@@ -761,7 +761,7 @@ static void precalc_tex( struct brw_wm_compile *c,
    if (c->key.tex_swizzles[unit] != SWIZZLE_NOOP) {
       /* swizzle the result of the TEX instruction */
       struct prog_src_register tmpsrc = src_reg_from_dst(inst->DstReg);
-      emit_op(c, OPCODE_MOV,
+      emit_op(c, OPCODE_SWZ,
               inst->DstReg,
               SATURATE_OFF, /* saturate already done above */
               0, 0,   /* tex unit, target N/A */
