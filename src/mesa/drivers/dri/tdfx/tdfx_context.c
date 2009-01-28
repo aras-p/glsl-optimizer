@@ -65,10 +65,8 @@
 #define need_GL_EXT_blend_func_separate
 #define need_GL_EXT_blend_minmax
 #define need_GL_EXT_fog_coord
-#define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_paletted_texture
 /* #define need_GL_EXT_secondary_color */
-#define need_GL_IBM_multimode_draw_arrays
 /* #define need_GL_MESA_program_debug */
 /* #define need_GL_NV_vertex_program */
 #include "extension_helper.h"
@@ -84,13 +82,11 @@ const struct dri_extension card_extensions[] =
 
     { "GL_EXT_blend_func_separate",        GL_EXT_blend_func_separate_functions },
     { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
-    { "GL_EXT_multi_draw_arrays",          GL_EXT_multi_draw_arrays_functions },
     { "GL_EXT_paletted_texture",           GL_EXT_paletted_texture_functions },
     { "GL_EXT_shared_texture_palette",     NULL },
     { "GL_EXT_stencil_wrap",               NULL },
     { "GL_EXT_texture_env_add",            NULL },
     { "GL_EXT_texture_lod_bias",           NULL },
-    { "GL_IBM_multimode_draw_arrays",      GL_IBM_multimode_draw_arrays_functions },
 
 #ifdef need_GL_ARB_point_parameters
     { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },

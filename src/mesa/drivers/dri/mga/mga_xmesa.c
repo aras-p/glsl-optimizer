@@ -72,7 +72,6 @@
 #define need_GL_ARB_vertex_program
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_gpu_program_parameters
-#define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_secondary_color
 #if 0
 #define need_GL_EXT_paletted_texture
@@ -385,7 +384,6 @@ static const struct dri_extension card_extensions[] =
    { "GL_ARB_texture_rectangle",      NULL },
    { "GL_EXT_blend_logic_op",         NULL },
    { "GL_EXT_fog_coord",              GL_EXT_fog_coord_functions },
-   { "GL_EXT_multi_draw_arrays",      GL_EXT_multi_draw_arrays_functions },
    /* paletted_textures currently doesn't work, but we could fix them later */
 #if defined( need_GL_EXT_paletted_texture )
    { "GL_EXT_shared_texture_palette", NULL },

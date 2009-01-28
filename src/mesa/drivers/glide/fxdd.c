@@ -1915,8 +1915,6 @@ fxDDInitExtensions(GLcontext * ctx)
    }
 
    /* core-level extensions */
-   _mesa_enable_extension(ctx, "GL_EXT_multi_draw_arrays");
-   _mesa_enable_extension(ctx, "GL_IBM_multimode_draw_arrays");
    /* dangerous */
    if (getenv("MESA_FX_ALLOW_VP")) {
       _mesa_enable_extension(ctx, "GL_ARB_vertex_program");
