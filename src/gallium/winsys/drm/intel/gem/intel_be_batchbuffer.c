@@ -72,7 +72,7 @@ intel_be_offset_relocation(struct intel_be_batchbuffer *batch,
 	                              read_domains,
 	                              write_domain);
 
-	((uint32_t*)batch->base.ptr)[0] = bo->offset - pre_add;
+	((uint32_t*)batch->base.ptr)[0] = bo->offset + pre_add;
 	batch->base.ptr += 4;
 
 	if (!ret)
