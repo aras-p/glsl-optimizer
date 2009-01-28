@@ -1862,7 +1862,6 @@ fxDDInitExtensions(GLcontext * ctx)
    }
 
    if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
-      _mesa_enable_extension(ctx, "GL_ARB_texture_compression");
       _mesa_enable_extension(ctx, "GL_3DFX_texture_compression_FXT1");
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
       _mesa_enable_extension(ctx, "GL_S3_s3tc");
@@ -1894,7 +1893,6 @@ fxDDInitExtensions(GLcontext * ctx)
        * fxSetupSingleTMU_NoLock/fxSetupDoubleTMU_NoLock:
        *    grTexDownloadTable(GR_TEXTABLE_NCC0, &(ti->palette));
        */
-      /*_mesa_enable_extension(ctx, "GL_ARB_texture_compression");*/
       _mesa_enable_extension(ctx, "GL_SGIS_generate_mipmap");
    }
 

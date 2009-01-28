@@ -64,7 +64,7 @@ static const struct {
    { OFF, "GL_ARB_shadow",                     F(ARB_shadow) },
    { OFF, "GL_ARB_shadow_ambient",             F(ARB_shadow_ambient) },
    { OFF, "GL_ARB_texture_border_clamp",       F(ARB_texture_border_clamp) },
-   { OFF, "GL_ARB_texture_compression",        F(ARB_texture_compression) },
+   { ON,  "GL_ARB_texture_compression",        F(ARB_texture_compression) },
    { OFF, "GL_ARB_texture_cube_map",           F(ARB_texture_cube_map) },
    { OFF, "GL_ARB_texture_env_add",            F(EXT_texture_env_add) },
    { OFF, "GL_ARB_texture_env_combine",        F(ARB_texture_env_combine) },
@@ -345,7 +345,7 @@ _mesa_enable_1_3_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_multisample = GL_TRUE;
    ctx->Extensions.ARB_multitexture = GL_TRUE;
    ctx->Extensions.ARB_texture_border_clamp = GL_TRUE;
-   ctx->Extensions.ARB_texture_compression = GL_TRUE;
+   /*ctx->Extensions.ARB_texture_compression = GL_TRUE;*/
    ctx->Extensions.ARB_texture_cube_map = GL_TRUE;
    ctx->Extensions.ARB_texture_env_combine = GL_TRUE;
    ctx->Extensions.ARB_texture_env_dot3 = GL_TRUE;

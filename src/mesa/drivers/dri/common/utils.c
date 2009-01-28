@@ -180,6 +180,7 @@ driGetRendererString( char * buffer, const char * hardware_name,
 
 
 #define need_GL_ARB_multisample
+#define need_GL_ARB_texture_compression
 #define need_GL_ARB_transpose_matrix
 #define need_GL_ARB_window_pos
 #define need_GL_EXT_compiled_vertex_array
@@ -199,6 +200,7 @@ driGetRendererString( char * buffer, const char * hardware_name,
 
 static const struct dri_extension all_mesa_extensions[] = {
    { "GL_ARB_multisample",           GL_ARB_multisample_functions },
+   { "GL_ARB_texture_compression",   GL_ARB_texture_compression_functions },
    { "GL_ARB_transpose_matrix",      GL_ARB_transpose_matrix_functions },
    { "GL_ARB_window_pos",            GL_ARB_window_pos_functions },
    { "GL_EXT_blend_func_separate",   GL_EXT_blend_func_separate_functions },

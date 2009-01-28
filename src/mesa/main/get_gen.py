@@ -523,10 +523,10 @@ StateVars = [
 
 	# GL_ARB_texture_compression */
 	( "GL_TEXTURE_COMPRESSION_HINT_ARB", GLint,
-	  ["ctx->Hint.TextureCompression"], "", ["ARB_texture_compression"] ),
+	  ["ctx->Hint.TextureCompression"], "", None ),
 	( "GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB", GLint,
 	  ["_mesa_get_compressed_formats(ctx, NULL, GL_FALSE)"],
-	  "", ["ARB_texture_compression"] ),
+	  "", None ),
 	( "GL_COMPRESSED_TEXTURE_FORMATS_ARB", GLenum,
 	  [],
 	  """GLint formats[100];
@@ -534,7 +534,7 @@ StateVars = [
          ASSERT(n <= 100);
          for (i = 0; i < n; i++)
             params[i] = CONVERSION(formats[i]);""",
-	  ["ARB_texture_compression"] ),
+	  None ),
 
 	# GL_EXT_compiled_vertex_array
 	( "GL_ARRAY_ELEMENT_LOCK_FIRST_EXT", GLint, ["ctx->Array.LockFirst"],

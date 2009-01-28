@@ -849,33 +849,21 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSED_IMAGE_SIZE:
-         if (ctx->Extensions.ARB_texture_compression) {
-            if (img->IsCompressed && !isProxy) {
-               /* Don't use ctx->Driver.CompressedTextureSize() since that
-                * may returned a padded hardware size.
-                */
-               *params = _mesa_compressed_texture_size(ctx, img->Width,
-                                                   img->Height, img->Depth,
-                                                   img->TexFormat->MesaFormat);
-            }
-            else {
-               _mesa_error(ctx, GL_INVALID_OPERATION,
-                           "glGetTexLevelParameter[if]v(pname)");
-            }
-         }
-         else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glGetTexLevelParameter[if]v(pname)");
-         }
+	 if (img->IsCompressed && !isProxy) {
+	    /* Don't use ctx->Driver.CompressedTextureSize() since that
+	     * may returned a padded hardware size.
+	     */
+	    *params = _mesa_compressed_texture_size(ctx, img->Width,
+						    img->Height, img->Depth,
+						    img->TexFormat->MesaFormat);
+	 }
+	 else {
+	    _mesa_error(ctx, GL_INVALID_OPERATION,
+			"glGetTexLevelParameter[if]v(pname)");
+	 }
          break;
       case GL_TEXTURE_COMPRESSED:
-         if (ctx->Extensions.ARB_texture_compression) {
-            *params = (GLint) img->IsCompressed;
-         }
-         else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glGetTexLevelParameter[if]v(pname)");
-         }
+         *params = (GLint) img->IsCompressed;
          break;
 
       /* GL_ARB_texture_float */

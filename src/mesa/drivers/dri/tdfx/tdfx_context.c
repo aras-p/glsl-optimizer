@@ -61,7 +61,6 @@
 #define need_GL_ARB_multisample
 /* #define need_GL_ARB_point_parameters */
 #define need_GL_ARB_occlusion_query
-#define need_GL_ARB_texture_compression
 #define need_GL_ARB_vertex_buffer_object
 /* #define need_GL_ARB_vertex_program */
 #define need_GL_EXT_blend_equation_separate
@@ -122,7 +121,6 @@ const struct dri_extension card_extensions[] =
  */
 const struct dri_extension napalm_extensions[] =
 {
-    { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
     { "GL_ARB_texture_env_combine",        NULL },
     { "GL_EXT_blend_equation_separate",    GL_EXT_blend_equation_separate_functions },
     { "GL_EXT_blend_subtract",             GL_EXT_blend_minmax_functions },

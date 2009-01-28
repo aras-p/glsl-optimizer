@@ -56,60 +56,58 @@ GLuint
 _mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all)
 {
    GLuint n = 0;
-   if (ctx->Extensions.ARB_texture_compression) {
-      if (ctx->Extensions.TDFX_texture_compression_FXT1) {
-         if (formats) {
-            formats[n++] = GL_COMPRESSED_RGB_FXT1_3DFX;
-            formats[n++] = GL_COMPRESSED_RGBA_FXT1_3DFX;
-         }
-         else {
-            n += 2;
-         }
+   if (ctx->Extensions.TDFX_texture_compression_FXT1) {
+      if (formats) {
+         formats[n++] = GL_COMPRESSED_RGB_FXT1_3DFX;
+         formats[n++] = GL_COMPRESSED_RGBA_FXT1_3DFX;
       }
-      if (ctx->Extensions.EXT_texture_compression_s3tc) {
-         if (formats) {
-            formats[n++] = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-            /* This format has some restrictions/limitations and so should
-             * not be returned via the GL_COMPRESSED_TEXTURE_FORMATS query.
-             * Specifically, all transparent pixels become black.  NVIDIA
-             * omits this format too.
-             */
-            if (all)
-               formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-            formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-            formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-         }
-         else {
-            n += 3;
-            if (all)
-               n += 1;
-         }
+      else {
+         n += 2;
       }
-      if (ctx->Extensions.S3_s3tc) {
-         if (formats) {
-            formats[n++] = GL_RGB_S3TC;
-            formats[n++] = GL_RGB4_S3TC;
-            formats[n++] = GL_RGBA_S3TC;
-            formats[n++] = GL_RGBA4_S3TC;
-         }
-         else {
-            n += 4;
-         }
-      }
-#if FEATURE_EXT_texture_sRGB
-      if (ctx->Extensions.EXT_texture_sRGB) {
-         if (formats) {
-            formats[n++] = GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
-            formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
-            formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
-            formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
-         }
-         else {
-            n += 4;
-         }
-      }
-#endif /* FEATURE_EXT_texture_sRGB */
    }
+   if (ctx->Extensions.EXT_texture_compression_s3tc) {
+      if (formats) {
+         formats[n++] = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+         /* This format has some restrictions/limitations and so should
+          * not be returned via the GL_COMPRESSED_TEXTURE_FORMATS query.
+          * Specifically, all transparent pixels become black.  NVIDIA
+          * omits this format too.
+          */
+         if (all)
+             formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+         formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+         formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+      }
+      else {
+         n += 3;
+         if (all)
+             n += 1;
+      }
+   }
+   if (ctx->Extensions.S3_s3tc) {
+      if (formats) {
+         formats[n++] = GL_RGB_S3TC;
+         formats[n++] = GL_RGB4_S3TC;
+         formats[n++] = GL_RGBA_S3TC;
+         formats[n++] = GL_RGBA4_S3TC;
+      }
+      else {
+         n += 4;
+      }
+   }
+#if FEATURE_EXT_texture_sRGB
+   if (ctx->Extensions.EXT_texture_sRGB) {
+      if (formats) {
+         formats[n++] = GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
+         formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
+         formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
+         formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
+      }
+      else {
+         n += 4;
+      }
+   }
+#endif /* FEATURE_EXT_texture_sRGB */
    return n;
 }
 

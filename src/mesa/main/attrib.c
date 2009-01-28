@@ -1006,9 +1006,8 @@ _mesa_PopAttrib(void)
                _mesa_Hint(GL_FOG_HINT, hint->Fog);
                _mesa_Hint(GL_CLIP_VOLUME_CLIPPING_HINT_EXT,
                           hint->ClipVolumeClipping);
-               if (ctx->Extensions.ARB_texture_compression)
-                  _mesa_Hint(GL_TEXTURE_COMPRESSION_HINT_ARB,
-                             hint->TextureCompression);
+	       _mesa_Hint(GL_TEXTURE_COMPRESSION_HINT_ARB,
+			  hint->TextureCompression);
             }
             break;
          case GL_LIGHTING_BIT:

@@ -80,7 +80,6 @@ int hw_tcl_on = 1;
 #define need_GL_VERSION_2_0
 #define need_GL_ARB_multisample
 #define need_GL_ARB_point_parameters
-#define need_GL_ARB_texture_compression
 #define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
 #define need_GL_EXT_blend_equation_separate
@@ -105,7 +104,6 @@ const struct dri_extension card_extensions[] = {
   {"GL_ARB_shadow",			NULL},
   {"GL_ARB_shadow_ambient",		NULL},
   {"GL_ARB_texture_border_clamp",	NULL},
-  {"GL_ARB_texture_compression",	GL_ARB_texture_compression_functions},
   {"GL_ARB_texture_cube_map",		NULL},
   {"GL_ARB_texture_env_add",		NULL},
   {"GL_ARB_texture_env_combine",	NULL},

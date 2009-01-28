@@ -253,23 +253,21 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
       }
    }
 
-   if (ctx->Extensions.ARB_texture_compression) {
-      switch (internalFormat) {
-         case GL_COMPRESSED_ALPHA:
-            return GL_ALPHA;
-         case GL_COMPRESSED_LUMINANCE:
-            return GL_LUMINANCE;
-         case GL_COMPRESSED_LUMINANCE_ALPHA:
-            return GL_LUMINANCE_ALPHA;
-         case GL_COMPRESSED_INTENSITY:
-            return GL_INTENSITY;
-         case GL_COMPRESSED_RGB:
-            return GL_RGB;
-         case GL_COMPRESSED_RGBA:
-            return GL_RGBA;
-         default:
-            ; /* fallthrough */
-      }
+   switch (internalFormat) {
+   case GL_COMPRESSED_ALPHA:
+      return GL_ALPHA;
+   case GL_COMPRESSED_LUMINANCE:
+      return GL_LUMINANCE;
+   case GL_COMPRESSED_LUMINANCE_ALPHA:
+      return GL_LUMINANCE_ALPHA;
+   case GL_COMPRESSED_INTENSITY:
+      return GL_INTENSITY;
+   case GL_COMPRESSED_RGB:
+      return GL_RGB;
+   case GL_COMPRESSED_RGBA:
+      return GL_RGBA;
+   default:
+      ; /* fallthrough */
    }
          
    if (ctx->Extensions.TDFX_texture_compression_FXT1) {
