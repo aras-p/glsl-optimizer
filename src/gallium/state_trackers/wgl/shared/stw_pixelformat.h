@@ -28,6 +28,8 @@
 #ifndef PIXELFORMAT_H
 #define PIXELFORMAT_H
 
+#include <windows.h>
+
 #define PF_FLAG_DOUBLEBUFFER  0x00000001
 #define PF_FLAG_MULTISAMPLED  0x00000002
 
@@ -72,5 +74,14 @@ pixelformat_get_extended_count( void );
 
 const struct pixelformat_info *
 pixelformat_get_info( uint index );
+
+
+int
+stw_pixelformat_describe(
+   HDC hdc,
+   int iPixelFormat,
+   UINT nBytes,
+   LPPIXELFORMATDESCRIPTOR ppfd );
+
 
 #endif /* PIXELFORMAT_H */

@@ -34,6 +34,7 @@
 
 #include "shared/stw_device.h"
 #include "shared/stw_context.h"
+#include "shared/stw_pixelformat.h"
 #include "icd/stw_icd.h"
 #include "wgl/stw_wgl.h"
 
@@ -135,7 +136,7 @@ DrvDescribePixelFormat(
 {
    LONG r;
 
-   r = wglDescribePixelFormat( hdc, iPixelFormat, cjpfd, ppfd );
+   r = stw_pixelformat_describe( hdc, iPixelFormat, cjpfd, ppfd );
 
    debug_printf( "%s( 0x%p, %d, %u, 0x%p ) = %d\n",
                  __FUNCTION__, hdc, iPixelFormat, cjpfd, ppfd, r );
@@ -596,7 +597,8 @@ DrvSetPixelFormat(
    PIXELFORMATDESCRIPTOR pfd;
    BOOL r;
 
-   wglDescribePixelFormat( hdc, iPixelFormat, sizeof( pfd ), &pfd );
+   stw_pixelformat_describe( hdc, iPixelFormat, sizeof( pfd ), &pfd );
+
    r = wglSetPixelFormat( hdc, iPixelFormat, &pfd );
 
    debug_printf( "%s( 0x%p, %d ) = %s\n", __FUNCTION__, hdc, iPixelFormat, r ? "TRUE" : "FALSE" );
