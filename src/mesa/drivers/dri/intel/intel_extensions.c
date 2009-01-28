@@ -98,11 +98,23 @@ static const struct dri_extension card_extensions[] = {
    { "GL_MESA_ycbcr_texture",             NULL },
    { "GL_NV_blend_square",                NULL },
    { "GL_NV_point_sprite",                GL_NV_point_sprite_functions },
-   { "GL_NV_texture_env_combine4",        NULL },
    { "GL_NV_vertex_program",              GL_NV_vertex_program_functions },
    { "GL_NV_vertex_program1_1",           NULL },
    { "GL_SGIS_generate_mipmap",           NULL },
    { NULL, NULL }
+};
+
+
+/** i915 / i945-only extensions */
+static const struct dri_extension i915_extensions[] = {
+   { "GL_ARB_depth_texture",              NULL },
+   { "GL_ARB_fragment_program",           NULL },
+   { "GL_ARB_shadow",                     NULL },
+   { "GL_ARB_texture_non_power_of_two",   NULL },
+   { "GL_ATI_texture_env_combine3",       NULL },
+   { "GL_EXT_shadow_funcs",               NULL },
+   { "GL_NV_texture_env_combine4",        NULL },
+   { NULL,                                NULL }
 };
 
 
@@ -132,6 +144,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_EXT_vertex_array_bgra",	  NULL },
    { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
    { "GL_ATI_texture_env_combine3",       NULL },
+   { "GL_NV_texture_env_combine4",        NULL },
    { NULL,                                NULL }
 };
 
@@ -169,4 +182,8 @@ intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
 
    if (intel == NULL || IS_965(intel->intelScreen->deviceID))
       driInitExtensions(ctx, brw_extensions, GL_FALSE);
+
+   if (intel == NULL || IS_915(intel->intelScreen->deviceID)
+       || IS_945(intel->intelScreen->deviceID))
+      driInitExtensions(ctx, i915_extensions, GL_FALSE);
 }
