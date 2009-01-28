@@ -69,7 +69,6 @@ struct brw_wm_prog_key {
    GLuint shadowtex_mask:16;
    GLuint yuvtex_mask:16;
    GLuint yuvtex_swap_mask:16;	/* UV swaped */
-   //   GLuint pad1:16;
 
    GLuint program_string_id:32;
    GLuint origin_x, origin_y;
