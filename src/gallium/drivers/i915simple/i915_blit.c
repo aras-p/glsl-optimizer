@@ -77,6 +77,7 @@ i915_fill_blit(struct i915_context *i915,
    OUT_BATCH(((y + h) << 16) | (x + w));
    OUT_RELOC( dst_buffer, I915_BUFFER_ACCESS_WRITE, dst_offset);
    OUT_BATCH(color);
+   FLUSH_BATCH(NULL);
 }
 
 
@@ -152,6 +153,7 @@ i915_copy_blit( struct i915_context *i915,
    OUT_BATCH((src_y << 16) | src_x);
    OUT_BATCH(((int) src_pitch & 0xffff));
    OUT_RELOC(src_buffer, I915_BUFFER_ACCESS_READ, src_offset);
+   FLUSH_BATCH(NULL);
 }
 
 
