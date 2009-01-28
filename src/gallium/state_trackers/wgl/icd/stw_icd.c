@@ -33,15 +33,18 @@
 #include "pipe/p_debug.h"
 
 #include "shared/stw_device.h"
+#include "shared/stw_context.h"
 #include "icd/stw_icd.h"
 #include "wgl/stw_wgl.h"
 
 
 static HGLRC
-_drv_lookup_hglrc( DHGLRC dhglrc )
+lookup_hglrc( DHGLRC dhglrc )
 {
-   if (dhglrc == 0 || dhglrc >= DRV_CONTEXT_MAX)
+   if (dhglrc == 0 || 
+       dhglrc >= DRV_CONTEXT_MAX)
       return NULL;
+
    return stw_dev->ctx_array[dhglrc - 1].hglrc;
 }
 
@@ -51,9 +54,14 @@ DrvCopyContext(
    DHGLRC dhrcDest,
    UINT fuMask )
 {
-   debug_printf( "%s\n", __FUNCTION__ );
+   HGLRC src = lookup_hglrc( dhrcSource );
+   HGLRC dst = lookup_hglrc( dhrcDest );
+   
+   if (src == NULL ||
+       dst == NULL)
+      return FALSE;
 
-   return FALSE;
+   return stw_wgl_copy_context( src, dst, fuMask );
 }
 
 DHGLRC APIENTRY
@@ -61,26 +69,23 @@ DrvCreateLayerContext(
    HDC hdc,
    INT iLayerPlane )
 {
-   DHGLRC dhglrc = 0;
-
-   if (iLayerPlane == 0) {
-      DWORD i;
-
-      for (i = 0; i < DRV_CONTEXT_MAX; i++) {
-         if (stw_dev->ctx_array[i].hglrc == NULL)
-            break;
-      }
-
-      if (i < DRV_CONTEXT_MAX) {
-         stw_dev->ctx_array[i].hglrc = wglCreateContext( hdc );
-         if (stw_dev->ctx_array[i].hglrc != NULL)
-            dhglrc = i + 1;
-      }
+   DWORD i;
+   
+   for (i = 0; i < DRV_CONTEXT_MAX; i++) {
+      if (stw_dev->ctx_array[i].hglrc == NULL)
+         goto found_slot;
    }
+   
+   /* No slot available, fail:
+    */
+   return 0;
 
-   debug_printf( "%s( 0x%p, %d ) = %u\n", __FUNCTION__, hdc, iLayerPlane, dhglrc );
+found_slot:
+   stw_dev->ctx_array[i].hglrc = stw_wgl_create_context( hdc, iLayerPlane );
+   if (stw_dev->ctx_array[i].hglrc == NULL)
+      return 0;
 
-   return dhglrc;
+   return (DHGLRC) i + 1;
 }
 
 DHGLRC APIENTRY
@@ -94,11 +99,11 @@ BOOL APIENTRY
 DrvDeleteContext(
    DHGLRC dhglrc )
 {
-   HGLRC hglrc = _drv_lookup_hglrc( dhglrc );
+   HGLRC hglrc = lookup_hglrc( dhglrc );
    BOOL success = FALSE;
 
    if (hglrc != NULL) {
-      success = wglDeleteContext( hglrc );
+      success = stw_wgl_delete_context( hglrc );
       if (success)
          stw_dev->ctx_array[dhglrc - 1].hglrc = NULL;
    }
@@ -132,7 +137,8 @@ DrvDescribePixelFormat(
 
    r = wglDescribePixelFormat( hdc, iPixelFormat, cjpfd, ppfd );
 
-   debug_printf( "%s( 0x%p, %d, %u, 0x%p ) = %d\n", __FUNCTION__, hdc, iPixelFormat, cjpfd, ppfd, r );
+   debug_printf( "%s( 0x%p, %d, %u, 0x%p ) = %d\n",
+                 __FUNCTION__, hdc, iPixelFormat, cjpfd, ppfd, r );
 
    return r;
 }
@@ -181,7 +187,7 @@ DrvReleaseContext(
    BOOL success = FALSE;
 
    if (dhglrc == stw_dev->ctx_current) {
-      HGLRC hglrc = _drv_lookup_hglrc( dhglrc );
+      HGLRC hglrc = lookup_hglrc( dhglrc );
 
       if (hglrc != NULL) {
          success = wglMakeCurrent( NULL, NULL );
@@ -215,7 +221,7 @@ DrvSetContext(
    DHGLRC dhglrc,
    PFN_SETPROCTABLE pfnSetProcTable )
 {
-   HGLRC hglrc = _drv_lookup_hglrc( dhglrc );
+   HGLRC hglrc = lookup_hglrc( dhglrc );
    GLDISPATCHTABLE *disp = &cpt.glDispatchTable;
 
    debug_printf( "%s( 0x%p, %u, 0x%p )\n", __FUNCTION__, hdc, dhglrc, pfnSetProcTable );

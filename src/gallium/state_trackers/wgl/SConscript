@@ -20,6 +20,7 @@ if env['platform'] in ['windows']:
      
     sources = [
         'icd/stw_icd.c',
+        'shared/stw_context.c',
         'shared/stw_device.c',
         'shared/stw_framebuffer.c',
         'shared/stw_pixelformat.c',
@@ -27,8 +28,7 @@ if env['platform'] in ['windows']:
         'wgl/stw_wgl_arbextensionsstring.c',
         'wgl/stw_wgl_arbmultisample.c',
         'wgl/stw_wgl_arbpixelformat.c',
-        #'wgl/stw_wgl.c',
-        'wgl/stw_wgl_context.c',
+        'wgl/stw_wgl.c',
         'wgl/stw_wgl_getprocaddress.c',
         'wgl/stw_wgl_pixelformat.c',
         'wgl/stw_wgl_swapbuffers.c',

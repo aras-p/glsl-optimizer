@@ -28,6 +28,63 @@
 #include <windows.h>
 
 #include "pipe/p_debug.h"
+#include "shared/stw_context.h"
+#include "stw_wgl.h"
+
+
+WINGDIAPI BOOL APIENTRY
+wglCopyContext(
+   HGLRC hglrcSrc,
+   HGLRC hglrcDst,
+   UINT mask )
+{
+   return stw_wgl_copy_context( hglrcSrc, hglrcDst, mask );
+}
+
+WINGDIAPI HGLRC APIENTRY
+wglCreateContext(
+   HDC hdc )
+{
+   return (HGLRC) stw_wgl_create_context( hdc, 0 );
+}
+
+WINGDIAPI HGLRC APIENTRY
+wglCreateLayerContext(
+   HDC hdc,
+   int iLayerPlane )
+{
+   return (HGLRC) stw_wgl_create_context( hdc, iLayerPlane );
+}
+
+WINGDIAPI BOOL APIENTRY
+wglDeleteContext(
+   HGLRC hglrc )
+{
+   return stw_wgl_delete_context( hglrc );
+}
+
+
+WINGDIAPI HGLRC APIENTRY
+wglGetCurrentContext( VOID )
+{
+   return stw_wgl_get_current_context();
+}
+
+WINGDIAPI HDC APIENTRY
+wglGetCurrentDC( VOID )
+{
+   return stw_wgl_get_current_dc();
+}
+
+WINGDIAPI BOOL APIENTRY
+wglMakeCurrent(
+   HDC hdc,
+   HGLRC hglrc )
+{
+   return stw_wgl_make_current( hdc, hglrc );
+}
+
+
 
 WINGDIAPI BOOL APIENTRY
 wglUseFontBitmapsA(

@@ -37,17 +37,17 @@
 #include "shared/stw_winsys.h"
 #include "shared/stw_framebuffer.h"
 #include "shared/stw_pixelformat.h"
-#include "stw_wgl_arbmultisample.h"
-#include "stw_wgl_context.h"
-#include "stw_wgl.h"
+#include "wgl/stw_wgl_arbmultisample.h"
+#include "stw_context.h"
+//#include "stw_wgl.h"
 
 static struct wgl_context *ctx_head = NULL;
 
 static HDC current_hdc = NULL;
 static HGLRC current_hrc = NULL;
 
-WINGDIAPI BOOL APIENTRY
-wglCopyContext(
+BOOL
+stw_wgl_copy_context(
    HGLRC hglrcSrc,
    HGLRC hglrcDst,
    UINT mask )
@@ -59,15 +59,19 @@ wglCopyContext(
    return FALSE;
 }
 
-WINGDIAPI HGLRC APIENTRY
-wglCreateContext(
-   HDC hdc )
+HGLRC
+stw_wgl_create_context(
+   HDC hdc,
+   int iLayerPlane )
 {
    uint pfi;
    const struct pixelformat_info *pf;
    struct wgl_context *ctx;
    GLvisual *visual;
    struct pipe_context *pipe;
+
+   if (iLayerPlane != 0)
+      return NULL;
 
    pfi = wglGetPixelFormat( hdc );
    if (pfi == 0)
@@ -130,19 +134,9 @@ wglCreateContext(
    return (HGLRC) ctx;
 }
 
-WINGDIAPI HGLRC APIENTRY
-wglCreateLayerContext(
-   HDC hdc,
-   int iLayerPlane )
-{
-   (void) hdc;
-   (void) iLayerPlane;
 
-   return NULL;
-}
-
-WINGDIAPI BOOL APIENTRY
-wglDeleteContext(
+BOOL
+stw_wgl_delete_context(
    HGLRC hglrc )
 {
    struct wgl_context **link = &ctx_head;
@@ -198,20 +192,20 @@ get_window_size( HDC hdc, GLuint *width, GLuint *height )
    }
 }
 
-WINGDIAPI HGLRC APIENTRY
-wglGetCurrentContext( VOID )
+HGLRC
+stw_wgl_get_current_context( void )
 {
    return current_hrc;
 }
 
-WINGDIAPI HDC APIENTRY
-wglGetCurrentDC( VOID )
+HDC
+stw_wgl_get_current_dc( void )
 {
     return current_hdc;
 }
 
-WINGDIAPI BOOL APIENTRY
-wglMakeCurrent(
+BOOL
+stw_wgl_make_current(
    HDC hdc,
    HGLRC hglrc )
 {
@@ -292,5 +286,3 @@ wgl_context_from_hdc(
    }
    return NULL;
 }
-
-#include "stw_wgl.c"
