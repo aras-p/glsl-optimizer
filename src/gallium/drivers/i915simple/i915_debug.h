@@ -41,7 +41,6 @@ struct debug_stream
    char *ptr;		/* pointer to gtt offset zero */
    char *end;		/* pointer to gtt offset zero */
    unsigned print_addresses;
-   struct pipe_winsys *winsys;
 };
 
 
@@ -105,9 +104,9 @@ I915_DBG(
 #endif
 
 
-void i915_dump_batchbuffer( struct i915_context *i915 );
+struct i915_batchbuffer;
 
-
+void i915_dump_batchbuffer( struct i915_batchbuffer *i915 );
 
 void i915_debug_init( struct i915_context *i915 );
 

@@ -864,18 +864,17 @@ static boolean i915_debug_packet( struct debug_stream *stream )
 
 
 void
-i915_dump_batchbuffer( struct i915_context *i915 )
+i915_dump_batchbuffer( struct i915_batchbuffer *batch )
 {
    struct debug_stream stream;
-   unsigned *start = (unsigned*)i915->batch->map;
-   unsigned *end = (unsigned*)i915->batch->ptr;
+   unsigned *start = (unsigned*)batch->map;
+   unsigned *end = (unsigned*)batch->ptr;
    unsigned long bytes = (unsigned long) (end - start) * 4;
    boolean done = FALSE;
 
    stream.offset = 0;
    stream.ptr = (char *)start;
    stream.print_addresses = 0;
-   stream.winsys = i915->pipe.winsys;
 
    if (!start || !end) {
       debug_printf( "\n\nBATCH: ???\n");
