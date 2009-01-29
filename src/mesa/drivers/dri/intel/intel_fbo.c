@@ -481,8 +481,6 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;
 
-   irb->RenderToTexture = GL_TRUE;
-
    return GL_TRUE;
 }
 
