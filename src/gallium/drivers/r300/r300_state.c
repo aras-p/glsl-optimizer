@@ -440,9 +440,6 @@ struct pipe_rasterizer_state
     unsigned point_size_per_vertex:1; /**< size computed in vertex shader */
     unsigned multisample:1;         /* XXX maybe more ms state in future */
     unsigned line_smooth:1;
-    unsigned line_stipple_enable:1;
-    unsigned line_stipple_factor:8;  /**< [1..256] actually */
-    unsigned line_stipple_pattern:16;
     unsigned line_last_pixel:1;
     unsigned bypass_clipping:1;
     unsigned bypass_vs:1; /**< Skip the vertex shader.  Note that the shader is
@@ -502,6 +499,15 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
                 pack_float_32(state->offset_units);
         rs->depth_scale_front = rs->depth_scale_back =
                 pack_float_32(state->offset_scale);
+    }
+
+    if (state->line_stipple_enable) {
+        rs->line_stipple_config =
+            R300_GA_LINE_STIPPLE_CONFIG_LINE_RESET_LINE |
+            (pack_float_32((float)state->line_stipple_factor) &
+                R300_GA_LINE_STIPPLE_CONFIG_STIPPLE_SCALE_MASK);
+        /* XXX this might need to be scaled up */
+        rs->line_stipple_value = state->line_stipple_pattern;
     }
 
     /* XXX this is part of HW TCL */

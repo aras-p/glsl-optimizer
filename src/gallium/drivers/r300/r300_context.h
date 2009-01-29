@@ -61,12 +61,14 @@ struct r300_fs_state {
 
 struct r300_rs_state {
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
-    uint32_t depth_scale_front;     /* R300_SU_POLY_OFFSET_FRONT_SCALE: 0x42a4 */
-    uint32_t depth_offset_front;    /* R300_SU_POLY_OFFSET_FRONT_OFFSET: 0x42a8 */
-    uint32_t depth_scale_back;      /* R300_SU_POLY_OFFSET_BACK_SCALE: 0x42ac */
-    uint32_t depth_offset_back;     /* R300_SU_POLY_OFFSET_BACK_OFFSET: 0x42b0 */
+    uint32_t depth_scale_front;  /* R300_SU_POLY_OFFSET_FRONT_SCALE: 0x42a4 */
+    uint32_t depth_offset_front;/* R300_SU_POLY_OFFSET_FRONT_OFFSET: 0x42a8 */
+    uint32_t depth_scale_back;    /* R300_SU_POLY_OFFSET_BACK_SCALE: 0x42ac */
+    uint32_t depth_offset_back;  /* R300_SU_POLY_OFFSET_BACK_OFFSET: 0x42b0 */
     uint32_t polygon_offset_enable; /* R300_SU_POLY_OFFSET_ENABLE: 0x42b4 */
     uint32_t cull_mode;             /* R300_SU_CULL_MODE: 0x42b8 */
+    uint32_t line_stipple_config;   /* R300_GA_LINE_STIPPLE_CONFIG: 0x4328 */
+    uint32_t line_stipple_value;    /* R300_GA_LINE_STIPPLE_VALUE: 0x4260 */
 };
 
 struct r300_sampler_state {
