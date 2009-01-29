@@ -37,6 +37,7 @@
 #endif
 #include "fbobject.h"
 #include "framebuffer.h"
+#include "hash.h"
 #include "image.h"
 #include "imports.h"
 #include "macros.h"
@@ -2378,23 +2379,33 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 }
 
 
+/** Callback info for walking over FBO hash table */
+struct cb_info
+{
+   GLcontext *ctx;
+   struct gl_texture_object *texObj;
+   GLuint level, face;
+};
+
 
 /**
- * Check if the given texture image is bound to any framebuffer objects
- * and update/invalidate them.
- * XXX We're only checking the currently bound framebuffer object for now.
- * In the future, perhaps struct gl_texture_image should have a pointer (or
- * list of pointers (yikes)) to the gl_framebuffer(s) which it's bound to.
+ * Check render to texture callback.  Called from _mesa_HashWalk().
  */
 static void
-update_fbo_texture(GLcontext *ctx, struct gl_texture_object *texObj,
-                   GLuint face, GLuint level)
+check_rtt_cb(GLuint key, void *data, void *userData)
 {
-   if (ctx->DrawBuffer->Name) {
+   struct gl_framebuffer *fb = (struct gl_framebuffer *) data;
+   const struct cb_info *info = (struct cb_info *) userData;
+   GLcontext *ctx = info->ctx;
+   const struct gl_texture_object *texObj = info->texObj;
+   const GLuint level = info->level, face = info->face;
+
+   /* If this is a user-created FBO */
+   if (fb->Name) {
       GLuint i;
+      /* check if any of the FBO's attachments point to 'texObj' */
       for (i = 0; i < BUFFER_COUNT; i++) {
-         struct gl_renderbuffer_attachment *att = 
-            ctx->DrawBuffer->Attachment + i;
+         struct gl_renderbuffer_attachment *att = fb->Attachment + i;
          if (att->Type == GL_TEXTURE &&
              att->Texture == texObj &&
              att->TextureLevel == level &&
@@ -2402,8 +2413,32 @@ update_fbo_texture(GLcontext *ctx, struct gl_texture_object *texObj,
             ASSERT(att->Texture->Image[att->CubeMapFace][att->TextureLevel]);
             /* Tell driver about the new renderbuffer texture */
             ctx->Driver.RenderTexture(ctx, ctx->DrawBuffer, att);
+            /* Mark fb status as indeterminate to force re-validation */
+            fb->_Status = 0;
          }
       }
+   }
+}
+
+
+/**
+ * When a texture image is specified we have to check if it's bound to
+ * any framebuffer objects (render to texture) in order to detect changes
+ * in size or format since that effects FBO completeness.
+ * Any FBOs rendering into the texture must be re-validated.
+ */
+static void
+update_fbo_texture(GLcontext *ctx, struct gl_texture_object *texObj,
+                   GLuint face, GLuint level)
+{
+   /* Only check this texture if it's been marked as RenderToTexture */
+   if (texObj->_RenderToTexture) {
+      struct cb_info info;
+      info.ctx = ctx;
+      info.texObj = texObj;
+      info.level = level;
+      info.face = face;
+      _mesa_HashWalk(ctx->Shared->FrameBuffers, check_rtt_cb, &info);
    }
 }
 

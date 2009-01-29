@@ -1469,6 +1469,15 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
    if (texObj) {
       _mesa_set_texture_attachment(ctx, fb, att, texObj, textarget,
                                    level, zoffset);
+      /* Set the render-to-texture flag.  We'll check this flag in
+       * glTexImage() and friends to determine if we need to revalidate
+       * any FBOs that might be rendering into this texture.
+       * This flag never gets cleared since it's non-trivial to determine
+       * when all FBOs might be done rendering to this texture.  That's OK
+       * though since it's uncommon to render to a texture then repeatedly
+       * call glTexImage() to change images in the texture.
+       */
+      texObj->_RenderToTexture = GL_TRUE;
    }
    else {
       _mesa_remove_attachment(ctx, att);
