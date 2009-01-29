@@ -76,4 +76,6 @@ void intelBitmap(GLcontext * ctx,
 		 const struct gl_pixelstore_attrib *unpack,
 		 const GLubyte * pixels);
 
+void intel_clear_tris(GLcontext *ctx, GLbitfield mask);
+
 #endif

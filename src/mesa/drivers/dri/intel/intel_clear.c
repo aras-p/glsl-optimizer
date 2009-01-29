@@ -1,6 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2009 Intel Corporation.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,99 +26,201 @@
  * 
  **************************************************************************/
 
-#include "intel_clear.h"
+#include "main/glheader.h"
+#include "main/enums.h"
+#include "main/image.h"
+#include "main/mtypes.h"
+#include "main/attrib.h"
+#include "main/blend.h"
+#include "main/bufferobj.h"
+#include "main/buffers.h"
+#include "main/depth.h"
+#include "main/enable.h"
+#include "main/macros.h"
+#include "main/matrix.h"
+#include "main/texstate.h"
+#include "main/stencil.h"
+#include "main/varray.h"
+#include "glapi/dispatch.h"
+#include "swrast/swrast.h"
+
 #include "intel_context.h"
 #include "intel_blit.h"
-#include "intel_buffers.h"
 #include "intel_chipset.h"
+#include "intel_clear.h"
 #include "intel_fbo.h"
-#include "intel_regions.h"
-#include "intel_batchbuffer.h"
-#include "main/framebuffer.h"
-#include "swrast/swrast.h"
-#include "drirenderbuffer.h"
+#include "intel_pixel.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 
-/* A true meta version of this would be very simple and additionally
- * machine independent.  Maybe we'll get there one day.
+/**
+ * Perform glClear where mask contains only color, depth, and/or stencil.
+ *
+ * The implementation is based on calling into Mesa to set GL state and
+ * performing normal triangle rendering.  The intent of this path is to
+ * have as generic a path as possible, so that any driver could make use of
+ * it.
  */
-static void
-intelClearWithTris(struct intel_context *intel, GLbitfield mask)
+void
+intel_clear_tris(GLcontext *ctx, GLbitfield mask)
 {
-   GLcontext *ctx = &intel->ctx;
+   struct intel_context *intel = intel_context(ctx);
+   GLfloat vertices[4][4];
+   GLfloat color[4][4];
+   GLfloat dst_z;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   GLuint buf;
+   int i;
+   GLboolean saved_fp_enable = GL_FALSE, saved_vp_enable = GL_FALSE;
+   unsigned int saved_active_texture;
 
-   intel->vtbl.install_meta_state(intel);
+   assert((mask & ~(BUFFER_BIT_BACK_LEFT | BUFFER_BIT_FRONT_LEFT |
+		    BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) == 0);
 
-   /* Back and stencil cliprects are the same.  Try and do both
-    * buffers at once:
-    */
-   if (mask & (BUFFER_BIT_BACK_LEFT | BUFFER_BIT_STENCIL | BUFFER_BIT_DEPTH)) {
-      struct intel_region *backRegion =
-	 intel_get_rb_region(fb, BUFFER_BACK_LEFT);
-      struct intel_region *depthRegion =
-	 intel_get_rb_region(fb, BUFFER_DEPTH);
+   _mesa_PushAttrib(GL_COLOR_BUFFER_BIT |
+		    GL_CURRENT_BIT |
+		    GL_DEPTH_BUFFER_BIT |
+		    GL_ENABLE_BIT |
+		    GL_STENCIL_BUFFER_BIT |
+		    GL_TRANSFORM_BIT |
+		    GL_CURRENT_BIT);
+   _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
+   saved_active_texture = ctx->Texture.CurrentUnit;
 
-      intel->vtbl.meta_draw_region(intel, backRegion, depthRegion);
-
-      if (mask & BUFFER_BIT_BACK_LEFT)
-	 intel->vtbl.meta_color_mask(intel, GL_TRUE);
-      else
-	 intel->vtbl.meta_color_mask(intel, GL_FALSE);
-
-      if (mask & BUFFER_BIT_STENCIL)
-	 intel->vtbl.meta_stencil_replace(intel,
-					  intel->ctx.Stencil.WriteMask[0],
-					  intel->ctx.Stencil.Clear);
-      else
-	 intel->vtbl.meta_no_stencil_write(intel);
-
-      if (mask & BUFFER_BIT_DEPTH)
-	 intel->vtbl.meta_depth_replace(intel);
-      else
-	 intel->vtbl.meta_no_depth_write(intel);
-
-      intel->vtbl.meta_draw_quad(intel,
-				 fb->_Xmin,
-				 fb->_Xmax,
-				 fb->_Ymin,
-				 fb->_Ymax,
-				 intel->ctx.Depth.Clear,
-				 intel->ClearColor8888,
-				 0, 0, 0, 0);   /* texcoords */
-
-      mask &= ~(BUFFER_BIT_BACK_LEFT | BUFFER_BIT_STENCIL | BUFFER_BIT_DEPTH);
+   /* Disable existing GL state we don't want to apply to a clear. */
+   _mesa_Disable(GL_ALPHA_TEST);
+   _mesa_Disable(GL_BLEND);
+   _mesa_Disable(GL_CULL_FACE);
+   _mesa_Disable(GL_FOG);
+   _mesa_Disable(GL_POLYGON_SMOOTH);
+   _mesa_Disable(GL_POLYGON_STIPPLE);
+   _mesa_Disable(GL_POLYGON_OFFSET_FILL);
+   _mesa_Disable(GL_LIGHTING);
+   _mesa_Disable(GL_CLIP_PLANE0);
+   _mesa_Disable(GL_CLIP_PLANE1);
+   _mesa_Disable(GL_CLIP_PLANE2);
+   _mesa_Disable(GL_CLIP_PLANE3);
+   _mesa_Disable(GL_CLIP_PLANE4);
+   _mesa_Disable(GL_CLIP_PLANE5);
+   if (ctx->Extensions.ARB_fragment_program && ctx->FragmentProgram.Enabled) {
+      saved_fp_enable = GL_TRUE;
+      _mesa_Disable(GL_FRAGMENT_PROGRAM_ARB);
+   }
+   if (ctx->Extensions.ARB_vertex_program && ctx->VertexProgram.Enabled) {
+      saved_vp_enable = GL_TRUE;
+      _mesa_Disable(GL_VERTEX_PROGRAM_ARB);
    }
 
-   /* clear the remaining (color) renderbuffers */
-   for (buf = 0; buf < BUFFER_COUNT && mask; buf++) {
-      const GLuint bufBit = 1 << buf;
-      if (mask & bufBit) {
-	 struct intel_renderbuffer *irbColor =
-	    intel_renderbuffer(fb->Attachment[buf].Renderbuffer);
+   if (ctx->Texture._EnabledUnits != 0) {
+      int i;
 
-	 ASSERT(irbColor);
-
-	 intel->vtbl.meta_no_depth_write(intel);
-	 intel->vtbl.meta_no_stencil_write(intel);
-	 intel->vtbl.meta_color_mask(intel, GL_TRUE);
-	 intel->vtbl.meta_draw_region(intel, irbColor->region, NULL);
-
-	 intel->vtbl.meta_draw_quad(intel,
-				    fb->_Xmin,
-				    fb->_Xmax,
-				    fb->_Ymin,
-				    fb->_Ymax,
-				    0, intel->ClearColor8888,
-				    0, 0, 0, 0);   /* texcoords */
-
-	 mask &= ~bufBit;
+      for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+	 _mesa_ActiveTextureARB(GL_TEXTURE0 + i);
+	 _mesa_Disable(GL_TEXTURE_1D);
+	 _mesa_Disable(GL_TEXTURE_2D);
+	 _mesa_Disable(GL_TEXTURE_3D);
+	 if (ctx->Extensions.ARB_texture_cube_map)
+	    _mesa_Disable(GL_TEXTURE_CUBE_MAP_ARB);
+	 if (ctx->Extensions.NV_texture_rectangle)
+	    _mesa_Disable(GL_TEXTURE_RECTANGLE_NV);
+	 if (ctx->Extensions.MESA_texture_array) {
+	    _mesa_Disable(GL_TEXTURE_1D_ARRAY_EXT);
+	    _mesa_Disable(GL_TEXTURE_2D_ARRAY_EXT);
+	 }
       }
    }
 
-   intel->vtbl.leave_meta_state(intel);
+   intel_meta_set_passthrough_transform(intel);
+
+   for (i = 0; i < 4; i++) {
+      color[i][0] = ctx->Color.ClearColor[0];
+      color[i][1] = ctx->Color.ClearColor[1];
+      color[i][2] = ctx->Color.ClearColor[2];
+      color[i][3] = ctx->Color.ClearColor[3];
+   }
+
+   /* convert clear Z from [0,1] to NDC coord in [-1,1] */
+   dst_z = -1.0 + 2.0 * ctx->Depth.Clear;
+
+   /* Prepare the vertices, which are the same regardless of which buffer we're
+    * drawing to.
+    */
+   vertices[0][0] = fb->_Xmin;
+   vertices[0][1] = fb->_Ymin;
+   vertices[0][2] = dst_z;
+   vertices[0][3] = 1.0;
+   vertices[1][0] = fb->_Xmax;
+   vertices[1][1] = fb->_Ymin;
+   vertices[1][2] = dst_z;
+   vertices[1][3] = 1.0;
+   vertices[2][0] = fb->_Xmax;
+   vertices[2][1] = fb->_Ymax;
+   vertices[2][2] = dst_z;
+   vertices[2][3] = 1.0;
+   vertices[3][0] = fb->_Xmin;
+   vertices[3][1] = fb->_Ymax;
+   vertices[3][2] = dst_z;
+   vertices[3][3] = 1.0;
+
+   _mesa_ColorPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &color);
+   _mesa_VertexPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &vertices);
+   _mesa_Enable(GL_COLOR_ARRAY);
+   _mesa_Enable(GL_VERTEX_ARRAY);
+
+   while (mask != 0) {
+      GLuint this_mask = 0;
+
+      if (mask & BUFFER_BIT_BACK_LEFT)
+	 this_mask = BUFFER_BIT_BACK_LEFT;
+      else if (mask & BUFFER_BIT_FRONT_LEFT)
+	 this_mask = BUFFER_BIT_FRONT_LEFT;
+
+      /* Clear depth/stencil in the same pass as color. */
+      this_mask |= (mask & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL));
+
+      /* Select the current color buffer and use the color write mask if
+       * we have one, otherwise don't write any color channels.
+       */
+      if (this_mask & BUFFER_BIT_FRONT_LEFT)
+	 _mesa_DrawBuffer(GL_FRONT_LEFT);
+      else if (this_mask & BUFFER_BIT_BACK_LEFT)
+	 _mesa_DrawBuffer(GL_BACK_LEFT);
+      else
+	 _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+      /* Control writing of the depth clear value to depth. */
+      if (this_mask & BUFFER_BIT_DEPTH) {
+	 _mesa_DepthFunc(GL_ALWAYS);
+	 _mesa_Enable(GL_DEPTH_TEST);
+      } else {
+	 _mesa_Disable(GL_DEPTH_TEST);
+	 _mesa_DepthMask(GL_FALSE);
+      }
+
+      /* Control writing of the stencil clear value to stencil. */
+      if (this_mask & BUFFER_BIT_STENCIL) {
+	 _mesa_Enable(GL_STENCIL_TEST);
+	 _mesa_StencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+	 _mesa_StencilFuncSeparate(GL_FRONT, GL_ALWAYS, ctx->Stencil.Clear,
+				   ctx->Stencil.WriteMask[0]);
+      } else {
+	 _mesa_Disable(GL_STENCIL_TEST);
+      }
+
+      CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
+
+      mask &= ~this_mask;
+   }
+
+   intel_meta_restore_transform(intel);
+
+   _mesa_ActiveTextureARB(GL_TEXTURE0 + saved_active_texture);
+   if (saved_fp_enable)
+      _mesa_Enable(GL_FRAGMENT_PROGRAM_ARB);
+   if (saved_vp_enable)
+      _mesa_Enable(GL_VERTEX_PROGRAM_ARB);
+
+   _mesa_PopClientAttrib();
+   _mesa_PopAttrib();
 }
 
 static const char *buffer_names[] = {
@@ -244,7 +347,7 @@ intelClear(GLcontext *ctx, GLbitfield mask)
 	 }
 	 DBG("\n");
       }
-      intelClearWithTris(intel, tri_mask);
+      intel_clear_tris(ctx, tri_mask);
    }
 
    if (swrast_mask) {
