@@ -379,14 +379,22 @@ static void pass0_precalc_mov( struct brw_wm_compile *c,
 {
    const struct prog_dst_register *dst = &inst->DstReg;
    GLuint writemask = inst->DstReg.WriteMask;
+   struct brw_wm_ref *refs[4];
    GLuint i;
 
    /* Get the effect of a MOV by manipulating our register table:
+    * First get all refs, then assign refs.  This ensures that "in-place"
+    * swizzles such as:
+    *   MOV t, t.xxyx
+    * are handled correctly.  Previously, these two steps were done in
+    * one loop and the above case was incorrectly handled.
     */
    for (i = 0; i < 4; i++) {
-      if (writemask & (1<<i)) {	    
-	 pass0_set_fpreg_ref( c, dst->File, dst->Index, i, 
-			      get_new_ref(c, inst->SrcReg[0], i, NULL));
+      refs[i] = get_new_ref(c, inst->SrcReg[0], i, NULL);
+   }
+   for (i = 0; i < 4; i++) {
+      if (writemask & (1 << i)) {	    
+         pass0_set_fpreg_ref( c, dst->File, dst->Index, i, refs[i]);
       }
    }
 }
