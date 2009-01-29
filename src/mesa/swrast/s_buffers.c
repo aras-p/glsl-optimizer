@@ -307,8 +307,6 @@ clear_color_buffers(GLcontext *ctx)
 void
 _swrast_Clear(GLcontext *ctx, GLbitfield buffers)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-
 #ifdef DEBUG_FOO
    {
       const GLbitfield legalBits =
@@ -327,7 +325,7 @@ _swrast_Clear(GLcontext *ctx, GLbitfield buffers)
    }
 #endif
 
-   RENDER_START(swrast,ctx);
+   swrast_render_start(ctx);
 
    /* do software clearing here */
    if (buffers) {
@@ -347,5 +345,5 @@ _swrast_Clear(GLcontext *ctx, GLbitfield buffers)
       }
    }
 
-   RENDER_FINISH(swrast,ctx);
+   swrast_render_finish(ctx);
 }

@@ -737,7 +737,6 @@ _swrast_BlitFramebuffer(GLcontext *ctx,
                         GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                         GLbitfield mask, GLenum filter)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    static const GLint buffers[3] = {
       GL_COLOR_BUFFER_BIT,
       GL_DEPTH_BUFFER_BIT,
@@ -753,7 +752,7 @@ _swrast_BlitFramebuffer(GLcontext *ctx,
       return;
    }
 
-   RENDER_START(swrast, ctx);
+   swrast_render_start(ctx);
 
    if (srcX1 - srcX0 == dstX1 - dstX0 &&
        srcY1 - srcY0 == dstY1 - dstY0 &&
@@ -789,5 +788,5 @@ _swrast_BlitFramebuffer(GLcontext *ctx,
       }
    }
 
-   RENDER_FINISH(swrast, ctx);
+   swrast_render_finish(ctx);
 }

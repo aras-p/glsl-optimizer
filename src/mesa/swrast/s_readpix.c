@@ -555,11 +555,11 @@ _swrast_ReadPixels( GLcontext *ctx,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_pixelstore_attrib clippedPacking = *packing;
 
-   /* Need to do RENDER_START before clipping or anything else since this
-    * is where a driver may grab the hw lock and get an updated window
-    * size.
+   /* Need to do swrast_render_start() before clipping or anything else
+    * since this is where a driver may grab the hw lock and get an updated
+    * window size.
     */
-   RENDER_START(swrast, ctx);
+   swrast_render_start(ctx);
 
    if (ctx->NewState)
       _mesa_update_state(ctx);
@@ -570,7 +570,7 @@ _swrast_ReadPixels( GLcontext *ctx,
    /* Do all needed clipping here, so that we can forget about it later */
    if (!_mesa_clip_readpixels(ctx, &x, &y, &width, &height, &clippedPacking)) {
       /* The ReadPixels region is totally outside the window bounds */
-      RENDER_FINISH(swrast, ctx);
+      swrast_render_finish(ctx);
       return;
    }
 
@@ -614,7 +614,7 @@ _swrast_ReadPixels( GLcontext *ctx,
          /* don't return yet, clean-up */
    }
 
-   RENDER_FINISH(swrast, ctx);
+   swrast_render_finish(ctx);
 
    _mesa_unmap_readpix_pbo(ctx, &clippedPacking);
 }

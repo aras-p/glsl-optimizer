@@ -253,19 +253,28 @@ CONST_SWRAST_CONTEXT(const GLcontext *ctx)
 }
 
 
-#define RENDER_START(SWctx, GLctx)			\
-   do {							\
-      if ((SWctx)->Driver.SpanRenderStart) {		\
-         (*(SWctx)->Driver.SpanRenderStart)(GLctx);	\
-      }							\
-   } while (0)
+/**
+ * Called prior to framebuffer reading/writing.
+ * For drivers that rely on swrast for fallback rendering, this is the
+ * driver's opportunity to map renderbuffers and textures.
+ */
+static INLINE void
+swrast_render_start(GLcontext *ctx)
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   if (swrast->Driver.SpanRenderStart)
+      swrast->Driver.SpanRenderStart(ctx);
+}
 
-#define RENDER_FINISH(SWctx, GLctx)			\
-   do {							\
-      if ((SWctx)->Driver.SpanRenderFinish) {		\
-         (*(SWctx)->Driver.SpanRenderFinish)(GLctx);	\
-      }							\
-   } while (0)
+
+/** Called after framebuffer reading/writing */
+static INLINE void
+swrast_render_finish(GLcontext *ctx)
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   if (swrast->Driver.SpanRenderFinish)
+      swrast->Driver.SpanRenderFinish(ctx);
+}
 
 
 
