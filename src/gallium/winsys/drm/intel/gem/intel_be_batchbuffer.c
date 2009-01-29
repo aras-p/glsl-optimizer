@@ -1,4 +1,5 @@
 
+#include "i915simple/i915_debug.h"
 #include "intel_be_batchbuffer.h"
 #include "intel_be_context.h"
 #include "intel_be_device.h"
@@ -105,6 +106,7 @@ intel_be_batchbuffer_flush(struct intel_be_batchbuffer *batch,
 		batch->base.ptr += 8;
 	}
 
+	i915_dump_batchbuffer(i915);
 	debug_printf("%s\n", __FUNCTION__);
 
 	used = batch->base.ptr - batch->base.map;
