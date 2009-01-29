@@ -159,41 +159,41 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 			     R300_S_FRONT_ZFAIL_OP_SHIFT);
 		}
 
-        OUT_BATCH_REGSEQ(R300_ZB_CNTL, 3);
+		OUT_BATCH_REGSEQ(R300_ZB_CNTL, 3);
 		OUT_BATCH(t1);
 		OUT_BATCH(t2);
 		OUT_BATCH(((ctx->Stencil.WriteMask[0] & R300_STENCILREF_MASK) <<
                    R300_STENCILWRITEMASK_SHIFT) |
 			  (ctx->Stencil.Clear & R300_STENCILREF_MASK));
-        END_BATCH();
+		END_BATCH();
 	}
 
-    if (!rmesa->radeon.radeonScreen->kernel_mm) {
-    	BEGIN_BATCH_NO_AUTOSTATE(9);
-    	OUT_BATCH(cmdpacket3(r300->radeon.radeonScreen, R300_CMD_PACKET3_CLEAR));
-    	OUT_BATCH_FLOAT32(dPriv->w / 2.0);
-	    OUT_BATCH_FLOAT32(dPriv->h / 2.0);
-    	OUT_BATCH_FLOAT32(ctx->Depth.Clear);
-	    OUT_BATCH_FLOAT32(1.0);
-    	OUT_BATCH_FLOAT32(ctx->Color.ClearColor[0]);
-	    OUT_BATCH_FLOAT32(ctx->Color.ClearColor[1]);
-    	OUT_BATCH_FLOAT32(ctx->Color.ClearColor[2]);
-	    OUT_BATCH_FLOAT32(ctx->Color.ClearColor[3]);
-    	END_BATCH();
-    } else {
-        OUT_BATCH(CP_PACKET3(R200_3D_DRAW_IMMD_2, 8));
-        OUT_BATCH(R300_PRIM_TYPE_POINT | R300_PRIM_WALK_RING |
-                  (1 << R300_PRIM_NUM_VERTICES_SHIFT));
-    	OUT_BATCH_FLOAT32(dPriv->w / 2.0);
-	    OUT_BATCH_FLOAT32(dPriv->h / 2.0);
-    	OUT_BATCH_FLOAT32(ctx->Depth.Clear);
-	    OUT_BATCH_FLOAT32(1.0);
-    	OUT_BATCH_FLOAT32(ctx->Color.ClearColor[0]);
-	    OUT_BATCH_FLOAT32(ctx->Color.ClearColor[1]);
-    	OUT_BATCH_FLOAT32(ctx->Color.ClearColor[2]);
-	    OUT_BATCH_FLOAT32(ctx->Color.ClearColor[3]);
-    }
-
+	if (!rmesa->radeon.radeonScreen->kernel_mm) {
+		BEGIN_BATCH_NO_AUTOSTATE(9);
+		OUT_BATCH(cmdpacket3(r300->radeon.radeonScreen, R300_CMD_PACKET3_CLEAR));
+		OUT_BATCH_FLOAT32(dPriv->w / 2.0);
+		OUT_BATCH_FLOAT32(dPriv->h / 2.0);
+		OUT_BATCH_FLOAT32(ctx->Depth.Clear);
+		OUT_BATCH_FLOAT32(1.0);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[0]);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[1]);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[2]);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[3]);
+		END_BATCH();
+	} else {
+		OUT_BATCH(CP_PACKET3(R200_3D_DRAW_IMMD_2, 8));
+		OUT_BATCH(R300_PRIM_TYPE_POINT | R300_PRIM_WALK_RING |
+			  (1 << R300_PRIM_NUM_VERTICES_SHIFT));
+		OUT_BATCH_FLOAT32(dPriv->w / 2.0);
+		OUT_BATCH_FLOAT32(dPriv->h / 2.0);
+		OUT_BATCH_FLOAT32(ctx->Depth.Clear);
+		OUT_BATCH_FLOAT32(1.0);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[0]);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[1]);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[2]);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[3]);
+	}
+	
 	r300EmitCacheFlush(rmesa);
 	cp_wait(rmesa, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
 
