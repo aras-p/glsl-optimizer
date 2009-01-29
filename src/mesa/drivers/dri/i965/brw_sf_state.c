@@ -121,10 +121,13 @@ struct brw_sf_unit_key {
    unsigned int nr_urb_entries, urb_size, sfsize;
 
    GLenum front_face, cull_face;
-   GLboolean scissor, line_smooth, point_sprite, point_attenuated;
+   unsigned scissor:1;
+   unsigned line_smooth:1;
+   unsigned point_sprite:1;
+   unsigned point_attenuated:1;
+   unsigned render_to_fbo:1;
    float line_width;
    float point_size;
-   GLboolean render_to_fbo;
 };
 
 static void
