@@ -3004,7 +3004,7 @@ enum {
 #   define R500_US_CODE_RANGE_ADDR(x)			(x << 0)
 #   define R500_US_CODE_RANGE_SIZE(x)			(x << 16)
 #define R500_US_CONFIG					0x4600
-#   define R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO		(1 << 0)
+#   define R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO		(1 << 1)
 #define R500_US_FC_ADDR_0				0xa000
 #   define R500_FC_BOOL_ADDR(x)				(x << 0)
 #   define R500_FC_INT_ADDR(x)				(x << 8)
