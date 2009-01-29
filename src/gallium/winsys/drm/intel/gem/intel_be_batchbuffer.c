@@ -68,6 +68,8 @@ intel_be_offset_relocation(struct intel_be_batchbuffer *batch,
 
 	offset = (unsigned)(batch->base.ptr - batch->base.map);
 
+	debug_printf("   - offset: %p\n", offset);
+
 	ret = drm_intel_bo_emit_reloc(batch->bo, offset,
 	                              bo, pre_add,
 	                              read_domains,
@@ -96,14 +98,12 @@ intel_be_batchbuffer_flush(struct intel_be_batchbuffer *batch,
 	assert((used & 3) == 0);
 
 	if (used & 4) {
-		((uint32_t *) batch->base.ptr)[0] = ((0<<29)|(4<<23)); // MI_FLUSH;
-		((uint32_t *) batch->base.ptr)[1] = 0;
-		((uint32_t *) batch->base.ptr)[2] = (0xA<<23); // MI_BATCH_BUFFER_END;
-		batch->base.ptr += 12;
+		i915_batchbuffer_dword(i915, (0x0<<29)|(0x4<<23)|(1<<0)); // MI_FLUSH | FLUSH_MAP_CACHE;
+		i915_batchbuffer_dword(i915, (0x0<<29)|(0x0<<23)); // MI_NOOP
+		i915_batchbuffer_dword(i915, (0x0<<29)|(0xA<<23)); // MI_BATCH_BUFFER_END;
 	} else {
-		((uint32_t *) batch->base.ptr)[0] = ((0<<29)|(4<<23)); // MI_FLUSH;
-		((uint32_t *) batch->base.ptr)[1] = (0xA<<23); // MI_BATCH_BUFFER_END;
-		batch->base.ptr += 8;
+		i915_batchbuffer_dword(i915, (0x0<<29)|(0x4<<23)|(1<<0)); //MI_FLUSH | FLUSH_MAP_CACHE;
+		i915_batchbuffer_dword(i915, (0x0<<29)|(0xA<<23)); // MI_BATCH_BUFFER_END;
 	}
 
 	i915_dump_batchbuffer(i915);
