@@ -177,18 +177,17 @@ static void radeonEmitPrim( GLcontext *ctx,
    r100ContextPtr rmesa = R100_CONTEXT( ctx );
    radeonTclPrimitive( ctx, prim, hwprim );
    
-   radeonEnsureCmdBufSpace( rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
-			    rmesa->hw.max_state_size + VBUF_BUFSZ );
+   rcommonEnsureCmdBufSpace( &rmesa->radeon,
+			     AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
+			     rmesa->hw.max_state_size + VBUF_BUFSZ );
 
    radeonEmitAOS( rmesa,
-		  rmesa->tcl.aos_components,
 		  rmesa->tcl.nr_aos_components,
 		  start );
    
    /* Why couldn't this packet have taken an offset param?
     */
    radeonEmitVbufPrim( rmesa,
-		       rmesa->tcl.vertex_format,
 		       rmesa->tcl.hw_primitive,
 		       count - start );
 }

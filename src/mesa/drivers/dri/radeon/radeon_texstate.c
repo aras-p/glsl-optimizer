@@ -122,6 +122,7 @@ tx_table[] =
  * \param tObj GL texture object whose images are to be posted to
  *                 hardware state.
  */
+#if 0
 static void radeonSetTexImages( r100ContextPtr rmesa,
 				struct gl_texture_object *tObj )
 {
@@ -354,7 +355,7 @@ static void radeonSetTexImages( r100ContextPtr rmesa,
 
    /* FYI: radeonUploadTexImages( rmesa, t ); used to be called here */
 }
-
+#endif
 
 
 /* ================================================================
@@ -1100,7 +1101,7 @@ static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
    return GL_TRUE;
 }
 
-
+#if 0
 static void disable_tex( GLcontext *ctx, int unit )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
@@ -1332,9 +1333,89 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
    FALLBACK( rmesa, RADEON_FALLBACK_BORDER_MODE, t->border_fallback );
    return !t->border_fallback;
 }
+#endif
 
+/**
+ * Compute the cached hardware register values for the given texture object.
+ *
+ * \param rmesa Context pointer
+ * \param t the r300 texture object
+ */
+static void setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t)
+{
+   const struct gl_texture_image *firstImage =
+      t->base.Image[0][t->mt->firstLevel];
+   GLint log2Width, log2Height, log2Depth, texelBytes;
+   
+   log2Width  = firstImage->WidthLog2;
+   log2Height = firstImage->HeightLog2;
+   log2Depth  = firstImage->DepthLog2;
+   texelBytes = firstImage->TexFormat->TexelBytes;
 
+   if (!t->image_override) {
+      if (VALID_FORMAT(firstImage->TexFormat->MesaFormat)) {
+	 const struct tx_table *table = _mesa_little_endian() ? tx_table_le :
+	    tx_table_be;
 
+	 t->pp_txformat &= ~(RADEON_TXFORMAT_FORMAT_MASK |
+			     RADEON_TXFORMAT_ALPHA_IN_MAP);
+	 t->pp_txfilter &= ~RADEON_YUV_TO_RGB;	 
+	 
+	 //	 t->pp_txformat |= table[ firstImage->TexFormat->MesaFormat ].format;
+	 // t->pp_txfilter |= table[ firstImage->TexFormat->MesaFormat ].filter;
+      } else {
+	 _mesa_problem(NULL, "unexpected texture format in %s",
+		       __FUNCTION__);
+	 return;
+      }
+   }
+   
+   t->pp_txfilter &= ~RADEON_MAX_MIP_LEVEL_MASK;
+   t->pp_txfilter |= (t->mt->lastLevel - t->mt->firstLevel) << RADEON_MAX_MIP_LEVEL_SHIFT;
+	
+   t->pp_txformat &= ~(RADEON_TXFORMAT_WIDTH_MASK |
+		       RADEON_TXFORMAT_HEIGHT_MASK |
+		       RADEON_TXFORMAT_CUBIC_MAP_ENABLE |
+		       RADEON_TXFORMAT_F5_WIDTH_MASK |
+		       RADEON_TXFORMAT_F5_HEIGHT_MASK);
+   t->pp_txformat |= ((log2Width << RADEON_TXFORMAT_WIDTH_SHIFT) |
+		      (log2Height << RADEON_TXFORMAT_HEIGHT_SHIFT));
+   
+   t->tile_bits = 0;
+   
+   if (t->base.Target == GL_TEXTURE_CUBE_MAP) {
+      ASSERT(log2Width == log2Height);
+      t->pp_txformat |= ((log2Width << RADEON_TXFORMAT_F5_WIDTH_SHIFT) |
+			 (log2Height << RADEON_TXFORMAT_F5_HEIGHT_SHIFT) |
+			 /* don't think we need this bit, if it exists at all - fglrx does not set it */
+			 (RADEON_TXFORMAT_CUBIC_MAP_ENABLE));
+      t->pp_cubic_faces = ((log2Width << RADEON_FACE_WIDTH_1_SHIFT) |
+                           (log2Height << RADEON_FACE_HEIGHT_1_SHIFT) |
+                           (log2Width << RADEON_FACE_WIDTH_2_SHIFT) |
+                           (log2Height << RADEON_FACE_HEIGHT_2_SHIFT) |
+                           (log2Width << RADEON_FACE_WIDTH_3_SHIFT) |
+                           (log2Height << RADEON_FACE_HEIGHT_3_SHIFT) |
+                           (log2Width << RADEON_FACE_WIDTH_4_SHIFT) |
+                           (log2Height << RADEON_FACE_HEIGHT_4_SHIFT));
+   }
+
+   t->pp_txsize = (((firstImage->Width - 1) << RADEON_PP_TX_WIDTHMASK_SHIFT)
+		   | ((firstImage->Height - 1) << RADEON_PP_TX_HEIGHTMASK_SHIFT));
+
+   if ( !t->image_override ) {
+      if (firstImage->IsCompressed)
+         t->pp_txpitch = (firstImage->Width + 63) & ~(63);
+      else
+         t->pp_txpitch = ((firstImage->Width * texelBytes) + 63) & ~(63);
+      t->pp_txpitch -= 32;
+   }
+
+   if (t->base.Target == GL_TEXTURE_RECTANGLE_NV) {
+      t->pp_txformat |= RADEON_TXFORMAT_NON_POWER2;
+   }
+   
+}
+#if 0
 static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
 {
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -1358,6 +1439,13 @@ static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
       disable_tex( ctx, unit );
       return GL_TRUE;
    }
+}
+#endif
+
+static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
+{
+   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+
 }
 
 void radeonUpdateTextureState( GLcontext *ctx )

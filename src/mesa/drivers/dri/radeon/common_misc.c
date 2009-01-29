@@ -2389,4 +2389,66 @@ void radeonReleaseDmaRegion(radeonContextPtr rmesa)
 	radeon_bo_unref(rmesa->dma.current);
 	rmesa->dma.current = NULL;
 }
+
+void rcommonEmitVertexAOS(radeonContextPtr rmesa, GLuint vertex_size, struct radeon_bo *bo, GLuint offset)
+{
+	BATCH_LOCALS(rmesa);
+
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s:  vertex_size %d, offset 0x%x \n",
+			__FUNCTION__, vertex_size, offset);
+
+	BEGIN_BATCH(5);
+	OUT_BATCH_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, 2);
+	OUT_BATCH(1);
+	OUT_BATCH(vertex_size | (vertex_size << 8));
+	OUT_BATCH_RELOC(offset, bo, offset, RADEON_GEM_DOMAIN_GTT, 0, 0);
+	END_BATCH();
+}
+
+void rcommonEmitVbufPrim(radeonContextPtr rmesa, GLuint primitive, GLuint vertex_nr)
+{
+	BATCH_LOCALS(rmesa);
+	int type, num_verts;
+
+	type = r300PrimitiveType(rmesa, primitive);
+	num_verts = r300NumVerts(rmesa, vertex_nr, primitive);
+
+	BEGIN_BATCH(3);
+	OUT_BATCH_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
+	OUT_BATCH(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (num_verts << 16) | type);
+	END_BATCH();
+}
 			    
+
+
+/* Alloc space in the current dma region.
+ */
+static void *
+rcommonAllocDmaLowVerts( radeonContextPtr rmesa, int nverts, int vsize )
+{
+	GLuint bytes = vsize * nverts;
+	void *head;
+
+	if (!rmesa->dma.current || rmesa->dma.current_vertexptr + bytes > rmesa->dma.current->size) {
+                radeonRefillCurrentDmaRegion( rmesa, bytes);
+	}
+
+        if (!rmesa->dma.flush) {
+                rmesa->glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+                rmesa->dma.flush = flush_last_swtcl_prim;
+        }
+
+	ASSERT( vsize == rmesa->swtcl.vertex_size * 4 );
+        ASSERT( rmesa->radeon.dma.flush == flush_last_swtcl_prim );
+        ASSERT( rmesa->radeon.dma.current_used +
+                rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
+                rmesa->radeon.dma.current_vertexptr );
+
+//	fprintf(stderr,"current %p %x\n", rmesa->radeon.dma.current->ptr,
+//		rmesa->radeon.dma.current_vertexptr);
+	head = (rmesa->radeon.dma.current->ptr + rmesa->radeon.dma.current_vertexptr);
+	rmesa->radeon.dma.current_vertexptr += bytes;
+	rmesa->swtcl.numverts += nverts;
+	return head;
+}

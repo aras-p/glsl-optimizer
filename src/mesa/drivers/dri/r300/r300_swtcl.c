@@ -303,7 +303,7 @@ r300AllocDmaLowVerts( r300ContextPtr rmesa, int nverts, int vsize )
         ASSERT( rmesa->radeon.dma.flush == flush_last_swtcl_prim );
         ASSERT( rmesa->radeon.dma.current_used +
                 rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
-                rmesa->dma.current_vertexptr );
+                rmesa->radeon.dma.current_vertexptr );
 
 //	fprintf(stderr,"current %p %x\n", rmesa->radeon.dma.current->ptr,
 //		rmesa->radeon.dma.current_vertexptr);

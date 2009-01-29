@@ -247,6 +247,19 @@ struct radeon_dma {
         GLuint nr_released_bufs;
 };
 
+/* radeon_swtcl.c
+ */
+struct radeon_swtcl_info {
+   struct radeon_bo *bo;
+
+   /* Fallback rasterization functions
+    */
+   GLuint hw_primitive;
+   GLenum render_primitive;
+   GLuint numverts;
+
+};
+
 struct radeon_ioctl {
 	GLuint vertex_offset;
 	GLuint vertex_size;
@@ -403,6 +416,7 @@ struct radeon_context {
    /* Derived state - for r300 only */
    struct radeon_state state;
 
+   struct radeon_swtcl swtcl;
    /* Configuration cache
     */
    driOptionCache optionCache;
