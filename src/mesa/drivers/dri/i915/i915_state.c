@@ -321,18 +321,9 @@ intelCalcViewport(GLcontext * ctx)
 
    if (ctx->DrawBuffer->Name) {
       /* User created FBO */
-      struct intel_renderbuffer *irb
-         = intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]);
-      if (irb && !irb->RenderToTexture) {
-         /* y=0=top */
-         yScale = -1.0;
-         yBias = irb->Base.Height;
-      }
-      else {
-         /* y=0=bottom */
-         yScale = 1.0;
-         yBias = 0.0;
-      }
+      /* y=0=bottom */
+      yScale = 1.0;
+      yBias = 0.0;
    }
    else {
       /* window buffer, y=0=top */
