@@ -297,6 +297,7 @@ static void flush_last_swtcl_prim(GLcontext *ctx)
 		     rmesa->swtcl.hw_primitive,
 		     rmesa->swtcl.numverts);
 
+   radeon_bo_unref(rmesa->swtcl.bo);
    //   COMMIT_BATCH();
    rmesa->swtcl.numverts = 0;
 }
