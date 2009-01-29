@@ -43,10 +43,11 @@ static void upload_sf_vp(struct brw_context *brw)
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport sfv;
    GLfloat y_scale, y_bias;
+   const GLboolean render_to_fbo = (ctx->DrawBuffer->Name != 0);
 
    memset(&sfv, 0, sizeof(sfv));
 
-   if (intel_rendering_to_texture(ctx)) {
+   if (render_to_fbo) {
       y_scale = 1.0;
       y_bias = 0;
    }
@@ -84,7 +85,7 @@ static void upload_sf_vp(struct brw_context *brw)
     * Note that the hardware's coordinates are inclusive, while Mesa's min is
     * inclusive but max is exclusive.
     */
-   if (intel_rendering_to_texture(ctx)) {
+   if (render_to_fbo) {
       /* texmemory: Y=0=bottom */
       sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
       sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
@@ -123,7 +124,7 @@ struct brw_sf_unit_key {
    GLboolean scissor, line_smooth, point_sprite, point_attenuated;
    float line_width;
    float point_size;
-   GLboolean render_to_texture;
+   GLboolean render_to_fbo;
 };
 
 static void
@@ -155,7 +156,7 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
    key->point_size = brw->attribs.Point->Size;
    key->point_attenuated = brw->attribs.Point->_Attenuated;
 
-   key->render_to_texture = intel_rendering_to_texture(&brw->intel.ctx);
+   key->render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
 }
 
 static dri_bo *
@@ -202,10 +203,10 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    else
       sf.sf5.front_winding = BRW_FRONTWINDING_CW;
 
-   /* The viewport is inverted for rendering to texture, and that inverts
+   /* The viewport is inverted for rendering to a FBO, and that inverts
     * polygon front/back orientation.
     */
-   sf.sf5.front_winding ^= key->render_to_texture;
+   sf.sf5.front_winding ^= key->render_to_fbo;
 
    switch (key->cull_face) {
    case GL_FRONT:
