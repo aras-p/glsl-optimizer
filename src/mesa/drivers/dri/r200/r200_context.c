@@ -365,7 +365,8 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    }
 
 
-   rmesa->dma.buf0_address = rmesa->radeon.radeonScreen->buffers->list[0].address;
+   if (!rmesa->radeon.radeonScreen->kernel_mm)
+       rmesa->dma.buf0_address = rmesa->radeon.radeonScreen->buffers->list[0].address;
 
    (void) memset( rmesa->radeon.texture_heaps, 0, sizeof( rmesa->radeon.texture_heaps ) );
    make_empty_list( & rmesa->radeon.swapped );
