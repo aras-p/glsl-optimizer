@@ -138,22 +138,4 @@ intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
 }
 
 
-/**
- * Are we currently rendering into a texture?
- */
-static INLINE GLboolean
-intel_rendering_to_texture(const GLcontext *ctx)
-{
-   if (ctx->DrawBuffer->Name) {
-      /* User-created FBO */
-      const struct intel_renderbuffer *irb =
-         intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]);
-      return irb && irb->RenderToTexture;
-   }
-   else {
-      return GL_FALSE;
-   }
-}
-
-
 #endif /* INTEL_FBO_H */
