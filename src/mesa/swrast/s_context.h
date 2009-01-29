@@ -238,7 +238,20 @@ extern void
 _swrast_update_texture_samplers(GLcontext *ctx);
 
 
-#define SWRAST_CONTEXT(ctx) ((SWcontext *)ctx->swrast_context)
+/** Return SWcontext for the given GLcontext */
+static INLINE SWcontext *
+SWRAST_CONTEXT(GLcontext *ctx)
+{
+   return (SWcontext *) ctx->swrast_context;
+}
+
+/** const version of above */
+static INLINE const SWcontext *
+CONST_SWRAST_CONTEXT(const GLcontext *ctx)
+{
+   return (const SWcontext *) ctx->swrast_context;
+}
+
 
 #define RENDER_START(SWctx, GLctx)			\
    do {							\

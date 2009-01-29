@@ -164,7 +164,7 @@ else {										\
 void
 _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
 {
-   const SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   const SWcontext *swrast = CONST_SWRAST_CONTEXT(ctx);
    GLfloat rFog, gFog, bFog;
 
    ASSERT(swrast->_FogEnabled);
@@ -283,7 +283,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
 void
 _swrast_fog_ci_span( const GLcontext *ctx, SWspan *span )
 {
-   const SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   const SWcontext *swrast = CONST_SWRAST_CONTEXT(ctx);
    const GLuint fogIndex = (GLuint) ctx->Fog.Index;
    GLuint *index = span->array->index;
 

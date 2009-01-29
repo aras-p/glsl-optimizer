@@ -87,7 +87,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 
    ASSERT(ctx->Extensions.EXT_texture_env_combine ||
           ctx->Extensions.ARB_texture_env_combine);
-   ASSERT(SWRAST_CONTEXT(ctx)->_AnyTextureCombine);
+   ASSERT(CONST_SWRAST_CONTEXT(ctx)->_AnyTextureCombine);
 
    /*
    printf("modeRGB 0x%x  modeA 0x%x  srcRGB1 0x%x  srcA1 0x%x  srcRGB2 0x%x  srcA2 0x%x\n",
