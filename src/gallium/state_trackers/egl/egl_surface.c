@@ -280,6 +280,7 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 	struct drm_device *dev = (struct drm_device *)drv;
 	struct drm_surface *surf = lookup_drm_surface(surface);
 	struct drm_screen *scrn = lookup_drm_screen(dpy, screen);
+	struct pipe_context *pipe;
 	_EGLMode *mode = _eglLookupMode(dpy, m);
 	int ret;
 	unsigned int i, k;
@@ -338,6 +339,13 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 
 	if (ret)
 		goto err_crtc;
+
+	pipe = drm_api_hocks.create_context(dev->screen);
+	pipe->surface_fill(pipe, scrn->surface,
+	                   0, 0,
+	                   scrn->front.width, scrn->front.height,
+	                   0xFF00FFFF);
+	pipe->destroy(pipe);
 
 	surf->screen = scrn;
 
