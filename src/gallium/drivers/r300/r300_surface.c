@@ -42,6 +42,16 @@ static void r300_surface_fill(struct pipe_context* pipe,
         " dimensions %dx%d, color 0x%x\n",
         dest, x, y, w, h, color);
 
+    /* Fallback? */
+    if (0) {
+        debug_printf("r300: Falling back on surface clear...");
+        void* map = pipe->screen->surface_map(pipe->screen, dest,
+            PIPE_BUFFER_USAGE_CPU_WRITE);
+        pipe_fill_rect(map, &dest->block, &dest->stride, x, y, w, h, color);
+        pipe->screen->surface_unmap(pipe->screen, dest);
+        return;
+    }
+
 BEGIN_CS((caps->is_r500) ? 300 : 322);
 R300_PACIFY;
 OUT_CS_REG(R300_TX_INVALTAGS, 0x0);
@@ -117,12 +127,6 @@ OUT_CS_REG(R300_SU_DEPTH_OFFSET, 0x00000000);
 OUT_CS_REG(R300_SC_HYPERZ, 0x0000001C);
 OUT_CS_REG(R300_SC_EDGERULE, 0x2DA49525);
 OUT_CS_REG(R300_SC_SCREENDOOR, 0x00FFFFFF);
-OUT_CS_REG_SEQ(R300_US_OUT_FMT_0, 4);
-OUT_CS(R300_C0_SEL_B | R300_C1_SEL_G | R300_C2_SEL_R);
-OUT_CS(R300_C0_SEL_B | R300_C1_SEL_G | R300_C2_SEL_R | R300_US_OUT_FMT_UNUSED);
-OUT_CS(R300_C0_SEL_B | R300_C1_SEL_G | R300_C2_SEL_R | R300_US_OUT_FMT_UNUSED);
-OUT_CS(R300_C0_SEL_B | R300_C1_SEL_G | R300_C2_SEL_R | R300_US_OUT_FMT_UNUSED);
-OUT_CS_REG(R300_US_W_FMT, 0x00000001);
 OUT_CS_REG(R300_FG_FOG_BLEND, 0x00000002);
 OUT_CS_REG(R300_FG_FOG_COLOR_R, 0x00000000);
 OUT_CS_REG(R300_FG_FOG_COLOR_G, 0x00000000);
@@ -164,9 +168,9 @@ OUT_CS_REG(R300_TX_ENABLE, 0x0);
 /* XXX viewport setup */
 OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
 OUT_CS_32F(1.0);
-OUT_CS_32F(0.0);
+OUT_CS_32F((float)x);
 OUT_CS_32F(1.0);
-OUT_CS_32F(0.0);
+OUT_CS_32F((float)y);
 OUT_CS_32F(1.0);
 OUT_CS_32F(0.0);
 
@@ -224,17 +228,18 @@ if (caps->is_r500) {
 } else {
     OUT_CS_REG_SEQ(R300_RS_IP_0, 8);
     for (i = 0; i < 8; i++) {
-        OUT_CS(R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3));
+        OUT_CS(R300_RS_SEL_T(R300_RS_SEL_K0) |
+            R300_RS_SEL_R(R300_RS_SEL_K0) | R300_RS_SEL_Q(R300_RS_SEL_K1));
     }
     /* XXX */
     OUT_CS_REG_SEQ(R300_RS_COUNT, 2);
     OUT_CS((1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
-    OUT_CS(0x0);
+    OUT_CS(1);
     OUT_CS_REG(R300_RS_INST_0, R300_RS_INST_COL_CN_WRITE);
 
     /* XXX magic numbers */
-    OUT_CS_REG(R300_US_CONFIG, 0x0);
-    OUT_CS_REG(R300_US_PIXSIZE, 0x0);
+    OUT_CS_REG(R300_US_CONFIG, 0);
+    OUT_CS_REG(R300_US_PIXSIZE, 2);
     OUT_CS_REG(R300_US_CODE_OFFSET, 0x0);
     OUT_CS_REG(R300_US_CODE_ADDR_0, 0x0);
     OUT_CS_REG(R300_US_CODE_ADDR_1, 0x0);
@@ -244,6 +249,12 @@ if (caps->is_r500) {
     OUT_CS_REG(R300_US_ALU_RGB_ADDR_0, 0x1C000000);
     OUT_CS_REG(R300_US_ALU_ALPHA_INST_0, 0x40889);
     OUT_CS_REG(R300_US_ALU_ALPHA_ADDR_0, 0x1000000);
+    OUT_CS_REG_SEQ(R300_US_OUT_FMT_0, 4);
+    OUT_CS(R300_C0_SEL_B | R300_C1_SEL_G | R300_C2_SEL_R | R300_C3_SEL_A);
+    OUT_CS(R300_US_OUT_FMT_UNUSED);
+    OUT_CS(R300_US_OUT_FMT_UNUSED);
+    OUT_CS(R300_US_OUT_FMT_UNUSED);
+    OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W0);
 }
 /* XXX these magic numbers should be explained when
  * this becomes a cached state object */

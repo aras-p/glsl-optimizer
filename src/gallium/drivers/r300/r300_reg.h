@@ -1233,11 +1233,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_RS_INST_0                     0x4330
 #define R300_RS_INST_1                     0x4334
 #define R300_RS_INST_2                     0x4338
-#define R300_RS_INST_3                     0x433C /* GUESS */
-#define R300_RS_INST_4                     0x4340 /* GUESS */
-#define R300_RS_INST_5                     0x4344 /* GUESS */
-#define R300_RS_INST_6                     0x4348 /* GUESS */
-#define R300_RS_INST_7                     0x434C /* GUESS */
+#define R300_RS_INST_3                     0x433C
+#define R300_RS_INST_4                     0x4340
+#define R300_RS_INST_5                     0x4344
+#define R300_RS_INST_6                     0x4348
+#define R300_RS_INST_7                     0x434C
 #	define R300_RS_INST_TEX_ID(x)  		((x) << 0)
 #	define R300_RS_INST_TEX_CN_WRITE 	(1 << 3)
 #	define R300_RS_INST_TEX_ADDR_SHIFT 	6
