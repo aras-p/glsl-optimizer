@@ -85,7 +85,9 @@ static uint32_t pack_float_32(float f)
 } while (0)
 
 #define OUT_CS_REG(register, value) do { \
-    debug_printf("r300: writing 0x%08X to register 0x%04X\n", value, register); \
+    debug_printf("r300: writing 0x%08X to register 0x%04X\n", \
+        value, register); \
+    assert(register); \
     OUT_CS(CP_PACKET0(register, 0)); \
     OUT_CS(value); \
 } while (0)
@@ -93,13 +95,16 @@ static uint32_t pack_float_32(float f)
 /* Note: This expects count to be the number of registers,
  * not the actual packet0 count! */
 #define OUT_CS_REG_SEQ(register, count) do { \
-    debug_printf("r300: writing register sequence of %d to 0x%04X\n", count, register); \
+    debug_printf("r300: writing register sequence of %d to 0x%04X\n", \
+        count, register); \
+    assert(register); \
     OUT_CS(CP_PACKET0(register, ((count) - 1))); \
 } while (0)
 
 #define OUT_CS_RELOC(bo, offset, rd, wd, flags) do { \
     debug_printf("r300: writing relocation for buffer %p, offset %d\n", \
         bo, offset); \
+    assert(bo); \
     OUT_CS(offset); \
     cs_winsys->write_cs_reloc(cs, bo, rd, wd, flags); \
 } while (0)

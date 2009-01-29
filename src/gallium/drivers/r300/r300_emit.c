@@ -62,9 +62,12 @@ void r300_emit_dsa_state(struct r300_context* r300,
     struct r300_screen* r300screen =
         (struct r300_screen*)r300->context.screen;
     CS_LOCALS(r300);
-    BEGIN_CS(r300screen->caps->is_r500 ? 12 : 10);
+    BEGIN_CS(r300screen->caps->is_r500 ? 12 : 8);
     OUT_CS_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function);
-    OUT_CS_REG(R500_FG_ALPHA_VALUE, dsa->alpha_reference);
+    /* XXX figure out the r300 counterpart for this */
+    if (r300screen->caps->is_r500) {
+        OUT_CS_REG(R500_FG_ALPHA_VALUE, dsa->alpha_reference);
+    }
     OUT_CS_REG_SEQ(R300_ZB_CNTL, 3);
     OUT_CS(dsa->z_buffer_control);
     OUT_CS(dsa->z_stencil_control);

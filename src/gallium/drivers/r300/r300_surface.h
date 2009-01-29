@@ -50,7 +50,7 @@ const struct r300_dsa_state dsa_clear_state = {
     .alpha_reference = 0x0,
     .z_buffer_control = 0x0,
     .z_stencil_control = 0x0,
-    .stencil_ref_mask = 0x0,
+    .stencil_ref_mask = R300_STENCILWRITEMASK_MASK,
     .z_buffer_top = R300_ZTOP_ENABLE,
     .stencil_ref_bf = 0x0,
 };
