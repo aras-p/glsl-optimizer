@@ -61,6 +61,7 @@ intel_new_framebuffer(GLcontext * ctx, GLuint name)
 }
 
 
+/** Called by gl_renderbuffer::Delete() */
 static void
 intel_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
@@ -81,7 +82,6 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
 }
 
 
-
 /**
  * Return a pointer to a specific pixel in a renderbuffer.
  */
@@ -94,7 +94,6 @@ intel_get_pointer(GLcontext * ctx, struct gl_renderbuffer *rb,
     */
    return NULL;
 }
-
 
 
 /**
@@ -227,7 +226,6 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 }
 
 
-
 /**
  * Called for each hardware renderbuffer when a _window_ is resized.
  * Just update fields.
@@ -244,6 +242,7 @@ intel_alloc_window_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
    return GL_TRUE;
 }
+
 
 static void
 intel_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
@@ -271,6 +270,8 @@ intel_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
    }
 }
 
+
+/** Dummy function for gl_renderbuffer::AllocStorage() */
 static GLboolean
 intel_nop_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                         GLenum internalFormat, GLuint width, GLuint height)
@@ -291,6 +292,7 @@ intel_renderbuffer_set_region(struct intel_renderbuffer *rb,
    intel_region_reference(&rb->region, region);
    intel_region_release(&old);
 }
+
 
 /**
  * Create a new intel_renderbuffer which corresponds to an on-screen window,
@@ -434,6 +436,7 @@ intel_framebuffer_renderbuffer(GLcontext * ctx,
    intel_draw_buffer(ctx, fb);
 }
 
+
 static GLboolean
 intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb, 
 		     struct gl_texture_image *texImage)
@@ -485,6 +488,7 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
    return GL_TRUE;
 }
 
+
 /**
  * When glFramebufferTexture[123]D is called this function sets up the
  * gl_renderbuffer wrapper around the texture image.
@@ -493,7 +497,7 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
 static struct intel_renderbuffer *
 intel_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
 {
-   const GLuint name = ~0;      /* not significant, but distinct for debugging */
+   const GLuint name = ~0;   /* not significant, but distinct for debugging */
    struct intel_renderbuffer *irb;
 
    /* make an intel_renderbuffer to wrap the texture image */
@@ -540,10 +544,11 @@ intel_render_texture(GLcontext * ctx,
       /* Fallback on drawing to a texture with a border, which won't have a
        * miptree.
        */
-       _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
-       _mesa_render_texture(ctx, fb, att);
-       return;
-   } else if (!irb) {
+      _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
+      _mesa_render_texture(ctx, fb, att);
+      return;
+   }
+   else if (!irb) {
       irb = intel_wrap_texture(ctx, newImage);
       if (irb) {
          /* bind the wrapper to the attachment point */
@@ -554,7 +559,9 @@ intel_render_texture(GLcontext * ctx,
          _mesa_render_texture(ctx, fb, att);
          return;
       }
-   } if (!intel_update_wrapper(ctx, irb, newImage)) {
+   }
+
+   if (!intel_update_wrapper(ctx, irb, newImage)) {
        _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
        _mesa_render_texture(ctx, fb, att);
        return;
