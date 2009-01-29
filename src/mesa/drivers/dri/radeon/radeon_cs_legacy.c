@@ -315,7 +315,7 @@ static int cs_emit(struct radeon_cs *cs)
         cmd.boxes = (drm_clip_rect_t *) csm->ctx->pClipRects;
     }
 
-    //    dump_cmdbuf(cs);
+    dump_cmdbuf(cs);
 
     r = drmCommandWrite(cs->csm->fd, DRM_RADEON_CMDBUF, &cmd, sizeof(cmd));
     if (r) {

@@ -15,7 +15,6 @@ DRIVER_SOURCES = \
 	radeon_state.c \
 	radeon_state_init.c \
 	radeon_tex.c \
-	radeon_texmem.c \
 	radeon_texstate.c \
 	radeon_tcl.c \
 	radeon_swtcl.c \

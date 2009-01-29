@@ -225,6 +225,15 @@ static void r100_vtbl_set_all_dirty(GLcontext *ctx)
    rmesa->hw.all_dirty = GL_TRUE;
 }
 
+static void r100_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)
+{
+}
+
+static void r100_vtbl_emit_state(radeonContextPtr rmesa)
+{
+	radeonEmitState((r100ContextPtr)rmesa);
+}
+
 static void r100_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r100_get_lock;
@@ -232,6 +241,8 @@ static void r100_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.flush = r100_vtbl_flush;
    radeon->vtbl.set_all_dirty = r100_vtbl_set_all_dirty;
    radeon->vtbl.update_draw_buffer = radeonUpdateDrawBuffer;
+   radeon->vtbl.emit_cs_header = r100_vtbl_emit_cs_header;
+   radeon->vtbl.emit_state = r100_vtbl_emit_state;
 }
 
 /* Create the device specific context.
@@ -290,35 +301,12 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    radeonInitDriverFuncs( &functions );
    radeonInitTextureFuncs( &functions );
 
-   /* Allocate the Mesa context */
-   if (sharedContextPrivate)
-      shareCtx = ((radeonContextPtr) sharedContextPrivate)->glCtx;
-   else
-      shareCtx = NULL;
-   rmesa->radeon.glCtx = _mesa_create_context(glVisual, shareCtx,
-					      &functions, (void *) rmesa);
-   if (!rmesa->radeon.glCtx) {
-      FREE(rmesa);
-      return GL_FALSE;
+   if (!radeonInitContext(&rmesa->radeon, &functions,
+			  glVisual, driContextPriv,
+			  sharedContextPrivate)) {
+     FREE(rmesa);
+     return GL_FALSE;
    }
-   driContextPriv->driverPrivate = rmesa;
-
-   /* Init radeon context data */
-   rmesa->radeon.dri.context = driContextPriv;
-   rmesa->radeon.dri.screen = sPriv;
-   rmesa->radeon.dri.drawable = NULL;
-   rmesa->radeon.dri.readable = NULL;
-   rmesa->radeon.dri.hwContext = driContextPriv->hHWContext;
-   rmesa->radeon.dri.hwLock = &sPriv->pSAREA->lock;
-   rmesa->radeon.dri.fd = sPriv->fd;
-   rmesa->radeon.dri.drmMinor = sPriv->drm_version.minor;
-
-   rmesa->radeon.radeonScreen = screen;
-   rmesa->radeon.sarea = (drm_radeon_sarea_t *)((GLubyte *)sPriv->pSAREA +
-				       screen->sarea_priv_offset);
-
-
-   //rmesa->dma.buf0_address = rmesa->radeon.radeonScreen->buffers->list[0].address;
 
    (void) memset( rmesa->radeon.texture_heaps, 0, sizeof( rmesa->radeon.texture_heaps ) );
    make_empty_list( & rmesa->radeon.swapped );
@@ -523,11 +511,10 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
       radeonDestroySwtcl( rmesa->radeon.glCtx );
       radeonReleaseArrays( rmesa->radeon.glCtx, ~0 );
       if (rmesa->radeon.dma.current) {
-	 radeonReleaseDmaRegion( rmesa, &rmesa->radeon.dma.current, __FUNCTION__ );
-	 radeonFlushCmdBuf( rmesa, __FUNCTION__ );
+	 radeonReleaseDmaRegion( &rmesa->radeon );
+	 radeonFlushCmdBuf( &rmesa->radeon, __FUNCTION__ );
       }
 
-      radeonCleanupContext(&rmesa->radeon);
       _mesa_vector4f_free( &rmesa->tcl.ObjClean );
 
       if (rmesa->radeon.state.scissor.pClipRects) {
