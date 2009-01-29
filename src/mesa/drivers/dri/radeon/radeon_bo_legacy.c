@@ -77,6 +77,7 @@ struct bo_manager_legacy {
     uint32_t                    fb_location;
     uint32_t                    texture_offset;
     unsigned                    dma_alloc_size;
+    uint32_t                    dma_buf_count;
     unsigned                    cpendings;
     driTextureObject            texture_swapped;
     driTexHeap                  *texture_heap;
@@ -221,7 +222,7 @@ static int legacy_wait_pending(struct radeon_bo *bo)
     return 0;
 }
 
-static void legacy_track_pending(struct bo_manager_legacy *boml)
+static void legacy_track_pending(struct bo_manager_legacy *boml, int debug)
 {
     struct bo_legacy *bo_legacy;
     struct bo_legacy *next;
@@ -229,11 +230,27 @@ static void legacy_track_pending(struct bo_manager_legacy *boml)
     legacy_get_current_age(boml);
     bo_legacy = boml->pending_bos.pnext;
     while (bo_legacy) {
+        if (debug)
+	  fprintf(stderr,"pending %p %d %d %d\n", bo_legacy, bo_legacy->base.size,
+		  boml->current_age, bo_legacy->pending);
         next = bo_legacy->pnext;
         if (legacy_is_pending(&(bo_legacy->base))) {
         }
         bo_legacy = next;
     } 
+}
+
+static int legacy_wait_any_pending(struct bo_manager_legacy *boml)
+{
+    struct bo_legacy *bo_legacy;
+    struct bo_legacy *next;
+
+    legacy_get_current_age(boml);
+    bo_legacy = boml->pending_bos.pnext;
+    if (!bo_legacy)
+      return -1;
+    legacy_wait_pending(&bo_legacy->base);
+    return 0;
 }
 
 static struct bo_legacy *bo_allocate(struct bo_manager_legacy *boml,
@@ -292,13 +309,13 @@ static int bo_dma_alloc(struct radeon_bo *bo)
     if (r) {
         /* ptr is set to NULL if dma allocation failed */
         bo_legacy->ptr = NULL;
-        exit(0);
         return r;
     }
     bo_legacy->ptr = boml->screen->gartTextures.map + base_offset;
     bo_legacy->offset = boml->screen->gart_texture_offset + base_offset;
     bo->size = size;
     boml->dma_alloc_size += size;
+    boml->dma_buf_count++;
     return 0;
 }
 
@@ -328,6 +345,7 @@ static int bo_dma_free(struct radeon_bo *bo)
         return r;
     }
     boml->dma_alloc_size -= bo_legacy->base.size;
+    boml->dma_buf_count--;
     return 0;
 }
 
@@ -388,15 +406,20 @@ static struct radeon_bo *bo_open(struct radeon_bo_manager *bom,
         return NULL;
     }
     if (bo_legacy->base.domains & RADEON_GEM_DOMAIN_GTT) {
-        legacy_track_pending(boml);
+    retry:
+        legacy_track_pending(boml, 0);
         /* dma buffers */
+
         r = bo_dma_alloc(&(bo_legacy->base));
         if (r) {
-            fprintf(stderr, "Ran out of GART memory (for %d)!\n", size);
+	  if (legacy_wait_any_pending(boml) == -1) {
+	    fprintf(stderr, "Ran out of GART memory (for %d)!\n", size);
             fprintf(stderr, "Please consider adjusting GARTSize option.\n");
             bo_free(bo_legacy);
             exit(-1);
-            return NULL;
+	  }
+	  goto retry;
+	  return NULL;
         }
     } else {
         bo_legacy->ptr = malloc(bo_legacy->base.size);
@@ -460,7 +483,6 @@ static int bo_map(struct radeon_bo *bo, int write)
         volatile int *buf = (int*)boml->screen->driScreen->pFB;
         p = *buf;
     }
-
     return 0;
 }
 

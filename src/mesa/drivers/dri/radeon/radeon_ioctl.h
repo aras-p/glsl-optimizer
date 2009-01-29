@@ -76,16 +76,6 @@ extern void radeonEmitBlit( r100ContextPtr rmesa,
 extern void radeonEmitWait( r100ContextPtr rmesa, GLuint flags );
 
 extern void radeonFlushCmdBuf( r100ContextPtr rmesa, const char * );
-extern void radeonRefillCurrentDmaRegion( r100ContextPtr rmesa );
-
-extern void radeonAllocDmaRegion( r100ContextPtr rmesa,
-				  struct radeon_dma_region *region,
-				  int bytes, 
-				  int alignment );
-
-extern void radeonReleaseDmaRegion( r100ContextPtr rmesa,
-				    struct radeon_dma_region *region,
-				    const char *caller );
 
 extern void radeonFlush( GLcontext *ctx );
 extern void radeonFinish( GLcontext *ctx );
@@ -101,8 +91,8 @@ extern void radeonSetUpAtomList( r100ContextPtr rmesa );
  */
 #define RADEON_NEWPRIM( rmesa )			\
 do {						\
-   if ( rmesa->dma.flush )			\
-      rmesa->dma.flush( rmesa->radeon.glCtx );	\
+   if ( rmesa->radeon.dma.flush )			\
+      rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	\
 } while (0)
 
 /* Can accomodate several state changes and primitive changes without
@@ -142,7 +132,7 @@ static INLINE int RADEON_DB_STATECHANGE(
  */
 #define RADEON_FIREVERTICES( rmesa )			\
 do {							\
-   if ( rmesa->store.cmd_used || rmesa->dma.flush ) {	\
+   if ( rmesa->store.cmd_used || rmesa->radeon.dma.flush ) {	\
       radeonFlush( rmesa->radeon.glCtx );			\
    }							\
 } while (0)

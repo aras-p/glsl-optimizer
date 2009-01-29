@@ -425,7 +425,6 @@ struct r100_context {
 	/* Vertex buffers
 	 */
 	struct radeon_ioctl ioctl;
-	struct radeon_dma dma;
 	struct radeon_store store;
 	/* A full state emit as of the first state emit in the main store, in case
 	 * the context is lost.

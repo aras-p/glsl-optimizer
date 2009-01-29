@@ -117,12 +117,12 @@ static void radeonBackUpAndEmitLostStateLocked( r100ContextPtr rmesa )
 
    rmesa->radeon.lost_context = GL_FALSE;
 
-   nr_released_bufs = rmesa->dma.nr_released_bufs;
+   nr_released_bufs = rmesa->radeon.dma.nr_released_bufs;
    saved_store = rmesa->store;
-   rmesa->dma.nr_released_bufs = 0;
+   rmesa->radeon.dma.nr_released_bufs = 0;
    rmesa->store = rmesa->backup_store;
    radeonFlushCmdBufLocked( rmesa, __FUNCTION__ );
-   rmesa->dma.nr_released_bufs = nr_released_bufs;
+   rmesa->radeon.dma.nr_released_bufs = nr_released_bufs;
    rmesa->store = saved_store;
 }
 
@@ -308,8 +308,8 @@ void radeonFlushElts( GLcontext *ctx )
    if (RADEON_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   assert( rmesa->dma.flush == radeonFlushElts );
-   rmesa->dma.flush = NULL;
+   assert( rmesa->radeon.dma.flush == radeonFlushElts );
+   rmesa->radeon.dma.flush = NULL;
 
    /* Cope with odd number of elts:
     */
@@ -381,9 +381,9 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
 	      __FUNCTION__,
 	      cmd[1].i, vertex_format, primitive);
 
-   assert(!rmesa->dma.flush);
+   assert(!rmesa->radeon.dma.flush);
    rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
-   rmesa->dma.flush = radeonFlushElts;
+   rmesa->radeon.dma.flush = radeonFlushElts;
 
    rmesa->store.elts_start = ((char *)cmd) - rmesa->store.cmd_buf;
 

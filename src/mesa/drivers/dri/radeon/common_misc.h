@@ -118,4 +118,8 @@ GLubyte *radeon_ptr16(const struct radeon_renderbuffer * rrb,
 		    GLint x, GLint y);
 GLubyte *radeon_ptr32(const struct radeon_renderbuffer * rrb,
 		    GLint x, GLint y);
+void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size);
+void radeonAllocDmaRegion(radeonContextPtr rmesa,
+			  struct radeon_bo **pbo, int *poffset,
+			  int bytes, int alignment);
 #endif

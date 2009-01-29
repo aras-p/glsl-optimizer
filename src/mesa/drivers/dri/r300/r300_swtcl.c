@@ -57,7 +57,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_ioctl.h"
 #include "r300_emit.h"
 
-static void flush_last_swtcl_prim( r300ContextPtr rmesa  );
+static void flush_last_swtcl_prim( GLcontext *ctx);
 
 
 void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, struct radeon_bo *bo, GLuint offset);
@@ -241,26 +241,45 @@ static void r300SetVertexFormat( GLcontext *ctx )
 
 /* Flush vertices in the current dma region.
  */
-static void flush_last_swtcl_prim( r300ContextPtr rmesa  )
+static void flush_last_swtcl_prim( GLcontext *ctx  )
 {
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	struct radeon_dma *dma = &rmesa->radeon.dma;
+		
+
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s\n", __FUNCTION__);
-    rmesa->swtcl.flush = NULL;
-    radeon_bo_unmap(rmesa->swtcl.bo);
-    rcommonEnsureCmdBufSpace(rmesa,
-			     rmesa->hw.max_state_size + (12*sizeof(int)),
-			     __FUNCTION__);
-    r300EmitState(rmesa);
-    r300EmitVertexAOS(rmesa,
-                      rmesa->swtcl.vertex_size,
-                      rmesa->swtcl.bo,
-                      0);
-    r300EmitVbufPrim(rmesa,
-                     rmesa->swtcl.hw_primitive,
-                     rmesa->swtcl.numverts);
-    r300EmitCacheFlush(rmesa);
-    COMMIT_BATCH();
-    rmesa->swtcl.numverts = 0;
+	dma->flush = NULL;
+
+	if (dma->current) {
+	    GLuint current_offset = dma->current_used;
+
+	    assert (dma->current_used +
+		    rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
+		    dma->current_vertexptr);
+
+	    radeon_bo_unmap(dma->current);
+	    if (dma->current_used != dma->current_vertexptr) {
+		    dma->current_used = dma->current_vertexptr;
+
+		    rcommonEnsureCmdBufSpace(rmesa,
+					     rmesa->hw.max_state_size + (12*sizeof(int)),
+					     __FUNCTION__);
+		    r300EmitState(rmesa);
+		    r300EmitVertexAOS(rmesa,
+				      rmesa->swtcl.vertex_size,
+				      dma->current,
+				      current_offset);
+
+		    r300EmitVbufPrim(rmesa,
+				     rmesa->swtcl.hw_primitive,
+				     rmesa->swtcl.numverts);
+		    r300EmitCacheFlush(rmesa);
+		    COMMIT_BATCH();
+	    }
+	    radeonReleaseDmaRegion(&rmesa->radeon);
+	    rmesa->swtcl.numverts = 0;
+	}
 }
 
 /* Alloc space in the current dma region.
@@ -269,15 +288,29 @@ static void *
 r300AllocDmaLowVerts( r300ContextPtr rmesa, int nverts, int vsize )
 {
 	GLuint bytes = vsize * nverts;
+	void *head;
 
-	rmesa->swtcl.bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
-					 0, bytes, 4, RADEON_GEM_DOMAIN_GTT, 0);
-	radeon_bo_map(rmesa->swtcl.bo, 1);
-	if (rmesa->swtcl.flush == NULL) {
-	  rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
-	  rmesa->swtcl.flush = flush_last_swtcl_prim;
+	if (!rmesa->radeon.dma.current || rmesa->radeon.dma.current_vertexptr + bytes > rmesa->radeon.dma.current->size) {
+                radeonRefillCurrentDmaRegion( &rmesa->radeon, bytes);
 	}
-	return rmesa->swtcl.bo->ptr;
+
+        if (!rmesa->radeon.dma.flush) {
+                rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+                rmesa->radeon.dma.flush = flush_last_swtcl_prim;
+        }
+
+	ASSERT( vsize == rmesa->swtcl.vertex_size * 4 );
+        ASSERT( rmesa->radeon.dma.flush == flush_last_swtcl_prim );
+        ASSERT( rmesa->radeon.dma.current_used +
+                rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
+                rmesa->dma.current_vertexptr );
+
+//	fprintf(stderr,"current %p %x\n", rmesa->radeon.dma.current->ptr,
+//		rmesa->radeon.dma.current_vertexptr);
+	head = (rmesa->radeon.dma.current->ptr + rmesa->radeon.dma.current_vertexptr);
+	rmesa->radeon.dma.current_vertexptr += bytes;
+	rmesa->swtcl.numverts += nverts;
+	return head;
 }
 
 static GLuint reduced_prim[] = {
@@ -550,9 +583,9 @@ static void r300RenderStart(GLcontext *ctx)
 	r300UpdateShaderStates(rmesa);
 
 	r300EmitCacheFlush(rmesa);
-    if (rmesa->swtcl.flush != NULL) {
-        rmesa->swtcl.flush(rmesa);
-    }
+	if (rmesa->radeon.dma.flush != NULL) {
+		rmesa->radeon.dma.flush(ctx);
+	}
 }
 
 static void r300RenderFinish(GLcontext *ctx)

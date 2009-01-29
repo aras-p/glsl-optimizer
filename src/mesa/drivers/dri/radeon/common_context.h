@@ -225,16 +225,26 @@ struct radeon_aos {
 };
 
 struct radeon_dma {
-   /* Active dma region.  Allocations for vertices and retained
-    * regions come from here.  Also used for emitting random vertices,
-    * these may be flushed by calling flush_current();
-    */
-   struct radeon_dma_region current;
-   
-   void (*flush)( GLcontext *ctx );
+        /* Active dma region.  Allocations for vertices and retained
+         * regions come from here.  Also used for emitting random vertices,
+         * these may be flushed by calling flush_current();
+         */
+        struct radeon_bo *current; /** Buffer that DMA memory is allocated from */
+        int current_used; /** Number of bytes allocated and forgotten about */
+        int current_vertexptr; /** End of active vertex region */
 
-   char *buf0_address;		/* start of buf[0], for index calcs */
-   GLuint nr_released_bufs;	/* flush after so many buffers released */
+        /**
+         * If current_vertexptr != current_used then flush must be non-zero.
+         * flush must be called before non-active vertex allocations can be
+         * performed.
+         */
+        void (*flush) (GLcontext *);
+
+        /* Number of "in-flight" DMA buffers, i.e. the number of buffers
+         * for which a DISCARD command is currently queued in the command buffer
+.
+         */
+        GLuint nr_released_bufs;
 };
 
 struct radeon_ioctl {
@@ -265,6 +275,8 @@ static INLINE GLuint radeonPackColor(GLuint cpp,
 }
 
 #define MAX_CMD_BUF_SZ (16*1024)
+
+#define MAX_DMA_BUF_SZ (64*1024)
 
 struct radeon_store {
 	GLuint statenr;
@@ -354,6 +366,7 @@ struct radeon_context {
    int                   texture_depth;
    float                 initialMaxAnisotropy;
 
+  struct radeon_dma dma;
    /* Rasterization and vertex state:
     */
    GLuint TclFallback;

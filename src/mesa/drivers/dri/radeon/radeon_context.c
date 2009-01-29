@@ -318,7 +318,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 				       screen->sarea_priv_offset);
 
 
-   rmesa->dma.buf0_address = rmesa->radeon.radeonScreen->buffers->list[0].address;
+   //rmesa->dma.buf0_address = rmesa->radeon.radeonScreen->buffers->list[0].address;
 
    (void) memset( rmesa->radeon.texture_heaps, 0, sizeof( rmesa->radeon.texture_heaps ) );
    make_empty_list( & rmesa->radeon.swapped );
@@ -522,8 +522,8 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
 
       radeonDestroySwtcl( rmesa->radeon.glCtx );
       radeonReleaseArrays( rmesa->radeon.glCtx, ~0 );
-      if (rmesa->dma.current.buf) {
-	 radeonReleaseDmaRegion( rmesa, &rmesa->dma.current, __FUNCTION__ );
+      if (rmesa->radeon.dma.current) {
+	 radeonReleaseDmaRegion( rmesa, &rmesa->radeon.dma.current, __FUNCTION__ );
 	 radeonFlushCmdBuf( rmesa, __FUNCTION__ );
       }
 

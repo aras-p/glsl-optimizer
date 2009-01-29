@@ -365,9 +365,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    }
 
 
-   if (!rmesa->radeon.radeonScreen->kernel_mm)
-       rmesa->dma.buf0_address = rmesa->radeon.radeonScreen->buffers->list[0].address;
-
    (void) memset( rmesa->radeon.texture_heaps, 0, sizeof( rmesa->radeon.texture_heaps ) );
    make_empty_list( & rmesa->radeon.swapped );
 
@@ -587,8 +584,8 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
       r200DestroySwtcl( rmesa->radeon.glCtx );
       r200ReleaseArrays( rmesa->radeon.glCtx, ~0 );
 
-      if (rmesa->dma.current.buf) {
-	//	 r200ReleaseDmaRegion( rmesa, &rmesa->dma.current, __FUNCTION__ );
+      if (rmesa->dma.current) {
+	 radeonReleaseDmaRegion(rmesa);
 	 rcommonFlushCmdBuf( &rmesa->radeon, __FUNCTION__ );
       }
 

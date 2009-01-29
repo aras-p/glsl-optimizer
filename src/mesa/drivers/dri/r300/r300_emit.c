@@ -301,28 +301,28 @@ int r300EmitArrays(GLcontext * ctx)
 	}
 
 	/* Setup INPUT_ROUTE. */
-    if (rmesa->radeon.radeonScreen->kernel_mm) {
-      R300_STATECHANGE(rmesa, vir[0]);
-      rmesa->hw.vir[0].cmd[0] &= 0xC000FFFF;
-      rmesa->hw.vir[1].cmd[0] &= 0xC000FFFF;
-	rmesa->hw.vir[0].cmd[0] |=
-        (r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
-                            vb->AttribPtr, inputs, tab, nr) & 0x3FFF) << 16;
-	R300_STATECHANGE(rmesa, vir[1]);
-	rmesa->hw.vir[1].cmd[0] |=
-	    (r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
-	                        nr) & 0x3FFF) << 16;
-    } else {
-	R300_STATECHANGE(rmesa, vir[0]);
-	((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
-	    r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
-			       vb->AttribPtr, inputs, tab, nr);
-	R300_STATECHANGE(rmesa, vir[1]);
-	((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
-	    r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
-			       nr);
-    }
-
+	if (rmesa->radeon.radeonScreen->kernel_mm) {
+		R300_STATECHANGE(rmesa, vir[0]);
+		rmesa->hw.vir[0].cmd[0] &= 0xC000FFFF;
+		rmesa->hw.vir[1].cmd[0] &= 0xC000FFFF;
+		rmesa->hw.vir[0].cmd[0] |=
+			(r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
+					    vb->AttribPtr, inputs, tab, nr) & 0x3FFF) << 16;
+		R300_STATECHANGE(rmesa, vir[1]);
+		rmesa->hw.vir[1].cmd[0] |=
+			(r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
+					    nr) & 0x3FFF) << 16;
+	} else {
+		R300_STATECHANGE(rmesa, vir[0]);
+		((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
+			r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
+					   vb->AttribPtr, inputs, tab, nr);
+		R300_STATECHANGE(rmesa, vir[1]);
+		((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
+			r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
+					   nr);
+	}
+	
 	/* Setup INPUT_CNTL. */
 	R300_STATECHANGE(rmesa, vic);
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
@@ -337,6 +337,8 @@ int r300EmitArrays(GLcontext * ctx)
 
 	rmesa->state.aos_count = nr;
 
+	radeon_bo_unmap(rmesa->radeon.dma.current);
+
 	return R300_FALLBACK_NONE;
 }
 
@@ -347,13 +349,15 @@ void r300ReleaseArrays(GLcontext * ctx)
 
 	if (rmesa->state.elt_dma_bo) {
 		radeon_bo_unref(rmesa->state.elt_dma_bo);
-		rmesa->state.elt_dma_bo = 0;
+		rmesa->state.elt_dma_bo = NULL;
 	}
 	for (i = 0; i < rmesa->state.aos_count; i++) {
 		if (rmesa->state.aos[i].bo) {
-			rmesa->state.aos[i].bo = radeon_bo_unref(rmesa->state.aos[i].bo);
+			radeon_bo_unref(rmesa->state.aos[i].bo);
+			rmesa->state.aos[i].bo = NULL;
 		}
 	}
+	radeonReleaseDmaRegion(&rmesa->radeon);
 }
 
 void r300EmitCacheFlush(r300ContextPtr rmesa)

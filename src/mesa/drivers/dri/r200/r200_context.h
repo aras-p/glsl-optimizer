@@ -525,10 +525,6 @@ struct r200_state {
    GLuint envneeded;
 };
 
-#define GET_START(rvb) (rmesa->radeon.radeonScreen->gart_buffer_offset +		\
-			(rvb)->address - rmesa->dma.buf0_address +	\
-			(rvb)->start)
-
 #define R200_CMD_BUF_SZ  (16*1024) 
 
 #define R200_ELT_BUF_SZ  (16*1024) 

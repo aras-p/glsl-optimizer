@@ -1316,22 +1316,19 @@ void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 	uint32_t *out;
 	uint32_t bo_size;
 
-	memset(aos, 0, sizeof(struct radeon_aos));
 	if (stride == 0) {
-		bo_size = size * 4;
+		radeonAllocDmaRegion(rmesa, &aos->bo, &aos->offset, size * 4, 32);
 		count = 1;
 		aos->stride = 0;
 	} else {
-		bo_size = size * count * 4;
+		radeonAllocDmaRegion(rmesa, &aos->bo, &aos->offset, size * count * 4, 32);
 		aos->stride = size;
 	}
-	aos->bo = radeon_bo_open(rmesa->radeonScreen->bom,
-				 0, bo_size, 32, RADEON_GEM_DOMAIN_GTT, 0);
-	aos->offset = 0;
+
 	aos->components = size;
 	aos->count = count;
 
-	radeon_bo_map(aos->bo, 1);
+//	radeon_bo_map(aos->bo, 1);
 	out = (uint32_t*)((char*)aos->bo->ptr + aos->offset);
 	switch (size) {
 	case 1: radeonEmitVec4(out, data, stride, count); break;
@@ -1342,7 +1339,7 @@ void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 		assert(0);
 		break;
 	}
-	radeon_bo_unmap(aos->bo);
+//	radeon_bo_unmap(aos->bo);
 }
 
 
@@ -2321,3 +2318,75 @@ void radeonSpanRenderFinish(GLcontext * ctx)
 		unmap_buffer(ctx->DrawBuffer->_StencilBuffer->Wrapped);
 }
 
+void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
+{
+	size = MAX2(size, MAX_DMA_BUF_SZ * 16);
+
+	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
+		fprintf(stderr, "%s\n", __FUNCTION__);
+
+	if (rmesa->dma.flush) {
+		radeon_bo_unmap(rmesa->dma.current);
+		rmesa->dma.flush(rmesa->glCtx);
+	}
+
+
+
+	if (rmesa->dma.nr_released_bufs > 4) {
+		rcommonFlushCmdBuf(rmesa, __FUNCTION__);
+		rmesa->dma.nr_released_bufs = 0;
+	}
+
+	if (rmesa->dma.current) {
+		radeon_bo_unref(rmesa->dma.current);
+		rmesa->dma.current = 0;
+	}
+	
+	rmesa->dma.current = radeon_bo_open(rmesa->radeonScreen->bom,
+					    0, size, 4, RADEON_GEM_DOMAIN_GTT,
+					    0);
+
+	rmesa->dma.current_used = 0;
+	rmesa->dma.current_vertexptr = 0;
+	radeon_bo_map(rmesa->dma.current, 1);
+}
+
+/* Allocates a region from rmesa->dma.current.  If there isn't enough
+ * space in current, grab a new buffer (and discard what was left of current)
+ */
+void radeonAllocDmaRegion(radeonContextPtr rmesa,
+			  struct radeon_bo **pbo, int *poffset,
+			  int bytes, int alignment)
+{
+	if (RADEON_DEBUG & DEBUG_IOCTL)
+		fprintf(stderr, "%s %d\n", __FUNCTION__, bytes);
+
+	if (rmesa->dma.flush)
+		rmesa->dma.flush(rmesa->glCtx);
+
+	assert(rmesa->dma.current_used == rmesa->dma.current_vertexptr);
+
+	alignment--;
+	rmesa->dma.current_used = (rmesa->dma.current_used + alignment) & ~alignment;
+
+	if (!rmesa->dma.current || rmesa->dma.current_used + bytes > rmesa->dma.current->size)
+		radeonRefillCurrentDmaRegion(rmesa, (bytes + 15) & ~15);
+
+	*poffset = rmesa->dma.current_used;
+	*pbo = rmesa->dma.current;
+	radeon_bo_ref(*pbo);
+
+	/* Always align to at least 16 bytes */
+	rmesa->dma.current_used = (rmesa->dma.current_used + bytes + 15) & ~15;
+	rmesa->dma.current_vertexptr = rmesa->dma.current_used;
+
+	assert(rmesa->dma.current_used <= rmesa->dma.current->size);
+}
+
+void radeonReleaseDmaRegion(radeonContextPtr rmesa)
+{
+	rmesa->dma.nr_released_bufs++;
+	radeon_bo_unref(rmesa->dma.current);
+	rmesa->dma.current = NULL;
+}
+			    

@@ -699,7 +699,6 @@ struct r300_swtcl_info {
    GLuint specoffset;
 
    struct radeon_bo *bo;
-   void (*flush) (r300ContextPtr);
 };
 
 

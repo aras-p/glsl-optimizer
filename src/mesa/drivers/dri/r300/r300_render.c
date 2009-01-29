@@ -177,10 +177,8 @@ static void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	void *out;
 
-	rmesa->state.elt_dma_bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
-                                             0, n_elts * 4, 4,
-                                             RADEON_GEM_DOMAIN_GTT, 0);
-	rmesa->state.elt_dma_offset = 0;
+	radeonAllocDmaRegion(&rmesa->radeon, &rmesa->state.elt_dma_bo,
+			     &rmesa->state.elt_dma_offset, n_elts * 4, 4);
 	radeon_bo_map(rmesa->state.elt_dma_bo, 1);
 	out = rmesa->state.elt_dma_bo->ptr + rmesa->state.elt_dma_offset;
 	memcpy(out, elts, n_elts * 4);

@@ -393,7 +393,7 @@ static void r300EmitClearState(GLcontext * ctx)
 		R300_STATECHANGE(r300, fp);
 		R300_STATECHANGE(r300, r500fp);
 
-		BEGIN_BATCH(14);
+		BEGIN_BATCH(7);
 		OUT_BATCH_REGSEQ(R500_US_CONFIG, 2);
 		OUT_BATCH(R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
 		OUT_BATCH(0x0);
@@ -619,10 +619,10 @@ void r300Flush(GLcontext * ctx)
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-    if (rmesa->swtcl.flush) {
-        rmesa->swtcl.flush(rmesa);
-    }
-
+	if (rmesa->radeon.dma.flush) {
+		rmesa->radeon.dma.flush(ctx);
+	}
+	
 	if (rmesa->radeon.cmdbuf.cs->cdw) {
 		rcommonFlushCmdBuf(&rmesa->radeon, __FUNCTION__);
 	}
