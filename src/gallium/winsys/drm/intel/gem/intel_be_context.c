@@ -26,10 +26,11 @@ intel_be_batch_reloc(struct i915_winsys *sws,
 
 	if (access_flags & I915_BUFFER_ACCESS_WRITE) {
 		write = I915_GEM_DOMAIN_RENDER;
+		read = I915_GEM_DOMAIN_RENDER;
 	}
 
 	if (access_flags & I915_BUFFER_ACCESS_READ) {
-		read = I915_GEM_DOMAIN_VERTEX;
+		read |= I915_GEM_DOMAIN_VERTEX;
 	}
 
     debug_printf("%s\n", __FUNCTION__);
