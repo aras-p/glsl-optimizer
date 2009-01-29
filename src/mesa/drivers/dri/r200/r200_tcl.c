@@ -143,7 +143,7 @@ static GLboolean discrete_prim[0x10] = {
 static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr ) 
 {
   //  fprintf(stderr,"alloc elts %d %d\n", nr, rmesa->tcl.elt_used);
-   if (rmesa->tcl.flush == r200FlushElts &&
+   if (rmesa->radeon.dma.flush == r200FlushElts &&
        rmesa->tcl.elt_used + nr*2 < R200_ELT_BUF_SZ) {
 
       GLushort *dest = (GLushort *)(rmesa->tcl.elt_dma_bo->ptr +
@@ -154,8 +154,8 @@ static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr )
       return dest;
    }
    else {
-      if (rmesa->tcl.flush)
-	 rmesa->tcl.flush( rmesa->radeon.glCtx );
+      if (rmesa->radeon.dma.flush)
+	 rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
 
       rcommonEnsureCmdBufSpace(rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components));
 
@@ -188,7 +188,8 @@ static void r200EmitPrim( GLcontext *ctx,
    r200TclPrimitive( ctx, prim, hwprim );
    
    //   fprintf(stderr,"Emit prim %d\n", rmesa->tcl.nr_aos_components);
-   rcommonEnsureCmdBufSpace( rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
+   rcommonEnsureCmdBufSpace( &rmesa->radeon,
+			     AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
 			     rmesa->hw.max_state_size + VBUF_BUFSZ );
 
    r200EmitAOS( rmesa,
@@ -564,10 +565,10 @@ static void transition_to_hwtnl( GLcontext *ctx )
 
    tnl->Driver.NotifyMaterialChange = r200UpdateMaterial;
 
-   if ( rmesa->swtcl.flush )			
-      rmesa->swtcl.flush( rmesa->radeon.glCtx );	
+   if ( rmesa->radeon.dma.flush )			
+      rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	
 
-   rmesa->swtcl.flush = NULL;
+   rmesa->radeon.dma.flush = NULL;
    
    R200_STATECHANGE( rmesa, vap );
    rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] |= R200_VAP_TCL_ENABLE;

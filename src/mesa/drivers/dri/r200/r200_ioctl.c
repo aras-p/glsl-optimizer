@@ -76,12 +76,12 @@ static void r200BackUpAndEmitLostStateLocked( r200ContextPtr rmesa )
 
    rmesa->radeon.lost_context = GL_FALSE;
 
-   nr_released_bufs = rmesa->dma.nr_released_bufs;
+   nr_released_bufs = rmesa->radeon.dma.nr_released_bufs;
    saved_store = rmesa->store;
-   rmesa->dma.nr_released_bufs = 0;
+   rmesa->radeon.dma.nr_released_bufs = 0;
    rmesa->store = rmesa->backup_store;
    rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
-   rmesa->dma.nr_released_bufs = nr_released_bufs;
+   rmesa->radeon.dma.nr_released_bufs = nr_released_bufs;
    rmesa->store = saved_store;
 }
 
@@ -302,11 +302,8 @@ void r200Flush( GLcontext *ctx )
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   if (rmesa->swtcl.flush)
-      rmesa->swtcl.flush( ctx );
-
-   if (rmesa->tcl.flush)
-      rmesa->tcl.flush( ctx );
+   if (rmesa->radeon.dma.flush)
+      rmesa->radeon.dma.flush( ctx );
 
    r200EmitState( rmesa );
 

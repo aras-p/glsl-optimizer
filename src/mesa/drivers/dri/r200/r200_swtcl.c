@@ -279,7 +279,7 @@ static void flush_last_swtcl_prim(GLcontext *ctx)
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   rmesa->swtcl.flush = NULL;
+   rmesa->radeon.dma.flush = NULL;
 
    radeon_bo_unmap(rmesa->swtcl.bo);
    rcommonEnsureCmdBufSpace(rmesa,
@@ -313,9 +313,9 @@ r200AllocDmaLowVerts( r200ContextPtr rmesa, int nverts, int vsize )
    rmesa->swtcl.bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
 				    0, bytes, 4, RADEON_GEM_DOMAIN_GTT, 0);
    radeon_bo_map(rmesa->swtcl.bo, 1);
-   if (rmesa->swtcl.flush == NULL) {
+   if (rmesa->radeon.dma.flush == NULL) {
      rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
-     rmesa->swtcl.flush = flush_last_swtcl_prim;
+     rmesa->radeon.dma.flush = flush_last_swtcl_prim;
    }
    return rmesa->swtcl.bo->ptr;
 

@@ -584,8 +584,8 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
       r200DestroySwtcl( rmesa->radeon.glCtx );
       r200ReleaseArrays( rmesa->radeon.glCtx, ~0 );
 
-      if (rmesa->dma.current) {
-	 radeonReleaseDmaRegion(rmesa);
+      if (rmesa->radeon.dma.current) {
+	 radeonReleaseDmaRegion(&rmesa->radeon);
 	 rcommonFlushCmdBuf( &rmesa->radeon, __FUNCTION__ );
       }
 

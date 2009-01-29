@@ -544,7 +544,6 @@ struct r200_tcl_info {
    int elt_dma_offset; /** Offset into this buffer object, in bytes */
    int elt_used;
 
-   void (*flush) (GLcontext *ctx);
    struct radeon_dma_region vertex_data[15];
 };
 
@@ -602,7 +601,6 @@ struct r200_swtcl_info {
    GLboolean needproj;
 
    struct radeon_bo *bo;
-   void (*flush) (GLcontext *ctx);
 };
 
 
@@ -633,7 +631,6 @@ struct r200_context {
    /* Vertex buffers
     */
    struct radeon_ioctl ioctl;
-   struct radeon_dma dma;
    struct radeon_store store;
    /* A full state emit as of the first state emit in the main store, in case
     * the context is lost.

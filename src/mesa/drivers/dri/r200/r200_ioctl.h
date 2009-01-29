@@ -112,8 +112,8 @@ void r200SetUpAtomList( r200ContextPtr rmesa );
  */
 #define R200_NEWPRIM( rmesa )			\
 do {						\
-   if ( rmesa->swtcl.flush )			\
-      rmesa->swtcl.flush( rmesa->radeon.glCtx );	\
+   if ( rmesa->radeon.dma.flush )			\
+      rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	\
 } while (0)
 
 /* Can accomodate several state changes and primitive changes without
@@ -153,7 +153,7 @@ static INLINE int R200_DB_STATECHANGE(
  */
 #define R200_FIREVERTICES( rmesa )			\
 do {							\
-   if ( rmesa->swtcl.flush || rmesa->tcl.flush ) {	\
+   if ( rmesa->radeon.dma.flush ) {	\
       r200Flush( rmesa->radeon.glCtx );			\
    }							\
 } while (0)

@@ -281,8 +281,8 @@ void r200FlushElts(GLcontext *ctx)
    if (R200_DEBUG & (DEBUG_IOCTL|DEBUG_PRIMS))
      fprintf(stderr, "%s %x %d\n", __FUNCTION__, rmesa->tcl.hw_primitive, elt_used);
 
-   assert( rmesa->tcl.flush == r200FlushElts );
-   rmesa->tcl.flush = NULL;
+   assert( rmesa->radeon.dma.flush == r200FlushElts );
+   rmesa->radeon.dma.flush = NULL;
 
    elt_used = (elt_used + 2) & ~2;
 
@@ -329,9 +329,9 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
       fprintf(stderr, "%s: header prim %x \n",
 	      __FUNCTION__, primitive);
 
-   assert(!rmesa->tcl.flush);
+   assert(!rmesa->radeon.dma.flush);
    rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
-   rmesa->tcl.flush = r200FlushElts;
+   rmesa->radeon.dma.flush = r200FlushElts;
 
    return retval;
 }
