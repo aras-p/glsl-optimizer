@@ -671,6 +671,17 @@ static const
 __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
 {
    intelScreenPrivate *intelScreen;
+   GLenum fb_format[3];
+   GLenum fb_type[3];
+   /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
+    * support pageflipping at all.
+    */
+   static const GLenum back_buffer_modes[] = {
+      GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
+   };
+   uint8_t depth_bits[4], stencil_bits[4];
+   int color;
+   const __DRIconfig **configs = NULL;
 
    /* Calling driInitExtensions here, with a NULL context pointer,
     * does not actually enable the extensions.  It just makes sure
@@ -710,8 +721,47 @@ __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
    intelScreen->irq_active = 1;
    psp->extensions = intelScreenExtensions;
 
-   return driConcatConfigs(intelFillInModes(psp, 16, 16, 0, 1),
-			   intelFillInModes(psp, 32, 24, 8, 1));
+   depth_bits[0] = 0;
+   stencil_bits[0] = 0;
+   depth_bits[1] = 16;
+   stencil_bits[1] = 0;
+   depth_bits[2] = 24;
+   stencil_bits[2] = 0;
+   depth_bits[3] = 24;
+   stencil_bits[3] = 8;
+
+   fb_format[0] = GL_RGB;
+   fb_type[0] = GL_UNSIGNED_SHORT_5_6_5;
+
+   fb_format[1] = GL_RGB;
+   fb_type[1] = GL_UNSIGNED_INT_8_8_8_8_REV;
+
+   fb_format[2] = GL_RGBA;
+   fb_type[2] = GL_UNSIGNED_INT_8_8_8_8_REV;
+
+   for (color = 0; color < ARRAY_SIZE(fb_format); color++) {
+      const __DRIconfig **new_configs;
+
+      new_configs = (const __DRIconfig **)
+	 driCreateConfigs(fb_format[color], fb_type[color],
+			  depth_bits,
+			  stencil_bits,
+			  ARRAY_SIZE(depth_bits),
+			  back_buffer_modes,
+			  ARRAY_SIZE(back_buffer_modes));
+      if (configs == NULL)
+	 configs = new_configs;
+      else
+	 configs = driConcatConfigs(configs, new_configs);
+   }
+
+   if (configs == NULL) {
+      fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
+              __LINE__);
+      return NULL;
+   }
+
+   return configs;
 }
 
 const struct __DriverAPIRec driDriverAPI = {

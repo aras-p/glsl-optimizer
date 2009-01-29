@@ -133,7 +133,8 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 		 unsigned num_depth_stencil_bits,
 		 const GLenum * db_modes, unsigned num_db_modes);
 
-const __DRIconfig **driConcatConfigs(__DRIconfig **a, __DRIconfig **b);
+const __DRIconfig **driConcatConfigs(const __DRIconfig **a,
+				     const __DRIconfig **b);
 
 int
 driGetConfigAttrib(const __DRIconfig *config,
