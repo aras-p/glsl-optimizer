@@ -255,8 +255,8 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 #define LOCAL_VARS							\
    struct intel_context *intel = intel_context(ctx);			\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
-   const GLint yScale = irb->RenderToTexture ? 1 : -1;			\
-   const GLint yBias = irb->RenderToTexture ? 0 : irb->Base.Height - 1;	\
+   const GLint yScale = ctx->DrawBuffer->Name ? 1 : -1;			\
+   const GLint yBias = ctx->DrawBuffer->Name ? 0 : irb->Base.Height - 1;\
    unsigned int num_cliprects;						\
    struct drm_clip_rect *cliprects;					\
    int x_off, y_off;							\
@@ -392,8 +392,8 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 #define LOCAL_DEPTH_VARS						\
    struct intel_context *intel = intel_context(ctx);			\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
-   const GLint yScale = irb->RenderToTexture ? 1 : -1;			\
-   const GLint yBias = irb->RenderToTexture ? 0 : irb->Base.Height - 1; \
+   const GLint yScale = ctx->DrawBuffer->Name ? 1 : -1;			\
+   const GLint yBias = ctx->DrawBuffer->Name ? 0 : irb->Base.Height - 1;\
    unsigned int num_cliprects;						\
    struct drm_clip_rect *cliprects;					\
    int x_off, y_off;							\
