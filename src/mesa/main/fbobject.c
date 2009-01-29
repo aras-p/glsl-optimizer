@@ -1367,16 +1367,31 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
    struct gl_renderbuffer_attachment *att;
    struct gl_texture_object *texObj = NULL;
    struct gl_framebuffer *fb;
+   GLboolean error = GL_FALSE;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (target != GL_FRAMEBUFFER_EXT) {
+   switch (target) {
+   case GL_READ_FRAMEBUFFER_EXT:
+      error = !ctx->Extensions.EXT_framebuffer_blit;
+      fb = ctx->ReadBuffer;
+      break;
+   case GL_DRAW_FRAMEBUFFER_EXT:
+      error = !ctx->Extensions.EXT_framebuffer_blit;
+      /* fall-through */
+   case GL_FRAMEBUFFER_EXT:
+      fb = ctx->DrawBuffer;
+      break;
+   default:
+      error = GL_TRUE;
+   }
+
+   if (error) {
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glFramebufferTexture%sEXT(target)", caller);
+                  "glFramebufferTexture%sEXT(target=0x%x)", caller, target);
       return;
    }
 
-   fb = ctx->DrawBuffer;
    ASSERT(fb);
 
    /* check framebuffer binding */
@@ -1518,7 +1533,7 @@ _mesa_FramebufferTexture2DEXT(GLenum target, GLenum attachment,
        (textarget != GL_TEXTURE_RECTANGLE_ARB) &&
        (!IS_CUBE_FACE(textarget))) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glFramebufferTexture2DEXT(textarget)");
+                  "glFramebufferTexture2DEXT(textarget=0x%x)", textarget);
       return;
    }
 
