@@ -6,7 +6,7 @@ include $(TOP)/configs/current
 
 
 
-default: $(TOP)/$(LIB_DIR) subdirs
+default: $(TOP)/$(LIB_DIR) subdirs dri.pc
 
 
 $(TOP)/$(LIB_DIR):
