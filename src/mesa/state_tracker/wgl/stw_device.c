@@ -39,7 +39,7 @@ struct stw_device *stw_dev = NULL;
 
 
 /**
- * XXX: Dispatch pipe_winsys::flush_front_buffer to our 
+ * XXX: Dispatch pipe_screen::flush_front_buffer to our 
  * stw_winsys::flush_front_buffer.
  */
 static void 
