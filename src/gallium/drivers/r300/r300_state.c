@@ -307,8 +307,8 @@ static void*
         }
 
         dsa->z_stencil_control |=
-                (translate_depth_stencil_function(state->depth.func) <<
-                    R300_Z_FUNC_SHIFT);
+            (translate_depth_stencil_function(state->depth.func) <<
+                R300_Z_FUNC_SHIFT);
     }
 
     /* Stencil buffer setup. */
@@ -331,25 +331,25 @@ static void*
         if (state->stencil[1].enabled) {
             dsa->z_buffer_control |= R300_STENCIL_FRONT_BACK;
             dsa->z_stencil_control |=
-                    (translate_depth_stencil_function(state->stencil[1].func) <<
-                        R300_S_BACK_FUNC_SHIFT) |
-                    (translate_stencil_op(state->stencil[1].fail_op) <<
-                        R300_S_BACK_SFAIL_OP_SHIFT) |
-                    (translate_stencil_op(state->stencil[1].zpass_op) <<
-                        R300_S_BACK_ZPASS_OP_SHIFT) |
-                    (translate_stencil_op(state->stencil[1].zfail_op) <<
-                        R300_S_BACK_ZFAIL_OP_SHIFT);
+                (translate_depth_stencil_function(state->stencil[1].func) <<
+                    R300_S_BACK_FUNC_SHIFT) |
+                (translate_stencil_op(state->stencil[1].fail_op) <<
+                    R300_S_BACK_SFAIL_OP_SHIFT) |
+                (translate_stencil_op(state->stencil[1].zpass_op) <<
+                    R300_S_BACK_ZPASS_OP_SHIFT) |
+                (translate_stencil_op(state->stencil[1].zfail_op) <<
+                    R300_S_BACK_ZFAIL_OP_SHIFT);
 
             dsa->stencil_ref_bf = (state->stencil[1].ref_value) |
-                    (state->stencil[1].value_mask << R300_STENCILMASK_SHIFT) |
-                    (state->stencil[1].write_mask << R300_STENCILWRITEMASK_SHIFT);
+                (state->stencil[1].value_mask << R300_STENCILMASK_SHIFT) |
+                (state->stencil[1].write_mask << R300_STENCILWRITEMASK_SHIFT);
         }
     }
 
     /* Alpha test setup. */
     if (state->alpha.enabled) {
         dsa->alpha_function = translate_alpha_function(state->alpha.func) |
-                R300_FG_ALPHA_FUNC_ENABLE;
+            R300_FG_ALPHA_FUNC_ENABLE;
         dsa->alpha_reference = CLAMP(state->alpha.ref * 1023.0f, 0, 1023);
     } else {
         dsa->z_buffer_top = R300_ZTOP_ENABLE;
@@ -437,7 +437,6 @@ struct pipe_rasterizer_state
     unsigned poly_stipple_enable:1;
     unsigned point_smooth:1;
     unsigned point_sprite:1;
-    unsigned point_size_per_vertex:1; /**< size computed in vertex shader */
     unsigned multisample:1;         /* XXX maybe more ms state in future */
     unsigned line_smooth:1;
     unsigned line_last_pixel:1;
@@ -447,14 +446,14 @@ struct pipe_rasterizer_state
     unsigned origin_lower_left:1;  /**< Is (0,0) the lower-left corner? */
     unsigned flatshade_first:1;   /**< take color attribute from the first vertex of a primitive */
     unsigned gl_rasterization_rules:1; /**< enable tweaks for GL rasterization?  */
-
-    float line_width;
-    float point_size;           /**< used when no per-vertex size */
-    float point_size_min;        /* XXX - temporary, will go away */
-    float point_size_max;        /* XXX - temporary, will go away */
     ubyte sprite_coord_mode[PIPE_MAX_SHADER_OUTPUTS]; /**< PIPE_SPRITE_COORD_ */
 };
 #endif
+
+static INLINE int pack_float_16_6x(float f) {
+    return ((int)(f * 6.0) & 0xffff);
+}
+
 /* Create a new rasterizer state based on the CSO rasterizer state.
  *
  * This is a very large chunk of state, and covers most of the graphics
@@ -466,6 +465,16 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
                                   const struct pipe_rasterizer_state* state)
 {
     struct r300_rs_state* rs = CALLOC_STRUCT(r300_rs_state);
+
+    /* XXX this is part of HW TCL */
+    /* XXX endian control */
+    rs->vap_control_status = R300_VAP_TCL_BYPASS;
+
+    rs->point_size = pack_float_16_6x(state->point_size) |
+        (pack_float_16_6x(state->point_size) << R300_POINTSIZE_X_SHIFT);
+
+    rs->line_control = pack_float_16_6x(state->line_width) |
+        R300_GA_LINE_CNTL_END_TYPE_COMP;
 
     /* Radeons don't think in "CW/CCW", they think in "front/back". */
     if (state->front_winding == PIPE_WINDING_CW) {
@@ -509,10 +518,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         /* XXX this might need to be scaled up */
         rs->line_stipple_value = state->line_stipple_pattern;
     }
-
-    /* XXX this is part of HW TCL */
-    /* XXX endian control */
-    rs->vap_control_status = R300_VAP_TCL_BYPASS;
 
     return (void*)rs;
 }
