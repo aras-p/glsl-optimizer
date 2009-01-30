@@ -984,11 +984,11 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          ASSERT(texUnit->CurrentRect);
          break;
       case GL_TEXTURE_1D_ARRAY_EXT:
-         texUnit->Current1DArray = newTexObj;
+         _mesa_reference_texobj(&texUnit->Current1DArray, newTexObj);
          ASSERT(texUnit->Current1DArray);
          break;
       case GL_TEXTURE_2D_ARRAY_EXT:
-         texUnit->Current2DArray = newTexObj;
+         _mesa_reference_texobj(&texUnit->Current2DArray, newTexObj);
          ASSERT(texUnit->Current2DArray);
          break;
       default:
