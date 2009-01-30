@@ -53,5 +53,8 @@ void intel_get_cliprects(struct intel_context *intel,
 			 struct drm_clip_rect **cliprects,
 			 unsigned int *num_cliprects,
 			 int *x_off, int *y_off);
+#ifdef I915
+void intelCalcViewport(GLcontext * ctx);
+#endif
 
 #endif /* INTEL_BUFFERS_H */

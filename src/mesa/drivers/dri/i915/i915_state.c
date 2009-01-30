@@ -41,6 +41,7 @@
 #include "intel_fbo.h"
 #include "intel_screen.h"
 #include "intel_batchbuffer.h"
+#include "intel_buffers.h"
 
 #include "i915_context.h"
 #include "i915_reg.h"
@@ -309,7 +310,7 @@ i915DepthMask(GLcontext * ctx, GLboolean flag)
  *  - depthrange
  *  - window pos/size or FBO size
  */
-static void
+void
 intelCalcViewport(GLcontext * ctx)
 {
    struct intel_context *intel = intel_context(ctx);

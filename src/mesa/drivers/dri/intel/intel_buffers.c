@@ -284,14 +284,11 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
                                fb->_NumColorDrawBuffers);
 
    /* update viewport since it depends on window size */
-   if (ctx->Driver.Viewport) {
-      ctx->Driver.Viewport(ctx, ctx->Viewport.X, ctx->Viewport.Y,
-			   ctx->Viewport.Width, ctx->Viewport.Height);
-   }
-   else {
-      ctx->NewState |= _NEW_VIEWPORT;
-   }
-
+#ifdef I915
+   intelCalcViewport(ctx);
+#else
+   ctx->NewState |= _NEW_VIEWPORT;
+#endif
    /* Set state we know depends on drawable parameters:
     */
    if (ctx->Driver.Scissor)
