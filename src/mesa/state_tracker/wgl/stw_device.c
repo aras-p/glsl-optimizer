@@ -28,7 +28,6 @@
 #include <windows.h>
 
 #include "pipe/p_debug.h"
-#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_screen.h"
 
 #include "stw_device.h"
@@ -44,15 +43,14 @@ struct stw_device *stw_dev = NULL;
  * stw_winsys::flush_front_buffer.
  */
 static void 
-st_flush_frontbuffer(struct pipe_winsys *ws,
+st_flush_frontbuffer(struct pipe_screen *screen,
                      struct pipe_surface *surf,
                      void *context_private )
 {
    const struct stw_winsys *stw_winsys = stw_dev->stw_winsys;
-   struct pipe_winsys *winsys = stw_dev->screen->winsys;
    HDC hdc = (HDC)context_private;
    
-   stw_winsys->flush_frontbuffer(winsys, surf, hdc);
+   stw_winsys->flush_frontbuffer(screen, surf, hdc);
 }
 
 
@@ -72,8 +70,7 @@ st_init(const struct stw_winsys *stw_winsys)
    if(!stw_dev->screen)
       goto error1;
 
-   /* XXX: pipe_winsys::flush_frontbuffer should go away */
-   stw_dev->screen->winsys->flush_frontbuffer = st_flush_frontbuffer;
+   stw_dev->screen->flush_frontbuffer = st_flush_frontbuffer;
    
    pixelformat_init();
 
