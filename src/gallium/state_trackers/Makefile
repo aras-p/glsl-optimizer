@@ -2,7 +2,7 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = glx egl
+SUBDIRS = glx
 
 
 default: subdirs
