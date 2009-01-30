@@ -10,7 +10,7 @@
 #include "ws_dri_bufpool.h"
 #include "ws_dri_fencemgr.h"
 
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"

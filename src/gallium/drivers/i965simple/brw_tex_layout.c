@@ -37,7 +37,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "brw_context.h"
@@ -295,7 +295,7 @@ brw_texture_create_screen(struct pipe_screen *screen,
       tex->base.nblocksy[0] = pf_get_nblocksy(&tex->base.block, tex->base.height[0]);
    
       if (brw_miptree_layout(tex))
-	 tex->buffer = ws->_buffer_create(ws, 64,
+	 tex->buffer = ws->buffer_create(ws, 64,
                                           PIPE_BUFFER_USAGE_PIXEL,
                                           tex->stride *
                                           tex->total_nblocksy);

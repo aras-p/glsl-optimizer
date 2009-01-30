@@ -2,7 +2,6 @@
 #include "vl_r16snorm_mc_buf.h"
 #include <assert.h>
 #include <pipe/p_context.h>
-#include <pipe/p_winsys.h>
 #include <pipe/p_screen.h>
 #include <pipe/p_state.h>
 #include <pipe/p_inlines.h>
@@ -649,9 +648,9 @@ static int vlFlush
 
 	pipe->set_framebuffer_state(pipe, &mc->render_target);
 	pipe->set_viewport_state(pipe, &mc->viewport);
-	vs_consts = pipe->winsys->buffer_map
+	vs_consts = pipe_buffer_map
 	(
-		pipe->winsys,
+		pipe->screen,
 		mc->vs_const_buf.buffer,
 		PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
 	);

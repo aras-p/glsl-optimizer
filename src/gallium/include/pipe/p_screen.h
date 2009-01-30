@@ -48,6 +48,8 @@ extern "C" {
 #endif
 
 
+/** Opaque type */
+struct pipe_fence_handle;
 
 /**
  * Gallium screen/adapter context.  Basically everything
@@ -196,6 +198,41 @@ struct pipe_screen {
 
    void (*buffer_destroy)( struct pipe_screen *screen,
 			   struct pipe_buffer *buf );
+
+
+   /**
+    * Do any special operations to ensure frontbuffer contents are
+    * displayed, eg copy fake frontbuffer.
+    */
+   void (*flush_frontbuffer)( struct pipe_screen *screen,
+                              struct pipe_surface *surf,
+                              void *context_private );
+
+
+
+   /** Set ptr = fence, with reference counting */
+   void (*fence_reference)( struct pipe_screen *screen,
+                            struct pipe_fence_handle **ptr,
+                            struct pipe_fence_handle *fence );
+
+   /**
+    * Checks whether the fence has been signalled.
+    * \param flags  driver-specific meaning
+    * \return zero on success.
+    */
+   int (*fence_signalled)( struct pipe_screen *screen,
+                           struct pipe_fence_handle *fence,
+                           unsigned flag );
+
+   /**
+    * Wait for the fence to finish.
+    * \param flags  driver-specific meaning
+    * \return zero on success.
+    */
+   int (*fence_finish)( struct pipe_screen *screen,
+                        struct pipe_fence_handle *fence,
+                        unsigned flag );
+
 };
 
 

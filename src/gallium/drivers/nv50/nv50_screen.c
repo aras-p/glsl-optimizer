@@ -242,7 +242,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_data  (so, 8);
 
 	/* Shared constant buffer */
-	screen->constbuf = ws->_buffer_create(ws, 0, 0, 128 * 4 * 4);
+	screen->constbuf = ws->buffer_create(ws, 0, 0, 128 * 4 * 4);
 	if (nvws->res_init(&screen->vp_data_heap, 0, 128)) {
 		NOUVEAU_ERR("Error initialising constant buffer\n");
 		nv50_screen_destroy(&screen->pipe);
@@ -261,7 +261,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	 * blocks.  At some point we *may* want to go the NVIDIA way of doing
 	 * things?
 	 */
-	screen->tic = ws->_buffer_create(ws, 0, 0, 32 * 8 * 4);
+	screen->tic = ws->buffer_create(ws, 0, 0, 32 * 8 * 4);
 	so_method(so, screen->tesla, 0x1280, 3);
 	so_reloc (so, screen->tic, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
@@ -275,7 +275,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
 	so_data  (so, 0x00000800);
 
-	screen->tsc = ws->_buffer_create(ws, 0, 0, 32 * 8 * 4);
+	screen->tsc = ws->buffer_create(ws, 0, 0, 32 * 8 * 4);
 	so_method(so, screen->tesla, 0x1280, 3);
 	so_reloc (so, screen->tsc, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);

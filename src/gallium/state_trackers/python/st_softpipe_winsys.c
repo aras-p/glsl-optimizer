@@ -36,7 +36,7 @@
  */
 
 
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"/* port to just p_screen */
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"

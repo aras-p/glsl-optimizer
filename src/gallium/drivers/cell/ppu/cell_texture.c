@@ -34,7 +34,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -112,7 +112,7 @@ cell_texture_create(struct pipe_screen *screen,
 
    cell_texture_layout(ct);
 
-   ct->buffer = ws->_buffer_create(ws, 32, PIPE_BUFFER_USAGE_PIXEL,
+   ct->buffer = ws->buffer_create(ws, 32, PIPE_BUFFER_USAGE_PIXEL,
                                    ct->buffer_size);
 
    if (!ct->buffer) {
@@ -324,11 +324,11 @@ cell_twiddle_texture(struct pipe_screen *screen,
             /* allocate buffer for tiled data now */
             struct pipe_winsys *ws = screen->winsys;
             uint bytes = bufWidth * bufHeight * 4 * numFaces;
-            ct->tiled_buffer[level] = ws->_buffer_create(ws, 16,
+            ct->tiled_buffer[level] = ws->buffer_create(ws, 16,
                                                          PIPE_BUFFER_USAGE_PIXEL,
                                                          bytes);
             /* and map it */
-            ct->tiled_mapped[level] = ws->_buffer_map(ws, ct->tiled_buffer[level],
+            ct->tiled_mapped[level] = ws->buffer_map(ws, ct->tiled_buffer[level],
                                                       PIPE_BUFFER_USAGE_GPU_READ);
          }
          dst = (uint *) ((ubyte *) ct->tiled_mapped[level] + offset);

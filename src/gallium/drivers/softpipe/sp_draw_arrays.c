@@ -33,7 +33,7 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_inlines.h"
 
 #include "sp_context.h"
@@ -50,7 +50,7 @@ softpipe_map_constant_buffers(struct softpipe_context *sp)
    uint i;
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
       if (sp->constants[i].buffer && sp->constants[i].buffer->size)
-         sp->mapped_constants[i] = ws->_buffer_map(ws, sp->constants[i].buffer,
+         sp->mapped_constants[i] = ws->buffer_map(ws, sp->constants[i].buffer,
                                                   PIPE_BUFFER_USAGE_CPU_READ);
    }
 
@@ -74,7 +74,7 @@ softpipe_unmap_constant_buffers(struct softpipe_context *sp)
 
    for (i = 0; i < 2; i++) {
       if (sp->constants[i].buffer && sp->constants[i].buffer->size)
-         ws->_buffer_unmap(ws, sp->constants[i].buffer);
+         ws->buffer_unmap(ws, sp->constants[i].buffer);
       sp->mapped_constants[i] = NULL;
    }
 }

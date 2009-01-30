@@ -88,14 +88,14 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 			size  = align(size, 64);
 			size *= align(pt->height[l], 8) * pt->block.size;
 
-			lvl->image[i] = ws->_buffer_create(ws, 256, 0, size);
+			lvl->image[i] = ws->buffer_create(ws, 256, 0, size);
 			lvl->image_offset[i] = mt->total_size;
 
 			mt->total_size += size;
 		}
 	}
 
-	mt->buffer = ws->_buffer_create(ws, 256, usage, mt->total_size);
+	mt->buffer = ws->buffer_create(ws, 256, usage, mt->total_size);
 	if (!mt->buffer) {
 		FREE(mt);
 		return NULL;

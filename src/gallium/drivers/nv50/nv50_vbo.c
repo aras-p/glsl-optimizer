@@ -153,7 +153,7 @@ nv50_draw_elements(struct pipe_context *pipe,
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct pipe_winsys *ws = pipe->winsys;
-	void *map = ws->_buffer_map(ws, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
+	void *map = ws->buffer_map(ws, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
 
 	nv50_state_validate(nv50);
 

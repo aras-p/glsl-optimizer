@@ -29,7 +29,7 @@
  * Authors: Keith Whitwell <keithw-at-tungstengraphics-dot-com>
  */
 
-#include <pipe/p_winsys.h>
+#include "pipe/internal/p_winsys_screen.h"
 #include <pipe/p_screen.h>
 #include <pipe/p_defines.h>
 #include <pipe/p_format.h>

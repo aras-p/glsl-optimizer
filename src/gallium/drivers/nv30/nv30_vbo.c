@@ -116,7 +116,7 @@ nv30_vbo_static_attrib(struct nv30_context *nv30, struct nouveau_stateobj *so,
 	if (nv30_vbo_format_to_hw(ve->src_format, &type, &ncomp))
 		return FALSE;
 
-	map  = ws->_buffer_map(ws, vb->buffer, PIPE_BUFFER_USAGE_CPU_READ);
+	map  = ws->buffer_map(ws, vb->buffer, PIPE_BUFFER_USAGE_CPU_READ);
 	map += vb->buffer_offset + ve->src_offset;
 
 	switch (type) {
@@ -148,17 +148,17 @@ nv30_vbo_static_attrib(struct nv30_context *nv30, struct nouveau_stateobj *so,
 			so_data  (so, fui(v[0]));
 			break;
 		default:
-			ws->_buffer_unmap(ws, vb->buffer);
+			ws->buffer_unmap(ws, vb->buffer);
 			return FALSE;
 		}
 	}
 		break;
 	default:
-		ws->_buffer_unmap(ws, vb->buffer);
+		ws->buffer_unmap(ws, vb->buffer);
 		return FALSE;
 	}
 
-	ws->_buffer_unmap(ws, vb->buffer);
+	ws->buffer_unmap(ws, vb->buffer);
 
 	return TRUE;
 }
@@ -371,7 +371,7 @@ nv30_draw_elements_inline(struct pipe_context *pipe,
 	struct pipe_winsys *ws = pipe->winsys;
 	void *map;
 
-	map = ws->_buffer_map(ws, ib, PIPE_BUFFER_USAGE_CPU_READ);
+	map = ws->buffer_map(ws, ib, PIPE_BUFFER_USAGE_CPU_READ);
 	if (!ib) {
 		NOUVEAU_ERR("failed mapping ib\n");
 		return FALSE;
@@ -392,7 +392,7 @@ nv30_draw_elements_inline(struct pipe_context *pipe,
 		break;
 	}
 
-	ws->_buffer_unmap(ws, ib);
+	ws->buffer_unmap(ws, ib);
 	return TRUE;
 }
 

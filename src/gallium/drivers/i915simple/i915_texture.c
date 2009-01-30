@@ -34,7 +34,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -605,7 +605,7 @@ i915_texture_create(struct pipe_screen *screen,
 
    tex_size = tex->stride * tex->total_nblocksy;
 
-   tex->buffer = ws->_buffer_create(ws, 64,
+   tex->buffer = ws->buffer_create(ws, 64,
                                     PIPE_BUFFER_USAGE_PIXEL,
                                     tex_size);
 
@@ -613,10 +613,10 @@ i915_texture_create(struct pipe_screen *screen,
       goto fail;
 
 #if 0
-   void *ptr = ws->_buffer_map(ws, tex->buffer,
+   void *ptr = ws->buffer_map(ws, tex->buffer,
       PIPE_BUFFER_USAGE_CPU_WRITE);
    memset(ptr, 0x80, tex_size);
-   ws->_buffer_unmap(ws, tex->buffer);
+   ws->buffer_unmap(ws, tex->buffer);
 #endif
 
    return &tex->base;

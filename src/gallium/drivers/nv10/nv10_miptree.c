@@ -65,7 +65,7 @@ nv10_miptree_create(struct pipe_screen *screen, const struct pipe_texture *pt)
 
 	nv10_miptree_layout(mt);
 
-	mt->buffer = ws->_buffer_create(ws, 256, PIPE_BUFFER_USAGE_PIXEL,
+	mt->buffer = ws->buffer_create(ws, 256, PIPE_BUFFER_USAGE_PIXEL,
 					   mt->total_size);
 	if (!mt->buffer) {
 		FREE(mt);

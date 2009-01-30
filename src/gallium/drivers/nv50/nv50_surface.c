@@ -22,7 +22,7 @@
 
 #include "nv50_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_inlines.h"
 
 #include "util/u_tile.h"
@@ -65,7 +65,7 @@ nv50_surface_map(struct pipe_screen *screen, struct pipe_surface *ps,
 {
 	struct pipe_winsys *ws = screen->winsys;
 
-	return ws->_buffer_map(ws, ps->buffer, flags);
+	return ws->buffer_map(ws, ps->buffer, flags);
 }
 
 static void
@@ -73,7 +73,7 @@ nv50_surface_unmap(struct pipe_screen *pscreen, struct pipe_surface *ps)
 {
 	struct pipe_winsys *ws = pscreen->winsys;
 
-	ws->_buffer_unmap(ws, ps->buffer);
+	ws->buffer_unmap(ws, ps->buffer);
 }
 
 void

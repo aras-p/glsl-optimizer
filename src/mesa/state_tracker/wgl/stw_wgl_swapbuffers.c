@@ -27,7 +27,7 @@
 
 #include <windows.h>
 
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "state_tracker/st_context.h"

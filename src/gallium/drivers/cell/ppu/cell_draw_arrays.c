@@ -33,7 +33,7 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_inlines.h"
 
 #include "cell_context.h"
@@ -52,7 +52,7 @@ cell_map_constant_buffers(struct cell_context *sp)
    uint i;
    for (i = 0; i < 2; i++) {
       if (sp->constants[i].size) {
-         sp->mapped_constants[i] = ws->_buffer_map(ws, sp->constants[i].buffer,
+         sp->mapped_constants[i] = ws->buffer_map(ws, sp->constants[i].buffer,
                                                    PIPE_BUFFER_USAGE_CPU_READ);
          cell_flush_buffer_range(sp, sp->mapped_constants[i], 
                                  sp->constants[i].buffer->size);
@@ -71,7 +71,7 @@ cell_unmap_constant_buffers(struct cell_context *sp)
    uint i;
    for (i = 0; i < 2; i++) {
       if (sp->constants[i].size)
-         ws->_buffer_unmap(ws, sp->constants[i].buffer);
+         ws->buffer_unmap(ws, sp->constants[i].buffer);
       sp->mapped_constants[i] = NULL;
    }
 }

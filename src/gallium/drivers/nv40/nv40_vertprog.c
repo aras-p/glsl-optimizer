@@ -980,7 +980,7 @@ check_gpu_resources:
 		float *map = NULL;
 
 		if (constbuf) {
-			map = ws->_buffer_map(ws, constbuf,
+			map = ws->buffer_map(ws, constbuf,
 					     PIPE_BUFFER_USAGE_CPU_READ);
 		}
 
@@ -1002,7 +1002,7 @@ check_gpu_resources:
 		}
 
 		if (constbuf)
-			ws->_buffer_unmap(ws, constbuf);
+			ws->buffer_unmap(ws, constbuf);
 	}
 
 	/* Upload vtxprog */

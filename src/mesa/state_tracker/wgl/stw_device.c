@@ -28,7 +28,7 @@
 #include <windows.h>
 
 #include "pipe/p_debug.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_screen.h"
 
 #include "stw_device.h"

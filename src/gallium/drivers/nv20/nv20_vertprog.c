@@ -749,7 +749,7 @@ nv20_vertprog_validate(struct nv20_context *nv20)
 		float *map = NULL;
 
 		if (constbuf) {
-			map = ws->_buffer_map(ws, constbuf,
+			map = ws->buffer_map(ws, constbuf,
 					     PIPE_BUFFER_USAGE_CPU_READ);
 		}
 
@@ -771,7 +771,7 @@ nv20_vertprog_validate(struct nv20_context *nv20)
 		}
 
 		if (constbuf) {
-			ws->_buffer_unmap(ws, constbuf);
+			ws->buffer_unmap(ws, constbuf);
 		}
 	}
 

@@ -38,7 +38,7 @@
 #include "brw_util.h"
 #include "brw_wm.h"
 #include "pipe/p_state.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -256,13 +256,13 @@ static void upload_constant_buffer(struct brw_context *brw)
       /* FIXME: buffer size is num_consts + num_immediates */
       if (brw->vs.prog_data->num_consts) {
          /* map the vertex constant buffer and copy to curbe: */
-         void *data = ws->_buffer_map(ws, cbuffer->buffer, 0);
+         void *data = ws->buffer_map(ws, cbuffer->buffer, 0);
          /* FIXME: this is wrong. the cbuffer->buffer->size currently
           * represents size of consts + immediates. so if we'll
           * have both we'll copy over the end of the buffer
           * with the subsequent memcpy */
          memcpy(&buf[offset], data, cbuffer->buffer->size);
-         ws->_buffer_unmap(ws, cbuffer->buffer);
+         ws->buffer_unmap(ws, cbuffer->buffer);
          offset += cbuffer->buffer->size;
       }
       /*immediates*/

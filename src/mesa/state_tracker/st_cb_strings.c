@@ -36,7 +36,8 @@
 #include "main/version.h"
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
-#include "pipe/p_winsys.h"
+/* We want the name of the winsys we're running on*/
+#include "pipe/internal/p_winsys_screen.h"
 #include "st_context.h"
 #include "st_cb_strings.h"
 

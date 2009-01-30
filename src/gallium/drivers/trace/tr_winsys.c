@@ -118,7 +118,7 @@ trace_winsys_surface_buffer_create(struct pipe_winsys *_winsys,
    trace_dump_arg(format, format);
    trace_dump_arg(uint, usage);
 
-   result = winsys->_surface_buffer_create(winsys,
+   result = winsys->surface_buffer_create(winsys,
                                           width, height,
                                           format,
                                           usage,
@@ -153,7 +153,7 @@ trace_winsys_buffer_create(struct pipe_winsys *_winsys,
    trace_dump_arg(uint, usage);
    trace_dump_arg(uint, size);
 
-   buffer = winsys->_buffer_create(winsys, alignment, usage, size);
+   buffer = winsys->buffer_create(winsys, alignment, usage, size);
    
    trace_dump_ret(ptr, buffer);
    
@@ -162,10 +162,10 @@ trace_winsys_buffer_create(struct pipe_winsys *_winsys,
    /* Zero the buffer to avoid dumping uninitialized memory */
    if(buffer->usage & PIPE_BUFFER_USAGE_CPU_WRITE) {
       void *map;
-      map = winsys->_buffer_map(winsys, buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
+      map = winsys->buffer_map(winsys, buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
       if(map) {
          memset(map, 0, buffer->size);
-         winsys->_buffer_unmap(winsys, buffer);
+         winsys->buffer_unmap(winsys, buffer);
       }
    }
    
@@ -190,7 +190,7 @@ trace_winsys_user_buffer_create(struct pipe_winsys *_winsys,
    trace_dump_arg_end();
    trace_dump_arg(uint, size);
 
-   result = winsys->_user_buffer_create(winsys, data, size);
+   result = winsys->user_buffer_create(winsys, data, size);
    
    trace_dump_ret(ptr, result);
    
@@ -216,7 +216,7 @@ trace_winsys_user_buffer_update(struct pipe_winsys *_winsys,
    const void *map;
    
    if(buffer && buffer->usage & TRACE_BUFFER_USAGE_USER) {
-      map = winsys->_buffer_map(winsys, buffer, PIPE_BUFFER_USAGE_CPU_READ);
+      map = winsys->buffer_map(winsys, buffer, PIPE_BUFFER_USAGE_CPU_READ);
       if(map) {
          trace_dump_call_begin("pipe_winsys", "buffer_write");
          
@@ -234,7 +234,7 @@ trace_winsys_user_buffer_update(struct pipe_winsys *_winsys,
       
          trace_dump_call_end();
          
-         winsys->_buffer_unmap(winsys, buffer);
+         winsys->buffer_unmap(winsys, buffer);
       }
    }
 }
@@ -249,7 +249,7 @@ trace_winsys_buffer_map(struct pipe_winsys *_winsys,
    struct pipe_winsys *winsys = tr_ws->winsys;
    void *map;
    
-   map = winsys->_buffer_map(winsys, buffer, usage);
+   map = winsys->buffer_map(winsys, buffer, usage);
    if(map) {
       if(usage & PIPE_BUFFER_USAGE_CPU_WRITE) {
          assert(!hash_table_get(tr_ws->buffer_maps, buffer));
@@ -290,7 +290,7 @@ trace_winsys_buffer_unmap(struct pipe_winsys *_winsys,
       hash_table_remove(tr_ws->buffer_maps, buffer);
    }
    
-   winsys->_buffer_unmap(winsys, buffer);
+   winsys->buffer_unmap(winsys, buffer);
 }
 
 
@@ -306,7 +306,7 @@ trace_winsys_buffer_destroy(struct pipe_winsys *_winsys,
    trace_dump_arg(ptr, winsys);
    trace_dump_arg(ptr, buffer);
 
-   winsys->_buffer_destroy(winsys, buffer);
+   winsys->buffer_destroy(winsys, buffer);
    
    trace_dump_call_end();
 }
@@ -420,12 +420,12 @@ trace_winsys_create(struct pipe_winsys *winsys)
    tr_ws->base.destroy = trace_winsys_destroy;
    tr_ws->base.get_name = trace_winsys_get_name;
    tr_ws->base.flush_frontbuffer = trace_winsys_flush_frontbuffer;
-   tr_ws->base._surface_buffer_create = trace_winsys_surface_buffer_create;
-   tr_ws->base._buffer_create = trace_winsys_buffer_create;
-   tr_ws->base._user_buffer_create = trace_winsys_user_buffer_create;
-   tr_ws->base._buffer_map = trace_winsys_buffer_map;
-   tr_ws->base._buffer_unmap = trace_winsys_buffer_unmap;
-   tr_ws->base._buffer_destroy = trace_winsys_buffer_destroy;
+   tr_ws->base.surface_buffer_create = trace_winsys_surface_buffer_create;
+   tr_ws->base.buffer_create = trace_winsys_buffer_create;
+   tr_ws->base.user_buffer_create = trace_winsys_user_buffer_create;
+   tr_ws->base.buffer_map = trace_winsys_buffer_map;
+   tr_ws->base.buffer_unmap = trace_winsys_buffer_unmap;
+   tr_ws->base.buffer_destroy = trace_winsys_buffer_destroy;
    tr_ws->base.fence_reference = trace_winsys_fence_reference;
    tr_ws->base.fence_signalled = trace_winsys_fence_signalled;
    tr_ws->base.fence_finish = trace_winsys_fence_finish;

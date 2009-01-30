@@ -161,7 +161,7 @@ nv30_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
 
 	assert(surface_to_map);
 
-	map = ws->_buffer_map(ws, surface_to_map->buffer, flags);
+	map = ws->buffer_map(ws, surface_to_map->buffer, flags);
 	if (!map)
 		return NULL;
 
@@ -189,7 +189,7 @@ nv30_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
 
 	assert(surface_to_unmap);
 
-	ws->_buffer_unmap(ws, surface_to_unmap->buffer);
+	ws->buffer_unmap(ws, surface_to_unmap->buffer);
 
 	if (surface_to_unmap != surface) {
 		struct nv30_screen *nvscreen = nv30_screen(screen);

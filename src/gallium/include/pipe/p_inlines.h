@@ -31,7 +31,6 @@
 #include "p_context.h"
 #include "p_defines.h"
 #include "p_screen.h"
-#include "p_winsys.h"
 
 
 #ifdef __cplusplus
@@ -129,26 +128,20 @@ pipe_texture_release(struct pipe_texture **ptr)
 
 
 /**
- * Convenience wrappers for winsys buffer functions.
+ * Convenience wrappers for screen buffer functions.
  */
 
 static INLINE struct pipe_buffer *
 pipe_buffer_create( struct pipe_screen *screen,
                     unsigned alignment, unsigned usage, unsigned size )
 {
-   if (screen->buffer_create)
-      return screen->buffer_create(screen, alignment, usage, size);
-   else
-      return screen->winsys->_buffer_create(screen->winsys, alignment, usage, size);
+   return screen->buffer_create(screen, alignment, usage, size);
 }
 
 static INLINE struct pipe_buffer *
 pipe_user_buffer_create( struct pipe_screen *screen, void *ptr, unsigned size )
 {
-   if (screen->user_buffer_create)
-      return screen->user_buffer_create(screen, ptr, size);
-   else
-      return screen->winsys->_user_buffer_create(screen->winsys, ptr, size);
+   return screen->user_buffer_create(screen, ptr, size);
 }
 
 static INLINE void *
@@ -156,20 +149,14 @@ pipe_buffer_map(struct pipe_screen *screen,
                 struct pipe_buffer *buf,
                 unsigned usage)
 {
-   if (screen->buffer_map)
-      return screen->buffer_map(screen, buf, usage);
-   else
-      return screen->winsys->_buffer_map(screen->winsys, buf, usage);
+   return screen->buffer_map(screen, buf, usage);
 }
 
 static INLINE void
 pipe_buffer_unmap(struct pipe_screen *screen,
                   struct pipe_buffer *buf)
 {
-   if (screen->buffer_unmap)
-      screen->buffer_unmap(screen, buf);
-   else
-      screen->winsys->_buffer_unmap(screen->winsys, buf);
+   screen->buffer_unmap(screen, buf);
 }
 
 /* XXX: thread safety issues!
@@ -187,10 +174,7 @@ pipe_buffer_reference(struct pipe_screen *screen,
    if (*ptr) {
       assert((*ptr)->refcount);
       if(--(*ptr)->refcount == 0) {
-         if (screen->buffer_destroy)
-            screen->buffer_destroy( screen, *ptr );
-         else
-            screen->winsys->_buffer_destroy( screen->winsys, *ptr );
+         screen->buffer_destroy( screen, *ptr );
       }
    }
 

@@ -803,7 +803,7 @@ nv30_fragprog_upload(struct nv30_context *nv30,
 	uint32_t *map;
 	int i;
 
-	map = ws->_buffer_map(ws, fp->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
+	map = ws->buffer_map(ws, fp->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
 
 #if 0
 	for (i = 0; i < fp->insn_len; i++) {
@@ -825,7 +825,7 @@ nv30_fragprog_upload(struct nv30_context *nv30,
 		}
 	}
 
-	ws->_buffer_unmap(ws, fp->buffer);
+	ws->buffer_unmap(ws, fp->buffer);
 }
 
 static boolean
@@ -849,7 +849,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
 		return FALSE;
 	}
 
-	fp->buffer = ws->_buffer_create(ws, 0x100, 0, fp->insn_len * 4);
+	fp->buffer = ws->buffer_create(ws, 0x100, 0, fp->insn_len * 4);
 	nv30_fragprog_upload(nv30, fp);
 
 	so = so_new(8, 1);
@@ -869,7 +869,7 @@ update_constants:
 	if (fp->nr_consts) {
 		float *map;
 		
-		map = ws->_buffer_map(ws, constbuf, PIPE_BUFFER_USAGE_CPU_READ);
+		map = ws->buffer_map(ws, constbuf, PIPE_BUFFER_USAGE_CPU_READ);
 		for (i = 0; i < fp->nr_consts; i++) {
 			struct nv30_fragment_program_data *fpd = &fp->consts[i];
 			uint32_t *p = &fp->insn[fpd->offset];
@@ -880,7 +880,7 @@ update_constants:
 			memcpy(p, cb, 4 * sizeof(float));
 			new_consts = TRUE;
 		}
-		ws->_buffer_unmap(ws, constbuf);
+		ws->buffer_unmap(ws, constbuf);
 
 		if (new_consts)
 			nv30_fragprog_upload(nv30, fp);
