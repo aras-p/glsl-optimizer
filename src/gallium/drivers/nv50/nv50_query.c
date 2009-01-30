@@ -47,7 +47,7 @@ nv50_query_create(struct pipe_context *pipe, unsigned type)
 	assert (q->type == PIPE_QUERY_OCCLUSION_COUNTER);
 	q->type = type;
 
-	q->buffer = ws->buffer_create(ws, 256, 0, 16);
+	q->buffer = ws->_buffer_create(ws, 256, 0, 16);
 	if (!q->buffer) {
 		FREE(q);
 		return NULL;
@@ -62,7 +62,7 @@ nv50_query_destroy(struct pipe_context *pipe, struct pipe_query *pq)
 	struct nv50_query *q = nv50_query(pq);
 
 	if (q) {
-		pipe_buffer_reference(pipe, &q->buffer, NULL);
+		pipe_buffer_reference(pipe->screen, &q->buffer, NULL);
 		FREE(q);
 	}
 }
@@ -107,11 +107,11 @@ nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 	 */
 
 	if (!q->ready) {
-		uint32_t *map = ws->buffer_map(ws, q->buffer,
+		uint32_t *map = ws->_buffer_map(ws, q->buffer,
 					       PIPE_BUFFER_USAGE_CPU_READ);
 		q->result = map[1];
 		q->ready = TRUE;
-		ws->buffer_unmap(ws, q->buffer);
+		ws->_buffer_unmap(ws, q->buffer);
 	}
 
 	*result = q->result;

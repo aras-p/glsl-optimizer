@@ -605,18 +605,18 @@ i915_texture_create(struct pipe_screen *screen,
 
    tex_size = tex->stride * tex->total_nblocksy;
 
-   tex->buffer = ws->buffer_create(ws, 64,
-				   PIPE_BUFFER_USAGE_PIXEL,
-				   tex_size);
+   tex->buffer = ws->_buffer_create(ws, 64,
+                                    PIPE_BUFFER_USAGE_PIXEL,
+                                    tex_size);
 
    if (!tex->buffer)
       goto fail;
 
 #if 0
-   void *ptr = ws->buffer_map(ws, tex->buffer,
+   void *ptr = ws->_buffer_map(ws, tex->buffer,
       PIPE_BUFFER_USAGE_CPU_WRITE);
    memset(ptr, 0x80, tex_size);
-   ws->buffer_unmap(ws, tex->buffer);
+   ws->_buffer_unmap(ws, tex->buffer);
 #endif
 
    return &tex->base;

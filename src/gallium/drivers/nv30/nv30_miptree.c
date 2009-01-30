@@ -93,7 +93,7 @@ nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 
 	nv30_miptree_layout(mt);
 
-	mt->buffer = ws->buffer_create(ws, 256,
+	mt->buffer = ws->_buffer_create(ws, 256,
 				       PIPE_BUFFER_USAGE_PIXEL |
 				       NOUVEAU_BUFFER_USAGE_TEXTURE,
 				       mt->total_size);
@@ -181,7 +181,7 @@ nv30_miptree_surface_del(struct pipe_screen *pscreen,
 		return;
 
 	pipe_texture_reference(&ps->texture, NULL);
-	pipe_buffer_reference(pscreen->winsys, &ps->buffer, NULL);
+	pipe_buffer_reference(pscreen, &ps->buffer, NULL);
 	FREE(ps);
 }
 

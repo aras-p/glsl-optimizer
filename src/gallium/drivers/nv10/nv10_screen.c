@@ -122,7 +122,7 @@ nv10_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
 	struct pipe_winsys *ws = screen->winsys;
 	void *map;
 
-	map = ws->buffer_map(ws, surface->buffer, flags);
+	map = ws->_buffer_map(ws, surface->buffer, flags);
 	if (!map)
 		return NULL;
 
@@ -134,7 +134,7 @@ nv10_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
 {
 	struct pipe_winsys *ws = screen->winsys;
 
-	ws->buffer_unmap(ws, surface->buffer);
+	ws->_buffer_unmap(ws, surface->buffer);
 }
 
 static void

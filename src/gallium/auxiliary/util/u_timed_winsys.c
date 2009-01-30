@@ -121,7 +121,8 @@ timed_buffer_create(struct pipe_winsys *winsys,
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
    uint64_t start = time_start();
 
-   struct pipe_buffer *buf = backend->buffer_create( backend, alignment, usage, size );
+   struct pipe_buffer *buf =
+      backend->_buffer_create( backend, alignment, usage, size );
 
    time_finish(winsys, start, 0, __FUNCTION__);
    
@@ -139,7 +140,7 @@ timed_user_buffer_create(struct pipe_winsys *winsys,
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
    uint64_t start = time_start();
 
-   struct pipe_buffer *buf = backend->user_buffer_create( backend, data, bytes );
+   struct pipe_buffer *buf = backend->_user_buffer_create( backend, data, bytes );
 
    time_finish(winsys, start, 1, __FUNCTION__);
    
@@ -155,7 +156,7 @@ timed_buffer_map(struct pipe_winsys *winsys,
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
    uint64_t start = time_start();
 
-   void *map = backend->buffer_map( backend, buf, flags );
+   void *map = backend->_buffer_map( backend, buf, flags );
 
    time_finish(winsys, start, 2, __FUNCTION__);
    
@@ -170,7 +171,7 @@ timed_buffer_unmap(struct pipe_winsys *winsys,
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
    uint64_t start = time_start();
 
-   backend->buffer_unmap( backend, buf );
+   backend->_buffer_unmap( backend, buf );
 
    time_finish(winsys, start, 3, __FUNCTION__);
 }
@@ -183,7 +184,7 @@ timed_buffer_destroy(struct pipe_winsys *winsys,
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
    uint64_t start = time_start();
 
-   backend->buffer_destroy( backend, buf );
+   backend->_buffer_destroy( backend, buf );
 
    time_finish(winsys, start, 4, __FUNCTION__);
 }
@@ -215,7 +216,7 @@ timed_surface_buffer_create(struct pipe_winsys *winsys,
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
    uint64_t start = time_start();
 
-   struct pipe_buffer *ret = backend->surface_buffer_create( backend, width, height, 
+   struct pipe_buffer *ret = backend->_surface_buffer_create( backend, width, height, 
                                                              format, usage, stride );
 
    time_finish(winsys, start, 7, __FUNCTION__);
@@ -295,14 +296,14 @@ struct pipe_winsys *u_timed_winsys_create( struct pipe_winsys *backend )
 {
    struct timed_winsys *ws = CALLOC_STRUCT(timed_winsys);
    
-   ws->base.user_buffer_create = timed_user_buffer_create;
-   ws->base.buffer_map = timed_buffer_map;
-   ws->base.buffer_unmap = timed_buffer_unmap;
-   ws->base.buffer_destroy = timed_buffer_destroy;
-   ws->base.buffer_create = timed_buffer_create;
+   ws->base._user_buffer_create = timed_user_buffer_create;
+   ws->base._buffer_map = timed_buffer_map;
+   ws->base._buffer_unmap = timed_buffer_unmap;
+   ws->base._buffer_destroy = timed_buffer_destroy;
+   ws->base._buffer_create = timed_buffer_create;
+   ws->base._surface_buffer_create = timed_surface_buffer_create;
    ws->base.flush_frontbuffer = timed_flush_frontbuffer;
    ws->base.get_name = timed_get_name;
-   ws->base.surface_buffer_create = timed_surface_buffer_create;
    ws->base.fence_reference = timed_fence_reference;
    ws->base.fence_signalled = timed_fence_signalled;
    ws->base.fence_finish = timed_fence_finish;

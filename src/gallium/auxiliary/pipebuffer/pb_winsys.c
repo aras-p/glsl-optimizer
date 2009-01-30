@@ -184,8 +184,8 @@ pb_winsys_buffer_destroy(struct pipe_winsys *winsys,
 void 
 pb_init_winsys(struct pipe_winsys *winsys)
 {
-   winsys->user_buffer_create = pb_winsys_user_buffer_create;
-   winsys->buffer_map = pb_winsys_buffer_map;
-   winsys->buffer_unmap = pb_winsys_buffer_unmap;
-   winsys->buffer_destroy = pb_winsys_buffer_destroy;
+   winsys->_user_buffer_create = pb_winsys_user_buffer_create;
+   winsys->_buffer_map = pb_winsys_buffer_map;
+   winsys->_buffer_unmap = pb_winsys_buffer_unmap;
+   winsys->_buffer_destroy = pb_winsys_buffer_destroy;
 }

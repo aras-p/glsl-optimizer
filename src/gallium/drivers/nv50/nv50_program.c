@@ -1581,11 +1581,11 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 	}
 
 	if (p->param_nr) {
-		float *map = ws->buffer_map(ws, nv50->constbuf[p->type],
+		float *map = ws->_buffer_map(ws, nv50->constbuf[p->type],
 					    PIPE_BUFFER_USAGE_CPU_READ);
 		nv50_program_upload_data(nv50, map, p->data->start,
 					 p->param_nr);
-		ws->buffer_unmap(ws, nv50->constbuf[p->type]);
+		ws->_buffer_unmap(ws, nv50->constbuf[p->type]);
 	}
 
 	if (p->immd_nr) {
@@ -1606,7 +1606,7 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 	boolean upload = FALSE;
 
 	if (!p->buffer) {
-		p->buffer = ws->buffer_create(ws, 0x100, 0, p->exec_size * 4);
+		p->buffer = ws->_buffer_create(ws, 0x100, 0, p->exec_size * 4);
 		upload = TRUE;
 	}
 

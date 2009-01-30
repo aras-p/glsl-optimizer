@@ -25,7 +25,7 @@ boolean nv20_draw_elements( struct pipe_context *pipe,
 	for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
 		if (nv20->vtxbuf[i].buffer) {
 			void *buf
-				= pipe->winsys->buffer_map(pipe->winsys,
+				= pipe->winsys->_buffer_map(pipe->winsys,
 						nv20->vtxbuf[i].buffer,
 						PIPE_BUFFER_USAGE_CPU_READ);
 			draw_set_mapped_vertex_buffer(draw, i, buf);
@@ -34,7 +34,7 @@ boolean nv20_draw_elements( struct pipe_context *pipe,
 	/* Map index buffer, if present */
 	if (indexBuffer) {
 		void *mapped_indexes
-			= pipe->winsys->buffer_map(pipe->winsys, indexBuffer,
+			= pipe->winsys->_buffer_map(pipe->winsys, indexBuffer,
 					PIPE_BUFFER_USAGE_CPU_READ);
 		draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
 	}
@@ -55,12 +55,12 @@ boolean nv20_draw_elements( struct pipe_context *pipe,
 	 */
 	for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
 		if (nv20->vtxbuf[i].buffer) {
-			pipe->winsys->buffer_unmap(pipe->winsys, nv20->vtxbuf[i].buffer);
+			pipe->winsys->_buffer_unmap(pipe->winsys, nv20->vtxbuf[i].buffer);
 			draw_set_mapped_vertex_buffer(draw, i, NULL);
 		}
 	}
 	if (indexBuffer) {
-		pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
+		pipe->winsys->_buffer_unmap(pipe->winsys, indexBuffer);
 		draw_set_mapped_element_buffer(draw, 0, NULL);
 	}
 

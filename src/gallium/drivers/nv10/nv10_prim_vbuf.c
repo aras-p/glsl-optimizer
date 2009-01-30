@@ -111,11 +111,11 @@ nv10_vbuf_render_allocate_vertices( struct vbuf_render *render,
 	size_t size = (size_t)vertex_size * (size_t)nr_vertices;
 
 	assert(!nv10_render->buffer);
-	nv10_render->buffer = winsys->buffer_create(winsys, 64, PIPE_BUFFER_USAGE_VERTEX, size);
+	nv10_render->buffer = winsys->_buffer_create(winsys, 64, PIPE_BUFFER_USAGE_VERTEX, size);
 
 	nv10->dirty |= NV10_NEW_VTXARRAYS;
 
-	return winsys->buffer_map(winsys, 
+	return winsys->_buffer_map(winsys, 
 			nv10_render->buffer, 
 			PIPE_BUFFER_USAGE_CPU_WRITE);
 }
@@ -187,7 +187,7 @@ nv10_vbuf_render_release_vertices( struct vbuf_render *render,
 	struct pipe_screen *pscreen = &nv10->screen->pipe;
 
 	assert(nv10_render->buffer);
-	winsys->buffer_unmap(winsys, nv10_render->buffer);
+	winsys->_buffer_unmap(winsys, nv10_render->buffer);
 	pipe_buffer_reference(pscreen, &nv10_render->buffer, NULL);
 }
 

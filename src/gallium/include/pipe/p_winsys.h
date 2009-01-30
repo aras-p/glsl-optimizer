@@ -90,7 +90,7 @@ struct pipe_winsys
     * alignment indicates the client's alignment requirements, eg for
     * SSE instructions.
     */
-   struct pipe_buffer *(*buffer_create)( struct pipe_winsys *ws, 
+   struct pipe_buffer *(*_buffer_create)( struct pipe_winsys *ws, 
                                          unsigned alignment, 
                                          unsigned usage,
                                          unsigned size );
@@ -116,7 +116,7 @@ struct pipe_winsys
     * Note that ptr may be accessed at any time upto the time when the
     * buffer is destroyed, so the data must not be freed before then.
     */
-   struct pipe_buffer *(*user_buffer_create)(struct pipe_winsys *ws, 
+   struct pipe_buffer *(*_user_buffer_create)(struct pipe_winsys *ws, 
                                                     void *ptr,
                                                     unsigned bytes);
 
@@ -131,7 +131,7 @@ struct pipe_winsys
     * with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET flag  to get the underlying 
     * buffer storage.
     */
-   struct pipe_buffer *(*surface_buffer_create)(struct pipe_winsys *ws,
+   struct pipe_buffer *(*_surface_buffer_create)(struct pipe_winsys *ws,
 						unsigned width, unsigned height,
 						enum pipe_format format,
 						unsigned usage,
@@ -142,14 +142,14 @@ struct pipe_winsys
     * Map the entire data store of a buffer object into the client's address.
     * flags is bitmask of PIPE_BUFFER_USAGE_CPU_READ/WRITE flags. 
     */
-   void *(*buffer_map)( struct pipe_winsys *ws, 
+   void *(*_buffer_map)( struct pipe_winsys *ws, 
 			struct pipe_buffer *buf,
 			unsigned usage );
    
-   void (*buffer_unmap)( struct pipe_winsys *ws, 
+   void (*_buffer_unmap)( struct pipe_winsys *ws, 
 			 struct pipe_buffer *buf );
 
-   void (*buffer_destroy)( struct pipe_winsys *ws,
+   void (*_buffer_destroy)( struct pipe_winsys *ws,
 			   struct pipe_buffer *buf );
 
 

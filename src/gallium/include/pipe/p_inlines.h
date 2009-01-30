@@ -89,29 +89,6 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
 }
 
 
-/* XXX: thread safety issues!
- */
-static INLINE void
-winsys_buffer_reference(struct pipe_winsys *winsys,
-		      struct pipe_buffer **ptr,
-		      struct pipe_buffer *buf)
-{
-   if (buf) {
-      assert(buf->refcount);
-      buf->refcount++;
-   }
-
-   if (*ptr) {
-      assert((*ptr)->refcount);
-      if(--(*ptr)->refcount == 0)
-         winsys->buffer_destroy( winsys, *ptr );
-   }
-
-   *ptr = buf;
-}
-
-
-
 /**
  * \sa pipe_surface_reference
  */
@@ -159,13 +136,19 @@ static INLINE struct pipe_buffer *
 pipe_buffer_create( struct pipe_screen *screen,
                     unsigned alignment, unsigned usage, unsigned size )
 {
-   return screen->winsys->buffer_create(screen->winsys, alignment, usage, size);
+   if (screen->buffer_create)
+      return screen->buffer_create(screen, alignment, usage, size);
+   else
+      return screen->winsys->_buffer_create(screen->winsys, alignment, usage, size);
 }
 
 static INLINE struct pipe_buffer *
 pipe_user_buffer_create( struct pipe_screen *screen, void *ptr, unsigned size )
 {
-   return screen->winsys->user_buffer_create(screen->winsys, ptr, size);
+   if (screen->user_buffer_create)
+      return screen->user_buffer_create(screen, ptr, size);
+   else
+      return screen->winsys->_user_buffer_create(screen->winsys, ptr, size);
 }
 
 static INLINE void *
@@ -173,25 +156,45 @@ pipe_buffer_map(struct pipe_screen *screen,
                 struct pipe_buffer *buf,
                 unsigned usage)
 {
-   return screen->winsys->buffer_map(screen->winsys, buf, usage);
+   if (screen->buffer_map)
+      return screen->buffer_map(screen, buf, usage);
+   else
+      return screen->winsys->_buffer_map(screen->winsys, buf, usage);
 }
 
 static INLINE void
 pipe_buffer_unmap(struct pipe_screen *screen,
                   struct pipe_buffer *buf)
 {
-   screen->winsys->buffer_unmap(screen->winsys, buf);
+   if (screen->buffer_unmap)
+      screen->buffer_unmap(screen, buf);
+   else
+      screen->winsys->_buffer_unmap(screen->winsys, buf);
 }
 
-/* XXX when we're using this everywhere, get rid of
- * winsys_buffer_reference() above.
+/* XXX: thread safety issues!
  */
 static INLINE void
 pipe_buffer_reference(struct pipe_screen *screen,
 		      struct pipe_buffer **ptr,
 		      struct pipe_buffer *buf)
 {
-   winsys_buffer_reference(screen->winsys, ptr, buf);
+   if (buf) {
+      assert(buf->refcount);
+      buf->refcount++;
+   }
+
+   if (*ptr) {
+      assert((*ptr)->refcount);
+      if(--(*ptr)->refcount == 0) {
+         if (screen->buffer_destroy)
+            screen->buffer_destroy( screen, *ptr );
+         else
+            screen->winsys->_buffer_destroy( screen->winsys, *ptr );
+      }
+   }
+
+   *ptr = buf;
 }
 
 
