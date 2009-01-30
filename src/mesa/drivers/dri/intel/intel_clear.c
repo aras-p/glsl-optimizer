@@ -201,6 +201,14 @@ intelClear(GLcontext *ctx, GLbitfield mask)
          blit_mask |= BUFFER_BIT_DEPTH;
    }
 
+   /* If we're doing a tri pass for depth/stencil, include a likely color
+    * buffer with it.
+    */
+   if (mask & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) {
+      tri_mask |= blit_mask & BUFFER_BIT_BACK_LEFT;
+      blit_mask &= ~BUFFER_BIT_BACK_LEFT;
+   }
+
    /* SW fallback clearing */
    swrast_mask = mask & ~tri_mask & ~blit_mask;
 
