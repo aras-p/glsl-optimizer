@@ -135,7 +135,6 @@ struct pipe_screen {
    /**
     * Buffer management. Buffer attributes are mostly fixed over its lifetime.
     *
-    * 
     */
    struct pipe_buffer *(*buffer_create)( struct pipe_screen *screen,
                                          unsigned alignment,
