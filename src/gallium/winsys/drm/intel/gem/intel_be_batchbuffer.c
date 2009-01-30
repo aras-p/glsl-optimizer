@@ -68,8 +68,6 @@ intel_be_offset_relocation(struct intel_be_batchbuffer *batch,
 
 	offset = (unsigned)(batch->base.ptr - batch->base.map);
 
-	debug_printf("   - offset: %p\n", offset);
-
 	ret = drm_intel_bo_emit_reloc(batch->bo, offset,
 	                              bo, pre_add,
 	                              read_domains,
@@ -106,18 +104,10 @@ intel_be_batchbuffer_flush(struct intel_be_batchbuffer *batch,
 		i915_batchbuffer_dword(i915, (0x0<<29)|(0xA<<23)); // MI_BATCH_BUFFER_END;
 	}
 
-	i915_dump_batchbuffer(i915);
-	debug_printf("%s\n", __FUNCTION__);
-
 	used = batch->base.ptr - batch->base.map;
 
-	debug_printf("   - subdata\n");
 	drm_intel_bo_subdata(batch->bo, 0, used, batch->base.map);
-	debug_printf("   - exec\n");
 	ret = drm_intel_bo_exec(batch->bo, used, NULL, 0, 0);
-	debug_printf("   - waiting\n");
-	drm_intel_bo_wait_rendering(batch->bo);
-	debug_printf("   - done\n");
 
 	assert(ret == 0);
 

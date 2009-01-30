@@ -80,7 +80,6 @@ drm_create_texture(_EGLDriver *drv,
 	unsigned stride = 1024;
 	unsigned pitch = 0;
 	unsigned size = 0;
-	void *ptr;
 
 	/* ugly */
 	if (stride < w)
@@ -97,14 +96,6 @@ drm_create_texture(_EGLDriver *drv,
 
 	if (!buf)
 		goto err_buf;
-
-#if DEBUG
-	ptr = pipe_buffer_map(screen, buf, PIPE_BUFFER_USAGE_CPU_WRITE);
-	memset(ptr, 0xFF, size);
-	pipe_buffer_unmap(screen, buf);
-#else
-	(void)ptr;
-#endif
 
 	memset(&templat, 0, sizeof(templat));
 	templat.tex_usage |= PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
@@ -339,13 +330,6 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 
 	if (ret)
 		goto err_crtc;
-
-	pipe = drm_api_hocks.create_context(dev->screen);
-	pipe->surface_fill(pipe, scrn->surface,
-	                   0, 0,
-	                   scrn->front.width, scrn->front.height,
-	                   0xFF00FFFF);
-	pipe->destroy(pipe);
 
 	surf->screen = scrn;
 

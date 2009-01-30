@@ -255,7 +255,13 @@ pb_reference(struct pb_buffer **dst,
 static INLINE boolean
 pb_check_alignment(size_t requested, size_t provided)
 {
-   return requested <= provided && (provided % requested) == 0 ? TRUE : FALSE;
+   if(!requested)
+      return TRUE;
+   if(requested > provided)
+      return FALSE;
+   if(provided % requested != 0)
+      return FALSE;
+   return TRUE;
 }
 
 
