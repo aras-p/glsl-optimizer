@@ -79,6 +79,25 @@ void r300_emit_dsa_state(struct r300_context* r300,
     END_CS;
 }
 
+void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
+{
+    struct r300_screen* r300screen =
+        (struct r300_screen*)r300->context.screen;
+    CS_LOCALS(r300);
+    BEGIN_CS(14);
+    OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
+    OUT_CS_REG_SEQ(R300_SU_POLY_OFFSET_FRONT_SCALE, 6);
+    OUT_CS(rs->depth_scale_front);
+    OUT_CS(rs->depth_offset_front);
+    OUT_CS(rs->depth_scale_back);
+    OUT_CS(rs->depth_offset_back);
+    OUT_CS(rs->polygon_offset_enable);
+    OUT_CS(rs->cull_mode);
+    OUT_CS_REG(R300_GA_LINE_STIPPLE_CONFIG, rs->line_stipple_config);
+    OUT_CS_REG(R300_GA_LINE_STIPPLE_VALUE, rs->line_stipple_value);
+    END_CS;
+}
+
 static void r300_emit_dirty_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen =
@@ -104,15 +123,7 @@ static void r300_emit_dirty_state(struct r300_context* r300)
     }
 
     if (r300->dirty_state & R300_NEW_RASTERIZER) {
-        struct r300_rs_state* rs = r300->rs_state;
-        OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
-        /* XXX next six are contiguous regs */
-        OUT_CS_REG(R300_SU_POLY_OFFSET_FRONT_SCALE, rs->depth_scale_front);
-        OUT_CS_REG(R300_SU_POLY_OFFSET_FRONT_OFFSET, rs->depth_offset_front);
-        OUT_CS_REG(R300_SU_POLY_OFFSET_BACK_SCALE, rs->depth_scale_back);
-        OUT_CS_REG(R300_SU_POLY_OFFSET_BACK_OFFSET, rs->depth_offset_back);
-        OUT_CS_REG(R300_SU_POLY_OFFSET_ENABLE, rs->polygon_offset_enable);
-        OUT_CS_REG(R300_SU_CULL_MODE, rs->cull_mode);
+        r300_emit_rs_state(r300, r300->rs_state);
     }
 
     if (r300->dirty_state & R300_NEW_SCISSOR) {

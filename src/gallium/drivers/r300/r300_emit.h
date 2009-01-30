@@ -31,4 +31,6 @@ void r300_emit_blend_color_state(struct r300_context* r300,
                                  struct r300_blend_color_state* bc);
 
 void r300_emit_dsa_state(struct r300_context* r300,
-                           struct r300_dsa_state* dsa);
+                         struct r300_dsa_state* dsa);
+
+void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs);
