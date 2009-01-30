@@ -1267,9 +1267,6 @@ adjust_buffer_object_ref_counts(struct gl_array_attrib *array, GLint step)
       array->ArrayObj->TexCoord[i].BufferObj->RefCount += step;
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
       array->ArrayObj->VertexAttrib[i].BufferObj->RefCount += step;
-
-   array->ArrayBufferObj->RefCount += step;
-   array->ElementArrayBufferObj->RefCount += step;
 }
 
 
