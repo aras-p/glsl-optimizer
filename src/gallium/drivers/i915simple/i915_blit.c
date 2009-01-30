@@ -38,7 +38,7 @@
 void
 i915_fill_blit(struct i915_context *i915,
 	       unsigned cpp,
-	       short dst_pitch,
+	       unsigned short dst_pitch,
 	       struct pipe_buffer *dst_buffer,
 	       unsigned dst_offset,
 	       short x, short y, 
@@ -47,25 +47,29 @@ i915_fill_blit(struct i915_context *i915,
 {
    unsigned BR13, CMD;
 
+
+   I915_DBG(i915,
+       "%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
+       __FUNCTION__,
+       dst_buffer, dst_pitch, dst_offset, x, y, w, h);
+
    switch (cpp) {
    case 1:
    case 2:
    case 3:
-      BR13 = dst_pitch | (0xF0 << 16) | (1 << 24);
+      BR13 = (((int) dst_pitch) & 0xffff) |
+	 (0xF0 << 16) | (1 << 24);
       CMD = XY_COLOR_BLT_CMD;
       break;
    case 4:
-      BR13 = dst_pitch | (0xF0 << 16) | (1 << 24) | (1 << 25);
+      BR13 = (((int) dst_pitch) & 0xffff) |
+	 (0xF0 << 16) | (1 << 24) | (1 << 25);
       CMD = (XY_COLOR_BLT_CMD | XY_COLOR_BLT_WRITE_ALPHA |
              XY_COLOR_BLT_WRITE_RGB);
       break;
    default:
       return;
    }
-
-//   DBG("%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
-//       __FUNCTION__, dst_buffer, dst_pitch, dst_offset, x, y, w, h);
-
 
    if (!BEGIN_BATCH(6, 1)) {
       FLUSH_BATCH(NULL);
@@ -85,10 +89,10 @@ void
 i915_copy_blit( struct i915_context *i915,
                   unsigned do_flip,
                   unsigned cpp,
-                  short src_pitch,
+                  unsigned short src_pitch,
                   struct pipe_buffer *src_buffer,
                   unsigned src_offset,
-                  short dst_pitch,
+                  unsigned short dst_pitch,
                   struct pipe_buffer *dst_buffer,
                   unsigned dst_offset,
                   short src_x, short src_y,
@@ -106,20 +110,16 @@ i915_copy_blit( struct i915_context *i915,
        src_buffer, src_pitch, src_offset, src_x, src_y,
        dst_buffer, dst_pitch, dst_offset, dst_x, dst_y, w, h);
 
-   src_pitch *= (short) cpp;
-   dst_pitch *= (short) cpp;
-
    switch (cpp) {
    case 1:
    case 2:
    case 3:
-      BR13 = (((int) dst_pitch) & 0xffff) | 
+      BR13 = (((int) dst_pitch) & 0xffff) |
 	 (0xCC << 16) | (1 << 24);
       CMD = XY_SRC_COPY_BLT_CMD;
       break;
    case 4:
-      BR13 =
-         (((int) dst_pitch) & 0xffff) | 
+      BR13 = (((int) dst_pitch) & 0xffff) |
 	 (0xCC << 16) | (1 << 24) | (1 << 25);
       CMD =
          (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |

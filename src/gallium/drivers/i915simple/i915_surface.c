@@ -79,8 +79,8 @@ i915_surface_copy(struct pipe_context *pipe,
       i915_copy_blit( i915_context(pipe),
                       do_flip,
                       dst->block.size,
-		      (short) src->stride, src->buffer, src->offset,
-		      (short) dst->stride, dst->buffer, dst->offset,
+		      (unsigned short) src->stride, src->buffer, src->offset,
+		      (unsigned short) dst->stride, dst->buffer, dst->offset,
 		      (short) srcx, (short) srcy, (short) dstx, (short) dsty, (short) width, (short) height );
    }
 }
@@ -106,7 +106,7 @@ i915_surface_fill(struct pipe_context *pipe,
       assert(dst->block.height == 1);
       i915_fill_blit( i915_context(pipe),
 		      dst->block.size,
-		      (short) dst->stride,
+		      (unsigned short) dst->stride,
 		      dst->buffer, dst->offset,
 		      (short) dstx, (short) dsty,
 		      (short) width, (short) height,
