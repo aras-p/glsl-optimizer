@@ -56,25 +56,16 @@ static void upload_sf_vp(struct brw_context *brw)
       y_bias = ctx->DrawBuffer->Height;
    }
 
-   /* _NEW_VIEWPORT, BRW_NEW_METAOPS */
+   /* _NEW_VIEWPORT */
 
-   if (!brw->metaops.active) {
-      const GLfloat *v = ctx->Viewport._WindowMap.m;
+   const GLfloat *v = ctx->Viewport._WindowMap.m;
 
-      sfv.viewport.m00 = v[MAT_SX];
-      sfv.viewport.m11 = v[MAT_SY] * y_scale;
-      sfv.viewport.m22 = v[MAT_SZ] * depth_scale;
-      sfv.viewport.m30 = v[MAT_TX];
-      sfv.viewport.m31 = v[MAT_TY] * y_scale + y_bias;
-      sfv.viewport.m32 = v[MAT_TZ] * depth_scale;
-   } else {
-      sfv.viewport.m00 =   1;
-      sfv.viewport.m11 = - 1;
-      sfv.viewport.m22 =   1;
-      sfv.viewport.m30 =   0;
-      sfv.viewport.m31 =   ctx->DrawBuffer->Height;
-      sfv.viewport.m32 =   0;
-   }
+   sfv.viewport.m00 = v[MAT_SX];
+   sfv.viewport.m11 = v[MAT_SY] * y_scale;
+   sfv.viewport.m22 = v[MAT_SZ] * depth_scale;
+   sfv.viewport.m30 = v[MAT_TX];
+   sfv.viewport.m31 = v[MAT_TY] * y_scale + y_bias;
+   sfv.viewport.m32 = v[MAT_TZ] * depth_scale;
 
    /* _NEW_SCISSOR */
 
@@ -108,7 +99,7 @@ const struct brw_tracked_state brw_sf_vp = {
    .dirty = {
       .mesa  = (_NEW_VIEWPORT | 
 		_NEW_SCISSOR),
-      .brw   = BRW_NEW_METAOPS,
+      .brw   = 0,
       .cache = 0
    },
    .prepare = upload_sf_vp
@@ -309,8 +300,7 @@ const struct brw_tracked_state brw_sf_unit = {
 		_NEW_LINE | 
 		_NEW_POINT | 
 		_NEW_SCISSOR),
-      .brw   = (BRW_NEW_URB_FENCE |
-		BRW_NEW_METAOPS),
+      .brw   = BRW_NEW_URB_FENCE,
       .cache = (CACHE_NEW_SF_VP |
 		CACHE_NEW_SF_PROG)
    },

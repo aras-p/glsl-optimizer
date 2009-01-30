@@ -47,20 +47,12 @@ static GLboolean do_check_fallback(struct brw_context *brw)
    GLcontext *ctx = &brw->intel.ctx;
    GLuint i;
 
-   /* BRW_NEW_METAOPS
-    */
-   if (brw->metaops.active)
-      return GL_FALSE;
-
    if (brw->intel.no_rast) {
       DBG("FALLBACK: rasterization disabled\n");
       return GL_TRUE;
    }
 
    /* _NEW_RENDERMODE
-    *
-    * XXX: need to save/restore RenderMode in metaops state, or
-    * somehow move to a new attribs pointer:
     */
    if (ctx->RenderMode != GL_RENDER) {
       DBG("FALLBACK: render mode\n");
@@ -101,7 +93,7 @@ static void check_fallback(struct brw_context *brw)
 const struct brw_tracked_state brw_check_fallback = {
    .dirty = {
       .mesa = _NEW_BUFFERS | _NEW_RENDERMODE | _NEW_TEXTURE | _NEW_STENCIL,
-      .brw  = BRW_NEW_METAOPS,
+      .brw  = 0,
       .cache = 0
    },
    .prepare = check_fallback

@@ -65,7 +65,7 @@ void
 intel_clear_tris(GLcontext *ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
-   GLfloat vertices[4][4];
+   GLfloat vertices[4][3];
    GLfloat color[4][4];
    GLfloat dst_z;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
@@ -147,22 +147,18 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
    vertices[0][0] = fb->_Xmin;
    vertices[0][1] = fb->_Ymin;
    vertices[0][2] = dst_z;
-   vertices[0][3] = 1.0;
    vertices[1][0] = fb->_Xmax;
    vertices[1][1] = fb->_Ymin;
    vertices[1][2] = dst_z;
-   vertices[1][3] = 1.0;
    vertices[2][0] = fb->_Xmax;
    vertices[2][1] = fb->_Ymax;
    vertices[2][2] = dst_z;
-   vertices[2][3] = 1.0;
    vertices[3][0] = fb->_Xmin;
    vertices[3][1] = fb->_Ymax;
    vertices[3][2] = dst_z;
-   vertices[3][3] = 1.0;
 
    _mesa_ColorPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &color);
-   _mesa_VertexPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &vertices);
+   _mesa_VertexPointer(3, GL_FLOAT, 3 * sizeof(GLfloat), &vertices);
    _mesa_Enable(GL_COLOR_ARRAY);
    _mesa_Enable(GL_VERTEX_ARRAY);
 

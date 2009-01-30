@@ -131,7 +131,6 @@ struct brw_context;
 #define BRW_NEW_WM_INPUT_DIMENSIONS     0x100
 #define BRW_NEW_INPUT_VARYING           0x200
 #define BRW_NEW_PSP                     0x800
-#define BRW_NEW_METAOPS                 0x1000
 #define BRW_NEW_FENCE                   0x2000
 #define BRW_NEW_INDICES			0x4000
 #define BRW_NEW_VERTICES		0x8000
@@ -491,28 +490,6 @@ struct brw_context
       unsigned int offset;
    } ib;
 
-   struct {
-      /* Will be allocated on demand if needed.   
-       */
-      struct brw_state_pointers attribs;
-      struct gl_vertex_program *vp;
-      struct gl_fragment_program *fp, *fp_tex;
-
-      struct gl_buffer_object *vbo;
-
-      struct intel_region *saved_draw_region;
-      GLuint saved_nr_draw_regions;
-      struct intel_region *saved_depth_region;
-
-      GLuint restore_draw_buffers[MAX_DRAW_BUFFERS];
-      GLuint restore_num_draw_buffers;
-
-      struct gl_fragment_program *restore_fp;
-      
-      GLboolean active;
-   } metaops;
-
-
    /* Active vertex program: 
     */
    const struct gl_vertex_program *vertex_program;
@@ -702,13 +679,6 @@ void brw_FrameBufferTexInit( struct brw_context *brw,
 			     struct intel_region *region );
 void brw_FrameBufferTexDestroy( struct brw_context *brw );
 void brw_validate_textures( struct brw_context *brw );
-
-/*======================================================================
- * brw_metaops.c
- */
-
-void brw_init_metaops( struct brw_context *brw );
-void brw_destroy_metaops( struct brw_context *brw );
 
 
 /*======================================================================

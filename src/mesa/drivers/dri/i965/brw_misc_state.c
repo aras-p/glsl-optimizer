@@ -154,10 +154,7 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
       OUT_RELOC(brw->gs.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    else
       OUT_BATCH(0);
-   if (!brw->metaops.active)
-      OUT_RELOC(brw->clip.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
-   else
-      OUT_BATCH(0);
+   OUT_RELOC(brw->clip.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    OUT_RELOC(brw->sf.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    OUT_RELOC(brw->wm.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    OUT_RELOC(brw->cc.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
@@ -186,7 +183,7 @@ static void upload_psp_urb_cbs(struct brw_context *brw )
 const struct brw_tracked_state brw_psp_urb_cbs = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_URB_FENCE | BRW_NEW_METAOPS | BRW_NEW_BATCH,
+      .brw = BRW_NEW_URB_FENCE | BRW_NEW_BATCH,
       .cache = (CACHE_NEW_VS_UNIT | 
 		CACHE_NEW_GS_UNIT | 
 		CACHE_NEW_GS_PROG | 

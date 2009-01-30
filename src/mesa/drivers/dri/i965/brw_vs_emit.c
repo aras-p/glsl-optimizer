@@ -871,21 +871,15 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    }
 
    /* Build ndc coords */
-   if (!c->key.know_w_is_one) {
-      ndc = get_tmp(c);
-      emit_math1(c, BRW_MATH_FUNCTION_INV, ndc, brw_swizzle1(pos, 3), BRW_MATH_PRECISION_FULL);
-      brw_MUL(p, brw_writemask(ndc, WRITEMASK_XYZ), pos, ndc);
-   }
-   else {
-      ndc = pos;
-   }
+   ndc = get_tmp(c);
+   emit_math1(c, BRW_MATH_FUNCTION_INV, ndc, brw_swizzle1(pos, 3), BRW_MATH_PRECISION_FULL);
+   brw_MUL(p, brw_writemask(ndc, WRITEMASK_XYZ), pos, ndc);
 
    /* Update the header for point size, user clipping flags, and -ve rhw
     * workaround.
     */
    if ((c->prog_data.outputs_written & (1<<VERT_RESULT_PSIZ)) ||
-       c->key.nr_userclip ||
-       (!BRW_IS_G4X(p->brw) && !c->key.know_w_is_one))
+       c->key.nr_userclip || !BRW_IS_G4X(p->brw))
    {
       struct brw_reg header1 = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
       GLuint i;
@@ -916,7 +910,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * Later, clipping will detect ucp[6] and ensure the primitive is
        * clipped against all fixed planes.
        */
-      if (!BRW_IS_G4X(p->brw) && !c->key.know_w_is_one) {
+      if (!BRW_IS_G4X(p->brw)) {
 	 brw_CMP(p,
 		 vec8(brw_null_reg()),
 		 BRW_CONDITIONAL_L,

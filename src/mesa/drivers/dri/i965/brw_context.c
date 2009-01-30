@@ -148,7 +148,6 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 /*    ctx->Const.MaxNativeVertexProgramTemps = 32; */
 
    brw_init_attribs( brw );
-   brw_init_metaops( brw );
    brw_init_state( brw );
 
    brw->state.dirty.mesa = ~0;
