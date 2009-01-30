@@ -2636,7 +2636,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                               1, border)) {
          /* when error, clear all proxy texture image parameters */
          if (texImage)
-            clear_teximage_fields(ctx->Texture.ProxyTex[TEXTURE_2D_INDEX]->Image[0][level]);
+            clear_teximage_fields(texImage);
       }
       else {
          /* no error, set the tex image parameters */
