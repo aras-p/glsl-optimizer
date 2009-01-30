@@ -124,6 +124,7 @@ struct brw_sf_unit_key {
 static void
 sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_SF_PROG */
@@ -135,20 +136,20 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
    key->urb_size = brw->urb.vsize;
    key->sfsize = brw->urb.sfsize;
 
-   key->scissor = brw->attribs.Scissor->Enabled;
-   key->front_face = brw->attribs.Polygon->FrontFace;
+   key->scissor = ctx->Scissor.Enabled;
+   key->front_face = ctx->Polygon.FrontFace;
 
-   if (brw->attribs.Polygon->CullFlag)
-      key->cull_face = brw->attribs.Polygon->CullFaceMode;
+   if (ctx->Polygon.CullFlag)
+      key->cull_face = ctx->Polygon.CullFaceMode;
    else
       key->cull_face = GL_NONE;
 
-   key->line_width = brw->attribs.Line->Width;
-   key->line_smooth = brw->attribs.Line->SmoothFlag;
+   key->line_width = ctx->Line.Width;
+   key->line_smooth = ctx->Line.SmoothFlag;
 
-   key->point_sprite = brw->attribs.Point->PointSprite;
-   key->point_size = brw->attribs.Point->Size;
-   key->point_attenuated = brw->attribs.Point->_Attenuated;
+   key->point_sprite = ctx->Point.PointSprite;
+   key->point_size = ctx->Point.Size;
+   key->point_attenuated = ctx->Point._Attenuated;
 
    key->render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
 }

@@ -145,14 +145,14 @@ static void upload_clip_prog(struct brw_context *brw)
    /* CACHE_NEW_VS_PROG */
    key.attrs = brw->vs.prog_data->outputs_written;
    /* _NEW_LIGHT */
-   key.do_flat_shading = (brw->attribs.Light->ShadeModel == GL_FLAT);
+   key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
    /* _NEW_TRANSFORM */
-   key.nr_userclip = brw_count_bits(brw->attribs.Transform->ClipPlanesEnabled);
+   key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
    key.clip_mode = BRW_CLIPMODE_NORMAL;
 
    /* _NEW_POLYGON */
    if (key.primitive == GL_TRIANGLES) {
-      if (brw->attribs.Polygon->CullFaceMode == GL_FRONT_AND_BACK) 
+      if (ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK) 
 	 key.clip_mode = BRW_CLIPMODE_REJECT_ALL;
       else {
 	 GLuint fill_front = CLIP_CULL;
@@ -160,44 +160,44 @@ static void upload_clip_prog(struct brw_context *brw)
 	 GLuint offset_front = 0;
 	 GLuint offset_back = 0;
 
-	 if (!brw->attribs.Polygon->CullFlag ||
-	     brw->attribs.Polygon->CullFaceMode != GL_FRONT) {
-	    switch (brw->attribs.Polygon->FrontMode) {
+	 if (!ctx->Polygon.CullFlag ||
+	     ctx->Polygon.CullFaceMode != GL_FRONT) {
+	    switch (ctx->Polygon.FrontMode) {
 	    case GL_FILL: 
 	       fill_front = CLIP_FILL; 
 	       offset_front = 0;
 	       break;
 	    case GL_LINE:
 	       fill_front = CLIP_LINE;
-	       offset_front = brw->attribs.Polygon->OffsetLine;
+	       offset_front = ctx->Polygon.OffsetLine;
 	       break;
 	    case GL_POINT:
 	       fill_front = CLIP_POINT;
-	       offset_front = brw->attribs.Polygon->OffsetPoint;
+	       offset_front = ctx->Polygon.OffsetPoint;
 	       break;
 	    }
 	 }
 
-	 if (!brw->attribs.Polygon->CullFlag ||
-	     brw->attribs.Polygon->CullFaceMode != GL_BACK) {
-	    switch (brw->attribs.Polygon->BackMode) {
+	 if (!ctx->Polygon.CullFlag ||
+	     ctx->Polygon.CullFaceMode != GL_BACK) {
+	    switch (ctx->Polygon.BackMode) {
 	    case GL_FILL: 
 	       fill_back = CLIP_FILL; 
 	       offset_back = 0;
 	       break;
 	    case GL_LINE:
 	       fill_back = CLIP_LINE;
-	       offset_back = brw->attribs.Polygon->OffsetLine;
+	       offset_back = ctx->Polygon.OffsetLine;
 	       break;
 	    case GL_POINT:
 	       fill_back = CLIP_POINT;
-	       offset_back = brw->attribs.Polygon->OffsetPoint;
+	       offset_back = ctx->Polygon.OffsetPoint;
 	       break;
 	    }
 	 }
 
-	 if (brw->attribs.Polygon->BackMode != GL_FILL ||
-	     brw->attribs.Polygon->FrontMode != GL_FILL) {
+	 if (ctx->Polygon.BackMode != GL_FILL ||
+	     ctx->Polygon.FrontMode != GL_FILL) {
 	    key.do_unfilled = 1;
 
 	    /* Most cases the fixed function units will handle.  Cases where
@@ -207,17 +207,17 @@ static void upload_clip_prog(struct brw_context *brw)
 
 	    if (offset_back || offset_front) {
 	       /* _NEW_POLYGON, _NEW_BUFFERS */
-	       key.offset_units = brw->attribs.Polygon->OffsetUnits * brw->intel.polygon_offset_scale;
-	       key.offset_factor = brw->attribs.Polygon->OffsetFactor * ctx->DrawBuffer->_MRD;
+	       key.offset_units = ctx->Polygon.OffsetUnits * brw->intel.polygon_offset_scale;
+	       key.offset_factor = ctx->Polygon.OffsetFactor * ctx->DrawBuffer->_MRD;
 	    }
 
-	    switch (brw->attribs.Polygon->FrontFace) {
+	    switch (ctx->Polygon.FrontFace) {
 	    case GL_CCW:
 	       key.fill_ccw = fill_front;
 	       key.fill_cw = fill_back;
 	       key.offset_ccw = offset_front;
 	       key.offset_cw = offset_back;
-	       if (brw->attribs.Light->Model.TwoSide &&
+	       if (ctx->Light.Model.TwoSide &&
 		   key.fill_cw != CLIP_CULL) 
 		  key.copy_bfc_cw = 1;
 	       break;
@@ -226,7 +226,7 @@ static void upload_clip_prog(struct brw_context *brw)
 	       key.fill_ccw = fill_back;
 	       key.offset_cw = offset_front;
 	       key.offset_ccw = offset_back;
-	       if (brw->attribs.Light->Model.TwoSide &&
+	       if (ctx->Light.Model.TwoSide &&
 		   key.fill_ccw != CLIP_CULL) 
 		  key.copy_bfc_ccw = 1;
 	       break;

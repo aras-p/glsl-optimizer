@@ -84,15 +84,17 @@ static const GLenum reduced_prim[GL_POLYGON+1] = {
  */
 static GLuint brw_set_prim(struct brw_context *brw, GLenum prim)
 {
+   GLcontext *ctx = &brw->intel.ctx;
+
    if (INTEL_DEBUG & DEBUG_PRIMS)
       _mesa_printf("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim));
    
    /* Slight optimization to avoid the GS program when not needed:
     */
    if (prim == GL_QUAD_STRIP &&
-       brw->attribs.Light->ShadeModel != GL_FLAT &&
-       brw->attribs.Polygon->FrontMode == GL_FILL &&
-       brw->attribs.Polygon->BackMode == GL_FILL)
+       ctx->Light.ShadeModel != GL_FLAT &&
+       ctx->Polygon.FrontMode == GL_FILL &&
+       ctx->Polygon.BackMode == GL_FILL)
       prim = GL_TRIANGLE_STRIP;
 
    if (prim != brw->primitive) {
@@ -189,12 +191,13 @@ static GLboolean check_fallbacks( struct brw_context *brw,
 				  const struct _mesa_prim *prim,
 				  GLuint nr_prims )
 {
+   GLcontext *ctx = &brw->intel.ctx;
    GLuint i;
 
    if (!brw->intel.strict_conformance)
       return GL_FALSE;
 
-   if (brw->attribs.Polygon->SmoothFlag) {
+   if (ctx->Polygon.SmoothFlag) {
       for (i = 0; i < nr_prims; i++)
 	 if (reduced_prim[prim[i].mode] == GL_TRIANGLES) 
 	    return GL_TRUE;
@@ -203,7 +206,7 @@ static GLboolean check_fallbacks( struct brw_context *brw,
    /* BRW hardware will do AA lines, but they are non-conformant it
     * seems.  TBD whether we keep this fallback:
     */
-   if (brw->attribs.Line->SmoothFlag) {
+   if (ctx->Line.SmoothFlag) {
       for (i = 0; i < nr_prims; i++)
 	 if (reduced_prim[prim[i].mode] == GL_LINES) 
 	    return GL_TRUE;
@@ -212,7 +215,7 @@ static GLboolean check_fallbacks( struct brw_context *brw,
    /* Stipple -- these fallbacks could be resolved with a little
     * bit of work?
     */
-   if (brw->attribs.Line->StippleFlag) {
+   if (ctx->Line.StippleFlag) {
       for (i = 0; i < nr_prims; i++) {
 	 /* GS doesn't get enough information to know when to reset
 	  * the stipple counter?!?
@@ -221,14 +224,14 @@ static GLboolean check_fallbacks( struct brw_context *brw,
 	    return GL_TRUE;
 	    
 	 if (prim[i].mode == GL_POLYGON &&
-	     (brw->attribs.Polygon->FrontMode == GL_LINE ||
-	      brw->attribs.Polygon->BackMode == GL_LINE))
+	     (ctx->Polygon.FrontMode == GL_LINE ||
+	      ctx->Polygon.BackMode == GL_LINE))
 	    return GL_TRUE;
       }
    }
 
 
-   if (brw->attribs.Point->SmoothFlag) {
+   if (ctx->Point.SmoothFlag) {
       for (i = 0; i < nr_prims; i++)
 	 if (prim[i].mode == GL_POINTS) 
 	    return GL_TRUE;

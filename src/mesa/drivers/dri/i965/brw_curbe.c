@@ -48,6 +48,7 @@
  */
 static void calculate_curbe_offsets( struct brw_context *brw )
 {
+   GLcontext *ctx = &brw->intel.ctx;
    /* CACHE_NEW_WM_PROG */
    GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
    
@@ -58,8 +59,8 @@ static void calculate_curbe_offsets( struct brw_context *brw )
    GLuint total_regs;
 
    /* _NEW_TRANSFORM */
-   if (brw->attribs.Transform->ClipPlanesEnabled) {
-      GLuint nr_planes = 6 + brw_count_bits(brw->attribs.Transform->ClipPlanesEnabled);
+   if (ctx->Transform.ClipPlanesEnabled) {
+      GLuint nr_planes = 6 + brw_count_bits(ctx->Transform.ClipPlanesEnabled);
       nr_clip_regs = (nr_planes * 4 + 15) / 16;
    }
 
@@ -233,11 +234,11 @@ static void prepare_constant_buffer(struct brw_context *brw)
        */
       assert(MAX_CLIP_PLANES == 6);
       for (j = 0; j < MAX_CLIP_PLANES; j++) {
-	 if (brw->attribs.Transform->ClipPlanesEnabled & (1<<j)) {
-	    buf[offset + i * 4 + 0] = brw->attribs.Transform->_ClipUserPlane[j][0];
-	    buf[offset + i * 4 + 1] = brw->attribs.Transform->_ClipUserPlane[j][1];
-	    buf[offset + i * 4 + 2] = brw->attribs.Transform->_ClipUserPlane[j][2];
-	    buf[offset + i * 4 + 3] = brw->attribs.Transform->_ClipUserPlane[j][3];
+	 if (ctx->Transform.ClipPlanesEnabled & (1<<j)) {
+	    buf[offset + i * 4 + 0] = ctx->Transform._ClipUserPlane[j][0];
+	    buf[offset + i * 4 + 1] = ctx->Transform._ClipUserPlane[j][1];
+	    buf[offset + i * 4 + 2] = ctx->Transform._ClipUserPlane[j][2];
+	    buf[offset + i * 4 + 3] = ctx->Transform._ClipUserPlane[j][3];
 	    i++;
 	 }
       }

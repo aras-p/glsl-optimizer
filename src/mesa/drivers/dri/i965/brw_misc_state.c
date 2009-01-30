@@ -48,15 +48,16 @@
 
 static void upload_blend_constant_color(struct brw_context *brw)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    struct brw_blend_constant_color bcc;
 
    memset(&bcc, 0, sizeof(bcc));      
    bcc.header.opcode = CMD_BLEND_CONSTANT_COLOR;
    bcc.header.length = sizeof(bcc)/4-2;
-   bcc.blend_constant_color[0] = brw->attribs.Color->BlendColor[0];
-   bcc.blend_constant_color[1] = brw->attribs.Color->BlendColor[1];
-   bcc.blend_constant_color[2] = brw->attribs.Color->BlendColor[2];
-   bcc.blend_constant_color[3] = brw->attribs.Color->BlendColor[3];
+   bcc.blend_constant_color[0] = ctx->Color.BlendColor[0];
+   bcc.blend_constant_color[1] = ctx->Color.BlendColor[1];
+   bcc.blend_constant_color[2] = ctx->Color.BlendColor[2];
+   bcc.blend_constant_color[3] = ctx->Color.BlendColor[3];
 
    BRW_CACHED_BATCH_STRUCT(brw, &bcc);
 }
@@ -281,6 +282,7 @@ const struct brw_tracked_state brw_depthbuffer = {
 
 static void upload_polygon_stipple(struct brw_context *brw)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    struct brw_polygon_stipple bps;
    GLuint i;
 
@@ -289,7 +291,7 @@ static void upload_polygon_stipple(struct brw_context *brw)
    bps.header.length = sizeof(bps)/4-2;
 
    for (i = 0; i < 32; i++)
-      bps.stipple[i] = brw->attribs.PolygonStipple[31 - i]; /* invert */
+      bps.stipple[i] = ctx->PolygonStipple[31 - i]; /* invert */
 
    BRW_CACHED_BATCH_STRUCT(brw, &bps);
 }
@@ -367,6 +369,7 @@ const struct brw_tracked_state brw_aa_line_parameters = {
 
 static void upload_line_stipple(struct brw_context *brw)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    struct brw_line_stipple bls;
    GLfloat tmp;
    GLint tmpi;
@@ -375,10 +378,10 @@ static void upload_line_stipple(struct brw_context *brw)
    bls.header.opcode = CMD_LINE_STIPPLE_PATTERN;
    bls.header.length = sizeof(bls)/4 - 2;
 
-   bls.bits0.pattern = brw->attribs.Line->StipplePattern;
-   bls.bits1.repeat_count = brw->attribs.Line->StippleFactor;
+   bls.bits0.pattern = ctx->Line.StipplePattern;
+   bls.bits1.repeat_count = ctx->Line.StippleFactor;
 
-   tmp = 1.0 / (GLfloat) brw->attribs.Line->StippleFactor;
+   tmp = 1.0 / (GLfloat) ctx->Line.StippleFactor;
    tmpi = tmp * (1<<13);
 
 

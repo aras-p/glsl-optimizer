@@ -157,6 +157,7 @@ static void do_wm_prog( struct brw_context *brw,
 static void brw_wm_populate_key( struct brw_context *brw,
 				 struct brw_wm_prog_key *key )
 {
+   GLcontext *ctx = &brw->intel.ctx;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    struct brw_fragment_program *fp = 
       (struct brw_fragment_program *)brw->fragment_program;
@@ -170,50 +171,50 @@ static void brw_wm_populate_key( struct brw_context *brw,
     */
    /* _NEW_COLOR */
    if (fp->program.UsesKill ||
-       brw->attribs.Color->AlphaEnabled)
+       ctx->Color.AlphaEnabled)
       lookup |= IZ_PS_KILL_ALPHATEST_BIT;
 
    if (fp->program.Base.OutputsWritten & (1<<FRAG_RESULT_DEPR))
       lookup |= IZ_PS_COMPUTES_DEPTH_BIT;
 
    /* _NEW_DEPTH */
-   if (brw->attribs.Depth->Test)
+   if (ctx->Depth.Test)
       lookup |= IZ_DEPTH_TEST_ENABLE_BIT;
 
-   if (brw->attribs.Depth->Test &&  
-       brw->attribs.Depth->Mask) /* ?? */
+   if (ctx->Depth.Test &&  
+       ctx->Depth.Mask) /* ?? */
       lookup |= IZ_DEPTH_WRITE_ENABLE_BIT;
 
    /* _NEW_STENCIL */
-   if (brw->attribs.Stencil->Enabled) {
+   if (ctx->Stencil.Enabled) {
       lookup |= IZ_STENCIL_TEST_ENABLE_BIT;
 
-      if (brw->attribs.Stencil->WriteMask[0] ||
-	  brw->attribs.Stencil->WriteMask[brw->attribs.Stencil->_BackFace])
+      if (ctx->Stencil.WriteMask[0] ||
+	  ctx->Stencil.WriteMask[ctx->Stencil._BackFace])
 	 lookup |= IZ_STENCIL_WRITE_ENABLE_BIT;
    }
 
    line_aa = AA_NEVER;
 
    /* _NEW_LINE, _NEW_POLYGON, BRW_NEW_REDUCED_PRIMITIVE */
-   if (brw->attribs.Line->SmoothFlag) {
+   if (ctx->Line.SmoothFlag) {
       if (brw->intel.reduced_primitive == GL_LINES) {
 	 line_aa = AA_ALWAYS;
       }
       else if (brw->intel.reduced_primitive == GL_TRIANGLES) {
-	 if (brw->attribs.Polygon->FrontMode == GL_LINE) {
+	 if (ctx->Polygon.FrontMode == GL_LINE) {
 	    line_aa = AA_SOMETIMES;
 
-	    if (brw->attribs.Polygon->BackMode == GL_LINE ||
-		(brw->attribs.Polygon->CullFlag &&
-		 brw->attribs.Polygon->CullFaceMode == GL_BACK))
+	    if (ctx->Polygon.BackMode == GL_LINE ||
+		(ctx->Polygon.CullFlag &&
+		 ctx->Polygon.CullFaceMode == GL_BACK))
 	       line_aa = AA_ALWAYS;
 	 }
-	 else if (brw->attribs.Polygon->BackMode == GL_LINE) {
+	 else if (ctx->Polygon.BackMode == GL_LINE) {
 	    line_aa = AA_SOMETIMES;
 
-	    if ((brw->attribs.Polygon->CullFlag &&
-		 brw->attribs.Polygon->CullFaceMode == GL_FRONT))
+	    if ((ctx->Polygon.CullFlag &&
+		 ctx->Polygon.CullFaceMode == GL_FRONT))
 	       line_aa = AA_ALWAYS;
 	 }
       }
@@ -228,11 +229,11 @@ static void brw_wm_populate_key( struct brw_context *brw,
    key->projtex_mask = brw->wm.input_size_masks[4-1] >> (FRAG_ATTRIB_TEX0 - FRAG_ATTRIB_WPOS); 
 
    /* _NEW_LIGHT */
-   key->flat_shade = (brw->attribs.Light->ShadeModel == GL_FLAT);
+   key->flat_shade = (ctx->Light.ShadeModel == GL_FLAT);
 
    /* _NEW_TEXTURE */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      const struct gl_texture_unit *unit = &brw->attribs.Texture->Unit[i];
+      const struct gl_texture_unit *unit = &ctx->Texture.Unit[i];
 
       if (unit->_ReallyEnabled) {
          const struct gl_texture_object *t = unit->_Current;

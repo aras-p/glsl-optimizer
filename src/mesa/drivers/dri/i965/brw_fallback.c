@@ -62,7 +62,7 @@ static GLboolean do_check_fallback(struct brw_context *brw)
    /* _NEW_TEXTURE:
     */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[i];
+      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
       if (texUnit->_ReallyEnabled) {
 	 struct intel_texture_object *intelObj = intel_texture_object(texUnit->_Current);
 	 struct gl_texture_image *texImage = intelObj->base.Image[0][intelObj->firstLevel];
@@ -75,7 +75,7 @@ static GLboolean do_check_fallback(struct brw_context *brw)
    
    /* _NEW_STENCIL 
     */
-   if (brw->attribs.Stencil->Enabled && 
+   if (ctx->Stencil.Enabled && 
        !brw->intel.hw_stencil) {
       DBG("FALLBACK: stencil\n");
       return GL_TRUE;

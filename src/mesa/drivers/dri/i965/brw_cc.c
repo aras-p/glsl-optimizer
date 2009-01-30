@@ -83,60 +83,60 @@ struct brw_cc_unit_key {
 static void
 cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 {
-   struct gl_stencil_attrib *stencil = brw->attribs.Stencil;
-   const unsigned back = stencil->_BackFace;
+   GLcontext *ctx = &brw->intel.ctx;
+   const unsigned back = ctx->Stencil._BackFace;
 
    memset(key, 0, sizeof(*key));
 
-   key->stencil = stencil->Enabled;
-   key->stencil_two_side = stencil->_TestTwoSide;
+   key->stencil = ctx->Stencil.Enabled;
+   key->stencil_two_side = ctx->Stencil._TestTwoSide;
 
    if (key->stencil) {
-      key->stencil_func[0] = stencil->Function[0];
-      key->stencil_fail_op[0] = stencil->FailFunc[0];
-      key->stencil_pass_depth_fail_op[0] = stencil->ZFailFunc[0];
-      key->stencil_pass_depth_pass_op[0] = stencil->ZPassFunc[0];
-      key->stencil_ref[0] = stencil->Ref[0];
-      key->stencil_write_mask[0] = stencil->WriteMask[0];
-      key->stencil_test_mask[0] = stencil->ValueMask[0];
+      key->stencil_func[0] = ctx->Stencil.Function[0];
+      key->stencil_fail_op[0] = ctx->Stencil.FailFunc[0];
+      key->stencil_pass_depth_fail_op[0] = ctx->Stencil.ZFailFunc[0];
+      key->stencil_pass_depth_pass_op[0] = ctx->Stencil.ZPassFunc[0];
+      key->stencil_ref[0] = ctx->Stencil.Ref[0];
+      key->stencil_write_mask[0] = ctx->Stencil.WriteMask[0];
+      key->stencil_test_mask[0] = ctx->Stencil.ValueMask[0];
    }
    if (key->stencil_two_side) {
-      key->stencil_func[1] = stencil->Function[back];
-      key->stencil_fail_op[1] = stencil->FailFunc[back];
-      key->stencil_pass_depth_fail_op[1] = stencil->ZFailFunc[back];
-      key->stencil_pass_depth_pass_op[1] = stencil->ZPassFunc[back];
-      key->stencil_ref[1] = stencil->Ref[back];
-      key->stencil_write_mask[1] = stencil->WriteMask[back];
-      key->stencil_test_mask[1] = stencil->ValueMask[back];
+      key->stencil_func[1] = ctx->Stencil.Function[back];
+      key->stencil_fail_op[1] = ctx->Stencil.FailFunc[back];
+      key->stencil_pass_depth_fail_op[1] = ctx->Stencil.ZFailFunc[back];
+      key->stencil_pass_depth_pass_op[1] = ctx->Stencil.ZPassFunc[back];
+      key->stencil_ref[1] = ctx->Stencil.Ref[back];
+      key->stencil_write_mask[1] = ctx->Stencil.WriteMask[back];
+      key->stencil_test_mask[1] = ctx->Stencil.ValueMask[back];
    }
 
-   if (brw->attribs.Color->_LogicOpEnabled)
-      key->logic_op = brw->attribs.Color->LogicOp;
+   if (ctx->Color._LogicOpEnabled)
+      key->logic_op = ctx->Color.LogicOp;
    else
       key->logic_op = GL_COPY;
 
-   key->color_blend = brw->attribs.Color->BlendEnabled;
+   key->color_blend = ctx->Color.BlendEnabled;
    if (key->color_blend) {
-      key->blend_eq_rgb = brw->attribs.Color->BlendEquationRGB;
-      key->blend_eq_a = brw->attribs.Color->BlendEquationA;
-      key->blend_src_rgb = brw->attribs.Color->BlendSrcRGB;
-      key->blend_dst_rgb = brw->attribs.Color->BlendDstRGB;
-      key->blend_src_a = brw->attribs.Color->BlendSrcA;
-      key->blend_dst_a = brw->attribs.Color->BlendDstA;
+      key->blend_eq_rgb = ctx->Color.BlendEquationRGB;
+      key->blend_eq_a = ctx->Color.BlendEquationA;
+      key->blend_src_rgb = ctx->Color.BlendSrcRGB;
+      key->blend_dst_rgb = ctx->Color.BlendDstRGB;
+      key->blend_src_a = ctx->Color.BlendSrcA;
+      key->blend_dst_a = ctx->Color.BlendDstA;
    }
 
-   key->alpha_enabled = brw->attribs.Color->AlphaEnabled;
+   key->alpha_enabled = ctx->Color.AlphaEnabled;
    if (key->alpha_enabled) {
-      key->alpha_func = brw->attribs.Color->AlphaFunc;
-      key->alpha_ref = brw->attribs.Color->AlphaRef;
+      key->alpha_func = ctx->Color.AlphaFunc;
+      key->alpha_ref = ctx->Color.AlphaRef;
    }
 
-   key->dither = brw->attribs.Color->DitherFlag;
+   key->dither = ctx->Color.DitherFlag;
 
-   key->depth_test = brw->attribs.Depth->Test;
+   key->depth_test = ctx->Depth.Test;
    if (key->depth_test) {
-      key->depth_func = brw->attribs.Depth->Func;
-      key->depth_write = brw->attribs.Depth->Mask;
+      key->depth_func = ctx->Depth.Func;
+      key->depth_write = ctx->Depth.Mask;
    }
 }
 

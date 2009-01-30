@@ -220,14 +220,15 @@ static void
 brw_wm_sampler_populate_key(struct brw_context *brw,
 			    struct wm_sampler_key *key)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    int unit;
 
    memset(key, 0, sizeof(*key));
 
    for (unit = 0; unit < BRW_MAX_TEX_UNIT; unit++) {
-      if (brw->attribs.Texture->Unit[unit]._ReallyEnabled) {
+      if (ctx->Texture.Unit[unit]._ReallyEnabled) {
 	 struct wm_sampler_entry *entry = &key->sampler[unit];
-	 struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[unit];
+	 struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 	 struct gl_texture_object *texObj = texUnit->_Current;
 	 struct intel_texture_object *intelObj = intel_texture_object(texObj);
 	 struct gl_texture_image *firstImage =
@@ -274,6 +275,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
  */
 static void upload_wm_samplers( struct brw_context *brw )
 {
+   GLcontext *ctx = &brw->intel.ctx;
    struct wm_sampler_key key;
    int i;
 
@@ -317,7 +319,7 @@ static void upload_wm_samplers( struct brw_context *brw )
 
       /* Emit SDC relocations */
       for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-	 if (!brw->attribs.Texture->Unit[i]._ReallyEnabled)
+	 if (!ctx->Texture.Unit[i]._ReallyEnabled)
 	    continue;
 
 	 dri_bo_emit_reloc(brw->wm.sampler_bo,

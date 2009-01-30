@@ -86,11 +86,12 @@ void brw_FrameBufferTexDestroy( struct brw_context *brw )
  */
 void brw_validate_textures( struct brw_context *brw )
 {
+   GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    int i;
 
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[i];
+      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
 
       if (texUnit->_ReallyEnabled) {
 	 intel_finalize_mipmap_tree(intel, i);
