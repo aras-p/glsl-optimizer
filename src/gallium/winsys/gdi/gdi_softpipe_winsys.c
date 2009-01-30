@@ -177,9 +177,9 @@ gdi_softpipe_surface_buffer_create(struct pipe_winsys *winsys,
    nblocksy = pf_get_nblocksy(&block, height);
    *stride = round_up(nblocksx * block.size, alignment);
 
-   return winsys->buffer_create(winsys, alignment,
-                                usage,
-                                *stride * nblocksy);
+   return winsys->_buffer_create(winsys, alignment,
+                                 usage,
+                                 *stride * nblocksy);
 }
 
 
@@ -237,13 +237,13 @@ gdi_softpipe_screen_create(void)
 
    winsys->destroy = gdi_softpipe_destroy;
 
-   winsys->buffer_create = gdi_softpipe_buffer_create;
-   winsys->user_buffer_create = gdi_softpipe_user_buffer_create;
-   winsys->buffer_map = gdi_softpipe_buffer_map;
-   winsys->buffer_unmap = gdi_softpipe_buffer_unmap;
-   winsys->buffer_destroy = gdi_softpipe_buffer_destroy;
+   winsys->_buffer_create = gdi_softpipe_buffer_create;
+   winsys->_user_buffer_create = gdi_softpipe_user_buffer_create;
+   winsys->_buffer_map = gdi_softpipe_buffer_map;
+   winsys->_buffer_unmap = gdi_softpipe_buffer_unmap;
+   winsys->_buffer_destroy = gdi_softpipe_buffer_destroy;
 
-   winsys->surface_buffer_create = gdi_softpipe_surface_buffer_create;
+   winsys->_surface_buffer_create = gdi_softpipe_surface_buffer_create;
 
    winsys->fence_reference = gdi_softpipe_fence_reference;
    winsys->fence_signalled = gdi_softpipe_fence_signalled;
