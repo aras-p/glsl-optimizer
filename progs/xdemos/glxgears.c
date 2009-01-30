@@ -622,7 +622,7 @@ query_vsync(Display *dpy)
    if (interval > 0) {
       printf("Running synchronized to the vertical refresh.  The framerate should be\n");
       if (interval == 1) {
-         printf("approximately the same as the montior refresh rate.\n");
+         printf("approximately the same as the monitor refresh rate.\n");
       } else if (interval > 1) {
          printf("approximately 1/%d the montior refresh rate.\n",
                 interval);
