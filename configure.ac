@@ -46,10 +46,14 @@ esac
 MKDEP_OPTIONS=-fdepend
 dnl Ask gcc where it's keeping its secret headers
 if test "x$GCC" = xyes; then
-    GCC_INCLUDES=`$CC -print-file-name=include`
-    if test "x$GCC_INCLUDES" != x; then
-        MKDEP_OPTIONS="$MKDEP_OPTIONS -I$GCC_INCLUDES"
-    fi
+    for dir in include include-fixed; do
+        GCC_INCLUDES=`$CC -print-file-name=$dir`
+        if test "x$GCC_INCLUDES" != x && \
+           test "$GCC_INCLUDES" != "$dir" && \
+           test -d "$GCC_INCLUDES"; then
+            MKDEP_OPTIONS="$MKDEP_OPTIONS -I$GCC_INCLUDES"
+        fi
+    done
 fi
 AC_SUBST([MKDEP_OPTIONS])
 
