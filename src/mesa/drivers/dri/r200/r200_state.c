@@ -48,6 +48,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast_setup/swrast_setup.h"
 
 #include "radeon_buffer.h"
+#include "radeon_cs.h"
+#include "radeon_mipmap_tree.h"
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_state.h"
@@ -2347,9 +2349,66 @@ r200UpdateDrawBuffer(GLcontext *ctx)
 #endif
 }
 
+static GLboolean r200ValidateBuffers(GLcontext *ctx)
+{
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   struct radeon_cs_space_check bos[8];
+   struct radeon_renderbuffer *rrb;
+   int num_bo = 0;
+   int i;
+   int flushed = 0, ret;
+again:
+   num_bo = 0;
+   
+   rrb = radeon_get_colorbuffer(&rmesa->radeon);
+   /* color buffer */
+   if (rrb && rrb->bo) {
+      bos[num_bo].bo = rrb->bo;
+      bos[num_bo].read_domains = 0;
+      bos[num_bo].write_domain = RADEON_GEM_DOMAIN_VRAM;
+      bos[num_bo].new_accounted = 0;
+      num_bo++;
+   }
 
+   /* depth buffer */
+   rrb = radeon_get_depthbuffer(&rmesa->radeon);
+   /* color buffer */
+   if (rrb && rrb->bo) {
+      bos[num_bo].bo = rrb->bo;
+      bos[num_bo].read_domains = 0;
+      bos[num_bo].write_domain = RADEON_GEM_DOMAIN_VRAM;
+      bos[num_bo].new_accounted = 0;
+      num_bo++;
+   }
 
-void r200ValidateState( GLcontext *ctx )
+   for (i = 0; i < ctx->Const.MaxTextureImageUnits; ++i) {
+      radeonTexObj *t;
+      
+      if (!ctx->Texture.Unit[i]._ReallyEnabled)
+	 continue;
+      
+      t = radeon_tex_obj(ctx->Texture.Unit[i]._Current);
+      bos[num_bo].bo = t->mt->bo;
+      bos[num_bo].read_domains = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
+      bos[num_bo].write_domain = 0;
+      bos[num_bo].new_accounted = 0;
+      num_bo++;
+   }
+   
+   ret = radeon_cs_space_check(rmesa->radeon.cmdbuf.cs, bos, num_bo);
+   if (ret == RADEON_CS_SPACE_OP_TO_BIG)
+      return GL_FALSE;
+   if (ret == RADEON_CS_SPACE_FLUSH) {
+      r200Flush(ctx);
+      if (flushed)
+	 return GL_FALSE;
+      flushed = 1;
+      goto again;
+   }
+   return GL_TRUE;
+}
+
+GLboolean r200ValidateState( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint new_state = rmesa->radeon.NewGLState;
@@ -2363,6 +2422,10 @@ void r200ValidateState( GLcontext *ctx )
       new_state |= rmesa->radeon.NewGLState; /* may add TEXTURE_MATRIX */
       r200UpdateLocalViewer( ctx );
    }
+
+   /* we need to do a space check here */
+   if (!r200ValidateBuffers(ctx))
+     return GL_FALSE;
 
 /* FIXME: don't really need most of these when vertex progs are enabled */
 
@@ -2408,6 +2471,7 @@ void r200ValidateState( GLcontext *ctx )
    }
 
    rmesa->radeon.NewGLState = 0;
+   return GL_TRUE;
 }
 
 
@@ -2452,7 +2516,8 @@ static void r200WrapRunPipeline( GLcontext *ctx )
    /* Validate state:
     */
    if (rmesa->radeon.NewGLState)
-      r200ValidateState( ctx );
+      if (!r200ValidateState( ctx ))
+	 FALLBACK(rmesa, RADEON_FALLBACK_TEXTURE, GL_TRUE);
 
    has_material = !ctx->VertexProgram._Enabled && ctx->Light.Enabled && check_material( ctx );
 

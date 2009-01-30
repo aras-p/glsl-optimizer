@@ -47,7 +47,7 @@ extern void r200UpdateViewportOffset( GLcontext *ctx );
 extern void r200UpdateWindow( GLcontext *ctx );
 extern void r200UpdateDrawBuffer(GLcontext *ctx);
 
-extern void r200ValidateState( GLcontext *ctx );
+extern GLboolean r200ValidateState( GLcontext *ctx );
 
 extern void r200PrintDirty( r200ContextPtr rmesa,
 			      const char *msg );

@@ -44,4 +44,5 @@ void radeon_bo_manager_legacy_dtor(struct radeon_bo_manager *bom);
 void radeon_bo_legacy_texture_age(struct radeon_bo_manager *bom);
 unsigned radeon_bo_legacy_relocs_size(struct radeon_bo *bo);
 
+int radeon_legacy_bo_is_static(struct radeon_bo *bo);
 #endif

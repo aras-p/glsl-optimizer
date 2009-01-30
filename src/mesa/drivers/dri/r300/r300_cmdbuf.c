@@ -296,12 +296,8 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	BATCH_LOCALS(&r300->radeon);
 	struct radeon_renderbuffer *rrb;
 	uint32_t cbpitch;
-	GLframebuffer *fb = r300->radeon.dri.drawable->driverPrivate;
 
-	rrb = r300->radeon.state.color.rrb;
-	if (r300->radeon.radeonScreen->driScreen->dri2.enabled) {
-		rrb = (struct radeon_renderbuffer *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-	}
+	rrb = radeon_get_colorbuffer(&r300->radeon);
 	if (!rrb || !rrb->bo) {
 		fprintf(stderr, "no rrb\n");
 		return;
@@ -331,7 +327,7 @@ static void emit_zb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	struct radeon_renderbuffer *rrb;
 	uint32_t zbpitch;
 
-	rrb = r300->radeon.state.depth.rrb;
+	rrb = radeon_get_depthbuffer(&r300->radeon);
 	if (!rrb)
 		return;
 

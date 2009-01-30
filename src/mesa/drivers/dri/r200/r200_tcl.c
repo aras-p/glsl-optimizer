@@ -406,7 +406,8 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
    /* Validate state:
     */
    if (rmesa->radeon.NewGLState)
-      r200ValidateState( ctx );
+      if (!r200ValidateState( ctx ))
+         return GL_TRUE; /* fallback to sw t&l */
 
    if (!ctx->VertexProgram._Enabled) {
    /* NOTE: inputs != tnl->render_inputs - these are the untransformed

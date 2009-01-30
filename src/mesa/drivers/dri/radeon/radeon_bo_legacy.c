@@ -413,10 +413,8 @@ static struct radeon_bo *bo_open(struct radeon_bo_manager *bom,
         r = bo_dma_alloc(&(bo_legacy->base));
         if (r) {
 	  if (legacy_wait_any_pending(boml) == -1) {
-	    fprintf(stderr, "Ran out of GART memory (for %d)!\n", size);
-            fprintf(stderr, "Please consider adjusting GARTSize option.\n");
             bo_free(bo_legacy);
-            exit(-1);
+	    return NULL;
 	  }
 	  goto retry;
 	  return NULL;
@@ -639,6 +637,24 @@ void radeon_bo_manager_legacy_dtor(struct radeon_bo_manager *bom)
     free(boml);
 }
 
+static struct bo_legacy *radeon_legacy_bo_alloc_static(struct bo_manager_legacy *bom,
+						       int size, uint32_t offset)
+{
+    struct bo_legacy *bo;
+
+    bo = bo_allocate(bom, size, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+    if (bo == NULL)
+	return NULL;
+    bo->static_bo = 1;
+    bo->offset = offset + bom->fb_location;
+    bo->base.handle = bo->offset;
+    bo->ptr = bom->screen->driScreen->pFB + offset;
+    if (bo->base.handle > bom->nhandle) {
+        bom->nhandle = bo->base.handle + 1;
+    }
+    return bo;
+}
+
 struct radeon_bo_manager *radeon_bo_manager_legacy_ctor(struct radeon_screen *scrn)
 {
     struct bo_manager_legacy *bom;
@@ -682,41 +698,30 @@ struct radeon_bo_manager *radeon_bo_manager_legacy_ctor(struct radeon_screen *sc
 
     /* biggest framebuffer size */
     size = 4096*4096*4; 
+
     /* allocate front */
-    bo = bo_allocate(bom, size, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-    if (bo == NULL) {
+    bo = radeon_legacy_bo_alloc_static(bom, size, bom->screen->frontOffset);
+    if (!bo) {
         radeon_bo_manager_legacy_dtor((struct radeon_bo_manager*)bom);
         return NULL;
     }
     if (scrn->sarea->tiling_enabled) {
         bo->base.flags = RADEON_BO_FLAGS_MACRO_TILE;
     }
-    bo->static_bo = 1;
-    bo->offset = bom->screen->frontOffset + bom->fb_location;
-    bo->base.handle = bo->offset;
-    bo->ptr = scrn->driScreen->pFB + bom->screen->frontOffset;
-    if (bo->base.handle > bom->nhandle) {
-        bom->nhandle = bo->base.handle + 1;
-    }
+
     /* allocate back */
-    bo = bo_allocate(bom, size, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-    if (bo == NULL) {
+    bo = radeon_legacy_bo_alloc_static(bom, size, bom->screen->backOffset);
+    if (!bo) {
         radeon_bo_manager_legacy_dtor((struct radeon_bo_manager*)bom);
         return NULL;
     }
     if (scrn->sarea->tiling_enabled) {
         bo->base.flags = RADEON_BO_FLAGS_MACRO_TILE;
     }
-    bo->static_bo = 1;
-    bo->offset = bom->screen->backOffset + bom->fb_location;
-    bo->base.handle = bo->offset;
-    bo->ptr = scrn->driScreen->pFB + bom->screen->backOffset;
-    if (bo->base.handle > bom->nhandle) {
-        bom->nhandle = bo->base.handle + 1;
-    }
+
     /* allocate depth */
-    bo = bo_allocate(bom, size, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-    if (bo == NULL) {
+    bo = radeon_legacy_bo_alloc_static(bom, size, bom->screen->depthOffset);
+    if (!bo) {
         radeon_bo_manager_legacy_dtor((struct radeon_bo_manager*)bom);
         return NULL;
     }
@@ -724,13 +729,6 @@ struct radeon_bo_manager *radeon_bo_manager_legacy_ctor(struct radeon_screen *sc
     if (scrn->sarea->tiling_enabled) {
         bo->base.flags |= RADEON_BO_FLAGS_MACRO_TILE;
         bo->base.flags |= RADEON_BO_FLAGS_MICRO_TILE;
-    }
-    bo->static_bo = 1;
-    bo->offset = bom->screen->depthOffset + bom->fb_location;
-    bo->base.handle = bo->offset;
-    bo->ptr = scrn->driScreen->pFB + bom->screen->depthOffset;
-    if (bo->base.handle > bom->nhandle) {
-        bom->nhandle = bo->base.handle + 1;
     }
     return (struct radeon_bo_manager*)bom;
 }
@@ -750,3 +748,10 @@ unsigned radeon_bo_legacy_relocs_size(struct radeon_bo *bo)
     }
     return bo->size;
 }
+
+int radeon_legacy_bo_is_static(struct radeon_bo *bo)
+{
+    struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
+    return bo_legacy->static_bo;
+}
+

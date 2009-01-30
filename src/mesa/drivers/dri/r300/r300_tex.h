@@ -41,7 +41,7 @@ extern void r300SetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 			     unsigned long long offset, GLint depth,
 			     GLuint pitch);
 
-extern void r300ValidateTextures(GLcontext * ctx);
+extern GLboolean r300ValidateTextures(GLcontext * ctx);
 
 extern void r300InitTextureFuncs(struct dd_function_table *functions);
 

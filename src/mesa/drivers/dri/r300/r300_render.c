@@ -501,6 +501,9 @@ static GLboolean r300RunTCLRender(GLcontext * ctx,
 		return GL_TRUE;
 	}
 
+	if (!r300ValidateTextures(ctx))
+	    return GL_TRUE;
+	
 	r300UpdateShaders(rmesa);
 
 	vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);

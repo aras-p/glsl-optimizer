@@ -2632,7 +2632,6 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 	GLcontext *ctx;
 	ctx = rmesa->radeon.glCtx;
 
-	r300ValidateTextures(ctx);
 	r300SetEarlyZState(ctx);
 
 	GLuint fgdepthsrc = R300_FG_DEPTH_SRC_SCAN;

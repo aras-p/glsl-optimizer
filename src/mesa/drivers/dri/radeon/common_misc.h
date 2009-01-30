@@ -2,6 +2,7 @@
 #define COMMON_MISC_H
 
 #include "common_context.h"
+#include "radeon_buffer.h"
 void radeonRecalcScissorRects(radeonContextPtr radeon);
 void radeonSetCliprects(radeonContextPtr radeon);
 void radeonUpdateScissor( GLcontext *ctx );
@@ -122,4 +123,36 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size);
 void radeonAllocDmaRegion(radeonContextPtr rmesa,
 			  struct radeon_bo **pbo, int *poffset,
 			  int bytes, int alignment);
+void radeonReleaseDmaRegion(radeonContextPtr rmesa);
+
+void rcommon_flush_last_swtcl_prim(GLcontext *ctx);
+
+void *rcommonAllocDmaLowVerts(radeonContextPtr rmesa, int nverts, int vsize);
+
+
+static inline struct radeon_renderbuffer *radeon_get_depthbuffer(radeonContextPtr rmesa)
+{
+	struct radeon_renderbuffer *rrb;
+	rrb = rmesa->state.depth.rrb;
+	if (!rrb)
+		return NULL;
+
+	return rrb;
+}
+
+static inline struct radeon_renderbuffer *radeon_get_colorbuffer(radeonContextPtr rmesa)
+{
+	struct radeon_renderbuffer *rrb;
+	GLframebuffer *fb = rmesa->dri.drawable->driverPrivate;
+
+	rrb = rmesa->state.color.rrb;
+	if (rmesa->radeonScreen->driScreen->dri2.enabled) {
+		rrb = (struct radeon_renderbuffer *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+	}
+	if (!rrb)
+		return NULL;
+	return rrb;
+}
+
+
 #endif

@@ -685,6 +685,14 @@ void rcommonInitCmdBuf(radeonContextPtr rmesa, int max_state_size)
 	assert(rmesa->cmdbuf.cs != NULL);
 	rmesa->cmdbuf.size = size;
 
+	if (!rmesa->radeonScreen->kernel_mm) {
+		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM, rmesa->radeonScreen->texSize[0]);
+		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_GTT, rmesa->radeonScreen->gartTextures.size);
+	} else {
+		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM, rmesa->radeonScreen->texSize[0]);
+		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_GTT, rmesa->radeonScreen->gartTextures.size);
+	}
+
 }
 /**
  * Destroy the command buffer
@@ -907,7 +915,7 @@ void radeonCleanupContext(radeonContextPtr radeon)
 	}
 }
 
-void
+static void
 radeon_make_kernel_renderbuffer_current(radeonContextPtr radeon,
 					GLframebuffer *draw)
 {
@@ -1314,7 +1322,6 @@ void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	uint32_t *out;
-	uint32_t bo_size;
 
 	if (stride == 0) {
 		radeonAllocDmaRegion(rmesa, &aos->bo, &aos->offset, size * 4, 32);
@@ -1328,7 +1335,6 @@ void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 	aos->components = size;
 	aos->count = count;
 
-//	radeon_bo_map(aos->bo, 1);
 	out = (uint32_t*)((char*)aos->bo->ptr + aos->offset);
 	switch (size) {
 	case 1: radeonEmitVec4(out, data, stride, count); break;
@@ -1339,7 +1345,6 @@ void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 		assert(0);
 		break;
 	}
-//	radeon_bo_unmap(aos->bo);
 }
 
 
@@ -2320,6 +2325,9 @@ void radeonSpanRenderFinish(GLcontext * ctx)
 
 void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 {
+	struct radeon_cs_space_check bos[1];
+	int flushed, ret;
+
 	size = MAX2(size, MAX_DMA_BUF_SZ * 16);
 
 	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
@@ -2330,8 +2338,6 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 		rmesa->dma.flush(rmesa->glCtx);
 	}
 
-
-
 	if (rmesa->dma.nr_released_bufs > 4) {
 		rcommonFlushCmdBuf(rmesa, __FUNCTION__);
 		rmesa->dma.nr_released_bufs = 0;
@@ -2341,13 +2347,42 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 		radeon_bo_unref(rmesa->dma.current);
 		rmesa->dma.current = 0;
 	}
-	
+
+again_alloc:	
 	rmesa->dma.current = radeon_bo_open(rmesa->radeonScreen->bom,
 					    0, size, 4, RADEON_GEM_DOMAIN_GTT,
 					    0);
 
+	if (!rmesa->dma.current) {
+		rcommonFlushCmdBuf(rmesa, __FUNCTION__);
+		rmesa->dma.nr_released_bufs = 0;
+		goto again_alloc;
+	}
+
 	rmesa->dma.current_used = 0;
 	rmesa->dma.current_vertexptr = 0;
+	
+	bos[0].bo = rmesa->dma.current;
+	bos[0].read_domains = RADEON_GEM_DOMAIN_GTT;
+	bos[0].write_domain =0 ;
+	bos[0].new_accounted = 0;
+
+again:
+	ret = radeon_cs_space_check(rmesa->cmdbuf.cs, bos, 1);
+	if (ret == RADEON_CS_SPACE_OP_TO_BIG) {
+		fprintf(stderr,"Got OPEARTION TO BIG ILLEGAL - this cannot happen");
+		assert(0);
+	} else if (ret == RADEON_CS_SPACE_FLUSH) {
+		rcommonFlushCmdBuf(rmesa, __FUNCTION__);
+		if (flushed) {
+			fprintf(stderr,"flushed but still no space\n");
+			assert(0);
+		}
+		flushed = 1;
+		goto again;
+	}
+		
+	
 	radeon_bo_map(rmesa->dma.current, 1);
 }
 
