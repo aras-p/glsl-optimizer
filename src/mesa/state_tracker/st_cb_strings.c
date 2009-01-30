@@ -36,8 +36,6 @@
 #include "main/version.h"
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
-/* We want the name of the winsys we're running on*/
-#include "pipe/internal/p_winsys_screen.h"
 #include "st_context.h"
 #include "st_cb_strings.h"
 
@@ -68,10 +66,9 @@ st_get_string(GLcontext * ctx, GLenum name)
    }
 
    case GL_RENDERER:
-      util_snprintf(st->renderer, sizeof(st->renderer), "Gallium %s, %s on %s", 
+      util_snprintf(st->renderer, sizeof(st->renderer), "Gallium %s on %s", 
                ST_VERSION_STRING,
-	       screen->get_name( screen ),
-	       screen->winsys->get_name( screen->winsys ));
+	       screen->get_name( screen ));
 
       return (GLubyte *) st->renderer;
 
