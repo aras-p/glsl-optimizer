@@ -551,39 +551,11 @@ struct r200_tcl_info {
 /* r200_swtcl.c
  */
 struct r200_swtcl_info {
-   GLuint RenderIndex;
-   
-   /**
-    * Size of a hardware vertex.  This is calculated when \c ::vertex_attrs is
-    * installed in the Mesa state vector.
-    */
-   GLuint vertex_size;
 
-   /**
-    * Attributes instructing the Mesa TCL pipeline where / how to put vertex
-    * data in the hardware buffer.
-    */
-   struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
 
-   /**
-    * Number of elements of \c ::vertex_attrs that are actually used.
-    */
-   GLuint vertex_attr_count;
-
-   /**
-    * Cached pointer to the buffer where Mesa will store vertex data.
-    */
-   GLubyte *verts;
-
-   /* Fallback rasterization functions
-    */
    radeon_point_func draw_point;
    radeon_line_func draw_line;
    radeon_tri_func draw_tri;
-
-   GLuint hw_primitive;
-   GLenum render_primitive;
-   GLuint numverts;
 
    /**
     * Offset of the 4UB color data within a hardware (swtcl) vertex.
@@ -599,8 +571,6 @@ struct r200_swtcl_info {
     * Should Mesa project vertex data or will the hardware do it?
     */
    GLboolean needproj;
-
-   struct radeon_bo *bo;
 };
 
 

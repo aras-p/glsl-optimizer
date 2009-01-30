@@ -1015,6 +1015,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
      free(screen);
      return NULL;
    }
+
    return screen;
 }
 

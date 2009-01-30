@@ -66,5 +66,5 @@ extern void r200PointsBitmap( GLcontext *ctx, GLint px, GLint py,
 			      const struct gl_pixelstore_attrib *unpack,
 			      const GLubyte *bitmap );
 
-
+void r200_swtcl_flush(GLcontext *ctx, uint32_t current_offset);
 #endif

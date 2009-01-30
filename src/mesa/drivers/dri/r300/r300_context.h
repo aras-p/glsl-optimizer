@@ -658,37 +658,7 @@ struct r300_state {
 /* r300_swtcl.c
  */
 struct r300_swtcl_info {
-   GLuint RenderIndex;
-
-   /**
-    * Size of a hardware vertex.  This is calculated when \c ::vertex_attrs is
-    * installed in the Mesa state vector.
-    */
-   GLuint vertex_size;
-
-   /**
-    * Attributes instructing the Mesa TCL pipeline where / how to put vertex
-    * data in the hardware buffer.
-    */
-   struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
-
-   /**
-    * Number of elements of \c ::vertex_attrs that are actually used.
-    */
-   GLuint vertex_attr_count;
-
-   /**
-    * Cached pointer to the buffer where Mesa will store vertex data.
-    */
-   GLubyte *verts;
-
-   /* Fallback rasterization functions
-    */
-   GLuint hw_primitive;
-   GLenum render_primitive;
-   GLuint numverts;
-
-   /**
+  /*
     * Offset of the 4UB color data within a hardware (swtcl) vertex.
     */
    GLuint coloroffset;
@@ -697,8 +667,6 @@ struct r300_swtcl_info {
     * Offset of the 3UB specular color data within a hardware (swtcl) vertex.
     */
    GLuint specoffset;
-
-   struct radeon_bo *bo;
 };
 
 

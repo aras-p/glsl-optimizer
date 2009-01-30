@@ -75,36 +75,28 @@ static void r200_emit_vecfog(GLcontext *ctx, struct radeon_aos *aos,
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	uint32_t *out;
-	uint32_t bo_size;
 	int i;
 	int size = 1;
 
-	memset(aos, 0, sizeof(struct radeon_aos));
 	if (stride == 0) {
-		bo_size = size * 4;
+		radeonAllocDmaRegion(rmesa, &aos->bo, &aos->offset, size * 4, 32);
 		count = 1;
 		aos->stride = 0;
 	} else {
-		bo_size = size * count * 4;
+		radeonAllocDmaRegion(rmesa, &aos->bo, &aos->offset, size * 4, 32);
 		aos->stride = size;
 	}
-	aos->bo = radeon_bo_open(rmesa->radeonScreen->bom,
-				 0, bo_size, 32, RADEON_GEM_DOMAIN_GTT, 0);
-	aos->offset = 0;
+
 	aos->components = size;
 	aos->count = count;
 
-	radeon_bo_map(aos->bo, 1);
 	out = (uint32_t*)((char*)aos->bo->ptr + aos->offset);
 	for (i = 0; i < count; i++) {
 	  out[0] = r200ComputeFogBlendFactor( ctx, *(GLfloat *)data );
 	  out++;
 	  data += stride;
 	}
-	radeon_bo_unmap(aos->bo);
 }
-
-
 
 /* Emit any changed arrays to new GART memory, re-emit a packet to
  * update the arrays.  
@@ -230,6 +222,7 @@ after_emit:
       rmesa->hw.vtx.cmd[VTX_VTXFMT_1] = vfmt1;
    }
 
+   radeon_bo_unmap(rmesa->radeon.dma.current);
    rmesa->tcl.nr_aos_components = nr;
 }
 
@@ -240,7 +233,9 @@ void r200ReleaseArrays( GLcontext *ctx, GLuint newinputs )
    int i;
    for (i = 0; i < rmesa->tcl.nr_aos_components; i++) {
      if (rmesa->tcl.aos[i].bo) {
-       rmesa->tcl.aos[i].bo = radeon_bo_unref(rmesa->tcl.aos[i].bo);
+       radeon_bo_unref(rmesa->tcl.aos[i].bo);
+       rmesa->tcl.aos[i].bo = NULL;
      }
    }
+   radeonReleaseDmaRegion(&rmesa->radeon);
 }

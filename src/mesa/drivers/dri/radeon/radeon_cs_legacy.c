@@ -44,6 +44,8 @@ struct cs_manager_legacy {
     /* hack for scratch stuff */
     uint32_t                    pending_age;
     uint32_t                    pending_count;
+
+
 };
 
 struct cs_reloc_legacy {
@@ -507,3 +509,4 @@ void radeon_cs_manager_legacy_dtor(struct radeon_cs_manager *csm)
 {
     free(csm);
 }
+

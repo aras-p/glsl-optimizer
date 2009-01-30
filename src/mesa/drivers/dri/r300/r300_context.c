@@ -260,6 +260,7 @@ static void r300_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.emit_cs_header = r300_vtbl_emit_cs_header;
    radeon->vtbl.emit_state = r300_vtbl_emit_state;
    radeon->vtbl.flush_vertices = r300_vtbl_flush_vertices;
+   radeon->vtbl.swtcl_flush = r300_swtcl_flush;
 }
 
 

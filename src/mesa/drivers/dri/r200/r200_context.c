@@ -297,6 +297,7 @@ static void r200_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.update_draw_buffer = r200UpdateDrawBuffer;
    radeon->vtbl.emit_cs_header = r200_vtbl_emit_cs_header;
    radeon->vtbl.emit_state = r200_vtbl_emit_state;
+   radeon->vtbl.swtcl_flush = r200_swtcl_flush;
 }
 
 
@@ -389,7 +390,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
       rmesa->radeon.texture_depth = ( screen->cpp == 4 ) ?
 	 DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
-   rmesa->swtcl.RenderIndex = ~0;
+   rmesa->radeon.swtcl.RenderIndex = ~0;
    rmesa->hw.all_dirty = 1;
 
    /* Set the maximum texture size small enough that we can guarentee that

@@ -42,4 +42,5 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern void r300InitSwtcl( GLcontext *ctx );
 extern void r300DestroySwtcl( GLcontext *ctx );
 
+extern void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset);
 #endif

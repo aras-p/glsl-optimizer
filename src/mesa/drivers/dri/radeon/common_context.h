@@ -11,6 +11,7 @@
 #include "radeon_screen.h"
 #include "radeon_drm.h"
 #include "dri_util.h"
+#include "tnl/t_vertex.h"
 
 /* This union is used to avoid warnings/miscompilation
    with float to uint32_t casts due to strict-aliasing */
@@ -250,13 +251,19 @@ struct radeon_dma {
 /* radeon_swtcl.c
  */
 struct radeon_swtcl_info {
-   struct radeon_bo *bo;
 
-   /* Fallback rasterization functions
-    */
-   GLuint hw_primitive;
-   GLenum render_primitive;
-   GLuint numverts;
+	GLuint RenderIndex;
+	GLuint vertex_size;
+	GLubyte *verts;
+
+	/* Fallback rasterization functions
+	 */
+	GLuint hw_primitive;
+	GLenum render_primitive;
+	GLuint numverts;
+
+	struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
+	GLuint vertex_attr_count;
 
 };
 
@@ -416,7 +423,7 @@ struct radeon_context {
    /* Derived state - for r300 only */
    struct radeon_state state;
 
-   struct radeon_swtcl swtcl;
+   struct radeon_swtcl_info swtcl;
    /* Configuration cache
     */
    driOptionCache optionCache;
@@ -424,14 +431,15 @@ struct radeon_context {
    struct radeon_cmdbuf cmdbuf;
 
    struct {
-      void (*get_lock)(radeonContextPtr radeon);
-      void (*update_viewport_offset)(GLcontext *ctx);
-      void (*flush)(GLcontext *ctx);
-      void (*set_all_dirty)(GLcontext *ctx);
-      void (*update_draw_buffer)(GLcontext *ctx);
-      void (*emit_cs_header)(struct radeon_cs *cs, radeonContextPtr rmesa);
-      void (*emit_state)(radeonContextPtr rmesa);
-      void (*flush_vertices)(radeonContextPtr rmesa);
+	   void (*get_lock)(radeonContextPtr radeon);
+	   void (*update_viewport_offset)(GLcontext *ctx);
+	   void (*flush)(GLcontext *ctx);
+	   void (*set_all_dirty)(GLcontext *ctx);
+	   void (*update_draw_buffer)(GLcontext *ctx);
+	   void (*emit_cs_header)(struct radeon_cs *cs, radeonContextPtr rmesa);
+	   void (*emit_state)(radeonContextPtr rmesa);
+	   void (*flush_vertices)(radeonContextPtr rmesa);
+	   void (*swtcl_flush)(GLcontext *ctx, uint32_t offset);
    } vtbl;
 };
 
