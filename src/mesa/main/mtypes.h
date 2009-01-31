@@ -901,7 +901,7 @@ struct gl_light_attrib
    /*@{*/
    GLboolean _NeedEyeCoords;		
    GLboolean _NeedVertices;		/**< Use fast shader? */
-   GLbitfield  _Flags;		        /**< LIGHT_* flags, see above */
+   GLbitfield _Flags;		        /**< LIGHT_* flags, see above */
    GLfloat _BaseColor[2][3];
    /*@}*/
 };
@@ -1140,7 +1140,8 @@ struct gl_stencil_attrib
 };
 
 
-#define NUM_TEXTURE_TARGETS 7   /* 1D, 2D, 3D, CUBE, RECT, 1D_STACK, and 2D_STACK */
+/** 1D, 2D, 3D, CUBE, RECT, 1D_ARRAY, and 2D_ARRAY targets */
+#define NUM_TEXTURE_TARGETS 7
 
 /**
  * An index for each type of texture object
@@ -2883,21 +2884,25 @@ struct gl_tnl_module
    /*@}*/
 };
 
-/* Strictly this is a tnl/ private concept, but it doesn't seem
+
+/**
+ * Strictly this is a tnl/ private concept, but it doesn't seem
  * worthwhile adding a tnl private structure just to hold this one bit
  * of information:
  */
 #define MESA_DLIST_DANGLING_REFS     0x1 
 
-/* Provide a location where information about a display list can be
+
+/**
+ * Provide a location where information about a display list can be
  * collected.  Could be extended with driverPrivate structures,
  * etc. in the future.
  */
 struct mesa_display_list
 {
-   Node *node;
+   Node *node;   /**< The dlist commands are in a linked list of nodes */
    GLuint id;
-   GLbitfield flags;
+   GLbitfield flags;  /**< MESA_DLIST_x flags */
 };
 
 
