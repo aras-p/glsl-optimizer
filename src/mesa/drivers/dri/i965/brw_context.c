@@ -135,13 +135,12 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
                                      ctx->Const.MaxTextureImageUnits);
    ctx->Const.MaxVertexTextureImageUnits = 0; /* no vertex shader textures */
 
-   /* Advertise the full hardware capabilities.  The new memory
-    * manager should cope much better with overload situations:
+   /* Mesa limits textures to 4kx4k; it would be nice to fix that someday
     */
-   ctx->Const.MaxTextureLevels = 12;
+   ctx->Const.MaxTextureLevels = 13;
    ctx->Const.Max3DTextureLevels = 9;
    ctx->Const.MaxCubeTextureLevels = 12;
-   ctx->Const.MaxTextureRectSize = (1<<11);
+   ctx->Const.MaxTextureRectSize = (1<<12);
    
    /* if conformance mode is set, swrast can handle any size AA point */
    ctx->Const.MaxPointSizeAA = 255.0;
