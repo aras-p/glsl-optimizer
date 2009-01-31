@@ -169,7 +169,6 @@ static const struct {
    { OFF, "GL_SGIS_texture_border_clamp",      F(ARB_texture_border_clamp) },
    { ON,  "GL_SGIS_texture_edge_clamp",        F(SGIS_texture_edge_clamp) },
    { ON,  "GL_SGIS_texture_lod",               F(SGIS_texture_lod) },
-   { OFF, "GL_SGIX_depth_texture",             F(ARB_depth_texture) },
    { ON,  "GL_SUN_multi_draw_arrays",          F(EXT_multi_draw_arrays) },
    { OFF, "GL_S3_s3tc",                        F(S3_s3tc) },
 };
