@@ -733,10 +733,10 @@ __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
    fb_format[0] = GL_RGB;
    fb_type[0] = GL_UNSIGNED_SHORT_5_6_5;
 
-   fb_format[1] = GL_RGB;
+   fb_format[1] = GL_BGR;
    fb_type[1] = GL_UNSIGNED_INT_8_8_8_8_REV;
 
-   fb_format[2] = GL_RGBA;
+   fb_format[2] = GL_BGRA;
    fb_type[2] = GL_UNSIGNED_INT_8_8_8_8_REV;
 
    for (color = 0; color < ARRAY_SIZE(fb_format); color++) {
