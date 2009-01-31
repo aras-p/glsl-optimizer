@@ -349,7 +349,7 @@ static void nv20_init_hwctx(struct nv20_context *nv20)
 	memset(projectionmatrix, 0, sizeof(projectionmatrix));
 	projectionmatrix[0*4+0] = 1.0;
 	projectionmatrix[1*4+1] = 1.0;
-	projectionmatrix[2*4+2] = 1.0;
+	projectionmatrix[2*4+2] = 16777215.0;
 	projectionmatrix[3*4+3] = 1.0;
 	BEGIN_RING(kelvin, NV20TCL_PROJECTION_MATRIX(0), 16);
 	for (i = 0; i < 16; i++) {
@@ -357,20 +357,20 @@ static void nv20_init_hwctx(struct nv20_context *nv20)
 	}
 
 	BEGIN_RING(kelvin, NV20TCL_DEPTH_RANGE_NEAR, 2);
-	OUT_RINGf  (0.0);
-	OUT_RINGf  (16777216.0); /* bpp dependant? */
+	OUT_RINGf (0.0);
+	OUT_RINGf (16777216.0); /* [0, 1] scaled approx to [0, 2^24] */
 
 	BEGIN_RING(kelvin, NV20TCL_VIEWPORT_SCALE0_X, 4);
-	OUT_RINGf  (0.0); /* x-offset */
-	OUT_RINGf  (0.0); /* y-offset */
-	OUT_RINGf  (16777215.0 * 0.5);
-	OUT_RING  (0);
+	OUT_RINGf (0.0); /* x-offset, w/2 + 1.031250 */
+	OUT_RINGf (0.0); /* y-offset, h/2 + 0.030762 */
+	OUT_RINGf (0.0);
+	OUT_RINGf (16777215.0);
 
 	BEGIN_RING(kelvin, NV20TCL_VIEWPORT_SCALE1_X, 4);
-	OUT_RINGf  (0.0); /* no effect? */
-	OUT_RINGf  (0.0); /* no effect? */
-	OUT_RINGf  (16777215.0 * 0.5);
-	OUT_RINGf  (65535.0);
+	OUT_RINGf (0.0); /* no effect?, w/2 */
+	OUT_RINGf (0.0); /* no effect?, h/2 */
+	OUT_RINGf (16777215.0 * 0.5);
+	OUT_RINGf (65535.0);
 
 	FIRE_RING (NULL);
 }

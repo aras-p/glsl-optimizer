@@ -73,6 +73,9 @@ static void nv20_state_emit_dsa(struct nv20_context* nv20)
 	BEGIN_RING(kelvin, NV20TCL_DEPTH_TEST_ENABLE, 1);
 	OUT_RING (d->depth.test_enable);
 
+	BEGIN_RING(kelvin, NV20TCL_DEPTH_UNK17D8, 1);
+	OUT_RING (1);
+
 #if 0
 	BEGIN_RING(kelvin, NV20TCL_STENCIL_ENABLE, 1);
 	OUT_RING (d->stencil.enable);
