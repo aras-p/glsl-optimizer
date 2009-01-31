@@ -27,6 +27,7 @@
 
 
 #include "util/u_memory.h"
+#include "util/u_simple_screen.h"
 #include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
@@ -169,6 +170,7 @@ cell_create_screen(struct pipe_winsys *winsys)
    screen->is_format_supported = cell_is_format_supported;
 
    cell_init_screen_texture_funcs(screen);
+   u_simple_screen_init(screen);
 
    return screen;
 }

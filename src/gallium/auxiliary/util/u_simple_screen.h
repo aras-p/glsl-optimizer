@@ -34,7 +34,7 @@ struct pipe_winsys;
 /**
  * The following function initializes a simple passthrough screen.
  *
- * All the relevant screen function pointers will forward to the
+ * All the relevant screen function pointers will forwarded to the
  * winsys.
  */
 void u_simple_screen_init(struct pipe_screen *screen);

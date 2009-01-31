@@ -1,4 +1,5 @@
 #include "pipe/p_screen.h"
+#include "util/u_simple_screen.h"
 
 #include "nv20_context.h"
 #include "nv20_screen.h"
@@ -200,6 +201,7 @@ nv20_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	screen->pipe.surface_unmap = nv20_surface_unmap;
 
 	nv20_screen_init_miptree_functions(&screen->pipe);
+	u_simple_screen_init(&screen->pipe);
 
 	return &screen->pipe;
 }
