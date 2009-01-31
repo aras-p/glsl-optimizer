@@ -418,10 +418,10 @@ void mesa_print_display_list(GLuint list);
  * reserve display list IDs.
  */
 static struct gl_display_list *
-make_list(GLuint list, GLuint count)
+make_list(GLuint name, GLuint count)
 {
    struct gl_display_list *dlist = CALLOC_STRUCT(gl_display_list);
-   dlist->Name = list;
+   dlist->Name = name;
    dlist->Head = (Node *) _mesa_malloc(sizeof(Node) * count);
    dlist->Head[0].opcode = OPCODE_END_OF_LIST;
    return dlist;
@@ -2524,12 +2524,12 @@ save_MultMatrixd(const GLdouble * m)
 
 
 static void GLAPIENTRY
-save_NewList(GLuint list, GLenum mode)
+save_NewList(GLuint name, GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
    /* It's an error to call this function while building a display list */
    _mesa_error(ctx, GL_INVALID_OPERATION, "glNewList");
-   (void) list;
+   (void) name;
    (void) mode;
 }
 
@@ -6726,7 +6726,7 @@ _mesa_GenLists(GLsizei range)
  * Begin a new display list.
  */
 void GLAPIENTRY
-_mesa_NewList(GLuint list, GLenum mode)
+_mesa_NewList(GLuint name, GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
@@ -6735,10 +6735,10 @@ _mesa_NewList(GLuint list, GLenum mode)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glNewList %u %s\n", list,
+      _mesa_debug(ctx, "glNewList %u %s\n", name,
                   _mesa_lookup_enum_by_nr(mode));
 
-   if (list == 0) {
+   if (name == 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glNewList");
       return;
    }
@@ -6748,7 +6748,7 @@ _mesa_NewList(GLuint list, GLenum mode)
       return;
    }
 
-   if (ctx->ListState.CurrentListPtr) {
+   if (ctx->ListState.CurrentList) {
       /* already compiling a display list */
       _mesa_error(ctx, GL_INVALID_OPERATION, "glNewList");
       return;
@@ -6758,10 +6758,8 @@ _mesa_NewList(GLuint list, GLenum mode)
    ctx->ExecuteFlag = (mode == GL_COMPILE_AND_EXECUTE);
 
    /* Allocate new display list */
-   ctx->ListState.CurrentListNum = list;
-   ctx->ListState.CurrentList = make_list(list, BLOCK_SIZE);
+   ctx->ListState.CurrentList = make_list(name, BLOCK_SIZE);
    ctx->ListState.CurrentBlock = ctx->ListState.CurrentList->Head;
-   ctx->ListState.CurrentListPtr = ctx->ListState.CurrentBlock;
    ctx->ListState.CurrentPos = 0;
 
    /* Reset acumulated list state:
@@ -6773,7 +6771,7 @@ _mesa_NewList(GLuint list, GLenum mode)
       ctx->ListState.ActiveMaterialSize[i] = 0;
 
    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
-   ctx->Driver.NewList(ctx, list, mode);
+   ctx->Driver.NewList(ctx, name, mode);
 
    ctx->CurrentDispatch = ctx->Save;
    _glapi_set_dispatch(ctx->CurrentDispatch);
@@ -6794,7 +6792,7 @@ _mesa_EndList(void)
       _mesa_debug(ctx, "glEndList\n");
 
    /* Check that a list is under construction */
-   if (!ctx->ListState.CurrentListPtr) {
+   if (!ctx->ListState.CurrentList) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glEndList");
       return;
    }
@@ -6807,19 +6805,18 @@ _mesa_EndList(void)
    (void) ALLOC_INSTRUCTION(ctx, OPCODE_END_OF_LIST, 0);
 
    /* Destroy old list, if any */
-   destroy_list(ctx, ctx->ListState.CurrentListNum);
+   destroy_list(ctx, ctx->ListState.CurrentList->Name);
 
    /* Install the new list */
-   _mesa_HashInsert(ctx->Shared->DisplayList, ctx->ListState.CurrentListNum,
+   _mesa_HashInsert(ctx->Shared->DisplayList,
+                    ctx->ListState.CurrentList->Name,
                     ctx->ListState.CurrentList);
 
 
    if (MESA_VERBOSE & VERBOSE_DISPLAY_LIST)
-      mesa_print_display_list(ctx->ListState.CurrentListNum);
+      mesa_print_display_list(ctx->ListState.CurrentList->Name);
 
    ctx->ListState.CurrentList = NULL;
-   ctx->ListState.CurrentListNum = 0;
-   ctx->ListState.CurrentListPtr = NULL;
    ctx->ExecuteFlag = GL_TRUE;
    ctx->CompileFlag = GL_FALSE;
 
@@ -8588,9 +8585,7 @@ _mesa_init_display_list(GLcontext *ctx)
    ctx->ListState.CallDepth = 0;
    ctx->ExecuteFlag = GL_TRUE;
    ctx->CompileFlag = GL_FALSE;
-   ctx->ListState.CurrentListPtr = NULL;
    ctx->ListState.CurrentBlock = NULL;
-   ctx->ListState.CurrentListNum = 0;
    ctx->ListState.CurrentPos = 0;
 
    /* Display List group */

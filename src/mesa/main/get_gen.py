@@ -254,7 +254,7 @@ StateVars = [
 	  ["ctx->Const.MinLineWidth",
 	   "ctx->Const.MaxLineWidth"], "", None ),
 	( "GL_LIST_BASE", GLint, ["ctx->List.ListBase"], "", None ),
-	( "GL_LIST_INDEX", GLint, ["ctx->ListState.CurrentListNum"], "", None ),
+	( "GL_LIST_INDEX", GLint, ["(ctx->ListState.CurrentList ? ctx->ListState.CurrentList->Name : 0)"], "", None ),
 	( "GL_LIST_MODE", GLenum, ["mode"],
 	  """GLenum mode;
          if (!ctx->CompileFlag)

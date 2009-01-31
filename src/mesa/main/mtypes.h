@@ -2886,9 +2886,8 @@ struct gl_tnl_module
  */
 #define DLIST_DANGLING_REFS     0x1 
 
-/*
- * Forward declaration of display list data types:
- */
+
+/** Opaque declaration of display list payload data type */
 union gl_dlist_node;
 
 
@@ -2913,9 +2912,7 @@ struct gl_dlist_state
 {
    GLuint CallDepth;		/**< Current recursion calling depth */
 
-   struct gl_display_list *CurrentList;
-   GLuint CurrentListNum;	/**< Number of the list being compiled */
-   union gl_dlist_node *CurrentListPtr;	/**< Head of list being compiled */
+   struct gl_display_list *CurrentList; /**< List currently being compiled */
    union gl_dlist_node *CurrentBlock; /**< Pointer to current block of nodes */
    GLuint CurrentPos;		/**< Index into current block of nodes */
 
