@@ -581,7 +581,7 @@ static void
 delete_displaylist_cb(GLuint id, void *data, void *userData)
 {
 #if FEATURE_dlist
-   struct mesa_display_list *list = (struct mesa_display_list *) data;
+   struct gl_display_list *list = (struct gl_display_list *) data;
    GLcontext *ctx = (GLcontext *) userData;
    _mesa_delete_list(ctx, list);
 #endif

@@ -2848,13 +2848,6 @@ struct gl_matrix_stack
 
 
 
-/*
- * Forward declaration of display list data types:
- */
-union node;
-typedef union node Node;
-
-
 /* This has to be included here. */
 #include "dd.h"
 
@@ -2886,11 +2879,17 @@ struct gl_tnl_module
 
 
 /**
- * Strictly this is a tnl/ private concept, but it doesn't seem
+ * Display list flags.
+ * Strictly this is a tnl-private concept, but it doesn't seem
  * worthwhile adding a tnl private structure just to hold this one bit
  * of information:
  */
-#define MESA_DLIST_DANGLING_REFS     0x1 
+#define DLIST_DANGLING_REFS     0x1 
+
+/*
+ * Forward declaration of display list data types:
+ */
+union gl_dlist_node;
 
 
 /**
@@ -2898,11 +2897,12 @@ struct gl_tnl_module
  * collected.  Could be extended with driverPrivate structures,
  * etc. in the future.
  */
-struct mesa_display_list
+struct gl_display_list
 {
-   Node *node;   /**< The dlist commands are in a linked list of nodes */
-   GLuint id;
-   GLbitfield flags;  /**< MESA_DLIST_x flags */
+   GLuint Name;
+   GLbitfield Flags;  /**< DLIST_x flags */
+   /** The dlist commands are in a linked list of nodes */
+   union gl_dlist_node *Head;
 };
 
 
@@ -2913,10 +2913,10 @@ struct gl_dlist_state
 {
    GLuint CallDepth;		/**< Current recursion calling depth */
 
-   struct mesa_display_list *CurrentList;
-   Node *CurrentListPtr;	/**< Head of list being compiled */
+   struct gl_display_list *CurrentList;
    GLuint CurrentListNum;	/**< Number of the list being compiled */
-   Node *CurrentBlock;		/**< Pointer to current block of nodes */
+   union gl_dlist_node *CurrentListPtr;	/**< Head of list being compiled */
+   union gl_dlist_node *CurrentBlock; /**< Pointer to current block of nodes */
    GLuint CurrentPos;		/**< Index into current block of nodes */
 
    GLvertexformat ListVtxfmt;
