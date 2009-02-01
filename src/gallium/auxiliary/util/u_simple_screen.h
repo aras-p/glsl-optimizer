@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2009 VMWare, Inc.
+ * Copyright 2009 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,62 +18,30 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
 
+#ifndef U_SIMPLE_SCREEN_H
+#define U_SIMPLE_SCREEN_H
+
+struct pipe_screen;
+struct pipe_winsys;
+
 /**
- * @file
- * Drop-in replacements for winsys buffer callbacks.
+ * The following function initializes a simple passthrough screen.
  *
- * The requirement to use this functions is that all pipe_buffers must be in
- * fact pb_buffers.
- * 
- * @author Jose Fonseca <jfonseca@vmware.com>
+ * All the relevant screen function pointers will forwarded to the
+ * winsys.
  */
+void u_simple_screen_init(struct pipe_screen *screen);
 
-#ifndef PB_WINSYS_H_
-#define PB_WINSYS_H_
+/**
+ * Returns the name of the winsys associated with this screen.
+ */
+const char* u_simple_screen_winsys_name(struct pipe_screen *screen);
 
-
-#include "pipe/p_compiler.h"
-#include "pipe/p_debug.h"
-#include "pipe/p_state.h"
-#include "pipe/p_inlines.h"
-
-
-#ifdef __cplusplus
-extern "C" {
 #endif
-
-
-struct pipe_buffer *
-pb_winsys_user_buffer_create(struct pipe_winsys *winsys,
-			     void *data, 
-			     unsigned bytes);
-                                
-void *
-pb_winsys_buffer_map(struct pipe_winsys *winsys,
-		     struct pipe_buffer *buf,
-		     unsigned flags);
-
-void
-pb_winsys_buffer_unmap(struct pipe_winsys *winsys,
-		       struct pipe_buffer *buf);
-
-void
-pb_winsys_buffer_destroy(struct pipe_winsys *winsys,
-			 struct pipe_buffer *buf);
-
-void 
-pb_init_winsys(struct pipe_winsys *winsys);
-
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /*PB_WINSYS_H_*/

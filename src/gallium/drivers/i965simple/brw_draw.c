@@ -34,7 +34,7 @@
 #include "brw_state.h"
 
 #include "pipe/p_context.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 
 static unsigned hw_prim[PIPE_PRIM_POLYGON+1] = {
    _3DPRIM_POINTLIST,

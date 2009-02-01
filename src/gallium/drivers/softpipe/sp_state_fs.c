@@ -32,7 +32,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw/draw_context.h"
 #include "tgsi/tgsi_dump.h"
@@ -146,13 +146,13 @@ softpipe_set_constant_buffer(struct pipe_context *pipe,
                              const struct pipe_constant_buffer *buf)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
-   struct pipe_winsys *ws = pipe->winsys;
+   struct pipe_screen *screen = pipe->screen;
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
 
    /* note: reference counting */
-   winsys_buffer_reference(ws,
+   pipe_buffer_reference(screen,
 			 &softpipe->constants[shader].buffer,
 			 buf ? buf->buffer : NULL);
 

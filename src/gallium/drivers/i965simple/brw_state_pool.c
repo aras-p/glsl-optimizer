@@ -42,7 +42,7 @@
  * the pool.
  */
 
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "pipe/p_inlines.h"

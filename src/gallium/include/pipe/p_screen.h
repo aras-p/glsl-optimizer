@@ -48,6 +48,8 @@ extern "C" {
 #endif
 
 
+/** Opaque type */
+struct pipe_fence_handle;
 
 /**
  * Gallium screen/adapter context.  Basically everything
@@ -128,7 +130,108 @@ struct pipe_screen {
 
    void (*surface_unmap)( struct pipe_screen *,
                           struct pipe_surface *surface );
-   
+
+
+   /**
+    * Buffer management. Buffer attributes are mostly fixed over its lifetime.
+    *
+    */
+   struct pipe_buffer *(*buffer_create)( struct pipe_screen *screen,
+                                         unsigned alignment,
+                                         unsigned usage,
+                                         unsigned size );
+
+   /**
+    * Create a buffer that wraps user-space data.
+    *
+    * Effectively this schedules a delayed call to buffer_create
+    * followed by an upload of the data at *some point in the future*,
+    * or perhaps never.  Basically the allocate/upload is delayed
+    * until the buffer is actually passed to hardware.
+    *
+    * The intention is to provide a quick way to turn regular data
+    * into a buffer, and secondly to avoid a copy operation if that
+    * data subsequently turns out to be only accessed by the CPU.
+    *
+    * Common example is OpenGL vertex buffers that are subsequently
+    * processed either by software TNL in the driver or by passing to
+    * hardware.
+    *
+    * XXX: What happens if the delayed call to buffer_create() fails?
+    *
+    * Note that ptr may be accessed at any time upto the time when the
+    * buffer is destroyed, so the data must not be freed before then.
+    */
+   struct pipe_buffer *(*user_buffer_create)(struct pipe_screen *screen,
+                                             void *ptr,
+                                             unsigned bytes);
+
+   /**
+    * Allocate storage for a display target surface.
+    *
+    * Often surfaces which are meant to be blitted to the front screen (i.e.,
+    * display targets) must be allocated with special characteristics, memory
+    * pools, or obtained directly from the windowing system.
+    *
+    * This callback is invoked by the pipe_screenwhen creating a texture marked
+    * with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET flag  to get the underlying
+    * buffer storage.
+    */
+   struct pipe_buffer *(*surface_buffer_create)(struct pipe_screen *screen,
+						unsigned width, unsigned height,
+						enum pipe_format format,
+						unsigned usage,
+						unsigned *stride);
+
+
+   /**
+    * Map the entire data store of a buffer object into the client's address.
+    * flags is bitmask of PIPE_BUFFER_USAGE_CPU_READ/WRITE flags.
+    */
+   void *(*buffer_map)( struct pipe_screen *screen,
+			struct pipe_buffer *buf,
+			unsigned usage );
+
+   void (*buffer_unmap)( struct pipe_screen *screen,
+			 struct pipe_buffer *buf );
+
+   void (*buffer_destroy)( struct pipe_screen *screen,
+			   struct pipe_buffer *buf );
+
+
+   /**
+    * Do any special operations to ensure frontbuffer contents are
+    * displayed, eg copy fake frontbuffer.
+    */
+   void (*flush_frontbuffer)( struct pipe_screen *screen,
+                              struct pipe_surface *surf,
+                              void *context_private );
+
+
+
+   /** Set ptr = fence, with reference counting */
+   void (*fence_reference)( struct pipe_screen *screen,
+                            struct pipe_fence_handle **ptr,
+                            struct pipe_fence_handle *fence );
+
+   /**
+    * Checks whether the fence has been signalled.
+    * \param flags  driver-specific meaning
+    * \return zero on success.
+    */
+   int (*fence_signalled)( struct pipe_screen *screen,
+                           struct pipe_fence_handle *fence,
+                           unsigned flag );
+
+   /**
+    * Wait for the fence to finish.
+    * \param flags  driver-specific meaning
+    * \return zero on success.
+    */
+   int (*fence_finish)( struct pipe_screen *screen,
+                        struct pipe_fence_handle *fence,
+                        unsigned flag );
+
 };
 
 

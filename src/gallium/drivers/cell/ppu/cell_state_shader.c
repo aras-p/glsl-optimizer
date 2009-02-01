@@ -28,7 +28,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "draw/draw_context.h"
 #include "tgsi/tgsi_parse.h"
 
@@ -194,9 +194,9 @@ cell_set_constant_buffer(struct pipe_context *pipe,
    draw_flush(cell->draw);
 
    /* note: reference counting */
-   winsys_buffer_reference(ws,
-                        &cell->constants[shader].buffer,
-                        buf->buffer);
+   pipe_buffer_reference(pipe->screen,
+                         &cell->constants[shader].buffer,
+                         buf->buffer);
    cell->constants[shader].size = buf->size;
 
    if (shader == PIPE_SHADER_VERTEX)

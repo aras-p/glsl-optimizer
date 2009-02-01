@@ -38,7 +38,6 @@
 #include "pipe/p_debug.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
 #include "pipe/p_shader_tokens.h"
 
 #include "util/u_memory.h"

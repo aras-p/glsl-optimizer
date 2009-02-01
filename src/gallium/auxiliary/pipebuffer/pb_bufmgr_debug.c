@@ -35,7 +35,6 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_debug.h"
-#include "pipe/p_winsys.h"
 #include "pipe/p_thread.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"

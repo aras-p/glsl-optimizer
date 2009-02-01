@@ -14,7 +14,6 @@ pipebuffer = env.ConvenienceLibrary(
 		'pb_bufmgr_pool.c',
 		'pb_bufmgr_slab.c',
 		'pb_validate.c',
-		'pb_winsys.c',
 	])
 
 auxiliaries.insert(0, pipebuffer)

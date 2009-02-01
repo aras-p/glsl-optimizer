@@ -27,7 +27,8 @@
 
 
 #include "util/u_memory.h"
-#include "pipe/p_winsys.h"
+#include "util/u_simple_screen.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_inlines.h"
 #include "util/u_string.h"
 
@@ -279,6 +280,7 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
    i915screen->screen.surface_unmap = i915_surface_unmap;
 
    i915_init_screen_texture_functions(&i915screen->screen);
+   u_simple_screen_init(&i915screen->screen);
 
    return &i915screen->screen;
 }

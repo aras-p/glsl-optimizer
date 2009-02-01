@@ -10,7 +10,6 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
-#include "pipe/p_winsys.h"
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/drm_api.h"

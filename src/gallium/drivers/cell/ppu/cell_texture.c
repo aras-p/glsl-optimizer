@@ -34,7 +34,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -113,7 +113,7 @@ cell_texture_create(struct pipe_screen *screen,
    cell_texture_layout(ct);
 
    ct->buffer = ws->buffer_create(ws, 32, PIPE_BUFFER_USAGE_PIXEL,
-                                  ct->buffer_size);
+                                   ct->buffer_size);
 
    if (!ct->buffer) {
       FREE(ct);
@@ -154,7 +154,7 @@ cell_texture_release(struct pipe_screen *screen,
           */
          if (ct->tiled_buffer[i]) {
             ct->tiled_mapped[i] = NULL;
-            winsys_buffer_reference(screen->winsys, &ct->tiled_buffer[i], NULL);
+            pipe_buffer_reference(screen, &ct->tiled_buffer[i], NULL);
          }
       }
 
@@ -325,11 +325,11 @@ cell_twiddle_texture(struct pipe_screen *screen,
             struct pipe_winsys *ws = screen->winsys;
             uint bytes = bufWidth * bufHeight * 4 * numFaces;
             ct->tiled_buffer[level] = ws->buffer_create(ws, 16,
-                                                        PIPE_BUFFER_USAGE_PIXEL,
-                                                        bytes);
+                                                         PIPE_BUFFER_USAGE_PIXEL,
+                                                         bytes);
             /* and map it */
             ct->tiled_mapped[level] = ws->buffer_map(ws, ct->tiled_buffer[level],
-                                                     PIPE_BUFFER_USAGE_GPU_READ);
+                                                      PIPE_BUFFER_USAGE_GPU_READ);
          }
          dst = (uint *) ((ubyte *) ct->tiled_mapped[level] + offset);
 
@@ -406,7 +406,7 @@ cell_get_tex_surface(struct pipe_screen *screen,
    if (ps) {
       assert(ps->refcount);
       assert(ps->winsys);
-      winsys_buffer_reference(ws, &ps->buffer, ct->buffer);
+      pipe_buffer_reference(screen, &ps->buffer, ct->buffer);
       ps->format = pt->format;
       ps->block = pt->block;
       ps->width = pt->width[level];

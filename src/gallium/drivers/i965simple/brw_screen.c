@@ -27,8 +27,9 @@
 
 
 #include "util/u_memory.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_string.h"
+#include "util/u_simple_screen.h"
 
 #include "brw_context.h"
 #include "brw_screen.h"
@@ -239,6 +240,7 @@ brw_create_screen(struct pipe_winsys *winsys, uint pci_id)
    brwscreen->screen.is_format_supported = brw_is_format_supported;
 
    brw_init_screen_texture_funcs(&brwscreen->screen);
+   u_simple_screen_init(&brwscreen->screen);
 
    return &brwscreen->screen;
 }

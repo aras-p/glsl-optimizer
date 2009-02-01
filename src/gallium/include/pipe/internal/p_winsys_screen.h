@@ -36,7 +36,7 @@
 #define P_WINSYS_H
 
 
-#include "p_format.h"
+#include "pipe/p_format.h"
 
 
 #ifdef __cplusplus
@@ -177,7 +177,6 @@ struct pipe_winsys
                         unsigned flag );
 
 };
-
 
 #ifdef __cplusplus
 }

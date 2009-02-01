@@ -2,7 +2,7 @@
 #define NOUVEAU_PIPE_WINSYS_H
 
 #include "pipe/p_context.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "nouveau_context.h"
 
 struct nouveau_pipe_buffer {

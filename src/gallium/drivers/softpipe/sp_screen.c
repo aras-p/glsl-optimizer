@@ -27,7 +27,8 @@
 
 
 #include "util/u_memory.h"
-#include "pipe/p_winsys.h"
+#include "util/u_simple_screen.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
@@ -174,6 +175,7 @@ softpipe_create_screen(struct pipe_winsys *winsys)
    screen->base.is_format_supported = softpipe_is_format_supported;
 
    softpipe_init_screen_texture_funcs(&screen->base);
+   u_simple_screen_init(&screen->base);
 
    return &screen->base;
 }

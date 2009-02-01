@@ -62,7 +62,7 @@ nv50_query_destroy(struct pipe_context *pipe, struct pipe_query *pq)
 	struct nv50_query *q = nv50_query(pq);
 
 	if (q) {
-		pipe_buffer_reference(pipe, &q->buffer, NULL);
+		pipe_buffer_reference(pipe->screen, &q->buffer, NULL);
 		FREE(q);
 	}
 }

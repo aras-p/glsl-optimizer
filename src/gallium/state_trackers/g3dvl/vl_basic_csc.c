@@ -2,7 +2,6 @@
 #include "vl_basic_csc.h"
 #include <assert.h>
 #include <pipe/p_context.h>
-#include <pipe/p_winsys.h>
 #include <pipe/p_state.h>
 #include <pipe/p_inlines.h>
 #include <tgsi/tgsi_parse.h>
