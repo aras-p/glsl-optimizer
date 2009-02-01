@@ -624,7 +624,7 @@ query_vsync(Display *dpy)
       if (interval == 1) {
          printf("approximately the same as the monitor refresh rate.\n");
       } else if (interval > 1) {
-         printf("approximately 1/%d the montior refresh rate.\n",
+         printf("approximately 1/%d the monitor refresh rate.\n",
                 interval);
       }
    }
