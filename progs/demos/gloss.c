@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 #include "readtex.h"
@@ -438,6 +439,7 @@ int main( int argc, char *argv[] )
    glutInitWindowSize(WinWidth, WinHeight);
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
    glutCreateWindow(argv[0] );
+   glewInit();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );

@@ -1,11 +1,22 @@
-Import('env')
+Import('*')
 
 if not env['GLUT']:
     Return()
 
 env = env.Clone()
 
-env.Prepend(LIBS = ['$GLUT_LIB'])
+env.Prepend(CPPPATH = [
+	'../util',
+])
+
+env.Prepend(LIBS = [
+	util,
+	'$GLUT_LIB'
+])
+
+if env['platform'] == 'windows':
+    env.Append(CPPDEFINES = ['NOMINMAX'])
+    env.Prepend(LIBS = ['winmm'])
 
 progs = [
 	'arbfplight',
@@ -38,7 +49,6 @@ progs = [
 	'multiarb',
 	'paltex',
 	'pointblast',
-	'rain',
 	'ray',
 	'readpix',
 	'reflect',
@@ -65,7 +75,15 @@ progs = [
 ]
 
 for prog in progs:
-    prog = env.Program(
+    env.Program(
         target = prog,
         source = prog + '.c',
     )
+    
+env.Program(
+    target = 'rain',
+    source = [
+        'rain.cxx',
+        'particles.cxx',
+    ]
+)
