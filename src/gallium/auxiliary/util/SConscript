@@ -24,6 +24,7 @@ util = env.ConvenienceLibrary(
 		'u_tile.c',
 		'u_time.c',
 		'u_timed_winsys.c',
+		'u_simple_screen.c',
 	])
 
 auxiliaries.insert(0, util)
