@@ -266,9 +266,6 @@ affine_span(GLcontext *ctx, SWspan *span,
    GLchan sample[4];  /* the filtered texture sample */
    const GLuint texEnableSave = ctx->Texture._EnabledUnits;
 
-   /* Disable tex units so they're not re-applied in swrast_write_rgba_span */
-   ctx->Texture._EnabledUnits = 0x0;
-
    /* Instead of defining a function for each mode, a test is done
     * between the outer and inner loops. This is to reduce code size
     * and complexity. Observe that an optimizing compiler kills
@@ -396,6 +393,9 @@ affine_span(GLcontext *ctx, SWspan *span,
 
    GLuint i;
    GLchan *dest = span->array->rgba[0];
+
+   /* Disable tex units so they're not re-applied in swrast_write_rgba_span */
+   ctx->Texture._EnabledUnits = 0x0;
 
    span->intTex[0] -= FIXED_HALF;
    span->intTex[1] -= FIXED_HALF;
