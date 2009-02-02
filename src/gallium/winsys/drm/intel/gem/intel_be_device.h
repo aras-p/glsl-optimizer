@@ -18,6 +18,8 @@ struct intel_be_device
 
 	int fd; /**< Drm file discriptor */
 
+	unsigned id;
+
 	size_t max_batch_size;
 	size_t max_vertex_size;
 
@@ -26,11 +28,14 @@ struct intel_be_device
 	} pools;
 };
 
+static INLINE struct intel_be_device *
+intel_be_device(struct pipe_winsys *winsys)
+{
+	return (struct intel_be_device *)winsys;
+}
+
 boolean
 intel_be_init_device(struct intel_be_device *device, int fd, unsigned id);
-
-void
-intel_be_destroy_device(struct intel_be_device *dev);
 
 /*
  * Buffer

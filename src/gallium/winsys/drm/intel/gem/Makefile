@@ -6,7 +6,8 @@ LIBNAME = inteldrm
 C_SOURCES = \
 	intel_be_batchbuffer.c \
 	intel_be_context.c \
-	intel_be_device.c
+	intel_be_device.c \
+	intel_be_api.c
 
 
 include ./Makefile.template

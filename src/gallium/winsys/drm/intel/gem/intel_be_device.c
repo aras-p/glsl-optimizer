@@ -11,15 +11,7 @@
 
 #include "i915simple/i915_screen.h"
 
-
-/**
- *  Turn a pipe winsys into an intel/pipe winsys:
- */
-static INLINE struct intel_be_device *
-intel_be_device(struct pipe_winsys *winsys)
-{
-	return (struct intel_be_device *)winsys;
-}
+#include "intel_be_api.h"
 
 /*
  * Buffer
@@ -233,10 +225,21 @@ intel_be_fence_finish(struct pipe_winsys *sws,
  * Misc functions
  */
 
+static void
+intel_be_destroy_winsys(struct pipe_winsys *winsys)
+{
+	struct intel_be_device *dev = intel_be_device(winsys);
+
+	drm_intel_bufmgr_destroy(dev->pools.gem);
+
+	free(dev);
+}
+
 boolean
 intel_be_init_device(struct intel_be_device *dev, int fd, unsigned id)
 {
 	dev->fd = fd;
+	dev->id = id;
 	dev->max_batch_size = 16 * 4096;
 	dev->max_vertex_size = 128 * 4096;
 
@@ -253,13 +256,28 @@ intel_be_init_device(struct intel_be_device *dev, int fd, unsigned id)
 	dev->base.fence_signalled = intel_be_fence_signalled;
 	dev->base.fence_finish = intel_be_fence_finish;
 
+	dev->base.destroy = intel_be_destroy_winsys;
+
 	dev->pools.gem = drm_intel_bufmgr_gem_init(dev->fd, dev->max_batch_size);
 
 	return true;
 }
 
-void
-intel_be_destroy_device(struct intel_be_device *dev)
+struct pipe_screen *
+intel_be_create_screen(int drmFD, int deviceID)
 {
-	drm_intel_bufmgr_destroy(dev->pools.gem);
+	struct intel_be_device *dev;
+	struct pipe_screen *screen;
+
+	/* Allocate the private area */
+	dev = malloc(sizeof(*dev));
+	if (!dev)
+		return NULL;
+	memset(dev, 0, sizeof(*dev));
+
+	intel_be_init_device(dev, drmFD, deviceID);
+
+	screen = i915_create_screen(&dev->base, deviceID);
+
+	return screen;
 }
