@@ -227,7 +227,7 @@ PrintShaderInstructions(GLuint shader, FILE *f)
    GET_CURRENT_CONTEXT(ctx);
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
    struct gl_program *prog = sh->Program;
-   _mesa_print_program_opt(prog, Options.Mode, Options.LineNumbers);
+   _mesa_fprint_program_opt(stdout, prog, Options.Mode, Options.LineNumbers);
 }
 
 
