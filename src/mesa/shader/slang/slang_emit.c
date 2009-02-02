@@ -2120,6 +2120,10 @@ emit_var_ref(slang_emit_info *emitInfo, slang_ir_node *n)
       /* mark var as used */
       _mesa_use_uniform(emitInfo->prog->Parameters, (char *) n->Var->a_name);
    }
+   else if (n->Store->File == PROGRAM_INPUT) {
+      assert(n->Store->Index >= 0);
+      emitInfo->prog->InputsRead |= (1 << n->Store->Index);
+   }
 
    if (n->Store->Index < 0) {
       /* probably ran out of registers */
