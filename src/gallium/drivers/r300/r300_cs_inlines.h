@@ -27,8 +27,10 @@
 #ifdef R300_CS_H
 
 #define R300_PACIFY do { \
+    OUT_CS_REG(R300_SC_SCREENDOOR, 0x0); \
     OUT_CS_REG(RADEON_WAIT_UNTIL, (1 << 15) | (1 << 17) | \
         (1 << 18) | (1 << 31)); \
+    OUT_CS_REG(R300_SC_SCREENDOOR, 0xffffff); \
 } while (0)
 
 
