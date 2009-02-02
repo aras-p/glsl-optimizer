@@ -26,6 +26,7 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
+#include "util/u_simple_screen.h"
 
 #include "r300_chipset.h"
 #include "r300_texture.h"

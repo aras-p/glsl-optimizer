@@ -264,6 +264,7 @@ struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys,
     r300screen->screen.surface_unmap = r300_surface_unmap;
 
     r300_init_screen_texture_functions(&r300screen->screen);
+    u_simple_screen_init(&r300screen->screen);
 
     return &r300screen->screen;
 }
