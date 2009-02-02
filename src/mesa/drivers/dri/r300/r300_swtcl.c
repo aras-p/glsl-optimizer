@@ -501,7 +501,7 @@ static void r300RenderStart(GLcontext *ctx)
 	r300ChooseRenderState(ctx);
 	r300SetVertexFormat(ctx);
 
-	r300ValidateTextures(ctx);
+	r300ValidateBuffers(ctx);
 
 	r300UpdateShaders(rmesa);
 	r300UpdateShaderStates(rmesa);

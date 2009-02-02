@@ -501,7 +501,7 @@ static GLboolean r300RunTCLRender(GLcontext * ctx,
 		return GL_TRUE;
 	}
 
-	if (!r300ValidateTextures(ctx))
+	if (!r300ValidateBuffers(ctx))
 	    return GL_TRUE;
 	
 	r300UpdateShaders(rmesa);
