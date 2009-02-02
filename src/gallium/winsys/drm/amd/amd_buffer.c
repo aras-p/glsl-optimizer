@@ -231,7 +231,7 @@ struct pipe_surface *amd_surface_from_handle(struct amd_context *amd_context,
 
     pt = pipe_screen->texture_blanket(pipe_screen, &tmpl, &pitch, pb);
     if (pt == NULL) {
-        winsys_buffer_reference(pipe_winsys, &pb, NULL);
+        pipe_buffer_reference(pipe_screen, &pb, NULL);
     }
     ps = pipe_screen->get_tex_surface(pipe_screen, pt, 0, 0, 0,
                                       PIPE_BUFFER_USAGE_GPU_WRITE);
