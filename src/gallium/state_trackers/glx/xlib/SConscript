@@ -1,0 +1,26 @@
+#######################################################################
+# SConscript for xlib state_tracker
+
+Import('*')
+
+if env['platform'] == 'linux' \
+        and 'mesa' in env['statetrackers'] \
+        and ('softpipe' or 'i915simple' or 'trace') in env['drivers'] \
+        and not env['dri']:
+
+    env = env.Clone()
+
+    env.Append(CPPPATH = [
+        '#/src/mesa',
+        '#/src/mesa/main',
+    ])
+
+    st_xlib = env.ConvenienceLibrary(
+	target = 'st_xlib',
+	source = [ 'glxapi.c',
+		'fakeglx.c',
+		'fakeglx_fonts.c',
+		'xm_api.c',
+		]
+    )
+    Export('st_xlib')
