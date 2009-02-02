@@ -34,6 +34,8 @@
 #define NV04_NEW_CONTROL	(1 << 5)
 #define NV04_NEW_VIEWPORT	(1 << 6)
 #define NV04_NEW_SAMPLER	(1 << 7)
+#define NV04_NEW_FRAMEBUFFER	(1 << 8)
+#define NV04_NEW_VTXARRAYS	(1 << 9)
 
 struct nv04_context {
 	struct pipe_context pipe;
@@ -61,8 +63,9 @@ struct nv04_context {
 	unsigned vp_samplers;
 
 	uint32_t rt_enable;
-	struct pipe_buffer *rt[4];
-	struct pipe_buffer *zeta;
+	struct pipe_framebuffer_state *framebuffer;
+	struct pipe_surface *rt;
+	struct pipe_surface *zeta;
 
 	struct {
 		struct pipe_buffer *buffer;
@@ -74,6 +77,9 @@ struct nv04_context {
 		struct pipe_buffer *buffer;
 		unsigned delta;
 	} vb[16];
+
+	float *constbuf[PIPE_SHADER_TYPES][32][4];
+	unsigned constbuf_nr[PIPE_SHADER_TYPES];
 
 	struct vertex_info vertex_info;
 	struct {
@@ -94,9 +100,8 @@ struct nv04_context {
 		struct pipe_buffer *constant_buf;
 	} fragprog;
 
-	struct pipe_vertex_buffer  vertex_buffer[PIPE_MAX_ATTRIBS];
-	unsigned num_vertex_buffers;
-	unsigned num_vertex_elements;
+	struct pipe_vertex_buffer  vtxbuf[PIPE_MAX_ATTRIBS];
+	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
 
 	struct pipe_viewport_state viewport;
 };
@@ -109,7 +114,7 @@ nv04_context(struct pipe_context *pipe)
 
 extern void nv04_init_state_functions(struct nv04_context *nv04);
 extern void nv04_init_surface_functions(struct nv04_context *nv04);
-extern void nv04_init_miptree_functions(struct pipe_screen *screen);
+extern void nv04_screen_init_miptree_functions(struct pipe_screen *screen);
 
 /* nv04_clear.c */
 extern void nv04_clear(struct pipe_context *pipe, struct pipe_surface *ps,

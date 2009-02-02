@@ -17,14 +17,16 @@ boolean nv04_draw_elements( struct pipe_context *pipe,
 	struct draw_context *draw = nv04->draw;
 	unsigned i;
 
+	nv04_emit_hw_state(nv04);
+
 	/*
 	 * Map vertex buffers
 	 */
 	for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
-		if (nv04->vertex_buffer[i].buffer) {
+		if (nv04->vtxbuf[i].buffer) {
 			void *buf
 				= pipe->winsys->buffer_map(pipe->winsys,
-						nv04->vertex_buffer[i].buffer,
+						nv04->vtxbuf[i].buffer,
 						PIPE_BUFFER_USAGE_CPU_READ);
 			draw_set_mapped_vertex_buffer(draw, i, buf);
 		}
@@ -41,6 +43,10 @@ boolean nv04_draw_elements( struct pipe_context *pipe,
 		draw_set_mapped_element_buffer(draw, 0, NULL);
 	}
 
+	draw_set_mapped_constant_buffer(draw,
+					nv04->constbuf[PIPE_SHADER_VERTEX],
+					nv04->constbuf_nr[PIPE_SHADER_VERTEX]);
+
 	/* draw! */
 	draw_arrays(nv04->draw, prim, start, count);
 
@@ -48,8 +54,8 @@ boolean nv04_draw_elements( struct pipe_context *pipe,
 	 * unmap vertex/index buffers
 	 */
 	for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
-		if (nv04->vertex_buffer[i].buffer) {
-			pipe->winsys->buffer_unmap(pipe->winsys, nv04->vertex_buffer[i].buffer);
+		if (nv04->vtxbuf[i].buffer) {
+			pipe->winsys->buffer_unmap(pipe->winsys, nv04->vtxbuf[i].buffer);
 			draw_set_mapped_vertex_buffer(draw, i, NULL);
 		}
 	}
@@ -64,6 +70,7 @@ boolean nv04_draw_elements( struct pipe_context *pipe,
 boolean nv04_draw_arrays( struct pipe_context *pipe,
 				 unsigned prim, unsigned start, unsigned count)
 {
+	printf("coucou in draw arrays\n");
 	return nv04_draw_elements(pipe, NULL, 0, prim, start, count);
 }
 

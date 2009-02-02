@@ -12,7 +12,9 @@ static void nv04_vertex_layout(struct pipe_context* pipe)
 	memset(&vinfo, 0, sizeof(vinfo));
 
 	for (i = 0; i < fp->info.num_inputs; i++) {
-		switch (i) {
+		int isn = fp->info.input_semantic_name[i];
+		int isi = fp->info.input_semantic_index[i];
+		switch (isn) {
 			case TGSI_SEMANTIC_POSITION:
 				draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_LINEAR, src++);
 				break;
@@ -28,6 +30,8 @@ static void nv04_vertex_layout(struct pipe_context* pipe)
 				break;
 		}
 	}
+
+	printf("%d vertex input\n",fp->info.num_inputs);
 	draw_compute_vertex_size(&vinfo);
 }
 
@@ -86,6 +90,56 @@ static void nv04_emit_sampler(struct nv04_context *nv04, int unit)
 	OUT_RING(nv04->sampler[unit]->filter);
 }
 
+static void nv04_state_emit_framebuffer(struct nv04_context* nv04)
+{
+	struct pipe_framebuffer_state* fb = nv04->framebuffer;
+	struct pipe_surface *rt, *zeta;
+	uint32_t rt_format, w, h;
+	int colour_format = 0, zeta_format = 0;
+
+	w = fb->cbufs[0]->width;
+	h = fb->cbufs[0]->height;
+	colour_format = fb->cbufs[0]->format;
+	rt = fb->cbufs[0];
+
+	if (fb->zsbuf) {
+		if (colour_format) {
+			assert(w == fb->zsbuf->width);
+			assert(h == fb->zsbuf->height);
+		} else {
+			w = fb->zsbuf->width;
+			h = fb->zsbuf->height;
+		}
+
+		zeta_format = fb->zsbuf->format;
+		zeta = fb->zsbuf;
+	}
+
+	switch (colour_format) {
+	case PIPE_FORMAT_A8R8G8B8_UNORM:
+	case 0:
+		rt_format = 0x108;
+		break;
+	case PIPE_FORMAT_R5G6B5_UNORM:
+		rt_format = 0x103;
+		break;
+	default:
+		assert(0);
+	}
+
+	BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_FORMAT, 1);
+	OUT_RING(rt_format);
+	
+	/* FIXME pitches have to be aligned ! */
+	BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_PITCH, 2);
+	OUT_RING(rt->stride|(zeta->stride<<16));
+	OUT_RELOCl(rt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	if (fb->zsbuf) {
+		BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_OFFSET_ZETA, 1);
+		OUT_RELOCl(zeta->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	}
+}
+
 void
 nv04_emit_hw_state(struct nv04_context *nv04)
 {
@@ -98,7 +152,7 @@ nv04_emit_hw_state(struct nv04_context *nv04)
 
 	if (nv04->dirty & NV04_NEW_FRAGPROG) {
 		nv04_fragprog_bind(nv04, nv04->fragprog.current);
-		/*XXX: clear NV04_NEW_FRAGPROG if no new program uploaded */
+		nv04->dirty &= ~NV04_NEW_FRAGPROG;
 		nv04->dirty_samplers |= (1<<10);
 		nv04->dirty_samplers = 0;
 	}
@@ -116,6 +170,11 @@ nv04_emit_hw_state(struct nv04_context *nv04)
 		nv04_emit_blend(nv04);
 	}
 
+	if (nv04->dirty & NV04_NEW_VTXARRAYS) {
+		nv04->dirty &= ~NV04_NEW_VTXARRAYS;
+		nv04_vertex_layout(nv04);
+	}
+
 	if (nv04->dirty & NV04_NEW_SAMPLER) {
 		nv04->dirty &= ~NV04_NEW_SAMPLER;
 
@@ -127,6 +186,11 @@ nv04_emit_hw_state(struct nv04_context *nv04)
 //		nv04_state_emit_viewport(nv04);
 	}
 
+ 	if (nv04->dirty & NV04_NEW_FRAMEBUFFER) {
+		nv04->dirty &= ~NV04_NEW_FRAMEBUFFER;
+		nv04_state_emit_framebuffer(nv04);
+	}
+
 	/* Emit relocs for every referenced buffer.
 	 * This is to ensure the bufmgr has an accurate idea of how
 	 * the buffer is used.  This isn't very efficient, but we don't
@@ -135,13 +199,13 @@ nv04_emit_hw_state(struct nv04_context *nv04)
 	 */
 
 	/* Render target */
-/*	BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_PITCH, 2);
-	OUT_RING(rt->stride|(zeta->stride<<16));
-	OUT_RELOCl(rt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	if (fb->zsbuf) {
+	BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_PITCH, 2);
+	OUT_RING(nv04->rt->stride|(nv04->zeta->stride<<16));
+	OUT_RELOCl(nv04->rt, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	if (nv04->zeta) {
 		BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_OFFSET_ZETA, 1);
-		OUT_RELOCl(zeta->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	}*/
+		OUT_RELOCl(nv04->zeta, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	}
 
 	/* Texture images */
 	for (i = 0; i < 1; i++) {

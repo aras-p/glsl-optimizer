@@ -100,6 +100,10 @@ nouveau_pipe_create(struct nouveau_context *nv)
 		return NULL;
 
 	switch (chipset & 0xf0) {
+	case 0x00:
+		hws_create = nv04_screen_create;
+		hw_create = nv04_create;
+		break;
 	case 0x10:
 		hws_create = nv10_screen_create;
 		hw_create = nv10_create;

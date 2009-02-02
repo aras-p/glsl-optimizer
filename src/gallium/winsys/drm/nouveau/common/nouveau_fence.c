@@ -148,9 +148,12 @@ nouveau_fence_emit(struct nouveau_fence *fence)
 		NOUVEAU_ERR("AII wrap unhandled\n");
 
 	/*XXX: assumes subc 0 is populated */
-	RING_SPACE_CH(fence->channel, 2);
-	OUT_RING_CH  (fence->channel, 0x00040050);
-	OUT_RING_CH  (fence->channel, nvfence->sequence);
+	/* Not the way to fence on nv4 */
+	if (nvchan->base.device->chipset >= 0x10) {
+		RING_SPACE_CH(fence->channel, 2);
+		OUT_RING_CH  (fence->channel, 0x00040050);
+		OUT_RING_CH  (fence->channel, nvfence->sequence);
+	}
 
 	if (nvchan->fence_tail) {
 		nouveau_fence(nvchan->fence_tail)->next = fence;

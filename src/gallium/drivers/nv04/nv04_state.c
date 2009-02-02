@@ -334,14 +334,21 @@ nv04_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 			 const struct pipe_constant_buffer *buf )
 {
 	struct nv04_context *nv04 = nv04_context(pipe);
+	struct pipe_winsys *ws = pipe->winsys;
 
-	if (shader == PIPE_SHADER_VERTEX) {
-		nv04->vertprog.constant_buf = buf->buffer;
-		nv04->dirty |= NV04_NEW_VERTPROG;
-	} else
-	if (shader == PIPE_SHADER_FRAGMENT) {
-		nv04->fragprog.constant_buf = buf->buffer;
-		nv04->dirty |= NV04_NEW_FRAGPROG;
+	assert(shader < PIPE_SHADER_TYPES);
+	assert(index == 0);
+
+	if (buf) {
+		void *mapped;
+		if (buf->buffer && buf->buffer->size &&
+                    (mapped = ws->buffer_map(ws, buf->buffer, PIPE_BUFFER_USAGE_CPU_READ)))
+		{
+			memcpy(nv04->constbuf[shader], mapped, buf->buffer->size);
+			nv04->constbuf_nr[shader] =
+				buf->buffer->size / (4 * sizeof(float));
+			ws->buffer_unmap(ws, buf->buffer);
+		}
 	}
 }
 
@@ -350,53 +357,11 @@ nv04_set_framebuffer_state(struct pipe_context *pipe,
 			   const struct pipe_framebuffer_state *fb)
 {
 	struct nv04_context *nv04 = nv04_context(pipe);
-	struct pipe_surface *rt, *zeta;
-	uint32_t rt_format, w, h;
-	int colour_format = 0, zeta_format = 0;
+	
+	nv04->framebuffer = (struct pipe_framebuffer_state*)fb;
 
-	w = fb->cbufs[0]->width;
-	h = fb->cbufs[0]->height;
-	colour_format = fb->cbufs[0]->format;
-	rt = fb->cbufs[0];
-
-	if (fb->zsbuf) {
-		if (colour_format) {
-			assert(w == fb->zsbuf->width);
-			assert(h == fb->zsbuf->height);
-		} else {
-			w = fb->zsbuf->width;
-			h = fb->zsbuf->height;
-		}
-
-		zeta_format = fb->zsbuf->format;
-		zeta = fb->zsbuf;
-	}
-
-	switch (colour_format) {
-	case PIPE_FORMAT_A8R8G8B8_UNORM:
-	case 0:
-		rt_format = 0x108;
-		break;
-	case PIPE_FORMAT_R5G6B5_UNORM:
-		rt_format = 0x103;
-		break;
-	default:
-		assert(0);
-	}
-
-	BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_FORMAT, 1);
-	OUT_RING(rt_format);
-
-	/* FIXME pitches have to be aligned ! */
-	BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_PITCH, 2);
-	OUT_RING(rt->stride|(zeta->stride<<16));
-	OUT_RELOCl(rt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	if (fb->zsbuf) {
-		BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_OFFSET_ZETA, 1);
-		OUT_RELOCl(zeta->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	}
+	nv04->dirty |= NV04_NEW_FRAMEBUFFER;
 }
-
 static void
 nv04_set_polygon_stipple(struct pipe_context *pipe,
 			 const struct pipe_poly_stipple *stipple)
@@ -433,10 +398,8 @@ nv04_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 {
 	struct nv04_context *nv04 = nv04_context(pipe);
 
-	draw_flush(nv04->draw);
-
-	memcpy(nv04->vertex_buffer, buffers, count * sizeof(buffers[0]));
-	nv04->num_vertex_buffers = count;
+	memcpy(nv04->vtxbuf, buffers, count * sizeof(buffers[0]));
+	nv04->dirty |= NV04_NEW_VTXARRAYS;
 
 	draw_set_vertex_buffers(nv04->draw, count, buffers);
 }
@@ -447,9 +410,9 @@ nv04_set_vertex_elements(struct pipe_context *pipe, unsigned count,
 {
 	struct nv04_context *nv04 = nv04_context(pipe);
 
-	draw_flush(nv04->draw);
+	memcpy(nv04->vtxelt, elements, sizeof(*elements) * count);
+	nv04->dirty |= NV04_NEW_VTXARRAYS;
 
-	nv04->num_vertex_elements = count;
 	draw_set_vertex_elements(nv04->draw, count, elements);
 }
 

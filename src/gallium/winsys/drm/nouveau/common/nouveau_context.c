@@ -84,6 +84,8 @@ nouveau_context_init(struct nouveau_screen *nv_screen,
 	int i;
 
 	switch (dev->chipset & 0xf0) {
+	case 0x00:
+		/* NV04 */
 	case 0x10:
 	case 0x20:
 		/* NV10 */
