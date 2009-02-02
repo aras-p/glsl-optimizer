@@ -45,7 +45,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "softpipe/sp_winsys.h"
-#include "stw_winsys.h"
+#include "shared/stw_winsys.h"
 
 
 struct gdi_softpipe_buffer

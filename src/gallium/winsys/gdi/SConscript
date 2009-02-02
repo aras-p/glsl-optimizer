@@ -8,7 +8,7 @@ if env['platform'] == 'windows':
 	env = env.Clone()
 
 	env.Append(CPPPATH = [
-		'#src/mesa/state_tracker/wgl',
+		'#src/gallium/state_trackers/wgl',
 	])
 
 	env.Append(CPPDEFINES = [
@@ -24,7 +24,7 @@ if env['platform'] == 'windows':
 	])
 
 	sources = [
-		'#src/mesa/state_tracker/wgl/opengl32.def',
+		'#src/gallium/state_trackers/wgl/opengl32.def',
 		'gdi_softpipe_winsys.c',
 	]
 		
