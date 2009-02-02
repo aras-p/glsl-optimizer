@@ -199,7 +199,7 @@ void radeonUpdateScissor( GLcontext *ctx )
 
    if ( rmesa->dri.drawable ) {
       __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
-
+      
       int x = ctx->Scissor.X;
       int y = dPriv->h - ctx->Scissor.Y - ctx->Scissor.Height;
       int w = ctx->Scissor.X + ctx->Scissor.Width - 1;
@@ -2118,10 +2118,14 @@ GLubyte *radeon_ptr32(const struct radeon_renderbuffer * rrb,
 		      GLint x, GLint y)
 {
     GLubyte *ptr = rrb->bo->ptr;
+    const __DRIdrawablePrivate *dPriv = rrb->dPriv;
     uint32_t mask = RADEON_BO_FLAGS_MACRO_TILE | RADEON_BO_FLAGS_MICRO_TILE;
     GLint offset;
     GLint nmacroblkpl;
     GLint nmicroblkpl;
+
+    x += dPriv->x;
+    y += dPriv->y;
 
     if (rrb->has_surface || !(rrb->bo->flags & mask)) {
         offset = x * rrb->cpp + y * rrb->pitch;
@@ -2158,10 +2162,14 @@ GLubyte *radeon_ptr16(const struct radeon_renderbuffer * rrb,
 		      GLint x, GLint y)
 {
     GLubyte *ptr = rrb->bo->ptr;
+    const __DRIdrawablePrivate *dPriv = rrb->dPriv;
     uint32_t mask = RADEON_BO_FLAGS_MACRO_TILE | RADEON_BO_FLAGS_MICRO_TILE;
     GLint offset;
     GLint nmacroblkpl;
     GLint nmicroblkpl;
+
+    x += dPriv->x;
+    y += dPriv->y;
 
     if (rrb->has_surface || !(rrb->bo->flags & mask)) {
         offset = x * rrb->cpp + y * rrb->pitch;
@@ -2198,12 +2206,16 @@ GLubyte *radeon_ptr(const struct radeon_renderbuffer * rrb,
 		    GLint x, GLint y)
 {
     GLubyte *ptr = rrb->bo->ptr;
+    const __DRIdrawablePrivate *dPriv = rrb->dPriv;
     uint32_t mask = RADEON_BO_FLAGS_MACRO_TILE | RADEON_BO_FLAGS_MICRO_TILE;
     GLint offset;
     GLint microblkxs;
     GLint macroblkxs;
     GLint nmacroblkpl;
     GLint nmicroblkpl;
+
+    x += dPriv->x;
+    y += dPriv->y;
 
     if (rrb->has_surface || !(rrb->bo->flags & mask)) {
         offset = x * rrb->cpp + y * rrb->pitch;
