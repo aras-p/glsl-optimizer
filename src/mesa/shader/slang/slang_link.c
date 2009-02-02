@@ -318,7 +318,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
 {
    GLint attribMap[MAX_VERTEX_ATTRIBS];
    GLuint i, j;
-   GLbitfield usedAttributes;
+   GLbitfield usedAttributes; /* generics only, not legacy attributes */
 
    assert(origProg != linkedProg);
    assert(origProg->Target == GL_VERTEX_PROGRAM_ARB);
@@ -340,6 +340,15 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
    for (i = 0; i < shProg->Attributes->NumParameters; i++) {
       GLint attr = shProg->Attributes->Parameters[i].StateIndexes[0];
       usedAttributes |= (1 << attr);
+   }
+
+   /* If gl_Vertex is used, that actually counts against the limit
+    * on generic vertex attributes.  This avoids the ambiguity of
+    * whether glVertexAttrib4fv(0, v) sets legacy attribute 0 (vert pos)
+    * or generic attribute[0].  If gl_Vertex is used, we want the former.
+    */
+   if (origProg->InputsRead & VERT_BIT_POS) {
+      usedAttributes |= 0x1;
    }
 
    /* initialize the generic attribute map entries to -1 */
@@ -384,7 +393,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
                    * Start at 1 since generic attribute 0 always aliases
                    * glVertex/position.
                    */
-                  for (attr = 1; attr < MAX_VERTEX_ATTRIBS; attr++) {
+                  for (attr = 0; attr < MAX_VERTEX_ATTRIBS; attr++) {
                      if (((1 << attr) & usedAttributes) == 0)
                         break;
                   }
