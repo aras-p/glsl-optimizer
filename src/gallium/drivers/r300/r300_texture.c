@@ -58,7 +58,7 @@ static struct pipe_texture*
     r300_texture_create(struct pipe_screen* screen,
                         const struct pipe_texture* template)
 {
-    struct r300_screen* r300screen = r300_screen(screen);
+    /* XXX struct r300_screen* r300screen = r300_screen(screen); */
 
     struct r300_texture* tex = CALLOC_STRUCT(r300_texture);
 
@@ -72,9 +72,9 @@ static struct pipe_texture*
 
     r300_setup_miptree(tex);
 
-    tex->buffer = screen->winsys->buffer_create(screen->winsys, 32,
-                                                PIPE_BUFFER_USAGE_PIXEL,
-                                                tex->size);
+    tex->buffer = screen->buffer_create(screen->winsys, 32,
+                                        PIPE_BUFFER_USAGE_PIXEL,
+                                        tex->size);
 
     if (!tex->buffer) {
         FREE(tex);

@@ -325,8 +325,8 @@ static void*
                     R300_S_FRONT_ZFAIL_OP_SHIFT);
 
         dsa->stencil_ref_mask = (state->stencil[0].ref_value) |
-                (state->stencil[0].value_mask << R300_STENCILMASK_SHIFT) |
-                (state->stencil[0].write_mask << R300_STENCILWRITEMASK_SHIFT);
+                (state->stencil[0].valuemask << R300_STENCILMASK_SHIFT) |
+                (state->stencil[0].writemask << R300_STENCILWRITEMASK_SHIFT);
 
         if (state->stencil[1].enabled) {
             dsa->z_buffer_control |= R300_STENCIL_FRONT_BACK;
@@ -341,8 +341,8 @@ static void*
                     R300_S_BACK_ZFAIL_OP_SHIFT);
 
             dsa->stencil_ref_bf = (state->stencil[1].ref_value) |
-                (state->stencil[1].value_mask << R300_STENCILMASK_SHIFT) |
-                (state->stencil[1].write_mask << R300_STENCILWRITEMASK_SHIFT);
+                (state->stencil[1].valuemask << R300_STENCILMASK_SHIFT) |
+                (state->stencil[1].writemask << R300_STENCILWRITEMASK_SHIFT);
         }
     }
 
@@ -350,7 +350,8 @@ static void*
     if (state->alpha.enabled) {
         dsa->alpha_function = translate_alpha_function(state->alpha.func) |
             R300_FG_ALPHA_FUNC_ENABLE;
-        dsa->alpha_reference = CLAMP(state->alpha.ref * 1023.0f, 0, 1023);
+        dsa->alpha_reference = CLAMP(state->alpha.ref_value * 1023.0f,
+                                     0, 1023);
     } else {
         dsa->z_buffer_top = R300_ZTOP_ENABLE;
     }
