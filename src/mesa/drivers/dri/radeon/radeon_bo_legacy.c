@@ -260,6 +260,9 @@ static struct bo_legacy *bo_allocate(struct bo_manager_legacy *boml,
                                      uint32_t flags)
 {
     struct bo_legacy *bo_legacy;
+    uint32_t pgsize = getpagesize() - 1;
+
+    size = (size + pgsize) & ~pgsize;
 
     bo_legacy = (struct bo_legacy*)calloc(1, sizeof(struct bo_legacy));
     if (bo_legacy == NULL) {
