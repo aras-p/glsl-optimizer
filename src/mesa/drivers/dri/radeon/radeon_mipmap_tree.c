@@ -101,6 +101,11 @@ static void compute_tex_image_offset(radeon_mipmap_tree *mt,
 	*curOffset = (*curOffset + 0x1f) & ~0x1f;
 	lvl->faces[face].offset = *curOffset;
 	*curOffset += lvl->size;
+
+	if (RADEON_DEBUG & DEBUG_TEXTURE)
+	  fprintf(stderr,
+		  "level %d, face %d: rs:%d %dx%d at %d\n",
+		  level, face, lvl->rowstride, lvl->width, lvl->height, lvl->faces[face].offset);
 }
 
 static GLuint minify(GLuint size, GLuint levels)

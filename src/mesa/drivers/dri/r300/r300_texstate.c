@@ -225,8 +225,9 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 		t->pp_txformat |= R300_TX_FORMAT_3D;
 
 	t->pp_txsize = (((firstImage->Width - 1) << R300_TX_WIDTHMASK_SHIFT)
-		| ((firstImage->Height - 1) << R300_TX_HEIGHTMASK_SHIFT))
-		| ((t->mt->lastLevel - t->mt->firstLevel) << R300_TX_MAX_MIP_LEVEL_SHIFT);
+			| ((firstImage->Height - 1) << R300_TX_HEIGHTMASK_SHIFT)
+			| ((firstImage->DepthLog2) << R300_TX_DEPTHMASK_SHIFT)
+			| ((t->mt->lastLevel - t->mt->firstLevel) << R300_TX_MAX_MIP_LEVEL_SHIFT));
 
 	if (t->base.Target == GL_TEXTURE_RECTANGLE_NV) {
 		unsigned int align = (64 / t->mt->bpp) - 1;

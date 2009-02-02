@@ -334,7 +334,7 @@ void r300InitTextureFuncs(struct dd_function_table *functions)
 	functions->CompressedTexImage2D = radeonCompressedTexImage2D;
 	functions->CompressedTexSubImage2D = radeonCompressedTexSubImage2D;
 
-	functions->GenerateMipmap = radeon_generate_mipmap;
+	functions->GenerateMipmap = radeonGenerateMipmap;
 
 	driInitTextureFormats();
 }

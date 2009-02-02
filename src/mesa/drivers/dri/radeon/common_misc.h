@@ -42,7 +42,7 @@ void radeon_teximage_map(radeon_texture_image *image, GLboolean write_enable);
 void radeon_teximage_unmap(radeon_texture_image *image);
 void radeonMapTexture(GLcontext *ctx, struct gl_texture_object *texObj);
 void radeonUnmapTexture(GLcontext *ctx, struct gl_texture_object *texObj);
-void radeon_generate_mipmap(GLcontext* ctx, GLenum target, struct gl_texture_object *texObj);
+void radeonGenerateMipmap(GLcontext* ctx, GLenum target, struct gl_texture_object *texObj);
 int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *texObj);
 GLuint radeon_face_for_target(GLenum target);
 const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,

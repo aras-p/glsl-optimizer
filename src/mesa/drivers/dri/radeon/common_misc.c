@@ -1476,13 +1476,42 @@ GLuint radeon_face_for_target(GLenum target)
  * This relies on internal details of _mesa_generate_mipmap, in particular
  * the fact that the memory for recreated texture images is always freed.
  */
-void radeon_generate_mipmap(GLcontext* ctx, GLenum target, struct gl_texture_object *texObj)
+void radeon_generate_mipmap(GLcontext *ctx, GLenum target,
+			    struct gl_texture_object *texObj)
+{
+	radeonTexObj* t = radeon_tex_obj(texObj);
+	GLuint nr_faces = (t->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+	int i, face;
+
+
+	_mesa_generate_mipmap(ctx, target, texObj);
+
+	for (face = 0; face < nr_faces; face++) {
+		for (i = texObj->BaseLevel + 1; i < texObj->MaxLevel; i++) {
+			radeon_texture_image *image;
+
+			image = get_radeon_texture_image(texObj->Image[face][i]);
+
+			if (image == NULL)
+				break;
+
+			image->mtlevel = i;
+			image->mtface = face;
+
+			radeon_miptree_unreference(image->mt);
+			image->mt = NULL;
+		}
+	}
+	
+}
+
+void radeonGenerateMipmap(GLcontext* ctx, GLenum target, struct gl_texture_object *texObj)
 {
 	GLuint face = radeon_face_for_target(target);
 	radeon_texture_image *baseimage = get_radeon_texture_image(texObj->Image[face][texObj->BaseLevel]);
 
 	radeon_teximage_map(baseimage, GL_FALSE);
-	_mesa_generate_mipmap(ctx, target, texObj);
+	radeon_generate_mipmap(ctx, target, texObj);
 	radeon_teximage_unmap(baseimage);
 }
 
@@ -1803,15 +1832,17 @@ static void radeon_teximage(
 				_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
 		}
 
-		radeon_teximage_unmap(image);
 	}
-
-	_mesa_unmap_teximage_pbo(ctx, packing);
 
 	/* SGIS_generate_mipmap */
 	if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-		ctx->Driver.GenerateMipmap(ctx, texObj->Target, texObj);
+		radeon_generate_mipmap(ctx, texObj->Target, texObj);
 	}
+	radeon_teximage_unmap(image);
+
+	_mesa_unmap_teximage_pbo(ctx, packing);
+
+
 }
 
 void radeonTexImage1D(GLcontext * ctx, GLenum target, GLint level,
@@ -1878,13 +1909,15 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, int level,
 		const struct gl_pixelstore_attrib *packing,
 		struct gl_texture_object *texObj,
 		struct gl_texture_image *texImage,
-		int compressed)
+			       int compressed)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+	radeonTexObj* t = radeon_tex_obj(texObj);
 	radeon_texture_image* image = get_radeon_texture_image(texImage);
 
 	rmesa->vtbl.flush_vertices(rmesa);
 
+	t->validated = GL_FALSE;
 	pixels = _mesa_validate_pbo_teximage(ctx, dims,
 		width, height, depth, format, type, pixels, packing, "glTexSubImage1D");
 
@@ -1896,7 +1929,7 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, int level,
 			radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
 			dstRowStride = lvl->rowstride;
 		} else {
-			dstRowStride = texImage->Width * texImage->TexFormat->TexelBytes;
+			dstRowStride = texImage->RowStride * texImage->TexFormat->TexelBytes;
 		}
 
 		if (!texImage->TexFormat->StoreImage(ctx, dims, texImage->_BaseFormat,
@@ -1908,15 +1941,18 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, int level,
 				format, type, pixels, packing))
 			_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
 
-		radeon_teximage_unmap(image);
-	}
 
-	_mesa_unmap_teximage_pbo(ctx, packing);
+	}
 
 	/* GL_SGIS_generate_mipmap */
 	if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-		ctx->Driver.GenerateMipmap(ctx, texObj->Target, texObj);
+		radeon_generate_mipmap(ctx, texObj->Target, texObj);
 	}
+	radeon_teximage_unmap(image);
+
+	_mesa_unmap_teximage_pbo(ctx, packing);
+
+
 }
 
 void radeonTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
