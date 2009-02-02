@@ -46,6 +46,13 @@ static PFNGLVERTEXATTRIB1FPROC glVertexAttrib1f_func = NULL;
 static PFNGLVERTEXATTRIB2FPROC glVertexAttrib2f_func = NULL;
 static PFNGLVERTEXATTRIB3FPROC glVertexAttrib3f_func = NULL;
 static PFNGLVERTEXATTRIB4FPROC glVertexAttrib4f_func = NULL;
+static PFNGLVERTEXATTRIB1FVPROC glVertexAttrib1fv_func = NULL;
+static PFNGLVERTEXATTRIB2FVPROC glVertexAttrib2fv_func = NULL;
+static PFNGLVERTEXATTRIB3FVPROC glVertexAttrib3fv_func = NULL;
+static PFNGLVERTEXATTRIB4FVPROC glVertexAttrib4fv_func = NULL;
+static PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer_func = NULL;
+static PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray_func = NULL;
+static PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray_func = NULL;
 
 /* OpenGL 2.1 */
 static PFNGLUNIFORMMATRIX2X3FVPROC glUniformMatrix2x3fv_func = NULL;
@@ -126,6 +133,14 @@ GetExtensionFuncs(void)
    glVertexAttrib2f_func = (PFNGLVERTEXATTRIB2FPROC) glutGetProcAddress("glVertexAttrib2f");
    glVertexAttrib3f_func = (PFNGLVERTEXATTRIB3FPROC) glutGetProcAddress("glVertexAttrib3f");
    glVertexAttrib4f_func = (PFNGLVERTEXATTRIB4FPROC) glutGetProcAddress("glVertexAttrib4f");
+   glVertexAttrib1fv_func = (PFNGLVERTEXATTRIB1FVPROC) glutGetProcAddress("glVertexAttrib1fv");
+   glVertexAttrib2fv_func = (PFNGLVERTEXATTRIB2FVPROC) glutGetProcAddress("glVertexAttrib2fv");
+   glVertexAttrib3fv_func = (PFNGLVERTEXATTRIB3FVPROC) glutGetProcAddress("glVertexAttrib3fv");
+   glVertexAttrib4fv_func = (PFNGLVERTEXATTRIB4FVPROC) glutGetProcAddress("glVertexAttrib4fv");
+
+   glVertexAttribPointer_func = (PFNGLVERTEXATTRIBPOINTERPROC) glutGetProcAddress("glVertexAttribPointer");
+   glEnableVertexAttribArray_func = (PFNGLENABLEVERTEXATTRIBARRAYPROC) glutGetProcAddress("glEnableVertexAttribArray");
+   glDisableVertexAttribArray_func = (PFNGLDISABLEVERTEXATTRIBARRAYPROC) glutGetProcAddress("glDisableVertexAttribArray");
 
    /* OpenGL 2.1 */
    glUniformMatrix2x3fv_func = (PFNGLUNIFORMMATRIX2X3FVPROC) glutGetProcAddress("glUniformMatrix2x3fv");
