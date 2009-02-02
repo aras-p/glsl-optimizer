@@ -22,6 +22,12 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/gallium/state_trackers/glx/xlib \
 	-I$(TOP)/src/gallium/auxiliary
 
+DEFINES = \
+	-DGALLIUM_SOFTPIPE \
+	-DGALLIUM_CELL \
+	-DGALLIUM_TRACE \
+	-DGALLIUM_BRW
+
 XLIB_WINSYS_SOURCES = \
 	xlib.c \
 	xlib_cell.c \
@@ -49,10 +55,10 @@ LIBS = \
 .SUFFIXES : .cpp
 
 .c.o:
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(DEFINES) $(CFLAGS) $< -o $@
 
 .cpp.o:
-	$(CXX) -c $(INCLUDE_DIRS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(INCLUDE_DIRS) $(DEFINES) $(CXXFLAGS) $< -o $@
 
 
 

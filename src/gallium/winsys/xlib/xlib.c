@@ -73,16 +73,24 @@ static void _init( void )
 
    switch (xlib_mode) {
    case MODE_TRACE:
+#if defined(GALLIUM_TRACE) && defined(GALLIUM_SOFTPIPE)
       xmesa_set_driver( &xlib_trace_driver );
+#endif
       break;
    case MODE_BRW:
+#if defined(GALLIUM_BRW)
       xmesa_set_driver( &xlib_brw_driver );
+#endif
       break;
    case MODE_CELL:
+#if defined(GALLIUM_CELL)
       xmesa_set_driver( &xlib_cell_driver );
+#endif
       break;
    case MODE_SOFTPIPE:
+#if defined(GALLIUM_SOFTPIPE)
       xmesa_set_driver( &xlib_softpipe_driver );
+#endif
       break;
    default:
       assert(0);

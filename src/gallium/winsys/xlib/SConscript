@@ -13,24 +13,39 @@ if env['platform'] == 'linux' \
     env.Append(CPPPATH = [
         '#/src/mesa',
         '#/src/mesa/main',
+        '#src/gallium/state_trackers/glx/xlib',
     ])
 
-    sources = [];
+    env.Append(CPPDEFINES = ['USE_XSHM'])
 
-    drivers = [];
+    sources = [
+        'xlib.c',
+    ]
+
+    drivers = []
         
     if 'softpipe' in env['drivers']:
+        env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
+        sources += ['xlib_softpipe.c']
         drivers += [softpipe]
 
     if 'i965simple' in env['drivers']:
-        drivers += [i965simple]
+        env.Append(CPPDEFINES = 'GALLIUM_I965SIMPLE')
         sources += [
-            'brw_aub.c',
-            'xm_winsys_aub.c',
-            ]
+            'xlib_brw_aub.c',
+            'xlib_brw_context.c',
+            'xlib_brw_screen.c',
+        ]
+        drivers += [i965simple]
         
+    if 'cell' in env['drivers']:
+        env.Append(CPPDEFINES = 'GALLIUM_CELL')
+        sources += ['xlib_cell.c']
+        drivers += [cell]
+
     if 'trace' in env['drivers']:
         env.Append(CPPDEFINES = 'GALLIUM_TRACE')
+        sources += ['xlib_trace.c']
         drivers += [trace]
 
     # TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
