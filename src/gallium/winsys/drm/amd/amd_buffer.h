@@ -30,7 +30,7 @@
 #ifndef AMD_BUFFER_H
 #define AMD_BUFFER_H
 
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "amd_screen.h"
 #include "amd_context.h"
 #include "radeon_bo.h"

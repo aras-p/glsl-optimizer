@@ -247,14 +247,15 @@ static void amd_buffer_destroy(__DRIdrawablePrivate * dri_drawable)
 static void amd_swap_buffers(__DRIdrawablePrivate *dri_drawable)
 {
     struct amd_framebuffer *amd_fb;
-    struct pipe_surface *back_surf;
+    struct pipe_surface *back_surf = NULL;
 
     amd_fb = dri_drawable->driverPrivate;
     assert(amd_fb);
     assert(amd_fb->st_framebuffer);
 
-    back_surf = st_get_framebuffer_surface(amd_fb->st_framebuffer,
-                                           ST_SURFACE_BACK_LEFT);
+    st_get_framebuffer_surface(amd_fb->st_framebuffer,
+                               ST_SURFACE_BACK_LEFT,
+                               &back_surf);
     if (back_surf) {
         st_notify_swapbuffers(amd_fb->st_framebuffer);
         /* TODO: do we want to do anythings ? */

@@ -30,7 +30,6 @@
 #ifndef AMD_SCREEN_H
 #define AMD_SCREEN_H
 
-#include "pipe/p_winsys.h"
 #include "dri_util.h"
 #include "radeon_bo.h"
 

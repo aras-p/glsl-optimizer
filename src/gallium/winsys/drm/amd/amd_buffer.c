@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include "dri_util.h"
 #include "state_tracker/st_public.h"
-#include "pipe/p_winsys.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "amd_buffer.h"
