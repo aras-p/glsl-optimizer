@@ -731,7 +731,7 @@ _mesa_print_instruction(const struct prog_instruction *inst)
 /**
  * Print program, with options.
  */
-static void
+void
 _mesa_fprint_program_opt(FILE *f,
                          const struct gl_program *prog,
                          gl_prog_print_mode mode,
