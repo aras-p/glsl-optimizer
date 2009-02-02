@@ -34,7 +34,6 @@
 
 struct pipe_screen;
 struct pipe_context;
-struct pipe_winsys;
 struct pipe_surface;
 
 struct stw_winsys
@@ -46,7 +45,7 @@ struct stw_winsys
    (*create_context)( struct pipe_screen *screen );
 
    void
-   (*flush_frontbuffer)( struct pipe_winsys *winsys,
+   (*flush_frontbuffer)( struct pipe_screen *screen,
                          struct pipe_surface *surf,
                          HDC hDC );
 };

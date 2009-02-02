@@ -30,7 +30,7 @@
 #include "brw_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_tile.h"
 #include "util/u_rect.h"
 

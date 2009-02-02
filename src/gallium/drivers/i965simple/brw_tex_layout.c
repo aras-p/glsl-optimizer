@@ -37,7 +37,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "brw_context.h"
@@ -296,9 +296,9 @@ brw_texture_create_screen(struct pipe_screen *screen,
    
       if (brw_miptree_layout(tex))
 	 tex->buffer = ws->buffer_create(ws, 64,
-                                         PIPE_BUFFER_USAGE_PIXEL,
-                                         tex->stride *
-                                         tex->total_nblocksy);
+                                          PIPE_BUFFER_USAGE_PIXEL,
+                                          tex->stride *
+                                          tex->total_nblocksy);
 
       if (!tex->buffer) {
 	 FREE(tex);
@@ -322,7 +322,6 @@ brw_texture_release_screen(struct pipe_screen *screen,
        __FUNCTION__, (void *) *pt, (*pt)->refcount - 1);
    */
    if (--(*pt)->refcount <= 0) {
-      struct pipe_winsys *ws = screen->winsys;
       struct brw_texture *tex = (struct brw_texture *)*pt;
       uint i;
 
@@ -330,7 +329,7 @@ brw_texture_release_screen(struct pipe_screen *screen,
       DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
       */
 
-      winsys_buffer_reference(ws, &tex->buffer, NULL);
+      pipe_buffer_reference(screen, &tex->buffer, NULL);
 
       for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
          if (tex->image_offset[i])
@@ -347,7 +346,6 @@ brw_get_tex_surface_screen(struct pipe_screen *screen,
                            struct pipe_texture *pt,
                            unsigned face, unsigned level, unsigned zslice)
 {
-   struct pipe_winsys *ws = screen->winsys;
    struct brw_texture *tex = (struct brw_texture *)pt;
    struct pipe_surface *ps;
    unsigned offset;  /* in bytes */
@@ -369,7 +367,7 @@ brw_get_tex_surface_screen(struct pipe_screen *screen,
    if (ps) {
       ps->refcount = 1;
       pipe_texture_reference(&ps->texture, pt);
-      winsys_buffer_reference(ws, &ps->buffer, tex->buffer);
+      pipe_buffer_reference(screen, &ps->buffer, tex->buffer);
       ps->format = pt->format;
       ps->width = pt->width[level];
       ps->height = pt->height[level];

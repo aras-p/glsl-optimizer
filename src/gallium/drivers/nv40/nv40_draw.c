@@ -242,7 +242,7 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 
 	for (i = 0; i < nv40->vtxbuf_nr; i++) {
 		map = ws->buffer_map(ws, nv40->vtxbuf[i].buffer,
-				     PIPE_BUFFER_USAGE_CPU_READ);
+                                      PIPE_BUFFER_USAGE_CPU_READ);
 		draw_set_mapped_vertex_buffer(nv40->draw, i, map);
 	}
 

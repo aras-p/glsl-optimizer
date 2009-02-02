@@ -303,7 +303,7 @@ def generate(env):
             #'_UNICODE',
             #'UNICODE',
             # http://msdn2.microsoft.com/en-us/library/6dwk3a1z.aspx,
-            'WIN32_LEAN_AND_MEAN',
+            #'WIN32_LEAN_AND_MEAN',
             'VC_EXTRALEAN',
             '_CRT_SECURE_NO_DEPRECATE',
         ]
@@ -362,24 +362,26 @@ def generate(env):
         ])
 
     # C compiler options
-    cflags = []
+    cflags = [] # C
+    cxxflags = [] # C++
+    ccflags = [] # C & C++
     if gcc:
         if debug:
-            cflags += ['-O0', '-g3']
+            ccflags += ['-O0', '-g3']
         else:
-            cflags += ['-O3', '-g0']
+            ccflags += ['-O3', '-g0']
         if env['profile']:
-            cflags += ['-pg']
+            ccflags += ['-pg']
         if env['machine'] == 'x86':
-            cflags += [
+            ccflags += [
                 '-m32',
                 #'-march=pentium4',
                 '-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
                 #'-mfpmath=sse',
             ]
         if env['machine'] == 'x86_64':
-            cflags += ['-m64']
-        cflags += [
+            ccflags += ['-m64']
+        ccflags += [
             '-Wall',
             '-Wmissing-prototypes',
             '-Wno-long-long',
@@ -387,43 +389,46 @@ def generate(env):
             '-pedantic',
             '-fmessage-length=0', # be nice to Eclipse
         ]
+        cflags += [
+            '-Wmissing-prototypes',
+        ]
     if msvc:
         # See also:
         # - http://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
         # - cl /?
         if debug:
-            cflags += [
+            ccflags += [
               '/Od', # disable optimizations
               '/Oi', # enable intrinsic functions
               '/Oy-', # disable frame pointer omission
             ]
         else:
-            cflags += [
+            ccflags += [
               '/Ox', # maximum optimizations
               '/Oi', # enable intrinsic functions
               '/Ot', # favor code speed
               #'/fp:fast', # fast floating point 
             ]
         if env['profile']:
-            cflags += [
+            ccflags += [
                 '/Gh', # enable _penter hook function
                 '/GH', # enable _pexit hook function
             ]
-        cflags += [
+        ccflags += [
             '/W3', # warning level
             #'/Wp64', # enable 64 bit porting warnings
         ]
         if env['machine'] == 'x86':
-            cflags += [
+            ccflags += [
                 #'/QIfist', # Suppress _ftol
                 #'/arch:SSE2', # use the SSE2 instructions
             ]
         if platform == 'windows':
-            cflags += [
+            ccflags += [
                 # TODO
             ]
         if platform == 'winddk':
-            cflags += [
+            ccflags += [
                 '/Zl', # omit default library name in .OBJ
                 '/Zp8', # 8bytes struct member alignment
                 '/Gy', # separate functions for linker
@@ -442,7 +447,7 @@ def generate(env):
             ]
         if platform == 'wince':
             # See also C:\WINCE600\public\common\oak\misc\makefile.def
-            cflags += [
+            ccflags += [
                 '/Zl', # omit default library name in .OBJ
                 '/GF', # enable read-only string pooling
                 '/GR-', # disable C++ RTTI
@@ -459,8 +464,9 @@ def generate(env):
         # See http://scons.tigris.org/issues/show_bug.cgi?id=1656
         env.EnsureSConsVersion(0, 98, 0)
         env['PDB'] = '${TARGET.base}.pdb'
+    env.Append(CCFLAGS = ccflags)
     env.Append(CFLAGS = cflags)
-    env.Append(CXXFLAGS = cflags)
+    env.Append(CXXFLAGS = cxxflags)
 
     if env['platform'] == 'windows' and msvc:
         # Choose the appropriate MSVC CRT

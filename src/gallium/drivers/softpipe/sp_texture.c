@@ -33,7 +33,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -106,11 +106,11 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
    spt->base.nblocksy[0] = pf_get_nblocksy(&spt->base.block, spt->base.height[0]);  
 
    spt->buffer = ws->surface_buffer_create( ws, 
-                                           spt->base.width[0], 
-                                           spt->base.height[0],
-                                           spt->base.format,
-                                           usage,
-                                           &spt->stride[0]);
+                                            spt->base.width[0], 
+                                            spt->base.height[0],
+                                            spt->base.format,
+                                            usage,
+                                            &spt->stride[0]);
 
    return spt->buffer != NULL;
 }

@@ -73,6 +73,9 @@ static void nv20_state_emit_dsa(struct nv20_context* nv20)
 	BEGIN_RING(kelvin, NV20TCL_DEPTH_TEST_ENABLE, 1);
 	OUT_RING (d->depth.test_enable);
 
+	BEGIN_RING(kelvin, NV20TCL_DEPTH_UNK17D8, 1);
+	OUT_RING (1);
+
 #if 0
 	BEGIN_RING(kelvin, NV20TCL_STENCIL_ENABLE, 1);
 	OUT_RING (d->stencil.enable);
@@ -352,16 +355,14 @@ nv20_emit_hw_state(struct nv20_context *nv20)
 	 */
 
 	/* Render target */
-/* XXX figre out who's who for NV10TCL_DMA_* and fill accordingly
- *	BEGIN_RING(kelvin, NV20TCL_DMA_COLOR0, 1);
- *	OUT_RELOCo(nv20->rt[0], NOUVEAU_BO_VRAM | NOUVEAU_BO_WR); */
+	BEGIN_RING(kelvin, NV20TCL_DMA_COLOR, 1);
+	OUT_RELOCo(nv20->rt[0], NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	BEGIN_RING(kelvin, NV20TCL_COLOR_OFFSET, 1);
 	OUT_RELOCl(nv20->rt[0], 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	if (nv20->zeta) {
-/* XXX
- *		BEGIN_RING(kelvin, NV20TCL_DMA_ZETA, 1);
- *		OUT_RELOCo(nv20->zeta, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR); */
+		BEGIN_RING(kelvin, NV20TCL_DMA_ZETA, 1);
+		OUT_RELOCo(nv20->zeta, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 		BEGIN_RING(kelvin, NV20TCL_ZETA_OFFSET, 1);
 		OUT_RELOCl(nv20->zeta, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 		/* XXX for when we allocate LMA on nv17 */

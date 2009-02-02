@@ -181,7 +181,7 @@ nv30_miptree_surface_del(struct pipe_screen *pscreen,
 		return;
 
 	pipe_texture_reference(&ps->texture, NULL);
-	pipe_buffer_reference(pscreen->winsys, &ps->buffer, NULL);
+	pipe_buffer_reference(pscreen, &ps->buffer, NULL);
 	FREE(ps);
 }
 

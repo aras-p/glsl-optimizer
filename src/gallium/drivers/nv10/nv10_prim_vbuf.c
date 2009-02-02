@@ -40,7 +40,7 @@
 
 #include "pipe/p_debug.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 
 #include "nv10_context.h"
 #include "nv10_state.h"

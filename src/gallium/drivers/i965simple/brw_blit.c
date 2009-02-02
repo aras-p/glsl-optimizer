@@ -35,7 +35,7 @@
 #include "brw_reg.h"
 
 #include "pipe/p_context.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 

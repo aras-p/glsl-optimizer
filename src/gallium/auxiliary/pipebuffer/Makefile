@@ -14,8 +14,7 @@ C_SOURCES = \
 	pb_bufmgr_ondemand.c \
 	pb_bufmgr_pool.c \
 	pb_bufmgr_slab.c \
-	pb_validate.c \
-	pb_winsys.c
+	pb_validate.c
 
 include ../../Makefile.template
 

@@ -27,7 +27,6 @@
 
 #include <windows.h>
 
-#include "pipe/p_winsys.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "state_tracker/st_context.h"
@@ -55,7 +54,7 @@ wglSwapBuffers(
 
    st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surf );
 
-   stw_dev->stw_winsys->flush_frontbuffer(stw_dev->screen->winsys,
+   stw_dev->stw_winsys->flush_frontbuffer(stw_dev->screen,
                                           surf,
                                           hdc );
 

@@ -30,7 +30,7 @@
 
 
 #include "draw/draw_context.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -537,7 +537,7 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
       void *mapped;
       if (buf->buffer && buf->buffer->size &&
           (mapped = ws->buffer_map(ws, buf->buffer,
-                                   PIPE_BUFFER_USAGE_CPU_READ))) {
+                                    PIPE_BUFFER_USAGE_CPU_READ))) {
          memcpy(i915->current.constants[shader], mapped, buf->buffer->size);
          ws->buffer_unmap(ws, buf->buffer);
          i915->current.num_user_constants[shader]

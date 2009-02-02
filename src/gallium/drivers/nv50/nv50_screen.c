@@ -22,6 +22,8 @@
 
 #include "pipe/p_screen.h"
 
+#include "util/u_simple_screen.h"
+
 #include "nv50_context.h"
 #include "nv50_screen.h"
 
@@ -323,6 +325,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 
 	nv50_screen_init_miptree_functions(&screen->pipe);
 	nv50_surface_init_screen_functions(&screen->pipe);
+	u_simple_screen_init(&screen->pipe);
 
 	return &screen->pipe;
 }

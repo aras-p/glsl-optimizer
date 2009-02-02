@@ -52,7 +52,6 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_winsys.h"
 #include "cso_cache/cso_cache.h"
 
 #include "draw/draw_context.h"

@@ -1,4 +1,4 @@
-#include <pipe/p_winsys.h>
+#include "pipe/internal/p_winsys_screen.h"
 #include <pipe/p_defines.h>
 #include <pipe/p_inlines.h>
 #include <util/u_memory.h>

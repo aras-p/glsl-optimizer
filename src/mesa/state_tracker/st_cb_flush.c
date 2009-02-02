@@ -42,7 +42,7 @@
 #include "st_public.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_winsys.h"
+#include "pipe/p_screen.h"
 #include "util/u_gen_mipmap.h"
 #include "util/u_blit.h"
 
@@ -55,7 +55,7 @@ is_front_buffer_dirty(struct st_context *st)
 
 
 /**
- * Tell the winsys to display the front color buffer on-screen.
+ * Tell the screen to display the front color buffer on-screen.
  */
 static void
 display_front_buffer(struct st_context *st)
@@ -67,7 +67,7 @@ display_front_buffer(struct st_context *st)
 
    /* Hook for copying "fake" frontbuffer if necessary:
     */
-   st->pipe->winsys->flush_frontbuffer( st->pipe->winsys, front_surf,
+   st->pipe->screen->flush_frontbuffer( st->pipe->screen, front_surf,
                                         st->pipe->priv );
 
    /*
@@ -103,8 +103,8 @@ void st_finish( struct st_context *st )
    st_flush(st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, &fence);
 
    if(fence) {
-      st->pipe->winsys->fence_finish(st->pipe->winsys, fence, 0);
-      st->pipe->winsys->fence_reference(st->pipe->winsys, &fence, NULL);
+      st->pipe->screen->fence_finish(st->pipe->screen, fence, 0);
+      st->pipe->screen->fence_reference(st->pipe->screen, &fence, NULL);
    }
 }
 

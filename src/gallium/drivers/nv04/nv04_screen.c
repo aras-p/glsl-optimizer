@@ -1,4 +1,5 @@
 #include "pipe/p_screen.h"
+#include "util/u_simple_screen.h"
 
 #include "nv04_context.h"
 #include "nv04_screen.h"
@@ -215,6 +216,7 @@ nv04_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	screen->pipe.surface_unmap = nv04_surface_unmap;
 
 	nv04_screen_init_miptree_functions(&screen->pipe);
+	u_simple_screen_init(&screen->pipe);
 
 	return &screen->pipe;
 }

@@ -5,10 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <GL/gl.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
-#include <GL/glext.h>
-#include "extfuncs.h"
 
 
 static GLuint fragShader;
@@ -56,9 +54,9 @@ Reshape(int width, int height)
 static void
 CleanUp(void)
 {
-   glDeleteShader_func(fragShader);
-   glDeleteShader_func(vertShader);
-   glDeleteProgram_func(program);
+   glDeleteShader(fragShader);
+   glDeleteShader(vertShader);
+   glDeleteProgram(program);
    glutDestroyWindow(win);
 }
 
@@ -110,15 +108,15 @@ LoadAndCompileShader(GLuint shader, const char *text)
 {
    GLint stat;
 
-   glShaderSource_func(shader, 1, (const GLchar **) &text, NULL);
+   glShaderSource(shader, 1, (const GLchar **) &text, NULL);
 
-   glCompileShader_func(shader);
+   glCompileShader(shader);
 
-   glGetShaderiv_func(shader, GL_COMPILE_STATUS, &stat);
+   glGetShaderiv(shader, GL_COMPILE_STATUS, &stat);
    if (!stat) {
       GLchar log[1000];
       GLsizei len;
-      glGetShaderInfoLog_func(shader, 1000, &len, log);
+      glGetShaderInfoLog(shader, 1000, &len, log);
       fprintf(stderr, "fslight: problem compiling shader:\n%s\n", log);
       exit(1);
    }
@@ -129,11 +127,11 @@ static void
 CheckLink(GLuint prog)
 {
    GLint stat;
-   glGetProgramiv_func(prog, GL_LINK_STATUS, &stat);
+   glGetProgramiv(prog, GL_LINK_STATUS, &stat);
    if (!stat) {
       GLchar log[1000];
       GLsizei len;
-      glGetProgramInfoLog_func(prog, 1000, &len, log);
+      glGetProgramInfoLog(prog, 1000, &len, log);
       fprintf(stderr, "Linker error:\n%s\n", log);
    }
 }
@@ -165,24 +163,22 @@ Init(void)
       exit(1);
    }
 
-   GetExtensionFuncs();
-
-   fragShader = glCreateShader_func(GL_FRAGMENT_SHADER);
+   fragShader = glCreateShader(GL_FRAGMENT_SHADER);
    LoadAndCompileShader(fragShader, fragShaderText);
 
 #if 0
-   vertShader = glCreateShader_func(GL_VERTEX_SHADER);
+   vertShader = glCreateShader(GL_VERTEX_SHADER);
    LoadAndCompileShader(vertShader, vertShaderText);
 #endif
 
-   program = glCreateProgram_func();
-   glAttachShader_func(program, fragShader);
+   program = glCreateProgram();
+   glAttachShader(program, fragShader);
 #if 0
-   glAttachShader_func(program, vertShader);
+   glAttachShader(program, vertShader);
 #endif
-   glLinkProgram_func(program);
+   glLinkProgram(program);
    CheckLink(program);
-   glUseProgram_func(program);
+   glUseProgram(program);
 
    assert(glGetError() == 0);
 
@@ -200,6 +196,7 @@ main(int argc, char *argv[])
    glutInitWindowSize(200, 200);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    win = glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
    glutSpecialFunc(SpecialKey);

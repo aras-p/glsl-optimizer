@@ -29,7 +29,7 @@
  * Authors: Keith Whitwell <keithw-at-tungstengraphics-dot-com>
  */
 
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "u_timed_winsys.h"
 #include "util/u_memory.h"
 #include "util/u_time.h"
@@ -121,7 +121,8 @@ timed_buffer_create(struct pipe_winsys *winsys,
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
    uint64_t start = time_start();
 
-   struct pipe_buffer *buf = backend->buffer_create( backend, alignment, usage, size );
+   struct pipe_buffer *buf =
+      backend->buffer_create( backend, alignment, usage, size );
 
    time_finish(winsys, start, 0, __FUNCTION__);
    
@@ -300,9 +301,9 @@ struct pipe_winsys *u_timed_winsys_create( struct pipe_winsys *backend )
    ws->base.buffer_unmap = timed_buffer_unmap;
    ws->base.buffer_destroy = timed_buffer_destroy;
    ws->base.buffer_create = timed_buffer_create;
+   ws->base.surface_buffer_create = timed_surface_buffer_create;
    ws->base.flush_frontbuffer = timed_flush_frontbuffer;
    ws->base.get_name = timed_get_name;
-   ws->base.surface_buffer_create = timed_surface_buffer_create;
    ws->base.fence_reference = timed_fence_reference;
    ws->base.fence_signalled = timed_fence_signalled;
    ws->base.fence_finish = timed_fence_finish;

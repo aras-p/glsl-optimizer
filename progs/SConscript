@@ -1,4 +1,5 @@
 SConscript([
+    'util/SConscript',
     'demos/SConscript',
     'trivial/SConscript',
     'vp/SConscript',

@@ -1,7 +1,7 @@
 #ifndef INTEL_DRM_DEVICE_H
 #define INTEL_DRM_DEVICE_H
 
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_context.h"
 
 /*

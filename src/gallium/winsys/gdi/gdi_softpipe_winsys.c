@@ -38,7 +38,7 @@
 
 #include <windows.h>
 
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
@@ -268,7 +268,7 @@ gdi_softpipe_context_create(struct pipe_screen *screen)
 
 
 static void
-gdi_softpipe_flush_frontbuffer(struct pipe_winsys *winsys,
+gdi_softpipe_flush_frontbuffer(struct pipe_screen *screen,
                                struct pipe_surface *surface,
                                HDC hDC)
 {

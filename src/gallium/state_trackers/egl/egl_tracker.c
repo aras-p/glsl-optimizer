@@ -10,7 +10,7 @@
 #include "state_tracker/drm_api.h"
 
 #include "pipe/p_screen.h"
-#include "pipe/p_winsys.h"
+#include "pipe/internal/p_winsys_screen.h"
 
 /** HACK */
 void* driDriverAPI;

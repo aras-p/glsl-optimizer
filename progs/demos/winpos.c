@@ -11,7 +11,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
-#define GL_GLEXT_PROTOTYPES
+#include "GL/glew.h"
 #include "GL/glut.h"
 
 #include "readtex.h"
@@ -29,8 +29,7 @@ static GLubyte *Image;
 static int ImgWidth, ImgHeight;
 static GLenum ImgFormat;
 
-typedef void (APIENTRY * PFNWINDOWPOSFUNC)(GLfloat x, GLfloat y);
-static PFNWINDOWPOSFUNC WindowPosFunc;
+static PFNGLWINDOWPOS2FPROC WindowPosFunc;
 
 static void draw( void )
 {
@@ -71,19 +70,16 @@ static void reshape( int width, int height )
 
 static void init( void )
 {
-#ifdef GL_ARB_window_pos
-   if (glutExtensionSupported("GL_ARB_window_pos")) {
+   if (GLEW_ARB_window_pos) {
       printf("Using GL_ARB_window_pos\n");
-      WindowPosFunc = &glWindowPos2fARB;
+      WindowPosFunc = glWindowPos2fARB;
    }
    else
-#elif defined(GL_MESA_window_pos)
-   if (glutExtensionSupported("GL_MESA_window_pos")) {
+   if (GLEW_MESA_window_pos) {
       printf("Using GL_MESA_window_pos\n");
-      WindowPosFunc = &glWindowPos2fMESA;
+      WindowPosFunc = glWindowPos2fMESA;
    }
    else
-#endif
    {
       printf("Sorry, GL_ARB/MESA_window_pos extension not available.\n");
       exit(1);
@@ -108,6 +104,8 @@ int main( int argc, char *argv[] )
    if (glutCreateWindow("winpos") <= 0) {
       exit(0);
    }
+
+   glewInit();
 
    init();
 

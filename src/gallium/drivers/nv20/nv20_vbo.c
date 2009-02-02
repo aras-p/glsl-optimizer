@@ -64,6 +64,7 @@ boolean nv20_draw_elements( struct pipe_context *pipe,
 		draw_set_mapped_element_buffer(draw, 0, NULL);
 	}
 
+	draw_flush(nv20->draw);
 	return TRUE;
 }
 

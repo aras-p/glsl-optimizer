@@ -31,7 +31,6 @@
 #include "p_context.h"
 #include "p_defines.h"
 #include "p_screen.h"
-#include "p_winsys.h"
 
 
 #ifdef __cplusplus
@@ -89,29 +88,6 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
 }
 
 
-/* XXX: thread safety issues!
- */
-static INLINE void
-winsys_buffer_reference(struct pipe_winsys *winsys,
-		      struct pipe_buffer **ptr,
-		      struct pipe_buffer *buf)
-{
-   if (buf) {
-      assert(buf->refcount);
-      buf->refcount++;
-   }
-
-   if (*ptr) {
-      assert((*ptr)->refcount);
-      if(--(*ptr)->refcount == 0)
-         winsys->buffer_destroy( winsys, *ptr );
-   }
-
-   *ptr = buf;
-}
-
-
-
 /**
  * \sa pipe_surface_reference
  */
@@ -152,20 +128,20 @@ pipe_texture_release(struct pipe_texture **ptr)
 
 
 /**
- * Convenience wrappers for winsys buffer functions.
+ * Convenience wrappers for screen buffer functions.
  */
 
 static INLINE struct pipe_buffer *
 pipe_buffer_create( struct pipe_screen *screen,
                     unsigned alignment, unsigned usage, unsigned size )
 {
-   return screen->winsys->buffer_create(screen->winsys, alignment, usage, size);
+   return screen->buffer_create(screen, alignment, usage, size);
 }
 
 static INLINE struct pipe_buffer *
 pipe_user_buffer_create( struct pipe_screen *screen, void *ptr, unsigned size )
 {
-   return screen->winsys->user_buffer_create(screen->winsys, ptr, size);
+   return screen->user_buffer_create(screen, ptr, size);
 }
 
 static INLINE void *
@@ -173,25 +149,36 @@ pipe_buffer_map(struct pipe_screen *screen,
                 struct pipe_buffer *buf,
                 unsigned usage)
 {
-   return screen->winsys->buffer_map(screen->winsys, buf, usage);
+   return screen->buffer_map(screen, buf, usage);
 }
 
 static INLINE void
 pipe_buffer_unmap(struct pipe_screen *screen,
                   struct pipe_buffer *buf)
 {
-   screen->winsys->buffer_unmap(screen->winsys, buf);
+   screen->buffer_unmap(screen, buf);
 }
 
-/* XXX when we're using this everywhere, get rid of
- * winsys_buffer_reference() above.
+/* XXX: thread safety issues!
  */
 static INLINE void
 pipe_buffer_reference(struct pipe_screen *screen,
 		      struct pipe_buffer **ptr,
 		      struct pipe_buffer *buf)
 {
-   winsys_buffer_reference(screen->winsys, ptr, buf);
+   if (buf) {
+      assert(buf->refcount);
+      buf->refcount++;
+   }
+
+   if (*ptr) {
+      assert((*ptr)->refcount);
+      if(--(*ptr)->refcount == 0) {
+         screen->buffer_destroy( screen, *ptr );
+      }
+   }
+
+   *ptr = buf;
 }
 
 

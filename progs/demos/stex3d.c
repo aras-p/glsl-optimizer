@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <GL/gl.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 
@@ -661,6 +661,8 @@ main(int argc, char **argv)
    if (glutCreateWindow("stex3d") <= 0) {
       exit(0);
    }
+
+   glewInit();
 
    init();
 
