@@ -28,6 +28,160 @@
 #include <windows.h>
 
 #include "pipe/p_debug.h"
+#include "shared/stw_public.h"
+#include "stw_wgl.h"
+#include "stw.h"
+
+boolean stw_wgl_init( void )
+{
+   debug_printf("%s\n", __FUNCTION__);
+   return TRUE;
+}
+
+void stw_wgl_cleanup( void )
+{
+}
+
+static INLINE struct stw_context *stw_context( HGLRC hglrc )
+{
+   return (struct stw_context *)hglrc;
+}
+
+
+WINGDIAPI BOOL APIENTRY
+wglCopyContext(
+   HGLRC hglrcSrc,
+   HGLRC hglrcDst,
+   UINT mask )
+{
+   return stw_copy_context( stw_context(hglrcSrc), 
+                            stw_context(hglrcDst), 
+                            mask );
+}
+
+WINGDIAPI HGLRC APIENTRY
+wglCreateContext(
+   HDC hdc )
+{
+   return (HGLRC) stw_create_context( hdc, 0 );
+}
+
+WINGDIAPI HGLRC APIENTRY
+wglCreateLayerContext(
+   HDC hdc,
+   int iLayerPlane )
+{
+   return (HGLRC) stw_create_context( hdc, iLayerPlane );
+}
+
+WINGDIAPI BOOL APIENTRY
+wglDeleteContext(
+   HGLRC hglrc )
+{
+   return stw_delete_context( stw_context(hglrc) );
+}
+
+
+WINGDIAPI HGLRC APIENTRY
+wglGetCurrentContext( VOID )
+{
+   return (HGLRC) stw_get_current_context();
+}
+
+WINGDIAPI HDC APIENTRY
+wglGetCurrentDC( VOID )
+{
+   return stw_get_current_dc();
+}
+
+WINGDIAPI BOOL APIENTRY
+wglMakeCurrent(
+   HDC hdc,
+   HGLRC hglrc )
+{
+   return stw_make_current( hdc, stw_context(hglrc) );
+}
+
+
+WINGDIAPI BOOL APIENTRY
+wglSwapBuffers(
+   HDC hdc )
+{
+   return stw_swap_buffers( hdc );
+}
+
+
+WINGDIAPI BOOL APIENTRY
+wglSwapLayerBuffers(
+   HDC hdc,
+   UINT fuPlanes )
+{
+   (void) hdc;
+   (void) fuPlanes;
+
+   return FALSE;
+}
+
+WINGDIAPI PROC APIENTRY
+wglGetProcAddress(
+    LPCSTR lpszProc )
+{
+   return stw_get_proc_address( lpszProc );
+}
+
+
+WINGDIAPI int APIENTRY
+wglChoosePixelFormat(
+   HDC hdc,
+   CONST PIXELFORMATDESCRIPTOR *ppfd )
+{
+   if (ppfd->nSize != sizeof( PIXELFORMATDESCRIPTOR ) || ppfd->nVersion != 1)
+      return 0;
+   if (ppfd->iPixelType != PFD_TYPE_RGBA)
+      return 0;
+   if (!(ppfd->dwFlags & PFD_DRAW_TO_WINDOW))
+      return 0;
+   if (!(ppfd->dwFlags & PFD_SUPPORT_OPENGL))
+      return 0;
+   if (ppfd->dwFlags & PFD_DRAW_TO_BITMAP)
+      return 0;
+   if (ppfd->dwFlags & PFD_SUPPORT_GDI)
+      return 0;
+   if (!(ppfd->dwFlags & PFD_STEREO_DONTCARE) && (ppfd->dwFlags & PFD_STEREO))
+      return 0;
+
+   return stw_pixelformat_choose( hdc, ppfd );
+}
+
+WINGDIAPI int APIENTRY
+wglDescribePixelFormat(
+   HDC hdc,
+   int iPixelFormat,
+   UINT nBytes,
+   LPPIXELFORMATDESCRIPTOR ppfd )
+{
+   return stw_pixelformat_describe( hdc, iPixelFormat, nBytes, ppfd );
+}
+
+WINGDIAPI int APIENTRY
+wglGetPixelFormat(
+   HDC hdc )
+{
+   return stw_pixelformat_get( hdc );
+}
+
+WINGDIAPI BOOL APIENTRY
+wglSetPixelFormat(
+   HDC hdc,
+   int iPixelFormat,
+   const PIXELFORMATDESCRIPTOR *ppfd )
+{
+   if (ppfd->nSize != sizeof( PIXELFORMATDESCRIPTOR ))
+      return FALSE;
+
+   return stw_pixelformat_set( hdc, iPixelFormat );
+}
+
 
 WINGDIAPI BOOL APIENTRY
 wglUseFontBitmapsA(

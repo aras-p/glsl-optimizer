@@ -29,9 +29,9 @@
 
 #include "pipe/p_compiler.h"
 #include "util/u_memory.h"
+#include "stw_public.h"
 #include "stw_pixelformat.h"
-#include "stw_wgl_arbmultisample.h"
-#include "stw_wgl_arbpixelformat.h"
+#include "stw_arbpixelformat.h"
 
 #define WGL_NUMBER_PIXEL_FORMATS_ARB            0x2000
 #define WGL_DRAW_TO_WINDOW_ARB                  0x2001
@@ -85,6 +85,12 @@
 
 #define WGL_TYPE_RGBA_ARB                       0x202B
 #define WGL_TYPE_COLORINDEX_ARB                 0x202C
+
+/* From arb_multisample:
+ */
+#define WGL_SAMPLE_BUFFERS_ARB               0x2041
+#define WGL_SAMPLES_ARB                      0x2042
+
 
 static boolean
 query_attrib(
@@ -253,14 +259,14 @@ query_attrib(
 
    case WGL_SAMPLE_BUFFERS_ARB:
       if (pf->flags & PF_FLAG_MULTISAMPLED)
-         *pvalue = wgl_query_sample_buffers();
+         *pvalue = stw_query_sample_buffers();
       else
          *pvalue = 0;
       break;
 
    case WGL_SAMPLES_ARB:
       if (pf->flags & PF_FLAG_MULTISAMPLED)
-         *pvalue = wgl_query_samples();
+         *pvalue = stw_query_samples();
       else
          *pvalue = 0;
       break;

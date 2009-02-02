@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,55 +22,70 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
-#ifndef PIXELFORMAT_H
-#define PIXELFORMAT_H
+#include <windows.h>
 
-#define PF_FLAG_DOUBLEBUFFER  0x00000001
-#define PF_FLAG_MULTISAMPLED  0x00000002
+#include "pipe/p_debug.h"
+#include "pipe/p_screen.h"
 
-struct pixelformat_color_info
+#include "shared/stw_device.h"
+#include "shared/stw_winsys.h"
+#include "shared/stw_pixelformat.h"
+#include "shared/stw_public.h"
+#include "stw.h"
+
+
+struct stw_device *stw_dev = NULL;
+
+
+/**
+ * XXX: Dispatch pipe_screen::flush_front_buffer to our 
+ * stw_winsys::flush_front_buffer.
+ */
+static void 
+st_flush_frontbuffer(struct pipe_screen *screen,
+                     struct pipe_surface *surf,
+                     void *context_private )
 {
-   uint redbits;
-   uint redshift;
-   uint greenbits;
-   uint greenshift;
-   uint bluebits;
-   uint blueshift;
-};
+   const struct stw_winsys *stw_winsys = stw_dev->stw_winsys;
+   HDC hdc = (HDC)context_private;
+   
+   stw_winsys->flush_frontbuffer(screen, surf, hdc);
+}
 
-struct pixelformat_alpha_info
-{
-   uint alphabits;
-   uint alphashift;
-};
 
-struct pixelformat_depth_info
+boolean
+stw_shared_init(const struct stw_winsys *stw_winsys)
 {
-   uint depthbits;
-   uint stencilbits;
-};
+   static struct stw_device stw_dev_storage;
 
-struct pixelformat_info
-{
-   uint flags;
-   struct pixelformat_color_info color;
-   struct pixelformat_alpha_info alpha;
-   struct pixelformat_depth_info depth;
-};
+   assert(!stw_dev);
+
+   stw_dev = &stw_dev_storage;
+   memset(stw_dev, 0, sizeof(*stw_dev));
+
+   stw_dev->stw_winsys = stw_winsys;
+
+   stw_dev->screen = stw_winsys->create_screen();
+   if(!stw_dev->screen)
+      goto error1;
+
+   stw_dev->screen->flush_frontbuffer = st_flush_frontbuffer;
+   
+   pixelformat_init();
+
+   return TRUE;
+
+error1:
+   stw_dev = NULL;
+   return FALSE;
+}
+
 
 void
-pixelformat_init( void );
-
-uint
-pixelformat_get_count( void );
-
-uint
-pixelformat_get_extended_count( void );
-
-const struct pixelformat_info *
-pixelformat_get_info( uint index );
-
-#endif /* PIXELFORMAT_H */
+stw_shared_cleanup(void)
+{
+   stw_dev = NULL;
+}

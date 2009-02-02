@@ -25,34 +25,59 @@
  * 
  **************************************************************************/
 
-#ifndef WGL_ARBPIXELFORMAT_H
-#define WGL_ARBPIXELFORMAT_H
+#ifndef PIXELFORMAT_H
+#define PIXELFORMAT_H
 
-WINGDIAPI BOOL APIENTRY
-wglChoosePixelFormatARB(
-   HDC hdc,
-   const int *piAttribIList,
-   const FLOAT *pfAttribFList,
-   UINT nMaxFormats,
-   int *piFormats,
-   UINT *nNumFormats );
+#include <windows.h>
+#include "pipe/p_compiler.h"
 
-WINGDIAPI BOOL APIENTRY
-wglGetPixelFormatAttribfvARB(
-   HDC hdc,
-   int iPixelFormat,
-   int iLayerPlane,
-   UINT nAttributes,
-   const int *piAttributes,
-   FLOAT *pfValues );
+#define PF_FLAG_DOUBLEBUFFER  0x00000001
+#define PF_FLAG_MULTISAMPLED  0x00000002
 
-WINGDIAPI BOOL APIENTRY
-wglGetPixelFormatAttribivARB(
-   HDC hdc,
-   int iPixelFormat,
-   int iLayerPlane,
-   UINT nAttributes,
-   const int *piAttributes,
-   int *piValues );
+struct pixelformat_color_info
+{
+   uint redbits;
+   uint redshift;
+   uint greenbits;
+   uint greenshift;
+   uint bluebits;
+   uint blueshift;
+};
 
-#endif /* WGL_ARBPIXELFORMAT_H */
+struct pixelformat_alpha_info
+{
+   uint alphabits;
+   uint alphashift;
+};
+
+struct pixelformat_depth_info
+{
+   uint depthbits;
+   uint stencilbits;
+};
+
+struct pixelformat_info
+{
+   uint flags;
+   struct pixelformat_color_info color;
+   struct pixelformat_alpha_info alpha;
+   struct pixelformat_depth_info depth;
+};
+
+void
+pixelformat_init( void );
+
+uint
+pixelformat_get_count( void );
+
+uint
+pixelformat_get_extended_count( void );
+
+const struct pixelformat_info *
+pixelformat_get_info( uint index );
+
+int stw_query_sample_buffers( void );
+int stw_query_samples( void );
+
+
+#endif /* PIXELFORMAT_H */

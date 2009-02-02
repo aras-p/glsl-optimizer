@@ -25,46 +25,20 @@
  *
  **************************************************************************/
 
-#include <windows.h>
+#ifndef ST_DEVICE_H_
+#define ST_DEVICE_H_
 
-#include "glapi/glapi.h"
-#include "stw_wgl_arbextensionsstring.h"
-#include "stw_wgl_arbpixelformat.h"
 
-struct extension_entry
+struct pipe_screen;
+
+struct stw_device
 {
-   const char *name;
-   PROC proc;
+   const struct stw_winsys *stw_winsys;
+   struct pipe_screen *screen;
 };
 
-#define EXTENTRY(P) { #P, (PROC) P }
 
-static struct extension_entry extension_entries[] = {
+extern struct stw_device *stw_dev;
 
-   /* WGL_ARB_extensions_string */
-   EXTENTRY( wglGetExtensionsStringARB ),
 
-   /* WGL_ARB_pixel_format */
-   EXTENTRY( wglChoosePixelFormatARB ),
-   EXTENTRY( wglGetPixelFormatAttribfvARB ),
-   EXTENTRY( wglGetPixelFormatAttribivARB ),
-
-   { NULL, NULL }
-};
-
-WINGDIAPI PROC APIENTRY
-wglGetProcAddress(
-   LPCSTR lpszProc )
-{
-   struct extension_entry *entry;
-
-   PROC p = (PROC) _glapi_get_proc_address( (const char *) lpszProc );
-   if (p)
-      return p;
-
-   for (entry = extension_entries; entry->name; entry++)
-      if (strcmp( lpszProc, entry->name ) == 0)
-         return entry->proc;
-
-   return NULL;
-}
+#endif /* ST_DEVICE_H_ */

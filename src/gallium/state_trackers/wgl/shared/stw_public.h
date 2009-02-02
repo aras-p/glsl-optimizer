@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2009 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,49 +25,51 @@
  *
  **************************************************************************/
 
+#ifndef STW_PUBLIC_H
+#define STW_PUBLIC_H
+
 #include <windows.h>
+#include "pipe/p_compiler.h"
 
-#include "pipe/p_screen.h"
-#include "pipe/p_context.h"
-#include "state_tracker/st_context.h"
-#include "state_tracker/st_public.h"
-#include "stw_winsys.h"
-#include "stw_device.h"
-#include "stw_framebuffer.h"
-#include "stw_wgl.h"
+struct stw_winsys;
+struct stw_context;
 
-WINGDIAPI BOOL APIENTRY
-wglSwapBuffers(
-   HDC hdc )
-{
-   struct stw_framebuffer *fb;
-   struct pipe_surface *surf;
+boolean
+st_shared_init(const struct stw_winsys *stw_winsys);
 
-   fb = framebuffer_from_hdc( hdc );
-   if (fb == NULL)
-      return FALSE;
+void
+st_shared_cleanup(void);
 
-   /* If we're swapping the buffer associated with the current context
-    * we have to flush any pending rendering commands first.
-    */
-   st_notify_swapbuffers( fb->stfb );
 
-   st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surf );
+BOOL stw_copy_context( struct stw_context *src,
+                       struct stw_context *dst,
+                       UINT mask );
 
-   stw_dev->stw_winsys->flush_frontbuffer(stw_dev->screen,
-                                          surf,
-                                          hdc );
+struct stw_context *stw_create_context( HDC hdc, int iLayerPlane );
 
-   return TRUE;
-}
+BOOL stw_delete_context( struct stw_context *ctx );
 
-WINGDIAPI BOOL APIENTRY
-wglSwapLayerBuffers(
-   HDC hdc,
-   UINT fuPlanes )
-{
-   (void) hdc;
-   (void) fuPlanes;
+struct stw_context *stw_get_current_context( void );
 
-   return FALSE;
-}
+HDC stw_get_current_dc( void );
+
+BOOL stw_make_current( HDC hdc, struct stw_context *ctx );
+
+BOOL stw_swap_buffers( HDC hdc );
+
+PROC stw_get_proc_address( LPCSTR lpszProc );
+
+int stw_pixelformat_describe( HDC hdc,
+                              int iPixelFormat,
+                              UINT nBytes,
+                              LPPIXELFORMATDESCRIPTOR ppfd );
+
+int stw_pixelformat_get( HDC hdc );
+
+BOOL stw_pixelformat_set( HDC hdc,
+                          int iPixelFormat );
+
+int stw_pixelformat_choose( HDC hdc,
+                            CONST PIXELFORMATDESCRIPTOR *ppfd );
+
+#endif

@@ -25,75 +25,29 @@
  *
  **************************************************************************/
 
+#ifndef STW_CONTEXT_H
+#define STW_CONTEXT_H
+
 #include <windows.h>
 
-#include "pipe/p_debug.h"
-#include "pipe/p_screen.h"
+struct st_context;
 
-#include "stw_device.h"
-#include "stw_winsys.h"
-#include "stw_pixelformat.h"
-
-
-struct stw_device *stw_dev = NULL;
-
-
-/**
- * XXX: Dispatch pipe_screen::flush_front_buffer to our 
- * stw_winsys::flush_front_buffer.
- */
-static void 
-st_flush_frontbuffer(struct pipe_screen *screen,
-                     struct pipe_surface *surf,
-                     void *context_private )
+struct stw_context
 {
-   const struct stw_winsys *stw_winsys = stw_dev->stw_winsys;
-   HDC hdc = (HDC)context_private;
-   
-   stw_winsys->flush_frontbuffer(screen, surf, hdc);
-}
+   struct st_context *st;
+   HDC hdc;
+   DWORD color_bits;
+   struct stw_context *next;
+};
+
+struct stw_context *
+stw_context_from_hdc(HDC hdc );
 
 
-boolean
-st_init(const struct stw_winsys *stw_winsys)
-{
-   static struct stw_device stw_dev_storage;
-
-   assert(!stw_dev);
-
-   stw_dev = &stw_dev_storage;
-   memset(stw_dev, 0, sizeof(*stw_dev));
-
-   stw_dev->stw_winsys = stw_winsys;
-
-   stw_dev->screen = stw_winsys->create_screen();
-   if(!stw_dev->screen)
-      goto error1;
-
-   stw_dev->screen->flush_frontbuffer = st_flush_frontbuffer;
-   
-   pixelformat_init();
-
-   return TRUE;
-
-error1:
-   stw_dev = NULL;
-   return FALSE;
-}
 
 
-void
-st_cleanup(void)
-{
-   DHGLRC dhglrc;
 
-   if(!stw_dev)
-      return;
 
-   /* Ensure all contexts are destroyed */
-   for (dhglrc = 1; dhglrc <= DRV_CONTEXT_MAX; dhglrc++)
-      if (stw_dev->ctx_array[dhglrc - 1].hglrc)
-         DrvDeleteContext( dhglrc );
 
-   stw_dev = NULL;
-}
+
+#endif /* STW_CONTEXT_H */

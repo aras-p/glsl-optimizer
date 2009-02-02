@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,19 +22,50 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
-#ifndef WGL_ARBMULTISAMPLE_H
-#define WGL_ARBMULTISAMPLE_H
+#include <windows.h>
 
-#define WGL_SAMPLE_BUFFERS_ARB               0x2041
-#define WGL_SAMPLES_ARB                      0x2042
+#include "glapi/glapi.h"
+#include "stw_arbextensionsstring.h"
+#include "stw_arbpixelformat.h"
+#include "stw_public.h"
 
-int
-wgl_query_sample_buffers( void );
+struct extension_entry
+{
+   const char *name;
+   PROC proc;
+};
 
-int
-wgl_query_samples( void );
+#define EXTENTRY(P) { #P, (PROC) P }
 
-#endif /* WGL_ARBMULTISAMPLE_H */
+static struct extension_entry extension_entries[] = {
+
+   /* WGL_ARB_extensions_string */
+   EXTENTRY( wglGetExtensionsStringARB ),
+
+   /* WGL_ARB_pixel_format */
+   EXTENTRY( wglChoosePixelFormatARB ),
+   EXTENTRY( wglGetPixelFormatAttribfvARB ),
+   EXTENTRY( wglGetPixelFormatAttribivARB ),
+
+   { NULL, NULL }
+};
+
+PROC
+stw_get_proc_address(
+   LPCSTR lpszProc )
+{
+   struct extension_entry *entry;
+
+   PROC p = (PROC) _glapi_get_proc_address( (const char *) lpszProc );
+   if (p)
+      return p;
+
+   for (entry = extension_entries; entry->name; entry++)
+      if (strcmp( lpszProc, entry->name ) == 0)
+         return entry->proc;
+
+   return NULL;
+}

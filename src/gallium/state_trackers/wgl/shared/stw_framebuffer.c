@@ -29,9 +29,14 @@
 
 #include "main/context.h"
 #include "pipe/p_format.h"
+#include "pipe/p_screen.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
 #include "stw_framebuffer.h"
+#include "stw_device.h"
+#include "stw_public.h"
+#include "stw_winsys.h"
+
 
 void
 framebuffer_resize(
@@ -166,7 +171,7 @@ framebuffer_destroy(
    }
 }
 
-/* Given an hdc, return the corresponding wgl_context.
+/* Given an hdc, return the corresponding stw_framebuffer.
  */
 struct stw_framebuffer *
 framebuffer_from_hdc(
@@ -178,4 +183,30 @@ framebuffer_from_hdc(
       if (fb->hDC == hdc)
          return fb;
    return NULL;
+}
+
+
+BOOL
+stw_swap_buffers(
+   HDC hdc )
+{
+   struct stw_framebuffer *fb;
+   struct pipe_surface *surf;
+
+   fb = framebuffer_from_hdc( hdc );
+   if (fb == NULL)
+      return FALSE;
+
+   /* If we're swapping the buffer associated with the current context
+    * we have to flush any pending rendering commands first.
+    */
+   st_notify_swapbuffers( fb->stfb );
+
+   st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surf );
+
+   stw_dev->stw_winsys->flush_frontbuffer(stw_dev->screen,
+                                          surf,
+                                          hdc );
+
+   return TRUE;
 }
