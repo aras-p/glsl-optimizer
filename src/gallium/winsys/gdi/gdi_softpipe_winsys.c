@@ -45,6 +45,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "softpipe/sp_winsys.h"
+#include "softpipe/sp_texture.h"
 #include "shared/stw_winsys.h"
 
 
@@ -275,7 +276,7 @@ gdi_softpipe_flush_frontbuffer(struct pipe_screen *screen,
     struct gdi_softpipe_buffer *buffer;
     BITMAPINFO bmi;
 
-    buffer = gdi_softpipe_buffer(surface->buffer);
+    buffer = gdi_softpipe_buffer(softpipe_texture(surface->texture)->buffer);
 
     memset(&bmi, 0, sizeof(BITMAPINFO));
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
