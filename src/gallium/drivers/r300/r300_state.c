@@ -56,7 +56,7 @@ static uint32_t translate_blend_function(int blend_func) {
         case PIPE_BLEND_MAX:
             return R300_COMB_FCN_MAX;
         default:
-            /* XXX should be unreachable, handle this */
+            debug_printf("r300: Unknown blend function %d\n", blend_func);
             break;
     }
     return 0;
@@ -102,7 +102,7 @@ static uint32_t translate_blend_factor(int blend_fact) {
         case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
         case PIPE_BLENDFACTOR_INV_SRC1_ALPHA: */
         default:
-            /* XXX the mythical 0x16 blend factor! */
+            debug_printf("r300: Unknown blend factor %d\n", blend_fact);
             break;
     }
     return 0;
@@ -231,7 +231,8 @@ static uint32_t translate_depth_stencil_function(int zs_func) {
         case PIPE_FUNC_ALWAYS:
             return R300_ZS_ALWAYS;
         default:
-            /* XXX shouldn't be reachable */
+            debug_printf("r300: Unknown depth/stencil function %d\n",
+                zs_func);
             break;
     }
     return 0;
@@ -256,7 +257,7 @@ static uint32_t translate_stencil_op(int s_op) {
         case PIPE_STENCIL_OP_INVERT:
             return R300_ZS_INVERT;
         default:
-            /* XXX shouldn't be reachable */
+            debug_printf("r300: Unknown stencil op %d", s_op);
             break;
     }
     return 0;
@@ -281,7 +282,7 @@ static uint32_t translate_alpha_function(int alpha_func) {
         case PIPE_FUNC_ALWAYS:
             return R300_FG_ALPHA_FUNC_ALWAYS;
         default:
-            /* XXX shouldn't be reachable */
+            debug_printf("r300: Unknown alpha function %d", alpha_func);
             break;
     }
     return 0;
@@ -557,7 +558,7 @@ static uint32_t translate_wrap(int wrap) {
         case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
             return R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
         default:
-            /* XXX handle this? */
+            debug_printf("r300: Unknown texture wrap %d", wrap);
             return 0;
     }
 }
@@ -572,7 +573,7 @@ static uint32_t translate_tex_filters(int min, int mag, int mip) {
         case PIPE_TEX_FILTER_ANISO:
             retval |= R300_TX_MIN_FILTER_ANISO;
         default:
-            /* XXX WTF?! */
+            debug_printf("r300: Unknown texture filter %d", min);
             break;
     }
     switch (mag) {
@@ -583,7 +584,7 @@ static uint32_t translate_tex_filters(int min, int mag, int mip) {
         case PIPE_TEX_FILTER_ANISO:
             retval |= R300_TX_MAG_FILTER_ANISO;
         default:
-            /* XXX WTF?! */
+            debug_printf("r300: Unknown texture filter %d", mag);
             break;
     }
     switch (mip) {
@@ -594,7 +595,7 @@ static uint32_t translate_tex_filters(int min, int mag, int mip) {
         case PIPE_TEX_MIPFILTER_LINEAR:
             retval |= R300_TX_MIN_FILTER_MIP_LINEAR;
         default:
-            /* XXX WTF?! */
+            debug_printf("r300: Unknown texture filter %d", mip);
             break;
     }
 
