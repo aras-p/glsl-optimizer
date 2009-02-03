@@ -169,6 +169,20 @@ the Gamma FAQ</a>
 </p>
 
 
+<H2>Direct Rendering Flag</H2>
+<p>
+Some applications won't run with indirect rendering contexts (which is
+what the Xlib driver supports).
+To force the glXIsDirect() query to return True, set the MESA_GLX_FORCE_DIRECT
+environment variable.
+For example:
+</p>
+<pre>
+	$ export MESA_GLX_FORCE_DIRECT=1
+</pre>
+
+
+
 <H2>Overlay Planes</H2>
 <p>
 Hardware overlay planes are supported by the Xlib driver.  To
@@ -268,6 +282,8 @@ This extension was added in Mesa 2.6
    MESA_BACK_BUFFER - specifies how to implement the back color buffer (X only)
    MESA_PRIVATE_CMAP - force aux/tk libraries to use private colormaps (X only)
    MESA_GAMMA - gamma correction coefficients (X only)
+   MESA_GLX_FORCE_DIRECT - report that the driver is direct rendering, even
+      though it's not.
 </pre>
 
 
