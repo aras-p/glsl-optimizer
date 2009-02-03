@@ -81,7 +81,7 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
             /* IN THEORY */
             return 0;
         case PIPE_CAP_TWO_SIDED_STENCIL:
-            if (r300screen->is_r500) {
+            if (r300screen->caps->is_r500) {
                 return 1;
             } else {
                 return 0;

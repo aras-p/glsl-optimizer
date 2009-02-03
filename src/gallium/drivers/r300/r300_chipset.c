@@ -21,6 +21,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "r300_chipset.h"
+#include "pipe/p_debug.h"
 
 /* r300_chipset: A file all to itself for deducing the various properties of
  * Radeons. */

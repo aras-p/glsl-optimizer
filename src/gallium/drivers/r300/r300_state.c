@@ -22,6 +22,7 @@
 
 #include "util/u_math.h"
 #include "util/u_pack_color.h"
+#include "pipe/p_debug.h"
 
 #include "r300_context.h"
 #include "r300_reg.h"
