@@ -655,6 +655,7 @@ static struct bo_legacy *radeon_legacy_bo_alloc_static(struct bo_manager_legacy 
     if (bo->base.handle > bom->nhandle) {
         bom->nhandle = bo->base.handle + 1;
     }
+    radeon_bo_ref(&(bo->base));
     return bo;
 }
 
