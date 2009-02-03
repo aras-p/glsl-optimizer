@@ -379,7 +379,7 @@ setup_interleaved_attribs(GLcontext *ctx,
          else {
             vbuffer->buffer = NULL;
             pipe_buffer_reference(pipe->screen, &vbuffer->buffer, stobj->buffer);
-            vbuffer->buffer_offset = (unsigned) arrays[mesaAttr]->Ptr;
+            vbuffer->buffer_offset = (unsigned) low;
          }
          vbuffer->stride = stride; /* in bytes */
          vbuffer->max_index = max_index;
