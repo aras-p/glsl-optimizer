@@ -337,7 +337,8 @@ void r300_parse_chipset(struct r300_capabilities* caps)
             break;
 
         default:
-            /* XXX not an r300?! */
+            debug_printf("r300: Warning: Unknown chipset 0x%x\n",
+                caps->pci_id);
             break;
     }
 

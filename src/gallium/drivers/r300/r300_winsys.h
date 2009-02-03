@@ -64,7 +64,6 @@ struct r300_winsys {
            int line);
 
     /* Write a dword to the command buffer. */
-    /* XXX is this an okay name for this handle? */
     void (*write_cs_dword)(struct radeon_cs* cs, uint32_t dword);
 
     /* Write a relocated dword to the command buffer. */
