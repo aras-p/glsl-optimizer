@@ -2168,7 +2168,8 @@ copytexsubimage_error_check2( GLcontext *ctx, GLuint dimensions,
 
    if (!_mesa_source_buffer_exists(ctx, teximage->_BaseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-               "glCopyTexSubImage%dD(missing readbuffer)", dimensions);
+                  "glCopyTexSubImage%dD(missing readbuffer, format=0x%x)",
+                  dimensions, teximage->_BaseFormat);
       return GL_TRUE;
    }
 
