@@ -62,15 +62,9 @@ nop_get_pointer(GLcontext *ctx, struct gl_renderbuffer *rb, GLint x, GLint y)
 static void
 delete_wrapper(struct gl_renderbuffer *rb)
 {
-   struct gl_renderbuffer *dsrb = rb->Wrapped;
-   ASSERT(dsrb);
    ASSERT(rb->_ActualFormat == GL_DEPTH_COMPONENT24 ||
           rb->_ActualFormat == GL_STENCIL_INDEX8_EXT);
-   /* decrement refcount on the wrapped buffer and delete it if necessary */
-   dsrb->RefCount--;
-   if (dsrb->RefCount <= 0) {
-      dsrb->Delete(dsrb);
-   }
+   _mesa_reference_renderbuffer(&rb->Wrapped, NULL);
    _mesa_free(rb);
 }
 
