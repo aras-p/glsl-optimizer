@@ -12,6 +12,7 @@ C_SOURCES = \
 	r300_screen.c \
 	r300_state.c \
 	r300_surface.c \
+	r300_swtcl_emit.c \
 	r300_texture.c
 
 include ../../Makefile.template

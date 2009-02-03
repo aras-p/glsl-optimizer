@@ -50,6 +50,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.clear = r300_clear;
 
     r300->draw = draw_create();
+    /*XXX draw_set_rasterize_stage(r300->draw, r300_draw_swtcl_stage(r300));*/
 
     r300->blend_color_state = CALLOC_STRUCT(r300_blend_color_state);
     r300->scissor_state = CALLOC_STRUCT(r300_scissor_state);
