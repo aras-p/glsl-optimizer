@@ -1,4 +1,5 @@
 #include "pipe/p_screen.h"
+#include "pipe/p_inlines.h"
 #include "util/u_simple_screen.h"
 
 #include "nv04_context.h"
@@ -122,10 +123,10 @@ static void *
 nv04_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
 		 unsigned flags )
 {
-	struct pipe_winsys *ws = screen->winsys;
 	void *map;
+	struct nv04_miptree *nv04mt = (struct nv04_miptree *)surface->texture;
 
-	map = ws->buffer_map(ws, surface->buffer, flags);
+	map = pipe_buffer_map(screen, nv04mt->buffer, flags);
 	if (!map)
 		return NULL;
 
@@ -135,9 +136,9 @@ nv04_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
 static void
 nv04_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
 {
-	struct pipe_winsys *ws = screen->winsys;
+	struct nv04_miptree *nv04mt = (struct nv04_miptree *)surface->texture;
 
-	ws->buffer_unmap(ws, surface->buffer);
+	pipe_buffer_unmap(screen, nv04mt->buffer);
 }
 
 static void

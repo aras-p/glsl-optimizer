@@ -41,6 +41,7 @@
 #include "pipe/internal/p_winsys_screen.h"
 #include "util/u_memory.h"
 #include "softpipe/sp_winsys.h"
+#include "softpipe/sp_texture.h"
 
 #include "eglconfig.h"
 #include "eglconfigutil.h"
@@ -292,7 +293,7 @@ display_surface(struct pipe_winsys *pws,
    assert(ximage->format);
    assert(ximage->bitmap_unit);
 
-   data = pws->buffer_map(pws, psurf->buffer, 0);
+   data = pws->buffer_map(pws, softpipe_texture(psurf->texture)->buffer, 0);
 
    /* update XImage's fields */
    ximage->data = data;
@@ -308,7 +309,7 @@ display_surface(struct pipe_winsys *pws,
    ximage->data = NULL;
    XDestroyImage(ximage);
 
-   pws->buffer_unmap(pws, psurf->buffer);
+   pws->buffer_unmap(pws, softpipe_texture(psurf->texture)->buffer);
 }
 
 

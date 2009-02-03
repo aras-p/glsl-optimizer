@@ -74,13 +74,15 @@ brw_surface_copy(struct pipe_context *pipe,
       pipe->screen->surface_unmap(pipe->screen, dst);
    }
    else {
+      struct brw_texture *dst_tex = (struct brw_texture *)dst->texture;
+      struct brw_texture *src_tex = (struct brw_texture *)src->texture;
       assert(dst->block.width == 1);
       assert(dst->block.height == 1);
       brw_copy_blit(brw_context(pipe),
                     do_flip,
                     dst->block.size,
-                    (short) src->stride/src->block.size, src->buffer, src->offset, FALSE,
-                    (short) dst->stride/dst->block.size, dst->buffer, dst->offset, FALSE,
+                    (short) src->stride/src->block.size, src_tex->buffer, src->offset, FALSE,
+                    (short) dst->stride/dst->block.size, dst_tex->buffer, dst->offset, FALSE,
                     (short) srcx, (short) srcy, (short) dstx, (short) dsty,
                     (short) width, (short) height, PIPE_LOGICOP_COPY);
    }
@@ -103,12 +105,13 @@ brw_surface_fill(struct pipe_context *pipe,
       pipe->screen->surface_unmap(pipe->screen, dst);
    }
    else {
+      struct brw_texture *tex = (struct brw_texture *)dst->texture;
       assert(dst->block.width == 1);
       assert(dst->block.height == 1);
       brw_fill_blit(brw_context(pipe),
                     dst->block.size,
                     (short) dst->stride/dst->block.size, 
-                    dst->buffer, dst->offset, FALSE,
+                    tex->buffer, dst->offset, FALSE,
                     (short) dstx, (short) dsty,
                     (short) width, (short) height,
                     value);

@@ -179,7 +179,7 @@ nv50_miptree_sync(struct pipe_screen *pscreen, struct nv50_miptree *mt,
 }
 
 /* The reverse of the above */
-void
+static void
 nv50_miptree_sync_cpu(struct pipe_screen *pscreen, struct nv50_miptree *mt,
 		      unsigned level, unsigned image)
 {
@@ -232,7 +232,6 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	if (!ps)
 		return NULL;
 	pipe_texture_reference(&ps->texture, pt);
-	pipe_buffer_reference(pscreen, &ps->buffer, mt->buffer);
 	ps->format = pt->format;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];
@@ -253,7 +252,6 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 
 		ps->offset = 0;
 		pipe_texture_reference(&ps->texture, pt);
-		pipe_buffer_reference(pscreen, &ps->buffer, lvl->image[img]);
 
 		if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
 			mark_dirty(lvl->image_dirty_cpu, img);
@@ -262,7 +260,6 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 
 		ps->offset = lvl->image_offset[img];
 		pipe_texture_reference(&ps->texture, pt);
-		pipe_buffer_reference(pscreen, &ps->buffer, mt->buffer);
 
 		if (flags & PIPE_BUFFER_USAGE_GPU_WRITE)
 			mark_dirty(lvl->image_dirty_gpu, img);
@@ -282,7 +279,6 @@ nv50_miptree_surface_del(struct pipe_screen *pscreen,
 
 	if (--ps->refcount <= 0) {
 		pipe_texture_reference(&ps->texture, NULL);
-		pipe_buffer_reference(pscreen, &ps->buffer, NULL);
 		FREE(s);
 	}
 }

@@ -209,7 +209,8 @@ i915_surface_map( struct pipe_screen *screen,
                   struct pipe_surface *surface,
                   unsigned flags )
 {
-   char *map = pipe_buffer_map( screen, surface->buffer, flags );
+   struct i915_texture *tex = (struct i915_texture *)surface->texture;
+   char *map = pipe_buffer_map( screen, tex->buffer, flags );
    if (map == NULL)
       return NULL;
 
@@ -228,7 +229,8 @@ static void
 i915_surface_unmap(struct pipe_screen *screen,
                    struct pipe_surface *surface)
 {
-   pipe_buffer_unmap( screen, surface->buffer );
+   struct i915_texture *tex = (struct i915_texture *)surface->texture;
+   pipe_buffer_unmap( screen, tex->buffer );
 }
 
 

@@ -193,6 +193,7 @@ static void upload_wm_surfaces(struct brw_context *brw )
       /* BRW_NEW_FRAMEBUFFER
        */
       struct pipe_surface *pipe_surface = brw->attribs.FrameBuffer.cbufs[0];/*fixme*/
+      struct brw_texture *tex = (struct brw_texture *)pipe_surface->texture;
 
       memset(&surf, 0, sizeof(surf));
 
@@ -204,7 +205,7 @@ static void upload_wm_surfaces(struct brw_context *brw )
 
 	 surf.ss0.surface_type = BRW_SURFACE_2D;
 
-	 surf.ss1.base_addr = brw_buffer_offset( brw, pipe_surface->buffer );
+	 surf.ss1.base_addr = brw_buffer_offset( brw, tex->buffer );
 
 	 surf.ss2.width = pipe_surface->width - 1;
 	 surf.ss2.height = pipe_surface->height - 1;

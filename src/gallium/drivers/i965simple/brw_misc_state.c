@@ -223,7 +223,7 @@ static void upload_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
    } else {
       unsigned int format;
-
+      struct brw_texture *tex = (struct brw_texture *)depth_surface->texture;
       assert(depth_surface->block.width == 1);
       assert(depth_surface->block.height == 1);
       switch (depth_surface->block.size) {
@@ -246,7 +246,7 @@ static void upload_depthbuffer(struct brw_context *brw)
 		(BRW_TILEWALK_YMAJOR << 26) |
 //		(depth_surface->region->tiled << 27) |
 		(BRW_SURFACE_2D << 29));
-      OUT_RELOC(depth_surface->buffer,
+      OUT_RELOC(tex->buffer,
 		PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE, 0);
       OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
 		((depth_surface->stride/depth_surface->block.size - 1) << 6) |

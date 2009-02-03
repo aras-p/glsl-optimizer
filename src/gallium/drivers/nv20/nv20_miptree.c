@@ -106,7 +106,6 @@ nv20_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 	if (!ps)
 		return NULL;
 	pipe_texture_reference(&ps->texture, pt);
-	pipe_buffer_reference(screen, &ps->buffer, nv20mt->buffer);
 	ps->format = pt->format;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];
@@ -141,7 +140,6 @@ nv20_miptree_surface_release(struct pipe_screen *pscreen,
 		return;
 
 	pipe_texture_reference(&ps->texture, NULL);
-	pipe_buffer_reference(pscreen, &ps->buffer, NULL);
 	FREE(ps);
 }
 

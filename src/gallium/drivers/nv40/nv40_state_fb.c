@@ -1,6 +1,13 @@
 #include "nv40_context.h"
 #include "nouveau/nouveau_util.h"
 
+static struct pipe_buffer *
+nv40_surface_buffer(struct pipe_surface *surface)
+{
+	struct nv40_miptree *mt = (struct nv40_miptree *)surface->texture;
+	return mt->buffer;
+}
+
 static boolean
 nv40_state_framebuffer_validate(struct nv40_context *nv40)
 {
@@ -71,33 +78,33 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR0) {
 		so_method(so, nv40->screen->curie, NV40TCL_DMA_COLOR0, 1);
-		so_reloc (so, rt[0]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
+		so_reloc (so, nv40_surface_buffer(rt[0]), 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR0_PITCH, 2);
 		so_data  (so, rt[0]->stride);
-		so_reloc (so, rt[0]->buffer, rt[0]->offset, rt_flags |
+		so_reloc (so, nv40_surface_buffer(rt[0]), rt[0]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR1) {
 		so_method(so, nv40->screen->curie, NV40TCL_DMA_COLOR1, 1);
-		so_reloc (so, rt[1]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
+		so_reloc (so, nv40_surface_buffer(rt[1]), 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR1_OFFSET, 2);
-		so_reloc (so, rt[1]->buffer, rt[1]->offset, rt_flags |
+		so_reloc (so, nv40_surface_buffer(rt[1]), rt[1]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 		so_data  (so, rt[1]->stride);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR2) {
 		so_method(so, nv40->screen->curie, NV40TCL_DMA_COLOR2, 1);
-		so_reloc (so, rt[2]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
+		so_reloc (so, nv40_surface_buffer(rt[2]), 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR2_OFFSET, 1);
-		so_reloc (so, rt[2]->buffer, rt[2]->offset, rt_flags |
+		so_reloc (so, nv40_surface_buffer(rt[2]), rt[2]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR2_PITCH, 1);
 		so_data  (so, rt[2]->stride);
@@ -105,11 +112,11 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR3) {
 		so_method(so, nv40->screen->curie, NV40TCL_DMA_COLOR3, 1);
-		so_reloc (so, rt[3]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
+		so_reloc (so, nv40_surface_buffer(rt[3]), 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR3_OFFSET, 1);
-		so_reloc (so, rt[3]->buffer, rt[3]->offset, rt_flags |
+		so_reloc (so, nv40_surface_buffer(rt[3]), rt[3]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR3_PITCH, 1);
 		so_data  (so, rt[3]->stride);
@@ -117,11 +124,11 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 
 	if (zeta_format) {
 		so_method(so, nv40->screen->curie, NV40TCL_DMA_ZETA, 1);
-		so_reloc (so, zeta->buffer, 0, rt_flags | NOUVEAU_BO_OR,
+		so_reloc (so, nv40_surface_buffer(zeta), 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
 		so_method(so, nv40->screen->curie, NV40TCL_ZETA_OFFSET, 1);
-		so_reloc (so, zeta->buffer, zeta->offset, rt_flags |
+		so_reloc (so, nv40_surface_buffer(zeta), zeta->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 		so_method(so, nv40->screen->curie, NV40TCL_ZETA_PITCH, 1);
 		so_data  (so, zeta->stride);

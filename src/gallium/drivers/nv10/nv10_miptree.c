@@ -114,7 +114,6 @@ nv10_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 	if (!ps)
 		return NULL;
 	pipe_texture_reference(&ps->texture, pt);
-	pipe_buffer_reference(screen, &ps->buffer, nv10mt->buffer);
 	ps->format = pt->format;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];

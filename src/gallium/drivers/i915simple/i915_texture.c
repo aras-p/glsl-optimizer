@@ -683,7 +683,6 @@ i915_get_tex_surface(struct pipe_screen *screen,
    if (ps) {
       ps->refcount = 1;
       pipe_texture_reference(&ps->texture, pt);
-      pipe_buffer_reference(screen, &ps->buffer, tex->buffer);
       ps->format = pt->format;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
@@ -755,7 +754,6 @@ i915_tex_surface_release(struct pipe_screen *screen,
       }
 
       pipe_texture_reference(&surf->texture, NULL);
-      pipe_buffer_reference(screen, &surf->buffer, NULL);
       FREE(surf);
    }
 

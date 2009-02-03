@@ -122,8 +122,9 @@ nv10_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
 {
 	struct pipe_winsys *ws = screen->winsys;
 	void *map;
+        struct nv10_miptree *nv10mt = (struct nv10_miptree *)surface->texture;
 
-	map = ws->buffer_map(ws, surface->buffer, flags);
+	map = ws->buffer_map(ws, nv10mt->buffer, flags);
 	if (!map)
 		return NULL;
 
@@ -134,8 +135,9 @@ static void
 nv10_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
 {
 	struct pipe_winsys *ws = screen->winsys;
+        struct nv10_miptree *nv10mt = (struct nv10_miptree *)surface->texture;
 
-	ws->buffer_unmap(ws, surface->buffer);
+	ws->buffer_unmap(ws, nv10mt->buffer);
 }
 
 static void

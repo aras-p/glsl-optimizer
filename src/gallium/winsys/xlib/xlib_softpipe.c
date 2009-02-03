@@ -45,6 +45,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "softpipe/sp_winsys.h"
+#include "softpipe/sp_texture.h"
 
 #include "xlib.h"
 
@@ -58,7 +59,7 @@ struct xm_buffer
    boolean userBuffer;  /** Is this a user-space buffer? */
    void *data;
    void *mapped;
-   
+
    XImage *tempImage;
    int shm;
    XShmSegmentInfo shminfo;
@@ -225,11 +226,12 @@ xm_buffer_destroy(struct pipe_winsys *pws,
  * by the XMesaBuffer.
  */
 static void
-xlib_softpipe_display_surface(struct xmesa_buffer *b, 
+xlib_softpipe_display_surface(struct xmesa_buffer *b,
                               struct pipe_surface *surf)
 {
    XImage *ximage;
-   struct xm_buffer *xm_buf = xm_buffer(surf->buffer);
+   struct xm_buffer *xm_buf = xm_buffer(
+      softpipe_texture(surf->texture)->buffer);
    static boolean no_swap = 0;
    static boolean firsttime = 1;
 

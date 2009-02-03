@@ -112,6 +112,7 @@ static void nv20_state_emit_framebuffer(struct nv20_context* nv20)
 	struct pipe_surface *rt, *zeta = NULL;
 	uint32_t rt_format, w, h;
 	int colour_format = 0, zeta_format = 0;
+	struct nv20_miptree *nv20mt = 0;
 
 	w = fb->cbufs[0]->width;
 	h = fb->cbufs[0]->height;
@@ -153,11 +154,13 @@ static void nv20_state_emit_framebuffer(struct nv20_context* nv20)
 		OUT_RING  (rt->stride | (rt->stride << 16));
 	}
 
-	nv20->rt[0] = rt->buffer;
+	nv20mt = (struct nv20_miptree *)rt->texture;
+	nv20->rt[0] = nv20mt->buffer;
 
 	if (zeta_format)
 	{
-		nv20->zeta = zeta->buffer;
+		nv20mt = (struct nv20_miptree *)zeta->texture;
+		nv20->zeta = nv20mt->buffer;
 	}
 
 	BEGIN_RING(kelvin, NV20TCL_RT_HORIZ, 3);

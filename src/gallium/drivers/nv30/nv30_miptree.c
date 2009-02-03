@@ -143,7 +143,6 @@ nv30_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	if (!ps)
 		return NULL;
 	pipe_texture_reference(&ps->texture, pt);
-	pipe_buffer_reference(pscreen, &ps->buffer, nv30mt->buffer);
 	ps->format = pt->format;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];
@@ -181,7 +180,6 @@ nv30_miptree_surface_del(struct pipe_screen *pscreen,
 		return;
 
 	pipe_texture_reference(&ps->texture, NULL);
-	pipe_buffer_reference(pscreen, &ps->buffer, NULL);
 	FREE(ps);
 }
 

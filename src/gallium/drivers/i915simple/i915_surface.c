@@ -74,13 +74,15 @@ i915_surface_copy(struct pipe_context *pipe,
       pipe->screen->surface_unmap(pipe->screen, dst);
    }
    else {
+      struct i915_texture *dst_tex = (struct i915_texture *)dst->texture;
+      struct i915_texture *src_tex = (struct i915_texture *)src->texture;
       assert(dst->block.width == 1);
       assert(dst->block.height == 1);
       i915_copy_blit( i915_context(pipe),
                       do_flip,
                       dst->block.size,
-		      (unsigned short) src->stride, src->buffer, src->offset,
-		      (unsigned short) dst->stride, dst->buffer, dst->offset,
+		      (unsigned short) src->stride, src_tex->buffer, src->offset,
+		      (unsigned short) dst->stride, dst_tex->buffer, dst->offset,
 		      (short) srcx, (short) srcy, (short) dstx, (short) dsty, (short) width, (short) height );
    }
 }
@@ -102,12 +104,13 @@ i915_surface_fill(struct pipe_context *pipe,
       pipe->screen->surface_unmap(pipe->screen, dst);
    }
    else {
+      struct i915_texture *tex = (struct i915_texture *)dst->texture;
       assert(dst->block.width == 1);
       assert(dst->block.height == 1);
       i915_fill_blit( i915_context(pipe),
 		      dst->block.size,
 		      (unsigned short) dst->stride,
-		      dst->buffer, dst->offset,
+		      tex->buffer, dst->offset,
 		      (short) dstx, (short) dsty,
 		      (short) width, (short) height,
 		      value );

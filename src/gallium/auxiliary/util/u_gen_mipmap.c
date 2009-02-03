@@ -1125,19 +1125,19 @@ make_1d_mipmap(struct gen_mipmap_state *ctx,
       dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice,
                                         PIPE_BUFFER_USAGE_CPU_WRITE);
 
-      srcMap = ((ubyte *) pipe_buffer_map(screen, srcSurf->buffer,
-                                          PIPE_BUFFER_USAGE_CPU_READ)
+      srcMap = ((ubyte *) pipe_surface_map(srcSurf,
+                                           PIPE_BUFFER_USAGE_CPU_READ)
                 + srcSurf->offset);
-      dstMap = ((ubyte *) pipe_buffer_map(screen, dstSurf->buffer,
-                                          PIPE_BUFFER_USAGE_CPU_WRITE)
+      dstMap = ((ubyte *) pipe_surface_map(dstSurf,
+                                           PIPE_BUFFER_USAGE_CPU_WRITE)
                 + dstSurf->offset);
 
       reduce_1d(pt->format,
                 srcSurf->width, srcMap,
                 dstSurf->width, dstMap);
 
-      pipe_buffer_unmap(screen, srcSurf->buffer);
-      pipe_buffer_unmap(screen, dstSurf->buffer);
+      pipe_surface_unmap(srcSurf);
+      pipe_surface_unmap(dstSurf);
 
       pipe_surface_reference(&srcSurf, NULL);
       pipe_surface_reference(&dstSurf, NULL);
@@ -1168,11 +1168,11 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
       dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice,
                                         PIPE_BUFFER_USAGE_CPU_WRITE);
 
-      srcMap = ((ubyte *) pipe_buffer_map(screen, srcSurf->buffer,
-                                          PIPE_BUFFER_USAGE_CPU_READ)
+      srcMap = ((ubyte *) pipe_surface_map(srcSurf,
+                                           PIPE_BUFFER_USAGE_CPU_READ)
                 + srcSurf->offset);
-      dstMap = ((ubyte *) pipe_buffer_map(screen, dstSurf->buffer,
-                                          PIPE_BUFFER_USAGE_CPU_WRITE)
+      dstMap = ((ubyte *) pipe_surface_map(dstSurf,
+                                           PIPE_BUFFER_USAGE_CPU_WRITE)
                 + dstSurf->offset);
 
       reduce_2d(pt->format,
@@ -1181,8 +1181,8 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
                 dstSurf->width, dstSurf->height,
                 dstSurf->stride, dstMap);
 
-      pipe_buffer_unmap(screen, srcSurf->buffer);
-      pipe_buffer_unmap(screen, dstSurf->buffer);
+      pipe_surface_unmap(srcSurf);
+      pipe_surface_unmap(dstSurf);
 
       pipe_surface_reference(&srcSurf, NULL);
       pipe_surface_reference(&dstSurf, NULL);
@@ -1212,11 +1212,11 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
       dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice,
                                         PIPE_BUFFER_USAGE_CPU_WRITE);
 
-      srcMap = ((ubyte *) pipe_buffer_map(screen, srcSurf->buffer,
-                                          PIPE_BUFFER_USAGE_CPU_READ)
+      srcMap = ((ubyte *) pipe_surface_map(srcSurf,
+                                           PIPE_BUFFER_USAGE_CPU_READ)
                 + srcSurf->offset);
-      dstMap = ((ubyte *) pipe_buffer_map(screen, dstSurf->buffer,
-                                          PIPE_BUFFER_USAGE_CPU_WRITE)
+      dstMap = ((ubyte *) pipe_surface_map(dstSurf,
+                                           PIPE_BUFFER_USAGE_CPU_WRITE)
                 + dstSurf->offset);
 
 #if 0
@@ -1229,8 +1229,8 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
       (void) reduce_3d;
 #endif
 
-      pipe_buffer_unmap(screen, srcSurf->buffer);
-      pipe_buffer_unmap(screen, dstSurf->buffer);
+      pipe_surface_unmap(srcSurf);
+      pipe_surface_unmap(dstSurf);
 
       pipe_surface_reference(&srcSurf, NULL);
       pipe_surface_reference(&dstSurf, NULL);

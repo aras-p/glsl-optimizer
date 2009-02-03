@@ -12,6 +12,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	unsigned rt_flags = NOUVEAU_BO_RDWR | NOUVEAU_BO_VRAM;
 	unsigned w = fb->width;
 	unsigned h = fb->height;
+	struct nv30_miptree *nv30mt;
 
 	rt_enable = 0;
 	for (i = 0; i < fb->nr_cbufs; i++) {
@@ -77,34 +78,37 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 			pitch |= (pitch << 16);
 		}
 
+		nv30mt = (struct nv30_miptree *)rt[0]->texture;
 		so_method(so, nv30->screen->rankine, NV34TCL_DMA_COLOR0, 1);
-		so_reloc (so, rt[0]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
+		so_reloc (so, nv30mt->buffer, 0, rt_flags | NOUVEAU_BO_OR,
 			  nv30->nvws->channel->vram->handle,
 			  nv30->nvws->channel->gart->handle);
 		so_method(so, nv30->screen->rankine, NV34TCL_COLOR0_PITCH, 2);
 		so_data  (so, pitch);
-		so_reloc (so, rt[0]->buffer, rt[0]->offset, rt_flags |
+		so_reloc (so, nv30mt->buffer, rt[0]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 	}
 
 	if (rt_enable & NV34TCL_RT_ENABLE_COLOR1) {
+		nv30mt = (struct nv30_miptree *)rt[1]->texture;
 		so_method(so, nv30->screen->rankine, NV34TCL_DMA_COLOR1, 1);
-		so_reloc (so, rt[1]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
+		so_reloc (so, nv30mt->buffer, 0, rt_flags | NOUVEAU_BO_OR,
 			  nv30->nvws->channel->vram->handle,
 			  nv30->nvws->channel->gart->handle);
 		so_method(so, nv30->screen->rankine, NV34TCL_COLOR1_OFFSET, 2);
-		so_reloc (so, rt[1]->buffer, rt[1]->offset, rt_flags |
+		so_reloc (so, nv30mt->buffer, rt[1]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 		so_data  (so, rt[1]->stride);
 	}
 
 	if (zeta_format) {
+		nv30mt = (struct nv30_miptree *)zeta->texture;
 		so_method(so, nv30->screen->rankine, NV34TCL_DMA_ZETA, 1);
-		so_reloc (so, zeta->buffer, 0, rt_flags | NOUVEAU_BO_OR,
+		so_reloc (so, nv30mt->buffer, 0, rt_flags | NOUVEAU_BO_OR,
 			  nv30->nvws->channel->vram->handle,
 			  nv30->nvws->channel->gart->handle);
 		so_method(so, nv30->screen->rankine, NV34TCL_ZETA_OFFSET, 1);
-		so_reloc (so, zeta->buffer, zeta->offset, rt_flags |
+		so_reloc (so, nv30mt->buffer, zeta->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 		/* TODO: allocate LMA depth buffer */
 	}

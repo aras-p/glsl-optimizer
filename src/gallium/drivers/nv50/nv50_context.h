@@ -99,6 +99,13 @@ nv50_surface(struct pipe_surface *pt)
 	return (struct nv50_surface *)pt;
 }
 
+static INLINE struct pipe_buffer *
+nv50_surface_buffer(struct pipe_surface *surface)
+{
+	struct nv50_miptree *mt = (struct nv50_miptree *)surface->texture;
+	return mt->buffer;
+}
+
 struct nv50_state {
 	unsigned dirty;
 

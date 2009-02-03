@@ -276,7 +276,6 @@ struct pipe_sampler_state
  */
 struct pipe_surface
 {
-   struct pipe_buffer *buffer;   /**< surface's buffer/memory */
    enum pipe_format format;      /**< PIPE_FORMAT_x */
    unsigned status;              /**< PIPE_SURFACE_STATUS_x */
    unsigned clear_value;         /**< XXX may be temporary */

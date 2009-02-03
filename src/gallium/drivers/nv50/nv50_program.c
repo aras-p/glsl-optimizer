@@ -970,7 +970,7 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	}
 
 	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
-		struct tgsi_full_src_register *fs = &inst->FullSrcRegisters[i];
+		const struct tgsi_full_src_register *fs = &inst->FullSrcRegisters[i];
 
 		if (fs->SrcRegister.File == TGSI_FILE_SAMPLER)
 			unit = fs->SrcRegister.Index;

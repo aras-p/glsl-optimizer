@@ -367,7 +367,6 @@ brw_get_tex_surface_screen(struct pipe_screen *screen,
    if (ps) {
       ps->refcount = 1;
       pipe_texture_reference(&ps->texture, pt);
-      pipe_buffer_reference(screen, &ps->buffer, tex->buffer);
       ps->format = pt->format;
       ps->width = pt->width[level];
       ps->height = pt->height[level];

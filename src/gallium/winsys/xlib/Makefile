@@ -22,11 +22,11 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/gallium/state_trackers/glx/xlib \
 	-I$(TOP)/src/gallium/auxiliary
 
-DEFINES = \
+DEFINES += \
 	-DGALLIUM_SOFTPIPE \
-	-DGALLIUM_CELL \
 	-DGALLIUM_TRACE \
 	-DGALLIUM_BRW
+#-DGALLIUM_CELL will be defined by the config */
 
 XLIB_WINSYS_SOURCES = \
 	xlib.c \

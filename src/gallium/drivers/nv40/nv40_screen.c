@@ -143,6 +143,7 @@ nv40_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
 	struct pipe_winsys	*ws = screen->winsys;
 	struct pipe_surface	*surface_to_map;
 	void			*map;
+        struct nv40_miptree *mt;
 
 	if (!(surface->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
 		struct nv40_miptree *mt = (struct nv40_miptree *)surface->texture;
@@ -170,8 +171,8 @@ nv40_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
 		surface_to_map = surface;
 
 	assert(surface_to_map);
-
-	map = ws->buffer_map(ws, surface_to_map->buffer, flags);
+        mt = (struct nv40_miptree *)surface_to_map->texture;
+	map = ws->buffer_map(ws, mt->buffer, flags);
 	if (!map)
 		return NULL;
 
@@ -183,6 +184,7 @@ nv40_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
 {
 	struct pipe_winsys	*ws = screen->winsys;
 	struct pipe_surface	*surface_to_unmap;
+        struct nv40_miptree *mt;
 
 	/* TODO: Copy from shadow just before push buffer is flushed instead.
 	         There are probably some programs that map/unmap excessively
@@ -199,7 +201,8 @@ nv40_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
 
 	assert(surface_to_unmap);
 
-	ws->buffer_unmap(ws, surface_to_unmap->buffer);
+        mt = (struct nv40_miptree *)surface_to_unmap->texture;
+	ws->buffer_unmap(ws, mt->buffer);
 
 	if (surface_to_unmap != surface) {
 		struct nv40_screen *nvscreen = nv40_screen(screen);

@@ -96,6 +96,7 @@ static void nv04_state_emit_framebuffer(struct nv04_context* nv04)
 	struct pipe_surface *rt, *zeta;
 	uint32_t rt_format, w, h;
 	int colour_format = 0, zeta_format = 0;
+	struct nv04_miptree *nv04mt = 0;
 
 	w = fb->cbufs[0]->width;
 	h = fb->cbufs[0]->height;
@@ -129,14 +130,16 @@ static void nv04_state_emit_framebuffer(struct nv04_context* nv04)
 
 	BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_FORMAT, 1);
 	OUT_RING(rt_format);
-	
+
+	nv04mt = (struct nv04_miptree *)rt->texture;
 	/* FIXME pitches have to be aligned ! */
 	BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_PITCH, 2);
 	OUT_RING(rt->stride|(zeta->stride<<16));
-	OUT_RELOCl(rt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(nv04mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	if (fb->zsbuf) {
+		nv04mt = (struct nv04_miptree *)zeta->texture;
 		BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_OFFSET_ZETA, 1);
-		OUT_RELOCl(zeta->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		OUT_RELOCl(nv04mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	}
 }
 

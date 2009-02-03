@@ -213,18 +213,22 @@ i915_emit_hardware_state(struct i915_context *i915 )
       if (cbuf_surface) {
 	 unsigned cpitch = cbuf_surface->stride;
 	 unsigned ctile = BUF_3D_USE_FENCE;
-	 if (cbuf_surface->texture &&
-	       ((struct i915_texture*)(cbuf_surface->texture))->tiled) {
+         struct i915_texture *tex = (struct i915_texture *)
+                                    cbuf_surface->texture;
+         struct pipe_buffer *buffer = tex->buffer;
+         assert(tex);
+
+	 if (tex && tex->tiled) {
 	    ctile = BUF_3D_TILED_SURFACE;
 	 }
 
 	 OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
-	 OUT_BATCH(BUF_3D_ID_COLOR_BACK | 
+	 OUT_BATCH(BUF_3D_ID_COLOR_BACK |
 		   BUF_3D_PITCH(cpitch) |  /* pitch in bytes */
 		   ctile);
 
-	 OUT_RELOC(cbuf_surface->buffer,
+	 OUT_RELOC(tex->buffer,
 		   I915_BUFFER_ACCESS_WRITE,
 		   cbuf_surface->offset);
       }
@@ -234,8 +238,12 @@ i915_emit_hardware_state(struct i915_context *i915 )
       if (depth_surface) {
 	 unsigned zpitch = depth_surface->stride;
 	 unsigned ztile = BUF_3D_USE_FENCE;
-	 if (depth_surface->texture &&
-	       ((struct i915_texture*)(depth_surface->texture))->tiled) {
+         struct i915_texture *tex = (struct i915_texture *)
+                                    depth_surface->texture;
+         struct pipe_buffer *buffer = tex->buffer;
+         assert(tex);
+
+	 if (tex && tex->tiled) {
 	    ztile = BUF_3D_TILED_SURFACE;
 	 }
 
@@ -245,7 +253,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 		   BUF_3D_PITCH(zpitch) |  /* pitch in bytes */
 		   ztile);
 
-	 OUT_RELOC(depth_surface->buffer,
+	 OUT_RELOC(tex->buffer,
 		   I915_BUFFER_ACCESS_WRITE,
 		   depth_surface->offset);
       }

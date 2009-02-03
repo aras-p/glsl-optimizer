@@ -369,7 +369,7 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
    struct pipe_surface *ps = tc->surface;
    int inuse = 0, pos;
 
-   if (ps && ps->buffer) {
+   if (ps) {
       /* caching a drawing surface */
       for (pos = 0; pos < NUM_ENTRIES; pos++) {
          struct softpipe_cached_tile *tile = tc->entries + pos;

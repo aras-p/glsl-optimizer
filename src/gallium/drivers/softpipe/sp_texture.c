@@ -211,11 +211,9 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
    assert(level <= pt->last_level);
 
    ps = CALLOC_STRUCT(pipe_surface);
-   ps->refcount = 1;
    if (ps) {
-      assert(ps->refcount);
+      ps->refcount = 1;
       pipe_texture_reference(&ps->texture, pt);
-      pipe_buffer_reference(screen, &ps->buffer, spt->buffer);
       ps->format = pt->format;
       ps->block = pt->block;
       ps->width = pt->width[level];
@@ -225,7 +223,7 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
       ps->stride = spt->stride[level];
       ps->offset = spt->level_offset[level];
       ps->usage = usage;
-      
+
       /* Because we are softpipe, anything that the state tracker
        * thought was going to be done with the GPU will actually get
        * done with the CPU.  Let's adjust the flags to take that into
@@ -274,8 +272,7 @@ softpipe_tex_surface_release(struct pipe_screen *screen,
     */
    assert ((*s)->texture);
    if (--surf->refcount == 0) {
-      pipe_texture_reference(&surf->texture, NULL); 
-      pipe_buffer_reference(screen, &surf->buffer, NULL);
+      pipe_texture_reference(&surf->texture, NULL);
       FREE(surf);
    }
    *s = NULL;
@@ -288,13 +285,16 @@ softpipe_surface_map( struct pipe_screen *screen,
                       unsigned flags )
 {
    ubyte *map;
+   struct softpipe_texture *spt;
 
    if (flags & ~surface->usage) {
       assert(0);
       return NULL;
    }
 
-   map = pipe_buffer_map( screen, surface->buffer, flags );
+   assert(surface->texture);
+   spt = softpipe_texture(surface->texture);
+   map = pipe_buffer_map(screen, spt->buffer, flags);
    if (map == NULL)
       return NULL;
 
@@ -318,7 +318,12 @@ static void
 softpipe_surface_unmap(struct pipe_screen *screen,
                        struct pipe_surface *surface)
 {
-   pipe_buffer_unmap( screen, surface->buffer );
+   struct softpipe_texture *spt;
+
+   assert(surface->texture);
+   spt = softpipe_texture(surface->texture);
+
+   pipe_buffer_unmap( screen, spt->buffer );
 }
 
 
