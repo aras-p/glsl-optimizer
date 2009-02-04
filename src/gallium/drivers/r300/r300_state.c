@@ -394,7 +394,7 @@ static void
 
     r300->framebuffer_state = *state;
 
-    /* XXX do we need to mark dirty state? */
+    r300->dirty_state |= R300_NEW_FRAMEBUFFERS;
 }
 
 /* Create fragment shader state. */
@@ -427,31 +427,6 @@ static void r300_set_polygon_stipple(struct pipe_context* pipe,
 {
     /* XXX */
 }
-
-#if 0
-struct pipe_rasterizer_state
-{
-    unsigned flatshade:1;
-    unsigned light_twoside:1;
-    unsigned fill_cw:2;        /**< PIPE_POLYGON_MODE_x */
-    unsigned fill_ccw:2;       /**< PIPE_POLYGON_MODE_x */
-    unsigned scissor:1;
-    unsigned poly_smooth:1;
-    unsigned poly_stipple_enable:1;
-    unsigned point_smooth:1;
-    unsigned point_sprite:1;
-    unsigned multisample:1;         /* XXX maybe more ms state in future */
-    unsigned line_smooth:1;
-    unsigned line_last_pixel:1;
-    unsigned bypass_clipping:1;
-    unsigned bypass_vs:1; /**< Skip the vertex shader.  Note that the shader is
-    still needed though, to indicate inputs/outputs */
-    unsigned origin_lower_left:1;  /**< Is (0,0) the lower-left corner? */
-    unsigned flatshade_first:1;   /**< take color attribute from the first vertex of a primitive */
-    unsigned gl_rasterization_rules:1; /**< enable tweaks for GL rasterization?  */
-    ubyte sprite_coord_mode[PIPE_MAX_SHADER_OUTPUTS]; /**< PIPE_SPRITE_COORD_ */
-};
-#endif
 
 static INLINE int pack_float_16_6x(float f) {
     return ((int)(f * 6.0) & 0xffff);
@@ -693,15 +668,16 @@ static void r300_set_sampler_textures(struct pipe_context* pipe,
         if (r300->textures[i] != (struct r300_texture*)texture[i]) {
             pipe_texture_reference((struct pipe_texture**)&r300->textures[i],
                 texture[i]);
-            /* XXX NEW_TEXTURE instead? */
-            r300->dirty_state |= (R300_NEW_SAMPLER << i);
+            r300->dirty_state |= (R300_NEW_TEXTURE << i);
         }
     }
 
     for (i = count; i < 8; i++) {
-        /* XXX also state change? */
-        pipe_texture_reference((struct pipe_texture**)&r300->textures[i],
-            NULL);
+        if (r300->textures[i]) {
+            pipe_texture_reference((struct pipe_texture**)&r300->textures[i],
+                NULL);
+            r300->dirty_state |= (R300_NEW_TEXTURE << i);
+        }
     }
 
     r300->texture_count = count;

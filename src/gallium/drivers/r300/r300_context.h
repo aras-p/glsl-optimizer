@@ -87,15 +87,17 @@ struct r300_scissor_state {
 struct r300_texture_state {
 };
 
-#define R300_NEW_BLEND           0x0001
-#define R300_NEW_BLEND_COLOR     0x0002
-#define R300_NEW_DSA             0x0004
-#define R300_NEW_FRAGMENT_SHADER 0x0008
-#define R300_NEW_RASTERIZER      0x0010
-#define R300_NEW_SAMPLER         0x0020
-#define R300_NEW_SCISSOR         0x2000
-#define R300_NEW_VERTEX_SHADER   0x4000
-#define R300_NEW_KITCHEN_SINK    0x7fff
+#define R300_NEW_BLEND           0x000001
+#define R300_NEW_BLEND_COLOR     0x000002
+#define R300_NEW_DSA             0x000004
+#define R300_NEW_FRAMEBUFFERS    0x000008
+#define R300_NEW_FRAGMENT_SHADER 0x000010
+#define R300_NEW_RASTERIZER      0x000020
+#define R300_NEW_SAMPLER         0x000040
+#define R300_NEW_SCISSOR         0x004000
+#define R300_NEW_TEXTURE         0x008000
+#define R300_NEW_VERTEX_SHADER   0x800000
+#define R300_NEW_KITCHEN_SINK    0xffffff
 
 struct r300_texture {
     /* Parent class */
