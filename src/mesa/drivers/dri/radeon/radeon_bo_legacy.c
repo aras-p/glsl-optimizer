@@ -479,7 +479,7 @@ static int bo_map(struct radeon_bo *bo, int write)
      * framebuffer, but I've found this to be unnecessary.
      *  -- Nicolai Hähnle, June 2008
      */
-    {
+    if (!(bo->domains & RADEON_GEM_DOMAIN_GTT)) {
         int p;
         volatile int *buf = (int*)boml->screen->driScreen->pFB;
         p = *buf;
