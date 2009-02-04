@@ -1311,6 +1311,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    /* Do the alpha test */
    if (ctx->Color.AlphaEnabled) {
       if (!_swrast_alpha_test(ctx, span)) {
+         /* all fragments failed test */
          goto end;
       }
    }
@@ -1323,6 +1324,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       if (ctx->Stencil.Enabled && fb->Visual.stencilBits > 0) {
          /* Combined Z/stencil tests */
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
+            /* all fragments failed test */
             goto end;
          }
       }
@@ -1331,6 +1333,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
          ASSERT(ctx->Depth.Test);
          ASSERT(span->arrayMask & SPAN_Z);
          if (!_swrast_depth_test_span(ctx, span)) {
+            /* all fragments failed test */
             goto end;
          }
       }
@@ -1350,6 +1353,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
     * the occlusion test.
     */
    if (colorMask == 0x0) {
+      /* no colors to write */
       goto end;
    }
 
