@@ -43,7 +43,7 @@ nouveau_channel_context_create(struct nouveau_device *dev)
 		return NULL;
 	}
 
-	nvc->next_handle = 0x80000000;
+	nvc->next_handle = 0x88000000;
 
 	if ((ret = nouveau_notifier_alloc(nvc->channel, nvc->next_handle++, 1,
 					  &nvc->sync_notifier))) {
@@ -120,22 +120,12 @@ nouveau_context_init(struct nouveau_screen *nv_screen,
 	{
 		struct pipe_surface *fb_surf;
 		struct nouveau_pipe_buffer *fb_buf;
-		struct nouveau_bo_priv *fb_bo;
-
-		fb_bo = calloc(1, sizeof(struct nouveau_bo_priv));
-		fb_bo->drm.offset = nv_screen->front_offset;
-		fb_bo->drm.flags = NOUVEAU_MEM_FB;
-		fb_bo->drm.size = nv_screen->front_pitch * 
-				  nv_screen->front_height;
-		fb_bo->refcount = 1;
-		fb_bo->base.flags = NOUVEAU_BO_PIN | NOUVEAU_BO_VRAM;
-		fb_bo->base.offset = fb_bo->drm.offset;
-		fb_bo->base.handle = (unsigned long)fb_bo;
-		fb_bo->base.size = fb_bo->drm.size;
-		fb_bo->base.device = nv_screen->device;
 
 		fb_buf = calloc(1, sizeof(struct nouveau_pipe_buffer));
-		fb_buf->bo = &fb_bo->base;
+
+		nouveau_bo_fake(dev, nv_screen->front_offset, NOUVEAU_BO_VRAM,
+				nv_screen->front_pitch*nv_screen->front_height,
+				NULL, &fb_buf->bo);
 
 		fb_surf = calloc(1, sizeof(struct pipe_surface));
 		if (nv_screen->front_cpp == 2)

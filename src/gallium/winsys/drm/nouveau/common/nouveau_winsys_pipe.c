@@ -105,7 +105,7 @@ nouveau_pipe_bo_del(struct pipe_winsys *ws, struct pipe_buffer *buf)
 {
 	struct nouveau_pipe_buffer *nvbuf = nouveau_buffer(buf);
 
-	nouveau_bo_del(&nvbuf->bo);
+	nouveau_bo_ref(NULL, &nvbuf->bo);
 	FREE(nvbuf);
 }
 
@@ -121,6 +121,7 @@ nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 	if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
 		map_flags |= NOUVEAU_BO_WR;
 
+#if 0
 	if (flags & PIPE_BUFFER_USAGE_DISCARD &&
 	    !(flags & PIPE_BUFFER_USAGE_CPU_READ) &&
 	    nouveau_bo_busy(nvbuf->bo, map_flags)) {
@@ -131,10 +132,11 @@ nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 		uint32_t flags = nouveau_flags_from_usage(nv, buf->usage);
 
 		if (!nouveau_bo_new(dev, flags, buf->alignment, buf->size, &rename)) {
-			nouveau_bo_del(&nvbuf->bo);
+			nouveau_bo_ref(NULL, &nvbuf->bo);
 			nvbuf->bo = rename;
 		}
 	}
+#endif
 
 	if (nouveau_bo_map(nvbuf->bo, map_flags))
 		return NULL;
@@ -149,42 +151,26 @@ nouveau_pipe_bo_unmap(struct pipe_winsys *pws, struct pipe_buffer *buf)
 	nouveau_bo_unmap(nvbuf->bo);
 }
 
-static INLINE struct nouveau_fence *
-nouveau_pipe_fence(struct pipe_fence_handle *pfence)
-{
-	return (struct nouveau_fence *)pfence;
-}
-
 static void
 nouveau_pipe_fence_reference(struct pipe_winsys *ws,
 			     struct pipe_fence_handle **ptr,
 			     struct pipe_fence_handle *pfence)
 {
-	nouveau_fence_ref((void *)pfence, (void *)ptr);
+	*ptr = pfence;
 }
 
 static int
 nouveau_pipe_fence_signalled(struct pipe_winsys *ws,
 			     struct pipe_fence_handle *pfence, unsigned flag)
 {
-	struct nouveau_pipe_winsys *nvpws = (struct nouveau_pipe_winsys *)ws;
-	struct nouveau_fence *fence = nouveau_pipe_fence(pfence);
-
-	if (nouveau_fence(fence)->signalled == 0)
-		nouveau_fence_flush(nvpws->nv->nvc->channel);
-
-	return !nouveau_fence(fence)->signalled;
+	return 0;
 }
 
 static int
 nouveau_pipe_fence_finish(struct pipe_winsys *ws,
 			  struct pipe_fence_handle *pfence, unsigned flag)
 {
-	struct nouveau_fence *fence = nouveau_pipe_fence(pfence);
-	struct nouveau_fence *ref = NULL;
-
-	nouveau_fence_ref(fence, &ref);
-	return nouveau_fence_wait(&ref);
+	return 0;
 }
 
 static void

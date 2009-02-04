@@ -12,7 +12,7 @@
 #include "nouveau_screen_dri.h"
 #include "nouveau_swapbuffers.h"
 
-#if NOUVEAU_DRM_HEADER_PATCHLEVEL != 11
+#if NOUVEAU_DRM_HEADER_PATCHLEVEL != 12
 #error nouveau_drm.h version does not match expected version
 #endif
 

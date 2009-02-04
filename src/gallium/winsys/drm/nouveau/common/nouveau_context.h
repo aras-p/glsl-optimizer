@@ -3,7 +3,14 @@
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau_drmif.h"
-#include "nouveau_dma.h"
+#include "nouveau_device.h"
+#include "nouveau_channel.h"
+#include "nouveau_pushbuf.h"
+#include "nouveau_bo.h"
+#include "nouveau_grobj.h"
+#include "nouveau_notifier.h"
+#include "nouveau_class.h"
+#include "nouveau_local.h"
 
 struct nouveau_channel_context {
 	struct pipe_screen *pscreen;
@@ -29,7 +36,6 @@ struct nouveau_channel_context {
 	struct nouveau_grobj    *Nv2D;
 
 	uint32_t                 next_handle;
-	uint32_t                 next_subchannel;
 	uint32_t                 next_sequence;
 };
 

@@ -26,6 +26,9 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
+DRIVER_DEFINES = $(shell pkg-config libdrm_nouveau --cflags)
+DRI_LIB_DEPS += $(shell pkg-config libdrm_nouveau --libs)
+
 include ../../Makefile.template
 
 symlinks:

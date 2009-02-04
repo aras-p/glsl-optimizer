@@ -5,8 +5,6 @@
 #include <xmlconfig.h>
 #include <nouveau/nouveau_winsys.h>
 #include "../common/nouveau_context.h"
-#include "../common/nouveau_drmif.h"
-#include "../common/nouveau_dma.h"
 
 struct nouveau_framebuffer {
 	struct st_framebuffer *stfb;
