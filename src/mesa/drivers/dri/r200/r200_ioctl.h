@@ -169,40 +169,6 @@ do {							\
 #define ELTS_BUFSZ(nr)	(12 + nr * 2)
 #define VBUF_BUFSZ	(3 * sizeof(int))
 
-/* Ensure that a minimum amount of space is available in the command buffer.
- * This is used to ensure atomicity of state updates with the rendering requests
- * that rely on them.
- *
- * An alternative would be to implement a "soft lock" such that when the buffer
- * wraps at an inopportune time, we grab the lock, flush the current buffer,
- * and hang on to the lock until the critical section is finished and we flush
- * the buffer again and unlock.
- */
-#if 0
-static INLINE void r200EnsureCmdBufSpace( r200ContextPtr rmesa, int bytes )
-{
-   if (rmesa->store.cmd_used + bytes > R200_CMD_BUF_SZ)
-      rcommonFlushCmdBuf( rmesa, __FUNCTION__ );
-   assert( bytes <= R200_CMD_BUF_SZ );
-}
-
-/* Alloc space in the command buffer
- */
-static INLINE char *r200AllocCmdBuf( r200ContextPtr rmesa,
-					 int bytes, const char *where )
-{
-   char * head;
-
-   if (rmesa->store.cmd_used + bytes > R200_CMD_BUF_SZ)
-      r200FlushCmdBuf( rmesa, where );
-
-   head = rmesa->store.cmd_buf + rmesa->store.cmd_used;
-   rmesa->store.cmd_used += bytes;
-   assert( rmesa->store.cmd_used <= R200_CMD_BUF_SZ );
-   return head;
-}
-#endif
-
 static inline uint32_t cmdpacket3(int cmd_type)
 {
   drm_radeon_cmd_header_t cmd;

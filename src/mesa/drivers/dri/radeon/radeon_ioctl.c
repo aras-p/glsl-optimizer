@@ -60,8 +60,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define RADEON_IDLE_RETRY           16
 
 
-static int radeonFlushCmdBufLocked( r100ContextPtr rmesa, 
-				    const char * caller );
 
 static void print_state_atom( struct radeon_state_atom *state )
 {
@@ -123,7 +121,7 @@ static void radeonBackUpAndEmitLostStateLocked( r100ContextPtr rmesa )
    saved_store = rmesa->store;
    rmesa->radeon.dma.nr_released_bufs = 0;
    rmesa->store = rmesa->backup_store;
-   radeonFlushCmdBufLocked( rmesa, __FUNCTION__ );
+   rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
    rmesa->radeon.dma.nr_released_bufs = nr_released_bufs;
    rmesa->store = saved_store;
 }
@@ -310,7 +308,6 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
 				    GLuint primitive,
 				    GLuint min_nr )
 {
-   drm_radeon_cmd_header_t *cmd;
    GLushort *retval;
 
    if (RADEON_DEBUG & DEBUG_IOCTL)
@@ -330,15 +327,15 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
    retval = rmesa->tcl.elt_dma_bo->ptr + rmesa->tcl.elt_dma_offset;
 
    if (RADEON_DEBUG & DEBUG_PRIMS)
-      fprintf(stderr, "%s: header 0x%x vfmt 0x%x prim %x \n",
+      fprintf(stderr, "%s: header vfmt 0x%x prim %x \n",
 	      __FUNCTION__,
-	      cmd[1].i, vertex_format, primitive);
+	      vertex_format, primitive);
 
    assert(!rmesa->radeon.dma.flush);
    rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
    rmesa->radeon.dma.flush = radeonFlushElts;
 
-   rmesa->store.elts_start = ((char *)cmd) - rmesa->store.cmd_buf;
+   //   rmesa->store.elts_start = ((char *)cmd) - rmesa->store.cmd_buf;
 
    return retval;
 }
@@ -423,6 +420,8 @@ void radeonEmitAOS( r100ContextPtr rmesa,
    }
 #endif
 }
+
+
 
 /* using already shifted color_fmt! */
 void radeonEmitBlit( r100ContextPtr rmesa, /* FIXME: which drmMinor is required? */
@@ -600,7 +599,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
    }
 
    /* Send current state to the hardware */
-   radeonFlushCmdBufLocked( rmesa, __FUNCTION__ );
+   rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
 
    for ( i = 0 ; i < dPriv->numClipRects ; ) {
       GLint nr = MIN2( i + RADEON_NR_SAREA_CLIPRECTS, dPriv->numClipRects );
