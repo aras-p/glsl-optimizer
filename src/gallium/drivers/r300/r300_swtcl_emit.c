@@ -23,6 +23,7 @@
 #include "draw/draw_pipe.h"
 #include "util/u_memory.h"
 
+#include "r300_cs.h"
 #include "r300_context.h"
 #include "r300_reg.h"
 
@@ -40,12 +41,34 @@ static INLINE struct swtcl_stage* swtcl_stage(struct draw_stage* draw) {
     return (struct swtcl_stage*)draw;
 }
 
+static void r300_emit_vertex(struct r300_context* r300,
+                             const struct vertex_header* vertex)
+{
+    /* XXX */
+}
+
 static INLINE void r300_emit_prim(struct draw_stage* draw,
                                   struct prim_header* prim,
                                   unsigned hwprim,
                                   unsigned count)
 {
     struct r300_context* r300 = swtcl_stage(draw)->r300;
+    CS_LOCALS(r300);
+    int i;
+
+    r300_emit_dirty_state(r300);
+
+    /* XXX should be count * vtx size */
+    BEGIN_CS(2 + count + 6);
+    OUT_CS(CP_PACKET3(R200_3D_DRAW_IMMD_2, count));
+    OUT_CS(hwprim | R300_PRIM_WALK_RING |
+        (count << R300_PRIM_NUM_VERTICES_SHIFT));
+
+    for (i = 0; i < count; i++) {
+        r300_emit_vertex(r300, prim->v[i]);
+    }
+    R300_PACIFY;
+    END_CS;
 }
 
 /* Just as an aside...
@@ -63,17 +86,17 @@ static INLINE void r300_emit_prim(struct draw_stage* draw,
 
 static void r300_emit_point(struct draw_stage* draw, struct prim_header* prim)
 {
-    r300_emit_prim(draw, prim, R300_VAP_VF_CNTL__PRIM_POINTS, 1);
+    r300_emit_prim(draw, prim, R300_PRIM_TYPE_POINT, 1);
 }
 
 static void r300_emit_line(struct draw_stage* draw, struct prim_header* prim)
 {
-    r300_emit_prim(draw, prim, R300_VAP_VF_CNTL__PRIM_LINES, 2);
+    r300_emit_prim(draw, prim, R300_PRIM_TYPE_LINE, 2);
 }
 
 static void r300_emit_tri(struct draw_stage* draw, struct prim_header* prim)
 {
-    r300_emit_prim(draw, prim, R300_VAP_VF_CNTL__PRIM_TRIANGLES, 3);
+    r300_emit_prim(draw, prim, R300_PRIM_TYPE_TRI_LIST, 3);
 }
 
 static void r300_swtcl_flush(struct draw_stage* draw, unsigned flags)
