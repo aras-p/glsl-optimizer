@@ -1510,8 +1510,8 @@ GLuint radeon_face_for_target(GLenum target)
  * This relies on internal details of _mesa_generate_mipmap, in particular
  * the fact that the memory for recreated texture images is always freed.
  */
-void radeon_generate_mipmap(GLcontext *ctx, GLenum target,
-			    struct gl_texture_object *texObj)
+static void radeon_generate_mipmap(GLcontext *ctx, GLenum target,
+				   struct gl_texture_object *texObj)
 {
 	radeonTexObj* t = radeon_tex_obj(texObj);
 	GLuint nr_faces = (t->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
