@@ -130,16 +130,26 @@ int r300FlushCmdBuf(r300ContextPtr r300, const char *caller)
 
 static void r300PrintStateAtom(r300ContextPtr r300, struct r300_state_atom *state)
 {
-	int i;
+	int i, j, reg;
 	int dwords = (*state->check) (r300, state);
+	drm_r300_cmd_header_t cmd;
 
 	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords,
 		state->cmd_size);
 
 	if (RADEON_DEBUG & DEBUG_VERBOSE) {
-		for (i = 0; i < dwords; i++) {
-			fprintf(stderr, "      %s[%d]: %08x\n",
-				state->name, i, state->cmd[i]);
+		for (i = 0; i < dwords;) {
+			cmd = (drm_r300_cmd_header_t) state->cmd[i];
+			reg = (cmd.packet0.reghi << 8) | cmd.packet0.reglo;
+			fprintf(stderr, "      %s[%d]: cmdpacket0 (first reg=0x%04x, count=%d)\n",
+					state->name, i, reg, cmd.packet0.count);
+			++i;
+			for (j = 0; j < cmd.packet0.count; j++) {
+				fprintf(stderr, "      %s[%d]: 0x%04x = %08x\n",
+					state->name, i, reg, state->cmd[i]);
+				reg += 4;
+				++i;
+			}
 		}
 	}
 }
