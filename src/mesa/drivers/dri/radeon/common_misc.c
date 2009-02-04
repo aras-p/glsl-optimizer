@@ -691,8 +691,13 @@ void rcommonInitCmdBuf(radeonContextPtr rmesa, int max_state_size)
 		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM, rmesa->radeonScreen->texSize[0]);
 		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_GTT, rmesa->radeonScreen->gartTextures.size);
 	} else {
-		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM, rmesa->radeonScreen->texSize[0]);
-		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_GTT, rmesa->radeonScreen->gartTextures.size);
+		struct drm_radeon_gem_info mminfo;
+
+		if (!drmCommandWriteRead(rmesa->dri.fd, DRM_RADEON_GEM_INFO, &mminfo, sizeof(mminfo)))
+		{
+			radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM, mminfo.vram_size);
+			radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_GTT, mminfo.gart_size);
+	    }
 	}
 
 }
@@ -2412,7 +2417,7 @@ void radeonSpanRenderFinish(GLcontext * ctx)
 void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 {
 	struct radeon_cs_space_check bos[1];
-	int flushed, ret;
+	int flushed = 0, ret;
 
 	size = MAX2(size, MAX_DMA_BUF_SZ * 16);
 
@@ -2464,10 +2469,8 @@ again:
 			assert(0);
 		}
 		flushed = 1;
-		goto again;
+		goto again_alloc;
 	}
-		
-	
 	radeon_bo_map(rmesa->dma.current, 1);
 }
 

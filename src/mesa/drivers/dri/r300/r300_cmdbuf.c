@@ -185,38 +185,41 @@ void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	BATCH_LOCALS(&r300->radeon);
 	drm_r300_cmd_header_t cmd;
-    uint32_t addr, ndw, i;
-
-    if (!r300->radeon.radeonScreen->kernel_mm) {
-        uint32_t dwords;
-    	dwords = (*atom->check) (ctx, atom);
-        BEGIN_BATCH_NO_AUTOSTATE(dwords);
-        OUT_BATCH_TABLE(atom->cmd, dwords);
-        END_BATCH();
-        return;
-    }
-
-    cmd.u = atom->cmd[0];
-    addr = (cmd.vpu.adrhi << 8) | cmd.vpu.adrlo;
+	uint32_t addr, ndw, i;
+	
+	if (!r300->radeon.radeonScreen->kernel_mm) {
+		uint32_t dwords;
+		dwords = (*atom->check) (ctx, atom);
+		BEGIN_BATCH_NO_AUTOSTATE(dwords);
+		OUT_BATCH_TABLE(atom->cmd, dwords);
+		END_BATCH();
+		return;
+	}
+	
+	cmd.u = atom->cmd[0];
+	addr = (cmd.vpu.adrhi << 8) | cmd.vpu.adrlo;
 	ndw = cmd.vpu.count * 4;
-    if (ndw) {
-        /* flush processing vertices */
-        OUT_BATCH(CP_PACKET0(R300_SC_SCREENDOOR, 0));
-        OUT_BATCH(0x0);
-        OUT_BATCH(CP_PACKET0(RADEON_WAIT_UNTIL, 0));
-        OUT_BATCH((1 << 15) | (1 << 28));
-        OUT_BATCH(CP_PACKET0(R300_SC_SCREENDOOR, 0));
-        OUT_BATCH(0x00FFFFFF);
-        OUT_BATCH(CP_PACKET0(R300_VAP_PVS_STATE_FLUSH_REG, 0));
-        OUT_BATCH(1);
-        /* write vpu */
-        OUT_BATCH(CP_PACKET0(R300_VAP_PVS_UPLOAD_ADDRESS, 0));
-        OUT_BATCH(addr);
-        OUT_BATCH(CP_PACKET0(R300_VAP_PVS_UPLOAD_DATA, ndw-1) | RADEON_ONE_REG_WR);
-        for (i = 0; i < ndw; i++) {
-            OUT_BATCH(atom->cmd[i+1]);
-        }
-    }
+	if (ndw) {
+		BEGIN_BATCH_NO_AUTOSTATE(11 + ndw);
+
+		/* flush processing vertices */
+		OUT_BATCH(CP_PACKET0(R300_SC_SCREENDOOR, 0));
+		OUT_BATCH(0x0);
+		OUT_BATCH(CP_PACKET0(RADEON_WAIT_UNTIL, 0));
+		OUT_BATCH((1 << 15) | (1 << 28));
+		OUT_BATCH(CP_PACKET0(R300_SC_SCREENDOOR, 0));
+		OUT_BATCH(0x00FFFFFF);
+		OUT_BATCH(CP_PACKET0(R300_VAP_PVS_STATE_FLUSH_REG, 0));
+		OUT_BATCH(1);
+		/* write vpu */
+		OUT_BATCH(CP_PACKET0(R300_VAP_PVS_UPLOAD_ADDRESS, 0));
+		OUT_BATCH(addr);
+		OUT_BATCH(CP_PACKET0(R300_VAP_PVS_UPLOAD_DATA, ndw-1) | RADEON_ONE_REG_WR);
+		for (i = 0; i < ndw; i++) {
+			OUT_BATCH(atom->cmd[i+1]);
+		}
+		END_BATCH();
+	}
 }
 
 void emit_r500fp(GLcontext *ctx, struct radeon_state_atom * atom)
@@ -250,12 +253,14 @@ void emit_r500fp(GLcontext *ctx, struct radeon_state_atom * atom)
 	ndw = sz * stride;
 	if (ndw) {
 
+		BEGIN_BATCH_NO_AUTOSTATE(3 + ndw);
 		OUT_BATCH(CP_PACKET0(R500_GA_US_VECTOR_INDEX, 0));
 		OUT_BATCH(addr);
 		OUT_BATCH(CP_PACKET0(R500_GA_US_VECTOR_DATA, ndw-1) | RADEON_ONE_REG_WR);
 		for (i = 0; i < ndw; i++) {
 			OUT_BATCH(atom->cmd[i+1]);
 		}
+		END_BATCH();
 	}
 }
 
@@ -269,23 +274,23 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 		int i;
 
 		for(i = 0; i < numtmus; ++i) {
-		    BEGIN_BATCH(2);
-    		OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
-			radeonTexObj *t = r300->hw.textures[i];
-			if (t && !t->image_override) {
-				OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
-                                RADEON_GEM_DOMAIN_VRAM, 0, 0);
-			} else if (!t) {
-				OUT_BATCH(r300->radeon.radeonScreen->texOffset[0]);
-			} else {
-				if (t->bo) {
-					OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
-							RADEON_GEM_DOMAIN_VRAM, 0, 0);
-				} else {
-					OUT_BATCH(t->override_offset);
-				}
-			}
-			END_BATCH();
+		    BEGIN_BATCH_NO_AUTOSTATE(2);
+		    OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
+		    radeonTexObj *t = r300->hw.textures[i];
+		    if (t && !t->image_override) {
+			    OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+					    RADEON_GEM_DOMAIN_VRAM, 0, 0);
+		    } else if (!t) {
+			    OUT_BATCH(r300->radeon.radeonScreen->texOffset[0]);
+		    } else {
+			    if (t->bo) {
+				    OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
+						    RADEON_GEM_DOMAIN_VRAM, 0, 0);
+			    } else {
+				    OUT_BATCH(t->override_offset);
+			    }
+		    }
+		    END_BATCH();
 		}
 	}
 }
@@ -312,7 +317,7 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
 		cbpitch |= R300_COLOR_TILE_ENABLE;
 
-	BEGIN_BATCH(4);
+	BEGIN_BATCH_NO_AUTOSTATE(6);
 	OUT_BATCH_REGSEQ(R300_RB3D_COLOROFFSET0, 1);
 	OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 	OUT_BATCH_REGSEQ(R300_RB3D_COLORPITCH0, 1);
@@ -339,7 +344,7 @@ static void emit_zb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 		zbpitch |= R300_DEPTHMICROTILE_TILED;
 	}
 	
-	BEGIN_BATCH(4);
+	BEGIN_BATCH_NO_AUTOSTATE(6);
 	OUT_BATCH_REGSEQ(R300_ZB_DEPTHOFFSET, 1);
 	OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 	OUT_BATCH_REGVAL(R300_ZB_DEPTHPITCH, zbpitch);

@@ -136,10 +136,10 @@ static INLINE uint32_t cmdpacify(struct radeon_screen *rscrn)
  * Outputs 2 dwords and expects (num_extra+1) additional dwords afterwards.
  */
 #define OUT_BATCH_PACKET3(packet, num_extra) do {\
-    if (!b_l_rmesa->radeonScreen->kernel_mm) { \
+    if (!b_l_rmesa->radeonScreen->kernel_mm) {		\
     	OUT_BATCH(cmdpacket3(b_l_rmesa->radeonScreen,\
                   R300_CMD_PACKET3_RAW)); \
-    }\
+    } else b_l_rmesa->cmdbuf.cs->section_cdw++;\
 	OUT_BATCH(CP_PACKET3((packet), (num_extra))); \
 	} while(0)
 

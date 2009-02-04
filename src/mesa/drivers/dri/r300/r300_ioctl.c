@@ -99,7 +99,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 
 	if (flags & CLEARBUFFER_COLOR) {
 		assert(rrb != 0);
-		BEGIN_BATCH_NO_AUTOSTATE(4);
+		BEGIN_BATCH_NO_AUTOSTATE(6);
 		OUT_BATCH_REGSEQ(R300_RB3D_COLOROFFSET0, 1);
 		OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 		OUT_BATCH_REGVAL(R300_RB3D_COLORPITCH0, cbpitch);
@@ -115,7 +115,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 		if (rrbd->bo->flags & RADEON_BO_FLAGS_MICRO_TILE){
             cbpitch |= R300_DEPTHMICROTILE_TILED;
         }
-		BEGIN_BATCH_NO_AUTOSTATE(4);
+		BEGIN_BATCH_NO_AUTOSTATE(6);
 		OUT_BATCH_REGSEQ(R300_ZB_DEPTHOFFSET, 1);
 		OUT_BATCH_RELOC(0, rrbd->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 		OUT_BATCH_REGVAL(R300_ZB_DEPTHPITCH, cbpitch);

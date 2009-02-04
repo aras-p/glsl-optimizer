@@ -229,12 +229,12 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 		fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __FUNCTION__, nr,
 			offset);
 
-	BEGIN_BATCH(sz+2);
-	OUT_BATCH_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, sz - 1);
-	OUT_BATCH(nr);
-
     
 	if (!rmesa->radeon.radeonScreen->kernel_mm) {
+		BEGIN_BATCH(sz+2);
+		OUT_BATCH_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, sz - 1);
+		OUT_BATCH(nr);
+
 		for (i = 0; i + 1 < nr; i += 2) {
 			OUT_BATCH((rmesa->state.aos[i].components << 0) |
 				  (rmesa->state.aos[i].stride << 8) |
@@ -246,10 +246,10 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 			OUT_BATCH_RELOC(voffset,
 					rmesa->state.aos[i].bo,
 					voffset,
-                        RADEON_GEM_DOMAIN_GTT,
+					RADEON_GEM_DOMAIN_GTT,
 					0, 0);
 			voffset =  rmesa->state.aos[i + 1].offset +
-				offset * 4 * rmesa->state.aos[i + 1].stride;
+			  offset * 4 * rmesa->state.aos[i + 1].stride;
 			OUT_BATCH_RELOC(voffset,
 					rmesa->state.aos[i+1].bo,
 					voffset,
@@ -268,7 +268,13 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 					RADEON_GEM_DOMAIN_GTT,
 					0, 0);
 		}
+		END_BATCH();
 	} else {
+
+		BEGIN_BATCH(sz+2+(nr * 2));
+		OUT_BATCH_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, sz - 1);
+		OUT_BATCH(nr);
+
 		for (i = 0; i + 1 < nr; i += 2) {
 			OUT_BATCH((rmesa->state.aos[i].components << 0) |
 				  (rmesa->state.aos[i].stride << 8) |
@@ -312,8 +318,9 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 					      RADEON_GEM_DOMAIN_GTT,
 					      0, 0);
 		}
+		END_BATCH();
 	}
-	END_BATCH();
+
 }
 
 static void r300FireAOS(r300ContextPtr rmesa, int vertex_count, int type)
