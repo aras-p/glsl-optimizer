@@ -222,7 +222,6 @@ after_emit:
       rmesa->hw.vtx.cmd[VTX_VTXFMT_1] = vfmt1;
    }
 
-   radeon_bo_unmap(rmesa->radeon.dma.current);
    rmesa->tcl.nr_aos_components = nr;
 }
 
@@ -237,5 +236,4 @@ void r200ReleaseArrays( GLcontext *ctx, GLuint newinputs )
        rmesa->tcl.aos[i].bo = NULL;
      }
    }
-   radeonReleaseDmaRegion(&rmesa->radeon);
 }
