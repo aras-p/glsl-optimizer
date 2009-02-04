@@ -51,6 +51,30 @@ nv20_miptree_layout(struct nv20_miptree *nv20mt)
 }
 
 static struct pipe_texture *
+nv20_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
+		     const unsigned *stride, struct pipe_buffer *pb)
+{
+	struct nv20_miptree *mt;
+
+	/* Only supports 2D, non-mipmapped textures for the moment */
+	if (pt->target != PIPE_TEXTURE_2D || pt->last_level != 0 ||
+	    pt->depth[0] != 1)
+		return NULL;
+
+	mt = CALLOC_STRUCT(nv20_miptree);
+	if (!mt)
+		return NULL;
+
+	mt->base = *pt;
+	mt->base.refcount = 1;
+	mt->base.screen = pscreen;
+	mt->level[0].image_offset = CALLOC(1, sizeof(unsigned));
+
+	pipe_buffer_reference(pscreen, &mt->buffer, pb);
+	return &mt->base;
+}
+
+static struct pipe_texture *
 nv20_miptree_create(struct pipe_screen *screen, const struct pipe_texture *pt)
 {
 	struct pipe_winsys *ws = screen->winsys;
@@ -146,6 +170,7 @@ nv20_miptree_surface_release(struct pipe_screen *pscreen,
 void nv20_screen_init_miptree_functions(struct pipe_screen *pscreen)
 {
 	pscreen->texture_create = nv20_miptree_create;
+	pscreen->texture_blanket = nv20_miptree_blanket;
 	pscreen->texture_release = nv20_miptree_release;
 	pscreen->get_tex_surface = nv20_miptree_surface_get;
 	pscreen->tex_surface_release = nv20_miptree_surface_release;

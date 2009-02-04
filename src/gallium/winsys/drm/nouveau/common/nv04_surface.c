@@ -132,7 +132,7 @@ nv04_surface_copy_swizzle(struct nouveau_context *nv, unsigned dx, unsigned dy,
 	assert(!(w & (w - 1)) && !(h & (h - 1)));
 
 	BEGIN_RING(chan, nv->nvc->NvSwzSurf, NV04_SWIZZLED_SURFACE_DMA_IMAGE, 1);
-	OUT_RELOCo(chan, nouveau_buffer(dst->buffer)->bo,
+	OUT_RELOCo(chan, nouveau_buffer(dst)->bo,
 	                 NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	BEGIN_RING(chan, nv->nvc->NvSwzSurf, NV04_SWIZZLED_SURFACE_FORMAT, 1);
 	OUT_RING  (chan, nv04_surface_format(dst->format) |
@@ -140,7 +140,7 @@ nv04_surface_copy_swizzle(struct nouveau_context *nv, unsigned dx, unsigned dy,
 	                 log2i(h) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_V_SHIFT);
 
 	BEGIN_RING(chan, nv->nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_DMA_IMAGE, 1);
-	OUT_RELOCo(chan, nouveau_buffer(src->buffer)->bo,
+	OUT_RELOCo(chan, nouveau_buffer(src)->bo,
 	                 NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	BEGIN_RING(chan, nv->nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_SURFACE, 1);
 	OUT_RING  (chan, nv->nvc->NvSwzSurf->handle);
@@ -148,7 +148,7 @@ nv04_surface_copy_swizzle(struct nouveau_context *nv, unsigned dx, unsigned dy,
 	for (cy = 0; cy < h; cy += sub_h) {
 		for (cx = 0; cx < w; cx += sub_w) {
 			BEGIN_RING(chan, nv->nvc->NvSwzSurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
-			OUT_RELOCl(chan, nouveau_buffer(dst->buffer)->bo,
+			OUT_RELOCl(chan, nouveau_buffer(dst)->bo,
 			                 dst->offset + nv04_swizzle_bits(cx, cy) * dst->block.size,
 			                 NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
@@ -168,7 +168,7 @@ nv04_surface_copy_swizzle(struct nouveau_context *nv, unsigned dx, unsigned dy,
 			OUT_RING  (chan, src->stride |
 			                 NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
 			                 NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
-			OUT_RELOCl(chan, nouveau_buffer(src->buffer)->bo,
+			OUT_RELOCl(chan, nouveau_buffer(src)->bo,
 			                 src->offset + cy * src->stride + cx * src->block.size,
 			                 NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 			OUT_RING  (chan, 0);
@@ -193,9 +193,9 @@ nv04_surface_copy_m2mf(struct nouveau_context *nv, unsigned dx, unsigned dy,
 
 		BEGIN_RING(chan, nv->nvc->NvM2MF,
 			   NV04_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 8);
-		OUT_RELOCl(chan, nouveau_buffer(src->buffer)->bo, src_offset,
+		OUT_RELOCl(chan, nouveau_buffer(src)->bo, src_offset,
 			   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-		OUT_RELOCl(chan, nouveau_buffer(dst->buffer)->bo, dst_offset,
+		OUT_RELOCl(chan, nouveau_buffer(dst)->bo, dst_offset,
 			   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_WR);
 		OUT_RING  (chan, src->stride);
 		OUT_RING  (chan, dst->stride);
@@ -253,9 +253,9 @@ nv04_surface_copy_prep(struct nouveau_context *nv, struct pipe_surface *dst,
 	if ((src->offset & 63) || (dst->offset & 63)) {
 		BEGIN_RING(nv->nvc->channel, nv->nvc->NvM2MF,
 			   NV04_MEMORY_TO_MEMORY_FORMAT_DMA_BUFFER_IN, 2);
-		OUT_RELOCo(chan, nouveau_buffer(src->buffer)->bo,
+		OUT_RELOCo(chan, nouveau_buffer(src)->bo,
 			   NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-		OUT_RELOCo(chan, nouveau_buffer(dst->buffer)->bo,
+		OUT_RELOCo(chan, nouveau_buffer(dst)->bo,
 			   NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 		nv->surface_copy = nv04_surface_copy_m2mf;
@@ -273,18 +273,18 @@ nv04_surface_copy_prep(struct nouveau_context *nv, struct pipe_surface *dst,
 
 	BEGIN_RING(chan, nv->nvc->NvCtxSurf2D,
 		   NV04_CONTEXT_SURFACES_2D_DMA_IMAGE_SOURCE, 2);
-	OUT_RELOCo(chan, nouveau_buffer(src->buffer)->bo,
+	OUT_RELOCo(chan, nouveau_buffer(src)->bo,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-	OUT_RELOCo(chan, nouveau_buffer(dst->buffer)->bo,
+	OUT_RELOCo(chan, nouveau_buffer(dst)->bo,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	BEGIN_RING(chan, nv->nvc->NvCtxSurf2D,
 		   NV04_CONTEXT_SURFACES_2D_FORMAT, 4);
 	OUT_RING  (chan, format);
 	OUT_RING  (chan, (dst->stride << 16) | src->stride);
-	OUT_RELOCl(chan, nouveau_buffer(src->buffer)->bo, src->offset,
+	OUT_RELOCl(chan, nouveau_buffer(src)->bo, src->offset,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-	OUT_RELOCl(chan, nouveau_buffer(dst->buffer)->bo, dst->offset,
+	OUT_RELOCl(chan, nouveau_buffer(dst)->bo, dst->offset,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	return 0;
@@ -317,16 +317,16 @@ nv04_surface_fill(struct nouveau_context *nv, struct pipe_surface *dst,
 	}
 
 	BEGIN_RING(chan, surf2d, NV04_CONTEXT_SURFACES_2D_DMA_IMAGE_SOURCE, 2);
-	OUT_RELOCo(chan, nouveau_buffer(dst->buffer)->bo,
+	OUT_RELOCo(chan, nouveau_buffer(dst)->bo,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RELOCo(chan, nouveau_buffer(dst->buffer)->bo,
+	OUT_RELOCo(chan, nouveau_buffer(dst)->bo,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	BEGIN_RING(chan, surf2d, NV04_CONTEXT_SURFACES_2D_FORMAT, 4);
 	OUT_RING  (chan, cs2d_format);
 	OUT_RING  (chan, (dst->stride << 16) | dst->stride);
-	OUT_RELOCl(chan, nouveau_buffer(dst->buffer)->bo, dst->offset,
+	OUT_RELOCl(chan, nouveau_buffer(dst)->bo, dst->offset,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RELOCl(chan, nouveau_buffer(dst->buffer)->bo, dst->offset,
+	OUT_RELOCl(chan, nouveau_buffer(dst)->bo, dst->offset,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	BEGIN_RING(chan, rect, NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT, 1);

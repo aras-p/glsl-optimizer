@@ -10,10 +10,15 @@ struct nouveau_pipe_buffer {
 	struct nouveau_bo *bo;
 };
 
+/* This is so horrible I should be shot - I promise I'll fix it properly
+ * tomorrow.  Just to make the winsys build again however... The TG guys
+ * don't like to make life easy :)
+ */
 static inline struct nouveau_pipe_buffer *
-nouveau_buffer(struct pipe_buffer *buf)
+nouveau_buffer(struct pipe_surface *ps)
 {
-	return (struct nouveau_pipe_buffer *)buf;
+	return *(struct nouveau_pipe_buffer **)
+		((void *)ps->texture + sizeof(struct pipe_texture));
 }
 
 struct nouveau_pipe_winsys {
@@ -35,5 +40,10 @@ nouveau_pipe_create(struct nouveau_context *nv);
 extern void
 nouveau_flush_frontbuffer(struct pipe_winsys *pws, struct pipe_surface *surf,
 			  void *context_private);
+
+struct pipe_surface *
+nouveau_surface_buffer_ref(struct nouveau_context *nv, struct pipe_buffer *pb,
+			   enum pipe_format format, int w, int h,
+			   unsigned pitch, struct pipe_texture **ppt);
 
 #endif

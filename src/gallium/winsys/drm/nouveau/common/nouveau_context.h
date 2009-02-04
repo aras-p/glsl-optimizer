@@ -43,6 +43,7 @@ struct nouveau_context {
 	int locked;
 	struct nouveau_screen *nv_screen;
 	struct pipe_surface *frontbuffer;
+	struct pipe_texture *frontbuffer_texture;
 
 	struct {
 		int hw_vertex_buffer;

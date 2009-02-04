@@ -103,7 +103,7 @@ nouveau_pipe_bo_user_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
 static void
 nouveau_pipe_bo_del(struct pipe_winsys *ws, struct pipe_buffer *buf)
 {
-	struct nouveau_pipe_buffer *nvbuf = nouveau_buffer(buf);
+	struct nouveau_pipe_buffer *nvbuf = (void *)buf;
 
 	nouveau_bo_ref(NULL, &nvbuf->bo);
 	FREE(nvbuf);
@@ -113,7 +113,7 @@ static void *
 nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 		    unsigned flags)
 {
-	struct nouveau_pipe_buffer *nvbuf = nouveau_buffer(buf);
+	struct nouveau_pipe_buffer *nvbuf = (void *)buf;
 	uint32_t map_flags = 0;
 
 	if (flags & PIPE_BUFFER_USAGE_CPU_READ)
@@ -146,7 +146,7 @@ nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 static void
 nouveau_pipe_bo_unmap(struct pipe_winsys *pws, struct pipe_buffer *buf)
 {
-	struct nouveau_pipe_buffer *nvbuf = nouveau_buffer(buf);
+	struct nouveau_pipe_buffer *nvbuf = (void *)buf;
 
 	nouveau_bo_unmap(nvbuf->bo);
 }
@@ -171,6 +171,38 @@ nouveau_pipe_fence_finish(struct pipe_winsys *ws,
 			  struct pipe_fence_handle *pfence, unsigned flag)
 {
 	return 0;
+}
+
+struct pipe_surface *
+nouveau_surface_buffer_ref(struct nouveau_context *nv, struct pipe_buffer *pb,
+			   enum pipe_format format, int w, int h,
+			   unsigned pitch, struct pipe_texture **ppt)
+{
+	struct pipe_screen *pscreen = nv->nvc->pscreen;
+	struct pipe_texture tmpl, *pt;
+	struct pipe_surface *ps;
+
+	memset(&tmpl, 0, sizeof(tmpl));
+	tmpl.tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+			 NOUVEAU_TEXTURE_USAGE_LINEAR;
+	tmpl.target = PIPE_TEXTURE_2D;
+	tmpl.width[0] = w;
+	tmpl.height[0] = h;
+	tmpl.depth[0] = 1;
+	tmpl.format = format;
+	pf_get_block(tmpl.format, &tmpl.block);
+	tmpl.nblocksx[0] = pf_get_nblocksx(&tmpl.block, w);
+	tmpl.nblocksy[0] = pf_get_nblocksy(&tmpl.block, h);
+
+	pt = pscreen->texture_blanket(pscreen, &tmpl, &pitch, pb);
+	if (!pt)
+		return NULL;
+
+	ps = pscreen->get_tex_surface(pscreen, pt, 0, 0, 0,
+				      PIPE_BUFFER_USAGE_GPU_WRITE);
+
+	*ppt = pt;
+	return ps;
 }
 
 static void

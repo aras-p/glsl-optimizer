@@ -65,8 +65,9 @@ nouveau_pipe_push_reloc(struct nouveau_winsys *nvws, void *ptr,
 			struct pipe_buffer *buf, uint32_t data,
 			uint32_t flags, uint32_t vor, uint32_t tor)
 {
-	return nouveau_pushbuf_emit_reloc(nvws->channel, ptr,
-					  nouveau_buffer(buf)->bo,
+	struct nouveau_bo *bo = ((struct nouveau_pipe_buffer *)buf)->bo;
+
+	return nouveau_pushbuf_emit_reloc(nvws->channel, ptr, bo,
 					  data, flags, vor, tor);
 }
 

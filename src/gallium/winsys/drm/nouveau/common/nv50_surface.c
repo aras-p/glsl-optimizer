@@ -26,7 +26,7 @@ nv50_surface_set(struct nouveau_context *nv, struct pipe_surface *surf, int dst)
 {
 	struct nouveau_channel *chan = nv->nvc->channel;
 	struct nouveau_grobj *eng2d = nv->nvc->Nv2D;
- 	struct nouveau_bo *bo = nouveau_buffer(surf->buffer)->bo;
+ 	struct nouveau_bo *bo = nouveau_buffer(surf)->bo;
  	int surf_format, mthd = dst ? NV50_2D_DST_FORMAT : NV50_2D_SRC_FORMAT;
  	int flags = NOUVEAU_BO_VRAM | (dst ? NOUVEAU_BO_WR : NOUVEAU_BO_RD);
   

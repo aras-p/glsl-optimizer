@@ -113,35 +113,6 @@ nouveau_context_init(struct nouveau_screen *nv_screen,
 		nvdev->lock = sarea_lock;
 	}
 
-	/*XXX: Hack up a fake region and buffer object for front buffer.
-	 *     This will go away with TTM, replaced with a simple reference
-	 *     of the front buffer handle passed to us by the DDX.
-	 */
-	{
-		struct pipe_surface *fb_surf;
-		struct nouveau_pipe_buffer *fb_buf;
-
-		fb_buf = calloc(1, sizeof(struct nouveau_pipe_buffer));
-
-		nouveau_bo_fake(dev, nv_screen->front_offset, NOUVEAU_BO_VRAM,
-				nv_screen->front_pitch*nv_screen->front_height,
-				NULL, &fb_buf->bo);
-
-		fb_surf = calloc(1, sizeof(struct pipe_surface));
-		if (nv_screen->front_cpp == 2)
-			fb_surf->format = PIPE_FORMAT_R5G6B5_UNORM;
-		else
-			fb_surf->format = PIPE_FORMAT_A8R8G8B8_UNORM;
-		pf_get_block(fb_surf->format, &fb_surf->block);
-		fb_surf->width = nv_screen->front_pitch / nv_screen->front_cpp;
-		fb_surf->height = nv_screen->front_height;
-		fb_surf->stride = fb_surf->width * fb_surf->block.size;
-		fb_surf->refcount = 1;
-		fb_surf->buffer = &fb_buf->base;
-
-		nv->frontbuffer = fb_surf;
-	}
-
 	/* Attempt to share a single channel between multiple contexts from
 	 * a single process.
 	 */
@@ -229,8 +200,37 @@ nouveau_context_init(struct nouveau_screen *nv_screen,
 		}
 	}
 
-	pipe->priv = nv;
+	{
+		struct pipe_texture *fb_tex;
+		struct pipe_surface *fb_surf;
+		struct nouveau_pipe_buffer *fb_buf;
+		enum pipe_format format;
 
+		fb_buf = calloc(1, sizeof(struct nouveau_pipe_buffer));
+		fb_buf->base.refcount = 1;
+		fb_buf->base.usage = PIPE_BUFFER_USAGE_PIXEL;
+
+		nouveau_bo_fake(dev, nv_screen->front_offset, NOUVEAU_BO_VRAM,
+				nv_screen->front_pitch*nv_screen->front_height,
+				NULL, &fb_buf->bo);
+
+		if (nv_screen->front_cpp == 4)
+			format = PIPE_FORMAT_A8R8G8B8_UNORM;
+		else
+			format = PIPE_FORMAT_R5G6B5_UNORM;
+
+		fb_surf = nouveau_surface_buffer_ref(nv, &fb_buf->base, format,
+						     nv_screen->front_pitch /
+						     nv_screen->front_cpp,
+						     nv_screen->front_height,
+						     nv_screen->front_pitch,
+						     &fb_tex);
+
+		nv->frontbuffer = fb_surf;
+		nv->frontbuffer_texture = fb_tex;
+	}
+
+	pipe->priv = nv;
 	return 0;
 }
 
