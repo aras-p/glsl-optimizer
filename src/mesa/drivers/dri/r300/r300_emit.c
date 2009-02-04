@@ -337,8 +337,6 @@ int r300EmitArrays(GLcontext * ctx)
 
 	rmesa->state.aos_count = nr;
 
-	radeon_bo_unmap(rmesa->radeon.dma.current);
-
 	return R300_FALLBACK_NONE;
 }
 
@@ -357,7 +355,6 @@ void r300ReleaseArrays(GLcontext * ctx)
 			rmesa->state.aos[i].bo = NULL;
 		}
 	}
-	radeonReleaseDmaRegion(&rmesa->radeon);
 }
 
 void r300EmitCacheFlush(r300ContextPtr rmesa)

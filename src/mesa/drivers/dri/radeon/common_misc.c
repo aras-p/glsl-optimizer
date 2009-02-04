@@ -621,6 +621,8 @@ int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller)
 {
 	int ret;
 
+	radeonReleaseDmaRegion(rmesa);
+	
 	LOCK_HARDWARE(rmesa);
 	ret = rcommonFlushCmdBufLocked(rmesa, caller);
 	UNLOCK_HARDWARE(rmesa);
@@ -2418,7 +2420,6 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
 	if (rmesa->dma.flush) {
-		radeon_bo_unmap(rmesa->dma.current);
 		rmesa->dma.flush(rmesa->glCtx);
 	}
 
@@ -2504,9 +2505,12 @@ void radeonAllocDmaRegion(radeonContextPtr rmesa,
 
 void radeonReleaseDmaRegion(radeonContextPtr rmesa)
 {
+	if (RADEON_DEBUG & DEBUG_IOCTL)
+		fprintf(stderr, "%s %p\n", __FUNCTION__, rmesa->dma.current);
 	if (rmesa->dma.current) {
 		rmesa->dma.nr_released_bufs++;
-		radeon_bo_unref(rmesa->dma.current);
+		radeon_bo_unmap(rmesa->dma.current);
+	        radeon_bo_unref(rmesa->dma.current);
 	}
 	rmesa->dma.current = NULL;
 }
