@@ -214,34 +214,32 @@ static void r300_vtbl_emit_state(radeonContextPtr rmesa)
 	r300EmitState((r300ContextPtr)rmesa);
 }
 
-extern int cs_write_dword(struct radeon_cs *cs, uint32_t dword);
-
 static void r300_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)
 {
     /* please flush pipe do all pending work */
-    cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
+    radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
                                   R300_SC_SCREENDOOR, 1));
-    cs_write_dword(cs, 0x0);
-    cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
+    radeon_cs_write_dword(cs, 0x0);
+    radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
                                   R300_SC_SCREENDOOR, 1));
-    cs_write_dword(cs, 0x00FFFFFF);
-    cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
+    radeon_cs_write_dword(cs, 0x00FFFFFF);
+    radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
                                   R300_SC_HYPERZ, 1));
-    cs_write_dword(cs, 0x0);
-    cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
+    radeon_cs_write_dword(cs, 0x0);
+    radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
                                   R300_US_CONFIG, 1));
-    cs_write_dword(cs, 0x0);
-    cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
+    radeon_cs_write_dword(cs, 0x0);
+    radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
                                   R300_ZB_CNTL, 1));
-    cs_write_dword(cs, 0x0);
-    cs_write_dword(cs, cmdwait(rmesa->radeonScreen, R300_WAIT_3D));
-    cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
+    radeon_cs_write_dword(cs, 0x0);
+    radeon_cs_write_dword(cs, cmdwait(rmesa->radeonScreen, R300_WAIT_3D));
+    radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
                                   R300_RB3D_DSTCACHE_CTLSTAT, 1));
-    cs_write_dword(cs, R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
-    cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
+    radeon_cs_write_dword(cs, R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
+    radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
                                   R300_ZB_ZCACHE_CTLSTAT, 1));
-    cs_write_dword(cs, R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE);
-    cs_write_dword(cs, cmdwait(rmesa->radeonScreen,
+    radeon_cs_write_dword(cs, R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE);
+    radeon_cs_write_dword(cs, cmdwait(rmesa->radeonScreen,
                                R300_WAIT_3D | R300_WAIT_3D_CLEAN));
 }
 

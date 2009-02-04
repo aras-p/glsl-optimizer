@@ -75,25 +75,6 @@ static struct radeon_cs *cs_create(struct radeon_cs_manager *csm,
     return cs;
 }
 
-int cs_write_dword(struct radeon_cs *cs, uint32_t dword)
-{
-    if (cs->cdw >= cs->ndw) {
-        uint32_t tmp, *ptr;
-        tmp = (cs->cdw + 1 + 0x3FF) & (~0x3FF);
-        ptr = (uint32_t*)realloc(cs->packets, 4 * tmp);
-        if (ptr == NULL) {
-            return -ENOMEM;
-        }
-        cs->packets = ptr;
-        cs->ndw = tmp;
-    }
-    cs->packets[cs->cdw++] = dword;
-    if (cs->section) {
-        cs->section_cdw++;
-    }
-    return 0;
-}
-
 static int cs_write_reloc(struct radeon_cs *cs,
                           struct radeon_bo *bo,
                           uint32_t read_domain,
@@ -192,6 +173,21 @@ static int cs_begin(struct radeon_cs *cs,
     cs->section_file = file;
     cs->section_func = func;
     cs->section_line = line;
+
+
+    if (cs->cdw + ndw > cs->ndw) {
+        uint32_t tmp, *ptr;
+	int num = (ndw > 0x3FF) ? ndw : 0x3FF;
+
+        tmp = (cs->cdw + 1 + num) & (~num);
+        ptr = (uint32_t*)realloc(cs->packets, 4 * tmp);
+        if (ptr == NULL) {
+            return -ENOMEM;
+        }
+        cs->packets = ptr;
+        cs->ndw = tmp;
+    }
+
     return 0;
 }
 
@@ -477,7 +473,6 @@ static int cs_check_space(struct radeon_cs *cs, struct radeon_cs_space_check *bo
 
 static struct radeon_cs_funcs  radeon_cs_legacy_funcs = {
     cs_create,
-    cs_write_dword,
     cs_write_reloc,
     cs_begin,
     cs_end,
