@@ -164,17 +164,27 @@ swrastFillInModes(__DRIscreen *psp,
     depth_buffer_factor = 4;
     back_buffer_factor = 2;
 
-    if (pixel_bits == 8) {
+    switch (pixel_bits) {
+    case 8:
 	fb_format = GL_RGB;
 	fb_type = GL_UNSIGNED_BYTE_2_3_3_REV;
-    }
-    else if (pixel_bits == 16) {
+	break;
+    case 16:
 	fb_format = GL_RGB;
 	fb_type = GL_UNSIGNED_SHORT_5_6_5;
-    }
-    else {
+	break;
+    case 24:
+	fb_format = GL_BGR;
+	fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
+	break;
+    case 32:
 	fb_format = GL_BGRA;
 	fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
+	break;
+    default:
+	fprintf(stderr, "[%s:%u] bad depth %d\n", __func__, __LINE__,
+		pixel_bits);
+	return NULL;
     }
 
     configs = driCreateConfigs(fb_format, fb_type,
@@ -196,7 +206,7 @@ driCreateNewScreen(int scrn, const __DRIextension **extensions,
 {
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
-    const __DRIconfig **configs8, **configs16, **configs32;
+    const __DRIconfig **configs8, **configs16, **configs24, **configs32;
 
     (void) data;
 
@@ -213,11 +223,12 @@ driCreateNewScreen(int scrn, const __DRIextension **extensions,
 
     configs8  = swrastFillInModes(psp,  8,  8, 0, 1);
     configs16 = swrastFillInModes(psp, 16, 16, 0, 1);
+    configs24 = swrastFillInModes(psp, 24, 24, 8, 1);
     configs32 = swrastFillInModes(psp, 32, 24, 8, 1);
 
     configs16 = driConcatConfigs(configs8, configs16);
-
-    *driver_configs = driConcatConfigs(configs16, configs32);
+    configs24 = driConcatConfigs(configs16, configs24);
+    *driver_configs = driConcatConfigs(configs24, configs32);
 
     driInitExtensions( NULL, card_extensions, GL_FALSE );
 
@@ -249,19 +260,24 @@ static GLuint
 choose_pixel_format(const GLvisual *v)
 {
     if (v->rgbMode) {
-	int bpp = v->rgbBits;
+	int depth = v->rgbBits;
 
-	if (bpp == 32
+	if (depth == 32
 	    && v->redMask   == 0xff0000
 	    && v->greenMask == 0x00ff00
 	    && v->blueMask  == 0x0000ff)
 	    return PF_A8R8G8B8;
-	else if (bpp == 16
+	else if (depth == 24
+	    && v->redMask   == 0xff0000
+	    && v->greenMask == 0x00ff00
+	    && v->blueMask  == 0x0000ff)
+	    return PF_X8R8G8B8;
+	else if (depth == 16
 	    && v->redMask   == 0xf800
 	    && v->greenMask == 0x07e0
 	    && v->blueMask  == 0x001f)
 	    return PF_R5G6B5;
-	else if (bpp == 8
+	else if (depth == 8
 	    && v->redMask   == 0x07
 	    && v->greenMask == 0x38
 	    && v->blueMask  == 0xc0)
@@ -290,7 +306,6 @@ swrast_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 			   GLenum internalFormat, GLuint width, GLuint height)
 {
     struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
-    int bpp;
     unsigned mask = PITCH_ALIGN_BITS - 1;
 
     TRACE;
@@ -299,23 +314,8 @@ swrast_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
     rb->Width = width;
     rb->Height = height;
 
-    switch (internalFormat) {
-    case GL_RGB:
-	bpp = rb->RedBits + rb->GreenBits + rb->BlueBits;
-	break;
-    case GL_RGBA:
-	bpp = rb->RedBits + rb->GreenBits + rb->BlueBits + rb->AlphaBits;
-	break;
-    case GL_COLOR_INDEX8_EXT:
-	bpp = rb->IndexBits;
-	break;
-    default:
-	_mesa_problem( NULL, "unexpected format in %s", __FUNCTION__ );
-	return GL_FALSE;
-    }
-
     /* always pad to PITCH_ALIGN_BITS */
-    xrb->pitch = ((width * bpp + mask) & ~mask) / 8;
+    xrb->pitch = ((width * xrb->bpp + mask) & ~mask) / 8;
 
     return GL_TRUE;
 }
@@ -371,6 +371,17 @@ swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
 	xrb->Base.GreenBits = 8 * sizeof(GLubyte);
 	xrb->Base.BlueBits  = 8 * sizeof(GLubyte);
 	xrb->Base.AlphaBits = 8 * sizeof(GLubyte);
+	xrb->bpp = 32;
+	break;
+    case PF_X8R8G8B8:
+	xrb->Base.InternalFormat = GL_RGB;
+	xrb->Base._BaseFormat = GL_RGB;
+	xrb->Base.DataType = GL_UNSIGNED_BYTE;
+	xrb->Base.RedBits   = 8 * sizeof(GLubyte);
+	xrb->Base.GreenBits = 8 * sizeof(GLubyte);
+	xrb->Base.BlueBits  = 8 * sizeof(GLubyte);
+	xrb->Base.AlphaBits = 0;
+	xrb->bpp = 32;
 	break;
     case PF_R5G6B5:
 	xrb->Base.InternalFormat = GL_RGB;
@@ -380,6 +391,7 @@ swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
 	xrb->Base.GreenBits = 6 * sizeof(GLubyte);
 	xrb->Base.BlueBits  = 5 * sizeof(GLubyte);
 	xrb->Base.AlphaBits = 0;
+	xrb->bpp = 16;
 	break;
     case PF_R3G3B2:
 	xrb->Base.InternalFormat = GL_RGB;
@@ -389,12 +401,14 @@ swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
 	xrb->Base.GreenBits = 3 * sizeof(GLubyte);
 	xrb->Base.BlueBits  = 2 * sizeof(GLubyte);
 	xrb->Base.AlphaBits = 0;
+	xrb->bpp = 8;
 	break;
     case PF_CI8:
 	xrb->Base.InternalFormat = GL_COLOR_INDEX8_EXT;
 	xrb->Base._BaseFormat = GL_COLOR_INDEX;
 	xrb->Base.DataType = GL_UNSIGNED_BYTE;
 	xrb->Base.IndexBits = 8 * sizeof(GLubyte);
+	xrb->bpp = 8;
 	break;
     default:
 	return NULL;

@@ -90,6 +90,8 @@ struct swrast_renderbuffer {
 
     /* renderbuffer pitch (in bytes) */
     GLuint pitch;
+   /* bits per pixel of storage */
+    GLuint bpp;
 };
 
 static INLINE __DRIcontext *
@@ -115,10 +117,10 @@ swrast_renderbuffer(struct gl_renderbuffer *rb)
  * Pixel formats we support
  */
 #define PF_CI8        1		/**< Color Index mode */
-#define PF_A8R8G8B8   2		/**< 32-bit TrueColor:  8-A, 8-R, 8-G, 8-B bits */
-#define PF_R5G6B5     3		/**< 16-bit TrueColor:  5-R, 6-G, 5-B bits */
-#define PF_R3G3B2     4		/**<  8-bit TrueColor:  3-R, 3-G, 2-B bits */
-
+#define PF_A8R8G8B8   2		/**< 32bpp TrueColor:  8-A, 8-R, 8-G, 8-B bits */
+#define PF_R5G6B5     3		/**< 16bpp TrueColor:  5-R, 6-G, 5-B bits */
+#define PF_R3G3B2     4		/**<  8bpp TrueColor:  3-R, 3-G, 2-B bits */
+#define PF_X8R8G8B8   5		/**< 32bpp TrueColor:  8-R, 8-G, 8-B bits */
 
 /**
  * Renderbuffer pitch alignment (in bits).
