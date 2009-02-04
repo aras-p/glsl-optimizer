@@ -923,7 +923,6 @@ radeon_make_kernel_renderbuffer_current(radeonContextPtr radeon,
 	struct radeon_renderbuffer *rb;
 
 	if ((rb = (void *)draw->Attachment[BUFFER_FRONT_LEFT].Renderbuffer)) {
-		
 		if (!rb->bo) {
 			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
 						radeon->radeonScreen->frontOffset,
@@ -948,6 +947,18 @@ radeon_make_kernel_renderbuffer_current(radeonContextPtr radeon,
 		rb->pitch = radeon->radeonScreen->backPitch * rb->cpp;
 	}
 	if ((rb = (void *)draw->Attachment[BUFFER_DEPTH].Renderbuffer)) {
+		if (!rb->bo) {
+			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+						radeon->radeonScreen->depthOffset,
+						0,
+						0,
+						RADEON_GEM_DOMAIN_VRAM,
+						0);
+		}
+		rb->cpp = radeon->radeonScreen->cpp;
+		rb->pitch = radeon->radeonScreen->depthPitch * rb->cpp;
+	}
+	if ((rb = (void *)draw->Attachment[BUFFER_STENCIL].Renderbuffer)) {
 		if (!rb->bo) {
 			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
 						radeon->radeonScreen->depthOffset,
@@ -1014,6 +1025,19 @@ radeon_make_renderbuffer_current(radeonContextPtr radeon,
 		rb->cpp = radeon->radeonScreen->cpp;
 		rb->pitch = radeon->radeonScreen->depthPitch * rb->cpp;
 	}
+	if ((rb = (void *)draw->Attachment[BUFFER_STENCIL].Renderbuffer)) {
+		if (!rb->bo) {
+			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+						radeon->radeonScreen->depthOffset +
+						radeon->radeonScreen->fbLocation,
+						size,
+						4096,
+						RADEON_GEM_DOMAIN_VRAM,
+						0);
+		}
+		rb->cpp = radeon->radeonScreen->cpp;
+		rb->pitch = radeon->radeonScreen->depthPitch * rb->cpp;
+	}
 }
 
 
@@ -1027,6 +1051,9 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	int i, count;
 	GLframebuffer *draw;
 	radeonContextPtr radeon;
+
+	if (RADEON_DEBUG & DEBUG_DRI)
+	    fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);
 	
 	draw = drawable->driverPrivate;
 	screen = context->driScreenPriv;
@@ -1168,19 +1195,19 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 			(void *)dfb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
 		radeon->state.depth.rrb =
 			(void *)dfb->Attachment[BUFFER_DEPTH].Renderbuffer;
+	} else {
+		radeon_make_renderbuffer_current(radeon, dfb);
 	}
 
 
 	if (RADEON_DEBUG & DEBUG_DRI)
-		fprintf(stderr, "%s ctx %p\n", __FUNCTION__, radeon->glCtx);
+	     fprintf(stderr, "%s ctx %p dfb %p rfb %p\n", __FUNCTION__, radeon->glCtx, dfb, rfb);
 
 	driUpdateFramebufferSize(radeon->glCtx, driDrawPriv);
 	if (driReadPriv != driDrawPriv)
 		driUpdateFramebufferSize(radeon->glCtx, driReadPriv);
 
-	if (!driContextPriv->driScreenPriv->dri2.enabled) {
-		radeon_make_renderbuffer_current(radeon, dfb);
-	}
+
 	
 	_mesa_make_current(radeon->glCtx, dfb, rfb);
 
@@ -1387,12 +1414,17 @@ void radeonFreeTexImageData(GLcontext *ctx, struct gl_texture_image *timage)
 		radeon_bo_unref(image->bo);
 		image->bo = NULL;
 	}
+	if (timage->Data) {
+		_mesa_free_texmemory(timage->Data);
+		timage->Data = NULL;
+	}
 }
 
 /* Set Data pointer and additional data for mapped texture image */
 static void teximage_set_map_data(radeon_texture_image *image)
 {
 	radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
+
 	image->base.Data = image->mt->bo->ptr + lvl->faces[image->mtface].offset;
 	image->base.RowStride = lvl->rowstride / image->mt->bpp;
 }
@@ -1430,7 +1462,7 @@ void radeonMapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 	radeonTexObj* t = radeon_tex_obj(texObj);
 	int face, level;
 
-	assert(texObj->_Complete);
+	//	assert(texObj->_Complete);
 	assert(t->mt);
 
 	radeon_bo_map(t->mt->bo, GL_FALSE);
@@ -1445,7 +1477,7 @@ void radeonUnmapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 	radeonTexObj* t = radeon_tex_obj(texObj);
 	int face, level;
 
-	assert(texObj->_Complete);
+	//	assert(texObj->_Complete);
 	assert(t->mt);
 
 	for(face = 0; face < t->mt->faces; ++face) {
@@ -1838,7 +1870,9 @@ static void radeon_teximage(
 	if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
 		radeon_generate_mipmap(ctx, texObj->Target, texObj);
 	}
-	radeon_teximage_unmap(image);
+
+	if (pixels) 
+	  radeon_teximage_unmap(image);
 
 	_mesa_unmap_teximage_pbo(ctx, packing);
 
@@ -2040,6 +2074,7 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt, radeon_texture_imag
 	assert(dstlvl->height == image->base.Height);
 	assert(dstlvl->depth == image->base.Depth);
 
+
 	radeon_bo_map(mt->bo, GL_TRUE);
 	dest = mt->bo->ptr + dstlvl->faces[face].offset;
 
@@ -2054,6 +2089,7 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt, radeon_texture_imag
 		assert(srclvl->rowstride == dstlvl->rowstride);
 
 		radeon_bo_map(image->mt->bo, GL_FALSE);
+
 		memcpy(dest,
 			image->mt->bo->ptr + srclvl->faces[face].offset,
 			dstlvl->size);
@@ -2133,7 +2169,7 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 		for(level = t->mt->firstLevel; level <= t->mt->lastLevel; ++level) {
 			radeon_texture_image *image = get_radeon_texture_image(texObj->Image[face][level]);
 			if (RADEON_DEBUG & DEBUG_TEXTURE)
-				fprintf(stderr, " face %i, level %i... ", face, level);
+				fprintf(stderr, " face %i, level %i... %p vs %p ", face, level, t->mt, image->mt);
 			if (t->mt == image->mt) {
 				if (RADEON_DEBUG & DEBUG_TEXTURE)
 					fprintf(stderr, "OK\n");
