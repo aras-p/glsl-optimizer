@@ -656,7 +656,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_GB_FOG_SELECT_C3A           (3 << 0)
 #	define R300_GB_FOG_SELECT_1_1_W         (4 << 0)
 #	define R300_GB_FOG_SELECT_Z		(5 << 0)
-#	define R300_GB_DEPTH_SELECT_Z		(0 << 3
+#	define R300_GB_DEPTH_SELECT_Z		(0 << 3)
 #	define R300_GB_DEPTH_SELECT_1_1_W	(1 << 3)
 #	define R300_GB_W_SELECT_1_W		(0 << 4)
 #	define R300_GB_W_SELECT_1		(1 << 4)
@@ -730,8 +730,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R500_RS_IP_TEX_PTR_Q_SHIFT 			18
 #define R500_RS_IP_COL_PTR_SHIFT 			24
 #define R500_RS_IP_COL_FMT_SHIFT 			27
-#	define R500_RS_COL_PTR(x)		        (x << 24)
-#       define R500_RS_COL_FMT(x)                       (x << 27)
+#	define R500_RS_COL_PTR(x)		        ((x) << 24)
+#       define R500_RS_COL_FMT(x)                       ((x) << 27)
 /* gap */
 #define R500_RS_IP_OFFSET_DIS 				(0 << 31)
 #define R500_RS_IP_OFFSET_EN 				(1 << 31)
@@ -1172,9 +1172,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_RS_IP_3				        0x431C
 #       define R300_RS_INTERP_SRC_SHIFT          2 /* TODO: check for removal */
 #       define R300_RS_INTERP_SRC_MASK           (7 << 2) /* TODO: check for removal */
-#	define R300_RS_TEX_PTR(x)		        (x << 0)
-#	define R300_RS_COL_PTR(x)		        (x << 6)
-#	define R300_RS_COL_FMT(x)		        (x << 9)
+#	define R300_RS_TEX_PTR(x)		        ((x) << 0)
+#	define R300_RS_COL_PTR(x)		        ((x) << 6)
+#	define R300_RS_COL_FMT(x)		        ((x) << 9)
 #	define R300_RS_COL_FMT_RGBA		        0
 #	define R300_RS_COL_FMT_RGB0		        1
 #	define R300_RS_COL_FMT_RGB1		        2
@@ -1184,10 +1184,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_RS_COL_FMT_111A		        8
 #	define R300_RS_COL_FMT_1110		        9
 #	define R300_RS_COL_FMT_1111		        10
-#	define R300_RS_SEL_S(x)		                (x << 13)
-#	define R300_RS_SEL_T(x)		                (x << 16)
-#	define R300_RS_SEL_R(x)		                (x << 19)
-#	define R300_RS_SEL_Q(x)		                (x << 22)
+#	define R300_RS_SEL_S(x)		                ((x) << 13)
+#	define R300_RS_SEL_T(x)		                ((x) << 16)
+#	define R300_RS_SEL_R(x)		                ((x) << 19)
+#	define R300_RS_SEL_Q(x)		                ((x) << 22)
 #	define R300_RS_SEL_C0		                0
 #	define R300_RS_SEL_C1		                1
 #	define R300_RS_SEL_C2		                2
@@ -2705,7 +2705,7 @@ enum {
 #   define R500_ALPHA_OP_COS				13
 #   define R500_ALPHA_OP_MDH				14
 #   define R500_ALPHA_OP_MDV				15
-#   define R500_ALPHA_ADDRD(x)				(x << 4)
+#   define R500_ALPHA_ADDRD(x)				((x) << 4)
 #   define R500_ALPHA_ADDRD_REL				(1 << 11)
 #  define R500_ALPHA_SEL_A_SHIFT			12
 #   define R500_ALPHA_SEL_A_SRC0			(0 << 12)
@@ -2749,16 +2749,16 @@ enum {
 #   define R500_ALPHA_OMOD_DIV_4			(5 << 26)
 #   define R500_ALPHA_OMOD_DIV_8			(6 << 26)
 #   define R500_ALPHA_OMOD_DISABLE			(7 << 26)
-#   define R500_ALPHA_TARGET(x)				(x << 29)
+#   define R500_ALPHA_TARGET(x)				((x) << 29)
 #   define R500_ALPHA_W_OMASK				(1 << 31)
 #define R500_US_ALU_ALPHA_ADDR_0			0x9800
-#   define R500_ALPHA_ADDR0(x)				(x << 0)
+#   define R500_ALPHA_ADDR0(x)				((x) << 0)
 #   define R500_ALPHA_ADDR0_CONST			(1 << 8)
 #   define R500_ALPHA_ADDR0_REL				(1 << 9)
-#   define R500_ALPHA_ADDR1(x)				(x << 10)
+#   define R500_ALPHA_ADDR1(x)				((x) << 10)
 #   define R500_ALPHA_ADDR1_CONST			(1 << 18)
 #   define R500_ALPHA_ADDR1_REL				(1 << 19)
-#   define R500_ALPHA_ADDR2(x)				(x << 20)
+#   define R500_ALPHA_ADDR2(x)				((x) << 20)
 #   define R500_ALPHA_ADDR2_CONST			(1 << 28)
 #   define R500_ALPHA_ADDR2_REL				(1 << 29)
 #   define R500_ALPHA_SRCP_OP_1_MINUS_2A0		(0 << 30)
@@ -2779,7 +2779,7 @@ enum {
 #   define R500_ALU_RGBA_OP_SOP				(10 << 0)
 #   define R500_ALU_RGBA_OP_MDH				(11 << 0)
 #   define R500_ALU_RGBA_OP_MDV				(12 << 0)
-#   define R500_ALU_RGBA_ADDRD(x)			(x << 4)
+#   define R500_ALU_RGBA_ADDRD(x)			((x) << 4)
 #   define R500_ALU_RGBA_ADDRD_REL			(1 << 11)
 #  define R500_ALU_RGBA_SEL_C_SHIFT			12
 #   define R500_ALU_RGBA_SEL_C_SRC0			(0 << 12)
@@ -2906,16 +2906,16 @@ enum {
 #   define R500_ALU_RGB_OMOD_DIV_4			(5 << 26)
 #   define R500_ALU_RGB_OMOD_DIV_8			(6 << 26)
 #   define R500_ALU_RGB_OMOD_DISABLE			(7 << 26)
-#   define R500_ALU_RGB_TARGET(x)			(x << 29)
+#   define R500_ALU_RGB_TARGET(x)			((x) << 29)
 #   define R500_ALU_RGB_WMASK				(1 << 31)
 #define R500_US_ALU_RGB_ADDR_0				0x9000
-#   define R500_RGB_ADDR0(x)				(x << 0)
+#   define R500_RGB_ADDR0(x)				((x) << 0)
 #   define R500_RGB_ADDR0_CONST				(1 << 8)
 #   define R500_RGB_ADDR0_REL				(1 << 9)
-#   define R500_RGB_ADDR1(x)				(x << 10)
+#   define R500_RGB_ADDR1(x)				((x) << 10)
 #   define R500_RGB_ADDR1_CONST				(1 << 18)
 #   define R500_RGB_ADDR1_REL				(1 << 19)
-#   define R500_RGB_ADDR2(x)				(x << 20)
+#   define R500_RGB_ADDR2(x)				((x) << 20)
 #   define R500_RGB_ADDR2_CONST				(1 << 28)
 #   define R500_RGB_ADDR2_REL				(1 << 29)
 #   define R500_RGB_SRCP_OP_1_MINUS_2RGB0		(0 << 30)
@@ -2970,19 +2970,19 @@ enum {
 
 /* note that these are 8 bit lengths, despite the offsets, at least for R500 */
 #define R500_US_CODE_ADDR				0x4630
-#   define R500_US_CODE_START_ADDR(x)			(x << 0)
-#   define R500_US_CODE_END_ADDR(x)			(x << 16)
+#   define R500_US_CODE_START_ADDR(x)			((x) << 0)
+#   define R500_US_CODE_END_ADDR(x)			((x) << 16)
 #define R500_US_CODE_OFFSET				0x4638
-#   define R500_US_CODE_OFFSET_ADDR(x)			(x << 0)
+#   define R500_US_CODE_OFFSET_ADDR(x)			((x) << 0)
 #define R500_US_CODE_RANGE				0x4634
-#   define R500_US_CODE_RANGE_ADDR(x)			(x << 0)
-#   define R500_US_CODE_RANGE_SIZE(x)			(x << 16)
+#   define R500_US_CODE_RANGE_ADDR(x)			((x) << 0)
+#   define R500_US_CODE_RANGE_SIZE(x)			((x) << 16)
 #define R500_US_CONFIG					0x4600
 #   define R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO		(1 << 1)
 #define R500_US_FC_ADDR_0				0xa000
-#   define R500_FC_BOOL_ADDR(x)				(x << 0)
-#   define R500_FC_INT_ADDR(x)				(x << 8)
-#   define R500_FC_JUMP_ADDR(x)				(x << 16)
+#   define R500_FC_BOOL_ADDR(x)				((x) << 0)
+#   define R500_FC_INT_ADDR(x)				((x) << 8)
+#   define R500_FC_JUMP_ADDR(x)				((x) << 16)
 #   define R500_FC_JUMP_GLOBAL				(1 << 31)
 #define R500_US_FC_BOOL_CONST				0x4620
 #   define R500_FC_KBOOL(x)				(x)
@@ -3003,8 +3003,8 @@ enum {
 #   define R500_FC_A_OP_NONE				(0 << 6)
 #   define R500_FC_A_OP_POP				(1 << 6)
 #   define R500_FC_A_OP_PUSH				(2 << 6)
-#   define R500_FC_JUMP_FUNC(x)				(x << 8)
-#   define R500_FC_B_POP_CNT(x)				(x << 16)
+#   define R500_FC_JUMP_FUNC(x)				((x) << 8)
+#   define R500_FC_B_POP_CNT(x)				((x) << 16)
 #   define R500_FC_B_OP0_NONE				(0 << 24)
 #   define R500_FC_B_OP0_DECR				(1 << 24)
 #   define R500_FC_B_OP0_INCR				(2 << 24)
@@ -3013,14 +3013,14 @@ enum {
 #   define R500_FC_B_OP1_INCR				(2 << 26)
 #   define R500_FC_IGNORE_UNCOVERED			(1 << 28)
 #define R500_US_FC_INT_CONST_0				0x4c00
-#   define R500_FC_INT_CONST_KR(x)			(x << 0)
-#   define R500_FC_INT_CONST_KG(x)			(x << 8)
-#   define R500_FC_INT_CONST_KB(x)			(x << 16)
+#   define R500_FC_INT_CONST_KR(x)			((x) << 0)
+#   define R500_FC_INT_CONST_KG(x)			((x) << 8)
+#   define R500_FC_INT_CONST_KB(x)			((x) << 16)
 /* _0 through _15 */
 #define R500_US_FORMAT0_0				0x4640
-#   define R500_FORMAT_TXWIDTH(x)			(x << 0)
-#   define R500_FORMAT_TXHEIGHT(x)			(x << 11)
-#   define R500_FORMAT_TXDEPTH(x)			(x << 22)
+#   define R500_FORMAT_TXWIDTH(x)			((x) << 0)
+#   define R500_FORMAT_TXHEIGHT(x)			((x) << 11)
+#   define R500_FORMAT_TXDEPTH(x)			((x) << 22)
 /* _0 through _3 */
 #define R500_US_OUT_FMT_0				0x46a4
 #   define R500_OUT_FMT_C4_8				(0 << 0)
@@ -3061,12 +3061,12 @@ enum {
 #   define R500_C3_SEL_R				(1 << 14)
 #   define R500_C3_SEL_G				(2 << 14)
 #   define R500_C3_SEL_B				(3 << 14)
-#   define R500_OUT_SIGN(x)				(x << 16)
+#   define R500_OUT_SIGN(x)				((x) << 16)
 #   define R500_ROUND_ADJ				(1 << 20)
 #define R500_US_PIXSIZE					0x4604
 #   define R500_PIX_SIZE(x)				(x)
 #define R500_US_TEX_ADDR_0				0x9800
-#   define R500_TEX_SRC_ADDR(x)				(x << 0)
+#   define R500_TEX_SRC_ADDR(x)				((x) << 0)
 #   define R500_TEX_SRC_ADDR_REL			(1 << 7)
 #   define R500_TEX_SRC_S_SWIZ_R			(0 << 8)
 #   define R500_TEX_SRC_S_SWIZ_G			(1 << 8)
@@ -3084,7 +3084,7 @@ enum {
 #   define R500_TEX_SRC_Q_SWIZ_G			(1 << 14)
 #   define R500_TEX_SRC_Q_SWIZ_B			(2 << 14)
 #   define R500_TEX_SRC_Q_SWIZ_A			(3 << 14)
-#   define R500_TEX_DST_ADDR(x)				(x << 16)
+#   define R500_TEX_DST_ADDR(x)				((x) << 16)
 #   define R500_TEX_DST_ADDR_REL			(1 << 23)
 #   define R500_TEX_DST_R_SWIZ_R			(0 << 24)
 #   define R500_TEX_DST_R_SWIZ_G			(1 << 24)
@@ -3103,7 +3103,7 @@ enum {
 #   define R500_TEX_DST_A_SWIZ_B			(2 << 30)
 #   define R500_TEX_DST_A_SWIZ_A			(3 << 30)
 #define R500_US_TEX_ADDR_DXDY_0				0xa000
-#   define R500_DX_ADDR(x)				(x << 0)
+#   define R500_DX_ADDR(x)				((x) << 0)
 #   define R500_DX_ADDR_REL				(1 << 7)
 #   define R500_DX_S_SWIZ_R				(0 << 8)
 #   define R500_DX_S_SWIZ_G				(1 << 8)
@@ -3121,7 +3121,7 @@ enum {
 #   define R500_DX_Q_SWIZ_G				(1 << 14)
 #   define R500_DX_Q_SWIZ_B				(2 << 14)
 #   define R500_DX_Q_SWIZ_A				(3 << 14)
-#   define R500_DY_ADDR(x)				(x << 16)
+#   define R500_DY_ADDR(x)				((x) << 16)
 #   define R500_DY_ADDR_REL				(1 << 17)
 #   define R500_DY_S_SWIZ_R				(0 << 24)
 #   define R500_DY_S_SWIZ_G				(1 << 24)
@@ -3140,7 +3140,7 @@ enum {
 #   define R500_DY_Q_SWIZ_B				(2 << 30)
 #   define R500_DY_Q_SWIZ_A				(3 << 30)
 #define R500_US_TEX_INST_0				0x9000
-#   define R500_TEX_ID(x)				(x << 16)
+#   define R500_TEX_ID(x)				((x) << 16)
 #   define R500_TEX_INST_NOP				(0 << 22)
 #   define R500_TEX_INST_LD				(1 << 22)
 #   define R500_TEX_INST_TEXKILL			(2 << 22)
