@@ -555,7 +555,7 @@ SquareWithHole(float squareSize, float holeRadius)
    for (i = 0; i <= 360; i += 5) {
       const float x1 = holeRadius * cos(DEG_TO_RAD(i));
       const float y1 = holeRadius * sin(DEG_TO_RAD(i));
-      float x2, y2;
+      float x2 = 0.0F, y2 = 0.0F;
       if (i > 315 || i <= 45) {
          x2 = squareSize;
          y2 = squareSize * tan(DEG_TO_RAD(i));
