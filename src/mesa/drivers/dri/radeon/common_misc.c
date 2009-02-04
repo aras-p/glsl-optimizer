@@ -2535,13 +2535,11 @@ void rcommon_flush_last_swtcl_prim( GLcontext *ctx  )
 		    rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
 		    dma->current_vertexptr);
 
-	    radeon_bo_unmap(dma->current);
 	    if (dma->current_used != dma->current_vertexptr) {
 		    dma->current_used = dma->current_vertexptr;
 
 		    rmesa->vtbl.swtcl_flush(ctx, current_offset);
 	    }
-	    radeonReleaseDmaRegion(rmesa);
 	    rmesa->swtcl.numverts = 0;
 	}
 }
@@ -2554,7 +2552,7 @@ rcommonAllocDmaLowVerts( radeonContextPtr rmesa, int nverts, int vsize )
 	void *head;
 
 	if (!rmesa->dma.current || rmesa->dma.current_vertexptr + bytes > rmesa->dma.current->size) {
-                radeonRefillCurrentDmaRegion( rmesa, bytes);
+                radeonRefillCurrentDmaRegion(rmesa, bytes);
 	}
 
         if (!rmesa->dma.flush) {
