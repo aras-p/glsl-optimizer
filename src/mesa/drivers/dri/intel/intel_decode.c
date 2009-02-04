@@ -932,7 +932,7 @@ decode_3d_1d(uint32_t *data, int count, uint32_t hw_offset, int *failures, int i
 	instr_out(data, hw_offset, 0, "3DSTATE_PIXEL_SHADER_CONSTANTS\n");
 	len = (data[0] & 0x000000ff) + 2;
 
-	i = 1;
+	i = 2;
 	for (c = 0; c <= 31; c++) {
 	    if (data[1] & (1 << c)) {
 		if (i + 4 >= count)
@@ -952,7 +952,7 @@ decode_3d_1d(uint32_t *data, int count, uint32_t hw_offset, int *failures, int i
 	    }
 	}
 	if (len != i) {
-	    fprintf(out, "Bad count in 3DSTATE_MAP_STATE\n");
+	    fprintf(out, "Bad count in 3DSTATE_PIXEL_SHADER_CONSTANTS\n");
 	    (*failures)++;
 	}
 	return len;
