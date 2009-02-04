@@ -63,5 +63,5 @@ extern void radeon_translate_vertex( GLcontext *ctx,
 
 extern void radeon_print_vertex( GLcontext *ctx, const radeonVertex *v );
 
-
+extern void r100_swtcl_flush(GLcontext *ctx, uint32_t current_offset);
 #endif

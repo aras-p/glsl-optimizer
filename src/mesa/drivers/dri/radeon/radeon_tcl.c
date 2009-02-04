@@ -145,15 +145,15 @@ static GLboolean discrete_prim[0x10] = {
 
 static GLushort *radeonAllocElts( r100ContextPtr rmesa, GLuint nr ) 
 {
-   if (rmesa->dma.flush)
-      rmesa->dma.flush( rmesa->radeon.glCtx );
+   if (rmesa->radeon.dma.flush)
+      rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
 
-   radeonEnsureCmdBufSpace(rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
+   rcommonEnsureCmdBufSpace(&rmesa->radeon, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
 			   rmesa->hw.max_state_size + ELTS_BUFSZ(nr));
 
    radeonEmitAOS( rmesa,
-		rmesa->tcl.aos_components,
-		rmesa->tcl.nr_aos_components, 0 );
+		  rmesa->tcl.aos_components,
+		  rmesa->tcl.nr_aos_components, 0 );
 
    return radeonAllocEltsOpenEnded( rmesa,
 				    rmesa->tcl.vertex_format, 
@@ -182,12 +182,14 @@ static void radeonEmitPrim( GLcontext *ctx,
 			     rmesa->hw.max_state_size + VBUF_BUFSZ );
 
    radeonEmitAOS( rmesa,
+		  rmesa->tcl.aos_components,
 		  rmesa->tcl.nr_aos_components,
 		  start );
    
    /* Why couldn't this packet have taken an offset param?
     */
    radeonEmitVbufPrim( rmesa,
+		       0,
 		       rmesa->tcl.hw_primitive,
 		       count - start );
 }
@@ -508,15 +510,15 @@ static void transition_to_hwtnl( GLcontext *ctx )
 
    tnl->Driver.NotifyMaterialChange = radeonUpdateMaterial;
 
-   if ( rmesa->dma.flush )			
-      rmesa->dma.flush( rmesa->radeon.glCtx );	
+   if ( rmesa->radeon.dma.flush )			
+      rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	
 
-   rmesa->dma.flush = NULL;
+   rmesa->radeon.dma.flush = NULL;
    rmesa->swtcl.vertex_format = 0;
    
-   if (rmesa->swtcl.indexed_verts.buf) 
-      radeonReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, 
-			      __FUNCTION__ );
+   //   if (rmesa->swtcl.indexed_verts.buf) 
+   //      radeonReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, 
+   //			      __FUNCTION__ );
 
    if (RADEON_DEBUG & DEBUG_FALLBACKS) 
       fprintf(stderr, "Radeon end tcl fallback\n");

@@ -340,7 +340,7 @@ struct r100_state {
 
 
 #define RADEON_CMD_BUF_SZ  (8*1024)
-
+#define R200_ELT_BUF_SZ  (8*1024)
 /* radeon_tcl.c
  */
 struct radeon_tcl_info {
@@ -364,17 +364,16 @@ struct radeon_tcl_info {
 	struct radeon_dma_region fog;
 	struct radeon_dma_region tex[RADEON_MAX_TEXTURE_UNITS];
 	struct radeon_dma_region norm;
+
+        struct radeon_bo *elt_dma_bo;
+        int elt_dma_offset; /** Offset into this buffer object, in bytes */
+        int elt_used;
 };
 
 /* radeon_swtcl.c
  */
-struct radeon_swtcl_info {
-	GLuint RenderIndex;
-	GLuint vertex_size;
+struct r100_swtcl_info {
 	GLuint vertex_format;
-
-	struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
-	GLuint vertex_attr_count;
 
 	GLubyte *verts;
 
@@ -383,10 +382,6 @@ struct radeon_swtcl_info {
 	radeon_point_func draw_point;
 	radeon_line_func draw_line;
 	radeon_tri_func draw_tri;
-
-	GLuint hw_primitive;
-	GLenum render_primitive;
-	GLuint numverts;
 
    /**
     * Offset of the 4UB color data within a hardware (swtcl) vertex.
@@ -448,7 +443,7 @@ struct r100_context {
 
 	/* radeon_swtcl.c
 	 */
-	struct radeon_swtcl_info swtcl;
+	struct r100_swtcl_info swtcl;
 
 	GLboolean using_hyperz;
 	GLboolean texmicrotile;

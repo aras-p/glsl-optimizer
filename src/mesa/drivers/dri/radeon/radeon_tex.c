@@ -44,6 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/texobj.h"
 
 #include "radeon_context.h"
+#include "radeon_mipmap_tree.h"
 #include "radeon_state.h"
 #include "radeon_ioctl.h"
 #include "radeon_swtcl.h"
@@ -453,7 +454,7 @@ void radeonInitTextureFuncs( struct dd_function_table *functions )
    functions->CompressedTexImage2D	= radeonCompressedTexImage2D;
    functions->CompressedTexSubImage2D	= radeonCompressedTexSubImage2D;
 
-   functions->GenerateMipmap = radeon_generate_mipmap;
+   functions->GenerateMipmap = radeonGenerateMipmap;
 
    functions->NewTextureImage = radeonNewTextureImage;
    functions->FreeTexImageData = radeonFreeTexImageData;

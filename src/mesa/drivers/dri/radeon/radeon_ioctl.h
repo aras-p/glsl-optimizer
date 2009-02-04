@@ -153,36 +153,37 @@ do {							\
 #define VBUF_BUFSZ	(4 * sizeof(int))
 #endif
 
-/* Ensure that a minimum amount of space is available in the command buffer.
- * This is used to ensure atomicity of state updates with the rendering requests
- * that rely on them.
- *
- * An alternative would be to implement a "soft lock" such that when the buffer
- * wraps at an inopportune time, we grab the lock, flush the current buffer,
- * and hang on to the lock until the critical section is finished and we flush
- * the buffer again and unlock.
- */
-static INLINE void radeonEnsureCmdBufSpace( r100ContextPtr rmesa,
-					      int bytes )
+
+static inline uint32_t cmdpacket3(int cmd_type)
 {
-   if (rmesa->store.cmd_used + bytes > RADEON_CMD_BUF_SZ)
-      radeonFlushCmdBuf( rmesa, __FUNCTION__ );
-   assert( bytes <= RADEON_CMD_BUF_SZ );
+  drm_radeon_cmd_header_t cmd;
+
+  cmd.i = 0;
+  cmd.header.cmd_type = cmd_type;
+
+  return (uint32_t)cmd.i;
+
 }
 
-/* Alloc space in the command buffer
- */
-static INLINE char *radeonAllocCmdBuf( r100ContextPtr rmesa,
-					 int bytes, const char *where )
-{
-   if (rmesa->store.cmd_used + bytes > RADEON_CMD_BUF_SZ)
-      radeonFlushCmdBuf( rmesa, __FUNCTION__ );
+#define OUT_BATCH_PACKET3(packet, num_extra) do {	      \
+    if (!b_l_rmesa->radeonScreen->kernel_mm) {		      \
+      OUT_BATCH(cmdpacket3(RADEON_CMD_PACKET3));				      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
+    } else {						      \
+      OUT_BATCH(CP_PACKET2);				      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
+    }							      \
+  } while(0)
 
-   {
-      char *head = rmesa->store.cmd_buf + rmesa->store.cmd_used;
-      rmesa->store.cmd_used += bytes;
-      return head;
-   }
-}
+#define OUT_BATCH_PACKET3_CLIP(packet, num_extra) do {	      \
+    if (!b_l_rmesa->radeonScreen->kernel_mm) {		      \
+      OUT_BATCH(cmdpacket3(RADEON_CMD_PACKET3_CLIP));	      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
+    } else {						      \
+      OUT_BATCH(CP_PACKET2);				      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
+    }							      \
+  } while(0)
+
 
 #endif /* __RADEON_IOCTL_H__ */

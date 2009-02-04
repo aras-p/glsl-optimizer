@@ -380,8 +380,8 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
    if (rmesa->tcl.indexed_verts.buf)
       radeonReleaseArrays( ctx, ~0 );
 
-   radeonAllocDmaRegion( rmesa,
-			 &rmesa->tcl.indexed_verts, 
+   radeonAllocDmaRegion( &rmesa->radeon,
+			 0,			 &rmesa->tcl.indexed_verts, 
 			 VB->Count * setup_tab[i].vertex_size * 4, 
 			 4);
 
@@ -425,7 +425,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 		      rmesa->tcl.indexed_verts.start );
 
    rmesa->tcl.vertex_format = setup_tab[i].vertex_format;
-   rmesa->tcl.indexed_verts.aos_start = GET_START( &rmesa->tcl.indexed_verts );
+   //   rmesa->tcl.indexed_verts.aos_start = GET_START( &rmesa->tcl.indexed_verts );
    rmesa->tcl.indexed_verts.aos_size = setup_tab[i].vertex_size;
    rmesa->tcl.indexed_verts.aos_stride = setup_tab[i].vertex_size;
 
@@ -444,6 +444,6 @@ void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
       _tnl_print_vert_flags( __FUNCTION__, newinputs );
 #endif
 
-   if (newinputs) 
-     radeonReleaseDmaRegion( rmesa, &rmesa->tcl.indexed_verts, __FUNCTION__ );
+   ///   if (newinputs) 
+      ///    radeonReleaseDmaRegion( rmesa, &rmesa->tcl.indexed_verts, __FUNCTION__ );
 }

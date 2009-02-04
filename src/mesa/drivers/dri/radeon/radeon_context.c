@@ -54,6 +54,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drivers/common/driverfuncs.h"
 
 #include "radeon_context.h"
+#include "common_cmdbuf.h"
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
 #include "radeon_span.h"
@@ -243,6 +244,7 @@ static void r100_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.update_draw_buffer = radeonUpdateDrawBuffer;
    radeon->vtbl.emit_cs_header = r100_vtbl_emit_cs_header;
    radeon->vtbl.emit_state = r100_vtbl_emit_state;
+   radeon->vtbl.swtcl_flush = r100_swtcl_flush;
 }
 
 /* Create the device specific context.
@@ -332,7 +334,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
       rmesa->radeon.texture_depth = ( screen->cpp == 4 ) ?
 	 DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
-   rmesa->swtcl.RenderIndex = ~0;
+   rmesa->radeon.swtcl.RenderIndex = ~0;
    rmesa->hw.all_dirty = GL_TRUE;
 
    /* Set the maximum texture size small enough that we can guarentee that
@@ -512,7 +514,7 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
       radeonReleaseArrays( rmesa->radeon.glCtx, ~0 );
       if (rmesa->radeon.dma.current) {
 	 radeonReleaseDmaRegion( &rmesa->radeon );
-	 radeonFlushCmdBuf( &rmesa->radeon, __FUNCTION__ );
+	 rcommonFlushCmdBuf( &rmesa->radeon, __FUNCTION__ );
       }
 
       _mesa_vector4f_free( &rmesa->tcl.ObjClean );

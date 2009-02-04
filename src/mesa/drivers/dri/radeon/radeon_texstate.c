@@ -43,6 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/enums.h"
 
 #include "radeon_context.h"
+#include "radeon_mipmap_tree.h"
 #include "radeon_state.h"
 #include "radeon_ioctl.h"
 #include "radeon_swtcl.h"
@@ -75,10 +76,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_RGBA_DXT5) \
 			     && (tx_table[f].format != 0xffffffff) )
 
-static const struct {
+struct tx_table {
    GLuint format, filter;
-}
-tx_table[] =
+};
+
+static const struct tx_table tx_table[] =
 {
    _ALPHA(RGBA8888),
    _ALPHA_REV(RGBA8888),
@@ -901,13 +903,13 @@ void radeonSetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 			      RADEON_TXFORMAT_CUBIC_MAP_ENABLE |	\
                               RADEON_TXFORMAT_NON_POWER2)
 
-
+#if 0
 static void import_tex_obj_state( r100ContextPtr rmesa,
 				  int unit,
 				  radeonTexObjPtr texobj )
 {
 /* do not use RADEON_DB_STATE to avoid stale texture caches */
-   int *cmd = &rmesa->hw.tex[unit].cmd[TEX_CMD_0];
+   uint32_t *cmd = &rmesa->hw.tex[unit].cmd[TEX_CMD_0];
    GLuint se_coord_fmt = rmesa->hw.set.cmd[SET_SE_COORDFMT];
 
    RADEON_STATECHANGE( rmesa, tex[unit] );
@@ -955,7 +957,7 @@ static void import_tex_obj_state( r100ContextPtr rmesa,
 
    texobj->dirty_state &= ~(1<<unit);
 }
-
+#endif
 
 
 
@@ -1354,8 +1356,7 @@ static void setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t)
 
    if (!t->image_override) {
       if (VALID_FORMAT(firstImage->TexFormat->MesaFormat)) {
-	 const struct tx_table *table = _mesa_little_endian() ? tx_table_le :
-	    tx_table_be;
+	const struct tx_table *table = tx_table;
 
 	 t->pp_txformat &= ~(RADEON_TXFORMAT_FORMAT_MASK |
 			     RADEON_TXFORMAT_ALPHA_IN_MAP);
@@ -1399,8 +1400,8 @@ static void setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t)
                            (log2Height << RADEON_FACE_HEIGHT_4_SHIFT));
    }
 
-   t->pp_txsize = (((firstImage->Width - 1) << RADEON_PP_TX_WIDTHMASK_SHIFT)
-		   | ((firstImage->Height - 1) << RADEON_PP_TX_HEIGHTMASK_SHIFT));
+   t->pp_txsize = (((firstImage->Width - 1) << RADEON_TEX_USIZE_SHIFT)
+		   | ((firstImage->Height - 1) << RADEON_TEX_VSIZE_SHIFT));
 
    if ( !t->image_override ) {
       if (firstImage->IsCompressed)
