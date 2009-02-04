@@ -1395,13 +1395,13 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
 
 /**
  * Init basic fields of a new fake_glx_context.
- * If the MESA_GLX_FORCE_DIRECT env var is set, the context will be marked as
- * a direct rendering context.  Some apps won't run without this.
  */
 static void
 init_glx_context(struct fake_glx_context *glxCtx, Display *dpy)
 {
-   GLboolean direct = _mesa_getenv("MESA_GLX_FORCE_DIRECT") ? GL_TRUE : GL_FALSE;
+   /* Always return True.  See if anyone's confused... */
+   GLboolean direct = GL_TRUE;
+
    glxCtx->xmesaContext->direct = direct;
    glxCtx->glxContext.isDirect = direct;
    glxCtx->glxContext.currentDpy = dpy;
