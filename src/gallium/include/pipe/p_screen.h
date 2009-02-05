@@ -51,6 +51,7 @@ extern "C" {
 /** Opaque type */
 struct pipe_fence_handle;
 
+
 /**
  * Gallium screen/adapter context.  Basically everything
  * hardware-specific that doesn't actually require a rendering
@@ -124,12 +125,25 @@ struct pipe_screen {
                                 struct pipe_surface ** );
    
 
-   void *(*surface_map)( struct pipe_screen *,
-                         struct pipe_surface *surface,
-                         unsigned flags );
+   /** Get a transfer object for transferring data to/from a texture */
+   struct pipe_transfer *(*get_tex_transfer)(struct pipe_screen *,
+                                             struct pipe_texture *texture,
+                                             unsigned face, unsigned level,
+                                             unsigned zslice,
+                                             enum pipe_transfer_usage usage,
+                                             unsigned x, unsigned y,
+                                             unsigned w, unsigned h);
 
-   void (*surface_unmap)( struct pipe_screen *,
-                          struct pipe_surface *surface );
+   /* Transfer objects allocated by the above must be released here:
+    */
+   void (*tex_transfer_release)( struct pipe_screen *,
+                                 struct pipe_transfer ** );
+   
+   void *(*transfer_map)( struct pipe_screen *,
+                          struct pipe_transfer *transfer );
+
+   void (*transfer_unmap)( struct pipe_screen *,
+                           struct pipe_transfer *transfer );
 
 
    /**

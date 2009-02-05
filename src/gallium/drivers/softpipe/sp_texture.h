@@ -51,12 +51,25 @@ struct softpipe_texture
    boolean modified;
 };
 
+struct softpipe_transfer
+{
+   struct pipe_transfer base;
 
-/** cast wrapper */
+   unsigned long offset;
+};
+
+
+/** cast wrappers */
 static INLINE struct softpipe_texture *
 softpipe_texture(struct pipe_texture *pt)
 {
    return (struct softpipe_texture *) pt;
+}
+
+static INLINE struct softpipe_transfer *
+softpipe_transfer(struct pipe_transfer *pt)
+{
+   return (struct softpipe_transfer *) pt;
 }
 
 

@@ -50,7 +50,7 @@ struct st_texture_image
     */
    struct pipe_texture *pt;
 
-   struct pipe_surface *surface;
+   struct pipe_transfer *transfer;
 };
 
 
@@ -132,7 +132,9 @@ extern GLubyte *
 st_texture_image_map(struct st_context *st,
                      struct st_texture_image *stImage,
 		     GLuint zoffset,
-                     GLuint flags);
+                     enum pipe_transfer_usage usage,
+                     unsigned x, unsigned y,
+                     unsigned w, unsigned h);
 
 extern void
 st_texture_image_unmap(struct st_context *st,

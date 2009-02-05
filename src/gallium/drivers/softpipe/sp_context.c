@@ -53,15 +53,15 @@
  * Map any drawing surfaces which aren't already mapped
  */
 void
-softpipe_map_surfaces(struct softpipe_context *sp)
+softpipe_map_transfers(struct softpipe_context *sp)
 {
    unsigned i;
 
    for (i = 0; i < sp->framebuffer.nr_cbufs; i++) {
-      sp_tile_cache_map_surfaces(sp->cbuf_cache[i]);
+      sp_tile_cache_map_transfers(sp->cbuf_cache[i]);
    }
 
-   sp_tile_cache_map_surfaces(sp->zsbuf_cache);
+   sp_tile_cache_map_transfers(sp->zsbuf_cache);
 }
 
 
@@ -69,7 +69,7 @@ softpipe_map_surfaces(struct softpipe_context *sp)
  * Unmap any mapped drawing surfaces
  */
 void
-softpipe_unmap_surfaces(struct softpipe_context *sp)
+softpipe_unmap_transfers(struct softpipe_context *sp)
 {
    uint i;
 
@@ -78,9 +78,9 @@ softpipe_unmap_surfaces(struct softpipe_context *sp)
    sp_flush_tile_cache(sp, sp->zsbuf_cache);
 
    for (i = 0; i < sp->framebuffer.nr_cbufs; i++) {
-      sp_tile_cache_unmap_surfaces(sp->cbuf_cache[i]);
+      sp_tile_cache_unmap_transfers(sp->cbuf_cache[i]);
    }
-   sp_tile_cache_unmap_surfaces(sp->zsbuf_cache);
+   sp_tile_cache_unmap_transfers(sp->zsbuf_cache);
 }
 
 

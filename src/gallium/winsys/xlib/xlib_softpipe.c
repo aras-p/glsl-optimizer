@@ -244,9 +244,10 @@ xlib_softpipe_display_surface(struct xmesa_buffer *b,
       return;
 
    if (XSHM_ENABLED(xm_buf) && (xm_buf->tempImage == NULL)) {
-      assert(surf->block.width == 1);
-      assert(surf->block.height == 1);
-      alloc_shm_ximage(xm_buf, b, surf->stride/surf->block.size, surf->height);
+      assert(surf->texture->block.width == 1);
+      assert(surf->texture->block.height == 1);
+      alloc_shm_ximage(xm_buf, b, surf->texture->nblocksx[surf->level],
+                       surf->height);
    }
 
    ximage = (XSHM_ENABLED(xm_buf)) ? xm_buf->tempImage : b->tempImage;
@@ -264,7 +265,7 @@ xlib_softpipe_display_surface(struct xmesa_buffer *b,
       /* update XImage's fields */
       ximage->width = surf->width;
       ximage->height = surf->height;
-      ximage->bytes_per_line = surf->stride;
+      ximage->bytes_per_line = surf->texture->nblocksx[surf->level];
 
       XPutImage(b->xm_visual->display, b->drawable, b->gc,
                 ximage, 0, 0, 0, 0, surf->width, surf->height);

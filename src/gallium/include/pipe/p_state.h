@@ -281,16 +281,36 @@ struct pipe_surface
    unsigned clear_value;         /**< XXX may be temporary */
    unsigned width;               /**< logical width in pixels */
    unsigned height;              /**< logical height in pixels */
-   struct pipe_format_block block;
-   unsigned nblocksx;            /**< allocated width in blocks */
-   unsigned nblocksy;            /**< allocated height in blocks */
-   unsigned stride;              /**< stride in bytes between rows of blocks */
    unsigned layout;              /**< PIPE_SURFACE_LAYOUT_x */
    unsigned offset;              /**< offset from start of buffer, in bytes */
    unsigned refcount;
    unsigned usage;               /**< PIPE_BUFFER_USAGE_*  */
 
    struct pipe_texture *texture; /**< texture into which this is a view  */
+   unsigned face;
+   unsigned level;
+   unsigned zslice;
+};
+
+
+/**
+ * Transfer object.  For data transfer to/from a texture.
+ */
+struct pipe_transfer
+{
+   enum pipe_format format;      /**< PIPE_FORMAT_x */
+   unsigned x;                   /**< x offset from start of texture image */
+   unsigned y;                   /**< y offset from start of texture image */
+   unsigned width;               /**< logical width in pixels */
+   unsigned height;              /**< logical height in pixels */
+   struct pipe_format_block block;
+   unsigned nblocksx;            /**< allocated width in blocks */
+   unsigned nblocksy;            /**< allocated height in blocks */
+   unsigned stride;              /**< stride in bytes between rows of blocks */
+   unsigned refcount;
+   unsigned usage;               /**< PIPE_TRANSFER_*  */
+
+   struct pipe_texture *texture; /**< texture to transfer to/from  */
    unsigned face;
    unsigned level;
    unsigned zslice;

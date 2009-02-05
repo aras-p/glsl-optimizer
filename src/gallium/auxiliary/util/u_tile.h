@@ -30,15 +30,15 @@
 
 #include "pipe/p_compiler.h"
 
-struct pipe_surface;
+struct pipe_transfer;
 
 
 /**
- * Clip tile against surface dims.
+ * Clip tile against transfer dims.
  * \return TRUE if tile is totally clipped, FALSE otherwise
  */
 static INLINE boolean
-pipe_clip_tile(uint x, uint y, uint *w, uint *h, const struct pipe_surface *ps)
+pipe_clip_tile(uint x, uint y, uint *w, uint *h, const struct pipe_transfer *ps)
 {
    if (x >= ps->width)
       return TRUE;
@@ -56,34 +56,34 @@ extern "C" {
 #endif
 
 void
-pipe_get_tile_raw(struct pipe_surface *ps,
+pipe_get_tile_raw(struct pipe_transfer *ps,
                   uint x, uint y, uint w, uint h,
                   void *p, int dst_stride);
 
 void
-pipe_put_tile_raw(struct pipe_surface *ps,
+pipe_put_tile_raw(struct pipe_transfer *ps,
                   uint x, uint y, uint w, uint h,
                   const void *p, int src_stride);
 
 
 void
-pipe_get_tile_rgba(struct pipe_surface *ps,
+pipe_get_tile_rgba(struct pipe_transfer *ps,
                    uint x, uint y, uint w, uint h,
                    float *p);
 
 void
-pipe_put_tile_rgba(struct pipe_surface *ps,
+pipe_put_tile_rgba(struct pipe_transfer *ps,
                    uint x, uint y, uint w, uint h,
                    const float *p);
 
 
 void
-pipe_get_tile_z(struct pipe_surface *ps,
+pipe_get_tile_z(struct pipe_transfer *ps,
                 uint x, uint y, uint w, uint h,
                 uint *z);
 
 void
-pipe_put_tile_z(struct pipe_surface *ps,
+pipe_put_tile_z(struct pipe_transfer *ps,
                 uint x, uint y, uint w, uint h,
                 const uint *z);
 

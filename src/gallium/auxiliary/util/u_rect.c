@@ -169,46 +169,35 @@ util_surface_copy(struct pipe_context *pipe,
                   unsigned w, unsigned h)
 {
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_surface *new_src = NULL, *new_dst = NULL;
+   struct pipe_transfer *src_trans, *dst_trans;
    void *dst_map;
    const void *src_map;
 
-   assert(dst->block.size == src->block.size);
-   assert(dst->block.width == src->block.width);
-   assert(dst->block.height == src->block.height);
+   assert(dst_trans->block.size == src_trans->block.size);
+   assert(dst_trans->block.width == src_trans->block.width);
+   assert(dst_trans->block.height == src_trans->block.height);
 
-   if ((src->usage & PIPE_BUFFER_USAGE_CPU_READ) == 0) {
-      /* Need to create new src surface which is CPU readable */
-      assert(src->texture);
-      if (!src->texture)
-         return;
-      new_src = screen->get_tex_surface(screen,
+   assert(src->texture && dst->texture);
+   if (!src->texture || !dst->texture)
+      return;
+   src_trans = screen->get_tex_transfer(screen,
                                         src->texture,
                                         src->face,
                                         src->level,
                                         src->zslice,
-                                        PIPE_BUFFER_USAGE_CPU_READ);
-      src = new_src;
-   }
+                                        PIPE_TRANSFER_READ,
+                                        src_x, src_y, w, h);
 
-   if ((dst->usage & PIPE_BUFFER_USAGE_CPU_WRITE) == 0) {
-      /* Need to create new dst surface which is CPU writable */
-      assert(dst->texture);
-      if (!dst->texture)
-         return;
-      new_dst = screen->get_tex_surface(screen,
+   dst_trans = screen->get_tex_transfer(screen,
                                         dst->texture,
                                         dst->face,
                                         dst->level,
                                         dst->zslice,
-                                        PIPE_BUFFER_USAGE_CPU_WRITE);
-      dst = new_dst;
-   }
+                                        PIPE_TRANSFER_WRITE,
+                                        dst_x, dst_y, w, h);
 
-   src_map = pipe->screen->surface_map(screen,
-                                       src, PIPE_BUFFER_USAGE_CPU_READ);
-   dst_map = pipe->screen->surface_map(screen,
-                                       dst, PIPE_BUFFER_USAGE_CPU_WRITE);
+   src_map = pipe->screen->transfer_map(screen, src_trans);
+   dst_map = pipe->screen->transfer_map(screen, dst_trans);
 
    assert(src_map);
    assert(dst_map);
@@ -216,34 +205,23 @@ util_surface_copy(struct pipe_context *pipe,
    if (src_map && dst_map) {
       /* If do_flip, invert src_y position and pass negative src stride */
       pipe_copy_rect(dst_map,
-                     &dst->block,
-                     dst->stride,
-                     dst_x, dst_y,
+                     &dst_trans->block,
+                     dst_trans->stride,
+                     0, 0,
                      w, h,
                      src_map,
-                     do_flip ? -(int) src->stride : src->stride,
-                     src_x,
-                     do_flip ? src_y + h - 1 : src_y);
+                     do_flip ? -(int) src_trans->stride : src_trans->stride,
+                     0,
+                     do_flip ? h - 1 : 0);
    }
 
-   pipe->screen->surface_unmap(pipe->screen, src);
-   pipe->screen->surface_unmap(pipe->screen, dst);
+   pipe->screen->transfer_unmap(pipe->screen, src_trans);
+   pipe->screen->transfer_unmap(pipe->screen, dst_trans);
 
-   if (new_src)
-      screen->tex_surface_release(screen, &new_src);
-   if (new_dst)
-      screen->tex_surface_release(screen, &new_dst);
+   screen->tex_transfer_release(screen, &src_trans);
+   screen->tex_transfer_release(screen, &dst_trans);
 }
 
-
-
-static void *
-get_pointer(struct pipe_surface *dst, void *dst_map, unsigned x, unsigned y)
-{
-   return (char *)dst_map
-      + y / dst->block.height * dst->stride
-      + x / dst->block.width * dst->block.size;
-}
 
 
 #define UBYTE_TO_USHORT(B) ((B) | ((B) << 8))
@@ -260,42 +238,38 @@ util_surface_fill(struct pipe_context *pipe,
                   unsigned width, unsigned height, unsigned value)
 {
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_surface *new_dst = NULL;
+   struct pipe_transfer *dst_trans;
    void *dst_map;
 
-   if ((dst->usage & PIPE_BUFFER_USAGE_CPU_WRITE) == 0) {
-      /* Need to create new dst surface which is CPU writable */
-      assert(dst->texture);
-      if (!dst->texture)
-         return;
-      new_dst = screen->get_tex_surface(screen,
+   assert(dst->texture);
+   if (!dst->texture)
+      return;
+   dst_trans = screen->get_tex_transfer(screen,
                                         dst->texture,
                                         dst->face,
                                         dst->level,
                                         dst->zslice,
-                                        PIPE_BUFFER_USAGE_CPU_WRITE);
-      dst = new_dst;
-   }
+                                        PIPE_TRANSFER_WRITE,
+                                        dstx, dsty, width, height);
 
-   dst_map = pipe->screen->surface_map(screen,
-                                       dst, PIPE_BUFFER_USAGE_CPU_WRITE);
+   dst_map = pipe->screen->transfer_map(screen, dst_trans);
 
    assert(dst_map);
 
    if (dst_map) {
-      assert(dst->stride > 0);
+      assert(dst_trans->stride > 0);
 
-      switch (dst->block.size) {
+      switch (dst_trans->block.size) {
       case 1:
       case 2:
       case 4:
-         pipe_fill_rect(dst_map, &dst->block, dst->stride,
-                        dstx, dsty, width, height, value);
+         pipe_fill_rect(dst_map, &dst_trans->block, dst_trans->stride,
+                        0, 0, width, height, value);
          break;
       case 8:
          {
             /* expand the 4-byte clear value to an 8-byte value */
-            ushort *row = (ushort *) get_pointer(dst, dst_map, dstx, dsty);
+            ushort *row = (ushort *) dst_map;
             ushort val0 = UBYTE_TO_USHORT((value >>  0) & 0xff);
             ushort val1 = UBYTE_TO_USHORT((value >>  8) & 0xff);
             ushort val2 = UBYTE_TO_USHORT((value >> 16) & 0xff);
@@ -312,7 +286,7 @@ util_surface_fill(struct pipe_context *pipe,
                   row[j*4+2] = val2;
                   row[j*4+3] = val3;
                }
-               row += dst->stride/2;
+               row += dst_trans->stride/2;
             }
          }
          break;
@@ -322,8 +296,6 @@ util_surface_fill(struct pipe_context *pipe,
       }
    }
 
-   pipe->screen->surface_unmap(pipe->screen, dst);
-
-   if (new_dst)
-      screen->tex_surface_release(screen, &new_dst);
+   pipe->screen->transfer_unmap(pipe->screen, dst_trans);
+   screen->tex_transfer_release(screen, &dst_trans);
 }
