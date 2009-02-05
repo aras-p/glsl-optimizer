@@ -72,9 +72,8 @@ _slang_delete_var_table(slang_var_table *vt)
 
 
 /**
- * Create new table, put at head, return ptr to it.
- * XXX we should take a maxTemps parameter to indicate how many temporaries
- * are available for the current shader/program target.
+ * Create new table on top of vartable stack.
+ * Used when we enter a {} block.
  */
 void
 _slang_push_var_table(slang_var_table *vt)
@@ -95,7 +94,8 @@ _slang_push_var_table(slang_var_table *vt)
 
 
 /**
- * Destroy given table, return ptr to Parent
+ * Pop top entry from variable table.
+ * Used when we leave a {} block.
  */
 void
 _slang_pop_var_table(slang_var_table *vt)
@@ -125,10 +125,12 @@ _slang_pop_var_table(slang_var_table *vt)
       else
          comp = 0;
 
-      assert(store->Index >= 0);
-      for (j = 0; j < store->Size; j++) {
-         assert(t->Temps[store->Index * 4 + j + comp] == VAR);
-         t->Temps[store->Index * 4 + j + comp] = FREE;
+      /* store->Index may be -1 if we run out of registers */
+      if (store->Index >= 0) {
+         for (j = 0; j < store->Size; j++) {
+            assert(t->Temps[store->Index * 4 + j + comp] == VAR);
+            t->Temps[store->Index * 4 + j + comp] = FREE;
+         }
       }
       store->Index = -1;
    }
@@ -156,7 +158,7 @@ _slang_pop_var_table(slang_var_table *vt)
 
 
 /**
- * Add a new variable to the given symbol table.
+ * Add a new variable to the given var/symbol table.
  */
 void
 _slang_add_variable(slang_var_table *vt, slang_variable *v)
@@ -214,6 +216,7 @@ alloc_reg(slang_var_table *vt, GLint size, GLboolean isTemp)
    for (i = 0; i <= vt->MaxRegisters * 4 - size; i += step) {
       GLuint found = 0;
       for (j = 0; j < (GLuint) size; j++) {
+         assert(i + j < 4 * MAX_PROGRAM_TEMPS);
          if (i + j < vt->MaxRegisters * 4 && t->Temps[i + j] == FREE) {
             found++;
          }
@@ -225,13 +228,17 @@ alloc_reg(slang_var_table *vt, GLint size, GLboolean isTemp)
          /* found block of size free regs */
          if (size > 1)
             assert(i % 4 == 0);
-         for (j = 0; j < (GLuint) size; j++)
+         for (j = 0; j < (GLuint) size; j++) {
+            assert(i + j < 4 * MAX_PROGRAM_TEMPS);
             t->Temps[i + j] = isTemp ? TEMP : VAR;
+         }
          assert(i < MAX_PROGRAM_TEMPS * 4);
          t->ValSize[i] = size;
          return i;
       }
    }
+
+   /* if we get here, we ran out of registers */
    return -1;
 }
 
