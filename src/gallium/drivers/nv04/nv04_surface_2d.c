@@ -391,7 +391,7 @@ nv04_surface_2d_init(struct nouveau_winsys *nvws)
 	BEGIN_RING(chan, ctx->rect, NV04_GDI_RECTANGLE_TEXT_DMA_NOTIFY, 1);
 	OUT_RING  (chan, ctx->ntfy->handle);
 	BEGIN_RING(chan, ctx->rect, NV04_GDI_RECTANGLE_TEXT_SURFACE, 1);
-	OUT_RING  (chan, ctx->ntfy->handle);
+	OUT_RING  (chan, ctx->surf2d->handle);
 	BEGIN_RING(chan, ctx->rect, NV04_GDI_RECTANGLE_TEXT_OPERATION, 1);
 	OUT_RING  (chan, NV04_GDI_RECTANGLE_TEXT_OPERATION_SRCCOPY);
 	BEGIN_RING(chan, ctx->rect,
