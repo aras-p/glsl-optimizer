@@ -1545,13 +1545,16 @@ static void
 nv50_program_upload_data(struct nv50_context *nv50, float *map,
 			 unsigned start, unsigned count)
 {
+	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+
 	while (count) {
 		unsigned nr = count > 2047 ? 2047 : count;
 
-		BEGIN_RING(tesla, 0x00000f00, 1);
-		OUT_RING  ((NV50_CB_PMISC << 0) | (start << 8));
-		BEGIN_RING(tesla, 0x40000f04, nr);
-		OUT_RINGp (map, nr);
+		BEGIN_RING(chan, tesla, 0x00000f00, 1);
+		OUT_RING  (chan, (NV50_CB_PMISC << 0) | (start << 8));
+		BEGIN_RING(chan, tesla, 0x40000f04, nr);
+		OUT_RINGp (chan, map, nr);
 
 		map += nr;
 		start += nr;
@@ -1598,6 +1601,8 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 static void
 nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 {
+	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct pipe_winsys *ws = nv50->pipe.winsys;
 	struct nv50_program_exec *e;
 	struct nouveau_stateobj *so;
@@ -1664,14 +1669,14 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 		nr = MIN2(count, 2047);
 		nr = MIN2(nvws->channel->pushbuf->remaining, nr);
 		if (nvws->channel->pushbuf->remaining < (nr + 3)) {
-			FIRE_RING(NULL);
+			FIRE_RING(chan);
 			continue;
 		}
 
-		BEGIN_RING(tesla, 0x0f00, 1);
-		OUT_RING  ((start << 8) | NV50_CB_PUPLOAD);
-		BEGIN_RING(tesla, 0x40000f04, nr);	
-		OUT_RINGp (up + start, nr);
+		BEGIN_RING(chan, tesla, 0x0f00, 1);
+		OUT_RING  (chan, (start << 8) | NV50_CB_PUPLOAD);
+		BEGIN_RING(chan, tesla, 0x40000f04, nr);	
+		OUT_RINGp (chan, up + start, nr);
 
 		start += nr;
 		count -= nr;

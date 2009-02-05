@@ -15,10 +15,6 @@
 #include "nouveau/nouveau_gldefs.h"
 #include "nouveau/nouveau_stateobj.h"
 
-#define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
-	struct nv50_screen *ctx = nv50->screen
-#include "nouveau/nouveau_push.h"
-
 #include "nv50_screen.h"
 #include "nv50_program.h"
 
