@@ -66,7 +66,6 @@ extern "C" {
 /* fwd decls */
 struct pipe_screen;
 struct pipe_surface;
-struct pipe_winsys;
 
 
 

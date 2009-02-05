@@ -50,6 +50,8 @@ extern "C" {
 
 /** Opaque type */
 struct pipe_fence_handle;
+struct pipe_winsys;
+
 
 /**
  * Gallium screen/adapter context.  Basically everything
