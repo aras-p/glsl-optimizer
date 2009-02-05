@@ -290,8 +290,8 @@ OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
 OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0, 1);
 OUT_CS_RELOC(dest->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 /* XXX this should not be so rigid and it still doesn't work right */
-OUT_CS_REG(R300_RB3D_COLORPITCH0, (w / 4) | R300_COLOR_TILE_ENABLE |
-    R300_COLOR_FORMAT_ARGB8888);
+debug_printf("Buffer width (stride): %d\n", dest->stride);
+OUT_CS_REG(R300_RB3D_COLORPITCH0, (dest->stride >> 2) | R300_COLOR_FORMAT_ARGB8888);
 OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0x0000000F);
 /* XXX Packet3 */
 OUT_CS(CP_PACKET3(R200_3D_DRAW_IMMD_2, 8));

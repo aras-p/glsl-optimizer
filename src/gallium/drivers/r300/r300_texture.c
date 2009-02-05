@@ -44,11 +44,11 @@ static void r300_setup_miptree(struct r300_texture* tex)
 
         /* Radeons enjoy things in multiples of 32. */
         /* XXX NPOT -> 64, not 32 */
-        stride = (base->nblocksx[i] * base->block.size + 31) & ~31;
+        stride = (base->nblocksx[i] * base->block.size + 63) & ~63;
         size = stride * base->nblocksy[i] * base->depth[i];
 
         /* XXX 64 for NPOT */
-        tex->offset[i] = (tex->size + 31) & ~31;
+        tex->offset[i] = (tex->size + 63) & ~63;
         tex->size = tex->offset[i] + size;
     }
 }
@@ -72,7 +72,7 @@ static struct pipe_texture*
 
     r300_setup_miptree(tex);
 
-    tex->buffer = screen->buffer_create(screen, 32,
+    tex->buffer = screen->buffer_create(screen, 63,
                                         PIPE_BUFFER_USAGE_PIXEL,
                                         tex->size);
 
@@ -130,7 +130,7 @@ static struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
         surface->nblocksy = texture->nblocksy[level];
         /* XXX save the actual stride instead plz kthnxbai */
         surface->stride =
-            (texture->nblocksx[level] * texture->block.size + 31) & ~31;
+            (texture->nblocksx[level] * texture->block.size + 63) & ~63;
         surface->offset = offset;
         surface->usage = flags;
         surface->status = PIPE_SURFACE_STATUS_DEFINED;
