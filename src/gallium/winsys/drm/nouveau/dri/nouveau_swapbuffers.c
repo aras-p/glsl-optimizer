@@ -28,18 +28,36 @@ nouveau_copy_buffer(__DRIdrawablePrivate *dPriv, struct pipe_surface *surf,
 	pbox = dPriv->pClipRects;
 	nbox = dPriv->numClipRects;
 
-	nv->base.surface_copy_prep(&nv->base, nv->base.frontbuffer, surf);
-	for (i = 0; i < nbox; i++, pbox++) {
-		int sx, sy, dx, dy, w, h;
+	if (nv->base.surface_copy_prep) {
+		nv->base.surface_copy_prep(&nv->base, nv->base.frontbuffer, surf);
+		for (i = 0; i < nbox; i++, pbox++) {
+			int sx, sy, dx, dy, w, h;
 
-		sx = pbox->x1 - dPriv->x;
-		sy = pbox->y1 - dPriv->y;
-		dx = pbox->x1;
-		dy = pbox->y1;
-		w  = pbox->x2 - pbox->x1;
-		h  = pbox->y2 - pbox->y1;
+			sx = pbox->x1 - dPriv->x;
+			sy = pbox->y1 - dPriv->y;
+			dx = pbox->x1;
+			dy = pbox->y1;
+			w  = pbox->x2 - pbox->x1;
+			h  = pbox->y2 - pbox->y1;
 
-		nv->base.surface_copy(&nv->base, dx, dy, sx, sy, w, h);
+			nv->base.surface_copy(&nv->base, dx, dy, sx, sy, w, h);
+		}
+	} else {
+		struct pipe_context *pipe = nv->base.nvc->pctx[nv->base.pctx_id];
+
+		for (i = 0; i < nbox; i++, pbox++) {
+			int sx, sy, dx, dy, w, h;
+
+			sx = pbox->x1 - dPriv->x;
+			sy = pbox->y1 - dPriv->y;
+			dx = pbox->x1;
+			dy = pbox->y1;
+			w  = pbox->x2 - pbox->x1;
+			h  = pbox->y2 - pbox->y1;
+
+			pipe->surface_copy(pipe, FALSE, nv->base.frontbuffer,
+					   dx, dy, surf, sx, sy, w, h);
+		}
 	}
 
 	FIRE_RING(nv->base.nvc->channel);

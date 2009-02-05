@@ -56,7 +56,7 @@ nouveau_channel_context_create(struct nouveau_device *dev)
 	case 0x50:
 	case 0x80:
 	case 0x90:
-		ret = nouveau_surface_channel_create_nv50(nvc);
+		/* pipe driver does this */
 		break;
 	default:
 		ret = nouveau_surface_channel_create_nv04(nvc);
@@ -168,8 +168,7 @@ nouveau_context_init(struct nouveau_screen *nv_screen,
 	case 0x50:
 	case 0x80:
 	case 0x90:
-		if (nouveau_surface_init_nv50(nv))
-			return 1;
+		/* pipe driver does this */
 		break;
 	default:
 		if (nouveau_surface_init_nv04(nv))

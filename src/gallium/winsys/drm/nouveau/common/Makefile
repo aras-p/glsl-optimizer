@@ -10,8 +10,7 @@ C_SOURCES = \
 	nouveau_winsys.c \
 	nouveau_winsys_pipe.c \
 	nouveau_winsys_softpipe.c \
-	nv04_surface.c \
-	nv50_surface.c
+	nv04_surface.c
 
 
 include ./Makefile.template

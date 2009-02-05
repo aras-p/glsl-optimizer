@@ -173,6 +173,14 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		return NULL;
 	screen->nvws = nvws;
 
+	/* 2D object */
+	ret = nvws->grobj_alloc(nvws, NV50_2D, &screen->eng2d);
+	if (ret) {
+		NOUVEAU_ERR("Error creating 2D object: %d\n", ret);
+		nv50_screen_destroy(&screen->pipe);
+		return NULL;
+	}
+
 	/* 3D object */
 	if ((chipset & 0xf0) != 0x50 && (chipset & 0xf0) != 0x80) {
 		NOUVEAU_ERR("Not a G8x chipset\n");
@@ -217,6 +225,22 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		nv50_screen_destroy(&screen->pipe);
 		return NULL;
 	}
+
+	/* Static 2D init */
+	so = so_new(64, 0);
+	so_method(so, screen->eng2d, NV50_2D_DMA_NOTIFY, 4);
+	so_data  (so, screen->sync->handle);
+	so_data  (so, screen->nvws->channel->vram->handle);
+	so_data  (so, screen->nvws->channel->vram->handle);
+	so_data  (so, screen->nvws->channel->vram->handle);
+	so_method(so, screen->eng2d, NV50_2D_OPERATION, 1);
+	so_data  (so, NV50_2D_OPERATION_SRCCOPY);
+	so_method(so, screen->eng2d, 0x0290, 1);
+	so_data  (so, 0);
+	so_method(so, screen->eng2d, 0x0888, 1);
+	so_data  (so, 1);
+	so_emit(nvws, so);
+	so_ref(NULL, &so);
 
 	/* Static tesla init */
 	so = so_new(256, 20);

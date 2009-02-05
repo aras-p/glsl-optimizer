@@ -11,6 +11,7 @@ struct nv50_screen {
 	unsigned cur_pctx;
 
 	struct nouveau_grobj *tesla;
+	struct nouveau_grobj *eng2d;
 	struct nouveau_notifier *sync;
 
 	struct pipe_buffer *constbuf;

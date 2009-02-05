@@ -20,12 +20,127 @@
  * SOFTWARE.
  */
 
+#define __NOUVEAU_PUSH_H__
+#include <stdint.h>
+#include "nouveau/nouveau_pushbuf.h"
 #include "nv50_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_inlines.h"
 
 #include "util/u_tile.h"
+
+static INLINE int
+nv50_format(enum pipe_format format)
+{
+	switch (format) {
+	case PIPE_FORMAT_A8R8G8B8_UNORM:
+	case PIPE_FORMAT_Z24S8_UNORM:
+		return NV50_2D_DST_FORMAT_32BPP;
+	case PIPE_FORMAT_X8R8G8B8_UNORM:
+		return NV50_2D_DST_FORMAT_24BPP;
+	case PIPE_FORMAT_R5G6B5_UNORM:
+		return NV50_2D_DST_FORMAT_16BPP;
+	case PIPE_FORMAT_A8_UNORM:
+		return NV50_2D_DST_FORMAT_8BPP;
+	default:
+		return -1;
+	}
+}
+
+static int
+nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
+{
+	struct nouveau_channel *chan = screen->nvws->channel;
+	struct nouveau_grobj *eng2d = screen->eng2d;
+	struct nouveau_bo *bo;
+ 	int format, mthd = dst ? NV50_2D_DST_FORMAT : NV50_2D_SRC_FORMAT;
+ 	int flags = NOUVEAU_BO_VRAM | (dst ? NOUVEAU_BO_WR : NOUVEAU_BO_RD);
+ 
+	bo = screen->nvws->get_bo(nv50_miptree(ps->texture)->buffer);
+	if (!bo)
+		return 1;
+
+ 	format = nv50_format(ps->format);
+ 	if (format < 0)
+ 		return 1;
+  
+ 	if (!bo->tiled) {
+ 		BEGIN_RING(chan, eng2d, mthd, 2);
+ 		OUT_RING  (chan, format);
+ 		OUT_RING  (chan, 1);
+ 		BEGIN_RING(chan, eng2d, mthd + 0x14, 5);
+ 		OUT_RING  (chan, ps->stride);
+ 		OUT_RING  (chan, ps->width);
+ 		OUT_RING  (chan, ps->height);
+ 		OUT_RELOCh(chan, bo, ps->offset, flags);
+ 		OUT_RELOCl(chan, bo, ps->offset, flags);
+ 	} else {
+ 		BEGIN_RING(chan, eng2d, mthd, 5);
+ 		OUT_RING  (chan, format);
+ 		OUT_RING  (chan, 0);
+ 		OUT_RING  (chan, 0);
+ 		OUT_RING  (chan, 1);
+ 		OUT_RING  (chan, 0);
+ 		BEGIN_RING(chan, eng2d, mthd + 0x18, 4);
+ 		OUT_RING  (chan, ps->width);
+ 		OUT_RING  (chan, ps->height);
+ 		OUT_RELOCh(chan, bo, ps->offset, flags);
+ 		OUT_RELOCl(chan, bo, ps->offset, flags);
+ 	}
+ 
+#if 0
+ 	if (dst) {
+ 		BEGIN_RING(chan, eng2d, NV50_2D_CLIP_X, 4);
+ 		OUT_RING  (chan, 0);
+ 		OUT_RING  (chan, 0);
+ 		OUT_RING  (chan, surf->width);
+ 		OUT_RING  (chan, surf->height);
+ 	}
+#endif
+  
+ 	return 0;
+}
+
+static int
+nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
+		     int dx, int dy, struct pipe_surface *src, int sx, int sy,
+		     int w, int h)
+{
+	struct nouveau_channel *chan = screen->nvws->channel;
+	struct nouveau_grobj *eng2d = screen->eng2d;
+	int ret;
+
+	WAIT_RING (chan, 32);
+
+	ret = nv50_surface_set(screen, dst, 1);
+	if (ret)
+		return ret;
+
+	ret = nv50_surface_set(screen, src, 0);
+	if (ret)
+		return ret;
+
+	BEGIN_RING(chan, eng2d, 0x088c, 1);
+	OUT_RING  (chan, 0);
+	BEGIN_RING(chan, eng2d, NV50_2D_BLIT_DST_X, 4);
+	OUT_RING  (chan, dx);
+	OUT_RING  (chan, dy);
+	OUT_RING  (chan, w);
+	OUT_RING  (chan, h);
+	BEGIN_RING(chan, eng2d, 0x08c0, 4);
+	OUT_RING  (chan, 0);
+	OUT_RING  (chan, 1);
+	OUT_RING  (chan, 0);
+	OUT_RING  (chan, 1);
+	BEGIN_RING(chan, eng2d, 0x08d0, 4);
+	OUT_RING  (chan, 0);
+	OUT_RING  (chan, sx);
+	OUT_RING  (chan, 0);
+	OUT_RING  (chan, sy);
+
+	return 0;
+}
 
 static void
 nv50_surface_copy(struct pipe_context *pipe, boolean flip,
@@ -34,17 +149,19 @@ nv50_surface_copy(struct pipe_context *pipe, boolean flip,
 		  unsigned width, unsigned height)
 {
 	struct nv50_context *nv50 = (struct nv50_context *)pipe;
-	struct nouveau_winsys *nvws = nv50->screen->nvws;
+	struct nv50_screen *screen = nv50->screen;
+
+	assert(src->format == dest->format);
 
 	if (flip) {
 		desty += height;
 		while (height--) {
-			nvws->surface_copy(nvws, dest, destx, desty--, src,
-					   srcx, srcy++, width, 1);
+			nv50_surface_do_copy(screen, dest, destx, desty--, src,
+					     srcx, srcy++, width, 1);
 		}
 	} else {
-		nvws->surface_copy(nvws, dest, destx, desty, src, srcx, srcy,
-				   width, height);
+		nv50_surface_do_copy(screen, dest, destx, desty, src, srcx,
+				     srcy, width, height);
 	}
 }
 
@@ -54,9 +171,30 @@ nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 		  unsigned height, unsigned value)
 {
 	struct nv50_context *nv50 = (struct nv50_context *)pipe;
-	struct nouveau_winsys *nvws = nv50->screen->nvws;
+	struct nv50_screen *screen = nv50->screen;
+	struct nouveau_channel *chan = screen->nvws->channel;
+	struct nouveau_grobj *eng2d = screen->eng2d;
+	int format, ret;
 
-	nvws->surface_fill(nvws, dest, destx, desty, width, height, value);
+	format = nv50_format(dest->format);
+	if (format < 0)
+		return;
+
+	WAIT_RING (chan, 32);
+
+	ret = nv50_surface_set(screen, dest, 1);
+	if (ret)
+		return;
+
+	BEGIN_RING(chan, eng2d, 0x0580, 3);
+	OUT_RING  (chan, 4);
+	OUT_RING  (chan, format);
+	OUT_RING  (chan, value);
+	BEGIN_RING(chan, eng2d, NV50_2D_RECT_X1, 4);
+	OUT_RING  (chan, destx);
+	OUT_RING  (chan, desty);
+	OUT_RING  (chan, width);
+	OUT_RING  (chan, height);
 }
 
 static void *

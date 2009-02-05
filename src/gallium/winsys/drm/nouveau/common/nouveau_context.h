@@ -78,10 +78,7 @@ extern void UNLOCK_HARDWARE(struct nouveau_context *);
 
 extern int
 nouveau_surface_channel_create_nv04(struct nouveau_channel_context *);
-extern int
-nouveau_surface_channel_create_nv50(struct nouveau_channel_context *);
 extern int nouveau_surface_init_nv04(struct nouveau_context *);
-extern int nouveau_surface_init_nv50(struct nouveau_context *);
 
 extern uint32_t *nouveau_pipe_dma_beginp(struct nouveau_grobj *, int, int);
 extern void nouveau_pipe_dma_kickoff(struct nouveau_channel *);
