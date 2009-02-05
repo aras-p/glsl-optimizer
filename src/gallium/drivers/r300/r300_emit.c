@@ -79,6 +79,22 @@ void r300_emit_dsa_state(struct r300_context* r300,
     END_CS;
 }
 
+/* XXX add pitch, stride, z/stencil buf */
+void r300_emit_fb_state(struct r300_context* r300,
+                        struct pipe_framebuffer_state* fb)
+{
+    CS_LOCALS(r300);
+    int i;
+
+    BEGIN_CS((3 * fb->nr_cbufs) + 6);
+    for (i = 0; i < fb->nr_cbufs; i++) {
+        OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
+        OUT_CS_RELOC(fb->cbufs[i]->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+    }
+    R300_PACIFY;
+    END_CS;
+}
+
 void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
 {
     struct r300_screen* r300screen =
