@@ -47,6 +47,7 @@ nv30_surface_copy(struct pipe_context *pipe, boolean do_flip,
 			eng2d->copy(eng2d, dest, destx, desty--, src,
 				    srcx, srcy++, width, 1);
 		}
+		return;
 	}
 
 	eng2d->copy(eng2d, dest, destx, desty, src, srcx, srcy, width, height);
