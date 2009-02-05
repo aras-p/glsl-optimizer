@@ -139,6 +139,9 @@ def do_tri( intype, outtype, ptr, v0, v1, v2, inpv, outpv ):
         else:
             tri( intype, outtype, ptr, v2, v0, v1 )
 
+def do_quad( intype, outtype, ptr, v0, v1, v2, v3, inpv, outpv ):
+    do_tri( intype, outtype, ptr+'+0',  v0, v1, v3, inpv, outpv );
+    do_tri( intype, outtype, ptr+'+3',  v1, v2, v3, inpv, outpv );
 
 def name(intype, outtype, inpv, outpv, prim):
     if intype == GENERATE:
@@ -234,8 +237,7 @@ def polygon(intype, outtype, inpv, outpv):
 def quads(intype, outtype, inpv, outpv):
     preamble(intype, outtype, inpv, outpv, prim='quads')
     print '  for (j = i = 0; j < nr; j+=6, i+=4) { '
-    do_tri( intype, outtype, 'out+j+0',  'i+0', 'i+1', 'i+3', inpv, outpv );
-    do_tri( intype, outtype, 'out+j+3',  'i+1', 'i+2', 'i+3', inpv, outpv );
+    do_quad( intype, outtype, 'out+j', 'i+0', 'i+1', 'i+2', 'i+3', inpv, outpv );
     print '   }'
     postamble()
 
@@ -243,8 +245,7 @@ def quads(intype, outtype, inpv, outpv):
 def quadstrip(intype, outtype, inpv, outpv):
     preamble(intype, outtype, inpv, outpv, prim='quadstrip')
     print '  for (j = i = 0; j < nr; j+=6, i+=2) { '
-    do_tri( intype, outtype, 'out+j+0',  'i+0', 'i+1', 'i+3', inpv, outpv );
-    do_tri( intype, outtype, 'out+j+3',  'i+1', 'i+2', 'i+3', inpv, outpv );
+    do_quad( intype, outtype, 'out+j', 'i+2', 'i+0', 'i+1', 'i+3', inpv, outpv );
     print '   }'
     postamble()
 

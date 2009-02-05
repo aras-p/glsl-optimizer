@@ -176,11 +176,11 @@ static void generate_quadstrip_ushort_first2first(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (ushort)(i+0);
-      (out+j+0)[1] = (ushort)(i+1);
+      (out+j+0)[0] = (ushort)(i+2);
+      (out+j+0)[1] = (ushort)(i+0);
       (out+j+0)[2] = (ushort)(i+3);
-      (out+j+3)[0] = (ushort)(i+1);
-      (out+j+3)[1] = (ushort)(i+2);
+      (out+j+3)[0] = (ushort)(i+0);
+      (out+j+3)[1] = (ushort)(i+1);
       (out+j+3)[2] = (ushort)(i+3);
    }
 }
@@ -309,12 +309,12 @@ static void generate_quadstrip_ushort_first2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (ushort)(i+1);
+      (out+j+0)[0] = (ushort)(i+0);
       (out+j+0)[1] = (ushort)(i+3);
-      (out+j+0)[2] = (ushort)(i+0);
-      (out+j+3)[0] = (ushort)(i+2);
+      (out+j+0)[2] = (ushort)(i+2);
+      (out+j+3)[0] = (ushort)(i+1);
       (out+j+3)[1] = (ushort)(i+3);
-      (out+j+3)[2] = (ushort)(i+1);
+      (out+j+3)[2] = (ushort)(i+0);
    }
 }
 static void generate_polygon_ushort_first2last(
@@ -443,11 +443,11 @@ static void generate_quadstrip_ushort_last2first(
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
       (out+j+0)[0] = (ushort)(i+3);
-      (out+j+0)[1] = (ushort)(i+0);
-      (out+j+0)[2] = (ushort)(i+1);
+      (out+j+0)[1] = (ushort)(i+2);
+      (out+j+0)[2] = (ushort)(i+0);
       (out+j+3)[0] = (ushort)(i+3);
-      (out+j+3)[1] = (ushort)(i+1);
-      (out+j+3)[2] = (ushort)(i+2);
+      (out+j+3)[1] = (ushort)(i+0);
+      (out+j+3)[2] = (ushort)(i+1);
    }
 }
 static void generate_polygon_ushort_last2first(
@@ -575,11 +575,11 @@ static void generate_quadstrip_ushort_last2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (ushort)(i+0);
-      (out+j+0)[1] = (ushort)(i+1);
+      (out+j+0)[0] = (ushort)(i+2);
+      (out+j+0)[1] = (ushort)(i+0);
       (out+j+0)[2] = (ushort)(i+3);
-      (out+j+3)[0] = (ushort)(i+1);
-      (out+j+3)[1] = (ushort)(i+2);
+      (out+j+3)[0] = (ushort)(i+0);
+      (out+j+3)[1] = (ushort)(i+1);
       (out+j+3)[2] = (ushort)(i+3);
    }
 }
@@ -708,11 +708,11 @@ static void generate_quadstrip_uint_first2first(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (uint)(i+0);
-      (out+j+0)[1] = (uint)(i+1);
+      (out+j+0)[0] = (uint)(i+2);
+      (out+j+0)[1] = (uint)(i+0);
       (out+j+0)[2] = (uint)(i+3);
-      (out+j+3)[0] = (uint)(i+1);
-      (out+j+3)[1] = (uint)(i+2);
+      (out+j+3)[0] = (uint)(i+0);
+      (out+j+3)[1] = (uint)(i+1);
       (out+j+3)[2] = (uint)(i+3);
    }
 }
@@ -841,12 +841,12 @@ static void generate_quadstrip_uint_first2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (uint)(i+1);
+      (out+j+0)[0] = (uint)(i+0);
       (out+j+0)[1] = (uint)(i+3);
-      (out+j+0)[2] = (uint)(i+0);
-      (out+j+3)[0] = (uint)(i+2);
+      (out+j+0)[2] = (uint)(i+2);
+      (out+j+3)[0] = (uint)(i+1);
       (out+j+3)[1] = (uint)(i+3);
-      (out+j+3)[2] = (uint)(i+1);
+      (out+j+3)[2] = (uint)(i+0);
    }
 }
 static void generate_polygon_uint_first2last(
@@ -975,11 +975,11 @@ static void generate_quadstrip_uint_last2first(
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
       (out+j+0)[0] = (uint)(i+3);
-      (out+j+0)[1] = (uint)(i+0);
-      (out+j+0)[2] = (uint)(i+1);
+      (out+j+0)[1] = (uint)(i+2);
+      (out+j+0)[2] = (uint)(i+0);
       (out+j+3)[0] = (uint)(i+3);
-      (out+j+3)[1] = (uint)(i+1);
-      (out+j+3)[2] = (uint)(i+2);
+      (out+j+3)[1] = (uint)(i+0);
+      (out+j+3)[2] = (uint)(i+1);
    }
 }
 static void generate_polygon_uint_last2first(
@@ -1107,11 +1107,11 @@ static void generate_quadstrip_uint_last2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (uint)(i+0);
-      (out+j+0)[1] = (uint)(i+1);
+      (out+j+0)[0] = (uint)(i+2);
+      (out+j+0)[1] = (uint)(i+0);
       (out+j+0)[2] = (uint)(i+3);
-      (out+j+3)[0] = (uint)(i+1);
-      (out+j+3)[1] = (uint)(i+2);
+      (out+j+3)[0] = (uint)(i+0);
+      (out+j+3)[1] = (uint)(i+1);
       (out+j+3)[2] = (uint)(i+3);
    }
 }
@@ -1258,11 +1258,11 @@ static void translate_quadstrip_ubyte2ushort_first2first(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (ushort)in[i+0];
-      (out+j+0)[1] = (ushort)in[i+1];
+      (out+j+0)[0] = (ushort)in[i+2];
+      (out+j+0)[1] = (ushort)in[i+0];
       (out+j+0)[2] = (ushort)in[i+3];
-      (out+j+3)[0] = (ushort)in[i+1];
-      (out+j+3)[1] = (ushort)in[i+2];
+      (out+j+3)[0] = (ushort)in[i+0];
+      (out+j+3)[1] = (ushort)in[i+1];
       (out+j+3)[2] = (ushort)in[i+3];
    }
 }
@@ -1411,12 +1411,12 @@ static void translate_quadstrip_ubyte2ushort_first2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (ushort)in[i+1];
+      (out+j+0)[0] = (ushort)in[i+0];
       (out+j+0)[1] = (ushort)in[i+3];
-      (out+j+0)[2] = (ushort)in[i+0];
-      (out+j+3)[0] = (ushort)in[i+2];
+      (out+j+0)[2] = (ushort)in[i+2];
+      (out+j+3)[0] = (ushort)in[i+1];
       (out+j+3)[1] = (ushort)in[i+3];
-      (out+j+3)[2] = (ushort)in[i+1];
+      (out+j+3)[2] = (ushort)in[i+0];
    }
 }
 static void translate_polygon_ubyte2ushort_first2last(
@@ -1565,11 +1565,11 @@ static void translate_quadstrip_ubyte2ushort_last2first(
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
       (out+j+0)[0] = (ushort)in[i+3];
-      (out+j+0)[1] = (ushort)in[i+0];
-      (out+j+0)[2] = (ushort)in[i+1];
+      (out+j+0)[1] = (ushort)in[i+2];
+      (out+j+0)[2] = (ushort)in[i+0];
       (out+j+3)[0] = (ushort)in[i+3];
-      (out+j+3)[1] = (ushort)in[i+1];
-      (out+j+3)[2] = (ushort)in[i+2];
+      (out+j+3)[1] = (ushort)in[i+0];
+      (out+j+3)[2] = (ushort)in[i+1];
    }
 }
 static void translate_polygon_ubyte2ushort_last2first(
@@ -1717,11 +1717,11 @@ static void translate_quadstrip_ubyte2ushort_last2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (ushort)in[i+0];
-      (out+j+0)[1] = (ushort)in[i+1];
+      (out+j+0)[0] = (ushort)in[i+2];
+      (out+j+0)[1] = (ushort)in[i+0];
       (out+j+0)[2] = (ushort)in[i+3];
-      (out+j+3)[0] = (ushort)in[i+1];
-      (out+j+3)[1] = (ushort)in[i+2];
+      (out+j+3)[0] = (ushort)in[i+0];
+      (out+j+3)[1] = (ushort)in[i+1];
       (out+j+3)[2] = (ushort)in[i+3];
    }
 }
@@ -1870,11 +1870,11 @@ static void translate_quadstrip_ubyte2uint_first2first(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (uint)in[i+0];
-      (out+j+0)[1] = (uint)in[i+1];
+      (out+j+0)[0] = (uint)in[i+2];
+      (out+j+0)[1] = (uint)in[i+0];
       (out+j+0)[2] = (uint)in[i+3];
-      (out+j+3)[0] = (uint)in[i+1];
-      (out+j+3)[1] = (uint)in[i+2];
+      (out+j+3)[0] = (uint)in[i+0];
+      (out+j+3)[1] = (uint)in[i+1];
       (out+j+3)[2] = (uint)in[i+3];
    }
 }
@@ -2023,12 +2023,12 @@ static void translate_quadstrip_ubyte2uint_first2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (uint)in[i+1];
+      (out+j+0)[0] = (uint)in[i+0];
       (out+j+0)[1] = (uint)in[i+3];
-      (out+j+0)[2] = (uint)in[i+0];
-      (out+j+3)[0] = (uint)in[i+2];
+      (out+j+0)[2] = (uint)in[i+2];
+      (out+j+3)[0] = (uint)in[i+1];
       (out+j+3)[1] = (uint)in[i+3];
-      (out+j+3)[2] = (uint)in[i+1];
+      (out+j+3)[2] = (uint)in[i+0];
    }
 }
 static void translate_polygon_ubyte2uint_first2last(
@@ -2177,11 +2177,11 @@ static void translate_quadstrip_ubyte2uint_last2first(
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
       (out+j+0)[0] = (uint)in[i+3];
-      (out+j+0)[1] = (uint)in[i+0];
-      (out+j+0)[2] = (uint)in[i+1];
+      (out+j+0)[1] = (uint)in[i+2];
+      (out+j+0)[2] = (uint)in[i+0];
       (out+j+3)[0] = (uint)in[i+3];
-      (out+j+3)[1] = (uint)in[i+1];
-      (out+j+3)[2] = (uint)in[i+2];
+      (out+j+3)[1] = (uint)in[i+0];
+      (out+j+3)[2] = (uint)in[i+1];
    }
 }
 static void translate_polygon_ubyte2uint_last2first(
@@ -2329,11 +2329,11 @@ static void translate_quadstrip_ubyte2uint_last2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (uint)in[i+0];
-      (out+j+0)[1] = (uint)in[i+1];
+      (out+j+0)[0] = (uint)in[i+2];
+      (out+j+0)[1] = (uint)in[i+0];
       (out+j+0)[2] = (uint)in[i+3];
-      (out+j+3)[0] = (uint)in[i+1];
-      (out+j+3)[1] = (uint)in[i+2];
+      (out+j+3)[0] = (uint)in[i+0];
+      (out+j+3)[1] = (uint)in[i+1];
       (out+j+3)[2] = (uint)in[i+3];
    }
 }
@@ -2482,11 +2482,11 @@ static void translate_quadstrip_ushort2ushort_first2first(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (ushort)in[i+0];
-      (out+j+0)[1] = (ushort)in[i+1];
+      (out+j+0)[0] = (ushort)in[i+2];
+      (out+j+0)[1] = (ushort)in[i+0];
       (out+j+0)[2] = (ushort)in[i+3];
-      (out+j+3)[0] = (ushort)in[i+1];
-      (out+j+3)[1] = (ushort)in[i+2];
+      (out+j+3)[0] = (ushort)in[i+0];
+      (out+j+3)[1] = (ushort)in[i+1];
       (out+j+3)[2] = (ushort)in[i+3];
    }
 }
@@ -2635,12 +2635,12 @@ static void translate_quadstrip_ushort2ushort_first2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (ushort)in[i+1];
+      (out+j+0)[0] = (ushort)in[i+0];
       (out+j+0)[1] = (ushort)in[i+3];
-      (out+j+0)[2] = (ushort)in[i+0];
-      (out+j+3)[0] = (ushort)in[i+2];
+      (out+j+0)[2] = (ushort)in[i+2];
+      (out+j+3)[0] = (ushort)in[i+1];
       (out+j+3)[1] = (ushort)in[i+3];
-      (out+j+3)[2] = (ushort)in[i+1];
+      (out+j+3)[2] = (ushort)in[i+0];
    }
 }
 static void translate_polygon_ushort2ushort_first2last(
@@ -2789,11 +2789,11 @@ static void translate_quadstrip_ushort2ushort_last2first(
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
       (out+j+0)[0] = (ushort)in[i+3];
-      (out+j+0)[1] = (ushort)in[i+0];
-      (out+j+0)[2] = (ushort)in[i+1];
+      (out+j+0)[1] = (ushort)in[i+2];
+      (out+j+0)[2] = (ushort)in[i+0];
       (out+j+3)[0] = (ushort)in[i+3];
-      (out+j+3)[1] = (ushort)in[i+1];
-      (out+j+3)[2] = (ushort)in[i+2];
+      (out+j+3)[1] = (ushort)in[i+0];
+      (out+j+3)[2] = (ushort)in[i+1];
    }
 }
 static void translate_polygon_ushort2ushort_last2first(
@@ -2941,11 +2941,11 @@ static void translate_quadstrip_ushort2ushort_last2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (ushort)in[i+0];
-      (out+j+0)[1] = (ushort)in[i+1];
+      (out+j+0)[0] = (ushort)in[i+2];
+      (out+j+0)[1] = (ushort)in[i+0];
       (out+j+0)[2] = (ushort)in[i+3];
-      (out+j+3)[0] = (ushort)in[i+1];
-      (out+j+3)[1] = (ushort)in[i+2];
+      (out+j+3)[0] = (ushort)in[i+0];
+      (out+j+3)[1] = (ushort)in[i+1];
       (out+j+3)[2] = (ushort)in[i+3];
    }
 }
@@ -3094,11 +3094,11 @@ static void translate_quadstrip_ushort2uint_first2first(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (uint)in[i+0];
-      (out+j+0)[1] = (uint)in[i+1];
+      (out+j+0)[0] = (uint)in[i+2];
+      (out+j+0)[1] = (uint)in[i+0];
       (out+j+0)[2] = (uint)in[i+3];
-      (out+j+3)[0] = (uint)in[i+1];
-      (out+j+3)[1] = (uint)in[i+2];
+      (out+j+3)[0] = (uint)in[i+0];
+      (out+j+3)[1] = (uint)in[i+1];
       (out+j+3)[2] = (uint)in[i+3];
    }
 }
@@ -3247,12 +3247,12 @@ static void translate_quadstrip_ushort2uint_first2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (uint)in[i+1];
+      (out+j+0)[0] = (uint)in[i+0];
       (out+j+0)[1] = (uint)in[i+3];
-      (out+j+0)[2] = (uint)in[i+0];
-      (out+j+3)[0] = (uint)in[i+2];
+      (out+j+0)[2] = (uint)in[i+2];
+      (out+j+3)[0] = (uint)in[i+1];
       (out+j+3)[1] = (uint)in[i+3];
-      (out+j+3)[2] = (uint)in[i+1];
+      (out+j+3)[2] = (uint)in[i+0];
    }
 }
 static void translate_polygon_ushort2uint_first2last(
@@ -3401,11 +3401,11 @@ static void translate_quadstrip_ushort2uint_last2first(
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
       (out+j+0)[0] = (uint)in[i+3];
-      (out+j+0)[1] = (uint)in[i+0];
-      (out+j+0)[2] = (uint)in[i+1];
+      (out+j+0)[1] = (uint)in[i+2];
+      (out+j+0)[2] = (uint)in[i+0];
       (out+j+3)[0] = (uint)in[i+3];
-      (out+j+3)[1] = (uint)in[i+1];
-      (out+j+3)[2] = (uint)in[i+2];
+      (out+j+3)[1] = (uint)in[i+0];
+      (out+j+3)[2] = (uint)in[i+1];
    }
 }
 static void translate_polygon_ushort2uint_last2first(
@@ -3553,11 +3553,11 @@ static void translate_quadstrip_ushort2uint_last2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (uint)in[i+0];
-      (out+j+0)[1] = (uint)in[i+1];
+      (out+j+0)[0] = (uint)in[i+2];
+      (out+j+0)[1] = (uint)in[i+0];
       (out+j+0)[2] = (uint)in[i+3];
-      (out+j+3)[0] = (uint)in[i+1];
-      (out+j+3)[1] = (uint)in[i+2];
+      (out+j+3)[0] = (uint)in[i+0];
+      (out+j+3)[1] = (uint)in[i+1];
       (out+j+3)[2] = (uint)in[i+3];
    }
 }
@@ -3706,11 +3706,11 @@ static void translate_quadstrip_uint2ushort_first2first(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (ushort)in[i+0];
-      (out+j+0)[1] = (ushort)in[i+1];
+      (out+j+0)[0] = (ushort)in[i+2];
+      (out+j+0)[1] = (ushort)in[i+0];
       (out+j+0)[2] = (ushort)in[i+3];
-      (out+j+3)[0] = (ushort)in[i+1];
-      (out+j+3)[1] = (ushort)in[i+2];
+      (out+j+3)[0] = (ushort)in[i+0];
+      (out+j+3)[1] = (ushort)in[i+1];
       (out+j+3)[2] = (ushort)in[i+3];
    }
 }
@@ -3859,12 +3859,12 @@ static void translate_quadstrip_uint2ushort_first2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (ushort)in[i+1];
+      (out+j+0)[0] = (ushort)in[i+0];
       (out+j+0)[1] = (ushort)in[i+3];
-      (out+j+0)[2] = (ushort)in[i+0];
-      (out+j+3)[0] = (ushort)in[i+2];
+      (out+j+0)[2] = (ushort)in[i+2];
+      (out+j+3)[0] = (ushort)in[i+1];
       (out+j+3)[1] = (ushort)in[i+3];
-      (out+j+3)[2] = (ushort)in[i+1];
+      (out+j+3)[2] = (ushort)in[i+0];
    }
 }
 static void translate_polygon_uint2ushort_first2last(
@@ -4013,11 +4013,11 @@ static void translate_quadstrip_uint2ushort_last2first(
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
       (out+j+0)[0] = (ushort)in[i+3];
-      (out+j+0)[1] = (ushort)in[i+0];
-      (out+j+0)[2] = (ushort)in[i+1];
+      (out+j+0)[1] = (ushort)in[i+2];
+      (out+j+0)[2] = (ushort)in[i+0];
       (out+j+3)[0] = (ushort)in[i+3];
-      (out+j+3)[1] = (ushort)in[i+1];
-      (out+j+3)[2] = (ushort)in[i+2];
+      (out+j+3)[1] = (ushort)in[i+0];
+      (out+j+3)[2] = (ushort)in[i+1];
    }
 }
 static void translate_polygon_uint2ushort_last2first(
@@ -4165,11 +4165,11 @@ static void translate_quadstrip_uint2ushort_last2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (ushort)in[i+0];
-      (out+j+0)[1] = (ushort)in[i+1];
+      (out+j+0)[0] = (ushort)in[i+2];
+      (out+j+0)[1] = (ushort)in[i+0];
       (out+j+0)[2] = (ushort)in[i+3];
-      (out+j+3)[0] = (ushort)in[i+1];
-      (out+j+3)[1] = (ushort)in[i+2];
+      (out+j+3)[0] = (ushort)in[i+0];
+      (out+j+3)[1] = (ushort)in[i+1];
       (out+j+3)[2] = (ushort)in[i+3];
    }
 }
@@ -4318,11 +4318,11 @@ static void translate_quadstrip_uint2uint_first2first(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (uint)in[i+0];
-      (out+j+0)[1] = (uint)in[i+1];
+      (out+j+0)[0] = (uint)in[i+2];
+      (out+j+0)[1] = (uint)in[i+0];
       (out+j+0)[2] = (uint)in[i+3];
-      (out+j+3)[0] = (uint)in[i+1];
-      (out+j+3)[1] = (uint)in[i+2];
+      (out+j+3)[0] = (uint)in[i+0];
+      (out+j+3)[1] = (uint)in[i+1];
       (out+j+3)[2] = (uint)in[i+3];
    }
 }
@@ -4471,12 +4471,12 @@ static void translate_quadstrip_uint2uint_first2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (uint)in[i+1];
+      (out+j+0)[0] = (uint)in[i+0];
       (out+j+0)[1] = (uint)in[i+3];
-      (out+j+0)[2] = (uint)in[i+0];
-      (out+j+3)[0] = (uint)in[i+2];
+      (out+j+0)[2] = (uint)in[i+2];
+      (out+j+3)[0] = (uint)in[i+1];
       (out+j+3)[1] = (uint)in[i+3];
-      (out+j+3)[2] = (uint)in[i+1];
+      (out+j+3)[2] = (uint)in[i+0];
    }
 }
 static void translate_polygon_uint2uint_first2last(
@@ -4625,11 +4625,11 @@ static void translate_quadstrip_uint2uint_last2first(
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
       (out+j+0)[0] = (uint)in[i+3];
-      (out+j+0)[1] = (uint)in[i+0];
-      (out+j+0)[2] = (uint)in[i+1];
+      (out+j+0)[1] = (uint)in[i+2];
+      (out+j+0)[2] = (uint)in[i+0];
       (out+j+3)[0] = (uint)in[i+3];
-      (out+j+3)[1] = (uint)in[i+1];
-      (out+j+3)[2] = (uint)in[i+2];
+      (out+j+3)[1] = (uint)in[i+0];
+      (out+j+3)[2] = (uint)in[i+1];
    }
 }
 static void translate_polygon_uint2uint_last2first(
@@ -4777,11 +4777,11 @@ static void translate_quadstrip_uint2uint_last2last(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=2) { 
-      (out+j+0)[0] = (uint)in[i+0];
-      (out+j+0)[1] = (uint)in[i+1];
+      (out+j+0)[0] = (uint)in[i+2];
+      (out+j+0)[1] = (uint)in[i+0];
       (out+j+0)[2] = (uint)in[i+3];
-      (out+j+3)[0] = (uint)in[i+1];
-      (out+j+3)[1] = (uint)in[i+2];
+      (out+j+3)[0] = (uint)in[i+0];
+      (out+j+3)[1] = (uint)in[i+1];
       (out+j+3)[2] = (uint)in[i+3];
    }
 }
