@@ -4,6 +4,7 @@
 #include "shader/prog_print.h"
 #include "slang_compile.h"
 #include "slang_compile_variable.h"
+#include "slang_emit.h"
 #include "slang_mem.h"
 #include "slang_vartable.h"
 #include "slang_ir.h"
@@ -266,21 +267,7 @@ _slang_alloc_var(slang_var_table *vt, slang_ir_storage *store)
       return GL_FALSE;
 
    store->Index = i / 4;
-   if (store->Size == 1) {
-      const GLuint comp = i % 4;
-      store->Swizzle = MAKE_SWIZZLE4(comp, comp, comp, comp);
-   }
-   else if (store->Size == 2) {
-      store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
-                                     SWIZZLE_NIL, SWIZZLE_NIL);
-   }
-   else if (store->Size == 3) {
-      store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
-                                     SWIZZLE_Z, SWIZZLE_NIL);
-   }
-   else {
-      store->Swizzle = SWIZZLE_NOOP;
-   }
+   store->Swizzle = _slang_var_swizzle(store->Size, i % 4);
 
    if (dbg)
       printf("Alloc var storage sz %d at %d.%s (level %d) store %p\n",
@@ -308,20 +295,7 @@ _slang_alloc_temp(slang_var_table *vt, slang_ir_storage *store)
    assert(store->Index < 0);
 
    store->Index = i / 4;
-   if (store->Size == 1) {
-      const GLuint comp = i % 4;
-      store->Swizzle = MAKE_SWIZZLE4(comp, comp, comp, comp);
-   }
-   else {
-      /* XXX improve swizzled for size=2/3, use for writemask... */
-#if 1
-      if (store->Size == 2) {
-         store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
-                                        SWIZZLE_NIL, SWIZZLE_NIL);
-      }
-#endif
-      store->Swizzle = SWIZZLE_NOOP;
-   }
+   store->Swizzle = _slang_var_swizzle(store->Size, i % 4);
 
    if (dbg) printf("Alloc temp sz %d at %d.%s (level %d) store %p\n",
                    store->Size, store->Index,
