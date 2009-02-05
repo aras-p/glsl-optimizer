@@ -39,7 +39,8 @@
 
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_state.h"
+#include "pipe/p_format.h"
+#include "pipe/p_defines.h"
 
 
 
@@ -51,6 +52,7 @@ extern "C" {
 /** Opaque type */
 struct pipe_fence_handle;
 struct pipe_winsys;
+struct pipe_buffer;
 
 
 /**
