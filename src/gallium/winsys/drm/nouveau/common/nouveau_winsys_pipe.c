@@ -103,7 +103,7 @@ nouveau_pipe_bo_user_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
 static void
 nouveau_pipe_bo_del(struct pipe_winsys *ws, struct pipe_buffer *buf)
 {
-	struct nouveau_pipe_buffer *nvbuf = (void *)buf;
+	struct nouveau_pipe_buffer *nvbuf = nouveau_pipe_buffer(buf);
 
 	nouveau_bo_ref(NULL, &nvbuf->bo);
 	FREE(nvbuf);
@@ -113,7 +113,7 @@ static void *
 nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 		    unsigned flags)
 {
-	struct nouveau_pipe_buffer *nvbuf = (void *)buf;
+	struct nouveau_pipe_buffer *nvbuf = nouveau_pipe_buffer(buf);
 	uint32_t map_flags = 0;
 
 	if (flags & PIPE_BUFFER_USAGE_CPU_READ)
@@ -146,7 +146,7 @@ nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 static void
 nouveau_pipe_bo_unmap(struct pipe_winsys *pws, struct pipe_buffer *buf)
 {
-	struct nouveau_pipe_buffer *nvbuf = (void *)buf;
+	struct nouveau_pipe_buffer *nvbuf = nouveau_pipe_buffer(buf);
 
 	nouveau_bo_unmap(nvbuf->bo);
 }

@@ -11,16 +11,6 @@
 static void
 nouveau_channel_context_destroy(struct nouveau_channel_context *nvc)
 {
-	nouveau_grobj_free(&nvc->NvCtxSurf2D);
-	nouveau_grobj_free(&nvc->NvImageBlit);
-	nouveau_grobj_free(&nvc->NvGdiRect);
-	nouveau_grobj_free(&nvc->NvM2MF);
-	nouveau_grobj_free(&nvc->Nv2D);
-	nouveau_grobj_free(&nvc->NvSwzSurf);
-	nouveau_grobj_free(&nvc->NvSIFM);
-
-	nouveau_notifier_free(&nvc->sync_notifier);
-
 	nouveau_channel_free(&nvc->channel);
 
 	FREE(nvc);
@@ -43,32 +33,7 @@ nouveau_channel_context_create(struct nouveau_device *dev)
 		return NULL;
 	}
 
-	nvc->next_handle = 0x88000000;
-
-	if ((ret = nouveau_notifier_alloc(nvc->channel, nvc->next_handle++, 1,
-					  &nvc->sync_notifier))) {
-		NOUVEAU_ERR("Error creating channel sync notifier: %d\n", ret);
-		nouveau_channel_context_destroy(nvc);
-		return NULL;
-	}
-
-	switch (dev->chipset & 0xf0) {
-	case 0x50:
-	case 0x80:
-	case 0x90:
-		/* pipe driver does this */
-		break;
-	default:
-		ret = nouveau_surface_channel_create_nv04(nvc);
-		break;
-	}
-
-	if (ret) {
-		NOUVEAU_ERR("Error initialising surface objects: %d\n", ret);
-		nouveau_channel_context_destroy(nvc);
-		return NULL;
-	}
-
+	nvc->next_handle = 0x77000000;
 	return nvc;
 }
 
@@ -164,18 +129,6 @@ nouveau_context_init(struct nouveau_screen *nv_screen,
 	}
 
 	/* Create pipe */
-	switch (dev->chipset & 0xf0) {
-	case 0x50:
-	case 0x80:
-	case 0x90:
-		/* pipe driver does this */
-		break;
-	default:
-		if (nouveau_surface_init_nv04(nv))
-			return 1;
-		break;
-	}
-
 	if (!getenv("NOUVEAU_FORCE_SOFTPIPE")) {
 		struct pipe_screen *pscreen;
 

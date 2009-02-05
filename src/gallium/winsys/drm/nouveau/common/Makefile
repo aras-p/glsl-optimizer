@@ -9,9 +9,7 @@ C_SOURCES = \
 	nouveau_screen.c \
 	nouveau_winsys.c \
 	nouveau_winsys_pipe.c \
-	nouveau_winsys_softpipe.c \
-	nv04_surface.c
-
+	nouveau_winsys_softpipe.c
 
 include ./Makefile.template
 

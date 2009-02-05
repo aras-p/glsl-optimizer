@@ -230,6 +230,14 @@ nv40_screen_destroy(struct pipe_screen *pscreen)
 	FREE(pscreen);
 }
 
+static struct pipe_buffer *
+nv40_surface_buffer(struct pipe_surface *surf)
+{
+	struct nv40_miptree *mt = (struct nv40_miptree *)surf->texture;
+
+	return mt->buffer;
+}
+
 struct pipe_screen *
 nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 {
@@ -242,6 +250,10 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	if (!screen)
 		return NULL;
 	screen->nvws = nvws;
+
+	/* 2D engine setup */
+	screen->eng2d = nv04_surface_2d_init(nvws);
+	screen->eng2d->buf = nv40_surface_buffer;
 
 	/* 3D object */
 	switch (chipset & 0xf0) {

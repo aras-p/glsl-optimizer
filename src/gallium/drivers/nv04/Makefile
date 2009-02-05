@@ -4,6 +4,7 @@ include $(TOP)/configs/current
 LIBNAME = nv04
 
 DRIVER_SOURCES = \
+	nv04_surface_2d.c \
 	nv04_clear.c \
 	nv04_context.c \
 	nv04_fragprog.c \
