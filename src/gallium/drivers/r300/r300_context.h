@@ -25,6 +25,7 @@
 
 #include "draw/draw_context.h"
 #include "pipe/p_context.h"
+#include "tgsi/tgsi_scan.h"
 #include "util/u_memory.h"
 
 #include "r300_clear.h"
@@ -54,9 +55,6 @@ struct r300_dsa_state {
     uint32_t stencil_ref_mask;  /* R300_ZB_STENCILREFMASK: 0x4f08 */
     uint32_t z_buffer_top;      /* R300_ZB_ZTOP: 0x4f14 */
     uint32_t stencil_ref_bf;    /* R500_ZB_STENCILREFMASK_BF: 0x4fd4 */
-};
-
-struct r300_fs_state {
 };
 
 struct r300_rs_state {
@@ -99,6 +97,28 @@ struct r300_texture_state {
 #define R300_NEW_VERTEX_SHADER   0x800000
 #define R300_NEW_KITCHEN_SINK    0xffffff
 
+/* The next several objects are not pure Radeon state; they inherit from
+ * various Gallium classes. */
+
+struct r3xx_fragment_shader {
+    /* Parent class */
+    struct pipe_shader_state state;
+    struct tgsi_shader_info info;
+
+    /* Has this shader been translated yet? */
+    boolean translated;
+};
+
+struct r300_fragment_shader {
+    /* Parent class */
+    struct r3xx_fragment_shader shader;
+};
+
+struct r500_fragment_shader {
+    /* Parent class */
+    struct r3xx_fragment_shader shader;
+};
+
 struct r300_texture {
     /* Parent class */
     struct pipe_texture tex;
@@ -129,8 +149,8 @@ struct r300_context {
     struct r300_blend_color_state* blend_color_state;
     /* Depth, stencil, and alpha state. */
     struct r300_dsa_state* dsa_state;
-    /* Fragment shader state. */
-    struct r300_fs_state* fs_state;
+    /* Fragment shader. */
+    struct r3xx_fragment_shader* fs;
     /* Framebuffer state. We currently don't need our own version of this. */
     struct pipe_framebuffer_state framebuffer_state;
     /* Rasterizer state. */

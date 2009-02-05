@@ -399,27 +399,48 @@ static void
 
 /* Create fragment shader state. */
 static void* r300_create_fs_state(struct pipe_context* pipe,
-                                  const struct pipe_shader_state* state)
+                                  const struct pipe_shader_state* shader)
 {
-    struct r300_fs_state* fs = CALLOC_STRUCT(r300_fs_state);
+    struct r300_context* r300 = r300_context(pipe);
+    struct r3xx_fragment_shader* fs = NULL;
+
+    if (r300_screen(r300->context.screen)->caps->is_r500) {
+        fs =
+            (struct r3xx_fragment_shader*)CALLOC_STRUCT(r500_fragment_shader);
+    } else {
+        fs =
+            (struct r3xx_fragment_shader*)CALLOC_STRUCT(r300_fragment_shader);
+    }
+
+    /* Copy state directly into shader. */
+    fs->state = *shader;
 
     return (void*)fs;
 }
 
 /* Bind fragment shader state. */
-static void r300_bind_fs_state(struct pipe_context* pipe, void* state)
+static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r3xx_fragment_shader* fs = (struct r3xx_fragment_shader*)shader;
 
-    r300->fs_state = (struct r300_fs_state*)state;
+    if (!fs->translated) {
+        if (r300_screen(r300->context.screen)->caps->is_r500) {
+            r500_translate_shader(r300, fs);
+        } else {
+            r300_translate_shader(r300, fs);
+        }
+    }
+
+    r300->fs = fs;
 
     r300->dirty_state |= R300_NEW_FRAGMENT_SHADER;
 }
 
-/* Delect fragment shader state. */
-static void r300_delete_fs_state(struct pipe_context* pipe, void* state)
+/* Delete fragment shader state. */
+static void r300_delete_fs_state(struct pipe_context* pipe, void* shader)
 {
-    FREE(state);
+    FREE(shader);
 }
 
 static void r300_set_polygon_stipple(struct pipe_context* pipe,
