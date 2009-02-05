@@ -22,7 +22,8 @@ Installation
 
   to install OpenGL libraries and
 
-     make linux-directfb-install
+     cd src/mesa/drivers/directfb ; make install
 
   to install DirectFBGL module in the proper location.
+  Actually, that last command may not be needed.  Please provide feedback.
 

@@ -44,10 +44,6 @@ install:
 	done
 
 
-# DirectFBGL module installation
-linux-directfb-install:
-	cd src/mesa/drivers/directfb && $(MAKE) install
-
 .PHONY: default doxygen clean realclean install linux-directfb-install
 
 # If there's no current configuration file
