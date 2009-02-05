@@ -21,6 +21,7 @@ SConscript([
 	'auxiliary/translate/SConscript',
 	'auxiliary/draw/SConscript',
 	'auxiliary/pipebuffer/SConscript',
+	'auxiliary/indices/SConscript',
 ])
 
 for driver in env['drivers']:
