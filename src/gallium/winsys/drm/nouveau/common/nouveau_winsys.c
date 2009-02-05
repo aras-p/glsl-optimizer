@@ -81,6 +81,12 @@ nouveau_pipe_push_flush(struct nouveau_winsys *nvws, unsigned size,
 	return nouveau_pushbuf_flush(nvws->channel, size);
 }
 
+static struct nouveau_bo *
+nouveau_pipe_get_bo(struct pipe_buffer *pb)
+{
+	return ((struct nouveau_pipe_buffer *)pb)->bo;
+}
+
 struct pipe_context *
 nouveau_pipe_create(struct nouveau_context *nv)
 {
@@ -150,6 +156,8 @@ nouveau_pipe_create(struct nouveau_context *nv)
 
 	nvws->surface_copy	= nouveau_pipe_surface_copy;
 	nvws->surface_fill	= nouveau_pipe_surface_fill;
+
+	nvws->get_bo		= nouveau_pipe_get_bo;
 
 	ws = nouveau_create_pipe_winsys(nv);
 

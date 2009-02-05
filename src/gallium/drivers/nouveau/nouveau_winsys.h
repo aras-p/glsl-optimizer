@@ -57,6 +57,8 @@ struct nouveau_winsys {
 			    unsigned, unsigned, unsigned, unsigned);
 	int (*surface_fill)(struct nouveau_winsys *, struct pipe_surface *,
 			    unsigned, unsigned, unsigned, unsigned, unsigned);
+
+	struct nouveau_bo *(*get_bo)(struct pipe_buffer *);
 };
 
 extern struct pipe_screen *
