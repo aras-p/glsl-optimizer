@@ -151,9 +151,9 @@ void static INLINE end_3d(r300ContextPtr rmesa)
 	BATCH_LOCALS(&rmesa->radeon);
 
     if (!rmesa->radeon.radeonScreen->kernel_mm) {
-    	BEGIN_BATCH(1);
-	    OUT_BATCH(cmdpacify(rmesa->radeon.radeonScreen));
-    	END_BATCH();
+        BEGIN_BATCH_NO_AUTOSTATE(1);
+	OUT_BATCH(cmdpacify(rmesa->radeon.radeonScreen));
+	END_BATCH();
     }
 }
 
@@ -162,8 +162,8 @@ void static INLINE cp_delay(r300ContextPtr rmesa, unsigned short count)
 	BATCH_LOCALS(&rmesa->radeon);
 
     if (!rmesa->radeon.radeonScreen->kernel_mm) {
-    	BEGIN_BATCH(1);
-	    OUT_BATCH(cmdcpdelay(rmesa->radeon.radeonScreen, count));
+        BEGIN_BATCH_NO_AUTOSTATE(1);
+	OUT_BATCH(cmdcpdelay(rmesa->radeon.radeonScreen, count));
     	END_BATCH();
     }
 }

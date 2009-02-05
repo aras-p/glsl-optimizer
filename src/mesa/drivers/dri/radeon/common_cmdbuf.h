@@ -71,18 +71,17 @@ void rcommonBeginBatch(radeonContextPtr rmesa,
 /**
  * Write a relocated dword to the command buffer.
  */
-#define OUT_BATCH_RELOC(data, bo, offset, rd, wd, flags) \
-	do { \
-        if (0 && offset) {\
-            fprintf(stderr, "(%s:%s:%d) offset : %d\n",\
-            __FILE__, __FUNCTION__, __LINE__, offset);\
-        }\
-        radeon_cs_write_dword(b_l_rmesa->cmdbuf.cs, offset);\
-        radeon_cs_write_reloc(b_l_rmesa->cmdbuf.cs, \
-                              bo, \
-                              rd, \
-                              wd, \
-                              flags);\
+#define OUT_BATCH_RELOC(data, bo, offset, rd, wd, flags) 	\
+	do { 							\
+        if (0 && offset) {					\
+            fprintf(stderr, "(%s:%s:%d) offset : %d\n",		\
+            __FILE__, __FUNCTION__, __LINE__, offset);		\
+        }							\
+        radeon_cs_write_dword(b_l_rmesa->cmdbuf.cs, offset);	\
+        radeon_cs_write_reloc(b_l_rmesa->cmdbuf.cs, 		\
+                              bo, rd, wd, flags);		\
+	if (!b_l_rmesa->radeonScreen->kernel_mm) 		\
+		b_l_rmesa->cmdbuf.cs->section_cdw += 2;		\
 	} while(0)
 
 

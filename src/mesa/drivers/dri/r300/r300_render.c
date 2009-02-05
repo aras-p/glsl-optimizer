@@ -190,7 +190,7 @@ static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type)
 	BATCH_LOCALS(&rmesa->radeon);
 
 	if (vertex_count > 0) {
-		BEGIN_BATCH(8);
+		BEGIN_BATCH(10);
 		OUT_BATCH_PACKET3(R300_PACKET3_3D_DRAW_INDX_2, 0);
 		OUT_BATCH(R300_VAP_VF_CNTL__PRIM_WALK_INDICES |
 			  ((vertex_count + 0) << 16) |
@@ -231,7 +231,7 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 
     
 	if (!rmesa->radeon.radeonScreen->kernel_mm) {
-		BEGIN_BATCH(sz+2);
+		BEGIN_BATCH(sz+2+(nr * 2));
 		OUT_BATCH_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, sz - 1);
 		OUT_BATCH(nr);
 
