@@ -39,8 +39,8 @@ static void r300_surface_fill(struct pipe_context* pipe,
     g = (float)((color >>  8) & 0xff) / 255.0f;
     b = (float)((color >>  0) & 0xff) / 255.0f;
     debug_printf("r300: Filling surface %p at (%d,%d),"
-        " dimensions %dx%d, color 0x%x\n",
-        dest, x, y, w, h, color);
+        " dimensions %dx%d (stride %d), color 0x%x\n",
+        dest, x, y, w, h, dest->stride, color);
 
     /* Fallback? */
     if (0) {
@@ -52,7 +52,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         return;
     }
 
-BEGIN_CS((caps->is_r500) ? 309 : 322);
+BEGIN_CS((caps->is_r500) ? 309 : 280);
 R300_PACIFY;
 OUT_CS_REG(R300_TX_INVALTAGS, 0x0);
 R300_PACIFY;
@@ -273,11 +273,14 @@ OUT_CS_REG(R300_VAP_PVS_UPLOAD_DATA, 0xF02203);
 OUT_CS_REG(R300_VAP_PVS_UPLOAD_DATA, 0xD10021);
 OUT_CS_REG(R300_VAP_PVS_UPLOAD_DATA, 0x1248021);
 OUT_CS_REG(R300_VAP_PVS_UPLOAD_DATA, 0x0);
+R300_PACIFY;
+END_CS;
 
 r300_emit_blend_state(r300, &blend_clear_state);
 r300_emit_blend_color_state(r300, &blend_color_clear_state);
 r300_emit_dsa_state(r300, &dsa_clear_state);
 
+BEGIN_CS(36);
 R300_PACIFY;
 /* Flush colorbuffer and blend caches. */
 OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
@@ -290,7 +293,6 @@ OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
 OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0, 1);
 OUT_CS_RELOC(dest->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 /* XXX this should not be so rigid and it still doesn't work right */
-debug_printf("Buffer width (stride): %d\n", dest->stride);
 OUT_CS_REG(R300_RB3D_COLORPITCH0, (dest->stride >> 2) | R300_COLOR_FORMAT_ARGB8888);
 OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0x0000000F);
 /* XXX Packet3 */

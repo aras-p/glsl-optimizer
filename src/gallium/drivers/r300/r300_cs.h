@@ -107,6 +107,7 @@ static uint32_t pack_float_32(float f)
     assert(bo); \
     OUT_CS(offset); \
     cs_winsys->write_cs_reloc(cs, bo, rd, wd, flags); \
+    cs_count -= 2; \
 } while (0)
 
 #define END_CS do { \
