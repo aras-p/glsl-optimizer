@@ -16,7 +16,6 @@ default: $(TOP)/configs/current
 doxygen:
 	cd doxygen && $(MAKE)
 
-
 clean:
 	-@touch $(TOP)/configs/current
 	-@for dir in $(SUBDIRS) ; do \

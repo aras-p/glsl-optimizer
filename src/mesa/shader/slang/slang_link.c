@@ -675,12 +675,12 @@ _slang_link(GLcontext *ctx,
       /* notify driver that a new fragment program has been compiled/linked */
       ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
                                       &shProg->FragmentProgram->Base);
-      if (ctx->Shader.Flags & GLSL_DUMP) {
-         _mesa_printf("Mesa original fragment program:\n");
+      if (MESA_VERBOSE & VERBOSE_GLSL_DUMP) {
+         printf("Mesa original fragment program:\n");
          _mesa_print_program(&fragProg->Base);
          _mesa_print_program_parameters(ctx, &fragProg->Base);
 
-         _mesa_printf("Mesa post-link fragment program:\n");
+         printf("Mesa post-link fragment program:\n");
          _mesa_print_program(&shProg->FragmentProgram->Base);
          _mesa_print_program_parameters(ctx, &shProg->FragmentProgram->Base);
       }
@@ -693,25 +693,21 @@ _slang_link(GLcontext *ctx,
       /* notify driver that a new vertex program has been compiled/linked */
       ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
                                       &shProg->VertexProgram->Base);
-      if (ctx->Shader.Flags & GLSL_DUMP) {
-         _mesa_printf("Mesa original vertex program:\n");
+      if (MESA_VERBOSE & VERBOSE_GLSL_DUMP) {
+         printf("Mesa original vertex program:\n");
          _mesa_print_program(&vertProg->Base);
          _mesa_print_program_parameters(ctx, &vertProg->Base);
 
-         _mesa_printf("Mesa post-link vertex program:\n");
+         printf("Mesa post-link vertex program:\n");
          _mesa_print_program(&shProg->VertexProgram->Base);
          _mesa_print_program_parameters(ctx, &shProg->VertexProgram->Base);
       }
    }
 
-   if (ctx->Shader.Flags & GLSL_DUMP) {
-      _mesa_printf("Varying vars:\n");
+   if (MESA_VERBOSE & VERBOSE_GLSL_DUMP) {
+      printf("Varying vars:\n");
       _mesa_print_parameter_list(shProg->Varying);
-      if (shProg->InfoLog) {
-         _mesa_printf("Info Log: %s\n", shProg->InfoLog);
-      }
    }
-
 
    shProg->LinkStatus = (shProg->VertexProgram || shProg->FragmentProgram);
 }
