@@ -152,9 +152,9 @@ int vlPutPicture
 
 	bind_pipe_drawable(pipe, drawable);
 
-	pipe->winsys->flush_frontbuffer
+	pipe->screen->flush_frontbuffer
 	(
-		pipe->winsys,
+		pipe->screen,
 		csc->vlGetFrameBuffer(csc),
 		pipe->priv
 	);
@@ -172,13 +172,13 @@ int vlSurfaceGetStatus
 	assert(surface->context);
 	assert(status);
 
-	if (surface->render_fence && !surface->context->pipe->winsys->fence_signalled(surface->context->pipe->winsys, surface->render_fence, 0))
+	if (surface->render_fence && !surface->context->pipe->screen->fence_signalled(surface->context->pipe->screen, surface->render_fence, 0))
 	{
 		*status = vlResourceStatusRendering;
 		return 0;
 	}
 
-	if (surface->disp_fence && !surface->context->pipe->winsys->fence_signalled(surface->context->pipe->winsys, surface->disp_fence, 0))
+	if (surface->disp_fence && !surface->context->pipe->screen->fence_signalled(surface->context->pipe->screen, surface->disp_fence, 0))
 	{
 		*status = vlResourceStatusDisplaying;
 		return 0;
@@ -211,7 +211,7 @@ int vlSurfaceSync
 	assert(surface->context);
 	assert(surface->render_fence);
 
-	surface->context->pipe->winsys->fence_finish(surface->context->pipe->winsys, surface->render_fence, 0);
+	surface->context->pipe->screen->fence_finish(surface->context->pipe->screen, surface->render_fence, 0);
 
 	return 0;
 }
