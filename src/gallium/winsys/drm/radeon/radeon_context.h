@@ -27,11 +27,44 @@
  * Authors:
  *      Jérôme Glisse <glisse@freedesktop.org>
  */
-#ifndef AMD_WINSYS_SOFTPIPE_H
-#define AMD_WINSYS_SOFTPIPE_H
+#ifndef RADEON_CONTEXT_H
+#define RADEON_CONTEXT_H
 
-#include "amd_context.h"
+#include "dri_util.h"
+#include "state_tracker/st_public.h"
+#include "state_tracker/st_context.h"
+#include "radeon_screen.h"
 
-struct pipe_context *amd_create_softpipe(struct amd_context *amd_context);
+#include "radeon_r300.h"
+
+struct radeon_framebuffer {
+    struct st_framebuffer   *st_framebuffer;
+    unsigned                attachments;
+};
+
+struct radeon_context {
+    /* st */
+    struct st_context       *st_context;
+    /* pipe */
+    struct pipe_screen      *pipe_screen;
+    struct pipe_winsys      *pipe_winsys;
+    /* DRI */
+    __DRIscreenPrivate      *dri_screen;
+    __DRIdrawablePrivate    *dri_drawable;
+    __DRIdrawablePrivate    *dri_readable;
+    /* DRM */
+    int                     drm_fd;
+   /* RADEON */
+    struct radeon_screen       *radeon_screen;
+};
+
+GLboolean radeon_context_create(const __GLcontextModes*,
+                             __DRIcontextPrivate*,
+                             void*);
+void radeon_context_destroy(__DRIcontextPrivate*);
+GLboolean radeon_context_bind(__DRIcontextPrivate*,
+                           __DRIdrawablePrivate*,
+                           __DRIdrawablePrivate*);
+GLboolean radeon_context_unbind(__DRIcontextPrivate*);
 
 #endif

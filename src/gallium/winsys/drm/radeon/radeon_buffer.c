@@ -32,34 +32,34 @@
 #include "state_tracker/st_public.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "amd_buffer.h"
-#include "amd_screen.h"
-#include "amd_context.h"
+#include "radeon_buffer.h"
+#include "radeon_screen.h"
+#include "radeon_context.h"
 #include "radeon_bo.h"
 #include "radeon_drm.h"
 
-static const char *amd_get_name(struct pipe_winsys *ws)
+static const char *radeon_get_name(struct pipe_winsys *ws)
 {
-    return "AMD/DRI2";
+    return "RADEON/DRI2";
 }
 
-static struct pipe_buffer *amd_buffer_create(struct pipe_winsys *ws,
+static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
                                              unsigned alignment,
                                              unsigned usage,
                                              unsigned size)
 {
-    struct amd_pipe_winsys *amd_ws = (struct amd_pipe_winsys *)ws;
-    struct amd_pipe_buffer *amd_buffer;
+    struct radeon_pipe_winsys *radeon_ws = (struct radeon_pipe_winsys *)ws;
+    struct radeon_pipe_buffer *radeon_buffer;
     uint32_t domain;
 
-    amd_buffer = calloc(1, sizeof(*amd_buffer));
-    if (amd_buffer == NULL) {
+    radeon_buffer = calloc(1, sizeof(*radeon_buffer));
+    if (radeon_buffer == NULL) {
         return NULL;
     }
-    amd_buffer->base.refcount = 1;
-    amd_buffer->base.alignment = alignment;
-    amd_buffer->base.usage = usage;
-    amd_buffer->base.size = size;
+    radeon_buffer->base.refcount = 1;
+    radeon_buffer->base.alignment = alignment;
+    radeon_buffer->base.usage = usage;
+    radeon_buffer->base.size = size;
 
     domain = 0;
 
@@ -73,148 +73,148 @@ static struct pipe_buffer *amd_buffer_create(struct pipe_winsys *ws,
     if (usage & PIPE_BUFFER_USAGE_INDEX) {
         domain |= RADEON_GEM_DOMAIN_GTT;
     }
-    amd_buffer->bo = radeon_bo_open(amd_ws->amd_screen->bom, 0,
+    radeon_buffer->bo = radeon_bo_open(radeon_ws->radeon_screen->bom, 0,
                                     size, alignment, domain, 0);
-    if (amd_buffer->bo == NULL) {
-        free(amd_buffer);
+    if (radeon_buffer->bo == NULL) {
+        free(radeon_buffer);
     }
-    return &amd_buffer->base;
+    return &radeon_buffer->base;
 }
 
-static struct pipe_buffer *amd_buffer_user_create(struct pipe_winsys *ws,
+static struct pipe_buffer *radeon_buffer_user_create(struct pipe_winsys *ws,
                                                   void *ptr,
                                                   unsigned bytes)
 {
-    struct amd_pipe_buffer *amd_buffer;
+    struct radeon_pipe_buffer *radeon_buffer;
 
-    amd_buffer = (struct amd_pipe_buffer*)amd_buffer_create(ws, 0, 0, bytes);
-    if (amd_buffer == NULL) {
+    radeon_buffer = (struct radeon_pipe_buffer*)radeon_buffer_create(ws, 0, 0, bytes);
+    if (radeon_buffer == NULL) {
         return NULL;
     }
-    radeon_bo_map(amd_buffer->bo, 1);
-    memcpy(amd_buffer->bo->ptr, ptr, bytes);
-    radeon_bo_unmap(amd_buffer->bo);
-    return &amd_buffer->base;
+    radeon_bo_map(radeon_buffer->bo, 1);
+    memcpy(radeon_buffer->bo->ptr, ptr, bytes);
+    radeon_bo_unmap(radeon_buffer->bo);
+    return &radeon_buffer->base;
 }
 
-static void amd_buffer_del(struct pipe_winsys *ws, struct pipe_buffer *buffer)
+static void radeon_buffer_del(struct pipe_winsys *ws, struct pipe_buffer *buffer)
 {
-    struct amd_pipe_buffer *amd_buffer = (struct amd_pipe_buffer*)buffer;
+    struct radeon_pipe_buffer *radeon_buffer = (struct radeon_pipe_buffer*)buffer;
 
-    radeon_bo_unref(amd_buffer->bo);
-    free(amd_buffer);
+    radeon_bo_unref(radeon_buffer->bo);
+    free(radeon_buffer);
 }
 
-static void *amd_buffer_map(struct pipe_winsys *ws,
+static void *radeon_buffer_map(struct pipe_winsys *ws,
                             struct pipe_buffer *buffer,
                             unsigned flags)
 {
-    struct amd_pipe_buffer *amd_buffer = (struct amd_pipe_buffer*)buffer;
+    struct radeon_pipe_buffer *radeon_buffer = (struct radeon_pipe_buffer*)buffer;
     int write = 0;
 
     if (flags & PIPE_BUFFER_USAGE_CPU_WRITE) {
         write = 1;
     }
-    if (radeon_bo_map(amd_buffer->bo, write))
+    if (radeon_bo_map(radeon_buffer->bo, write))
         return NULL;
-    return amd_buffer->bo->ptr;
+    return radeon_buffer->bo->ptr;
 }
 
-static void amd_buffer_unmap(struct pipe_winsys *ws, struct pipe_buffer *buffer)
+static void radeon_buffer_unmap(struct pipe_winsys *ws, struct pipe_buffer *buffer)
 {
-    struct amd_pipe_buffer *amd_buffer = (struct amd_pipe_buffer*)buffer;
+    struct radeon_pipe_buffer *radeon_buffer = (struct radeon_pipe_buffer*)buffer;
 
-    radeon_bo_unmap(amd_buffer->bo);
+    radeon_bo_unmap(radeon_buffer->bo);
 }
 
-static void amd_fence_reference(struct pipe_winsys *ws,
+static void radeon_fence_reference(struct pipe_winsys *ws,
                                 struct pipe_fence_handle **ptr,
                                 struct pipe_fence_handle *pfence)
 {
 }
 
-static int amd_fence_signalled(struct pipe_winsys *ws,
+static int radeon_fence_signalled(struct pipe_winsys *ws,
                                struct pipe_fence_handle *pfence,
                                unsigned flag)
 {
     return 1;
 }
 
-static int amd_fence_finish(struct pipe_winsys *ws,
+static int radeon_fence_finish(struct pipe_winsys *ws,
                             struct pipe_fence_handle *pfence,
                             unsigned flag)
 {
     return 0;
 }
 
-static void amd_flush_frontbuffer(struct pipe_winsys *pipe_winsys,
+static void radeon_flush_frontbuffer(struct pipe_winsys *pipe_winsys,
                                   struct pipe_surface *pipe_surface,
                                   void *context_private)
 {
     /* TODO: call dri2CopyRegion */
 }
 
-struct pipe_winsys *amd_pipe_winsys(struct amd_screen *amd_screen)
+struct pipe_winsys *radeon_pipe_winsys(struct radeon_screen *radeon_screen)
 {
-    struct amd_pipe_winsys *amd_ws;
+    struct radeon_pipe_winsys *radeon_ws;
 
-    amd_ws = calloc(1, sizeof(struct amd_pipe_winsys));
-    if (amd_ws == NULL) {
+    radeon_ws = calloc(1, sizeof(struct radeon_pipe_winsys));
+    if (radeon_ws == NULL) {
         return NULL;
     }
-    amd_ws->amd_screen = amd_screen;
+    radeon_ws->radeon_screen = radeon_screen;
 
-    amd_ws->winsys.flush_frontbuffer = amd_flush_frontbuffer;
+    radeon_ws->winsys.flush_frontbuffer = radeon_flush_frontbuffer;
 
-    amd_ws->winsys.buffer_create = amd_buffer_create;
-    amd_ws->winsys.buffer_destroy = amd_buffer_del;
-    amd_ws->winsys.user_buffer_create = amd_buffer_user_create;
-    amd_ws->winsys.buffer_map = amd_buffer_map;
-    amd_ws->winsys.buffer_unmap = amd_buffer_unmap;
+    radeon_ws->winsys.buffer_create = radeon_buffer_create;
+    radeon_ws->winsys.buffer_destroy = radeon_buffer_del;
+    radeon_ws->winsys.user_buffer_create = radeon_buffer_user_create;
+    radeon_ws->winsys.buffer_map = radeon_buffer_map;
+    radeon_ws->winsys.buffer_unmap = radeon_buffer_unmap;
 
-    amd_ws->winsys.fence_reference = amd_fence_reference;
-    amd_ws->winsys.fence_signalled = amd_fence_signalled;
-    amd_ws->winsys.fence_finish = amd_fence_finish;
+    radeon_ws->winsys.fence_reference = radeon_fence_reference;
+    radeon_ws->winsys.fence_signalled = radeon_fence_signalled;
+    radeon_ws->winsys.fence_finish = radeon_fence_finish;
 
-    amd_ws->winsys.get_name = amd_get_name;
+    radeon_ws->winsys.get_name = radeon_get_name;
 
-    return &amd_ws->winsys;
+    return &radeon_ws->winsys;
 }
 
-static struct pipe_buffer *amd_buffer_from_handle(struct amd_screen *amd_screen,
+static struct pipe_buffer *radeon_buffer_from_handle(struct radeon_screen *radeon_screen,
                                                   uint32_t handle)
 {
-    struct amd_pipe_buffer *amd_buffer;
+    struct radeon_pipe_buffer *radeon_buffer;
     struct radeon_bo *bo = NULL;
 
-    bo = radeon_bo_open(amd_screen->bom, handle, 0, 0, 0, 0);
+    bo = radeon_bo_open(radeon_screen->bom, handle, 0, 0, 0, 0);
     if (bo == NULL) {
         return NULL;
     }
-    amd_buffer = calloc(1, sizeof(struct amd_pipe_buffer));
-    if (amd_buffer == NULL) {
+    radeon_buffer = calloc(1, sizeof(struct radeon_pipe_buffer));
+    if (radeon_buffer == NULL) {
         radeon_bo_unref(bo);
         return NULL;
     }
-    amd_buffer->base.refcount = 1;
-    amd_buffer->base.usage = PIPE_BUFFER_USAGE_PIXEL;
-    amd_buffer->bo = bo;
-    return &amd_buffer->base;
+    radeon_buffer->base.refcount = 1;
+    radeon_buffer->base.usage = PIPE_BUFFER_USAGE_PIXEL;
+    radeon_buffer->bo = bo;
+    return &radeon_buffer->base;
 }
 
-struct pipe_surface *amd_surface_from_handle(struct amd_context *amd_context,
+struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_context,
                                              uint32_t handle,
                                              enum pipe_format format,
                                              int w, int h, int pitch)
 {
-    struct pipe_screen *pipe_screen = amd_context->pipe_screen;
-    struct pipe_winsys *pipe_winsys = amd_context->pipe_winsys;
+    struct pipe_screen *pipe_screen = radeon_context->pipe_screen;
+    struct pipe_winsys *pipe_winsys = radeon_context->pipe_winsys;
     struct pipe_texture tmpl;
     struct pipe_surface *ps;
     struct pipe_texture *pt;
     struct pipe_buffer *pb;
 
-    pb = amd_buffer_from_handle(amd_context->amd_screen, handle);
+    pb = radeon_buffer_from_handle(radeon_context->radeon_screen, handle);
     if (pb == NULL) {
         return NULL;
     }

@@ -27,15 +27,28 @@
  * Authors:
  *      Jérôme Glisse <glisse@freedesktop.org>
  */
-#ifndef AMD_SCREEN_H
-#define AMD_SCREEN_H
+#ifndef RADEON_BUFFER_H
+#define RADEON_BUFFER_H
 
-#include "dri_util.h"
+#include "pipe/internal/p_winsys_screen.h"
+#include "radeon_screen.h"
+#include "radeon_context.h"
 #include "radeon_bo.h"
 
-struct amd_screen {
-    __DRIscreenPrivate          *dri_screen;
-    struct radeon_bo_manager    *bom;
+struct radeon_pipe_buffer {
+    struct pipe_buffer  base;
+    struct radeon_bo    *bo;
 };
+
+struct radeon_pipe_winsys {
+    struct pipe_winsys      winsys;
+    struct radeon_screen       *radeon_screen;
+};
+
+struct pipe_winsys *radeon_pipe_winsys(struct radeon_screen *radeon_screen);
+struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_context,
+                                             uint32_t handle,
+                                             enum pipe_format format,
+                                             int w, int h, int pitch);
 
 #endif

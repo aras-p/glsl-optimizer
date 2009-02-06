@@ -39,16 +39,16 @@
 #include "xf86drm.h"
 #include "drm.h"
 #include "dri_util.h"
-#include "amd_screen.h"
-#include "amd_context.h"
-#include "amd_buffer.h"
+#include "radeon_screen.h"
+#include "radeon_context.h"
+#include "radeon_buffer.h"
 #include "radeon_bo.h"
 #include "radeon_bo_gem.h"
 #include "radeon_drm.h"
 
-extern const struct dri_extension amd_card_extensions[];
+extern const struct dri_extension radeon_card_extensions[];
 
-static const __DRIextension *amd_screen_extensions[] = {
+static const __DRIextension *radeon_screen_extensions[] = {
     &driReadDrawableExtension,
     &driCopySubBufferExtension.base,
     &driSwapControlExtension.base,
@@ -57,7 +57,7 @@ static const __DRIextension *amd_screen_extensions[] = {
     NULL
 };
 
-static __DRIconfig **amd_fill_in_modes(unsigned pixel_bits,
+static __DRIconfig **radeon_fill_in_modes(unsigned pixel_bits,
                                        unsigned depth_bits,
                                        GLboolean have_back_buffer)
 {
@@ -116,18 +116,18 @@ static __DRIconfig **amd_fill_in_modes(unsigned pixel_bits,
     return configs;
 }
 
-static void amd_screen_destroy(__DRIscreenPrivate *dri_screen)
+static void radeon_screen_destroy(__DRIscreenPrivate *dri_screen)
 {
-     struct amd_screen *amd_screen = (struct amd_screen*)dri_screen->private;
+     struct radeon_screen *radeon_screen = (struct radeon_screen*)dri_screen->private;
 
-     radeon_bo_manager_gem_dtor(amd_screen->bom); 
+     radeon_bo_manager_gem_dtor(radeon_screen->bom); 
      dri_screen = NULL;
-     free(amd_screen);
+     free(radeon_screen);
 }
 
-static const __DRIconfig **amd_screen_init(__DRIscreenPrivate *dri_screen)
+static const __DRIconfig **radeon_screen_init(__DRIscreenPrivate *dri_screen)
 {
-    struct amd_screen *amd_screen;
+    struct radeon_screen *radeon_screen;
 
     /* Calling driInitExtensions here, with a NULL context pointer,
      * does not actually enable the extensions.  It just makes sure
@@ -139,28 +139,28 @@ static const __DRIconfig **amd_screen_init(__DRIscreenPrivate *dri_screen)
      *
      * Hello chicken.  Hello egg.  How are you two today?
      */
-    driInitExtensions(NULL, amd_card_extensions, GL_FALSE);
+    driInitExtensions(NULL, radeon_card_extensions, GL_FALSE);
 
-    amd_screen = calloc(1, sizeof(struct amd_screen));
-    if (amd_screen == NULL) {
+    radeon_screen = calloc(1, sizeof(struct radeon_screen));
+    if (radeon_screen == NULL) {
         fprintf(stderr, "\nERROR!  Allocating private area failed\n");
         return NULL;
     }
-    dri_screen->private = (void*)amd_screen;
-    dri_screen->extensions = amd_screen_extensions;
-    amd_screen->dri_screen = dri_screen;
+    dri_screen->private = (void*)radeon_screen;
+    dri_screen->extensions = radeon_screen_extensions;
+    radeon_screen->dri_screen = dri_screen;
 
-    amd_screen->bom = radeon_bo_manager_gem_ctor(dri_screen->fd);
-    if (amd_screen->bom == NULL) {
-        amd_screen_destroy(dri_screen);
+    radeon_screen->bom = radeon_bo_manager_gem_ctor(dri_screen->fd);
+    if (radeon_screen->bom == NULL) {
+        radeon_screen_destroy(dri_screen);
         return NULL;
     }
 
-    return driConcatConfigs(amd_fill_in_modes(16, 16, 1),
-                            amd_fill_in_modes(32, 24, 1));
+    return driConcatConfigs(radeon_fill_in_modes(16, 16, 1),
+                            radeon_fill_in_modes(32, 24, 1));
 }
 
-static boolean amd_buffer_create(__DRIscreenPrivate *dri_screen,
+static boolean radeon_buffer_create(__DRIscreenPrivate *dri_screen,
                                  __DRIdrawablePrivate *dri_drawable,
                                  const __GLcontextModes *visual,
                                  boolean is_pixmap)
@@ -170,10 +170,10 @@ static boolean amd_buffer_create(__DRIscreenPrivate *dri_screen,
         return GL_FALSE;
     } else {
         enum pipe_format color_format, depth_format, stencil_format;
-        struct amd_framebuffer *amd_fb;
+        struct radeon_framebuffer *radeon_fb;
 
-        amd_fb = calloc(1, sizeof(struct amd_framebuffer));
-        if (amd_fb == NULL) {
+        radeon_fb = calloc(1, sizeof(struct radeon_framebuffer));
+        if (radeon_fb == NULL) {
             return GL_FALSE;
         }
 
@@ -209,57 +209,57 @@ static boolean amd_buffer_create(__DRIscreenPrivate *dri_screen,
             break;
         }
 
-        amd_fb->st_framebuffer = st_create_framebuffer(visual,
+        radeon_fb->st_framebuffer = st_create_framebuffer(visual,
                                                        color_format,
                                                        depth_format,
                                                        stencil_format,
                                                        dri_drawable->w,
                                                        dri_drawable->h,
-                                                       (void*)amd_fb);
-        if (amd_fb->st_framebuffer == NULL) {
-            free(amd_fb);
+                                                       (void*)radeon_fb);
+        if (radeon_fb->st_framebuffer == NULL) {
+            free(radeon_fb);
             return GL_FALSE;
         }
-        dri_drawable->driverPrivate = (void *) amd_fb;
+        dri_drawable->driverPrivate = (void *) radeon_fb;
 
-        amd_fb->attachments = (1 << __DRI_BUFFER_FRONT_LEFT);
+        radeon_fb->attachments = (1 << __DRI_BUFFER_FRONT_LEFT);
         if (visual->doubleBufferMode) {
-            amd_fb->attachments |= (1 << __DRI_BUFFER_BACK_LEFT);
+            radeon_fb->attachments |= (1 << __DRI_BUFFER_BACK_LEFT);
         }
         if (visual->depthBits || visual->stencilBits) {
-            amd_fb->attachments |= (1 << __DRI_BUFFER_DEPTH);
+            radeon_fb->attachments |= (1 << __DRI_BUFFER_DEPTH);
         }
 
         return GL_TRUE;
     }
 }
 
-static void amd_buffer_destroy(__DRIdrawablePrivate * dri_drawable)
+static void radeon_buffer_destroy(__DRIdrawablePrivate * dri_drawable)
 {
-   struct amd_framebuffer *amd_fb;
+   struct radeon_framebuffer *radeon_fb;
    
-   amd_fb = dri_drawable->driverPrivate;
-   assert(amd_fb->st_framebuffer);
-   st_unreference_framebuffer(amd_fb->st_framebuffer);
-   free(amd_fb);
+   radeon_fb = dri_drawable->driverPrivate;
+   assert(radeon_fb->st_framebuffer);
+   st_unreference_framebuffer(radeon_fb->st_framebuffer);
+   free(radeon_fb);
 }
 
-static void amd_swap_buffers(__DRIdrawablePrivate *dri_drawable)
+static void radeon_swap_buffers(__DRIdrawablePrivate *dri_drawable)
 {
-    struct amd_framebuffer *amd_fb;
+    struct radeon_framebuffer *radeon_fb;
     struct pipe_surface *back_surf = NULL;
 
-    amd_fb = dri_drawable->driverPrivate;
-    assert(amd_fb);
-    assert(amd_fb->st_framebuffer);
+    radeon_fb = dri_drawable->driverPrivate;
+    assert(radeon_fb);
+    assert(radeon_fb->st_framebuffer);
 
-    st_get_framebuffer_surface(amd_fb->st_framebuffer,
+    st_get_framebuffer_surface(radeon_fb->st_framebuffer,
                                ST_SURFACE_BACK_LEFT,
                                &back_surf);
     if (back_surf) {
-        st_notify_swapbuffers(amd_fb->st_framebuffer);
+        st_notify_swapbuffers(radeon_fb->st_framebuffer);
         /* TODO: do we want to do anythings ? */
-        st_notify_swapbuffers_complete(amd_fb->st_framebuffer);
+        st_notify_swapbuffers_complete(radeon_fb->st_framebuffer);
     }
 }
 
@@ -267,7 +267,7 @@ static void amd_swap_buffers(__DRIdrawablePrivate *dri_drawable)
  * Called via glXCopySubBufferMESA() to copy a subrect of the back
  * buffer to the front buffer/screen.
  */
-static void amd_copy_sub_buffer(__DRIdrawablePrivate *dri_drawable,
+static void radeon_copy_sub_buffer(__DRIdrawablePrivate *dri_drawable,
                          int x, int y, int w, int h)
 {
     /* TODO: ... */
@@ -275,14 +275,14 @@ static void amd_copy_sub_buffer(__DRIdrawablePrivate *dri_drawable,
 
 const struct __DriverAPIRec driDriverAPI = {
     .InitScreen           = NULL,
-    .DestroyScreen        = amd_screen_destroy,
-    .CreateContext        = amd_context_create,
-    .DestroyContext       = amd_context_destroy,
-    .CreateBuffer         = amd_buffer_create,
-    .DestroyBuffer        = amd_buffer_destroy,
-    .SwapBuffers          = amd_swap_buffers,
-    .MakeCurrent          = amd_context_bind,
-    .UnbindContext        = amd_context_unbind,
-    .CopySubBuffer        = amd_copy_sub_buffer,
-    .InitScreen2          = amd_screen_init,
+    .DestroyScreen        = radeon_screen_destroy,
+    .CreateContext        = radeon_context_create,
+    .DestroyContext       = radeon_context_destroy,
+    .CreateBuffer         = radeon_buffer_create,
+    .DestroyBuffer        = radeon_buffer_destroy,
+    .SwapBuffers          = radeon_swap_buffers,
+    .MakeCurrent          = radeon_context_bind,
+    .UnbindContext        = radeon_context_unbind,
+    .CopySubBuffer        = radeon_copy_sub_buffer,
+    .InitScreen2          = radeon_screen_init,
 };

@@ -27,28 +27,11 @@
  * Authors:
  *      Jérôme Glisse <glisse@freedesktop.org>
  */
-#ifndef AMD_BUFFER_H
-#define AMD_BUFFER_H
+#ifndef RADEON_WINSYS_SOFTPIPE_H
+#define RADEON_WINSYS_SOFTPIPE_H
 
-#include "pipe/internal/p_winsys_screen.h"
-#include "amd_screen.h"
-#include "amd_context.h"
-#include "radeon_bo.h"
+#include "radeon_context.h"
 
-struct amd_pipe_buffer {
-    struct pipe_buffer  base;
-    struct radeon_bo    *bo;
-};
-
-struct amd_pipe_winsys {
-    struct pipe_winsys      winsys;
-    struct amd_screen       *amd_screen;
-};
-
-struct pipe_winsys *amd_pipe_winsys(struct amd_screen *amd_screen);
-struct pipe_surface *amd_surface_from_handle(struct amd_context *amd_context,
-                                             uint32_t handle,
-                                             enum pipe_format format,
-                                             int w, int h, int pitch);
+struct pipe_context *radeon_create_softpipe(struct radeon_context *radeon_context);
 
 #endif

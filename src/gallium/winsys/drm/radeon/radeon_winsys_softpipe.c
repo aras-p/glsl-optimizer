@@ -33,18 +33,18 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_format.h"
 #include "softpipe/sp_winsys.h"
-#include "amd_context.h"
-#include "amd_winsys_softpipe.h"
+#include "radeon_context.h"
+#include "radeon_winsys_softpipe.h"
 
-struct amd_softpipe_winsys {
+struct radeon_softpipe_winsys {
     struct softpipe_winsys  sp_winsys;
-    struct amd_context      *amd_context;
+    struct radeon_context      *radeon_context;
 };
 
 /**
  * Return list of surface formats supported by this driver.
  */
-static boolean amd_is_format_supported(struct softpipe_winsys *sws, uint format)
+static boolean radeon_is_format_supported(struct softpipe_winsys *sws, uint format)
 {
     switch (format) {
     case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -57,21 +57,21 @@ static boolean amd_is_format_supported(struct softpipe_winsys *sws, uint format)
     return FALSE;
 }
 
-struct pipe_context *amd_create_softpipe(struct amd_context *amd_context)
+struct pipe_context *radeon_create_softpipe(struct radeon_context *radeon_context)
 {
-    struct amd_softpipe_winsys *amd_sp_ws;
+    struct radeon_softpipe_winsys *radeon_sp_ws;
     struct pipe_screen *pipe_screen;
 
-    pipe_screen = softpipe_create_screen(amd_context->pipe_winsys);
+    pipe_screen = softpipe_create_screen(radeon_context->pipe_winsys);
 
-    amd_sp_ws = CALLOC_STRUCT(amd_softpipe_winsys);
-    if (amd_sp_ws == NULL) {
+    radeon_sp_ws = CALLOC_STRUCT(radeon_softpipe_winsys);
+    if (radeon_sp_ws == NULL) {
         return NULL;
     }
-    amd_context->pipe_screen = pipe_screen;
-    amd_sp_ws->amd_context = amd_context;
-    amd_sp_ws->sp_winsys.is_format_supported = amd_is_format_supported;
+    radeon_context->pipe_screen = pipe_screen;
+    radeon_sp_ws->radeon_context = radeon_context;
+    radeon_sp_ws->sp_winsys.is_format_supported = radeon_is_format_supported;
     return softpipe_create(pipe_screen,
-                           amd_context->pipe_winsys,
-                           &amd_sp_ws->sp_winsys);
+                           radeon_context->pipe_winsys,
+                           &radeon_sp_ws->sp_winsys);
 }

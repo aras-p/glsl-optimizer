@@ -33,10 +33,10 @@
 #include "pipe/p_inlines.h"
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
-#include "amd_screen.h"
-#include "amd_context.h"
-#include "amd_buffer.h"
-#include "amd_winsys_softpipe.h"
+#include "radeon_screen.h"
+#include "radeon_context.h"
+#include "radeon_buffer.h"
+#include "radeon_winsys_softpipe.h"
 
 #define need_GL_ARB_fragment_program
 #define need_GL_ARB_multisample
@@ -61,9 +61,9 @@
 #include "extension_helper.h"
 
 /**
- * Extension strings exported by the amd driver.
+ * Extension strings exported by the radeon driver.
  */
-const struct dri_extension amd_card_extensions[] = {
+const struct dri_extension radeon_card_extensions[] = {
    {"GL_ARB_multitexture", NULL},
    {"GL_ARB_texture_border_clamp", NULL},
    {"GL_ARB_texture_rectangle", NULL},
@@ -92,21 +92,21 @@ const struct dri_extension amd_card_extensions[] = {
    {NULL, NULL}
 };
 
-static void amd_update_renderbuffers(__DRIcontext *dri_context,
+static void radeon_update_renderbuffers(__DRIcontext *dri_context,
                                      __DRIdrawable *dri_drawable)
 {
-    struct amd_framebuffer *amd_fb;
-    struct amd_context *amd_context;
+    struct radeon_framebuffer *radeon_fb;
+    struct radeon_context *radeon_context;
     unsigned attachments[10];
     __DRIbuffer *buffers;
     __DRIscreen *screen;
     int i, count;
 
-    amd_context = dri_context->driverPrivate;
+    radeon_context = dri_context->driverPrivate;
     screen = dri_drawable->driScreenPriv;
-    amd_fb = dri_drawable->driverPrivate;
+    radeon_fb = dri_drawable->driverPrivate;
     for (count = 0, i = 0; count < 6; count++) {
-        if (amd_fb->attachments & (1 << count)) {
+        if (radeon_fb->attachments & (1 << count)) {
             attachments[i++] = count;
         }
     }
@@ -195,112 +195,112 @@ static void amd_update_renderbuffers(__DRIcontext *dri_context,
             return;
         }
 
-        ps = amd_surface_from_handle(amd_context,
+        ps = radeon_surface_from_handle(radeon_context,
                                      buffers[i].name,
                                      format,
                                      dri_drawable->w,
                                      dri_drawable->h,
                                      buffers[i].pitch);
         assert(ps);
-        st_set_framebuffer_surface(amd_fb->st_framebuffer, index, ps);
+        st_set_framebuffer_surface(radeon_fb->st_framebuffer, index, ps);
     }
-    st_resize_framebuffer(amd_fb->st_framebuffer,
+    st_resize_framebuffer(radeon_fb->st_framebuffer,
                           dri_drawable->w,
                           dri_drawable->h);
 }
 
-GLboolean amd_context_create(const __GLcontextModes *visual,
+GLboolean radeon_context_create(const __GLcontextModes *visual,
                              __DRIcontextPrivate *dri_context,
                              void *shared_context)
 {
     __DRIscreenPrivate *dri_screen;
-    struct amd_context *amd_context;
-    struct amd_screen *amd_screen;
+    struct radeon_context *radeon_context;
+    struct radeon_screen *radeon_screen;
     struct pipe_context *pipe;
     struct st_context *shared_st_context = NULL;
 
     dri_context->driverPrivate = NULL;
-    amd_context = calloc(1, sizeof(struct amd_context));
-    if (amd_context == NULL) {
+    radeon_context = calloc(1, sizeof(struct radeon_context));
+    if (radeon_context == NULL) {
         return GL_FALSE;
     }
 
     if (shared_context) {
-        shared_st_context = ((struct amd_context*)shared_context)->st_context;
+        shared_st_context = ((struct radeon_context*)shared_context)->st_context;
     }
 
     dri_screen = dri_context->driScreenPriv;
-    amd_screen = dri_screen->private;
-    amd_context->dri_screen = dri_screen;
-    amd_context->amd_screen = amd_screen;
-    amd_context->drm_fd = dri_screen->fd;
+    radeon_screen = dri_screen->private;
+    radeon_context->dri_screen = dri_screen;
+    radeon_context->radeon_screen = radeon_screen;
+    radeon_context->drm_fd = dri_screen->fd;
 
-    amd_context->pipe_winsys = amd_pipe_winsys(amd_screen);
-    if (amd_context->pipe_winsys == NULL) {
-        free(amd_context);
+    radeon_context->pipe_winsys = radeon_pipe_winsys(radeon_screen);
+    if (radeon_context->pipe_winsys == NULL) {
+        free(radeon_context);
         return GL_FALSE;
     }
 
-    if (!getenv("AMD_SOFTPIPE")) {
+    if (!getenv("RADEON_SOFTPIPE")) {
         fprintf(stderr, "Creating r300 context...\n");
         pipe =
             r300_create_context(NULL,
-                                amd_context->pipe_winsys,
-                                amd_create_r300_winsys(amd_context->drm_fd));
-        amd_context->pipe_screen = pipe->screen;
+                                radeon_context->pipe_winsys,
+                                radeon_create_r300_winsys(radeon_context->drm_fd));
+        radeon_context->pipe_screen = pipe->screen;
     } else {
-        pipe = amd_create_softpipe(amd_context);
+        pipe = radeon_create_softpipe(radeon_context);
     }
-    amd_context->st_context = st_create_context(pipe, visual,
+    radeon_context->st_context = st_create_context(pipe, visual,
                                                 shared_st_context);
-    driInitExtensions(amd_context->st_context->ctx,
-                      amd_card_extensions, GL_TRUE);
-    dri_context->driverPrivate = amd_context;
+    driInitExtensions(radeon_context->st_context->ctx,
+                      radeon_card_extensions, GL_TRUE);
+    dri_context->driverPrivate = radeon_context;
     return GL_TRUE;
 }
 
-void amd_context_destroy(__DRIcontextPrivate *dri_context)
+void radeon_context_destroy(__DRIcontextPrivate *dri_context)
 {
-    struct amd_context *amd_context;
+    struct radeon_context *radeon_context;
 
-    amd_context = dri_context->driverPrivate;
-    st_finish(amd_context->st_context);
-    st_destroy_context(amd_context->st_context);
-    free(amd_context);
+    radeon_context = dri_context->driverPrivate;
+    st_finish(radeon_context->st_context);
+    st_destroy_context(radeon_context->st_context);
+    free(radeon_context);
 }
 
-GLboolean amd_context_bind(__DRIcontextPrivate *dri_context,
+GLboolean radeon_context_bind(__DRIcontextPrivate *dri_context,
                            __DRIdrawablePrivate *dri_drawable,
                            __DRIdrawablePrivate *dri_readable)
 {
-    struct amd_framebuffer *drawable;
-    struct amd_framebuffer *readable;
-    struct amd_context *amd_context;
+    struct radeon_framebuffer *drawable;
+    struct radeon_framebuffer *readable;
+    struct radeon_context *radeon_context;
 
     if (dri_context == NULL) {
         st_make_current(NULL, NULL, NULL);
         return GL_TRUE;
     }
 
-    amd_context = dri_context->driverPrivate;
+    radeon_context = dri_context->driverPrivate;
     drawable = dri_drawable->driverPrivate;
     readable = dri_readable->driverPrivate;
-    st_make_current(amd_context->st_context,
+    st_make_current(radeon_context->st_context,
                     drawable->st_framebuffer,
                     readable->st_framebuffer);
 
-    amd_update_renderbuffers(dri_context, dri_drawable);
+    radeon_update_renderbuffers(dri_context, dri_drawable);
     if (dri_drawable != dri_readable) {
-        amd_update_renderbuffers(dri_context, dri_readable);
+        radeon_update_renderbuffers(dri_context, dri_readable);
     }
     return GL_TRUE;
 }
 
-GLboolean amd_context_unbind(__DRIcontextPrivate *dri_context)
+GLboolean radeon_context_unbind(__DRIcontextPrivate *dri_context)
 {
-    struct amd_context *amd_context;
+    struct radeon_context *radeon_context;
 
-    amd_context = dri_context->driverPrivate;
-    st_flush(amd_context->st_context, PIPE_FLUSH_RENDER_CACHE, NULL);
+    radeon_context = dri_context->driverPrivate;
+    st_flush(radeon_context->st_context, PIPE_FLUSH_RENDER_CACHE, NULL);
     return GL_TRUE;
 }

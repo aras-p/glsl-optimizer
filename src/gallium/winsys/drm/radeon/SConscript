@@ -5,10 +5,10 @@ if 'mesa' in env['statetrackers']:
 	env = drienv.Clone()
 
 	DRIVER_SOURCES = [
-		'amd_buffer.c',
-		'amd_context.c',
-		'amd_screen.c',
-		'amd_winsys_softpipe.c',
+		'radeon_buffer.c',
+		'radeon_context.c',
+		'radeon_screen.c',
+		'radeon_winsys_softpipe.c',
 	]
 
 	sources = \
@@ -22,7 +22,7 @@ if 'mesa' in env['statetrackers']:
 
 	# TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
 	env.SharedLibrary(
-		target ='amd_dri.so',
+		target ='radeon_dri.so',
 		source = sources,
 		LIBS = drivers + mesa + auxiliaries + env['LIBS'],
 	)

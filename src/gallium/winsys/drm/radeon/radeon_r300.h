@@ -29,6 +29,6 @@
 
 #include "r300_winsys.h"
 
-#include "amd_buffer.h"
+#include "radeon_buffer.h"
 
-struct r300_winsys* amd_create_r300_winsys(int fd);
+struct r300_winsys* radeon_create_r300_winsys(int fd);

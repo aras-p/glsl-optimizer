@@ -20,24 +20,24 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "amd_r300.h"
+#include "radeon_r300.h"
 
-static boolean amd_r300_check_cs(struct radeon_cs* cs, int size)
+static boolean radeon_r300_check_cs(struct radeon_cs* cs, int size)
 {
     /* XXX check size here, lazy ass! */
     return TRUE;
 }
 
-static void amd_r300_write_cs_reloc(struct radeon_cs* cs,
+static void radeon_r300_write_cs_reloc(struct radeon_cs* cs,
                                     struct pipe_buffer* pbuffer,
                                     uint32_t rd,
                                     uint32_t wd,
                                     uint32_t flags)
 {
-    radeon_cs_write_reloc(cs, ((struct amd_pipe_buffer*)pbuffer)->bo, rd, wd, flags);
+    radeon_cs_write_reloc(cs, ((struct radeon_pipe_buffer*)pbuffer)->bo, rd, wd, flags);
 }
 
-static void amd_r300_flush_cs(struct radeon_cs* cs)
+static void radeon_r300_flush_cs(struct radeon_cs* cs)
 {
     radeon_cs_emit(cs);
     radeon_cs_erase(cs);
@@ -75,7 +75,7 @@ static void do_ioctls(struct r300_winsys* winsys, int fd)
 
 }
 
-struct r300_winsys* amd_create_r300_winsys(int fd)
+struct r300_winsys* radeon_create_r300_winsys(int fd)
 {
     struct r300_winsys* winsys = calloc(1, sizeof(struct r300_winsys));
 
@@ -85,12 +85,12 @@ struct r300_winsys* amd_create_r300_winsys(int fd)
 
     winsys->cs = radeon_cs_create(csm, 1024 * 64 / 4);
 
-    winsys->check_cs = amd_r300_check_cs;
+    winsys->check_cs = radeon_r300_check_cs;
     winsys->begin_cs = radeon_cs_begin;
     winsys->write_cs_dword = radeon_cs_write_dword;
-    winsys->write_cs_reloc = amd_r300_write_cs_reloc;
+    winsys->write_cs_reloc = radeon_r300_write_cs_reloc;
     winsys->end_cs = radeon_cs_end;
-    winsys->flush_cs = amd_r300_flush_cs;
+    winsys->flush_cs = radeon_r300_flush_cs;
 
     return winsys;
 }

@@ -27,44 +27,15 @@
  * Authors:
  *      Jérôme Glisse <glisse@freedesktop.org>
  */
-#ifndef AMD_CONTEXT_H
-#define AMD_CONTEXT_H
+#ifndef RADEON_SCREEN_H
+#define RADEON_SCREEN_H
 
 #include "dri_util.h"
-#include "state_tracker/st_public.h"
-#include "state_tracker/st_context.h"
-#include "amd_screen.h"
+#include "radeon_bo.h"
 
-#include "amd_r300.h"
-
-struct amd_framebuffer {
-    struct st_framebuffer   *st_framebuffer;
-    unsigned                attachments;
+struct radeon_screen {
+    __DRIscreenPrivate          *dri_screen;
+    struct radeon_bo_manager    *bom;
 };
-
-struct amd_context {
-    /* st */
-    struct st_context       *st_context;
-    /* pipe */
-    struct pipe_screen      *pipe_screen;
-    struct pipe_winsys      *pipe_winsys;
-    /* DRI */
-    __DRIscreenPrivate      *dri_screen;
-    __DRIdrawablePrivate    *dri_drawable;
-    __DRIdrawablePrivate    *dri_readable;
-    /* DRM */
-    int                     drm_fd;
-   /* AMD */
-    struct amd_screen       *amd_screen;
-};
-
-GLboolean amd_context_create(const __GLcontextModes*,
-                             __DRIcontextPrivate*,
-                             void*);
-void amd_context_destroy(__DRIcontextPrivate*);
-GLboolean amd_context_bind(__DRIcontextPrivate*,
-                           __DRIdrawablePrivate*,
-                           __DRIdrawablePrivate*);
-GLboolean amd_context_unbind(__DRIcontextPrivate*);
 
 #endif
