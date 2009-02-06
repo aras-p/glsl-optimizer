@@ -4,7 +4,7 @@
 #include <common/nouveau_dri.h>
 #include <common/nouveau_local.h>
 
-#if NOUVEAU_DRM_HEADER_PATCHLEVEL != 11
+#if NOUVEAU_DRM_HEADER_PATCHLEVEL != 12
 #error nouveau_drm.h version does not match expected version
 #endif
 
