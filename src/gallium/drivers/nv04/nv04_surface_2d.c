@@ -277,7 +277,7 @@ nv04_surface_fill(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	cs2d_format = nv04_surface_format(dst->format);
 	assert(cs2d_format >= 0);
 
-	gdirect_format = nv04_surface_format(dst->format);
+	gdirect_format = nv04_rect_format(dst->format);
 	assert(gdirect_format >= 0);
 
 	WAIT_RING (chan, 16);
