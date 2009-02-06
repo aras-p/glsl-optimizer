@@ -40,7 +40,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast_setup/swrast_setup.h"
 #include "math/m_translate.h"
 #include "tnl/tnl.h"
-#include "tnl/tcontext.h"
 
 #include "radeon_context.h"
 #include "radeon_ioctl.h"
