@@ -1290,7 +1290,7 @@ static void radeonEmitVec4(uint32_t *out, GLvoid * data, int stride, int count)
 		}
 }
 
-static void radeonEmitVec8(uint32_t *out, GLvoid * data, int stride, int count)
+void radeonEmitVec8(uint32_t *out, GLvoid * data, int stride, int count)
 {
 	int i;
 
@@ -1309,7 +1309,7 @@ static void radeonEmitVec8(uint32_t *out, GLvoid * data, int stride, int count)
 		}
 }
 
-static void radeonEmitVec12(uint32_t *out, GLvoid * data, int stride, int count)
+void radeonEmitVec12(uint32_t *out, GLvoid * data, int stride, int count)
 {
 	int i;
 

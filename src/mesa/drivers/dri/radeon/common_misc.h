@@ -31,6 +31,9 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 			    __DRIdrawablePrivate * driDrawPriv,
 			    __DRIdrawablePrivate * driReadPriv);
 
+void radeonEmitVec8(uint32_t *out, GLvoid * data, int stride, int count);
+void radeonEmitVec12(uint32_t *out, GLvoid * data, int stride, int count);
+
 void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 			 GLvoid * data, int size, int stride, int count);
 void radeon_print_state_atom( struct radeon_state_atom *state );
