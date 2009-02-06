@@ -164,9 +164,7 @@ static void add_debug_flags( const char *debug )
       { "api",       VERBOSE_API },
       { "list",      VERBOSE_DISPLAY_LIST },
       { "lighting",  VERBOSE_LIGHTING },
-      { "disassem",  VERBOSE_DISASSEM },
-      { "glsl",      VERBOSE_GLSL },     /* report GLSL compile/link errors */
-      { "glsl_dump", VERBOSE_GLSL_DUMP } /* print shader GPU instructions */
+      { "disassem",  VERBOSE_DISASSEM }
    };
    GLuint i;
 

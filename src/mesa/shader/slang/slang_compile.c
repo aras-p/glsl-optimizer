@@ -32,6 +32,7 @@
 #include "main/context.h"
 #include "shader/program.h"
 #include "shader/programopt.h"
+#include "shader/prog_optimize.h"
 #include "shader/prog_print.h"
 #include "shader/prog_parameter.h"
 #include "shader/grammar/grammar_mesa.h"
@@ -2794,11 +2795,22 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
    _mesa_print_program(shader->Program);
 #endif
 
+   if (success) {
+      if ((ctx->Shader.Flags & GLSL_NO_OPT) == 0) {
+         if ((ctx->Shader.Flags & GLSL_OPT) || shader->Pragmas.Optimize) {
+            /* apply program optimizations */
+            _mesa_remove_extra_moves(shader->Program);
+            _mesa_remove_dead_code(shader->Program);
+            _mesa_consolidate_registers(shader->Program);
+         }
+      }
+   }
+
    shader->CompileStatus = success;
 
-#if 0
-   _mesa_write_shader_to_file(shader);
-#endif
+   if (ctx->Shader.Flags & GLSL_LOG) {
+      _mesa_write_shader_to_file(shader);
+   }
 
    return success;
 }

@@ -370,6 +370,31 @@ _mesa_lookup_shader_err(GLcontext *ctx, GLuint name, const char *caller)
 }
 
 
+/**
+ * Return mask of GLSL_x flags by examining the MESA_GLSL env var.
+ */
+static GLbitfield
+get_shader_flags(void)
+{
+   GLbitfield flags = 0x0;
+   const char *env = _mesa_getenv("MESA_GLSL");
+
+   if (env) {
+      if (_mesa_strstr(env, "dump"))
+         flags |= GLSL_DUMP;
+      if (_mesa_strstr(env, "log"))
+         flags |= GLSL_LOG;
+      if (_mesa_strstr(env, "nopt"))
+         flags |= GLSL_NO_OPT;
+      else if (_mesa_strstr(env, "opt"))
+         flags |= GLSL_OPT;
+      if (_mesa_strstr(env, "uniform"))
+         flags |= GLSL_UNIFORMS;
+   }
+
+   return flags;
+}
+
 
 /**
  * Initialize context's shader state.
@@ -383,6 +408,7 @@ _mesa_init_shader_state(GLcontext * ctx)
    ctx->Shader.EmitHighLevelInstructions = GL_TRUE;
    ctx->Shader.EmitCondCodes = GL_TRUE; /* XXX probably want GL_FALSE... */
    ctx->Shader.EmitComments = GL_FALSE;
+   ctx->Shader.Flags = get_shader_flags();
 }
 
 
@@ -1613,6 +1639,7 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
    struct gl_uniform *uniform;
    GLint elems, offset;
+   GLenum basicType;
 
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(program not linked)");
@@ -1636,19 +1663,35 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
 
    switch (type) {
    case GL_FLOAT:
+      basicType = GL_FLOAT;
+      elems = 1;
+      break;
    case GL_INT:
+      basicType = GL_INT;
       elems = 1;
       break;
    case GL_FLOAT_VEC2:
+      basicType = GL_FLOAT;
+      elems = 2;
+      break;
    case GL_INT_VEC2:
+      basicType = GL_INT;
       elems = 2;
       break;
    case GL_FLOAT_VEC3:
+      basicType = GL_FLOAT;
+      elems = 3;
+      break;
    case GL_INT_VEC3:
+      basicType = GL_INT;
       elems = 3;
       break;
    case GL_FLOAT_VEC4:
+      basicType = GL_FLOAT;
+      elems = 4;
+      break;
    case GL_INT_VEC4:
+      basicType = GL_INT;
       elems = 4;
       break;
    default:
@@ -1659,6 +1702,25 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    uniform = &shProg->Uniforms->Uniforms[location];
+
+   if (ctx->Shader.Flags & GLSL_UNIFORMS) {
+      GLint i;
+      _mesa_printf("Mesa: set program %u uniform %s (loc %d) to: ",
+                   shProg->Name, uniform->Name, location);
+      if (basicType == GL_INT) {
+         const GLint *v = (const GLint *) values;
+         for (i = 0; i < count * elems; i++) {
+            _mesa_printf("%d ", v[i]);
+         }
+      }
+      else {
+         const GLfloat *v = (const GLfloat *) values;
+         for (i = 0; i < count * elems; i++) {
+            _mesa_printf("%g ", v[i]);
+         }
+      }
+      _mesa_printf("\n");
+   }
 
    /* A uniform var may be used by both a vertex shader and a fragment
     * shader.  We may need to update one or both shader's uniform here:

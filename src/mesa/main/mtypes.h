@@ -2162,6 +2162,13 @@ struct gl_shader_program
 };   
 
 
+#define GLSL_DUMP      0x1  /**< Dump shaders to stdout */
+#define GLSL_LOG       0x2  /**< Write shaders to files */
+#define GLSL_OPT       0x4  /**< Force optimizations (override pragmas) */
+#define GLSL_NO_OPT    0x8  /**< Force no optimizations (override pragmas) */
+#define GLSL_UNIFORMS 0x10  /**< Print glUniform calls */
+
+
 /**
  * Context state for GLSL vertex/fragment shaders.
  */
@@ -2173,6 +2180,7 @@ struct gl_shader_state
    GLboolean EmitCondCodes;             /**< Use condition codes? */
    GLboolean EmitComments;              /**< Annotated instructions */
    void *MemPool;
+   GLbitfield Flags;                    /**< Mask of GLSL_x flags */
 };
 
 
@@ -3163,8 +3171,6 @@ enum _verbose
    VERBOSE_PRIMS		= 0x0400,
    VERBOSE_VERTS		= 0x0800,
    VERBOSE_DISASSEM		= 0x1000,
-   VERBOSE_GLSL			= 0x2000,
-   VERBOSE_GLSL_DUMP		= 0x4000
 };
 
 
