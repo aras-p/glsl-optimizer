@@ -902,7 +902,9 @@ _mesa_write_shader_to_file(const struct gl_shader *shader)
    }
    else {
       fprintf(f, "/* GPU code */\n");
+      fprintf(f, "/*\n");
       _mesa_fprint_program_opt(f, shader->Program, PROG_PRINT_DEBUG, GL_TRUE);
+      fprintf(f, "*/\n");
    }
 
    fclose(f);
