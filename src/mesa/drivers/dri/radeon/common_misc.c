@@ -752,12 +752,12 @@ static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
 			radeon->radeonScreen->AGPMode;
 		const char* chipname;
 
-			
-
 		if (IS_R300_CLASS(radeon->radeonScreen))
 			chipname = "R300";
-		else
+		else if (IS_R200_CLASS(radeon->radeonScreen))
 			chipname = "R200";
+		else
+			chipname = "R100";
 
 		offset = driGetRendererString(buffer, chipname, DRIVER_DATE,
 					      agp_mode);

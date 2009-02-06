@@ -235,6 +235,12 @@ static void r100_vtbl_emit_state(radeonContextPtr rmesa)
 	radeonEmitState((r100ContextPtr)rmesa);
 }
 
+static void r100_vtbl_flush_vertices(radeonContextPtr rmesa)
+{
+  RADEON_FIREVERTICES(((r100ContextPtr)rmesa));
+}
+
+
 static void r100_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r100_get_lock;
@@ -245,6 +251,7 @@ static void r100_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.emit_cs_header = r100_vtbl_emit_cs_header;
    radeon->vtbl.emit_state = r100_vtbl_emit_state;
    radeon->vtbl.swtcl_flush = r100_swtcl_flush;
+   radeon->vtbl.flush_vertices = r100_vtbl_flush_vertices;
 }
 
 /* Create the device specific context.
@@ -258,7 +265,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    radeonScreenPtr screen = (radeonScreenPtr)(sPriv->private);
    struct dd_function_table functions;
    r100ContextPtr rmesa;
-   GLcontext *ctx, *shareCtx;
+   GLcontext *ctx;
    int i;
    int tcl_mode, fthrottle_mode;
 
@@ -313,6 +320,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    (void) memset( rmesa->radeon.texture_heaps, 0, sizeof( rmesa->radeon.texture_heaps ) );
    make_empty_list( & rmesa->radeon.swapped );
 
+#if 0
    rmesa->radeon.nr_heaps = screen->numTexHeaps;
    for ( i = 0 ; i < rmesa->radeon.nr_heaps ; i++ ) {
       rmesa->radeon.texture_heaps[i] = driCreateTextureHeap( i, rmesa,
@@ -328,6 +336,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
       driSetTextureSwapCounterLocation( rmesa->radeon.texture_heaps[i],
 					& rmesa->c_textureSwaps );
    }
+#endif
    rmesa->radeon.texture_depth = driQueryOptioni (&rmesa->radeon.optionCache,
 					   "texture_depth");
    if (rmesa->radeon.texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)

@@ -614,4 +614,6 @@ void radeonInitState( r100ContextPtr rmesa )
    rmesa->hw.eye.cmd[EYE_RESCALE_FACTOR] = IEEE_ONE;
    
    rmesa->hw.all_dirty = GL_TRUE;
+
+   rcommonInitCmdBuf(&rmesa->radeon, rmesa->hw.max_state_size);
 }

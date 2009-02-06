@@ -2091,34 +2091,23 @@ radeonUpdateDrawBuffer(GLcontext *ctx)
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   driRenderbuffer *drb;
+   struct radeon_renderbuffer *rrb;
 
    if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
-      /* draw to front */
-      drb = (driRenderbuffer *) fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-   }
-   else if (fb->_ColorDrawBufferIndexes[0] == BUFFER_BACK_LEFT) {
-      /* draw to back */
-      drb = (driRenderbuffer *) fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-   }
-   else {
-      /* drawing to multiple buffers, or none */
-      return;
+     /* draw to front */
+     rrb = (void *) fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+   } else if (fb->_ColorDrawBufferIndexes[0] == BUFFER_BACK_LEFT) {
+     /* draw to back */
+     rrb = (void *) fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+   } else {
+     /* drawing to multiple buffers, or none */
+     return;
    }
 
-   assert(drb);
-   assert(drb->flippedPitch);
+   assert(rrb);
+   assert(rrb->pitch);
 
    RADEON_STATECHANGE( rmesa, ctx );
-
-   /* Note: we used the (possibly) page-flipped values */
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET]
-     = ((drb->flippedOffset + rmesa->radeon.radeonScreen->fbLocation)
-	& RADEON_COLOROFFSET_MASK);
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = drb->flippedPitch;
-   if (rmesa->radeon.sarea->tiling_enabled) {
-      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= RADEON_COLOR_TILE_ENABLE;
-   }
 }
 
 

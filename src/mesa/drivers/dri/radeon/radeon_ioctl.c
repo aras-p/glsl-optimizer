@@ -59,19 +59,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define RADEON_TIMEOUT             512
 #define RADEON_IDLE_RETRY           16
 
-
-
-static void print_state_atom( struct radeon_state_atom *state )
-{
-   int i;
-
-   fprintf(stderr, "emit %s/%d\n", state->name, state->cmd_size);
-
-   if (RADEON_DEBUG & DEBUG_VERBOSE) 
-      for (i = 0 ; i < state->cmd_size ; i++) 
-	 fprintf(stderr, "\t%s[%d]: %x\n", state->name, i, state->cmd[i]);
-
-}
+#define DEBUG_CMDBUF         0
 
 static void radeonSaveHwState( r100ContextPtr rmesa )
 {
@@ -90,7 +78,7 @@ static void radeonSaveHwState( r100ContextPtr rmesa )
 	 dest += size;
 	 rmesa->backup_store.cmd_used += size;
 	 if (RADEON_DEBUG & DEBUG_STATE)
-	    print_state_atom( atom );
+	    radeon_print_state_atom( atom );
       }
    }
 
@@ -166,6 +154,40 @@ void radeonSetUpAtomList( r100ContextPtr rmesa )
    insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.glt);
 }
 
+static INLINE void radeonEmitAtoms(r100ContextPtr r100, GLboolean dirty)
+{
+   BATCH_LOCALS(&r100->radeon);
+   struct radeon_state_atom *atom;
+   int dwords;
+
+   /* Emit actual atoms */
+   foreach(atom, &r100->hw.atomlist) {
+     if ((atom->dirty || r100->hw.all_dirty) == dirty) {
+       dwords = (*atom->check) (r100->radeon.glCtx, atom);
+       if (dwords) {
+	  if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+	     radeon_print_state_atom(atom);
+	  }
+	 if (atom->emit) {
+	   (*atom->emit)(r100->radeon.glCtx, atom);
+	 } else {
+	   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+	   OUT_BATCH_TABLE(atom->cmd, dwords);
+	   END_BATCH();
+	 }
+	 atom->dirty = GL_FALSE;
+       } else {
+	  if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+	     fprintf(stderr, "  skip state %s\n",
+		     atom->name);
+	  }
+       }
+     }
+   }
+   
+   COMMIT_BATCH();
+}
+
 void radeonEmitState( r100ContextPtr rmesa )
 {
    struct radeon_state_atom *atom;
@@ -179,6 +201,9 @@ void radeonEmitState( r100ContextPtr rmesa )
       radeonSaveHwState(rmesa);
       rmesa->save_on_next_emit = GL_FALSE;
    }
+
+   if (rmesa->radeon.cmdbuf.cs->cdw)
+       return;
 
    /* this code used to return here but now it emits zbs */
 
@@ -195,44 +220,20 @@ void radeonEmitState( r100ContextPtr rmesa )
       you get tcl lockups on at least M7/7500 class of chips - airlied */
    rmesa->hw.zbs.dirty=1;
 
-   if (RADEON_DEBUG & DEBUG_STATE) {
-      foreach(atom, &rmesa->hw.atomlist) {
-	 if (atom->dirty || rmesa->hw.all_dirty) {
-	    if (atom->check(rmesa->radeon.glCtx, 0))
-	       print_state_atom(atom);
-	    else
-	       fprintf(stderr, "skip state %s\n", atom->name);
-	 }
-      }
+   if (!rmesa->radeon.cmdbuf.cs->cdw) {
+     if (RADEON_DEBUG & DEBUG_STATE)
+       fprintf(stderr, "Begin reemit state\n");
+     
+     radeonEmitAtoms(rmesa, GL_FALSE);
    }
 
-   foreach(atom, &rmesa->hw.atomlist) {
-      if (rmesa->hw.all_dirty)
-	 atom->dirty = GL_TRUE;
-      if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL) &&
-	   atom->is_tcl)
-	 atom->dirty = GL_FALSE;
-      if (atom->dirty) {
-	dwords = atom->check(rmesa->radeon.glCtx, atom);
-	if (dwords) {
-	    int size = atom->cmd_size * 4;
-	    
-	    if (atom->emit) {
-	      (*atom->emit)(rmesa->radeon.glCtx, atom);
-	    } else {
-	      memcpy(dest, atom->cmd, size);
-	      dest += size;
-	      rmesa->store.cmd_used += size;
-	    }
-	    atom->dirty = GL_FALSE;
-	 }
-      }
-   }
+   if (RADEON_DEBUG & DEBUG_STATE)
+     fprintf(stderr, "Begin dirty state\n");
 
-   assert(rmesa->store.cmd_used <= RADEON_CMD_BUF_SZ);
- 
+   radeonEmitAtoms(rmesa, GL_TRUE);
    rmesa->hw.is_dirty = GL_FALSE;
    rmesa->hw.all_dirty = GL_FALSE;
+
 }
 
 /* Fire a section of the retained (indexed_verts) buffer as a regular
@@ -422,7 +423,7 @@ void radeonEmitAOS( r100ContextPtr rmesa,
 }
 
 
-
+#if 0
 /* using already shifted color_fmt! */
 void radeonEmitBlit( r100ContextPtr rmesa, /* FIXME: which drmMinor is required? */
 		   GLuint color_fmt,
@@ -487,6 +488,7 @@ void radeonEmitWait( r100ContextPtr rmesa, GLuint flags )
    cmd[0].wait.cmd_type = RADEON_CMD_WAIT;
    cmd[0].wait.flags = flags;
 }
+#endif
 
 /* ================================================================
  * Buffer clear
@@ -681,12 +683,12 @@ void radeonFlush( GLcontext *ctx )
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (rmesa->radeon.dma.flush)
-      rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
+      rmesa->radeon.dma.flush( ctx );
 
    radeonEmitState( rmesa );
    
-   if (rmesa->store.cmd_used)
-      radeonFlushCmdBuf( rmesa, __FUNCTION__ );
+   if (rmesa->radeon.cmdbuf.cs->cdw)
+      rcommonFlushCmdBuf( &rmesa->radeon, __FUNCTION__ );
 }
 
 /* Make sure all commands have been sent to the hardware and have

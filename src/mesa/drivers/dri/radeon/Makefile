@@ -24,7 +24,8 @@ DRIVER_SOURCES = \
 	common_lock.c \
 	common_misc.c \
 	radeon_bo_legacy.c \
-	radeon_cs_legacy.c
+	radeon_cs_legacy.c \
+	radeon_mipmap_tree.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \
