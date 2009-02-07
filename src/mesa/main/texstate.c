@@ -488,24 +488,26 @@ update_texture_state( GLcontext *ctx )
       texUnit->_ReallyEnabled = 0;
       texUnit->_GenFlags = 0;
 
-      /* Get the bitmask of texture enables.
+      /* Get the bitmask of texture target enables.
        * enableBits will be a mask of the TEXTURE_*_BIT flags indicating
        * which texture targets are enabled (fixed function) or referenced
        * by a fragment shader/program.  When multiple flags are set, we'll
        * settle on the one with highest priority (see texture_override below).
        */
-      if (fprog || vprog) {
-         enableBits = 0x0;
-         if (fprog)
-            enableBits |= fprog->Base.TexturesUsed[unit];
-         if (vprog)
-            enableBits |= vprog->Base.TexturesUsed[unit];
+      enableBits = 0x0;
+      if (vprog) {
+         enableBits |= vprog->Base.TexturesUsed[unit];
+      }
+      if (fprog) {
+         enableBits |= fprog->Base.TexturesUsed[unit];
       }
       else {
-         if (!texUnit->Enabled)
-            continue;
-         enableBits = texUnit->Enabled;
+         /* fixed-function fragment program */
+         enableBits |= texUnit->Enabled;
       }
+
+      if (enableBits == 0x0)
+         continue;
 
       ASSERT(texUnit->Current1D);
       ASSERT(texUnit->Current2D);
