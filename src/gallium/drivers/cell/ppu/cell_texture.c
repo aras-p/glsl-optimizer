@@ -307,9 +307,8 @@ cell_twiddle_texture(struct pipe_screen *screen,
    const uint texHeight = ct->base.height[level];
    const uint bufWidth = align(texWidth, TILE_SIZE);
    const uint bufHeight = align(texHeight, TILE_SIZE);
-   const void *map = pipe_buffer_map(screen, surface->buffer,
-                                     PIPE_BUFFER_USAGE_CPU_READ);
-   const uint *src = (const uint *) ((const ubyte *) map + surface->offset);
+   const void *map = screen->surface_map(screen, surface, PIPE_BUFFER_USAGE_CPU_READ);
+   const uint *src = (const uint *) map;
 
    switch (ct->base.format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -324,12 +323,12 @@ cell_twiddle_texture(struct pipe_screen *screen,
             /* allocate buffer for tiled data now */
             struct pipe_winsys *ws = screen->winsys;
             uint bytes = bufWidth * bufHeight * 4 * numFaces;
-            ct->tiled_buffer[level] = ws->buffer_create(ws, 16,
-                                                         PIPE_BUFFER_USAGE_PIXEL,
-                                                         bytes);
+            ct->tiled_buffer[level] =
+               ws->buffer_create(ws, 16, PIPE_BUFFER_USAGE_PIXEL, bytes);
             /* and map it */
-            ct->tiled_mapped[level] = ws->buffer_map(ws, ct->tiled_buffer[level],
-                                                      PIPE_BUFFER_USAGE_GPU_READ);
+            ct->tiled_mapped[level] =
+               ws->buffer_map(ws, ct->tiled_buffer[level],
+                              PIPE_BUFFER_USAGE_GPU_READ);
          }
          dst = (uint *) ((ubyte *) ct->tiled_mapped[level] + offset);
 
@@ -338,11 +337,11 @@ cell_twiddle_texture(struct pipe_screen *screen,
       }
       break;
    default:
-      printf("Cell: twiddle unsupported texture format %s\n", pf_name(ct->base.format));
-      ;
+      printf("Cell: twiddle unsupported texture format %s\n",
+             pf_name(ct->base.format));
    }
 
-   pipe_buffer_unmap(screen, surface->buffer);
+   screen->surface_unmap(screen, surface);
 }
 
 
@@ -357,8 +356,7 @@ cell_untwiddle_texture(struct pipe_screen *screen,
    const uint level = surface->level;
    const uint texWidth = ct->base.width[level];
    const uint texHeight = ct->base.height[level];
-   const void *map = pipe_buffer_map(screen, surface->buffer,
-                                     PIPE_BUFFER_USAGE_CPU_READ);
+   const void *map = screen->surface_map(screen, surface, PIPE_BUFFER_USAGE_CPU_READ);
    const uint *src = (const uint *) ((const ubyte *) map + surface->offset);
 
    switch (ct->base.format) {
@@ -384,11 +382,12 @@ cell_untwiddle_texture(struct pipe_screen *screen,
    default:
       {
          ct->untiled_data[level] = NULL;
-         printf("Cell: untwiddle unsupported texture format %s\n", pf_name(ct->base.format));
+         printf("Cell: untwiddle unsupported texture format %s\n",
+                pf_name(ct->base.format));
       }
    }
 
-   pipe_buffer_unmap(screen, surface->buffer);
+   screen->surface_unmap(screen, surface);
 }
 
 
@@ -398,15 +397,13 @@ cell_get_tex_surface(struct pipe_screen *screen,
                      unsigned face, unsigned level, unsigned zslice,
                      unsigned usage)
 {
-   struct pipe_winsys *ws = screen->winsys;
    struct cell_texture *ct = cell_texture(pt);
    struct pipe_surface *ps;
 
-   ps = ws->surface_alloc(ws);
+   ps = CALLOC_STRUCT(pipe_surface);
    if (ps) {
-      assert(ps->refcount);
-      assert(ps->winsys);
-      pipe_buffer_reference(screen, &ps->buffer, ct->buffer);
+      ps->refcount = 1;
+      pipe_texture_reference(&ps->texture, pt);
       ps->format = pt->format;
       ps->block = pt->block;
       ps->width = pt->width[level];
@@ -425,9 +422,9 @@ cell_get_tex_surface(struct pipe_screen *screen,
       ps->zslice = zslice;
 
       if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
-	         ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
-		      ps->nblocksy *
-		      ps->stride;
+         ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
+            ps->nblocksy *
+            ps->stride;
       }
       else {
          assert(face == 0);
@@ -449,18 +446,27 @@ cell_tex_surface_release(struct pipe_screen *screen,
 {
    struct cell_texture *ct = cell_texture((*s)->texture);
    const uint level = (*s)->level;
+   struct pipe_surface *surf = *s;
 
-   if (((*s)->usage & PIPE_BUFFER_USAGE_CPU_READ) && (ct->untiled_data[level]))
+   if ((surf->usage & PIPE_BUFFER_USAGE_CPU_READ) && (ct->untiled_data[level]))
    {
       align_free(ct->untiled_data[level]);
       ct->untiled_data[level] = NULL;
    }
 
+   if ((ct->base.tex_usage & PIPE_TEXTURE_USAGE_SAMPLER) &&
+       (surf->usage & PIPE_BUFFER_USAGE_CPU_WRITE)) {
+      /* convert from linear to tiled layout */
+      cell_twiddle_texture(screen, surf);
+   }
+
    /* XXX if done rendering to teximage, re-tile */
 
-   pipe_texture_reference(&(*s)->texture, NULL); 
-
-   screen->winsys->surface_release(screen->winsys, s);
+   if (--surf->refcount == 0) {
+      pipe_texture_reference(&surf->texture, NULL);
+      FREE(surf);
+   }
+   *s = NULL;
 }
 
 
@@ -475,17 +481,20 @@ cell_surface_map(struct pipe_screen *screen,
 
    assert(ct);
 
+#if 0
    if (flags & ~surface->usage) {
       assert(0);
       return NULL;
    }
+#endif
 
-   map = pipe_buffer_map( screen, surface->buffer, flags );
-   if (map == NULL)
+   map = pipe_buffer_map( screen, ct->buffer, flags );
+   if (map == NULL) {
       return NULL;
-   else
-   {
-      if ((surface->usage & PIPE_BUFFER_USAGE_CPU_READ) && (ct->untiled_data[level])) {
+   }
+   else {
+      if ((surface->usage & PIPE_BUFFER_USAGE_CPU_READ) &&
+          (ct->untiled_data[level])) {
          return (void *) ((ubyte *) ct->untiled_data[level] + surface->offset);
       }
       else {
@@ -503,13 +512,7 @@ cell_surface_unmap(struct pipe_screen *screen,
 
    assert(ct);
 
-   if ((ct->base.tex_usage & PIPE_TEXTURE_USAGE_SAMPLER) &&
-       (surface->usage & PIPE_BUFFER_USAGE_CPU_WRITE)) {
-      /* convert from linear to tiled layout */
-      cell_twiddle_texture(screen, surface);
-   }
-
-   pipe_buffer_unmap( screen, surface->buffer );
+   pipe_buffer_unmap( screen, ct->buffer );
 }
 
 
