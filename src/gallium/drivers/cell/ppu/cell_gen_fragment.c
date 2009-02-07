@@ -161,7 +161,7 @@ gen_alpha_test(const struct pipe_depth_stencil_alpha_state *dsa,
    if ((dsa->alpha.func != PIPE_FUNC_NEVER) &&
        (dsa->alpha.func != PIPE_FUNC_ALWAYS)) {
       /* load/splat the alpha reference float value */
-      spe_load_float(f, ref_reg, dsa->alpha.ref);
+      spe_load_float(f, ref_reg, dsa->alpha.ref_value);
    }
 
    /* emit code to do the alpha comparison, updating 'mask' */
