@@ -24,9 +24,13 @@
 
 #include "mtypes.h"
 #include "context.h"
+#include "hash.h"
 #include "imports.h"
 #include "debug.h"
 #include "get.h"
+#include "texobj.h"
+#include "texformat.h"
+
 
 /**
  * Primitive names
@@ -219,3 +223,98 @@ _mesa_init_debug( GLcontext *ctx )
       add_debug_flags(c);
 }
 
+
+/*
+ * Write ppm file
+ */
+static void
+write_ppm(const char *filename, const GLubyte *buffer, int width, int height,
+          int comps, int rcomp, int gcomp, int bcomp)
+{
+   FILE *f = fopen( filename, "w" );
+   if (f) {
+      int i, x, y;
+      const GLubyte *ptr = buffer;
+      fprintf(f,"P6\n");
+      fprintf(f,"# ppm-file created by osdemo.c\n");
+      fprintf(f,"%i %i\n", width,height);
+      fprintf(f,"255\n");
+      fclose(f);
+      f = fopen( filename, "ab" );  /* reopen in binary append mode */
+      for (y=height-1; y>=0; y--) {
+         for (x=0; x<width; x++) {
+            i = (y*width + x) * comps;
+            fputc(ptr[i+rcomp], f);   /* write red */
+            fputc(ptr[i+gcomp], f); /* write green */
+            fputc(ptr[i+bcomp], f); /* write blue */
+         }
+      }
+      fclose(f);
+   }
+}
+
+
+/**
+ * Write level[0] image to a ppm file.
+ */
+static void
+write_texture_image(struct gl_texture_object *texObj)
+{
+   const struct gl_texture_image *img = texObj->Image[0][0];
+   if (img) {
+      char s[100];
+
+      /* make filename */
+      sprintf(s, "/tmp/teximage%u.ppm", texObj->Name);
+
+      switch (img->TexFormat->MesaFormat) {
+      case MESA_FORMAT_RGBA8888:
+         write_ppm(s, img->Data, img->Width, img->Height, 4, 3, 2, 1);
+         break;
+      case MESA_FORMAT_ARGB8888:
+         write_ppm(s, img->Data, img->Width, img->Height, 4, 2, 1, 0);
+         break;
+      default:
+         printf("XXXX unsupported mesa tex format %d in %s\n",
+                img->TexFormat->MesaFormat, __FUNCTION__);
+      }
+   }
+}
+
+
+static GLboolean DumpImages;
+
+
+static void
+dump_texture_cb(GLuint id, void *data, void *userData)
+{
+   struct gl_texture_object *texObj = (struct gl_texture_object *) data;
+   (void) userData;
+   int i;
+
+   printf("Texture %u\n", texObj->Name);
+   printf("  Target 0x%x\n", texObj->Target);
+   for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
+      struct gl_texture_image *texImg = texObj->Image[0][i];
+      if (texImg) {
+         printf("  Image %u: %d x %d x %d at %p\n", i,
+                texImg->Width, texImg->Height, texImg->Depth, texImg->Data);
+         if (DumpImages && i == 0) {
+            write_texture_image(texObj);
+         }
+      }
+   }
+}
+
+
+/**
+ * Print basic info about all texture objext to stdout.
+ * If dumpImages is true, write PPM of level[0] image to a file.
+ */
+void
+_mesa_dump_textures(GLboolean dumpImages)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   DumpImages = dumpImages;
+   _mesa_HashDeleteAll(ctx->Shared->TexObjects, dump_texture_cb, ctx);
+}
