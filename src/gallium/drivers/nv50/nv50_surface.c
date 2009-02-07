@@ -102,7 +102,7 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
  	return 0;
 }
 
-static int
+int
 nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
 		     int dx, int dy, struct pipe_surface *src, int sx, int sy,
 		     int w, int h)
