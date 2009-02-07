@@ -468,9 +468,8 @@ update_texture_state( GLcontext *ctx )
       }
    }
 
-   ctx->NewState |= _NEW_TEXTURE; /* TODO: only set this if there are 
-				   * actual changes. 
-				   */
+   /* TODO: only set this if there are actual changes */
+   ctx->NewState |= _NEW_TEXTURE;
 
    ctx->Texture._EnabledUnits = 0;
    ctx->Texture._GenFlags = 0;
@@ -540,8 +539,9 @@ update_texture_state( GLcontext *ctx )
          continue;
       }
 
-      if (texUnit->_ReallyEnabled)
-         ctx->Texture._EnabledUnits |= (1 << unit);
+      /* if we get here, we know this texture unit is enabled */
+
+      ctx->Texture._EnabledUnits |= (1 << unit);
 
       if (texUnit->EnvMode == GL_COMBINE ||
           texUnit->EnvMode == GL_COMBINE4_NV) {
