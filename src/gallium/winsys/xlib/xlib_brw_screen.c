@@ -325,6 +325,7 @@ xlib_create_brw_winsys( void )
 static struct pipe_screen *
 xlib_create_brw_screen( void )
 {
+#ifndef GALLIUM_CELL
    struct pipe_winsys *winsys;
    struct pipe_screen *screen;
 
@@ -342,6 +343,7 @@ fail:
    if (winsys)
       winsys->destroy( winsys );
 
+#endif
    return NULL;
 }
 
