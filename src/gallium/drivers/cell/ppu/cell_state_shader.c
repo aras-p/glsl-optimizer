@@ -186,7 +186,6 @@ cell_set_constant_buffer(struct pipe_context *pipe,
                          const struct pipe_constant_buffer *buf)
 {
    struct cell_context *cell = cell_context(pipe);
-   struct pipe_winsys *ws = pipe->winsys;
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
