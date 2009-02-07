@@ -437,6 +437,96 @@ texture_override(GLcontext *ctx,
 
 
 /**
+ * Examine texture unit's combine/env state to update derived state.
+ */
+static void
+update_tex_combine(GLcontext *ctx, struct gl_texture_unit *texUnit)
+{
+   /* Set the texUnit->_CurrentCombine field to point to the user's combiner
+    * state, or the combiner state which is derived from traditional texenv
+    * mode.
+    */
+   if (texUnit->EnvMode == GL_COMBINE ||
+       texUnit->EnvMode == GL_COMBINE4_NV) {
+      texUnit->_CurrentCombine = & texUnit->Combine;
+   }
+   else {
+      const struct gl_texture_object *texObj = texUnit->_Current;
+      GLenum format = texObj->Image[0][texObj->BaseLevel]->_BaseFormat;
+      if (format == GL_COLOR_INDEX) {
+         format = GL_RGBA;  /* a bit of a hack */
+      }
+      else if (format == GL_DEPTH_COMPONENT ||
+               format == GL_DEPTH_STENCIL_EXT) {
+         format = texObj->DepthMode;
+      }
+      calculate_derived_texenv(&texUnit->_EnvMode, texUnit->EnvMode, format);
+      texUnit->_CurrentCombine = & texUnit->_EnvMode;
+   }
+
+   /* Determine number of source RGB terms in the combiner function */
+   switch (texUnit->_CurrentCombine->ModeRGB) {
+   case GL_REPLACE:
+      texUnit->_CurrentCombine->_NumArgsRGB = 1;
+      break;
+   case GL_ADD:
+   case GL_ADD_SIGNED:
+      if (texUnit->EnvMode == GL_COMBINE4_NV)
+         texUnit->_CurrentCombine->_NumArgsRGB = 4;
+      else
+         texUnit->_CurrentCombine->_NumArgsRGB = 2;
+      break;
+   case GL_MODULATE:
+   case GL_SUBTRACT:
+   case GL_DOT3_RGB:
+   case GL_DOT3_RGBA:
+   case GL_DOT3_RGB_EXT:
+   case GL_DOT3_RGBA_EXT:
+      texUnit->_CurrentCombine->_NumArgsRGB = 2;
+      break;
+   case GL_INTERPOLATE:
+   case GL_MODULATE_ADD_ATI:
+   case GL_MODULATE_SIGNED_ADD_ATI:
+   case GL_MODULATE_SUBTRACT_ATI:
+      texUnit->_CurrentCombine->_NumArgsRGB = 3;
+      break;
+   default:
+      texUnit->_CurrentCombine->_NumArgsRGB = 0;
+      _mesa_problem(ctx, "invalid RGB combine mode in update_texture_state");
+      return;
+   }
+
+   /* Determine number of source Alpha terms in the combiner function */
+   switch (texUnit->_CurrentCombine->ModeA) {
+   case GL_REPLACE:
+      texUnit->_CurrentCombine->_NumArgsA = 1;
+      break;
+   case GL_ADD:
+   case GL_ADD_SIGNED:
+      if (texUnit->EnvMode == GL_COMBINE4_NV)
+         texUnit->_CurrentCombine->_NumArgsA = 4;
+      else
+         texUnit->_CurrentCombine->_NumArgsA = 2;
+      break;
+   case GL_MODULATE:
+   case GL_SUBTRACT:
+      texUnit->_CurrentCombine->_NumArgsA = 2;
+      break;
+   case GL_INTERPOLATE:
+   case GL_MODULATE_ADD_ATI:
+   case GL_MODULATE_SIGNED_ADD_ATI:
+   case GL_MODULATE_SUBTRACT_ATI:
+      texUnit->_CurrentCombine->_NumArgsA = 3;
+      break;
+   default:
+      texUnit->_CurrentCombine->_NumArgsA = 0;
+      _mesa_problem(ctx, "invalid Alpha combine mode in update_texture_state");
+      break;
+   }
+}
+
+
+/**
  * \note This routine refers to derived texture matrix values to
  * compute the ENABLE_TEXMAT flags, but is only called on
  * _NEW_TEXTURE.  On changes to _NEW_TEXTURE_MATRIX, the ENABLE_TEXMAT
@@ -543,82 +633,9 @@ update_texture_state( GLcontext *ctx )
 
       ctx->Texture._EnabledUnits |= (1 << unit);
 
-      if (texUnit->EnvMode == GL_COMBINE ||
-          texUnit->EnvMode == GL_COMBINE4_NV) {
-	 texUnit->_CurrentCombine = & texUnit->Combine;
-      }
-      else {
-         const struct gl_texture_object *texObj = texUnit->_Current;
-         GLenum format = texObj->Image[0][texObj->BaseLevel]->_BaseFormat;
-         if (format == GL_COLOR_INDEX) {
-            format = GL_RGBA;  /* a bit of a hack */
-         }
-         else if (format == GL_DEPTH_COMPONENT
-                  || format == GL_DEPTH_STENCIL_EXT) {
-            format = texObj->DepthMode;
-         }
-	 calculate_derived_texenv(&texUnit->_EnvMode, texUnit->EnvMode, format);
-	 texUnit->_CurrentCombine = & texUnit->_EnvMode;
-      }
-
-      switch (texUnit->_CurrentCombine->ModeRGB) {
-      case GL_REPLACE:
-	 texUnit->_CurrentCombine->_NumArgsRGB = 1;
-	 break;
-      case GL_ADD:
-      case GL_ADD_SIGNED:
-         if (texUnit->EnvMode == GL_COMBINE4_NV)
-            texUnit->_CurrentCombine->_NumArgsRGB = 4;
-         else
-            texUnit->_CurrentCombine->_NumArgsRGB = 2;
-         break;
-      case GL_MODULATE:
-      case GL_SUBTRACT:
-      case GL_DOT3_RGB:
-      case GL_DOT3_RGBA:
-      case GL_DOT3_RGB_EXT:
-      case GL_DOT3_RGBA_EXT:
-	 texUnit->_CurrentCombine->_NumArgsRGB = 2;
-	 break;
-      case GL_INTERPOLATE:
-      case GL_MODULATE_ADD_ATI:
-      case GL_MODULATE_SIGNED_ADD_ATI:
-      case GL_MODULATE_SUBTRACT_ATI:
-	 texUnit->_CurrentCombine->_NumArgsRGB = 3;
-	 break;
-      default:
-	 texUnit->_CurrentCombine->_NumArgsRGB = 0;
-         _mesa_problem(ctx, "invalid RGB combine mode in update_texture_state");
-         return;
-      }
-
-      switch (texUnit->_CurrentCombine->ModeA) {
-      case GL_REPLACE:
-	 texUnit->_CurrentCombine->_NumArgsA = 1;
-	 break;
-      case GL_ADD:
-      case GL_ADD_SIGNED:
-         if (texUnit->EnvMode == GL_COMBINE4_NV)
-            texUnit->_CurrentCombine->_NumArgsA = 4;
-         else
-            texUnit->_CurrentCombine->_NumArgsA = 2;
-         break;
-      case GL_MODULATE:
-      case GL_SUBTRACT:
-	 texUnit->_CurrentCombine->_NumArgsA = 2;
-	 break;
-      case GL_INTERPOLATE:
-      case GL_MODULATE_ADD_ATI:
-      case GL_MODULATE_SIGNED_ADD_ATI:
-      case GL_MODULATE_SUBTRACT_ATI:
-	 texUnit->_CurrentCombine->_NumArgsA = 3;
-	 break;
-      default:
-	 texUnit->_CurrentCombine->_NumArgsA = 0;
-         _mesa_problem(ctx, "invalid Alpha combine mode in update_texture_state");
-	 break;
-      }
+      update_tex_combine(ctx, texUnit);
    }
+
 
    /* Determine which texture coordinate sets are actually needed */
    if (fprog) {
