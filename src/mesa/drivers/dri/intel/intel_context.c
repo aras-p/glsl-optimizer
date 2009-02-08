@@ -254,6 +254,9 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	   return;
        }
 
+       if (rb == NULL)
+	  continue;
+
        if (rb->region) {
 	  dri_bo_flink(rb->region->buffer, &name);
 	  if (name == buffers[i].name)
