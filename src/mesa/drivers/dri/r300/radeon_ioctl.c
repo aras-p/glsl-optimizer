@@ -78,7 +78,7 @@ uint32_t radeonGetAge(radeonContextPtr radeon)
 {
 	drm_radeon_getparam_t gp;
 	int ret;
-	uint32_t age;
+	uint32_t age = 0;
 
 	gp.param = RADEON_PARAM_LAST_CLEAR;
 	gp.value = (int *)&age;
