@@ -1,6 +1,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_format.h"
 #include "util/u_memory.h"
+#include "util/u_math.h"
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_util.h"
@@ -159,10 +160,10 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 		  }
 		}
 
+		/* FIXME: need to know how many bytes per pixel */
+		offset += align(w * h * 2 /*src->block.size*/, 64);
 		w >>= 1;
 		h >>= 1;
-		/* FIXME: need to know how many bytes per pixel */
-		offset += align(w * h * 2, 64);
 	}
 
 	return 0;
