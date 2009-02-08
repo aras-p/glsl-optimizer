@@ -142,7 +142,6 @@ static GLboolean discrete_prim[0x10] = {
 
 static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr ) 
 {
-  //  fprintf(stderr,"alloc elts %d %d\n", nr, rmesa->tcl.elt_used);
    if (rmesa->radeon.dma.flush == r200FlushElts &&
        rmesa->tcl.elt_used + nr*2 < R200_ELT_BUF_SZ) {
 

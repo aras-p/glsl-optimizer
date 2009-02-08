@@ -63,32 +63,6 @@ extern GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
 
 extern void r200EmitAOS(r200ContextPtr rmesa, GLuint nr, GLuint offset);
 
-extern void r200EmitBlit( r200ContextPtr rmesa,
-			  GLuint color_fmt,
-			  GLuint src_pitch,
-			  GLuint src_offset,
-			  GLuint dst_pitch,
-			  GLuint dst_offset,
-			  GLint srcx, GLint srcy,
-			  GLint dstx, GLint dsty,
-			  GLuint w, GLuint h );
-
-extern void r200EmitWait( r200ContextPtr rmesa, GLuint flags );
-
-//extern void r200FlushCmdBuf( r200ContextPtr rmesa, const char * );
-//extern int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller );
-
-extern void r200RefillCurrentDmaRegion( r200ContextPtr rmesa );
-
-extern void r200AllocDmaRegion( r200ContextPtr rmesa,
-				  struct radeon_dma_region *region,
-				  int bytes, 
-				  int alignment );
-
-extern void r200ReleaseDmaRegion( r200ContextPtr rmesa,
-				    struct radeon_dma_region *region,
-				    const char *caller );
-
 extern void r200Flush( GLcontext *ctx );
 extern void r200Finish( GLcontext *ctx );
 extern void r200InitIoctlFuncs( struct dd_function_table *functions );

@@ -535,7 +535,6 @@ struct r200_tcl_info {
 
 /* hw can handle 12 components max */
   struct radeon_aos aos[12];
-  //   struct radeon_dma_region *aos_components[12];
    GLuint nr_aos_components;
 
    GLuint *Elts;
@@ -544,7 +543,6 @@ struct r200_tcl_info {
    int elt_dma_offset; /** Offset into this buffer object, in bytes */
    int elt_used;
 
-   struct radeon_dma_region vertex_data[15];
 };
 
 

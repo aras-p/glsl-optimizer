@@ -105,7 +105,6 @@ void r200EmitArrays( GLcontext *ctx, GLubyte *vimap_rev )
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;
-   //   struct radeon_dma_region **component = rmesa->tcl.aos_components;
    GLuint nr = 0;
    GLuint vfmt0 = 0, vfmt1 = 0;
    GLuint count = VB->Count;
@@ -143,7 +142,7 @@ void r200EmitArrays( GLcontext *ctx, GLubyte *vimap_rev )
 	 case 3:
 	    /* special handling to fix up fog. Will get us into trouble with vbos...*/
 	    assert(attrib == VERT_ATTRIB_FOG);
-	    if (!rmesa->tcl.vertex_data[i].buf) {
+	    if (!rmesa->tcl.aos[i].bo) {
 	       if (ctx->VertexProgram._Enabled)
 		  rcommon_emit_vector( ctx,
 				       &(rmesa->tcl.aos[nr]),
@@ -200,7 +199,7 @@ void r200EmitArrays( GLcontext *ctx, GLubyte *vimap_rev )
 	 default:
 	    assert(0);
 	 }
-	 if (!rmesa->tcl.vertex_data[i].buf) {
+	 if (!rmesa->tcl.aos[nr].bo) {
 	   rcommon_emit_vector( ctx,
 				&(rmesa->tcl.aos[nr]),
 				(char *)VB->AttribPtr[attrib]->data,
@@ -211,7 +210,6 @@ void r200EmitArrays( GLcontext *ctx, GLubyte *vimap_rev )
 after_emit:
 	 assert(nr < 12);
 	 nr++;
-	 //	 component[nr++] = &rmesa->tcl.vertex_data[i];
       }
    }
 
