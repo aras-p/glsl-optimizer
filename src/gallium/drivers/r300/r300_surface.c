@@ -33,6 +33,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     CS_LOCALS(r300);
     struct r300_capabilities* caps = ((struct r300_screen*)pipe->screen)->caps;
+    struct r300_texture* tex = (struct r300_texture*)dest->texture;
     int i;
     float r, g, b, a;
     r = (float)((color >> 16) & 0xff) / 255.0f;
@@ -291,7 +292,7 @@ OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
     R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
 
 OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0, 1);
-OUT_CS_RELOC(dest->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 /* XXX this should not be so rigid and it still doesn't work right */
 OUT_CS_REG(R300_RB3D_COLORPITCH0, (dest->stride >> 2) | R300_COLOR_FORMAT_ARGB8888);
 OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0x0000000F);

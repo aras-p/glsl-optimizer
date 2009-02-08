@@ -84,12 +84,14 @@ void r300_emit_fb_state(struct r300_context* r300,
                         struct pipe_framebuffer_state* fb)
 {
     CS_LOCALS(r300);
+    struct r300_texture* tex;
     int i;
 
     BEGIN_CS((3 * fb->nr_cbufs) + 6);
     for (i = 0; i < fb->nr_cbufs; i++) {
+        tex = (struct r300_texture*)fb->cbufs[i]->texture;
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
-        OUT_CS_RELOC(fb->cbufs[i]->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+        OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
     }
     R300_PACIFY;
     END_CS;

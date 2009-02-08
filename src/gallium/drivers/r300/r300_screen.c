@@ -214,7 +214,8 @@ static void* r300_surface_map(struct pipe_screen* screen,
                               struct pipe_surface* surface,
                               unsigned flags)
 {
-    char* map = pipe_buffer_map(screen, surface->buffer, flags);
+    struct r300_texture* tex = (struct r300_texture*)surface->texture;
+    char* map = pipe_buffer_map(screen, tex->buffer, flags);
 
     if (!map) {
         return NULL;
@@ -226,7 +227,8 @@ static void* r300_surface_map(struct pipe_screen* screen,
 static void r300_surface_unmap(struct pipe_screen* screen,
                                struct pipe_surface* surface)
 {
-    pipe_buffer_unmap(screen, surface->buffer);
+    struct r300_texture* tex = (struct r300_texture*)surface->texture;
+    pipe_buffer_unmap(screen, tex->buffer);
 }
 
 static void r300_destroy_screen(struct pipe_screen* pscreen)

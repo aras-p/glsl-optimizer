@@ -121,7 +121,6 @@ static struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
     if (surface) {
         surface->refcount = 1;
         pipe_texture_reference(&surface->texture, texture);
-        pipe_buffer_reference(screen, &surface->buffer, tex->buffer);
         surface->format = texture->format;
         surface->width = texture->width[level];
         surface->height = texture->height[level];
@@ -148,7 +147,6 @@ static void r300_tex_surface_release(struct pipe_screen* screen,
 
     if (s->refcount <= 0) {
         pipe_texture_reference(&s->texture, NULL);
-        pipe_buffer_reference(screen, &s->buffer, NULL);
         FREE(s);
     }
 
@@ -179,8 +177,6 @@ static struct pipe_texture*
     tex->tex.screen = screen;
 
     /* XXX tex->stride = *stride; */
-
-    pipe_buffer_reference(screen, &tex->buffer, buffer);
 
     return (struct pipe_texture*)tex;
 }
