@@ -178,6 +178,8 @@ static struct pipe_texture*
 
     /* XXX tex->stride = *stride; */
 
+    pipe_buffer_reference(screen, &tex->buffer, buffer);
+
     return (struct pipe_texture*)tex;
 }
 
