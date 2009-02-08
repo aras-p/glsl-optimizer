@@ -107,6 +107,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	const unsigned sub_h = h > max_h ? max_h : h;
 	unsigned cx = 0;
 	unsigned cy = 0;
+	int i, offset = 0;
 
 	/* POT or GTFO */
 	assert(!(w & (w - 1)) && !(h & (h - 1)));
@@ -125,34 +126,43 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_SURFACE, 1);
 	OUT_RING  (chan, swzsurf->handle);
 
-	for (cy = 0; cy < h; cy += sub_h) {
-	  for (cx = 0; cx < w; cx += sub_w) {
-	    BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
-	    OUT_RELOCl(chan, dst_bo, dst->offset + nv04_swizzle_bits(cx, cy) *
-			     dst->block.size, NOUVEAU_BO_GART |
-			     NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	/* Upload, then swizzle each mipmap level in turn */
+	for (i=0; i<src->texture->last_level; i++) {
 
-	    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 9);
-	    OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION_TRUNCATE);
-	    OUT_RING  (chan, nv04_scaled_image_format(src->format));
-	    OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_OPERATION_SRCCOPY);
-	    OUT_RING  (chan, 0);
-	    OUT_RING  (chan, sub_h << 16 | sub_w);
-	    OUT_RING  (chan, 0);
-	    OUT_RING  (chan, sub_h << 16 | sub_w);
-	    OUT_RING  (chan, 1 << 20);
-	    OUT_RING  (chan, 1 << 20);
+		for (cy = 0; cy < h; cy += sub_h) {
+		  for (cx = 0; cx < w; cx += sub_w) {
+		    BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
+		    OUT_RELOCl(chan, dst_bo, dst->offset + nv04_swizzle_bits(cx, cy) *
+				     dst->block.size + offset, NOUVEAU_BO_GART |
+				     NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
-	    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_SIZE, 4);
-	    OUT_RING  (chan, sub_h << 16 | sub_w);
-	    OUT_RING  (chan, src->stride |
-	                     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
-	                     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
-	    OUT_RELOCl(chan, src_bo, src->offset + cy * src->stride +
-			     cx * src->block.size, NOUVEAU_BO_GART |
-			     NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-	    OUT_RING  (chan, 0);
-	  }
+		    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 9);
+		    OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION_TRUNCATE);
+		    OUT_RING  (chan, nv04_scaled_image_format(src->format));
+		    OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_OPERATION_SRCCOPY);
+		    OUT_RING  (chan, 0);
+		    OUT_RING  (chan, sub_h << 16 | sub_w);
+		    OUT_RING  (chan, 0);
+		    OUT_RING  (chan, sub_h << 16 | sub_w);
+		    OUT_RING  (chan, 1 << 20);
+		    OUT_RING  (chan, 1 << 20);
+
+		    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_SIZE, 4);
+		    OUT_RING  (chan, sub_h << 16 | sub_w);
+		    OUT_RING  (chan, src->stride |
+		                     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
+		                     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
+		    OUT_RELOCl(chan, src_bo, src->offset + cy * src->stride +
+				     cx * src->block.size + offset, NOUVEAU_BO_GART |
+				     NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+		    OUT_RING  (chan, 0);
+		  }
+		}
+
+		w >>= 1;
+		h >>= 1;
+		/* FIXME: need to know how many bytes per pixel */
+		offset += align(w * h * 2, 64);
 	}
 
 	return 0;
