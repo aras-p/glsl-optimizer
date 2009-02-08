@@ -903,7 +903,7 @@ void radeonSetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 			      RADEON_TXFORMAT_CUBIC_MAP_ENABLE |	\
                               RADEON_TXFORMAT_NON_POWER2)
 
-#if 0
+
 static void import_tex_obj_state( r100ContextPtr rmesa,
 				  int unit,
 				  radeonTexObjPtr texobj )
@@ -921,7 +921,7 @@ static void import_tex_obj_state( r100ContextPtr rmesa,
    cmd[TEX_PP_TXOFFSET] = texobj->pp_txoffset;
    cmd[TEX_PP_BORDER_COLOR] = texobj->pp_border_color;
 
-   if (texobj->base.tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
+   if (texobj->base.Target == GL_TEXTURE_RECTANGLE_NV) {
       GLuint *txr_cmd = RADEON_DB_STATE( txr[unit] );
       txr_cmd[TXR_PP_TEX_SIZE] = texobj->pp_txsize; /* NPOT only! */
       txr_cmd[TXR_PP_TEX_PITCH] = texobj->pp_txpitch; /* NPOT only! */
@@ -931,10 +931,11 @@ static void import_tex_obj_state( r100ContextPtr rmesa,
    else {
       se_coord_fmt &= ~(RADEON_VTX_ST0_NONPARAMETRIC << unit);
 
-      if (texobj->base.tObj->Target == GL_TEXTURE_CUBE_MAP) {
-	 int *cube_cmd = &rmesa->hw.cube[unit].cmd[CUBE_CMD_0];
-	 GLuint bytesPerFace = texobj->base.totalSize / 6;
-	 ASSERT(texobj->base.totalSize % 6 == 0);
+      if (texobj->base.Target == GL_TEXTURE_CUBE_MAP) {
+	 uint32_t *cube_cmd = &rmesa->hw.cube[unit].cmd[CUBE_CMD_0];
+	 //	 GLuint bytesPerFace = texobj->base.totalSize / 6;
+	 //	 ASSERT(texobj->base.totalSize % 6 == 0);
+	 GLuint bytesPerFace = 1; // TODO
 
 	 RADEON_STATECHANGE( rmesa, cube[unit] );
 	 cube_cmd[CUBE_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
@@ -957,8 +958,6 @@ static void import_tex_obj_state( r100ContextPtr rmesa,
 
    texobj->dirty_state &= ~(1<<unit);
 }
-#endif
-
 
 
 static void set_texgen_matrix( r100ContextPtr rmesa, 
@@ -1443,10 +1442,41 @@ static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
 }
 #endif
 
+static GLboolean radeon_validate_texture(GLcontext *ctx, struct gl_texture_object *texObj, int unit)
+{
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   radeonTexObj *t = radeon_tex_obj(texObj);
+
+   if (!radeon_validate_texture_miptree(ctx, texObj))
+      return GL_FALSE;
+
+   setup_hardware_state(rmesa, t);
+
+   if (t->dirty_state & (1<<unit)) {
+      import_tex_obj_state( rmesa, unit, t );
+   }
+
+   t->validated = GL_TRUE;
+   return GL_TRUE;
+}
+
 static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
 {
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
+   if (!ctx->Texture.Unit[unit]._ReallyEnabled)
+     return GL_TRUE;
+
+   if (!radeon_validate_texture(ctx, ctx->Texture.Unit[unit]._Current, unit)) {
+    _mesa_warning(ctx,
+		  "failed to validate texture for unit %d.\n",
+		  unit);
+    rmesa->state.texture.unit[unit].texobj = NULL;
+    return GL_FALSE;
+   }
+   rmesa->state.texture.unit[unit].texobj = radeon_tex_obj(ctx->Texture.Unit[unit]._Current);
+   return GL_TRUE;
 }
 
 void radeonUpdateTextureState( GLcontext *ctx )

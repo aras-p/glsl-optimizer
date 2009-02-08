@@ -43,6 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_pipeline.h"
 
 #include "radeon_context.h"
+#include "common_cmdbuf.h"
 #include "radeon_state.h"
 #include "radeon_ioctl.h"
 #include "radeon_tex.h"
@@ -145,19 +146,31 @@ static GLboolean discrete_prim[0x10] = {
 
 static GLushort *radeonAllocElts( r100ContextPtr rmesa, GLuint nr ) 
 {
-   if (rmesa->radeon.dma.flush)
-      rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
+#if 0
+   if (rmesa->radeon.dma.flush == radeonFlushElts &&
+       rmesa->tcl.elt_used + nr*2 < R200_ELT_BUF_SZ) {
 
-   rcommonEnsureCmdBufSpace(&rmesa->radeon, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
-			   rmesa->hw.max_state_size + ELTS_BUFSZ(nr));
+      GLushort *dest = (GLushort *)(rmesa->tcl.elt_dma_bo->ptr +
+				    rmesa->tcl.elt_used);
 
-   radeonEmitAOS( rmesa,
-		  rmesa->tcl.aos_components,
-		  rmesa->tcl.nr_aos_components, 0 );
+      rmesa->tcl.elt_used += nr*2;
 
-   return radeonAllocEltsOpenEnded( rmesa,
-				    rmesa->tcl.vertex_format, 
-				    rmesa->tcl.hw_primitive, nr );
+      return dest;
+   }
+   else {
+#endif
+      if (rmesa->radeon.dma.flush)
+	 rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
+
+      rcommonEnsureCmdBufSpace(&rmesa->radeon, rmesa->hw.max_state_size + ELTS_BUFSZ(nr) + 
+			       AOS_BUFSZ(rmesa->tcl.nr_aos_components), __FUNCTION__);
+
+      radeonEmitAOS( rmesa,
+		     rmesa->tcl.nr_aos_components, 0 );
+
+      return radeonAllocEltsOpenEnded( rmesa, rmesa->tcl.vertex_format,
+				       rmesa->tcl.hw_primitive, nr );
+      //   }
 }
 
 #define CLOSE_ELTS()  RADEON_NEWPRIM( rmesa )
@@ -179,17 +192,16 @@ static void radeonEmitPrim( GLcontext *ctx,
    
    rcommonEnsureCmdBufSpace( &rmesa->radeon,
 			     AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
-			     rmesa->hw.max_state_size + VBUF_BUFSZ );
+			     rmesa->hw.max_state_size + VBUF_BUFSZ, __FUNCTION__ );
 
    radeonEmitAOS( rmesa,
-		  rmesa->tcl.aos_components,
 		  rmesa->tcl.nr_aos_components,
 		  start );
    
    /* Why couldn't this packet have taken an offset param?
     */
    radeonEmitVbufPrim( rmesa,
-		       0,
+		       rmesa->tcl.vertex_format,
 		       rmesa->tcl.hw_primitive,
 		       count - start );
 }

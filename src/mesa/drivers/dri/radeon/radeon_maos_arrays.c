@@ -40,7 +40,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast_setup/swrast_setup.h"
 #include "math/m_translate.h"
 #include "tnl/tnl.h"
-#include "tnl/tcontext.h"
 
 #include "radeon_context.h"
 #include "radeon_ioctl.h"
@@ -49,22 +48,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_maos.h"
 #include "radeon_tcl.h"
 
-static void emit_vecfog( GLcontext *ctx,
-			 struct radeon_dma_region *rvb,
-			 char *data,
-			 int stride,
-			 int count )
+static void emit_vecfog(GLcontext *ctx, struct radeon_aos *aos,
+			GLvoid *data, int stride, int count)
 {
    int i;
-   GLfloat *out;
-
+   uint32_t *out;
+   int size = 1;
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 
    if (RADEON_DEBUG & DEBUG_VERTS)
       fprintf(stderr, "%s count %d stride %d\n",
 	      __FUNCTION__, count, stride);
-
-   assert (!rvb->buf);
 
    if (stride == 0) {
       radeonAllocDmaRegion( rmesa, &aos->bo, &aos->offset, size * 4, 32 );
@@ -125,15 +119,12 @@ static void emit_stq_vec(uint32_t *out, GLvoid *data, int stride, int count)
 
 
 
-static void emit_tex_vector( GLcontext *ctx,
-			     struct radeon_aos *aos,
-			     GLvoid *data,
-			     int size,
-			     int stride,
-			     int count )
+static void emit_tex_vector(GLcontext *ctx, struct radeon_aos *aos,
+			    GLvoid *data, int size, int stride, int count)
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    int emitsize;
+   uint32_t *out;
 
    if (RADEON_DEBUG & DEBUG_VERTS)
       fprintf(stderr, "%s %d/%d\n", __FUNCTION__, count, size);
@@ -160,6 +151,7 @@ static void emit_tex_vector( GLcontext *ctx,
 
    /* Emit the data
     */
+   out = (uint32_t*)((char*)aos->bo->ptr + aos->offset);
    switch (size) {
    case 1:
       emit_s0_vec( out, data, stride, count );
@@ -188,9 +180,8 @@ static void emit_tex_vector( GLcontext *ctx,
  */
 void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
+   r100ContextPtr rmesa = R100_CONTEXT( ctx );
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;
-   struct radeon_dma_region **component = rmesa->tcl.aos_components;
    GLuint nr = 0;
    GLuint vfmt = 0;
    GLuint count = VB->Count;
@@ -204,7 +195,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
    if (1) {
       if (!rmesa->tcl.obj.buf) 
 	rcommon_emit_vector( ctx, 
-			     &rmesa->tcl.obj, 
+			     &(rmesa->tcl.aos[nr]),
 			     (char *)VB->ObjPtr->data,
 			     VB->ObjPtr->size,
 			     VB->ObjPtr->stride,
@@ -217,21 +208,21 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       default:
          break;
       }
-      component[nr++] = &rmesa->tcl.obj;
+      nr++;
    }
    
 
    if (inputs & VERT_BIT_NORMAL) {
       if (!rmesa->tcl.norm.buf)
 	 rcommon_emit_vector( ctx, 
-			      &(rmesa->tcl.norm), 
+			      &(rmesa->tcl.aos[nr]),
 			      (char *)VB->NormalPtr->data,
 			      3,
 			      VB->NormalPtr->stride,
 			      count);
 
       vfmt |= RADEON_CP_VC_FRMT_N0;
-      component[nr++] = &rmesa->tcl.norm;
+      nr++;
    }
 
    if (inputs & VERT_BIT_COLOR0) {
@@ -250,14 +241,13 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 
       if (!rmesa->tcl.rgba.buf)
 	rcommon_emit_vector( ctx,
-			     &(rmesa->tcl.rgba),
+			     &(rmesa->tcl.aos[nr]),
 			     (char *)VB->ColorPtr[0]->data,
 			     emitsize,
 			     VB->ColorPtr[0]->stride,
 			     count);
 
-
-      component[nr++] = &rmesa->tcl.rgba;
+      nr++;
    }
 
 
@@ -265,7 +255,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       if (!rmesa->tcl.spec.buf) {
 
 	rcommon_emit_vector( ctx,
-			     &rmesa->tcl.spec,
+			     &(rmesa->tcl.aos[nr]),
 			     (char *)VB->SecondaryColorPtr[0]->data,
 			     3,
 			     VB->SecondaryColorPtr[0]->stride,
@@ -273,7 +263,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       }
 
       vfmt |= RADEON_CP_VC_FRMT_FPSPEC;
-      component[nr++] = &rmesa->tcl.spec;
+      nr++;
    }
 
 /* FIXME: not sure if this is correct. May need to stitch this together with
@@ -282,13 +272,13 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
    if (inputs & VERT_BIT_FOG) {
       if (!rmesa->tcl.fog.buf)
 	 emit_vecfog( ctx,
-		      &(rmesa->tcl.fog),
+		      &(rmesa->tcl.aos[nr]),
 		      (char *)VB->FogCoordPtr->data,
 		      VB->FogCoordPtr->stride,
 		      count);
 
       vfmt |= RADEON_CP_VC_FRMT_FPFOG;
-      component[nr++] = &rmesa->tcl.fog;
+      nr++;
    }
 
 
@@ -299,11 +289,12 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
       if (inputs & VERT_BIT_TEX(unit)) {
 	 if (!rmesa->tcl.tex[unit].buf)
 	    emit_tex_vector( ctx,
-			     &(rmesa->tcl.tex[unit]),
+			     &(rmesa->tcl.aos[nr]),
 			     (char *)VB->TexCoordPtr[unit]->data,
 			     VB->TexCoordPtr[unit]->size,
 			     VB->TexCoordPtr[unit]->stride,
 			     count );
+	 nr++;
 
 	 vfmt |= RADEON_ST_BIT(unit);
          /* assume we need the 3rd coord if texgen is active for r/q OR at least
@@ -321,7 +312,6 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 		 (swaptexmatcol != ((rmesa->TexMatColSwap >> unit) & 1)))
 	       radeonUploadTexMatrix( rmesa, unit, swaptexmatcol ) ;
 	 }
-	 component[nr++] = &rmesa->tcl.tex[unit];
       }
    }
 
@@ -337,31 +327,13 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 
 void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
-   GLuint unit;
+   r100ContextPtr rmesa = R100_CONTEXT( ctx );
+   int i;
 
-#if 0
-   if (RADEON_DEBUG & DEBUG_VERTS) 
-      _tnl_print_vert_flags( __FUNCTION__, newinputs );
-#endif
-
-   if (newinputs & VERT_BIT_POS) 
-     radeonReleaseDmaRegion( rmesa, &rmesa->tcl.obj, __FUNCTION__ );
-
-   if (newinputs & VERT_BIT_NORMAL) 
-      radeonReleaseDmaRegion( rmesa, &rmesa->tcl.norm, __FUNCTION__ );
-
-   if (newinputs & VERT_BIT_COLOR0) 
-      radeonReleaseDmaRegion( rmesa, &rmesa->tcl.rgba, __FUNCTION__ );
-
-   if (newinputs & VERT_BIT_COLOR1) 
-      radeonReleaseDmaRegion( rmesa, &rmesa->tcl.spec, __FUNCTION__ );
-      
-   if (newinputs & VERT_BIT_FOG)
-      radeonReleaseDmaRegion( rmesa, &rmesa->tcl.fog, __FUNCTION__ );
-
-   for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
-      if (newinputs & VERT_BIT_TEX(unit))
-         radeonReleaseDmaRegion( rmesa, &rmesa->tcl.tex[unit], __FUNCTION__ );
+   for (i = 0; i < rmesa->tcl.nr_aos_components; i++) {
+     if (rmesa->tcl.aos[i].bo) {
+       radeon_bo_unref(rmesa->tcl.aos[i].bo);
+       rmesa->tcl.aos[i].bo = NULL;
+     }
    }
 }

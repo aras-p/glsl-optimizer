@@ -269,6 +269,7 @@ struct radeon_swtcl_info {
 
 struct radeon_ioctl {
 	GLuint vertex_offset;
+        struct radeon_bo *bo;
 	GLuint vertex_size;
 };
 

@@ -43,6 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern void radeonEmitState( r100ContextPtr rmesa );
 extern void radeonEmitVertexAOS( r100ContextPtr rmesa,
 				 GLuint vertex_size,
+				 struct radeon_bo *bo,
 				 GLuint offset );
 
 extern void radeonEmitVbufPrim( r100ContextPtr rmesa,
@@ -58,8 +59,8 @@ extern GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
 					   GLuint primitive,
 					   GLuint min_nr );
 
+
 extern void radeonEmitAOS( r100ContextPtr rmesa,
-			   struct radeon_dma_region **regions,
 			   GLuint n,
 			   GLuint offset );
 

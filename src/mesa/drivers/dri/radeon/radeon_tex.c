@@ -315,7 +315,7 @@ static void radeonTexParameter( GLcontext *ctx, GLenum target,
 				struct gl_texture_object *texObj,
 				GLenum pname, const GLfloat *params )
 {
-   radeonTexObjPtr t = (radeonTexObjPtr) texObj->DriverData;
+   radeonTexObj* t = radeon_tex_obj(texObj);
 
    if ( RADEON_DEBUG & (DEBUG_STATE|DEBUG_TEXTURE) ) {
       fprintf( stderr, "%s( %s )\n", __FUNCTION__,

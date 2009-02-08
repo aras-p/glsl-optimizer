@@ -46,6 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_pipeline.h"
 
 #include "radeon_context.h"
+#include "common_cmdbuf.h"
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
 #include "radeon_swtcl.h"
@@ -291,7 +292,7 @@ void r100_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
    radeonEmitState(rmesa);
    radeonEmitVertexAOS( rmesa,
 			rmesa->radeon.swtcl.vertex_size,
-			//			rmesa->radeon.dma.current,
+			rmesa->radeon.dma.current,
 			current_offset);
 
 		      

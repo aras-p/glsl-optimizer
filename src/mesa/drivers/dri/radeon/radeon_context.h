@@ -334,11 +334,6 @@ struct r100_state {
 	struct radeon_texture_state texture;
 };
 
-#define GET_START(rvb) (rmesa->radeon.radeonScreen->gart_buffer_offset +			\
-			(rvb)->address - rmesa->dma.buf0_address +	\
-			(rvb)->start)
-
-
 #define RADEON_CMD_BUF_SZ  (8*1024)
 #define R200_ELT_BUF_SZ  (8*1024)
 /* radeon_tcl.c
@@ -352,12 +347,14 @@ struct radeon_tcl_info {
 	 */
 	GLvector4f ObjClean;
 
-	struct radeon_dma_region *aos_components[8];
+        struct radeon_aos aos[8];
 	GLuint nr_aos_components;
 
 	GLuint *Elts;
 
-	struct radeon_dma_region indexed_verts;
+	struct radeon_bo *indexed_bo;
+
+//	struct radeon_dma_region indexed_verts;
 	struct radeon_dma_region obj;
 	struct radeon_dma_region rgba;
 	struct radeon_dma_region spec;
@@ -365,8 +362,8 @@ struct radeon_tcl_info {
 	struct radeon_dma_region tex[RADEON_MAX_TEXTURE_UNITS];
 	struct radeon_dma_region norm;
 
-        struct radeon_bo *elt_dma_bo;
-        int elt_dma_offset; /** Offset into this buffer object, in bytes */
+        int elt_cmd_offset; /** Offset into the cmdbuf */
+	int elt_cmd_start;
         int elt_used;
 };
 
