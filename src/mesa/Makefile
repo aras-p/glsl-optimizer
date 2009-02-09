@@ -21,7 +21,8 @@ include sources.mak
 
 # Default: build dependencies, then asm_subdirs, then convenience
 # libs (.a) and finally the device drivers:
-default: depend asm_subdirs libmesa.a libglapi.a driver_subdirs
+default: depend asm_subdirs libmesa.a libmesagallium.a libglapi.a \
+	driver_subdirs
 
 
 

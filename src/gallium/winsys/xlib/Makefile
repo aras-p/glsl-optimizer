@@ -47,7 +47,7 @@ LIBS = \
 	$(GALLIUM_DRIVERS) \
 	$(TOP)/src/gallium/state_trackers/glx/xlib/libxlib.a \
 	$(TOP)/src/mesa/libglapi.a \
-	$(TOP)/src/mesa/libmesa.a \
+	$(TOP)/src/mesa/libmesagallium.a \
 	$(GALLIUM_AUXILIARIES) \
 	$(CELL_SPU_LIB) \
 
