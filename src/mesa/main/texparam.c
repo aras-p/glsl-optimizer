@@ -262,8 +262,10 @@ set_tex_parameteri(GLcontext *ctx,
 
    case GL_GENERATE_MIPMAP_SGIS:
       if (ctx->Extensions.SGIS_generate_mipmap) {
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         texObj->GenerateMipmap = params[0] ? GL_TRUE : GL_FALSE;
+         if (texObj->GenerateMipmap != params[0]) {
+            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+            texObj->GenerateMipmap = params[0] ? GL_TRUE : GL_FALSE;
+         }
       }
       else {
          _mesa_error(ctx, GL_INVALID_ENUM,
@@ -275,8 +277,10 @@ set_tex_parameteri(GLcontext *ctx,
       if (ctx->Extensions.ARB_shadow &&
           (params[0] == GL_NONE ||
            params[0] == GL_COMPARE_R_TO_TEXTURE_ARB)) {
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         texObj->CompareMode = params[0];
+         if (texObj->CompareMode != params[0]) {
+            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+            texObj->CompareMode = params[0];
+         }
       }
       else {
          _mesa_error(ctx, GL_INVALID_ENUM,
@@ -286,6 +290,8 @@ set_tex_parameteri(GLcontext *ctx,
 
    case GL_TEXTURE_COMPARE_FUNC_ARB:
       if (ctx->Extensions.ARB_shadow) {
+         if (texObj->CompareFunc == params[0])
+            return;
          switch (params[0]) {
          case GL_LEQUAL:
          case GL_GEQUAL:
@@ -319,8 +325,10 @@ set_tex_parameteri(GLcontext *ctx,
           (params[0] == GL_LUMINANCE ||
            params[0] == GL_INTENSITY ||
            params[0] == GL_ALPHA)) {
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         texObj->DepthMode = params[0];
+         if (texObj->DepthMode != params[0]) {
+            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+            texObj->DepthMode = params[0];
+         }
       }
       else {
          _mesa_error(ctx, GL_INVALID_ENUM,
@@ -415,6 +423,8 @@ set_tex_parameterf(GLcontext *ctx,
 
    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
       if (ctx->Extensions.EXT_texture_filter_anisotropic) {
+         if (texObj->MaxAnisotropy == params[0])
+            return;
          if (params[0] < 1.0) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
             return;
@@ -432,8 +442,10 @@ set_tex_parameterf(GLcontext *ctx,
 
    case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
       if (ctx->Extensions.ARB_shadow_ambient) {
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         texObj->CompareFailValue = CLAMP(params[0], 0.0F, 1.0F);
+         if (texObj->CompareFailValue != params[0]) {
+            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+            texObj->CompareFailValue = CLAMP(params[0], 0.0F, 1.0F);
+         }
       }
       else {
          _mesa_error(ctx, GL_INVALID_ENUM,
