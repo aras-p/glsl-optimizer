@@ -365,9 +365,8 @@ intelInvalidateState(GLcontext * ctx, GLuint new_state)
       intel->vtbl.invalidate_state( intel, new_state );
 }
 
-
-void
-intelFlush(GLcontext * ctx)
+static void
+intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
 {
    struct intel_context *intel = intel_context(ctx);
 
@@ -381,10 +380,23 @@ intelFlush(GLcontext * ctx)
     * lands onscreen in a timely manner, even if the X Server doesn't trigger
     * a flush for us.
     */
-   intel_batchbuffer_emit_mi_flush(intel->batch);
+   if (needs_mi_flush)
+      intel_batchbuffer_emit_mi_flush(intel->batch);
 
    if (intel->batch->map != intel->batch->ptr)
       intel_batchbuffer_flush(intel->batch);
+}
+
+void
+intelFlush(GLcontext * ctx)
+{
+   intel_flush(ctx, GL_FALSE);
+}
+
+static void
+intel_glFlush(GLcontext *ctx)
+{
+   intel_flush(ctx, GL_TRUE);
 }
 
 void
@@ -413,7 +425,7 @@ intelInitDriverFunctions(struct dd_function_table *functions)
 {
    _mesa_init_driver_functions(functions);
 
-   functions->Flush = intelFlush;
+   functions->Flush = intel_glFlush;
    functions->Finish = intelFinish;
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
