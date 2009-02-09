@@ -881,7 +881,7 @@ _swrast_DrawPixels( GLcontext *ctx,
 
    swrast_render_finish(ctx);
 
-   _mesa_unmap_drapix_pbo(ctx, unpack);
+   _mesa_unmap_drawpix_pbo(ctx, unpack);
 }
 
 
