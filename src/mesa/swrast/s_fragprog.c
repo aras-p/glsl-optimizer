@@ -84,8 +84,7 @@ fetch_texel_lod( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
       swizzle_texel(rgba, color, texObj->_Swizzle);
    }
    else {
-      color[0] = color[1] = color[2] = 0.0F;
-      color[3] = 1.0F;
+      ASSIGN_4V(color, 0.0F, 0.0F, 0.0F, 1.0F);
    }
 }
 
@@ -127,8 +126,7 @@ fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
       swizzle_texel(rgba, color, texObj->_Swizzle);
    }
    else {
-      color[0] = color[1] = color[2] = 0.0F;
-      color[3] = 1.0F;
+      ASSIGN_4V(color, 0.0F, 0.0F, 0.0F, 1.0F);
    }
 }
 
