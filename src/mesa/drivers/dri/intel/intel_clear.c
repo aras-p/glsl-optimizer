@@ -39,6 +39,7 @@
 #include "main/macros.h"
 #include "main/matrix.h"
 #include "main/texstate.h"
+#include "main/shaders.h"
 #include "main/stencil.h"
 #include "main/varray.h"
 #include "glapi/dispatch.h"
@@ -71,6 +72,7 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    int i;
    GLboolean saved_fp_enable = GL_FALSE, saved_vp_enable = GL_FALSE;
+   GLboolean saved_shader_program = 0;
    unsigned int saved_active_texture;
 
    assert((mask & ~(BUFFER_BIT_BACK_LEFT | BUFFER_BIT_FRONT_LEFT |
@@ -108,6 +110,10 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
    if (ctx->Extensions.ARB_vertex_program && ctx->VertexProgram.Enabled) {
       saved_vp_enable = GL_TRUE;
       _mesa_Disable(GL_VERTEX_PROGRAM_ARB);
+   }
+   if (ctx->Extensions.ARB_shader_objects && ctx->Shader.CurrentProgram) {
+      saved_shader_program = ctx->Shader.CurrentProgram->Name;
+      _mesa_UseProgramObjectARB(0);
    }
 
    if (ctx->Texture._EnabledUnits != 0) {
@@ -214,6 +220,9 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
       _mesa_Enable(GL_FRAGMENT_PROGRAM_ARB);
    if (saved_vp_enable)
       _mesa_Enable(GL_VERTEX_PROGRAM_ARB);
+
+   if (saved_shader_program)
+      _mesa_UseProgramObjectARB(saved_shader_program);
 
    _mesa_PopClientAttrib();
    _mesa_PopAttrib();
