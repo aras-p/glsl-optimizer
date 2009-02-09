@@ -73,6 +73,7 @@ intel_texture_drawpixels(GLcontext * ctx,
    GLfloat texcoords[4][2];
    GLfloat z;
    GLint old_active_texture;
+   GLenum internalFormat;
 
    /* We're going to mess with texturing with no regard to existing texture
     * state, so if there is some set up we have to bail.
@@ -134,11 +135,11 @@ intel_texture_drawpixels(GLcontext * ctx,
    _mesa_TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    _mesa_TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    _mesa_TexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-   /*
-   _mesa_TexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
-   _mesa_TexEnvf(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-   */
-   _mesa_TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, format,
+   if (type == GL_ALPHA)
+      internalFormat = GL_ALPHA;
+   else
+      internalFormat = GL_RGBA;
+   _mesa_TexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format,
 		    type, pixels);
 
    intel_meta_set_passthrough_transform(intel);
