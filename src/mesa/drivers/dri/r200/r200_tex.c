@@ -43,8 +43,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/teximage.h"
 #include "main/texobj.h"
 
-#include "texmem.h"
-
 #include "radeon_mipmap_tree.h"
 #include "r200_context.h"
 #include "r200_state.h"
@@ -210,6 +208,9 @@ static void r200SetTexMaxAnisotropy( radeonTexObjPtr t, GLfloat max )
 static void r200SetTexFilter( radeonTexObjPtr t, GLenum minf, GLenum magf )
 {
    GLuint anisotropy = (t->pp_txfilter & R200_MAX_ANISO_MASK);
+
+   /* Force revalidation to account for switches from/to mipmapping. */
+   t->validated = GL_FALSE;
 
    t->pp_txfilter &= ~(R200_MIN_FILTER_MASK | R200_MAG_FILTER_MASK);
    t->pp_txformat_x &= ~R200_VOLUME_FILTER_MASK;
@@ -389,7 +390,11 @@ static void r200TexParameter( GLcontext *ctx, GLenum target,
        * we just have to rely on loading the right subset of mipmap levels
        * to simulate a clamped LOD.
        */
-      driSwapOutTextureObject( (driTextureObject *) t );
+      if (t->mt) {
+         radeon_miptree_unreference(t->mt);
+	 t->mt = 0;
+	 t->validated = GL_FALSE;
+      }
       break;
 
    default:
