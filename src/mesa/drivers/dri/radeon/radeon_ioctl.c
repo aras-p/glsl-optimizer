@@ -251,7 +251,7 @@ extern void radeonEmitVbufPrim( r100ContextPtr rmesa,
 
 
 #if RADEON_OLD_PACKETS
-   BEGIN_BATCH(6);
+   BEGIN_BATCH(8);
    OUT_BATCH_PACKET3_CLIP(RADEON_CP_PACKET3_3D_RNDR_GEN_INDX_PRIM, 3);
    OUT_BATCH_RELOC(rmesa->ioctl.vertex_offset, rmesa->ioctl.bo, rmesa->ioctl.vertex_offset, RADEON_GEM_DOMAIN_GTT, 0, 0);
    OUT_BATCH(vertex_nr);
@@ -363,6 +363,7 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
 				    GLuint min_nr )
 {
    GLushort *retval;
+   int align_min_nr;
    BATCH_LOCALS(&rmesa->radeon);
    if (RADEON_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s %d prim %x\n", __FUNCTION__, min_nr, primitive);
@@ -373,8 +374,11 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
    
    rmesa->tcl.elt_cmd_start = rmesa->radeon.cmdbuf.cs->cdw;
 
+   /* round up min_nr to align the state */
+   align_min_nr = (min_nr + 1) & ~1;
+
 #if RADEON_OLD_PACKETS
-   BEGIN_BATCH_NO_AUTOSTATE(2+ELTS_BUFSZ(min_nr)/4);
+   BEGIN_BATCH_NO_AUTOSTATE(2+ELTS_BUFSZ(align_min_nr)/4);
    OUT_BATCH_PACKET3_CLIP(RADEON_CP_PACKET3_3D_RNDR_GEN_INDX_PRIM, 0);
    OUT_BATCH_RELOC(rmesa->ioctl.vertex_offset, rmesa->ioctl.bo, rmesa->ioctl.vertex_offset, RADEON_GEM_DOMAIN_GTT, 0, 0);
    OUT_BATCH(0xffff);
@@ -385,7 +389,7 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
 	     RADEON_CP_VC_CNTL_VTX_FMT_RADEON_MODE);
 
 #else
-   BEGIN_BATCH_NO_AUTOSTATE(ELTS_BUFSZ(min_nr)/4);
+   BEGIN_BATCH_NO_AUTOSTATE(ELTS_BUFSZ(align_min_nr)/4);
    OUT_BATCH_PACKET3_CLIP(RADEON_CP_PACKET3_DRAW_INDX, 0);
    OUT_BATCH(vertex_format);
    OUT_BATCH(primitive | 
