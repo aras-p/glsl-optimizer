@@ -231,17 +231,36 @@ if test "$enable_static" = yes; then
     GLW_LIB_NAME='lib$(GLW_LIB).a'
     OSMESA_LIB_NAME='lib$(OSMESA_LIB).a'
 else
-    GL_LIB_NAME='lib$(GL_LIB).so'
-    GLU_LIB_NAME='lib$(GLU_LIB).so'
-    GLUT_LIB_NAME='lib$(GLUT_LIB).so'
-    GLW_LIB_NAME='lib$(GLW_LIB).so'
-    OSMESA_LIB_NAME='lib$(OSMESA_LIB).so'
+    case "$host_os" in
+    darwin* )
+        LIB_EXTENSION='dylib' ;;
+    * )
+        LIB_EXTENSION='so' ;;
+    esac
+
+    GL_LIB_NAME='lib$(GL_LIB).'${LIB_EXTENSION}
+    GLU_LIB_NAME='lib$(GLU_LIB).'${LIB_EXTENSION}
+    GLUT_LIB_NAME='lib$(GLUT_LIB).'${LIB_EXTENSION}
+    GLW_LIB_NAME='lib$(GLW_LIB).'${LIB_EXTENSION}
+    OSMESA_LIB_NAME='lib$(OSMESA_LIB).'${LIB_EXTENSION}
+
+    GL_LIB_GLOB='lib$(GL_LIB).*'${LIB_EXTENSION}'*'
+    GLU_LIB_GLOB='lib$(GLU_LIB).*'${LIB_EXTENSION}'*'
+    GLUT_LIB_GLOB='lib$(GLUT_LIB).*'${LIB_EXTENSION}'*'
+    GLW_LIB_GLOB='lib$(GLW_LIB).*'${LIB_EXTENSION}'*'
+    OSMESA_LIB_GLOB='lib$(OSMESA_LIB).*'${LIB_EXTENSION}'*'
 fi
 AC_SUBST([GL_LIB_NAME])
 AC_SUBST([GLU_LIB_NAME])
 AC_SUBST([GLUT_LIB_NAME])
 AC_SUBST([GLW_LIB_NAME])
 AC_SUBST([OSMESA_LIB_NAME])
+
+AC_SUBST([GL_LIB_GLOB])
+AC_SUBST([GLU_LIB_GLOB])
+AC_SUBST([GLUT_LIB_GLOB])
+AC_SUBST([GLW_LIB_GLOB])
+AC_SUBST([OSMESA_LIB_GLOB])
 
 dnl
 dnl Arch/platform-specific settings
