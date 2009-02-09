@@ -3,7 +3,7 @@
  * Version:  7.5
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
- * Copyright (C) 1999-2009  VMware, Inc.  All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -165,6 +165,20 @@ set_swizzle_component(GLuint *swizzle, GLuint comp, GLuint swz)
 }
 
 
+/**
+ * This is called just prior to changing any texture object state.
+ * Any pending rendering will be flushed out, we'll set the _NEW_TEXTURE
+ * state flag and then mark the texture object as 'incomplete' so that any
+ * per-texture derived state gets recomputed.
+ */
+static INLINE void
+flush(GLcontext *ctx, struct gl_texture_object *texObj)
+{
+   FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+   texObj->_Complete = GL_FALSE;
+}
+
+
 /** Set an integer-valued texture parameter */
 static void
 set_tex_parameteri(GLcontext *ctx,
@@ -178,7 +192,7 @@ set_tex_parameteri(GLcontext *ctx,
       switch (params[0]) {
       case GL_NEAREST:
       case GL_LINEAR:
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+         flush(ctx, texObj);
          texObj->MinFilter = params[0];
          return;
       case GL_NEAREST_MIPMAP_NEAREST:
@@ -186,7 +200,7 @@ set_tex_parameteri(GLcontext *ctx,
       case GL_NEAREST_MIPMAP_LINEAR:
       case GL_LINEAR_MIPMAP_LINEAR:
          if (texObj->Target != GL_TEXTURE_RECTANGLE_NV) {
-            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+            flush(ctx, texObj);
             texObj->MinFilter = params[0];
             return;
          }
@@ -202,7 +216,7 @@ set_tex_parameteri(GLcontext *ctx,
       switch (params[0]) {
       case GL_NEAREST:
       case GL_LINEAR:
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+         flush(ctx, texObj);
          texObj->MagFilter = params[0];
          return;
       default:
@@ -214,7 +228,7 @@ set_tex_parameteri(GLcontext *ctx,
       if (texObj->WrapS == params[0])
          return;
       if (validate_texture_wrap_mode(ctx, texObj->Target, params[0])) {
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+         flush(ctx, texObj);
          texObj->WrapS = params[0];
       }
       return;
@@ -223,7 +237,7 @@ set_tex_parameteri(GLcontext *ctx,
       if (texObj->WrapT == params[0])
          return;
       if (validate_texture_wrap_mode(ctx, texObj->Target, params[0])) {
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+         flush(ctx, texObj);
          texObj->WrapT = params[0];
       }
       return;
@@ -232,7 +246,7 @@ set_tex_parameteri(GLcontext *ctx,
       if (texObj->WrapR == params[0])
          return;
       if (validate_texture_wrap_mode(ctx, texObj->Target, params[0])) {
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+         flush(ctx, texObj);
          texObj->WrapR = params[0];
       }
       return;
@@ -245,7 +259,7 @@ set_tex_parameteri(GLcontext *ctx,
          _mesa_error(ctx, GL_INVALID_VALUE, "glTexParameter(param)");
          return;
       }
-      FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+      flush(ctx, texObj);
       texObj->BaseLevel = params[0];
       return;
 
@@ -256,14 +270,14 @@ set_tex_parameteri(GLcontext *ctx,
          _mesa_error(ctx, GL_INVALID_OPERATION, "glTexParameter(param)");
          return;
       }
-      FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+      flush(ctx, texObj);
       texObj->MaxLevel = params[0];
       return;
 
    case GL_GENERATE_MIPMAP_SGIS:
       if (ctx->Extensions.SGIS_generate_mipmap) {
          if (texObj->GenerateMipmap != params[0]) {
-            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+            flush(ctx, texObj);
             texObj->GenerateMipmap = params[0] ? GL_TRUE : GL_FALSE;
          }
       }
@@ -278,7 +292,7 @@ set_tex_parameteri(GLcontext *ctx,
           (params[0] == GL_NONE ||
            params[0] == GL_COMPARE_R_TO_TEXTURE_ARB)) {
          if (texObj->CompareMode != params[0]) {
-            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+            flush(ctx, texObj);
             texObj->CompareMode = params[0];
          }
       }
@@ -295,7 +309,7 @@ set_tex_parameteri(GLcontext *ctx,
          switch (params[0]) {
          case GL_LEQUAL:
          case GL_GEQUAL:
-            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+            flush(ctx, texObj);
             texObj->CompareFunc = params[0];
             return;
          case GL_EQUAL:
@@ -305,7 +319,7 @@ set_tex_parameteri(GLcontext *ctx,
          case GL_ALWAYS:
          case GL_NEVER:
             if (ctx->Extensions.EXT_shadow_funcs) {
-               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+               flush(ctx, texObj);
                texObj->CompareFunc = params[0];
                return;
             }
@@ -326,7 +340,7 @@ set_tex_parameteri(GLcontext *ctx,
            params[0] == GL_INTENSITY ||
            params[0] == GL_ALPHA)) {
          if (texObj->DepthMode != params[0]) {
-            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+            flush(ctx, texObj);
             texObj->DepthMode = params[0];
          }
       }
@@ -359,7 +373,7 @@ set_tex_parameteri(GLcontext *ctx,
          }
          ASSERT(comp < 4);
          if (swz >= 0) {
-            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+            flush(ctx, texObj);
             texObj->Swizzle[comp] = params[0];
             set_swizzle_component(&texObj->_Swizzle, comp, swz);
             return;
@@ -371,7 +385,7 @@ set_tex_parameteri(GLcontext *ctx,
    case GL_TEXTURE_SWIZZLE_RGBA_EXT:
       if (ctx->Extensions.EXT_texture_swizzle) {
          GLuint comp;
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+         flush(ctx, texObj);
          for (comp = 0; comp < 4; comp++) {
             const GLint swz = comp_to_swizzle(params[comp]);
             if (swz >= 0) {
@@ -405,19 +419,19 @@ set_tex_parameterf(GLcontext *ctx,
    case GL_TEXTURE_MIN_LOD:
       if (texObj->MinLod == params[0])
          return;
-      FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+      flush(ctx, texObj);
       texObj->MinLod = params[0];
       return;
 
    case GL_TEXTURE_MAX_LOD:
       if (texObj->MaxLod == params[0])
          return;
-      FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+      flush(ctx, texObj);
       texObj->MaxLod = params[0];
       return;
 
    case GL_TEXTURE_PRIORITY:
-      FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+      flush(ctx, texObj);
       texObj->Priority = CLAMP(params[0], 0.0F, 1.0F);
       return;
 
@@ -429,7 +443,7 @@ set_tex_parameterf(GLcontext *ctx,
             _mesa_error(ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
             return;
          }
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+         flush(ctx, texObj);
          /* clamp to max, that's what NVIDIA does */
          texObj->MaxAnisotropy = MIN2(params[0],
                                       ctx->Const.MaxTextureMaxAnisotropy);
@@ -443,7 +457,7 @@ set_tex_parameterf(GLcontext *ctx,
    case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
       if (ctx->Extensions.ARB_shadow_ambient) {
          if (texObj->CompareFailValue != params[0]) {
-            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+            flush(ctx, texObj);
             texObj->CompareFailValue = CLAMP(params[0], 0.0F, 1.0F);
          }
       }
@@ -457,14 +471,14 @@ set_tex_parameterf(GLcontext *ctx,
       /* NOTE: this is really part of OpenGL 1.4, not EXT_texture_lod_bias */
       if (ctx->Extensions.EXT_texture_lod_bias) {
          if (texObj->LodBias != params[0]) {
-            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+            flush(ctx, texObj);
             texObj->LodBias = params[0];
          }
       }
       break;
 
    case GL_TEXTURE_BORDER_COLOR:
-      FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+      flush(ctx, texObj);
       texObj->BorderColor[RCOMP] = params[0];
       texObj->BorderColor[GCOMP] = params[1];
       texObj->BorderColor[BCOMP] = params[2];
@@ -514,8 +528,6 @@ _mesa_TexParameterf(GLenum target, GLenum pname, GLfloat param)
       /* this will generate an error if pname is illegal */
       set_tex_parameterf(ctx, texObj, pname, &param);
    }
-
-   texObj->_Complete = GL_FALSE;
 
    if (ctx->Driver.TexParameter && ctx->ErrorValue == GL_NO_ERROR) {
       ctx->Driver.TexParameter(ctx, target, texObj, pname, &param);
@@ -572,8 +584,6 @@ _mesa_TexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
       set_tex_parameterf(ctx, texObj, pname, params);
    }
 
-   texObj->_Complete = GL_FALSE;
-
    if (ctx->Driver.TexParameter && ctx->ErrorValue == GL_NO_ERROR) {
       ctx->Driver.TexParameter(ctx, target, texObj, pname, params);
    }
@@ -608,8 +618,6 @@ _mesa_TexParameteri(GLenum target, GLenum pname, GLint param)
       /* this will generate an error if pname is illegal */
       set_tex_parameteri(ctx, texObj, pname, &param);
    }
-
-   texObj->_Complete = GL_FALSE;
 
    if (ctx->Driver.TexParameter && ctx->ErrorValue == GL_NO_ERROR) {
       GLfloat fparam = (GLfloat) param;
@@ -657,8 +665,6 @@ _mesa_TexParameteriv(GLenum target, GLenum pname, const GLint *params)
       /* this will generate an error if pname is illegal */
       set_tex_parameteri(ctx, texObj, pname, params);
    }
-
-   texObj->_Complete = GL_FALSE;
 
    if (ctx->Driver.TexParameter && ctx->ErrorValue == GL_NO_ERROR) {
       GLfloat fparams[4];
