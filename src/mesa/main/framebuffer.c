@@ -223,19 +223,36 @@ _mesa_reference_framebuffer(struct gl_framebuffer **ptr,
       /* no change */
       return;
    }
+
    if (*ptr) {
-      _mesa_unreference_framebuffer(ptr);
+      /* unreference old renderbuffer */
+      GLboolean deleteFlag = GL_FALSE;
+      struct gl_framebuffer *oldFb = *ptr;
+
+      _glthread_LOCK_MUTEX(oldFb->Mutex);
+      ASSERT(oldFb->RefCount > 0);
+      oldFb->RefCount--;
+      deleteFlag = (oldFb->RefCount == 0);
+      _glthread_UNLOCK_MUTEX(oldFb->Mutex);
+      
+      if (deleteFlag)
+         oldFb->Delete(oldFb);
+
+      *ptr = NULL;
    }
    assert(!*ptr);
-   assert(fb);
-   _glthread_LOCK_MUTEX(fb->Mutex);
-   fb->RefCount++;
-   _glthread_UNLOCK_MUTEX(fb->Mutex);
-   *ptr = fb;
+
+   if (fb) {
+      _glthread_LOCK_MUTEX(fb->Mutex);
+      fb->RefCount++;
+      _glthread_UNLOCK_MUTEX(fb->Mutex);
+      *ptr = fb;
+   }
 }
 
 
 /**
+ * XXX this function is deprecated.
  * Undo/remove a reference to a framebuffer object.
  * Decrement the framebuffer object's reference count and delete it when
  * the refcount hits zero.
@@ -244,21 +261,7 @@ _mesa_reference_framebuffer(struct gl_framebuffer **ptr,
 void
 _mesa_unreference_framebuffer(struct gl_framebuffer **fb)
 {
-   assert(fb);
-   if (*fb) {
-      GLboolean deleteFlag = GL_FALSE;
-
-      _glthread_LOCK_MUTEX((*fb)->Mutex);
-      ASSERT((*fb)->RefCount > 0);
-      (*fb)->RefCount--;
-      deleteFlag = ((*fb)->RefCount == 0);
-      _glthread_UNLOCK_MUTEX((*fb)->Mutex);
-      
-      if (deleteFlag)
-         (*fb)->Delete(*fb);
-
-      *fb = NULL;
-   }
+   _mesa_reference_framebuffer(fb, NULL);
 }
 
 
