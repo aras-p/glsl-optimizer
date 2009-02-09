@@ -361,6 +361,7 @@ tdfxFillInModes(__DRIscreenPrivate *psp,
 	static const GLenum db_modes[2] = { GLX_NONE, GLX_SWAP_UNDEFINED_OML };
 	uint8_t depth_bits_array[4];
 	uint8_t stencil_bits_array[4];
+        uint8_t msaa_samples_array[1];
 	if(deep) {
 		depth_bits_array[0] = 0;
 		depth_bits_array[1] = 24;
@@ -383,7 +384,8 @@ tdfxFillInModes(__DRIscreenPrivate *psp,
 		depth_bits_array,
 		stencil_bits_array,
 		deep ? 2 : 4,
-		db_modes, 2);
+		db_modes, 2,
+                msaa_samples_array, 1);
 }
 
 /**

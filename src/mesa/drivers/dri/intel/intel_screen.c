@@ -478,6 +478,7 @@ intelFillInModes(__DRIscreenPrivate *psp,
 
    uint8_t depth_bits_array[3];
    uint8_t stencil_bits_array[3];
+   uint8_t msaa_samples_array[1];
 
    depth_bits_array[0] = 0;
    depth_bits_array[1] = depth_bits;
@@ -509,7 +510,9 @@ intelFillInModes(__DRIscreenPrivate *psp,
    configs = driCreateConfigs(fb_format, fb_type,
 			      depth_bits_array, stencil_bits_array,
 			      depth_buffer_factor, back_buffer_modes,
-			      back_buffer_factor);
+			      back_buffer_factor,
+                              msaa_samples_array, 1);
+
    if (configs == NULL) {
     fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
               __LINE__);
@@ -679,7 +682,7 @@ __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
    static const GLenum back_buffer_modes[] = {
       GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
    };
-   uint8_t depth_bits[4], stencil_bits[4];
+   uint8_t depth_bits[4], stencil_bits[4], msaa_samples_array[1];
    int color;
    const __DRIconfig **configs = NULL;
 
@@ -748,7 +751,9 @@ __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
 			  stencil_bits,
 			  ARRAY_SIZE(depth_bits),
 			  back_buffer_modes,
-			  ARRAY_SIZE(back_buffer_modes));
+			  ARRAY_SIZE(back_buffer_modes),
+                          msaa_samples_array, ARRAY_SIZE(msaa_samples_array));
+
       if (configs == NULL)
 	 configs = new_configs;
       else

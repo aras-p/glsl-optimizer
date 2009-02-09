@@ -129,6 +129,7 @@ mgaFillInModes( __DRIscreenPrivate *psp,
 
     uint8_t depth_bits_array[3];
     uint8_t stencil_bits_array[3];
+    uint8_t msaa_samples_array[1];
 
 
     depth_bits_array[0] = 0;
@@ -158,7 +159,8 @@ mgaFillInModes( __DRIscreenPrivate *psp,
     configs = driCreateConfigs(fb_format, fb_type,
 			       depth_bits_array, stencil_bits_array,
 			       depth_buffer_factor,
-			       back_buffer_modes, back_buffer_factor);
+			       back_buffer_modes, back_buffer_factor,
+                               msaa_samples_array, 1);
     if (configs == NULL) {
 	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
 		 __func__, __LINE__ );
