@@ -492,7 +492,7 @@ xmesa_free_buffer(XMesaBuffer buffer)
          b->frontxrb->drawable = 0;
 
          /* Unreference.  If count = zero we'll really delete the buffer */
-         _mesa_unreference_framebuffer(&fb);
+         _mesa_reference_framebuffer(&fb, NULL);
 
          return;
       }
