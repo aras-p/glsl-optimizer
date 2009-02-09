@@ -157,7 +157,7 @@ def preamble(intype, outtype, inpv, outpv, prim):
     print '    void *_out )'
     print '{'
     if intype != GENERATE:
-        print '  const ' + intype + '*in = (const ' + intype + '*)in;'
+        print '  const ' + intype + '*in = (const ' + intype + '*)_in;'
     print '  ' + outtype + ' *out = (' + outtype + '*)_out;'
     print '  unsigned i, j;'
     print '  (void)j;'

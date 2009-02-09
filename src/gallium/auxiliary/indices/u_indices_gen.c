@@ -1133,7 +1133,7 @@ static void translate_points_ubyte2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1146,7 +1146,7 @@ static void translate_lines_ubyte2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1160,7 +1160,7 @@ static void translate_linestrip_ubyte2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1174,7 +1174,7 @@ static void translate_lineloop_ubyte2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1190,7 +1190,7 @@ static void translate_tris_ubyte2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1205,7 +1205,7 @@ static void translate_tristrip_ubyte2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1220,7 +1220,7 @@ static void translate_trifan_ubyte2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1235,7 +1235,7 @@ static void translate_quads_ubyte2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1253,7 +1253,7 @@ static void translate_quadstrip_ubyte2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1271,7 +1271,7 @@ static void translate_polygon_ubyte2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1286,7 +1286,7 @@ static void translate_points_ubyte2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1299,7 +1299,7 @@ static void translate_lines_ubyte2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1313,7 +1313,7 @@ static void translate_linestrip_ubyte2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1327,7 +1327,7 @@ static void translate_lineloop_ubyte2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1343,7 +1343,7 @@ static void translate_tris_ubyte2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1358,7 +1358,7 @@ static void translate_tristrip_ubyte2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1373,7 +1373,7 @@ static void translate_trifan_ubyte2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1388,7 +1388,7 @@ static void translate_quads_ubyte2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1406,7 +1406,7 @@ static void translate_quadstrip_ubyte2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1424,7 +1424,7 @@ static void translate_polygon_ubyte2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1439,7 +1439,7 @@ static void translate_points_ubyte2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1452,7 +1452,7 @@ static void translate_lines_ubyte2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1466,7 +1466,7 @@ static void translate_linestrip_ubyte2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1480,7 +1480,7 @@ static void translate_lineloop_ubyte2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1496,7 +1496,7 @@ static void translate_tris_ubyte2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1511,7 +1511,7 @@ static void translate_tristrip_ubyte2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1526,7 +1526,7 @@ static void translate_trifan_ubyte2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1541,7 +1541,7 @@ static void translate_quads_ubyte2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1559,7 +1559,7 @@ static void translate_quadstrip_ubyte2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1577,7 +1577,7 @@ static void translate_polygon_ubyte2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1592,7 +1592,7 @@ static void translate_points_ubyte2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1605,7 +1605,7 @@ static void translate_lines_ubyte2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1619,7 +1619,7 @@ static void translate_linestrip_ubyte2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1633,7 +1633,7 @@ static void translate_lineloop_ubyte2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1649,7 +1649,7 @@ static void translate_tris_ubyte2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1664,7 +1664,7 @@ static void translate_tristrip_ubyte2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1679,7 +1679,7 @@ static void translate_trifan_ubyte2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1694,7 +1694,7 @@ static void translate_quads_ubyte2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1712,7 +1712,7 @@ static void translate_quadstrip_ubyte2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1730,7 +1730,7 @@ static void translate_polygon_ubyte2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -1745,7 +1745,7 @@ static void translate_points_ubyte2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1758,7 +1758,7 @@ static void translate_lines_ubyte2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1772,7 +1772,7 @@ static void translate_linestrip_ubyte2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1786,7 +1786,7 @@ static void translate_lineloop_ubyte2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1802,7 +1802,7 @@ static void translate_tris_ubyte2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1817,7 +1817,7 @@ static void translate_tristrip_ubyte2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1832,7 +1832,7 @@ static void translate_trifan_ubyte2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1847,7 +1847,7 @@ static void translate_quads_ubyte2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1865,7 +1865,7 @@ static void translate_quadstrip_ubyte2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1883,7 +1883,7 @@ static void translate_polygon_ubyte2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1898,7 +1898,7 @@ static void translate_points_ubyte2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1911,7 +1911,7 @@ static void translate_lines_ubyte2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1925,7 +1925,7 @@ static void translate_linestrip_ubyte2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1939,7 +1939,7 @@ static void translate_lineloop_ubyte2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1955,7 +1955,7 @@ static void translate_tris_ubyte2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1970,7 +1970,7 @@ static void translate_tristrip_ubyte2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -1985,7 +1985,7 @@ static void translate_trifan_ubyte2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2000,7 +2000,7 @@ static void translate_quads_ubyte2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2018,7 +2018,7 @@ static void translate_quadstrip_ubyte2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2036,7 +2036,7 @@ static void translate_polygon_ubyte2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2051,7 +2051,7 @@ static void translate_points_ubyte2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2064,7 +2064,7 @@ static void translate_lines_ubyte2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2078,7 +2078,7 @@ static void translate_linestrip_ubyte2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2092,7 +2092,7 @@ static void translate_lineloop_ubyte2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2108,7 +2108,7 @@ static void translate_tris_ubyte2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2123,7 +2123,7 @@ static void translate_tristrip_ubyte2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2138,7 +2138,7 @@ static void translate_trifan_ubyte2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2153,7 +2153,7 @@ static void translate_quads_ubyte2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2171,7 +2171,7 @@ static void translate_quadstrip_ubyte2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2189,7 +2189,7 @@ static void translate_polygon_ubyte2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2204,7 +2204,7 @@ static void translate_points_ubyte2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2217,7 +2217,7 @@ static void translate_lines_ubyte2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2231,7 +2231,7 @@ static void translate_linestrip_ubyte2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2245,7 +2245,7 @@ static void translate_lineloop_ubyte2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2261,7 +2261,7 @@ static void translate_tris_ubyte2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2276,7 +2276,7 @@ static void translate_tristrip_ubyte2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2291,7 +2291,7 @@ static void translate_trifan_ubyte2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2306,7 +2306,7 @@ static void translate_quads_ubyte2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2324,7 +2324,7 @@ static void translate_quadstrip_ubyte2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2342,7 +2342,7 @@ static void translate_polygon_ubyte2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ubyte*in = (const ubyte*)in;
+  const ubyte*in = (const ubyte*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2357,7 +2357,7 @@ static void translate_points_ushort2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2370,7 +2370,7 @@ static void translate_lines_ushort2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2384,7 +2384,7 @@ static void translate_linestrip_ushort2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2398,7 +2398,7 @@ static void translate_lineloop_ushort2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2414,7 +2414,7 @@ static void translate_tris_ushort2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2429,7 +2429,7 @@ static void translate_tristrip_ushort2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2444,7 +2444,7 @@ static void translate_trifan_ushort2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2459,7 +2459,7 @@ static void translate_quads_ushort2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2477,7 +2477,7 @@ static void translate_quadstrip_ushort2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2495,7 +2495,7 @@ static void translate_polygon_ushort2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2510,7 +2510,7 @@ static void translate_points_ushort2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2523,7 +2523,7 @@ static void translate_lines_ushort2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2537,7 +2537,7 @@ static void translate_linestrip_ushort2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2551,7 +2551,7 @@ static void translate_lineloop_ushort2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2567,7 +2567,7 @@ static void translate_tris_ushort2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2582,7 +2582,7 @@ static void translate_tristrip_ushort2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2597,7 +2597,7 @@ static void translate_trifan_ushort2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2612,7 +2612,7 @@ static void translate_quads_ushort2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2630,7 +2630,7 @@ static void translate_quadstrip_ushort2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2648,7 +2648,7 @@ static void translate_polygon_ushort2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2663,7 +2663,7 @@ static void translate_points_ushort2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2676,7 +2676,7 @@ static void translate_lines_ushort2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2690,7 +2690,7 @@ static void translate_linestrip_ushort2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2704,7 +2704,7 @@ static void translate_lineloop_ushort2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2720,7 +2720,7 @@ static void translate_tris_ushort2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2735,7 +2735,7 @@ static void translate_tristrip_ushort2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2750,7 +2750,7 @@ static void translate_trifan_ushort2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2765,7 +2765,7 @@ static void translate_quads_ushort2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2783,7 +2783,7 @@ static void translate_quadstrip_ushort2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2801,7 +2801,7 @@ static void translate_polygon_ushort2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2816,7 +2816,7 @@ static void translate_points_ushort2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2829,7 +2829,7 @@ static void translate_lines_ushort2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2843,7 +2843,7 @@ static void translate_linestrip_ushort2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2857,7 +2857,7 @@ static void translate_lineloop_ushort2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2873,7 +2873,7 @@ static void translate_tris_ushort2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2888,7 +2888,7 @@ static void translate_tristrip_ushort2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2903,7 +2903,7 @@ static void translate_trifan_ushort2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2918,7 +2918,7 @@ static void translate_quads_ushort2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2936,7 +2936,7 @@ static void translate_quadstrip_ushort2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2954,7 +2954,7 @@ static void translate_polygon_ushort2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -2969,7 +2969,7 @@ static void translate_points_ushort2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2982,7 +2982,7 @@ static void translate_lines_ushort2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -2996,7 +2996,7 @@ static void translate_linestrip_ushort2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3010,7 +3010,7 @@ static void translate_lineloop_ushort2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3026,7 +3026,7 @@ static void translate_tris_ushort2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3041,7 +3041,7 @@ static void translate_tristrip_ushort2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3056,7 +3056,7 @@ static void translate_trifan_ushort2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3071,7 +3071,7 @@ static void translate_quads_ushort2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3089,7 +3089,7 @@ static void translate_quadstrip_ushort2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3107,7 +3107,7 @@ static void translate_polygon_ushort2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3122,7 +3122,7 @@ static void translate_points_ushort2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3135,7 +3135,7 @@ static void translate_lines_ushort2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3149,7 +3149,7 @@ static void translate_linestrip_ushort2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3163,7 +3163,7 @@ static void translate_lineloop_ushort2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3179,7 +3179,7 @@ static void translate_tris_ushort2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3194,7 +3194,7 @@ static void translate_tristrip_ushort2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3209,7 +3209,7 @@ static void translate_trifan_ushort2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3224,7 +3224,7 @@ static void translate_quads_ushort2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3242,7 +3242,7 @@ static void translate_quadstrip_ushort2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3260,7 +3260,7 @@ static void translate_polygon_ushort2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3275,7 +3275,7 @@ static void translate_points_ushort2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3288,7 +3288,7 @@ static void translate_lines_ushort2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3302,7 +3302,7 @@ static void translate_linestrip_ushort2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3316,7 +3316,7 @@ static void translate_lineloop_ushort2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3332,7 +3332,7 @@ static void translate_tris_ushort2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3347,7 +3347,7 @@ static void translate_tristrip_ushort2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3362,7 +3362,7 @@ static void translate_trifan_ushort2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3377,7 +3377,7 @@ static void translate_quads_ushort2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3395,7 +3395,7 @@ static void translate_quadstrip_ushort2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3413,7 +3413,7 @@ static void translate_polygon_ushort2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3428,7 +3428,7 @@ static void translate_points_ushort2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3441,7 +3441,7 @@ static void translate_lines_ushort2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3455,7 +3455,7 @@ static void translate_linestrip_ushort2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3469,7 +3469,7 @@ static void translate_lineloop_ushort2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3485,7 +3485,7 @@ static void translate_tris_ushort2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3500,7 +3500,7 @@ static void translate_tristrip_ushort2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3515,7 +3515,7 @@ static void translate_trifan_ushort2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3530,7 +3530,7 @@ static void translate_quads_ushort2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3548,7 +3548,7 @@ static void translate_quadstrip_ushort2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3566,7 +3566,7 @@ static void translate_polygon_ushort2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const ushort*in = (const ushort*)in;
+  const ushort*in = (const ushort*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -3581,7 +3581,7 @@ static void translate_points_uint2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3594,7 +3594,7 @@ static void translate_lines_uint2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3608,7 +3608,7 @@ static void translate_linestrip_uint2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3622,7 +3622,7 @@ static void translate_lineloop_uint2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3638,7 +3638,7 @@ static void translate_tris_uint2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3653,7 +3653,7 @@ static void translate_tristrip_uint2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3668,7 +3668,7 @@ static void translate_trifan_uint2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3683,7 +3683,7 @@ static void translate_quads_uint2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3701,7 +3701,7 @@ static void translate_quadstrip_uint2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3719,7 +3719,7 @@ static void translate_polygon_uint2ushort_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3734,7 +3734,7 @@ static void translate_points_uint2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3747,7 +3747,7 @@ static void translate_lines_uint2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3761,7 +3761,7 @@ static void translate_linestrip_uint2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3775,7 +3775,7 @@ static void translate_lineloop_uint2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3791,7 +3791,7 @@ static void translate_tris_uint2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3806,7 +3806,7 @@ static void translate_tristrip_uint2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3821,7 +3821,7 @@ static void translate_trifan_uint2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3836,7 +3836,7 @@ static void translate_quads_uint2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3854,7 +3854,7 @@ static void translate_quadstrip_uint2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3872,7 +3872,7 @@ static void translate_polygon_uint2ushort_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3887,7 +3887,7 @@ static void translate_points_uint2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3900,7 +3900,7 @@ static void translate_lines_uint2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3914,7 +3914,7 @@ static void translate_linestrip_uint2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3928,7 +3928,7 @@ static void translate_lineloop_uint2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3944,7 +3944,7 @@ static void translate_tris_uint2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3959,7 +3959,7 @@ static void translate_tristrip_uint2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3974,7 +3974,7 @@ static void translate_trifan_uint2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -3989,7 +3989,7 @@ static void translate_quads_uint2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -4007,7 +4007,7 @@ static void translate_quadstrip_uint2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -4025,7 +4025,7 @@ static void translate_polygon_uint2ushort_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -4040,7 +4040,7 @@ static void translate_points_uint2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -4053,7 +4053,7 @@ static void translate_lines_uint2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -4067,7 +4067,7 @@ static void translate_linestrip_uint2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -4081,7 +4081,7 @@ static void translate_lineloop_uint2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -4097,7 +4097,7 @@ static void translate_tris_uint2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -4112,7 +4112,7 @@ static void translate_tristrip_uint2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -4127,7 +4127,7 @@ static void translate_trifan_uint2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -4142,7 +4142,7 @@ static void translate_quads_uint2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -4160,7 +4160,7 @@ static void translate_quadstrip_uint2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -4178,7 +4178,7 @@ static void translate_polygon_uint2ushort_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   ushort *out = (ushort*)_out;
   unsigned i, j;
   (void)j;
@@ -4193,7 +4193,7 @@ static void translate_points_uint2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4206,7 +4206,7 @@ static void translate_lines_uint2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4220,7 +4220,7 @@ static void translate_linestrip_uint2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4234,7 +4234,7 @@ static void translate_lineloop_uint2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4250,7 +4250,7 @@ static void translate_tris_uint2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4265,7 +4265,7 @@ static void translate_tristrip_uint2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4280,7 +4280,7 @@ static void translate_trifan_uint2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4295,7 +4295,7 @@ static void translate_quads_uint2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4313,7 +4313,7 @@ static void translate_quadstrip_uint2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4331,7 +4331,7 @@ static void translate_polygon_uint2uint_first2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4346,7 +4346,7 @@ static void translate_points_uint2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4359,7 +4359,7 @@ static void translate_lines_uint2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4373,7 +4373,7 @@ static void translate_linestrip_uint2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4387,7 +4387,7 @@ static void translate_lineloop_uint2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4403,7 +4403,7 @@ static void translate_tris_uint2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4418,7 +4418,7 @@ static void translate_tristrip_uint2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4433,7 +4433,7 @@ static void translate_trifan_uint2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4448,7 +4448,7 @@ static void translate_quads_uint2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4466,7 +4466,7 @@ static void translate_quadstrip_uint2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4484,7 +4484,7 @@ static void translate_polygon_uint2uint_first2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4499,7 +4499,7 @@ static void translate_points_uint2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4512,7 +4512,7 @@ static void translate_lines_uint2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4526,7 +4526,7 @@ static void translate_linestrip_uint2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4540,7 +4540,7 @@ static void translate_lineloop_uint2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4556,7 +4556,7 @@ static void translate_tris_uint2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4571,7 +4571,7 @@ static void translate_tristrip_uint2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4586,7 +4586,7 @@ static void translate_trifan_uint2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4601,7 +4601,7 @@ static void translate_quads_uint2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4619,7 +4619,7 @@ static void translate_quadstrip_uint2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4637,7 +4637,7 @@ static void translate_polygon_uint2uint_last2first(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4652,7 +4652,7 @@ static void translate_points_uint2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4665,7 +4665,7 @@ static void translate_lines_uint2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4679,7 +4679,7 @@ static void translate_linestrip_uint2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4693,7 +4693,7 @@ static void translate_lineloop_uint2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4709,7 +4709,7 @@ static void translate_tris_uint2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4724,7 +4724,7 @@ static void translate_tristrip_uint2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4739,7 +4739,7 @@ static void translate_trifan_uint2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4754,7 +4754,7 @@ static void translate_quads_uint2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4772,7 +4772,7 @@ static void translate_quadstrip_uint2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
@@ -4790,7 +4790,7 @@ static void translate_polygon_uint2uint_last2last(
     unsigned nr,
     void *_out )
 {
-  const uint*in = (const uint*)in;
+  const uint*in = (const uint*)_in;
   uint *out = (uint*)_out;
   unsigned i, j;
   (void)j;
