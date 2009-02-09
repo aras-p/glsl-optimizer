@@ -1268,7 +1268,7 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
                /* But the object will not be freed until it's no longer
                 * bound in any context.
                 */
-               _mesa_unreference_framebuffer(&fb);
+               _mesa_reference_framebuffer(&fb, NULL);
 	    }
 	 }
       }
