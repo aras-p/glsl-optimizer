@@ -1,4 +1,3 @@
-.cvsignore
 arbfplight
 arbfslight
 arbocclude
@@ -9,6 +8,7 @@ cubemap
 drawpix
 engine
 extfuncs.h
+fbo_firecube
 fire
 fogcoord
 fplight
@@ -54,6 +54,7 @@ texcyl
 texdown
 texenv
 texobj
+textures
 trackball.c
 trackball.h
 trispd

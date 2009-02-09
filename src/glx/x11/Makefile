@@ -39,9 +39,9 @@ SOURCES = \
 	  dri2_glx.c \
 	  dri2.c
 
-include $(TOP)/src/mesa/sources
+include $(TOP)/src/mesa/sources.mak
 
-MESA_ASM_API = $(addprefix $(TOP)/src/mesa/, $(ASM_API))
+MESA_GLAPI_ASM_SOURCES = $(addprefix $(TOP)/src/mesa/, $(GLAPI_ASM_SOURCES))
 MESA_GLAPI_SOURCES = $(addprefix $(TOP)/src/mesa/, $(GLAPI_SOURCES))
 MESA_GLAPI_OBJECTS = $(addprefix $(TOP)/src/mesa/, $(GLAPI_OBJECTS))
 
@@ -77,10 +77,11 @@ $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile
 		$(GL_LIB_DEPS) $(OBJECTS)
 
 
-depend: $(SOURCES) $(MESA_GLAPI_SOURCES) $(MESA_ASM_API) Makefile
+depend: $(SOURCES) $(MESA_GLAPI_SOURCES) $(MESA_GLAPI_ASM_SOURCES) Makefile
+	rm -f depend
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(SOURCES) \
-		$(MESA_GLAPI_SOURCES) $(MESA_ASM_API) 
+		$(MESA_GLAPI_SOURCES) $(MESA_GLAPI_ASM_SOURCES) 
 
 
 # Emacs tags

@@ -31,12 +31,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#define GL_GLEXT_PROTOTYPES
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include "showbuffer.h"
 
@@ -1025,6 +1025,7 @@ main(int argc, char *argv[])
    glutInitWindowSize(WindowWidth, WindowHeight);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STENCIL);
    glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
    glutSpecialFunc(SpecialKey);

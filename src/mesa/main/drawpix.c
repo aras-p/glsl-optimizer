@@ -153,7 +153,7 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
       return;
    }
 
-   if (!ctx->Current.RasterPosValid) {
+   if (!ctx->Current.RasterPosValid || width ==0 || height == 0) {
       return;
    }
 
@@ -218,7 +218,7 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
 
    if (ctx->RenderMode == GL_RENDER) {
       /* Truncate, to satisfy conformance tests (matches SGI's OpenGL). */
-      const GLfloat epsilon = (const GLfloat)0.0001;
+      const GLfloat epsilon = 0.0001F;
       GLint x = IFLOOR(ctx->Current.RasterPos[0] + epsilon - xorig);
       GLint y = IFLOOR(ctx->Current.RasterPos[1] + epsilon - yorig);
 

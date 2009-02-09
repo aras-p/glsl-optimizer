@@ -225,33 +225,6 @@ static void
 TestFunctions(void)
 {
    printf("Error 0x%x at line %d\n", glGetError(), __LINE__);
-   {
-      GLfloat pos[3];
-      printf("Error 0x%x at line %d\n", glGetError(), __LINE__);
-      printf("Light pos %g %g %g\n", pos[0], pos[1], pos[2]);
-   }
-
-
-   {
-      GLfloat m[16], result[16];
-      GLint mPos;
-      int i;
-
-      for (i = 0; i < 16; i++)
-         m[i] = (float) i;
-
-      mPos = glGetUniformLocation_func(program, "m");
-      printf("Error 0x%x at line %d\n", glGetError(), __LINE__);
-      glUniformMatrix4fv_func(mPos, 1, GL_FALSE, m);
-      printf("Error 0x%x at line %d\n", glGetError(), __LINE__);
-
-      glGetUniformfv_func(program, mPos, result);
-      printf("Error 0x%x at line %d\n", glGetError(), __LINE__);
-
-      for (i = 0; i < 16; i++) {
-         printf("%8g %8g\n", m[i], result[i]);
-      }
-   }
 
    assert(glIsProgram_func(program));
    assert(glIsShader_func(fragShader));
@@ -279,6 +252,22 @@ TestFunctions(void)
       printf("Frag Shader Info Log: %s\n", log);
       glGetProgramInfoLog_func(program, 1000, &len, log);
       printf("Program Info Log: %s\n", log);
+   }
+
+   /* active uniforms */
+   {
+      GLint n, max, i;
+      glGetProgramiv_func(program, GL_ACTIVE_UNIFORMS, &n);
+      glGetProgramiv_func(program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max);
+      printf("Num uniforms: %d  Max name length: %d\n", n, max);
+      for (i = 0; i < n; i++) {
+         GLint size, len;
+         GLenum type;
+         char name[100];
+         glGetActiveUniform_func(program, i, 100, &len, &size, &type, name);
+         printf("  %d: %s nameLen=%d size=%d type=0x%x\n",
+                i, name, len, size, type);
+      }
    }
 }
 
@@ -512,7 +501,9 @@ Init(void)
    glUniform4fv_func(uDiffuse, 1, diffuse);
    glUniform4fv_func(uSpecular, 1, specular);
    /*   assert(glGetError() == 0);*/
+#if TEXTURE
    glUniform1i_func(uTexture, 2);  /* use texture unit 2 */
+#endif
    /*assert(glGetError() == 0);*/
 
    if (CoordAttrib) {

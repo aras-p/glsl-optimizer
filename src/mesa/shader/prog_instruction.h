@@ -418,11 +418,13 @@ struct prog_instruction
     */
    GLint BranchTarget;
 
+#if 0
    /**
     * For TEX instructions in shaders, the sampler to use for the
     * texture lookup.
     */
    GLint Sampler;
+#endif
 
    const char *Comment;
 };

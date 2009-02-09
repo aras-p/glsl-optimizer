@@ -1,0 +1,33 @@
+This directory contains Python bindings to Gallium3D. It looks like a state
+tracker from the pipe driver perspective, and it looks like a pipe driver from
+the python script perspective.
+
+
+To build you'll need:
+* Python (with development packages)
+* SCons
+* SWIG
+* Python Imaging Library with TK support (for the samples)
+
+Invoke scons on the top dir as
+ 
+ scons statetrackers=python
+
+To use do
+
+ export PYTHONPATH=build/XXXX-XXXX-XXXX/gallium/state_trackers/python
+
+and then try running
+
+  python src/gallium/state_trackers/python/samples/tri.py
+
+which should show a triangle.
+
+
+This is still work in progress:
+- errors are not handled properly and almost always result in crash
+- state atoms with array members are awkward to set
+- there no efficient way to view images
+
+--
+Jose Fonseca <jrfonseca@tungstengraphics.com>

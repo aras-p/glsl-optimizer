@@ -1,0 +1,11 @@
+Import('*')
+
+cso_cache = env.ConvenienceLibrary(
+	target = 'cso_cache',
+	source = [
+		'cso_context.c',
+		'cso_cache.c',
+		'cso_hash.c',
+	])
+
+auxiliaries.insert(0, cso_cache)

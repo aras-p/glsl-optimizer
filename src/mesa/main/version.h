@@ -1,6 +1,10 @@
 /*
  * Mesa 3-D graphics library
+<<<<<<< HEAD:src/mesa/main/version.h
  * Version:  7.5
+=======
+ * Version:  7.4
+>>>>>>> origin/gallium-0.2:src/mesa/main/version.h
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *

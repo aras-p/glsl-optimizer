@@ -143,32 +143,36 @@ static void vbo_exec_copy_to_current( struct vbo_exec_context *exec )
 
    for (i = VBO_ATTRIB_POS+1 ; i < VBO_ATTRIB_MAX ; i++) {
       if (exec->vtx.attrsz[i]) {
-	 GLfloat *current = (GLfloat *)vbo->currval[i].Ptr;
-
          /* Note: the exec->vtx.current[i] pointers point into the
           * ctx->Current.Attrib and ctx->Light.Material.Attrib arrays.
           */
-         if (exec->vtx.attrptr[i]) {
+	 GLfloat *current = (GLfloat *)vbo->currval[i].Ptr;
+         GLfloat tmp[4];
 
-	 COPY_CLEAN_4V(current, 
-		       exec->vtx.attrsz[i], 
-		       exec->vtx.attrptr[i]);
+         COPY_CLEAN_4V(tmp, 
+                       exec->vtx.attrsz[i], 
+                       exec->vtx.attrptr[i]);
+         
+         if (memcmp(current, tmp, sizeof(tmp)) != 0)
+         { 
+            memcpy(current, tmp, sizeof(tmp));
+	 
+            /* Given that we explicitly state size here, there is no need
+             * for the COPY_CLEAN above, could just copy 16 bytes and be
+             * done.  The only problem is when Mesa accesses ctx->Current
+             * directly.
+             */
+            vbo->currval[i].Size = exec->vtx.attrsz[i];
 
-	 }
-
-	 /* Given that we explicitly state size here, there is no need
-	  * for the COPY_CLEAN above, could just copy 16 bytes and be
-	  * done.  The only problem is when Mesa accesses ctx->Current
-	  * directly.
-	  */
-	 vbo->currval[i].Size = exec->vtx.attrsz[i];
-
-	 /* This triggers rather too much recalculation of Mesa state
-	  * that doesn't get used (eg light positions).
-	  */
-	 if (i >= VBO_ATTRIB_MAT_FRONT_AMBIENT &&
-	     i <= VBO_ATTRIB_MAT_BACK_INDEXES)
-	    ctx->NewState |= _NEW_LIGHT;
+            /* This triggers rather too much recalculation of Mesa state
+             * that doesn't get used (eg light positions).
+             */
+            if (i >= VBO_ATTRIB_MAT_FRONT_AMBIENT &&
+                i <= VBO_ATTRIB_MAT_BACK_INDEXES)
+               ctx->NewState |= _NEW_LIGHT;
+            
+            ctx->NewState |= _NEW_CURRENT_ATTRIB;
+         }
       }
    }
 
@@ -696,7 +700,8 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
    GLuint i;
 
    /* Allocate a buffer object.  Will just reuse this object
-    * continuously.
+    * continuously, unless vbo_use_buffer_objects() is called to enable
+    * use of real VBOs.
     */
    _mesa_reference_buffer_object(ctx,
                                  &exec->vtx.bufferobj,
@@ -775,3 +780,36 @@ static void reset_attrfv( struct vbo_exec_context *exec )
    exec->vtx.vertex_size = 0;
 }
       
+
+void GLAPIENTRY
+_vbo_Color4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
+{
+   vbo_Color4f(r, g, b, a);
+}
+
+
+void GLAPIENTRY
+_vbo_Normal3f(GLfloat x, GLfloat y, GLfloat z)
+{
+   vbo_Normal3f(x, y, z);
+}
+
+
+void GLAPIENTRY
+_vbo_MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q)
+{
+   vbo_MultiTexCoord4f(target, s, t, r, q);
+}
+
+void GLAPIENTRY
+_vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params)
+{
+   vbo_Materialfv(face, pname, params);
+}
+
+
+void GLAPIENTRY
+_vbo_VertexAttrib4f(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+   vbo_VertexAttrib4fARB(index, x, y, z, w);
+}

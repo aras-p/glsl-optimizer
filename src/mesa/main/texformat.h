@@ -3,6 +3,7 @@
  * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (c) 2008 VMware, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -98,9 +99,15 @@ enum _format {
    /*@{*/
    MESA_FORMAT_SRGB8,
    MESA_FORMAT_SRGBA8,
+   MESA_FORMAT_SARGB8,
    MESA_FORMAT_SL8,
    MESA_FORMAT_SLA8,
+#if FEATURE_texture_s3tc
    MESA_FORMAT_SRGB_DXT1,
+   MESA_FORMAT_SRGBA_DXT1,
+   MESA_FORMAT_SRGBA_DXT3,
+   MESA_FORMAT_SRGBA_DXT5,
+#endif
    /*@}*/
 #endif
 
@@ -108,12 +115,16 @@ enum _format {
     * \name Compressed texture formats.
     */
    /*@{*/
+#if FEATURE_texture_fxt1
    MESA_FORMAT_RGB_FXT1,
    MESA_FORMAT_RGBA_FXT1,
+#endif
+#if FEATURE_texture_s3tc
    MESA_FORMAT_RGB_DXT1,
    MESA_FORMAT_RGBA_DXT1,
    MESA_FORMAT_RGBA_DXT3,
    MESA_FORMAT_RGBA_DXT5,
+#endif
    /*@}*/
 
    /**
@@ -170,9 +181,15 @@ extern const struct gl_texture_format _mesa_texformat_intensity;
 /*@{*/
 extern const struct gl_texture_format _mesa_texformat_srgb8;
 extern const struct gl_texture_format _mesa_texformat_srgba8;
+extern const struct gl_texture_format _mesa_texformat_sargb8;
 extern const struct gl_texture_format _mesa_texformat_sl8;
 extern const struct gl_texture_format _mesa_texformat_sla8;
+#if FEATURE_texture_s3tc
 extern const struct gl_texture_format _mesa_texformat_srgb_dxt1;
+extern const struct gl_texture_format _mesa_texformat_srgba_dxt1;
+extern const struct gl_texture_format _mesa_texformat_srgba_dxt3;
+extern const struct gl_texture_format _mesa_texformat_srgba_dxt5;
+#endif
 /*@}*/
 #endif
 
@@ -229,12 +246,16 @@ extern const struct gl_texture_format _mesa_texformat_ycbcr_rev;
 
 /** \name Compressed formats */
 /*@{*/
+#if FEATURE_texture_fxt1
 extern const struct gl_texture_format _mesa_texformat_rgb_fxt1;
 extern const struct gl_texture_format _mesa_texformat_rgba_fxt1;
+#endif
+#if FEATURE_texture_s3tc
 extern const struct gl_texture_format _mesa_texformat_rgb_dxt1;
 extern const struct gl_texture_format _mesa_texformat_rgba_dxt1;
 extern const struct gl_texture_format _mesa_texformat_rgba_dxt3;
 extern const struct gl_texture_format _mesa_texformat_rgba_dxt5;
+#endif
 /*@}*/
 
 /** \name The null format */

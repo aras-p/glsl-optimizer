@@ -29,11 +29,11 @@
  *
  */
 
-#define GL_GLEXT_PROTOTYPES
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include "readtex.h"
 
@@ -1037,6 +1037,7 @@ main(int argc, char *argv[])
 
    glutInitWindowSize(WinWidth, WinHeight);
    Win = glutCreateWindow("fbo_firecube");
+   glewInit();
    init(argc, argv);
 
    glutDisplayFunc(draw);

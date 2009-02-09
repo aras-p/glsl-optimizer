@@ -11,46 +11,14 @@ include $(TOP)/configs/current
 LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
 
 SOURCES = \
-	tri-abs.c \
-	tri-add.c \
-	tri-cmp.c \
-	tri-cos.c \
-	tri-dp3.c \
-	tri-dp4.c \
-	tri-dph.c \
-	tri-dst.c \
-	tri-ex2.c \
-	tri-flr.c \
-	tri-frc.c \
-	tri-kil.c \
-	tri-lg2.c \
-	tri-lit.c \
-	tri-lrp.c \
-	tri-mad.c \
-	tri-max.c \
-	tri-min.c \
-	tri-mov.c \
-	tri-mul.c \
-	tri-pow.c \
-	tri-param.c \
-	tri-rcp.c \
-	tri-rsq.c \
-	tri-scs.c \
-	tri-sge.c \
-	tri-sge2.c \
-	tri-sin.c \
-	tri-slt.c \
-	tri-sub.c \
-	tri-swz.c \
-	tri-swz2.c \
 	tri-tex.c \
-	tri-xpd.c \
-	tri-position.c \
 	point-position.c \
 	tri-depth.c \
 	tri-depth2.c \
 	tri-depthwrite.c \
 	tri-depthwrite2.c \
+        tri-param.c \
+        fp-tri.c
 
 NOTDONE=\
 	tri-txb.c \
@@ -72,13 +40,13 @@ UTIL_FILES = readtex.h readtex.c
 .SUFFIXES: .c
 
 .c:
-	$(CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
+	$(APP_CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
 
 .c.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 .S.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
 
 
 ##### TARGETS #####
@@ -100,18 +68,20 @@ getproclist.h: $(TOP)/src/mesa/glapi/gl_API.xml getprocaddress.c getprocaddress.
 
 texrect: texrect.o readtex.o
 	$(CC) $(CFLAGS) $(LDFLAGS) texrect.o readtex.o $(LIBS) -o $@
+#	$(APP_CC) texrect.o readtex.o $(LIBS) -o $@
 
 texrect.o: texrect.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 invert: invert.o readtex.o
 	$(CC) $(CFLAGS) $(LDFLAGS) invert.o readtex.o $(LIBS) -o $@
+#	$(APP_CC) invert.o readtex.o $(LIBS) -o $@
 
 invert.o: invert.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 readtex.o: readtex.c
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 
 readtex.h: $(TOP)/progs/util/readtex.h

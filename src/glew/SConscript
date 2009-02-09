@@ -1,0 +1,50 @@
+Import('*')
+
+if env['platform'] not in ['windows', 'linux']:
+    Return()
+
+env = env.Clone()
+
+env.Append(CPPDEFINES = [
+    'GLEW_BUILD',
+    'GLEW_STATIC',
+    #'GLEW_MX', # Multiple Rendering Contexts support
+])
+
+env.PrependUnique(CPPPATH = [
+    '#/include',
+])
+
+glew = env.StaticLibrary(
+    target = 'glew',
+    source = [
+        'glew.c',
+    ],
+)
+
+env = env.Clone()
+
+if env['platform'] == 'windows':
+    env.PrependUnique(LIBS = [
+        'glu32', 
+        'opengl32', 
+        'gdi32', 
+        'user32', 
+    ])
+else:
+    env.PrependUnique(LIBS = [
+        'GLU',
+        'GL',
+        'X11',
+    ])
+env.Prepend(LIBS = [glew])
+
+env.Program(
+    target = 'glewinfo',
+    source = ['glewinfo.c'],
+)
+
+env.Program(
+    target = 'visualinfo',
+    source = ['visualinfo.c'],
+)

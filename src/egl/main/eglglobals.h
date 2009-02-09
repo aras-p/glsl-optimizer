@@ -24,17 +24,20 @@ struct _egl_global
    EGLBoolean Initialized;
 
    _EGLHashtable *Displays;
-   _EGLHashtable *Contexts;
    _EGLHashtable *Surfaces;
 
    EGLScreenMESA FreeScreenHandle;
 
-   /* XXX these may be temporary */
-   EGLBoolean OpenGLESAPISupported;
-   EGLBoolean OpenVGAPISupported;
+   /* bitmaks of supported APIs (supported by _some_ driver) */
+   EGLint ClientAPIsMask;
+
+   char ClientAPIs[1000];   /**< updated by eglQueryString */
 
    /* XXX temporary - should be thread-specific data (TSD) */
    _EGLThreadInfo *ThreadInfo;
+
+   EGLint NumDrivers;
+   _EGLDriver *Drivers[10];
 };
 
 

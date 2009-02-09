@@ -274,20 +274,19 @@ MESA_SOURCES = \
 ALL_SOURCES = \
 	$(MESA_SOURCES)		\
 	$(GLAPI_SOURCES)	\
-	$(ASM_SOURCES)		\
+	$(MESA_ASM_SOURCES)		\
 	$(COMMON_DRIVER_SOURCES)
-
 
 
 ### Object files
 
 MESA_OBJECTS = \
 	$(MESA_SOURCES:.c=.o) \
-	$(ASM_SOURCES:.S=.o)
+	$(MESA_ASM_SOURCES:.S=.o)
 
 GLAPI_OBJECTS = \
 	$(GLAPI_SOURCES:.c=.o) \
-	$(ASM_API:.S=.o)
+	$(GLAPI_ASM_SOURCES:.S=.o)
 
 
 COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_SOURCES:.c=.o)
@@ -301,5 +300,4 @@ COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_SOURCES:.c=.o)
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
-	-I$(TOP)/src/mesa \
-	-I$(TOP)/src/mesa/main
+	-I$(TOP)/src/mesa

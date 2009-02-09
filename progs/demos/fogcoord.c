@@ -7,18 +7,15 @@
  * Daniel Borca
  */
 
-#define GL_GLEXT_PROTOTYPES
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 #define DEPTH 5.0f
 
-static PFNGLFOGCOORDFEXTPROC glFogCoordf_ext;
 static PFNGLFOGCOORDPOINTEREXTPROC glFogCoordPointer_ext;
-
-static GLboolean have_fog_coord;
 
 static GLfloat camz;
 
@@ -45,10 +42,11 @@ Reset(void)
 }
 
 
-static void APIENTRY
-glFogCoordf_nop (GLfloat f)
+static void
+glFogCoordf_ext (GLfloat f)
 {
-   (void)f;
+   if (fogCoord)
+      glFogCoordfEXT(f);
 }
 
 
@@ -120,14 +118,11 @@ SetFogMode(GLint fogMode)
 static GLboolean
 SetFogCoord(GLboolean fogCoord)
 {
-   glFogCoordf_ext = glFogCoordf_nop;
-
-   if (!have_fog_coord) {
+   if (!GLEW_EXT_fog_coord) {
       return GL_FALSE;
    }
 
    if (fogCoord) {
-      glFogCoordf_ext = (PFNGLFOGCOORDFEXTPROC)glutGetProcAddress("glFogCoordfEXT");
       glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
    }
    else {
@@ -340,7 +335,7 @@ Key( unsigned char key, int x, int y )
          SetFogMode(fogMode);
          break;
       case 'c':
-         fogCoord = SetFogCoord(fogCoord ^ GL_TRUE);
+	 fogCoord = SetFogCoord(fogCoord ^ GL_TRUE);
          break;
       case 't':
          Texture = !Texture;
@@ -372,8 +367,7 @@ Init(void)
 
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
 
-   have_fog_coord = glutExtensionSupported("GL_EXT_fog_coord");
-   if (!have_fog_coord) {
+   if (!GLEW_EXT_fog_coord) {
       printf("GL_EXT_fog_coord not supported!\n");
    }
 
@@ -400,10 +394,9 @@ Init(void)
    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
    glTexCoordPointer(2, GL_FLOAT, 0, texcoord_pointer);
 
-   if (have_fog_coord) {
-      glFogCoordPointer_ext = (PFNGLFOGCOORDPOINTEREXTPROC)glutGetProcAddress("glFogCoordPointerEXT");
+   if (GLEW_EXT_fog_coord) {
       glEnableClientState(GL_FOG_COORDINATE_ARRAY_EXT);
-      glFogCoordPointer_ext(GL_FLOAT, 0, fogcoord_pointer);
+      glFogCoordPointerEXT(GL_FLOAT, 0, fogcoord_pointer);
    }
 
    Reset();
@@ -417,6 +410,7 @@ main( int argc, char *argv[] )
    glutInitWindowSize( 600, 600 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
    glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );

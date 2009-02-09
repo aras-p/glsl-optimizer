@@ -502,7 +502,6 @@ _slang_update_inputs_outputs(struct gl_program *prog)
          maxAddrReg = MAX2(maxAddrReg, inst->DstReg.Index + 1);
       }
    }
-
    prog->NumAddressRegs = maxAddrReg;
 }
 

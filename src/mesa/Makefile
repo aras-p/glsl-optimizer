@@ -3,8 +3,7 @@
 TOP = ../..
 include $(TOP)/configs/current
 
-include sources
-
+include sources.mak
 
 .SUFFIXES : .cpp
 
@@ -16,6 +15,7 @@ include sources
 
 .S.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+
 
 
 
@@ -34,8 +34,11 @@ libmesa.a: $(MESA_OBJECTS)
 
 # Make archive of gl* API dispatcher functions only
 libglapi.a: $(GLAPI_OBJECTS)
-	@ $(MKLIB) -o glapi -static $(GLAPI_OBJECTS)
-
+	@if [ "${WINDOW_SYSTEM}" = "dri" ] ; then \
+		touch libglapi.a ; \
+	else \
+		$(MKLIB) -o glapi -static $(GLAPI_OBJECTS) ; \
+	fi
 
 ######################################################################
 # Device drivers

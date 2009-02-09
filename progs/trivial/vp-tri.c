@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 static void Init( void )
@@ -43,17 +43,17 @@ static void Init( void )
 static void Display( void )
 {
    glClearColor(0.3, 0.3, 0.3, 1);
-   glClear( GL_COLOR_BUFFER_BIT  );
+   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
    glEnable(GL_VERTEX_PROGRAM_NV);
 
    glBegin(GL_TRIANGLES);
-   glColor3f(0,0,1); 
-   glVertex3f( 0.9, -0.9, 0.0);
-   glColor3f(0,1,0); 
-   glVertex3f( 0.9,  0.9, 0.0);
-   glColor3f(1,0,0); 
-   glVertex3f(-0.9,  0.0, 0.0);
+   glColor3f(0,0,.7); 
+   glVertex3f( 0.9, -0.9, -0.0);
+   glColor3f(.8,0,0); 
+   glVertex3f( 0.9,  0.9, -0.0);
+   glColor3f(0,.9,0); 
+   glVertex3f(-0.9,  0.0, -0.0);
    glEnd();
 
 
@@ -93,8 +93,9 @@ int main( int argc, char *argv[] )
    glutInit( &argc, argv );
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( 250, 250 );
-   glutInitDisplayMode( GLUT_RGB | GLUT_SINGLE );
+   glutInitDisplayMode( GLUT_DEPTH | GLUT_RGB | GLUT_SINGLE );
    glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );

@@ -81,6 +81,8 @@ _tnl_draw_prims( GLcontext *ctx,
 		 GLuint min_index,
 		 GLuint max_index);
 
+extern void
+_mesa_load_tracked_matrices(GLcontext *ctx);
 
 extern void
 _tnl_RasterPos(GLcontext *ctx, const GLfloat vObj[4]);

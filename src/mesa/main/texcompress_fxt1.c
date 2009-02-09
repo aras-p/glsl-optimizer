@@ -298,17 +298,17 @@ const struct gl_texture_format _mesa_texformat_rgba_fxt1 = {
 /*
  * Define a 64-bit unsigned integer type and macros
  */
-#ifdef GL_EXT_timer_query  /* this extensions defines the GLuint64EXT type */
+#if 1
 
 #define FX64_NATIVE 1
 
-typedef GLuint64EXT Fx64;
+typedef uint64_t Fx64;
 
 #define FX64_MOV32(a, b) a = b
 #define FX64_OR32(a, b)  a |= b
 #define FX64_SHL(a, c)   a <<= c
 
-#else  /* !GL_EXT_timer_query */
+#else
 
 #define FX64_NATIVE 0
 
@@ -330,7 +330,7 @@ typedef struct {
        }                                               \
    } while (0)
 
-#endif  /* !GL_EXT_timer_query */
+#endif
 
 
 #define F(i) (GLfloat)1 /* can be used to obtain an oblong metric: 0.30 / 0.59 / 0.11 */
