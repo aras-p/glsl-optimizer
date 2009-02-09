@@ -146,19 +146,6 @@ static GLboolean discrete_prim[0x10] = {
 
 static GLushort *radeonAllocElts( r100ContextPtr rmesa, GLuint nr ) 
 {
-#if 0
-   if (rmesa->radeon.dma.flush == radeonFlushElts &&
-       rmesa->tcl.elt_used + nr*2 < R200_ELT_BUF_SZ) {
-
-      GLushort *dest = (GLushort *)(rmesa->tcl.elt_dma_bo->ptr +
-				    rmesa->tcl.elt_used);
-
-      rmesa->tcl.elt_used += nr*2;
-
-      return dest;
-   }
-   else {
-#endif
       if (rmesa->radeon.dma.flush)
 	 rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
 
@@ -170,7 +157,6 @@ static GLushort *radeonAllocElts( r100ContextPtr rmesa, GLuint nr )
 
       return radeonAllocEltsOpenEnded( rmesa, rmesa->tcl.vertex_format,
 				       rmesa->tcl.hw_primitive, nr );
-      //   }
 }
 
 #define CLOSE_ELTS()  RADEON_NEWPRIM( rmesa )

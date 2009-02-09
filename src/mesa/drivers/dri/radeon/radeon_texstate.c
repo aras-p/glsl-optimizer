@@ -113,253 +113,6 @@ static const struct tx_table tx_table[] =
 #undef _ALPHA
 #undef _INVALID
 
-/**
- * This function computes the number of bytes of storage needed for
- * the given texture object (all mipmap levels, all cube faces).
- * The \c image[face][level].x/y/width/height parameters for upload/blitting
- * are computed here.  \c pp_txfilter, \c pp_txformat, etc. will be set here
- * too.
- * 
- * \param rmesa Context pointer
- * \param tObj GL texture object whose images are to be posted to
- *                 hardware state.
- */
-#if 0
-static void radeonSetTexImages( r100ContextPtr rmesa,
-				struct gl_texture_object *tObj )
-{
-   radeonTexObjPtr t = (radeonTexObjPtr)tObj->DriverData;
-   const struct gl_texture_image *baseImage = tObj->Image[0][tObj->BaseLevel];
-   GLint curOffset, blitWidth;
-   GLint i, texelBytes;
-   GLint numLevels;
-   GLint log2Width, log2Height, log2Depth;
-
-   /* Set the hardware texture format
-    */
-   if ( !t->image_override ) {
-      t->pp_txformat &= ~(RADEON_TXFORMAT_FORMAT_MASK |
-                          RADEON_TXFORMAT_ALPHA_IN_MAP);
-      t->pp_txfilter &= ~RADEON_YUV_TO_RGB;
-
-      if ( VALID_FORMAT( baseImage->TexFormat->MesaFormat ) ) {
-         t->pp_txformat |= tx_table[ baseImage->TexFormat->MesaFormat ].format;
-         t->pp_txfilter |= tx_table[ baseImage->TexFormat->MesaFormat ].filter;
-      }
-      else {
-         _mesa_problem(NULL, "unexpected texture format in %s", __FUNCTION__);
-         return;
-      }
-   }
-
-   texelBytes = baseImage->TexFormat->TexelBytes;
-
-   /* Compute which mipmap levels we really want to send to the hardware.
-    */
-
-   if (tObj->Target != GL_TEXTURE_CUBE_MAP)
-      driCalculateTextureFirstLastLevel( (driTextureObject *) t );
-   else {
-      /* r100 can't handle mipmaps for cube/3d textures, so don't waste
-         memory for them */
-      t->base.firstLevel = t->base.lastLevel = tObj->BaseLevel;
-   }
-   log2Width  = tObj->Image[0][t->base.firstLevel]->WidthLog2;
-   log2Height = tObj->Image[0][t->base.firstLevel]->HeightLog2;
-   log2Depth  = tObj->Image[0][t->base.firstLevel]->DepthLog2;
-
-   numLevels = t->base.lastLevel - t->base.firstLevel + 1;
-
-   assert(numLevels <= RADEON_MAX_TEXTURE_LEVELS);
-
-   /* Calculate mipmap offsets and dimensions for blitting (uploading)
-    * The idea is that we lay out the mipmap levels within a block of
-    * memory organized as a rectangle of width BLIT_WIDTH_BYTES.
-    */
-   curOffset = 0;
-   blitWidth = BLIT_WIDTH_BYTES;
-   t->tile_bits = 0;
-
-   /* figure out if this texture is suitable for tiling. */
-   if (texelBytes && (tObj->Target != GL_TEXTURE_RECTANGLE_NV)) {
-      if (rmesa->texmicrotile && (baseImage->Height > 1)) {
-	 /* allow 32 (bytes) x 1 mip (which will use two times the space
-	    the non-tiled version would use) max if base texture is large enough */
-	 if ((numLevels == 1) ||
-	   (((baseImage->Width * texelBytes / baseImage->Height) <= 32) &&
-	       (baseImage->Width * texelBytes > 64)) ||
-	    ((baseImage->Width * texelBytes / baseImage->Height) <= 16)) {
-	    /* R100 has two microtile bits (only the txoffset reg, not the blitter)
-	       weird: X2 + OPT: 32bit correct, 16bit completely hosed
-		      X2: 32bit correct, 16bit correct
-		      OPT: 32bit large mips correct, small mips hosed, 16bit completely hosed */
-	    t->tile_bits |= RADEON_TXO_MICRO_TILE_X2 /*| RADEON_TXO_MICRO_TILE_OPT*/;
-	 }
-      }
-      if ((baseImage->Width * texelBytes >= 256) && (baseImage->Height >= 16)) {
-	 /* R100 disables macro tiling only if mip width is smaller than 256 bytes, and not
-	    in the case if height is smaller than 16 (not 100% sure), as does the r200,
-	    so need to disable macro tiling in that case */
-	 if ((numLevels == 1) || ((baseImage->Width * texelBytes / baseImage->Height) <= 4)) {
-	    t->tile_bits |= RADEON_TXO_MACRO_TILE;
-	 }
-      }
-   }
-
-   for (i = 0; i < numLevels; i++) {
-      const struct gl_texture_image *texImage;
-      GLuint size;
-
-      texImage = tObj->Image[0][i + t->base.firstLevel];
-      if ( !texImage )
-	 break;
-
-      /* find image size in bytes */
-      if (texImage->IsCompressed) {
-      /* need to calculate the size AFTER padding even though the texture is
-         submitted without padding.
-         Only handle pot textures currently - don't know if npot is even possible,
-         size calculation would certainly need (trivial) adjustments.
-         Align (and later pad) to 32byte, not sure what that 64byte blit width is
-         good for? */
-         if ((t->pp_txformat & RADEON_TXFORMAT_FORMAT_MASK) == RADEON_TXFORMAT_DXT1) {
-            /* RGB_DXT1/RGBA_DXT1, 8 bytes per block */
-            if ((texImage->Width + 3) < 8) /* width one block */
-               size = texImage->CompressedSize * 4;
-            else if ((texImage->Width + 3) < 16)
-               size = texImage->CompressedSize * 2;
-            else size = texImage->CompressedSize;
-         }
-         else /* DXT3/5, 16 bytes per block */
-            if ((texImage->Width + 3) < 8)
-               size = texImage->CompressedSize * 2;
-            else size = texImage->CompressedSize;
-      }
-      else if (tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
-	 size = ((texImage->Width * texelBytes + 63) & ~63) * texImage->Height;
-      }
-      else if (t->tile_bits & RADEON_TXO_MICRO_TILE_X2) {
-	 /* tile pattern is 16 bytes x2. mipmaps stay 32 byte aligned,
-	    though the actual offset may be different (if texture is less than
-	    32 bytes width) to the untiled case */
-	 int w = (texImage->Width * texelBytes * 2 + 31) & ~31;
-	 size = (w * ((texImage->Height + 1) / 2)) * texImage->Depth;
-	 blitWidth = MAX2(texImage->Width, 64 / texelBytes);
-      }
-      else {
-	 int w = (texImage->Width * texelBytes + 31) & ~31;
-	 size = w * texImage->Height * texImage->Depth;
-	 blitWidth = MAX2(texImage->Width, 64 / texelBytes);
-      }
-      assert(size > 0);
-
-      /* Align to 32-byte offset.  It is faster to do this unconditionally
-       * (no branch penalty).
-       */
-
-      curOffset = (curOffset + 0x1f) & ~0x1f;
-
-      if (texelBytes) {
-	 t->image[0][i].x = curOffset; /* fix x and y coords up later together with offset */
-	 t->image[0][i].y = 0;
-	 t->image[0][i].width = MIN2(size / texelBytes, blitWidth);
-	 t->image[0][i].height = (size / texelBytes) / t->image[0][i].width;
-      }
-      else {
-         t->image[0][i].x = curOffset % BLIT_WIDTH_BYTES;
-         t->image[0][i].y = curOffset / BLIT_WIDTH_BYTES;
-         t->image[0][i].width  = MIN2(size, BLIT_WIDTH_BYTES);
-         t->image[0][i].height = size / t->image[0][i].width;     
-      }
-
-#if 0
-      /* for debugging only and only  applicable to non-rectangle targets */
-      assert(size % t->image[0][i].width == 0);
-      assert(t->image[0][i].x == 0
-             || (size < BLIT_WIDTH_BYTES && t->image[0][i].height == 1));
-#endif
-
-      if (0)
-         fprintf(stderr,
-                 "level %d: %dx%d x=%d y=%d w=%d h=%d size=%d at %d\n",
-                 i, texImage->Width, texImage->Height,
-                 t->image[0][i].x, t->image[0][i].y,
-                 t->image[0][i].width, t->image[0][i].height, size, curOffset);
-
-      curOffset += size;
-
-   }
-
-   /* Align the total size of texture memory block.
-    */
-   t->base.totalSize = (curOffset + RADEON_OFFSET_MASK) & ~RADEON_OFFSET_MASK;
-
-   /* Setup remaining cube face blits, if needed */
-   if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
-      const GLuint faceSize = t->base.totalSize;
-      GLuint face;
-      /* reuse face 0 x/y/width/height - just update the offset when uploading */
-      for (face = 1; face < 6; face++) {
-         for (i = 0; i < numLevels; i++) {
-            t->image[face][i].x =  t->image[0][i].x;
-            t->image[face][i].y =  t->image[0][i].y;
-            t->image[face][i].width  = t->image[0][i].width;
-            t->image[face][i].height = t->image[0][i].height;
-         }
-      }
-      t->base.totalSize = 6 * faceSize; /* total texmem needed */
-   }
-
-   /* Hardware state:
-    */
-   t->pp_txfilter &= ~RADEON_MAX_MIP_LEVEL_MASK;
-   t->pp_txfilter |= (numLevels - 1) << RADEON_MAX_MIP_LEVEL_SHIFT;
-
-   t->pp_txformat &= ~(RADEON_TXFORMAT_WIDTH_MASK |
-		       RADEON_TXFORMAT_HEIGHT_MASK |
-                       RADEON_TXFORMAT_CUBIC_MAP_ENABLE |
-                       RADEON_TXFORMAT_F5_WIDTH_MASK |
-                       RADEON_TXFORMAT_F5_HEIGHT_MASK);
-   t->pp_txformat |= ((log2Width << RADEON_TXFORMAT_WIDTH_SHIFT) |
-		      (log2Height << RADEON_TXFORMAT_HEIGHT_SHIFT));
-
-   if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
-      assert(log2Width == log2Height);
-      t->pp_txformat |= ((log2Width << RADEON_TXFORMAT_F5_WIDTH_SHIFT) |
-                         (log2Height << RADEON_TXFORMAT_F5_HEIGHT_SHIFT) |
-                         (RADEON_TXFORMAT_CUBIC_MAP_ENABLE));
-      t->pp_cubic_faces = ((log2Width << RADEON_FACE_WIDTH_1_SHIFT) |
-                           (log2Height << RADEON_FACE_HEIGHT_1_SHIFT) |
-                           (log2Width << RADEON_FACE_WIDTH_2_SHIFT) |
-                           (log2Height << RADEON_FACE_HEIGHT_2_SHIFT) |
-                           (log2Width << RADEON_FACE_WIDTH_3_SHIFT) |
-                           (log2Height << RADEON_FACE_HEIGHT_3_SHIFT) |
-                           (log2Width << RADEON_FACE_WIDTH_4_SHIFT) |
-                           (log2Height << RADEON_FACE_HEIGHT_4_SHIFT));
-   }
-
-   t->pp_txsize = (((tObj->Image[0][t->base.firstLevel]->Width - 1) << 0) |
-                   ((tObj->Image[0][t->base.firstLevel]->Height - 1) << 16));
-
-   /* Only need to round to nearest 32 for textures, but the blitter
-    * requires 64-byte aligned pitches, and we may/may not need the
-    * blitter.   NPOT only!
-    */
-   if ( !t->image_override ) {
-      if (baseImage->IsCompressed)
-         t->pp_txpitch = (tObj->Image[0][t->base.firstLevel]->Width + 63) & ~(63);
-      else
-         t->pp_txpitch = ((tObj->Image[0][t->base.firstLevel]->Width * texelBytes) + 63) & ~(63);
-      t->pp_txpitch -= 32;
-   }
-
-   t->dirty_state = R100_TEX_ALL;
-
-   /* FYI: radeonUploadTexImages( rmesa, t ); used to be called here */
-}
-#endif
-
-
 /* ================================================================
  * Texture combine functions
  */
@@ -904,6 +657,52 @@ void radeonSetTexOffset(__DRIcontext * pDRICtx, GLint texname,
                               RADEON_TXFORMAT_NON_POWER2)
 
 
+static void disable_tex_obj_state( r100ContextPtr rmesa, 
+				   int unit )
+{
+   /* do not use RADEON_DB_STATE to avoid stale texture caches */
+   uint32_t *cmd = &rmesa->hw.tex[unit].cmd[TEX_CMD_0];
+   GLuint se_coord_fmt = rmesa->hw.set.cmd[SET_SE_COORDFMT];
+   GLuint *txr_cmd = RADEON_DB_STATE( txr[unit] );
+
+   RADEON_STATECHANGE( rmesa, tex[unit] );
+
+   RADEON_STATECHANGE( rmesa, tcl );
+   rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] &= ~(RADEON_ST_BIT(unit) |
+					     RADEON_Q_BIT(unit));
+   
+   if (rmesa->radeon.TclFallback & (RADEON_TCL_FALLBACK_TEXGEN_0<<unit)) {
+     TCL_FALLBACK( rmesa->radeon.glCtx, (RADEON_TCL_FALLBACK_TEXGEN_0<<unit), GL_FALSE);
+     rmesa->recheck_texgen[unit] = GL_TRUE;
+   }
+
+   if (rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT] & RADEON_TXFORMAT_CUBIC_MAP_ENABLE) {
+     /* this seems to be a genuine (r100 only?) hw bug. Need to remove the
+	cubic_map bit on unit 2 when the unit is disabled, otherwise every
+	2nd (2d) mipmap on unit 0 will be broken (may not be needed for other
+	units, better be safe than sorry though).*/
+     RADEON_STATECHANGE( rmesa, tex[unit] );
+     rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT] &= ~RADEON_TXFORMAT_CUBIC_MAP_ENABLE;
+   }
+
+   {
+      GLuint inputshift = RADEON_TEXGEN_0_INPUT_SHIFT + unit*4;
+      GLuint tmp = rmesa->TexGenEnabled;
+
+      rmesa->TexGenEnabled &= ~(RADEON_TEXGEN_TEXMAT_0_ENABLE<<unit);
+      rmesa->TexGenEnabled &= ~(RADEON_TEXMAT_0_ENABLE<<unit);
+      rmesa->TexGenEnabled &= ~(RADEON_TEXGEN_INPUT_MASK<<inputshift);
+      rmesa->TexGenNeedNormals[unit] = 0;
+      rmesa->TexGenEnabled |= 
+	(RADEON_TEXGEN_INPUT_TEXCOORD_0+unit) << inputshift;
+
+      if (tmp != rmesa->TexGenEnabled) {
+	rmesa->recheck_texgen[unit] = GL_TRUE;
+	rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
+      }
+   }
+}
+
 static void import_tex_obj_state( r100ContextPtr rmesa,
 				  int unit,
 				  radeonTexObjPtr texobj )
@@ -957,6 +756,8 @@ static void import_tex_obj_state( r100ContextPtr rmesa,
    }
 
    texobj->dirty_state &= ~(1<<unit);
+
+   rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
 }
 
 
@@ -1102,252 +903,24 @@ static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
    return GL_TRUE;
 }
 
-#if 0
-static void disable_tex( GLcontext *ctx, int unit )
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-
-   if (rmesa->hw.ctx.cmd[CTX_PP_CNTL] & (RADEON_TEX_0_ENABLE<<unit)) {
-      /* Texture unit disabled */
-      if ( rmesa->state.texture.unit[unit].texobj != NULL ) {
-	 /* The old texture is no longer bound to this texture unit.
-	  * Mark it as such.
-	  */
-
-	 rmesa->state.texture.unit[unit].texobj->base.bound &= ~(1UL << unit);
-	 rmesa->state.texture.unit[unit].texobj = NULL;
-      }
-
-      RADEON_STATECHANGE( rmesa, ctx );
-      rmesa->hw.ctx.cmd[CTX_PP_CNTL] &= 
-	  ~((RADEON_TEX_0_ENABLE | RADEON_TEX_BLEND_0_ENABLE) << unit);
-
-      RADEON_STATECHANGE( rmesa, tcl );
-      rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] &= ~(RADEON_ST_BIT(unit) |
-						RADEON_Q_BIT(unit));
-
-      if (rmesa->radeon.TclFallback & (RADEON_TCL_FALLBACK_TEXGEN_0<<unit)) {
-	 TCL_FALLBACK( ctx, (RADEON_TCL_FALLBACK_TEXGEN_0<<unit), GL_FALSE);
-	 rmesa->recheck_texgen[unit] = GL_TRUE;
-      }
-
-      if (rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT] & RADEON_TXFORMAT_CUBIC_MAP_ENABLE) {
-      /* this seems to be a genuine (r100 only?) hw bug. Need to remove the
-         cubic_map bit on unit 2 when the unit is disabled, otherwise every
-	 2nd (2d) mipmap on unit 0 will be broken (may not be needed for other
-	 units, better be safe than sorry though).*/
-	 RADEON_STATECHANGE( rmesa, tex[unit] );
-	 rmesa->hw.tex[unit].cmd[TEX_PP_TXFORMAT] &= ~RADEON_TXFORMAT_CUBIC_MAP_ENABLE;
-      }
-
-      {
-	 GLuint inputshift = RADEON_TEXGEN_0_INPUT_SHIFT + unit*4;
-	 GLuint tmp = rmesa->TexGenEnabled;
-
-	 rmesa->TexGenEnabled &= ~(RADEON_TEXGEN_TEXMAT_0_ENABLE<<unit);
-	 rmesa->TexGenEnabled &= ~(RADEON_TEXMAT_0_ENABLE<<unit);
-	 rmesa->TexGenEnabled &= ~(RADEON_TEXGEN_INPUT_MASK<<inputshift);
-	 rmesa->TexGenNeedNormals[unit] = 0;
-	 rmesa->TexGenEnabled |= 
-	     (RADEON_TEXGEN_INPUT_TEXCOORD_0+unit) << inputshift;
-
-	 if (tmp != rmesa->TexGenEnabled) {
-	    rmesa->recheck_texgen[unit] = GL_TRUE;
-	    rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
-	 }
-      }
-   }
-}
-
-static GLboolean enable_tex_2d( GLcontext *ctx, int unit )
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   struct gl_texture_object *tObj = texUnit->_Current;
-   radeonTexObjPtr t = (radeonTexObjPtr) tObj->DriverData;
-
-   /* Need to load the 2d images associated with this unit.
-    */
-   if (t->pp_txformat & RADEON_TXFORMAT_NON_POWER2) {
-      t->pp_txformat &= ~RADEON_TXFORMAT_NON_POWER2;
-      t->base.dirty_images[0] = ~0;
-   }
-
-   ASSERT(tObj->Target == GL_TEXTURE_2D || tObj->Target == GL_TEXTURE_1D);
-
-   if ( t->base.dirty_images[0] ) {
-      RADEON_FIREVERTICES( rmesa );
-      radeonSetTexImages( rmesa, tObj );
-      radeonUploadTexImages( rmesa, (radeonTexObjPtr) tObj->DriverData, 0 );
-      if ( !t->base.memBlock && !t->image_override ) 
-	return GL_FALSE;
-   }
-
-   return GL_TRUE;
-}
-
-static GLboolean enable_tex_cube( GLcontext *ctx, int unit )
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   struct gl_texture_object *tObj = texUnit->_Current;
-   radeonTexObjPtr t = (radeonTexObjPtr) tObj->DriverData;
-   GLuint face;
-
-   /* Need to load the 2d images associated with this unit.
-    */
-   if (t->pp_txformat & RADEON_TXFORMAT_NON_POWER2) {
-      t->pp_txformat &= ~RADEON_TXFORMAT_NON_POWER2;
-      for (face = 0; face < 6; face++)
-         t->base.dirty_images[face] = ~0;
-   }
-
-   ASSERT(tObj->Target == GL_TEXTURE_CUBE_MAP);
-
-   if ( t->base.dirty_images[0] || t->base.dirty_images[1] ||
-        t->base.dirty_images[2] || t->base.dirty_images[3] ||
-        t->base.dirty_images[4] || t->base.dirty_images[5] ) {
-      /* flush */
-      RADEON_FIREVERTICES( rmesa );
-      /* layout memory space, once for all faces */
-      radeonSetTexImages( rmesa, tObj );
-   }
-
-   /* upload (per face) */
-   for (face = 0; face < 6; face++) {
-      if (t->base.dirty_images[face]) {
-         radeonUploadTexImages( rmesa, (radeonTexObjPtr) tObj->DriverData, face );
-      }
-   }
-      
-   if ( !t->base.memBlock ) {
-      /* texmem alloc failed, use s/w fallback */
-      return GL_FALSE;
-   }
-
-   return GL_TRUE;
-}
-
-static GLboolean enable_tex_rect( GLcontext *ctx, int unit )
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   struct gl_texture_object *tObj = texUnit->_Current;
-   radeonTexObjPtr t = (radeonTexObjPtr) tObj->DriverData;
-
-   if (!(t->pp_txformat & RADEON_TXFORMAT_NON_POWER2)) {
-      t->pp_txformat |= RADEON_TXFORMAT_NON_POWER2;
-      t->base.dirty_images[0] = ~0;
-   }
-
-   ASSERT(tObj->Target == GL_TEXTURE_RECTANGLE_NV);
-
-   if ( t->base.dirty_images[0] ) {
-      RADEON_FIREVERTICES( rmesa );
-      radeonSetTexImages( rmesa, tObj );
-      radeonUploadTexImages( rmesa, (radeonTexObjPtr) tObj->DriverData, 0 );
-      if ( !t->base.memBlock &&
-           !t->image_override /* && !rmesa->prefer_gart_client_texturing  FIXME */ ) {
-	 fprintf(stderr, "%s: upload failed\n", __FUNCTION__);
-	 return GL_FALSE;
-      }
-   }
-
-   return GL_TRUE;
-}
-
-
-static GLboolean update_tex_common( GLcontext *ctx, int unit )
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   struct gl_texture_object *tObj = texUnit->_Current;
-   radeonTexObjPtr t = (radeonTexObjPtr) tObj->DriverData;
-   GLenum format;
-
-   /* Fallback if there's a texture border */
-   if ( tObj->Image[0][tObj->BaseLevel]->Border > 0 ) {
-      fprintf(stderr, "%s: border\n", __FUNCTION__);
-      return GL_FALSE;
-   }
-   /* yuv conversion only works in first unit */
-   if (unit != 0 && (t->pp_txfilter & RADEON_YUV_TO_RGB))
-      return GL_FALSE;
-
-   /* Update state if this is a different texture object to last
-    * time.
-    */
-   if ( rmesa->state.texture.unit[unit].texobj != t ) {
-      if ( rmesa->state.texture.unit[unit].texobj != NULL ) {
-	 /* The old texture is no longer bound to this texture unit.
-	  * Mark it as such.
-	  */
-
-	 rmesa->state.texture.unit[unit].texobj->base.bound &= 
-	     ~(1UL << unit);
-      }
-
-      rmesa->state.texture.unit[unit].texobj = t;
-      t->base.bound |= (1UL << unit);
-      t->dirty_state |= 1<<unit;
-      driUpdateTextureLRU( (driTextureObject *) t ); /* XXX: should be locked! */
-   }
-
-
-   /* Newly enabled?
-    */
-   if ( !(rmesa->hw.ctx.cmd[CTX_PP_CNTL] & (RADEON_TEX_0_ENABLE<<unit))) {
-      RADEON_STATECHANGE( rmesa, ctx );
-      rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= 
-	  (RADEON_TEX_0_ENABLE | RADEON_TEX_BLEND_0_ENABLE) << unit;
-
-      RADEON_STATECHANGE( rmesa, tcl );
-
-      rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_ST_BIT(unit);
-
-      rmesa->recheck_texgen[unit] = GL_TRUE;
-   }
-
-   if (t->dirty_state & (1<<unit)) {
-      import_tex_obj_state( rmesa, unit, t );
-      /* may need to update texture matrix (for texrect adjustments) */
-      rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
-   }
-
-   if (rmesa->recheck_texgen[unit]) {
-      GLboolean fallback = !radeon_validate_texgen( ctx, unit );
-      TCL_FALLBACK( ctx, (RADEON_TCL_FALLBACK_TEXGEN_0<<unit), fallback);
-      rmesa->recheck_texgen[unit] = 0;
-      rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
-   }
-
-   format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
-   if ( rmesa->state.texture.unit[unit].format != format ||
-	rmesa->state.texture.unit[unit].envMode != texUnit->EnvMode ) {
-      rmesa->state.texture.unit[unit].format = format;
-      rmesa->state.texture.unit[unit].envMode = texUnit->EnvMode;
-      if ( ! radeonUpdateTextureEnv( ctx, unit ) ) {
-	 return GL_FALSE;
-      }
-   }
-
-   FALLBACK( rmesa, RADEON_FALLBACK_BORDER_MODE, t->border_fallback );
-   return !t->border_fallback;
-}
-#endif
-
 /**
  * Compute the cached hardware register values for the given texture object.
  *
  * \param rmesa Context pointer
  * \param t the r300 texture object
  */
-static void setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t)
+static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int unit)
 {
-   const struct gl_texture_image *firstImage =
-      t->base.Image[0][t->mt->firstLevel];
+   const struct gl_texture_image *firstImage;
    GLint log2Width, log2Height, log2Depth, texelBytes;
-   
+
+   firstImage = t->base.Image[0][t->mt->firstLevel];   
+
+   if (firstImage->Border > 0) {
+      fprintf(stderr, "%s: border\n", __FUNCTION__);
+      return GL_FALSE;
+   }
+
    log2Width  = firstImage->WidthLog2;
    log2Height = firstImage->HeightLog2;
    log2Depth  = firstImage->DepthLog2;
@@ -1361,12 +934,12 @@ static void setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t)
 			     RADEON_TXFORMAT_ALPHA_IN_MAP);
 	 t->pp_txfilter &= ~RADEON_YUV_TO_RGB;	 
 	 
-	 //	 t->pp_txformat |= table[ firstImage->TexFormat->MesaFormat ].format;
-	 // t->pp_txfilter |= table[ firstImage->TexFormat->MesaFormat ].filter;
+	 t->pp_txformat |= table[ firstImage->TexFormat->MesaFormat ].format;
+	 t->pp_txfilter |= table[ firstImage->TexFormat->MesaFormat ].filter;
       } else {
 	 _mesa_problem(NULL, "unexpected texture format in %s",
 		       __FUNCTION__);
-	 return;
+	 return GL_FALSE;
       }
    }
    
@@ -1413,51 +986,57 @@ static void setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t)
    if (t->base.Target == GL_TEXTURE_RECTANGLE_NV) {
       t->pp_txformat |= RADEON_TXFORMAT_NON_POWER2;
    }
-   
+   return GL_TRUE;
 }
-#if 0
-static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
-{
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-
-   if ( texUnit->_ReallyEnabled & (TEXTURE_RECT_BIT) ) {
-      return (enable_tex_rect( ctx, unit ) &&
-	      update_tex_common( ctx, unit ));
-   }
-   else if ( texUnit->_ReallyEnabled & (TEXTURE_1D_BIT | TEXTURE_2D_BIT) ) {
-      return (enable_tex_2d( ctx, unit ) &&
-	      update_tex_common( ctx, unit ));
-   }
-   else if ( texUnit->_ReallyEnabled & (TEXTURE_CUBE_BIT) ) {
-      return (enable_tex_cube( ctx, unit ) &&
-	      update_tex_common( ctx, unit ));
-   }
-   else if ( texUnit->_ReallyEnabled ) {
-      return GL_FALSE;
-   }
-   else {
-      disable_tex( ctx, unit );
-      return GL_TRUE;
-   }
-}
-#endif
 
 static GLboolean radeon_validate_texture(GLcontext *ctx, struct gl_texture_object *texObj, int unit)
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    radeonTexObj *t = radeon_tex_obj(texObj);
+   int ret;
+
+   fprintf(stderr,"t dirty %d %x %d\n", unit, t->dirty_state, t->validated);
 
    if (!radeon_validate_texture_miptree(ctx, texObj))
       return GL_FALSE;
 
-   setup_hardware_state(rmesa, t);
+   /* yuv conversion only works in first unit */
+   if (unit != 0 && (t->pp_txfilter & RADEON_YUV_TO_RGB))
+      return GL_FALSE;
+
+
+   ret = setup_hardware_state(rmesa, t, unit);
+   if (ret == GL_FALSE)
+     return GL_FALSE;
+
+   RADEON_STATECHANGE( rmesa, ctx );
+   rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= 
+     (RADEON_TEX_0_ENABLE | RADEON_TEX_BLEND_0_ENABLE) << unit;
+
+   RADEON_STATECHANGE( rmesa, tcl );
+   rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_ST_BIT(unit);
+
+   fprintf(stderr,"setting pp cntl to %x\n", rmesa->hw.ctx.cmd[CTX_PP_CNTL]);
+   rmesa->recheck_texgen[unit] = GL_TRUE;
 
    if (t->dirty_state & (1<<unit)) {
       import_tex_obj_state( rmesa, unit, t );
    }
 
+   if (rmesa->recheck_texgen[unit]) {
+      GLboolean fallback = !radeon_validate_texgen( ctx, unit );
+      TCL_FALLBACK( ctx, (RADEON_TCL_FALLBACK_TEXGEN_0<<unit), fallback);
+      rmesa->recheck_texgen[unit] = 0;
+      rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
+   }
+
+   if ( ! radeonUpdateTextureEnv( ctx, unit ) ) {
+     return GL_FALSE;
+   }
+   FALLBACK( rmesa, RADEON_FALLBACK_BORDER_MODE, t->border_fallback );
+
    t->validated = GL_TRUE;
-   return GL_TRUE;
+   return !t->border_fallback;
 }
 
 static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
@@ -1465,8 +1044,12 @@ static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
-   if (!ctx->Texture.Unit[unit]._ReallyEnabled)
+   fprintf(stderr,"really enabled %d\n", ctx->Texture.Unit[unit]._ReallyEnabled);
+   if (!ctx->Texture.Unit[unit]._ReallyEnabled) {
+     /* disable the unit */
+     disable_tex_obj_state(rmesa, unit);
      return GL_TRUE;
+   }
 
    if (!radeon_validate_texture(ctx, ctx->Texture.Unit[unit]._Current, unit)) {
     _mesa_warning(ctx,
@@ -1483,6 +1066,10 @@ void radeonUpdateTextureState( GLcontext *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLboolean ok;
+
+   /* set the ctx all textures off */
+   RADEON_STATECHANGE( rmesa, ctx );
+   rmesa->hw.ctx.cmd[CTX_PP_CNTL] &= ~((RADEON_TEX_ENABLE_MASK) | (RADEON_TEX_BLEND_ENABLE_MASK));
 
    ok = (radeonUpdateTextureUnit( ctx, 0 ) &&
 	 radeonUpdateTextureUnit( ctx, 1 ) &&

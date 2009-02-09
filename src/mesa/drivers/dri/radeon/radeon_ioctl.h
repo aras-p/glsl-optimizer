@@ -99,6 +99,7 @@ do {						\
 /* Can accomodate several state changes and primitive changes without
  * actually firing the buffer.
  */
+
 #define RADEON_STATECHANGE( rmesa, ATOM )			\
 do {								\
    RADEON_NEWPRIM( rmesa );					\
@@ -106,13 +107,12 @@ do {								\
    rmesa->hw.is_dirty = GL_TRUE;				\
 } while (0)
 
-#define RADEON_DB_STATE( ATOM )			        \
+#define RADEON_DB_STATE( ATOM )				\
    memcpy( rmesa->hw.ATOM.lastcmd, rmesa->hw.ATOM.cmd,	\
 	   rmesa->hw.ATOM.cmd_size * 4)
 
-static INLINE int RADEON_DB_STATECHANGE( 
-   r100ContextPtr rmesa,
-   struct radeon_state_atom *atom )
+static INLINE int RADEON_DB_STATECHANGE(r100ContextPtr rmesa,
+					struct radeon_state_atom *atom )
 {
    if (memcmp(atom->cmd, atom->lastcmd, atom->cmd_size*4)) {
       GLuint *tmp;
@@ -128,12 +128,11 @@ static INLINE int RADEON_DB_STATECHANGE(
       return 0;
 }
 
-
 /* Fire the buffered vertices no matter what.
  */
 #define RADEON_FIREVERTICES( rmesa )			\
 do {							\
-   if ( rmesa->store.cmd_used || rmesa->radeon.dma.flush ) {	\
+   if ( rmesa->radeon.dma.flush ) {	\
       radeonFlush( rmesa->radeon.glCtx );			\
    }							\
 } while (0)

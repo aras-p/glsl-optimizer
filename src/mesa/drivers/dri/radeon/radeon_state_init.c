@@ -432,8 +432,6 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    END_BATCH();
 }
 
-
-
 static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
@@ -442,18 +440,19 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    int i = atom->idx;
    radeonTexObj *t = r100->state.texture.unit[i].texobj;
 
-   if (!t)
-     return;
+   fprintf(stderr,"t is %p, i is %d\n", t, i );
 
-   BEGIN_BATCH_NO_AUTOSTATE(dwords + 2);
+   if (t && !t->image_override)
+     dwords += 2;
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_BATCH_TABLE(atom->cmd, 3);
    if (t && !t->image_override) {
      OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
 		     RADEON_GEM_DOMAIN_VRAM, 0, 0);
    } else if (!t) {
-
-     
-     OUT_BATCH(atom->cmd[10]);
+     /* workaround for old CS mechanism */
+     OUT_BATCH(r100->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP]);
+     //     OUT_BATCH(r100->radeon.radeonScreen);
    }
 
    OUT_BATCH_TABLE((atom->cmd+4), 5);
@@ -517,19 +516,25 @@ void radeonInitState( r100ContextPtr rmesa )
 
    rmesa->hw.max_state_size = 0;
 
-#define ALLOC_STATE( ATOM, CHK, SZ, NM, FLAG )				\
+
+      //      rmesa->hw.ATOM.lastcmd = (GLuint *)CALLOC(SZ * sizeof(int)); \
+
+
+#define ALLOC_STATE_IDX( ATOM, CHK, SZ, NM, FLAG, IDX )		\
    do {								\
       rmesa->hw.ATOM.cmd_size = SZ;				\
       rmesa->hw.ATOM.cmd = (GLuint *)CALLOC(SZ * sizeof(int));	\
-      rmesa->hw.ATOM.lastcmd = (GLuint *)CALLOC(SZ * sizeof(int));	\
-      rmesa->hw.ATOM.name = NM;					\
+      rmesa->hw.ATOM.name = NM;						\
       rmesa->hw.ATOM.is_tcl = FLAG;					\
       rmesa->hw.ATOM.check = check_##CHK;				\
-      rmesa->hw.ATOM.dirty = GL_TRUE;				\
+      rmesa->hw.ATOM.dirty = GL_TRUE;					\
+      rmesa->hw.ATOM.idx = IDX;					\
       rmesa->hw.max_state_size += SZ * sizeof(int);		\
    } while (0)
-      
-      
+
+#define ALLOC_STATE( ATOM, CHK, SZ, NM, FLAG )		\
+   ALLOC_STATE_IDX(ATOM, CHK, SZ, NM, FLAG, 0)
+
    /* Allocate state buffers:
     */
    ALLOC_STATE( ctx, always, CTX_STATE_SIZE, "CTX/context", 0 );
@@ -549,23 +554,23 @@ void radeonInitState( r100ContextPtr rmesa )
    ALLOC_STATE( fog, fog, FOG_STATE_SIZE, "FOG/fog", 1 );
    ALLOC_STATE( glt, tcl_lighting, GLT_STATE_SIZE, "GLT/light-global", 1 );
    ALLOC_STATE( eye, tcl_lighting, EYE_STATE_SIZE, "EYE/eye-vector", 1 );
-   ALLOC_STATE( tex[0], tex0, TEX_STATE_SIZE, "TEX/tex-0", 0 );
-   ALLOC_STATE( tex[1], tex1, TEX_STATE_SIZE, "TEX/tex-1", 0 );
-   ALLOC_STATE( tex[2], tex2, TEX_STATE_SIZE, "TEX/tex-2", 0 );
+   ALLOC_STATE_IDX( tex[0], tex0, TEX_STATE_SIZE, "TEX/tex-0", 0, 0);
+   ALLOC_STATE_IDX( tex[1], tex1, TEX_STATE_SIZE, "TEX/tex-1", 0, 1);
+   ALLOC_STATE_IDX( tex[2], tex2, TEX_STATE_SIZE, "TEX/tex-2", 0, 2 );
 
    for (i = 0; i < 3; i++)
      rmesa->hw.tex[i].emit = tex_emit;
    if (rmesa->radeon.radeonScreen->drmSupportsCubeMapsR100)
    {
-      ALLOC_STATE( cube[0], cube0, CUBE_STATE_SIZE, "CUBE/cube-0", 0 );
-      ALLOC_STATE( cube[1], cube1, CUBE_STATE_SIZE, "CUBE/cube-1", 0 );
-      ALLOC_STATE( cube[2], cube2, CUBE_STATE_SIZE, "CUBE/cube-2", 0 );
+      ALLOC_STATE_IDX( cube[0], cube0, CUBE_STATE_SIZE, "CUBE/cube-0", 0, 0 );
+      ALLOC_STATE_IDX( cube[1], cube1, CUBE_STATE_SIZE, "CUBE/cube-1", 0, 1 );
+      ALLOC_STATE_IDX( cube[2], cube2, CUBE_STATE_SIZE, "CUBE/cube-2", 0, 2 );
    }
    else
    {
-      ALLOC_STATE( cube[0], never, CUBE_STATE_SIZE, "CUBE/cube-0", 0 );
-      ALLOC_STATE( cube[1], never, CUBE_STATE_SIZE, "CUBE/cube-1", 0 );
-      ALLOC_STATE( cube[2], never, CUBE_STATE_SIZE, "CUBE/cube-2", 0 );
+      ALLOC_STATE_IDX( cube[0], never, CUBE_STATE_SIZE, "CUBE/cube-0", 0, 0 );
+      ALLOC_STATE_IDX( cube[1], never, CUBE_STATE_SIZE, "CUBE/cube-1", 0, 1 );
+      ALLOC_STATE_IDX( cube[2], never, CUBE_STATE_SIZE, "CUBE/cube-2", 0, 2 );
    }
    ALLOC_STATE( mat[0], tcl, MAT_STATE_SIZE, "MAT/modelproject", 1 );
    ALLOC_STATE( mat[1], tcl_eyespace_or_fog, MAT_STATE_SIZE, "MAT/modelview", 1 );
@@ -587,9 +592,9 @@ void radeonInitState( r100ContextPtr rmesa )
    ALLOC_STATE( lit[5], tcl_lit5, LIT_STATE_SIZE, "LIT/light-5", 1 );
    ALLOC_STATE( lit[6], tcl_lit6, LIT_STATE_SIZE, "LIT/light-6", 1 );
    ALLOC_STATE( lit[7], tcl_lit7, LIT_STATE_SIZE, "LIT/light-7", 1 );
-   ALLOC_STATE( txr[0], txr0, TXR_STATE_SIZE, "TXR/txr-0", 0 );
-   ALLOC_STATE( txr[1], txr1, TXR_STATE_SIZE, "TXR/txr-1", 0 );
-   ALLOC_STATE( txr[2], txr2, TXR_STATE_SIZE, "TXR/txr-2", 0 );
+   ALLOC_STATE_IDX( txr[0], txr0, TXR_STATE_SIZE, "TXR/txr-0", 0, 0 );
+   ALLOC_STATE_IDX( txr[1], txr1, TXR_STATE_SIZE, "TXR/txr-1", 0, 1 );
+   ALLOC_STATE_IDX( txr[2], txr2, TXR_STATE_SIZE, "TXR/txr-2", 0, 2 );
 
    radeonSetUpAtomList( rmesa );
 
@@ -810,8 +815,8 @@ void radeonInitState( r100ContextPtr rmesa )
 	   (2 << RADEON_TXFORMAT_HEIGHT_SHIFT));
 
       /* Initialize the texture offset to the start of the card texture heap */
-      rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET] =
-	  rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
+      //      rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET] =
+      //	  rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
 
       rmesa->hw.tex[i].cmd[TEX_PP_BORDER_COLOR] = 0;
       rmesa->hw.tex[i].cmd[TEX_PP_TXCBLEND] =  

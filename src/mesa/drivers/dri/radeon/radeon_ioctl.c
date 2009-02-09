@@ -198,9 +198,6 @@ void radeonEmitState( r100ContextPtr rmesa )
       rmesa->save_on_next_emit = GL_FALSE;
    }
 
-   if (rmesa->radeon.cmdbuf.cs->cdw)
-       return;
-
    /* this code used to return here but now it emits zbs */
 
    /* To avoid going across the entire set of states multiple times, just check
@@ -245,11 +242,6 @@ extern void radeonEmitVbufPrim( r100ContextPtr rmesa,
    
    radeonEmitState( rmesa );
 
-   //   if (RADEON_DEBUG & DEBUG_IOCTL)
-   //      fprintf(stderr, "%s cmd_used/4: %d\n", __FUNCTION__,
-   //	      rmesa->store.cmd_used/4);
-
-
 #if RADEON_OLD_PACKETS
    BEGIN_BATCH(8);
    OUT_BATCH_PACKET3_CLIP(RADEON_CP_PACKET3_3D_RNDR_GEN_INDX_PRIM, 3);
@@ -276,51 +268,13 @@ extern void radeonEmitVbufPrim( r100ContextPtr rmesa,
 #endif
 }
 
-static void radeonFireEB(r100ContextPtr rmesa, int vertex_count, int vertex_format, int type)
-{
-	BATCH_LOCALS(&rmesa->radeon);
-
-	if (vertex_count > 0) {
-		BEGIN_BATCH(8);
-		OUT_BATCH_PACKET3(RADEON_CP_PACKET3_3D_DRAW_INDX, 0);
-		OUT_BATCH(vertex_format);
-		OUT_BATCH(RADEON_CP_VC_CNTL_PRIM_WALK_IND |
-			  ((vertex_count + 0) << 16) |
-			  type);
-		
-		assert(0);  // RADEON HAS NO INDX_BUFFERs 
-#if 0
-
-		
-		if (!rmesa->radeon.radeonScreen->kernel_mm) {
-			OUT_BATCH_PACKET3(R200_CP_CMD_INDX_BUFFER, 2);
-			OUT_BATCH((0x80 << 24) | (0 << 16) | 0x810);
-			OUT_BATCH_RELOC(rmesa->tcl.elt_dma_offset,
-					rmesa->tcl.elt_dma_bo,
-					rmesa->tcl.elt_dma_offset,
-					RADEON_GEM_DOMAIN_GTT, 0, 0);
-			OUT_BATCH(vertex_count/2);
-		} else {
-			OUT_BATCH_PACKET3(R200_CP_CMD_INDX_BUFFER, 2);
-			OUT_BATCH((0x80 << 24) | (0 << 16) | 0x810);
-			OUT_BATCH(rmesa->tcl.elt_dma_offset);
-			OUT_BATCH(vertex_count/2);
-			radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
-					      rmesa->tcl.elt_dma_bo,
-					      RADEON_GEM_DOMAIN_GTT, 0, 0);
-		}
-#endif
-		END_BATCH();
-	}
-}
-
 void radeonFlushElts( GLcontext *ctx )
 {
-  r100ContextPtr rmesa = R100_CONTEXT(ctx);
-  BATCH_LOCALS(&rmesa->radeon);
-   int dwords;
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   BATCH_LOCALS(&rmesa->radeon);
+   int nr;
    uint32_t *cmd = (uint32_t *)(rmesa->radeon.cmdbuf.cs->packets + rmesa->tcl.elt_cmd_start);
-   int nr = (rmesa->radeon.cmdbuf.cs->section_ndw - rmesa->radeon.cmdbuf.cs->section_cdw) * 2;
+   int dwords = (rmesa->radeon.cmdbuf.cs->section_ndw - rmesa->radeon.cmdbuf.cs->section_cdw);
    
    if (RADEON_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s\n", __FUNCTION__);
@@ -328,12 +282,7 @@ void radeonFlushElts( GLcontext *ctx )
    assert( rmesa->radeon.dma.flush == radeonFlushElts );
    rmesa->radeon.dma.flush = NULL;
 
-
-   /* Cope with odd number of elts:
-    */
-   //   rmesa->store.cmd_used = (rmesa->store.cmd_used + 2) & ~2;
-   // dwords = (rmesa->store.cmd_used - rmesa->store.elts_start) / 4;
-   dwords = nr / 2;
+   nr = rmesa->tcl.elt_used;
 
    rmesa->radeon.cmdbuf.cs->cdw += dwords;
 
@@ -341,11 +290,9 @@ void radeonFlushElts( GLcontext *ctx )
    cmd[1] |= (dwords + 3) << 16;
    cmd[5] |= nr << RADEON_CP_VC_CNTL_NUM_SHIFT;
 #else
-   cmd[1] |= (dwords) << 16;
+   cmd[1] |= (dwords + 2) << 16;
    cmd[3] |= nr << RADEON_CP_VC_CNTL_NUM_SHIFT;
 #endif
-
-   fprintf(stderr,"nr is %d cmd1 is %08x\n", nr, cmd[1]);
 
    rmesa->radeon.cmdbuf.cs->section_cdw += dwords;
    END_BATCH();
@@ -366,7 +313,6 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
    int align_min_nr;
    BATCH_LOCALS(&rmesa->radeon);
    if (RADEON_DEBUG & DEBUG_IOCTL)
-      fprintf(stderr, "%s %d prim %x\n", __FUNCTION__, min_nr, primitive);
 
    assert((primitive & RADEON_CP_VC_CNTL_PRIM_WALK_IND));
    
@@ -401,12 +347,10 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
 
 
    rmesa->tcl.elt_cmd_offset = rmesa->radeon.cmdbuf.cs->cdw;
-   rmesa->tcl.elt_used = min_nr * 2;
+   rmesa->tcl.elt_used = min_nr;
 
    retval = (GLushort *)(rmesa->radeon.cmdbuf.cs->packets + rmesa->tcl.elt_cmd_offset);
    
-   fprintf(stderr," %d elt start %d offset %d\n", min_nr, rmesa->tcl.elt_cmd_start, rmesa->tcl.elt_cmd_offset);
-
    if (RADEON_DEBUG & DEBUG_PRIMS)
       fprintf(stderr, "%s: header prim %x \n",
 	      __FUNCTION__, primitive);
@@ -450,9 +394,6 @@ void radeonEmitAOS( r100ContextPtr rmesa,
 {
 #if RADEON_OLD_PACKETS
    assert( nr == 1 );
-   //   assert( rmesa->radeon.aos[0]->aos_size == component[0]->aos_stride );
-   //   rmesa->ioctl.vertex_offset = 
-   //      (component[0]->aos_start + offset * component[0]->aos_stride * 4);
    rmesa->ioctl.bo = rmesa->tcl.aos[0].bo;
    rmesa->ioctl.vertex_offset = 
      (rmesa->tcl.aos[0].offset + offset * rmesa->tcl.aos[0].stride * 4);
@@ -553,74 +494,6 @@ void radeonEmitAOS( r100ContextPtr rmesa,
 
 #endif
 }
-
-
-#if 0
-/* using already shifted color_fmt! */
-void radeonEmitBlit( r100ContextPtr rmesa, /* FIXME: which drmMinor is required? */
-		   GLuint color_fmt,
-		   GLuint src_pitch,
-		   GLuint src_offset,
-		   GLuint dst_pitch,
-		   GLuint dst_offset,
-		   GLint srcx, GLint srcy,
-		   GLint dstx, GLint dsty,
-		   GLuint w, GLuint h )
-{
-   drm_radeon_cmd_header_t *cmd;
-
-   if (RADEON_DEBUG & DEBUG_IOCTL)
-      fprintf(stderr, "%s src %x/%x %d,%d dst: %x/%x %d,%d sz: %dx%d\n",
-	      __FUNCTION__, 
-	      src_pitch, src_offset, srcx, srcy,
-	      dst_pitch, dst_offset, dstx, dsty,
-	      w, h);
-
-   assert( (src_pitch & 63) == 0 );
-   assert( (dst_pitch & 63) == 0 );
-   assert( (src_offset & 1023) == 0 ); 
-   assert( (dst_offset & 1023) == 0 ); 
-   assert( w < (1<<16) );
-   assert( h < (1<<16) );
-
-   cmd = (drm_radeon_cmd_header_t *)radeonAllocCmdBuf( rmesa, 8 * sizeof(int),
-						  __FUNCTION__ );
-
-
-   cmd[0].i = 0;
-   cmd[0].header.cmd_type = RADEON_CMD_PACKET3;
-   cmd[1].i = RADEON_CP_PACKET3_CNTL_BITBLT_MULTI | (5 << 16);
-   cmd[2].i = (RADEON_GMC_SRC_PITCH_OFFSET_CNTL |
-	       RADEON_GMC_DST_PITCH_OFFSET_CNTL |
-	       RADEON_GMC_BRUSH_NONE |
-	       color_fmt |
-	       RADEON_GMC_SRC_DATATYPE_COLOR |
-	       RADEON_ROP3_S |
-	       RADEON_DP_SRC_SOURCE_MEMORY |
-	       RADEON_GMC_CLR_CMP_CNTL_DIS |
-	       RADEON_GMC_WR_MSK_DIS );
-
-   cmd[3].i = ((src_pitch/64)<<22) | (src_offset >> 10);
-   cmd[4].i = ((dst_pitch/64)<<22) | (dst_offset >> 10);
-   cmd[5].i = (srcx << 16) | srcy;
-   cmd[6].i = (dstx << 16) | dsty; /* dst */
-   cmd[7].i = (w << 16) | h;
-}
-
-
-void radeonEmitWait( r100ContextPtr rmesa, GLuint flags )
-{
-   drm_radeon_cmd_header_t *cmd;
-
-   assert( !(flags & ~(RADEON_WAIT_2D|RADEON_WAIT_3D)) );
-
-   cmd = (drm_radeon_cmd_header_t *)radeonAllocCmdBuf( rmesa, 1 * sizeof(int),
-					   __FUNCTION__ );
-   cmd[0].i = 0;
-   cmd[0].wait.cmd_type = RADEON_CMD_WAIT;
-   cmd[0].wait.flags = flags;
-}
-#endif
 
 /* ================================================================
  * Buffer clear
