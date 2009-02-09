@@ -91,7 +91,7 @@ MATH_SOURCES = \
 	math/m_vector.c \
 	math/m_xform.c
 
-__SWRAST_SOURCES = \
+SWRAST_SOURCES = \
 	swrast/s_aaline.c \
 	swrast/s_aatriangle.c \
 	swrast/s_accum.c \
@@ -122,11 +122,11 @@ __SWRAST_SOURCES = \
 	swrast/s_triangle.c \
 	swrast/s_zoom.c
 
-__SWRAST_SETUP_SOURCES = \
+SWRAST_SETUP_SOURCES = \
 	swrast_setup/ss_context.c \
 	swrast_setup/ss_triangle.c 
 
-__TNL_SOURCES = \
+TNL_SOURCES = \
 	tnl/t_context.c \
 	tnl/t_pipeline.c \
 	tnl/t_draw.c \
@@ -162,7 +162,7 @@ VBO_SOURCES = \
 	vbo/vbo_save_draw.c \
 	vbo/vbo_save_loopback.c 
 
-__VF_SOURCES = \
+VF_SOURCES = \
 	vf/vf.c \
 	vf/vf_generic.c \
 	vf/vf_sse.c
@@ -299,7 +299,7 @@ SPARC_SOURCES =			\
 SPARC_API =			\
 	sparc/glapi_sparc.S
 
-__COMMON_DRIVER_SOURCES =			\
+COMMON_DRIVER_SOURCES =			\
 	drivers/common/driverfuncs.c
 
 
@@ -310,25 +310,37 @@ MESA_SOURCES = \
 	$(MAIN_SOURCES)		\
 	$(MATH_SOURCES)		\
 	$(VBO_SOURCES)		\
-	$(STATETRACKER_SOURCES)	\
 	$(TNL_SOURCES)		\
 	$(SHADER_SOURCES)	\
 	$(SWRAST_SOURCES)	\
 	$(SWRAST_SETUP_SOURCES)	\
+	$(COMMON_DRIVER_SOURCES)\
 	$(ASM_C_SOURCES)	\
 	$(SLANG_SOURCES)
 
 ALL_SOURCES = \
 	$(MESA_SOURCES)		\
 	$(GLAPI_SOURCES)	\
-	$(MESA_ASM_SOURCES)	\
-	$(COMMON_DRIVER_SOURCES)
+	$(MESA_ASM_SOURCES)
+
+MESA_GALLIUM_SOURCES = \
+	$(MAIN_SOURCES)		\
+	$(MATH_SOURCES)		\
+	$(VBO_SOURCES)		\
+	$(STATETRACKER_SOURCES)	\
+	$(SHADER_SOURCES)	\
+	$(ASM_C_SOURCES)	\
+	$(SLANG_SOURCES)
 
 
 ### Object files
 
 MESA_OBJECTS = \
 	$(MESA_SOURCES:.c=.o) \
+	$(MESA_ASM_SOURCES:.S=.o)
+
+MESA_GALLIUM_OBJECTS = \
+	$(MESA_GALLIUM_SOURCES:.c=.o) \
 	$(MESA_ASM_SOURCES:.S=.o)
 
 GLAPI_OBJECTS = \
