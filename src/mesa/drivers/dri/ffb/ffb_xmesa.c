@@ -642,6 +642,8 @@ ffbFillInModes( __DRIscreenPrivate *psp,
    stencil_bits_array[1] = 0;
    stencil_bits_array[2] = (stencil_bits == 0) ? 8 : stencil_bits;
 
+   msaa_samples_array[0] = 0;
+
    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;
    back_buffer_factor  = (have_back_buffer) ? 3 : 1;
 

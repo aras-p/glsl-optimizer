@@ -378,6 +378,8 @@ tdfxFillInModes(__DRIscreenPrivate *psp,
 		stencil_bits_array[3] = 8;
 	}
 
+	msaa_samples_array[0] = 0;
+
 	return driCreateConfigs(
 		deep ? GL_RGBA : GL_RGB,
 		deep ? GL_UNSIGNED_INT_8_8_8_8 : GL_UNSIGNED_SHORT_5_6_5,

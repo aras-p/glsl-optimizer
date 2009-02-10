@@ -88,6 +88,8 @@ sisFillInModes(__DRIscreenPrivate *psp, int bpp)
    depth_bits_array[3] = 32;
    stencil_bits_array[3] = 0;
 
+   msaa_samples_array[0] = 0;
+
    depth_buffer_factor = 4;
    back_buffer_factor = 2;
 

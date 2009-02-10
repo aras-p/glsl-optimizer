@@ -342,7 +342,7 @@ viaFillInModes( __DRIscreenPrivate *psp,
      */
     static const uint8_t depth_bits_array[4]   = { 0, 16, 24, 32 };
     static const uint8_t stencil_bits_array[4] = { 0,  0,  8,  0 };
-    uint8_t msaa_samples_array[1];
+    uint8_t msaa_samples_array[1] = { 0 };
     const unsigned depth_buffer_factor = 3;
 
     if ( pixel_bits == 16 ) {

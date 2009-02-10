@@ -288,6 +288,8 @@ radeonFillInModes( __DRIscreenPrivate *psp,
     stencil_bits_array[0] = 0;
     stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
 
+    msaa_samples_array[0] = 0;
+
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
 
@@ -304,7 +306,7 @@ radeonFillInModes( __DRIscreenPrivate *psp,
 			       depth_bits_array, stencil_bits_array,
 			       depth_buffer_factor,
 			       back_buffer_modes, back_buffer_factor,
-                              msaa_samples_array, 1);
+			       msaa_samples_array, 1);
     if (configs == NULL) {
 	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
 		 __func__, __LINE__ );

@@ -495,6 +495,8 @@ intelFillInModes(__DRIscreenPrivate *psp,
 
    stencil_bits_array[2] = (stencil_bits == 0) ? 8 : stencil_bits;
 
+   msaa_samples_array[0] = 0;
+
    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;
    back_buffer_factor = (have_back_buffer) ? 3 : 1;
 
@@ -732,6 +734,8 @@ __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
    stencil_bits[2] = 0;
    depth_bits[3] = 24;
    stencil_bits[3] = 8;
+
+   msaa_samples_array[0] = 0;
 
    fb_format[0] = GL_RGB;
    fb_type[0] = GL_UNSIGNED_SHORT_5_6_5;
