@@ -1,7 +1,8 @@
 SConscript([
     'util/SConscript',
     'demos/SConscript',
-    'trivial/SConscript',
     'redbook/SConscript',
+    'samples/SConscript',
+    'trivial/SConscript',
     'vp/SConscript',
 ])
