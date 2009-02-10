@@ -1,6 +1,6 @@
 # linux-cell  (non-debug build)
 
-include $(TOP)/configs/linux-gallium
+include $(TOP)/configs/default
 
 CONFIG_NAME = linux-cell
 
