@@ -62,15 +62,17 @@ LIBS = \
 
 
 
-default: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
+default: $(TOP)/$(LIB_DIR)/gallium $(TOP)/$(LIB_DIR)/gallium/$(GL_LIB_NAME)
 
+$(TOP)/$(LIB_DIR)/gallium:
+	@ mkdir -p $(TOP)/$(LIB_DIR)/gallium
 
 # Make the libGL.so library
-$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(XLIB_WINSYS_OBJECTS) $(LIBS) Makefile
+$(TOP)/$(LIB_DIR)/gallium/$(GL_LIB_NAME): $(XLIB_WINSYS_OBJECTS) $(LIBS) Makefile
 	$(TOP)/bin/mklib -o $(GL_LIB) \
 		-linker "$(CC)" \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
-		-install $(TOP)/$(LIB_DIR) \
+		-install $(TOP)/$(LIB_DIR)/gallium \
 		$(MKLIB_OPTIONS) $(XLIB_WINSYS_OBJECTS) \
 		--start-group $(LIBS) --end-group $(GL_LIB_DEPS)
 
