@@ -89,6 +89,9 @@ lookup_context( DHGLRC dhglrc )
        dhglrc >= DRV_CONTEXT_MAX)
       return NULL;
 
+   if(!stw_icd)
+      return NULL;
+
    return stw_icd->ctx_array[dhglrc - 1].ctx;
 }
 
