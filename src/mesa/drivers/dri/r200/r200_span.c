@@ -61,9 +61,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define LOCAL_DEPTH_VARS				\
    struct radeon_renderbuffer *rrb = (void *) rb;		\
    const __DRIdrawablePrivate *dPriv = rrb->dPriv;	\
-   const GLuint bottom = dPriv->h - 1;			\
-   GLuint xo = dPriv->x;				\
-   GLuint yo = dPriv->y;
+   const GLuint bottom = dPriv->h - 1;
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
 
@@ -118,10 +116,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define VALUE_TYPE GLushort
 
 #define WRITE_DEPTH( _x, _y, d )					\
-   *(GLushort *)radeon_ptr(rrb, _x + xo, _y + yo) = d
+   *(GLushort *)radeon_ptr(rrb, _x, _y) = d
 
 #define READ_DEPTH( d, _x, _y )						\
-   d = *(GLushort *)radeon_ptr(rrb, _x + xo, _y + yo)
+   d = *(GLushort *)radeon_ptr(rrb, _x, _y)
 
 #define TAG(x) radeon##x##_z16
 #include "depthtmp.h"
@@ -133,7 +131,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x + xo, _y + yo);		\
+   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x, _y);		\
    GLuint tmp = *_ptr;							\
    tmp &= 0xff000000;							\
    tmp |= ((d) & 0x00ffffff);						\
@@ -142,7 +140,7 @@ do {									\
 
 #define READ_DEPTH( d, _x, _y )						\
    do {									\
-      d = (*(GLuint*)(radeon_ptr32(rrb, _x + xo, _y + yo)) & 0x00ffffff); \
+      d = (*(GLuint*)(radeon_ptr32(rrb, _x, _y)) & 0x00ffffff); \
    }while(0)
 
 #define TAG(x) radeon##x##_z24_s8
@@ -157,7 +155,7 @@ do {									\
  */
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x + xo, _y + yo);		\
+   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x, _y);		\
    GLuint tmp = *_ptr;				\
    tmp &= 0x00ffffff;							\
    tmp |= (((d) & 0xff) << 24);						\
@@ -166,7 +164,7 @@ do {									\
 
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x + xo, _y + yo);		\
+   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x, _y);		\
    GLuint tmp = *_ptr;							\
    tmp &= 0xff000000;							\
    d = tmp >> 24;							\
