@@ -854,8 +854,6 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 
 	(*sPriv->systemTime->getUST) (&radeon->swap_ust);
 
-	radeonInitSpanFuncs( ctx );
-
 	return GL_TRUE;
 }
 
