@@ -448,7 +448,6 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    /* XXX these should really go right after _mesa_init_driver_functions() */
    radeonInitIoctlFuncs( ctx );
    radeonInitStateFuncs( ctx );
-   radeonInitSpanFuncs( ctx );
    radeonInitState( rmesa );
    radeonInitSwtcl( ctx );
 

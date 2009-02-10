@@ -43,13 +43,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/glheader.h"
 #include "swrast/swrast.h"
 
-#include "radeon_context.h"
-#include "radeon_ioctl.h"
-#include "radeon_state.h"
+#include "common_context.h"
+#include "common_misc.h"
 #include "radeon_span.h"
-#include "radeon_tex.h"
 
-#include "drirenderbuffer.h"
+#include "radeon_buffer.h"
 
 #define DBG 0
 
@@ -62,11 +60,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    struct radeon_renderbuffer *rrb = (void *) rb;		\
    const __DRIdrawablePrivate *dPriv = rrb->dPriv;		\
    const GLuint bottom = dPriv->h - 1;				\
-   GLuint p;							\
-   (void) p;				
+   GLuint p;						\
+   (void)p;
 
 #define LOCAL_DEPTH_VARS				\
-   struct radeon_renderbuffer *rrb = (void *) rb;		\
+   struct radeon_renderbuffer *rrb = (void *) rb;	\
    const __DRIdrawablePrivate *dPriv = rrb->dPriv;	\
    const GLuint bottom = dPriv->h - 1;
 
@@ -102,6 +100,20 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define GET_PTR(X,Y) radeon_ptr32(rrb, (X), (Y))
 #include "spantmp2.h"
 
+/* ================================================================
+ * Depth buffer
+ */
+
+/* The Radeon family has depth tiling on all the time, so we have to convert
+ * the x,y coordinates into the memory bus address (mba) in the same
+ * manner as the engine.  In each case, the linear block address (ba)
+ * is calculated, and then wired with x and y to produce the final
+ * memory address.
+ * The chip will do address translation on its own if the surface registers
+ * are set up correctly. It is not quite enough to get it working with hyperz
+ * too...
+ */
+
 /* 16-bit depth buffer functions
  */
 #define VALUE_TYPE GLushort
@@ -125,16 +137,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifdef COMPILE_R300
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint offset = radeon_mba_z32( drb, _x, _y );			\
-   GLuint tmp = *(GLuint *)(buf + offset);				\
+   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x, _y );		\
+   GLuint tmp = *_ptr;				\
    tmp &= 0x000000ff;							\
    tmp |= ((d << 8) & 0xffffff00);					\
-   *(GLuint *)(buf + offset) = tmp;					\
+   *_ptr = tmp;					\
 } while (0)
 #else
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x, _y);			\
+   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x, _y );		\
    GLuint tmp = *_ptr;				\
    tmp &= 0xff000000;							\
    tmp |= ((d) & 0x00ffffff);						\
@@ -144,17 +156,17 @@ do {									\
 
 #ifdef COMPILE_R300
 #define READ_DEPTH( d, _x, _y )						\
-  do {									\
-    d = (*(GLuint *)(buf + radeon_mba_z32( drb, _x,		\
-					   _y)) & 0xffffff00) >> 8;	\
+  do { \
+    d = (*(GLuint*)(radeon_ptr32(rrb, _x, _y)) & 0xffffff00) >> 8; \
   }while(0)
 #else
 #define READ_DEPTH( d, _x, _y )						\
-   do {									\
-    d = (*(GLuint*)(radeon_ptr32(rrb, _x, _y)) & 0x00ffffff); \
-  } while (0)
+   d = *(GLuint*)(radeon_ptr32(rrb, _x,	_y )) & 0x00ffffff;
 #endif
-
+/*
+    fprintf(stderr, "dval(%d, %d, %d, %d)=0x%08X\n", _x, xo, _y, yo, d);\
+   d = *(GLuint*)(radeon_ptr(rrb, _x,	_y )) & 0x00ffffff;
+*/
 #define TAG(x) radeon##x##_z24_s8
 #include "depthtmp.h"
 
@@ -167,11 +179,11 @@ do {									\
 #ifdef COMPILE_R300
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
-   GLuint offset = radeon_mba_z32( drb, _x, _y );		\
-   GLuint tmp = *(GLuint *)(buf + offset);				\
+   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x, _y);		\
+   GLuint tmp = *_ptr;				\
    tmp &= 0xffffff00;							\
    tmp |= (d) & 0xff;							\
-   *(GLuint *)(buf + offset) = tmp;					\
+   *_ptr = tmp;					\
 } while (0)
 #else
 #define WRITE_STENCIL( _x, _y, d )					\
@@ -187,15 +199,15 @@ do {									\
 #ifdef COMPILE_R300
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
-   GLuint offset = radeon_mba_z32( drb, _x, _y );		\
-   GLuint tmp = *(GLuint *)(buf + offset);				\
+   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x, _y );		\
+   GLuint tmp = *_ptr;				\
    d = tmp & 0x000000ff;						\
 } while (0)
 #else
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x, _y);		\
-   GLuint tmp = *_ptr;							\
+   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x, _y );		\
+   GLuint tmp = *_ptr;				\
    d = (tmp & 0xff000000) >> 24;					\
 } while (0)
 #endif

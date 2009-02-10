@@ -73,6 +73,7 @@ COMMON_SYMLINKS = \
 	radeon_screen.c \
 	radeon_screen.h \
 	radeon_span.h \
+	radeon_span.c \
 	radeon_buffer.h \
 	radeon_bo_legacy.c \
 	radeon_cs_legacy.c \

@@ -73,6 +73,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "common_lock.h"
 #include "common_cmdbuf.h"
 #include "radeon_mipmap_tree.h"
+#include "radeon_span.h"
 
 #define DRIVER_DATE "20090101"
 
@@ -852,6 +853,8 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 			fthrottle_mode, radeon->radeonScreen->irq);
 
 	(*sPriv->systemTime->getUST) (&radeon->swap_ust);
+
+	radeonInitSpanFuncs( ctx );
 
 	return GL_TRUE;
 }

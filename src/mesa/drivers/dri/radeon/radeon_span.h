@@ -42,8 +42,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_SPAN_H__
 #define __RADEON_SPAN_H__
 
-#include "drirenderbuffer.h"
-
 #include "radeon_buffer.h"
 
 extern void radeonInitSpanFuncs(GLcontext * ctx);

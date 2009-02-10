@@ -54,7 +54,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_state.h"
-#include "r200_span.h"
 #include "r200_pixel.h"
 #include "r200_tex.h"
 #include "r200_swtcl.h"
@@ -521,7 +520,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    /* plug in a few more device driver functions */
    /* XXX these should really go right after _mesa_init_driver_functions() */
    r200InitPixelFuncs( ctx );
-   r200InitSpanFuncs( ctx );
    r200InitTnlFuncs( ctx );
    r200InitState( rmesa );
    r200InitSwtcl( ctx );

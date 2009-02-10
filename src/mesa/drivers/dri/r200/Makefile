@@ -21,7 +21,6 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_texstate.c \
 		 r200_tcl.c \
 		 r200_swtcl.c \
-		 r200_span.c \
 		 r200_maos.c \
 		 r200_sanity.c \
 		 r200_fragshader.c \
@@ -32,6 +31,7 @@ DRIVER_SOURCES = r200_context.c \
 		 radeon_bo_legacy.c \
 		 radeon_cs_legacy.c \
 		 radeon_mipmap_tree.c \
+		 radeon_span.c \
 		 $(EGL_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
@@ -56,6 +56,8 @@ COMMON_SYMLINKS = \
 	radeon_cs_legacy.c \
 	radeon_bo_legacy.h \
 	radeon_cs_legacy.h \
+	radeon_span.h \
+	radeon_span.c \
 	radeon_buffer.h \
 	common_context.h \
 	common_lock.c \
