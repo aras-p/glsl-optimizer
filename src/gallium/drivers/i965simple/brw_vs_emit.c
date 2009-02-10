@@ -1293,7 +1293,7 @@ void brw_vs_emit(struct brw_vs_compile *c)
          break;
       case TGSI_TOKEN_TYPE_IMMEDIATE: {
          struct tgsi_full_immediate *imm = &parse.FullToken.FullImmediate;
-         /*assert(imm->Immediate.Size == 4);*/
+         assert(imm->Immediate.NrTokens == 4 + 1);
          c->prog_data.imm_buf[c->prog_data.num_imm][0] = imm->u.ImmediateFloat32[0].Float;
          c->prog_data.imm_buf[c->prog_data.num_imm][1] = imm->u.ImmediateFloat32[1].Float;
          c->prog_data.imm_buf[c->prog_data.num_imm][2] = imm->u.ImmediateFloat32[2].Float;
