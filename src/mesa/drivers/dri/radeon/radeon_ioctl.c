@@ -312,7 +312,9 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
    GLushort *retval;
    int align_min_nr;
    BATCH_LOCALS(&rmesa->radeon);
+
    if (RADEON_DEBUG & DEBUG_IOCTL)
+      fprintf(stderr, "%s %d prim %x\n", __FUNCTION__, min_nr, primitive);
 
    assert((primitive & RADEON_CP_VC_CNTL_PRIM_WALK_IND));
    

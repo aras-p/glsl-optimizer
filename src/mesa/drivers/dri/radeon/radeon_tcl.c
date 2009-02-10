@@ -159,7 +159,7 @@ static GLushort *radeonAllocElts( r100ContextPtr rmesa, GLuint nr )
 				       rmesa->tcl.hw_primitive, nr );
 }
 
-#define CLOSE_ELTS()  RADEON_NEWPRIM( rmesa )
+#define CLOSE_ELTS() if (0)  RADEON_NEWPRIM( rmesa )
 
 
 

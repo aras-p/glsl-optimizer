@@ -373,6 +373,7 @@ static void radeonDeleteTexture( GLcontext *ctx,
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    radeonTexObj* t = radeon_tex_obj(texObj);
+   int i;
 
    if ( RADEON_DEBUG & (DEBUG_STATE|DEBUG_TEXTURE) ) {
       fprintf( stderr, "%s( %p (target = %s) )\n", __FUNCTION__, (void *)texObj,
@@ -381,7 +382,13 @@ static void radeonDeleteTexture( GLcontext *ctx,
 
    if ( rmesa ) {
      RADEON_FIREVERTICES( rmesa );
-     
+     for ( i = 0 ; i < rmesa->radeon.glCtx->Const.MaxTextureUnits ; i++ ) {
+       if ( t == rmesa->state.texture.unit[i].texobj ) {
+	 rmesa->state.texture.unit[i].texobj = NULL;
+	 rmesa->hw.tex[i].dirty = GL_FALSE;
+	 rmesa->hw.cube[i].dirty = GL_FALSE;
+       }
+     }
    }
 
    if (t->mt) {
@@ -453,7 +460,6 @@ void radeonInitTextureFuncs( struct dd_function_table *functions )
    functions->NewTextureObject		= radeonNewTextureObject;
    //   functions->BindTexture		= radeonBindTexture;
    functions->DeleteTexture		= radeonDeleteTexture;
-   functions->IsTextureResident		= driIsTextureResident;
 
    functions->TexEnv			= radeonTexEnv;
    functions->TexParameter		= radeonTexParameter;

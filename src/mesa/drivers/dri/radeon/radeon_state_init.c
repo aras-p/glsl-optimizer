@@ -440,16 +440,14 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    int i = atom->idx;
    radeonTexObj *t = r100->state.texture.unit[i].texobj;
 
-   fprintf(stderr,"t is %p, i is %d\n", t, i );
-
-   if (t && !t->image_override)
+   if (t && t->mt && !t->image_override)
      dwords += 2;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_BATCH_TABLE(atom->cmd, 3);
-   if (t && !t->image_override) {
+   if (t && t->mt && !t->image_override) {
      OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
 		     RADEON_GEM_DOMAIN_VRAM, 0, 0);
-   } else if (!t) {
+   } else  {
      /* workaround for old CS mechanism */
      OUT_BATCH(r100->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP]);
      //     OUT_BATCH(r100->radeon.radeonScreen);
