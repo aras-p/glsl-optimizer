@@ -130,7 +130,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	/* FIXME: Find right src and dst offset, given mipmap level */
 	level_w = w;
 	level_h = h;
-	for (i=0; i<src->level; i++) {
+	for (i=0; i<src->level && level_w && level_h; i++) {
 		dst_offset += level_w * level_h * dst->block.size;
 		level_w >>= 1;
 		level_h >>= 1;
