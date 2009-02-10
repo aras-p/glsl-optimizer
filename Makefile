@@ -115,8 +115,6 @@ linux-dri-x86-64 \
 linux-dri-ppc \
 linux-dri-xcb \
 linux-egl \
-linux-gallium \
-linux-gallium-debug \
 linux-indirect \
 linux-fbdev \
 linux-glide \

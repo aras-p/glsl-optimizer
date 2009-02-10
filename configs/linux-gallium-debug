@@ -1,8 +1,0 @@
-# Configuration for Linux / Gallium for debug
-
-include $(TOP)/configs/linux-gallium
-
-CONFIG_NAME = linux-gallium-debug
-
-OPT_FLAGS = -g -ansi -pedantic
-DEFINES += -DDEBUG -DDEBUG_MATH
