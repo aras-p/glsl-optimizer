@@ -1,7 +1,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_format.h"
 #include "util/u_memory.h"
-#include "util/u_math.h"
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_util.h"
@@ -106,8 +105,8 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	const unsigned max_h = 1024;
 	const unsigned sub_w = w > max_w ? max_w : w;
 	const unsigned sub_h = h > max_h ? max_h : h;
-	unsigned cx, cy, level_w, level_h;
-	int i, dst_offset = dst->offset;
+	unsigned cx = 0;
+	unsigned cy = 0;
 
 	/* POT or GTFO */
 	assert(!(w & (w - 1)) && !(h & (h - 1)));
@@ -118,29 +117,19 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 
 	BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_FORMAT, 1);
 	OUT_RING  (chan, nv04_surface_format(dst->format) |
-			 log2i(w) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_U_SHIFT |
-			 log2i(h) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_V_SHIFT);
-
+	                 log2i(w) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_U_SHIFT |
+	                 log2i(h) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_V_SHIFT);
+ 
 	BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_DMA_IMAGE, 1);
 	OUT_RELOCo(chan, src_bo,
 	                 NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_SURFACE, 1);
 	OUT_RING  (chan, swzsurf->handle);
 
-	/* FIXME: Find right src and dst offset, given mipmap level */
-	level_w = w;
-	level_h = h;
-	for (i=0; i<src->level && level_w && level_h; i++) {
-		dst_offset += level_w * level_h * dst->block.size;
-		level_w >>= 1;
-		level_h >>= 1;
-	}
-
 	for (cy = 0; cy < h; cy += sub_h) {
 	  for (cx = 0; cx < w; cx += sub_w) {
-
 	    BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
-	    OUT_RELOCl(chan, dst_bo, dst_offset + nv04_swizzle_bits(cx, cy) *
+	    OUT_RELOCl(chan, dst_bo, dst->offset + nv04_swizzle_bits(cx, cy) *
 			     dst->block.size, NOUVEAU_BO_GART |
 			     NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
@@ -259,8 +248,7 @@ nv04_surface_copy(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	assert(src->format == dst->format);
 
 	/* Setup transfer to swizzle the texture to vram if needed */
-	/* FIXME/TODO: check proper limits of this operation */
-	if (src_linear ^ dst_linear) {
+	if (src_linear && !dst_linear && w > 1 && h > 1) {
 		nv04_surface_copy_swizzle(ctx, dst, dx, dy, src, sx, sy, w, h);
 		return;
 	}
@@ -268,7 +256,8 @@ nv04_surface_copy(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	/* NV_CONTEXT_SURFACES_2D has buffer alignment restrictions, fallback
 	 * to NV_MEMORY_TO_MEMORY_FORMAT in this case.
 	 */
-	if ((src->offset & 63) || (dst->offset & 63)) {
+	if ((src->offset & 63) || (dst->offset & 63) ||
+	    (src->stride & 63) || (dst->stride & 63)) {
 		nv04_surface_copy_m2mf(ctx, dst, dx, dy, src, sx, sy, w, h);
 		return;
 	}
@@ -457,5 +446,3 @@ nv04_surface_2d_init(struct nouveau_winsys *nvws)
 	ctx->fill = nv04_surface_fill;
 	return ctx;
 }
-
-
