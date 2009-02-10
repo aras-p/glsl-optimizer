@@ -31,11 +31,11 @@ INCLUDES = \
 
 ##### TARGETS #####
 
-default: depend symlinks $(LIBNAME)
+default: depend symlinks lib$(LIBNAME).a
 
 
-$(LIBNAME): $(OBJECTS) Makefile Makefile.template
-	$(TOP)/bin/mklib -o $@ -static $(OBJECTS) $(DRIVER_LIBS)
+lib$(LIBNAME).a: $(OBJECTS) Makefile Makefile.template
+	$(TOP)/bin/mklib -o $(LIBNAME) -static $(OBJECTS) $(DRIVER_LIBS)
 
 
 depend: $(C_SOURCES) $(CPP_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
