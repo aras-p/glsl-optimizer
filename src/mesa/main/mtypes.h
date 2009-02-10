@@ -2842,6 +2842,10 @@ struct gl_matrix_stack
 /*@}*/
 
 
+/**
+ * Composite state flags
+ */
+/*@{*/
 #define _MESA_NEW_NEED_EYE_COORDS         (_NEW_LIGHT |		\
                                            _NEW_TEXTURE |	\
                                            _NEW_POINT |		\
@@ -2851,7 +2855,9 @@ struct gl_matrix_stack
 #define _MESA_NEW_NEED_NORMALS            (_NEW_LIGHT |		\
                                            _NEW_TEXTURE)
 
-#define _IMAGE_NEW_TRANSFER_STATE         (_NEW_PIXEL | _NEW_COLOR_MATRIX)
+#define _MESA_NEW_TRANSFER_STATE          (_NEW_PIXEL |		\
+                                           _NEW_COLOR_MATRIX)
+/*@}*/
 
 
 

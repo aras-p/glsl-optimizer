@@ -2420,7 +2420,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
          return;   /* error was recorded */
       }
 
-      if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+      if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
 	 _mesa_update_state(ctx);
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -2526,7 +2526,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
          return;   /* error was recorded */
       }
 
-      if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+      if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
 	 _mesa_update_state(ctx);
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -2627,7 +2627,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
          return;   /* error was recorded */
       }
 
-      if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+      if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
 	 _mesa_update_state(ctx);
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -2720,7 +2720,7 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
 #if FEATURE_convolve
@@ -2780,7 +2780,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
 #if FEATURE_convolve
@@ -2840,7 +2840,7 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    if (subtexture_error_check(ctx, 3, target, level, xoffset, yoffset, zoffset,
@@ -2896,7 +2896,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
 #if FEATURE_convolve
@@ -2961,7 +2961,7 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
 #if FEATURE_convolve
@@ -3029,7 +3029,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    if (copytexsubimage_error_check1(ctx, 1, target, level))
@@ -3084,7 +3084,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    if (copytexsubimage_error_check1(ctx, 2, target, level))
@@ -3139,7 +3139,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    if (copytexsubimage_error_check1(ctx, 3, target, level))

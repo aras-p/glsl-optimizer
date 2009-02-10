@@ -828,7 +828,7 @@ void _mesa_update_pixel( GLcontext *ctx, GLuint new_state )
 
    /* References ColorMatrix.type (derived above).
     */
-   if (new_state & _IMAGE_NEW_TRANSFER_STATE)
+   if (new_state & _MESA_NEW_TRANSFER_STATE)
       update_image_transfer_state(ctx);
 }
 
