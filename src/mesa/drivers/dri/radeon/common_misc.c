@@ -1469,8 +1469,9 @@ void radeonMapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 	radeonTexObj* t = radeon_tex_obj(texObj);
 	int face, level;
 
-	//	assert(texObj->_Complete);
-	assert(t->mt);
+	/* for r100 3D sw fallbacks don't have mt */
+	if (!t->mt)
+	  return;
 
 	radeon_bo_map(t->mt->bo, GL_FALSE);
 	for(face = 0; face < t->mt->faces; ++face) {
@@ -1484,8 +1485,9 @@ void radeonUnmapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 	radeonTexObj* t = radeon_tex_obj(texObj);
 	int face, level;
 
-	//	assert(texObj->_Complete);
-	assert(t->mt);
+	/* for r100 3D sw fallbacks don't have mt */
+	if (!t->mt)
+	  return;
 
 	for(face = 0; face < t->mt->faces; ++face) {
 		for(level = t->mt->firstLevel; level <= t->mt->lastLevel; ++level)
