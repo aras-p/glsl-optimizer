@@ -39,6 +39,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_dri.h"
 #include "r200_lock.h"
 
+#include "radeon_cs_legacy.h"
+
 #include "xf86drm.h"
 #include "drm.h"
 #include "radeon_drm.h"
@@ -129,7 +131,7 @@ static INLINE int R200_DB_STATECHANGE(
  */
 #define R200_FIREVERTICES( rmesa )			\
 do {							\
-   if ( rmesa->radeon.dma.flush ) {	\
+   if ( rmesa->radeon.cmdbuf.cs->cdw || rmesa->radeon.dma.flush ) {	\
       r200Flush( rmesa->radeon.glCtx );			\
    }							\
 } while (0)

@@ -38,7 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/simple_list.h"
 #include "radeon_lock.h"
-
+#include "radeon_cs_legacy.h"
 
 extern void radeonEmitState( r100ContextPtr rmesa );
 extern void radeonEmitVertexAOS( r100ContextPtr rmesa,
@@ -132,9 +132,9 @@ static INLINE int RADEON_DB_STATECHANGE(r100ContextPtr rmesa,
  */
 #define RADEON_FIREVERTICES( rmesa )			\
 do {							\
-   if ( rmesa->radeon.dma.flush ) {	\
+   if (rmesa->radeon.cmdbuf.cs->cdw || rmesa->radeon.dma.flush ) {	\
       radeonFlush( rmesa->radeon.glCtx );			\
-   }							\
+  }							\
 } while (0)
 
 /* Command lengths.  Note that any time you ensure ELTS_BUFSZ or VBUF_BUFSZ
