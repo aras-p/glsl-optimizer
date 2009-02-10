@@ -163,11 +163,9 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 		  }
 		}
 
-		/* FIXME: need to find next offset for both source and dest */
-		src_offset += w * h * dst->block.size;
-		/*src_offset = align(src_offset, 64);*/
+		/* FIXME: need to find next offset for source */
+		/*src_offset += w * h * src->block.size;*/
 		dst_offset += w * h * dst->block.size;
-		/*dst_offset = align(dst_offset, 64);*/
 		src_stride >>= 1;
 		w >>= 1;
 		h >>= 1;
