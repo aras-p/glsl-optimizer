@@ -994,7 +994,7 @@ sisFlushPrimsLocked(sisContextPtr smesa)
 	 MMIO(REG_3D_PrimitiveSet, smesa->dwPrimitiveSet);
       }
       while (smesa->vb_last < smesa->vb_cur) {
-	 sis_emit_func(smesa, smesa->vb_last);
+	 sis_emit_func(smesa, (char *)smesa->vb_last);
 	 smesa->vb_last += incr;
       }
       mWait3DCmdQueue(1);
