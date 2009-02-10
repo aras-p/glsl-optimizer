@@ -127,7 +127,7 @@ setupLoaderExtensions(__DRIscreen *psp,
     }
 }
 
-static const __DRIconfig **
+static __DRIconfig **
 swrastFillInModes(__DRIscreen *psp,
 		  unsigned pixel_bits, unsigned depth_bits,
 		  unsigned stencil_bits, GLboolean have_back_buffer)
@@ -200,7 +200,7 @@ swrastFillInModes(__DRIscreen *psp,
 	return NULL;
     }
 
-    return (const __DRIconfig **)configs;
+    return configs;
 }
 
 static __DRIscreen *
@@ -209,7 +209,7 @@ driCreateNewScreen(int scrn, const __DRIextension **extensions,
 {
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
-    const __DRIconfig **configs8, **configs16, **configs24, **configs32;
+    __DRIconfig **configs8, **configs16, **configs24, **configs32;
 
     (void) data;
 
@@ -231,7 +231,8 @@ driCreateNewScreen(int scrn, const __DRIextension **extensions,
 
     configs16 = driConcatConfigs(configs8, configs16);
     configs24 = driConcatConfigs(configs16, configs24);
-    *driver_configs = driConcatConfigs(configs24, configs32);
+    *driver_configs = (const __DRIconfig **)
+       driConcatConfigs(configs24, configs32);
 
     driInitExtensions( NULL, card_extensions, GL_FALSE );
 

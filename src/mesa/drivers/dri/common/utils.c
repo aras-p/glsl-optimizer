@@ -754,10 +754,10 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
     return configs;
 }
 
-const __DRIconfig **driConcatConfigs(const __DRIconfig **a,
-				     const __DRIconfig **b)
+__DRIconfig **driConcatConfigs(__DRIconfig **a,
+			       __DRIconfig **b)
 {
-    const __DRIconfig **all;
+    __DRIconfig **all;
     int i, j, index;
 
     i = 0;

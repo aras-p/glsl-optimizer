@@ -465,8 +465,6 @@ intelFillInModes(__DRIscreenPrivate *psp,
    __GLcontextModes *m;
    unsigned depth_buffer_factor;
    unsigned back_buffer_factor;
-   GLenum fb_format;
-   GLenum fb_type;
    int i;
 
    /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
@@ -501,19 +499,32 @@ intelFillInModes(__DRIscreenPrivate *psp,
    back_buffer_factor = (have_back_buffer) ? 3 : 1;
 
    if (pixel_bits == 16) {
-      fb_format = GL_RGB;
-      fb_type = GL_UNSIGNED_SHORT_5_6_5;
+      configs = driCreateConfigs(GL_RGB, GL_UNSIGNED_SHORT_5_6_5,
+				 depth_bits_array, stencil_bits_array,
+				 depth_buffer_factor, back_buffer_modes,
+				 back_buffer_factor,
+				 msaa_samples_array, 1);
    }
    else {
-      fb_format = GL_BGRA;
-      fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
-   }
+      __DRIconfig **configs_a8r8g8b8;
+      __DRIconfig **configs_x8r8g8b8;
 
-   configs = driCreateConfigs(fb_format, fb_type,
-			      depth_bits_array, stencil_bits_array,
-			      depth_buffer_factor, back_buffer_modes,
-			      back_buffer_factor,
-                              msaa_samples_array, 1);
+      configs_a8r8g8b8 = driCreateConfigs(GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+					  depth_bits_array,
+					  stencil_bits_array,
+					  depth_buffer_factor,
+					  back_buffer_modes,
+					  back_buffer_factor,
+					  msaa_samples_array, 1);
+      configs_x8r8g8b8 = driCreateConfigs(GL_BGR, GL_UNSIGNED_INT_8_8_8_8_REV,
+					  depth_bits_array,
+					  stencil_bits_array,
+					  depth_buffer_factor,
+					  back_buffer_modes,
+					  back_buffer_factor,
+					  msaa_samples_array, 1);
+      configs = driConcatConfigs(configs_a8r8g8b8, configs_x8r8g8b8);
+   }
 
    if (configs == NULL) {
     fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
@@ -686,7 +697,7 @@ __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
    };
    uint8_t depth_bits[4], stencil_bits[4], msaa_samples_array[1];
    int color;
-   const __DRIconfig **configs = NULL;
+   __DRIconfig **configs = NULL;
 
    /* Calling driInitExtensions here, with a NULL context pointer,
     * does not actually enable the extensions.  It just makes sure
@@ -747,17 +758,16 @@ __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
    fb_type[2] = GL_UNSIGNED_INT_8_8_8_8_REV;
 
    for (color = 0; color < ARRAY_SIZE(fb_format); color++) {
-      const __DRIconfig **new_configs;
+      __DRIconfig **new_configs;
 
-      new_configs = (const __DRIconfig **)
-	 driCreateConfigs(fb_format[color], fb_type[color],
-			  depth_bits,
-			  stencil_bits,
-			  ARRAY_SIZE(depth_bits),
-			  back_buffer_modes,
-			  ARRAY_SIZE(back_buffer_modes),
-                          msaa_samples_array, ARRAY_SIZE(msaa_samples_array));
-
+      new_configs = driCreateConfigs(fb_format[color], fb_type[color],
+				     depth_bits,
+				     stencil_bits,
+				     ARRAY_SIZE(depth_bits),
+				     back_buffer_modes,
+				     ARRAY_SIZE(back_buffer_modes),
+				     msaa_samples_array,
+				     ARRAY_SIZE(msaa_samples_array));
       if (configs == NULL)
 	 configs = new_configs;
       else
@@ -770,7 +780,7 @@ __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
       return NULL;
    }
 
-   return configs;
+   return (const __DRIconfig **)configs;
 }
 
 const struct __DriverAPIRec driDriverAPI = {
