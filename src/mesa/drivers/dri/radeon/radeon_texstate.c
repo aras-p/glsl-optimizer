@@ -995,8 +995,6 @@ static GLboolean radeon_validate_texture(GLcontext *ctx, struct gl_texture_objec
    radeonTexObj *t = radeon_tex_obj(texObj);
    int ret;
 
-   fprintf(stderr,"t dirty %d %x %d\n", unit, t->dirty_state, t->validated);
-
    if (!radeon_validate_texture_miptree(ctx, texObj))
       return GL_FALSE;
 
@@ -1016,7 +1014,6 @@ static GLboolean radeon_validate_texture(GLcontext *ctx, struct gl_texture_objec
    RADEON_STATECHANGE( rmesa, tcl );
    rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_ST_BIT(unit);
 
-   fprintf(stderr,"setting pp cntl to %x\n", rmesa->hw.ctx.cmd[CTX_PP_CNTL]);
    rmesa->recheck_texgen[unit] = GL_TRUE;
 
    if (t->dirty_state & (1<<unit)) {

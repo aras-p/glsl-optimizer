@@ -2060,8 +2060,6 @@ static void update_texturematrix( GLcontext *ctx )
 
    tpc = (texMatEnabled | rmesa->TexGenEnabled);
 
-   fprintf(stderr,"setting tpc to %x %x\n", tpc, rmesa->TexGenEnabled);
-
    /* TCL_TEX_COMPUTED_x is TCL_TEX_INPUT_x | 0x8 */
    vs &= ~((RADEON_TCL_TEX_COMPUTED_TEX_0 << RADEON_TCL_TEX_0_OUTPUT_SHIFT) |
 	   (RADEON_TCL_TEX_COMPUTED_TEX_0 << RADEON_TCL_TEX_1_OUTPUT_SHIFT) |
