@@ -59,7 +59,6 @@ extern "C" {
 #endif
 
 
-struct pipe_winsys;
 struct pipe_buffer;
 struct pipe_fence_handle;
 
@@ -70,13 +69,42 @@ struct pipe_fence_handle;
 struct fenced_buffer_list;
 
 
+struct pb_fence_ops
+{
+   void (*destroy)( struct pb_fence_ops *ops );
+
+   /** Set ptr = fence, with reference counting */
+   void (*fence_reference)( struct pb_fence_ops *ops,
+                            struct pipe_fence_handle **ptr,
+                            struct pipe_fence_handle *fence );
+
+   /**
+    * Checks whether the fence has been signalled.
+    * \param flags  driver-specific meaning
+    * \return zero on success.
+    */
+   int (*fence_signalled)( struct pb_fence_ops *ops,
+                           struct pipe_fence_handle *fence,
+                           unsigned flag );
+
+   /**
+    * Wait for the fence to finish.
+    * \param flags  driver-specific meaning
+    * \return zero on success.
+    */
+   int (*fence_finish)( struct pb_fence_ops *ops,
+                        struct pipe_fence_handle *fence,
+                        unsigned flag );
+};
+
+
 /**
  * Create a fenced buffer list.
  * 
  * See also fenced_bufmgr_create for a more convenient way to use this.
  */
 struct fenced_buffer_list *
-fenced_buffer_list_create(struct pipe_winsys *winsys);
+fenced_buffer_list_create(struct pb_fence_ops *ops);
 
 
 /**
