@@ -44,8 +44,6 @@ struct stw_icd
    struct {
       struct stw_context *ctx;
    } ctx_array[DRV_CONTEXT_MAX];
-
-   DHGLRC ctx_current;
 };
 
 
@@ -232,9 +230,10 @@ DrvReleaseContext(
 {
    struct stw_context *ctx;
 
-   if (dhglrc != stw_icd->ctx_current) 
-      goto fail;
-
+   /* XXX: The expectation is that ctx is the same context which is
+    * current for this thread.  We should check that and return False
+    * if not the case.
+    */
    ctx = lookup_context( dhglrc );
    if (ctx == NULL) 
       goto fail;
@@ -242,7 +241,6 @@ DrvReleaseContext(
    if (stw_make_current( NULL, NULL ) == FALSE)
       goto fail;
 
-   stw_icd->ctx_current = 0;
    return TRUE;
 
 fail:
