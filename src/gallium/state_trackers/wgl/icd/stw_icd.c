@@ -76,7 +76,7 @@ stw_icd_cleanup(void)
 {
    int i;
 
-   if(!stw_icd)
+   if (!stw_icd)
       return;
    
    pipe_mutex_lock( stw_icd->mutex );
@@ -115,6 +115,9 @@ DrvCopyContext(
 {
    BOOL ret = FALSE;
 
+   if (!stw_icd)
+      return FALSE;
+
    pipe_mutex_lock( stw_icd->mutex );
    {
       struct stw_context *src = lookup_context( stw_icd, dhrcSource );
@@ -136,7 +139,10 @@ DrvCreateLayerContext(
    HDC hdc,
    INT iLayerPlane )
 {
-   DHGLRC handle = 0;;
+   DHGLRC handle = 0;
+
+   if (!stw_icd)
+      return handle;
 
    pipe_mutex_lock( stw_icd->mutex );
    {
@@ -178,6 +184,9 @@ DrvDeleteContext(
    DHGLRC dhglrc )
 {
    BOOL ret = FALSE;
+
+   if (!stw_icd)
+      return ret;
 
    pipe_mutex_lock( stw_icd->mutex );
    {
@@ -272,6 +281,9 @@ DrvReleaseContext(
    DHGLRC dhglrc )
 {
    BOOL ret = FALSE;
+
+   if (!stw_icd)
+      return ret;
 
    pipe_mutex_lock( stw_icd->mutex );
    {
@@ -660,6 +672,9 @@ DrvSetContext(
    PFN_SETPROCTABLE pfnSetProcTable )
 {
    PGLCLTPROCTABLE result = NULL;
+
+   if (!stw_icd)
+      return result;
 
    pipe_mutex_lock( stw_icd->mutex ); 
    {
