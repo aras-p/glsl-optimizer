@@ -6,11 +6,11 @@ include $(TOP)/configs/current
 
 SUBDIRS = $(GALLIUM_WINSYS_DRM_DIRS)
 
-default: $(TOP)/$(LIB_DIR) subdirs
+default: $(TOP)/$(LIB_DIR)/gallium subdirs
 
 
-$(TOP)/$(LIB_DIR):
-	-mkdir $(TOP)/$(LIB_DIR)
+$(TOP)/$(LIB_DIR)/gallium:
+	-mkdir -p $(TOP)/$(LIB_DIR)/gallium
 
 
 subdirs:
