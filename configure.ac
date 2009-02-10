@@ -314,7 +314,7 @@ if test "x$enable_asm" = xyes; then
 
     case "$asm_arch" in
     x86)
-        ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
+        dnl ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
         ASM_SOURCES='$(X86_SOURCES)'
         ASM_API='$(X86_API)'
         AC_MSG_RESULT([yes, x86])
@@ -412,17 +412,22 @@ esac
 dnl
 dnl Driver specific build directories
 dnl
-SRC_DIRS="mesa"
+SRC_DIRS="mesa gallium egl gallium/winsys"
 GLU_DIRS="sgi"
 WINDOW_SYSTEM=""
+GALLIUM_WINSYS_DIRS=""
+GALLIUM_AUXILIARY_DIRS="draw translate cso_cache pipebuffer tgsi sct rtasm util"
+GALLIUM_DRIVER_DIRS="softpipe failover"
 case "$mesa_driver" in
 xlib)
     DRIVER_DIRS="x11"
     ;;
 dri)
     SRC_DIRS="glx/x11 $SRC_DIRS"
-    DRIVER_DIRS="dri"
+    DRIVER_DIRS=""
     WINDOW_SYSTEM="dri"
+    GALLIUM_WINSYS_DIRS="drm $GALLIUM_WINSYS_DIRS"
+    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS i915simple i965simple nv04 nv10 nv20 nv30 nv40 nv50"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
@@ -432,6 +437,9 @@ AC_SUBST([SRC_DIRS])
 AC_SUBST([GLU_DIRS])
 AC_SUBST([DRIVER_DIRS])
 AC_SUBST([WINDOW_SYSTEM])
+AC_SUBST([GALLIUM_WINSYS_DIRS])
+AC_SUBST([GALLIUM_DRIVER_DIRS])
+AC_SUBST([GALLIUM_AUXILIARY_DIRS])
 
 dnl
 dnl User supplied program configuration
@@ -679,10 +687,10 @@ if test "$mesa_driver" = dri; then
     case "$host_os" in
     linux*)
         DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
-        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING -DHAVE_ALIAS"
         if test "x$driglx_direct" = xyes; then
             DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
         fi
+        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING -DHAVE_ALIAS"
 
         case "$host_cpu" in
         x86_64)

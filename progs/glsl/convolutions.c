@@ -61,15 +61,15 @@ static void loadAndCompileShader(GLuint shader, const char *text)
 {
    GLint stat;
 
-   glShaderSourceARB(shader, 1, (const GLchar **) &text, NULL);
+   glShaderSource(shader, 1, (const GLchar **) &text, NULL);
 
-   glCompileShaderARB(shader);
+   glCompileShader(shader);
 
-   glGetObjectParameterivARB(shader, GL_COMPILE_STATUS, &stat);
+   glGetShaderiv(shader, GL_COMPILE_STATUS, &stat);
    if (!stat) {
       GLchar log[1000];
       GLsizei len;
-      glGetInfoLogARB(shader, 1000, &len, log);
+      glGetShaderInfoLog(shader, 1000, &len, log);
       fprintf(stderr, "Problem compiling shader: %s\n", log);
       exit(1);
    }
@@ -105,11 +105,11 @@ static void
 checkLink(GLuint prog)
 {
    GLint stat;
-   glGetObjectParameterivARB(prog, GL_LINK_STATUS, &stat);
+   glGetProgramiv(prog, GL_LINK_STATUS, &stat);
    if (!stat) {
       GLchar log[1000];
       GLsizei len;
-      glGetInfoLogARB(prog, 1000, &len, log);
+      glGetProgramInfoLog(prog, 1000, &len, log);
       fprintf(stderr, "Linker error:\n%s\n", log);
    }
    else {
@@ -200,12 +200,12 @@ static void setupConvolution()
    }
 
    loc = glGetUniformLocationARB(program, "KernelValue");
-   glUniform4fvARB(loc, 9, vecKer);
+   glUniform4fv(loc, 9, vecKer);
    loc = glGetUniformLocationARB(program, "ScaleFactor");
-   glUniform4fARB(loc, scale, scale, scale, scale);
+   glUniform4f(loc, scale, scale, scale, scale);
    loc = glGetUniformLocationARB(program, "BaseColor");
-   glUniform4fARB(loc, baseColor[0], baseColor[1],
-                  baseColor[2], baseColor[3]);
+   glUniform4f(loc, baseColor[0], baseColor[1],
+               baseColor[2], baseColor[3]);
 
    free(vecKer);
    free(kernel);
@@ -229,10 +229,10 @@ static void createProgram(const char *vertProgFile,
       glAttachShader(program, fragShader);
    }
 
-   glLinkProgramARB(program);
+   glLinkProgram(program);
    checkLink(program);
 
-   glUseProgramObjectARB(program);
+   glUseProgram(program);
 
    /*
    assert(glIsProgram(program));
@@ -256,7 +256,7 @@ static void createProgram(const char *vertProgFile,
                           0.0                , -1.0 / texture.height,
                           -1.0 / texture.width, -1.0 / texture.height };
       GLuint offsetLoc = glGetUniformLocationARB(program, "Offset");
-      glUniform2fvARB(offsetLoc, 9, offsets);
+      glUniform2fv(offsetLoc, 9, offsets);
    }
    setupConvolution();
 
@@ -331,6 +331,7 @@ static void init()
       fprintf(stderr, "Sorry, this program requires GL_ARB_shader_objects, GL_ARB_vertex_shader, and GL_ARB_fragment_shader\n");
       exit(1);
    }
+
    fprintf(stderr, "GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
    fprintf(stderr, "GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));

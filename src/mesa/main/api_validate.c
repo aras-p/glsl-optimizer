@@ -133,6 +133,12 @@ _mesa_validate_DrawElements(GLcontext *ctx,
       /* use indices in the buffer object */
       GLuint indexBytes;
 
+      if (!ctx->Array.ElementArrayBufferObj->Size) {
+         _mesa_warning(ctx,
+                       "glDrawElements called with empty array elements buffer");
+         return GL_FALSE;
+      }
+
       if (type == GL_UNSIGNED_INT) {
          indexBytes = count * sizeof(GLuint);
       }

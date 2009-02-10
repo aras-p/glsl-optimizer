@@ -22,7 +22,7 @@
  * OF THIS SOFTWARE.
  */
 
-#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -138,13 +138,15 @@ int main(int argc, char **argv)
 
     glutInitWindowPosition(0, 0); glutInitWindowSize( 250, 250);
 
-    type = GLUT_RGB;
+    type = GLUT_RGB | GLUT_ALPHA;
     type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
     glutInitDisplayMode(type);
 
     if (glutCreateWindow(argv[0]) == GL_FALSE) {
 	exit(1);
     }
+
+    glewInit();
 
     Init();
 

@@ -193,7 +193,7 @@ _mesa_remove_attachment(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
    if (att->Type == GL_TEXTURE) {
       ASSERT(att->Texture);
       if (ctx->Driver.FinishRenderTexture) {
-         /* tell driver we're done rendering to this texobj */
+         /* tell driver that we're done rendering to this texture. */
          ctx->Driver.FinishRenderTexture(ctx, att);
       }
       _mesa_reference_texobj(&att->Texture, NULL); /* unbind */

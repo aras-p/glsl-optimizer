@@ -24,8 +24,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#define EGL_EGLEXT_PROTOTYPES
 
-#include <GLES/egl.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +36,6 @@
 #define MAX_CONFIGS 1000
 #define MAX_MODES 1000
 #define MAX_SCREENS 10
-
 
 /**
  * Print table of all available configurations.
@@ -48,15 +49,17 @@ PrintConfigs(EGLDisplay d)
    eglGetConfigs(d, configs, MAX_CONFIGS, &numConfigs);
 
    printf("Configurations:\n");
-   printf("     bf lv d st colorbuffer dp st   supported\n");
-   printf("  id sz  l b ro  r  g  b  a th cl   surfaces  \n");
-   printf("---------------------------------------------------\n");
+   printf("     bf lv d st colorbuffer dp st  ms    vis   supported\n");
+   printf("  id sz  l b ro  r  g  b  a th cl ns b    id   surfaces \n");
+   printf("--------------------------------------------------------\n");
    for (i = 0; i < numConfigs; i++) {
       EGLint id, size, level;
       EGLint red, green, blue, alpha;
       EGLint depth, stencil;
       EGLint surfaces;
       EGLint doubleBuf = 1, stereo = 0;
+      EGLint vid;
+      EGLint samples, sampleBuffers;
       char surfString[100] = "";
 
       eglGetConfigAttrib(d, configs[i], EGL_CONFIG_ID, &id);
@@ -69,7 +72,11 @@ PrintConfigs(EGLDisplay d)
       eglGetConfigAttrib(d, configs[i], EGL_ALPHA_SIZE, &alpha);
       eglGetConfigAttrib(d, configs[i], EGL_DEPTH_SIZE, &depth);
       eglGetConfigAttrib(d, configs[i], EGL_STENCIL_SIZE, &stencil);
+      eglGetConfigAttrib(d, configs[i], EGL_NATIVE_VISUAL_ID, &vid);
       eglGetConfigAttrib(d, configs[i], EGL_SURFACE_TYPE, &surfaces);
+
+      eglGetConfigAttrib(d, configs[i], EGL_SAMPLES, &samples);
+      eglGetConfigAttrib(d, configs[i], EGL_SAMPLE_BUFFERS, &sampleBuffers);
 
       if (surfaces & EGL_WINDOW_BIT)
          strcat(surfString, "win,");
@@ -84,12 +91,13 @@ PrintConfigs(EGLDisplay d)
       if (strlen(surfString) > 0)
          surfString[strlen(surfString) - 1] = 0;
 
-      printf("0x%02x %2d %2d %c  %c %2d %2d %2d %2d %2d %2d   %-12s\n",
+      printf("0x%02x %2d %2d %c  %c %2d %2d %2d %2d %2d %2d %2d%2d  0x%02x   %-12s\n",
              id, size, level,
              doubleBuf ? 'y' : '.',
              stereo ? 'y' : '.',
              red, green, blue, alpha,
-             depth, stencil, surfString);
+             depth, stencil,
+             samples, sampleBuffers, vid, surfString);
    }
 }
 
@@ -139,8 +147,8 @@ int
 main(int argc, char *argv[])
 {
    int maj, min;
-   /*EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);*/
-   EGLDisplay d = eglGetDisplay(":0");
+   //EGLDisplay d = eglGetDisplay((EGLNativeDisplayType)"!EGL_i915");
+   EGLDisplay d = eglGetDisplay((EGLNativeDisplayType)"!EGL_i915");
 
    if (!eglInitialize(d, &maj, &min)) {
       printf("eglinfo: eglInitialize failed\n");
@@ -150,13 +158,13 @@ main(int argc, char *argv[])
    printf("EGL API version: %d.%d\n", maj, min);
    printf("EGL vendor string: %s\n", eglQueryString(d, EGL_VENDOR));
    printf("EGL version string: %s\n", eglQueryString(d, EGL_VERSION));
+#ifdef EGL_VERSION_1_2
+   printf("EGL client APIs: %s\n", eglQueryString(d, EGL_CLIENT_APIS));
+#endif
    printf("EGL extensions string:\n");
    printf("    %s\n", eglQueryString(d, EGL_EXTENSIONS));
-   printf("\n");
 
    PrintConfigs(d);
-
-   printf("\n");
 
    PrintModes(d);
 

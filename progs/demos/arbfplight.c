@@ -46,14 +46,25 @@ static PFNGLDELETEPROGRAMSARBPROC glDeleteProgramsARB_func;
 /* Set to one to test ARB_fog_linear program option */
 #define DO_FRAGMENT_FOG 0
 
+static void normalize (GLfloat *dst, const GLfloat *src)
+{
+   GLfloat len = sqrt (src[0] * src[0] + src[1] * src[1] + src[2] * src[2]);
+   dst[0] = src[0] / len;
+   dst[1] = src[1] / len;
+   dst[2] = src[2] / len;
+}
 
 static void Redisplay( void )
 {
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
    if (PixelLight) {
+      GLfloat pos[4];
+
+      normalize( pos, LightPos );
+      pos[3] = LightPos[3];
       glProgramLocalParameter4fvARB_func(GL_FRAGMENT_PROGRAM_ARB,
-                                         LIGHTPOS, LightPos);
+                                         LIGHTPOS, pos);
       glEnable(GL_FRAGMENT_PROGRAM_ARB);
       glEnable(GL_VERTEX_PROGRAM_ARB);
       glDisable(GL_LIGHTING);
@@ -204,35 +215,31 @@ static void Init( void )
       "PARAM Diffuse = state.material.diffuse; \n"
       "PARAM Specular = state.material.specular; \n"
       "PARAM LightPos = program.local[3]; \n"
-      "TEMP lightDir, normal, len; \n"
+      "TEMP normal, len; \n"
       "TEMP dotProd, specAtten; \n"
       "TEMP diffuseColor, specularColor; \n"
-
-      "# Compute normalized light direction \n"
-      "DP3 len.x, LightPos, LightPos; \n"
-      "RSQ len.y, len.x; \n"
-      "MUL lightDir, LightPos, len.y; \n"
 
       "# Compute normalized normal \n"
       "DP3 len.x, fragment.texcoord[0], fragment.texcoord[0]; \n"
       "RSQ len.y, len.x; \n"
-      "MUL normal, fragment.texcoord[0], len.y; \n"
+      "MUL normal.xyz, fragment.texcoord[0], len.y; \n"
 
       "# Compute dot product of light direction and normal vector\n"
-      "DP3_SAT dotProd, lightDir, normal;             # limited to [0,1]\n"
+      "DP3_SAT dotProd.x, LightPos, normal;             # limited to [0,1]\n"
 
-      "MUL diffuseColor, Diffuse, dotProd;            # diffuse attenuation\n"
+      "MUL diffuseColor.xyz, Diffuse, dotProd.x;            # diffuse attenuation\n"
 
       "POW specAtten.x, dotProd.x, {20.0}.x;          # specular exponent\n"
 
-      "MUL specularColor, Specular, specAtten.x;      # specular attenuation\n"
+      "MUL specularColor.xyz, Specular, specAtten.x;      # specular attenuation\n"
 
+      "MOV result.color.w, Diffuse; \n"
 #if DO_FRAGMENT_FOG
       "# need to clamp color to [0,1] before fogging \n"
-      "ADD_SAT result.color, diffuseColor, specularColor; # add colors\n"
+      "ADD_SAT result.color.xyz, diffuseColor, specularColor; # add colors\n"
 #else
       "# clamping will be done after program's finished \n"
-      "ADD result.color, diffuseColor, specularColor; # add colors\n"
+      "ADD result.color.xyz, diffuseColor, specularColor; # add colors\n"
 #endif
       "END \n"
       ;

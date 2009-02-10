@@ -628,6 +628,7 @@ ffbFillInModes( __DRIscreenPrivate *psp,
 
    uint8_t depth_bits_array[3];
    uint8_t stencil_bits_array[3];
+   uint8_t msaa_samples_array[1];
 
    depth_bits_array[0] = 0;
    depth_bits_array[1] = depth_bits;
@@ -640,6 +641,8 @@ ffbFillInModes( __DRIscreenPrivate *psp,
    stencil_bits_array[0] = 0;
    stencil_bits_array[1] = 0;
    stencil_bits_array[2] = (stencil_bits == 0) ? 8 : stencil_bits;
+
+   msaa_samples_array[0] = 0;
 
    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;
    back_buffer_factor  = (have_back_buffer) ? 3 : 1;
@@ -656,9 +659,10 @@ ffbFillInModes( __DRIscreenPrivate *psp,
    configs = driCreateConfigs(fb_format, fb_type,
 			      depth_bits_array, stencil_bits_array,
 			      depth_buffer_factor, back_buffer_modes,
-			      back_buffer_factor);
+			      back_buffer_factor,
+                               msaa_samples_array, 1);
    if (configs == NULL) {
-    fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
+      fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
               __LINE__);
       return NULL;
    }

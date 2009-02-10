@@ -1,0 +1,17 @@
+This is an application written in python to replay the traces captured by the
+ trace pipe driver. 
+
+
+To use it follow the instructions in src/gallium/drivers/trace/README and
+src/gallium/state_trackers/python/README, and then do
+
+  python src/gallium/state_trackers/python/samples/retrace/interpreter.py filename.trace
+
+
+This is still work in progress:
+- not everything is captured/replayed
+  - surface/textures contents
+- any tiny error will result in a crash
+
+--
+Jose Fonseca <jrfonseca@tungstengraphics.com>

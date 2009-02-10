@@ -1321,7 +1321,12 @@ processWindowWorkList(GLUTwindow * window)
        is where the finish works gets queued for indirect
        contexts. */
     __glutSetWindow(window);
-    glFinish();
+#if !defined(_WIN32)
+    if (!window->isDirect)
+#endif
+    {
+       glFinish();
+    }
   }
   if (workMask & GLUT_DEBUG_WORK) {
     __glutSetWindow(window);
@@ -1338,9 +1343,7 @@ processWindowWorkList(GLUTwindow * window)
   }
 }
 
-#ifndef _WIN32
 static  /* X11 implementations do not need this global. */
-#endif
 void
 __glutProcessWindowWorkLists(void)
 {

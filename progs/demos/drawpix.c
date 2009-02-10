@@ -28,6 +28,7 @@ static GLfloat Zpos = -1.0;
 static float Xzoom, Yzoom;
 static GLboolean DrawFront = GL_FALSE;
 static GLboolean Dither = GL_TRUE;
+static int win = 0;
 
 
 static void Reset( void )
@@ -215,6 +216,7 @@ static void Key( unsigned char key, int x, int y )
          printf("glDrawBuffer(%s)\n", DrawFront ? "GL_FRONT" : "GL_BACK");
          break;
       case 27:
+         glutDestroyWindow(win);
          exit(0);
          break;
    }
@@ -343,7 +345,7 @@ int main( int argc, char *argv[] )
    else
       glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE);
 
-   glutCreateWindow(argv[0]);
+   win = glutCreateWindow(argv[0]);
 
    Init(ciMode, filename);
    Usage();

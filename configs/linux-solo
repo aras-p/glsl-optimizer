@@ -16,10 +16,10 @@ PIC_FLAGS  = -fPIC
 ARCH_FLAGS ?=
 
 # DRM and pciaccess
-LIBDRM_CFLAGS = `pkg-config --cflags libdrm`
-LIBDRM_LIB = `pkg-config --libs libdrm`
-PCIACCESS_CFLAGS = `pkg-config --cflags pciaccess`
-PCIACCESS_LIB = `pkg-config --libs pciaccess`
+LIBDRM_CFLAGS = $(shell pkg-config --cflags libdrm)
+LIBDRM_LIB = $(shell pkg-config --libs libdrm)
+PCIACCESS_CFLAGS = $(shell pkg-config --cflags pciaccess)
+PCIACCESS_LIB = $(shell pkg-config --libs pciaccess)
 
 
 DEFINES = -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE \
@@ -36,7 +36,7 @@ CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES)
 CFLAGS += -fno-strict-aliasing
 CXXFLAGS += -fno-strict-aliasing
 
-ASM_SOURCES = 
+MESA_ASM_SOURCES = 
 
 # Library/program dependencies
 DRI_LIB_DEPS = -lm -lpthread -lexpat -ldl -L$(TOP)/$(LIB_DIR) $(PCIACCESS_LIB)
@@ -46,7 +46,7 @@ GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lm
 APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm -lpthread
 
 # Directories
-SRC_DIRS = glx/mini mesa glu glut/mini
+SRC_DIRS = glx/mini gallium mesa glu glut/mini glew
 DRIVER_DIRS = dri
 PROGRAM_DIRS = miniglx
 

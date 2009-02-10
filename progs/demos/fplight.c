@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 
@@ -273,6 +273,7 @@ int main( int argc, char *argv[] )
    glutInitWindowSize( 200, 200 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
    Win = glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutSpecialFunc( SpecialKey );

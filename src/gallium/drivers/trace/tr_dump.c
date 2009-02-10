@@ -1,0 +1,404 @@
+/**************************************************************************
+ *
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
+
+
+/**
+ * @file
+ * Trace dumping functions.
+ * 
+ * For now we just use standard XML for dumping the trace calls, as this is
+ * simple to write, parse, and visually inspect, but the actual representation 
+ * is abstracted out of this file, so that we can switch to a binary 
+ * representation if/when it becomes justified.
+ * 
+ * @author Jose Fonseca <jrfonseca@tungstengraphics.com>   
+ */
+
+#include "pipe/p_config.h"
+
+#if defined(PIPE_OS_LINUX)
+#include <stdlib.h>
+#endif
+
+#include "pipe/p_compiler.h"
+#include "pipe/p_debug.h"
+#include "util/u_memory.h"
+#include "util/u_string.h"
+#include "util/u_stream.h"
+
+#include "tr_dump.h"
+
+
+static struct util_stream *stream = NULL;
+static unsigned refcount = 0;
+
+
+static INLINE void 
+trace_dump_write(const char *buf, size_t size)
+{
+   if(stream)
+      util_stream_write(stream, buf, size);
+}
+
+
+static INLINE void 
+trace_dump_writes(const char *s)
+{
+   trace_dump_write(s, strlen(s));
+}
+
+
+static INLINE void 
+trace_dump_writef(const char *format, ...)
+{
+   static char buf[1024];
+   unsigned len;
+   va_list ap;
+   va_start(ap, format);
+   len = util_vsnprintf(buf, sizeof(buf), format, ap);
+   va_end(ap);
+   trace_dump_write(buf, len);
+}
+
+
+static INLINE void 
+trace_dump_escape(const char *str) 
+{
+   const unsigned char *p = (const unsigned char *)str;
+   unsigned char c;
+   while((c = *p++) != 0) {
+      if(c == '<')
+         trace_dump_writes("&lt;");
+      else if(c == '>')
+         trace_dump_writes("&gt;");
+      else if(c == '&')
+         trace_dump_writes("&amp;");
+      else if(c == '\'')
+         trace_dump_writes("&apos;");
+      else if(c == '\"')
+         trace_dump_writes("&quot;");
+      else if(c >= 0x20 && c <= 0x7e)
+         trace_dump_writef("%c", c);
+      else
+         trace_dump_writef("&#%u;", c);
+   }
+}
+
+
+static INLINE void 
+trace_dump_indent(unsigned level)
+{
+   unsigned i;
+   for(i = 0; i < level; ++i)
+      trace_dump_writes("\t");
+}
+
+
+static INLINE void 
+trace_dump_newline(void) 
+{
+   trace_dump_writes("\n");
+}
+
+
+static INLINE void 
+trace_dump_tag(const char *name)
+{
+   trace_dump_writes("<");
+   trace_dump_writes(name);
+   trace_dump_writes("/>");
+}
+
+
+static INLINE void 
+trace_dump_tag_begin(const char *name)
+{
+   trace_dump_writes("<");
+   trace_dump_writes(name);
+   trace_dump_writes(">");
+}
+
+static INLINE void 
+trace_dump_tag_begin1(const char *name, 
+                      const char *attr1, const char *value1)
+{
+   trace_dump_writes("<");
+   trace_dump_writes(name);
+   trace_dump_writes(" ");
+   trace_dump_writes(attr1);
+   trace_dump_writes("='");
+   trace_dump_escape(value1);
+   trace_dump_writes("'>");
+}
+
+
+static INLINE void 
+trace_dump_tag_begin2(const char *name, 
+                      const char *attr1, const char *value1,
+                      const char *attr2, const char *value2)
+{
+   trace_dump_writes("<");
+   trace_dump_writes(name);
+   trace_dump_writes(" ");
+   trace_dump_writes(attr1);
+   trace_dump_writes("=\'");
+   trace_dump_escape(value1);
+   trace_dump_writes("\' ");
+   trace_dump_writes(attr2);
+   trace_dump_writes("=\'");
+   trace_dump_escape(value2);
+   trace_dump_writes("\'>");
+}
+
+
+static INLINE void 
+trace_dump_tag_begin3(const char *name, 
+                      const char *attr1, const char *value1,
+                      const char *attr2, const char *value2,
+                      const char *attr3, const char *value3)
+{
+   trace_dump_writes("<");
+   trace_dump_writes(name);
+   trace_dump_writes(" ");
+   trace_dump_writes(attr1);
+   trace_dump_writes("=\'");
+   trace_dump_escape(value1);
+   trace_dump_writes("\' ");
+   trace_dump_writes(attr2);
+   trace_dump_writes("=\'");
+   trace_dump_escape(value2);
+   trace_dump_writes("\' ");
+   trace_dump_writes(attr3);
+   trace_dump_writes("=\'");
+   trace_dump_escape(value3);
+   trace_dump_writes("\'>");
+}
+
+
+static INLINE void
+trace_dump_tag_end(const char *name)
+{
+   trace_dump_writes("</");
+   trace_dump_writes(name);
+   trace_dump_writes(">");
+}
+
+static void 
+trace_dump_trace_close(void)
+{
+   if(stream) {
+      trace_dump_writes("</trace>\n");
+      util_stream_close(stream);
+      stream = NULL;
+      refcount = 0;
+   }
+}
+
+boolean trace_dump_trace_begin()
+{
+   const char *filename;
+   
+   filename = debug_get_option("GALLIUM_TRACE", NULL);
+   if(!filename)
+      return FALSE;
+   
+   if(!stream) {
+   
+      stream = util_stream_create(filename, 0);
+      if(!stream)
+         return FALSE;
+      
+      trace_dump_writes("<?xml version='1.0' encoding='UTF-8'?>\n");
+      trace_dump_writes("<?xml-stylesheet type='text/xsl' href='trace.xsl'?>\n");
+      trace_dump_writes("<trace version='0.1'>\n");
+      
+#if defined(PIPE_OS_LINUX)
+      /* Linux applications rarely cleanup GL / Gallium resources so catch 
+       * application exit here */ 
+      atexit(trace_dump_trace_close);
+#endif
+   }
+   
+   ++refcount;
+   
+   return TRUE;
+}
+
+boolean trace_dump_enabled(void)
+{
+   return stream ? TRUE : FALSE;
+}
+
+void trace_dump_trace_end(void)
+{
+   if(stream)
+      if(!--refcount)
+         trace_dump_trace_close();
+}
+
+void trace_dump_call_begin(const char *klass, const char *method)
+{
+   trace_dump_indent(1);
+   trace_dump_tag_begin2("call", "class", klass, "method", method);
+   trace_dump_newline();
+}
+
+void trace_dump_call_end(void)
+{
+   trace_dump_indent(1);
+   trace_dump_tag_end("call");
+   trace_dump_newline();
+   util_stream_flush(stream);
+}
+
+void trace_dump_arg_begin(const char *name)
+{
+   trace_dump_indent(2);
+   trace_dump_tag_begin1("arg", "name", name);
+}
+
+void trace_dump_arg_end(void)
+{
+   trace_dump_tag_end("arg");
+   trace_dump_newline();
+}
+
+void trace_dump_ret_begin(void)
+{
+   trace_dump_indent(2);
+   trace_dump_tag_begin("ret");
+}
+
+void trace_dump_ret_end(void)
+{
+   trace_dump_tag_end("ret");
+   trace_dump_newline();
+}
+
+void trace_dump_bool(int value)
+{
+   trace_dump_writef("<bool>%c</bool>", value ? '1' : '0');
+}
+
+void trace_dump_int(long long int value)
+{
+   trace_dump_writef("<int>%lli</int>", value);
+}
+
+void trace_dump_uint(long long unsigned value)
+{
+   trace_dump_writef("<uint>%llu</uint>", value);
+}
+
+void trace_dump_float(double value)
+{
+   trace_dump_writef("<float>%g</float>", value);
+}
+
+void trace_dump_bytes(const void *data,
+                      long unsigned size)
+{
+   static const char hex_table[16] = "0123456789ABCDEF";
+   const uint8_t *p = data;
+   long unsigned i;
+   trace_dump_writes("<bytes>");
+   for(i = 0; i < size; ++i) {
+      uint8_t byte = *p++;
+      char hex[2];
+      hex[0] = hex_table[byte >> 4];
+      hex[1] = hex_table[byte & 0xf];
+      trace_dump_write(hex, 2);
+   }
+   trace_dump_writes("</bytes>");
+}
+
+void trace_dump_string(const char *str)
+{
+   trace_dump_writes("<string>");
+   trace_dump_escape(str);
+   trace_dump_writes("</string>");
+}
+
+void trace_dump_enum(const char *value)
+{
+   trace_dump_writes("<enum>");
+   trace_dump_escape(value);
+   trace_dump_writes("</enum>");
+}
+
+void trace_dump_array_begin(void)
+{
+   trace_dump_writes("<array>");
+}
+
+void trace_dump_array_end(void)
+{
+   trace_dump_writes("</array>");
+}
+
+void trace_dump_elem_begin(void)
+{
+   trace_dump_writes("<elem>");
+}
+
+void trace_dump_elem_end(void)
+{
+   trace_dump_writes("</elem>");
+}
+
+void trace_dump_struct_begin(const char *name)
+{
+   trace_dump_writef("<struct name='%s'>", name);
+}
+
+void trace_dump_struct_end(void)
+{
+   trace_dump_writes("</struct>");
+}
+
+void trace_dump_member_begin(const char *name)
+{
+   trace_dump_writef("<member name='%s'>", name);
+}
+
+void trace_dump_member_end(void)
+{
+   trace_dump_writes("</member>");
+}
+
+void trace_dump_null(void)
+{
+   trace_dump_writes("<null/>");
+}
+
+void trace_dump_ptr(const void *value)
+{
+   if(value)
+      trace_dump_writef("<ptr>0x%08lx</ptr>", (unsigned long)(uintptr_t)value);
+   else
+      trace_dump_null();
+}

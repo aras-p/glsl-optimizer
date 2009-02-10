@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.3
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
@@ -29,13 +29,21 @@
 #include "mtypes.h"
 
 extern void
-_mesa_update_state( GLcontext *ctx );
+_mesa_update_state(GLcontext *ctx);
 
 /* As above but can only be called between _mesa_lock_context_textures() and 
  * _mesa_unlock_context_textures().
  */
 extern void
-_mesa_update_state_locked( GLcontext *ctx );
+_mesa_update_state_locked(GLcontext *ctx);
+
+
+extern void
+_mesa_set_varying_vp_inputs(GLcontext *ctx, GLbitfield varying_inputs);
+
+
+extern void
+_mesa_set_vp_override(GLcontext *ctx, GLboolean flag);
 
 
 #endif

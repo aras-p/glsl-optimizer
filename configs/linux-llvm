@@ -1,0 +1,35 @@
+# -*-makefile-*-
+# Configuration for Linux and LLVM with debugging info
+
+include $(TOP)/configs/linux
+
+CONFIG_NAME = linux-llvm
+
+GALLIUM_AUXILIARY_DIRS += gallivm
+
+OPT_FLAGS = -g -ansi -pedantic
+DEFINES += -DDEBUG -DDEBUG_MATH -DMESA_LLVM=1
+
+LLVM_VERSION := $(shell llvm-config --version)
+
+ifeq ($(LLVM_VERSION),)
+  $(warning Could not find LLVM! Make Sure 'llvm-config' is in the path)
+  MESA_LLVM=0
+else
+  MESA_LLVM=1
+  $(info Using LLVM version: $(LLVM_VERSION))
+endif
+
+ifeq ($(MESA_LLVM),1)
+#  LLVM_CFLAGS=`llvm-config --cflags`
+  LLVM_CXXFLAGS=`llvm-config --cxxflags backend bitreader engine ipo` -Wno-long-long
+  LLVM_LDFLAGS=`llvm-config --ldflags backend bitreader engine ipo`
+  LLVM_LIBS=`llvm-config --libs backend bitreader engine ipo`
+  MKLIB_OPTIONS=-cplusplus
+else
+  LLVM_CFLAGS=
+  LLVM_CXXFLAGS=
+endif
+
+LD = g++
+GL_LIB_DEPS = $(LLVM_LDFLAGS) $(LLVM_LIBS) $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread -lstdc++

@@ -205,6 +205,8 @@ key(unsigned char k, int x, int y)
 {
    switch (k) {
    case 27:
+      glutDestroyWindow(channel[0]);
+      glutDestroyWindow(channel[1]);
       exit(0);
       break;
 

@@ -1,0 +1,43 @@
+import os
+
+Import('*')
+
+if env['platform'] in ['windows']:
+     
+    env = env.Clone()
+     
+    env.Append(CPPPATH = [
+    	'#src/mesa',
+    	'.',
+    ])
+     
+    env.Append(CPPDEFINES = [
+        '_GDI32_', # prevent wgl* being declared __declspec(dllimport)
+        'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers 
+        '__GL_EXPORTS',
+        '_GNU_H_WINDOWS32_DEFINES',
+    ])
+     
+    sources = [
+        'stw.c',
+
+        'icd/stw_icd.c',
+
+        'wgl/stw_wgl.c',
+
+        'shared/stw_context.c',
+        'shared/stw_device.c',
+        'shared/stw_framebuffer.c',
+        'shared/stw_pixelformat.c',
+        'shared/stw_quirks.c',
+        'shared/stw_arbextensionsstring.c',
+        'shared/stw_getprocaddress.c',
+        'shared/stw_arbpixelformat.c',
+    ]
+
+    wgl = env.ConvenienceLibrary(
+        target ='wgl',
+        source = sources,
+    )
+    
+    Export('wgl')

@@ -22,7 +22,7 @@
  * OF THIS SOFTWARE.
  */
 
-#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -170,6 +170,8 @@ int main(int argc, char **argv)
     if (glutCreateWindow("First Tri") == GL_FALSE) {
 	exit(1);
     }
+
+    glewInit();
 
     Init();
 

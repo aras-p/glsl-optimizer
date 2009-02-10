@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 
@@ -152,13 +153,15 @@ int main(int argc, char **argv)
 
     glutInitWindowPosition(0, 0); glutInitWindowSize( 250, 250);
 
-    type = GLUT_RGB;
+    type = GLUT_RGB | GLUT_ALPHA;
     type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
     glutInitDisplayMode(type);
 
     if (glutCreateWindow("First Tri") == GL_FALSE) {
 	exit(1);
     }
+
+    glewInit();
 
     Init();
 

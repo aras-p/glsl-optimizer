@@ -526,9 +526,7 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->GetVertexAttribdvARB = __indirect_glGetVertexAttribdvARB;
     glAPI->GetVertexAttribfvARB = __indirect_glGetVertexAttribfvARB;
     glAPI->GetVertexAttribivARB = __indirect_glGetVertexAttribivARB;
-    glAPI->ProgramEnvParameter4dARB = __indirect_glProgramEnvParameter4dARB;
     glAPI->ProgramEnvParameter4dvARB = __indirect_glProgramEnvParameter4dvARB;
-    glAPI->ProgramEnvParameter4fARB = __indirect_glProgramEnvParameter4fARB;
     glAPI->ProgramEnvParameter4fvARB = __indirect_glProgramEnvParameter4fvARB;
     glAPI->ProgramLocalParameter4dARB = __indirect_glProgramLocalParameter4dARB;
     glAPI->ProgramLocalParameter4dvARB = __indirect_glProgramLocalParameter4dvARB;

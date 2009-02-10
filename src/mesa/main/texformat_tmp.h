@@ -3,6 +3,7 @@
  * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (c) 2008 VMware, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1222,11 +1223,11 @@ static void store_texel_srgb8(struct gl_texture_image *texImage,
 static void FETCH(srgba8)(const struct gl_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
-   const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 4);
-   texel[RCOMP] = nonlinear_to_linear(src[0]);
-   texel[GCOMP] = nonlinear_to_linear(src[1]);
-   texel[BCOMP] = nonlinear_to_linear(src[2]);
-   texel[ACOMP] = UBYTE_TO_FLOAT(src[3]); /* linear! */
+   const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   texel[RCOMP] = nonlinear_to_linear( (s >> 24) );
+   texel[GCOMP] = nonlinear_to_linear( (s >> 16) & 0xff );
+   texel[BCOMP] = nonlinear_to_linear( (s >>  8) & 0xff );
+   texel[ACOMP] = UBYTE_TO_FLOAT( (s      ) & 0xff ); /* linear! */
 }
 
 #if DIM == 3
@@ -1234,10 +1235,29 @@ static void store_texel_srgba8(struct gl_texture_image *texImage,
                                GLint i, GLint j, GLint k, const void *texel)
 {
    const GLubyte *rgba = (const GLubyte *) texel;
-   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 4);
-   dst[0] = rgba[RCOMP];
-   dst[1] = rgba[GCOMP];
-   dst[2] = rgba[BCOMP];
+   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   *dst = PACK_COLOR_8888(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], rgba[ACOMP]);
+}
+#endif
+
+/* Fetch texel from 1D, 2D or 3D sargb8 texture, return 4 GLfloats */
+static void FETCH(sargb8)(const struct gl_texture_image *texImage,
+                          GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   texel[RCOMP] = nonlinear_to_linear( (s >> 16) & 0xff );
+   texel[GCOMP] = nonlinear_to_linear( (s >>  8) & 0xff );
+   texel[BCOMP] = nonlinear_to_linear( (s      ) & 0xff );
+   texel[ACOMP] = UBYTE_TO_FLOAT( (s >> 24) ); /* linear! */
+}
+
+#if DIM == 3
+static void store_texel_sargb8(struct gl_texture_image *texImage,
+                               GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLubyte *rgba = (const GLubyte *) texel;
+   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   *dst = PACK_COLOR_8888(rgba[ACOMP], rgba[RCOMP], rgba[GCOMP], rgba[BCOMP]);
 }
 #endif
 

@@ -32,10 +32,6 @@
 
 #include <GL/glut.h>
 
-#if defined(MESA) && defined(_WIN32) && !defined(__CYGWIN32__)
-#include <gl/mesa_wgl.h>
-#endif
-
 #ifndef _WIN32
 /* added by BrianP: */
 #ifndef APIENTRY
@@ -47,24 +43,6 @@
 
 /* GLUT_BUILDING_LIB is used by <GL/glut.h> to 1) not #pragma link
    with the GLUT library, and 2) avoid the Win32 atexit hack. */
-
-/* This must be done after <GL/gl.h> is included.  MESA is defined
-   if the <GL/gl.h> is supplied by Brian Paul's Mesa library. */
-#if defined(MESA) && defined(_WIN32)
-/* Mesa implements "wgl" versions of GDI entry points needed for
-   using OpenGL.  Map these "wgl" versions to the GDI names via
-   macros. */
-#define ChoosePixelFormat   wglChoosePixelFormat
-#define DescribePixelFormat wglDescribePixelFormat
-#define GetPixelFormat      wglGetPixelFormat
-#define SetPixelFormat      wglSetPixelFormat
-#define SwapBuffers         wglSwapBuffers
-#define GetCurrentContext   wglGetCurrentContext
-#define GetCurrentDC        wglGetCurrentDC
-#define MakeCurrent         wglMakeCurrent
-#define CreateContext       wglCreateContext
-#define DeleteContext       wglDeleteContext
-#endif /* MESA */
 
 #ifdef SUPPORT_FORTRAN
 #include <GL/glutf90.h>
@@ -572,27 +550,27 @@ typedef struct {
 #ifdef _WIN32
 #define MAKE_CURRENT_LAYER(window)                                    \
   {                                                                   \
-    HGLRC currentContext = GetCurrentContext();                       \
-    HDC currentDc = GetCurrentDC();                                   \
+    HGLRC currentContext = wglGetCurrentContext();                    \
+    HDC currentDc = wglGetCurrentDC();                                \
                                                                       \
     if (currentContext != window->renderCtx                           \
       || currentDc != window->renderDc) {                             \
-      MakeCurrent(window->renderDc, window->renderCtx);               \
+      wglMakeCurrent(window->renderDc, window->renderCtx);            \
     }                                                                 \
   }
 #define MAKE_CURRENT_WINDOW(window)                                   \
   {                                                                   \
-    HGLRC currentContext = GetCurrentContext();                       \
-    HDC currentDc = GetCurrentDC();                                   \
+    HGLRC currentContext = wglGetCurrentContext();                    \
+    HDC currentDc = wglGetCurrentDC();                                \
                                                                       \
     if (currentContext != window->ctx || currentDc != window->hdc) {  \
-      MakeCurrent(window->hdc, window->ctx);                          \
+      wglMakeCurrent(window->hdc, window->ctx);                       \
     }                                                                 \
   }
 #define MAKE_CURRENT_OVERLAY(overlay) \
-  MakeCurrent(overlay->hdc, overlay->ctx)
+  wglMakeCurrent(overlay->hdc, overlay->ctx)
 #define UNMAKE_CURRENT() \
-  MakeCurrent(NULL, NULL)
+  wglMakeCurrent(NULL, NULL)
 #define SWAP_BUFFERS_WINDOW(window) \
   SwapBuffers(window->hdc)
 #define SWAP_BUFFERS_LAYER(window) \

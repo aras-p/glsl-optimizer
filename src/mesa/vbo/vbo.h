@@ -117,4 +117,22 @@ void vbo_rebase_prims( GLcontext *ctx,
 void vbo_use_buffer_objects(GLcontext *ctx);
 
 
+void vbo_set_draw_func(GLcontext *ctx, vbo_draw_func func);
+
+
+void GLAPIENTRY
+_vbo_Color4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
+
+void GLAPIENTRY
+_vbo_Normal3f(GLfloat x, GLfloat y, GLfloat z);
+
+void GLAPIENTRY
+_vbo_MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
+
+void GLAPIENTRY
+_vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params);
+
+void GLAPIENTRY
+_vbo_VertexAttrib4f(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+
 #endif

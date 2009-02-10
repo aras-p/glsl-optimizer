@@ -605,6 +605,8 @@ extern void __glXSendLargeCommand(__GLXcontext *, const GLvoid *, GLint,
 extern __GLXdisplayPrivate * __glXGetPrivateFromDisplay(Display *dpy);
 extern __GLXdisplayPrivate *__glXInitialize(Display*);
 
+extern void __glXPreferEGL(int state);
+
 /************************************************************************/
 
 extern int __glXDebug;

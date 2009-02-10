@@ -73,6 +73,32 @@ Rand(int max)
 }
 
 
+static void
+BlitOne(void)
+{
+   int x, y;
+
+   do {
+      x = Rand(WinWidth);
+      y = Rand(WinHeight);
+   } while (x <= ImgWidth && y <= ImgHeight);
+
+#ifdef GL_EXT_framebuffer_blit
+   if (UseBlit)
+   {
+      glBlitFramebufferEXT_func(0, 0, ImgWidth, ImgHeight,
+                                x, y, x + ImgWidth, y + ImgHeight,
+                                GL_COLOR_BUFFER_BIT, GL_LINEAR);
+   }
+   else
+#endif
+   {
+      glWindowPos2iARB(x, y);
+      glCopyPixels(0, 0, ImgWidth, ImgHeight, GL_COLOR);
+   }
+}
+
+
 /**
  * Measure glCopyPixels rate
  */
@@ -96,30 +122,14 @@ RunTest(void)
    bpp = (r + g + b + a) / 8;
 
    do {
-      int x, y;
-      x = Rand(WinWidth);
-      y = Rand(WinHeight);
+      BlitOne();
 
-      if (x > ImgWidth || y > ImgHeight) {
-#ifdef GL_EXT_framebuffer_blit
-         if (UseBlit)
-         {
-            glBlitFramebufferEXT_func(0, 0, ImgWidth, ImgHeight,
-                                      x, y, x + ImgWidth, y + ImgHeight,
-                                      GL_COLOR_BUFFER_BIT, GL_LINEAR);
-         }
-         else
-#endif
-         {
-            glWindowPos2iARB(x, y);
-            glCopyPixels(0, 0, ImgWidth, ImgHeight, GL_COLOR);
-         }
-         glFinish(); /* XXX OK? */
+      if (Buffer == GL_FRONT)
+         glFinish(); /* XXX to view progress */
 
-         iters++;
+      iters++;
 
-         t1 = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-      }
+      t1 = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
    } while (t1 - t0 < 5.0);
 
    glDisable(GL_ALPHA_TEST);
@@ -151,8 +161,10 @@ Draw(void)
    else
       glutSwapBuffers();
 
+#if 1
    printf("exiting\n");
    exit(0);
+#endif
 }
 
 
@@ -175,9 +187,12 @@ Key(unsigned char key, int x, int y)
    (void) x;
    (void) y;
    switch (key) {
-      case 27:
-         exit(0);
-         break;
+   case 'b':
+      BlitOne();
+      break;
+   case 27:
+      exit(0);
+      break;
    }
    glutPostRedisplay();
 }

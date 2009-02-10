@@ -1,0 +1,4 @@
+!!ARBfp1.0
+TEMP R0, R1;
+LRP result.color, fragment.color.z, {1,0,0,1}, {0,1,0,1};
+END

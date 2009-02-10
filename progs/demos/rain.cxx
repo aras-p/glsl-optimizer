@@ -24,8 +24,6 @@ extern "C" {
 #ifdef _WIN32
 #include <windows.h>
 #include <mmsystem.h>
-#include "particles.cxx"
-#include "readtex.c"
 #endif
 
 #ifdef XMESA

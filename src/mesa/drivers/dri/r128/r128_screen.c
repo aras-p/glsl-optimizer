@@ -422,7 +422,7 @@ r128FillInModes( __DRIscreenPrivate *psp,
 
     uint8_t depth_bits_array[2];
     uint8_t stencil_bits_array[2];
-
+    uint8_t msaa_samples_array[1];
 
     depth_bits_array[0] = depth_bits;
     depth_bits_array[1] = depth_bits;
@@ -433,6 +433,8 @@ r128FillInModes( __DRIscreenPrivate *psp,
      */
     stencil_bits_array[0] = 0;
     stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
+
+    msaa_samples_array[0] = 0;
 
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
@@ -446,26 +448,27 @@ r128FillInModes( __DRIscreenPrivate *psp,
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-   configs = driCreateConfigs(fb_format, fb_type,
-			      depth_bits_array, stencil_bits_array,
-			      depth_buffer_factor, back_buffer_modes,
-			      back_buffer_factor);
-   if (configs == NULL) {
-    fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
-              __LINE__);
-      return NULL;
-   }
+    configs = driCreateConfigs(fb_format, fb_type,
+                               depth_bits_array, stencil_bits_array,
+                               depth_buffer_factor, back_buffer_modes,
+                               back_buffer_factor,
+                               msaa_samples_array, 1);
+    if (configs == NULL) {
+        fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
+                __LINE__);
+        return NULL;
+    }
 
-   /* Mark the visual as slow if there are "fake" stencil bits.
-    */
-   for (i = 0; configs[i]; i++) {
-      m = &configs[i]->modes;
-      if ((m->stencilBits != 0) && (m->stencilBits != stencil_bits)) {
-         m->visualRating = GLX_SLOW_CONFIG;
-      }
-   }
+    /* Mark the visual as slow if there are "fake" stencil bits.
+     */
+    for (i = 0; configs[i]; i++) {
+        m = &configs[i]->modes;
+        if ((m->stencilBits != 0) && (m->stencilBits != stencil_bits)) {
+            m->visualRating = GLX_SLOW_CONFIG;
+        }
+    }
 
-   return (const __DRIconfig **) configs;
+    return (const __DRIconfig **) configs;
 }
 
 

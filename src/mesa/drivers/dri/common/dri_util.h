@@ -1,25 +1,3 @@
-/* $XFree86: xc/lib/GL/dri/dri_util.h,v 1.1 2002/02/22 21:32:52 dawes Exp $ */
-/**
- * \file dri_util.h
- * DRI utility functions definitions.
- *
- * This module acts as glue between GLX and the actual hardware driver.  A DRI
- * driver doesn't really \e have to use any of this - it's optional.  But, some
- * useful stuff is done here that otherwise would have to be duplicated in most
- * drivers.
- * 
- * Basically, these utility functions take care of some of the dirty details of
- * screen initialization, context creation, context binding, DRM setup, etc.
- *
- * These functions are compiled into each DRI driver so libGL.so knows nothing
- * about them.
- *
- * \sa dri_util.c.
- * 
- * \author Kevin E. Martin <kevin@precisioninsight.com>
- * \author Brian Paul <brian@precisioninsight.com>
- */
-
 /*
  * Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -45,6 +23,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * \file dri_util.h
+ * DRI utility functions definitions.
+ *
+ * This module acts as glue between GLX and the actual hardware driver.  A DRI
+ * driver doesn't really \e have to use any of this - it's optional.  But, some
+ * useful stuff is done here that otherwise would have to be duplicated in most
+ * drivers.
+ * 
+ * Basically, these utility functions take care of some of the dirty details of
+ * screen initialization, context creation, context binding, DRM setup, etc.
+ *
+ * These functions are compiled into each DRI driver so libGL.so knows nothing
+ * about them.
+ *
+ * \sa dri_util.c.
+ * 
+ * \author Kevin E. Martin <kevin@precisioninsight.com>
+ * \author Brian Paul <brian@precisioninsight.com>
+ */
 
 #ifndef _DRI_UTIL_H_
 #define _DRI_UTIL_H_

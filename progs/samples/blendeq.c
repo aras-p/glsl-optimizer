@@ -11,10 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef _WIN32
-#include <windows.h>
-#endif
-#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 GLenum doubleBuffer;
@@ -273,6 +270,8 @@ int main(int argc, char **argv)
     if (glutCreateWindow("Blend Equation") == GL_FALSE) {
 	exit(1);
     }
+
+    glewInit();
 
     /* Make sure blend_logic_op extension is there. */
     s = (char *) glGetString(GL_EXTENSIONS);

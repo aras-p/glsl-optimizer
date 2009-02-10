@@ -26,8 +26,8 @@ ifeq ($(CPU), x86)
 		-DUSE_3DNOW_ASM \
 		-DUSE_SSE_ASM
 	
-	ASM_SOURCES = $(X86_SOURCES)
-	ASM_API = $(X86_API)
+	MESA_ASM_SOURCES = $(X86_SOURCES)
+	GLAPI_ASM_SOURCES = $(X86_API)
 
 	CC = gcc
 	CXX = g++
@@ -90,7 +90,7 @@ else
 endif
 
 # Directories
-SRC_DIRS = mesa glu glut/beos
+SRC_DIRS = gallium mesa glu glut/beos glew
 GLU_DIRS = sgi
 DRIVER_DIRS = beos
 PROGRAM_DIRS = beos samples redbook demos tests

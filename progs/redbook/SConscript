@@ -1,0 +1,91 @@
+Import('*')
+
+if not env['GLUT']:
+    Return()
+
+env = env.Clone()
+
+env.Prepend(CPPPATH = [
+	'../util',
+])
+
+env.Prepend(LIBS = [
+	util,
+	'$GLUT_LIB'
+])
+
+if env['platform'] == 'windows':
+    env.Append(CPPDEFINES = ['NOMINMAX'])
+    env.Prepend(LIBS = ['winmm'])
+
+progs = [
+    'aaindex',
+    'aapoly',
+    'aargb',
+    'accanti',
+    'accpersp',
+    'alpha3D',
+    'alpha',
+    'anti',
+    'bezcurve',
+    'bezmesh',
+    'checker',
+    'clip',
+    'colormat',
+    'cube',
+    'depthcue',
+    'dof',
+    'double',
+    'drawf',
+    'feedback',
+    'fog',
+    'fogindex',
+    'font',
+    'hello',
+    'image',
+    'light',
+    'lines',
+    'list',
+    'material',
+    'mipmap',
+    'model',
+    'movelight',
+    'nurbs',
+    'pickdepth',
+    'picksquare',
+    'plane',
+    'planet',
+    'polyoff',
+    'polys',
+    'quadric',
+    'robot',
+    'sccolorlight',
+    'scenebamb',
+    'scene',
+    'sceneflat',
+    'select',
+    'smooth',
+    'stencil',
+    'stroke',
+    'surface',
+    'teaambient',
+    'teapots',
+    'tess',
+    'tesswind',
+    'texbind',
+    'texgen',
+    'texprox',
+    'texsub',
+    'texturesurf',
+    'torus',
+    'trim',
+    'unproject',
+    'varray',
+    'wrap',
+]
+
+for prog in progs:
+    env.Program(
+        target = prog,
+        source = prog + '.c',
+    )

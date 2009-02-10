@@ -7,7 +7,7 @@
    and is provided without guarantee or warrantee expressed or 
    implied. This program is -not- in the public domain. */
 
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 #pragma warning (disable:4244)  /* disable bogus conversion warnings */
 #pragma warning (disable:4305)  /* VC++ 5.0 version of above warning. */
 #endif
