@@ -1261,39 +1261,3 @@ _mesa_get_fixed_func_fragment_program(GLcontext *ctx)
 
    return prog;
 }
-
-
-
-/**
- * If _MaintainTexEnvProgram is set we'll generate a fragment program that
- * implements the current texture env/combine mode.
- * This function generates that program and puts it into effect.
- */
-void
-_mesa_UpdateTexEnvProgram( GLcontext *ctx )
-{
-   const struct gl_fragment_program *prev = ctx->FragmentProgram._Current;
-	
-   ASSERT(ctx->FragmentProgram._MaintainTexEnvProgram);
-
-   /* If a conventional fragment program/shader isn't in effect... */
-   if (!ctx->FragmentProgram._Enabled &&
-       (!ctx->Shader.CurrentProgram ||
-        !ctx->Shader.CurrentProgram->FragmentProgram) ) 
-   {
-      struct gl_fragment_program *newProg;
-
-      newProg = _mesa_get_fixed_func_fragment_program(ctx);
-
-      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, newProg);
-      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram, newProg);
-   } 
-
-   /* Tell the driver about the change.  Could define a new target for
-    * this?
-    */
-   if (ctx->FragmentProgram._Current != prev && ctx->Driver.BindProgram) {
-      ctx->Driver.BindProgram(ctx, GL_FRAGMENT_PROGRAM_ARB,
-                         (struct gl_program *) ctx->FragmentProgram._Current);
-   }
-}
