@@ -107,7 +107,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	const unsigned sub_w = w > max_w ? max_w : w;
 	const unsigned sub_h = h > max_h ? max_h : h;
 	unsigned cx, cy, level_w, level_h;
-	int i, src_offset = src->offset, dst_offset = dst->offset;
+	int i, dst_offset = dst->offset;
 
 	/* POT or GTFO */
 	assert(!(w & (w - 1)) && !(h & (h - 1)));
@@ -131,7 +131,6 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	level_w = w;
 	level_h = h;
 	for (i=0; i<src->level; i++) {
-		src_offset += level_w * level_h * src->block.size;
 		dst_offset += level_w * level_h * dst->block.size;
 		level_w >>= 1;
 		level_h >>= 1;
@@ -161,7 +160,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	    OUT_RING  (chan, src->stride |
 			     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
 			     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
-	    OUT_RELOCl(chan, src_bo, src_offset + cy * src->stride +
+	    OUT_RELOCl(chan, src_bo, src->offset + cy * src->stride +
 			     cx * src->block.size, NOUVEAU_BO_GART |
 			     NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	    OUT_RING  (chan, 0);
