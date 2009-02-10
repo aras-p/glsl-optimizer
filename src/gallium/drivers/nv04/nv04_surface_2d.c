@@ -105,8 +105,8 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	const unsigned max_h = 1024;
 	const unsigned sub_w = w > max_w ? max_w : w;
 	const unsigned sub_h = h > max_h ? max_h : h;
-	unsigned cx = 0;
-	unsigned cy = 0;
+	unsigned cx;
+	unsigned cy;
 
 	/* POT or GTFO */
 	assert(!(w & (w - 1)) && !(h & (h - 1)));
