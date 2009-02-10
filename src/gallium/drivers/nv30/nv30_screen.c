@@ -206,6 +206,8 @@ nv30_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
 		nvscreen->eng2d->copy(nvscreen->eng2d, surface, 0, 0,
 		                      surface_to_unmap, 0, 0,
 		                      surface->width, surface->height);
+
+		screen->tex_surface_release(screen, &surface_to_unmap);
 	}
 }
 
