@@ -160,7 +160,7 @@ translate_immediate(Storage *storage,
 {
    float vec[4];
    int i;
-   for (i = 0; i < imm->Immediate.Size - 1; ++i) {
+   for (i = 0; i < imm->Immediate.NrTokens - 1; ++i) {
       switch (imm->Immediate.DataType) {
       case TGSI_IMM_FLOAT32:
          vec[i] = imm->u.ImmediateFloat32[i].Float;
@@ -179,7 +179,7 @@ translate_immediateir(StorageSoa *storage,
 {
    float vec[4];
    int i;
-   for (i = 0; i < imm->Immediate.Size - 1; ++i) {
+   for (i = 0; i < imm->Immediate.NrTokens - 1; ++i) {
       switch (imm->Immediate.DataType) {
       case TGSI_IMM_FLOAT32:
          vec[i] = imm->u.ImmediateFloat32[i].Float;
