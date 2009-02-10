@@ -10,7 +10,12 @@ nv40_miptree_layout(struct nv40_miptree *mt)
 	struct pipe_texture *pt = &mt->base;
 	uint width = pt->width[0], height = pt->height[0], depth = pt->depth[0];
 	uint offset = 0;
-	int nr_faces, l, f, pitch;
+	int nr_faces, l, f;
+	uint wide_pitch = pt->tex_usage & (PIPE_TEXTURE_USAGE_SAMPLER |
+		                           PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
+		                           PIPE_TEXTURE_USAGE_RENDER_TARGET |
+		                           PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+		                           PIPE_TEXTURE_USAGE_PRIMARY);
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
 		nr_faces = 6;
@@ -21,7 +26,6 @@ nv40_miptree_layout(struct nv40_miptree *mt)
 		nr_faces = 1;
 	}
 
-	pitch = pt->width[0];
 	for (l = 0; l <= pt->last_level; l++) {
 		pt->width[l] = width;
 		pt->height[l] = height;
@@ -29,11 +33,11 @@ nv40_miptree_layout(struct nv40_miptree *mt)
 		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
 		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
 
-		if (!(pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR))
-			pitch = pt->nblocksx[l];
-		pitch = align(pitch, 64);
+		if (wide_pitch && (pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR))
+			mt->level[l].pitch = align(pt->width[0] * pt->block.size, 64);
+		else
+			mt->level[l].pitch = pt->width[l] * pt->block.size;
 
-		mt->level[l].pitch = pitch * pt->block.size;
 		mt->level[l].image_offset =
 			CALLOC(nr_faces, sizeof(unsigned));
 
@@ -43,10 +47,17 @@ nv40_miptree_layout(struct nv40_miptree *mt)
 	}
 
 	for (f = 0; f < nr_faces; f++) {
-		for (l = 0; l <= pt->last_level; l++) {
+		for (l = 0; l < pt->last_level; l++) {
 			mt->level[l].image_offset[f] = offset;
-			offset += mt->level[l].pitch * pt->height[l];
+
+			if (!(pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR))
+				offset += align(mt->level[l].pitch * pt->height[l], 64);
+			else
+				offset += mt->level[l].pitch * pt->height[l];
 		}
+
+		mt->level[l].image_offset[f] = offset;
+		offset += mt->level[l].pitch * pt->height[l];
 	}
 
 	mt->total_size = offset;
@@ -75,7 +86,8 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 	else
 	if (pt->tex_usage & (PIPE_TEXTURE_USAGE_PRIMARY |
-	                     PIPE_TEXTURE_USAGE_DISPLAY_TARGET))
+	                     PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+	                     PIPE_TEXTURE_USAGE_DEPTH_STENCIL))
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 	else
 	if (pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC)
@@ -86,7 +98,11 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_X8R8G8B8_UNORM:
 		case PIPE_FORMAT_R16_SNORM:
+		{
+			if (debug_get_bool_option("NOUVEAU_NO_SWIZZLE", FALSE))
+				mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 			break;
+		}
 		default:
 			mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 		}
@@ -149,8 +165,8 @@ nv40_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **ppt)
 	}
 
 	if (mt->shadow_tex) {
-		assert(mt->shadow_surface);
-		pscreen->tex_surface_release(pscreen, &mt->shadow_surface);
+		if (mt->shadow_surface)
+			pscreen->tex_surface_release(pscreen, &mt->shadow_surface);
 		nv40_miptree_release(pscreen, &mt->shadow_tex);
 	}
 

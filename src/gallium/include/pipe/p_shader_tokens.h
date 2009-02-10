@@ -64,7 +64,7 @@ struct tgsi_processor
 struct tgsi_token
 {
    unsigned Type       : 4;  /**< TGSI_TOKEN_TYPE_x */
-   unsigned Size       : 8;  /**< UINT */
+   unsigned NrTokens   : 8;  /**< UINT */
    unsigned Padding    : 19;
    unsigned Extended   : 1;  /**< BOOL */
 };
@@ -107,7 +107,7 @@ enum tgsi_file_type {
 struct tgsi_declaration
 {
    unsigned Type        : 4;  /**< TGSI_TOKEN_TYPE_DECLARATION */
-   unsigned Size        : 8;  /**< UINT */
+   unsigned NrTokens    : 8;  /**< UINT */
    unsigned File        : 4;  /**< one of TGSI_FILE_x */
    unsigned UsageMask   : 4;  /**< bitmask of TGSI_WRITEMASK_x flags */
    unsigned Interpolate : 4;  /**< one of TGSI_INTERPOLATE_x */
@@ -145,7 +145,7 @@ struct tgsi_declaration_semantic
 struct tgsi_immediate
 {
    unsigned Type       : 4;  /**< TGSI_TOKEN_TYPE_IMMEDIATE */
-   unsigned Size       : 8;  /**< UINT */
+   unsigned NrTokens   : 8;  /**< UINT */
    unsigned DataType   : 4;  /**< one of TGSI_IMM_x */
    unsigned Padding    : 15;
    unsigned Extended   : 1;  /**< BOOL */
@@ -442,7 +442,7 @@ struct tgsi_immediate_float32
 struct tgsi_instruction
 {
    unsigned Type       : 4;  /* TGSI_TOKEN_TYPE_INSTRUCTION */
-   unsigned Size       : 8;  /* UINT */
+   unsigned NrTokens   : 8;  /* UINT */
    unsigned Opcode     : 8;  /* TGSI_OPCODE_ */
    unsigned Saturate   : 2;  /* TGSI_SAT_ */
    unsigned NumDstRegs : 2;  /* UINT */
@@ -458,7 +458,7 @@ struct tgsi_instruction
  * 
  * Then, tgsi_instruction::NumSrcRegs of tgsi_src_register follow.
  *
- * tgsi_instruction::Size contains the total number of words that make the
+ * tgsi_instruction::NrTokens contains the total number of words that make the
  * instruction, including the instruction word.
  */
 

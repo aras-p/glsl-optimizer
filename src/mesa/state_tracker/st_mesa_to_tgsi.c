@@ -188,7 +188,7 @@ make_immediate(const float *value, uint size)
    struct tgsi_full_immediate imm;
 
    imm = tgsi_default_full_immediate();
-   imm.Immediate.Size += size;
+   imm.Immediate.NrTokens += size;
    imm.Immediate.DataType = TGSI_IMM_FLOAT32;
    imm.u.Pointer = value;
    return imm;

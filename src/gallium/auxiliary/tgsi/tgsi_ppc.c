@@ -1327,7 +1327,7 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          /* splat each immediate component into a float[4] vector for SoA */
          {
-            const uint size = parse.FullToken.FullImmediate.Immediate.Size - 1;
+            const uint size = parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
             uint i;
             assert(size <= 4);
             assert(num_immediates < TGSI_EXEC_NUM_IMMEDIATES);

@@ -613,7 +613,7 @@ nv20_vertprog_translate(struct nv20_context *nv20,
 
 			imm = &parse.FullToken.FullImmediate;
 			assert(imm->Immediate.DataType == TGSI_IMM_FLOAT32);
-//			assert(imm->Immediate.Size == 4);
+			assert(imm->Immediate.NrTokens == 4 + 1);
 			vpc->imm[vpc->nr_imm++] =
 				constant(vpc, -1,
 					 imm->u.ImmediateFloat32[0].Float,
