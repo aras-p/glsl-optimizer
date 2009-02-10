@@ -202,7 +202,7 @@ tgsi_exec_machine_bind_shader(
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          {
-            uint size = parse.FullToken.FullImmediate.Immediate.Size - 1;
+            uint size = parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
             assert( size % 4 == 0 );
             assert( mach->ImmLimit + size / 4 <= TGSI_EXEC_NUM_IMMEDIATES );
 

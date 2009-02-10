@@ -239,7 +239,7 @@ cell_emit_state(struct cell_context *cell)
 
    if (cell->dirty & (CELL_NEW_FS_CONSTANTS)) {
       const uint shader = PIPE_SHADER_FRAGMENT;
-      const uint num_const = cell->constants[shader].size / sizeof(float);
+      const uint num_const = cell->constants[shader].buffer->size / sizeof(float);
       uint i, j;
       float *buf = cell_batch_alloc16(cell, ROUNDUP16(32 + num_const * sizeof(float)));
       uint32_t *ibuf = (uint32_t *) buf;

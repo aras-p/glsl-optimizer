@@ -283,7 +283,7 @@ dump_immediate_verbose(
       UIX( imm->Immediate.Padding );
    }
 
-   for( i = 0; i < imm->Immediate.Size - 1; i++ ) {
+   for( i = 0; i < imm->Immediate.NrTokens - 1; i++ ) {
       EOL();
       switch( imm->Immediate.DataType ) {
       case TGSI_IMM_FLOAT32:
@@ -675,7 +675,7 @@ tgsi_dump_c(
       ENM( parse.FullToken.Token.Type, TGSI_TOKEN_TYPES );
       if( ignored ) {
          TXT( "\nSize       : " );
-         UID( parse.FullToken.Token.Size );
+         UID( parse.FullToken.Token.NrTokens );
          if( deflt || parse.FullToken.Token.Extended ) {
             TXT( "\nExtended   : " );
             UID( parse.FullToken.Token.Extended );

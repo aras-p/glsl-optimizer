@@ -124,6 +124,7 @@ nv40_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 	mt->base = *pt;
 	mt->base.refcount = 1;
 	mt->base.screen = pscreen;
+	mt->level[0].pitch = stride[0];
 	mt->level[0].image_offset = CALLOC(1, sizeof(unsigned));
 
 	pipe_buffer_reference(pscreen, &mt->buffer, pb);

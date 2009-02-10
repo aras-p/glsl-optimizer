@@ -68,6 +68,7 @@ nv20_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 	mt->base = *pt;
 	mt->base.refcount = 1;
 	mt->base.screen = pscreen;
+	mt->level[0].pitch = stride[0];
 	mt->level[0].image_offset = CALLOC(1, sizeof(unsigned));
 
 	pipe_buffer_reference(pscreen, &mt->buffer, pb);
@@ -79,6 +80,8 @@ nv20_miptree_create(struct pipe_screen *screen, const struct pipe_texture *pt)
 {
 	struct pipe_winsys *ws = screen->winsys;
 	struct nv20_miptree *mt;
+	unsigned buf_usage = PIPE_BUFFER_USAGE_PIXEL |
+	                     NOUVEAU_BUFFER_USAGE_TEXTURE;
 
 	mt = MALLOC(sizeof(struct nv20_miptree));
 	if (!mt)
@@ -87,10 +90,35 @@ nv20_miptree_create(struct pipe_screen *screen, const struct pipe_texture *pt)
 	mt->base.refcount = 1;
 	mt->base.screen = screen;
 
+	/* Swizzled textures must be POT */
+	if (pt->width[0] & (pt->width[0] - 1) ||
+	    pt->height[0] & (pt->height[0] - 1))
+		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
+	else
+	if (pt->tex_usage & (PIPE_TEXTURE_USAGE_PRIMARY |
+	                     PIPE_TEXTURE_USAGE_DISPLAY_TARGET))
+		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
+	else
+	if (pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC)
+		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
+	else {
+		switch (pt->format) {
+		/* TODO: Figure out which formats can be swizzled */
+		case PIPE_FORMAT_A8R8G8B8_UNORM:
+		case PIPE_FORMAT_X8R8G8B8_UNORM:
+		case PIPE_FORMAT_R16_SNORM:
+			break;
+		default:
+			mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
+		}
+	}
+
+	if (pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC)
+		buf_usage |= PIPE_BUFFER_USAGE_CPU_READ_WRITE;
+
 	nv20_miptree_layout(mt);
 
-	mt->buffer = ws->buffer_create(ws, 256, PIPE_BUFFER_USAGE_PIXEL,
-					   mt->total_size);
+	mt->buffer = ws->buffer_create(ws, 256, buf_usage, mt->total_size);
 	if (!mt->buffer) {
 		FREE(mt);
 		return NULL;

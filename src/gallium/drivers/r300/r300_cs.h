@@ -1,0 +1,129 @@
+/*
+ * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * on the rights to use, copy, modify, merge, publish, distribute, sub
+ * license, and/or sell copies of the Software, and to permit persons to whom
+ * the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHOR(S) AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+ * USE OR OTHER DEALINGS IN THE SOFTWARE. */
+
+#ifndef R300_CS_H
+#define R300_CS_H
+
+#include "r300_reg.h"
+#include "r300_winsys.h"
+
+/* Pack a 32-bit float into a dword. */
+static uint32_t pack_float_32(float f)
+{
+    union {
+        float f;
+        uint32_t u;
+    } u;
+
+    u.f = f;
+    return u.u;
+}
+
+/* Yes, I know macros are ugly. However, they are much prettier than the code
+ * that they neatly hide away, and don't have the cost of function setup,so
+ * we're going to use them. */
+
+#define MAX_CS_SIZE 64 * 1024 / 4
+
+/* XXX stolen from radeon_drm.h */
+#define RADEON_GEM_DOMAIN_CPU  0x1
+#define RADEON_GEM_DOMAIN_GTT  0x2
+#define RADEON_GEM_DOMAIN_VRAM 0x4
+
+/* XXX stolen from radeon_reg.h */
+#define RADEON_CP_PACKET0 0x0
+
+#define CP_PACKET0(register, count) \
+    (RADEON_CP_PACKET0 | ((count) << 16) | ((register) >> 2))
+
+#define CP_PACKET3(op, count) \
+    (RADEON_CP_PACKET3 | (op) | ((count) << 16))
+
+#define CS_LOCALS(context) \
+    struct r300_winsys* cs_winsys = context->winsys; \
+    struct radeon_cs* cs = cs_winsys->cs; \
+    int cs_count = 0;
+
+#define CHECK_CS(size) \
+    cs_winsys->check_cs(cs, (size))
+
+#define BEGIN_CS(size) do { \
+    CHECK_CS(size); \
+    debug_printf("r300: BEGIN_CS, count %d, in %s (%s:%d)\n", \
+        size, __FUNCTION__, __FILE__, __LINE__); \
+    cs_winsys->begin_cs(cs, (size), __FILE__, __FUNCTION__, __LINE__); \
+    cs_count = size; \
+} while (0)
+
+#define OUT_CS(value) do { \
+    cs_winsys->write_cs_dword(cs, (value)); \
+    cs_count--; \
+} while (0)
+
+#define OUT_CS_32F(value) do { \
+    cs_winsys->write_cs_dword(cs, pack_float_32(value)); \
+    cs_count--; \
+} while (0)
+
+#define OUT_CS_REG(register, value) do { \
+    debug_printf("r300: writing 0x%08X to register 0x%04X\n", \
+        value, register); \
+    assert(register); \
+    OUT_CS(CP_PACKET0(register, 0)); \
+    OUT_CS(value); \
+} while (0)
+
+/* Note: This expects count to be the number of registers,
+ * not the actual packet0 count! */
+#define OUT_CS_REG_SEQ(register, count) do { \
+    debug_printf("r300: writing register sequence of %d to 0x%04X\n", \
+        count, register); \
+    assert(register); \
+    OUT_CS(CP_PACKET0(register, ((count) - 1))); \
+} while (0)
+
+#define OUT_CS_RELOC(bo, offset, rd, wd, flags) do { \
+    debug_printf("r300: writing relocation for buffer %p, offset %d\n", \
+        bo, offset); \
+    assert(bo); \
+    OUT_CS(offset); \
+    cs_winsys->write_cs_reloc(cs, bo, rd, wd, flags); \
+    cs_count -= 2; \
+} while (0)
+
+#define END_CS do { \
+    debug_printf("r300: END_CS in %s (%s:%d)\n", __FUNCTION__, __FILE__, \
+        __LINE__); \
+    if (cs_count != 0) \
+        debug_printf("r300: Warning: cs_count off by %d\n", cs_count); \
+    cs_winsys->end_cs(cs, __FILE__, __FUNCTION__, __LINE__); \
+} while (0)
+
+#define FLUSH_CS do { \
+    debug_printf("r300: FLUSH_CS in %s (%s:%d)\n", __FUNCTION__, __FILE__, \
+        __LINE__); \
+    cs_winsys->flush_cs(cs); \
+} while (0)
+
+#include "r300_cs_inlines.h"
+
+#endif /* R300_CS_H */

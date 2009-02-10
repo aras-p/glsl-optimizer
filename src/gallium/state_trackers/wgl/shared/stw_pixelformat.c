@@ -256,6 +256,14 @@ stw_pixelformat_set(
       return FALSE;
 
    currentpixelformat = iPixelFormat;
+   
+   /* Some applications mistakenly use the undocumented wglSetPixelFormat 
+    * function instead of SetPixelFormat, so we call SetPixelFormat here to 
+    * avoid opengl32.dll's wglCreateContext to fail */
+   if (GetPixelFormat(hdc) == 0) {
+        SetPixelFormat(hdc, iPixelFormat, NULL);
+   }
+   
    return TRUE;
 }
 

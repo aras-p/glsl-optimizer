@@ -86,7 +86,7 @@ static int vlInitCommon(struct vlContext *context)
 	}
 	dsa.alpha.enabled = 0;
 	dsa.alpha.func = PIPE_FUNC_ALWAYS;
-	dsa.alpha.ref = 0;
+	dsa.alpha.ref_value = 0;
 	context->dsa = pipe->create_depth_stencil_alpha_state(pipe, &dsa);
 	pipe->bind_depth_stencil_alpha_state(pipe, context->dsa);
 

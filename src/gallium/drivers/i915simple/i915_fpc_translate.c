@@ -964,7 +964,7 @@ i915_translate_instructions(struct i915_fp_compile *p,
                = &parse.FullToken.FullImmediate;
             const uint pos = p->num_immediates++;
             uint j;
-            for (j = 0; j < imm->Immediate.Size; j++) {
+            for (j = 0; j < imm->Immediate.NrTokens - 1; j++) {
                p->immediates[pos][j] = imm->u.ImmediateFloat32[j].Float;
             }
          }

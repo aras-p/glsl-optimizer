@@ -167,6 +167,11 @@ extern void nv50_init_query_functions(struct nv50_context *nv50);
 
 extern void nv50_screen_init_miptree_functions(struct pipe_screen *pscreen);
 
+extern int
+nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
+		     int dx, int dy, struct pipe_surface *src, int sx, int sy,
+		     int w, int h);
+
 /* nv50_draw.c */
 extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *nv50);
 

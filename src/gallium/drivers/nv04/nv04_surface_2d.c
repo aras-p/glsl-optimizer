@@ -1,6 +1,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_format.h"
 #include "util/u_memory.h"
+#include "util/u_math.h"
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_util.h"
@@ -103,10 +104,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	struct nouveau_bo *dst_bo = ctx->nvws->get_bo(ctx->buf(dst));
 	const unsigned max_w = 1024;
 	const unsigned max_h = 1024;
-	const unsigned sub_w = w > max_w ? max_w : w;
-	const unsigned sub_h = h > max_h ? max_h : h;
-	unsigned cx = 0;
-	unsigned cy = 0;
+	int i, src_offset = src->offset, dst_offset = dst->offset, src_stride = src->stride;
 
 	/* POT or GTFO */
 	assert(!(w & (w - 1)) && !(h & (h - 1)));
@@ -114,10 +112,6 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_DMA_IMAGE, 1);
 	OUT_RELOCo(chan, dst_bo,
 	                 NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_FORMAT, 1);
-	OUT_RING  (chan, nv04_surface_format(dst->format) |
-	                 log2i(w) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_U_SHIFT |
-	                 log2i(h) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_V_SHIFT);
 
 	BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_DMA_IMAGE, 1);
 	OUT_RELOCo(chan, src_bo,
@@ -125,34 +119,56 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_SURFACE, 1);
 	OUT_RING  (chan, swzsurf->handle);
 
-	for (cy = 0; cy < h; cy += sub_h) {
-	  for (cx = 0; cx < w; cx += sub_w) {
-	    BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
-	    OUT_RELOCl(chan, dst_bo, dst->offset + nv04_swizzle_bits(cx, cy) *
-			     dst->block.size, NOUVEAU_BO_GART |
-			     NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	/* Upload, then swizzle each mipmap level in turn */
+	for (i=0; i<src->texture->last_level; i++) {
+		unsigned sub_w, sub_h;
+		unsigned cx, cy;
 
-	    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 9);
-	    OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION_TRUNCATE);
-	    OUT_RING  (chan, nv04_scaled_image_format(src->format));
-	    OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_OPERATION_SRCCOPY);
-	    OUT_RING  (chan, 0);
-	    OUT_RING  (chan, sub_h << 16 | sub_w);
-	    OUT_RING  (chan, 0);
-	    OUT_RING  (chan, sub_h << 16 | sub_w);
-	    OUT_RING  (chan, 1 << 20);
-	    OUT_RING  (chan, 1 << 20);
+		BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_FORMAT, 1);
+		OUT_RING  (chan, nv04_surface_format(dst->format) |
+				 log2i(w) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_U_SHIFT |
+				 log2i(h) << NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_V_SHIFT);
 
-	    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_SIZE, 4);
-	    OUT_RING  (chan, sub_h << 16 | sub_w);
-	    OUT_RING  (chan, src->stride |
-	                     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
-	                     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
-	    OUT_RELOCl(chan, src_bo, src->offset + cy * src->stride +
-			     cx * src->block.size, NOUVEAU_BO_GART |
-			     NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-	    OUT_RING  (chan, 0);
-	  }
+		sub_w = w > max_w ? max_w : w;
+		sub_h = h > max_h ? max_h : h;
+
+		for (cy = 0; cy < h; cy += sub_h) {
+		  for (cx = 0; cx < w; cx += sub_w) {
+
+		    BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
+		    OUT_RELOCl(chan, dst_bo, dst_offset + nv04_swizzle_bits(cx, cy) *
+				     dst->block.size, NOUVEAU_BO_GART |
+				     NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+
+		    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 9);
+		    OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION_TRUNCATE);
+		    OUT_RING  (chan, nv04_scaled_image_format(src->format));
+		    OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_OPERATION_SRCCOPY);
+		    OUT_RING  (chan, 0);
+		    OUT_RING  (chan, sub_h << 16 | sub_w);
+		    OUT_RING  (chan, 0);
+		    OUT_RING  (chan, sub_h << 16 | sub_w);
+		    OUT_RING  (chan, 1 << 20);
+		    OUT_RING  (chan, 1 << 20);
+
+		    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_SIZE, 4);
+		    OUT_RING  (chan, sub_h << 16 | sub_w);
+		    OUT_RING  (chan, src_stride |
+		                     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
+		                     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
+		    OUT_RELOCl(chan, src_bo, src_offset + cy * src_stride +
+				     cx * src->block.size, NOUVEAU_BO_GART |
+				     NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+		    OUT_RING  (chan, 0);
+		  }
+		}
+
+		/* FIXME: need to find next offset for source */
+		/*src_offset += w * h * src->block.size;*/
+		dst_offset += w * h * dst->block.size;
+		src_stride >>= 1;
+		w >>= 1;
+		h >>= 1;
 	}
 
 	return 0;
@@ -277,7 +293,7 @@ nv04_surface_fill(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	cs2d_format = nv04_surface_format(dst->format);
 	assert(cs2d_format >= 0);
 
-	gdirect_format = nv04_surface_format(dst->format);
+	gdirect_format = nv04_rect_format(dst->format);
 	assert(gdirect_format >= 0);
 
 	WAIT_RING (chan, 16);
@@ -391,7 +407,7 @@ nv04_surface_2d_init(struct nouveau_winsys *nvws)
 	BEGIN_RING(chan, ctx->rect, NV04_GDI_RECTANGLE_TEXT_DMA_NOTIFY, 1);
 	OUT_RING  (chan, ctx->ntfy->handle);
 	BEGIN_RING(chan, ctx->rect, NV04_GDI_RECTANGLE_TEXT_SURFACE, 1);
-	OUT_RING  (chan, ctx->ntfy->handle);
+	OUT_RING  (chan, ctx->surf2d->handle);
 	BEGIN_RING(chan, ctx->rect, NV04_GDI_RECTANGLE_TEXT_OPERATION, 1);
 	OUT_RING  (chan, NV04_GDI_RECTANGLE_TEXT_OPERATION_SRCCOPY);
 	BEGIN_RING(chan, ctx->rect,

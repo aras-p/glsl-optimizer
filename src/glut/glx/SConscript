@@ -10,7 +10,6 @@ target = 'glut32'
 env.Replace(CPPDEFINES = [
     'BUILD_GLUT32', 
     'GLUT_BUILDING_LIB', 
-    'MESA', 
     'NDEBUG',
     'GLUT_NO_WARNING_DISABLE',
 ])

@@ -285,7 +285,7 @@ iter_immediate(
    ENM( imm->Immediate.DataType, immediate_type_names );
 
    TXT( " { " );
-   for (i = 0; i < imm->Immediate.Size - 1; i++) {
+   for (i = 0; i < imm->Immediate.NrTokens - 1; i++) {
       switch (imm->Immediate.DataType) {
       case TGSI_IMM_FLOAT32:
          FLT( imm->u.ImmediateFloat32[i].Float );
@@ -294,7 +294,7 @@ iter_immediate(
          assert( 0 );
       }
 
-      if (i < imm->Immediate.Size - 2)
+      if (i < imm->Immediate.NrTokens - 2)
          TXT( ", " );
    }
    TXT( " }" );

@@ -544,7 +544,7 @@ static int vlCreateDataBufs
 	 * to display a rendered surface
 	 * Quad is rendered as a tri strip
 	 */
-	csc->vertex_bufs[0].pitch = sizeof(struct vlVertex2f);
+	csc->vertex_bufs[0].stride = sizeof(struct vlVertex2f);
 	csc->vertex_bufs[0].max_index = 3;
 	csc->vertex_bufs[0].buffer_offset = 0;
 	csc->vertex_bufs[0].buffer = pipe_buffer_create
@@ -573,7 +573,7 @@ static int vlCreateDataBufs
 	 * Create our texcoord buffer and texcoord buffer element
 	 * Texcoord buffer contains the TCs for mapping the rendered surface to the 4 vertices
 	 */
-	csc->vertex_bufs[1].pitch = sizeof(struct vlVertex2f);
+	csc->vertex_bufs[1].stride = sizeof(struct vlVertex2f);
 	csc->vertex_bufs[1].max_index = 3;
 	csc->vertex_bufs[1].buffer_offset = 0;
 	csc->vertex_bufs[1].buffer = pipe_buffer_create
@@ -602,26 +602,24 @@ static int vlCreateDataBufs
 	 * Create our vertex shader's constant buffer
 	 * Const buffer contains scaling and translation vectors
 	 */
-	csc->vs_const_buf.size = sizeof(struct vlVertexShaderConsts);
 	csc->vs_const_buf.buffer = pipe_buffer_create
 	(
 		pipe->screen,
 		1,
 		PIPE_BUFFER_USAGE_CONSTANT | PIPE_BUFFER_USAGE_DISCARD,
-		csc->vs_const_buf.size
+		sizeof(struct vlVertexShaderConsts)
 	);
 
 	/*
 	 * Create our fragment shader's constant buffer
 	 * Const buffer contains the color conversion matrix and bias vectors
 	 */
-	csc->fs_const_buf.size = sizeof(struct vlFragmentShaderConsts);
 	csc->fs_const_buf.buffer = pipe_buffer_create
 	(
 		pipe->screen,
 		1,
 		PIPE_BUFFER_USAGE_CONSTANT,
-		csc->fs_const_buf.size
+		sizeof(struct vlFragmentShaderConsts)
 	);
 
 	/*

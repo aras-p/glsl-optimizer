@@ -101,6 +101,9 @@ lookup_context( struct stw_icd *icd,
        dhglrc >= DRV_CONTEXT_MAX)
       return NULL;
 
+   if (icd == NULL)
+      return NULL;
+
    return icd->ctx_array[dhglrc - 1].ctx;
 }
 
@@ -221,7 +224,7 @@ DrvDescribePixelFormat(
 
    r = stw_pixelformat_describe( hdc, iPixelFormat, cjpfd, ppfd );
 
-   debug_printf( "%s( 0x%p, %d, %u, 0x%p ) = %d\n",
+   debug_printf( "%s( %p, %d, %u, %p ) = %d\n",
                  __FUNCTION__, hdc, iPixelFormat, cjpfd, ppfd, r );
 
    return r;
@@ -248,7 +251,7 @@ DrvGetProcAddress(
 
    r = stw_get_proc_address( lpszProc );
 
-   debug_printf( "%s( \", __FUNCTION__%s\" ) = 0x%p\n", lpszProc, r );
+   debug_printf( "%s( \", __FUNCTION__%s\" ) = %p\n", lpszProc, r );
 
    return r;
 }
@@ -298,7 +301,7 @@ DrvSetCallbackProcs(
    INT nProcs,
    PROC *pProcs )
 {
-   debug_printf( "%s( %d, 0x%p )\n", __FUNCTION__, nProcs, pProcs );
+   debug_printf( "%s( %d, %p )\n", __FUNCTION__, nProcs, pProcs );
 
    return;
 }
@@ -709,7 +712,7 @@ DrvSetPixelFormat(
 
    r = stw_pixelformat_set( hdc, iPixelFormat );
 
-   debug_printf( "%s( 0x%p, %d ) = %s\n", __FUNCTION__, hdc, iPixelFormat, r ? "TRUE" : "FALSE" );
+   debug_printf( "%s( %p, %d ) = %s\n", __FUNCTION__, hdc, iPixelFormat, r ? "TRUE" : "FALSE" );
 
    return r;
 }
@@ -728,7 +731,7 @@ BOOL APIENTRY
 DrvSwapBuffers(
    HDC hdc )
 {
-   debug_printf( "%s( 0x%p )\n", __FUNCTION__, hdc );
+   debug_printf( "%s( %p )\n", __FUNCTION__, hdc );
 
    return stw_swap_buffers( hdc );
 }
@@ -749,5 +752,7 @@ DrvValidateVersion(
 {
    debug_printf( "%s( %u )\n", __FUNCTION__, ulVersion );
 
+   /* TODO: get the expected version from the winsys */
+   
    return ulVersion == 1;
 }
