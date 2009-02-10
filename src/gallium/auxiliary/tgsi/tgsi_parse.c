@@ -155,8 +155,8 @@ tgsi_parse_token(
       switch (imm->Immediate.DataType) {
       case TGSI_IMM_FLOAT32:
          imm->u.Pointer = MALLOC(
-            sizeof( struct tgsi_immediate_float32 ) * (imm->Immediate.Size - 1) );
-         for( i = 0; i < imm->Immediate.Size - 1; i++ ) {
+            sizeof( struct tgsi_immediate_float32 ) * (imm->Immediate.NrTokens - 1) );
+         for( i = 0; i < imm->Immediate.NrTokens - 1; i++ ) {
             next_token( ctx, (struct tgsi_immediate_float32 *) &imm->u.ImmediateFloat32[i] );
          }
          break;
