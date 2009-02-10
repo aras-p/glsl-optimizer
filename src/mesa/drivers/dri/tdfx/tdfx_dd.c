@@ -110,13 +110,13 @@ static const GLubyte *tdfxDDGetString( GLcontext *ctx, GLenum name )
 
 
 static void
-tdfxBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+tdfxBeginQuery(GLcontext *ctx, struct gl_query_object *q)
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
    (void) q;
 
-   if (target == GL_SAMPLES_PASSED_ARB) {
+   if (q->Target == GL_SAMPLES_PASSED_ARB) {
       LOCK_HARDWARE(fxMesa);
       fxMesa->Glide.grFinish();
       fxMesa->Glide.grReset(GR_STATS_PIXELS);
@@ -126,14 +126,14 @@ tdfxBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 
 
 static void
-tdfxEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+tdfxEndQuery(GLcontext *ctx, struct gl_query_object *q)
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    FxI32 total_pixels;
    FxI32 z_fail_pixels;
 
 
-   if (target == GL_SAMPLES_PASSED_ARB) {
+   if (q->Target == GL_SAMPLES_PASSED_ARB) {
       LOCK_HARDWARE(fxMesa);
       fxMesa->Glide.grFinish();
 
