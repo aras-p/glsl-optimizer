@@ -106,7 +106,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	const unsigned max_h = 1024;
 	const unsigned sub_w = w > max_w ? max_w : w;
 	const unsigned sub_h = h > max_h ? max_h : h;
-	unsigned cx, cy;
+	unsigned cx, cy, level_w, level_h;
 	int i, src_offset = src->offset, dst_offset = dst->offset;
 
 	/* POT or GTFO */
@@ -128,9 +128,13 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	OUT_RING  (chan, swzsurf->handle);
 
 	/* FIXME: Find right src and dst offset, given mipmap level */
+	level_w = w;
+	level_h = h;
 	for (i=0; i<src->level; i++) {
-		src_offset += w * h * src->block.size;
-		dst_offset += w * h * dst->block.size;
+		src_offset += level_w * level_h * src->block.size;
+		dst_offset += level_w * level_h * dst->block.size;
+		level_w >>= 1;
+		level_h >>= 1;
 	}
 
 	for (cy = 0; cy < h; cy += sub_h) {
