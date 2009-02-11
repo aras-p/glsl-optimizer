@@ -9,7 +9,7 @@ pipe_linear_to_tile(size_t src_stride, void *src_ptr,
    int x, y, z;
    char *ptr;
    size_t bytes = t->cols * t->block.size;
-
+   char *dst_ptr2 = (char *) dst_ptr;
 
    assert(pipe_linear_check_tile(t));
 
@@ -19,8 +19,8 @@ pipe_linear_to_tile(size_t src_stride, void *src_ptr,
 	 /* this inner loop could be replace with SSE magic */
 	 ptr = (char*)src_ptr + src_stride * t->rows * y + bytes * x;
 	 for (z = 0; z < t->rows; z++) {
-	    memcpy(dst_ptr, ptr, bytes);
-	    dst_ptr += bytes;
+	    memcpy(dst_ptr2, ptr, bytes);
+	    dst_ptr2 += bytes;
 	    ptr += src_stride;
 	 }
       }
@@ -33,6 +33,7 @@ void pipe_linear_from_tile(struct pipe_tile_info *t, void  *src_ptr,
    int x, y, z;
    char *ptr;
    size_t bytes = t->cols * t->block.size;
+   const char *src_ptr2 = (const char *) src_ptr;
 
    /* lets read lineary from the tiled buffer */
    for (y = 0; y < t->tiles_y; y++) {
@@ -40,8 +41,8 @@ void pipe_linear_from_tile(struct pipe_tile_info *t, void  *src_ptr,
 	 /* this inner loop could be replace with SSE magic */
 	 ptr = (char*)dst_ptr + dst_stride * t->rows * y + bytes * x;
 	 for (z = 0; z < t->rows; z++) {
-	    memcpy(ptr, src_ptr, bytes);
-	    src_ptr += bytes;
+	    memcpy(ptr, src_ptr2, bytes);
+	    src_ptr2 += bytes;
 	    ptr += dst_stride;
 	 }
       }
