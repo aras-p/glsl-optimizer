@@ -50,7 +50,8 @@ nv40_miptree_layout(struct nv40_miptree *mt)
 		for (l = 0; l < pt->last_level; l++) {
 			mt->level[l].image_offset[f] = offset;
 
-			if (!(pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR))
+			if (!(pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR) &&
+			    pt->width[l + 1] > 1 && pt->height[l + 1] > 1)
 				offset += align(mt->level[l].pitch * pt->height[l], 64);
 			else
 				offset += mt->level[l].pitch * pt->height[l];
