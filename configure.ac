@@ -412,22 +412,28 @@ esac
 dnl
 dnl Driver specific build directories
 dnl
-SRC_DIRS="mesa gallium egl gallium/winsys"
+SRC_DIRS="mesa egl"
 GLU_DIRS="sgi"
 WINDOW_SYSTEM=""
+GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_WINSYS_DIRS=""
+GALLIUM_WINSYS_DRM_DIRS=""
 GALLIUM_AUXILIARY_DIRS="draw translate cso_cache pipebuffer tgsi sct rtasm util"
-GALLIUM_DRIVER_DIRS="softpipe failover"
+GALLIUM_DRIVER_DIRS="softpipe failover trace"
+GALLIUM_STATE_TRACKERS_DIRS=""
+
 case "$mesa_driver" in
 xlib)
     DRIVER_DIRS="x11"
     ;;
 dri)
     SRC_DIRS="glx/x11 $SRC_DIRS"
-    DRIVER_DIRS=""
+    DRIVER_DIRS="dri"
     WINDOW_SYSTEM="dri"
     GALLIUM_WINSYS_DIRS="drm $GALLIUM_WINSYS_DIRS"
+    GALLIUM_WINSYS_DRM_DIRS="intel"
     GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS i915simple i965simple"
+    GALLIUM_STATE_TRACKERS_DIRS="egl"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
@@ -437,9 +443,12 @@ AC_SUBST([SRC_DIRS])
 AC_SUBST([GLU_DIRS])
 AC_SUBST([DRIVER_DIRS])
 AC_SUBST([WINDOW_SYSTEM])
+AC_SUBST([GALLIUM_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DIRS])
+AC_SUBST([GALLIUM_WINSYS_DRM_DIRS])
 AC_SUBST([GALLIUM_DRIVER_DIRS])
 AC_SUBST([GALLIUM_AUXILIARY_DIRS])
+AC_SUBST([GALLIUM_STATE_TRACKERS_DIRS])
 
 dnl
 dnl User supplied program configuration
@@ -1060,6 +1069,17 @@ fi
 AC_SUBST([APP_LIB_DEPS])
 AC_SUBST([PROGRAM_DIRS])
 
+dnl
+dnl Gallium configuration
+dnl
+AC_ARG_ENABLE([gallium],
+    [AS_HELP_STRING([--disable-gallium],
+        [build gallium @<:@default=enabled@:>@])],
+    [enable_gallium="$enableval"],
+    [enable_gallium=yes])
+if test "x$enable_gallium" = xyes; then
+    SRC_DIRS="$SRC_DIRS gallium gallium/winsys"
+fi
 
 dnl Restore LDFLAGS and CPPFLAGS
 LDFLAGS="$_SAVE_LDFLAGS"
@@ -1106,6 +1126,19 @@ fi
     echo "        DRI driver dir:  $DRI_DRIVER_INSTALL_DIR"
 fi
 echo "        Use XCB:         $enable_xcb"
+
+echo ""
+if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
+    echo "        Gallium:         yes"
+    echo "        Gallium dirs:    $GALLIUM_DIRS"
+    echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
+    echo "        Winsys drm dirs: $GALLIUM_WINSYS_DRM_DIRS"
+    echo "        Auxiliary dirs:  $GALLIUM_AUXILIARY_DIRS"
+    echo "        Driver dirs:     $GALLIUM_DRIVER_DIRS"
+    echo "        Trackers dirs:   $GALLIUM_STATE_TRACKERS_DIRS"
+else
+    echo "        Gallium:         no"
+fi
 
 dnl Libraries
 echo ""
