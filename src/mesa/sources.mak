@@ -88,7 +88,10 @@ MATH_SOURCES = \
 	math/m_eval.c \
 	math/m_matrix.c \
 	math/m_translate.c \
-	math/m_vector.c \
+	math/m_vector.c
+
+MATH_XFORM_SOURCES = \
+	$(MATH_SOURCES) \
 	math/m_xform.c
 
 SWRAST_SOURCES = \
@@ -309,7 +312,7 @@ COMMON_DRIVER_SOURCES =			\
 
 MESA_SOURCES = \
 	$(MAIN_SOURCES)		\
-	$(MATH_SOURCES)		\
+	$(MATH_XFORM_SOURCES)	\
 	$(VBO_SOURCES)		\
 	$(TNL_SOURCES)		\
 	$(SHADER_SOURCES)	\
@@ -330,7 +333,6 @@ MESA_GALLIUM_SOURCES = \
 	$(VBO_SOURCES)		\
 	$(STATETRACKER_SOURCES)	\
 	$(SHADER_SOURCES)	\
-	$(ASM_C_SOURCES)	\
 	$(SLANG_SOURCES)
 
 
