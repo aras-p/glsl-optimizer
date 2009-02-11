@@ -289,8 +289,8 @@ static void
 dump_texture_cb(GLuint id, void *data, void *userData)
 {
    struct gl_texture_object *texObj = (struct gl_texture_object *) data;
-   (void) userData;
    int i;
+   (void) userData;
 
    printf("Texture %u\n", texObj->Name);
    printf("  Target 0x%x\n", texObj->Target);
