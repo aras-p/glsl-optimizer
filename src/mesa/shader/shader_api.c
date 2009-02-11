@@ -1616,19 +1616,31 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
    else {
       /* ordinary uniform variable */
       GLsizei k, i;
-      GLint slots = (param->Size + 3) / 4;
+      const GLint slots = (param->Size + 3) / 4;
+      const GLint typeSize = sizeof_glsl_type(param->DataType);
 
-      if (count * elems > (GLint) param->Size) {
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count too large)");
-         return;
+      if (param->Size > typeSize) {
+         /* an array */
+         /* we'll ignore extra data below */
+      }
+      else {
+         /* non-array: count must be one */
+         if (count != 1) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glUniform(uniform is not an array)");
+            return;
+         }
       }
 
-      if (count > slots)
-         count = slots;
-
       for (k = 0; k < count; k++) {
-         GLfloat *uniformVal =
-            program->Parameters->ParameterValues[index + offset + k];
+         GLfloat *uniformVal;
+
+         if (offset + k > slots) {
+            /* Extra array data is ignored */
+            break;
+         }
+
+         uniformVal = program->Parameters->ParameterValues[index + offset + k];
          if (is_integer_type(type)) {
             const GLint *iValues = ((const GLint *) values) + k * elems;
             for (i = 0; i < elems; i++) {
