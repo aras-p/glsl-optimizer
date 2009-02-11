@@ -1603,27 +1603,36 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
    if (param->Type == PROGRAM_SAMPLER) {
       /* This controls which texture unit which is used by a sampler */
       GLuint texUnit, sampler;
+      GLint i;
 
       /* data type for setting samplers must be int */
-      if (type != GL_INT || count != 1) {
+      if (type != GL_INT) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glUniform(only glUniform1i can be used "
                      "to set sampler uniforms)");
          return;
       }
 
-      sampler = (GLuint) program->Parameters->ParameterValues[index][0];
-      texUnit = ((GLuint *) values)[0];
+      /* XXX arrays of samplers haven't been tested much, but it's not a
+       * common thing...
+       */
+      for (i = 0; i < count; i++) {
+         sampler = (GLuint) program->Parameters->ParameterValues[index + i][0];
+         texUnit = ((GLuint *) values)[i];
 
-      /* check that the sampler (tex unit index) is legal */
-      if (texUnit >= ctx->Const.MaxTextureImageUnits) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glUniform1(invalid sampler/tex unit index)");
-         return;
+         /* check that the sampler (tex unit index) is legal */
+         if (texUnit >= ctx->Const.MaxTextureImageUnits) {
+            _mesa_error(ctx, GL_INVALID_VALUE,
+                        "glUniform1(invalid sampler/tex unit index)");
+            return;
+         }
+
+         /* This maps a sampler to a texture unit: */
+         if (sampler < MAX_SAMPLERS) {
+            program->SamplerUnits[sampler] = texUnit;
+         }
       }
 
-      /* This maps a sampler to a texture unit: */
-      program->SamplerUnits[sampler] = texUnit;
       _mesa_update_shader_textures_used(program);
 
       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
