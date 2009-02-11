@@ -1700,6 +1700,11 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
    if (location == -1)
       return;   /* The standard specifies this as a no-op */
 
+   if (location < -1) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(location)");
+      return;
+   }
+
    split_location_offset(&location, &offset);
 
    if (location < 0 || location >= (GLint) shProg->Uniforms->NumUniforms) {
@@ -1873,6 +1878,11 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
 
    if (location == -1)
       return;   /* The standard specifies this as a no-op */
+
+   if (location < -1) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glUniformMatrix(location)");
+      return;
+   }
 
    split_location_offset(&location, &offset);
 
