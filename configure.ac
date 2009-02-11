@@ -427,7 +427,7 @@ dri)
     DRIVER_DIRS=""
     WINDOW_SYSTEM="dri"
     GALLIUM_WINSYS_DIRS="drm $GALLIUM_WINSYS_DIRS"
-    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS i915simple i965simple nv04 nv10 nv20 nv30 nv40 nv50"
+    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS i915simple i965simple"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
