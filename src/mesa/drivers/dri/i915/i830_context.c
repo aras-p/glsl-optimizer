@@ -73,6 +73,8 @@ i830CreateContext(const __GLcontextModes * mesaVis,
       return GL_FALSE;
    }
 
+   _math_matrix_ctr(&intel->ViewportMatrix);
+
    /* Initialize swrast, tnl driver tables: */
    intelInitSpanFuncs(ctx);
    intelInitTriFuncs(ctx);

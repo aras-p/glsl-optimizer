@@ -573,8 +573,6 @@ intelInitContext(struct intel_context *intel,
 
    intel->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
-   _math_matrix_ctr(&intel->ViewportMatrix);
-
    if (IS_965(intelScreen->deviceID) && !intel->intelScreen->irq_active) {
       _mesa_printf("IRQs not active.  Exiting\n");
       exit(1);

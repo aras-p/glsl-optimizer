@@ -67,6 +67,8 @@ static void brw_destroy_context( struct intel_context *intel )
    brw_destroy_state(brw);
    brw_draw_destroy( brw );
 
+   _mesa_free(brw->wm.compile_data);
+
    brw_FrameBufferTexDestroy( brw );
 
    for (i = 0; i < brw->state.nr_draw_regions; i++)
@@ -90,6 +92,7 @@ static void brw_destroy_context( struct intel_context *intel )
    dri_bo_release(&brw->wm.bind_bo);
    for (i = 0; i < BRW_WM_MAX_SURF; i++)
       dri_bo_release(&brw->wm.surf_bo[i]);
+   dri_bo_release(&brw->wm.sampler_bo);
    dri_bo_release(&brw->wm.prog_bo);
    dri_bo_release(&brw->wm.state_bo);
    dri_bo_release(&brw->cc.prog_bo);
