@@ -2740,6 +2740,27 @@ void r300UpdateClipPlanes( GLcontext *ctx )
 	}
 }
 
+static void r300DrawBuffer( GLcontext *ctx, GLenum mode )
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	if (RADEON_DEBUG & DEBUG_DRI)
+		fprintf(stderr, "%s %s\n", __FUNCTION__,
+			_mesa_lookup_enum_by_nr( mode ));
+
+	R300_FIREVERTICES(rmesa);	/* don't pipeline cliprect changes */
+
+	radeonSetCliprects( &rmesa->radeon );
+	radeonUpdatePageFlipping(&rmesa->radeon);
+}
+
+static void r300ReadBuffer( GLcontext *ctx, GLenum mode )
+{
+	if (RADEON_DEBUG & DEBUG_DRI)
+		fprintf(stderr, "%s %s\n", __FUNCTION__,
+			_mesa_lookup_enum_by_nr( mode ));
+
+};
+
 /**
  * Initialize driver's state callback functions
  */
@@ -2782,4 +2803,7 @@ void r300InitStateFuncs(struct dd_function_table *functions)
 	functions->RenderMode = r300RenderMode;
 
 	functions->ClipPlane = r300ClipPlane;
+
+	functions->DrawBuffer		= r300DrawBuffer;
+	functions->ReadBuffer		= r300ReadBuffer;
 }
