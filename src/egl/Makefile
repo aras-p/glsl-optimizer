@@ -1,6 +1,7 @@
 # src/egl/Makefile
 
 TOP = ../..
+include $(TOP)/configs/current
 
 SUBDIRS = main drivers
 
@@ -15,6 +16,12 @@ subdirs:
 		fi \
 	done
 
+install:
+	@for dir in $(SUBDIRS) ; do \
+		if [ -d $$dir ] ; then \
+			(cd $$dir && $(MAKE) install) || exit 1 ; \
+		fi \
+	done
 
 clean:
 	-@for dir in $(SUBDIRS) ; do \

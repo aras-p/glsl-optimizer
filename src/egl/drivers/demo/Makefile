@@ -25,7 +25,9 @@ $(TOP)/$(LIB_DIR)/demodriver.so: $(OBJECTS)
 		-ldflags '$(LDFLAGS)' -install $(TOP)/$(LIB_DIR) \
 		$(OBJECTS)
 
-
+install:
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) $(TOP)/$(LIB_DIR)/demodriver.so $(DESTDIR)$(INSTALL_LIB_DIR)
 
 clean:
 	-rm -f *.o
