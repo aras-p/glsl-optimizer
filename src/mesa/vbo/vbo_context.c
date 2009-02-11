@@ -28,6 +28,7 @@
 #include "main/imports.h"
 #include "main/mtypes.h"
 #include "main/api_arrayelt.h"
+#include "math/m_eval.h"
 #include "vbo.h"
 #include "vbo_context.h"
 
@@ -229,6 +230,8 @@ GLboolean _vbo_CreateContext( GLcontext *ctx )
 #if FEATURE_dlist
    vbo_save_init( ctx );
 #endif
+
+   _math_init_eval();
 
    return GL_TRUE;
 }

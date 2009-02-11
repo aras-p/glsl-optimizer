@@ -151,10 +151,7 @@
 #include "shader/atifragshader.h"
 #endif
 #if _HAVE_FULL_GL
-#include "math/m_translate.h"
 #include "math/m_matrix.h"
-#include "math/m_xform.h"
-#include "math/mathmod.h"
 #endif
 
 #ifdef USE_SPARC_ASM
@@ -387,13 +384,9 @@ one_time_init( GLcontext *ctx )
 
       _mesa_init_sqrt_table();
 
-#if _HAVE_FULL_GL
-      _math_init();
-
       for (i = 0; i < 256; i++) {
          _mesa_ubyte_to_float_color_tab[i] = (float) i / 255.0F;
       }
-#endif
 
 #ifdef USE_SPARC_ASM
       _mesa_init_sparc_glapi_relocs();

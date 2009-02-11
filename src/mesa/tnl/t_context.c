@@ -32,6 +32,8 @@
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/light.h"
+#include "math/m_translate.h"
+#include "math/m_xform.h"
 
 #include "tnl.h"
 #include "t_context.h"
@@ -80,6 +82,9 @@ _tnl_CreateContext( GLcontext *ctx )
 
    /* plug in the VBO drawing function */
    vbo_set_draw_func(ctx, _tnl_draw_prims);
+
+   _math_init_transformation();
+   _math_init_translate();
 
    return GL_TRUE;
 }
