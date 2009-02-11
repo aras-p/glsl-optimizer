@@ -7,13 +7,13 @@ TOP        = ../../../..
 include ${TOP}/configs/current
 
 CFLAGS += -g -Wall -Werror=implicit-function-declaration -fPIC \
-          $(shell pkg-config --cflags pixman-1 xorg-server) \
           -I${GALLIUMDIR}/include \
           -I${GALLIUMDIR}/auxiliary \
           -I${TOP}/src/mesa/drivers/dri/common \
           -I${TOP}/src/mesa \
           -I$(TOP)/include \
           -I$(TOP)/src/egl/main \
+          $(shell pkg-config --cflags pixman-1 xorg-server) \
           ${LIBDRM_CFLAGS}
 
 #############################################
