@@ -866,6 +866,9 @@ void radeonCleanupContext(radeonContextPtr radeon)
 	FILE *track;
 	struct radeon_renderbuffer *rb;
 	GLframebuffer *fb;
+
+	/* free the Mesa context */
+	_mesa_destroy_context(radeon->glCtx);
 	
 	fb = (void*)radeon->dri.drawable->driverPrivate;
 	rb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
@@ -906,11 +909,12 @@ void radeonCleanupContext(radeonContextPtr radeon)
 	 * radeon->glCtx->DriverCtx = NULL;
 	 */
 
-	/* free the Mesa context */
-	_mesa_destroy_context(radeon->glCtx);
+
 
 	/* free the option cache */
 	driDestroyOptionCache(&radeon->optionCache);
+
+	rcommonDestroyCmdBuf(radeon);
 
 	if (radeon->state.scissor.pClipRects) {
 		FREE(radeon->state.scissor.pClipRects);

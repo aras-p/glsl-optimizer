@@ -97,12 +97,12 @@ static INLINE void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 	struct radeon_state_atom *atom;
 	int dwords;
 
-    cp_wait(r300, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
+	cp_wait(r300, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
 	BEGIN_BATCH_NO_AUTOSTATE(2);
 	OUT_BATCH(cmdpacket0(r300->radeon.radeonScreen, R300_TX_INVALTAGS, 1));
 	OUT_BATCH(R300_TX_FLUSH);
 	END_BATCH();
-    end_3d(r300);
+	end_3d(r300);
 
 	/* Emit actual atoms */
 	foreach(atom, &r300->hw.atomlist) {
@@ -724,6 +724,5 @@ void r300DestroyCmdBuf(r300ContextPtr r300)
 	foreach(atom, &r300->hw.atomlist) {
 		FREE(atom->cmd);
 	}
-	rcommonDestroyCmdBuf(&r300->radeon);
 
 }

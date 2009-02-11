@@ -487,14 +487,16 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 		_swrast_DestroyContext(r300->radeon.glCtx);
 
 		rcommonFlushCmdBuf(&r300->radeon, __FUNCTION__);
-		r300DestroyCmdBuf(r300);
 
 		if (radeon->state.scissor.pClipRects) {
 			FREE(radeon->state.scissor.pClipRects);
 			radeon->state.scissor.pClipRects = NULL;
 		}
 
+		r300DestroyCmdBuf(r300);
+
 		radeonCleanupContext(&r300->radeon);
+
 
 		/* the memory manager might be accessed when Mesa frees the shared
 		 * state, so don't destroy it earlier
