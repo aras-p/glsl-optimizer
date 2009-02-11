@@ -46,17 +46,19 @@ special changes.
 
 <p>
 To compile the code, run <code>make linux-cell</code>.
-To build in debug mode, run <code>make linux-cell-debug</code>.
+Or to build in debug mode, run <code>make linux-cell-debug</code>.
 </p>
 
 <p>
-To use the library, make sure <code>LD_LIBRARY_PATH</code> points the Mesa/lib/
-directory that contains <code>libGL.so</code>.
-</p>
+To use the library, make sure your current directory is the top of the
+Mesa tree, then set <code>LD_LIBRARY_PATH</code> like this:
+<pre>
+  export LD_LIBRARY_PATH=$PWD/lib/gallium:$PWD/lib/
+</pre>
 
 <p>
-Verify that the Cell driver is being used by running <code>glxinfo</code>
-and looking for:
+Verify that the Cell driver is being used by running
+<code>progs/xdemos/glxinfo</code> and looking for:
 <pre>
   OpenGL renderer string: Gallium 0.2, Cell on Xlib
 </pre>
