@@ -892,6 +892,7 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
 {
    const struct gl_shader_program *shProg;
    const struct gl_program *prog;
+   const struct gl_program_parameter *param;
    GLint progPos;
 
    shProg = _mesa_lookup_shader_program_err(ctx, program, "glGetActiveUniform");
@@ -917,14 +918,30 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
    if (!prog || progPos < 0)
       return; /* should never happen */
 
-   if (nameOut)
-      copy_string(nameOut, maxLength, length,
-                  prog->Parameters->Parameters[progPos].Name);
-   if (size)
-      *size = prog->Parameters->Parameters[progPos].Size
-         / sizeof_glsl_type(prog->Parameters->Parameters[progPos].DataType);
-   if (type)
-      *type = prog->Parameters->Parameters[progPos].DataType;
+   ASSERT(progPos < prog->Parameters->NumParameters);
+   param = &prog->Parameters->Parameters[progPos];
+
+   if (nameOut) {
+      copy_string(nameOut, maxLength, length, param->Name);
+   }
+
+   if (size) {
+      GLint typeSize = sizeof_glsl_type(param->DataType);
+      if (param->Size > typeSize) {
+         /* This is an array.
+          * Array elements are placed on vector[4] boundaries so they're
+          * a multiple of four floats.  We round typeSize up to next multiple
+          * of four to get the right size below.
+          */
+         typeSize = (typeSize + 3) & ~3;
+      }
+      /* Note that the returned size is in units of the <type>, not bytes */
+      *size = param->Size / typeSize;
+   }
+
+   if (type) {
+      *type = param->DataType;
+   }
 }
 
 
