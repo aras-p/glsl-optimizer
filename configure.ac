@@ -314,7 +314,7 @@ if test "x$enable_asm" = xyes; then
 
     case "$asm_arch" in
     x86)
-        dnl ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
+        ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
         ASM_SOURCES='$(X86_SOURCES)'
         ASM_API='$(X86_API)'
         AC_MSG_RESULT([yes, x86])
