@@ -282,7 +282,7 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 					    RADEON_GEM_DOMAIN_VRAM, 0, 0);
 		            END_BATCH();
 		    } else if (!t) {
-			    assert(0);
+			    //assert(0);
 		    } else {
 			    if (t->bo) {
 		            	    BEGIN_BATCH_NO_AUTOSTATE(4);
