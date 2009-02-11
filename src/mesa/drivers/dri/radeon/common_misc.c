@@ -2446,6 +2446,7 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 	}
 
 	if (rmesa->dma.current) {
+		radeon_bo_unmap(rmesa->dma.current);
 		radeon_bo_unref(rmesa->dma.current);
 		rmesa->dma.current = 0;
 	}
