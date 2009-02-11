@@ -3,6 +3,7 @@
 #define U_LINEAR_H
 
 #include "pipe/p_format.h"
+
 struct pipe_tile_info
 {
    unsigned size;
@@ -23,10 +24,10 @@ struct pipe_tile_info
    struct pipe_format_block block;
 };
 
-void pipe_linear_to_tile(size_t src_stride, void *src_ptr,
+void pipe_linear_to_tile(size_t src_stride, const void *src_ptr,
 			 struct pipe_tile_info *t, void  *dst_ptr);
 
-void pipe_linear_from_tile(struct pipe_tile_info *t, void  *src_ptr,
+void pipe_linear_from_tile(struct pipe_tile_info *t, const void *src_ptr,
 			   size_t dst_stride, void *dst_ptr);
 
 /**
@@ -39,11 +40,11 @@ void pipe_linear_from_tile(struct pipe_tile_info *t, void  *src_ptr,
  * @tiles_y number of tiles in y axis
  */
 void pipe_linear_fill_info(struct pipe_tile_info *t,
-			   struct pipe_format_block *block,
+			   const struct pipe_format_block *block,
 			   unsigned tile_width, unsigned tile_height,
 			   unsigned tiles_x, unsigned tiles_y);
 
-static INLINE boolean pipe_linear_check_tile(struct pipe_tile_info *t)
+static INLINE boolean pipe_linear_check_tile(const struct pipe_tile_info *t)
 {
    if (t->tile.size != t->block.size * t->cols * t->rows)
       return FALSE;

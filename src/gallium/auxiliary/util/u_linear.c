@@ -3,7 +3,7 @@
 #include "u_linear.h"
 
 void
-pipe_linear_to_tile(size_t src_stride, void *src_ptr,
+pipe_linear_to_tile(size_t src_stride, const void *src_ptr,
 		    struct pipe_tile_info *t, void *dst_ptr)
 {
    int x, y, z;
@@ -27,7 +27,7 @@ pipe_linear_to_tile(size_t src_stride, void *src_ptr,
    }
 }
 
-void pipe_linear_from_tile(struct pipe_tile_info *t, void  *src_ptr,
+void pipe_linear_from_tile(struct pipe_tile_info *t, const void *src_ptr,
 			   size_t dst_stride, void *dst_ptr)
 {
    int x, y, z;
@@ -51,7 +51,7 @@ void pipe_linear_from_tile(struct pipe_tile_info *t, void  *src_ptr,
 
 void
 pipe_linear_fill_info(struct pipe_tile_info *t,
-		      struct pipe_format_block *block,
+		      const struct pipe_format_block *block,
 		      unsigned tile_width, unsigned tile_height,
 		      unsigned tiles_x, unsigned tiles_y)
 {
