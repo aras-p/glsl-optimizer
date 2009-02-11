@@ -48,20 +48,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_screen.h"
 #include "radeon_buffer.h"
 #include "common_misc.h"
+#include "radeon_span.h"
 #if !RADEON_COMMON
 #include "radeon_context.h"
-#include "radeon_span.h"
 #include "radeon_tex.h"
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
 #include "r200_context.h"
 #include "r200_ioctl.h"
-#include "r200_span.h"
 #include "r200_tex.h"
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 #include "r300_context.h"
 #include "r300_fragprog.h"
 #include "r300_tex.h"
-#include "radeon_span.h"
 #endif
 
 #include "utils.h"
