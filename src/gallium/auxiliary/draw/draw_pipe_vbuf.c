@@ -394,13 +394,14 @@ vbuf_alloc_vertices( struct vbuf_stage *vbuf )
    /* even number */
    vbuf->max_vertices = vbuf->max_vertices & ~1;
 
+   if(vbuf->max_vertices >= UNDEFINED_VERTEX_ID)
+      vbuf->max_vertices = UNDEFINED_VERTEX_ID - 1;
+
    /* Must always succeed -- driver gives us a
     * 'max_vertex_buffer_bytes' which it guarantees it can allocate,
     * and it will flush itself if necessary to do so.  If this does
     * fail, we are basically without usable hardware.
     */
-   assert(vbuf->max_vertices < UNDEFINED_VERTEX_ID);
-
    vbuf->vertices = (uint *) vbuf->render->allocate_vertices(vbuf->render,
 							     (ushort) vbuf->vertex_size,
 							     (ushort) vbuf->max_vertices);
