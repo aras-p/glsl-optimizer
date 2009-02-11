@@ -218,48 +218,48 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
    switch (mode) {
    case PROG_PRINT_DEBUG:
       if (relAddr)
-         sprintf(str, "%s[ADDR+%d]", file_string(f, mode), index);
+         _mesa_sprintf(str, "%s[ADDR+%d]", file_string(f, mode), index);
       else
-         sprintf(str, "%s[%d]", file_string(f, mode), index);
+         _mesa_sprintf(str, "%s[%d]", file_string(f, mode), index);
       break;
 
    case PROG_PRINT_ARB:
       switch (f) {
       case PROGRAM_INPUT:
-         sprintf(str, "%s", arb_input_attrib_string(index, prog->Target));
+         _mesa_sprintf(str, "%s", arb_input_attrib_string(index, prog->Target));
          break;
       case PROGRAM_OUTPUT:
-         sprintf(str, "%s", arb_output_attrib_string(index, prog->Target));
+         _mesa_sprintf(str, "%s", arb_output_attrib_string(index, prog->Target));
          break;
       case PROGRAM_TEMPORARY:
-         sprintf(str, "temp%d", index);
+         _mesa_sprintf(str, "temp%d", index);
          break;
       case PROGRAM_ENV_PARAM:
-         sprintf(str, "program.env[%d]", index);
+         _mesa_sprintf(str, "program.env[%d]", index);
          break;
       case PROGRAM_LOCAL_PARAM:
-         sprintf(str, "program.local[%d]", index);
+         _mesa_sprintf(str, "program.local[%d]", index);
          break;
       case PROGRAM_VARYING: /* extension */
-         sprintf(str, "varying[%d]", index);
+         _mesa_sprintf(str, "varying[%d]", index);
          break;
       case PROGRAM_CONSTANT: /* extension */
-         sprintf(str, "constant[%d]", index);
+         _mesa_sprintf(str, "constant[%d]", index);
          break;
       case PROGRAM_UNIFORM: /* extension */
-         sprintf(str, "uniform[%d]", index);
+         _mesa_sprintf(str, "uniform[%d]", index);
          break;
       case PROGRAM_STATE_VAR:
          {
             struct gl_program_parameter *param
                = prog->Parameters->Parameters + index;
             char *state = _mesa_program_state_string(param->StateIndexes);
-            sprintf(str, state);
+            _mesa_sprintf(str, state);
             _mesa_free(state);
          }
          break;
       case PROGRAM_ADDRESS:
-         sprintf(str, "A%d", index);
+         _mesa_sprintf(str, "A%d", index);
          break;
       default:
          _mesa_problem(NULL, "bad file in reg_string()");
@@ -270,30 +270,30 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
       switch (f) {
       case PROGRAM_INPUT:
          if (prog->Target == GL_VERTEX_PROGRAM_ARB)
-            sprintf(str, "v[%d]", index);
+            _mesa_sprintf(str, "v[%d]", index);
          else
-            sprintf(str, "f[%d]", index);
+            _mesa_sprintf(str, "f[%d]", index);
          break;
       case PROGRAM_OUTPUT:
-         sprintf(str, "o[%d]", index);
+         _mesa_sprintf(str, "o[%d]", index);
          break;
       case PROGRAM_TEMPORARY:
-         sprintf(str, "R%d", index);
+         _mesa_sprintf(str, "R%d", index);
          break;
       case PROGRAM_ENV_PARAM:
-         sprintf(str, "c[%d]", index);
+         _mesa_sprintf(str, "c[%d]", index);
          break;
       case PROGRAM_VARYING: /* extension */
-         sprintf(str, "varying[%d]", index);
+         _mesa_sprintf(str, "varying[%d]", index);
          break;
       case PROGRAM_UNIFORM: /* extension */
-         sprintf(str, "uniform[%d]", index);
+         _mesa_sprintf(str, "uniform[%d]", index);
          break;
       case PROGRAM_CONSTANT: /* extension */
-         sprintf(str, "constant[%d]", index);
+         _mesa_sprintf(str, "constant[%d]", index);
          break;
       case PROGRAM_STATE_VAR: /* extension */
-         sprintf(str, "state[%d]", index);
+         _mesa_sprintf(str, "state[%d]", index);
          break;
       default:
          _mesa_problem(NULL, "bad file in reg_string()");
@@ -898,7 +898,7 @@ _mesa_write_shader_to_file(const struct gl_shader *shader)
    else
       type = "vert";
 
-   snprintf(filename, strlen(filename), "shader_%u.%s", shader->Name, type);
+   _mesa_snprintf(filename, strlen(filename), "shader_%u.%s", shader->Name, type);
    f = fopen(filename, "w");
    if (!f) {
       fprintf(stderr, "Unable to open %s for writing\n", filename);
