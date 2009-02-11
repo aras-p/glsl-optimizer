@@ -1185,24 +1185,30 @@ get_uniform_rows_cols(const struct gl_program_parameter *p,
 }
 
 
-#define MAX_UNIFORM_ELEMENTS 16
-
 /**
- * Helper for GetUniformfv(), GetUniformiv()
- * Returns number of elements written to 'params' output.
+ * Helper for get_uniform[fi]v() functions.
+ * Given a shader program name and uniform location, return a pointer
+ * to the shader program and return the program parameter position.
  */
-static GLuint
-get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
-              GLfloat *params)
+static void
+lookup_uniform_parameter(GLcontext *ctx, GLuint program, GLint location,
+                         struct gl_program **progOut, GLint *paramPosOut)
 {
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program_err(ctx, program, "glGetUniform[if]v");
-   if (shProg) {
-      if (shProg->Uniforms &&
-          location >= 0 && location < (GLint) shProg->Uniforms->NumUniforms) {
-         GLint progPos;
-         const struct gl_program *prog = NULL;
+   struct gl_program *prog = NULL;
+   GLint progPos = -1;
 
+   /* if shProg is NULL, we'll have already recorded an error */
+
+   if (shProg) {
+      if (!shProg->Uniforms ||
+          location < 0 ||
+          location >= (GLint) shProg->Uniforms->NumUniforms) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,  "glGetUniformfv(location)");
+      }
+      else {
+         /* OK, find the gl_program and program parameter location */
          progPos = shProg->Uniforms->Uniforms[location].VertPos;
          if (progPos >= 0) {
             prog = &shProg->VertexProgram->Base;
@@ -1213,33 +1219,11 @@ get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
                prog = &shProg->FragmentProgram->Base;
             }
          }
-
-         ASSERT(prog);
-         if (prog) {
-            const struct gl_program_parameter *p =
-               &prog->Parameters->Parameters[progPos];
-            GLint rows, cols, i, j, k;
-
-            /* See uniformiv() below */                    
-            assert(p->Size <= MAX_UNIFORM_ELEMENTS);
-
-            get_uniform_rows_cols(p, &rows, &cols);
-
-            k = 0;
-            for (i = 0; i < rows; i++) {
-               for (j = 0; j < cols; j++ ) {
-                  params[k++] = prog->Parameters->ParameterValues[progPos+i][j];
-               }
-            }
-
-            return p->Size;
-         }
-      }
-      else {
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfv(location)");
       }
    }
-   return 0;
+
+   *progOut = prog;
+   *paramPosOut = progPos;
 }
 
 
@@ -1250,23 +1234,54 @@ static void
 _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
                     GLfloat *params)
 {
-   (void) get_uniformfv(ctx, program, location, params);
+   struct gl_program *prog;
+   GLint paramPos;
+
+   lookup_uniform_parameter(ctx, program, location, &prog, &paramPos);
+
+   if (prog) {
+      const struct gl_program_parameter *p =
+         &prog->Parameters->Parameters[paramPos];
+      GLint rows, cols, i, j, k;
+
+      get_uniform_rows_cols(p, &rows, &cols);
+
+      k = 0;
+      for (i = 0; i < rows; i++) {
+         for (j = 0; j < cols; j++ ) {
+            params[k++] = prog->Parameters->ParameterValues[paramPos+i][j];
+         }
+      }
+   }
 }
 
 
 /**
  * Called via ctx->Driver.GetUniformiv().
+ * \sa _mesa_get_uniformfv, only difference is a cast.
  */
 static void
 _mesa_get_uniformiv(GLcontext *ctx, GLuint program, GLint location,
                     GLint *params)
 {
-   GLfloat fparams[MAX_UNIFORM_ELEMENTS];
-   GLuint n = get_uniformfv(ctx, program, location, fparams);
-   GLuint i;
-   assert(n <= MAX_UNIFORM_ELEMENTS);
-   for (i = 0; i < n; i++) {
-      params[i] = (GLint) fparams[i];
+   struct gl_program *prog;
+   GLint paramPos;
+
+   lookup_uniform_parameter(ctx, program, location, &prog, &paramPos);
+
+   if (prog) {
+      const struct gl_program_parameter *p =
+         &prog->Parameters->Parameters[paramPos];
+      GLint rows, cols, i, j, k;
+
+      get_uniform_rows_cols(p, &rows, &cols);
+
+      k = 0;
+      for (i = 0; i < rows; i++) {
+         for (j = 0; j < cols; j++ ) {
+            params[k++] = (GLint) prog->Parameters->ParameterValues[paramPos+i][j];
+         }
+      }
    }
 }
 
