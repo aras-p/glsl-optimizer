@@ -128,7 +128,7 @@ struct drm_screen
 	/*drmModeCrtcPtr crtc;*/
 	uint32_t crtcID;
 
-	struct drm_mode_modeinfo *mode;
+	drmModeModeInfoPtr mode;
 };
 
 

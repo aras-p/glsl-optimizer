@@ -16,11 +16,11 @@
  * Util functions
  */
 
-static struct drm_mode_modeinfo *
+static drmModeModeInfoPtr
 drm_find_mode(drmModeConnectorPtr connector, _EGLMode *mode)
 {
 	int i;
-	struct drm_mode_modeinfo *m = NULL;
+	drmModeModeInfoPtr m = NULL;
 
 	for (i = 0; i < connector->count_modes; i++) {
 		m = &connector->modes[i];
