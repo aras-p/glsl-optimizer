@@ -15,6 +15,14 @@
 
 #ifndef DRM_RADEON_GEM_INFO
 #define DRM_RADEON_GEM_INFO 0x1c
+
+struct drm_radeon_gem_info {
+        uint64_t gart_start;
+        uint64_t gart_size;
+        uint64_t vram_start;
+        uint64_t vram_size;
+        uint64_t vram_visible;
+};
 #endif
 
 #ifndef RADEON_PARAM_DEVICE_ID
