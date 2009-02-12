@@ -55,8 +55,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "drivers/common/driverfuncs.h"
 
-#include "radeon_span.h"
 #include "r300_context.h"
+#include "radeon_context.h"
+#include "radeon_span.h"
 #include "r300_cmdbuf.h"
 #include "r300_state.h"
 #include "r300_ioctl.h"

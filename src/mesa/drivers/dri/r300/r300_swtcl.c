@@ -56,6 +56,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "r300_ioctl.h"
 #include "r300_emit.h"
+#include "r300_tex.h"
 
 void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, struct radeon_bo *bo, GLuint offset);
 void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr);
@@ -628,7 +629,7 @@ void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
   rcommonEnsureCmdBufSpace(&rmesa->radeon,
 			   rmesa->radeon.hw.max_state_size + (12*sizeof(int)),
 			   __FUNCTION__);
-  r300EmitState(rmesa);
+  radeonEmitState(&rmesa->radeon);
   r300EmitVertexAOS(rmesa,
 		    rmesa->radeon.swtcl.vertex_size,
 		    rmesa->radeon.dma.current,
