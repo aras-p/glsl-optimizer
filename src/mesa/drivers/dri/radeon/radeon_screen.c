@@ -1016,10 +1016,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    return screen;
 }
 
-#ifndef RADEON_PARAM_DEVICE_ID
-#define RADEON_PARAM_DEVICE_ID 17
-#endif
-
 static radeonScreenPtr
 radeonCreateScreen2(__DRIscreenPrivate *sPriv)
 {
