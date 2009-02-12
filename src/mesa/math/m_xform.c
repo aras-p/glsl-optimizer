@@ -40,7 +40,6 @@
 #include "m_matrix.h"
 #include "m_translate.h"
 #include "m_xform.h"
-#include "mathmod.h"
 
 
 #ifdef DEBUG_MATH
