@@ -335,10 +335,6 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
          COPY_4V(params, ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index]);
          break;
       case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB:
-         if (!ctx->Extensions.ARB_vertex_buffer_object) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribfvARB(pname)");
-            return;
-         }
          params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].BufferObj->Name;
          break;
       default:
@@ -807,6 +803,7 @@ _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat floatParams[4];
+   ASSIGN_4V(floatParams, 0.0F, 0.0F, 0.0F, 0.0F);
    _mesa_GetProgramLocalParameterfvARB(target, index, floatParams);
    if (ctx->ErrorValue == GL_NO_ERROR) {
       COPY_4V(params, floatParams);

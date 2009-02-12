@@ -179,13 +179,18 @@ driGetRendererString( char * buffer, const char * hardware_name,
 
 
 
+#define need_GL_ARB_draw_buffers
 #define need_GL_ARB_multisample
+#define need_GL_ARB_texture_compression
 #define need_GL_ARB_transpose_matrix
+#define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_window_pos
 #define need_GL_EXT_compiled_vertex_array
+#define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_polygon_offset
 #define need_GL_EXT_texture_object
 #define need_GL_EXT_vertex_array
+#define need_GL_IBM_multimode_draw_arrays
 #define need_GL_MESA_window_pos
 
 /* These are needed in *all* drivers because Mesa internally implements
@@ -198,14 +203,19 @@ driGetRendererString( char * buffer, const char * hardware_name,
 #include "extension_helper.h"
 
 static const struct dri_extension all_mesa_extensions[] = {
+   { "GL_ARB_draw_buffers",          GL_ARB_draw_buffers_functions },
    { "GL_ARB_multisample",           GL_ARB_multisample_functions },
+   { "GL_ARB_texture_compression",   GL_ARB_texture_compression_functions },
    { "GL_ARB_transpose_matrix",      GL_ARB_transpose_matrix_functions },
+   { "GL_ARB_vertex_buffer_object",  GL_ARB_vertex_buffer_object_functions},
    { "GL_ARB_window_pos",            GL_ARB_window_pos_functions },
    { "GL_EXT_blend_func_separate",   GL_EXT_blend_func_separate_functions },
    { "GL_EXT_compiled_vertex_array", GL_EXT_compiled_vertex_array_functions },
+   { "GL_EXT_multi_draw_arrays",     GL_EXT_multi_draw_arrays_functions },
    { "GL_EXT_polygon_offset",        GL_EXT_polygon_offset_functions },
    { "GL_EXT_texture_object",        GL_EXT_texture_object_functions },
    { "GL_EXT_vertex_array",          GL_EXT_vertex_array_functions },
+   { "GL_IBM_multimode_draw_arrays", GL_IBM_multimode_draw_arrays_functions },
    { "GL_MESA_window_pos",           GL_MESA_window_pos_functions },
    { "GL_NV_vertex_program",         GL_NV_vertex_program_functions },
    { NULL,                           NULL }
@@ -310,8 +320,10 @@ void driInitSingleExtension( GLcontext * ctx,
 	     */
 	    offset = _glapi_add_dispatch( functions, parameter_signature );
 	    if (offset == -1) {
+#if 0 /* this causes noise with egl */
 		fprintf(stderr, "DISPATCH ERROR! _glapi_add_dispatch failed "
 			"to add %s!\n", functions[0]);
+#endif
 	    }
 	    else if (ext->functions[i].remap_index != -1) {
 		driDispatchRemapTable[ ext->functions[i].remap_index ] = 
@@ -504,6 +516,9 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
  *                      \c GLX_SWAP_UNDEFINED_OML.  See the
  *                      GLX_OML_swap_method extension spec for more details.
  * \param num_db_modes  Number of entries in \c db_modes.
+ * \param msaa_samples  Array of msaa sample count. 0 represents a visual
+ *                      without a multisample buffer.
+ * \param num_msaa_modes Number of entries in \c msaa_samples.
  * \param visType       GLX visual type.  Usually either \c GLX_TRUE_COLOR or
  *                      \c GLX_DIRECT_COLOR.
  * 
@@ -523,7 +538,8 @@ __DRIconfig **
 driCreateConfigs(GLenum fb_format, GLenum fb_type,
 		 const uint8_t * depth_bits, const uint8_t * stencil_bits,
 		 unsigned num_depth_stencil_bits,
-		 const GLenum * db_modes, unsigned num_db_modes)
+		 const GLenum * db_modes, unsigned num_db_modes,
+	 	 const u_int8_t * msaa_samples, unsigned num_msaa_modes)
 {
    static const uint8_t bits_table[4][4] = {
      /* R  G  B  A */
@@ -583,9 +599,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
    int index;
    __DRIconfig **configs, **c;
    __GLcontextModes *modes;
-   unsigned i;
-   unsigned j;
-   unsigned k;
+   unsigned i, j, k, h;
    unsigned num_modes;
    unsigned num_accum_bits = 2;
 
@@ -658,7 +672,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 	 break;
    }
 
-   num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits;
+   num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits * num_msaa_modes;
    configs = _mesa_calloc((num_modes + 1) * sizeof *configs);
    if (configs == NULL)
        return NULL;
@@ -666,66 +680,72 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
     c = configs;
     for ( k = 0 ; k < num_depth_stencil_bits ; k++ ) {
 	for ( i = 0 ; i < num_db_modes ; i++ ) {
-	    for ( j = 0 ; j < num_accum_bits ; j++ ) {
-		*c = _mesa_malloc (sizeof **c);
-		modes = &(*c)->modes;
-		c++;
+	    for ( h = 0 ; h < num_msaa_modes; h++ ) {
+	    	for ( j = 0 ; j < num_accum_bits ; j++ ) {
+		    *c = _mesa_malloc (sizeof **c);
+		    modes = &(*c)->modes;
+		    c++;
 
-		memset(modes, 0, sizeof *modes);
-		modes->redBits   = bits[0];
-		modes->greenBits = bits[1];
-		modes->blueBits  = bits[2];
-		modes->alphaBits = bits[3];
-		modes->redMask   = masks[0];
-		modes->greenMask = masks[1];
-		modes->blueMask  = masks[2];
-		modes->alphaMask = masks[3];
-		modes->rgbBits   = modes->redBits + modes->greenBits
-		    + modes->blueBits + modes->alphaBits;
+		    memset(modes, 0, sizeof *modes);
+		    modes->redBits   = bits[0];
+		    modes->greenBits = bits[1];
+		    modes->blueBits  = bits[2];
+		    modes->alphaBits = bits[3];
+		    modes->redMask   = masks[0];
+		    modes->greenMask = masks[1];
+		    modes->blueMask  = masks[2];
+		    modes->alphaMask = masks[3];
+		    modes->rgbBits   = modes->redBits + modes->greenBits
+		    	+ modes->blueBits + modes->alphaBits;
 
-		modes->accumRedBits   = 16 * j;
-		modes->accumGreenBits = 16 * j;
-		modes->accumBlueBits  = 16 * j;
-		modes->accumAlphaBits = (masks[3] != 0) ? 16 * j : 0;
-		modes->visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
+		    modes->accumRedBits   = 16 * j;
+		    modes->accumGreenBits = 16 * j;
+		    modes->accumBlueBits  = 16 * j;
+		    modes->accumAlphaBits = (masks[3] != 0) ? 16 * j : 0;
+		    modes->visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
 
-		modes->stencilBits = stencil_bits[k];
-		modes->depthBits = depth_bits[k];
+		    modes->stencilBits = stencil_bits[k];
+		    modes->depthBits = depth_bits[k];
 
-		modes->transparentPixel = GLX_NONE;
-		modes->transparentRed = GLX_DONT_CARE;
-		modes->transparentGreen = GLX_DONT_CARE;
-		modes->transparentBlue = GLX_DONT_CARE;
-		modes->transparentAlpha = GLX_DONT_CARE;
-		modes->transparentIndex = GLX_DONT_CARE;
-		modes->visualType = GLX_DONT_CARE;
-		modes->renderType = GLX_RGBA_BIT;
-		modes->drawableType = GLX_WINDOW_BIT;
-		modes->rgbMode = GL_TRUE;
+		    modes->transparentPixel = GLX_NONE;
+		    modes->transparentRed = GLX_DONT_CARE;
+		    modes->transparentGreen = GLX_DONT_CARE;
+		    modes->transparentBlue = GLX_DONT_CARE;
+		    modes->transparentAlpha = GLX_DONT_CARE;
+		    modes->transparentIndex = GLX_DONT_CARE;
+		    modes->visualType = GLX_DONT_CARE;
+		    modes->renderType = GLX_RGBA_BIT;
+		    modes->drawableType = GLX_WINDOW_BIT;
+		    modes->rgbMode = GL_TRUE;
 
-		if ( db_modes[i] == GLX_NONE ) {
-		    modes->doubleBufferMode = GL_FALSE;
-		}
-		else {
-		    modes->doubleBufferMode = GL_TRUE;
-		    modes->swapMethod = db_modes[i];
-		}
+		    if ( db_modes[i] == GLX_NONE ) {
+		    	modes->doubleBufferMode = GL_FALSE;
+		    }
+		    else {
+		    	modes->doubleBufferMode = GL_TRUE;
+		    	modes->swapMethod = db_modes[i];
+		    }
 
-		modes->haveAccumBuffer = ((modes->accumRedBits +
+		    modes->samples = msaa_samples[h];
+		    modes->sampleBuffers = modes->samples ? 1 : 0;
+
+
+		    modes->haveAccumBuffer = ((modes->accumRedBits +
 					   modes->accumGreenBits +
 					   modes->accumBlueBits +
 					   modes->accumAlphaBits) > 0);
-		modes->haveDepthBuffer = (modes->depthBits > 0);
-		modes->haveStencilBuffer = (modes->stencilBits > 0);
+		    modes->haveDepthBuffer = (modes->depthBits > 0);
+		    modes->haveStencilBuffer = (modes->stencilBits > 0);
 
-		modes->bindToTextureRgb = GL_TRUE;
-		modes->bindToTextureRgba = GL_TRUE;
-		modes->bindToMipmapTexture = GL_FALSE;
-		modes->bindToTextureTargets = modes->rgbMode ?
-		    __DRI_ATTRIB_TEXTURE_1D_BIT |
-		    __DRI_ATTRIB_TEXTURE_2D_BIT |
-		    __DRI_ATTRIB_TEXTURE_RECTANGLE_BIT :
-		    0;
+		    modes->bindToTextureRgb = GL_TRUE;
+		    modes->bindToTextureRgba = GL_TRUE;
+		    modes->bindToMipmapTexture = GL_FALSE;
+		    modes->bindToTextureTargets = modes->rgbMode ?
+		    	__DRI_ATTRIB_TEXTURE_1D_BIT |
+		    	__DRI_ATTRIB_TEXTURE_2D_BIT |
+		    	__DRI_ATTRIB_TEXTURE_RECTANGLE_BIT :
+		    	0;
+		}
 	    }
 	}
     }
@@ -734,9 +754,10 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
     return configs;
 }
 
-const __DRIconfig **driConcatConfigs(__DRIconfig **a, __DRIconfig **b)
+__DRIconfig **driConcatConfigs(__DRIconfig **a,
+			       __DRIconfig **b)
 {
-    const __DRIconfig **all;
+    __DRIconfig **all;
     int i, j, index;
 
     i = 0;

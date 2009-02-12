@@ -50,15 +50,6 @@
  * Mesa's Driver Functions
  ***************************************/
 
-static const struct dri_extension i915_extensions[] = {
-   {"GL_ARB_depth_texture", NULL},
-   {"GL_ARB_fragment_program", NULL},
-   {"GL_ARB_shadow", NULL},
-   {"GL_ARB_texture_non_power_of_two", NULL},
-   {"GL_EXT_shadow_funcs", NULL},
-   {NULL, NULL}
-};
-
 /* Override intel default.
  */
 static void
@@ -170,10 +161,8 @@ i915CreateContext(const __GLcontextModes * mesaVis,
    ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0; /* I don't think we have one */
 
    ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
-   ctx->FragmentProgram._UseTexEnvProgram = GL_TRUE;
 
-   driInitExtensions(ctx, i915_extensions, GL_FALSE);
-
+   ctx->Const.MaxDrawBuffers = 1;
 
    _tnl_init_vertices(ctx, ctx->Const.MaxArrayLockSize + 12,
                       36 * sizeof(GLfloat));

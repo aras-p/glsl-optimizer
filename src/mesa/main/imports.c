@@ -557,7 +557,7 @@ _mesa_pow(double x, double y)
  * Find the first bit set in a word.
  */
 int
-_mesa_ffs(int i)
+_mesa_ffs(int32_t i)
 {
 #if (defined(_WIN32) ) || defined(__IBMC__) || defined(__IBMCPP__)
    register int bit = 0;
@@ -594,11 +594,7 @@ _mesa_ffs(int i)
  *          if no bits set.
  */
 int
-#ifdef __MINGW32__
-_mesa_ffsll(long val)
-#else
-_mesa_ffsll(long long val)
-#endif
+_mesa_ffsll(int64_t val)
 {
 #ifdef ffsll
    return ffsll(val);
@@ -607,11 +603,11 @@ _mesa_ffsll(long long val)
 
    assert(sizeof(val) == 8);
 
-   bit = _mesa_ffs(val);
+   bit = _mesa_ffs((int32_t)val);
    if (bit != 0)
       return bit;
 
-   bit = _mesa_ffs(val >> 32);
+   bit = _mesa_ffs((int32_t)(val >> 32));
    if (bit != 0)
       return 32 + bit;
 
@@ -934,17 +930,40 @@ _mesa_sprintf( char *str, const char *fmt, ... )
    return r;
 }
 
+/** Wrapper around vsnprintf() */
+int
+_mesa_snprintf( char *str, size_t size, const char *fmt, ... )
+{
+   int r;
+   va_list args;
+   va_start( args, fmt );  
+   r = vsnprintf( str, size, fmt, args );
+   va_end( args );
+   return r;
+}
+
 /** Wrapper around printf(), using vsprintf() for the formatting. */
 void
 _mesa_printf( const char *fmtString, ... )
+{
+   va_list args;
+   va_start( args, fmtString );  
+   vfprintf(stderr, fmtString, args);
+   va_end( args );
+}
+
+/** Wrapper around fprintf(), using vsprintf() for the formatting. */
+void
+_mesa_fprintf( FILE *f, const char *fmtString, ... )
 {
    char s[MAXSTRING];
    va_list args;
    va_start( args, fmtString );  
    vsnprintf(s, MAXSTRING, fmtString, args);
    va_end( args );
-   fprintf(stderr,"%s", s);
+   fprintf(f, "%s", s);
 }
+
 
 /** Wrapper around vsprintf() */
 int

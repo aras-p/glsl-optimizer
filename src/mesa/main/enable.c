@@ -201,6 +201,26 @@ _mesa_DisableClientState( GLenum cap )
    }
 
 
+
+/**
+ * Return pointer to current texture unit for setting/getting coordinate
+ * state.
+ * Note that we'll set GL_INVALID_OPERATION if the active texture unit is
+ * higher than the number of supported coordinate units.  And we'll return NULL.
+ */
+static struct gl_texture_unit *
+get_texcoord_unit(GLcontext *ctx)
+{
+   if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureCoordUnits) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glEnable/Disable(texcoord unit)");
+      return NULL;
+   }
+   else {
+      return &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   }
+}
+
+
 /**
  * Helper function to enable or disable a texture target.
  */
@@ -321,10 +341,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          ctx->Transform.CullVertexFlag = state;
          break;
       case GL_DEPTH_TEST:
-         if (state && ctx->DrawBuffer->Visual.depthBits == 0) {
-            _mesa_warning(ctx,"glEnable(GL_DEPTH_TEST) but no depth buffer");
-            return;
-         }
          if (ctx->Depth.Test == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_DEPTH);
@@ -612,54 +628,62 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
             return;
          }
          break;
-      case GL_TEXTURE_GEN_Q: {
-         GLuint unit = ctx->Texture.CurrentUnit;
-         struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-         GLuint newenabled = texUnit->TexGenEnabled & ~Q_BIT;
-         if (state)
-            newenabled |= Q_BIT;
-         if (texUnit->TexGenEnabled == newenabled)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         texUnit->TexGenEnabled = newenabled;
+      case GL_TEXTURE_GEN_Q:
+         {
+            struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
+            if (texUnit) {
+               GLuint newenabled = texUnit->TexGenEnabled & ~Q_BIT;
+               if (state)
+                  newenabled |= Q_BIT;
+               if (texUnit->TexGenEnabled == newenabled)
+                  return;
+               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+               texUnit->TexGenEnabled = newenabled;
+            }
+         }
          break;
-      }
-      case GL_TEXTURE_GEN_R: {
-         GLuint unit = ctx->Texture.CurrentUnit;
-         struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-         GLuint newenabled = texUnit->TexGenEnabled & ~R_BIT;
-         if (state)
-            newenabled |= R_BIT;
-         if (texUnit->TexGenEnabled == newenabled)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         texUnit->TexGenEnabled = newenabled;
+      case GL_TEXTURE_GEN_R:
+         {
+            struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
+            if (texUnit) {
+               GLuint newenabled = texUnit->TexGenEnabled & ~R_BIT;
+               if (state)
+                  newenabled |= R_BIT;
+               if (texUnit->TexGenEnabled == newenabled)
+                  return;
+               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+               texUnit->TexGenEnabled = newenabled;
+            }
+         }
          break;
-      }
-      case GL_TEXTURE_GEN_S: {
-         GLuint unit = ctx->Texture.CurrentUnit;
-         struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-         GLuint newenabled = texUnit->TexGenEnabled & ~S_BIT;
-         if (state)
-            newenabled |= S_BIT;
-         if (texUnit->TexGenEnabled == newenabled)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         texUnit->TexGenEnabled = newenabled;
+      case GL_TEXTURE_GEN_S:
+         {
+            struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
+            if (texUnit) {
+               GLuint newenabled = texUnit->TexGenEnabled & ~S_BIT;
+               if (state)
+                  newenabled |= S_BIT;
+               if (texUnit->TexGenEnabled == newenabled)
+                  return;
+               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+               texUnit->TexGenEnabled = newenabled;
+            }
+         }
          break;
-      }
-      case GL_TEXTURE_GEN_T: {
-         GLuint unit = ctx->Texture.CurrentUnit;
-         struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-         GLuint newenabled = texUnit->TexGenEnabled & ~T_BIT;
-         if (state)
-            newenabled |= T_BIT;
-         if (texUnit->TexGenEnabled == newenabled)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         texUnit->TexGenEnabled = newenabled;
+      case GL_TEXTURE_GEN_T:
+         {
+            struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
+            if (texUnit) {
+               GLuint newenabled = texUnit->TexGenEnabled & ~T_BIT;
+               if (state)
+                  newenabled |= T_BIT;
+               if (texUnit->TexGenEnabled == newenabled)
+                  return;
+               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+               texUnit->TexGenEnabled = newenabled;
+            }
+         }
          break;
-      }
 
       /*
        * CLIENT STATE!!!
@@ -748,35 +772,30 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 
       /* GL_ARB_multisample */
       case GL_MULTISAMPLE_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.Enabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
          ctx->Multisample.Enabled = state;
          break;
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.SampleAlphaToCoverage == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
          ctx->Multisample.SampleAlphaToCoverage = state;
          break;
       case GL_SAMPLE_ALPHA_TO_ONE_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.SampleAlphaToOne == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
          ctx->Multisample.SampleAlphaToOne = state;
          break;
       case GL_SAMPLE_COVERAGE_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.SampleCoverage == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
          ctx->Multisample.SampleCoverage = state;
          break;
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.SampleCoverageInvert == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
@@ -898,10 +917,13 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
             return;
          FLUSH_VERTICES(ctx, _NEW_STENCIL);
          ctx->Stencil.TestTwoSide = state;
-         if (state)
+         if (state) {
+            ctx->Stencil._BackFace = 2;
             ctx->_TriangleCaps |= DD_TRI_TWOSTENCIL;
-         else
+         } else {
+            ctx->Stencil._BackFace = 1;
             ctx->_TriangleCaps &= ~DD_TRI_TWOSTENCIL;
+         }
          break;
 
 #if FEATURE_ARB_fragment_program
@@ -929,6 +951,7 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          break;
 
       /* GL_MESA_program_debug */
+#if FEATURE_MESA_program_debug
       case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
          CHECK_EXTENSION(MESA_program_debug, cap);
          ctx->FragmentProgram.CallbackEnabled = state;
@@ -937,6 +960,7 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          CHECK_EXTENSION(MESA_program_debug, cap);
          ctx->VertexProgram.CallbackEnabled = state;
          break;
+#endif
 
 #if FEATURE_ATI_fragment_shader
       case GL_FRAGMENT_SHADER_ATI:
@@ -1153,28 +1177,36 @@ _mesa_IsEnabled( GLenum cap )
          return is_texture_enabled(ctx, TEXTURE_3D_BIT);
       case GL_TEXTURE_GEN_Q:
          {
-            const struct gl_texture_unit *texUnit;
-            texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-            return (texUnit->TexGenEnabled & Q_BIT) ? GL_TRUE : GL_FALSE;
+            const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
+            if (texUnit) {
+               return (texUnit->TexGenEnabled & Q_BIT) ? GL_TRUE : GL_FALSE;
+            }
          }
+         return GL_FALSE;
       case GL_TEXTURE_GEN_R:
          {
-            const struct gl_texture_unit *texUnit;
-            texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-            return (texUnit->TexGenEnabled & R_BIT) ? GL_TRUE : GL_FALSE;
+            const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
+            if (texUnit) {
+               return (texUnit->TexGenEnabled & R_BIT) ? GL_TRUE : GL_FALSE;
+            }
          }
+         return GL_FALSE;
       case GL_TEXTURE_GEN_S:
          {
-            const struct gl_texture_unit *texUnit;
-            texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-            return (texUnit->TexGenEnabled & S_BIT) ? GL_TRUE : GL_FALSE;
+            const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
+            if (texUnit) {
+               return (texUnit->TexGenEnabled & S_BIT) ? GL_TRUE : GL_FALSE;
+            }
          }
+         return GL_FALSE;
       case GL_TEXTURE_GEN_T:
          {
-            const struct gl_texture_unit *texUnit;
-            texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-            return (texUnit->TexGenEnabled & T_BIT) ? GL_TRUE : GL_FALSE;
+            const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
+            if (texUnit) {
+               return (texUnit->TexGenEnabled & T_BIT) ? GL_TRUE : GL_FALSE;
+            }
          }
+         return GL_FALSE;
 
       /*
        * CLIENT STATE!!!
@@ -1249,19 +1281,14 @@ _mesa_IsEnabled( GLenum cap )
 
       /* GL_ARB_multisample */
       case GL_MULTISAMPLE_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.Enabled;
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.SampleAlphaToCoverage;
       case GL_SAMPLE_ALPHA_TO_ONE_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.SampleAlphaToOne;
       case GL_SAMPLE_COVERAGE_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.SampleCoverage;
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.SampleCoverageInvert;
 
       /* GL_IBM_rasterpos_clip */
@@ -1378,12 +1405,15 @@ _mesa_IsEnabled( GLenum cap )
          return ctx->Depth.BoundsTest;
 
       /* GL_MESA_program_debug */
+#if FEATURE_MESA_program_debug
       case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
          CHECK_EXTENSION(MESA_program_debug);
          return ctx->FragmentProgram.CallbackEnabled;
       case GL_VERTEX_PROGRAM_CALLBACK_MESA:
          CHECK_EXTENSION(MESA_program_debug);
          return ctx->VertexProgram.CallbackEnabled;
+#endif
+
 #if FEATURE_ATI_fragment_shader
       case GL_FRAGMENT_SHADER_ATI:
 	 CHECK_EXTENSION(ATI_fragment_shader);

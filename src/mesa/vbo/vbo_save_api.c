@@ -293,7 +293,7 @@ static void _save_compile_vertex_list( GLcontext *ctx )
 	  node->count == 0);
 
    if (save->dangling_attr_ref)
-      ctx->ListState.CurrentList->flags |= MESA_DLIST_DANGLING_REFS;
+      ctx->ListState.CurrentList->Flags |= DLIST_DANGLING_REFS;
 
    save->vertex_store->used += save->vertex_size * node->count;
    save->prim_store->used += node->prim_count;
@@ -1076,10 +1076,10 @@ void vbo_save_EndList( GLcontext *ctx )
    assert(save->vertex_size == 0);
 }
  
-void vbo_save_BeginCallList( GLcontext *ctx, struct mesa_display_list *dlist )
+void vbo_save_BeginCallList( GLcontext *ctx, struct gl_display_list *dlist )
 {
    struct vbo_save_context *save = &vbo_context(ctx)->save;
-   save->replay_flags |= dlist->flags;
+   save->replay_flags |= dlist->Flags;
 }
 
 void vbo_save_EndCallList( GLcontext *ctx )

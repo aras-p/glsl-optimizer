@@ -44,6 +44,12 @@
 #include "xf86dri.h"
 #endif
 
+#if defined(USE_XCB)
+#include <X11/Xlib-xcb.h>
+#include <xcb/xcb.h>
+#include <xcb/glx.h>
+#endif
+
 static const char __glXGLXClientVendorName[] = "SGI";
 static const char __glXGLXClientVersion[] = "1.4";
 
@@ -749,8 +755,10 @@ PUBLIC void glXCopyContext(Display *dpy, GLXContext source,
  */
 static Bool __glXIsDirect(Display *dpy, GLXContextID contextID)
 {
+#if !defined(USE_XCB)
     xGLXIsDirectReq *req;
     xGLXIsDirectReply reply;
+#endif
     CARD8 opcode;
 
     opcode = __glXSetupForCommand(dpy);
@@ -758,6 +766,18 @@ static Bool __glXIsDirect(Display *dpy, GLXContextID contextID)
 	return GL_FALSE;
     }
 
+#ifdef USE_XCB
+   xcb_connection_t* c = XGetXCBConnection(dpy);
+   xcb_glx_is_direct_reply_t* reply =
+      xcb_glx_is_direct_reply(c,
+                              xcb_glx_is_direct(c, contextID),
+                              NULL);
+
+   const Bool is_direct = reply->is_direct ? True : False;
+   free(reply);
+
+   return is_direct;
+#else
     /* Send the glXIsDirect request */
     LockDisplay(dpy);
     GetReq(GLXIsDirect,req);
@@ -769,6 +789,7 @@ static Bool __glXIsDirect(Display *dpy, GLXContextID contextID)
     SyncHandle();
 
     return reply.isDirect;
+#endif /* USE_XCB */
 }
 
 /**
@@ -840,10 +861,15 @@ PUBLIC void glXDestroyGLXPixmap(Display *dpy, GLXPixmap glxpixmap)
 
 PUBLIC void glXSwapBuffers(Display *dpy, GLXDrawable drawable)
 {
-    xGLXSwapBuffersReq *req;
     GLXContext gc;
     GLXContextTag tag;
     CARD8 opcode;
+#ifdef USE_XCB
+    xcb_connection_t *c;
+#else
+    xGLXSwapBuffersReq *req;
+#endif
+
 #ifdef GLX_DIRECT_RENDERING
     __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
 
@@ -871,6 +897,11 @@ PUBLIC void glXSwapBuffers(Display *dpy, GLXDrawable drawable)
 	tag = 0;
     }
 
+#ifdef USE_XCB
+    c = XGetXCBConnection(dpy);
+    xcb_glx_swap_buffers(c, tag, drawable);
+    xcb_flush(c);
+#else
     /* Send the glXSwapBuffers request */
     LockDisplay(dpy);
     GetReq(GLXSwapBuffers,req);
@@ -881,6 +912,7 @@ PUBLIC void glXSwapBuffers(Display *dpy, GLXDrawable drawable)
     UnlockDisplay(dpy);
     SyncHandle();
     XFlush(dpy);
+#endif /* USE_XCB */
 }
 
 
@@ -1314,9 +1346,8 @@ PUBLIC const char *glXQueryExtensionsString( Display *dpy, int screen )
 
     if (!psc->effectiveGLXexts) {
         if (!psc->serverGLXexts) {
-	    psc->serverGLXexts = __glXGetStringFromServer(dpy, priv->majorOpcode,
-					  	   X_GLXQueryServerString,
-					  	   screen, GLX_EXTENSIONS);
+           psc->serverGLXexts =
+              __glXQueryServerString(dpy, priv->majorOpcode, screen, GLX_EXTENSIONS);
 	}
 
 	__glXCalculateUsableExtensions(psc,
@@ -1371,8 +1402,7 @@ PUBLIC const char *glXQueryServerString( Display *dpy, int screen, int name )
     }
 
     if ( *str == NULL ) {
-	*str = __glXGetStringFromServer(dpy, priv->majorOpcode,
-					X_GLXQueryServerString, screen, name);
+       *str = __glXQueryServerString(dpy, priv->majorOpcode, screen, name);
     }
     
     return *str;
@@ -1380,9 +1410,18 @@ PUBLIC const char *glXQueryServerString( Display *dpy, int screen, int name )
 
 void __glXClientInfo (  Display *dpy, int opcode  )
 {
-    xGLXClientInfoReq *req;
-    int size;
     char * ext_str = __glXGetClientGLExtensionString();
+    int size = strlen( ext_str ) + 1;
+
+#ifdef USE_XCB
+   xcb_connection_t *c = XGetXCBConnection(dpy);
+   xcb_glx_client_info(c,
+                       GLX_MAJOR_VERSION,
+                       GLX_MINOR_VERSION,
+                       size,
+                       (const uint8_t *)ext_str);
+#else
+    xGLXClientInfoReq *req;
 
     /* Send the glXClientInfo request */
     LockDisplay(dpy);
@@ -1392,14 +1431,14 @@ void __glXClientInfo (  Display *dpy, int opcode  )
     req->major = GLX_MAJOR_VERSION;
     req->minor = GLX_MINOR_VERSION;
 
-    size = strlen( ext_str ) + 1;
     req->length += (size + 3) >> 2;
     req->numbytes = size;
     Data(dpy, ext_str, size);
 
     UnlockDisplay(dpy);
     SyncHandle();
-    
+#endif /* USE_XCB */
+
     Xfree( ext_str );
 }
 

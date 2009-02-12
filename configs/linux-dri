@@ -13,7 +13,7 @@ CXX = g++
 #MKDEP = gcc -M
 #MKDEP_OPTIONS = -MF depend
 
-OPT_FLAGS  = -O -g
+OPT_FLAGS  = -O2 -g
 PIC_FLAGS  = -fPIC
 
 # Add '-DGLX_USE_TLS' to ARCH_FLAGS to enable TLS support.
@@ -38,37 +38,30 @@ GLUT_CFLAGS = -fexceptions
 CFLAGS += -fno-strict-aliasing
 CXXFLAGS += -fno-strict-aliasing
 
-ASM_SOURCES = 
+MESA_ASM_SOURCES = 
 
 # Library/program dependencies
 EXTRA_LIB_PATH=-L/usr/X11R6/lib
 
-LIBDRM_CFLAGS = `pkg-config --cflags libdrm`
-LIBDRM_LIB = `pkg-config --libs libdrm`
+LIBDRM_CFLAGS = $(shell pkg-config --cflags libdrm)
+LIBDRM_LIB = $(shell pkg-config --libs libdrm)
 DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl $(LIBDRM_LIB)
 GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
 		-lm -lpthread -ldl $(LIBDRM_LIB)
 
 
-# This is now 0 by default since it seems to confuse the hell out of people
-# and generate a lot of extra noise on bugzilla.  If you need to build with
-# EGL, do 'make linux-dri USING_EGL=1'
-
-USING_EGL=0
-
 # Directories
-ifeq ($(USING_EGL), 1)
-SRC_DIRS = egl glx/x11 mesa glu glut/glx glw
-PROGRAM_DIRS = egl xdemos
-else
-SRC_DIRS = glx/x11 mesa glu glut/glx glw
-PROGRAM_DIRS = xdemos
-endif
+SRC_DIRS := glx/x11 egl $(SRC_DIRS)
+PROGRAM_DIRS := egl $(PROGRAM_DIRS)
+
+# EGL directories
+EGL_DRIVERS_DIRS = demo glx
 
 DRIVER_DIRS = dri
-WINDOW_SYSTEM=dri
+WINDOW_SYSTEM = dri
+GALLIUM_WINSYS_DIRS = drm
+GALLIUM_WINSYS_DRM_DIRS = intel
+GALLIUM_STATE_TRACKERS_DIRS = egl
 
-# gamma are missing because they have not been converted to use the new
-# interface.
 DRI_DIRS = i810 i915 i965 mach64 mga r128 r200 r300 radeon s3v \
 	savage sis tdfx trident unichrome ffb

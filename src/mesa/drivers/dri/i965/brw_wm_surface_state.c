@@ -192,21 +192,27 @@ brw_create_texture_surface( struct brw_context *brw,
    if (key->bo) 
       surf.ss0.surface_format = translate_tex_format(key->format, key->depthmode);
    else {
-     switch(key->depth) {
-     case 32: surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM; break;
-     default:
-     case 24: surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8X8_UNORM; break;
-     case 16: surf.ss0.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM; break;
-     }
+      switch (key->depth) {
+      case 32:
+         surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+         break;
+      default:
+      case 24:
+         surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
+         break;
+      case 16:
+         surf.ss0.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
+         break;
+      }
    }
 
    /* This is ok for all textures with channel width 8bit or less:
     */
 /*    surf.ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
    if (key->bo)
-     surf.ss1.base_addr = key->bo->offset; /* reloc */
+      surf.ss1.base_addr = key->bo->offset; /* reloc */
    else
-     surf.ss1.base_addr = key->offset;
+      surf.ss1.base_addr = key->offset;
 
    surf.ss2.mip_count = key->last_level - key->first_level;
    surf.ss2.width = key->width - 1;
@@ -247,7 +253,7 @@ static void
 brw_update_texture_surface( GLcontext *ctx, GLuint unit )
 {
    struct brw_context *brw = brw_context(ctx);
-   struct gl_texture_object *tObj = brw->attribs.Texture->Unit[unit]._Current;
+   struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage = tObj->Image[0][intelObj->firstLevel];
    struct brw_wm_surface_key key;
@@ -295,6 +301,7 @@ static void
 brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
 			  unsigned int unit, GLboolean cached)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    dri_bo *region_bo = NULL;
    struct {
       unsigned int surface_type;
@@ -327,10 +334,10 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
       key.height = 1;
       key.cpp = 4;
    }
-   memcpy(key.color_mask, brw->attribs.Color->ColorMask,
+   memcpy(key.color_mask, ctx->Color.ColorMask,
 	  sizeof(key.color_mask));
-   key.color_blend = (!brw->attribs.Color->_LogicOpEnabled &&
-		      brw->attribs.Color->BlendEnabled);
+   key.color_blend = (!ctx->Color._LogicOpEnabled &&
+		      ctx->Color.BlendEnabled);
 
    dri_bo_unreference(brw->wm.surf_bo[unit]);
    brw->wm.surf_bo[unit] = NULL;
@@ -438,6 +445,7 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    GLuint i;
+   int old_nr_surfaces;
 
    if (brw->state.nr_draw_regions  > 1) {
       for (i = 0; i < brw->state.nr_draw_regions; i++) {
@@ -448,10 +456,11 @@ static void prepare_wm_surfaces(struct brw_context *brw )
       brw_update_region_surface(brw, brw->state.draw_regions[0], 0, GL_TRUE);
    }
 
+   old_nr_surfaces = brw->wm.nr_surfaces;
    brw->wm.nr_surfaces = MAX_DRAW_BUFFERS;
 
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[i];
+      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
 
       /* _NEW_TEXTURE, BRW_NEW_TEXDATA */
       if(texUnit->_ReallyEnabled) {
@@ -473,6 +482,9 @@ static void prepare_wm_surfaces(struct brw_context *brw )
 
    dri_bo_unreference(brw->wm.bind_bo);
    brw->wm.bind_bo = brw_wm_get_binding_table(brw);
+
+   if (brw->wm.nr_surfaces != old_nr_surfaces)
+      brw->state.dirty.brw |= BRW_NEW_NR_SURFACES;
 }
 
 

@@ -3,6 +3,7 @@
  * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (c) 2008 VMware, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,8 +47,10 @@ extern GLboolean _mesa_texstore_rgb888(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_bgr888(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_rgb565(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_rgb565_rev(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba4444(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_argb4444(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_argb4444_rev(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba5551(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_argb1555(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_argb1555_rev(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_al88(TEXSTORE_PARAMS);
@@ -71,6 +74,7 @@ extern GLboolean _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS);
 #if FEATURE_EXT_texture_sRGB
 extern GLboolean _mesa_texstore_srgb8(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_srgba8(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_sargb8(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_sl8(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_sla8(TEXSTORE_PARAMS);
 #endif

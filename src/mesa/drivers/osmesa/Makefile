@@ -30,8 +30,7 @@ CORE_MESA = $(TOP)/src/mesa/libmesa.a $(TOP)/src/mesa/libglapi.a
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 
-default:
-# $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
+default: $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
 	@ if [ "${DRIVER_DIRS}" = "osmesa" ] ; then \
 		$(MAKE) osmesa16 ; \
 	else \
@@ -42,9 +41,9 @@ default:
 
 
 # The normal libOSMesa is used in conjuction with libGL
-osmesa8: $(TOP)/lib/$(OSMESA_LIB_NAME)
+osmesa8: $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
 
-$(TOP)/lib/$(OSMESA_LIB_NAME): $(OBJECTS)
+$(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OBJECTS)
 	$(MKLIB) -o $(OSMESA_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \

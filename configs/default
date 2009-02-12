@@ -19,10 +19,15 @@ DRM_SOURCE_PATH=$(TOP)/../drm
 # Compiler and flags
 CC = cc
 CXX = CC
+HOST_CC = $(CC)
 CFLAGS = -O
 CXXFLAGS = -O
 LDFLAGS =
 GLU_CFLAGS = 
+
+# Compiler for building demos/tests/etc
+APP_CC = $(CC)
+APP_CXX = $(CXX)
 
 # Misc tools and flags
 SHELL = /bin/sh
@@ -43,6 +48,7 @@ INDENT_FLAGS = -i4 -nut -br -brs -npcs -ce -T GLubyte -T GLbyte -T Bool
 GL_LIB = GL
 GLU_LIB = GLU
 GLUT_LIB = glut
+GLEW_LIB = GLEW
 GLW_LIB = GLw
 OSMESA_LIB = OSMesa
 
@@ -51,6 +57,7 @@ OSMESA_LIB = OSMesa
 GL_LIB_NAME = lib$(GL_LIB).so
 GLU_LIB_NAME = lib$(GLU_LIB).so
 GLUT_LIB_NAME = lib$(GLUT_LIB).so
+GLEW_LIB_NAME = lib$(GLEW_LIB).a
 GLW_LIB_NAME = lib$(GLW_LIB).so
 OSMESA_LIB_NAME = lib$(OSMESA_LIB).so
 
@@ -62,7 +69,7 @@ GLW_LIB_GLOB = $(GLW_LIB_NAME)*
 OSMESA_LIB_GLOB = $(OSMESA_LIB_NAME)*
 
 # Optional assembly language optimization files for libGL
-ASM_SOURCES = 
+MESA_ASM_SOURCES = 
 
 # GLw widget sources (Append "GLwMDrawA.c" here and add -lXm to GLW_LIB_DEPS in
 # order to build the Motif widget too)
@@ -72,20 +79,34 @@ MOTIF_CFLAGS = -I/usr/include/Motif1.2
 
 # Directories to build
 LIB_DIR = lib
-SRC_DIRS = mesa glu glut/glx glw
+SRC_DIRS = mesa gallium egl gallium/winsys glu glut/glx glew glw
 GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
 # Which subdirs under $(TOP)/progs/ to enter:
 PROGRAM_DIRS = demos redbook samples glsl xdemos
 
+# EGL directories
+EGL_DRIVERS_DIRS = demo
+
+# Gallium directories and 
+GALLIUM_DIRS = auxiliary drivers state_trackers
+GALLIUM_AUXILIARY_DIRS = draw translate cso_cache pipebuffer tgsi sct rtasm util indices
+GALLIUM_AUXILIARIES = $(foreach DIR,$(GALLIUM_AUXILIARY_DIRS),$(TOP)/src/gallium/auxiliary/$(DIR)/lib$(DIR).a)
+GALLIUM_DRIVER_DIRS = softpipe i915simple i965simple failover trace
+GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVER_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)
+GALLIUM_WINSYS_DIRS = xlib egl_xlib
+GALLIUM_WINSYS_DRM_DIRS =
+GALLIUM_STATE_TRACKERS_DIRS = glx
+
 
 # Library dependencies
 #EXTRA_LIB_PATH ?=
-GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread
-OSMESA_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
-GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm
-GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lX11 -lXmu -lXi -lm
-GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lXt -lX11
+GL_LIB_DEPS     = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread
+OSMESA_LIB_DEPS = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
+GLU_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm
+GLUT_LIB_DEPS   = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXmu -lXi -lm
+GLW_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lXt -lX11
+APP_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm
 
 # Program dependencies - specific GL/glut libraries added in Makefiles
 APP_LIB_DEPS = -lm
@@ -100,3 +121,20 @@ DRI_DRIVER_INSTALL_DIR = $(INSTALL_LIB_DIR)/dri
 # Where libGL will look for DRI hardware drivers
 DRI_DRIVER_SEARCH_DIR = $(DRI_DRIVER_INSTALL_DIR)
 
+# pkg-config substitutions
+GL_PC_REQ_PRIV =
+GL_PC_LIB_PRIV =
+GL_PC_CFLAGS =
+DRI_PC_REQ_PRIV =
+GLU_PC_REQ = gl
+GLU_PC_REQ_PRIV =
+GLU_PC_LIB_PRIV =
+GLU_PC_CFLAGS =
+GLUT_PC_REQ_PRIV =
+GLUT_PC_LIB_PRIV =
+GLUT_PC_CFLAGS =
+GLW_PC_REQ_PRIV =
+GLW_PC_LIB_PRIV =
+GLW_PC_CFLAGS =
+OSMESA_PC_REQ =
+OSMESA_PC_LIB_PRIV =

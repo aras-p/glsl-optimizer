@@ -184,3 +184,18 @@ intelTexSubImage1D(GLcontext * ctx,
                     format, type, pixels, packing, texObj, texImage);
 
 }
+
+void
+intelCompressedTexSubImage2D(GLcontext * ctx,
+			     GLenum target,
+			     GLint level,
+			     GLint xoffset, GLint yoffset,
+			     GLsizei width, GLsizei height,
+			     GLenum format, GLsizei imageSize,
+			     const GLvoid * pixels,
+			     struct gl_texture_object *texObj,
+			     struct gl_texture_image *texImage)
+{
+   fprintf(stderr, "stubbed CompressedTexSubImage2D: %dx%d@%dx%d\n",
+	   width, height, xoffset, yoffset);
+}

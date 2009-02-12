@@ -39,14 +39,7 @@ struct intel_framebuffer
 {
    struct gl_framebuffer Base;
 
-   struct intel_renderbuffer *color_rb[3];
-
-   /* Drawable page flipping state */
-   GLboolean pf_active;
-   GLuint pf_seq;
-   GLint pf_planes;
-   GLint pf_current_page;
-   GLint pf_num_pages;
+   struct intel_renderbuffer *color_rb[2];
 
    /* VBI
     */
@@ -62,21 +55,11 @@ struct intel_framebuffer
 
 /**
  * Intel renderbuffer, derived from gl_renderbuffer.
- * Note: The PairedDepth and PairedStencil fields use renderbuffer IDs,
- * not pointers because in some circumstances a deleted renderbuffer could
- * result in a dangling pointer here.
  */
 struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
    struct intel_region *region;
-   GLuint pfPitch;              /* possibly paged flipped pitch */
-   GLboolean RenderToTexture;   /* RTT? */
-
-   GLuint PairedDepth;   /**< only used if this is a depth renderbuffer */
-   GLuint PairedStencil; /**< only used if this is a stencil renderbuffer */
-
-   GLuint pf_pending;  /**< sequence number of pending flip */
 
    GLuint vbl_pending;   /**< vblank sequence number of pending flip */
 
@@ -84,32 +67,71 @@ struct intel_renderbuffer
    unsigned long span_cache_offset;
 };
 
-extern struct intel_renderbuffer *intel_renderbuffer(struct gl_renderbuffer
-                                                     *rb);
+
+/**
+ * gl_renderbuffer is a base class which we subclass.  The Class field
+ * is used for simple run-time type checking.
+ */
+#define INTEL_RB_CLASS 0x12345678
+
+
+/**
+ * Return a gl_renderbuffer ptr casted to intel_renderbuffer.
+ * NULL will be returned if the rb isn't really an intel_renderbuffer.
+ * This is determined by checking the ClassID.
+ */
+static INLINE struct intel_renderbuffer *
+intel_renderbuffer(struct gl_renderbuffer *rb)
+{
+   struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
+   if (irb && irb->Base.ClassID == INTEL_RB_CLASS) {
+      /*_mesa_warning(NULL, "Returning non-intel Rb\n");*/
+      return irb;
+   }
+   else
+      return NULL;
+}
+
+
+/**
+ * Return a framebuffer's renderbuffer, named by a BUFFER_x index.
+ */
+static INLINE struct intel_renderbuffer *
+intel_get_renderbuffer(struct gl_framebuffer *fb, int attIndex)
+{
+   if (attIndex >= 0)
+      return intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
+   else
+      return NULL;
+}
+
 
 extern void
 intel_renderbuffer_set_region(struct intel_renderbuffer *irb,
 			      struct intel_region *region);
 
+
 extern struct intel_renderbuffer *
 intel_create_renderbuffer(GLenum intFormat);
 
-extern void intel_fbo_init(struct intel_context *intel);
+
+extern void
+intel_fbo_init(struct intel_context *intel);
 
 
-/* XXX make inline or macro */
-extern struct intel_renderbuffer *intel_get_renderbuffer(struct gl_framebuffer
-                                                         *fb,
-                                                         int attIndex);
-
-extern void intel_flip_renderbuffers(struct intel_framebuffer *intel_fb);
+extern void
+intel_flip_renderbuffers(struct intel_framebuffer *intel_fb);
 
 
-/* XXX make inline or macro */
-extern struct intel_region *intel_get_rb_region(struct gl_framebuffer *fb,
-                                                GLuint attIndex);
-
-
+static INLINE struct intel_region *
+intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
+{
+   struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, attIndex);
+   if (irb)
+      return irb->region;
+   else
+      return NULL;
+}
 
 
 #endif /* INTEL_FBO_H */

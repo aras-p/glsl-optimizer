@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
  *
  * Copyright (C) 2004-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2008 VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -59,7 +59,7 @@
 .syntax translation_unit;
 
 /* revision number - increment after each change affecting emitted output */
-.emtcode REVISION                                   4
+.emtcode REVISION                                   5
 
 /* external declaration (or precision or invariant stmt) */
 .emtcode EXTERNAL_NULL                              0
@@ -82,6 +82,10 @@
 .emtcode FUNCTION_ORDINARY                          0
 .emtcode FUNCTION_CONSTRUCTOR                       1
 .emtcode FUNCTION_OPERATOR                          2
+
+/* function call type */
+.emtcode FUNCTION_CALL_NONARRAY                     0
+.emtcode FUNCTION_CALL_ARRAY                        1
 
 /* operator type */
 .emtcode OPERATOR_ADDASSIGN                         1
@@ -178,6 +182,9 @@
 .emtcode TYPE_SPECIFIER_MAT34                       30
 .emtcode TYPE_SPECIFIER_MAT43                       31
 
+/* type specifier array */
+.emtcode TYPE_SPECIFIER_NONARRAY                    0
+.emtcode TYPE_SPECIFIER_ARRAY                       1
 
 /* structure field */
 .emtcode FIELD_NONE                                 0
@@ -248,6 +255,7 @@
 .emtcode OP_POSTINCREMENT                           60
 .emtcode OP_POSTDECREMENT                           61
 .emtcode OP_PRECISION                               62
+.emtcode OP_METHOD                                  63
 
 /* parameter qualifier */
 .emtcode PARAM_QUALIFIER_IN                         0
@@ -339,6 +347,25 @@ integer_expression
  * <function_call> ::= <function_call_generic>
  */
 function_call
+    function_call_or_method;
+
+/*
+ * <function_call_or_method> ::= <regular_function_call>
+ *                             | <postfix_expression> "." <function_call_generic>
+ */
+function_call_or_method
+    regular_function_call .or method_call;
+
+/*
+ * <method_call> ::= <identifier> "." <function_call_generic>
+ */
+method_call
+    identifier .emit OP_METHOD .and dot .and function_call_generic .and .true .emit OP_END;
+
+/*
+ * <regular_function_call> ::= <function_call_generic>
+ */
+regular_function_call
     function_call_generic .emit OP_CALL .and .true .emit OP_END;
 
 /*
@@ -380,11 +407,17 @@ function_call_header
 /*
  * <function_identifier> ::= <constructor_identifier>
  *                         | <identifier>
+ *                         | <type_specifier>
  *
- * note: <constructor_identifier> has been deleted
+ * note: <constructor_identifier> and <type_specifier> have been deleted
  */
 function_identifier
-    identifier;
+    identifier .and function_identifier_opt_array;
+function_identifier_opt_array
+    function_identifier_array .emit FUNCTION_CALL_ARRAY .or
+    .true .emit FUNCTION_CALL_NONARRAY;
+function_identifier_array
+    lbracket .and constant_expression .and rbracket;
 
 /*
  * <unary_expression> ::= <postfix_expression>
@@ -837,10 +870,8 @@ parameter_type_specifier_3
  * <init_declarator_list> ::= <single_declaration>
  *                          | <init_declarator_list> "," <identifier>
  *                          | <init_declarator_list> "," <identifier> "[" "]"
- *                          | <init_declarator_list> "," <identifier> "["
- *                            <constant_expression> "]"
- *                          | <init_declarator_list> "," <identifier> "="
- *                            <initializer>
+ *                          | <init_declarator_list> "," <identifier> "[" <constant_expression> "]"
+ *                          | <init_declarator_list> "," <identifier> "=" <initializer>
  */
 init_declarator_list
     single_declaration .and .loop init_declarator_list_1 .emit DECLARATOR_NEXT .and
@@ -860,10 +891,9 @@ init_declarator_list_5
  * <single_declaration> ::= <fully_specified_type>
  *                        | <fully_specified_type> <identifier>
  *                        | <fully_specified_type> <identifier> "[" "]"
- *                        | <fully_specified_type> <identifier> "["
- *                          <constant_expression> "]"
+ *                        | <fully_specified_type> <identifier> "[" <constant_expression> "]"
  *                        | <fully_specified_type> <identifier> "=" <initializer>
-*/
+ */
 single_declaration
     single_declaration_nospace .or single_declaration_space;
 single_declaration_space
@@ -924,12 +954,12 @@ centroid_qualifier
 
 
 /*
- *  <type_qualifier> ::= "const"
- *                     | "attribute" // Vertex only.
- *                     | "varying"
- *                     | "uniform"
- *                     | "__fixed_output"
- *                     | "__fixed_input"
+ * <type_qualifier> ::= "const"
+ *                    | "attribute" // Vertex only.
+ *                    | "varying"
+ *                    | "uniform"
+ *                    | "__fixed_output"
+ *                    | "__fixed_input"
  *
  * note: this is an extension to the standard language specification,
  * normally slang disallows __fixed_output and __fixed_input type qualifiers
@@ -943,40 +973,40 @@ type_qualifier
     .if (parsing_builtin != 0) "__fixed_input" .emit TYPE_QUALIFIER_FIXEDINPUT;
 
 /*
- * <type_specifier> ::= "void"
- *                    | "float"
- *                    | "int"
- *                    | "bool"
- *                    | "vec2"
- *                    | "vec3"
- *                    | "vec4"
- *                    | "bvec2"
- *                    | "bvec3"
- *                    | "bvec4"
- *                    | "ivec2"
- *                    | "ivec3"
- *                    | "ivec4"
- *                    | "mat2"
- *                    | "mat3"
- *                    | "mat4"
- *                    | "mat2x3"
- *                    | "mat3x2"
- *                    | "mat2x4"
- *                    | "mat4x2"
- *                    | "mat3x4"
- *                    | "mat4x3"
- *                    | "sampler1D"
- *                    | "sampler2D"
- *                    | "sampler3D"
- *                    | "samplerCube"
- *                    | "sampler1DShadow"
- *                    | "sampler2DShadow"
- *                    | "sampler2DRect"
- *                    | "sampler2DRectShadow"
- *                    | <struct_specifier>
- *                    | <type_name>
+ * <type_specifier_nonarray> ::= "void"
+ *                             | "float"
+ *                             | "int"
+ *                             | "bool"
+ *                             | "vec2"
+ *                             | "vec3"
+ *                             | "vec4"
+ *                             | "bvec2"
+ *                             | "bvec3"
+ *                             | "bvec4"
+ *                             | "ivec2"
+ *                             | "ivec3"
+ *                             | "ivec4"
+ *                             | "mat2"
+ *                             | "mat3"
+ *                             | "mat4"
+ *                             | "mat2x3"
+ *                             | "mat3x2"
+ *                             | "mat2x4"
+ *                             | "mat4x2"
+ *                             | "mat3x4"
+ *                             | "mat4x3"
+ *                             | "sampler1D"
+ *                             | "sampler2D"
+ *                             | "sampler3D"
+ *                             | "samplerCube"
+ *                             | "sampler1DShadow"
+ *                             | "sampler2DShadow"
+ *                             | "sampler2DRect"
+ *                             | "sampler2DRectShadow"
+ *                             | <struct_specifier>
+ *                             | <type_name>
  */
-type_specifier_space
+type_specifier_nonarray_space
     "void" .emit TYPE_SPECIFIER_VOID .or
     "float" .emit TYPE_SPECIFIER_FLOAT .or
     "int" .emit TYPE_SPECIFIER_INT .or
@@ -1008,12 +1038,27 @@ type_specifier_space
     "sampler2DRect" .emit TYPE_SPECIFIER_SAMPLER2DRECT .or
     "sampler2DRectShadow" .emit TYPE_SPECIFIER_SAMPLER2DRECTSHADOW .or
     type_name .emit TYPE_SPECIFIER_TYPENAME;
-type_specifier_nospace
+type_specifier_nonarray_nospace
     struct_specifier .emit TYPE_SPECIFIER_STRUCT;
+type_specifier_nonarray
+    type_specifier_nonarray_nospace .or type_specifier_nonarray_space;
+
+/*
+ * <type_specifier> ::= <type_specifier_nonarray>
+ *                    | <type_specifier_nonarray> "[" <constant_expression> "]"
+ */
+type_specifier_space
+    type_specifier_nonarray_space .and .true .emit TYPE_SPECIFIER_NONARRAY;
+type_specifier_nospace
+    type_specifier_nospace_array .or type_specifier_nospace_1;
+type_specifier_nospace_1
+    type_specifier_nonarray_nospace .and .true .emit TYPE_SPECIFIER_NONARRAY;
+type_specifier_nospace_array
+    type_specifier_nonarray .and lbracket .emit TYPE_SPECIFIER_ARRAY .and constant_expression .and rbracket;
 
 /*
  * <struct_specifier> ::= "struct" <identifier> "{" <struct_declaration_list> "}"
- *                       | "struct" "{" <struct_declaration_list> "}"
+ *                      | "struct" "{" <struct_declaration_list> "}"
  */
 struct_specifier
     "struct" .and struct_specifier_1 .and optional_space .and lbrace .error LBRACE_EXPECTED .and
@@ -1025,7 +1070,7 @@ struct_specifier_2
 
 /*
  * <struct_declaration_list> ::= <struct_declaration>
- *                              | <struct_declaration_list> <struct_declaration>
+ *                             | <struct_declaration_list> <struct_declaration>
  */
 struct_declaration_list
     struct_declaration .and .loop struct_declaration .emit FIELD_NEXT;
@@ -1042,7 +1087,7 @@ struct_declaration_nospace
 
 /*
  * <struct_declarator_list> ::= <struct_declarator>
- *                             | <struct_declarator_list> "," <struct_declarator>
+ *                            | <struct_declarator_list> "," <struct_declarator>
  */
 struct_declarator_list
     struct_declarator .and .loop struct_declarator_list_1 .emit FIELD_NEXT;
@@ -1117,13 +1162,6 @@ compound_statement_3
     lbrace .and statement_list .and rbrace;
 
 /*
- * <statement_no_new_scope> ::= <compound_statement_no_new_scope>
- *                            | <simple_statement>
- */
-statement_no_new_scope
-    compound_statement_no_new_scope .or simple_statement;
-
-/*
  * <compound_statement_no_new_scope> ::= "{" "}"
  *                                     | "{" <statement_list> "}"
  */
@@ -1135,6 +1173,7 @@ compound_statement_no_new_scope_2
     lbrace .and rbrace;
 compound_statement_no_new_scope_3
     lbrace .and statement_list .and rbrace;
+
 
 /*
  * <statement_list> ::= <statement>
@@ -1197,8 +1236,7 @@ condition_3
 /*
  * <iteration_statement> ::= "while" "(" <condition> ")" <statement>
  *                         | "do" <statement> "while" "(" <expression> ")" ";"
- *                         | "for" "(" <for_init_statement> <for_rest_statement> ")"
- *                            <statement_no_new_scope>
+ *                         | "for" "(" <for_init_statement> <for_rest_statement> ")" <statement>
  */
 iteration_statement
     iteration_statement_1 .or iteration_statement_2 .or iteration_statement_3;
@@ -1210,7 +1248,7 @@ iteration_statement_2
     expression .and rparen .error RPAREN_EXPECTED .emit OP_END .and semicolon;
 iteration_statement_3
     "for" .emit OP_FOR .and lparen .error LPAREN_EXPECTED .and for_init_statement .and
-    for_rest_statement .and rparen .error RPAREN_EXPECTED .and statement_no_new_scope;
+    for_rest_statement .and rparen .error RPAREN_EXPECTED .and statement;
 
 /*
  * <for_init_statement> ::= <expression_statement>

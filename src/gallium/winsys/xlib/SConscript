@@ -1,0 +1,58 @@
+#######################################################################
+# SConscript for xlib winsys
+
+Import('*')
+
+if env['platform'] == 'linux' \
+        and 'mesa' in env['statetrackers'] \
+        and ('softpipe' or 'i915simple' or 'trace') in env['drivers'] \
+        and not env['dri']:
+
+    env = env.Clone()
+
+    env.Append(CPPPATH = [
+        '#/src/mesa',
+        '#/src/mesa/main',
+        '#src/gallium/state_trackers/glx/xlib',
+    ])
+
+    env.Append(CPPDEFINES = ['USE_XSHM'])
+
+    sources = [
+        'xlib.c',
+    ]
+
+    drivers = []
+        
+    if 'softpipe' in env['drivers']:
+        env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
+        sources += ['xlib_softpipe.c']
+        drivers += [softpipe]
+
+    if 'i965simple' in env['drivers']:
+        env.Append(CPPDEFINES = 'GALLIUM_I965SIMPLE')
+        sources += [
+            'xlib_brw_aub.c',
+            'xlib_brw_context.c',
+            'xlib_brw_screen.c',
+        ]
+        drivers += [i965simple]
+        
+    if 'cell' in env['drivers']:
+        env.Append(CPPDEFINES = 'GALLIUM_CELL')
+        sources += ['xlib_cell.c']
+        drivers += [cell]
+
+    if 'trace' in env['drivers']:
+        env.Append(CPPDEFINES = 'GALLIUM_TRACE')
+        sources += ['xlib_trace.c']
+        drivers += [trace]
+
+    # TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
+    libgl = env.SharedLibrary(
+        target ='GL',
+        source = sources,
+        LIBS = st_xlib + glapi + mesa + drivers + auxiliaries + env['LIBS'],
+    )
+
+    env.InstallSharedLibrary(libgl, version=(1, 5))

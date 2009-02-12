@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.2
+ * Version:  7.3
  *
  * Copyright (C) 2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -76,50 +77,34 @@ link_error(struct gl_shader_program *shProg, const char *msg)
 
 
 /**
+ * Check if the given bit is either set or clear in both bitfields.
+ */
+static GLboolean
+bits_agree(GLbitfield flags1, GLbitfield flags2, GLbitfield bit)
+{
+   return (flags1 & bit) == (flags2 & bit);
+}
+
+
+/**
  * Linking varying vars involves rearranging varying vars so that the
  * vertex program's output varyings matches the order of the fragment
  * program's input varyings.
+ * We'll then rewrite instructions to replace PROGRAM_VARYING with either
+ * PROGRAM_INPUT or PROGRAM_OUTPUT depending on whether it's a vertex or
+ * fragment shader.
+ * This is also where we set program Input/OutputFlags to indicate
+ * which inputs are centroid-sampled, invariant, etc.
  */
 static GLboolean
 link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
 {
    GLuint *map, i, firstVarying, newFile;
+   GLbitfield *inOutFlags;
 
    map = (GLuint *) malloc(prog->Varying->NumParameters * sizeof(GLuint));
    if (!map)
       return GL_FALSE;
-
-   for (i = 0; i < prog->Varying->NumParameters; i++) {
-      /* see if this varying is in the linked varying list */
-      const struct gl_program_parameter *var = prog->Varying->Parameters + i;
-      GLint j = _mesa_lookup_parameter_index(shProg->Varying, -1, var->Name);
-      if (j >= 0) {
-         /* already in list, check size */
-         if (var->Size != shProg->Varying->Parameters[j].Size) {
-            /* error */
-            link_error(shProg, "mismatched varying variable types");
-            return GL_FALSE;
-         }
-      }
-      else {
-         /* not already in linked list */
-         j = _mesa_add_varying(shProg->Varying, var->Name, var->Size);
-      }
-
-      /* map varying[i] to varying[j].
-       * Note: the loop here takes care of arrays or large (sz>4) vars.
-       */
-      {
-         GLint sz = var->Size;
-         while (sz > 0) {
-            /*printf("Link varying from %d to %d\n", i, j);*/
-            map[i++] = j++;
-            sz -= 4;
-         }
-         i--; /* go back one */
-      }
-   }
-
 
    /* Varying variables are treated like other vertex program outputs
     * (and like other fragment program inputs).  The position of the
@@ -129,12 +114,64 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
    if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
       firstVarying = VERT_RESULT_VAR0;
       newFile = PROGRAM_OUTPUT;
+      inOutFlags = prog->OutputFlags;
    }
    else {
       assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
       firstVarying = FRAG_ATTRIB_VAR0;
       newFile = PROGRAM_INPUT;
+      inOutFlags = prog->InputFlags;
    }
+
+   for (i = 0; i < prog->Varying->NumParameters; i++) {
+      /* see if this varying is in the linked varying list */
+      const struct gl_program_parameter *var = prog->Varying->Parameters + i;
+      GLint j = _mesa_lookup_parameter_index(shProg->Varying, -1, var->Name);
+      if (j >= 0) {
+         /* varying is already in list, do some error checking */
+         const struct gl_program_parameter *v =
+            &shProg->Varying->Parameters[j];
+         if (var->Size != v->Size) {
+            link_error(shProg, "mismatched varying variable types");
+            return GL_FALSE;
+         }
+         if (!bits_agree(var->Flags, v->Flags, PROG_PARAM_BIT_CENTROID)) {
+            char msg[100];
+            _mesa_snprintf(msg, sizeof(msg),
+                           "centroid modifier mismatch for '%s'", var->Name);
+            link_error(shProg, msg);
+            return GL_FALSE;
+         }
+         if (!bits_agree(var->Flags, v->Flags, PROG_PARAM_BIT_INVARIANT)) {
+            char msg[100];
+            _mesa_snprintf(msg, sizeof(msg),
+                           "invariant modifier mismatch for '%s'", var->Name);
+            link_error(shProg, msg);
+            return GL_FALSE;
+         }
+      }
+      else {
+         /* not already in linked list */
+         j = _mesa_add_varying(shProg->Varying, var->Name, var->Size,
+                               var->Flags);
+      }
+
+      /* Map varying[i] to varying[j].
+       * Plus, set prog->Input/OutputFlags[] as described above.
+       * Note: the loop here takes care of arrays or large (sz>4) vars.
+       */
+      {
+         GLint sz = var->Size;
+         while (sz > 0) {
+            inOutFlags[firstVarying + j] = var->Flags;
+            /*printf("Link varying from %d to %d\n", i, j);*/
+            map[i++] = j++;
+            sz -= 4;
+         }
+         i--; /* go back one */
+      }
+   }
+
 
    /* OK, now scan the program/shader instructions looking for varying vars,
     * replacing the old index with the new index.
@@ -170,13 +207,27 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
  * Build the shProg->Uniforms list.
  * This is basically a list/index of all uniforms found in either/both of
  * the vertex and fragment shaders.
+ *
+ * About uniforms:
+ * Each uniform has two indexes, one that points into the vertex
+ * program's parameter array and another that points into the fragment
+ * program's parameter array.  When the user changes a uniform's value
+ * we have to change the value in the vertex and/or fragment program's
+ * parameter array.
+ *
+ * This function will be called twice to set up the two uniform->parameter
+ * mappings.
+ *
+ * If a uniform is only present in the vertex program OR fragment program
+ * then the fragment/vertex parameter index, respectively, will be -1.
  */
-static void
-link_uniform_vars(struct gl_shader_program *shProg,
+static GLboolean
+link_uniform_vars(GLcontext *ctx,
+                  struct gl_shader_program *shProg,
                   struct gl_program *prog,
                   GLuint *numSamplers)
 {
-   GLuint samplerMap[MAX_SAMPLERS];
+   GLuint samplerMap[200]; /* max number of samplers declared, not used */
    GLuint i;
 
    for (i = 0; i < prog->Parameters->NumParameters; i++) {
@@ -191,44 +242,64 @@ link_uniform_vars(struct gl_shader_program *shProg,
        * Furthermore, we'll need to fix the state-var's size/datatype info.
        */
 
-      if ((p->Type == PROGRAM_UNIFORM && p->Used) ||
-          p->Type == PROGRAM_SAMPLER) {
+      if ((p->Type == PROGRAM_UNIFORM || p->Type == PROGRAM_SAMPLER)
+          && p->Used) {
+         /* add this uniform, indexing into the target's Parameters list */
          struct gl_uniform *uniform =
             _mesa_append_uniform(shProg->Uniforms, p->Name, prog->Target, i);
          if (uniform)
             uniform->Initialized = p->Initialized;
       }
 
-      if (p->Type == PROGRAM_SAMPLER) {
+      /* The samplerMap[] table we build here is used to remap/re-index
+       * sampler references by TEX instructions.
+       */
+      if (p->Type == PROGRAM_SAMPLER && p->Used) {
          /* Allocate a new sampler index */
-         GLuint sampNum = *numSamplers;
          GLuint oldSampNum = (GLuint) prog->Parameters->ParameterValues[i][0];
-         assert(oldSampNum < MAX_SAMPLERS);
-         samplerMap[oldSampNum] = sampNum;
+         GLuint newSampNum = *numSamplers;
+         if (newSampNum >= ctx->Const.MaxTextureImageUnits) {
+            char s[100];
+            _mesa_sprintf(s, "Too many texture samplers (%u, max is %u)",
+                          newSampNum, ctx->Const.MaxTextureImageUnits);
+            link_error(shProg, s);
+            return GL_FALSE;
+         }
+         /* save old->new mapping in the table */
+         if (oldSampNum < Elements(samplerMap))
+            samplerMap[oldSampNum] = newSampNum;
+         /* update parameter's sampler index */
+         prog->Parameters->ParameterValues[i][0] = (GLfloat) newSampNum;
          (*numSamplers)++;
       }
    }
 
-
-   /* OK, now scan the program/shader instructions looking for sampler vars,
-    * replacing the old index with the new index.
+   /* OK, now scan the program/shader instructions looking for texture
+    * instructions using sampler vars.  Replace old sampler indexes with
+    * new ones.
     */
    prog->SamplersUsed = 0x0;
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = prog->Instructions + i;
       if (_mesa_is_tex_instruction(inst->Opcode)) {
-         /*
+         const GLint oldSampNum = inst->TexSrcUnit;
+
+#if 0
          printf("====== remap sampler from %d to %d\n",
-                inst->Sampler, map[ inst->Sampler ]);
-         */
+                inst->TexSrcUnit, samplerMap[ inst->TexSrcUnit ]);
+#endif
+
          /* here, texUnit is really samplerUnit */
-         assert(inst->TexSrcUnit < MAX_SAMPLERS);
-         inst->TexSrcUnit = samplerMap[inst->TexSrcUnit];
-         prog->SamplerTargets[inst->TexSrcUnit] = inst->TexSrcTarget;
-         prog->SamplersUsed |= (1 << inst->TexSrcUnit);
+         if (oldSampNum < Elements(samplerMap)) {
+            const GLuint newSampNum = samplerMap[oldSampNum];
+            inst->TexSrcUnit = newSampNum;
+            prog->SamplerTargets[newSampNum] = inst->TexSrcTarget;
+            prog->SamplersUsed |= (1 << newSampNum);
+         }
       }
    }
 
+   return GL_TRUE;
 }
 
 
@@ -247,7 +318,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
 {
    GLint attribMap[MAX_VERTEX_ATTRIBS];
    GLuint i, j;
-   GLbitfield usedAttributes;
+   GLbitfield usedAttributes; /* generics only, not legacy attributes */
 
    assert(origProg != linkedProg);
    assert(origProg->Target == GL_VERTEX_PROGRAM_ARB);
@@ -269,6 +340,15 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
    for (i = 0; i < shProg->Attributes->NumParameters; i++) {
       GLint attr = shProg->Attributes->Parameters[i].StateIndexes[0];
       usedAttributes |= (1 << attr);
+   }
+
+   /* If gl_Vertex is used, that actually counts against the limit
+    * on generic vertex attributes.  This avoids the ambiguity of
+    * whether glVertexAttrib4fv(0, v) sets legacy attribute 0 (vert pos)
+    * or generic attribute[0].  If gl_Vertex is used, we want the former.
+    */
+   if (origProg->InputsRead & VERT_BIT_POS) {
+      usedAttributes |= 0x1;
    }
 
    /* initialize the generic attribute map entries to -1 */
@@ -313,7 +393,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
                    * Start at 1 since generic attribute 0 always aliases
                    * glVertex/position.
                    */
-                  for (attr = 1; attr < MAX_VERTEX_ATTRIBS; attr++) {
+                  for (attr = 0; attr < MAX_VERTEX_ATTRIBS; attr++) {
                      if (((1 << attr) & usedAttributes) == 0)
                         break;
                   }
@@ -422,7 +502,6 @@ _slang_update_inputs_outputs(struct gl_program *prog)
          maxAddrReg = MAX2(maxAddrReg, inst->DstReg.Index + 1);
       }
    }
-
    prog->NumAddressRegs = maxAddrReg;
 }
 
@@ -524,10 +603,18 @@ _slang_link(GLcontext *ctx,
    }
 
    /* link uniform vars */
-   if (shProg->VertexProgram)
-      link_uniform_vars(shProg, &shProg->VertexProgram->Base, &numSamplers);
-   if (shProg->FragmentProgram)
-      link_uniform_vars(shProg, &shProg->FragmentProgram->Base, &numSamplers);
+   if (shProg->VertexProgram) {
+      if (!link_uniform_vars(ctx, shProg, &shProg->VertexProgram->Base,
+                             &numSamplers)) {
+         return;
+      }
+   }
+   if (shProg->FragmentProgram) {
+      if (!link_uniform_vars(ctx, shProg, &shProg->FragmentProgram->Base,
+                             &numSamplers)) {
+         return;
+      }
+   }
 
    /*_mesa_print_uniforms(shProg->Uniforms);*/
 
@@ -568,6 +655,17 @@ _slang_link(GLcontext *ctx,
       }         
    }
 
+   /* check that gl_FragColor and gl_FragData are not both written to */
+   if (shProg->FragmentProgram) {
+      GLbitfield outputsWritten = shProg->FragmentProgram->Base.OutputsWritten;
+      if ((outputsWritten & ((1 << FRAG_RESULT_COLR))) &&
+          (outputsWritten >= (1 << FRAG_RESULT_DATA0))) {
+         link_error(shProg, "Fragment program cannot write both gl_FragColor"
+                    " and gl_FragData[].\n");
+         return;
+      }         
+   }
+
 
    if (fragProg && shProg->FragmentProgram) {
       /* Compute initial program's TexturesUsed info */
@@ -576,12 +674,12 @@ _slang_link(GLcontext *ctx,
       /* notify driver that a new fragment program has been compiled/linked */
       ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
                                       &shProg->FragmentProgram->Base);
-      if (MESA_VERBOSE & VERBOSE_GLSL_DUMP) {
-         printf("Mesa original fragment program:\n");
+      if (ctx->Shader.Flags & GLSL_DUMP) {
+         _mesa_printf("Mesa pre-link fragment program:\n");
          _mesa_print_program(&fragProg->Base);
          _mesa_print_program_parameters(ctx, &fragProg->Base);
 
-         printf("Mesa post-link fragment program:\n");
+         _mesa_printf("Mesa post-link fragment program:\n");
          _mesa_print_program(&shProg->FragmentProgram->Base);
          _mesa_print_program_parameters(ctx, &shProg->FragmentProgram->Base);
       }
@@ -594,14 +692,22 @@ _slang_link(GLcontext *ctx,
       /* notify driver that a new vertex program has been compiled/linked */
       ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
                                       &shProg->VertexProgram->Base);
-      if (MESA_VERBOSE & VERBOSE_GLSL_DUMP) {
-         printf("Mesa original vertex program:\n");
+      if (ctx->Shader.Flags & GLSL_DUMP) {
+         _mesa_printf("Mesa pre-link vertex program:\n");
          _mesa_print_program(&vertProg->Base);
          _mesa_print_program_parameters(ctx, &vertProg->Base);
 
-         printf("Mesa post-link vertex program:\n");
+         _mesa_printf("Mesa post-link vertex program:\n");
          _mesa_print_program(&shProg->VertexProgram->Base);
          _mesa_print_program_parameters(ctx, &shProg->VertexProgram->Base);
+      }
+   }
+
+   if (ctx->Shader.Flags & GLSL_DUMP) {
+      _mesa_printf("Varying vars:\n");
+      _mesa_print_parameter_list(shProg->Varying);
+      if (shProg->InfoLog) {
+         _mesa_printf("Info Log: %s\n", shProg->InfoLog);
       }
    }
 

@@ -45,6 +45,7 @@
                    counter             (true | false) "false"
                    count_scale         NMTOKEN "1"
                    output              (true | false) "false"
+                   padding             (true | false) "false"
                    img_width           NMTOKEN #IMPLIED
                    img_height          NMTOKEN #IMPLIED
                    img_depth           NMTOKEN #IMPLIED

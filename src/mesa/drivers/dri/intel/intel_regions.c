@@ -152,7 +152,7 @@ void
 intel_region_reference(struct intel_region **dst, struct intel_region *src)
 {
    if (src)
-      DBG("%s %d\n", __FUNCTION__, src->refcount);
+      DBG("%s %p %d\n", __FUNCTION__, src, src->refcount);
 
    assert(*dst == NULL);
    if (src) {
@@ -169,7 +169,7 @@ intel_region_release(struct intel_region **region_handle)
    if (region == NULL)
       return;
 
-   DBG("%s %d\n", __FUNCTION__, region->refcount - 1);
+   DBG("%s %p %d\n", __FUNCTION__, region, region->refcount - 1);
 
    ASSERT(region->refcount > 0);
    region->refcount--;
@@ -549,15 +549,6 @@ intel_recreate_static_regions(struct intel_context *intel)
       intel_recreate_static(intel, "back",
 			    intel->back_region,
 			    &intelScreen->back);
-
-#ifdef I915
-   if (intelScreen->third.handle) {
-      intel->third_region =
-	 intel_recreate_static(intel, "third",
-			       intel->third_region,
-			       &intelScreen->third);
-   }
-#endif /* I915 */
 
    /* Still assumes front.cpp == depth.cpp.  We can kill this when we move to
     * private buffers.

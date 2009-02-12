@@ -1,0 +1,9 @@
+Import('*')
+
+sct = env.ConvenienceLibrary(
+	target = 'sct',
+	source = [
+		'sct.c'
+	])
+
+auxiliaries.insert(0, sct)

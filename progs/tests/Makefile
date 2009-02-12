@@ -26,10 +26,13 @@ SOURCES = \
 	arraytexture.c \
 	blendminmax.c \
 	blendsquare.c \
+	blendxor.c \
 	bufferobj.c \
 	bug_3050.c \
 	bug_3101.c \
 	bug_3195.c \
+	bug_texstore_i8.c \
+	calibrate_rast.c \
 	copypixrate.c \
 	crossbar.c \
 	cva.c \
@@ -40,6 +43,7 @@ SOURCES = \
 	fbotest1.c \
 	fbotest2.c \
 	fbotexture.c \
+	fillrate.c \
 	fog.c \
 	fogcoord.c \
 	fptest1.c \
@@ -52,20 +56,24 @@ SOURCES = \
 	manytex.c \
 	minmag.c \
 	mipmap_limits.c \
+	mipmap_view.c \
 	multipal.c \
 	no_s3tc.c \
 	packedpixels.c \
 	pbo.c \
 	prog_parameter.c \
 	projtex.c \
+	quads.c \
 	random.c \
 	readrate.c \
+	rubberband.c \
 	seccolor.c \
 	shader_api.c \
 	sharedtex.c \
 	stencil_twoside.c \
 	stencilwrap.c \
 	stencil_wrap.c \
+	subtex \
 	subtexrate.c \
 	tex1d.c \
 	texcompress2.c \
@@ -85,6 +93,8 @@ SOURCES = \
 	vpwarpmesh.c \
 	yuvrect.c \
 	yuvsquare.c \
+	zcomp.c \
+	zdrawpix.c \
 	zreaddraw.c
 
 PROGS = $(SOURCES:%.c=%)
@@ -109,13 +119,13 @@ clean:
 .SUFFIXES: .c
 
 .c:
-	$(CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
+	$(APP_CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
 
 .c.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 .S.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
 
 # auto code generation
 getprocaddress: getprocaddress.c getproclist.h
@@ -124,44 +134,66 @@ getproclist.h: $(TOP)/src/mesa/glapi/gl_API.xml getprocaddress.c getprocaddress.
 	python getprocaddress.py > getproclist.h
 
 arraytexture: arraytexture.o readtex.o
-	$(CC) $(CFLAGS) arraytexture.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) arraytexture.o readtex.o $(LIBS) -o $@
 
 arraytexture.o: arraytexture.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) arraytexture.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) arraytexture.c -o $@
 
 afsmultiarb: afsmultiarb.o readtex.o
-	$(CC) $(CFLAGS) $(LDFLAGS) afsmultiarb.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) afsmultiarb.o readtex.o $(LIBS) -o $@
 
 afsmultiarb.o: afsmultiarb.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) afsmultiarb.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) afsmultiarb.c -o $@
 
 drawbuffers: drawbuffers.o
-	$(CC) $(CFLAGS) $(LDFLAGS) drawbuffers.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) drawbuffers.o $(LIBS) -o $@
 
 drawbuffers.o: drawbuffers.c extfuncs.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) drawbuffers.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) drawbuffers.c -o $@
 
 texrect: texrect.o readtex.o
-	$(CC) $(CFLAGS) $(LDFLAGS) texrect.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) texrect.o readtex.o $(LIBS) -o $@
 
 texrect.o: texrect.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) texrect.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) texrect.c -o $@
 
 bug_3195: bug_3195.o readtex.o
-	$(CC) $(CFLAGS) $(LDFLAGS) bug_3195.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) bug_3195.o readtex.o $(LIBS) -o $@
 
 bug_3195.o: bug_3195.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) bug_3195.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) bug_3195.c -o $@
 
 invert: invert.o readtex.o
-	$(CC) $(CFLAGS) $(LDFLAGS) invert.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) invert.o readtex.o $(LIBS) -o $@
 
 invert.o: invert.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) invert.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) invert.c -o $@
+
+mipmap_view: mipmap_view.o readtex.o
+	$(APP_CC) $(CFLAGS) mipmap_view.o readtex.o $(LIBS) -o $@
+
+mipmap_view.o: mipmap_view.c readtex.h
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+
+fillrate: fillrate.o readtex.o
+	$(APP_CC) $(CFLAGS) fillrate.o readtex.o $(LIBS) -o $@
+
+fillrate.o: fillrate.c readtex.h
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+
+
+
+floattex: floattex.o readtex.o shaderutil.o
+	$(CC) $(CFLAGS) $(LDFLAGS) floattex.o readtex.o shaderutil.o $(LIBS) -o $@
+
+floattex.o: floattex.c readtex.h shaderutil.h
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) floattex.c -o $@
+
 
 readtex.o: readtex.c
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) readtex.c -o $@
-
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) readtex.c -o $@
 
 readtex.h: $(TOP)/progs/util/readtex.h
 	ln -s $(TOP)/progs/util/readtex.h .
@@ -169,8 +201,21 @@ readtex.h: $(TOP)/progs/util/readtex.h
 readtex.c: $(TOP)/progs/util/readtex.c
 	ln -s $(TOP)/progs/util/readtex.c .
 
+
+
 extfuncs.h: $(TOP)/progs/util/extfuncs.h
 	ln -s $(TOP)/progs/util/extfuncs.h .
+
+
+
+shaderutil.c: $(TOP)/progs/util/shaderutil.c
+	cp $< .
+
+shaderutil.h: $(TOP)/progs/util/shaderutil.h
+	cp $< .
+
+shaderutil.o: shaderutil.c shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) shaderutil.c
 
 
 

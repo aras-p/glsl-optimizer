@@ -830,7 +830,7 @@ _swrast_DrawPixels( GLcontext *ctx,
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   RENDER_START(swrast,ctx);
+   swrast_render_start(ctx);
 
    if (ctx->NewState)
       _mesa_update_state(ctx);
@@ -840,7 +840,7 @@ _swrast_DrawPixels( GLcontext *ctx,
 
     pixels = _mesa_map_drawpix_pbo(ctx, unpack, pixels);
     if (!pixels) {
-       RENDER_FINISH(swrast,ctx);
+       swrast_render_finish(ctx);
        return;
     }
 
@@ -879,9 +879,9 @@ _swrast_DrawPixels( GLcontext *ctx,
       /* don't return yet, clean-up */
    }
 
-   RENDER_FINISH(swrast,ctx);
+   swrast_render_finish(ctx);
 
-   _mesa_unmap_drapix_pbo(ctx, unpack);
+   _mesa_unmap_drawpix_pbo(ctx, unpack);
 }
 
 
@@ -904,7 +904,7 @@ _swrast_DrawDepthPixelsMESA( GLcontext *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   RENDER_START(swrast,ctx);
+   swrast_render_start(ctx);
 
    switch (colorFormat) {
    case GL_COLOR_INDEX:
@@ -933,6 +933,6 @@ _swrast_DrawDepthPixelsMESA( GLcontext *ctx,
       _mesa_problem(ctx, "unexpected format in glDrawDepthPixelsMESA");
    }
 
-   RENDER_FINISH(swrast,ctx);
+   swrast_render_finish(ctx);
 }
 #endif

@@ -88,6 +88,29 @@ static void free_space(GLcontext *ctx)
 } while (0)
 
 
+/**
+ * Convert array of BGRA/GLubyte[4] values to RGBA/float[4]
+ * \param ptr  input/ubyte array
+ * \param fptr  output/float array
+ */
+static void
+convert_bgra_to_float(const struct gl_client_array *input,
+                      const GLubyte *ptr, GLfloat *fptr,
+                      GLuint count )
+{
+   GLuint i;
+   assert(input->Normalized);
+   assert(input->Size == 4);
+   for (i = 0; i < count; i++) {
+      const GLubyte *in = (GLubyte *) ptr;  /* in is in BGRA order */
+      *fptr++ = UBYTE_TO_FLOAT(in[2]);  /* red */
+      *fptr++ = UBYTE_TO_FLOAT(in[1]);  /* green */
+      *fptr++ = UBYTE_TO_FLOAT(in[0]);  /* blue */
+      *fptr++ = UBYTE_TO_FLOAT(in[3]);  /* alpha */
+      ptr += input->StrideB;
+   }
+}
+
 
 /* Adjust pointer to point at first requested element, convert to
  * floating point, populate VB->AttribPtr[].
@@ -112,7 +135,13 @@ static void _tnl_import_array( GLcontext *ctx,
 	 CONVERT(GLbyte, BYTE_TO_FLOAT); 
 	 break;
       case GL_UNSIGNED_BYTE: 
-	 CONVERT(GLubyte, UBYTE_TO_FLOAT); 
+         if (input->Format == GL_BGRA) {
+            /* See GL_EXT_vertex_array_bgra */
+            convert_bgra_to_float(input, ptr, fptr, count);
+         }
+         else {
+            CONVERT(GLubyte, UBYTE_TO_FLOAT); 
+         }
 	 break;
       case GL_SHORT: 
 	 CONVERT(GLshort, SHORT_TO_FLOAT); 

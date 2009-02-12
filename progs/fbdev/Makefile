@@ -42,6 +42,7 @@ clean:
 
 
 depend: $(SOURCES)
+	rm -f depend
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(SOURCES) > /dev/null 
 

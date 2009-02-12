@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.3
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -35,6 +35,7 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/texformat.h"
+#include "shader/prog_instruction.h"
 
 #include "s_aatriangle.h"
 #include "s_context.h"
@@ -263,6 +264,7 @@ affine_span(GLcontext *ctx, SWspan *span,
             struct affine_info *info)
 {
    GLchan sample[4];  /* the filtered texture sample */
+   const GLuint texEnableSave = ctx->Texture._EnabledUnits;
 
    /* Instead of defining a function for each mode, a test is done
     * between the outer and inner loops. This is to reduce code size
@@ -392,6 +394,9 @@ affine_span(GLcontext *ctx, SWspan *span,
    GLuint i;
    GLchan *dest = span->array->rgba[0];
 
+   /* Disable tex units so they're not re-applied in swrast_write_rgba_span */
+   ctx->Texture._EnabledUnits = 0x0;
+
    span->intTex[0] -= FIXED_HALF;
    span->intTex[1] -= FIXED_HALF;
    switch (info->filter) {
@@ -493,7 +498,11 @@ affine_span(GLcontext *ctx, SWspan *span,
    }
    span->interpMask &= ~SPAN_RGBA;
    ASSERT(span->arrayMask & SPAN_RGBA);
+
    _swrast_write_rgba_span(ctx, span);
+
+   /* re-enable texture units */
+   ctx->Texture._EnabledUnits = texEnableSave;
 
 #undef SPAN_NEAREST
 #undef SPAN_LINEAR
@@ -1055,6 +1064,7 @@ _swrast_choose_triangle( GLcontext *ctx )
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
              && texObj2D->WrapS == GL_REPEAT
              && texObj2D->WrapT == GL_REPEAT
+             && texObj2D->_Swizzle == SWIZZLE_NOOP
              && texImg->_IsPowerOfTwo
              && texImg->Border == 0
              && texImg->Width == texImg->RowStride
@@ -1062,7 +1072,8 @@ _swrast_choose_triangle( GLcontext *ctx )
              && minFilter == magFilter
              && ctx->Light.Model.ColorControl == GL_SINGLE_COLOR
              && !swrast->_FogEnabled
-             && ctx->Texture.Unit[0].EnvMode != GL_COMBINE_EXT) {
+             && ctx->Texture.Unit[0].EnvMode != GL_COMBINE_EXT
+             && ctx->Texture.Unit[0].EnvMode != GL_COMBINE4_NV) {
 	    if (ctx->Hint.PerspectiveCorrection==GL_FASTEST) {
 	       if (minFilter == GL_NEAREST
 		   && format == MESA_FORMAT_RGB

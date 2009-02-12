@@ -42,7 +42,7 @@ static GLfloat Xrot = 0, Yrot = -30, Zrot = 0;
 static GLboolean Anim = GL_TRUE;
 static GLint Bias = 0, BiasStepSign = +1; /* ints avoid fp precision problem */
 static GLint BiasMin = -400, BiasMax = 400;
-
+static int win = 0;
 
 
 static void
@@ -172,6 +172,7 @@ static void Key( unsigned char key, int x, int y )
          Bias = 100.0 * (key - '0');
          break;
       case 27:
+         glutDestroyWindow(win);
          exit(0);
          break;
    }
@@ -281,7 +282,7 @@ int main( int argc, char *argv[] )
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( 350, 350 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
-   glutCreateWindow(argv[0]);
+   win = glutCreateWindow(argv[0]);
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutSpecialFunc( SpecialKey );

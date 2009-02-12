@@ -1,0 +1,5 @@
+!!ARBfp1.0
+TEMP R0;
+MUL R0, fragment.color, {3.0}.x;
+RSQ result.color, R0.x;
+END

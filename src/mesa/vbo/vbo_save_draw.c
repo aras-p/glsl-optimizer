@@ -64,18 +64,26 @@ static void _playback_copy_to_current( GLcontext *ctx,
    for (i = VBO_ATTRIB_POS+1 ; i < VBO_ATTRIB_MAX ; i++) {
       if (node->attrsz[i]) {
 	 GLfloat *current = (GLfloat *)vbo->currval[i].Ptr;
+         GLfloat tmp[4];
 
-	 COPY_CLEAN_4V(current, 
-		       node->attrsz[i], 
-		       data);
+         COPY_CLEAN_4V(tmp, 
+                       node->attrsz[i], 
+                       data);
+         
+         if (memcmp(current, tmp, 4 * sizeof(GLfloat)) != 0)
+         {
+            memcpy(current, tmp, 4 * sizeof(GLfloat));
 
-	 vbo->currval[i].Size = node->attrsz[i];
+            vbo->currval[i].Size = node->attrsz[i];
+
+            if (i >= VBO_ATTRIB_FIRST_MATERIAL &&
+                i <= VBO_ATTRIB_LAST_MATERIAL)
+               ctx->NewState |= _NEW_LIGHT;
+
+            ctx->NewState |= _NEW_CURRENT_ATTRIB;
+         }
 
 	 data += node->attrsz[i];
-
-	 if (i >= VBO_ATTRIB_FIRST_MATERIAL &&
-	     i <= VBO_ATTRIB_LAST_MATERIAL)
-	    ctx->NewState |= _NEW_LIGHT;
       }
    }
 
@@ -110,6 +118,10 @@ static void vbo_bind_vertex_list( GLcontext *ctx,
    GLuint data = node->buffer_offset;
    const GLuint *map;
    GLuint attr;
+   GLubyte node_attrsz[VBO_ATTRIB_MAX];  /* copy of node->attrsz[] */
+   GLbitfield varying_inputs = 0x0;
+
+   memcpy(node_attrsz, node->attrsz, sizeof(node->attrsz));
 
    /* Install the default (ie Current) attributes first, then overlay
     * all active ones.
@@ -135,13 +147,26 @@ static void vbo_bind_vertex_list( GLcontext *ctx,
          save->inputs[attr + 16] = &vbo->generic_currval[attr];
       }
       map = vbo->map_vp_arb;
+
+      /* check if VERT_ATTRIB_POS is not read but VERT_BIT_GENERIC0 is read.
+       * In that case we effectively need to route the data from
+       * glVertexAttrib(0, val) calls to feed into the GENERIC0 input.
+       */
+      if ((ctx->VertexProgram._Current->Base.InputsRead & VERT_BIT_POS) == 0 &&
+          (ctx->VertexProgram._Current->Base.InputsRead & VERT_BIT_GENERIC0)) {
+         save->inputs[16] = save->inputs[0];
+         node_attrsz[16] = node_attrsz[0];
+         node_attrsz[0] = 0;
+      }
       break;
+   default:
+      assert(0);
    }
 
    for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
       GLuint src = map[attr];
 
-      if (node->attrsz[src]) {
+      if (node_attrsz[src]) {
          /* override the default array set above */
          save->inputs[attr] = &arrays[attr];
 
@@ -150,6 +175,7 @@ static void vbo_bind_vertex_list( GLcontext *ctx,
 	 arrays[attr].StrideB = node->vertex_size * sizeof(GLfloat);
 	 arrays[attr].Stride = node->vertex_size * sizeof(GLfloat);
 	 arrays[attr].Type = GL_FLOAT;
+         arrays[attr].Format = GL_RGBA;
 	 arrays[attr].Enabled = 1;
          _mesa_reference_buffer_object(ctx,
                                        &arrays[attr].BufferObj,
@@ -159,8 +185,11 @@ static void vbo_bind_vertex_list( GLcontext *ctx,
 	 assert(arrays[attr].BufferObj->Name);
 
 	 data += node->attrsz[src] * sizeof(GLfloat);
+         varying_inputs |= 1<<attr;
       }
    }
+
+   _mesa_set_varying_vp_inputs( ctx, varying_inputs );
 }
 
 static void vbo_save_loopback_vertex_list( GLcontext *ctx,
@@ -228,6 +257,11 @@ void vbo_save_playback_vertex_list( GLcontext *ctx, void *data )
       }
 
       vbo_bind_vertex_list( ctx, node );
+
+      /* Again...
+       */
+      if (ctx->NewState)
+	 _mesa_update_state( ctx );
 
       vbo_context(ctx)->draw_prims( ctx, 
 				    save->inputs, 

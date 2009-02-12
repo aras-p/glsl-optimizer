@@ -880,5 +880,12 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 
    /* GL_ATI_separate_stencil */
    SET_StencilFuncSeparateATI(exec, _mesa_StencilFuncSeparateATI);
+
+#if FEATURE_ARB_framebuffer_object
+   /* The ARB_fbo functions are the union of
+    * GL_EXT_fbo, GL_EXT_framebuffer_blit, GL_EXT_texture_array
+    */
+   SET_RenderbufferStorageMultisample(exec, _mesa_RenderbufferStorageMultisample);
+#endif
 }
 

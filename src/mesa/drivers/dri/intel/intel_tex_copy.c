@@ -98,7 +98,9 @@ do_copy_texsubimage(struct intel_context *intel,
       get_teximage_source(intel, internalFormat);
 
    if (!intelImage->mt || !src) {
-      DBG("%s fail %p %p\n", __FUNCTION__, intelImage->mt, src);
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "%s fail %p %p\n",
+		 __FUNCTION__, intelImage->mt, src);
       return GL_FALSE;
    }
 
@@ -110,56 +112,53 @@ do_copy_texsubimage(struct intel_context *intel,
                                                        intelImage->level);
       const GLint orig_x = x;
       const GLint orig_y = y;
-      const struct gl_framebuffer *fb = ctx->DrawBuffer;
+      GLshort src_pitch;
 
-      if (_mesa_clip_to_region(fb->_Xmin, fb->_Ymin, fb->_Xmax, fb->_Ymax,
-                               &x, &y, &width, &height)) {
-         /* Update dst for clipped src.  Need to also clip the source rect.
-          */
-         dstx += x - orig_x;
-         dsty += y - orig_y;
+      /* Update dst for clipped src.  Need to also clip the source rect. */
+      dstx += x - orig_x;
+      dsty += y - orig_y;
 
-         if (ctx->ReadBuffer->Name == 0) {
-            /* reading from a window, adjust x, y */
-            __DRIdrawablePrivate *dPriv = intel->driDrawable;
-            GLuint window_y;
-            /* window_y = position of window on screen if y=0=bottom */
-            window_y = intel->intelScreen->height - (dPriv->y + dPriv->h);
-            y = window_y + y;
-            x += dPriv->x;
-         }
-         else {
-            /* reading from a FBO */
-            /* invert Y */
-            y = ctx->ReadBuffer->Height - y - 1;
-         }
+      /* image_offset may be non-page-aligned, but that's illegal for tiling. */
+      assert(intelImage->mt->region->tiling == I915_TILING_NONE);
 
+      if (ctx->ReadBuffer->Name == 0) {
+	 /* reading from a window, adjust x, y */
+	 __DRIdrawablePrivate *dPriv = intel->driDrawable;
+	 y = dPriv->y + (dPriv->h - (y + height));
+	 x += dPriv->x;
 
-         /* A bit of fiddling to get the blitter to work with -ve
-          * pitches.  But we get a nice inverted blit this way, so it's
-          * worth it:
-          */
-         intelEmitCopyBlit(intel,
-                           intelImage->mt->cpp,
-                           -src->pitch,
-                           src->buffer,
-                           src->height * src->pitch * src->cpp,
-			   src->tiling,
-                           intelImage->mt->pitch,
-                           intelImage->mt->region->buffer,
-                           image_offset,
-			   intelImage->mt->region->tiling,
-                           x, y + height, dstx, dsty, width, height,
-			   GL_COPY); /* ? */
+	 /* Invert the data coming from the source rectangle due to GL
+	  * and hardware disagreeing on where y=0 is.
+	  *
+	  * It appears that our offsets and pitches get mangled
+	  * appropriately by the hardware, and we don't need to adjust them
+	  * on our own.
+	  */
+	 src_pitch = -src->pitch;
+      } else {
+	 /* reading from a FBO, y is already oriented the way we like */
+	 src_pitch = src->pitch;
       }
-   }
 
+      intelEmitCopyBlit(intel,
+			intelImage->mt->cpp,
+			src_pitch,
+			src->buffer,
+			0,
+			src->tiling,
+			intelImage->mt->pitch,
+			intelImage->mt->region->buffer,
+			image_offset,
+			intelImage->mt->region->tiling,
+			x, y, dstx, dsty, width, height,
+			GL_COPY);
+   }
 
    UNLOCK_HARDWARE(intel);
 
    /* GL_SGIS_generate_mipmap */
    if (intelImage->level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      intel_generate_mipmap(ctx, target, texObj);
+      ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
 
    return GL_TRUE;
@@ -180,6 +179,7 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
       _mesa_select_tex_object(ctx, texUnit, target);
    struct gl_texture_image *texImage =
       _mesa_select_tex_image(ctx, texObj, target, level);
+   int srcx, srcy, dstx, dsty, height;
 
    if (border)
       goto fail;
@@ -191,10 +191,20 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
                           width, border,
                           GL_RGBA, CHAN_TYPE, NULL,
                           &ctx->DefaultPacking, texObj, texImage);
+   srcx = x;
+   srcy = y;
+   dstx = 0;
+   dsty = 0;
+   height = 1;
+   if (!_mesa_clip_copytexsubimage(ctx,
+				   &dstx, &dsty,
+				   &srcx, &srcy,
+				   &width, &height))
+      return;
 
    if (!do_copy_texsubimage(intel_context(ctx), target,
                             intel_texture_image(texImage),
-                            internalFormat, 0, 0, x, y, width, 1))
+                            internalFormat, 0, 0, x, y, width, height))
       goto fail;
 
    return;
@@ -216,9 +226,20 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       _mesa_select_tex_object(ctx, texUnit, target);
    struct gl_texture_image *texImage =
       _mesa_select_tex_image(ctx, texObj, target, level);
+   int srcx, srcy, dstx, dsty;
 
    if (border)
       goto fail;
+
+   srcx = x;
+   srcy = y;
+   dstx = 0;
+   dsty = 0;
+   if (!_mesa_clip_copytexsubimage(ctx,
+				   &dstx, &dsty,
+				   &srcx, &srcy,
+				   &width, &height))
+      return;
 
    /* Setup or redefine the texture object, mipmap tree and texture
     * image.  Don't populate yet.  

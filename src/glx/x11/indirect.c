@@ -5397,8 +5397,7 @@ __glx_TexSubImage_1D2D(unsigned opcode, unsigned dim, GLenum target,
             (void) memcpy((void *) (gc->pc + 44), (void *) (&height), 4);
             (void) memcpy((void *) (gc->pc + 48), (void *) (&format), 4);
             (void) memcpy((void *) (gc->pc + 52), (void *) (&type), 4);
-            (void) memcpy((void *) (gc->pc + 56),
-                          (void *) ((pixels == NULL) ? one : zero), 4);
+            (void) memset((void *) (gc->pc + 56), 0, 4);
             if (compsize > 0) {
                 (*gc->fillImage) (gc, dim, width, height, 1, format, type,
                                   pixels, gc->pc + 60, gc->pc + 4);
@@ -5424,7 +5423,7 @@ __glx_TexSubImage_1D2D(unsigned opcode, unsigned dim, GLenum target,
             (void) memcpy((void *) (pc + 48), (void *) (&height), 4);
             (void) memcpy((void *) (pc + 52), (void *) (&format), 4);
             (void) memcpy((void *) (pc + 56), (void *) (&type), 4);
-            (void) memcpy((void *) (pc + 60), zero, 4);
+            (void) memset((void *) (pc + 60), 0, 4);
             __glXSendLargeImage(gc, compsize, dim, width, height, 1, format,
                                 type, pixels, pc + 64, pc + 8);
         }
@@ -6869,8 +6868,7 @@ __glx_TexSubImage_3D4D(unsigned opcode, unsigned dim, GLenum target,
             (void) memcpy((void *) (gc->pc + 76), (void *) (&extent), 4);
             (void) memcpy((void *) (gc->pc + 80), (void *) (&format), 4);
             (void) memcpy((void *) (gc->pc + 84), (void *) (&type), 4);
-            (void) memcpy((void *) (gc->pc + 88),
-                          (void *) ((pixels == NULL) ? one : zero), 4);
+            (void) memset((void *) (gc->pc + 88), 0, 4);
             if (compsize > 0) {
                 (*gc->fillImage) (gc, dim, width, height, depth, format, type,
                                   pixels, gc->pc + 92, gc->pc + 4);
@@ -6900,7 +6898,7 @@ __glx_TexSubImage_3D4D(unsigned opcode, unsigned dim, GLenum target,
             (void) memcpy((void *) (pc + 80), (void *) (&extent), 4);
             (void) memcpy((void *) (pc + 84), (void *) (&format), 4);
             (void) memcpy((void *) (pc + 88), (void *) (&type), 4);
-            (void) memcpy((void *) (pc + 92), zero, 4);
+            (void) memset((void *) (pc + 92), 0, 4);
             __glXSendLargeImage(gc, compsize, dim, width, height, depth,
                                 format, type, pixels, pc + 96, pc + 8);
         }
@@ -7525,26 +7523,6 @@ __indirect_glGetProgramivARB(GLenum target, GLenum pname, GLint * params)
 
 #define X_GLrop_ProgramEnvParameter4dvARB 4185
 void
-__indirect_glProgramEnvParameter4dARB(GLenum target, GLuint index, GLdouble x,
-                                      GLdouble y, GLdouble z, GLdouble w)
-{
-    __GLXcontext *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 44;
-    emit_header(gc->pc, X_GLrop_ProgramEnvParameter4dvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&x), 8);
-    (void) memcpy((void *) (gc->pc + 20), (void *) (&y), 8);
-    (void) memcpy((void *) (gc->pc + 28), (void *) (&z), 8);
-    (void) memcpy((void *) (gc->pc + 36), (void *) (&w), 8);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_ProgramEnvParameter4dvARB 4185
-void
 __indirect_glProgramEnvParameter4dvARB(GLenum target, GLuint index,
                                        const GLdouble * params)
 {
@@ -7554,26 +7532,6 @@ __indirect_glProgramEnvParameter4dvARB(GLenum target, GLuint index,
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&index), 4);
     (void) memcpy((void *) (gc->pc + 12), (void *) (params), 32);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_ProgramEnvParameter4fvARB 4184
-void
-__indirect_glProgramEnvParameter4fARB(GLenum target, GLuint index, GLfloat x,
-                                      GLfloat y, GLfloat z, GLfloat w)
-{
-    __GLXcontext *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 28;
-    emit_header(gc->pc, X_GLrop_ProgramEnvParameter4fvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&x), 4);
-    (void) memcpy((void *) (gc->pc + 16), (void *) (&y), 4);
-    (void) memcpy((void *) (gc->pc + 20), (void *) (&z), 4);
-    (void) memcpy((void *) (gc->pc + 24), (void *) (&w), 4);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);

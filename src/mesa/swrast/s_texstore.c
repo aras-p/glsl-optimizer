@@ -67,7 +67,6 @@ static GLvoid *
 read_color_image( GLcontext *ctx, GLint x, GLint y, GLenum type,
                   GLsizei width, GLsizei height )
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
    const GLint pixelSize = _mesa_bytes_per_pixel(GL_RGBA, type);
    const GLint stride = width * pixelSize;
@@ -78,7 +77,7 @@ read_color_image( GLcontext *ctx, GLint x, GLint y, GLenum type,
    if (!image)
       return NULL;
 
-   RENDER_START(swrast, ctx);
+   swrast_render_start(ctx);
 
    dst = image;
    for (row = 0; row < height; row++) {
@@ -86,7 +85,7 @@ read_color_image( GLcontext *ctx, GLint x, GLint y, GLenum type,
       dst += stride;
    }
 
-   RENDER_FINISH(swrast, ctx);
+   swrast_render_finish(ctx);
 
    return image;
 }
@@ -101,7 +100,6 @@ read_depth_image( GLcontext *ctx, GLint x, GLint y,
                   GLsizei width, GLsizei height )
 {
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_DepthBuffer;
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint *image, *dst;
    GLint i;
 
@@ -109,7 +107,7 @@ read_depth_image( GLcontext *ctx, GLint x, GLint y,
    if (!image)
       return NULL;
 
-   RENDER_START(swrast, ctx);
+   swrast_render_start(ctx);
 
    dst = image;
    for (i = 0; i < height; i++) {
@@ -117,7 +115,7 @@ read_depth_image( GLcontext *ctx, GLint x, GLint y,
       dst += width;
    }
 
-   RENDER_FINISH(swrast, ctx);
+   swrast_render_finish(ctx);
 
    return image;
 }
@@ -132,7 +130,6 @@ read_depth_stencil_image(GLcontext *ctx, GLint x, GLint y,
 {
    struct gl_renderbuffer *depthRb = ctx->ReadBuffer->_DepthBuffer;
    struct gl_renderbuffer *stencilRb = ctx->ReadBuffer->_StencilBuffer;
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint *image, *dst;
    GLint i;
 
@@ -143,7 +140,7 @@ read_depth_stencil_image(GLcontext *ctx, GLint x, GLint y,
    if (!image)
       return NULL;
 
-   RENDER_START(swrast, ctx);
+   swrast_render_start(ctx);
 
    /* read from depth buffer */
    dst = image;
@@ -205,7 +202,7 @@ read_depth_stencil_image(GLcontext *ctx, GLint x, GLint y,
       dst += width;
    }
 
-   RENDER_FINISH(swrast, ctx);
+   swrast_render_finish(ctx);
 
    return image;
 }

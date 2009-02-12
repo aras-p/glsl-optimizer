@@ -26,7 +26,7 @@
  **************************************************************************/
 
 /**
- * \file ffvertex_prog.
+ * \file ffvertex_prog.c
  *
  * Create a vertex program to execute the current fixed function T&L pipeline.
  * \author Keith Whitwell
@@ -47,17 +47,17 @@
 
 
 struct state_key {
+   unsigned light_color_material_mask:12;
+   unsigned light_material_mask:12;
    unsigned light_global_enabled:1;
    unsigned light_local_viewer:1;
    unsigned light_twoside:1;
    unsigned light_color_material:1;
-   unsigned light_color_material_mask:12;
-   unsigned light_material_mask:12;
    unsigned material_shininess_is_zero:1;
-
    unsigned need_eye_coords:1;
    unsigned normalize:1;
    unsigned rescale_normals:1;
+
    unsigned fog_source_is_depth:1;
    unsigned tnl_do_vertex_fog:1;
    unsigned separate_specular:1;
@@ -66,6 +66,8 @@ struct state_key {
    unsigned point_array:1;
    unsigned texture_enabled_global:1;
    unsigned fragprog_inputs_read:12;
+
+   unsigned varying_vp_inputs;
 
    struct {
       unsigned light_enabled:1;
@@ -98,6 +100,7 @@ static GLuint translate_fog_mode( GLenum mode )
    default: return FOG_NONE;
    }
 }
+
 
 #define TXG_NONE           0
 #define TXG_OBJ_LINEAR     1
@@ -143,6 +146,7 @@ tnl_get_per_vertex_materials(GLcontext *ctx)
    return mask;
 }
 
+
 /**
  * Should fog be computed per-vertex?
  */
@@ -156,6 +160,7 @@ tnl_get_per_vertex_fog(GLcontext *ctx)
    return GL_FALSE;
 #endif
 }
+
 
 static GLboolean check_active_shininess( GLcontext *ctx,
                                          const struct state_key *key,
@@ -174,8 +179,6 @@ static GLboolean check_active_shininess( GLcontext *ctx,
 
    return GL_FALSE;
 }
-     
-
 
 
 static void make_state_key( GLcontext *ctx, struct state_key *key )
@@ -193,6 +196,7 @@ static void make_state_key( GLcontext *ctx, struct state_key *key )
    key->need_eye_coords = ctx->_NeedEyeCoords;
 
    key->fragprog_inputs_read = fp->Base.InputsRead;
+   key->varying_vp_inputs = ctx->varying_vp_inputs;
 
    if (ctx->RenderMode == GL_FEEDBACK) {
       /* make sure the vertprog emits color and tex0 */
@@ -275,7 +279,7 @@ static void make_state_key( GLcontext *ctx, struct state_key *key )
        ctx->Texture._EnabledUnits)
       key->texture_enabled_global = 1;
       
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
 
       if (texUnit->_ReallyEnabled)
@@ -407,10 +411,12 @@ static struct ureg swizzle( struct ureg reg, int x, int y, int z, int w )
    return reg;
 }
 
+
 static struct ureg swizzle1( struct ureg reg, int x )
 {
    return swizzle(reg, x, x, x, x);
 }
+
 
 static struct ureg get_temp( struct tnl_program *p )
 {
@@ -427,12 +433,14 @@ static struct ureg get_temp( struct tnl_program *p )
    return make_ureg(PROGRAM_TEMPORARY, bit-1);
 }
 
+
 static struct ureg reserve_temp( struct tnl_program *p )
 {
    struct ureg temp = get_temp( p );
    p->temp_reserved |= 1<<temp.idx;
    return temp;
 }
+
 
 static void release_temp( struct tnl_program *p, struct ureg reg )
 {
@@ -448,15 +456,48 @@ static void release_temps( struct tnl_program *p )
 }
 
 
+static struct ureg register_param5(struct tnl_program *p, 
+				   GLint s0,
+				   GLint s1,
+				   GLint s2,
+				   GLint s3,
+                                   GLint s4)
+{
+   gl_state_index tokens[STATE_LENGTH];
+   GLint idx;
+   tokens[0] = s0;
+   tokens[1] = s1;
+   tokens[2] = s2;
+   tokens[3] = s3;
+   tokens[4] = s4;
+   idx = _mesa_add_state_reference( p->program->Base.Parameters, tokens );
+   return make_ureg(PROGRAM_STATE_VAR, idx);
+}
+
+
+#define register_param1(p,s0)          register_param5(p,s0,0,0,0,0)
+#define register_param2(p,s0,s1)       register_param5(p,s0,s1,0,0,0)
+#define register_param3(p,s0,s1,s2)    register_param5(p,s0,s1,s2,0,0)
+#define register_param4(p,s0,s1,s2,s3) register_param5(p,s0,s1,s2,s3,0)
+
+
 
 /**
  * \param input  one of VERT_ATTRIB_x tokens.
  */
 static struct ureg register_input( struct tnl_program *p, GLuint input )
 {
-   p->program->Base.InputsRead |= (1<<input);
-   return make_ureg(PROGRAM_INPUT, input);
+   /* Material attribs are passed here as inputs >= 32
+    */
+   if (input >= 32 || (p->state->varying_vp_inputs & (1<<input))) {
+      p->program->Base.InputsRead |= (1<<input);
+      return make_ureg(PROGRAM_INPUT, input);
+   }
+   else {
+      return register_param3( p, STATE_INTERNAL, STATE_CURRENT_ATTRIB, input );
+   }
 }
+
 
 /**
  * \param input  one of VERT_RESULT_x tokens.
@@ -466,6 +507,7 @@ static struct ureg register_output( struct tnl_program *p, GLuint output )
    p->program->Base.OutputsWritten |= (1<<output);
    return make_ureg(PROGRAM_OUTPUT, output);
 }
+
 
 static struct ureg register_const4f( struct tnl_program *p, 
 			      GLfloat s0,
@@ -496,6 +538,7 @@ static GLboolean is_undef( struct ureg reg )
    return reg.file == PROGRAM_UNDEFINED;
 }
 
+
 static struct ureg get_identity_param( struct tnl_program *p )
 {
    if (is_undef(p->identity)) 
@@ -503,31 +546,6 @@ static struct ureg get_identity_param( struct tnl_program *p )
 
    return p->identity;
 }
-
-static struct ureg register_param5(struct tnl_program *p, 
-				   GLint s0,
-				   GLint s1,
-				   GLint s2,
-				   GLint s3,
-                                   GLint s4)
-{
-   gl_state_index tokens[STATE_LENGTH];
-   GLint idx;
-   tokens[0] = s0;
-   tokens[1] = s1;
-   tokens[2] = s2;
-   tokens[3] = s3;
-   tokens[4] = s4;
-   idx = _mesa_add_state_reference( p->program->Base.Parameters, tokens );
-   return make_ureg(PROGRAM_STATE_VAR, idx);
-}
-
-
-#define register_param1(p,s0)          register_param5(p,s0,0,0,0,0)
-#define register_param2(p,s0,s1)       register_param5(p,s0,s1,0,0,0)
-#define register_param3(p,s0,s1,s2)    register_param5(p,s0,s1,s2,0,0)
-#define register_param4(p,s0,s1,s2,s3) register_param5(p,s0,s1,s2,s3,0)
-
 
 static void register_matrix_param5( struct tnl_program *p,
 				    GLint s0, /* modelview, projection, etc */
@@ -561,6 +579,7 @@ static void emit_arg( struct prog_src_register *src,
    ASSERT(src->Index == reg.idx);
 }
 
+
 static void emit_dst( struct prog_dst_register *dst,
 		      struct ureg reg, GLuint mask )
 {
@@ -575,6 +594,7 @@ static void emit_dst( struct prog_dst_register *dst,
    /* Check that bitfield sizes aren't exceeded */
    ASSERT(dst->Index == reg.idx);
 }
+
 
 static void debug_insn( struct prog_instruction *inst, const char *fn,
 			GLuint line )
@@ -686,6 +706,7 @@ static void emit_matrix_transform_vec4( struct tnl_program *p,
    emit_op2(p, OPCODE_DP4, dest, WRITEMASK_W, src, mat[3]);
 }
 
+
 /* This version is much easier to implement if writemasks are not
  * supported natively on the target or (like SSE), the target doesn't
  * have a clean/obvious dotproduct implementation.
@@ -710,6 +731,7 @@ static void emit_transpose_matrix_transform_vec4( struct tnl_program *p,
    if (dest.file != PROGRAM_TEMPORARY)
       release_temp(p, tmp);
 }
+
 
 static void emit_matrix_transform_vec3( struct tnl_program *p,
 					struct ureg dest,
@@ -738,6 +760,7 @@ static void emit_normalize_vec3( struct tnl_program *p,
 #endif
 }
 
+
 static void emit_passthrough( struct tnl_program *p, 
 			      GLuint input,
 			      GLuint output )
@@ -745,6 +768,7 @@ static void emit_passthrough( struct tnl_program *p,
    struct ureg out = register_output(p, output);
    emit_op1(p, OPCODE_MOV, out, 0, register_input(p, input)); 
 }
+
 
 static struct ureg get_eye_position( struct tnl_program *p )
 {
@@ -792,7 +816,6 @@ static struct ureg get_eye_position_z( struct tnl_program *p )
    return p->eye_position_z;
 }
    
-
 
 static struct ureg get_eye_position_normalized( struct tnl_program *p )
 {
@@ -855,7 +878,6 @@ static struct ureg get_transformed_normal( struct tnl_program *p )
 }
 
 
-
 static void build_hpos( struct tnl_program *p )
 {
    struct ureg pos = register_input( p, VERT_ATTRIB_POS ); 
@@ -881,7 +903,9 @@ static GLuint material_attrib( GLuint side, GLuint property )
 	   side);
 }
 
-/* Get a bitmask of which material values vary on a per-vertex basis.
+
+/**
+ * Get a bitmask of which material values vary on a per-vertex basis.
  */
 static void set_material_flags( struct tnl_program *p )
 {
@@ -917,7 +941,9 @@ static struct ureg get_material( struct tnl_program *p, GLuint side,
 				   MAT_BIT_FRONT_AMBIENT | \
 				   MAT_BIT_FRONT_DIFFUSE) << (side))
 
-/* Either return a precalculated constant value or emit code to
+
+/**
+ * Either return a precalculated constant value or emit code to
  * calculate these values dynamically in the case where material calls
  * are present between begin/end pairs.
  *
@@ -959,6 +985,7 @@ static struct ureg get_lightprod( struct tnl_program *p, GLuint light,
    else
       return register_param4(p, STATE_LIGHTPROD, light, side, property);
 }
+
 
 static struct ureg calculate_light_attenuation( struct tnl_program *p,
 						GLuint i, 
@@ -1216,7 +1243,6 @@ static void build_lighting( struct tnl_program *p )
 	    struct ureg res0, res1;
 	    GLuint mask0, mask1;
 
-	    
 	    if (count == nr_lights) {
 	       if (separate) {
 		  mask0 = WRITEMASK_XYZ;
@@ -1236,7 +1262,6 @@ static void build_lighting( struct tnl_program *p )
 	       res0 = _col0;
 	       res1 = _col1;
 	    }
-
 
 	    if (!is_undef(att)) {
                /* light is attenuated by distance */
@@ -1310,7 +1335,6 @@ static void build_lighting( struct tnl_program *p )
 
 	    emit_op3(p, OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _bfc0);
 	    emit_op3(p, OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _bfc1);
-
             /* restore negate flag for next lighting */
             dots = negate(dots);
 
@@ -1385,6 +1409,7 @@ static void build_fog( struct tnl_program *p )
       emit_op1(p, useabs ? OPCODE_ABS : OPCODE_MOV, fog, WRITEMASK_X, input);
    }
 }
+
  
 static void build_reflect_texgen( struct tnl_program *p,
 				  struct ureg dest,
@@ -1403,6 +1428,7 @@ static void build_reflect_texgen( struct tnl_program *p,
 
    release_temp(p, tmp);
 }
+
 
 static void build_sphere_texgen( struct tnl_program *p,
 				 struct ureg dest,
@@ -1451,7 +1477,7 @@ static void build_texture_transform( struct tnl_program *p )
 {
    GLuint i, j;
 
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
 
       if (!(p->state->fragprog_inputs_read & FRAG_BIT_TEX(i)))
 	 continue;
@@ -1514,10 +1540,8 @@ static void build_texture_transform( struct tnl_program *p )
 	       case TXG_NONE:
 		  copy_mask |= WRITEMASK_X << j;
 	       }
-
 	    }
 
-	 
 	    if (sphere_mask) {
 	       build_sphere_texgen(p, out_texgen, sphere_mask);
 	    }
@@ -1600,6 +1624,7 @@ static void build_atten_pointsize( struct tnl_program *p )
    release_temp(p, ut);
 }
 
+
 /**
  * Emit constant point size.
  */
@@ -1609,6 +1634,7 @@ static void build_constant_pointsize( struct tnl_program *p )
    struct ureg out = register_output(p, VERT_RESULT_PSIZ);
    emit_op1(p, OPCODE_MOV, out, WRITEMASK_X, state_size);
 }
+
 
 /**
  * Pass-though per-vertex point size, from user's point size array.

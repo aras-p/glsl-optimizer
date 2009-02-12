@@ -47,20 +47,12 @@ static GLboolean do_check_fallback(struct brw_context *brw)
    GLcontext *ctx = &brw->intel.ctx;
    GLuint i;
 
-   /* BRW_NEW_METAOPS
-    */
-   if (brw->metaops.active)
-      return GL_FALSE;
-
    if (brw->intel.no_rast) {
       DBG("FALLBACK: rasterization disabled\n");
       return GL_TRUE;
    }
 
    /* _NEW_RENDERMODE
-    *
-    * XXX: need to save/restore RenderMode in metaops state, or
-    * somehow move to a new attribs pointer:
     */
    if (ctx->RenderMode != GL_RENDER) {
       DBG("FALLBACK: render mode\n");
@@ -70,7 +62,7 @@ static GLboolean do_check_fallback(struct brw_context *brw)
    /* _NEW_TEXTURE:
     */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[i];
+      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
       if (texUnit->_ReallyEnabled) {
 	 struct intel_texture_object *intelObj = intel_texture_object(texUnit->_Current);
 	 struct gl_texture_image *texImage = intelObj->base.Image[0][intelObj->firstLevel];
@@ -83,7 +75,7 @@ static GLboolean do_check_fallback(struct brw_context *brw)
    
    /* _NEW_STENCIL 
     */
-   if (brw->attribs.Stencil->Enabled && 
+   if (ctx->Stencil.Enabled && 
        !brw->intel.hw_stencil) {
       DBG("FALLBACK: stencil\n");
       return GL_TRUE;
@@ -101,7 +93,7 @@ static void check_fallback(struct brw_context *brw)
 const struct brw_tracked_state brw_check_fallback = {
    .dirty = {
       .mesa = _NEW_BUFFERS | _NEW_RENDERMODE | _NEW_TEXTURE | _NEW_STENCIL,
-      .brw  = BRW_NEW_METAOPS,
+      .brw  = 0,
       .cache = 0
    },
    .prepare = check_fallback

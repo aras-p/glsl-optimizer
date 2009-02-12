@@ -2,6 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2009 VMware, Inc.  All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -38,6 +39,24 @@
 #include "texenvprogram.h"
 
 
+#define MAX_TERMS 4
+
+
+/*
+ * Note on texture units:
+ *
+ * The number of texture units supported by fixed-function fragment
+ * processing is MAX_TEXTURE_COORD_UNITS, not MAX_TEXTURE_IMAGE_UNITS.
+ * That's because there's a one-to-one correspondence between texture
+ * coordinates and samplers in fixed-function processing.
+ *
+ * Since fixed-function vertex processing is limited to MAX_TEXTURE_COORD_UNITS
+ * sets of texcoords, so is fixed-function fragment processing.
+ *
+ * We can safely use ctx->Const.MaxTextureUnits for loop bounds.
+ */
+
+
 struct texenvprog_cache_item
 {
    GLuint hash;
@@ -48,11 +67,9 @@ struct texenvprog_cache_item
 
 
 /**
- * This MAX is probably a bit generous, but that's OK.  There can be
- * up to four instructions per texture unit (TEX + 3 for combine),
- * then there's fog and specular add.
+ * Up to nine instructions per tex unit, plus fog, specular color.
  */
-#define MAX_INSTRUCTIONS ((MAX_TEXTURE_UNITS * 4) + 12)
+#define MAX_INSTRUCTIONS ((MAX_TEXTURE_COORD_UNITS * 9) + 12)
 
 #define DISASSEM (MESA_VERBOSE & VERBOSE_DISASSEM)
 
@@ -62,10 +79,12 @@ struct mode_opt {
 };
 
 struct state_key {
-   GLbitfield enabled_units;
+   GLuint nr_enabled_units:8;
+   GLuint enabled_units:8;
    GLuint separate_specular:1;
    GLuint fog_enabled:1;
    GLuint fog_mode:2;
+   GLuint inputs_available:12;
 
    struct {
       GLuint enabled:1;
@@ -74,13 +93,13 @@ struct state_key {
       GLuint ScaleShiftRGB:2;
       GLuint ScaleShiftA:2;
 
-      GLuint NumArgsRGB:2;
+      GLuint NumArgsRGB:3;
       GLuint ModeRGB:4;
-      struct mode_opt OptRGB[3];
+      struct mode_opt OptRGB[MAX_TERMS];
 
-      GLuint NumArgsA:2;
+      GLuint NumArgsA:3;
       GLuint ModeA:4;
-      struct mode_opt OptA[3];
+      struct mode_opt OptA[MAX_TERMS];
    } unit[8];
 };
 
@@ -116,7 +135,9 @@ static GLuint translate_operand( GLenum operand )
    case GL_ONE_MINUS_SRC_ALPHA: return OPR_ONE_MINUS_SRC_ALPHA;
    case GL_ZERO: return OPR_ZERO;
    case GL_ONE: return OPR_ONE;
-   default:	return OPR_UNKNOWN;
+   default:
+      assert(0);
+      return OPR_UNKNOWN;
    }
 }
 
@@ -132,6 +153,7 @@ static GLuint translate_operand( GLenum operand )
 #define SRC_CONSTANT 9
 #define SRC_PRIMARY_COLOR 10
 #define SRC_PREVIOUS 11
+#define SRC_ZERO     12
 #define SRC_UNKNOWN  15
 
 static GLuint translate_source( GLenum src )
@@ -149,32 +171,49 @@ static GLuint translate_source( GLenum src )
    case GL_CONSTANT: return SRC_CONSTANT;
    case GL_PRIMARY_COLOR: return SRC_PRIMARY_COLOR;
    case GL_PREVIOUS: return SRC_PREVIOUS;
-   default: return SRC_UNKNOWN;
+   case GL_ZERO:
+      return SRC_ZERO;
+   default:
+      assert(0);
+      return SRC_UNKNOWN;
    }
 }
 
-#define MODE_REPLACE       0
-#define MODE_MODULATE      1
-#define MODE_ADD           2
-#define MODE_ADD_SIGNED    3
-#define MODE_INTERPOLATE   4
-#define MODE_SUBTRACT      5
-#define MODE_DOT3_RGB      6
-#define MODE_DOT3_RGB_EXT  7
-#define MODE_DOT3_RGBA     8
-#define MODE_DOT3_RGBA_EXT 9
-#define MODE_MODULATE_ADD_ATI           10
-#define MODE_MODULATE_SIGNED_ADD_ATI    11
-#define MODE_MODULATE_SUBTRACT_ATI      12
-#define MODE_UNKNOWN       15
+#define MODE_REPLACE                     0  /* r = a0 */
+#define MODE_MODULATE                    1  /* r = a0 * a1 */
+#define MODE_ADD                         2  /* r = a0 + a1 */
+#define MODE_ADD_SIGNED                  3  /* r = a0 + a1 - 0.5 */
+#define MODE_INTERPOLATE                 4  /* r = a0 * a2 + a1 * (1 - a2) */
+#define MODE_SUBTRACT                    5  /* r = a0 - a1 */
+#define MODE_DOT3_RGB                    6  /* r = a0 . a1 */
+#define MODE_DOT3_RGB_EXT                7  /* r = a0 . a1 */
+#define MODE_DOT3_RGBA                   8  /* r = a0 . a1 */
+#define MODE_DOT3_RGBA_EXT               9  /* r = a0 . a1 */
+#define MODE_MODULATE_ADD_ATI           10  /* r = a0 * a2 + a1 */
+#define MODE_MODULATE_SIGNED_ADD_ATI    11  /* r = a0 * a2 + a1 - 0.5 */
+#define MODE_MODULATE_SUBTRACT_ATI      12  /* r = a0 * a2 - a1 */
+#define MODE_ADD_PRODUCTS               13  /* r = a0 * a1 + a2 * a3 */
+#define MODE_ADD_PRODUCTS_SIGNED        14  /* r = a0 * a1 + a2 * a3 - 0.5 */
+#define MODE_UNKNOWN                    15
 
-static GLuint translate_mode( GLenum mode )
+/**
+ * Translate GL combiner state into a MODE_x value
+ */
+static GLuint translate_mode( GLenum envMode, GLenum mode )
 {
    switch (mode) {
    case GL_REPLACE: return MODE_REPLACE;
    case GL_MODULATE: return MODE_MODULATE;
-   case GL_ADD: return MODE_ADD;
-   case GL_ADD_SIGNED: return MODE_ADD_SIGNED;
+   case GL_ADD:
+      if (envMode == GL_COMBINE4_NV)
+         return MODE_ADD_PRODUCTS;
+      else
+         return MODE_ADD;
+   case GL_ADD_SIGNED:
+      if (envMode == GL_COMBINE4_NV)
+         return MODE_ADD_PRODUCTS_SIGNED;
+      else
+         return MODE_ADD_SIGNED;
    case GL_INTERPOLATE: return MODE_INTERPOLATE;
    case GL_SUBTRACT: return MODE_SUBTRACT;
    case GL_DOT3_RGB: return MODE_DOT3_RGB;
@@ -184,22 +223,126 @@ static GLuint translate_mode( GLenum mode )
    case GL_MODULATE_ADD_ATI: return MODE_MODULATE_ADD_ATI;
    case GL_MODULATE_SIGNED_ADD_ATI: return MODE_MODULATE_SIGNED_ADD_ATI;
    case GL_MODULATE_SUBTRACT_ATI: return MODE_MODULATE_SUBTRACT_ATI;
-   default: return MODE_UNKNOWN;
+   default:
+      assert(0);
+      return MODE_UNKNOWN;
    }
 }
 
 #define TEXTURE_UNKNOWN_INDEX 7
 static GLuint translate_tex_src_bit( GLbitfield bit )
 {
+   /* make sure number of switch cases is correct */
+   assert(NUM_TEXTURE_TARGETS == 7);
    switch (bit) {
    case TEXTURE_1D_BIT:   return TEXTURE_1D_INDEX;
    case TEXTURE_2D_BIT:   return TEXTURE_2D_INDEX;
    case TEXTURE_RECT_BIT: return TEXTURE_RECT_INDEX;
    case TEXTURE_3D_BIT:   return TEXTURE_3D_INDEX;
    case TEXTURE_CUBE_BIT: return TEXTURE_CUBE_INDEX;
-   default: return TEXTURE_UNKNOWN_INDEX;
+   case TEXTURE_1D_ARRAY_BIT: return TEXTURE_1D_ARRAY_INDEX;
+   case TEXTURE_2D_ARRAY_BIT: return TEXTURE_2D_ARRAY_INDEX;
+   default:
+      assert(0);
+      return TEXTURE_UNKNOWN_INDEX;
    }
 }
+
+#define VERT_BIT_TEX_ANY    (0xff << VERT_ATTRIB_TEX0)
+#define VERT_RESULT_TEX_ANY (0xff << VERT_RESULT_TEX0)
+
+/**
+ * Identify all possible varying inputs.  The fragment program will
+ * never reference non-varying inputs, but will track them via state
+ * constants instead.
+ *
+ * This function figures out all the inputs that the fragment program
+ * has access to.  The bitmask is later reduced to just those which
+ * are actually referenced.
+ */
+static GLbitfield get_fp_input_mask( GLcontext *ctx )
+{
+   const GLboolean vertexShader = (ctx->Shader.CurrentProgram &&
+                                   ctx->Shader.CurrentProgram->VertexProgram);
+   const GLboolean vertexProgram = ctx->VertexProgram._Enabled;
+   GLbitfield fp_inputs = 0x0;
+
+   if (ctx->VertexProgram._Overriden) {
+      /* Somebody's messing with the vertex program and we don't have
+       * a clue what's happening.  Assume that it could be producing
+       * all possible outputs.
+       */
+      fp_inputs = ~0;
+   }
+   else if (ctx->RenderMode == GL_FEEDBACK) {
+      fp_inputs = (FRAG_BIT_COL0 | FRAG_BIT_TEX0);
+   }
+   else if (!(vertexProgram || vertexShader) ||
+            !ctx->VertexProgram._Current) {
+      /* Fixed function vertex logic */
+      GLbitfield varying_inputs = ctx->varying_vp_inputs;
+
+      /* These get generated in the setup routine regardless of the
+       * vertex program:
+       */
+      if (ctx->Point.PointSprite)
+         varying_inputs |= FRAG_BITS_TEX_ANY;
+
+      /* First look at what values may be computed by the generated
+       * vertex program:
+       */
+      if (ctx->Light.Enabled) {
+         fp_inputs |= FRAG_BIT_COL0;
+
+         if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
+            fp_inputs |= FRAG_BIT_COL1;
+      }
+
+      fp_inputs |= (ctx->Texture._TexGenEnabled |
+                    ctx->Texture._TexMatEnabled) << FRAG_ATTRIB_TEX0;
+
+      /* Then look at what might be varying as a result of enabled
+       * arrays, etc:
+       */
+      if (varying_inputs & VERT_BIT_COLOR0) fp_inputs |= FRAG_BIT_COL0;
+      if (varying_inputs & VERT_BIT_COLOR1) fp_inputs |= FRAG_BIT_COL1;
+
+      fp_inputs |= (((varying_inputs & VERT_BIT_TEX_ANY) >> VERT_ATTRIB_TEX0) 
+                    << FRAG_ATTRIB_TEX0);
+
+   }
+   else {
+      /* calculate from vp->outputs */
+      struct gl_vertex_program *vprog;
+      GLbitfield vp_outputs;
+
+      /* Choose GLSL vertex shader over ARB vertex program.  Need this
+       * since vertex shader state validation comes after fragment state
+       * validation (see additional comments in state.c).
+       */
+      if (vertexShader)
+         vprog = ctx->Shader.CurrentProgram->VertexProgram;
+      else
+         vprog = ctx->VertexProgram._Current;
+
+      vp_outputs = vprog->Base.OutputsWritten;
+
+      /* These get generated in the setup routine regardless of the
+       * vertex program:
+       */
+      if (ctx->Point.PointSprite)
+         vp_outputs |= FRAG_BITS_TEX_ANY;
+
+      if (vp_outputs & (1 << VERT_RESULT_COL0)) fp_inputs |= FRAG_BIT_COL0;
+      if (vp_outputs & (1 << VERT_RESULT_COL1)) fp_inputs |= FRAG_BIT_COL1;
+
+      fp_inputs |= (((vp_outputs & VERT_RESULT_TEX_ANY) >> VERT_RESULT_TEX0) 
+                    << FRAG_ATTRIB_TEX0);
+   }
+   
+   return fp_inputs;
+}
+
 
 /**
  * Examine current texture environment state and generate a unique
@@ -208,34 +351,43 @@ static GLuint translate_tex_src_bit( GLbitfield bit )
 static void make_state_key( GLcontext *ctx,  struct state_key *key )
 {
    GLuint i, j;
-	
+   GLbitfield inputs_referenced = FRAG_BIT_COL0;
+   GLbitfield inputs_available = get_fp_input_mask( ctx );
+
    memset(key, 0, sizeof(*key));
 
-   for (i=0;i<MAX_TEXTURE_UNITS;i++) {
+   for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+      GLenum format;
 
       if (!texUnit->_ReallyEnabled || !texUnit->Enabled)
          continue;
 
+      format = texUnit->_Current->Image[0][texUnit->_Current->BaseLevel]->_BaseFormat;
+
       key->unit[i].enabled = 1;
       key->enabled_units |= (1<<i);
+      key->nr_enabled_units = i+1;
+      inputs_referenced |= FRAG_BIT_TEX(i);
 
       key->unit[i].source_index = 
 	 translate_tex_src_bit(texUnit->_ReallyEnabled);		
-      key->unit[i].shadow = texUnit->_Current->CompareMode == GL_COMPARE_R_TO_TEXTURE;
+      key->unit[i].shadow = ((texUnit->_Current->CompareMode == GL_COMPARE_R_TO_TEXTURE) && 
+                             ((format == GL_DEPTH_COMPONENT) || 
+                              (format == GL_DEPTH_STENCIL_EXT)));
 
       key->unit[i].NumArgsRGB = texUnit->_CurrentCombine->_NumArgsRGB;
       key->unit[i].NumArgsA = texUnit->_CurrentCombine->_NumArgsA;
 
       key->unit[i].ModeRGB =
-	 translate_mode(texUnit->_CurrentCombine->ModeRGB);
+	 translate_mode(texUnit->EnvMode, texUnit->_CurrentCombine->ModeRGB);
       key->unit[i].ModeA =
-	 translate_mode(texUnit->_CurrentCombine->ModeA);
+	 translate_mode(texUnit->EnvMode, texUnit->_CurrentCombine->ModeA);
 		
       key->unit[i].ScaleShiftRGB = texUnit->_CurrentCombine->ScaleShiftRGB;
       key->unit[i].ScaleShiftA = texUnit->_CurrentCombine->ScaleShiftA;
 
-      for (j=0;j<3;j++) {
+      for (j = 0; j < MAX_TERMS; j++) {
          key->unit[i].OptRGB[j].Operand =
 	    translate_operand(texUnit->_CurrentCombine->OperandRGB[j]);
          key->unit[i].OptA[j].Operand =
@@ -247,16 +399,22 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
       }
    }
 	
-   if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
+   if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
       key->separate_specular = 1;
+      inputs_referenced |= FRAG_BIT_COL1;
+   }
 
    if (ctx->Fog.Enabled) {
       key->fog_enabled = 1;
       key->fog_mode = translate_fog_mode(ctx->Fog.Mode);
+      inputs_referenced |= FRAG_BIT_FOGC; /* maybe */
    }
+
+   key->inputs_available = (inputs_available & inputs_referenced);
 }
 
-/* Use uregs to represent registers internally, translate to Mesa's
+/**
+ * Use uregs to represent registers internally, translate to Mesa's
  * expected formats on emit.  
  *
  * NOTE: These are passed by value extensively in this file rather
@@ -289,28 +447,28 @@ static const struct ureg undef = {
 };
 
 
-/* State used to build the fragment program:
+/** State used to build the fragment program:
  */
 struct texenv_fragment_program {
    struct gl_fragment_program *program;
    GLcontext *ctx;
    struct state_key *state;
 
-   GLbitfield alu_temps;	/* Track texture indirections, see spec. */
-   GLbitfield temps_output;	/* Track texture indirections, see spec. */
-   GLbitfield temp_in_use;	/* Tracks temporary regs which are in use. */
+   GLbitfield alu_temps;	/**< Track texture indirections, see spec. */
+   GLbitfield temps_output;	/**< Track texture indirections, see spec. */
+   GLbitfield temp_in_use;	/**< Tracks temporary regs which are in use. */
    GLboolean error;
 
-   struct ureg src_texture[MAX_TEXTURE_UNITS];   
+   struct ureg src_texture[MAX_TEXTURE_COORD_UNITS];   
    /* Reg containing each texture unit's sampled texture color,
     * else undef.
     */
 
-   struct ureg src_previous;	/* Reg containing color from previous 
+   struct ureg src_previous;	/**< Reg containing color from previous 
 				 * stage.  May need to be decl'd.
 				 */
 
-   GLuint last_tex_stage;	/* Number of last enabled texture unit */
+   GLuint last_tex_stage;	/**< Number of last enabled texture unit */
 
    struct ureg half;
    struct ureg one;
@@ -388,7 +546,7 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
 {
    int bit;
    
-   /* First try to find availble temp not previously used (to avoid
+   /* First try to find available temp not previously used (to avoid
     * starting a new texture indirection).  According to the spec, the
     * ~p->temps_output isn't necessary, but will keep it there for
     * now:
@@ -410,6 +568,14 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
 
    p->temp_in_use |= 1<<(bit-1);
    return make_ureg(PROGRAM_TEMPORARY, (bit-1));
+}
+
+
+/** Mark a temp reg as being no longer allocatable. */
+static void reserve_temp( struct texenv_fragment_program *p, struct ureg r )
+{
+   if (r.file == PROGRAM_TEMPORARY)
+      p->temps_output |= (1 << r.idx);
 }
 
 
@@ -451,11 +617,29 @@ static struct ureg register_param5( struct texenv_fragment_program *p,
 #define register_param3(p,s0,s1,s2)    register_param5(p,s0,s1,s2,0,0)
 #define register_param4(p,s0,s1,s2,s3) register_param5(p,s0,s1,s2,s3,0)
 
+static GLuint frag_to_vert_attrib( GLuint attrib )
+{
+   switch (attrib) {
+   case FRAG_ATTRIB_COL0: return VERT_ATTRIB_COLOR0;
+   case FRAG_ATTRIB_COL1: return VERT_ATTRIB_COLOR1;
+   default:
+      assert(attrib >= FRAG_ATTRIB_TEX0);
+      assert(attrib <= FRAG_ATTRIB_TEX7);
+      return attrib - FRAG_ATTRIB_TEX0 + VERT_ATTRIB_TEX0;
+   }
+}
+
 
 static struct ureg register_input( struct texenv_fragment_program *p, GLuint input )
 {
-   p->program->Base.InputsRead |= (1 << input);
-   return make_ureg(PROGRAM_INPUT, input);
+   if (p->state->inputs_available & (1<<input)) {
+      p->program->Base.InputsRead |= (1 << input);
+      return make_ureg(PROGRAM_INPUT, input);
+   }
+   else {
+      GLuint idx = frag_to_vert_attrib( input );
+      return register_param3( p, STATE_INTERNAL, STATE_CURRENT_ATTRIB, idx );
+   }
 }
 
 
@@ -506,10 +690,12 @@ emit_op(struct texenv_fragment_program *p,
 
    emit_dst( &inst->DstReg, dest, mask );
 
+#if 0
    /* Accounting for indirection tracking:
     */
    if (dest.file == PROGRAM_TEMPORARY)
       p->temps_output |= 1 << dest.idx;
+#endif
 
    return inst;
 }
@@ -564,6 +750,10 @@ static struct ureg emit_texld( struct texenv_fragment_program *p,
 
    p->program->Base.NumTexInstructions++;
 
+   /* Accounting for indirection tracking:
+    */
+   reserve_temp(p, dest);
+
    /* Is this a texture indirection?
     */
    if ((coord.file == PROGRAM_TEMPORARY &&
@@ -588,14 +778,16 @@ static struct ureg register_const4f( struct texenv_fragment_program *p,
 {
    GLfloat values[4];
    GLuint idx, swizzle;
+   struct ureg r;
    values[0] = s0;
    values[1] = s1;
    values[2] = s2;
    values[3] = s3;
    idx = _mesa_add_unnamed_constant( p->program->Base.Parameters, values, 4,
                                      &swizzle );
-   ASSERT(swizzle == SWIZZLE_NOOP);
-   return make_ureg(PROGRAM_CONSTANT, idx);
+   r = make_ureg(PROGRAM_CONSTANT, idx);
+   r.swz = swizzle;
+   return r;
 }
 
 #define register_scalar_const(p, s0)    register_const4f(p, s0, s0, s0, s0)
@@ -657,12 +849,17 @@ static struct ureg get_source( struct texenv_fragment_program *p,
    case SRC_PRIMARY_COLOR:
       return register_input(p, FRAG_ATTRIB_COL0);
 
+   case SRC_ZERO:
+      return get_zero(p);
+
    case SRC_PREVIOUS:
-   default:
       if (is_undef(p->src_previous))
 	 return register_input(p, FRAG_ATTRIB_COL0);
       else
 	 return p->src_previous;
+
+   default:
+      assert(0);
    }
 }
 
@@ -703,7 +900,9 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
    case OPR_ONE:
       return get_one(p);
    case OPR_SRC_COLOR: 
+      return src;
    default:
+      assert(0);
       return src;
    }
 }
@@ -752,9 +951,11 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
 				 GLuint mode,
 				 const struct mode_opt *opt)
 {
-   struct ureg src[3];
+   struct ureg src[MAX_TERMS];
    struct ureg tmp, half;
    GLuint i;
+
+   assert(nr <= MAX_TERMS);
 
    tmp = undef; /* silence warning (bug 5318) */
 
@@ -831,7 +1032,26 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
       /* Arg0 * Arg2 - Arg1 */
       emit_arith( p, OPCODE_MAD, dest, mask, 0, src[0], src[2], negate(src[1]) );
       return dest;
+   case MODE_ADD_PRODUCTS:
+      /* Arg0 * Arg1 + Arg2 * Arg3 */
+      {
+         struct ureg tmp0 = get_temp(p);
+         emit_arith( p, OPCODE_MUL, tmp0, mask, 0, src[0], src[1], undef );
+         emit_arith( p, OPCODE_MAD, dest, mask, saturate, src[2], src[3], tmp0 );
+      }
+      return dest;
+   case MODE_ADD_PRODUCTS_SIGNED:
+      /* Arg0 * Arg1 + Arg2 * Arg3 - 0.5 */
+      {
+         struct ureg tmp0 = get_temp(p);
+         half = get_half(p);
+         emit_arith( p, OPCODE_MUL, tmp0, mask, 0, src[0], src[1], undef );
+         emit_arith( p, OPCODE_MAD, tmp0, mask, 0, src[2], src[3], tmp0 );
+         emit_arith( p, OPCODE_SUB, dest, mask, saturate, tmp0, half, undef );
+      }
+      return dest;
    default: 
+      assert(0);
       return src[0];
    }
 }
@@ -953,6 +1173,7 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 	 p->src_texture[unit] = emit_texld( p, OPCODE_TXP,
 					    tmp, WRITEMASK_XYZW, 
 					    unit, dim, texcoord );
+
 	 if (p->state->unit[unit].shadow)
 	    p->program->Base.ShadowSamplers |= 1 << unit;
 
@@ -987,6 +1208,7 @@ static GLboolean load_texenv_source( struct texenv_fragment_program *p,
       break;
       
    default:
+      /* not a texture src - do nothing */
       break;
    }
  
@@ -1051,7 +1273,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    p.program->Base.InputsRead = 0;
    p.program->Base.OutputsWritten = 1 << FRAG_RESULT_COLR;
 
-   for (unit = 0; unit < MAX_TEXTURE_UNITS; unit++)
+   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
       p.src_texture[unit] = undef;
 
    p.src_previous = undef;
@@ -1078,6 +1300,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
       for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++)
 	 if (key->enabled_units & (1<<unit)) {
 	    p.src_previous = emit_texenv( &p, unit );
+            reserve_temp(&p, p.src_previous); /* don't re-use this temp reg */
 	    release_temps(ctx, &p);	/* release all temps */
 	 }
    }
@@ -1181,40 +1404,4 @@ _mesa_get_fixed_func_fragment_program(GLcontext *ctx)
    }
 
    return prog;
-}
-
-
-
-/**
- * If _MaintainTexEnvProgram is set we'll generate a fragment program that
- * implements the current texture env/combine mode.
- * This function generates that program and puts it into effect.
- */
-void
-_mesa_UpdateTexEnvProgram( GLcontext *ctx )
-{
-   const struct gl_fragment_program *prev = ctx->FragmentProgram._Current;
-	
-   ASSERT(ctx->FragmentProgram._MaintainTexEnvProgram);
-
-   /* If a conventional fragment program/shader isn't in effect... */
-   if (!ctx->FragmentProgram._Enabled &&
-       (!ctx->Shader.CurrentProgram ||
-        !ctx->Shader.CurrentProgram->FragmentProgram) ) 
-   {
-      struct gl_fragment_program *newProg;
-
-      newProg = _mesa_get_fixed_func_fragment_program(ctx);
-
-      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, newProg);
-      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram, newProg);
-   } 
-
-   /* Tell the driver about the change.  Could define a new target for
-    * this?
-    */
-   if (ctx->FragmentProgram._Current != prev && ctx->Driver.BindProgram) {
-      ctx->Driver.BindProgram(ctx, GL_FRAGMENT_PROGRAM_ARB,
-                         (struct gl_program *) ctx->FragmentProgram._Current);
-   }
 }

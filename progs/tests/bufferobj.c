@@ -22,6 +22,8 @@ struct object
    GLuint NumVerts;
    GLuint VertexOffset;
    GLuint ColorOffset;
+   GLuint VertexStride;
+   GLuint ColorStride;
    GLuint NumElements;
 };
 
@@ -46,7 +48,7 @@ static void CheckError(int line)
 static void DrawObject( const struct object *obj )
 {
    glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->BufferID);
-   glVertexPointer(3, GL_FLOAT, 0, (void *) obj->VertexOffset);
+   glVertexPointer(3, GL_FLOAT, obj->VertexStride, (void *) obj->VertexOffset);
    glEnable(GL_VERTEX_ARRAY);
 
    /* test push/pop attrib */
@@ -60,7 +62,7 @@ static void DrawObject( const struct object *obj )
       glPopClientAttrib();
    }
 #endif
-   glColorPointer(3, GL_FLOAT, 0, (void *) obj->ColorOffset);
+   glColorPointer(3, GL_FLOAT, obj->ColorStride, (void *) obj->ColorOffset);
    glEnable(GL_COLOR_ARRAY);
 
    if (obj->NumElements > 0) {
@@ -241,6 +243,8 @@ static void MakeObject1(struct object *obj)
    obj->NumVerts = 4;
    obj->VertexOffset = 0;
    obj->ColorOffset = 3 * sizeof(GLfloat) * obj->NumVerts;
+   obj->VertexStride = 0;
+   obj->ColorStride = 0;
    obj->NumElements = 0;
 
    glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
@@ -255,24 +259,28 @@ static void MakeObject1(struct object *obj)
 
 static void MakeObject2(struct object *obj)
 {
-   GLfloat *v, *c;
+   GLfloat *v;
+   int start = 40; /* bytes, to test non-zero array offsets */
 
    glGenBuffersARB(1, &obj->BufferID);
    glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->BufferID);
    glBufferDataARB(GL_ARRAY_BUFFER_ARB, 1000, NULL, GL_STATIC_DRAW_ARB);
    v = (GLfloat *) glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
 
-   /* Make triangle */
-   v[0] = -1;  v[1] = -1;  v[2] = 0;
-   v[3] =  1;  v[4] = -1;  v[5] = 0;
-   v[6] =  0;  v[7] =  1;  v[8] = 0;
-   c = v + 9;
-   c[0] = 0;  c[1] = 1;  c[2] = 0;
-   c[3] = 0;  c[4] = 1;  c[5] = 0;
-   c[6] = 1;  c[7] = 1;  c[8] = 0;
+   v += start / sizeof(GLfloat);
+
+   /* Make triangle: interleaved colors, then positions */
+   /*   R            G          B           X           Y            Z  */
+   v[0] = 0;   v[1] = 1;   v[2] = 0;   v[3] = -1;  v[4] = -1;   v[5] = 0;
+   v[6] = 0;   v[7] = 1;   v[8] = 0;   v[9] = 1;   v[10] = -1;  v[11] = 0;
+   v[12] = 1;  v[13] = 1;  v[14] = 0;  v[15] = 0;  v[16] =  1;  v[17] = 0;
+
    obj->NumVerts = 3;
-   obj->VertexOffset = 0;
-   obj->ColorOffset = 3 * sizeof(GLfloat) * obj->NumVerts;
+   obj->VertexOffset = start + 3 * sizeof(GLfloat);
+   obj->ColorOffset = start;
+   obj->VertexStride = 6 * sizeof(GLfloat);
+   obj->ColorStride = 6 * sizeof(GLfloat);
+
    obj->NumElements = 0;
 
    glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
@@ -300,6 +308,8 @@ static void MakeObject3(struct object *obj)
    obj->NumVerts = 4;
    obj->VertexOffset = 0;
    obj->ColorOffset = 3 * sizeof(GLfloat) * obj->NumVerts;
+   obj->VertexStride = 0;
+   obj->ColorStride = 0;
 
    bytes = obj->NumVerts * (3 + 3) * sizeof(GLfloat);
 

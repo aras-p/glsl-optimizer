@@ -314,13 +314,28 @@ static void driReportDamage(__DRIdrawable *pdp,
 static void driSwapBuffers(__DRIdrawable *dPriv)
 {
     __DRIscreen *psp = dPriv->driScreenPriv;
-
+    drm_clip_rect_t *rects;
+    int i;
+    
     if (!dPriv->numClipRects)
         return;
 
     psp->DriverAPI.SwapBuffers(dPriv);
 
-    driReportDamage(dPriv, dPriv->pClipRects, dPriv->numClipRects);
+    rects = _mesa_malloc(sizeof(*rects) * dPriv->numClipRects);
+
+    if (!rects)
+        return;
+
+    for (i = 0; i < dPriv->numClipRects; i++) {
+        rects[i].x1 = dPriv->pClipRects[i].x1 - dPriv->x;
+        rects[i].y1 = dPriv->pClipRects[i].y1 - dPriv->y;
+        rects[i].x2 = dPriv->pClipRects[i].x2 - dPriv->x;
+        rects[i].y2 = dPriv->pClipRects[i].y2 - dPriv->y;
+    }
+
+    driReportDamage(dPriv, rects, dPriv->numClipRects);
+    _mesa_free(rects);
 }
 
 static int driDrawableGetMSC( __DRIscreen *sPriv, __DRIdrawable *dPriv,

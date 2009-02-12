@@ -32,17 +32,19 @@
 #include "main/mtypes.h"
 
 
-extern void
-slang_print_ir(const slang_ir_node *n, int indent);
-
-
 extern GLuint
 _slang_swizzle_swizzle(GLuint swz1, GLuint swz2);
 
 
+extern GLuint
+_slang_var_swizzle(GLint size, GLint comp);
+
+
 extern GLboolean
 _slang_emit_code(slang_ir_node *n, slang_var_table *vartable,
-                 struct gl_program *prog, GLboolean withEnd,
+                 struct gl_program *prog,
+                 const struct gl_sl_pragmas *pragmas,
+                 GLboolean withEnd,
                  slang_info_log *log);
 
 

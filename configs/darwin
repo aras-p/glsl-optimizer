@@ -20,9 +20,9 @@ DEFINES =  -D_DARWIN_C_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L \
 
 ARCH_FLAGS += $(RC_CFLAGS)
 
-CFLAGS =  -g -O2 -Wall -Wmissing-prototypes -std=c99 -ffast-math -fno-strict-aliasing \
+CFLAGS =  -ggdb3 -Os -Wall -Wmissing-prototypes -std=c99 -ffast-math -fno-strict-aliasing \
 	-I$(INSTALL_DIR)/include $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(ASM_FLAGS) $(DEFINES)
-CXXFLAGS =  -g -O2 -Wall -fno-strict-aliasing \
+CXXFLAGS =  -ggdb3 -Os -Wall -fno-strict-aliasing \
 	-I$(INSTALL_DIR)/include $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(ASM_FLAGS) $(DEFINES)
 
 # Library names (actual file names)
@@ -47,7 +47,7 @@ GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -L$(INSTALL_DIR)/$(LIB_DIR) -lX11
 APP_LIB_DEPS = -L$(TOP)/lib -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L$(INSTALL_DIR)/$(LIB_DIR) -lX11 -lXmu -lXt -lXi -lm
 
 # omit glw lib for now:
-SRC_DIRS = glx/x11 mesa glu glut/glx
+SRC_DIRS = glx/x11 mesa glu glut/glx glew
 GLU_DIRS = sgi
 DRIVER_DIRS = osmesa
 #DRIVER_DIRS = dri

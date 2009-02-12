@@ -8,6 +8,7 @@
 #include <string.h>
 #include "eglcontext.h"
 #include "eglconfig.h"
+#include "egldriver.h"
 #include "eglglobals.h"
 #include "eglhash.h"
 #include "egllog.h"
@@ -56,6 +57,12 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
 
    conf = _eglLookupConfig(drv, dpy, config);
    if (!conf) {
+      _eglError(EGL_BAD_CONFIG, func);
+      return EGL_FALSE;
+   }
+
+   if ((GET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE) & type) == 0) {
+      /* The config can't be used to create a surface of this type */
       _eglError(EGL_BAD_CONFIG, func);
       return EGL_FALSE;
    }
@@ -175,7 +182,7 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
       }
    }
 
-   if (width <= 0 || height <= 0) {
+   if (width < 0 || height < 0) {
       _eglError(EGL_BAD_ATTRIBUTE, func);
       return EGL_FALSE;
    }
@@ -207,25 +214,47 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
 void
 _eglSaveSurface(_EGLSurface *surf)
 {
+   EGLuint key = _eglHashGenKey(_eglGlobal.Surfaces);
    assert(surf);
    assert(!surf->Handle);
-   surf->Handle = _eglHashGenKey(_eglGlobal.Contexts);
+   surf->Handle = (EGLSurface) key;
    assert(surf->Handle);
-   _eglHashInsert(_eglGlobal.Surfaces, surf->Handle, surf);
+   _eglHashInsert(_eglGlobal.Surfaces, key, surf);
 }
 
 
 void
 _eglRemoveSurface(_EGLSurface *surf)
 {
-   _eglHashRemove(_eglGlobal.Surfaces, surf->Handle);
+   _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surf->Handle);
 }
 
 
+
+/**
+ * Return the public handle for an internal _EGLSurface.
+ * This is the inverse of _eglLookupSurface().
+ */
+EGLSurface
+_eglGetSurfaceHandle(_EGLSurface *surface)
+{
+   if (surface)
+      return surface->Handle;
+   else
+      return EGL_NO_SURFACE;
+}
+
+
+/**
+ * Return the private _EGLSurface which corresponds to a public EGLSurface
+ * handle.
+ * This is the inverse of _eglGetSurfaceHandle().
+ */
 _EGLSurface *
 _eglLookupSurface(EGLSurface surf)
 {
-   _EGLSurface *c = (_EGLSurface *) _eglHashLookup(_eglGlobal.Surfaces, surf);
+   _EGLSurface *c = (_EGLSurface *) _eglHashLookup(_eglGlobal.Surfaces,
+                                                   (EGLuint) surf);
    return c;
 }
 
@@ -254,12 +283,7 @@ _eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
    /* Basically just do error checking here.  Drivers have to do the
     * actual buffer swap.
     */
-   _EGLContext *context = _eglGetCurrentContext();
    _EGLSurface *surface = _eglLookupSurface(draw);
-   if (context && context->DrawSurface != surface) {
-      _eglError(EGL_BAD_SURFACE, "eglSwapBuffers");
-      return EGL_FALSE;
-   }
    if (surface == NULL) {
       _eglError(EGL_BAD_SURFACE, "eglSwapBuffers");
       return EGL_FALSE;
@@ -297,7 +321,9 @@ _eglQuerySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
    case EGL_CONFIG_ID:
       *value = GET_CONFIG_ATTRIB(surface->Config, EGL_CONFIG_ID);
       return EGL_TRUE;
-   /*XXX case EGL_LARGEST_PBUFFER:*/
+   case EGL_LARGEST_PBUFFER:
+      *value = drv->LargestPbuffer;
+      return EGL_TRUE;
    case EGL_SURFACE_TYPE:
       *value = surface->Type;
       return EGL_TRUE;
@@ -439,7 +465,7 @@ _eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
    _EGLSurface *surf = _eglLookupSurface(surface);
    if (surf) {
-      _eglHashRemove(_eglGlobal.Surfaces, surface);
+      _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surface);
       if (surf->IsBound) {
          surf->DeletePending = EGL_TRUE;
       }
@@ -459,7 +485,8 @@ _eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
  * Default fallback routine - drivers might override this.
  */
 EGLBoolean
-_eglSurfaceAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf, EGLint attribute, EGLint value)
+_eglSurfaceAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
+                  EGLint attribute, EGLint value)
 {
    _EGLSurface *surface = _eglLookupSurface(surf);
 
@@ -481,18 +508,67 @@ _eglSurfaceAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf, EGLint attri
 
 
 EGLBoolean
-_eglBindTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, EGLint buffer)
+_eglBindTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
+                 EGLint buffer)
 {
-   /* XXX unfinished */
-   return EGL_FALSE;
+   /* Just do basic error checking and return success/fail.
+    * Drivers must implement the real stuff.
+    */
+   _EGLSurface *surface = _eglLookupSurface(surf);
+
+   if (!surface || surface->Type != EGL_PBUFFER_BIT) {
+      _eglError(EGL_BAD_SURFACE, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   if (surface->TextureFormat == EGL_NO_TEXTURE) {
+      _eglError(EGL_BAD_MATCH, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   if (buffer != EGL_BACK_BUFFER) {
+      _eglError(EGL_BAD_PARAMETER, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   surface->BoundToTexture = EGL_TRUE;
+
+   return EGL_TRUE;
 }
 
 
 EGLBoolean
-_eglReleaseTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, EGLint buffer)
+_eglReleaseTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
+                    EGLint buffer)
 {
-   /* XXX unfinished */
-   return EGL_FALSE;
+   /* Just do basic error checking and return success/fail.
+    * Drivers must implement the real stuff.
+    */
+   _EGLSurface *surface = _eglLookupSurface(surf);
+
+   if (!surface || surface->Type != EGL_PBUFFER_BIT) {
+      _eglError(EGL_BAD_SURFACE, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   if (surface->TextureFormat == EGL_NO_TEXTURE) {
+      _eglError(EGL_BAD_MATCH, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   if (buffer != EGL_BACK_BUFFER) {
+      _eglError(EGL_BAD_PARAMETER, "eglReleaseTexImage");
+      return EGL_FALSE;
+   }
+
+   if (!surface->BoundToTexture) {
+      _eglError(EGL_BAD_SURFACE, "eglReleaseTexImage");
+      return EGL_FALSE;
+   }
+
+   surface->BoundToTexture = EGL_FALSE;
+
+   return EGL_TRUE;
 }
 
 

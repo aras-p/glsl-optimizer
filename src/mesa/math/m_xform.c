@@ -220,11 +220,3 @@ _math_init_transformation( void )
    _mesa_init_all_x86_64_transform_asm();
 #endif
 }
-
-void
-_math_init( void )
-{
-   _math_init_transformation();
-   _math_init_translate();
-   _math_init_eval();
-}

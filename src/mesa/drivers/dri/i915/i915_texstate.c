@@ -295,6 +295,13 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
            wt == GL_CLAMP_TO_BORDER || wr == GL_CLAMP_TO_BORDER))
          return GL_FALSE;
 
+      /* Only support TEXCOORDMODE_CLAMP_EDGE and TEXCOORDMODE_CUBE (not 
+       * used) when using cube map texture coordinates
+       */
+      if (tObj->Target == GL_TEXTURE_CUBE_MAP_ARB &&
+          (((ws != GL_CLAMP) && (ws != GL_CLAMP_TO_EDGE)) ||
+           ((wt != GL_CLAMP) && (wt != GL_CLAMP_TO_EDGE))))
+          return GL_FALSE;
 
       state[I915_TEXREG_SS3] = ss3;     /* SS3_NORMALIZED_COORDS */
 

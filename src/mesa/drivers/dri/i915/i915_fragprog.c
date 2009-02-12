@@ -33,6 +33,7 @@
 #include "shader/prog_parameter.h"
 #include "shader/program.h"
 #include "shader/programopt.h"
+#include "shader/prog_print.h"
 
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
@@ -1048,6 +1049,9 @@ i915ProgramStringNotify(GLcontext * ctx,
          _mesa_append_fog_code(ctx, &p->FragProg);
          p->FragProg.FogOption = GL_NONE;
       }
+
+      if (INTEL_DEBUG & DEBUG_STATE)
+	 _mesa_print_program(prog);
    }
 
    _tnl_program_string(ctx, target, prog);
@@ -1105,30 +1109,14 @@ i915ValidateFragmentProgram(struct i915_context *i915)
       EMIT_ATTR(_TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, S4_VFMT_COLOR, 4);
    }
 
-   if ((inputsRead & (FRAG_BIT_COL1 | FRAG_BIT_FOGC)) ||
-       i915->vertex_fog != I915_FOG_NONE) {
-
-      if (inputsRead & FRAG_BIT_COL1) {
-         intel->specoffset = offset / 4;
-         EMIT_ATTR(_TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, S4_VFMT_SPEC_FOG, 3);
-      }
-      else
-         EMIT_PAD(3);
-
-      if ((inputsRead & FRAG_BIT_FOGC) || i915->vertex_fog != I915_FOG_NONE)
-         EMIT_ATTR(_TNL_ATTRIB_FOG, EMIT_1UB_1F, S4_VFMT_SPEC_FOG, 1);
-      else
-         EMIT_PAD(1);
+   if (inputsRead & FRAG_BIT_COL1) {
+       intel->specoffset = offset / 4;
+       EMIT_ATTR(_TNL_ATTRIB_COLOR1, EMIT_4UB_4F_BGRA, S4_VFMT_SPEC_FOG, 4);
    }
 
-   /* XXX this was disabled, but enabling this code helped fix the Glean
-    * tfragprog1 fog tests.
-    */
-#if 1
    if ((inputsRead & FRAG_BIT_FOGC) || i915->vertex_fog != I915_FOG_NONE) {
       EMIT_ATTR(_TNL_ATTRIB_FOG, EMIT_1F, S4_VFMT_FOG_PARAM, 4);
    }
-#endif
 
    for (i = 0; i < p->ctx->Const.MaxTextureCoordUnits; i++) {
       if (inputsRead & FRAG_BIT_TEX(i)) {

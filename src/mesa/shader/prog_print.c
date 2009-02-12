@@ -3,6 +3,7 @@
  * Version:  7.3
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -71,6 +72,8 @@ file_string(enum register_file f, gl_prog_print_mode mode)
       return "ADDR";
    case PROGRAM_SAMPLER:
       return "SAMPLER";
+   case PROGRAM_UNDEFINED:
+      return "UNDEFINED";
    default:
       return "Unknown program file!";
    }
@@ -215,46 +218,48 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
    switch (mode) {
    case PROG_PRINT_DEBUG:
       if (relAddr)
-         sprintf(str, "%s[ADDR+%d]", file_string(f, mode), index);
+         _mesa_sprintf(str, "%s[ADDR+%d]", file_string(f, mode), index);
       else
-         sprintf(str, "%s[%d]", file_string(f, mode), index);
+         _mesa_sprintf(str, "%s[%d]", file_string(f, mode), index);
       break;
 
    case PROG_PRINT_ARB:
       switch (f) {
       case PROGRAM_INPUT:
-         sprintf(str, "%s", arb_input_attrib_string(index, prog->Target));
+         _mesa_sprintf(str, "%s", arb_input_attrib_string(index, prog->Target));
          break;
       case PROGRAM_OUTPUT:
-         sprintf(str, "%s", arb_output_attrib_string(index, prog->Target));
+         _mesa_sprintf(str, "%s", arb_output_attrib_string(index, prog->Target));
          break;
       case PROGRAM_TEMPORARY:
-         sprintf(str, "temp%d", index);
+         _mesa_sprintf(str, "temp%d", index);
          break;
       case PROGRAM_ENV_PARAM:
-         sprintf(str, "program.env[%d]", index);
+         _mesa_sprintf(str, "program.env[%d]", index);
          break;
       case PROGRAM_LOCAL_PARAM:
-         sprintf(str, "program.local[%d]", index);
+         _mesa_sprintf(str, "program.local[%d]", index);
          break;
       case PROGRAM_VARYING: /* extension */
-         sprintf(str, "varying[%d]", index);
+         _mesa_sprintf(str, "varying[%d]", index);
          break;
       case PROGRAM_CONSTANT: /* extension */
-         sprintf(str, "constant[%d]", index);
+         _mesa_sprintf(str, "constant[%d]", index);
          break;
       case PROGRAM_UNIFORM: /* extension */
-         sprintf(str, "uniform[%d]", index);
+         _mesa_sprintf(str, "uniform[%d]", index);
          break;
       case PROGRAM_STATE_VAR:
          {
             struct gl_program_parameter *param
                = prog->Parameters->Parameters + index;
-            sprintf(str, _mesa_program_state_string(param->StateIndexes));
+            char *state = _mesa_program_state_string(param->StateIndexes);
+            _mesa_sprintf(str, state);
+            _mesa_free(state);
          }
          break;
       case PROGRAM_ADDRESS:
-         sprintf(str, "A%d", index);
+         _mesa_sprintf(str, "A%d", index);
          break;
       default:
          _mesa_problem(NULL, "bad file in reg_string()");
@@ -265,30 +270,30 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
       switch (f) {
       case PROGRAM_INPUT:
          if (prog->Target == GL_VERTEX_PROGRAM_ARB)
-            sprintf(str, "v[%d]", index);
+            _mesa_sprintf(str, "v[%d]", index);
          else
-            sprintf(str, "f[%d]", index);
+            _mesa_sprintf(str, "f[%d]", index);
          break;
       case PROGRAM_OUTPUT:
-         sprintf(str, "o[%d]", index);
+         _mesa_sprintf(str, "o[%d]", index);
          break;
       case PROGRAM_TEMPORARY:
-         sprintf(str, "R%d", index);
+         _mesa_sprintf(str, "R%d", index);
          break;
       case PROGRAM_ENV_PARAM:
-         sprintf(str, "c[%d]", index);
+         _mesa_sprintf(str, "c[%d]", index);
          break;
       case PROGRAM_VARYING: /* extension */
-         sprintf(str, "varying[%d]", index);
+         _mesa_sprintf(str, "varying[%d]", index);
          break;
       case PROGRAM_UNIFORM: /* extension */
-         sprintf(str, "uniform[%d]", index);
+         _mesa_sprintf(str, "uniform[%d]", index);
          break;
       case PROGRAM_CONSTANT: /* extension */
-         sprintf(str, "constant[%d]", index);
+         _mesa_sprintf(str, "constant[%d]", index);
          break;
       case PROGRAM_STATE_VAR: /* extension */
-         sprintf(str, "state[%d]", index);
+         _mesa_sprintf(str, "state[%d]", index);
          break;
       default:
          _mesa_problem(NULL, "bad file in reg_string()");
@@ -356,6 +361,19 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
 }
 
 
+void
+_mesa_print_swizzle(GLuint swizzle)
+{
+   if (swizzle == SWIZZLE_XYZW) {
+      _mesa_printf(".xyzw\n");
+   }
+   else {
+      const char *s = _mesa_swizzle_string(swizzle, 0, 0);
+      _mesa_printf("%s\n", s);
+   }
+}
+
+
 const char *
 _mesa_writemask_string(GLuint writeMask)
 {
@@ -399,90 +417,98 @@ _mesa_condcode_string(GLuint condcode)
 
 
 static void
-print_dst_reg(const struct prog_dst_register *dstReg, gl_prog_print_mode mode,
-              const struct gl_program *prog)
+fprint_dst_reg(FILE * f,
+               const struct prog_dst_register *dstReg,
+               gl_prog_print_mode mode,
+               const struct gl_program *prog)
 {
-   _mesa_printf("%s%s",
-                reg_string((enum register_file) dstReg->File,
-                           dstReg->Index, mode, dstReg->RelAddr, prog),
-                _mesa_writemask_string(dstReg->WriteMask));
+   _mesa_fprintf(f, "%s%s",
+                 reg_string((enum register_file) dstReg->File,
+                            dstReg->Index, mode, dstReg->RelAddr, prog),
+                 _mesa_writemask_string(dstReg->WriteMask));
 
    if (dstReg->CondMask != COND_TR) {
-      _mesa_printf(" (%s.%s)",
-                   _mesa_condcode_string(dstReg->CondMask),
-                   _mesa_swizzle_string(dstReg->CondSwizzle, GL_FALSE, GL_FALSE));
+      _mesa_fprintf(f, " (%s.%s)",
+                    _mesa_condcode_string(dstReg->CondMask),
+                    _mesa_swizzle_string(dstReg->CondSwizzle,
+                                         GL_FALSE, GL_FALSE));
    }
 
 #if 0
-   _mesa_printf("%s[%d]%s",
+   _mesa_fprintf(f, "%s[%d]%s",
                 file_string((enum register_file) dstReg->File, mode),
                 dstReg->Index,
                 _mesa_writemask_string(dstReg->WriteMask));
 #endif
 }
 
+
 static void
-print_src_reg(const struct prog_src_register *srcReg, gl_prog_print_mode mode,
-              const struct gl_program *prog)
+fprint_src_reg(FILE *f,
+               const struct prog_src_register *srcReg, 
+               gl_prog_print_mode mode,
+               const struct gl_program *prog)
 {
-   _mesa_printf("%s%s",
-                reg_string((enum register_file) srcReg->File,
-                           srcReg->Index, mode, srcReg->RelAddr, prog),
-                _mesa_swizzle_string(srcReg->Swizzle,
-                                     srcReg->NegateBase, GL_FALSE));
+   _mesa_fprintf(f, "%s%s",
+                 reg_string((enum register_file) srcReg->File,
+                            srcReg->Index, mode, srcReg->RelAddr, prog),
+                 _mesa_swizzle_string(srcReg->Swizzle,
+                                      srcReg->NegateBase, GL_FALSE));
 #if 0
-   _mesa_printf("%s[%d]%s",
-                file_string((enum register_file) srcReg->File, mode),
-                srcReg->Index,
-                _mesa_swizzle_string(srcReg->Swizzle,
-                               srcReg->NegateBase, GL_FALSE));
+   _mesa_fprintf(f, "%s[%d]%s",
+                 file_string((enum register_file) srcReg->File, mode),
+                 srcReg->Index,
+                 _mesa_swizzle_string(srcReg->Swizzle,
+                                      srcReg->NegateBase, GL_FALSE));
 #endif
 }
 
+
 static void
-print_comment(const struct prog_instruction *inst)
+fprint_comment(FILE *f, const struct prog_instruction *inst)
 {
    if (inst->Comment)
-      _mesa_printf(";  # %s\n", inst->Comment);
+      _mesa_fprintf(f, ";  # %s\n", inst->Comment);
    else
-      _mesa_printf(";\n");
+      _mesa_fprintf(f, ";\n");
 }
 
 
 static void
-print_alu_instruction(const struct prog_instruction *inst,
-                      const char *opcode_string, GLuint numRegs,
-                      gl_prog_print_mode mode,
-                      const struct gl_program *prog)
+fprint_alu_instruction(FILE *f,
+                       const struct prog_instruction *inst,
+                       const char *opcode_string, GLuint numRegs,
+                       gl_prog_print_mode mode,
+                       const struct gl_program *prog)
 {
    GLuint j;
 
-   _mesa_printf("%s", opcode_string);
+   _mesa_fprintf(f, "%s", opcode_string);
    if (inst->CondUpdate)
-      _mesa_printf(".C");
+      _mesa_fprintf(f, ".C");
 
    /* frag prog only */
    if (inst->SaturateMode == SATURATE_ZERO_ONE)
-      _mesa_printf("_SAT");
+      _mesa_fprintf(f, "_SAT");
 
-   _mesa_printf(" ");
+   _mesa_fprintf(f, " ");
    if (inst->DstReg.File != PROGRAM_UNDEFINED) {
-      print_dst_reg(&inst->DstReg, mode, prog);
+      fprint_dst_reg(f, &inst->DstReg, mode, prog);
    }
    else {
-      _mesa_printf(" ???");
+      _mesa_fprintf(f, " ???");
    }
 
    if (numRegs > 0)
-      _mesa_printf(", ");
+      _mesa_fprintf(f, ", ");
 
    for (j = 0; j < numRegs; j++) {
-      print_src_reg(inst->SrcReg + j, mode, prog);
+      fprint_src_reg(f, inst->SrcReg + j, mode, prog);
       if (j + 1 < numRegs)
-	 _mesa_printf(", ");
+	 _mesa_fprintf(f, ", ");
    }
 
-   print_comment(inst);
+   fprint_comment(f, inst);
 }
 
 
@@ -490,23 +516,18 @@ void
 _mesa_print_alu_instruction(const struct prog_instruction *inst,
                             const char *opcode_string, GLuint numRegs)
 {
-   print_alu_instruction(inst, opcode_string, numRegs, PROG_PRINT_DEBUG, NULL);
-}
-
-
-void
-_mesa_print_instruction(const struct prog_instruction *inst)
-{
-   /* note: 4th param should be ignored for PROG_PRINT_DEBUG */
-   _mesa_print_instruction_opt(inst, 0, PROG_PRINT_DEBUG, NULL);
+   fprint_alu_instruction(stdout, inst, opcode_string,
+                          numRegs, PROG_PRINT_DEBUG, NULL);
 }
 
 
 /**
  * Print a single vertex/fragment program instruction.
  */
-GLint
-_mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
+static GLint
+_mesa_fprint_instruction_opt(FILE *f,
+                            const struct prog_instruction *inst,
+                            GLint indent,
                             gl_prog_print_mode mode,
                             const struct gl_program *prog)
 {
@@ -519,15 +540,15 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       indent -= 3;
    }
    for (i = 0; i < indent; i++) {
-      _mesa_printf(" ");
+      _mesa_fprintf(f, " ");
    }
 
    switch (inst->Opcode) {
    case OPCODE_PRINT:
-      _mesa_printf("PRINT '%s'", inst->Data);
+      _mesa_fprintf(f, "PRINT '%s'", inst->Data);
       if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
-         _mesa_printf(", ");
-         _mesa_printf("%s[%d]%s",
+         _mesa_fprintf(f, ", ");
+         _mesa_fprintf(f, "%s[%d]%s",
                       file_string((enum register_file) inst->SrcReg[0].File,
                                   mode),
                       inst->SrcReg[0].Index,
@@ -535,171 +556,230 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
                                            inst->SrcReg[0].NegateBase, GL_FALSE));
       }
       if (inst->Comment)
-         _mesa_printf("  # %s", inst->Comment);
-      print_comment(inst);
+         _mesa_fprintf(f, "  # %s", inst->Comment);
+      fprint_comment(f, inst);
       break;
    case OPCODE_SWZ:
-      _mesa_printf("SWZ");
+      _mesa_fprintf(f, "SWZ");
       if (inst->SaturateMode == SATURATE_ZERO_ONE)
-         _mesa_printf("_SAT");
-      _mesa_printf(" ");
-      print_dst_reg(&inst->DstReg, mode, prog);
-      _mesa_printf(", %s[%d], %s",
+         _mesa_fprintf(f, "_SAT");
+      _mesa_fprintf(f, " ");
+      fprint_dst_reg(f, &inst->DstReg, mode, prog);
+      _mesa_fprintf(f, ", %s[%d], %s",
                    file_string((enum register_file) inst->SrcReg[0].File,
                                mode),
                    inst->SrcReg[0].Index,
                    _mesa_swizzle_string(inst->SrcReg[0].Swizzle,
                                         inst->SrcReg[0].NegateBase, GL_TRUE));
-      print_comment(inst);
+      fprint_comment(f, inst);
       break;
    case OPCODE_TEX:
    case OPCODE_TXP:
    case OPCODE_TXL:
    case OPCODE_TXB:
-      _mesa_printf("%s", _mesa_opcode_string(inst->Opcode));
+      _mesa_fprintf(f, "%s", _mesa_opcode_string(inst->Opcode));
       if (inst->SaturateMode == SATURATE_ZERO_ONE)
-         _mesa_printf("_SAT");
-      _mesa_printf(" ");
-      print_dst_reg(&inst->DstReg, mode, prog);
-      _mesa_printf(", ");
-      print_src_reg(&inst->SrcReg[0], mode, prog);
-      _mesa_printf(", texture[%d], ", inst->TexSrcUnit);
+         _mesa_fprintf(f, "_SAT");
+      _mesa_fprintf(f, " ");
+      fprint_dst_reg(f, &inst->DstReg, mode, prog);
+      _mesa_fprintf(f, ", ");
+      fprint_src_reg(f, &inst->SrcReg[0], mode, prog);
+      _mesa_fprintf(f, ", texture[%d], ", inst->TexSrcUnit);
       switch (inst->TexSrcTarget) {
-      case TEXTURE_1D_INDEX:   _mesa_printf("1D");    break;
-      case TEXTURE_2D_INDEX:   _mesa_printf("2D");    break;
-      case TEXTURE_3D_INDEX:   _mesa_printf("3D");    break;
-      case TEXTURE_CUBE_INDEX: _mesa_printf("CUBE");  break;
-      case TEXTURE_RECT_INDEX: _mesa_printf("RECT");  break;
+      case TEXTURE_1D_INDEX:   _mesa_fprintf(f, "1D");    break;
+      case TEXTURE_2D_INDEX:   _mesa_fprintf(f, "2D");    break;
+      case TEXTURE_3D_INDEX:   _mesa_fprintf(f, "3D");    break;
+      case TEXTURE_CUBE_INDEX: _mesa_fprintf(f, "CUBE");  break;
+      case TEXTURE_RECT_INDEX: _mesa_fprintf(f, "RECT");  break;
       default:
          ;
       }
-      print_comment(inst);
+      fprint_comment(f, inst);
       break;
 
    case OPCODE_KIL:
-      _mesa_printf("%s", _mesa_opcode_string(inst->Opcode));
-      _mesa_printf(" ");
-      print_src_reg(&inst->SrcReg[0], mode, prog);
-      print_comment(inst);
+      _mesa_fprintf(f, "%s", _mesa_opcode_string(inst->Opcode));
+      _mesa_fprintf(f, " ");
+      fprint_src_reg(f, &inst->SrcReg[0], mode, prog);
+      fprint_comment(f, inst);
       break;
    case OPCODE_KIL_NV:
-      _mesa_printf("%s", _mesa_opcode_string(inst->Opcode));
-      _mesa_printf(" ");
-      _mesa_printf("%s.%s",
+      _mesa_fprintf(f, "%s", _mesa_opcode_string(inst->Opcode));
+      _mesa_fprintf(f, " ");
+      _mesa_fprintf(f, "%s.%s",
                    _mesa_condcode_string(inst->DstReg.CondMask),
                    _mesa_swizzle_string(inst->DstReg.CondSwizzle,
                                         GL_FALSE, GL_FALSE));
-      print_comment(inst);
+      fprint_comment(f, inst);
       break;
 
    case OPCODE_ARL:
-      _mesa_printf("ARL ");
-      print_dst_reg(&inst->DstReg, mode, prog);
-      _mesa_printf(", ");
-      print_src_reg(&inst->SrcReg[0], mode, prog);
-      print_comment(inst);
+      _mesa_fprintf(f, "ARL ");
+      fprint_dst_reg(f, &inst->DstReg, mode, prog);
+      _mesa_fprintf(f, ", ");
+      fprint_src_reg(f, &inst->SrcReg[0], mode, prog);
+      fprint_comment(f, inst);
       break;
    case OPCODE_BRA:
-      _mesa_printf("BRA %d (%s%s)",
+      _mesa_fprintf(f, "BRA %d (%s%s)",
                    inst->BranchTarget,
                    _mesa_condcode_string(inst->DstReg.CondMask),
                    _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE));
-      print_comment(inst);
+      fprint_comment(f, inst);
       break;
    case OPCODE_IF:
       if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
          /* Use ordinary register */
-         _mesa_printf("IF ");
-         print_src_reg(&inst->SrcReg[0], mode, prog);
-         _mesa_printf("; ");
+         _mesa_fprintf(f, "IF ");
+         fprint_src_reg(f, &inst->SrcReg[0], mode, prog);
+         _mesa_fprintf(f, "; ");
       }
       else {
          /* Use cond codes */
-         _mesa_printf("IF (%s%s);",
+         _mesa_fprintf(f, "IF (%s%s);",
                       _mesa_condcode_string(inst->DstReg.CondMask),
                       _mesa_swizzle_string(inst->DstReg.CondSwizzle,
                                            0, GL_FALSE));
       }
-      _mesa_printf(" # (if false, goto %d)", inst->BranchTarget);
-      print_comment(inst);
+      _mesa_fprintf(f, " # (if false, goto %d)", inst->BranchTarget);
+      fprint_comment(f, inst);
       return indent + 3;
    case OPCODE_ELSE:
-      _mesa_printf("ELSE; # (goto %d)\n", inst->BranchTarget);
+      _mesa_fprintf(f, "ELSE; # (goto %d)\n", inst->BranchTarget);
       return indent + 3;
    case OPCODE_ENDIF:
-      _mesa_printf("ENDIF;\n");
+      _mesa_fprintf(f, "ENDIF;\n");
       break;
    case OPCODE_BGNLOOP:
-      _mesa_printf("BGNLOOP; # (end at %d)\n", inst->BranchTarget);
+      _mesa_fprintf(f, "BGNLOOP; # (end at %d)\n", inst->BranchTarget);
       return indent + 3;
    case OPCODE_ENDLOOP:
-      _mesa_printf("ENDLOOP; # (goto %d)\n", inst->BranchTarget);
+      _mesa_fprintf(f, "ENDLOOP; # (goto %d)\n", inst->BranchTarget);
       break;
    case OPCODE_BRK:
    case OPCODE_CONT:
-      _mesa_printf("%s (%s%s); # (goto %d)",
+      _mesa_fprintf(f, "%s (%s%s); # (goto %d)",
                    _mesa_opcode_string(inst->Opcode),
                    _mesa_condcode_string(inst->DstReg.CondMask),
                    _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
                    inst->BranchTarget);
-      print_comment(inst);
+      fprint_comment(f, inst);
       break;
 
    case OPCODE_BGNSUB:
       if (mode == PROG_PRINT_NV) {
-         _mesa_printf("%s:\n", inst->Comment); /* comment is label */
+         _mesa_fprintf(f, "%s:\n", inst->Comment); /* comment is label */
          return indent;
       }
       else {
-         _mesa_printf("BGNSUB");
-         print_comment(inst);
+         _mesa_fprintf(f, "BGNSUB");
+         fprint_comment(f, inst);
          return indent + 3;
       }
    case OPCODE_ENDSUB:
       if (mode == PROG_PRINT_DEBUG) {
-         _mesa_printf("ENDSUB");
-         print_comment(inst);
+         _mesa_fprintf(f, "ENDSUB");
+         fprint_comment(f, inst);
       }
       break;
    case OPCODE_CAL:
       if (mode == PROG_PRINT_NV) {
-         _mesa_printf("CAL %s;  # (goto %d)\n", inst->Comment, inst->BranchTarget);
+         _mesa_fprintf(f, "CAL %s;  # (goto %d)\n", inst->Comment, inst->BranchTarget);
       }
       else {
-         _mesa_printf("CAL %u", inst->BranchTarget);
-         print_comment(inst);
+         _mesa_fprintf(f, "CAL %u", inst->BranchTarget);
+         fprint_comment(f, inst);
       }
       break;
    case OPCODE_RET:
-      _mesa_printf("RET (%s%s)",
+      _mesa_fprintf(f, "RET (%s%s)",
                    _mesa_condcode_string(inst->DstReg.CondMask),
                    _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE));
-      print_comment(inst);
+      fprint_comment(f, inst);
       break;
 
    case OPCODE_END:
-      _mesa_printf("END\n");
+      _mesa_fprintf(f, "END\n");
       break;
    case OPCODE_NOP:
       if (mode == PROG_PRINT_DEBUG) {
-         _mesa_printf("NOP");
-         print_comment(inst);
+         _mesa_fprintf(f, "NOP");
+         fprint_comment(f, inst);
       }
       else if (inst->Comment) {
          /* ARB/NV extensions don't have NOP instruction */
-         _mesa_printf("# %s\n", inst->Comment);
+         _mesa_fprintf(f, "# %s\n", inst->Comment);
       }
       break;
    /* XXX may need other special-case instructions */
    default:
       /* typical alu instruction */
-      print_alu_instruction(inst,
-                            _mesa_opcode_string(inst->Opcode),
-                            _mesa_num_inst_src_regs(inst->Opcode),
-                            mode, prog);
+      fprint_alu_instruction(f, inst,
+                             _mesa_opcode_string(inst->Opcode),
+                             _mesa_num_inst_src_regs(inst->Opcode),
+                             mode, prog);
       break;
    }
    return indent;
+}
+
+
+GLint
+_mesa_print_instruction_opt(const struct prog_instruction *inst,
+                            GLint indent,
+                            gl_prog_print_mode mode,
+                            const struct gl_program *prog)
+{
+   return _mesa_fprint_instruction_opt(stdout, inst, indent, mode, prog);
+}
+
+
+void
+_mesa_print_instruction(const struct prog_instruction *inst)
+{
+   /* note: 4th param should be ignored for PROG_PRINT_DEBUG */
+   _mesa_fprint_instruction_opt(stdout, inst, 0, PROG_PRINT_DEBUG, NULL);
+}
+
+
+
+/**
+ * Print program, with options.
+ */
+void
+_mesa_fprint_program_opt(FILE *f,
+                         const struct gl_program *prog,
+                         gl_prog_print_mode mode,
+                         GLboolean lineNumbers)
+{
+   GLuint i, indent = 0;
+
+   switch (prog->Target) {
+   case GL_VERTEX_PROGRAM_ARB:
+      if (mode == PROG_PRINT_ARB)
+         _mesa_fprintf(f, "!!ARBvp1.0\n");
+      else if (mode == PROG_PRINT_NV)
+         _mesa_fprintf(f, "!!VP1.0\n");
+      else
+         _mesa_fprintf(f, "# Vertex Program/Shader\n");
+      break;
+   case GL_FRAGMENT_PROGRAM_ARB:
+   case GL_FRAGMENT_PROGRAM_NV:
+      if (mode == PROG_PRINT_ARB)
+         _mesa_fprintf(f, "!!ARBfp1.0\n");
+      else if (mode == PROG_PRINT_NV)
+         _mesa_fprintf(f, "!!FP1.0\n");
+      else
+         _mesa_fprintf(f, "# Fragment Program/Shader\n");
+      break;
+   }
+
+   for (i = 0; i < prog->NumInstructions; i++) {
+      if (lineNumbers)
+         _mesa_fprintf(f, "%3d: ", i);
+      indent = _mesa_fprint_instruction_opt(f, prog->Instructions + i,
+                                           indent, mode, prog);
+   }
 }
 
 
@@ -709,85 +789,62 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
 void
 _mesa_print_program(const struct gl_program *prog)
 {
-   _mesa_print_program_opt(prog, PROG_PRINT_DEBUG, GL_TRUE);
+   _mesa_fprint_program_opt(stdout, prog, PROG_PRINT_DEBUG, GL_TRUE);
 }
 
 
 /**
- * Print program, with options.
+ * Print all of a program's parameters/fields to given file.
  */
-void
-_mesa_print_program_opt(const struct gl_program *prog,
-                        gl_prog_print_mode mode,
-                        GLboolean lineNumbers)
-{
-   GLuint i, indent = 0;
-
-   switch (prog->Target) {
-   case GL_VERTEX_PROGRAM_ARB:
-      if (mode == PROG_PRINT_ARB)
-         _mesa_printf("!!ARBvp1.0\n");
-      else if (mode == PROG_PRINT_NV)
-         _mesa_printf("!!VP1.0\n");
-      else
-         _mesa_printf("# Vertex Program/Shader\n");
-      break;
-   case GL_FRAGMENT_PROGRAM_ARB:
-   case GL_FRAGMENT_PROGRAM_NV:
-      if (mode == PROG_PRINT_ARB)
-         _mesa_printf("!!ARBfp1.0\n");
-      else if (mode == PROG_PRINT_NV)
-         _mesa_printf("!!FP1.0\n");
-      else
-         _mesa_printf("# Fragment Program/Shader\n");
-      break;
-   }
-
-   for (i = 0; i < prog->NumInstructions; i++) {
-      if (lineNumbers)
-         _mesa_printf("%3d: ", i);
-      indent = _mesa_print_instruction_opt(prog->Instructions + i,
-                                           indent, mode, prog);
-   }
-}
-
-
-/**
- * Print all of a program's parameters.
- */
-void
-_mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
+static void
+_mesa_fprint_program_parameters(FILE *f,
+                                GLcontext *ctx,
+                                const struct gl_program *prog)
 {
    GLuint i;
 
-   _mesa_printf("InputsRead: 0x%x\n", prog->InputsRead);
-   _mesa_printf("OutputsWritten: 0x%x\n", prog->OutputsWritten);
-   _mesa_printf("NumInstructions=%d\n", prog->NumInstructions);
-   _mesa_printf("NumTemporaries=%d\n", prog->NumTemporaries);
-   _mesa_printf("NumParameters=%d\n", prog->NumParameters);
-   _mesa_printf("NumAttributes=%d\n", prog->NumAttributes);
-   _mesa_printf("NumAddressRegs=%d\n", prog->NumAddressRegs);
-   _mesa_printf("Samplers=[ ");
+   _mesa_fprintf(f, "InputsRead: 0x%x\n", prog->InputsRead);
+   _mesa_fprintf(f, "OutputsWritten: 0x%x\n", prog->OutputsWritten);
+   _mesa_fprintf(f, "NumInstructions=%d\n", prog->NumInstructions);
+   _mesa_fprintf(f, "NumTemporaries=%d\n", prog->NumTemporaries);
+   _mesa_fprintf(f, "NumParameters=%d\n", prog->NumParameters);
+   _mesa_fprintf(f, "NumAttributes=%d\n", prog->NumAttributes);
+   _mesa_fprintf(f, "NumAddressRegs=%d\n", prog->NumAddressRegs);
+   _mesa_fprintf(f, "Samplers=[ ");
    for (i = 0; i < MAX_SAMPLERS; i++) {
-      _mesa_printf("%d ", prog->SamplerUnits[i]);
+      _mesa_fprintf(f, "%d ", prog->SamplerUnits[i]);
    }
-   _mesa_printf("]\n");
+   _mesa_fprintf(f, "]\n");
 
    _mesa_load_state_parameters(ctx, prog->Parameters);
 
 #if 0
-   _mesa_printf("Local Params:\n");
+   _mesa_fprintf(f, "Local Params:\n");
    for (i = 0; i < MAX_PROGRAM_LOCAL_PARAMS; i++){
       const GLfloat *p = prog->LocalParams[i];
-      _mesa_printf("%2d: %f, %f, %f, %f\n", i, p[0], p[1], p[2], p[3]);
+      _mesa_fprintf(f, "%2d: %f, %f, %f, %f\n", i, p[0], p[1], p[2], p[3]);
    }
 #endif	
    _mesa_print_parameter_list(prog->Parameters);
 }
 
 
+/**
+ * Print all of a program's parameters/fields to stdout.
+ */
 void
-_mesa_print_parameter_list(const struct gl_program_parameter_list *list)
+_mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
+{
+   _mesa_fprint_program_parameters(stdout, ctx, prog);
+}
+
+
+/**
+ * Print a program parameter list to given file.
+ */
+static void
+_mesa_fprint_parameter_list(FILE *f,
+                            const struct gl_program_parameter_list *list)
 {
    const gl_prog_print_mode mode = PROG_PRINT_DEBUG;
    GLuint i;
@@ -795,13 +852,77 @@ _mesa_print_parameter_list(const struct gl_program_parameter_list *list)
    if (!list)
       return;
 
-   _mesa_printf("param list %p\n", (void *) list);
+   _mesa_fprintf(f, "param list %p\n", (void *) list);
    for (i = 0; i < list->NumParameters; i++){
       struct gl_program_parameter *param = list->Parameters + i;
       const GLfloat *v = list->ParameterValues[i];
-      _mesa_printf("param[%d] sz=%d %s %s = {%.3g, %.3g, %.3g, %.3g};\n",
+      _mesa_fprintf(f, "param[%d] sz=%d %s %s = {%.3g, %.3g, %.3g, %.3g}",
                    i, param->Size,
                    file_string(list->Parameters[i].Type, mode),
                    param->Name, v[0], v[1], v[2], v[3]);
+      if (param->Flags & PROG_PARAM_BIT_CENTROID)
+         _mesa_fprintf(f, " Centroid");
+      if (param->Flags & PROG_PARAM_BIT_INVARIANT)
+         _mesa_fprintf(f, " Invariant");
+      if (param->Flags & PROG_PARAM_BIT_FLAT)
+         _mesa_fprintf(f, " Flat");
+      if (param->Flags & PROG_PARAM_BIT_LINEAR)
+         _mesa_fprintf(f, " Linear");
+      _mesa_fprintf(f, "\n");
    }
 }
+
+
+/**
+ * Print a program parameter list to stdout.
+ */
+void
+_mesa_print_parameter_list(const struct gl_program_parameter_list *list)
+{
+   _mesa_fprint_parameter_list(stdout, list);
+}
+
+
+/**
+ * Write shader and associated info to a file.
+ */
+void
+_mesa_write_shader_to_file(const struct gl_shader *shader)
+{
+   const char *type;
+   char filename[100];
+   FILE *f;
+
+   if (shader->Type == GL_FRAGMENT_SHADER)
+      type = "frag";
+   else
+      type = "vert";
+
+   _mesa_snprintf(filename, strlen(filename), "shader_%u.%s", shader->Name, type);
+   f = fopen(filename, "w");
+   if (!f) {
+      fprintf(stderr, "Unable to open %s for writing\n", filename);
+      return;
+   }
+
+   fprintf(f, "/* Shader %u source */\n", shader->Name);
+   fputs(shader->Source, f);
+   fprintf(f, "\n");
+
+   fprintf(f, "/* Compile status: %s */\n",
+           shader->CompileStatus ? "ok" : "fail");
+   if (!shader->CompileStatus) {
+      fprintf(f, "/* Log Info: */\n");
+      fputs(shader->InfoLog, f);
+   }
+   else {
+      fprintf(f, "/* GPU code */\n");
+      fprintf(f, "/*\n");
+      _mesa_fprint_program_opt(f, shader->Program, PROG_PRINT_DEBUG, GL_TRUE);
+      fprintf(f, "*/\n");
+   }
+
+   fclose(f);
+}
+
+

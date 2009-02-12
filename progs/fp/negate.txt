@@ -1,0 +1,6 @@
+!!ARBfp1.0
+# this should result in fragment color passing through unchanged
+TEMP R0;
+ADD R0, fragment.color, fragment.color;
+ADD result.color, R0, -fragment.color;
+END

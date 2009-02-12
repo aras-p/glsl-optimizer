@@ -40,6 +40,7 @@
 #ifdef USE_XCB
 #include <xcb/xcb.h>
 #include <xcb/glx.h>
+#include <X11/Xlib-xcb.h>
 #endif /* USE_XCB */
 
 
@@ -678,9 +679,7 @@ __indirect_glGetString(GLenum name)
     */
 
    (void) __glXFlushRenderBuffer(gc, gc->pc);
-   s = (GLubyte *) __glXGetStringFromServer(dpy, gc->majorOpcode,
-                                            X_GLsop_GetString,
-                                            gc->currentContextTag, name);
+   s = (GLubyte *) __glXGetString(dpy, gc->majorOpcode, gc->currentContextTag, name);
    if (!s) {
       /* Throw data on the floor */
       __glXSetError(gc, GL_OUT_OF_MEMORY);

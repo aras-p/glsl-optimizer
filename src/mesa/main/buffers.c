@@ -247,13 +247,14 @@ _mesa_DrawBuffer(GLenum buffer)
       destMask = draw_buffer_enum_to_bitmask(buffer);
       if (destMask == BAD_MASK) {
          /* totally bogus buffer */
-         _mesa_error(ctx, GL_INVALID_ENUM, "glDrawBuffer(buffer)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glDrawBuffer(buffer=0x%x)", buffer);
          return;
       }
       destMask &= supportedMask;
       if (destMask == 0x0) {
          /* none of the named color buffers exist! */
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawBuffer(buffer)");
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glDrawBuffer(buffer=0x%x)", buffer);
          return;
       }
    }
@@ -289,10 +290,6 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (!ctx->Extensions.ARB_draw_buffers) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawBuffersARB");
-      return;
-   }
    if (n < 1 || n > (GLsizei) ctx->Const.MaxDrawBuffers) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glDrawBuffersARB(n)");
       return;
@@ -419,7 +416,7 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
       }
    }
 
-   ctx->NewState |= _NEW_COLOR;
+   ctx->NewState |= _NEW_BUFFERS;
 }
 
 
@@ -494,6 +491,7 @@ _mesa_ReadBuffer(GLenum buffer)
    /* OK, all error checking has been completed now */
 
    _mesa_readbuffer(ctx, buffer, srcBuffer);
+   ctx->NewState |= _NEW_BUFFERS;
 
    /*
     * Call device driver function.

@@ -36,63 +36,24 @@
 #include "brw_state.h"
 
 
+/** Return number of src args for given instruction */
 GLuint brw_wm_nr_args( GLuint opcode )
 {
    switch (opcode) {
-
    case WM_PIXELXY:
-   case OPCODE_ABS:
-   case OPCODE_FLR:
-   case OPCODE_FRC:
-   case OPCODE_SWZ:
-   case OPCODE_MOV:
-   case OPCODE_COS:
-   case OPCODE_EX2:
-   case OPCODE_LG2:
-   case OPCODE_RCP:
-   case OPCODE_RSQ:
-   case OPCODE_SIN:
-   case OPCODE_SCS:
-   case OPCODE_TEX:
-   case OPCODE_TXB:
-   case OPCODE_TXP:	
-   case OPCODE_KIL:
-   case OPCODE_LIT: 
-   case WM_CINTERP: 
-   case WM_WPOSXY: 
+   case WM_CINTERP:
+   case WM_WPOSXY:
       return 1;
-
-   case OPCODE_POW:
-   case OPCODE_SUB:
-   case OPCODE_SGE:
-   case OPCODE_SGT:
-   case OPCODE_SLE:
-   case OPCODE_SLT:
-   case OPCODE_SEQ:
-   case OPCODE_SNE:
-   case OPCODE_ADD:
-   case OPCODE_MAX:
-   case OPCODE_MIN:
-   case OPCODE_MUL:
-   case OPCODE_XPD:
-   case OPCODE_DP3:	
-   case OPCODE_DP4:
-   case OPCODE_DPH:
-   case OPCODE_DST:
-   case WM_LINTERP: 
+   case WM_LINTERP:
    case WM_DELTAXY:
    case WM_PIXELW:
       return 2;
-
    case WM_FB_WRITE:
-   case WM_PINTERP: 
-   case OPCODE_MAD:	
-   case OPCODE_CMP:
-   case OPCODE_LRP:
+   case WM_PINTERP:
       return 3;
-      
    default:
-      return 0;
+      assert(opcode < MAX_OPCODE);
+      return _mesa_num_inst_src_regs(opcode);
    }
 }
 
@@ -175,6 +136,9 @@ static void do_wm_prog( struct brw_context *brw,
 	*/
        brw_wm_emit(c);
    }
+   if (INTEL_DEBUG & DEBUG_WM)
+      fprintf(stderr, "\n");
+
    /* get the program
     */
    program = brw_get_program(&c->func, &program_size);
@@ -193,6 +157,7 @@ static void do_wm_prog( struct brw_context *brw,
 static void brw_wm_populate_key( struct brw_context *brw,
 				 struct brw_wm_prog_key *key )
 {
+   GLcontext *ctx = &brw->intel.ctx;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    struct brw_fragment_program *fp = 
       (struct brw_fragment_program *)brw->fragment_program;
@@ -206,57 +171,50 @@ static void brw_wm_populate_key( struct brw_context *brw,
     */
    /* _NEW_COLOR */
    if (fp->program.UsesKill ||
-       brw->attribs.Color->AlphaEnabled)
+       ctx->Color.AlphaEnabled)
       lookup |= IZ_PS_KILL_ALPHATEST_BIT;
 
    if (fp->program.Base.OutputsWritten & (1<<FRAG_RESULT_DEPR))
       lookup |= IZ_PS_COMPUTES_DEPTH_BIT;
 
    /* _NEW_DEPTH */
-   if (brw->attribs.Depth->Test)
+   if (ctx->Depth.Test)
       lookup |= IZ_DEPTH_TEST_ENABLE_BIT;
 
-   if (brw->attribs.Depth->Test &&  
-       brw->attribs.Depth->Mask) /* ?? */
+   if (ctx->Depth.Test &&  
+       ctx->Depth.Mask) /* ?? */
       lookup |= IZ_DEPTH_WRITE_ENABLE_BIT;
 
    /* _NEW_STENCIL */
-   if (brw->attribs.Stencil->Enabled) {
+   if (ctx->Stencil.Enabled) {
       lookup |= IZ_STENCIL_TEST_ENABLE_BIT;
 
-      if (brw->attribs.Stencil->WriteMask[0] ||
-	  (brw->attribs.Stencil->_TestTwoSide &&
-	   brw->attribs.Stencil->WriteMask[1]))
+      if (ctx->Stencil.WriteMask[0] ||
+	  ctx->Stencil.WriteMask[ctx->Stencil._BackFace])
 	 lookup |= IZ_STENCIL_WRITE_ENABLE_BIT;
    }
 
-   /* XXX: when should this be disabled?
-    */
-   if (1)
-      lookup |= IZ_EARLY_DEPTH_TEST_BIT;
-
-   
    line_aa = AA_NEVER;
 
    /* _NEW_LINE, _NEW_POLYGON, BRW_NEW_REDUCED_PRIMITIVE */
-   if (brw->attribs.Line->SmoothFlag) {
+   if (ctx->Line.SmoothFlag) {
       if (brw->intel.reduced_primitive == GL_LINES) {
 	 line_aa = AA_ALWAYS;
       }
       else if (brw->intel.reduced_primitive == GL_TRIANGLES) {
-	 if (brw->attribs.Polygon->FrontMode == GL_LINE) {
+	 if (ctx->Polygon.FrontMode == GL_LINE) {
 	    line_aa = AA_SOMETIMES;
 
-	    if (brw->attribs.Polygon->BackMode == GL_LINE ||
-		(brw->attribs.Polygon->CullFlag &&
-		 brw->attribs.Polygon->CullFaceMode == GL_BACK))
+	    if (ctx->Polygon.BackMode == GL_LINE ||
+		(ctx->Polygon.CullFlag &&
+		 ctx->Polygon.CullFaceMode == GL_BACK))
 	       line_aa = AA_ALWAYS;
 	 }
-	 else if (brw->attribs.Polygon->BackMode == GL_LINE) {
+	 else if (ctx->Polygon.BackMode == GL_LINE) {
 	    line_aa = AA_SOMETIMES;
 
-	    if ((brw->attribs.Polygon->CullFlag &&
-		 brw->attribs.Polygon->CullFaceMode == GL_FRONT))
+	    if ((ctx->Polygon.CullFlag &&
+		 ctx->Polygon.CullFaceMode == GL_FRONT))
 	       line_aa = AA_ALWAYS;
 	 }
       }
@@ -271,20 +229,25 @@ static void brw_wm_populate_key( struct brw_context *brw,
    key->projtex_mask = brw->wm.input_size_masks[4-1] >> (FRAG_ATTRIB_TEX0 - FRAG_ATTRIB_WPOS); 
 
    /* _NEW_LIGHT */
-   key->flat_shade = (brw->attribs.Light->ShadeModel == GL_FLAT);
+   key->flat_shade = (ctx->Light.ShadeModel == GL_FLAT);
 
    /* _NEW_TEXTURE */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      const struct gl_texture_unit *unit = &brw->attribs.Texture->Unit[i];
-      const struct gl_texture_object *t = unit->_Current;
+      const struct gl_texture_unit *unit = &ctx->Texture.Unit[i];
 
       if (unit->_ReallyEnabled) {
-	 if (t->Image[0][t->BaseLevel]->InternalFormat == GL_YCBCR_MESA) {
-	    key->yuvtex_mask |= 1<<i;
-	    if (t->Image[0][t->BaseLevel]->TexFormat->MesaFormat == 
-		    MESA_FORMAT_YCBCR)
-		key->yuvtex_swap_mask |= 1<< i;
+         const struct gl_texture_object *t = unit->_Current;
+         const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
+	 if (img->InternalFormat == GL_YCBCR_MESA) {
+	    key->yuvtex_mask |= 1 << i;
+	    if (img->TexFormat->MesaFormat == MESA_FORMAT_YCBCR)
+		key->yuvtex_swap_mask |= 1 << i;
 	 }
+
+         key->tex_swizzles[i] = t->_Swizzle;
+      }
+      else {
+         key->tex_swizzles[i] = SWIZZLE_NOOP;
       }
    }
 

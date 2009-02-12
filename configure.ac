@@ -22,7 +22,7 @@ AC_CONFIG_AUX_DIR([bin])
 AC_CANONICAL_HOST
 
 dnl Versions for external dependencies
-LIBDRM_REQUIRED=2.3.1
+LIBDRM_REQUIRED=2.4.3
 DRI2PROTO_REQUIRED=1.99.3
 
 dnl Check for progs
@@ -46,10 +46,14 @@ esac
 MKDEP_OPTIONS=-fdepend
 dnl Ask gcc where it's keeping its secret headers
 if test "x$GCC" = xyes; then
-    GCC_INCLUDES=`$CC -print-file-name=include`
-    if test "x$GCC_INCLUDES" != x; then
-        MKDEP_OPTIONS="$MKDEP_OPTIONS -I$GCC_INCLUDES"
-    fi
+    for dir in include include-fixed; do
+        GCC_INCLUDES=`$CC -print-file-name=$dir`
+        if test "x$GCC_INCLUDES" != x && \
+           test "$GCC_INCLUDES" != "$dir" && \
+           test -d "$GCC_INCLUDES"; then
+            MKDEP_OPTIONS="$MKDEP_OPTIONS -I$GCC_INCLUDES"
+        fi
+    done
 fi
 AC_SUBST([MKDEP_OPTIONS])
 
@@ -83,11 +87,8 @@ dnl Compiler macros
 DEFINES=""
 AC_SUBST([DEFINES])
 case "$host_os" in
-*-gnu)
-if test "x$GCC" = xyes; then
-    DEFINES="$DEFINES -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE"
-fi
-    DEFINES="$DEFINES -D_SVID_SOURCE -D_GNU_SOURCE -DPTHREADS"
+*-gnu*)
+    DEFINES="$DEFINES -D_GNU_SOURCE -DPTHREADS"
     ;;
 solaris*)
     DEFINES="$DEFINES -DPTHREADS -DSVR4"
@@ -224,23 +225,39 @@ dnl
 dnl library names
 dnl
 if test "$enable_static" = yes; then
-    GL_LIB_NAME='lib$(GL_LIB).a'
-    GLU_LIB_NAME='lib$(GLU_LIB).a'
-    GLUT_LIB_NAME='lib$(GLUT_LIB).a'
-    GLW_LIB_NAME='lib$(GLW_LIB).a'
-    OSMESA_LIB_NAME='lib$(OSMESA_LIB).a'
+    LIB_EXTENSION='a'
 else
-    GL_LIB_NAME='lib$(GL_LIB).so'
-    GLU_LIB_NAME='lib$(GLU_LIB).so'
-    GLUT_LIB_NAME='lib$(GLUT_LIB).so'
-    GLW_LIB_NAME='lib$(GLW_LIB).so'
-    OSMESA_LIB_NAME='lib$(OSMESA_LIB).so'
+    case "$host_os" in
+    darwin* )
+        LIB_EXTENSION='dylib' ;;
+    * )
+        LIB_EXTENSION='so' ;;
+    esac
 fi
+
+GL_LIB_NAME='lib$(GL_LIB).'${LIB_EXTENSION}
+GLU_LIB_NAME='lib$(GLU_LIB).'${LIB_EXTENSION}
+GLUT_LIB_NAME='lib$(GLUT_LIB).'${LIB_EXTENSION}
+GLW_LIB_NAME='lib$(GLW_LIB).'${LIB_EXTENSION}
+OSMESA_LIB_NAME='lib$(OSMESA_LIB).'${LIB_EXTENSION}
+
+GL_LIB_GLOB='lib$(GL_LIB).*'${LIB_EXTENSION}'*'
+GLU_LIB_GLOB='lib$(GLU_LIB).*'${LIB_EXTENSION}'*'
+GLUT_LIB_GLOB='lib$(GLUT_LIB).*'${LIB_EXTENSION}'*'
+GLW_LIB_GLOB='lib$(GLW_LIB).*'${LIB_EXTENSION}'*'
+OSMESA_LIB_GLOB='lib$(OSMESA_LIB).*'${LIB_EXTENSION}'*'
+
 AC_SUBST([GL_LIB_NAME])
 AC_SUBST([GLU_LIB_NAME])
 AC_SUBST([GLUT_LIB_NAME])
 AC_SUBST([GLW_LIB_NAME])
 AC_SUBST([OSMESA_LIB_NAME])
+
+AC_SUBST([GL_LIB_GLOB])
+AC_SUBST([GLU_LIB_GLOB])
+AC_SUBST([GLUT_LIB_GLOB])
+AC_SUBST([GLW_LIB_GLOB])
+AC_SUBST([OSMESA_LIB_GLOB])
 
 dnl
 dnl Arch/platform-specific settings
@@ -253,8 +270,8 @@ AC_ARG_ENABLE([asm],
 )
 asm_arch=""
 ASM_FLAGS=""
-ASM_SOURCES=""
-ASM_API=""
+MESA_ASM_SOURCES=""
+GLAPI_ASM_SOURCES=""
 AC_MSG_CHECKING([whether to enable assembly])
 test "x$enable_asm" = xno && AC_MSG_RESULT([no])
 # disable if cross compiling on x86/x86_64 since we must run gen_matypes
@@ -295,19 +312,19 @@ if test "x$enable_asm" = xyes; then
     case "$asm_arch" in
     x86)
         ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
-        ASM_SOURCES='$(X86_SOURCES)'
-        ASM_API='$(X86_API)'
+        MESA_ASM_SOURCES='$(X86_SOURCES)'
+        GLAPI_ASM_SOURCES='$(X86_API)'
         AC_MSG_RESULT([yes, x86])
         ;;
     x86_64)
         ASM_FLAGS="-DUSE_X86_64_ASM"
-        ASM_SOURCES='$(X86-64_SOURCES)'
-        ASM_API='$(X86-64_API)'
+        MESA_ASM_SOURCES='$(X86-64_SOURCES)'
+        GLAPI_ASM_SOURCES='$(X86-64_API)'
         AC_MSG_RESULT([yes, x86_64])
         ;;
     ppc)
         ASM_FLAGS="-DUSE_PPC_ASM -DUSE_VMX_ASM"
-        ASM_SOURCES='$(PPC_SOURCES)'
+        MESA_ASM_SOURCES='$(PPC_SOURCES)'
         AC_MSG_RESULT([yes, ppc])
         ;;
     *)
@@ -316,8 +333,8 @@ if test "x$enable_asm" = xyes; then
     esac
 fi
 AC_SUBST([ASM_FLAGS])
-AC_SUBST([ASM_SOURCES])
-AC_SUBST([ASM_API])
+AC_SUBST([MESA_ASM_SOURCES])
+AC_SUBST([GLAPI_ASM_SOURCES])
 
 dnl PIC code macro
 MESA_PIC_FLAGS
@@ -392,9 +409,16 @@ esac
 dnl
 dnl Driver specific build directories
 dnl
-SRC_DIRS="mesa"
+SRC_DIRS="mesa egl"
 GLU_DIRS="sgi"
 WINDOW_SYSTEM=""
+GALLIUM_DIRS="auxiliary drivers state_trackers"
+GALLIUM_WINSYS_DIRS=""
+GALLIUM_WINSYS_DRM_DIRS=""
+GALLIUM_AUXILIARY_DIRS="draw translate cso_cache pipebuffer tgsi sct rtasm util"
+GALLIUM_DRIVER_DIRS="softpipe failover trace"
+GALLIUM_STATE_TRACKERS_DIRS=""
+
 case "$mesa_driver" in
 xlib)
     DRIVER_DIRS="x11"
@@ -403,6 +427,10 @@ dri)
     SRC_DIRS="glx/x11 $SRC_DIRS"
     DRIVER_DIRS="dri"
     WINDOW_SYSTEM="dri"
+    GALLIUM_WINSYS_DIRS="drm $GALLIUM_WINSYS_DIRS"
+    GALLIUM_WINSYS_DRM_DIRS="intel"
+    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS i915simple i965simple"
+    GALLIUM_STATE_TRACKERS_DIRS="egl"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
@@ -412,6 +440,12 @@ AC_SUBST([SRC_DIRS])
 AC_SUBST([GLU_DIRS])
 AC_SUBST([DRIVER_DIRS])
 AC_SUBST([WINDOW_SYSTEM])
+AC_SUBST([GALLIUM_DIRS])
+AC_SUBST([GALLIUM_WINSYS_DIRS])
+AC_SUBST([GALLIUM_WINSYS_DRM_DIRS])
+AC_SUBST([GALLIUM_DRIVER_DIRS])
+AC_SUBST([GALLIUM_AUXILIARY_DIRS])
+AC_SUBST([GALLIUM_STATE_TRACKERS_DIRS])
 
 dnl
 dnl User supplied program configuration
@@ -507,14 +541,18 @@ case "$mesa_driver" in
 xlib)
     if test "$x11_pkgconfig" = yes; then
         PKG_CHECK_MODULES([XLIBGL], [x11 xext])
+        GL_PC_REQ_PRIV="x11 xext"
         X11_INCLUDES="$X11_INCLUDES $XLIBGL_CFLAGS"
         GL_LIB_DEPS="$XLIBGL_LIBS"
     else
         # should check these...
         X11_INCLUDES="$X11_INCLUDES $X_CFLAGS"
         GL_LIB_DEPS="$X_LIBS -lX11 -lXext"
+        GL_PC_LIB_PRIV="$GL_LIB_DEPS"
+        GL_PC_CFLAGS="$X11_INCLUDES"
     fi
     GL_LIB_DEPS="$GL_LIB_DEPS $SELINUX_LIBS -lm -lpthread $OS_LIBS"
+    GL_PC_LIB_PRIV="$GL_PC_LIB_PRIV $SELINUX_LIBS -lm -lpthread $OS_LIBS"
 
     # if static, move the external libraries to the programs
     # and empty the libraries for libGL
@@ -532,6 +570,8 @@ dri)
     # Check for libdrm
     PKG_CHECK_MODULES([LIBDRM], [libdrm >= $LIBDRM_REQUIRED])
     PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
+    GL_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED dri2proto >= $DRI2PROTO_REQUIRED"
+    DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
 
     # find the DRI deps for libGL
     if test "$x11_pkgconfig" = yes; then
@@ -542,16 +582,20 @@ dri)
         fi
 
         PKG_CHECK_MODULES([DRIGL], [$dri_modules])
+        GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV $dri_modules"
         X11_INCLUDES="$X11_INCLUDES $DRIGL_CFLAGS"
         GL_LIB_DEPS="$DRIGL_LIBS"
     else
         # should check these...
         X11_INCLUDES="$X11_INCLUDES $X_CFLAGS"
         GL_LIB_DEPS="$X_LIBS -lX11 -lXext -lXxf86vm -lXdamage -lXfixes"
+        GL_PC_LIB_PRIV="$GL_LIB_DEPS"
+        GL_PC_CFLAGS="$X11_INCLUDES"
 
         # XCB can only be used from pkg-config
         if test "$enable_xcb" = yes; then
             PKG_CHECK_MODULES([XCB],[x11-xcb xcb-glx])
+            GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV x11-xcb xcb-glx"
             X11_INCLUDES="$X11_INCLUDES $XCB_CFLAGS"
             GL_LIB_DEPS="$GL_LIB_DEPS $XCB_LIBS"
         fi
@@ -559,6 +603,7 @@ dri)
 
     # need DRM libs, -lpthread, etc.
     GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS $OS_LIBS"
+    GL_PC_LIB_PRIV="-lm -lpthread $DLOPEN_LIBS $OS_LIBS"
     ;;
 osmesa)
     # No libGL for osmesa
@@ -566,6 +611,10 @@ osmesa)
     ;;
 esac
 AC_SUBST([GL_LIB_DEPS])
+AC_SUBST([GL_PC_REQ_PRIV])
+AC_SUBST([GL_PC_LIB_PRIV])
+AC_SUBST([GL_PC_CFLAGS])
+AC_SUBST([DRI_PC_REQ_PRIV])
 
 dnl
 dnl More X11 setup
@@ -644,10 +693,10 @@ if test "$mesa_driver" = dri; then
     case "$host_os" in
     linux*)
         DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
-        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING -DHAVE_ALIAS"
         if test "x$driglx_direct" = xyes; then
             DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
         fi
+        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING -DHAVE_ALIAS"
 
         case "$host_cpu" in
         x86_64)
@@ -786,6 +835,7 @@ osmesa)
         OSMESA_LIB_DEPS=""
     fi
     OSMESA_MESA_DEPS=""
+    OSMESA_PC_LIB_PRIV="-lm -lpthread $SELINUX_LIBS"
     ;;
 *)
     # Link OSMesa to libGL otherwise
@@ -796,13 +846,17 @@ osmesa)
     else
         OSMESA_MESA_DEPS=""
     fi
+    OSMESA_PC_REQ="gl"
     ;;
 esac
 if test "$enable_static" = no; then
     OSMESA_LIB_DEPS="$OSMESA_LIB_DEPS $OS_LIBS"
 fi
+OSMESA_PC_LIB_PRIV="$OSMESA_PC_LIB_PRIV $OS_LIBS"
 AC_SUBST([OSMESA_LIB_DEPS])
 AC_SUBST([OSMESA_MESA_DEPS])
+AC_SUBST([OSMESA_PC_REQ])
+AC_SUBST([OSMESA_PC_LIB_PRIV])
 
 dnl
 dnl GLU configuration
@@ -825,6 +879,7 @@ if test "x$enable_glu" = xyes; then
 
         # Link libGLU to libOSMesa instead of libGL
         GLU_LIB_DEPS=""
+        GLU_PC_REQ="osmesa"
         if test "$enable_static" = no; then
             GLU_MESA_DEPS='-l$(OSMESA_LIB)'
         else
@@ -833,6 +888,8 @@ if test "x$enable_glu" = xyes; then
         ;;
     *)
         # If static, empty GLU_LIB_DEPS and add libs for programs to link
+        GLU_PC_REQ="gl"
+        GLU_PC_LIB_PRIV="-lm"
         if test "$enable_static" = no; then
             GLU_LIB_DEPS="-lm"
             GLU_MESA_DEPS='-l$(GL_LIB)'
@@ -847,8 +904,13 @@ fi
 if test "$enable_static" = no; then
     GLU_LIB_DEPS="$GLU_LIB_DEPS $OS_CPLUSPLUS_LIBS"
 fi
+GLU_PC_LIB_PRIV="$GLU_PC_LIB_PRIV $OS_CPLUSPLUS_LIBS"
 AC_SUBST([GLU_LIB_DEPS])
 AC_SUBST([GLU_MESA_DEPS])
+AC_SUBST([GLU_PC_REQ])
+AC_SUBST([GLU_PC_REQ_PRIV])
+AC_SUBST([GLU_PC_LIB_PRIV])
+AC_SUBST([GLU_PC_CFLAGS])
 
 dnl
 dnl GLw configuration
@@ -873,10 +935,13 @@ if test "x$enable_glw" = xyes; then
     SRC_DIRS="$SRC_DIRS glw"
     if test "$x11_pkgconfig" = yes; then
         PKG_CHECK_MODULES([GLW],[x11 xt])
+        GLW_PC_REQ_PRIV="x11 xt"
         GLW_LIB_DEPS="$GLW_LIBS"
     else
         # should check these...
         GLW_LIB_DEPS="$X_LIBS -lXt -lX11"
+        GLW_PC_LIB_PRIV="$GLW_LIB_DEPS"
+        GLW_PC_CFLAGS="$X11_INCLUDES"
     fi
 
     GLW_SOURCES="GLwDrawA.c"
@@ -895,9 +960,12 @@ if test "x$enable_glw" = xyes; then
         fi
         # MOTIF_LIBS is prepended to GLW_LIB_DEPS since Xm needs Xt/X11
         GLW_LIB_DEPS="$MOTIF_LIBS $GLW_LIB_DEPS"
+        GLW_PC_LIB_PRIV="$MOTIF_LIBS $GLW_PC_LIB_PRIV"
+        GLW_PC_CFLAGS="$MOTIF_CFLAGS $GLW_PC_CFLAGS"
     fi
 
     # If static, empty GLW_LIB_DEPS and add libs for programs to link
+    GLW_PC_LIB_PRIV="$GLW_PC_LIB_PRIV $OS_LIBS"
     if test "$enable_static" = no; then
         GLW_MESA_DEPS='-l$(GL_LIB)'
         GLW_LIB_DEPS="$GLW_LIB_DEPS $OS_LIBS"
@@ -911,6 +979,9 @@ AC_SUBST([GLW_LIB_DEPS])
 AC_SUBST([GLW_MESA_DEPS])
 AC_SUBST([GLW_SOURCES])
 AC_SUBST([MOTIF_CFLAGS])
+AC_SUBST([GLW_PC_REQ_PRIV])
+AC_SUBST([GLW_PC_LIB_PRIV])
+AC_SUBST([GLW_PC_CFLAGS])
 
 dnl
 dnl GLUT configuration
@@ -945,12 +1016,16 @@ if test "x$enable_glut" = xyes; then
     fi
     if test "$x11_pkgconfig" = yes; then
         PKG_CHECK_MODULES([GLUT],[x11 xmu xi])
+        GLUT_PC_REQ_PRIV="x11 xmu xi"
         GLUT_LIB_DEPS="$GLUT_LIBS"
     else
         # should check these...
         GLUT_LIB_DEPS="$X_LIBS -lX11 -lXmu -lXi"
+        GLUT_PC_LIB_PRIV="$GLUT_LIB_DEPS"
+        GLUT_PC_CFLAGS="$X11_INCLUDES"
     fi
     GLUT_LIB_DEPS="$GLUT_LIB_DEPS -lm $OS_LIBS"
+    GLUT_PC_LIB_PRIV="$GLUT_PC_LIB_PRIV -lm $OS_LIBS"
 
     # If glut is available, we can build most programs
     if test "$with_demos" = yes; then
@@ -969,6 +1044,9 @@ fi
 AC_SUBST([GLUT_LIB_DEPS])
 AC_SUBST([GLUT_MESA_DEPS])
 AC_SUBST([GLUT_CFLAGS])
+AC_SUBST([GLUT_PC_REQ_PRIV])
+AC_SUBST([GLUT_PC_LIB_PRIV])
+AC_SUBST([GLUT_PC_CFLAGS])
 
 dnl
 dnl Program library dependencies
@@ -988,6 +1066,17 @@ fi
 AC_SUBST([APP_LIB_DEPS])
 AC_SUBST([PROGRAM_DIRS])
 
+dnl
+dnl Gallium configuration
+dnl
+AC_ARG_ENABLE([gallium],
+    [AS_HELP_STRING([--disable-gallium],
+        [build gallium @<:@default=enabled@:>@])],
+    [enable_gallium="$enableval"],
+    [enable_gallium=yes])
+if test "x$enable_gallium" = xyes; then
+    SRC_DIRS="$SRC_DIRS gallium gallium/winsys"
+fi
 
 dnl Restore LDFLAGS and CPPFLAGS
 LDFLAGS="$_SAVE_LDFLAGS"
@@ -1032,6 +1121,20 @@ else
     echo "        DRI drivers:     $dri_dirs"
 fi
     echo "        DRI driver dir:  $DRI_DRIVER_INSTALL_DIR"
+fi
+echo "        Use XCB:         $enable_xcb"
+
+echo ""
+if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
+    echo "        Gallium:         yes"
+    echo "        Gallium dirs:    $GALLIUM_DIRS"
+    echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
+    echo "        Winsys drm dirs: $GALLIUM_WINSYS_DRM_DIRS"
+    echo "        Auxiliary dirs:  $GALLIUM_AUXILIARY_DIRS"
+    echo "        Driver dirs:     $GALLIUM_DRIVER_DIRS"
+    echo "        Trackers dirs:   $GALLIUM_STATE_TRACKERS_DIRS"
+else
+    echo "        Gallium:         no"
 fi
 
 dnl Libraries

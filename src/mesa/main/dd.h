@@ -34,7 +34,7 @@
 /* THIS FILE ONLY INCLUDED BY mtypes.h !!!!! */
 
 struct gl_pixelstore_attrib;
-struct mesa_display_list;
+struct gl_display_list;
 
 /**
  * Device driver function table.
@@ -808,6 +808,8 @@ struct dd_function_table {
                          struct gl_renderbuffer_attachment *att);
    void (*FinishRenderTexture)(GLcontext *ctx,
                                struct gl_renderbuffer_attachment *att);
+   void (*ValidateFramebuffer)(GLcontext *ctx,
+                               struct gl_framebuffer *fb);
    /*@}*/
 #endif
 #if FEATURE_EXT_framebuffer_blit
@@ -997,7 +999,7 @@ struct dd_function_table {
     * Notify the T&L component before and after calling a display list.
     */
    void (*BeginCallList)( GLcontext *ctx, 
-			  struct mesa_display_list *dlist );
+			  struct gl_display_list *dlist );
    /**
     * Called by glEndCallList().
     *

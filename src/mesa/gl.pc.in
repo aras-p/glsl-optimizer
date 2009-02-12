@@ -5,7 +5,8 @@ includedir=@INSTALL_INC_DIR@
 
 Name: gl
 Description: Mesa OpenGL library
-Requires:
+Requires.private: @GL_PC_REQ_PRIV@
 Version: @VERSION@
 Libs: -L${libdir} -lGL
-Cflags: -I${includedir}
+Libs.private: @GL_PC_LIB_PRIV@
+Cflags: -I${includedir} @GL_PC_CFLAGS@

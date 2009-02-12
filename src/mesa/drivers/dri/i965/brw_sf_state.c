@@ -42,45 +42,30 @@ static void upload_sf_vp(struct brw_context *brw)
    GLcontext *ctx = &brw->intel.ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport sfv;
-   struct intel_renderbuffer *irb =
-      intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]);
    GLfloat y_scale, y_bias;
+   const GLboolean render_to_fbo = (ctx->DrawBuffer->Name != 0);
 
    memset(&sfv, 0, sizeof(sfv));
 
-   if (ctx->DrawBuffer->Name) {
-      /* User-created FBO */
-      if (irb && !irb->RenderToTexture) {
-	 y_scale = -1.0;
-	 y_bias = ctx->DrawBuffer->Height;
-      } else {
-	 y_scale = 1.0;
-	 y_bias = 0;
-      }
-   } else {
+   if (render_to_fbo) {
+      y_scale = 1.0;
+      y_bias = 0;
+   }
+   else {
       y_scale = -1.0;
       y_bias = ctx->DrawBuffer->Height;
    }
 
-   /* _NEW_VIEWPORT, BRW_NEW_METAOPS */
+   /* _NEW_VIEWPORT */
 
-   if (!brw->metaops.active) {
-      const GLfloat *v = ctx->Viewport._WindowMap.m;
+   const GLfloat *v = ctx->Viewport._WindowMap.m;
 
-      sfv.viewport.m00 = v[MAT_SX];
-      sfv.viewport.m11 = v[MAT_SY] * y_scale;
-      sfv.viewport.m22 = v[MAT_SZ] * depth_scale;
-      sfv.viewport.m30 = v[MAT_TX];
-      sfv.viewport.m31 = v[MAT_TY] * y_scale + y_bias;
-      sfv.viewport.m32 = v[MAT_TZ] * depth_scale;
-   } else {
-      sfv.viewport.m00 =   1;
-      sfv.viewport.m11 = - 1;
-      sfv.viewport.m22 =   1;
-      sfv.viewport.m30 =   0;
-      sfv.viewport.m31 =   ctx->DrawBuffer->Height;
-      sfv.viewport.m32 =   0;
-   }
+   sfv.viewport.m00 = v[MAT_SX];
+   sfv.viewport.m11 = v[MAT_SY] * y_scale;
+   sfv.viewport.m22 = v[MAT_SZ] * depth_scale;
+   sfv.viewport.m30 = v[MAT_TX];
+   sfv.viewport.m31 = v[MAT_TY] * y_scale + y_bias;
+   sfv.viewport.m32 = v[MAT_TZ] * depth_scale;
 
    /* _NEW_SCISSOR */
 
@@ -91,10 +76,20 @@ static void upload_sf_vp(struct brw_context *brw)
     * Note that the hardware's coordinates are inclusive, while Mesa's min is
     * inclusive but max is exclusive.
     */
-   sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
-   sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
-   sfv.scissor.ymin = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymax;
-   sfv.scissor.ymax = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin - 1;
+   if (render_to_fbo) {
+      /* texmemory: Y=0=bottom */
+      sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
+      sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
+      sfv.scissor.ymin = ctx->DrawBuffer->_Ymin;
+      sfv.scissor.ymax = ctx->DrawBuffer->_Ymax - 1;
+   }
+   else {
+      /* memory: Y=0=top */
+      sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
+      sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
+      sfv.scissor.ymin = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymax;
+      sfv.scissor.ymax = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin - 1;
+   }
 
    dri_bo_unreference(brw->sf.vp_bo);
    brw->sf.vp_bo = brw_cache_data( &brw->cache, BRW_SF_VP, &sfv, NULL, 0 );
@@ -104,7 +99,7 @@ const struct brw_tracked_state brw_sf_vp = {
    .dirty = {
       .mesa  = (_NEW_VIEWPORT | 
 		_NEW_SCISSOR),
-      .brw   = BRW_NEW_METAOPS,
+      .brw   = 0,
       .cache = 0
    },
    .prepare = upload_sf_vp
@@ -117,7 +112,11 @@ struct brw_sf_unit_key {
    unsigned int nr_urb_entries, urb_size, sfsize;
 
    GLenum front_face, cull_face;
-   GLboolean scissor, line_smooth, point_sprite, point_attenuated;
+   unsigned scissor:1;
+   unsigned line_smooth:1;
+   unsigned point_sprite:1;
+   unsigned point_attenuated:1;
+   unsigned render_to_fbo:1;
    float line_width;
    float point_size;
 };
@@ -125,6 +124,7 @@ struct brw_sf_unit_key {
 static void
 sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_SF_PROG */
@@ -136,20 +136,22 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
    key->urb_size = brw->urb.vsize;
    key->sfsize = brw->urb.sfsize;
 
-   key->scissor = brw->attribs.Scissor->Enabled;
-   key->front_face = brw->attribs.Polygon->FrontFace;
+   key->scissor = ctx->Scissor.Enabled;
+   key->front_face = ctx->Polygon.FrontFace;
 
-   if (brw->attribs.Polygon->CullFlag)
-      key->cull_face = brw->attribs.Polygon->CullFaceMode;
+   if (ctx->Polygon.CullFlag)
+      key->cull_face = ctx->Polygon.CullFaceMode;
    else
       key->cull_face = GL_NONE;
 
-   key->line_width = brw->attribs.Line->Width;
-   key->line_smooth = brw->attribs.Line->SmoothFlag;
+   key->line_width = ctx->Line.Width;
+   key->line_smooth = ctx->Line.SmoothFlag;
 
-   key->point_sprite = brw->attribs.Point->PointSprite;
-   key->point_size = brw->attribs.Point->Size;
-   key->point_attenuated = brw->attribs.Point->_Attenuated;
+   key->point_sprite = ctx->Point.PointSprite;
+   key->point_size = ctx->Point.Size;
+   key->point_attenuated = ctx->Point._Attenuated;
+
+   key->render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
 }
 
 static dri_bo *
@@ -196,6 +198,11 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    else
       sf.sf5.front_winding = BRW_FRONTWINDING_CW;
 
+   /* The viewport is inverted for rendering to a FBO, and that inverts
+    * polygon front/back orientation.
+    */
+   sf.sf5.front_winding ^= key->render_to_fbo;
+
    switch (key->cull_face) {
    case GL_FRONT:
       sf.sf6.cull_mode = BRW_CULLMODE_FRONT;
@@ -229,7 +236,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    /* XXX clamp max depends on AA vs. non-AA */
 
    sf.sf7.sprite_point = key->point_sprite;
-   sf.sf7.point_size = CLAMP(nearbyint(key->point_size), 1, 255) * (1<<3);
+   sf.sf7.point_size = CLAMP(rint(key->point_size), 1, 255) * (1<<3);
    sf.sf7.use_point_size_state = !key->point_attenuated;
    sf.sf7.aa_line_distance_mode = 0;
 
@@ -294,8 +301,7 @@ const struct brw_tracked_state brw_sf_unit = {
 		_NEW_LINE | 
 		_NEW_POINT | 
 		_NEW_SCISSOR),
-      .brw   = (BRW_NEW_URB_FENCE |
-		BRW_NEW_METAOPS),
+      .brw   = BRW_NEW_URB_FENCE,
       .cache = (CACHE_NEW_SF_VP |
 		CACHE_NEW_SF_PROG)
    },

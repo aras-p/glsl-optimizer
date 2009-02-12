@@ -49,7 +49,7 @@
 
 #define FILE_DEBUG_FLAG DEBUG_BATCH
 
-static GLuint hw_prim[GL_POLYGON+1] = {
+static GLuint prim_to_hw_prim[GL_POLYGON+1] = {
    _3DPRIM_POINTLIST,
    _3DPRIM_LINELIST,
    _3DPRIM_LINELOOP,
@@ -84,15 +84,17 @@ static const GLenum reduced_prim[GL_POLYGON+1] = {
  */
 static GLuint brw_set_prim(struct brw_context *brw, GLenum prim)
 {
+   GLcontext *ctx = &brw->intel.ctx;
+
    if (INTEL_DEBUG & DEBUG_PRIMS)
       _mesa_printf("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim));
    
    /* Slight optimization to avoid the GS program when not needed:
     */
    if (prim == GL_QUAD_STRIP &&
-       brw->attribs.Light->ShadeModel != GL_FLAT &&
-       brw->attribs.Polygon->FrontMode == GL_FILL &&
-       brw->attribs.Polygon->BackMode == GL_FILL)
+       ctx->Light.ShadeModel != GL_FLAT &&
+       ctx->Polygon.FrontMode == GL_FILL &&
+       ctx->Polygon.BackMode == GL_FILL)
       prim = GL_TRIANGLE_STRIP;
 
    if (prim != brw->primitive) {
@@ -103,12 +105,9 @@ static GLuint brw_set_prim(struct brw_context *brw, GLenum prim)
 	 brw->intel.reduced_primitive = reduced_prim[prim];
 	 brw->state.dirty.brw |= BRW_NEW_REDUCED_PRIMITIVE;
       }
-
-      brw_validate_state(brw);
-      brw_upload_state(brw);
    }
 
-   return hw_prim[prim];
+   return prim_to_hw_prim[prim];
 }
 
 
@@ -123,9 +122,9 @@ static GLuint trim(GLenum prim, GLuint length)
 }
 
 
-static void brw_emit_prim( struct brw_context *brw, 
-			   const struct _mesa_prim *prim )
-
+static void brw_emit_prim(struct brw_context *brw,
+			  const struct _mesa_prim *prim,
+			  uint32_t hw_prim)
 {
    struct brw_3d_primitive prim_packet;
 
@@ -136,7 +135,7 @@ static void brw_emit_prim( struct brw_context *brw,
    prim_packet.header.opcode = CMD_3D_PRIM;
    prim_packet.header.length = sizeof(prim_packet)/4 - 2;
    prim_packet.header.pad = 0;
-   prim_packet.header.topology = brw_set_prim(brw, prim->mode);
+   prim_packet.header.topology = hw_prim;
    prim_packet.header.indexed = prim->indexed;
 
    prim_packet.verts_per_instance = trim(prim->mode, prim->count);
@@ -169,14 +168,11 @@ static void brw_merge_inputs( struct brw_context *brw,
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
       brw->vb.inputs[i].glarray = arrays[i];
 
-      /* XXX: metaops passes null arrays */
-      if (arrays[i]) {
-	 if (arrays[i]->StrideB != 0)
-	    brw->vb.info.varying |= 1 << i;
+      if (arrays[i]->StrideB != 0)
+	 brw->vb.info.varying |= 1 << i;
 
 	 brw->vb.info.sizes[i/16] |= (brw->vb.inputs[i].glarray->Size - 1) <<
 	    ((i%16) * 2);
-      }
    }
 
    /* Raise statechanges if input sizes and varying have changed: 
@@ -195,12 +191,13 @@ static GLboolean check_fallbacks( struct brw_context *brw,
 				  const struct _mesa_prim *prim,
 				  GLuint nr_prims )
 {
+   GLcontext *ctx = &brw->intel.ctx;
    GLuint i;
 
    if (!brw->intel.strict_conformance)
       return GL_FALSE;
 
-   if (brw->attribs.Polygon->SmoothFlag) {
+   if (ctx->Polygon.SmoothFlag) {
       for (i = 0; i < nr_prims; i++)
 	 if (reduced_prim[prim[i].mode] == GL_TRIANGLES) 
 	    return GL_TRUE;
@@ -209,7 +206,7 @@ static GLboolean check_fallbacks( struct brw_context *brw,
    /* BRW hardware will do AA lines, but they are non-conformant it
     * seems.  TBD whether we keep this fallback:
     */
-   if (brw->attribs.Line->SmoothFlag) {
+   if (ctx->Line.SmoothFlag) {
       for (i = 0; i < nr_prims; i++)
 	 if (reduced_prim[prim[i].mode] == GL_LINES) 
 	    return GL_TRUE;
@@ -218,7 +215,7 @@ static GLboolean check_fallbacks( struct brw_context *brw,
    /* Stipple -- these fallbacks could be resolved with a little
     * bit of work?
     */
-   if (brw->attribs.Line->StippleFlag) {
+   if (ctx->Line.StippleFlag) {
       for (i = 0; i < nr_prims; i++) {
 	 /* GS doesn't get enough information to know when to reset
 	  * the stipple counter?!?
@@ -227,14 +224,14 @@ static GLboolean check_fallbacks( struct brw_context *brw,
 	    return GL_TRUE;
 	    
 	 if (prim[i].mode == GL_POLYGON &&
-	     (brw->attribs.Polygon->FrontMode == GL_LINE ||
-	      brw->attribs.Polygon->BackMode == GL_LINE))
+	     (ctx->Polygon.FrontMode == GL_LINE ||
+	      ctx->Polygon.BackMode == GL_LINE))
 	    return GL_TRUE;
       }
    }
 
 
-   if (brw->attribs.Point->SmoothFlag) {
+   if (ctx->Point.SmoothFlag) {
       for (i = 0; i < nr_prims; i++)
 	 if (prim[i].mode == GL_POINTS) 
 	    return GL_TRUE;
@@ -258,10 +255,14 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    struct brw_context *brw = brw_context(ctx);
    GLboolean retval = GL_FALSE;
    GLboolean warn = GL_FALSE;
+   GLboolean first_time = GL_TRUE;
    GLuint i;
 
    if (ctx->NewState)
       _mesa_update_state( ctx );
+
+   if (check_fallbacks(brw, prim, nr_prims))
+      return GL_FALSE;
 
    brw_validate_textures( brw );
 
@@ -275,6 +276,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    brw->vb.min_index = min_index;
    brw->vb.max_index = max_index;
    brw->state.dirty.brw |= BRW_NEW_VERTICES;
+
    /* Have to validate state quite late.  Will rebuild tnl_program,
     * which depends on varying information.  
     * 
@@ -289,58 +291,57 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
       return GL_TRUE;
    }
 
-   /* Flush the batch if it's approaching full, so that we don't wrap while
-    * we've got validated state that needs to be in the same batch as the
-    * primitives.  This fraction is just a guess (minimal full state plus
-    * a primitive is around 512 bytes), and would be better if we had
-    * an upper bound of how much we might emit in a single
-    * brw_try_draw_prims().
-    */
-   intel_batchbuffer_require_space(intel->batch, intel->batch->size / 4,
-				   LOOP_CLIPRECTS);
-   {
-      /* Set the first primitive early, ahead of validate_state:
+   for (i = 0; i < nr_prims; i++) {
+      uint32_t hw_prim;
+
+      /* Flush the batch if it's approaching full, so that we don't wrap while
+       * we've got validated state that needs to be in the same batch as the
+       * primitives.  This fraction is just a guess (minimal full state plus
+       * a primitive is around 512 bytes), and would be better if we had
+       * an upper bound of how much we might emit in a single
+       * brw_try_draw_prims().
        */
-      brw_set_prim(brw, prim[0].mode);
+      intel_batchbuffer_require_space(intel->batch, intel->batch->size / 4,
+				      LOOP_CLIPRECTS);
 
-      brw_validate_state( brw );
+      hw_prim = brw_set_prim(brw, prim[i].mode);
 
-      /* Various fallback checks:
-       */
-      if (brw->intel.Fallback) 
-	 goto out;
+      if (first_time || (brw->state.dirty.brw & BRW_NEW_PRIMITIVE)) {
+	 first_time = GL_FALSE;
 
-      if (check_fallbacks( brw, prim, nr_prims ))
-	 goto out;
-
-      /* Check that we can fit our state in with our existing batchbuffer, or
-       * flush otherwise.
-       */
-      if (dri_bufmgr_check_aperture_space(brw->state.validated_bos,
-					  brw->state.validated_bo_count)) {
-	 static GLboolean warned;
-	 intel_batchbuffer_flush(intel->batch);
-
-	 /* Validate the state after we flushed the batch (which would have
-	  * changed the set of dirty state).  If we still fail to
-	  * check_aperture, warn of what's happening, but attempt to continue
-	  * on since it may succeed anyway, and the user would probably rather
-	  * see a failure and a warning than a fallback.
-	  */
 	 brw_validate_state(brw);
-	 if (!warned &&
-	     dri_bufmgr_check_aperture_space(brw->state.validated_bos,
+
+	 /* Various fallback checks:  */
+	 if (brw->intel.Fallback)
+	    goto out;
+
+	 /* Check that we can fit our state in with our existing batchbuffer, or
+	  * flush otherwise.
+	  */
+	 if (dri_bufmgr_check_aperture_space(brw->state.validated_bos,
 					     brw->state.validated_bo_count)) {
-	    warn = GL_TRUE;
-	    warned = GL_TRUE;
+	    static GLboolean warned;
+	    intel_batchbuffer_flush(intel->batch);
+
+	    /* Validate the state after we flushed the batch (which would have
+	     * changed the set of dirty state).  If we still fail to
+	     * check_aperture, warn of what's happening, but attempt to continue
+	     * on since it may succeed anyway, and the user would probably rather
+	     * see a failure and a warning than a fallback.
+	     */
+	    brw_validate_state(brw);
+	    if (!warned &&
+		dri_bufmgr_check_aperture_space(brw->state.validated_bos,
+						brw->state.validated_bo_count)) {
+	       warn = GL_TRUE;
+	       warned = GL_TRUE;
+	    }
 	 }
+
+	 brw_upload_state(brw);
       }
 
-      brw_upload_state(brw);
-
-      for (i = 0; i < nr_prims; i++) {
-	 brw_emit_prim(brw, &prim[i]);
-      }
+      brw_emit_prim(brw, &prim[i], hw_prim);
 
       retval = GL_TRUE;
    }

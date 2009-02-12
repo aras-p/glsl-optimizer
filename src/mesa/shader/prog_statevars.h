@@ -79,10 +79,10 @@ typedef enum gl_state_index_ {
    STATE_SHININESS,
    STATE_HALF_VECTOR,
 
-   STATE_POSITION,
-   STATE_ATTENUATION,
-   STATE_SPOT_DIRECTION,
-   STATE_SPOT_CUTOFF,
+   STATE_POSITION,       /**< xyzw = position */
+   STATE_ATTENUATION,    /**< xyz = attenuation, w = spot exponent */
+   STATE_SPOT_DIRECTION, /**< xyz = direction, w = cos(cutoff) */
+   STATE_SPOT_CUTOFF,    /**< x = cutoff, yzw = undefined */
 
    STATE_TEXGEN_EYE_S,
    STATE_TEXGEN_EYE_T,
@@ -104,6 +104,7 @@ typedef enum gl_state_index_ {
    STATE_LOCAL,
 
    STATE_INTERNAL,		/* Mesa additions */
+   STATE_CURRENT_ATTRIB,        /* ctx->Current vertex attrib value */
    STATE_NORMAL_SCALE,
    STATE_TEXRECT_SCALE,
    STATE_FOG_PARAMS_OPTIMIZED,  /* for faster fog calc */
@@ -130,7 +131,7 @@ extern GLbitfield
 _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH]);
 
 
-extern const char *
+extern char *
 _mesa_program_state_string(const gl_state_index state[STATE_LENGTH]);
 
 

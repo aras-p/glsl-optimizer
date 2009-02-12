@@ -63,6 +63,9 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 		n = f.static_name(name)
 
 		for p in f.parameterIterator():
+			if p.is_padding:
+				continue
+
 			if p.is_pointer():
 				cast = "(const void *) "
 			else:

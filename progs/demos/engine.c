@@ -5,12 +5,11 @@
  * June 2006
  */
 
-#define GL_GLEXT_PROTOTYPES
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include "readtex.h"
 #include "trackball.h"
@@ -555,7 +554,7 @@ SquareWithHole(float squareSize, float holeRadius)
    for (i = 0; i <= 360; i += 5) {
       const float x1 = holeRadius * cos(DEG_TO_RAD(i));
       const float y1 = holeRadius * sin(DEG_TO_RAD(i));
-      float x2, y2;
+      float x2 = 0.0F, y2 = 0.0F;
       if (i > 315 || i <= 45) {
          x2 = squareSize;
          y2 = squareSize * tan(DEG_TO_RAD(i));
@@ -1288,6 +1287,7 @@ main(int argc, char *argv[])
    glutInitWindowSize(WinWidth, WinHeight);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    glutCreateWindow("OpenGL Engine Demo");
+   glewInit();
    glutReshapeFunc(Reshape);
    glutMouseFunc(Mouse);
    glutMotionFunc(Motion);

@@ -6,6 +6,8 @@ includedir=@INSTALL_INC_DIR@
 Name: glut
 Description: Mesa OpenGL Utility Toolkit library
 Requires: gl glu
+Requires.private: @GLUT_PC_REQ_PRIV@
 Version: @VERSION@
 Libs: -L${libdir} -lglut
-Cflags: -I${includedir}
+Libs.private: @GLUT_PC_LIB_PRIV@
+Cflags: -I${includedir} @GLUT_PC_CFLAGS@

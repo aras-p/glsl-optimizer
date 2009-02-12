@@ -708,14 +708,10 @@ extern double
 _mesa_pow(double x, double y);
 
 extern int
-_mesa_ffs(int i);
+_mesa_ffs(int32_t i);
 
 extern int
-#ifdef __MINGW32__
-_mesa_ffsll(long i);
-#else
-_mesa_ffsll(long long i);
-#endif
+_mesa_ffsll(int64_t i);
 
 extern unsigned int
 _mesa_bitcount(unsigned int n);
@@ -767,8 +763,14 @@ _mesa_strtod( const char *s, char **end );
 extern int
 _mesa_sprintf( char *str, const char *fmt, ... );
 
+extern int
+_mesa_snprintf( char *str, size_t size, const char *fmt, ... );
+
 extern void
 _mesa_printf( const char *fmtString, ... );
+
+extern void
+_mesa_fprintf( FILE *f, const char *fmtString, ... );
 
 extern int 
 _mesa_vsprintf( char *str, const char *fmt, va_list args );

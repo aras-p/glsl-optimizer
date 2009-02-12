@@ -150,6 +150,7 @@ static void vbo_exec_bind_arrays( GLcontext *ctx )
    GLubyte *data = exec->vtx.buffer_map;
    const GLuint *map;
    GLuint attr;
+   GLbitfield varying_inputs = 0x0;
 
    /* Install the default (ie Current) attributes first, then overlay
     * all active ones.
@@ -175,7 +176,20 @@ static void vbo_exec_bind_arrays( GLcontext *ctx )
          exec->vtx.inputs[attr + 16] = &vbo->generic_currval[attr];
       }
       map = vbo->map_vp_arb;
+
+      /* check if VERT_ATTRIB_POS is not read but VERT_BIT_GENERIC0 is read.
+       * In that case we effectively need to route the data from
+       * glVertexAttrib(0, val) calls to feed into the GENERIC0 input.
+       */
+      if ((ctx->VertexProgram._Current->Base.InputsRead & VERT_BIT_POS) == 0 &&
+          (ctx->VertexProgram._Current->Base.InputsRead & VERT_BIT_GENERIC0)) {
+         exec->vtx.inputs[16] = exec->vtx.inputs[0];
+         exec->vtx.attrsz[16] = exec->vtx.attrsz[0];
+         exec->vtx.attrsz[0] = 0;
+      }
       break;
+   default:
+      assert(0);
    }
 
    /* Make all active attributes (including edgeflag) available as
@@ -204,6 +218,7 @@ static void vbo_exec_bind_arrays( GLcontext *ctx )
 	 arrays[attr].StrideB = exec->vtx.vertex_size * sizeof(GLfloat);
 	 arrays[attr].Stride = exec->vtx.vertex_size * sizeof(GLfloat);
 	 arrays[attr].Type = GL_FLOAT;
+         arrays[attr].Format = GL_RGBA;
 	 arrays[attr].Enabled = 1;
          _mesa_reference_buffer_object(ctx,
                                        &arrays[attr].BufferObj,
@@ -211,8 +226,11 @@ static void vbo_exec_bind_arrays( GLcontext *ctx )
 	 arrays[attr]._MaxElement = count; /* ??? */
 
 	 data += exec->vtx.attrsz[src] * sizeof(GLfloat);
+         varying_inputs |= 1<<attr;
       }
    }
+
+   _mesa_set_varying_vp_inputs( ctx, varying_inputs );
 }
 
 
@@ -241,6 +259,9 @@ void vbo_exec_vtx_flush( struct vbo_exec_context *exec )
 	 /* Before the unmap (why?)
 	  */
 	 vbo_exec_bind_arrays( ctx );
+
+         if (ctx->NewState)
+            _mesa_update_state( ctx );
 
          /* if using a real VBO, unmap it before drawing */
          if (exec->vtx.bufferobj->Name) {

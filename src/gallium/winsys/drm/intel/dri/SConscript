@@ -1,0 +1,41 @@
+Import('*')
+
+if 'mesa' in env['statetrackers']:
+
+	env = drienv.Clone()
+
+	env.Append(CPPPATH = [
+		'../intel',
+		'server'
+	])
+
+	#MINIGLX_SOURCES = server/intel_dri.c
+
+	DRIVER_SOURCES = [
+		'intel_winsys_pipe.c',
+		'intel_winsys_softpipe.c',
+		'intel_winsys_i915.c',
+		'intel_batchbuffer.c',
+		'intel_swapbuffers.c',
+		'intel_context.c',
+		'intel_lock.c',
+		'intel_screen.c',
+		'intel_batchpool.c',
+	]
+
+	sources = \
+		COMMON_GALLIUM_SOURCES + \
+		COMMON_BM_SOURCES + \
+		DRIVER_SOURCES
+
+	drivers = [
+		softpipe,
+		i915simple
+	]
+
+	# TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
+	env.SharedLibrary(
+		target ='i915tex_dri.so',
+		source = sources,
+		LIBS = drivers + mesa + auxiliaries + env['LIBS'],
+	)

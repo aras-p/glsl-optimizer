@@ -131,18 +131,17 @@ struct brw_context;
 #define BRW_NEW_WM_INPUT_DIMENSIONS     0x100
 #define BRW_NEW_INPUT_VARYING           0x200
 #define BRW_NEW_PSP                     0x800
-#define BRW_NEW_METAOPS                 0x1000
 #define BRW_NEW_FENCE                   0x2000
-#define BRW_NEW_LOCK                    0x4000
-#define BRW_NEW_INDICES			0x8000
-#define BRW_NEW_VERTICES		0x10000
+#define BRW_NEW_INDICES			0x4000
+#define BRW_NEW_VERTICES		0x8000
 /**
  * Used for any batch entry with a relocated pointer that will be used
  * by any 3D rendering.
  */
-#define BRW_NEW_BATCH			0x8000
+#define BRW_NEW_BATCH			0x10000
 /** brw->depth_region updated */
-#define BRW_NEW_DEPTH_BUFFER		0x10000
+#define BRW_NEW_DEPTH_BUFFER		0x20000
+#define BRW_NEW_NR_SURFACES		0x40000
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -158,7 +157,6 @@ struct brw_state_flags {
 struct brw_vertex_program {
    struct gl_vertex_program program;
    GLuint id;
-   GLuint param_state;		/* flags indicating state tracked by params */
 };
 
 
@@ -166,7 +164,6 @@ struct brw_vertex_program {
 struct brw_fragment_program {
    struct gl_fragment_program program;
    GLuint id;
-   GLuint param_state;		/* flags indicating state tracked by params */
 };
 
 
@@ -240,7 +237,7 @@ struct brw_vs_ouput_sizes {
 };
 
 
-#define BRW_MAX_TEX_UNIT 8
+#define BRW_MAX_TEX_UNIT 16
 #define BRW_WM_MAX_SURF BRW_MAX_TEX_UNIT + MAX_DRAW_BUFFERS
 
 enum brw_cache_id {
@@ -304,26 +301,6 @@ struct brw_cache {
    dri_bo *last_bo[BRW_MAX_CACHE];
 };
 
-
-
-struct brw_state_pointers {
-   struct gl_colorbuffer_attrib	*Color;
-   struct gl_depthbuffer_attrib	*Depth;
-   struct gl_fog_attrib		*Fog;
-   struct gl_hint_attrib	*Hint;
-   struct gl_light_attrib	*Light;
-   struct gl_line_attrib	*Line;
-   struct gl_point_attrib	*Point;
-   struct gl_polygon_attrib	*Polygon;
-   GLuint                       *PolygonStipple;
-   struct gl_scissor_attrib	*Scissor;
-   struct gl_stencil_attrib	*Stencil;
-   struct gl_texture_attrib	*Texture;
-   struct gl_transform_attrib	*Transform;
-   struct gl_viewport_attrib	*Viewport;
-   struct gl_vertex_program_state *VertexProgram; 
-   struct gl_fragment_program_state *FragmentProgram;
-};
 
 /* Considered adding a member to this struct to document which flags
  * an update might raise so that ordering of the state atoms can be
@@ -459,7 +436,6 @@ struct brw_context
       int validated_bo_count;
    } state;
 
-   struct brw_state_pointers attribs;
    struct brw_cache cache;
    struct brw_cached_batch_item *cached_batch_items;
 
@@ -492,28 +468,6 @@ struct brw_context
       dri_bo *bo;
       unsigned int offset;
    } ib;
-
-   struct {
-      /* Will be allocated on demand if needed.   
-       */
-      struct brw_state_pointers attribs;
-      struct gl_vertex_program *vp;
-      struct gl_fragment_program *fp, *fp_tex;
-
-      struct gl_buffer_object *vbo;
-
-      struct intel_region *saved_draw_region;
-      GLuint saved_nr_draw_regions;
-      struct intel_region *saved_depth_region;
-
-      GLuint restore_draw_buffers[MAX_DRAW_BUFFERS];
-      GLuint restore_num_draw_buffers;
-
-      struct gl_fragment_program *restore_fp;
-      
-      GLboolean active;
-   } metaops;
-
 
    /* Active vertex program: 
     */
@@ -704,13 +658,6 @@ void brw_FrameBufferTexInit( struct brw_context *brw,
 			     struct intel_region *region );
 void brw_FrameBufferTexDestroy( struct brw_context *brw );
 void brw_validate_textures( struct brw_context *brw );
-
-/*======================================================================
- * brw_metaops.c
- */
-
-void brw_init_metaops( struct brw_context *brw );
-void brw_destroy_metaops( struct brw_context *brw );
 
 
 /*======================================================================

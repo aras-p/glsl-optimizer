@@ -46,6 +46,7 @@
 static void compile_sf_prog( struct brw_context *brw,
 			     struct brw_sf_prog_key *key )
 {
+   GLcontext *ctx = &brw->intel.ctx;
    struct brw_sf_compile c;
    const GLuint *program;
    GLuint program_size;
@@ -73,10 +74,12 @@ static void compile_sf_prog( struct brw_context *brw,
 	 c.attr_to_idx[i] = idx;
 	 c.idx_to_attr[idx] = i;
 	 if (i >= VERT_RESULT_TEX0 && i <= VERT_RESULT_TEX7) {
-		 c.point_attrs[i].CoordReplace = 
-			brw->attribs.Point->CoordReplace[i - VERT_RESULT_TEX0];
-	 } else
-		 c.point_attrs[i].CoordReplace = GL_FALSE;
+            c.point_attrs[i].CoordReplace = 
+               ctx->Point.CoordReplace[i - VERT_RESULT_TEX0];
+	 }
+         else {
+            c.point_attrs[i].CoordReplace = GL_FALSE;
+         }
 	 idx++;
       }
    
@@ -106,7 +109,6 @@ static void compile_sf_prog( struct brw_context *brw,
       assert(0);
       return;
    }
-	 
 
    /* get the program
     */
@@ -127,6 +129,7 @@ static void compile_sf_prog( struct brw_context *brw,
  */
 static void upload_sf_prog(struct brw_context *brw)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    struct brw_sf_prog_key key;
 
    memset(&key, 0, sizeof(key));
@@ -157,15 +160,15 @@ static void upload_sf_prog(struct brw_context *brw)
       break;
    }
 
-   key.do_point_sprite = brw->attribs.Point->PointSprite;
-   key.SpriteOrigin = brw->attribs.Point->SpriteOrigin;
+   key.do_point_sprite = ctx->Point.PointSprite;
+   key.SpriteOrigin = ctx->Point.SpriteOrigin;
    /* _NEW_LIGHT */
-   key.do_flat_shading = (brw->attribs.Light->ShadeModel == GL_FLAT);
-   key.do_twoside_color = (brw->attribs.Light->Enabled && brw->attribs.Light->Model.TwoSide);
+   key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
+   key.do_twoside_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
 
    /* _NEW_POLYGON */
    if (key.do_twoside_color)
-      key.frontface_ccw = (brw->attribs.Polygon->FrontFace == GL_CCW);
+      key.frontface_ccw = (ctx->Polygon.FrontFace == GL_CCW);
 
    dri_bo_unreference(brw->sf.prog_bo);
    brw->sf.prog_bo = brw_search_cache(&brw->cache, BRW_SF_PROG,

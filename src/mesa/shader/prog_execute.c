@@ -43,7 +43,7 @@
 #include "prog_instruction.h"
 #include "prog_parameter.h"
 #include "prog_print.h"
-#include "shader/slang/slang_library_noise.h"
+#include "prog_noise.h"
 
 
 /* debug predicate */
@@ -705,7 +705,7 @@ _mesa_execute_program(GLcontext * ctx,
          {
             GLfloat t[4];
             fetch_vector4(&inst->SrcReg[0], machine, t);
-            machine->AddressReg[0][0] = (GLint) FLOORF(t[0]);
+            machine->AddressReg[0][0] = IFLOOR(t[0]);
          }
          break;
       case OPCODE_BGNLOOP:
@@ -963,7 +963,10 @@ _mesa_execute_program(GLcontext * ctx,
          {
             GLfloat a[4], result[4];
             fetch_vector1(&inst->SrcReg[0], machine, a);
-            result[0] = result[1] = result[2] = result[3] = LOG2(a[0]);
+	    /* The fast LOG2 macro doesn't meet the precision requirements.
+	     */
+            result[0] = result[1] = result[2] = result[3] =
+		(log(a[0]) * 1.442695F);
             store_vector4(inst, machine, result);
          }
          break;
@@ -1022,7 +1025,11 @@ _mesa_execute_program(GLcontext * ctx,
                   GLfloat mantissa = FREXPF(t[0], &exponent);
                   q[0] = (GLfloat) (exponent - 1);
                   q[1] = (GLfloat) (2.0 * mantissa); /* map [.5, 1) -> [1, 2) */
-                  q[2] = (GLfloat) (q[0] + LOG2(q[1]));
+
+		  /* The fast LOG2 macro doesn't meet the precision
+		   * requirements.
+		   */
+                  q[2] = (log(t[0]) * 1.442695F);
                }
             }
             else {
@@ -1137,7 +1144,8 @@ _mesa_execute_program(GLcontext * ctx,
             fetch_vector1(&inst->SrcReg[0], machine, a);
             result[0] =
                result[1] =
-               result[2] = result[3] = _slang_library_noise1(a[0]);
+               result[2] =
+               result[3] = _mesa_noise1(a[0]);
             store_vector4(inst, machine, result);
          }
          break;
@@ -1147,7 +1155,7 @@ _mesa_execute_program(GLcontext * ctx,
             fetch_vector4(&inst->SrcReg[0], machine, a);
             result[0] =
                result[1] =
-               result[2] = result[3] = _slang_library_noise2(a[0], a[1]);
+               result[2] = result[3] = _mesa_noise2(a[0], a[1]);
             store_vector4(inst, machine, result);
          }
          break;
@@ -1158,7 +1166,7 @@ _mesa_execute_program(GLcontext * ctx,
             result[0] =
                result[1] =
                result[2] =
-               result[3] = _slang_library_noise3(a[0], a[1], a[2]);
+               result[3] = _mesa_noise3(a[0], a[1], a[2]);
             store_vector4(inst, machine, result);
          }
          break;
@@ -1169,7 +1177,7 @@ _mesa_execute_program(GLcontext * ctx,
             result[0] =
                result[1] =
                result[2] =
-               result[3] = _slang_library_noise4(a[0], a[1], a[2], a[3]);
+               result[3] = _mesa_noise4(a[0], a[1], a[2], a[3]);
             store_vector4(inst, machine, result);
          }
          break;

@@ -113,7 +113,7 @@ swrastGetDrawableInfo(__DRIdrawable * draw,
                       int *x, int *y, int *w, int *h, void *loaderPrivate)
 {
    __GLXDRIdrawablePrivate *pdp = loaderPrivate;
-   __GLXDRIdrawable *pdraw = &(pdp->base);;
+   __GLXDRIdrawable *pdraw = &(pdp->base);
    Display *dpy = pdraw->psc->dpy;
    Drawable drawable;
 
@@ -141,7 +141,7 @@ swrastPutImage(__DRIdrawable * draw, int op,
                int x, int y, int w, int h, char *data, void *loaderPrivate)
 {
    __GLXDRIdrawablePrivate *pdp = loaderPrivate;
-   __GLXDRIdrawable *pdraw = &(pdp->base);;
+   __GLXDRIdrawable *pdraw = &(pdp->base);
    Display *dpy = pdraw->psc->dpy;
    Drawable drawable;
    XImage *ximage;
@@ -176,7 +176,7 @@ swrastGetImage(__DRIdrawable * draw,
                int x, int y, int w, int h, char *data, void *loaderPrivate)
 {
    __GLXDRIdrawablePrivate *pdp = loaderPrivate;
-   __GLXDRIdrawable *pdraw = &(pdp->base);;
+   __GLXDRIdrawable *pdraw = &(pdp->base);
    Display *dpy = pdraw->psc->dpy;
    Drawable drawable;
    XImage *ximage;

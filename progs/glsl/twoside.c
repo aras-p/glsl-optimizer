@@ -26,27 +26,39 @@ static GLuint fragShader;
 static GLuint vertShader;
 static GLuint program;
 static GLint win = 0;
-static GLboolean anim = 0*GL_TRUE;
-static GLboolean DetermineInFragProg = GL_TRUE;
-static GLfloat Xrot = 30.0f;
+static GLboolean anim;
+static GLboolean DetermineFacingInFragProg;
+static GLfloat Xrot;
 static GLint u_fragface;
-static GLenum FrontWinding = GL_CCW;
+static GLenum FrontWinding;
 static int prevTime = 0;
 
 
-static const GLfloat Red[4] = {1, 0, 0, 0};
+static const GLfloat Red[4] = {1, 0, 0, 1};
 static const GLfloat Green[4] = {0, 1, 0, 0};
+
+
+static void
+SetDefaults(void)
+{
+   DetermineFacingInFragProg = GL_TRUE;
+   FrontWinding = GL_CCW;
+   Xrot = 30;
+   anim = 0;
+   glutIdleFunc(NULL);
+}
 
 
 static void
 Redisplay(void)
 {
+   const int sections = 20;
    int i;
    float radius = 2;
 
    glFrontFace(FrontWinding);
 
-   if (DetermineInFragProg) {
+   if (DetermineFacingInFragProg) {
       glUniform1i_func(u_fragface, 1);
       glDisable(GL_VERTEX_PROGRAM_TWO_SIDE);
    }
@@ -64,8 +76,8 @@ Redisplay(void)
    glBegin(GL_TRIANGLE_STRIP);
    glColor4fv(Red);
    glSecondaryColor3fv_func(Green);
-   for (i = 0; i < 20; i++) {
-      float a = i / 19.0 * M_PI * 2.0;
+   for (i = 0; i <= sections; i++) {
+      float a = (float) i / (sections) * M_PI * 2.0;
       float x = radius * cos(a);
       float y = radius * sin(a);
       glVertex3f(x, -1, y);
@@ -139,17 +151,15 @@ Key(unsigned char key, int x, int y)
       break;
    case 'f':
       printf("Using frag shader gl_FrontFacing\n");
-      DetermineInFragProg = GL_TRUE;
+      DetermineFacingInFragProg = GL_TRUE;
       break;
    case 'v':
       printf("Using vert shader Two-sided lighting\n");
-      DetermineInFragProg = GL_FALSE;
+      DetermineFacingInFragProg = GL_FALSE;
       break;
    case 'r':
       /* reset */
-      Xrot = 30;
-      anim = 0;
-      glutIdleFunc(NULL);
+      SetDefaults();
       break;
    case 's':
       Xrot += 5;
@@ -182,14 +192,16 @@ Init(void)
    static const char *fragShaderText =
       "uniform bool fragface; \n"
       "void main() { \n"
-#if 0
+#if 1
       "   if (!fragface || gl_FrontFacing) { \n"
       "      gl_FragColor = gl_Color; \n"
       "   } \n"
       "   else { \n"
+      "      // note: dim green to help debug \n"
       "      gl_FragColor = 0.8 * gl_SecondaryColor; \n"
       "   } \n"
 #else
+      /* DEBUG CODE */
       "   bool f = gl_FrontFacing; \n"
       "   if (f) { \n"
       "      gl_FragColor = vec4(1.0, 0.0, 0.0, 0.0); \n"
@@ -197,8 +209,6 @@ Init(void)
       "   else { \n"
       "      gl_FragColor = vec4(0.0, 1.0, 0.0, 0.0); \n"
       "   } \n"
-      "   //float g = float(gl_FrontFacing) * 0.5 + 0.5; \n"
-      "   //gl_FragColor = vec4(g); \n"
 #endif
       "} \n";
    static const char *vertShaderText =
@@ -241,6 +251,8 @@ Init(void)
    assert(glIsShader_func(vertShader));
 
    glEnable(GL_DEPTH_TEST);
+
+   SetDefaults();
 }
 
 

@@ -154,11 +154,6 @@ static unsigned long align(unsigned long value, unsigned long a)
    return (value + a - 1) & ~(a-1);
 }
 
-static int MIN2(int a, int b)
-{
-   return a < b ? a : b;
-}
-
 static void
 MeasureDownloadRate(void)
 {

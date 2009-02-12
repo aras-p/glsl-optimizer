@@ -1,14 +1,9 @@
-/**
- * \file context.c
- * Mesa context/visual/framebuffer management functions.
- * \author Brian Paul
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.3
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2008  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +23,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * \file context.c
+ * Mesa context/visual/framebuffer management functions.
+ * \author Brian Paul
+ */
 
 /**
  * \mainpage Mesa Main Module
@@ -145,18 +145,13 @@
 #include "glapi/glthread.h"
 #include "glapi/glapioffsets.h"
 #include "glapi/glapitable.h"
-#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
 #include "shader/program.h"
-#endif
 #include "shader/shader_api.h"
 #if FEATURE_ATI_fragment_shader
 #include "shader/atifragshader.h"
 #endif
 #if _HAVE_FULL_GL
-#include "math/m_translate.h"
 #include "math/m_matrix.h"
-#include "math/m_xform.h"
-#include "math/mathmod.h"
 #endif
 
 #ifdef USE_SPARC_ASM
@@ -186,9 +181,11 @@ GLfloat _mesa_ubyte_to_float_color_tab[256];
  * We have to finish any pending rendering.
  */
 void
-_mesa_notifySwapBuffers(__GLcontext *gc)
+_mesa_notifySwapBuffers(__GLcontext *ctx)
 {
-   FLUSH_VERTICES( gc, 0 );
+   if (ctx->Driver.Flush) {
+      ctx->Driver.Flush(ctx);
+   }
 }
 
 
@@ -387,13 +384,9 @@ one_time_init( GLcontext *ctx )
 
       _mesa_init_sqrt_table();
 
-#if _HAVE_FULL_GL
-      _math_init();
-
       for (i = 0; i < 256; i++) {
          _mesa_ubyte_to_float_color_tab[i] = (float) i / 255.0F;
       }
-#endif
 
 #ifdef USE_SPARC_ASM
       _mesa_init_sparc_glapi_relocs();
@@ -581,7 +574,7 @@ static void
 delete_displaylist_cb(GLuint id, void *data, void *userData)
 {
 #if FEATURE_dlist
-   struct mesa_display_list *list = (struct mesa_display_list *) data;
+   struct gl_display_list *list = (struct gl_display_list *) data;
    GLcontext *ctx = (GLcontext *) userData;
    _mesa_delete_list(ctx, list);
 #endif
@@ -611,6 +604,7 @@ delete_program_cb(GLuint id, void *data, void *userData)
    ctx->Driver.DeleteProgram(ctx, prog);
 }
 
+#if FEATURE_ATI_fragment_shader
 /**
  * Callback for deleting an ATI fragment shader object.
  * Called by _mesa_HashDeleteAll().
@@ -622,6 +616,7 @@ delete_fragshader_cb(GLuint id, void *data, void *userData)
    GLcontext *ctx = (GLcontext *) userData;
    _mesa_delete_ati_fragment_shader(ctx, shader);
 }
+#endif
 
 /**
  * Callback for deleting a buffer object.  Called by _mesa_HashDeleteAll().
@@ -710,7 +705,6 @@ delete_renderbuffer_cb(GLuint id, void *data, void *userData)
    if (rb->Delete)
       rb->Delete(rb);
 }
-
 
 
 /**
@@ -818,11 +812,33 @@ _mesa_init_current(GLcontext *ctx)
 
 
 /**
- * Init vertex/fragment program native limits from logical limits.
+ * Init vertex/fragment program limits.
+ * Important: drivers should override these with actual limits.
  */
 static void
-init_natives(struct gl_program_constants *prog)
+init_program_limits(GLenum type, struct gl_program_constants *prog)
 {
+   prog->MaxInstructions = MAX_PROGRAM_INSTRUCTIONS;
+   prog->MaxAluInstructions = MAX_PROGRAM_INSTRUCTIONS;
+   prog->MaxTexInstructions = MAX_PROGRAM_INSTRUCTIONS;
+   prog->MaxTexIndirections = MAX_PROGRAM_INSTRUCTIONS;
+   prog->MaxTemps = MAX_PROGRAM_TEMPS;
+   prog->MaxEnvParams = MAX_PROGRAM_ENV_PARAMS;
+   prog->MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
+   prog->MaxUniformComponents = 4 * MAX_UNIFORMS;
+
+   if (type == GL_VERTEX_PROGRAM_ARB) {
+      prog->MaxParameters = MAX_NV_VERTEX_PROGRAM_PARAMS;
+      prog->MaxAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
+      prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
+   }
+   else {
+      prog->MaxParameters = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
+      prog->MaxAttribs = MAX_NV_FRAGMENT_PROGRAM_INPUTS;
+      prog->MaxAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
+   }
+
+   /* copy the above limits to init native limits */
    prog->MaxNativeInstructions = prog->MaxInstructions;
    prog->MaxNativeAluInstructions = prog->MaxAluInstructions;
    prog->MaxNativeTexInstructions = prog->MaxTexInstructions;
@@ -846,9 +862,6 @@ _mesa_init_constants(GLcontext *ctx)
 
    assert(MAX_TEXTURE_LEVELS >= MAX_3D_TEXTURE_LEVELS);
    assert(MAX_TEXTURE_LEVELS >= MAX_CUBE_TEXTURE_LEVELS);
-
-   assert(MAX_TEXTURE_UNITS >= MAX_TEXTURE_COORD_UNITS);
-   assert(MAX_TEXTURE_UNITS >= MAX_TEXTURE_IMAGE_UNITS);
 
    /* Constants, may be overriden (usually only reduced) by device drivers */
    ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
@@ -884,33 +897,10 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.MaxViewportWidth = MAX_WIDTH;
    ctx->Const.MaxViewportHeight = MAX_HEIGHT;
 #if FEATURE_ARB_vertex_program
-   ctx->Const.VertexProgram.MaxInstructions = MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS;
-   ctx->Const.VertexProgram.MaxAluInstructions = 0;
-   ctx->Const.VertexProgram.MaxTexInstructions = 0;
-   ctx->Const.VertexProgram.MaxTexIndirections = 0;
-   ctx->Const.VertexProgram.MaxAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
-   ctx->Const.VertexProgram.MaxTemps = MAX_PROGRAM_TEMPS;
-   ctx->Const.VertexProgram.MaxParameters = MAX_NV_VERTEX_PROGRAM_PARAMS;
-   ctx->Const.VertexProgram.MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
-   ctx->Const.VertexProgram.MaxEnvParams = MAX_PROGRAM_ENV_PARAMS;
-   ctx->Const.VertexProgram.MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
-   ctx->Const.VertexProgram.MaxUniformComponents = 4 * MAX_UNIFORMS;
-   init_natives(&ctx->Const.VertexProgram);
+   init_program_limits(GL_VERTEX_PROGRAM_ARB, &ctx->Const.VertexProgram);
 #endif
-
 #if FEATURE_ARB_fragment_program
-   ctx->Const.FragmentProgram.MaxInstructions = MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS;
-   ctx->Const.FragmentProgram.MaxAluInstructions = MAX_FRAGMENT_PROGRAM_ALU_INSTRUCTIONS;
-   ctx->Const.FragmentProgram.MaxTexInstructions = MAX_FRAGMENT_PROGRAM_TEX_INSTRUCTIONS;
-   ctx->Const.FragmentProgram.MaxTexIndirections = MAX_FRAGMENT_PROGRAM_TEX_INDIRECTIONS;
-   ctx->Const.FragmentProgram.MaxAttribs = MAX_NV_FRAGMENT_PROGRAM_INPUTS;
-   ctx->Const.FragmentProgram.MaxTemps = MAX_PROGRAM_TEMPS;
-   ctx->Const.FragmentProgram.MaxParameters = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
-   ctx->Const.FragmentProgram.MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
-   ctx->Const.FragmentProgram.MaxEnvParams = MAX_PROGRAM_ENV_PARAMS;
-   ctx->Const.FragmentProgram.MaxAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
-   ctx->Const.FragmentProgram.MaxUniformComponents = 4 * MAX_UNIFORMS;
-   init_natives(&ctx->Const.FragmentProgram);
+   init_program_limits(GL_FRAGMENT_PROGRAM_ARB, &ctx->Const.FragmentProgram);
 #endif
    ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
    ctx->Const.MaxProgramMatrixStackDepth = MAX_PROGRAM_MATRIX_STACK_DEPTH;
@@ -934,6 +924,9 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.MaxVertexTextureImageUnits = MAX_VERTEX_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxVarying = MAX_VARYING;
 #endif
+
+   /* GL_ARB_framebuffer_object */
+   ctx->Const.MaxSamples = 0;
 
    /* sanity checks */
    ASSERT(ctx->Const.MaxTextureUnits == MIN2(ctx->Const.MaxTextureImageUnits,
@@ -962,6 +955,9 @@ check_context_limits(GLcontext *ctx)
    assert(ctx->Const.MaxTextureCoordUnits <= MAX_TEXTURE_COORD_UNITS);
    assert(ctx->Const.MaxTextureUnits <= MAX_TEXTURE_IMAGE_UNITS);
    assert(ctx->Const.MaxTextureUnits <= MAX_TEXTURE_COORD_UNITS);
+
+   /* number of coord units cannot be greater than number of image units */
+   assert(ctx->Const.MaxTextureCoordUnits <= ctx->Const.MaxTextureImageUnits);
 
    assert(ctx->Const.MaxViewportWidth <= MAX_WIDTH);
    assert(ctx->Const.MaxViewportHeight <= MAX_WIDTH);
@@ -1063,6 +1059,7 @@ init_attrib_groups(GLcontext *ctx)
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
+   ctx->varying_vp_inputs = ~0;
 
    return GL_TRUE;
 }
@@ -1162,7 +1159,7 @@ _mesa_initialize_context(GLcontext *ctx,
                          const struct dd_function_table *driverFunctions,
                          void *driverContext)
 {
-   ASSERT(driverContext);
+   /*ASSERT(driverContext);*/
    assert(driverFunctions->NewTextureObject);
    assert(driverFunctions->FreeTexImageData);
 
@@ -1225,7 +1222,6 @@ _mesa_initialize_context(GLcontext *ctx,
 
    ctx->FragmentProgram._MaintainTexEnvProgram
       = (_mesa_getenv("MESA_TEX_PROG") != NULL);
-   ctx->FragmentProgram._UseTexEnvProgram = ctx->FragmentProgram._MaintainTexEnvProgram;
 
    ctx->VertexProgram._MaintainTnlProgram
       = (_mesa_getenv("MESA_TNL_PROG") != NULL);
@@ -1267,7 +1263,7 @@ _mesa_create_context(const GLvisual *visual,
    GLcontext *ctx;
 
    ASSERT(visual);
-   ASSERT(driverContext);
+   /*ASSERT(driverContext);*/
 
    ctx = (GLcontext *) _mesa_calloc(sizeof(GLcontext));
    if (!ctx)
@@ -1302,10 +1298,10 @@ _mesa_free_context_data( GLcontext *ctx )
    }
 
    /* unreference WinSysDraw/Read buffers */
-   _mesa_unreference_framebuffer(&ctx->WinSysDrawBuffer);
-   _mesa_unreference_framebuffer(&ctx->WinSysReadBuffer);
-   _mesa_unreference_framebuffer(&ctx->DrawBuffer);
-   _mesa_unreference_framebuffer(&ctx->ReadBuffer);
+   _mesa_reference_framebuffer(&ctx->WinSysDrawBuffer, NULL);
+   _mesa_reference_framebuffer(&ctx->WinSysReadBuffer, NULL);
+   _mesa_reference_framebuffer(&ctx->DrawBuffer, NULL);
+   _mesa_reference_framebuffer(&ctx->ReadBuffer, NULL);
 
    _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current, NULL);
    _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, NULL);
@@ -1315,7 +1311,9 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram, NULL);
 
+#if FEATURE_attrib_stack
    _mesa_free_attrib_data(ctx);
+#endif
    _mesa_free_lighting_data( ctx );
 #if FEATURE_evaluators
    _mesa_free_eval_data( ctx );
@@ -1632,7 +1630,22 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
           * or not bound to a user-created FBO.
           */
          if (!newCtx->DrawBuffer || newCtx->DrawBuffer->Name == 0) {
+            /* KW: merge conflict here, revisit. 
+             */
+            /* fix up the fb fields - these will end up wrong otherwise
+             * if the DRIdrawable changes, and everything relies on them.
+             * This is a bit messy (same as needed in _mesa_BindFramebufferEXT)
+             */
+            unsigned int i;
+            GLenum buffers[MAX_DRAW_BUFFERS];
+
             _mesa_reference_framebuffer(&newCtx->DrawBuffer, drawBuffer);
+
+            for(i = 0; i < newCtx->Const.MaxDrawBuffers; i++) {
+               buffers[i] = newCtx->Color.DrawBuffer[i];
+            }
+
+            _mesa_drawbuffers(newCtx, newCtx->Const.MaxDrawBuffers, buffers, NULL);
          }
          if (!newCtx->ReadBuffer || newCtx->ReadBuffer->Name == 0) {
             _mesa_reference_framebuffer(&newCtx->ReadBuffer, readBuffer);

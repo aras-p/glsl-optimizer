@@ -26,7 +26,7 @@
 #include "main/imports.h"
 #include "main/matrix.h"
 #include "main/mtypes.h"
-#include "GL/amesa.h"
+#include "amesa.h"
 
 
 struct amesa_visual
@@ -338,7 +338,7 @@ void AMesaDestroyBuffer(AMesaBuffer buffer)
 {
    if (buffer->Screen)     destroy_bitmap(buffer->Screen);
    if (buffer->Background) destroy_bitmap(buffer->Background);
-   _mesa_unreference_framebuffer(&buffer->GLBuffer);
+   _mesa_reference_framebuffer(&buffer->GLBuffer, NULL);
    free(buffer);
 }
 

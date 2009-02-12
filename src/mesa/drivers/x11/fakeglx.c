@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.5
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,7 +43,6 @@
 
 #include "glxheader.h"
 #include "glxapi.h"
-#include "GL/xmesa.h"
 #include "main/context.h"
 #include "main/config.h"
 #include "main/macros.h"
@@ -1393,6 +1393,25 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
 }
 
 
+/**
+ * Init basic fields of a new fake_glx_context.
+ */
+static void
+init_glx_context(struct fake_glx_context *glxCtx, Display *dpy)
+{
+   /* Always return True.  See if anyone's confused... */
+   GLboolean direct = GL_TRUE;
+
+   glxCtx->xmesaContext->direct = direct;
+   glxCtx->glxContext.isDirect = direct;
+   glxCtx->glxContext.currentDpy = dpy;
+   glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
+
+   assert((void *) glxCtx == (void *) &(glxCtx->glxContext));
+}
+
+
+
 static GLXContext
 Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
                        GLXContext share_list, Bool direct )
@@ -1431,12 +1450,7 @@ Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
       return NULL;
    }
 
-   glxCtx->xmesaContext->direct = GL_FALSE;
-   glxCtx->glxContext.isDirect = GL_FALSE;
-   glxCtx->glxContext.currentDpy = dpy;
-   glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
-
-   assert((void *) glxCtx == (void *) &(glxCtx->glxContext));
+   init_glx_context(glxCtx, dpy);
 
    return (GLXContext) glxCtx;
 }
@@ -2442,12 +2456,7 @@ Fake_glXCreateNewContext( Display *dpy, GLXFBConfig config,
       return NULL;
    }
 
-   glxCtx->xmesaContext->direct = GL_FALSE;
-   glxCtx->glxContext.isDirect = GL_FALSE;
-   glxCtx->glxContext.currentDpy = dpy;
-   glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
-
-   assert((void *) glxCtx == (void *) &(glxCtx->glxContext));
+   init_glx_context(glxCtx, dpy);
 
    return (GLXContext) glxCtx;
 }
@@ -2665,12 +2674,7 @@ Fake_glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, int re
       return NULL;
    }
 
-   glxCtx->xmesaContext->direct = GL_FALSE;
-   glxCtx->glxContext.isDirect = GL_FALSE;
-   glxCtx->glxContext.currentDpy = dpy;
-   glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
-
-   assert((void *) glxCtx == (void *) &(glxCtx->glxContext));
+   init_glx_context(glxCtx, dpy);
 
    return (GLXContext) glxCtx;
 }

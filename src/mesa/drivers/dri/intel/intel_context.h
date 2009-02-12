@@ -157,6 +157,20 @@ struct intel_context
       void (*debug_batch)(struct intel_context *intel);
    } vtbl;
 
+   struct {
+      struct gl_fragment_program *bitmap_fp;
+      struct gl_vertex_program *passthrough_vp;
+
+      struct gl_fragment_program *saved_fp;
+      GLboolean saved_fp_enable;
+      struct gl_vertex_program *saved_vp;
+      GLboolean saved_vp_enable;
+
+      GLint saved_vp_x, saved_vp_y;
+      GLsizei saved_vp_width, saved_vp_height;
+      GLenum saved_matrix_mode;
+   } meta;
+
    GLint refcount;
    GLuint Fallback;
    GLuint NewGLState;
@@ -166,7 +180,6 @@ struct intel_context
 
    struct intel_region *front_region;
    struct intel_region *back_region;
-   struct intel_region *third_region;
    struct intel_region *depth_region;
 
    /**
@@ -184,6 +197,7 @@ struct intel_context
       GLuint id;
       uint32_t primitive;	/**< Current hardware primitive type */
       void (*flush) (struct intel_context *);
+      GLubyte *start_ptr; /**< for i8xx */
       dri_bo *vb_bo;
       uint8_t *vb;
       unsigned int start_offset; /**< Byte offset of primitive sequence */
@@ -196,7 +210,6 @@ struct intel_context
    char *prevLockFile;
    int prevLockLine;
 
-   GLubyte clear_chan[4];
    GLuint ClearColor565;
    GLuint ClearColor8888;
 
@@ -424,7 +437,6 @@ extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);
 
 extern void intelInitDriverFunctions(struct dd_function_table *functions);
-extern void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging);
 
 
 /* ================================================================
@@ -494,6 +506,9 @@ extern int intel_translate_compare_func(GLenum func);
 extern int intel_translate_stencil_op(GLenum op);
 extern int intel_translate_blend_factor(GLenum factor);
 extern int intel_translate_logic_op(GLenum opcode);
+
+void intel_viewport(GLcontext * ctx, GLint x, GLint y,
+		    GLsizei width, GLsizei height);
 
 void intel_update_renderbuffers(__DRIcontext *context,
 				__DRIdrawable *drawable);

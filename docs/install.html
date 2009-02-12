@@ -1,58 +1,73 @@
 <HTML>
 
-<TITLE>Compilation and Installation</TITLE>
+<TITLE>Compiling and Installing</TITLE>
 
 <link rel="stylesheet" type="text/css" href="mesa.css"></head>
 
 <BODY>
 
 
-<H1>Compilation and Installation</H1>
+<H1>Compiling and Installing</H1>
 
 <ol>
 <li><a href="#unix-x11">Unix / X11</a>
+  <ul>
+  <li><a href="#prereq">Prerequisites for DRI and hardware acceleration</a>
+  <li><a href="#autoconf">Building with autoconf</a>
+  <li><a href="#traditional">Building with traditional Makefiles</a>
+  <li><a href="#libs">The Libraries</a>
+  <li><a href="#demos">Running the demos
+  <li><a href="#install">Installing the header and library files
+  <li><a href="#pkg-config">Building OpenGL programs with pkg-config
+  </ul>
 <li><a href="#windows">Windows</a>
-<li><a href="#vms">VMS</a>
 <li><a href="#other">Other</a>
 </ol>
-
+<br>
 
 
 <a name="unix-x11">
 <H2>1. Unix/X11 Compilation and Installation</H1>
 
 
-<h3>1.1 Prerequisites for DRI and Hardware Acceleration</h3>
+<a name="prereq">
+<h3>1.1 Prerequisites for DRI and hardware acceleration</h3>
 
 <p>
-To build Mesa 7.1 with DRI-based hardware acceleration you must first have
-the <a href="http://dri.freedesktop.org/libdrm/" target="_parent">DRM version 2.3.1</a>.
+The following are required for DRI-based hardware acceleration with Mesa 7.3:
 </p>
 
-<p>
-You should also be using the Xorg server version 1.4 or 1.5.
+<ul>
+<li><a href="http://xorg.freedesktop.org/releases/individual/proto/">dri2proto</a> version 1.99.3 or later
+<li>Linux 2.6.28
+<li><a href="http://dri.freedesktop.org/libdrm/" target="_parent">libDRM</a>
+version 2.4.3 or later
+<li>Xorg server version 1.5 or later
+</ul>
 </p>
 
 
-
-<h3>1.2 Autoconf Compilation</h3>
+<a name="autoconf">
+<h3>1.2 Building with Autoconf</h3>
 
 <p>
 Mesa may be <a href="autoconf.html">built using autoconf</a>.
 This should work well on most GNU-based systems.
-When that fails, the traditional Mesa build system is available.
+If that fails the traditional Mesa build system is available.
 
 
 
-<h3>1.3 Traditional Compilation</h3>
+<a name="traditional">
+<h3>1.3 Building with traditional Makefiles</h3>
 
 <p>
 The traditional Mesa build system is based on a collection of pre-defined
 system configurations.
 </p>
 <p>
-To see the list of configurations, type <b>make</b> alone.
-Then choose a configuration from the list and type <b>make configname</b>.
+To see the list of configurations, just type <code>make</code>.
+Then choose a configuration from the list and type <code>make</code>
+<em>configname</em>.
 </p>
 
 <p>
@@ -66,7 +81,7 @@ allow you to run OpenGL/GLX applications on any X server (regardless of
 whether it supports the GLX X server extension).
 You will <em>not</em> be able to use hardware 3D acceleration.
 <p>
-To compile stand-alone Mesa type <b>make</b> in the top-level directory.
+To compile stand-alone Mesa type <code>make</code> in the top-level directory.
 You'll see a list of supported system configurations.
 Choose one from the list (such as linux-x86), and type:
 </p>
@@ -109,6 +124,7 @@ Later, if you want to rebuild for a different configuration run
 </p>
 
 
+<a name="libs">
 <h3>1.4 The libraries</h3>
 
 <p>
@@ -169,6 +185,7 @@ If you built the DRI hardware drivers, you'll also see the DRI drivers:
 </pre>
 
 
+<a name="demos">
 <h3>1.5 Running the demos</h3>
 
 <p>
@@ -244,6 +261,7 @@ Retrace your steps if this doesn't look right.
 </p>
 
 
+<a name="install">
 <H3>1.6 Installing the header and library files</H3>
 
 <p>
@@ -284,7 +302,8 @@ This is a handy way to compare multiple OpenGL implementations.
 </p>
 
 
-<H3>1.7 Building OpenGL Programs With pkg-config</H3>
+<a name="pkg-config">
+<H3>1.7 Building OpenGL programs with pkg-config</H3>
 
 <p>
 Running <code>make install</code> will install package configuration files
@@ -314,25 +333,15 @@ Please see the <a href="README.WIN32">README.WIN32</a> file.
 
 
 
-
-<a name="vms">
-<H2>3. VMS Compilation and Installation</H1>
-
-<p>
-Please see the <a href="README.VMS">README.VMS</a> file.
-</p>
-
-
-
-
 <a name="other">
-<H2>4. Other systems</H1>
+<H2>3. Other systems</H1>
 
 <p>
 Documentation for other environments (some may be very out of date):
 </p>
 
 <UL>
+<li><A HREF="README.VMS">README.VMS</A> - VMS
 <LI><A HREF="README.GGI">README.GGI</A> - GGI
 <LI><A HREF="README.3DFX">README.3DFX</A> - 3Dfx/Glide driver
 <LI><A HREF="README.AMIWIN">README.AMIWIN</A> - Amiga Amiwin

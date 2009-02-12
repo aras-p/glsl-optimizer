@@ -64,6 +64,7 @@ $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
 # Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.
 depend: $(SOURCES) 
+	rm -f depend
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(SOURCES) > /dev/null 
 
@@ -77,7 +78,10 @@ pcedit = sed \
 	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
 	-e 's,@INSTALL_LIB_DIR@,$(INSTALL_LIB_DIR),' \
 	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
-	-e 's,@VERSION@,$(GLUT_MAJOR).$(GLUT_MINOR).$(GLUT_TINY),'
+	-e 's,@VERSION@,$(GLUT_MAJOR).$(GLUT_MINOR).$(GLUT_TINY),' \
+	-e 's,@GLUT_PC_REQ_PRIV@,$(GLUT_PC_REQ_PRIV),' \
+	-e 's,@GLUT_PC_LIB_PRIV@,$(GLUT_PC_LIB_PRIV),' \
+	-e 's,@GLUT_PC_CFLAGS@,$(GLUT_PC_CFLAGS),'
 glut.pc: glut.pc.in
 	$(pcedit) $< > $@
 

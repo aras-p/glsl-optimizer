@@ -9,7 +9,7 @@ CFLAGS = -O3 -ffast-math -ansi -pedantic -fPIC -D_POSIX_C_SOURCE=199309L -D_SVID
 # Work around aliasing bugs - developers should comment this out
 CFLAGS += -fno-strict-aliasing
 
-SRC_DIRS = mesa glu glut/fbdev
+SRC_DIRS = gallium mesa glu glut/fbdev glew
 DRIVER_DIRS = fbdev osmesa
 PROGRAM_DIRS = fbdev demos redbook samples
 

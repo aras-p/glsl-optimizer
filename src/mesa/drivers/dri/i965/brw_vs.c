@@ -85,6 +85,7 @@ static void do_vs_prog( struct brw_context *brw,
 
 static void brw_upload_vs_prog(struct brw_context *brw)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    struct brw_vs_prog_key key;
    struct brw_vertex_program *vp = 
       (struct brw_vertex_program *)brw->vertex_program;
@@ -97,14 +98,9 @@ static void brw_upload_vs_prog(struct brw_context *brw)
     * the inputs it asks for, whether they are varying or not.
     */
    key.program_string_id = vp->id;
-   key.nr_userclip = brw_count_bits(brw->attribs.Transform->ClipPlanesEnabled);
-   key.copy_edgeflag = (brw->attribs.Polygon->FrontMode != GL_FILL ||
-			brw->attribs.Polygon->BackMode != GL_FILL);
-
-   /* BRW_NEW_METAOPS
-    */
-   if (brw->metaops.active)
-      key.know_w_is_one = 1;
+   key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
+   key.copy_edgeflag = (ctx->Polygon.FrontMode != GL_FILL ||
+			ctx->Polygon.BackMode != GL_FILL);
 
    /* Make an early check for the key.
     */
@@ -123,7 +119,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
 const struct brw_tracked_state brw_vs_prog = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM | _NEW_POLYGON,
-      .brw   = BRW_NEW_VERTEX_PROGRAM | BRW_NEW_METAOPS,
+      .brw   = BRW_NEW_VERTEX_PROGRAM,
       .cache = 0
    },
    .prepare = brw_upload_vs_prog

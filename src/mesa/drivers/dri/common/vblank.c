@@ -130,9 +130,8 @@ int driWaitForMSC32( __DRIdrawablePrivate *priv,
 
 
    if ( divisor != 0 ) {
-      unsigned int target = (unsigned int)target_msc;
-      unsigned int next = target;
-      unsigned int r;
+      int64_t next = target_msc;
+      int64_t r;
       int dont_wait = (target_msc == 0);
 
       do {
@@ -154,9 +153,9 @@ int driWaitForMSC32( __DRIdrawablePrivate *priv,
 
 	 *msc = vblank_to_msc(priv, vbl.reply.sequence);
 
-         dont_wait = 0;
-         if (target_msc != 0 && *msc == target)
+         if (!dont_wait && *msc == next)
             break;
+         dont_wait = 0;
 
          /* Assuming the wait-done test fails, the next refresh to wait for
           * will be one that satisfies (MSC % divisor) == remainder.  The
@@ -165,11 +164,12 @@ int driWaitForMSC32( __DRIdrawablePrivate *priv,
           * If this refresh has already happened, we add divisor to obtain 
           * the next refresh after the current one that will satisfy it.
           */
-         r = (*msc % (unsigned int)divisor);
-         next = (*msc - r + (unsigned int)remainder);
-         if (next <= *msc) next += (unsigned int)divisor;
+         r = ((uint64_t)*msc % divisor);
+         next = (*msc - r + remainder);
+         if (next <= *msc)
+	    next += divisor;
 
-      } while ( r != (unsigned int)remainder );
+      } while (r != remainder);
    }
    else {
       /* If the \c divisor is zero, just wait until the MSC is greater

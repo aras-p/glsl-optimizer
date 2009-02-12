@@ -581,6 +581,11 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 
 		self.common_emit_fixups(fixup)
 
+		if img.img_null_flag:
+			print ''
+			print '	   if (*(CARD32 *) (pc + %s))' % (img.offset - 4)
+			print '	       return 0;'
+
 		print ''
 		print '    return __glXImageSize(%s, %s, %s, %s, %s, %s,' % (img.img_format, img.img_type, img.img_target, w, h, d )
 		print '                          image_height, row_length, skip_images,'

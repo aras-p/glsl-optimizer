@@ -1422,6 +1422,8 @@ BOOL gldInitialiseMesa_DX(
 		lpCtx->glCtx->Const.MaxTextureUnits = 1;
 	}
 
+	lpCtx->glCtx->Const.MaxDrawBuffers = 1;
+
 	// max texture size
 //	MaxTextureSize = min(gld->d3dCaps8.MaxTextureHeight, gld->d3dCaps8.MaxTextureWidth);
 	MaxTextureSize = min(gld->d3dCaps.dwMaxTextureHeight, gld->d3dCaps.dwMaxTextureWidth);

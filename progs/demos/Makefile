@@ -5,16 +5,10 @@ include $(TOP)/configs/current
 
 INCDIR = $(TOP)/include
 
-OSMESA_LIBS = -L$(TOP)/$(LIB_DIR) -lglut -lOSMesa -lGLU -lGL $(APP_LIB_DEPS)
-
-OSMESA16_LIBS = -L$(TOP)/$(LIB_DIR) -lglut -lOSMesa16 -lGLU -lGL $(APP_LIB_DEPS)
-
-OSMESA32_LIBS = -L$(TOP)/$(LIB_DIR) -lglut -lOSMesa32 -lGLU -lGL $(APP_LIB_DEPS)
-
 LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) \
 	$(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME)
 
-LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) \
+LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLEW_LIB) -l$(GLU_LIB) -l$(GL_LIB) \
 	$(APP_LIB_DEPS)
 
 PROGS = \
@@ -66,6 +60,7 @@ PROGS = \
 	texdown \
 	texenv \
 	texobj \
+	textures \
 	trispd \
 	tunnel \
 	tunnel2 \
@@ -81,7 +76,7 @@ PROGS = \
 
 # make executable from .c file:
 .c: $(LIB_DEP) readtex.o
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< readtex.o $(LIBS) -o $@
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< readtex.o $(LIBS) -o $@
 
 
 ##### TARGETS #####
@@ -97,7 +92,7 @@ readtex.h: $(TOP)/progs/util/readtex.h
 	cp $< .
 
 readtex.o: readtex.c readtex.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) readtex.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) readtex.c
 
 
 showbuffer.c: $(TOP)/progs/util/showbuffer.c
@@ -107,7 +102,7 @@ showbuffer.h: $(TOP)/progs/util/showbuffer.h
 	cp $< .
 
 showbuffer.o: showbuffer.c showbuffer.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) showbuffer.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) showbuffer.c
 
 
 trackball.c: $(TOP)/progs/util/trackball.c
@@ -117,7 +112,7 @@ trackball.h: $(TOP)/progs/util/trackball.h
 	cp $< .
 
 trackball.o: trackball.c trackball.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) trackball.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) trackball.c
 
 
 extfuncs.h:  $(TOP)/progs/util/extfuncs.h
@@ -125,38 +120,38 @@ extfuncs.h:  $(TOP)/progs/util/extfuncs.h
 
 
 reflect: reflect.o showbuffer.o readtex.o
-	$(CC) $(CFLAGS) $(LDFLAGS) reflect.o showbuffer.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) reflect.o showbuffer.o readtex.o $(LIBS) -o $@
 
 reflect.o: reflect.c showbuffer.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) reflect.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) reflect.c
 
 
 shadowtex: shadowtex.o showbuffer.o
-	$(CC) $(CFLAGS) $(LDFLAGS) shadowtex.o showbuffer.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) shadowtex.o showbuffer.o $(LIBS) -o $@
 
 shadowtex.o: shadowtex.c showbuffer.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) shadowtex.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) shadowtex.c
 
 
 gloss: gloss.o trackball.o readtex.o
-	$(CC) $(CFLAGS) $(LDFLAGS) gloss.o trackball.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) gloss.o trackball.o readtex.o $(LIBS) -o $@
 
 gloss.o: gloss.c trackball.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) gloss.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) gloss.c
 
 
 engine: engine.o trackball.o readtex.o
-	$(CC) $(CFLAGS) $(LDFLAGS) engine.o trackball.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) engine.o trackball.o readtex.o $(LIBS) -o $@
 
 engine.o: engine.c trackball.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) engine.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) engine.c
 
 
 fslight: fslight.o
-	$(CC) $(CFLAGS) $(LDFLAGS) fslight.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) fslight.o $(LIBS) -o $@
 
 fslight.o: fslight.c extfuncs.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) fslight.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) fslight.c
 
 rain: particles.o rain.o readtex.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LIBS) -o $@

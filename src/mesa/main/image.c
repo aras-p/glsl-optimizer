@@ -61,7 +61,7 @@
 /**
  * \return GL_TRUE if type is packed pixel type, GL_FALSE otherwise.
  */
-static GLboolean
+GLboolean
 _mesa_type_is_packed(GLenum type)
 {
    switch (type) {
@@ -1689,7 +1689,7 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
 
    if (dstFormat == GL_LUMINANCE || dstFormat == GL_LUMINANCE_ALPHA) {
       /* compute luminance values */
-      if (dstType != GL_FLOAT || ctx->Color.ClampReadColor == GL_TRUE) {
+      if (transferOps & IMAGE_CLAMP_BIT) {
          for (i = 0; i < n; i++) {
             GLfloat sum = rgba[i][RCOMP] + rgba[i][GCOMP] + rgba[i][BCOMP];
             luminance[i] = CLAMP(sum, 0.0F, 1.0F);
@@ -5119,7 +5119,7 @@ _mesa_clip_copytexsubimage(const GLcontext *ctx,
    const struct gl_framebuffer *fb = ctx->ReadBuffer;
    const GLint srcX0 = *srcX, srcY0 = *srcY;
 
-   if (_mesa_clip_to_region(fb->_Xmin, fb->_Ymin, fb->_Xmax, fb->_Ymax,
+   if (_mesa_clip_to_region(0, 0, fb->Width, fb->Height,
                             srcX, srcY, width, height)) {
       *destX = *destX + *srcX - srcX0;
       *destY = *destY + *srcY - srcY0;
@@ -5152,7 +5152,7 @@ _mesa_clip_to_region(GLint xmin, GLint ymin,
 
    /* right clipping */
    if (*x + *width > xmax)
-      *width -= (*x + *width - xmax - 1);
+      *width -= (*x + *width - xmax);
 
    if (*width <= 0)
       return GL_FALSE;
@@ -5165,7 +5165,7 @@ _mesa_clip_to_region(GLint xmin, GLint ymin,
 
    /* top (or bottom) clipping */
    if (*y + *height > ymax)
-      *height -= (*y + *height - ymax - 1);
+      *height -= (*y + *height - ymax);
 
    if (*height <= 0)
       return GL_FALSE;

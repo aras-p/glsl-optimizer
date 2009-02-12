@@ -56,6 +56,7 @@ SOURCES = \
 	glut_modifier.c \
 	glut_mroman.c \
 	glut_overlay.c \
+	glut_ppm.c \
 	glut_roman.c \
 	glut_shapes.c \
 	glut_space.c \
@@ -103,7 +104,10 @@ pcedit = sed \
 	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
 	-e 's,@INSTALL_LIB_DIR@,$(INSTALL_LIB_DIR),' \
 	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
-	-e 's,@VERSION@,$(GLUT_MAJOR).$(GLUT_MINOR).$(GLUT_TINY),'
+	-e 's,@VERSION@,$(GLUT_MAJOR).$(GLUT_MINOR).$(GLUT_TINY),' \
+	-e 's,@GLUT_PC_REQ_PRIV@,$(GLUT_PC_REQ_PRIV),' \
+	-e 's,@GLUT_PC_LIB_PRIV@,$(GLUT_PC_LIB_PRIV),' \
+	-e 's,@GLUT_PC_CFLAGS@,$(GLUT_PC_CFLAGS),'
 glut.pc: glut.pc.in
 	$(pcedit) $< > $@
 
@@ -127,6 +131,7 @@ clean:
 
 depend: $(SOURCES)
 	@ echo "running $(MKDEP)"
+	@ rm -f depend
 	@ touch depend
 	@ $(MKDEP) $(MKDEP_OPTIONS) -I$(TOP)/include $(SOURCES) \
 		$(X11_INCLUDES) > /dev/null 

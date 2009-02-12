@@ -5,7 +5,9 @@ includedir=@INSTALL_INC_DIR@
 
 Name: glu
 Description: Mesa OpenGL Utility library
-Requires: gl
+Requires: @GLU_PC_REQ@
+Requires.private: @GLU_PC_REQ_PRIV@
 Version: @VERSION@
 Libs: -L${libdir} -lGLU
-Cflags: -I${includedir}
+Libs.private: @GLU_PC_LIB_PRIV@
+Cflags: -I${includedir} @GLU_PC_CFLAGS@

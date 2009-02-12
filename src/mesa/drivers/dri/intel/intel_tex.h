@@ -130,6 +130,16 @@ void intelCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
 				struct gl_texture_object *texObj,
 				struct gl_texture_image *texImage );
 
+void intelCompressedTexSubImage2D(GLcontext * ctx,
+				  GLenum target,
+				  GLint level,
+				  GLint xoffset, GLint yoffset,
+				  GLsizei width, GLsizei height,
+				  GLenum format, GLsizei imageSize,
+				  const GLvoid * pixels,
+				  struct gl_texture_object *texObj,
+				  struct gl_texture_image *texImage);
+
 void intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
 				GLvoid *pixels,
 				struct gl_texture_object *texObj,

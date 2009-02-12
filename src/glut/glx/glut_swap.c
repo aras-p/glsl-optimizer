@@ -18,6 +18,10 @@ glutSwapBuffers(void)
 {
   GLUTwindow *window = __glutCurrentWindow;
 
+  if (__glutPPMFile) {
+     __glutWritePPMFile();
+  }
+
   if (window->renderWin == window->win) {
     if (__glutCurrentWindow->treatAsSingle) {
       /* Pretend the double buffered window is single buffered,

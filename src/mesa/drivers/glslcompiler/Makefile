@@ -33,7 +33,7 @@ default: $(PROGRAM)
 
 
 glslcompiler: $(OBJECTS)
-	$(CC) $(OBJECTS) -lm -lpthread -o $@
+	$(CC) $(OBJECTS) $(GL_LIB_DEPS) -o $@
 
 
 glslcompiler.o: glslcompiler.c

@@ -60,6 +60,7 @@ struct brw_wm_unit_key {
 static void
 wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    const struct gl_fragment_program *fp = brw->fragment_program;
    struct intel_context *intel = &brw->intel;
 
@@ -88,14 +89,14 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    /* BRW_NEW_CURBE_OFFSETS */
    key->curbe_offset = brw->curbe.wm_start;
 
-   /* CACHE_NEW_SURFACE */
+   /* BRW_NEW_NR_SURFACEs */
    key->nr_surfaces = brw->wm.nr_surfaces;
 
    /* CACHE_NEW_SAMPLER */
    key->sampler_count = brw->wm.sampler_count;
 
    /* _NEW_POLYGONSTIPPLE */
-   key->polygon_stipple = brw->attribs.Polygon->StippleFlag;
+   key->polygon_stipple = ctx->Polygon.StippleFlag;
 
    /* BRW_NEW_FRAGMENT_PROGRAM */
    key->uses_depth = (fp->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS)) != 0;
@@ -105,19 +106,19 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
       (fp->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) != 0;
 
    /* _NEW_COLOR */
-   key->uses_kill = fp->UsesKill || brw->attribs.Color->AlphaEnabled;
+   key->uses_kill = fp->UsesKill || ctx->Color.AlphaEnabled;
    key->is_glsl = brw_wm_is_glsl(fp);
 
    /* XXX: This needs a flag to indicate when it changes. */
    key->stats_wm = intel->stats_wm;
 
    /* _NEW_LINE */
-   key->line_stipple = brw->attribs.Line->StippleFlag;
+   key->line_stipple = ctx->Line.StippleFlag;
 
    /* _NEW_POLYGON */
-   key->offset_enable = brw->attribs.Polygon->OffsetFill;
-   key->offset_units = brw->attribs.Polygon->OffsetUnits;
-   key->offset_factor = brw->attribs.Polygon->OffsetFactor;
+   key->offset_enable = ctx->Polygon.OffsetFill;
+   key->offset_units = ctx->Polygon.OffsetUnits;
+   key->offset_factor = ctx->Polygon.OffsetFactor;
 }
 
 static dri_bo *
@@ -281,10 +282,9 @@ const struct brw_tracked_state brw_wm_unit = {
 
       .brw = (BRW_NEW_FRAGMENT_PROGRAM | 
 	      BRW_NEW_CURBE_OFFSETS |
-	      BRW_NEW_LOCK),
+	      BRW_NEW_NR_SURFACES),
 
-      .cache = (CACHE_NEW_SURFACE | 
-		CACHE_NEW_WM_PROG | 
+      .cache = (CACHE_NEW_WM_PROG |
 		CACHE_NEW_SAMPLER)
    },
    .prepare = upload_wm_unit,

@@ -20,10 +20,10 @@
 extern unsigned __glutMenuButton;
 extern GLUTidleCB __glutIdleFunc;
 extern GLUTtimer *__glutTimerList;
-extern GLUTmenuItem *__glutGetUniqueMenuItem(GLUTmenu * menu, int unique);
+extern GLUTmenuItem *__glutGetUniqueMenuItem(GLUTmenu * menu, UINT unique);
 static HMENU __glutHMenu;
 
-void
+static void
 updateWindowState(GLUTwindow *window, int visState)
 {
   GLUTwindow* child;

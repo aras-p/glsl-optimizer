@@ -3,6 +3,7 @@
  * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (c) 2008 VMware, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -56,60 +57,58 @@ GLuint
 _mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all)
 {
    GLuint n = 0;
-   if (ctx->Extensions.ARB_texture_compression) {
-      if (ctx->Extensions.TDFX_texture_compression_FXT1) {
-         if (formats) {
-            formats[n++] = GL_COMPRESSED_RGB_FXT1_3DFX;
-            formats[n++] = GL_COMPRESSED_RGBA_FXT1_3DFX;
-         }
-         else {
-            n += 2;
-         }
+   if (ctx->Extensions.TDFX_texture_compression_FXT1) {
+      if (formats) {
+         formats[n++] = GL_COMPRESSED_RGB_FXT1_3DFX;
+         formats[n++] = GL_COMPRESSED_RGBA_FXT1_3DFX;
       }
-      if (ctx->Extensions.EXT_texture_compression_s3tc) {
-         if (formats) {
-            formats[n++] = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-            /* This format has some restrictions/limitations and so should
-             * not be returned via the GL_COMPRESSED_TEXTURE_FORMATS query.
-             * Specifically, all transparent pixels become black.  NVIDIA
-             * omits this format too.
-             */
-            if (all)
-               formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-            formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-            formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-         }
-         else {
-            n += 3;
-            if (all)
-               n += 1;
-         }
+      else {
+         n += 2;
       }
-      if (ctx->Extensions.S3_s3tc) {
-         if (formats) {
-            formats[n++] = GL_RGB_S3TC;
-            formats[n++] = GL_RGB4_S3TC;
-            formats[n++] = GL_RGBA_S3TC;
-            formats[n++] = GL_RGBA4_S3TC;
-         }
-         else {
-            n += 4;
-         }
-      }
-#if FEATURE_EXT_texture_sRGB
-      if (ctx->Extensions.EXT_texture_sRGB) {
-         if (formats) {
-            formats[n++] = GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
-            formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
-            formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
-            formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
-         }
-         else {
-            n += 4;
-         }
-      }
-#endif /* FEATURE_EXT_texture_sRGB */
    }
+   if (ctx->Extensions.EXT_texture_compression_s3tc) {
+      if (formats) {
+         formats[n++] = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+         /* This format has some restrictions/limitations and so should
+          * not be returned via the GL_COMPRESSED_TEXTURE_FORMATS query.
+          * Specifically, all transparent pixels become black.  NVIDIA
+          * omits this format too.
+          */
+         if (all)
+             formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+         formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+         formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+      }
+      else {
+         n += 3;
+         if (all)
+             n += 1;
+      }
+   }
+   if (ctx->Extensions.S3_s3tc) {
+      if (formats) {
+         formats[n++] = GL_RGB_S3TC;
+         formats[n++] = GL_RGB4_S3TC;
+         formats[n++] = GL_RGBA_S3TC;
+         formats[n++] = GL_RGBA4_S3TC;
+      }
+      else {
+         n += 4;
+      }
+   }
+#if FEATURE_EXT_texture_sRGB
+   if (ctx->Extensions.EXT_texture_sRGB) {
+      if (formats) {
+         formats[n++] = GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
+         formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
+         formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
+         formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
+      }
+      else {
+         n += 4;
+      }
+   }
+#endif /* FEATURE_EXT_texture_sRGB */
    return n;
 }
 
@@ -137,8 +136,10 @@ _mesa_compressed_texture_size( GLcontext *ctx,
 
    ASSERT(depth == 1);
    (void) depth;
+   (void) size;
 
    switch (mesaFormat) {
+#if FEATURE_texture_fxt1
    case MESA_FORMAT_RGB_FXT1:
    case MESA_FORMAT_RGBA_FXT1:
       /* round up width to next multiple of 8, height to next multiple of 4 */
@@ -149,11 +150,15 @@ _mesa_compressed_texture_size( GLcontext *ctx,
       /* Textures smaller than 8x4 will effectively be made into 8x4 and
        * take 16 bytes.
        */
-      if (size < 16)
-         size = 16;
       return size;
+#endif
+#if FEATURE_texture_s3tc
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGB_DXT1:
+   case MESA_FORMAT_SRGBA_DXT1:
+#endif
       /* round up width, height to next multiple of 4 */
       width = (width + 3) & ~3;
       height = (height + 3) & ~3;
@@ -162,11 +167,13 @@ _mesa_compressed_texture_size( GLcontext *ctx,
       /* Textures smaller than 4x4 will effectively be made into 4x4 and
        * take 8 bytes.
        */
-      if (size < 8)
-         size = 8;
       return size;
    case MESA_FORMAT_RGBA_DXT3:
    case MESA_FORMAT_RGBA_DXT5:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGBA_DXT3:
+   case MESA_FORMAT_SRGBA_DXT5:
+#endif
       /* round up width, height to next multiple of 4 */
       width = (width + 3) & ~3;
       height = (height + 3) & ~3;
@@ -175,9 +182,8 @@ _mesa_compressed_texture_size( GLcontext *ctx,
       /* Textures smaller than 4x4 will effectively be made into 4x4 and
        * take 16 bytes.
        */
-      if (size < 16)
-         size = 16;
       return size;
+#endif
    default:
       _mesa_problem(ctx, "bad mesaFormat in _mesa_compressed_texture_size");
       return 0;
@@ -202,12 +208,15 @@ _mesa_compressed_texture_size_glenum(GLcontext *ctx,
    GLuint mesaFormat;
 
    switch (glformat) {
+#if FEATURE_texture_fxt1
    case GL_COMPRESSED_RGB_FXT1_3DFX:
       mesaFormat = MESA_FORMAT_RGB_FXT1;
       break;
    case GL_COMPRESSED_RGBA_FXT1_3DFX:
       mesaFormat = MESA_FORMAT_RGBA_FXT1;
       break;
+#endif
+#if FEATURE_texture_s3tc
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
    case GL_RGB_S3TC:
       mesaFormat = MESA_FORMAT_RGB_DXT1;
@@ -224,6 +233,21 @@ _mesa_compressed_texture_size_glenum(GLcontext *ctx,
    case GL_RGBA4_S3TC:
       mesaFormat = MESA_FORMAT_RGBA_DXT5;
       break;
+#if FEATURE_EXT_texture_sRGB
+   case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+      mesaFormat = MESA_FORMAT_SRGB_DXT1;
+      break;
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+      mesaFormat = MESA_FORMAT_SRGBA_DXT1;
+      break;
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+      mesaFormat = MESA_FORMAT_SRGBA_DXT3;
+      break;
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+      mesaFormat = MESA_FORMAT_SRGBA_DXT5;
+      break;
+#endif
+#endif
    default:
       return 0;
    }
@@ -245,18 +269,30 @@ _mesa_compressed_row_stride(GLuint mesaFormat, GLsizei width)
    GLint stride;
 
    switch (mesaFormat) {
+#if FEATURE_texture_fxt1
    case MESA_FORMAT_RGB_FXT1:
    case MESA_FORMAT_RGBA_FXT1:
       stride = ((width + 7) / 8) * 16; /* 16 bytes per 8x4 tile */
       break;
+#endif
+#if FEATURE_texture_s3tc
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGB_DXT1:
+   case MESA_FORMAT_SRGBA_DXT1:
+#endif
       stride = ((width + 3) / 4) * 8; /* 8 bytes per 4x4 tile */
       break;
    case MESA_FORMAT_RGBA_DXT3:
    case MESA_FORMAT_RGBA_DXT5:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGBA_DXT3:
+   case MESA_FORMAT_SRGBA_DXT5:
+#endif
       stride = ((width + 3) / 4) * 16; /* 16 bytes per 4x4 tile */
       break;
+#endif
    default:
       _mesa_problem(NULL, "bad mesaFormat in _mesa_compressed_row_stride");
       return 0;
@@ -293,18 +329,30 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
     */
 
    switch (mesaFormat) {
+#if FEATURE_texture_fxt1
    case MESA_FORMAT_RGB_FXT1:
    case MESA_FORMAT_RGBA_FXT1:
       addr = (GLubyte *) image + 16 * (((width + 7) / 8) * (row / 4) + col / 8);
       break;
+#endif
+#if FEATURE_texture_s3tc
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGB_DXT1:
+   case MESA_FORMAT_SRGBA_DXT1:
+#endif
       addr = (GLubyte *) image + 8 * (((width + 3) / 4) * (row / 4) + col / 4);
       break;
    case MESA_FORMAT_RGBA_DXT3:
    case MESA_FORMAT_RGBA_DXT5:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGBA_DXT3:
+   case MESA_FORMAT_SRGBA_DXT5:
+#endif
       addr = (GLubyte *) image + 16 * (((width + 3) / 4) * (row / 4) + col / 4);
       break;
+#endif
    default:
       _mesa_problem(NULL, "bad mesaFormat in _mesa_compressed_image_address");
       addr = NULL;

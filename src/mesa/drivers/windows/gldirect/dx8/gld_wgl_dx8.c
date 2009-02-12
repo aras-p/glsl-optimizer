@@ -1204,6 +1204,7 @@ BOOL gldInitialiseMesa_DX(
 		MaxTextureSize >>= 1;
 	}
 	lpCtx->glCtx->Const.MaxTextureLevels = (TextureLevels) ? TextureLevels : 8;
+	lpCtx->glCtx->Const.MaxDrawBuffers = 1;
 
 	IDirect3DDevice8_SetRenderState(gld->pDev, D3DRS_LIGHTING, FALSE);
 	IDirect3DDevice8_SetRenderState(gld->pDev, D3DRS_CULLMODE, D3DCULL_NONE);

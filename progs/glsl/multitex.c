@@ -47,9 +47,12 @@ static const char *TexFiles[2] =
 
 static GLuint Program;
 
-static GLfloat Xrot = -90.0, Yrot = .0, Zrot = 0.0;
+static GLfloat Xrot = 0.0, Yrot = .0, Zrot = 0.0;
 static GLfloat EyeDist = 10;
 static GLboolean Anim = GL_TRUE;
+static GLboolean UseArrays = GL_TRUE;
+
+static GLint VertCoord_attr = -1, TexCoord0_attr = -1, TexCoord1_attr = -1;
 
 
 /* value[0] = tex unit */
@@ -60,32 +63,62 @@ static struct uniform_info Uniforms[] = {
 };
 
 
+static const GLfloat Tex0Coords[4][2] = {
+   { 0.0, 0.0 }, { 2.0, 0.0 }, { 2.0, 2.0 }, { 0.0, 2.0 }
+};
+
+static const GLfloat Tex1Coords[4][2] = {
+   { 0.0, 0.0 }, { 1.0, 0.0 }, { 1.0, 1.0 }, { 0.0, 1.0 }
+};
+
+static const GLfloat VertCoords[4][2] = {
+   { -3.0, -3.0 }, { 3.0, -3.0 }, { 3.0, 3.0 }, { -3.0, 3.0 }
+};
+
+
 static void
-DrawPolygon(GLfloat size)
+DrawPolygonArray(void)
 {
-   glPushMatrix();
-   glRotatef(90, 1, 0, 0);
-   glNormal3f(0, 0, 1);
-   glBegin(GL_POLYGON);
+   if (VertCoord_attr >= 0) {
+      glVertexAttribPointer_func(VertCoord_attr, 2, GL_FLOAT, GL_FALSE,
+                                 0, VertCoords);
+      glEnableVertexAttribArray_func(VertCoord_attr);
+   }
+   else {
+      glVertexPointer(2, GL_FLOAT, 0, VertCoords);
+      glEnable(GL_VERTEX_ARRAY);
+   }
 
-   glMultiTexCoord2f(GL_TEXTURE0, 0, 0);
-   glMultiTexCoord2f(GL_TEXTURE1, 0, 0);
-   glVertex2f(-size, -size);
+   glVertexAttribPointer_func(TexCoord0_attr, 2, GL_FLOAT, GL_FALSE,
+                              0, Tex0Coords);
+   glEnableVertexAttribArray_func(TexCoord0_attr);
 
-   glMultiTexCoord2f(GL_TEXTURE0, 2, 0);
-   glMultiTexCoord2f(GL_TEXTURE1, 1, 0);
-   glVertex2f( size, -size);
+   glVertexAttribPointer_func(TexCoord1_attr, 2, GL_FLOAT, GL_FALSE,
+                              0, Tex1Coords);
+   glEnableVertexAttribArray_func(TexCoord1_attr);
 
-   glMultiTexCoord2f(GL_TEXTURE0, 2, 2);
-   glMultiTexCoord2f(GL_TEXTURE1, 1, 1);
-   glVertex2f( size,  size);
+   glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
 
-   glMultiTexCoord2f(GL_TEXTURE0, 0, 2);
-   glMultiTexCoord2f(GL_TEXTURE1, 0, 1);
-   glVertex2f(-size,  size);
+
+static void
+DrawPolygonVert(void)
+{
+   GLuint i;
+
+   glBegin(GL_TRIANGLE_FAN);
+
+   for (i = 0; i < 4; i++) {
+      glVertexAttrib2fv_func(TexCoord0_attr, Tex0Coords[i]);
+      glVertexAttrib2fv_func(TexCoord1_attr, Tex1Coords[i]);
+
+      if (VertCoord_attr >= 0)
+         glVertexAttrib2fv_func(VertCoord_attr, VertCoords[i]);
+      else
+         glVertex2fv(VertCoords[i]);
+   }
 
    glEnd();
-   glPopMatrix();
 }
 
 
@@ -100,7 +133,10 @@ draw(void)
       glRotatef(Yrot, 0, 1, 0);
       glRotatef(Xrot, 1, 0, 0);
 
-      DrawPolygon(3.0);
+      if (UseArrays)
+         DrawPolygonArray();
+      else
+         DrawPolygonVert();
 
    glPopMatrix();
 
@@ -123,8 +159,11 @@ key(unsigned char k, int x, int y)
    (void) x;
    (void) y;
    switch (k) {
-   case ' ':
    case 'a':
+      UseArrays = !UseArrays;
+      printf("Arrays: %d\n", UseArrays);
+      break;
+   case ' ':
       Anim = !Anim;
       if (Anim)
          glutIdleFunc(idle);
@@ -231,6 +270,13 @@ CreateProgram(const char *vertProgFile, const char *fragProgFile,
    glUseProgram_func(program);
 
    InitUniforms(program, uniforms);
+
+   TexCoord0_attr = glGetAttribLocation_func(program, "TexCoord0");
+   TexCoord1_attr = glGetAttribLocation_func(program, "TexCoord1");
+   VertCoord_attr = glGetAttribLocation_func(program, "VertCoord");
+   printf("TexCoord0_attr = %d\n", TexCoord0_attr);
+   printf("TexCoord1_attr = %d\n", TexCoord1_attr);
+   printf("VertCoord_attr = %d\n", VertCoord_attr);
 
    return program;
 }

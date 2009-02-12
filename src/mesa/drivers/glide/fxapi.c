@@ -728,7 +728,7 @@ errorhandler:
        FREE(fxMesa->fogTable);
     }
     if (fxMesa->glBuffer) {
-       _mesa_unreference_framebuffer(&fxMesa->glBuffer);
+       _mesa_reference_framebuffer(&fxMesa->glBuffer, NULL);
     }
     if (fxMesa->glVis) {
        _mesa_destroy_visual(fxMesa->glVis);
@@ -828,7 +828,7 @@ fxMesaDestroyContext(fxMesaContext fxMesa)
    fxDDDestroyFxMesaContext(fxMesa); /* must be before _mesa_destroy_context */
    _mesa_destroy_visual(fxMesa->glVis);
    _mesa_destroy_context(fxMesa->glCtx);
-   _mesa_unreference_framebuffer(&fxMesa->glBuffer);
+   _mesa_reference_framebuffer(&fxMesa->glBuffer, NULL);
    fxTMClose(fxMesa); /* must be after _mesa_destroy_context */
 
    FREE(fxMesa);

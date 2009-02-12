@@ -40,8 +40,8 @@
 #ifndef DRI_INTERFACE_H
 #define DRI_INTERFACE_H
 
-/* Make this something other than __APPLE__ for other arcs with no drm.h */
-#ifndef __APPLE__
+/* For archs with no drm.h */
+#if !defined(__APPLE__) && !defined(__CYGWIN__)
 #include <drm.h>
 #else
 typedef unsigned int drm_context_t;
@@ -624,6 +624,8 @@ struct __DRIswrastExtensionRec {
 #define __DRI_BUFFER_DEPTH		4
 #define __DRI_BUFFER_STENCIL		5
 #define __DRI_BUFFER_ACCUM		6
+#define __DRI_BUFFER_FAKE_FRONT_LEFT	7
+#define __DRI_BUFFER_FAKE_FRONT_RIGHT	8
 
 struct __DRIbufferRec {
     unsigned int attachment;
