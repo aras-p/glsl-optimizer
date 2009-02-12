@@ -194,7 +194,7 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
    ASSERT(strb);
    pipe_surface_reference(&strb->surface, NULL);
    pipe_texture_reference(&strb->texture, NULL);
-   free(strb);
+   _mesa_free(strb);
 }
 
 

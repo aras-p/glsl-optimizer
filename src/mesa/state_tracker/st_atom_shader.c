@@ -298,7 +298,7 @@ st_free_translated_vertex_programs(struct st_context *st,
 
    while (xvp) {
       next = xvp->next;
-      free(xvp);
+      _mesa_free(xvp);
       xvp = next;
    }
 }
@@ -313,7 +313,7 @@ get_passthrough_fs(struct st_context *st)
       st->passthrough_fs =
          util_make_fragment_passthrough_shader(st->pipe, &shader);
 #if 0      /* We actually need to keep the tokens around at this time */
-      free((void *) shader.tokens);
+      _mesa_free((void *) shader.tokens);
 #endif
    }
 

@@ -98,12 +98,12 @@ st_destroy_clear(struct st_context *st)
    struct pipe_context *pipe = st->pipe;
 
    if (st->clear.vert_shader.tokens) {
-      FREE((void *) st->clear.vert_shader.tokens);
+      _mesa_free((void *) st->clear.vert_shader.tokens);
       st->clear.vert_shader.tokens = NULL;
    }
 
    if (st->clear.frag_shader.tokens) {
-      FREE((void *) st->clear.frag_shader.tokens);
+      _mesa_free((void *) st->clear.frag_shader.tokens);
       st->clear.frag_shader.tokens = NULL;
    }
 

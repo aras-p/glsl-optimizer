@@ -152,7 +152,7 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
          }
 
          if (stvp->state.tokens) {
-            FREE((void *) stvp->state.tokens);
+            _mesa_free((void *) stvp->state.tokens);
             stvp->state.tokens = NULL;
          }
       }
@@ -167,7 +167,7 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
          }
          
          if (stfp->state.tokens) {
-            FREE((void *) stfp->state.tokens);
+            _mesa_free((void *) stfp->state.tokens);
             stfp->state.tokens = NULL;
          }
 
@@ -214,7 +214,7 @@ static void st_program_string_notify( GLcontext *ctx,
       }
 
       if (stfp->state.tokens) {
-         FREE((void *) stfp->state.tokens);
+         _mesa_free((void *) stfp->state.tokens);
          stfp->state.tokens = NULL;
       }
 
@@ -242,7 +242,7 @@ static void st_program_string_notify( GLcontext *ctx,
       }
 
       if (stvp->state.tokens) {
-         FREE((void *) stvp->state.tokens);
+         _mesa_free((void *) stvp->state.tokens);
          stvp->state.tokens = NULL;
       }
 

@@ -206,8 +206,8 @@ accum_accum(struct pipe_context *pipe, GLfloat value,
    color_surf = screen->get_tex_surface(screen, color_strb->texture, 0, 0, 0,
                                         PIPE_BUFFER_USAGE_CPU_READ);
 
-   colorBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-   accBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
+   colorBuf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+   accBuf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
 
    pipe_get_tile_rgba(color_surf, xpos, ypos, width, height, colorBuf);
    acc_get_tile_rgba(pipe, acc_surf, xpos, ypos, width, height, accBuf);
@@ -218,8 +218,8 @@ accum_accum(struct pipe_context *pipe, GLfloat value,
 
    acc_put_tile_rgba(pipe, acc_surf, xpos, ypos, width, height, accBuf);
 
-   free(colorBuf);
-   free(accBuf);
+   _mesa_free(colorBuf);
+   _mesa_free(accBuf);
    pipe_surface_reference(&acc_surf, NULL);
    pipe_surface_reference(&color_surf, NULL);
 }
@@ -242,7 +242,7 @@ accum_load(struct pipe_context *pipe, GLfloat value,
    color_surf = screen->get_tex_surface(screen, color_strb->texture, 0, 0, 0,
                                         PIPE_BUFFER_USAGE_CPU_READ);
 
-   buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
+   buf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
 
    pipe_get_tile_rgba(color_surf, xpos, ypos, width, height, buf);
 
@@ -252,7 +252,7 @@ accum_load(struct pipe_context *pipe, GLfloat value,
 
    acc_put_tile_rgba(pipe, acc_surf, xpos, ypos, width, height, buf);
 
-   free(buf);
+   _mesa_free(buf);
    pipe_surface_reference(&acc_surf, NULL);
    pipe_surface_reference(&color_surf, NULL);
 }
@@ -271,7 +271,7 @@ accum_return(GLcontext *ctx, GLfloat value,
    GLfloat *abuf, *cbuf = NULL;
    GLint i, ch;
 
-   abuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
+   abuf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
 
    acc_surf = screen->get_tex_surface(screen, acc_strb->texture, 0, 0, 0,
                                       PIPE_BUFFER_USAGE_CPU_READ);
@@ -283,7 +283,7 @@ accum_return(GLcontext *ctx, GLfloat value,
    acc_get_tile_rgba(pipe, acc_surf, xpos, ypos, width, height, abuf);
 
    if (!colormask[0] || !colormask[1] || !colormask[2] || !colormask[3]) {
-      cbuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
+      cbuf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
       pipe_get_tile_rgba(color_surf, xpos, ypos, width, height, cbuf);
    }
 
@@ -301,9 +301,9 @@ accum_return(GLcontext *ctx, GLfloat value,
 
    pipe_put_tile_rgba(color_surf, xpos, ypos, width, height, abuf);
 
-   free(abuf);
+   _mesa_free(abuf);
    if (cbuf)
-      free(cbuf);
+      _mesa_free(cbuf);
    pipe_surface_reference(&acc_surf, NULL);
    pipe_surface_reference(&color_surf, NULL);
 }

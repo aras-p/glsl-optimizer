@@ -223,7 +223,7 @@ setup_edgeflags(GLcontext *ctx, GLenum primMode, GLint start, GLint count,
       if (!stobj)
          return NULL;
 
-      vec = (unsigned *) calloc(sizeof(unsigned), (count + 31) / 32);
+      vec = (unsigned *) _mesa_calloc(sizeof(unsigned) * ((count + 31) / 32));
       if (!vec)
          return NULL;
 
