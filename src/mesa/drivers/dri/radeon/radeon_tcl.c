@@ -42,8 +42,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 
+#include "radeon_common.h"
 #include "radeon_context.h"
-#include "common_cmdbuf.h"
 #include "radeon_state.h"
 #include "radeon_ioctl.h"
 #include "radeon_tex.h"

@@ -53,8 +53,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "drivers/common/driverfuncs.h"
 
+#include "radeon_common.h"
 #include "radeon_context.h"
-#include "common_cmdbuf.h"
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
 #include "radeon_span.h"
@@ -76,36 +76,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vblank.h"
 #include "utils.h"
 #include "xmlpool.h" /* for symbolic values of enum-type options */
-
-/* Return various strings for glGetString().
- */
-static const GLubyte *radeonGetString( GLcontext *ctx, GLenum name )
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   static char buffer[128];
-   unsigned   offset;
-   GLuint agp_mode = (rmesa->radeon.radeonScreen->card_type==RADEON_CARD_PCI) ? 0 :
-      rmesa->radeon.radeonScreen->AGPMode;
-
-   switch ( name ) {
-   case GL_VENDOR:
-      return (GLubyte *)"Tungsten Graphics, Inc.";
-
-   case GL_RENDERER:
-      offset = driGetRendererString( buffer, "Radeon", DRIVER_DATE,
-				     agp_mode );
-
-      sprintf( & buffer[ offset ], " %sTCL",
-	       !(rmesa->radeon.TclFallback & RADEON_TCL_FALLBACK_TCL_DISABLE)
-	       ? "" : "NO-" );
-
-      return (GLubyte *)buffer;
-
-   default:
-      return NULL;
-   }
-}
-
 
 /* Extension strings exported by the R100 driver.
  */
@@ -162,15 +132,6 @@ static const struct tnl_pipeline_stage *radeon_pipeline[] = {
    &_tnl_render_stage,		/* FALLBACK:  */
    NULL,
 };
-
-
-
-/* Initialize the driver's misc functions.
- */
-static void radeonInitDriverFuncs( struct dd_function_table *functions )
-{
-    functions->GetString	= radeonGetString;
-}
 
 static const struct dri_debug_control debug_control[] =
 {
@@ -292,7 +253,6 @@ radeonCreateContext( const __GLcontextModes *glVisual,
     * (the texture functions are especially important)
     */
    _mesa_init_driver_functions( &functions );
-   radeonInitDriverFuncs( &functions );
    radeonInitTextureFuncs( &functions );
 
    if (!radeonInitContext(&rmesa->radeon, &functions,

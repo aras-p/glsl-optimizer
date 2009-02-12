@@ -47,7 +47,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast_setup/swrast_setup.h"
 
 #include "radeon_context.h"
-#include "common_cmdbuf.h"
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
 #include "radeon_tcl.h"

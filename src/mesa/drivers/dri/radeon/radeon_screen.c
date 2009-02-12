@@ -47,7 +47,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_macros.h"
 #include "radeon_screen.h"
 #include "radeon_buffer.h"
-#include "common_misc.h"
+#include "radeon_common.h"
 #include "radeon_span.h"
 #if !RADEON_COMMON
 #include "radeon_context.h"
@@ -362,7 +362,7 @@ static const __DRItexBufferExtension r300TexBufferExtension = {
 };
 #endif
 
-int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
+static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
 {
    screen->chip_flags = 0;
    switch ( device_id ) {

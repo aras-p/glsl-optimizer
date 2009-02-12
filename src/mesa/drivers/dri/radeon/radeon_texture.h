@@ -1,45 +1,35 @@
-#ifndef COMMON_MISC_H
-#define COMMON_MISC_H
+/*
+ * Copyright (C) 2008 Nicolai Haehnle.
+ * Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
+ *
+ * The Weather Channel (TM) funded Tungsten Graphics to develop the
+ * initial release of the Radeon 8500 driver under the XFree86 license.
+ * This notice must be preserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
 
-#include "common_context.h"
-#include "radeon_buffer.h"
-void radeonRecalcScissorRects(radeonContextPtr radeon);
-void radeonSetCliprects(radeonContextPtr radeon);
-void radeonUpdateScissor( GLcontext *ctx );
-void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h);
-
-void radeonWaitForIdleLocked(radeonContextPtr radeon);
-extern uint32_t radeonGetAge(radeonContextPtr radeon);
-void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
-		       const drm_clip_rect_t	  *rect);
-void radeonPageFlip( __DRIdrawablePrivate *dPriv );
-void radeon_common_finish(GLcontext * ctx);
-void radeonSwapBuffers(__DRIdrawablePrivate * dPriv);
-void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
-			 int x, int y, int w, int h );
-
-void radeonUpdatePageFlipping(radeonContextPtr rmesa);
-
-GLboolean radeonInitContext(radeonContextPtr radeon,
-			    struct dd_function_table* functions,
-			    const __GLcontextModes * glVisual,
-			    __DRIcontextPrivate * driContextPriv,
-			    void *sharedContextPrivate);
-
-void radeonCleanupContext(radeonContextPtr radeon);
-GLboolean radeonUnbindContext(__DRIcontextPrivate * driContextPriv);
-void radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable);
-GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
-			    __DRIdrawablePrivate * driDrawPriv,
-			    __DRIdrawablePrivate * driReadPriv);
-
-void radeonEmitVec8(uint32_t *out, GLvoid * data, int stride, int count);
-void radeonEmitVec12(uint32_t *out, GLvoid * data, int stride, int count);
-
-void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
-			 GLvoid * data, int size, int stride, int count);
-void radeon_print_state_atom( struct radeon_state_atom *state );
-
+#ifndef RADEON_TEXTURE_H
+#define RADEON_TEXTURE_H
 struct gl_texture_image *radeonNewTextureImage(GLcontext *ctx);
 void radeonFreeTexImageData(GLcontext *ctx, struct gl_texture_image *timage);
 
@@ -115,52 +105,4 @@ void radeonTexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 			 const struct gl_pixelstore_attrib *packing,
 			 struct gl_texture_object *texObj,
 			 struct gl_texture_image *texImage);
-
-void radeonSpanRenderStart(GLcontext * ctx);
-void radeonSpanRenderFinish(GLcontext * ctx);
-GLubyte *radeon_ptr(const struct radeon_renderbuffer * rrb,
-		    GLint x, GLint y);
-GLubyte *radeon_ptr16(const struct radeon_renderbuffer * rrb,
-		    GLint x, GLint y);
-GLubyte *radeon_ptr32(const struct radeon_renderbuffer * rrb,
-		    GLint x, GLint y);
-void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size);
-void radeonAllocDmaRegion(radeonContextPtr rmesa,
-			  struct radeon_bo **pbo, int *poffset,
-			  int bytes, int alignment);
-void radeonReleaseDmaRegion(radeonContextPtr rmesa);
-
-void rcommon_flush_last_swtcl_prim(GLcontext *ctx);
-
-void *rcommonAllocDmaLowVerts(radeonContextPtr rmesa, int nverts, int vsize);
-
-void radeonFlush(GLcontext *ctx);
-void radeonFinish(GLcontext * ctx);
-void radeonEmitState(radeonContextPtr radeon);
-
-static inline struct radeon_renderbuffer *radeon_get_depthbuffer(radeonContextPtr rmesa)
-{
-	struct radeon_renderbuffer *rrb;
-	rrb = rmesa->state.depth.rrb;
-	if (!rrb)
-		return NULL;
-
-	return rrb;
-}
-
-static inline struct radeon_renderbuffer *radeon_get_colorbuffer(radeonContextPtr rmesa)
-{
-	struct radeon_renderbuffer *rrb;
-	GLframebuffer *fb = rmesa->dri.drawable->driverPrivate;
-
-	rrb = rmesa->state.color.rrb;
-	if (rmesa->radeonScreen->driScreen->dri2.enabled) {
-		rrb = (struct radeon_renderbuffer *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-	}
-	if (!rrb)
-		return NULL;
-	return rrb;
-}
-
-
 #endif

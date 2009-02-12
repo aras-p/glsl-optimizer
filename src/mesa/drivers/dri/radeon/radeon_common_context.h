@@ -486,6 +486,19 @@ static INLINE uint32_t radeonPackFloat24(float f)
 	return float24;
 }
 
+GLboolean radeonInitContext(radeonContextPtr radeon,
+			    struct dd_function_table* functions,
+			    const __GLcontextModes * glVisual,
+			    __DRIcontextPrivate * driContextPriv,
+			    void *sharedContextPrivate);
+
+void radeonCleanupContext(radeonContextPtr radeon);
+GLboolean radeonUnbindContext(__DRIcontextPrivate * driContextPriv);
+void radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable);
+GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
+			    __DRIdrawablePrivate * driDrawPriv,
+			    __DRIdrawablePrivate * driReadPriv);
+
 /* ================================================================
  * Debugging:
  */
@@ -497,6 +510,4 @@ extern int RADEON_DEBUG;
 #define RADEON_DEBUG		0
 #endif
 
-#include "common_misc.h"
-#include "common_cmdbuf.h"
 #endif

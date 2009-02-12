@@ -53,8 +53,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/colormac.h"
 #include "radeon_screen.h"
 
-#include "common_context.h"
-#include "common_misc.h"
+#include "radeon_common.h"
 
 
 struct r100_context;

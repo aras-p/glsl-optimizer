@@ -28,7 +28,7 @@
 #ifndef __RADEON_MIPMAP_TREE_H_
 #define __RADEON_MIPMAP_TREE_H_
 
-#include "common_context.h"
+#include "radeon_common.h"
 
 typedef struct _radeon_mipmap_tree radeon_mipmap_tree;
 typedef struct _radeon_mipmap_level radeon_mipmap_level;

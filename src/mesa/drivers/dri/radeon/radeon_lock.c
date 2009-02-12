@@ -44,10 +44,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/colormac.h"
 #include "dri_util.h"
 #include "radeon_screen.h"
-#include "common_context.h"
-#include "common_lock.h"
-#include "common_misc.h"
-
+#include "radeon_common.h"
+#include "radeon_lock.h"
 #include "drirenderbuffer.h"
 
 #if DEBUG_LOCKING

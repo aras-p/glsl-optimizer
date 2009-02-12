@@ -43,13 +43,153 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/glheader.h"
 #include "swrast/swrast.h"
 
-#include "common_context.h"
-#include "common_misc.h"
+#include "radeon_common.h"
+#include "radeon_lock.h"
 #include "radeon_span.h"
 
 #include "radeon_buffer.h"
 
 #define DBG 0
+
+static GLubyte *radeon_ptr32(const struct radeon_renderbuffer * rrb,
+			     GLint x, GLint y)
+{
+    GLubyte *ptr = rrb->bo->ptr;
+    const __DRIdrawablePrivate *dPriv = rrb->dPriv;
+    uint32_t mask = RADEON_BO_FLAGS_MACRO_TILE | RADEON_BO_FLAGS_MICRO_TILE;
+    GLint offset;
+    GLint nmacroblkpl;
+    GLint nmicroblkpl;
+
+    x += dPriv->x;
+    y += dPriv->y;
+
+    if (rrb->has_surface || !(rrb->bo->flags & mask)) {
+        offset = x * rrb->cpp + y * rrb->pitch;
+    } else {
+        offset = 0;
+        if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE) {
+            if (rrb->bo->flags & RADEON_BO_FLAGS_MICRO_TILE) {
+                nmacroblkpl = rrb->pitch >> 5;
+                offset += ((y >> 4) * nmacroblkpl) << 11;
+                offset += ((y & 15) >> 1) << 8;
+                offset += (y & 1) << 4;
+                offset += (x >> 5) << 11;
+                offset += ((x & 31) >> 2) << 5;
+                offset += (x & 3) << 2;
+            } else {
+                nmacroblkpl = rrb->pitch >> 6;
+                offset += ((y >> 3) * nmacroblkpl) << 11;
+                offset += (y & 7) << 8;
+                offset += (x >> 6) << 11;
+                offset += ((x & 63) >> 3) << 5;
+                offset += (x & 7) << 2;
+            }
+        } else {
+            nmicroblkpl = ((rrb->pitch + 31) & ~31) >> 5;
+            offset += (y * nmicroblkpl) << 5;
+            offset += (x >> 3) << 5;
+            offset += (x & 7) << 2;
+        }
+    }
+    return &ptr[offset];
+}
+
+static GLubyte *radeon_ptr16(const struct radeon_renderbuffer * rrb,
+			     GLint x, GLint y)
+{
+    GLubyte *ptr = rrb->bo->ptr;
+    const __DRIdrawablePrivate *dPriv = rrb->dPriv;
+    uint32_t mask = RADEON_BO_FLAGS_MACRO_TILE | RADEON_BO_FLAGS_MICRO_TILE;
+    GLint offset;
+    GLint nmacroblkpl;
+    GLint nmicroblkpl;
+
+    x += dPriv->x;
+    y += dPriv->y;
+
+    if (rrb->has_surface || !(rrb->bo->flags & mask)) {
+        offset = x * rrb->cpp + y * rrb->pitch;
+    } else {
+        offset = 0;
+        if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE) {
+            if (rrb->bo->flags & RADEON_BO_FLAGS_MICRO_TILE) {
+                nmacroblkpl = rrb->pitch >> 6;
+                offset += ((y >> 4) * nmacroblkpl) << 11;
+                offset += ((y & 15) >> 1) << 8;
+                offset += (y & 1) << 4;
+                offset += (x >> 6) << 11;
+                offset += ((x & 63) >> 3) << 5;
+                offset += (x & 7) << 1;
+            } else {
+                nmacroblkpl = rrb->pitch >> 7;
+                offset += ((y >> 3) * nmacroblkpl) << 11;
+                offset += (y & 7) << 8;
+                offset += (x >> 7) << 11;
+                offset += ((x & 127) >> 4) << 5;
+                offset += (x & 15) << 2;
+            }
+        } else {
+            nmicroblkpl = ((rrb->pitch + 31) & ~31) >> 5;
+            offset += (y * nmicroblkpl) << 5;
+            offset += (x >> 4) << 5;
+            offset += (x & 15) << 2;
+        }
+    }
+    return &ptr[offset];
+}
+
+static GLubyte *radeon_ptr(const struct radeon_renderbuffer * rrb,
+			   GLint x, GLint y)
+{
+    GLubyte *ptr = rrb->bo->ptr;
+    const __DRIdrawablePrivate *dPriv = rrb->dPriv;
+    uint32_t mask = RADEON_BO_FLAGS_MACRO_TILE | RADEON_BO_FLAGS_MICRO_TILE;
+    GLint offset;
+    GLint microblkxs;
+    GLint macroblkxs;
+    GLint nmacroblkpl;
+    GLint nmicroblkpl;
+
+    x += dPriv->x;
+    y += dPriv->y;
+
+    if (rrb->has_surface || !(rrb->bo->flags & mask)) {
+        offset = x * rrb->cpp + y * rrb->pitch;
+    } else {
+        offset = 0;
+        if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE) {
+            if (rrb->bo->flags & RADEON_BO_FLAGS_MICRO_TILE) {
+                microblkxs = 16 / rrb->cpp;
+                macroblkxs = 128 / rrb->cpp;
+                nmacroblkpl = rrb->pitch / macroblkxs;
+                offset += ((y >> 4) * nmacroblkpl) << 11;
+                offset += ((y & 15) >> 1) << 8;
+                offset += (y & 1) << 4;
+                offset += (x / macroblkxs) << 11;
+                offset += ((x & (macroblkxs - 1)) / microblkxs) << 5;
+                offset += (x & (microblkxs - 1)) * rrb->cpp;
+            } else {
+                microblkxs = 32 / rrb->cpp;
+                macroblkxs = 256 / rrb->cpp;
+                nmacroblkpl = rrb->pitch / macroblkxs;
+                offset += ((y >> 3) * nmacroblkpl) << 11;
+                offset += (y & 7) << 8;
+                offset += (x / macroblkxs) << 11;
+                offset += ((x & (macroblkxs - 1)) / microblkxs) << 5;
+                offset += (x & (microblkxs - 1)) * rrb->cpp;
+            }
+        } else {
+            microblkxs = 32 / rrb->cpp;
+            nmicroblkpl = ((rrb->pitch + 31) & ~31) >> 5;
+            offset += (y * nmicroblkpl) << 5;
+            offset += (x / microblkxs) << 5;
+            offset += (x & (microblkxs - 1)) * rrb->cpp;
+        }
+    }
+    return &ptr[offset];
+}
+
 
 /*
  * Note that all information needed to access pixels in a renderbuffer
@@ -214,6 +354,88 @@ do {									\
 
 #define TAG(x) radeon##x##_z24_s8
 #include "stenciltmp.h"
+
+
+static void map_buffer(struct gl_renderbuffer *rb, GLboolean write)
+{
+	struct radeon_renderbuffer *rrb = (void*)rb;
+	int r;
+	
+	if (rrb->bo) {
+		r = radeon_bo_map(rrb->bo, write);
+		if (r) {
+			fprintf(stderr, "(%s) error(%d) mapping buffer.\n",
+				__FUNCTION__, r);
+		}
+	}
+}
+
+static void unmap_buffer(struct gl_renderbuffer *rb)
+{
+	struct radeon_renderbuffer *rrb = (void*)rb;
+
+	if (rrb->bo) {
+		radeon_bo_unmap(rrb->bo);
+	}
+}
+
+static void radeonSpanRenderStart(GLcontext * ctx)
+{
+	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+	int i;
+
+	radeon_firevertices(rmesa);
+
+	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+		if (ctx->Texture.Unit[i]._ReallyEnabled)
+			ctx->Driver.MapTexture(ctx, ctx->Texture.Unit[i]._Current);
+	}
+
+	/* color draw buffers */
+	for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
+		map_buffer(ctx->DrawBuffer->_ColorDrawBuffers[i], GL_TRUE);
+	}
+
+	map_buffer(ctx->ReadBuffer->_ColorReadBuffer, GL_FALSE);
+
+	if (ctx->DrawBuffer->_DepthBuffer) {
+		map_buffer(ctx->DrawBuffer->_DepthBuffer->Wrapped, GL_TRUE);
+	}
+	if (ctx->DrawBuffer->_StencilBuffer)
+		map_buffer(ctx->DrawBuffer->_StencilBuffer->Wrapped, GL_TRUE);
+
+	/* The locking and wait for idle should really only be needed in classic mode.
+	 * In a future memory manager based implementation, this should become
+	 * unnecessary due to the fact that mapping our buffers, textures, etc.
+	 * should implicitly wait for any previous rendering commands that must
+	 * be waited on. */
+	LOCK_HARDWARE(rmesa);
+	radeonWaitForIdleLocked(rmesa);
+}
+
+static void radeonSpanRenderFinish(GLcontext * ctx)
+{
+	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+	int i;
+	_swrast_flush(ctx);
+	UNLOCK_HARDWARE(rmesa);
+
+	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+		if (ctx->Texture.Unit[i]._ReallyEnabled)
+			ctx->Driver.UnmapTexture(ctx, ctx->Texture.Unit[i]._Current);
+	}
+
+	/* color draw buffers */
+	for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++)
+		unmap_buffer(ctx->DrawBuffer->_ColorDrawBuffers[i]);
+
+	unmap_buffer(ctx->ReadBuffer->_ColorReadBuffer);
+
+	if (ctx->DrawBuffer->_DepthBuffer)
+		unmap_buffer(ctx->DrawBuffer->_DepthBuffer->Wrapped);
+	if (ctx->DrawBuffer->_StencilBuffer)
+		unmap_buffer(ctx->DrawBuffer->_StencilBuffer->Wrapped);
+}
 
 void radeonInitSpanFuncs(GLcontext * ctx)
 {

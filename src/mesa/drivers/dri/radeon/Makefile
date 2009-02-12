@@ -8,6 +8,16 @@ LIBNAME = radeon_dri.so
 
 MINIGLX_SOURCES = server/radeon_dri.c 
 
+RADEON_COMMON_SOURCES = \
+	radeon_texture.c \
+	radeon_common_context.c \
+	radeon_dma.c \
+	radeon_lock.c \
+	radeon_bo_legacy.c \
+	radeon_cs_legacy.c \
+	radeon_mipmap_tree.c \
+	radeon_span.c
+
 DRIVER_SOURCES = \
 	radeon_context.c \
 	radeon_ioctl.c \
@@ -18,14 +28,9 @@ DRIVER_SOURCES = \
 	radeon_texstate.c \
 	radeon_tcl.c \
 	radeon_swtcl.c \
-	radeon_span.c \
 	radeon_maos.c \
 	radeon_sanity.c \
-	common_lock.c \
-	common_misc.c \
-	radeon_bo_legacy.c \
-	radeon_cs_legacy.c \
-	radeon_mipmap_tree.c
+	$(RADEON_COMMON_SOURCES)
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \

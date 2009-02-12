@@ -33,7 +33,7 @@
 #define RADEON_CS_LEGACY_H
 
 #include "radeon_cs.h"
-#include "common_context.h"
+#include "radeon_common.h"
 
 struct radeon_cs_manager *radeon_cs_manager_legacy_ctor(struct radeon_context *ctx);
 void radeon_cs_manager_legacy_dtor(struct radeon_cs_manager *csm);

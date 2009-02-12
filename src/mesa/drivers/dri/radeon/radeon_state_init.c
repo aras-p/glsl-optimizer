@@ -38,7 +38,6 @@
 #include "swrast_setup/swrast_setup.h"
 
 #include "radeon_context.h"
-#include "common_cmdbuf.h"
 #include "radeon_cs.h"
 #include "radeon_mipmap_tree.h"
 #include "radeon_ioctl.h"

@@ -31,8 +31,6 @@
  */
 #include <errno.h>
 
-
-#include "common_context.h"
 #include "radeon_cs.h"
 #include "radeon_cs_legacy.h"
 #include "radeon_bo_legacy.h"
@@ -234,7 +232,7 @@ static int cs_process_relocs(struct radeon_cs *cs)
             }
             cs->packets[relocs[i].indices[j]] += soffset;
             if (cs->packets[relocs[i].indices[j]] >= eoffset) {
-                radeon_bo_debug(relocs[i].base.bo, 12);
+	      /*                radeon_bo_debug(relocs[i].base.bo, 12); */
                 fprintf(stderr, "validated %p [0x%08X, 0x%08X]\n",
                         relocs[i].base.bo, soffset, eoffset);
                 fprintf(stderr, "above end: %p 0x%08X 0x%08X\n",
