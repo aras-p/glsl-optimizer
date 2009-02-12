@@ -163,10 +163,7 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
    assert(!tc->texture);
 
    if (tc->transfer) {
-      if (ps->texture == tc->transfer->texture &&
-          ps->face == tc->transfer->face &&
-          ps->level == tc->transfer->level &&
-          ps->zslice == tc->transfer->zslice)
+      if (ps == tc->surface)
          return;
 
       if (tc->transfer_map) {
@@ -176,6 +173,8 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
 
       screen->tex_transfer_release(screen, &tc->transfer);
    }
+
+   tc->surface = ps;
 
    tc->transfer = screen->get_tex_transfer(screen, ps->texture, ps->face,
                                            ps->level, ps->zslice,
