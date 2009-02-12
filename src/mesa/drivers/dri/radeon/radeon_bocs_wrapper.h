@@ -9,6 +9,8 @@
 #include "radeon_cs_gem.h"
 
 #else
+#include <stdint.h>
+
 #define RADEON_GEM_DOMAIN_CPU 0x1   // Cached CPU domain
 #define RADEON_GEM_DOMAIN_GTT 0x2   // GTT or cache flushed
 #define RADEON_GEM_DOMAIN_VRAM 0x4  // VRAM domain
