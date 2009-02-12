@@ -14,7 +14,7 @@ C_SOURCES = \
 	sp_draw_arrays.c \
 	sp_prim_setup.c \
 	sp_prim_vbuf.c \
-	sp_quad.c \
+	sp_quad_pipe.c \
 	sp_quad_alpha_test.c \
 	sp_quad_blend.c \
 	sp_quad_colormask.c \

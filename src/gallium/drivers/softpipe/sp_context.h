@@ -36,7 +36,7 @@
 
 #include "draw/draw_vertex.h"
 
-#include "sp_quad.h"
+#include "sp_quad_pipe.h"
 #include "sp_tex_sample.h"
 
 

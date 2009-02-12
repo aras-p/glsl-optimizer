@@ -36,7 +36,7 @@
 
 #include "sp_context.h"
 #include "sp_headers.h"
-#include "sp_quad.h"
+#include "sp_quad_pipe.h"
 #include "sp_state.h"
 #include "sp_prim_setup.h"
 #include "draw/draw_context.h"
