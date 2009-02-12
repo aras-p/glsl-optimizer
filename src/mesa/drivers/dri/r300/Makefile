@@ -20,13 +20,18 @@ COMMON_SOURCES = \
 	../common/xmlconfig.c \
 	../common/dri_util.c
 
+RADEON_COMMON_SOURCES = \
+	radeon_texture.c \
+	radeon_common_context.c \
+	radeon_dma.c \
+	radeon_lock.c \
+	radeon_bo_legacy.c \
+	radeon_cs_legacy.c \
+	radeon_mipmap_tree.c \
+	radeon_span.c
+
 DRIVER_SOURCES = \
-		 radeon_bo_legacy.c \
-		 radeon_cs_legacy.c \
 		 radeon_screen.c \
-		 common_lock.c \
-		 common_misc.c \
-		 radeon_span.c \
 		 r300_ioctl.c \
 		 r300_cmdbuf.c \
 		 r300_state.c \
@@ -46,7 +51,7 @@ DRIVER_SOURCES = \
 		 r300_shader.c \
 		 r300_emit.c \
 		 r300_swtcl.c \
-		 radeon_mipmap_tree.c \
+		 $(RADEON_COMMON_SOURCES) \
 		 $(EGL_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
@@ -75,14 +80,19 @@ COMMON_SYMLINKS = \
 	radeon_cs_legacy.c \
 	radeon_bo_legacy.h \
 	radeon_cs_legacy.h \
-	common_context.h \
-	common_lock.c \
-	common_lock.h \
-	common_misc.c \
-	common_misc.h \
-	common_cmdbuf.h \
+	radeon_lock.c \
+	radeon_lock.h \
+	radeon_common.c \
+	radeon_common.h \
+	radeon_common_context.c \
+	radeon_common_context.h \
+	radeon_cmdbuf.h \
+	radeon_dma.c \
+	radeon_dma.h \
 	radeon_mipmap_tree.c \
-	radeon_mipmap_tree.h
+	radeon_mipmap_tree.h \
+	radeon_texture.c \
+	radeon_texture.h
 
 DRI_LIB_DEPS += -ldrm_radeon
 

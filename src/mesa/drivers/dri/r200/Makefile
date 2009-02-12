@@ -11,6 +11,17 @@ ifeq ($(USING_EGL), 1)
 EGL_SOURCES = server/radeon_egl.c
 endif
 
+RADEON_COMMON_SOURCES = \
+	radeon_texture.c \
+	radeon_common_context.c \
+	radeon_dma.c \
+	radeon_lock.c \
+	radeon_bo_legacy.c \
+	radeon_cs_legacy.c \
+	radeon_mipmap_tree.c \
+	radeon_span.c
+
+
 DRIVER_SOURCES = r200_context.c \
 		 r200_ioctl.c \
 		 r200_state.c \
@@ -26,13 +37,8 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_fragshader.c \
 		 r200_vertprog.c \
 		 radeon_screen.c \
-		 common_lock.c \
-		 common_misc.c \
-		 radeon_bo_legacy.c \
-		 radeon_cs_legacy.c \
-		 radeon_mipmap_tree.c \
-		 radeon_span.c \
-		 $(EGL_SOURCES)
+		 $(EGL_SOURCES) \
+		 $(RADEON_COMMON_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
@@ -59,14 +65,19 @@ COMMON_SYMLINKS = \
 	radeon_span.h \
 	radeon_span.c \
 	radeon_buffer.h \
-	common_context.h \
-	common_lock.c \
-	common_lock.h \
-	common_misc.h \
-	common_misc.c \
-	common_cmdbuf.h \
+	radeon_lock.c \
+	radeon_lock.h \
+	radeon_common.c \
+	radeon_common_context.c \
+	radeon_common_context.h \
+	radeon_common.h \
+	radeon_cmdbuf.h \
 	radeon_mipmap_tree.c \
-	radeon_mipmap_tree.h
+	radeon_mipmap_tree.h \
+	radeon_texture.c \
+	radeon_texture.h \
+	radeon_dma.c \
+	radeon_dma.h
 
 DRI_LIB_DEPS += -ldrm_radeon
 

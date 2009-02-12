@@ -334,7 +334,6 @@ static void r300FireAOS(r300ContextPtr rmesa, int vertex_count, int type)
 static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 				   int start, int end, int prim)
 {
-	BATCH_LOCALS(&rmesa->radeon);
 	int type, num_verts;
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *vb = &tnl->vb;
@@ -396,7 +395,7 @@ static GLboolean r300RunRender(GLcontext * ctx,
 	r300UpdateShaderStates(rmesa);
 
 	r300EmitCacheFlush(rmesa);
-	r300EmitState(rmesa);
+	radeonEmitState(&rmesa->radeon);
 
 	for (i = 0; i < vb->PrimitiveCount; i++) {
 		GLuint prim = _tnl_translate_prim(&vb->Primitive[i]);

@@ -40,7 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/texobj.h"
 #include "main/enums.h"
 
-#include "common_context.h"
+#include "radeon_common.h"
 #include "radeon_mipmap_tree.h"
 #include "r200_context.h"
 #include "r200_state.h"
@@ -1411,7 +1411,7 @@ static GLboolean r200_validate_texture(GLcontext *ctx, struct gl_texture_object 
    return GL_TRUE;
 }
 
-GLboolean r200UpdateTextureUnit(GLcontext *ctx, int unit)
+static GLboolean r200UpdateTextureUnit(GLcontext *ctx, int unit)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint unitneeded = rmesa->state.texture.unit[unit].unitneeded;

@@ -54,14 +54,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 #include "radeon_screen.h"
-#include "common_context.h"
-#include "common_misc.h"
+#include "radeon_common.h"
+
+#include "radeon_lock.h"
 
 struct r200_context;
 typedef struct r200_context r200ContextRec;
 typedef struct r200_context *r200ContextPtr;
-
-#include "r200_lock.h"
 
 #include "main/mm.h"
 

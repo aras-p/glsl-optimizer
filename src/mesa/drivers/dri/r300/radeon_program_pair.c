@@ -35,7 +35,7 @@
 
 #include "radeon_program_pair.h"
 
-#include "radeon_context.h"
+#include "radeon_common.h"
 
 #include "shader/prog_print.h"
 

@@ -37,15 +37,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/simple_list.h"
 #include "radeon_dri.h"
-#include "r200_lock.h"
 
 #include "radeon_cs_legacy.h"
 
 #include "xf86drm.h"
 #include "drm.h"
 #include "radeon_drm.h"
-
-#include "common_cmdbuf.h"
 
 extern void r200EmitVertexAOS( r200ContextPtr rmesa,
 			       GLuint vertex_size,

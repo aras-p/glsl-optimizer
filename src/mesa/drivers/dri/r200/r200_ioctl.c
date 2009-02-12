@@ -41,10 +41,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "swrast/swrast.h"
 
-#include "radeon_cs.h"
+#include "radeon_common.h"
+#include "radeon_lock.h"
 #include "r200_context.h"
-
-#include "common_cmdbuf.h"
 #include "r200_state.h"
 #include "r200_ioctl.h"
 #include "r200_tcl.h"
