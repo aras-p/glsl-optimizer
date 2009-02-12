@@ -146,36 +146,36 @@ static INLINE uint32_t cmdpacify(struct radeon_screen *rscrn)
 /**
  * Must be sent to switch to 2d commands
  */
-void static INLINE end_3d(r300ContextPtr rmesa)
+void static INLINE end_3d(radeonContextPtr radeon)
 {
-	BATCH_LOCALS(&rmesa->radeon);
+	BATCH_LOCALS(radeon);
 
-    if (!rmesa->radeon.radeonScreen->kernel_mm) {
-        BEGIN_BATCH_NO_AUTOSTATE(1);
-	OUT_BATCH(cmdpacify(rmesa->radeon.radeonScreen));
-	END_BATCH();
-    }
+	if (!radeon->radeonScreen->kernel_mm) {
+		BEGIN_BATCH_NO_AUTOSTATE(1);
+		OUT_BATCH(cmdpacify(radeon->radeonScreen));
+		END_BATCH();
+	}
 }
 
 void static INLINE cp_delay(r300ContextPtr rmesa, unsigned short count)
 {
 	BATCH_LOCALS(&rmesa->radeon);
 
-    if (!rmesa->radeon.radeonScreen->kernel_mm) {
-        BEGIN_BATCH_NO_AUTOSTATE(1);
-	OUT_BATCH(cmdcpdelay(rmesa->radeon.radeonScreen, count));
-    	END_BATCH();
-    }
-}
-
-void static INLINE cp_wait(r300ContextPtr rmesa, unsigned char flags)
-{
-	BATCH_LOCALS(&rmesa->radeon);
-	uint32_t wait_until;
-
 	if (!rmesa->radeon.radeonScreen->kernel_mm) {
 		BEGIN_BATCH_NO_AUTOSTATE(1);
-		OUT_BATCH(cmdwait(rmesa->radeon.radeonScreen, flags));
+		OUT_BATCH(cmdcpdelay(rmesa->radeon.radeonScreen, count));
+		END_BATCH();
+	}
+}
+
+void static INLINE cp_wait(radeonContextPtr radeon, unsigned char flags)
+{
+	BATCH_LOCALS(radeon);
+	uint32_t wait_until;
+
+	if (!radeon->radeonScreen->kernel_mm) {
+		BEGIN_BATCH_NO_AUTOSTATE(1);
+		OUT_BATCH(cmdwait(radeon->radeonScreen, flags));
 		END_BATCH();
 	} else {
 		switch(flags) {

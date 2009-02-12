@@ -53,8 +53,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
 
-#include "radeon_ioctl.h"
-#include "radeon_state.h"
 #include "radeon_buffer.h"
 #include "r300_context.h"
 #include "r300_ioctl.h"
@@ -1087,7 +1085,7 @@ static void r300UpdateWindow(GLcontext * ctx)
 	GLfloat sz = v[MAT_SZ] * rmesa->radeon.state.depth.scale;
 	GLfloat tz = v[MAT_TZ] * rmesa->radeon.state.depth.scale;
 
-	R300_FIREVERTICES(rmesa);
+	radeon_firevertices(&rmesa->radeon);
 	R300_STATECHANGE(rmesa, vpt);
 
 	rmesa->hw.vpt.cmd[R300_VPT_XSCALE] = r300PackFloat32(sx);
@@ -2112,6 +2110,7 @@ static void r300SetupVertexProgram(r300ContextPtr rmesa)
  */
 static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 {
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s( %s = %s )\n", __FUNCTION__,
 			_mesa_lookup_enum_by_nr(cap),
@@ -2157,8 +2156,12 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 	case GL_POLYGON_OFFSET_FILL:
 		r300SetPolygonOffsetState(ctx, state);
 		break;
+	case GL_SCISSOR_TEST:
+		radeon_firevertices(&rmesa->radeon);
+		rmesa->radeon.state.scissor.enabled = state;
+		radeonUpdateScissor( ctx );
+		break;
 	default:
-		radeonEnable(ctx, cap, state);
 		break;
 	}
 }
@@ -2405,7 +2408,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 		r300->hw.vps.cmd[R300_VPS_ZERO_3] = 0;
 	}
 
-	r300->hw.all_dirty = GL_TRUE;
+	r300->radeon.hw.all_dirty = GL_TRUE;
 }
 
 void r300UpdateShaders(r300ContextPtr rmesa)
@@ -2747,7 +2750,7 @@ static void r300DrawBuffer( GLcontext *ctx, GLenum mode )
 		fprintf(stderr, "%s %s\n", __FUNCTION__,
 			_mesa_lookup_enum_by_nr( mode ));
 
-	R300_FIREVERTICES(rmesa);	/* don't pipeline cliprect changes */
+	radeon_firevertices(&rmesa->radeon);	/* don't pipeline cliprect changes */
 
 	radeonSetCliprects( &rmesa->radeon );
 	radeonUpdatePageFlipping(&rmesa->radeon);
@@ -2803,6 +2806,7 @@ void r300InitStateFuncs(struct dd_function_table *functions)
 	functions->RenderMode = r300RenderMode;
 
 	functions->ClipPlane = r300ClipPlane;
+	functions->Scissor = radeonScissor;
 
 	functions->DrawBuffer		= r300DrawBuffer;
 	functions->ReadBuffer		= r300ReadBuffer;

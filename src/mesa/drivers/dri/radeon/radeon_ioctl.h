@@ -40,7 +40,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_lock.h"
 #include "radeon_cs_legacy.h"
 
-extern void radeonEmitState( r100ContextPtr rmesa );
 extern void radeonEmitVertexAOS( r100ContextPtr rmesa,
 				 GLuint vertex_size,
 				 struct radeon_bo *bo,
@@ -104,7 +103,7 @@ do {						\
 do {								\
    RADEON_NEWPRIM( rmesa );					\
    rmesa->hw.ATOM.dirty = GL_TRUE;				\
-   rmesa->hw.is_dirty = GL_TRUE;				\
+   rmesa->radeon.hw.is_dirty = GL_TRUE;				\
 } while (0)
 
 #define RADEON_DB_STATE( ATOM )				\
@@ -118,7 +117,7 @@ static INLINE int RADEON_DB_STATECHANGE(r100ContextPtr rmesa,
       GLuint *tmp;
       RADEON_NEWPRIM( rmesa );
       atom->dirty = GL_TRUE;
-      rmesa->hw.is_dirty = GL_TRUE;
+      rmesa->radeon.hw.is_dirty = GL_TRUE;
       tmp = atom->cmd; 
       atom->cmd = atom->lastcmd;
       atom->lastcmd = tmp;
@@ -127,15 +126,6 @@ static INLINE int RADEON_DB_STATECHANGE(r100ContextPtr rmesa,
    else
       return 0;
 }
-
-/* Fire the buffered vertices no matter what.
- */
-#define RADEON_FIREVERTICES( rmesa )			\
-do {							\
-   if (rmesa->radeon.cmdbuf.cs->cdw || rmesa->radeon.dma.flush ) {	\
-      radeonFlush( rmesa->radeon.glCtx );			\
-  }							\
-} while (0)
 
 /* Command lengths.  Note that any time you ensure ELTS_BUFSZ or VBUF_BUFSZ
  * are available, you will also be adding an rmesa->state.max_state_size because

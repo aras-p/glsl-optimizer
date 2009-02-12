@@ -6,6 +6,7 @@
 void radeonRecalcScissorRects(radeonContextPtr radeon);
 void radeonSetCliprects(radeonContextPtr radeon);
 void radeonUpdateScissor( GLcontext *ctx );
+void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h);
 
 void radeonWaitForIdleLocked(radeonContextPtr radeon);
 extern uint32_t radeonGetAge(radeonContextPtr radeon);
@@ -26,6 +27,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 			    void *sharedContextPrivate);
 
 void radeonCleanupContext(radeonContextPtr radeon);
+GLboolean radeonUnbindContext(__DRIcontextPrivate * driContextPriv);
 void radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable);
 GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 			    __DRIdrawablePrivate * driDrawPriv,
@@ -132,6 +134,9 @@ void rcommon_flush_last_swtcl_prim(GLcontext *ctx);
 
 void *rcommonAllocDmaLowVerts(radeonContextPtr rmesa, int nverts, int vsize);
 
+void radeonFlush(GLcontext *ctx);
+void radeonFinish(GLcontext * ctx);
+void radeonEmitState(radeonContextPtr radeon);
 
 static inline struct radeon_renderbuffer *radeon_get_depthbuffer(radeonContextPtr rmesa)
 {

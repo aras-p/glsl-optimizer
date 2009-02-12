@@ -215,29 +215,17 @@ static void r100_get_lock(radeonContextPtr radeon)
    }
 }
 
-static void r100_vtbl_flush(GLcontext *ctx)
-{
-   RADEON_FIREVERTICES(R100_CONTEXT(ctx));
-}
-
-static void r100_vtbl_set_all_dirty(GLcontext *ctx)
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   rmesa->hw.all_dirty = GL_TRUE;
-}
-
 static void r100_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)
 {
 }
 
-static void r100_vtbl_emit_state(radeonContextPtr rmesa)
+static void r100_vtbl_pre_emit_state(radeonContextPtr radeon)
 {
-	radeonEmitState((r100ContextPtr)rmesa);
-}
-
-static void r100_vtbl_flush_vertices(radeonContextPtr rmesa)
-{
-  RADEON_FIREVERTICES(((r100ContextPtr)rmesa));
+   r100ContextPtr rmesa = (r100ContextPtr)radeon;
+   
+   /* r100 always needs to emit ZBS to avoid TCL lockups */
+   rmesa->hw.zbs.dirty = 1;
+   radeon->hw.is_dirty = 1;
 }
 
 
@@ -245,13 +233,10 @@ static void r100_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r100_get_lock;
    radeon->vtbl.update_viewport_offset = radeonUpdateViewportOffset;
-   radeon->vtbl.flush = r100_vtbl_flush;
-   radeon->vtbl.set_all_dirty = r100_vtbl_set_all_dirty;
    radeon->vtbl.update_draw_buffer = radeonUpdateDrawBuffer;
    radeon->vtbl.emit_cs_header = r100_vtbl_emit_cs_header;
-   radeon->vtbl.emit_state = r100_vtbl_emit_state;
    radeon->vtbl.swtcl_flush = r100_swtcl_flush;
-   radeon->vtbl.flush_vertices = r100_vtbl_flush_vertices;
+   radeon->vtbl.pre_emit_state = r100_vtbl_pre_emit_state;
 }
 
 /* Create the device specific context.
@@ -344,7 +329,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 	 DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
    rmesa->radeon.swtcl.RenderIndex = ~0;
-   rmesa->hw.all_dirty = GL_TRUE;
+   rmesa->radeon.hw.all_dirty = GL_TRUE;
 
    /* Set the maximum texture size small enough that we can guarentee that
     * all texture units can bind a maximal texture and have all of them in
@@ -503,7 +488,7 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
 
    /* check if we're deleting the currently bound context */
    if (rmesa == current) {
-      RADEON_FIREVERTICES( rmesa );
+      radeon_firevertices(&rmesa->radeon);
       _mesa_make_current(NULL, NULL, NULL);
    }
 
@@ -553,16 +538,3 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
    }
 }
 
-
-/* Force the context `c' to be unbound from its buffer.
- */
-GLboolean
-radeonUnbindContext( __DRIcontextPrivate *driContextPriv )
-{
-   r100ContextPtr rmesa = (r100ContextPtr) driContextPriv->driverPrivate;
-
-   if (RADEON_DEBUG & DEBUG_DRI)
-      fprintf(stderr, "%s ctx %p\n", __FUNCTION__, (void *) rmesa->radeon.glCtx);
-
-   return GL_TRUE;
-}

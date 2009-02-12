@@ -1,10 +1,12 @@
 #ifndef COMMON_CMDBUF_H
 #define COMMON_CMDBUF_H
 
+#include "radeon_cs.h"
+
 void rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const char *caller);
 int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller);
 int rcommonFlushCmdBufLocked(radeonContextPtr rmesa, const char *caller);
-void rcommonInitCmdBuf(radeonContextPtr rmesa, int max_state_size);
+void rcommonInitCmdBuf(radeonContextPtr rmesa);
 void rcommonDestroyCmdBuf(radeonContextPtr rmesa);
 
 void rcommonBeginBatch(radeonContextPtr rmesa,
@@ -128,4 +130,14 @@ void rcommonBeginBatch(radeonContextPtr rmesa,
 /** Write a 32 bit float to the ring; requires 1 dword. */
 #define OUT_BATCH_FLOAT32(f) \
 	OUT_BATCH(radeonPackFloat32((f)));
+
+
+/* Fire the buffered vertices no matter what.
+ */
+static INLINE void radeon_firevertices(radeonContextPtr radeon)
+{
+   if (radeon->cmdbuf.cs->cdw || radeon->dma.flush )
+      radeonFlush(radeon->glCtx);
+}
+
 #endif

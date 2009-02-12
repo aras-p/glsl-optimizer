@@ -171,8 +171,8 @@ void radeonPrintDirty( r100ContextPtr rmesa, const char *msg )
    fprintf(stderr, msg);
    fprintf(stderr, ": ");
 
-   foreach(l, &rmesa->hw.atomlist) {
-      if (l->dirty || rmesa->hw.all_dirty)
+   foreach(l, &rmesa->radeon.hw.atomlist) {
+      if (l->dirty || rmesa->radeon.hw.all_dirty)
 	 fprintf(stderr, "%s, ", l->name);
    }
 
@@ -512,7 +512,7 @@ void radeonInitState( r100ContextPtr rmesa )
       drawPitch  = rmesa->radeon.radeonScreen->frontPitch;
    }
 
-   rmesa->hw.max_state_size = 0;
+   rmesa->radeon.hw.max_state_size = 0;
 
 #define ALLOC_STATE_IDX( ATOM, CHK, SZ, NM, FLAG, IDX )		\
    do {								\
@@ -524,7 +524,7 @@ void radeonInitState( r100ContextPtr rmesa )
       rmesa->hw.ATOM.check = check_##CHK;				\
       rmesa->hw.ATOM.dirty = GL_TRUE;					\
       rmesa->hw.ATOM.idx = IDX;					\
-      rmesa->hw.max_state_size += SZ * sizeof(int);		\
+      rmesa->radeon.hw.max_state_size += SZ * sizeof(int);		\
    } while (0)
 
 #define ALLOC_STATE( ATOM, CHK, SZ, NM, FLAG )		\
@@ -932,7 +932,7 @@ void radeonInitState( r100ContextPtr rmesa )
    rmesa->hw.eye.cmd[EYE_Z] = IEEE_ONE;
    rmesa->hw.eye.cmd[EYE_RESCALE_FACTOR] = IEEE_ONE;
    
-   rmesa->hw.all_dirty = GL_TRUE;
+   rmesa->radeon.hw.all_dirty = GL_TRUE;
 
-   rcommonInitCmdBuf(&rmesa->radeon, rmesa->hw.max_state_size);
+   rcommonInitCmdBuf(&rmesa->radeon);
 }

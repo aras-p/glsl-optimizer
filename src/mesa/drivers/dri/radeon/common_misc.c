@@ -42,6 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/colormac.h"
 #include "main/light.h"
 #include "main/framebuffer.h"
+#include "main/simple_list.h"
 
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"
@@ -80,6 +81,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef RADEON_DEBUG
 int RADEON_DEBUG = (0);
 #endif
+
+#define DEBUG_CMDBUF         0
 
 /* =============================================================
  * Scissoring
@@ -214,6 +217,21 @@ void radeonUpdateScissor( GLcontext *ctx )
       radeonRecalcScissorRects( rmesa );
    }
 }
+
+/* =============================================================
+ * Scissoring
+ */
+
+void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	if (ctx->Scissor.Enabled) {
+		/* We don't pipeline cliprect changes */
+		radeon_firevertices(radeon);
+		radeonUpdateScissor(ctx);
+	}
+}
+
 
 /* ================================================================
  * SwapBuffers with client-side throttling
@@ -367,7 +385,7 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
       fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *) rmesa->glCtx );
    }
 
-   rmesa->vtbl.flush(rmesa->glCtx);
+   radeon_firevertices(rmesa);
    LOCK_HARDWARE( rmesa );
 
    /* Throttle the frame rate -- only allow one pending swap buffers
@@ -437,7 +455,7 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
        }
 
        rmesa->swap_ust = ust;
-       rmesa->vtbl.set_all_dirty(rmesa->glCtx);
+       rmesa->hw.all_dirty = GL_TRUE;
 
    }
 }
@@ -465,7 +483,7 @@ void radeonPageFlip( __DRIdrawablePrivate *dPriv )
 	      rmesa->sarea->pfCurrentPage);
    }
 
-   rmesa->vtbl.flush(rmesa->glCtx);
+   radeon_firevertices(rmesa);
 
    LOCK_HARDWARE( rmesa );
 
@@ -516,15 +534,110 @@ void radeonPageFlip( __DRIdrawablePrivate *dPriv )
 	   rmesa->vtbl.update_draw_buffer(rmesa->glCtx);
 }
 
+void radeonFlush(GLcontext *ctx)
+{
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	if (RADEON_DEBUG & DEBUG_IOCTL)
+	  fprintf(stderr, "%s\n", __FUNCTION__);
+
+	if (radeon->dma.flush)
+	  radeon->dma.flush( ctx );
+
+	radeonEmitState(radeon);
+   
+	if (radeon->cmdbuf.cs->cdw)
+	  rcommonFlushCmdBuf(radeon, __FUNCTION__);
+}
+
+static INLINE void radeonEmitAtoms(radeonContextPtr radeon, GLboolean dirty)
+{
+   BATCH_LOCALS(radeon);
+   struct radeon_state_atom *atom;
+   int dwords;
+
+   if (radeon->vtbl.pre_emit_atoms)
+     radeon->vtbl.pre_emit_atoms(radeon);
+
+   /* Emit actual atoms */
+   foreach(atom, &radeon->hw.atomlist) {
+     if ((atom->dirty || radeon->hw.all_dirty) == dirty) {
+       dwords = (*atom->check) (radeon->glCtx, atom);
+       if (dwords) {
+	  if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+	     radeon_print_state_atom(atom);
+	  }
+	 if (atom->emit) {
+	   (*atom->emit)(radeon->glCtx, atom);
+	 } else {
+	   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+	   OUT_BATCH_TABLE(atom->cmd, dwords);
+	   END_BATCH();
+	 }
+	 atom->dirty = GL_FALSE;
+       } else {
+	  if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+	     fprintf(stderr, "  skip state %s\n",
+		     atom->name);
+	  }
+       }
+     }
+   }
+   
+   COMMIT_BATCH();
+}
+
+void radeonEmitState(radeonContextPtr radeon)
+{
+   if (RADEON_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
+      fprintf(stderr, "%s\n", __FUNCTION__);
+
+   if (radeon->vtbl.pre_emit_state)
+     radeon->vtbl.pre_emit_state(radeon);
+
+   /* this code used to return here but now it emits zbs */
+   if (radeon->cmdbuf.cs->cdw && !radeon->hw.is_dirty && !radeon->hw.all_dirty)
+     return;
+
+   /* To avoid going across the entire set of states multiple times, just check
+    * for enough space for the case of emitting all state, and inline the
+    * radeonAllocCmdBuf code here without all the checks.
+    */
+   rcommonEnsureCmdBufSpace(radeon, radeon->hw.max_state_size, __FUNCTION__);
+
+   /* We always always emit zbs, this is due to a bug found by keithw in
+      the hardware and rediscovered after Erics changes by me.
+      if you ever touch this code make sure you emit zbs otherwise
+      you get tcl lockups on at least M7/7500 class of chips - airlied */
+   /* special r100 case */
+   //   rmesa->hw.zbs.dirty=1;
+
+   if (!radeon->cmdbuf.cs->cdw) {
+     if (RADEON_DEBUG & DEBUG_STATE)
+       fprintf(stderr, "Begin reemit state\n");
+     
+     radeonEmitAtoms(radeon, GL_FALSE);
+   }
+
+   if (RADEON_DEBUG & DEBUG_STATE)
+     fprintf(stderr, "Begin dirty state\n");
+
+   radeonEmitAtoms(radeon, GL_TRUE);
+   radeon->hw.is_dirty = GL_FALSE;
+   radeon->hw.all_dirty = GL_FALSE;
+
+}
+
 
 /* Make sure all commands have been sent to the hardware and have
  * completed processing.
  */
-void radeon_common_finish(GLcontext * ctx)
+void radeonFinish(GLcontext * ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	int i;
+
+	radeonFlush(ctx);
 
 	if (radeon->radeonScreen->kernel_mm) {
 		for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
@@ -611,7 +724,7 @@ int rcommonFlushCmdBufLocked(radeonContextPtr rmesa, const char *caller)
 	rmesa->cmdbuf.flushing = 1;
 	if (rmesa->cmdbuf.cs->cdw) {
 		ret = radeon_cs_emit(rmesa->cmdbuf.cs);
-		rmesa->vtbl.set_all_dirty(rmesa->glCtx);
+		rmesa->hw.all_dirty = GL_TRUE;
 	}
 	radeon_cs_erase(rmesa->cmdbuf.cs);
 	rmesa->cmdbuf.flushing = 0;
@@ -650,19 +763,17 @@ void rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const char *ca
     }
 }
 
-void rcommonInitCmdBuf(radeonContextPtr rmesa, int max_state_size)
+void rcommonInitCmdBuf(radeonContextPtr rmesa)
 {
 	GLuint size;
 	/* Initialize command buffer */
 	size = 256 * driQueryOptioni(&rmesa->optionCache,
 				     "command_buffer_size");
-	if (size < 2 * max_state_size) {
-		size = 2 * max_state_size + 65535;
+	if (size < 2 * rmesa->hw.max_state_size) {
+		size = 2 * rmesa->hw.max_state_size + 65535;
 	}
 	if (size > 64 * 256)
 		size = 64 * 256;
-
-	size = 64 * 1024 / 4;
 
 	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA)) {
 		fprintf(stderr, "sizeof(drm_r300_cmd_header_t)=%zd\n",
@@ -671,7 +782,7 @@ void rcommonInitCmdBuf(radeonContextPtr rmesa, int max_state_size)
 			sizeof(drm_radeon_cmd_buffer_t));
 		fprintf(stderr,
 			"Allocating %d bytes command buffer (max state is %d bytes)\n",
-			size * 4, max_state_size * 4);
+			size * 4, rmesa->hw.max_state_size * 4);
 	}
 
 	if (rmesa->radeonScreen->kernel_mm) {
@@ -725,7 +836,7 @@ void rcommonBeginBatch(radeonContextPtr rmesa, int n,
 	if (!rmesa->cmdbuf.cs->cdw && dostate) {
 		if (RADEON_DEBUG & DEBUG_IOCTL)
 		  fprintf(stderr, "Reemit state after flush (from %s)\n", function);
-		rmesa->vtbl.emit_state(rmesa);
+		radeonEmitState(rmesa);
 	}
 	radeon_cs_begin(rmesa->cmdbuf.cs, n, file, function, line);
 }
@@ -926,6 +1037,20 @@ void radeonCleanupContext(radeonContextPtr radeon)
 		fclose(track);
 	}
 }
+
+/* Force the context `c' to be unbound from its buffer.
+ */
+GLboolean radeonUnbindContext(__DRIcontextPrivate * driContextPriv)
+{
+	radeonContextPtr radeon = (radeonContextPtr) driContextPriv->driverPrivate;
+
+	if (RADEON_DEBUG & DEBUG_DRI)
+		fprintf(stderr, "%s ctx %p\n", __FUNCTION__,
+			radeon->glCtx);
+
+	return GL_TRUE;
+}
+
 
 static void
 radeon_make_kernel_renderbuffer_current(radeonContextPtr radeon,
@@ -1810,7 +1935,7 @@ static void radeon_teximage(
 	radeonTexObj* t = radeon_tex_obj(texObj);
 	radeon_texture_image* image = get_radeon_texture_image(texImage);
 
-	rmesa->vtbl.flush_vertices(rmesa);
+	radeon_firevertices(rmesa);
 
 	t->validated = GL_FALSE;
 
@@ -1968,7 +2093,7 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, int level,
 	radeonTexObj* t = radeon_tex_obj(texObj);
 	radeon_texture_image* image = get_radeon_texture_image(texImage);
 
-	rmesa->vtbl.flush_vertices(rmesa);
+	radeon_firevertices(rmesa);
 
 	t->validated = GL_FALSE;
 	pixels = _mesa_validate_pbo_teximage(ctx, dims,
@@ -2373,7 +2498,7 @@ void radeonSpanRenderStart(GLcontext * ctx)
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	int i;
 
-	rmesa->vtbl.flush_vertices(rmesa);
+	radeon_firevertices(rmesa);
 
 	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
 		if (ctx->Texture.Unit[i]._ReallyEnabled)

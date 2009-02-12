@@ -285,11 +285,11 @@ void r100_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
 
    rcommonEnsureCmdBufSpace(&rmesa->radeon,
-			    rmesa->hw.max_state_size + (12*sizeof(int)),
+			    rmesa->radeon.hw.max_state_size + (12*sizeof(int)),
 			    __FUNCTION__);
 
 
-   radeonEmitState(rmesa);
+   radeonEmitState(&rmesa->radeon);
    radeonEmitVertexAOS( rmesa,
 			rmesa->radeon.swtcl.vertex_size,
 			rmesa->radeon.dma.current,
@@ -372,9 +372,6 @@ static GLboolean radeon_run_render( GLcontext *ctx,
    tnl_render_func *tab = TAG(render_tab_verts);
    GLuint i;
 
-   if (rmesa->swtcl.indexed_verts.buf) 
-      RELEASE_ELT_VERTS();
-   	
    if (rmesa->radeon.swtcl.RenderIndex != 0 ||   
        !radeon_dma_validate_render( ctx, VB ))
       return GL_TRUE;		
@@ -750,7 +747,7 @@ void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
    if (mode) {
       rmesa->radeon.Fallback |= bit;
       if (oldfallback == 0) {
-	 RADEON_FIREVERTICES( rmesa );
+	 radeon_firevertices(&rmesa->radeon);
 	 TCL_FALLBACK( ctx, RADEON_TCL_FALLBACK_RASTER, GL_TRUE );
 	 _swsetup_Wakeup( ctx );
 	 rmesa->radeon.swtcl.RenderIndex = ~0;
@@ -831,7 +828,4 @@ void radeonDestroySwtcl( GLcontext *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
 
-   // if (rmesa->swtcl.indexed_verts.buf) 
-   //    radeonReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, 
-   //			      __FUNCTION__ );
 }

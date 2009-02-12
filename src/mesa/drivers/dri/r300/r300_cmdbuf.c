@@ -45,7 +45,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_drm.h"
 
 #include "radeon_buffer.h"
-#include "radeon_ioctl.h"
 #include "r300_context.h"
 #include "r300_ioctl.h"
 #include "radeon_reg.h"
@@ -61,110 +60,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_VAP_PVS_UPLOAD_ADDRESS 0x2200
 #   define RADEON_ONE_REG_WR        (1 << 15)
 
-// Set this to 1 for extremely verbose debugging of command buffers
-#define DEBUG_CMDBUF		0
-
 /** # of dwords reserved for additional instructions that may need to be written
  * during flushing.
  */
 #define SPACE_FOR_FLUSHING	4
-
-static void r300PrintStateAtom(r300ContextPtr r300,
-                               struct radeon_state_atom *state)
-{
-	int i;
-	int dwords = (*state->check) (r300->radeon.glCtx, state);
-
-	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
-
-	if (RADEON_DEBUG & DEBUG_VERBOSE) {
-		for (i = 0; i < dwords; i++) {
-			fprintf(stderr, "      %s[%d]: %08x\n",
-				state->name, i, state->cmd[i]);
-		}
-	}
-}
-
-/**
- * Emit all atoms with a dirty field equal to dirty.
- *
- * The caller must have ensured that there is enough space in the command
- * buffer.
- */
-static INLINE void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
-{
-	BATCH_LOCALS(&r300->radeon);
-	struct radeon_state_atom *atom;
-	int dwords;
-
-	cp_wait(r300, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
-	BEGIN_BATCH_NO_AUTOSTATE(2);
-	OUT_BATCH(cmdpacket0(r300->radeon.radeonScreen, R300_TX_INVALTAGS, 1));
-	OUT_BATCH(R300_TX_FLUSH);
-	END_BATCH();
-	end_3d(r300);
-
-	/* Emit actual atoms */
-	foreach(atom, &r300->hw.atomlist) {
-		if ((atom->dirty || r300->hw.all_dirty) == dirty) {
-			dwords = (*atom->check) (r300->radeon.glCtx, atom);
-			if (dwords) {
-				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-					r300PrintStateAtom(r300, atom);
-				}
-				if (atom->emit) {
-					(*atom->emit)(r300->radeon.glCtx, atom);
-				} else {
-					BEGIN_BATCH_NO_AUTOSTATE(dwords);
-					OUT_BATCH_TABLE(atom->cmd, dwords);
-					END_BATCH();
-				}
-				atom->dirty = GL_FALSE;
-			} else {
-				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-					fprintf(stderr, "  skip state %s\n",
-						atom->name);
-				}
-			}
-		}
-	}
-
-	COMMIT_BATCH();
-}
-
-/**
- * Copy dirty hardware state atoms into the command buffer.
- *
- * We also copy out clean state if we're at the start of a buffer. That makes
- * it easy to recover from lost contexts.
- */
-void r300EmitState(r300ContextPtr r300)
-{
-	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_PRIMS))
-		fprintf(stderr, "%s\n", __FUNCTION__);
-
-	if (r300->radeon.cmdbuf.cs->cdw && !r300->hw.is_dirty && !r300->hw.all_dirty)
-		return;
-
-	/* To avoid going across the entire set of states multiple times, just check
-	 * for enough space for the case of emitting all state.
-	 */
-	rcommonEnsureCmdBufSpace(&r300->radeon, r300->hw.max_state_size, __FUNCTION__);
-
-	if (!r300->radeon.cmdbuf.cs->cdw) {
-		if (RADEON_DEBUG & DEBUG_STATE)
-			fprintf(stderr, "Begin reemit state\n");
-
-		r300EmitAtoms(r300, GL_FALSE);
-	}
-
-	if (RADEON_DEBUG & DEBUG_STATE)
-		fprintf(stderr, "Begin dirty state\n");
-
-	r300EmitAtoms(r300, GL_TRUE);
-	r300->hw.is_dirty = GL_FALSE;
-	r300->hw.all_dirty = GL_FALSE;
-}
 
 static unsigned packet0_count(r300ContextPtr r300, uint32_t *pkt)
 {
@@ -405,8 +304,8 @@ int check_r500fp_const(GLcontext *ctx, struct radeon_state_atom *atom)
       r300->hw.ATOM.idx = (IDX);					\
       r300->hw.ATOM.check = check_##CHK;				\
       r300->hw.ATOM.dirty = GL_FALSE;					\
-      r300->hw.max_state_size += (SZ);					\
-      insert_at_tail(&r300->hw.atomlist, &r300->hw.ATOM);		\
+      r300->radeon.hw.max_state_size += (SZ);					\
+      insert_at_tail(&r300->radeon.hw.atomlist, &r300->hw.ATOM);		\
    } while (0)
 /**
  * Allocate memory for the command buffer and initialize the state atom
@@ -425,7 +324,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
 		is_r500 = 1;
 
-	r300->hw.max_state_size = 2 + 2;	/* reserve extra space for WAIT_IDLE and tex cache flush */
+	r300->radeon.hw.max_state_size = 2 + 2;	/* reserve extra space for WAIT_IDLE and tex cache flush */
 
 	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
 	if (RADEON_DEBUG & DEBUG_TEXTURE) {
@@ -433,8 +332,8 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	}
 
 	/* Setup the atom linked list */
-	make_empty_list(&r300->hw.atomlist);
-	r300->hw.atomlist.name = "atom-list";
+	make_empty_list(&r300->radeon.hw.atomlist);
+	r300->radeon.hw.atomlist.name = "atom-list";
 
 	/* Initialize state atoms */
 	ALLOC_STATE(vpt, always, R300_VPT_CMDSIZE, 0);
@@ -708,10 +607,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] =
 	    cmdpacket0(r300->radeon.radeonScreen, R300_TX_BORDER_COLOR_0, 0);
 
-	r300->hw.is_dirty = GL_TRUE;
-	r300->hw.all_dirty = GL_TRUE;
+	r300->radeon.hw.is_dirty = GL_TRUE;
+	r300->radeon.hw.all_dirty = GL_TRUE;
 
-	rcommonInitCmdBuf(&r300->radeon, r300->hw.max_state_size);
+	rcommonInitCmdBuf(&r300->radeon);
 }
 
 /**
@@ -721,7 +620,7 @@ void r300DestroyCmdBuf(r300ContextPtr r300)
 {
 	struct radeon_state_atom *atom;
 
-	foreach(atom, &r300->hw.atomlist) {
+	foreach(atom, &r300->radeon.hw.atomlist) {
 		FREE(atom->cmd);
 	}
 

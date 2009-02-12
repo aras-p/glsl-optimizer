@@ -48,7 +48,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "radeon_buffer.h"
 #include "r300_context.h"
-#include "radeon_ioctl.h"
 #include "r300_ioctl.h"
 #include "r300_cmdbuf.h"
 #include "r300_state.h"
@@ -94,8 +93,8 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 	}
 
 	/* TODO in bufmgr */
-	cp_wait(r300, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
-	end_3d(rmesa);
+	cp_wait(&r300->radeon, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
+	end_3d(&rmesa->radeon);
 
 	if (flags & CLEARBUFFER_COLOR) {
 		assert(rrb != 0);
@@ -195,7 +194,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 	}
 	
 	r300EmitCacheFlush(rmesa);
-	cp_wait(rmesa, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
+	cp_wait(&r300->radeon, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
 
 	R300_STATECHANGE(r300, cb);
 	R300_STATECHANGE(r300, cmk);

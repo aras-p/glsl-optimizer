@@ -42,6 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_drm.h"
 #include "dri_util.h"
 #include "texmem.h"
+#include "common_context.h"
 #include "radeon_context.h"
 #include "radeon_bo.h"
 
@@ -53,7 +54,7 @@ struct r300_context;
 typedef struct r300_context r300ContextRec;
 typedef struct r300_context *r300ContextPtr;
 
-#include "radeon_lock.h"
+
 #include "main/mm.h"
 
 /* From http://gcc. gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
@@ -304,12 +305,6 @@ struct r300_texture_state {
  * Cache for hardware register state.
  */
 struct r300_hw_state {
-	struct radeon_state_atom atomlist;
-
-	GLboolean is_dirty;
-	GLboolean all_dirty;
-	int max_state_size;	/* in dwords */
-
 	struct radeon_state_atom vpt;	/* viewport (1D98) */
 	struct radeon_state_atom vap_cntl;
         struct radeon_state_atom vap_index_offset; /* 0x208c r5xx only */

@@ -47,6 +47,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast_setup/swrast_setup.h"
 
 #include "radeon_context.h"
+#include "common_cmdbuf.h"
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
 #include "radeon_tcl.h"
@@ -406,23 +407,6 @@ static void radeonFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
    }
 }
 
-
-/* =============================================================
- * Scissoring
- */
-static void radeonScissor( GLcontext *ctx,
-			   GLint x, GLint y, GLsizei w, GLsizei h )
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-
-   if ( ctx->Scissor.Enabled ) {
-      RADEON_FIREVERTICES( rmesa );	/* don't pipeline cliprect changes */
-      radeonUpdateScissor( ctx );
-   }
-
-}
-
-
 /* =============================================================
  * Culling
  */
@@ -567,7 +551,7 @@ static void radeonPolygonStipple( GLcontext *ctx, const GLubyte *mask )
 
    /* TODO: push this into cmd mechanism
     */
-   RADEON_FIREVERTICES( rmesa );
+   radeon_firevertices(&rmesa->radeon);
    LOCK_HARDWARE( &rmesa->radeon );
 
    /* FIXME: Use window x,y offsets into stipple RAM.
@@ -1415,7 +1399,7 @@ void radeonUpdateWindow( GLcontext *ctx )
    float_ui32_type sz = { v[MAT_SZ] * rmesa->radeon.state.depth.scale };
    float_ui32_type tz = { v[MAT_TZ] * rmesa->radeon.state.depth.scale };
 
-   RADEON_FIREVERTICES( rmesa );
+   radeon_firevertices(&rmesa->radeon);
    RADEON_STATECHANGE( rmesa, vpt );
 
    rmesa->hw.vpt.cmd[VPT_SE_VPORT_XSCALE]  = sx.ui32;
@@ -1561,7 +1545,7 @@ static void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
       fprintf(stderr, "%s %s\n", __FUNCTION__,
 	      _mesa_lookup_enum_by_nr( mode ));
 
-   RADEON_FIREVERTICES(rmesa);	/* don't pipeline cliprect changes */
+   radeon_firevertices(&rmesa->radeon);	/* don't pipeline cliprect changes */
 
    if (ctx->DrawBuffer->_NumColorDrawBuffers != 1) {
       /* 0 (GL_NONE) buffers or multiple color drawing buffers */
@@ -1843,7 +1827,7 @@ static void radeonEnable( GLcontext *ctx, GLenum cap, GLboolean state )
    }
 
    case GL_SCISSOR_TEST:
-      RADEON_FIREVERTICES( rmesa );
+      radeon_firevertices(&rmesa->radeon);
       rmesa->radeon.state.scissor.enabled = state;
       radeonUpdateScissor( ctx );
       break;

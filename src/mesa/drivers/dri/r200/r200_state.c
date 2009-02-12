@@ -524,25 +524,6 @@ static void r200Fogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
    }
 }
 
-
-/* =============================================================
- * Scissoring
- */
-
-
-static void r200Scissor( GLcontext *ctx,
-			   GLint x, GLint y, GLsizei w, GLsizei h )
-{
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-
-   if ( ctx->Scissor.Enabled ) {
-      R200_FIREVERTICES( rmesa );	/* don't pipeline cliprect changes */
-      radeonUpdateScissor( ctx );
-   }
-
-}
-
-
 /* =============================================================
  * Culling
  */
@@ -787,7 +768,7 @@ static void r200PolygonStipple( GLcontext *ctx, const GLubyte *mask )
 
    /* TODO: push this into cmd mechanism
     */
-   R200_FIREVERTICES( rmesa );
+   radeon_firevertices(&rmesa->radeon);
    LOCK_HARDWARE( &rmesa->radeon );
 
    /* FIXME: Use window x,y offsets into stipple RAM.
@@ -1638,7 +1619,7 @@ void r200UpdateWindow( GLcontext *ctx )
    float_ui32_type sz = { v[MAT_SZ] * rmesa->radeon.state.depth.scale };
    float_ui32_type tz = { v[MAT_TZ] * rmesa->radeon.state.depth.scale };
 
-   R200_FIREVERTICES( rmesa );
+   radeon_firevertices(&rmesa->radeon);
    R200_STATECHANGE( rmesa, vpt );
 
    rmesa->hw.vpt.cmd[VPT_SE_VPORT_XSCALE]  = sx.ui32;
@@ -1783,7 +1764,7 @@ static void r200DrawBuffer( GLcontext *ctx, GLenum mode )
       fprintf(stderr, "%s %s\n", __FUNCTION__,
 	      _mesa_lookup_enum_by_nr( mode ));
 
-   R200_FIREVERTICES(rmesa);	/* don't pipeline cliprect changes */
+   radeon_firevertices(&rmesa->radeon);	/* don't pipeline cliprect changes */
 
    if (ctx->DrawBuffer->_NumColorDrawBuffers != 1) {
       /* 0 (GL_NONE) buffers or multiple color drawing buffers */
@@ -2057,7 +2038,7 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
    }
 
    case GL_SCISSOR_TEST:
-      R200_FIREVERTICES( rmesa );
+      radeon_firevertices(&rmesa->radeon);
       rmesa->radeon.state.scissor.enabled = state;
       radeonUpdateScissor( ctx );
       break;
@@ -2575,7 +2556,7 @@ void r200InitStateFuncs( struct dd_function_table *functions )
    functions->PointParameterfv		= r200PointParameter;
    functions->PointSize			= r200PointSize;
    functions->RenderMode		= r200RenderMode;
-   functions->Scissor			= r200Scissor;
+   functions->Scissor			= radeonScissor;
    functions->ShadeModel		= r200ShadeModel;
    functions->StencilFuncSeparate	= r200StencilFuncSeparate;
    functions->StencilMaskSeparate	= r200StencilMaskSeparate;

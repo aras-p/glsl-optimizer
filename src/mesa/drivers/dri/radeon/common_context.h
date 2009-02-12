@@ -111,6 +111,13 @@ struct radeon_state_atom {
         void (*emit) (GLcontext *, struct radeon_state_atom *atom);
 };
 
+struct radeon_hw_state {
+  	/* Head of the linked list of state atoms. */
+	struct radeon_state_atom atomlist;
+	int max_state_size;	/* Number of bytes necessary for a full state emit. */
+	GLboolean is_dirty, all_dirty;
+};
+
 
 /* Texture related */
 typedef struct _radeon_texture_image radeon_texture_image;
@@ -204,17 +211,6 @@ static INLINE radeonTexObj* radeon_tex_obj(struct gl_texture_object *texObj)
 struct radeon_dma_buffer {
 	int refcount;		/* the number of retained regions in buf */
 	drmBufPtr buf;
-};
-
-/* A retained region, eg vertices for indexed vertices.
- */
-struct radeon_dma_region {
-   struct radeon_dma_buffer *buf;
-   char *address;		/* == buf->address */
-   int start, end, ptr;		/* offsets from start of buf */
-   int aos_start;
-   int aos_stride;
-   int aos_size;
 };
 
 struct radeon_aos {
@@ -388,6 +384,7 @@ struct radeon_context {
    float                 initialMaxAnisotropy;
 
   struct radeon_dma dma;
+  struct radeon_hw_state hw;
    /* Rasterization and vertex state:
     */
    GLuint TclFallback;
@@ -434,13 +431,11 @@ struct radeon_context {
    struct {
 	   void (*get_lock)(radeonContextPtr radeon);
 	   void (*update_viewport_offset)(GLcontext *ctx);
-	   void (*flush)(GLcontext *ctx);
-	   void (*set_all_dirty)(GLcontext *ctx);
 	   void (*update_draw_buffer)(GLcontext *ctx);
 	   void (*emit_cs_header)(struct radeon_cs *cs, radeonContextPtr rmesa);
-	   void (*emit_state)(radeonContextPtr rmesa);
-	   void (*flush_vertices)(radeonContextPtr rmesa);
 	   void (*swtcl_flush)(GLcontext *ctx, uint32_t offset);
+	   void (*pre_emit_atoms)(radeonContextPtr rmesa);
+	   void (*pre_emit_state)(radeonContextPtr rmesa);
    } vtbl;
 };
 
@@ -502,4 +497,6 @@ extern int RADEON_DEBUG;
 #define RADEON_DEBUG		0
 #endif
 
+#include "common_misc.h"
+#include "common_cmdbuf.h"
 #endif

@@ -626,7 +626,7 @@ void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
   r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
   rcommonEnsureCmdBufSpace(&rmesa->radeon,
-			   rmesa->hw.max_state_size + (12*sizeof(int)),
+			   rmesa->radeon.hw.max_state_size + (12*sizeof(int)),
 			   __FUNCTION__);
   r300EmitState(rmesa);
   r300EmitVertexAOS(rmesa,

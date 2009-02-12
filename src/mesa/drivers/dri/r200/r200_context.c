@@ -61,6 +61,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_maos.h"
 #include "r200_vertprog.h"
 
+#include "radeon_span.h"
+
 #define need_GL_ARB_multisample
 #define need_GL_ARB_texture_compression
 #define need_GL_ARB_vertex_buffer_object
@@ -259,30 +261,8 @@ static void r200_get_lock(radeonContextPtr radeon)
    }
 }
 
-
-static void r200_vtbl_flush(GLcontext *ctx)
-{
-   R200_FIREVERTICES(R200_CONTEXT(ctx));
-}
-
-static void r200_vtbl_flush_vertices(radeonContextPtr rmesa)
-{
-  R200_FIREVERTICES(((r200ContextPtr)rmesa));
-}
-
-static void r200_vtbl_set_all_dirty(GLcontext *ctx)
-{
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   rmesa->hw.all_dirty = GL_TRUE;
-}
-
 static void r200_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)
 {
-}
-
-static void r200_vtbl_emit_state(radeonContextPtr rmesa)
-{
-	r200EmitState((r200ContextPtr)rmesa);
 }
 
 
@@ -290,12 +270,8 @@ static void r200_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r200_get_lock;
    radeon->vtbl.update_viewport_offset = r200UpdateViewportOffset;
-   radeon->vtbl.flush = r200_vtbl_flush;
-   radeon->vtbl.flush_vertices = r200_vtbl_flush_vertices;
-   radeon->vtbl.set_all_dirty = r200_vtbl_set_all_dirty;
    radeon->vtbl.update_draw_buffer = r200UpdateDrawBuffer;
    radeon->vtbl.emit_cs_header = r200_vtbl_emit_cs_header;
-   radeon->vtbl.emit_state = r200_vtbl_emit_state;
    radeon->vtbl.swtcl_flush = r200_swtcl_flush;
 }
 
@@ -390,7 +366,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 	 DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
    rmesa->radeon.swtcl.RenderIndex = ~0;
-   rmesa->hw.all_dirty = 1;
+   rmesa->radeon.hw.all_dirty = 1;
 
    /* Set the maximum texture size small enough that we can guarentee that
     * all texture units can bind a maximal texture and have all of them in
@@ -565,7 +541,7 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
 
    /* check if we're deleting the currently bound context */
    if (rmesa == current) {
-      R200_FIREVERTICES( rmesa );
+      radeon_firevertices(&rmesa->radeon);
       _mesa_make_current(NULL, NULL, NULL);
    }
 

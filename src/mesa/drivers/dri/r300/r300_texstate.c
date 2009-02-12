@@ -47,7 +47,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_context.h"
 #include "r300_state.h"
 #include "r300_ioctl.h"
-#include "radeon_ioctl.h"
 #include "radeon_mipmap_tree.h"
 #include "radeon_cs.h"
 #include "r300_tex.h"

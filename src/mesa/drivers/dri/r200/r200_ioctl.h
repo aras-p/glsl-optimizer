@@ -47,7 +47,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "common_cmdbuf.h"
 
-extern void r200EmitState( r200ContextPtr rmesa );
 extern void r200EmitVertexAOS( r200ContextPtr rmesa,
 			       GLuint vertex_size,
 			       struct radeon_bo *bo,
@@ -101,7 +100,7 @@ do {						\
 do {								\
    R200_NEWPRIM( rmesa );					\
    rmesa->hw.ATOM.dirty = GL_TRUE;				\
-   rmesa->hw.is_dirty = GL_TRUE;				\
+   rmesa->radeon.hw.is_dirty = GL_TRUE;				\
 } while (0)
 
 #define R200_DB_STATE( ATOM )			        \
@@ -116,7 +115,7 @@ static INLINE int R200_DB_STATECHANGE(
       GLuint *tmp;
       R200_NEWPRIM( rmesa );
       atom->dirty = GL_TRUE;
-      rmesa->hw.is_dirty = GL_TRUE;
+      rmesa->radeon.hw.is_dirty = GL_TRUE;
       tmp = atom->cmd; 
       atom->cmd = atom->lastcmd;
       atom->lastcmd = tmp;
@@ -126,15 +125,6 @@ static INLINE int R200_DB_STATECHANGE(
       return 0;
 }
 
-
-/* Fire the buffered vertices no matter what.
- */
-#define R200_FIREVERTICES( rmesa )			\
-do {							\
-   if ( rmesa->radeon.cmdbuf.cs->cdw || rmesa->radeon.dma.flush ) {	\
-      r200Flush( rmesa->radeon.glCtx );			\
-   }							\
-} while (0)
 
 /* Command lengths.  Note that any time you ensure ELTS_BUFSZ or VBUF_BUFSZ
  * are available, you will also be adding an rmesa->state.max_state_size because

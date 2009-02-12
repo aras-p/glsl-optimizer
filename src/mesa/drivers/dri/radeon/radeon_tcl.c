@@ -126,7 +126,7 @@ static GLboolean discrete_prim[0x10] = {
 
 #define RESET_STIPPLE() do {			\
    RADEON_STATECHANGE( rmesa, lin );		\
-   radeonEmitState( rmesa );			\
+   radeonEmitState(&rmesa->radeon);			\
 } while (0)
 
 #define AUTO_STIPPLE( mode )  do {		\
@@ -137,7 +137,7 @@ static GLboolean discrete_prim[0x10] = {
    else						\
       rmesa->hw.lin.cmd[LIN_RE_LINE_PATTERN] &=	\
 	 ~RADEON_LINE_PATTERN_AUTO_RESET;	\
-   radeonEmitState( rmesa );			\
+   radeonEmitState(&rmesa->radeon);		\
 } while (0)
 
 
@@ -149,7 +149,7 @@ static GLushort *radeonAllocElts( r100ContextPtr rmesa, GLuint nr )
       if (rmesa->radeon.dma.flush)
 	 rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
 
-      rcommonEnsureCmdBufSpace(&rmesa->radeon, rmesa->hw.max_state_size + ELTS_BUFSZ(nr) + 
+      rcommonEnsureCmdBufSpace(&rmesa->radeon, rmesa->radeon.hw.max_state_size + ELTS_BUFSZ(nr) + 
 			       AOS_BUFSZ(rmesa->tcl.nr_aos_components), __FUNCTION__);
 
       radeonEmitAOS( rmesa,
@@ -178,7 +178,7 @@ static void radeonEmitPrim( GLcontext *ctx,
    
    rcommonEnsureCmdBufSpace( &rmesa->radeon,
 			     AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
-			     rmesa->hw.max_state_size + VBUF_BUFSZ, __FUNCTION__ );
+			     rmesa->radeon.hw.max_state_size + VBUF_BUFSZ, __FUNCTION__ );
 
    radeonEmitAOS( rmesa,
 		  rmesa->tcl.nr_aos_components,

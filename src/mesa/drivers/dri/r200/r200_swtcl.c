@@ -204,8 +204,6 @@ static void r200SetVertexFormat( GLcontext *ctx )
 
 static void r200RenderStart( GLcontext *ctx )
 {
-   r200ContextPtr rmesa = R200_CONTEXT( ctx );
-
    r200SetVertexFormat( ctx );
 }
 
@@ -271,11 +269,11 @@ void r200_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    rcommonEnsureCmdBufSpace(&rmesa->radeon,
-			    rmesa->hw.max_state_size + (12*sizeof(int)),
+			    rmesa->radeon.hw.max_state_size + (12*sizeof(int)),
 			    __FUNCTION__);
 
 
-   r200EmitState(rmesa);
+   radeonEmitState(&rmesa->radeon);
    r200EmitVertexAOS( rmesa,
 		      rmesa->radeon.swtcl.vertex_size,
 		      rmesa->radeon.dma.current,
@@ -649,7 +647,7 @@ void r200Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
    if (mode) {
       rmesa->radeon.Fallback |= bit;
       if (oldfallback == 0) {
-	 R200_FIREVERTICES( rmesa );
+	 radeon_firevertices(&rmesa->radeon);
 	 TCL_FALLBACK( ctx, R200_TCL_FALLBACK_RASTER, GL_TRUE );
 	 _swsetup_Wakeup( ctx );
 	 rmesa->radeon.swtcl.RenderIndex = ~0;
@@ -914,6 +912,4 @@ void r200InitSwtcl( GLcontext *ctx )
 
 void r200DestroySwtcl( GLcontext *ctx )
 {
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-
 }

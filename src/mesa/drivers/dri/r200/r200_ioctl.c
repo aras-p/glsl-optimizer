@@ -57,34 +57,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_TIMEOUT             512
 #define R200_IDLE_RETRY           16
 
-
-/* At this point we were in FlushCmdBufLocked but we had lost our context, so
- * we need to unwire our current cmdbuf, hook the one with the saved state in
- * it, flush it, and then put the current one back.  This is so commands at the
- * start of a cmdbuf can rely on the state being kept from the previous one.
- */
-static void r200BackUpAndEmitLostStateLocked( r200ContextPtr rmesa )
-{
-   GLuint nr_released_bufs;
-   struct radeon_store saved_store;
-
-   if (rmesa->backup_store.cmd_used == 0)
-      return;
-
-   if (R200_DEBUG & DEBUG_STATE)
-      fprintf(stderr, "Emitting backup state on lost context\n");
-
-   rmesa->radeon.lost_context = GL_FALSE;
-
-   nr_released_bufs = rmesa->radeon.dma.nr_released_bufs;
-   saved_store = rmesa->store;
-   rmesa->radeon.dma.nr_released_bufs = 0;
-   rmesa->store = rmesa->backup_store;
-   rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
-   rmesa->radeon.dma.nr_released_bufs = nr_released_bufs;
-   rmesa->store = saved_store;
-}
-
 static void r200UserClear(GLcontext *ctx, GLuint flags)
 {
    if (flags & (RADEON_FRONT | RADEON_BACK)) {
@@ -291,35 +263,8 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
    else
       r200KernelClear(ctx, flags);
 
-   rmesa->hw.all_dirty = GL_TRUE;
+   rmesa->radeon.hw.all_dirty = GL_TRUE;
 }
-
-
-void r200Flush( GLcontext *ctx )
-{
-   r200ContextPtr rmesa = R200_CONTEXT( ctx );
-
-   if (R200_DEBUG & DEBUG_IOCTL)
-      fprintf(stderr, "%s\n", __FUNCTION__);
-
-   if (rmesa->radeon.dma.flush)
-      rmesa->radeon.dma.flush( ctx );
-
-   r200EmitState( rmesa );
-
-   if (rmesa->radeon.cmdbuf.cs->cdw)
-      rcommonFlushCmdBuf( &rmesa->radeon, __FUNCTION__ );
-}
-
-/* Make sure all commands have been sent to the hardware and have
- * completed processing.
- */
-void r200Finish( GLcontext *ctx )
-{
-   r200Flush( ctx );
-   radeon_common_finish(ctx);
-}
-
 
 /* This version of AllocateMemoryMESA allocates only GART memory, and
  * only does so after the point at which the driver has been
@@ -458,7 +403,7 @@ GLuint r200GartOffsetFromVirtual( r200ContextPtr rmesa, const GLvoid *pointer )
 void r200InitIoctlFuncs( struct dd_function_table *functions )
 {
     functions->Clear = r200Clear;
-    functions->Finish = r200Finish;
-    functions->Flush = r200Flush;
+    functions->Finish = radeonFinish;
+    functions->Flush = radeonFlush;
 }
 

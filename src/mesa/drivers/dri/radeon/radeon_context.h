@@ -296,10 +296,7 @@ struct radeon_texture_state {
 #define SHN_SHININESS      1
 #define SHN_STATE_SIZE     2
 
-struct radeon_hw_state {
-	/* Head of the linked list of state atoms. */
-	struct radeon_state_atom atomlist;
-
+struct r100_hw_state {
 	/* Hardware state, stored as cmdbuf commands:  
 	 *   -- Need to doublebuffer for
 	 *           - eliding noop statechange loops? (except line stipple count)
@@ -324,8 +321,6 @@ struct radeon_hw_state {
 	struct radeon_state_atom glt;
 	struct radeon_state_atom txr[3];	/* for NPOT */
 
-	int max_state_size;	/* Number of bytes necessary for a full state emit. */
-	GLboolean is_dirty, all_dirty;
 };
 
 
@@ -353,14 +348,6 @@ struct radeon_tcl_info {
 	GLuint *Elts;
 
 	struct radeon_bo *indexed_bo;
-
-//	struct radeon_dma_region indexed_verts;
-	struct radeon_dma_region obj;
-	struct radeon_dma_region rgba;
-	struct radeon_dma_region spec;
-	struct radeon_dma_region fog;
-	struct radeon_dma_region tex[RADEON_MAX_TEXTURE_UNITS];
-	struct radeon_dma_region norm;
 
         int elt_cmd_offset; /** Offset into the cmdbuf */
 	int elt_cmd_start;
@@ -391,8 +378,6 @@ struct r100_swtcl_info {
 	GLuint specoffset;
 
 	GLboolean needproj;
-
-	struct radeon_dma_region indexed_verts;
 };
 
 
@@ -411,17 +396,13 @@ struct r100_context {
 
 	/* Driver and hardware state management
 	 */
-	struct radeon_hw_state hw;
+	struct r100_hw_state hw;
 	struct r100_state state;
 
 	/* Vertex buffers
 	 */
 	struct radeon_ioctl ioctl;
 	struct radeon_store store;
-	/* A full state emit as of the first state emit in the main store, in case
-	 * the context is lost.
-	 */
-	struct radeon_store backup_store;
 
 	/* TCL stuff
 	 */
@@ -455,7 +436,6 @@ struct r100_context {
 	GLuint c_textureBytes;
 	GLuint c_vertexBuffers;
 
-	GLboolean save_on_next_emit;
 };
 
 #define R100_CONTEXT(ctx)		((r100ContextPtr)(ctx->DriverCtx))

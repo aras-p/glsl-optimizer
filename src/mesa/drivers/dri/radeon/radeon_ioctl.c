@@ -59,60 +59,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define RADEON_TIMEOUT             512
 #define RADEON_IDLE_RETRY           16
 
-#define DEBUG_CMDBUF         1
-
-static void radeonSaveHwState( r100ContextPtr rmesa )
-{
-   struct radeon_state_atom *atom;
-   char * dest = rmesa->backup_store.cmd_buf;
-
-   if (RADEON_DEBUG & DEBUG_STATE)
-      fprintf(stderr, "%s\n", __FUNCTION__);
-   
-   rmesa->backup_store.cmd_used = 0;
-
-   foreach( atom, &rmesa->hw.atomlist ) {
-      if ( atom->check( rmesa->radeon.glCtx, 0 ) ) {
-	 int size = atom->cmd_size * 4;
-	 memcpy( dest, atom->cmd, size);
-	 dest += size;
-	 rmesa->backup_store.cmd_used += size;
-	 if (RADEON_DEBUG & DEBUG_STATE)
-	    radeon_print_state_atom( atom );
-      }
-   }
-
-   assert( rmesa->backup_store.cmd_used <= RADEON_CMD_BUF_SZ );
-   if (RADEON_DEBUG & DEBUG_STATE)
-      fprintf(stderr, "Returning to radeonEmitState\n");
-}
-
-/* At this point we were in FlushCmdBufLocked but we had lost our context, so
- * we need to unwire our current cmdbuf, hook the one with the saved state in
- * it, flush it, and then put the current one back.  This is so commands at the
- * start of a cmdbuf can rely on the state being kept from the previous one.
- */
-static void radeonBackUpAndEmitLostStateLocked( r100ContextPtr rmesa )
-{
-   GLuint nr_released_bufs;
-   struct radeon_store saved_store;
-
-   if (rmesa->backup_store.cmd_used == 0)
-      return;
-
-   if (RADEON_DEBUG & DEBUG_STATE)
-      fprintf(stderr, "Emitting backup state on lost context\n");
-
-   rmesa->radeon.lost_context = GL_FALSE;
-
-   nr_released_bufs = rmesa->radeon.dma.nr_released_bufs;
-   saved_store = rmesa->store;
-   rmesa->radeon.dma.nr_released_bufs = 0;
-   rmesa->store = rmesa->backup_store;
-   rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
-   rmesa->radeon.dma.nr_released_bufs = nr_released_bufs;
-   rmesa->store = saved_store;
-}
 
 /* =============================================================
  * Kernel command buffer handling
@@ -125,107 +71,33 @@ void radeonSetUpAtomList( r100ContextPtr rmesa )
 {
    int i, mtu = rmesa->radeon.glCtx->Const.MaxTextureUnits;
 
-   make_empty_list(&rmesa->hw.atomlist);
-   rmesa->hw.atomlist.name = "atom-list";
+   make_empty_list(&rmesa->radeon.hw.atomlist);
+   rmesa->radeon.hw.atomlist.name = "atom-list";
 
-   insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.ctx);
-   insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.set);
-   insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.lin);
-   insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.msk);
-   insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.vpt);
-   insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.tcl);
-   insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.msc);
+   insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.ctx);
+   insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.set);
+   insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.lin);
+   insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.msk);
+   insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.vpt);
+   insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.tcl);
+   insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.msc);
    for (i = 0; i < mtu; ++i) {
-       insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.tex[i]);
-       insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.txr[i]);
-       insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.cube[i]);
+       insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.tex[i]);
+       insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.txr[i]);
+       insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.cube[i]);
    }
-   insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.zbs);
-   insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.mtl);
+   insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.zbs);
+   insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.mtl);
    for (i = 0; i < 3 + mtu; ++i)
-      insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.mat[i]);
+      insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.mat[i]);
    for (i = 0; i < 8; ++i)
-      insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.lit[i]);
+      insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.lit[i]);
    for (i = 0; i < 6; ++i)
-      insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.ucp[i]);
-   insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.eye);
-   insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.grd);
-   insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.fog);
-   insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.glt);
-}
-
-static INLINE void radeonEmitAtoms(r100ContextPtr r100, GLboolean dirty)
-{
-   BATCH_LOCALS(&r100->radeon);
-   struct radeon_state_atom *atom;
-   int dwords;
-
-   /* Emit actual atoms */
-   foreach(atom, &r100->hw.atomlist) {
-     if ((atom->dirty || r100->hw.all_dirty) == dirty) {
-       dwords = (*atom->check) (r100->radeon.glCtx, atom);
-       if (dwords) {
-	  if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-	     radeon_print_state_atom(atom);
-	  }
-	 if (atom->emit) {
-	   (*atom->emit)(r100->radeon.glCtx, atom);
-	 } else {
-	   BEGIN_BATCH_NO_AUTOSTATE(dwords);
-	   OUT_BATCH_TABLE(atom->cmd, dwords);
-	   END_BATCH();
-	 }
-	 atom->dirty = GL_FALSE;
-       } else {
-	  if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-	     fprintf(stderr, "  skip state %s\n",
-		     atom->name);
-	  }
-       }
-     }
-   }
-   
-   COMMIT_BATCH();
-}
-
-void radeonEmitState( r100ContextPtr rmesa )
-{
-   if (RADEON_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
-      fprintf(stderr, "%s\n", __FUNCTION__);
-
-   if (rmesa->save_on_next_emit) {
-      radeonSaveHwState(rmesa);
-      rmesa->save_on_next_emit = GL_FALSE;
-   }
-
-   /* this code used to return here but now it emits zbs */
-
-   /* To avoid going across the entire set of states multiple times, just check
-    * for enough space for the case of emitting all state, and inline the
-    * radeonAllocCmdBuf code here without all the checks.
-    */
-   rcommonEnsureCmdBufSpace(&rmesa->radeon, rmesa->hw.max_state_size, __FUNCTION__);
-
-   /* We always always emit zbs, this is due to a bug found by keithw in
-      the hardware and rediscovered after Erics changes by me.
-      if you ever touch this code make sure you emit zbs otherwise
-      you get tcl lockups on at least M7/7500 class of chips - airlied */
-   rmesa->hw.zbs.dirty=1;
-
-   if (!rmesa->radeon.cmdbuf.cs->cdw) {
-     if (RADEON_DEBUG & DEBUG_STATE)
-       fprintf(stderr, "Begin reemit state\n");
-     
-     radeonEmitAtoms(rmesa, GL_FALSE);
-   }
-
-   if (RADEON_DEBUG & DEBUG_STATE)
-     fprintf(stderr, "Begin dirty state\n");
-
-   radeonEmitAtoms(rmesa, GL_TRUE);
-   rmesa->hw.is_dirty = GL_FALSE;
-   rmesa->hw.all_dirty = GL_FALSE;
-
+      insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.ucp[i]);
+   insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.eye);
+   insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.grd);
+   insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.fog);
+   insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.glt);
 }
 
 /* Fire a section of the retained (indexed_verts) buffer as a regular
@@ -240,7 +112,7 @@ extern void radeonEmitVbufPrim( r100ContextPtr rmesa,
 
    assert(!(primitive & RADEON_CP_VC_CNTL_PRIM_WALK_IND));
    
-   radeonEmitState( rmesa );
+   radeonEmitState(&rmesa->radeon);
 
 #if RADEON_OLD_PACKETS
    BEGIN_BATCH(8);
@@ -318,7 +190,7 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
 
    assert((primitive & RADEON_CP_VC_CNTL_PRIM_WALK_IND));
    
-   radeonEmitState( rmesa );
+   radeonEmitState(&rmesa->radeon);
    
    rmesa->tcl.elt_cmd_start = rmesa->radeon.cmdbuf.cs->cdw;
 
@@ -679,34 +551,8 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
    }
 
    UNLOCK_HARDWARE( &rmesa->radeon );
-   rmesa->hw.all_dirty = GL_TRUE;
+   rmesa->radeon.hw.all_dirty = GL_TRUE;
 }
-
-void radeonFlush( GLcontext *ctx )
-{
-   r100ContextPtr rmesa = R100_CONTEXT( ctx );
-
-   if (RADEON_DEBUG & DEBUG_IOCTL)
-      fprintf(stderr, "%s\n", __FUNCTION__);
-
-   if (rmesa->radeon.dma.flush)
-      rmesa->radeon.dma.flush( ctx );
-
-   radeonEmitState( rmesa );
-   
-   if (rmesa->radeon.cmdbuf.cs->cdw)
-      rcommonFlushCmdBuf( &rmesa->radeon, __FUNCTION__ );
-}
-
-/* Make sure all commands have been sent to the hardware and have
- * completed processing.
- */
-void radeonFinish( GLcontext *ctx )
-{
-   radeonFlush( ctx );
-   radeon_common_finish(ctx);
-}
-
 
 void radeonInitIoctlFuncs( GLcontext *ctx )
 {

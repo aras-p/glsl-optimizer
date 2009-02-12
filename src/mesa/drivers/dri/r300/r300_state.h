@@ -39,25 +39,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define R300_NEWPRIM( rmesa )			\
   do {						\
+  if ( rmesa->radeon.dma.flush )			\
+    rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	\
   } while (0)
 
 #define R300_STATECHANGE(r300, atom) \
 	do {						\
 	  R300_NEWPRIM(r300);				\
 		r300->hw.atom.dirty = GL_TRUE;		\
-		r300->hw.is_dirty = GL_TRUE;		\
+		r300->radeon.hw.is_dirty = GL_TRUE;		\
 	} while(0)
-
-#define R300_PRINT_STATE(r300, atom) \
-		r300PrintStateAtom(r300, &r300->hw.atom)
-
-/* Fire the buffered vertices no matter what.
-   TODO: This has not been implemented yet
- */
-#define R300_FIREVERTICES( r300 )			\
-    do {							\
-        r300Flush( (r300)->radeon.glCtx );		\
-    } while (0)
 
 // r300_state.c
 extern int future_hw_tcl_on;

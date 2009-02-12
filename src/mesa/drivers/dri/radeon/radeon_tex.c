@@ -381,7 +381,7 @@ static void radeonDeleteTexture( GLcontext *ctx,
    }
 
    if ( rmesa ) {
-     RADEON_FIREVERTICES( rmesa );
+     radeon_firevertices(&rmesa->radeon);
      for ( i = 0 ; i < rmesa->radeon.glCtx->Const.MaxTextureUnits ; i++ ) {
        if ( t == rmesa->state.texture.unit[i].texobj ) {
 	 rmesa->state.texture.unit[i].texobj = NULL;

@@ -46,8 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_buffer.h"
 #include "radeon_mipmap_tree.h"
 #include "radeon_cs.h"
-#include "common_context.h"
-#include "common_cmdbuf.h"
+#include "common_misc.h"
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_state.h"
@@ -177,8 +176,8 @@ void r200PrintDirty( r200ContextPtr rmesa, const char *msg )
    fprintf(stderr, msg);
    fprintf(stderr, ": ");
 
-   foreach(l, &rmesa->hw.atomlist) {
-      if (l->dirty || rmesa->hw.all_dirty)
+   foreach(l, &rmesa->radeon.hw.atomlist) {
+      if (l->dirty || rmesa->radeon.hw.all_dirty)
 	 fprintf(stderr, "%s, ", l->name);
    }
 
@@ -649,7 +648,7 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->state.pixel.readPitch  = rmesa->radeon.state.color.drawPitch;
 #endif
 
-   rmesa->hw.max_state_size = 0;
+   rmesa->radeon.hw.max_state_size = 0;
 
 #define ALLOC_STATE( ATOM, CHK, SZ, NM, IDX )				\
    do {								\
@@ -660,7 +659,7 @@ void r200InitState( r200ContextPtr rmesa )
       rmesa->hw.ATOM.idx = IDX;					\
       rmesa->hw.ATOM.check = check_##CHK;			\
       rmesa->hw.ATOM.dirty = GL_FALSE;				\
-      rmesa->hw.max_state_size += SZ * sizeof(int);		\
+      rmesa->radeon.hw.max_state_size += SZ * sizeof(int);		\
    } while (0)
 
 
@@ -1405,7 +1404,7 @@ void r200InitState( r200ContextPtr rmesa )
 
    r200LightingSpaceChange( ctx );
 
-   rmesa->hw.all_dirty = GL_TRUE;
+   rmesa->radeon.hw.all_dirty = GL_TRUE;
 
-   rcommonInitCmdBuf(&rmesa->radeon, rmesa->hw.max_state_size);
+   rcommonInitCmdBuf(&rmesa->radeon);
 }

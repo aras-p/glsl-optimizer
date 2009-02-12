@@ -47,8 +47,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_sanity.h"
 #include "radeon_reg.h"
 
-#define DEBUG_CMDBUF         0
-
 /* The state atoms will be emitted in the order they appear in the atom list,
  * so this step is important.
  */
@@ -58,161 +56,54 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
 
    mtu = rmesa->radeon.glCtx->Const.MaxTextureUnits;
 
-   make_empty_list(&rmesa->hw.atomlist);
-   rmesa->hw.atomlist.name = "atom-list";
+   make_empty_list(&rmesa->radeon.hw.atomlist);
+   rmesa->radeon.hw.atomlist.name = "atom-list";
 
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.ctx );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.set );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.lin );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.msk );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vpt );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vtx );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vap );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vte );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.msc );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.cst );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.zbs );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.tcl );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.msl );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.tcg );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.grd );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.fog );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.tam );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.tf );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.atf );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.ctx );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.set );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.lin );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.msk );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpt );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vtx );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vap );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vte );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.msc );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.cst );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.zbs );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.tcl );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.msl );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.tcg );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.grd );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.fog );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.tam );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.tf );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.atf );
    for (i = 0; i < mtu; ++i)
-       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.tex[i] );
+       insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.tex[i] );
    for (i = 0; i < mtu; ++i)
-       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.cube[i] );
+       insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.cube[i] );
    for (i = 0; i < 6; ++i)
-       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.pix[i] );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.afs[0] );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.afs[1] );
+       insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.pix[i] );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.afs[0] );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.afs[1] );
    for (i = 0; i < 8; ++i)
-       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.lit[i] );
+       insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.lit[i] );
    for (i = 0; i < 3 + mtu; ++i)
-       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.mat[i] );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.eye );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.glt );
+       insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.mat[i] );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.eye );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.glt );
    for (i = 0; i < 2; ++i)
-      insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.mtl[i] );
+      insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.mtl[i] );
    for (i = 0; i < 6; ++i)
-       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.ucp[i] );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.spr );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.ptp );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.prf );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.pvs );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vpp[0] );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vpp[1] );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vpi[0] );
-   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vpi[1] );
-}
-
-static void r200SaveHwState( r200ContextPtr rmesa )
-{
-   struct radeon_state_atom *atom;
-   char * dest = rmesa->backup_store.cmd_buf;
-   uint32_t dwords;
-   if (R200_DEBUG & DEBUG_STATE)
-      fprintf(stderr, "%s\n", __FUNCTION__);
-
-   rmesa->backup_store.cmd_used = 0;
-
-   foreach( atom, &rmesa->hw.atomlist ) {
-      dwords = atom->check( rmesa->radeon.glCtx, atom );
-      if ( dwords ) {
-	 int size = atom->cmd_size * 4;
-
-	 if (atom->emit) {
-	   (*atom->emit)(rmesa->radeon.glCtx, atom);
-	 } else {
-	   memcpy( dest, atom->cmd, size);
-	   dest += size;
-	   rmesa->backup_store.cmd_used += size;
-	 }
-	 if (R200_DEBUG & DEBUG_STATE)
-	    radeon_print_state_atom( atom );
-      }
-   }
-
-   assert( rmesa->backup_store.cmd_used <= R200_CMD_BUF_SZ );
-   if (R200_DEBUG & DEBUG_STATE)
-      fprintf(stderr, "Returning to r200EmitState\n");
-}
-
-static INLINE void r200EmitAtoms(r200ContextPtr r200, GLboolean dirty)
-{
-   BATCH_LOCALS(&r200->radeon);
-   struct radeon_state_atom *atom;
-   int dwords;
-
-   /* Emit actual atoms */
-   foreach(atom, &r200->hw.atomlist) {
-     if ((atom->dirty || r200->hw.all_dirty) == dirty) {
-       dwords = (*atom->check) (r200->radeon.glCtx, atom);
-       if (dwords) {
-	  if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-	     radeon_print_state_atom(atom);
-	  }
-	 if (atom->emit) {
-	   (*atom->emit)(r200->radeon.glCtx, atom);
-	 } else {
-	   BEGIN_BATCH_NO_AUTOSTATE(dwords);
-	   OUT_BATCH_TABLE(atom->cmd, dwords);
-	   END_BATCH();
-	 }
-	 atom->dirty = GL_FALSE;
-       } else {
-	  if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-	     fprintf(stderr, "  skip state %s\n",
-		     atom->name);
-	  }
-       }
-     }
-   }
-   
-   COMMIT_BATCH();
-}
-
-void r200EmitState( r200ContextPtr rmesa )
-{
-   char *dest;
-   int mtu;
-   struct radeon_state_atom *atom;
-   uint32_t dwords;
-
-   if (R200_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
-      fprintf(stderr, "%s\n", __FUNCTION__);
-
-   if (rmesa->save_on_next_emit) {
-      r200SaveHwState(rmesa);
-      rmesa->save_on_next_emit = GL_FALSE;
-   }
-
-   if (rmesa->radeon.cmdbuf.cs->cdw && !rmesa->hw.is_dirty && !rmesa->hw.all_dirty)
-       return;
-
-   mtu = rmesa->radeon.glCtx->Const.MaxTextureUnits;
-
-   /* To avoid going across the entire set of states multiple times, just check
-    * for enough space for the case of emitting all state, and inline the
-    * r200AllocCmdBuf code here without all the checks.
-    */
-   rcommonEnsureCmdBufSpace(&rmesa->radeon, rmesa->hw.max_state_size, __FUNCTION__);
-
-   if (!rmesa->radeon.cmdbuf.cs->cdw) {
-     if (RADEON_DEBUG & DEBUG_STATE)
-       fprintf(stderr, "Begin reemit state\n");
-     
-     r200EmitAtoms(rmesa, GL_FALSE);
-   }
-
-   if (RADEON_DEBUG & DEBUG_STATE)
-     fprintf(stderr, "Begin dirty state\n");
-
-   r200EmitAtoms(rmesa, GL_TRUE);
-   rmesa->hw.is_dirty = GL_FALSE;
-   rmesa->hw.all_dirty = GL_FALSE;
+       insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.ucp[i] );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.spr );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.ptp );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.prf );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.pvs );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpp[0] );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpp[1] );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpi[0] );
+   insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpi[1] );
 }
 
 /* Fire a section of the retained (indexed_verts) buffer as a regular
@@ -227,7 +118,7 @@ void r200EmitVbufPrim( r200ContextPtr rmesa,
 
    assert(!(primitive & R200_VF_PRIM_WALK_IND));
    
-   r200EmitState( rmesa );
+   radeonEmitState(&rmesa->radeon);
    
    if (R200_DEBUG & (DEBUG_IOCTL|DEBUG_PRIMS))
       fprintf(stderr, "%s cmd_used/4: %d prim %x nr %d\n", __FUNCTION__,
@@ -313,7 +204,7 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
 
    assert((primitive & R200_VF_PRIM_WALK_IND));
    
-   r200EmitState( rmesa );
+   radeonEmitState(&rmesa->radeon);
 
    rmesa->tcl.elt_dma_bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
 					  0, R200_ELT_BUF_SZ, 4,

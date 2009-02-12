@@ -55,7 +55,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "drivers/common/driverfuncs.h"
 
-#include "radeon_ioctl.h"
 #include "radeon_span.h"
 #include "r300_context.h"
 #include "r300_cmdbuf.h"
@@ -198,22 +197,6 @@ static void r300_get_lock(radeonContextPtr rmesa)
 	}
 }		  
 
-static void r300_vtbl_flush(GLcontext *ctx)
-{
-	r300Flush(ctx);
-}
-
-static void r300_vtbl_set_all_dirty(GLcontext *ctx)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	rmesa->hw.all_dirty = GL_TRUE;
-}
-
-static void r300_vtbl_emit_state(radeonContextPtr rmesa)
-{
-	r300EmitState((r300ContextPtr)rmesa);
-}
-
 static void r300_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)
 {
     /* please flush pipe do all pending work */
@@ -243,22 +226,25 @@ static void r300_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmes
                                R300_WAIT_3D | R300_WAIT_3D_CLEAN));
 }
 
-static void r300_vtbl_flush_vertices(radeonContextPtr rmesa)
+static void r300_vtbl_pre_emit_atoms(radeonContextPtr radeon)
 {
-   R300_FIREVERTICES(((r300ContextPtr)rmesa));
+   BATCH_LOCALS(radeon);
+   cp_wait(radeon, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
+   BEGIN_BATCH_NO_AUTOSTATE(2);
+   OUT_BATCH(cmdpacket0(radeon->radeonScreen, R300_TX_INVALTAGS, 1));
+   OUT_BATCH(R300_TX_FLUSH);
+   END_BATCH();
+   end_3d(radeon);
 }
 
 static void r300_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r300_get_lock;
    radeon->vtbl.update_viewport_offset = r300UpdateViewportOffset;
-   radeon->vtbl.flush = r300_vtbl_flush;
-   radeon->vtbl.set_all_dirty = r300_vtbl_set_all_dirty;
    radeon->vtbl.update_draw_buffer = r300UpdateDrawBuffer;
    radeon->vtbl.emit_cs_header = r300_vtbl_emit_cs_header;
-   radeon->vtbl.emit_state = r300_vtbl_emit_state;
-   radeon->vtbl.flush_vertices = r300_vtbl_flush_vertices;
    radeon->vtbl.swtcl_flush = r300_swtcl_flush;
+   radeon->vtbl.pre_emit_atoms = r300_vtbl_pre_emit_atoms;
 }
 
 

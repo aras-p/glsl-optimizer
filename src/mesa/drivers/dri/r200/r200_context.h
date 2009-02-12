@@ -469,9 +469,6 @@ struct r200_texture_state {
 
 
 struct r200_hw_state {
-   /* Head of the linked list of state atoms. */
-   struct radeon_state_atom atomlist;
-
    /* Hardware state, stored as cmdbuf commands:  
     *   -- Need to doublebuffer for
     *           - reviving state after loss of context
@@ -512,9 +509,6 @@ struct r200_hw_state {
    struct radeon_state_atom atf;
    struct radeon_state_atom spr;
    struct radeon_state_atom ptp;
-
-   int max_state_size;	/* Number of bytes necessary for a full state emit. */
-   GLboolean is_dirty, all_dirty;
 };
 
 struct r200_state {
@@ -600,16 +594,10 @@ struct r200_context {
     */
    struct radeon_ioctl ioctl;
    struct radeon_store store;
-   /* A full state emit as of the first state emit in the main store, in case
-    * the context is lost.
-    */
-   struct radeon_store backup_store;
 
    /* Clientdata textures;
     */
-  GLuint prefer_gart_client_texturing;
-
-   GLboolean save_on_next_emit;
+   GLuint prefer_gart_client_texturing;
 
    /* TCL stuff
     */

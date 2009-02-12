@@ -123,7 +123,7 @@ static GLboolean discrete_prim[0x10] = {
 
 #define RESET_STIPPLE() do {			\
    R200_STATECHANGE( rmesa, lin );		\
-   r200EmitState( rmesa );			\
+   radeonEmitState(&rmesa->radeon);			\
 } while (0)
 
 #define AUTO_STIPPLE( mode )  do {		\
@@ -134,7 +134,7 @@ static GLboolean discrete_prim[0x10] = {
    else						\
       rmesa->hw.lin.cmd[LIN_RE_LINE_PATTERN] &=	\
 	 ~R200_LINE_PATTERN_AUTO_RESET;	\
-   r200EmitState( rmesa );			\
+   radeonEmitState(&rmesa->radeon);			\
 } while (0)
 
 
@@ -189,7 +189,7 @@ static void r200EmitPrim( GLcontext *ctx,
    //   fprintf(stderr,"Emit prim %d\n", rmesa->tcl.nr_aos_components);
    rcommonEnsureCmdBufSpace( &rmesa->radeon,
 			     AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
-			     rmesa->hw.max_state_size + VBUF_BUFSZ, __FUNCTION__ );
+			     rmesa->radeon.hw.max_state_size + VBUF_BUFSZ, __FUNCTION__ );
 
    r200EmitAOS( rmesa,
 		rmesa->tcl.nr_aos_components,

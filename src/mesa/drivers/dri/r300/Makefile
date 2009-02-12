@@ -26,11 +26,7 @@ DRIVER_SOURCES = \
 		 radeon_screen.c \
 		 common_lock.c \
 		 common_misc.c \
-		 radeon_context.c \
-		 radeon_ioctl.c \
 		 radeon_span.c \
-		 radeon_state.c \
-		 r300_context.c \
 		 r300_ioctl.c \
 		 r300_cmdbuf.c \
 		 r300_state.c \
