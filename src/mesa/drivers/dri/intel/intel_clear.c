@@ -275,7 +275,7 @@ intelClear(GLcontext *ctx, GLbitfield mask)
    }
    else {
       /* glColorMask in effect */
-      tri_mask |= (mask & BUFFER_BITS_COLOR);
+      tri_mask |= (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT));
    }
 
    /* HW stencil */
