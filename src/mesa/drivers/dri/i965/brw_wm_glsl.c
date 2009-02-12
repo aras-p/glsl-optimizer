@@ -1044,23 +1044,23 @@ static void emit_ddy(struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
-static __inline struct brw_reg high_words( struct brw_reg reg )
+static INLINE struct brw_reg high_words( struct brw_reg reg )
 {
     return stride( suboffset( retype( reg, BRW_REGISTER_TYPE_W ), 1 ),
 		   0, 8, 2 );
 }
 
-static __inline struct brw_reg low_words( struct brw_reg reg )
+static INLINE struct brw_reg low_words( struct brw_reg reg )
 {
     return stride( retype( reg, BRW_REGISTER_TYPE_W ), 0, 8, 2 );
 }
 
-static __inline struct brw_reg even_bytes( struct brw_reg reg )
+static INLINE struct brw_reg even_bytes( struct brw_reg reg )
 {
     return stride( retype( reg, BRW_REGISTER_TYPE_B ), 0, 16, 2 );
 }
 
-static __inline struct brw_reg odd_bytes( struct brw_reg reg )
+static INLINE struct brw_reg odd_bytes( struct brw_reg reg )
 {
     return stride( suboffset( retype( reg, BRW_REGISTER_TYPE_B ), 1 ),
 		   0, 16, 2 );
