@@ -1068,7 +1068,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       else {
          /* GL_DEPTH */
          GLuint *buf = (GLuint *) malloc(width * height * sizeof(GLuint));
-         pipe_get_tile_z(ptRead, srcx, srcy, width, height, buf);
+         pipe_get_tile_z(ptRead, 0, 0, width, height, buf);
          pipe_put_tile_z(ptTex, 0, 0, width, height, buf);
          free(buf);
       }
