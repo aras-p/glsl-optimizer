@@ -417,7 +417,7 @@ static void ctx_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    GLframebuffer *fb = r200->radeon.dri.drawable->driverPrivate;
 
    /* output the first 7 bytes of context */
-   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   BEGIN_BATCH_NO_AUTOSTATE(dwords+2+2);
    OUT_BATCH_TABLE(atom->cmd, 5);
 
    rrb = r200->radeon.state.depth.rrb;

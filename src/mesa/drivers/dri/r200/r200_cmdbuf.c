@@ -259,7 +259,7 @@ void r200EmitAOS(r200ContextPtr rmesa, GLuint nr, GLuint offset)
       fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __FUNCTION__, nr,
 	      offset);
 
-   BEGIN_BATCH(sz+2);
+   BEGIN_BATCH(sz+2+ (nr*2));
    OUT_BATCH_PACKET3(R200_CP_CMD_3D_LOAD_VBPNTR, sz - 1);
    OUT_BATCH(nr);
 
