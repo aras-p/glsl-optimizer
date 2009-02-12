@@ -230,8 +230,8 @@ xlib_softpipe_display_surface(struct xmesa_buffer *b,
                               struct pipe_surface *surf)
 {
    XImage *ximage;
-   struct xm_buffer *xm_buf = xm_buffer(
-      softpipe_texture(surf->texture)->buffer);
+   struct softpipe_texture *spt = softpipe_texture(surf->texture);
+   struct xm_buffer *xm_buf = xm_buffer(spt->buffer);
    static boolean no_swap = 0;
    static boolean firsttime = 1;
 
@@ -246,8 +246,8 @@ xlib_softpipe_display_surface(struct xmesa_buffer *b,
    if (XSHM_ENABLED(xm_buf) && (xm_buf->tempImage == NULL)) {
       assert(surf->texture->block.width == 1);
       assert(surf->texture->block.height == 1);
-      alloc_shm_ximage(xm_buf, b, surf->texture->nblocksx[surf->level],
-                       surf->height);
+      alloc_shm_ximage(xm_buf, b, spt->stride[surf->level] /
+                       surf->texture->block.size, surf->height);
    }
 
    ximage = (XSHM_ENABLED(xm_buf)) ? xm_buf->tempImage : b->tempImage;
@@ -265,7 +265,7 @@ xlib_softpipe_display_surface(struct xmesa_buffer *b,
       /* update XImage's fields */
       ximage->width = surf->width;
       ximage->height = surf->height;
-      ximage->bytes_per_line = surf->texture->nblocksx[surf->level];
+      ximage->bytes_per_line = spt->stride[surf->level];
 
       XPutImage(b->xm_visual->display, b->drawable, b->gc,
                 ximage, 0, 0, 0, 0, surf->width, surf->height);

@@ -36,6 +36,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_debug.h"
 #include "util/u_memory.h"
+#include "softpipe/sp_texture.h"
 
 
 struct brw_aubfile {
@@ -335,7 +336,8 @@ void brw_aub_dump_bmp( struct brw_aubfile *aubfile,
    db.ymin = 0;
    db.format = format;
    db.bpp = surface->texture->block.size * 8;
-   db.pitch = surface->texture->nblocksx[surface->level];
+   db.pitch = softpipe_texture(surface->texture)->stride[surface->level] /
+      surface->texture->block.size;
    db.xsize = surface->width;
    db.ysize = surface->height;
    db.addr = gtt_offset;
