@@ -319,7 +319,6 @@ static void emit_pixel_xy(struct brw_wm_compile *c,
 		stride(suboffset(r1_uw, 5), 2, 4, 0),
 		brw_imm_v(0x11001100));
     }
-
 }
 
 static void emit_delta_xy(struct brw_wm_compile *c,
@@ -395,18 +394,17 @@ static void emit_fb_write(struct brw_wm_compile *c,
      */
     if (c->key.aa_dest_stencil_reg)
 	nr += 1;
-    {
-	brw_push_insn_state(p);
-	for (channel = 0; channel < 4; channel++) {
-	    src0 = get_src_reg(c,  &inst->SrcReg[0], channel, 1);
-	    /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
-	    /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
-	    brw_MOV(p, brw_message_reg(nr + channel), src0);
-	}
-	/* skip over the regs populated above: */
-	nr += 8;
-	brw_pop_insn_state(p);
+
+    brw_push_insn_state(p);
+    for (channel = 0; channel < 4; channel++) {
+        src0 = get_src_reg(c,  &inst->SrcReg[0], channel, 1);
+        /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
+        /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
+        brw_MOV(p, brw_message_reg(nr + channel), src0);
     }
+    /* skip over the regs populated above: */
+    nr += 8;
+    brw_pop_insn_state(p);
 
     if (c->key.source_depth_to_render_target) {
        if (c->key.computes_depth) {
