@@ -6,7 +6,7 @@ TOP        = ../../../..
 
 include ${TOP}/configs/current
 
-CFLAGS += -g -Wall -Werror=implicit-function-declaration -fPIC \
+CFLAGS += -g -Wall -Werror-implicit-function-declaration -fPIC \
           -I${GALLIUMDIR}/include \
           -I${GALLIUMDIR}/auxiliary \
           -I${TOP}/src/mesa/drivers/dri/common \
