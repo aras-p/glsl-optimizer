@@ -968,7 +968,7 @@ void setup_tri( struct setup_context *setup,
    setup_tri_coefficients( setup );
    setup_tri_edges( setup );
 
-   setup->quad.input.prim = PRIM_TRI;
+   setup->quad.input.prim = QUAD_PRIM_TRI;
 
    setup->span.y = 0;
    setup->span.y_flags = 0;
@@ -1206,7 +1206,7 @@ setup_line(struct setup_context *setup,
 
    setup->quad.input.x0 = setup->quad.input.y0 = -1;
    setup->quad.inout.mask = 0x0;
-   setup->quad.input.prim = PRIM_LINE;
+   setup->quad.input.prim = QUAD_PRIM_LINE;
    /* XXX temporary: set coverage to 1.0 so the line appears
     * if AA mode happens to be enabled.
     */
@@ -1361,7 +1361,7 @@ setup_point( struct setup_context *setup,
       }
    }
 
-   setup->quad.input.prim = PRIM_POINT;
+   setup->quad.input.prim = QUAD_PRIM_POINT;
 
    if (halfSize <= 0.5 && !round) {
       /* special case for 1-pixel points */

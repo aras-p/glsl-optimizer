@@ -34,9 +34,9 @@
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_exec.h"
 
-#define PRIM_POINT 1
-#define PRIM_LINE  2
-#define PRIM_TRI   3
+#define QUAD_PRIM_POINT 1
+#define QUAD_PRIM_LINE  2
+#define QUAD_PRIM_TRI   3
 
 
 /* The rasterizer generates 2x2 quads of fragment and feeds them to
@@ -65,7 +65,7 @@ struct quad_header_input
    int y0;
    float coverage[QUAD_SIZE];    /** fragment coverage for antialiasing */
    unsigned facing:1;   /**< Front (0) or back (1) facing? */
-   unsigned prim:2;     /**< PRIM_POINT, LINE, TRI */
+   unsigned prim:2;     /**< QUAD_PRIM_POINT, LINE, TRI */
 };
 
 struct quad_header_inout

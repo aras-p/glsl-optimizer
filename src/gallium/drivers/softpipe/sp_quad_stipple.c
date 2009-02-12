@@ -19,7 +19,7 @@ stipple_quad(struct quad_stage *qs, struct quad_header *quad)
    static const uint bit31 = 1 << 31;
    static const uint bit30 = 1 << 30;
 
-   if (quad->input.prim == PRIM_TRI) {
+   if (quad->input.prim == QUAD_PRIM_TRI) {
       struct softpipe_context *softpipe = qs->softpipe;
       /* need to invert Y to index into OpenGL's stipple pattern */
       int y0, y1;
