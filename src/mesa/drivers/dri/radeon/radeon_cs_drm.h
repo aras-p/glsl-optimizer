@@ -35,7 +35,6 @@
 #include <stdint.h>
 #include "drm.h"
 #include "radeon_drm.h"
-#include "radeon_bocs_wrapper.h"
 
 struct radeon_cs_reloc {
     struct radeon_bo    *bo;

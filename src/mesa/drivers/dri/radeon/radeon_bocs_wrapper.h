@@ -15,6 +15,10 @@
 #define RADEON_GEM_DOMAIN_GTT 0x2   // GTT or cache flushed
 #define RADEON_GEM_DOMAIN_VRAM 0x4  // VRAM domain
 
+/* to be used to build locally in mesa with no libdrm bits */
+#include "../radeon/radeon_bo_drm.h"
+#include "../radeon/radeon_cs_drm.h"
+
 #ifndef DRM_RADEON_GEM_INFO
 #define DRM_RADEON_GEM_INFO 0x1c
 
@@ -31,9 +35,6 @@ struct drm_radeon_gem_info {
 #define RADEON_PARAM_DEVICE_ID 17
 #endif
 
-/* to be used to build locally in mesa with no libdrm bits */
-#include "../radeon/radeon_bo_drm.h"
-#include "../radeon/radeon_cs_drm.h"
 
 
 static inline void *radeon_bo_manager_gem_ctor(int fd)
