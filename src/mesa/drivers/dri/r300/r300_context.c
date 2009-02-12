@@ -44,6 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/extensions.h"
 #include "main/state.h"
 #include "main/bufferobj.h"
+#include "main/texobj.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
