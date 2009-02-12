@@ -80,6 +80,53 @@ GLuint brw_wm_is_scalar_result( GLuint opcode )
 }
 
 
+/**
+ * Do GPU code generation for non-GLSL shader.  non-GLSL shaders have
+ * no flow control instructions so we can more readily do SSA-style
+ * optimizations.
+ */
+static void
+brw_wm_non_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
+{
+   /* Augment fragment program.  Add instructions for pre- and
+    * post-fragment-program tasks such as interpolation and fogging.
+    */
+   brw_wm_pass_fp(c);
+
+   /* Translate to intermediate representation.  Build register usage
+    * chains.
+    */
+   brw_wm_pass0(c);
+
+   /* Dead code removal.
+    */
+   brw_wm_pass1(c);
+
+   /* Register allocation.
+    */
+   c->grf_limit = BRW_WM_MAX_GRF / 2;
+
+   brw_wm_pass2(c);
+
+   c->prog_data.total_grf = c->max_wm_grf;
+   if (c->last_scratch) {
+      c->prog_data.total_scratch = c->last_scratch + 0x40;
+   }
+   else {
+      c->prog_data.total_scratch = 0;
+   }
+
+   /* Emit GEN4 code.
+    */
+   brw_wm_emit(c);
+}
+
+
+/**
+ * All Mesa program -> GPU code generation goes through this function.
+ * Depending on the instructions used (i.e. flow control instructions)
+ * we'll use one of two code generators.
+ */
 static void do_wm_prog( struct brw_context *brw,
 			struct brw_fragment_program *fp, 
 			struct brw_wm_prog_key *key)
@@ -102,42 +149,17 @@ static void do_wm_prog( struct brw_context *brw,
 
    brw_init_compile(brw, &c->func);
 
+   /*
+    * Shader which use GLSL features such as flow control are handled
+    * differently from "simple" shaders.
+    */
    if (brw_wm_is_glsl(&c->fp->program)) {
       brw_wm_glsl_emit(brw, c);
    }
    else {
-      /* Augment fragment program.  Add instructions for pre- and
-       * post-fragment-program tasks such as interpolation and fogging.
-       */
-      brw_wm_pass_fp(c);
-
-      /* Translate to intermediate representation.  Build register usage
-       * chains.
-       */
-      brw_wm_pass0(c);
-
-      /* Dead code removal.
-       */
-      brw_wm_pass1(c);
-
-      /* Register allocation.
-       */
-      c->grf_limit = BRW_WM_MAX_GRF/2;
-
-      brw_wm_pass2(c);
-
-      c->prog_data.total_grf = c->max_wm_grf;
-      if (c->last_scratch) {
-         c->prog_data.total_scratch =
-            c->last_scratch + 0x40;
-      } else {
-         c->prog_data.total_scratch = 0;
-      }
-
-      /* Emit GEN4 code.
-       */
-      brw_wm_emit(c);
+      brw_wm_non_glsl_emit(brw, c);
    }
+
    if (INTEL_DEBUG & DEBUG_WM)
       fprintf(stderr, "\n");
 
@@ -307,8 +329,6 @@ static void brw_prepare_wm_prog(struct brw_context *brw)
 }
 
 
-/* See brw_wm.c:
- */
 const struct brw_tracked_state brw_wm_prog = {
    .dirty = {
       .mesa  = (_NEW_COLOR |
