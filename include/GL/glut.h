@@ -108,7 +108,7 @@ extern "C" {
 #  define GLUTAPIENTRY
 #  define GLUTAPIENTRYV
 #  define GLUTCALLBACK
-#  define GLUTAPI __attribute__((visibility("default")))
+#  define GLUTAPI extern __attribute__((visibility("default")))
 
 #else
 
