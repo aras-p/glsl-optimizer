@@ -51,7 +51,6 @@
  */
 #define SP_NUM_QUAD_THREADS 1
 
-struct softpipe_winsys;
 struct softpipe_vbuf_render;
 struct draw_context;
 struct draw_stage;
@@ -63,15 +62,15 @@ struct sp_vertex_shader;
 struct softpipe_context {
    struct pipe_context pipe;  /**< base class */
 
-   /* The most recent drawing state as set by the driver:
-    */
-   const struct pipe_blend_state   *blend;
+   /** Constant state objects */
+   const struct pipe_blend_state *blend;
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
-   const struct pipe_depth_stencil_alpha_state   *depth_stencil;
+   const struct pipe_depth_stencil_alpha_state *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
    const struct sp_fragment_shader *fs;
    const struct sp_vertex_shader *vs;
 
+   /** Other rendering state */
    struct pipe_blend_color blend_color;
    struct pipe_clip_state clip;
    struct pipe_constant_buffer constants[PIPE_SHADER_TYPES];
@@ -82,23 +81,20 @@ struct softpipe_context {
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
-   unsigned dirty;
 
    unsigned num_samplers;
    unsigned num_textures;
    unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
 
-   boolean no_rast;
+   unsigned dirty; /**< Mask of SP_NEW_x flags */
 
    /* Counter for occlusion queries.  Note this supports overlapping
     * queries.
     */
    uint64_t occlusion_count;
 
-   /*
-    * Mapped vertex buffers
-    */
+   /** Mapped vertex buffers */
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];
    
    /** Mapped constant buffers */
@@ -108,6 +104,7 @@ struct softpipe_context {
    struct vertex_info vertex_info;
    struct vertex_info vertex_info_vbuf;
 
+   /** Which vertex shader output slot contains point size */
    int psize_slot;
 
    unsigned reduced_api_prim;  /**< PIPE_PRIM_POINTS, _LINES or _TRIANGLES */
@@ -153,8 +150,9 @@ struct softpipe_context {
 
    struct softpipe_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
 
-   int use_sse : 1;
-   int dump_fs : 1;
+   unsigned use_sse : 1;
+   unsigned dump_fs : 1;
+   unsigned no_rast : 1;
 };
 
 
