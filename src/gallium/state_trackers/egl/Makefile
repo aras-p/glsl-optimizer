@@ -13,7 +13,6 @@ CFLAGS += -g -Wall -Werror-implicit-function-declaration -fPIC \
           -I${TOP}/src/mesa \
           -I$(TOP)/include \
           -I$(TOP)/src/egl/main \
-          $(shell pkg-config --cflags pixman-1 xorg-server) \
           ${LIBDRM_CFLAGS}
 
 #############################################
