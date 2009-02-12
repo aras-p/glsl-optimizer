@@ -173,10 +173,6 @@ util_surface_copy(struct pipe_context *pipe,
    void *dst_map;
    const void *src_map;
 
-   assert(dst_trans->block.size == src_trans->block.size);
-   assert(dst_trans->block.width == src_trans->block.width);
-   assert(dst_trans->block.height == src_trans->block.height);
-
    assert(src->texture && dst->texture);
    if (!src->texture || !dst->texture)
       return;
@@ -195,6 +191,10 @@ util_surface_copy(struct pipe_context *pipe,
                                         dst->zslice,
                                         PIPE_TRANSFER_WRITE,
                                         dst_x, dst_y, w, h);
+
+   assert(dst_trans->block.size == src_trans->block.size);
+   assert(dst_trans->block.width == src_trans->block.width);
+   assert(dst_trans->block.height == src_trans->block.height);
 
    src_map = pipe->screen->transfer_map(screen, src_trans);
    dst_map = pipe->screen->transfer_map(screen, dst_trans);

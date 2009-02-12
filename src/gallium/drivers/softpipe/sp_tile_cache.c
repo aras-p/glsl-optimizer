@@ -158,11 +158,11 @@ void
 sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
                           struct pipe_surface *ps)
 {
-   struct pipe_screen *screen = ps->texture->screen;
-
    assert(!tc->texture);
 
    if (tc->transfer) {
+      struct pipe_screen *screen = tc->transfer->texture->screen;
+
       if (ps == tc->surface)
          return;
 
@@ -176,18 +176,22 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
 
    tc->surface = ps;
 
-   tc->transfer = screen->get_tex_transfer(screen, ps->texture, ps->face,
-                                           ps->level, ps->zslice,
-                                           PIPE_TRANSFER_READ_WRITE,
-                                           0, 0, ps->width, ps->height);
+   if (ps) {
+      struct pipe_screen *screen = ps->texture->screen;
 
-   tc->depth_stencil = (ps->format == PIPE_FORMAT_S8Z24_UNORM ||
-                        ps->format == PIPE_FORMAT_X8Z24_UNORM ||
-                        ps->format == PIPE_FORMAT_Z24S8_UNORM ||
-                        ps->format == PIPE_FORMAT_Z24X8_UNORM ||
-                        ps->format == PIPE_FORMAT_Z16_UNORM ||
-                        ps->format == PIPE_FORMAT_Z32_UNORM ||
-                        ps->format == PIPE_FORMAT_S8_UNORM);
+      tc->transfer = screen->get_tex_transfer(screen, ps->texture, ps->face,
+                                              ps->level, ps->zslice,
+                                              PIPE_TRANSFER_READ_WRITE,
+                                              0, 0, ps->width, ps->height);
+
+      tc->depth_stencil = (ps->format == PIPE_FORMAT_S8Z24_UNORM ||
+                           ps->format == PIPE_FORMAT_X8Z24_UNORM ||
+                           ps->format == PIPE_FORMAT_Z24S8_UNORM ||
+                           ps->format == PIPE_FORMAT_Z24X8_UNORM ||
+                           ps->format == PIPE_FORMAT_Z16_UNORM ||
+                           ps->format == PIPE_FORMAT_Z32_UNORM ||
+                           ps->format == PIPE_FORMAT_S8_UNORM);
+   }
 }
 
 
@@ -235,18 +239,22 @@ sp_tile_cache_set_texture(struct pipe_context *pipe,
                           struct softpipe_tile_cache *tc,
                           struct pipe_texture *texture)
 {
-   struct pipe_screen *screen = texture->screen;
    uint i;
 
    assert(!tc->transfer);
 
    pipe_texture_reference(&tc->texture, texture);
 
-   if (tc->tex_trans_map) {
-      tc->screen->transfer_unmap(tc->screen, tc->tex_trans);
-      tc->tex_trans_map = NULL;
+   if (tc->transfer) {
+      struct pipe_screen *screen = tc->transfer->texture->screen;
+
+      if (tc->tex_trans_map) {
+         tc->screen->transfer_unmap(tc->screen, tc->tex_trans);
+         tc->tex_trans_map = NULL;
+      }
+
+      screen->tex_transfer_release(screen, &tc->tex_trans);
    }
-   screen->tex_transfer_release(screen, &tc->tex_trans);
 
    /* mark as entries as invalid/empty */
    /* XXX we should try to avoid this when the teximage hasn't changed */
@@ -539,9 +547,12 @@ sp_get_cached_tile_tex(struct softpipe_context *sp,
           tc->tex_z != z) {
          /* get new transfer (view into texture) */
 
-	 if (tc->tex_trans_map)
-            tc->screen->transfer_unmap(tc->screen, tc->tex_trans);
-         screen->tex_transfer_release(screen, &tc->tex_trans);
+         if (tc->transfer) {
+            if (tc->tex_trans_map)
+               tc->screen->transfer_unmap(tc->screen, tc->tex_trans);
+
+            screen->tex_transfer_release(screen, &tc->tex_trans);
+         }
 
          tc->tex_trans = screen->get_tex_transfer(screen, tc->texture, face, level, z, 
                                                   PIPE_TRANSFER_READ, 0, 0,
