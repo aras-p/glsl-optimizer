@@ -112,12 +112,6 @@ struct softpipe_context {
 
    unsigned reduced_api_prim;  /**< PIPE_PRIM_POINTS, _LINES or _TRIANGLES */
 
-#if 0
-   /* Stipple derived state:
-    */
-   ubyte stipple_masks[16][16];
-#endif
-
    /** Derived from scissor and surface bounds: */
    struct pipe_scissor_state cliprect;
 
