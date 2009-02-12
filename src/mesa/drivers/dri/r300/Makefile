@@ -94,7 +94,7 @@ COMMON_SYMLINKS = \
 	radeon_texture.c \
 	radeon_texture.h
 
-DRI_LIB_DEPS += -ldrm_radeon
+DRI_LIB_DEPS += #-ldrm_radeon
 
 ##### TARGETS #####
 

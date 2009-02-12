@@ -79,7 +79,7 @@ COMMON_SYMLINKS = \
 	radeon_dma.c \
 	radeon_dma.h
 
-DRI_LIB_DEPS += -ldrm_radeon
+DRI_LIB_DEPS += #-ldrm_radeon
 
 ##### TARGETS #####
 

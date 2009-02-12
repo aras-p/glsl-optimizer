@@ -38,7 +38,7 @@ C_SOURCES = \
 
 DRIVER_DEFINES = -DRADEON_COMMON=0
 
-DRI_LIB_DEPS += -ldrm_radeon
+DRI_LIB_DEPS += #-ldrm_radeon
 
 X86_SOURCES = 
 
