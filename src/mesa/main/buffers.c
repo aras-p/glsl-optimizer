@@ -290,7 +290,10 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (n < 1 || n > (GLsizei) ctx->Const.MaxDrawBuffers) {
+   /* Turns out n==0 is a valid input that should not produce an error.
+    * The remaining code below correctly handles the n==0 case.
+    */
+   if (n < 0 || n > (GLsizei) ctx->Const.MaxDrawBuffers) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glDrawBuffersARB(n)");
       return;
    }
@@ -332,12 +335,14 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
    _mesa_drawbuffers(ctx, n, buffers, destMask);
 
    /*
-    * Call device driver function.
+    * Call device driver function.  Note that n can be equal to 0,
+    * in which case we don't want to reference buffers[0], which
+    * may not be valid.
     */
    if (ctx->Driver.DrawBuffers)
       ctx->Driver.DrawBuffers(ctx, n, buffers);
    else if (ctx->Driver.DrawBuffer)
-      ctx->Driver.DrawBuffer(ctx, buffers[0]);
+      ctx->Driver.DrawBuffer(ctx, n>0? buffers[0]:GL_NONE);
 }
 
 
