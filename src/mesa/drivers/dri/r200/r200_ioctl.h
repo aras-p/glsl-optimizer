@@ -38,7 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/simple_list.h"
 #include "radeon_dri.h"
 
-#include "radeon_cs_legacy.h"
+#include "radeon_bocs_wrapper.h"
 
 #include "xf86drm.h"
 #include "drm.h"

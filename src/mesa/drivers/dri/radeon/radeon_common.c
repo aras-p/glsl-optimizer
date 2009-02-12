@@ -63,13 +63,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vblank.h"
 
 #include "radeon_common.h"
-#include "radeon_common.h"
-#include "radeon_bo.h"
-#include "radeon_cs.h"
-#include "radeon_bo_legacy.h"
-#include "radeon_cs_legacy.h"
-#include "radeon_bo_gem.h"
-#include "radeon_cs_gem.h"
+#include "radeon_bocs_wrapper.h"
 #include "radeon_drm.h"
 #include "radeon_mipmap_tree.h"
 

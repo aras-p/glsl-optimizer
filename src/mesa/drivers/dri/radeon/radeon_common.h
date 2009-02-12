@@ -2,7 +2,6 @@
 #define COMMON_MISC_H
 
 #include "radeon_common_context.h"
-#include "radeon_buffer.h"
 #include "radeon_dma.h"
 #include "radeon_texture.h"
 

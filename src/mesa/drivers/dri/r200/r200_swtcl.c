@@ -48,7 +48,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 
-#include "radeon_bo.h"
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_state.h"

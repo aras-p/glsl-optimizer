@@ -43,7 +43,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "dri_util.h"
 #include "texmem.h"
 #include "radeon_common.h"
-#include "radeon_bo.h"
 
 #include "main/macros.h"
 #include "main/mtypes.h"

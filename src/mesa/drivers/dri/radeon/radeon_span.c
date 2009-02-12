@@ -47,8 +47,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_lock.h"
 #include "radeon_span.h"
 
-#include "radeon_buffer.h"
-
 #define DBG 0
 
 static GLubyte *radeon_ptr32(const struct radeon_renderbuffer * rrb,

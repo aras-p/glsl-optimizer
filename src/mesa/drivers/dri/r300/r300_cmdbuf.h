@@ -37,7 +37,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define __R300_CMDBUF_H__
 
 #include "r300_context.h"
-#include "radeon_cs.h"
 
 extern void r300InitCmdBuf(r300ContextPtr r300);
 extern void r300DestroyCmdBuf(r300ContextPtr r300);

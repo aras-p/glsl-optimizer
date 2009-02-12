@@ -45,9 +45,9 @@
 
 #include "drm.h"
 #include "radeon_drm.h"
-#include "radeon_bo.h"
-#include "radeon_bo_legacy.h"
 #include "radeon_common.h"
+#include "radeon_bocs_wrapper.h"
+
 
 struct bo_legacy {
     struct radeon_bo    base;

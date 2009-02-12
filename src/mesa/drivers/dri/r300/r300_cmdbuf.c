@@ -44,17 +44,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drm.h"
 #include "radeon_drm.h"
 
-#include "radeon_buffer.h"
 #include "r300_context.h"
 #include "r300_ioctl.h"
 #include "radeon_reg.h"
 #include "r300_reg.h"
 #include "r300_cmdbuf.h"
 #include "r300_emit.h"
+#include "radeon_bocs_wrapper.h"
 #include "radeon_mipmap_tree.h"
 #include "r300_state.h"
-#include "radeon_cs_legacy.h"
-#include "radeon_cs_gem.h"
 #include "radeon_reg.h"
 
 #define R300_VAP_PVS_UPLOAD_ADDRESS 0x2200

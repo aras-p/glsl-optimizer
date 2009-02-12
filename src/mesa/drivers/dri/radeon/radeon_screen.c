@@ -46,7 +46,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_chipset.h"
 #include "radeon_macros.h"
 #include "radeon_screen.h"
-#include "radeon_buffer.h"
 #include "radeon_common.h"
 #include "radeon_span.h"
 #if !RADEON_COMMON
@@ -66,13 +65,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vblank.h"
 #include "drirenderbuffer.h"
 
+#include "radeon_bocs_wrapper.h"
+
 #include "GL/internal/dri_interface.h"
 
 /* Radeon configuration
  */
 #include "xmlpool.h"
-#include "radeon_bo_legacy.h"
-#include "radeon_bo_gem.h"
 
 #define DRI_CONF_COMMAND_BUFFER_SIZE(def,min,max) \
 DRI_CONF_OPT_BEGIN_V(command_buffer_size,int,def, # min ":" # max ) \

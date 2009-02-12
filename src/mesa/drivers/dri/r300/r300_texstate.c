@@ -48,10 +48,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "r300_ioctl.h"
 #include "radeon_mipmap_tree.h"
-#include "radeon_cs.h"
 #include "r300_tex.h"
 #include "r300_reg.h"
-#include "radeon_buffer.h"
 
 #define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_RGBA_DXT5			\
 			   || ((f) >= MESA_FORMAT_RGBA_FLOAT32 &&	\

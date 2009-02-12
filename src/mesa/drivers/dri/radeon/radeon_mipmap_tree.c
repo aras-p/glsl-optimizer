@@ -34,8 +34,6 @@
 #include "main/texcompress.h"
 #include "main/texformat.h"
 
-#include "radeon_buffer.h"
-
 static GLuint radeon_compressed_texture_size(GLcontext *ctx,
 		GLsizei width, GLsizei height, GLsizei depth,
 		GLuint mesaFormat)

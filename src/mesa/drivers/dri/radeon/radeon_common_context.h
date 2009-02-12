@@ -68,6 +68,22 @@ typedef struct radeon_context *radeonContextPtr;
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
+struct radeon_renderbuffer
+{
+	struct gl_renderbuffer base;
+	struct radeon_bo *bo;
+	unsigned int cpp;
+	/* unsigned int offset; */
+	unsigned int pitch;
+	unsigned int width;
+	unsigned int height;
+
+	/* boo Xorg 6.8.2 compat */
+	int has_surface;
+
+	__DRIdrawablePrivate *dPriv;
+};
+
 struct radeon_colorbuffer_state {
 	GLuint clear;
 	int roundEnable;

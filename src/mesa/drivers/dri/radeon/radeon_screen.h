@@ -46,7 +46,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_reg.h"
 #include "drm_sarea.h"
 #include "xmlconfig.h"
-#include "radeon_bo.h"
 
 
 typedef struct {

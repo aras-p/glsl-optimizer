@@ -53,7 +53,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
 
-#include "radeon_buffer.h"
 #include "r300_context.h"
 #include "r300_ioctl.h"
 #include "r300_state.h"

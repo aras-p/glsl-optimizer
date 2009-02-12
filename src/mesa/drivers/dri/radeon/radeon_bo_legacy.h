@@ -32,7 +32,6 @@
 #ifndef RADEON_BO_LEGACY_H
 #define RADEON_BO_LEGACY_H
 
-#include "radeon_bo.h"
 #include "radeon_screen.h"
 
 void radeon_bo_legacy_pending(struct radeon_bo *bo, uint32_t pending);

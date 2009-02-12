@@ -63,7 +63,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_tex.h"
 #include "r300_emit.h"
 #include "r300_swtcl.h"
-#include "radeon_bo_legacy.h"
+#include "radeon_bocs_wrapper.h"
 
 
 #include "vblank.h"
