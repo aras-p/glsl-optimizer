@@ -32,13 +32,12 @@
  * \author  Brian Paul
  */
 
-#include "sp_setup.h"
-
 #include "sp_context.h"
+#include "sp_prim_setup.h"
 #include "sp_quad.h"
 #include "sp_quad_pipe.h"
+#include "sp_setup.h"
 #include "sp_state.h"
-#include "sp_prim_setup.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_vertex.h"
@@ -265,17 +264,20 @@ is_inf_or_nan(float x)
 }
 
 
-static boolean cull_tri( struct setup_context *setup,
-		      float det )
+/**
+ * Do triangle cull test using tri determinant (sign indicates orientation)
+ * \return true if triangle is to be culled.
+ */
+static INLINE boolean
+cull_tri(const struct setup_context *setup, float det)
 {
-   if (det != 0) 
-   {   
+   if (det != 0) {   
       /* if (det < 0 then Z points toward camera and triangle is 
        * counter-clockwise winding.
        */
       unsigned winding = (det < 0) ? PIPE_WINDING_CCW : PIPE_WINDING_CW;
-      
-      if ((winding & setup->winding) == 0) 
+
+      if ((winding & setup->winding) == 0)
 	 return FALSE;
    }
 
@@ -1009,7 +1011,7 @@ void setup_tri( struct setup_context *setup,
  * for a line.
  */
 static void
-line_linear_coeff(struct setup_context *setup,
+line_linear_coeff(const struct setup_context *setup,
                   struct tgsi_interp_coef *coef,
                   uint vertSlot, uint i)
 {
@@ -1029,9 +1031,9 @@ line_linear_coeff(struct setup_context *setup,
  * for a line.
  */
 static void
-line_persp_coeff(struct setup_context *setup,
-                  struct tgsi_interp_coef *coef,
-                  uint vertSlot, uint i)
+line_persp_coeff(const struct setup_context *setup,
+                 struct tgsi_interp_coef *coef,
+                 uint vertSlot, uint i)
 {
    /* XXX double-check/verify this arithmetic */
    const float a0 = setup->vmin[vertSlot][i] * setup->vmin[0][3];
@@ -1266,7 +1268,7 @@ setup_line(struct setup_context *setup,
 
 
 static void
-point_persp_coeff(struct setup_context *setup,
+point_persp_coeff(const struct setup_context *setup,
                   const float (*vert)[4],
                   struct tgsi_interp_coef *coef,
                   uint vertSlot, uint i)
