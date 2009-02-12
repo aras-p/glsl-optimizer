@@ -8,12 +8,17 @@ enum _subroutine {
     SUB_NOISE1, SUB_NOISE2, SUB_NOISE3, SUB_NOISE4
 };
 
-/* Only guess, need a flag in gl_fragment_program later */
+
+/**
+ * Determine if the given fragment program uses GLSL features such
+ * as flow conditionals, loops, subroutines.
+ * Some GLSL shaders may use these features, others might not.
+ */
 GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
 {
     int i;
     for (i = 0; i < fp->Base.NumInstructions; i++) {
-	struct prog_instruction *inst = &fp->Base.Instructions[i];
+	const struct prog_instruction *inst = &fp->Base.Instructions[i];
 	switch (inst->Opcode) {
 	    case OPCODE_IF:
 	    case OPCODE_TRUNC:
@@ -176,13 +181,15 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
 	    src->NegateBase, src->Abs);
 }
 
-/* Subroutines are minimal support for resusable instruction sequences.
-   They are implemented as simply as possible to minimise overhead: there
-   is no explicit support for communication between the caller and callee
-   other than saving the return address in a temporary register, nor is
-   there any automatic local storage.  This implies that great care is
-   required before attempting reentrancy or any kind of nested
-   subroutine invocations. */
+/**
+ * Subroutines are minimal support for resusable instruction sequences.
+ * They are implemented as simply as possible to minimise overhead: there
+ * is no explicit support for communication between the caller and callee
+ * other than saving the return address in a temporary register, nor is
+ * there any automatic local storage.  This implies that great care is
+ * required before attempting reentrancy or any kind of nested
+ * subroutine invocations.
+ */
 static void invoke_subroutine( struct brw_wm_compile *c,
 			       enum _subroutine subroutine,
 			       void (*emit)( struct brw_wm_compile * ) )
@@ -1363,9 +1370,11 @@ static void emit_noise2( struct brw_wm_compile *c,
     release_tmps( c, mark );
 }
 
-/* The three-dimensional case is much like the one- and two- versions above,
-   but since the number of corners is rapidly growing we now pack 16 16-bit
-   hashes into each register to extract more parallelism from the EUs. */
+/**
+ * The three-dimensional case is much like the one- and two- versions above,
+ * but since the number of corners is rapidly growing we now pack 16 16-bit
+ * hashes into each register to extract more parallelism from the EUs.
+ */
 static void noise3_sub( struct brw_wm_compile *c ) {
 
     struct brw_compile *p = &c->func;
@@ -1667,11 +1676,13 @@ static void emit_noise3( struct brw_wm_compile *c,
     release_tmps( c, mark );
 }
     
-/* For the four-dimensional case, the little micro-optimisation benefits
-   we obtain by unrolling all the loops aren't worth the massive bloat it
-   now causes.  Instead, we loop twice around performing a similar operation
-   to noise3, once for the w=0 cube and once for the w=1, with a bit more
-   code to glue it all together. */
+/**
+ * For the four-dimensional case, the little micro-optimisation benefits
+ * we obtain by unrolling all the loops aren't worth the massive bloat it
+ * now causes.  Instead, we loop twice around performing a similar operation
+ * to noise3, once for the w=0 cube and once for the w=1, with a bit more
+ * code to glue it all together.
+ */
 static void noise4_sub( struct brw_wm_compile *c )
 {
     struct brw_compile *p = &c->func;
@@ -2511,10 +2522,19 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	c->fp->program.Base.Instructions[i].Data = NULL;
 }
 
+
+/**
+ * Do GPU code generation for shaders that use GLSL features such as
+ * flow control.  Other shaders will be compiled with the 
+ */
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
+    /* initial instruction translation/simplification */
     brw_wm_pass_fp(c);
+
+    /* actual code generation */
     brw_wm_emit_glsl(brw, c);
+
     c->prog_data.total_grf = c->reg_index;
     c->prog_data.total_scratch = 0;
 }
