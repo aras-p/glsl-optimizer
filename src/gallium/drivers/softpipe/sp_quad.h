@@ -34,6 +34,7 @@
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_exec.h"
 
+
 #define QUAD_PRIM_POINT 1
 #define QUAD_PRIM_LINE  2
 #define QUAD_PRIM_TRI   3
@@ -56,23 +57,29 @@
 
 
 /**
- * Encodes everything we need to know about a 2x2 pixel block.  Uses
- * "Channel-Serial" or "SoA" layout.  
+ * Quad stage inputs (pos, coverage, front/back face, etc)
  */
 struct quad_header_input
 {
-   int x0;
-   int y0;
-   float coverage[QUAD_SIZE];    /** fragment coverage for antialiasing */
-   unsigned facing:1;   /**< Front (0) or back (1) facing? */
-   unsigned prim:2;     /**< QUAD_PRIM_POINT, LINE, TRI */
+   int x0, y0;                /**< quad window pos, always even */
+   float coverage[QUAD_SIZE]; /**< fragment coverage for antialiasing */
+   unsigned facing:1;         /**< Front (0) or back (1) facing? */
+   unsigned prim:2;           /**< QUAD_PRIM_POINT, LINE, TRI */
 };
 
+
+/**
+ * Quad stage inputs/outputs.
+ */
 struct quad_header_inout
 {
    unsigned mask:4;
 };
 
+
+/**
+ * Quad stage outputs (color & depth).
+ */
 struct quad_header_output
 {
    /** colors in SOA format (rrrr, gggg, bbbb, aaaa) */
@@ -80,6 +87,11 @@ struct quad_header_output
    float depth[QUAD_SIZE];
 };
 
+
+/**
+ * Encodes everything we need to know about a 2x2 pixel block.  Uses
+ * "Channel-Serial" or "SoA" layout.  
+ */
 struct quad_header {
    struct quad_header_input input;
    struct quad_header_inout inout;
