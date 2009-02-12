@@ -42,10 +42,6 @@
 
 
 extern void
-_mesa_transform_vector(GLfloat u[4], CONST GLfloat v[4], CONST GLfloat m[16]);
-
-
-extern void
 _math_init_transformation(void);
 
 

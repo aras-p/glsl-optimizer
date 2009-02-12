@@ -1620,3 +1620,24 @@ _math_transposefd( GLfloat to[16], const GLdouble from[16] )
 
 /*@}*/
 
+
+/**
+ * Transform a 4-element row vector (1x4 matrix) by a 4x4 matrix.  This
+ * function is used for transforming clipping plane equations and spotlight
+ * directions.
+ * Mathematically,  u = v * m.
+ * Input:  v - input vector
+ *         m - transformation matrix
+ * Output:  u - transformed vector
+ */
+void
+_mesa_transform_vector( GLfloat u[4], const GLfloat v[4], const GLfloat m[16] )
+{
+   const GLfloat v0 = v[0], v1 = v[1], v2 = v[2], v3 = v[3];
+#define M(row,col)  m[row + col*4]
+   u[0] = v0 * M(0,0) + v1 * M(1,0) + v2 * M(2,0) + v3 * M(3,0);
+   u[1] = v0 * M(0,1) + v1 * M(1,1) + v2 * M(2,1) + v3 * M(3,1);
+   u[2] = v0 * M(0,2) + v1 * M(1,2) + v2 * M(2,2) + v3 * M(3,2);
+   u[3] = v0 * M(0,3) + v1 * M(1,3) + v2 * M(2,3) + v3 * M(3,3);
+#undef M
+}
