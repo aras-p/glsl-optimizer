@@ -32,7 +32,6 @@
 #define SP_CONTEXT_H
 
 #include "pipe/p_context.h"
-#include "pipe/p_defines.h"
 
 #include "draw/draw_vertex.h"
 
