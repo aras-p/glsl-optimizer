@@ -425,6 +425,7 @@ def generate(env):
               '/Od', # disable optimizations
               '/Oi', # enable intrinsic functions
               '/Oy-', # disable frame pointer omission
+              '/GL-', # disable whole program optimization
             ]
         else:
             ccflags += [
@@ -516,9 +517,14 @@ def generate(env):
             linkflags += ['-m32']
         if env['machine'] == 'x86_64':
             linkflags += ['-m64']
-    if platform == 'winddk':
+    if platform == 'windows':
         # See also:
         # - http://msdn2.microsoft.com/en-us/library/y0zzbyt4.aspx
+        linkflags += [
+            '/fixed:no',
+            '/incremental:no',
+        ]
+    if platform == 'winddk':
         linkflags += [
             '/merge:_PAGE=PAGE',
             '/merge:_TEXT=.text',
