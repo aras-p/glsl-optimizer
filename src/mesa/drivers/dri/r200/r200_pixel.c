@@ -262,7 +262,7 @@ r200TryReadPixels( GLcontext *ctx,
    }
    UNLOCK_HARDWARE( &rmesa->radeon );
 
-   r200Finish( ctx ); /* required by GL */
+   radeonFinish( ctx ); /* required by GL */
 #endif
    return GL_TRUE;
 }

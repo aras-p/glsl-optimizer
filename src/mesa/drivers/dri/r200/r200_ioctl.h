@@ -61,8 +61,6 @@ extern GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
 
 extern void r200EmitAOS(r200ContextPtr rmesa, GLuint nr, GLuint offset);
 
-extern void r200Flush( GLcontext *ctx );
-extern void r200Finish( GLcontext *ctx );
 extern void r200InitIoctlFuncs( struct dd_function_table *functions );
 
 extern void *r200AllocateMemoryMESA( __DRIscreen *screen, GLsizei size, GLfloat readfreq,

@@ -213,7 +213,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
 	 return;
    }
 
-   r200Flush( ctx );
+   radeonFlush( ctx );
 
    if ( mask & BUFFER_BIT_FRONT_LEFT ) {
       flags |= RADEON_FRONT;

@@ -2380,7 +2380,7 @@ again:
    if (ret == RADEON_CS_SPACE_OP_TO_BIG)
       return GL_FALSE;
    if (ret == RADEON_CS_SPACE_FLUSH) {
-      r200Flush(ctx);
+      radeonFlush(ctx);
       if (flushed)
 	 return GL_FALSE;
       flushed = 1;

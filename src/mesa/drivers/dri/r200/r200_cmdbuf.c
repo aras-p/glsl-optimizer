@@ -187,7 +187,7 @@ void r200FlushElts(GLcontext *ctx)
 
    if (R200_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "%s: Syncing\n", __FUNCTION__);
-      r200Finish( rmesa->radeon.glCtx );
+      radeonFinish( rmesa->radeon.glCtx );
    }
 }
 
