@@ -2692,8 +2692,6 @@ void r300InitState(r300ContextPtr r300)
 	GLcontext *ctx = r300->radeon.glCtx;
 	GLuint depth_fmt;
 
-	radeonInitState(&r300->radeon);
-
 	switch (ctx->Visual.depthBits) {
 	case 16:
 		r300->radeon.state.depth.scale = 1.0 / (GLfloat) 0xffff;
@@ -2769,7 +2767,6 @@ static void r300ReadBuffer( GLcontext *ctx, GLenum mode )
  */
 void r300InitStateFuncs(struct dd_function_table *functions)
 {
-	radeonInitStateFuncs(functions);
 
 	functions->UpdateState = r300InvalidateState;
 	functions->AlphaFunc = r300AlphaFunc;

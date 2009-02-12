@@ -1564,7 +1564,7 @@ static void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
    }
 
    radeonSetCliprects( &rmesa->radeon );
-
+   radeonUpdatePageFlipping(&rmesa->radeon);
    /* We'll set the drawing engine's offset/pitch parameters later
     * when we update other state.
     */

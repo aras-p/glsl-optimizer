@@ -2595,7 +2595,6 @@ again_alloc:
 	bos[0].write_domain =0 ;
 	bos[0].new_accounted = 0;
 
-again:
 	ret = radeon_cs_space_check(rmesa->cmdbuf.cs, bos, 1);
 	if (ret == RADEON_CS_SPACE_OP_TO_BIG) {
 		fprintf(stderr,"Got OPEARTION TO BIG ILLEGAL - this cannot happen");
