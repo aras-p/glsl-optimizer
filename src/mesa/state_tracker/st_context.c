@@ -105,7 +105,7 @@ static struct st_context *
 st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 {
    uint i;
-   struct st_context *st = CALLOC_STRUCT( st_context );
+   struct st_context *st = ST_CALLOC_STRUCT( st_context );
    
    ctx->st = st;
 

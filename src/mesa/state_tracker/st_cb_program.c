@@ -99,7 +99,7 @@ static struct gl_program *st_new_program( GLcontext *ctx,
 {
    switch (target) {
    case GL_VERTEX_PROGRAM_ARB: {
-      struct st_vertex_program *prog = CALLOC_STRUCT(st_vertex_program);
+      struct st_vertex_program *prog = ST_CALLOC_STRUCT(st_vertex_program);
 
       prog->serialNo = SerialNo++;
 
@@ -111,7 +111,7 @@ static struct gl_program *st_new_program( GLcontext *ctx,
 
    case GL_FRAGMENT_PROGRAM_ARB:
    case GL_FRAGMENT_PROGRAM_NV: {
-      struct st_fragment_program *prog = CALLOC_STRUCT(st_fragment_program);
+      struct st_fragment_program *prog = ST_CALLOC_STRUCT(st_fragment_program);
 
       prog->serialNo = SerialNo++;
 

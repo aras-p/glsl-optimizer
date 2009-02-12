@@ -232,7 +232,7 @@ st_new_framebuffer(GLcontext *ctx, GLuint name)
 static struct gl_renderbuffer *
 st_new_renderbuffer(GLcontext *ctx, GLuint name)
 {
-   struct st_renderbuffer *strb = CALLOC_STRUCT(st_renderbuffer);
+   struct st_renderbuffer *strb = ST_CALLOC_STRUCT(st_renderbuffer);
    if (strb) {
       _mesa_init_renderbuffer(&strb->Base, name);
       strb->Base.Delete = st_renderbuffer_delete;
@@ -254,7 +254,7 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples)
 {
    struct st_renderbuffer *strb;
 
-   strb = CALLOC_STRUCT(st_renderbuffer);
+   strb = ST_CALLOC_STRUCT(st_renderbuffer);
    if (!strb) {
       _mesa_error(NULL, GL_OUT_OF_MEMORY, "creating renderbuffer");
       return NULL;

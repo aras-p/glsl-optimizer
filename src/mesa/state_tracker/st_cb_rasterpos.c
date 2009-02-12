@@ -180,7 +180,7 @@ rastpos_point(struct draw_stage *stage, struct prim_header *prim)
 static struct rastpos_stage *
 new_draw_rastpos_stage(GLcontext *ctx, struct draw_context *draw)
 {
-   struct rastpos_stage *rs = CALLOC_STRUCT(rastpos_stage);
+   struct rastpos_stage *rs = ST_CALLOC_STRUCT(rastpos_stage);
    GLuint i;
 
    rs->stage.draw = draw;

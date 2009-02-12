@@ -55,7 +55,7 @@
 static struct gl_buffer_object *
 st_bufferobj_alloc(GLcontext *ctx, GLuint name, GLenum target)
 {
-   struct st_buffer_object *st_obj = CALLOC_STRUCT(st_buffer_object);
+   struct st_buffer_object *st_obj = ST_CALLOC_STRUCT(st_buffer_object);
 
    if (!st_obj)
       return NULL;

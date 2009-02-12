@@ -165,7 +165,7 @@ find_translated_vp(struct st_context *st,
 
    /* No?  Allocate translated vp object now */
    if (!xvp) {
-      xvp = CALLOC_STRUCT(translated_vertex_program);
+      xvp = ST_CALLOC_STRUCT(translated_vertex_program);
       xvp->frag_inputs = fragInputsRead;
       xvp->master = stvp;
 

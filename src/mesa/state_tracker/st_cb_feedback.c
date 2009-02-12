@@ -184,7 +184,7 @@ feedback_destroy( struct draw_stage *stage )
 static struct draw_stage *
 draw_glfeedback_stage(GLcontext *ctx, struct draw_context *draw)
 {
-   struct feedback_stage *fs = CALLOC_STRUCT(feedback_stage);
+   struct feedback_stage *fs = ST_CALLOC_STRUCT(feedback_stage);
 
    fs->stage.draw = draw;
    fs->stage.next = NULL;
@@ -257,7 +257,7 @@ select_destroy( struct draw_stage *stage )
 static struct draw_stage *
 draw_glselect_stage(GLcontext *ctx, struct draw_context *draw)
 {
-   struct feedback_stage *fs = CALLOC_STRUCT(feedback_stage);
+   struct feedback_stage *fs = ST_CALLOC_STRUCT(feedback_stage);
 
    fs->stage.draw = draw;
    fs->stage.next = NULL;
