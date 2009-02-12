@@ -35,7 +35,6 @@
 #include "main/enums.h"
 #include "main/macros.h"
 #include "main/texenv.h"
-#include "math/m_xform.h"
 
 
 #define TE_ERROR(errCode, msg, value)				\
