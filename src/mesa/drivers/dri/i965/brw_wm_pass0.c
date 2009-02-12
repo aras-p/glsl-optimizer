@@ -334,8 +334,9 @@ static struct brw_wm_ref *get_new_ref( struct brw_wm_compile *c,
 }
 
 
-static struct brw_wm_instruction *translate_insn( struct brw_wm_compile *c,
-						  const struct prog_instruction *inst )
+static void
+translate_insn(struct brw_wm_compile *c,
+               const struct prog_instruction *inst)
 {
    struct brw_wm_instruction *out = get_instruction(c);
    GLuint writemask = inst->DstReg.WriteMask;
@@ -365,8 +366,6 @@ static struct brw_wm_instruction *translate_insn( struct brw_wm_compile *c,
       pass0_set_dst_scalar(c, out, inst, writemask);
    else 
       pass0_set_dst(c, out, inst, writemask);
-
-   return out;
 }
 
 
