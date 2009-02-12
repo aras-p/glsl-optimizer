@@ -1115,7 +1115,9 @@ radeonDestroyScreen( __DRIscreenPrivate *sPriv )
         return;
 
     if (screen->kernel_mm) {
+#ifdef RADEON_BO_TRACK
         radeon_tracker_print(&screen->bom->tracker, stderr);
+#endif
         radeon_bo_manager_gem_dtor(screen->bom);
     } else {
         radeon_bo_manager_legacy_dtor(screen->bom);

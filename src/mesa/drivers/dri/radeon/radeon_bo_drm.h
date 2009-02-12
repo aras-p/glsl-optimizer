@@ -32,7 +32,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include "radeon_track.h"
+//#include "radeon_track.h"
 
 /* bo object */
 #define RADEON_BO_FLAGS_MACRO_TILE  1
@@ -73,7 +73,10 @@ struct radeon_bo_funcs {
 struct radeon_bo_manager {
     struct radeon_bo_funcs  *funcs;
     int                     fd;
+
+#ifdef RADEON_BO_TRACK
     struct radeon_tracker   tracker;
+#endif
 };
     
 static inline void _radeon_bo_debug(struct radeon_bo *bo,

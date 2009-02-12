@@ -26,7 +26,18 @@ static inline void radeon_bo_manager_gem_dtor(void *dummy)
 {
 }
 
+static inline void *radeon_cs_manager_gem_ctor(int fd)
+{
+  return NULL;
+}
 
+static inline void radeon_cs_manager_gem_dtor(void *dummy)
+{
+}
+
+static inline void radeon_tracker_print(void *ptr, int io)
+{
+}
 #endif
 
 #include "radeon_bo_legacy.h"

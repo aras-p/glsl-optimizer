@@ -37,6 +37,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "drirenderbuffer.h"
 #include "vblank.h"
+#include "main/state.h"
 
 #define DRIVER_DATE "20090101"
 
@@ -175,7 +176,9 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
  */
 void radeonCleanupContext(radeonContextPtr radeon)
 {
+#ifdef RADEON_BO_TRACK
 	FILE *track;
+#endif
 	struct radeon_renderbuffer *rb;
 	GLframebuffer *fb;
 
@@ -232,11 +235,13 @@ void radeonCleanupContext(radeonContextPtr radeon)
 		FREE(radeon->state.scissor.pClipRects);
 		radeon->state.scissor.pClipRects = 0;
 	}
+#ifdef RADEON_BO_TRACK
 	track = fopen("/tmp/tracklog", "w");
 	if (track) {
 		radeon_tracker_print(&radeon->radeonScreen->bom->tracker, track);
 		fclose(track);
 	}
+#endif
 }
 
 /* Force the context `c' to be unbound from its buffer.

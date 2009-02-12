@@ -14,6 +14,7 @@ endif
 RADEON_COMMON_SOURCES = \
 	radeon_texture.c \
 	radeon_common_context.c \
+	radeon_common.c \
 	radeon_dma.c \
 	radeon_lock.c \
 	radeon_bo_legacy.c \
