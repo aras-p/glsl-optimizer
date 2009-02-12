@@ -90,51 +90,53 @@ static void do_wm_prog( struct brw_context *brw,
 
    c = brw->wm.compile_data;
    if (c == NULL) {
-     brw->wm.compile_data = calloc(1, sizeof(*brw->wm.compile_data));
-     c = brw->wm.compile_data;
+      brw->wm.compile_data = calloc(1, sizeof(*brw->wm.compile_data));
+      c = brw->wm.compile_data;
    } else {
-     memset(c, 0, sizeof(*brw->wm.compile_data));
+      memset(c, 0, sizeof(*brw->wm.compile_data));
    }
    memcpy(&c->key, key, sizeof(*key));
 
    c->fp = fp;
    c->env_param = brw->intel.ctx.FragmentProgram.Parameters;
 
-    brw_init_compile(brw, &c->func);
+   brw_init_compile(brw, &c->func);
+
    if (brw_wm_is_glsl(&c->fp->program)) {
-       brw_wm_glsl_emit(brw, c);
-   } else {
-       /* Augment fragment program.  Add instructions for pre- and
-	* post-fragment-program tasks such as interpolation and fogging.
-	*/
-       brw_wm_pass_fp(c);
+      brw_wm_glsl_emit(brw, c);
+   }
+   else {
+      /* Augment fragment program.  Add instructions for pre- and
+       * post-fragment-program tasks such as interpolation and fogging.
+       */
+      brw_wm_pass_fp(c);
 
-       /* Translate to intermediate representation.  Build register usage
-	* chains.
-	*/
-       brw_wm_pass0(c);
+      /* Translate to intermediate representation.  Build register usage
+       * chains.
+       */
+      brw_wm_pass0(c);
 
-       /* Dead code removal.
-	*/
-       brw_wm_pass1(c);
+      /* Dead code removal.
+       */
+      brw_wm_pass1(c);
 
-       /* Register allocation.
-	*/
-       c->grf_limit = BRW_WM_MAX_GRF/2;
+      /* Register allocation.
+       */
+      c->grf_limit = BRW_WM_MAX_GRF/2;
 
-       brw_wm_pass2(c);
+      brw_wm_pass2(c);
 
-       c->prog_data.total_grf = c->max_wm_grf;
-       if (c->last_scratch) {
-	   c->prog_data.total_scratch =
-	       c->last_scratch + 0x40;
-       } else {
-	   c->prog_data.total_scratch = 0;
-       }
+      c->prog_data.total_grf = c->max_wm_grf;
+      if (c->last_scratch) {
+         c->prog_data.total_scratch =
+            c->last_scratch + 0x40;
+      } else {
+         c->prog_data.total_scratch = 0;
+      }
 
-       /* Emit GEN4 code.
-	*/
-       brw_wm_emit(c);
+      /* Emit GEN4 code.
+       */
+      brw_wm_emit(c);
    }
    if (INTEL_DEBUG & DEBUG_WM)
       fprintf(stderr, "\n");
