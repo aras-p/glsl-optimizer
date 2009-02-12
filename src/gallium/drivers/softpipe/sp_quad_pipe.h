@@ -28,14 +28,19 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifndef SP_QUAD_H
-#define SP_QUAD_H
+#ifndef SP_QUAD_PIPE_H
+#define SP_QUAD_PIPE_H
 
 
 struct softpipe_context;
 struct quad_header;
 
 
+/**
+ * Fragment processing is performed on 2x2 blocks of pixels called "quads".
+ * Quad processing is performed with a pipeline of stages represented by
+ * this type.
+ */
 struct quad_stage {
    struct softpipe_context *softpipe;
 
@@ -66,4 +71,4 @@ void sp_build_quad_pipeline(struct softpipe_context *sp);
 
 void sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad);
 
-#endif /* SP_QUAD_H */
+#endif /* SP_QUAD_PIPE_H */
