@@ -428,9 +428,6 @@ dri)
     DRIVER_DIRS="dri"
     WINDOW_SYSTEM="dri"
     GALLIUM_WINSYS_DIRS="drm $GALLIUM_WINSYS_DIRS"
-    GALLIUM_WINSYS_DRM_DIRS="intel"
-    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS i915simple i965simple"
-    GALLIUM_STATE_TRACKERS_DIRS="egl"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
@@ -1078,6 +1075,79 @@ if test "x$enable_gallium" = xyes; then
     SRC_DIRS="$SRC_DIRS gallium gallium/winsys"
 fi
 
+dnl
+dnl Gallium state trackers configuration
+dnl
+AC_ARG_WITH([state-trackers],
+    [AS_HELP_STRING([--with-state-trackers@<:@=DIRS...@:>@],
+        [comma delimited state_trackers list, e.g.
+        "egl,glx" @<:@default=auto@:>@])],
+    [with_state_trackers="$withval"],
+    [with_state_trackers=yes])
+
+case "$with_state_trackers" in
+no)
+    GALLIUM_STATE_TRACKERS_DIRS=""
+    ;;
+yes)
+    # look at what else is built
+    case "$mesa_driver" in
+    dri)
+        GALLIUM_STATE_TRACKERS_DIRS=egl
+        ;;
+    esac
+    ;;
+*)
+    # verify the requested state tracker exist
+    state_trackers=`IFS=', '; echo $with_state_trackers`
+    for tracker in $state_trackers; do
+        test -d "$srcdir/src/gallium/state_trackers/$tracker" || \
+            AC_MSG_ERROR([state tracker '$tracker' doesn't exist])
+    done
+    GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
+    ;;
+esac
+
+dnl
+dnl Gallium Intel configuration
+dnl
+AC_ARG_ENABLE([gallium-intel],
+    [AS_HELP_STRING([--disable-gallium-intel],
+        [build gallium intel @<:@default=enabled@:>@])],
+    [enable_gallium_intel="$enableval"],
+    [enable_gallium_intel=yes])
+if test "x$enable_gallium_intel" = xyes; then
+    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS intel"
+    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS i915simple i965simple"
+fi
+
+dnl
+dnl Gallium Radeon configuration
+dnl
+AC_ARG_ENABLE([gallium-radeon],
+    [AS_HELP_STRING([--enable-gallium-radeon],
+        [build gallium radeon @<:@default=disabled@:>@])],
+    [enable_gallium_radeon="$enableval"],
+    [enable_gallium_radeon=no])
+if test "x$enable_gallium_radeon" = xyes; then
+    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS radeon"
+    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS r300"
+fi
+
+dnl
+dnl Gallium Radeon configuration
+dnl
+AC_ARG_ENABLE([gallium-nouveau],
+    [AS_HELP_STRING([--enable-gallium-nouveau],
+        [build gallium nouveau @<:@default=disabled@:>@])],
+    [enable_gallium_nouveau="$enableval"],
+    [enable_gallium_nouveau=no])
+if test "x$enable_gallium_nouveau" = xyes; then
+    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS nouveau"
+    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS nv04 nv10 nv20 nv30 nv40 nv50"
+fi
+
+
 dnl Restore LDFLAGS and CPPFLAGS
 LDFLAGS="$_SAVE_LDFLAGS"
 CPPFLAGS="$_SAVE_CPPFLAGS"
@@ -1129,7 +1199,7 @@ if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
     echo "        Gallium:         yes"
     echo "        Gallium dirs:    $GALLIUM_DIRS"
     echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
-    echo "        Winsys drm dirs: $GALLIUM_WINSYS_DRM_DIRS"
+    echo "        Winsys drm dirs:$GALLIUM_WINSYS_DRM_DIRS"
     echo "        Auxiliary dirs:  $GALLIUM_AUXILIARY_DIRS"
     echo "        Driver dirs:     $GALLIUM_DRIVER_DIRS"
     echo "        Trackers dirs:   $GALLIUM_STATE_TRACKERS_DIRS"
