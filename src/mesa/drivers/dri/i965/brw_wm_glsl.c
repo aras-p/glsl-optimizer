@@ -323,7 +323,7 @@ static void emit_pixel_xy(struct brw_wm_compile *c,
 }
 
 static void emit_delta_xy(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                          struct prog_instruction *inst)
 {
     struct brw_reg r1 = brw_vec1_grf(1, 0);
     struct brw_reg dst0, dst1, src0, src1;
@@ -351,9 +351,7 @@ static void emit_delta_xy(struct brw_wm_compile *c,
 		negate(suboffset(r1,1)));
 
     }
-
 }
-
 
 static void fire_fb_write( struct brw_wm_compile *c,
                            GLuint base_reg,
@@ -410,18 +408,19 @@ static void emit_fb_write(struct brw_wm_compile *c,
 	brw_pop_insn_state(p);
     }
 
-   if (c->key.source_depth_to_render_target)
-   {
-      if (c->key.computes_depth) {
-         src0 = get_src_reg(c, &inst->SrcReg[2], 2, 1);
-         brw_MOV(p, brw_message_reg(nr), src0);
-      } else {
-         src0 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
-         brw_MOV(p, brw_message_reg(nr), src0);
-      }
+    if (c->key.source_depth_to_render_target) {
+       if (c->key.computes_depth) {
+          src0 = get_src_reg(c, &inst->SrcReg[2], 2, 1);
+          brw_MOV(p, brw_message_reg(nr), src0);
+       }
+       else {
+          src0 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
+          brw_MOV(p, brw_message_reg(nr), src0);
+       }
 
-      nr += 2;
-   }
+       nr += 2;
+    }
+
     target = inst->Sampler >> 1;
     eot = inst->Sampler & 1;
     fire_fb_write(c, 0, nr, target, eot);
@@ -1675,8 +1674,8 @@ static void emit_noise3( struct brw_wm_compile *c,
    now causes.  Instead, we loop twice around performing a similar operation
    to noise3, once for the w=0 cube and once for the w=1, with a bit more
    code to glue it all together. */
-static void noise4_sub( struct brw_wm_compile *c ) {
-
+static void noise4_sub( struct brw_wm_compile *c )
+{
     struct brw_compile *p = &c->func;
     struct brw_reg param[ 4 ],
 	x0y0, x0y1, x1y0, x1y1, /* gradients at four of the corners */
