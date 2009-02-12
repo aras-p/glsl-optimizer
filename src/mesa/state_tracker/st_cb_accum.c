@@ -255,13 +255,13 @@ accum_load(struct pipe_context *pipe, GLfloat value,
 
    buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   pipe_get_tile_rgba(color_trans, xpos, ypos, width, height, buf);
+   pipe_get_tile_rgba(color_trans, 0, 0, width, height, buf);
 
    for (i = 0; i < 4 * width * height; i++) {
       buf[i] = buf[i] * value;
    }
 
-   acc_put_tile_rgba(pipe, acc_trans, xpos, ypos, width, height, buf);
+   acc_put_tile_rgba(pipe, acc_trans, 0, 0, width, height, buf);
 
    free(buf);
    screen->tex_transfer_release(screen, &acc_trans);
@@ -292,11 +292,11 @@ accum_return(GLcontext *ctx, GLfloat value,
                                           PIPE_TRANSFER_READ_WRITE, xpos, ypos,
                                           width, height);
 
-   acc_get_tile_rgba(pipe, acc_trans, xpos, ypos, width, height, abuf);
+   acc_get_tile_rgba(pipe, acc_trans, 0, 0, width, height, abuf);
 
    if (!colormask[0] || !colormask[1] || !colormask[2] || !colormask[3]) {
       cbuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-      pipe_get_tile_rgba(color_trans, xpos, ypos, width, height, cbuf);
+      pipe_get_tile_rgba(color_trans, 0, 0, width, height, cbuf);
    }
 
    for (i = 0; i < width * height; i++) {
@@ -311,7 +311,7 @@ accum_return(GLcontext *ctx, GLfloat value,
       }
    }
 
-   pipe_put_tile_rgba(color_trans, xpos, ypos, width, height, abuf);
+   pipe_put_tile_rgba(color_trans, 0, 0, width, height, abuf);
 
    free(abuf);
    if (cbuf)
