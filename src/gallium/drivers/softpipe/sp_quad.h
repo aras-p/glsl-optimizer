@@ -28,8 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifndef SP_HEADERS_H
-#define SP_HEADERS_H
+#ifndef SP_QUAD_H
+#define SP_QUAD_H
 
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_exec.h"
@@ -91,5 +91,4 @@ struct quad_header {
    unsigned nr_attrs;
 };
 
-#endif /* SP_HEADERS_H */
-
+#endif /* SP_QUAD_H */

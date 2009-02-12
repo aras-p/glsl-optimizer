@@ -5,7 +5,7 @@
 
 
 #include "sp_context.h"
-#include "sp_headers.h"
+#include "sp_quad.h"
 #include "sp_surface.h"
 #include "sp_tile_cache.h"
 #include "sp_quad_pipe.h"
