@@ -28,8 +28,12 @@
 
 #define RADEON_ONE_REG_WR        (1 << 15)
 
-#define OUT_CS_ONE_REG(register, count) \
-    OUT_CS_REG_SEQ(register, (count | RADEON_ONE_REG_WR))
+#define OUT_CS_ONE_REG(register, count) do { \
+    debug_printf("r300: writing data sequence of %d to 0x%04X\n", \
+        count, register); \
+    assert(register); \
+    OUT_CS(CP_PACKET0(register, ((count) - 1)) | RADEON_ONE_REG_WR); \
+} while (0)
 
 #define R300_PACIFY do { \
     OUT_CS_REG(RADEON_WAIT_UNTIL, (1 << 15) | (1 << 17) | \

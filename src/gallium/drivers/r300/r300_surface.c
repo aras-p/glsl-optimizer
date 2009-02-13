@@ -54,7 +54,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         return;
     }
 
-    BEGIN_CS(172 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
+    BEGIN_CS(168 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
     R300_PACIFY;
     OUT_CS_REG(R300_TX_INVALTAGS, 0x0);
     R300_PACIFY;
@@ -153,8 +153,9 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT, 0x00000003);
     OUT_CS_REG(R300_ZB_BW_CNTL, 0x00000000);
     OUT_CS_REG(R300_ZB_DEPTHCLEARVALUE, 0x00000000);
+    /* XXX Moar unknown that should probably be left out.
     OUT_CS_REG(0x4F30, 0x00000000);
-    OUT_CS_REG(0x4F34, 0x00000000);
+    OUT_CS_REG(0x4F34, 0x00000000); */
     OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0x00000000);
     OUT_CS_REG(R300_ZB_HIZ_PITCH, 0x00000000);
     R300_PACIFY;
@@ -233,8 +234,8 @@ static void r300_surface_fill(struct pipe_context* pipe,
     } else {
         r300_emit_fragment_shader(r300, &r300_passthrough_fragment_shader);
     }
-
-    BEGIN_CS(2 + (caps->has_tcl ? 30 : 2));
+    
+    BEGIN_CS(2 + (caps->has_tcl ? 23 : 2));
     /* XXX these magic numbers should be explained when
      * this becomes a cached state object */
     if (caps->has_tcl) {
@@ -249,14 +250,15 @@ static void r300_surface_fill(struct pipe_context* pipe,
         /* XXX translate these back into normal instructions */
         OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x1);
         OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG, 0x0);
-        OUT_CS_REG(R300_VAP_PVS_UPLOAD_DATA, 0xF00203);
-        OUT_CS_REG(R300_VAP_PVS_UPLOAD_DATA, 0xD10001);
-        OUT_CS_REG(R300_VAP_PVS_UPLOAD_DATA, 0x1248001);
-        OUT_CS_REG(R300_VAP_PVS_UPLOAD_DATA, 0x0);
-        OUT_CS_REG(R300_VAP_PVS_UPLOAD_DATA, 0xF02203);
-        OUT_CS_REG(R300_VAP_PVS_UPLOAD_DATA, 0xD10021);
-        OUT_CS_REG(R300_VAP_PVS_UPLOAD_DATA, 0x1248021);
-        OUT_CS_REG(R300_VAP_PVS_UPLOAD_DATA, 0x0);
+        OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, 8);
+        OUT_CS(0x00F00203);
+        OUT_CS(0x00D10001);
+        OUT_CS(0x01248001);
+        OUT_CS(0x00000000);
+        OUT_CS(0x00F02203);
+        OUT_CS(0x00D10021);
+        OUT_CS(0x01248021);
+        OUT_CS(0x00000000);
     } else {
         OUT_CS_REG(R300_VAP_CNTL, 0xA |
             (0x5 << R300_PVS_NUM_CNTLRS_SHIFT) |
