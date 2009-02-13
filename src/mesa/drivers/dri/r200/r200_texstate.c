@@ -733,12 +733,10 @@ void r200SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	r200ContextPtr rmesa = pDRICtx->driverPrivate;
 	struct gl_texture_object *tObj =
 	    _mesa_lookup_texture(rmesa->radeon.glCtx, texname);
-	radeonTexObjPtr t;
+	radeonTexObjPtr t = radeon_tex_obj(tObj);
 
 	if (!tObj)
 		return;
-
-	t = (radeonTexObjPtr) tObj->DriverData;
 
 	t->image_override = GL_TRUE;
 
