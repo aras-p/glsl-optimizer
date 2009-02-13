@@ -1212,6 +1212,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 brw_set_access_mode(p, BRW_ALIGN_1);
          brw_MOV(p, brw_ip_reg(), deref_1d(stack_index, 0));
 	 brw_set_access_mode(p, BRW_ALIGN_16);
+	 break;
       case OPCODE_END:	
          brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
          break;
