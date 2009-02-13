@@ -2973,6 +2973,7 @@ enum {
 #   define R500_INST_RGB_OMASK_R			(1 << 15)
 #   define R500_INST_RGB_OMASK_G			(1 << 16)
 #   define R500_INST_RGB_OMASK_B			(1 << 17)
+#   define R500_INST_RGB_OMASK_RGB			(7 << 15)
 #   define R500_INST_ALPHA_OMASK			(1 << 18)
 #   define R500_INST_RGB_CLAMP				(1 << 19)
 #   define R500_INST_ALPHA_CLAMP			(1 << 20)

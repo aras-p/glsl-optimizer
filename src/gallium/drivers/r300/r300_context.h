@@ -107,6 +107,12 @@ struct r3xx_fragment_shader {
 
     /* Has this shader been translated yet? */
     boolean translated;
+
+    /* Number of used instructions */
+    int instruction_count;
+
+    /* Pixel stack size */
+    int stack_size;
 };
 
 struct r300_fragment_shader {
@@ -117,6 +123,16 @@ struct r300_fragment_shader {
 struct r500_fragment_shader {
     /* Parent class */
     struct r3xx_fragment_shader shader;
+
+    /* Machine instructions */
+    struct {
+        uint32_t inst0;
+        uint32_t inst1;
+        uint32_t inst2;
+        uint32_t inst3;
+        uint32_t inst4;
+        uint32_t inst5;
+    } instructions[256]; /*< XXX magic number */
 };
 
 struct r300_texture {

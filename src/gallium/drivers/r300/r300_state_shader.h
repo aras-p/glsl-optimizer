@@ -24,6 +24,7 @@
 #define R300_STATE_SHADER_H
 
 #include "r300_context.h"
+#include "r300_reg.h"
 #include "r300_screen.h"
 
 void r300_translate_shader(struct r300_context* r300,
