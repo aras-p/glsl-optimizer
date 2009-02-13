@@ -102,6 +102,7 @@ tri-tri
 tri-unfilled
 tri-unfilled-clip
 tri-unfilled-edgeflag
+tri-unfilled-fog
 tri-unfilled-smooth
 tri-unfilled-tri
 tri-unfilled-tri-lit

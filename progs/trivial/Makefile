@@ -108,6 +108,7 @@ SOURCES = \
 	tri-tex.c \
 	tri-tex-3d.c \
 	tri-tri.c \
+	tri-unfilled-fog.c \
 	tri-unfilled-edgeflag.c \
 	tri-unfilled-clip.c \
 	tri-unfilled-smooth.c \
