@@ -511,11 +511,8 @@ static void radeon_teximage(
 		int size;
 		if (texImage->IsCompressed) {
 			size = texImage->CompressedSize;
-			dstRowStride =
-			  _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
 		} else {
 			size = texImage->Width * texImage->Height * texImage->Depth * texImage->TexFormat->TexelBytes;
-			dstRowStride = postConvWidth * texelBytes;
 		}
 		texImage->Data = _mesa_alloc_texmemory(size);
 	}
@@ -536,6 +533,14 @@ static void radeon_teximage(
 		if (compressed) {
 			memcpy(texImage->Data, pixels, imageSize);
 		} else {
+			GLuint dstRowStride;
+			if (image->mt) {
+				radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
+				dstRowStride = lvl->rowstride;
+			} else {
+				dstRowStride = texImage->Width * texImage->TexFormat->TexelBytes;
+			}
+
 			if (!texImage->TexFormat->StoreImage(ctx, dims,
 						texImage->_BaseFormat,
 						texImage->TexFormat,
