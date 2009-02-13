@@ -780,7 +780,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
          }
          else {
             if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
-               spanY = ctx->DrawBuffer->Height - spanY - 1;
+               spanY = height - spanY - 1;
             }
 
             switch (pt->format) {
@@ -925,7 +925,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       y = i;
 
       if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
-         y = ctx->DrawBuffer->Height - y - 1;
+         y = height - y - 1;
       }
 
       dst = drawMap + y * ptDraw->stride;

@@ -817,7 +817,7 @@ st_TexSubimage(GLcontext * ctx,
       if (!texImage->TexFormat->StoreImage(ctx, dims, texImage->_BaseFormat,
 					   texImage->TexFormat,
 					   texImage->Data,
-					   xoffset, yoffset, 0,
+					   0, 0, 0,
 					   dstRowStride,
 					   texImage->ImageOffsets,
 					   width, height, 1,
@@ -934,7 +934,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
    assert(width <= MAX_WIDTH);
 
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
-      srcY = strb->Base.Height - 1 - srcY;
+      srcY = strb->Base.Height - srcY - height;
    }
 
    src_trans = pipe->screen->get_tex_transfer( pipe->screen,
@@ -954,7 +954,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
 
       /* determine bottom-to-top vs. top-to-bottom order for src buffer */
       if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
-         srcY = height - 1 - srcY;
+         srcY = height - 1;
          yStep = -1;
       }
       else {

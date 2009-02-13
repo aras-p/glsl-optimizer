@@ -213,7 +213,7 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
       GLint row, col, dy, dstStride;
 
       if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
-         y = strb->texture->height[0] - y - 1;
+         y = strb->texture->height[0] - y - height;
       }
 
       trans = screen->get_tex_transfer(screen, strb->texture, 0, 0, 0,
@@ -229,7 +229,7 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
       }
 
       if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
-         y = height - y - 1;
+         y = height - 1;
          dy = -1;
       }
       else {
@@ -365,7 +365,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
 
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
-      y = strb->Base.Height - 1 - y;
+      y = strb->Base.Height - y - height;
    }
 
    /* Create a read transfer from the renderbuffer's texture */
@@ -374,7 +374,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    /* determine bottom-to-top vs. top-to-bottom order */
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
-      y = trans->height - 1 - y;
+      y = height - 1;
       yStep = -1;
    }
    else {
