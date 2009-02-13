@@ -445,11 +445,12 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    if (t && t->mt && !t->image_override) {
      OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
 		     RADEON_GEM_DOMAIN_VRAM, 0, 0);
-   } else  {
+   } else if (!t) {
      /* workaround for old CS mechanism */
      OUT_BATCH(r100->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP]);
      //     OUT_BATCH(r100->radeon.radeonScreen);
-   }
+   } else if (t->image_override)
+     OUT_BATCH(atom->cmd[4]);
 
    OUT_BATCH_TABLE((atom->cmd+4), 5);
    END_BATCH();

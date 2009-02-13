@@ -552,7 +552,8 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    } else if (!t) {
      /* workaround for old CS mechanism */
      OUT_BATCH(r200->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP]);
-   }
+   } else if (t->image_override)
+     OUT_BATCH(atom->cmd[10]);
 
    END_BATCH();
 }

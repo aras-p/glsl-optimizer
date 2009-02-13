@@ -59,7 +59,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast_setup/swrast_setup.h"
 
 #include "dri_util.h"
-#include "drirenderbuffer.h"
 #include "vblank.h"
 
 #include "radeon_common.h"
@@ -511,8 +510,8 @@ void radeonPageFlip( __DRIdrawablePrivate *dPriv )
 	/* Get ready for drawing next frame.  Update the renderbuffers'
 	 * flippedOffset/Pitch fields so we draw into the right place.
 	 */
-	driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
-			     rmesa->sarea->pfCurrentPage);
+	//	driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
+	//			     rmesa->sarea->pfCurrentPage);
 	
 	rmesa->state.color.rrb = rrb;
 

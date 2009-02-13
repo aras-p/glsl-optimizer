@@ -881,3 +881,4 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 
 	return GL_TRUE;
 }
+
