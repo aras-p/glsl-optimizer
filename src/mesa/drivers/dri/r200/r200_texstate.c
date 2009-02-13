@@ -958,6 +958,35 @@ static GLboolean r200UpdateAllTexEnv( GLcontext *ctx )
                                 R200_VOLUME_FILTER_MASK)
 
 
+static void disable_tex_obj_state( r200ContextPtr rmesa, 
+				   int unit )
+{
+   
+   R200_STATECHANGE( rmesa, vtx );
+   rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_1] &= ~(7 << (unit * 3));
+
+   if (rmesa->radeon.TclFallback & (R200_TCL_FALLBACK_TEXGEN_0<<unit)) {
+      TCL_FALLBACK( rmesa->radeon.glCtx, (R200_TCL_FALLBACK_TEXGEN_0<<unit), GL_FALSE);
+   }
+
+   /* Actually want to keep all units less than max active texture
+    * enabled, right?  Fix this for >2 texunits.
+    */
+
+   {
+      GLuint tmp = rmesa->TexGenEnabled;
+
+      rmesa->TexGenEnabled &= ~(R200_TEXGEN_TEXMAT_0_ENABLE<<unit);
+      rmesa->TexGenEnabled &= ~(R200_TEXMAT_0_ENABLE<<unit);
+      rmesa->TexGenNeedNormals[unit] = GL_FALSE;
+      rmesa->TexGenCompSel &= ~(R200_OUTPUT_TEX_0 << unit);
+
+      if (tmp != rmesa->TexGenEnabled) {
+	 rmesa->recheck_texgen[unit] = GL_TRUE;
+	 rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
+      }
+   }
+}
 static void import_tex_obj_state( r200ContextPtr rmesa,
 				  int unit,
 				  radeonTexObjPtr texobj )
@@ -1405,10 +1434,20 @@ static GLboolean r200_validate_texture(GLcontext *ctx, struct gl_texture_object 
       import_tex_obj_state( rmesa, unit, t );
    }
 
+   if (rmesa->recheck_texgen[unit]) {
+      GLboolean fallback = !r200_validate_texgen( ctx, unit );
+      TCL_FALLBACK( ctx, (R200_TCL_FALLBACK_TEXGEN_0<<unit), fallback);
+      rmesa->recheck_texgen[unit] = 0;
+      rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
+   }
+
    t->dirty_state = R200_TEX_ALL;
    
    t->validated = GL_TRUE;
-   return GL_TRUE;
+
+   FALLBACK( rmesa, RADEON_FALLBACK_BORDER_MODE, t->border_fallback );
+
+   return !t->border_fallback;
 }
 
 static GLboolean r200UpdateTextureUnit(GLcontext *ctx, int unit)
@@ -1416,8 +1455,11 @@ static GLboolean r200UpdateTextureUnit(GLcontext *ctx, int unit)
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint unitneeded = rmesa->state.texture.unit[unit].unitneeded;
 
-   if (!unitneeded)
+   if (!unitneeded) {
+      /* disable the unit */
+     disable_tex_obj_state(rmesa, unit);
      return GL_TRUE;
+   }
 
    if (!r200_validate_texture(ctx, ctx->Texture.Unit[unit]._Current, unit)) {
     _mesa_warning(ctx,
