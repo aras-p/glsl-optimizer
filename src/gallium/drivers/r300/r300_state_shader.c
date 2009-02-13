@@ -40,13 +40,13 @@ static void r500_copy_passthrough_shader(struct r500_fragment_shader* fs)
     fs->instructions[0] = pt->instructions[0];
 }
 
-void r300_translate_shader(struct r300_context* r300,
+void r300_translate_fragment_shader(struct r300_context* r300,
                            struct r300_fragment_shader* fs)
 {
     r300_copy_passthrough_shader(fs);
 }
 
-void r500_translate_shader(struct r300_context* r300,
+void r500_translate_fragment_shader(struct r300_context* r300,
                            struct r500_fragment_shader* fs)
 {
     r500_copy_passthrough_shader(fs);

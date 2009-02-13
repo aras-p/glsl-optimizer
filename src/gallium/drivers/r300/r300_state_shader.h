@@ -27,10 +27,10 @@
 #include "r300_reg.h"
 #include "r300_screen.h"
 
-void r300_translate_shader(struct r300_context* r300,
+void r300_translate_fragment_shader(struct r300_context* r300,
                            struct r300_fragment_shader* fs);
 
-void r500_translate_shader(struct r300_context* r300,
+void r500_translate_fragment_shader(struct r300_context* r300,
                            struct r500_fragment_shader* fs);
 
 static const struct r300_fragment_shader r300_passthrough_fragment_shader = {
@@ -41,12 +41,7 @@ static const struct r300_fragment_shader r300_passthrough_fragment_shader = {
     OUT_CS_REG(R300_US_CODE_ADDR_1, 0x0);
     OUT_CS_REG(R300_US_CODE_ADDR_2, 0x0);
     OUT_CS_REG(R300_US_CODE_ADDR_3, 0x400000);
-    OUT_CS_REG_SEQ(R300_US_OUT_FMT_0, 4);
-    OUT_CS(R300_C0_SEL_B | R300_C1_SEL_G | R300_C2_SEL_R | R300_C3_SEL_A);
-    OUT_CS(R300_US_OUT_FMT_UNUSED);
-    OUT_CS(R300_US_OUT_FMT_UNUSED);
-    OUT_CS(R300_US_OUT_FMT_UNUSED);
-    OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W0); */
+*/
     .alu_instruction_count = 1,
     .tex_instruction_count = 0,
     .indirections = 1,

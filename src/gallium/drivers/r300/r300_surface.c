@@ -235,7 +235,13 @@ static void r300_surface_fill(struct pipe_context* pipe,
         r300_emit_fragment_shader(r300, &r300_passthrough_fragment_shader);
     }
 
-    BEGIN_CS(2 + (caps->has_tcl ? 23 : 2));
+    BEGIN_CS(10 + (caps->has_tcl ? 23 : 2));
+    OUT_CS_REG_SEQ(R300_US_OUT_FMT_0, 4);
+    OUT_CS(R300_C0_SEL_B | R300_C1_SEL_G | R300_C2_SEL_R | R300_C3_SEL_A);
+    OUT_CS(R300_US_OUT_FMT_UNUSED);
+    OUT_CS(R300_US_OUT_FMT_UNUSED);
+    OUT_CS(R300_US_OUT_FMT_UNUSED);
+    OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W0);
     /* XXX these magic numbers should be explained when
      * this becomes a cached state object */
     if (caps->has_tcl) {

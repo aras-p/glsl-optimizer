@@ -26,6 +26,7 @@
 
 #include "r300_context.h"
 #include "r300_reg.h"
+#include "r300_state_shader.h"
 
 /* r300_state: Functions used to intialize state context by translating
  * Gallium state objects into semi-native r300 state objects.
@@ -429,9 +430,9 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
         return;
     } else if (!fs->translated) {
         if (r300_screen(r300->context.screen)->caps->is_r500) {
-            r500_translate_shader(r300, fs);
+            r500_translate_fragment_shader(r300, (struct r500_fragment_shader*)fs);
         } else {
-            r300_translate_shader(r300, fs);
+            r300_translate_fragment_shader(r300, (struct r300_fragment_shader*)fs);
         }
     }
 
