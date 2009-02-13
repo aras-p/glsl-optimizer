@@ -755,16 +755,21 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 
    _mesa_lock_texture(&intel->ctx, texObj);
 
+   texImage = _mesa_get_tex_image(&intel->ctx, texObj, target, level);
+   intelImage = intel_texture_image(texImage);
+
+   if (intelImage->mt) {
+      intel_miptree_release(intel, &intelImage->mt);
+      assert(!texImage->Data);
+   }
    if (intelObj->mt)
       intel_miptree_release(intel, &intelObj->mt);
 
    intelObj->mt = mt;
-   texImage = _mesa_get_tex_image(&intel->ctx, texObj, target, level);
    _mesa_init_teximage_fields(&intel->ctx, target, texImage,
 			      rb->region->width, rb->region->height, 1,
 			      0, internalFormat);
 
-   intelImage = intel_texture_image(texImage);
    intelImage->face = target_to_face(target);
    intelImage->level = level;
    texImage->TexFormat = intelChooseTextureFormat(&intel->ctx, internalFormat,
