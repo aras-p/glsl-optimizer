@@ -72,7 +72,7 @@ static struct pipe_texture*
 
     r300_setup_miptree(tex);
 
-    tex->buffer = screen->buffer_create(screen, 63,
+    tex->buffer = screen->buffer_create(screen, 64,
                                         PIPE_BUFFER_USAGE_PIXEL,
                                         tex->size);
 
