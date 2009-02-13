@@ -83,7 +83,6 @@ static const struct r500_fragment_shader r500_passthrough_fragment_shader = {
         R500_ALU_RGBA_OP_CMP | R500_ALU_RGBA_R_SWIZ_0 |
         R500_ALU_RGBA_G_SWIZ_0 | R500_ALU_RGBA_B_SWIZ_0 |
         R500_ALU_RGBA_A_SWIZ_0,
-    .shader.translated = TRUE,
 };
 
 #endif /* R300_STATE_SHADER_H */

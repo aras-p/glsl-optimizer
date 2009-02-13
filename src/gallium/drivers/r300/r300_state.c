@@ -424,7 +424,10 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
     struct r300_context* r300 = r300_context(pipe);
     struct r3xx_fragment_shader* fs = (struct r3xx_fragment_shader*)shader;
 
-    if (!fs->translated) {
+    if (fs == NULL) {
+        r300->fs = NULL;
+        return;
+    } else if (!fs->translated) {
         if (r300_screen(r300->context.screen)->caps->is_r500) {
             r500_translate_shader(r300, fs);
         } else {
@@ -432,11 +435,7 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
         }
     }
 
-    if (!fs->translated) {
-        debug_printf("r300: Couldn't assemble fragment shader...\n");
-        /* XXX exit here */
-    }
-
+    fs->translated = true;
     r300->fs = fs;
 
     r300->dirty_state |= R300_NEW_FRAGMENT_SHADER;

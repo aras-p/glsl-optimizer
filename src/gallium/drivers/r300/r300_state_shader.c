@@ -22,16 +22,32 @@
 
 #include "r300_state_shader.h"
 
+static void r300_copy_passthrough_shader(struct r300_fragment_shader* fs)
+{
+    struct r300_fragment_shader* pt = &r300_passthrough_fragment_shader;
+    fs->shader.stack_size = pt->shader.stack_size;
+    fs->alu_instruction_count = pt->alu_instruction_count;
+    fs->tex_instruction_count = pt->tex_instruction_count;
+    fs->indirections = pt->indirections;
+    fs->instructions[0] = pt->instructions[0];
+}
+
+static void r500_copy_passthrough_shader(struct r500_fragment_shader* fs)
+{
+    struct r500_fragment_shader* pt = &r500_passthrough_fragment_shader;
+    fs->shader.stack_size = pt->shader.stack_size;
+    fs->instruction_count = pt->instruction_count;
+    fs->instructions[0] = pt->instructions[0];
+}
+
 void r300_translate_shader(struct r300_context* r300,
                            struct r300_fragment_shader* fs)
 {
-    /* XXX fix this at some point */
-    *fs = r300_passthrough_fragment_shader;
+    r300_copy_passthrough_shader(fs);
 }
 
 void r500_translate_shader(struct r300_context* r300,
                            struct r500_fragment_shader* fs)
 {
-    /* XXX fix this at some point */
-    *fs = r500_passthrough_fragment_shader;
+    r500_copy_passthrough_shader(fs);
 }
