@@ -2,7 +2,9 @@ TOP = ../../../../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = gem egl
+# Always build gem and then build winsys with
+# enabled state trackers
+SUBDIRS = gem $(GALLIUM_STATE_TRACKERS_DIRS)
 
 
 default: subdirs
