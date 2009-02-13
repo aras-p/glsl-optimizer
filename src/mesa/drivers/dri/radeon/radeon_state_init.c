@@ -362,6 +362,7 @@ static void ctx_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 
    END_BATCH();
 }
+
 static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
@@ -430,6 +431,34 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    END_BATCH();
 }
 
+static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r100ContextPtr r100 = R100_CONTEXT(ctx);
+   BATCH_LOCALS(&r100->radeon);
+   uint32_t dwords = atom->cmd_size;
+   int i = atom->idx, j;
+   radeonTexObj *t = r100->state.texture.unit[i].texobj;
+   radeon_mipmap_level *lvl;
+
+   if (!(ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT))
+	return;
+
+   if (!t)
+	return;
+
+   if (!t->mt)
+	return;
+
+   BEGIN_BATCH_NO_AUTOSTATE(dwords + 10);
+   OUT_BATCH_TABLE(atom->cmd, 3);
+   lvl = &t->mt->levels[0];
+   for (j = 0; j < 5; j++) {
+	OUT_BATCH_RELOC(lvl->faces[j].offset, t->mt->bo, lvl->faces[j].offset,
+			RADEON_GEM_DOMAIN_VRAM, 0, 0);
+   }
+   END_BATCH();
+}
+
 static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
@@ -437,14 +466,21 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    uint32_t dwords = atom->cmd_size;
    int i = atom->idx;
    radeonTexObj *t = r100->state.texture.unit[i].texobj;
+   radeon_mipmap_level *lvl;
 
    if (t && t->mt && !t->image_override)
      dwords += 2;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_BATCH_TABLE(atom->cmd, 3);
    if (t && t->mt && !t->image_override) {
-     OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+     if ((ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT)) {
+   	lvl = &t->mt->levels[0];
+	OUT_BATCH_RELOC(lvl->faces[5].offset, t->mt->bo, lvl->faces[5].offset,
+			RADEON_GEM_DOMAIN_VRAM, 0, 0);
+     } else {
+        OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
 		     RADEON_GEM_DOMAIN_VRAM, 0, 0);
+     }
    } else if (!t) {
      /* workaround for old CS mechanism */
      OUT_BATCH(r100->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP]);
@@ -559,6 +595,8 @@ void radeonInitState( r100ContextPtr rmesa )
       ALLOC_STATE_IDX( cube[0], cube0, CUBE_STATE_SIZE, "CUBE/cube-0", 0, 0 );
       ALLOC_STATE_IDX( cube[1], cube1, CUBE_STATE_SIZE, "CUBE/cube-1", 0, 1 );
       ALLOC_STATE_IDX( cube[2], cube2, CUBE_STATE_SIZE, "CUBE/cube-2", 0, 2 );
+      for (i = 0; i < 3; i++)
+         rmesa->hw.cube[i].emit = cube_emit;
    }
    else
    {
