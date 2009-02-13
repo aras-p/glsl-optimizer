@@ -1006,7 +1006,7 @@ if test "x$enable_glut" = xyes && test "$mesa_driver" = osmesa; then
 fi
 
 if test "x$enable_glut" = xyes; then
-    SRC_DIRS="$SRC_DIRS glut/glx"
+    SRC_DIRS="$SRC_DIRS glut/glx glew"
     GLUT_CFLAGS=""
     if test "x$GCC" = xyes; then
         GLUT_CFLAGS="-fexceptions"
