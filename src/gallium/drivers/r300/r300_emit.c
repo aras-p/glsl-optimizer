@@ -115,7 +115,7 @@ void r500_emit_fragment_shader(struct r300_context* r300,
 {
     CS_LOCALS(r300);
     int i = 0;
-    BEGIN_CS(11 + (shader->shader.instruction_count * 6));
+    BEGIN_CS(11 + (fs->instruction_count * 6));
     OUT_CS_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
     OUT_CS_REG(R500_US_PIXSIZE, fs->shader.stack_size);
     OUT_CS_REG(R500_US_CODE_ADDR, R500_US_CODE_START_ADDR(0) |
@@ -123,14 +123,14 @@ void r500_emit_fragment_shader(struct r300_context* r300,
 
     OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_INSTR);
     OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA,
-        shader->shader.instruction_count * 6);
-    for (i = 0; i < shader->shader.instruction_count; i++) {
-        OUT_CS(shader->instructions[i].inst0);
-        OUT_CS(shader->instructions[i].inst1);
-        OUT_CS(shader->instructions[i].inst2);
-        OUT_CS(shader->instructions[i].inst3);
-        OUT_CS(shader->instructions[i].inst4);
-        OUT_CS(shader->instructions[i].inst5);
+        fs->instruction_count * 6);
+    for (i = 0; i < fs->instruction_count; i++) {
+        OUT_CS(fs->instructions[i].inst0);
+        OUT_CS(fs->instructions[i].inst1);
+        OUT_CS(fs->instructions[i].inst2);
+        OUT_CS(fs->instructions[i].inst3);
+        OUT_CS(fs->instructions[i].inst4);
+        OUT_CS(fs->instructions[i].inst5);
     }
     R300_PACIFY;
     END_CS;

@@ -234,7 +234,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     } else {
         r300_emit_fragment_shader(r300, &r300_passthrough_fragment_shader);
     }
-    
+
     BEGIN_CS(2 + (caps->has_tcl ? 23 : 2));
     /* XXX these magic numbers should be explained when
      * this becomes a cached state object */

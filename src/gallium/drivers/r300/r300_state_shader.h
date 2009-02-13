@@ -47,16 +47,16 @@ static const struct r300_fragment_shader r300_passthrough_fragment_shader = {
     OUT_CS(R300_US_OUT_FMT_UNUSED);
     OUT_CS(R300_US_OUT_FMT_UNUSED);
     OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W0); */
-    .alu_instruction_count = 1;
-    .tex_instruction_count = 0;
-    .indirections = 1;
-    .shader.stack_size = 2;
+    .alu_instruction_count = 1,
+    .tex_instruction_count = 0,
+    .indirections = 1,
+    .shader.stack_size = 2,
 
     /* XXX decode these */
-    .instructions[0].alu_rgb_inst = 0x50A80;
-    .instructions[0].alu_rgb_inst = 0x1C000000;
-    .instructions[0].alu_alpha_inst = 0x40889;
-    .instructions[0].alu_alpha_inst = 0x1000000;
+    .instructions[0].alu_rgb_inst = 0x50A80,
+    .instructions[0].alu_rgb_inst = 0x1C000000,
+    .instructions[0].alu_alpha_inst = 0x40889,
+    .instructions[0].alu_alpha_inst = 0x1000000,
 };
 
 static const struct r500_fragment_shader r500_passthrough_fragment_shader = {
