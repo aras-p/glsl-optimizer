@@ -54,7 +54,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         return;
     }
 
-    BEGIN_CS((caps->is_r500 ? 222 : 213) + (caps->has_tcl ? 34 : 4));
+    BEGIN_CS(172 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
     R300_PACIFY;
     OUT_CS_REG(R300_TX_INVALTAGS, 0x0);
     R300_PACIFY;
@@ -197,7 +197,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         ((h * 6) & R300_POINTSIZE_Y_MASK) |
         ((w * 6) << R300_POINTSIZE_X_SHIFT));
 
-    /* XXX RS block and fp setup */
+    /* RS block setup */
     if (caps->is_r500) {
         /* XXX We seem to be in disagreement about how many of these we have
          * RS:RS_IP_[0-15] [R/W] 32 bits Access: 8/16/32 MMReg:0x4074-0x40b0
@@ -213,40 +213,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
         OUT_CS((1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
         OUT_CS(0x00000000);
         OUT_CS_REG(R500_RS_INST_0, R500_RS_INST_COL_CN_WRITE);
-
-        OUT_CS_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
-        OUT_CS_REG(R500_US_PIXSIZE, 0x00000000);
-        OUT_CS_REG(R500_US_CODE_ADDR, R500_US_CODE_START_ADDR(0) |
-            R500_US_CODE_END_ADDR(1));
-        OUT_CS_REG(R500_US_CODE_RANGE, R500_US_CODE_RANGE_ADDR(0) |
-            R500_US_CODE_RANGE_SIZE(1));
-        OUT_CS_REG(R500_US_CODE_OFFSET, R500_US_CODE_OFFSET_ADDR(0));
-        R300_PACIFY;
-        OUT_CS_REG(R500_GA_US_VECTOR_INDEX,
-            0 | R500_GA_US_VECTOR_INDEX_TYPE_INSTR);
-        OUT_CS_REG(R500_GA_US_VECTOR_DATA,
-            R500_INST_TYPE_OUT | R500_INST_TEX_SEM_WAIT | R500_INST_LAST |
-            R500_INST_RGB_OMASK_R | R500_INST_RGB_OMASK_G |
-            R500_INST_RGB_OMASK_B | R500_INST_ALPHA_OMASK |
-            R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP);
-        OUT_CS_REG(R500_GA_US_VECTOR_DATA,
-            R500_RGB_ADDR0(0) | R500_RGB_ADDR1(0) | R500_RGB_ADDR1_CONST |
-            R500_RGB_ADDR2(0) | R500_RGB_ADDR2_CONST);
-        OUT_CS_REG(R500_GA_US_VECTOR_DATA,
-            R500_ALPHA_ADDR0(0) | R500_ALPHA_ADDR1(0) |
-            R500_ALPHA_ADDR1_CONST | R500_ALPHA_ADDR2(0) |
-            R500_ALPHA_ADDR2_CONST);
-        OUT_CS_REG(R500_GA_US_VECTOR_DATA,
-            R500_ALU_RGB_SEL_A_SRC0 | R500_ALU_RGB_R_SWIZ_A_R |
-            R500_ALU_RGB_G_SWIZ_A_G | R500_ALU_RGB_B_SWIZ_A_B |
-            R500_ALU_RGB_SEL_B_SRC0 | R500_ALU_RGB_R_SWIZ_B_R |
-            R500_ALU_RGB_B_SWIZ_B_G | R500_ALU_RGB_G_SWIZ_B_B);
-        OUT_CS_REG(R500_GA_US_VECTOR_DATA,
-            R500_ALPHA_OP_CMP | R500_ALPHA_SWIZ_A_A | R500_ALPHA_SWIZ_B_A);
-        OUT_CS_REG(R500_GA_US_VECTOR_DATA,
-            R500_ALU_RGBA_OP_CMP | R500_ALU_RGBA_R_SWIZ_0 |
-            R500_ALU_RGBA_G_SWIZ_0 | R500_ALU_RGBA_B_SWIZ_0 |
-            R500_ALU_RGBA_A_SWIZ_0);
     } else {
         OUT_CS_REG_SEQ(R300_RS_IP_0, 8);
         for (i = 0; i < 8; i++) {
@@ -258,26 +224,17 @@ static void r300_surface_fill(struct pipe_context* pipe,
         /* XXX Shouldn't this be 0? */
         OUT_CS(1);
         OUT_CS_REG(R300_RS_INST_0, R300_RS_INST_COL_CN_WRITE);
-
-        /* XXX magic numbers */
-        OUT_CS_REG(R300_US_CONFIG, 0);
-        OUT_CS_REG(R300_US_PIXSIZE, 2);
-        OUT_CS_REG(R300_US_CODE_OFFSET, 0x0);
-        OUT_CS_REG(R300_US_CODE_ADDR_0, 0x0);
-        OUT_CS_REG(R300_US_CODE_ADDR_1, 0x0);
-        OUT_CS_REG(R300_US_CODE_ADDR_2, 0x0);
-        OUT_CS_REG(R300_US_CODE_ADDR_3, 0x400000);
-        OUT_CS_REG(R300_US_ALU_RGB_INST_0, 0x50A80);
-        OUT_CS_REG(R300_US_ALU_RGB_ADDR_0, 0x1C000000);
-        OUT_CS_REG(R300_US_ALU_ALPHA_INST_0, 0x40889);
-        OUT_CS_REG(R300_US_ALU_ALPHA_ADDR_0, 0x1000000);
-        OUT_CS_REG_SEQ(R300_US_OUT_FMT_0, 4);
-        OUT_CS(R300_C0_SEL_B | R300_C1_SEL_G | R300_C2_SEL_R | R300_C3_SEL_A);
-        OUT_CS(R300_US_OUT_FMT_UNUSED);
-        OUT_CS(R300_US_OUT_FMT_UNUSED);
-        OUT_CS(R300_US_OUT_FMT_UNUSED);
-        OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W0);
     }
+    END_CS;
+
+    /* Fragment shader setup */
+    if (caps->is_r500) {
+        r500_emit_fragment_shader(r300, &r500_passthrough_fragment_shader);
+    } else {
+        r300_emit_fragment_shader(r300, &r300_passthrough_fragment_shader);
+    }
+
+    BEGIN_CS(2 + (caps->has_tcl ? 30 : 2));
     /* XXX these magic numbers should be explained when
      * this becomes a cached state object */
     if (caps->has_tcl) {

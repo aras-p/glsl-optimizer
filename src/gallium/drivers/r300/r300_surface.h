@@ -31,6 +31,7 @@
 #include "r300_context.h"
 #include "r300_cs.h"
 #include "r300_emit.h"
+#include "r300_state_shader.h"
 
 const struct r300_blend_state blend_clear_state = {
     .blend_control = 0x0,
