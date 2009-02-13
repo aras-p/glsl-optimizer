@@ -32,6 +32,7 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/mipmap.h"
+#include "main/texcompress.h"
 #include "main/texformat.h"
 #include "main/texstore.h"
 #include "main/teximage.h"
@@ -453,16 +454,26 @@ static void radeon_teximage(
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	radeonTexObj* t = radeon_tex_obj(texObj);
 	radeon_texture_image* image = get_radeon_texture_image(texImage);
+	GLuint dstRowStride;
+	GLint postConvWidth = width;
+	GLint postConvHeight = height;
+	GLuint texelBytes;
 
 	radeon_firevertices(rmesa);
 
 	t->validated = GL_FALSE;
+
+	if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
+	       _mesa_adjust_image_for_convolution(ctx, dims, &postConvWidth,
+						  &postConvHeight);
+	}
 
 	/* Choose and fill in the texture format for this image */
 	texImage->TexFormat = radeonChooseTextureFormat(ctx, internalFormat, format, type);
 	_mesa_set_fetch_functions(texImage, dims);
 
 	if (texImage->TexFormat->TexelBytes == 0) {
+		texelBytes = 0;
 		texImage->IsCompressed = GL_TRUE;
 		texImage->CompressedSize =
 			ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
@@ -471,6 +482,16 @@ static void radeon_teximage(
 	} else {
 		texImage->IsCompressed = GL_FALSE;
 		texImage->CompressedSize = 0;
+
+		texelBytes = texImage->TexFormat->TexelBytes;
+		/* Minimum pitch of 32 bytes */
+		if (postConvWidth * texelBytes < 32) {
+		  postConvWidth = 32 / texelBytes;
+		  texImage->RowStride = postConvWidth;
+		}
+		if (!image->mt) {      
+			assert(texImage->RowStride == postConvWidth);
+		}
 	}
 
 	/* Allocate memory for image */
@@ -479,16 +500,22 @@ static void radeon_teximage(
 	if (!t->mt)
 		radeon_try_alloc_miptree(rmesa, t, texImage, face, level);
 	if (t->mt && radeon_miptree_matches_image(t->mt, texImage, face, level)) {
+		radeon_mipmap_level *lvl;
 		image->mt = t->mt;
 		image->mtlevel = level - t->mt->firstLevel;
 		image->mtface = face;
 		radeon_miptree_reference(t->mt);
+		lvl = &image->mt->levels[image->mtlevel];
+		dstRowStride = lvl->rowstride;
 	} else {
 		int size;
 		if (texImage->IsCompressed) {
 			size = texImage->CompressedSize;
+			dstRowStride =
+			  _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
 		} else {
 			size = texImage->Width * texImage->Height * texImage->Depth * texImage->TexFormat->TexelBytes;
+			dstRowStride = postConvWidth * texelBytes;
 		}
 		texImage->Data = _mesa_alloc_texmemory(size);
 	}
@@ -509,13 +536,6 @@ static void radeon_teximage(
 		if (compressed) {
 			memcpy(texImage->Data, pixels, imageSize);
 		} else {
-			GLuint dstRowStride;
-			if (image->mt) {
-				radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
-				dstRowStride = lvl->rowstride;
-			} else {
-				dstRowStride = texImage->Width * texImage->TexFormat->TexelBytes;
-			}
 			if (!texImage->TexFormat->StoreImage(ctx, dims,
 						texImage->_BaseFormat,
 						texImage->TexFormat,
@@ -534,10 +554,10 @@ static void radeon_teximage(
 		radeon_generate_mipmap(ctx, texObj->Target, texObj);
 	}
 
-	if (pixels) 
-	  radeon_teximage_unmap(image);
-
 	_mesa_unmap_teximage_pbo(ctx, packing);
+
+	if (pixels)
+	  radeon_teximage_unmap(image);
 
 
 }
@@ -579,7 +599,7 @@ void radeonCompressedTexImage2D(GLcontext * ctx, GLenum target,
 	GLuint face = radeon_face_for_target(target);
 
 	radeon_teximage(ctx, 2, face, level, internalFormat, width, height, 1,
-		imageSize, 0, 0, data, 0, texObj, texImage, 1);
+		imageSize, 0, 0, data, &ctx->Unpack, texObj, texImage, 1);
 }
 
 void radeonTexImage3D(GLcontext * ctx, GLenum target, GLint level,
@@ -760,13 +780,22 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt, radeon_texture_imag
 
 		radeon_miptree_unreference(image->mt);
 	} else {
-		uint srcrowstride = image->base.Width * image->base.TexFormat->TexelBytes;
+		uint32_t srcrowstride;
+		uint32_t height;
+		/* need to confirm this value is correct */
+		if (mt->compressed) {
+			height = image->base.Height / 4;
+			srcrowstride = image->base.RowStride * mt->bpp;
+		} else {
+			height = image->base.Height * image->base.Depth;
+			srcrowstride = image->base.Width * image->base.TexFormat->TexelBytes;
+		}
 
 //		if (mt->tilebits)
 //			WARN_ONCE("%s: tiling not supported yet", __FUNCTION__);
 
 		copy_rows(dest, dstlvl->rowstride, image->base.Data, srcrowstride,
-			image->base.Height * image->base.Depth, srcrowstride);
+			  height, srcrowstride);
 
 		_mesa_free_texmemory(image->base.Data);
 		image->base.Data = 0;

@@ -56,6 +56,29 @@ static GLuint radeon_compressed_texture_size(GLcontext *ctx,
 	return size;
 }
 
+
+static int radeon_compressed_num_bytes(GLuint mesaFormat)
+{
+   int bytes = 0;
+   switch(mesaFormat) {
+     
+   case MESA_FORMAT_RGB_FXT1:
+   case MESA_FORMAT_RGBA_FXT1:
+   case MESA_FORMAT_RGB_DXT1:
+   case MESA_FORMAT_RGBA_DXT1:
+     bytes = 2;
+     break;
+     
+   case MESA_FORMAT_RGBA_DXT3:
+   case MESA_FORMAT_RGBA_DXT5:
+     bytes = 4;
+   default:
+     break;
+   }
+   
+   return bytes;
+}
+
 /**
  * Compute sizes and fill in offset and blit information for the given
  * image (determined by \p face and \p level).
@@ -73,18 +96,14 @@ static void compute_tex_image_offset(radeon_mipmap_tree *mt,
 		/* TODO: Is this correct? Need test cases for compressed textures! */
 		GLuint align;
 
-		if (mt->target == GL_TEXTURE_RECTANGLE_NV)
-			align = 64 / mt->bpp;
-		else
-			align = 32 / mt->bpp;
-		lvl->rowstride = (lvl->width + align - 1) & ~(align - 1);
+		lvl->rowstride = (lvl->width * mt->bpp + 63) & ~63;
 		lvl->size = radeon_compressed_texture_size(mt->radeon->glCtx,
-			lvl->width, lvl->height, lvl->depth, mt->compressed);
+							   lvl->width, lvl->height, lvl->depth, mt->compressed);
 	} else if (mt->target == GL_TEXTURE_RECTANGLE_NV) {
 		lvl->rowstride = (lvl->width * mt->bpp + 63) & ~63;
 		lvl->size = lvl->rowstride * lvl->height;
 	} else if (mt->tilebits & RADEON_TXO_MICRO_TILE) {
-	  /* tile pattern is 16 bytes x2. mipmaps stay 32 byte aligned,
+		/* tile pattern is 16 bytes x2. mipmaps stay 32 byte aligned,
 		 * though the actual offset may be different (if texture is less than
 		 * 32 bytes width) to the untiled case */
 		lvl->rowstride = (lvl->width * mt->bpp * 2 + 31) & ~31;
@@ -160,7 +179,7 @@ radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa, radeonTexObj *
 	mt->width0 = width0;
 	mt->height0 = height0;
 	mt->depth0 = depth0;
-	mt->bpp = bpp;
+	mt->bpp = compressed ? radeon_compressed_num_bytes(compressed) : bpp;
 	mt->tilebits = tilebits;
 	mt->compressed = compressed;
 
@@ -255,7 +274,12 @@ GLboolean radeon_miptree_matches_image(radeon_mipmap_tree *mt,
 	if (face >= mt->faces || level < mt->firstLevel || level > mt->lastLevel)
 		return GL_FALSE;
 
-	if (texImage->TexFormat->TexelBytes != mt->bpp)
+	if (texImage->IsCompressed != mt->compressed)
+		return GL_FALSE;
+
+	if (!texImage->IsCompressed &&
+	    !mt->compressed &&
+	    texImage->TexFormat->TexelBytes != mt->bpp)
 		return GL_FALSE;
 
 	lvl = &mt->levels[level - mt->firstLevel];
