@@ -42,6 +42,15 @@ static void Init(void)
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
 
     glClearColor(0.0, 0.0, 1.0, 0.0);
+
+    glEnable(GL_FOG);
+    glFogi(GL_FOG_MODE, GL_LINEAR);
+    glFogf(GL_FOG_START, 25);
+    glFogf(GL_FOG_END, 35);
+#if 0
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable (GL_BLEND);
+#endif
 }
 
 static void Reshape(int width, int height)
@@ -70,26 +79,26 @@ static void Key(unsigned char key, int x, int y)
 
 static void Draw(void)
 {
-   glClear(GL_COLOR_BUFFER_BIT); 
+   glClear(GL_COLOR_BUFFER_BIT);
 
    glEnable(GL_FOG);
 
    glBegin(GL_TRIANGLES);
-   glColor3f(0,0,.7); 
+   glColor3f(1,1,1);
    glVertex3f( 0.9, -0.9, -30.0);
-   glColor3f(.8,0,0); 
+   glColor3f(1,1,1);
    glVertex3f( 0.9,  0.9, -30.0);
-   glColor3f(0,.9,0); 
-   glVertex3f(-0.9,  0.0, -30.0);
+   glColor3f(1,1,1);
+   glVertex3f(-0.9,  0.0, -40.0);
    glEnd();
 
 #if 0
    glBegin(GL_TRIANGLES);
-   glColor3f(0,0,.7); 
+   glColor3f(0,0,.7);
    glVertex3f(-0.9, -0.9, -30.0);
-   glColor3f(.8,0,0); 
+   glColor3f(.8,0,0);
    glVertex3f(-0.9,  0.9, -30.0);
-   glColor3f(0,.9,0); 
+   glColor3f(0,.9,0);
    glVertex3f( 0.9,  0.0, -30.0);
    glEnd();
 #endif
