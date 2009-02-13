@@ -28,7 +28,7 @@
 
 #define RADEON_ONE_REG_WR        (1 << 15)
 
-#define CS_OUT_ONE_REG(register, count) \
+#define OUT_CS_ONE_REG(register, count) \
     OUT_CS_REG_SEQ(register, (count | RADEON_ONE_REG_WR))
 
 #define R300_PACIFY do { \

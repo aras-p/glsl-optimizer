@@ -80,33 +80,58 @@ void r300_emit_dsa_state(struct r300_context* r300,
 }
 
 void r300_emit_fragment_shader(struct r300_context* r300,
-                               struct r300_fragment_shader* shader)
+                               struct r300_fragment_shader* fs)
 {
     CS_LOCALS(r300);
+    int i;
+    BEGIN_CS(0);
+
+    OUT_CS_REG(R300_US_CONFIG, MAX(fs->indirections - 1, 0));
+    OUT_CS_REG(R300_US_PIXSIZE, fs->shader.stack_size);
+    /* XXX figure out exactly how big the sizes are on this reg */
+    OUT_CS_REG(R300_US_CODE_OFFSET, 0x0);
+    /* XXX figure these ones out a bit better kthnx */
+    OUT_CS_REG(R300_US_CODE_ADDR_0, 0x0);
+    OUT_CS_REG(R300_US_CODE_ADDR_1, 0x0);
+    OUT_CS_REG(R300_US_CODE_ADDR_2, 0x0);
+    OUT_CS_REG(R300_US_CODE_ADDR_3, R300_RGBA_OUT);
+
+    for (i = 0; i < fs->alu_instruction_count; i++) {
+        OUT_CS_REG(R300_US_ALU_RGB_INST_0 + (4 * i),
+            fs->instructions[i].alu_rgb_inst);
+        OUT_CS_REG(R300_US_ALU_RGB_ADDR_0 + (4 * i),
+            fs->instructions[i].alu_rgb_addr);
+        OUT_CS_REG(R300_US_ALU_ALPHA_INST_0 + (4 * i),
+            fs->instructions[i].alu_alpha_inst);
+        OUT_CS_REG(R300_US_ALU_ALPHA_ADDR_0 + (4 * i),
+            fs->instructions[i].alu_alpha_addr);
+    }
+
+    END_CS;
 }
 
 void r500_emit_fragment_shader(struct r300_context* r300,
-                               struct r500_fragment_shader* shader)
+                               struct r500_fragment_shader* fs)
 {
     CS_LOCALS(r300);
-    int i = 0;
+    int i;
 
-    BEGIN_CS(8 + (shader->shader.instruction_count * 6) + 6);
+    BEGIN_CS(8 + (fs->instruction_count * 6) + 6);
     OUT_CS_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
-    OUT_CS_REG(R500_US_PIXSIZE, shader->shader.stack_size);
+    OUT_CS_REG(R500_US_PIXSIZE, fs->shader.stack_size);
     OUT_CS_REG(R500_US_CODE_ADDR, R500_US_CODE_START_ADDR(0) |
-        R500_US_CODE_END_ADDR(shader->shader.instruction_count));
+        R500_US_CODE_END_ADDR(fs->instruction_count));
 
     OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_INSTR);
     OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA,
-        shader->shader.instruction_count * 6);
-    for (i = 0; i < shader->shader.instruction_count; i++) {
-        CS_OUT(shader->instructions[i].inst0);
-        CS_OUT(shader->instructions[i].inst1);
-        CS_OUT(shader->instructions[i].inst2);
-        CS_OUT(shader->instructions[i].inst3);
-        CS_OUT(shader->instructions[i].inst4);
-        CS_OUT(shader->instructions[i].inst5);
+        fs->instruction_count * 6);
+    for (i = 0; i < fs->instruction_count; i++) {
+        OUT_CS(fs->instructions[i].inst0);
+        OUT_CS(fs->instructions[i].inst1);
+        OUT_CS(fs->instructions[i].inst2);
+        OUT_CS(fs->instructions[i].inst3);
+        OUT_CS(fs->instructions[i].inst4);
+        OUT_CS(fs->instructions[i].inst5);
     }
     R300_PACIFY;
     END_CS;
@@ -171,6 +196,16 @@ static void r300_emit_dirty_state(struct r300_context* r300)
 
     if (r300->dirty_state & R300_NEW_DSA) {
         r300_emit_dsa_state(r300, r300->dsa_state);
+    }
+
+    if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER) {
+        if (r300screen->caps->is_r500) {
+            r500_emit_fragment_shader(r300,
+                (struct r500_fragment_shader*)r300->fs);
+        } else {
+            r300_emit_fragment_shader(r300,
+                (struct r300_fragment_shader*)r300->fs);
+        }
     }
 
     if (r300->dirty_state & R300_NEW_RASTERIZER) {

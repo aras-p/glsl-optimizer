@@ -24,11 +24,21 @@
 
 void r300_make_passthrough_fragment_shader(struct r300_fragment_shader* fs)
 {
+    fs->alu_instruction_count = 1;
+    fs->tex_instruction_count = 0;
+    fs->indirections = 1;
+    fs->shader.stack_size = 2;
+
+    /* XXX decode these */
+    fs->instructions[0].alu_rgb_inst = 0x50A80;
+    fs->instructions[0].alu_rgb_inst = 0x1C000000;
+    fs->instructions[0].alu_alpha_inst = 0x40889;
+    fs->instructions[0].alu_alpha_inst = 0x1000000;
 }
 
 void r500_make_passthrough_fragment_shader(struct r500_fragment_shader* fs)
 {
-    fs->shader.instruction_count = 1;
+    fs->instruction_count = 1;
     fs->shader.stack_size = 0;
 
     fs->instructions[0].inst0 = R500_INST_TYPE_OUT |
