@@ -31,6 +31,7 @@
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/context.h"
+#include "main/convolve.h"
 #include "main/mipmap.h"
 #include "main/texcompress.h"
 #include "main/texformat.h"

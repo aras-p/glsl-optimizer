@@ -37,6 +37,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extern void r300SetDepthTexMode(struct gl_texture_object *tObj);
 
+extern void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target,
+			     __DRIdrawable *dPriv);
+
 extern void r300SetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 			     unsigned long long offset, GLint depth,
 			     GLuint pitch);

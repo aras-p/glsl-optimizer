@@ -357,9 +357,6 @@ static const __DRItexOffsetExtension r300texOffsetExtension = {
    r300SetTexOffset,
 };
 
-void r300SetTexBuffer(__DRIcontext *pDRICtx,
-                      GLint target,
-                      __DRIdrawable *dPriv);
 static const __DRItexBufferExtension r300TexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
    r300SetTexBuffer,
