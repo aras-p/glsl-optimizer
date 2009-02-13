@@ -20,6 +20,8 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#include "util/u_math.h"
+
 #include "r300_context.h"
 #include "r300_cs.h"
 #include "r300_screen.h"
@@ -32,5 +34,14 @@ void r300_emit_blend_color_state(struct r300_context* r300,
 
 void r300_emit_dsa_state(struct r300_context* r300,
                          struct r300_dsa_state* dsa);
+
+void r300_emit_fragment_shader(struct r300_context* r300,
+                               struct r300_fragment_shader* fs);
+
+void r500_emit_fragment_shader(struct r300_context* r300,
+                               struct r500_fragment_shader* fs);
+
+void r300_emit_fb_state(struct r300_context* r300,
+                        struct pipe_framebuffer_state* fb);
 
 void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs);

@@ -86,7 +86,7 @@ void r300_emit_fragment_shader(struct r300_context* r300,
     int i;
     BEGIN_CS(0);
 
-    OUT_CS_REG(R300_US_CONFIG, MAX(fs->indirections - 1, 0));
+    OUT_CS_REG(R300_US_CONFIG, MAX2(fs->indirections - 1, 0));
     OUT_CS_REG(R300_US_PIXSIZE, fs->shader.stack_size);
     /* XXX figure out exactly how big the sizes are on this reg */
     OUT_CS_REG(R300_US_CODE_OFFSET, 0x0);
