@@ -343,6 +343,6 @@ void r300_parse_chipset(struct r300_capabilities* caps)
             break;
     }
 
-    /* Force off TCL for now */
-    caps->has_tcl = FALSE;
+    /* XXX SW TCL is broken so no forcing it off right now
+    caps->has_tcl = FALSE; */
 }
