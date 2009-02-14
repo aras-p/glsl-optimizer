@@ -168,6 +168,19 @@ void r300_emit_fb_state(struct r300_context* r300,
         OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i),
             translate_out_fmt(fb->cbufs[i]->format));
     }
+
+    if (fb->zsbuf) {
+        tex = (struct r300_texture*)fb->zsbuf->texture;
+        OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
+        OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+    }
+
+    OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
+        R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
+        R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
+    OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
+        R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
+        R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
     R300_PACIFY;
     END_CS;
 }
