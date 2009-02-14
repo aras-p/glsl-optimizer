@@ -33,6 +33,7 @@
 #define RADEON_CS_H
 
 #include <stdint.h>
+#include <string.h>
 #include "drm.h"
 #include "radeon_drm.h"
 
@@ -194,4 +195,13 @@ static inline void radeon_cs_write_dword(struct radeon_cs *cs, uint32_t dword)
     }
 }
 
+static inline void radeon_cs_write_qword(struct radeon_cs *cs, uint64_t qword)
+{
+
+    memcpy(cs->packets + cs->cdw, &qword, sizeof(qword));
+    cs->cdw+=2;
+    if (cs->section) {
+        cs->section_cdw+=2;
+    }
+}
 #endif

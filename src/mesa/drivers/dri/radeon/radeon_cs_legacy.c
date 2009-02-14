@@ -288,8 +288,7 @@ static int cs_emit(struct radeon_cs *cs)
       age.scratch.n_bufs = 1;
       age.scratch.flags = 0;
       radeon_cs_write_dword(cs, age.u);
-      radeon_cs_write_dword(cs, ull & 0xffffffff);
-      radeon_cs_write_dword(cs, ull >> 32);
+      radeon_cs_write_qword(cs, ull);
       radeon_cs_write_dword(cs, 0);
     }
 
