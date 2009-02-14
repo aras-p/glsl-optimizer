@@ -115,7 +115,7 @@ void r500_emit_fragment_shader(struct r300_context* r300,
 {
     CS_LOCALS(r300);
     int i = 0;
-    BEGIN_CS(11 + (fs->instruction_count * 6));
+    BEGIN_CS(9 + (fs->instruction_count * 6));
     OUT_CS_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
     OUT_CS_REG(R500_US_PIXSIZE, fs->shader.stack_size);
     OUT_CS_REG(R500_US_CODE_ADDR, R500_US_CODE_START_ADDR(0) |
@@ -132,7 +132,6 @@ void r500_emit_fragment_shader(struct r300_context* r300,
         OUT_CS(fs->instructions[i].inst4);
         OUT_CS(fs->instructions[i].inst5);
     }
-    R300_PACIFY;
     END_CS;
 }
 
@@ -159,7 +158,7 @@ void r300_emit_fb_state(struct r300_context* r300,
     struct r300_texture* tex;
     int i;
 
-    BEGIN_CS((5 * fb->nr_cbufs) + (fb->zsbuf ? 5 : 0) + 6);
+    BEGIN_CS((5 * fb->nr_cbufs) + (fb->zsbuf ? 5 : 0) + 4);
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = (struct r300_texture*)fb->cbufs[i]->texture;
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
@@ -187,7 +186,6 @@ void r300_emit_fb_state(struct r300_context* r300,
     OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
         R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
         R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
-    R300_PACIFY;
     END_CS;
 }
 

@@ -40,5 +40,10 @@
         (1 << 18) | (1 << 31)); \
 } while (0)
 
+#define R300_SCREENDOOR do { \
+    OUT_CS_REG(R300_SC_SCREENDOOR, 0x0); \
+    R300_PACIFY; \
+    OUT_CS_REG(R300_SC_SCREENDOOR, 0xffffff); \
+} while (0)
 
 #endif /* R300_CS_H */

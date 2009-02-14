@@ -54,8 +54,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         return;
     }
 
-    BEGIN_CS(164 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
-    R300_PACIFY;
+    BEGIN_CS(158 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -127,7 +126,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_SU_DEPTH_OFFSET, 0x00000000);
     OUT_CS_REG(R300_SC_HYPERZ, 0x0000001C);
     OUT_CS_REG(R300_SC_EDGERULE, 0x2DA49525);
-    OUT_CS_REG(R300_SC_SCREENDOOR, 0x00FFFFFF);
     OUT_CS_REG(R300_FG_FOG_BLEND, 0x00000002);
     OUT_CS_REG(R300_FG_FOG_COLOR_R, 0x00000000);
     OUT_CS_REG(R300_FG_FOG_COLOR_G, 0x00000000);
@@ -156,7 +154,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(0x4F34, 0x00000000); */
     OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0x00000000);
     OUT_CS_REG(R300_ZB_HIZ_PITCH, 0x00000000);
-    R300_PACIFY;
     if (caps->has_tcl) {
         OUT_CS_REG(R300_VAP_PROG_STREAM_CNTL_0,
             (R300_DATA_TYPE_FLOAT_4 << R300_DATA_TYPE_0_SHIFT) |
@@ -233,7 +230,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         r300_emit_fragment_shader(r300, &r300_passthrough_fragment_shader);
     }
 
-    BEGIN_CS(8 + (caps->has_tcl ? 23 : 2));
+    BEGIN_CS(8 + (caps->has_tcl ? 20 : 2));
     OUT_CS_REG_SEQ(R300_US_OUT_FMT_0, 4);
     OUT_CS(R300_C0_SEL_B | R300_C1_SEL_G | R300_C2_SEL_R | R300_C3_SEL_A);
     OUT_CS(R300_US_OUT_FMT_UNUSED);
@@ -250,7 +247,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
         OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_0, 0x00100000);
         OUT_CS_REG(R300_VAP_PVS_CONST_CNTL, 0x00000000);
         OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_1, 0x00000001);
-        R300_PACIFY;
         /* XXX translate these back into normal instructions */
         OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x1);
         OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG, 0x0);
@@ -269,15 +265,13 @@ static void r300_surface_fill(struct pipe_context* pipe,
             (0x5 << R300_VF_MAX_VTX_NUM_SHIFT) |
             (caps->num_vert_fpus << R300_PVS_NUM_FPUS_SHIFT));
     }
-    R300_PACIFY;
     END_CS;
 
     r300_emit_blend_state(r300, &blend_clear_state);
     r300_emit_blend_color_state(r300, &blend_color_clear_state);
     r300_emit_dsa_state(r300, &dsa_clear_state);
 
-    BEGIN_CS(32);
-    R300_PACIFY;
+    BEGIN_CS(24);
     /* Flush colorbuffer and blend caches. */
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
         R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D |
@@ -312,12 +306,10 @@ static void r300_surface_fill(struct pipe_context* pipe,
     /* XXX OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
         R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
         R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE); */
-    R300_SCREENDOOR;
 
     END_CS;
-    FLUSH_CS;
 
-    r300->dirty_state = R300_NEW_KITCHEN_SINK;
+    r300->dirty_hw++;
 }
 
 void r300_init_surface_functions(struct r300_context* r300)

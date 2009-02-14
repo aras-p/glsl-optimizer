@@ -41,10 +41,44 @@ static INLINE struct swtcl_stage* swtcl_stage(struct draw_stage* draw) {
     return (struct swtcl_stage*)draw;
 }
 
-static void r300_emit_vertex(struct r300_context* r300,
-                             const struct vertex_header* vertex)
+static INLINE void r300_emit_vertex(struct r300_context* r300,
+                                    const struct vertex_header* vertex)
 {
-    /* XXX */
+    struct vertex_info* vinfo = &r300->vertex_info;
+    CS_LOCALS(r300);
+    uint i, j;
+
+    BEGIN_CS(vinfo->size);
+
+    for (i = 0; i < vinfo->num_attribs; i++) {
+        j = vinfo->attrib[i].src_index;
+        switch (vinfo->attrib[i].emit) {
+            case EMIT_1F:
+                CS_OUT_32F(vertex->data[j][0]);
+                break;
+            case EMIT_2F:
+                CS_OUT_32F(vertex->data[j][0]);
+                CS_OUT_32F(vertex->data[j][1]);
+                break;
+            case EMIT_3F:
+                CS_OUT_32F(vertex->data[j][0]);
+                CS_OUT_32F(vertex->data[j][1]);
+                CS_OUT_32F(vertex->data[j][2]);
+                break;
+            case EMIT_4F:
+                CS_OUT_32F(vertex->data[j][0]);
+                CS_OUT_32F(vertex->data[j][1]);
+                CS_OUT_32F(vertex->data[j][2]);
+                CS_OUT_32F(vertex->data[j][3]);
+                break;
+            default:
+                debug_printf("r300: Unknown emit value %d\n",
+                    vinfo->attrib[i].emit);
+                break;
+        }
+    }
+
+    END_CS;
 }
 
 static INLINE void r300_emit_prim(struct draw_stage* draw,
@@ -58,8 +92,12 @@ static INLINE void r300_emit_prim(struct draw_stage* draw,
 
     r300_emit_dirty_state(r300);
 
-    /* XXX should be count * vtx size */
-    BEGIN_CS(2 + count + 6);
+    BEGIN_CS(3);
+    OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
+    OUT_CS(r300->vertex_info.hwfmt[0]);
+    OUT_CS(r300->vertex_info.hwfmt[1]);
+
+    BEGIN_CS(2 + (count * r300->vertex_info.size) + 2);
     OUT_CS(CP_PACKET3(R200_3D_DRAW_IMMD_2, count));
     OUT_CS(hwprim | R300_PRIM_WALK_RING |
         (count << R300_PRIM_NUM_VERTICES_SHIFT));
@@ -67,7 +105,7 @@ static INLINE void r300_emit_prim(struct draw_stage* draw,
     for (i = 0; i < count; i++) {
         r300_emit_vertex(r300, prim->v[i]);
     }
-    R300_PACIFY;
+
     END_CS;
 }
 
