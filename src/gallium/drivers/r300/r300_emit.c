@@ -151,7 +151,7 @@ uint32_t translate_out_fmt(enum pipe_format format)
     return 0;
 }
 
-/* XXX add pitch, stride, z/stencil buf */
+/* XXX add pitch, stride */
 void r300_emit_fb_state(struct r300_context* r300,
                         struct pipe_framebuffer_state* fb)
 {
@@ -159,7 +159,7 @@ void r300_emit_fb_state(struct r300_context* r300,
     struct r300_texture* tex;
     int i;
 
-    BEGIN_CS((3 * fb->nr_cbufs) + 6);
+    BEGIN_CS((5 * fb->nr_cbufs) + (fb->zsbuf ? 5 : 0) + 6);
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = (struct r300_texture*)fb->cbufs[i]->texture;
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
@@ -173,6 +173,12 @@ void r300_emit_fb_state(struct r300_context* r300,
         tex = (struct r300_texture*)fb->zsbuf->texture;
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
         OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+        if (fb->zsbuf->format == PIPE_FORMAT_Z24S8_UNORM) {
+            OUT_CS_REG(R300_ZB_FORMAT,
+                R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL);
+        } else {
+            OUT_CS_REG(R300_ZB_FORMAT, 0x0);
+        }
     }
 
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
