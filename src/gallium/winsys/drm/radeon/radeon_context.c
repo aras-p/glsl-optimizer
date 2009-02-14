@@ -38,57 +38,23 @@
 #include "radeon_buffer.h"
 #include "radeon_winsys_softpipe.h"
 
-#define need_GL_ARB_fragment_program
-#define need_GL_ARB_multisample
 #define need_GL_ARB_point_parameters
-#define need_GL_ARB_shader_objects
-#define need_GL_ARB_texture_compression
 #define need_GL_ARB_vertex_buffer_object
-#define need_GL_ARB_vertex_program
-#define need_GL_ARB_vertex_shader
-#define need_GL_EXT_blend_color
-#define need_GL_EXT_blend_equation_separate
-#define need_GL_EXT_blend_func_separate
-#define need_GL_EXT_blend_minmax
 #define need_GL_EXT_cull_vertex
 #define need_GL_EXT_compiled_vertex_array
-#define need_GL_EXT_fog_coord
-#define need_GL_EXT_framebuffer_object
-#define need_GL_EXT_multi_draw_arrays
-#define need_GL_EXT_secondary_color
-#define need_GL_VERSION_2_0
-#define need_GL_VERSION_2_1
 #include "extension_helper.h"
 
 /**
  * Extension strings exported by the radeon driver.
  */
 const struct dri_extension radeon_card_extensions[] = {
-   {"GL_ARB_multitexture", NULL},
-   {"GL_ARB_texture_border_clamp", NULL},
+/* XXX these are technically not supported
    {"GL_ARB_texture_rectangle", NULL},
-   {"GL_ARB_pixel_buffer_object", NULL},
+   {"GL_ARB_pixel_buffer_object", NULL}, */
    {"GL_ARB_point_parameters", GL_ARB_point_parameters_functions},
-   {"GL_ARB_shader_objects", GL_ARB_shader_objects_functions},
-   {"GL_ARB_shading_language_100", GL_VERSION_2_0_functions},
-   {"GL_ARB_shading_language_120", GL_VERSION_2_1_functions},
    {"GL_ARB_vertex_buffer_object", GL_ARB_vertex_buffer_object_functions},
-   {"GL_ARB_vertex_program", GL_ARB_vertex_program_functions},
-   {"GL_ARB_vertex_shader", GL_ARB_vertex_shader_functions},
-   {"GL_EXT_blend_color", GL_EXT_blend_color_functions},
-   {"GL_EXT_blend_equation_separate", GL_EXT_blend_equation_separate_functions},
-   {"GL_EXT_blend_func_separate", GL_EXT_blend_func_separate_functions},
-   {"GL_EXT_blend_minmax", GL_EXT_blend_minmax_functions},
-   {"GL_EXT_blend_subtract", NULL},
    {"GL_EXT_compiled_vertex_array", GL_EXT_compiled_vertex_array_functions},
    {"GL_EXT_cull_vertex", GL_EXT_cull_vertex_functions},
-   {"GL_EXT_fog_coord", GL_EXT_fog_coord_functions},
-   {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
-   {"GL_EXT_multi_draw_arrays", GL_EXT_multi_draw_arrays_functions},
-   {"GL_EXT_packed_depth_stencil", NULL},
-   {"GL_EXT_pixel_buffer_object", NULL},
-   {"GL_EXT_secondary_color", GL_EXT_secondary_color_functions},
-   {"GL_EXT_stencil_wrap", NULL},
    {NULL, NULL}
 };
 
