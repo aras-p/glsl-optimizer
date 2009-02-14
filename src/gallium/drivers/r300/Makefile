@@ -11,6 +11,7 @@ C_SOURCES = \
 	r300_flush.c \
 	r300_screen.c \
 	r300_state.c \
+	r300_state_derived.c \
 	r300_state_shader.c \
 	r300_surface.c \
 	r300_swtcl_emit.c \

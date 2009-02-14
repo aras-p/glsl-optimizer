@@ -24,6 +24,7 @@
 #define R300_CONTEXT_H
 
 #include "draw/draw_context.h"
+#include "draw/draw_vertex.h"
 #include "pipe/p_context.h"
 #include "tgsi/tgsi_scan.h"
 #include "util/u_memory.h"
@@ -85,17 +86,18 @@ struct r300_scissor_state {
 struct r300_texture_state {
 };
 
-#define R300_NEW_BLEND           0x000001
-#define R300_NEW_BLEND_COLOR     0x000002
-#define R300_NEW_DSA             0x000004
-#define R300_NEW_FRAMEBUFFERS    0x000008
-#define R300_NEW_FRAGMENT_SHADER 0x000010
-#define R300_NEW_RASTERIZER      0x000020
-#define R300_NEW_SAMPLER         0x000040
-#define R300_NEW_SCISSOR         0x004000
-#define R300_NEW_TEXTURE         0x008000
-#define R300_NEW_VERTEX_SHADER   0x800000
-#define R300_NEW_KITCHEN_SINK    0xffffff
+#define R300_NEW_BLEND           0x0000001
+#define R300_NEW_BLEND_COLOR     0x0000002
+#define R300_NEW_DSA             0x0000004
+#define R300_NEW_FRAMEBUFFERS    0x0000008
+#define R300_NEW_FRAGMENT_SHADER 0x0000010
+#define R300_NEW_RASTERIZER      0x0000020
+#define R300_NEW_SAMPLER         0x0000040
+#define R300_NEW_SCISSOR         0x0004000
+#define R300_NEW_TEXTURE         0x0008000
+#define R300_NEW_VERTEX_FORMAT   0x0800000
+#define R300_NEW_VERTEX_SHADER   0x1000000
+#define R300_NEW_KITCHEN_SINK    0x1ffffff
 
 /* The next several objects are not pure Radeon state; they inherit from
  * various Gallium classes. */
@@ -203,6 +205,8 @@ struct r300_context {
     struct r300_texture* textures[8];
     struct r300_texture_state* texture_states[8];
     int texture_count;
+    /* Vertex information. */
+    struct vertex_info vertex_info;
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */
