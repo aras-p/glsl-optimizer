@@ -213,12 +213,26 @@ void radeon_miptree_unreference(radeon_mipmap_tree *mt)
 }
 
 
+/**
+ * Calculate first and last mip levels for the given texture object,
+ * where the dimensions are taken from the given texture image at
+ * the given level.
+ *
+ * Note: level is the OpenGL level number, which is not necessarily the same
+ * as the first level that is actually present.
+ *
+ * The base level image of the given texture face must be non-null,
+ * or this will fail.
+ */
 static void calculate_first_last_level(struct gl_texture_object *tObj,
-				       GLuint *pfirstLevel, GLuint *plastLevel)
+				       GLuint *pfirstLevel, GLuint *plastLevel,
+				       GLuint face, GLuint level)
 {
 	const struct gl_texture_image * const baseImage =
-		tObj->Image[0][tObj->BaseLevel];
+		tObj->Image[face][level];
 
+	assert(baseImage);
+	
 	/* These must be signed values.  MinLod and MaxLod can be negative numbers,
 	* and having firstLevel and lastLevel as signed prevents the need for
 	* extra sign checks.
@@ -240,10 +254,10 @@ static void calculate_first_last_level(struct gl_texture_object *tObj,
 		} else {
 			firstLevel = tObj->BaseLevel + (GLint)(tObj->MinLod + 0.5);
 			firstLevel = MAX2(firstLevel, tObj->BaseLevel);
-			firstLevel = MIN2(firstLevel, tObj->BaseLevel + baseImage->MaxLog2);
+			firstLevel = MIN2(firstLevel, level + baseImage->MaxLog2);
 			lastLevel = tObj->BaseLevel + (GLint)(tObj->MaxLod + 0.5);
 			lastLevel = MAX2(lastLevel, tObj->BaseLevel);
-			lastLevel = MIN2(lastLevel, tObj->BaseLevel + baseImage->MaxLog2);
+			lastLevel = MIN2(lastLevel, level + baseImage->MaxLog2);
 			lastLevel = MIN2(lastLevel, tObj->MaxLevel);
 			lastLevel = MAX2(firstLevel, lastLevel); /* need at least one level */
 		}
@@ -302,7 +316,7 @@ GLboolean radeon_miptree_matches_texture(radeon_mipmap_tree *mt, struct gl_textu
 	GLuint numfaces = 1;
 	GLuint firstLevel, lastLevel;
 
-	calculate_first_last_level(texObj, &firstLevel, &lastLevel);
+	calculate_first_last_level(texObj, &firstLevel, &lastLevel, 0, texObj->BaseLevel);
 	if (texObj->Target == GL_TEXTURE_CUBE_MAP)
 		numfaces = 6;
 
@@ -332,7 +346,7 @@ void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t,
 
 	assert(!t->mt);
 
-	calculate_first_last_level(&t->base, &firstLevel, &lastLevel);
+	calculate_first_last_level(&t->base, &firstLevel, &lastLevel, face, level);
 	if (t->base.Target == GL_TEXTURE_CUBE_MAP)
 		numfaces = 6;
 
