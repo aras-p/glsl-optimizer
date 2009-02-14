@@ -954,35 +954,26 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 }
 
 
+/**
+ * Called after code generation to resolve subroutine calls and the
+ * END instruction.
+ * \param end_inst  points to brw code for END instruction
+ * \param last_inst  points to last instruction emitted before vertex write
+ */
 static void 
-post_vs_emit( struct brw_vs_compile *c, struct brw_instruction *end_inst )
+post_vs_emit( struct brw_vs_compile *c,
+              struct brw_instruction *end_inst,
+              struct brw_instruction *last_inst )
 {
-   GLuint nr_insns = c->vp->program.Base.NumInstructions;
-   GLuint insn, target_insn;
-   struct prog_instruction *inst1, *inst2;
-   struct brw_instruction *brw_inst1, *brw_inst2;
-   int offset;
-   for (insn = 0; insn < nr_insns; insn++) {
-       inst1 = &c->vp->program.Base.Instructions[insn];
-       brw_inst1 = inst1->Data;
-       switch (inst1->Opcode) {
-	   case OPCODE_CAL:
-	   case OPCODE_BRA:
-	       target_insn = inst1->BranchTarget;
-	       inst2 = &c->vp->program.Base.Instructions[target_insn];
-	       brw_inst2 = inst2->Data;
-	       offset = brw_inst2 - brw_inst1;
-	       brw_set_src1(brw_inst1, brw_imm_d(offset*16));
-	       break;
-	   case OPCODE_END:
-	       offset = end_inst - brw_inst1;
-	       brw_set_src1(brw_inst1, brw_imm_d(offset*16));
-	       break;
-	   default:
-	       break;
-       }
-   }
+   GLint offset;
+
+   brw_resolve_cals(&c->func);
+
+   /* patch up the END code to jump past subroutines, etc */
+   offset = last_inst - end_inst;
+   brw_set_src1(end_inst, brw_imm_d(offset * 16));
 }
+
 
 /* Emit the fragment program instructions here.
  */
@@ -992,7 +983,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
    struct brw_compile *p = &c->func;
    GLuint nr_insns = c->vp->program.Base.NumInstructions;
    GLuint insn, if_insn = 0;
-   struct brw_instruction *end_inst;
+   GLuint end_offset = 0;
+   struct brw_instruction *end_inst, *last_inst;
    struct brw_instruction *if_inst[MAX_IFSN];
    struct brw_indirect stack_index = brw_indirect(0, 0);   
 
@@ -1035,7 +1027,6 @@ void brw_vs_emit(struct brw_vs_compile *c )
       
       /* Get argument regs.  SWZ is special and does this itself.
        */
-      inst->Data = &p->store[p->nr_insn];
       if (inst->Opcode != OPCODE_SWZ)
 	  for (i = 0; i < 3; i++) {
 	      struct prog_src_register *src = &inst->SrcReg[i];
@@ -1203,7 +1194,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 brw_set_access_mode(p, BRW_ALIGN_16);
 	 brw_ADD(p, get_addr_reg(stack_index),
 			 get_addr_reg(stack_index), brw_imm_d(4));
-	 inst->Data = &p->store[p->nr_insn];
+         brw_save_call(p, inst->Comment, p->nr_insn);
 	 brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
          break;
       case OPCODE_RET:
@@ -1214,13 +1205,21 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 brw_set_access_mode(p, BRW_ALIGN_16);
 	 break;
       case OPCODE_END:	
+         end_offset = p->nr_insn;
+         /* this instruction will get patched later to jump past subroutine
+          * code, etc.
+          */
          brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
          break;
       case OPCODE_PRINT:
+         /* no-op */
+         break;
       case OPCODE_BGNSUB:
+         brw_save_label(p, inst->Comment, p->nr_insn);
+         break;
       case OPCODE_ENDSUB:
-         /* no-op instructions */
-	 break;
+         /* no-op */
+         break;
       default:
 	 _mesa_problem(NULL, "Unsupported opcode %i (%s) in vertex shader",
                        inst->Opcode, inst->Opcode < MAX_OPCODE ?
@@ -1258,9 +1257,11 @@ void brw_vs_emit(struct brw_vs_compile *c )
       release_tmps(c);
    }
 
-   end_inst = &p->store[p->nr_insn];
+   end_inst = &p->store[end_offset];
+   last_inst = &p->store[p->nr_insn];
+
+   /* The END instruction will be patched to jump to this code */
    emit_vertex_write(c);
-   post_vs_emit(c, end_inst);
-   for (insn = 0; insn < nr_insns; insn++)
-       c->vp->program.Base.Instructions[insn].Data = NULL;
+
+   post_vs_emit(c, end_inst, last_inst);
 }

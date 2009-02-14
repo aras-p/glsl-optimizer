@@ -183,7 +183,6 @@ static struct prog_instruction *emit_insn(struct brw_wm_compile *c,
 {
    struct prog_instruction *inst = get_fp_inst(c);
    *inst = *inst0;
-   inst->Data = (void *)inst0;
    return inst;
 }
 

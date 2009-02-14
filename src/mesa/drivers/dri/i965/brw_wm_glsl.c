@@ -2252,28 +2252,12 @@ static void emit_tex(struct brw_wm_compile *c,
 	brw_MOV(p, dst[3], brw_imm_f(1.0));
 }
 
+/**
+ * Resolve subroutine calls after code emit is done.
+ */
 static void post_wm_emit( struct brw_wm_compile *c )
 {
-    GLuint nr_insns = c->fp->program.Base.NumInstructions;
-    GLuint insn, target_insn;
-    struct prog_instruction *inst1, *inst2;
-    struct brw_instruction *brw_inst1, *brw_inst2;
-    int offset;
-    for (insn = 0; insn < nr_insns; insn++) {
-	inst1 = &c->fp->program.Base.Instructions[insn];
-	brw_inst1 = inst1->Data;
-	switch (inst1->Opcode) {
-	    case OPCODE_CAL:
-		target_insn = inst1->BranchTarget;
-		inst2 = &c->fp->program.Base.Instructions[target_insn];
-		brw_inst2 = inst2->Data;
-		offset = brw_inst2 - brw_inst1;
-		brw_set_src1(brw_inst1, brw_imm_d(offset*16));
-		break;
-	    default:
-		break;
-	}
-    }
+    brw_resolve_cals(&c->func);
 }
 
 static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
@@ -2293,10 +2277,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 
     for (i = 0; i < c->nr_fp_insns; i++) {
 	struct prog_instruction *inst = &c->prog_instructions[i];
-	struct prog_instruction *orig_inst;
-
-	if ((orig_inst = inst->Data) != 0)
-	    orig_inst->Data = current_insn(p);
 
 	if (inst->CondUpdate)
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
@@ -2454,7 +2434,10 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		brw_ENDIF(p, if_inst[--if_insn]);
 		break;
 	    case OPCODE_BGNSUB:
+		brw_save_label(p, inst->Comment, p->nr_insn);
+		break;
 	    case OPCODE_ENDSUB:
+		/* no-op */
 		break;
 	    case OPCODE_CAL: 
 		brw_push_insn_state(p);
@@ -2464,8 +2447,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
                 brw_set_access_mode(p, BRW_ALIGN_16);
                 brw_ADD(p, get_addr_reg(stack_index),
                          get_addr_reg(stack_index), brw_imm_d(4));
-                orig_inst = inst->Data;
-                orig_inst->Data = &p->store[p->nr_insn];
+		brw_save_call(&c->func, inst->Comment, p->nr_insn);
                 brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
                 brw_pop_insn_state(p);
 		break;
@@ -2518,8 +2500,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
     }
     post_wm_emit(c);
-    for (i = 0; i < c->fp->program.Base.NumInstructions; i++)
-	c->fp->program.Base.Instructions[i].Data = NULL;
 }
 
 
