@@ -54,9 +54,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         return;
     }
 
-    BEGIN_CS(168 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
-    R300_PACIFY;
-    OUT_CS_REG(R300_TX_INVALTAGS, 0x0);
+    BEGIN_CS(164 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
     R300_PACIFY;
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
@@ -235,7 +233,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         r300_emit_fragment_shader(r300, &r300_passthrough_fragment_shader);
     }
 
-    BEGIN_CS(10 + (caps->has_tcl ? 23 : 2));
+    BEGIN_CS(8 + (caps->has_tcl ? 23 : 2));
     OUT_CS_REG_SEQ(R300_US_OUT_FMT_0, 4);
     OUT_CS(R300_C0_SEL_B | R300_C1_SEL_G | R300_C2_SEL_R | R300_C3_SEL_A);
     OUT_CS(R300_US_OUT_FMT_UNUSED);
@@ -314,9 +312,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     /* XXX OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
         R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
         R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE); */
-    OUT_CS_REG(R300_SC_SCREENDOOR, 0x00000000);
-    R300_PACIFY;
-    OUT_CS_REG(R300_SC_SCREENDOOR, 0x00FFFFFF);
+    R300_SCREENDOOR;
 
     END_CS;
     FLUSH_CS;
