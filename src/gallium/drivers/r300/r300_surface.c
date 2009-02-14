@@ -54,7 +54,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         return;
     }
 
-    BEGIN_CS(158 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
+    BEGIN_CS(161 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -189,9 +189,15 @@ static void r300_surface_fill(struct pipe_context* pipe,
             R300_PS_UCP_MODE_CLIP_AS_TRIFAN);
     }
 
+    /* The size of the point we're about to draw, in sixths of pixels */
     OUT_CS_REG(R300_GA_POINT_SIZE,
         ((h * 6) & R300_POINTSIZE_Y_MASK) |
         ((w * 6) << R300_POINTSIZE_X_SHIFT));
+
+    /* Pixel scissors */
+    OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
+    OUT_CS((x << R300_SCISSORS_X_SHIFT) | (y << R300_SCISSORS_Y_SHIFT));
+    OUT_CS((w << R300_SCISSORS_X_SHIFT) | (h << R300_SCISSORS_Y_SHIFT));
 
     /* RS block setup */
     if (caps->is_r500) {

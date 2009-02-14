@@ -715,20 +715,12 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     draw_flush(r300->draw);
 
-    uint32_t left, top, right, bottom;
-
-    /* So, a bit of info. The scissors are offset by R300_SCISSORS_OFFSET in
-     * both directions for all values, and can only be 13 bits wide. Why?
-     * We may never know. */
-    left = (state->minx + R300_SCISSORS_OFFSET) & 0x1fff;
-    top = (state->miny + R300_SCISSORS_OFFSET) & 0x1fff;
-    right = (state->maxx + R300_SCISSORS_OFFSET) & 0x1fff;
-    bottom = (state->maxy + R300_SCISSORS_OFFSET) & 0x1fff;
-
-    r300->scissor_state->scissor_top_left = (left << R300_SCISSORS_X_SHIFT) |
-            (top << R300_SCISSORS_Y_SHIFT);
+    r300->scissor_state->scissor_top_left =
+        (state->minx << R300_SCISSORS_X_SHIFT) |
+        (state->miny << R300_SCISSORS_Y_SHIFT);
     r300->scissor_state->scissor_bottom_right =
-        (right << R300_SCISSORS_X_SHIFT) | (bottom << R300_SCISSORS_Y_SHIFT);
+        (state->maxx << R300_SCISSORS_X_SHIFT) |
+        (state->maxy << R300_SCISSORS_Y_SHIFT);
 
     r300->dirty_state |= R300_NEW_SCISSOR;
 }

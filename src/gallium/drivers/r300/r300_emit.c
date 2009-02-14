@@ -208,6 +208,17 @@ void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
     END_CS;
 }
 
+void r300_emit_scissor_state(struct r300_context* r300,
+                             struct r300_scissor_state* scissor)
+{
+    CS_LOCALS(r300);
+    BEGIN_CS(3);
+    OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
+    OUT_CS(scissor->scissor_top_left);
+    OUT_CS(scissor->scissor_bottom_right);
+}
+
+/* Emit all dirty state. */
 static void r300_emit_dirty_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen =
@@ -247,10 +258,7 @@ static void r300_emit_dirty_state(struct r300_context* r300)
     }
 
     if (r300->dirty_state & R300_NEW_SCISSOR) {
-        struct r300_scissor_state* scissor = r300->scissor_state;
-        /* XXX next two are contiguous regs */
-        OUT_CS_REG(R300_SC_SCISSORS_TL, scissor->scissor_top_left);
-        OUT_CS_REG(R300_SC_SCISSORS_BR, scissor->scissor_bottom_right);
+        r300_emit_scissor_state(r300, r300->scissor_state);
     }
 
     r300->dirty_state = 0;

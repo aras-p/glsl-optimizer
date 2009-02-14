@@ -45,3 +45,6 @@ void r300_emit_fb_state(struct r300_context* r300,
                         struct pipe_framebuffer_state* fb);
 
 void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs);
+
+void r300_emit_scissor_state(struct r300_context* r300,
+                             struct r300_scissor_state* scissor);

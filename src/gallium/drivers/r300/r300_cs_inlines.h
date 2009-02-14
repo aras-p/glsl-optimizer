@@ -36,8 +36,8 @@
 } while (0)
 
 #define R300_PACIFY do { \
-    OUT_CS_REG(RADEON_WAIT_UNTIL, (1 << 15) | (1 << 17) | \
-        (1 << 18) | (1 << 31)); \
+    OUT_CS_REG(RADEON_WAIT_UNTIL, (1 << 14) | (1 << 15) | (1 << 16) | (1 << 17) | \
+        (1 << 18)); \
 } while (0)
 
 #define R300_SCREENDOOR do { \
