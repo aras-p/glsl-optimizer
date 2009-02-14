@@ -567,10 +567,9 @@ static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    radeonTexObj *t = r200->state.texture.unit[i].texobj;
    GLuint size;
 
-   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   BEGIN_BATCH_NO_AUTOSTATE(dwords + (2 * 5));
    OUT_BATCH_TABLE(atom->cmd, 3);
 
-   fprintf(stderr,"total size is %d\n", t->mt->totalsize);
    if (t && !t->image_override) {
      size = t->mt->totalsize / 6;
      OUT_BATCH_RELOC(0, t->mt->bo, size, RADEON_GEM_DOMAIN_VRAM, 0, 0);
