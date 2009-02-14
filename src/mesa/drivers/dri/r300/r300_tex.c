@@ -325,6 +325,8 @@ void r300InitTextureFuncs(struct dd_function_table *functions)
 	functions->TexSubImage1D = radeonTexSubImage1D;
 	functions->TexSubImage2D = radeonTexSubImage2D;
 	functions->TexSubImage3D = radeonTexSubImage3D;
+	functions->GetTexImage = radeonGetTexImage;
+	functions->GetCompressedTexImage = radeonGetCompressedTexImage;
 	functions->NewTextureObject = r300NewTextureObject;
 	functions->DeleteTexture = r300DeleteTexture;
 	functions->IsTextureResident = driIsTextureResident;

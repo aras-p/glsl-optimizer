@@ -456,6 +456,8 @@ void radeonInitTextureFuncs( struct dd_function_table *functions )
    functions->TexImage2D		= radeonTexImage2D;
    functions->TexSubImage1D		= radeonTexSubImage1D;
    functions->TexSubImage2D		= radeonTexSubImage2D;
+   functions->GetTexImage               = radeonGetTexImage;
+   functions->GetCompressedTexImage     = radeonGetCompressedTexImage;
 
    functions->NewTextureObject		= radeonNewTextureObject;
    //   functions->BindTexture		= radeonBindTexture;

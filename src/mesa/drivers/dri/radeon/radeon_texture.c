@@ -883,3 +883,56 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 	return GL_TRUE;
 }
 
+
+/**
+ * Need to map texture image into memory before copying image data,
+ * then unmap it.
+ */
+static void
+radeon_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
+		     GLenum format, GLenum type, GLvoid * pixels,
+		     struct gl_texture_object *texObj,
+		     struct gl_texture_image *texImage, int compressed)
+{
+	radeon_texture_image *image = get_radeon_texture_image(texImage);
+
+	if (image->mt) {
+		/* Map the texture image read-only */
+		radeon_teximage_map(image, GL_FALSE);
+	} else {
+		/* Image hasn't been uploaded to a miptree yet */
+		assert(image->base.Data);
+	}
+
+	if (compressed) {
+		_mesa_get_compressed_teximage(ctx, target, level, pixels,
+					      texObj, texImage);
+	} else {
+		_mesa_get_teximage(ctx, target, level, format, type, pixels,
+				   texObj, texImage);
+	}
+     
+	if (image->mt) {
+		radeon_teximage_unmap(image);
+	}
+}
+
+void
+radeonGetTexImage(GLcontext * ctx, GLenum target, GLint level,
+		  GLenum format, GLenum type, GLvoid * pixels,
+		  struct gl_texture_object *texObj,
+		  struct gl_texture_image *texImage)
+{
+	radeon_get_tex_image(ctx, target, level, format, type, pixels,
+			     texObj, texImage, 0);
+}
+
+void
+radeonGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
+			    GLvoid *pixels,
+			    struct gl_texture_object *texObj,
+			    struct gl_texture_image *texImage)
+{
+	radeon_get_tex_image(ctx, target, level, 0, 0, pixels,
+			     texObj, texImage, 1);
+}

@@ -105,4 +105,14 @@ void radeonTexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 			 const struct gl_pixelstore_attrib *packing,
 			 struct gl_texture_object *texObj,
 			 struct gl_texture_image *texImage);
+
+void radeonGetTexImage(GLcontext * ctx, GLenum target, GLint level,
+		       GLenum format, GLenum type, GLvoid * pixels,
+		       struct gl_texture_object *texObj,
+		       struct gl_texture_image *texImage);
+void radeonGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
+				 GLvoid *pixels,
+				 struct gl_texture_object *texObj,
+				 struct gl_texture_image *texImage);
+
 #endif
