@@ -2,10 +2,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#define GL_GLEXT_PROTOTYPES
-#include <GL/glut.h>
+
+#ifndef WIN32
 #include <unistd.h>
 #include <signal.h>
+#endif
+
+#include <GL/glew.h>
+#include <GL/glut.h>
 
 unsigned show_fps = 0;
 unsigned int frame_cnt = 0;
@@ -15,11 +19,14 @@ static const char *filename = NULL;
 static void usage(char *name)
 {
    fprintf(stderr, "usage: %s [ options ] shader_filename\n", name);
+#ifndef WIN32
    fprintf(stderr, "\n" );
    fprintf(stderr, "options:\n");
    fprintf(stderr, "    -fps  show frames per second\n");
+#endif
 }
 
+#ifndef WIN32
 void alarmhandler (int sig)
 {
    if (sig == SIGALRM) {
@@ -31,6 +38,7 @@ void alarmhandler (int sig)
    signal(SIGALRM, alarmhandler);
    alarm(5);
 }
+#endif
 
 static void args(int argc, char *argv[])
 {
@@ -142,7 +150,6 @@ static void Display(void)
    glEnd();
 
    glFlush();
-
    if (show_fps) {
       ++frame_cnt;
       glutPostRedisplay();
@@ -158,14 +165,17 @@ int main(int argc, char **argv)
    glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH);
    args(argc, argv);
    glutCreateWindow(filename);
+   glewInit();
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
    glutDisplayFunc(Display);
    Init();
+#ifndef WIN32
    if (show_fps) {
       signal(SIGALRM, alarmhandler);
       alarm(5);
    }
+#endif
    glutMainLoop();
    return 0;
 }

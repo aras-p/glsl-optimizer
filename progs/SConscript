@@ -5,4 +5,5 @@ SConscript([
     'samples/SConscript',
     'trivial/SConscript',
     'vp/SConscript',
+    'fp/SConscript',
 ])
