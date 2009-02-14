@@ -63,6 +63,7 @@ quad-unfilled-clip
 quad-unfilled-stipple
 quads
 quadstrip
+quadstrip-clip
 quadstrip-cont
 quadstrip-flat
 readtex.c

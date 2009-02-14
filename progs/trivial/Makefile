@@ -74,6 +74,7 @@ SOURCES = \
 	quad-unfilled.c \
 	quad.c \
 	quads.c \
+	quadstrip-clip.c \
 	quadstrip-cont.c \
 	quadstrip-flat.c \
 	quadstrip.c \

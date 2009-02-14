@@ -70,6 +70,7 @@ progs = [
 	'quad-unfilled',
 	'quad',
 	'quads',
+	'quadstrip-clip',
 	'quadstrip-cont',
 	'quadstrip-flat',
 	'quadstrip',
