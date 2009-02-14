@@ -438,7 +438,9 @@ void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
    int i;
 
    for (i = 0; i < rmesa->tcl.nr_aos_components; i++) {
-     radeon_bo_unref(rmesa->tcl.aos[i].bo);
-     rmesa->tcl.aos[i].bo = NULL;
+      if (rmesa->tcl.aos[i].bo) {
+         radeon_bo_unref(rmesa->tcl.aos[i].bo);
+         rmesa->tcl.aos[i].bo = NULL;
+      }
    }
 }
