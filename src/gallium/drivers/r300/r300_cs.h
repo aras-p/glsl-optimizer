@@ -23,20 +23,10 @@
 #ifndef R300_CS_H
 #define R300_CS_H
 
+#include "util/u_math.h"
+
 #include "r300_reg.h"
 #include "r300_winsys.h"
-
-/* Pack a 32-bit float into a dword. */
-static uint32_t pack_float_32(float f)
-{
-    union {
-        float f;
-        uint32_t u;
-    } u;
-
-    u.f = f;
-    return u.u;
-}
 
 /* Yes, I know macros are ugly. However, they are much prettier than the code
  * that they neatly hide away, and don't have the cost of function setup,so
@@ -80,7 +70,7 @@ static uint32_t pack_float_32(float f)
 } while (0)
 
 #define OUT_CS_32F(value) do { \
-    cs_winsys->write_cs_dword(cs, pack_float_32(value)); \
+    cs_winsys->write_cs_dword(cs, fui(value)); \
     cs_count--; \
 } while (0)
 
