@@ -135,7 +135,7 @@ static void r200FireEB(r200ContextPtr rmesa, int vertex_count, int type)
 	BATCH_LOCALS(&rmesa->radeon);
 
 	if (vertex_count > 0) {
-		BEGIN_BATCH(8);
+		BEGIN_BATCH(8+2);
 		OUT_BATCH_PACKET3(R200_CP_CMD_3D_DRAW_INDX_2, 0);
 		OUT_BATCH(R200_VF_PRIM_WALK_IND |
 			  ((vertex_count + 0) << 16) |
