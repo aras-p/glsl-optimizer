@@ -120,7 +120,7 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
              * shows why this is silly. Assuming RGBA, 4cpp, we can see that
              * 4096*4096*4096 = 64.0 GiB exactly, so it's not exactly
              * practical. However, if at some point a game really wants this,
-             * then we can remove this limit. */
+             * then we can remove or raise this limit. */
             if (r300screen->caps->is_r500) {
                 /* 9 == 256x256x256 */
                 return 9;
@@ -141,7 +141,7 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
         case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
             return 1;
         case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-            /* XXX guessing */
+            /* XXX guessing (what a terrible guess) */
             return 2;
         default:
             debug_printf("r300: Implementation error: Bad param %d\n",
@@ -174,13 +174,25 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param)
     }
 }
 
-/* XXX moar formats */
+/* XXX even moar formats */
 static boolean check_tex_2d_format(enum pipe_format format)
 {
     switch (format) {
+        /* Colorbuffer */
         case PIPE_FORMAT_A8R8G8B8_UNORM:
+        /* Texture */
         case PIPE_FORMAT_I8_UNORM:
+        /* Z buffer */
+        case PIPE_FORMAT_Z16_UNORM:
+        /* Z buffer with stencil */
+        case PIPE_FORMAT_Z24S8_UNORM:
             return TRUE;
+
+        /* These formats are explicitly not supported, in order to keep
+         * people from wasting their time trying to implement them... */
+        case PIPE_FORMAT_S8Z24_UNORM:
+            return FALSE;
+
         default:
             debug_printf("r300: Warning: Got unknown format: %s, in %s\n",
                 pf_name(format), __FUNCTION__);
