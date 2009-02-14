@@ -100,8 +100,7 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
             /* IN THEORY */
             return 0;
         case PIPE_CAP_MAX_RENDER_TARGETS:
-            /* XXX 4 eventually */
-            return 1;
+            return 4;
         case PIPE_CAP_OCCLUSION_QUERY:
             /* IN THEORY */
             return 0;
