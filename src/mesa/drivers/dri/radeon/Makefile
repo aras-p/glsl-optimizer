@@ -4,6 +4,8 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
+CFLAGS += $(RADEON_CFLAGS)
+
 LIBNAME = radeon_dri.so
 
 MINIGLX_SOURCES = server/radeon_dri.c 
@@ -39,7 +41,7 @@ C_SOURCES = \
 
 DRIVER_DEFINES = -DRADEON_COMMON=0
 
-DRI_LIB_DEPS += #-ldrm_radeon
+DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 
 X86_SOURCES = 
 

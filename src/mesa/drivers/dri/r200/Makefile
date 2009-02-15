@@ -3,6 +3,8 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
+CFLAGS += $(RADEON_CFLAGS)
+
 LIBNAME = r200_dri.so
 
 MINIGLX_SOURCES = server/radeon_dri.c 
@@ -80,7 +82,7 @@ COMMON_SYMLINKS = \
 	radeon_dma.c \
 	radeon_dma.h
 
-DRI_LIB_DEPS += #-ldrm_radeon
+DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 
 ##### TARGETS #####
 
