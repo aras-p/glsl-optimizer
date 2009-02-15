@@ -29,7 +29,6 @@
  * Triangle rendering within a tile.
  */
 
-#include <transpose_matrix4x4.h>
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 #include "util/u_math.h"
@@ -69,6 +68,12 @@ struct vertex_header {
 #define MASK_BOTTOM_LEFT  (1 << QUAD_BOTTOM_LEFT)
 #define MASK_BOTTOM_RIGHT (1 << QUAD_BOTTOM_RIGHT)
 #define MASK_ALL          0xf
+
+
+#define CHAN0 0
+#define CHAN1 1
+#define CHAN2 2
+#define CHAN3 3
 
 
 #define DEBUG_VERTS 0
@@ -144,105 +149,94 @@ struct setup_stage {
 static struct setup_stage setup;
 
 
-/**
- * Evaluate attribute coefficients (plane equations) to compute
- * attribute values for the four fragments in a quad.
- * Eg: four colors will be computed (in AoS format).
- */
-static INLINE void
-eval_coeff(uint slot, float x, float y, vector float w, vector float result[4])
+static INLINE vector float
+splatx(vector float v)
 {
-   switch (spu.vertex_info.attrib[slot].interp_mode) {
-   case INTERP_CONSTANT:
-      result[QUAD_TOP_LEFT] =
-      result[QUAD_TOP_RIGHT] =
-      result[QUAD_BOTTOM_LEFT] =
-      result[QUAD_BOTTOM_RIGHT] = setup.coef[slot].a0;
-      break;
-   case INTERP_LINEAR:
-      {
-         vector float dadx = setup.coef[slot].dadx;
-         vector float dady = setup.coef[slot].dady;
-         vector float topLeft =
-            spu_add(setup.coef[slot].a0,
-                    spu_add(spu_mul(spu_splats(x), dadx),
-                            spu_mul(spu_splats(y), dady)));
-
-         result[QUAD_TOP_LEFT] = topLeft;
-         result[QUAD_TOP_RIGHT] = spu_add(topLeft, dadx);
-         result[QUAD_BOTTOM_LEFT] = spu_add(topLeft, dady);
-         result[QUAD_BOTTOM_RIGHT] = spu_add(spu_add(topLeft, dadx), dady);
-      }
-      break;
-   case INTERP_PERSPECTIVE:
-      {
-         vector float dadx = setup.coef[slot].dadx;
-         vector float dady = setup.coef[slot].dady;
-         vector float topLeft =
-            spu_add(setup.coef[slot].a0,
-                    spu_add(spu_mul(spu_splats(x), dadx),
-                            spu_mul(spu_splats(y), dady)));
-
-         vector float wInv = spu_re(w);  /* 1.0 / w */
-
-         result[QUAD_TOP_LEFT] = spu_mul(topLeft, wInv);
-         result[QUAD_TOP_RIGHT] = spu_mul(spu_add(topLeft, dadx), wInv);
-         result[QUAD_BOTTOM_LEFT] = spu_mul(spu_add(topLeft, dady), wInv);
-         result[QUAD_BOTTOM_RIGHT] = spu_mul(spu_add(spu_add(topLeft, dadx), dady), wInv);
-      }
-      break;
-   case INTERP_POS:
-   case INTERP_NONE:
-      break;
-   default:
-      ASSERT(0);
-   }
+   return spu_splats(spu_extract(v, CHAN0));
 }
 
-
-/**
- * As above, but return 4 vectors in SOA format.
- * XXX this will all be re-written someday.
- */
-static INLINE void
-eval_coeff_soa(uint slot, float x, float y, vector float w, vector float result[4])
+static INLINE vector float
+splaty(vector float v)
 {
-   eval_coeff(slot, x, y, w, result);
-   _transpose_matrix4x4(result, result);
+   return spu_splats(spu_extract(v, CHAN1));
 }
-
 
 static INLINE vector float
 splatz(vector float v)
 {
-   return spu_splats(spu_extract(v, 2));
+   return spu_splats(spu_extract(v, CHAN2));
 }
-
 
 static INLINE vector float
 splatw(vector float v)
 {
-   return spu_splats(spu_extract(v, 3));
+   return spu_splats(spu_extract(v, CHAN3));
 }
 
 
 /**
- * Compute quad's Z and W vectors for the quad at (x,y).
+ * Setup fragment shader inputs by evaluating triangle's vertex
+ * attribute coefficient info.
+ * \param x  quad x pos
+ * \param y  quad y pos
+ * \param fragZ  returns quad Z values
+ * \param fragInputs  returns fragment program inputs
+ * Note: this code could be incorporated into the fragment program
+ * itself to avoid the loop and switch.
  */
-static INLINE void
-eval_zw(float x, float y, vector float *zOut, vector float *wOut)
+static void
+eval_inputs(float x, float y, vector float *fragZ, vector float fragInputs[])
 {
-   static const vector float fragX = (const vector float) { 0.0, 1.0, 0.0, 1.0 };
-   static const vector float fragY = (const vector float) { 0.0, 0.0, 1.0, 1.0 };
-   const uint slot = 0;  /* vertex position attribute */
-   const vector float pos = setup.coef[slot].a0;
-   const vector float dposdx = setup.coef[slot].dadx;
-   const vector float dposdy = setup.coef[slot].dady;
-   const vector float xVec = spu_splats(x) + fragX;
-   const vector float yVec = spu_splats(y) + fragY;
+   static const vector float deltaX = (const vector float) {0, 1, 0, 1};
+   static const vector float deltaY = (const vector float) {0, 0, 1, 1};
 
-   *zOut = splatz(pos) + xVec * splatz(dposdx) + yVec * splatz(dposdy);
-   *wOut = splatw(pos) + xVec * splatw(dposdx) + yVec * splatw(dposdy);
+   const uint posSlot = 0;
+   const vector float pos = setup.coef[posSlot].a0;
+   const vector float dposdx = setup.coef[posSlot].dadx;
+   const vector float dposdy = setup.coef[posSlot].dady;
+   const vector float fragX = spu_splats(x) + deltaX;
+   const vector float fragY = spu_splats(y) + deltaY;
+   vector float fragW, wInv;
+   uint i;
+
+   *fragZ = splatz(pos) + fragX * splatz(dposdx) + fragY * splatz(dposdy);
+   fragW =  splatw(pos) + fragX * splatw(dposdx) + fragY * splatw(dposdy);
+   wInv = spu_re(fragW);  /* 1 / w */
+
+   /* loop over fragment program inputs */
+   for (i = 0; i < spu.vertex_info.num_attribs; i++) {
+      uint attr = i + 1;
+      enum interp_mode interp = spu.vertex_info.attrib[attr].interp_mode;
+
+      /* constant term */
+      vector float a0 = setup.coef[attr].a0;
+      vector float r0 = splatx(a0);
+      vector float r1 = splaty(a0);
+      vector float r2 = splatz(a0);
+      vector float r3 = splatw(a0);
+
+      if (interp == INTERP_LINEAR || interp == INTERP_PERSPECTIVE) {
+         /* linear term */
+         vector float dadx = setup.coef[attr].dadx;
+         vector float dady = setup.coef[attr].dady;
+         r0 += fragX * splatx(dadx) + fragY * splatx(dady);
+         r1 += fragX * splaty(dadx) + fragY * splaty(dady);
+         r2 += fragX * splatz(dadx) + fragY * splatz(dady);
+         r3 += fragX * splatw(dadx) + fragY * splatw(dady);
+         if (interp == INTERP_PERSPECTIVE) {
+            /* perspective term */
+            r0 *= wInv;
+            r1 *= wInv;
+            r2 *= wInv;
+            r3 *= wInv;
+         }
+      }
+      fragInputs[CHAN0] = r0;
+      fragInputs[CHAN1] = r1;
+      fragInputs[CHAN2] = r2;
+      fragInputs[CHAN3] = r3;
+      fragInputs += 4;
+   }
 }
 
 
@@ -268,20 +262,11 @@ emit_quad( int x, int y, mask_t mask)
           * Run fragment shader, execute per-fragment ops, update fb/tile.
           */
          vector float inputs[4*4], outputs[2*4];
-         vector float fragZ, fragW;
          vector unsigned int kill_mask;
+         vector float fragZ;
 
-         eval_zw((float) x, (float) y, &fragZ, &fragW);
+         eval_inputs((float) x, (float) y, &fragZ, inputs);
 
-         /* setup inputs */
-#if 0
-         eval_coeff_soa(1, (float) x, (float) y, fragW, inputs);
-#else
-         uint i;
-         for (i = 0; i < spu.vertex_info.num_attribs; i++) {
-            eval_coeff_soa(i+1, (float) x, (float) y, fragW, inputs + i * 4);
-         }
-#endif
          ASSERT(spu.fragment_program);
          ASSERT(spu.fragment_ops);
 
