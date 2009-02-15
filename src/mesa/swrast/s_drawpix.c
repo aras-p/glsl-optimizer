@@ -829,6 +829,15 @@ _swrast_DrawPixels( GLcontext *ctx,
 		    const GLvoid *pixels )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GLboolean save_vp_override = ctx->VertexProgram._Overriden;
+
+   /* We are creating fragments directly, without going through vertex programs.
+    *
+    * This override flag tells the fragment processing code that its input comes
+    * from a non-standard source, and it may therefore not rely on optimizations
+    * that assume e.g. constant color if there is no color vertex array.
+    */
+   _mesa_set_vp_override(ctx, GL_TRUE);
 
    swrast_render_start(ctx);
 
@@ -841,6 +850,7 @@ _swrast_DrawPixels( GLcontext *ctx,
     pixels = _mesa_map_drawpix_pbo(ctx, unpack, pixels);
     if (!pixels) {
        swrast_render_finish(ctx);
+       _mesa_set_vp_override(ctx, save_vp_override);
        return;
     }
 
@@ -880,6 +890,7 @@ _swrast_DrawPixels( GLcontext *ctx,
    }
 
    swrast_render_finish(ctx);
+   _mesa_set_vp_override(ctx, save_vp_override);
 
    _mesa_unmap_drawpix_pbo(ctx, unpack);
 }
