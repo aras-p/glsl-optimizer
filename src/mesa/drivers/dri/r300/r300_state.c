@@ -730,134 +730,6 @@ static void r300ColorMask(GLcontext * ctx,
 }
 
 /* =============================================================
- * Fog
- */
-static void r300Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
-{
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	union {
-		int i;
-		float f;
-	} fogScale, fogStart;
-
-	(void)param;
-
-	fogScale.i = r300->hw.fogp.cmd[R300_FOGP_SCALE];
-	fogStart.i = r300->hw.fogp.cmd[R300_FOGP_START];
-
-	switch (pname) {
-	case GL_FOG_MODE:
-		switch (ctx->Fog.Mode) {
-		case GL_LINEAR:
-			R300_STATECHANGE(r300, fogs);
-			r300->hw.fogs.cmd[R300_FOGS_STATE] =
-			    (r300->hw.fogs.
-			     cmd[R300_FOGS_STATE] & ~R300_FG_FOG_BLEND_FN_MASK) |
-			    R300_FG_FOG_BLEND_FN_LINEAR;
-
-			if (ctx->Fog.Start == ctx->Fog.End) {
-				fogScale.f = -1.0;
-				fogStart.f = 1.0;
-			} else {
-				fogScale.f =
-				    1.0 / (ctx->Fog.End - ctx->Fog.Start);
-				fogStart.f =
-				    -ctx->Fog.Start / (ctx->Fog.End -
-						       ctx->Fog.Start);
-			}
-			break;
-		case GL_EXP:
-			R300_STATECHANGE(r300, fogs);
-			r300->hw.fogs.cmd[R300_FOGS_STATE] =
-			    (r300->hw.fogs.
-			     cmd[R300_FOGS_STATE] & ~R300_FG_FOG_BLEND_FN_MASK) |
-			    R300_FG_FOG_BLEND_FN_EXP;
-			fogScale.f = 0.0933 * ctx->Fog.Density;
-			fogStart.f = 0.0;
-			break;
-		case GL_EXP2:
-			R300_STATECHANGE(r300, fogs);
-			r300->hw.fogs.cmd[R300_FOGS_STATE] =
-			    (r300->hw.fogs.
-			     cmd[R300_FOGS_STATE] & ~R300_FG_FOG_BLEND_FN_MASK) |
-			    R300_FG_FOG_BLEND_FN_EXP2;
-			fogScale.f = 0.3 * ctx->Fog.Density;
-			fogStart.f = 0.0;
-                        break;
-		default:
-			return;
-		}
-		break;
-	case GL_FOG_DENSITY:
-		switch (ctx->Fog.Mode) {
-		case GL_EXP:
-			fogScale.f = 0.0933 * ctx->Fog.Density;
-			fogStart.f = 0.0;
-			break;
-		case GL_EXP2:
-			fogScale.f = 0.3 * ctx->Fog.Density;
-			fogStart.f = 0.0;
-		default:
-			break;
-		}
-		break;
-	case GL_FOG_START:
-	case GL_FOG_END:
-		if (ctx->Fog.Mode == GL_LINEAR) {
-			if (ctx->Fog.Start == ctx->Fog.End) {
-				fogScale.f = -1.0;
-				fogStart.f = 1.0;
-			} else {
-				fogScale.f =
-				    1.0 / (ctx->Fog.End - ctx->Fog.Start);
-				fogStart.f =
-				    -ctx->Fog.Start / (ctx->Fog.End -
-						       ctx->Fog.Start);
-			}
-		}
-		break;
-	case GL_FOG_COLOR:
-		R300_STATECHANGE(r300, fogc);
-		r300->hw.fogc.cmd[R300_FOGC_R] =
-		    (GLuint) (ctx->Fog.Color[0] * 1023.0F) & 0x3FF;
-		r300->hw.fogc.cmd[R300_FOGC_G] =
-		    (GLuint) (ctx->Fog.Color[1] * 1023.0F) & 0x3FF;
-		r300->hw.fogc.cmd[R300_FOGC_B] =
-		    (GLuint) (ctx->Fog.Color[2] * 1023.0F) & 0x3FF;
-		break;
-	case GL_FOG_COORD_SRC:
-		break;
-	default:
-		return;
-	}
-
-	if (fogScale.i != r300->hw.fogp.cmd[R300_FOGP_SCALE] ||
-	    fogStart.i != r300->hw.fogp.cmd[R300_FOGP_START]) {
-		R300_STATECHANGE(r300, fogp);
-		r300->hw.fogp.cmd[R300_FOGP_SCALE] = fogScale.i;
-		r300->hw.fogp.cmd[R300_FOGP_START] = fogStart.i;
-	}
-}
-
-static void r300SetFogState(GLcontext * ctx, GLboolean state)
-{
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-
-	R300_STATECHANGE(r300, fogs);
-	if (state) {
-		r300->hw.fogs.cmd[R300_FOGS_STATE] |= R300_FG_FOG_BLEND_ENABLE;
-
-		r300Fogfv(ctx, GL_FOG_MODE, NULL);
-		r300Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
-		r300Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
-		r300Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
-		r300Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
-	} else {
-		r300->hw.fogs.cmd[R300_FOGS_STATE] &= ~R300_FG_FOG_BLEND_ENABLE;
-	}
-}
-
-/* =============================================================
  * Point state
  */
 static void r300PointSize(GLcontext * ctx, GLfloat size)
@@ -2153,7 +2025,7 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 		/* empty */
 		break;
 	case GL_FOG:
-		r300SetFogState(ctx, state);
+		/* empty */
 		break;
 	case GL_ALPHA_TEST:
 		r300SetAlphaState(ctx);
@@ -2307,11 +2179,9 @@ static void r300ResetHwState(r300ContextPtr r300)
 		break;
 	}
 
-	/* XXX: set to 0 when fog is disabled? */
-	r300->hw.gb_misc.cmd[R300_GB_MISC_SELECT] = R300_GB_FOG_SELECT_1_1_W;
-
 	/* XXX: Enable anti-aliasing? */
 	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = GB_AA_CONFIG_AA_DISABLE;
+	r300->hw.gb_misc.cmd[R300_GB_MISC_SELECT] = 0;
 
 	r300->hw.ga_point_s0.cmd[1] = r300PackFloat32(0.0);
 	r300->hw.ga_point_s0.cmd[2] = r300PackFloat32(0.0);
@@ -2360,17 +2230,11 @@ static void r300ResetHwState(r300ContextPtr r300)
 	  R500_C0_SEL_B | R500_C1_SEL_G | R500_C2_SEL_R | R500_C3_SEL_A;
 	r300->hw.us_out_fmt.cmd[4] = R500_OUT_FMT_UNUSED |
 	  R500_C0_SEL_B | R500_C1_SEL_G | R500_C2_SEL_R | R500_C3_SEL_A;
-	r300->hw.us_out_fmt.cmd[5] = R300_W_FMT_W24;
+	r300->hw.us_out_fmt.cmd[5] = R300_W_FMT_W0 | R300_W_SRC_US;
 
-	r300Enable(ctx, GL_FOG, ctx->Fog.Enabled);
-	r300Fogfv(ctx, GL_FOG_MODE, NULL);
-	r300Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
-	r300Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
-	r300Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
-	r300Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
-	r300Fogfv(ctx, GL_FOG_COORDINATE_SOURCE_EXT, NULL);
-
-	r300->hw.fg_depth_src.cmd[1] = 0;
+	/* disable fog unit */
+	r300->hw.fogs.cmd[R300_FOGS_STATE] = 0;
+	r300->hw.fg_depth_src.cmd[1] = R300_FG_DEPTH_SRC_SHADER;
 
 	r300->hw.rb3d_cctl.cmd[1] = 0;
 
@@ -2625,16 +2489,6 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 	}
 	code = &fp->code;
 
-	if (fp->mesa_program.FogOption != GL_NONE) {
-		/* Enable HW fog. Try not to squish GL context.
-		 * (Anybody sane remembered to set glFog() opts first!) */
-		r300SetFogState(ctx, GL_TRUE);
-		ctx->Fog.Mode = fp->mesa_program.FogOption;
-		r300Fogfv(ctx, GL_FOG_MODE, NULL);
-	} else
-		/* Make sure HW is matching GL context. */
-		r300SetFogState(ctx, ctx->Fog.Enabled);
-
 	r300SetupTextures(ctx);
 
 	R300_STATECHANGE(rmesa, fp);
@@ -2683,12 +2537,18 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 	r300UpdateTextureState(ctx);
 	r300SetEarlyZState(ctx);
 
-	GLuint fgdepthsrc = R300_FG_DEPTH_SRC_SCAN;
-	if (current_fragment_program_writes_depth(ctx))
-		fgdepthsrc = R300_FG_DEPTH_SRC_SHADER;
-	if (fgdepthsrc != rmesa->hw.fg_depth_src.cmd[1]) {
-		R300_STATECHANGE(rmesa, fg_depth_src);
-		rmesa->hw.fg_depth_src.cmd[1] = fgdepthsrc;
+	/* w_fmt value is set to get best performance
+	 * see p.130 R5xx 3D acceleration guide v1.3 */
+	GLuint w_fmt;
+	if (current_fragment_program_writes_depth(ctx)) {
+		w_fmt = R300_W_FMT_W24 | R300_W_SRC_US;
+	} else {
+		w_fmt = R300_W_FMT_W0 | R300_W_SRC_US;
+	}
+	
+	if (w_fmt != rmesa->hw.us_out_fmt.cmd[5]) {
+		R300_STATECHANGE(rmesa, us_out_fmt);
+		rmesa->hw.us_out_fmt.cmd[5] = w_fmt;
 	}
 
 	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
@@ -2806,7 +2666,6 @@ void r300InitStateFuncs(struct dd_function_table *functions)
 	functions->DepthFunc = r300DepthFunc;
 	functions->DepthMask = r300DepthMask;
 	functions->CullFace = r300CullFace;
-	functions->Fogfv = r300Fogfv;
 	functions->FrontFace = r300FrontFace;
 	functions->ShadeModel = r300ShadeModel;
 	functions->LogicOpcode = r300LogicOpcode;
