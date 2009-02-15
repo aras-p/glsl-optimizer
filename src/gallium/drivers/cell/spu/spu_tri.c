@@ -212,31 +212,37 @@ eval_coeff_soa(uint slot, float x, float y, vector float w, vector float result[
 }
 
 
-/** Evalute coefficients to get Z for four pixels in a quad */
 static INLINE vector float
-eval_z(float x, float y)
+splatz(vector float v)
 {
-   const uint slot = 0;
-   const float dzdx = spu_extract(setup.coef[slot].dadx, 2);
-   const float dzdy = spu_extract(setup.coef[slot].dady, 2);
-   const float topLeft = spu_extract(setup.coef[slot].a0, 2) + x * dzdx + y * dzdy;
-   const vector float topLeftv = spu_splats(topLeft);
-   const vector float derivs = (vector float) { 0.0, dzdx, dzdy, dzdx + dzdy };
-   return spu_add(topLeftv, derivs);
+   return spu_splats(spu_extract(v, 2));
 }
 
 
-/** Evalute coefficients to get W for four pixels in a quad */
 static INLINE vector float
-eval_w(float x, float y)
+splatw(vector float v)
 {
-   const uint slot = 0;
-   const float dwdx = spu_extract(setup.coef[slot].dadx, 3);
-   const float dwdy = spu_extract(setup.coef[slot].dady, 3);
-   const float topLeft = spu_extract(setup.coef[slot].a0, 3) + x * dwdx + y * dwdy;
-   const vector float topLeftv = spu_splats(topLeft);
-   const vector float derivs = (vector float) { 0.0, dwdx, dwdy, dwdx + dwdy };
-   return spu_add(topLeftv, derivs);
+   return spu_splats(spu_extract(v, 3));
+}
+
+
+/**
+ * Compute quad's Z and W vectors for the quad at (x,y).
+ */
+static INLINE void
+eval_zw(float x, float y, vector float *zOut, vector float *wOut)
+{
+   static const vector float fragX = (const vector float) { 0.0, 1.0, 0.0, 1.0 };
+   static const vector float fragY = (const vector float) { 0.0, 0.0, 1.0, 1.0 };
+   const uint slot = 0;  /* vertex position attribute */
+   const vector float pos = setup.coef[slot].a0;
+   const vector float dposdx = setup.coef[slot].dadx;
+   const vector float dposdy = setup.coef[slot].dady;
+   const vector float xVec = spu_splats(x) + fragX;
+   const vector float yVec = spu_splats(y) + fragY;
+
+   *zOut = splatz(pos) + xVec * splatz(dposdx) + yVec * splatz(dposdy);
+   *wOut = splatw(pos) + xVec * splatw(dposdx) + yVec * splatw(dposdy);
 }
 
 
@@ -262,9 +268,10 @@ emit_quad( int x, int y, mask_t mask)
           * Run fragment shader, execute per-fragment ops, update fb/tile.
           */
          vector float inputs[4*4], outputs[2*4];
-         vector float fragZ = eval_z((float) x, (float) y);
-         vector float fragW = eval_w((float) x, (float) y);
+         vector float fragZ, fragW;
          vector unsigned int kill_mask;
+
+         eval_zw((float) x, (float) y, &fragZ, &fragW);
 
          /* setup inputs */
 #if 0
