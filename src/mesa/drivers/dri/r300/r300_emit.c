@@ -314,10 +314,6 @@ GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
 		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT |
 		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;
 
-#if 0
-	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) ;
-#endif
-
 	if (OutputsWritten & (1 << VERT_RESULT_PSIZ))
 		ret |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
 
@@ -326,12 +322,21 @@ GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
 
 GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
 {
-	GLuint i, ret = 0;
+	GLuint i, ret = 0, first_free_texcoord = 0;
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 		if (OutputsWritten & (1 << (VERT_RESULT_TEX0 + i))) {
 			ret |= (4 << (3 * i));
+			++first_free_texcoord;
 		}
+	}
+
+	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) {
+		if (first_free_texcoord > 8) {
+			fprintf(stderr, "\tout of free texcoords to write fog coord\n");
+			_mesa_exit(-1);
+		}
+		ret |= 4 << (3 * first_free_texcoord);
 	}
 
 	return ret;

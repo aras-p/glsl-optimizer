@@ -85,15 +85,15 @@ static void r300SetVertexFormat( GLcontext *ctx )
 	struct vertex_buffer *VB = &tnl->vb;
 	DECLARE_RENDERINPUTS(index_bitset);
 	GLuint InputsRead = 0, OutputsWritten = 0;
-	int vap_fmt_0 = 0;
-	int vap_vte_cntl = 0;
+	int vap_fmt_1 = 0;
 	int offset = 0;
 	int vte = 0;
+	int fog_id;
 	GLint inputs[VERT_ATTRIB_MAX];
 	GLint tab[VERT_ATTRIB_MAX];
 	int swizzle[VERT_ATTRIB_MAX][4];
 	GLuint i, nr;
-	GLuint sz, vap_fmt_1 = 0;
+	GLuint sz;
 
 	DECLARE_RENDERINPUTS(render_inputs_bitset);
 	RENDERINPUTS_COPY(render_inputs_bitset, tnl->render_inputs_bitset);
@@ -132,7 +132,6 @@ static void r300SetVertexFormat( GLcontext *ctx )
 /*
 	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POINTSIZE )) {
 		EMIT_ATTR( _TNL_ATTRIB_POINTSIZE, EMIT_1F );
-		vap_fmt_0 |=  R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
 		offset += 1;
 	}
 */
@@ -154,6 +153,33 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		OutputsWritten |= 1 << VERT_RESULT_COL1;
 	}
 
+	fog_id = -1;
+	if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_FOG)) {
+		/* find first free tex coord slot */
+		if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
+			int i;
+			for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+				if (!RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
+					fog_id = i;
+					break;
+				}
+			}
+		} else {
+			fog_id = 0;
+		}
+
+		if (fog_id == -1) {
+			fprintf(stderr, "\tout of free texcoords to do fog\n");
+			_mesa_exit(-1);
+		}
+
+		sz = VB->AttribPtr[VERT_ATTRIB_FOG]->size;
+		EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1F + sz - 1);
+		InputsRead |= 1 << VERT_ATTRIB_FOG;
+		OutputsWritten |= 1 << VERT_RESULT_FOGC;
+		vap_fmt_1 |= sz << (3 * fog_id);
+	}
+
 	if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
 		int i;
 
@@ -168,6 +194,37 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		}
 	}
 
+	/* RS can't put fragment position on the pixel stack, so stuff it in texcoord if needed */
+	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POS) && (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_WPOS)) {
+		int first_free_tex = -1;
+		if (fog_id >= 0) {
+			first_free_tex = fog_id+1;
+		} else {
+			if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
+				int i;
+				for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+					if (!RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
+						first_free_tex = i;
+						break;
+					}
+				}
+			} else {
+				first_free_tex = 0;
+			}
+		}
+
+		if (first_free_tex == -1) {
+			fprintf(stderr, "\tout of free texcoords to write w pos\n");
+			_mesa_exit(-1);
+		}
+
+		sz = VB->AttribPtr[VERT_ATTRIB_POS]->size;
+		InputsRead |= 1 << (VERT_ATTRIB_TEX0 + first_free_tex);
+		OutputsWritten |= 1 << (VERT_RESULT_TEX0 + first_free_tex);
+		EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_1F + sz - 1 );
+		vap_fmt_1 |= sz << (3 * first_free_tex);
+	}
+
 	for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++) {
 		if (InputsRead & (1 << i)) {
 			inputs[i] = nr++;
@@ -175,7 +232,7 @@ static void r300SetVertexFormat( GLcontext *ctx )
 			inputs[i] = -1;
 		}
 	}
-	
+
 	/* Fixed, apply to vir0 only */
 	if (InputsRead & (1 << VERT_ATTRIB_POS))
 		inputs[VERT_ATTRIB_POS] = 0;
@@ -183,19 +240,21 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		inputs[VERT_ATTRIB_COLOR0] = 2;
 	if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
 		inputs[VERT_ATTRIB_COLOR1] = 3;
+	if (InputsRead & (1 << VERT_ATTRIB_FOG))
+		inputs[VERT_ATTRIB_FOG] = 6 + fog_id;
 	for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
 		if (InputsRead & (1 << i))
 			inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
-	
+
 	for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++) {
 		if (InputsRead & (1 << i)) {
 			tab[nr++] = i;
 		}
 	}
-	
+
 	for (i = 0; i < nr; i++) {
 		int ci;
-		
+
 		swizzle[i][0] = SWIZZLE_ZERO;
 		swizzle[i][1] = SWIZZLE_ZERO;
 		swizzle[i][2] = SWIZZLE_ZERO;
@@ -215,21 +274,21 @@ static void r300SetVertexFormat( GLcontext *ctx )
 	((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
 		r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
 				   nr);
-   
+
 	R300_STATECHANGE(rmesa, vic);
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
-   
+
 	R300_STATECHANGE(rmesa, vof);
 	rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
 	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = vap_fmt_1;
-   
+
 	rmesa->swtcl.vertex_size =
 		_tnl_install_attrs( ctx,
-				    rmesa->swtcl.vertex_attrs, 
+				    rmesa->swtcl.vertex_attrs,
 				    rmesa->swtcl.vertex_attr_count,
 				    NULL, 0 );
-	
+
 	rmesa->swtcl.vertex_size /= 4;
 
 	RENDERINPUTS_COPY( rmesa->tnl_index_bitset, index_bitset );
@@ -247,34 +306,34 @@ static void flush_last_swtcl_prim( r300ContextPtr rmesa  )
 {
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s\n", __FUNCTION__);
-	
+
 	rmesa->dma.flush = NULL;
 
 	if (rmesa->dma.current.buf) {
 		struct r300_dma_region *current = &rmesa->dma.current;
 		GLuint current_offset = GET_START(current);
 
-		assert (current->start + 
+		assert (current->start +
 			rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
 			current->ptr);
 
 		if (rmesa->dma.current.start != rmesa->dma.current.ptr) {
 
 			r300EnsureCmdBufSpace( rmesa, rmesa->hw.max_state_size + (12*sizeof(int)), __FUNCTION__);
-			
+
 			r300EmitState(rmesa);
-			
+
 			r300EmitVertexAOS( rmesa,
 					   rmesa->swtcl.vertex_size,
 					   current_offset);
-			
+
 			r300EmitVbufPrim( rmesa,
 					  rmesa->swtcl.hw_primitive,
 					  rmesa->swtcl.numverts);
-			
+
 			r300EmitCacheFlush(rmesa);
 		}
-		
+
 		rmesa->swtcl.numverts = 0;
 		current->start = current->ptr;
 	}
@@ -287,7 +346,7 @@ r300AllocDmaLowVerts( r300ContextPtr rmesa, int nverts, int vsize )
 {
 	GLuint bytes = vsize * nverts;
 
-	if ( rmesa->dma.current.ptr + bytes > rmesa->dma.current.end ) 
+	if ( rmesa->dma.current.ptr + bytes > rmesa->dma.current.end )
 		r300RefillCurrentDmaRegion( rmesa, bytes);
 
 	if (!rmesa->dma.flush) {
@@ -297,7 +356,7 @@ r300AllocDmaLowVerts( r300ContextPtr rmesa, int nverts, int vsize )
 
 	ASSERT( vsize == rmesa->swtcl.vertex_size * 4 );
 	ASSERT( rmesa->dma.flush == flush_last_swtcl_prim );
-	ASSERT( rmesa->dma.current.start + 
+	ASSERT( rmesa->dma.current.start +
 		rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
 		rmesa->dma.current.ptr );
 
@@ -352,7 +411,7 @@ static void r300RenderPrimitive( GLcontext *ctx, GLenum prim );
    r300ContextPtr rmesa = R300_CONTEXT(ctx);		\
    const char *r300verts = (char *)rmesa->swtcl.verts;
 #define VERT(x) (r300Vertex *)(r300verts + ((x) * vertsize * sizeof(int)))
-#define VERTEX r300Vertex 
+#define VERTEX r300Vertex
 #define DO_DEBUG_VERTS (1 && (RADEON_DEBUG & DEBUG_VERTS))
 #define PRINT_VERTEX(x)
 #undef TAG
@@ -572,15 +631,15 @@ static void r300RenderStart(GLcontext *ctx)
         r300ContextPtr rmesa = R300_CONTEXT( ctx );
 	//	fprintf(stderr, "%s\n", __FUNCTION__);
 
-	r300ChooseRenderState(ctx);	
+	r300ChooseRenderState(ctx);
 	r300SetVertexFormat(ctx);
 
 	r300UpdateShaders(rmesa);
 	r300UpdateShaderStates(rmesa);
 
 	r300EmitCacheFlush(rmesa);
-	
-	if (rmesa->dma.flush != 0 && 
+
+	if (rmesa->dma.flush != 0 &&
 	    rmesa->dma.flush != flush_last_swtcl_prim)
 		rmesa->dma.flush( rmesa );
 
@@ -593,7 +652,7 @@ static void r300RenderFinish(GLcontext *ctx)
 static void r300RasterPrimitive( GLcontext *ctx, GLuint hwprim )
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	
+
 	if (rmesa->swtcl.hw_primitive != hwprim) {
 	        R300_NEWPRIM( rmesa );
 		rmesa->swtcl.hw_primitive = hwprim;
@@ -611,7 +670,7 @@ static void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 
 	r300RasterPrimitive( ctx, reduced_prim[prim] );
 	//	fprintf(stderr, "%s\n", __FUNCTION__);
-	
+
 }
 
 static void r300ResetLineStipple(GLcontext *ctx)
@@ -625,12 +684,12 @@ void r300InitSwtcl(GLcontext *ctx)
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	static int firsttime = 1;
-	
+
 	if (firsttime) {
 		init_rast_tab();
 		firsttime = 0;
 	}
-	
+
 	tnl->Driver.Render.Start = r300RenderStart;
 	tnl->Driver.Render.Finish = r300RenderFinish;
 	tnl->Driver.Render.PrimitiveNotify = r300RenderPrimitive;
@@ -638,15 +697,15 @@ void r300InitSwtcl(GLcontext *ctx)
 	tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
 	tnl->Driver.Render.CopyPV = _tnl_copy_pv;
 	tnl->Driver.Render.Interp = _tnl_interp;
-	
+
 	/* FIXME: what are these numbers? */
-	_tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
+	_tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12,
 			    48 * sizeof(GLfloat) );
-	
+
 	rmesa->swtcl.verts = (GLubyte *)tnl->clipspace.vertex_buf;
 	rmesa->swtcl.RenderIndex = ~0;
 	rmesa->swtcl.render_primitive = GL_TRIANGLES;
-	rmesa->swtcl.hw_primitive = 0;	
+	rmesa->swtcl.hw_primitive = 0;
 
 	_tnl_invalidate_vertex_state( ctx, ~0 );
 	_tnl_invalidate_vertices( ctx, ~0 );
@@ -655,9 +714,9 @@ void r300InitSwtcl(GLcontext *ctx)
 	_tnl_need_projected_coords( ctx, GL_FALSE );
 	r300ChooseRenderState(ctx);
 
-	_mesa_validate_all_lighting_tables( ctx ); 
+	_mesa_validate_all_lighting_tables( ctx );
 
-	tnl->Driver.NotifyMaterialChange = 
+	tnl->Driver.NotifyMaterialChange =
 	  _mesa_validate_all_lighting_tables;
 }
 
@@ -691,7 +750,7 @@ void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr)
 
 	type = r300PrimitiveType(rmesa, primitive);
 	num_verts = r300NumVerts(rmesa, vertex_nr, primitive);
-	
+
 	start_packet3(CP_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0), 0);
 	e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (num_verts << 16) | type);
 }
