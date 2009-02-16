@@ -194,7 +194,7 @@ void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
     struct r300_screen* r300screen =
         (struct r300_screen*)r300->context.screen;
     CS_LOCALS(r300);
-    BEGIN_CS(14);
+    BEGIN_CS(13);
     OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
     OUT_CS_REG_SEQ(R300_SU_POLY_OFFSET_FRONT_SCALE, 6);
     OUT_CS(rs->depth_scale_front);
@@ -216,6 +216,7 @@ void r300_emit_scissor_state(struct r300_context* r300,
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
     OUT_CS(scissor->scissor_top_left);
     OUT_CS(scissor->scissor_bottom_right);
+    END_CS;
 }
 
 /* Emit all dirty state. */

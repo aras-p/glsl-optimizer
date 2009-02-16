@@ -48,8 +48,6 @@ static INLINE void r300_emit_vertex(struct r300_context* r300,
     CS_LOCALS(r300);
     uint i, j;
 
-    BEGIN_CS(vinfo->size);
-
     for (i = 0; i < vinfo->num_attribs; i++) {
         j = vinfo->attrib[i].src_index;
         switch (vinfo->attrib[i].emit) {
@@ -77,8 +75,6 @@ static INLINE void r300_emit_vertex(struct r300_context* r300,
                 break;
         }
     }
-
-    END_CS;
 }
 
 static INLINE void r300_emit_prim(struct draw_stage* draw,
@@ -96,6 +92,7 @@ static INLINE void r300_emit_prim(struct draw_stage* draw,
     OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
     OUT_CS(r300->vertex_info.hwfmt[0]);
     OUT_CS(r300->vertex_info.hwfmt[1]);
+    END_CS;
 
     BEGIN_CS(2 + (count * r300->vertex_info.size) + 2);
     OUT_CS(CP_PACKET3(R200_3D_DRAW_IMMD_2, count));

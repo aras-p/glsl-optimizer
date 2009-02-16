@@ -54,7 +54,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         return;
     }
 
-    BEGIN_CS(161 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
+    BEGIN_CS(163 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
