@@ -219,10 +219,13 @@ eval_inputs(float x, float y, vector float *fragZ, vector float fragInputs[])
          /* linear term */
          vector float dadx = setup.coef[attr].dadx;
          vector float dady = setup.coef[attr].dady;
-         r0 += fragX * splatx(dadx) + fragY * splatx(dady);
-         r1 += fragX * splaty(dadx) + fragY * splaty(dady);
-         r2 += fragX * splatz(dadx) + fragY * splatz(dady);
-         r3 += fragX * splatw(dadx) + fragY * splatw(dady);
+         /* Use SPU intrinsics here to get slightly better code.
+          * originally: r0 += fragX * splatx(dadx) + fragY * splatx(dady);
+          */
+         r0 = spu_madd(fragX, splatx(dadx), spu_madd(fragY, splatx(dady), r0));
+         r1 = spu_madd(fragX, splaty(dadx), spu_madd(fragY, splaty(dady), r1));
+         r2 = spu_madd(fragX, splatz(dadx), spu_madd(fragY, splatz(dady), r2));
+         r3 = spu_madd(fragX, splatw(dadx), spu_madd(fragY, splatw(dady), r3));
          if (interp == INTERP_PERSPECTIVE) {
             /* perspective term */
             r0 *= wInv;
