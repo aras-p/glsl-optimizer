@@ -219,7 +219,7 @@ void r300_emit_scissor_state(struct r300_context* r300,
 }
 
 /* Emit all dirty state. */
-static void r300_emit_dirty_state(struct r300_context* r300)
+void r300_emit_dirty_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen =
         (struct r300_screen*)r300->context.screen;

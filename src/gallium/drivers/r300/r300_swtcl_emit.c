@@ -54,22 +54,22 @@ static INLINE void r300_emit_vertex(struct r300_context* r300,
         j = vinfo->attrib[i].src_index;
         switch (vinfo->attrib[i].emit) {
             case EMIT_1F:
-                CS_OUT_32F(vertex->data[j][0]);
+                OUT_CS_32F(vertex->data[j][0]);
                 break;
             case EMIT_2F:
-                CS_OUT_32F(vertex->data[j][0]);
-                CS_OUT_32F(vertex->data[j][1]);
+                OUT_CS_32F(vertex->data[j][0]);
+                OUT_CS_32F(vertex->data[j][1]);
                 break;
             case EMIT_3F:
-                CS_OUT_32F(vertex->data[j][0]);
-                CS_OUT_32F(vertex->data[j][1]);
-                CS_OUT_32F(vertex->data[j][2]);
+                OUT_CS_32F(vertex->data[j][0]);
+                OUT_CS_32F(vertex->data[j][1]);
+                OUT_CS_32F(vertex->data[j][2]);
                 break;
             case EMIT_4F:
-                CS_OUT_32F(vertex->data[j][0]);
-                CS_OUT_32F(vertex->data[j][1]);
-                CS_OUT_32F(vertex->data[j][2]);
-                CS_OUT_32F(vertex->data[j][3]);
+                OUT_CS_32F(vertex->data[j][0]);
+                OUT_CS_32F(vertex->data[j][1]);
+                OUT_CS_32F(vertex->data[j][2]);
+                OUT_CS_32F(vertex->data[j][3]);
                 break;
             default:
                 debug_printf("r300: Unknown emit value %d\n",

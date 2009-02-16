@@ -88,19 +88,30 @@ struct r300_texture_state {
 
 #define R300_NEW_BLEND           0x0000001
 #define R300_NEW_BLEND_COLOR     0x0000002
-#define R300_NEW_DSA             0x0000004
-#define R300_NEW_FRAMEBUFFERS    0x0000008
-#define R300_NEW_FRAGMENT_SHADER 0x0000010
-#define R300_NEW_RASTERIZER      0x0000020
-#define R300_NEW_SAMPLER         0x0000040
-#define R300_NEW_SCISSOR         0x0004000
-#define R300_NEW_TEXTURE         0x0008000
-#define R300_NEW_VERTEX_FORMAT   0x0800000
-#define R300_NEW_VERTEX_SHADER   0x1000000
-#define R300_NEW_KITCHEN_SINK    0x1ffffff
+#define R300_NEW_CONSTANTS       0x0000004
+#define R300_NEW_DSA             0x0000008
+#define R300_NEW_FRAMEBUFFERS    0x0000010
+#define R300_NEW_FRAGMENT_SHADER 0x0000020
+#define R300_NEW_RASTERIZER      0x0000040
+#define R300_NEW_SAMPLER         0x0000080
+#define R300_NEW_SCISSOR         0x0008000
+#define R300_NEW_TEXTURE         0x0010000
+#define R300_NEW_VERTEX_FORMAT   0x1000000
+#define R300_NEW_VERTEX_SHADER   0x2000000
+#define R300_NEW_KITCHEN_SINK    0x3ffffff
 
 /* The next several objects are not pure Radeon state; they inherit from
  * various Gallium classes. */
+
+struct r300_constant_buffer {
+    /* Buffer of constants */
+    /* XXX first number should be raised */
+    float constants[8][4];
+    /* Number of user-defined constants */
+    int user_count;
+    /* Total number of constants */
+    int count;
+};
 
 struct r3xx_fragment_shader {
     /* Parent class */
@@ -188,6 +199,8 @@ struct r300_context {
     struct r300_blend_state* blend_state;
     /* Blend color state. */
     struct r300_blend_color_state* blend_color_state;
+    /* Shader constants. */
+    struct r300_constant_buffer shader_constants[PIPE_SHADER_TYPES];
     /* Depth, stencil, and alpha state. */
     struct r300_dsa_state* dsa_state;
     /* Fragment shader. */
@@ -205,6 +218,9 @@ struct r300_context {
     struct r300_texture* textures[8];
     struct r300_texture_state* texture_states[8];
     int texture_count;
+    /* Vertex buffers. */
+    struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
+    int vertex_buffer_count;
     /* Vertex information. */
     struct vertex_info vertex_info;
     /* Bitmask of dirty state objects. */

@@ -22,7 +22,9 @@
 
 #include "util/u_math.h"
 #include "util/u_pack_color.h"
+
 #include "pipe/p_debug.h"
+#include "pipe/internal/p_winsys_screen.h"
 
 #include "r300_context.h"
 #include "r300_reg.h"
@@ -211,7 +213,24 @@ static void
                              uint shader, uint index,
                              const struct pipe_constant_buffer* buffer)
 {
-    /* XXX */
+    struct r300_context* r300 = r300_context(pipe);
+
+    /* This entire chunk of code seems ever-so-slightly baked.
+     * It's as if I've got pipe_buffer* matryoshkas... */
+    if (buffer && buffer->buffer && buffer->buffer->size) {
+        void* map = pipe->winsys->buffer_map(pipe->winsys, buffer->buffer,
+                                             PIPE_BUFFER_USAGE_CPU_READ);
+        memcpy(r300->shader_constants[shader].constants,
+            map, buffer->buffer->size);
+        pipe->winsys->buffer_unmap(pipe->winsys, map);
+
+        r300->shader_constants[shader].user_count =
+            buffer->buffer->size / (sizeof(float) * 4);
+    } else {
+        r300->shader_constants[shader].user_count = 0;
+    }
+
+    r300->dirty_state |= R300_NEW_CONSTANTS;
 }
 
 static uint32_t translate_depth_stencil_function(int zs_func) {
@@ -738,7 +757,12 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
                                     const struct pipe_vertex_buffer* buffers)
 {
     struct r300_context* r300 = r300_context(pipe);
-    /* XXX Draw */
+
+    memcpy(r300->vertex_buffers, buffers,
+        sizeof(struct pipe_vertex_buffer) * count);
+
+    r300->vertex_buffer_count = count;
+
     draw_flush(r300->draw);
     draw_set_vertex_buffers(r300->draw, count, buffers);
 }
