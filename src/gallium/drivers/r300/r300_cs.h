@@ -34,6 +34,8 @@
 
 #define MAX_CS_SIZE 64 * 1024 / 4
 
+#define VERY_VERBOSE_REGISTERS 0
+
 /* XXX stolen from radeon_drm.h */
 #define RADEON_GEM_DOMAIN_CPU  0x1
 #define RADEON_GEM_DOMAIN_GTT  0x2
@@ -75,8 +77,9 @@
 } while (0)
 
 #define OUT_CS_REG(register, value) do { \
-    debug_printf("r300: writing 0x%08X to register 0x%04X\n", \
-        value, register); \
+    if (VERY_VERBOSE_REGISTERS) \
+        debug_printf("r300: writing 0x%08X to register 0x%04X\n", \
+            value, register); \
     assert(register); \
     OUT_CS(CP_PACKET0(register, 0)); \
     OUT_CS(value); \
@@ -85,8 +88,9 @@
 /* Note: This expects count to be the number of registers,
  * not the actual packet0 count! */
 #define OUT_CS_REG_SEQ(register, count) do { \
-    debug_printf("r300: writing register sequence of %d to 0x%04X\n", \
-        count, register); \
+    if (VERY_VERBOSE_REGISTERS) \
+        debug_printf("r300: writing register sequence of %d to 0x%04X\n", \
+            count, register); \
     assert(register); \
     OUT_CS(CP_PACKET0(register, ((count) - 1))); \
 } while (0)
@@ -109,7 +113,7 @@
 } while (0)
 
 #define FLUSH_CS do { \
-    debug_printf("r300: FLUSH_CS in %s (%s:%d)\n", __FUNCTION__, __FILE__, \
+    debug_printf("r300: FLUSH_CS in %s (%s:%d)\n\n", __FUNCTION__, __FILE__, \
         __LINE__); \
     cs_winsys->flush_cs(cs); \
 } while (0)

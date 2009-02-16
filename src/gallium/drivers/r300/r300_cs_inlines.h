@@ -29,8 +29,9 @@
 #define RADEON_ONE_REG_WR        (1 << 15)
 
 #define OUT_CS_ONE_REG(register, count) do { \
-    debug_printf("r300: writing data sequence of %d to 0x%04X\n", \
-        count, register); \
+    if (VERY_VERBOSE_REGISTERS) \
+        debug_printf("r300: writing data sequence of %d to 0x%04X\n", \
+            count, register); \
     assert(register); \
     OUT_CS(CP_PACKET0(register, ((count) - 1)) | RADEON_ONE_REG_WR); \
 } while (0)
