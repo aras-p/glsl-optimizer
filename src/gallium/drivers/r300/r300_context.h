@@ -59,6 +59,9 @@ struct r300_dsa_state {
 };
 
 struct r300_rs_state {
+    /* XXX icky as fucking hell */
+    struct pipe_rasterizer_state rs;
+
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
     uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
     uint32_t line_control;          /* R300_GA_LINE_CNTL: 0x4234 */

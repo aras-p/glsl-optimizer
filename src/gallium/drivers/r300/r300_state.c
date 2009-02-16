@@ -222,7 +222,7 @@ static void
                                              PIPE_BUFFER_USAGE_CPU_READ);
         memcpy(r300->shader_constants[shader].constants,
             map, buffer->buffer->size);
-        pipe->winsys->buffer_unmap(pipe->winsys, map);
+        pipe->winsys->buffer_unmap(pipe->winsys, buffer->buffer);
 
         r300->shader_constants[shader].user_count =
             buffer->buffer->size / (sizeof(float) * 4);
@@ -542,6 +542,8 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         rs->line_stipple_value = state->line_stipple_pattern;
     }
 
+    rs->rs = *state;
+
     return (void*)rs;
 }
 
@@ -549,8 +551,11 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_rs_state* rs = (struct r300_rs_state*)state;
 
-    r300->rs_state = (struct r300_rs_state*)state;
+    draw_set_rasterizer_state(r300->draw, &rs->rs);
+
+    r300->rs_state = rs;
     r300->dirty_state |= R300_NEW_RASTERIZER;
 }
 
