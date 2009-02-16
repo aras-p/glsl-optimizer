@@ -20,6 +20,9 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#ifndef R300_EMIT_H
+#define R300_EMIT_H
+
 #include "util/u_math.h"
 
 #include "r300_context.h"
@@ -48,3 +51,9 @@ void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs);
 
 void r300_emit_scissor_state(struct r300_context* r300,
                              struct r300_scissor_state* scissor);
+
+
+/* Emit all dirty state. */
+void r300_emit_dirty_state(struct r300_context* r300);
+
+#endif /* R300_EMIT_H */
