@@ -1575,6 +1575,7 @@ emit_instruction(
    case TGSI_OPCODE_RSQ:
    /* TGSI_OPCODE_RECIPSQRT */
       FETCH( func, *inst, 0, 0, CHAN_X );
+      emit_abs( func, 0 );
       emit_rsqrt( func, 1, 0 );
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          STORE( func, *inst, 1, 0, chan_index );

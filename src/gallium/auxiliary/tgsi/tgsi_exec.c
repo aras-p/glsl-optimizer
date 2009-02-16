@@ -1889,6 +1889,7 @@ exec_instruction(
    case TGSI_OPCODE_RSQ:
    /* TGSI_OPCODE_RECIPSQRT */
       FETCH( &r[0], 0, CHAN_X );
+      micro_abs( &r[0], &r[0] );
       micro_sqrt( &r[0], &r[0] );
       micro_div( &r[0], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &r[0] );
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {

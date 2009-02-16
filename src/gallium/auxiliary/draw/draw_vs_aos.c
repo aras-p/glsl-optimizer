@@ -1559,7 +1559,6 @@ static boolean emit_RCP( struct aos_compilation *cp, const struct tgsi_full_inst
  */
 static boolean emit_RSQ( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
 {
-
    if (0) {
       struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
       struct x86_reg r = aos_get_xmm_reg(cp);
@@ -1568,21 +1567,30 @@ static boolean emit_RSQ( struct aos_compilation *cp, const struct tgsi_full_inst
       return TRUE;
    }
    else {
-      struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
-      struct x86_reg r = aos_get_xmm_reg(cp);
+      struct x86_reg arg0           = fetch_src(cp, &op->FullSrcRegisters[0]);
+      struct x86_reg r              = aos_get_xmm_reg(cp);
 
       struct x86_reg neg_half       = get_reg_ptr( cp, AOS_FILE_INTERNAL, IMM_RSQ );
       struct x86_reg one_point_five = x86_make_disp( neg_half, 4 );
       struct x86_reg src            = get_xmm_writable( cp, arg0 );
-      
-      sse_rsqrtss( cp->func, r, src  );             /* rsqrtss(a) */
-      sse_mulss(   cp->func, src, neg_half  );      /* -.5 * a */
-      sse_mulss(   cp->func, src,  r );             /* -.5 * a * r */
-      sse_mulss(   cp->func, src,  r );             /* -.5 * a * r * r */
-      sse_addss(   cp->func, src, one_point_five ); /* 1.5 - .5 * a * r * r */
-      sse_mulss(   cp->func, r,  src );             /* r * (1.5 - .5 * a * r * r) */
+      struct x86_reg neg            = aos_get_internal(cp, IMM_NEGS);
+      struct x86_reg tmp            = aos_get_xmm_reg(cp);
+
+      sse_movaps(cp->func, tmp, src);
+      sse_mulps(cp->func, tmp, neg);
+      sse_maxps(cp->func, tmp, src);
+   
+      sse_rsqrtss( cp->func, r, tmp  );             /* rsqrtss(a) */
+      sse_mulss(   cp->func, tmp, neg_half  );      /* -.5 * a */
+      sse_mulss(   cp->func, tmp,  r );             /* -.5 * a * r */
+      sse_mulss(   cp->func, tmp,  r );             /* -.5 * a * r * r */
+      sse_addss(   cp->func, tmp, one_point_five ); /* 1.5 - .5 * a * r * r */
+      sse_mulss(   cp->func, r,  tmp );             /* r * (1.5 - .5 * a * r * r) */
 
       store_scalar_dest(cp, &op->FullDstRegisters[0], r);
+
+      aos_release_xmm_reg(cp, tmp.idx);
+
       return TRUE;
    }
 }
