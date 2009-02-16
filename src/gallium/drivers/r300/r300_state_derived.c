@@ -107,8 +107,28 @@ static void r300_update_vertex_layout(struct r300_context* r300)
         vinfo.hwfmt[1] |= (4 << (3 * i));
     }
 
+    draw_compute_vertex_size(&vinfo);
+
     if (memcmp(&r300->vertex_info, &vinfo, sizeof(struct vertex_info))) {
         memcpy(&r300->vertex_info, &vinfo, sizeof(struct vertex_info));
         r300->dirty_state |= R300_NEW_VERTEX_FORMAT;
+    }
+}
+
+/* Set up the RS block. This is the part of the chipset that actually does
+ * the rasterization of vertices into fragments. This is also the part of the
+ * chipset that locks up if any part of it is even slightly wrong. */
+void r300_update_rs_block(struct r300_context* r300)
+{
+}
+
+void r300_update_derived_state(struct r300_context* r300)
+{
+    if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER) {
+        r300_update_vertex_layout(r300);
+    }
+
+    if (r300->dirty_state & R300_NEW_VERTEX_FORMAT) {
+        r300_update_rs_block(r300);
     }
 }

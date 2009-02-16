@@ -28,4 +28,6 @@
 #include "r300_context.h"
 #include "r300_reg.h"
 
+void r300_update_derived_state(struct r300_context* r300);
+
 #endif /* R300_STATE_DERIVED_H */
