@@ -318,7 +318,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
 {
    GLint attribMap[MAX_VERTEX_ATTRIBS];
    GLuint i, j;
-   GLbitfield usedAttributes;
+   GLbitfield usedAttributes; /* generics only, not legacy attributes */
 
    assert(origProg != linkedProg);
    assert(origProg->Target == GL_VERTEX_PROGRAM_ARB);
@@ -340,6 +340,15 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
    for (i = 0; i < shProg->Attributes->NumParameters; i++) {
       GLint attr = shProg->Attributes->Parameters[i].StateIndexes[0];
       usedAttributes |= (1 << attr);
+   }
+
+   /* If gl_Vertex is used, that actually counts against the limit
+    * on generic vertex attributes.  This avoids the ambiguity of
+    * whether glVertexAttrib4fv(0, v) sets legacy attribute 0 (vert pos)
+    * or generic attribute[0].  If gl_Vertex is used, we want the former.
+    */
+   if (origProg->InputsRead & VERT_BIT_POS) {
+      usedAttributes |= 0x1;
    }
 
    /* initialize the generic attribute map entries to -1 */
@@ -384,7 +393,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
                    * Start at 1 since generic attribute 0 always aliases
                    * glVertex/position.
                    */
-                  for (attr = 1; attr < MAX_VERTEX_ATTRIBS; attr++) {
+                  for (attr = 0; attr < MAX_VERTEX_ATTRIBS; attr++) {
                      if (((1 << attr) & usedAttributes) == 0)
                         break;
                   }
@@ -665,12 +674,12 @@ _slang_link(GLcontext *ctx,
       /* notify driver that a new fragment program has been compiled/linked */
       ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
                                       &shProg->FragmentProgram->Base);
-      if (MESA_VERBOSE & VERBOSE_GLSL_DUMP) {
-         printf("Mesa original fragment program:\n");
+      if (ctx->Shader.Flags & GLSL_DUMP) {
+         _mesa_printf("Mesa pre-link fragment program:\n");
          _mesa_print_program(&fragProg->Base);
          _mesa_print_program_parameters(ctx, &fragProg->Base);
 
-         printf("Mesa post-link fragment program:\n");
+         _mesa_printf("Mesa post-link fragment program:\n");
          _mesa_print_program(&shProg->FragmentProgram->Base);
          _mesa_print_program_parameters(ctx, &shProg->FragmentProgram->Base);
       }
@@ -683,20 +692,23 @@ _slang_link(GLcontext *ctx,
       /* notify driver that a new vertex program has been compiled/linked */
       ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
                                       &shProg->VertexProgram->Base);
-      if (MESA_VERBOSE & VERBOSE_GLSL_DUMP) {
-         printf("Mesa original vertex program:\n");
+      if (ctx->Shader.Flags & GLSL_DUMP) {
+         _mesa_printf("Mesa pre-link vertex program:\n");
          _mesa_print_program(&vertProg->Base);
          _mesa_print_program_parameters(ctx, &vertProg->Base);
 
-         printf("Mesa post-link vertex program:\n");
+         _mesa_printf("Mesa post-link vertex program:\n");
          _mesa_print_program(&shProg->VertexProgram->Base);
          _mesa_print_program_parameters(ctx, &shProg->VertexProgram->Base);
       }
    }
 
-   if (MESA_VERBOSE & VERBOSE_GLSL_DUMP) {
-      printf("Varying vars:\n");
+   if (ctx->Shader.Flags & GLSL_DUMP) {
+      _mesa_printf("Varying vars:\n");
       _mesa_print_parameter_list(shProg->Varying);
+      if (shProg->InfoLog) {
+         _mesa_printf("Info Log: %s\n", shProg->InfoLog);
+      }
    }
 
    shProg->LinkStatus = (shProg->VertexProgram || shProg->FragmentProgram);

@@ -2,6 +2,7 @@
 #define __NV30_SCREEN_H__
 
 #include "pipe/p_screen.h"
+#include "nv04/nv04_surface_2d.h"
 
 struct nv30_screen {
 	struct pipe_screen pipe;
@@ -11,6 +12,7 @@ struct nv30_screen {
 	unsigned cur_pctx;
 
 	/* HW graphics objects */
+	struct nv04_surface_2d *eng2d;
 	struct nouveau_grobj *rankine;
 	struct nouveau_notifier *sync;
 

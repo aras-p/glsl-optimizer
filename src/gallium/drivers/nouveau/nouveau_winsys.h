@@ -50,13 +50,15 @@ struct nouveau_winsys {
 	uint32_t  (*notifier_status)(struct nouveau_notifier *, int id);
 	uint32_t  (*notifier_retval)(struct nouveau_notifier *, int id);
 	int       (*notifier_wait)(struct nouveau_notifier *, int id,
-				   int status, int timeout);
+				   int status, double timeout);
 
 	int (*surface_copy)(struct nouveau_winsys *, struct pipe_surface *,
 			    unsigned, unsigned, struct pipe_surface *,
 			    unsigned, unsigned, unsigned, unsigned);
 	int (*surface_fill)(struct nouveau_winsys *, struct pipe_surface *,
 			    unsigned, unsigned, unsigned, unsigned, unsigned);
+
+	struct nouveau_bo *(*get_bo)(struct pipe_buffer *);
 };
 
 extern struct pipe_screen *

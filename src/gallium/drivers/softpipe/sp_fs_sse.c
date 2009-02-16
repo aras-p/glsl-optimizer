@@ -29,7 +29,7 @@
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_fs.h"
-#include "sp_headers.h"
+#include "sp_quad.h"
 
 
 #include "pipe/p_state.h"

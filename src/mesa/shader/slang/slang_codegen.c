@@ -3662,7 +3662,7 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
       if (lhs && rhs) {
          /* convert lhs swizzle into writemask */
          const GLuint swizzle = root_swizzle(lhs->Store);
-         GLuint writemask, newSwizzle;
+         GLuint writemask, newSwizzle = 0x0;
          if (!swizzle_to_writemask(A, swizzle, &writemask, &newSwizzle)) {
             /* Non-simple writemask, need to swizzle right hand side in
              * order to put components into the right place.

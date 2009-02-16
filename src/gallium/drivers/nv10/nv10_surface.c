@@ -39,10 +39,18 @@ nv10_surface_copy(struct pipe_context *pipe, boolean do_flip,
 		  unsigned width, unsigned height)
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
-	struct nouveau_winsys *nvws = nv10->nvws;
+	struct nv04_surface_2d *eng2d = nv10->screen->eng2d;
 
-	nvws->surface_copy(nvws, dest, destx, desty, src, srcx, srcy,
-			   width, height);
+	if (do_flip) {
+		desty += height;
+		while (height--) {
+			eng2d->copy(eng2d, dest, destx, desty--, src,
+				    srcx, srcy++, width, 1);
+		}
+		return;
+	}
+
+	eng2d->copy(eng2d, dest, destx, desty, src, srcx, srcy, width, height);
 }
 
 static void
@@ -51,9 +59,9 @@ nv10_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 		  unsigned height, unsigned value)
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
-	struct nouveau_winsys *nvws = nv10->nvws;
+	struct nv04_surface_2d *eng2d = nv10->screen->eng2d;
 
-	nvws->surface_fill(nvws, dest, destx, desty, width, height, value);
+	eng2d->fill(eng2d, dest, destx, desty, width, height, value);
 }
 
 void

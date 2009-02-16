@@ -101,16 +101,16 @@
 #define MAX_COLOR_TABLE_SIZE 256
 
 /** Number of 1D/2D texture mipmap levels */
-#define MAX_TEXTURE_LEVELS 12
+#define MAX_TEXTURE_LEVELS 13
 
 /** Number of 3D texture mipmap levels */
 #define MAX_3D_TEXTURE_LEVELS 9
 
 /** Number of cube texture mipmap levels - GL_ARB_texture_cube_map */
-#define MAX_CUBE_TEXTURE_LEVELS 12
+#define MAX_CUBE_TEXTURE_LEVELS 13
 
 /** Maximum rectangular texture size - GL_NV_texture_rectangle */
-#define MAX_TEXTURE_RECT_SIZE 2048
+#define MAX_TEXTURE_RECT_SIZE 4096
 
 /** Maximum number of layers in a 1D or 2D array texture - GL_MESA_texture_array */
 #define MAX_ARRAY_TEXTURE_LAYERS 64
@@ -166,7 +166,7 @@
 #define MAX_TEXTURE_MAX_ANISOTROPY 16.0
 
 /** For GL_EXT_texture_lod_bias (typically MAX_TEXTURE_LEVELS - 1) */
-#define MAX_TEXTURE_LOD_BIAS 11.0
+#define MAX_TEXTURE_LOD_BIAS 12.0
 
 /** For GL_ARB_vertex_program */
 /*@{*/

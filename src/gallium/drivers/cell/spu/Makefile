@@ -33,9 +33,10 @@ OLD_SOURCES = \
 	spu_vertex_shader.c
 
 
-SPU_OBJECTS = $(SOURCES:.c=.o) \
+SPU_OBJECTS = $(SOURCES:.c=.o)
 
-SPU_ASM_OUT = $(SOURCES:.c=.s) \
+SPU_ASM_OUT = $(SOURCES:.c=.s)
+
 
 INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa \

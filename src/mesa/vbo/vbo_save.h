@@ -166,7 +166,7 @@ void vbo_loopback_vertex_list( GLcontext *ctx,
 void vbo_save_EndList( GLcontext *ctx );
 void vbo_save_NewList( GLcontext *ctx, GLuint list, GLenum mode );
 void vbo_save_EndCallList( GLcontext *ctx );
-void vbo_save_BeginCallList( GLcontext *ctx, struct mesa_display_list *list );
+void vbo_save_BeginCallList( GLcontext *ctx, struct gl_display_list *list );
 void vbo_save_SaveFlushVertices( GLcontext *ctx );
 GLboolean vbo_save_NotifyBegin( GLcontext *ctx, GLenum mode );
 

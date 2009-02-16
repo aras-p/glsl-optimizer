@@ -34,7 +34,7 @@ LIBS = \
 # mesa code, as done for ES 1.x, 2.x, OpenVG, etc)
 UNUSED_LIBS = \
 	$(TOP)/src/mesa/libglapi.a \
-	$(TOP)/src/mesa/libmesa.a \
+	$(TOP)/src/mesa/libmesagallium.a \
 
 
 LOCAL_CFLAGS = -D_EGL_PLATFORM_X=1

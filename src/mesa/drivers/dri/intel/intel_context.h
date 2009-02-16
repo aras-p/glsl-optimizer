@@ -210,7 +210,6 @@ struct intel_context
    char *prevLockFile;
    int prevLockLine;
 
-   GLubyte clear_chan[4];
    GLuint ClearColor565;
    GLuint ClearColor8888;
 
@@ -438,7 +437,6 @@ extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);
 
 extern void intelInitDriverFunctions(struct dd_function_table *functions);
-extern void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging);
 
 
 /* ================================================================

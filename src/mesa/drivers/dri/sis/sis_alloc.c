@@ -137,7 +137,7 @@ sisAllocZStencilBuffer( sisContextPtr smesa )
 {
    int cpp = ( smesa->glCtx->Visual.depthBits +
                smesa->glCtx->Visual.stencilBits ) / 8;
-   unsigned char *addr;
+   char *addr;
 
    smesa->depth.bpp = cpp * 8;
    smesa->depth.pitch = ALIGNMENT(smesa->driDrawable->w * cpp, 4);
@@ -150,7 +150,7 @@ sisAllocZStencilBuffer( sisContextPtr smesa )
    addr = (char *)ALIGNMENT((unsigned long)addr, Z_BUFFER_HW_ALIGNMENT);
 
    smesa->depth.map = addr;
-   smesa->depth.offset = addr - smesa->FbBase;
+   smesa->depth.offset = addr - (char *)smesa->FbBase;
 
    /* stencil buffer is same as depth buffer */
    smesa->stencil.size = smesa->depth.size;
@@ -173,7 +173,7 @@ void
 sisAllocBackbuffer( sisContextPtr smesa )
 {
    int cpp = smesa->bytesPerPixel;
-   unsigned char *addr;
+   char *addr;
 
    smesa->back.bpp = smesa->bytesPerPixel * 8;
    smesa->back.pitch = ALIGNMENT(smesa->driDrawable->w * cpp, 4);
@@ -186,7 +186,7 @@ sisAllocBackbuffer( sisContextPtr smesa )
    addr = (char *)ALIGNMENT((unsigned long)addr, DRAW_BUFFER_HW_ALIGNMENT);
 
    smesa->back.map = addr;
-   smesa->back.offset = addr - smesa->FbBase;
+   smesa->back.offset = addr - (char *)smesa->FbBase;
 }
 
 void

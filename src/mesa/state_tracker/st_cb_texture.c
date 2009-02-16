@@ -114,7 +114,7 @@ st_NewTextureImage(GLcontext * ctx)
 {
    DBG("%s\n", __FUNCTION__);
    (void) ctx;
-   return (struct gl_texture_image *) CALLOC_STRUCT(st_texture_image);
+   return (struct gl_texture_image *) ST_CALLOC_STRUCT(st_texture_image);
 }
 
 
@@ -122,7 +122,7 @@ st_NewTextureImage(GLcontext * ctx)
 static struct gl_texture_object *
 st_NewTextureObject(GLcontext * ctx, GLuint name, GLenum target)
 {
-   struct st_texture_object *obj = CALLOC_STRUCT(st_texture_object);
+   struct st_texture_object *obj = ST_CALLOC_STRUCT(st_texture_object);
 
    DBG("%s\n", __FUNCTION__);
    _mesa_initialize_texture_object(&obj->base, name, target);
@@ -1410,9 +1410,7 @@ st_finalize_texture(GLcontext *ctx,
           stObj->pt->width[0] != firstImage->base.Width2 ||
           stObj->pt->height[0] != firstImage->base.Height2 ||
           stObj->pt->depth[0] != firstImage->base.Depth2 ||
-          stObj->pt->block.size != cpp ||
-          stObj->pt->block.width != 1 ||
-          stObj->pt->block.height != 1 ||
+          stObj->pt->block.size/stObj->pt->block.width != cpp || /* Nominal bytes per pixel */
           stObj->pt->compressed != firstImage->base.IsCompressed) {
          pipe_texture_release(&stObj->pt);
          ctx->st->dirty.st |= ST_NEW_FRAMEBUFFER;

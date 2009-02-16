@@ -39,6 +39,9 @@
 #include <GL/gl.h>
 #include <GL/glx.h>
 
+static int is_glx_extension_supported(Display *dpy, const char *query);
+
+static void query_vsync(Display *dpy);
 
 #define BENCHMARK
 
@@ -561,12 +564,82 @@ make_window( Display *dpy, const char *name,
 
 
 /**
+ * Determine whether or not a GLX extension is supported.
+ */
+int
+is_glx_extension_supported(Display *dpy, const char *query)
+{
+   const int scrnum = DefaultScreen(dpy);
+   const char *glx_extensions = NULL;
+   const size_t len = strlen(query);
+   const char *ptr;
+
+   if (glx_extensions == NULL) {
+      glx_extensions = glXQueryExtensionsString(dpy, scrnum);
+   }
+
+   ptr = strstr(glx_extensions, query);
+   return ((ptr != NULL) && ((ptr[len] == ' ') || (ptr[len] == '\0')));
+}
+
+
+/**
+ * Attempt to determine whether or not the display is synched to vblank.
+ */
+void
+query_vsync(Display *dpy)
+{
+   int interval = 0;
+
+
+#ifdef GLX_MESA_swap_control
+   if ((interval <= 0)
+       && is_glx_extension_supported(dpy, "GLX_MESA_swap_control")) {
+      PFNGLXGETSWAPINTERVALMESAPROC pglXGetSwapIntervalMESA =
+          (PFNGLXGETSWAPINTERVALMESAPROC)
+          glXGetProcAddressARB((const GLubyte *) "glXGetSwapIntervalMESA");
+
+      interval = (*pglXGetSwapIntervalMESA)();
+   }
+#endif
+
+
+#ifdef GLX_SGI_video_sync
+   if ((interval <= 0)
+       && is_glx_extension_supported(dpy, "GLX_SGI_video_sync")) {
+      PFNGLXGETVIDEOSYNCSGIPROC pglXGetVideoSyncSGI =
+          (PFNGLXGETVIDEOSYNCSGIPROC)
+          glXGetProcAddressARB((const GLubyte *) "glXGetVideoSyncSGI");
+      unsigned count;
+
+      if ((*pglXGetVideoSyncSGI)(& count) == 0) {
+         interval = (int) count;
+      }
+   }
+#endif
+
+
+   if (interval > 0) {
+      printf("Running synchronized to the vertical refresh.  The framerate should be\n");
+      if (interval == 1) {
+         printf("approximately the same as the monitor refresh rate.\n");
+      } else if (interval > 1) {
+         printf("approximately 1/%d the monitor refresh rate.\n",
+                interval);
+      }
+   }
+}
+
+/**
  * Handle one X event.
  * \return NOP, EXIT or DRAW
  */
 static int
 handle_event(Display *dpy, Window win, XEvent *event)
 {
+   (void) dpy;
+   (void) win;
+
    switch (event->type) {
    case Expose:
       return DRAW;
@@ -686,6 +759,7 @@ main(int argc, char *argv[])
    make_window(dpy, "glxgears", x, y, winWidth, winHeight, &win, &ctx);
    XMapWindow(dpy, win);
    glXMakeCurrent(dpy, win, ctx);
+   query_vsync(dpy);
 
    if (printInfo) {
       printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));

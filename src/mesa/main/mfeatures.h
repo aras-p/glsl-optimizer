@@ -60,6 +60,7 @@
 
 #define FEATURE_ARB_occlusion_query  _HAVE_FULL_GL
 #define FEATURE_ARB_fragment_program  _HAVE_FULL_GL
+#define FEATURE_ARB_framebuffer_object  _HAVE_FULL_GL
 #define FEATURE_ARB_vertex_buffer_object  _HAVE_FULL_GL
 #define FEATURE_ARB_vertex_program  _HAVE_FULL_GL
 #define FEATURE_ARB_vertex_shader _HAVE_FULL_GL

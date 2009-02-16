@@ -56,7 +56,7 @@
 #include "texstate.h"
 #include "varray.h"
 #include "mtypes.h"
-#include "math/m_xform.h"
+
 
 /**
  * Special struct for saving/restoring texture state (GL_TEXTURE_BIT)
@@ -820,15 +820,9 @@ pop_texture_group(GLcontext *ctx, struct texture_state *texstate)
             _mesa_TexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                                 obj->MaxAnisotropy);
          }
-         if (ctx->Extensions.SGIX_shadow) {
-            _mesa_TexParameteri(target, GL_TEXTURE_COMPARE_SGIX,
-                                obj->CompareFlag);
-            _mesa_TexParameteri(target, GL_TEXTURE_COMPARE_OPERATOR_SGIX,
-                                obj->CompareOperator);
-         }
-         if (ctx->Extensions.SGIX_shadow_ambient) {
-            _mesa_TexParameterf(target, GL_SHADOW_AMBIENT_SGIX,
-                                obj->ShadowAmbient);
+         if (ctx->Extensions.ARB_shadow_ambient) {
+            _mesa_TexParameterf(target, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB,
+                                obj->CompareFailValue);
          }
       }
 
@@ -909,14 +903,13 @@ _mesa_PopAttrib(void)
                    * function, but legal for the later.
                    */
                   GLboolean multipleBuffers = GL_FALSE;
-                  if (ctx->Extensions.ARB_draw_buffers) {
-                     GLuint i;
-                     for (i = 1; i < ctx->Const.MaxDrawBuffers; i++) {
-                        if (color->DrawBuffer[i] != GL_NONE) {
-                           multipleBuffers = GL_TRUE;
-                           break;
-                        }
-                     }
+		  GLuint i;
+
+		  for (i = 1; i < ctx->Const.MaxDrawBuffers; i++) {
+		     if (color->DrawBuffer[i] != GL_NONE) {
+			multipleBuffers = GL_TRUE;
+			break;
+		     }
                   }
                   /* Call the API_level functions, not _mesa_drawbuffers()
                    * since we need to do error checking on the pop'd
@@ -1012,9 +1005,8 @@ _mesa_PopAttrib(void)
                _mesa_Hint(GL_FOG_HINT, hint->Fog);
                _mesa_Hint(GL_CLIP_VOLUME_CLIPPING_HINT_EXT,
                           hint->ClipVolumeClipping);
-               if (ctx->Extensions.ARB_texture_compression)
-                  _mesa_Hint(GL_TEXTURE_COMPRESSION_HINT_ARB,
-                             hint->TextureCompression);
+	       _mesa_Hint(GL_TEXTURE_COMPRESSION_HINT_ARB,
+			  hint->TextureCompression);
             }
             break;
          case GL_LIGHTING_BIT:
@@ -1275,9 +1267,6 @@ adjust_buffer_object_ref_counts(struct gl_array_attrib *array, GLint step)
       array->ArrayObj->TexCoord[i].BufferObj->RefCount += step;
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
       array->ArrayObj->VertexAttrib[i].BufferObj->RefCount += step;
-
-   array->ArrayBufferObj->RefCount += step;
-   array->ElementArrayBufferObj->RefCount += step;
 }
 
 

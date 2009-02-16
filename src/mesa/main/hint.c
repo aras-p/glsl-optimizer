@@ -89,10 +89,6 @@ _mesa_Hint( GLenum target, GLenum mode )
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
-         if (!ctx->Extensions.ARB_texture_compression) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
-	    return;
-         }
 	 if (ctx->Hint.TextureCompression == mode)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_HINT);

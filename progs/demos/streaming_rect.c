@@ -47,7 +47,10 @@ static void Idle( void )
 }
 
 /*static int max( int a, int b ) { return a > b ? a : b; }*/
+
+#ifndef min
 static int min( int a, int b ) { return a < b ? a : b; }
+#endif
 
 static void DrawObject()
 {

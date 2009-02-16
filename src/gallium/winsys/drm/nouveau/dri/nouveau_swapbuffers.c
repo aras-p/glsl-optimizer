@@ -17,6 +17,7 @@ nouveau_copy_buffer(__DRIdrawablePrivate *dPriv, struct pipe_surface *surf,
 		    const drm_clip_rect_t *rect)
 {
 	struct nouveau_context_dri *nv = dPriv->driContextPriv->driverPrivate;
+	struct pipe_context *pipe = nv->base.nvc->pctx[nv->base.pctx_id];
 	drm_clip_rect_t *pbox;
 	int nbox, i;
 
@@ -28,7 +29,6 @@ nouveau_copy_buffer(__DRIdrawablePrivate *dPriv, struct pipe_surface *surf,
 	pbox = dPriv->pClipRects;
 	nbox = dPriv->numClipRects;
 
-	nv->base.surface_copy_prep(&nv->base, nv->base.frontbuffer, surf);
 	for (i = 0; i < nbox; i++, pbox++) {
 		int sx, sy, dx, dy, w, h;
 
@@ -39,7 +39,8 @@ nouveau_copy_buffer(__DRIdrawablePrivate *dPriv, struct pipe_surface *surf,
 		w  = pbox->x2 - pbox->x1;
 		h  = pbox->y2 - pbox->y1;
 
-		nv->base.surface_copy(&nv->base, dx, dy, sx, sy, w, h);
+		pipe->surface_copy(pipe, FALSE, nv->base.frontbuffer,
+				   dx, dy, surf, sx, sy, w, h);
 	}
 
 	FIRE_RING(nv->base.nvc->channel);

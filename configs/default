@@ -81,7 +81,7 @@ MOTIF_CFLAGS = -I/usr/include/Motif1.2
 LIB_DIR = lib
 SRC_DIRS = mesa gallium egl gallium/winsys glu glut/glx glew glw
 GLU_DIRS = sgi
-DRIVER_DIRS = 
+DRIVER_DIRS = x11 osmesa
 # Which subdirs under $(TOP)/progs/ to enter:
 PROGRAM_DIRS = demos redbook samples glsl xdemos
 
@@ -89,11 +89,14 @@ PROGRAM_DIRS = demos redbook samples glsl xdemos
 EGL_DRIVERS_DIRS = demo
 
 # Gallium directories and 
-GALLIUM_AUXILIARY_DIRS = draw translate cso_cache pipebuffer tgsi sct rtasm util
+GALLIUM_DIRS = auxiliary drivers state_trackers
+GALLIUM_AUXILIARY_DIRS = draw translate cso_cache pipebuffer tgsi sct rtasm util indices
 GALLIUM_AUXILIARIES = $(foreach DIR,$(GALLIUM_AUXILIARY_DIRS),$(TOP)/src/gallium/auxiliary/$(DIR)/lib$(DIR).a)
-GALLIUM_DRIVER_DIRS = softpipe i915simple i965simple nv04 nv10 nv20 nv30 nv40 nv50 failover trace
+GALLIUM_DRIVER_DIRS = softpipe i915simple i965simple failover trace
 GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVER_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)
 GALLIUM_WINSYS_DIRS = xlib egl_xlib
+GALLIUM_WINSYS_DRM_DIRS =
+GALLIUM_STATE_TRACKERS_DIRS = glx
 
 
 # Library dependencies

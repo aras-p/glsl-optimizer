@@ -47,9 +47,11 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 
 		so_method(so, tesla, NV50TCL_RT_ADDRESS_HIGH(i), 5);
 		so_reloc (so, nv50_surface_buffer(fb->cbufs[i]), fb->cbufs[i]->offset,
-			  NOUVEAU_BO_VRAM | NOUVEAU_BO_HIGH, 0, 0);
+			  NOUVEAU_BO_VRAM | NOUVEAU_BO_HIGH |
+			  NOUVEAU_BO_RDWR, 0, 0);
 		so_reloc (so, nv50_surface_buffer(fb->cbufs[i]), fb->cbufs[i]->offset,
-			  NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW, 0, 0);
+			  NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
+			  NOUVEAU_BO_RDWR, 0, 0);
 		switch (fb->cbufs[i]->format) {
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 			so_data(so, 0xcf);
@@ -82,9 +84,11 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 
 		so_method(so, tesla, NV50TCL_ZETA_ADDRESS_HIGH, 5);
 		so_reloc (so, nv50_surface_buffer(fb->zsbuf), fb->zsbuf->offset,
-			  NOUVEAU_BO_VRAM | NOUVEAU_BO_HIGH, 0, 0);
+			  NOUVEAU_BO_VRAM | NOUVEAU_BO_HIGH |
+			  NOUVEAU_BO_RDWR, 0, 0);
 		so_reloc (so, nv50_surface_buffer(fb->zsbuf), fb->zsbuf->offset,
-			  NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW, 0, 0);
+			  NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
+			  NOUVEAU_BO_RDWR, 0, 0);
 		switch (fb->zsbuf->format) {
 		case PIPE_FORMAT_Z24S8_UNORM:
 			so_data(so, 0x16);

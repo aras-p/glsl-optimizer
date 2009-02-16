@@ -133,6 +133,8 @@ GLboolean gammaCreateContext( const __GLcontextModes *glVisual,
    ctx->Const.MaxPointSizeAA = 16.0; 
    ctx->Const.PointSizeGranularity = 0.25;
 
+   ctx->Const.MaxDrawBuffers = 1;
+
    gmesa->texHeap = mmInit( 0, gmesa->gammaScreen->textureSize );
 
    make_empty_list(&gmesa->TexObjList);

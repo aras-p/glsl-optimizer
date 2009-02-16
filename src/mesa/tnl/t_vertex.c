@@ -535,27 +535,30 @@ void _tnl_init_vertices( GLcontext *ctx,
 
 void _tnl_free_vertices( GLcontext *ctx )
 {
-   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   struct tnl_clipspace_fastpath *fp, *tmp;
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   if (tnl) {
+      struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
+      struct tnl_clipspace_fastpath *fp, *tmp;
 
-   if (vtx->vertex_buf) {
-      ALIGN_FREE(vtx->vertex_buf);
-      vtx->vertex_buf = NULL;
-   }
-   
-   for (fp = vtx->fastpath ; fp ; fp = tmp) {
-      tmp = fp->next;
-      FREE(fp->attr);
+      if (vtx->vertex_buf) {
+         ALIGN_FREE(vtx->vertex_buf);
+         vtx->vertex_buf = NULL;
+      }
 
-      /* KW: At the moment, fp->func is constrained to be allocated by
-       * _mesa_exec_alloc(), as the hardwired fastpaths in
-       * t_vertex_generic.c are handled specially.  It would be nice
-       * to unify them, but this probably won't change until this
-       * module gets another overhaul.
-       */
-      _mesa_exec_free((void *) fp->func);
-      FREE(fp);
+      for (fp = vtx->fastpath ; fp ; fp = tmp) {
+         tmp = fp->next;
+         FREE(fp->attr);
+
+         /* KW: At the moment, fp->func is constrained to be allocated by
+          * _mesa_exec_alloc(), as the hardwired fastpaths in
+          * t_vertex_generic.c are handled specially.  It would be nice
+          * to unify them, but this probably won't change until this
+          * module gets another overhaul.
+          */
+         _mesa_exec_free((void *) fp->func);
+         FREE(fp);
+      }
+
+      vtx->fastpath = NULL;
    }
-   
-   vtx->fastpath = NULL;
 }

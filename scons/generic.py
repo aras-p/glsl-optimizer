@@ -206,6 +206,25 @@ _bool_map = {
 }
 
 
+def num_jobs():
+    try:
+        return int(os.environ['NUMBER_OF_PROCESSORS'])
+    except (ValueError, KeyError):
+        pass
+
+    try:
+        return os.sysconf('SC_NPROCESSORS_ONLN')
+    except (ValueError, OSError, AttributeError):
+        pass
+
+    try:
+        return int(os.popen2("sysctl -n hw.ncpu")[1].read())
+    except ValueError:
+        pass
+
+    return 1
+
+
 def generate(env):
     """Common environment generation code"""
 
@@ -266,6 +285,10 @@ def generate(env):
     # different scons versions building the same source file
     env.SConsignFile(os.path.join(env['build'], '.sconsign'))
 
+    # Parallel build
+    if env.GetOption('num_jobs') <= 1:
+        env.SetOption('num_jobs', num_jobs())
+
     # Summary
     print
     print '  platform=%s' % env['platform']
@@ -274,6 +297,7 @@ def generate(env):
     print '  debug=%s' % ['no', 'yes'][env['debug']]
     print '  profile=%s' % ['no', 'yes'][env['profile']]
     print '  build=%s' % env['build']
+    print '  %s jobs' % env.GetOption('num_jobs')
     print
 
     # Load tool chain
@@ -401,6 +425,7 @@ def generate(env):
               '/Od', # disable optimizations
               '/Oi', # enable intrinsic functions
               '/Oy-', # disable frame pointer omission
+              '/GL-', # disable whole program optimization
             ]
         else:
             ccflags += [
@@ -492,9 +517,14 @@ def generate(env):
             linkflags += ['-m32']
         if env['machine'] == 'x86_64':
             linkflags += ['-m64']
-    if platform == 'winddk':
+    if platform == 'windows' and msvc:
         # See also:
         # - http://msdn2.microsoft.com/en-us/library/y0zzbyt4.aspx
+        linkflags += [
+            '/fixed:no',
+            '/incremental:no',
+        ]
+    if platform == 'winddk':
         linkflags += [
             '/merge:_PAGE=PAGE',
             '/merge:_TEXT=.text',

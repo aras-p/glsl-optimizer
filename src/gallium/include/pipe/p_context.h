@@ -40,6 +40,7 @@ struct pipe_screen;
 struct pipe_fence_handle;
 struct pipe_state_cache;
 struct pipe_query;
+struct pipe_winsys;
 
 
 /**

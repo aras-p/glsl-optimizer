@@ -1,8 +1,9 @@
 /*
  * mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.5
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,6 +38,7 @@
 #endif
 #include "fbobject.h"
 #include "framebuffer.h"
+#include "hash.h"
 #include "image.h"
 #include "imports.h"
 #include "macros.h"
@@ -253,23 +255,21 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
       }
    }
 
-   if (ctx->Extensions.ARB_texture_compression) {
-      switch (internalFormat) {
-         case GL_COMPRESSED_ALPHA:
-            return GL_ALPHA;
-         case GL_COMPRESSED_LUMINANCE:
-            return GL_LUMINANCE;
-         case GL_COMPRESSED_LUMINANCE_ALPHA:
-            return GL_LUMINANCE_ALPHA;
-         case GL_COMPRESSED_INTENSITY:
-            return GL_INTENSITY;
-         case GL_COMPRESSED_RGB:
-            return GL_RGB;
-         case GL_COMPRESSED_RGBA:
-            return GL_RGBA;
-         default:
-            ; /* fallthrough */
-      }
+   switch (internalFormat) {
+   case GL_COMPRESSED_ALPHA:
+      return GL_ALPHA;
+   case GL_COMPRESSED_LUMINANCE:
+      return GL_LUMINANCE;
+   case GL_COMPRESSED_LUMINANCE_ALPHA:
+      return GL_LUMINANCE_ALPHA;
+   case GL_COMPRESSED_INTENSITY:
+      return GL_INTENSITY;
+   case GL_COMPRESSED_RGB:
+      return GL_RGB;
+   case GL_COMPRESSED_RGBA:
+      return GL_RGBA;
+   default:
+      ; /* fallthrough */
    }
          
    if (ctx->Extensions.TDFX_texture_compression_FXT1) {
@@ -925,6 +925,7 @@ struct gl_texture_image *
 _mesa_get_proxy_tex_image(GLcontext *ctx, GLenum target, GLint level)
 {
    struct gl_texture_image *texImage;
+   GLuint texIndex;
 
    if (level < 0 )
       return NULL;
@@ -933,111 +934,54 @@ _mesa_get_proxy_tex_image(GLcontext *ctx, GLenum target, GLint level)
    case GL_PROXY_TEXTURE_1D:
       if (level >= ctx->Const.MaxTextureLevels)
          return NULL;
-      texImage = ctx->Texture.ProxyTex[TEXTURE_1D_INDEX]->Image[0][level];
-      if (!texImage) {
-         texImage = ctx->Driver.NewTextureImage(ctx);
-         if (!texImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
-            return NULL;
-         }
-         ctx->Texture.ProxyTex[TEXTURE_1D_INDEX]->Image[0][level] = texImage;
-         /* Set the 'back' pointer */
-         texImage->TexObject = ctx->Texture.ProxyTex[TEXTURE_1D_INDEX];
-      }
-      return texImage;
+      texIndex = TEXTURE_1D_INDEX;
+      break;
    case GL_PROXY_TEXTURE_2D:
       if (level >= ctx->Const.MaxTextureLevels)
          return NULL;
-      texImage = ctx->Texture.ProxyTex[TEXTURE_2D_INDEX]->Image[0][level];
-      if (!texImage) {
-         texImage = ctx->Driver.NewTextureImage(ctx);
-         if (!texImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
-            return NULL;
-         }
-         ctx->Texture.ProxyTex[TEXTURE_2D_INDEX]->Image[0][level] = texImage;
-         /* Set the 'back' pointer */
-         texImage->TexObject = ctx->Texture.ProxyTex[TEXTURE_2D_INDEX];
-      }
-      return texImage;
+      texIndex = TEXTURE_2D_INDEX;
+      break;
    case GL_PROXY_TEXTURE_3D:
       if (level >= ctx->Const.Max3DTextureLevels)
          return NULL;
-      texImage = ctx->Texture.ProxyTex[TEXTURE_3D_INDEX]->Image[0][level];
-      if (!texImage) {
-         texImage = ctx->Driver.NewTextureImage(ctx);
-         if (!texImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
-            return NULL;
-         }
-         ctx->Texture.ProxyTex[TEXTURE_3D_INDEX]->Image[0][level] = texImage;
-         /* Set the 'back' pointer */
-         texImage->TexObject = ctx->Texture.ProxyTex[TEXTURE_3D_INDEX];
-      }
-      return texImage;
+      texIndex = TEXTURE_3D_INDEX;
+      break;
    case GL_PROXY_TEXTURE_CUBE_MAP:
       if (level >= ctx->Const.MaxCubeTextureLevels)
          return NULL;
-      texImage = ctx->Texture.ProxyTex[TEXTURE_CUBE_INDEX]->Image[0][level];
-      if (!texImage) {
-         texImage = ctx->Driver.NewTextureImage(ctx);
-         if (!texImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
-            return NULL;
-         }
-         ctx->Texture.ProxyTex[TEXTURE_CUBE_INDEX]->Image[0][level] = texImage;
-         /* Set the 'back' pointer */
-         texImage->TexObject = ctx->Texture.ProxyTex[TEXTURE_CUBE_INDEX];
-      }
-      return texImage;
+      texIndex = TEXTURE_CUBE_INDEX;
+      break;
    case GL_PROXY_TEXTURE_RECTANGLE_NV:
       if (level > 0)
          return NULL;
-      texImage = ctx->Texture.ProxyTex[TEXTURE_RECT_INDEX]->Image[0][level];
-      if (!texImage) {
-         texImage = ctx->Driver.NewTextureImage(ctx);
-         if (!texImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
-            return NULL;
-         }
-         ctx->Texture.ProxyTex[TEXTURE_RECT_INDEX]->Image[0][level] = texImage;
-         /* Set the 'back' pointer */
-         texImage->TexObject = ctx->Texture.ProxyTex[TEXTURE_RECT_INDEX];
-      }
-      return texImage;
+      texIndex = TEXTURE_RECT_INDEX;
+      break;
    case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
       if (level >= ctx->Const.MaxTextureLevels)
          return NULL;
-      texImage = ctx->Texture.ProxyTex[TEXTURE_1D_ARRAY_INDEX]->Image[0][level];
-      if (!texImage) {
-         texImage = ctx->Driver.NewTextureImage(ctx);
-         if (!texImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
-            return NULL;
-         }
-         ctx->Texture.ProxyTex[TEXTURE_1D_ARRAY_INDEX]->Image[0][level] = texImage;
-         /* Set the 'back' pointer */
-         texImage->TexObject = ctx->Texture.ProxyTex[TEXTURE_1D_ARRAY_INDEX];
-      }
-      return texImage;
+      texIndex = TEXTURE_1D_ARRAY_INDEX;
+      break;
    case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
       if (level >= ctx->Const.MaxTextureLevels)
          return NULL;
-      texImage = ctx->Texture.ProxyTex[TEXTURE_2D_ARRAY_INDEX]->Image[0][level];
-      if (!texImage) {
-         texImage = ctx->Driver.NewTextureImage(ctx);
-         if (!texImage) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
-            return NULL;
-         }
-         ctx->Texture.ProxyTex[TEXTURE_2D_ARRAY_INDEX]->Image[0][level] = texImage;
-         /* Set the 'back' pointer */
-         texImage->TexObject = ctx->Texture.ProxyTex[TEXTURE_2D_ARRAY_INDEX];
-      }
-      return texImage;
+      texIndex = TEXTURE_2D_ARRAY_INDEX;
+      break;
    default:
       return NULL;
    }
+
+   texImage = ctx->Texture.ProxyTex[texIndex]->Image[0][level];
+   if (!texImage) {
+      texImage = ctx->Driver.NewTextureImage(ctx);
+      if (!texImage) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
+         return NULL;
+      }
+      ctx->Texture.ProxyTex[texIndex]->Image[0][level] = texImage;
+      /* Set the 'back' pointer */
+      texImage->TexObject = ctx->Texture.ProxyTex[texIndex];
+   }
+   return texImage;
 }
 
 
@@ -2235,7 +2179,8 @@ copytexsubimage_error_check2( GLcontext *ctx, GLuint dimensions,
 
    if (!_mesa_source_buffer_exists(ctx, teximage->_BaseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-               "glCopyTexSubImage%dD(missing readbuffer)", dimensions);
+                  "glCopyTexSubImage%dD(missing readbuffer, format=0x%x)",
+                  dimensions, teximage->_BaseFormat);
       return GL_TRUE;
    }
 
@@ -2391,23 +2336,33 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 }
 
 
+/** Callback info for walking over FBO hash table */
+struct cb_info
+{
+   GLcontext *ctx;
+   struct gl_texture_object *texObj;
+   GLuint level, face;
+};
+
 
 /**
- * Check if the given texture image is bound to any framebuffer objects
- * and update/invalidate them.
- * XXX We're only checking the currently bound framebuffer object for now.
- * In the future, perhaps struct gl_texture_image should have a pointer (or
- * list of pointers (yikes)) to the gl_framebuffer(s) which it's bound to.
+ * Check render to texture callback.  Called from _mesa_HashWalk().
  */
 static void
-update_fbo_texture(GLcontext *ctx, struct gl_texture_object *texObj,
-                   GLuint face, GLuint level)
+check_rtt_cb(GLuint key, void *data, void *userData)
 {
-   if (ctx->DrawBuffer->Name) {
+   struct gl_framebuffer *fb = (struct gl_framebuffer *) data;
+   const struct cb_info *info = (struct cb_info *) userData;
+   GLcontext *ctx = info->ctx;
+   const struct gl_texture_object *texObj = info->texObj;
+   const GLuint level = info->level, face = info->face;
+
+   /* If this is a user-created FBO */
+   if (fb->Name) {
       GLuint i;
+      /* check if any of the FBO's attachments point to 'texObj' */
       for (i = 0; i < BUFFER_COUNT; i++) {
-         struct gl_renderbuffer_attachment *att = 
-            ctx->DrawBuffer->Attachment + i;
+         struct gl_renderbuffer_attachment *att = fb->Attachment + i;
          if (att->Type == GL_TEXTURE &&
              att->Texture == texObj &&
              att->TextureLevel == level &&
@@ -2415,8 +2370,32 @@ update_fbo_texture(GLcontext *ctx, struct gl_texture_object *texObj,
             ASSERT(att->Texture->Image[att->CubeMapFace][att->TextureLevel]);
             /* Tell driver about the new renderbuffer texture */
             ctx->Driver.RenderTexture(ctx, ctx->DrawBuffer, att);
+            /* Mark fb status as indeterminate to force re-validation */
+            fb->_Status = 0;
          }
       }
+   }
+}
+
+
+/**
+ * When a texture image is specified we have to check if it's bound to
+ * any framebuffer objects (render to texture) in order to detect changes
+ * in size or format since that effects FBO completeness.
+ * Any FBOs rendering into the texture must be re-validated.
+ */
+static void
+update_fbo_texture(GLcontext *ctx, struct gl_texture_object *texObj,
+                   GLuint face, GLuint level)
+{
+   /* Only check this texture if it's been marked as RenderToTexture */
+   if (texObj->_RenderToTexture) {
+      struct cb_info info;
+      info.ctx = ctx;
+      info.texObj = texObj;
+      info.level = level;
+      info.face = face;
+      _mesa_HashWalk(ctx->Shared->FrameBuffers, check_rtt_cb, &info);
    }
 }
 
@@ -2452,7 +2431,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
          return;   /* error was recorded */
       }
 
-      if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+      if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
 	 _mesa_update_state(ctx);
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -2558,7 +2537,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
          return;   /* error was recorded */
       }
 
-      if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+      if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
 	 _mesa_update_state(ctx);
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -2614,7 +2593,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                               1, border)) {
          /* when error, clear all proxy texture image parameters */
          if (texImage)
-            clear_teximage_fields(ctx->Texture.ProxyTex[TEXTURE_2D_INDEX]->Image[0][level]);
+            clear_teximage_fields(texImage);
       }
       else {
          /* no error, set the tex image parameters */
@@ -2659,7 +2638,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
          return;   /* error was recorded */
       }
 
-      if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+      if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
 	 _mesa_update_state(ctx);
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -2752,7 +2731,7 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
 #if FEATURE_convolve
@@ -2812,7 +2791,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
 #if FEATURE_convolve
@@ -2872,7 +2851,7 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    if (subtexture_error_check(ctx, 3, target, level, xoffset, yoffset, zoffset,
@@ -2928,7 +2907,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
 #if FEATURE_convolve
@@ -2993,7 +2972,7 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
 #if FEATURE_convolve
@@ -3061,7 +3040,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    if (copytexsubimage_error_check1(ctx, 1, target, level))
@@ -3116,7 +3095,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    if (copytexsubimage_error_check1(ctx, 2, target, level))
@@ -3171,7 +3150,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
    if (copytexsubimage_error_check1(ctx, 3, target, level))

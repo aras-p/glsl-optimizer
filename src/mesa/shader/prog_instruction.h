@@ -418,7 +418,7 @@ struct prog_instruction
     */
    GLint BranchTarget;
 
-#if 0
+#if 01 /* XXX just use this for i965 driver for now! */
    /**
     * For TEX instructions in shaders, the sampler to use for the
     * texture lookup.

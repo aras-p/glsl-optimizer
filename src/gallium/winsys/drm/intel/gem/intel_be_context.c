@@ -1,9 +1,13 @@
 
+#include "pipe/p_screen.h"
+
 #include "intel_be_device.h"
 #include "intel_be_context.h"
 #include "intel_be_batchbuffer.h"
 
 #include "i915_drm.h"
+
+#include "intel_be_api.h"
 
 static struct i915_batchbuffer *
 intel_be_batch_get(struct i915_winsys *sws)
@@ -57,6 +61,21 @@ intel_be_batch_flush(struct i915_winsys *sws,
 	intel_be_batchbuffer_flush(intel->batch, f);
 }
 
+
+/*
+ * Misc functions.
+ */
+
+static void
+intel_be_destroy_context(struct i915_winsys *winsys)
+{
+	struct intel_be_context *intel = intel_be_context(winsys);
+
+	intel_be_batchbuffer_free(intel->batch);
+
+	free(intel);
+}
+
 boolean
 intel_be_init_context(struct intel_be_context *intel, struct intel_be_device *device)
 {
@@ -68,13 +87,32 @@ intel_be_init_context(struct intel_be_context *intel, struct intel_be_device *de
 	intel->base.batch_reloc = intel_be_batch_reloc;
 	intel->base.batch_flush = intel_be_batch_flush;
 
+	intel->base.destroy = intel_be_destroy_context;
+
 	intel->batch = intel_be_batchbuffer_alloc(intel);
 
 	return true;
 }
 
-void
-intel_be_destroy_context(struct intel_be_context *intel)
+struct pipe_context *
+intel_be_create_context(struct pipe_screen *screen)
 {
-	intel_be_batchbuffer_free(intel->batch);
+	struct intel_be_context *intel;
+	struct pipe_context *pipe;
+	struct intel_be_device *device = intel_be_device(screen->winsys);
+
+	intel = (struct intel_be_context *)malloc(sizeof(*intel));
+	memset(intel, 0, sizeof(*intel));
+
+	intel_be_init_context(intel, device);
+
+#if 0
+	pipe = intel_create_softpipe(intel, screen->winsys);
+#else
+	pipe = i915_create_context(screen, &device->base, &intel->base);
+#endif
+
+	pipe->priv = intel;
+
+	return pipe;
 }

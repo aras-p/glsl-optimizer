@@ -2,7 +2,7 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = glx
+SUBDIRS = $(GALLIUM_STATE_TRACKERS_DIRS)
 
 
 default: subdirs

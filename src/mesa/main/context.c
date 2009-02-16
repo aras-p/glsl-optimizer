@@ -151,10 +151,7 @@
 #include "shader/atifragshader.h"
 #endif
 #if _HAVE_FULL_GL
-#include "math/m_translate.h"
 #include "math/m_matrix.h"
-#include "math/m_xform.h"
-#include "math/mathmod.h"
 #endif
 
 #ifdef USE_SPARC_ASM
@@ -186,6 +183,7 @@ GLfloat _mesa_ubyte_to_float_color_tab[256];
 void
 _mesa_notifySwapBuffers(__GLcontext *ctx)
 {
+   FLUSH_VERTICES( ctx, 0 );
    if (ctx->Driver.Flush) {
       ctx->Driver.Flush(ctx);
    }
@@ -387,13 +385,9 @@ one_time_init( GLcontext *ctx )
 
       _mesa_init_sqrt_table();
 
-#if _HAVE_FULL_GL
-      _math_init();
-
       for (i = 0; i < 256; i++) {
          _mesa_ubyte_to_float_color_tab[i] = (float) i / 255.0F;
       }
-#endif
 
 #ifdef USE_SPARC_ASM
       _mesa_init_sparc_glapi_relocs();
@@ -581,7 +575,7 @@ static void
 delete_displaylist_cb(GLuint id, void *data, void *userData)
 {
 #if FEATURE_dlist
-   struct mesa_display_list *list = (struct mesa_display_list *) data;
+   struct gl_display_list *list = (struct gl_display_list *) data;
    GLcontext *ctx = (GLcontext *) userData;
    _mesa_delete_list(ctx, list);
 #endif
@@ -870,6 +864,9 @@ _mesa_init_constants(GLcontext *ctx)
    assert(MAX_TEXTURE_LEVELS >= MAX_3D_TEXTURE_LEVELS);
    assert(MAX_TEXTURE_LEVELS >= MAX_CUBE_TEXTURE_LEVELS);
 
+   /* Max texture size should be <= max viewport size (render to texture) */
+   assert((1 << (MAX_TEXTURE_LEVELS - 1)) <= MAX_WIDTH);
+
    /* Constants, may be overriden (usually only reduced) by device drivers */
    ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
    ctx->Const.Max3DTextureLevels = MAX_3D_TEXTURE_LEVELS;
@@ -932,6 +929,9 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.MaxVarying = MAX_VARYING;
 #endif
 
+   /* GL_ARB_framebuffer_object */
+   ctx->Const.MaxSamples = 0;
+
    /* sanity checks */
    ASSERT(ctx->Const.MaxTextureUnits == MIN2(ctx->Const.MaxTextureImageUnits,
                                              ctx->Const.MaxTextureCoordUnits));
@@ -963,13 +963,18 @@ check_context_limits(GLcontext *ctx)
    /* number of coord units cannot be greater than number of image units */
    assert(ctx->Const.MaxTextureCoordUnits <= ctx->Const.MaxTextureImageUnits);
 
-   assert(ctx->Const.MaxViewportWidth <= MAX_WIDTH);
-   assert(ctx->Const.MaxViewportHeight <= MAX_WIDTH);
+   assert(ctx->Const.MaxTextureLevels <= MAX_TEXTURE_LEVELS);
+   assert(ctx->Const.Max3DTextureLevels <= MAX_3D_TEXTURE_LEVELS);
+   assert(ctx->Const.MaxCubeTextureLevels <= MAX_CUBE_TEXTURE_LEVELS);
+   assert(ctx->Const.MaxTextureRectSize <= MAX_TEXTURE_RECT_SIZE);
 
    /* make sure largest texture image is <= MAX_WIDTH in size */
-   assert((1 << (ctx->Const.MaxTextureLevels -1 )) <= MAX_WIDTH);
-   assert((1 << (ctx->Const.MaxCubeTextureLevels -1 )) <= MAX_WIDTH);
-   assert((1 << (ctx->Const.Max3DTextureLevels -1 )) <= MAX_WIDTH);
+   assert((1 << (ctx->Const.MaxTextureLevels - 1)) <= MAX_WIDTH);
+   assert((1 << (ctx->Const.MaxCubeTextureLevels - 1)) <= MAX_WIDTH);
+   assert((1 << (ctx->Const.Max3DTextureLevels - 1)) <= MAX_WIDTH);
+
+   assert(ctx->Const.MaxViewportWidth <= MAX_WIDTH);
+   assert(ctx->Const.MaxViewportHeight <= MAX_WIDTH);
 
    assert(ctx->Const.MaxDrawBuffers <= MAX_DRAW_BUFFERS);
 
@@ -1302,10 +1307,10 @@ _mesa_free_context_data( GLcontext *ctx )
    }
 
    /* unreference WinSysDraw/Read buffers */
-   _mesa_unreference_framebuffer(&ctx->WinSysDrawBuffer);
-   _mesa_unreference_framebuffer(&ctx->WinSysReadBuffer);
-   _mesa_unreference_framebuffer(&ctx->DrawBuffer);
-   _mesa_unreference_framebuffer(&ctx->ReadBuffer);
+   _mesa_reference_framebuffer(&ctx->WinSysDrawBuffer, NULL);
+   _mesa_reference_framebuffer(&ctx->WinSysReadBuffer, NULL);
+   _mesa_reference_framebuffer(&ctx->DrawBuffer, NULL);
+   _mesa_reference_framebuffer(&ctx->ReadBuffer, NULL);
 
    _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current, NULL);
    _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, NULL);

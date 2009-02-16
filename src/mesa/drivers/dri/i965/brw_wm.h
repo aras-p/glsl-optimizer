@@ -69,7 +69,8 @@ struct brw_wm_prog_key {
    GLuint shadowtex_mask:16;
    GLuint yuvtex_mask:16;
    GLuint yuvtex_swap_mask:16;	/* UV swaped */
-   //   GLuint pad1:16;
+
+   GLuint tex_swizzles[BRW_MAX_TEX_UNIT];
 
    GLuint program_string_id:32;
    GLuint origin_x, origin_y;
@@ -280,4 +281,6 @@ void brw_wm_lookup_iz( GLuint line_aa,
 
 GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c);
+
+
 #endif

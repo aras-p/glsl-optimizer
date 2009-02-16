@@ -29,33 +29,9 @@ nouveau_pipe_grobj_alloc(struct nouveau_winsys *nvws, int grclass,
 	if (ret)
 		return ret;
 
-	assert(nv->nvc->next_subchannel < 7);
-	BIND_RING(chan, *grobj, nv->nvc->next_subchannel++);
-	return 0;
-}
-
-static int
-nouveau_pipe_surface_copy(struct nouveau_winsys *nvws, struct pipe_surface *dst,
-			  unsigned dx, unsigned dy, struct pipe_surface *src,
-			  unsigned sx, unsigned sy, unsigned w, unsigned h)
-{
-	struct nouveau_context *nv = nvws->nv;
-
-	if (nv->surface_copy_prep(nv, dst, src))
-		return 1;
-	nv->surface_copy(nv, dx, dy, sx, sy, w, h);
-	nv->surface_copy_done(nv);
-
-	return 0;
-}
-
-static int
-nouveau_pipe_surface_fill(struct nouveau_winsys *nvws, struct pipe_surface *dst,
-			  unsigned dx, unsigned dy, unsigned w, unsigned h,
-			  unsigned value)
-{
-	if (nvws->nv->surface_fill(nvws->nv, dst, dx, dy, w, h, value))
-		return 1;
+	BEGIN_RING(chan, *grobj, 0x0000, 1);
+	OUT_RING  (chan, (*grobj)->handle);
+	(*grobj)->bound = NOUVEAU_GROBJ_BOUND_EXPLICIT;
 	return 0;
 }
 
@@ -64,8 +40,9 @@ nouveau_pipe_push_reloc(struct nouveau_winsys *nvws, void *ptr,
 			struct pipe_buffer *buf, uint32_t data,
 			uint32_t flags, uint32_t vor, uint32_t tor)
 {
-	return nouveau_pushbuf_emit_reloc(nvws->channel, ptr,
-					  nouveau_buffer(buf)->bo,
+	struct nouveau_bo *bo = nouveau_pipe_buffer(buf)->bo;
+
+	return nouveau_pushbuf_emit_reloc(nvws->channel, ptr, bo,
 					  data, flags, vor, tor);
 }
 
@@ -73,16 +50,16 @@ static int
 nouveau_pipe_push_flush(struct nouveau_winsys *nvws, unsigned size,
 			struct pipe_fence_handle **fence)
 {
-	if (fence) {
-		struct nouveau_pushbuf *pb = nvws->channel->pushbuf;
-		struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(pb);
-		struct nouveau_fence *ref = NULL;
-
-		nouveau_fence_ref(nvpb->fence, &ref);
-		*fence = (struct pipe_fence_handle *)ref;
-	}
+	if (fence)
+		*fence = NULL;
 
 	return nouveau_pushbuf_flush(nvws->channel, size);
+}
+
+static struct nouveau_bo *
+nouveau_pipe_get_bo(struct pipe_buffer *pb)
+{
+	return nouveau_pipe_buffer(pb)->bo;
 }
 
 struct pipe_context *
@@ -152,8 +129,7 @@ nouveau_pipe_create(struct nouveau_context *nv)
 	nvws->notifier_retval	= nouveau_notifier_return_val;
 	nvws->notifier_wait	= nouveau_notifier_wait_status;
 
-	nvws->surface_copy	= nouveau_pipe_surface_copy;
-	nvws->surface_fill	= nouveau_pipe_surface_fill;
+	nvws->get_bo		= nouveau_pipe_get_bo;
 
 	ws = nouveau_create_pipe_winsys(nv);
 

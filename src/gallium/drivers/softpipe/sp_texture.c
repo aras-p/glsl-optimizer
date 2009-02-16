@@ -265,7 +265,7 @@ softpipe_tex_surface_release(struct pipe_screen *screen,
     * needed post-processing to put them into hardware layout, this is
     * where it would happen.  For softpipe, nothing to do.
     */
-   assert ((*s)->texture);
+   assert(surf->texture);
    if (--surf->refcount == 0) {
       pipe_texture_reference(&surf->texture, NULL);
       FREE(surf);

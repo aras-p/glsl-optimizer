@@ -495,6 +495,7 @@ intel_texture_bitmap(GLcontext * ctx,
    texcoords[3][1] = 1.0;
 
    _mesa_VertexPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &vertices);
+   _mesa_ClientActiveTextureARB(GL_TEXTURE0);
    _mesa_TexCoordPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &texcoords);
    _mesa_Enable(GL_VERTEX_ARRAY);
    _mesa_Enable(GL_TEXTURE_COORD_ARRAY);

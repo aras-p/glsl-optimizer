@@ -114,7 +114,7 @@ tgsi_default_declaration( void )
    struct tgsi_declaration declaration;
 
    declaration.Type = TGSI_TOKEN_TYPE_DECLARATION;
-   declaration.Size = 1;
+   declaration.NrTokens = 1;
    declaration.File = TGSI_FILE_NULL;
    declaration.UsageMask = TGSI_WRITEMASK_XYZW;
    declaration.Interpolate = TGSI_INTERPOLATE_CONSTANT;
@@ -160,9 +160,9 @@ declaration_grow(
    struct tgsi_declaration *declaration,
    struct tgsi_header *header )
 {
-   assert( declaration->Size < 0xFF );
+   assert( declaration->NrTokens < 0xFF );
 
-   declaration->Size++;
+   declaration->NrTokens++;
 
    header_bodysize_grow( header );
 }
@@ -308,7 +308,7 @@ tgsi_default_immediate( void )
    struct tgsi_immediate immediate;
 
    immediate.Type = TGSI_TOKEN_TYPE_IMMEDIATE;
-   immediate.Size = 1;
+   immediate.NrTokens = 1;
    immediate.DataType = TGSI_IMM_FLOAT32;
    immediate.Padding = 0;
    immediate.Extended = 0;
@@ -345,9 +345,9 @@ immediate_grow(
    struct tgsi_immediate *immediate,
    struct tgsi_header *header )
 {
-   assert( immediate->Size < 0xFF );
+   assert( immediate->NrTokens < 0xFF );
 
-   immediate->Size++;
+   immediate->NrTokens++;
 
    header_bodysize_grow( header );
 }
@@ -384,7 +384,7 @@ tgsi_build_full_immediate(
 
    *immediate = tgsi_build_immediate( header );
 
-   for( i = 0; i < full_imm->Immediate.Size - 1; i++ ) {
+   for( i = 0; i < full_imm->Immediate.NrTokens - 1; i++ ) {
       struct tgsi_immediate_float32 *if32;
 
       if( maxsize <= size )
@@ -411,7 +411,7 @@ tgsi_default_instruction( void )
    struct tgsi_instruction instruction;
 
    instruction.Type = TGSI_TOKEN_TYPE_INSTRUCTION;
-   instruction.Size = 1;
+   instruction.NrTokens = 1;
    instruction.Opcode = TGSI_OPCODE_MOV;
    instruction.Saturate = TGSI_SAT_NONE;
    instruction.NumDstRegs = 1;
@@ -453,9 +453,9 @@ instruction_grow(
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
 {
-   assert (instruction->Size <   0xFF);
+   assert (instruction->NrTokens <   0xFF);
 
-   instruction->Size++;
+   instruction->NrTokens++;
 
    header_bodysize_grow( header );
 }

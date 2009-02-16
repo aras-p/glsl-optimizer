@@ -611,11 +611,15 @@ PUBLIC void glXWaitGL(void)
 
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
-/* This bit of ugliness unwraps the glFinish function */
-#ifdef glFinish
-#undef glFinish
-#endif
-	glFinish();
+    	int screen;
+    	__GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, gc->currentDrawable, &screen);
+
+    	if ( pdraw != NULL ) {
+	    __GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
+	    glFlush();
+	    if (psc->driScreen->waitGL != NULL)
+	    	(*psc->driScreen->waitGL)(pdraw);
+	}
 	return;
     }
 #endif
@@ -647,7 +651,15 @@ PUBLIC void glXWaitX(void)
 
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
-	XSync(dpy, False);
+    	int screen;
+    	__GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, gc->currentDrawable, &screen);
+
+    	if ( pdraw != NULL ) {
+	    __GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
+	    if (psc->driScreen->waitX != NULL)
+	    	(*psc->driScreen->waitX)(pdraw);
+	} else
+	    XSync(dpy, False);
 	return;
     }
 #endif

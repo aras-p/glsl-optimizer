@@ -131,7 +131,6 @@ struct brw_context;
 #define BRW_NEW_WM_INPUT_DIMENSIONS     0x100
 #define BRW_NEW_INPUT_VARYING           0x200
 #define BRW_NEW_PSP                     0x800
-#define BRW_NEW_METAOPS                 0x1000
 #define BRW_NEW_FENCE                   0x2000
 #define BRW_NEW_INDICES			0x4000
 #define BRW_NEW_VERTICES		0x8000
@@ -303,26 +302,6 @@ struct brw_cache {
 };
 
 
-
-struct brw_state_pointers {
-   struct gl_colorbuffer_attrib	*Color;
-   struct gl_depthbuffer_attrib	*Depth;
-   struct gl_fog_attrib		*Fog;
-   struct gl_hint_attrib	*Hint;
-   struct gl_light_attrib	*Light;
-   struct gl_line_attrib	*Line;
-   struct gl_point_attrib	*Point;
-   struct gl_polygon_attrib	*Polygon;
-   GLuint                       *PolygonStipple;
-   struct gl_scissor_attrib	*Scissor;
-   struct gl_stencil_attrib	*Stencil;
-   struct gl_texture_attrib	*Texture;
-   struct gl_transform_attrib	*Transform;
-   struct gl_viewport_attrib	*Viewport;
-   struct gl_vertex_program_state *VertexProgram; 
-   struct gl_fragment_program_state *FragmentProgram;
-};
-
 /* Considered adding a member to this struct to document which flags
  * an update might raise so that ordering of the state atoms can be
  * checked or derived at runtime.  Dropped the idea in favor of having
@@ -457,7 +436,6 @@ struct brw_context
       int validated_bo_count;
    } state;
 
-   struct brw_state_pointers attribs;
    struct brw_cache cache;
    struct brw_cached_batch_item *cached_batch_items;
 
@@ -490,28 +468,6 @@ struct brw_context
       dri_bo *bo;
       unsigned int offset;
    } ib;
-
-   struct {
-      /* Will be allocated on demand if needed.   
-       */
-      struct brw_state_pointers attribs;
-      struct gl_vertex_program *vp;
-      struct gl_fragment_program *fp, *fp_tex;
-
-      struct gl_buffer_object *vbo;
-
-      struct intel_region *saved_draw_region;
-      GLuint saved_nr_draw_regions;
-      struct intel_region *saved_depth_region;
-
-      GLuint restore_draw_buffers[MAX_DRAW_BUFFERS];
-      GLuint restore_num_draw_buffers;
-
-      struct gl_fragment_program *restore_fp;
-      
-      GLboolean active;
-   } metaops;
-
 
    /* Active vertex program: 
     */
@@ -702,13 +658,6 @@ void brw_FrameBufferTexInit( struct brw_context *brw,
 			     struct intel_region *region );
 void brw_FrameBufferTexDestroy( struct brw_context *brw );
 void brw_validate_textures( struct brw_context *brw );
-
-/*======================================================================
- * brw_metaops.c
- */
-
-void brw_init_metaops( struct brw_context *brw );
-void brw_destroy_metaops( struct brw_context *brw );
 
 
 /*======================================================================

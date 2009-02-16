@@ -37,7 +37,6 @@
 #include "mtypes.h"
 #include "enums.h"
 #include "math/m_matrix.h"
-#include "math/m_xform.h"
 #include "api_arrayelt.h"
 
 
@@ -772,35 +771,30 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 
       /* GL_ARB_multisample */
       case GL_MULTISAMPLE_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.Enabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
          ctx->Multisample.Enabled = state;
          break;
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.SampleAlphaToCoverage == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
          ctx->Multisample.SampleAlphaToCoverage = state;
          break;
       case GL_SAMPLE_ALPHA_TO_ONE_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.SampleAlphaToOne == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
          ctx->Multisample.SampleAlphaToOne = state;
          break;
       case GL_SAMPLE_COVERAGE_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.SampleCoverage == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
          ctx->Multisample.SampleCoverage = state;
          break;
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.SampleCoverageInvert == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
@@ -922,10 +916,13 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
             return;
          FLUSH_VERTICES(ctx, _NEW_STENCIL);
          ctx->Stencil.TestTwoSide = state;
-         if (state)
+         if (state) {
+            ctx->Stencil._BackFace = 2;
             ctx->_TriangleCaps |= DD_TRI_TWOSTENCIL;
-         else
+         } else {
+            ctx->Stencil._BackFace = 1;
             ctx->_TriangleCaps &= ~DD_TRI_TWOSTENCIL;
+         }
          break;
 
 #if FEATURE_ARB_fragment_program
@@ -1283,19 +1280,14 @@ _mesa_IsEnabled( GLenum cap )
 
       /* GL_ARB_multisample */
       case GL_MULTISAMPLE_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.Enabled;
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.SampleAlphaToCoverage;
       case GL_SAMPLE_ALPHA_TO_ONE_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.SampleAlphaToOne;
       case GL_SAMPLE_COVERAGE_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.SampleCoverage;
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.SampleCoverageInvert;
 
       /* GL_IBM_rasterpos_clip */

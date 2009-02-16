@@ -31,6 +31,7 @@
 #include "GL/gl.h"
 
 #include "pipe/p_debug.h"
+#include "pipe/p_thread.h"
 
 #include "shared/stw_public.h"
 #include "icd/stw_icd.h"
@@ -41,11 +42,14 @@
 
 struct stw_icd
 {
+   pipe_mutex mutex;
+
+   GLCLTPROCTABLE cpt;
+   boolean cpt_initialized;
+
    struct {
       struct stw_context *ctx;
    } ctx_array[DRV_CONTEXT_MAX];
-
-   DHGLRC ctx_current;
 };
 
 
@@ -62,6 +66,8 @@ stw_icd_init( void )
    stw_icd = &stw_icd_storage;
    memset(stw_icd, 0, sizeof *stw_icd);
 
+   pipe_mutex_init( stw_icd->mutex );
+
    return TRUE;
 }
 
@@ -70,26 +76,35 @@ stw_icd_cleanup(void)
 {
    int i;
 
-   if(!stw_icd)
+   if (!stw_icd)
       return;
+   
+   pipe_mutex_lock( stw_icd->mutex );
+   {
+      /* Ensure all contexts are destroyed */
+      for (i = 0; i < DRV_CONTEXT_MAX; i++)
+         if (stw_icd->ctx_array[i].ctx) 
+            stw_delete_context( stw_icd->ctx_array[i].ctx );
+   }
+   pipe_mutex_unlock( stw_icd->mutex );
 
-   /* Ensure all contexts are destroyed */
-   for (i = 0; i < DRV_CONTEXT_MAX; i++)
-      if (stw_icd->ctx_array[i].ctx) 
-         stw_delete_context( stw_icd->ctx_array[i].ctx );
-
+   pipe_mutex_init( stw_icd->mutex );
    stw_icd = NULL;
 }
 
 
 static struct stw_context *
-lookup_context( DHGLRC dhglrc )
+lookup_context( struct stw_icd *icd, 
+                DHGLRC dhglrc )
 {
    if (dhglrc == 0 || 
        dhglrc >= DRV_CONTEXT_MAX)
       return NULL;
 
-   return stw_icd->ctx_array[dhglrc - 1].ctx;
+   if (icd == NULL)
+      return NULL;
+
+   return icd->ctx_array[dhglrc - 1].ctx;
 }
 
 BOOL APIENTRY
@@ -98,14 +113,25 @@ DrvCopyContext(
    DHGLRC dhrcDest,
    UINT fuMask )
 {
-   struct stw_context *src = lookup_context( dhrcSource );
-   struct stw_context *dst = lookup_context( dhrcDest );
-   
-   if (src == NULL ||
-       dst == NULL)
+   BOOL ret = FALSE;
+
+   if (!stw_icd)
       return FALSE;
 
-   return stw_copy_context( src, dst, fuMask );
+   pipe_mutex_lock( stw_icd->mutex );
+   {
+      struct stw_context *src = lookup_context( stw_icd, dhrcSource );
+      struct stw_context *dst = lookup_context( stw_icd, dhrcDest );
+   
+      if (src == NULL || dst == NULL) 
+         goto done;
+
+      ret = stw_copy_context( src, dst, fuMask );
+   }
+done:
+   pipe_mutex_unlock( stw_icd->mutex );
+
+   return ret;
 }
 
 DHGLRC APIENTRY
@@ -113,23 +139,37 @@ DrvCreateLayerContext(
    HDC hdc,
    INT iLayerPlane )
 {
-   DWORD i;
+   DHGLRC handle = 0;
+
+   if (!stw_icd)
+      return handle;
+
+   pipe_mutex_lock( stw_icd->mutex );
+   {
+      int i;
+
+      for (i = 0; i < DRV_CONTEXT_MAX; i++) {
+         if (stw_icd->ctx_array[i].ctx == NULL)
+            break;
+      }
    
-   for (i = 0; i < DRV_CONTEXT_MAX; i++) {
-      if (stw_icd->ctx_array[i].ctx == NULL)
-         goto found_slot;
+      /* No slot available, fail:
+       */
+      if (i == DRV_CONTEXT_MAX)
+         goto done;
+
+      stw_icd->ctx_array[i].ctx = stw_create_context( hdc, iLayerPlane );
+      if (stw_icd->ctx_array[i].ctx == NULL) 
+         goto done;
+      
+      /* success:
+       */
+      handle = (DHGLRC) i + 1;
    }
-   
-   /* No slot available, fail:
-    */
-   return 0;
+done:
+   pipe_mutex_unlock( stw_icd->mutex );
 
-found_slot:
-   stw_icd->ctx_array[i].ctx = stw_create_context( hdc, iLayerPlane );
-   if (stw_icd->ctx_array[i].ctx == NULL)
-      return 0;
-
-   return (DHGLRC) i + 1;
+   return handle;
 }
 
 DHGLRC APIENTRY
@@ -143,20 +183,30 @@ BOOL APIENTRY
 DrvDeleteContext(
    DHGLRC dhglrc )
 {
-   struct stw_context *ctx;
+   BOOL ret = FALSE;
 
-   ctx = lookup_context( dhglrc );
-   if (ctx == NULL) 
-      goto fail;
+   if (!stw_icd)
+      return ret;
 
-   if (stw_delete_context( ctx ) == FALSE)
-      goto fail;
+   pipe_mutex_lock( stw_icd->mutex );
+   {
+      struct stw_context *ctx;
 
-   stw_icd->ctx_array[dhglrc - 1].ctx = NULL;
-   return TRUE;
+      ctx = lookup_context( stw_icd, dhglrc );
+      if (ctx == NULL) 
+         goto done;
+      
+      if (stw_delete_context( ctx ) == FALSE)
+         goto done;
+      
+      stw_icd->ctx_array[dhglrc - 1].ctx = NULL;
+      ret = TRUE;
+
+   }
+done:
+   pipe_mutex_unlock( stw_icd->mutex );
    
-fail:
-   return FALSE;
+   return ret;
 }
 
 BOOL APIENTRY
@@ -183,7 +233,7 @@ DrvDescribePixelFormat(
 
    r = stw_pixelformat_describe( hdc, iPixelFormat, cjpfd, ppfd );
 
-   debug_printf( "%s( 0x%p, %d, %u, 0x%p ) = %d\n",
+   debug_printf( "%s( %p, %d, %u, %p ) = %d\n",
                  __FUNCTION__, hdc, iPixelFormat, cjpfd, ppfd, r );
 
    return r;
@@ -210,7 +260,7 @@ DrvGetProcAddress(
 
    r = stw_get_proc_address( lpszProc );
 
-   debug_printf( "%s( \", __FUNCTION__%s\" ) = 0x%p\n", lpszProc, r );
+   debug_printf( "%s( \", __FUNCTION__%s\" ) = %p\n", lpszProc, r );
 
    return r;
 }
@@ -230,23 +280,32 @@ BOOL APIENTRY
 DrvReleaseContext(
    DHGLRC dhglrc )
 {
-   struct stw_context *ctx;
+   BOOL ret = FALSE;
 
-   if (dhglrc != stw_icd->ctx_current) 
-      goto fail;
+   if (!stw_icd)
+      return ret;
 
-   ctx = lookup_context( dhglrc );
-   if (ctx == NULL) 
-      goto fail;
+   pipe_mutex_lock( stw_icd->mutex );
+   {
+      struct stw_context *ctx;
 
-   if (stw_make_current( NULL, NULL ) == FALSE)
-      goto fail;
+      /* XXX: The expectation is that ctx is the same context which is
+       * current for this thread.  We should check that and return False
+       * if not the case.
+       */
+      ctx = lookup_context( stw_icd, dhglrc );
+      if (ctx == NULL) 
+         goto done;
 
-   stw_icd->ctx_current = 0;
-   return TRUE;
+      if (stw_make_current( NULL, NULL ) == FALSE)
+         goto done;
 
-fail:
-   return FALSE;
+      ret = TRUE;
+   }
+done:
+   pipe_mutex_unlock( stw_icd->mutex );
+
+   return ret;
 }
 
 void APIENTRY
@@ -254,36 +313,20 @@ DrvSetCallbackProcs(
    INT nProcs,
    PROC *pProcs )
 {
-   debug_printf( "%s( %d, 0x%p )\n", __FUNCTION__, nProcs, pProcs );
+   debug_printf( "%s( %d, %p )\n", __FUNCTION__, nProcs, pProcs );
 
    return;
 }
 
+
+static void init_proc_table( GLCLTPROCTABLE *cpt )
+{ 
+   GLDISPATCHTABLE *disp = &cpt->glDispatchTable;
+
+   memset( cpt, 0, sizeof *cpt );
+   cpt->cEntries = OPENGL_VERSION_110_ENTRIES;
+
 #define GPA_GL( NAME ) disp->NAME = gl##NAME
-
-static GLCLTPROCTABLE cpt;
-
-PGLCLTPROCTABLE APIENTRY
-DrvSetContext(
-   HDC hdc,
-   DHGLRC dhglrc,
-   PFN_SETPROCTABLE pfnSetProcTable )
-{
-   struct stw_context *ctx;
-   GLDISPATCHTABLE *disp = &cpt.glDispatchTable;
-
-   debug_printf( "%s( 0x%p, %u, 0x%p )\n", __FUNCTION__, hdc, dhglrc, pfnSetProcTable );
-
-   ctx = lookup_context( dhglrc );
-   if (ctx == NULL)
-      return NULL;
-
-   if (!stw_make_current( hdc, ctx ))
-      return NULL;
-
-   memset( &cpt, 0, sizeof( cpt ) );
-   cpt.cEntries = OPENGL_VERSION_110_ENTRIES;
-
    GPA_GL( NewList );
    GPA_GL( EndList );
    GPA_GL( CallList );
@@ -620,8 +663,46 @@ DrvSetContext(
    GPA_GL( TexSubImage2D );
    GPA_GL( PopClientAttrib );
    GPA_GL( PushClientAttrib );
+}
 
-   return &cpt;
+PGLCLTPROCTABLE APIENTRY
+DrvSetContext(
+   HDC hdc,
+   DHGLRC dhglrc,
+   PFN_SETPROCTABLE pfnSetProcTable )
+{
+   PGLCLTPROCTABLE result = NULL;
+
+   if (!stw_icd)
+      return result;
+
+   pipe_mutex_lock( stw_icd->mutex ); 
+   {
+      struct stw_context *ctx;
+
+      debug_printf( "%s( 0x%p, %u, 0x%p )\n", 
+                    __FUNCTION__, hdc, dhglrc, pfnSetProcTable );
+
+      /* Although WGL allows different dispatch entrypoints per 
+       */
+      if (!stw_icd->cpt_initialized) {
+         init_proc_table( &stw_icd->cpt );
+         stw_icd->cpt_initialized = TRUE;
+      }
+
+      ctx = lookup_context( stw_icd, dhglrc );
+      if (ctx == NULL)
+         goto done;
+
+      if (!stw_make_current( hdc, ctx ))
+         goto done;
+
+      result = &stw_icd->cpt;
+   }
+done:
+   pipe_mutex_unlock( stw_icd->mutex );
+
+   return result;
 }
 
 int APIENTRY
@@ -646,7 +727,7 @@ DrvSetPixelFormat(
 
    r = stw_pixelformat_set( hdc, iPixelFormat );
 
-   debug_printf( "%s( 0x%p, %d ) = %s\n", __FUNCTION__, hdc, iPixelFormat, r ? "TRUE" : "FALSE" );
+   debug_printf( "%s( %p, %d ) = %s\n", __FUNCTION__, hdc, iPixelFormat, r ? "TRUE" : "FALSE" );
 
    return r;
 }
@@ -665,7 +746,7 @@ BOOL APIENTRY
 DrvSwapBuffers(
    HDC hdc )
 {
-   debug_printf( "%s( 0x%p )\n", __FUNCTION__, hdc );
+   debug_printf( "%s( %p )\n", __FUNCTION__, hdc );
 
    return stw_swap_buffers( hdc );
 }
@@ -686,5 +767,7 @@ DrvValidateVersion(
 {
    debug_printf( "%s( %u )\n", __FUNCTION__, ulVersion );
 
+   /* TODO: get the expected version from the winsys */
+   
    return ulVersion == 1;
 }

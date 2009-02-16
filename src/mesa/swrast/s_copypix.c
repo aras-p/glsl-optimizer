@@ -899,7 +899,7 @@ _swrast_CopyPixels( GLcontext *ctx,
 		    GLint destx, GLint desty, GLenum type )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   RENDER_START(swrast,ctx);
+   swrast_render_start(ctx);
       
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
@@ -928,5 +928,5 @@ _swrast_CopyPixels( GLcontext *ctx,
       }
    }
 
-   RENDER_FINISH(swrast,ctx);
+   swrast_render_finish(ctx);
 }

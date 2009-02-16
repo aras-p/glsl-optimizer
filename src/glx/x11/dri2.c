@@ -253,7 +253,7 @@ DRI2Buffer *DRI2GetBuffers(Display *dpy, XID drawable,
     *height = rep.height;
     *outCount = rep.count;
 
-    buffers = Xmalloc(count * sizeof buffers[0]);
+    buffers = Xmalloc(rep.count * sizeof buffers[0]);
     if (buffers == NULL) {
 	_XEatData(dpy, rep.count * sizeof repBuffer);
 	UnlockDisplay(dpy);

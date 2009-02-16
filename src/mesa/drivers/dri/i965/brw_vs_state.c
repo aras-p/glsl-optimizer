@@ -49,6 +49,8 @@ struct brw_vs_unit_key {
 static void
 vs_unit_populate_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 {
+   GLcontext *ctx = &brw->intel.ctx;
+
    memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_VS_PROG */
@@ -61,7 +63,7 @@ vs_unit_populate_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    key->urb_size = brw->urb.vsize;
 
    /* BRW_NEW_CURBE_OFFSETS, _NEW_TRANSFORM */
-   if (brw->attribs.Transform->ClipPlanesEnabled) {
+   if (ctx->Transform.ClipPlanesEnabled) {
       /* Note that we read in the userclip planes as well, hence
        * clip_start:
        */

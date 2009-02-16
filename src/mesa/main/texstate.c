@@ -42,7 +42,6 @@
 #include "texstate.h"
 #include "texenvprogram.h"
 #include "mtypes.h"
-#include "math/m_xform.h"
 
 
 
@@ -53,10 +52,10 @@
  */
 static const struct gl_tex_env_combine_state default_combine_state = {
    GL_MODULATE, GL_MODULATE,
-   { GL_TEXTURE, GL_PREVIOUS, GL_CONSTANT },
-   { GL_TEXTURE, GL_PREVIOUS, GL_CONSTANT },
-   { GL_SRC_COLOR, GL_SRC_COLOR, GL_SRC_ALPHA },
-   { GL_SRC_ALPHA, GL_SRC_ALPHA, GL_SRC_ALPHA },
+   { GL_TEXTURE, GL_PREVIOUS, GL_CONSTANT, GL_CONSTANT },
+   { GL_TEXTURE, GL_PREVIOUS, GL_CONSTANT, GL_CONSTANT },
+   { GL_SRC_COLOR, GL_SRC_COLOR, GL_SRC_ALPHA, GL_SRC_ALPHA },
+   { GL_SRC_ALPHA, GL_SRC_ALPHA, GL_SRC_ALPHA, GL_SRC_ALPHA },
    0, 0,
    2, 2
 };
@@ -404,16 +403,6 @@ update_texture_compare_function(GLcontext *ctx,
        */
       tObj->_Function = GL_NONE;
    }
-   else if (tObj->CompareFlag) {
-      /* GL_SGIX_shadow */
-      if (tObj->CompareOperator == GL_TEXTURE_LEQUAL_R_SGIX) {
-         tObj->_Function = GL_LEQUAL;
-      }
-      else {
-         ASSERT(tObj->CompareOperator == GL_TEXTURE_GEQUAL_R_SGIX);
-         tObj->_Function = GL_GEQUAL;
-      }
-   }
    else if (tObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
       /* GL_ARB_shadow */
       tObj->_Function = tObj->CompareFunc;
@@ -442,6 +431,96 @@ texture_override(GLcontext *ctx,
          texUnit->_Current = texObj;
          update_texture_compare_function(ctx, texObj);
       }
+   }
+}
+
+
+/**
+ * Examine texture unit's combine/env state to update derived state.
+ */
+static void
+update_tex_combine(GLcontext *ctx, struct gl_texture_unit *texUnit)
+{
+   /* Set the texUnit->_CurrentCombine field to point to the user's combiner
+    * state, or the combiner state which is derived from traditional texenv
+    * mode.
+    */
+   if (texUnit->EnvMode == GL_COMBINE ||
+       texUnit->EnvMode == GL_COMBINE4_NV) {
+      texUnit->_CurrentCombine = & texUnit->Combine;
+   }
+   else {
+      const struct gl_texture_object *texObj = texUnit->_Current;
+      GLenum format = texObj->Image[0][texObj->BaseLevel]->_BaseFormat;
+      if (format == GL_COLOR_INDEX) {
+         format = GL_RGBA;  /* a bit of a hack */
+      }
+      else if (format == GL_DEPTH_COMPONENT ||
+               format == GL_DEPTH_STENCIL_EXT) {
+         format = texObj->DepthMode;
+      }
+      calculate_derived_texenv(&texUnit->_EnvMode, texUnit->EnvMode, format);
+      texUnit->_CurrentCombine = & texUnit->_EnvMode;
+   }
+
+   /* Determine number of source RGB terms in the combiner function */
+   switch (texUnit->_CurrentCombine->ModeRGB) {
+   case GL_REPLACE:
+      texUnit->_CurrentCombine->_NumArgsRGB = 1;
+      break;
+   case GL_ADD:
+   case GL_ADD_SIGNED:
+      if (texUnit->EnvMode == GL_COMBINE4_NV)
+         texUnit->_CurrentCombine->_NumArgsRGB = 4;
+      else
+         texUnit->_CurrentCombine->_NumArgsRGB = 2;
+      break;
+   case GL_MODULATE:
+   case GL_SUBTRACT:
+   case GL_DOT3_RGB:
+   case GL_DOT3_RGBA:
+   case GL_DOT3_RGB_EXT:
+   case GL_DOT3_RGBA_EXT:
+      texUnit->_CurrentCombine->_NumArgsRGB = 2;
+      break;
+   case GL_INTERPOLATE:
+   case GL_MODULATE_ADD_ATI:
+   case GL_MODULATE_SIGNED_ADD_ATI:
+   case GL_MODULATE_SUBTRACT_ATI:
+      texUnit->_CurrentCombine->_NumArgsRGB = 3;
+      break;
+   default:
+      texUnit->_CurrentCombine->_NumArgsRGB = 0;
+      _mesa_problem(ctx, "invalid RGB combine mode in update_texture_state");
+      return;
+   }
+
+   /* Determine number of source Alpha terms in the combiner function */
+   switch (texUnit->_CurrentCombine->ModeA) {
+   case GL_REPLACE:
+      texUnit->_CurrentCombine->_NumArgsA = 1;
+      break;
+   case GL_ADD:
+   case GL_ADD_SIGNED:
+      if (texUnit->EnvMode == GL_COMBINE4_NV)
+         texUnit->_CurrentCombine->_NumArgsA = 4;
+      else
+         texUnit->_CurrentCombine->_NumArgsA = 2;
+      break;
+   case GL_MODULATE:
+   case GL_SUBTRACT:
+      texUnit->_CurrentCombine->_NumArgsA = 2;
+      break;
+   case GL_INTERPOLATE:
+   case GL_MODULATE_ADD_ATI:
+   case GL_MODULATE_SIGNED_ADD_ATI:
+   case GL_MODULATE_SUBTRACT_ATI:
+      texUnit->_CurrentCombine->_NumArgsA = 3;
+      break;
+   default:
+      texUnit->_CurrentCombine->_NumArgsA = 0;
+      _mesa_problem(ctx, "invalid Alpha combine mode in update_texture_state");
+      break;
    }
 }
 
@@ -478,9 +557,8 @@ update_texture_state( GLcontext *ctx )
       }
    }
 
-   ctx->NewState |= _NEW_TEXTURE; /* TODO: only set this if there are 
-				   * actual changes. 
-				   */
+   /* TODO: only set this if there are actual changes */
+   ctx->NewState |= _NEW_TEXTURE;
 
    ctx->Texture._EnabledUnits = 0;
    ctx->Texture._GenFlags = 0;
@@ -498,24 +576,26 @@ update_texture_state( GLcontext *ctx )
       texUnit->_ReallyEnabled = 0;
       texUnit->_GenFlags = 0;
 
-      /* Get the bitmask of texture enables.
+      /* Get the bitmask of texture target enables.
        * enableBits will be a mask of the TEXTURE_*_BIT flags indicating
        * which texture targets are enabled (fixed function) or referenced
        * by a fragment shader/program.  When multiple flags are set, we'll
        * settle on the one with highest priority (see texture_override below).
        */
-      if (fprog || vprog) {
-         enableBits = 0x0;
-         if (fprog)
-            enableBits |= fprog->Base.TexturesUsed[unit];
-         if (vprog)
-            enableBits |= vprog->Base.TexturesUsed[unit];
+      enableBits = 0x0;
+      if (vprog) {
+         enableBits |= vprog->Base.TexturesUsed[unit];
+      }
+      if (fprog) {
+         enableBits |= fprog->Base.TexturesUsed[unit];
       }
       else {
-         if (!texUnit->Enabled)
-            continue;
-         enableBits = texUnit->Enabled;
+         /* fixed-function fragment program */
+         enableBits |= texUnit->Enabled;
       }
+
+      if (enableBits == 0x0)
+         continue;
 
       ASSERT(texUnit->Current1D);
       ASSERT(texUnit->Current2D);
@@ -548,74 +628,13 @@ update_texture_state( GLcontext *ctx )
          continue;
       }
 
-      if (texUnit->_ReallyEnabled)
-         ctx->Texture._EnabledUnits |= (1 << unit);
+      /* if we get here, we know this texture unit is enabled */
 
-      if (texUnit->EnvMode == GL_COMBINE) {
-	 texUnit->_CurrentCombine = & texUnit->Combine;
-      }
-      else {
-         const struct gl_texture_object *texObj = texUnit->_Current;
-         GLenum format = texObj->Image[0][texObj->BaseLevel]->_BaseFormat;
-         if (format == GL_COLOR_INDEX) {
-            format = GL_RGBA;  /* a bit of a hack */
-         }
-         else if (format == GL_DEPTH_COMPONENT
-                  || format == GL_DEPTH_STENCIL_EXT) {
-            format = texObj->DepthMode;
-         }
-	 calculate_derived_texenv(&texUnit->_EnvMode, texUnit->EnvMode, format);
-	 texUnit->_CurrentCombine = & texUnit->_EnvMode;
-      }
+      ctx->Texture._EnabledUnits |= (1 << unit);
 
-      switch (texUnit->_CurrentCombine->ModeRGB) {
-      case GL_REPLACE:
-	 texUnit->_CurrentCombine->_NumArgsRGB = 1;
-	 break;
-      case GL_MODULATE:
-      case GL_ADD:
-      case GL_ADD_SIGNED:
-      case GL_SUBTRACT:
-      case GL_DOT3_RGB:
-      case GL_DOT3_RGBA:
-      case GL_DOT3_RGB_EXT:
-      case GL_DOT3_RGBA_EXT:
-	 texUnit->_CurrentCombine->_NumArgsRGB = 2;
-	 break;
-      case GL_INTERPOLATE:
-      case GL_MODULATE_ADD_ATI:
-      case GL_MODULATE_SIGNED_ADD_ATI:
-      case GL_MODULATE_SUBTRACT_ATI:
-	 texUnit->_CurrentCombine->_NumArgsRGB = 3;
-	 break;
-      default:
-	 texUnit->_CurrentCombine->_NumArgsRGB = 0;
-         _mesa_problem(ctx, "invalid RGB combine mode in update_texture_state");
-         return;
-      }
-
-      switch (texUnit->_CurrentCombine->ModeA) {
-      case GL_REPLACE:
-	 texUnit->_CurrentCombine->_NumArgsA = 1;
-	 break;
-      case GL_MODULATE:
-      case GL_ADD:
-      case GL_ADD_SIGNED:
-      case GL_SUBTRACT:
-	 texUnit->_CurrentCombine->_NumArgsA = 2;
-	 break;
-      case GL_INTERPOLATE:
-      case GL_MODULATE_ADD_ATI:
-      case GL_MODULATE_SIGNED_ADD_ATI:
-      case GL_MODULATE_SUBTRACT_ATI:
-	 texUnit->_CurrentCombine->_NumArgsA = 3;
-	 break;
-      default:
-	 texUnit->_CurrentCombine->_NumArgsA = 0;
-         _mesa_problem(ctx, "invalid Alpha combine mode in update_texture_state");
-	 break;
-      }
+      update_tex_combine(ctx, texUnit);
    }
+
 
    /* Determine which texture coordinate sets are actually needed */
    if (fprog) {

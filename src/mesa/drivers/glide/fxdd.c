@@ -1773,6 +1773,8 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    ctx->Const.MaxTextureImageUnits = fxMesa->haveTwoTMUs ? 2 : 1;
    ctx->Const.MaxTextureUnits = MAX2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits);
 
+   ctx->Const.MaxDrawBuffers = 1;
+
    fxMesa->new_state = _NEW_ALL;
    if (!fxMesa->haveHwStencil) {
       /* don't touch stencil if there is none */
@@ -1862,7 +1864,6 @@ fxDDInitExtensions(GLcontext * ctx)
    }
 
    if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
-      _mesa_enable_extension(ctx, "GL_ARB_texture_compression");
       _mesa_enable_extension(ctx, "GL_3DFX_texture_compression_FXT1");
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
       _mesa_enable_extension(ctx, "GL_S3_s3tc");
@@ -1894,7 +1895,6 @@ fxDDInitExtensions(GLcontext * ctx)
        * fxSetupSingleTMU_NoLock/fxSetupDoubleTMU_NoLock:
        *    grTexDownloadTable(GR_TEXTABLE_NCC0, &(ti->palette));
        */
-      /*_mesa_enable_extension(ctx, "GL_ARB_texture_compression");*/
       _mesa_enable_extension(ctx, "GL_SGIS_generate_mipmap");
    }
 
@@ -1917,9 +1917,6 @@ fxDDInitExtensions(GLcontext * ctx)
    }
 
    /* core-level extensions */
-   _mesa_enable_extension(ctx, "GL_EXT_multi_draw_arrays");
-   _mesa_enable_extension(ctx, "GL_IBM_multimode_draw_arrays");
-   _mesa_enable_extension(ctx, "GL_ARB_vertex_buffer_object");
    /* dangerous */
    if (getenv("MESA_FX_ALLOW_VP")) {
       _mesa_enable_extension(ctx, "GL_ARB_vertex_program");

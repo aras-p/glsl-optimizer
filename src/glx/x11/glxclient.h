@@ -139,6 +139,8 @@ struct __GLXDRIscreenRec {
     void (*swapBuffers)(__GLXDRIdrawable *pdraw);
     void (*copySubBuffer)(__GLXDRIdrawable *pdraw,
 			  int x, int y, int width, int height);
+    void (*waitX)(__GLXDRIdrawable *pdraw);
+    void (*waitGL)(__GLXDRIdrawable *pdraw);
 };
 
 struct __GLXDRIcontextRec {
@@ -602,6 +604,7 @@ extern void __glXSendLargeCommand(__GLXcontext *, const GLvoid *, GLint,
 				  const GLvoid *, GLint);
 
 /* Initialize the GLX extension for dpy */
+extern __GLXdisplayPrivate * __glXGetPrivateFromDisplay(Display *dpy);
 extern __GLXdisplayPrivate *__glXInitialize(Display*);
 
 extern void __glXPreferEGL(int state);

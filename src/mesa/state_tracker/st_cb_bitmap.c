@@ -798,7 +798,7 @@ st_init_bitmap(struct st_context *st)
    }
 
    /* alloc bitmap cache object */
-   st->bitmap.cache = CALLOC_STRUCT(bitmap_cache);
+   st->bitmap.cache = ST_CALLOC_STRUCT(bitmap_cache);
 
    reset_cache(st);
 }
@@ -827,7 +827,7 @@ st_destroy_bitmap(struct st_context *st)
 
    if (st->bitmap.cache) {
       pipe_texture_release(&st->bitmap.cache->texture);
-      FREE(st->bitmap.cache);
+      _mesa_free(st->bitmap.cache);
       st->bitmap.cache = NULL;
    }
 }

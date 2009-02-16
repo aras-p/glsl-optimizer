@@ -1,0 +1,56 @@
+<HTML>
+
+<TITLE>Mesa Release Notes</TITLE>
+
+<head><link rel="stylesheet" type="text/css" href="mesa.css"></head>
+
+<BODY>
+
+<body bgcolor="#eeeeee">
+
+<H1>Mesa 7.5 Release Notes / date TBD</H1>
+
+<p>
+Mesa 7.5 is a new development release.
+</p>
+<p>
+Mesa 7.5 implements the OpenGL 2.1 API, but the version reported by
+glGetString(GL_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 2.1.
+</p>
+<p>
+See the <a href="install.html">Compiling/Installing page</a> for prerequisites
+for DRI ardware acceleration.
+</p>
+
+
+<h2>MD5 checksums</h2>
+<pre>
+tbd
+</pre>
+
+
+<h2>New features</h2>
+<ul>
+<li>GL_ARB_framebuffer_object extension (software drivers, i965 driver)
+<li>Reworked two-sided stencil support.
+This allows a driver to support all three variations of two-sided stencil
+including GL_ATI_separate_stencil, GL_EXT_stencil_two_side and OpenGL 2.0
+<li>GL_EXT_vertex_array_bgra extension (software drivers, i965 driver)
+<li>GL_NV_texture_env_combine4 extension (software drivers, i965/i915 drivers)
+<li>GL_EXT_texture_swizzle extension (software drivers, i965 driver)
+</ul>
+
+
+<h2>Bug fixes</h2>
+<ul>
+</ul>
+
+<h2>Changes</h2>
+<ul>
+<li>Remove support for GL_SGIX_shadow, GL_SGIX_shadow_ambient and
+GL_SGIX_depth_texture extensions.  Superseded by the ARB versions.
+</ul>
+
+</body>
+</html>

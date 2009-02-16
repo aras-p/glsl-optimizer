@@ -71,12 +71,14 @@ static void
 nv50_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
+	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_query *q = nv50_query(pq);
 
-	BEGIN_RING(tesla, 0x1530, 1);
-	OUT_RING  (1);
-	BEGIN_RING(tesla, 0x1514, 1);
-	OUT_RING  (1);
+	BEGIN_RING(chan, tesla, 0x1530, 1);
+	OUT_RING  (chan, 1);
+	BEGIN_RING(chan, tesla, 0x1514, 1);
+	OUT_RING  (chan, 1);
 
 	q->ready = FALSE;
 }
@@ -85,14 +87,17 @@ static void
 nv50_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
+	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_query *q = nv50_query(pq);
 
-	BEGIN_RING(tesla, 0x1b00, 4);
-	OUT_RELOCh(q->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RELOCl(q->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RING  (0x00000000);
-	OUT_RING  (0x0100f002);
-	FIRE_RING (NULL);
+	WAIT_RING (chan, 5);
+	BEGIN_RING(chan, tesla, 0x1b00, 4);
+	OUT_RELOCh(chan, q->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(chan, q->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RING  (chan, 0x00000000);
+	OUT_RING  (chan, 0x0100f002);
+	FIRE_RING (chan);
 }
 
 static boolean

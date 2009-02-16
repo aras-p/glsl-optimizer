@@ -2,7 +2,7 @@ TOP = ../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = auxiliary drivers state_trackers
+SUBDIRS = $(GALLIUM_DIRS)
 # Note winsys/ needs to be built after src/mesa
 
 

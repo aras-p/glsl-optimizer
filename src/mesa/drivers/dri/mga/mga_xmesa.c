@@ -69,13 +69,9 @@
 
 #include "GL/internal/dri_interface.h"
 
-#define need_GL_ARB_multisample
-#define need_GL_ARB_texture_compression
-#define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_gpu_program_parameters
-#define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_secondary_color
 #if 0
 #define need_GL_EXT_paletted_texture
@@ -133,6 +129,7 @@ mgaFillInModes( __DRIscreenPrivate *psp,
 
     uint8_t depth_bits_array[3];
     uint8_t stencil_bits_array[3];
+    uint8_t msaa_samples_array[1];
 
 
     depth_bits_array[0] = 0;
@@ -146,6 +143,8 @@ mgaFillInModes( __DRIscreenPrivate *psp,
     stencil_bits_array[0] = 0;
     stencil_bits_array[1] = 0;
     stencil_bits_array[2] = (stencil_bits == 0) ? 8 : stencil_bits;
+
+    msaa_samples_array[0] = 0;
 
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
@@ -162,7 +161,8 @@ mgaFillInModes( __DRIscreenPrivate *psp,
     configs = driCreateConfigs(fb_format, fb_type,
 			       depth_bits_array, stencil_bits_array,
 			       depth_buffer_factor,
-			       back_buffer_modes, back_buffer_factor);
+			       back_buffer_modes, back_buffer_factor,
+                               msaa_samples_array, 1);
     if (configs == NULL) {
 	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
 		 __func__, __LINE__ );
@@ -385,13 +385,9 @@ static const struct dri_extension g400_extensions[] =
 
 static const struct dri_extension card_extensions[] =
 {
-   { "GL_ARB_multisample",            GL_ARB_multisample_functions },
-   { "GL_ARB_texture_compression",    GL_ARB_texture_compression_functions },
    { "GL_ARB_texture_rectangle",      NULL },
-   { "GL_ARB_vertex_buffer_object",   GL_ARB_vertex_buffer_object_functions },
    { "GL_EXT_blend_logic_op",         NULL },
    { "GL_EXT_fog_coord",              GL_EXT_fog_coord_functions },
-   { "GL_EXT_multi_draw_arrays",      GL_EXT_multi_draw_arrays_functions },
    /* paletted_textures currently doesn't work, but we could fix them later */
 #if defined( need_GL_EXT_paletted_texture )
    { "GL_EXT_shared_texture_palette", NULL },
@@ -538,6 +534,8 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.MaxLineWidth = 10.0;
    ctx->Const.MaxLineWidthAA = 10.0;
    ctx->Const.LineWidthGranularity = 1.0;
+
+   ctx->Const.MaxDrawBuffers = 1;
 
    mmesa->texture_depth = driQueryOptioni (&mmesa->optionCache,
 					   "texture_depth");

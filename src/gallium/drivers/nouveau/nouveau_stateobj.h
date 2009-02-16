@@ -147,8 +147,9 @@ so_emit_reloc_markers(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
 		nvws->push_reloc(nvws, pb->cur++, r->bo, r->packet,
-				 (r->flags &
-				  (NOUVEAU_BO_VRAM | NOUVEAU_BO_GART)) |
+				 (r->flags & (NOUVEAU_BO_VRAM |
+					      NOUVEAU_BO_GART |
+					      NOUVEAU_BO_RDWR)) |
 				 NOUVEAU_BO_DUMMY, 0, 0);
 		nvws->push_reloc(nvws, pb->cur++, r->bo, r->data,
 				 r->flags | NOUVEAU_BO_DUMMY, r->vor, r->tor);

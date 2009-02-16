@@ -209,7 +209,8 @@ try_pbo_upload(struct intel_context *intel,
       return GL_FALSE;
    }
 
-   src_offset = (GLuint) pixels;
+   /* note: potential 64-bit ptr to 32-bit int cast */
+   src_offset = (GLuint) (unsigned long) pixels;
 
    if (unpack->RowLength > 0)
       src_stride = unpack->RowLength;
@@ -264,7 +265,8 @@ try_pbo_zcopy(struct intel_context *intel,
       return GL_FALSE;
    }
 
-   src_offset = (GLuint) pixels;
+   /* note: potential 64-bit ptr to 32-bit int cast */
+   src_offset = (GLuint) (unsigned long) pixels;
 
    if (unpack->RowLength > 0)
       src_stride = unpack->RowLength;

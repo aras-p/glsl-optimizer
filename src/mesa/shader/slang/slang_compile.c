@@ -1450,7 +1450,7 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
       case OP_CALL:
          {
             GLboolean array_constructor = GL_FALSE;
-            GLint array_constructor_size;
+            GLint array_constructor_size = 0;
 
             op->type = SLANG_OPER_CALL;
             op->a_id = parse_identifier(C);
@@ -2793,6 +2793,12 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
    printf("Post-remove output reads:\n");
    _mesa_print_program(shader->Program);
 #endif
+
+   shader->CompileStatus = success;
+
+   if (ctx->Shader.Flags & GLSL_LOG) {
+      _mesa_write_shader_to_file(shader);
+   }
 
    return success;
 }

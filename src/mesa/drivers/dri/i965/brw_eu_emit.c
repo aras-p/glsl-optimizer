@@ -96,7 +96,7 @@ static void brw_set_dest( struct brw_instruction *insn,
 }
 
 static void brw_set_src0( struct brw_instruction *insn,
-		      struct brw_reg reg )
+                          struct brw_reg reg )
 {
    assert(reg.file != BRW_MESSAGE_REGISTER_FILE);
 
@@ -169,7 +169,7 @@ static void brw_set_src0( struct brw_instruction *insn,
 
 
 void brw_set_src1( struct brw_instruction *insn,
-			  struct brw_reg reg )
+                   struct brw_reg reg )
 {
    assert(reg.file != BRW_MESSAGE_REGISTER_FILE);
 
@@ -323,13 +323,13 @@ static void brw_set_dp_read_message( struct brw_instruction *insn,
 }
 
 static void brw_set_sampler_message(struct brw_context *brw,
-                 struct brw_instruction *insn,
-				     GLuint binding_table_index,
-				     GLuint sampler,
-				     GLuint msg_type,
-				     GLuint response_length,
-				     GLuint msg_length,
-				     GLboolean eot)
+                                    struct brw_instruction *insn,
+                                    GLuint binding_table_index,
+                                    GLuint sampler,
+                                    GLuint msg_type,
+                                    GLuint response_length,
+                                    GLuint msg_length,
+                                    GLboolean eot)
 {
    brw_set_src1(insn, brw_imm_d(0));
 
@@ -407,7 +407,7 @@ static struct brw_instruction *brw_alu2(struct brw_compile *p,
  * Convenience routines.
  */
 #define ALU1(OP)					\
-struct brw_instruction *brw_##OP(struct brw_compile *p,			\
+struct brw_instruction *brw_##OP(struct brw_compile *p,	\
 	      struct brw_reg dest,			\
 	      struct brw_reg src0)   			\
 {							\
@@ -415,7 +415,7 @@ struct brw_instruction *brw_##OP(struct brw_compile *p,			\
 }
 
 #define ALU2(OP)					\
-struct brw_instruction *brw_##OP(struct brw_compile *p,			\
+struct brw_instruction *brw_##OP(struct brw_compile *p,	\
 	      struct brw_reg dest,			\
 	      struct brw_reg src0,			\
 	      struct brw_reg src1)   			\
@@ -469,9 +469,9 @@ void brw_NOP(struct brw_compile *p)
  */
 
 struct brw_instruction *brw_JMPI(struct brw_compile *p, 
-	      struct brw_reg dest,
-	      struct brw_reg src0,
-	      struct brw_reg src1)
+                                 struct brw_reg dest,
+                                 struct brw_reg src0,
+                                 struct brw_reg src1)
 {
    struct brw_instruction *insn = brw_alu2(p, BRW_OPCODE_JMPI, dest, src0, src1);
 
@@ -674,7 +674,7 @@ struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
 
 
 struct brw_instruction *brw_WHILE(struct brw_compile *p, 
-	       struct brw_instruction *do_insn)
+                                  struct brw_instruction *do_insn)
 {
    struct brw_instruction *insn;
 
@@ -931,13 +931,13 @@ void brw_dp_READ_16( struct brw_compile *p,
 
 
 void brw_fb_WRITE(struct brw_compile *p,
-		   struct brw_reg dest,
-		   GLuint msg_reg_nr,
-		   struct brw_reg src0,
-		   GLuint binding_table_index,
-		   GLuint msg_length,
-		   GLuint response_length,
-		   GLboolean eot)
+                  struct brw_reg dest,
+                  GLuint msg_reg_nr,
+                  struct brw_reg src0,
+                  GLuint binding_table_index,
+                  GLuint msg_length,
+                  GLuint response_length,
+                  GLboolean eot)
 {
    struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
    
@@ -973,8 +973,8 @@ void brw_SAMPLE(struct brw_compile *p,
 {
    GLboolean need_stall = 0;
    
-   if(writemask == 0) {
-/*       _mesa_printf("%s: zero writemask??\n", __FUNCTION__); */
+   if (writemask == 0) {
+      /*_mesa_printf("%s: zero writemask??\n", __FUNCTION__); */
       return;
    }
    
@@ -1006,7 +1006,7 @@ void brw_SAMPLE(struct brw_compile *p,
 
       if (newmask != writemask) {
 	 need_stall = 1;
-/* 	 _mesa_printf("need stall %x %x\n", newmask , writemask); */
+         /* _mesa_printf("need stall %x %x\n", newmask , writemask); */
       }
       else {
 	 struct brw_reg m1 = brw_message_reg(msg_reg_nr);
@@ -1047,8 +1047,7 @@ void brw_SAMPLE(struct brw_compile *p,
 			      eot);
    }
 
-   if (need_stall)
-   {
+   if (need_stall) {
       struct brw_reg reg = vec8(offset(dest, response_length-1));
 
       /*  mov (8) r9.0<1>:f    r9.0<8;8,1>:f    { Align1 }

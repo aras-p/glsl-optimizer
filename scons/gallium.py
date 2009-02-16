@@ -163,6 +163,25 @@ def createInstallMethods(env):
     env.AddMethod(install_shared_library, 'InstallSharedLibrary')
 
 
+def num_jobs():
+    try:
+        return int(os.environ['NUMBER_OF_PROCESSORS'])
+    except (ValueError, KeyError):
+        pass
+
+    try:
+        return os.sysconf('SC_NPROCESSORS_ONLN')
+    except (ValueError, OSError, AttributeError):
+        pass
+
+    try:
+        return int(os.popen2("sysctl -n hw.ncpu")[1].read())
+    except ValueError:
+        pass
+
+    return 1
+
+
 def generate(env):
     """Common environment generation code"""
 
@@ -206,6 +225,10 @@ def generate(env):
     env['build'] = build_dir
     env.SConsignFile(os.path.join(build_dir, '.sconsign'))
     env.CacheDir('build/cache')
+
+    # Parallel build
+    if env.GetOption('num_jobs') <= 1:
+        env.SetOption('num_jobs', num_jobs())
 
     # C preprocessor options
     cppdefines = []
@@ -324,6 +347,7 @@ def generate(env):
               '/Od', # disable optimizations
               '/Oi', # enable intrinsic functions
               '/Oy-', # disable frame pointer omission
+              '/GL-', # disable whole program optimization
             ]
         else:
             cflags += [
@@ -414,9 +438,14 @@ def generate(env):
             linkflags += ['-m32']
         if env['machine'] == 'x86_64':
             linkflags += ['-m64']
-    if platform == 'winddk':
+    if platform == 'windows' and msvc:
         # See also:
         # - http://msdn2.microsoft.com/en-us/library/y0zzbyt4.aspx
+        linkflags += [
+            '/fixed:no',
+            '/incremental:no',
+        ]
+    if platform == 'winddk':
         linkflags += [
             '/merge:_PAGE=PAGE',
             '/merge:_TEXT=.text',

@@ -361,6 +361,7 @@ tdfxFillInModes(__DRIscreenPrivate *psp,
 	static const GLenum db_modes[2] = { GLX_NONE, GLX_SWAP_UNDEFINED_OML };
 	uint8_t depth_bits_array[4];
 	uint8_t stencil_bits_array[4];
+        uint8_t msaa_samples_array[1];
 	if(deep) {
 		depth_bits_array[0] = 0;
 		depth_bits_array[1] = 24;
@@ -377,13 +378,17 @@ tdfxFillInModes(__DRIscreenPrivate *psp,
 		stencil_bits_array[3] = 8;
 	}
 
-	return driCreateConfigs(
-		deep ? GL_RGBA : GL_RGB,
-		deep ? GL_UNSIGNED_INT_8_8_8_8 : GL_UNSIGNED_SHORT_5_6_5,
-		depth_bits_array,
-		stencil_bits_array,
-		deep ? 2 : 4,
-		db_modes, 2);
+	msaa_samples_array[0] = 0;
+
+	return (const __DRIconfig **)
+	   driCreateConfigs(deep ? GL_RGBA : GL_RGB,
+			    deep ? GL_UNSIGNED_INT_8_8_8_8 :
+				   GL_UNSIGNED_SHORT_5_6_5,
+			    depth_bits_array,
+			    stencil_bits_array,
+			    deep ? 2 : 4,
+			    db_modes, 2,
+			    msaa_samples_array, 1);
 }
 
 /**

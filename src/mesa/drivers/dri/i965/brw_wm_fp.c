@@ -111,6 +111,12 @@ static struct prog_src_register src_swizzle1( struct prog_src_register reg, int 
    return src_swizzle(reg, x, x, x, x);
 }
 
+static struct prog_src_register src_swizzle4( struct prog_src_register reg, uint swizzle )
+{
+   reg.Swizzle = swizzle;
+   return reg;
+}
+
 
 /***********************************************************************
  * Dest regs
@@ -177,7 +183,6 @@ static struct prog_instruction *emit_insn(struct brw_wm_compile *c,
 {
    struct prog_instruction *inst = get_fp_inst(c);
    *inst = *inst0;
-   inst->Data = (void *)inst0;
    return inst;
 }
 
@@ -554,12 +559,19 @@ static void precalc_lit( struct brw_wm_compile *c,
    }
 }
 
+
+/**
+ * Some TEX instructions require extra code, cube map coordinate
+ * normalization, or coordinate scaling for RECT textures, etc.
+ * This function emits those extra instructions and the TEX
+ * instruction itself.
+ */
 static void precalc_tex( struct brw_wm_compile *c,
 			 const struct prog_instruction *inst )
 {
    struct prog_src_register coord;
    struct prog_dst_register tmpcoord;
-   GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
+   const GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
 
    if (inst->TexSrcTarget == TEXTURE_CUBE_INDEX) {
        struct prog_instruction *out;
@@ -569,9 +581,11 @@ static void precalc_tex( struct brw_wm_compile *c,
        struct prog_src_register tmp1src = src_reg_from_dst(tmp1);
        struct prog_src_register src0 = inst->SrcReg[0];
 
+       /* find longest component of coord vector and normalize it */
        tmpcoord = get_temp(c);
        coord = src_reg_from_dst(tmpcoord);
 
+       /* tmpcoord = src0 (i.e.: coord = src0) */
        out = emit_op(c, OPCODE_MOV,
                      tmpcoord,
                      0, 0, 0,
@@ -581,6 +595,7 @@ static void precalc_tex( struct brw_wm_compile *c,
        out->SrcReg[0].NegateBase = 0;
        out->SrcReg[0].Abs = 1;
 
+       /* tmp0 = MAX(coord.X, coord.Y) */
        emit_op(c, OPCODE_MAX,
                tmp0,
                0, 0, 0,
@@ -588,6 +603,7 @@ static void precalc_tex( struct brw_wm_compile *c,
                src_swizzle1(coord, Y),
                src_undef());
 
+       /* tmp1 = MAX(tmp0, coord.Z) */
        emit_op(c, OPCODE_MAX,
                tmp1,
                0, 0, 0,
@@ -595,6 +611,7 @@ static void precalc_tex( struct brw_wm_compile *c,
                src_swizzle1(coord, Z),
                src_undef());
 
+       /* tmp0 = 1 / tmp1 */
        emit_op(c, OPCODE_RCP,
                tmp0,
                0, 0, 0,
@@ -602,6 +619,7 @@ static void precalc_tex( struct brw_wm_compile *c,
                src_undef(),
                src_undef());
 
+       /* tmpCoord = src0 * tmp0 */
        emit_op(c, OPCODE_MUL,
                tmpcoord,
                0, 0, 0,
@@ -611,7 +629,8 @@ static void precalc_tex( struct brw_wm_compile *c,
 
        release_temp(c, tmp0);
        release_temp(c, tmp1);
-   } else if (inst->TexSrcTarget == TEXTURE_RECT_INDEX) {
+   }
+   else if (inst->TexSrcTarget == TEXTURE_RECT_INDEX) {
       struct prog_src_register scale = 
 	 search_or_add_param5( c, 
 			       STATE_INTERNAL, 
@@ -642,19 +661,9 @@ static void precalc_tex( struct brw_wm_compile *c,
     * conversion requires allocating a temporary variable which we
     * don't have the facility to do that late in the compilation.
     */
-   if (!(c->key.yuvtex_mask & (1<<unit))) {
-      emit_op(c, 
-	      OPCODE_TEX,
-	      inst->DstReg,
-	      inst->SaturateMode,
-	      unit,
-	      inst->TexSrcTarget,
-	      coord,
-	      src_undef(),
-	      src_undef());
-   }
-   else {
-       GLboolean  swap_uv = c->key.yuvtex_swap_mask & (1<<unit);
+   if (c->key.yuvtex_mask & (1 << unit)) {
+      /* convert ycbcr to RGBA */
+      GLboolean  swap_uv = c->key.yuvtex_swap_mask & (1<<unit);
 
       /* 
 	 CONST C0 = { -.5, -.0625,  -.5, 1.164 }
@@ -733,6 +742,31 @@ static void precalc_tex( struct brw_wm_compile *c,
 	      src_swizzle1(src_reg_from_dst(dst), Y));
 
       release_temp(c, tmp);
+   }
+   else {
+      /* ordinary RGBA tex instruction */
+      emit_op(c, 
+	      OPCODE_TEX,
+	      inst->DstReg,
+	      inst->SaturateMode,
+	      unit,
+	      inst->TexSrcTarget,
+	      coord,
+	      src_undef(),
+	      src_undef());
+   }
+
+   /* For GL_EXT_texture_swizzle: */
+   if (c->key.tex_swizzles[unit] != SWIZZLE_NOOP) {
+      /* swizzle the result of the TEX instruction */
+      struct prog_src_register tmpsrc = src_reg_from_dst(inst->DstReg);
+      emit_op(c, OPCODE_SWZ,
+              inst->DstReg,
+              SATURATE_OFF, /* saturate already done above */
+              0, 0,   /* tex unit, target N/A */
+              src_swizzle4(tmpsrc, c->key.tex_swizzles[unit]),
+              src_undef(),
+              src_undef());
    }
 
    if ((inst->TexSrcTarget == TEXTURE_RECT_INDEX) ||
@@ -907,6 +941,11 @@ static void print_insns( const struct prog_instruction *insn,
    }
 }
 
+
+/**
+ * Initial pass for fragment program code generation.
+ * This function is used by both the GLSL and non-GLSL paths.
+ */
 void brw_wm_pass_fp( struct brw_wm_compile *c )
 {
    struct brw_fragment_program *fp = c->fp;
@@ -923,15 +962,19 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
    c->pixel_w = src_undef();
    c->nr_fp_insns = 0;
 
-   /* Emit preamble instructions:
+   /* Emit preamble instructions.  This is where special instructions such as
+    * WM_CINTERP, WM_LINTERP, WM_PINTERP and WM_WPOSXY are emitted to
+    * compute shader inputs from varying vars.
     */
-
-
    for (insn = 0; insn < fp->program.Base.NumInstructions; insn++) {
       const struct prog_instruction *inst = &fp->program.Base.Instructions[insn];
       validate_src_regs(c, inst);
       validate_dst_regs(c, inst);
    }
+
+   /* Loop over all instructions doing assorted simplifications and
+    * transformations.
+    */
    for (insn = 0; insn < fp->program.Base.NumInstructions; insn++) {
       const struct prog_instruction *inst = &fp->program.Base.Instructions[insn];
       struct prog_instruction *out;
@@ -939,7 +982,6 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
       /* Check for INPUT values, emit INTERP instructions where
        * necessary:
        */
-
 
       switch (inst->Opcode) {
       case OPCODE_SWZ: 

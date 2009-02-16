@@ -253,7 +253,7 @@ static void
 brw_update_texture_surface( GLcontext *ctx, GLuint unit )
 {
    struct brw_context *brw = brw_context(ctx);
-   struct gl_texture_object *tObj = brw->attribs.Texture->Unit[unit]._Current;
+   struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage = tObj->Image[0][intelObj->firstLevel];
    struct brw_wm_surface_key key;
@@ -301,6 +301,7 @@ static void
 brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
 			  unsigned int unit, GLboolean cached)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    dri_bo *region_bo = NULL;
    struct {
       unsigned int surface_type;
@@ -333,10 +334,10 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
       key.height = 1;
       key.cpp = 4;
    }
-   memcpy(key.color_mask, brw->attribs.Color->ColorMask,
+   memcpy(key.color_mask, ctx->Color.ColorMask,
 	  sizeof(key.color_mask));
-   key.color_blend = (!brw->attribs.Color->_LogicOpEnabled &&
-		      brw->attribs.Color->BlendEnabled);
+   key.color_blend = (!ctx->Color._LogicOpEnabled &&
+		      ctx->Color.BlendEnabled);
 
    dri_bo_unreference(brw->wm.surf_bo[unit]);
    brw->wm.surf_bo[unit] = NULL;
@@ -459,7 +460,7 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    brw->wm.nr_surfaces = MAX_DRAW_BUFFERS;
 
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[i];
+      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
 
       /* _NEW_TEXTURE, BRW_NEW_TEXDATA */
       if(texUnit->_ReallyEnabled) {

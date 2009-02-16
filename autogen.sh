@@ -11,6 +11,8 @@ if test "x$SRCDIR" != "x$ORIGDIR"; then
 	exit 1
 fi
 
+MAKEFLAGS=""
+
 autoreconf -v --install || exit 1
 
 "$srcdir"/configure "$@"

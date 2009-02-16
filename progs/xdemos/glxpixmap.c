@@ -178,6 +178,7 @@ int main( int argc, char *argv[] )
    glColor3f( 0.0, 1.0, 1.0 );
    glRectf( -0.75, -0.75, 0.75, 0.75 );
    glFlush();
+   glXWaitGL();
 
    XMapWindow( dpy, win );
 

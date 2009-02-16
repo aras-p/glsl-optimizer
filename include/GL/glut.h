@@ -74,23 +74,9 @@ extern "C" {
 #  define __cdecl
 #  define GLUT_DEFINED___CDECL
 # endif
-# ifndef _CRTIMP
-#  ifdef _NTSDK
-    /* Definition compatible with NT SDK */
-#   define _CRTIMP
-#  else
-    /* Current definition */
-#   ifdef _DLL
-#    define _CRTIMP __declspec(dllimport)
-#   else
-#    define _CRTIMP
-#   endif
-#  endif
-#  define GLUT_DEFINED__CRTIMP
-# endif
-# ifndef GLUT_BUILDING_LIB
-extern _CRTIMP void __cdecl exit(int);
-# endif
+#if defined(_WIN32) && !defined(GLUT_DISABLE_ATEXIT_HACK)
+#include <stdlib.h>
+#endif
 
 /* GLUT callback calling convention for Win32. */
 # define GLUTCALLBACK __cdecl
@@ -122,7 +108,7 @@ extern _CRTIMP void __cdecl exit(int);
 #  define GLUTAPIENTRY
 #  define GLUTAPIENTRYV
 #  define GLUTCALLBACK
-#  define GLUTAPI __attribute__((visibility("default")))
+#  define GLUTAPI extern __attribute__((visibility("default")))
 
 #else
 

@@ -63,11 +63,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drirenderbuffer.h"
 #include "utils.h"
 
-#define need_GL_ARB_multisample
-#define need_GL_ARB_texture_compression
-#define need_GL_ARB_vertex_buffer_object
-#include "extension_helper.h"
-
 #ifndef I810_DEBUG
 int I810_DEBUG = (0);
 #endif
@@ -123,14 +118,11 @@ static void i810BufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
  */
 const struct dri_extension card_extensions[] =
 {
-    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },
-    { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
     { "GL_ARB_texture_env_add",            NULL },
     { "GL_ARB_texture_env_combine",        NULL },
     { "GL_ARB_texture_env_crossbar",       NULL },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
-    { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
     { "GL_EXT_stencil_wrap",               NULL },
     { "GL_EXT_texture_edge_clamp",         NULL },
     { "GL_EXT_texture_env_combine",        NULL },

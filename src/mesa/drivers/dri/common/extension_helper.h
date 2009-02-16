@@ -119,9 +119,10 @@ static const char ActiveTextureARB_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_blit)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_blit)
 static const char BlitFramebufferEXT_names[] = 
     "iiiiiiiiii\0" /* Parameter signature */
+    "glBlitFramebuffer\0"
     "glBlitFramebufferEXT\0"
     "";
 #endif
@@ -433,17 +434,18 @@ static const char Color4ubVertex3fvSUN_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_texture_array)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_texture_array)
 static const char FramebufferTextureLayerEXT_names[] = 
     "iiiii\0" /* Parameter signature */
+    "glFramebufferTextureLayer\0"
     "glFramebufferTextureLayerEXT\0"
     "";
 #endif
 
 #if defined(need_GL_SGIX_list_priority)
-static const char GetListParameterivSGIX_names[] = 
+static const char GetListParameterfvSGIX_names[] = 
     "iip\0" /* Parameter signature */
-    "glGetListParameterivSGIX\0"
+    "glGetListParameterfvSGIX\0"
     "";
 #endif
 
@@ -777,6 +779,13 @@ static const char VertexAttribs4fvNV_names[] =
     "";
 #endif
 
+#if defined(need_GL_NV_vertex_array_range)
+static const char VertexArrayRangeNV_names[] = 
+    "ip\0" /* Parameter signature */
+    "glVertexArrayRangeNV\0"
+    "";
+#endif
+
 #if defined(need_GL_SGIX_fragment_lighting)
 static const char FragmentLightiSGIX_names[] = 
     "iii\0" /* Parameter signature */
@@ -946,9 +955,10 @@ static const char VertexAttribs3fvNV_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char GenerateMipmapEXT_names[] = 
     "i\0" /* Parameter signature */
+    "glGenerateMipmap\0"
     "glGenerateMipmapEXT\0"
     "";
 #endif
@@ -1077,13 +1087,6 @@ static const char AreTexturesResident_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
-static const char IsRenderbufferEXT_names[] = 
-    "i\0" /* Parameter signature */
-    "glIsRenderbufferEXT\0"
-    "";
-#endif
-
 #if defined(need_GL_VERSION_2_0) || defined(need_GL_ATI_separate_stencil)
 static const char StencilOpSeparate_names[] = 
     "iiii\0" /* Parameter signature */
@@ -1171,9 +1174,10 @@ static const char TexCoord2fNormal3fVertex3fSUN_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char RenderbufferStorageEXT_names[] = 
     "iiii\0" /* Parameter signature */
+    "glRenderbufferStorage\0"
     "glRenderbufferStorageEXT\0"
     "";
 #endif
@@ -1364,9 +1368,10 @@ static const char SpriteParameterfvSGIX_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char CheckFramebufferStatusEXT_names[] = 
     "i\0" /* Parameter signature */
+    "glCheckFramebufferStatus\0"
     "glCheckFramebufferStatusEXT\0"
     "";
 #endif
@@ -1554,13 +1559,6 @@ static const char FragmentLightivSGIX_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
-static const char DeleteRenderbuffersEXT_names[] = 
-    "ip\0" /* Parameter signature */
-    "glDeleteRenderbuffersEXT\0"
-    "";
-#endif
-
 #if defined(need_GL_EXT_pixel_transform)
 static const char PixelTransformParameterfvEXT_names[] = 
     "iip\0" /* Parameter signature */
@@ -1621,9 +1619,10 @@ static const char WindowPos2dMESA_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char FramebufferTexture3DEXT_names[] = 
     "iiiiii\0" /* Parameter signature */
+    "glFramebufferTexture3D\0"
     "glFramebufferTexture3DEXT\0"
     "";
 #endif
@@ -1673,10 +1672,11 @@ static const char IndexFuncEXT_names[] =
     "";
 #endif
 
-#if defined(need_GL_SGIX_list_priority)
-static const char GetListParameterfvSGIX_names[] = 
-    "iip\0" /* Parameter signature */
-    "glGetListParameterfvSGIX\0"
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
+static const char FramebufferTexture2DEXT_names[] = 
+    "iiiii\0" /* Parameter signature */
+    "glFramebufferTexture2D\0"
+    "glFramebufferTexture2DEXT\0"
     "";
 #endif
 
@@ -1760,13 +1760,6 @@ static const char EndQueryARB_names[] =
 static const char DeleteFencesNV_names[] = 
     "ip\0" /* Parameter signature */
     "glDeleteFencesNV\0"
-    "";
-#endif
-
-#if defined(need_GL_SGIX_polynomial_ffd)
-static const char DeformationMap3dSGIX_names[] = 
-    "iddiiddiiddiip\0" /* Parameter signature */
-    "glDeformationMap3dSGIX\0"
     "";
 #endif
 
@@ -1894,6 +1887,13 @@ static const char MatrixIndexuivARB_names[] =
     "";
 #endif
 
+#if defined(need_GL_ARB_framebuffer_object)
+static const char RenderbufferStorageMultisample_names[] = 
+    "iiiii\0" /* Parameter signature */
+    "glRenderbufferStorageMultisample\0"
+    "";
+#endif
+
 #if defined(need_GL_EXT_coordinate_frame)
 static const char Tangent3sEXT_names[] = 
     "iii\0" /* Parameter signature */
@@ -1944,9 +1944,10 @@ static const char VertexAttrib2dvNV_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char FramebufferRenderbufferEXT_names[] = 
     "iiii\0" /* Parameter signature */
+    "glFramebufferRenderbuffer\0"
     "glFramebufferRenderbufferEXT\0"
     "";
 #endif
@@ -1973,9 +1974,10 @@ static const char SetFenceNV_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char FramebufferTexture1DEXT_names[] = 
     "iiiii\0" /* Parameter signature */
+    "glFramebufferTexture1D\0"
     "glFramebufferTexture1DEXT\0"
     "";
 #endif
@@ -2105,9 +2107,10 @@ static const char Tangent3fvEXT_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char BindFramebufferEXT_names[] = 
     "ii\0" /* Parameter signature */
+    "glBindFramebuffer\0"
     "glBindFramebufferEXT\0"
     "";
 #endif
@@ -2488,9 +2491,10 @@ static const char MapParameterivNV_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char GenRenderbuffersEXT_names[] = 
     "ip\0" /* Parameter signature */
+    "glGenRenderbuffers\0"
     "glGenRenderbuffersEXT\0"
     "";
 #endif
@@ -2952,9 +2956,10 @@ static const char WindowPos2ivMESA_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char IsFramebufferEXT_names[] = 
     "i\0" /* Parameter signature */
+    "glIsFramebuffer\0"
     "glIsFramebufferEXT\0"
     "";
 #endif
@@ -3125,13 +3130,6 @@ static const char ReplacementCodeuiSUN_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
-static const char FramebufferTexture2DEXT_names[] = 
-    "iiiii\0" /* Parameter signature */
-    "glFramebufferTexture2DEXT\0"
-    "";
-#endif
-
 #if defined(need_GL_NV_vertex_program)
 static const char VertexAttribPointerNV_names[] = 
     "iiiip\0" /* Parameter signature */
@@ -3139,10 +3137,18 @@ static const char VertexAttribPointerNV_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char GetFramebufferAttachmentParameterivEXT_names[] = 
     "iiip\0" /* Parameter signature */
+    "glGetFramebufferAttachmentParameteriv\0"
     "glGetFramebufferAttachmentParameterivEXT\0"
+    "";
+#endif
+
+#if defined(need_GL_EXT_pixel_transform)
+static const char PixelTransformParameterfEXT_names[] = 
+    "iif\0" /* Parameter signature */
+    "glPixelTransformParameterfEXT\0"
     "";
 #endif
 
@@ -3264,9 +3270,10 @@ static const char VertexAttrib3fvARB_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char DeleteFramebuffersEXT_names[] = 
     "ip\0" /* Parameter signature */
+    "glDeleteFramebuffers\0"
     "glDeleteFramebuffersEXT\0"
     "";
 #endif
@@ -3360,9 +3367,10 @@ static const char GetPixelTexGenParameterfvSGIS_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char GenFramebuffersEXT_names[] = 
     "ip\0" /* Parameter signature */
+    "glGenFramebuffers\0"
     "glGenFramebuffersEXT\0"
     "";
 #endif
@@ -3374,10 +3382,10 @@ static const char GetProgramParameterdvNV_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_pixel_transform)
-static const char PixelTransformParameterfEXT_names[] = 
-    "iif\0" /* Parameter signature */
-    "glPixelTransformParameterfEXT\0"
+#if defined(need_GL_SGIX_instruments)
+static const char PollInstrumentsSGIX_names[] = 
+    "p\0" /* Parameter signature */
+    "glPollInstrumentsSGIX\0"
     "";
 #endif
 
@@ -3709,9 +3717,10 @@ static const char MultiDrawArraysEXT_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char BindRenderbufferEXT_names[] = 
     "ii\0" /* Parameter signature */
+    "glBindRenderbuffer\0"
     "glBindRenderbufferEXT\0"
     "";
 #endif
@@ -4530,6 +4539,13 @@ static const char Minmax_names[] =
     "";
 #endif
 
+#if defined(need_GL_SGIX_polynomial_ffd)
+static const char DeformationMap3dSGIX_names[] = 
+    "iddiiddiiddiip\0" /* Parameter signature */
+    "glDeformationMap3dSGIX\0"
+    "";
+#endif
+
 #if defined(need_GL_VERSION_1_4) || defined(need_GL_EXT_fog_coord)
 static const char FogCoorddvEXT_names[] = 
     "p\0" /* Parameter signature */
@@ -4605,10 +4621,11 @@ static const char WeightdvARB_names[] =
     "";
 #endif
 
-#if defined(need_GL_SGIX_instruments)
-static const char PollInstrumentsSGIX_names[] = 
-    "p\0" /* Parameter signature */
-    "glPollInstrumentsSGIX\0"
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
+static const char DeleteRenderbuffersEXT_names[] = 
+    "ip\0" /* Parameter signature */
+    "glDeleteRenderbuffers\0"
+    "glDeleteRenderbuffersEXT\0"
     "";
 #endif
 
@@ -4684,9 +4701,10 @@ static const char MultiTexCoord2fvARB_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_framebuffer_object)
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char GetRenderbufferParameterivEXT_names[] = 
     "iip\0" /* Parameter signature */
+    "glGetRenderbufferParameteriv\0"
     "glGetRenderbufferParameterivEXT\0"
     "";
 #endif
@@ -4739,6 +4757,13 @@ static const char GenAsyncMarkersSGIX_names[] =
 static const char Tangent3svEXT_names[] = 
     "p\0" /* Parameter signature */
     "glTangent3svEXT\0"
+    "";
+#endif
+
+#if defined(need_GL_SGIX_list_priority)
+static const char GetListParameterivSGIX_names[] = 
+    "iip\0" /* Parameter signature */
+    "glGetListParameterivSGIX\0"
     "";
 #endif
 
@@ -4823,10 +4848,11 @@ static const char FragmentMaterialivSGIX_names[] =
     "";
 #endif
 
-#if defined(need_GL_NV_vertex_array_range)
-static const char VertexArrayRangeNV_names[] = 
-    "ip\0" /* Parameter signature */
-    "glVertexArrayRangeNV\0"
+#if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
+static const char IsRenderbufferEXT_names[] = 
+    "i\0" /* Parameter signature */
+    "glIsRenderbuffer\0"
+    "glIsRenderbufferEXT\0"
     "";
 #endif
 
@@ -4888,6 +4914,32 @@ static const struct dri_extension_function GL_APPLE_vertex_array_object_function
 #if defined(need_GL_ARB_draw_buffers)
 static const struct dri_extension_function GL_ARB_draw_buffers_functions[] = {
     { DrawBuffersARB_names, DrawBuffersARB_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_ARB_framebuffer_object)
+static const struct dri_extension_function GL_ARB_framebuffer_object_functions[] = {
+    { BlitFramebufferEXT_names, BlitFramebufferEXT_remap_index, -1 },
+    { FramebufferTextureLayerEXT_names, FramebufferTextureLayerEXT_remap_index, -1 },
+    { GenerateMipmapEXT_names, GenerateMipmapEXT_remap_index, -1 },
+    { RenderbufferStorageEXT_names, RenderbufferStorageEXT_remap_index, -1 },
+    { CheckFramebufferStatusEXT_names, CheckFramebufferStatusEXT_remap_index, -1 },
+    { FramebufferTexture3DEXT_names, FramebufferTexture3DEXT_remap_index, -1 },
+    { FramebufferTexture2DEXT_names, FramebufferTexture2DEXT_remap_index, -1 },
+    { RenderbufferStorageMultisample_names, RenderbufferStorageMultisample_remap_index, -1 },
+    { FramebufferRenderbufferEXT_names, FramebufferRenderbufferEXT_remap_index, -1 },
+    { FramebufferTexture1DEXT_names, FramebufferTexture1DEXT_remap_index, -1 },
+    { BindFramebufferEXT_names, BindFramebufferEXT_remap_index, -1 },
+    { GenRenderbuffersEXT_names, GenRenderbuffersEXT_remap_index, -1 },
+    { IsFramebufferEXT_names, IsFramebufferEXT_remap_index, -1 },
+    { GetFramebufferAttachmentParameterivEXT_names, GetFramebufferAttachmentParameterivEXT_remap_index, -1 },
+    { DeleteFramebuffersEXT_names, DeleteFramebuffersEXT_remap_index, -1 },
+    { GenFramebuffersEXT_names, GenFramebuffersEXT_remap_index, -1 },
+    { BindRenderbufferEXT_names, BindRenderbufferEXT_remap_index, -1 },
+    { DeleteRenderbuffersEXT_names, DeleteRenderbuffersEXT_remap_index, -1 },
+    { GetRenderbufferParameterivEXT_names, GetRenderbufferParameterivEXT_remap_index, -1 },
+    { IsRenderbufferEXT_names, IsRenderbufferEXT_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
@@ -5319,22 +5371,22 @@ static const struct dri_extension_function GL_EXT_framebuffer_blit_functions[] =
 #if defined(need_GL_EXT_framebuffer_object)
 static const struct dri_extension_function GL_EXT_framebuffer_object_functions[] = {
     { GenerateMipmapEXT_names, GenerateMipmapEXT_remap_index, -1 },
-    { IsRenderbufferEXT_names, IsRenderbufferEXT_remap_index, -1 },
     { RenderbufferStorageEXT_names, RenderbufferStorageEXT_remap_index, -1 },
     { CheckFramebufferStatusEXT_names, CheckFramebufferStatusEXT_remap_index, -1 },
-    { DeleteRenderbuffersEXT_names, DeleteRenderbuffersEXT_remap_index, -1 },
     { FramebufferTexture3DEXT_names, FramebufferTexture3DEXT_remap_index, -1 },
+    { FramebufferTexture2DEXT_names, FramebufferTexture2DEXT_remap_index, -1 },
     { FramebufferRenderbufferEXT_names, FramebufferRenderbufferEXT_remap_index, -1 },
     { FramebufferTexture1DEXT_names, FramebufferTexture1DEXT_remap_index, -1 },
     { BindFramebufferEXT_names, BindFramebufferEXT_remap_index, -1 },
     { GenRenderbuffersEXT_names, GenRenderbuffersEXT_remap_index, -1 },
     { IsFramebufferEXT_names, IsFramebufferEXT_remap_index, -1 },
-    { FramebufferTexture2DEXT_names, FramebufferTexture2DEXT_remap_index, -1 },
     { GetFramebufferAttachmentParameterivEXT_names, GetFramebufferAttachmentParameterivEXT_remap_index, -1 },
     { DeleteFramebuffersEXT_names, DeleteFramebuffersEXT_remap_index, -1 },
     { GenFramebuffersEXT_names, GenFramebuffersEXT_remap_index, -1 },
     { BindRenderbufferEXT_names, BindRenderbufferEXT_remap_index, -1 },
+    { DeleteRenderbuffersEXT_names, DeleteRenderbuffersEXT_remap_index, -1 },
     { GetRenderbufferParameterivEXT_names, GetRenderbufferParameterivEXT_remap_index, -1 },
+    { IsRenderbufferEXT_names, IsRenderbufferEXT_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
@@ -5415,8 +5467,8 @@ static const struct dri_extension_function GL_EXT_paletted_texture_functions[] =
 #if defined(need_GL_EXT_pixel_transform)
 static const struct dri_extension_function GL_EXT_pixel_transform_functions[] = {
     { PixelTransformParameterfvEXT_names, PixelTransformParameterfvEXT_remap_index, -1 },
-    { PixelTransformParameteriEXT_names, PixelTransformParameteriEXT_remap_index, -1 },
     { PixelTransformParameterfEXT_names, PixelTransformParameterfEXT_remap_index, -1 },
+    { PixelTransformParameteriEXT_names, PixelTransformParameteriEXT_remap_index, -1 },
     { PixelTransformParameterivEXT_names, PixelTransformParameterivEXT_remap_index, -1 },
     { NULL, 0, 0 }
 };
@@ -5716,8 +5768,8 @@ static const struct dri_extension_function GL_NV_register_combiners2_functions[]
 
 #if defined(need_GL_NV_vertex_array_range)
 static const struct dri_extension_function GL_NV_vertex_array_range_functions[] = {
-    { FlushVertexArrayRangeNV_names, FlushVertexArrayRangeNV_remap_index, -1 },
     { VertexArrayRangeNV_names, VertexArrayRangeNV_remap_index, -1 },
+    { FlushVertexArrayRangeNV_names, FlushVertexArrayRangeNV_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
@@ -5946,11 +5998,11 @@ static const struct dri_extension_function GL_SGIX_instruments_functions[] = {
 #if defined(need_GL_SGIX_list_priority)
 static const struct dri_extension_function GL_SGIX_list_priority_functions[] = {
     { ListParameterfSGIX_names, ListParameterfSGIX_remap_index, -1 },
-    { GetListParameterivSGIX_names, GetListParameterivSGIX_remap_index, -1 },
     { GetListParameterfvSGIX_names, GetListParameterfvSGIX_remap_index, -1 },
     { ListParameteriSGIX_names, ListParameteriSGIX_remap_index, -1 },
     { ListParameterfvSGIX_names, ListParameterfvSGIX_remap_index, -1 },
     { ListParameterivSGIX_names, ListParameterivSGIX_remap_index, -1 },
+    { GetListParameterivSGIX_names, GetListParameterivSGIX_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
@@ -5965,9 +6017,9 @@ static const struct dri_extension_function GL_SGIX_pixel_texture_functions[] = {
 #if defined(need_GL_SGIX_polynomial_ffd)
 static const struct dri_extension_function GL_SGIX_polynomial_ffd_functions[] = {
     { LoadIdentityDeformationMapSGIX_names, LoadIdentityDeformationMapSGIX_remap_index, -1 },
-    { DeformationMap3dSGIX_names, DeformationMap3dSGIX_remap_index, -1 },
     { DeformSGIX_names, DeformSGIX_remap_index, -1 },
     { DeformationMap3fSGIX_names, DeformationMap3fSGIX_remap_index, -1 },
+    { DeformationMap3dSGIX_names, DeformationMap3dSGIX_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif

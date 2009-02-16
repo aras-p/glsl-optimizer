@@ -15,10 +15,6 @@
 #include "nouveau/nouveau_gldefs.h"
 #include "nouveau/nouveau_stateobj.h"
 
-#define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
-	struct nv50_screen *ctx = nv50->screen
-#include "nouveau/nouveau_push.h"
-
 #include "nv50_screen.h"
 #include "nv50_program.h"
 
@@ -170,6 +166,11 @@ extern void nv50_init_state_functions(struct nv50_context *nv50);
 extern void nv50_init_query_functions(struct nv50_context *nv50);
 
 extern void nv50_screen_init_miptree_functions(struct pipe_screen *pscreen);
+
+extern int
+nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
+		     int dx, int dy, struct pipe_surface *src, int sx, int sy,
+		     int w, int h);
 
 /* nv50_draw.c */
 extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *nv50);

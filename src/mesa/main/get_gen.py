@@ -254,7 +254,7 @@ StateVars = [
 	  ["ctx->Const.MinLineWidth",
 	   "ctx->Const.MaxLineWidth"], "", None ),
 	( "GL_LIST_BASE", GLint, ["ctx->List.ListBase"], "", None ),
-	( "GL_LIST_INDEX", GLint, ["ctx->ListState.CurrentListNum"], "", None ),
+	( "GL_LIST_INDEX", GLint, ["(ctx->ListState.CurrentList ? ctx->ListState.CurrentList->Name : 0)"], "", None ),
 	( "GL_LIST_MODE", GLenum, ["mode"],
 	  """GLenum mode;
          if (!ctx->CompileFlag)
@@ -523,10 +523,10 @@ StateVars = [
 
 	# GL_ARB_texture_compression */
 	( "GL_TEXTURE_COMPRESSION_HINT_ARB", GLint,
-	  ["ctx->Hint.TextureCompression"], "", ["ARB_texture_compression"] ),
+	  ["ctx->Hint.TextureCompression"], "", None ),
 	( "GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB", GLint,
 	  ["_mesa_get_compressed_formats(ctx, NULL, GL_FALSE)"],
-	  "", ["ARB_texture_compression"] ),
+	  "", None ),
 	( "GL_COMPRESSED_TEXTURE_FORMATS_ARB", GLenum,
 	  [],
 	  """GLint formats[100];
@@ -534,7 +534,7 @@ StateVars = [
          ASSERT(n <= 100);
          for (i = 0; i < n; i++)
             params[i] = CONVERSION(formats[i]);""",
-	  ["ARB_texture_compression"] ),
+	  None ),
 
 	# GL_EXT_compiled_vertex_array
 	( "GL_ARRAY_ELEMENT_LOCK_FIRST_EXT", GLint, ["ctx->Array.LockFirst"],
@@ -681,21 +681,21 @@ StateVars = [
 
 	# GL_ARB_multisample
 	( "GL_MULTISAMPLE_ARB", GLboolean,
-	  ["ctx->Multisample.Enabled"], "", ["ARB_multisample"] ),
+	  ["ctx->Multisample.Enabled"], "", None ),
 	( "GL_SAMPLE_ALPHA_TO_COVERAGE_ARB", GLboolean,
-	  ["ctx->Multisample.SampleAlphaToCoverage"], "", ["ARB_multisample"] ),
+	  ["ctx->Multisample.SampleAlphaToCoverage"], "", None ),
 	( "GL_SAMPLE_ALPHA_TO_ONE_ARB", GLboolean,
-	  ["ctx->Multisample.SampleAlphaToOne"], "", ["ARB_multisample"] ),
+	  ["ctx->Multisample.SampleAlphaToOne"], "", None ),
 	( "GL_SAMPLE_COVERAGE_ARB", GLboolean,
-	  ["ctx->Multisample.SampleCoverage"], "", ["ARB_multisample"] ),
+	  ["ctx->Multisample.SampleCoverage"], "", None ),
 	( "GL_SAMPLE_COVERAGE_VALUE_ARB", GLfloat,
-	  ["ctx->Multisample.SampleCoverageValue"], "", ["ARB_multisample"] ),
+	  ["ctx->Multisample.SampleCoverageValue"], "", None ),
 	( "GL_SAMPLE_COVERAGE_INVERT_ARB", GLboolean,
-	  ["ctx->Multisample.SampleCoverageInvert"], "", ["ARB_multisample"] ),
+	  ["ctx->Multisample.SampleCoverageInvert"], "", None ),
 	( "GL_SAMPLE_BUFFERS_ARB", GLint,
-	  ["ctx->DrawBuffer->Visual.sampleBuffers"], "", ["ARB_multisample"] ),
+	  ["ctx->DrawBuffer->Visual.sampleBuffers"], "", None ),
 	( "GL_SAMPLES_ARB", GLint,
-	  ["ctx->DrawBuffer->Visual.samples"], "", ["ARB_multisample"] ),
+	  ["ctx->DrawBuffer->Visual.samples"], "", None ),
 
 	# GL_IBM_rasterpos_clip
 	( "GL_RASTER_POSITION_UNCLIPPED_IBM", GLboolean,
@@ -815,30 +815,30 @@ StateVars = [
 
 	# GL_ARB_vertex_buffer_object
 	( "GL_ARRAY_BUFFER_BINDING_ARB", GLint,
-	  ["ctx->Array.ArrayBufferObj->Name"], "", ["ARB_vertex_buffer_object"] ),
+	  ["ctx->Array.ArrayBufferObj->Name"], "", None ),
 	( "GL_VERTEX_ARRAY_BUFFER_BINDING_ARB", GLint,
-	  ["ctx->Array.ArrayObj->Vertex.BufferObj->Name"], "", ["ARB_vertex_buffer_object"] ),
+	  ["ctx->Array.ArrayObj->Vertex.BufferObj->Name"], "", None ),
 	( "GL_NORMAL_ARRAY_BUFFER_BINDING_ARB", GLint,
-	  ["ctx->Array.ArrayObj->Normal.BufferObj->Name"], "", ["ARB_vertex_buffer_object"] ),
+	  ["ctx->Array.ArrayObj->Normal.BufferObj->Name"], "", None ),
 	( "GL_COLOR_ARRAY_BUFFER_BINDING_ARB", GLint,
-	  ["ctx->Array.ArrayObj->Color.BufferObj->Name"], "", ["ARB_vertex_buffer_object"] ),
+	  ["ctx->Array.ArrayObj->Color.BufferObj->Name"], "", None ),
 	( "GL_INDEX_ARRAY_BUFFER_BINDING_ARB", GLint,
-	  ["ctx->Array.ArrayObj->Index.BufferObj->Name"], "", ["ARB_vertex_buffer_object"] ),
+	  ["ctx->Array.ArrayObj->Index.BufferObj->Name"], "", None ),
 	( "GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB", GLint,
 	  ["ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].BufferObj->Name"],
-	  "", ["ARB_vertex_buffer_object"] ),
+	  "", None ),
 	( "GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB", GLint,
-	  ["ctx->Array.ArrayObj->EdgeFlag.BufferObj->Name"], "", ["ARB_vertex_buffer_object"] ),
+	  ["ctx->Array.ArrayObj->EdgeFlag.BufferObj->Name"], "", None ),
 	( "GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB", GLint,
 	  ["ctx->Array.ArrayObj->SecondaryColor.BufferObj->Name"],
-	  "", ["ARB_vertex_buffer_object"] ),
+	  "", None ),
 	( "GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB", GLint,
 	  ["ctx->Array.ArrayObj->FogCoord.BufferObj->Name"],
-	  "", ["ARB_vertex_buffer_object"] ),
+	  "", None ),
 	# GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB - not supported
 	( "GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB", GLint,
 	  ["ctx->Array.ElementArrayBufferObj->Name"],
-	  "", ["ARB_vertex_buffer_object"] ),
+	  "", None ),
 
 	# GL_EXT_pixel_buffer_object
 	( "GL_PIXEL_PACK_BUFFER_BINDING_EXT", GLint,
@@ -914,9 +914,9 @@ StateVars = [
 
 	# GL_ARB_draw_buffers
 	( "GL_MAX_DRAW_BUFFERS_ARB", GLint,
-	  ["ctx->Const.MaxDrawBuffers"], "", ["ARB_draw_buffers"] ),
+	  ["ctx->Const.MaxDrawBuffers"], "", None ),
 	( "GL_DRAW_BUFFER0_ARB", GLenum,
-	  ["ctx->DrawBuffer->ColorDrawBuffer[0]"], "", ["ARB_draw_buffers"] ),
+	  ["ctx->DrawBuffer->ColorDrawBuffer[0]"], "", None ),
 	( "GL_DRAW_BUFFER1_ARB", GLenum,
 	  ["buffer"],
 	  """GLenum buffer;
@@ -924,7 +924,7 @@ StateVars = [
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->DrawBuffer->ColorDrawBuffer[1];""", ["ARB_draw_buffers"] ),
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[1];""", None ),
 	( "GL_DRAW_BUFFER2_ARB", GLenum,
 	  ["buffer"],
 	  """GLenum buffer;
@@ -932,7 +932,7 @@ StateVars = [
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->DrawBuffer->ColorDrawBuffer[2];""", ["ARB_draw_buffers"] ),
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[2];""", None ),
 	( "GL_DRAW_BUFFER3_ARB", GLenum,
 	  ["buffer"],
 	  """GLenum buffer;
@@ -940,7 +940,7 @@ StateVars = [
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->DrawBuffer->ColorDrawBuffer[3];""", ["ARB_draw_buffers"] ),
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[3];""", None ),
 	# XXX Add more GL_DRAW_BUFFERn_ARB entries as needed in the future
 
 	# GL_OES_read_format
@@ -1009,7 +1009,11 @@ StateVars = [
 	# close enough for now.
 	( "GL_CURRENT_PROGRAM", GLint,
 	  ["ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0"],
-	  "", ["ARB_shader_objects"] )
+	  "", ["ARB_shader_objects"] ),
+
+	# GL_ARB_framebuffer_object
+	( "GL_MAX_SAMPLES", GLint, ["ctx->Const.MaxSamples"], "",
+	  ["ARB_framebuffer_object"] )
 ]
 
 

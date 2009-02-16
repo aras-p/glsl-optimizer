@@ -72,6 +72,8 @@ intel_texture_drawpixels(GLcontext * ctx,
    GLfloat vertices[4][4];
    GLfloat texcoords[4][2];
    GLfloat z;
+   GLint old_active_texture;
+   GLenum internalFormat;
 
    /* We're going to mess with texturing with no regard to existing texture
     * state, so if there is some set up we have to bail.
@@ -125,6 +127,7 @@ intel_texture_drawpixels(GLcontext * ctx,
    /* XXX: pixel store stuff */
    _mesa_Disable(GL_POLYGON_STIPPLE);
 
+   old_active_texture = ctx->Texture.CurrentUnit;
    _mesa_ActiveTextureARB(GL_TEXTURE0_ARB);
    _mesa_Enable(GL_TEXTURE_2D);
    _mesa_GenTextures(1, &texname);
@@ -132,11 +135,11 @@ intel_texture_drawpixels(GLcontext * ctx,
    _mesa_TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    _mesa_TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    _mesa_TexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-   /*
-   _mesa_TexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
-   _mesa_TexEnvf(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-   */
-   _mesa_TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, format,
+   if (type == GL_ALPHA)
+      internalFormat = GL_ALPHA;
+   else
+      internalFormat = GL_RGBA;
+   _mesa_TexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format,
 		    type, pixels);
 
    intel_meta_set_passthrough_transform(intel);
@@ -176,12 +179,15 @@ intel_texture_drawpixels(GLcontext * ctx,
    texcoords[3][1] = 1.0;
 
    _mesa_VertexPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &vertices);
+   _mesa_ClientActiveTextureARB(GL_TEXTURE0);
    _mesa_TexCoordPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &texcoords);
    _mesa_Enable(GL_VERTEX_ARRAY);
    _mesa_Enable(GL_TEXTURE_COORD_ARRAY);
    CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
 
    intel_meta_restore_transform(intel);
+
+   _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + old_active_texture);
    _mesa_PopClientAttrib();
    _mesa_PopAttrib();
 
@@ -209,6 +215,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
    struct gl_pixelstore_attrib old_unpack;
    GLstencil *stencil_pixels;
    int row;
+   GLint old_active_texture;
 
    if (format != GL_STENCIL_INDEX)
       return GL_FALSE;
@@ -270,6 +277,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
 		    GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
    old_fb_name = ctx->DrawBuffer->Name;
+   old_active_texture = ctx->Texture.CurrentUnit;
 
    _mesa_Disable(GL_POLYGON_STIPPLE);
    _mesa_Disable(GL_DEPTH_TEST);
@@ -355,6 +363,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
    texcoords[3][1] = 1.0;
 
    _mesa_VertexPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &vertices);
+   _mesa_ClientActiveTextureARB(GL_TEXTURE0);
    _mesa_TexCoordPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &texcoords);
    _mesa_Enable(GL_VERTEX_ARRAY);
    _mesa_Enable(GL_TEXTURE_COORD_ARRAY);
@@ -362,6 +371,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
 
    intel_meta_restore_transform(intel);
 
+   _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + old_active_texture);
    _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, old_fb_name);
 
    _mesa_PopClientAttrib();

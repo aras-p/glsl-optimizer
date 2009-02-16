@@ -37,6 +37,9 @@ $(TOP)/$(LIB_DIR)/$(GLEW_LIB_NAME): depend $(OBJECTS)
 	$(MKLIB) -o $(GLEW_LIB) -static -install $(TOP)/$(LIB_DIR) $(OBJECTS)
 
 
+install:
+
+
 clean:
 	-rm -f *.o *~
 	-rm -f depend depend.bak

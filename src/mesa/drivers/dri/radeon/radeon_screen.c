@@ -206,6 +206,8 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 static const GLuint __driNConfigOptions = 17;
 
+extern const struct dri_extension gl_20_extension[];
+
 #ifndef RADEON_DEBUG
 int RADEON_DEBUG = 0;
 
@@ -274,7 +276,7 @@ radeonFillInModes( __DRIscreenPrivate *psp,
 
     uint8_t depth_bits_array[2];
     uint8_t stencil_bits_array[2];
-
+    uint8_t msaa_samples_array[1];
 
     depth_bits_array[0] = depth_bits;
     depth_bits_array[1] = depth_bits;
@@ -285,6 +287,8 @@ radeonFillInModes( __DRIscreenPrivate *psp,
      */
     stencil_bits_array[0] = 0;
     stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
+
+    msaa_samples_array[0] = 0;
 
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
@@ -301,7 +305,8 @@ radeonFillInModes( __DRIscreenPrivate *psp,
     configs = driCreateConfigs(fb_format, fb_type,
 			       depth_bits_array, stencil_bits_array,
 			       depth_buffer_factor,
-			       back_buffer_modes, back_buffer_factor);
+			       back_buffer_modes, back_buffer_factor,
+			       msaa_samples_array, 1);
     if (configs == NULL) {
 	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
 		 __func__, __LINE__ );
@@ -1140,6 +1145,7 @@ static void radeonDestroyContext(__DRIcontextPrivate * driContextPriv)
 
 #endif
 
+
 /**
  * This is the driver specific part of the createNewScreen entry point.
  *
@@ -1192,6 +1198,8 @@ radeonInitScreen(__DRIscreenPrivate *psp)
    driInitSingleExtension( NULL, NV_vp_extension );
    driInitSingleExtension( NULL, ATI_fs_extension );
    driInitExtensions( NULL, point_extensions, GL_FALSE );
+#elif defined(RADEON_COMMON_FOR_R300)
+   driInitSingleExtension( NULL, gl_20_extension );
 #endif
 
    if (!radeonInitDriver(psp))

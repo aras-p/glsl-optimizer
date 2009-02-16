@@ -57,4 +57,7 @@ extern void _mesa_init_debug( GLcontext *ctx );
 
 #endif
 
+extern void
+_mesa_dump_textures(GLboolean dumpImages);
+
 #endif

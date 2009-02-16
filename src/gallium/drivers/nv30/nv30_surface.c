@@ -30,7 +30,6 @@
 #include "pipe/p_defines.h"
 #include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_inlines.h"
-
 #include "util/u_tile.h"
 
 static void
@@ -40,22 +39,18 @@ nv30_surface_copy(struct pipe_context *pipe, boolean do_flip,
 		  unsigned width, unsigned height)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct nouveau_winsys *nvws = nv30->nvws;
+	struct nv04_surface_2d *eng2d = nv30->screen->eng2d;
 
 	if (do_flip) {
-		/*XXX: This dodgyness will do for now for correctness.  But,
-		 *     need to investigate whether the 2D engine is able to
-		 *     manage a flip (perhaps SIFM?), if not, use the 3D engine
-		 */
 		desty += height;
 		while (height--) {
-			nvws->surface_copy(nvws, dest, destx, desty--, src,
-					   srcx, srcy++, width, 1);
+			eng2d->copy(eng2d, dest, destx, desty--, src,
+				    srcx, srcy++, width, 1);
 		}
-	} else {
-		nvws->surface_copy(nvws, dest, destx, desty, src, srcx, srcy,
-				   width, height);
+		return;
 	}
+
+	eng2d->copy(eng2d, dest, destx, desty, src, srcx, srcy, width, height);
 }
 
 static void
@@ -64,9 +59,9 @@ nv30_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 		  unsigned height, unsigned value)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct nouveau_winsys *nvws = nv30->nvws;
+	struct nv04_surface_2d *eng2d = nv30->screen->eng2d;
 
-	nvws->surface_fill(nvws, dest, destx, desty, width, height, value);
+	eng2d->fill(eng2d, dest, destx, desty, width, height, value);
 }
 
 void

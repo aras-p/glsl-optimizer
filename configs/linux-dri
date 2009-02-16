@@ -57,16 +57,11 @@ PROGRAM_DIRS := egl $(PROGRAM_DIRS)
 # EGL directories
 EGL_DRIVERS_DIRS = demo glx
 
-DRIVER_DIRS =
+DRIVER_DIRS = dri
 WINDOW_SYSTEM = dri
-GALLIUM_WINSYS_DIRS = drm 
+GALLIUM_WINSYS_DIRS = drm
+GALLIUM_WINSYS_DRM_DIRS = intel
+GALLIUM_STATE_TRACKERS_DIRS = egl
 
-# gamma are missing because they have not been converted to use the new
-# interface.
-
-# XXX: need to figure out a way for gallium and non-gallium builds to
-# coexist:
-#
-
-#DRI_DIRS = i810 i915 i965 mach64 mga r128 r200 r300 radeon s3v \
-#	savage sis tdfx trident unichrome ffb
+DRI_DIRS = i810 i915 i965 mach64 mga r128 r200 r300 radeon s3v \
+	savage sis tdfx trident unichrome ffb

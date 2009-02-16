@@ -242,6 +242,10 @@ st_fb_orientation(const struct gl_framebuffer *fb)
 }
 
 
+/** clear-alloc a struct-sized object, with casting */
+#define ST_CALLOC_STRUCT(T)   (struct T *) _mesa_calloc(sizeof(struct T))
+
+
 extern int
 st_get_msaa(void);
 

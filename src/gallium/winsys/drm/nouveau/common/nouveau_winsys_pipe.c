@@ -103,9 +103,9 @@ nouveau_pipe_bo_user_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
 static void
 nouveau_pipe_bo_del(struct pipe_winsys *ws, struct pipe_buffer *buf)
 {
-	struct nouveau_pipe_buffer *nvbuf = nouveau_buffer(buf);
+	struct nouveau_pipe_buffer *nvbuf = nouveau_pipe_buffer(buf);
 
-	nouveau_bo_del(&nvbuf->bo);
+	nouveau_bo_ref(NULL, &nvbuf->bo);
 	FREE(nvbuf);
 }
 
@@ -113,7 +113,7 @@ static void *
 nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 		    unsigned flags)
 {
-	struct nouveau_pipe_buffer *nvbuf = nouveau_buffer(buf);
+	struct nouveau_pipe_buffer *nvbuf = nouveau_pipe_buffer(buf);
 	uint32_t map_flags = 0;
 
 	if (flags & PIPE_BUFFER_USAGE_CPU_READ)
@@ -121,6 +121,7 @@ nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 	if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
 		map_flags |= NOUVEAU_BO_WR;
 
+#if 0
 	if (flags & PIPE_BUFFER_USAGE_DISCARD &&
 	    !(flags & PIPE_BUFFER_USAGE_CPU_READ) &&
 	    nouveau_bo_busy(nvbuf->bo, map_flags)) {
@@ -131,10 +132,11 @@ nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 		uint32_t flags = nouveau_flags_from_usage(nv, buf->usage);
 
 		if (!nouveau_bo_new(dev, flags, buf->alignment, buf->size, &rename)) {
-			nouveau_bo_del(&nvbuf->bo);
+			nouveau_bo_ref(NULL, &nvbuf->bo);
 			nvbuf->bo = rename;
 		}
 	}
+#endif
 
 	if (nouveau_bo_map(nvbuf->bo, map_flags))
 		return NULL;
@@ -144,15 +146,9 @@ nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 static void
 nouveau_pipe_bo_unmap(struct pipe_winsys *pws, struct pipe_buffer *buf)
 {
-	struct nouveau_pipe_buffer *nvbuf = nouveau_buffer(buf);
+	struct nouveau_pipe_buffer *nvbuf = nouveau_pipe_buffer(buf);
 
 	nouveau_bo_unmap(nvbuf->bo);
-}
-
-static INLINE struct nouveau_fence *
-nouveau_pipe_fence(struct pipe_fence_handle *pfence)
-{
-	return (struct nouveau_fence *)pfence;
 }
 
 static void
@@ -160,31 +156,53 @@ nouveau_pipe_fence_reference(struct pipe_winsys *ws,
 			     struct pipe_fence_handle **ptr,
 			     struct pipe_fence_handle *pfence)
 {
-	nouveau_fence_ref((void *)pfence, (void *)ptr);
+	*ptr = pfence;
 }
 
 static int
 nouveau_pipe_fence_signalled(struct pipe_winsys *ws,
 			     struct pipe_fence_handle *pfence, unsigned flag)
 {
-	struct nouveau_pipe_winsys *nvpws = (struct nouveau_pipe_winsys *)ws;
-	struct nouveau_fence *fence = nouveau_pipe_fence(pfence);
-
-	if (nouveau_fence(fence)->signalled == 0)
-		nouveau_fence_flush(nvpws->nv->nvc->channel);
-
-	return !nouveau_fence(fence)->signalled;
+	return 0;
 }
 
 static int
 nouveau_pipe_fence_finish(struct pipe_winsys *ws,
 			  struct pipe_fence_handle *pfence, unsigned flag)
 {
-	struct nouveau_fence *fence = nouveau_pipe_fence(pfence);
-	struct nouveau_fence *ref = NULL;
+	return 0;
+}
 
-	nouveau_fence_ref(fence, &ref);
-	return nouveau_fence_wait(&ref);
+struct pipe_surface *
+nouveau_surface_buffer_ref(struct nouveau_context *nv, struct pipe_buffer *pb,
+			   enum pipe_format format, int w, int h,
+			   unsigned pitch, struct pipe_texture **ppt)
+{
+	struct pipe_screen *pscreen = nv->nvc->pscreen;
+	struct pipe_texture tmpl, *pt;
+	struct pipe_surface *ps;
+
+	memset(&tmpl, 0, sizeof(tmpl));
+	tmpl.tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+			 NOUVEAU_TEXTURE_USAGE_LINEAR;
+	tmpl.target = PIPE_TEXTURE_2D;
+	tmpl.width[0] = w;
+	tmpl.height[0] = h;
+	tmpl.depth[0] = 1;
+	tmpl.format = format;
+	pf_get_block(tmpl.format, &tmpl.block);
+	tmpl.nblocksx[0] = pf_get_nblocksx(&tmpl.block, w);
+	tmpl.nblocksy[0] = pf_get_nblocksy(&tmpl.block, h);
+
+	pt = pscreen->texture_blanket(pscreen, &tmpl, &pitch, pb);
+	if (!pt)
+		return NULL;
+
+	ps = pscreen->get_tex_surface(pscreen, pt, 0, 0, 0,
+				      PIPE_BUFFER_USAGE_GPU_WRITE);
+
+	*ppt = pt;
+	return ps;
 }
 
 static void

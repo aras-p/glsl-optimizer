@@ -550,7 +550,7 @@ _swrast_Accum(GLcontext *ctx, GLenum op, GLfloat value)
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLint xpos, ypos, width, height;
 
-   if (SWRAST_CONTEXT(ctx)->NewState)
+   if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
    if (!ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer) {
@@ -558,9 +558,9 @@ _swrast_Accum(GLcontext *ctx, GLenum op, GLfloat value)
       return;
    }
 
-   RENDER_START(swrast, ctx);
+   swrast_render_start(ctx);
 
-   /* Compute region after calling RENDER_START so that we know the
+   /* Compute region after calling swrast_render_start() so that we know the
     * drawbuffer's size/bounds are up to date.
     */
    xpos = ctx->DrawBuffer->_Xmin;
@@ -595,5 +595,5 @@ _swrast_Accum(GLcontext *ctx, GLenum op, GLfloat value)
          break;
    }
 
-   RENDER_FINISH(swrast, ctx);
+   swrast_render_finish(ctx);
 }

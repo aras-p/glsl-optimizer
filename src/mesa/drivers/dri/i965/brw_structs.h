@@ -1031,10 +1031,10 @@ struct brw_surface_state
       GLuint writedisable_green:1; 
       GLuint writedisable_red:1; 
       GLuint writedisable_alpha:1; 
-      GLuint surface_format:9; 
+      GLuint surface_format:9;     /**< BRW_SURFACEFORMAT_x */
       GLuint data_return_format:1; 
       GLuint pad0:1;
-      GLuint surface_type:3; 
+      GLuint surface_type:3;       /**< BRW_SURFACE_1D/2D/3D/CUBE */
    } ss0;
    
    struct {

@@ -1310,7 +1310,7 @@ OSMesaDestroyContext( OSMesaContext osmesa )
       _swrast_DestroyContext( &osmesa->mesa );
 
       _mesa_destroy_visual( osmesa->gl_visual );
-      _mesa_unreference_framebuffer( &osmesa->gl_buffer );
+      _mesa_reference_framebuffer( &osmesa->gl_buffer, NULL );
 
       _mesa_free_context_data( &osmesa->mesa );
       _mesa_free( osmesa );

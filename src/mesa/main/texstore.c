@@ -3699,14 +3699,37 @@ is_srgb_teximage(const struct gl_texture_image *texImage)
    case MESA_FORMAT_SARGB8:
    case MESA_FORMAT_SL8:
    case MESA_FORMAT_SLA8:
+   case MESA_FORMAT_SRGB_DXT1:
+   case MESA_FORMAT_SRGBA_DXT1:
+   case MESA_FORMAT_SRGBA_DXT3:
+   case MESA_FORMAT_SRGBA_DXT5:
       return GL_TRUE;
    default:
       return GL_FALSE;
    }
 }
 
-#endif /* FEATURE_EXT_texture_sRGB */
 
+/**
+ * Convert a float value from linear space to a
+ * non-linear sRGB value in [0, 255].
+ * Not terribly efficient.
+ */
+static INLINE GLfloat
+linear_to_nonlinear(GLfloat cl)
+{
+   /* can't have values outside [0, 1] */
+   GLfloat cs;
+   if (cl < 0.0031308) {
+      cs = 12.92 * cl;
+   }
+   else {
+      cs = 1.055 * _mesa_pow(cl, 0.41666) - 0.055;
+   }
+   return cs;
+}
+
+#endif /* FEATURE_EXT_texture_sRGB */
 
 /**
  * This is the software fallback for Driver.GetTexImage().
@@ -3823,16 +3846,34 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
             }
 #if FEATURE_EXT_texture_sRGB
             else if (is_srgb_teximage(texImage)) {
-               /* no pixel transfer and no non-linear to linear conversion */
-               const GLint comps = texImage->TexFormat->TexelBytes;
-               const GLint rowstride = comps * texImage->RowStride;
-               MEMCPY(dest,
-                      (const GLubyte *) texImage->Data + row * rowstride,
-                      comps * width * sizeof(GLubyte));
-               /* FIXME: isn't it necessary to still do component assigning
-                  according to format/type? */
-               /* FIXME: need to do something else for compressed srgb textures
-                         (currently will return values converted to linear) */
+               /* special case this since need to backconvert values */
+               /* convert row to RGBA format */
+               GLfloat rgba[MAX_WIDTH][4];
+               GLint col;
+               GLbitfield transferOps = 0x0;
+
+               for (col = 0; col < width; col++) {
+                  (*texImage->FetchTexelf)(texImage, col, row, img, rgba[col]);
+                  if (texImage->TexFormat->BaseFormat == GL_LUMINANCE) {
+                     rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
+                     rgba[col][GCOMP] = 0.0;
+                     rgba[col][BCOMP] = 0.0;
+                  }
+                  else if (texImage->TexFormat->BaseFormat == GL_LUMINANCE_ALPHA) {
+                     rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
+                     rgba[col][GCOMP] = 0.0;
+                     rgba[col][BCOMP] = 0.0;
+                  }
+                  else if (texImage->TexFormat->BaseFormat == GL_RGB ||
+                     texImage->TexFormat->BaseFormat == GL_RGBA) {
+                     rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
+                     rgba[col][GCOMP] = linear_to_nonlinear(rgba[col][GCOMP]);
+                     rgba[col][BCOMP] = linear_to_nonlinear(rgba[col][BCOMP]);
+                  }
+               }
+               _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
+                                          format, type, dest,
+                                          &ctx->Pack, transferOps /*image xfer ops*/);
             }
 #endif /* FEATURE_EXT_texture_sRGB */
             else {

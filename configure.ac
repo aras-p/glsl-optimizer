@@ -46,10 +46,14 @@ esac
 MKDEP_OPTIONS=-fdepend
 dnl Ask gcc where it's keeping its secret headers
 if test "x$GCC" = xyes; then
-    GCC_INCLUDES=`$CC -print-file-name=include`
-    if test "x$GCC_INCLUDES" != x; then
-        MKDEP_OPTIONS="$MKDEP_OPTIONS -I$GCC_INCLUDES"
-    fi
+    for dir in include include-fixed; do
+        GCC_INCLUDES=`$CC -print-file-name=$dir`
+        if test "x$GCC_INCLUDES" != x && \
+           test "$GCC_INCLUDES" != "$dir" && \
+           test -d "$GCC_INCLUDES"; then
+            MKDEP_OPTIONS="$MKDEP_OPTIONS -I$GCC_INCLUDES"
+        fi
+    done
 fi
 AC_SUBST([MKDEP_OPTIONS])
 
@@ -221,23 +225,39 @@ dnl
 dnl library names
 dnl
 if test "$enable_static" = yes; then
-    GL_LIB_NAME='lib$(GL_LIB).a'
-    GLU_LIB_NAME='lib$(GLU_LIB).a'
-    GLUT_LIB_NAME='lib$(GLUT_LIB).a'
-    GLW_LIB_NAME='lib$(GLW_LIB).a'
-    OSMESA_LIB_NAME='lib$(OSMESA_LIB).a'
+    LIB_EXTENSION='a'
 else
-    GL_LIB_NAME='lib$(GL_LIB).so'
-    GLU_LIB_NAME='lib$(GLU_LIB).so'
-    GLUT_LIB_NAME='lib$(GLUT_LIB).so'
-    GLW_LIB_NAME='lib$(GLW_LIB).so'
-    OSMESA_LIB_NAME='lib$(OSMESA_LIB).so'
+    case "$host_os" in
+    darwin* )
+        LIB_EXTENSION='dylib' ;;
+    * )
+        LIB_EXTENSION='so' ;;
+    esac
 fi
+
+GL_LIB_NAME='lib$(GL_LIB).'${LIB_EXTENSION}
+GLU_LIB_NAME='lib$(GLU_LIB).'${LIB_EXTENSION}
+GLUT_LIB_NAME='lib$(GLUT_LIB).'${LIB_EXTENSION}
+GLW_LIB_NAME='lib$(GLW_LIB).'${LIB_EXTENSION}
+OSMESA_LIB_NAME='lib$(OSMESA_LIB).'${LIB_EXTENSION}
+
+GL_LIB_GLOB='lib$(GL_LIB).*'${LIB_EXTENSION}'*'
+GLU_LIB_GLOB='lib$(GLU_LIB).*'${LIB_EXTENSION}'*'
+GLUT_LIB_GLOB='lib$(GLUT_LIB).*'${LIB_EXTENSION}'*'
+GLW_LIB_GLOB='lib$(GLW_LIB).*'${LIB_EXTENSION}'*'
+OSMESA_LIB_GLOB='lib$(OSMESA_LIB).*'${LIB_EXTENSION}'*'
+
 AC_SUBST([GL_LIB_NAME])
 AC_SUBST([GLU_LIB_NAME])
 AC_SUBST([GLUT_LIB_NAME])
 AC_SUBST([GLW_LIB_NAME])
 AC_SUBST([OSMESA_LIB_NAME])
+
+AC_SUBST([GL_LIB_GLOB])
+AC_SUBST([GLU_LIB_GLOB])
+AC_SUBST([GLUT_LIB_GLOB])
+AC_SUBST([GLW_LIB_GLOB])
+AC_SUBST([OSMESA_LIB_GLOB])
 
 dnl
 dnl Arch/platform-specific settings
@@ -250,8 +270,8 @@ AC_ARG_ENABLE([asm],
 )
 asm_arch=""
 ASM_FLAGS=""
-ASM_SOURCES=""
-ASM_API=""
+MESA_ASM_SOURCES=""
+GLAPI_ASM_SOURCES=""
 AC_MSG_CHECKING([whether to enable assembly])
 test "x$enable_asm" = xno && AC_MSG_RESULT([no])
 # disable if cross compiling on x86/x86_64 since we must run gen_matypes
@@ -292,19 +312,19 @@ if test "x$enable_asm" = xyes; then
     case "$asm_arch" in
     x86)
         ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
-        ASM_SOURCES='$(X86_SOURCES)'
-        ASM_API='$(X86_API)'
+        MESA_ASM_SOURCES='$(X86_SOURCES)'
+        GLAPI_ASM_SOURCES='$(X86_API)'
         AC_MSG_RESULT([yes, x86])
         ;;
     x86_64)
         ASM_FLAGS="-DUSE_X86_64_ASM"
-        ASM_SOURCES='$(X86-64_SOURCES)'
-        ASM_API='$(X86-64_API)'
+        MESA_ASM_SOURCES='$(X86-64_SOURCES)'
+        GLAPI_ASM_SOURCES='$(X86-64_API)'
         AC_MSG_RESULT([yes, x86_64])
         ;;
     ppc)
         ASM_FLAGS="-DUSE_PPC_ASM -DUSE_VMX_ASM"
-        ASM_SOURCES='$(PPC_SOURCES)'
+        MESA_ASM_SOURCES='$(PPC_SOURCES)'
         AC_MSG_RESULT([yes, ppc])
         ;;
     *)
@@ -313,8 +333,8 @@ if test "x$enable_asm" = xyes; then
     esac
 fi
 AC_SUBST([ASM_FLAGS])
-AC_SUBST([ASM_SOURCES])
-AC_SUBST([ASM_API])
+AC_SUBST([MESA_ASM_SOURCES])
+AC_SUBST([GLAPI_ASM_SOURCES])
 
 dnl PIC code macro
 MESA_PIC_FLAGS
@@ -389,9 +409,16 @@ esac
 dnl
 dnl Driver specific build directories
 dnl
-SRC_DIRS="mesa"
+SRC_DIRS="mesa egl glew"
 GLU_DIRS="sgi"
 WINDOW_SYSTEM=""
+GALLIUM_DIRS="auxiliary drivers state_trackers"
+GALLIUM_WINSYS_DIRS=""
+GALLIUM_WINSYS_DRM_DIRS=""
+GALLIUM_AUXILIARY_DIRS="draw translate cso_cache pipebuffer tgsi sct rtasm util"
+GALLIUM_DRIVER_DIRS="softpipe failover trace"
+GALLIUM_STATE_TRACKERS_DIRS=""
+
 case "$mesa_driver" in
 xlib)
     DRIVER_DIRS="x11"
@@ -400,6 +427,7 @@ dri)
     SRC_DIRS="glx/x11 $SRC_DIRS"
     DRIVER_DIRS="dri"
     WINDOW_SYSTEM="dri"
+    GALLIUM_WINSYS_DIRS="drm $GALLIUM_WINSYS_DIRS"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
@@ -409,6 +437,12 @@ AC_SUBST([SRC_DIRS])
 AC_SUBST([GLU_DIRS])
 AC_SUBST([DRIVER_DIRS])
 AC_SUBST([WINDOW_SYSTEM])
+AC_SUBST([GALLIUM_DIRS])
+AC_SUBST([GALLIUM_WINSYS_DIRS])
+AC_SUBST([GALLIUM_WINSYS_DRM_DIRS])
+AC_SUBST([GALLIUM_DRIVER_DIRS])
+AC_SUBST([GALLIUM_AUXILIARY_DIRS])
+AC_SUBST([GALLIUM_STATE_TRACKERS_DIRS])
 
 dnl
 dnl User supplied program configuration
@@ -656,10 +690,10 @@ if test "$mesa_driver" = dri; then
     case "$host_os" in
     linux*)
         DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
-        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING -DHAVE_ALIAS"
         if test "x$driglx_direct" = xyes; then
             DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
         fi
+        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING -DHAVE_ALIAS"
 
         case "$host_cpu" in
         x86_64)
@@ -1029,6 +1063,90 @@ fi
 AC_SUBST([APP_LIB_DEPS])
 AC_SUBST([PROGRAM_DIRS])
 
+dnl
+dnl Gallium configuration
+dnl
+AC_ARG_ENABLE([gallium],
+    [AS_HELP_STRING([--disable-gallium],
+        [build gallium @<:@default=enabled@:>@])],
+    [enable_gallium="$enableval"],
+    [enable_gallium=yes])
+if test "x$enable_gallium" = xyes; then
+    SRC_DIRS="$SRC_DIRS gallium gallium/winsys"
+fi
+
+dnl
+dnl Gallium state trackers configuration
+dnl
+AC_ARG_WITH([state-trackers],
+    [AS_HELP_STRING([--with-state-trackers@<:@=DIRS...@:>@],
+        [comma delimited state_trackers list, e.g.
+        "egl,glx" @<:@default=auto@:>@])],
+    [with_state_trackers="$withval"],
+    [with_state_trackers=yes])
+
+case "$with_state_trackers" in
+no)
+    GALLIUM_STATE_TRACKERS_DIRS=""
+    ;;
+yes)
+    # look at what else is built
+    case "$mesa_driver" in
+    dri)
+        GALLIUM_STATE_TRACKERS_DIRS=egl
+        ;;
+    esac
+    ;;
+*)
+    # verify the requested state tracker exist
+    state_trackers=`IFS=', '; echo $with_state_trackers`
+    for tracker in $state_trackers; do
+        test -d "$srcdir/src/gallium/state_trackers/$tracker" || \
+            AC_MSG_ERROR([state tracker '$tracker' doesn't exist])
+    done
+    GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
+    ;;
+esac
+
+dnl
+dnl Gallium Intel configuration
+dnl
+AC_ARG_ENABLE([gallium-intel],
+    [AS_HELP_STRING([--disable-gallium-intel],
+        [build gallium intel @<:@default=enabled@:>@])],
+    [enable_gallium_intel="$enableval"],
+    [enable_gallium_intel=yes])
+if test "x$enable_gallium_intel" = xyes; then
+    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS intel"
+    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS i915simple i965simple"
+fi
+
+dnl
+dnl Gallium Radeon configuration
+dnl
+AC_ARG_ENABLE([gallium-radeon],
+    [AS_HELP_STRING([--enable-gallium-radeon],
+        [build gallium radeon @<:@default=disabled@:>@])],
+    [enable_gallium_radeon="$enableval"],
+    [enable_gallium_radeon=no])
+if test "x$enable_gallium_radeon" = xyes; then
+    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS radeon"
+    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS r300"
+fi
+
+dnl
+dnl Gallium Radeon configuration
+dnl
+AC_ARG_ENABLE([gallium-nouveau],
+    [AS_HELP_STRING([--enable-gallium-nouveau],
+        [build gallium nouveau @<:@default=disabled@:>@])],
+    [enable_gallium_nouveau="$enableval"],
+    [enable_gallium_nouveau=no])
+if test "x$enable_gallium_nouveau" = xyes; then
+    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS nouveau"
+    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS nv04 nv10 nv20 nv30 nv40 nv50"
+fi
+
 
 dnl Restore LDFLAGS and CPPFLAGS
 LDFLAGS="$_SAVE_LDFLAGS"
@@ -1075,6 +1193,19 @@ fi
     echo "        DRI driver dir:  $DRI_DRIVER_INSTALL_DIR"
 fi
 echo "        Use XCB:         $enable_xcb"
+
+echo ""
+if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
+    echo "        Gallium:         yes"
+    echo "        Gallium dirs:    $GALLIUM_DIRS"
+    echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
+    echo "        Winsys drm dirs:$GALLIUM_WINSYS_DRM_DIRS"
+    echo "        Auxiliary dirs:  $GALLIUM_AUXILIARY_DIRS"
+    echo "        Driver dirs:     $GALLIUM_DRIVER_DIRS"
+    echo "        Trackers dirs:   $GALLIUM_STATE_TRACKERS_DIRS"
+else
+    echo "        Gallium:         no"
+fi
 
 dnl Libraries
 echo ""

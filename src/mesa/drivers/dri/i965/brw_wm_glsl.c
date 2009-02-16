@@ -8,12 +8,17 @@ enum _subroutine {
     SUB_NOISE1, SUB_NOISE2, SUB_NOISE3, SUB_NOISE4
 };
 
-/* Only guess, need a flag in gl_fragment_program later */
+
+/**
+ * Determine if the given fragment program uses GLSL features such
+ * as flow conditionals, loops, subroutines.
+ * Some GLSL shaders may use these features, others might not.
+ */
 GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
 {
     int i;
     for (i = 0; i < fp->Base.NumInstructions; i++) {
-	struct prog_instruction *inst = &fp->Base.Instructions[i];
+	const struct prog_instruction *inst = &fp->Base.Instructions[i];
 	switch (inst->Opcode) {
 	    case OPCODE_IF:
 	    case OPCODE_TRUNC:
@@ -176,13 +181,15 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
 	    src->NegateBase, src->Abs);
 }
 
-/* Subroutines are minimal support for resusable instruction sequences.
-   They are implemented as simply as possible to minimise overhead: there
-   is no explicit support for communication between the caller and callee
-   other than saving the return address in a temporary register, nor is
-   there any automatic local storage.  This implies that great care is
-   required before attempting reentrancy or any kind of nested
-   subroutine invocations. */
+/**
+ * Subroutines are minimal support for resusable instruction sequences.
+ * They are implemented as simply as possible to minimise overhead: there
+ * is no explicit support for communication between the caller and callee
+ * other than saving the return address in a temporary register, nor is
+ * there any automatic local storage.  This implies that great care is
+ * required before attempting reentrancy or any kind of nested
+ * subroutine invocations.
+ */
 static void invoke_subroutine( struct brw_wm_compile *c,
 			       enum _subroutine subroutine,
 			       void (*emit)( struct brw_wm_compile * ) )
@@ -319,11 +326,10 @@ static void emit_pixel_xy(struct brw_wm_compile *c,
 		stride(suboffset(r1_uw, 5), 2, 4, 0),
 		brw_imm_v(0x11001100));
     }
-
 }
 
 static void emit_delta_xy(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                          struct prog_instruction *inst)
 {
     struct brw_reg r1 = brw_vec1_grf(1, 0);
     struct brw_reg dst0, dst1, src0, src1;
@@ -351,9 +357,7 @@ static void emit_delta_xy(struct brw_wm_compile *c,
 		negate(suboffset(r1,1)));
 
     }
-
 }
-
 
 static void fire_fb_write( struct brw_wm_compile *c,
                            GLuint base_reg,
@@ -397,31 +401,31 @@ static void emit_fb_write(struct brw_wm_compile *c,
      */
     if (c->key.aa_dest_stencil_reg)
 	nr += 1;
-    {
-	brw_push_insn_state(p);
-	for (channel = 0; channel < 4; channel++) {
-	    src0 = get_src_reg(c,  &inst->SrcReg[0], channel, 1);
-	    /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
-	    /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
-	    brw_MOV(p, brw_message_reg(nr + channel), src0);
-	}
-	/* skip over the regs populated above: */
-	nr += 8;
-	brw_pop_insn_state(p);
+
+    brw_push_insn_state(p);
+    for (channel = 0; channel < 4; channel++) {
+        src0 = get_src_reg(c,  &inst->SrcReg[0], channel, 1);
+        /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
+        /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
+        brw_MOV(p, brw_message_reg(nr + channel), src0);
+    }
+    /* skip over the regs populated above: */
+    nr += 8;
+    brw_pop_insn_state(p);
+
+    if (c->key.source_depth_to_render_target) {
+       if (c->key.computes_depth) {
+          src0 = get_src_reg(c, &inst->SrcReg[2], 2, 1);
+          brw_MOV(p, brw_message_reg(nr), src0);
+       }
+       else {
+          src0 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
+          brw_MOV(p, brw_message_reg(nr), src0);
+       }
+
+       nr += 2;
     }
 
-   if (c->key.source_depth_to_render_target)
-   {
-      if (c->key.computes_depth) {
-         src0 = get_src_reg(c, &inst->SrcReg[2], 2, 1);
-         brw_MOV(p, brw_message_reg(nr), src0);
-      } else {
-         src0 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
-         brw_MOV(p, brw_message_reg(nr), src0);
-      }
-
-      nr += 2;
-   }
     target = inst->Sampler >> 1;
     eot = inst->Sampler & 1;
     fire_fb_write(c, 0, nr, target, eot);
@@ -1045,23 +1049,23 @@ static void emit_ddy(struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
-static __inline struct brw_reg high_words( struct brw_reg reg )
+static INLINE struct brw_reg high_words( struct brw_reg reg )
 {
     return stride( suboffset( retype( reg, BRW_REGISTER_TYPE_W ), 1 ),
 		   0, 8, 2 );
 }
 
-static __inline struct brw_reg low_words( struct brw_reg reg )
+static INLINE struct brw_reg low_words( struct brw_reg reg )
 {
     return stride( retype( reg, BRW_REGISTER_TYPE_W ), 0, 8, 2 );
 }
 
-static __inline struct brw_reg even_bytes( struct brw_reg reg )
+static INLINE struct brw_reg even_bytes( struct brw_reg reg )
 {
     return stride( retype( reg, BRW_REGISTER_TYPE_B ), 0, 16, 2 );
 }
 
-static __inline struct brw_reg odd_bytes( struct brw_reg reg )
+static INLINE struct brw_reg odd_bytes( struct brw_reg reg )
 {
     return stride( suboffset( retype( reg, BRW_REGISTER_TYPE_B ), 1 ),
 		   0, 16, 2 );
@@ -1366,9 +1370,11 @@ static void emit_noise2( struct brw_wm_compile *c,
     release_tmps( c, mark );
 }
 
-/* The three-dimensional case is much like the one- and two- versions above,
-   but since the number of corners is rapidly growing we now pack 16 16-bit
-   hashes into each register to extract more parallelism from the EUs. */
+/**
+ * The three-dimensional case is much like the one- and two- versions above,
+ * but since the number of corners is rapidly growing we now pack 16 16-bit
+ * hashes into each register to extract more parallelism from the EUs.
+ */
 static void noise3_sub( struct brw_wm_compile *c ) {
 
     struct brw_compile *p = &c->func;
@@ -1670,13 +1676,15 @@ static void emit_noise3( struct brw_wm_compile *c,
     release_tmps( c, mark );
 }
     
-/* For the four-dimensional case, the little micro-optimisation benefits
-   we obtain by unrolling all the loops aren't worth the massive bloat it
-   now causes.  Instead, we loop twice around performing a similar operation
-   to noise3, once for the w=0 cube and once for the w=1, with a bit more
-   code to glue it all together. */
-static void noise4_sub( struct brw_wm_compile *c ) {
-
+/**
+ * For the four-dimensional case, the little micro-optimisation benefits
+ * we obtain by unrolling all the loops aren't worth the massive bloat it
+ * now causes.  Instead, we loop twice around performing a similar operation
+ * to noise3, once for the w=0 cube and once for the w=1, with a bit more
+ * code to glue it all together.
+ */
+static void noise4_sub( struct brw_wm_compile *c )
+{
     struct brw_compile *p = &c->func;
     struct brw_reg param[ 4 ],
 	x0y0, x0y1, x1y0, x1y1, /* gradients at four of the corners */
@@ -2244,28 +2252,12 @@ static void emit_tex(struct brw_wm_compile *c,
 	brw_MOV(p, dst[3], brw_imm_f(1.0));
 }
 
+/**
+ * Resolve subroutine calls after code emit is done.
+ */
 static void post_wm_emit( struct brw_wm_compile *c )
 {
-    GLuint nr_insns = c->fp->program.Base.NumInstructions;
-    GLuint insn, target_insn;
-    struct prog_instruction *inst1, *inst2;
-    struct brw_instruction *brw_inst1, *brw_inst2;
-    int offset;
-    for (insn = 0; insn < nr_insns; insn++) {
-	inst1 = &c->fp->program.Base.Instructions[insn];
-	brw_inst1 = inst1->Data;
-	switch (inst1->Opcode) {
-	    case OPCODE_CAL:
-		target_insn = inst1->BranchTarget;
-		inst2 = &c->fp->program.Base.Instructions[target_insn];
-		brw_inst2 = inst2->Data;
-		offset = brw_inst2 - brw_inst1;
-		brw_set_src1(brw_inst1, brw_imm_d(offset*16));
-		break;
-	    default:
-		break;
-	}
-    }
+    brw_resolve_cals(&c->func);
 }
 
 static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
@@ -2285,10 +2277,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 
     for (i = 0; i < c->nr_fp_insns; i++) {
 	struct prog_instruction *inst = &c->prog_instructions[i];
-	struct prog_instruction *orig_inst;
-
-	if ((orig_inst = inst->Data) != 0)
-	    orig_inst->Data = current_insn(p);
 
 	if (inst->CondUpdate)
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
@@ -2446,7 +2434,10 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		brw_ENDIF(p, if_inst[--if_insn]);
 		break;
 	    case OPCODE_BGNSUB:
+		brw_save_label(p, inst->Comment, p->nr_insn);
+		break;
 	    case OPCODE_ENDSUB:
+		/* no-op */
 		break;
 	    case OPCODE_CAL: 
 		brw_push_insn_state(p);
@@ -2456,8 +2447,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
                 brw_set_access_mode(p, BRW_ALIGN_16);
                 brw_ADD(p, get_addr_reg(stack_index),
                          get_addr_reg(stack_index), brw_imm_d(4));
-                orig_inst = inst->Data;
-                orig_inst->Data = &p->store[p->nr_insn];
+		brw_save_call(&c->func, inst->Comment, p->nr_insn);
                 brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
                 brw_pop_insn_state(p);
 		break;
@@ -2510,14 +2500,21 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
     }
     post_wm_emit(c);
-    for (i = 0; i < c->fp->program.Base.NumInstructions; i++)
-	c->fp->program.Base.Instructions[i].Data = NULL;
 }
 
+
+/**
+ * Do GPU code generation for shaders that use GLSL features such as
+ * flow control.  Other shaders will be compiled with the 
+ */
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
+    /* initial instruction translation/simplification */
     brw_wm_pass_fp(c);
+
+    /* actual code generation */
     brw_wm_emit_glsl(brw, c);
+
     c->prog_data.total_grf = c->reg_index;
     c->prog_data.total_scratch = 0;
 }

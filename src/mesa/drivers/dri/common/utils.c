@@ -179,13 +179,18 @@ driGetRendererString( char * buffer, const char * hardware_name,
 
 
 
+#define need_GL_ARB_draw_buffers
 #define need_GL_ARB_multisample
+#define need_GL_ARB_texture_compression
 #define need_GL_ARB_transpose_matrix
+#define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_window_pos
 #define need_GL_EXT_compiled_vertex_array
+#define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_polygon_offset
 #define need_GL_EXT_texture_object
 #define need_GL_EXT_vertex_array
+#define need_GL_IBM_multimode_draw_arrays
 #define need_GL_MESA_window_pos
 
 /* These are needed in *all* drivers because Mesa internally implements
@@ -198,14 +203,19 @@ driGetRendererString( char * buffer, const char * hardware_name,
 #include "extension_helper.h"
 
 static const struct dri_extension all_mesa_extensions[] = {
+   { "GL_ARB_draw_buffers",          GL_ARB_draw_buffers_functions },
    { "GL_ARB_multisample",           GL_ARB_multisample_functions },
+   { "GL_ARB_texture_compression",   GL_ARB_texture_compression_functions },
    { "GL_ARB_transpose_matrix",      GL_ARB_transpose_matrix_functions },
+   { "GL_ARB_vertex_buffer_object",  GL_ARB_vertex_buffer_object_functions},
    { "GL_ARB_window_pos",            GL_ARB_window_pos_functions },
    { "GL_EXT_blend_func_separate",   GL_EXT_blend_func_separate_functions },
    { "GL_EXT_compiled_vertex_array", GL_EXT_compiled_vertex_array_functions },
+   { "GL_EXT_multi_draw_arrays",     GL_EXT_multi_draw_arrays_functions },
    { "GL_EXT_polygon_offset",        GL_EXT_polygon_offset_functions },
    { "GL_EXT_texture_object",        GL_EXT_texture_object_functions },
    { "GL_EXT_vertex_array",          GL_EXT_vertex_array_functions },
+   { "GL_IBM_multimode_draw_arrays", GL_IBM_multimode_draw_arrays_functions },
    { "GL_MESA_window_pos",           GL_MESA_window_pos_functions },
    { "GL_NV_vertex_program",         GL_NV_vertex_program_functions },
    { NULL,                           NULL }
@@ -744,9 +754,10 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
     return configs;
 }
 
-const __DRIconfig **driConcatConfigs(__DRIconfig **a, __DRIconfig **b)
+__DRIconfig **driConcatConfigs(__DRIconfig **a,
+			       __DRIconfig **b)
 {
-    const __DRIconfig **all;
+    __DRIconfig **all;
     int i, j, index;
 
     i = 0;

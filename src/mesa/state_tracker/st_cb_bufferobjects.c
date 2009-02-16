@@ -55,7 +55,7 @@
 static struct gl_buffer_object *
 st_bufferobj_alloc(GLcontext *ctx, GLuint name, GLenum target)
 {
-   struct st_buffer_object *st_obj = CALLOC_STRUCT(st_buffer_object);
+   struct st_buffer_object *st_obj = ST_CALLOC_STRUCT(st_buffer_object);
 
    if (!st_obj)
       return NULL;
@@ -80,7 +80,7 @@ st_bufferobj_free(GLcontext *ctx, struct gl_buffer_object *obj)
    if (st_obj->buffer) 
       pipe_buffer_reference(pipe->screen, &st_obj->buffer, NULL);
 
-   free(st_obj);
+   _mesa_free(st_obj);
 }
 
 

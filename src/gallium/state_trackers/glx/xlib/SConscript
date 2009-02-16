@@ -5,8 +5,7 @@ Import('*')
 
 if env['platform'] == 'linux' \
         and 'mesa' in env['statetrackers'] \
-        and ('softpipe' or 'i915simple' or 'trace') in env['drivers'] \
-        and not env['dri']:
+        and ('softpipe' or 'i915simple' or 'trace') in env['drivers']:
 
     env = env.Clone()
 

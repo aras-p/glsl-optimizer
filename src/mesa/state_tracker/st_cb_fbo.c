@@ -118,7 +118,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    template.height[0] = height;
    template.depth[0] = 1;
    template.last_level = 0;
-   template.nr_samples = rb->Samples;
+   template.nr_samples = rb->NumSamples;
 
    if (pf_is_depth_stencil(template.format)) {
       template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
@@ -190,7 +190,7 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
    ASSERT(strb);
    pipe_surface_reference(&strb->surface, NULL);
    pipe_texture_reference(&strb->texture, NULL);
-   free(strb);
+   _mesa_free(strb);
 }
 
 
@@ -228,7 +228,7 @@ st_new_framebuffer(GLcontext *ctx, GLuint name)
 static struct gl_renderbuffer *
 st_new_renderbuffer(GLcontext *ctx, GLuint name)
 {
-   struct st_renderbuffer *strb = CALLOC_STRUCT(st_renderbuffer);
+   struct st_renderbuffer *strb = ST_CALLOC_STRUCT(st_renderbuffer);
    if (strb) {
       _mesa_init_renderbuffer(&strb->Base, name);
       strb->Base.Delete = st_renderbuffer_delete;
@@ -250,7 +250,7 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples)
 {
    struct st_renderbuffer *strb;
 
-   strb = CALLOC_STRUCT(st_renderbuffer);
+   strb = ST_CALLOC_STRUCT(st_renderbuffer);
    if (!strb) {
       _mesa_error(NULL, GL_OUT_OF_MEMORY, "creating renderbuffer");
       return NULL;
@@ -258,7 +258,7 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples)
 
    _mesa_init_renderbuffer(&strb->Base, 0);
    strb->Base.ClassID = 0x4242; /* just a unique value */
-   strb->Base.Samples = samples;
+   strb->Base.NumSamples = samples;
    strb->format = format;
 
    switch (format) {

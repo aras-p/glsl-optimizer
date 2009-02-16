@@ -233,7 +233,6 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_WM_INPUT_DIMENSIONS),
    DEFINE_BIT(BRW_NEW_INPUT_VARYING),
    DEFINE_BIT(BRW_NEW_PSP),
-   DEFINE_BIT(BRW_NEW_METAOPS),
    DEFINE_BIT(BRW_NEW_FENCE),
    DEFINE_BIT(BRW_NEW_INDICES),
    DEFINE_BIT(BRW_NEW_VERTICES),
@@ -298,6 +297,7 @@ brw_print_dirty_count(struct dirty_bit_map *bit_map, int32_t bits)
  */
 void brw_validate_state( struct brw_context *brw )
 {
+   GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    struct brw_state_flags *state = &brw->state.dirty;
    GLuint i;
@@ -314,13 +314,13 @@ void brw_validate_state( struct brw_context *brw )
       state->brw |= ~0;
    }
 
-   if (brw->fragment_program != brw->attribs.FragmentProgram->_Current) {
-      brw->fragment_program = brw->attribs.FragmentProgram->_Current;
+   if (brw->fragment_program != ctx->FragmentProgram._Current) {
+      brw->fragment_program = ctx->FragmentProgram._Current;
       brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
    }
 
-   if (brw->vertex_program != brw->attribs.VertexProgram->_Current) {
-      brw->vertex_program = brw->attribs.VertexProgram->_Current;
+   if (brw->vertex_program != ctx->VertexProgram._Current) {
+      brw->vertex_program = ctx->VertexProgram._Current;
       brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
    }
 

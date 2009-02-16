@@ -6,8 +6,7 @@ TOP        = ../../../..
 
 include ${TOP}/configs/current
 
-CFLAGS += -g -Wall -Werror=implicit-function-declaration -fPIC \
-          $(shell pkg-config --cflags pixman-1 xorg-server) \
+CFLAGS += -g -Wall -Werror-implicit-function-declaration -fPIC \
           -I${GALLIUMDIR}/include \
           -I${GALLIUMDIR}/auxiliary \
           -I${TOP}/src/mesa/drivers/dri/common \

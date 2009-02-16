@@ -127,6 +127,14 @@ nv30_screen_surface_format_supported(struct pipe_screen *pscreen,
 	return FALSE;
 }
 
+static struct pipe_buffer *
+nv30_surface_buffer(struct pipe_surface *surf)
+{
+	struct nv30_miptree *mt = (struct nv30_miptree *)surf->texture;
+
+	return mt->buffer;
+}
+
 static void *
 nv30_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
 		 unsigned flags )
@@ -134,7 +142,6 @@ nv30_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
 	struct pipe_winsys	*ws = screen->winsys;
 	struct pipe_surface	*surface_to_map;
 	void			*map;
-	struct nv30_miptree *nv30mt = (struct nv30_miptree *)surface->texture;
 
 	if (!(surface->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
 		struct nv30_miptree *mt = (struct nv30_miptree *)surface->texture;
@@ -163,7 +170,7 @@ nv30_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
 
 	assert(surface_to_map);
 
-	map = ws->buffer_map(ws, nv30mt->buffer, flags);
+	map = ws->buffer_map(ws, nv30_surface_buffer(surface_to_map), flags);
 	if (!map)
 		return NULL;
 
@@ -175,7 +182,6 @@ nv30_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
 {
 	struct pipe_winsys	*ws = screen->winsys;
 	struct pipe_surface	*surface_to_unmap;
-	struct nv30_miptree *nv30mt = (struct nv30_miptree *)surface->texture;
 
 	/* TODO: Copy from shadow just before push buffer is flushed instead.
 	         There are probably some programs that map/unmap excessively
@@ -192,15 +198,16 @@ nv30_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
 
 	assert(surface_to_unmap);
 
-	ws->buffer_unmap(ws, nv30mt->buffer);
+	ws->buffer_unmap(ws, nv30_surface_buffer(surface_to_unmap));
 
 	if (surface_to_unmap != surface) {
 		struct nv30_screen *nvscreen = nv30_screen(screen);
 
-		nvscreen->nvws->surface_copy(nvscreen->nvws,
-		                             surface, 0, 0,
-		                             surface_to_unmap, 0, 0,
-		                             surface->width, surface->height);
+		nvscreen->eng2d->copy(nvscreen->eng2d, surface, 0, 0,
+		                      surface_to_unmap, 0, 0,
+		                      surface->width, surface->height);
+
+		screen->tex_surface_release(screen, &surface_to_unmap);
 	}
 }
 
@@ -232,6 +239,10 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	if (!screen)
 		return NULL;
 	screen->nvws = nvws;
+
+	/* 2D engine setup */
+	screen->eng2d = nv04_surface_2d_init(nvws);
+	screen->eng2d->buf = nv30_surface_buffer;
 
 	/* 3D object */
 	switch (chipset & 0xf0) {

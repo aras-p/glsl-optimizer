@@ -1,9 +1,4 @@
-DESCRIPTION 'OpenGL Utility Toolkit for Win32'
-
-VERSION 3.7
-
 EXPORTS
-
 	glutAddMenuEntry
 	glutAddSubMenu
 	glutAttachMenu
@@ -128,4 +123,3 @@ EXPORTS
 	glutBitmapTimesRoman24
 ;    __glutSetFCB
 ;    __glutGetFCB
-

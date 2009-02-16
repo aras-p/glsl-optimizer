@@ -108,6 +108,8 @@ GLboolean s3vCreateContext(const __GLcontextModes *glVisual,
 	ctx->Const.MaxLineWidthAA = 1.0;
 	ctx->Const.LineWidthGranularity = 1.0;
 
+	ctx->Const.MaxDrawBuffers = 1;
+
 	vmesa->texHeap = mmInit( 0, vmesa->s3vScreen->textureSize );
 	DEBUG(("vmesa->s3vScreen->textureSize = 0x%x\n",
 		vmesa->s3vScreen->textureSize));

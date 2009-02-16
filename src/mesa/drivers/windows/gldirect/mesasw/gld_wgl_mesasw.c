@@ -1625,6 +1625,7 @@ BOOL gldInitialiseMesa_MesaSW(
 
 	// Added this to force max texture diminsion to 256. KeithH
 	ctx->Const.MaxTextureLevels = 8;
+	ctx->Const.MaxDrawBuffers = 1;
 
 	_mesa_enable_sw_extensions(ctx);
 	_mesa_enable_imaging_extensions(ctx);

@@ -61,9 +61,9 @@
 static INLINE void *
 mem_dup(const void *src, uint size)
 {
-   void *dup = MALLOC(size);
+   void *dup = _mesa_malloc(size);
    if (dup)
-      memcpy(dup, src, size);
+      _mesa_memcpy(dup, src, size);
    return dup;
 }
 
@@ -307,7 +307,7 @@ st_translate_vertex_program(struct st_context *st,
 
    /* free old shader state, if any */
    if (stvp->state.tokens) {
-      FREE((void *) stvp->state.tokens);
+      _mesa_free((void *) stvp->state.tokens);
       stvp->state.tokens = NULL;
    }
    if (stvp->driver_shader) {

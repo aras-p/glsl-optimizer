@@ -45,10 +45,6 @@ extern struct intel_region *intel_readbuf_region(struct intel_context *intel);
 
 extern struct intel_region *intel_drawbuf_region(struct intel_context *intel);
 
-extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
-
-extern void intelWindowMoved(struct intel_context *intel);
-
 extern void intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb);
 
 extern void intelInitBufferFuncs(struct dd_function_table *functions);
@@ -57,5 +53,8 @@ void intel_get_cliprects(struct intel_context *intel,
 			 struct drm_clip_rect **cliprects,
 			 unsigned int *num_cliprects,
 			 int *x_off, int *y_off);
+#ifdef I915
+void intelCalcViewport(GLcontext * ctx);
+#endif
 
 #endif /* INTEL_BUFFERS_H */

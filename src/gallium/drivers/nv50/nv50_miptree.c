@@ -104,6 +104,31 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 	return &mt->base;
 }
 
+static struct pipe_texture *
+nv50_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
+		     const unsigned *stride, struct pipe_buffer *pb)
+{
+	struct nv50_miptree *mt;
+
+	/* Only supports 2D, non-mipmapped textures for the moment */
+	if (pt->target != PIPE_TEXTURE_2D || pt->last_level != 0 ||
+	    pt->depth[0] != 1)
+		return NULL;
+
+	mt = CALLOC_STRUCT(nv50_miptree);
+	if (!mt)
+		return NULL;
+
+	mt->base = *pt;
+	mt->base.refcount = 1;
+	mt->base.screen = pscreen;
+	mt->image_nr = 1;
+	mt->level[0].image_offset = CALLOC(1, sizeof(unsigned));
+
+	pipe_buffer_reference(pscreen, &mt->buffer, pb);
+	return &mt->base;
+}
+
 static INLINE void
 mark_dirty(uint32_t *flags, unsigned image)
 {
@@ -141,7 +166,7 @@ void
 nv50_miptree_sync(struct pipe_screen *pscreen, struct nv50_miptree *mt,
 		  unsigned level, unsigned image)
 {
-	struct nouveau_winsys *nvws = nv50_screen(pscreen)->nvws;
+	struct nv50_screen *nvscreen = nv50_screen(pscreen);
 	struct nv50_miptree_level *lvl = &mt->level[level];
 	struct pipe_surface *dst, *src;
 	unsigned face = 0, zslice = 0;
@@ -172,7 +197,7 @@ nv50_miptree_sync(struct pipe_screen *pscreen, struct nv50_miptree *mt,
 	dst = pscreen->get_tex_surface(pscreen, &mt->base, face, level, zslice,
 				       PIPE_BUFFER_USAGE_GPU_READ);
 
-	nvws->surface_copy(nvws, dst, 0, 0, src, 0, 0, dst->width, dst->height);
+	nv50_surface_do_copy(nvscreen, dst, 0, 0, src, 0, 0, dst->width, dst->height);
 
 	pscreen->tex_surface_release(pscreen, &dst);
 	pscreen->tex_surface_release(pscreen, &src);
@@ -183,7 +208,7 @@ static void
 nv50_miptree_sync_cpu(struct pipe_screen *pscreen, struct nv50_miptree *mt,
 		      unsigned level, unsigned image)
 {
-	struct nouveau_winsys *nvws = nv50_screen(pscreen)->nvws;
+	struct nv50_screen *nvscreen = nv50_screen(pscreen);
 	struct nv50_miptree_level *lvl = &mt->level[level];
 	struct pipe_surface *dst, *src;
 	unsigned face = 0, zslice = 0;
@@ -204,7 +229,7 @@ nv50_miptree_sync_cpu(struct pipe_screen *pscreen, struct nv50_miptree *mt,
 	dst = pscreen->get_tex_surface(pscreen, &mt->base, face, level, zslice,
 				       PIPE_BUFFER_USAGE_CPU_READ);
 
-	nvws->surface_copy(nvws, dst, 0, 0, src, 0, 0, dst->width, dst->height);
+	nv50_surface_do_copy(nvscreen, dst, 0, 0, src, 0, 0, dst->width, dst->height);
 
 	pscreen->tex_surface_release(pscreen, &dst);
 	pscreen->tex_surface_release(pscreen, &src);
@@ -287,6 +312,7 @@ void
 nv50_screen_init_miptree_functions(struct pipe_screen *pscreen)
 {
 	pscreen->texture_create = nv50_miptree_create;
+	pscreen->texture_blanket = nv50_miptree_blanket;
 	pscreen->texture_release = nv50_miptree_release;
 	pscreen->get_tex_surface = nv50_miptree_surface_new;
 	pscreen->tex_surface_release = nv50_miptree_surface_del;

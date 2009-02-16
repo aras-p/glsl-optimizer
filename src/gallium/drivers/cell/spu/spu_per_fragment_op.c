@@ -85,7 +85,7 @@ spu_fallback_fragment_ops(uint x, uint y,
     * Do alpha test
     */
    if (spu.depth_stencil_alpha.alpha.enabled) {
-      vector float ref = spu_splats(spu.depth_stencil_alpha.alpha.ref);
+      vector float ref = spu_splats(spu.depth_stencil_alpha.alpha.ref_value);
       vector unsigned int amask;
 
       switch (spu.depth_stencil_alpha.alpha.func) {

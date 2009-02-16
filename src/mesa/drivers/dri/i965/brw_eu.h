@@ -91,6 +91,11 @@ struct brw_indirect {
 };
 
 
+struct brw_glsl_label;
+struct brw_glsl_call;
+
+
+
 #define BRW_EU_MAX_INSN_STACK 5
 #define BRW_EU_MAX_INSN 1200
 
@@ -106,7 +111,20 @@ struct brw_compile {
    GLuint flag_value;
    GLboolean single_program_flow;
    struct brw_context *brw;
+
+   struct brw_glsl_label *first_label;  /**< linked list of labels */
+   struct brw_glsl_call *first_call;    /**< linked list of CALs */
 };
+
+
+void
+brw_save_label(struct brw_compile *c, const char *name, GLuint position);
+
+void
+brw_save_call(struct brw_compile *c, const char *name, GLuint call_pos);
+
+void
+brw_resolve_cals(struct brw_compile *c);
 
 
 

@@ -47,16 +47,22 @@ static void
 softpipe_map_constant_buffers(struct softpipe_context *sp)
 {
    struct pipe_winsys *ws = sp->pipe.winsys;
-   uint i;
+   uint i, size;
+
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
       if (sp->constants[i].buffer && sp->constants[i].buffer->size)
          sp->mapped_constants[i] = ws->buffer_map(ws, sp->constants[i].buffer,
                                                   PIPE_BUFFER_USAGE_CPU_READ);
    }
 
+   if (sp->constants[PIPE_SHADER_VERTEX].buffer)
+      size = sp->constants[PIPE_SHADER_VERTEX].buffer->size;
+   else
+      size = 0;
+
    draw_set_mapped_constant_buffer(sp->draw,
                                    sp->mapped_constants[PIPE_SHADER_VERTEX],
-                                   sp->constants[PIPE_SHADER_VERTEX].buffer->size);
+                                   size);
 }
 
 static void

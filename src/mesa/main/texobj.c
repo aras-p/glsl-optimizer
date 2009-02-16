@@ -42,6 +42,8 @@
 #include "texstate.h"
 #include "texobj.h"
 #include "mtypes.h"
+#include "shader/prog_instruction.h"
+
 
 
 /**********************************************************************/
@@ -132,12 +134,15 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
    obj->BaseLevel = 0;
    obj->MaxLevel = 1000;
    obj->MaxAnisotropy = 1.0;
-   obj->CompareFlag = GL_FALSE;                      /* SGIX_shadow */
-   obj->CompareOperator = GL_TEXTURE_LEQUAL_R_SGIX;  /* SGIX_shadow */
    obj->CompareMode = GL_NONE;         /* ARB_shadow */
    obj->CompareFunc = GL_LEQUAL;       /* ARB_shadow */
+   obj->CompareFailValue = 0.0F;       /* ARB_shadow_ambient */
    obj->DepthMode = GL_LUMINANCE;      /* ARB_depth_texture */
-   obj->ShadowAmbient = 0.0F;          /* ARB/SGIX_shadow_ambient */
+   obj->Swizzle[0] = GL_RED;
+   obj->Swizzle[1] = GL_GREEN;
+   obj->Swizzle[2] = GL_BLUE;
+   obj->Swizzle[3] = GL_ALPHA;
+   obj->_Swizzle = SWIZZLE_NOOP;
 }
 
 
@@ -241,17 +246,17 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
    dest->BaseLevel = src->BaseLevel;
    dest->MaxLevel = src->MaxLevel;
    dest->MaxAnisotropy = src->MaxAnisotropy;
-   dest->CompareFlag = src->CompareFlag;
-   dest->CompareOperator = src->CompareOperator;
-   dest->ShadowAmbient = src->ShadowAmbient;
    dest->CompareMode = src->CompareMode;
    dest->CompareFunc = src->CompareFunc;
+   dest->CompareFailValue = src->CompareFailValue;
    dest->DepthMode = src->DepthMode;
    dest->_MaxLevel = src->_MaxLevel;
    dest->_MaxLambda = src->_MaxLambda;
    dest->GenerateMipmap = src->GenerateMipmap;
    dest->Palette = src->Palette;
    dest->_Complete = src->_Complete;
+   COPY_4V(dest->Swizzle, src->Swizzle);
+   dest->_Swizzle = src->_Swizzle;
 }
 
 
@@ -388,8 +393,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
     */
    if ((baseLevel < 0) || (baseLevel > MAX_TEXTURE_LEVELS)) {
       char s[100];
-      _mesa_sprintf(s, "obj %p (%d) base level = %d is invalid",
-              (void *) t, t->Name, baseLevel);
+      _mesa_sprintf(s, "base level = %d is invalid", baseLevel);
       incomplete(t, s);
       t->_Complete = GL_FALSE;
       return;
@@ -398,8 +402,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    /* Always need the base level image */
    if (!t->Image[0][baseLevel]) {
       char s[100];
-      _mesa_sprintf(s, "obj %p (%d) Image[baseLevel=%d] == NULL",
-              (void *) t, t->Name, baseLevel);
+      _mesa_sprintf(s, "Image[baseLevel=%d] == NULL", baseLevel);
       incomplete(t, s);
       t->_Complete = GL_FALSE;
       return;
@@ -979,11 +982,11 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          ASSERT(texUnit->CurrentRect);
          break;
       case GL_TEXTURE_1D_ARRAY_EXT:
-         texUnit->Current1DArray = newTexObj;
+         _mesa_reference_texobj(&texUnit->Current1DArray, newTexObj);
          ASSERT(texUnit->Current1DArray);
          break;
       case GL_TEXTURE_2D_ARRAY_EXT:
-         texUnit->Current2DArray = newTexObj;
+         _mesa_reference_texobj(&texUnit->Current2DArray, newTexObj);
          ASSERT(texUnit->Current2DArray);
          break;
       default:

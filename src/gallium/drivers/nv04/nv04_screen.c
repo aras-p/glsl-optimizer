@@ -149,8 +149,17 @@ nv04_screen_destroy(struct pipe_screen *pscreen)
 
 	nvws->notifier_free(&screen->sync);
 	nvws->grobj_free(&screen->fahrenheit);
+	nv04_surface_2d_takedown(&screen->eng2d);
 
 	FREE(pscreen);
+}
+
+static struct pipe_buffer *
+nv04_surface_buffer(struct pipe_surface *surf)
+{
+	struct nv04_miptree *mt = (struct nv04_miptree *)surf->texture;
+
+	return mt->buffer;
 }
 
 struct pipe_screen *
@@ -180,6 +189,10 @@ nv04_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		NOUVEAU_ERR("Unknown nv04 chipset: nv%02x\n", chipset);
 		return NULL;
 	}
+
+	/* 2D engine setup */
+	screen->eng2d = nv04_surface_2d_init(nvws);
+	screen->eng2d->buf = nv04_surface_buffer;
 
 	/* 3D object */
 	ret = nvws->grobj_alloc(nvws, fahrenheit_class, &screen->fahrenheit);

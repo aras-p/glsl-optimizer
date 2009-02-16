@@ -32,10 +32,6 @@
 #include "main/mtypes.h"
 
 
-extern void
-slang_print_ir(const slang_ir_node *n, int indent);
-
-
 extern GLuint
 _slang_swizzle_swizzle(GLuint swz1, GLuint swz2);
 

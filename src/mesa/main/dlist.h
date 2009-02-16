@@ -39,7 +39,7 @@
 #if _HAVE_FULL_GL
 
 extern void
-_mesa_delete_list(GLcontext *ctx, struct mesa_display_list *dlist);
+_mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist);
 
 extern void GLAPIENTRY _mesa_CallList( GLuint list );
 

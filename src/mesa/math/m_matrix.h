@@ -200,6 +200,9 @@ do {								\
 } while (0)
 
 
+extern void
+_mesa_transform_vector(GLfloat u[4], const GLfloat v[4], const GLfloat m[16]);
+
 
 /*@}*/
 

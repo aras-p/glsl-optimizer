@@ -3648,8 +3648,7 @@ enable_parser_extensions(GLcontext *ctx, grammar id)
    if (ctx->Extensions.NV_texture_rectangle
        && !enable_ext(ctx, id, "texture_rectangle"))
       return GL_FALSE;
-   if (ctx->Extensions.ARB_draw_buffers
-       && !enable_ext(ctx, id, "draw_buffers"))
+   if (!enable_ext(ctx, id, "draw_buffers"))
       return GL_FALSE;
    if (ctx->Extensions.MESA_texture_array
        && !enable_ext(ctx, id, "texture_array"))

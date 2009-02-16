@@ -223,7 +223,7 @@ setup_edgeflags(GLcontext *ctx, GLenum primMode, GLint start, GLint count,
       if (!stobj)
          return NULL;
 
-      vec = (unsigned *) calloc(sizeof(unsigned), (count + 31) / 32);
+      vec = (unsigned *) _mesa_calloc(sizeof(unsigned) * ((count + 31) / 32));
       if (!vec)
          return NULL;
 
@@ -379,7 +379,7 @@ setup_interleaved_attribs(GLcontext *ctx,
          else {
             vbuffer->buffer = NULL;
             pipe_buffer_reference(pipe->screen, &vbuffer->buffer, stobj->buffer);
-            vbuffer->buffer_offset = (unsigned) arrays[mesaAttr]->Ptr;
+            vbuffer->buffer_offset = (unsigned) low;
          }
          vbuffer->stride = stride; /* in bytes */
          vbuffer->max_index = max_index;
@@ -541,9 +541,11 @@ st_draw_vbo(GLcontext *ctx,
    vp = ctx->st->vp;
    vs = &ctx->st->vp->state;
 
+#if 0
    if (MESA_VERBOSE & VERBOSE_GLSL) {
       check_uniforms(ctx);
    }
+#endif
 
    /*
     * Setup the vbuffer[] and velements[] arrays.

@@ -508,8 +508,7 @@ static GLvoid
 pp_ext_init(pp_ext *self, const struct gl_extensions *extensions)
 {
    pp_ext_disable_all (self);
-   if (extensions->ARB_draw_buffers)
-      self->ARB_draw_buffers = GL_TRUE;
+   self->ARB_draw_buffers = GL_TRUE;
    if (extensions->NV_texture_rectangle)
       self->ARB_texture_rectangle = GL_TRUE;
 }

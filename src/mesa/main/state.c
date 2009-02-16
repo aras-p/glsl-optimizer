@@ -173,13 +173,16 @@ update_arrays( GLcontext *ctx )
 }
 
 
+/**
+ * Update the following fields:
+ *   ctx->VertexProgram._Enabled
+ *   ctx->FragmentProgram._Enabled
+ *   ctx->ATIFragmentShader._Enabled
+ * This needs to be done before texture state validation.
+ */
 static void
-update_program(GLcontext *ctx)
+update_program_enables(GLcontext *ctx)
 {
-   const struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
-   const struct gl_vertex_program *prevVP = ctx->VertexProgram._Current;
-   const struct gl_fragment_program *prevFP = ctx->FragmentProgram._Current;
-
    /* These _Enabled flags indicate if the program is enabled AND valid. */
    ctx->VertexProgram._Enabled = ctx->VertexProgram.Enabled
       && ctx->VertexProgram.Current->Base.Instructions;
@@ -187,6 +190,25 @@ update_program(GLcontext *ctx)
       && ctx->FragmentProgram.Current->Base.Instructions;
    ctx->ATIFragmentShader._Enabled = ctx->ATIFragmentShader.Enabled
       && ctx->ATIFragmentShader.Current->Instructions[0];
+}
+
+
+/**
+ * Update vertex/fragment program state.  In particular, update these fields:
+ *   ctx->VertexProgram._Current
+ *   ctx->VertexProgram._TnlProgram,
+ * These point to the highest priority enabled vertex/fragment program or are
+ * NULL if fixed-function processing is to be done.
+ *
+ * This function needs to be called after texture state validation in case
+ * we're generating a fragment program from fixed-function texture state.
+ */
+static void
+update_program(GLcontext *ctx)
+{
+   const struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+   const struct gl_vertex_program *prevVP = ctx->VertexProgram._Current;
+   const struct gl_fragment_program *prevFP = ctx->FragmentProgram._Current;
 
    /*
     * Set the ctx->VertexProgram._Current and ctx->FragmentProgram._Current
@@ -432,6 +454,24 @@ _mesa_update_state_locked( GLcontext *ctx )
    if (MESA_VERBOSE & VERBOSE_STATE)
       _mesa_print_state("_mesa_update_state", new_state);
 
+   /* Determine which state flags effect vertex/fragment program state */
+   if (ctx->FragmentProgram._MaintainTexEnvProgram) {
+      prog_flags |= (_NEW_TEXTURE | _NEW_FOG | _DD_NEW_SEPARATE_SPECULAR);
+   }
+   if (ctx->VertexProgram._MaintainTnlProgram) {
+      prog_flags |= (_NEW_ARRAY | _NEW_TEXTURE | _NEW_TEXTURE_MATRIX |
+                     _NEW_TRANSFORM | _NEW_POINT |
+                     _NEW_FOG | _NEW_LIGHT |
+                     _MESA_NEW_NEED_EYE_COORDS);
+   }
+
+   /*
+    * Now update derived state info
+    */
+
+   if (new_state & prog_flags)
+      update_program_enables( ctx );
+
    if (new_state & (_NEW_MODELVIEW|_NEW_PROJECTION))
       _mesa_update_modelview_project( ctx, new_state );
 
@@ -454,7 +494,7 @@ _mesa_update_state_locked( GLcontext *ctx )
       _mesa_update_stencil( ctx );
 
 #if FEATURE_pixel_transfer
-   if (new_state & _IMAGE_NEW_TRANSFER_STATE)
+   if (new_state & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_pixel( ctx, new_state );
 #endif
 
@@ -491,22 +531,8 @@ _mesa_update_state_locked( GLcontext *ctx )
    if (new_state & _MESA_NEW_NEED_EYE_COORDS) 
       _mesa_update_tnl_spaces( ctx, new_state );
 
-   if (ctx->FragmentProgram._MaintainTexEnvProgram) {
-      prog_flags |= (_NEW_ARRAY | _NEW_TEXTURE_MATRIX | _NEW_LIGHT |
-                     _NEW_RENDERMODE |
-                     _NEW_TEXTURE | _NEW_FOG | _DD_NEW_SEPARATE_SPECULAR);
-   }
-   if (ctx->VertexProgram._MaintainTnlProgram) {
-      prog_flags |= (_NEW_ARRAY | _NEW_TEXTURE | _NEW_TEXTURE_MATRIX |
-                     _NEW_RENDERMODE |
-                     _NEW_TRANSFORM | _NEW_POINT |
-                     _NEW_FOG | _NEW_LIGHT |
-                     _MESA_NEW_NEED_EYE_COORDS);
-   }
    if (new_state & prog_flags)
       update_program( ctx );
-
-
 
    /*
     * Give the driver a chance to act upon the new_state flags.

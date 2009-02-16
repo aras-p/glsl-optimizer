@@ -1482,6 +1482,7 @@ SkipPrimaryCreate:
 #else
 	lpCtx->glCtx->Const.MaxTextureSize = 1024;
 #endif
+	lpCtx->glCtx->Const.MaxDrawBuffers = 1;
 
 	// Setup the Display Driver pointers
 	dglSetupDDPointers(lpCtx->glCtx);

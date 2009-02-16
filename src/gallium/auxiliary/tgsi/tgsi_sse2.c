@@ -2671,7 +2671,7 @@ tgsi_emit_sse2(
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          /* simply copy the immediate values into the next immediates[] slot */
          {
-            const uint size = parse.FullToken.FullImmediate.Immediate.Size - 1;
+            const uint size = parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
             uint i;
             assert(size <= 4);
             assert(num_immediates < TGSI_EXEC_NUM_IMMEDIATES);

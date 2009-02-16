@@ -60,6 +60,7 @@ struct brw_wm_unit_key {
 static void
 wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    const struct gl_fragment_program *fp = brw->fragment_program;
    struct intel_context *intel = &brw->intel;
 
@@ -95,7 +96,7 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    key->sampler_count = brw->wm.sampler_count;
 
    /* _NEW_POLYGONSTIPPLE */
-   key->polygon_stipple = brw->attribs.Polygon->StippleFlag;
+   key->polygon_stipple = ctx->Polygon.StippleFlag;
 
    /* BRW_NEW_FRAGMENT_PROGRAM */
    key->uses_depth = (fp->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS)) != 0;
@@ -105,19 +106,19 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
       (fp->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) != 0;
 
    /* _NEW_COLOR */
-   key->uses_kill = fp->UsesKill || brw->attribs.Color->AlphaEnabled;
+   key->uses_kill = fp->UsesKill || ctx->Color.AlphaEnabled;
    key->is_glsl = brw_wm_is_glsl(fp);
 
    /* XXX: This needs a flag to indicate when it changes. */
    key->stats_wm = intel->stats_wm;
 
    /* _NEW_LINE */
-   key->line_stipple = brw->attribs.Line->StippleFlag;
+   key->line_stipple = ctx->Line.StippleFlag;
 
    /* _NEW_POLYGON */
-   key->offset_enable = brw->attribs.Polygon->OffsetFill;
-   key->offset_units = brw->attribs.Polygon->OffsetUnits;
-   key->offset_factor = brw->attribs.Polygon->OffsetFactor;
+   key->offset_enable = ctx->Polygon.OffsetFill;
+   key->offset_units = ctx->Polygon.OffsetUnits;
+   key->offset_factor = ctx->Polygon.OffsetFactor;
 }
 
 static dri_bo *

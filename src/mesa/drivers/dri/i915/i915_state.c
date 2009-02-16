@@ -41,6 +41,7 @@
 #include "intel_fbo.h"
 #include "intel_screen.h"
 #include "intel_batchbuffer.h"
+#include "intel_buffers.h"
 
 #include "i915_context.h"
 #include "i915_reg.h"
@@ -300,6 +301,65 @@ i915DepthMask(GLcontext * ctx, GLboolean flag)
    else
       i915->state.Ctx[I915_CTXREG_LIS6] &= ~S6_DEPTH_WRITE_ENABLE;
 }
+
+
+
+/**
+ * Update the viewport transformation matrix.  Depends on:
+ *  - viewport pos/size
+ *  - depthrange
+ *  - window pos/size or FBO size
+ */
+void
+intelCalcViewport(GLcontext * ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   const GLfloat *v = ctx->Viewport._WindowMap.m;
+   const GLfloat depthScale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
+   GLfloat *m = intel->ViewportMatrix.m;
+   GLfloat yScale, yBias;
+
+   if (ctx->DrawBuffer->Name) {
+      /* User created FBO */
+      /* y=0=bottom */
+      yScale = 1.0;
+      yBias = 0.0;
+   }
+   else {
+      /* window buffer, y=0=top */
+      yScale = -1.0;
+      yBias = (intel->driDrawable) ? intel->driDrawable->h : 0.0F;
+   }
+
+   m[MAT_SX] = v[MAT_SX];
+   m[MAT_TX] = v[MAT_TX];
+
+   m[MAT_SY] = v[MAT_SY] * yScale;
+   m[MAT_TY] = v[MAT_TY] * yScale + yBias;
+
+   m[MAT_SZ] = v[MAT_SZ] * depthScale;
+   m[MAT_TZ] = v[MAT_TZ] * depthScale;
+}
+
+
+/** Called from ctx->Driver.Viewport() */
+static void
+i915Viewport(GLcontext * ctx,
+              GLint x, GLint y, GLsizei width, GLsizei height)
+{
+   intelCalcViewport(ctx);
+
+   intel_viewport(ctx, x, y, width, height);
+}
+
+
+/** Called from ctx->Driver.DepthRange() */
+static void
+i915DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
+{
+   intelCalcViewport(ctx);
+}
+
 
 /* =============================================================
  * Polygon stipple
@@ -964,6 +1024,8 @@ i915InitStateFunctions(struct dd_function_table *functions)
    functions->StencilFuncSeparate = i915StencilFuncSeparate;
    functions->StencilMaskSeparate = i915StencilMaskSeparate;
    functions->StencilOpSeparate = i915StencilOpSeparate;
+   functions->DepthRange = i915DepthRange;
+   functions->Viewport = i915Viewport;
 }
 
 

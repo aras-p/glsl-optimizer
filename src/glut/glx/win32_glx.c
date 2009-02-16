@@ -22,7 +22,7 @@ glXCreateContext(Display * display, XVisualInfo * visinfo,
      routine. */
   HGLRC context;
 
-  context = CreateContext(XHDC);
+  context = wglCreateContext(XHDC);
 
 #if 0
   /* XXX GLUT doesn't support it now, so don't worry about display list

@@ -49,7 +49,7 @@ st_create_framebuffer( const __GLcontextModes *visual,
                        uint width, uint height,
                        void *private)
 {
-   struct st_framebuffer *stfb = CALLOC_STRUCT(st_framebuffer);
+   struct st_framebuffer *stfb = ST_CALLOC_STRUCT(st_framebuffer);
    if (stfb) {
       int samples = st_get_msaa();
 

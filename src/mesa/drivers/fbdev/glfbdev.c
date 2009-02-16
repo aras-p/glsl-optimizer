@@ -685,7 +685,7 @@ glFBDevDestroyBuffer( GLFBDevBufferPtr buffer )
       }
       {
          struct gl_framebuffer *fb = &buffer->glframebuffer;
-         _mesa_unreference_framebuffer(&fb);
+         _mesa_reference_framebuffer(&fb, NULL);
       }
    }
 }

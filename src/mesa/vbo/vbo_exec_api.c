@@ -156,7 +156,6 @@ static void vbo_exec_copy_to_current( struct vbo_exec_context *exec )
          if (memcmp(current, tmp, sizeof(tmp)) != 0)
          { 
             memcpy(current, tmp, sizeof(tmp));
-
 	 
             /* Given that we explicitly state size here, there is no need
              * for the COPY_CLEAN above, could just copy 16 bytes and be

@@ -2,6 +2,7 @@
 #define __NV10_SCREEN_H__
 
 #include "pipe/p_screen.h"
+#include "nv04/nv04_surface_2d.h"
 
 struct nv10_screen {
 	struct pipe_screen pipe;
@@ -9,6 +10,7 @@ struct nv10_screen {
 	struct nouveau_winsys *nvws;
 
 	/* HW graphics objects */
+	struct nv04_surface_2d *eng2d;
 	struct nouveau_grobj *celsius;
 	struct nouveau_notifier *sync;
 };

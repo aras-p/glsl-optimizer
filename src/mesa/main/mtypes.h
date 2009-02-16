@@ -903,7 +903,7 @@ struct gl_light_attrib
    /*@{*/
    GLboolean _NeedEyeCoords;		
    GLboolean _NeedVertices;		/**< Use fast shader? */
-   GLbitfield  _Flags;		        /**< LIGHT_* flags, see above */
+   GLbitfield _Flags;		        /**< LIGHT_* flags, see above */
    GLfloat _BaseColor[2][3];
    /*@}*/
 };
@@ -1110,25 +1110,40 @@ struct gl_scissor_attrib
 
 /**
  * Stencil attribute group (GL_STENCIL_BUFFER_BIT).
+ *
+ * Three sets of stencil data are tracked so that OpenGL 2.0,
+ * GL_EXT_stencil_two_side, and GL_ATI_separate_stencil can all be supported
+ * simultaneously.  In each of the stencil state arrays, element 0 corresponds
+ * to GL_FRONT.  Element 1 corresponds to the OpenGL 2.0 /
+ * GL_ATI_separate_stencil GL_BACK state.  Element 2 corresponds to the
+ * GL_EXT_stencil_two_side GL_BACK state.
+ *
+ * The derived value \c _BackFace is either 1 or 2 depending on whether or
+ * not GL_STENCIL_TEST_TWO_SIDE_EXT is enabled.
+ *
+ * The derived value \c _TestTwoSide is set when the front-face and back-face
+ * stencil state are different.
  */
 struct gl_stencil_attrib
 {
    GLboolean Enabled;		/**< Enabled flag */
    GLboolean TestTwoSide;	/**< GL_EXT_stencil_two_side */
-   GLubyte ActiveFace;		/**< GL_EXT_stencil_two_side (0 or 1) */
+   GLubyte ActiveFace;		/**< GL_EXT_stencil_two_side (0 or 2) */
    GLboolean _TestTwoSide;
-   GLenum Function[2];		/**< Stencil function */
-   GLenum FailFunc[2];		/**< Fail function */
-   GLenum ZPassFunc[2];		/**< Depth buffer pass function */
-   GLenum ZFailFunc[2];		/**< Depth buffer fail function */
-   GLint Ref[2];		/**< Reference value */
-   GLuint ValueMask[2];		/**< Value mask */
-   GLuint WriteMask[2];		/**< Write mask */
+   GLubyte _BackFace;
+   GLenum Function[3];		/**< Stencil function */
+   GLenum FailFunc[3];		/**< Fail function */
+   GLenum ZPassFunc[3];		/**< Depth buffer pass function */
+   GLenum ZFailFunc[3];		/**< Depth buffer fail function */
+   GLint Ref[3];		/**< Reference value */
+   GLuint ValueMask[3];		/**< Value mask */
+   GLuint WriteMask[3];		/**< Write mask */
    GLuint Clear;		/**< Clear value */
 };
 
 
-#define NUM_TEXTURE_TARGETS 7   /* 1D, 2D, 3D, CUBE, RECT, 1D_STACK, and 2D_STACK */
+/** 1D, 2D, 3D, CUBE, RECT, 1D_ARRAY, and 2D_ARRAY targets */
+#define NUM_TEXTURE_TARGETS 7
 
 /**
  * An index for each type of texture object
@@ -1421,11 +1436,9 @@ struct gl_texture_object
    GLint BaseLevel;		/**< min mipmap level, OpenGL 1.2 */
    GLint MaxLevel;		/**< max mipmap level, OpenGL 1.2 */
    GLfloat MaxAnisotropy;	/**< GL_EXT_texture_filter_anisotropic */
-   GLboolean CompareFlag;	/**< GL_SGIX_shadow */
-   GLenum CompareOperator;	/**< GL_SGIX_shadow */
-   GLfloat ShadowAmbient;       /**< GL_ARB_shadow_ambient */
    GLenum CompareMode;		/**< GL_ARB_shadow */
    GLenum CompareFunc;		/**< GL_ARB_shadow */
+   GLfloat CompareFailValue;    /**< GL_ARB_shadow_ambient */
    GLenum _Function;		/**< Comparison function derived from 
 				 * \c CompareOperator, \c CompareMode, and
 				 * \c CompareFunc.
@@ -1434,8 +1447,11 @@ struct gl_texture_object
    GLint _MaxLevel;		/**< actual max mipmap level (q in the spec) */
    GLfloat _MaxLambda;		/**< = _MaxLevel - BaseLevel (q - b in spec) */
    GLint CropRect[4];           /**< GL_OES_draw_texture */
+   GLenum Swizzle[4];           /**< GL_EXT_texture_swizzle */
+   GLuint _Swizzle;             /**< same as Swizzle, but SWIZZLE_* format */
    GLboolean GenerateMipmap;    /**< GL_SGIS_generate_mipmap */
    GLboolean _Complete;		/**< Is texture object complete? */
+   GLboolean _RenderToTexture;  /**< Any rendering to this texture? */
 
    /** Actual texture images, indexed by [cube face] and [mipmap level] */
    struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
@@ -1456,23 +1472,20 @@ struct gl_texture_object
 
 /**
  * Texture combine environment state.
- * 
- * \todo
- * If GL_NV_texture_env_combine4 is ever supported, the arrays in this
- * structure will need to be expanded for 4 elements.
+ * Up to four combiner sources are possible with GL_NV_texture_env_combine4.
  */
 struct gl_tex_env_combine_state
 {
    GLenum ModeRGB;       /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
    GLenum ModeA;         /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
-   GLenum SourceRGB[3];  /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
-   GLenum SourceA[3];    /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
-   GLenum OperandRGB[3]; /**< SRC_COLOR, ONE_MINUS_SRC_COLOR, etc */
-   GLenum OperandA[3];   /**< SRC_ALPHA, ONE_MINUS_SRC_ALPHA, etc */
+   GLenum SourceRGB[4];  /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
+   GLenum SourceA[4];    /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
+   GLenum OperandRGB[4]; /**< SRC_COLOR, ONE_MINUS_SRC_COLOR, etc */
+   GLenum OperandA[4];   /**< SRC_ALPHA, ONE_MINUS_SRC_ALPHA, etc */
    GLuint ScaleShiftRGB; /**< 0, 1 or 2 */
    GLuint ScaleShiftA;   /**< 0, 1 or 2 */
-   GLuint _NumArgsRGB;   /**< Number of inputs used for the combine mode. */
-   GLuint _NumArgsA;     /**< Number of inputs used for the combine mode. */
+   GLuint _NumArgsRGB;   /**< Number of inputs used for the RGB combiner */
+   GLuint _NumArgsA;     /**< Number of inputs used for the A combiner */
 };
 
 
@@ -1662,6 +1675,7 @@ struct gl_client_array
 {
    GLint Size;                  /**< components per element (1,2,3,4) */
    GLenum Type;                 /**< datatype: GL_FLOAT, GL_INT, etc */
+   GLenum Format;               /**< default: GL_RGBA, but may be GL_BGRA */
    GLsizei Stride;		/**< user-specified stride */
    GLsizei StrideB;		/**< actual stride in bytes */
    const GLubyte *Ptr;          /**< Points to array data */
@@ -2151,6 +2165,13 @@ struct gl_shader_program
 };   
 
 
+#define GLSL_DUMP      0x1  /**< Dump shaders to stdout */
+#define GLSL_LOG       0x2  /**< Write shaders to files */
+#define GLSL_OPT       0x4  /**< Force optimizations (override pragmas) */
+#define GLSL_NO_OPT    0x8  /**< Force no optimizations (override pragmas) */
+#define GLSL_UNIFORMS 0x10  /**< Print glUniform calls */
+
+
 /**
  * Context state for GLSL vertex/fragment shaders.
  */
@@ -2162,6 +2183,7 @@ struct gl_shader_state
    GLboolean EmitCondCodes;             /**< Use condition codes? */
    GLboolean EmitComments;              /**< Annotated instructions */
    void *MemPool;
+   GLbitfield Flags;                    /**< Mask of GLSL_x flags */
 };
 
 
@@ -2263,7 +2285,9 @@ struct gl_renderbuffer
    GLenum _ActualFormat;  /**< The driver-chosen format */
    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
                                GL_STENCIL_INDEX. */
-   GLenum DataType;      /**< Type of values passed to the Get/Put functions */
+   GLenum ColorEncoding; /**< GL_LINEAR or GL_SRGB */
+   GLenum ComponentType; /**< GL_FLOAT, GL_INT, GL_UNSIGNED_INT,
+                              GL_UNSIGNED_NORMALIZED or GL_INDEX */
    GLubyte RedBits;      /**< Bits of red per pixel */
    GLubyte GreenBits;
    GLubyte BlueBits;
@@ -2271,7 +2295,9 @@ struct gl_renderbuffer
    GLubyte IndexBits;
    GLubyte DepthBits;
    GLubyte StencilBits;
-   GLubyte Samples;     /**< Number of samples - 0 if not multisampled */
+   GLubyte NumSamples;
+
+   GLenum DataType;      /**< Type of values passed to the Get/Put functions */
    GLvoid *Data;        /**< This may not be used by some kinds of RBs */
 
    /* Used to wrap one renderbuffer around another: */
@@ -2514,6 +2540,8 @@ struct gl_constants
    /* GL_ARB_vertex_shader */
    GLuint MaxVertexTextureImageUnits;
    GLuint MaxVarying;  /**< Number of float[4] vectors */
+   /* GL_ARB_framebuffer_object */
+   GLuint MaxSamples;
 };
 
 
@@ -2535,6 +2563,7 @@ struct gl_extensions
    GLboolean ARB_fragment_program;
    GLboolean ARB_fragment_program_shadow;
    GLboolean ARB_fragment_shader;
+   GLboolean ARB_framebuffer_object;
    GLboolean ARB_half_float_pixel;
    GLboolean ARB_imaging;
    GLboolean ARB_multisample;
@@ -2545,6 +2574,7 @@ struct gl_extensions
    GLboolean ARB_shading_language_100;
    GLboolean ARB_shading_language_120;
    GLboolean ARB_shadow;
+   GLboolean ARB_shadow_ambient; /* or GL_ARB_shadow_ambient */
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_compression;
    GLboolean ARB_texture_cube_map;
@@ -2605,8 +2635,10 @@ struct gl_extensions
    GLboolean EXT_texture_lod_bias;
    GLboolean EXT_texture_mirror_clamp;
    GLboolean EXT_texture_sRGB;
+   GLboolean EXT_texture_swizzle;
    GLboolean EXT_timer_query;
    GLboolean EXT_vertex_array;
+   GLboolean EXT_vertex_array_bgra;
    GLboolean EXT_vertex_array_set;
    /* vendor extensions */
    GLboolean APPLE_client_storage;
@@ -2629,6 +2661,7 @@ struct gl_extensions
    GLboolean NV_light_max_exponent;
    GLboolean NV_point_sprite;
    GLboolean NV_texgen_reflection;
+   GLboolean NV_texture_env_combine4;
    GLboolean NV_texture_rectangle;
    GLboolean NV_vertex_program;
    GLboolean NV_vertex_program1_1;
@@ -2639,8 +2672,6 @@ struct gl_extensions
    GLboolean SGIS_generate_mipmap;
    GLboolean SGIS_texture_edge_clamp;
    GLboolean SGIS_texture_lod;
-   GLboolean SGIX_shadow;
-   GLboolean SGIX_shadow_ambient; /* or GL_ARB_shadow_ambient */
    GLboolean TDFX_texture_compression_FXT1;
    GLboolean S3_s3tc;
    /*@}*/
@@ -2815,6 +2846,10 @@ struct gl_matrix_stack
 /*@}*/
 
 
+/**
+ * Composite state flags
+ */
+/*@{*/
 #define _MESA_NEW_NEED_EYE_COORDS         (_NEW_LIGHT |		\
                                            _NEW_TEXTURE |	\
                                            _NEW_POINT |		\
@@ -2824,16 +2859,11 @@ struct gl_matrix_stack
 #define _MESA_NEW_NEED_NORMALS            (_NEW_LIGHT |		\
                                            _NEW_TEXTURE)
 
-#define _IMAGE_NEW_TRANSFER_STATE         (_NEW_PIXEL | _NEW_COLOR_MATRIX)
+#define _MESA_NEW_TRANSFER_STATE          (_NEW_PIXEL |		\
+                                           _NEW_COLOR_MATRIX)
+/*@}*/
 
 
-
-
-/*
- * Forward declaration of display list data types:
- */
-union node;
-typedef union node Node;
 
 
 /* This has to be included here. */
@@ -2865,21 +2895,31 @@ struct gl_tnl_module
    /*@}*/
 };
 
-/* Strictly this is a tnl/ private concept, but it doesn't seem
+
+/**
+ * Display list flags.
+ * Strictly this is a tnl-private concept, but it doesn't seem
  * worthwhile adding a tnl private structure just to hold this one bit
  * of information:
  */
-#define MESA_DLIST_DANGLING_REFS     0x1 
+#define DLIST_DANGLING_REFS     0x1 
 
-/* Provide a location where information about a display list can be
+
+/** Opaque declaration of display list payload data type */
+union gl_dlist_node;
+
+
+/**
+ * Provide a location where information about a display list can be
  * collected.  Could be extended with driverPrivate structures,
  * etc. in the future.
  */
-struct mesa_display_list
+struct gl_display_list
 {
-   Node *node;
-   GLuint id;
-   GLbitfield flags;
+   GLuint Name;
+   GLbitfield Flags;  /**< DLIST_x flags */
+   /** The dlist commands are in a linked list of nodes */
+   union gl_dlist_node *Head;
 };
 
 
@@ -2890,10 +2930,8 @@ struct gl_dlist_state
 {
    GLuint CallDepth;		/**< Current recursion calling depth */
 
-   struct mesa_display_list *CurrentList;
-   Node *CurrentListPtr;	/**< Head of list being compiled */
-   GLuint CurrentListNum;	/**< Number of the list being compiled */
-   Node *CurrentBlock;		/**< Pointer to current block of nodes */
+   struct gl_display_list *CurrentList; /**< List currently being compiled */
+   union gl_dlist_node *CurrentBlock; /**< Pointer to current block of nodes */
    GLuint CurrentPos;		/**< Index into current block of nodes */
 
    GLvertexformat ListVtxfmt;
@@ -3145,8 +3183,6 @@ enum _verbose
    VERBOSE_PRIMS		= 0x0400,
    VERBOSE_VERTS		= 0x0800,
    VERBOSE_DISASSEM		= 0x1000,
-   VERBOSE_GLSL			= 0x2000,
-   VERBOSE_GLSL_DUMP		= 0x4000
 };
 
 

@@ -165,7 +165,8 @@ MakeOverlayWindow(Display *dpy)
          /* XXX setup the colormap entries! */
       }
       else {
-         printf("Error: couldn't get an overlay visual!\n");
+         printf("Couldn't get an overlay visual.\n");
+         printf("Your hardware probably doesn't support framebuffer overlay planes.\n");
          exit(1);
       }
    }

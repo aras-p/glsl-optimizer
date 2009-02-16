@@ -64,7 +64,7 @@ st_query_object(struct gl_query_object *q)
 static struct gl_query_object *
 st_NewQueryObject(GLcontext *ctx, GLuint id)
 {
-   struct st_query_object *stq = CALLOC_STRUCT(st_query_object);
+   struct st_query_object *stq = ST_CALLOC_STRUCT(st_query_object);
    if (stq) {
       stq->base.Id = id;
       stq->base.Ready = GL_TRUE;
@@ -87,7 +87,7 @@ st_DeleteQuery(GLcontext *ctx, struct gl_query_object *q)
       stq->pq = NULL;
    }
 
-   FREE(stq);
+   _mesa_free(stq);
 }
 
 

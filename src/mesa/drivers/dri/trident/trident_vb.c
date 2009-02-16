@@ -402,7 +402,7 @@ void tridentInitVB( GLcontext *ctx )
    tridentContextPtr tmesa = TRIDENT_CONTEXT(ctx);
    GLuint size = TNL_CONTEXT(ctx)->vb.Size;
 
-   tmesa->verts = (char *)ALIGN_MALLOC( size * 16 * 4, 32 );
+   tmesa->verts = (GLubyte *)ALIGN_MALLOC( size * 16 * 4, 32 );
 
    {
       static int firsttime = 1;
