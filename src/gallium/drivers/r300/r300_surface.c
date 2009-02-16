@@ -194,6 +194,9 @@ static void r300_surface_fill(struct pipe_context* pipe,
         ((h * 6) & R300_POINTSIZE_Y_MASK) |
         ((w * 6) << R300_POINTSIZE_X_SHIFT));
 
+    /* XXX */
+    OUT_CS_REG(R300_SC_CLIP_RULE, 0xaaaa);
+
     /* Pixel scissors */
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
     OUT_CS((x << R300_SCISSORS_X_SHIFT) | (y << R300_SCISSORS_Y_SHIFT));
