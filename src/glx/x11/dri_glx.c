@@ -655,6 +655,8 @@ static __GLXDRIscreen *driCreateScreen(__GLXscreenConfigs *psc, int screen,
     psp->createContext = driCreateContext;
     psp->createDrawable = driCreateDrawable;
     psp->swapBuffers = driSwapBuffers;
+    psp->waitX = NULL;
+    psp->waitGL = NULL;
 
     return psp;
 }

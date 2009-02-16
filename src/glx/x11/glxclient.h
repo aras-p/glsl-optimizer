@@ -139,6 +139,8 @@ struct __GLXDRIscreenRec {
     void (*swapBuffers)(__GLXDRIdrawable *pdraw);
     void (*copySubBuffer)(__GLXDRIdrawable *pdraw,
 			  int x, int y, int width, int height);
+    void (*waitX)(__GLXDRIdrawable *pdraw);
+    void (*waitGL)(__GLXDRIdrawable *pdraw);
 };
 
 struct __GLXDRIcontextRec {
