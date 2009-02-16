@@ -714,7 +714,7 @@ void radeonCompressedTexSubImage2D(GLcontext * ctx, GLenum target,
 				   struct gl_texture_image *texImage)
 {
 	radeon_texsubimage(ctx, 2, level, xoffset, yoffset, 0, width, height, 1,
-		format, 0, data, 0, texObj, texImage, 1);
+		format, 0, data, &ctx->Unpack, texObj, texImage, 1);
 }
 
 
