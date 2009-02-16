@@ -409,7 +409,7 @@ esac
 dnl
 dnl Driver specific build directories
 dnl
-SRC_DIRS="mesa egl"
+SRC_DIRS="mesa egl glew"
 GLU_DIRS="sgi"
 WINDOW_SYSTEM=""
 GALLIUM_DIRS="auxiliary drivers state_trackers"
@@ -1006,7 +1006,7 @@ if test "x$enable_glut" = xyes && test "$mesa_driver" = osmesa; then
 fi
 
 if test "x$enable_glut" = xyes; then
-    SRC_DIRS="$SRC_DIRS glut/glx glew"
+    SRC_DIRS="$SRC_DIRS glut/glx"
     GLUT_CFLAGS=""
     if test "x$GCC" = xyes; then
         GLUT_CFLAGS="-fexceptions"
