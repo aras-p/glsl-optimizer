@@ -85,8 +85,8 @@ nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 	else
 	if (pt->tex_usage & (PIPE_TEXTURE_USAGE_PRIMARY |
-+	                     PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-+	                     PIPE_TEXTURE_USAGE_DEPTH_STENCIL))
+	                     PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+	                     PIPE_TEXTURE_USAGE_DEPTH_STENCIL))
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 	else
 	if (pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC)
