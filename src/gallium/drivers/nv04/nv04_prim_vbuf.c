@@ -51,7 +51,7 @@ nv04_vbuf_render_get_vertex_info( struct vbuf_render *render )
 }
 
 
-static void *
+static boolean
 nv04_vbuf_render_allocate_vertices( struct vbuf_render *render,
 		ushort vertex_size,
 		ushort nr_vertices )
@@ -61,9 +61,22 @@ nv04_vbuf_render_allocate_vertices( struct vbuf_render *render,
 	nv04_render->buffer = (unsigned char*) MALLOC(VERTEX_BUFFER_SIZE);
 	assert(!nv04_render->buffer);
 
+	return nv04_render->buffer ? TRUE : FALSE;
+}
+
+static void *
+nv04_vbuf_render_map_vertices( struct vbuf_render *render )
+{
+	struct nv04_vbuf_render *nv04_render = nv04_vbuf_render(render);
 	return nv04_render->buffer;
 }
 
+static void
+nv04_vbuf_render_unmap_vertices( struct vbuf_render *render,
+		ushort min_index,
+		ushort max_index )
+{
+}
 
 static boolean 
 nv04_vbuf_render_set_primitive( struct vbuf_render *render, 
@@ -244,10 +257,7 @@ nv04_vbuf_render_draw( struct vbuf_render *render,
 
 
 static void
-nv04_vbuf_render_release_vertices( struct vbuf_render *render,
-		void *vertices, 
-		unsigned vertex_size,
-		unsigned vertices_used )
+nv04_vbuf_render_release_vertices( struct vbuf_render *render )
 {
 	struct nv04_vbuf_render *nv04_render = nv04_vbuf_render(render);
 
@@ -278,6 +288,8 @@ nv04_vbuf_render_create( struct nv04_context *nv04 )
 	nv04_render->base.max_indices = 65536; 
 	nv04_render->base.get_vertex_info = nv04_vbuf_render_get_vertex_info;
 	nv04_render->base.allocate_vertices = nv04_vbuf_render_allocate_vertices;
+	nv04_render->base.map_vertices = nv04_vbuf_render_map_vertices;
+	nv04_render->base.unmap_vertices = nv04_vbuf_render_unmap_vertices;
 	nv04_render->base.set_primitive = nv04_vbuf_render_set_primitive;
 	nv04_render->base.draw = nv04_vbuf_render_draw;
 	nv04_render->base.release_vertices = nv04_vbuf_render_release_vertices;
