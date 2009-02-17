@@ -75,8 +75,8 @@ static GLboolean do_check_fallback(struct brw_context *brw)
    
    /* _NEW_STENCIL 
     */
-   if (ctx->Stencil.Enabled && 
-       !brw->intel.hw_stencil) {
+   if (ctx->Stencil.Enabled &&
+       (ctx->DrawBuffer->Name == 0 && !brw->intel.hw_stencil)) {
       DBG("FALLBACK: stencil\n");
       return GL_TRUE;
    }
