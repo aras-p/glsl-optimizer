@@ -99,8 +99,7 @@ nv10_vbuf_render_get_vertex_info( struct vbuf_render *render )
 	return &nv10->vertex_info;
 }
 
-
-static void *
+static boolean
 nv10_vbuf_render_allocate_vertices( struct vbuf_render *render,
 		ushort vertex_size,
 		ushort nr_vertices )
@@ -115,11 +114,35 @@ nv10_vbuf_render_allocate_vertices( struct vbuf_render *render,
 
 	nv10->dirty |= NV10_NEW_VTXARRAYS;
 
+	if (nv10_render->buffer)
+		return FALSE;
+	return TRUE;
+}
+
+static void *
+nv10_vbuf_render_map_vertices( struct vbuf_render *render )
+{
+	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
+	struct nv10_context *nv10 = nv10_render->nv10;
+	struct pipe_winsys *winsys = nv10->pipe.winsys;
+
 	return winsys->buffer_map(winsys, 
 			nv10_render->buffer, 
 			PIPE_BUFFER_USAGE_CPU_WRITE);
 }
 
+static void
+nv10_vbuf_render_unmap_vertices( struct vbuf_render *render,
+		ushort min_index,
+		ushort max_index )
+{
+	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
+	struct nv10_context *nv10 = nv10_render->nv10;
+	struct pipe_winsys *winsys = nv10->pipe.winsys;
+
+	assert(!nv10_render->buffer);
+	winsys->buffer_unmap(winsys, nv10_render->buffer);
+}
 
 static boolean
 nv10_vbuf_render_set_primitive( struct vbuf_render *render, 
@@ -176,18 +199,13 @@ nv10_vbuf_render_draw( struct vbuf_render *render,
 
 
 static void
-nv10_vbuf_render_release_vertices( struct vbuf_render *render,
-		void *vertices, 
-		unsigned vertex_size,
-		unsigned vertices_used )
+nv10_vbuf_render_release_vertices( struct vbuf_render *render )
 {
 	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
 	struct nv10_context *nv10 = nv10_render->nv10;
-	struct pipe_winsys *winsys = nv10->pipe.winsys;
 	struct pipe_screen *pscreen = &nv10->screen->pipe;
 
 	assert(nv10_render->buffer);
-	winsys->buffer_unmap(winsys, nv10_render->buffer);
 	pipe_buffer_reference(pscreen, &nv10_render->buffer, NULL);
 }
 
@@ -214,6 +232,8 @@ nv10_vbuf_render_create( struct nv10_context *nv10 )
 	nv10_render->base.max_indices = 1024;
 	nv10_render->base.get_vertex_info = nv10_vbuf_render_get_vertex_info;
 	nv10_render->base.allocate_vertices = nv10_vbuf_render_allocate_vertices;
+	nv10_render->base.map_vertices = nv10_vbuf_render_map_vertices;
+	nv10_render->base.unmap_vertices = nv10_vbuf_render_unmap_vertices;
 	nv10_render->base.set_primitive = nv10_vbuf_render_set_primitive;
 	nv10_render->base.draw = nv10_vbuf_render_draw;
 	nv10_render->base.release_vertices = nv10_vbuf_render_release_vertices;
