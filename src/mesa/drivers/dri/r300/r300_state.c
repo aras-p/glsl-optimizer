@@ -2234,7 +2234,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	/* disable fog unit */
 	r300->hw.fogs.cmd[R300_FOGS_STATE] = 0;
-	r300->hw.fg_depth_src.cmd[1] = R300_FG_DEPTH_SRC_SHADER;
+	r300->hw.fg_depth_src.cmd[1] = R300_FG_DEPTH_SRC_SCAN;
 
 	r300->hw.rb3d_cctl.cmd[1] = 0;
 
@@ -2539,16 +2539,23 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 
 	/* w_fmt value is set to get best performance
 	 * see p.130 R5xx 3D acceleration guide v1.3 */
-	GLuint w_fmt;
+	GLuint w_fmt, fgdepthsrc;
 	if (current_fragment_program_writes_depth(ctx)) {
+		fgdepthsrc = R300_FG_DEPTH_SRC_SHADER;
 		w_fmt = R300_W_FMT_W24 | R300_W_SRC_US;
 	} else {
+		fgdepthsrc = R300_FG_DEPTH_SRC_SCAN;
 		w_fmt = R300_W_FMT_W0 | R300_W_SRC_US;
 	}
-	
+
 	if (w_fmt != rmesa->hw.us_out_fmt.cmd[5]) {
 		R300_STATECHANGE(rmesa, us_out_fmt);
 		rmesa->hw.us_out_fmt.cmd[5] = w_fmt;
+	}
+
+	if (fgdepthsrc != rmesa->hw.fg_depth_src.cmd[1]) {
+		R300_STATECHANGE(rmesa, fg_depth_src);
+		rmesa->hw.fg_depth_src.cmd[1] = fgdepthsrc;
 	}
 
 	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
