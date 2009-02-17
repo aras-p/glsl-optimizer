@@ -246,11 +246,10 @@ static void r200_get_lock(radeonContextPtr radeon)
 
    if ( sarea->ctx_owner != rmesa->radeon.dri.hwContext ) {
       sarea->ctx_owner = rmesa->radeon.dri.hwContext;
+      if (!radeon->radeonScreen->kernel_mm)
+         radeon_bo_legacy_texture_age(radeon->radeonScreen->bom);
    }
 
-   for ( i = 0 ; i < rmesa->radeon.nr_heaps ; i++ ) {
-      DRI_AGE_TEXTURES( rmesa->radeon.texture_heaps[ i ] );
-   }
 }
 
 static void r200_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)

@@ -164,9 +164,8 @@ static void r100_get_lock(radeonContextPtr radeon)
       int i;
       sarea->ctx_owner = rmesa->radeon.dri.hwContext;
       
-      for (i = 0; i < rmesa->radeon.nr_heaps; i++) {
-	 DRI_AGE_TEXTURES(rmesa->radeon.texture_heaps[i]);
-      }
+      if (!radeon->radeonScreen->kernel_mm)
+         radeon_bo_legacy_texture_age(radeon->radeonScreen->bom);
    }
 }
 
