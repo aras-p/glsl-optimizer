@@ -689,6 +689,8 @@ struct radeon_bo_manager *radeon_bo_manager_legacy_ctor(struct radeon_screen *sc
         return NULL;
     }
 
+    make_empty_list(&bom->texture_swapped);
+
     bom->texture_heap = driCreateTextureHeap(0,
                                              bom,
                                              scrn->texSize[0],
