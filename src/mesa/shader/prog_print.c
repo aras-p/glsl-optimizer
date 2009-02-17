@@ -212,15 +212,13 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
            GLboolean relAddr, const struct gl_program *prog)
 {
    static char str[100];
+   const char *addr = relAddr ? "ADDR+" : "";
 
    str[0] = 0;
 
    switch (mode) {
    case PROG_PRINT_DEBUG:
-      if (relAddr)
-         _mesa_sprintf(str, "%s[ADDR+%d]", file_string(f, mode), index);
-      else
-         _mesa_sprintf(str, "%s[%d]", file_string(f, mode), index);
+      _mesa_sprintf(str, "%s[%s%d]", file_string(f, mode), addr, index);
       break;
 
    case PROG_PRINT_ARB:
@@ -235,19 +233,19 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
          _mesa_sprintf(str, "temp%d", index);
          break;
       case PROGRAM_ENV_PARAM:
-         _mesa_sprintf(str, "program.env[%d]", index);
+         _mesa_sprintf(str, "program.env[%s%d]", addr, index);
          break;
       case PROGRAM_LOCAL_PARAM:
-         _mesa_sprintf(str, "program.local[%d]", index);
+         _mesa_sprintf(str, "program.local[%s%d]", addr, index);
          break;
       case PROGRAM_VARYING: /* extension */
-         _mesa_sprintf(str, "varying[%d]", index);
+         _mesa_sprintf(str, "varying[%s%d]", addr, index);
          break;
       case PROGRAM_CONSTANT: /* extension */
-         _mesa_sprintf(str, "constant[%d]", index);
+         _mesa_sprintf(str, "constant[%s%d]", addr, index);
          break;
       case PROGRAM_UNIFORM: /* extension */
-         _mesa_sprintf(str, "uniform[%d]", index);
+         _mesa_sprintf(str, "uniform[%s%d]", addr, index);
          break;
       case PROGRAM_STATE_VAR:
          {
@@ -284,16 +282,16 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
          _mesa_sprintf(str, "c[%d]", index);
          break;
       case PROGRAM_VARYING: /* extension */
-         _mesa_sprintf(str, "varying[%d]", index);
+         _mesa_sprintf(str, "varying[%s%d]", addr, index);
          break;
       case PROGRAM_UNIFORM: /* extension */
-         _mesa_sprintf(str, "uniform[%d]", index);
+         _mesa_sprintf(str, "uniform[%s%d]", addr, index);
          break;
       case PROGRAM_CONSTANT: /* extension */
-         _mesa_sprintf(str, "constant[%d]", index);
+         _mesa_sprintf(str, "constant[%s%d]", addr, index);
          break;
       case PROGRAM_STATE_VAR: /* extension */
-         _mesa_sprintf(str, "state[%d]", index);
+         _mesa_sprintf(str, "state[%s%d]", addr, index);
          break;
       default:
          _mesa_problem(NULL, "bad file in reg_string()");
