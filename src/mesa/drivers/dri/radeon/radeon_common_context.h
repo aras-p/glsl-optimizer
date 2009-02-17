@@ -375,9 +375,6 @@ struct radeon_context {
   
    /* Texture object bookkeeping
     */
-   unsigned              nr_heaps;
-   driTexHeap          * texture_heaps[ RADEON_NR_TEX_HEAPS ];
-   driTextureObject      swapped;
    int                   texture_depth;
    float                 initialMaxAnisotropy;
 

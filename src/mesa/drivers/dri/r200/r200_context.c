@@ -331,25 +331,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
      return GL_FALSE;
    }
 
-
-   (void) memset( rmesa->radeon.texture_heaps, 0, sizeof( rmesa->radeon.texture_heaps ) );
-   make_empty_list( & rmesa->radeon.swapped );
-
-   rmesa->radeon.nr_heaps = 1 /* screen->numTexHeaps */ ;
-   assert(rmesa->radeon.nr_heaps < RADEON_NR_TEX_HEAPS);
-#if 0
-   for ( i = 0 ; i < rmesa->radeon.nr_heaps ; i++ ) {
-      rmesa->radeon.texture_heaps[i] = driCreateTextureHeap( i, rmesa,
-	    screen->texSize[i],
-	    12,
-	    RADEON_NR_TEX_REGIONS,
-	    (drmTextureRegionPtr)rmesa->radeon.sarea->tex_list[i],
-	    & rmesa->radeon.sarea->tex_age[i],
-	    & rmesa->radeon.swapped,
-	    sizeof( radeonTexObj ),
-	    (destroy_texture_object_t *) r200DestroyTexObj );
-   }
-#endif
    rmesa->radeon.texture_depth = driQueryOptioni (&rmesa->radeon.optionCache,
 					   "texture_depth");
    if (rmesa->radeon.texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
@@ -372,22 +353,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
 
    i = driQueryOptioni( &rmesa->radeon.optionCache, "allow_large_textures");
-
-   driCalculateMaxTextureLevels( rmesa->radeon.texture_heaps,
-				 rmesa->radeon.nr_heaps,
-				 & ctx->Const,
-				 4,
-				 11, /* max 2D texture size is 2048x2048 */
-#if ENABLE_HW_3D_TEXTURE
-				 8,  /* max 3D texture size is 256^3 */
-#else
-				 0,  /* 3D textures unsupported */
-#endif
-				 11, /* max cube texture size is 2048x2048 */
-				 11, /* max texture rectangle size is 2048x2048 */
-				 12,
-				 GL_FALSE,
-				 i );
 
    ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 
@@ -541,10 +506,7 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
    /* Free r200 context resources */
    assert(rmesa); /* should never be null */
    if ( rmesa ) {
-      GLboolean   release_texture_heaps;
 
-
-      release_texture_heaps = (rmesa->radeon.glCtx->Shared->RefCount == 1);
       _swsetup_DestroyContext( rmesa->radeon.glCtx );
       _tnl_DestroyContext( rmesa->radeon.glCtx );
       _vbo_DestroyContext( rmesa->radeon.glCtx );
@@ -561,21 +523,6 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
       if (rmesa->radeon.state.scissor.pClipRects) {
 	 FREE(rmesa->radeon.state.scissor.pClipRects);
 	 rmesa->radeon.state.scissor.pClipRects = NULL;
-      }
-
-
-      if ( release_texture_heaps ) {
-         /* This share group is about to go away, free our private
-          * texture object data.
-          */
-         int i;
-
-         for ( i = 0 ; i < rmesa->radeon.nr_heaps ; i++ ) {
-	    driDestroyTextureHeap( rmesa->radeon.texture_heaps[ i ] );
-	    rmesa->radeon.texture_heaps[ i ] = NULL;
-         }
-
-	 assert( is_empty_list( & rmesa->radeon.swapped ) );
       }
 
       radeonCleanupContext(&rmesa->radeon);
