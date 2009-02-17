@@ -32,6 +32,7 @@
  *      Jérôme Glisse <glisse@freedesktop.org>
  */
 #include <stdio.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,7 +52,6 @@
 
 struct bo_legacy {
     struct radeon_bo    base;
-    driTextureObject    tobj_base;
     int                 map_count;
     uint32_t            pending;
     int                 is_pending;
@@ -85,11 +85,15 @@ struct bo_manager_legacy {
     unsigned                    *free_handles;
 };
 
+#define container_of(ptr, type, member) ({                      \
+        const __typeof( ((type *)0)->member ) *__mptr = (ptr);    \
+        (type *)( (char *)__mptr - offsetof(type,member) );})
+
 static void bo_legacy_tobj_destroy(void *data, driTextureObject *t)
 {
-    struct bo_legacy *bo_legacy;
+    struct bo_legacy *bo_legacy = container_of(t, struct bo_legacy, dri_texture_obj);
 
-    bo_legacy = (struct bo_legacy*)((char*)t)-sizeof(struct radeon_bo);
+
     bo_legacy->got_dri_texture_obj = 0;
     bo_legacy->validated = 0;
 }
@@ -535,6 +539,9 @@ static int bo_vram_validate(struct radeon_bo *bo,
         bo_legacy->got_dri_texture_obj = 1;
         bo_legacy->dirty = 1;
     }
+
+    if (bo_legacy->got_dri_texture_obj)
+      driUpdateTextureLRU(&bo_legacy->dri_texture_obj);
     if (bo_legacy->dirty) {
         /* Copy to VRAM using a blit.
          * All memory is 4K aligned. We're using 1024 pixels wide blits.
