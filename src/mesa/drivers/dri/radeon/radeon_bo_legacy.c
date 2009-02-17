@@ -49,18 +49,23 @@
 #include "radeon_common.h"
 #include "radeon_bocs_wrapper.h"
 
+/* no seriously texmem.c is this screwed up */
+struct bo_legacy_texture_object {
+    driTextureObject    base;
+    struct bo_legacy *parent;
+};
 
 struct bo_legacy {
     struct radeon_bo    base;
     int                 map_count;
     uint32_t            pending;
     int                 is_pending;
-    int                 validated;
     int                 static_bo;
     int                 got_dri_texture_obj;
-    int                 dirty;
     uint32_t            offset;
-    driTextureObject    dri_texture_obj;
+    struct bo_legacy_texture_object *tobj;
+    int                 validated;
+    int                 dirty;
     void                *ptr;
     struct bo_legacy    *next, *prev;
     struct bo_legacy    *pnext, *pprev;
@@ -85,17 +90,14 @@ struct bo_manager_legacy {
     unsigned                    *free_handles;
 };
 
-#define container_of(ptr, type, member) ({                      \
-        const __typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-        (type *)( (char *)__mptr - offsetof(type,member) );})
-
 static void bo_legacy_tobj_destroy(void *data, driTextureObject *t)
 {
-    struct bo_legacy *bo_legacy = container_of(t, struct bo_legacy, dri_texture_obj);
-
-
-    bo_legacy->got_dri_texture_obj = 0;
-    bo_legacy->validated = 0;
+    struct bo_legacy_texture_object *tobj = (struct bo_legacy_texture_object *)t;
+    
+    if (tobj->parent) {
+	tobj->parent->got_dri_texture_obj = 0;
+	tobj->parent->validated = 0;
+    }
 }
 
 static void inline clean_handles(struct bo_manager_legacy *bom)
@@ -247,7 +249,6 @@ static void legacy_track_pending(struct bo_manager_legacy *boml, int debug)
 static int legacy_wait_any_pending(struct bo_manager_legacy *boml)
 {
     struct bo_legacy *bo_legacy;
-    struct bo_legacy *next;
 
     legacy_get_current_age(boml);
     bo_legacy = boml->pending_bos.pnext;
@@ -377,6 +378,8 @@ static void bo_free(struct bo_legacy *bo_legacy)
             /* dma buffers */
             bo_dma_free(&bo_legacy->base);
         } else {
+  	    driDestroyTextureObject(&bo_legacy->tobj->base);
+	    bo_legacy->tobj = NULL;
             /* free backing store */
             free(bo_legacy->ptr);
         }
@@ -522,10 +525,12 @@ static int bo_vram_validate(struct radeon_bo *bo,
     int r;
     
     if (!bo_legacy->got_dri_texture_obj) {
-        make_empty_list(&bo_legacy->dri_texture_obj);
-        bo_legacy->dri_texture_obj.totalSize = bo->size;
+	bo_legacy->tobj = CALLOC(sizeof(struct bo_legacy_texture_object));
+	bo_legacy->tobj->parent = bo_legacy;
+	make_empty_list(&bo_legacy->tobj->base);
+	bo_legacy->tobj->base.totalSize = bo->size;
         r = driAllocateTexture(&boml->texture_heap, 1,
-                               &bo_legacy->dri_texture_obj);
+                               &bo_legacy->tobj->base);
         if (r) {
             uint8_t *segfault=NULL;
             fprintf(stderr, "Ouch! vram_validate failed %d\n", r);
@@ -533,14 +538,15 @@ static int bo_vram_validate(struct radeon_bo *bo,
             return -1;
         }
         bo_legacy->offset = boml->texture_offset +
-                            bo_legacy->dri_texture_obj.memBlock->ofs;
+                            bo_legacy->tobj->base.memBlock->ofs;
         bo_legacy->got_dri_texture_obj = 1;
         bo_legacy->dirty = 1;
     }
 
     if (bo_legacy->got_dri_texture_obj)
-      driUpdateTextureLRU(&bo_legacy->dri_texture_obj);
-    if (bo_legacy->dirty) {
+	driUpdateTextureLRU(&bo_legacy->tobj->base);
+
+    if (bo_legacy->dirty || bo_legacy->tobj->base.dirty_images[0]) {
         /* Copy to VRAM using a blit.
          * All memory is 4K aligned. We're using 1024 pixels wide blits.
          */
@@ -578,6 +584,7 @@ static int bo_vram_validate(struct radeon_bo *bo,
             }
         } while (ret == -EAGAIN);
         bo_legacy->dirty = 0;
+	bo_legacy->tobj->base.dirty_images[0] = 0;
     }
     return 0;
 }
@@ -646,6 +653,7 @@ void radeon_bo_manager_legacy_dtor(struct radeon_bo_manager *bom)
         bo_free(bo_legacy);
         bo_legacy = next;
     }
+    driDestroyTextureHeap(boml->texture_heap);
     free(boml->free_handles);
     free(boml);
 }
@@ -689,7 +697,7 @@ struct radeon_bo_manager *radeon_bo_manager_legacy_ctor(struct radeon_screen *sc
                                              (drmTextureRegionPtr)scrn->sarea->tex_list[0],
                                              &scrn->sarea->tex_age[0],
                                              &bom->texture_swapped,
-                                             sizeof(struct bo_legacy),
+                                             sizeof(struct bo_legacy_texture_object),
                                              &bo_legacy_tobj_destroy);
     bom->texture_offset = scrn->texOffset[0];
 
