@@ -263,7 +263,7 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
 
    draw->render->unmap_vertices( draw->render, 
                                  0, 
-                                 (ushort)fetch_count );
+                                 (ushort)(fetch_count - 1) );
 
    /* XXX: Draw arrays path to avoid re-emitting index list again and
     * again.
@@ -319,7 +319,7 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
       }
    }
 
-   draw->render->unmap_vertices( draw->render, 0, count );
+   draw->render->unmap_vertices( draw->render, 0, count - 1 );
 
    /* XXX: Draw arrays path to avoid re-emitting index list again and
     * again.
@@ -370,7 +370,7 @@ static boolean fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
                          count,
                          hw_verts );
 
-   draw->render->unmap_vertices( draw->render, 0, (ushort)count );
+   draw->render->unmap_vertices( draw->render, 0, (ushort)(count - 1) );
 
    /* XXX: Draw arrays path to avoid re-emitting index list again and
     * again.

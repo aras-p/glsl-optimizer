@@ -341,7 +341,7 @@ vbuf_flush_vertices( struct vbuf_stage *vbuf )
 {
    if(vbuf->vertices) {
 
-      vbuf->render->unmap_vertices( vbuf->render, 0, vbuf->nr_vertices );
+      vbuf->render->unmap_vertices( vbuf->render, 0, vbuf->nr_vertices - 1 );
 
       if (vbuf->nr_indices) 
       {

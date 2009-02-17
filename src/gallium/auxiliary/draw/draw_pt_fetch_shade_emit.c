@@ -267,7 +267,7 @@ static void fse_run_linear( struct draw_pt_middle_end *middle,
       }
    }
    
-   draw->render->unmap_vertices( draw->render, 0, (ushort)count );
+   draw->render->unmap_vertices( draw->render, 0, (ushort)(count - 1) );
 
    /* Draw arrays path to avoid re-emitting index list again and
     * again.
@@ -333,7 +333,7 @@ fse_run(struct draw_pt_middle_end *middle,
       }
    }
 
-   draw->render->unmap_vertices( draw->render, 0, (ushort)fetch_count );
+   draw->render->unmap_vertices( draw->render, 0, (ushort)(fetch_count - 1) );
    
    draw->render->draw( draw->render, 
                        draw_elts, 
@@ -390,7 +390,7 @@ static boolean fse_run_linear_elts( struct draw_pt_middle_end *middle,
                        draw_count );
    
 
-   draw->render->unmap_vertices( draw->render, 0, (ushort) count );
+   draw->render->unmap_vertices( draw->render, 0, (ushort)(count - 1) );
 
    draw->render->release_vertices( draw->render );
 
