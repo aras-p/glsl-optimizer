@@ -1398,7 +1398,8 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
    if (t->base.Target == GL_TEXTURE_RECTANGLE_NV) {
       t->pp_txformat |= R200_TXFORMAT_NON_POWER2;
    }
-   
+
+   t->dirty_state = R200_TEX_ALL;
 }
 
 static GLboolean r200_validate_texture(GLcontext *ctx, struct gl_texture_object *texObj, int unit)
@@ -1439,8 +1440,6 @@ static GLboolean r200_validate_texture(GLcontext *ctx, struct gl_texture_object 
       rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
    }
 
-   t->dirty_state = R200_TEX_ALL;
-   
    t->validated = GL_TRUE;
 
    FALLBACK( rmesa, RADEON_FALLBACK_BORDER_MODE, t->border_fallback );
