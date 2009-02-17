@@ -314,10 +314,9 @@ void driSwapOutTextureObject( driTextureObject * t )
  * \param t Texture object to be destroyed
  */
 
-void driDestroyTextureObject( driTextureObject * t )
+void driCleanupTextureObject( driTextureObject * t )
 {
    driTexHeap * heap;
-
 
    if ( 0 ) {
       fprintf( stderr, "[%s:%d] freeing %p (tObj = %p, DriverData = %p)\n",
@@ -350,12 +349,23 @@ void driDestroyTextureObject( driTextureObject * t )
       }
 
       remove_from_list( t );
-      FREE( t );
    }
 
    if ( 0 ) {
       fprintf( stderr, "[%s:%d] done freeing %p\n", __FILE__, __LINE__, (void *)t );
    }
+}
+
+
+void driDestroyTextureObject( driTextureObject * t )
+{
+   driTexHeap * heap;
+
+   if (t == NULL)
+     return;
+
+   driCleanupTextureObject(t);
+   FREE(t);
 }
 
 
