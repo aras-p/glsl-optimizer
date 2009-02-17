@@ -377,13 +377,11 @@ static void bo_free(struct bo_legacy *bo_legacy)
             /* dma buffers */
             bo_dma_free(&bo_legacy->base);
         } else {
-	    if (bo_legacy->got_dri_texture_obj)
-		driCleanupTextureObject(&bo_legacy->dri_texture_obj);
-
             /* free backing store */
             free(bo_legacy->ptr);
         }
     }
+    memset(bo_legacy, 0 , sizeof(struct bo_legacy));
     free(bo_legacy);
 }
 

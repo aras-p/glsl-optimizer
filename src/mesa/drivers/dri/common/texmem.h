@@ -272,7 +272,6 @@ void driAgeTextures( driTexHeap * heap );
 
 void driUpdateTextureLRU( driTextureObject * t );
 void driSwapOutTextureObject( driTextureObject * t );
-void driCleanupTextureObject( driTextureObject * t );
 void driDestroyTextureObject( driTextureObject * t );
 int driAllocateTexture( driTexHeap * const * heap_array, unsigned nr_heaps,
     driTextureObject * t );
