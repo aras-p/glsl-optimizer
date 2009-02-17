@@ -80,9 +80,14 @@ struct vbuf_render {
     * Hardware renderers will use ttm memory, others will just malloc
     * something.
     */
-   void *(*allocate_vertices)( struct vbuf_render *,
-			       ushort vertex_size,
-			       ushort nr_vertices );
+   boolean (*allocate_vertices)( struct vbuf_render *,
+                                 ushort vertex_size,
+                                 ushort nr_vertices );
+   
+   void *(*map_vertices)( struct vbuf_render * );
+   void (*unmap_vertices)( struct vbuf_render *, 
+                           ushort min_index,
+                           ushort max_index );
 
    /**
     * Notify the renderer of the current primitive when it changes.
@@ -109,10 +114,7 @@ struct vbuf_render {
    /**
     * Called when vbuf is done with this set of vertices:
     */
-   void (*release_vertices)( struct vbuf_render *,
-			     void *vertices, 
-			     unsigned vertex_size,
-			     unsigned vertices_used );
+   void (*release_vertices)( struct vbuf_render * );
 
    void (*destroy)( struct vbuf_render * );
 };

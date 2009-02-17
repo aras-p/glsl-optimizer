@@ -234,19 +234,17 @@ static void fse_run_linear( struct draw_pt_middle_end *middle,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   if (count >= UNDEFINED_VERTEX_ID) {
-      assert(0);
-      return;
-   }
+   if (count >= UNDEFINED_VERTEX_ID) 
+      goto fail;
 
-   hw_verts = draw->render->allocate_vertices( draw->render,
-                                               (ushort)fse->key.output_stride,
-                                               (ushort)count );
+   if (!draw->render->allocate_vertices( draw->render,
+                                         (ushort)fse->key.output_stride,
+                                         (ushort)count ))
+      goto fail;
 
-   if (!hw_verts) {
-      assert(0);
-      return;
-   }
+   hw_verts = draw->render->map_vertices( draw->render );
+   if (!hw_verts)
+      goto fail;
 
    /* Single routine to fetch vertices, run shader and emit HW verts.
     * Clipping is done elsewhere -- either by the API or on hardware,
@@ -256,13 +254,7 @@ static void fse_run_linear( struct draw_pt_middle_end *middle,
                             start, count,
                             hw_verts );
 
-   /* Draw arrays path to avoid re-emitting index list again and
-    * again.
-    */
-   draw->render->draw_arrays( draw->render,
-                              0,
-                              count );
-   
+
    if (0) {
       unsigned i;
       for (i = 0; i < count; i++) {
@@ -274,12 +266,24 @@ static void fse_run_linear( struct draw_pt_middle_end *middle,
                                    (const uint8_t *)hw_verts + fse->key.output_stride * i );
       }
    }
+   
+   draw->render->unmap_vertices( draw->render, 0, (ushort)count );
 
+   /* Draw arrays path to avoid re-emitting index list again and
+    * again.
+    */
+   draw->render->draw_arrays( draw->render,
+                              0,
+                              count );
+   
 
-   draw->render->release_vertices( draw->render, 
-				   hw_verts, 
-				   fse->key.output_stride, 
-				   count );
+   draw->render->release_vertices( draw->render );
+
+   return;
+
+fail:
+   assert(0);
+   return;
 }
 
 
@@ -298,18 +302,17 @@ fse_run(struct draw_pt_middle_end *middle,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   if (fetch_count >= UNDEFINED_VERTEX_ID) {
-      assert(0);
-      return;
-   }
+   if (fetch_count >= UNDEFINED_VERTEX_ID) 
+      goto fail;
 
-   hw_verts = draw->render->allocate_vertices( draw->render,
-                                               (ushort)fse->key.output_stride,
-                                               (ushort)fetch_count );
-   if (!hw_verts) {
-      assert(0);
-      return;
-   }
+   if (!draw->render->allocate_vertices( draw->render,
+                                         (ushort)fse->key.output_stride,
+                                         (ushort)fetch_count ))
+      goto fail;
+
+   hw_verts = draw->render->map_vertices( draw->render ); 
+   if (!hw_verts) 
+      goto fail;
          
 					
    /* Single routine to fetch vertices, run shader and emit HW verts.
@@ -319,9 +322,6 @@ fse_run(struct draw_pt_middle_end *middle,
                           fetch_count,
                           hw_verts );
 
-   draw->render->draw( draw->render, 
-                       draw_elts, 
-                       draw_count );
 
    if (0) {
       unsigned i;
@@ -333,12 +333,19 @@ fse_run(struct draw_pt_middle_end *middle,
       }
    }
 
+   draw->render->unmap_vertices( draw->render, 0, (ushort)fetch_count );
+   
+   draw->render->draw( draw->render, 
+                       draw_elts, 
+                       draw_count );
 
-   draw->render->release_vertices( draw->render, 
-                                   hw_verts, 
-                                   fse->key.output_stride, 
-                                   fetch_count );
 
+   draw->render->release_vertices( draw->render );
+   return;
+
+fail:
+   assert(0);
+   return;
 }
 
 
@@ -360,13 +367,14 @@ static boolean fse_run_linear_elts( struct draw_pt_middle_end *middle,
    if (count >= UNDEFINED_VERTEX_ID)
       return FALSE;
 
-   hw_verts = draw->render->allocate_vertices( draw->render,
-                                               (ushort)fse->key.output_stride,
-                                               (ushort)count );
-
-   if (!hw_verts) {
+   if (!draw->render->allocate_vertices( draw->render,
+                                         (ushort)fse->key.output_stride,
+                                         (ushort)count ))
       return FALSE;
-   }
+
+   hw_verts = draw->render->map_vertices( draw->render );
+   if (!hw_verts) 
+      return FALSE;
 
    /* Single routine to fetch vertices, run shader and emit HW verts.
     * Clipping is done elsewhere -- either by the API or on hardware,
@@ -382,11 +390,9 @@ static boolean fse_run_linear_elts( struct draw_pt_middle_end *middle,
                        draw_count );
    
 
+   draw->render->unmap_vertices( draw->render, 0, (ushort) count );
 
-   draw->render->release_vertices( draw->render, 
-				   hw_verts, 
-				   fse->key.output_stride, 
-				   count );
+   draw->render->release_vertices( draw->render );
 
    return TRUE;
 }

@@ -178,9 +178,11 @@ void draw_pt_emit( struct pt_emit *emit,
       return;
    }
 
-   hw_verts = render->allocate_vertices(render,
-					(ushort)translate->key.output_stride,
-					(ushort)vertex_count);
+   render->allocate_vertices(render,
+                             (ushort)translate->key.output_stride,
+                             (ushort)vertex_count);
+
+   hw_verts = render->map_vertices( render );
    if (!hw_verts) {
       assert(0);
       return;
@@ -201,22 +203,21 @@ void draw_pt_emit( struct pt_emit *emit,
 		   vertex_count,
 		   hw_verts );
 
+   render->unmap_vertices( render, 
+                           0, 
+                           vertex_count );
+
    render->draw(render,
 		elts,
 		count);
 
-   render->release_vertices(render,
-			    hw_verts,
-			    translate->key.output_stride,
-			    vertex_count);
+   render->release_vertices(render);
 }
 
 
 void draw_pt_emit_linear(struct pt_emit *emit,
                          const float (*vertex_data)[4],
-                         unsigned vertex_count,
                          unsigned stride,
-                         unsigned start,
                          unsigned count)
 {
    struct draw_context *draw = emit->draw;
@@ -231,26 +232,23 @@ void draw_pt_emit_linear(struct pt_emit *emit,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   if (count >= UNDEFINED_VERTEX_ID) {
-      assert(0);
-      return;
-   }
+   if (count >= UNDEFINED_VERTEX_ID)
+      goto fail;
 
    /* XXX: and work out some way to coordinate the render primitive
     * between vbuf.c and here...
     */
-   if (!draw->render->set_primitive(draw->render, emit->prim)) {
-      assert(0);
-      return;
-   }
+   if (!draw->render->set_primitive(draw->render, emit->prim)) 
+      goto fail;
 
-   hw_verts = render->allocate_vertices(render,
-					(ushort)translate->key.output_stride,
-					(ushort)count);
-   if (!hw_verts) {
-      assert(0);
-      return;
-   }
+   if (!render->allocate_vertices(render,
+                                  (ushort)translate->key.output_stride,
+                                  (ushort)count))
+      goto fail;
+
+   hw_verts = render->map_vertices( render );
+   if (!hw_verts)
+      goto fail;
 
    translate->set_buffer(translate, 0,
 			 vertex_data, stride);
@@ -261,12 +259,12 @@ void draw_pt_emit_linear(struct pt_emit *emit,
 
    translate->run(translate,
                   0,
-                  vertex_count,
+                  count,
                   hw_verts);
 
    if (0) {
       unsigned i;
-      for (i = 0; i < vertex_count; i++) {
+      for (i = 0; i < count; i++) {
          debug_printf("\n\n%s vertex %d:\n", __FUNCTION__, i);
          draw_dump_emitted_vertex( emit->vinfo, 
                                    (const uint8_t *)hw_verts + 
@@ -274,13 +272,17 @@ void draw_pt_emit_linear(struct pt_emit *emit,
       }
    }
 
+   render->unmap_vertices( render, 0, count );
 
-   render->draw_arrays(render, start, count);
+   render->draw_arrays(render, 0, count);
 
-   render->release_vertices(render,
-			    hw_verts,
-			    translate->key.output_stride,
-			    vertex_count);
+   render->release_vertices(render);
+
+   return;
+
+fail:
+   assert(0);
+   return;
 }
 
 struct pt_emit *draw_pt_emit_create( struct draw_context *draw )
