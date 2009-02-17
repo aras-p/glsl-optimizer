@@ -985,14 +985,13 @@ static GLboolean radeon_validate_texture(GLcontext *ctx, struct gl_texture_objec
    if (!radeon_validate_texture_miptree(ctx, texObj))
       return GL_FALSE;
 
-   /* yuv conversion only works in first unit */
-   if (unit != 0 && (t->pp_txfilter & RADEON_YUV_TO_RGB))
-      return GL_FALSE;
-
-
    ret = setup_hardware_state(rmesa, t, unit);
    if (ret == GL_FALSE)
      return GL_FALSE;
+
+   /* yuv conversion only works in first unit */
+   if (unit != 0 && (t->pp_txfilter & RADEON_YUV_TO_RGB))
+      return GL_FALSE;
 
    RADEON_STATECHANGE( rmesa, ctx );
    rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= 
