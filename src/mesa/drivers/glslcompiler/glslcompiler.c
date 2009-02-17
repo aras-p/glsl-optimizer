@@ -72,6 +72,7 @@ struct options {
    const char *VertFile;
    const char *FragFile;
    const char *OutputFile;
+   GLboolean Params;
 };
 
 static struct options Options;
@@ -228,6 +229,8 @@ PrintShaderInstructions(GLuint shader, FILE *f)
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
    struct gl_program *prog = sh->Program;
    _mesa_fprint_program_opt(stdout, prog, Options.Mode, Options.LineNumbers);
+   if (Options.Params)
+      _mesa_print_program_parameters(ctx, prog);
 }
 
 
@@ -258,6 +261,7 @@ Usage(void)
    printf("  --debug            emit debug-style instructions\n");
    printf("  --number, -n       emit line numbers\n");
    printf("  --output, -o FILE  output filename\n");
+   printf("  --params           also emit program parameter info\n");
    printf("  --help             display this information\n");
 }
 
@@ -272,6 +276,7 @@ ParseOptions(int argc, char *argv[])
    Options.VertFile = NULL;
    Options.FragFile = NULL;
    Options.OutputFile = NULL;
+   Options.Params = GL_FALSE;
 
    if (argc == 1) {
       Usage();
@@ -304,6 +309,9 @@ ParseOptions(int argc, char *argv[])
                strcmp(argv[i], "-o") == 0) {
          Options.OutputFile = argv[i + 1];
          i++;
+      }
+      else if (strcmp(argv[i], "--params") == 0) {
+         Options.Params = GL_TRUE;
       }
       else if (strcmp(argv[i], "--help") == 0) {
          Usage();
