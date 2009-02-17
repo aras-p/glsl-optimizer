@@ -170,7 +170,6 @@ typedef struct radeon_tex_obj radeonTexObj, *radeonTexObjPtr;
 /* Texture object in locally shared texture space.
  */
 struct radeon_tex_obj {
-  //	driTextureObject base;
 	struct gl_texture_object base;
 	struct _radeon_mipmap_tree *mt;
 
@@ -185,26 +184,9 @@ struct radeon_tex_obj {
 	GLuint tile_bits;	/* hw texture tile bits used on this texture */
         struct radeon_bo *bo;
 
-	GLuint bufAddr;		/* Offset to start of locally
-				   shared texture block */
-
-	GLuint dirty_state;	/* Flags (1 per texunit) for
-				   whether or not this texobj
-				   has dirty hardware state
-				   (pp_*) that needs to be
-				   brought into the
-				   texunit. */
-
-	drm_radeon_tex_image_t image[6][RADEON_MAX_TEXTURE_LEVELS];
-	/* Six, for the cube faces */
-
-
-
 	GLuint pp_txfilter;	/* hardware register values */
 	GLuint pp_txformat;
-        GLuint pp_txformat_x;
-	GLuint pp_txoffset;	/* Image location in texmem.
-				   All cube faces follow. */
+	GLuint pp_txformat_x;
 	GLuint pp_txsize;	/* npot only */
 	GLuint pp_txpitch;	/* npot only */
 	GLuint pp_border_color;

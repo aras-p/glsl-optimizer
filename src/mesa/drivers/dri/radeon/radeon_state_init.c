@@ -486,7 +486,7 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
      OUT_BATCH(r100->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP]);
      //     OUT_BATCH(r100->radeon.radeonScreen);
    } else if (t->image_override)
-     OUT_BATCH(atom->cmd[4]);
+     OUT_BATCH(t->override_offset);
 
    OUT_BATCH_TABLE((atom->cmd+4), 5);
    END_BATCH();

@@ -400,10 +400,6 @@ static void r200TexParameter( GLcontext *ctx, GLenum target,
    default:
       return;
    }
-
-   /* Mark this texobj as dirty (one bit per tex unit)
-    */
-   t->dirty_state = R200_TEX_ALL;
 }
 
 

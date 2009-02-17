@@ -743,7 +743,8 @@ void r200SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	if (!offset)
 		return;
 
-	t->pp_txoffset = offset;
+	t->bo = NULL;
+	t->override_offset = offset;
 	t->pp_txpitch = pitch - 32;
 
 	switch (depth) {
@@ -1003,18 +1004,9 @@ static void import_tex_obj_state( r200ContextPtr rmesa,
    cmd[TEX_PP_TXSIZE] = texobj->pp_txsize; /* NPOT only! */
    cmd[TEX_PP_TXPITCH] = texobj->pp_txpitch; /* NPOT only! */
    cmd[TEX_PP_BORDER_COLOR] = texobj->pp_border_color;
-   if (rmesa->radeon.radeonScreen->drmSupportsFragShader) {
-      cmd[TEX_PP_TXOFFSET_NEWDRM] = texobj->pp_txoffset;
-   }
-   else {
-      cmd[TEX_PP_TXOFFSET_OLDDRM] = texobj->pp_txoffset;
-   }
 
    if (texobj->base.Target == GL_TEXTURE_CUBE_MAP) {
       GLuint *cube_cmd = &rmesa->hw.cube[unit].cmd[CUBE_CMD_0];
-      //      GLuint bytesPerFace = texobj->base.totalSize / 6;
-      //      ASSERT(texobj->base.totalSize % 6 == 0);
-      GLuint bytesPerFace = 1; // TODO
 
       R200_STATECHANGE( rmesa, cube[unit] );
       cube_cmd[CUBE_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
@@ -1023,14 +1015,8 @@ static void import_tex_obj_state( r200ContextPtr rmesa,
 	    to not include that command when new drm is used */
 	 cmd[TEX_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
       }
-      cube_cmd[CUBE_PP_CUBIC_OFFSET_F1] = texobj->pp_txoffset + 1 * bytesPerFace;
-      cube_cmd[CUBE_PP_CUBIC_OFFSET_F2] = texobj->pp_txoffset + 2 * bytesPerFace;
-      cube_cmd[CUBE_PP_CUBIC_OFFSET_F3] = texobj->pp_txoffset + 3 * bytesPerFace;
-      cube_cmd[CUBE_PP_CUBIC_OFFSET_F4] = texobj->pp_txoffset + 4 * bytesPerFace;
-      cube_cmd[CUBE_PP_CUBIC_OFFSET_F5] = texobj->pp_txoffset + 5 * bytesPerFace;
    }
 
-   texobj->dirty_state &= ~(1<<unit);
 }
 
 static void set_texgen_matrix( r200ContextPtr rmesa, 
@@ -1399,7 +1385,6 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
       t->pp_txformat |= R200_TXFORMAT_NON_POWER2;
    }
 
-   t->dirty_state = R200_TEX_ALL;
 }
 
 static GLboolean r200_validate_texture(GLcontext *ctx, struct gl_texture_object *texObj, int unit)
@@ -1429,9 +1414,7 @@ static GLboolean r200_validate_texture(GLcontext *ctx, struct gl_texture_object 
    rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_1] |= 4 << (unit * 3);
 
    rmesa->recheck_texgen[unit] = GL_TRUE;
-   if (t->dirty_state & (1<<unit)) {
-      import_tex_obj_state( rmesa, unit, t );
-   }
+   import_tex_obj_state( rmesa, unit, t );
 
    if (rmesa->recheck_texgen[unit]) {
       GLboolean fallback = !r200_validate_texgen( ctx, unit );

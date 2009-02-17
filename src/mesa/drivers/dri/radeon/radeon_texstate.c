@@ -614,8 +614,9 @@ void radeonSetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 
 	if (!offset)
 		return;
-
-	t->pp_txoffset = offset;
+	
+	t->bo = NULL;
+	t->override_offset = offset;
 	t->pp_txpitch = pitch - 32;
 
 	switch (depth) {
@@ -715,7 +716,6 @@ static void import_tex_obj_state( r100ContextPtr rmesa,
    cmd[TEX_PP_TXFILTER] |= texobj->pp_txfilter & TEXOBJ_TXFILTER_MASK;
    cmd[TEX_PP_TXFORMAT] &= ~TEXOBJ_TXFORMAT_MASK;
    cmd[TEX_PP_TXFORMAT] |= texobj->pp_txformat & TEXOBJ_TXFORMAT_MASK;
-   cmd[TEX_PP_TXOFFSET] = texobj->pp_txoffset;
    cmd[TEX_PP_BORDER_COLOR] = texobj->pp_border_color;
 
    if (texobj->base.Target == GL_TEXTURE_RECTANGLE_NV) {
@@ -741,8 +741,6 @@ static void import_tex_obj_state( r100ContextPtr rmesa,
       RADEON_STATECHANGE( rmesa, set );
       rmesa->hw.set.cmd[SET_SE_COORDFMT] = se_coord_fmt;
    }
-
-   texobj->dirty_state &= ~(1<<unit);
 
    rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
 }
@@ -974,7 +972,6 @@ static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int
       t->pp_txformat |= RADEON_TXFORMAT_NON_POWER2;
    }
 
-   t->dirty_state = R100_TEX_ALL;
    return GL_TRUE;
 }
 
@@ -1004,9 +1001,7 @@ static GLboolean radeon_validate_texture(GLcontext *ctx, struct gl_texture_objec
 
    rmesa->recheck_texgen[unit] = GL_TRUE;
 
-   if (t->dirty_state & (1<<unit)) {
-      import_tex_obj_state( rmesa, unit, t );
-   }
+   import_tex_obj_state( rmesa, unit, t );
 
    if (rmesa->recheck_texgen[unit]) {
       GLboolean fallback = !radeon_validate_texgen( ctx, unit );

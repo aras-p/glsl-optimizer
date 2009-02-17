@@ -362,10 +362,6 @@ static void radeonTexParameter( GLcontext *ctx, GLenum target,
    default:
       return;
    }
-
-   /* Mark this texobj as dirty (one bit per tex unit)
-    */
-   t->dirty_state = R100_TEX_ALL;
 }
 
 static void radeonDeleteTexture( GLcontext *ctx,
