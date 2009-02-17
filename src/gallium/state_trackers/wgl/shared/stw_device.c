@@ -66,6 +66,10 @@ stw_shared_init(const struct stw_winsys *stw_winsys)
    stw_dev = &stw_dev_storage;
    memset(stw_dev, 0, sizeof(*stw_dev));
 
+#ifdef DEBUG
+   stw_dev->memdbg_no = debug_memory_begin();
+#endif
+   
    stw_dev->stw_winsys = stw_winsys;
 
    stw_dev->screen = stw_winsys->create_screen();
@@ -87,5 +91,11 @@ error1:
 void
 stw_shared_cleanup(void)
 {
+   if(stw_dev) {
+#ifdef DEBUG
+      debug_memory_end(stw_dev->memdbg_no);
+#endif
+   }
+
    stw_dev = NULL;
 }
