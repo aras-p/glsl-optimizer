@@ -1820,7 +1820,7 @@ emit_cont_break_if_true(slang_emit_info *emitInfo, slang_ir_node *n)
  * may be NIL/undefined.  For example:
  *  swizzle_size(".zzxx") = 4
  *  swizzle_size(".xy??") = 2
- *  swizzle_size(".xyz?") = 1
+ *  swizzle_size(".w???") = 1
  */
 static GLuint
 swizzle_size(GLuint swizzle)
