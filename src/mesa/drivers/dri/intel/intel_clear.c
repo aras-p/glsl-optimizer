@@ -54,6 +54,17 @@
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 
+#define TRI_CLEAR_COLOR_BITS (BUFFER_BIT_BACK_LEFT |			\
+			      BUFFER_BIT_FRONT_LEFT |			\
+			      BUFFER_BIT_COLOR0 |			\
+			      BUFFER_BIT_COLOR1 |			\
+			      BUFFER_BIT_COLOR2 |			\
+			      BUFFER_BIT_COLOR3 |			\
+			      BUFFER_BIT_COLOR4 |			\
+			      BUFFER_BIT_COLOR5 |			\
+			      BUFFER_BIT_COLOR6 |			\
+			      BUFFER_BIT_COLOR7)
+
 /**
  * Perform glClear where mask contains only color, depth, and/or stencil.
  *
@@ -75,8 +86,8 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
    GLboolean saved_shader_program = 0;
    unsigned int saved_active_texture;
 
-   assert((mask & ~(BUFFER_BIT_BACK_LEFT | BUFFER_BIT_FRONT_LEFT |
-		    BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) == 0);
+   assert((mask & ~(TRI_CLEAR_COLOR_BITS | BUFFER_BIT_DEPTH |
+		    BUFFER_BIT_STENCIL)) == 0);
 
    _mesa_PushAttrib(GL_COLOR_BUFFER_BIT |
 		    GL_CURRENT_BIT |
@@ -170,11 +181,11 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
 
    while (mask != 0) {
       GLuint this_mask = 0;
+      GLuint color_bit;
 
-      if (mask & BUFFER_BIT_BACK_LEFT)
-	 this_mask = BUFFER_BIT_BACK_LEFT;
-      else if (mask & BUFFER_BIT_FRONT_LEFT)
-	 this_mask = BUFFER_BIT_FRONT_LEFT;
+      color_bit = _mesa_ffs(mask & TRI_CLEAR_COLOR_BITS);
+      if (color_bit != 0)
+	 this_mask |= (1 << (color_bit - 1));
 
       /* Clear depth/stencil in the same pass as color. */
       this_mask |= (mask & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL));
@@ -186,6 +197,9 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
 	 _mesa_DrawBuffer(GL_FRONT_LEFT);
       else if (this_mask & BUFFER_BIT_BACK_LEFT)
 	 _mesa_DrawBuffer(GL_BACK_LEFT);
+      else if (color_bit != 0)
+	 _mesa_DrawBuffer(GL_COLOR_ATTACHMENT0 +
+			  (color_bit - BUFFER_COLOR0 - 1));
       else
 	 _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
@@ -313,8 +327,11 @@ intelClear(GLcontext *ctx, GLbitfield mask)
     * buffer with it.
     */
    if (mask & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) {
-      tri_mask |= blit_mask & BUFFER_BIT_BACK_LEFT;
-      blit_mask &= ~BUFFER_BIT_BACK_LEFT;
+      int color_bit = _mesa_ffs(mask & TRI_CLEAR_COLOR_BITS);
+      if (color_bit != 0) {
+	 tri_mask |= blit_mask & (1 << (color_bit - 1));
+	 blit_mask &= ~(1 << (color_bit - 1));
+      }
    }
 
    /* SW fallback clearing */
