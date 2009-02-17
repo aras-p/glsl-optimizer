@@ -517,6 +517,16 @@ static void radeon_teximage(
 	/* Allocate memory for image */
 	radeonFreeTexImageData(ctx, texImage); /* Mesa core only clears texImage->Data but not image->mt */
 
+	if (t->mt &&
+	    t->mt->firstLevel == level &&
+	    t->mt->lastLevel == level &&
+	    t->mt->target != GL_TEXTURE_CUBE_MAP_ARB &&
+	    !radeon_miptree_matches_image(t->mt, texImage, face, level)) {
+	  fprintf(stderr,"freeing old miptree\n");
+	  radeon_miptree_unreference(t->mt);
+	  t->mt = NULL;
+	}
+
 	if (!t->mt)
 		radeon_try_alloc_miptree(rmesa, t, texImage, face, level);
 	if (t->mt && radeon_miptree_matches_image(t->mt, texImage, face, level)) {
