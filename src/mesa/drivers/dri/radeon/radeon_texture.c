@@ -522,7 +522,6 @@ static void radeon_teximage(
 	    t->mt->lastLevel == level &&
 	    t->mt->target != GL_TEXTURE_CUBE_MAP_ARB &&
 	    !radeon_miptree_matches_image(t->mt, texImage, face, level)) {
-	  fprintf(stderr,"freeing old miptree\n");
 	  radeon_miptree_unreference(t->mt);
 	  t->mt = NULL;
 	}
