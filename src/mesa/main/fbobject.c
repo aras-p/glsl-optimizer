@@ -303,6 +303,20 @@ _mesa_framebuffer_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
 
 
 /**
+ * For debug only.
+ */
+static void
+att_incomplete(const char *msg)
+{
+#if 0
+   _mesa_printf("attachment incomplete: %s\n", msg);
+#else
+   (void) msg;
+#endif
+}
+
+
+/**
  * Test if an attachment point is complete and update its Complete field.
  * \param format if GL_COLOR, this is a color attachment point,
  *               if GL_DEPTH, this is a depth component attachment point,
@@ -323,20 +337,26 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
       struct gl_texture_image *texImage;
 
       if (!texObj) {
+         att_incomplete("no texobj");
          att->Complete = GL_FALSE;
          return;
       }
 
       texImage = texObj->Image[att->CubeMapFace][att->TextureLevel];
       if (!texImage) {
+         att_incomplete("no teximage");
          att->Complete = GL_FALSE;
          return;
       }
       if (texImage->Width < 1 || texImage->Height < 1) {
+         att_incomplete("teximage width/height=0");
+         _mesa_printf("texobj = %u\n", texObj->Name);
+         _mesa_printf("level = %d\n", att->TextureLevel);
          att->Complete = GL_FALSE;
          return;
       }
       if (texObj->Target == GL_TEXTURE_3D && att->Zoffset >= texImage->Depth) {
+         att_incomplete("bad z offset");
          att->Complete = GL_FALSE;
          return;
       }
@@ -344,6 +364,7 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
       if (format == GL_COLOR) {
          if (texImage->TexFormat->BaseFormat != GL_RGB &&
              texImage->TexFormat->BaseFormat != GL_RGBA) {
+            att_incomplete("bad format");
             att->Complete = GL_FALSE;
             return;
          }
@@ -358,11 +379,13 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
          }
          else {
             att->Complete = GL_FALSE;
+            att_incomplete("bad depth format");
             return;
          }
       }
       else {
          /* no such thing as stencil textures */
+         att_incomplete("illegal stencil texture");
          att->Complete = GL_FALSE;
          return;
       }
@@ -372,6 +395,7 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
       if (!att->Renderbuffer->InternalFormat ||
           att->Renderbuffer->Width < 1 ||
           att->Renderbuffer->Height < 1) {
+         att_incomplete("0x0 renderbuffer");
          att->Complete = GL_FALSE;
          return;
       }
@@ -381,6 +405,7 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
             ASSERT(att->Renderbuffer->RedBits);
             ASSERT(att->Renderbuffer->GreenBits);
             ASSERT(att->Renderbuffer->BlueBits);
+            att_incomplete("bad renderbuffer color format");
             att->Complete = GL_FALSE;
             return;
          }
@@ -395,6 +420,7 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
             /* OK */
          }
          else {
+            att_incomplete("bad renderbuffer depth format");
             att->Complete = GL_FALSE;
             return;
          }
@@ -411,6 +437,7 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
          }
          else {
             att->Complete = GL_FALSE;
+            att_incomplete("bad renderbuffer stencil format");
             return;
          }
       }
