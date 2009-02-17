@@ -973,6 +973,8 @@ static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int
    if (t->base.Target == GL_TEXTURE_RECTANGLE_NV) {
       t->pp_txformat |= RADEON_TXFORMAT_NON_POWER2;
    }
+
+   t->dirty_state = R100_TEX_ALL;
    return GL_TRUE;
 }
 
