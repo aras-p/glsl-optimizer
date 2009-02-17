@@ -40,7 +40,7 @@
 #include "sp_texture.h"
 #include "sp_tile_cache.h"
 
-#define NUM_ENTRIES 32
+#define NUM_ENTRIES 50
 
 
 /** XXX move these */
@@ -484,7 +484,7 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
 static INLINE uint
 tex_cache_pos(int x, int y, int z, int face, int level)
 {
-   uint entry = x + y * 5 + z * 4 + face + level;
+   uint entry = x + y * 9 + z * 3 + face + level * 7;
    return entry % NUM_ENTRIES;
 }
 
@@ -510,8 +510,12 @@ sp_get_cached_tile_tex(struct softpipe_context *sp,
    if (tc->texture) {
       struct softpipe_texture *spt = softpipe_texture(tc->texture);
       if (spt->modified) {
-         /* texture was modified, force a cache reload */
-         tile->x = -1;
+         /* texture was modified, invalidate all cached tiles */
+         uint p;
+         for (p = 0; p < NUM_ENTRIES; p++) {
+            tile = tc->entries + p;
+            tile->x = -1;
+         }
          spt->modified = FALSE;
       }
    }
@@ -523,6 +527,10 @@ sp_get_cached_tile_tex(struct softpipe_context *sp,
        level != tile->level) {
       /* cache miss */
 
+#if 0
+      printf("miss at %u  x=%d y=%d z=%d face=%d level=%d\n", pos,
+             x/TILE_SIZE, y/TILE_SIZE, z, face, level);
+#endif
       /* check if we need to get a new surface */
       if (!tc->tex_surf ||
           tc->tex_face != face ||
