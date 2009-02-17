@@ -451,7 +451,7 @@ emit_arl_load(slang_emit_info *emitInfo,
    struct prog_instruction *inst = new_instruction(emitInfo, OPCODE_ARL);
    inst->SrcReg[0].File = file;
    inst->SrcReg[0].Index = index;
-   inst->SrcReg[0].Swizzle = swizzle;
+   inst->SrcReg[0].Swizzle = fix_swizzle(swizzle);
    inst->DstReg.File = PROGRAM_ADDRESS;
    inst->DstReg.Index = 0;
    inst->DstReg.WriteMask = WRITEMASK_X;
@@ -873,6 +873,7 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
 
    if (n->Children[0]->Store->Size != n->Children[1]->Store->Size) {
       slang_info_log_error(emitInfo->log, "invalid operands to == or !=");
+      n->Store = NULL;
       return NULL;
    }
 
@@ -902,6 +903,7 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
       slang_ir_storage tempStore;
 
       if (!alloc_local_temp(emitInfo, &tempStore, 4)) {
+         n->Store = NULL;
          return NULL;
          /* out of temps */
       }
@@ -1813,6 +1815,25 @@ emit_cont_break_if_true(slang_emit_info *emitInfo, slang_ir_node *n)
 }
 
 
+/**
+ * Return the size of a swizzle mask given that some swizzle components
+ * may be NIL/undefined.  For example:
+ *  swizzle_size(".zzxx") = 4
+ *  swizzle_size(".xy??") = 2
+ *  swizzle_size(".xyz?") = 1
+ */
+static GLuint
+swizzle_size(GLuint swizzle)
+{
+   GLuint i;
+   for (i = 0; i < 4; i++) {
+      if (GET_SWZ(swizzle, i) == SWIZZLE_NIL)
+         return i;
+   }
+   return 4;
+}
+
+
 static struct prog_instruction *
 emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
 {
@@ -1820,14 +1841,24 @@ emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
 
    inst = emit(emitInfo, n->Children[0]);
 
-#if 0
-   assert(n->Store->Parent);
-   /* Apply this node's swizzle to parent's storage */
-   GLuint swizzle = n->Store->Swizzle;
-   _slang_copy_ir_storage(n->Store, n->Store->Parent);
-   n->Store->Swizzle = _slang_swizzle_swizzle(n->Store->Swizzle, swizzle);
-   assert(!n->Store->Parent);
-#endif
+   if (n->Children[0]->Opcode == IR_VAR ||
+       n->Children[0]->Opcode == IR_SWIZZLE ||
+       n->Children[0]->Opcode == IR_ELEMENT) {
+      /* We can resolve the swizzle now.  Other swizzles will be resolved
+       * in storage_to_src_reg().
+       */
+      const GLuint swizzle = n->Store->Swizzle;
+      assert(n->Store->Parent);
+      /* new storage is parent storage with updated Swizzle + Size fields */
+      _slang_copy_ir_storage(n->Store, n->Store->Parent);
+      /* Apply this node's swizzle to parent's storage */
+      n->Store->Swizzle = _slang_swizzle_swizzle(n->Store->Swizzle, swizzle);
+      /* Update size */
+      n->Store->Size = swizzle_size(n->Store->Swizzle);
+      assert(!n->Store->Parent);
+      assert(n->Store->Index >= 0);
+   }
+
    return inst;
 }
 
@@ -2428,7 +2459,9 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
       maxUniforms = ctx->Const.VertexProgram.MaxUniformComponents / 4;
    }
    if (prog->Parameters->NumParameters > maxUniforms) {
-      slang_info_log_error(log, "Constant/uniform register limit exceeded");
+      slang_info_log_error(log, "Constant/uniform register limit exceeded "
+                           "(max=%u vec4)", maxUniforms);
+
       return GL_FALSE;
    }
 
