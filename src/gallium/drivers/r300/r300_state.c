@@ -435,6 +435,8 @@ static void* r300_create_fs_state(struct pipe_context* pipe,
     /* Copy state directly into shader. */
     fs->state = *shader;
 
+    tgsi_scan_shader(shader->tokens, &fs->info);
+
     return (void*)fs;
 }
 
