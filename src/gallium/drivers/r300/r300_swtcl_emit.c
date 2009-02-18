@@ -174,6 +174,40 @@ static boolean r300_swtcl_render_set_primitive(struct vbuf_render* render,
     return true;
 }
 
+static void prepare_render(struct r300_swtcl_render* render)
+{
+    struct r300_context* r300 = render->r300;
+
+    CS_LOCALS(r300);
+
+    /* Make sure that all possible state is emitted. */
+    r300_update_derived_state(r300);
+    r300_emit_dirty_state(r300);
+
+    /* Take care of vertex formats and routes. */
+    BEGIN_CS(3);
+    OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
+    OUT_CS(r300->vertex_info.hwfmt[0]);
+    OUT_CS(r300->vertex_info.hwfmt[1]);
+    END_CS;
+
+    /* Draw stuff! */
+    BEGIN_CS(6);
+
+    /* Set the pointer to our vertex buffer. The emitted values are this:
+     * PACKET3 [3D_LOAD_VBPNTR]
+     * COUNT   [1]
+     * FORMAT  [size | stride << 8]
+     * VBPNTR  [relocated BO]
+     *
+     * And of course that extra dword is space for the relocation. */
+    OUT_CS(CP_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, 3));
+    OUT_CS(1);
+    OUT_CS(r300->vertex_info.size | (r300->vertex_info.size << 8));
+    OUT_CS(0);
+    OUT_CS_RELOC(render->vbo, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
+}
+
 static void r300_swtcl_render_draw_arrays(struct vbuf_render* render,
                                           unsigned start,
                                           unsigned count)
@@ -184,22 +218,13 @@ static void r300_swtcl_render_draw_arrays(struct vbuf_render* render,
 
     CS_LOCALS(r300);
 
-    /* Make sure that all possible state is emitted. */
-    r300_update_derived_state(r300);
-    r300_emit_dirty_state(r300);
+    prepare_render(r300render);
 
-    /* Take care of vertex formats and routes */
-    BEGIN_CS(3);
-    OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
-    OUT_CS(r300->vertex_info.hwfmt[0]);
-    OUT_CS(r300->vertex_info.hwfmt[1]);
-    END_CS;
-
-    /* Draw stuff! */
     BEGIN_CS(2);
     OUT_CS(CP_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0));
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
            r300render->hwprim | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
+    END_CS;
 }
 
 static void r300_swtcl_render_draw(struct vbuf_render* render,
@@ -214,9 +239,7 @@ static void r300_swtcl_render_draw(struct vbuf_render* render,
 
     CS_LOCALS(r300);
 
-    /* Make sure that all possible state is emitted. */
-    r300_update_derived_state(r300);
-    r300_emit_dirty_state(r300);
+    prepare_render(r300render);
 
     /* Send our indices into an index buffer. */
     index_buffer = pipe_buffer_create(screen, 64, PIPE_BUFFER_USAGE_VERTEX,
@@ -230,15 +253,7 @@ static void r300_swtcl_render_draw(struct vbuf_render* render,
     memcpy(index_map, indices, count * 4);
     pipe_buffer_unmap(screen, index_buffer);
 
-    /* Take care of vertex formats and routes */
-    BEGIN_CS(3);
-    OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
-    OUT_CS(r300->vertex_info.hwfmt[0]);
-    OUT_CS(r300->vertex_info.hwfmt[1]);
-    END_CS;
-
-    /* Draw stuff! */
-    BEGIN_CS(10);
+    BEGIN_CS(5);
     OUT_CS(CP_PACKET3(R300_PACKET3_3D_DRAW_INDX_2, 0));
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
            r300render->hwprim | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
