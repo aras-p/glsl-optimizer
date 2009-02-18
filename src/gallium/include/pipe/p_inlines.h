@@ -69,6 +69,31 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
  * \sa pipe_surface_reference
  */
 static INLINE void
+pipe_transfer_reference(struct pipe_transfer **ptr, struct pipe_transfer *trans)
+{
+   /* bump the refcount first */
+   if (trans) {
+      assert(trans->refcount);
+      trans->refcount++;
+   }
+
+   if (*ptr) {
+      struct pipe_screen *screen;
+      assert((*ptr)->refcount);
+      assert((*ptr)->texture);
+      screen = (*ptr)->texture->screen;
+      screen->tex_transfer_release( screen, ptr );
+      assert(!*ptr);
+   }
+
+   *ptr = trans;
+}
+
+
+/**
+ * \sa pipe_surface_reference
+ */
+static INLINE void
 pipe_texture_reference(struct pipe_texture **ptr,
 		       struct pipe_texture *pt)
 {
