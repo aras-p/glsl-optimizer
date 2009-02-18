@@ -230,18 +230,23 @@ void r300_emit_dirty_state(struct r300_context* r300)
         return;
     }
 
+    r300_update_derived_state(r300);
+
     /* XXX check size */
 
     if (r300->dirty_state & R300_NEW_BLEND) {
         r300_emit_blend_state(r300, r300->blend_state);
+        r300->dirty_state &= ~R300_NEW_BLEND;
     }
 
     if (r300->dirty_state & R300_NEW_BLEND_COLOR) {
         r300_emit_blend_color_state(r300, r300->blend_color_state);
+        r300->dirty_state &= ~R300_NEW_BLEND_COLOR;
     }
 
     if (r300->dirty_state & R300_NEW_DSA) {
         r300_emit_dsa_state(r300, r300->dsa_state);
+        r300->dirty_state &= ~R300_NEW_DSA;
     }
 
     if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER) {
@@ -252,15 +257,16 @@ void r300_emit_dirty_state(struct r300_context* r300)
             r300_emit_fragment_shader(r300,
                 (struct r300_fragment_shader*)r300->fs);
         }
+        r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER;
     }
 
     if (r300->dirty_state & R300_NEW_RASTERIZER) {
         r300_emit_rs_state(r300, r300->rs_state);
+        r300->dirty_state &= ~R300_NEW_RASTERIZER;
     }
 
     if (r300->dirty_state & R300_NEW_SCISSOR) {
         r300_emit_scissor_state(r300, r300->scissor_state);
+        r300->dirty_state &= ~R300_NEW_SCISSOR;
     }
-
-    r300->dirty_state = 0;
 }
