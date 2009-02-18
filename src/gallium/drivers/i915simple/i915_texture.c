@@ -686,10 +686,6 @@ i915_get_tex_surface(struct pipe_screen *screen,
       ps->format = pt->format;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
-      ps->block = pt->block;
-      ps->nblocksx = pt->nblocksx[level];
-      ps->nblocksy = pt->nblocksy[level];
-      ps->stride = tex->stride;
       ps->offset = offset;
       ps->usage = flags;
       ps->status = PIPE_SURFACE_STATUS_DEFINED;

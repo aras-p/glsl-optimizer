@@ -36,6 +36,7 @@
 #include "pipe/p_state.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
+#include "softpipe/sp_texture.h"
 
 
 struct brw_aubfile {
@@ -322,10 +323,10 @@ void brw_aub_dump_bmp( struct brw_aubfile *aubfile,
    struct aub_dump_bmp db;
    unsigned format;
 
-   assert(surface->block.width == 1);
-   assert(surface->block.height == 1);
+   assert(surface->texture->block.width == 1);
+   assert(surface->texture->block.height == 1);
    
-   if (surface->block.size == 4)
+   if (surface->texture->block.size == 4)
       format = 0x7;
    else
       format = 0x3;
@@ -334,8 +335,9 @@ void brw_aub_dump_bmp( struct brw_aubfile *aubfile,
    db.xmin = 0;
    db.ymin = 0;
    db.format = format;
-   db.bpp = surface->block.size * 8;
-   db.pitch = surface->stride/surface->block.size;
+   db.bpp = surface->texture->block.size * 8;
+   db.pitch = softpipe_texture(surface->texture)->stride[surface->level] /
+      surface->texture->block.size;
    db.xsize = surface->width;
    db.ysize = surface->height;
    db.addr = gtt_offset;

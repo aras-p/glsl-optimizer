@@ -119,36 +119,36 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
 
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
       const uint srcLevel = dstLevel - 1;
-      struct pipe_surface *srcSurf, *dstSurf;
+      struct pipe_transfer *srcTrans, *dstTrans;
       const ubyte *srcData;
       ubyte *dstData;
 
-      srcSurf = screen->get_tex_surface(screen, pt, face, srcLevel, zslice,
-                                        PIPE_BUFFER_USAGE_CPU_READ);
-      dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice,
-                                        PIPE_BUFFER_USAGE_CPU_WRITE);
+      srcTrans = screen->get_tex_transfer(screen, pt, face, srcLevel, zslice,
+                                          PIPE_TRANSFER_READ, 0, 0,
+                                          pt->width[srcLevel],
+                                          pt->height[srcLevel]);
+      dstTrans = screen->get_tex_transfer(screen, pt, face, dstLevel, zslice,
+                                          PIPE_TRANSFER_WRITE, 0, 0,
+                                          pt->width[dstLevel],
+                                          pt->height[dstLevel]);
 
-      srcData = (ubyte *) pipe_surface_map(srcSurf,
-                                           PIPE_BUFFER_USAGE_CPU_READ)
-              + srcSurf->offset;
-      dstData = (ubyte *) pipe_surface_map(dstSurf,
-                                           PIPE_BUFFER_USAGE_CPU_WRITE)
-              + dstSurf->offset;
+      srcData = (ubyte *) screen->transfer_map(screen, srcTrans);
+      dstData = (ubyte *) screen->transfer_map(screen, dstTrans);
 
       _mesa_generate_mipmap_level(target, datatype, comps,
                    0 /*border*/,
                    pt->width[srcLevel], pt->height[srcLevel], pt->depth[srcLevel],
                    srcData,
-                   srcSurf->stride, /* stride in bytes */
+                   srcTrans->stride, /* stride in bytes */
                    pt->width[dstLevel], pt->height[dstLevel], pt->depth[dstLevel],
                    dstData,
-                   dstSurf->stride); /* stride in bytes */
+                   dstTrans->stride); /* stride in bytes */
 
-      pipe_surface_unmap(srcSurf);
-      pipe_surface_unmap(dstSurf);
+      screen->transfer_unmap(screen, srcTrans);
+      screen->transfer_unmap(screen, dstTrans);
 
-      pipe_surface_reference(&srcSurf, NULL);
-      pipe_surface_reference(&dstSurf, NULL);
+      screen->tex_transfer_release(screen, &srcTrans);
+      screen->tex_transfer_release(screen, &dstTrans);
    }
 }
 

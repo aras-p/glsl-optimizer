@@ -184,10 +184,10 @@ softpipe_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags);
 
 
 void
-softpipe_map_surfaces(struct softpipe_context *sp);
+softpipe_map_transfers(struct softpipe_context *sp);
 
 void
-softpipe_unmap_surfaces(struct softpipe_context *sp);
+softpipe_unmap_transfers(struct softpipe_context *sp);
 
 void
 softpipe_map_texture_surfaces(struct softpipe_context *sp);

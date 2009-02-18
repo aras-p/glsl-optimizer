@@ -28,7 +28,6 @@
 /**
  * RGBA/float tile get/put functions.
  * Usable both by drivers and state trackers.
- * Surfaces should already be in a mapped state.
  */
 
 
@@ -42,58 +41,58 @@
 
 
 /**
- * Move raw block of pixels from surface to user memory.
- * This should be usable by any hw driver that has mappable surfaces.
+ * Move raw block of pixels from transfer object to user memory.
  */
 void
-pipe_get_tile_raw(struct pipe_surface *ps,
+pipe_get_tile_raw(struct pipe_transfer *pt,
                   uint x, uint y, uint w, uint h,
                   void *dst, int dst_stride)
 {
+   struct pipe_screen *screen = pt->texture->screen;
    const void *src;
 
    if (dst_stride == 0)
-      dst_stride = pf_get_nblocksx(&ps->block, w) * ps->block.size;
+      dst_stride = pf_get_nblocksx(&pt->block, w) * pt->block.size;
 
-   if (pipe_clip_tile(x, y, &w, &h, ps))
+   if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
 
-   src = pipe_surface_map(ps, PIPE_BUFFER_USAGE_CPU_READ);
+   src = screen->transfer_map(screen, pt);
    assert(src);
    if(!src)
       return;
 
-   pipe_copy_rect(dst, &ps->block, dst_stride, 0, 0, w, h, src, ps->stride, x, y);
+   pipe_copy_rect(dst, &pt->block, dst_stride, 0, 0, w, h, src, pt->stride, x, y);
 
-   pipe_surface_unmap(ps);
+   screen->transfer_unmap(screen, pt);
 }
 
 
 /**
- * Move raw block of pixels from user memory to surface.
- * This should be usable by any hw driver that has mappable surfaces.
+ * Move raw block of pixels from user memory to transfer object.
  */
 void
-pipe_put_tile_raw(struct pipe_surface *ps,
+pipe_put_tile_raw(struct pipe_transfer *pt,
                   uint x, uint y, uint w, uint h,
                   const void *src, int src_stride)
 {
+   struct pipe_screen *screen = pt->texture->screen;
    void *dst;
 
    if (src_stride == 0)
-      src_stride = pf_get_nblocksx(&ps->block, w) * ps->block.size;
+      src_stride = pf_get_nblocksx(&pt->block, w) * pt->block.size;
 
-   if (pipe_clip_tile(x, y, &w, &h, ps))
+   if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
 
-   dst = pipe_surface_map(ps, PIPE_BUFFER_USAGE_CPU_WRITE);
+   dst = screen->transfer_map(screen, pt);
    assert(dst);
    if(!dst)
       return;
 
-   pipe_copy_rect(dst, &ps->block, ps->stride, x, y, w, h, src, src_stride, 0, 0);
+   pipe_copy_rect(dst, &pt->block, pt->stride, x, y, w, h, src, src_stride, 0, 0);
 
-   pipe_surface_unmap(ps);
+   screen->transfer_unmap(screen, pt);
 }
 
 
@@ -955,49 +954,49 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
 
 
 void
-pipe_get_tile_rgba(struct pipe_surface *ps,
+pipe_get_tile_rgba(struct pipe_transfer *pt,
                    uint x, uint y, uint w, uint h,
                    float *p)
 {
    unsigned dst_stride = w * 4;
    void *packed;
 
-   if (pipe_clip_tile(x, y, &w, &h, ps))
+   if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
 
-   packed = MALLOC(pf_get_nblocks(&ps->block, w, h) * ps->block.size);
+   packed = MALLOC(pf_get_nblocks(&pt->block, w, h) * pt->block.size);
 
    if (!packed)
       return;
 
-   if(ps->format == PIPE_FORMAT_YCBCR || ps->format == PIPE_FORMAT_YCBCR_REV)
+   if(pt->format == PIPE_FORMAT_YCBCR || pt->format == PIPE_FORMAT_YCBCR_REV)
       assert((x & 1) == 0);
 
-   pipe_get_tile_raw(ps, x, y, w, h, packed, 0);
+   pipe_get_tile_raw(pt, x, y, w, h, packed, 0);
 
-   pipe_tile_raw_to_rgba(ps->format, packed, w, h, p, dst_stride);
+   pipe_tile_raw_to_rgba(pt->format, packed, w, h, p, dst_stride);
 
    FREE(packed);
 }
 
 
 void
-pipe_put_tile_rgba(struct pipe_surface *ps,
+pipe_put_tile_rgba(struct pipe_transfer *pt,
                    uint x, uint y, uint w, uint h,
                    const float *p)
 {
    unsigned src_stride = w * 4;
    void *packed;
 
-   if (pipe_clip_tile(x, y, &w, &h, ps))
+   if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
 
-   packed = MALLOC(pf_get_nblocks(&ps->block, w, h) * ps->block.size);
+   packed = MALLOC(pf_get_nblocks(&pt->block, w, h) * pt->block.size);
 
    if (!packed)
       return;
 
-   switch (ps->format) {
+   switch (pt->format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       a8r8g8b8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);
       break;
@@ -1054,7 +1053,7 @@ pipe_put_tile_rgba(struct pipe_surface *ps,
       assert(0);
    }
 
-   pipe_put_tile_raw(ps, x, y, w, h, packed, 0);
+   pipe_put_tile_raw(pt, x, y, w, h, packed, 0);
 
    FREE(packed);
 }
@@ -1064,62 +1063,63 @@ pipe_put_tile_rgba(struct pipe_surface *ps,
  * Get a block of Z values, converted to 32-bit range.
  */
 void
-pipe_get_tile_z(struct pipe_surface *ps,
+pipe_get_tile_z(struct pipe_transfer *pt,
                 uint x, uint y, uint w, uint h,
                 uint *z)
 {
+   struct pipe_screen *screen = pt->texture->screen;
    const uint dstStride = w;
    ubyte *map;
    uint *pDest = z;
    uint i, j;
 
-   if (pipe_clip_tile(x, y, &w, &h, ps))
+   if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
 
-   map = (ubyte *)pipe_surface_map(ps, PIPE_BUFFER_USAGE_CPU_READ);
+   map = (ubyte *)screen->transfer_map(screen, pt);
    if (!map) {
       assert(0);
       return;
    }
 
-   switch (ps->format) {
+   switch (pt->format) {
    case PIPE_FORMAT_Z32_UNORM:
       {
-         const uint *pSrc
-            = (const uint *)(map  + y * ps->stride + x*4);
+         const uint *ptrc
+            = (const uint *)(map  + y * pt->stride + x*4);
          for (i = 0; i < h; i++) {
-            memcpy(pDest, pSrc, 4 * w);
+            memcpy(pDest, ptrc, 4 * w);
             pDest += dstStride;
-            pSrc += ps->stride/4;
+            ptrc += pt->stride/4;
          }
       }
       break;
    case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
       {
-         const uint *pSrc
-            = (const uint *)(map + y * ps->stride + x*4);
+         const uint *ptrc
+            = (const uint *)(map + y * pt->stride + x*4);
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 24-bit Z to 32-bit Z */
-               pDest[j] = (pSrc[j] << 8) | (pSrc[j] & 0xff);
+               pDest[j] = (ptrc[j] << 8) | (ptrc[j] & 0xff);
             }
             pDest += dstStride;
-            pSrc += ps->stride/4;
+            ptrc += pt->stride/4;
          }
       }
       break;
    case PIPE_FORMAT_Z16_UNORM:
       {
-         const ushort *pSrc
-            = (const ushort *)(map + y * ps->stride + x*2);
+         const ushort *ptrc
+            = (const ushort *)(map + y * pt->stride + x*2);
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 16-bit Z to 32-bit Z */
-               pDest[j] = (pSrc[j] << 16) | pSrc[j];
+               pDest[j] = (ptrc[j] << 16) | ptrc[j];
             }
             pDest += dstStride;
-            pSrc += ps->stride/2;
+            ptrc += pt->stride/2;
          }
       }
       break;
@@ -1127,64 +1127,65 @@ pipe_get_tile_z(struct pipe_surface *ps,
       assert(0);
    }
 
-   pipe_surface_unmap(ps);
+   screen->transfer_unmap(screen, pt);
 }
 
 
 void
-pipe_put_tile_z(struct pipe_surface *ps,
+pipe_put_tile_z(struct pipe_transfer *pt,
                 uint x, uint y, uint w, uint h,
                 const uint *zSrc)
 {
+   struct pipe_screen *screen = pt->texture->screen;
    const uint srcStride = w;
-   const uint *pSrc = zSrc;
+   const uint *ptrc = zSrc;
    ubyte *map;
    uint i, j;
 
-   if (pipe_clip_tile(x, y, &w, &h, ps))
+   if (pipe_clip_tile(x, y, &w, &h, pt))
       return;
 
-   map = (ubyte *)pipe_surface_map(ps, PIPE_BUFFER_USAGE_CPU_WRITE);
+   map = (ubyte *)screen->transfer_map(screen, pt);
    if (!map) {
       assert(0);
       return;
    }
 
-   switch (ps->format) {
+   switch (pt->format) {
    case PIPE_FORMAT_Z32_UNORM:
       {
-         uint *pDest = (uint *) (map + y * ps->stride + x*4);
+         uint *pDest = (uint *) (map + y * pt->stride + x*4);
          for (i = 0; i < h; i++) {
-            memcpy(pDest, pSrc, 4 * w);
-            pDest += ps->stride/4;
-            pSrc += srcStride;
+            memcpy(pDest, ptrc, 4 * w);
+            pDest += pt->stride/4;
+            ptrc += srcStride;
          }
       }
       break;
    case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
       {
-         uint *pDest = (uint *) (map + y * ps->stride + x*4);
+         uint *pDest = (uint *) (map + y * pt->stride + x*4);
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 32-bit Z to 24-bit Z (0 stencil) */
-               pDest[j] = pSrc[j] >> 8;
+               pDest[j] = ptrc[j] >> 8;
             }
-            pDest += ps->stride/4;
-            pSrc += srcStride;
+            pDest += pt->stride/4;
+            ptrc += srcStride;
          }
       }
       break;
    case PIPE_FORMAT_Z16_UNORM:
       {
-         ushort *pDest = (ushort *) (map + y * ps->stride + x*2);
+         ushort *pDest = (ushort *) (map + y * pt->stride + x*2);
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 32-bit Z to 16-bit Z */
-               pDest[j] = pSrc[j] >> 16;
+               pDest[j] = ptrc[j] >> 16;
             }
-            pDest += ps->stride/2;
-            pSrc += srcStride;
+            pDest += pt->stride/2;
+            ptrc += srcStride;
          }
       }
       break;
@@ -1192,7 +1193,7 @@ pipe_put_tile_z(struct pipe_surface *ps,
       assert(0);
    }
 
-   pipe_surface_unmap(ps);
+   screen->transfer_unmap(screen, pt);
 }
 
 

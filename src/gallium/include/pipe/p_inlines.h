@@ -38,29 +38,6 @@ extern "C" {
 #endif
 
 
-/* XXX: these are a kludge.  will fix when all surfaces are views into
- * textures, and free-floating winsys surfaces go away.
- */
-static INLINE void *
-pipe_surface_map( struct pipe_surface *surf, unsigned flags )
-{
-   struct pipe_screen *screen;
-   assert(surf->texture);
-   screen = surf->texture->screen;
-   return screen->surface_map( screen, surf, flags );
-}
-
-static INLINE void
-pipe_surface_unmap( struct pipe_surface *surf )
-{
-   struct pipe_screen *screen;
-   assert(surf->texture);
-   screen = surf->texture->screen;
-   screen->surface_unmap( screen, surf );
-}
-
-
-
 /**
  * Set 'ptr' to point to 'surf' and update reference counting.
  * The old thing pointed to, if any, will be unreferenced first.

@@ -643,34 +643,37 @@ void debug_dump_image(const char *prefix,
 void debug_dump_surface(const char *prefix,
                         struct pipe_surface *surface)     
 {
-   unsigned surface_usage;
+   struct pipe_texture *texture;
+   struct pipe_screen *screen;
+   struct pipe_transfer *transfer;
    void *data;
 
    if (!surface)
-      goto error1;
+      return;
 
-   /* XXX: force mappable surface */
-   surface_usage = surface->usage;
-   surface->usage |= PIPE_BUFFER_USAGE_CPU_READ;
+   texture = surface->texture;
+   screen = texture->screen;
+
+   transfer = screen->get_tex_transfer(screen, texture, surface->face,
+                                       surface->level, surface->zslice,
+                                       PIPE_TRANSFER_READ, 0, 0, surface->width,
+                                       surface->height);
    
-   data = pipe_surface_map(surface, 
-                           PIPE_BUFFER_USAGE_CPU_READ);
+   data = screen->transfer_map(screen, transfer);
    if(!data)
-      goto error2;
+      goto error;
    
    debug_dump_image(prefix, 
-                    surface->format,
-                    surface->block.size, 
-                    surface->nblocksx,
-                    surface->nblocksy,
-                    surface->stride,
+                    transfer->format,
+                    transfer->block.size, 
+                    transfer->nblocksx,
+                    transfer->nblocksy,
+                    transfer->stride,
                     data);
    
-   pipe_surface_unmap(surface);
-error2:
-   surface->usage = surface_usage;
-error1:
-   ;
+   screen->transfer_unmap(screen, transfer);
+error:
+   screen->tex_transfer_release(screen, &transfer);
 }
 
 
@@ -710,8 +713,10 @@ debug_dump_surface_bmp(const char *filename,
                        struct pipe_surface *surface)
 {
 #ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
+   struct pipe_texture *texture;
+   struct pipe_screen *screen;
    struct util_stream *stream;
-   unsigned surface_usage;
+   struct pipe_transfer *transfer;
    struct bmp_file_header bmfh;
    struct bmp_info_header bmih;
    float *rgba;
@@ -748,14 +753,18 @@ debug_dump_surface_bmp(const char *filename,
    
    util_stream_write(stream, &bmfh, 14);
    util_stream_write(stream, &bmih, 40);
+
+   texture = surface->texture;
+   screen = texture->screen;
    
-   /* XXX: force mappable surface */
-   surface_usage = surface->usage;
-   surface->usage |= PIPE_BUFFER_USAGE_CPU_READ;
+   transfer = screen->get_tex_transfer(screen, texture, surface->face,
+                                       surface->level, surface->zslice,
+                                       PIPE_TRANSFER_READ, 0, 0, surface->width,
+                                       surface->height);
 
    y = surface->height;
    while(y--) {
-      pipe_get_tile_rgba(surface,
+      pipe_get_tile_rgba(transfer,
                          0, y, surface->width, 1,
                          rgba);
       for(x = 0; x < surface->width; ++x)
@@ -768,9 +777,9 @@ debug_dump_surface_bmp(const char *filename,
          util_stream_write(stream, &pixel, 4);
       }  
    }
-   
-   surface->usage = surface_usage;
 
+   screen->tex_transfer_release(screen, &transfer);
+   
    util_stream_close(stream);
 error2:
    FREE(rgba);

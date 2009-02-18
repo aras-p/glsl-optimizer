@@ -215,12 +215,8 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
       ps->refcount = 1;
       pipe_texture_reference(&ps->texture, pt);
       ps->format = pt->format;
-      ps->block = pt->block;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
-      ps->nblocksx = pt->nblocksx[level];
-      ps->nblocksy = pt->nblocksy[level];
-      ps->stride = spt->stride[level];
       ps->offset = spt->level_offset[level];
       ps->usage = usage;
 
@@ -249,8 +245,7 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
 
       if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
          ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
-            ps->nblocksy *
-            ps->stride;
+            pt->nblocksy[level] * spt->stride[level];
       }
       else {
          assert(face == 0);
@@ -279,21 +274,91 @@ softpipe_tex_surface_release(struct pipe_screen *screen,
 }
 
 
+static struct pipe_transfer *
+softpipe_get_tex_transfer(struct pipe_screen *screen,
+                          struct pipe_texture *texture,
+                          unsigned face, unsigned level, unsigned zslice,
+                          enum pipe_transfer_usage usage,
+                          unsigned x, unsigned y, unsigned w, unsigned h)
+{
+   struct softpipe_texture *sptex = softpipe_texture(texture);
+   struct softpipe_transfer *spt;
+   struct pipe_transfer *pt;
+
+   assert(texture);
+   assert(level <= texture->last_level);
+
+   spt = CALLOC_STRUCT(softpipe_transfer);
+   pt = &spt->base;
+   if (spt) {
+      pt->refcount = 1;
+      pipe_texture_reference(&pt->texture, texture);
+      pt->format = texture->format;
+      pt->block = texture->block;
+      pt->x = x;
+      pt->y = y;
+      pt->width = w;
+      pt->height = h;
+      pt->nblocksx = texture->nblocksx[level];
+      pt->nblocksy = texture->nblocksy[level];
+      pt->stride = sptex->stride[level];
+      spt->offset = sptex->level_offset[level];
+      pt->usage = usage;
+      pt->face = face;
+      pt->level = level;
+      pt->zslice = zslice;
+
+      if (texture->target == PIPE_TEXTURE_CUBE ||
+          texture->target == PIPE_TEXTURE_3D) {
+         spt->offset += ((texture->target == PIPE_TEXTURE_CUBE) ? face :
+                         zslice) * pt->nblocksy * pt->stride;
+      }
+      else {
+         assert(face == 0);
+         assert(zslice == 0);
+      }
+   }
+   return pt;
+}
+
+
+static void 
+softpipe_tex_transfer_release(struct pipe_screen *screen, 
+                              struct pipe_transfer **t)
+{
+   struct softpipe_transfer *transfer = softpipe_transfer(*t);
+   /* Effectively do the texture_update work here - if texture images
+    * needed post-processing to put them into hardware layout, this is
+    * where it would happen.  For softpipe, nothing to do.
+    */
+   assert (transfer->base.texture);
+   if (--transfer->base.refcount == 0) {
+      pipe_texture_reference(&transfer->base.texture, NULL);
+      FREE(transfer);
+   }
+   *t = NULL;
+}
+
+
 static void *
-softpipe_surface_map( struct pipe_screen *screen,
-                      struct pipe_surface *surface,
-                      unsigned flags )
+softpipe_transfer_map( struct pipe_screen *screen,
+                       struct pipe_transfer *transfer )
 {
    ubyte *map;
    struct softpipe_texture *spt;
+   unsigned flags = 0;
 
-   if (flags & ~surface->usage) {
-      assert(0);
-      return NULL;
+   assert(transfer->texture);
+   spt = softpipe_texture(transfer->texture);
+
+   if (transfer->usage != PIPE_TRANSFER_READ) {
+      flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
    }
 
-   assert(surface->texture);
-   spt = softpipe_texture(surface->texture);
+   if (transfer->usage != PIPE_TRANSFER_WRITE) {
+      flags |= PIPE_BUFFER_USAGE_CPU_READ;
+   }
+
    map = pipe_buffer_map(screen, spt->buffer, flags);
    if (map == NULL)
       return NULL;
@@ -301,8 +366,7 @@ softpipe_surface_map( struct pipe_screen *screen,
    /* May want to different things here depending on read/write nature
     * of the map:
     */
-   if (surface->texture &&
-       (flags & PIPE_BUFFER_USAGE_CPU_WRITE)) 
+   if (transfer->texture && transfer->usage != PIPE_TRANSFER_READ) 
    {
       /* Do something to notify sharing contexts of a texture change.
        * In softpipe, that would mean flushing the texture cache.
@@ -310,18 +374,20 @@ softpipe_surface_map( struct pipe_screen *screen,
       softpipe_screen(screen)->timestamp++;
    }
    
-   return map + surface->offset;
+   return map + softpipe_transfer(transfer)->offset +
+      transfer->y / transfer->block.height * transfer->stride +
+      transfer->x / transfer->block.width * transfer->block.size;
 }
 
 
 static void
-softpipe_surface_unmap(struct pipe_screen *screen,
-                       struct pipe_surface *surface)
+softpipe_transfer_unmap(struct pipe_screen *screen,
+                       struct pipe_transfer *transfer)
 {
    struct softpipe_texture *spt;
 
-   assert(surface->texture);
-   spt = softpipe_texture(surface->texture);
+   assert(transfer->texture);
+   spt = softpipe_texture(transfer->texture);
 
    pipe_buffer_unmap( screen, spt->buffer );
 }
@@ -343,6 +409,8 @@ softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
    screen->get_tex_surface = softpipe_get_tex_surface;
    screen->tex_surface_release = softpipe_tex_surface_release;
 
-   screen->surface_map = softpipe_surface_map;
-   screen->surface_unmap = softpipe_surface_unmap;
+   screen->get_tex_transfer = softpipe_get_tex_transfer;
+   screen->tex_transfer_release = softpipe_tex_transfer_release;
+   screen->transfer_map = softpipe_transfer_map;
+   screen->transfer_unmap = softpipe_transfer_unmap;
 }

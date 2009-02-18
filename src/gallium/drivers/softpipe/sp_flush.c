@@ -70,7 +70,7 @@ softpipe_flush( struct pipe_context *pipe,
        * that's called before swapbuffers because we don't always want
        * to unmap surfaces when flushing.
        */
-      softpipe_unmap_surfaces(softpipe);
+      softpipe_unmap_transfers(softpipe);
    }
 
    /* Enable to dump BMPs of the color/depth buffers each frame */
