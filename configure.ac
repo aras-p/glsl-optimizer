@@ -1118,7 +1118,7 @@ AC_ARG_ENABLE([gallium-intel],
     [enable_gallium_intel=yes])
 if test "x$enable_gallium_intel" = xyes; then
     GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS intel"
-    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS i915simple i965simple"
+    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS i915simple"
 fi
 
 dnl
