@@ -1,6 +1,10 @@
 #ifndef RADEON_CS_WRAPPER_H
 #define RADEON_CS_WRAPPER_H
 
+#ifndef RADEON_PARAM_DEVICE_ID
+#define RADEON_PARAM_DEVICE_ID 17
+#endif
+
 #ifdef HAVE_LIBDRM_RADEON
 
 #include "radeon_bo.h"
@@ -31,9 +35,6 @@ struct drm_radeon_gem_info {
 };
 #endif
 
-#ifndef RADEON_PARAM_DEVICE_ID
-#define RADEON_PARAM_DEVICE_ID 17
-#endif
 
 
 
