@@ -32,7 +32,7 @@ import common
 default_statetrackers = 'mesa'
 
 if common.default_platform in ('linux', 'freebsd', 'darwin'):
-	default_drivers = 'softpipe,failover,i915simple,i965simple,trace'
+	default_drivers = 'softpipe,failover,i915simple,trace'
 	default_winsys = 'xlib'
 elif common.default_platform in ('winddk',):
 	default_drivers = 'softpipe,i915simple,trace'
