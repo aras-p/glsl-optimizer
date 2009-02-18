@@ -164,7 +164,7 @@ _slang_var_swizzle(GLint size, GLint comp)
 {
    switch (size) {
    case 1:
-      return MAKE_SWIZZLE4(comp, comp, comp, comp);
+      return MAKE_SWIZZLE4(comp, SWIZZLE_NIL, SWIZZLE_NIL, SWIZZLE_NIL);
    case 2:
       return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_NIL, SWIZZLE_NIL);
    case 3:
