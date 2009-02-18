@@ -262,3 +262,26 @@ static struct vbuf_render* r300_swtcl_render_create(struct r300_context* r300)
 
     return &r300render->base;
 }
+
+struct draw_stage* r300_draw_swtcl_stage(struct r300_context* r300)
+{
+    struct vbuf_render* render;
+    struct draw_stage* stage;
+
+    render = r300_swtcl_render_create(r300);
+
+    if (!render) {
+        return NULL;
+    }
+
+    stage = draw_vbuf_stage(r300->draw, render);
+
+    if (!stage) {
+        render->destroy(render);
+        return NULL;
+    }
+
+    draw_set_render(r300->draw, render);
+
+    return stage;
+}
