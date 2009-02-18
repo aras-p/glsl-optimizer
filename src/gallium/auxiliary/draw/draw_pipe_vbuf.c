@@ -93,7 +93,6 @@ vbuf_stage( struct draw_stage *stage )
 }
 
 
-static void vbuf_flush_indices( struct vbuf_stage *vbuf );
 static void vbuf_flush_vertices( struct vbuf_stage *vbuf );
 static void vbuf_alloc_vertices( struct vbuf_stage *vbuf );
 
@@ -109,13 +108,12 @@ overflow( void *map, void *ptr, unsigned bytes, unsigned bufsz )
 static INLINE void 
 check_space( struct vbuf_stage *vbuf, unsigned nr )
 {
-   if (vbuf->nr_vertices + nr > vbuf->max_vertices ) {
-      vbuf_flush_vertices(vbuf);
-      vbuf_alloc_vertices(vbuf);
+   if (vbuf->nr_vertices + nr > vbuf->max_vertices ||
+       vbuf->nr_indices + nr > vbuf->max_indices)
+   {
+      vbuf_flush_vertices( vbuf );
+      vbuf_alloc_vertices( vbuf );
    }
-
-   if (vbuf->nr_indices + nr > vbuf->max_indices )
-      vbuf_flush_indices(vbuf);
 }
 
 
@@ -202,7 +200,7 @@ vbuf_point( struct draw_stage *stage,
  * will be flushed if needed and a new one allocated.
  */
 static void
-vbuf_set_prim( struct vbuf_stage *vbuf, uint prim )
+vbuf_start_prim( struct vbuf_stage *vbuf, uint prim )
 {
    struct translate_key hw_key;
    unsigned dst_offset;
@@ -217,11 +215,7 @@ vbuf_set_prim( struct vbuf_stage *vbuf, uint prim )
     * state change.
     */
    vbuf->vinfo = vbuf->render->get_vertex_info(vbuf->render);
-
-   if (vbuf->vertex_size != vbuf->vinfo->size * sizeof(float)) {
-      vbuf_flush_vertices(vbuf);
-      vbuf->vertex_size = vbuf->vinfo->size * sizeof(float);
-   }
+   vbuf->vertex_size = vbuf->vinfo->size * sizeof(float);
 
    /* Translate from pipeline vertices to hw vertices.
     */
@@ -294,8 +288,8 @@ vbuf_set_prim( struct vbuf_stage *vbuf, uint prim )
 
    /* Allocate new buffer?
     */
-   if (!vbuf->vertices)
-      vbuf_alloc_vertices(vbuf);
+   assert(vbuf->vertices == NULL);
+   vbuf_alloc_vertices(vbuf);
 }
 
 
@@ -305,9 +299,9 @@ vbuf_first_tri( struct draw_stage *stage,
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
-   vbuf_flush_indices( vbuf );   
+   vbuf_flush_vertices( vbuf );
+   vbuf_start_prim(vbuf, PIPE_PRIM_TRIANGLES);
    stage->tri = vbuf_tri;
-   vbuf_set_prim(vbuf, PIPE_PRIM_TRIANGLES);
    stage->tri( stage, prim );
 }
 
@@ -318,9 +312,9 @@ vbuf_first_line( struct draw_stage *stage,
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
-   vbuf_flush_indices( vbuf );
+   vbuf_flush_vertices( vbuf );
+   vbuf_start_prim(vbuf, PIPE_PRIM_LINES);
    stage->line = vbuf_line;
-   vbuf_set_prim(vbuf, PIPE_PRIM_LINES);
    stage->line( stage, prim );
 }
 
@@ -331,53 +325,42 @@ vbuf_first_point( struct draw_stage *stage,
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
-   vbuf_flush_indices( vbuf );
+   vbuf_flush_vertices(vbuf);
+   vbuf_start_prim(vbuf, PIPE_PRIM_POINTS);
    stage->point = vbuf_point;
-   vbuf_set_prim(vbuf, PIPE_PRIM_POINTS);
    stage->point( stage, prim );
 }
 
 
-static void 
-vbuf_flush_indices( struct vbuf_stage *vbuf ) 
-{
-   if(!vbuf->nr_indices)
-      return;
-   
-   assert((uint) (vbuf->vertex_ptr - vbuf->vertices) == 
-          vbuf->nr_vertices * vbuf->vertex_size / sizeof(unsigned));
-
-   vbuf->render->draw(vbuf->render, vbuf->indices, vbuf->nr_indices);
-   
-   vbuf->nr_indices = 0;
-}
-
 
 /**
  * Flush existing vertex buffer and allocate a new one.
- * 
- * XXX: We separate flush-on-index-full and flush-on-vb-full, but may 
- * raise issues uploading vertices if the hardware wants to flush when
- * we flush.
  */
 static void 
 vbuf_flush_vertices( struct vbuf_stage *vbuf )
 {
-   if(vbuf->vertices) {      
-      vbuf_flush_indices(vbuf);
-      
+   if(vbuf->vertices) {
+
+      vbuf->render->unmap_vertices( vbuf->render, 0, vbuf->nr_vertices - 1 );
+
+      if (vbuf->nr_indices) 
+      {
+         vbuf->render->draw(vbuf->render, 
+                            vbuf->indices, 
+                            vbuf->nr_indices );
+   
+         vbuf->nr_indices = 0;
+      }
+     
       /* Reset temporary vertices ids */
       if(vbuf->nr_vertices)
 	 draw_reset_vertex_ids( vbuf->stage.draw );
       
       /* Free the vertex buffer */
-      vbuf->render->release_vertices(vbuf->render,
-                                     vbuf->vertices,
-                                     vbuf->vertex_size,
-                                     vbuf->nr_vertices);
+      vbuf->render->release_vertices( vbuf->render );
+
       vbuf->max_vertices = vbuf->nr_vertices = 0;
       vbuf->vertex_ptr = vbuf->vertices = NULL;
-      
    }
 }
    
@@ -402,9 +385,12 @@ vbuf_alloc_vertices( struct vbuf_stage *vbuf )
     * and it will flush itself if necessary to do so.  If this does
     * fail, we are basically without usable hardware.
     */
-   vbuf->vertices = (uint *) vbuf->render->allocate_vertices(vbuf->render,
-							     (ushort) vbuf->vertex_size,
-							     (ushort) vbuf->max_vertices);
+   vbuf->render->allocate_vertices(vbuf->render,
+                                   (ushort) vbuf->vertex_size,
+                                   (ushort) vbuf->max_vertices);
+
+   vbuf->vertices = (uint *) vbuf->render->map_vertices( vbuf->render );
+   
    vbuf->vertex_ptr = vbuf->vertices;
 }
 
@@ -415,14 +401,11 @@ vbuf_flush( struct draw_stage *stage, unsigned flags )
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
-   vbuf_flush_indices( vbuf );
+   vbuf_flush_vertices( vbuf );
 
    stage->point = vbuf_first_point;
    stage->line = vbuf_first_line;
    stage->tri = vbuf_first_tri;
-
-   if (flags & DRAW_FLUSH_BACKEND)
-      vbuf_flush_vertices( vbuf );
 }
 
 

@@ -62,7 +62,7 @@ struct i915_vbuf_render {
    struct i915_context *i915;   
 
    /** Vertex size in bytes */
-   unsigned vertex_size;
+   size_t vertex_size;
 
    /** Software primitive */
    unsigned prim;
@@ -79,6 +79,7 @@ struct i915_vbuf_render {
    size_t vbo_offset;
    void *vbo_ptr;
    size_t vbo_alloc_size;
+   size_t vbo_max_used;
 };
 
 
@@ -108,7 +109,7 @@ i915_vbuf_render_get_vertex_info( struct vbuf_render *render )
 }
 
 
-static void *
+static boolean
 i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
                                     ushort vertex_size,
                                     ushort nr_vertices )
@@ -124,7 +125,8 @@ i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
    if (i915_render->vbo_size > size + i915_render->vbo_offset && !i915->vbo_flushed) {
    } else {
       i915->vbo_flushed = 0;
-      pipe_buffer_reference(screen, &i915_render->vbo, NULL);
+      if (i915_render->vbo)
+         pipe_buffer_reference(screen, &i915_render->vbo, NULL);
    }
 
    if (!i915_render->vbo) {
@@ -134,19 +136,49 @@ i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
                                             64,
                                             I915_BUFFER_USAGE_LIT_VERTEX,
                                             i915_render->vbo_size);
-      i915_render->vbo_ptr = pipe_buffer_map(screen,
-                                             i915_render->vbo,
-                                             PIPE_BUFFER_USAGE_CPU_WRITE);
-      pipe_buffer_unmap(screen, i915_render->vbo);
+
    }
 
+   i915_render->vertex_size = vertex_size;
    i915->vbo = i915_render->vbo;
    i915->vbo_offset = i915_render->vbo_offset;
    i915->dirty |= I915_NEW_VBO;
 
+   if (!i915_render->vbo)
+      return FALSE;
+   return TRUE;
+}
+
+
+static void *
+i915_vbuf_render_map_vertices( struct vbuf_render *render )
+{
+   struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
+   struct i915_context *i915 = i915_render->i915;
+   struct pipe_screen *screen = i915->pipe.screen;
+
+   if (i915->vbo_flushed)
+      debug_printf("%s bad vbo flush occured stalling on hw\n");
+
+   i915_render->vbo_ptr = pipe_buffer_map(screen,
+                                          i915_render->vbo,
+                                          PIPE_BUFFER_USAGE_CPU_WRITE);
+
    return (unsigned char *)i915_render->vbo_ptr + i915->vbo_offset;
 }
 
+static void
+i915_vbuf_render_unmap_vertices( struct vbuf_render *render,
+                                 ushort min_index,
+                                 ushort max_index )
+{
+   struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
+   struct i915_context *i915 = i915_render->i915;
+   struct pipe_screen *screen = i915->pipe.screen;
+
+   i915_render->vbo_max_used = MAX2(i915_render->vbo_max_used, i915_render->vertex_size * (max_index + 1));
+   pipe_buffer_unmap(screen, i915_render->vbo);
+}
 
 static boolean
 i915_vbuf_render_set_primitive( struct vbuf_render *render, 
@@ -454,18 +486,15 @@ out:
 
 
 static void
-i915_vbuf_render_release_vertices( struct vbuf_render *render,
-			           void *vertices, 
-			           unsigned vertex_size,
-			           unsigned vertices_used )
+i915_vbuf_render_release_vertices( struct vbuf_render *render )
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
-   size_t size = (size_t)vertex_size * (size_t)vertices_used;
 
    assert(i915->vbo);
 
-   i915_render->vbo_offset += size;
+   i915_render->vbo_offset += i915_render->vbo_max_used;
+   i915_render->vbo_max_used = 0;
    i915->vbo = NULL;
    i915->dirty |= I915_NEW_VBO;
 }
@@ -499,6 +528,8 @@ i915_vbuf_render_create( struct i915_context *i915 )
 
    i915_render->base.get_vertex_info = i915_vbuf_render_get_vertex_info;
    i915_render->base.allocate_vertices = i915_vbuf_render_allocate_vertices;
+   i915_render->base.map_vertices = i915_vbuf_render_map_vertices;
+   i915_render->base.unmap_vertices = i915_vbuf_render_unmap_vertices;
    i915_render->base.set_primitive = i915_vbuf_render_set_primitive;
    i915_render->base.draw = i915_vbuf_render_draw;
    i915_render->base.draw_arrays = i915_vbuf_render_draw_arrays;

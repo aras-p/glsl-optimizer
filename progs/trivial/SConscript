@@ -103,6 +103,7 @@ progs = [
 	'tri-tex',
 	'tri-tex-3d',
 	'tri-tri',
+	'tri-unfilled-fog',
 	'tri-unfilled-edgeflag',
 	'tri-unfilled-clip',
 	'tri-unfilled-smooth',

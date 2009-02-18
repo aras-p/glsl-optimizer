@@ -173,9 +173,7 @@ void draw_pt_emit( struct pt_emit *emit,
 
 void draw_pt_emit_linear( struct pt_emit *emit,
                           const float (*vertex_data)[4],
-                          unsigned vertex_count,
                           unsigned stride,
-                          unsigned start,
                           unsigned count );
 
 void draw_pt_emit_destroy( struct pt_emit *emit );

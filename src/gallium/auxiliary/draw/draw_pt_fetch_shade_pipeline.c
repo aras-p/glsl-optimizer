@@ -251,9 +251,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
    else {
       draw_pt_emit_linear( fpme->emit,
                            (const float (*)[4])pipeline_verts->data,
-                           count,
                            fpme->vertex_size,
-                           0, /*start*/
                            count );
    }
 
