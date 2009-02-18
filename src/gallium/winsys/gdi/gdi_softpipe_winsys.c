@@ -273,14 +273,17 @@ gdi_softpipe_flush_frontbuffer(struct pipe_screen *screen,
                                struct pipe_surface *surface,
                                HDC hDC)
 {
+    struct softpipe_texture *texture;
     struct gdi_softpipe_buffer *buffer;
     BITMAPINFO bmi;
 
-    buffer = gdi_softpipe_buffer(softpipe_texture(surface->texture)->buffer);
+    texture = softpipe_texture(surface->texture);
+                                               
+    buffer = gdi_softpipe_buffer(texture->buffer);
 
     memset(&bmi, 0, sizeof(BITMAPINFO));
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = surface->stride / pf_get_size(surface->format);
+    bmi.bmiHeader.biWidth = texture->stride[surface->level] / pf_get_size(surface->format);
     bmi.bmiHeader.biHeight= -(long)surface->height;
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biBitCount = pf_get_bits(surface->format);
