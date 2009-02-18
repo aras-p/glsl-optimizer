@@ -174,6 +174,34 @@ static boolean r300_swtcl_render_set_primitive(struct vbuf_render* render,
     return true;
 }
 
+static void r300_swtcl_render_draw_arrays(struct vbuf_render* render,
+                                          unsigned start,
+                                          unsigned count)
+{
+    struct r300_swtcl_render* r300render = r300_swtcl_render(render);
+    struct r300_context* r300 = r300render->r300;
+    struct pipe_screen* screen = r300->context.screen;
+
+    CS_LOCALS(r300);
+
+    /* Make sure that all possible state is emitted. */
+    r300_update_derived_state(r300);
+    r300_emit_dirty_state(r300);
+
+    /* Take care of vertex formats and routes */
+    BEGIN_CS(3);
+    OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
+    OUT_CS(r300->vertex_info.hwfmt[0]);
+    OUT_CS(r300->vertex_info.hwfmt[1]);
+    END_CS;
+
+    /* Draw stuff! */
+    BEGIN_CS(2);
+    OUT_CS(CP_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0));
+    OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
+           r300render->hwprim | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
+}
+
 static void r300_swtcl_render_draw(struct vbuf_render* render,
                                    const ushort* indices,
                                    uint count)
@@ -211,7 +239,7 @@ static void r300_swtcl_render_draw(struct vbuf_render* render,
 
     /* Draw stuff! */
     BEGIN_CS(10);
-    OUT_CS(CP_PACKET3(R300_PACKET3_3D_DRAW_INDX, 0));
+    OUT_CS(CP_PACKET3(R300_PACKET3_3D_DRAW_INDX_2, 0));
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
            r300render->hwprim | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
 
@@ -243,7 +271,7 @@ static struct vbuf_render* r300_swtcl_render_create(struct r300_context* r300)
     r300render->base.unmap_vertices = r300_swtcl_render_unmap_vertices;
     r300render->base.set_primitive = r300_swtcl_render_set_primitive;
     r300render->base.draw = r300_swtcl_render_draw;
-    /* r300render->base.draw_arrays = r300_swtcl_render_draw_arrays; */
+    r300render->base.draw_arrays = r300_swtcl_render_draw_arrays;
     r300render->base.release_vertices = r300_swtcl_render_release_vertices;
     r300render->base.destroy = r300_swtcl_render_destroy;
 
