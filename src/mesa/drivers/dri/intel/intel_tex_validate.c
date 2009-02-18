@@ -206,7 +206,8 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
                                           firstImage->base.Height,
                                           firstImage->base.Depth,
                                           cpp,
-                                          comp_byte);
+                                          comp_byte,
+					  GL_TRUE);
    }
 
    /* Pull in any images not in the object's tree:

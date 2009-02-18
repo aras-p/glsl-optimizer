@@ -74,7 +74,8 @@ struct intel_region
  */
 struct intel_region *intel_region_alloc(struct intel_context *intel,
                                         GLuint cpp, GLuint width,
-                                        GLuint height, GLuint pitch);
+                                        GLuint height, GLuint pitch,
+					GLboolean expect_accelerated_upload);
 
 struct intel_region *
 intel_region_alloc_for_handle(struct intel_context *intel,

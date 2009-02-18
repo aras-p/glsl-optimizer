@@ -103,7 +103,8 @@ intel_miptree_create(struct intel_context *intel,
 		     GLuint last_level,
 		     GLuint width0,
 		     GLuint height0,
-		     GLuint depth0, GLuint cpp, GLuint compress_byte)
+		     GLuint depth0, GLuint cpp, GLuint compress_byte,
+		     GLboolean expect_accelerated_upload)
 {
    struct intel_mipmap_tree *mt;
 
@@ -120,7 +121,8 @@ intel_miptree_create(struct intel_context *intel,
 				   mt->cpp,
 				   mt->pitch,
 				   mt->total_height,
-				   mt->pitch);
+				   mt->pitch,
+				   expect_accelerated_upload);
 
    if (!mt->region) {
        free(mt);

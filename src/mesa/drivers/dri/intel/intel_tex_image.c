@@ -62,7 +62,8 @@ logbase2(int n)
 static void
 guess_and_alloc_mipmap_tree(struct intel_context *intel,
                             struct intel_texture_object *intelObj,
-                            struct intel_texture_image *intelImage)
+                            struct intel_texture_image *intelImage,
+			    GLboolean expect_accelerated_upload)
 {
    GLuint firstLevel;
    GLuint lastLevel;
@@ -136,7 +137,8 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
                                        height,
                                        depth,
                                        intelImage->base.TexFormat->TexelBytes,
-                                       comp_byte);
+                                       comp_byte,
+				       expect_accelerated_upload);
 
    DBG("%s - success\n", __FUNCTION__);
 }
@@ -385,7 +387,7 @@ intelTexImage(GLcontext * ctx,
    }
 
    if (!intelObj->mt) {
-      guess_and_alloc_mipmap_tree(intel, intelObj, intelImage);
+      guess_and_alloc_mipmap_tree(intel, intelObj, intelImage, pixels == NULL);
       if (!intelObj->mt) {
 	 DBG("guess_and_alloc_mipmap_tree: failed\n");
       }
@@ -415,7 +417,7 @@ intelTexImage(GLcontext * ctx,
 					    level, level,
 					    width, height, depth,
 					    intelImage->base.TexFormat->TexelBytes,
-					    comp_byte);
+					    comp_byte, pixels == NULL);
 
    }
 
