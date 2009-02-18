@@ -288,6 +288,7 @@ static void aos_soft_release_xmm( struct aos_compilation *cp,
                                   struct x86_reg reg )
 {
    if (reg.file == file_XMM) {
+      assert(cp->xmm[reg.idx].last_used == cp->insn_counter);
       cp->xmm[reg.idx].last_used = cp->insn_counter - 1;
    }
 }
