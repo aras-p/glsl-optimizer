@@ -196,8 +196,10 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
  */
 static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 {
-	const struct gl_texture_image *firstImage =
-	    t->base.Image[0][t->mt->firstLevel];
+	const struct gl_texture_image *firstImage;
+	int firstlevel = t->mt ? t->mt->firstLevel : 0;
+	    
+	firstImage = t->base.Image[0][firstlevel];
 
 	if (!t->image_override
 	    && VALID_FORMAT(firstImage->TexFormat->MesaFormat)) {
@@ -214,6 +216,14 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 		return;
 	}
 
+	if (t->image_override)
+		return;
+
+	t->pp_txsize = (((firstImage->Width - 1) << R300_TX_WIDTHMASK_SHIFT)
+			| ((firstImage->Height - 1) << R300_TX_HEIGHTMASK_SHIFT)
+			| ((firstImage->DepthLog2) << R300_TX_DEPTHMASK_SHIFT)
+			| ((t->mt->lastLevel - t->mt->firstLevel) << R300_TX_MAX_MIP_LEVEL_SHIFT));
+
 	t->tile_bits = 0;
 
 	if (t->base.Target == GL_TEXTURE_CUBE_MAP)
@@ -221,10 +231,6 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 	if (t->base.Target == GL_TEXTURE_3D)
 		t->pp_txformat |= R300_TX_FORMAT_3D;
 
-	t->pp_txsize = (((firstImage->Width - 1) << R300_TX_WIDTHMASK_SHIFT)
-			| ((firstImage->Height - 1) << R300_TX_HEIGHTMASK_SHIFT)
-			| ((firstImage->DepthLog2) << R300_TX_DEPTHMASK_SHIFT)
-			| ((t->mt->lastLevel - t->mt->firstLevel) << R300_TX_MAX_MIP_LEVEL_SHIFT));
 
 	if (t->base.Target == GL_TEXTURE_RECTANGLE_NV) {
 		unsigned int align = (64 / t->mt->bpp) - 1;
@@ -310,7 +316,10 @@ again:
 				      i);
 		}
 		t = radeon_tex_obj(ctx->Texture.Unit[i]._Current);
-		bos[num_bo].bo = t->mt->bo;
+		if (t->image_override && t->bo)
+			bos[num_bo].bo = t->bo;
+		else if (t->mt->bo)
+			bos[num_bo].bo = t->mt->bo;
 		bos[num_bo].read_domains = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
 		bos[num_bo].write_domain = 0;
 		bos[num_bo].new_accounted = 0;
@@ -440,6 +449,7 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 	rImage->bo = rb->bo;
 	
 	t->bo = rb->bo;
+	radeon_bo_ref(t->bo);
 	t->tile_bits = 0;
 	t->image_override = GL_TRUE;
 	t->override_offset = 0;
