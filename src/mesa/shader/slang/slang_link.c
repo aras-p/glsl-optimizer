@@ -495,8 +495,33 @@ _slang_update_inputs_outputs(struct gl_program *prog)
             maxAddrReg = MAX2(maxAddrReg, (GLuint) (inst->SrcReg[j].Index + 1));
          }
       }
+
       if (inst->DstReg.File == PROGRAM_OUTPUT) {
          prog->OutputsWritten |= 1 << inst->DstReg.Index;
+         if (inst->DstReg.RelAddr) {
+            /* If the output attribute is indexed with relative addressing
+             * we know that it must be a varying or texcoord such as
+             * gl_TexCoord[i] = v;  In this case, mark all the texcoords
+             * or varying outputs as being written.  It's not an error if
+             * a vertex shader writes varying vars that aren't used by the
+             * fragment shader.  But it is an error for a fragment shader
+             * to use varyings that are not written by the vertex shader.
+             */
+            if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
+               if (inst->DstReg.Index == VERT_RESULT_TEX0) {
+                  /* mark all texcoord outputs as written */
+                  const GLbitfield mask =
+                     ((1 << MAX_TEXTURE_COORD_UNITS) - 1) << VERT_RESULT_TEX0;
+                  prog->OutputsWritten |= mask;
+               }
+               else if (inst->DstReg.Index == VERT_RESULT_VAR0) {
+                  /* mark all generic varying outputs as written */
+                  const GLbitfield mask =
+                     ((1 << MAX_VARYING) - 1) << VERT_RESULT_VAR0;
+                  prog->OutputsWritten |= mask;
+               }
+            }
+         }
       }
       else if (inst->DstReg.File == PROGRAM_ADDRESS) {
          maxAddrReg = MAX2(maxAddrReg, inst->DstReg.Index + 1);
