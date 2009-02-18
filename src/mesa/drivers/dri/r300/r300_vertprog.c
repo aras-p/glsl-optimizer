@@ -993,16 +993,15 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 		    vp->outputs[VERT_RESULT_COL0] + 3;
 		cur_reg = vp->outputs[VERT_RESULT_BFC1] + 1;
 	}
-#if 0
-	if (vp->key.OutputsWritten & (1 << VERT_RESULT_FOGC)) {
-		vp->outputs[VERT_RESULT_FOGC] = cur_reg++;
-	}
-#endif
 
 	for (i = VERT_RESULT_TEX0; i <= VERT_RESULT_TEX7; i++) {
 		if (vp->key.OutputsWritten & (1 << i)) {
 			vp->outputs[i] = cur_reg++;
 		}
+	}
+
+	if (vp->key.OutputsWritten & (1 << VERT_RESULT_FOGC)) {
+		vp->outputs[VERT_RESULT_FOGC] = cur_reg++;
 	}
 }
 

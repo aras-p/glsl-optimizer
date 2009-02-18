@@ -451,19 +451,7 @@ static void allocate_input_registers(struct pair_state *s)
 	int i;
 	GLuint hwindex = 0;
 
-	/* Texcoords come first */
-	for (i = 0; i < s->Ctx->Const.MaxTextureUnits; i++) {
-		if (InputsRead & (FRAG_BIT_TEX0 << i))
-			alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_TEX0+i, hwindex++);
-	}
-	InputsRead &= ~FRAG_BITS_TEX_ANY;
-
-	/* fragment position treated as a texcoord */
-	if (InputsRead & FRAG_BIT_WPOS)
-		alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_WPOS, hwindex++);
-	InputsRead &= ~FRAG_BIT_WPOS;
-
-	/* Then primary colour */
+	/* Primary colour */
 	if (InputsRead & FRAG_BIT_COL0)
 		alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_COL0, hwindex++);
 	InputsRead &= ~FRAG_BIT_COL0;
@@ -473,10 +461,22 @@ static void allocate_input_registers(struct pair_state *s)
 		alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_COL1, hwindex++);
 	InputsRead &= ~FRAG_BIT_COL1;
 
-	/* Fog coordinate */
+	/* Texcoords */
+	for (i = 0; i < s->Ctx->Const.MaxTextureUnits; i++) {
+		if (InputsRead & (FRAG_BIT_TEX0 << i))
+			alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_TEX0+i, hwindex++);
+	}
+	InputsRead &= ~FRAG_BITS_TEX_ANY;
+
+	/* Fogcoords treated as a texcoord */
 	if (InputsRead & FRAG_BIT_FOGC)
 		alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_FOGC, hwindex++);
 	InputsRead &= ~FRAG_BIT_FOGC;
+
+	/* fragment position treated as a texcoord */
+	if (InputsRead & FRAG_BIT_WPOS)
+		alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_WPOS, hwindex++);
+	InputsRead &= ~FRAG_BIT_WPOS;
 
 	/* Anything else */
 	if (InputsRead)
