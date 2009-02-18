@@ -36,7 +36,7 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_error.h"
 #include "util/u_memory.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 
 #include "pb_buffer.h"
 #include "pb_buffer_fenced.h"

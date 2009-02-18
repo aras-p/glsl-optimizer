@@ -30,7 +30,7 @@
 
 #include "GL/gl.h"
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/p_thread.h"
 
 #include "shared/stw_public.h"

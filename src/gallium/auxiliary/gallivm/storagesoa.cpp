@@ -30,7 +30,7 @@
 #include "gallivm_p.h"
 
 #include "pipe/p_shader_tokens.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 
 #include <llvm/BasicBlock.h>
 #include <llvm/Module.h>

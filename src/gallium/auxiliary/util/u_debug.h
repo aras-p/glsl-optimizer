@@ -35,13 +35,13 @@
  * @author Jose Fonseca <jrfonseca@tungstengraphics.com>
  */
 
-#ifndef P_DEBUG_H_
-#define P_DEBUG_H_
+#ifndef U_DEBUG_H_
+#define U_DEBUG_H_
 
 
 #include <stdarg.h>
 
-#include "p_compiler.h"
+#include "pipe/p_compiler.h"
 
 
 #ifdef	__cplusplus
@@ -358,4 +358,4 @@ void debug_dump_surface_bmp(const char *filename,
 }
 #endif
 
-#endif /* P_DEBUG_H_ */
+#endif /* U_DEBUG_H_ */

@@ -44,7 +44,7 @@
 #include <stdlib.h>
 #endif
 
-#include "pipe/p_debug.h" 
+#include "util/u_debug.h" 
 #include "util/u_double_list.h" 
 
 

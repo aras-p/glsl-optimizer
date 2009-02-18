@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "tgsi_sanity.h"
 #include "tgsi_info.h"
 #include "tgsi_iterate.h"

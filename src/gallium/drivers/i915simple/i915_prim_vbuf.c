@@ -40,7 +40,7 @@
 
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/p_inlines.h"
 #include "pipe/internal/p_winsys_screen.h"
 #include "util/u_math.h"

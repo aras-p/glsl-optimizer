@@ -51,7 +51,7 @@
 #define PB_BUFFER_FENCED_H_
 
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 
 
 #ifdef __cplusplus

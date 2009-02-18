@@ -32,7 +32,7 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "pipe/p_shader_tokens.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_exec.h"

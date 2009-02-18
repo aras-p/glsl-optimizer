@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "stw_pixelformat.h"
 #include "stw_public.h"
 

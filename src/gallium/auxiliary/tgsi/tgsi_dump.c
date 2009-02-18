@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "util/u_string.h"
 #include "tgsi_dump.h"
 #include "tgsi_info.h"

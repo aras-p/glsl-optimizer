@@ -26,7 +26,7 @@
 #if defined(PIPE_ARCH_X86)
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "util/u_pointer.h"
 
 #include "rtasm_execmem.h"

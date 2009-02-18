@@ -1,7 +1,7 @@
 #ifndef __NOUVEAU_STATEOBJ_H__
 #define __NOUVEAU_STATEOBJ_H__
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 
 struct nouveau_stateobj_reloc {
 	struct pipe_buffer *bo;

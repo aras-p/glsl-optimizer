@@ -39,7 +39,7 @@
 
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 
 #include "cso_cache/cso_hash.h"
 

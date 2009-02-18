@@ -31,7 +31,7 @@
  * Authors:  Brian Paul
  */
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 
 #include "tgsi_transform.h"
 

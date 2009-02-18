@@ -41,7 +41,7 @@
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 
 /*
  * Map mesa register file to TGSI register file.

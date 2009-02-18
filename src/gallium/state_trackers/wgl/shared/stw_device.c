@@ -27,7 +27,7 @@
 
 #include <windows.h>
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/p_screen.h"
 
 #include "shared/stw_device.h"

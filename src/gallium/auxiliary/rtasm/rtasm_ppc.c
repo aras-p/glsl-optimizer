@@ -38,7 +38,7 @@
 
 #include <stdio.h>
 #include "util/u_memory.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "rtasm_execmem.h"
 #include "rtasm_ppc.h"
 

@@ -23,7 +23,7 @@
 #include "util/u_math.h"
 #include "util/u_pack_color.h"
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/internal/p_winsys_screen.h"
 
 #include "r300_context.h"

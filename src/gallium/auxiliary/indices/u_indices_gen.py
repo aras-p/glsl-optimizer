@@ -72,7 +72,7 @@ def prolog():
 #include "indices/u_indices.h"
 #include "indices/u_indices_priv.h"
 #include "pipe/p_compiler.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
 

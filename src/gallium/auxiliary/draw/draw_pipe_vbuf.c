@@ -29,12 +29,12 @@
  * \file
  * Vertex buffer drawing stage.
  * 
- * \author José Fonseca <jrfonsec@tungstengraphics.com>
+ * \author Jose Fonseca <jrfonsec@tungstengraphics.com>
  * \author Keith Whitwell <keith@tungstengraphics.com>
  */
 
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 

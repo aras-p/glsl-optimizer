@@ -33,7 +33,7 @@
 
 #if defined(PIPE_ARCH_PPC)
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"

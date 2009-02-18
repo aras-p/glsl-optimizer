@@ -27,7 +27,7 @@
 
 #include <windows.h>
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "shared/stw_public.h"
 #include "stw_wgl.h"
 #include "stw.h"

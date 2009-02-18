@@ -30,7 +30,7 @@
 
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/internal/p_winsys_screen.h"
 
 
