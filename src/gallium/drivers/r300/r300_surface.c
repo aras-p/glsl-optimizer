@@ -42,17 +42,17 @@ static void r300_surface_fill(struct pipe_context* pipe,
     b = (float)((color >>  0) & 0xff) / 255.0f;
     debug_printf("r300: Filling surface %p at (%d,%d),"
         " dimensions %dx%d (stride %d), color 0x%x\n",
-        dest, x, y, w, h, dest->stride, color);
+        dest, x, y, w, h, tex->stride, color);
 
     /* Fallback? */
-    if (0) {
+    /*if (0) {
         debug_printf("r300: Falling back on surface clear...");
         void* map = pipe->screen->surface_map(pipe->screen, dest,
             PIPE_BUFFER_USAGE_CPU_WRITE);
         pipe_fill_rect(map, &dest->block, &dest->stride, x, y, w, h, color);
         pipe->screen->surface_unmap(pipe->screen, dest);
         return;
-    }
+    }*/
 
     BEGIN_CS(163 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
     /* Flush PVS. */
@@ -293,7 +293,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
     /* XXX (dest->stride >> 2) should be the buffer width in pixels however,
      * this little calculation is only good as long as the buffer is 32bpp */
-    OUT_CS_REG(R300_RB3D_COLORPITCH0, (dest->stride >> 2) |
+    OUT_CS_REG(R300_RB3D_COLORPITCH0, (tex->stride >> 2) |
         R300_COLOR_FORMAT_ARGB8888);
     OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0x0000000F);
     /* XXX Packet3 */

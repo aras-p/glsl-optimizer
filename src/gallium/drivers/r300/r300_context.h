@@ -181,6 +181,9 @@ struct r300_texture {
     /* Offsets into the buffer. */
     unsigned offset[PIPE_MAX_TEXTURE_LEVELS];
 
+    /* Stride (pitch?) of this texture in bytes */
+    unsigned stride;
+    
     /* Total size of this texture, in bytes. */
     unsigned size;
 

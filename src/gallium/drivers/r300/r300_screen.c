@@ -221,24 +221,92 @@ static boolean r300_is_format_supported(struct pipe_screen* pscreen,
     return FALSE;
 }
 
-static void* r300_surface_map(struct pipe_screen* screen,
-                              struct pipe_surface* surface,
-                              unsigned flags)
+static struct pipe_transfer*
+r300_get_tex_transfer(struct pipe_screen *screen,
+                      struct pipe_texture *texture,
+                      unsigned face, unsigned level, unsigned zslice,
+                      enum pipe_transfer_usage usage, unsigned x, unsigned y,
+                      unsigned w, unsigned h)
 {
-    struct r300_texture* tex = (struct r300_texture*)surface->texture;
-    char* map = pipe_buffer_map(screen, tex->buffer, flags);
+    struct r300_texture *tex = (struct r300_texture *)texture;
+    struct r300_transfer *trans;
+    unsigned offset;  /* in bytes */
+
+    /* XXX Add support for these things */
+    if (texture->target == PIPE_TEXTURE_CUBE) {
+        debug_printf("PIPE_TEXTURE_CUBE is not yet supported.\n");
+        /* offset = tex->image_offset[level][face]; */
+    }
+    else if (texture->target == PIPE_TEXTURE_3D) {
+        debug_printf("PIPE_TEXTURE_3D is not yet supported.\n");
+        /* offset = tex->image_offset[level][zslice]; */
+    }
+    else {
+        offset = tex->offset[level];
+        assert(face == 0);
+        assert(zslice == 0);
+    }
+
+    trans = CALLOC_STRUCT(r300_transfer);
+    if (trans) {
+        trans->transfer.refcount = 1;
+        pipe_texture_reference(&trans->transfer.texture, texture);
+        trans->transfer.format = trans->transfer.format;
+        trans->transfer.width = w;
+        trans->transfer.height = h;
+        trans->transfer.block = texture->block;
+        trans->transfer.nblocksx = texture->nblocksx[level];
+        trans->transfer.nblocksy = texture->nblocksy[level];
+        trans->transfer.stride = tex->stride;
+        trans->transfer.usage = usage;
+        trans->offset = offset;
+    }
+    return &trans->transfer;
+}
+
+static void
+r300_tex_transfer_release(struct pipe_screen *screen,
+                          struct pipe_transfer **transfer)
+{
+   struct pipe_transfer *trans = *transfer;
+
+   if (--trans->refcount == 0) {
+      pipe_texture_reference(&trans->texture, NULL);
+      FREE(trans);
+   }
+
+   *transfer = NULL;
+}
+
+static void* r300_transfer_map(struct pipe_screen* screen,
+                              struct pipe_transfer* transfer)
+{
+    struct r300_texture* tex = (struct r300_texture*)transfer->texture;
+    char* map;
+    unsigned flags = 0;
+
+    if (transfer->usage != PIPE_TRANSFER_WRITE) {
+        flags |= PIPE_BUFFER_USAGE_CPU_READ;
+    }
+    if (transfer->usage != PIPE_TRANSFER_READ) {
+        flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
+    }
+    
+    map = pipe_buffer_map(screen, tex->buffer, flags);
 
     if (!map) {
         return NULL;
     }
 
-    return map + surface->offset;
+    return map + r300_transfer(transfer)->offset +
+        transfer->y / transfer->block.height * transfer->stride +
+        transfer->x / transfer->block.width * transfer->block.size;
 }
 
-static void r300_surface_unmap(struct pipe_screen* screen,
-                               struct pipe_surface* surface)
+static void r300_transfer_unmap(struct pipe_screen* screen,
+                                struct pipe_transfer* transfer)
 {
-    struct r300_texture* tex = (struct r300_texture*)surface->texture;
+    struct r300_texture* tex = (struct r300_texture*)transfer->texture;
     pipe_buffer_unmap(screen, tex->buffer);
 }
 
@@ -272,8 +340,10 @@ struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys,
     r300screen->screen.get_param = r300_get_param;
     r300screen->screen.get_paramf = r300_get_paramf;
     r300screen->screen.is_format_supported = r300_is_format_supported;
-    r300screen->screen.surface_map = r300_surface_map;
-    r300screen->screen.surface_unmap = r300_surface_unmap;
+    r300screen->screen.get_tex_transfer = r300_get_tex_transfer;
+    r300screen->screen.tex_transfer_release = r300_tex_transfer_release;
+    r300screen->screen.transfer_map = r300_transfer_map;
+    r300screen->screen.transfer_unmap = r300_transfer_unmap;
 
     r300_init_screen_texture_functions(&r300screen->screen);
     u_simple_screen_init(&r300screen->screen);

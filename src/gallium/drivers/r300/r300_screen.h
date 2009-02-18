@@ -40,9 +40,24 @@ struct r300_screen {
     struct r300_capabilities* caps;
 };
 
+struct r300_transfer {
+    /* Parent class */
+    struct pipe_transfer transfer;
+
+    /* Offset from start of buffer. */
+    unsigned offset;
+};
+
 /* Convenience cast wrapper. */
 static struct r300_screen* r300_screen(struct pipe_screen* screen) {
     return (struct r300_screen*)screen;
+}
+
+/* Convenience cast wrapper. */
+static INLINE struct r300_transfer*
+r300_transfer(struct pipe_transfer* transfer)
+{
+    return (struct r300_transfer*)transfer;
 }
 
 /* Creates a new r300 screen. */
