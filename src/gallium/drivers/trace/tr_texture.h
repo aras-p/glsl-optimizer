@@ -48,6 +48,14 @@ struct trace_surface
    struct pipe_surface base;
 
    struct pipe_surface *surface;
+};
+
+
+struct trace_transfer
+{
+   struct pipe_transfer base;
+
+   struct pipe_transfer *transfer;
    
    void *map;
 };
@@ -75,6 +83,17 @@ trace_surface(struct trace_texture *tr_tex,
 }
 
 
+static INLINE struct trace_transfer *
+trace_transfer(struct trace_texture *tr_tex, 
+               struct pipe_transfer *transfer)
+{
+   if(!transfer)
+      return NULL;
+   assert(transfer->texture == &tr_tex->base);
+   return (struct trace_transfer *)transfer;
+}
+
+
 struct pipe_texture *
 trace_texture_create(struct trace_screen *tr_scr, 
                      struct pipe_texture *texture);
@@ -90,6 +109,14 @@ trace_surface_create(struct trace_texture *tr_tex,
 void
 trace_surface_destroy(struct trace_texture *tr_tex,
                       struct pipe_surface *surface);
+
+struct pipe_transfer *
+trace_transfer_create(struct trace_texture *tr_tex, 
+                      struct pipe_transfer *transfer);
+
+void
+trace_transfer_destroy(struct trace_texture *tr_tex,
+                       struct pipe_transfer *transfer);
 
 
 #endif /* TR_TEXTURE_H_ */

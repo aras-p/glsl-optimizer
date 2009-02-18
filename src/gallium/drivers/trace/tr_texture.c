@@ -109,3 +109,43 @@ trace_surface_destroy(struct trace_texture *tr_tex,
    FREE(tr_surf);
 }
 
+
+struct pipe_transfer *
+trace_transfer_create(struct trace_texture *tr_tex, 
+                     struct pipe_transfer *transfer)
+{
+   struct trace_transfer *tr_trans;
+   
+   if(!transfer)
+      goto error;
+   
+   assert(transfer->texture == tr_tex->texture);
+   
+   tr_trans = CALLOC_STRUCT(trace_transfer);
+   if(!tr_trans)
+      goto error;
+   
+   memcpy(&tr_trans->base, transfer, sizeof(struct pipe_transfer));
+   
+   tr_trans->base.texture = NULL;
+   pipe_texture_reference(&tr_trans->base.texture, &tr_tex->base);
+   tr_trans->transfer = transfer;
+
+   return &tr_trans->base;
+   
+error:
+   pipe_transfer_reference(&transfer, NULL);
+   return NULL;
+}
+
+
+void
+trace_transfer_destroy(struct trace_texture *tr_tex, 
+                      struct pipe_transfer *transfer)
+{
+   struct trace_transfer *tr_trans = trace_transfer(tr_tex, transfer);
+   pipe_texture_reference(&tr_trans->base.texture, NULL);
+   pipe_transfer_reference(&tr_trans->transfer, NULL);
+   FREE(tr_trans);
+}
+
