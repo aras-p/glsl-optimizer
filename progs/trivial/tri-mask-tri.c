@@ -143,7 +143,7 @@ int main(int argc, char **argv)
 
    glutInitWindowPosition(100, 0); glutInitWindowSize(Width, Height);
    glutInitDisplayMode(type);
-   Win = glutCreateWindow("First Tri");
+   Win = glutCreateWindow(*argv);
    Init();
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);

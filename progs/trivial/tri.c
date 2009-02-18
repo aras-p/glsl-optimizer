@@ -119,7 +119,7 @@ int main(int argc, char **argv)
     type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
     glutInitDisplayMode(type);
 
-    win = glutCreateWindow("First Tri");
+    win = glutCreateWindow(*argv);
     if (!win) {
 	exit(1);
     }
