@@ -62,6 +62,7 @@ struct cell_vbuf_render
    uint vertex_size;     /**< in bytes */
    void *vertex_buffer;  /**< just for debug, really */
    uint vertex_buf;      /**< in [0, CELL_NUM_BUFFERS-1] */
+   uint vertex_buffer_size;  /**< size in bytes */
 };
 
 
@@ -82,24 +83,26 @@ cell_vbuf_get_vertex_info(struct vbuf_render *vbr)
 }
 
 
-static void *
+static boolean
 cell_vbuf_allocate_vertices(struct vbuf_render *vbr,
                             ushort vertex_size, ushort nr_vertices)
 {
    struct cell_vbuf_render *cvbr = cell_vbuf_render(vbr);
+   unsigned size = vertex_size * nr_vertices;
    /*printf("Alloc verts %u * %u\n", vertex_size, nr_vertices);*/
 
    assert(cvbr->vertex_buf == ~0);
    cvbr->vertex_buf = cell_get_empty_buffer(cvbr->cell);
    cvbr->vertex_buffer = cvbr->cell->buffer[cvbr->vertex_buf];
+   cvbr->vertex_buffer_size = size;
    cvbr->vertex_size = vertex_size;
-   return cvbr->vertex_buffer;
+
+   return cvbr->vertex_buffer != NULL;
 }
 
 
 static void
-cell_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices, 
-                           unsigned vertex_size, unsigned vertices_used)
+cell_vbuf_release_vertices(struct vbuf_render *vbr)
 {
    struct cell_vbuf_render *cvbr = cell_vbuf_render(vbr);
    struct cell_context *cell = cvbr->cell;
@@ -127,8 +130,26 @@ cell_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices,
    cvbr->vertex_buf = ~0;
    cell_flush_int(cell, 0x0);
 
-   assert(vertices == cvbr->vertex_buffer);
    cvbr->vertex_buffer = NULL;
+}
+
+
+static void *
+cell_vbuf_map_vertices(struct vbuf_render *vbr)
+{
+   struct cell_vbuf_render *cvbr = cell_vbuf_render(vbr);
+   return cvbr->vertex_buffer;
+}
+
+
+static void 
+cell_vbuf_unmap_vertices(struct vbuf_render *vbr, 
+                         ushort min_index,
+                         ushort max_index )
+{
+   struct cell_vbuf_render *cvbr = cell_vbuf_render(vbr);
+   assert( cvbr->vertex_buffer_size >= (max_index+1) * cvbr->vertex_size );
+   /* do nothing */
 }
 
 
@@ -295,6 +316,8 @@ cell_init_vbuf(struct cell_context *cell)
 
    cell->vbuf_render->base.get_vertex_info = cell_vbuf_get_vertex_info;
    cell->vbuf_render->base.allocate_vertices = cell_vbuf_allocate_vertices;
+   cell->vbuf_render->base.map_vertices = cell_vbuf_map_vertices;
+   cell->vbuf_render->base.unmap_vertices = cell_vbuf_unmap_vertices;
    cell->vbuf_render->base.set_primitive = cell_vbuf_set_primitive;
    cell->vbuf_render->base.draw = cell_vbuf_draw;
    cell->vbuf_render->base.release_vertices = cell_vbuf_release_vertices;
