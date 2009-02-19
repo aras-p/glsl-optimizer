@@ -565,4 +565,5 @@ _mesa_init_stencil(GLcontext *ctx)
    ctx->Stencil.WriteMask[1] = ~0U;
    ctx->Stencil.WriteMask[2] = ~0U;
    ctx->Stencil.Clear = 0;
+   ctx->Stencil._BackFace = 1;
 }
