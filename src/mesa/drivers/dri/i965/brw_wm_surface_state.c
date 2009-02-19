@@ -389,8 +389,7 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
 	  * a more restrictive relocation to emit.
 	  */
 	 dri_bo_emit_reloc(brw->wm.surf_bo[unit],
-			   I915_GEM_DOMAIN_RENDER |
-			   I915_GEM_DOMAIN_SAMPLER,
+			   I915_GEM_DOMAIN_RENDER,
 			   I915_GEM_DOMAIN_RENDER,
 			   0,
 			   offsetof(struct brw_surface_state, ss1),
