@@ -9,11 +9,8 @@ C_SOURCES = \
 	intel_be_device.c \
 	intel_be_api.c
 
+LIBRARY_INCLUDES = $(shell pkg-config libdrm --cflags-only-I)
 
-include ./Makefile.template
+LIBRARY_DEFINES = $(shell pkg-config libdrm --cflags-only-other)
 
-DRIVER_DEFINES = $(shell pkg-config libdrm --cflags \
-                && pkg-config libdrm --atleast-version=2.3.1 \
-                && echo "-DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP")
-symlinks:
-
+include ../../../../Makefile.template
