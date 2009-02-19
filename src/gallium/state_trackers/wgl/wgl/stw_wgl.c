@@ -30,22 +30,6 @@
 #include "util/u_debug.h"
 #include "shared/stw_public.h"
 #include "stw_wgl.h"
-#include "stw.h"
-
-boolean stw_wgl_init( void )
-{
-   debug_printf("%s\n", __FUNCTION__);
-   return TRUE;
-}
-
-void stw_wgl_cleanup( void )
-{
-}
-
-static INLINE struct stw_context *stw_context( HGLRC hglrc )
-{
-   return (struct stw_context *)hglrc;
-}
 
 
 WINGDIAPI BOOL APIENTRY
@@ -54,8 +38,8 @@ wglCopyContext(
    HGLRC hglrcDst,
    UINT mask )
 {
-   return stw_copy_context( stw_context(hglrcSrc), 
-                            stw_context(hglrcDst), 
+   return stw_copy_context( (UINT_PTR)hglrcSrc, 
+                            (UINT_PTR)hglrcDst, 
                             mask );
 }
 
@@ -63,7 +47,7 @@ WINGDIAPI HGLRC APIENTRY
 wglCreateContext(
    HDC hdc )
 {
-   return (HGLRC) stw_create_context( hdc, 0 );
+   return wglCreateLayerContext(hdc, 0);
 }
 
 WINGDIAPI HGLRC APIENTRY
@@ -71,21 +55,21 @@ wglCreateLayerContext(
    HDC hdc,
    int iLayerPlane )
 {
-   return (HGLRC) stw_create_context( hdc, iLayerPlane );
+   return (HGLRC) stw_create_layer_context( hdc, iLayerPlane );
 }
 
 WINGDIAPI BOOL APIENTRY
 wglDeleteContext(
    HGLRC hglrc )
 {
-   return stw_delete_context( stw_context(hglrc) );
+   return stw_delete_context( (UINT_PTR)hglrc );
 }
 
 
 WINGDIAPI HGLRC APIENTRY
 wglGetCurrentContext( VOID )
 {
-   return (HGLRC) stw_get_current_context();
+   return (HGLRC)stw_get_current_context();
 }
 
 WINGDIAPI HDC APIENTRY
@@ -99,7 +83,7 @@ wglMakeCurrent(
    HDC hdc,
    HGLRC hglrc )
 {
-   return stw_make_current( hdc, stw_context(hglrc) );
+   return stw_make_current( hdc, (UINT_PTR)hglrc );
 }
 
 

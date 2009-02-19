@@ -34,7 +34,6 @@
 #include "shared/stw_winsys.h"
 #include "shared/stw_pixelformat.h"
 #include "shared/stw_public.h"
-#include "stw.h"
 
 
 struct stw_device *stw_dev = NULL;
@@ -57,7 +56,7 @@ st_flush_frontbuffer(struct pipe_screen *screen,
 
 
 boolean
-stw_shared_init(const struct stw_winsys *stw_winsys)
+st_init(const struct stw_winsys *stw_winsys)
 {
    static struct stw_device stw_dev_storage;
 
@@ -78,6 +77,8 @@ stw_shared_init(const struct stw_winsys *stw_winsys)
 
    stw_dev->screen->flush_frontbuffer = st_flush_frontbuffer;
    
+   pipe_mutex_init( stw_dev->mutex );
+
    pixelformat_init();
 
    return TRUE;
@@ -89,8 +90,24 @@ error1:
 
 
 void
-stw_shared_cleanup(void)
+st_cleanup(void)
 {
+   UINT_PTR i;
+
+   if (!stw_dev)
+      return;
+   
+   pipe_mutex_lock( stw_dev->mutex );
+   {
+      /* Ensure all contexts are destroyed */
+      for (i = 0; i < STW_CONTEXT_MAX; i++)
+         if (stw_dev->ctx_array[i].ctx) 
+            stw_delete_context( i + 1 );
+   }
+   pipe_mutex_unlock( stw_dev->mutex );
+
+   pipe_mutex_destroy( stw_dev->mutex );
+   
    if(stw_dev) {
 #ifdef DEBUG
       debug_memory_end(stw_dev->memdbg_no);
@@ -99,3 +116,18 @@ stw_shared_cleanup(void)
 
    stw_dev = NULL;
 }
+
+
+struct stw_context *
+stw_lookup_context( UINT_PTR dhglrc )
+{
+   if (dhglrc == 0 || 
+       dhglrc >= STW_CONTEXT_MAX)
+      return NULL;
+
+   if (stw_dev == NULL)
+      return NULL;
+
+   return stw_dev->ctx_array[dhglrc - 1].ctx;
+}
+

@@ -29,31 +29,24 @@
 #define STW_PUBLIC_H
 
 #include <windows.h>
-#include "pipe/p_compiler.h"
 
-struct stw_winsys;
-struct stw_context;
-
-boolean
-st_shared_init(const struct stw_winsys *stw_winsys);
-
-void
-st_shared_cleanup(void);
-
-
-BOOL stw_copy_context( struct stw_context *src,
-                       struct stw_context *dst,
+BOOL stw_copy_context( UINT_PTR hglrcSrc,
+                       UINT_PTR hglrcDst,
                        UINT mask );
 
-struct stw_context *stw_create_context( HDC hdc, int iLayerPlane );
+UINT_PTR stw_create_layer_context( HDC hdc, 
+                                   int iLayerPlane );
 
-BOOL stw_delete_context( struct stw_context *ctx );
+BOOL stw_delete_context( UINT_PTR hglrc );
 
-struct stw_context *stw_get_current_context( void );
+BOOL
+stw_release_context( UINT_PTR dhglrc );
+
+UINT_PTR stw_get_current_context( void );
 
 HDC stw_get_current_dc( void );
 
-BOOL stw_make_current( HDC hdc, struct stw_context *ctx );
+BOOL stw_make_current( HDC hdc, UINT_PTR hglrc );
 
 BOOL stw_swap_buffers( HDC hdc );
 
