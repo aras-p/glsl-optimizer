@@ -1660,7 +1660,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
       for (k = 0; k < count; k++) {
          GLfloat *uniformVal;
 
-         if (offset + k > slots) {
+         if (offset + k >= slots) {
             /* Extra array data is ignored */
             break;
          }
