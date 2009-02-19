@@ -11,12 +11,12 @@ C_SOURCES = \
 	nouveau_winsys_pipe.c \
 	nouveau_winsys_softpipe.c
 
-include ./Makefile.template
+LIBRARY_INCLUDES = $(shell pkg-config libdrm libdrm_nouveau --cflags-only-I)
 
-DRIVER_DEFINES = $(shell pkg-config libdrm --cflags \
-                && pkg-config libdrm --atleast-version=2.3.1 \
-                && pkg-config libdrm_nouveau --exact-version=0.5 \
-                && pkg-config libdrm_nouveau --cflags \
-                && echo "-DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP")
-symlinks:
+LIBRARY_DEFINES = $(shell pkg-config libdrm --cflags-only-other \
+		&& pkg-config libdrm --atleast-version=2.3.1 \
+		&& pkg-config libdrm_nouveau --exact-version=0.5 \
+		&& pkg-config libdrm_nouveau --cflags-only-other \
+		&& echo "-DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP")
 
+include ../../../../Makefile.template
