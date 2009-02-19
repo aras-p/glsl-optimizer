@@ -1,25 +1,12 @@
+# src/gallium/winsys/drm/nouveau/Makefile
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-
 SUBDIRS = common dri
 
-
-default: subdirs
-
-
-subdirs:
+default install clean:
 	@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \
-			(cd $$dir && $(MAKE)) || exit 1 ; \
+			(cd $$dir && $(MAKE) $@) || exit 1; \
 		fi \
 	done
-
-
-clean:
-	rm -f `find . -name \*.[oa]`
-	rm -f `find . -name depend`
-
-
-# Dummy install target
-install:

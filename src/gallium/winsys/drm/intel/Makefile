@@ -1,27 +1,12 @@
+# src/gallium/winsys/drm/intel/Makefile
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-
-# Always build gem and then build winsys with
-# enabled state trackers
 SUBDIRS = gem $(GALLIUM_STATE_TRACKERS_DIRS)
 
-
-default: subdirs
-
-
-subdirs:
+default install clean:
 	@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \
-			(cd $$dir && $(MAKE)) || exit 1 ; \
+			(cd $$dir && $(MAKE) $@) || exit 1; \
 		fi \
 	done
-
-
-clean:
-	rm -f `find . -name \*.[oa]`
-	rm -f `find . -name depend`
-
-
-# Dummy install target
-install:
