@@ -61,8 +61,10 @@ struct xm_buffer
    void *mapped;
 
    XImage *tempImage;
+#ifdef USE_XSHM
    int shm;
    XShmSegmentInfo shminfo;
+#endif
 };
 
 
@@ -73,7 +75,9 @@ struct xmesa_pipe_winsys
 {
    struct pipe_winsys base;
 /*   struct xmesa_visual *xm_visual; */
+#ifdef USE_XSHM
    int shm;
+#endif
 };
 
 
@@ -89,7 +93,13 @@ xm_buffer( struct pipe_buffer *buf )
 /**
  * X Shared Memory Image extension code
  */
+#ifdef USE_XSHM
 #define XSHM_ENABLED(b) ((b)->shm)
+#else
+#define XSHM_ENABLED(b) 0
+#endif
+
+#ifdef USE_XSHM
 
 static volatile int mesaXErrorFlag = 0;
 
@@ -174,6 +184,8 @@ alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
    b->shm = 1;
 }
 
+#endif /* USE_XSHM */
+
 
 
 /* Most callbacks map direcly onto dri_bufmgr operations:
@@ -201,6 +213,7 @@ xm_buffer_destroy(struct pipe_winsys *pws,
    struct xm_buffer *oldBuf = xm_buffer(buf);
 
    if (oldBuf->data) {
+#ifdef USE_XSHM
       if (oldBuf->shminfo.shmid >= 0) {
          shmdt(oldBuf->shminfo.shmaddr);
          shmctl(oldBuf->shminfo.shmid, IPC_RMID, 0);
@@ -209,6 +222,7 @@ xm_buffer_destroy(struct pipe_winsys *pws,
          oldBuf->shminfo.shmaddr = (char *) -1;
       }
       else
+#endif
       {
          if (!oldBuf->userBuffer) {
             align_free(oldBuf->data);
@@ -220,7 +234,6 @@ xm_buffer_destroy(struct pipe_winsys *pws,
 
    free(oldBuf);
 }
-
 
 
 /**
@@ -245,21 +258,26 @@ xlib_softpipe_display_surface(struct xmesa_buffer *b,
    if (no_swap)
       return;
 
+#ifdef USE_XSHM
    if (XSHM_ENABLED(xm_buf) && (xm_buf->tempImage == NULL)) {
       assert(surf->texture->block.width == 1);
       assert(surf->texture->block.height == 1);
       alloc_shm_ximage(xm_buf, b, spt->stride[surf->level] /
                        surf->texture->block.size, surf->height);
    }
+#endif
 
    ximage = (XSHM_ENABLED(xm_buf)) ? xm_buf->tempImage : b->tempImage;
    ximage->data = xm_buf->data;
 
    /* display image in Window */
+#ifdef USE_XSHM
    if (XSHM_ENABLED(xm_buf)) {
       XShmPutImage(b->xm_visual->display, b->drawable, b->gc,
                    ximage, 0, 0, 0, 0, surf->width, surf->height, False);
-   } else {
+   } else
+#endif
+   {
       /* check that the XImage has been previously initialized */
       assert(ximage->format);
       assert(ximage->bitmap_unit);
@@ -304,12 +322,9 @@ xm_buffer_create(struct pipe_winsys *pws,
                  unsigned size)
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
+#ifdef USE_XSHM
    struct xmesa_pipe_winsys *xpws = (struct xmesa_pipe_winsys *) pws;
 
-   buffer->base.refcount = 1;
-   buffer->base.alignment = alignment;
-   buffer->base.usage = usage;
-   buffer->base.size = size;
    buffer->shminfo.shmid = -1;
    buffer->shminfo.shmaddr = (char *) -1;
 
@@ -318,12 +333,17 @@ xm_buffer_create(struct pipe_winsys *pws,
 
       if (alloc_shm(buffer, size)) {
          buffer->data = buffer->shminfo.shmaddr;
+         buffer->shm = 1;
       }
    }
+#endif
+
+   buffer->base.refcount = 1;
+   buffer->base.alignment = alignment;
+   buffer->base.usage = usage;
+   buffer->base.size = size;
 
    if (buffer->data == NULL) {
-      buffer->shm = 0;
-
       /* align to 16-byte multiple for Cell */
       buffer->data = align_malloc(size, max(alignment, 16));
    }
@@ -343,7 +363,9 @@ xm_user_buffer_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
    buffer->base.size = bytes;
    buffer->userBuffer = TRUE;
    buffer->data = ptr;
+#ifdef USE_XSHM
    buffer->shm = 0;
+#endif
 
    return &buffer->base;
 }
