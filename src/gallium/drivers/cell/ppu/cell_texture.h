@@ -52,7 +52,19 @@ struct cell_texture
    struct pipe_buffer *tiled_buffer[CELL_MAX_TEXTURE_LEVELS];
    /** Mapped, tiled texture data */
    void *tiled_mapped[CELL_MAX_TEXTURE_LEVELS];
+
+   struct pipe_transfer *transfer;
+
+   /** The original, linear texture data */
    void *untiled_data[CELL_MAX_TEXTURE_LEVELS];
+};
+
+
+struct cell_transfer
+{
+   struct pipe_transfer base;
+
+   unsigned long offset;
 };
 
 
@@ -63,6 +75,13 @@ cell_texture(struct pipe_texture *pt)
    return (struct cell_texture *) pt;
 }
 
+
+/** cast wrapper */
+static INLINE struct cell_transfer *
+cell_transfer(struct pipe_transfer *pt)
+{
+   return (struct cell_transfer *) pt;
+}
 
 
 extern void
