@@ -77,6 +77,7 @@ nouveau_pipe_create(struct nouveau_context *nv)
 		return NULL;
 
 	switch (chipset & 0xf0) {
+#if 0
 	case 0x00:
 		hws_create = nv04_screen_create;
 		hw_create = nv04_create;
@@ -98,6 +99,7 @@ nouveau_pipe_create(struct nouveau_context *nv)
 		hws_create = nv40_screen_create;
 		hw_create = nv40_create;
 		break;
+#endif
 	case 0x50:
 	case 0x80:
 	case 0x90:

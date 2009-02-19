@@ -19,6 +19,9 @@ nouveau_flags_from_usage(struct nouveau_context *nv, unsigned usage)
 	struct nouveau_device *dev = nv->nv_screen->device;
 	uint32_t flags = NOUVEAU_BO_LOCAL;
 
+	if (usage & NOUVEAU_BUFFER_USAGE_TRANSFER)
+		flags |= NOUVEAU_BO_GART;
+
 	if (usage & PIPE_BUFFER_USAGE_PIXEL) {
 		if (usage & NOUVEAU_BUFFER_USAGE_TEXTURE)
 			flags |= NOUVEAU_BO_GART;

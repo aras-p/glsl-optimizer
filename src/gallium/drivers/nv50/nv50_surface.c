@@ -51,6 +51,7 @@ nv50_format(enum pipe_format format)
 static int
 nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
 {
+	struct nv50_miptree *mt = nv50_miptree(ps->texture);
 	struct nouveau_channel *chan = screen->nvws->channel;
 	struct nouveau_grobj *eng2d = screen->eng2d;
 	struct nouveau_bo *bo;
@@ -70,7 +71,7 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
  		OUT_RING  (chan, format);
  		OUT_RING  (chan, 1);
  		BEGIN_RING(chan, eng2d, mthd + 0x14, 5);
- 		OUT_RING  (chan, ps->stride);
+ 		OUT_RING  (chan, mt->level[0].pitch);
  		OUT_RING  (chan, ps->width);
  		OUT_RING  (chan, ps->height);
  		OUT_RELOCh(chan, bo, ps->offset, flags);
@@ -197,23 +198,6 @@ nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 	OUT_RING  (chan, height);
 }
 
-static void *
-nv50_surface_map(struct pipe_screen *screen, struct pipe_surface *ps,
-		 unsigned flags )
-{
-	struct pipe_winsys *ws = screen->winsys;
-
-	return ws->buffer_map(ws, nv50_surface_buffer(ps), flags);
-}
-
-static void
-nv50_surface_unmap(struct pipe_screen *pscreen, struct pipe_surface *ps)
-{
-	struct pipe_winsys *ws = pscreen->winsys;
-
-	ws->buffer_unmap(ws, nv50_surface_buffer(ps));
-}
-
 void
 nv50_init_surface_functions(struct nv50_context *nv50)
 {
@@ -221,10 +205,4 @@ nv50_init_surface_functions(struct nv50_context *nv50)
 	nv50->pipe.surface_fill = nv50_surface_fill;
 }
 
-void
-nv50_surface_init_screen_functions(struct pipe_screen *pscreen)
-{
-	pscreen->surface_map = nv50_surface_map;
-	pscreen->surface_unmap = nv50_surface_unmap;
-}
 

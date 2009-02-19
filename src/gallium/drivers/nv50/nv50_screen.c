@@ -173,6 +173,14 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		return NULL;
 	screen->nvws = nvws;
 
+	/* DMA engine object */
+	ret = nvws->grobj_alloc(nvws, 0x5039, &screen->m2mf);
+	if (ret) {
+		NOUVEAU_ERR("Error creating M2MF object: %d\n", ret);
+		nv50_screen_destroy(&screen->pipe);
+		return NULL;
+	}
+
 	/* 2D object */
 	ret = nvws->grobj_alloc(nvws, NV50_2D, &screen->eng2d);
 	if (ret) {
@@ -225,6 +233,15 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		nv50_screen_destroy(&screen->pipe);
 		return NULL;
 	}
+
+	/* Static M2MF init */
+	so = so_new(32, 0);
+	so_method(so, screen->m2mf, 0x0180, 3);
+	so_data  (so, screen->sync->handle);
+	so_data  (so, screen->nvws->channel->vram->handle);
+	so_data  (so, screen->nvws->channel->vram->handle);
+	so_emit(nvws, so);
+	so_ref (NULL, &so);
 
 	/* Static 2D init */
 	so = so_new(64, 0);
@@ -348,7 +365,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	screen->pipe.is_format_supported = nv50_screen_is_format_supported;
 
 	nv50_screen_init_miptree_functions(&screen->pipe);
-	nv50_surface_init_screen_functions(&screen->pipe);
+	nv50_transfer_init_screen_functions(&screen->pipe);
 	u_simple_screen_init(&screen->pipe);
 
 	return &screen->pipe;
