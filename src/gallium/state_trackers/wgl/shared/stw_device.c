@@ -108,11 +108,11 @@ st_cleanup(void)
 
    pipe_mutex_destroy( stw_dev->mutex );
    
-   if(stw_dev) {
+   stw_dev->screen->destroy(stw_dev->screen);
+
 #ifdef DEBUG
-      debug_memory_end(stw_dev->memdbg_no);
+   debug_memory_end(stw_dev->memdbg_no);
 #endif
-   }
 
    stw_dev = NULL;
 }
