@@ -60,6 +60,10 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe,
                                       struct pipe_shader_state *shader);
 
 
+extern void
+util_free_shader(struct pipe_shader_state *shader);
+
+
 #ifdef __cplusplus
 }
 #endif

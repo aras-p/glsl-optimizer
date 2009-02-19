@@ -819,6 +819,7 @@ st_destroy_bitmap(struct st_context *st)
       cso_delete_vertex_shader(st->cso_context, st->bitmap.vs);
       st->bitmap.vs = NULL;
    }
+   util_free_shader(&st->bitmap.vert_shader);
 
    if (st->bitmap.vbuf) {
       pipe_buffer_reference(pipe->screen, &st->bitmap.vbuf, NULL);

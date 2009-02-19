@@ -359,3 +359,10 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe,
    return pipe->create_fs_state(pipe, shader);
 }
 
+
+void
+util_free_shader(struct pipe_shader_state *shader)
+{
+   FREE((struct tgsi_token *)shader->tokens);
+   shader->tokens = NULL;
+}
