@@ -301,6 +301,7 @@ static void
 cell_twiddle_texture(struct pipe_screen *screen,
                      struct pipe_surface *surface)
 {
+#if 0 // XXX fix me
    struct cell_texture *ct = cell_texture(surface->texture);
    const uint level = surface->level;
    const uint texWidth = ct->base.width[level];
@@ -342,6 +343,7 @@ cell_twiddle_texture(struct pipe_screen *screen,
    }
 
    screen->surface_unmap(screen, surface);
+#endif
 }
 
 
@@ -352,6 +354,7 @@ static void
 cell_untwiddle_texture(struct pipe_screen *screen,
                      struct pipe_surface *surface)
 {
+#if 0 // XXX fix me
    struct cell_texture *ct = cell_texture(surface->texture);
    const uint level = surface->level;
    const uint texWidth = ct->base.width[level];
@@ -388,6 +391,7 @@ cell_untwiddle_texture(struct pipe_screen *screen,
    }
 
    screen->surface_unmap(screen, surface);
+#endif
 }
 
 
@@ -405,12 +409,12 @@ cell_get_tex_surface(struct pipe_screen *screen,
       ps->refcount = 1;
       pipe_texture_reference(&ps->texture, pt);
       ps->format = pt->format;
-      ps->block = pt->block;
+      //ps->block = pt->block;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
-      ps->nblocksx = pt->nblocksx[level];
-      ps->nblocksy = pt->nblocksy[level];
-      ps->stride = ct->stride[level];
+      //ps->nblocksx = pt->nblocksx[level];
+      //ps->nblocksy = pt->nblocksy[level];
+      //ps->stride = ct->stride[level];
       ps->offset = ct->level_offset[level];
       ps->usage = usage;
 
@@ -422,9 +426,11 @@ cell_get_tex_surface(struct pipe_screen *screen,
       ps->zslice = zslice;
 
       if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
+#if 0 // XXX fix me
          ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
             ps->nblocksy *
             ps->stride;
+#endif
       }
       else {
          assert(face == 0);
@@ -467,6 +473,127 @@ cell_tex_surface_release(struct pipe_screen *screen,
       FREE(surf);
    }
    *s = NULL;
+}
+
+
+static struct pipe_transfer *
+cell_get_tex_transfer(struct pipe_screen *screen,
+                      struct pipe_texture *texture,
+                      unsigned face, unsigned level, unsigned zslice,
+                      enum pipe_transfer_usage usage,
+                      unsigned x, unsigned y, unsigned w, unsigned h)
+{
+   struct cell_texture *ct = cell_texture(texture);
+   struct cell_transfer *ctrans;
+   struct pipe_transfer *pt;
+
+   assert(texture);
+   assert(level <= texture->last_level);
+
+   ctrans = CALLOC_STRUCT(cell_transfer);
+   pt = &ctrans->base;
+   if (ctrans) {
+      pt->refcount = 1;
+      pipe_texture_reference(&pt->texture, texture);
+      pt->format = texture->format;
+      pt->block = texture->block;
+      pt->x = x;
+      pt->y = y;
+      pt->width = w;
+      pt->height = h;
+      pt->nblocksx = texture->nblocksx[level];
+      pt->nblocksy = texture->nblocksy[level];
+      pt->stride = ct->stride[level];
+      ctrans->offset = ct->level_offset[level];
+      pt->usage = usage;
+      pt->face = face;
+      pt->level = level;
+      pt->zslice = zslice;
+
+      if (texture->target == PIPE_TEXTURE_CUBE ||
+          texture->target == PIPE_TEXTURE_3D) {
+         ctrans->offset += ((texture->target == PIPE_TEXTURE_CUBE) ? face :
+                         zslice) * pt->nblocksy * pt->stride;
+      }
+      else {
+         assert(face == 0);
+         assert(zslice == 0);
+      }
+   }
+   return pt;
+}
+
+
+static void 
+cell_tex_transfer_release(struct pipe_screen *screen, 
+                          struct pipe_transfer **t)
+{
+   struct cell_transfer *transfer = cell_transfer(*t);
+   /* Effectively do the texture_update work here - if texture images
+    * needed post-processing to put them into hardware layout, this is
+    * where it would happen.  For cell, nothing to do.
+    */
+   assert (transfer->base.texture);
+   if (--transfer->base.refcount == 0) {
+      pipe_texture_reference(&transfer->base.texture, NULL);
+      FREE(transfer);
+   }
+   *t = NULL;
+}
+
+
+static void *
+cell_transfer_map( struct pipe_screen *screen,
+                       struct pipe_transfer *transfer )
+{
+   ubyte *map;
+   struct cell_texture *spt;
+   unsigned flags = 0;
+
+   assert(transfer->texture);
+   spt = cell_texture(transfer->texture);
+
+   if (transfer->usage != PIPE_TRANSFER_READ) {
+      flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
+   }
+
+   if (transfer->usage != PIPE_TRANSFER_WRITE) {
+      flags |= PIPE_BUFFER_USAGE_CPU_READ;
+   }
+
+   map = pipe_buffer_map(screen, spt->buffer, flags);
+   if (map == NULL)
+      return NULL;
+
+   /* May want to different things here depending on read/write nature
+    * of the map:
+    */
+   if (transfer->texture && transfer->usage != PIPE_TRANSFER_READ) 
+   {
+      /* Do something to notify sharing contexts of a texture change.
+       * In cell, that would mean flushing the texture cache.
+       */
+#if 00
+      cell_screen(screen)->timestamp++;
+#endif
+   }
+   
+   return map + cell_transfer(transfer)->offset +
+      transfer->y / transfer->block.height * transfer->stride +
+      transfer->x / transfer->block.width * transfer->block.size;
+}
+
+
+static void
+cell_transfer_unmap(struct pipe_screen *screen,
+                       struct pipe_transfer *transfer)
+{
+   struct cell_texture *spt;
+
+   assert(transfer->texture);
+   spt = cell_texture(transfer->texture);
+
+   pipe_buffer_unmap( screen, spt->buffer );
 }
 
 
@@ -526,6 +653,8 @@ cell_init_screen_texture_funcs(struct pipe_screen *screen)
    screen->get_tex_surface = cell_get_tex_surface;
    screen->tex_surface_release = cell_tex_surface_release;
 
-   screen->surface_map = cell_surface_map;
-   screen->surface_unmap = cell_surface_unmap;
+   screen->get_tex_transfer = cell_get_tex_transfer;
+   screen->tex_transfer_release = cell_tex_transfer_release;
+   screen->transfer_map = cell_transfer_map;
+   screen->transfer_unmap = cell_transfer_unmap;
 }
