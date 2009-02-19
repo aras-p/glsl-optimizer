@@ -519,6 +519,10 @@ struct __GLXscreenConfigsRec {
     const __DRItexBufferExtension *texBuffer;
 #endif
 
+#ifdef __DRI2_FLUSH
+    const __DRI2flushExtension *f;
+#endif
+
 #endif
 
     /**

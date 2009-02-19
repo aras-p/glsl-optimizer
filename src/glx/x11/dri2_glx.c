@@ -208,7 +208,13 @@ static void dri2CopySubBuffer(__GLXDRIdrawable *pdraw,
     xrect.width = width;
     xrect.height = height;
 
+#ifdef __DRI2_FLUSH
+    if (pdraw->psc->f)
+    	(*pdraw->psc->f->flush)(pdraw->driDrawable);
+#endif
+
     region = XFixesCreateRegion(pdraw->psc->dpy, &xrect, 1);
+    /* should get a fence ID back from here at some point */
     DRI2CopyRegion(pdraw->psc->dpy, pdraw->drawable, region,
 		   DRI2BufferFrontLeft, DRI2BufferBackLeft);
     XFixesDestroyRegion(pdraw->psc->dpy, region);
@@ -236,6 +242,11 @@ static void dri2WaitX(__GLXDRIdrawable *pdraw)
     xrect.width = priv->width;
     xrect.height = priv->height;
 
+#ifdef __DRI2_FLUSH
+    if (pdraw->psc->f)
+    	(*pdraw->psc->f->flush)(pdraw->driDrawable);
+#endif
+
     region = XFixesCreateRegion(pdraw->psc->dpy, &xrect, 1);
     DRI2CopyRegion(pdraw->psc->dpy, pdraw->drawable, region,
 		   DRI2BufferFakeFrontLeft, DRI2BufferFrontLeft);
@@ -255,6 +266,11 @@ static void dri2WaitGL(__GLXDRIdrawable *pdraw)
     xrect.y = 0;
     xrect.width = priv->width;
     xrect.height = priv->height;
+
+#ifdef __DRI2_FLUSH
+    if (pdraw->psc->f)
+    	(*pdraw->psc->f->flush)(pdraw->driDrawable);
+#endif
 
     region = XFixesCreateRegion(pdraw->psc->dpy, &xrect, 1);
     DRI2CopyRegion(pdraw->psc->dpy, pdraw->drawable, region,
