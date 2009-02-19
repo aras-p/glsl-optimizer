@@ -70,7 +70,6 @@ void
 cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
                    unsigned clearValue)
 {
-   struct pipe_screen *screen = pipe->screen;
    struct cell_context *cell = cell_context(pipe);
    uint surfIndex;
 
