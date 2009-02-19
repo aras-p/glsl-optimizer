@@ -253,10 +253,13 @@ cell_set_sampler_textures(struct pipe_context *pipe,
    assert(num <= CELL_MAX_SAMPLERS);
 
    for (i = 0; i < CELL_MAX_SAMPLERS; i++) {
-      struct pipe_texture *new_tex = i < num ? texture[i] : NULL;
-      if ((struct pipe_texture *) cell->texture[i] != new_tex) {
+      struct cell_texture *new_tex = cell_texture(i < num ? texture[i] : NULL);
+      struct cell_texture *old_tex = cell->texture[i];
+      if (old_tex != new_tex) {
+
          pipe_texture_reference((struct pipe_texture **) &cell->texture[i],
-                                new_tex);
+                                (struct pipe_texture *) new_tex);
+
          changed |= (1 << i);
       }
    }
@@ -270,6 +273,76 @@ cell_set_sampler_textures(struct pipe_context *pipe,
 }
 
 
+/**
+ * Map color and z/stencil framebuffer surfaces.
+ */
+static void
+cell_map_surfaces(struct cell_context *cell)
+{
+   struct pipe_screen *screen = cell->pipe.screen;
+   uint i;
+
+   for (i = 0; i < 1; i++) {
+      struct pipe_surface *ps = cell->framebuffer.cbufs[i];
+      if (ps) {
+         cell->cbuf_transfer[i] =
+            screen->get_tex_transfer(screen, ps->texture, ps->face,
+                                     ps->level, ps->zslice,
+                                     PIPE_TRANSFER_READ_WRITE,
+                                     0, 0, ps->width, ps->height);
+
+         cell->cbuf_map[i] =
+            screen->transfer_map(screen, cell->cbuf_transfer[i]);
+      }
+   }
+
+   {
+      struct pipe_surface *ps = cell->framebuffer.zsbuf;
+      if (ps) {
+         cell->zsbuf_transfer =
+            screen->get_tex_transfer(screen, ps->texture, ps->face,
+                                     ps->level, ps->zslice,
+                                     PIPE_TRANSFER_READ_WRITE,
+                                     0, 0, ps->width, ps->height);
+
+         cell->zsbuf_map =
+            screen->transfer_map(screen, cell->zsbuf_transfer);
+      }
+   }
+}
+
+
+/**
+ * Unmap color and z/stencil framebuffer surfaces.
+ */
+static void
+cell_unmap_surfaces(struct cell_context *cell)
+{
+   struct pipe_screen *screen = cell->pipe.screen;
+   uint i;
+
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+      if (cell->cbuf_transfer[i] && cell->cbuf_map[i]) {
+         /* unmap color buffer/surface [i] */
+         screen->transfer_unmap(screen, cell->cbuf_transfer[i]);
+         cell->cbuf_map[i] = NULL;
+
+         /* get rid of transfer object [i] */
+         screen->tex_transfer_release(screen, &cell->cbuf_transfer[i]);
+         assert(cell->cbuf_transfer[i] == NULL);
+      }
+   }
+
+   if (cell->zsbuf_transfer && cell->zsbuf_map) {
+      screen->transfer_unmap(screen, cell->zsbuf_transfer);
+      cell->zsbuf_map = NULL;
+
+      /* get rid of transfer object */
+      screen->tex_transfer_release(screen, &cell->zsbuf_transfer);
+      assert(cell->zsbuf_transfer == NULL);
+   }
+}
+
 
 static void
 cell_set_framebuffer_state(struct pipe_context *pipe,
@@ -278,24 +351,10 @@ cell_set_framebuffer_state(struct pipe_context *pipe,
    struct cell_context *cell = cell_context(pipe);
 
    if (1 /*memcmp(&cell->framebuffer, fb, sizeof(*fb))*/) {
-      struct pipe_surface *csurf = fb->cbufs[0];
-      struct pipe_surface *zsurf = fb->zsbuf;
       uint i;
-      uint flags = (PIPE_BUFFER_USAGE_GPU_WRITE |
-                    PIPE_BUFFER_USAGE_GPU_READ);
 
       /* unmap old surfaces */
-      for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-         if (cell->framebuffer.cbufs[i] && cell->cbuf_map[i]) {
-            pipe_surface_unmap(cell->framebuffer.cbufs[i]);
-            cell->cbuf_map[i] = NULL;
-         }
-      }
-
-      if (cell->framebuffer.zsbuf && cell->zsbuf_map) {
-         pipe_surface_unmap(cell->framebuffer.zsbuf);
-         cell->zsbuf_map = NULL;
-      }
+      cell_unmap_surfaces(cell);
 
       /* Finish any pending rendering to the current surface before
        * installing a new surface!
@@ -314,11 +373,7 @@ cell_set_framebuffer_state(struct pipe_context *pipe,
       pipe_surface_reference(&cell->framebuffer.zsbuf, fb->zsbuf);
 
       /* map new surfaces */
-      if (csurf)
-         cell->cbuf_map[0] = pipe_surface_map(csurf, flags);
-
-      if (zsurf)
-         cell->zsbuf_map = pipe_surface_map(zsurf, flags);
+      cell_map_surfaces(cell);
 
       cell->dirty |= CELL_NEW_FRAMEBUFFER;
    }
