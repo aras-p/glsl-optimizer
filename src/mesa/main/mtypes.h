@@ -1,9 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.3
+ * Version:  7.5
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
- * Copyright (C) 1999-2008  VMware, Inc.  All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -226,24 +226,27 @@ enum
  * Indexes for vertex program result attributes
  */
 /*@{*/
-#define VERT_RESULT_HPOS 0
-#define VERT_RESULT_COL0 1
-#define VERT_RESULT_COL1 2
-#define VERT_RESULT_FOGC 3
-#define VERT_RESULT_TEX0 4
-#define VERT_RESULT_TEX1 5
-#define VERT_RESULT_TEX2 6
-#define VERT_RESULT_TEX3 7
-#define VERT_RESULT_TEX4 8
-#define VERT_RESULT_TEX5 9
-#define VERT_RESULT_TEX6 10
-#define VERT_RESULT_TEX7 11
-#define VERT_RESULT_PSIZ 12
-#define VERT_RESULT_BFC0 13
-#define VERT_RESULT_BFC1 14
-#define VERT_RESULT_EDGE 15
-#define VERT_RESULT_VAR0 16  /**< shader varying */
-#define VERT_RESULT_MAX  (VERT_RESULT_VAR0 + MAX_VARYING)
+enum
+{
+   VERT_RESULT_HPOS = 0,
+   VERT_RESULT_COL0 = 1,
+   VERT_RESULT_COL1 = 2,
+   VERT_RESULT_FOGC = 3,
+   VERT_RESULT_TEX0 = 4,
+   VERT_RESULT_TEX1 = 5,
+   VERT_RESULT_TEX2 = 6,
+   VERT_RESULT_TEX3 = 7,
+   VERT_RESULT_TEX4 = 8,
+   VERT_RESULT_TEX5 = 9,
+   VERT_RESULT_TEX6 = 10,
+   VERT_RESULT_TEX7 = 11,
+   VERT_RESULT_PSIZ = 12,
+   VERT_RESULT_BFC0 = 13,
+   VERT_RESULT_BFC1 = 14,
+   VERT_RESULT_EDGE = 15,
+   VERT_RESULT_VAR0 = 16  /**< shader varying */,
+   VERT_RESULT_MAX = (VERT_RESULT_VAR0 + MAX_VARYING)
+};
 /*@}*/
 
 
