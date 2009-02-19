@@ -277,6 +277,8 @@ get_fbconfig_attribs(Display *dpy, GLXFBConfig fbconfig,
 
    /* We don't use the GLX_FBCONFIG_ID here */
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_VISUAL_ID, &attribs->id);
+   if (attribs->id == 0)
+      return GL_FALSE;
 
 #if 0
    attribs->depth = vInfo->depth;
@@ -344,6 +346,7 @@ create_configs(_EGLDisplay *disp, struct GLX_egl_driver *GLX_drv)
    int numVisuals;
    long mask;
    int i;
+   int egl_configs = 1;
    struct visual_attribs attribs;
 
    GLX_drv->fbconfigs = NULL;
@@ -365,7 +368,7 @@ create_configs(_EGLDisplay *disp, struct GLX_egl_driver *GLX_drv)
 
       config = CALLOC_STRUCT(GLX_egl_config);
 
-      _eglInitConfig(&config->Base, i+1);
+      _eglInitConfig(&config->Base, egl_configs++);
       SET_CONFIG_ATTRIB(&config->Base, EGL_NATIVE_VISUAL_ID, attribs.id);
       SET_CONFIG_ATTRIB(&config->Base, EGL_BUFFER_SIZE, attribs.bufferSize);
       SET_CONFIG_ATTRIB(&config->Base, EGL_RED_SIZE, attribs.redSize);
@@ -403,7 +406,7 @@ xvisual:
 
       config = CALLOC_STRUCT(GLX_egl_config);
 
-      _eglInitConfig(&config->Base, i+1);
+      _eglInitConfig(&config->Base, egl_configs++);
       SET_CONFIG_ATTRIB(&config->Base, EGL_NATIVE_VISUAL_ID, attribs.id);
       SET_CONFIG_ATTRIB(&config->Base, EGL_BUFFER_SIZE, attribs.bufferSize);
       SET_CONFIG_ATTRIB(&config->Base, EGL_RED_SIZE, attribs.redSize);
