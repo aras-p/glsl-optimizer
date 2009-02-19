@@ -27,6 +27,23 @@
  * \file stencil.c
  * Stencil operations.
  *
+ * Note: There's some conflict between GL_EXT_stencil_two_side and
+ * OpenGL 2.0's two-sided stencil feature.
+ *
+ * With GL_EXT_stencil_two_side, calling glStencilOp/Func/Mask() only the
+ * front OR back face state (as set by glActiveStencilFaceEXT) is set.
+ *
+ * But with OpenGL 2.0, calling glStencilOp/Func/Mask() sets BOTH the
+ * front AND back state.
+ *
+ * Also, note that GL_ATI_separate_stencil is different as well:
+ * glStencilFuncSeparateATI(GLenum frontfunc, GLenum backfunc, ...)  vs.
+ * glStencilFuncSeparate(GLenum face, GLenum func, ...).
+ *
+ * This problem is solved by keeping three sets of stencil state:
+ *  state[0] = GL_FRONT state.
+ *  state[1] = OpenGL 2.0 / GL_ATI_separate_stencil GL_BACK state.
+ *  state[2] = GL_EXT_stencil_two_side GL_BACK state.
  */
 
 
@@ -542,7 +559,7 @@ _mesa_init_stencil(GLcontext *ctx)
 {
    ctx->Stencil.Enabled = GL_FALSE;
    ctx->Stencil.TestTwoSide = GL_FALSE;
-   ctx->Stencil.ActiveFace = 0;  /* 0 = GL_FRONT, 1 = GL_BACK */
+   ctx->Stencil.ActiveFace = 0;  /* 0 = GL_FRONT, 2 = GL_BACK */
    ctx->Stencil.Function[0] = GL_ALWAYS;
    ctx->Stencil.Function[1] = GL_ALWAYS;
    ctx->Stencil.Function[2] = GL_ALWAYS;
