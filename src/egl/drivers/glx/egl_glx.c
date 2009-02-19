@@ -267,18 +267,18 @@ glx_token_to_visual_class(int visual_type)
       return None;
    }
 }
-static GLboolean
+static int
 get_fbconfig_attribs(Display *dpy, GLXFBConfig fbconfig,
 		     struct visual_attribs *attribs)
 {
    int visual_type;
+   int fbconfig_id;
 
    memset(attribs, 0, sizeof(struct visual_attribs));
 
-   /* We don't use the GLX_FBCONFIG_ID here */
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_FBCONFIG_ID, &fbconfig_id);
+
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_VISUAL_ID, &attribs->id);
-   if (attribs->id == 0)
-      return GL_FALSE;
 
 #if 0
    attribs->depth = vInfo->depth;
@@ -296,11 +296,11 @@ get_fbconfig_attribs(Display *dpy, GLXFBConfig fbconfig,
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_LEVEL, &attribs->level);
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_RENDER_TYPE, &attribs->render_type);
    if (!(attribs->render_type & GLX_RGBA_BIT))
-      return GL_FALSE;
+      return 0;
 
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_DOUBLEBUFFER, &attribs->doubleBuffer);
    if (!attribs->doubleBuffer)
-      return GL_FALSE;
+      return 0;
 
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_STEREO, &attribs->stereo);
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_AUX_BUFFERS, &attribs->auxBuffers);
@@ -334,7 +334,12 @@ get_fbconfig_attribs(Display *dpy, GLXFBConfig fbconfig,
 
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_CONFIG_CAVEAT, &attribs->visualCaveat);
 
-   return GL_TRUE;
+   if (attribs->id == 0) {
+      attribs->id = fbconfig_id;
+      return EGL_PBUFFER_BIT | EGL_PIXMAP_BIT;
+   }
+
+   return EGL_WINDOW_BIT;
 }
 
 #endif
@@ -362,13 +367,15 @@ create_configs(_EGLDisplay *disp, struct GLX_egl_driver *GLX_drv)
 
    for (i = 0; i < numVisuals; i++) {
       struct GLX_egl_config *config;
+      int bit;
 
-      if (!get_fbconfig_attribs(disp->Xdpy, GLX_drv->fbconfigs[i], &attribs))
+      bit = get_fbconfig_attribs(disp->Xdpy, GLX_drv->fbconfigs[i], &attribs);
+      if (!bit)
          continue;
 
       config = CALLOC_STRUCT(GLX_egl_config);
 
-      _eglInitConfig(&config->Base, egl_configs++);
+      _eglInitConfig(&config->Base, (i+1));
       SET_CONFIG_ATTRIB(&config->Base, EGL_NATIVE_VISUAL_ID, attribs.id);
       SET_CONFIG_ATTRIB(&config->Base, EGL_BUFFER_SIZE, attribs.bufferSize);
       SET_CONFIG_ATTRIB(&config->Base, EGL_RED_SIZE, attribs.redSize);
@@ -381,8 +388,7 @@ create_configs(_EGLDisplay *disp, struct GLX_egl_driver *GLX_drv)
       SET_CONFIG_ATTRIB(&config->Base, EGL_SAMPLE_BUFFERS, attribs.numMultisample);
       SET_CONFIG_ATTRIB(&config->Base, EGL_CONFORMANT, all_apis);
       SET_CONFIG_ATTRIB(&config->Base, EGL_RENDERABLE_TYPE, all_apis);
-      SET_CONFIG_ATTRIB(&config->Base, EGL_SURFACE_TYPE,
-                        (EGL_WINDOW_BIT | EGL_PBUFFER_BIT | EGL_PIXMAP_BIT));
+      SET_CONFIG_ATTRIB(&config->Base, EGL_SURFACE_TYPE, bit);
 
       /* XXX possibly other things to init... */
 
@@ -406,7 +412,7 @@ xvisual:
 
       config = CALLOC_STRUCT(GLX_egl_config);
 
-      _eglInitConfig(&config->Base, egl_configs++);
+      _eglInitConfig(&config->Base, (i+1));
       SET_CONFIG_ATTRIB(&config->Base, EGL_NATIVE_VISUAL_ID, attribs.id);
       SET_CONFIG_ATTRIB(&config->Base, EGL_BUFFER_SIZE, attribs.bufferSize);
       SET_CONFIG_ATTRIB(&config->Base, EGL_RED_SIZE, attribs.redSize);
