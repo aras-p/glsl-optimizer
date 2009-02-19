@@ -27,6 +27,3 @@ C_SOURCES = \
 	u_simple_screen.c
 
 include ../../Makefile.template
-
-symlinks:
-

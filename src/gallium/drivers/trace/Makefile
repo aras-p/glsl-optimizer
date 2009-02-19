@@ -9,10 +9,6 @@ C_SOURCES = \
 	tr_screen.c \
 	tr_state.c \
 	tr_texture.c \
-	tr_winsys.c 
-
+	tr_winsys.c
 
 include ../../Makefile.template
-
-symlinks:
-

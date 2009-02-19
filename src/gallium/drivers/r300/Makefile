@@ -18,5 +18,3 @@ C_SOURCES = \
 	r300_texture.c
 
 include ../../Makefile.template
-
-symlinks:

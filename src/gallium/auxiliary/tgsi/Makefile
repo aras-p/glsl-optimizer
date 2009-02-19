@@ -19,6 +19,3 @@ C_SOURCES = \
 	tgsi_util.c
 
 include ../../Makefile.template
-
-symlinks:
-

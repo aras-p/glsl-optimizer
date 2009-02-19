@@ -3,7 +3,7 @@ include $(TOP)/configs/current
 
 LIBNAME = nv04
 
-DRIVER_SOURCES = \
+C_SOURCES = \
 	nv04_surface_2d.c \
 	nv04_clear.c \
 	nv04_context.c \
@@ -17,13 +17,4 @@ DRIVER_SOURCES = \
 	nv04_surface.c \
 	nv04_vbo.c
 
-C_SOURCES = \
-	$(COMMON_SOURCES) \
-	$(DRIVER_SOURCES)
-
-ASM_SOURCES = 
-
 include ../../Makefile.template
-
-symlinks:
-

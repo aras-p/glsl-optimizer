@@ -17,6 +17,3 @@ C_SOURCES = \
 	pb_validate.c
 
 include ../../Makefile.template
-
-symlinks:
-

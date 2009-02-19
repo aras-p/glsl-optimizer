@@ -42,6 +42,3 @@ C_SOURCES = \
 	sp_surface.c 
 
 include ../../Makefile.template
-
-symlinks:
-

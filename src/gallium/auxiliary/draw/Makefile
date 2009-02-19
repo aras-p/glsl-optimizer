@@ -43,8 +43,4 @@ C_SOURCES = \
 	draw_vs_ppc.c  \
 	draw_vs_sse.c 
 
-
 include ../../Makefile.template
-
-symlinks:
-

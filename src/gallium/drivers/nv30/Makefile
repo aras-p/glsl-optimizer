@@ -3,7 +3,7 @@ include $(TOP)/configs/current
 
 LIBNAME = nv30
 
-DRIVER_SOURCES = \
+C_SOURCES = \
 	nv30_clear.c \
 	nv30_context.c \
 	nv30_draw.c \
@@ -25,13 +25,4 @@ DRIVER_SOURCES = \
 	nv30_vbo.c \
 	nv30_vertprog.c
 
-C_SOURCES = \
-	$(COMMON_SOURCES) \
-	$(DRIVER_SOURCES)
-
-ASM_SOURCES = 
-
 include ../../Makefile.template
-
-symlinks:
-

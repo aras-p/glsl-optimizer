@@ -9,6 +9,3 @@ C_SOURCES = \
 	fo_context.c 
 
 include ../../Makefile.template
-
-symlinks:
-

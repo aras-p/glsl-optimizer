@@ -26,6 +26,3 @@ C_SOURCES = \
 	i915_surface.c 
 
 include ../../Makefile.template
-
-symlinks:
-
