@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.2
+ * Version:  7.5
  *
  * Copyright (C) 2004-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -827,6 +828,27 @@ is_integer_type(GLenum type)
 }
 
 
+static GLboolean
+is_sampler_type(GLenum type)
+{
+   switch (type) {
+   case GL_SAMPLER_1D:
+   case GL_SAMPLER_2D:
+   case GL_SAMPLER_3D:
+   case GL_SAMPLER_CUBE:
+   case GL_SAMPLER_1D_SHADOW:
+   case GL_SAMPLER_2D_SHADOW:
+   case GL_SAMPLER_2D_RECT_ARB:
+   case GL_SAMPLER_2D_RECT_SHADOW_ARB:
+   case GL_SAMPLER_1D_ARRAY_EXT:
+   case GL_SAMPLER_2D_ARRAY_EXT:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
 static void
 _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
                         GLsizei maxLength, GLsizei *length, GLint *size,
@@ -1516,27 +1538,6 @@ _mesa_update_shader_textures_used(struct gl_program *prog)
 }
 
 
-static GLboolean
-is_sampler_type(GLenum type)
-{
-   switch (type) {
-   case GL_SAMPLER_1D:
-   case GL_SAMPLER_2D:
-   case GL_SAMPLER_3D:
-   case GL_SAMPLER_CUBE:
-   case GL_SAMPLER_1D_SHADOW:
-   case GL_SAMPLER_2D_SHADOW:
-   case GL_SAMPLER_2D_RECT_ARB:
-   case GL_SAMPLER_2D_RECT_SHADOW_ARB:
-   case GL_SAMPLER_1D_ARRAY_EXT:
-   case GL_SAMPLER_2D_ARRAY_EXT:
-      return GL_TRUE;
-   default:
-      return GL_FALSE;
-   }
-}
-
-
 /**
  * Check if the type given by userType is allowed to set a uniform of the
  * target type.  Generally, equivalence is required, but setting Boolean
@@ -1575,10 +1576,10 @@ compatible_types(GLenum userType, GLenum targetType)
  * \param program  the program whose uniform to update
  * \param index  the index of the program parameter for the uniform
  * \param offset  additional parameter slot offset (for arrays)
- * \param type  the datatype of the uniform
+ * \param type  the incoming datatype of 'values'
  * \param count  the number of uniforms to set
- * \param elems  number of elements per uniform
- * \param values  the new values
+ * \param elems  number of elements per uniform (1, 2, 3 or 4)
+ * \param values  the new values, of datatype 'type'
  */
 static void
 set_program_uniform(GLcontext *ctx, struct gl_program *program,
@@ -1588,8 +1589,12 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
 {
    struct gl_program_parameter *param =
       &program->Parameters->Parameters[index];
+   const GLboolean isUniformBool = is_boolean_type(param->DataType);
+   const GLboolean areIntValues = is_integer_type(type);
 
    assert(offset >= 0);
+   assert(elems >= 1);
+   assert(elems <= 4);
 
    if (!compatible_types(type, param->DataType)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(type mismatch)");
@@ -1657,6 +1662,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
          }
       }
 
+      /* loop over number of array elements */
       for (k = 0; k < count; k++) {
          GLfloat *uniformVal;
 
@@ -1665,8 +1671,11 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
             break;
          }
 
+         /* uniformVal (the destination) is always float[4] */
          uniformVal = program->Parameters->ParameterValues[index + offset + k];
-         if (is_integer_type(type)) {
+
+         if (areIntValues) {
+            /* convert user's ints to floats */
             const GLint *iValues = ((const GLint *) values) + k * elems;
             for (i = 0; i < elems; i++) {
                uniformVal[i] = (GLfloat) iValues[i];
@@ -1680,7 +1689,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
          }
 
          /* if the uniform is bool-valued, convert to 1.0 or 0.0 */
-         if (is_boolean_type(param->DataType)) {
+         if (isUniformBool) {
             for (i = 0; i < elems; i++) {
                uniformVal[i] = uniformVal[i] ? 1.0f : 0.0f;
             }
