@@ -77,11 +77,6 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
    if (cell->dirty)
       cell_update_derived(cell);
 
-
-   if (!cell->cbuf_map[0])
-      cell->cbuf_map[0] = screen->surface_map(screen, ps,
-                                              PIPE_BUFFER_USAGE_GPU_WRITE);
-
    if (ps == cell->framebuffer.zsbuf) {
       /* clear z/stencil buffer */
       surfIndex = 1;
