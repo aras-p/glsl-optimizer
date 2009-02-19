@@ -60,6 +60,8 @@ st_init(const struct stw_winsys *stw_winsys)
 {
    static struct stw_device stw_dev_storage;
 
+   debug_printf("%s\n", __FUNCTION__);
+   
    assert(!stw_dev);
 
    stw_dev = &stw_dev_storage;
@@ -93,6 +95,8 @@ void
 st_cleanup(void)
 {
    UINT_PTR i;
+
+   debug_printf("%s\n", __FUNCTION__);
 
    if (!stw_dev)
       return;
