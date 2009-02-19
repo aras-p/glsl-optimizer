@@ -138,7 +138,7 @@ int main(int argc, char **argv)
    type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
    glutInitDisplayMode(type);
 
-   if (glutCreateWindow("Filled and unfilled fog tri") == GL_FALSE) {
+   if (glutCreateWindow(*argv) == GL_FALSE) {
       exit(1);
    }
 
