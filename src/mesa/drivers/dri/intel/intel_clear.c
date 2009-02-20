@@ -83,7 +83,7 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    int i;
    GLboolean saved_fp_enable = GL_FALSE, saved_vp_enable = GL_FALSE;
-   GLboolean saved_shader_program = 0;
+   GLuint saved_shader_program = 0;
    unsigned int saved_active_texture;
 
    assert((mask & ~(TRI_CLEAR_COLOR_BITS | BUFFER_BIT_DEPTH |
