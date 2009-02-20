@@ -186,7 +186,7 @@ static struct prog_instruction *emit_insn(struct brw_wm_compile *c,
    return inst;
 }
 
-static struct prog_instruction * emit_op(struct brw_wm_compile *c,
+static struct prog_instruction * emit_tex_op(struct brw_wm_compile *c,
 				       GLuint op,
 				       struct prog_dst_register dest,
 				       GLuint saturate,
@@ -212,6 +212,20 @@ static struct prog_instruction * emit_op(struct brw_wm_compile *c,
 }
    
 
+static struct prog_instruction * emit_op(struct brw_wm_compile *c,
+				       GLuint op,
+				       struct prog_dst_register dest,
+				       GLuint saturate,
+				       struct prog_src_register src0,
+				       struct prog_src_register src1,
+				       struct prog_src_register src2 )
+{
+   return emit_tex_op(c, op, dest, saturate,
+                      0, 0,  /* tex unit, target */
+                      src0, src1, src2);
+}
+   
+
 
 
 /***********************************************************************
@@ -233,7 +247,7 @@ static struct prog_src_register get_pixel_xy( struct brw_wm_compile *c )
       emit_op(c,
 	      WM_PIXELXY,
 	      dst_mask(pixel_xy, WRITEMASK_XY),
-	      0, 0, 0,
+	      0,
 	      payload_r0_depth,
 	      src_undef(),
 	      src_undef());
@@ -256,7 +270,7 @@ static struct prog_src_register get_delta_xy( struct brw_wm_compile *c )
       emit_op(c,
 	      WM_DELTAXY,
 	      dst_mask(delta_xy, WRITEMASK_XY),
-	      0, 0, 0,
+	      0,
 	      pixel_xy, 
 	      payload_r0_depth,
 	      src_undef());
@@ -280,7 +294,7 @@ static struct prog_src_register get_pixel_w( struct brw_wm_compile *c )
       emit_op(c,
 	      WM_PIXELW,
 	      dst_mask(pixel_w, WRITEMASK_W),
-	      0, 0, 0,
+	      0,
 	      interp_wpos,
 	      deltas, 
 	      src_undef());
@@ -315,7 +329,7 @@ static void emit_interp( struct brw_wm_compile *c,
       emit_op(c,
 	      WM_WPOSXY,
 	      dst_mask(dst, WRITEMASK_XY),
-	      0, 0, 0,
+	      0,
 	      get_pixel_xy(c),
 	      src_undef(),
 	      src_undef());
@@ -327,7 +341,7 @@ static void emit_interp( struct brw_wm_compile *c,
       emit_op(c,
 	      WM_LINTERP,
 	      dst,
-	      0, 0, 0,
+	      0,
 	      interp,
 	      deltas,
 	      arg2);
@@ -338,7 +352,7 @@ static void emit_interp( struct brw_wm_compile *c,
 	 emit_op(c,
 		 WM_CINTERP,
 		 dst,
-		 0, 0, 0,
+		 0,
 		 interp,
 		 src_undef(),
 		 src_undef());
@@ -347,7 +361,7 @@ static void emit_interp( struct brw_wm_compile *c,
 	 emit_op(c,
 		 WM_LINTERP,
 		 dst,
-		 0, 0, 0,
+		 0,
 		 interp,
 		 deltas,
 		 src_undef());
@@ -357,7 +371,7 @@ static void emit_interp( struct brw_wm_compile *c,
       emit_op(c,
 	      WM_PINTERP,
 	      dst,
-	      0, 0, 0,
+	      0,
 	      interp,
 	      deltas,
 	      get_pixel_w(c));
@@ -377,7 +391,7 @@ static void emit_ddx( struct brw_wm_compile *c,
     emit_op(c,
             OPCODE_DDX,
             inst->DstReg,
-            0, 0, 0,
+            0,
             interp,
             get_pixel_w(c),
             src_undef());
@@ -393,7 +407,7 @@ static void emit_ddy( struct brw_wm_compile *c,
     emit_op(c,
             OPCODE_DDY,
             inst->DstReg,
-            0, 0, 0,
+            0,
             interp,
             get_pixel_w(c),
             src_undef());
@@ -488,7 +502,7 @@ static void precalc_dst( struct brw_wm_compile *c,
       emit_op(c,
 	      OPCODE_MUL,
 	      dst_mask(dst, WRITEMASK_Y),
-	      inst->SaturateMode, 0, 0,
+	      inst->SaturateMode,
 	      src0,
 	      src1,
 	      src_undef());
@@ -504,7 +518,7 @@ static void precalc_dst( struct brw_wm_compile *c,
       swz = emit_op(c,
 		    OPCODE_SWZ,
 		    dst_mask(dst, WRITEMASK_XZ),
-		    inst->SaturateMode, 0, 0,
+		    inst->SaturateMode,
 		    src_swizzle(src0, SWIZZLE_ONE, z, z, z),
 		    src_undef(),
 		    src_undef());
@@ -517,7 +531,7 @@ static void precalc_dst( struct brw_wm_compile *c,
       emit_op(c,
 	      OPCODE_MOV,
 	      dst_mask(dst, WRITEMASK_W),
-	      inst->SaturateMode, 0, 0,
+	      inst->SaturateMode,
 	      src1,
 	      src_undef(),
 	      src_undef());
@@ -539,7 +553,7 @@ static void precalc_lit( struct brw_wm_compile *c,
       swz = emit_op(c,
 		    OPCODE_SWZ,
 		    dst_mask(dst, WRITEMASK_XW),
-		    0, 0, 0,
+		    0,
 		    src_swizzle1(src0, SWIZZLE_ONE),
 		    src_undef(),
 		    src_undef());
@@ -552,7 +566,7 @@ static void precalc_lit( struct brw_wm_compile *c,
       emit_op(c,
 	      OPCODE_LIT,
 	      dst_mask(dst, WRITEMASK_YZ),
-	      inst->SaturateMode, 0, 0,
+	      inst->SaturateMode,
 	      src0,
 	      src_undef(),
 	      src_undef());
@@ -588,7 +602,7 @@ static void precalc_tex( struct brw_wm_compile *c,
        /* tmpcoord = src0 (i.e.: coord = src0) */
        out = emit_op(c, OPCODE_MOV,
                      tmpcoord,
-                     0, 0, 0,
+                     0,
                      src0,
                      src_undef(),
                      src_undef());
@@ -598,7 +612,7 @@ static void precalc_tex( struct brw_wm_compile *c,
        /* tmp0 = MAX(coord.X, coord.Y) */
        emit_op(c, OPCODE_MAX,
                tmp0,
-               0, 0, 0,
+               0,
                src_swizzle1(coord, X),
                src_swizzle1(coord, Y),
                src_undef());
@@ -606,7 +620,7 @@ static void precalc_tex( struct brw_wm_compile *c,
        /* tmp1 = MAX(tmp0, coord.Z) */
        emit_op(c, OPCODE_MAX,
                tmp1,
-               0, 0, 0,
+               0,
                tmp0src,
                src_swizzle1(coord, Z),
                src_undef());
@@ -614,7 +628,7 @@ static void precalc_tex( struct brw_wm_compile *c,
        /* tmp0 = 1 / tmp1 */
        emit_op(c, OPCODE_RCP,
                tmp0,
-               0, 0, 0,
+               0,
                tmp1src,
                src_undef(),
                src_undef());
@@ -622,7 +636,7 @@ static void precalc_tex( struct brw_wm_compile *c,
        /* tmpCoord = src0 * tmp0 */
        emit_op(c, OPCODE_MUL,
                tmpcoord,
-               0, 0, 0,
+               0,
                src0,
                tmp0src,
                src_undef());
@@ -645,7 +659,7 @@ static void precalc_tex( struct brw_wm_compile *c,
       emit_op(c,
 	      OPCODE_MUL,
 	      tmpcoord,
-	      0, 0, 0,
+	      0,
 	      inst->SrcReg[0],
 	      scale,
 	      src_undef());
@@ -685,22 +699,22 @@ static void precalc_tex( struct brw_wm_compile *c,
      
       /* tmp     = TEX ...
        */
-      emit_op(c, 
-	      OPCODE_TEX,
-	      tmp,
-	      inst->SaturateMode,
-	      unit,
-	      inst->TexSrcTarget,
-	      coord,
-	      src_undef(),
-	      src_undef());
+      emit_tex_op(c, 
+                  OPCODE_TEX,
+                  tmp,
+                  inst->SaturateMode,
+                  unit,
+                  inst->TexSrcTarget,
+                  coord,
+                  src_undef(),
+                  src_undef());
 
       /* tmp.xyz =  ADD TMP, C0
        */
       emit_op(c,
 	      OPCODE_ADD,
 	      dst_mask(tmp, WRITEMASK_XYZ),
-	      0, 0, 0,
+	      0,
 	      tmpsrc,
 	      C0,
 	      src_undef());
@@ -711,7 +725,7 @@ static void precalc_tex( struct brw_wm_compile *c,
       emit_op(c,
 	      OPCODE_MUL,
 	      dst_mask(tmp, WRITEMASK_Y),
-	      0, 0, 0,
+	      0,
 	      tmpsrc,
 	      src_swizzle1(C0, W),
 	      src_undef());
@@ -726,7 +740,7 @@ static void precalc_tex( struct brw_wm_compile *c,
       emit_op(c,
 	      OPCODE_MAD,
 	      dst_mask(dst, WRITEMASK_XYZ),
-	      0, 0, 0,
+	      0,
 	      swap_uv?src_swizzle(tmpsrc, Z,Z,X,X):src_swizzle(tmpsrc, X,X,Z,Z),
 	      C1,
 	      src_swizzle1(tmpsrc, Y));
@@ -736,7 +750,7 @@ static void precalc_tex( struct brw_wm_compile *c,
       emit_op(c,
 	      OPCODE_MAD,
 	      dst_mask(dst, WRITEMASK_Y),
-	      0, 0, 0,
+	      0,
 	      src_swizzle1(tmpsrc, Z),
 	      src_swizzle1(C1, W),
 	      src_swizzle1(src_reg_from_dst(dst), Y));
@@ -745,15 +759,15 @@ static void precalc_tex( struct brw_wm_compile *c,
    }
    else {
       /* ordinary RGBA tex instruction */
-      emit_op(c, 
-	      OPCODE_TEX,
-	      inst->DstReg,
-	      inst->SaturateMode,
-	      unit,
-	      inst->TexSrcTarget,
-	      coord,
-	      src_undef(),
-	      src_undef());
+      emit_tex_op(c, 
+                  OPCODE_TEX,
+                  inst->DstReg,
+                  inst->SaturateMode,
+                  unit,
+                  inst->TexSrcTarget,
+                  coord,
+                  src_undef(),
+                  src_undef());
    }
 
    /* For GL_EXT_texture_swizzle: */
@@ -763,7 +777,6 @@ static void precalc_tex( struct brw_wm_compile *c,
       emit_op(c, OPCODE_SWZ,
               inst->DstReg,
               SATURATE_OFF, /* saturate already done above */
-              0, 0,   /* tex unit, target N/A */
               src_swizzle4(tmpsrc, c->key.tex_swizzles[unit]),
               src_undef(),
               src_undef());
@@ -812,7 +825,7 @@ static void precalc_txp( struct brw_wm_compile *c,
       emit_op(c,
 	      OPCODE_RCP,
 	      dst_mask(tmp, WRITEMASK_W),
-	      0, 0, 0,
+	      0,
 	      src_swizzle1(src0, GET_SWZ(src0.Swizzle, W)),
 	      src_undef(),
 	      src_undef());
@@ -822,7 +835,7 @@ static void precalc_txp( struct brw_wm_compile *c,
       emit_op(c,
 	      OPCODE_MUL,
 	      dst_mask(tmp, WRITEMASK_XYZ),
-	      0, 0, 0,
+	      0,
 	      src0,
 	      src_swizzle1(src_reg_from_dst(tmp), W),
 	      src_undef());
@@ -862,13 +875,13 @@ static void emit_fb_write( struct brw_wm_compile *c )
        for (i = 0 ; i < brw->state.nr_draw_regions; i++) {
 	   outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i);
 	   last_inst = inst = emit_op(c,
-		   WM_FB_WRITE, dst_mask(dst_undef(),0), 0, 0, 0,
+		   WM_FB_WRITE, dst_mask(dst_undef(),0), 0,
 		   outcolor, payload_r0_depth, outdepth);
 	   inst->Sampler = (i<<1);
 	   if (c->fp_fragcolor_emitted) {
 	       outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
 	       last_inst = inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
-		       0, 0, 0, outcolor, payload_r0_depth, outdepth);
+		       0, outcolor, payload_r0_depth, outdepth);
 	       inst->Sampler = (i<<1);
 	   }
        }
@@ -882,7 +895,7 @@ static void emit_fb_write( struct brw_wm_compile *c )
          outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
 
        inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
-	       0, 0, 0, outcolor, payload_r0_depth, outdepth);
+	       0, outcolor, payload_r0_depth, outdepth);
        inst->Sampler = 1|(0<<1);
    }
 }
