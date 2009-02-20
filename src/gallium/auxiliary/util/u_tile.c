@@ -883,6 +883,27 @@ ycbcr_get_tile_rgba(const ushort *src,
 }
 
 
+static void
+fake_get_tile_rgba(const ushort *src,
+                   unsigned w, unsigned h,
+                   float *p,
+                   unsigned dst_stride)
+{
+   unsigned i, j;
+
+   for (i = 0; i < h; i++) {
+      float *pRow = p;
+      for (j = 0; j < w; j++, pRow += 4) {
+         pRow[0] =
+         pRow[1] =
+         pRow[2] =
+         pRow[3] = (i ^ j) & 1 ? 1.0f : 0.0f;
+      }
+      p += dst_stride;
+   }
+}
+
+
 void
 pipe_tile_raw_to_rgba(enum pipe_format format,
                       void *src,
@@ -949,7 +970,8 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
       ycbcr_get_tile_rgba((ushort *) src, w, h, dst, dst_stride, TRUE);
       break;
    default:
-      assert(0);
+      debug_printf("%s: unsupported format %s\n", __FUNCTION__, pf_name(format));
+      fake_get_tile_rgba(src, w, h, dst, dst_stride);
    }
 }
 
@@ -1051,7 +1073,7 @@ pipe_put_tile_rgba(struct pipe_surface *ps,
       /*z24s8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
       break;
    default:
-      assert(0);
+      debug_printf("%s: unsupported format %s\n", __FUNCTION__, pf_name(ps->format));
    }
 
    pipe_put_tile_raw(ps, x, y, w, h, packed, 0);
