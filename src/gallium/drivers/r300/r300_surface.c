@@ -37,12 +37,13 @@ static void r300_surface_fill(struct pipe_context* pipe,
     struct r300_texture* tex = (struct r300_texture*)dest->texture;
     int i;
     float r, g, b, a;
+    unsigned pixpitch = tex->stride / tex->tex.block.size;
     r = (float)((color >> 16) & 0xff) / 255.0f;
     g = (float)((color >>  8) & 0xff) / 255.0f;
     b = (float)((color >>  0) & 0xff) / 255.0f;
     debug_printf("r300: Filling surface %p at (%d,%d),"
-        " dimensions %dx%d (stride %d), color 0x%x\n",
-        dest, x, y, w, h, tex->stride, color);
+        " dimensions %dx%d (pixel pitch %d), color 0x%x\n",
+        dest, x, y, w, h, pixpitch, color);
 
     /* Fallback? */
     /*if (0) {
@@ -291,10 +292,8 @@ static void r300_surface_fill(struct pipe_context* pipe,
 
     OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0, 1);
     OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-    /* XXX (dest->stride >> 2) should be the buffer width in pixels however,
-     * this little calculation is only good as long as the buffer is 32bpp */
-    OUT_CS_REG(R300_RB3D_COLORPITCH0, (tex->stride >> 2) |
-        R300_COLOR_FORMAT_ARGB8888);
+    /* XXX Fix color format in case it's not ARGB8888 */
+    OUT_CS_REG(R300_RB3D_COLORPITCH0, pixpitch | R300_COLOR_FORMAT_ARGB8888);
     OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0x0000000F);
     /* XXX Packet3 */
     OUT_CS(CP_PACKET3(R200_3D_DRAW_IMMD_2, 8));
