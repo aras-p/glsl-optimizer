@@ -516,18 +516,18 @@ static slang_asm_info AsmInfo[] = {
    /* float binary op */
    { "float_power", IR_POW, 1, 2 },
    /* texture / sampler */
-   { "vec4_tex1d", IR_TEX, 1, 2 },
-   { "vec4_texb1d", IR_TEXB, 1, 2 },  /* 1d w/ bias */
-   { "vec4_texp1d", IR_TEXP, 1, 2 },  /* 1d w/ projection */
-   { "vec4_tex2d", IR_TEX, 1, 2 },
-   { "vec4_texb2d", IR_TEXB, 1, 2 },  /* 2d w/ bias */
-   { "vec4_texp2d", IR_TEXP, 1, 2 },  /* 2d w/ projection */
-   { "vec4_tex3d", IR_TEX, 1, 2 },
-   { "vec4_texb3d", IR_TEXB, 1, 2 },  /* 3d w/ bias */
-   { "vec4_texp3d", IR_TEXP, 1, 2 },  /* 3d w/ projection */
-   { "vec4_texcube", IR_TEX, 1, 2 },  /* cubemap */
-   { "vec4_tex_rect", IR_TEX, 1, 2 }, /* rectangle */
-   { "vec4_texp_rect", IR_TEXP, 1, 2 },/* rectangle w/ projection */
+   { "vec4_tex_1d", IR_TEX, 1, 2 },
+   { "vec4_tex_1d_bias", IR_TEXB, 1, 2 },  /* 1d w/ bias */
+   { "vec4_tex_1d_proj", IR_TEXP, 1, 2 },  /* 1d w/ projection */
+   { "vec4_tex_2d", IR_TEX, 1, 2 },
+   { "vec4_tex_2d_bias", IR_TEXB, 1, 2 },  /* 2d w/ bias */
+   { "vec4_tex_2d_proj", IR_TEXP, 1, 2 },  /* 2d w/ projection */
+   { "vec4_tex_3d", IR_TEX, 1, 2 },
+   { "vec4_tex_3d_bias", IR_TEXB, 1, 2 },  /* 3d w/ bias */
+   { "vec4_tex_3d_proj", IR_TEXP, 1, 2 },  /* 3d w/ projection */
+   { "vec4_tex_cube", IR_TEX, 1, 2 },      /* cubemap */
+   { "vec4_tex_rect", IR_TEX, 1, 2 },      /* rectangle */
+   { "vec4_tex_rect_bias", IR_TEX, 1, 2 }, /* rectangle w/ projection */
 
    /* unary op */
    { "ivec4_to_vec4", IR_I_TO_F, 1, 1 }, /* int[4] to float[4] */
