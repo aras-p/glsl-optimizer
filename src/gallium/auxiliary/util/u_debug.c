@@ -50,6 +50,7 @@
 #define WIN32_LEAN_AND_MEAN      // Exclude rarely-used stuff from Windows headers
 #endif
 #include <windows.h>
+#include <stdio.h>
 
 #else
 
@@ -106,6 +107,11 @@ void _debug_vprintf(const char *format, va_list ap)
       OutputDebugStringA(buf);
       buf[0] = '\0';
    }
+   
+   if(GetConsoleWindow() && !IsDebuggerPresent()) {
+      vfprintf(stderr, format, ap);
+   }
+   
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
    wchar_t *wide_format;
    long wide_str_len;   
