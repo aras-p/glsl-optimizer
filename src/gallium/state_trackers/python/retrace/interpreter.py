@@ -44,20 +44,10 @@ except ImportError:
 
 
 def make_image(surface):
-    pixels = gallium.FloatArray(surface.height*surface.width*4)
-    surface.get_tile_rgba(0, 0, surface.width, surface.height, pixels)
+    data = surface.get_tile_rgba8(0, 0, surface.width, surface.height)
 
     import Image
-    outimage = Image.new(
-        mode='RGB',
-        size=(surface.width, surface.height),
-        color=(0,0,0))
-    outpixels = outimage.load()
-    for y in range(0, surface.height):
-        for x in range(0, surface.width):
-            offset = (y*surface.width + x)*4
-            r, g, b, a = [int(pixels[offset + ch]*255) for ch in range(4)]
-            outpixels[x, y] = r, g, b
+    outimage = Image.fromstring('RGBA', (surface.width, surface.height), data, "raw", 'RGBA', 0, 1)
     return outimage
 
 def save_image(filename, surface):

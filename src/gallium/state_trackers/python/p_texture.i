@@ -121,6 +121,50 @@
       pipe_put_tile_rgba($self, x, y, w, h, rgba);
    }
 
+   %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));
+   void
+   get_tile_rgba8(unsigned x, unsigned y, unsigned w, unsigned h, char **STRING, int *LENGTH) 
+   {
+      unsigned surface_usage;
+      float *rgba;
+      unsigned char *rgba8;
+      unsigned i, j, k;
+
+      *LENGTH = 0;
+      *STRING = NULL;
+      
+      if (!$self)
+         return;
+
+      *LENGTH = h*w*4;
+      *STRING = (char *) malloc(*LENGTH);
+      if(!*STRING)
+         return;
+      
+      rgba = malloc(w*4*sizeof(float));
+      if(!rgba)
+         return;
+      
+      rgba8 = (unsigned char *) *STRING;
+
+      /* XXX: force mappable surface */
+      surface_usage = $self->usage;
+      $self->usage |= PIPE_BUFFER_USAGE_CPU_READ;
+
+      for(j = 0; j < h; ++j) {
+         pipe_get_tile_rgba($self,
+                            x, y + j, w, 1,
+                            rgba);
+         for(i = 0; i < w; ++i)
+            for(k = 0; k <4; ++k)
+               rgba8[j*w*4 + i*4 + k] = float_to_ubyte(rgba[i*4 + k]);
+      }
+      
+      $self->usage = surface_usage;
+      
+      free(rgba);
+   }
+
    void
    get_tile_z(unsigned x, unsigned y, unsigned w, unsigned h, unsigned *z) {
       pipe_get_tile_z($self, x, y, w, h, z);
