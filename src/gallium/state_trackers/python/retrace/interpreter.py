@@ -85,6 +85,7 @@ def show_image(surface):
     root.mainloop()
 
 
+verbose = 1
 
 
 class Struct:
@@ -382,18 +383,23 @@ class Context(Object):
             _state.ucp = ucp
         self.real.set_clip(_state)
 
+    def dump_constant_buffer(self, buffer):
+        if verbose < 2:
+            return
+
+        data = buffer.read()
+        format = '4f'
+        index = 0
+        for offset in range(0, len(data), struct.calcsize(format)):
+            x, y, z, w = unpack_from(format, data, offset)
+            sys.stdout.write('\tCONST[%2u] = {%10.4f, %10.4f, %10.4f, %10.4f}\n' % (index, x, y, z, w))
+            index += 1
+
     def set_constant_buffer(self, shader, index, state):
         if state is not None:
             self.real.set_constant_buffer(shader, index, state.buffer)
 
-            if 1:
-                data = state.buffer.read()
-                format = '4f'
-                index = 0
-                for offset in range(0, len(data), struct.calcsize(format)):
-                    x, y, z, w = unpack_from(format, data, offset)
-                    sys.stdout.write('\tCONST[%2u] = {%10.4f, %10.4f, %10.4f, %10.4f}\n' % (index, x, y, z, w))
-                    index += 1
+            self.dump_constant_buffer(state.buffer)
 
     def set_framebuffer_state(self, state):
         _state = gallium.Framebuffer()
@@ -444,6 +450,9 @@ class Context(Object):
         pass
     
     def dump_vertices(self, start, count):
+        if verbose < 2:
+            return
+
         for index in range(start, start + count):
             if index >= start + 16:
                 sys.stdout.write('\t...\n')
@@ -468,6 +477,9 @@ class Context(Object):
             sys.stdout.write('\t},\n')
 
     def dump_indices(self, ibuf, isize, start, count):
+        if verbose < 2:
+            return
+
         format = {
             1: 'B',
             2: 'H',
@@ -499,16 +511,18 @@ class Context(Object):
         self.real.draw_arrays(mode, start, count)
     
     def draw_elements(self, indexBuffer, indexSize, mode, start, count):
-        minindex, maxindex = self.dump_indices(indexBuffer, indexSize, start, count)
-        self.dump_vertices(minindex, maxindex - minindex)
+        if verbose >= 2:
+            minindex, maxindex = self.dump_indices(indexBuffer, indexSize, start, count)
+            self.dump_vertices(minindex, maxindex - minindex)
 
         self.real.draw_elements(indexBuffer, indexSize, mode, start, count)
         
     def draw_range_elements(self, indexBuffer, indexSize, minIndex, maxIndex, mode, start, count):
-        minindex, maxindex = self.dump_indices(indexBuffer, indexSize, start, count)
-        minindex = min(minindex, minIndex)
-        maxindex = min(maxindex, maxIndex)
-        self.dump_vertices(minindex, maxindex - minindex)
+        if verbose >= 2:
+            minindex, maxindex = self.dump_indices(indexBuffer, indexSize, start, count)
+            minindex = min(minindex, minIndex)
+            maxindex = min(maxindex, maxIndex)
+            self.dump_vertices(minindex, maxindex - minindex)
 
         self.real.draw_range_elements(indexBuffer, indexSize, minIndex, maxIndex, mode, start, count)
         
@@ -561,7 +575,8 @@ class Interpreter(parser.TraceDumper):
         if (call.klass, call.method) in self.ignore_calls:
             return
 
-        parser.TraceDumper.handle_call(self, call)
+        if verbose >= 1:
+            parser.TraceDumper.handle_call(self, call)
         
         args = [self.interpret_arg(arg) for name, arg in call.args] 
         
