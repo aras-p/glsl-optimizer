@@ -40,7 +40,7 @@ static void st_viewport(GLcontext * ctx, GLint x, GLint y,
 {
    struct st_context *st = ctx->st;
 
-   if (st->pipe->winsys)
+   if (st->pipe->winsys && st->pipe->winsys->update_buffer)
       st->pipe->winsys->update_buffer( st->pipe->winsys,
                                        st->pipe->priv );
 }
