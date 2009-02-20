@@ -2509,11 +2509,19 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
  */
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
+    if (INTEL_DEBUG & DEBUG_WM) {
+        _mesa_printf("brw_wm_glsl_emit:\n");
+    }
+
     /* initial instruction translation/simplification */
     brw_wm_pass_fp(c);
 
     /* actual code generation */
     brw_wm_emit_glsl(brw, c);
+
+    if (INTEL_DEBUG & DEBUG_WM) {
+        brw_wm_print_program(c, "brw_wm_glsl_emit done");
+    }
 
     c->prog_data.total_grf = c->reg_index;
     c->prog_data.total_scratch = 0;
