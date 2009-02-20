@@ -527,7 +527,7 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_texp3d", IR_TEXP, 1, 2 },  /* 3d w/ projection */
    { "vec4_texcube", IR_TEX, 1, 2 },  /* cubemap */
    { "vec4_tex_rect", IR_TEX, 1, 2 }, /* rectangle */
-   { "vec4_texp_rect", IR_TEX, 1, 2 },/* rectangle w/ projection */
+   { "vec4_texp_rect", IR_TEXP, 1, 2 },/* rectangle w/ projection */
 
    /* unary op */
    { "ivec4_to_vec4", IR_I_TO_F, 1, 1 }, /* int[4] to float[4] */
