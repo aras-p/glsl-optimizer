@@ -306,6 +306,7 @@ class Context(Object):
         self.zsbuf = None
         self.vbufs = []
         self.velems = []
+        self.dirty = False
 
     def destroy(self):
         pass
@@ -509,6 +510,8 @@ class Context(Object):
         self.dump_vertices(start, count)
             
         self.real.draw_arrays(mode, start, count)
+
+        self.dirty = True
     
     def draw_elements(self, indexBuffer, indexSize, mode, start, count):
         if verbose >= 2:
@@ -516,6 +519,8 @@ class Context(Object):
             self.dump_vertices(minindex, maxindex - minindex)
 
         self.real.draw_elements(indexBuffer, indexSize, mode, start, count)
+
+        self.dirty = True
         
     def draw_range_elements(self, indexBuffer, indexSize, minIndex, maxIndex, mode, start, count):
         if verbose >= 2:
@@ -525,11 +530,15 @@ class Context(Object):
             self.dump_vertices(minindex, maxindex - minindex)
 
         self.real.draw_range_elements(indexBuffer, indexSize, minIndex, maxIndex, mode, start, count)
+
+        self.dirty = True
         
     def flush(self, flags):
         self.real.flush(flags)
-        if flags & gallium.PIPE_FLUSH_FRAME:
-            self._update()
+        if self.dirty:
+            if flags & gallium.PIPE_FLUSH_FRAME:
+                self._update()
+            self.dirty = False
         return None
 
     def clear(self, surface, value):
