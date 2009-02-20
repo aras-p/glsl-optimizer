@@ -183,7 +183,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
 {
    GLcontext *ctx = &brw->intel.ctx;
    /* BRW_NEW_FRAGMENT_PROGRAM */
-   struct brw_fragment_program *fp = 
+   const struct brw_fragment_program *fp = 
       (struct brw_fragment_program *)brw->fragment_program;
    GLuint lookup = 0;
    GLuint line_aa;
@@ -302,10 +302,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
       key->drawable_height = brw->intel.driDrawable->h;
    }
 
-   /* Extra info:
-    */
+   /* The unique fragment program ID */
    key->program_string_id = fp->id;
-
 }
 
 
