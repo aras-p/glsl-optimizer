@@ -3104,6 +3104,9 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
                break;
          }
 
+         if (shadow_tex)
+            fp->TexShadow = 1;
+
          /* Don't test the first time a particular sampler is seen.  Each time
           * after that, make sure the shadow state is the same.
           */

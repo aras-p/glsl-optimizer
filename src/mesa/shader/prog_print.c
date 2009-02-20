@@ -592,6 +592,8 @@ _mesa_fprint_instruction_opt(FILE *f,
       default:
          ;
       }
+      if (inst->TexShadow)
+         _mesa_fprintf(f, " SHADOW");
       fprint_comment(f, inst);
       break;
 

@@ -736,6 +736,7 @@ static struct ureg emit_texld( struct texenv_fragment_program *p,
 			       GLuint destmask,
 			       GLuint tex_unit,
 			       GLuint tex_idx,
+                               GLuint tex_shadow,
 			       struct ureg coord )
 {
    struct prog_instruction *inst = emit_op( p, op, 
@@ -747,6 +748,7 @@ static struct ureg emit_texld( struct texenv_fragment_program *p,
    
    inst->TexSrcTarget = tex_idx;
    inst->TexSrcUnit = tex_unit;
+   inst->TexShadow = tex_shadow;
 
    p->program->Base.NumTexInstructions++;
 
@@ -1160,22 +1162,27 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 {
    if (is_undef(p->src_texture[unit])) {
-      GLuint dim = p->state->unit[unit].source_index;
+      GLuint texTarget = p->state->unit[unit].source_index;
       struct ureg texcoord = register_input(p, FRAG_ATTRIB_TEX0+unit);
       struct ureg tmp = get_tex_temp( p );
 
-      if (dim == TEXTURE_UNKNOWN_INDEX)
+      if (texTarget == TEXTURE_UNKNOWN_INDEX)
          program_error(p, "TexSrcBit");
 			  
       /* TODO: Use D0_MASK_XY where possible.
        */
       if (p->state->unit[unit].enabled) {
+         GLboolean shadow = GL_FALSE;
+
+	 if (p->state->unit[unit].shadow) {
+	    p->program->Base.ShadowSamplers |= 1 << unit;
+            shadow = GL_TRUE;
+         }
+
 	 p->src_texture[unit] = emit_texld( p, OPCODE_TXP,
 					    tmp, WRITEMASK_XYZW, 
-					    unit, dim, texcoord );
-
-	 if (p->state->unit[unit].shadow)
-	    p->program->Base.ShadowSamplers |= 1 << unit;
+					    unit, texTarget, shadow,
+                                            texcoord );
 
          p->program->Base.SamplersUsed |= (1 << unit);
          /* This identity mapping should already be in place
