@@ -35,6 +35,14 @@ import model
 import parser
 
 
+try:
+    from struct import unpack_from
+except ImportError:
+    def unpack_from(fmt, buf, offset=0):
+        size = struct.calcsize(fmt)
+        return struct.unpack(fmt, buf[offset:offset + size])
+
+
 def make_image(surface):
     pixels = gallium.FloatArray(surface.height*surface.width*4)
     surface.get_tile_rgba(0, 0, surface.width, surface.height, pixels)
@@ -383,7 +391,7 @@ class Context(Object):
                 format = '4f'
                 index = 0
                 for offset in range(0, len(data), struct.calcsize(format)):
-                    x, y, z, w = struct.unpack_from(format, data, offset)
+                    x, y, z, w = unpack_from(format, data, offset)
                     sys.stdout.write('\tCONST[%2u] = {%10.4f, %10.4f, %10.4f, %10.4f}\n' % (index, x, y, z, w))
                     index += 1
 
@@ -454,7 +462,7 @@ class Context(Object):
                 }[velem.src_format]
 
                 data = vbuf.buffer.read()
-                values = struct.unpack_from(format, data, offset)
+                values = unpack_from(format, data, offset)
                 sys.stdout.write('\t\t{' + ', '.join(map(str, values)) + '},\n')
                 assert len(values) == velem.nr_components
             sys.stdout.write('\t},\n')
@@ -477,7 +485,7 @@ class Context(Object):
                 sys.stdout.write('\t...\n')
                 break
             offset = i*isize
-            index, = struct.unpack_from(format, data, offset)
+            index, = unpack_from(format, data, offset)
             sys.stdout.write('\t\t%u,\n' % index)
             minindex = min(minindex, index)
             maxindex = max(maxindex, index)
