@@ -295,6 +295,9 @@ link_uniform_vars(GLcontext *ctx,
             inst->TexSrcUnit = newSampNum;
             prog->SamplerTargets[newSampNum] = inst->TexSrcTarget;
             prog->SamplersUsed |= (1 << newSampNum);
+            if (inst->TexShadow) {
+               prog->ShadowSamplers |= (1 << newSampNum);
+            }
          }
       }
    }

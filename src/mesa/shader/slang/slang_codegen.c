@@ -529,6 +529,16 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_tex_rect", IR_TEX, 1, 2 },      /* rectangle */
    { "vec4_tex_rect_bias", IR_TEX, 1, 2 }, /* rectangle w/ projection */
 
+   /* texture / sampler but with shadow comparison */
+   { "vec4_tex_1d_shadow", IR_TEX_SH, 1, 2 },
+   { "vec4_tex_1d_bias_shadow", IR_TEXB_SH, 1, 2 },
+   { "vec4_tex_1d_proj_shadow", IR_TEXP_SH, 1, 2 },
+   { "vec4_tex_2d_shadow", IR_TEX_SH, 1, 2 },
+   { "vec4_tex_2d_bias_shadow", IR_TEXB_SH, 1, 2 },
+   { "vec4_tex_2d_proj_shadow", IR_TEXP_SH, 1, 2 },
+   { "vec4_tex_rect_shadow", IR_TEX_SH, 1, 2 },
+   { "vec4_tex_rect_proj_shadow", IR_TEXP_SH, 1, 2 },
+
    /* unary op */
    { "ivec4_to_vec4", IR_I_TO_F, 1, 1 }, /* int[4] to float[4] */
    { "vec4_to_ivec4", IR_F_TO_I, 1, 1 },  /* float[4] to int[4] */

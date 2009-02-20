@@ -131,6 +131,10 @@ typedef enum
    IR_TEXB,    /* texture lookup with LOD bias */
    IR_TEXP,    /* texture lookup with projection */
 
+   IR_TEX_SH,     /* texture lookup, shadow compare */
+   IR_TEXB_SH,    /* texture lookup with LOD bias, shadow compare */
+   IR_TEXP_SH,    /* texture lookup with projection, shadow compare */
+
    IR_FLOAT,
    IR_I_TO_F,  /* int[4] to float[4] conversion */
    IR_F_TO_I,  /* float[4] to int[4] conversion */

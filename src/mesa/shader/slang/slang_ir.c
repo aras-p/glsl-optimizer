@@ -94,6 +94,9 @@ static const slang_ir_info IrInfo[] = {
    { IR_TEX, "IR_TEX", OPCODE_TEX, 4, 1 },
    { IR_TEXB, "IR_TEXB", OPCODE_TXB, 4, 1 },
    { IR_TEXP, "IR_TEXP", OPCODE_TXP, 4, 1 },
+   { IR_TEX_SH, "IR_TEX_SH", OPCODE_TEX, 4, 1 },
+   { IR_TEXB_SH, "IR_TEXB_SH", OPCODE_TXB, 4, 1 },
+   { IR_TEXP_SH, "IR_TEXP_SH", OPCODE_TXP, 4, 1 },
    { IR_FLOAT, "IR_FLOAT", OPCODE_NOP, 0, 0 }, /* float literal */
    { IR_FIELD, "IR_FIELD", OPCODE_NOP, 0, 0 },
    { IR_ELEMENT, "IR_ELEMENT", OPCODE_NOP, 0, 0 },

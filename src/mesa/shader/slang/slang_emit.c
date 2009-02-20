@@ -1261,16 +1261,33 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct prog_instruction *inst;
    gl_inst_opcode opcode;
+   GLboolean shadow = GL_FALSE;
 
-   if (n->Opcode == IR_TEX) {
+   switch (n->Opcode) {
+   case IR_TEX:
       opcode = OPCODE_TEX;
-   }
-   else if (n->Opcode == IR_TEXB) {
+      break;
+   case IR_TEX_SH:
+      opcode = OPCODE_TEX;
+      shadow = GL_TRUE;
+      break;
+   case IR_TEXB:
       opcode = OPCODE_TXB;
-   }
-   else {
-      assert(n->Opcode == IR_TEXP);
+      break;
+   case IR_TEXB_SH:
+      opcode = OPCODE_TXB;
+      shadow = GL_TRUE;
+      break;
+   case IR_TEXP:
       opcode = OPCODE_TXP;
+      break;
+   case IR_TEXP_SH:
+      opcode = OPCODE_TXP;
+      shadow = GL_TRUE;
+      break;
+   default:
+      _mesa_problem(NULL, "Bad IR TEX code");
+      return NULL;
    }
 
    if (n->Children[0]->Opcode == IR_ELEMENT) {
@@ -1301,6 +1318,8 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
                            n->Children[1]->Store,
                            NULL,
                            NULL);
+
+   inst->TexShadow = shadow;
 
    /* Store->Index is the uniform/sampler index */
    assert(n->Children[0]->Store->Index >= 0);
@@ -2270,6 +2289,9 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_TEX:
    case IR_TEXB:
    case IR_TEXP:
+   case IR_TEX_SH:
+   case IR_TEXB_SH:
+   case IR_TEXP_SH:
       return emit_tex(emitInfo, n);
    case IR_NEG:
       return emit_negation(emitInfo, n);
