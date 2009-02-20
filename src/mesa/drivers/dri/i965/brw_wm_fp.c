@@ -192,6 +192,7 @@ static struct prog_instruction * emit_tex_op(struct brw_wm_compile *c,
 				       GLuint saturate,
 				       GLuint tex_src_unit,
 				       GLuint tex_src_target,
+				       GLuint tex_shadow,
 				       struct prog_src_register src0,
 				       struct prog_src_register src1,
 				       struct prog_src_register src2 )
@@ -205,6 +206,7 @@ static struct prog_instruction * emit_tex_op(struct brw_wm_compile *c,
    inst->SaturateMode = saturate;   
    inst->TexSrcUnit = tex_src_unit;
    inst->TexSrcTarget = tex_src_target;
+   inst->TexShadow = tex_shadow;
    inst->SrcReg[0] = src0;
    inst->SrcReg[1] = src1;
    inst->SrcReg[2] = src2;
@@ -221,7 +223,7 @@ static struct prog_instruction * emit_op(struct brw_wm_compile *c,
 				       struct prog_src_register src2 )
 {
    return emit_tex_op(c, op, dest, saturate,
-                      0, 0,  /* tex unit, target */
+                      0, 0, 0,  /* tex unit, target, shadow */
                       src0, src1, src2);
 }
    
@@ -705,6 +707,7 @@ static void precalc_tex( struct brw_wm_compile *c,
                   inst->SaturateMode,
                   unit,
                   inst->TexSrcTarget,
+                  inst->TexShadow,
                   coord,
                   src_undef(),
                   src_undef());
@@ -765,6 +768,7 @@ static void precalc_tex( struct brw_wm_compile *c,
                   inst->SaturateMode,
                   unit,
                   inst->TexSrcTarget,
+                  inst->TexShadow,
                   coord,
                   src_undef(),
                   src_undef());

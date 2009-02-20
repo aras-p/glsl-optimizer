@@ -210,9 +210,10 @@ void brw_wm_pass1( struct brw_wm_compile *c )
 	 break;
 
       case OPCODE_TEX:
+      case OPCODE_TXP:
 	 read0 = get_texcoord_mask(inst->tex_idx);
 
-	 if (c->key.shadowtex_mask & (1<<inst->tex_unit))
+         if (inst->tex_shadow)
 	    read0 |= WRITEMASK_Z;
 	 break;
 
@@ -267,7 +268,6 @@ void brw_wm_pass1( struct brw_wm_compile *c )
 	 break;
 
       case OPCODE_DST:
-      case OPCODE_TXP:
       default:
 	 break;
       }

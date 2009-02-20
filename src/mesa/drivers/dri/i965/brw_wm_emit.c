@@ -671,7 +671,6 @@ static void emit_tex( struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
    GLuint msgLength, responseLength;
-   GLboolean shadow = (c->key.shadowtex_mask & (1<<inst->tex_unit)) ? 1 : 0;
    GLuint i, nr;
    GLuint emit;
 
@@ -693,7 +692,7 @@ static void emit_tex( struct brw_wm_compile *c,
       break;
    }
 
-   if (shadow) {
+   if (inst->tex_shadow) {
       nr = 4;
       emit |= WRITEMASK_W;
    }
@@ -718,7 +717,7 @@ static void emit_tex( struct brw_wm_compile *c,
 	      inst->tex_unit + MAX_DRAW_BUFFERS, /* surface */
 	      inst->tex_unit,	  /* sampler */
 	      inst->writemask,
-	      (shadow ? 
+	      (inst->tex_shadow ? 
 	       BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE : 
 	       BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE),
 	      responseLength,
