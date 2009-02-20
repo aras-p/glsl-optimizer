@@ -416,7 +416,7 @@ GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_WINSYS_DIRS=""
 GALLIUM_WINSYS_DRM_DIRS=""
 GALLIUM_AUXILIARY_DIRS="draw translate cso_cache pipebuffer tgsi sct rtasm util"
-GALLIUM_DRIVER_DIRS="softpipe failover trace"
+GALLIUM_DRIVERS_DIRS="softpipe failover trace"
 GALLIUM_STATE_TRACKERS_DIRS=""
 
 case "$mesa_driver" in
@@ -440,7 +440,7 @@ AC_SUBST([WINDOW_SYSTEM])
 AC_SUBST([GALLIUM_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DRM_DIRS])
-AC_SUBST([GALLIUM_DRIVER_DIRS])
+AC_SUBST([GALLIUM_DRIVERS_DIRS])
 AC_SUBST([GALLIUM_AUXILIARY_DIRS])
 AC_SUBST([GALLIUM_STATE_TRACKERS_DIRS])
 
@@ -1118,7 +1118,7 @@ AC_ARG_ENABLE([gallium-intel],
     [enable_gallium_intel=yes])
 if test "x$enable_gallium_intel" = xyes; then
     GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS intel"
-    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS i915simple"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915simple"
 fi
 
 dnl
@@ -1131,7 +1131,7 @@ AC_ARG_ENABLE([gallium-radeon],
     [enable_gallium_radeon=no])
 if test "x$enable_gallium_radeon" = xyes; then
     GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS radeon"
-    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS r300"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
 fi
 
 dnl
@@ -1144,7 +1144,7 @@ AC_ARG_ENABLE([gallium-nouveau],
     [enable_gallium_nouveau=no])
 if test "x$enable_gallium_nouveau" = xyes; then
     GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS nouveau"
-    GALLIUM_DRIVER_DIRS="$GALLIUM_DRIVER_DIRS nv04 nv10 nv20 nv30 nv40 nv50"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nv04 nv10 nv20 nv30 nv40 nv50"
 fi
 
 
@@ -1201,7 +1201,7 @@ if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
     echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
     echo "        Winsys drm dirs:$GALLIUM_WINSYS_DRM_DIRS"
     echo "        Auxiliary dirs:  $GALLIUM_AUXILIARY_DIRS"
-    echo "        Driver dirs:     $GALLIUM_DRIVER_DIRS"
+    echo "        Driver dirs:     $GALLIUM_DRIVERS_DIRS"
     echo "        Trackers dirs:   $GALLIUM_STATE_TRACKERS_DIRS"
 else
     echo "        Gallium:         no"

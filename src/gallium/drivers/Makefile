@@ -2,7 +2,7 @@
 TOP = ../../..
 include $(TOP)/configs/current
 
-SUBDIRS = $(GALLIUM_DRIVER_DIRS)
+SUBDIRS = $(GALLIUM_DRIVERS_DIRS)
 
 default install clean:
 	@for dir in $(SUBDIRS) ; do \
