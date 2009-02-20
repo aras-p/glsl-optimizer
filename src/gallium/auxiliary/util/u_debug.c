@@ -110,6 +110,7 @@ void _debug_vprintf(const char *format, va_list ap)
    
    if(GetConsoleWindow() && !IsDebuggerPresent()) {
       vfprintf(stderr, format, ap);
+      fflush(stderr);
    }
    
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
