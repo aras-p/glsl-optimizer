@@ -1,9 +1,10 @@
 #include "vl_winsys.h"
 #include <X11/Xutil.h>
-#include <pipe/p_winsys.h>
+#include <pipe/internal/p_winsys_screen.h>
 #include <pipe/p_state.h>
 #include <pipe/p_inlines.h>
 #include <util/u_memory.h>
+#include <util/u_math.h>
 #include <softpipe/sp_winsys.h>
 
 /* pipe_winsys implementation */
@@ -96,12 +97,6 @@ static void xsp_buffer_destroy(struct pipe_winsys *pws, struct pipe_buffer *buff
 	free(xsp_buf);
 }
 
-/* Borrowed from Mesa's xm_winsys */
-static unsigned int round_up(unsigned n, unsigned multiple)
-{
-   return (n + multiple - 1) & ~(multiple - 1);
-}
-
 static struct pipe_buffer* xsp_surface_buffer_create
 (
 	struct pipe_winsys *pws,
@@ -119,11 +114,11 @@ static struct pipe_buffer* xsp_surface_buffer_create
 	pf_get_block(format, &block);
 	nblocksx = pf_get_nblocksx(&block, width);
 	nblocksy = pf_get_nblocksy(&block, height);
-	*stride = round_up(nblocksx * block.size, ALIGNMENT);
+	*stride = align(nblocksx * block.size, ALIGNMENT);
 
-	return winsys->buffer_create(winsys, ALIGNMENT,
-				     usage,
-				     *stride * nblocksy);
+	return pws->buffer_create(pws, ALIGNMENT,
+				  usage,
+				  *stride * nblocksy);
 }
 
 static void xsp_fence_reference(struct pipe_winsys *pws, struct pipe_fence_handle **ptr, struct pipe_fence_handle *fence)
