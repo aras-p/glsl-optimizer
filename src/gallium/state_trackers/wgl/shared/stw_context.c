@@ -178,6 +178,9 @@ stw_delete_context(
    struct stw_context *ctx ;
    BOOL ret = FALSE;
    
+   if (!stw_dev)
+      return FALSE;
+
    pipe_mutex_lock( stw_dev->mutex );
 
    ctx = stw_lookup_context(hglrc);
