@@ -139,7 +139,15 @@ static GLuint translate_tex_format( GLuint mesa_format, GLenum depth_mode )
       return BRW_SURFACEFORMAT_BC1_UNORM_SRGB;
 
    case MESA_FORMAT_S8_Z24:
-      return BRW_SURFACEFORMAT_I24X8_UNORM;
+      /* XXX: these different surface formats don't seem to
+       * make any difference for shadow sampler/compares.
+       */
+      if (depth_mode == GL_INTENSITY) 
+         return BRW_SURFACEFORMAT_I24X8_UNORM;
+      else if (depth_mode == GL_ALPHA)
+         return BRW_SURFACEFORMAT_A24X8_UNORM;
+      else
+         return BRW_SURFACEFORMAT_L24X8_UNORM;
 
    default:
       assert(0);
