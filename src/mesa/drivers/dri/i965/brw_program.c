@@ -94,7 +94,6 @@ static struct gl_program *brwNewProgram( GLcontext *ctx,
 static void brwDeleteProgram( GLcontext *ctx,
 			      struct gl_program *prog )
 {
-   
    _mesa_delete_program( ctx, prog );
 }
 
@@ -110,30 +109,29 @@ static void brwProgramStringNotify( GLcontext *ctx,
 				    GLenum target,
 				    struct gl_program *prog )
 {
+   struct brw_context *brw = brw_context(ctx);
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       struct gl_fragment_program *fprog = (struct gl_fragment_program *) prog;
-      struct brw_context *brw = brw_context(ctx);
-      struct brw_fragment_program *p = (struct brw_fragment_program *)prog;
-      struct brw_fragment_program *fp = (struct brw_fragment_program *)brw->fragment_program;
+      struct brw_fragment_program *newFP = (struct brw_fragment_program *) prog;
+      struct brw_fragment_program *curFP = (struct brw_fragment_program *) brw->fragment_program;
       if (fprog->FogOption) {
          _mesa_append_fog_code(ctx, fprog);
          fprog->FogOption = GL_NONE;
       }
 
-      if (p == fp)
+      if (newFP == curFP)
 	 brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
-      p->id = brw->program_id++;      
+      newFP->id = brw->program_id++;      
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
-      struct brw_context *brw = brw_context(ctx);
-      struct brw_vertex_program *p = (struct brw_vertex_program *)prog;
-      struct brw_vertex_program *vp = (struct brw_vertex_program *)brw->vertex_program;
-      if (p == vp)
+      struct brw_vertex_program *newVP = (struct brw_vertex_program *) prog;
+      struct brw_vertex_program *curVP = (struct brw_vertex_program *) brw->vertex_program;
+      if (newVP == curVP)
 	 brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
-      if (p->program.IsPositionInvariant) {
-	 _mesa_insert_mvp_code(ctx, &p->program);
+      if (newVP->program.IsPositionInvariant) {
+	 _mesa_insert_mvp_code(ctx, &newVP->program);
       }
-      p->id = brw->program_id++;      
+      newVP->id = brw->program_id++;      
 
       /* Also tell tnl about it:
        */
