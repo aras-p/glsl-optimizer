@@ -1614,6 +1614,7 @@ exec_tex(struct tgsi_exec_machine *mach,
 
    switch (inst->InstructionExtTexture.Texture) {
    case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_SHADOW1D:
 
       FETCH(&r[0], 0, CHAN_X);
 
@@ -1636,6 +1637,8 @@ exec_tex(struct tgsi_exec_machine *mach,
 
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
 
       FETCH(&r[0], 0, CHAN_X);
       FETCH(&r[1], 0, CHAN_Y);
