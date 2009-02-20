@@ -341,14 +341,6 @@ struct prog_dst_register
 struct prog_instruction
 {
    gl_inst_opcode Opcode;
-#if FEATURE_MESA_program_debug
-   GLshort StringPos;
-#endif
-   /**
-    * Arbitrary data.  Used for the PRINT, CAL, and BRA instructions.
-    */
-   void *Data;
-
    struct prog_src_register SrcReg[3];
    struct prog_dst_register DstReg;
 
@@ -388,7 +380,7 @@ struct prog_instruction
    GLuint SaturateMode:2;
    
    /**
-    * Per-instruction selectable precision.
+    * Per-instruction selectable precision: FLOAT32, FLOAT16, FIXED12.
     *
     * \since
     * NV_fragment_program, NV_fragment_program_option.
@@ -396,24 +388,13 @@ struct prog_instruction
    GLuint Precision:3;
 
    /**
-    * \name Texture source controls.
-    * 
-    * The texture source controls are only used with the \c TEX, \c TXD,
-    * \c TXL, and \c TXP instructions.
-    *
-    * \since
-    * ARB_fragment_program, NV_fragment_program, NV_vertex_program3.
+    * \name Extra fields for TEX, TXB, TXD, TXL, TXP instructions.
     */
    /*@{*/
-   /**
-    * Source texture unit.  OpenGL supports a maximum of 32 texture
-    * units.
-    */
+   /** Source texture unit. */
    GLuint TexSrcUnit:5;
    
-   /**
-    * Source texture target, one of TEXTURE_{1D,2D,3D,CUBE,RECT}_INDEX.
-    */
+   /** Source texture target, one of TEXTURE_{1D,2D,3D,CUBE,RECT}_INDEX */
    GLuint TexSrcTarget:3;
    /*@}*/
 
@@ -421,8 +402,8 @@ struct prog_instruction
     * For BRA and CAL instructions, the location to jump to.
     * For BGNLOOP, points to ENDLOOP (and vice-versa).
     * For BRK, points to BGNLOOP (which points to ENDLOOP).
-    * For IF, points to else or endif.
-    * For ELSE, points to endif.
+    * For IF, points to ELSE or ENDIF.
+    * For ELSE, points to ENDIF.
     */
    GLint BranchTarget;
 
@@ -434,7 +415,16 @@ struct prog_instruction
    GLint Sampler;
 #endif
 
+   /** for debugging purposes */
    const char *Comment;
+
+   /** Arbitrary data.  Used for OPCODE_PRINT and some drivers */
+   void *Data;
+
+   /* XXX obsolete - remove someday */
+#if FEATURE_MESA_program_debug
+   GLshort StringPos;
+#endif
 };
 
 
