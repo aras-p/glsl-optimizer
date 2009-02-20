@@ -8,6 +8,7 @@ util = env.ConvenienceLibrary(
 		'u_debug.c',
 		'u_debug_memory.c',
 		'u_debug_profile.c',
+		'u_debug_stack.c',
 		'u_draw_quad.c',
 		'u_gen_mipmap.c',
 		'u_handle_table.c',

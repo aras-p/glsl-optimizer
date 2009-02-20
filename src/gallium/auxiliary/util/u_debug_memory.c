@@ -45,10 +45,12 @@
 #endif
 
 #include "util/u_debug.h" 
+#include "util/u_debug_stack.h" 
 #include "util/u_double_list.h" 
 
 
 #define DEBUG_MEMORY_MAGIC 0x6e34090aU 
+#define DEBUG_MEMORY_STACK 0 /* XXX: disabled until we have symbol lookup */
 
 
 #if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) && !defined(WINCE)
@@ -71,7 +73,9 @@ struct debug_memory_header
    const char *file;
    unsigned line;
    const char *function;
+   struct debug_stack_frame backtrace[DEBUG_MEMORY_STACK];
    size_t size;
+   
    unsigned magic;
 };
 
@@ -135,6 +139,8 @@ debug_malloc(const char *file, unsigned line, const char *function,
    hdr->function = function;
    hdr->size = size;
    hdr->magic = DEBUG_MEMORY_MAGIC;
+
+   debug_backtrace_capture(hdr->backtrace, 0, DEBUG_MEMORY_STACK);
 
    ftr = footer_from_header(hdr);
    ftr->magic = DEBUG_MEMORY_MAGIC;
@@ -290,6 +296,7 @@ debug_memory_end(unsigned long start_no)
 	 debug_printf("%s:%u:%s: %u bytes at %p not freed\n",
 		      hdr->file, hdr->line, hdr->function,
 		      hdr->size, ptr);
+	 debug_backtrace_dump(hdr->backtrace, DEBUG_MEMORY_STACK);
 	 total_size += hdr->size;
       }
 
