@@ -114,6 +114,7 @@ progs = [
 	'tri-unfilled-userclip',
 	'tri-unfilled',
 	'tri-userclip',
+	'tri-viewport',
 	'tri-z-eq',
 	'tri-z',
 	'tri',

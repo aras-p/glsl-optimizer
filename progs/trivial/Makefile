@@ -119,6 +119,7 @@ SOURCES = \
 	tri-unfilled-userclip.c \
 	tri-unfilled.c \
 	tri-userclip.c \
+	tri-viewport.c \
 	tri-z-eq.c \
 	tri-z.c \
 	tri.c \
