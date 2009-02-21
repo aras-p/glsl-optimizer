@@ -763,13 +763,13 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    ASSIGN_4V( texUnit->GenQ.EyePlane, 0.0, 0.0, 0.0, 0.0 );
 
    /* initialize current texture object ptrs to the shared default objects */
-   _mesa_reference_texobj(&texUnit->Current1D, ctx->Shared->Default1D);
-   _mesa_reference_texobj(&texUnit->Current2D, ctx->Shared->Default2D);
-   _mesa_reference_texobj(&texUnit->Current3D, ctx->Shared->Default3D);
-   _mesa_reference_texobj(&texUnit->CurrentCubeMap, ctx->Shared->DefaultCubeMap);
-   _mesa_reference_texobj(&texUnit->CurrentRect, ctx->Shared->DefaultRect);
-   _mesa_reference_texobj(&texUnit->Current1DArray, ctx->Shared->Default1DArray);
-   _mesa_reference_texobj(&texUnit->Current2DArray, ctx->Shared->Default2DArray);
+   _mesa_reference_texobj(&texUnit->Current1D, ctx->Shared->DefaultTex[TEXTURE_1D_INDEX]);
+   _mesa_reference_texobj(&texUnit->Current2D, ctx->Shared->DefaultTex[TEXTURE_2D_INDEX]);
+   _mesa_reference_texobj(&texUnit->Current3D, ctx->Shared->DefaultTex[TEXTURE_3D_INDEX]);
+   _mesa_reference_texobj(&texUnit->CurrentCubeMap, ctx->Shared->DefaultTex[TEXTURE_CUBE_INDEX]);
+   _mesa_reference_texobj(&texUnit->CurrentRect, ctx->Shared->DefaultTex[TEXTURE_RECT_INDEX]);
+   _mesa_reference_texobj(&texUnit->Current1DArray, ctx->Shared->DefaultTex[TEXTURE_1D_ARRAY_INDEX]);
+   _mesa_reference_texobj(&texUnit->Current2DArray, ctx->Shared->DefaultTex[TEXTURE_2D_ARRAY_INDEX]);
 }
 
 
@@ -798,7 +798,8 @@ _mesa_init_texture(GLcontext *ctx)
    /* After we're done initializing the context's texture state the default
     * texture objects' refcounts should be at least MAX_TEXTURE_UNITS + 1.
     */
-   assert(ctx->Shared->Default1D->RefCount >= MAX_TEXTURE_UNITS + 1);
+   assert(ctx->Shared->DefaultTex[TEXTURE_1D_INDEX]->RefCount
+          >= MAX_TEXTURE_UNITS + 1);
 
    /* Allocate proxy textures */
    if (!alloc_proxy_textures( ctx ))
@@ -855,12 +856,19 @@ _mesa_update_default_objects_texture(GLcontext *ctx)
    for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
 
-      _mesa_reference_texobj(&texUnit->Current1D, ctx->Shared->Default1D);
-      _mesa_reference_texobj(&texUnit->Current2D, ctx->Shared->Default2D);
-      _mesa_reference_texobj(&texUnit->Current3D, ctx->Shared->Default3D);
-      _mesa_reference_texobj(&texUnit->CurrentCubeMap, ctx->Shared->DefaultCubeMap);
-      _mesa_reference_texobj(&texUnit->CurrentRect, ctx->Shared->DefaultRect);
-      _mesa_reference_texobj(&texUnit->Current1DArray, ctx->Shared->Default1DArray);
-      _mesa_reference_texobj(&texUnit->Current2DArray, ctx->Shared->Default2DArray);
+      _mesa_reference_texobj(&texUnit->Current1D,
+                             ctx->Shared->DefaultTex[TEXTURE_1D_INDEX]);
+      _mesa_reference_texobj(&texUnit->Current2D,
+                             ctx->Shared->DefaultTex[TEXTURE_2D_INDEX]);
+      _mesa_reference_texobj(&texUnit->Current3D,
+                             ctx->Shared->DefaultTex[TEXTURE_3D_INDEX]);
+      _mesa_reference_texobj(&texUnit->CurrentCubeMap,
+                             ctx->Shared->DefaultTex[TEXTURE_CUBE_INDEX]);
+      _mesa_reference_texobj(&texUnit->CurrentRect,
+                             ctx->Shared->DefaultTex[TEXTURE_RECT_INDEX]);
+      _mesa_reference_texobj(&texUnit->Current1DArray,
+                             ctx->Shared->DefaultTex[TEXTURE_1D_ARRAY_INDEX]);
+      _mesa_reference_texobj(&texUnit->Current2DArray,
+                             ctx->Shared->DefaultTex[TEXTURE_2D_ARRAY_INDEX]);
    }
 }

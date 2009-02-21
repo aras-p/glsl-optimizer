@@ -2198,18 +2198,8 @@ struct gl_shared_state
    struct _mesa_HashTable *DisplayList;	   /**< Display lists hash table */
    struct _mesa_HashTable *TexObjects;	   /**< Texture objects hash table */
 
-   /**
-    * \name Default texture objects (shared by all multi-texture units)
-    */
-   /*@{*/
-   struct gl_texture_object *Default1D;
-   struct gl_texture_object *Default2D;
-   struct gl_texture_object *Default3D;
-   struct gl_texture_object *DefaultCubeMap;
-   struct gl_texture_object *DefaultRect;
-   struct gl_texture_object *Default1DArray;
-   struct gl_texture_object *Default2DArray;
-   /*@}*/
+   /** Default texture objects (shared by all texture units) */
+   struct gl_texture_object *DefaultTex[NUM_TEXTURE_TARGETS];
 
    /**
     * \name Thread safety and statechange notification for texture

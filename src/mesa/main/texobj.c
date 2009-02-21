@@ -764,31 +764,38 @@ unbind_texobj_from_texunits(GLcontext *ctx, struct gl_texture_object *texObj)
    for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++) {
       struct gl_texture_unit *unit = &ctx->Texture.Unit[u];
       if (texObj == unit->Current1D) {
-         _mesa_reference_texobj(&unit->Current1D, ctx->Shared->Default1D);
+         _mesa_reference_texobj(&unit->Current1D,
+                                ctx->Shared->DefaultTex[TEXTURE_1D_INDEX]);
          ASSERT(unit->Current1D);
       }
       else if (texObj == unit->Current2D) {
-         _mesa_reference_texobj(&unit->Current2D, ctx->Shared->Default2D);
+         _mesa_reference_texobj(&unit->Current2D,
+                                ctx->Shared->DefaultTex[TEXTURE_2D_INDEX]);
          ASSERT(unit->Current2D);
       }
       else if (texObj == unit->Current3D) {
-         _mesa_reference_texobj(&unit->Current3D, ctx->Shared->Default3D);
+         _mesa_reference_texobj(&unit->Current3D,
+                                ctx->Shared->DefaultTex[TEXTURE_3D_INDEX]);
          ASSERT(unit->Current3D);
       }
       else if (texObj == unit->CurrentCubeMap) {
-         _mesa_reference_texobj(&unit->CurrentCubeMap, ctx->Shared->DefaultCubeMap);
+         _mesa_reference_texobj(&unit->CurrentCubeMap,
+                                ctx->Shared->DefaultTex[TEXTURE_CUBE_INDEX]);
          ASSERT(unit->CurrentCubeMap);
       }
       else if (texObj == unit->CurrentRect) {
-         _mesa_reference_texobj(&unit->CurrentRect, ctx->Shared->DefaultRect);
+         _mesa_reference_texobj(&unit->CurrentRect,
+                                ctx->Shared->DefaultTex[TEXTURE_RECT_INDEX]);
          ASSERT(unit->CurrentRect);
       }
       else if (texObj == unit->Current1DArray) {
-         _mesa_reference_texobj(&unit->Current1DArray, ctx->Shared->Default1DArray);
+         _mesa_reference_texobj(&unit->Current1DArray,
+                             ctx->Shared->DefaultTex[TEXTURE_1D_ARRAY_INDEX]);
          ASSERT(unit->Current1DArray);
       }
       else if (texObj == unit->Current2DArray) {
-         _mesa_reference_texobj(&unit->Current2DArray, ctx->Shared->Default2DArray);
+         _mesa_reference_texobj(&unit->Current2DArray,
+                             ctx->Shared->DefaultTex[TEXTURE_2D_ARRAY_INDEX]);
          ASSERT(unit->Current2DArray);
       }
    }
@@ -889,25 +896,25 @@ _mesa_BindTexture( GLenum target, GLuint texName )
 
    switch (target) {
    case GL_TEXTURE_1D:
-      defaultTexObj = ctx->Shared->Default1D;
+      defaultTexObj = ctx->Shared->DefaultTex[TEXTURE_1D_INDEX];
       break;
    case GL_TEXTURE_2D:
-      defaultTexObj = ctx->Shared->Default2D;
+      defaultTexObj = ctx->Shared->DefaultTex[TEXTURE_2D_INDEX];
       break;
    case GL_TEXTURE_3D:
-      defaultTexObj = ctx->Shared->Default3D;
+      defaultTexObj = ctx->Shared->DefaultTex[TEXTURE_3D_INDEX];
       break;
    case GL_TEXTURE_CUBE_MAP_ARB:
-      defaultTexObj = ctx->Shared->DefaultCubeMap;
+      defaultTexObj = ctx->Shared->DefaultTex[TEXTURE_CUBE_INDEX];
       break;
    case GL_TEXTURE_RECTANGLE_NV:
-      defaultTexObj = ctx->Shared->DefaultRect;
+      defaultTexObj = ctx->Shared->DefaultTex[TEXTURE_RECT_INDEX];
       break;
    case GL_TEXTURE_1D_ARRAY_EXT:
-      defaultTexObj = ctx->Shared->Default1DArray;
+      defaultTexObj = ctx->Shared->DefaultTex[TEXTURE_1D_ARRAY_INDEX];
       break;
    case GL_TEXTURE_2D_ARRAY_EXT:
-      defaultTexObj = ctx->Shared->Default2DArray;
+      defaultTexObj = ctx->Shared->DefaultTex[TEXTURE_2D_ARRAY_INDEX];
       break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glBindTexture(target)");
