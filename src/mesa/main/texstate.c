@@ -548,7 +548,7 @@ update_texture_state( GLcontext *ctx )
    for (unit = 0; unit < ctx->Const.MaxTextureImageUnits; unit++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
       GLbitfield enableBits;
-      GLuint tex;
+      GLuint texIndex;
 
       texUnit->_Current = NULL;
       texUnit->_ReallyEnabled = 0;
@@ -575,26 +575,12 @@ update_texture_state( GLcontext *ctx )
       if (enableBits == 0x0)
          continue;
 
-      for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
-         ASSERT(texUnit->CurrentTex[tex]);
-      }
-
       /* Look for the highest-priority texture target that's enabled and
        * complete.  That's the one we'll use for texturing.  If we're using
        * a fragment program we're guaranteed that bitcount(enabledBits) <= 1.
+       * Note that the TEXTURE_x_INDEX values are in high to low priority.
        */
-      for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
-         /* texture indexes from highest to lowest priority */
-         static const GLuint targets[NUM_TEXTURE_TARGETS] = {
-            TEXTURE_2D_ARRAY_INDEX,
-            TEXTURE_1D_ARRAY_INDEX,
-            TEXTURE_CUBE_INDEX,
-            TEXTURE_3D_INDEX,
-            TEXTURE_RECT_INDEX,
-            TEXTURE_2D_INDEX,
-            TEXTURE_1D_INDEX
-         };
-         GLuint texIndex = targets[tex];
+      for (texIndex = 0; texIndex < NUM_TEXTURE_TARGETS; texIndex++) {
          texture_override(ctx, texUnit, enableBits,
                           texUnit->CurrentTex[texIndex], 1 << texIndex);
       }

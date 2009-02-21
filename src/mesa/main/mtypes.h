@@ -1145,34 +1145,35 @@ struct gl_stencil_attrib
 };
 
 
-/** 1D, 2D, 3D, CUBE, RECT, 1D_ARRAY, and 2D_ARRAY targets */
-#define NUM_TEXTURE_TARGETS 7
-
 /**
- * An index for each type of texture object
+ * An index for each type of texture object.  These correspond to the GL
+ * target target enums, such as GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, etc.
+ * Note: the order is from highest priority to lowest priority.
  */
-/*@{*/
-#define TEXTURE_1D_INDEX       0
-#define TEXTURE_2D_INDEX       1
-#define TEXTURE_3D_INDEX       2
-#define TEXTURE_CUBE_INDEX     3
-#define TEXTURE_RECT_INDEX     4
-#define TEXTURE_1D_ARRAY_INDEX 5
-#define TEXTURE_2D_ARRAY_INDEX 6
-/*@}*/
+enum {
+   TEXTURE_2D_ARRAY_INDEX,
+   TEXTURE_1D_ARRAY_INDEX,
+   TEXTURE_CUBE_INDEX,
+   TEXTURE_3D_INDEX,
+   TEXTURE_RECT_INDEX,
+   TEXTURE_2D_INDEX,
+   TEXTURE_1D_INDEX,
+   NUM_TEXTURE_TARGETS
+};
+
 
 /**
  * Bit flags for each type of texture object
  * Used for Texture.Unit[]._ReallyEnabled flags.
  */
 /*@{*/
-#define TEXTURE_1D_BIT       (1 << TEXTURE_1D_INDEX)
-#define TEXTURE_2D_BIT       (1 << TEXTURE_2D_INDEX)
-#define TEXTURE_3D_BIT       (1 << TEXTURE_3D_INDEX)
-#define TEXTURE_CUBE_BIT     (1 << TEXTURE_CUBE_INDEX)
-#define TEXTURE_RECT_BIT     (1 << TEXTURE_RECT_INDEX)
-#define TEXTURE_1D_ARRAY_BIT (1 << TEXTURE_1D_ARRAY_INDEX)
 #define TEXTURE_2D_ARRAY_BIT (1 << TEXTURE_2D_ARRAY_INDEX)
+#define TEXTURE_1D_ARRAY_BIT (1 << TEXTURE_1D_ARRAY_INDEX)
+#define TEXTURE_CUBE_BIT     (1 << TEXTURE_CUBE_INDEX)
+#define TEXTURE_3D_BIT       (1 << TEXTURE_3D_INDEX)
+#define TEXTURE_RECT_BIT     (1 << TEXTURE_RECT_INDEX)
+#define TEXTURE_2D_BIT       (1 << TEXTURE_2D_INDEX)
+#define TEXTURE_1D_BIT       (1 << TEXTURE_1D_INDEX)
 /*@}*/
 
 

@@ -467,14 +467,15 @@ alloc_shared_state( GLcontext *ctx )
 
    /* Create default texture objects */
    for (i = 0; i < NUM_TEXTURE_TARGETS; i++) {
+      /* NOTE: the order of these enums matches the TEXTURE_x_INDEX values */
       static const GLenum targets[NUM_TEXTURE_TARGETS] = {
-         GL_TEXTURE_1D,
-         GL_TEXTURE_2D,
-         GL_TEXTURE_3D,
-         GL_TEXTURE_CUBE_MAP,
-         GL_TEXTURE_RECTANGLE_NV,
+         GL_TEXTURE_2D_ARRAY_EXT,
          GL_TEXTURE_1D_ARRAY_EXT,
-         GL_TEXTURE_2D_ARRAY_EXT
+         GL_TEXTURE_CUBE_MAP,
+         GL_TEXTURE_3D,
+         GL_TEXTURE_RECTANGLE_NV,
+         GL_TEXTURE_2D,
+         GL_TEXTURE_1D
       };
       ss->DefaultTex[i] = ctx->Driver.NewTextureObject(ctx, 0, targets[i]);
       if (!ss->DefaultTex[i])
