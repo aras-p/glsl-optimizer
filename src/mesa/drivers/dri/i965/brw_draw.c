@@ -220,7 +220,7 @@ static GLboolean check_fallbacks( struct brw_context *brw,
 	 /* GS doesn't get enough information to know when to reset
 	  * the stipple counter?!?
 	  */
-	 if (prim[i].mode == GL_LINE_LOOP) 
+	 if (prim[i].mode == GL_LINE_LOOP || prim[i].mode == GL_LINE_STRIP) 
 	    return GL_TRUE;
 	    
 	 if (prim[i].mode == GL_POLYGON &&
