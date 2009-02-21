@@ -293,16 +293,16 @@ static void make_state_key( GLcontext *ctx, struct state_key *key )
       
 	 key->unit[i].texgen_mode0 = 
 	    translate_texgen( texUnit->TexGenEnabled & (1<<0),
-			      texUnit->GenModeS );
+			      texUnit->GenS.Mode );
 	 key->unit[i].texgen_mode1 = 
 	    translate_texgen( texUnit->TexGenEnabled & (1<<1),
-			      texUnit->GenModeT );
+			      texUnit->GenT.Mode );
 	 key->unit[i].texgen_mode2 = 
 	    translate_texgen( texUnit->TexGenEnabled & (1<<2),
-			      texUnit->GenModeR );
+			      texUnit->GenR.Mode );
 	 key->unit[i].texgen_mode3 = 
 	    translate_texgen( texUnit->TexGenEnabled & (1<<3),
-			      texUnit->GenModeQ );
+			      texUnit->GenQ.Mode );
       }
    }
 }

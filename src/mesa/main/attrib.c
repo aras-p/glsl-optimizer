@@ -699,26 +699,26 @@ pop_texture_group(GLcontext *ctx, struct texture_state *texstate)
       }
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, unit->EnvMode);
       _mesa_TexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, unit->EnvColor);
-      _mesa_TexGeni(GL_S, GL_TEXTURE_GEN_MODE, unit->GenModeS);
-      _mesa_TexGeni(GL_T, GL_TEXTURE_GEN_MODE, unit->GenModeT);
-      _mesa_TexGeni(GL_R, GL_TEXTURE_GEN_MODE, unit->GenModeR);
-      _mesa_TexGeni(GL_Q, GL_TEXTURE_GEN_MODE, unit->GenModeQ);
-      _mesa_TexGenfv(GL_S, GL_OBJECT_PLANE, unit->ObjectPlaneS);
-      _mesa_TexGenfv(GL_T, GL_OBJECT_PLANE, unit->ObjectPlaneT);
-      _mesa_TexGenfv(GL_R, GL_OBJECT_PLANE, unit->ObjectPlaneR);
-      _mesa_TexGenfv(GL_Q, GL_OBJECT_PLANE, unit->ObjectPlaneQ);
+      _mesa_TexGeni(GL_S, GL_TEXTURE_GEN_MODE, unit->GenS.Mode);
+      _mesa_TexGeni(GL_T, GL_TEXTURE_GEN_MODE, unit->GenT.Mode);
+      _mesa_TexGeni(GL_R, GL_TEXTURE_GEN_MODE, unit->GenR.Mode);
+      _mesa_TexGeni(GL_Q, GL_TEXTURE_GEN_MODE, unit->GenQ.Mode);
+      _mesa_TexGenfv(GL_S, GL_OBJECT_PLANE, unit->GenS.ObjectPlane);
+      _mesa_TexGenfv(GL_T, GL_OBJECT_PLANE, unit->GenT.ObjectPlane);
+      _mesa_TexGenfv(GL_R, GL_OBJECT_PLANE, unit->GenR.ObjectPlane);
+      _mesa_TexGenfv(GL_Q, GL_OBJECT_PLANE, unit->GenQ.ObjectPlane);
       /* Eye plane done differently to avoid re-transformation */
       {
          struct gl_texture_unit *destUnit = &ctx->Texture.Unit[u];
-         COPY_4FV(destUnit->EyePlaneS, unit->EyePlaneS);
-         COPY_4FV(destUnit->EyePlaneT, unit->EyePlaneT);
-         COPY_4FV(destUnit->EyePlaneR, unit->EyePlaneR);
-         COPY_4FV(destUnit->EyePlaneQ, unit->EyePlaneQ);
+         COPY_4FV(destUnit->GenS.EyePlane, unit->GenS.EyePlane);
+         COPY_4FV(destUnit->GenT.EyePlane, unit->GenT.EyePlane);
+         COPY_4FV(destUnit->GenR.EyePlane, unit->GenR.EyePlane);
+         COPY_4FV(destUnit->GenQ.EyePlane, unit->GenQ.EyePlane);
          if (ctx->Driver.TexGen) {
-            ctx->Driver.TexGen(ctx, GL_S, GL_EYE_PLANE, unit->EyePlaneS);
-            ctx->Driver.TexGen(ctx, GL_T, GL_EYE_PLANE, unit->EyePlaneT);
-            ctx->Driver.TexGen(ctx, GL_R, GL_EYE_PLANE, unit->EyePlaneR);
-            ctx->Driver.TexGen(ctx, GL_Q, GL_EYE_PLANE, unit->EyePlaneQ);
+            ctx->Driver.TexGen(ctx, GL_S, GL_EYE_PLANE, unit->GenS.EyePlane);
+            ctx->Driver.TexGen(ctx, GL_T, GL_EYE_PLANE, unit->GenT.EyePlane);
+            ctx->Driver.TexGen(ctx, GL_R, GL_EYE_PLANE, unit->GenR.EyePlane);
+            ctx->Driver.TexGen(ctx, GL_Q, GL_EYE_PLANE, unit->GenQ.EyePlane);
          }
       }
       _mesa_set_enable(ctx, GL_TEXTURE_GEN_S,

@@ -85,23 +85,10 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
       dst->Texture.Unit[i].EnvMode = src->Texture.Unit[i].EnvMode;
       COPY_4V(dst->Texture.Unit[i].EnvColor, src->Texture.Unit[i].EnvColor);
       dst->Texture.Unit[i].TexGenEnabled = src->Texture.Unit[i].TexGenEnabled;
-      dst->Texture.Unit[i].GenModeS = src->Texture.Unit[i].GenModeS;
-      dst->Texture.Unit[i].GenModeT = src->Texture.Unit[i].GenModeT;
-      dst->Texture.Unit[i].GenModeR = src->Texture.Unit[i].GenModeR;
-      dst->Texture.Unit[i].GenModeQ = src->Texture.Unit[i].GenModeQ;
-      dst->Texture.Unit[i]._GenBitS = src->Texture.Unit[i]._GenBitS;
-      dst->Texture.Unit[i]._GenBitT = src->Texture.Unit[i]._GenBitT;
-      dst->Texture.Unit[i]._GenBitR = src->Texture.Unit[i]._GenBitR;
-      dst->Texture.Unit[i]._GenBitQ = src->Texture.Unit[i]._GenBitQ;
-      dst->Texture.Unit[i]._GenFlags = src->Texture.Unit[i]._GenFlags;
-      COPY_4V(dst->Texture.Unit[i].ObjectPlaneS, src->Texture.Unit[i].ObjectPlaneS);
-      COPY_4V(dst->Texture.Unit[i].ObjectPlaneT, src->Texture.Unit[i].ObjectPlaneT);
-      COPY_4V(dst->Texture.Unit[i].ObjectPlaneR, src->Texture.Unit[i].ObjectPlaneR);
-      COPY_4V(dst->Texture.Unit[i].ObjectPlaneQ, src->Texture.Unit[i].ObjectPlaneQ);
-      COPY_4V(dst->Texture.Unit[i].EyePlaneS, src->Texture.Unit[i].EyePlaneS);
-      COPY_4V(dst->Texture.Unit[i].EyePlaneT, src->Texture.Unit[i].EyePlaneT);
-      COPY_4V(dst->Texture.Unit[i].EyePlaneR, src->Texture.Unit[i].EyePlaneR);
-      COPY_4V(dst->Texture.Unit[i].EyePlaneQ, src->Texture.Unit[i].EyePlaneQ);
+      dst->Texture.Unit[i].GenS = src->Texture.Unit[i].GenS;
+      dst->Texture.Unit[i].GenT = src->Texture.Unit[i].GenT;
+      dst->Texture.Unit[i].GenR = src->Texture.Unit[i].GenR;
+      dst->Texture.Unit[i].GenQ = src->Texture.Unit[i].GenQ;
       dst->Texture.Unit[i].LodBias = src->Texture.Unit[i].LodBias;
 
       /* GL_EXT_texture_env_combine */
@@ -655,16 +642,16 @@ update_texture_state( GLcontext *ctx )
 
       if (texUnit->TexGenEnabled) {
 	 if (texUnit->TexGenEnabled & S_BIT) {
-	    texUnit->_GenFlags |= texUnit->_GenBitS;
+	    texUnit->_GenFlags |= texUnit->GenS._ModeBit;
 	 }
 	 if (texUnit->TexGenEnabled & T_BIT) {
-	    texUnit->_GenFlags |= texUnit->_GenBitT;
-	 }
-	 if (texUnit->TexGenEnabled & Q_BIT) {
-	    texUnit->_GenFlags |= texUnit->_GenBitQ;
+	    texUnit->_GenFlags |= texUnit->GenT._ModeBit;
 	 }
 	 if (texUnit->TexGenEnabled & R_BIT) {
-	    texUnit->_GenFlags |= texUnit->_GenBitR;
+	    texUnit->_GenFlags |= texUnit->GenR._ModeBit;
+	 }
+	 if (texUnit->TexGenEnabled & Q_BIT) {
+	    texUnit->_GenFlags |= texUnit->GenQ._ModeBit;
 	 }
 
 	 ctx->Texture._TexGenEnabled |= ENABLE_TEXGEN(unit);
@@ -756,24 +743,24 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    texUnit->_CurrentCombine = & texUnit->_EnvMode;
 
    texUnit->TexGenEnabled = 0;
-   texUnit->GenModeS = GL_EYE_LINEAR;
-   texUnit->GenModeT = GL_EYE_LINEAR;
-   texUnit->GenModeR = GL_EYE_LINEAR;
-   texUnit->GenModeQ = GL_EYE_LINEAR;
-   texUnit->_GenBitS = TEXGEN_EYE_LINEAR;
-   texUnit->_GenBitT = TEXGEN_EYE_LINEAR;
-   texUnit->_GenBitR = TEXGEN_EYE_LINEAR;
-   texUnit->_GenBitQ = TEXGEN_EYE_LINEAR;
+   texUnit->GenS.Mode = GL_EYE_LINEAR;
+   texUnit->GenT.Mode = GL_EYE_LINEAR;
+   texUnit->GenR.Mode = GL_EYE_LINEAR;
+   texUnit->GenQ.Mode = GL_EYE_LINEAR;
+   texUnit->GenS._ModeBit = TEXGEN_EYE_LINEAR;
+   texUnit->GenT._ModeBit = TEXGEN_EYE_LINEAR;
+   texUnit->GenR._ModeBit = TEXGEN_EYE_LINEAR;
+   texUnit->GenQ._ModeBit = TEXGEN_EYE_LINEAR;
 
    /* Yes, these plane coefficients are correct! */
-   ASSIGN_4V( texUnit->ObjectPlaneS, 1.0, 0.0, 0.0, 0.0 );
-   ASSIGN_4V( texUnit->ObjectPlaneT, 0.0, 1.0, 0.0, 0.0 );
-   ASSIGN_4V( texUnit->ObjectPlaneR, 0.0, 0.0, 0.0, 0.0 );
-   ASSIGN_4V( texUnit->ObjectPlaneQ, 0.0, 0.0, 0.0, 0.0 );
-   ASSIGN_4V( texUnit->EyePlaneS, 1.0, 0.0, 0.0, 0.0 );
-   ASSIGN_4V( texUnit->EyePlaneT, 0.0, 1.0, 0.0, 0.0 );
-   ASSIGN_4V( texUnit->EyePlaneR, 0.0, 0.0, 0.0, 0.0 );
-   ASSIGN_4V( texUnit->EyePlaneQ, 0.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenS.ObjectPlane, 1.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenT.ObjectPlane, 0.0, 1.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenR.ObjectPlane, 0.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenQ.ObjectPlane, 0.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenS.EyePlane, 1.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenT.EyePlane, 0.0, 1.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenR.EyePlane, 0.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenQ.EyePlane, 0.0, 0.0, 0.0, 0.0 );
 
    /* initialize current texture object ptrs to the shared default objects */
    _mesa_reference_texobj(&texUnit->Current1D, ctx->Shared->Default1D);

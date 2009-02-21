@@ -1493,6 +1493,18 @@ struct gl_tex_env_combine_state
 
 
 /**
+ * Texture coord generation state.
+ */
+struct gl_texgen
+{
+   GLenum Mode;         /**< GL_EYE_LINEAR, GL_SPHERE_MAP, etc */
+   GLbitfield _ModeBit; /**< TEXGEN_x bit corresponding to Mode */
+   GLfloat ObjectPlane[4];
+   GLfloat EyePlane[4];
+};
+
+
+/**
  * Texture unit state.  Contains enable flags, texture environment/function/
  * combiners, texgen state, pointers to current texture objects and
  * post-filter color tables.
@@ -1504,28 +1516,14 @@ struct gl_texture_unit
 
    GLenum EnvMode;              /**< GL_MODULATE, GL_DECAL, GL_BLEND, etc. */
    GLfloat EnvColor[4];
+
+   struct gl_texgen GenS;
+   struct gl_texgen GenT;
+   struct gl_texgen GenR;
+   struct gl_texgen GenQ;
    GLbitfield TexGenEnabled;	/**< Bitwise-OR of [STRQ]_BIT values */
-   /** \name Tex coord generation mode
-    * Either GL_OBJECT_LINEAR, GL_EYE_LINEAR or GL_SPHERE_MAP. */
-   /*@{*/
-   GLenum GenModeS;		
-   GLenum GenModeT;
-   GLenum GenModeR;
-   GLenum GenModeQ;
-   /*@}*/
-   GLbitfield _GenBitS;
-   GLbitfield _GenBitT;
-   GLbitfield _GenBitR;
-   GLbitfield _GenBitQ;
-   GLbitfield _GenFlags;	/**< bitwise or of _GenBit[STRQ] */
-   GLfloat ObjectPlaneS[4];
-   GLfloat ObjectPlaneT[4];
-   GLfloat ObjectPlaneR[4];
-   GLfloat ObjectPlaneQ[4];
-   GLfloat EyePlaneS[4];
-   GLfloat EyePlaneT[4];
-   GLfloat EyePlaneR[4];
-   GLfloat EyePlaneQ[4];
+   GLbitfield _GenFlags;	/**< Bitwise-OR of Gen[STRQ]._ModeBit */
+
    GLfloat LodBias;		/**< for biasing mipmap levels */
 
    /** 

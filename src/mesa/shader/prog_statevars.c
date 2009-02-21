@@ -206,28 +206,28 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          /* state[2] is the texgen attribute */
          switch (state[2]) {
          case STATE_TEXGEN_EYE_S:
-            COPY_4V(value, ctx->Texture.Unit[unit].EyePlaneS);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenS.EyePlane);
             return;
          case STATE_TEXGEN_EYE_T:
-            COPY_4V(value, ctx->Texture.Unit[unit].EyePlaneT);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenT.EyePlane);
             return;
          case STATE_TEXGEN_EYE_R:
-            COPY_4V(value, ctx->Texture.Unit[unit].EyePlaneR);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenR.EyePlane);
             return;
          case STATE_TEXGEN_EYE_Q:
-            COPY_4V(value, ctx->Texture.Unit[unit].EyePlaneQ);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenQ.EyePlane);
             return;
          case STATE_TEXGEN_OBJECT_S:
-            COPY_4V(value, ctx->Texture.Unit[unit].ObjectPlaneS);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenS.ObjectPlane);
             return;
          case STATE_TEXGEN_OBJECT_T:
-            COPY_4V(value, ctx->Texture.Unit[unit].ObjectPlaneT);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenT.ObjectPlane);
             return;
          case STATE_TEXGEN_OBJECT_R:
-            COPY_4V(value, ctx->Texture.Unit[unit].ObjectPlaneR);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenR.ObjectPlane);
             return;
          case STATE_TEXGEN_OBJECT_Q:
-            COPY_4V(value, ctx->Texture.Unit[unit].ObjectPlaneQ);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenQ.ObjectPlane);
             return;
          default:
             _mesa_problem(ctx, "Invalid texgen state in fetch_state");

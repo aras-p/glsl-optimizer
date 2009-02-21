@@ -1023,11 +1023,11 @@ static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
     */
    else if ( (texUnit->TexGenEnabled & S_BIT) &&
 	     (texUnit->TexGenEnabled & T_BIT) &&
-	     (texUnit->GenModeS == texUnit->GenModeT) ) {
+	     (texUnit->GenS.Mode == texUnit->GenT.Mode) ) {
       if ( ((texUnit->TexGenEnabled & R_BIT) &&
-	    (texUnit->GenModeS != texUnit->GenModeR)) ||
+	    (texUnit->GenS.Mode != texUnit->GenR.Mode)) ||
 	   ((texUnit->TexGenEnabled & Q_BIT) &&
-	    (texUnit->GenModeS != texUnit->GenModeQ)) ) {
+	    (texUnit->GenS.Mode != texUnit->GenQ.Mode)) ) {
 	 /* Mixed modes, fallback:
 	  */
 	 if (RADEON_DEBUG & DEBUG_FALLBACKS)
@@ -1051,23 +1051,23 @@ static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
       rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] |= RADEON_Q_BIT(unit);
    }
 
-   switch (texUnit->GenModeS) {
+   switch (texUnit->GenS.Mode) {
    case GL_OBJECT_LINEAR:
       rmesa->TexGenEnabled |= RADEON_TEXGEN_INPUT_OBJ << inputshift;
       set_texgen_matrix( rmesa, unit,
-			 texUnit->ObjectPlaneS,
-			 texUnit->ObjectPlaneT,
-			 texUnit->ObjectPlaneR,
-			 texUnit->ObjectPlaneQ);
+			 texUnit->GenS.ObjectPlane,
+			 texUnit->GenT.ObjectPlane,
+			 texUnit->GenR.ObjectPlane,
+			 texUnit->GenQ.ObjectPlane);
       break;
 
    case GL_EYE_LINEAR:
       rmesa->TexGenEnabled |= RADEON_TEXGEN_INPUT_EYE << inputshift;
       set_texgen_matrix( rmesa, unit,
-			 texUnit->EyePlaneS,
-			 texUnit->EyePlaneT,
-			 texUnit->EyePlaneR,
-			 texUnit->EyePlaneQ);
+			 texUnit->GenS.EyePlane,
+			 texUnit->GenT.EyePlane,
+			 texUnit->GenR.EyePlane,
+			 texUnit->GenQ.EyePlane);
       break;
 
    case GL_REFLECTION_MAP_NV:

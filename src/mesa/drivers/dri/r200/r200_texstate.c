@@ -1366,27 +1366,27 @@ static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
       fprintf(stderr, "%s unit %d\n", __FUNCTION__, unit);
 
    if (texUnit->TexGenEnabled & S_BIT) {
-      mode = texUnit->GenModeS;
+      mode = texUnit->GenS.Mode;
    } else {
       tgcm |= R200_TEXGEN_COMP_S << (unit * 4);
    }
 
    if (texUnit->TexGenEnabled & T_BIT) {
-      if (texUnit->GenModeT != mode)
+      if (texUnit->GenT.Mode != mode)
 	 mixed_fallback = GL_TRUE;
    } else {
       tgcm |= R200_TEXGEN_COMP_T << (unit * 4);
    }
 
    if (texUnit->TexGenEnabled & R_BIT) {
-      if (texUnit->GenModeR != mode)
+      if (texUnit->GenR.Mode != mode)
 	 mixed_fallback = GL_TRUE;
    } else {
       tgcm |= R200_TEXGEN_COMP_R << (unit * 4);
    }
 
    if (texUnit->TexGenEnabled & Q_BIT) {
-      if (texUnit->GenModeQ != mode)
+      if (texUnit->GenQ.Mode != mode)
 	 mixed_fallback = GL_TRUE;
    } else {
       tgcm |= R200_TEXGEN_COMP_Q << (unit * 4);
@@ -1395,8 +1395,8 @@ static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
    if (mixed_fallback) {
       if (R200_DEBUG & DEBUG_FALLBACKS)
 	 fprintf(stderr, "fallback mixed texgen, 0x%x (0x%x 0x%x 0x%x 0x%x)\n",
-		 texUnit->TexGenEnabled, texUnit->GenModeS, texUnit->GenModeT,
-		 texUnit->GenModeR, texUnit->GenModeQ);
+		 texUnit->TexGenEnabled, texUnit->GenS.Mode, texUnit->GenT.Mode,
+		 texUnit->GenR.Mode, texUnit->GenQ.Mode);
       return GL_FALSE;
    }
 
@@ -1414,8 +1414,10 @@ static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
    switch (mode) {
    case GL_OBJECT_LINEAR: {
       GLuint needtgenable = r200_need_dis_texgen( texUnit->TexGenEnabled,
-				texUnit->ObjectPlaneS, texUnit->ObjectPlaneT,
-				texUnit->ObjectPlaneR, texUnit->ObjectPlaneQ );
+                                                  texUnit->GenS.ObjectPlane,
+                                                  texUnit->GenT.ObjectPlane,
+                                                  texUnit->GenR.ObjectPlane,
+                                                  texUnit->GenQ.ObjectPlane );
       if (needtgenable & (S_BIT | T_BIT)) {
 	 if (R200_DEBUG & DEBUG_FALLBACKS)
 	 fprintf(stderr, "fallback mixed texgen / obj plane, 0x%x\n",
@@ -1431,17 +1433,19 @@ static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
 
       tgi |= R200_TEXGEN_INPUT_OBJ << inputshift;
       set_texgen_matrix( rmesa, unit, 
-	 (texUnit->TexGenEnabled & S_BIT) ? texUnit->ObjectPlaneS : I,
-	 (texUnit->TexGenEnabled & T_BIT) ? texUnit->ObjectPlaneT : I + 4,
-	 (texUnit->TexGenEnabled & R_BIT) ? texUnit->ObjectPlaneR : I + 8,
-	 (texUnit->TexGenEnabled & Q_BIT) ? texUnit->ObjectPlaneQ : I + 12);
+	 (texUnit->TexGenEnabled & S_BIT) ? texUnit->GenS.ObjectPlane : I,
+	 (texUnit->TexGenEnabled & T_BIT) ? texUnit->GenT.ObjectPlane : I + 4,
+	 (texUnit->TexGenEnabled & R_BIT) ? texUnit->GenR.ObjectPlane : I + 8,
+	 (texUnit->TexGenEnabled & Q_BIT) ? texUnit->GenQ.ObjectPlane : I + 12);
       }
       break;
 
    case GL_EYE_LINEAR: {
       GLuint needtgenable = r200_need_dis_texgen( texUnit->TexGenEnabled,
-				texUnit->EyePlaneS, texUnit->EyePlaneT,
-				texUnit->EyePlaneR, texUnit->EyePlaneQ );
+                                                  texUnit->GenS.EyePlane,
+                                                  texUnit->GenT.EyePlane,
+                                                  texUnit->GenR.EyePlane,
+                                                  texUnit->GenQ.EyePlane );
       if (needtgenable & (S_BIT | T_BIT)) {
 	 if (R200_DEBUG & DEBUG_FALLBACKS)
 	 fprintf(stderr, "fallback mixed texgen / eye plane, 0x%x\n",
@@ -1456,10 +1460,10 @@ static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
       }
       tgi |= R200_TEXGEN_INPUT_EYE << inputshift;
       set_texgen_matrix( rmesa, unit,
-	 (texUnit->TexGenEnabled & S_BIT) ? texUnit->EyePlaneS : I,
-	 (texUnit->TexGenEnabled & T_BIT) ? texUnit->EyePlaneT : I + 4,
-	 (texUnit->TexGenEnabled & R_BIT) ? texUnit->EyePlaneR : I + 8,
-	 (texUnit->TexGenEnabled & Q_BIT) ? texUnit->EyePlaneQ : I + 12);
+	 (texUnit->TexGenEnabled & S_BIT) ? texUnit->GenS.EyePlane : I,
+	 (texUnit->TexGenEnabled & T_BIT) ? texUnit->GenT.EyePlane : I + 4,
+	 (texUnit->TexGenEnabled & R_BIT) ? texUnit->GenR.EyePlane : I + 8,
+	 (texUnit->TexGenEnabled & Q_BIT) ? texUnit->GenQ.EyePlane : I + 12);
       }
       break;
 
@@ -1495,7 +1499,7 @@ static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
        */
       if (R200_DEBUG & DEBUG_FALLBACKS)
 	 fprintf(stderr, "fallback unsupported texgen, %d\n",
-		 texUnit->GenModeS);
+		 texUnit->GenS.Mode);
       return GL_FALSE;
    }
 
