@@ -1063,31 +1063,31 @@ void driInitTextureObjects( GLcontext *ctx, driTextureObject * swapped,
       ctx->Texture.CurrentUnit = i;
 
       if ( (targets & DRI_TEXMGR_DO_TEXTURE_1D) != 0 ) {
-	 texObj = ctx->Texture.Unit[i].Current1D;
+	 texObj = ctx->Texture.Unit[i].CurrentTex[TEXTURE_1D_INDEX];
 	 ctx->Driver.BindTexture( ctx, GL_TEXTURE_1D, texObj );
 	 move_to_tail( swapped, (driTextureObject *) texObj->DriverData );
       }
 
       if ( (targets & DRI_TEXMGR_DO_TEXTURE_2D) != 0 ) {
-	 texObj = ctx->Texture.Unit[i].Current2D;
+	 texObj = ctx->Texture.Unit[i].CurrentTex[TEXTURE_2D_INDEX];
 	 ctx->Driver.BindTexture( ctx, GL_TEXTURE_2D, texObj );
 	 move_to_tail( swapped, (driTextureObject *) texObj->DriverData );
       }
 
       if ( (targets & DRI_TEXMGR_DO_TEXTURE_3D) != 0 ) {
-	 texObj = ctx->Texture.Unit[i].Current3D;
+	 texObj = ctx->Texture.Unit[i].CurrentTex[TEXTURE_3D_INDEX];
 	 ctx->Driver.BindTexture( ctx, GL_TEXTURE_3D, texObj );
 	 move_to_tail( swapped, (driTextureObject *) texObj->DriverData );
       }
 
       if ( (targets & DRI_TEXMGR_DO_TEXTURE_CUBE) != 0 ) {
-	 texObj = ctx->Texture.Unit[i].CurrentCubeMap;
+	 texObj = ctx->Texture.Unit[i].CurrentTex[TEXTURE_CUBE_INDEX]Map;
 	 ctx->Driver.BindTexture( ctx, GL_TEXTURE_CUBE_MAP_ARB, texObj );
 	 move_to_tail( swapped, (driTextureObject *) texObj->DriverData );
       }
 
       if ( (targets & DRI_TEXMGR_DO_TEXTURE_RECT) != 0 ) {
-	 texObj = ctx->Texture.Unit[i].CurrentRect;
+	 texObj = ctx->Texture.Unit[i].CurrentTex[TEXTURE_RECT_INDEX];
 	 ctx->Driver.BindTexture( ctx, GL_TEXTURE_RECTANGLE_NV, texObj );
 	 move_to_tail( swapped, (driTextureObject *) texObj->DriverData );
       }

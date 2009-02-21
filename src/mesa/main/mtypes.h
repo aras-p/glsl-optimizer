@@ -1543,15 +1543,11 @@ struct gl_texture_unit
     */
    struct gl_tex_env_combine_state *_CurrentCombine;
 
-   struct gl_texture_object *Current1D;
-   struct gl_texture_object *Current2D;
-   struct gl_texture_object *Current3D;
-   struct gl_texture_object *CurrentCubeMap; /**< GL_ARB_texture_cube_map */
-   struct gl_texture_object *CurrentRect;    /**< GL_NV_texture_rectangle */
-   struct gl_texture_object *Current1DArray; /**< GL_MESA_texture_array */
-   struct gl_texture_object *Current2DArray; /**< GL_MESA_texture_array */
+   /** Current texture object pointers */
+   struct gl_texture_object *CurrentTex[NUM_TEXTURE_TARGETS];
 
-   struct gl_texture_object *_Current; /**< Points to really enabled tex obj */
+   /** Points to highest priority, complete and enabled texture object */
+   struct gl_texture_object *_Current;
 
    /** GL_SGI_texture_color_table */
    /*@{*/

@@ -206,8 +206,8 @@ static void mgaUpdateTextureEnvG200( GLcontext *ctx, GLuint unit )
    mgaTextureObjectPtr t = (mgaTextureObjectPtr) tObj->DriverData;
    GLenum format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
 
-   if (tObj != ctx->Texture.Unit[0].Current2D &&
-       tObj != ctx->Texture.Unit[0].CurrentRect)
+   if (tObj != ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX] &&
+       tObj != ctx->Texture.Unit[0].CurrentTex[TEXTURE_RECT_INDEX])
       return;
 
 
@@ -635,8 +635,8 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, GLuint unit )
    mgaTextureObjectPtr t = (mgaTextureObjectPtr) tObj->DriverData;
    GLenum format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
 
-   if (tObj != ctx->Texture.Unit[source].Current2D &&
-       tObj != ctx->Texture.Unit[source].CurrentRect)
+   if (tObj != ctx->Texture.Unit[source].CurrentTex[TEXTURE_2D_INDEX] &&
+       tObj != ctx->Texture.Unit[source].CurrentTex[TEXTURE_RECT_INDEX])
       return;
 
    switch (ctx->Texture.Unit[source].EnvMode) {

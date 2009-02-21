@@ -2461,13 +2461,13 @@ XMesaBindTexImage(XMesaDisplay *dpy, XMesaBuffer drawable, int buffer,
 #if 0
    switch (drawable->TextureTarget) {
    case GLX_TEXTURE_1D_EXT:
-      texObj = texUnit->Current1D;
+      texObj = texUnit->CurrentTex[TEXTURE_1D_INDEX];
       break;
    case GLX_TEXTURE_2D_EXT:
-      texObj = texUnit->Current2D;
+      texObj = texUnit->CurrentTex[TEXTURE_2D_INDEX];
       break;
    case GLX_TEXTURE_RECTANGLE_EXT:
-      texObj = texUnit->CurrentRect;
+      texObj = texUnit->CurrentTex[TEXTURE_RECT_INDEX];
       break;
    default:
       return; /* BadMatch error */

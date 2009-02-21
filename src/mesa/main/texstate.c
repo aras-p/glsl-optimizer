@@ -68,7 +68,7 @@ static const struct gl_tex_env_combine_state default_combine_state = {
 void
 _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
 {
-   GLuint i;
+   GLuint i, tex;
 
    ASSERT(src);
    ASSERT(dst);
@@ -104,20 +104,10 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
       /* copy texture object bindings, not contents of texture objects */
       _mesa_lock_context_textures(dst);
 
-      _mesa_reference_texobj(&dst->Texture.Unit[i].Current1D,
-                             src->Texture.Unit[i].Current1D);
-      _mesa_reference_texobj(&dst->Texture.Unit[i].Current2D,
-                             src->Texture.Unit[i].Current2D);
-      _mesa_reference_texobj(&dst->Texture.Unit[i].Current3D,
-                             src->Texture.Unit[i].Current3D);
-      _mesa_reference_texobj(&dst->Texture.Unit[i].CurrentCubeMap,
-                             src->Texture.Unit[i].CurrentCubeMap);
-      _mesa_reference_texobj(&dst->Texture.Unit[i].CurrentRect,
-                             src->Texture.Unit[i].CurrentRect);
-      _mesa_reference_texobj(&dst->Texture.Unit[i].Current1DArray,
-                             src->Texture.Unit[i].Current1DArray);
-      _mesa_reference_texobj(&dst->Texture.Unit[i].Current2DArray,
-                             src->Texture.Unit[i].Current2DArray);
+      for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
+         _mesa_reference_texobj(&dst->Texture.Unit[i].CurrentTex[tex],
+                                src->Texture.Unit[i].CurrentTex[tex]);
+      }
 
       _mesa_unlock_context_textures(dst);
    }
@@ -558,6 +548,7 @@ update_texture_state( GLcontext *ctx )
    for (unit = 0; unit < ctx->Const.MaxTextureImageUnits; unit++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
       GLbitfield enableBits;
+      GLuint tex;
 
       texUnit->_Current = NULL;
       texUnit->_ReallyEnabled = 0;
@@ -584,32 +575,29 @@ update_texture_state( GLcontext *ctx )
       if (enableBits == 0x0)
          continue;
 
-      ASSERT(texUnit->Current1D);
-      ASSERT(texUnit->Current2D);
-      ASSERT(texUnit->Current3D);
-      ASSERT(texUnit->CurrentCubeMap);
-      ASSERT(texUnit->CurrentRect);
-      ASSERT(texUnit->Current1DArray);
-      ASSERT(texUnit->Current2DArray);
+      for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
+         ASSERT(texUnit->CurrentTex[tex]);
+      }
 
       /* Look for the highest-priority texture target that's enabled and
        * complete.  That's the one we'll use for texturing.  If we're using
        * a fragment program we're guaranteed that bitcount(enabledBits) <= 1.
        */
-      texture_override(ctx, texUnit, enableBits,
-                       texUnit->Current2DArray, TEXTURE_2D_ARRAY_BIT);
-      texture_override(ctx, texUnit, enableBits,
-                       texUnit->Current1DArray, TEXTURE_1D_ARRAY_BIT);
-      texture_override(ctx, texUnit, enableBits,
-                       texUnit->CurrentCubeMap, TEXTURE_CUBE_BIT);
-      texture_override(ctx, texUnit, enableBits,
-                       texUnit->Current3D, TEXTURE_3D_BIT);
-      texture_override(ctx, texUnit, enableBits,
-                       texUnit->CurrentRect, TEXTURE_RECT_BIT);
-      texture_override(ctx, texUnit, enableBits,
-                       texUnit->Current2D, TEXTURE_2D_BIT);
-      texture_override(ctx, texUnit, enableBits,
-                       texUnit->Current1D, TEXTURE_1D_BIT);
+      for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
+         /* texture indexes from highest to lowest priority */
+         static const GLuint targets[NUM_TEXTURE_TARGETS] = {
+            TEXTURE_2D_ARRAY_INDEX,
+            TEXTURE_1D_ARRAY_INDEX,
+            TEXTURE_CUBE_INDEX,
+            TEXTURE_3D_INDEX,
+            TEXTURE_RECT_INDEX,
+            TEXTURE_2D_INDEX,
+            TEXTURE_1D_INDEX
+         };
+         GLuint texIndex = targets[tex];
+         texture_override(ctx, texUnit, enableBits,
+                          texUnit->CurrentTex[texIndex], 1 << texIndex);
+      }
 
       if (!texUnit->_ReallyEnabled) {
          continue;
@@ -734,6 +722,7 @@ static void
 init_texture_unit( GLcontext *ctx, GLuint unit )
 {
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+   GLuint tex;
 
    texUnit->EnvMode = GL_MODULATE;
    ASSIGN_4V( texUnit->EnvColor, 0.0, 0.0, 0.0, 0.0 );
@@ -763,13 +752,10 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    ASSIGN_4V( texUnit->GenQ.EyePlane, 0.0, 0.0, 0.0, 0.0 );
 
    /* initialize current texture object ptrs to the shared default objects */
-   _mesa_reference_texobj(&texUnit->Current1D, ctx->Shared->DefaultTex[TEXTURE_1D_INDEX]);
-   _mesa_reference_texobj(&texUnit->Current2D, ctx->Shared->DefaultTex[TEXTURE_2D_INDEX]);
-   _mesa_reference_texobj(&texUnit->Current3D, ctx->Shared->DefaultTex[TEXTURE_3D_INDEX]);
-   _mesa_reference_texobj(&texUnit->CurrentCubeMap, ctx->Shared->DefaultTex[TEXTURE_CUBE_INDEX]);
-   _mesa_reference_texobj(&texUnit->CurrentRect, ctx->Shared->DefaultTex[TEXTURE_RECT_INDEX]);
-   _mesa_reference_texobj(&texUnit->Current1DArray, ctx->Shared->DefaultTex[TEXTURE_1D_ARRAY_INDEX]);
-   _mesa_reference_texobj(&texUnit->Current2DArray, ctx->Shared->DefaultTex[TEXTURE_2D_ARRAY_INDEX]);
+   for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
+      _mesa_reference_texobj(&texUnit->CurrentTex[tex],
+                             ctx->Shared->DefaultTex[tex]);
+   }
 }
 
 
@@ -820,13 +806,9 @@ _mesa_free_texture_data(GLcontext *ctx)
    /* unreference current textures */
    for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++) {
       struct gl_texture_unit *unit = ctx->Texture.Unit + u;
-      _mesa_reference_texobj(&unit->Current1D, NULL);
-      _mesa_reference_texobj(&unit->Current2D, NULL);
-      _mesa_reference_texobj(&unit->Current3D, NULL);
-      _mesa_reference_texobj(&unit->CurrentCubeMap, NULL);
-      _mesa_reference_texobj(&unit->CurrentRect, NULL);
-      _mesa_reference_texobj(&unit->Current1DArray, NULL);
-      _mesa_reference_texobj(&unit->Current2DArray, NULL);
+      for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++) {
+         _mesa_reference_texobj(&unit->CurrentTex[tgt], NULL);
+      }
    }
 
    /* Free proxy texture objects */
@@ -851,24 +833,13 @@ _mesa_free_texture_data(GLcontext *ctx)
 void
 _mesa_update_default_objects_texture(GLcontext *ctx)
 {
-   GLuint i;
+   GLuint i, tex;
 
    for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
-
-      _mesa_reference_texobj(&texUnit->Current1D,
-                             ctx->Shared->DefaultTex[TEXTURE_1D_INDEX]);
-      _mesa_reference_texobj(&texUnit->Current2D,
-                             ctx->Shared->DefaultTex[TEXTURE_2D_INDEX]);
-      _mesa_reference_texobj(&texUnit->Current3D,
-                             ctx->Shared->DefaultTex[TEXTURE_3D_INDEX]);
-      _mesa_reference_texobj(&texUnit->CurrentCubeMap,
-                             ctx->Shared->DefaultTex[TEXTURE_CUBE_INDEX]);
-      _mesa_reference_texobj(&texUnit->CurrentRect,
-                             ctx->Shared->DefaultTex[TEXTURE_RECT_INDEX]);
-      _mesa_reference_texobj(&texUnit->Current1DArray,
-                             ctx->Shared->DefaultTex[TEXTURE_1D_ARRAY_INDEX]);
-      _mesa_reference_texobj(&texUnit->Current2DArray,
-                             ctx->Shared->DefaultTex[TEXTURE_2D_ARRAY_INDEX]);
+      for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
+         _mesa_reference_texobj(&texUnit->CurrentTex[tex],
+                                ctx->Shared->DefaultTex[tex]);
+      }
    }
 }

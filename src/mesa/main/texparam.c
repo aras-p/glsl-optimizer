@@ -92,29 +92,29 @@ get_texobj(GLcontext *ctx, GLenum target)
 
    switch (target) {
    case GL_TEXTURE_1D:
-      return texUnit->Current1D;
+      return texUnit->CurrentTex[TEXTURE_1D_INDEX];
    case GL_TEXTURE_2D:
-      return texUnit->Current2D;
+      return texUnit->CurrentTex[TEXTURE_2D_INDEX];
    case GL_TEXTURE_3D:
-      return texUnit->Current3D;
+      return texUnit->CurrentTex[TEXTURE_3D_INDEX];
    case GL_TEXTURE_CUBE_MAP:
       if (ctx->Extensions.ARB_texture_cube_map) {
-         return texUnit->CurrentCubeMap;
+         return texUnit->CurrentTex[TEXTURE_CUBE_INDEX];
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
       if (ctx->Extensions.NV_texture_rectangle) {
-         return texUnit->CurrentRect;
+         return texUnit->CurrentTex[TEXTURE_RECT_INDEX];
       }
       break;
    case GL_TEXTURE_1D_ARRAY_EXT:
       if (ctx->Extensions.MESA_texture_array) {
-         return texUnit->Current1DArray;
+         return texUnit->CurrentTex[TEXTURE_1D_ARRAY_INDEX];
       }
       break;
    case GL_TEXTURE_2D_ARRAY_EXT:
       if (ctx->Extensions.MESA_texture_array) {
-         return texUnit->Current2DArray;
+         return texUnit->CurrentTex[TEXTURE_2D_ARRAY_INDEX];
       }
       break;
    default:

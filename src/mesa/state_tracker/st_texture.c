@@ -429,7 +429,7 @@ st_bind_teximage(struct st_framebuffer *stfb, uint surfIndex,
    }
 
    if (target == ST_TEXTURE_2D) {
-      texObj = texUnit->Current2D;
+      texObj = texUnit->CurrentTex[TEXTURE_2D_INDEX];
       texImage = _mesa_get_tex_image(ctx, texObj, GL_TEXTURE_2D, level);
       stImage = st_texture_image(texImage);
    }

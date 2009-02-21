@@ -1199,7 +1199,7 @@ r300FetchStateParameter(GLcontext * ctx,
 
 		case STATE_R300_TEXRECT_FACTOR:{
 				struct gl_texture_object *t =
-				    ctx->Texture.Unit[state[2]].CurrentRect;
+				    ctx->Texture.Unit[state[2]].CurrentTex[TEXTURE_RECT_INDEX];
 
 				if (t && t->Image[0][t->BaseLevel]) {
 					struct gl_texture_image *image =
