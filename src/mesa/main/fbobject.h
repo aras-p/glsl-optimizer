@@ -83,7 +83,7 @@ extern void GLAPIENTRY
 _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalformat,
                              GLsizei width, GLsizei height);
 
-void GLAPIENTRY
+extern void GLAPIENTRY
 _mesa_RenderbufferStorageMultisample(GLenum target, GLsizei samples,
                                      GLenum internalformat,
                                      GLsizei width, GLsizei height);
