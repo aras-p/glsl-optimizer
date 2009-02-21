@@ -292,8 +292,8 @@ static void r300_surface_fill(struct pipe_context* pipe,
 
     OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0, 1);
     OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-    /* XXX Fix color format in case it's not ARGB8888 */
-    OUT_CS_REG(R300_RB3D_COLORPITCH0, pixpitch | R300_COLOR_FORMAT_ARGB8888);
+    OUT_CS_REG(R300_RB3D_COLORPITCH0, pixpitch |
+        r300_translate_colorformat(tex->tex.format));
     OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0x0000000F);
     /* XXX Packet3 */
     OUT_CS(CP_PACKET3(R200_3D_DRAW_IMMD_2, 8));
