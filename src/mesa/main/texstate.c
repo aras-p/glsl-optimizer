@@ -92,14 +92,7 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
       dst->Texture.Unit[i].LodBias = src->Texture.Unit[i].LodBias;
 
       /* GL_EXT_texture_env_combine */
-      dst->Texture.Unit[i].Combine.ModeRGB = src->Texture.Unit[i].Combine.ModeRGB;
-      dst->Texture.Unit[i].Combine.ModeA = src->Texture.Unit[i].Combine.ModeA;
-      COPY_3V(dst->Texture.Unit[i].Combine.SourceRGB, src->Texture.Unit[i].Combine.SourceRGB);
-      COPY_3V(dst->Texture.Unit[i].Combine.SourceA, src->Texture.Unit[i].Combine.SourceA);
-      COPY_3V(dst->Texture.Unit[i].Combine.OperandRGB, src->Texture.Unit[i].Combine.OperandRGB);
-      COPY_3V(dst->Texture.Unit[i].Combine.OperandA, src->Texture.Unit[i].Combine.OperandA);
-      dst->Texture.Unit[i].Combine.ScaleShiftRGB = src->Texture.Unit[i].Combine.ScaleShiftRGB;
-      dst->Texture.Unit[i].Combine.ScaleShiftA = src->Texture.Unit[i].Combine.ScaleShiftA;
+      dst->Texture.Unit[i].Combine = src->Texture.Unit[i].Combine;
 
       /* copy texture object bindings, not contents of texture objects */
       _mesa_lock_context_textures(dst);
