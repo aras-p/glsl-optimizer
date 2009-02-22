@@ -30,18 +30,17 @@
  * Please try to mark derived values with a leading underscore ('_').
  */
 
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef MTYPES_H
+#define MTYPES_H
 
 
 #include "main/glheader.h"
 #include "main/config.h"
 #include "main/compiler.h"
 #include "main/mfeatures.h"
-#include <GL/internal/glcore.h>	/* __GLcontextModes (GLvisual) */
+#include "main/bitset.h"
 #include "glapi/glapi.h"
 #include "math/m_matrix.h"	/* GLmatrix */
-#include "bitset.h"
 
 
 /**
@@ -3161,4 +3160,4 @@ enum _debug
 
 
 
-#endif /* TYPES_H */
+#endif /* MTYPES_H */
