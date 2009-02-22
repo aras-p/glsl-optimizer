@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.5
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -68,7 +68,7 @@ static const struct gl_tex_env_combine_state default_combine_state = {
 void
 _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
 {
-   GLuint i, tex;
+   GLuint u, tex;
 
    ASSERT(src);
    ASSERT(dst);
@@ -80,26 +80,26 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
    dst->Texture.SharedPalette = src->Texture.SharedPalette;
 
    /* per-unit state */
-   for (i = 0; i < src->Const.MaxTextureImageUnits; i++) {
-      dst->Texture.Unit[i].Enabled = src->Texture.Unit[i].Enabled;
-      dst->Texture.Unit[i].EnvMode = src->Texture.Unit[i].EnvMode;
-      COPY_4V(dst->Texture.Unit[i].EnvColor, src->Texture.Unit[i].EnvColor);
-      dst->Texture.Unit[i].TexGenEnabled = src->Texture.Unit[i].TexGenEnabled;
-      dst->Texture.Unit[i].GenS = src->Texture.Unit[i].GenS;
-      dst->Texture.Unit[i].GenT = src->Texture.Unit[i].GenT;
-      dst->Texture.Unit[i].GenR = src->Texture.Unit[i].GenR;
-      dst->Texture.Unit[i].GenQ = src->Texture.Unit[i].GenQ;
-      dst->Texture.Unit[i].LodBias = src->Texture.Unit[i].LodBias;
+   for (u = 0; u < src->Const.MaxTextureImageUnits; u++) {
+      dst->Texture.Unit[u].Enabled = src->Texture.Unit[u].Enabled;
+      dst->Texture.Unit[u].EnvMode = src->Texture.Unit[u].EnvMode;
+      COPY_4V(dst->Texture.Unit[u].EnvColor, src->Texture.Unit[u].EnvColor);
+      dst->Texture.Unit[u].TexGenEnabled = src->Texture.Unit[u].TexGenEnabled;
+      dst->Texture.Unit[u].GenS = src->Texture.Unit[u].GenS;
+      dst->Texture.Unit[u].GenT = src->Texture.Unit[u].GenT;
+      dst->Texture.Unit[u].GenR = src->Texture.Unit[u].GenR;
+      dst->Texture.Unit[u].GenQ = src->Texture.Unit[u].GenQ;
+      dst->Texture.Unit[u].LodBias = src->Texture.Unit[u].LodBias;
 
       /* GL_EXT_texture_env_combine */
-      dst->Texture.Unit[i].Combine = src->Texture.Unit[i].Combine;
+      dst->Texture.Unit[u].Combine = src->Texture.Unit[u].Combine;
 
       /* copy texture object bindings, not contents of texture objects */
       _mesa_lock_context_textures(dst);
 
       for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
-         _mesa_reference_texobj(&dst->Texture.Unit[i].CurrentTex[tex],
-                                src->Texture.Unit[i].CurrentTex[tex]);
+         _mesa_reference_texobj(&dst->Texture.Unit[u].CurrentTex[tex],
+                                src->Texture.Unit[u].CurrentTex[tex]);
       }
 
       _mesa_unlock_context_textures(dst);
@@ -333,20 +333,20 @@ _mesa_ClientActiveTextureARB(GLenum texture)
 static void
 update_texture_matrices( GLcontext *ctx )
 {
-   GLuint i;
+   GLuint u;
 
-   ctx->Texture._TexMatEnabled = 0;
+   ctx->Texture._TexMatEnabled = 0x0;
 
-   for (i=0; i < ctx->Const.MaxTextureCoordUnits; i++) {
-      if (_math_matrix_is_dirty(ctx->TextureMatrixStack[i].Top)) {
-	 _math_matrix_analyse( ctx->TextureMatrixStack[i].Top );
+   for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
+      if (_math_matrix_is_dirty(ctx->TextureMatrixStack[u].Top)) {
+	 _math_matrix_analyse( ctx->TextureMatrixStack[u].Top );
 
-	 if (ctx->Texture.Unit[i]._ReallyEnabled &&
-	     ctx->TextureMatrixStack[i].Top->type != MATRIX_IDENTITY)
-	    ctx->Texture._TexMatEnabled |= ENABLE_TEXMAT(i);
+	 if (ctx->Texture.Unit[u]._ReallyEnabled &&
+	     ctx->TextureMatrixStack[u].Top->type != MATRIX_IDENTITY)
+	    ctx->Texture._TexMatEnabled |= ENABLE_TEXMAT(u);
 
 	 if (ctx->Driver.TextureMatrix)
-	    ctx->Driver.TextureMatrix( ctx, i, ctx->TextureMatrixStack[i].Top);
+	    ctx->Driver.TextureMatrix( ctx, u, ctx->TextureMatrixStack[u].Top);
       }
    }
 }
@@ -411,6 +411,8 @@ texture_override(GLcontext *ctx,
 static void
 update_tex_combine(GLcontext *ctx, struct gl_texture_unit *texUnit)
 {
+   struct gl_tex_env_combine_state *combine;
+
    /* Set the texUnit->_CurrentCombine field to point to the user's combiner
     * state, or the combiner state which is derived from traditional texenv
     * mode.
@@ -433,17 +435,19 @@ update_tex_combine(GLcontext *ctx, struct gl_texture_unit *texUnit)
       texUnit->_CurrentCombine = & texUnit->_EnvMode;
    }
 
+   combine = texUnit->_CurrentCombine;
+
    /* Determine number of source RGB terms in the combiner function */
-   switch (texUnit->_CurrentCombine->ModeRGB) {
+   switch (combine->ModeRGB) {
    case GL_REPLACE:
-      texUnit->_CurrentCombine->_NumArgsRGB = 1;
+      combine->_NumArgsRGB = 1;
       break;
    case GL_ADD:
    case GL_ADD_SIGNED:
       if (texUnit->EnvMode == GL_COMBINE4_NV)
-         texUnit->_CurrentCombine->_NumArgsRGB = 4;
+         combine->_NumArgsRGB = 4;
       else
-         texUnit->_CurrentCombine->_NumArgsRGB = 2;
+         combine->_NumArgsRGB = 2;
       break;
    case GL_MODULATE:
    case GL_SUBTRACT:
@@ -451,44 +455,44 @@ update_tex_combine(GLcontext *ctx, struct gl_texture_unit *texUnit)
    case GL_DOT3_RGBA:
    case GL_DOT3_RGB_EXT:
    case GL_DOT3_RGBA_EXT:
-      texUnit->_CurrentCombine->_NumArgsRGB = 2;
+      combine->_NumArgsRGB = 2;
       break;
    case GL_INTERPOLATE:
    case GL_MODULATE_ADD_ATI:
    case GL_MODULATE_SIGNED_ADD_ATI:
    case GL_MODULATE_SUBTRACT_ATI:
-      texUnit->_CurrentCombine->_NumArgsRGB = 3;
+      combine->_NumArgsRGB = 3;
       break;
    default:
-      texUnit->_CurrentCombine->_NumArgsRGB = 0;
+      combine->_NumArgsRGB = 0;
       _mesa_problem(ctx, "invalid RGB combine mode in update_texture_state");
       return;
    }
 
    /* Determine number of source Alpha terms in the combiner function */
-   switch (texUnit->_CurrentCombine->ModeA) {
+   switch (combine->ModeA) {
    case GL_REPLACE:
-      texUnit->_CurrentCombine->_NumArgsA = 1;
+      combine->_NumArgsA = 1;
       break;
    case GL_ADD:
    case GL_ADD_SIGNED:
       if (texUnit->EnvMode == GL_COMBINE4_NV)
-         texUnit->_CurrentCombine->_NumArgsA = 4;
+         combine->_NumArgsA = 4;
       else
-         texUnit->_CurrentCombine->_NumArgsA = 2;
+         combine->_NumArgsA = 2;
       break;
    case GL_MODULATE:
    case GL_SUBTRACT:
-      texUnit->_CurrentCombine->_NumArgsA = 2;
+      combine->_NumArgsA = 2;
       break;
    case GL_INTERPOLATE:
    case GL_MODULATE_ADD_ATI:
    case GL_MODULATE_SIGNED_ADD_ATI:
    case GL_MODULATE_SUBTRACT_ATI:
-      texUnit->_CurrentCombine->_NumArgsA = 3;
+      combine->_NumArgsA = 3;
       break;
    default:
-      texUnit->_CurrentCombine->_NumArgsA = 0;
+      combine->_NumArgsA = 0;
       _mesa_problem(ctx, "invalid Alpha combine mode in update_texture_state");
       break;
    }
@@ -530,10 +534,10 @@ update_texture_state( GLcontext *ctx )
    /* TODO: only set this if there are actual changes */
    ctx->NewState |= _NEW_TEXTURE;
 
-   ctx->Texture._EnabledUnits = 0;
-   ctx->Texture._GenFlags = 0;
-   ctx->Texture._TexMatEnabled = 0;
-   ctx->Texture._TexGenEnabled = 0;
+   ctx->Texture._EnabledUnits = 0x0;
+   ctx->Texture._GenFlags = 0x0;
+   ctx->Texture._TexMatEnabled = 0x0;
+   ctx->Texture._TexGenEnabled = 0x0;
 
    /*
     * Update texture unit state.
@@ -544,8 +548,8 @@ update_texture_state( GLcontext *ctx )
       GLuint texIndex;
 
       texUnit->_Current = NULL;
-      texUnit->_ReallyEnabled = 0;
-      texUnit->_GenFlags = 0;
+      texUnit->_ReallyEnabled = 0x0;
+      texUnit->_GenFlags = 0x0;
 
       /* Get the bitmask of texture target enables.
        * enableBits will be a mask of the TEXTURE_*_BIT flags indicating
@@ -710,7 +714,7 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    texUnit->_EnvMode = default_combine_state;
    texUnit->_CurrentCombine = & texUnit->_EnvMode;
 
-   texUnit->TexGenEnabled = 0;
+   texUnit->TexGenEnabled = 0x0;
    texUnit->GenS.Mode = GL_EYE_LINEAR;
    texUnit->GenT.Mode = GL_EYE_LINEAR;
    texUnit->GenR.Mode = GL_EYE_LINEAR;
@@ -744,18 +748,18 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
 GLboolean
 _mesa_init_texture(GLcontext *ctx)
 {
-   GLuint i;
+   GLuint u;
 
    /* Texture group */
    ctx->Texture.CurrentUnit = 0;      /* multitexture */
-   ctx->Texture._EnabledUnits = 0;
+   ctx->Texture._EnabledUnits = 0x0;
    ctx->Texture.SharedPalette = GL_FALSE;
 #if FEATURE_colortable
    _mesa_init_colortable(&ctx->Texture.Palette);
 #endif
 
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++)
-      init_texture_unit( ctx, i );
+   for (u = 0; u < MAX_TEXTURE_UNITS; u++)
+      init_texture_unit(ctx, u);
 
    /* After we're done initializing the context's texture state the default
     * texture objects' refcounts should be at least MAX_TEXTURE_UNITS + 1.
@@ -781,9 +785,8 @@ _mesa_free_texture_data(GLcontext *ctx)
 
    /* unreference current textures */
    for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++) {
-      struct gl_texture_unit *unit = ctx->Texture.Unit + u;
       for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++) {
-         _mesa_reference_texobj(&unit->CurrentTex[tgt], NULL);
+         _mesa_reference_texobj(&ctx->Texture.Unit[u].CurrentTex[tgt], NULL);
       }
    }
 
@@ -792,11 +795,8 @@ _mesa_free_texture_data(GLcontext *ctx)
       ctx->Driver.DeleteTexture(ctx, ctx->Texture.ProxyTex[tgt]);
 
 #if FEATURE_colortable
-   {
-      GLuint i;
-      for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
-         _mesa_free_colortable_data( &ctx->Texture.Unit[i].ColorTable );
-   }
+   for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++)
+      _mesa_free_colortable_data(&ctx->Texture.Unit[u].ColorTable);
 #endif
 }
 
@@ -809,10 +809,10 @@ _mesa_free_texture_data(GLcontext *ctx)
 void
 _mesa_update_default_objects_texture(GLcontext *ctx)
 {
-   GLuint i, tex;
+   GLuint u, tex;
 
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
-      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+   for (u = 0; u < MAX_TEXTURE_UNITS; u++) {
+      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[u];
       for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
          _mesa_reference_texobj(&texUnit->CurrentTex[tex],
                                 ctx->Shared->DefaultTex[tex]);
