@@ -26,6 +26,7 @@
  */
 
 #include "glheader.h"
+#include "mfeatures.h"
 #include "enums.h"
 #include "imports.h"
 
@@ -4972,8 +4973,6 @@ static const unsigned reduced_enums[1308] =
        984, /* GL_MULTISAMPLE_BIT */
         30, /* GL_ALL_CLIENT_ATTRIB_BITS */
 };
-
-#define Elements(x) sizeof(x)/sizeof(*x)
 
 typedef int (*cfunc)(const void *, const void *);
 

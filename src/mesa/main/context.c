@@ -77,6 +77,7 @@
 
 
 #include "glheader.h"
+#include "mfeatures.h"
 #include "imports.h"
 #if FEATURE_accum
 #include "accum.h"

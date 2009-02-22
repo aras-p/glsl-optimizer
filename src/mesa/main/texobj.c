@@ -28,7 +28,7 @@
  */
 
 
-#include "glheader.h"
+#include "mfeatures.h"
 #if FEATURE_colortable
 #include "colortab.h"
 #endif

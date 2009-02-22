@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.3
+ * Version:  7.5
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  * Copyright (C) 2008  VMware, Inc.  All Rights Reserved.
@@ -30,9 +30,6 @@
 
 #ifndef MESA_CONFIG_H_INCLUDED
 #define MESA_CONFIG_H_INCLUDED
-
-
-#include "main/mfeatures.h"
 
 
 /**

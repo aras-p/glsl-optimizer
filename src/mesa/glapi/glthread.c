@@ -32,7 +32,7 @@
 #include <dix-config.h>
 #endif
 
-#include "main/glheader.h"
+#include "main/compiler.h"
 #include "glthread.h"
 
 

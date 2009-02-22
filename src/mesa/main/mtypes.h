@@ -34,18 +34,14 @@
 #define TYPES_H
 
 
-#include "glheader.h"
+#include "main/glheader.h"
+#include "main/config.h"
+#include "main/compiler.h"
+#include "main/mfeatures.h"
 #include <GL/internal/glcore.h>	/* __GLcontextModes (GLvisual) */
-#include "config.h"		/* Hardwired parameters */
 #include "glapi/glapi.h"
 #include "math/m_matrix.h"	/* GLmatrix */
 #include "bitset.h"
-
-
-/**
- * Special, internal token
- */
-#define GL_SHADER_PROGRAM_MESA 0x9999
 
 
 /**
@@ -126,7 +122,6 @@ struct gl_texture_format;
 struct gl_texture_image;
 struct gl_texture_object;
 struct st_context;
-struct pipe_surface;
 typedef struct __GLcontextRec GLcontext;
 typedef struct __GLcontextModesRec GLvisual;
 typedef struct gl_framebuffer GLframebuffer;
@@ -3164,9 +3159,6 @@ enum _debug
    DEBUG_ALWAYS_FLUSH		= 0x1
 };
 
-
-
-#define Elements(x) sizeof(x)/sizeof(*(x))
 
 
 #endif /* TYPES_H */

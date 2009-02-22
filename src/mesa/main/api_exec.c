@@ -29,7 +29,7 @@
  */
 
 
-#include "glheader.h"
+#include "mfeatures.h"
 #if FEATURE_accum
 #include "accum.h"
 #endif

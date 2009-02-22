@@ -25,12 +25,13 @@
  * 
  **************************************************************************/
 
-#include "main/imports.h"
+#include "main/mfeatures.h"
 #if FEATURE_convolve
 #include "main/convolve.h"
 #endif
 #include "main/enums.h"
 #include "main/image.h"
+#include "main/imports.h"
 #include "main/macros.h"
 #include "main/mipmap.h"
 #include "main/pixel.h"

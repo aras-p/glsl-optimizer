@@ -29,6 +29,7 @@
  */
 
 #include "glheader.h"
+#include "mfeatures.h"
 #include "colormac.h"
 #if FEATURE_colortable
 #include "colortab.h"

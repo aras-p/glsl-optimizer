@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "main/glheader.h"
+#include "main/compiler.h"
 #include "glapi/glapi.h"
 #include "glxapi.h"
 

@@ -33,6 +33,7 @@
 #include "api_arrayelt.h"
 #include "api_loopback.h"
 #include "config.h"
+#include "mfeatures.h"
 #include "attrib.h"
 #include "blend.h"
 #include "buffers.h"

@@ -61,6 +61,8 @@
 
 #endif
 
+#include "main/compiler.h"
+
 #include <stdlib.h>
 #include <string.h>
 #ifdef DEBUG
