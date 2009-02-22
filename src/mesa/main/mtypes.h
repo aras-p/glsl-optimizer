@@ -1208,27 +1208,12 @@ enum {
 /*@}*/
 
 
-/* A selection of state flags to make driver and module's lives easier. */
-#define ENABLE_TEXGEN0        0x1
-#define ENABLE_TEXGEN1        0x2
-#define ENABLE_TEXGEN2        0x4
-#define ENABLE_TEXGEN3        0x8
-#define ENABLE_TEXGEN4        0x10
-#define ENABLE_TEXGEN5        0x20
-#define ENABLE_TEXGEN6        0x40
-#define ENABLE_TEXGEN7        0x80
 
-#define ENABLE_TEXMAT0        0x1	/* Ie. not the identity matrix */
-#define ENABLE_TEXMAT1        0x2
-#define ENABLE_TEXMAT2        0x4
-#define ENABLE_TEXMAT3        0x8
-#define ENABLE_TEXMAT4        0x10
-#define ENABLE_TEXMAT5        0x20
-#define ENABLE_TEXMAT6        0x40
-#define ENABLE_TEXMAT7        0x80
+/** Tex-gen enabled for texture unit? */
+#define ENABLE_TEXGEN(unit) (1 << (unit))
 
-#define ENABLE_TEXGEN(i) (ENABLE_TEXGEN0 << (i))
-#define ENABLE_TEXMAT(i) (ENABLE_TEXMAT0 << (i))
+/** Non-identity texture matrix for texture unit? */
+#define ENABLE_TEXMAT(unit) (1 << (unit))
 
 
 /**
@@ -1573,8 +1558,8 @@ struct gl_texture_attrib
    GLbitfield _EnabledUnits;  /**< one bit set for each really-enabled unit */
    GLbitfield _EnabledCoordUnits;   /**< one bit per enabled coordinate unit */
    GLbitfield _GenFlags;            /**< for texgen */
-   GLbitfield _TexGenEnabled;
-   GLbitfield _TexMatEnabled;
+   GLbitfield _TexGenEnabled;  /**< Mask of ENABLE_TEXGEN flags */
+   GLbitfield _TexMatEnabled;  /**< Mask of ENABLE_TEXMAT flags */
    /**@}*/
 
    struct gl_texture_unit Unit[MAX_TEXTURE_UNITS];
