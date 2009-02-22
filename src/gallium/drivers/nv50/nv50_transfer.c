@@ -162,10 +162,22 @@ nv50_transfer_del(struct pipe_screen *pscreen, struct pipe_transfer **pptx)
 {
 	struct pipe_transfer *ptx = *pptx;
 	struct nv50_transfer *tx = (struct nv50_transfer *)ptx;
+	struct nv50_miptree *mt = nv50_miptree(ptx->texture);
 
 	*pptx = NULL;
 	if (--ptx->refcount)
 		return;
+
+	if (ptx->usage != PIPE_TRANSFER_READ) {
+		nv50_transfer_rect_m2mf(pscreen, tx->buffer, tx->base.stride,
+					0, 0, tx->base.width, tx->base.height,
+					mt->buffer, tx->level_pitch,
+					tx->level_x, tx->level_y,
+					tx->level_width, tx->level_height,
+					tx->base.block.size, tx->base.width,
+					tx->base.height, NOUVEAU_BO_GART,
+					NOUVEAU_BO_VRAM | NOUVEAU_BO_GART);
+	}
 
 	pipe_buffer_reference(pscreen, &tx->buffer, NULL);
 	pipe_texture_reference(&ptx->texture, NULL);
@@ -190,20 +202,8 @@ static void
 nv50_transfer_unmap(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
 {
 	struct nv50_transfer *tx = (struct nv50_transfer *)ptx;
-	struct nv50_miptree *mt = nv50_miptree(ptx->texture);
 
-	if (ptx->usage != PIPE_TRANSFER_READ) {
-		nv50_transfer_rect_m2mf(pscreen, tx->buffer, tx->base.stride,
-					0, 0, tx->base.width, tx->base.height,
-					mt->buffer, tx->level_pitch,
-					tx->level_x, tx->level_y,
-					tx->level_width, tx->level_height,
-					tx->base.block.size, tx->base.width,
-					tx->base.height, NOUVEAU_BO_GART,
-					NOUVEAU_BO_VRAM | NOUVEAU_BO_GART);
-	}
-
-	pipe_buffer_unmap(pscreen, mt->buffer);
+	pipe_buffer_unmap(pscreen, tx->buffer);
 }
 
 void
