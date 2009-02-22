@@ -34,11 +34,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "main/glheader.h"
 #include "glapi/glapi.h"
 #include "glxapi.h"
 #include "fakeglx.h"
 #include "pipe/p_thread.h"
+
+
+#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
+#  define PUBLIC __attribute__((visibility("default")))
+#  define USED __attribute__((used))
+#else
+#  define PUBLIC
+#  define USED
+#endif
 
 
 struct display_dispatch {
