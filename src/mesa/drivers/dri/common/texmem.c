@@ -1081,7 +1081,7 @@ void driInitTextureObjects( GLcontext *ctx, driTextureObject * swapped,
       }
 
       if ( (targets & DRI_TEXMGR_DO_TEXTURE_CUBE) != 0 ) {
-	 texObj = ctx->Texture.Unit[i].CurrentTex[TEXTURE_CUBE_INDEX]Map;
+	 texObj = ctx->Texture.Unit[i].CurrentTex[TEXTURE_CUBE_INDEX];
 	 ctx->Driver.BindTexture( ctx, GL_TEXTURE_CUBE_MAP_ARB, texObj );
 	 move_to_tail( swapped, (driTextureObject *) texObj->DriverData );
       }
