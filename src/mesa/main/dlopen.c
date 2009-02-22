@@ -28,8 +28,6 @@
  */
 
 
-#include "glheader.h"
-#include "imports.h"
 #include "dlopen.h"
 
 #if defined(_GNU_SOURCE) && !defined(__MINGW32__)
