@@ -257,6 +257,7 @@ enum pipe_transfer_usage {
 #define PIPE_PRIM_QUADS           7
 #define PIPE_PRIM_QUAD_STRIP      8
 #define PIPE_PRIM_POLYGON         9
+#define PIPE_PRIM_MAX             10
 
 
 /**
