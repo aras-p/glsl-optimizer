@@ -1375,7 +1375,12 @@ _glxapi_get_proc_address(const char *funcName)
 {
    GLuint i;
    for (i = 0; GLX_functions[i].Name; i++) {
+#ifdef MANGLE
+      /* skip the "m" prefix on the name */
+      if (strcmp(GLX_functions[i].Name, funcName+1) == 0)
+#else
       if (strcmp(GLX_functions[i].Name, funcName) == 0)
+#endif
          return GLX_functions[i].Address;
    }
    return NULL;
