@@ -574,14 +574,15 @@ void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
 }
 
 
-static void radeon_print_state_atom( struct radeon_state_atom *state )
+static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state_atom *state )
 {
 	int i;
+	int dwords = (*state->check)(radeon->glCtx, state);
 
-	fprintf(stderr, "emit %s/%d\n", state->name, state->cmd_size);
+	fprintf(stderr, "emit %s %d/%d\n", state->name, state->cmd_size, dwords);
 
 	if (RADEON_DEBUG & DEBUG_VERBOSE) 
-		for (i = 0 ; i < state->cmd_size ; i++) 
+		for (i = 0 ; i < dwords; i++) 
 			fprintf(stderr, "\t%s[%d]: %x\n", state->name, i, state->cmd[i]);
 
 }
@@ -601,7 +602,7 @@ static INLINE void radeonEmitAtoms(radeonContextPtr radeon, GLboolean dirty)
 			dwords = (*atom->check) (radeon->glCtx, atom);
 			if (dwords) {
 				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-					radeon_print_state_atom(atom);
+					radeon_print_state_atom(radeon, atom);
 				}
 				if (atom->emit) {
 					(*atom->emit)(radeon->glCtx, atom);
