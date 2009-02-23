@@ -715,6 +715,12 @@ int rcommonFlushCmdBufLocked(radeonContextPtr rmesa, const char *caller)
 		exit(-1);
 	}
 	rmesa->cmdbuf.flushing = 1;
+
+	if (RADEON_DEBUG & DEBUG_IOCTL) {
+		fprintf(stderr, "%s from %s - %i cliprects\n",
+			__FUNCTION__, caller, rmesa->numClipRects);
+	}
+
 	if (rmesa->cmdbuf.cs->cdw) {
 		ret = radeon_cs_emit(rmesa->cmdbuf.cs);
 		rmesa->hw.all_dirty = GL_TRUE;
@@ -832,6 +838,11 @@ void rcommonBeginBatch(radeonContextPtr rmesa, int n,
 		radeonEmitState(rmesa);
 	}
 	radeon_cs_begin(rmesa->cmdbuf.cs, n, file, function, line);
+
+        if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_IOCTL)
+                fprintf(stderr, "BEGIN_BATCH(%d) at %d, from %s:%i\n",
+                        n, rmesa->cmdbuf.cs->cdw, function, line);
+
 }
 
 
