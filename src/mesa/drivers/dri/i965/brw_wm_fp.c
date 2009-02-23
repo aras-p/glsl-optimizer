@@ -289,8 +289,7 @@ static struct prog_src_register get_pixel_w( struct brw_wm_compile *c )
       struct prog_dst_register pixel_w = get_temp(c);
       struct prog_src_register deltas = get_delta_xy(c);
       struct prog_src_register interp_wpos = src_reg(PROGRAM_PAYLOAD, FRAG_ATTRIB_WPOS);
-      
-      
+
       /* deltas.xyw = DELTAS2 deltas.xy, payload.interp_wpos.x
        */
       emit_op(c,
@@ -510,7 +509,6 @@ static void precalc_dst( struct brw_wm_compile *c,
 	      src_undef());
    }
 
-
    if (dst.WriteMask & WRITEMASK_XZ) {
       struct prog_instruction *swz;
       GLuint z = GET_SWZ(src0.Swizzle, Z);
@@ -562,7 +560,6 @@ static void precalc_lit( struct brw_wm_compile *c,
       /* Avoid letting the negation flag of src0 affect our 1 constant. */
       swz->SrcReg[0].NegateBase = 0;
    }
-
 
    if (dst.WriteMask & WRITEMASK_YZ) {
       emit_op(c,
@@ -876,20 +873,20 @@ static void emit_fb_write( struct brw_wm_compile *c )
       use it for fb write target and eot */
 
    if (brw->state.nr_draw_regions > 1) {
-       for (i = 0 ; i < brw->state.nr_draw_regions; i++) {
-	   outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i);
-	   last_inst = inst = emit_op(c,
-		   WM_FB_WRITE, dst_mask(dst_undef(),0), 0,
-		   outcolor, payload_r0_depth, outdepth);
-	   inst->Sampler = (i<<1);
-	   if (c->fp_fragcolor_emitted) {
-	       outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
-	       last_inst = inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
-		       0, outcolor, payload_r0_depth, outdepth);
-	       inst->Sampler = (i<<1);
-	   }
-       }
-       last_inst->Sampler |= 1; //eot
+      for (i = 0 ; i < brw->state.nr_draw_regions; i++) {
+         outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i);
+         last_inst = inst = emit_op(c,
+                                    WM_FB_WRITE, dst_mask(dst_undef(),0), 0,
+                                    outcolor, payload_r0_depth, outdepth);
+         inst->Sampler = (i<<1);
+         if (c->fp_fragcolor_emitted) {
+            outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
+            last_inst = inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
+                                       0, outcolor, payload_r0_depth, outdepth);
+            inst->Sampler = (i<<1);
+         }
+      }
+      last_inst->Sampler |= 1; //eot
    }
    else {
       /* if gl_FragData[0] is written, use it, else use gl_FragColor */
@@ -898,9 +895,9 @@ static void emit_fb_write( struct brw_wm_compile *c )
       else 
          outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
 
-       inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
-	       0, outcolor, payload_r0_depth, outdepth);
-       inst->Sampler = 1|(0<<1);
+      inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
+                     0, outcolor, payload_r0_depth, outdepth);
+      inst->Sampler = 1|(0<<1);
    }
 }
 
@@ -931,9 +928,9 @@ static void validate_dst_regs( struct brw_wm_compile *c,
 			       const struct prog_instruction *inst )
 {
    if (inst->DstReg.File == PROGRAM_OUTPUT) {
-       GLuint idx = inst->DstReg.Index;
-       if (idx == FRAG_RESULT_COLR)
-	   c->fp_fragcolor_emitted = 1;
+      GLuint idx = inst->DstReg.Index;
+      if (idx == FRAG_RESULT_COLR)
+         c->fp_fragcolor_emitted = 1;
    }
 }
 
@@ -954,7 +951,6 @@ static void print_insns( const struct prog_instruction *insn,
       }
       else 
 	 _mesa_printf("UNKNOWN\n");
-	   
    }
 }
 
@@ -1079,9 +1075,9 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
    }
 
    if (INTEL_DEBUG & DEBUG_WM) {
-	   _mesa_printf("pass_fp:\n");
-	   print_insns( c->prog_instructions, c->nr_fp_insns );
-	   _mesa_printf("\n");
+      _mesa_printf("pass_fp:\n");
+      print_insns( c->prog_instructions, c->nr_fp_insns );
+      _mesa_printf("\n");
    }
 }
 
