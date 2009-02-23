@@ -27,6 +27,7 @@
 
 #include <windows.h>
 
+#include "glapi/glthread.h"
 #include "util/u_debug.h"
 #include "pipe/p_screen.h"
 
@@ -34,6 +35,11 @@
 #include "shared/stw_winsys.h"
 #include "shared/stw_pixelformat.h"
 #include "shared/stw_public.h"
+
+#ifdef WIN32_THREADS
+extern _glthread_Mutex OneTimeLock;
+extern void FreeAllTSD(void);
+#endif
 
 
 struct stw_device *stw_dev = NULL;
@@ -72,6 +78,10 @@ st_init(const struct stw_winsys *stw_winsys)
 #endif
    
    stw_dev->stw_winsys = stw_winsys;
+
+#ifdef WIN32_THREADS
+   _glthread_INIT_MUTEX(OneTimeLock);
+#endif
 
    stw_dev->screen = stw_winsys->create_screen();
    if(!stw_dev->screen)
@@ -113,6 +123,11 @@ st_cleanup(void)
    pipe_mutex_destroy( stw_dev->mutex );
    
    stw_dev->screen->destroy(stw_dev->screen);
+
+#ifdef WIN32_THREADS
+   _glthread_DESTROY_MUTEX(OneTimeLock);
+   FreeAllTSD();
+#endif
 
 #ifdef DEBUG
    debug_memory_end(stw_dev->memdbg_no);
