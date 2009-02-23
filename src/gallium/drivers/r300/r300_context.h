@@ -250,6 +250,7 @@ static struct r300_context* r300_context(struct pipe_context* context) {
 }
 
 /* Context initialization. */
+struct draw_stage* r300_draw_swtcl_stage(struct r300_context* r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_surface_functions(struct r300_context* r300);
 

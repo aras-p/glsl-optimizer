@@ -40,7 +40,13 @@ static uint32_t translate_vertex_data_type(int type) {
         case EMIT_4F:
             return R300_DATA_TYPE_FLOAT_4;
             break;
+        default:
+            debug_printf("r300: Implementation error: "
+                    "Bad vertex data type!\n");
+            break;
     }
+
+    return 0;
 }
 
 /* Update the vertex_info struct in our r300_context.
@@ -98,7 +104,7 @@ static void r300_update_vertex_layout(struct r300_context* r300)
     vinfo.hwfmt[0] = 0x5555; /* XXX this is classic Mesa bonghits */
 
     if (!pos) {
-        debug_printf("r300: Forcing vertex position attribute emit...");
+        debug_printf("r300: Forcing vertex position attribute emit...\n");
     }
 
     draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_POS,
