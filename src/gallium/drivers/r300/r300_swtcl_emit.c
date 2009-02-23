@@ -184,6 +184,9 @@ static void prepare_render(struct r300_swtcl_render* render)
     /* Make sure that all possible state is emitted. */
     r300_emit_dirty_state(r300);
 
+    debug_printf("r300: Preparing vertex buffer %p for render, "
+            "vertex size %d, vertex count %d\n", render->vbo,
+            r300->vertex_info.vinfo.size, render->vbo_size);
     /* Set the pointer to our vertex buffer. The emitted values are this:
      * PACKET3 [3D_LOAD_VBPNTR]
      * COUNT   [1]
@@ -210,9 +213,11 @@ static void r300_swtcl_render_draw_arrays(struct vbuf_render* render,
 
     prepare_render(r300render);
 
+    debug_printf("r300: Doing vbuf render, count %d\n", count);
+
     BEGIN_CS(2);
     OUT_CS(CP_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0));
-    OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
+    OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
            r300render->hwprim | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
     END_CS;
 }
@@ -242,6 +247,8 @@ static void r300_swtcl_render_draw(struct vbuf_render* render,
                                 PIPE_BUFFER_USAGE_CPU_WRITE);
     memcpy(index_map, indices, count * 4);
     pipe_buffer_unmap(screen, index_buffer);
+
+    debug_printf("r300: Doing indexbuf render, count %d\n", count);
 
     BEGIN_CS(5);
     OUT_CS(CP_PACKET3(R300_PACKET3_3D_DRAW_INDX_2, 0));
