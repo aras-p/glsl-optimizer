@@ -216,12 +216,15 @@ static int cs_process_relocs(struct radeon_cs *cs)
 
     csm = (struct cs_manager_legacy*)cs->csm;
     relocs = (struct cs_reloc_legacy *)cs->relocs;
+ restart:
     for (i = 0; i < cs->crelocs; i++) {
         for (j = 0; j < relocs[i].cindices; j++) {
             uint32_t soffset, eoffset;
 
             r = radeon_bo_legacy_validate(relocs[i].base.bo,
                                            &soffset, &eoffset);
+	    if (r == -EAGAIN)
+	      goto restart;
             if (r) {
                 fprintf(stderr, "validated %p [0x%08X, 0x%08X]\n",
                         relocs[i].base.bo, soffset, eoffset);
@@ -275,7 +278,6 @@ static int cs_emit(struct radeon_cs *cs)
     int r;
 
     csm->ctx->vtbl.emit_cs_header(cs, csm->ctx);
-
 
     /* append buffer age */
     if (IS_R300_CLASS(csm->ctx->radeonScreen)) {

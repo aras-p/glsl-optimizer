@@ -61,7 +61,6 @@ struct bo_legacy {
     uint32_t            pending;
     int                 is_pending;
     int                 static_bo;
-    int                 got_dri_texture_obj;
     uint32_t            offset;
     struct bo_legacy_texture_object *tobj;
     int                 validated;
@@ -95,8 +94,8 @@ static void bo_legacy_tobj_destroy(void *data, driTextureObject *t)
     struct bo_legacy_texture_object *tobj = (struct bo_legacy_texture_object *)t;
     
     if (tobj->parent) {
-	tobj->parent->got_dri_texture_obj = 0;
-	tobj->parent->validated = 0;
+        tobj->parent->tobj = NULL;
+        tobj->parent->validated = 0;
     }
 }
 
@@ -258,6 +257,23 @@ static int legacy_wait_any_pending(struct bo_manager_legacy *boml)
     return 0;
 }
 
+static void legacy_kick_all_buffers(struct bo_manager_legacy *boml)
+{
+    struct bo_legacy *legacy;
+
+    legacy = boml->bos.next;
+    while (legacy != &boml->bos) {
+	if (legacy->tobj) {
+	    if (legacy->validated) {
+		driDestroyTextureObject(&legacy->tobj->base);
+		legacy->tobj = 0;
+		legacy->validated = 0;
+	    }
+	}
+	legacy = legacy->next;
+    }
+}
+
 static struct bo_legacy *bo_allocate(struct bo_manager_legacy *boml,
                                      uint32_t size,
                                      uint32_t alignment,
@@ -286,7 +302,6 @@ static struct bo_legacy *bo_allocate(struct bo_manager_legacy *boml,
     bo_legacy->map_count = 0;
     bo_legacy->next = NULL;
     bo_legacy->prev = NULL;
-    bo_legacy->got_dri_texture_obj = 0;
     bo_legacy->pnext = NULL;
     bo_legacy->pprev = NULL;
     bo_legacy->next = boml->bos.next;
@@ -523,27 +538,38 @@ static int bo_vram_validate(struct radeon_bo *bo,
     struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bo->bom;
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
     int r;
+    int retry_count = 0, pending_retry = 0;
     
-    if (!bo_legacy->got_dri_texture_obj) {
+    if (!bo_legacy->tobj) {
 	bo_legacy->tobj = CALLOC(sizeof(struct bo_legacy_texture_object));
 	bo_legacy->tobj->parent = bo_legacy;
 	make_empty_list(&bo_legacy->tobj->base);
 	bo_legacy->tobj->base.totalSize = bo->size;
+    retry:
         r = driAllocateTexture(&boml->texture_heap, 1,
                                &bo_legacy->tobj->base);
         if (r) {
-            uint8_t *segfault=NULL;
-            fprintf(stderr, "Ouch! vram_validate failed %d\n", r);
-            *segfault=1;
-            return -1;
-        }
+		pending_retry = 0;
+		while(boml->cpendings && pending_retry++ < 10000) {
+			legacy_track_pending(boml, 0);
+			retry_count++;
+			if (retry_count > 2) {
+				free(bo_legacy->tobj);
+				bo_legacy->tobj = NULL;
+				fprintf(stderr, "Ouch! vram_validate failed %d\n", r);
+				return -1;
+			}
+			goto retry;
+		}
+	}
         bo_legacy->offset = boml->texture_offset +
                             bo_legacy->tobj->base.memBlock->ofs;
-        bo_legacy->got_dri_texture_obj = 1;
         bo_legacy->dirty = 1;
     }
 
-    if (bo_legacy->got_dri_texture_obj)
+    assert(bo_legacy->tobj->base.memBlock);
+
+    if (bo_legacy->tobj)
 	driUpdateTextureLRU(&bo_legacy->tobj->base);
 
     if (bo_legacy->dirty || bo_legacy->tobj->base.dirty_images[0]) {
@@ -589,12 +615,21 @@ static int bo_vram_validate(struct radeon_bo *bo,
     return 0;
 }
 
+/* 
+ *  radeon_bo_legacy_validate -
+ *  returns:
+ *  0 - all good
+ *  -EINVAL - mapped buffer can't be validated
+ *  -EAGAIN - restart validation we've kicked all the buffers out
+ */
 int radeon_bo_legacy_validate(struct radeon_bo *bo,
                               uint32_t *soffset,
                               uint32_t *eoffset)
 {
+    struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bo->bom;
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
     int r;
+    int retries = 0;
 
     if (bo_legacy->map_count) {
         fprintf(stderr, "bo(%p, %d) is mapped (%d) can't valide it.\n",
@@ -607,9 +642,18 @@ int radeon_bo_legacy_validate(struct radeon_bo *bo,
         return 0;
     }
     if (!(bo->domains & RADEON_GEM_DOMAIN_GTT)) {
+
         r = bo_vram_validate(bo, soffset, eoffset);
         if (r) {
-            return r;
+	    legacy_track_pending(boml, 0);
+	    legacy_kick_all_buffers(boml);
+	    retries++;
+	    if (retries == 2) {
+		fprintf(stderr,"legacy bo: failed to get relocations into aperture\n");
+		assert(0);
+		exit(-1);
+	    }
+	    return -EAGAIN;
         }
     }
     *soffset = bo_legacy->offset;
