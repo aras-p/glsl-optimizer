@@ -33,6 +33,9 @@
 #if defined(_GNU_SOURCE) && !defined(__MINGW32__)
 #include <dlfcn.h>
 #endif
+#if defined(_WIN32)
+#include <windows.h>
+#endif
 
 
 /**
