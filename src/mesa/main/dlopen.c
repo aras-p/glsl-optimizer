@@ -28,6 +28,7 @@
  */
 
 
+#include "compiler.h"
 #include "dlopen.h"
 
 #if defined(_GNU_SOURCE) && !defined(__MINGW32__)
@@ -36,10 +37,7 @@
 #if defined(_WIN32)
 #include <windows.h>
 #endif
-#if defined(__HAIKU__)
-/* for NULL */
-#include <stdio.h>
-#endif
+
 
 /**
  * Wrapper for dlopen().
