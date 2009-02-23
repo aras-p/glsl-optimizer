@@ -84,7 +84,7 @@ void r300_emit_fragment_shader(struct r300_context* r300,
 {
     CS_LOCALS(r300);
     int i;
-    BEGIN_CS(0);
+    BEGIN_CS(22);
 
     OUT_CS_REG(R300_US_CONFIG, MAX2(fs->indirections - 1, 0));
     OUT_CS_REG(R300_US_PIXSIZE, fs->shader.stack_size);
