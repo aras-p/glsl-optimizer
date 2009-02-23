@@ -216,7 +216,7 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 		return;
 	}
 
-	if (t->image_override)
+	if (t->image_override && t->bo)
 		return;
 
 	t->pp_txsize = (((firstImage->Width - 1) << R300_TX_WIDTHMASK_SHIFT)

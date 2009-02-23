@@ -97,7 +97,7 @@ void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom)
 	addr = (cmd.vpu.adrhi << 8) | cmd.vpu.adrlo;
 	ndw = cmd.vpu.count * 4;
 	if (ndw) {
-		BEGIN_BATCH_NO_AUTOSTATE(13 + ndw);
+		BEGIN_BATCH_NO_AUTOSTATE(15 + ndw);
 
 		/* flush processing vertices */
 		OUT_BATCH_REGVAL(R300_SC_SCREENDOOR, 0);
@@ -166,35 +166,25 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 	if (numtmus) {
 		int i;
 
+		BEGIN_BATCH_NO_AUTOSTATE(4 * numtmus);
 		for(i = 0; i < numtmus; ++i) {
 		    radeonTexObj *t = r300->hw.textures[i];
+		    OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
 		    if (t && !t->image_override) {
-		            BEGIN_BATCH_NO_AUTOSTATE(4);
-		            OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
 			    OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
 					    RADEON_GEM_DOMAIN_VRAM, 0, 0);
-		            END_BATCH();
 		    } else if (!t) {
-			    //assert(0);
-		            BEGIN_BATCH_NO_AUTOSTATE(4);
-		            OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
 			    OUT_BATCH(r300->radeon.radeonScreen->texOffset[0]);
-			    END_BATCH();
-		    } else {
+		    } else { /* override cases */
 			    if (t->bo) {
-		            	    BEGIN_BATCH_NO_AUTOSTATE(4);
-		                    OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
 				    OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
 						    RADEON_GEM_DOMAIN_VRAM, 0, 0);
-		                    END_BATCH();
 			    } else if (!r300->radeon.radeonScreen->kernel_mm) {
-		            	    BEGIN_BATCH_NO_AUTOSTATE(2);
-		                    OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
 				    OUT_BATCH(t->override_offset);
-				    END_BATCH();
 			    }
 		    }
 		}
+		END_BATCH();
 	}
 }
 

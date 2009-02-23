@@ -983,20 +983,22 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
        screen->extensions[i++] = &driMediaStreamCounterExtension.base;
    }
 
+   if (!screen->kernel_mm) {
 #if !RADEON_COMMON
-   screen->extensions[i++] = &radeonTexOffsetExtension.base;
+   	screen->extensions[i++] = &radeonTexOffsetExtension.base;
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
-   if (IS_R200_CLASS(screen))
-       screen->extensions[i++] = &r200AllocateExtension.base;
+        if (IS_R200_CLASS(screen))
+            screen->extensions[i++] = &r200AllocateExtension.base;
 
-   screen->extensions[i++] = &r200texOffsetExtension.base;
+        screen->extensions[i++] = &r200texOffsetExtension.base;
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
-   //screen->extensions[i++] = &r300texOffsetExtension.base;
+        screen->extensions[i++] = &r300texOffsetExtension.base;
 #endif
+   }
 
    screen->extensions[i++] = NULL;
    sPriv->extensions = screen->extensions;
@@ -1090,7 +1092,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
-   screen->extensions[i++] = &r300texOffsetExtension.base;
+   //screen->extensions[i++] = &r300texOffsetExtension.base;
    screen->extensions[i++] = &r300TexBufferExtension.base;
 #endif
 
