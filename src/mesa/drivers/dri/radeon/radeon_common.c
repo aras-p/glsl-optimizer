@@ -663,7 +663,7 @@ void radeonFlush(GLcontext *ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	if (RADEON_DEBUG & DEBUG_IOCTL)
-		fprintf(stderr, "%s\n", __FUNCTION__);
+		fprintf(stderr, "%s %d\n", __FUNCTION__, radeon->cmdbuf.cs->cdw);
 
 	if (radeon->dma.flush)
 		radeon->dma.flush( ctx );
