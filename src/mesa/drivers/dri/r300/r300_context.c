@@ -238,8 +238,7 @@ static void r300_vtbl_pre_emit_atoms(radeonContextPtr radeon)
    BATCH_LOCALS(radeon);
    cp_wait(radeon, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
    BEGIN_BATCH_NO_AUTOSTATE(2);
-   OUT_BATCH(cmdpacket0(radeon->radeonScreen, R300_TX_INVALTAGS, 1));
-   OUT_BATCH(R300_TX_FLUSH);
+   OUT_BATCH_REGVAL(R300_TX_INVALTAGS, R300_TX_FLUSH);
    END_BATCH();
    end_3d(radeon);
 }

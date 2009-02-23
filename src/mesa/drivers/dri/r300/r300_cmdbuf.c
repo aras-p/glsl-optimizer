@@ -97,24 +97,20 @@ void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom)
 	addr = (cmd.vpu.adrhi << 8) | cmd.vpu.adrlo;
 	ndw = cmd.vpu.count * 4;
 	if (ndw) {
-		BEGIN_BATCH_NO_AUTOSTATE(11 + ndw);
+		BEGIN_BATCH_NO_AUTOSTATE(13 + ndw);
 
 		/* flush processing vertices */
-		OUT_BATCH(CP_PACKET0(R300_SC_SCREENDOOR, 0));
-		OUT_BATCH(0x0);
-		OUT_BATCH(CP_PACKET0(RADEON_WAIT_UNTIL, 0));
-		OUT_BATCH((1 << 15) | (1 << 28));
-		OUT_BATCH(CP_PACKET0(R300_SC_SCREENDOOR, 0));
-		OUT_BATCH(0x00FFFFFF);
-		OUT_BATCH(CP_PACKET0(R300_VAP_PVS_STATE_FLUSH_REG, 0));
-		OUT_BATCH(1);
-		/* write vpu */
-		OUT_BATCH(CP_PACKET0(R300_VAP_PVS_UPLOAD_ADDRESS, 0));
-		OUT_BATCH(addr);
+		OUT_BATCH_REGVAL(R300_SC_SCREENDOOR, 0);
+		OUT_BATCH_REGVAL(R300_RB3D_DSTCACHE_CTLSTAT, R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
+		OUT_BATCH_REGVAL(RADEON_WAIT_UNTIL, RADEON_WAIT_3D_IDLECLEAN);
+		OUT_BATCH_REGVAL(R300_SC_SCREENDOOR, 0xffffff);
+		OUT_BATCH_REGVAL(R300_VAP_PVS_STATE_FLUSH_REG, 1);
+		OUT_BATCH_REGVAL(R300_VAP_PVS_UPLOAD_ADDRESS, addr);
 		OUT_BATCH(CP_PACKET0(R300_VAP_PVS_UPLOAD_DATA, ndw-1) | RADEON_ONE_REG_WR);
 		for (i = 0; i < ndw; i++) {
 			OUT_BATCH(atom->cmd[i+1]);
 		}
+		OUT_BATCH_REGVAL(R300_VAP_PVS_STATE_FLUSH_REG, 0);
 		END_BATCH();
 	}
 }
@@ -180,6 +176,10 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 		            END_BATCH();
 		    } else if (!t) {
 			    //assert(0);
+		            BEGIN_BATCH_NO_AUTOSTATE(4);
+		            OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
+			    OUT_BATCH(r300->radeon.radeonScreen->texOffset[0]);
+			    END_BATCH();
 		    } else {
 			    if (t->bo) {
 		            	    BEGIN_BATCH_NO_AUTOSTATE(4);
