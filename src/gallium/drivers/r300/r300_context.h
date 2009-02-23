@@ -191,6 +191,15 @@ struct r300_texture {
     struct pipe_buffer* buffer;
 };
 
+struct r300_vertex_format {
+    /* Parent class */
+    struct vertex_info vinfo;
+    /* R300_VAP_PROG_STREAK_CNTL_[0-7] */
+    uint32_t vap_prog_stream_cntl[8];
+    /* R300_VAP_PROG_STREAK_CNTL_EXT_[0-7] */
+    uint32_t vap_prog_stream_cntl_ext[8];
+};
+
 struct r300_context {
     /* Parent class */
     struct pipe_context context;
@@ -228,7 +237,7 @@ struct r300_context {
     struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
     int vertex_buffer_count;
     /* Vertex information. */
-    struct vertex_info vertex_info;
+    struct r300_vertex_format vertex_info;
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */
