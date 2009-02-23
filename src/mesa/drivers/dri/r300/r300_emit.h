@@ -50,6 +50,7 @@ static INLINE uint32_t cmdpacket0(struct radeon_screen *rscrn,
     if (!rscrn->kernel_mm) {
 	    drm_r300_cmd_header_t cmd;
 
+	cmd.u = 0;
     	cmd.packet0.cmd_type = R300_CMD_PACKET0;
 	    cmd.packet0.count = count;
     	cmd.packet0.reghi = ((unsigned int)reg & 0xFF00) >> 8;
@@ -67,6 +68,7 @@ static INLINE uint32_t cmdvpu(struct radeon_screen *rscrn, int addr, int count)
 {
 	drm_r300_cmd_header_t cmd;
 
+	cmd.u = 0;
 	cmd.vpu.cmd_type = R300_CMD_VPU;
 	cmd.vpu.count = count;
 	cmd.vpu.adrhi = ((unsigned int)addr & 0xFF00) >> 8;
@@ -80,6 +82,7 @@ static INLINE uint32_t cmdr500fp(struct radeon_screen *rscrn,
 {
 	drm_r300_cmd_header_t cmd;
 
+	cmd.u = 0;
 	cmd.r500fp.cmd_type = R300_CMD_R500FP;
 	cmd.r500fp.count = count;
 	cmd.r500fp.adrhi_flags = ((unsigned int)addr & 0x100) >> 8;
@@ -94,6 +97,7 @@ static INLINE uint32_t cmdpacket3(struct radeon_screen *rscrn, int packet)
 {
 	drm_r300_cmd_header_t cmd;
 
+	cmd.u = 0;
 	cmd.packet3.cmd_type = R300_CMD_PACKET3;
 	cmd.packet3.packet = packet;
 
@@ -104,6 +108,8 @@ static INLINE uint32_t cmdcpdelay(struct radeon_screen *rscrn,
                                   unsigned short count)
 {
 	drm_r300_cmd_header_t cmd;
+
+	cmd.u = 0;
 
 	cmd.delay.cmd_type = R300_CMD_CP_DELAY;
 	cmd.delay.count = count;
@@ -116,6 +122,7 @@ static INLINE uint32_t cmdwait(struct radeon_screen *rscrn,
 {
 	drm_r300_cmd_header_t cmd;
 
+	cmd.u = 0;
 	cmd.wait.cmd_type = R300_CMD_WAIT;
 	cmd.wait.flags = flags;
 
@@ -126,6 +133,7 @@ static INLINE uint32_t cmdpacify(struct radeon_screen *rscrn)
 {
 	drm_r300_cmd_header_t cmd;
 
+	cmd.u = 0;
 	cmd.header.cmd_type = R300_CMD_END3D;
 
 	return cmd.u;
