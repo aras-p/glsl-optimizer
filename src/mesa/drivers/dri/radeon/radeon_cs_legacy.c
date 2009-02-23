@@ -364,8 +364,9 @@ static int cs_erase(struct radeon_cs *cs)
 
 static int cs_need_flush(struct radeon_cs *cs)
 {
-    /* FIXME: we should get the texture heap size */
-    return (cs->relocs_total_size > (7*1024*1024));
+    /* this function used to flush when the BO usage got to
+     * a certain size, now the higher levels handle this better */
+    return 0;
 }
 
 static void cs_print(struct radeon_cs *cs, FILE *file)
