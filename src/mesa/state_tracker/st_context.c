@@ -59,6 +59,7 @@
 #include "st_cb_texture.h"
 #include "st_cb_flush.h"
 #include "st_cb_strings.h"
+#include "st_cb_viewport.h"
 #include "st_atom.h"
 #include "st_draw.h"
 #include "st_extensions.h"
