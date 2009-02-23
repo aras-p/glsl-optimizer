@@ -35,7 +35,6 @@ static boolean r300_draw_range_elements(struct pipe_context* pipe,
     int i;
 
     if (r300->dirty_state) {
-        r300_update_derived_state(r300);
         r300_emit_dirty_state(r300);
     }
 

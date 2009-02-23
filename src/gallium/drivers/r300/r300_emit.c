@@ -219,6 +219,32 @@ void r300_emit_scissor_state(struct r300_context* r300,
     END_CS;
 }
 
+void r300_emit_vertex_format_state(struct r300_context* r300)
+{
+    CS_LOCALS(r300);
+    int i;
+
+    BEGIN_CS(6);
+    OUT_CS_REG_SEQ(R300_VAP_VTX_STATE_CNTL, 2);
+    OUT_CS(r300->vertex_info.vinfo.hwfmt[0]);
+    OUT_CS(r300->vertex_info.vinfo.hwfmt[1]);
+    OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
+    OUT_CS(r300->vertex_info.vinfo.hwfmt[2]);
+    OUT_CS(r300->vertex_info.vinfo.hwfmt[3]);
+    END_CS;
+
+    BEGIN_CS(18);
+    OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_0, 8);
+    for (i = 0; i < 8; i++) {
+        OUT_CS(r300->vertex_info.vap_prog_stream_cntl[i]);
+    }
+    OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_EXT_0, 8);
+    for (i = 0; i < 8; i++) {
+        OUT_CS(r300->vertex_info.vap_prog_stream_cntl_ext[i]);
+    }
+    END_CS;
+}
+
 /* Emit all dirty state. */
 void r300_emit_dirty_state(struct r300_context* r300)
 {
@@ -268,5 +294,10 @@ void r300_emit_dirty_state(struct r300_context* r300)
     if (r300->dirty_state & R300_NEW_SCISSOR) {
         r300_emit_scissor_state(r300, r300->scissor_state);
         r300->dirty_state &= ~R300_NEW_SCISSOR;
+    }
+
+    if (r300->dirty_state & R300_NEW_VERTEX_FORMAT) {
+        r300_emit_vertex_format_state(r300);
+        r300->dirty_state &= ~R300_NEW_VERTEX_FORMAT;
     }
 }
