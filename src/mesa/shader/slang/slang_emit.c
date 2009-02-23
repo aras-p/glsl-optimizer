@@ -1379,6 +1379,7 @@ emit_copy(slang_emit_info *emitInfo, slang_ir_node *n)
 
 #if PEEPHOLE_OPTIMIZATIONS
    if (inst &&
+       (n->Children[1]->Opcode != IR_SWIZZLE) &&
        _slang_is_temp(emitInfo->vt, n->Children[1]->Store) &&
        (inst->DstReg.File == n->Children[1]->Store->File) &&
        (inst->DstReg.Index == n->Children[1]->Store->Index) &&
@@ -1395,13 +1396,9 @@ emit_copy(slang_emit_info *emitInfo, slang_ir_node *n)
        * becomes:
        *   MUL a, x, y;
        */
-      if (n->Children[1]->Opcode != IR_SWIZZLE)
-         _slang_free_temp(emitInfo->vt, n->Children[1]->Store);
-      *n->Children[1]->Store = *n->Children[0]->Store;
 
       /* fixup the previous instruction (which stored the RHS result) */
       assert(n->Children[0]->Store->Index >= 0);
-
       storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store);
       return inst;
    }
@@ -1860,23 +1857,21 @@ emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
 
    inst = emit(emitInfo, n->Children[0]);
 
-   if (n->Children[0]->Opcode == IR_VAR ||
-       n->Children[0]->Opcode == IR_SWIZZLE ||
-       n->Children[0]->Opcode == IR_ELEMENT) {
-      /* We can resolve the swizzle now.  Other swizzles will be resolved
-       * in storage_to_src_reg().
-       */
+   assert(n->Children[0]->Store == n->Store->Parent);
+   assert(n->Store->Parent);
+
+   {
       const GLuint swizzle = n->Store->Swizzle;
-      assert(n->Store->Parent);
       /* new storage is parent storage with updated Swizzle + Size fields */
       _slang_copy_ir_storage(n->Store, n->Store->Parent);
       /* Apply this node's swizzle to parent's storage */
       n->Store->Swizzle = _slang_swizzle_swizzle(n->Store->Swizzle, swizzle);
       /* Update size */
       n->Store->Size = swizzle_size(n->Store->Swizzle);
-      assert(!n->Store->Parent);
-      assert(n->Store->Index >= 0);
    }
+
+   assert(!n->Store->Parent);
+   assert(n->Store->Index >= 0);
 
    return inst;
 }
