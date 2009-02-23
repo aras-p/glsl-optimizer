@@ -204,13 +204,9 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
 #if 0
       mmDumpMemInfo(mm->heap);
 #endif
-      
-      mm_buf->block = u_mmAllocMem(mm->heap, size, mm->align2, 0);
-      if(!mm_buf->block) {
-         FREE(mm_buf);
-         pipe_mutex_unlock(mm->mutex);
-         return NULL;
-      }
+      FREE(mm_buf);
+      pipe_mutex_unlock(mm->mutex);
+      return NULL;
    }
    
    /* Some sanity checks */

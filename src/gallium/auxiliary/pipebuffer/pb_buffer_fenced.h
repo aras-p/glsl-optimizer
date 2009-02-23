@@ -114,6 +114,13 @@ void
 fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list, 
                               int wait);
 
+
+#ifdef DEBUG
+void
+fenced_buffer_list_dump(struct fenced_buffer_list *fenced_list);
+#endif
+
+
 void
 fenced_buffer_list_destroy(struct fenced_buffer_list *fenced_list);
 

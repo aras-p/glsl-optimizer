@@ -473,7 +473,7 @@ def generate(env):
 
             '/entry:DrvEnableDriver',
         ]
-        if env['profile']:
+        if env['debug'] or env['profile']:
             linkflags += [
                 '/MAP', # http://msdn.microsoft.com/en-us/library/k7xkk3e2.aspx
             ]

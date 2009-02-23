@@ -35,21 +35,19 @@ import model
 import parser
 
 
+try:
+    from struct import unpack_from
+except ImportError:
+    def unpack_from(fmt, buf, offset=0):
+        size = struct.calcsize(fmt)
+        return struct.unpack(fmt, buf[offset:offset + size])
+
+
 def make_image(surface):
-    pixels = gallium.FloatArray(surface.height*surface.width*4)
-    surface.get_tile_rgba(0, 0, surface.width, surface.height, pixels)
+    data = surface.get_tile_rgba8(0, 0, surface.width, surface.height)
 
     import Image
-    outimage = Image.new(
-        mode='RGB',
-        size=(surface.width, surface.height),
-        color=(0,0,0))
-    outpixels = outimage.load()
-    for y in range(0, surface.height):
-        for x in range(0, surface.width):
-            offset = (y*surface.width + x)*4
-            r, g, b, a = [int(pixels[offset + ch]*255) for ch in range(4)]
-            outpixels[x, y] = r, g, b
+    outimage = Image.fromstring('RGBA', (surface.width, surface.height), data, "raw", 'RGBA', 0, 1)
     return outimage
 
 def save_image(filename, surface):
@@ -77,6 +75,7 @@ def show_image(surface):
     root.mainloop()
 
 
+verbose = 1
 
 
 class Struct:
@@ -297,6 +296,7 @@ class Context(Object):
         self.zsbuf = None
         self.vbufs = []
         self.velems = []
+        self.dirty = False
 
     def destroy(self):
         pass
@@ -374,18 +374,23 @@ class Context(Object):
             _state.ucp = ucp
         self.real.set_clip(_state)
 
+    def dump_constant_buffer(self, buffer):
+        if verbose < 2:
+            return
+
+        data = buffer.read()
+        format = '4f'
+        index = 0
+        for offset in range(0, len(data), struct.calcsize(format)):
+            x, y, z, w = unpack_from(format, data, offset)
+            sys.stdout.write('\tCONST[%2u] = {%10.4f, %10.4f, %10.4f, %10.4f}\n' % (index, x, y, z, w))
+            index += 1
+
     def set_constant_buffer(self, shader, index, state):
         if state is not None:
             self.real.set_constant_buffer(shader, index, state.buffer)
 
-            if 1:
-                data = state.buffer.read()
-                format = '4f'
-                index = 0
-                for offset in range(0, len(data), struct.calcsize(format)):
-                    x, y, z, w = struct.unpack_from(format, data, offset)
-                    sys.stdout.write('\tCONST[%2u] = {%10.4f, %10.4f, %10.4f, %10.4f}\n' % (index, x, y, z, w))
-                    index += 1
+            self.dump_constant_buffer(state.buffer)
 
     def set_framebuffer_state(self, state):
         _state = gallium.Framebuffer()
@@ -436,6 +441,9 @@ class Context(Object):
         pass
     
     def dump_vertices(self, start, count):
+        if verbose < 2:
+            return
+
         for index in range(start, start + count):
             if index >= start + 16:
                 sys.stdout.write('\t...\n')
@@ -454,12 +462,15 @@ class Context(Object):
                 }[velem.src_format]
 
                 data = vbuf.buffer.read()
-                values = struct.unpack_from(format, data, offset)
+                values = unpack_from(format, data, offset)
                 sys.stdout.write('\t\t{' + ', '.join(map(str, values)) + '},\n')
                 assert len(values) == velem.nr_components
             sys.stdout.write('\t},\n')
 
     def dump_indices(self, ibuf, isize, start, count):
+        if verbose < 2:
+            return
+
         format = {
             1: 'B',
             2: 'H',
@@ -477,7 +488,7 @@ class Context(Object):
                 sys.stdout.write('\t...\n')
                 break
             offset = i*isize
-            index, = struct.unpack_from(format, data, offset)
+            index, = unpack_from(format, data, offset)
             sys.stdout.write('\t\t%u,\n' % index)
             minindex = min(minindex, index)
             maxindex = max(maxindex, index)
@@ -489,25 +500,35 @@ class Context(Object):
         self.dump_vertices(start, count)
             
         self.real.draw_arrays(mode, start, count)
+
+        self.dirty = True
     
     def draw_elements(self, indexBuffer, indexSize, mode, start, count):
-        minindex, maxindex = self.dump_indices(indexBuffer, indexSize, start, count)
-        self.dump_vertices(minindex, maxindex - minindex)
+        if verbose >= 2:
+            minindex, maxindex = self.dump_indices(indexBuffer, indexSize, start, count)
+            self.dump_vertices(minindex, maxindex - minindex)
 
         self.real.draw_elements(indexBuffer, indexSize, mode, start, count)
+
+        self.dirty = True
         
     def draw_range_elements(self, indexBuffer, indexSize, minIndex, maxIndex, mode, start, count):
-        minindex, maxindex = self.dump_indices(indexBuffer, indexSize, start, count)
-        minindex = min(minindex, minIndex)
-        maxindex = min(maxindex, maxIndex)
-        self.dump_vertices(minindex, maxindex - minindex)
+        if verbose >= 2:
+            minindex, maxindex = self.dump_indices(indexBuffer, indexSize, start, count)
+            minindex = min(minindex, minIndex)
+            maxindex = min(maxindex, maxIndex)
+            self.dump_vertices(minindex, maxindex - minindex)
 
         self.real.draw_range_elements(indexBuffer, indexSize, minIndex, maxIndex, mode, start, count)
+
+        self.dirty = True
         
     def flush(self, flags):
         self.real.flush(flags)
-        if flags & gallium.PIPE_FLUSH_FRAME:
-            self._update()
+        if self.dirty:
+            if flags & gallium.PIPE_FLUSH_FRAME:
+                self._update()
+            self.dirty = False
         return None
 
     def clear(self, surface, value):
@@ -553,7 +574,8 @@ class Interpreter(parser.TraceDumper):
         if (call.klass, call.method) in self.ignore_calls:
             return
 
-        parser.TraceDumper.handle_call(self, call)
+        if verbose >= 1:
+            parser.TraceDumper.handle_call(self, call)
         
         args = [self.interpret_arg(arg) for name, arg in call.args] 
         
