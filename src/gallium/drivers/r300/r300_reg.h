@@ -1796,6 +1796,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_ALU_DSTC_OUTPUT_X           (1 << 26)
 #       define R300_ALU_DSTC_OUTPUT_Y           (1 << 27)
 #       define R300_ALU_DSTC_OUTPUT_Z           (1 << 28)
+#       define R300_ALU_DSTC_OUTPUT_XYZ         (7 << 26)
+#       define R300_RGB_ADDR0(x)                ((x) << 0)
+#       define R300_RGB_ADDR1(x)                ((x) << 6)
+#       define R300_RGB_ADDR2(x)                ((x) << 12)
 
 #define R300_US_ALU_ALPHA_ADDR_0                 0x47C0
 #       define R300_ALU_SRC0A_SHIFT             0
@@ -1813,6 +1817,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_ALU_DSTA_REG                (1 << 23)
 #       define R300_ALU_DSTA_OUTPUT             (1 << 24)
 #		define R300_ALU_DSTA_DEPTH              (1 << 27)
+#       define R300_ALPHA_ADDR0(x)                ((x) << 0)
+#       define R300_ALPHA_ADDR1(x)                ((x) << 6)
+#       define R300_ALPHA_ADDR2(x)                ((x) << 12)
 
 #define R300_US_ALU_RGB_INST_0                   0x48C0
 #       define R300_ALU_ARGC_SRC0C_XYZ          0
@@ -1847,6 +1854,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_ALU_ARGC_SRC0CA_WZY         29
 #       define R300_ALU_ARGC_SRC1CA_WZY         30
 #       define R300_ALU_ARGC_SRC2CA_WZY         31
+#       define R300_RGB_SWIZA(x)                ((x) << 0)
+#       define R300_RGB_SWIZB(x)                ((x) << 7)
+#       define R300_RGB_SWIZC(x)                ((x) << 14)
 
 #       define R300_ALU_ARG0C_SHIFT             0
 #       define R300_ALU_ARG0C_MASK              (31 << 0)
@@ -1910,10 +1920,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_ALU_ARGA_SRCP_Y             13
 #       define R300_ALU_ARGA_SRCP_Z             14
 #       define R300_ALU_ARGA_SRCP_W             15
-
 #       define R300_ALU_ARGA_ZERO               16
 #       define R300_ALU_ARGA_ONE                17
 #       define R300_ALU_ARGA_HALF               18
+#       define R300_ALPHA_SWIZA(x)              ((x) << 0)
+#       define R300_ALPHA_SWIZB(x)              ((x) << 7)
+#       define R300_ALPHA_SWIZC(x)              ((x) << 14)
+
 #       define R300_ALU_ARG0A_SHIFT             0
 #       define R300_ALU_ARG0A_MASK              (31 << 0)
 #       define R300_ALU_ARG0A_NOP               (0 << 5)

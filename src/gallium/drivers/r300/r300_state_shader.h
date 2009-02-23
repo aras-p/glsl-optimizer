@@ -47,11 +47,18 @@ static const struct r300_fragment_shader r300_passthrough_fragment_shader = {
     .indirections = 1,
     .shader.stack_size = 2,
 
-    /* XXX decode these */
-    .instructions[0].alu_rgb_inst = 0x50A80,
-    .instructions[0].alu_rgb_inst = 0x1C000000,
-    .instructions[0].alu_alpha_inst = 0x40889,
-    .instructions[0].alu_alpha_inst = 0x1000000,
+    .instructions[0].alu_rgb_inst = R300_RGB_SWIZA(R300_ALU_ARGC_SRC0C_XYZ) |
+        R300_RGB_SWIZB(R300_ALU_ARGC_ONE) |
+        R300_RGB_SWIZC(R300_ALU_ARGC_ZERO) |
+        R300_ALU_OUTC_MAD,
+    .instructions[0].alu_rgb_addr = R300_RGB_ADDR0(0) | R300_RGB_ADDR1(0) |
+        R300_RGB_ADDR2(0) | R300_ALU_DSTC_OUTPUT_XYZ,
+    .instructions[0].alu_alpha_inst = R300_ALPHA_SWIZA(R300_ALU_ARGA_SRC0A) |
+        R300_ALPHA_SWIZB(R300_ALU_ARGA_ONE) |
+        R300_ALPHA_SWIZC(R300_ALU_ARGA_ZERO) |
+        R300_ALU_OUTA_MAD,
+    .instructions[0].alu_alpha_addr = R300_ALPHA_ADDR0(0) |
+        R300_ALPHA_ADDR1(0) | R300_ALPHA_ADDR2(0) | R300_ALU_DSTA_OUTPUT,
 };
 
 static const struct r500_fragment_shader r500_passthrough_fragment_shader = {
