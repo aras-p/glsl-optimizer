@@ -36,7 +36,10 @@
 #if defined(_WIN32)
 #include <windows.h>
 #endif
-
+#if defined(__HAIKU__)
+/* for NULL */
+#include <stdio.h>
+#endif
 
 /**
  * Wrapper for dlopen().
