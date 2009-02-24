@@ -225,7 +225,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/Makefile					\
 	$(DIRECTORY)/src/descrip.mms					\
 	$(DIRECTORY)/src/mesa/Makefile*					\
-	$(DIRECTORY)/src/mesa/sources					\
+	$(DIRECTORY)/src/mesa/sources.mak				\
 	$(DIRECTORY)/src/mesa/descrip.mms				\
 	$(DIRECTORY)/src/mesa/gl.pc.in					\
 	$(DIRECTORY)/src/mesa/osmesa.pc.in				\
