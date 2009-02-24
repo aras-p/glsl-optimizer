@@ -869,8 +869,7 @@ static void emit_fb_write( struct brw_wm_compile *c )
    struct prog_instruction *inst, *last_inst;
    struct brw_context *brw = c->func.brw;
 
-   /* inst->Sampler is not used by backend, 
-      use it for fb write target and eot */
+   /* The inst->Aux field is used for FB write target and the EOT marker */
 
    if (brw->state.nr_draw_regions > 1) {
       for (i = 0 ; i < brw->state.nr_draw_regions; i++) {
@@ -878,15 +877,15 @@ static void emit_fb_write( struct brw_wm_compile *c )
          last_inst = inst = emit_op(c,
                                     WM_FB_WRITE, dst_mask(dst_undef(),0), 0,
                                     outcolor, payload_r0_depth, outdepth);
-         inst->Sampler = (i<<1);
+         inst->Aux = (i<<1);
          if (c->fp_fragcolor_emitted) {
             outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
             last_inst = inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
                                        0, outcolor, payload_r0_depth, outdepth);
-            inst->Sampler = (i<<1);
+            inst->Aux = (i<<1);
          }
       }
-      last_inst->Sampler |= 1; //eot
+      last_inst->Aux |= 1; //eot
    }
    else {
       /* if gl_FragData[0] is written, use it, else use gl_FragColor */
@@ -897,7 +896,7 @@ static void emit_fb_write( struct brw_wm_compile *c )
 
       inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
                      0, outcolor, payload_r0_depth, outdepth);
-      inst->Sampler = 1|(0<<1);
+      inst->Aux = 1|(0<<1);
    }
 }
 

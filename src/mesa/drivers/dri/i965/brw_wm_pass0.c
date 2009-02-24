@@ -350,8 +350,8 @@ translate_insn(struct brw_wm_compile *c,
    out->tex_unit = inst->TexSrcUnit;
    out->tex_idx = inst->TexSrcTarget;
    out->tex_shadow = inst->TexShadow;
-   out->eot = inst->Sampler & 1;
-   out->target = inst->Sampler>>1;
+   out->eot = inst->Aux & 1;
+   out->target = inst->Aux >> 1;
 
    /* Args:
     */
