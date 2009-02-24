@@ -9,7 +9,7 @@
 
 #include "intel_be_fence.h"
 
-#include "i915simple/i915_screen.h"
+#include "i915simple/i915_winsys.h"
 
 #include "intel_be_api.h"
 
