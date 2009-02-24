@@ -1857,8 +1857,11 @@ emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
 
    inst = emit(emitInfo, n->Children[0]);
 
-   assert(n->Children[0]->Store == n->Store->Parent);
-   assert(n->Store->Parent);
+   if (!n->Store->Parent) {
+      /* this covers a case such as "(b ? p : q).x" */
+      n->Store->Parent = n->Children[0]->Store;
+      assert(n->Store->Parent);
+   }
 
    {
       const GLuint swizzle = n->Store->Swizzle;
