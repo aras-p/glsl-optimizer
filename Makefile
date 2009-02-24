@@ -297,6 +297,31 @@ MAIN_FILES = \
 	$(DIRECTORY)/progs/util/sampleMakefile				\
 	$(DIRECTORY)/windows/VC8/
 
+EGL_FILES = \
+	$(DIRECTORY)/src/egl/Makefile					\
+	$(DIRECTORY)/src/egl/*/Makefile					\
+	$(DIRECTORY)/src/egl/*/*.[ch]					\
+	$(DIRECTORY)/src/egl/*/*/Makefile				\
+	$(DIRECTORY)/src/egl/*/*/*.[ch]					\
+
+GALLIUM_FILES = \
+	$(DIRECTORY)/src/mesa/state_tracker/*[ch]			\
+	$(DIRECTORY)/src/gallium/Makefile				\
+	$(DIRECTORY)/src/gallium/Makefile.template			\
+	$(DIRECTORY)/src/gallium/SConscript				\
+	$(DIRECTORY)/src/gallium/*/Makefile				\
+	$(DIRECTORY)/src/gallium/*/SConscript				\
+	$(DIRECTORY)/src/gallium/*/*/Makefile				\
+	$(DIRECTORY)/src/gallium/*/*/Makefile.template			\
+	$(DIRECTORY)/src/gallium/*/*/SConscript				\
+	$(DIRECTORY)/src/gallium/*/*/*.[ch]				\
+	$(DIRECTORY)/src/gallium/*/*/*.py				\
+	$(DIRECTORY)/src/gallium/*/*/*/Makefile				\
+	$(DIRECTORY)/src/gallium/*/*/*/SConscript			\
+	$(DIRECTORY)/src/gallium/*/*/*/*.[ch]				\
+	$(DIRECTORY)/src/gallium/*/*/*/*.py				\
+	$(DIRECTORY)/src/gallium/*/*/*/*/*.[ch]				\
+
 
 DRI_FILES = \
 	$(DIRECTORY)/include/GL/internal/dri_interface.h		\
@@ -427,7 +452,13 @@ DEPEND_FILES = \
 	$(TOP)/src/glu/sgi/depend
 
 
-LIB_FILES = $(MAIN_FILES) $(DRI_FILES) $(SGI_GLU_FILES) $(GLW_FILES)
+LIB_FILES = \
+	$(MAIN_FILES)		\
+	$(EGL_FILES)		\
+	$(GALLIUM_FILES)	\
+	$(DRI_FILES)		\
+	$(SGI_GLU_FILES)	\
+	$(GLW_FILES)
 
 
 # Everything for new a Mesa release:
