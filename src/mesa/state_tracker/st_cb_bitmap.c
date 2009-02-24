@@ -142,6 +142,10 @@ make_bitmap_fragment_program(GLcontext *ctx, GLuint samplerIndex)
    /* KIL if -tmp0 < 0 # texel=0 -> keep / texel=0 -> discard */
    p->Instructions[ic].Opcode = OPCODE_KIL;
    p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+
+   if (ctx->st->bitmap.tex_format == PIPE_FORMAT_L8_UNORM)
+      p->Instructions[ic].SrcReg[0].Swizzle = SWIZZLE_XXXX;
+
    p->Instructions[ic].SrcReg[0].Index = 0;
    p->Instructions[ic].SrcReg[0].NegateBase = NEGATE_XYZW;
    ic++;
@@ -157,7 +161,11 @@ make_bitmap_fragment_program(GLcontext *ctx, GLuint samplerIndex)
 
    stfp = (struct st_fragment_program *) p;
    stfp->Base.UsesKill = GL_TRUE;
-   st_translate_fragment_program(ctx->st, stfp, NULL);
+
+   /* No need to send this incomplete program down to hardware:
+    *
+    * st_translate_fragment_program(ctx->st, stfp, NULL);
+    */
 
    return stfp;
 }
@@ -785,6 +793,10 @@ st_init_bitmap(struct st_context *st)
    if (screen->is_format_supported(screen, PIPE_FORMAT_I8_UNORM, PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       st->bitmap.tex_format = PIPE_FORMAT_I8_UNORM;
+   }
+   else if (screen->is_format_supported(screen, PIPE_FORMAT_L8_UNORM, PIPE_TEXTURE_2D, 
+                                        PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
+      st->bitmap.tex_format = PIPE_FORMAT_L8_UNORM;
    }
    else {
       /* XXX support more formats */
