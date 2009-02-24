@@ -65,6 +65,7 @@ static void Redisplay (void)
       GLfloat seconds = (GLfloat) (t - t0) / 1000.0f;
       GLfloat fps = frames / seconds;
       printf ("%d frames in %6.3f seconds = %6.3f FPS\n", frames, seconds, fps);
+      fflush(stdout);
       t0 = t;
       frames = 0;
    }
