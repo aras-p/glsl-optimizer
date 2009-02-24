@@ -494,7 +494,7 @@ emit_statevars(const char *name, int array_len,
    }
    else if (type->type == SLANG_SPEC_STRUCT) {
       const slang_variable_scope *fields = type->_struct->fields;
-      GLuint i, pos;
+      GLuint i, pos = 0;
       for (i = 0; i < fields->num_variables; i++) {
          const slang_variable *var = fields->variables[i];
          GLint p = emit_statevars(var->a_name, 0, &var->type.specifier,
