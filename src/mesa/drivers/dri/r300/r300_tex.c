@@ -270,6 +270,11 @@ static void r300DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 				rmesa->hw.textures[i] = 0;
 	}
 
+	if (t->bo) {
+		radeon_bo_unref(t->bo);
+		t->bo = NULL;
+	}
+
 	if (t->mt) {
 		radeon_miptree_unreference(t->mt);
 		t->mt = 0;

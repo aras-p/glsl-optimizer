@@ -433,9 +433,15 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 	
 	_mesa_lock_texture(radeon->glCtx, texObj);
 	if (t->bo) {
+		radeon_bo_unref(t->bo);
 		t->bo = NULL;
 	}
+	if (rImage->bo) {
+		radeon_bo_unref(rImage->bo);
+		rImage->bo = NULL;
+	}
 	if (t->mt) {
+		radeon_miptree_unreference(t->mt);
 		t->mt = NULL;
 	}
 	if (rImage->mt) {
@@ -447,7 +453,7 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 				   rb->width, rb->height, 1, 0, rb->cpp);
 	texImage->TexFormat = &_mesa_texformat_rgba8888_rev;
 	rImage->bo = rb->bo;
-	
+	radeon_bo_ref(rImage->bo);
 	t->bo = rb->bo;
 	radeon_bo_ref(t->bo);
 	t->tile_bits = 0;
