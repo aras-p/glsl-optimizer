@@ -513,7 +513,6 @@ fenced_buffer_list_dump(struct fenced_buffer_list *fenced_list)
    struct pb_fence_ops *ops = fenced_list->ops;
    struct list_head *curr, *next;
    struct fenced_buffer *fenced_buf;
-   struct pipe_fence_handle *prev_fence = NULL;
 
    pipe_mutex_lock(fenced_list->mutex);
 
