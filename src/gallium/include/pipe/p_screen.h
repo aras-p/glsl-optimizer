@@ -56,6 +56,13 @@ struct pipe_buffer;
 
 
 
+struct pipe_buffer_range 
+{
+   unsigned offset;
+   unsigned size;
+};
+
+
 /**
  * Gallium screen/adapter context.  Basically everything
  * hardware-specific that doesn't actually require a rendering
@@ -212,6 +219,27 @@ struct pipe_screen {
 
    void (*buffer_unmap)( struct pipe_screen *screen,
 			 struct pipe_buffer *buf );
+
+   /**
+    * Map a subrange of the buffer data store into the client's address space.
+    *
+    * Return pointer is always relative to offset 0, regardless of the 
+    * read/write ranges.
+    */
+   void *(*buffer_map_range)( struct pipe_screen *screen,
+                              struct pipe_buffer *buf,
+                              struct pipe_buffer_range read,
+                              struct pipe_buffer_range write,
+                              unsigned usage /* XXX: deprecated? */);
+
+   /**
+    * Unmap a buffer.
+    *
+    * written is the range that the client actually wrote. 
+    */
+   void (*buffer_unmap_range)( struct pipe_screen *screen,
+                               struct pipe_buffer *buf,
+                               struct pipe_buffer_range written);
 
    void (*buffer_destroy)( struct pipe_screen *screen,
 			   struct pipe_buffer *buf );

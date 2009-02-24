@@ -151,14 +151,59 @@ pipe_buffer_map(struct pipe_screen *screen,
                 struct pipe_buffer *buf,
                 unsigned usage)
 {
-   return screen->buffer_map(screen, buf, usage);
+   if(screen->buffer_map_range) {
+      struct pipe_buffer_range read;
+      struct pipe_buffer_range write;
+      read.offset = 0;
+      read.size = usage & PIPE_BUFFER_USAGE_CPU_READ ? buf->size : 0;
+      write.offset = 0;
+      write.size = usage & PIPE_BUFFER_USAGE_CPU_WRITE ? buf->size : 0;
+      return screen->buffer_map_range(screen, buf, read, write, usage);
+   }
+   else
+      return screen->buffer_map(screen, buf, usage);
 }
 
 static INLINE void
 pipe_buffer_unmap(struct pipe_screen *screen,
                   struct pipe_buffer *buf)
 {
-   screen->buffer_unmap(screen, buf);
+   if(screen->buffer_unmap_range) {
+      struct pipe_buffer_range written;
+      written.offset = 0;
+      written.size = buf->size;
+      screen->buffer_unmap_range(screen, buf, written);
+   }
+   else
+      screen->buffer_unmap(screen, buf);
+}
+
+static INLINE void *
+pipe_buffer_map_range(struct pipe_screen *screen,
+                struct pipe_buffer *buf,
+                struct pipe_buffer_range read,
+                struct pipe_buffer_range write)
+{
+   unsigned usage = 0;
+   if(read.size)
+      usage |= PIPE_BUFFER_USAGE_CPU_READ;
+   if(write.size)
+      usage |= PIPE_BUFFER_USAGE_CPU_WRITE;
+   if(screen->buffer_map_range)
+      return screen->buffer_map_range(screen, buf, read, write, usage);
+   else
+      return screen->buffer_map(screen, buf, usage);
+}
+
+static INLINE void
+pipe_buffer_unmap_range(struct pipe_screen *screen,
+                        struct pipe_buffer *buf,
+                        struct pipe_buffer_range written)
+{
+   if(screen->buffer_unmap_range)
+      screen->buffer_unmap_range(screen, buf, written);
+   else
+      screen->buffer_unmap(screen, buf);
 }
 
 static INLINE void
@@ -167,16 +212,23 @@ pipe_buffer_write(struct pipe_screen *screen,
                   unsigned offset, unsigned size,
                   const void *data)
 {
+   struct pipe_buffer_range read;
+   struct pipe_buffer_range write;
    uint8_t *map;
    
    assert(offset < buf->size);
    assert(offset + size <= buf->size);
    
-   map = pipe_buffer_map(screen, buf, PIPE_BUFFER_USAGE_CPU_WRITE);
+   read.offset = 0;
+   read.size = 0;
+   write.offset = offset;
+   write.size = size;
+   
+   map = pipe_buffer_map_range(screen, buf, read, write);
    assert(map);
    if(map) {
       memcpy(map + offset, data, size);
-      pipe_buffer_unmap(screen, buf);
+      pipe_buffer_unmap_range(screen, buf, write);
    }
 }
 
@@ -186,16 +238,23 @@ pipe_buffer_read(struct pipe_screen *screen,
                  unsigned offset, unsigned size,
                  void *data)
 {
+   struct pipe_buffer_range read;
+   struct pipe_buffer_range write;
    uint8_t *map;
    
    assert(offset < buf->size);
    assert(offset + size <= buf->size);
    
-   map = pipe_buffer_map(screen, buf, PIPE_BUFFER_USAGE_CPU_READ);
+   read.offset = offset;
+   read.size = size;
+   write.offset = 0;
+   write.size = 0;
+   
+   map = pipe_buffer_map_range(screen, buf, read, write);
    assert(map);
    if(map) {
       memcpy(data, map + offset, size);
-      pipe_buffer_unmap(screen, buf);
+      pipe_buffer_unmap_range(screen, buf, write);
    }
 }
 
