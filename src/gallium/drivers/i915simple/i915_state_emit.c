@@ -214,7 +214,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
 	 unsigned ctile = BUF_3D_USE_FENCE;
          struct i915_texture *tex = (struct i915_texture *)
                                     cbuf_surface->texture;
-         struct pipe_buffer *buffer = tex->buffer;
          assert(tex);
 
 	 if (tex && tex->tiled) {
@@ -238,7 +237,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
 	 unsigned ztile = BUF_3D_USE_FENCE;
          struct i915_texture *tex = (struct i915_texture *)
                                     depth_surface->texture;
-         struct pipe_buffer *buffer = tex->buffer;
          assert(tex);
 
 	 if (tex && tex->tiled) {
