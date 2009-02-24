@@ -42,6 +42,7 @@
 #include "i915_texture.h"
 #include "i915_debug.h"
 #include "i915_screen.h"
+#include "i915_winsys.h"
 
 /*
  * Helper function and arrays
@@ -764,4 +765,21 @@ i915_init_screen_texture_functions(struct pipe_screen *screen)
    screen->get_tex_surface = i915_get_tex_surface;
    screen->texture_blanket = i915_texture_blanket;
    screen->tex_surface_release = i915_tex_surface_release;
+}
+
+boolean i915_get_texture_buffer( struct pipe_texture *texture,
+                                 struct pipe_buffer **buf,
+                                 unsigned *stride )
+{
+   struct i915_texture *tex = (struct i915_texture *)texture;
+
+   if (!tex)
+      return FALSE;
+
+   pipe_buffer_reference(texture->screen, buf, tex->buffer);
+
+   if (stride)
+      *stride = tex->stride;
+
+   return TRUE;
 }

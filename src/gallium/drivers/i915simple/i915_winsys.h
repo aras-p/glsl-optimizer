@@ -56,6 +56,7 @@ extern "C" {
  */
 
 struct i915_batchbuffer;
+struct pipe_texture;
 struct pipe_buffer;
 struct pipe_fence_handle;
 struct pipe_winsys;
@@ -122,6 +123,18 @@ struct pipe_screen *i915_create_screen( struct pipe_winsys *winsys,
 struct pipe_context *i915_create_context( struct pipe_screen *screen,
                                           struct pipe_winsys *winsys,
                                           struct i915_winsys *i915 );
+
+/**
+ * Used for the winsys to get the buffer used for a texture
+ * and also the stride used for the texture.
+ *
+ * Buffer is referenced for you so you need to unref after use.
+ *
+ * This is needed for example kms.
+ */
+boolean i915_get_texture_buffer( struct pipe_texture *texture,
+                                 struct pipe_buffer **buf,
+                                 unsigned *stride );
 
 #ifdef __cplusplus
 }
