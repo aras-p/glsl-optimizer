@@ -52,7 +52,7 @@
 #define GL_GLEXT_PROTOTYPES
 #include "GL/gl.h"
 #include "GL/glext.h"
-#include <GL/internal/glcore.h>
+#include "GL/internal/glcore.h"
 
 
 #ifndef GL_FIXED
