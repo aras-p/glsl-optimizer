@@ -283,14 +283,13 @@ softpipe_get_tex_transfer(struct pipe_screen *screen,
 {
    struct softpipe_texture *sptex = softpipe_texture(texture);
    struct softpipe_transfer *spt;
-   struct pipe_transfer *pt;
 
    assert(texture);
    assert(level <= texture->last_level);
 
    spt = CALLOC_STRUCT(softpipe_transfer);
-   pt = &spt->base;
    if (spt) {
+      struct pipe_transfer *pt = &spt->base;
       pt->refcount = 1;
       pipe_texture_reference(&pt->texture, texture);
       pt->format = texture->format;
@@ -302,11 +301,12 @@ softpipe_get_tex_transfer(struct pipe_screen *screen,
       pt->nblocksx = texture->nblocksx[level];
       pt->nblocksy = texture->nblocksy[level];
       pt->stride = sptex->stride[level];
-      spt->offset = sptex->level_offset[level];
       pt->usage = usage;
       pt->face = face;
       pt->level = level;
       pt->zslice = zslice;
+
+      spt->offset = sptex->level_offset[level];
 
       if (texture->target == PIPE_TEXTURE_CUBE ||
           texture->target == PIPE_TEXTURE_3D) {
@@ -317,8 +317,9 @@ softpipe_get_tex_transfer(struct pipe_screen *screen,
          assert(face == 0);
          assert(zslice == 0);
       }
+      return pt;
    }
-   return pt;
+   return NULL;
 }
 
 
