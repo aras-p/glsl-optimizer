@@ -161,6 +161,44 @@ pipe_buffer_unmap(struct pipe_screen *screen,
    screen->buffer_unmap(screen, buf);
 }
 
+static INLINE void
+pipe_buffer_write(struct pipe_screen *screen,
+                  struct pipe_buffer *buf,
+                  unsigned offset, unsigned size,
+                  const void *data)
+{
+   uint8_t *map;
+   
+   assert(offset < buf->size);
+   assert(offset + size <= buf->size);
+   
+   map = pipe_buffer_map(screen, buf, PIPE_BUFFER_USAGE_CPU_WRITE);
+   assert(map);
+   if(map) {
+      memcpy(map + offset, data, size);
+      pipe_buffer_unmap(screen, buf);
+   }
+}
+
+static INLINE void
+pipe_buffer_read(struct pipe_screen *screen,
+                 struct pipe_buffer *buf,
+                 unsigned offset, unsigned size,
+                 void *data)
+{
+   uint8_t *map;
+   
+   assert(offset < buf->size);
+   assert(offset + size <= buf->size);
+   
+   map = pipe_buffer_map(screen, buf, PIPE_BUFFER_USAGE_CPU_READ);
+   assert(map);
+   if(map) {
+      memcpy(data, map + offset, size);
+      pipe_buffer_unmap(screen, buf);
+   }
+}
+
 /* XXX: thread safety issues!
  */
 static INLINE void

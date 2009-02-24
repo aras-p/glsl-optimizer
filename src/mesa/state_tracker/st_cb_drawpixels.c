@@ -485,14 +485,11 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
 
    {
       struct pipe_buffer *buf;
-      ubyte *map;
 
       /* allocate/load buffer object with vertex data */
       buf = pipe_buffer_create(pipe->screen, 32, PIPE_BUFFER_USAGE_VERTEX,
                                sizeof(verts));
-      map = pipe_buffer_map(pipe->screen, buf, PIPE_BUFFER_USAGE_CPU_WRITE);
-      memcpy(map, verts, sizeof(verts));
-      pipe_buffer_unmap(pipe->screen, buf);
+      pipe_buffer_write(pipe->screen, buf, 0, sizeof(verts), verts);
 
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_QUADS,

@@ -100,14 +100,11 @@ st_bufferobj_subdata(GLcontext *ctx,
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
-   char *map;
 
    if (offset >= st_obj->size || size > (st_obj->size - offset))
       return;
 
-   map = pipe_buffer_map(pipe->screen, st_obj->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
-   memcpy(map + offset, data, size);
-   pipe_buffer_unmap(pipe->screen, st_obj->buffer);
+   pipe_buffer_write(pipe->screen, st_obj->buffer, offset, size, data);
 }
 
 
@@ -123,14 +120,11 @@ st_bufferobj_get_subdata(GLcontext *ctx,
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
-   char *map;
 
    if (offset >= st_obj->size || size > (st_obj->size - offset))
       return;
 
-   map = pipe_buffer_map(pipe->screen, st_obj->buffer, PIPE_BUFFER_USAGE_CPU_READ);
-   memcpy(data, map + offset, size);
-   pipe_buffer_unmap(pipe->screen, st_obj->buffer);
+   pipe_buffer_read(pipe->screen, st_obj->buffer, offset, size, data);
 }
 
 

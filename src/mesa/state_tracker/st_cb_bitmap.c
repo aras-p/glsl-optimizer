@@ -417,17 +417,11 @@ setup_bitmap_vertex_data(struct st_context *st,
    }
 
    /* put vertex data into vbuf */
-   {
-      char *buf = pipe_buffer_map(pipe->screen, 
-                                  st->bitmap.vbuf, 
-                                  PIPE_BUFFER_USAGE_CPU_WRITE);
-
-      memcpy(buf + st->bitmap.vbuf_slot * sizeof st->bitmap.vertices, 
-             st->bitmap.vertices, 
-             sizeof st->bitmap.vertices);
-
-      pipe_buffer_unmap(pipe->screen, st->bitmap.vbuf);
-   }
+   pipe_buffer_write(pipe->screen, 
+                     st->bitmap.vbuf, 
+                     st->bitmap.vbuf_slot * sizeof st->bitmap.vertices,
+                     sizeof st->bitmap.vertices,
+                     st->bitmap.vertices);
 
    return st->bitmap.vbuf_slot++ * sizeof st->bitmap.vertices;
 }

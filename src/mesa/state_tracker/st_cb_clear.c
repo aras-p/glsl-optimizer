@@ -150,7 +150,6 @@ draw_quad(GLcontext *ctx,
    struct pipe_context *pipe = st->pipe;
    const GLuint max_slots = 1024 / sizeof(st->clear.vertices);
    GLuint i;
-   void *buf;
 
    if (st->clear.vbuf_slot >= max_slots) {
       pipe_buffer_reference(pipe->screen, &st->clear.vbuf, NULL);
@@ -186,13 +185,10 @@ draw_quad(GLcontext *ctx,
    }
 
    /* put vertex data into vbuf */
-   buf = pipe_buffer_map(pipe->screen, st->clear.vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
-
-   memcpy((char *)buf + st->clear.vbuf_slot * sizeof(st->clear.vertices), 
-          st->clear.vertices, 
-          sizeof(st->clear.vertices));
-
-   pipe_buffer_unmap(pipe->screen, st->clear.vbuf);
+   pipe_buffer_write(pipe->screen, st->clear.vbuf, 
+                     st->clear.vbuf_slot * sizeof(st->clear.vertices),
+                     sizeof(st->clear.vertices),
+                     st->clear.vertices);
 
    /* draw */
    util_draw_vertex_buffer(pipe, 

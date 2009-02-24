@@ -199,7 +199,6 @@ static unsigned
 setup_vertex_data(struct blit_state *ctx,
                   float x0, float y0, float x1, float y1, float z)
 {
-   void *buf;
    unsigned offset;
 
    ctx->vertices[0][0][0] = x0;
@@ -228,12 +227,8 @@ setup_vertex_data(struct blit_state *ctx,
 
    offset = get_next_slot( ctx );
 
-   buf = pipe_buffer_map(ctx->pipe->screen, ctx->vbuf,
-                         PIPE_BUFFER_USAGE_CPU_WRITE);
-
-   memcpy((char *)buf + offset, ctx->vertices, sizeof(ctx->vertices));
-
-   pipe_buffer_unmap(ctx->pipe->screen, ctx->vbuf);
+   pipe_buffer_write(ctx->pipe->screen, ctx->vbuf,
+                     offset, sizeof(ctx->vertices), ctx->vertices);
 
    return offset;
 }
@@ -249,7 +244,6 @@ setup_vertex_data_tex(struct blit_state *ctx,
                       float s0, float t0, float s1, float t1,
                       float z)
 {
-   void *buf;
    unsigned offset;
 
    ctx->vertices[0][0][0] = x0;
@@ -278,12 +272,8 @@ setup_vertex_data_tex(struct blit_state *ctx,
 
    offset = get_next_slot( ctx );
 
-   buf = pipe_buffer_map(ctx->pipe->screen, ctx->vbuf,
-                         PIPE_BUFFER_USAGE_CPU_WRITE);
-
-   memcpy((char *)buf + offset, ctx->vertices, sizeof(ctx->vertices));
-
-   pipe_buffer_unmap(ctx->pipe->screen, ctx->vbuf);
+   pipe_buffer_write(ctx->pipe->screen, ctx->vbuf,
+                     offset, sizeof(ctx->vertices), ctx->vertices);
 
    return offset;
 }

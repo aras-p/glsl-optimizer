@@ -1368,7 +1368,6 @@ get_next_slot(struct gen_mipmap_state *ctx)
 static unsigned
 set_vertex_data(struct gen_mipmap_state *ctx, float width, float height)
 {
-   void *buf;
    unsigned offset;
 
    ctx->vertices[0][0][0] = 0.0f; /*x*/
@@ -1393,12 +1392,8 @@ set_vertex_data(struct gen_mipmap_state *ctx, float width, float height)
 
    offset = get_next_slot( ctx );
 
-   buf = pipe_buffer_map(ctx->pipe->screen, ctx->vbuf,
-                         PIPE_BUFFER_USAGE_CPU_WRITE);
-
-   memcpy((char *)buf + offset, ctx->vertices, sizeof(ctx->vertices));
-
-   pipe_buffer_unmap(ctx->pipe->screen, ctx->vbuf);
+   pipe_buffer_write(ctx->pipe->screen, ctx->vbuf,
+                     offset, sizeof(ctx->vertices), ctx->vertices);
 
    return offset;
 }
