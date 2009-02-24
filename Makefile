@@ -298,6 +298,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/windows/VC8/
 
 EGL_FILES = \
+	$(DIRECTORY)/include/EGL/*.h					\
 	$(DIRECTORY)/src/egl/Makefile					\
 	$(DIRECTORY)/src/egl/*/Makefile					\
 	$(DIRECTORY)/src/egl/*/*.[ch]					\
