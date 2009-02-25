@@ -75,6 +75,16 @@ compute_max_element(struct gl_client_array *array)
 {
    assert(array->Enabled);
    if (array->BufferObj->Name) {
+      GLsizeiptrARB offset = (GLsizeiptrARB) array->Ptr;
+      GLsizeiptrARB obj_size = (GLsizeiptrARB) array->BufferObj->Size;
+
+      if (offset < obj_size) {
+	 array->_MaxElement = (obj_size - offset +
+			       array->StrideB -
+			       array->_ElementSize) / array->StrideB;
+      } else {
+	 array->_MaxElement = 0;
+      }
       /* Compute the max element we can access in the VBO without going
        * out of bounds.
        */
