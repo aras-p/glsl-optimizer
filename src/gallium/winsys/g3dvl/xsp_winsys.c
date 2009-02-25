@@ -6,6 +6,7 @@
 #include <util/u_memory.h>
 #include <util/u_math.h>
 #include <softpipe/sp_winsys.h>
+#include <softpipe/sp_texture.h>
 
 /* pipe_winsys implementation */
 
@@ -162,7 +163,7 @@ static void xsp_flush_frontbuffer(struct pipe_winsys *pws, struct pipe_surface *
 	xsp_winsys->fbimage.width = surface->width;
 	xsp_winsys->fbimage.height = surface->height;
 	xsp_winsys->fbimage.bytes_per_line = surface->width * (xsp_winsys->fbimage.bits_per_pixel >> 3);
-	xsp_winsys->fbimage.data = pipe_surface_map(surface, 0);
+	xsp_winsys->fbimage.data = ((struct xsp_buffer *)softpipe_texture(surface->texture)->buffer)->data + surface->offset;
 
 	XPutImage
 	(
@@ -178,7 +179,6 @@ static void xsp_flush_frontbuffer(struct pipe_winsys *pws, struct pipe_surface *
 		surface->height
 	);
 	XFlush(xsp_context->display);
-	pipe_surface_unmap(surface);
 }
 
 static const char* xsp_get_name(struct pipe_winsys *pws)
