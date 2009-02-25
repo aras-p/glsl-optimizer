@@ -1538,6 +1538,7 @@ const struct __DriverAPIRec driDriverAPI = {
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL,
    .CopySubBuffer   = radeonCopySubBuffer,
+   .InitScreen2     = radeonInitScreen2,
 };
 #endif
 
