@@ -299,6 +299,8 @@ MAIN_FILES = \
 
 EGL_FILES = \
 	$(DIRECTORY)/include/EGL/*.h					\
+	$(DIRECTORY)/include/GLES/*.h					\
+	$(DIRECTORY)/include/GLES2/*.h					\
 	$(DIRECTORY)/src/egl/Makefile					\
 	$(DIRECTORY)/src/egl/*/Makefile					\
 	$(DIRECTORY)/src/egl/*/*.[ch]					\
