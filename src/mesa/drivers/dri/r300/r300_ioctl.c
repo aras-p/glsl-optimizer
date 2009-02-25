@@ -612,25 +612,9 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 	COMMIT_BATCH();
 }
 
-void r300Flush(GLcontext * ctx)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-
-	if (RADEON_DEBUG & DEBUG_IOCTL)
-		fprintf(stderr, "%s\n", __FUNCTION__);
-
-	if (rmesa->radeon.dma.flush) {
-		rmesa->radeon.dma.flush(ctx);
-	}
-	
-	if (rmesa->radeon.cmdbuf.cs->cdw) {
-		rcommonFlushCmdBuf(&rmesa->radeon, __FUNCTION__);
-	}
-}
-
 void r300InitIoctlFuncs(struct dd_function_table *functions)
 {
 	functions->Clear = r300Clear;
 	functions->Finish = radeonFinish;
-	functions->Flush = r300Flush;
+	functions->Flush = radeonFlush;
 }

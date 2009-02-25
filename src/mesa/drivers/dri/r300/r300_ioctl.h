@@ -39,13 +39,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_context.h"
 #include "radeon_drm.h"
 
-extern void r300Flush(GLcontext * ctx);
-
-extern void r300AllocDmaRegion(r300ContextPtr rmesa,
-			       struct radeon_bo **pbo, int *poffset,
-			       int bytes, int alignment);
-
 extern void r300InitIoctlFuncs(struct dd_function_table *functions);
 
-extern void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size);
 #endif				/* __R300_IOCTL_H__ */
