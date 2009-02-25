@@ -52,7 +52,7 @@ struct intel_be_buffer {
  * Takes a reference.
  */
 struct pipe_buffer *
-intel_be_buffer_from_handle(struct pipe_winsys *winsys,
+intel_be_buffer_from_handle(struct pipe_screen *screen,
                             const char* name, unsigned handle);
 
 /**
@@ -61,7 +61,7 @@ intel_be_buffer_from_handle(struct pipe_winsys *winsys,
  * If buffer is destroyed handle may become invalid.
  */
 unsigned
-intel_be_handle_from_buffer(struct pipe_winsys *winsys,
+intel_be_handle_from_buffer(struct pipe_screen *screen,
                             struct pipe_buffer *buffer);
 
 static INLINE struct intel_be_buffer *

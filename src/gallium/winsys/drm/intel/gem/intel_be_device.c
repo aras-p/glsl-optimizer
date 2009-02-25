@@ -133,10 +133,10 @@ err:
 }
 
 struct pipe_buffer *
-intel_be_buffer_from_handle(struct pipe_winsys *winsys,
+intel_be_buffer_from_handle(struct pipe_screen *screen,
                             const char* name, unsigned handle)
 {
-	struct intel_be_device *dev = intel_be_device(winsys);
+	struct intel_be_device *dev = intel_be_device(screen->winsys);
 	struct intel_be_buffer *buffer = CALLOC_STRUCT(intel_be_buffer);
 
 	if (!buffer)
@@ -163,7 +163,7 @@ err:
 }
 
 unsigned
-intel_be_handle_from_buffer(struct pipe_winsys *winsys,
+intel_be_handle_from_buffer(struct pipe_screen *screen,
                             struct pipe_buffer *buf)
 {
 	drm_intel_bo *bo = intel_bo(buf);
