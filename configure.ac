@@ -382,7 +382,7 @@ default_driver="xlib"
 case "$host_os" in
 linux*)
     case "$host_cpu" in
-    i*86|x86_64|powerpc*) default_driver="dri";;
+    i*86|x86_64|powerpc*|sparc*) default_driver="dri";;
     esac
     ;;
 *freebsd* | dragonfly*)
