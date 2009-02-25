@@ -6,9 +6,7 @@ TOP        = ../../../..
 
 include ${TOP}/configs/current
 
-# XXX: We shouldn't be specifying special compiler flags here.
-# Flags should come from the configuration file instead.
-CFLAGS:= -g -Wall -Werror-implicit-function-declaration -fPIC \
+CFLAGS := \
           -I${GALLIUMDIR}/include \
           -I${GALLIUMDIR}/auxiliary \
           -I${TOP}/src/mesa/drivers/dri/common \
