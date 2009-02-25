@@ -144,81 +144,6 @@ nv40_surface_buffer(struct pipe_surface *surf)
 	return mt->buffer;
 }
 
-static void *
-nv40_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
-		 unsigned flags )
-{
-	struct pipe_winsys	*ws = screen->winsys;
-	struct pipe_surface	*surface_to_map;
-	void			*map;
-
-	if (!(surface->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
-		struct nv40_miptree *mt = (struct nv40_miptree *)surface->texture;
-
-		if (!mt->shadow_tex) {
-			unsigned old_tex_usage = surface->texture->tex_usage;
-			surface->texture->tex_usage = NOUVEAU_TEXTURE_USAGE_LINEAR |
-			                              PIPE_TEXTURE_USAGE_DYNAMIC;
-			mt->shadow_tex = screen->texture_create(screen, surface->texture);
-			surface->texture->tex_usage = old_tex_usage;
-
-			assert(mt->shadow_tex->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR);
-		}
-
-		mt->shadow_surface = screen->get_tex_surface
-		(
-			screen, mt->shadow_tex,
-			surface->face, surface->level, surface->zslice,
-			surface->usage
-		);
-
-		surface_to_map = mt->shadow_surface;
-	}
-	else
-		surface_to_map = surface;
-
-	assert(surface_to_map);
-	map = ws->buffer_map(ws, nv40_surface_buffer(surface_to_map), flags);
-	if (!map)
-		return NULL;
-
-	return map + surface_to_map->offset;
-}
-
-static void
-nv40_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
-{
-	struct pipe_winsys	*ws = screen->winsys;
-	struct pipe_surface	*surface_to_unmap;
-
-	/* TODO: Copy from shadow just before push buffer is flushed instead.
-	         There are probably some programs that map/unmap excessively
-	         before rendering. */
-	if (!(surface->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
-		struct nv40_miptree *mt = (struct nv40_miptree *)surface->texture;
-
-		assert(mt->shadow_tex);
-
-		surface_to_unmap = mt->shadow_surface;
-	}
-	else
-		surface_to_unmap = surface;
-
-	assert(surface_to_unmap);
-
-	ws->buffer_unmap(ws, nv40_surface_buffer(surface_to_unmap));
-
-	if (surface_to_unmap != surface) {
-		struct nv40_screen *nvscreen = nv40_screen(screen);
-
-		nvscreen->eng2d->copy(nvscreen->eng2d, surface, 0, 0,
-		                      surface_to_unmap, 0, 0,
-		                      surface->width, surface->height);
-
-		screen->tex_surface_release(screen, &surface_to_unmap);
-	}
-}
-
 static void
 nv40_screen_destroy(struct pipe_screen *pscreen)
 {
@@ -240,7 +165,7 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 {
 	struct nv40_screen *screen = CALLOC_STRUCT(nv40_screen);
 	struct nouveau_stateobj *so;
-	unsigned curie_class;
+	unsigned curie_class = 0;
 	unsigned chipset = nvws->channel->device->chipset;
 	int ret;
 
@@ -264,8 +189,6 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	case 0x60:
 		if (NV6X_GRCLASS4497_CHIPSETS & (1 << (chipset & 0x0f)))
 			curie_class = NV44TCL;
-		break;
-	default:
 		break;
 	}
 
@@ -372,10 +295,8 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 
 	screen->pipe.is_format_supported = nv40_screen_surface_format_supported;
 
-	screen->pipe.surface_map = nv40_surface_map;
-	screen->pipe.surface_unmap = nv40_surface_unmap;
-
 	nv40_screen_init_miptree_functions(&screen->pipe);
+	nv40_screen_init_transfer_functions(&screen->pipe);
 	u_simple_screen_init(&screen->pipe);
 
 	return &screen->pipe;

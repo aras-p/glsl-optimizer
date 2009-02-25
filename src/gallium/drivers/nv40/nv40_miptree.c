@@ -78,8 +78,6 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	mt->base = *pt;
 	mt->base.refcount = 1;
 	mt->base.screen = pscreen;
-	mt->shadow_tex = NULL;
-	mt->shadow_surface = NULL;
 
 	/* Swizzled textures must be POT */
 	if (pt->width[0] & (pt->width[0] - 1) ||
@@ -165,12 +163,6 @@ nv40_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **ppt)
 			FREE(mt->level[l].image_offset);
 	}
 
-	if (mt->shadow_tex) {
-		if (mt->shadow_surface)
-			pscreen->tex_surface_release(pscreen, &mt->shadow_surface);
-		nv40_miptree_release(pscreen, &mt->shadow_tex);
-	}
-
 	FREE(mt);
 }
 
@@ -180,36 +172,33 @@ nv40_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 			 unsigned flags)
 {
 	struct nv40_miptree *mt = (struct nv40_miptree *)pt;
-	struct pipe_surface *ps;
+	struct nv04_surface *ns;
 
-	ps = CALLOC_STRUCT(pipe_surface);
-	if (!ps)
+	ns = CALLOC_STRUCT(nv04_surface);
+	if (!ns)
 		return NULL;
-	pipe_texture_reference(&ps->texture, pt);
-	ps->format = pt->format;
-	ps->width = pt->width[level];
-	ps->height = pt->height[level];
-	ps->block = pt->block;
-	ps->nblocksx = pt->nblocksx[level];
-	ps->nblocksy = pt->nblocksy[level];
-	ps->stride = mt->level[level].pitch;
-	ps->usage = flags;
-	ps->status = PIPE_SURFACE_STATUS_DEFINED;
-	ps->refcount = 1;
-	ps->face = face;
-	ps->level = level;
-	ps->zslice = zslice;
+	pipe_texture_reference(&ns->base.texture, pt);
+	ns->base.format = pt->format;
+	ns->base.width = pt->width[level];
+	ns->base.height = pt->height[level];
+	ns->base.usage = flags;
+	ns->base.status = PIPE_SURFACE_STATUS_DEFINED;
+	ns->base.refcount = 1;
+	ns->base.face = face;
+	ns->base.level = level;
+	ns->base.zslice = zslice;
+	ns->pitch = mt->level[level].pitch;
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
-		ps->offset = mt->level[level].image_offset[face];
+		ns->base.offset = mt->level[level].image_offset[face];
 	} else
 	if (pt->target == PIPE_TEXTURE_3D) {
-		ps->offset = mt->level[level].image_offset[zslice];
+		ns->base.offset = mt->level[level].image_offset[zslice];
 	} else {
-		ps->offset = mt->level[level].image_offset[0];
+		ns->base.offset = mt->level[level].image_offset[0];
 	}
 
-	return ps;
+	return &ns->base;
 }
 
 static void

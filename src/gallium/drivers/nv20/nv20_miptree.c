@@ -9,10 +9,14 @@ static void
 nv20_miptree_layout(struct nv20_miptree *nv20mt)
 {
 	struct pipe_texture *pt = &nv20mt->base;
-	boolean swizzled = FALSE;
 	uint width = pt->width[0], height = pt->height[0];
 	uint offset = 0;
 	int nr_faces, l, f;
+	uint wide_pitch = pt->tex_usage & (PIPE_TEXTURE_USAGE_SAMPLER |
+		                           PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
+		                           PIPE_TEXTURE_USAGE_RENDER_TARGET |
+		                           PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+		                           PIPE_TEXTURE_USAGE_PRIMARY);
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
 		nr_faces = 6;
@@ -26,25 +30,31 @@ nv20_miptree_layout(struct nv20_miptree *nv20mt)
 		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
 		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
 
-		if (swizzled)
-			nv20mt->level[l].pitch = pt->nblocksx[l] * pt->block.size;
+		if (wide_pitch && (pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR))
+			nv20mt->level[l].pitch = align(pt->width[0] * pt->block.size, 64);
 		else
-			nv20mt->level[l].pitch = pt->nblocksx[0] * pt->block.size;
-		nv20mt->level[l].pitch = (nv20mt->level[l].pitch + 63) & ~63;
+			nv20mt->level[l].pitch = pt->width[l] * pt->block.size;
 
 		nv20mt->level[l].image_offset =
 			CALLOC(nr_faces, sizeof(unsigned));
 
 		width  = MAX2(1, width  >> 1);
 		height = MAX2(1, height >> 1);
-
 	}
 
 	for (f = 0; f < nr_faces; f++) {
-		for (l = 0; l <= pt->last_level; l++) {
+		for (l = 0; l < pt->last_level; l++) {
 			nv20mt->level[l].image_offset[f] = offset;
-			offset += nv20mt->level[l].pitch * pt->height[l];
+
+			if (!(pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR) &&
+			    pt->width[l + 1] > 1 && pt->height[l + 1] > 1)
+				offset += align(nv20mt->level[l].pitch * pt->height[l], 64);
+			else
+				offset += nv20mt->level[l].pitch * pt->height[l];
 		}
+
+		nv20mt->level[l].image_offset[f] = offset;
+		offset += nv20mt->level[l].pitch * pt->height[l];
 	}
 
 	nv20mt->total_size = offset;
@@ -96,7 +106,8 @@ nv20_miptree_create(struct pipe_screen *screen, const struct pipe_texture *pt)
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 	else
 	if (pt->tex_usage & (PIPE_TEXTURE_USAGE_PRIMARY |
-	                     PIPE_TEXTURE_USAGE_DISPLAY_TARGET))
+	                     PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+	                     PIPE_TEXTURE_USAGE_DEPTH_STENCIL))
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 	else
 	if (pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC)
@@ -107,7 +118,11 @@ nv20_miptree_create(struct pipe_screen *screen, const struct pipe_texture *pt)
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_X8R8G8B8_UNORM:
 		case PIPE_FORMAT_R16_SNORM:
+		{
+			if (debug_get_bool_option("NOUVEAU_NO_SWIZZLE", FALSE))
+				mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 			break;
+		}
 		default:
 			mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 		}
@@ -152,33 +167,33 @@ nv20_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 			 unsigned flags)
 {
 	struct nv20_miptree *nv20mt = (struct nv20_miptree *)pt;
-	struct pipe_surface *ps;
+	struct nv04_surface *ns;
 
-	ps = CALLOC_STRUCT(pipe_surface);
-	if (!ps)
+	ns = CALLOC_STRUCT(nv04_surface);
+	if (!ns)
 		return NULL;
-	pipe_texture_reference(&ps->texture, pt);
-	ps->format = pt->format;
-	ps->width = pt->width[level];
-	ps->height = pt->height[level];
-	ps->block = pt->block;
-	ps->nblocksx = pt->nblocksx[level];
-	ps->nblocksy = pt->nblocksy[level];
-	ps->stride = nv20mt->level[level].pitch;
-	ps->usage = flags;
-	ps->status = PIPE_SURFACE_STATUS_DEFINED;
-	ps->refcount = 1;
+	pipe_texture_reference(&ns->base.texture, pt);
+	ns->base.format = pt->format;
+	ns->base.width = pt->width[level];
+	ns->base.height = pt->height[level];
+	ns->base.usage = flags;
+	ns->base.status = PIPE_SURFACE_STATUS_DEFINED;
+	ns->base.refcount = 1;
+	ns->base.face = face;
+	ns->base.level = level;
+	ns->base.zslice = zslice;
+	ns->pitch = nv20mt->level[level].pitch;
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
-		ps->offset = nv20mt->level[level].image_offset[face];
+		ns->base.offset = nv20mt->level[level].image_offset[face];
 	} else
 	if (pt->target == PIPE_TEXTURE_3D) {
-		ps->offset = nv20mt->level[level].image_offset[zslice];
+		ns->base.offset = nv20mt->level[level].image_offset[zslice];
 	} else {
-		ps->offset = nv20mt->level[level].image_offset[0];
+		ns->base.offset = nv20mt->level[level].image_offset[0];
 	}
 
-	return ps;
+	return &ns->base;
 }
 
 static void

@@ -21,4 +21,8 @@ nv20_screen(struct pipe_screen *screen)
 	return (struct nv20_screen *)screen;
 }
 
+
+void
+nv20_screen_init_transfer_functions(struct pipe_screen *pscreen);
+
 #endif
