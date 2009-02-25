@@ -4,12 +4,14 @@
 
 struct pipe_screen;
 struct pipe_winsys;
+struct pipe_buffer;
 struct pipe_context;
+struct pipe_texture;
 
 struct drm_api
 {
 	/**
-	 * Special buffer function
+	 * Special buffer functions
 	 */
 	/*@{*/
 	struct pipe_screen*  (*create_screen)(int drmFB, int pciID);
@@ -17,11 +19,12 @@ struct drm_api
 	/*@}*/
 
 	/**
-	 * Special buffer function
+	 * Special buffer functions
 	 */
 	/*@{*/
-	struct pipe_buffer* (*buffer_from_handle)(struct pipe_winsys *winsys, const char *name, unsigned handle);
-	unsigned (*handle_from_buffer)(struct pipe_winsys *winsys, struct pipe_buffer *buffer);
+	boolean (*buffer_from_texture)(struct pipe_texture *texture, struct pipe_buffer **buffer, unsigned *stride);
+	struct pipe_buffer* (*buffer_from_handle)(struct pipe_screen *screen, const char *name, unsigned handle);
+	unsigned (*handle_from_buffer)(struct pipe_screen *screen, struct pipe_buffer *buffer);
 	/*@}*/
 };
 
