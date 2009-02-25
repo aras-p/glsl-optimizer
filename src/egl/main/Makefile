@@ -63,7 +63,7 @@ library: $(TOP)/$(LIB_DIR)/libEGL.so
 $(TOP)/$(LIB_DIR)/libEGL.so: $(OBJECTS)
 	$(MKLIB) -o EGL -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major 1 -minor 0 \
-		-install $(TOP)/$(LIB_DIR) -ldl $(OBJECTS) $(LIBS)
+		-install $(TOP)/$(LIB_DIR) -dlopen $(OBJECTS) $(LIBS)
 
 install:
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
