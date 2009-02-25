@@ -734,7 +734,7 @@
 
 
 #define CMD_URB_FENCE                 0x6000
-#define CMD_CONST_BUFFER_STATE        0x6001
+#define CMD_CS_URB_STATE              0x6001
 #define CMD_CONST_BUFFER              0x6002
 
 #define CMD_STATE_BASE_ADDRESS        0x6101

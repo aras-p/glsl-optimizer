@@ -670,7 +670,9 @@ void brwInitFragProgFuncs( struct dd_function_table *functions );
  */
 void brw_upload_urb_fence(struct brw_context *brw);
 
-void brw_upload_constant_buffer_state(struct brw_context *brw);
+/* brw_curbe.c
+ */
+void brw_upload_cs_urb_state(struct brw_context *brw);
 
 
 /*======================================================================
