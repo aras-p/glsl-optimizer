@@ -6,14 +6,15 @@ TOP        = ../../../..
 
 include ${TOP}/configs/current
 
-CFLAGS += -g -Wall -Werror-implicit-function-declaration -fPIC \
+CFLAGS:= -g -Wall -Werror-implicit-function-declaration -fPIC \
           -I${GALLIUMDIR}/include \
           -I${GALLIUMDIR}/auxiliary \
           -I${TOP}/src/mesa/drivers/dri/common \
           -I${TOP}/src/mesa \
           -I$(TOP)/include \
           -I$(TOP)/src/egl/main \
-          ${LIBDRM_CFLAGS}
+          ${LIBDRM_CFLAGS} \
+          ${CFLAGS}
 
 #############################################
 
