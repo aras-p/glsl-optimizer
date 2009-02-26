@@ -168,10 +168,21 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	BATCH_LOCALS(&r300->radeon);
 	int numtmus = packet0_count(r300, r300->hw.tex.offset.cmd);
+	int notexture = 0;
 
 	if (numtmus) {
 		int i;
 
+		for(i = 0; i < numtmus; ++i) {
+		    radeonTexObj *t = r300->hw.textures[i];
+		
+		    if (!t)
+			notexture = 1;
+		}
+
+		if (r300->radeon.radeonScreen->kernel_mm && notexture) {
+			return;
+		}
 		BEGIN_BATCH_NO_AUTOSTATE(4 * numtmus);
 		for(i = 0; i < numtmus; ++i) {
 		    radeonTexObj *t = r300->hw.textures[i];
@@ -188,6 +199,8 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 			    } else if (!r300->radeon.radeonScreen->kernel_mm) {
 				    OUT_BATCH(t->override_offset);
 			    }
+			    else
+			    	OUT_BATCH(r300->radeon.radeonScreen->texOffset[0]);
 		    }
 		}
 		END_BATCH();
