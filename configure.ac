@@ -307,6 +307,13 @@ if test "x$enable_asm" = xyes; then
             ;;
         esac
         ;;
+    sparc*)
+        case "$host_os" in
+        linux*)
+            asm_arch=sparc
+            ;;
+        esac
+        ;;
     esac
 
     case "$asm_arch" in
@@ -326,6 +333,12 @@ if test "x$enable_asm" = xyes; then
         ASM_FLAGS="-DUSE_PPC_ASM -DUSE_VMX_ASM"
         MESA_ASM_SOURCES='$(PPC_SOURCES)'
         AC_MSG_RESULT([yes, ppc])
+        ;;
+    sparc)
+        ASM_FLAGS="-DUSE_SPARC_ASM"
+        MESA_ASM_SOURCES='$(SPARC_SOURCES)'
+        GLAPI_ASM_SOURCES='$(SPARC_API)'
+        AC_MSG_RESULT([yes, sparc])
         ;;
     *)
         AC_MSG_RESULT([no, platform not supported])

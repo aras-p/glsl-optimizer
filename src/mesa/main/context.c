@@ -390,9 +390,6 @@ one_time_init( GLcontext *ctx )
          _mesa_ubyte_to_float_color_tab[i] = (float) i / 255.0F;
       }
 
-#ifdef USE_SPARC_ASM
-      _mesa_init_sparc_glapi_relocs();
-#endif
       if (_mesa_getenv("MESA_DEBUG")) {
          _glapi_noop_enable_warnings(GL_TRUE);
          _glapi_set_warning_func( (_glapi_warning_func) _mesa_warning );
