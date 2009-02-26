@@ -235,7 +235,11 @@ static void r300_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmes
 
 static void r300_vtbl_pre_emit_atoms(radeonContextPtr radeon)
 {
+   r300ContextPtr r300 = (r300ContextPtr)radeon;
    BATCH_LOCALS(radeon);
+
+   r300->vap_flush_needed = GL_TRUE;
+
    cp_wait(radeon, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
    BEGIN_BATCH_NO_AUTOSTATE(2);
    OUT_BATCH_REGVAL(R300_TX_INVALTAGS, R300_TX_FLUSH);

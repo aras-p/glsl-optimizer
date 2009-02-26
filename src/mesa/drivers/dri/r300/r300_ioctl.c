@@ -528,6 +528,8 @@ static void r300EmitClearState(GLcontext * ctx)
                                       PVS_SRC_SELECT_FORCE_0,
                                       PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 		vpu.cmd[8] = 0x0;
+
+		r300->vap_flush_needed = GL_TRUE;
 		emit_vpu(ctx, &vpu);
 	}
 }

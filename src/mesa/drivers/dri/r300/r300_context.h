@@ -683,7 +683,9 @@ struct r300_context {
 	GLboolean disable_lowimpact_fallback;
 
 	DECLARE_RENDERINPUTS(tnl_index_bitset);	/* index of bits for last tnl_install_attrs */
+	
 	struct r300_swtcl_info swtcl;
+	GLboolean vap_flush_needed;
 };
 
 struct r300_buffer_object {
