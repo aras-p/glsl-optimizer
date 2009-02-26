@@ -349,6 +349,13 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 #define INTEL_TAG(name) name##_z16
 #include "intel_depthtmp.h"
 
+/* z24 depthbuffer functions. */
+#define INTEL_VALUE_TYPE GLuint
+#define INTEL_WRITE_DEPTH(offset, d) pwrite_32(irb, offset, d)
+#define INTEL_READ_DEPTH(offset) pread_32(irb, offset)
+#define INTEL_TAG(name) name##_z24
+#include "intel_depthtmp.h"
+
 /* z24s8 depthbuffer functions. */
 #define INTEL_VALUE_TYPE GLuint
 #define INTEL_WRITE_DEPTH(offset, d) pwrite_32(irb, offset, z24s8_to_s8z24(d))
@@ -613,8 +620,21 @@ intel_set_span_functions(struct intel_context *intel,
 	 break;
       }
    }
-   else if (rb->_ActualFormat == GL_DEPTH_COMPONENT24 ||        /* XXX FBO remove */
-            rb->_ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
+   else if (rb->_ActualFormat == GL_DEPTH_COMPONENT24) {
+      switch (tiling) {
+      case I915_TILING_NONE:
+      default:
+	 intelInitDepthPointers_z24(rb);
+	 break;
+      case I915_TILING_X:
+	 intel_XTile_InitDepthPointers_z24(rb);
+	 break;
+      case I915_TILING_Y:
+	 intel_YTile_InitDepthPointers_z24(rb);
+	 break;
+      }
+   }
+   else if (rb->_ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
       switch (tiling) {
       case I915_TILING_NONE:
       default:
