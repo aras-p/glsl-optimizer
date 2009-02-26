@@ -323,6 +323,15 @@ intel_create_renderbuffer(GLenum intFormat)
       irb->Base.BlueBits = 5;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       break;
+   case GL_RGB8:
+      irb->Base._ActualFormat = GL_RGB8;
+      irb->Base._BaseFormat = GL_RGB;
+      irb->Base.RedBits = 8;
+      irb->Base.GreenBits = 8;
+      irb->Base.BlueBits = 8;
+      irb->Base.AlphaBits = 0;
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      break;
    case GL_RGBA8:
       irb->Base._ActualFormat = GL_RGBA8;
       irb->Base._BaseFormat = GL_RGBA;

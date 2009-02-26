@@ -323,7 +323,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
    else {
       GLboolean swStencil = (mesaVis->stencilBits > 0 &&
                              mesaVis->depthBits != 24);
-      GLenum rgbFormat = (mesaVis->redBits == 5 ? GL_RGB5 : GL_RGBA8);
+      GLenum rgbFormat;
 
       struct intel_framebuffer *intel_fb = CALLOC_STRUCT(intel_framebuffer);
 
@@ -331,6 +331,13 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 	 return GL_FALSE;
 
       _mesa_initialize_framebuffer(&intel_fb->Base, mesaVis);
+
+      if (mesaVis->redBits == 5)
+	 rgbFormat = GL_RGB5;
+      else if (mesaVis->alphaBits == 0)
+	 rgbFormat = GL_RGB8;
+      else
+	 rgbFormat = GL_RGBA8;
 
       /* setup the hardware-based renderbuffers */
       intel_fb->color_rb[0] = intel_create_renderbuffer(rgbFormat);
