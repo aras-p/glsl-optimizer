@@ -2742,7 +2742,8 @@ static void r300DrawBuffer( GLcontext *ctx, GLenum mode )
 	radeon_firevertices(&rmesa->radeon);	/* don't pipeline cliprect changes */
 
 	radeonSetCliprects( &rmesa->radeon );
-	radeonUpdatePageFlipping(&rmesa->radeon);
+        if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled) 
+		radeonUpdatePageFlipping(&rmesa->radeon);
 }
 
 static void r300ReadBuffer( GLcontext *ctx, GLenum mode )
