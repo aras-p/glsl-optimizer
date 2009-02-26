@@ -418,8 +418,8 @@ struct brw_context
       struct brw_tracked_state **atoms;
       GLuint nr_atoms;
 
-      GLuint nr_draw_regions;
-      struct intel_region *draw_regions[MAX_DRAW_BUFFERS];
+      GLuint nr_color_regions;
+      struct intel_region *color_regions[MAX_DRAW_BUFFERS];
       struct intel_region *depth_region;
 
       /**

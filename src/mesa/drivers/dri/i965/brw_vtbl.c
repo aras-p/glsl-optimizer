@@ -71,9 +71,9 @@ static void brw_destroy_context( struct intel_context *intel )
 
    brw_FrameBufferTexDestroy( brw );
 
-   for (i = 0; i < brw->state.nr_draw_regions; i++)
-      intel_region_release(&brw->state.draw_regions[i]);
-   brw->state.nr_draw_regions = 0;
+   for (i = 0; i < brw->state.nr_color_regions; i++)
+      intel_region_release(&brw->state.color_regions[i]);
+   brw->state.nr_color_regions = 0;
    intel_region_release(&brw->state.depth_region);
 
    dri_bo_release(&brw->curbe.curbe_bo);
@@ -105,25 +105,25 @@ static void brw_destroy_context( struct intel_context *intel )
  * called from intelDrawBuffer()
  */
 static void brw_set_draw_region( struct intel_context *intel, 
-                                 struct intel_region *draw_regions[],
+                                 struct intel_region *color_regions[],
                                  struct intel_region *depth_region,
-                                 GLuint num_regions)
+                                 GLuint num_color_regions)
 {
    struct brw_context *brw = brw_context(&intel->ctx);
-   int i;
+   GLuint i;
 
    /* release old color/depth regions */
    if (brw->state.depth_region != depth_region)
       brw->state.dirty.brw |= BRW_NEW_DEPTH_BUFFER;
-   for (i = 0; i < brw->state.nr_draw_regions; i++)
-       intel_region_release(&brw->state.draw_regions[i]);
+   for (i = 0; i < brw->state.nr_color_regions; i++)
+       intel_region_release(&brw->state.color_regions[i]);
    intel_region_release(&brw->state.depth_region);
 
    /* reference new color/depth regions */
-   for (i = 0; i < num_regions; i++)
-       intel_region_reference(&brw->state.draw_regions[i], draw_regions[i]);
+   for (i = 0; i < num_color_regions; i++)
+       intel_region_reference(&brw->state.color_regions[i], color_regions[i]);
    intel_region_reference(&brw->state.depth_region, depth_region);
-   brw->state.nr_draw_regions = num_regions;
+   brw->state.nr_color_regions = num_color_regions;
 }
 
 

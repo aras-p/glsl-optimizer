@@ -871,8 +871,8 @@ static void emit_fb_write( struct brw_wm_compile *c )
 
    /* The inst->Aux field is used for FB write target and the EOT marker */
 
-   if (brw->state.nr_draw_regions > 1) {
-      for (i = 0 ; i < brw->state.nr_draw_regions; i++) {
+   if (brw->state.nr_color_regions > 1) {
+      for (i = 0 ; i < brw->state.nr_color_regions; i++) {
          outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i);
          last_inst = inst = emit_op(c,
                                     WM_FB_WRITE, dst_mask(dst_undef(),0), 0,
