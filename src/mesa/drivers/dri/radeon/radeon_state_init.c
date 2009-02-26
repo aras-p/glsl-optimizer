@@ -288,7 +288,8 @@ static void scl_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    r100ContextPtr r100 = R100_CONTEXT(ctx);
    BATCH_LOCALS(&r100->radeon);
    uint32_t dwords = atom->cmd_size;
-
+   
+   dwords += 2;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_SCL(atom->cmd[0], atom->cmd+1);
    END_BATCH();
@@ -301,8 +302,23 @@ static void vec_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    BATCH_LOCALS(&r100->radeon);
    uint32_t dwords = atom->cmd_size;
 
+   dwords += 4;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_VEC(atom->cmd[0], atom->cmd+1);
+   END_BATCH();
+}
+
+
+static void lit_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r100ContextPtr r100 = R100_CONTEXT(ctx);
+   BATCH_LOCALS(&r100->radeon);
+   uint32_t dwords = atom->cmd_size;
+
+   dwords += 6;
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   OUT_VEC(atom->cmd[LIT_CMD_0], atom->cmd+1);
+   OUT_SCL(atom->cmd[LIT_CMD_1], atom->cmd+LIT_CMD_1+1);
    END_BATCH();
 }
 
@@ -408,7 +424,12 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
      atom->cmd[CTX_RB3D_ZSTENCILCNTL] |= depth_fmt;
      
    }
+
    /* output the first 7 bytes of context */
+   if (drb)
+     dwords += 4;
+   if (rrb)
+     dwords += 4;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
 
    /* In the CS case we need to split this up */
@@ -428,7 +449,6 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    OUT_BATCH(CP_PACKET0(RADEON_PP_CNTL, 1));
    OUT_BATCH(atom->cmd[CTX_PP_CNTL]);
    OUT_BATCH(atom->cmd[CTX_RB3D_CNTL]);
-
 
    if (rrb) {
      OUT_BATCH(CP_PACKET0(RADEON_RB3D_COLOROFFSET, 0));
@@ -680,6 +700,22 @@ void radeonInitState( r100ContextPtr rmesa )
    for (i = 0 ; i < 6; i++) {
       rmesa->hw.ucp[i].cmd[UCP_CMD_0] = 
 	 cmdvec( RADEON_VS_UCP_ADDR + i, 1, 4 );
+   }
+
+   if (rmesa->radeon.radeonScreen->kernel_mm) {
+      rmesa->hw.grd.emit = scl_emit;
+      rmesa->hw.fog.emit = vec_emit;
+      rmesa->hw.glt.emit = vec_emit;
+      rmesa->hw.eye.emit = vec_emit;
+      
+      for (i = 0; i <= 6; i++)
+	 rmesa->hw.mat[i].emit = vec_emit;
+
+      for (i = 0; i < 8; i++)
+	 rmesa->hw.lit[i].emit = lit_emit;
+
+      for (i = 0; i < 6; i++)
+	 rmesa->hw.ucp[i].emit = vec_emit;
    }
 
    rmesa->last_ReallyEnabled = -1;
