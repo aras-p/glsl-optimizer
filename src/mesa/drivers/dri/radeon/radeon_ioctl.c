@@ -116,13 +116,26 @@ extern void radeonEmitVbufPrim( r100ContextPtr rmesa,
 #if RADEON_OLD_PACKETS
    BEGIN_BATCH(8);
    OUT_BATCH_PACKET3_CLIP(RADEON_CP_PACKET3_3D_RNDR_GEN_INDX_PRIM, 3);
-   OUT_BATCH_RELOC(rmesa->ioctl.vertex_offset, rmesa->ioctl.bo, rmesa->ioctl.vertex_offset, RADEON_GEM_DOMAIN_GTT, 0, 0);
+   if (!rmesa->radeon.radeonScreen->kernel_mm) {
+     OUT_BATCH_RELOC(rmesa->ioctl.vertex_offset, rmesa->ioctl.bo, rmesa->ioctl.vertex_offset, RADEON_GEM_DOMAIN_GTT, 0, 0);
+   } else {
+     OUT_BATCH(rmesa->ioctl.vertex_offset);
+   }
+    
    OUT_BATCH(vertex_nr);
    OUT_BATCH(vertex_format);
    OUT_BATCH(primitive |  RADEON_CP_VC_CNTL_PRIM_WALK_LIST |
 	     RADEON_CP_VC_CNTL_COLOR_ORDER_RGBA |
 	     RADEON_CP_VC_CNTL_VTX_FMT_RADEON_MODE |
 	     (vertex_nr << RADEON_CP_VC_CNTL_NUM_SHIFT));
+
+   if (rmesa->radeon.radeonScreen->kernel_mm) {
+     radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
+			   rmesa->ioctl.bo,
+			   RADEON_GEM_DOMAIN_GTT,
+			   0, 0);
+   }
+   
    END_BATCH();
    
 #else   
@@ -155,7 +168,11 @@ void radeonFlushElts( GLcontext *ctx )
 
    nr = rmesa->tcl.elt_used;
 
-   rmesa->radeon.cmdbuf.cs->cdw += dwords;
+#if RADEON_OLD_PACKETS
+   if (rmesa->radeon.radeonScreen->kernel_mm) {
+     dwords -= 2;
+   }
+#endif
 
 #if RADEON_OLD_PACKETS
    cmd[1] |= (dwords + 3) << 16;
@@ -165,7 +182,18 @@ void radeonFlushElts( GLcontext *ctx )
    cmd[3] |= nr << RADEON_CP_VC_CNTL_NUM_SHIFT;
 #endif
 
+   rmesa->radeon.cmdbuf.cs->cdw += dwords;
    rmesa->radeon.cmdbuf.cs->section_cdw += dwords;
+
+#if RADEON_OLD_PACKETS
+   if (rmesa->radeon.radeonScreen->kernel_mm) {
+      radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
+			    rmesa->ioctl.bo,
+			    RADEON_GEM_DOMAIN_GTT,
+			    0, 0);
+   }
+#endif
+
    END_BATCH();
 
    if (RADEON_DEBUG & DEBUG_SYNC) {
@@ -199,7 +227,11 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
 #if RADEON_OLD_PACKETS
    BEGIN_BATCH_NO_AUTOSTATE(2+ELTS_BUFSZ(align_min_nr)/4);
    OUT_BATCH_PACKET3_CLIP(RADEON_CP_PACKET3_3D_RNDR_GEN_INDX_PRIM, 0);
-   OUT_BATCH_RELOC(rmesa->ioctl.vertex_offset, rmesa->ioctl.bo, rmesa->ioctl.vertex_offset, RADEON_GEM_DOMAIN_GTT, 0, 0);
+   if (!rmesa->radeon.radeonScreen->kernel_mm) {
+     OUT_BATCH_RELOC(rmesa->ioctl.vertex_offset, rmesa->ioctl.bo, rmesa->ioctl.vertex_offset, RADEON_GEM_DOMAIN_GTT, 0, 0);
+   } else {
+     OUT_BATCH(rmesa->ioctl.vertex_offset);
+   }
    OUT_BATCH(0xffff);
    OUT_BATCH(vertex_format);
    OUT_BATCH(primitive | 
