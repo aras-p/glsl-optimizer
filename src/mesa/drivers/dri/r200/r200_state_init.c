@@ -342,6 +342,7 @@ static void mtl_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    BATCH_LOCALS(&r200->radeon);
    uint32_t dwords = atom->cmd_size;
 
+   dwords += 6;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_VEC(atom->cmd[MTL_CMD_0], (atom->cmd+1));
    OUT_SCL2(atom->cmd[MTL_CMD_1], (atom->cmd + 18));
@@ -354,6 +355,7 @@ static void lit_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    BATCH_LOCALS(&r200->radeon);
    uint32_t dwords = atom->cmd_size;
 
+   dwords += 8;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_VEC(atom->cmd[LIT_CMD_0], atom->cmd+1);
    OUT_VEC(atom->cmd[LIT_CMD_1], atom->cmd+LIT_CMD_1+1);
@@ -366,6 +368,7 @@ static void ptp_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    BATCH_LOCALS(&r200->radeon);
    uint32_t dwords = atom->cmd_size;
 
+   dwords += 8;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_VEC(atom->cmd[PTP_CMD_0], atom->cmd+1);
    OUT_VEC(atom->cmd[PTP_CMD_1], atom->cmd+PTP_CMD_1+1);
@@ -378,6 +381,7 @@ static void veclinear_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    BATCH_LOCALS(&r200->radeon);
    uint32_t dwords = atom->cmd_size;
 
+   dwords += 4;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_VECLINEAR(atom->cmd[0], atom->cmd+1);
    END_BATCH();
@@ -389,6 +393,7 @@ static void scl_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    BATCH_LOCALS(&r200->radeon);
    uint32_t dwords = atom->cmd_size;
 
+   dwords += 2;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_SCL(atom->cmd[0], atom->cmd+1);
    END_BATCH();
@@ -401,6 +406,7 @@ static void vec_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    BATCH_LOCALS(&r200->radeon);
    uint32_t dwords = atom->cmd_size;
 
+   dwords += 4;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_VEC(atom->cmd[0], atom->cmd+1);
    END_BATCH();
