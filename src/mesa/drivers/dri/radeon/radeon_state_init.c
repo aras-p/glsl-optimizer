@@ -456,7 +456,6 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    }
 
    if (rrb) {
-     cbpitch = (rrb->pitch / rrb->cpp);
      OUT_BATCH(CP_PACKET0(RADEON_RB3D_COLORPITCH, 0));
      OUT_BATCH(cbpitch);
    }

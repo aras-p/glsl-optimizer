@@ -412,36 +412,47 @@ static void ctx_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    BATCH_LOCALS(&r200->radeon);
    struct radeon_renderbuffer *rrb;
    uint32_t cbpitch;
-   uint32_t zbpitch;
+   uint32_t zbpitch, depth_fmt;
    uint32_t dwords = atom->cmd_size;
-   GLframebuffer *fb = r200->radeon.dri.drawable->driverPrivate;
 
    /* output the first 7 bytes of context */
    BEGIN_BATCH_NO_AUTOSTATE(dwords+2+2);
    OUT_BATCH_TABLE(atom->cmd, 5);
 
-   rrb = r200->radeon.state.depth.rrb;
+   rrb = radeon_get_depthbuffer(&r200->radeon);
    if (!rrb) {
      OUT_BATCH(0);
      OUT_BATCH(0);
    } else {
      zbpitch = (rrb->pitch / rrb->cpp);
+     if (r200->using_hyperz)
+       zbpitch |= RADEON_DEPTH_HYPERZ;
      OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
      OUT_BATCH(zbpitch);
+     if (rrb->cpp == 4) 
+       depth_fmt = RADEON_DEPTH_FORMAT_24BIT_INT_Z; 
+     else 
+       depth_fmt = RADEON_DEPTH_FORMAT_16BIT_INT_Z; 
+     atom->cmd[CTX_RB3D_ZSTENCILCNTL] &= ~RADEON_DEPTH_FORMAT_MASK; 
+     atom->cmd[CTX_RB3D_ZSTENCILCNTL] |= depth_fmt; 
    }
      
    OUT_BATCH(atom->cmd[CTX_RB3D_ZSTENCILCNTL]);
    OUT_BATCH(atom->cmd[CTX_CMD_1]);
    OUT_BATCH(atom->cmd[CTX_PP_CNTL]);
-   OUT_BATCH(atom->cmd[CTX_RB3D_CNTL]);
 
-   rrb = r200->radeon.state.color.rrb;
-   if (r200->radeon.radeonScreen->driScreen->dri2.enabled) {
-      rrb = (struct radeon_renderbuffer *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-   }
+   rrb = radeon_get_colorbuffer(&r200->radeon);
    if (!rrb || !rrb->bo) {
+     OUT_BATCH(atom->cmd[CTX_RB3D_CNTL]);
      OUT_BATCH(atom->cmd[CTX_RB3D_COLOROFFSET]);
    } else {
+     atom->cmd[CTX_RB3D_CNTL] &= ~(0xf << 10); 
+     if (rrb->cpp == 4) 
+       atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB8888; 
+     else 
+       atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_RGB565; 
+ 
+     OUT_BATCH(atom->cmd[CTX_RB3D_CNTL]); 
      OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
    }
 
@@ -451,11 +462,7 @@ static void ctx_emit(GLcontext *ctx, struct radeon_state_atom *atom)
      OUT_BATCH(atom->cmd[CTX_RB3D_COLORPITCH]);
    } else {
      cbpitch = (rrb->pitch / rrb->cpp);
-     if (rrb->cpp == 4)
-       ;
-     else
-       ;
-     if (r200->radeon.sarea->tiling_enabled)
+     if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
        cbpitch |= R200_COLOR_TILE_ENABLE;
      OUT_BATCH(cbpitch);
    }
@@ -474,22 +481,38 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    uint32_t cbpitch = 0;
    uint32_t zbpitch = 0;
    uint32_t dwords = atom->cmd_size;
-   GLframebuffer *fb = r200->radeon.dri.drawable->driverPrivate;
+   uint32_t depth_fmt;
 
-   rrb = r200->radeon.state.color.rrb;
-   if (r200->radeon.radeonScreen->driScreen->dri2.enabled) {
-      rrb = (struct radeon_renderbuffer *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+   rrb = radeon_get_colorbuffer(&r200->radeon);
+   if (!rrb || !rrb->bo) {
+      return;
    }
-   if (rrb) {
-     assert(rrb->bo != NULL);
-     cbpitch = (rrb->pitch / rrb->cpp);
-     if (r200->radeon.sarea->tiling_enabled)
+
+   atom->cmd[CTX_RB3D_CNTL] &= ~(0xf << 10);
+   if (rrb->cpp == 4)
+	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB8888;
+   else
+	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_RGB565;
+
+   cbpitch = (rrb->pitch / rrb->cpp);
+   if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
        cbpitch |= R200_COLOR_TILE_ENABLE;
+
+   drb = radeon_get_depthbuffer(&r200->radeon);
+   if (drb) {
+     zbpitch = (drb->pitch / drb->cpp);
+     if (drb->cpp == 4)
+        depth_fmt = RADEON_DEPTH_FORMAT_24BIT_INT_Z;
+     else
+        depth_fmt = RADEON_DEPTH_FORMAT_16BIT_INT_Z;
+     atom->cmd[CTX_RB3D_ZSTENCILCNTL] &= ~RADEON_DEPTH_FORMAT_MASK;
+     atom->cmd[CTX_RB3D_ZSTENCILCNTL] |= depth_fmt;
    }
 
-   drb = r200->radeon.state.depth.rrb;
    if (drb)
-     zbpitch = (drb->pitch / drb->cpp);
+     dwords += 4;
+   if (rrb)
+     dwords += 4;
 
    /* output the first 7 bytes of context */
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
@@ -519,10 +542,6 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    }
 
    if (rrb) {
-     if (rrb->cpp == 4)
-       ;
-     else
-       ;
      OUT_BATCH(CP_PACKET0(RADEON_RB3D_COLORPITCH, 0));
      OUT_BATCH(cbpitch);
    }
@@ -586,20 +605,7 @@ static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 void r200InitState( r200ContextPtr rmesa )
 {
    GLcontext *ctx = rmesa->radeon.glCtx;
-   GLuint color_fmt, depth_fmt, i;
-   GLint drawPitch, drawOffset;
-
-   switch ( rmesa->radeon.radeonScreen->cpp ) {
-   case 2:
-      color_fmt = R200_COLOR_FORMAT_RGB565;
-      break;
-   case 4:
-      color_fmt = R200_COLOR_FORMAT_ARGB8888;
-      break;
-   default:
-      fprintf( stderr, "Error: Unsupported pixel depth... exiting\n" );
-      exit( -1 );
-   }
+   GLuint i;
 
    rmesa->radeon.state.color.clear = 0x00000000;
 
@@ -607,13 +613,11 @@ void r200InitState( r200ContextPtr rmesa )
    case 16:
       rmesa->radeon.state.depth.clear = 0x0000ffff;
       rmesa->radeon.state.depth.scale = 1.0 / (GLfloat)0xffff;
-      depth_fmt = R200_DEPTH_FORMAT_16BIT_INT_Z;
       rmesa->radeon.state.stencil.clear = 0x00000000;
       break;
    case 24:
       rmesa->radeon.state.depth.clear = 0x00ffffff;
       rmesa->radeon.state.depth.scale = 1.0 / (GLfloat)0xffffff;
-      depth_fmt = R200_DEPTH_FORMAT_24BIT_INT_Z;
       rmesa->radeon.state.stencil.clear = 0xffff0000;
       break;
    default:
@@ -627,26 +631,6 @@ void r200InitState( r200ContextPtr rmesa )
 				     ctx->Visual.depthBits == 24 );
 
    rmesa->radeon.Fallback = 0;
-
-   if ( ctx->Visual.doubleBufferMode && rmesa->radeon.sarea->pfCurrentPage == 0 ) {
-      drawOffset = rmesa->radeon.radeonScreen->backOffset;
-      drawPitch  = rmesa->radeon.radeonScreen->backPitch;
-   } else {
-      drawOffset = rmesa->radeon.radeonScreen->frontOffset;
-      drawPitch  = rmesa->radeon.radeonScreen->frontPitch;
-   }
-#if 000
-   if ( ctx->Visual.doubleBufferMode && rmesa->sarea->pfCurrentPage == 0 ) {
-      rmesa->radeon.state.color.drawOffset = rmesa->radeon.radeonScreen->backOffset;
-      rmesa->radeon.state.color.drawPitch  = rmesa->radeon.radeonScreen->backPitch;
-   } else {
-      rmesa->radeon.state.color.drawOffset = rmesa->radeon.radeonScreen->frontOffset;
-      rmesa->radeon.state.color.drawPitch  = rmesa->radeon.radeonScreen->frontPitch;
-   }
-
-   rmesa->state.pixel.readOffset = rmesa->radeon.state.color.drawOffset;
-   rmesa->state.pixel.readPitch  = rmesa->radeon.state.color.drawPitch;
-#endif
 
    rmesa->radeon.hw.max_state_size = 0;
 
@@ -1025,8 +1009,7 @@ void r200InitState( r200ContextPtr rmesa )
    if (rmesa->using_hyperz)
       rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHPITCH] |= R200_DEPTH_HYPERZ;
 
-   rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] = (depth_fmt |
-					       R200_Z_TEST_LESS |
+   rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] = (R200_Z_TEST_LESS |
 					       R200_STENCIL_TEST_ALWAYS |
 					       R200_STENCIL_FAIL_KEEP |
 					       R200_STENCIL_ZPASS_KEEP |
@@ -1043,7 +1026,6 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.ctx.cmd[CTX_PP_CNTL] = (R200_ANTI_ALIAS_NONE 
  				     | R200_TEX_BLEND_0_ENABLE);
 
-   rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = color_fmt;
    switch ( driQueryOptioni( &rmesa->radeon.optionCache, "dither_mode" ) ) {
    case DRI_CONF_DITHER_XERRORDIFFRESET:
       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= R200_DITHER_INIT;
@@ -1062,28 +1044,6 @@ void r200InitState( r200ContextPtr rmesa )
       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= R200_DITHER_ENABLE;
    else
       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= rmesa->radeon.state.color.roundEnable;
-
-#if 000
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((rmesa->radeon.state.color.drawOffset +
-					       rmesa->radeon.radeonScreen->fbLocation)
-					      & R200_COLOROFFSET_MASK);
-
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = ((rmesa->radeon.state.color.drawPitch &
-					      R200_COLORPITCH_MASK) |
-					     R200_COLOR_ENDIAN_NO_SWAP);
-#else
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((drawOffset +
-					       rmesa->radeon.radeonScreen->fbLocation)
-					      & R200_COLOROFFSET_MASK);
-
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = ((drawPitch &
-					      R200_COLORPITCH_MASK) |
-					     R200_COLOR_ENDIAN_NO_SWAP);
-#endif
-   /* (fixed size) sarea is initialized to zero afaics so can omit version check. Phew! */
-   if (rmesa->radeon.sarea->tiling_enabled) {
-      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
-   }
 
    rmesa->hw.prf.cmd[PRF_PP_TRI_PERF] = R200_TRI_CUTOFF_MASK - R200_TRI_CUTOFF_MASK * 
 			driQueryOptionf (&rmesa->radeon.optionCache,"texture_blend_quality");
