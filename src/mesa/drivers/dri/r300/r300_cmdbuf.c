@@ -263,6 +263,33 @@ static void emit_zb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	END_BATCH();
 }
 
+static void emit_zstencil_format(GLcontext *ctx, struct radeon_state_atom * atom)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	BATCH_LOCALS(&r300->radeon);
+	struct radeon_renderbuffer *rrb;
+	uint32_t zbpitch;
+	uint32_t format;
+
+	rrb = radeon_get_depthbuffer(&r300->radeon);
+	if (!rrb)
+	  format = 0;
+	else {
+	  if (rrb->cpp == 2)
+	    format = R300_DEPTHFORMAT_16BIT_INT_Z;
+	  else if (rrb->cpp == 4)
+	    format = R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
+	}
+
+	OUT_BATCH(atom->cmd[0]);
+	atom->cmd[1] &= ~(3 << 0);
+	atom->cmd[1] |= format;
+	OUT_BATCH(atom->cmd[1]);
+	OUT_BATCH(atom->cmd[2]);
+	OUT_BATCH(atom->cmd[3]);
+	OUT_BATCH(atom->cmd[4]);
+}
+
 static int check_always(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	return atom->cmd_size;
@@ -521,9 +548,12 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(zs, always, R300_ZS_CMDSIZE, 0);
 	r300->hw.zs.cmd[R300_ZS_CMD_0] =
 	    cmdpacket0(r300->radeon.radeonScreen, R300_ZB_CNTL, 3);
+
 	ALLOC_STATE(zstencil_format, always, 5, 0);
 	r300->hw.zstencil_format.cmd[0] =
 	    cmdpacket0(r300->radeon.radeonScreen, R300_ZB_FORMAT, 4);
+	r300->hw.zstencil_format.emit = emit_zstencil_format;
+
 	ALLOC_STATE(zb, always, R300_ZB_CMDSIZE, 0);
 	r300->hw.zb.emit = emit_zb_offset;
 	ALLOC_STATE(zb_depthclearvalue, always, 2, 0);

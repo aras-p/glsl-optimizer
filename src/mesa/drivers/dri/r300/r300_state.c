@@ -2367,18 +2367,6 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.zb_depthclearvalue.cmd[1] = 0;
 
-	switch (ctx->Visual.depthBits) {
-	case 16:
-		r300->hw.zstencil_format.cmd[1] = R300_DEPTHFORMAT_16BIT_INT_Z;
-		break;
-	case 24:
-		r300->hw.zstencil_format.cmd[1] = R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
-		break;
-	default:
-		fprintf(stderr, "Error: Unsupported depth %d... exiting\n", ctx->Visual.depthBits);
-		_mesa_exit(-1);
-	}
-
 	r300->hw.zstencil_format.cmd[2] = R300_ZTOP_DISABLE;
 	r300->hw.zstencil_format.cmd[3] = 0x00000003;
 	r300->hw.zstencil_format.cmd[4] = 0x00000000;
@@ -2682,21 +2670,6 @@ void r300InitState(r300ContextPtr r300)
 {
 	GLcontext *ctx = r300->radeon.glCtx;
 	GLuint depth_fmt;
-
-	switch (ctx->Visual.depthBits) {
-	case 16:
-		r300->radeon.state.depth.scale = 1.0 / (GLfloat) 0xffff;
-		depth_fmt = R300_DEPTHFORMAT_16BIT_INT_Z;
-		break;
-	case 24:
-		r300->radeon.state.depth.scale = 1.0 / (GLfloat) 0xffffff;
-		depth_fmt = R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
-		break;
-	default:
-		fprintf(stderr, "Error: Unsupported depth %d... exiting\n",
-			ctx->Visual.depthBits);
-		_mesa_exit(-1);
-	}
 
 	/* Only have hw stencil when depth buffer is 24 bits deep */
 	r300->radeon.state.stencil.hwBuffer = (ctx->Visual.stencilBits > 0 &&
