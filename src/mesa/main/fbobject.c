@@ -1229,19 +1229,26 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    ASSERT(newFb != &DummyFramebuffer);
 
    /*
-    * XXX check if re-binding same buffer and skip some of this code.
+    * OK, now bind the new Draw/Read framebuffers, if they're changing.
     */
 
    if (bindReadBuf) {
-      _mesa_reference_framebuffer(&ctx->ReadBuffer, newFbread);
+      if (ctx->ReadBuffer == newFbread)
+         bindReadBuf = GL_FALSE; /* no change */
+      else
+         _mesa_reference_framebuffer(&ctx->ReadBuffer, newFbread);
    }
 
    if (bindDrawBuf) {
       /* check if old FB had any texture attachments */
-      check_end_texture_render(ctx, ctx->DrawBuffer);
+      if (ctx->DrawBuffer->Name != 0) {
+         check_end_texture_render(ctx, ctx->DrawBuffer);
+      }
 
-      /* check if time to delete this framebuffer */
-      _mesa_reference_framebuffer(&ctx->DrawBuffer, newFb);
+      if (ctx->DrawBuffer == newFb)
+         bindDrawBuf = GL_FALSE; /* no change */
+      else
+         _mesa_reference_framebuffer(&ctx->DrawBuffer, newFb);
 
       if (newFb->Name != 0) {
          /* check if newly bound framebuffer has any texture attachments */
@@ -1249,7 +1256,7 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
       }
    }
 
-   if (ctx->Driver.BindFramebuffer) {
+   if ((bindDrawBuf || bindReadBuf) && ctx->Driver.BindFramebuffer) {
       ctx->Driver.BindFramebuffer(ctx, target, newFb, newFbread);
    }
 }
