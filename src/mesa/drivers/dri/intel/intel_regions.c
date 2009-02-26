@@ -466,7 +466,8 @@ intel_recreate_static(struct intel_context *intel,
    else
       region->cpp = intel->ctx.Visual.rgbBits / 8;
    region->pitch = intelScreen->pitch;
-   region->height = intelScreen->height;     /* needed? */
+   region->width = intelScreen->width;
+   region->height = intelScreen->height;
 
    if (region->buffer != NULL) {
       dri_bo_unreference(region->buffer);
