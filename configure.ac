@@ -856,6 +856,19 @@ AC_SUBST([OSMESA_PC_REQ])
 AC_SUBST([OSMESA_PC_LIB_PRIV])
 
 dnl
+dnl EGL configuration
+dnl
+if test "$x11_pkgconfig" = yes; then
+    PKG_CHECK_MODULES([EGL],[x11])
+    EGL_LIB_DEPS="$EGL_LIBS"
+else
+    # should check these...
+    EGL_LIB_DEPS="$X_LIBS -lX11"
+fi
+EGL_LIB_DEPS="$EGL_LIB_DEPS $DLOPEN_LIBS $OS_LIBS"
+AC_SUBST([EGL_LIB_DEPS])
+
+dnl
 dnl GLU configuration
 dnl
 AC_ARG_ENABLE([glu],
