@@ -541,7 +541,7 @@ intelBitmap(GLcontext * ctx,
 	    GLsizei width, GLsizei height,
 	    const struct gl_pixelstore_attrib *unpack,
 	    const GLubyte * pixels)
-{
+{/*
    if (do_blit_bitmap(ctx, x, y, width, height,
                           unpack, pixels))
       return;
@@ -549,7 +549,7 @@ intelBitmap(GLcontext * ctx,
    if (intel_texture_bitmap(ctx, x, y, width, height,
 			    unpack, pixels))
       return;
-
+ */
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s: fallback to swrast\n", __FUNCTION__);
 

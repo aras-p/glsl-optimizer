@@ -131,6 +131,18 @@ pwrite_8(struct intel_renderbuffer *irb, uint32_t offset, uint8_t val)
    dri_bo_subdata(irb->region->buffer, offset, 1, &val);
 }
 
+static uint32_t
+z24s8_to_s8z24(uint32_t val)
+{
+   return (val << 24) | (val >> 8);
+}
+
+static uint32_t
+s8z24_to_z24s8(uint32_t val)
+{
+   return (val >> 24) | (val << 8);
+}
+
 static uint32_t no_tile_swizzle(struct intel_renderbuffer *irb,
 				int x, int y)
 {
@@ -293,101 +305,29 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 #define X_TILE(_X, _Y) x_tile_swizzle(irb, (_X) + x_off, (_Y) + y_off)
 #define Y_TILE(_X, _Y) y_tile_swizzle(irb, (_X) + x_off, (_Y) + y_off)
 
-/* 16 bit, RGB565 color spanline and pixel functions
- */
-#define SPANTMP_PIXEL_FMT GL_RGB
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
+/* r5g6b5 color span and pixel functions */
+#define INTEL_PIXEL_FMT GL_RGB
+#define INTEL_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
+#define INTEL_READ_VALUE(offset) pread_16(irb, offset)
+#define INTEL_WRITE_VALUE(offset, v) pwrite_16(irb, offset, v)
+#define INTEL_TAG(x) x##_RGB565
+#include "intel_spantmp.h"
 
-#define TAG(x)    intel##x##_RGB565
-#define TAG2(x,y) intel##x##_RGB565##y
-#define GET_VALUE(X, Y) pread_16(irb, NO_TILE(X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_16(irb, NO_TILE(X, Y), V)
-#include "spantmp2.h"
+/* a8r8g8b8 color span and pixel functions */
+#define INTEL_PIXEL_FMT GL_BGRA
+#define INTEL_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
+#define INTEL_READ_VALUE(offset) pread_32(irb, offset)
+#define INTEL_WRITE_VALUE(offset, v) pwrite_32(irb, offset, v)
+#define INTEL_TAG(x) x##_ARGB8888
+#include "intel_spantmp.h"
 
-/* 32 bit, ARGB8888 color spanline and pixel functions
- */
-#define SPANTMP_PIXEL_FMT GL_BGRA
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
-
-#define TAG(x)    intel##x##_ARGB8888
-#define TAG2(x,y) intel##x##_ARGB8888##y
-#define GET_VALUE(X, Y) pread_32(irb, NO_TILE(X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_32(irb, NO_TILE(X, Y), V)
-#include "spantmp2.h"
-
-/* 32 bit, xRGB8888 color spanline and pixel functions
- */
-#define SPANTMP_PIXEL_FMT GL_BGRA
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
-
-#define TAG(x)    intel##x##_xRGB8888
-#define TAG2(x,y) intel##x##_xRGB8888##y
-#define GET_VALUE(X, Y) pread_xrgb8888(irb, NO_TILE(X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_xrgb8888(irb, NO_TILE(X, Y), V)
-#include "spantmp2.h"
-
-/* 16 bit RGB565 color tile spanline and pixel functions
- */
-
-#define SPANTMP_PIXEL_FMT GL_RGB
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
-
-#define TAG(x)    intel_XTile_##x##_RGB565
-#define TAG2(x,y) intel_XTile_##x##_RGB565##y
-#define GET_VALUE(X, Y) pread_16(irb, X_TILE(X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_16(irb, X_TILE(X, Y), V)
-#include "spantmp2.h"
-
-#define SPANTMP_PIXEL_FMT GL_RGB
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
-
-#define TAG(x)    intel_YTile_##x##_RGB565
-#define TAG2(x,y) intel_YTile_##x##_RGB565##y
-#define GET_VALUE(X, Y) pread_16(irb, Y_TILE(X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_16(irb, Y_TILE(X, Y), V)
-#include "spantmp2.h"
-
-/* 32 bit ARGB888 color tile spanline and pixel functions
- */
-
-#define SPANTMP_PIXEL_FMT GL_BGRA
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
-
-#define TAG(x)    intel_XTile_##x##_ARGB8888
-#define TAG2(x,y) intel_XTile_##x##_ARGB8888##y
-#define GET_VALUE(X, Y) pread_32(irb, X_TILE(X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_32(irb, X_TILE(X, Y), V)
-#include "spantmp2.h"
-
-#define SPANTMP_PIXEL_FMT GL_BGRA
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
-
-#define TAG(x)    intel_YTile_##x##_ARGB8888
-#define TAG2(x,y) intel_YTile_##x##_ARGB8888##y
-#define GET_VALUE(X, Y) pread_32(irb, Y_TILE(X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_32(irb, Y_TILE(X, Y), V)
-#include "spantmp2.h"
-
-/* 32 bit xRGB888 color tile spanline and pixel functions
- */
-
-#define SPANTMP_PIXEL_FMT GL_BGRA
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
-
-#define TAG(x)    intel_XTile_##x##_xRGB8888
-#define TAG2(x,y) intel_XTile_##x##_xRGB8888##y
-#define GET_VALUE(X, Y) pread_xrgb8888(irb, X_TILE(X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_xrgb8888(irb, X_TILE(X, Y), V)
-#include "spantmp2.h"
-
-#define SPANTMP_PIXEL_FMT GL_BGRA
-#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
-
-#define TAG(x)    intel_YTile_##x##_xRGB8888
-#define TAG2(x,y) intel_YTile_##x##_xRGB8888##y
-#define GET_VALUE(X, Y) pread_xrgb8888(irb, Y_TILE(X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_xrgb8888(irb, Y_TILE(X, Y), V)
-#include "spantmp2.h"
+/* x8r8g8b8 color span and pixel functions */
+#define INTEL_PIXEL_FMT GL_BGRA
+#define INTEL_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
+#define INTEL_READ_VALUE(offset) pread_xrgb8888(irb, offset)
+#define INTEL_WRITE_VALUE(offset, v) pwrite_xrgb8888(irb, offset, v)
+#define INTEL_TAG(x) x##_xRGB8888
+#include "intel_spantmp.h"
 
 #define LOCAL_DEPTH_VARS						\
    struct intel_context *intel = intel_context(ctx);			\
@@ -402,98 +342,19 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
 
-/**
- ** 16-bit depthbuffer functions.
- **/
-#define VALUE_TYPE GLushort
-#define WRITE_DEPTH(_x, _y, d) pwrite_16(irb, NO_TILE(_x, _y), d)
-#define READ_DEPTH(d, _x, _y) d = pread_16(irb, NO_TILE(_x, _y))
-#define TAG(x) intel##x##_z16
-#include "depthtmp.h"
+/* z16 depthbuffer functions. */
+#define INTEL_VALUE_TYPE GLushort
+#define INTEL_WRITE_DEPTH(offset, d) pwrite_16(irb, offset, d)
+#define INTEL_READ_DEPTH(offset) pread_16(irb, offset)
+#define INTEL_TAG(name) name##_z16
+#include "intel_depthtmp.h"
 
-
-/**
- ** 16-bit x tile depthbuffer functions.
- **/
-#define VALUE_TYPE GLushort
-#define WRITE_DEPTH(_x, _y, d) pwrite_16(irb, X_TILE(_x, _y), d)
-#define READ_DEPTH(d, _x, _y) d = pread_16(irb, X_TILE(_x, _y))
-#define TAG(x) intel_XTile_##x##_z16
-#include "depthtmp.h"
-
-/**
- ** 16-bit y tile depthbuffer functions.
- **/
-#define VALUE_TYPE GLushort
-#define WRITE_DEPTH(_x, _y, d) pwrite_16(irb, Y_TILE(_x, _y), d)
-#define READ_DEPTH(d, _x, _y) d = pread_16(irb, Y_TILE(_x, _y))
-#define TAG(x) intel_YTile_##x##_z16
-#include "depthtmp.h"
-
-
-/**
- ** 24/8-bit interleaved depth/stencil functions
- ** Note: we're actually reading back combined depth+stencil values.
- ** The wrappers in main/depthstencil.c are used to extract the depth
- ** and stencil values.
- **/
-#define VALUE_TYPE GLuint
-
-/* Change ZZZS -> SZZZ */
-#define WRITE_DEPTH(_x, _y, d)					\
-   pwrite_32(irb, NO_TILE(_x, _y), ((d) >> 8) | ((d) << 24))
-
-/* Change SZZZ -> ZZZS */
-#define READ_DEPTH( d, _x, _y ) {				\
-   GLuint tmp = pread_32(irb, NO_TILE(_x, _y));			\
-   d = (tmp << 8) | (tmp >> 24);				\
-}
-
-#define TAG(x) intel##x##_z24_s8
-#include "depthtmp.h"
-
-
-/**
- ** 24/8-bit x-tile interleaved depth/stencil functions
- ** Note: we're actually reading back combined depth+stencil values.
- ** The wrappers in main/depthstencil.c are used to extract the depth
- ** and stencil values.
- **/
-#define VALUE_TYPE GLuint
-
-/* Change ZZZS -> SZZZ */
-#define WRITE_DEPTH(_x, _y, d)					\
-   pwrite_32(irb, X_TILE(_x, _y), ((d) >> 8) | ((d) << 24))
-
-/* Change SZZZ -> ZZZS */
-#define READ_DEPTH( d, _x, _y ) {				\
-   GLuint tmp = pread_32(irb, X_TILE(_x, _y));		\
-   d = (tmp << 8) | (tmp >> 24);				\
-}
-
-#define TAG(x) intel_XTile_##x##_z24_s8
-#include "depthtmp.h"
-
-/**
- ** 24/8-bit y-tile interleaved depth/stencil functions
- ** Note: we're actually reading back combined depth+stencil values.
- ** The wrappers in main/depthstencil.c are used to extract the depth
- ** and stencil values.
- **/
-#define VALUE_TYPE GLuint
-
-/* Change ZZZS -> SZZZ */
-#define WRITE_DEPTH(_x, _y, d)					\
-   pwrite_32(irb, Y_TILE(_x, _y), ((d) >> 8) | ((d) << 24))
-
-/* Change SZZZ -> ZZZS */
-#define READ_DEPTH( d, _x, _y ) {				\
-   GLuint tmp = pread_32(irb, Y_TILE(_x, _y));			\
-   d = (tmp << 8) | (tmp >> 24);				\
-}
-
-#define TAG(x) intel_YTile_##x##_z24_s8
-#include "depthtmp.h"
+/* z24s8 depthbuffer functions. */
+#define INTEL_VALUE_TYPE GLuint
+#define INTEL_WRITE_DEPTH(offset, d) pwrite_32(irb, offset, z24s8_to_s8z24(d))
+#define INTEL_READ_DEPTH(offset) s8z24_to_z24s8(pread_32(irb, offset))
+#define INTEL_TAG(name) name##_z24_s8
+#include "intel_depthtmp.h"
 
 
 /**
