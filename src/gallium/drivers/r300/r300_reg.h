@@ -732,6 +732,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R500_RS_IP_TEX_PTR_Q_SHIFT 			18
 #define R500_RS_IP_COL_PTR_SHIFT 			24
 #define R500_RS_IP_COL_FMT_SHIFT 			27
+#       define R500_RS_SEL_S(x)                         ((x) << 0)
+#       define R500_RS_SEL_T(x)                         ((x) << 6)
+#       define R500_RS_SEL_R(x)                         ((x) << 12)
+#       define R500_RS_SEL_Q(x)                         ((x) << 18)
 #	define R500_RS_COL_PTR(x)		        ((x) << 24)
 #       define R500_RS_COL_FMT(x)                       ((x) << 27)
 /* gap */

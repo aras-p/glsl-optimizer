@@ -197,36 +197,72 @@ static void r300_update_rs_block(struct r300_context* r300)
 
     memset(rs, 0, sizeof(struct r300_rs_block));
 
-    for (i = 0; i < vinfo->num_attribs; i++) {
-        switch (vinfo->attrib[i].interp_mode) {
-            case INTERP_LINEAR:
-                rs->ip[col_count] |=
-                    R300_RS_COL_PTR(vinfo->attrib[i].src_index) |
-                    R300_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
-                col_count++;
-                break;
-            case INTERP_PERSPECTIVE:
-                rs->ip[tex_count] |=
-                    R300_RS_TEX_PTR(vinfo->attrib[i].src_index) |
-                    R300_RS_SEL_S(R300_RS_SEL_C0) |
-                    R300_RS_SEL_T(R300_RS_SEL_C1) |
-                    R300_RS_SEL_R(R300_RS_SEL_C2) |
-                    R300_RS_SEL_Q(R300_RS_SEL_C3);
-                tex_count += 4;
-                break;
+    if (r300_screen(r300->context.screen)->caps->is_r500) {
+        for (i = 0; i < vinfo->num_attribs; i++) {
+            switch (vinfo->attrib[i].interp_mode) {
+                case INTERP_LINEAR:
+                    rs->ip[col_count] |=
+                        R500_RS_COL_PTR(vinfo->attrib[i].src_index) |
+                        R500_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
+                    col_count++;
+                    break;
+                case INTERP_PERSPECTIVE:
+                    rs->ip[tex_count] |=
+                        R500_RS_TEX_PTR(vinfo->attrib[i].src_index) |
+                        R500_RS_SEL_S(tex_count) |
+                        R500_RS_SEL_T(tex_count + 1) |
+                        R500_RS_SEL_R(tex_count + 2) |
+                        R500_RS_SEL_Q(tex_count + 3);
+                    tex_count++;
+                    break;
+            }
         }
-    }
 
-    for (i = 0; i < tex_count; i++) {
-        rs->inst[i] |= R300_RS_INST_TEX_ID(i) | R300_RS_INST_TEX_CN_WRITE |
-            R300_RS_INST_TEX_ADDR(fp_offset);
-        fp_offset++;
-    }
+        for (i = 0; i < tex_count; i++) {
+            rs->inst[i] |= R500_RS_INST_TEX_ID(i) | R500_RS_INST_TEX_CN_WRITE |
+                R500_RS_INST_TEX_ADDR(fp_offset);
+            fp_offset++;
+        }
 
-    for (i = 0; i < col_count; i++) {
-        rs->inst[i] |= R300_RS_INST_COL_ID(i) | R300_RS_INST_COL_CN_WRITE |
-            R300_RS_INST_COL_ADDR(fp_offset);
-        fp_offset++;
+        for (i = 0; i < col_count; i++) {
+            rs->inst[i] |= R500_RS_INST_COL_ID(i) | R500_RS_INST_COL_CN_WRITE |
+                R500_RS_INST_COL_ADDR(fp_offset);
+            fp_offset++;
+        }
+
+        rs->inst_count = MAX2(col_count, tex_count);
+    } else {
+        for (i = 0; i < vinfo->num_attribs; i++) {
+            switch (vinfo->attrib[i].interp_mode) {
+                case INTERP_LINEAR:
+                    rs->ip[col_count] |=
+                        R300_RS_COL_PTR(vinfo->attrib[i].src_index) |
+                        R300_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
+                    col_count++;
+                    break;
+                case INTERP_PERSPECTIVE:
+                    rs->ip[tex_count] |=
+                        R300_RS_TEX_PTR(vinfo->attrib[i].src_index) |
+                        R300_RS_SEL_S(R300_RS_SEL_C0) |
+                        R300_RS_SEL_T(R300_RS_SEL_C1) |
+                        R300_RS_SEL_R(R300_RS_SEL_C2) |
+                        R300_RS_SEL_Q(R300_RS_SEL_C3);
+                    tex_count += 4;
+                    break;
+            }
+        }
+
+        for (i = 0; i < tex_count; i++) {
+            rs->inst[i] |= R300_RS_INST_TEX_ID(i) | R300_RS_INST_TEX_CN_WRITE |
+                R300_RS_INST_TEX_ADDR(fp_offset);
+            fp_offset++;
+        }
+
+        for (i = 0; i < col_count; i++) {
+            rs->inst[i] |= R300_RS_INST_COL_ID(i) | R300_RS_INST_COL_CN_WRITE |
+                R300_RS_INST_COL_ADDR(fp_offset);
+            fp_offset++;
+        }
     }
 
     rs->count = (tex_count * 4) | (col_count << R300_IC_COUNT_SHIFT) |

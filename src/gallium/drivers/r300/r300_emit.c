@@ -216,7 +216,7 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     CS_LOCALS(r300);
     int i;
 
-    BEGIN_CS(0);
+    BEGIN_CS(21);
     if (r300screen->caps->is_r500) {
         OUT_CS_REG_SEQ(R500_RS_IP_0, 8);
     } else {
@@ -238,6 +238,7 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     for (i = 0; i < 8; i++) {
         OUT_CS(rs->inst[i]);
     }
+
     END_CS;
 }
 
