@@ -54,6 +54,7 @@ SOURCES = \
 	jkrahntest.c \
 	lineclip.c \
 	manytex.c \
+	mapvbo.c \
 	minmag.c \
 	mipmap_limits.c \
 	mipmap_view.c \
