@@ -57,34 +57,39 @@ static uint32_t translate_vertex_data_type(int type) {
 /* XXX this function should be able to handle vert shaders as well as draw */
 static void r300_update_vertex_layout(struct r300_context* r300)
 {
+    struct r300_vertex_format vformat;
     struct vertex_info vinfo;
     boolean pos = false, psize = false, fog = false;
     int i, texs = 0, cols = 0;
+    int tab[16];
 
     struct tgsi_shader_info* info = &r300->fs->info;
+
     memset(&vinfo, 0, sizeof(vinfo));
+    for (i = 0; i < 16; i++) {
+        tab[i] = -1;
+    }
 
     assert(info->num_inputs <= 16);
 
-    /* This is rather lame. Since draw_find_vs_output doesn't return an error
-     * when it can't find an output, we have to pre-iterate and count each
-     * output ourselves. */
     for (i = 0; i < info->num_inputs; i++) {
         switch (info->input_semantic_name[i]) {
             case TGSI_SEMANTIC_POSITION:
                 pos = true;
+                tab[i] = 0;
                 break;
             case TGSI_SEMANTIC_COLOR:
-                cols++;
+                tab[i] = 2 + cols++;
                 break;
             case TGSI_SEMANTIC_FOG:
                 fog = true;
                 break;
             case TGSI_SEMANTIC_PSIZE:
                 psize = true;
+                tab[i] = 1;
                 break;
             case TGSI_SEMANTIC_GENERIC:
-                texs++;
+                tab[i] = 6 + texs++;
                 break;
             default:
                 debug_printf("r300: Unknown vertex input %d\n",
@@ -105,6 +110,7 @@ static void r300_update_vertex_layout(struct r300_context* r300)
 
     if (!pos) {
         debug_printf("r300: Forcing vertex position attribute emit...\n");
+        tab[0] = 0;
     }
 
     draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_POS,
@@ -152,18 +158,19 @@ static void r300_update_vertex_layout(struct r300_context* r300)
          (0xf << R300_WRITE_ENA_SHIFT))
 
         for (i = 0; i < vinfo.num_attribs; i++) {
+            /* Make sure we have a proper destination for our attribute */
+            //assert(tab[i] != -1);
+
             temp = translate_vertex_data_type(vinfo.attrib[i].emit) |
-                R300_SIGNED;
+                (tab[i] << R300_DST_VEC_LOC_SHIFT) | R300_SIGNED;
             if (i & 1) {
                 r300->vertex_info.vap_prog_stream_cntl[i >> 1] &= 0xffff0000;
                 r300->vertex_info.vap_prog_stream_cntl[i >> 1] |=
-                        (translate_vertex_data_type(vinfo.attrib[i].emit) |
-                        R300_SIGNED) << 16;
+                        temp << 16;
             } else {
                 r300->vertex_info.vap_prog_stream_cntl[i >> 1] &= 0xffff;
                 r300->vertex_info.vap_prog_stream_cntl[i >> 1] |=
-                    translate_vertex_data_type(vinfo.attrib[i].emit) |
-                    R300_SIGNED;
+                    temp;
             }
 
             r300->vertex_info.vap_prog_stream_cntl_ext[i >> 1] |=
@@ -180,7 +187,7 @@ static void r300_update_vertex_layout(struct r300_context* r300)
 /* Set up the RS block. This is the part of the chipset that actually does
  * the rasterization of vertices into fragments. This is also the part of the
  * chipset that locks up if any part of it is even slightly wrong. */
-void r300_update_rs_block(struct r300_context* r300)
+static void r300_update_rs_block(struct r300_context* r300)
 {
 }
 
