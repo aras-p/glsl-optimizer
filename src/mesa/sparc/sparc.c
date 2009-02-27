@@ -109,10 +109,10 @@ void _mesa_init_all_sparc_transform_asm(void)
    ASSIGN_XFORM_GROUP(sparc, 2)
    ASSIGN_XFORM_GROUP(sparc, 3)
    ASSIGN_XFORM_GROUP(sparc, 4)
-#if 0
+
    _mesa_clip_tab[4] = _mesa_sparc_cliptest_points4;
    _mesa_clip_np_tab[4] = _mesa_sparc_cliptest_points4_np;
-#endif
+
 #if 0
    /* disable these too.  See bug 673938 */
    _mesa_normal_tab[NORM_TRANSFORM | NORM_NORMALIZE] =
