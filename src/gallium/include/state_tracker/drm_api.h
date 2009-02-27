@@ -2,6 +2,8 @@
 #ifndef _DRM_API_H_
 #define _DRM_API_H_
 
+#include "pipe/p_compiler.h"
+
 struct pipe_screen;
 struct pipe_winsys;
 struct pipe_buffer;
