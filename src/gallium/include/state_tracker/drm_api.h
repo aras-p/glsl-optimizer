@@ -22,9 +22,18 @@ struct drm_api
 	 * Special buffer functions
 	 */
 	/*@{*/
-	boolean (*buffer_from_texture)(struct pipe_texture *texture, struct pipe_buffer **buffer, unsigned *stride);
-	struct pipe_buffer* (*buffer_from_handle)(struct pipe_screen *screen, const char *name, unsigned handle);
-	unsigned (*handle_from_buffer)(struct pipe_screen *screen, struct pipe_buffer *buffer);
+	boolean (*buffer_from_texture)(struct pipe_texture *texture,
+                                       struct pipe_buffer **buffer,
+                                       unsigned *stride);
+	struct pipe_buffer* (*buffer_from_handle)(struct pipe_screen *screen,
+                                                  const char *name,
+                                                  unsigned handle);
+	boolean (*handle_from_buffer)(struct pipe_screen *screen,
+                                      struct pipe_buffer *buffer,
+                                      unsigned *handle);
+	boolean (*global_handle_from_buffer)(struct pipe_screen *screen,
+                                             struct pipe_buffer *buffer,
+                                             unsigned *handle);
 	/*@}*/
 };
 
