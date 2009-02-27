@@ -1438,6 +1438,7 @@ radeonInitScreen(__DRIscreenPrivate *psp)
 			     (dri_priv->bpp == 16) ? 16 : 24,
 			     (dri_priv->bpp == 16) ? 0  : 8, 1);
 }
+#define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
 
 /**
  * This is the driver specific part of the createNewScreen entry point.
@@ -1448,6 +1449,18 @@ radeonInitScreen(__DRIscreenPrivate *psp)
 static const
 __DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
 {
+   GLenum fb_format[3];
+   GLenum fb_type[3];
+   /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
+    * support pageflipping at all.
+    */
+   static const GLenum back_buffer_modes[] = {
+     GLX_NONE, GLX_SWAP_UNDEFINED_OML, /*, GLX_SWAP_COPY_OML*/
+   };
+   uint8_t depth_bits[4], stencil_bits[4], msaa_samples_array[1];
+   int color;
+   __DRIconfig **configs = NULL;
+
    /* Calling driInitExtensions here, with a NULL context pointer,
     * does not actually enable the extensions.  It just makes sure
     * that all the dispatch offsets for all the extensions that
@@ -1470,9 +1483,50 @@ __DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
    if (!radeonInitDriver(psp)) {
        return NULL;
     }
+   depth_bits[0] = 0;
+   stencil_bits[0] = 0;
+   depth_bits[1] = 16;
+   stencil_bits[1] = 0;
+   depth_bits[2] = 24;
+   stencil_bits[2] = 0;
+   depth_bits[3] = 24;
+   stencil_bits[3] = 8;
 
-   /* for now fill in all modes */
-   return radeonFillInModes( psp, 24, 24, 8, 1);
+   msaa_samples_array[0] = 0;
+
+   fb_format[0] = GL_RGB;
+   fb_type[0] = GL_UNSIGNED_SHORT_5_6_5;
+
+   fb_format[1] = GL_BGR;
+   fb_type[1] = GL_UNSIGNED_INT_8_8_8_8_REV;
+
+   fb_format[2] = GL_BGRA;
+   fb_type[2] = GL_UNSIGNED_INT_8_8_8_8_REV;
+
+   for (color = 0; color < ARRAY_SIZE(fb_format); color++) {
+      __DRIconfig **new_configs;
+
+      new_configs = driCreateConfigs(fb_format[color], fb_type[color],
+				     depth_bits,
+				     stencil_bits,
+				     ARRAY_SIZE(depth_bits),
+				     back_buffer_modes,
+				     ARRAY_SIZE(back_buffer_modes),
+				     msaa_samples_array,
+				     ARRAY_SIZE(msaa_samples_array));
+      if (configs == NULL)
+	 configs = new_configs;
+      else
+	 configs = driConcatConfigs(configs, new_configs);
+   }
+
+   if (configs == NULL) {
+      fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
+              __LINE__);
+      return NULL;
+   }
+
+   return (const __DRIconfig **)configs;
 }
 
 /**
