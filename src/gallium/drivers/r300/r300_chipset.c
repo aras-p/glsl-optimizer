@@ -204,6 +204,13 @@ void r300_parse_chipset(struct r300_capabilities* caps)
             caps->has_tcl = FALSE;
             break;
 
+        case 0x793F:
+        case 0x7941:
+        case 0x7942:
+            caps->family = CHIP_FAMILY_RS600;
+            caps->has_tcl = FALSE;
+            break;
+
         case 0x796C:
         case 0x796D:
         case 0x796E:

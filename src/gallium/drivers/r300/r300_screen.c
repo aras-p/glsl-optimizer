@@ -50,6 +50,7 @@ static const char* chip_families[] = {
     "RC410",
     "RS480",
     "RS482",
+    "RS600",
     "RS690",
     "RS740",
     "RV515",
