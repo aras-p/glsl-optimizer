@@ -75,6 +75,13 @@ struct r300_rs_state {
     uint32_t line_stipple_value;    /* R300_GA_LINE_STIPPLE_VALUE: 0x4260 */
 };
 
+struct r300_rs_block {
+    uint32_t ip[8]; /* R300_RS_IP_[0-7], R500_RS_IP_[0-7] */
+    uint32_t count; /* R300_RS_COUNT */
+    uint32_t inst_count; /* R300_RS_INST_COUNT */
+    uint32_t inst[8]; /* R300_RS_INST_[0-7] */
+};
+
 struct r300_sampler_state {
     uint32_t filter0;      /* R300_TX_FILTER0: 0x4400 */
     uint32_t filter1;      /* R300_TX_FILTER1: 0x4440 */
@@ -96,12 +103,13 @@ struct r300_texture_state {
 #define R300_NEW_FRAMEBUFFERS    0x0000010
 #define R300_NEW_FRAGMENT_SHADER 0x0000020
 #define R300_NEW_RASTERIZER      0x0000040
-#define R300_NEW_SAMPLER         0x0000080
-#define R300_NEW_SCISSOR         0x0008000
-#define R300_NEW_TEXTURE         0x0010000
-#define R300_NEW_VERTEX_FORMAT   0x1000000
-#define R300_NEW_VERTEX_SHADER   0x2000000
-#define R300_NEW_KITCHEN_SINK    0x3ffffff
+#define R300_NEW_RS_BLOCK        0x0000080
+#define R300_NEW_SAMPLER         0x0000100
+#define R300_NEW_SCISSOR         0x0010000
+#define R300_NEW_TEXTURE         0x0020000
+#define R300_NEW_VERTEX_FORMAT   0x2000000
+#define R300_NEW_VERTEX_SHADER   0x4000000
+#define R300_NEW_KITCHEN_SINK    0x7ffffff
 
 /* The next several objects are not pure Radeon state; they inherit from
  * various Gallium classes. */
@@ -224,6 +232,8 @@ struct r300_context {
     struct pipe_framebuffer_state framebuffer_state;
     /* Rasterizer state. */
     struct r300_rs_state* rs_state;
+    /* RS block state. */
+    struct r300_rs_block* rs_block;
     /* Sampler states. */
     struct r300_sampler_state* sampler_states[8];
     int sampler_count;

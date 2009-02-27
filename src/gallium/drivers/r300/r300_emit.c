@@ -208,6 +208,39 @@ void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
     END_CS;
 }
 
+void r300_emit_rs_block_state(struct r300_context* r300,
+                              struct r300_rs_block* rs)
+{
+    struct r300_screen* r300screen =
+        (struct r300_screen*)r300->context.screen;
+    CS_LOCALS(r300);
+    int i;
+
+    BEGIN_CS(0);
+    if (r300screen->caps->is_r500) {
+        OUT_CS_REG_SEQ(R500_RS_IP_0, 8);
+    } else {
+        OUT_CS_REG_SEQ(R300_RS_IP_0, 8);
+    }
+    for (i = 0; i < 8; i++) {
+        OUT_CS(rs->ip[i]);
+    }
+
+    OUT_CS_REG_SEQ(R300_RS_COUNT, 2);
+    OUT_CS(rs->count);
+    OUT_CS(rs->inst_count);
+
+    if (r300screen->caps->is_r500) {
+        OUT_CS_REG_SEQ(R500_RS_INST_0, 8);
+    } else {
+        OUT_CS_REG_SEQ(R300_RS_INST_0, 8);
+    }
+    for (i = 0; i < 8; i++) {
+        OUT_CS(rs->inst[i]);
+    }
+    END_CS;
+}
+
 void r300_emit_scissor_state(struct r300_context* r300,
                              struct r300_scissor_state* scissor)
 {

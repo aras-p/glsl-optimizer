@@ -1240,9 +1240,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_RS_INST_7                     0x434C
 #	define R300_RS_INST_TEX_ID(x)  		((x) << 0)
 #	define R300_RS_INST_TEX_CN_WRITE 	(1 << 3)
+#	define R300_RS_INST_TEX_ADDR(x)		((x) << 6)
 #	define R300_RS_INST_TEX_ADDR_SHIFT 	6
 #	define R300_RS_INST_COL_ID(x)		((x) << 11)
 #	define R300_RS_INST_COL_CN_WRITE	(1 << 14)
+#	define R300_RS_INST_COL_ADDR(x)		((x) << 17)
 #	define R300_RS_INST_COL_ADDR_SHIFT	17
 #	define R300_RS_INST_TEX_ADJ		(1 << 22)
 #	define R300_RS_COL_BIAS_UNUSED_SHIFT    23
