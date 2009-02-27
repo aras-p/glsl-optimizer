@@ -892,7 +892,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
        screen->fbLocation = (temp & 0xffff) << 16;
    }
 
-   if (screen->chip_family >= CHIP_FAMILY_RV515) {
+   if (screen->chip_family >= CHIP_FAMILY_R300) {
        ret = radeonGetParam( sPriv->fd, RADEON_PARAM_NUM_GB_PIPES,
 			     &temp);
        if (ret) {
