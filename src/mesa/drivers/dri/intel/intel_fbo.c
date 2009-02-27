@@ -612,19 +612,16 @@ static void
 intel_finish_render_texture(GLcontext * ctx,
                             struct gl_renderbuffer_attachment *att)
 {
-   struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
-
-   DBG("End render texture (tid %x) tex %u\n", _glthread_GetID(), att->Texture->Name);
-
-   if (irb) {
-      /* just release the region */
-      intel_region_release(&irb->region);
-   }
-   else if (att->Renderbuffer) {
-      /* software fallback */
-      _mesa_finish_render_texture(ctx, att);
-      /* XXX FBO: Need to unmap the buffer (or in intelSpanRenderStart???) */
-   }
+   /* no-op
+    * Previously we released the renderbuffer's intel_region but
+    * that's not necessary and actually caused problems when trying
+    * to do a glRead/CopyPixels from the renderbuffer later.
+    * The region will be released later if the texture is replaced
+    * or the renderbuffer deleted.
+    *
+    * The intention of this driver hook is more of a "done rendering
+    * to texture, please re-twiddle/etc if necessary".
+    */
 }
 
 
