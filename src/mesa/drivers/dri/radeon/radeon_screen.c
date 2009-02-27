@@ -570,6 +570,12 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
       screen->chip_family = CHIP_FAMILY_RS400;
       break;
 
+   case PCI_CHIP_RS600_793F:
+   case PCI_CHIP_RS600_7941:
+   case PCI_CHIP_RS600_7942:
+      screen->chip_family = CHIP_FAMILY_RS600;
+      break;
+
    case PCI_CHIP_RS690_791E:
    case PCI_CHIP_RS690_791F:
       screen->chip_family = CHIP_FAMILY_RS690;
@@ -881,7 +887,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    ret = radeonGetParam( sPriv->fd, RADEON_PARAM_FB_LOCATION,
                          &temp);
    if (ret) {
-       if (screen->chip_family < CHIP_FAMILY_RS690 && !screen->kernel_mm)
+       if (screen->chip_family < CHIP_FAMILY_RS600 && !screen->kernel_mm)
 	   screen->fbLocation      = ( INREG( RADEON_MC_FB_LOCATION ) & 0xffff) << 16;
        else {
            FREE( screen );
