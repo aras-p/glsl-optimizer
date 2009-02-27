@@ -793,6 +793,11 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
 
          ASSERT(bufObj->Name == ids[i]);
 
+         if (bufObj->Pointer) {
+            /* if mapped, unmap it now */
+            ctx->Driver.UnmapBuffer(ctx, 0, bufObj);
+         }
+
          /* unbind any vertex pointers bound to this buffer */
          unbind(ctx, &ctx->Array.ArrayObj->Vertex.BufferObj, bufObj);
          unbind(ctx, &ctx->Array.ArrayObj->Normal.BufferObj, bufObj);
