@@ -194,6 +194,9 @@ static GLboolean check_fallbacks( struct brw_context *brw,
    GLcontext *ctx = &brw->intel.ctx;
    GLuint i;
 
+   /* If we don't require strict OpenGL conformance, never 
+    * use fallbacks.
+    */
    if (!brw->intel.strict_conformance)
       return GL_FALSE;
 
@@ -230,13 +233,31 @@ static GLboolean check_fallbacks( struct brw_context *brw,
       }
    }
 
-
    if (ctx->Point.SmoothFlag) {
       for (i = 0; i < nr_prims; i++)
 	 if (prim[i].mode == GL_POINTS) 
 	    return GL_TRUE;
    }
+
+   /* BRW hardware doesn't handle GL_CLAMP texturing correctly;
+    * brw_wm_sampler_state:translate_wrap_mode() treats GL_CLAMP
+    * as GL_CLAMP_TO_EDGE instead.  If we're using GL_CLAMP, and
+    * we want strict conformance, force the fallback.
+    * Right now, we only do this for 2D textures.
+    */
+   {
+      int u;
+      for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
+         if (ctx->Texture.Unit[u].Enabled) {
+            if (ctx->Texture.Unit[u].CurrentTex[TEXTURE_2D_INDEX]->WrapS == GL_CLAMP ||
+                ctx->Texture.Unit[u].CurrentTex[TEXTURE_2D_INDEX]->WrapT == GL_CLAMP) {
+                   return GL_TRUE;
+            }
+         }
+      }
+   }
       
+   /* Nothing stopping us from the fast path now */
    return GL_FALSE;
 }
 
@@ -261,10 +282,17 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    if (ctx->NewState)
       _mesa_update_state( ctx );
 
+   /* We have to validate the textures *before* checking for fallbacks;
+    * otherwise, the software fallback won't be able to rely on the
+    * texture state, the firstLevel and lastLevel fields won't be
+    * set in the intel texture object (they'll both be 0), and the 
+    * software fallback will segfault if it attempts to access any
+    * texture level other than level 0.
+    */
+   brw_validate_textures( brw );
+
    if (check_fallbacks(brw, prim, nr_prims))
       return GL_FALSE;
-
-   brw_validate_textures( brw );
 
    /* Bind all inputs, derive varying and size information:
     */
