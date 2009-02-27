@@ -11,4 +11,5 @@ struct drm_api drm_api_hocks =
 	.buffer_from_texture = i915_get_texture_buffer,
 	.buffer_from_handle = intel_be_buffer_from_handle,
 	.handle_from_buffer = intel_be_handle_from_buffer,
+	.global_handle_from_buffer = intel_be_global_handle_from_buffer,
 };

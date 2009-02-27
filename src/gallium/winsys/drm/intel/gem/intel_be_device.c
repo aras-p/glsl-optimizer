@@ -70,6 +70,8 @@ intel_be_buffer_create(struct pipe_winsys *winsys,
 	buffer->base.alignment = alignment;
 	buffer->base.usage = usage;
 	buffer->base.size = size;
+	buffer->flinked = FALSE;
+	buffer->flink = 0;
 
 	if (usage & (PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_CONSTANT)) {
 		/* Local buffer */
@@ -162,14 +164,39 @@ err:
 	return NULL;
 }
 
-unsigned
+boolean
 intel_be_handle_from_buffer(struct pipe_screen *screen,
-                            struct pipe_buffer *buf)
+                            struct pipe_buffer *buffer,
+                            unsigned *handle)
 {
-	drm_intel_bo *bo = intel_bo(buf);
-	return bo->handle;
+	drm_intel_bo *bo;
+
+	if (!buffer)
+		return FALSE;
+
+	*handle = intel_bo(buffer)->handle;
+	return TRUE;
 }
 
+boolean
+intel_be_global_handle_from_buffer(struct pipe_screen *screen,
+				   struct pipe_buffer *buffer,
+				   unsigned *handle)
+{
+	struct intel_be_buffer *buf = intel_be_buffer(buffer);
+
+	if (!buffer)
+		return FALSE;
+
+	if (!buf->flinked) {
+		if (drm_intel_bo_flink(intel_bo(buffer), &buf->flink))
+			return FALSE;
+		buf->flinked = TRUE;
+	}
+
+	*handle = buf->flink;
+	return TRUE;
+}
 /*
  * Fence
  */
