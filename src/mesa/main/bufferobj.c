@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.2
+ * Version:  7.5
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,7 +26,7 @@
 
 /**
  * \file bufferobj.c
- * \brief Functions for the GL_ARB_vertex_buffer_object extension.
+ * \brief Functions for the GL_ARB_vertex/pixel_buffer_object extensions.
  * \author Brian Paul, Ian Romanick
  */
 
@@ -144,8 +145,7 @@ buffer_object_subdata_range_good( GLcontext * ctx, GLenum target,
 /**
  * Allocate and initialize a new buffer object.
  * 
- * This function is intended to be called via
- * \c dd_function_table::NewBufferObject.
+ * Default callback for the \c dd_function_table::NewBufferObject() hook.
  */
 struct gl_buffer_object *
 _mesa_new_buffer_object( GLcontext *ctx, GLuint name, GLenum target )
@@ -163,8 +163,7 @@ _mesa_new_buffer_object( GLcontext *ctx, GLuint name, GLenum target )
 /**
  * Delete a buffer object.
  * 
- * This function is intended to be called via
- * \c dd_function_table::DeleteBuffer.
+ * Default callback for the \c dd_function_table::DeleteBuffer() hook.
  */
 void
 _mesa_delete_buffer_object( GLcontext *ctx, struct gl_buffer_object *bufObj )
@@ -271,9 +270,8 @@ _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
  * previously stored in the buffer object is lost.  If \c data is \c NULL,
  * memory will be allocated, but no copy will occur.
  *
- * This function is intended to be called via
- * \c dd_function_table::BufferData.  This function need not set GL error
- * codes.  The input parameters will have been tested before calling.
+ * This is the default callback for \c dd_function_table::BufferData()
+ * Note that all GL error checking will have been done already.
  *
  * \param ctx     GL context.
  * \param target  Buffer object target on which to operate.
@@ -312,9 +310,8 @@ _mesa_buffer_data( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
  * specified by \c size + \c offset extends beyond the end of the buffer or
  * if \c data is \c NULL, no copy is performed.
  *
- * This function is intended to be called by
- * \c dd_function_table::BufferSubData.  This function need not set GL error
- * codes.  The input parameters will have been tested before calling.
+ * This is the default callback for \c dd_function_table::BufferSubData()
+ * Note that all GL error checking will have been done already.
  *
  * \param ctx     GL context.
  * \param target  Buffer object target on which to operate.
@@ -346,15 +343,14 @@ _mesa_buffer_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
  * specified by \c size + \c offset extends beyond the end of the buffer or
  * if \c data is \c NULL, no copy is performed.
  *
- * This function is intended to be called by
- * \c dd_function_table::BufferGetSubData.  This function need not set GL error
- * codes.  The input parameters will have been tested before calling.
+ * This is the default callback for \c dd_function_table::GetBufferSubData()
+ * Note that all GL error checking will have been done already.
  *
  * \param ctx     GL context.
  * \param target  Buffer object target on which to operate.
- * \param offset  Offset of the first byte to be modified.
+ * \param offset  Offset of the first byte to be fetched.
  * \param size    Size, in bytes, of the data range.
- * \param data    Pointer to the data to store in the buffer object.
+ * \param data    Destination for data
  * \param bufObj  Object to be used.
  *
  * \sa glBufferGetSubDataARB, dd_function_table::GetBufferSubData.
@@ -373,9 +369,7 @@ _mesa_buffer_get_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
 
 
 /**
- * Fallback function called via ctx->Driver.MapBuffer().
- * Hardware drivers that really implement buffer objects should never use
- * this function.
+ * Default callback for \c dd_function_tabel::MapBuffer().
  *
  * The function parameters will have been already tested for errors.
  *
@@ -407,9 +401,7 @@ _mesa_buffer_map( GLcontext *ctx, GLenum target, GLenum access,
 
 
 /**
- * Fallback function called via ctx->Driver.MapBuffer().
- * Hardware drivers that really implement buffer objects should never use
- * function.
+ * Default callback for \c dd_function_table::MapBuffer().
  *
  * The input parameters will have been already tested for errors.
  *
@@ -445,6 +437,7 @@ _mesa_init_buffer_objects( GLcontext *ctx )
    ctx->Array.ArrayBufferObj = ctx->Array.NullBufferObj;
    ctx->Array.ElementArrayBufferObj = ctx->Array.NullBufferObj;
 }
+
 
 /**
  * Bind the specified target to buffer for the specified context.
@@ -796,11 +789,11 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
    for (i = 0; i < n; i++) {
       struct gl_buffer_object *bufObj = _mesa_lookup_bufferobj(ctx, ids[i]);
       if (bufObj) {
-         /* unbind any vertex pointers bound to this buffer */
          GLuint j;
 
          ASSERT(bufObj->Name == ids[i]);
 
+         /* unbind any vertex pointers bound to this buffer */
          unbind(ctx, &ctx->Array.ArrayObj->Vertex.BufferObj, bufObj);
          unbind(ctx, &ctx->Array.ArrayObj->Normal.BufferObj, bufObj);
          unbind(ctx, &ctx->Array.ArrayObj->Color.BufferObj, bufObj);
@@ -822,6 +815,7 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
             _mesa_BindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, 0 );
          }
 
+         /* unbind any pixel pack/unpack pointers bound to this buffer */
          if (ctx->Pack.BufferObj == bufObj) {
             _mesa_BindBufferARB( GL_PIXEL_PACK_BUFFER_EXT, 0 );
          }
