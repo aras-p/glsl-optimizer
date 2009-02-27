@@ -59,7 +59,7 @@ static void r300_update_vertex_layout(struct r300_context* r300)
 {
     struct r300_vertex_format vformat;
     struct vertex_info vinfo;
-    boolean pos = false, psize = false, fog = false;
+    boolean pos = FALSE, psize = FALSE, fog = FALSE;
     int i, texs = 0, cols = 0;
     int tab[16];
 
@@ -75,17 +75,17 @@ static void r300_update_vertex_layout(struct r300_context* r300)
     for (i = 0; i < info->num_inputs; i++) {
         switch (info->input_semantic_name[i]) {
             case TGSI_SEMANTIC_POSITION:
-                pos = true;
+                pos = TRUE;
                 tab[i] = 0;
                 break;
             case TGSI_SEMANTIC_COLOR:
                 tab[i] = 2 + cols++;
                 break;
             case TGSI_SEMANTIC_FOG:
-                fog = true;
+                fog = TRUE;
                 break;
             case TGSI_SEMANTIC_PSIZE:
-                psize = true;
+                psize = TRUE;
                 tab[i] = 1;
                 break;
             case TGSI_SEMANTIC_GENERIC:

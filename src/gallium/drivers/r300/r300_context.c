@@ -73,7 +73,7 @@ static boolean r300_draw_range_elements(struct pipe_context* pipe,
                                              start + count - 1, NULL);
     }
 
-    return true;
+    return TRUE;
 }
 
 static boolean r300_draw_elements(struct pipe_context* pipe,

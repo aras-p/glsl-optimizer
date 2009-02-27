@@ -457,7 +457,7 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
         }
     }
 
-    fs->translated = true;
+    fs->translated = TRUE;
     r300->fs = fs;
 
     r300->dirty_state |= R300_NEW_FRAGMENT_SHADER;

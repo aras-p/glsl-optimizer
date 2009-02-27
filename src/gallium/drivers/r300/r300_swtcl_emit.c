@@ -92,9 +92,9 @@ static boolean r300_swtcl_render_allocate_vertices(struct vbuf_render* render,
     r300render->vertex_size = vertex_size;
 
     if (r300render->vbo) {
-        return true;
+        return TRUE;
     } else {
-        return false;
+        return FALSE;
     }
 }
 
@@ -168,11 +168,11 @@ static boolean r300_swtcl_render_set_primitive(struct vbuf_render* render,
             r300render->hwprim = R300_VAP_VF_CNTL__PRIM_POLYGON;
             break;
         default:
-            return false;
+            return FALSE;
             break;
     }
 
-    return true;
+    return TRUE;
 }
 
 static void prepare_render(struct r300_swtcl_render* render)
