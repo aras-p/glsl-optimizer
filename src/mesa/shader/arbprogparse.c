@@ -1688,7 +1688,7 @@ parse_result_binding(GLcontext *ctx, const GLubyte **inst,
              */
             parse_output_color_num(ctx, inst, Program, &out_color);
             ASSERT(out_color < MAX_DRAW_BUFFERS);
-            *outputReg = FRAG_RESULT_COLR;
+            *outputReg = FRAG_RESULT_COLOR;
          }
          else {
             /* for vtx programs, this is VERTEX_RESULT_POSITION */
@@ -1699,7 +1699,7 @@ parse_result_binding(GLcontext *ctx, const GLubyte **inst,
       case FRAGMENT_RESULT_DEPTH:
          if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
             /* for frag programs, this is FRAGMENT_RESULT_DEPTH */
-            *outputReg = FRAG_RESULT_DEPR;
+            *outputReg = FRAG_RESULT_DEPTH;
          }
          else {
             /* for vtx programs, this is VERTEX_RESULT_COLOR */

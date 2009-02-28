@@ -686,7 +686,7 @@ _slang_link(GLcontext *ctx,
    /* check that gl_FragColor and gl_FragData are not both written to */
    if (shProg->FragmentProgram) {
       GLbitfield outputsWritten = shProg->FragmentProgram->Base.OutputsWritten;
-      if ((outputsWritten & ((1 << FRAG_RESULT_COLR))) &&
+      if ((outputsWritten & ((1 << FRAG_RESULT_COLOR))) &&
           (outputsWritten >= (1 << FRAG_RESULT_DATA0))) {
          link_error(shProg, "Fragment program cannot write both gl_FragColor"
                     " and gl_FragData[].\n");

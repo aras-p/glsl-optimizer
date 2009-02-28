@@ -198,7 +198,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
        ctx->Color.AlphaEnabled)
       lookup |= IZ_PS_KILL_ALPHATEST_BIT;
 
-   if (fp->program.Base.OutputsWritten & (1<<FRAG_RESULT_DEPR))
+   if (fp->program.Base.OutputsWritten & (1<<FRAG_RESULT_DEPTH))
       lookup |= IZ_PS_COMPUTES_DEPTH_BIT;
 
    /* _NEW_DEPTH */

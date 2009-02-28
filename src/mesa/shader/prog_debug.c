@@ -222,20 +222,16 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                         "glGetProgramRegisterfvMESA(registerName)");
             return;
          }
-         else if (_mesa_strcmp(reg, "o[COLR]") == 0) {
+         else if (_mesa_strcmp(reg, "o[COLR]") == 0 ||
+                  _mesa_strcmp(reg, "o[COLH]") == 0) {
             /* Fragment output color */
             ctx->Driver.GetProgramRegister(ctx, PROGRAM_OUTPUT,
-                                           FRAG_RESULT_COLR, v);
-         }
-         else if (_mesa_strcmp(reg, "o[COLH]") == 0) {
-            /* Fragment output color */
-            ctx->Driver.GetProgramRegister(ctx, PROGRAM_OUTPUT,
-                                           FRAG_RESULT_COLH, v);
+                                           FRAG_RESULT_COLOR, v);
          }
          else if (_mesa_strcmp(reg, "o[DEPR]") == 0) {
             /* Fragment output depth */
             ctx->Driver.GetProgramRegister(ctx, PROGRAM_OUTPUT,
-                                           FRAG_RESULT_DEPR, v);
+                                           FRAG_RESULT_DEPTH, v);
          }
          else {
             /* try user-defined identifiers */

@@ -862,7 +862,7 @@ static void precalc_txp( struct brw_wm_compile *c,
 static void emit_fb_write( struct brw_wm_compile *c )
 {
    struct prog_src_register payload_r0_depth = src_reg(PROGRAM_PAYLOAD, PAYLOAD_DEPTH);
-   struct prog_src_register outdepth = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DEPR);
+   struct prog_src_register outdepth = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DEPTH);
    struct prog_src_register outcolor;
    GLuint i;
 
@@ -879,7 +879,7 @@ static void emit_fb_write( struct brw_wm_compile *c )
                                     outcolor, payload_r0_depth, outdepth);
          inst->Aux = (i<<1);
          if (c->fp_fragcolor_emitted) {
-            outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
+            outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLOR);
             last_inst = inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
                                        0, outcolor, payload_r0_depth, outdepth);
             inst->Aux = (i<<1);
@@ -892,7 +892,7 @@ static void emit_fb_write( struct brw_wm_compile *c )
       if (c->fp->program.Base.OutputsWritten & (1 << FRAG_RESULT_DATA0))
          outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0);
       else 
-         outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
+         outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLOR);
 
       inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
                      0, outcolor, payload_r0_depth, outdepth);
@@ -928,7 +928,7 @@ static void validate_dst_regs( struct brw_wm_compile *c,
 {
    if (inst->DstReg.File == PROGRAM_OUTPUT) {
       GLuint idx = inst->DstReg.Index;
-      if (idx == FRAG_RESULT_COLR)
+      if (idx == FRAG_RESULT_COLOR)
          c->fp_fragcolor_emitted = 1;
    }
 }
