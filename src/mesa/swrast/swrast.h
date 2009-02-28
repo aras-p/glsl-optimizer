@@ -75,6 +75,12 @@ typedef struct {
 } SWvertex;
 
 
+/**
+ * Fixed point data type.
+ */
+typedef int GLfixed;
+
+
 #define FRAG_ATTRIB_CI FRAG_ATTRIB_COL0
 
 
