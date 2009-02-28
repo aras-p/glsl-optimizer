@@ -203,11 +203,14 @@ _mesa_SelectBuffer( GLsizei size, GLuint *buffer )
  * Verifies there is free space in the buffer to write the value and
  * increments the pointer.
  */
-#define WRITE_RECORD( CTX, V )					\
-	if (CTX->Select.BufferCount < CTX->Select.BufferSize) {	\
-	   CTX->Select.Buffer[CTX->Select.BufferCount] = (V);	\
-	}							\
-	CTX->Select.BufferCount++;
+static INLINE void
+write_record(GLcontext *ctx, GLuint value)
+{
+   if (ctx->Select.BufferCount < ctx->Select.BufferSize) {
+      ctx->Select.Buffer[ctx->Select.BufferCount] = value;
+   }
+   ctx->Select.BufferCount++;
+}
 
 
 /**
@@ -256,11 +259,11 @@ write_hit_record(GLcontext *ctx)
    zmin = (GLuint) ((GLfloat) zscale * ctx->Select.HitMinZ);
    zmax = (GLuint) ((GLfloat) zscale * ctx->Select.HitMaxZ);
 
-   WRITE_RECORD( ctx, ctx->Select.NameStackDepth );
-   WRITE_RECORD( ctx, zmin );
-   WRITE_RECORD( ctx, zmax );
+   write_record( ctx, ctx->Select.NameStackDepth );
+   write_record( ctx, zmin );
+   write_record( ctx, zmax );
    for (i = 0; i < ctx->Select.NameStackDepth; i++) {
-      WRITE_RECORD( ctx, ctx->Select.NameStack[i] );
+      write_record( ctx, ctx->Select.NameStack[i] );
    }
 
    ctx->Select.Hits++;
