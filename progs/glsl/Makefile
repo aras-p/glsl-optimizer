@@ -25,6 +25,7 @@ PROGS = \
 	pointcoord \
 	samplers \
 	samplers_array \
+	shadow_sampler \
 	skinning \
 	texdemo1 \
 	toyball \
