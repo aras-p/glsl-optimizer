@@ -256,15 +256,7 @@ static INLINE int GET_FLOAT_BITS( float x )
 /***
  *** IROUND: return (as an integer) float rounded to nearest integer
  ***/
-#if defined(USE_SPARC_ASM) && defined(__GNUC__) && defined(__sparc__)
-static INLINE int iround(float f)
-{
-   int r;
-   __asm__ ("fstoi %1, %0" : "=f" (r) : "f" (f));
-   return r;
-}
-#define IROUND(x)  iround(x)
-#elif defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__) && \
+#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__) && \
 			(!(defined(__BEOS__) || defined(__HAIKU__))  || \
 			(__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)))
 static INLINE int iround(float f)
