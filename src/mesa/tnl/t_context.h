@@ -50,6 +50,7 @@
 #define _T_CONTEXT_H
 
 #include "main/glheader.h"
+#include "main/bitset.h"
 #include "main/mtypes.h"
 
 #include "math/m_matrix.h"
