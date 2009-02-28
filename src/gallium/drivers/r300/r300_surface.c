@@ -55,7 +55,12 @@ static void r300_surface_fill(struct pipe_context* pipe,
         return;
     }*/
 
-    BEGIN_CS(163 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
+    r300_emit_blend_state(r300, &blend_clear_state);
+    r300_emit_blend_color_state(r300, &blend_color_clear_state);
+    r300_emit_dsa_state(r300, &dsa_clear_state);
+    r300_emit_rs_state(r300, &rs_clear_state);
+
+    BEGIN_CS(143 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -69,7 +74,12 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, 0xFFFFFF);
     OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, 0x0);
     /* XXX endian */
-    OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VC_NO_SWAP);
+    if (caps->has_tcl) {
+        OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VC_NO_SWAP);
+    } else {
+        OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VC_NO_SWAP |
+                R300_VAP_TCL_BYPASS);
+    }
     OUT_CS_REG(R300_VAP_PROG_STREAM_CNTL_0, 0x0);
     /* XXX magic number not in r300_reg */
     OUT_CS_REG(R300_VAP_PSC_SGN_NORM_CNTL, 0xAAAAAAAA);
@@ -102,9 +112,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_GA_POINT_MINMAX, 0x6 |
         (0x1800 << R300_GA_POINT_MINMAX_MAX_SHIFT));
     /* XXX this big chunk should be refactored into rs_state */
-    OUT_CS_REG(R300_GA_LINE_CNTL, 0x00030006);
-    OUT_CS_REG(R300_GA_LINE_STIPPLE_CONFIG, 0x3BAAAAAB);
-    OUT_CS_REG(R300_GA_LINE_STIPPLE_VALUE, 0x00000000);
     OUT_CS_REG(R300_GA_LINE_S0, 0x00000000);
     OUT_CS_REG(R300_GA_LINE_S1, 0x3F800000);
     OUT_CS_REG(R300_GA_ENHANCE, 0x00000002);
@@ -117,12 +124,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_GA_FOG_SCALE, 0x3DBF1412);
     OUT_CS_REG(R300_GA_FOG_OFFSET, 0x00000000);
     OUT_CS_REG(R300_SU_TEX_WRAP, 0x00000000);
-    OUT_CS_REG(R300_SU_POLY_OFFSET_FRONT_SCALE, 0x00000000);
-    OUT_CS_REG(R300_SU_POLY_OFFSET_FRONT_OFFSET, 0x00000000);
-    OUT_CS_REG(R300_SU_POLY_OFFSET_BACK_SCALE, 0x00000000);
-    OUT_CS_REG(R300_SU_POLY_OFFSET_BACK_OFFSET, 0x00000000);
-    OUT_CS_REG(R300_SU_POLY_OFFSET_ENABLE, 0x00000000);
-    OUT_CS_REG(R300_SU_CULL_MODE, 0x00000000);
     OUT_CS_REG(R300_SU_DEPTH_SCALE, 0x4B7FFFFF);
     OUT_CS_REG(R300_SU_DEPTH_OFFSET, 0x00000000);
     OUT_CS_REG(R300_SC_HYPERZ, 0x0000001C);
@@ -189,11 +190,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
         OUT_CS_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE |
             R300_PS_UCP_MODE_CLIP_AS_TRIFAN);
     }
-
-    /* The size of the point we're about to draw, in sixths of pixels */
-    OUT_CS_REG(R300_GA_POINT_SIZE,
-        ((h * 6) & R300_POINTSIZE_Y_MASK) |
-        ((w * 6) << R300_POINTSIZE_X_SHIFT));
 
     /* XXX */
     OUT_CS_REG(R300_SC_CLIP_RULE, 0xaaaa);
@@ -277,9 +273,10 @@ static void r300_surface_fill(struct pipe_context* pipe,
     }
     END_CS;
 
-    r300_emit_blend_state(r300, &blend_clear_state);
-    r300_emit_blend_color_state(r300, &blend_color_clear_state);
-    r300_emit_dsa_state(r300, &dsa_clear_state);
+    /* The size of the point we're about to draw, in sixths of pixels */
+    OUT_CS_REG(R300_GA_POINT_SIZE,
+        ((h * 6) & R300_POINTSIZE_Y_MASK) |
+        ((w * 6) << R300_POINTSIZE_X_SHIFT));
 
     BEGIN_CS(24);
     /* Flush colorbuffer and blend caches. */

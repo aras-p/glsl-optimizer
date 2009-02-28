@@ -57,4 +57,16 @@ const struct r300_dsa_state dsa_clear_state = {
     .stencil_ref_bf = 0x0,
 };
 
+const struct r300_rs_state rs_clear_state = {
+    .line_control = 0x00030006,
+    .depth_scale_front = 0x0,
+    .depth_offset_front = 0x0,
+    .depth_scale_back = 0x0,
+    .depth_offset_back = 0x0,
+    .polygon_offset_enable = 0x0,
+    .cull_mode = 0x0,
+    .line_stipple_config = 0x3BAAAAAB,
+    .line_stipple_value = 0x0,
+};
+
 #endif /* R300_SURFACE_H */
