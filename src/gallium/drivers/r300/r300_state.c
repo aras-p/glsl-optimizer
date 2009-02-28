@@ -28,6 +28,7 @@
 
 #include "r300_context.h"
 #include "r300_reg.h"
+#include "r300_state_inlines.h"
 #include "r300_state_shader.h"
 
 /* r300_state: Functions used to intialize state context by translating
@@ -47,71 +48,6 @@ static uint32_t pack_float_32(float f)
     return u.u;
 }
 
-static uint32_t translate_blend_function(int blend_func) {
-    switch (blend_func) {
-        case PIPE_BLEND_ADD:
-            return R300_COMB_FCN_ADD_CLAMP;
-        case PIPE_BLEND_SUBTRACT:
-            return R300_COMB_FCN_SUB_CLAMP;
-        case PIPE_BLEND_REVERSE_SUBTRACT:
-            return R300_COMB_FCN_RSUB_CLAMP;
-        case PIPE_BLEND_MIN:
-            return R300_COMB_FCN_MIN;
-        case PIPE_BLEND_MAX:
-            return R300_COMB_FCN_MAX;
-        default:
-            debug_printf("r300: Unknown blend function %d\n", blend_func);
-            break;
-    }
-    return 0;
-}
-
-/* XXX we can also offer the D3D versions of some of these... */
-static uint32_t translate_blend_factor(int blend_fact) {
-    switch (blend_fact) {
-        case PIPE_BLENDFACTOR_ONE:
-            return R300_BLEND_GL_ONE;
-        case PIPE_BLENDFACTOR_SRC_COLOR:
-            return R300_BLEND_GL_SRC_COLOR;
-        case PIPE_BLENDFACTOR_SRC_ALPHA:
-            return R300_BLEND_GL_SRC_ALPHA;
-        case PIPE_BLENDFACTOR_DST_ALPHA:
-            return R300_BLEND_GL_DST_ALPHA;
-        case PIPE_BLENDFACTOR_DST_COLOR:
-            return R300_BLEND_GL_DST_COLOR;
-        case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
-            return R300_BLEND_GL_SRC_ALPHA_SATURATE;
-        case PIPE_BLENDFACTOR_CONST_COLOR:
-            return R300_BLEND_GL_CONST_COLOR;
-        case PIPE_BLENDFACTOR_CONST_ALPHA:
-            return R300_BLEND_GL_CONST_ALPHA;
-        /* XXX WTF are these?
-        case PIPE_BLENDFACTOR_SRC1_COLOR:
-        case PIPE_BLENDFACTOR_SRC1_ALPHA: */
-        case PIPE_BLENDFACTOR_ZERO:
-            return R300_BLEND_GL_ZERO;
-        case PIPE_BLENDFACTOR_INV_SRC_COLOR:
-            return R300_BLEND_GL_ONE_MINUS_SRC_COLOR;
-        case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
-            return R300_BLEND_GL_ONE_MINUS_SRC_ALPHA;
-        case PIPE_BLENDFACTOR_INV_DST_ALPHA:
-            return R300_BLEND_GL_ONE_MINUS_DST_ALPHA;
-        case PIPE_BLENDFACTOR_INV_DST_COLOR:
-            return R300_BLEND_GL_ONE_MINUS_DST_COLOR;
-        case PIPE_BLENDFACTOR_INV_CONST_COLOR:
-            return R300_BLEND_GL_ONE_MINUS_CONST_COLOR;
-        case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
-            return R300_BLEND_GL_ONE_MINUS_CONST_ALPHA;
-        /* XXX see above
-        case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
-        case PIPE_BLENDFACTOR_INV_SRC1_ALPHA: */
-        default:
-            debug_printf("r300: Unknown blend factor %d\n", blend_fact);
-            break;
-    }
-    return 0;
-}
-
 /* Create a new blend state based on the CSO blend state.
  *
  * This encompasses alpha blending, logic/raster ops, and blend dithering. */
@@ -126,16 +62,16 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
         blend->blend_control = R300_ALPHA_BLEND_ENABLE |
                 R300_SEPARATE_ALPHA_ENABLE |
                 R300_READ_ENABLE |
-                translate_blend_function(state->rgb_func) |
-                (translate_blend_factor(state->rgb_src_factor) <<
+                r300_translate_blend_function(state->rgb_func) |
+                (r300_translate_blend_factor(state->rgb_src_factor) <<
                     R300_SRC_BLEND_SHIFT) |
-                (translate_blend_factor(state->rgb_dst_factor) <<
+                (r300_translate_blend_factor(state->rgb_dst_factor) <<
                     R300_DST_BLEND_SHIFT);
         blend->alpha_blend_control =
-                translate_blend_function(state->alpha_func) |
-                (translate_blend_factor(state->alpha_src_factor) <<
+                r300_translate_blend_function(state->alpha_func) |
+                (r300_translate_blend_factor(state->alpha_src_factor) <<
                     R300_SRC_BLEND_SHIFT) |
-                (translate_blend_factor(state->alpha_dst_factor) <<
+                (r300_translate_blend_factor(state->alpha_dst_factor) <<
                     R300_DST_BLEND_SHIFT);
     }
 
@@ -233,82 +169,6 @@ static void
     r300->dirty_state |= R300_NEW_CONSTANTS;
 }
 
-static uint32_t translate_depth_stencil_function(int zs_func) {
-    switch (zs_func) {
-        case PIPE_FUNC_NEVER:
-            return R300_ZS_NEVER;
-        case PIPE_FUNC_LESS:
-            return R300_ZS_LESS;
-        case PIPE_FUNC_EQUAL:
-            return R300_ZS_EQUAL;
-        case PIPE_FUNC_LEQUAL:
-            return R300_ZS_LEQUAL;
-        case PIPE_FUNC_GREATER:
-            return R300_ZS_GREATER;
-        case PIPE_FUNC_NOTEQUAL:
-            return R300_ZS_NOTEQUAL;
-        case PIPE_FUNC_GEQUAL:
-            return R300_ZS_GEQUAL;
-        case PIPE_FUNC_ALWAYS:
-            return R300_ZS_ALWAYS;
-        default:
-            debug_printf("r300: Unknown depth/stencil function %d\n",
-                zs_func);
-            break;
-    }
-    return 0;
-}
-
-static uint32_t translate_stencil_op(int s_op) {
-    switch (s_op) {
-        case PIPE_STENCIL_OP_KEEP:
-            return R300_ZS_KEEP;
-        case PIPE_STENCIL_OP_ZERO:
-            return R300_ZS_ZERO;
-        case PIPE_STENCIL_OP_REPLACE:
-            return R300_ZS_REPLACE;
-        case PIPE_STENCIL_OP_INCR:
-            return R300_ZS_INCR;
-        case PIPE_STENCIL_OP_DECR:
-            return R300_ZS_DECR;
-        case PIPE_STENCIL_OP_INCR_WRAP:
-            return R300_ZS_INCR_WRAP;
-        case PIPE_STENCIL_OP_DECR_WRAP:
-            return R300_ZS_DECR_WRAP;
-        case PIPE_STENCIL_OP_INVERT:
-            return R300_ZS_INVERT;
-        default:
-            debug_printf("r300: Unknown stencil op %d", s_op);
-            break;
-    }
-    return 0;
-}
-
-static uint32_t translate_alpha_function(int alpha_func) {
-    switch (alpha_func) {
-        case PIPE_FUNC_NEVER:
-            return R300_FG_ALPHA_FUNC_NEVER;
-        case PIPE_FUNC_LESS:
-            return R300_FG_ALPHA_FUNC_LESS;
-        case PIPE_FUNC_EQUAL:
-            return R300_FG_ALPHA_FUNC_EQUAL;
-        case PIPE_FUNC_LEQUAL:
-            return R300_FG_ALPHA_FUNC_LE;
-        case PIPE_FUNC_GREATER:
-            return R300_FG_ALPHA_FUNC_GREATER;
-        case PIPE_FUNC_NOTEQUAL:
-            return R300_FG_ALPHA_FUNC_NOTEQUAL;
-        case PIPE_FUNC_GEQUAL:
-            return R300_FG_ALPHA_FUNC_GE;
-        case PIPE_FUNC_ALWAYS:
-            return R300_FG_ALPHA_FUNC_ALWAYS;
-        default:
-            debug_printf("r300: Unknown alpha function %d", alpha_func);
-            break;
-    }
-    return 0;
-}
-
 /* Create a new depth, stencil, and alpha state based on the CSO dsa state.
  *
  * This contains the depth buffer, stencil buffer, alpha test, and such.
@@ -329,7 +189,7 @@ static void*
         }
 
         dsa->z_stencil_control |=
-            (translate_depth_stencil_function(state->depth.func) <<
+            (r300_translate_depth_stencil_function(state->depth.func) <<
                 R300_Z_FUNC_SHIFT);
     }
 
@@ -337,14 +197,14 @@ static void*
     if (state->stencil[0].enabled) {
         dsa->z_buffer_control |= R300_STENCIL_ENABLE;
         dsa->z_stencil_control |=
-                (translate_depth_stencil_function(state->stencil[0].func) <<
-                    R300_S_FRONT_FUNC_SHIFT) |
-                (translate_stencil_op(state->stencil[0].fail_op) <<
-                    R300_S_FRONT_SFAIL_OP_SHIFT) |
-                (translate_stencil_op(state->stencil[0].zpass_op) <<
-                    R300_S_FRONT_ZPASS_OP_SHIFT) |
-                (translate_stencil_op(state->stencil[0].zfail_op) <<
-                    R300_S_FRONT_ZFAIL_OP_SHIFT);
+            (r300_translate_depth_stencil_function(state->stencil[0].func) <<
+                R300_S_FRONT_FUNC_SHIFT) |
+            (r300_translate_stencil_op(state->stencil[0].fail_op) <<
+                R300_S_FRONT_SFAIL_OP_SHIFT) |
+            (r300_translate_stencil_op(state->stencil[0].zpass_op) <<
+                R300_S_FRONT_ZPASS_OP_SHIFT) |
+            (r300_translate_stencil_op(state->stencil[0].zfail_op) <<
+                R300_S_FRONT_ZFAIL_OP_SHIFT);
 
         dsa->stencil_ref_mask = (state->stencil[0].ref_value) |
                 (state->stencil[0].valuemask << R300_STENCILMASK_SHIFT) |
@@ -353,14 +213,14 @@ static void*
         if (state->stencil[1].enabled) {
             dsa->z_buffer_control |= R300_STENCIL_FRONT_BACK;
             dsa->z_stencil_control |=
-                (translate_depth_stencil_function(state->stencil[1].func) <<
-                    R300_S_BACK_FUNC_SHIFT) |
-                (translate_stencil_op(state->stencil[1].fail_op) <<
-                    R300_S_BACK_SFAIL_OP_SHIFT) |
-                (translate_stencil_op(state->stencil[1].zpass_op) <<
-                    R300_S_BACK_ZPASS_OP_SHIFT) |
-                (translate_stencil_op(state->stencil[1].zfail_op) <<
-                    R300_S_BACK_ZFAIL_OP_SHIFT);
+            (r300_translate_depth_stencil_function(state->stencil[1].func) <<
+                R300_S_BACK_FUNC_SHIFT) |
+            (r300_translate_stencil_op(state->stencil[1].fail_op) <<
+                R300_S_BACK_SFAIL_OP_SHIFT) |
+            (r300_translate_stencil_op(state->stencil[1].zpass_op) <<
+                R300_S_BACK_ZPASS_OP_SHIFT) |
+            (r300_translate_stencil_op(state->stencil[1].zfail_op) <<
+                R300_S_BACK_ZFAIL_OP_SHIFT);
 
             dsa->stencil_ref_bf = (state->stencil[1].ref_value) |
                 (state->stencil[1].valuemask << R300_STENCILMASK_SHIFT) |
@@ -370,7 +230,8 @@ static void*
 
     /* Alpha test setup. */
     if (state->alpha.enabled) {
-        dsa->alpha_function = translate_alpha_function(state->alpha.func) |
+        dsa->alpha_function =
+            r300_translate_alpha_function(state->alpha.func) |
             R300_FG_ALPHA_FUNC_ENABLE;
         dsa->alpha_reference = CLAMP(state->alpha.ref_value * 1023.0f,
                                      0, 1023);
@@ -567,83 +428,6 @@ static void r300_delete_rs_state(struct pipe_context* pipe, void* state)
     FREE(state);
 }
 
-static uint32_t translate_wrap(int wrap) {
-    switch (wrap) {
-        case PIPE_TEX_WRAP_REPEAT:
-            return R300_TX_REPEAT;
-        case PIPE_TEX_WRAP_CLAMP:
-            return R300_TX_CLAMP;
-        case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-            return R300_TX_CLAMP_TO_EDGE;
-        case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-            return R300_TX_CLAMP_TO_BORDER;
-        case PIPE_TEX_WRAP_MIRROR_REPEAT:
-            return R300_TX_REPEAT | R300_TX_MIRRORED;
-        case PIPE_TEX_WRAP_MIRROR_CLAMP:
-            return R300_TX_CLAMP | R300_TX_MIRRORED;
-        case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
-            return R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
-        case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
-            return R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
-        default:
-            debug_printf("r300: Unknown texture wrap %d", wrap);
-            return 0;
-    }
-}
-
-static uint32_t translate_tex_filters(int min, int mag, int mip) {
-    uint32_t retval = 0;
-    switch (min) {
-        case PIPE_TEX_FILTER_NEAREST:
-            retval |= R300_TX_MIN_FILTER_NEAREST;
-        case PIPE_TEX_FILTER_LINEAR:
-            retval |= R300_TX_MIN_FILTER_LINEAR;
-        case PIPE_TEX_FILTER_ANISO:
-            retval |= R300_TX_MIN_FILTER_ANISO;
-        default:
-            debug_printf("r300: Unknown texture filter %d", min);
-            break;
-    }
-    switch (mag) {
-        case PIPE_TEX_FILTER_NEAREST:
-            retval |= R300_TX_MAG_FILTER_NEAREST;
-        case PIPE_TEX_FILTER_LINEAR:
-            retval |= R300_TX_MAG_FILTER_LINEAR;
-        case PIPE_TEX_FILTER_ANISO:
-            retval |= R300_TX_MAG_FILTER_ANISO;
-        default:
-            debug_printf("r300: Unknown texture filter %d", mag);
-            break;
-    }
-    switch (mip) {
-        case PIPE_TEX_MIPFILTER_NONE:
-            retval |= R300_TX_MIN_FILTER_MIP_NONE;
-        case PIPE_TEX_MIPFILTER_NEAREST:
-            retval |= R300_TX_MIN_FILTER_MIP_NEAREST;
-        case PIPE_TEX_MIPFILTER_LINEAR:
-            retval |= R300_TX_MIN_FILTER_MIP_LINEAR;
-        default:
-            debug_printf("r300: Unknown texture filter %d", mip);
-            break;
-    }
-
-    return retval;
-}
-
-static uint32_t anisotropy(float max_aniso) {
-    if (max_aniso >= 16.0f) {
-        return R300_TX_MAX_ANISO_16_TO_1;
-    } else if (max_aniso >= 8.0f) {
-        return R300_TX_MAX_ANISO_8_TO_1;
-    } else if (max_aniso >= 4.0f) {
-        return R300_TX_MAX_ANISO_4_TO_1;
-    } else if (max_aniso >= 2.0f) {
-        return R300_TX_MAX_ANISO_2_TO_1;
-    } else {
-        return R300_TX_MAX_ANISO_1_TO_1;
-    }
-}
-
 static void*
         r300_create_sampler_state(struct pipe_context* pipe,
                                   const struct pipe_sampler_state* state)
@@ -653,19 +437,19 @@ static void*
     int lod_bias;
 
     sampler->filter0 |=
-        (translate_wrap(state->wrap_s) << R300_TX_WRAP_S_SHIFT) |
-        (translate_wrap(state->wrap_t) << R300_TX_WRAP_T_SHIFT) |
-        (translate_wrap(state->wrap_r) << R300_TX_WRAP_R_SHIFT);
+        (r300_translate_wrap(state->wrap_s) << R300_TX_WRAP_S_SHIFT) |
+        (r300_translate_wrap(state->wrap_t) << R300_TX_WRAP_T_SHIFT) |
+        (r300_translate_wrap(state->wrap_r) << R300_TX_WRAP_R_SHIFT);
 
-    sampler->filter0 |= translate_tex_filters(state->min_img_filter,
-                                              state->mag_img_filter,
-                                              state->min_mip_filter);
+    sampler->filter0 |= r300_translate_tex_filters(state->min_img_filter,
+                                                   state->mag_img_filter,
+                                                   state->min_mip_filter);
 
     lod_bias = CLAMP((int)(state->lod_bias * 32), -(1 << 9), (1 << 9) - 1);
 
     sampler->filter1 |= lod_bias << R300_LOD_BIAS_SHIFT;
 
-    sampler->filter1 |= anisotropy(state->max_anisotropy);
+    sampler->filter1 |= r300_anisotropy(state->max_anisotropy);
 
     util_pack_color(state->border_color, PIPE_FORMAT_A8R8G8B8_UNORM,
                     &sampler->border_color);
