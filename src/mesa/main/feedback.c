@@ -111,8 +111,8 @@ _mesa_PassThrough( GLfloat token )
 
    if (ctx->RenderMode==GL_FEEDBACK) {
       FLUSH_VERTICES(ctx, 0);
-      FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_PASS_THROUGH_TOKEN );
-      FEEDBACK_TOKEN( ctx, token );
+      _mesa_feedback_token( ctx, (GLfloat) (GLint) GL_PASS_THROUGH_TOKEN );
+      _mesa_feedback_token( ctx, token );
    }
 }
 
@@ -127,30 +127,31 @@ _mesa_feedback_vertex(GLcontext *ctx,
                       GLfloat index,
                       const GLfloat texcoord[4])
 {
-   FEEDBACK_TOKEN( ctx, win[0] );
-   FEEDBACK_TOKEN( ctx, win[1] );
+   _mesa_feedback_token( ctx, win[0] );
+   _mesa_feedback_token( ctx, win[1] );
    if (ctx->Feedback._Mask & FB_3D) {
-      FEEDBACK_TOKEN( ctx, win[2] );
+      _mesa_feedback_token( ctx, win[2] );
    }
    if (ctx->Feedback._Mask & FB_4D) {
-      FEEDBACK_TOKEN( ctx, win[3] );
+      _mesa_feedback_token( ctx, win[3] );
    }
    if (ctx->Feedback._Mask & FB_INDEX) {
-      FEEDBACK_TOKEN( ctx, (GLfloat) index );
+      _mesa_feedback_token( ctx, (GLfloat) index );
    }
    if (ctx->Feedback._Mask & FB_COLOR) {
-      FEEDBACK_TOKEN( ctx, color[0] );
-      FEEDBACK_TOKEN( ctx, color[1] );
-      FEEDBACK_TOKEN( ctx, color[2] );
-      FEEDBACK_TOKEN( ctx, color[3] );
+      _mesa_feedback_token( ctx, color[0] );
+      _mesa_feedback_token( ctx, color[1] );
+      _mesa_feedback_token( ctx, color[2] );
+      _mesa_feedback_token( ctx, color[3] );
    }
    if (ctx->Feedback._Mask & FB_TEXTURE) {
-      FEEDBACK_TOKEN( ctx, texcoord[0] );
-      FEEDBACK_TOKEN( ctx, texcoord[1] );
-      FEEDBACK_TOKEN( ctx, texcoord[2] );
-      FEEDBACK_TOKEN( ctx, texcoord[3] );
+      _mesa_feedback_token( ctx, texcoord[0] );
+      _mesa_feedback_token( ctx, texcoord[1] );
+      _mesa_feedback_token( ctx, texcoord[2] );
+      _mesa_feedback_token( ctx, texcoord[3] );
    }
 }
+
 
 #endif /* _HAVE_FULL_GL */
 

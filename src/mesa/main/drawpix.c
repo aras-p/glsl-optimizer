@@ -103,7 +103,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
    else if (ctx->RenderMode == GL_FEEDBACK) {
       /* Feedback the current raster pos info */
       FLUSH_CURRENT( ctx, 0 );
-      FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_DRAW_PIXEL_TOKEN );
+      _mesa_feedback_token( ctx, (GLfloat) (GLint) GL_DRAW_PIXEL_TOKEN );
       _mesa_feedback_vertex( ctx,
                              ctx->Current.RasterPos,
                              ctx->Current.RasterColor,
@@ -166,7 +166,7 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
    }
    else if (ctx->RenderMode == GL_FEEDBACK) {
       FLUSH_CURRENT( ctx, 0 );
-      FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_COPY_PIXEL_TOKEN );
+      _mesa_feedback_token( ctx, (GLfloat) (GLint) GL_COPY_PIXEL_TOKEN );
       _mesa_feedback_vertex( ctx, 
                              ctx->Current.RasterPos,
                              ctx->Current.RasterColor,
@@ -243,7 +243,7 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
 #if _HAVE_FULL_GL
    else if (ctx->RenderMode == GL_FEEDBACK) {
       FLUSH_CURRENT(ctx, 0);
-      FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_BITMAP_TOKEN );
+      _mesa_feedback_token( ctx, (GLfloat) (GLint) GL_BITMAP_TOKEN );
       _mesa_feedback_vertex( ctx,
                              ctx->Current.RasterPos,
                              ctx->Current.RasterColor,
@@ -311,7 +311,7 @@ _mesa_DrawDepthPixelsMESA( GLsizei width, GLsizei height,
    else if (ctx->RenderMode == GL_FEEDBACK) {
       /* Feedback the current raster pos info */
       FLUSH_CURRENT( ctx, 0 );
-      FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_DRAW_PIXEL_TOKEN );
+      _mesa_feedback_token( ctx, (GLfloat) (GLint) GL_DRAW_PIXEL_TOKEN );
       _mesa_feedback_vertex( ctx,
                              ctx->Current.RasterPos,
                              ctx->Current.RasterColor,

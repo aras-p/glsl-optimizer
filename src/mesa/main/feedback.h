@@ -30,13 +30,6 @@
 #include "mtypes.h"
 
 
-#define FEEDBACK_TOKEN( CTX, T )				\
-	if (CTX->Feedback.Count < CTX->Feedback.BufferSize) {	\
-	   CTX->Feedback.Buffer[CTX->Feedback.Count] = (GLfloat) (T); \
-	}							\
-	CTX->Feedback.Count++;
-
-
 extern void
 _mesa_init_feedback( GLcontext *ctx );
 
@@ -46,6 +39,16 @@ _mesa_feedback_vertex( GLcontext *ctx,
                        const GLfloat color[4],
                        GLfloat index,
                        const GLfloat texcoord[4] );
+
+
+static INLINE void
+_mesa_feedback_token( GLcontext *ctx, GLfloat token )
+{
+   if (ctx->Feedback.Count < ctx->Feedback.BufferSize) {
+      ctx->Feedback.Buffer[ctx->Feedback.Count] = token;
+   }
+   ctx->Feedback.Count++;
+}
 
 
 extern void
