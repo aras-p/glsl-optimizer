@@ -97,7 +97,8 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_GB_MSPOS0, 0x66666666);
     OUT_CS_REG(R300_GB_MSPOS1, 0x66666666);
     /* XXX why doesn't classic Mesa write the number of pipes, too? */
-    OUT_CS_REG(R300_GB_TILE_CONFIG, R300_GB_TILE_ENABLE |
+    OUT_CS_REG(R300_GB_TILE_CONFIG, R300_GB_TILE_DISABLE |
+        r300_translate_gb_pipes(caps->num_frag_pipes) |
         R300_GB_TILE_SIZE_16);
     OUT_CS_REG(R300_GB_SELECT, R300_GB_FOG_SELECT_1_1_W);
     OUT_CS_REG(R300_GB_AA_CONFIG, 0x0);
