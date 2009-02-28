@@ -208,11 +208,10 @@ static void r300_update_rs_block(struct r300_context* r300)
                     break;
                 case INTERP_PERSPECTIVE:
                     rs->ip[tex_count] |=
-                        R500_RS_TEX_PTR(vinfo->attrib[i].src_index) |
-                        R500_RS_SEL_S(tex_count) |
-                        R500_RS_SEL_T(tex_count + 1) |
-                        R500_RS_SEL_R(tex_count + 2) |
-                        R500_RS_SEL_Q(tex_count + 3);
+                        R500_RS_SEL_S(vinfo->attrib[i].src_index) |
+                        R500_RS_SEL_T(vinfo->attrib[i].src_index + 1) |
+                        R500_RS_SEL_R(vinfo->attrib[i].src_index + 2) |
+                        R500_RS_SEL_Q(vinfo->attrib[i].src_index + 3);
                     tex_count++;
                     break;
             }

@@ -1220,14 +1220,18 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R500_RS_INST_14					0x4358
 #define R500_RS_INST_15					0x435c
 #define R500_RS_INST_TEX_ID_SHIFT			0
+#        define R500_RS_INST_TEX_ID(x)                  ((x) << 0)
 #define R500_RS_INST_TEX_CN_WRITE			(1 << 4)
 #define R500_RS_INST_TEX_ADDR_SHIFT			5
+#        define R500_RS_INST_TEX_ADDR(x)                ((x) << 0)
 #define R500_RS_INST_COL_ID_SHIFT			12
+#        define R500_RS_INST_COL_ID(x)                  ((x) << 12)
 #define R500_RS_INST_COL_CN_NO_WRITE			(0 << 16)
 #define R500_RS_INST_COL_CN_WRITE			(1 << 16)
 #define R500_RS_INST_COL_CN_WRITE_FBUFFER		(2 << 16)
 #define R500_RS_INST_COL_CN_WRITE_BACKFACE		(3 << 16)
 #define R500_RS_INST_COL_ADDR_SHIFT			18
+#        define R500_RS_INST_COL_ADDR(x)                ((x) << 18)
 #define R500_RS_INST_TEX_ADJ				(1 << 25)
 #define R500_RS_INST_W_CN				(1 << 26)
 
