@@ -30,18 +30,19 @@
 #include "tgsi_info.h"
 #include "tgsi_iterate.h"
 
-#define MAX_REGISTERS 256
-
 typedef uint reg_flag;
 
 #define BITS_IN_REG_FLAG (sizeof( reg_flag ) * 8)
+
+#define MAX_REGISTERS 256
+#define MAX_REG_FLAGS ((MAX_REGISTERS + BITS_IN_REG_FLAG - 1) / BITS_IN_REG_FLAG)
 
 struct sanity_check_ctx
 {
    struct tgsi_iterate_context iter;
 
-   reg_flag regs_decl[TGSI_FILE_COUNT][MAX_REGISTERS / BITS_IN_REG_FLAG];
-   reg_flag regs_used[TGSI_FILE_COUNT][MAX_REGISTERS / BITS_IN_REG_FLAG];
+   reg_flag regs_decl[TGSI_FILE_COUNT][MAX_REG_FLAGS];
+   reg_flag regs_used[TGSI_FILE_COUNT][MAX_REG_FLAGS];
    boolean regs_ind_used[TGSI_FILE_COUNT];
    uint num_imms;
    uint num_instructions;
@@ -89,7 +90,7 @@ check_file_name(
    uint file )
 {
    if (file <= TGSI_FILE_NULL || file >= TGSI_FILE_COUNT) {
-      report_error( ctx, "Invalid register file name" );
+      report_error( ctx, "(%u): Invalid register file name", file );
       return FALSE;
    }
    return TRUE;
@@ -113,7 +114,7 @@ is_any_register_declared(
 {
    uint i;
 
-   for (i = 0; i < MAX_REGISTERS / BITS_IN_REG_FLAG; i++)
+   for (i = 0; i < MAX_REG_FLAGS; i++)
       if (ctx->regs_decl[file][i])
          return TRUE;
    return FALSE;
@@ -162,9 +163,8 @@ check_register_usage(
       ctx->regs_ind_used[file] = TRUE;
    }
    else {
-      if (index < 0 || index > MAX_REGISTERS) {
-         report_error( ctx, "%s[%i]: Invalid index %s",
-                       file_names[file], index, name );
+      if (index < 0 || index >= MAX_REGISTERS) {
+         report_error( ctx, "%s[%d]: Invalid %s index", file_names[file], index, name );
          return FALSE;
       }
 
@@ -193,15 +193,15 @@ iter_instruction(
 
    info = tgsi_get_opcode_info( inst->Instruction.Opcode );
    if (info == NULL) {
-      report_error( ctx, "Invalid instruction opcode" );
+      report_error( ctx, "(%u): Invalid instruction opcode", inst->Instruction.Opcode );
       return TRUE;
    }
 
    if (info->num_dst != inst->Instruction.NumDstRegs) {
-      report_error( ctx, "Invalid number of destination operands" );
+      report_error( ctx, "Invalid number of destination operands, should be %u", info->num_dst );
    }
    if (info->num_src != inst->Instruction.NumSrcRegs) {
-      report_error( ctx, "Invalid number of source operands" );
+      report_error( ctx, "Invalid number of source operands, should be %u", info->num_src );
    }
 
    /* Check destination and source registers' validity.
@@ -266,7 +266,7 @@ iter_declaration(
       return TRUE;
    for (i = decl->DeclarationRange.First; i <= decl->DeclarationRange.Last; i++) {
       if (is_register_declared( ctx, file, i ))
-         report_error( ctx, "The same register declared twice" );
+         report_error( ctx, "%s[%u]: The same register declared more than once", file_names[file], i );
       ctx->regs_decl[file][i / BITS_IN_REG_FLAG] |= (1 << (i % BITS_IN_REG_FLAG));
    }
 
@@ -295,7 +295,7 @@ iter_immediate(
    /* Check data type validity.
     */
    if (imm->Immediate.DataType != TGSI_IMM_FLOAT32) {
-      report_error( ctx, "Invalid immediate data type" );
+      report_error( ctx, "(%u): Invalid immediate data type", imm->Immediate.DataType );
       return TRUE;
    }
 
@@ -322,7 +322,7 @@ epilog(
 
       for (i = 0; i < MAX_REGISTERS; i++) {
          if (is_register_declared( ctx, file, i ) && !is_register_used( ctx, file, i ) && !ctx->regs_ind_used[file]) {
-            report_warning( ctx, "Register never used" );
+            report_warning( ctx, "%s[%u]: Register never used", file_names[file], i );
          }
       }
    }
