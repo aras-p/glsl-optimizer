@@ -285,14 +285,11 @@ typedef enum
    BUFFER_BACK_LEFT,
    BUFFER_FRONT_RIGHT,
    BUFFER_BACK_RIGHT,
-   /* optional aux buffers */
-   BUFFER_AUX0,
-   BUFFER_AUX1,
-   BUFFER_AUX2,
-   BUFFER_AUX3,
    BUFFER_DEPTH,
    BUFFER_STENCIL,
    BUFFER_ACCUM,
+   /* optional aux buffer */
+   BUFFER_AUX0,
    /* generic renderbuffers */
    BUFFER_COLOR0,
    BUFFER_COLOR1,
@@ -336,9 +333,6 @@ typedef enum
                             BUFFER_BIT_FRONT_RIGHT | \
                             BUFFER_BIT_BACK_RIGHT | \
                             BUFFER_BIT_AUX0 | \
-                            BUFFER_BIT_AUX1 | \
-                            BUFFER_BIT_AUX2 | \
-                            BUFFER_BIT_AUX3 | \
                             BUFFER_BIT_COLOR0 | \
                             BUFFER_BIT_COLOR1 | \
                             BUFFER_BIT_COLOR2 | \

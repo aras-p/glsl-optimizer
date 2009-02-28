@@ -317,10 +317,7 @@ _swrast_Clear(GLcontext *ctx, GLbitfield buffers)
 	 BUFFER_BIT_DEPTH |
 	 BUFFER_BIT_STENCIL |
 	 BUFFER_BIT_ACCUM |
-         BUFFER_BIT_AUX0 |
-         BUFFER_BIT_AUX1 |
-         BUFFER_BIT_AUX2 |
-         BUFFER_BIT_AUX3;
+         BUFFER_BIT_AUX0;
       assert((buffers & (~legalBits)) == 0);
    }
 #endif

@@ -119,12 +119,6 @@ draw_buffer_enum_to_bitmask(GLenum buffer)
          return BUFFER_BIT_FRONT_LEFT;
       case GL_AUX0:
          return BUFFER_BIT_AUX0;
-      case GL_AUX1:
-         return BUFFER_BIT_AUX1;
-      case GL_AUX2:
-         return BUFFER_BIT_AUX2;
-      case GL_AUX3:
-         return BUFFER_BIT_AUX3;
       case GL_COLOR_ATTACHMENT0_EXT:
          return BUFFER_BIT_COLOR0;
       case GL_COLOR_ATTACHMENT1_EXT:
@@ -176,12 +170,6 @@ read_buffer_enum_to_index(GLenum buffer)
          return BUFFER_FRONT_LEFT;
       case GL_AUX0:
          return BUFFER_AUX0;
-      case GL_AUX1:
-         return BUFFER_AUX1;
-      case GL_AUX2:
-         return BUFFER_AUX2;
-      case GL_AUX3:
-         return BUFFER_AUX3;
       case GL_COLOR_ATTACHMENT0_EXT:
          return BUFFER_COLOR0;
       case GL_COLOR_ATTACHMENT1_EXT:

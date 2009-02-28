@@ -68,7 +68,7 @@
 #define MAX_PIXEL_MAP_TABLE 256
 
 /** Maximum number of auxillary color buffers */
-#define MAX_AUX_BUFFERS 4
+#define MAX_AUX_BUFFERS 1
 
 /** Maximum order (degree) of curves */
 #ifdef AMIGA
