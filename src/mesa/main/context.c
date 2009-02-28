@@ -351,6 +351,36 @@ _mesa_destroy_visual( GLvisual *vis )
 /**********************************************************************/
 /*@{*/
 
+
+/**
+ * This is lame.  gdb only seems to recognize enum types that are
+ * actually used somewhere.  We want to be able to print/use enum
+ * values such as TEXTURE_2D_INDEX in gdb.  But we don't actually use
+ * the gl_texture_index type anywhere.  Thus, this lame function.
+ */
+static void
+dummy_enum_func(void)
+{
+   gl_buffer_index bi;
+   gl_colortable_index ci;
+   gl_face_index fi;
+   gl_frag_attrib fa;
+   gl_frag_result fr;
+   gl_texture_index ti;
+   gl_vert_attrib va;
+   gl_vert_result vr;
+
+   (void) bi;
+   (void) ci;
+   (void) fi;
+   (void) fa;
+   (void) fr;
+   (void) ti;
+   (void) va;
+   (void) vr;
+}
+
+
 /**
  * One-time initialization mutex lock.
  *
@@ -406,6 +436,8 @@ one_time_init( GLcontext *ctx )
       alreadyCalled = GL_TRUE;
    }
    _glthread_UNLOCK_MUTEX(OneTimeLock);
+
+   dummy_enum_func();
 }
 
 

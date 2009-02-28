@@ -103,7 +103,7 @@ typedef struct gl_framebuffer GLframebuffer;
  * In GL_ARB_vertex_shader / OpenGL 2.0 the aliasing is disallowed (the
  * generic attributes are distinct/separate).
  */
-enum
+typedef enum
 {
    VERT_ATTRIB_POS = 0,
    VERT_ATTRIB_WEIGHT = 1,
@@ -139,7 +139,7 @@ enum
    VERT_ATTRIB_GENERIC14 = 30,
    VERT_ATTRIB_GENERIC15 = 31,
    VERT_ATTRIB_MAX = 32
-};
+} gl_vert_attrib;
 
 /**
  * Bitflags for vertex attributes.
@@ -187,8 +187,7 @@ enum
 /**
  * Indexes for vertex program result attributes
  */
-/*@{*/
-enum
+typedef enum
 {
    VERT_RESULT_HPOS = 0,
    VERT_RESULT_COL0 = 1,
@@ -208,14 +207,13 @@ enum
    VERT_RESULT_EDGE = 15,
    VERT_RESULT_VAR0 = 16  /**< shader varying */,
    VERT_RESULT_MAX = (VERT_RESULT_VAR0 + MAX_VARYING)
-};
-/*@}*/
+} gl_vert_result;
 
 
 /**
  * Indexes for fragment program input attributes.
  */
-enum
+typedef enum
 {
    FRAG_ATTRIB_WPOS = 0,
    FRAG_ATTRIB_COL0 = 1,
@@ -231,7 +229,7 @@ enum
    FRAG_ATTRIB_TEX7 = 11,
    FRAG_ATTRIB_VAR0 = 12,  /**< shader varying */
    FRAG_ATTRIB_MAX = (FRAG_ATTRIB_VAR0 + MAX_VARYING)
-};
+} gl_frag_attrib;
 
 /**
  * Bitflags for fragment program input attributes.
@@ -268,41 +266,45 @@ enum
 /**
  * Fragment program results
  */
-enum
+typedef enum
 {
    FRAG_RESULT_COLR = 0,
    FRAG_RESULT_COLH = 1,
    FRAG_RESULT_DEPR = 2,
    FRAG_RESULT_DATA0 = 3,
    FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
-};
+} gl_frag_result;
 
 
 /**
  * Indexes for all renderbuffers
  */
-enum {
-   BUFFER_FRONT_LEFT  = 0,  /* the four standard color buffers */
-   BUFFER_BACK_LEFT   = 1,
-   BUFFER_FRONT_RIGHT = 2,
-   BUFFER_BACK_RIGHT  = 3,
-   BUFFER_AUX0        = 4,  /* optional aux buffer */
-   BUFFER_AUX1        = 5,
-   BUFFER_AUX2        = 6,
-   BUFFER_AUX3        = 7,
-   BUFFER_DEPTH       = 8,
-   BUFFER_STENCIL     = 9,
-   BUFFER_ACCUM       = 10,
-   BUFFER_COLOR0      = 11, /* generic renderbuffers */
-   BUFFER_COLOR1      = 12,
-   BUFFER_COLOR2      = 13,
-   BUFFER_COLOR3      = 14,
-   BUFFER_COLOR4      = 15,
-   BUFFER_COLOR5      = 16,
-   BUFFER_COLOR6      = 17,
-   BUFFER_COLOR7      = 18,
-   BUFFER_COUNT       = 19
-};
+typedef enum
+{
+   /* the four standard color buffers */
+   BUFFER_FRONT_LEFT,
+   BUFFER_BACK_LEFT,
+   BUFFER_FRONT_RIGHT,
+   BUFFER_BACK_RIGHT,
+   /* optional aux buffers */
+   BUFFER_AUX0,
+   BUFFER_AUX1,
+   BUFFER_AUX2,
+   BUFFER_AUX3,
+   BUFFER_DEPTH,
+   BUFFER_STENCIL,
+   BUFFER_ACCUM,
+   /* generic renderbuffers */
+   BUFFER_COLOR0,
+   BUFFER_COLOR1,
+   BUFFER_COLOR2,
+   BUFFER_COLOR3,
+   BUFFER_COLOR4,
+   BUFFER_COLOR5,
+   BUFFER_COLOR6,
+   BUFFER_COLOR7,
+   BUFFER_COUNT
+} gl_buffer_index;
 
 /**
  * Bit flags for all renderbuffers
@@ -349,12 +351,13 @@ enum {
 
 
 /** The pixel transfer path has three color tables: */
-/*@{*/
-#define COLORTABLE_PRECONVOLUTION  0
-#define COLORTABLE_POSTCONVOLUTION 1
-#define COLORTABLE_POSTCOLORMATRIX 2
-#define COLORTABLE_MAX 3
-/*@}*/
+typedef enum
+{
+   COLORTABLE_PRECONVOLUTION,
+   COLORTABLE_POSTCONVOLUTION,
+   COLORTABLE_POSTCOLORMATRIX,
+   COLORTABLE_MAX
+} gl_colortable_index;
 
 
 /**
@@ -1034,7 +1037,8 @@ struct gl_stencil_attrib
  * target target enums, such as GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, etc.
  * Note: the order is from highest priority to lowest priority.
  */
-enum {
+typedef enum
+{
    TEXTURE_2D_ARRAY_INDEX,
    TEXTURE_1D_ARRAY_INDEX,
    TEXTURE_CUBE_INDEX,
@@ -1043,7 +1047,7 @@ enum {
    TEXTURE_2D_INDEX,
    TEXTURE_1D_INDEX,
    NUM_TEXTURE_TARGETS
-};
+} gl_texture_index;
 
 
 /**
@@ -1273,15 +1277,16 @@ struct gl_texture_image
 /**
  * Indexes for cube map faces.
  */
-/*@{*/
-#define FACE_POS_X   0
-#define FACE_NEG_X   1
-#define FACE_POS_Y   2
-#define FACE_NEG_Y   3
-#define FACE_POS_Z   4
-#define FACE_NEG_Z   5
-#define MAX_FACES    6
-/*@}*/
+typedef enum
+{
+   FACE_POS_X = 0,
+   FACE_NEG_X = 1,
+   FACE_POS_Y = 2,
+   FACE_NEG_Y = 3,
+   FACE_POS_Z = 4,
+   FACE_NEG_Z = 5,
+   MAX_FACES = 6
+} gl_face_index;
 
 
 /**
