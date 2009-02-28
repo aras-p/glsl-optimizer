@@ -115,6 +115,7 @@ typedef int GLfixed;
  */
 /*@{*/
 struct _mesa_HashTable;
+struct gl_attrib_node;
 struct gl_pixelstore_attrib;
 struct gl_program_cache;
 struct gl_texture_format;
@@ -1513,17 +1514,6 @@ struct gl_viewport_attrib
    GLsizei Width, Height;	/**< size */
    GLfloat Near, Far;		/**< Depth buffer range */
    GLmatrix _WindowMap;		/**< Mapping transformation as a matrix. */
-};
-
-
-/**
- * Node for the attribute stack.
- */
-struct gl_attrib_node
-{
-   GLbitfield kind;
-   void *data;
-   struct gl_attrib_node *next;
 };
 
 

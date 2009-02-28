@@ -143,6 +143,18 @@ struct gl_enable_attrib
 
 
 /**
+ * Node for the attribute stack.
+ */
+struct gl_attrib_node
+{
+   GLbitfield kind;
+   void *data;
+   struct gl_attrib_node *next;
+};
+
+
+
+/**
  * Special struct for saving/restoring texture state (GL_TEXTURE_BIT)
  */
 struct texture_state
