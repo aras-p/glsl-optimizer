@@ -265,21 +265,24 @@ static INLINE uint32_t r300_anisotropy(float max_aniso)
 static INLINE uint32_t r300_translate_colorformat(enum pipe_format format)
 {
     switch (format) {
-        case PIPE_FORMAT_A8R8G8B8_UNORM:
-            return R300_COLOR_FORMAT_ARGB8888;
+        /* 8-bit buffers */
         case PIPE_FORMAT_I8_UNORM:
             return R300_COLOR_FORMAT_I8;
-        case PIPE_FORMAT_A1R5G5B5_UNORM:
-            return R300_COLOR_FORMAT_ARGB1555;
+        /* 16-bit buffers */
         case PIPE_FORMAT_R5G6B5_UNORM:
             return R300_COLOR_FORMAT_RGB565;
+        case PIPE_FORMAT_A1R5G5B5_UNORM:
+            return R300_COLOR_FORMAT_ARGB1555;
+        case PIPE_FORMAT_A4R4G4B4_UNORM:
+            return R300_COLOR_FORMAT_ARGB4444;
+        /* 32-bit buffers */
+        case PIPE_FORMAT_A8R8G8B8_UNORM:
+            return R300_COLOR_FORMAT_ARGB8888;
         /* XXX Not in pipe_format
         case PIPE_FORMAT_A32R32G32B32:
             return R300_COLOR_FORMAT_ARGB32323232;
         case PIPE_FORMAT_A16R16G16B16:
             return R300_COLOR_FORMAT_ARGB16161616; */
-        case PIPE_FORMAT_A4R4G4B4_UNORM:
-            return R300_COLOR_FORMAT_ARGB4444;
         /* XXX Not in pipe_format
         case PIPE_FORMAT_A10R10G10B10_UNORM:
             return R500_COLOR_FORMAT_ARGB10101010;
@@ -299,8 +302,10 @@ static INLINE uint32_t r300_translate_colorformat(enum pipe_format format)
 static INLINE uint32_t r300_translate_zsformat(enum pipe_format format)
 {
     switch (format) {
+        /* 16-bit depth, no stencil */
         case PIPE_FORMAT_Z16_UNORM:
             return R300_DEPTHFORMAT_16BIT_INT_Z;
+        /* 24-bit depth, 8-bit stencil */
         case PIPE_FORMAT_Z24S8_UNORM:
             return R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
         default:
