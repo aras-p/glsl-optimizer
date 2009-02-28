@@ -1,13 +1,9 @@
-/**
- * \file feedback.h
- * Selection and feedback modes functions.
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  7.5
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,7 +23,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 #ifndef FEEDBACK_H
 #define FEEDBACK_H
 
@@ -42,16 +37,19 @@
 	CTX->Feedback.Count++;
 
 
-extern void _mesa_init_feedback( GLcontext * ctx );
+extern void
+_mesa_init_feedback( GLcontext *ctx );
 
-extern void _mesa_feedback_vertex( GLcontext *ctx,
-                                const GLfloat win[4],
-                                const GLfloat color[4],
-				GLfloat index,
-                                const GLfloat texcoord[4] );
+extern void
+_mesa_feedback_vertex( GLcontext *ctx,
+                       const GLfloat win[4],
+                       const GLfloat color[4],
+                       GLfloat index,
+                       const GLfloat texcoord[4] );
 
 
-extern void _mesa_update_hitflag( GLcontext *ctx, GLfloat z );
+extern void
+_mesa_update_hitflag( GLcontext *ctx, GLfloat z );
 
 
 extern void GLAPIENTRY

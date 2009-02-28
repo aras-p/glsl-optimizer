@@ -1,13 +1,9 @@
-/**
- * \file feedback.c
- * Selection and feedback modes functions.
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  7.5
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,6 +21,11 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * \file feedback.c
+ * Selection and feedback modes functions.
  */
 
 
@@ -116,15 +117,15 @@ _mesa_PassThrough( GLfloat token )
 }
 
 
-
-/*
+/**
  * Put a vertex into the feedback buffer.
  */
-void _mesa_feedback_vertex( GLcontext *ctx,
-                            const GLfloat win[4],
-                            const GLfloat color[4],
-                            GLfloat index,
-                            const GLfloat texcoord[4] )
+void
+_mesa_feedback_vertex(GLcontext *ctx,
+                      const GLfloat win[4],
+                      const GLfloat color[4],
+                      GLfloat index,
+                      const GLfloat texcoord[4])
 {
    FEEDBACK_TOKEN( ctx, win[0] );
    FEEDBACK_TOKEN( ctx, win[1] );
@@ -151,7 +152,7 @@ void _mesa_feedback_vertex( GLcontext *ctx,
    }
 }
 
-#endif
+#endif /* _HAVE_FULL_GL */
 
 
 /**********************************************************************/
@@ -217,7 +218,8 @@ _mesa_SelectBuffer( GLsizei size, GLuint *buffer )
  * Sets gl_selection::HitFlag and updates gl_selection::HitMinZ and
  * gl_selection::HitMaxZ.
  */
-void _mesa_update_hitflag( GLcontext *ctx, GLfloat z )
+void
+_mesa_update_hitflag(GLcontext *ctx, GLfloat z)
 {
    ctx->Select.HitFlag = GL_TRUE;
    if (z < ctx->Select.HitMinZ) {
@@ -240,7 +242,8 @@ void _mesa_update_hitflag( GLcontext *ctx, GLfloat z )
  *
  * \sa gl_selection.
  */
-static void write_hit_record( GLcontext *ctx )
+static void
+write_hit_record(GLcontext *ctx)
 {
    GLuint i;
    GLuint zmin, zmax, zscale = (~0u);
