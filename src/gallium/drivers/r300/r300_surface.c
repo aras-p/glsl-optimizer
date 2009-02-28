@@ -237,7 +237,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         r300_emit_fragment_shader(r300, &r300_passthrough_fragment_shader);
     }
 
-    BEGIN_CS(8 + (caps->has_tcl ? 20 : 2));
+    BEGIN_CS(7 + (caps->has_tcl ? 21 : 2));
     OUT_CS_REG_SEQ(R300_US_OUT_FMT_0, 4);
     OUT_CS(R300_C0_SEL_B | R300_C1_SEL_G | R300_C2_SEL_R | R300_C3_SEL_A);
     OUT_CS(R300_US_OUT_FMT_UNUSED);
