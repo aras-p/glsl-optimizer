@@ -318,10 +318,6 @@ static void r300_set_polygon_stipple(struct pipe_context* pipe,
     /* XXX */
 }
 
-static INLINE int pack_float_16_6x(float f) {
-    return ((int)(f * 6.0) & 0xffff);
-}
-
 /* Create a new rasterizer state based on the CSO rasterizer state.
  *
  * This is a very large chunk of state, and covers most of the graphics

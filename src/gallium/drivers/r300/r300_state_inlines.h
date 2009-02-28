@@ -28,6 +28,12 @@
 
 #include "r300_reg.h"
 
+/* Some maths. These should probably find their way to u_math, if needed. */
+
+static INLINE int pack_float_16_6x(float f) {
+    return ((int)(f * 6.0) & 0xffff);
+}
+
 /* Blend state. */
 
 static INLINE uint32_t r300_translate_blend_function(int blend_func)
