@@ -623,9 +623,7 @@ struct gl_current_attrib
     * \note Index and Edgeflag current values are stored as floats in the 
     * SIX and SEVEN attribute slots.
     */
-   /*@{*/
    GLfloat Attrib[VERT_ATTRIB_MAX][4];	/**< Position, color, texcoords, etc */
-   /*@}*/
 
    /**
     * \name Current raster position attributes (always valid).
@@ -822,11 +820,11 @@ struct gl_hint_attrib
  */
 struct gl_histogram_attrib
 {
-   GLuint Width;				/**< number of table entries */
-   GLint Format;				/**< GL_ALPHA, GL_RGB, etc */
-   GLuint Count[HISTOGRAM_TABLE_SIZE][4];	/**< the histogram */
-   GLboolean Sink;				/**< terminate image transfer? */
-   GLubyte RedSize;				/**< Bits per counter */
+   GLuint Width;                            /**< number of table entries */
+   GLint Format;                            /**< GL_ALPHA, GL_RGB, etc */
+   GLuint Count[HISTOGRAM_TABLE_SIZE][4];   /**< the histogram */
+   GLboolean Sink;                          /**< terminate image transfer? */
+   GLubyte RedSize;                         /**< Bits per counter */
    GLubyte GreenSize;
    GLubyte BlueSize;
    GLubyte AlphaSize;
@@ -1005,13 +1003,15 @@ struct gl_pixel_attrib
    /*--- Begin Pixel Transfer State ---*/
    /* Fields are in the order in which they're applied... */
 
-   /* Scale & Bias (index shift, offset) */
+   /** Scale & Bias (index shift, offset) */
+   /*@{*/
    GLfloat RedBias, RedScale;
    GLfloat GreenBias, GreenScale;
    GLfloat BlueBias, BlueScale;
    GLfloat AlphaBias, AlphaScale;
    GLfloat DepthBias, DepthScale;
    GLint IndexShift, IndexOffset;
+   /*@}*/
 
    /* Pixel Maps */
    /* Note: actual pixel maps are not part of this attrib group */
@@ -1027,7 +1027,7 @@ struct gl_pixel_attrib
    GLboolean Convolution1DEnabled;
    GLboolean Convolution2DEnabled;
    GLboolean Separable2DEnabled;
-   GLfloat ConvolutionBorderColor[3][4];
+   GLfloat ConvolutionBorderColor[3][4];  /**< RGBA */
    GLenum ConvolutionBorderMode[3];
    GLfloat ConvolutionFilterScale[3][4];  /**< RGBA */
    GLfloat ConvolutionFilterBias[3][4];   /**< RGBA */
@@ -1538,24 +1538,12 @@ struct gl_texture_unit
 };
 
 
-
 /**
  * Texture attribute group (GL_TEXTURE_BIT).
  */
 struct gl_texture_attrib
 {
-   /**
-    * name multitexture 
-    */
-   /**@{*/
-   GLuint CurrentUnit;   /**< Active texture unit [0, MaxTextureImageUnits-1] */
-   GLbitfield _EnabledUnits;  /**< one bit set for each really-enabled unit */
-   GLbitfield _EnabledCoordUnits;   /**< one bit per enabled coordinate unit */
-   GLbitfield _GenFlags;            /**< for texgen */
-   GLbitfield _TexGenEnabled;  /**< Mask of ENABLE_TEXGEN flags */
-   GLbitfield _TexMatEnabled;  /**< Mask of ENABLE_TEXMAT flags */
-   /**@}*/
-
+   GLuint CurrentUnit;   /**< GL_ACTIVE_TEXTURE */
    struct gl_texture_unit Unit[MAX_TEXTURE_UNITS];
 
    struct gl_texture_object *ProxyTex[NUM_TEXTURE_TARGETS];
@@ -1563,6 +1551,15 @@ struct gl_texture_attrib
    /** GL_EXT_shared_texture_palette */
    GLboolean SharedPalette;
    struct gl_color_table Palette;
+
+   /** Per-unit flags */
+   /*@{*/
+   GLbitfield _EnabledUnits;  /**< one bit set for each really-enabled unit */
+   GLbitfield _EnabledCoordUnits;   /**< one bit per enabled coordinate unit */
+   GLbitfield _GenFlags;            /**< for texgen */
+   GLbitfield _TexGenEnabled;  /**< Mask of ENABLE_TEXGEN flags */
+   GLbitfield _TexMatEnabled;  /**< Mask of ENABLE_TEXMAT flags */
+   /*@}*/
 };
 
 
@@ -1624,7 +1621,6 @@ struct gl_buffer_object
 };
 
 
-
 /**
  * Client pixel packing/unpacking attributes
  */
@@ -1634,15 +1630,14 @@ struct gl_pixelstore_attrib
    GLint RowLength;
    GLint SkipPixels;
    GLint SkipRows;
-   GLint ImageHeight;     /**< for GL_EXT_texture3D */
-   GLint SkipImages;      /**< for GL_EXT_texture3D */
+   GLint ImageHeight;
+   GLint SkipImages;
    GLboolean SwapBytes;
    GLboolean LsbFirst;
    GLboolean ClientStorage; /**< GL_APPLE_client_storage */
    GLboolean Invert;        /**< GL_MESA_pack_invert */
    struct gl_buffer_object *BufferObj; /**< GL_ARB_pixel_buffer_object */
 };
-
 
 
 /**
@@ -1724,7 +1719,7 @@ struct gl_array_attrib
 struct gl_feedback
 {
    GLenum Type;
-   GLbitfield _Mask;		/* FB_* bits */
+   GLbitfield _Mask;    /**< FB_* bits */
    GLfloat *Buffer;
    GLuint BufferSize;
    GLuint Count;
@@ -1948,14 +1943,14 @@ struct gl_program_state
  */
 struct gl_vertex_program_state
 {
-   GLboolean Enabled;               /**< User-set GL_VERTEX_PROGRAM_ARB/NV flag */
-   GLboolean _Enabled;              /**< Enabled and _valid_ user program? */
-   GLboolean PointSizeEnabled;      /**< GL_VERTEX_PROGRAM_POINT_SIZE_ARB/NV */
-   GLboolean TwoSideEnabled;        /**< GL_VERTEX_PROGRAM_TWO_SIDE_ARB/NV */
+   GLboolean Enabled;            /**< User-set GL_VERTEX_PROGRAM_ARB/NV flag */
+   GLboolean _Enabled;           /**< Enabled and _valid_ user program? */
+   GLboolean PointSizeEnabled;   /**< GL_VERTEX_PROGRAM_POINT_SIZE_ARB/NV */
+   GLboolean TwoSideEnabled;     /**< GL_VERTEX_PROGRAM_TWO_SIDE_ARB/NV */
    struct gl_vertex_program *Current;  /**< User-bound vertex program */
 
-   /** Currently enabled and valid vertex program (including internal programs,
-    * user-defined vertex programs and GLSL vertex shaders).
+   /** Currently enabled and valid vertex program (including internal
+    * programs, user-defined vertex programs and GLSL vertex shaders).
     * This is the program we must use when rendering.
     */
    struct gl_vertex_program *_Current;
@@ -1995,8 +1990,8 @@ struct gl_fragment_program_state
    GLboolean _Enabled;    /**< Enabled and _valid_ user program? */
    struct gl_fragment_program *Current;  /**< User-bound fragment program */
 
-   /** Currently enabled and valid fragment program (including internal programs,
-    * user-defined fragment programs and GLSL fragment shaders).
+   /** Currently enabled and valid fragment program (including internal
+    * programs, user-defined fragment programs and GLSL fragment shaders).
     * This is the program we must use when rendering.
     */
    struct gl_fragment_program *_Current;
@@ -2339,9 +2334,8 @@ struct gl_renderbuffer
 
 
 /**
- * A renderbuffer attachment point points to either a texture object
- * (and specifies a mipmap level, cube face or 3D texture slice) or
- * points to a renderbuffer.
+ * A renderbuffer attachment points to either a texture object (and specifies
+ * a mipmap level, cube face or 3D texture slice) or points to a renderbuffer.
  */
 struct gl_renderbuffer_attachment
 {
@@ -2373,14 +2367,16 @@ struct gl_renderbuffer_attachment
  */
 struct gl_framebuffer
 {
-   _glthread_Mutex Mutex;		   /**< for thread safety */
-   GLuint Name;      /* if zero, this is a window system framebuffer */
+   _glthread_Mutex Mutex;  /**< for thread safety */
+   GLuint Name;            /**< if zero, this is a window system framebuffer */
    GLint RefCount;
    GLboolean DeletePending;
 
-   GLvisual Visual;	/**< The framebuffer's visual.
-                             Immutable if this is a window system buffer.
-                             Computed from attachments if user-made FBO. */
+   /**
+    * The framebuffer's visual. Immutable if this is a window system buffer.
+    * Computed from attachments if user-made FBO.
+    */
+   GLvisual Visual;
 
    GLboolean Initialized;
 
@@ -2399,9 +2395,10 @@ struct gl_framebuffer
    GLfloat _MRD;	/**< minimum resolvable difference in Z values */
    /*@}*/
 
-   GLenum _Status; /* One of the GL_FRAMEBUFFER_(IN)COMPLETE_* tokens */
+   /** One of the GL_FRAMEBUFFER_(IN)COMPLETE_* tokens */
+   GLenum _Status;
 
-   /* Array of all renderbuffer attachments, indexed by BUFFER_* tokens. */
+   /** Array of all renderbuffer attachments, indexed by BUFFER_* tokens. */
    struct gl_renderbuffer_attachment Attachment[BUFFER_COUNT];
 
    /* In unextended OpenGL these vars are part of the GL_COLOR_BUFFER
@@ -2463,52 +2460,58 @@ struct gl_program_constants
  */
 struct gl_constants
 {
-   GLint MaxTextureLevels;		/**< Maximum number of allowed mipmap levels. */ 
-   GLint Max3DTextureLevels;		/**< Maximum number of allowed mipmap levels for 3D texture targets. */
-   GLint MaxCubeTextureLevels;          /**< Maximum number of allowed mipmap levels for GL_ARB_texture_cube_map */
-   GLint MaxArrayTextureLayers;         /**< Maximum number of layers in an array texture. */
-   GLint MaxTextureRectSize;            /* GL_NV_texture_rectangle */
+   GLint MaxTextureLevels;      /**< Max mipmap levels. */ 
+   GLint Max3DTextureLevels;    /**< Max mipmap levels for 3D textures */
+   GLint MaxCubeTextureLevels;  /**< Max mipmap levels for cube textures */
+   GLint MaxArrayTextureLayers; /**< Max layers in array textures */
+   GLint MaxTextureRectSize;    /**< Max rectangle texture size, in pixes */
    GLuint MaxTextureCoordUnits;
    GLuint MaxTextureImageUnits;
-   GLuint MaxTextureUnits;              /**< = MIN(CoordUnits, ImageUnits) */
-   GLfloat MaxTextureMaxAnisotropy;     /**< GL_EXT_texture_filter_anisotropic */
-   GLfloat MaxTextureLodBias;           /**< GL_EXT_texture_lod_bias */
+   GLuint MaxVertexTextureImageUnits;
+   GLuint MaxTextureUnits;           /**< = MIN(CoordUnits, ImageUnits) */
+   GLfloat MaxTextureMaxAnisotropy;  /**< GL_EXT_texture_filter_anisotropic */
+   GLfloat MaxTextureLodBias;        /**< GL_EXT_texture_lod_bias */
+
    GLuint MaxArrayLockSize;
+
    GLint SubPixelBits;
-   GLfloat MinPointSize, MaxPointSize;		/* aliased */
-   GLfloat MinPointSizeAA, MaxPointSizeAA;	/* antialiased */
+
+   GLfloat MinPointSize, MaxPointSize;	     /**< aliased */
+   GLfloat MinPointSizeAA, MaxPointSizeAA;   /**< antialiased */
    GLfloat PointSizeGranularity;
-   GLfloat MinLineWidth, MaxLineWidth;		/* aliased */
-   GLfloat MinLineWidthAA, MaxLineWidthAA;	/* antialiased */
+   GLfloat MinLineWidth, MaxLineWidth;       /**< aliased */
+   GLfloat MinLineWidthAA, MaxLineWidthAA;   /**< antialiased */
    GLfloat LineWidthGranularity;
+
    GLuint MaxColorTableSize;
    GLuint MaxConvolutionWidth;
    GLuint MaxConvolutionHeight;
+
    GLuint MaxClipPlanes;
    GLuint MaxLights;
-   GLfloat MaxShininess;			/* GL_NV_light_max_exponent */
-   GLfloat MaxSpotExponent;			/* GL_NV_light_max_exponent */
+   GLfloat MaxShininess;                     /**< GL_NV_light_max_exponent */
+   GLfloat MaxSpotExponent;                  /**< GL_NV_light_max_exponent */
+
    GLuint MaxViewportWidth, MaxViewportHeight;
-   struct gl_program_constants VertexProgram;    /* GL_ARB_vertex_program */
-   struct gl_program_constants FragmentProgram;  /* GL_ARB_fragment_program */
-   /* shared by vertex and fragment program: */
+
+   struct gl_program_constants VertexProgram;   /**< GL_ARB_vertex_program */
+   struct gl_program_constants FragmentProgram; /**< GL_ARB_fragment_program */
    GLuint MaxProgramMatrices;
    GLuint MaxProgramMatrixStackDepth;
-   /* vertex array / buffer object bounds checking */
+
+   /** vertex array / buffer object bounds checking */
    GLboolean CheckArrayBounds;
-   /* GL_ARB_draw_buffers */
-   GLuint MaxDrawBuffers;
-   /* GL_OES_read_format */
-   GLenum ColorReadFormat;
-   GLenum ColorReadType;
-   /* GL_EXT_framebuffer_object */
-   GLuint MaxColorAttachments;
-   GLuint MaxRenderbufferSize;
-   /* GL_ARB_vertex_shader */
-   GLuint MaxVertexTextureImageUnits;
-   GLuint MaxVarying;  /**< Number of float[4] vectors */
-   /* GL_ARB_framebuffer_object */
-   GLuint MaxSamples;
+
+   GLuint MaxDrawBuffers;    /**< GL_ARB_draw_buffers */
+
+   GLenum ColorReadFormat;   /**< GL_OES_read_format */
+   GLenum ColorReadType;     /**< GL_OES_read_format */
+
+   GLuint MaxColorAttachments;   /**< GL_EXT_framebuffer_object */
+   GLuint MaxRenderbufferSize;   /**< GL_EXT_framebuffer_object */
+   GLuint MaxSamples;            /**< GL_ARB_framebuffer_object */
+
+   GLuint MaxVarying;  /**< Number of float[4] varying parameters */
 };
 
 
@@ -2518,12 +2521,6 @@ struct gl_constants
  */
 struct gl_extensions
 {
-   /**
-    * \name Flags to quickly test if certain extensions are available.
-    * 
-    * Not every extension needs to have such a flag, but it's encouraged.
-    */
-   /*@{*/
    GLboolean dummy;  /* don't remove this! */
    GLboolean ARB_depth_texture;
    GLboolean ARB_draw_buffers;
@@ -2641,8 +2638,7 @@ struct gl_extensions
    GLboolean SGIS_texture_lod;
    GLboolean TDFX_texture_compression_FXT1;
    GLboolean S3_s3tc;
-   /*@}*/
-   /* The extension string */
+   /** The extension string */
    const GLubyte *String;
 };
 
@@ -2662,7 +2658,6 @@ struct gl_matrix_stack
 
 /**
  * \name Bits for image transfer operations 
- *
  * \sa __GLcontextRec::ImageTransferState.
  */
 /*@{*/
@@ -2677,7 +2672,7 @@ struct gl_matrix_stack
 #define IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT   0x100
 #define IMAGE_HISTOGRAM_BIT                       0x200
 #define IMAGE_MIN_MAX_BIT                         0x400
-#define IMAGE_CLAMP_BIT                           0x800 /* extra */
+#define IMAGE_CLAMP_BIT                           0x800
 
 
 /** Pixel Transfer ops up to convolution */
@@ -3040,21 +3035,15 @@ struct __GLcontextRec
 
    struct gl_color_table ColorTable[COLORTABLE_MAX];
    struct gl_color_table ProxyColorTable[COLORTABLE_MAX];
-#if 0
-   struct gl_color_table PostConvolutionColorTable;
-   struct gl_color_table ProxyPostConvolutionColorTable;
-   struct gl_color_table PostColorMatrixColorTable;
-   struct gl_color_table ProxyPostColorMatrixColorTable;
-#endif
 
-   struct gl_program_state Program;        /**< for vertex or fragment progs */
-   struct gl_vertex_program_state VertexProgram;   /**< GL_ARB/NV_vertex_program */
-   struct gl_fragment_program_state FragmentProgram;  /**< GL_ARB/NV_vertex_program */
-   struct gl_ati_fragment_shader_state ATIFragmentShader;  /**< GL_ATI_fragment_shader */
-
-   struct gl_query_state Query;  /**< GL_ARB_occlusion_query */
+   struct gl_program_state Program;  /**< general program state */
+   struct gl_vertex_program_state VertexProgram;
+   struct gl_fragment_program_state FragmentProgram;
+   struct gl_ati_fragment_shader_state ATIFragmentShader;
 
    struct gl_shader_state Shader; /**< GLSL shader object state */
+
+   struct gl_query_state Query;  /**< occlusion, timer queries */
    /*@}*/
 
 #if FEATURE_EXT_framebuffer_object
@@ -3078,9 +3067,9 @@ struct __GLcontextRec
    GLfloat _ModelViewInvScale;
    GLboolean _NeedEyeCoords;
    GLboolean _ForceEyeCoords; 
-   GLenum _CurrentProgram;    /* currently executing program */
+   GLenum _CurrentProgram;    /**< currently executing program */
 
-   GLuint TextureStateTimestamp; /* detect changes to shared state */
+   GLuint TextureStateTimestamp; /**< detect changes to shared state */
 
    struct gl_shine_tab *_ShineTable[2]; /**< Active shine tables */
    struct gl_shine_tab *_ShineTabList;  /**< MRU list of inactive shine tables */
