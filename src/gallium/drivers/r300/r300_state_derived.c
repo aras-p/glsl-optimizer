@@ -83,6 +83,7 @@ static void r300_update_vertex_layout(struct r300_context* r300)
                 break;
             case TGSI_SEMANTIC_FOG:
                 fog = TRUE;
+                tab[i] = 6 + texs++;
                 break;
             case TGSI_SEMANTIC_PSIZE:
                 psize = TRUE;
@@ -110,6 +111,11 @@ static void r300_update_vertex_layout(struct r300_context* r300)
 
     if (!pos) {
         debug_printf("r300: Forcing vertex position attribute emit...\n");
+        /* Make room for the position attribute
+         * at the beginning of the tab. */
+        for (i = 1; i < 16; i++) {
+            tab[i] = tab[i-1];
+        }
         tab[0] = 0;
     }
 
@@ -131,16 +137,17 @@ static void r300_update_vertex_layout(struct r300_context* r300)
         vinfo.hwfmt[2] |= (R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << i);
     }
 
-    if (fog) {
-        draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_FOG, 0));
-        vinfo.hwfmt[2] |=
-            (R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << cols);
-    }
-
     for (i = 0; i < texs; i++) {
         draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE,
             draw_find_vs_output(r300->draw, TGSI_SEMANTIC_GENERIC, i));
+        vinfo.hwfmt[1] |= (R300_INPUT_CNTL_TC0 << i);
+        vinfo.hwfmt[3] |= (4 << (3 * i));
+    }
+
+    if (fog) {
+        i++;
+        draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE,
+            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_FOG, 0));
         vinfo.hwfmt[1] |= (R300_INPUT_CNTL_TC0 << i);
         vinfo.hwfmt[3] |= (4 << (3 * i));
     }
@@ -159,7 +166,15 @@ static void r300_update_vertex_layout(struct r300_context* r300)
 
         for (i = 0; i < vinfo.num_attribs; i++) {
             /* Make sure we have a proper destination for our attribute */
-            if (tab[i] != -1) {
+            if (tab[i] == -1) {
+                debug_printf("attrib count: %d, fp input count: %d\n",
+                        vinfo.num_attribs, info->num_inputs);
+                for (i = 0; i < vinfo.num_attribs; i++) {
+                    debug_printf("attrib: offset %d, interp %d, size %d,"
+                           " tab %d\n", vinfo.attrib[i].src_index,
+                           vinfo.attrib[i].interp_mode, vinfo.attrib[i].emit,
+                           tab[i]);
+                }
                 assert(0);
             }
 
