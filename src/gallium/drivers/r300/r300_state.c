@@ -32,21 +32,7 @@
 #include "r300_state_shader.h"
 
 /* r300_state: Functions used to intialize state context by translating
- * Gallium state objects into semi-native r300 state objects.
- *
- * XXX break this file up into pieces if it gets too big! */
-
-/* Pack a float into a dword. */
-static uint32_t pack_float_32(float f)
-{
-    union {
-        float f;
-        uint32_t u;
-    } u;
-
-    u.f = f;
-    return u.u;
-}
+ * Gallium state objects into semi-native r300 state objects. */
 
 /* Create a new blend state based on the CSO blend state.
  *
@@ -114,21 +100,17 @@ static void r300_set_blend_color(struct pipe_context* pipe,
                                  const struct pipe_blend_color* color)
 {
     struct r300_context* r300 = r300_context(pipe);
-    uint32_t r, g, b, a;
     ubyte ur, ug, ub, ua;
-
-    r = util_iround(color->color[0] * 1023.0f);
-    g = util_iround(color->color[1] * 1023.0f);
-    b = util_iround(color->color[2] * 1023.0f);
-    a = util_iround(color->color[3] * 1023.0f);
 
     ur = float_to_ubyte(color->color[0]);
     ug = float_to_ubyte(color->color[1]);
     ub = float_to_ubyte(color->color[2]);
     ua = float_to_ubyte(color->color[3]);
 
-    r300->blend_color_state->blend_color = (a << 24) | (r << 16) | (g << 8) | b;
+    util_pack_color(color->color, PIPE_FORMAT_A8R8G8B8_UNORM,
+            &r300->blend_color_state->blend_color);
 
+    /* XXX this is wrong */
     r300->blend_color_state->blend_color_red_alpha = ur | (ua << 16);
     r300->blend_color_state->blend_color_green_blue = ub | (ug << 16);
 
@@ -391,15 +373,15 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     if (rs->polygon_offset_enable) {
         rs->depth_offset_front = rs->depth_offset_back =
-                pack_float_32(state->offset_units);
+            fui(state->offset_units);
         rs->depth_scale_front = rs->depth_scale_back =
-                pack_float_32(state->offset_scale);
+            fui(state->offset_scale);
     }
 
     if (state->line_stipple_enable) {
         rs->line_stipple_config =
             R300_GA_LINE_STIPPLE_CONFIG_LINE_RESET_LINE |
-            (pack_float_32((float)state->line_stipple_factor) &
+            (fui((float)state->line_stipple_factor) &
                 R300_GA_LINE_STIPPLE_CONFIG_STIPPLE_SCALE_MASK);
         /* XXX this might need to be scaled up */
         rs->line_stipple_value = state->line_stipple_pattern;
