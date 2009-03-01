@@ -400,7 +400,6 @@ texture_override(GLcontext *ctx,
       if (texObj->_Complete) {
          texUnit->_ReallyEnabled = textureBit;
          texUnit->_Current = texObj;
-         update_texture_compare_function(ctx, texObj);
       }
    }
 }
@@ -581,6 +580,9 @@ update_texture_state( GLcontext *ctx )
          texture_override(ctx, texUnit, enableBits,
                           texUnit->CurrentTex[texIndex], 1 << texIndex);
       }
+
+      if (texUnit->_Current)
+         update_texture_compare_function(ctx, texUnit->_Current);
 
       if (!texUnit->_ReallyEnabled) {
          continue;
