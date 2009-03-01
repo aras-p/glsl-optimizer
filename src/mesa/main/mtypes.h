@@ -1440,14 +1440,20 @@ struct gl_texture_attrib
    GLboolean SharedPalette;
    struct gl_color_table Palette;
 
-   /** Per-unit flags */
-   /*@{*/
-   GLbitfield _EnabledUnits;  /**< one bit set for each really-enabled unit */
-   GLbitfield _EnabledCoordUnits;   /**< one bit per enabled coordinate unit */
-   GLbitfield _GenFlags;            /**< for texgen */
-   GLbitfield _TexGenEnabled;  /**< Mask of ENABLE_TEXGEN flags */
-   GLbitfield _TexMatEnabled;  /**< Mask of ENABLE_TEXMAT flags */
-   /*@}*/
+   /** Texture units/samplers used by vertex or fragment texturing */
+   GLbitfield _EnabledUnits;
+
+   /** Texture coord units/sets used for fragment texturing */
+   GLbitfield _EnabledCoordUnits;
+
+   /** Texture coord units that have texgen enabled */
+   GLbitfield _TexGenEnabled;
+
+   /** Texture coord units that have non-identity matrices */
+   GLbitfield _TexMatEnabled;
+
+   /** Bitwise-OR of all Texture.Unit[i]._GenFlags */
+   GLbitfield _GenFlags;
 };
 
 
