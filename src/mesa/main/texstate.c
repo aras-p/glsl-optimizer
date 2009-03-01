@@ -385,27 +385,6 @@ update_texture_compare_function(GLcontext *ctx,
 
 
 /**
- * Helper function for determining which texture object (1D, 2D, cube, etc)
- * should actually be used.
- */
-static void
-texture_override(GLcontext *ctx,
-                 struct gl_texture_unit *texUnit, GLbitfield enableBits,
-                 struct gl_texture_object *texObj, GLuint textureBit)
-{
-   if (!texUnit->_ReallyEnabled && (enableBits & textureBit)) {
-      if (!texObj->_Complete) {
-         _mesa_test_texobj_completeness(ctx, texObj);
-      }
-      if (texObj->_Complete) {
-         texUnit->_ReallyEnabled = textureBit;
-         texUnit->_Current = texObj;
-      }
-   }
-}
-
-
-/**
  * Examine texture unit's combine/env state to update derived state.
  */
 static void
@@ -547,14 +526,11 @@ update_texture_state( GLcontext *ctx )
       GLbitfield enableBits;
       GLuint texIndex;
 
-      texUnit->_Current = NULL;
-      texUnit->_ReallyEnabled = 0x0;
-
       /* Get the bitmask of texture target enables.
        * enableBits will be a mask of the TEXTURE_*_BIT flags indicating
        * which texture targets are enabled (fixed function) or referenced
        * by a fragment shader/program.  When multiple flags are set, we'll
-       * settle on the one with highest priority (see texture_override below).
+       * settle on the one with highest priority (see below).
        */
       enableBits = 0x0;
       if (vprog) {
@@ -571,14 +547,27 @@ update_texture_state( GLcontext *ctx )
       if (enableBits == 0x0)
          continue;
 
-      /* Look for the highest-priority texture target that's enabled and
-       * complete.  That's the one we'll use for texturing.  If we're using
-       * a fragment program we're guaranteed that bitcount(enabledBits) <= 1.
+      texUnit->_Current = NULL;
+      texUnit->_ReallyEnabled = 0x0;
+
+      /* Look for the highest priority texture target that's enabled (or used
+       * by the vert/frag shaders) and "complete".  That's the one we'll use
+       * for texturing.  If we're using vert/frag program we're guaranteed
+       * that bitcount(enabledBits) <= 1.
        * Note that the TEXTURE_x_INDEX values are in high to low priority.
        */
       for (texIndex = 0; texIndex < NUM_TEXTURE_TARGETS; texIndex++) {
-         texture_override(ctx, texUnit, enableBits,
-                          texUnit->CurrentTex[texIndex], 1 << texIndex);
+         if (enableBits & (1 << texIndex)) {
+            struct gl_texture_object *texObj = texUnit->CurrentTex[texIndex];
+            if (!texObj->_Complete) {
+               _mesa_test_texobj_completeness(ctx, texObj);
+            }
+            if (texObj->_Complete) {
+               texUnit->_ReallyEnabled = 1 << texIndex;
+               texUnit->_Current = texObj;
+               break;
+            }
+         }
       }
 
       if (texUnit->_Current)
