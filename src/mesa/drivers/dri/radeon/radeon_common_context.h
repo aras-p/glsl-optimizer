@@ -39,6 +39,8 @@ typedef struct radeon_context *radeonContextPtr;
 #define RADEON_FALLBACK_BLEND_FUNC	0x0020
 #define RADEON_FALLBACK_DISABLE 	0x0040
 #define RADEON_FALLBACK_BORDER_MODE	0x0080
+#define RADEON_FALLBACK_DEPTH_BUFFER	0x0100
+#define RADEON_FALLBACK_STENCIL_BUFFER  0x0200
 
 #define R200_FALLBACK_TEXTURE           0x01
 #define R200_FALLBACK_DRAW_BUFFER       0x02
@@ -81,9 +83,34 @@ struct radeon_renderbuffer
 	/* boo Xorg 6.8.2 compat */
 	int has_surface;
 
+	GLuint pf_pending;  /**< sequence number of pending flip */
+	GLuint vbl_pending;   /**< vblank sequence number of pending flip */
 	__DRIdrawablePrivate *dPriv;
 };
 
+struct radeon_framebuffer
+{
+	struct gl_framebuffer base;
+
+	struct radeon_renderbuffer *color_rb[2];
+
+	GLuint vbl_waited;
+
+	/* buffer swap */
+	int64_t swap_ust;
+	int64_t swap_missed_ust;
+
+	GLuint swap_count;
+	GLuint swap_missed_count;
+
+	/* Drawable page flipping state */
+	GLboolean pf_active;
+	GLint pf_current_page;
+	GLint pf_num_pages;
+
+};
+
+ 
 struct radeon_colorbuffer_state {
 	GLuint clear;
 	int roundEnable;
@@ -387,9 +414,6 @@ struct radeon_context {
    GLuint NewGLState;
    DECLARE_RENDERINPUTS(tnl_index_bitset);	/* index of bits for last tnl_install_attrs */
 
-   /* Page flipping */
-   GLuint doPageFlip;
-
    /* Drawable, cliprect and scissor information */
    GLuint numClipRects;	/* Cliprects for the draw buffer */
    drm_clip_rect_t *pClipRects;
@@ -406,13 +430,6 @@ struct radeon_context {
    GLuint irqsEmitted;
    drm_radeon_irq_wait_t iw;
 
-   /* buffer swap */
-   int64_t swap_ust;
-   int64_t swap_missed_ust;
-
-   GLuint swap_count;
-   GLuint swap_missed_count;
-
    /* Derived state - for r300 only */
    struct radeon_state state;
 
@@ -422,15 +439,19 @@ struct radeon_context {
    driOptionCache optionCache;
 
    struct radeon_cmdbuf cmdbuf;
+	
+	drm_clip_rect_t fboRect;
+	GLboolean constant_cliprect; /* use for FBO or DRI2 rendering */
+	GLboolean front_cliprects;
 
    struct {
 	   void (*get_lock)(radeonContextPtr radeon);
 	   void (*update_viewport_offset)(GLcontext *ctx);
-	   void (*update_draw_buffer)(GLcontext *ctx);
 	   void (*emit_cs_header)(struct radeon_cs *cs, radeonContextPtr rmesa);
 	   void (*swtcl_flush)(GLcontext *ctx, uint32_t offset);
 	   void (*pre_emit_atoms)(radeonContextPtr rmesa);
 	   void (*pre_emit_state)(radeonContextPtr rmesa);
+	   void (*fallback)(GLcontext *ctx, GLuint bit, GLboolean mode);
    } vtbl;
 };
 

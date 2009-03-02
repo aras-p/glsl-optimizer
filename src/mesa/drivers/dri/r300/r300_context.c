@@ -235,26 +235,35 @@ static void r300_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmes
 
 static void r300_vtbl_pre_emit_atoms(radeonContextPtr radeon)
 {
-   r300ContextPtr r300 = (r300ContextPtr)radeon;
-   BATCH_LOCALS(radeon);
+	r300ContextPtr r300 = (r300ContextPtr)radeon;
+	BATCH_LOCALS(radeon);
+	
+	r300->vap_flush_needed = GL_TRUE;
+	
+	cp_wait(radeon, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
+	BEGIN_BATCH_NO_AUTOSTATE(2);
+	OUT_BATCH_REGVAL(R300_TX_INVALTAGS, R300_TX_FLUSH);
+	END_BATCH();
+	end_3d(radeon);
+}
 
-   r300->vap_flush_needed = GL_TRUE;
-
-   cp_wait(radeon, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
-   BEGIN_BATCH_NO_AUTOSTATE(2);
-   OUT_BATCH_REGVAL(R300_TX_INVALTAGS, R300_TX_FLUSH);
-   END_BATCH();
-   end_3d(radeon);
+static void r300_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	if (mode)
+		r300->radeon.Fallback |= bit;
+	else
+		r300->radeon.Fallback &= ~bit;
 }
 
 static void r300_init_vtbl(radeonContextPtr radeon)
 {
-   radeon->vtbl.get_lock = r300_get_lock;
-   radeon->vtbl.update_viewport_offset = r300UpdateViewportOffset;
-   radeon->vtbl.update_draw_buffer = r300UpdateDrawBuffer;
-   radeon->vtbl.emit_cs_header = r300_vtbl_emit_cs_header;
-   radeon->vtbl.swtcl_flush = r300_swtcl_flush;
-   radeon->vtbl.pre_emit_atoms = r300_vtbl_pre_emit_atoms;
+	radeon->vtbl.get_lock = r300_get_lock;
+	radeon->vtbl.update_viewport_offset = r300UpdateViewportOffset;
+	radeon->vtbl.emit_cs_header = r300_vtbl_emit_cs_header;
+	radeon->vtbl.swtcl_flush = r300_swtcl_flush;
+	radeon->vtbl.pre_emit_atoms = r300_vtbl_pre_emit_atoms;
+	radeon->vtbl.fallback = r300_fallback;
 }
 
 

@@ -541,7 +541,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
-	GLframebuffer *fb = dPriv->driverPrivate;
+	struct radeon_framebuffer *rfb = dPriv->driverPrivate;
 	struct radeon_renderbuffer *rrb;
 	struct radeon_renderbuffer *rrbd;
 	int flags = 0;
@@ -594,16 +594,16 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 	rcommonEnsureCmdBufSpace(&r300->radeon, 421 * 3, __FUNCTION__);
 	if (flags || bits)
 		r300EmitClearState(ctx);
-	rrbd = (void *)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+	rrbd = (void *)rfb->base.Attachment[BUFFER_DEPTH].Renderbuffer;
 
 	if (flags & BUFFER_BIT_FRONT_LEFT) {
-		rrb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+		rrb = (void *)rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
 		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, rrb, rrbd);
 		bits = 0;
 	}
 
 	if (flags & BUFFER_BIT_BACK_LEFT) {
-		rrb = (void *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+		rrb = (void *)rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
 		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, rrb, rrbd);
 		bits = 0;
 	}

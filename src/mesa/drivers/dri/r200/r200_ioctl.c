@@ -203,7 +203,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
    GLint ret;
 
    if ( R200_DEBUG & DEBUG_IOCTL ) {
-      fprintf( stderr, "r200Clear\n");
+       fprintf( stderr, "r200Clear %x %d\n", mask, rmesa->radeon.sarea->pfCurrentPage);
    }
 
    {

@@ -393,7 +393,7 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 	radeon_texture_image *rImage;
 	radeonContextPtr radeon;
 	r300ContextPtr rmesa;
-	GLframebuffer *fb;
+	struct radeon_framebuffer *rfb;
 	radeonTexObjPtr t;
 	uint32_t pitch_val;
 
@@ -402,7 +402,7 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 	radeon = pDRICtx->driverPrivate;
 	rmesa = pDRICtx->driverPrivate;
 
-	fb = dPriv->driverPrivate;
+	rfb = dPriv->driverPrivate;
         texUnit = &radeon->glCtx->Texture.Unit[radeon->glCtx->Texture.CurrentUnit];
 	texObj = _mesa_select_tex_object(radeon->glCtx, texUnit, target);
         texImage = _mesa_get_tex_image(radeon->glCtx, texObj, target, 0);
@@ -415,17 +415,17 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 
 	radeon_update_renderbuffers(pDRICtx, dPriv);
 	/* back & depth buffer are useless free them right away */
-	rb = (void*)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+	rb = (void*)rfb->base.Attachment[BUFFER_DEPTH].Renderbuffer;
 	if (rb && rb->bo) {
 		radeon_bo_unref(rb->bo);
         rb->bo = NULL;
 	}
-	rb = (void*)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+	rb = (void*)rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
 	if (rb && rb->bo) {
 		radeon_bo_unref(rb->bo);
 		rb->bo = NULL;
 	}
-	rb = (void*)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+	rb = (void*)rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
 	if (rb->bo == NULL) {
 		/* Failed to BO for the buffer */
 		return;

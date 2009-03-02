@@ -186,10 +186,10 @@ static void r100_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r100_get_lock;
    radeon->vtbl.update_viewport_offset = radeonUpdateViewportOffset;
-   radeon->vtbl.update_draw_buffer = radeonUpdateDrawBuffer;
    radeon->vtbl.emit_cs_header = r100_vtbl_emit_cs_header;
    radeon->vtbl.swtcl_flush = r100_swtcl_flush;
    radeon->vtbl.pre_emit_state = r100_vtbl_pre_emit_state;
+   radeon->vtbl.fallback = radeonFallback;
 }
 
 /* Create the device specific context.
@@ -368,8 +368,6 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 			    fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS);
 
    rmesa->radeon.do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
-
-   (*sPriv->systemTime->getUST)( & rmesa->radeon.swap_ust );
 
 
 #if DO_DEBUG

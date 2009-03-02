@@ -14,7 +14,6 @@ void radeonWaitForIdleLocked(radeonContextPtr radeon);
 extern uint32_t radeonGetAge(radeonContextPtr radeon);
 void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 		       const drm_clip_rect_t	  *rect);
-void radeonPageFlip( __DRIdrawablePrivate *dPriv );
 void radeonSwapBuffers(__DRIdrawablePrivate * dPriv);
 void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
 			 int x, int y, int w, int h );
@@ -24,6 +23,12 @@ void radeonUpdatePageFlipping(radeonContextPtr rmesa);
 void radeonFlush(GLcontext *ctx);
 void radeonFinish(GLcontext * ctx);
 void radeonEmitState(radeonContextPtr radeon);
+
+void radeon_window_moved(radeonContextPtr radeon);
+void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb);
+void radeonDrawBuffer( GLcontext *ctx, GLenum mode );
+void radeonReadBuffer( GLcontext *ctx, GLenum mode );
+void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height);
 
 static inline struct radeon_renderbuffer *radeon_get_depthbuffer(radeonContextPtr rmesa)
 {
@@ -38,11 +43,11 @@ static inline struct radeon_renderbuffer *radeon_get_depthbuffer(radeonContextPt
 static inline struct radeon_renderbuffer *radeon_get_colorbuffer(radeonContextPtr rmesa)
 {
 	struct radeon_renderbuffer *rrb;
-	GLframebuffer *fb = rmesa->dri.drawable->driverPrivate;
+	struct radeon_framebuffer *rfb = rmesa->dri.drawable->driverPrivate;
 
 	rrb = rmesa->state.color.rrb;
 	if (rmesa->radeonScreen->driScreen->dri2.enabled) {
-		rrb = (struct radeon_renderbuffer *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+		rrb = (struct radeon_renderbuffer *)rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
 	}
 	if (!rrb)
 		return NULL;

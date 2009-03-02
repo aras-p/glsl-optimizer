@@ -1083,20 +1083,13 @@ static void r300UpdateWindow(GLcontext * ctx)
 static void r300Viewport(GLcontext * ctx, GLint x, GLint y,
 			 GLsizei width, GLsizei height)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-    __DRIcontext *driContext = rmesa->radeon.dri.context;
 	/* Don't pipeline viewport changes, conflict with window offset
 	 * setting below.  Could apply deltas to rescue pipelined viewport
 	 * values, or keep the originals hanging around.
 	 */
-    if (rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
-        radeon_update_renderbuffers(driContext, driContext->driDrawablePriv);
-        if (driContext->driDrawablePriv != driContext->driReadablePriv) {
-            radeon_update_renderbuffers(driContext,
-                                        driContext->driReadablePriv);
-        }
-    }
 	r300UpdateWindow(ctx);
+
+	radeon_viewport(ctx, x, y, width, height);
 }
 
 static void r300DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
@@ -1127,34 +1120,6 @@ void r300UpdateViewportOffset(GLcontext * ctx)
 	}
 
 	radeonUpdateScissor(ctx);
-}
-
-/**
- * Tell the card where to render (offset, pitch).
- * Effected by glDrawBuffer, etc
- */
-void r300UpdateDrawBuffer(GLcontext * ctx)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct gl_framebuffer *fb = ctx->DrawBuffer;
-	struct radeon_renderbuffer *rrb;
-
-	if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
-		/* draw to front */
-		rrb =
-		    (void *) fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-	} else if (fb->_ColorDrawBufferIndexes[0] == BUFFER_BACK_LEFT) {
-		/* draw to back */
-		rrb = (void *) fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-	} else {
-		/* drawing to multiple buffers, or none */
-		return;
-	}
-
-	assert(rrb);
-	assert(rrb->pitch);
-
-	R300_STATECHANGE(rmesa, cb);
 }
 
 static void
@@ -2653,7 +2618,11 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 	_ae_invalidate_state(ctx, new_state);
 
 	if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
-		r300UpdateDrawBuffer(ctx);
+		_mesa_update_framebuffer(ctx);
+		/* this updates the DrawBuffer's Width/Height if it's a FBO */
+		_mesa_update_draw_buffer_bounds(ctx);
+
+		R300_STATECHANGE(r300, cb);
 	}
 
 	r300UpdateStateParameters(ctx, new_state);
@@ -2705,28 +2674,6 @@ void r300UpdateClipPlanes( GLcontext *ctx )
 	}
 }
 
-static void r300DrawBuffer( GLcontext *ctx, GLenum mode )
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	if (RADEON_DEBUG & DEBUG_DRI)
-		fprintf(stderr, "%s %s\n", __FUNCTION__,
-			_mesa_lookup_enum_by_nr( mode ));
-
-	radeon_firevertices(&rmesa->radeon);	/* don't pipeline cliprect changes */
-
-	radeonSetCliprects( &rmesa->radeon );
-        if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled) 
-		radeonUpdatePageFlipping(&rmesa->radeon);
-}
-
-static void r300ReadBuffer( GLcontext *ctx, GLenum mode )
-{
-	if (RADEON_DEBUG & DEBUG_DRI)
-		fprintf(stderr, "%s %s\n", __FUNCTION__,
-			_mesa_lookup_enum_by_nr( mode ));
-
-};
-
 /**
  * Initialize driver's state callback functions
  */
@@ -2770,6 +2717,6 @@ void r300InitStateFuncs(struct dd_function_table *functions)
 	functions->ClipPlane = r300ClipPlane;
 	functions->Scissor = radeonScissor;
 
-	functions->DrawBuffer		= r300DrawBuffer;
-	functions->ReadBuffer		= r300ReadBuffer;
+	functions->DrawBuffer		= radeonDrawBuffer;
+	functions->ReadBuffer		= radeonReadBuffer;
 }

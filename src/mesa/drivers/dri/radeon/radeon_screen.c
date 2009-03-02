@@ -1262,7 +1262,7 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                     const __GLcontextModes *mesaVis,
                     GLboolean isPixmap )
 {
-   radeonScreenPtr screen = (radeonScreenPtr) driScrnPriv->private;
+    radeonScreenPtr screen = (radeonScreenPtr) driScrnPriv->private;
 
     const GLboolean swDepth = GL_FALSE;
     const GLboolean swAlpha = GL_FALSE;
@@ -1271,7 +1271,16 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 	mesaVis->depthBits != 24;
     GLenum rgbFormat = (mesaVis->redBits == 5 ? GL_RGB5 : GL_RGBA8);
     GLenum depthFormat = GL_NONE;
-    struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
+    struct radeon_framebuffer *rfb;
+
+    if (isPixmap)
+      return GL_FALSE; /* not implemented */
+
+    rfb = CALLOC_STRUCT(radeon_framebuffer);
+    if (!rfb)
+      return GL_FALSE;
+
+    _mesa_initialize_framebuffer(&rfb->base, mesaVis);
 
     if (mesaVis->depthBits == 16)
 	depthFormat = GL_DEPTH_COMPONENT16;
@@ -1279,26 +1288,22 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 	depthFormat = GL_DEPTH_COMPONENT24;
 
     /* front color renderbuffer */
-    {
-	struct radeon_renderbuffer *front =
-	    radeon_create_renderbuffer(rgbFormat, driDrawPriv);
-	_mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &front->base);
-	front->has_surface = 1;
-    }
+    rfb->color_rb[0] = radeon_create_renderbuffer(rgbFormat, driDrawPriv);
+    _mesa_add_renderbuffer(&rfb->base, BUFFER_FRONT_LEFT, &rfb->color_rb[0]->base);
+    rfb->color_rb[0]->has_surface = 1;
 
     /* back color renderbuffer */
     if (mesaVis->doubleBufferMode) {
-	struct radeon_renderbuffer *back =
-	    radeon_create_renderbuffer(rgbFormat, driDrawPriv);
-	_mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &back->base);
-	back->has_surface = 1;
+	rfb->color_rb[1] = radeon_create_renderbuffer(rgbFormat, driDrawPriv);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_BACK_LEFT, &rfb->color_rb[1]->base);
+	rfb->color_rb[1]->has_surface = 1;
     }
 
     /* depth renderbuffer */
     if (depthFormat != GL_NONE) {
 	struct radeon_renderbuffer *depth =
 	    radeon_create_renderbuffer(depthFormat, driDrawPriv);
-	_mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depth->base);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depth->base);
 	depth->has_surface = screen->depthHasSurface;
     }
 
@@ -1306,18 +1311,18 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
     if (mesaVis->stencilBits > 0 && !swStencil) {
 	struct radeon_renderbuffer *stencil =
 	    radeon_create_renderbuffer(GL_STENCIL_INDEX8_EXT, driDrawPriv);
-	_mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencil->base);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_STENCIL, &stencil->base);
 	stencil->has_surface = screen->depthHasSurface;
     }
 
-    _mesa_add_soft_renderbuffers(fb,
+    _mesa_add_soft_renderbuffers(&rfb->base,
 	    GL_FALSE, /* color */
 	    swDepth,
 	    swStencil,
 	    swAccum,
 	    swAlpha,
 	    GL_FALSE /* aux */);
-    driDrawPriv->driverPrivate = (void *) fb;
+    driDrawPriv->driverPrivate = (void *) rfb;
 
     return (driDrawPriv->driverPrivate != NULL);
 }
@@ -1325,21 +1330,21 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 static void
 radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-	struct radeon_renderbuffer *rb;
-	GLframebuffer *fb;
+    struct radeon_renderbuffer *rb;
+    struct radeon_framebuffer *rfb;
     
-    fb = (void*)driDrawPriv->driverPrivate;
-    rb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+    rfb = (void*)driDrawPriv->driverPrivate;
+    rb = (void *)rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
     if (rb && rb->bo) {
         radeon_bo_unref(rb->bo);
         rb->bo = NULL;
     }
-    rb = (void *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+    rb = (void *)rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
     if (rb && rb->bo) {
         radeon_bo_unref(rb->bo);
         rb->bo = NULL;
     }
-    rb = (void *)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+    rb = (void *)rfb->base.Attachment[BUFFER_DEPTH].Renderbuffer;
     if (rb && rb->bo) {
         radeon_bo_unref(rb->bo);
         rb->bo = NULL;
@@ -1541,21 +1546,21 @@ __DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
 static int
 getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
 {
-   radeonContextPtr  rmesa;
+    struct radeon_framebuffer *rfb;
 
-   if ( (dPriv == NULL) || (dPriv->driContextPriv == NULL)
-	|| (dPriv->driContextPriv->driverPrivate == NULL)
-	|| (sInfo == NULL) ) {
-      return -1;
+    if ( (dPriv == NULL) || (dPriv->driContextPriv == NULL)
+	 || (dPriv->driContextPriv->driverPrivate == NULL)
+	 || (sInfo == NULL) ) {
+	return -1;
    }
 
-   rmesa = dPriv->driContextPriv->driverPrivate;
-   sInfo->swap_count = rmesa->swap_count;
-   sInfo->swap_ust = rmesa->swap_ust;
-   sInfo->swap_missed_count = rmesa->swap_missed_count;
+    rfb = dPriv->driverPrivate;
+    sInfo->swap_count = rfb->swap_count;
+    sInfo->swap_ust = rfb->swap_ust;
+    sInfo->swap_missed_count = rfb->swap_missed_count;
 
    sInfo->swap_missed_usage = (sInfo->swap_missed_count != 0)
-       ? driCalculateSwapUsage( dPriv, 0, rmesa->swap_missed_ust )
+       ? driCalculateSwapUsage( dPriv, 0, rfb->swap_missed_ust )
        : 0.0;
 
    return 0;

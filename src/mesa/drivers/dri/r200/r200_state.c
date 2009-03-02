@@ -1639,6 +1639,8 @@ static void r200Viewport( GLcontext *ctx, GLint x, GLint y,
     * values, or keep the originals hanging around.
     */
    r200UpdateWindow( ctx );
+
+   radeon_viewport(ctx, x, y, width, height);
 }
 
 static void r200DepthRange( GLcontext *ctx, GLclampd nearval,
@@ -1752,47 +1754,6 @@ static void r200LogicOpCode( GLcontext *ctx, GLenum opcode )
 
    R200_STATECHANGE( rmesa, msk );
    rmesa->hw.msk.cmd[MSK_RB3D_ROPCNTL] = r200_rop_tab[rop];
-}
-
-
-static void r200DrawBuffer( GLcontext *ctx, GLenum mode )
-{
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-
-   if (R200_DEBUG & DEBUG_DRI)
-      fprintf(stderr, "%s %s\n", __FUNCTION__,
-	      _mesa_lookup_enum_by_nr( mode ));
-
-   radeon_firevertices(&rmesa->radeon);	/* don't pipeline cliprect changes */
-
-   if (ctx->DrawBuffer->_NumColorDrawBuffers != 1) {
-      /* 0 (GL_NONE) buffers or multiple color drawing buffers */
-      FALLBACK( rmesa, R200_FALLBACK_DRAW_BUFFER, GL_TRUE );
-      return;
-   }
-
-   switch ( ctx->DrawBuffer->_ColorDrawBufferIndexes[0] ) {
-   case BUFFER_FRONT_LEFT:
-   case BUFFER_BACK_LEFT:
-      FALLBACK( rmesa, R200_FALLBACK_DRAW_BUFFER, GL_FALSE );
-      break;
-   default:
-      FALLBACK( rmesa, R200_FALLBACK_DRAW_BUFFER, GL_TRUE );
-      return;
-   }
-
-   radeonSetCliprects( &rmesa->radeon );
-   radeonUpdatePageFlipping(&rmesa->radeon);
-
-   /* We'll set the drawing engine's offset/pitch parameters later
-    * when we update other state.
-    */
-}
-
-
-static void r200ReadBuffer( GLcontext *ctx, GLenum mode )
-{
-   /* nothing, until we implement h/w glRead/CopyPixels or CopyTexImage */
 }
 
 /* =============================================================
@@ -2289,47 +2250,6 @@ static void update_texturematrix( GLcontext *ctx )
    }
 }
 
-
-
-/**
- * Tell the card where to render (offset, pitch).
- * Effected by glDrawBuffer, etc
- */
-void
-r200UpdateDrawBuffer(GLcontext *ctx)
-{
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct radeon_renderbuffer *rrb;
-
-   if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
-     /* draw to front */
-     rrb = (void *) fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-   } else if (fb->_ColorDrawBufferIndexes[0] == BUFFER_BACK_LEFT) {
-     /* draw to back */
-     rrb = (void *) fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-   } else {
-     /* drawing to multiple buffers, or none */
-     return;
-   }
-
-   assert(rrb);
-   assert(rrb->pitch);
-
-   R200_STATECHANGE( rmesa, ctx );
-
-#if 0
-   /* Note: we used the (possibly) page-flipped values */
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET]
-     = ((rrb->flippedOffset + rmesa->radeon.radeonScreen->fbLocation)
-	& R200_COLOROFFSET_MASK);
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = drb->flippedPitch;
-   if (rmesa->radeon.sarea->tiling_enabled) {
-      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
-   }
-#endif
-}
-
 static GLboolean r200ValidateBuffers(GLcontext *ctx)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -2395,7 +2315,11 @@ GLboolean r200ValidateState( GLcontext *ctx )
    GLuint new_state = rmesa->radeon.NewGLState;
 
    if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
-     r200UpdateDrawBuffer(ctx);
+      _mesa_update_framebuffer(ctx);
+      /* this updates the DrawBuffer's Width/Height if it's a FBO */
+      _mesa_update_draw_buffer_bounds(ctx);
+      
+      R200_STATECHANGE(rmesa, ctx);
    }
 
    if (new_state & (_NEW_TEXTURE | _NEW_PROGRAM)) {
@@ -2523,8 +2447,8 @@ void r200InitStateFuncs( struct dd_function_table *functions )
    functions->UpdateState		= r200InvalidateState;
    functions->LightingSpaceChange	= r200LightingSpaceChange;
 
-   functions->DrawBuffer		= r200DrawBuffer;
-   functions->ReadBuffer		= r200ReadBuffer;
+   functions->DrawBuffer		= radeonDrawBuffer;
+   functions->ReadBuffer		= radeonReadBuffer;
 
    functions->AlphaFunc			= r200AlphaFunc;
    functions->BlendColor		= r200BlendColor;

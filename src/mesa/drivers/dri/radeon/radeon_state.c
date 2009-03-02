@@ -1418,6 +1418,8 @@ static void radeonViewport( GLcontext *ctx, GLint x, GLint y,
     * values, or keep the originals hanging around.
     */
    radeonUpdateWindow( ctx );
+
+   radeon_viewport(ctx, x, y, width, height);
 }
 
 static void radeonDepthRange( GLcontext *ctx, GLclampd nearval,
@@ -1531,50 +1533,6 @@ static void radeonLogicOpCode( GLcontext *ctx, GLenum opcode )
    RADEON_STATECHANGE( rmesa, msk );
    rmesa->hw.msk.cmd[MSK_RB3D_ROPCNTL] = radeon_rop_tab[rop];
 }
-
-
-/**
- * Called via glDrawBuffer.
- */
-static void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-
-   if (RADEON_DEBUG & DEBUG_DRI)
-      fprintf(stderr, "%s %s\n", __FUNCTION__,
-	      _mesa_lookup_enum_by_nr( mode ));
-
-   radeon_firevertices(&rmesa->radeon);	/* don't pipeline cliprect changes */
-
-   if (ctx->DrawBuffer->_NumColorDrawBuffers != 1) {
-      /* 0 (GL_NONE) buffers or multiple color drawing buffers */
-      FALLBACK( rmesa, RADEON_FALLBACK_DRAW_BUFFER, GL_TRUE );
-      return;
-   }
-
-   switch ( ctx->DrawBuffer->_ColorDrawBufferIndexes[0] ) {
-   case BUFFER_FRONT_LEFT:
-   case BUFFER_BACK_LEFT:
-      FALLBACK( rmesa, RADEON_FALLBACK_DRAW_BUFFER, GL_FALSE );
-      break;
-   default:
-      FALLBACK( rmesa, RADEON_FALLBACK_DRAW_BUFFER, GL_TRUE );
-      return;
-   }
-
-   radeonSetCliprects( &rmesa->radeon );
-   if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled)
-      radeonUpdatePageFlipping(&rmesa->radeon);
-   /* We'll set the drawing engine's offset/pitch parameters later
-    * when we update other state.
-    */
-}
-
-static void radeonReadBuffer( GLcontext *ctx, GLenum mode )
-{
-   /* nothing, until we implement h/w glRead/CopyPixels or CopyTexImage */
-}
-
 
 /* =============================================================
  * State enable/disable
@@ -2066,42 +2024,16 @@ static void update_texturematrix( GLcontext *ctx )
 }
 
 
-/**
- * Tell the card where to render (offset, pitch).
- * Effected by glDrawBuffer, etc
- */
-void
-radeonUpdateDrawBuffer(GLcontext *ctx)
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   struct gl_framebuffer *fb = ctx->DrawBuffer;
-   struct radeon_renderbuffer *rrb;
-
-   if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
-     /* draw to front */
-     rrb = (void *) fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-   } else if (fb->_ColorDrawBufferIndexes[0] == BUFFER_BACK_LEFT) {
-     /* draw to back */
-     rrb = (void *) fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-   } else {
-     /* drawing to multiple buffers, or none */
-     return;
-   }
-
-   assert(rrb);
-   assert(rrb->pitch);
-
-   RADEON_STATECHANGE( rmesa, ctx );
-}
-
-
 void radeonValidateState( GLcontext *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLuint new_state = rmesa->radeon.NewGLState;
 
    if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
-     radeonUpdateDrawBuffer(ctx);
+     _mesa_update_framebuffer(ctx);
+     /* this updates the DrawBuffer's Width/Height if it's a FBO */
+     _mesa_update_draw_buffer_bounds(ctx);
+     RADEON_STATECHANGE(rmesa, ctx);
    }
 
    if (new_state & _NEW_TEXTURE) {

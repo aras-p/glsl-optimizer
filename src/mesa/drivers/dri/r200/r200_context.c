@@ -261,9 +261,9 @@ static void r200_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r200_get_lock;
    radeon->vtbl.update_viewport_offset = r200UpdateViewportOffset;
-   radeon->vtbl.update_draw_buffer = r200UpdateDrawBuffer;
    radeon->vtbl.emit_cs_header = r200_vtbl_emit_cs_header;
    radeon->vtbl.swtcl_flush = r200_swtcl_flush;
+   radeon->vtbl.fallback = r200Fallback;
 }
 
 

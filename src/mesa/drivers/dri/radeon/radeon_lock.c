@@ -48,37 +48,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_lock.h"
 #include "drirenderbuffer.h"
 
-#if DEBUG_LOCKING
-char *prevLockFile = NULL;
-int prevLockLine = 0;
-#endif
-
-/* Turn on/off page flipping according to the flags in the sarea:
- */
-void radeonUpdatePageFlipping(radeonContextPtr rmesa)
-{
-	int use_back;
-	__DRIdrawablePrivate *const drawable = rmesa->dri.drawable;
-	GLframebuffer *fb = drawable->driverPrivate;
-
-	rmesa->doPageFlip = rmesa->sarea->pfState;
-	if (rmesa->glCtx->WinSysDrawBuffer) {
-		rmesa->vtbl.update_draw_buffer(rmesa->glCtx);
-	}
-
-	use_back = rmesa->glCtx->DrawBuffer ?
-	    (rmesa->glCtx->DrawBuffer->_ColorDrawBufferIndexes[0] ==
-	     BUFFER_BACK_LEFT) : 1;
-	use_back ^= (rmesa->sarea->pfCurrentPage == 1);
-
-	if (use_back)
-		rmesa->state.color.rrb = (void *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-	else
-		rmesa->state.color.rrb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-
-	rmesa->state.depth.rrb = (void *)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
-}
-
 /* Update the hardware state.  This is called if another context has
  * grabbed the hardware lock, which includes the X server.  This
  * function also updates the driver's window state after the X server
@@ -112,13 +81,52 @@ void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 	}
 
 	if (rmesa->lastStamp != drawable->lastStamp) {
-		radeonUpdatePageFlipping(rmesa);
-		radeonSetCliprects(rmesa);
-		rmesa->vtbl.update_viewport_offset(rmesa->glCtx);
-		driUpdateFramebufferSize(rmesa->glCtx, drawable);
+		radeon_window_moved(rmesa);
+		rmesa->lastStamp = drawable->lastStamp;
 	}
 
 	rmesa->vtbl.get_lock(rmesa);
 
 	rmesa->lost_context = GL_TRUE;
+}
+
+static INLINE struct radeon_renderbuffer *
+radeon_get_renderbuffer(struct gl_framebuffer *fb, int attIndex)
+{
+	if (attIndex >= 0)
+		return (struct radeon_renderbuffer *)fb->Attachment[attIndex].Renderbuffer;
+	else
+		return NULL;
+}
+
+void radeon_lock_hardware(radeonContextPtr radeon)
+{
+	__DRIdrawable *dPriv = radeon->dri.drawable;
+	char ret = 0;
+	struct radeon_framebuffer *rfb = NULL;
+	struct radeon_renderbuffer *rrb = NULL;
+
+	if (radeon->dri.drawable) {
+		rfb = radeon->dri.drawable->driverPrivate;
+
+		if (rfb)
+			rrb = radeon_get_renderbuffer(&rfb->base,
+						      rfb->base._ColorDrawBufferIndexes[0]);
+	}
+
+	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
+		DRM_CAS(radeon->dri.hwLock, radeon->dri.hwContext,
+			 (DRM_LOCK_HELD | radeon->dri.hwContext), ret );
+		if (ret)
+			radeonGetLock(radeon, 0);
+	}
+}
+
+void radeon_unlock_hardware(radeonContextPtr radeon)
+{
+	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
+		DRM_UNLOCK( radeon->dri.fd,
+			    radeon->dri.hwLock,
+			    radeon->dri.hwContext );
+	}
 }

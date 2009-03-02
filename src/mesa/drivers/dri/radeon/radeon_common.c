@@ -51,7 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/light.h"
 #include "main/framebuffer.h"
 #include "main/simple_list.h"
-
+#include "main/renderbuffer.h"
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
@@ -132,6 +132,38 @@ void radeonRecalcScissorRects(radeonContextPtr radeon)
 	}
 }
 
+static void radeon_get_cliprects(radeonContextPtr radeon,
+				 struct drm_clip_rect **cliprects,
+				 unsigned int *num_cliprects,
+				 int *x_off, int *y_off)
+{
+	__DRIdrawablePrivate *dPriv = radeon->dri.drawable;
+	struct radeon_framebuffer *rfb = dPriv->driverPrivate;
+
+	if (radeon->constant_cliprect) {
+		radeon->fboRect.x1 = 0;
+		radeon->fboRect.y1 = 0;
+		radeon->fboRect.x2 = radeon->glCtx->DrawBuffer->Width;
+		radeon->fboRect.y2 = radeon->glCtx->DrawBuffer->Height;
+
+		*cliprects = &radeon->fboRect;
+		*num_cliprects = 1;
+		*x_off = 0;
+		*y_off = 0;
+	} else if (radeon->front_cliprects ||
+		   rfb->pf_active || dPriv->numBackClipRects == 0) {
+		*cliprects = dPriv->pClipRects;
+		*num_cliprects = dPriv->numClipRects;
+		*x_off = dPriv->x;
+		*y_off = dPriv->y;
+	} else {
+		*num_cliprects = dPriv->numBackClipRects;
+		*cliprects = dPriv->pBackClipRects;
+		*x_off = dPriv->backX;
+		*y_off = dPriv->backY;
+	}
+}
+
 /**
  * Update cliprects and scissors.
  */
@@ -139,48 +171,36 @@ void radeonSetCliprects(radeonContextPtr radeon)
 {
 	__DRIdrawablePrivate *const drawable = radeon->dri.drawable;
 	__DRIdrawablePrivate *const readable = radeon->dri.readable;
-	GLframebuffer *const draw_fb = (GLframebuffer*)drawable->driverPrivate;
-	GLframebuffer *const read_fb = (GLframebuffer*)readable->driverPrivate;
+	struct radeon_framebuffer *const draw_rfb = drawable->driverPrivate;
+	struct radeon_framebuffer *const read_rfb = readable->driverPrivate;
+	int x_off, y_off;
 
-	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
-		if (draw_fb->_ColorDrawBufferIndexes[0] == BUFFER_BACK_LEFT) {
-			/* Can't ignore 2d windows if we are page flipping. */
-			if (drawable->numBackClipRects == 0 || radeon->doPageFlip ||
-			    radeon->sarea->pfCurrentPage == 1) {
-				radeon->numClipRects = drawable->numClipRects;
-				radeon->pClipRects = drawable->pClipRects;
-			} else {
-				radeon->numClipRects = drawable->numBackClipRects;
-				radeon->pClipRects = drawable->pBackClipRects;
-			}
-		} else {
-			/* front buffer (or none, or multiple buffers */
-			radeon->numClipRects = drawable->numClipRects;
-			radeon->pClipRects = drawable->pClipRects;
-		}
-	}
+	fprintf(stderr,"cliprects %d %d\n", radeon->front_cliprects, radeon->constant_cliprect);
+	radeon_get_cliprects(radeon, &radeon->pClipRects,
+			     &radeon->numClipRects, &x_off, &y_off);
 	
-	if ((draw_fb->Width != drawable->w) ||
-	    (draw_fb->Height != drawable->h)) {
-		_mesa_resize_framebuffer(radeon->glCtx, draw_fb,
+	if ((draw_rfb->base.Width != drawable->w) ||
+	    (draw_rfb->base.Height != drawable->h)) {
+		_mesa_resize_framebuffer(radeon->glCtx, &draw_rfb->base,
 					 drawable->w, drawable->h);
-		draw_fb->Initialized = GL_TRUE;
+		draw_rfb->base.Initialized = GL_TRUE;
 	}
 
 	if (drawable != readable) {
-		if ((read_fb->Width != readable->w) ||
-		    (read_fb->Height != readable->h)) {
-			_mesa_resize_framebuffer(radeon->glCtx, read_fb,
+		if ((read_rfb->base.Width != readable->w) ||
+		    (read_rfb->base.Height != readable->h)) {
+			_mesa_resize_framebuffer(radeon->glCtx, &read_rfb->base,
 						 readable->w, readable->h);
-			read_fb->Initialized = GL_TRUE;
+			read_rfb->base.Initialized = GL_TRUE;
 		}
 	}
 
 	if (radeon->state.scissor.enabled)
 		radeonRecalcScissorRects(radeon);
 
-	radeon->lastStamp = drawable->lastStamp;
 }
+
+
 
 void radeonUpdateScissor( GLcontext *ctx )
 {
@@ -348,6 +368,37 @@ static void radeonWaitForIdle(radeonContextPtr radeon)
 	UNLOCK_HARDWARE(radeon);
 }
 
+static void radeon_flip_renderbuffers(struct radeon_framebuffer *rfb)
+{
+	int current_page = rfb->pf_current_page;
+	int next_page = (current_page + 1) % rfb->pf_num_pages;
+	struct gl_renderbuffer *tmp_rb;
+
+	/* Exchange renderbuffers if necessary but make sure their
+	 * reference counts are preserved.
+	 */
+	if (rfb->color_rb[current_page] &&
+	    rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer !=
+	    &rfb->color_rb[current_page]->base) {
+		tmp_rb = NULL;
+		_mesa_reference_renderbuffer(&tmp_rb,
+					     rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+		tmp_rb = &rfb->color_rb[current_page]->base;
+		_mesa_reference_renderbuffer(&rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer, tmp_rb);
+		_mesa_reference_renderbuffer(&tmp_rb, NULL);
+	}
+
+	if (rfb->color_rb[next_page] &&
+	    rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer !=
+	    &rfb->color_rb[next_page]->base) {
+		tmp_rb = NULL;
+		_mesa_reference_renderbuffer(&tmp_rb,
+					     rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer);
+		tmp_rb = &rfb->color_rb[next_page]->base;
+		_mesa_reference_renderbuffer(&rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer, tmp_rb);
+		_mesa_reference_renderbuffer(&tmp_rb, NULL);
+	}
+}
 
 /* Copy the back color buffer to the front color buffer.
  */
@@ -355,10 +406,8 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 		       const drm_clip_rect_t	  *rect)
 {
 	radeonContextPtr rmesa;
+	struct radeon_framebuffer *rfb;
 	GLint nbox, i, ret;
-	GLboolean   missed_target;
-	int64_t ust;
-	__DRIscreenPrivate *psp;
    
 	assert(dPriv);
 	assert(dPriv->driContextPriv);
@@ -366,22 +415,10 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
    
 	rmesa = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
 
+	rfb = dPriv->driverPrivate;
+
 	if ( RADEON_DEBUG & DEBUG_IOCTL ) {
 		fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *) rmesa->glCtx );
-	}
-
-	radeon_firevertices(rmesa);
-	LOCK_HARDWARE( rmesa );
-
-	/* Throttle the frame rate -- only allow one pending swap buffers
-	 * request at a time.
-	 */
-	radeonWaitForFrameCompletion( rmesa );
-	if (!rect)
-	{
-		UNLOCK_HARDWARE( rmesa );
-		driWaitForVBlank( dPriv, & missed_target );
-		LOCK_HARDWARE( rmesa );
 	}
 
 	nbox = dPriv->numClipRects; /* must be in locked region */
@@ -429,45 +466,13 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 	}
 
 	UNLOCK_HARDWARE( rmesa );
-	if (!rect)
-	{
-		psp = dPriv->driScreenPriv;
-		rmesa->swap_count++;
-		(*psp->systemTime->getUST)( & ust );
-		if ( missed_target ) {
-			rmesa->swap_missed_count++;
-			rmesa->swap_missed_ust = ust - rmesa->swap_ust;
-		}
-
-		rmesa->swap_ust = ust;
-		rmesa->hw.all_dirty = GL_TRUE;
-
-	}
 }
 
-void radeonPageFlip( __DRIdrawablePrivate *dPriv )
+static int radeonScheduleSwap(__DRIdrawablePrivate *dPriv, GLboolean *missed_target)
 {
 	radeonContextPtr rmesa;
-	GLint ret;
-	GLboolean   missed_target;
-	__DRIscreenPrivate *psp;
-	struct radeon_renderbuffer *rrb;
-	GLframebuffer *fb = dPriv->driverPrivate;
-	
-	assert(dPriv);
-	assert(dPriv->driContextPriv);
-	assert(dPriv->driContextPriv->driverPrivate);
 
 	rmesa = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
-	rrb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-
-	psp = dPriv->driScreenPriv;
-
-	if ( RADEON_DEBUG & DEBUG_IOCTL ) {
-		fprintf(stderr, "%s: pfCurrentPage: %d\n", __FUNCTION__,
-			rmesa->sarea->pfCurrentPage);
-	}
-
 	radeon_firevertices(rmesa);
 
 	LOCK_HARDWARE( rmesa );
@@ -475,48 +480,62 @@ void radeonPageFlip( __DRIdrawablePrivate *dPriv )
 	if (!dPriv->numClipRects) {
 		UNLOCK_HARDWARE(rmesa);
 		usleep(10000);	/* throttle invisible client 10ms */
-		return;
+		return 0;
 	}
 
+	radeonWaitForFrameCompletion(rmesa);
+
+	UNLOCK_HARDWARE(rmesa);
+	driWaitForVBlank(dPriv, missed_target);
+	LOCK_HARDWARE(rmesa);
+
+	return 0;
+}
+
+static GLboolean radeonPageFlip( __DRIdrawablePrivate *dPriv )
+{
+	radeonContextPtr radeon;
+	GLint ret;
+	__DRIscreenPrivate *psp;
+	struct radeon_renderbuffer *rrb;
+	struct radeon_framebuffer *rfb;
+
+	assert(dPriv);
+	assert(dPriv->driContextPriv);
+	assert(dPriv->driContextPriv->driverPrivate);
+
+	radeon = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
+	rfb = dPriv->driverPrivate;
+	rrb = (void *)rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+
+	psp = dPriv->driScreenPriv;
+
+	if ( RADEON_DEBUG & DEBUG_IOCTL ) {
+		fprintf(stderr, "%s: pfCurrentPage: %d %d\n", __FUNCTION__,
+			radeon->sarea->pfCurrentPage, radeon->sarea->pfState);
+	}
 	drm_clip_rect_t *box = dPriv->pClipRects;
-	drm_clip_rect_t *b = rmesa->sarea->boxes;
+	drm_clip_rect_t *b = radeon->sarea->boxes;
 	b[0] = box[0];
-	rmesa->sarea->nbox = 1;
+	radeon->sarea->nbox = 1;
 
-	/* Throttle the frame rate -- only allow a few pending swap buffers
-	 * request at a time.
-	 */
-	radeonWaitForFrameCompletion( rmesa );
-	UNLOCK_HARDWARE( rmesa );
-	driWaitForVBlank( dPriv, & missed_target );
-	if ( missed_target ) {
-		rmesa->swap_missed_count++;
-		(void) (*psp->systemTime->getUST)( & rmesa->swap_missed_ust );
-	}
-	LOCK_HARDWARE( rmesa );
-
-	ret = drmCommandNone( rmesa->dri.fd, DRM_RADEON_FLIP );
+	ret = drmCommandNone( radeon->dri.fd, DRM_RADEON_FLIP );
 	
-	UNLOCK_HARDWARE( rmesa );
+	UNLOCK_HARDWARE( radeon );
 
 	if ( ret ) {
 		fprintf( stderr, "DRM_RADEON_FLIP: return = %d\n", ret );
-		exit( 1 );
+		return GL_FALSE;
 	}
 
-	rmesa->swap_count++;
-	(void) (*psp->systemTime->getUST)( & rmesa->swap_ust );
-	
-	/* Get ready for drawing next frame.  Update the renderbuffers'
-	 * flippedOffset/Pitch fields so we draw into the right place.
-	 */
-	//	driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
-	//			     rmesa->sarea->pfCurrentPage);
-	
-	rmesa->state.color.rrb = rrb;
+	if (!rfb->pf_active)
+		return GL_FALSE;
 
-	if (rmesa->vtbl.update_draw_buffer)
-		rmesa->vtbl.update_draw_buffer(rmesa->glCtx);
+	rfb->pf_current_page = radeon->sarea->pfCurrentPage;
+	radeon_flip_renderbuffers(rfb);
+	radeon_draw_buffer(radeon->glCtx, &rfb->base);
+
+	return GL_TRUE;
 }
 
 
@@ -525,6 +544,9 @@ void radeonPageFlip( __DRIdrawablePrivate *dPriv )
  */
 void radeonSwapBuffers(__DRIdrawablePrivate * dPriv)
 {
+	int64_t ust;
+	__DRIscreenPrivate *psp;
+
 	if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
 		radeonContextPtr radeon;
 		GLcontext *ctx;
@@ -533,12 +555,29 @@ void radeonSwapBuffers(__DRIdrawablePrivate * dPriv)
 		ctx = radeon->glCtx;
 
 		if (ctx->Visual.doubleBufferMode) {
+			GLboolean missed_target;
+			struct radeon_framebuffer *rfb = dPriv->driverPrivate;
 			_mesa_notifySwapBuffers(ctx);/* flush pending rendering comands */
-			if (radeon->doPageFlip) {
+
+			radeonScheduleSwap(dPriv, &missed_target);
+
+			if (rfb->pf_active) {
 				radeonPageFlip(dPriv);
 			} else {
 				radeonCopyBuffer(dPriv, NULL);
 			}
+
+			psp = dPriv->driScreenPriv;
+
+			rfb->swap_count++;
+			(*psp->systemTime->getUST)( & ust );
+			if ( missed_target ) {
+				rfb->swap_missed_count++;
+				rfb->swap_missed_ust = ust - rfb->swap_ust;
+			}
+
+			rfb->swap_ust = ust;
+			radeon->hw.all_dirty = GL_TRUE;
 		}
 	} else {
 		/* XXX this shouldn't be an error but we can't handle it for now */
@@ -573,7 +612,224 @@ void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
 	}
 }
 
+void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
+{
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	struct radeon_renderbuffer *rrbDepth = NULL, *rrbStencil = NULL,
+		*rrbColor = NULL;
+       
 
+	if (!fb) {
+		/* this can happen during the initial context initialization */
+		return;
+	}
+
+	/* radeons only handle 1 color draw so far */
+	if (fb->_NumColorDrawBuffers != 1) {
+		radeon->vtbl.fallback(ctx, RADEON_FALLBACK_DRAW_BUFFER, GL_TRUE);
+		return;
+	}
+		
+	/* Do this here, note core Mesa, since this function is called from
+	 * many places within the driver.
+	 */
+	if (ctx->NewState & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
+		/* this updates the DrawBuffer->_NumColorDrawBuffers fields, etc */
+		_mesa_update_framebuffer(ctx);
+		/* this updates the DrawBuffer's Width/Height if it's a FBO */
+		_mesa_update_draw_buffer_bounds(ctx);
+	}
+
+	if (fb->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+		/* this may occur when we're called by glBindFrameBuffer() during
+		 * the process of someone setting up renderbuffers, etc.
+		 */
+		/*_mesa_debug(ctx, "DrawBuffer: incomplete user FBO\n");*/
+		return;
+	}
+
+	if (fb->Name)
+		;/* do something depthy/stencily TODO */
+
+
+		/* none */
+	if (fb->Name == 0) {
+		if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
+			rrbColor = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+			radeon->front_cliprects = GL_TRUE;
+		} else {
+			rrbColor = (void *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+			radeon->front_cliprects = GL_FALSE;
+		}
+	} else {
+		/* user FBO in theory */
+		struct radeon_renderbuffer *rrb;
+		rrb = (void *)fb->_ColorDrawBuffers[0];
+		rrbColor = rrb;
+		radeon->constant_cliprect = GL_TRUE;
+	}
+
+	if (rrbColor == NULL)
+		radeon->vtbl.fallback(ctx, RADEON_FALLBACK_DRAW_BUFFER, GL_TRUE);
+	else
+		radeon->vtbl.fallback(ctx, RADEON_FALLBACK_DRAW_BUFFER, GL_FALSE);
+
+
+
+	if (fb->_DepthBuffer && fb->_DepthBuffer->Wrapped) {
+		rrbDepth = (struct radeon_renderbuffer *)fb->_DepthBuffer->Wrapped;
+		if (rrbDepth && rrbDepth->bo) {
+			radeon->vtbl.fallback(ctx, RADEON_FALLBACK_DEPTH_BUFFER, GL_FALSE);
+		} else {
+			radeon->vtbl.fallback(ctx, RADEON_FALLBACK_DEPTH_BUFFER, GL_TRUE);
+		}
+	} else {
+		radeon->vtbl.fallback(ctx, RADEON_FALLBACK_DEPTH_BUFFER, GL_FALSE);
+		rrbDepth = NULL;
+	}
+
+	/* TODO stencil things */
+	if (fb->_StencilBuffer && fb->_StencilBuffer->Wrapped) {
+		rrbStencil = (struct radeon_renderbuffer *)fb->_DepthBuffer->Wrapped;
+		if (rrbStencil && rrbStencil->bo) {
+			radeon->vtbl.fallback(ctx, RADEON_FALLBACK_STENCIL_BUFFER, GL_FALSE);
+			/* need to re-compute stencil hw state */
+			if (ctx->Driver.Enable != NULL)
+				ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
+			else
+				ctx->NewState |= _NEW_STENCIL;
+			if (!rrbDepth)
+				rrbDepth = rrbStencil;
+		} else {
+			radeon->vtbl.fallback(ctx, RADEON_FALLBACK_STENCIL_BUFFER, GL_TRUE);
+		}
+	} else {
+		radeon->vtbl.fallback(ctx, RADEON_FALLBACK_STENCIL_BUFFER, GL_FALSE);
+		if (ctx->Driver.Enable != NULL)
+			ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
+		else
+			ctx->NewState |= _NEW_STENCIL;
+	}
+
+	/* Update culling direction which changes depending on the
+	 * orientation of the buffer:
+	 */
+	if (ctx->Driver.FrontFace)
+		ctx->Driver.FrontFace(ctx, ctx->Polygon.FrontFace);
+	else
+		ctx->NewState |= _NEW_POLYGON;
+	
+	/*
+	 * Update depth test state
+	 */
+	if (ctx->Driver.Enable) {
+		if (ctx->Depth.Test && fb->Visual.depthBits > 0) {
+			ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_TRUE);
+		} else {
+			ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_FALSE);
+		}
+	} else {
+		ctx->NewState |= _NEW_DEPTH;
+	}
+	
+	radeon->state.depth.rrb = rrbDepth;
+
+	radeon->state.color.rrb = rrbColor;
+
+	/* update viewport since it depends on window size */
+	if (ctx->Driver.Viewport) {
+		ctx->Driver.Viewport(ctx, ctx->Viewport.X, ctx->Viewport.Y,
+				     ctx->Viewport.Width, ctx->Viewport.Height);
+	} else {
+		ctx->NewState |= _NEW_VIEWPORT;
+	}
+
+	/* Set state we know depends on drawable parameters:
+	 */
+	if (ctx->Driver.Scissor)
+		ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+				    ctx->Scissor.Width, ctx->Scissor.Height);
+	radeon->NewGLState |= _NEW_SCISSOR;
+}
+
+/**
+ * Called via glDrawBuffer.
+ */
+void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
+{
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	
+	if (RADEON_DEBUG & DEBUG_DRI)
+		fprintf(stderr, "%s %s\n", __FUNCTION__,
+			_mesa_lookup_enum_by_nr( mode ));
+	
+	radeon_firevertices(radeon);	/* don't pipeline cliprect changes */
+	
+	radeon_draw_buffer(ctx, ctx->DrawBuffer);
+}
+
+void radeonReadBuffer( GLcontext *ctx, GLenum mode )
+{
+	/* nothing, until we implement h/w glRead/CopyPixels or CopyTexImage */
+	if (ctx->ReadBuffer == ctx->DrawBuffer) {
+		/* This will update FBO completeness status.
+		 * A framebuffer will be incomplete if the GL_READ_BUFFER setting
+		 * refers to a missing renderbuffer.  Calling glReadBuffer can set
+		 * that straight and can make the drawing buffer complete.
+		 */
+		radeon_draw_buffer(ctx, ctx->DrawBuffer);
+	}
+}
+
+
+/* Turn on/off page flipping according to the flags in the sarea:
+ */
+void radeonUpdatePageFlipping(radeonContextPtr radeon)
+{
+	struct radeon_framebuffer *rfb = radeon->dri.drawable->driverPrivate;
+
+	rfb->pf_active = radeon->sarea->pfState;
+	rfb->pf_current_page = radeon->sarea->pfCurrentPage;
+	rfb->pf_num_pages = 2;
+	radeon_flip_renderbuffers(rfb);
+	radeon_draw_buffer(radeon->glCtx, radeon->glCtx->DrawBuffer);
+}
+
+void radeon_window_moved(radeonContextPtr radeon)
+{
+	GLcontext *ctx = radeon->glCtx;
+	__DRIdrawablePrivate *dPriv = radeon->dri.drawable;
+	struct radeon_framebuffer *rfb = dPriv->driverPrivate;
+
+	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
+		radeonUpdatePageFlipping(radeon);
+	}
+	radeonSetCliprects(radeon);
+}
+
+void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height)
+{
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	__DRIcontext *driContext = radeon->dri.context;
+	void (*old_viewport)(GLcontext *ctx, GLint x, GLint y,
+			     GLsizei w, GLsizei h);
+
+	if (!driContext->driScreenPriv->dri2.enabled)
+		return;
+
+	radeon_update_renderbuffers(driContext, driContext->driDrawablePriv);
+	if (driContext->driDrawablePriv != driContext->driReadablePriv)
+		radeon_update_renderbuffers(driContext, driContext->driReadablePriv);
+
+	old_viewport = ctx->Driver.Viewport;
+	ctx->Driver.Viewport = NULL;
+	radeon->dri.drawable = driContext->driDrawablePriv;
+	radeon_window_moved(radeon);
+	radeon_draw_buffer(ctx, radeon->glCtx->DrawBuffer);
+	ctx->Driver.Viewport = old_viewport;
+
+
+}
 static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state_atom *state )
 {
 	int i;

@@ -427,7 +427,8 @@ static int r300Fallback(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	const unsigned back = ctx->Stencil._BackFace;
-
+	
+	FALLBACK_IF(r300->radeon.Fallback);
 	/* Do we need to use new-style shaders?
 	 * Also is there a better way to do this? */
 	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
