@@ -175,7 +175,6 @@ void radeonSetCliprects(radeonContextPtr radeon)
 	struct radeon_framebuffer *const read_rfb = readable->driverPrivate;
 	int x_off, y_off;
 
-	fprintf(stderr,"cliprects %d %d\n", radeon->front_cliprects, radeon->constant_cliprect);
 	radeon_get_cliprects(radeon, &radeon->pClipRects,
 			     &radeon->numClipRects, &x_off, &y_off);
 	
