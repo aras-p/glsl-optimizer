@@ -40,9 +40,9 @@ void r300_emit_blend_state(struct r300_context* r300,
 void r300_emit_blend_color_state(struct r300_context* r300,
                                  struct r300_blend_color_state* bc)
 {
-    struct r300_screen* r300screen =
-        (struct r300_screen*)r300->context.screen;
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
+
     if (r300screen->caps->is_r500) {
         BEGIN_CS(3);
         OUT_CS_REG_SEQ(R500_RB3D_CONSTANT_COLOR_AR, 2);
@@ -59,9 +59,9 @@ void r300_emit_blend_color_state(struct r300_context* r300,
 void r300_emit_dsa_state(struct r300_context* r300,
                            struct r300_dsa_state* dsa)
 {
-    struct r300_screen* r300screen =
-        (struct r300_screen*)r300->context.screen;
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
+
     BEGIN_CS(r300screen->caps->is_r500 ? 8 : 8);
     OUT_CS_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function);
     /* XXX figure out the r300 counterpart for this */
@@ -84,6 +84,7 @@ void r300_emit_fragment_shader(struct r300_context* r300,
 {
     CS_LOCALS(r300);
     int i;
+
     BEGIN_CS(22);
 
     OUT_CS_REG(R300_US_CONFIG, MAX2(fs->indirections - 1, 0));
@@ -114,7 +115,8 @@ void r500_emit_fragment_shader(struct r300_context* r300,
                                struct r500_fragment_shader* fs)
 {
     CS_LOCALS(r300);
-    int i = 0;
+    int i;
+
     BEGIN_CS(9 + (fs->instruction_count * 6));
     OUT_CS_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
     OUT_CS_REG(R500_US_PIXSIZE, fs->shader.stack_size);
@@ -191,9 +193,9 @@ void r300_emit_fb_state(struct r300_context* r300,
 
 void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
 {
-    struct r300_screen* r300screen =
-        (struct r300_screen*)r300->context.screen;
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
+
     BEGIN_CS(13);
     OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
     OUT_CS_REG_SEQ(R300_SU_POLY_OFFSET_FRONT_SCALE, 6);
@@ -211,8 +213,7 @@ void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
 void r300_emit_rs_block_state(struct r300_context* r300,
                               struct r300_rs_block* rs)
 {
-    struct r300_screen* r300screen =
-        (struct r300_screen*)r300->context.screen;
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
     int i;
 
@@ -246,6 +247,7 @@ void r300_emit_scissor_state(struct r300_context* r300,
                              struct r300_scissor_state* scissor)
 {
     CS_LOCALS(r300);
+
     BEGIN_CS(3);
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
     OUT_CS(scissor->scissor_top_left);
@@ -282,8 +284,7 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
 /* Emit all dirty state. */
 void r300_emit_dirty_state(struct r300_context* r300)
 {
-    struct r300_screen* r300screen =
-        (struct r300_screen*)r300->context.screen;
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
 
     if (!(r300->dirty_state) && !(r300->dirty_hw)) {
