@@ -549,12 +549,12 @@ update_texture_state( GLcontext *ctx )
 
       enabledTargets = enabledVertTargets | enabledFragTargets;
 
+      texUnit->_ReallyEnabled = 0x0;
+
       if (enabledTargets == 0x0) {
          /* neither vertex nor fragment processing uses this unit */
          continue;
       }
-
-      texUnit->_ReallyEnabled = 0x0;
 
       /* Look for the highest priority texture target that's enabled (or used
        * by the vert/frag shaders) and "complete".  That's the one we'll use
@@ -580,6 +580,7 @@ update_texture_state( GLcontext *ctx )
          update_texture_compare_function(ctx, texUnit->_Current);
 
       if (!texUnit->_ReallyEnabled) {
+         _mesa_reference_texobj(&texUnit->_Current, NULL);
          continue;
       }
 
