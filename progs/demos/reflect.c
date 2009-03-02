@@ -401,6 +401,7 @@ DrawWindow(void)
          GLfloat seconds = (t - t0) / 1000.0;
          GLfloat fps = frames / seconds;
          printf("%d frames in %g seconds = %g FPS\n", frames, seconds, fps);
+         fflush(stdout);
          t0 = t;
          frames = 0;
       }

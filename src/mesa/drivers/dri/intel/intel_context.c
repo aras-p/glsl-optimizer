@@ -123,6 +123,10 @@ intelGetString(GLcontext * ctx, GLenum name)
       case PCI_CHIP_Q33_G:
 	 chipset = "Intel(R) Q33";
 	 break;
+      case PCI_CHIP_IGD_GM:
+      case PCI_CHIP_IGD_G:
+	 chipset = "Intel(R) IGD";
+	 break;
       case PCI_CHIP_I965_Q:
 	 chipset = "Intel(R) 965Q";
 	 break;

@@ -454,13 +454,13 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    GLuint i;
    int old_nr_surfaces;
 
-   if (brw->state.nr_draw_regions  > 1) {
-      for (i = 0; i < brw->state.nr_draw_regions; i++) {
-         brw_update_region_surface(brw, brw->state.draw_regions[i], i,
+   if (brw->state.nr_color_regions  > 1) {
+      for (i = 0; i < brw->state.nr_color_regions; i++) {
+         brw_update_region_surface(brw, brw->state.color_regions[i], i,
 				   GL_FALSE);
       }
-   }else {
-      brw_update_region_surface(brw, brw->state.draw_regions[0], 0, GL_TRUE);
+   } else {
+      brw_update_region_surface(brw, brw->state.color_regions[0], 0, GL_TRUE);
    }
 
    old_nr_surfaces = brw->wm.nr_surfaces;

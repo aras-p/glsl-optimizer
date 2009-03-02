@@ -455,6 +455,8 @@ static void brw_clip_test( struct brw_clip_compile *c )
     struct brw_indirect vt2 = brw_indirect(2, 0);
 
     struct brw_compile *p = &c->func;
+    struct brw_instruction *is_outside;
+    struct brw_reg tmp0 = c->reg.loopcount; /* handy temporary */
 
     brw_MOV(p, get_addr_reg(vt0), brw_address(c->reg.vertex[0]));
     brw_MOV(p, get_addr_reg(vt1), brw_address(c->reg.vertex[1]));
@@ -462,53 +464,87 @@ static void brw_clip_test( struct brw_clip_compile *c )
     brw_MOV(p, v0, deref_4f(vt0, c->offset[VERT_RESULT_HPOS]));
     brw_MOV(p, v1, deref_4f(vt1, c->offset[VERT_RESULT_HPOS]));
     brw_MOV(p, v2, deref_4f(vt2, c->offset[VERT_RESULT_HPOS]));
+    brw_AND(p, c->reg.planemask, c->reg.planemask, brw_imm_ud(~0x3f));
 
     /* test nearz, xmin, ymin plane */
-    brw_CMP(p, t1, BRW_CONDITIONAL_LE, negate(v0), get_element(v0, 3)); 
+    /* clip.xyz < -clip.w */
+    brw_CMP(p, t1, BRW_CONDITIONAL_L, v0, negate(get_element(v0, 3))); 
     brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-    brw_CMP(p, t2, BRW_CONDITIONAL_LE, negate(v1), get_element(v1, 3)); 
+    brw_CMP(p, t2, BRW_CONDITIONAL_L, v1, negate(get_element(v1, 3))); 
     brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-    brw_CMP(p, t3, BRW_CONDITIONAL_LE, negate(v2), get_element(v2, 3)); 
+    brw_CMP(p, t3, BRW_CONDITIONAL_L, v2, negate(get_element(v2, 3))); 
     brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+
+    /* All vertices are outside of a plane, rejected */
+    brw_AND(p, t, t1, t2);
+    brw_AND(p, t, t, t3);
+    brw_OR(p, tmp0, get_element(t, 0), get_element(t, 1));
+    brw_OR(p, tmp0, tmp0, get_element(t, 2));
+    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
+    brw_AND(p, brw_null_reg(), tmp0, brw_imm_ud(0x1));
+    is_outside = brw_IF(p, BRW_EXECUTE_1);
+    {
+        brw_clip_kill_thread(c);
+    }
+    brw_ENDIF(p, is_outside);
+    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+
+    /* some vertices are inside a plane, some are outside,need to clip */
     brw_XOR(p, t, t1, t2);
     brw_XOR(p, t1, t2, t3);
     brw_OR(p, t, t, t1);
-
-    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ, 
-	    get_element(t, 0), brw_imm_ud(0));
+    brw_AND(p, t, t, brw_imm_ud(0x1));
+    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
+            get_element(t, 0), brw_imm_ud(0));
     brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<5)));
     brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ, 
-	    get_element(t, 1), brw_imm_ud(0));
+    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
+            get_element(t, 1), brw_imm_ud(0));
     brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<3)));
     brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ, 
-	    get_element(t, 2), brw_imm_ud(0));
+    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
+            get_element(t, 2), brw_imm_ud(0));
     brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<1)));
     brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
     /* test farz, xmax, ymax plane */
-    brw_CMP(p, t1, BRW_CONDITIONAL_L, v0, get_element(v0, 3)); 
+    /* clip.xyz > clip.w */
+    brw_CMP(p, t1, BRW_CONDITIONAL_G, v0, get_element(v0, 3)); 
     brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-    brw_CMP(p, t2, BRW_CONDITIONAL_L, v1, get_element(v1, 3)); 
+    brw_CMP(p, t2, BRW_CONDITIONAL_G, v1, get_element(v1, 3)); 
     brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-    brw_CMP(p, t3, BRW_CONDITIONAL_L, v2, get_element(v2, 3)); 
+    brw_CMP(p, t3, BRW_CONDITIONAL_G, v2, get_element(v2, 3)); 
     brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
+    /* All vertices are outside of a plane, rejected */
+    brw_AND(p, t, t1, t2);
+    brw_AND(p, t, t, t3);
+    brw_OR(p, tmp0, get_element(t, 0), get_element(t, 1));
+    brw_OR(p, tmp0, tmp0, get_element(t, 2));
+    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
+    brw_AND(p, brw_null_reg(), tmp0, brw_imm_ud(0x1));
+    is_outside = brw_IF(p, BRW_EXECUTE_1);
+    {
+        brw_clip_kill_thread(c);
+    }
+    brw_ENDIF(p, is_outside);
+    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+
+    /* some vertices are inside a plane, some are outside,need to clip */
     brw_XOR(p, t, t1, t2);
     brw_XOR(p, t1, t2, t3);
     brw_OR(p, t, t, t1);
-
-    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ, 
-	    get_element(t, 0), brw_imm_ud(0));
+    brw_AND(p, t, t, brw_imm_ud(0x1));
+    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
+            get_element(t, 0), brw_imm_ud(0));
     brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<4)));
     brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ, 
-	    get_element(t, 1), brw_imm_ud(0));
+    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
+            get_element(t, 1), brw_imm_ud(0));
     brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<2)));
     brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ, 
-	    get_element(t, 2), brw_imm_ud(0));
+    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
+            get_element(t, 2), brw_imm_ud(0));
     brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<0)));
     brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 

@@ -190,8 +190,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/configure.ac					\
 	$(DIRECTORY)/acinclude.m4					\
 	$(DIRECTORY)/aclocal.m4						\
-	$(DIRECTORY)/descrip.mms					\
-	$(DIRECTORY)/mms-config.					\
 	$(DIRECTORY)/bin/config.guess					\
 	$(DIRECTORY)/bin/config.sub					\
 	$(DIRECTORY)/bin/install-sh					\
@@ -223,9 +221,8 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
 	$(DIRECTORY)/include/GL/wmesa.h					\
 	$(DIRECTORY)/src/Makefile					\
-	$(DIRECTORY)/src/descrip.mms					\
 	$(DIRECTORY)/src/mesa/Makefile*					\
-	$(DIRECTORY)/src/mesa/sources					\
+	$(DIRECTORY)/src/mesa/sources.mak				\
 	$(DIRECTORY)/src/mesa/descrip.mms				\
 	$(DIRECTORY)/src/mesa/gl.pc.in					\
 	$(DIRECTORY)/src/mesa/osmesa.pc.in				\
@@ -233,13 +230,11 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/main/*.[chS]				\
 	$(DIRECTORY)/src/mesa/main/descrip.mms				\
 	$(DIRECTORY)/src/mesa/glapi/*.[chS]				\
-	$(DIRECTORY)/src/mesa/glapi/descrip.mms				\
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
 	$(DIRECTORY)/src/mesa/math/descrip.mms				\
 	$(DIRECTORY)/src/mesa/shader/*.[ch]				\
 	$(DIRECTORY)/src/mesa/shader/descrip.mms			\
 	$(DIRECTORY)/src/mesa/shader/grammar/*.[ch]			\
-	$(DIRECTORY)/src/mesa/shader/grammar/descrip.mms		\
 	$(DIRECTORY)/src/mesa/shader/slang/*.[ch]			\
 	$(DIRECTORY)/src/mesa/shader/slang/descrip.mms			\
 	$(DIRECTORY)/src/mesa/shader/slang/library/*.[ch]		\
@@ -300,10 +295,35 @@ MAIN_FILES = \
 	$(DIRECTORY)/progs/util/README					\
 	$(DIRECTORY)/progs/util/*.[ch]					\
 	$(DIRECTORY)/progs/util/sampleMakefile				\
-	$(DIRECTORY)/vms/analyze_map.com				\
-	$(DIRECTORY)/vms/xlib.opt					\
-	$(DIRECTORY)/vms/xlib_share.opt					\
 	$(DIRECTORY)/windows/VC8/
+
+EGL_FILES = \
+	$(DIRECTORY)/include/EGL/*.h					\
+	$(DIRECTORY)/include/GLES/*.h					\
+	$(DIRECTORY)/include/GLES2/*.h					\
+	$(DIRECTORY)/src/egl/Makefile					\
+	$(DIRECTORY)/src/egl/*/Makefile					\
+	$(DIRECTORY)/src/egl/*/*.[ch]					\
+	$(DIRECTORY)/src/egl/*/*/Makefile				\
+	$(DIRECTORY)/src/egl/*/*/*.[ch]					\
+
+GALLIUM_FILES = \
+	$(DIRECTORY)/src/mesa/state_tracker/*[ch]			\
+	$(DIRECTORY)/src/gallium/Makefile				\
+	$(DIRECTORY)/src/gallium/Makefile.template			\
+	$(DIRECTORY)/src/gallium/SConscript				\
+	$(DIRECTORY)/src/gallium/*/Makefile				\
+	$(DIRECTORY)/src/gallium/*/SConscript				\
+	$(DIRECTORY)/src/gallium/*/*/Makefile				\
+	$(DIRECTORY)/src/gallium/*/*/Makefile.template			\
+	$(DIRECTORY)/src/gallium/*/*/SConscript				\
+	$(DIRECTORY)/src/gallium/*/*/*.[ch]				\
+	$(DIRECTORY)/src/gallium/*/*/*.py				\
+	$(DIRECTORY)/src/gallium/*/*/*/Makefile				\
+	$(DIRECTORY)/src/gallium/*/*/*/SConscript			\
+	$(DIRECTORY)/src/gallium/*/*/*/*.[ch]				\
+	$(DIRECTORY)/src/gallium/*/*/*/*.py				\
+	$(DIRECTORY)/src/gallium/*/*/*/*/*.[ch]				\
 
 
 DRI_FILES = \
@@ -325,15 +345,12 @@ DRI_FILES = \
 
 SGI_GLU_FILES = \
 	$(DIRECTORY)/src/glu/Makefile					\
-	$(DIRECTORY)/src/glu/descrip.mms				\
 	$(DIRECTORY)/src/glu/glu.pc.in					\
 	$(DIRECTORY)/src/glu/sgi/Makefile				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.mgw				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.win				\
-	$(DIRECTORY)/src/glu/sgi/Makefile.DJ				\
 	$(DIRECTORY)/src/glu/sgi/glu.def				\
 	$(DIRECTORY)/src/glu/sgi/dummy.cc				\
-	$(DIRECTORY)/src/glu/sgi/descrip.mms				\
 	$(DIRECTORY)/src/glu/sgi/glu.exports				\
 	$(DIRECTORY)/src/glu/sgi/glu.exports.darwin			\
 	$(DIRECTORY)/src/glu/sgi/mesaglu.opt				\
@@ -438,7 +455,13 @@ DEPEND_FILES = \
 	$(TOP)/src/glu/sgi/depend
 
 
-LIB_FILES = $(MAIN_FILES) $(DRI_FILES) $(SGI_GLU_FILES) $(GLW_FILES)
+LIB_FILES = \
+	$(MAIN_FILES)		\
+	$(EGL_FILES)		\
+	$(GALLIUM_FILES)	\
+	$(DRI_FILES)		\
+	$(SGI_GLU_FILES)	\
+	$(GLW_FILES)
 
 
 # Everything for new a Mesa release:

@@ -79,9 +79,6 @@ struct nv40_miptree {
 	struct pipe_buffer *buffer;
 	uint total_size;
 
-	struct pipe_texture *shadow_tex;
-	struct pipe_surface *shadow_surface;
-
 	struct {
 		uint pitch;
 		uint *image_offset;

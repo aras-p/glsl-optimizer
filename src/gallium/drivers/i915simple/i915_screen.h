@@ -75,10 +75,6 @@ i915_transfer( struct pipe_transfer *transfer )
 }
 
 
-extern struct pipe_screen *
-i915_create_screen(struct pipe_winsys *winsys, uint pci_id);
-
-
 #ifdef __cplusplus
 }
 #endif

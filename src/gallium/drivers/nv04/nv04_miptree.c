@@ -50,8 +50,6 @@ nv04_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	mt->base = *pt;
 	mt->base.refcount = 1;
 	mt->base.screen = pscreen;
-	mt->shadow_tex = NULL;
-	mt->shadow_surface = NULL;
 
 	//mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 
@@ -111,12 +109,6 @@ nv04_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **ppt)
 			FREE(mt->level[l].image_offset);
 	}
 
-	if (mt->shadow_tex) {
-		assert(mt->shadow_surface);
-		pscreen->tex_surface_release(pscreen, &mt->shadow_surface);
-		nv04_miptree_release(pscreen, &mt->shadow_tex);
-	}
-
 	FREE(mt);
 }
 
@@ -126,29 +118,26 @@ nv04_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 			 unsigned flags)
 {
 	struct nv04_miptree *nv04mt = (struct nv04_miptree *)pt;
-	struct pipe_surface *ps;
+	struct nv04_surface *ns;
 
-	ps = CALLOC_STRUCT(pipe_surface);
-	if (!ps)
+	ns = CALLOC_STRUCT(nv04_surface);
+	if (!ns)
 		return NULL;
-	pipe_texture_reference(&ps->texture, pt);
-	ps->format = pt->format;
-	ps->width = pt->width[level];
-	ps->height = pt->height[level];
-	ps->block = pt->block;
-	ps->nblocksx = pt->nblocksx[level];
-	ps->nblocksy = pt->nblocksy[level];
-	ps->stride = nv04mt->level[level].pitch;
-	ps->usage = flags;
-	ps->status = PIPE_SURFACE_STATUS_DEFINED;
-	ps->refcount = 1;
-	ps->face = face;
-	ps->level = level;
-	ps->zslice = zslice;
+	pipe_texture_reference(&ns->base.texture, pt);
+	ns->base.format = pt->format;
+	ns->base.width = pt->width[level];
+	ns->base.height = pt->height[level];
+	ns->base.usage = flags;
+	ns->base.status = PIPE_SURFACE_STATUS_DEFINED;
+	ns->base.refcount = 1;
+	ns->base.face = face;
+	ns->base.level = level;
+	ns->base.zslice = zslice;
+	ns->pitch = nv04mt->level[level].pitch;
 
-	ps->offset = nv04mt->level[level].image_offset;
+	ns->base.offset = nv04mt->level[level].image_offset;
 
-	return ps;
+	return &ns->base;
 }
 
 static void

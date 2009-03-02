@@ -93,7 +93,7 @@ static void nv04_emit_sampler(struct nv04_context *nv04, int unit)
 static void nv04_state_emit_framebuffer(struct nv04_context* nv04)
 {
 	struct pipe_framebuffer_state* fb = nv04->framebuffer;
-	struct pipe_surface *rt, *zeta;
+	struct nv04_surface *rt, *zeta;
 	uint32_t rt_format, w, h;
 	int colour_format = 0, zeta_format = 0;
 	struct nv04_miptree *nv04mt = 0;
@@ -101,7 +101,7 @@ static void nv04_state_emit_framebuffer(struct nv04_context* nv04)
 	w = fb->cbufs[0]->width;
 	h = fb->cbufs[0]->height;
 	colour_format = fb->cbufs[0]->format;
-	rt = fb->cbufs[0];
+	rt = (struct nv04_surface *)fb->cbufs[0];
 
 	if (fb->zsbuf) {
 		if (colour_format) {
@@ -113,7 +113,7 @@ static void nv04_state_emit_framebuffer(struct nv04_context* nv04)
 		}
 
 		zeta_format = fb->zsbuf->format;
-		zeta = fb->zsbuf;
+		zeta = (struct nv04_surface *)fb->zsbuf;
 	}
 
 	switch (colour_format) {
@@ -131,13 +131,13 @@ static void nv04_state_emit_framebuffer(struct nv04_context* nv04)
 	BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_FORMAT, 1);
 	OUT_RING(rt_format);
 
-	nv04mt = (struct nv04_miptree *)rt->texture;
+	nv04mt = (struct nv04_miptree *)rt->base.texture;
 	/* FIXME pitches have to be aligned ! */
 	BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_PITCH, 2);
-	OUT_RING(rt->stride|(zeta->stride<<16));
+	OUT_RING(rt->pitch|(zeta->pitch<<16));
 	OUT_RELOCl(nv04mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	if (fb->zsbuf) {
-		nv04mt = (struct nv04_miptree *)zeta->texture;
+		nv04mt = (struct nv04_miptree *)zeta->base.texture;
 		BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_OFFSET_ZETA, 1);
 		OUT_RELOCl(nv04mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	}
@@ -202,8 +202,11 @@ nv04_emit_hw_state(struct nv04_context *nv04)
 	 */
 
 	/* Render target */
+	unsigned rt_pitch = ((struct nv04_surface *)nv04->rt)->pitch;
+	unsigned zeta_pitch = ((struct nv04_surface *)nv04->zeta)->pitch;
+
 	BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_PITCH, 2);
-	OUT_RING(nv04->rt->stride|(nv04->zeta->stride<<16));
+	OUT_RING(rt_pitch|(zeta_pitch<<16));
 	OUT_RELOCl(nv04->rt, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	if (nv04->zeta) {
 		BEGIN_RING(context_surfaces_3d, NV04_CONTEXT_SURFACES_3D_OFFSET_ZETA, 1);

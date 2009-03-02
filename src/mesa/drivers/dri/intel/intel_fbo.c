@@ -323,6 +323,15 @@ intel_create_renderbuffer(GLenum intFormat)
       irb->Base.BlueBits = 5;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       break;
+   case GL_RGB8:
+      irb->Base._ActualFormat = GL_RGB8;
+      irb->Base._BaseFormat = GL_RGB;
+      irb->Base.RedBits = 8;
+      irb->Base.GreenBits = 8;
+      irb->Base.BlueBits = 8;
+      irb->Base.AlphaBits = 0;
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      break;
    case GL_RGBA8:
       irb->Base._ActualFormat = GL_RGBA8;
       irb->Base._BaseFormat = GL_RGBA;
@@ -603,19 +612,16 @@ static void
 intel_finish_render_texture(GLcontext * ctx,
                             struct gl_renderbuffer_attachment *att)
 {
-   struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
-
-   DBG("End render texture (tid %x) tex %u\n", _glthread_GetID(), att->Texture->Name);
-
-   if (irb) {
-      /* just release the region */
-      intel_region_release(&irb->region);
-   }
-   else if (att->Renderbuffer) {
-      /* software fallback */
-      _mesa_finish_render_texture(ctx, att);
-      /* XXX FBO: Need to unmap the buffer (or in intelSpanRenderStart???) */
-   }
+   /* no-op
+    * Previously we released the renderbuffer's intel_region but
+    * that's not necessary and actually caused problems when trying
+    * to do a glRead/CopyPixels from the renderbuffer later.
+    * The region will be released later if the texture is replaced
+    * or the renderbuffer deleted.
+    *
+    * The intention of this driver hook is more of a "done rendering
+    * to texture, please re-twiddle/etc if necessary".
+    */
 }
 
 
@@ -625,6 +631,7 @@ intel_finish_render_texture(GLcontext * ctx,
 static void
 intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 {
+   struct intel_context *intel = intel_context(ctx);
    const struct intel_renderbuffer *depthRb =
       intel_get_renderbuffer(fb, BUFFER_DEPTH);
    const struct intel_renderbuffer *stencilRb =
@@ -635,6 +642,34 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
        * stencil buffers.
        */
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+   }
+
+   /* check that texture color buffers are a format we can render into */
+   {
+      const struct gl_texture_format *supportedFormat;
+      GLuint i;
+
+      /* The texture format we can render into seems to depend on the
+       * screen depth.  There currently seems to be a problem when
+       * rendering into a rgb565 texture when the screen is abgr8888.
+       */
+      if (intel->front_region->cpp == 4)
+         supportedFormat = &_mesa_texformat_argb8888;
+      else 
+         supportedFormat = &_mesa_texformat_rgb565;
+
+      for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+         const struct gl_texture_object *texObj =
+            fb->Attachment[BUFFER_COLOR0 + i].Texture;
+         if (texObj) {
+            const struct gl_texture_image *texImg =
+               texObj->Image[0][texObj->BaseLevel];
+            if (texImg && texImg->TexFormat != supportedFormat) {
+               fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+               break;
+            }
+         }
+      }
    }
 }
 

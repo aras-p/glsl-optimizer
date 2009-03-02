@@ -14,6 +14,7 @@ C_SOURCES = \
 	nv20_state.c \
 	nv20_state_emit.c \
 	nv20_surface.c \
+	nv20_transfer.c \
 	nv20_vbo.c
 #	nv20_vertprog.c
 

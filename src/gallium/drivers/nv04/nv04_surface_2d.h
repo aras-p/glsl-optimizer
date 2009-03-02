@@ -1,6 +1,11 @@
 #ifndef __NV04_SURFACE_2D_H__
 #define __NV04_SURFACE_2D_H__
 
+struct nv04_surface {
+	struct pipe_surface base;
+	unsigned pitch;
+};
+
 struct nv04_surface_2d {
 	struct nouveau_winsys *nvws;
 	struct nouveau_notifier *ntfy;

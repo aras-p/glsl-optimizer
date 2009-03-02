@@ -439,6 +439,25 @@ st_finish_render_texture(GLcontext *ctx,
 }
 
 
+/**
+ * Check that the framebuffer configuration is valid in terms of what
+ * the driver can support.
+ *
+ * For Gallium we only supports combined Z+stencil, not separate buffers.
+ */
+static void
+st_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
+{
+   const struct gl_renderbuffer *depthRb =
+      fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   const struct gl_renderbuffer *stencilRb =
+      fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+
+   if (stencilRb && depthRb && stencilRb != depthRb) {
+      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+   }
+}
+
 
 void st_init_fbo_functions(struct dd_function_table *functions)
 {
@@ -448,6 +467,7 @@ void st_init_fbo_functions(struct dd_function_table *functions)
    functions->FramebufferRenderbuffer = st_framebuffer_renderbuffer;
    functions->RenderTexture = st_render_texture;
    functions->FinishRenderTexture = st_finish_render_texture;
+   functions->ValidateFramebuffer = st_validate_framebuffer;
    /* no longer needed by core Mesa, drivers handle resizes...
    functions->ResizeBuffers = st_resize_buffers;
    */

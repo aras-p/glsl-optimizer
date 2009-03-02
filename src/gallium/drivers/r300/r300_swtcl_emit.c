@@ -27,6 +27,7 @@
 #include "r300_cs.h"
 #include "r300_context.h"
 #include "r300_reg.h"
+#include "r300_state_derived.h"
 
 /* r300_swtcl_emit: Vertex and index buffer primitive emission. No HW TCL. */
 
@@ -91,9 +92,9 @@ static boolean r300_swtcl_render_allocate_vertices(struct vbuf_render* render,
     r300render->vertex_size = vertex_size;
 
     if (r300render->vbo) {
-        return true;
+        return TRUE;
     } else {
-        return false;
+        return FALSE;
     }
 }
 
@@ -167,11 +168,11 @@ static boolean r300_swtcl_render_set_primitive(struct vbuf_render* render,
             r300render->hwprim = R300_VAP_VF_CNTL__PRIM_POLYGON;
             break;
         default:
-            return false;
+            return FALSE;
             break;
     }
 
-    return true;
+    return TRUE;
 }
 
 static void prepare_render(struct r300_swtcl_render* render)
@@ -191,12 +192,15 @@ static void prepare_render(struct r300_swtcl_render* render)
      * PACKET3 [3D_LOAD_VBPNTR]
      * COUNT   [1]
      * FORMAT  [size | stride << 8]
+     * OFFSET  [0]
      * VBPNTR  [relocated BO]
      */
     BEGIN_CS(5);
     OUT_CS(CP_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, 3));
     OUT_CS(1);
-    OUT_CS(r300->vertex_info.vinfo.size | (r300->vertex_info.vinfo.size << 8));
+    OUT_CS(r300->vertex_info.vinfo.size |
+            (r300->vertex_info.vinfo.size << 8));
+    OUT_CS(render->vbo_offset);
     OUT_CS_RELOC(render->vbo, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
     END_CS;
 }
@@ -218,7 +222,7 @@ static void r300_swtcl_render_draw_arrays(struct vbuf_render* render,
     BEGIN_CS(2);
     OUT_CS(CP_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0));
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
-           r300render->hwprim | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
+           r300render->hwprim);
     END_CS;
 }
 

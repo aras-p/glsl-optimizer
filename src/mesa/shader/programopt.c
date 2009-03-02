@@ -171,7 +171,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
       if (inst->Opcode == OPCODE_END)
          break;
       if (inst->DstReg.File == PROGRAM_OUTPUT &&
-          inst->DstReg.Index == FRAG_RESULT_COLR) {
+          inst->DstReg.Index == FRAG_RESULT_COLOR) {
          /* change the instruction to write to colorTemp w/ clamping */
          inst->DstReg.File = PROGRAM_TEMPORARY;
          inst->DstReg.Index = colorTemp;
@@ -249,7 +249,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    /* LRP result.color.xyz, fogFactorTemp.xxxx, colorTemp, fogColorRef; */
    inst->Opcode = OPCODE_LRP;
    inst->DstReg.File = PROGRAM_OUTPUT;
-   inst->DstReg.Index = FRAG_RESULT_COLR;
+   inst->DstReg.Index = FRAG_RESULT_COLOR;
    inst->DstReg.WriteMask = WRITEMASK_XYZ;
    inst->SrcReg[0].File = PROGRAM_TEMPORARY;
    inst->SrcReg[0].Index = fogFactorTemp;
@@ -264,7 +264,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    /* MOV result.color.w, colorTemp.x;  # copy alpha */
    inst->Opcode = OPCODE_MOV;
    inst->DstReg.File = PROGRAM_OUTPUT;
-   inst->DstReg.Index = FRAG_RESULT_COLR;
+   inst->DstReg.Index = FRAG_RESULT_COLOR;
    inst->DstReg.WriteMask = WRITEMASK_W;
    inst->SrcReg[0].File = PROGRAM_TEMPORARY;
    inst->SrcReg[0].Index = colorTemp;

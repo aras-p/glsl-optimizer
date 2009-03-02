@@ -60,6 +60,7 @@ struct softpipe_vbuf_render
    struct softpipe_context *softpipe;
    uint prim;
    uint vertex_size;
+   uint nr_vertices;
    uint vertex_buffer_size;
    void *vertex_buffer;
 };
@@ -95,12 +96,44 @@ sp_vbuf_allocate_vertices(struct vbuf_render *vbr,
    }
 
    cvbr->vertex_size = vertex_size;
+   cvbr->nr_vertices = nr_vertices;
+   
    return cvbr->vertex_buffer != NULL;
 }
 
 static void
 sp_vbuf_release_vertices(struct vbuf_render *vbr)
 {
+#if 0
+   {
+      struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
+      const struct vertex_info *info = 
+         softpipe_get_vbuf_vertex_info(cvbr->softpipe);
+      const float *vtx = (const float *) cvbr->vertex_buffer;
+      uint i, j;
+      debug_printf("%s (vtx_size = %u,  vtx_used = %u)\n",
+             __FUNCTION__, cvbr->vertex_size, cvbr->nr_vertices);
+      for (i = 0; i < cvbr->nr_vertices; i++) {
+         for (j = 0; j < info->num_attribs; j++) {
+            uint k;
+            switch (info->attrib[j].emit) {
+            case EMIT_4F:  k = 4;   break;
+            case EMIT_3F:  k = 3;   break;
+            case EMIT_2F:  k = 2;   break;
+            case EMIT_1F:  k = 1;   break;
+            default: assert(0);
+            }
+            debug_printf("Vert %u attr %u: ", i, j);
+            while (k-- > 0) {
+               debug_printf("%g ", vtx[0]);
+               vtx++;
+            }
+            debug_printf("\n");
+         }
+      }
+   }
+#endif
+
    /* keep the old allocation for next time */
 }
 

@@ -202,9 +202,9 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
          if (_mesa_execute_program(ctx, &program->Base, machine)) {
 
             /* Store result color */
-            if (outputsWritten & (1 << FRAG_RESULT_COLR)) {
+            if (outputsWritten & (1 << FRAG_RESULT_COLOR)) {
                COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0][i],
-                       machine->Outputs[FRAG_RESULT_COLR]);
+                       machine->Outputs[FRAG_RESULT_COLOR]);
             }
             else {
                /* Multiple drawbuffers / render targets
@@ -221,8 +221,8 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
             }
 
             /* Store result depth/z */
-            if (outputsWritten & (1 << FRAG_RESULT_DEPR)) {
-               const GLfloat depth = machine->Outputs[FRAG_RESULT_DEPR][2];
+            if (outputsWritten & (1 << FRAG_RESULT_DEPTH)) {
+               const GLfloat depth = machine->Outputs[FRAG_RESULT_DEPTH][2];
                if (depth <= 0.0)
                   span->array->z[i] = 0;
                else if (depth >= 1.0)
@@ -259,12 +259,12 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
 
    run_program(ctx, span, 0, span->end);
 
-   if (program->Base.OutputsWritten & (1 << FRAG_RESULT_COLR)) {
+   if (program->Base.OutputsWritten & (1 << FRAG_RESULT_COLOR)) {
       span->interpMask &= ~SPAN_RGBA;
       span->arrayMask |= SPAN_RGBA;
    }
 
-   if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
+   if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPTH)) {
       span->interpMask &= ~SPAN_Z;
       span->arrayMask |= SPAN_Z;
    }

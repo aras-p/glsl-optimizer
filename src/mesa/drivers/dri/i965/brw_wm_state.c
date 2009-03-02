@@ -103,7 +103,7 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 
    /* as far as we can tell */
    key->computes_depth =
-      (fp->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) != 0;
+      (fp->Base.OutputsWritten & (1 << FRAG_RESULT_DEPTH)) != 0;
 
    /* _NEW_COLOR */
    key->uses_kill = fp->UsesKill || ctx->Color.AlphaEnabled;

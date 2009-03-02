@@ -127,14 +127,8 @@ struct cell_context
    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
    uint num_vertex_elements;
 
-   struct pipe_transfer *cbuf_transfer[PIPE_MAX_COLOR_BUFS];
-   struct pipe_transfer *zsbuf_transfer;
-
    ubyte *cbuf_map[PIPE_MAX_COLOR_BUFS];
    ubyte *zsbuf_map;
-
-   struct pipe_surface *tex_surf;
-   uint *tex_map;
 
    uint dirty;
    uint dirty_textures;  /* bitmask of texture units */

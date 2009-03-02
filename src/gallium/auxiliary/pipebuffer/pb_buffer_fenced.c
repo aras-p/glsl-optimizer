@@ -36,7 +36,7 @@
 
 #include "pipe/p_config.h"
 
-#if defined(PIPE_OS_LINUX)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
 #include <unistd.h>
 #include <sched.h>
 #endif
@@ -559,7 +559,7 @@ fenced_buffer_list_destroy(struct fenced_buffer_list *fenced_list)
    /* Wait on outstanding fences */
    while (fenced_list->numDelayed) {
       pipe_mutex_unlock(fenced_list->mutex);
-#if defined(PIPE_OS_LINUX)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
       sched_yield();
 #endif
       _fenced_buffer_list_check_free(fenced_list, 1);

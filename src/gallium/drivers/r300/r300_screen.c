@@ -50,6 +50,7 @@ static const char* chip_families[] = {
     "RC410",
     "RS480",
     "RS482",
+    "RS600",
     "RS690",
     "RS740",
     "RV515",
@@ -178,8 +179,11 @@ static boolean check_tex_2d_format(enum pipe_format format, boolean is_r500)
 {
     switch (format) {
         /* Colorbuffer */
+        case PIPE_FORMAT_A4R4G4B4_UNORM:
+        case PIPE_FORMAT_R5G6B5_UNORM:
+        case PIPE_FORMAT_A1R5G5B5_UNORM:
         case PIPE_FORMAT_A8R8G8B8_UNORM:
-        /* Texture */
+        /* Colorbuffer or texture */
         case PIPE_FORMAT_I8_UNORM:
         /* Z buffer */
         case PIPE_FORMAT_Z16_UNORM:
@@ -187,29 +191,25 @@ static boolean check_tex_2d_format(enum pipe_format format, boolean is_r500)
         case PIPE_FORMAT_Z24S8_UNORM:
             return TRUE;
 
-        /* XXX Supported yet unimplemented formats: */
-        case PIPE_FORMAT_A1R5G5B5_UNORM:
-        case PIPE_FORMAT_R5G6B5_UNORM:
         /* XXX These don't even exist
         case PIPE_FORMAT_A32R32G32B32:
         case PIPE_FORMAT_A16R16G16B16: */
         /* XXX Insert YUV422 packed VYUY and YVYU here */
-        /* XXX What the deuce is UV88? (r3xx accel page 14) */
-        case PIPE_FORMAT_A4R4G4B4_UNORM:
+        /* XXX What the deuce is UV88? (r3xx accel page 14)
             debug_printf("r300: Warning: Got unimplemented format: %s in %s\n",
                 pf_name(format), __FUNCTION__);
-            return FALSE;
+            return FALSE; */
 
         /* XXX Supported yet unimplemented r5xx formats: */
         /* XXX Again, what is UV1010 this time? (r5xx accel page 148) */
         /* XXX Even more that don't exist
         case PIPE_FORMAT_A10R10G10B10_UNORM:
         case PIPE_FORMAT_A2R10G10B10_UNORM:
-        case PIPE_FORMAT_I10_UNORM: */
+        case PIPE_FORMAT_I10_UNORM:
             debug_printf(
                 "r300: Warning: Got unimplemented r500 format: %s in %s\n",
                 pf_name(format), __FUNCTION__);
-            return FALSE;
+            return FALSE; */
 
         default:
             debug_printf("r300: Warning: Got unsupported format: %s in %s\n",

@@ -56,19 +56,6 @@
 void __glXDumpDrawBuffer(__GLXcontext * ctx);
 #endif
 
-#ifdef USE_SPARC_ASM
-static void _glx_mesa_init_sparc_glapi_relocs(void);
-static int _mesa_sparc_needs_init = 1;
-#define INIT_MESA_SPARC do {               \
-   if (_mesa_sparc_needs_init) {           \
-      _glx_mesa_init_sparc_glapi_relocs(); \
-      _mesa_sparc_needs_init = 0;          \
-   }                                       \
-  } while(0)
-#else
-#define INIT_MESA_SPARC do { } while(0)
-#endif
-
 /*
 ** You can set this cell to 1 to force the gl drawing stuff to be
 ** one command per packet
@@ -670,7 +657,6 @@ __glXInitialize(Display * dpy)
    }
 #endif
 
-   INIT_MESA_SPARC;
    /* The one and only long long lock */
    __glXLock();
 
@@ -785,7 +771,6 @@ __glXSetupForCommand(Display * dpy)
 
       if (gc->currentDpy == dpy) {
          /* Use opcode from gc because its right */
-         INIT_MESA_SPARC;
          return gc->majorOpcode;
       }
       else {
@@ -979,74 +964,3 @@ __glXDumpDrawBuffer(__GLXcontext * ctx)
    }
 }
 #endif
-
-#ifdef  USE_SPARC_ASM
-/*
- * This is where our dispatch table's bounds are.
- * And the static mesa_init is taken directly from
- * Mesa's 'sparc.c' initializer.
- *
- * We need something like this here, because this version
- * of openGL/glx never initializes a Mesa context, and so
- * the address of the dispatch table pointer never gets stuffed
- * into the dispatch jump table otherwise.
- *
- * It matters only on SPARC, and only if you are using assembler
- * code instead of C-code indirect dispatch.
- *
- * -- FEM, 04.xii.03
- */
-extern unsigned int _mesa_sparc_glapi_begin;
-extern unsigned int _mesa_sparc_glapi_end;
-extern void __glapi_sparc_icache_flush(unsigned int *);
-
-static void
-_glx_mesa_init_sparc_glapi_relocs(void)
-{
-   unsigned int *insn_ptr, *end_ptr;
-   unsigned long disp_addr;
-
-   insn_ptr = &_mesa_sparc_glapi_begin;
-   end_ptr = &_mesa_sparc_glapi_end;
-   disp_addr = (unsigned long) &_glapi_Dispatch;
-
-   /*
-    * Verbatim from Mesa sparc.c.  It's needed because there doesn't
-    * seem to be a better way to do this:
-    *
-    * UNCONDITIONAL_JUMP ( (*_glapi_Dispatch) + entry_offset )
-    *
-    * This code is patching in the ADDRESS of the pointer to the
-    * dispatch table.  Hence, it must be called exactly once, because
-    * that address is not going to change.
-    *
-    * What it points to can change, but Mesa (and hence, we) assume
-    * that there is only one pointer.
-    *
-    */
-   while (insn_ptr < end_ptr) {
-#if ( defined(__sparc_v9__) && ( !defined(__linux__) || defined(__linux_64__) ) )
-/*
-	This code patches for 64-bit addresses.  This had better
-	not happen for Sparc/Linux, no matter what architecture we
-	are building for.  So, don't do this.
-
-        The 'defined(__linux_64__)' is used here as a placeholder for
-        when we do do 64-bit usermode on sparc linux.
-	*/
-      insn_ptr[0] |= (disp_addr >> (32 + 10));
-      insn_ptr[1] |= ((disp_addr & 0xffffffff) >> 10);
-      __glapi_sparc_icache_flush(&insn_ptr[0]);
-      insn_ptr[2] |= ((disp_addr >> 32) & ((1 << 10) - 1));
-      insn_ptr[3] |= (disp_addr & ((1 << 10) - 1));
-      __glapi_sparc_icache_flush(&insn_ptr[2]);
-      insn_ptr += 11;
-#else
-      insn_ptr[0] |= (disp_addr >> 10);
-      insn_ptr[1] |= (disp_addr & ((1 << 10) - 1));
-      __glapi_sparc_icache_flush(&insn_ptr[0]);
-      insn_ptr += 5;
-#endif
-   }
-}
-#endif /* sparc ASM in use */

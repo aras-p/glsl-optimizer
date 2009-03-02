@@ -550,7 +550,6 @@ update_texture_state( GLcontext *ctx )
 
       texUnit->_Current = NULL;
       texUnit->_ReallyEnabled = 0x0;
-      texUnit->_GenFlags = 0x0;
 
       /* Get the bitmask of texture target enables.
        * enableBits will be a mask of the TEXTURE_*_BIT flags indicating
@@ -608,6 +607,8 @@ update_texture_state( GLcontext *ctx )
    /* Setup texgen for those texture coordinate sets that are in use */
    for (unit = 0; unit < ctx->Const.MaxTextureCoordUnits; unit++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+
+      texUnit->_GenFlags = 0x0;
 
       if (!(ctx->Texture._EnabledCoordUnits & (1 << unit)))
 	 continue;

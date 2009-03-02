@@ -119,28 +119,6 @@ nv04_screen_is_format_supported(struct pipe_screen *screen,
 	return FALSE;
 }
 
-static void *
-nv04_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
-		 unsigned flags )
-{
-	void *map;
-	struct nv04_miptree *nv04mt = (struct nv04_miptree *)surface->texture;
-
-	map = pipe_buffer_map(screen, nv04mt->buffer, flags);
-	if (!map)
-		return NULL;
-
-	return map + surface->offset;
-}
-
-static void
-nv04_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
-{
-	struct nv04_miptree *nv04mt = (struct nv04_miptree *)surface->texture;
-
-	pipe_buffer_unmap(screen, nv04mt->buffer);
-}
-
 static void
 nv04_screen_destroy(struct pipe_screen *pscreen)
 {
@@ -226,10 +204,8 @@ nv04_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 
 	screen->pipe.is_format_supported = nv04_screen_is_format_supported;
 
-	screen->pipe.surface_map = nv04_surface_map;
-	screen->pipe.surface_unmap = nv04_surface_unmap;
-
 	nv04_screen_init_miptree_functions(&screen->pipe);
+	nv04_screen_init_transfer_functions(&screen->pipe);
 	u_simple_screen_init(&screen->pipe);
 
 	return &screen->pipe;

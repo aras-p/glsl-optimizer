@@ -277,7 +277,7 @@ class PrintGlxDispatchFunctions(glX_proto_common.glx_print_proto):
 			if param.is_image():
 				offset = f.offset_of( param.name )
 
-				print '%s    %s const %s = (%s) %s(pc + %s);' % (indent, type_string, param.name, type_string, cond, offset)
+				print '%s    %s const %s = (%s) (%s(pc + %s));' % (indent, type_string, param.name, type_string, cond, offset)
 				
 				if param.depth:
 					print '%s    __GLXpixel3DHeader * const hdr = (__GLXpixel3DHeader *)(pc);' % (indent)

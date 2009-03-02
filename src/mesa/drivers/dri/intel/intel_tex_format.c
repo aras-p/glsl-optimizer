@@ -3,11 +3,15 @@
 #include "main/texformat.h"
 #include "main/enums.h"
 
-/* It works out that this function is fine for all the supported
+
+/**
+ * Choose hardware texture format given the user's glTexImage parameters.
+ *
+ * It works out that this function is fine for all the supported
  * hardware.  However, there is still a need to map the formats onto
  * hardware descriptors.
- */
-/* Note that the i915 can actually support many more formats than
+ *
+ * Note that the i915 can actually support many more formats than
  * these if we take the step of simply swizzling the colors
  * immediately after sampling...
  */
@@ -17,6 +21,11 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
 {
    struct intel_context *intel = intel_context(ctx);
    const GLboolean do32bpt = (intel->ctx.Visual.rgbBits >= 24);
+
+#if 0
+   printf("%s intFmt=0x%x format=0x%x type=0x%x\n",
+          __FUNCTION__, internalFormat, format, type);
+#endif
 
    switch (internalFormat) {
    case 4:

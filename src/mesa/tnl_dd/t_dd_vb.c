@@ -188,6 +188,9 @@ void TAG(translate_vertex)(GLcontext *ctx,
 }
 
 
+/* prototype to silence warning */
+void TAG(print_vertex)( GLcontext *ctx, const VERTEX *v );
+
 
 void TAG(print_vertex)( GLcontext *ctx, const VERTEX *v )
 {

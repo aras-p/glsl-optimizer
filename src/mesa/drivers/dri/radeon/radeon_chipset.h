@@ -247,6 +247,9 @@
 #define PCI_CHIP_RS350_7835		0x7835
 #define PCI_CHIP_RS690_791E             0x791E
 #define PCI_CHIP_RS690_791F             0x791F
+#define PCI_CHIP_RS600_793F             0x793F
+#define PCI_CHIP_RS600_7941             0x7941
+#define PCI_CHIP_RS600_7942             0x7942
 #define PCI_CHIP_RS740_796C             0x796C
 #define PCI_CHIP_RS740_796D             0x796D
 #define PCI_CHIP_RS740_796E             0x796E
@@ -270,6 +273,7 @@ enum {
    CHIP_FAMILY_R420,
    CHIP_FAMILY_RV410,
    CHIP_FAMILY_RS400,
+   CHIP_FAMILY_RS600,
    CHIP_FAMILY_RS690,
    CHIP_FAMILY_RS740,
    CHIP_FAMILY_RV515,

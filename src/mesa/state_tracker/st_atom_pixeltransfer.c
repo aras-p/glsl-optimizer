@@ -212,7 +212,7 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
    inst[ic].TexSrcTarget = TEXTURE_2D_INDEX;
    ic++;
    fp->Base.InputsRead = (1 << FRAG_ATTRIB_TEX0);
-   fp->Base.OutputsWritten = (1 << FRAG_RESULT_COLR);
+   fp->Base.OutputsWritten = (1 << FRAG_RESULT_COLOR);
    fp->Base.SamplersUsed = 0x1;  /* sampler 0 (bit 0) is used */
 
    if (key->scaleAndBias) {
@@ -400,7 +400,7 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
    {
       struct prog_instruction *last = &inst[ic - 1];
       last->DstReg.File = PROGRAM_OUTPUT;
-      last->DstReg.Index = FRAG_RESULT_COLR;
+      last->DstReg.Index = FRAG_RESULT_COLOR;
    }
 
    /* END; */

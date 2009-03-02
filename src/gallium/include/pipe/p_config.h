@@ -111,6 +111,10 @@
 #define PIPE_OS_LINUX
 #endif
 
+#if defined(__FreeBSD__)
+#define PIPE_OS_BSD
+#endif
+
 #if defined(_WIN32) || defined(WIN32)
 #define PIPE_OS_WINDOWS
 #endif
@@ -122,9 +126,9 @@
  * NOTE: There is no way to auto-detect most of these.
  */
 
-#if defined(PIPE_OS_LINUX)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
 #define PIPE_SUBSYSTEM_DRI
-#endif /* PIPE_OS_LINUX */
+#endif /* PIPE_OS_LINUX || PIPE_OS_BSD */
 
 #if defined(PIPE_OS_WINDOWS)
 #if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)

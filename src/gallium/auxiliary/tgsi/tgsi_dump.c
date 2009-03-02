@@ -245,8 +245,12 @@ iter_declaration(
       }
    }
 
-   TXT( ", " );
-   ENM( decl->Declaration.Interpolate, interpolate_names );
+   if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT &&
+       decl->Declaration.File == TGSI_FILE_INPUT)
+   {
+      TXT( ", " );
+      ENM( decl->Declaration.Interpolate, interpolate_names );
+   }
 
    if (decl->Declaration.Centroid) {
       TXT( ", CENTROID" );

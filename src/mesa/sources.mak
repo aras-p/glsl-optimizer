@@ -308,9 +308,7 @@ COMMON_DRIVER_SOURCES =			\
 	drivers/common/driverfuncs.c
 
 
-
-### All the core C sources
-
+# Sources for building non-Gallium drivers
 MESA_SOURCES = \
 	$(MAIN_SOURCES)		\
 	$(MATH_XFORM_SOURCES)	\
@@ -323,11 +321,7 @@ MESA_SOURCES = \
 	$(ASM_C_SOURCES)	\
 	$(SLANG_SOURCES)
 
-ALL_SOURCES = \
-	$(MESA_SOURCES)		\
-	$(GLAPI_SOURCES)	\
-	$(MESA_ASM_SOURCES)
-
+# Sources for building Gallium drivers
 MESA_GALLIUM_SOURCES = \
 	$(MAIN_SOURCES)		\
 	$(MATH_SOURCES)		\
@@ -335,6 +329,13 @@ MESA_GALLIUM_SOURCES = \
 	$(STATETRACKER_SOURCES)	\
 	$(SHADER_SOURCES)	\
 	$(SLANG_SOURCES)
+
+# All the core C sources, for dependency checking
+ALL_SOURCES = \
+	$(MESA_SOURCES)		\
+	$(GLAPI_SOURCES)	\
+	$(MESA_ASM_SOURCES)	\
+	$(STATETRACKER_SOURCES)
 
 
 ### Object files

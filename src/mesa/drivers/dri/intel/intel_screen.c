@@ -323,7 +323,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
    else {
       GLboolean swStencil = (mesaVis->stencilBits > 0 &&
                              mesaVis->depthBits != 24);
-      GLenum rgbFormat = (mesaVis->redBits == 5 ? GL_RGB5 : GL_RGBA8);
+      GLenum rgbFormat;
 
       struct intel_framebuffer *intel_fb = CALLOC_STRUCT(intel_framebuffer);
 
@@ -331,6 +331,13 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 	 return GL_FALSE;
 
       _mesa_initialize_framebuffer(&intel_fb->Base, mesaVis);
+
+      if (mesaVis->redBits == 5)
+	 rgbFormat = GL_RGB5;
+      else if (mesaVis->alphaBits == 0)
+	 rgbFormat = GL_RGB8;
+      else
+	 rgbFormat = GL_RGBA8;
 
       /* setup the hardware-based renderbuffers */
       intel_fb->color_rb[0] = intel_create_renderbuffer(rgbFormat);
@@ -758,13 +765,34 @@ __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
    fb_format[2] = GL_BGRA;
    fb_type[2] = GL_UNSIGNED_INT_8_8_8_8_REV;
 
+   depth_bits[0] = 0;
+   stencil_bits[0] = 0;
+
    for (color = 0; color < ARRAY_SIZE(fb_format); color++) {
       __DRIconfig **new_configs;
+      int depth_factor;
 
+      /* With DRI2 right now, GetBuffers always returns a depth/stencil buffer
+       * with the same cpp as the drawable.  So we can't support depth cpp !=
+       * color cpp currently.
+       */
+      if (fb_type[color] == GL_UNSIGNED_SHORT_5_6_5) {
+	 depth_bits[1] = 16;
+	 stencil_bits[1] = 0;
+
+	 depth_factor = 2;
+      } else {
+	 depth_bits[1] = 24;
+	 stencil_bits[1] = 0;
+	 depth_bits[2] = 24;
+	 stencil_bits[2] = 8;
+
+	 depth_factor = 3;
+      }
       new_configs = driCreateConfigs(fb_format[color], fb_type[color],
 				     depth_bits,
 				     stencil_bits,
-				     ARRAY_SIZE(depth_bits),
+				     depth_factor,
 				     back_buffer_modes,
 				     ARRAY_SIZE(back_buffer_modes),
 				     msaa_samples_array,

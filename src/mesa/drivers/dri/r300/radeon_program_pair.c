@@ -778,10 +778,10 @@ static void fill_dest_into_pair(struct pair_state *s, struct radeon_pair_instruc
 	struct prog_instruction *inst = s->Program->Instructions + ip;
 
 	if (inst->DstReg.File == PROGRAM_OUTPUT) {
-		if (inst->DstReg.Index == FRAG_RESULT_COLR) {
+		if (inst->DstReg.Index == FRAG_RESULT_COLOR) {
 			pair->RGB.OutputWriteMask |= inst->DstReg.WriteMask & WRITEMASK_XYZ;
 			pair->Alpha.OutputWriteMask |= GET_BIT(inst->DstReg.WriteMask, 3);
-		} else if (inst->DstReg.Index == FRAG_RESULT_DEPR) {
+		} else if (inst->DstReg.Index == FRAG_RESULT_DEPTH) {
 			pair->Alpha.DepthWriteMask |= GET_BIT(inst->DstReg.WriteMask, 3);
 		}
 	} else {

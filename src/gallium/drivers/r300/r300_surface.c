@@ -33,9 +33,10 @@ static void r300_surface_fill(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     CS_LOCALS(r300);
-    struct r300_capabilities* caps = ((struct r300_screen*)pipe->screen)->caps;
+    struct r300_capabilities* caps = r300_screen(pipe->screen)->caps;
     struct r300_texture* tex = (struct r300_texture*)dest->texture;
     int i;
+
     float r, g, b, a;
     unsigned pixpitch = tex->stride / tex->tex.block.size;
     r = (float)((color >> 16) & 0xff) / 255.0f;
@@ -55,7 +56,14 @@ static void r300_surface_fill(struct pipe_context* pipe,
         return;
     }*/
 
-    BEGIN_CS(163 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
+    r300_emit_invariant_state(r300);
+
+    r300_emit_blend_state(r300, &blend_clear_state);
+    r300_emit_blend_color_state(r300, &blend_color_clear_state);
+    r300_emit_dsa_state(r300, &dsa_clear_state);
+    r300_emit_rs_state(r300, &rs_clear_state);
+
+    BEGIN_CS(129 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -69,7 +77,12 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, 0xFFFFFF);
     OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, 0x0);
     /* XXX endian */
-    OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VC_NO_SWAP);
+    if (caps->has_tcl) {
+        OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VC_NO_SWAP);
+    } else {
+        OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VC_NO_SWAP |
+                R300_VAP_TCL_BYPASS);
+    }
     OUT_CS_REG(R300_VAP_PROG_STREAM_CNTL_0, 0x0);
     /* XXX magic number not in r300_reg */
     OUT_CS_REG(R300_VAP_PSC_SGN_NORM_CNTL, 0xAAAAAAAA);
@@ -79,18 +92,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_32F(1.0);
     OUT_CS_32F(1.0);
     OUT_CS_32F(1.0);
-    /* XXX is this too long? */
-    OUT_CS_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xFFFF);
-    OUT_CS_REG(R300_GB_ENABLE, R300_GB_POINT_STUFF_ENABLE |
-        R300_GB_LINE_STUFF_ENABLE | R300_GB_TRIANGLE_STUFF_ENABLE);
-    /* XXX more magic numbers */
-    OUT_CS_REG(R300_GB_MSPOS0, 0x66666666);
-    OUT_CS_REG(R300_GB_MSPOS1, 0x66666666);
-    /* XXX why doesn't classic Mesa write the number of pipes, too? */
-    OUT_CS_REG(R300_GB_TILE_CONFIG, R300_GB_TILE_ENABLE |
-        R300_GB_TILE_SIZE_16);
-    OUT_CS_REG(R300_GB_SELECT, R300_GB_FOG_SELECT_1_1_W);
-    OUT_CS_REG(R300_GB_AA_CONFIG, 0x0);
     /* XXX point tex stuffing */
     OUT_CS_REG_SEQ(R300_GA_POINT_S0, 1);
     OUT_CS_32F(0.0);
@@ -102,9 +103,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_GA_POINT_MINMAX, 0x6 |
         (0x1800 << R300_GA_POINT_MINMAX_MAX_SHIFT));
     /* XXX this big chunk should be refactored into rs_state */
-    OUT_CS_REG(R300_GA_LINE_CNTL, 0x00030006);
-    OUT_CS_REG(R300_GA_LINE_STIPPLE_CONFIG, 0x3BAAAAAB);
-    OUT_CS_REG(R300_GA_LINE_STIPPLE_VALUE, 0x00000000);
     OUT_CS_REG(R300_GA_LINE_S0, 0x00000000);
     OUT_CS_REG(R300_GA_LINE_S1, 0x3F800000);
     OUT_CS_REG(R300_GA_ENHANCE, 0x00000002);
@@ -117,12 +115,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_GA_FOG_SCALE, 0x3DBF1412);
     OUT_CS_REG(R300_GA_FOG_OFFSET, 0x00000000);
     OUT_CS_REG(R300_SU_TEX_WRAP, 0x00000000);
-    OUT_CS_REG(R300_SU_POLY_OFFSET_FRONT_SCALE, 0x00000000);
-    OUT_CS_REG(R300_SU_POLY_OFFSET_FRONT_OFFSET, 0x00000000);
-    OUT_CS_REG(R300_SU_POLY_OFFSET_BACK_SCALE, 0x00000000);
-    OUT_CS_REG(R300_SU_POLY_OFFSET_BACK_OFFSET, 0x00000000);
-    OUT_CS_REG(R300_SU_POLY_OFFSET_ENABLE, 0x00000000);
-    OUT_CS_REG(R300_SU_CULL_MODE, 0x00000000);
     OUT_CS_REG(R300_SU_DEPTH_SCALE, 0x4B7FFFFF);
     OUT_CS_REG(R300_SU_DEPTH_OFFSET, 0x00000000);
     OUT_CS_REG(R300_SC_HYPERZ, 0x0000001C);
@@ -190,11 +182,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
             R300_PS_UCP_MODE_CLIP_AS_TRIFAN);
     }
 
-    /* The size of the point we're about to draw, in sixths of pixels */
-    OUT_CS_REG(R300_GA_POINT_SIZE,
-        ((h * 6) & R300_POINTSIZE_Y_MASK) |
-        ((w * 6) << R300_POINTSIZE_X_SHIFT));
-
     /* XXX */
     OUT_CS_REG(R300_SC_CLIP_RULE, 0xaaaa);
 
@@ -240,7 +227,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         r300_emit_fragment_shader(r300, &r300_passthrough_fragment_shader);
     }
 
-    BEGIN_CS(8 + (caps->has_tcl ? 20 : 2));
+    BEGIN_CS(7 + (caps->has_tcl ? 21 : 2));
     OUT_CS_REG_SEQ(R300_US_OUT_FMT_0, 4);
     OUT_CS(R300_C0_SEL_B | R300_C1_SEL_G | R300_C2_SEL_R | R300_C3_SEL_A);
     OUT_CS(R300_US_OUT_FMT_UNUSED);
@@ -277,9 +264,10 @@ static void r300_surface_fill(struct pipe_context* pipe,
     }
     END_CS;
 
-    r300_emit_blend_state(r300, &blend_clear_state);
-    r300_emit_blend_color_state(r300, &blend_color_clear_state);
-    r300_emit_dsa_state(r300, &dsa_clear_state);
+    /* The size of the point we're about to draw, in sixths of pixels */
+    OUT_CS_REG(R300_GA_POINT_SIZE,
+        ((h * 6) & R300_POINTSIZE_Y_MASK) |
+        ((w * 6) << R300_POINTSIZE_X_SHIFT));
 
     BEGIN_CS(24);
     /* Flush colorbuffer and blend caches. */

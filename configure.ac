@@ -307,6 +307,13 @@ if test "x$enable_asm" = xyes; then
             ;;
         esac
         ;;
+    sparc*)
+        case "$host_os" in
+        linux*)
+            asm_arch=sparc
+            ;;
+        esac
+        ;;
     esac
 
     case "$asm_arch" in
@@ -326,6 +333,12 @@ if test "x$enable_asm" = xyes; then
         ASM_FLAGS="-DUSE_PPC_ASM -DUSE_VMX_ASM"
         MESA_ASM_SOURCES='$(PPC_SOURCES)'
         AC_MSG_RESULT([yes, ppc])
+        ;;
+    sparc)
+        ASM_FLAGS="-DUSE_SPARC_ASM"
+        MESA_ASM_SOURCES='$(SPARC_SOURCES)'
+        GLAPI_ASM_SOURCES='$(SPARC_API)'
+        AC_MSG_RESULT([yes, sparc])
         ;;
     *)
         AC_MSG_RESULT([no, platform not supported])
@@ -382,7 +395,7 @@ default_driver="xlib"
 case "$host_os" in
 linux*)
     case "$host_cpu" in
-    i*86|x86_64|powerpc*) default_driver="dri";;
+    i*86|x86_64|powerpc*|sparc*) default_driver="dri";;
     esac
     ;;
 *freebsd* | dragonfly*)
@@ -854,6 +867,19 @@ AC_SUBST([OSMESA_LIB_DEPS])
 AC_SUBST([OSMESA_MESA_DEPS])
 AC_SUBST([OSMESA_PC_REQ])
 AC_SUBST([OSMESA_PC_LIB_PRIV])
+
+dnl
+dnl EGL configuration
+dnl
+if test "$x11_pkgconfig" = yes; then
+    PKG_CHECK_MODULES([EGL],[x11])
+    EGL_LIB_DEPS="$EGL_LIBS"
+else
+    # should check these...
+    EGL_LIB_DEPS="$X_LIBS -lX11"
+fi
+EGL_LIB_DEPS="$EGL_LIB_DEPS $DLOPEN_LIBS $OS_LIBS"
+AC_SUBST([EGL_LIB_DEPS])
 
 dnl
 dnl GLU configuration

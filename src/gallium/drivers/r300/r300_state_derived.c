@@ -57,34 +57,40 @@ static uint32_t translate_vertex_data_type(int type) {
 /* XXX this function should be able to handle vert shaders as well as draw */
 static void r300_update_vertex_layout(struct r300_context* r300)
 {
+    struct r300_vertex_format vformat;
     struct vertex_info vinfo;
-    boolean pos = false, psize = false, fog = false;
+    boolean pos = FALSE, psize = FALSE, fog = FALSE;
     int i, texs = 0, cols = 0;
+    int tab[16];
 
     struct tgsi_shader_info* info = &r300->fs->info;
+
     memset(&vinfo, 0, sizeof(vinfo));
+    for (i = 0; i < 16; i++) {
+        tab[i] = -1;
+    }
 
     assert(info->num_inputs <= 16);
 
-    /* This is rather lame. Since draw_find_vs_output doesn't return an error
-     * when it can't find an output, we have to pre-iterate and count each
-     * output ourselves. */
     for (i = 0; i < info->num_inputs; i++) {
         switch (info->input_semantic_name[i]) {
             case TGSI_SEMANTIC_POSITION:
-                pos = true;
+                pos = TRUE;
+                tab[i] = 0;
                 break;
             case TGSI_SEMANTIC_COLOR:
-                cols++;
+                tab[i] = 2 + cols++;
                 break;
             case TGSI_SEMANTIC_FOG:
-                fog = true;
+                fog = TRUE;
+                tab[i] = 6 + texs++;
                 break;
             case TGSI_SEMANTIC_PSIZE:
-                psize = true;
+                psize = TRUE;
+                tab[i] = 1;
                 break;
             case TGSI_SEMANTIC_GENERIC:
-                texs++;
+                tab[i] = 6 + texs++;
                 break;
             default:
                 debug_printf("r300: Unknown vertex input %d\n",
@@ -105,6 +111,12 @@ static void r300_update_vertex_layout(struct r300_context* r300)
 
     if (!pos) {
         debug_printf("r300: Forcing vertex position attribute emit...\n");
+        /* Make room for the position attribute
+         * at the beginning of the tab. */
+        for (i = 1; i < 16; i++) {
+            tab[i] = tab[i-1];
+        }
+        tab[0] = 0;
     }
 
     draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_POS,
@@ -125,16 +137,17 @@ static void r300_update_vertex_layout(struct r300_context* r300)
         vinfo.hwfmt[2] |= (R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << i);
     }
 
-    if (fog) {
+    for (i = 0; i < texs; i++) {
         draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_FOG, 0));
-        vinfo.hwfmt[2] |=
-            (R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << cols);
+            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_GENERIC, i));
+        vinfo.hwfmt[1] |= (R300_INPUT_CNTL_TC0 << i);
+        vinfo.hwfmt[3] |= (4 << (3 * i));
     }
 
-    for (i = 0; i < texs; i++) {
-        draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_LINEAR,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_GENERIC, i));
+    if (fog) {
+        i++;
+        draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE,
+            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_FOG, 0));
         vinfo.hwfmt[1] |= (R300_INPUT_CNTL_TC0 << i);
         vinfo.hwfmt[3] |= (4 << (3 * i));
     }
@@ -152,18 +165,29 @@ static void r300_update_vertex_layout(struct r300_context* r300)
          (0xf << R300_WRITE_ENA_SHIFT))
 
         for (i = 0; i < vinfo.num_attribs; i++) {
+            /* Make sure we have a proper destination for our attribute */
+            if (tab[i] == -1) {
+                debug_printf("attrib count: %d, fp input count: %d\n",
+                        vinfo.num_attribs, info->num_inputs);
+                for (i = 0; i < vinfo.num_attribs; i++) {
+                    debug_printf("attrib: offset %d, interp %d, size %d,"
+                           " tab %d\n", vinfo.attrib[i].src_index,
+                           vinfo.attrib[i].interp_mode, vinfo.attrib[i].emit,
+                           tab[i]);
+                }
+                assert(0);
+            }
+
             temp = translate_vertex_data_type(vinfo.attrib[i].emit) |
-                R300_SIGNED;
+                (tab[i] << R300_DST_VEC_LOC_SHIFT) | R300_SIGNED;
             if (i & 1) {
                 r300->vertex_info.vap_prog_stream_cntl[i >> 1] &= 0xffff0000;
                 r300->vertex_info.vap_prog_stream_cntl[i >> 1] |=
-                        (translate_vertex_data_type(vinfo.attrib[i].emit) |
-                        R300_SIGNED) << 16;
+                        temp << 16;
             } else {
                 r300->vertex_info.vap_prog_stream_cntl[i >> 1] &= 0xffff;
                 r300->vertex_info.vap_prog_stream_cntl[i >> 1] |=
-                    translate_vertex_data_type(vinfo.attrib[i].emit) |
-                    R300_SIGNED;
+                    temp;
             }
 
             r300->vertex_info.vap_prog_stream_cntl_ext[i >> 1] |=
@@ -180,8 +204,85 @@ static void r300_update_vertex_layout(struct r300_context* r300)
 /* Set up the RS block. This is the part of the chipset that actually does
  * the rasterization of vertices into fragments. This is also the part of the
  * chipset that locks up if any part of it is even slightly wrong. */
-void r300_update_rs_block(struct r300_context* r300)
+static void r300_update_rs_block(struct r300_context* r300)
 {
+    struct r300_rs_block* rs = r300->rs_block;
+    struct vertex_info* vinfo = &r300->vertex_info.vinfo;
+    int col_count = 0, fp_offset = 0, i, tex_count = 0;
+
+    memset(rs, 0, sizeof(struct r300_rs_block));
+
+    if (r300_screen(r300->context.screen)->caps->is_r500) {
+        for (i = 0; i < vinfo->num_attribs; i++) {
+            switch (vinfo->attrib[i].interp_mode) {
+                case INTERP_LINEAR:
+                    rs->ip[col_count] |=
+                        R500_RS_COL_PTR(vinfo->attrib[i].src_index) |
+                        R500_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
+                    col_count++;
+                    break;
+                case INTERP_PERSPECTIVE:
+                    rs->ip[tex_count] |=
+                        R500_RS_SEL_S(vinfo->attrib[i].src_index) |
+                        R500_RS_SEL_T(vinfo->attrib[i].src_index + 1) |
+                        R500_RS_SEL_R(vinfo->attrib[i].src_index + 2) |
+                        R500_RS_SEL_Q(vinfo->attrib[i].src_index + 3);
+                    tex_count++;
+                    break;
+            }
+        }
+
+        for (i = 0; i < tex_count; i++) {
+            rs->inst[i] |= R500_RS_INST_TEX_ID(i) | R500_RS_INST_TEX_CN_WRITE |
+                R500_RS_INST_TEX_ADDR(fp_offset);
+            fp_offset++;
+        }
+
+        for (i = 0; i < col_count; i++) {
+            rs->inst[i] |= R500_RS_INST_COL_ID(i) | R500_RS_INST_COL_CN_WRITE |
+                R500_RS_INST_COL_ADDR(fp_offset);
+            fp_offset++;
+        }
+
+        rs->inst_count = MAX2(col_count, tex_count);
+    } else {
+        for (i = 0; i < vinfo->num_attribs; i++) {
+            switch (vinfo->attrib[i].interp_mode) {
+                case INTERP_LINEAR:
+                    rs->ip[col_count] |=
+                        R300_RS_COL_PTR(vinfo->attrib[i].src_index) |
+                        R300_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
+                    col_count++;
+                    break;
+                case INTERP_PERSPECTIVE:
+                    rs->ip[tex_count] |=
+                        R300_RS_TEX_PTR(vinfo->attrib[i].src_index) |
+                        R300_RS_SEL_S(R300_RS_SEL_C0) |
+                        R300_RS_SEL_T(R300_RS_SEL_C1) |
+                        R300_RS_SEL_R(R300_RS_SEL_C2) |
+                        R300_RS_SEL_Q(R300_RS_SEL_C3);
+                    tex_count += 4;
+                    break;
+            }
+        }
+
+        for (i = 0; i < tex_count; i++) {
+            rs->inst[i] |= R300_RS_INST_TEX_ID(i) | R300_RS_INST_TEX_CN_WRITE |
+                R300_RS_INST_TEX_ADDR(fp_offset);
+            fp_offset++;
+        }
+
+        for (i = 0; i < col_count; i++) {
+            rs->inst[i] |= R300_RS_INST_COL_ID(i) | R300_RS_INST_COL_CN_WRITE |
+                R300_RS_INST_COL_ADDR(fp_offset);
+            fp_offset++;
+        }
+    }
+
+    rs->count = (tex_count * 4) | (col_count << R300_IC_COUNT_SHIFT) |
+        R300_HIRES_EN;
+
+    rs->inst_count = MAX2(col_count, tex_count);
 }
 
 void r300_update_derived_state(struct r300_context* r300)

@@ -75,7 +75,7 @@ is_passthrough_program(const struct gl_fragment_program *prog)
       if (inst[0].Opcode == OPCODE_MOV &&
           inst[1].Opcode == OPCODE_END &&
           inst[0].DstReg.File == PROGRAM_OUTPUT &&
-          inst[0].DstReg.Index == FRAG_RESULT_COLR &&
+          inst[0].DstReg.Index == FRAG_RESULT_COLOR &&
           inst[0].DstReg.WriteMask == WRITEMASK_XYZW &&
           inst[0].SrcReg[0].File == PROGRAM_INPUT &&
           inst[0].SrcReg[0].Index == FRAG_ATTRIB_COL0 &&
@@ -158,7 +158,7 @@ combined_drawpix_fragment_program(GLcontext *ctx)
 
 /**
  * Create fragment shader that does a TEX() instruction to get a Z
- * value, then writes to FRAG_RESULT_DEPR.
+ * value, then writes to FRAG_RESULT_DEPTH.
  * Pass fragment color through as-is.
  */
 static struct st_fragment_program *
@@ -191,7 +191,7 @@ make_fragment_shader_z(struct st_context *st)
    /* TEX result.depth, fragment.texcoord[0], texture[0], 2D; */
    p->Instructions[ic].Opcode = OPCODE_TEX;
    p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
-   p->Instructions[ic].DstReg.Index = FRAG_RESULT_DEPR;
+   p->Instructions[ic].DstReg.Index = FRAG_RESULT_DEPTH;
    p->Instructions[ic].DstReg.WriteMask = WRITEMASK_Z;
    p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
    p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
@@ -202,7 +202,7 @@ make_fragment_shader_z(struct st_context *st)
    /* MOV result.color, fragment.color */
    p->Instructions[ic].Opcode = OPCODE_MOV;
    p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
-   p->Instructions[ic].DstReg.Index = FRAG_RESULT_COLR;
+   p->Instructions[ic].DstReg.Index = FRAG_RESULT_COLOR;
    p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
    p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_COL0;
    ic++;
@@ -213,7 +213,7 @@ make_fragment_shader_z(struct st_context *st)
    assert(ic == p->NumInstructions);
 
    p->InputsRead = FRAG_BIT_TEX0 | FRAG_BIT_COL0;
-   p->OutputsWritten = (1 << FRAG_RESULT_COLR) | (1 << FRAG_RESULT_DEPR);
+   p->OutputsWritten = (1 << FRAG_RESULT_COLOR) | (1 << FRAG_RESULT_DEPTH);
    p->SamplersUsed = 0x1;  /* sampler 0 (bit 0) is used */
 
    st->drawpix.z_shader = (struct st_fragment_program *) p;

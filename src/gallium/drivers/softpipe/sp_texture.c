@@ -243,9 +243,11 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
       ps->level = level;
       ps->zslice = zslice;
 
-      if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
-         ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
-            pt->nblocksy[level] * spt->stride[level];
+      if (pt->target == PIPE_TEXTURE_CUBE) {
+         ps->offset += face * pt->nblocksy[level] * spt->stride[level];
+      }
+      else if (pt->target == PIPE_TEXTURE_3D) {
+         ps->offset += zslice * pt->nblocksy[level] * spt->stride[level];
       }
       else {
          assert(face == 0);
@@ -283,14 +285,13 @@ softpipe_get_tex_transfer(struct pipe_screen *screen,
 {
    struct softpipe_texture *sptex = softpipe_texture(texture);
    struct softpipe_transfer *spt;
-   struct pipe_transfer *pt;
 
    assert(texture);
    assert(level <= texture->last_level);
 
    spt = CALLOC_STRUCT(softpipe_transfer);
-   pt = &spt->base;
    if (spt) {
+      struct pipe_transfer *pt = &spt->base;
       pt->refcount = 1;
       pipe_texture_reference(&pt->texture, texture);
       pt->format = texture->format;
@@ -302,23 +303,26 @@ softpipe_get_tex_transfer(struct pipe_screen *screen,
       pt->nblocksx = texture->nblocksx[level];
       pt->nblocksy = texture->nblocksy[level];
       pt->stride = sptex->stride[level];
-      spt->offset = sptex->level_offset[level];
       pt->usage = usage;
       pt->face = face;
       pt->level = level;
       pt->zslice = zslice;
 
-      if (texture->target == PIPE_TEXTURE_CUBE ||
-          texture->target == PIPE_TEXTURE_3D) {
-         spt->offset += ((texture->target == PIPE_TEXTURE_CUBE) ? face :
-                         zslice) * pt->nblocksy * pt->stride;
+      spt->offset = sptex->level_offset[level];
+
+      if (texture->target == PIPE_TEXTURE_CUBE) {
+         spt->offset += face * pt->nblocksy * pt->stride;
+      }
+      else if (texture->target == PIPE_TEXTURE_3D) {
+         spt->offset += zslice * pt->nblocksy * pt->stride;
       }
       else {
          assert(face == 0);
          assert(zslice == 0);
       }
+      return pt;
    }
-   return pt;
+   return NULL;
 }
 
 

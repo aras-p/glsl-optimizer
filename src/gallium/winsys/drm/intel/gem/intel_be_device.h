@@ -44,6 +44,8 @@ intel_be_init_device(struct intel_be_device *device, int fd, unsigned id);
 struct intel_be_buffer {
 	struct pipe_buffer base;
 	drm_intel_bo *bo;
+	boolean flinked;
+	unsigned flink;
 };
 
 /**
@@ -52,7 +54,7 @@ struct intel_be_buffer {
  * Takes a reference.
  */
 struct pipe_buffer *
-intel_be_buffer_from_handle(struct pipe_winsys *winsys,
+intel_be_buffer_from_handle(struct pipe_screen *screen,
                             const char* name, unsigned handle);
 
 /**
@@ -60,9 +62,20 @@ intel_be_buffer_from_handle(struct pipe_winsys *winsys,
  *
  * If buffer is destroyed handle may become invalid.
  */
-unsigned
-intel_be_handle_from_buffer(struct pipe_winsys *winsys,
-                            struct pipe_buffer *buffer);
+boolean
+intel_be_handle_from_buffer(struct pipe_screen *screen,
+                            struct pipe_buffer *buffer,
+                            unsigned *handle);
+
+/**
+ * Gets the global handle from a buffer.
+ *
+ * If buffer is destroyed handle may become invalid.
+ */
+boolean
+intel_be_global_handle_from_buffer(struct pipe_screen *screen,
+                                   struct pipe_buffer *buffer,
+                                   unsigned *handle);
 
 static INLINE struct intel_be_buffer *
 intel_be_buffer(struct pipe_buffer *buf)

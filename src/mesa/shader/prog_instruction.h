@@ -410,19 +410,14 @@ struct prog_instruction
     */
    GLint BranchTarget;
 
-#if 01 /* XXX just use this for i965 driver for now! */
-   /**
-    * For TEX instructions in shaders, the sampler to use for the
-    * texture lookup.
-    */
-   GLint Sampler;
-#endif
-
    /** for debugging purposes */
    const char *Comment;
 
    /** Arbitrary data.  Used for OPCODE_PRINT and some drivers */
    void *Data;
+
+   /** for driver use (try to remove someday) */
+   GLint Aux;
 
    /* XXX obsolete - remove someday */
 #if FEATURE_MESA_program_debug

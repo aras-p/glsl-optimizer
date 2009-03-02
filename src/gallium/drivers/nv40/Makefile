@@ -22,6 +22,7 @@ C_SOURCES = \
 	nv40_state_viewport.c \
 	nv40_state_zsa.c \
 	nv40_surface.c \
+	nv40_transfer.c \
 	nv40_vbo.c \
 	nv40_vertprog.c
 

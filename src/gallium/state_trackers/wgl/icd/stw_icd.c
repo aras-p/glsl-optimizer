@@ -36,6 +36,7 @@
 #include "shared/stw_public.h"
 #include "icd/stw_icd.h"
 
+#define DBG 0
 
 static GLCLTPROCTABLE cpt;
 static boolean cpt_initialized = FALSE;
@@ -81,7 +82,8 @@ DrvDescribeLayerPlane(
    UINT nBytes,
    LPLAYERPLANEDESCRIPTOR plpd )
 {
-   debug_printf( "%s\n", __FUNCTION__ );
+   if (DBG) 
+      debug_printf( "%s\n", __FUNCTION__ );
 
    return FALSE;
 }
@@ -97,8 +99,9 @@ DrvDescribePixelFormat(
 
    r = stw_pixelformat_describe( hdc, iPixelFormat, cjpfd, ppfd );
 
-   debug_printf( "%s( %p, %d, %u, %p ) = %d\n",
-                 __FUNCTION__, hdc, iPixelFormat, cjpfd, ppfd, r );
+   if (DBG)
+      debug_printf( "%s( %p, %d, %u, %p ) = %d\n",
+                    __FUNCTION__, hdc, iPixelFormat, cjpfd, ppfd, r );
 
    return r;
 }
@@ -111,7 +114,8 @@ DrvGetLayerPaletteEntries(
    INT cEntries,
    COLORREF *pcr )
 {
-   debug_printf( "%s\n", __FUNCTION__ );
+   if (DBG)
+      debug_printf( "%s\n", __FUNCTION__ );
 
    return 0;
 }
@@ -124,7 +128,8 @@ DrvGetProcAddress(
 
    r = stw_get_proc_address( lpszProc );
 
-   debug_printf( "%s( \", __FUNCTION__%s\" ) = %p\n", lpszProc, r );
+   if (DBG)
+      debug_printf( "%s( \", __FUNCTION__%s\" ) = %p\n", lpszProc, r );
 
    return r;
 }
@@ -135,7 +140,8 @@ DrvRealizeLayerPalette(
    INT iLayerPlane,
    BOOL bRealize )
 {
-   debug_printf( "%s\n", __FUNCTION__ );
+   if (DBG)
+      debug_printf( "%s\n", __FUNCTION__ );
 
    return FALSE;
 }
@@ -152,7 +158,8 @@ DrvSetCallbackProcs(
    INT nProcs,
    PROC *pProcs )
 {
-   debug_printf( "%s( %d, %p )\n", __FUNCTION__, nProcs, pProcs );
+   if (DBG)
+      debug_printf( "%s( %d, %p )\n", __FUNCTION__, nProcs, pProcs );
 
    return;
 }
@@ -510,8 +517,9 @@ DrvSetContext(
    DHGLRC dhglrc,
    PFN_SETPROCTABLE pfnSetProcTable )
 {
-   debug_printf( "%s( 0x%p, %u, 0x%p )\n", 
-                 __FUNCTION__, hdc, dhglrc, pfnSetProcTable );
+   if (DBG)
+      debug_printf( "%s( 0x%p, %u, 0x%p )\n", 
+                    __FUNCTION__, hdc, dhglrc, pfnSetProcTable );
 
    /* Although WGL allows different dispatch entrypoints per 
     */
@@ -534,7 +542,8 @@ DrvSetLayerPaletteEntries(
    INT cEntries,
    CONST COLORREF *pcr )
 {
-   debug_printf( "%s\n", __FUNCTION__ );
+   if (DBG)
+      debug_printf( "%s\n", __FUNCTION__ );
 
    return 0;
 }
@@ -548,7 +557,8 @@ DrvSetPixelFormat(
 
    r = stw_pixelformat_set( hdc, iPixelFormat );
 
-   debug_printf( "%s( %p, %d ) = %s\n", __FUNCTION__, hdc, iPixelFormat, r ? "TRUE" : "FALSE" );
+   if (DBG)
+      debug_printf( "%s( %p, %d ) = %s\n", __FUNCTION__, hdc, iPixelFormat, r ? "TRUE" : "FALSE" );
 
    return r;
 }
@@ -558,7 +568,8 @@ DrvShareLists(
    DHGLRC dhglrc1,
    DHGLRC dhglrc2 )
 {
-   debug_printf( "%s\n", __FUNCTION__ );
+   if (DBG)
+      debug_printf( "%s\n", __FUNCTION__ );
 
    return FALSE;
 }
@@ -567,7 +578,8 @@ BOOL APIENTRY
 DrvSwapBuffers(
    HDC hdc )
 {
-   debug_printf( "%s( %p )\n", __FUNCTION__, hdc );
+   if (DBG)
+      debug_printf( "%s( %p )\n", __FUNCTION__, hdc );
 
    return stw_swap_buffers( hdc );
 }
@@ -577,7 +589,8 @@ DrvSwapLayerBuffers(
    HDC hdc,
    UINT fuPlanes )
 {
-   debug_printf( "%s\n", __FUNCTION__ );
+   if (DBG)
+      debug_printf( "%s\n", __FUNCTION__ );
 
    return FALSE;
 }
@@ -586,7 +599,8 @@ BOOL APIENTRY
 DrvValidateVersion(
    ULONG ulVersion )
 {
-   debug_printf( "%s( %u )\n", __FUNCTION__, ulVersion );
+   if (DBG)
+      debug_printf( "%s( %u )\n", __FUNCTION__, ulVersion );
 
    /* TODO: get the expected version from the winsys */
    

@@ -1,11 +1,8 @@
 
 #include "sparc_matrix.h"
 
-#if defined(SVR4) || defined(__SVR4) || defined(__svr4__)
-	/* Solaris requires this for 64-bit. */
 	.register %g2, #scratch
 	.register %g3, #scratch
-#endif
 
 	.text
 
@@ -98,7 +95,7 @@ _mesa_sparc_transform_normalize_normals:
 
 	cmp	%o4, %g1			! continue if (i < count)
 	bl	1b
-	 add	%g3, 0x0c, %g3			! advance out vector pointer
+	 add	%g3, 0x10, %g3			! advance out vector pointer
 
 	ba	7f
 	 nop
@@ -154,7 +151,7 @@ _mesa_sparc_transform_normalize_normals:
 
 	cmp	%o4, %g1			! continue if (i < count)
 	bl	5b
-	 add	%g3, 0x0c, %g3			! advance out vector pointer
+	 add	%g3, 0x10, %g3			! advance out vector pointer
 
 7:	retl
 	 nop
@@ -225,7 +222,7 @@ _mesa_sparc_transform_normalize_normals_no_rot:
 
 	cmp	%o4, %g1			! continue if (i < count)
 	bl	1b
-	 add	%g3, 0x0c, %g3			! advance out vector pointer
+	 add	%g3, 0x10, %g3			! advance out vector pointer
 
 	ba	7f
 	 nop
@@ -263,7 +260,7 @@ _mesa_sparc_transform_normalize_normals_no_rot:
 
 	cmp	%o4, %g1			! continue if (i < count)
 	bl	5b
-	 add	%g3, 0x0c, %g3			! advance out vector pointer
+	 add	%g3, 0x10, %g3			! advance out vector pointer
 
 7:	retl
 	 nop
@@ -314,7 +311,7 @@ _mesa_sparc_transform_rescale_normals_no_rot:
 
 	cmp	%o4, %g1			! continue if (i < count)
 	bl	1b
-	 add	%g3, 0x0c, %g3			! advance out vector pointer
+	 add	%g3, 0x10, %g3			! advance out vector pointer
 
 7:	retl
 	 nop
@@ -379,7 +376,7 @@ _mesa_sparc_transform_rescale_normals:
 
 	cmp	%o4, %g1			! continue if (i < count)
 	bl	1b
-	 add	%g3, 0x0c, %g3			! advance out vector pointer
+	 add	%g3, 0x10, %g3			! advance out vector pointer
 
 7:	retl
 	 nop
@@ -421,7 +418,7 @@ _mesa_sparc_transform_normals_no_rot:
 
 	cmp	%o4, %g1			! continue if (i < count)
 	bl	1b
-	 add	%g3, 0x0c, %g3			! advance out vector pointer
+	 add	%g3, 0x10, %g3			! advance out vector pointer
 
 7:	retl
 	 nop
@@ -471,7 +468,7 @@ _mesa_sparc_transform_normals:
 
 	cmp	%o4, %g1			! continue if (i < count)
 	bl	1b
-	 add	%g3, 0x0c, %g3			! advance out vector pointer
+	 add	%g3, 0x10, %g3			! advance out vector pointer
 
 7:	retl
 	 nop
@@ -529,7 +526,7 @@ _mesa_sparc_normalize_normals:
 
 	cmp	%o4, %g1			! continue if (i < count)
 	bl	1b
-	 add	%g3, 0x0c, %g3			! advance out vector pointer
+	 add	%g3, 0x10, %g3			! advance out vector pointer
 
 	ba	7f
 	 nop
@@ -557,7 +554,7 @@ _mesa_sparc_normalize_normals:
 
 	cmp	%o4, %g1			! continue if (i < count)
 	bl	5b
-	 add	%g3, 0x0c, %g3			! advance out vector pointer
+	 add	%g3, 0x10, %g3			! advance out vector pointer
 
 7:	retl
 	 nop
@@ -602,7 +599,7 @@ _mesa_sparc_rescale_normals:
 
 	cmp	%o4, %g1			! continue if (i < count)
 	bl	1b
-	 add	%g3, 0x0c, %g3			! advance out vector pointer
+	 add	%g3, 0x10, %g3			! advance out vector pointer
 
 7:	retl
 	 nop

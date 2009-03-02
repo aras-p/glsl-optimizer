@@ -222,7 +222,8 @@ xm_flush_frontbuffer(struct pipe_winsys *pws,
     * This function copies that XImage to the actual X Window.
     */
    XMesaContext xmctx = (XMesaContext) context_private;
-   xlib_cell_display_surface(xmctx->xm_buffer, surf);
+   if (xmctx)
+      xlib_cell_display_surface(xmctx->xm_buffer, surf);
 }
 
 

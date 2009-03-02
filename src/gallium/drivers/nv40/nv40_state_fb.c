@@ -12,7 +12,7 @@ static boolean
 nv40_state_framebuffer_validate(struct nv40_context *nv40)
 {
 	struct pipe_framebuffer_state *fb = &nv40->framebuffer;
-	struct pipe_surface *rt[4], *zeta;
+	struct nv04_surface *rt[4], *zeta;
 	uint32_t rt_enable, rt_format;
 	int i, colour_format = 0, zeta_format = 0;
 	struct nouveau_stateobj *so = so_new(64, 10);
@@ -27,7 +27,7 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 		} else {
 			colour_format = fb->cbufs[i]->format;
 			rt_enable |= (NV40TCL_RT_ENABLE_COLOR0 << i);
-			rt[i] = fb->cbufs[i];
+			rt[i] = (struct nv04_surface *)fb->cbufs[i];
 		}
 	}
 
@@ -37,13 +37,13 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 
 	if (fb->zsbuf) {
 		zeta_format = fb->zsbuf->format;
-		zeta = fb->zsbuf;
+		zeta = (struct nv04_surface *)fb->zsbuf;
 	}
 
-	if (!(rt[0]->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
+	if (!(rt[0]->base.texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
 		assert(!(fb->width & (fb->width - 1)) && !(fb->height & (fb->height - 1)));
 		for (i = 1; i < fb->nr_cbufs; i++)
-			assert(!(rt[i]->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR));
+			assert(!(rt[i]->base.texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR));
 
 		rt_format = NV40TCL_RT_FORMAT_TYPE_SWIZZLED |
 		            log2i(fb->width) << NV40TCL_RT_FORMAT_LOG2_WIDTH_SHIFT |
@@ -78,60 +78,60 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR0) {
 		so_method(so, nv40->screen->curie, NV40TCL_DMA_COLOR0, 1);
-		so_reloc (so, nv40_surface_buffer(rt[0]), 0, rt_flags | NOUVEAU_BO_OR,
+		so_reloc (so, nv40_surface_buffer(&rt[0]->base), 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR0_PITCH, 2);
-		so_data  (so, rt[0]->stride);
-		so_reloc (so, nv40_surface_buffer(rt[0]), rt[0]->offset, rt_flags |
+		so_data  (so, rt[0]->pitch);
+		so_reloc (so, nv40_surface_buffer(&rt[0]->base), rt[0]->base.offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR1) {
 		so_method(so, nv40->screen->curie, NV40TCL_DMA_COLOR1, 1);
-		so_reloc (so, nv40_surface_buffer(rt[1]), 0, rt_flags | NOUVEAU_BO_OR,
+		so_reloc (so, nv40_surface_buffer(&rt[1]->base), 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR1_OFFSET, 2);
-		so_reloc (so, nv40_surface_buffer(rt[1]), rt[1]->offset, rt_flags |
+		so_reloc (so, nv40_surface_buffer(&rt[1]->base), rt[1]->base.offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
-		so_data  (so, rt[1]->stride);
+		so_data  (so, rt[1]->pitch);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR2) {
 		so_method(so, nv40->screen->curie, NV40TCL_DMA_COLOR2, 1);
-		so_reloc (so, nv40_surface_buffer(rt[2]), 0, rt_flags | NOUVEAU_BO_OR,
+		so_reloc (so, nv40_surface_buffer(&rt[2]->base), 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR2_OFFSET, 1);
-		so_reloc (so, nv40_surface_buffer(rt[2]), rt[2]->offset, rt_flags |
+		so_reloc (so, nv40_surface_buffer(&rt[2]->base), rt[2]->base.offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR2_PITCH, 1);
-		so_data  (so, rt[2]->stride);
+		so_data  (so, rt[2]->pitch);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR3) {
 		so_method(so, nv40->screen->curie, NV40TCL_DMA_COLOR3, 1);
-		so_reloc (so, nv40_surface_buffer(rt[3]), 0, rt_flags | NOUVEAU_BO_OR,
+		so_reloc (so, nv40_surface_buffer(&rt[3]->base), 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR3_OFFSET, 1);
-		so_reloc (so, nv40_surface_buffer(rt[3]), rt[3]->offset, rt_flags |
+		so_reloc (so, nv40_surface_buffer(&rt[3]->base), rt[3]->base.offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR3_PITCH, 1);
-		so_data  (so, rt[3]->stride);
+		so_data  (so, rt[3]->pitch);
 	}
 
 	if (zeta_format) {
 		so_method(so, nv40->screen->curie, NV40TCL_DMA_ZETA, 1);
-		so_reloc (so, nv40_surface_buffer(zeta), 0, rt_flags | NOUVEAU_BO_OR,
+		so_reloc (so, nv40_surface_buffer(&zeta->base), 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
 		so_method(so, nv40->screen->curie, NV40TCL_ZETA_OFFSET, 1);
-		so_reloc (so, nv40_surface_buffer(zeta), zeta->offset, rt_flags |
+		so_reloc (so, nv40_surface_buffer(&zeta->base), zeta->base.offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 		so_method(so, nv40->screen->curie, NV40TCL_ZETA_PITCH, 1);
-		so_data  (so, zeta->stride);
+		so_data  (so, zeta->pitch);
 	}
 
 	so_method(so, nv40->screen->curie, NV40TCL_RT_ENABLE, 1);

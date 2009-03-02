@@ -30,7 +30,7 @@
 void r300_parse_chipset(struct r300_capabilities* caps)
 {
     /* Reasonable defaults */
-    caps->has_tcl = TRUE;
+    caps->has_tcl = getenv("RADEON_NO_TCL") ? TRUE : FALSE;
     caps->is_r500 = FALSE;
     caps->num_vert_fpus = 4;
 
@@ -201,6 +201,13 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x791E:
         case 0x791F:
             caps->family = CHIP_FAMILY_RS690;
+            caps->has_tcl = FALSE;
+            break;
+
+        case 0x793F:
+        case 0x7941:
+        case 0x7942:
+            caps->family = CHIP_FAMILY_RS600;
             caps->has_tcl = FALSE;
             break;
 

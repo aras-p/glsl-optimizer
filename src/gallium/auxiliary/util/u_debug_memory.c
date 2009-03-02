@@ -73,7 +73,9 @@ struct debug_memory_header
    const char *file;
    unsigned line;
    const char *function;
+#if DEBUG_MEMORY_STACK
    struct debug_stack_frame backtrace[DEBUG_MEMORY_STACK];
+#endif
    size_t size;
    
    unsigned magic;
@@ -140,7 +142,9 @@ debug_malloc(const char *file, unsigned line, const char *function,
    hdr->size = size;
    hdr->magic = DEBUG_MEMORY_MAGIC;
 
+#if DEBUG_MEMORY_STACK
    debug_backtrace_capture(hdr->backtrace, 0, DEBUG_MEMORY_STACK);
+#endif
 
    ftr = footer_from_header(hdr);
    ftr->magic = DEBUG_MEMORY_MAGIC;
@@ -296,7 +300,9 @@ debug_memory_end(unsigned long start_no)
 	 debug_printf("%s:%u:%s: %u bytes at %p not freed\n",
 		      hdr->file, hdr->line, hdr->function,
 		      hdr->size, ptr);
+#if DEBUG_MEMORY_STACK
 	 debug_backtrace_dump(hdr->backtrace, DEBUG_MEMORY_STACK);
+#endif
 	 total_size += hdr->size;
       }
 

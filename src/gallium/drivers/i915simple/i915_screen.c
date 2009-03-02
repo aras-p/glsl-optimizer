@@ -36,6 +36,7 @@
 #include "i915_context.h"
 #include "i915_screen.h"
 #include "i915_texture.h"
+#include "i915_winsys.h"
 
 
 static const char *

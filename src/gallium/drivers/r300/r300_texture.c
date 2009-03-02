@@ -31,8 +31,9 @@ static void r300_setup_miptree(struct r300_texture* tex)
 {
     struct pipe_texture* base = &tex->tex;
     int stride, size, offset;
+    int i;
 
-    for (int i = 0; i <= base->last_level; i++) {
+    for (i = 0; i <= base->last_level; i++) {
         if (i > 0) {
             base->width[i] = minify(base->width[i-1]);
             base->height[i] = minify(base->height[i-1]);

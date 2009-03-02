@@ -153,16 +153,12 @@ cell_add_fenced_textures(struct cell_context *cell)
    for (i = 0; i < cell->num_textures; i++) {
       struct cell_texture *ct = cell->texture[i];
       if (ct) {
-         uint level;
-         for (level = 0; level < CELL_MAX_TEXTURE_LEVELS; level++) {
-            if (ct->tiled_buffer[level]) {
 #if 0
-               printf("Adding texture %p buffer %p to list\n",
-                      ct, ct->tiled_buffer[level]);
+         printf("Adding texture %p buffer %p to list\n",
+                ct, ct->tiled_buffer[level]);
 #endif
-               cell_add_buffer_to_list(cell, list, ct->tiled_buffer[level]);
-            }
-         }
+         if (ct->buffer)
+            cell_add_buffer_to_list(cell, list, ct->buffer);
       }
    }
 }

@@ -418,8 +418,8 @@ struct brw_context
       struct brw_tracked_state **atoms;
       GLuint nr_atoms;
 
-      GLuint nr_draw_regions;
-      struct intel_region *draw_regions[MAX_DRAW_BUFFERS];
+      GLuint nr_color_regions;
+      struct intel_region *color_regions[MAX_DRAW_BUFFERS];
       struct intel_region *depth_region;
 
       /**
@@ -670,7 +670,9 @@ void brwInitFragProgFuncs( struct dd_function_table *functions );
  */
 void brw_upload_urb_fence(struct brw_context *brw);
 
-void brw_upload_constant_buffer_state(struct brw_context *brw);
+/* brw_curbe.c
+ */
+void brw_upload_cs_urb_state(struct brw_context *brw);
 
 
 /*======================================================================

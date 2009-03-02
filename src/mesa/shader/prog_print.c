@@ -86,6 +86,9 @@ file_string(enum register_file f, gl_prog_print_mode mode)
 static const char *
 arb_input_attrib_string(GLint index, GLenum progType)
 {
+   /*
+    * These strings should match the VERT_ATTRIB_x and FRAG_ATTRIB_x tokens.
+    */
    const char *vertAttribs[] = {
       "vertex.position",
       "vertex.weight",
@@ -160,6 +163,9 @@ arb_input_attrib_string(GLint index, GLenum progType)
 static const char *
 arb_output_attrib_string(GLint index, GLenum progType)
 {
+   /*
+    * These strings should match the VERT_RESULT_x and FRAG_RESULT_x tokens.
+    */
    const char *vertResults[] = {
       "result.position",
       "result.color.primary",
@@ -184,7 +190,12 @@ arb_output_attrib_string(GLint index, GLenum progType)
    };
    const char *fragResults[] = {
       "result.color",
-      "result.depth"
+      "result.color(half)",
+      "result.depth",
+      "result.color[0]",
+      "result.color[1]",
+      "result.color[2]",
+      "result.color[3]"
    };
 
    if (progType == GL_VERTEX_PROGRAM_ARB) {

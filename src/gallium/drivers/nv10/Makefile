@@ -14,6 +14,7 @@ C_SOURCES = \
 	nv10_state.c \
 	nv10_state_emit.c \
 	nv10_surface.c \
+	nv10_transfer.c \
 	nv10_vbo.c
 
 include ../../Makefile.template

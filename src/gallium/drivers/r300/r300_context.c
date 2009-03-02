@@ -73,7 +73,7 @@ static boolean r300_draw_range_elements(struct pipe_context* pipe,
                                              start + count - 1, NULL);
     }
 
-    return true;
+    return TRUE;
 }
 
 static boolean r300_draw_elements(struct pipe_context* pipe,
@@ -97,6 +97,7 @@ static void r300_destroy_context(struct pipe_context* context) {
     draw_destroy(r300->draw);
 
     FREE(r300->blend_color_state);
+    FREE(r300->rs_block);
     FREE(r300->scissor_state);
     FREE(r300);
 }
@@ -126,6 +127,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     draw_set_rasterize_stage(r300->draw, r300_draw_swtcl_stage(r300));
 
     r300->blend_color_state = CALLOC_STRUCT(r300_blend_color_state);
+    r300->rs_block = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state = CALLOC_STRUCT(r300_scissor_state);
 
     r300_init_flush_functions(r300);

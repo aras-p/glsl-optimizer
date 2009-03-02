@@ -138,24 +138,24 @@ const struct brw_tracked_state brw_curbe_offsets = {
  * fixed-function hardware in a double-buffering scheme to avoid a
  * pipeline stall each time the contents of the curbe is changed.
  */
-void brw_upload_constant_buffer_state(struct brw_context *brw)
+void brw_upload_cs_urb_state(struct brw_context *brw)
 {
-   struct brw_constant_buffer_state cbs; 
-   memset(&cbs, 0, sizeof(cbs));
+   struct brw_cs_urb_state cs_urb;
+   memset(&cs_urb, 0, sizeof(cs_urb));
 
    /* It appears that this is the state packet for the CS unit, ie. the
     * urb entries detailed here are housed in the CS range from the
     * URB_FENCE command.
     */
-   cbs.header.opcode = CMD_CONST_BUFFER_STATE;
-   cbs.header.length = sizeof(cbs)/4 - 2;
+   cs_urb.header.opcode = CMD_CS_URB_STATE;
+   cs_urb.header.length = sizeof(cs_urb)/4 - 2;
 
    /* BRW_NEW_URB_FENCE */
-   cbs.bits0.nr_urb_entries = brw->urb.nr_cs_entries;
-   cbs.bits0.urb_entry_size = brw->urb.csize - 1;
+   cs_urb.bits0.nr_urb_entries = brw->urb.nr_cs_entries;
+   cs_urb.bits0.urb_entry_size = brw->urb.csize - 1;
 
    assert(brw->urb.nr_cs_entries);
-   BRW_CACHED_BATCH_STRUCT(brw, &cbs);
+   BRW_CACHED_BATCH_STRUCT(brw, &cs_urb);
 }
 
 static GLfloat fixed_plane[6][4] = {
