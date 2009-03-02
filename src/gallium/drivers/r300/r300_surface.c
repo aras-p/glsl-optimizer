@@ -55,12 +55,14 @@ static void r300_surface_fill(struct pipe_context* pipe,
         return;
     }*/
 
+    r300_emit_invariant_state(r300);
+
     r300_emit_blend_state(r300, &blend_clear_state);
     r300_emit_blend_color_state(r300, &blend_color_clear_state);
     r300_emit_dsa_state(r300, &dsa_clear_state);
     r300_emit_rs_state(r300, &rs_clear_state);
 
-    BEGIN_CS(143 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
+    BEGIN_CS(129 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -89,19 +91,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_32F(1.0);
     OUT_CS_32F(1.0);
     OUT_CS_32F(1.0);
-    /* XXX is this too long? */
-    OUT_CS_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xFFFF);
-    OUT_CS_REG(R300_GB_ENABLE, R300_GB_POINT_STUFF_ENABLE |
-        R300_GB_LINE_STUFF_ENABLE | R300_GB_TRIANGLE_STUFF_ENABLE);
-    /* XXX more magic numbers */
-    OUT_CS_REG(R300_GB_MSPOS0, 0x66666666);
-    OUT_CS_REG(R300_GB_MSPOS1, 0x66666666);
-    /* XXX why doesn't classic Mesa write the number of pipes, too? */
-    OUT_CS_REG(R300_GB_TILE_CONFIG, R300_GB_TILE_DISABLE |
-        r300_translate_gb_pipes(caps->num_frag_pipes) |
-        R300_GB_TILE_SIZE_16);
-    OUT_CS_REG(R300_GB_SELECT, R300_GB_FOG_SELECT_1_1_W);
-    OUT_CS_REG(R300_GB_AA_CONFIG, 0x0);
     /* XXX point tex stuffing */
     OUT_CS_REG_SEQ(R300_GA_POINT_S0, 1);
     OUT_CS_32F(0.0);
