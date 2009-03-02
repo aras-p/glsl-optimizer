@@ -492,6 +492,7 @@ update_texture_state( GLcontext *ctx )
    GLuint unit;
    struct gl_fragment_program *fprog = NULL;
    struct gl_vertex_program *vprog = NULL;
+   GLbitfield enabledFragUnits = 0x0;
 
    if (ctx->Shader.CurrentProgram &&
        ctx->Shader.CurrentProgram->LinkStatus) {
@@ -523,7 +524,9 @@ update_texture_state( GLcontext *ctx )
     */
    for (unit = 0; unit < ctx->Const.MaxTextureImageUnits; unit++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-      GLbitfield enableBits;
+      GLbitfield enabledVertTargets = 0x0;
+      GLbitfield enabledFragTargets = 0x0;
+      GLbitfield enabledTargets = 0x0;
       GLuint texIndex;
 
       /* Get the bitmask of texture target enables.
@@ -532,20 +535,24 @@ update_texture_state( GLcontext *ctx )
        * by a fragment shader/program.  When multiple flags are set, we'll
        * settle on the one with highest priority (see below).
        */
-      enableBits = 0x0;
       if (vprog) {
-         enableBits |= vprog->Base.TexturesUsed[unit];
+         enabledVertTargets |= vprog->Base.TexturesUsed[unit];
       }
+
       if (fprog) {
-         enableBits |= fprog->Base.TexturesUsed[unit];
+         enabledFragTargets |= fprog->Base.TexturesUsed[unit];
       }
       else {
          /* fixed-function fragment program */
-         enableBits |= texUnit->Enabled;
+         enabledFragTargets |= texUnit->Enabled;
       }
 
-      if (enableBits == 0x0)
+      enabledTargets = enabledVertTargets | enabledFragTargets;
+
+      if (enabledTargets == 0x0) {
+         /* neither vertex nor fragment processing uses this unit */
          continue;
+      }
 
       texUnit->_Current = NULL;
       texUnit->_ReallyEnabled = 0x0;
@@ -557,7 +564,7 @@ update_texture_state( GLcontext *ctx )
        * Note that the TEXTURE_x_INDEX values are in high to low priority.
        */
       for (texIndex = 0; texIndex < NUM_TEXTURE_TARGETS; texIndex++) {
-         if (enableBits & (1 << texIndex)) {
+         if (enabledTargets & (1 << texIndex)) {
             struct gl_texture_object *texObj = texUnit->CurrentTex[texIndex];
             if (!texObj->_Complete) {
                _mesa_test_texobj_completeness(ctx, texObj);
@@ -581,6 +588,9 @@ update_texture_state( GLcontext *ctx )
 
       ctx->Texture._EnabledUnits |= (1 << unit);
 
+      if (enabledFragTargets)
+         enabledFragUnits |= (1 << unit);
+
       update_tex_combine(ctx, texUnit);
    }
 
@@ -592,7 +602,7 @@ update_texture_state( GLcontext *ctx )
          = (fprog->Base.InputsRead >> FRAG_ATTRIB_TEX0) & coordMask;
    }
    else {
-      ctx->Texture._EnabledCoordUnits = ctx->Texture._EnabledUnits;
+      ctx->Texture._EnabledCoordUnits = enabledFragUnits;
    }
 
    /* Setup texgen for those texture coordinate sets that are in use */
