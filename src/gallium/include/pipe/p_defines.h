@@ -201,6 +201,8 @@ enum pipe_texture_target {
 #define PIPE_BUFFER_USAGE_VERTEX    (1 << 5)
 #define PIPE_BUFFER_USAGE_INDEX     (1 << 6)
 #define PIPE_BUFFER_USAGE_CONSTANT  (1 << 7)
+#define PIPE_BUFFER_USAGE_DISCARD   (1 << 8)
+#define PIPE_BUFFER_USAGE_DONTBLOCK (1 << 9)
 /** Pipe driver custom usage flags should be greater or equal to this value */
 #define PIPE_BUFFER_USAGE_CUSTOM    (1 << 16)
 
