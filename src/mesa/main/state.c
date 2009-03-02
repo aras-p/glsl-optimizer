@@ -490,7 +490,7 @@ _mesa_update_state_locked( GLcontext *ctx )
    if (new_state & _NEW_LIGHT)
       _mesa_update_lighting( ctx );
 
-   if (new_state & _NEW_STENCIL)
+   if (new_state & (_NEW_STENCIL | _NEW_BUFFERS))
       _mesa_update_stencil( ctx );
 
 #if FEATURE_pixel_transfer

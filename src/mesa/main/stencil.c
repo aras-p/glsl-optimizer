@@ -536,7 +536,11 @@ _mesa_update_stencil(GLcontext *ctx)
 {
    const GLint face = ctx->Stencil._BackFace;
 
-   ctx->Stencil._TestTwoSide =
+   ctx->Stencil._Enabled = (ctx->Stencil.Enabled &&
+                            ctx->DrawBuffer->Visual.stencilBits > 0);
+
+    ctx->Stencil._TestTwoSide =
+       ctx->Stencil._Enabled &&
        (ctx->Stencil.Function[0] != ctx->Stencil.Function[face] ||
 	ctx->Stencil.FailFunc[0] != ctx->Stencil.FailFunc[face] ||
 	ctx->Stencil.ZPassFunc[0] != ctx->Stencil.ZPassFunc[face] ||
