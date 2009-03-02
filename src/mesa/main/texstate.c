@@ -576,9 +576,6 @@ update_texture_state( GLcontext *ctx )
          }
       }
 
-      if (texUnit->_Current)
-         update_texture_compare_function(ctx, texUnit->_Current);
-
       if (!texUnit->_ReallyEnabled) {
          _mesa_reference_texobj(&texUnit->_Current, NULL);
          continue;
@@ -592,6 +589,7 @@ update_texture_state( GLcontext *ctx )
          enabledFragUnits |= (1 << unit);
 
       update_tex_combine(ctx, texUnit);
+      update_texture_compare_function(ctx, texUnit->_Current);
    }
 
 
