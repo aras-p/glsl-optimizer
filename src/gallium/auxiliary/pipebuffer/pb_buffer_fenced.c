@@ -419,16 +419,14 @@ buffer_fence(struct pb_buffer *buf,
    if(buf->vtbl != &fenced_buffer_vtbl)
       return;
    
+   if(!fence)
+      return;
+
    fenced_buf = fenced_buffer(buf);
    fenced_list = fenced_buf->list;
    winsys = fenced_list->winsys;
    
-   if(!fence || fence == fenced_buf->fence) {
-      /* Handle the same fence case specially, not only because it is a fast 
-       * path, but mostly to avoid serializing two writes with the same fence, 
-       * as that would bring the hardware down to synchronous operation without
-       * any benefit.
-       */
+   if(fence == fenced_buf->fence) {
       fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
       return;
    }
@@ -436,11 +434,9 @@ buffer_fence(struct pb_buffer *buf,
    pipe_mutex_lock(fenced_list->mutex);
    if (fenced_buf->fence)
       _fenced_buffer_remove(fenced_list, fenced_buf);
-   if (fence) {
-      winsys->fence_reference(winsys, &fenced_buf->fence, fence);
-      fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
-      _fenced_buffer_add(fenced_buf);
-   }
+   winsys->fence_reference(winsys, &fenced_buf->fence, fence);
+   fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
+   _fenced_buffer_add(fenced_buf);
    pipe_mutex_unlock(fenced_list->mutex);
 }
 
