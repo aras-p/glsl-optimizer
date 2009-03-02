@@ -2205,7 +2205,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300DepthFunc(ctx, ctx->Depth.Func);
 
 	/* stencil */
-	r300Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
+	r300Enable(ctx, GL_STENCIL_TEST, ctx->Stencil._Enabled);
 	r300StencilMaskSeparate(ctx, 0, ctx->Stencil.WriteMask[0]);
 	r300StencilFuncSeparate(ctx, 0, ctx->Stencil.Function[0],
 				ctx->Stencil.Ref[0], ctx->Stencil.ValueMask[0]);

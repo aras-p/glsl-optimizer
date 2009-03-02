@@ -1022,7 +1022,7 @@ _swrast_choose_triangle( GLcontext *ctx )
           ctx->Depth.Test &&
           ctx->Depth.Mask == GL_FALSE &&
           ctx->Depth.Func == GL_LESS &&
-          !ctx->Stencil.Enabled) {
+          !ctx->Stencil._Enabled) {
          if ((rgbmode &&
               ctx->Color.ColorMask[0] == 0 &&
               ctx->Color.ColorMask[1] == 0 &&

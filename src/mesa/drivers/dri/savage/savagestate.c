@@ -514,7 +514,7 @@ static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
 	imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites = GL_TRUE;
 	imesa->regs.s4.zBufCtrl.ni.zBufEn = GL_TRUE;
     }
-    else if (imesa->glCtx->Stencil.Enabled && imesa->hw_stencil)
+    else if (imesa->glCtx->Stencil._Enabled && imesa->hw_stencil)
     {
         /* Need to keep Z on for Stencil. */
 	imesa->regs.s4.zBufCtrl.ni.zCmpFunc = CF_Always;
@@ -1092,7 +1092,7 @@ static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
 		FALLBACK (ctx, SAVAGE_FALLBACK_STENCIL, state);
 	    else {
 		imesa->regs.s4.stencilCtrl.ni.stencilEn = state;
-		if (ctx->Stencil.Enabled &&
+		if (ctx->Stencil._Enabled &&
 		    imesa->regs.s4.zBufCtrl.ni.zBufEn != GL_TRUE)
 		{
 		    /* Stencil buffer requires Z enabled. */

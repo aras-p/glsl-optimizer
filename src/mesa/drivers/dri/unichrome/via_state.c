@@ -1342,7 +1342,7 @@ static void viaChooseStencilState(GLcontext *ctx)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
     
-    if (ctx->Stencil.Enabled) {
+    if (ctx->Stencil._Enabled) {
         GLuint temp;
 
         vmesa->regEnable |= HC_HenST_MASK;

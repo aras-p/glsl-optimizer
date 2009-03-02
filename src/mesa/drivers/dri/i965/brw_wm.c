@@ -210,7 +210,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
       lookup |= IZ_DEPTH_WRITE_ENABLE_BIT;
 
    /* _NEW_STENCIL */
-   if (ctx->Stencil.Enabled) {
+   if (ctx->Stencil._Enabled) {
       lookup |= IZ_STENCIL_TEST_ENABLE_BIT;
 
       if (ctx->Stencil.WriteMask[0] ||
