@@ -554,7 +554,6 @@ update_texture_state( GLcontext *ctx )
          continue;
       }
 
-      texUnit->_Current = NULL;
       texUnit->_ReallyEnabled = 0x0;
 
       /* Look for the highest priority texture target that's enabled (or used
@@ -571,7 +570,7 @@ update_texture_state( GLcontext *ctx )
             }
             if (texObj->_Complete) {
                texUnit->_ReallyEnabled = 1 << texIndex;
-               texUnit->_Current = texObj;
+               _mesa_reference_texobj(&texUnit->_Current, texObj);
                break;
             }
          }
