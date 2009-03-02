@@ -296,9 +296,10 @@ fenced_buffer_map(struct pb_buffer *buf,
    assert(!(flags & ~PIPE_BUFFER_USAGE_CPU_READ_WRITE));
    flags &= PIPE_BUFFER_USAGE_CPU_READ_WRITE;
    
-   /* Check for GPU read/write access */
-   if(fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_WRITE) {
-      /* Wait for the GPU to finish writing */
+   /* Serialize writes */
+   if((fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_WRITE) ||
+      ((fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_READ) && (flags & PIPE_BUFFER_USAGE_CPU_WRITE))) {
+      /* Wait for the GPU to finish */
       _fenced_buffer_finish(fenced_buf);
    }
 
