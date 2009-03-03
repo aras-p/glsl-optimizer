@@ -18,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -37,12 +37,14 @@ struct st_framebuffer;
 
 struct dri_drawable
 {
+   /* dri */
    __DRIdrawablePrivate *dPriv;
-   unsigned stamp;
+   __DRIscreenPrivate *sPriv;
 
-   struct pipe_fence *last_swap_fence;
-   struct pipe_fence *first_swap_fence;
+   unsigned attachments[8];
+   unsigned num_attachments;
 
+   /* gallium */
    struct st_framebuffer *stfb;
 };
 
@@ -57,17 +59,26 @@ dri_drawable(__DRIdrawablePrivate * driDrawPriv)
 /***********************************************************************
  * dri_drawable.c
  */
+boolean
+dri_create_buffer(__DRIscreenPrivate *sPriv,
+                  __DRIdrawablePrivate *dPriv,
+                  const __GLcontextModes *visual,
+                  boolean isPixmap);
 
-void 
+void
 dri_swap_buffers(__DRIdrawablePrivate * dPriv);
 
-void 
+void
 dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv,
-                    int x, int y, 
+                    int x, int y,
                     int w, int h);
 
-void 
-dri_update_window_size(__DRIdrawablePrivate *dPriv);
+void
+dri_get_buffers(__DRIdrawablePrivate * dPriv);
 
+void
+dri_destroy_buffer(__DRIdrawablePrivate *dPriv);
 
 #endif
+
+/* vim: set sw=3 ts=8 sts=3 expandtab: */

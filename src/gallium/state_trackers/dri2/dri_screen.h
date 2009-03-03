@@ -18,12 +18,16 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+/*
+ * Author: Keith Whitwell <keithw@vmware.com>
+ * Author: Jakob Bornecrantz <wallbraker@gmail.com>
+ */
 
 #ifndef DRI_SCREEN_H
 #define DRI_SCREEN_H
@@ -35,27 +39,8 @@
 
 struct dri_screen
 {
-   __DRIScreenPrivate *sPriv;
-   struct pipe_winsys *pipe_winsys;
-   struct pipe_screen *pipe_screen;
-
-   struct {
-      /* Need a pipe_surface pointer to do client-side swapbuffers:
-       */
-      unsigned long buffer_handle;
-      struct pipe_surface *surface;
-      struct pipe_texture *texture;
-
-      int pitch;                   /* row stride, in bytes */
-      int width;
-      int height;
-      int size;
-      int cpp;                     /* for front and back buffers */
-   } front;
-
-   int deviceID;
-   int drmMinor;
-
+   /* dri */
+   __DRIscreenPrivate *sPriv;
 
    /**
     * Configuration cache with default values for all contexts
@@ -67,8 +52,16 @@ struct dri_screen
     * which we need a rendering context, but none is currently bound.
     */
    struct dri_context *dummyContext;
-};
 
+   /* drm */
+   int deviceID;
+   int fd;
+   int minor;
+
+   /* gallium */
+   struct pipe_winsys *pipe_winsys;
+   struct pipe_screen *pipe_screen;
+};
 
 
 /** cast wrapper */
@@ -79,5 +72,19 @@ dri_screen(__DRIscreenPrivate *sPriv)
 }
 
 
+/***********************************************************************
+ * dri_screen.c
+ */
+const __DRIconfig **
+dri_init_screen2(__DRIscreenPrivate *sPriv);
+
+void
+dri_destroy_screen(__DRIscreenPrivate * sPriv);
+
+int
+dri_get_swap_info(__DRIdrawablePrivate * dPriv,
+                  __DRIswapInfo * sInfo);
 
 #endif
+
+/* vim: set sw=3 ts=8 sts=3 expandtab: */

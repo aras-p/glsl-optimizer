@@ -18,15 +18,20 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+/*
+ * Author: Keith Whitwell <keithw@vmware.com>
+ * Author: Jakob Bornecrantz <wallbraker@gmail.com>
+ */
 
-
-
+#include "dri_screen.h"
+#include "dri_context.h"
+#include "state_tracker/st_context.h"
 
 #define need_GL_ARB_multisample
 #define need_GL_ARB_point_parameters
@@ -96,13 +101,17 @@ const struct dri_extension card_extensions[] = {
 };
 
 
-
-void 
-dri_init_extensions( void )
+void
+dri_init_extensions(struct dri_context *ctx)
 {
    /* The card_extensions list should be pruned according to the
-    * capabilities of the pipe_screen.  This is actually something
+    * capabilities of the pipe_screen. This is actually something
     * that can/should be done inside st_create_context().
     */
-   driInitExtensions( ctx->st->ctx, card_extensions, GL_TRUE );
+   if (ctx)
+      driInitExtensions(ctx->st->ctx, card_extensions, GL_TRUE);
+   else
+      driInitExtensions(NULL, card_extensions, GL_FALSE);
 }
+
+/* vim: set sw=3 ts=8 sts=3 expandtab: */
