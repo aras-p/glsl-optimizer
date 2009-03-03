@@ -26,6 +26,12 @@ intel_be_buffer_map(struct pipe_winsys *winsys,
 	int write = 0;
 	int ret;
 
+        if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
+           /* Remove this when drm_intel_bo_map supports DONTBLOCK 
+            */
+           return NULL;
+        }
+
 	if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
 		write = 1;
 
