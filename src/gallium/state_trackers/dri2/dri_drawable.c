@@ -44,6 +44,15 @@
 #include "util/u_memory.h"
 
 
+static void
+dri_copy_to_front(__DRIdrawablePrivate *dPriv,
+                  struct pipe_surface *from,
+                  int x, int y, unsigned w, unsigned h)
+{
+   /* TODO send a message to the Xserver to copy to the real front buffer */
+}
+
+
 static struct pipe_surface *
 dri_surface_from_handle(struct pipe_screen *screen,
                         unsigned handle,
@@ -181,6 +190,16 @@ dri_get_buffers(__DRIdrawablePrivate *dPriv)
    }
    /* this needed, or else the state tracker fails to pick the new buffers */
    st_resize_framebuffer(drawable->stfb, dri_drawable->w, dri_drawable->h);
+}
+
+
+void
+dri_flush_frontbuffer(struct pipe_screen *screen,
+                      struct pipe_surface *surf,
+                      void *context_private)
+{
+   struct dri_context *ctx = (struct dri_context *)context_private;
+   dri_copy_to_front(ctx->dPriv, surf, 0, 0, surf->width, surf->height);
 }
 
 

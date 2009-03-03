@@ -224,6 +224,9 @@ dri_init_screen2(__DRIscreenPrivate *sPriv)
       goto fail;
    }
 
+   /* We need to hook in here */
+   screen->pipe_screen->flush_frontbuffer = dri_flush_frontbuffer;
+
    driParseOptionInfo(&screen->optionCache,
                       __driConfigOptions,
                       __driNConfigOptions);
