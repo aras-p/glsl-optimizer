@@ -31,6 +31,7 @@
 #include "main/api_validate.h"
 #include "main/api_noop.h"
 #include "main/varray.h"
+#include "main/bufferobj.h"
 #include "glapi/dispatch.h"
 
 #include "vbo_context.h"
@@ -291,6 +292,47 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
    prim[0].indexed = 0;
 
    vbo->draw_prims( ctx, exec->array.inputs, prim, 1, NULL, start, start + count - 1 );
+
+#if 0
+   {
+      int i;
+
+      _mesa_printf("vbo_exec_DrawArrays(mode 0x%x, start %d, count %d):\n",
+                   mode, start, count);
+
+      for (i = 0; i < 32; i++) {
+         GLuint bufName = exec->array.inputs[i]->BufferObj->Name;
+         GLint stride = exec->array.inputs[i]->Stride;
+         _mesa_printf("attr %2d: size %d stride %d  enabled %d  "
+                      "ptr %p  Bufobj %u\n",
+                      i,
+                      exec->array.inputs[i]->Size,
+                      stride,
+                      /*exec->array.inputs[i]->Enabled,*/
+                      exec->array.legacy_array[i]->Enabled,
+                      exec->array.inputs[i]->Ptr,
+                      bufName);
+         
+         if (bufName) {
+            struct gl_buffer_object *buf = _mesa_lookup_bufferobj(ctx, bufName);
+            GLubyte *p = ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER_ARB,
+                                            GL_READ_ONLY_ARB, buf);
+            int offset = (int) exec->array.inputs[i]->Ptr;
+            float *f = (float *) (p + offset);
+            int *k = (int *) f;
+            int i;
+            int n = (count * stride) / 4;
+            if (n > 32)
+               n = 32;
+            _mesa_printf("  Data at offset %d:\n", offset);
+            for (i = 0; i < n; i++) {
+               _mesa_printf("    float[%d] = 0x%08x %f\n", i, k[i], f[i]);
+            }
+            ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, buf);
+         }
+      }
+   }
+#endif
 }
 
 
