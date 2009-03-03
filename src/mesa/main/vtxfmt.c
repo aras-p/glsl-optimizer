@@ -54,9 +54,12 @@
    ASSERT( tnl->Current );						\
    ASSERT( tnl->SwapCount < NUM_VERTEX_FORMAT_ENTRIES );		\
    ASSERT( tmp_offset >= 0 );						\
-									\
-   /* Save the swapped function's dispatch entry so it can be */	\
-   /* restored later. */						\
+                                                                        \
+   if (tnl->SwapCount == 0)                                             \
+      ctx->Driver.BeginVertices( ctx );                                 \
+                                                                        \
+   /* Save the swapped function's dispatch entry so it can be */        \
+   /* restored later. */                                                \
    tnl->Swapped[tnl->SwapCount].location = & (((_glapi_proc *)ctx->Exec)[tmp_offset]); \
    tnl->Swapped[tnl->SwapCount].function = (_glapi_proc)TAG(FUNC);	\
    tnl->SwapCount++;							\

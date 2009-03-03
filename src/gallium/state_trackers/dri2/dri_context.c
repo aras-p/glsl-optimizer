@@ -18,21 +18,28 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
-
+/*
+ * Author: Keith Whitwell <keithw@vmware.com>
+ * Author: Jakob Bornecrantz <wallbraker@gmail.com>
+ */
 
 #include "dri_screen.h"
-#include "dri_context.h"
-#include "dri_winsys.h"
 
+#include "dri_drawable.h"
+
+
+#include "state_tracker/drm_api.h"
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
 #include "pipe/p_context.h"
+
+#include "dri_context.h"
 
 #include "util/u_memory.h"
 
@@ -59,14 +66,13 @@ dri_create_context(const __GLcontextModes *visual,
    ctx->cPriv = cPriv;
    ctx->sPriv = sPriv;
 
-   driParseConfigFiles(&ctx->optionCache, 
+   driParseConfigFiles(&ctx->optionCache,
                        &screen->optionCache,
-                       sPriv->myNum, 
+                       sPriv->myNum,
                        "dri");
-   
-   ctx->pipe = screen->pipe_screen->create_context(screen->pipe_screen,
-                                                   screen->pipe_winsys,
-                                                   hw_winsys );
+
+   ctx->pipe = drm_api_hocks.create_context(screen->pipe_screen);
+
    if (ctx->pipe == NULL)
       goto fail;
 
@@ -76,16 +82,16 @@ dri_create_context(const __GLcontextModes *visual,
    if (ctx->st == NULL)
       goto fail;
 
-   dri_init_extensions( ctx );
+   dri_init_extensions(ctx);
 
    return GL_TRUE;
 
 fail:
    if (ctx && ctx->st)
-      st_destroy_context( ctx->st );
+      st_destroy_context(ctx->st);
 
    if (ctx && ctx->pipe)
-      ctx->pipe->destroy( ctx->pipe );
+      ctx->pipe->destroy(ctx->pipe);
 
    FREE(ctx);
    return FALSE;
@@ -97,14 +103,13 @@ dri_destroy_context(__DRIcontextPrivate *cPriv)
 {
    struct dri_context *ctx = dri_context(cPriv);
    struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
-   struct pipe_winsys *winsys = screen->winsys;
 
    /* No particular reason to wait for command completion before
     * destroying a context, but it is probably worthwhile flushing it
     * to avoid having to add code elsewhere to cope with flushing a
     * partially destroyed context.
     */
-   st_flush(ctx->st);
+   st_flush(ctx->st, 0, NULL);
 
    if (screen->dummyContext == ctx)
       screen->dummyContext = NULL;
@@ -143,26 +148,21 @@ dri_make_current(__DRIcontextPrivate *cPriv,
        */
       screen->dummyContext = ctx;
 
-      st_make_current( ctx->st, 
-                       draw->stfb, 
-                       read->stfb );
+      st_make_current(ctx->st,
+                      draw->stfb,
+                      read->stfb);
 
       ctx->dPriv = driDrawPriv;
 
-      /* Update window sizes if necessary:
-       */
-      if (draw->stamp != driDrawPriv->lastStamp) {
-         dri_update_window_size( draw );
-      }
-
-      if (read->stamp != driReadPriv->lastStamp) {
-         dri_update_window_size( read );
-      }
-
-   }
-   else {
+      if (driDrawPriv)
+         dri_get_buffers(driDrawPriv);
+      if (driDrawPriv != driReadPriv && driReadPriv)
+         dri_get_buffers(driReadPriv);
+   } else {
       st_make_current(NULL, NULL, NULL);
    }
 
    return GL_TRUE;
 }
+
+/* vim: set sw=3 ts=8 sts=3 expandtab: */

@@ -87,7 +87,7 @@ nv10_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	{
 		tx->direct = true;
 		tx->surface = pscreen->get_tex_surface(pscreen, pt,
-	                                               face, level, zslice,
+	                                               0, 0, 0,
 	                                               nv10_usage_tx_to_buf(usage));
 		return &tx->base;
 	}

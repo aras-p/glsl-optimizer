@@ -61,7 +61,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
    if (ctx->Depth.Test)                   rasterMask |= DEPTH_BIT;
    if (swrast->_FogEnabled)               rasterMask |= FOG_BIT;
    if (ctx->Scissor.Enabled)              rasterMask |= CLIP_BIT;
-   if (ctx->Stencil.Enabled)              rasterMask |= STENCIL_BIT;
+   if (ctx->Stencil._Enabled)             rasterMask |= STENCIL_BIT;
    if (ctx->Visual.rgbMode) {
       const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
       if (colorMask != 0xffffffff)        rasterMask |= MASKING_BIT;

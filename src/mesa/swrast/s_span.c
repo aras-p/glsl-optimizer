@@ -846,11 +846,11 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
    }
 
    /* Stencil and Z testing */
-   if (ctx->Depth.Test || ctx->Stencil.Enabled) {
+   if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
 
-      if (ctx->Stencil.Enabled) {
+      if (ctx->Stencil._Enabled) {
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
             span->arrayMask = origArrayMask;
             return;
@@ -1211,7 +1211,7 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
          _swrast_exec_fragment_shader(ctx, span);
       }
    }
-   else if (ctx->Texture._EnabledUnits) {
+   else if (ctx->Texture._EnabledCoordUnits) {
       /* conventional texturing */
 
 #if CHAN_BITS == 32
@@ -1250,7 +1250,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    void * const origRgba = span->array->rgba;
    const GLboolean shader = (ctx->FragmentProgram._Current
                              || ctx->ATIFragmentShader._Enabled);
-   const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledUnits;
+   const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledCoordUnits;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
 
    /*
@@ -1317,11 +1317,11 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    }
 
    /* Stencil and Z testing */
-   if (ctx->Stencil.Enabled || ctx->Depth.Test) {
+   if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
 
-      if (ctx->Stencil.Enabled && fb->Visual.stencilBits > 0) {
+      if (ctx->Stencil._Enabled) {
          /* Combined Z/stencil tests */
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
             /* all fragments failed test */

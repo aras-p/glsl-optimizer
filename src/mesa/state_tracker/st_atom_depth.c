@@ -98,9 +98,11 @@ update_depth_stencil_alpha(struct st_context *st)
 
    memset(dsa, 0, sizeof(*dsa));
 
-   dsa->depth.enabled = ctx->Depth.Test;
-   dsa->depth.writemask = ctx->Depth.Mask;
-   dsa->depth.func = st_compare_func_to_pipe(ctx->Depth.Func);
+   if (ctx->Depth.Test && ctx->DrawBuffer->Visual.depthBits > 0) {
+      dsa->depth.enabled = 1;
+      dsa->depth.writemask = ctx->Depth.Mask;
+      dsa->depth.func = st_compare_func_to_pipe(ctx->Depth.Func);
+   }
 
    if (ctx->Query.CurrentOcclusionObject &&
        ctx->Query.CurrentOcclusionObject->Active)

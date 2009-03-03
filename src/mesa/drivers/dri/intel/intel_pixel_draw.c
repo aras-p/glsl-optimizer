@@ -233,7 +233,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
    }
 
    /* We don't support stencil testing/ops here */
-   if (ctx->Stencil.Enabled)
+   if (ctx->Stencil._Enabled)
       return GL_FALSE;
 
    /* We use FBOs for our wrapping of the depthbuffer into a color

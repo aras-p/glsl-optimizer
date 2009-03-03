@@ -91,7 +91,6 @@ MATH_SOURCES = \
 	math/m_vector.c
 
 MATH_XFORM_SOURCES = \
-	$(MATH_SOURCES) \
 	math/m_xform.c
 
 SWRAST_SOURCES = \
@@ -164,11 +163,6 @@ VBO_SOURCES = \
 	vbo/vbo_save_api.c \
 	vbo/vbo_save_draw.c \
 	vbo/vbo_save_loopback.c 
-
-VF_SOURCES = \
-	vf/vf.c \
-	vf/vf_generic.c \
-	vf/vf_sse.c
 
 STATETRACKER_SOURCES = \
 	state_tracker/st_atom.c \
@@ -311,6 +305,7 @@ COMMON_DRIVER_SOURCES =			\
 # Sources for building non-Gallium drivers
 MESA_SOURCES = \
 	$(MAIN_SOURCES)		\
+	$(MATH_SOURCES)		\
 	$(MATH_XFORM_SOURCES)	\
 	$(VBO_SOURCES)		\
 	$(TNL_SOURCES)		\

@@ -2410,11 +2410,8 @@ xbuffer_to_renderbuffer(int buffer)
    case GLX_AUX0_EXT:
       return BUFFER_AUX0;
    case GLX_AUX1_EXT:
-      return BUFFER_AUX1;
    case GLX_AUX2_EXT:
-      return BUFFER_AUX2;
    case GLX_AUX3_EXT:
-      return BUFFER_AUX3;
    case GLX_AUX4_EXT:
    case GLX_AUX5_EXT:
    case GLX_AUX6_EXT:

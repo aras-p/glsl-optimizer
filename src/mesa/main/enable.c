@@ -602,11 +602,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          ctx->Texture.SharedPalette = state;
          break;
       case GL_STENCIL_TEST:
-         if (state && ctx->DrawBuffer->Visual.stencilBits == 0) {
-            _mesa_warning(ctx,
-                          "glEnable(GL_STENCIL_TEST) but no stencil buffer");
-            return;
-         }
          if (ctx->Stencil.Enabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_STENCIL);

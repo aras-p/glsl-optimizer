@@ -385,28 +385,6 @@ update_texture_compare_function(GLcontext *ctx,
 
 
 /**
- * Helper function for determining which texture object (1D, 2D, cube, etc)
- * should actually be used.
- */
-static void
-texture_override(GLcontext *ctx,
-                 struct gl_texture_unit *texUnit, GLbitfield enableBits,
-                 struct gl_texture_object *texObj, GLuint textureBit)
-{
-   if (!texUnit->_ReallyEnabled && (enableBits & textureBit)) {
-      if (!texObj->_Complete) {
-         _mesa_test_texobj_completeness(ctx, texObj);
-      }
-      if (texObj->_Complete) {
-         texUnit->_ReallyEnabled = textureBit;
-         texUnit->_Current = texObj;
-         update_texture_compare_function(ctx, texObj);
-      }
-   }
-}
-
-
-/**
  * Examine texture unit's combine/env state to update derived state.
  */
 static void
@@ -514,6 +492,7 @@ update_texture_state( GLcontext *ctx )
    GLuint unit;
    struct gl_fragment_program *fprog = NULL;
    struct gl_vertex_program *vprog = NULL;
+   GLbitfield enabledFragUnits = 0x0;
 
    if (ctx->Shader.CurrentProgram &&
        ctx->Shader.CurrentProgram->LinkStatus) {
@@ -545,44 +524,60 @@ update_texture_state( GLcontext *ctx )
     */
    for (unit = 0; unit < ctx->Const.MaxTextureImageUnits; unit++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-      GLbitfield enableBits;
+      GLbitfield enabledVertTargets = 0x0;
+      GLbitfield enabledFragTargets = 0x0;
+      GLbitfield enabledTargets = 0x0;
       GLuint texIndex;
-
-      texUnit->_Current = NULL;
-      texUnit->_ReallyEnabled = 0x0;
 
       /* Get the bitmask of texture target enables.
        * enableBits will be a mask of the TEXTURE_*_BIT flags indicating
        * which texture targets are enabled (fixed function) or referenced
        * by a fragment shader/program.  When multiple flags are set, we'll
-       * settle on the one with highest priority (see texture_override below).
+       * settle on the one with highest priority (see below).
        */
-      enableBits = 0x0;
       if (vprog) {
-         enableBits |= vprog->Base.TexturesUsed[unit];
+         enabledVertTargets |= vprog->Base.TexturesUsed[unit];
       }
+
       if (fprog) {
-         enableBits |= fprog->Base.TexturesUsed[unit];
+         enabledFragTargets |= fprog->Base.TexturesUsed[unit];
       }
       else {
          /* fixed-function fragment program */
-         enableBits |= texUnit->Enabled;
+         enabledFragTargets |= texUnit->Enabled;
       }
 
-      if (enableBits == 0x0)
-         continue;
+      enabledTargets = enabledVertTargets | enabledFragTargets;
 
-      /* Look for the highest-priority texture target that's enabled and
-       * complete.  That's the one we'll use for texturing.  If we're using
-       * a fragment program we're guaranteed that bitcount(enabledBits) <= 1.
+      texUnit->_ReallyEnabled = 0x0;
+
+      if (enabledTargets == 0x0) {
+         /* neither vertex nor fragment processing uses this unit */
+         continue;
+      }
+
+      /* Look for the highest priority texture target that's enabled (or used
+       * by the vert/frag shaders) and "complete".  That's the one we'll use
+       * for texturing.  If we're using vert/frag program we're guaranteed
+       * that bitcount(enabledBits) <= 1.
        * Note that the TEXTURE_x_INDEX values are in high to low priority.
        */
       for (texIndex = 0; texIndex < NUM_TEXTURE_TARGETS; texIndex++) {
-         texture_override(ctx, texUnit, enableBits,
-                          texUnit->CurrentTex[texIndex], 1 << texIndex);
+         if (enabledTargets & (1 << texIndex)) {
+            struct gl_texture_object *texObj = texUnit->CurrentTex[texIndex];
+            if (!texObj->_Complete) {
+               _mesa_test_texobj_completeness(ctx, texObj);
+            }
+            if (texObj->_Complete) {
+               texUnit->_ReallyEnabled = 1 << texIndex;
+               _mesa_reference_texobj(&texUnit->_Current, texObj);
+               break;
+            }
+         }
       }
 
       if (!texUnit->_ReallyEnabled) {
+         _mesa_reference_texobj(&texUnit->_Current, NULL);
          continue;
       }
 
@@ -590,7 +585,11 @@ update_texture_state( GLcontext *ctx )
 
       ctx->Texture._EnabledUnits |= (1 << unit);
 
+      if (enabledFragTargets)
+         enabledFragUnits |= (1 << unit);
+
       update_tex_combine(ctx, texUnit);
+      update_texture_compare_function(ctx, texUnit->_Current);
    }
 
 
@@ -601,7 +600,7 @@ update_texture_state( GLcontext *ctx )
          = (fprog->Base.InputsRead >> FRAG_ATTRIB_TEX0) & coordMask;
    }
    else {
-      ctx->Texture._EnabledCoordUnits = ctx->Texture._EnabledUnits;
+      ctx->Texture._EnabledCoordUnits = enabledFragUnits;
    }
 
    /* Setup texgen for those texture coordinate sets that are in use */

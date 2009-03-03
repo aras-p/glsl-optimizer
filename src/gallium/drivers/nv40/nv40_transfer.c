@@ -104,7 +104,7 @@ nv40_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	}
 
 	tx->surface = pscreen->get_tex_surface(pscreen, tx_tex,
-	                                       face, level, zslice,
+	                                       0, 0, 0,
 	                                       nv40_usage_tx_to_buf(usage));
 
 	pipe_texture_reference(&tx_tex, NULL);

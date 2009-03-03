@@ -112,7 +112,7 @@ intel_check_blit_fragment_ops(GLcontext * ctx, GLboolean src_alpha_is_one)
       return GL_FALSE;
    }
 
-   if (ctx->Stencil.Enabled) {
+   if (ctx->Stencil._Enabled) {
       DBG("fallback due to image stencil\n");
       return GL_FALSE;
    }

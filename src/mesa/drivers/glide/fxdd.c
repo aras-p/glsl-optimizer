@@ -1948,7 +1948,7 @@ fx_check_IsInHardware(GLcontext * ctx)
       return FX_FALLBACK_RENDER_MODE;
    }
 
-   if (ctx->Stencil.Enabled && !fxMesa->haveHwStencil) {
+   if (ctx->Stencil._Enabled && !fxMesa->haveHwStencil) {
       return FX_FALLBACK_STENCIL;
    }
 

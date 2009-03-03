@@ -119,6 +119,12 @@ nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 	struct nouveau_pipe_buffer *nvbuf = nouveau_pipe_buffer(buf);
 	uint32_t map_flags = 0;
 
+        if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
+           /* Remove this when this code is modified to support DONTBLOCK 
+            */
+           return NULL;
+        }
+
 	if (flags & PIPE_BUFFER_USAGE_CPU_READ)
 		map_flags |= NOUVEAU_BO_RD;
 	if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)

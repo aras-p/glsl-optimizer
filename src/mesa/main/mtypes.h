@@ -285,14 +285,11 @@ typedef enum
    BUFFER_BACK_LEFT,
    BUFFER_FRONT_RIGHT,
    BUFFER_BACK_RIGHT,
-   /* optional aux buffers */
-   BUFFER_AUX0,
-   BUFFER_AUX1,
-   BUFFER_AUX2,
-   BUFFER_AUX3,
    BUFFER_DEPTH,
    BUFFER_STENCIL,
    BUFFER_ACCUM,
+   /* optional aux buffer */
+   BUFFER_AUX0,
    /* generic renderbuffers */
    BUFFER_COLOR0,
    BUFFER_COLOR1,
@@ -336,9 +333,6 @@ typedef enum
                             BUFFER_BIT_FRONT_RIGHT | \
                             BUFFER_BIT_BACK_RIGHT | \
                             BUFFER_BIT_AUX0 | \
-                            BUFFER_BIT_AUX1 | \
-                            BUFFER_BIT_AUX2 | \
-                            BUFFER_BIT_AUX3 | \
                             BUFFER_BIT_COLOR0 | \
                             BUFFER_BIT_COLOR1 | \
                             BUFFER_BIT_COLOR2 | \
@@ -1018,6 +1012,7 @@ struct gl_stencil_attrib
    GLboolean Enabled;		/**< Enabled flag */
    GLboolean TestTwoSide;	/**< GL_EXT_stencil_two_side */
    GLubyte ActiveFace;		/**< GL_EXT_stencil_two_side (0 or 2) */
+   GLboolean _Enabled;          /**< Enabled and stencil buffer present */
    GLboolean _TestTwoSide;
    GLubyte _BackFace;           /**< Current back stencil state (1 or 2) */
    GLenum Function[3];		/**< Stencil function */
@@ -1446,14 +1441,20 @@ struct gl_texture_attrib
    GLboolean SharedPalette;
    struct gl_color_table Palette;
 
-   /** Per-unit flags */
-   /*@{*/
-   GLbitfield _EnabledUnits;  /**< one bit set for each really-enabled unit */
-   GLbitfield _EnabledCoordUnits;   /**< one bit per enabled coordinate unit */
-   GLbitfield _GenFlags;            /**< for texgen */
-   GLbitfield _TexGenEnabled;  /**< Mask of ENABLE_TEXGEN flags */
-   GLbitfield _TexMatEnabled;  /**< Mask of ENABLE_TEXMAT flags */
-   /*@}*/
+   /** Texture units/samplers used by vertex or fragment texturing */
+   GLbitfield _EnabledUnits;
+
+   /** Texture coord units/sets used for fragment texturing */
+   GLbitfield _EnabledCoordUnits;
+
+   /** Texture coord units that have texgen enabled */
+   GLbitfield _TexGenEnabled;
+
+   /** Texture coord units that have non-identity matrices */
+   GLbitfield _TexMatEnabled;
+
+   /** Bitwise-OR of all Texture.Unit[i]._GenFlags */
+   GLbitfield _GenFlags;
 };
 
 

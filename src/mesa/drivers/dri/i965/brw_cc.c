@@ -88,7 +88,7 @@ cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 
    memset(key, 0, sizeof(*key));
 
-   key->stencil = ctx->Stencil.Enabled;
+   key->stencil = ctx->Stencil._Enabled;
    key->stencil_two_side = ctx->Stencil._TestTwoSide;
 
    if (key->stencil) {

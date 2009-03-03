@@ -112,6 +112,12 @@ static void *radeon_buffer_map(struct pipe_winsys *ws,
     struct radeon_pipe_buffer *radeon_buffer = (struct radeon_pipe_buffer*)buffer;
     int write = 0;
 
+    if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
+       /* Remove this when radeon_bo_map supports DONTBLOCK 
+        */
+       return NULL;
+    }
+
     if (flags & PIPE_BUFFER_USAGE_CPU_WRITE) {
         write = 1;
     }

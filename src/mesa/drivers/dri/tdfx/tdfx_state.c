@@ -459,7 +459,7 @@ static void tdfxUpdateStencil( GLcontext *ctx )
    }
 
    if (fxMesa->haveHwStencil) {
-      if (ctx->Stencil.Enabled) {
+      if (ctx->Stencil._Enabled) {
          fxMesa->Stencil.Function = ctx->Stencil.Function[0] - GL_NEVER + GR_CMP_NEVER;
          fxMesa->Stencil.RefValue = ctx->Stencil.Ref[0] & 0xff;
          fxMesa->Stencil.ValueMask = ctx->Stencil.ValueMask[0] & 0xff;

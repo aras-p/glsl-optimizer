@@ -740,7 +740,7 @@ void tdfxEmitHwStateLocked( tdfxContextPtr fxMesa )
    }
 
    if ( fxMesa->dirty & TDFX_UPLOAD_STENCIL ) {
-      if (fxMesa->glCtx->Stencil.Enabled) {
+      if (fxMesa->glCtx->Stencil._Enabled) {
          fxMesa->Glide.grEnable(GR_STENCIL_MODE_EXT);
          fxMesa->Glide.grStencilOp(fxMesa->Stencil.FailFunc,
                                    fxMesa->Stencil.ZFailFunc,

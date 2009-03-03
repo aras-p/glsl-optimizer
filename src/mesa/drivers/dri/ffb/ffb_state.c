@@ -275,7 +275,7 @@ ffbDDStencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func,
 	/* We will properly update sw/hw state when stenciling is
 	 * enabled.
 	 */
-	if (! ctx->Stencil.Enabled)
+	if (! ctx->Stencil._Enabled)
 		return;
 
 	stencilctl = fmesa->stencilctl;
@@ -333,7 +333,7 @@ ffbDDStencilOpSeparate(GLcontext *ctx, GLenum face, GLenum fail,
 	/* We will properly update sw/hw state when stenciling is
 	 * enabled.
 	 */
-	if (! ctx->Stencil.Enabled)
+	if (! ctx->Stencil._Enabled)
 		return;
 
 	stencilctl = fmesa->stencilctl;

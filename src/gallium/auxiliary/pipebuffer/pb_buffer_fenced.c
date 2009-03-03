@@ -284,16 +284,26 @@ fenced_buffer_map(struct pb_buffer *buf,
                   unsigned flags)
 {
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);
+   struct fenced_buffer_list *fenced_list = fenced_buf->list;
+   struct pb_fence_ops *ops = fenced_list->ops;
    void *map;
 
-   assert(flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE);
-   assert(!(flags & ~PIPE_BUFFER_USAGE_CPU_READ_WRITE));
-   flags &= PIPE_BUFFER_USAGE_CPU_READ_WRITE;
+   assert(!(flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE));
    
-   /* Check for GPU read/write access */
-   if(fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_WRITE) {
-      /* Wait for the GPU to finish writing */
-      _fenced_buffer_finish(fenced_buf);
+   /* Serialize writes */
+   if((fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_WRITE) ||
+      ((fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_READ) && (flags & PIPE_BUFFER_USAGE_CPU_WRITE))) {
+      if(flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
+         /* Don't wait for the GPU to finish writing */
+         if(ops->fence_signalled(ops, fenced_buf->fence, 0) == 0)
+            _fenced_buffer_remove(fenced_list, fenced_buf);
+         else
+            return NULL;
+      }
+      else {
+         /* Wait for the GPU to finish writing */
+         _fenced_buffer_finish(fenced_buf);
+      }
    }
 
 #if 0
@@ -307,7 +317,7 @@ fenced_buffer_map(struct pb_buffer *buf,
    map = pb_map(fenced_buf->buffer, flags);
    if(map) {
       ++fenced_buf->mapcount;
-      fenced_buf->flags |= flags;
+      fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE;
    }
 
    return map;
