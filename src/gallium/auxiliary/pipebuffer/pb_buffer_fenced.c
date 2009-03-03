@@ -285,7 +285,7 @@ fenced_buffer_map(struct pb_buffer *buf,
 {
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);
    struct fenced_buffer_list *fenced_list = fenced_buf->list;
-   struct pipe_winsys *winsys = fenced_list->winsys;
+   struct pb_fence_ops *ops = fenced_list->ops;
    void *map;
 
    assert(!(flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE));
@@ -295,7 +295,7 @@ fenced_buffer_map(struct pb_buffer *buf,
       ((fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_READ) && (flags & PIPE_BUFFER_USAGE_CPU_WRITE))) {
       if(flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
          /* Don't wait for the GPU to finish writing */
-         if(winsys->fence_finish(winsys, fenced_buf->fence, 0) == 0)
+         if(ops->fence_finish(ops, fenced_buf->fence, 0) == 0)
             _fenced_buffer_remove(fenced_list, fenced_buf);
          else
             return NULL;
@@ -480,16 +480,14 @@ fenced_buffer_create(struct fenced_buffer_list *fenced_list,
    return &buf->base;
 }
 
-
-<<<<<<< HEAD:src/gallium/auxiliary/pipebuffer/pb_buffer_fenced.c
-=======
+#if 0
 void
 buffer_fence(struct pb_buffer *buf,
              struct pipe_fence_handle *fence)
 {
    struct fenced_buffer *fenced_buf;
    struct fenced_buffer_list *fenced_list;
-   struct pipe_winsys *winsys;
+   struct pb_fence_ops *ops;
    /* FIXME: receive this as a parameter */
    unsigned flags = fence ? PIPE_BUFFER_USAGE_GPU_READ_WRITE : 0;
 
@@ -508,7 +506,7 @@ buffer_fence(struct pb_buffer *buf,
 
    fenced_buf = fenced_buffer(buf);
    fenced_list = fenced_buf->list;
-   winsys = fenced_list->winsys;
+   ops = fenced_list->ops;
    
    if(fence == fenced_buf->fence) {
       fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
@@ -518,14 +516,14 @@ buffer_fence(struct pb_buffer *buf,
    pipe_mutex_lock(fenced_list->mutex);
    if (fenced_buf->fence)
       _fenced_buffer_remove(fenced_list, fenced_buf);
-   winsys->fence_reference(winsys, &fenced_buf->fence, fence);
+   ops->fence_reference(ops, &fenced_buf->fence, fence);
    fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
    _fenced_buffer_add(fenced_buf);
    pipe_mutex_unlock(fenced_list->mutex);
 }
+#endif
 
 
->>>>>>> origin/gallium-0.1:src/gallium/auxiliary/pipebuffer/pb_buffer_fenced.c
 struct fenced_buffer_list *
 fenced_buffer_list_create(struct pb_fence_ops *ops) 
 {
