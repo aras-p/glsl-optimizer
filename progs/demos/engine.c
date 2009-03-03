@@ -386,7 +386,10 @@ DrawPositionedPiston(const Engine *eng, float crankAngle)
    glPushMatrix();
       glRotatef(-90, 1, 0, 0);
       glTranslatef(0, 0, pos);
-      DrawPiston(eng);
+      if (eng->PistonList)
+         glCallList(eng->PistonList);
+      else
+         DrawPiston(eng);
    glPopMatrix();
 }
 
