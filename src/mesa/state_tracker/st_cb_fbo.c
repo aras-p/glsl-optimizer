@@ -357,8 +357,6 @@ st_render_texture(GLcontext *ctx,
    if (!pt) 
       return;
 
-   assert(!att->Renderbuffer);
-
    /* create new renderbuffer which wraps the texture image */
    rb = st_new_renderbuffer(ctx, 0);
    if (!rb) {
