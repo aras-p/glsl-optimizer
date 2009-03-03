@@ -480,49 +480,6 @@ fenced_buffer_create(struct fenced_buffer_list *fenced_list,
    return &buf->base;
 }
 
-#if 0
-void
-buffer_fence(struct pb_buffer *buf,
-             struct pipe_fence_handle *fence)
-{
-   struct fenced_buffer *fenced_buf;
-   struct fenced_buffer_list *fenced_list;
-   struct pb_fence_ops *ops;
-   /* FIXME: receive this as a parameter */
-   unsigned flags = fence ? PIPE_BUFFER_USAGE_GPU_READ_WRITE : 0;
-
-   /* This is a public function, so be extra cautious with the buffer passed, 
-    * as happens frequently to receive null buffers, or pointer to buffers 
-    * other than fenced buffers. */
-   assert(buf);
-   if(!buf)
-      return;
-   assert(buf->vtbl == &fenced_buffer_vtbl);
-   if(buf->vtbl != &fenced_buffer_vtbl)
-      return;
-   
-   if(!fence)
-      return;
-
-   fenced_buf = fenced_buffer(buf);
-   fenced_list = fenced_buf->list;
-   ops = fenced_list->ops;
-   
-   if(fence == fenced_buf->fence) {
-      fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
-      return;
-   }
-   
-   pipe_mutex_lock(fenced_list->mutex);
-   if (fenced_buf->fence)
-      _fenced_buffer_remove(fenced_list, fenced_buf);
-   ops->fence_reference(ops, &fenced_buf->fence, fence);
-   fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
-   _fenced_buffer_add(fenced_buf);
-   pipe_mutex_unlock(fenced_list->mutex);
-}
-#endif
-
 
 struct fenced_buffer_list *
 fenced_buffer_list_create(struct pb_fence_ops *ops) 
