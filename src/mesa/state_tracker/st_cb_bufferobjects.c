@@ -212,8 +212,40 @@ st_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
 }
 
 
+
 /**
- * Called via glMapBufferARB().
+ * Called via glMapBufferRange().
+ */
+static void *
+st_bufferobj_map_range(GLcontext *ctx, GLenum target, 
+                       GLintptr offset, GLsizeiptr length, GLbitfield access,
+                       struct gl_buffer_object *obj)
+{
+   struct pipe_context *pipe = st_context(ctx)->pipe;
+   struct st_buffer_object *st_obj = st_buffer_object(obj);
+   GLuint flags = 0;
+
+   if (access & GL_MAP_WRITE_BIT)
+      flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
+
+   if (access & GL_MAP_READ_BIT)
+      flags |= PIPE_BUFFER_USAGE_CPU_READ;
+
+   /* ... other flags ...
+    */
+
+   if (access & MESA_MAP_NOWAIT_BIT)
+      flags |= PIPE_BUFFER_USAGE_DONTBLOCK;
+
+   obj->Pointer = pipe_buffer_map(pipe->screen, st_obj->buffer, flags);
+   return obj->Pointer;
+}
+
+
+
+
+/**
+ * Called via glUnmapBufferARB().
  */
 static GLboolean
 st_bufferobj_unmap(GLcontext *ctx, GLenum target, struct gl_buffer_object *obj)
@@ -236,5 +268,6 @@ st_init_bufferobject_functions(struct dd_function_table *functions)
    functions->BufferSubData = st_bufferobj_subdata;
    functions->GetBufferSubData = st_bufferobj_get_subdata;
    functions->MapBuffer = st_bufferobj_map;
+   functions->MapBufferRange = st_bufferobj_map_range;
    functions->UnmapBuffer = st_bufferobj_unmap;
 }
