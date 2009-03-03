@@ -749,7 +749,7 @@ void vbo_exec_BeginVertices( GLcontext *ctx )
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
    if (0) _mesa_printf("%s\n", __FUNCTION__);
-//   vbo_exec_vtx_map( exec );
+   vbo_exec_vtx_map( exec );
 }
 
 void vbo_exec_FlushVertices_internal( GLcontext *ctx, GLboolean unmap )
