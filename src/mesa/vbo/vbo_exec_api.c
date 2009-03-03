@@ -748,6 +748,12 @@ void vbo_exec_vtx_destroy( struct vbo_exec_context *exec )
    }
 }
 
+void vbo_exec_BeginVertices( GLcontext *ctx )
+{
+   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
+   if (0) _mesa_printf("%s\n", __FUNCTION__);
+//   vbo_exec_vtx_map( exec );
+}
 
 void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags )
 {
@@ -764,6 +770,10 @@ void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags )
       vbo_exec_copy_to_current( exec );
       reset_attrfv( exec );
    }
+
+   /* Need to do this to ensure BeginVertices gets called again:
+    */
+   _mesa_restore_exec_vtxfmt( ctx );
 
    exec->ctx->Driver.NeedFlush = 0;
 }

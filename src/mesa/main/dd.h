@@ -947,6 +947,12 @@ struct dd_function_table {
    GLuint NeedFlush;
    GLuint SaveNeedFlush;
 
+
+   /* Called prior to any of the GLvertexformat functions being
+    * called.  Paired with Driver.FlushVertices().
+    */
+   void (*BeginVertices)( GLcontext *ctx );
+
    /**
     * If inside glBegin()/glEnd(), it should ASSERT(0).  Otherwise, if
     * FLUSH_STORED_VERTICES bit in \p flags is set flushes any buffered

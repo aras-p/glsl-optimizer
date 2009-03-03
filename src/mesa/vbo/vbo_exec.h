@@ -140,6 +140,8 @@ struct vbo_exec_context
 void vbo_exec_init( GLcontext *ctx );
 void vbo_exec_destroy( GLcontext *ctx );
 void vbo_exec_invalidate_state( GLcontext *ctx, GLuint new_state );
+
+void vbo_exec_BeginVertices( GLcontext *ctx );
 void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags );
 
 
