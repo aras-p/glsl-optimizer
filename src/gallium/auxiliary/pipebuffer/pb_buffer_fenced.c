@@ -284,16 +284,26 @@ fenced_buffer_map(struct pb_buffer *buf,
                   unsigned flags)
 {
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);
+   struct fenced_buffer_list *fenced_list = fenced_buf->list;
+   struct pipe_winsys *winsys = fenced_list->winsys;
    void *map;
 
-   assert(flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE);
-   assert(!(flags & ~PIPE_BUFFER_USAGE_CPU_READ_WRITE));
-   flags &= PIPE_BUFFER_USAGE_CPU_READ_WRITE;
+   assert(!(flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE));
    
-   /* Check for GPU read/write access */
-   if(fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_WRITE) {
-      /* Wait for the GPU to finish writing */
-      _fenced_buffer_finish(fenced_buf);
+   /* Serialize writes */
+   if((fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_WRITE) ||
+      ((fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_READ) && (flags & PIPE_BUFFER_USAGE_CPU_WRITE))) {
+      if(flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
+         /* Don't wait for the GPU to finish writing */
+         if(winsys->fence_finish(winsys, fenced_buf->fence, 0) == 0)
+            _fenced_buffer_remove(fenced_list, fenced_buf);
+         else
+            return NULL;
+      }
+      else {
+         /* Wait for the GPU to finish writing */
+         _fenced_buffer_finish(fenced_buf);
+      }
    }
 
 #if 0
@@ -307,7 +317,7 @@ fenced_buffer_map(struct pb_buffer *buf,
    map = pb_map(fenced_buf->buffer, flags);
    if(map) {
       ++fenced_buf->mapcount;
-      fenced_buf->flags |= flags;
+      fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE;
    }
 
    return map;
@@ -471,6 +481,51 @@ fenced_buffer_create(struct fenced_buffer_list *fenced_list,
 }
 
 
+<<<<<<< HEAD:src/gallium/auxiliary/pipebuffer/pb_buffer_fenced.c
+=======
+void
+buffer_fence(struct pb_buffer *buf,
+             struct pipe_fence_handle *fence)
+{
+   struct fenced_buffer *fenced_buf;
+   struct fenced_buffer_list *fenced_list;
+   struct pipe_winsys *winsys;
+   /* FIXME: receive this as a parameter */
+   unsigned flags = fence ? PIPE_BUFFER_USAGE_GPU_READ_WRITE : 0;
+
+   /* This is a public function, so be extra cautious with the buffer passed, 
+    * as happens frequently to receive null buffers, or pointer to buffers 
+    * other than fenced buffers. */
+   assert(buf);
+   if(!buf)
+      return;
+   assert(buf->vtbl == &fenced_buffer_vtbl);
+   if(buf->vtbl != &fenced_buffer_vtbl)
+      return;
+   
+   if(!fence)
+      return;
+
+   fenced_buf = fenced_buffer(buf);
+   fenced_list = fenced_buf->list;
+   winsys = fenced_list->winsys;
+   
+   if(fence == fenced_buf->fence) {
+      fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
+      return;
+   }
+   
+   pipe_mutex_lock(fenced_list->mutex);
+   if (fenced_buf->fence)
+      _fenced_buffer_remove(fenced_list, fenced_buf);
+   winsys->fence_reference(winsys, &fenced_buf->fence, fence);
+   fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
+   _fenced_buffer_add(fenced_buf);
+   pipe_mutex_unlock(fenced_list->mutex);
+}
+
+
+>>>>>>> origin/gallium-0.1:src/gallium/auxiliary/pipebuffer/pb_buffer_fenced.c
 struct fenced_buffer_list *
 fenced_buffer_list_create(struct pb_fence_ops *ops) 
 {

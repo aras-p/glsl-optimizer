@@ -130,7 +130,7 @@ struct vbo_save_context {
    struct vbo_save_vertex_store *vertex_store;
    struct vbo_save_primitive_store *prim_store;
 
-   GLfloat *vbptr;		   /* cursor, points into buffer */
+   GLfloat *buffer_ptr;		   /* cursor, points into buffer */
    GLfloat vertex[VBO_ATTRIB_MAX*4];	   /* current values */
    GLfloat *attrptr[VBO_ATTRIB_MAX];
    GLuint vert_count;
