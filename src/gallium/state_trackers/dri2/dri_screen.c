@@ -208,7 +208,7 @@ dri_init_screen2(__DRIscreenPrivate *sPriv)
    sPriv->extensions = dri_screen_extensions;
 
 
-   screen->pipe_screen = drm_api_hocks.create_screen(screen->fd, screen->deviceID);
+   screen->pipe_screen = drm_api_hooks.create_screen(screen->fd, screen->deviceID);
    if (!screen->pipe_screen) {
       debug_printf("%s: failed to create pipe_screen\n", __FUNCTION__);
       goto fail;

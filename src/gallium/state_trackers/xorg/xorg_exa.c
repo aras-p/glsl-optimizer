@@ -380,8 +380,8 @@ xorg_exa_get_pixmap_handle(PixmapPtr pPixmap)
 	return 0;
     }
 
-    drm_api_hocks.buffer_from_texture(priv->tex, &buffer, &stride);
-    drm_api_hocks.handle_from_buffer(ms->screen, buffer, &handle);
+    drm_api_hooks.buffer_from_texture(priv->tex, &buffer, &stride);
+    drm_api_hooks.handle_from_buffer(ms->screen, buffer, &handle);
     pipe_buffer_reference(ms->screen, &buffer, NULL);
     return handle;
 }
@@ -519,7 +519,7 @@ xorg_exa_init(ScrnInfoPtr pScrn)
     }
 
     exa->scrn = ms->screen;
-    exa->ctx = drm_api_hocks.create_context(exa->scrn);
+    exa->ctx = drm_api_hooks.create_context(exa->scrn);
     /* Share context with DRI */
     ms->ctx = exa->ctx;
 

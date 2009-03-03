@@ -57,7 +57,7 @@ dri_surface_from_handle(struct pipe_screen *screen,
    struct pipe_texture templat;
    struct pipe_buffer *buf = NULL;
 
-   buf = drm_api_hocks.buffer_from_handle(screen, "dri2 buffer", handle);
+   buf = drm_api_hooks.buffer_from_handle(screen, "dri2 buffer", handle);
    if (!buf)
       return NULL;
 

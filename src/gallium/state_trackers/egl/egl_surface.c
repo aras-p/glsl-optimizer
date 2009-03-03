@@ -132,7 +132,7 @@ drm_create_texture(_EGLDriver *drv,
 	scrn->front.width = w;
 	scrn->front.height = h;
 	scrn->front.pitch = pitch;
-	drm_api_hocks.handle_from_buffer(dev->winsys, scrn->buffer, &scrn->front.handle);
+	drm_api_hooks.handle_from_buffer(screen, scrn->buffer, &scrn->front.handle);
 	if (0)
 		goto err_handle;
 
@@ -271,7 +271,6 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 	struct drm_device *dev = (struct drm_device *)drv;
 	struct drm_surface *surf = lookup_drm_surface(surface);
 	struct drm_screen *scrn = lookup_drm_screen(dpy, screen);
-	struct pipe_context *pipe;
 	_EGLMode *mode = _eglLookupMode(dpy, m);
 	int ret;
 	unsigned int i, k;

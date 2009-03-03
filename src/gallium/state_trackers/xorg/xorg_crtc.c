@@ -194,7 +194,7 @@ crtc_load_cursor_argb(xf86CrtcPtr crtc, CARD32 * image)
 					       PIPE_BUFFER_USAGE_CPU_WRITE |
 					       PIPE_BUFFER_USAGE_GPU_READ,
 					       64*64*4);
-	drm_api_hocks.handle_from_buffer(ms->screen,
+	drm_api_hooks.handle_from_buffer(ms->screen,
 					 crtcp->cursor_buf,
 					 &crtcp->cursor_handle);
     }
