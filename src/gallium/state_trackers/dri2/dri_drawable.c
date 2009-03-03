@@ -153,6 +153,10 @@ dri_get_buffers(__DRIdrawablePrivate *dPriv)
             index = ST_SURFACE_FRONT_LEFT;
             format = PIPE_FORMAT_A8R8G8B8_UNORM;
             break;
+         case __DRI_BUFFER_FAKE_FRONT_LEFT:
+            index = ST_SURFACE_FRONT_LEFT;
+            format = PIPE_FORMAT_A8R8G8B8_UNORM;
+            break;
          case __DRI_BUFFER_BACK_LEFT:
             index = ST_SURFACE_BACK_LEFT;
             format = PIPE_FORMAT_A8R8G8B8_UNORM;
@@ -275,7 +279,12 @@ dri_create_buffer(__DRIscreenPrivate *sPriv,
    /* setup dri2 buffers information */
    i = 0;
    drawable->attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
-   drawable->attachments[i++] = __DRI_BUFFER_BACK_LEFT;
+#if 0
+   /* TODO incase of double buffer visual, delay fake creation */
+   drawable->attachments[i++] = __DRI_BUFFER_FAKE_FRONT_LEFT;
+#endif
+   if (visual->doubleBufferMode)
+      drawable->attachments[i++] = __DRI_BUFFER_BACK_LEFT;
    if (visual->depthBits)
       drawable->attachments[i++] = __DRI_BUFFER_DEPTH;
    if (visual->stencilBits)
