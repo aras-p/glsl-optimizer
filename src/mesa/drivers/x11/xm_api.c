@@ -1584,6 +1584,14 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       return NULL;
    }
 
+   /* Enable this to exercise fixed function -> shader translation
+    * with software rendering.
+    */
+   if (0) {
+      mesaCtx->VertexProgram._MaintainTnlProgram = GL_TRUE;
+      mesaCtx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
+   }
+
    _mesa_enable_sw_extensions(mesaCtx);
    _mesa_enable_1_3_extensions(mesaCtx);
    _mesa_enable_1_4_extensions(mesaCtx);
