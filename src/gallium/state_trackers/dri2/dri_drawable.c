@@ -187,48 +187,16 @@ dri_get_buffers(__DRIdrawablePrivate *dPriv)
 void
 dri_swap_buffers(__DRIdrawablePrivate * dPriv)
 {
-   struct dri_drawable *drawable = dri_drawable(dPriv);
-   struct pipe_surface *back_surf;
-
-   assert(drawable);
-   assert(drawable->stfb);
-
-   st_get_framebuffer_surface(drawable->stfb,
-                              ST_SURFACE_BACK_LEFT,
-                              &back_surf);
-   if (back_surf) {
-      st_notify_swapbuffers(drawable->stfb);
-      /* TODO do stuff here */
-      st_notify_swapbuffers_complete(drawable->stfb);
-   }
+   /* not needed for dri2 */
+   assert(0);
 }
 
 
-/**
- * Called via glXCopySubBufferMESA() to copy a subrect of the back
- * buffer to the front buffer/screen.
- */
 void
 dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
 {
-   struct dri_drawable *drawable = dri_drawable(dPriv);
-   struct pipe_surface *back_surf;
-
-   assert(drawable);
-   assert(drawable->stfb);
-
-   st_get_framebuffer_surface(drawable->stfb,
-                              ST_SURFACE_BACK_LEFT,
-                              &back_surf);
-   if (back_surf) {
-      drm_clip_rect_t rect;
-      rect.x1 = x;
-      rect.y1 = y;
-      rect.x2 = w;
-      rect.y2 = h;
-
-      /* do stuff here */
-   }
+   /* not needed for dri2 */
+   assert(0);
 }
 
 
