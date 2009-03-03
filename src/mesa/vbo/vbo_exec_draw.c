@@ -281,11 +281,8 @@ void vbo_exec_vtx_map( struct vbo_exec_context *exec )
                                                 MESA_MAP_NOWAIT_BIT),
                                                exec->vtx.bufferobj);
    }
-
-   if (exec->vtx.buffer_map) {
-      exec->vtx.buffer_map += exec->vtx.buffer_used / sizeof(float);
-   }
-   else {
+   
+   if (!exec->vtx.buffer_map) {
       exec->vtx.buffer_used = 0;
 
       ctx->Driver.BufferData(ctx, target, 

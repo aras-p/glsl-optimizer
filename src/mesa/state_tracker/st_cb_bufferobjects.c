@@ -218,6 +218,7 @@ st_bufferobj_map_range(GLcontext *ctx, GLenum target,
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
    GLuint flags = 0;
+   char *map;
 
    if (access & GL_MAP_WRITE_BIT)
       flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
@@ -231,8 +232,12 @@ st_bufferobj_map_range(GLcontext *ctx, GLenum target,
    if (access & MESA_MAP_NOWAIT_BIT)
       flags |= PIPE_BUFFER_USAGE_DONTBLOCK;
 
-   obj->Pointer = pipe_buffer_map(pipe->screen, st_obj->buffer, flags);
-   return obj->Pointer;
+   map = pipe_buffer_map_range(pipe->screen, st_obj->buffer, offset, length, flags);
+   /* FIXME: some code expects this to point to the buffer start, which means that
+    * the range might not be respected in all circumstances
+    */
+   obj->Pointer = map ? map - offset : NULL;
+   return map;
 }
 
 
