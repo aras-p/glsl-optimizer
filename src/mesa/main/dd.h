@@ -36,6 +36,22 @@
 struct gl_pixelstore_attrib;
 struct mesa_display_list;
 
+#if FEATURE_ARB_vertex_buffer_object
+/* Modifies GL_MAP_UNSYNCHRONIZED_BIT to allow driver to fail (return
+ * NULL) if buffer is unavailable for immediate mapping.
+ *
+ * Does GL_MAP_INVALIDATE_RANGE_BIT do this?  It seems so, but it
+ * would require more book-keeping in the driver than seems necessary
+ * at this point.
+ *
+ * Does GL_MAP_INVALDIATE_BUFFER_BIT do this?  Not really -- we don't
+ * want to provoke the driver to throw away the old storage, we will
+ * respect the contents of already referenced data.
+ */
+#define MESA_MAP_NOWAIT_BIT       0x0040
+#endif
+
+
 /**
  * Device driver function table.
  * Core Mesa uses these function pointers to call into device drivers.
@@ -779,6 +795,16 @@ struct dd_function_table {
 
    void * (*MapBuffer)( GLcontext *ctx, GLenum target, GLenum access,
 			struct gl_buffer_object *obj );
+
+   /* May return NULL if MESA_MAP_NOWAIT_BIT is set in access:
+    */
+   void * (*MapBufferRange)( GLcontext *ctx, GLenum target,
+                             GLintptr offset, GLsizeiptr length, GLbitfield access,
+                             struct gl_buffer_object *obj);
+
+   void (*FlushMappedBufferRange) (GLcontext *ctx, GLenum target, 
+                                   GLintptr offset, GLsizeiptr length,
+                                   struct gl_buffer_object *obj);
 
    GLboolean (*UnmapBuffer)( GLcontext *ctx, GLenum target,
 			     struct gl_buffer_object *obj );
