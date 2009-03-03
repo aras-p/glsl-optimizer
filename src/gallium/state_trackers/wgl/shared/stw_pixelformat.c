@@ -76,6 +76,18 @@ add_standard_pixelformats(
 
    pf->flags = flags;
    pf->color = color24;
+   pf->alpha = alpha8;
+   pf->depth = depth16;
+   pf++;
+
+   pf->flags = flags;
+   pf->color = color24;
+   pf->alpha = alpha8;
+   pf->depth = depth24s8;
+   pf++;
+
+   pf->flags = flags;
+   pf->color = color24;
    pf->alpha = noalpha;
    pf->depth = depth16;
    pf++;
