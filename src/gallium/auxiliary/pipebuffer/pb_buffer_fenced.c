@@ -295,7 +295,7 @@ fenced_buffer_map(struct pb_buffer *buf,
       ((fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_READ) && (flags & PIPE_BUFFER_USAGE_CPU_WRITE))) {
       if(flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
          /* Don't wait for the GPU to finish writing */
-         if(ops->fence_finish(ops, fenced_buf->fence, 0) == 0)
+         if(ops->fence_signalled(ops, fenced_buf->fence, 0) == 0)
             _fenced_buffer_remove(fenced_list, fenced_buf);
          else
             return NULL;
