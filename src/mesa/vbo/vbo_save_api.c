@@ -241,7 +241,7 @@ static void _save_reset_counters( GLcontext *ctx )
    save->buffer = (save->vertex_store->buffer + 
 		   save->vertex_store->used);
 
-   assert(save->buffer == save->vbptr);
+   assert(save->buffer == save->buffer_ptr);
 
    if (save->vertex_size)
       save->max_vert = ((VBO_SAVE_BUFFER_SIZE - save->vertex_store->used) / 
@@ -343,7 +343,7 @@ static void _save_compile_vertex_list( GLcontext *ctx )
       /* Allocate and map new store:
        */
       save->vertex_store = alloc_vertex_store( ctx );
-      save->vbptr = map_vertex_store( ctx, save->vertex_store );
+      save->buffer_ptr = map_vertex_store( ctx, save->vertex_store );
    } 
 
    if (save->prim_store->used > VBO_SAVE_PRIM_SIZE - 6) {
@@ -414,9 +414,9 @@ static void _save_wrap_filled_vertex( GLcontext *ctx )
    assert(save->max_vert - save->vert_count > save->copied.nr);
 
    for (i = 0 ; i < save->copied.nr ; i++) {
-      _mesa_memcpy( save->vbptr, data, save->vertex_size * sizeof(GLfloat));
+      _mesa_memcpy( save->buffer_ptr, data, save->vertex_size * sizeof(GLfloat));
       data += save->vertex_size;
-      save->vbptr += save->vertex_size;
+      save->buffer_ptr += save->vertex_size;
       save->vert_count++;
    }
 }
@@ -550,7 +550,7 @@ static void _save_upgrade_vertex( GLcontext *ctx,
 	 }
       }
 
-      save->vbptr = dest;
+      save->buffer_ptr = dest;
       save->vert_count += save->copied.nr;
    }
 }
@@ -622,9 +622,9 @@ do {								\
       GLuint i;							\
 								\
       for (i = 0; i < save->vertex_size; i++)			\
-	 save->vbptr[i] = save->vertex[i];			\
+	 save->buffer_ptr[i] = save->vertex[i];			\
 								\
-      save->vbptr += save->vertex_size;				\
+      save->buffer_ptr += save->vertex_size;				\
 								\
       if (++save->vert_count >= save->max_vert)			\
 	 _save_wrap_filled_vertex( ctx );			\
@@ -1035,7 +1035,7 @@ void vbo_save_NewList( GLcontext *ctx, GLuint list, GLenum mode )
    if (!save->vertex_store) 
       save->vertex_store = alloc_vertex_store( ctx );
       
-   save->vbptr = map_vertex_store( ctx, save->vertex_store );
+   save->buffer_ptr = map_vertex_store( ctx, save->vertex_store );
    
    _save_reset_vertex( ctx );
    _save_reset_counters( ctx );  

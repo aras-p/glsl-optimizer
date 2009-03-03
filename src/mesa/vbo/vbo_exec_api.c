@@ -62,7 +62,7 @@ static void vbo_exec_wrap_buffers( struct vbo_exec_context *exec )
    if (exec->vtx.prim_count == 0) {
       exec->vtx.copied.nr = 0;
       exec->vtx.vert_count = 0;
-      exec->vtx.vbptr = (GLfloat *)exec->vtx.buffer_map;
+      exec->vtx.buffer_ptr = exec->vtx.buffer_map;
    }
    else {
       GLuint last_begin = exec->vtx.prim[exec->vtx.prim_count-1].begin;
@@ -80,7 +80,7 @@ static void vbo_exec_wrap_buffers( struct vbo_exec_context *exec )
       /* Execute the buffer and save copied vertices.
        */
       if (exec->vtx.vert_count)
-	 vbo_exec_vtx_flush( exec );
+	 vbo_exec_vtx_flush( exec, GL_FALSE );
       else {
 	 exec->vtx.prim_count = 0;
 	 exec->vtx.copied.nr = 0;
@@ -121,9 +121,9 @@ void vbo_exec_vtx_wrap( struct vbo_exec_context *exec )
    assert(exec->vtx.max_vert - exec->vtx.vert_count > exec->vtx.copied.nr);
 
    for (i = 0 ; i < exec->vtx.copied.nr ; i++) {
-      _mesa_memcpy( exec->vtx.vbptr, data, 
+      _mesa_memcpy( exec->vtx.buffer_ptr, data, 
 		    exec->vtx.vertex_size * sizeof(GLfloat));
-      exec->vtx.vbptr += exec->vtx.vertex_size;
+      exec->vtx.buffer_ptr += exec->vtx.vertex_size;
       data += exec->vtx.vertex_size;
       exec->vtx.vert_count++;
    }
@@ -252,9 +252,10 @@ static void vbo_exec_wrap_upgrade_vertex( struct vbo_exec_context *exec,
    exec->vtx.attrsz[attr] = newsz;
 
    exec->vtx.vertex_size += newsz - oldsz;
-   exec->vtx.max_vert = VBO_VERT_BUFFER_SIZE / exec->vtx.vertex_size;
+   exec->vtx.max_vert = ((VBO_VERT_BUFFER_SIZE - exec->vtx.buffer_used) / 
+                         (exec->vtx.vertex_size * sizeof(GLfloat)));
    exec->vtx.vert_count = 0;
-   exec->vtx.vbptr = (GLfloat *)exec->vtx.buffer_map;
+   exec->vtx.buffer_ptr = exec->vtx.buffer_map;
    
 
    /* Recalculate all the attrptr[] values
@@ -280,10 +281,10 @@ static void vbo_exec_wrap_upgrade_vertex( struct vbo_exec_context *exec,
    if (exec->vtx.copied.nr)
    {
       GLfloat *data = exec->vtx.copied.buffer;
-      GLfloat *dest = exec->vtx.vbptr;
+      GLfloat *dest = exec->vtx.buffer_ptr;
       GLuint j;
 
-      assert(exec->vtx.vbptr == (GLfloat *)exec->vtx.buffer_map);
+      assert(exec->vtx.buffer_ptr == exec->vtx.buffer_map);
       
       for (i = 0 ; i < exec->vtx.copied.nr ; i++) {
 	 for (j = 0 ; j < VBO_ATTRIB_MAX ; j++) {
@@ -309,7 +310,7 @@ static void vbo_exec_wrap_upgrade_vertex( struct vbo_exec_context *exec,
 	 }
       }
 
-      exec->vtx.vbptr = dest;
+      exec->vtx.buffer_ptr = dest;
       exec->vtx.vert_count += exec->vtx.copied.nr;
       exec->vtx.copied.nr = 0;
    }
@@ -374,9 +375,9 @@ do {								\
       GLuint i;							\
 								\
       for (i = 0; i < exec->vtx.vertex_size; i++)		\
-	 exec->vtx.vbptr[i] = exec->vtx.vertex[i];		\
+	 exec->vtx.buffer_ptr[i] = exec->vtx.vertex[i];		\
 								\
-      exec->vtx.vbptr += exec->vtx.vertex_size;			\
+      exec->vtx.buffer_ptr += exec->vtx.vertex_size;			\
       exec->ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;	\
 								\
       if (++exec->vtx.vert_count >= exec->vtx.max_vert)		\
@@ -533,7 +534,7 @@ static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
        * begin/end pairs.
        */
       if (exec->vtx.vertex_size && !exec->vtx.attrsz[0]) 
-	 vbo_exec_FlushVertices( ctx, ~0 );
+	 vbo_exec_FlushVertices_internal( ctx, GL_FALSE );
 
       i = exec->vtx.prim_count++;
       exec->vtx.prim[i].mode = mode;
@@ -567,7 +568,7 @@ static void GLAPIENTRY vbo_exec_End( void )
       ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
 
       if (exec->vtx.prim_count == VBO_MAX_PRIM)
-	 vbo_exec_vtx_flush( exec );	
+	 vbo_exec_vtx_flush( exec, GL_FALSE );
    }
    else 
       _mesa_error( ctx, GL_INVALID_OPERATION, "glEnd" );
@@ -673,23 +674,19 @@ void vbo_use_buffer_objects(GLcontext *ctx)
     */
    GLuint bufName = 0xaabbccdd;
    GLenum target = GL_ARRAY_BUFFER_ARB;
-   GLenum access = GL_READ_WRITE_ARB;
    GLenum usage = GL_STREAM_DRAW_ARB;
-   GLsizei size = VBO_VERT_BUFFER_SIZE * sizeof(GLfloat);
+   GLsizei size = VBO_VERT_BUFFER_SIZE;
 
    /* Make sure this func is only used once */
    assert(exec->vtx.bufferobj == ctx->Array.NullBufferObj);
    if (exec->vtx.buffer_map) {
       _mesa_align_free(exec->vtx.buffer_map);
+      exec->vtx.buffer_map = NULL;
    }
 
    /* Allocate a real buffer object now */
    exec->vtx.bufferobj = ctx->Driver.NewBufferObject(ctx, bufName, target);
    ctx->Driver.BufferData(ctx, target, size, NULL, usage, exec->vtx.bufferobj);
-
-   /* and map it */
-   exec->vtx.buffer_map
-      = ctx->Driver.MapBuffer(ctx, target, access, exec->vtx.bufferobj);
 }
 
 
@@ -708,7 +705,7 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
                                  &exec->vtx.bufferobj,
                                  ctx->Array.NullBufferObj);
 
-   exec->vtx.buffer_map = ALIGN_MALLOC(VBO_VERT_BUFFER_SIZE * sizeof(GLfloat), 64);
+   exec->vtx.buffer_map = (GLfloat *)ALIGN_MALLOC(VBO_VERT_BUFFER_SIZE, 64);
 
    vbo_exec_vtxfmt_init( exec );
 
@@ -755,21 +752,34 @@ void vbo_exec_BeginVertices( GLcontext *ctx )
 //   vbo_exec_vtx_map( exec );
 }
 
-void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags )
+void vbo_exec_FlushVertices_internal( GLcontext *ctx, GLboolean unmap )
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
 
-   if (exec->ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END)
-      return;
-
-   if (exec->vtx.vert_count) {
-      vbo_exec_vtx_flush( exec );
+   if (exec->vtx.vert_count || unmap) {
+      vbo_exec_vtx_flush( exec, unmap );
    }
 
    if (exec->vtx.vertex_size) {
       vbo_exec_copy_to_current( exec );
       reset_attrfv( exec );
    }
+}
+
+
+
+void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags )
+{
+   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
+
+   if (0) _mesa_printf("%s\n", __FUNCTION__);
+
+   if (exec->ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
+      if (0) _mesa_printf("%s - inside begin/end\n", __FUNCTION__);
+      return;
+   }
+
+   vbo_exec_FlushVertices_internal( ctx, GL_TRUE );
 
    /* Need to do this to ensure BeginVertices gets called again:
     */
