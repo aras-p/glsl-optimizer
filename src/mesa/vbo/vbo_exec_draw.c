@@ -250,7 +250,10 @@ static void vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
 
       exec->vtx.buffer_used += (exec->vtx.buffer_ptr -
                                 exec->vtx.buffer_map) * sizeof(float);
-            
+
+      assert(exec->vtx.buffer_used <= VBO_VERT_BUFFER_SIZE);
+      assert(exec->vtx.buffer_ptr != NULL);
+      
       ctx->Driver.UnmapBuffer(ctx, target, exec->vtx.bufferobj);
       exec->vtx.buffer_map = NULL;
       exec->vtx.buffer_ptr = NULL;
@@ -271,6 +274,7 @@ void vbo_exec_vtx_map( struct vbo_exec_context *exec )
    if (exec->vtx.buffer_map != NULL) {
       assert(0);
       exec->vtx.buffer_map = NULL;
+      exec->vtx.buffer_ptr = NULL;
    }
 
    if (VBO_VERT_BUFFER_SIZE > exec->vtx.buffer_used + 1024 &&
@@ -287,6 +291,7 @@ void vbo_exec_vtx_map( struct vbo_exec_context *exec )
                                                 GL_MAP_UNSYNCHRONIZED_BIT | 
                                                 MESA_MAP_NOWAIT_BIT),
                                                exec->vtx.bufferobj);
+      exec->vtx.buffer_ptr = exec->vtx.buffer_map;
    }
    
    if (!exec->vtx.buffer_map) {
@@ -298,6 +303,7 @@ void vbo_exec_vtx_map( struct vbo_exec_context *exec )
 
       exec->vtx.buffer_map = 
          (GLfloat *)ctx->Driver.MapBuffer(ctx, target, access, exec->vtx.bufferobj);
+      exec->vtx.buffer_ptr = exec->vtx.buffer_map;
    }
 
    if (0) _mesa_printf("map %d..\n", exec->vtx.buffer_used);
