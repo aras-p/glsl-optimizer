@@ -337,8 +337,7 @@ static void r300_destroy_screen(struct pipe_screen* pscreen)
     FREE(r300screen);
 }
 
-struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys,
-                                       struct r300_winsys* r300_winsys)
+struct pipe_screen* r300_create_screen(struct r300_winsys* r300_winsys)
 {
     struct r300_screen* r300screen = CALLOC_STRUCT(r300_screen);
     struct r300_capabilities* caps = CALLOC_STRUCT(r300_capabilities);
@@ -352,7 +351,7 @@ struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys,
     r300_parse_chipset(caps);
 
     r300screen->caps = caps;
-    r300screen->screen.winsys = winsys;
+    r300screen->screen.winsys = (struct pipe_winsys*)r300_winsys;
     r300screen->screen.destroy = r300_destroy_screen;
     r300screen->screen.get_name = r300_get_name;
     r300screen->screen.get_vendor = r300_get_vendor;

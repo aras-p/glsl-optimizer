@@ -7,15 +7,14 @@ LIBNAME = radeon_dri.so
 MINIGLX_SOURCES =
 
 PIPE_DRIVERS = \
+	$(TOP)/src/gallium/state_trackers/dri2/libdri2drm.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
 
 DRIVER_SOURCES = \
 	radeon_buffer.c \
-	radeon_context.c \
 	radeon_drm.c \
 	radeon_r300.c \
-	radeon_screen.c \
 	radeon_winsys_softpipe.c
 
 C_SOURCES = \

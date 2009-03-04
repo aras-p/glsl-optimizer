@@ -27,4 +27,84 @@
  * Authors:
  *      Corbin Simpson <MostAwesomeDude@gmail.com>
  */
+
 #include "radeon_drm.h"
+
+/* Create a pipe_screen. */
+struct pipe_screen* radeon_create_screen(int drmFB, int pciID)
+{
+    struct radeon_context* radeon = CALLOC_STRUCT(radeon_context);
+    struct pipe_winsys* winsys = radeon_pipe_winsys(radeon);
+
+    if (getenv("RADEON_SOFTPIPE")) {
+        return softpipe_create_screen(winsys);
+    } else {
+        struct r300_winsys* r300 = radeon_create_r300_winsys(drmFB, winsys);
+        FREE(winsys);
+        return r300_create_screen(r300);
+    }
+}
+
+/* Create a pipe_context. */
+struct pipe_context* radeon_create_context(struct pipe_screen* screen)
+{
+    if (getenv("RADEON_SOFTPIPE")) {
+        return radeon_create_softpipe(screen->winsys);
+    } else {
+        return r300_create_context(screen, screen->winsys);
+    }
+}
+
+boolean radeon_buffer_from_texture(struct pipe_texture* texture,
+                                   struct pipe_buffer** buffer,
+                                   unsigned* stride)
+{
+}
+
+/* Create a buffer from a handle. */
+/* XXX what's up with name? */
+struct pipe_buffer* radeon_buffer_from_handle(struct pipe_screen* screen,
+                                              const char* name,
+                                              unsigned handle)
+{
+    struct radeon_bo_manager* bom = ((struct radeon_winsys*)screen->winsys)->bom;
+    struct radeon_pipe_buffer* radeon_buffer;
+    struct radeon_bo* bo = NULL;
+
+    bo = radeon_bo_open(bom, handle, 0, 0, 0, 0);
+    if (bo == NULL) {
+        return NULL;
+    }
+
+    radeon_buffer = CALLOC_STRUCT(radeon_pipe_buffer);
+    if (radeon_buffer == NULL) {
+        radeon_bo_unref(bo);
+        return NULL;
+    }
+
+    radeon_buffer->base.refcount = 1;
+    radeon_buffer->base.usage = PIPE_BUFFER_USAGE_PIXEL;
+    radeon_buffer->bo = bo;
+    return &radeon_buffer->base;
+}
+
+boolean radeon_handle_from_buffer(struct pipe_screen* screen,
+                                  struct pipe_buffer* buffer,
+                                  unsigned* handle)
+{
+}
+
+boolean radeon_global_handle_from_buffer(struct pipe_screen* screen,
+                                         struct pipe_buffer* buffer,
+                                         unsigned* handle)
+{
+}
+
+struct drm_api drm_api_hooks = {
+    .create_screen = radeon_create_screen,
+    .create_context = radeon_create_context,
+    .buffer_from_texture = radeon_buffer_from_texture,
+    .buffer_from_handle = radeon_buffer_from_handle,
+    .handle_from_buffer = radeon_handle_from_buffer,
+    .global_handle_from_buffer = radeon_global_handle_from_buffer,
+};
