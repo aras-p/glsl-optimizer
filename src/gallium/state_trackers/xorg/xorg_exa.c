@@ -55,6 +55,7 @@ struct PixmapPriv
     unsigned int color;
     struct pipe_surface *src_surf; /* for copies */
     struct pipe_transfer *map_transfer;
+    unsigned map_count;
 };
 
 /*
@@ -116,6 +117,8 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
 
     if (!priv->tex)
 	return FALSE;
+
+    if (priv->map_count++ == 0)
     {
 	priv->map_transfer =
 	    exa->scrn->get_tex_transfer(exa->scrn, priv->tex, 0, 0, 0,
@@ -146,9 +149,12 @@ ExaFinishAccess(PixmapPtr pPix, int index)
     if (!priv->map_transfer)
 	return;
 
-    exa->scrn->transfer_unmap(exa->scrn, priv->map_transfer);
-    exa->scrn->tex_transfer_destroy(priv->map_transfer);
-
+    if (--priv->map_count == 0) {
+	assert(priv->map_transfer);
+	exa->scrn->transfer_unmap(exa->scrn, priv->map_transfer);
+	exa->scrn->tex_transfer_destroy(priv->map_transfer);
+	priv->map_transfer = NULL;
+    }
 }
 
 static void
@@ -258,7 +264,7 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
 				   PIPE_BUFFER_USAGE_GPU_READ |
 				   PIPE_BUFFER_USAGE_GPU_WRITE);
 
-    return FALSE;
+    return TRUE;
 }
 
 static void
