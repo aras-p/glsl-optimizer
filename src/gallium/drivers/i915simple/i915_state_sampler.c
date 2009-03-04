@@ -116,7 +116,7 @@ static void update_sampler(struct i915_context *i915,
            ws == PIPE_TEX_WRAP_CLAMP_TO_BORDER ||
            wt == PIPE_TEX_WRAP_CLAMP_TO_BORDER || 
            wr == PIPE_TEX_WRAP_CLAMP_TO_BORDER)) {
-         if (i915->strict_conformance) {
+         if (i915->conformance_mode > 0) {
             assert(0);
             /* 	    sampler->fallback = true; */
             /* TODO */

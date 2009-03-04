@@ -195,10 +195,14 @@ static GLboolean check_fallbacks( struct brw_context *brw,
    GLuint i;
 
    /* If we don't require strict OpenGL conformance, never 
-    * use fallbacks.
+    * use fallbacks.  If we're forcing fallbacks, always
+    * use fallfacks.
     */
-   if (!brw->intel.strict_conformance)
+   if (brw->intel.conformance_mode == 0)
       return GL_FALSE;
+
+   if (brw->intel.conformance_mode == 2)
+      return GL_TRUE;
 
    if (ctx->Polygon.SmoothFlag) {
       for (i = 0; i < nr_prims; i++)
@@ -248,10 +252,25 @@ static GLboolean check_fallbacks( struct brw_context *brw,
    {
       int u;
       for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
-         if (ctx->Texture.Unit[u].Enabled) {
-            if (ctx->Texture.Unit[u].CurrentTex[TEXTURE_2D_INDEX]->WrapS == GL_CLAMP ||
-                ctx->Texture.Unit[u].CurrentTex[TEXTURE_2D_INDEX]->WrapT == GL_CLAMP) {
+         struct gl_texture_unit *texUnit = &ctx->Texture.Unit[u];
+         if (texUnit->Enabled) {
+            if (texUnit->Enabled & TEXTURE_1D_BIT) {
+               if (texUnit->CurrentTex[TEXTURE_1D_INDEX]->WrapS == GL_CLAMP) {
                    return GL_TRUE;
+               }
+            }
+            if (texUnit->Enabled & TEXTURE_2D_BIT) {
+               if (texUnit->CurrentTex[TEXTURE_2D_INDEX]->WrapS == GL_CLAMP ||
+                   texUnit->CurrentTex[TEXTURE_2D_INDEX]->WrapT == GL_CLAMP) {
+                   return GL_TRUE;
+               }
+            }
+            if (texUnit->Enabled & TEXTURE_3D_BIT) {
+               if (texUnit->CurrentTex[TEXTURE_3D_INDEX]->WrapS == GL_CLAMP ||
+                   texUnit->CurrentTex[TEXTURE_3D_INDEX]->WrapT == GL_CLAMP ||
+                   texUnit->CurrentTex[TEXTURE_3D_INDEX]->WrapR == GL_CLAMP) {
+                   return GL_TRUE;
+               }
             }
          }
       }

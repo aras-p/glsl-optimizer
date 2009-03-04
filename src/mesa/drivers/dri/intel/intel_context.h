@@ -229,7 +229,12 @@ struct intel_context
    GLboolean hw_stipple;
    GLboolean depth_buffer_is_float;
    GLboolean no_rast;
-   GLboolean strict_conformance;
+
+   /* 0 - nonconformant, best performance;
+    * 1 - fallback to sw for known conformance bugs
+    * 2 - always fallback to sw
+    */
+   GLuint conformance_mode;
 
    /* State for intelvb.c and inteltris.c.
     */

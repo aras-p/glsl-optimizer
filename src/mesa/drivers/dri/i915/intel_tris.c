@@ -989,7 +989,7 @@ intelChooseRenderState(GLcontext * ctx)
             intel->draw_tri = intel_fallback_tri;
 
          if (flags & DD_TRI_SMOOTH) {
-	    if (intel->strict_conformance)
+	    if (intel->conformance_mode > 0)
 	       intel->draw_tri = intel_fallback_tri;
 	 }
 
@@ -1001,7 +1001,7 @@ intelChooseRenderState(GLcontext * ctx)
 	 }
 
 	 if (flags & DD_POINT_SMOOTH) {
-	    if (intel->strict_conformance)
+	    if (intel->conformance_mode > 0)
 	       intel->draw_point = intel_fallback_point;
 	 }
 

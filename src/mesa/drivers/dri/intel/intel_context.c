@@ -506,10 +506,16 @@ intelInitContext(struct intel_context *intel,
     * start.
     */
    if (getenv("INTEL_STRICT_CONFORMANCE")) {
-      intel->strict_conformance = 1;
+      unsigned int value = atoi(getenv("INTEL_STRICT_CONFORMANCE"));
+      if (value > 0) {
+         intel->conformance_mode = value;
+      }
+      else {
+         intel->conformance_mode = 1;
+      }
    }
 
-   if (intel->strict_conformance) {
+   if (intel->conformance_mode > 0) {
       ctx->Const.MinLineWidth = 1.0;
       ctx->Const.MinLineWidthAA = 1.0;
       ctx->Const.MaxLineWidth = 1.0;
