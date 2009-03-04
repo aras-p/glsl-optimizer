@@ -38,6 +38,9 @@
 #define PROG_INSTRUCTION_H
 
 
+#include "main/mfeatures.h"
+
+
 /**
  * Swizzle indexes.
  * Do not change!
