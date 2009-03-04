@@ -405,71 +405,52 @@ void radeonEmitAOS( r100ContextPtr rmesa,
  */
 #define RADEON_MAX_CLEARS	256
 
-static void radeonClear( GLcontext *ctx, GLbitfield mask )
+static void radeonUserClear(GLcontext *ctx, GLuint flags)
 {
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
+  GLuint mask = 0;
+
+  if (flags & RADEON_FRONT)
+    mask |= BUFFER_BIT_FRONT_LEFT;
+
+  if (flags & RADEON_BACK)
+    mask |= BUFFER_BIT_BACK_LEFT;
+
+  if (flags & RADEON_DEPTH)
+    mask |= BUFFER_BIT_DEPTH;
+
+  if (flags & RADEON_STENCIL)
+    mask |= BUFFER_BIT_STENCIL;
+
+#if 1
+  _swrast_Clear(ctx, mask);
+#else
+   for ( i = 0 ; i < dPriv->numClipRects ; ) {
+
+   }
+
+   if (flags & (RADEON_FRONT | RADEON_BACK)) {
+     	OUT_BATCH(CP_PACKET0(RADEON_WAIT_UNTIL, 0));
+	OUT_BATCH((RADEON_WAIT_3D_IDLECLEAN |
+		  RADEON_WAIT_HOST_IDLECLEAN));
+	OUT_BATCH_REGVAL(RADEON_DP_WRITE_MASK, 0); //clear->color_mask);
+
+   }
+	  
+   if ((flags & (RADEON_DEPTH | RADEON_STENCIL))
+       && (flags & RADEON_CLEAR_FASTZ)) {
+
+   }
+#endif
+}
+
+static void radeonKernelClear(GLcontext *ctx, GLuint flags)
+{
+     r100ContextPtr rmesa = R100_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
    drm_radeon_sarea_t *sarea = rmesa->radeon.sarea;
    uint32_t clear;
-   GLuint flags = 0;
-   GLuint color_mask = 0;
    GLint ret, i;
    GLint cx, cy, cw, ch;
-
-   if ( RADEON_DEBUG & DEBUG_IOCTL ) {
-      fprintf( stderr, "radeonClear\n");
-   }
-
-   {
-      LOCK_HARDWARE( &rmesa->radeon );
-      UNLOCK_HARDWARE( &rmesa->radeon );
-      if ( dPriv->numClipRects == 0 ) 
-	 return;
-   }
-   
-   radeonFlush( ctx ); 
-
-   if ( mask & BUFFER_BIT_FRONT_LEFT ) {
-      flags |= RADEON_FRONT;
-      color_mask = rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK];
-      mask &= ~BUFFER_BIT_FRONT_LEFT;
-   }
-
-   if ( mask & BUFFER_BIT_BACK_LEFT ) {
-      flags |= RADEON_BACK;
-      color_mask = rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK];
-      mask &= ~BUFFER_BIT_BACK_LEFT;
-   }
-
-   if ( mask & BUFFER_BIT_DEPTH ) {
-      flags |= RADEON_DEPTH;
-      mask &= ~BUFFER_BIT_DEPTH;
-   }
-
-   if ( (mask & BUFFER_BIT_STENCIL) && rmesa->radeon.state.stencil.hwBuffer ) {
-      flags |= RADEON_STENCIL;
-      mask &= ~BUFFER_BIT_STENCIL;
-   }
-
-   if ( mask ) {
-      if (RADEON_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr, "%s: swrast clear, mask: %x\n", __FUNCTION__, mask);
-      _swrast_Clear( ctx, mask );
-   }
-
-   if ( !flags ) 
-      return;
-
-   if (rmesa->using_hyperz) {
-      flags |= RADEON_USE_COMP_ZBUF;
-/*      if (rmesa->radeon.radeonScreen->chipset & RADEON_CHIPSET_TCL) 
-         flags |= RADEON_USE_HIERZ; */
-      if (!(rmesa->radeon.state.stencil.hwBuffer) ||
-	 ((flags & RADEON_DEPTH) && (flags & RADEON_STENCIL) &&
-	    ((rmesa->radeon.state.stencil.clear & RADEON_STENCIL_WRITE_MASK) == RADEON_STENCIL_WRITE_MASK))) {
-	  flags |= RADEON_CLEAR_FASTZ;
-      }
-   }
 
    LOCK_HARDWARE( &rmesa->radeon );
 
@@ -580,8 +561,76 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
 	 exit( 1 );
       }
    }
-
    UNLOCK_HARDWARE( &rmesa->radeon );
+}
+
+static void radeonClear( GLcontext *ctx, GLbitfield mask )
+{
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
+   GLuint flags = 0;
+   GLuint color_mask = 0;
+
+   if ( RADEON_DEBUG & DEBUG_IOCTL ) {
+      fprintf( stderr, "radeonClear\n");
+   }
+
+   {
+      LOCK_HARDWARE( &rmesa->radeon );
+      UNLOCK_HARDWARE( &rmesa->radeon );
+      if ( dPriv->numClipRects == 0 ) 
+	 return;
+   }
+   
+   radeonFlush( ctx ); 
+
+   if ( mask & BUFFER_BIT_FRONT_LEFT ) {
+      flags |= RADEON_FRONT;
+      color_mask = rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK];
+      mask &= ~BUFFER_BIT_FRONT_LEFT;
+   }
+
+   if ( mask & BUFFER_BIT_BACK_LEFT ) {
+      flags |= RADEON_BACK;
+      color_mask = rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK];
+      mask &= ~BUFFER_BIT_BACK_LEFT;
+   }
+
+   if ( mask & BUFFER_BIT_DEPTH ) {
+      flags |= RADEON_DEPTH;
+      mask &= ~BUFFER_BIT_DEPTH;
+   }
+
+   if ( (mask & BUFFER_BIT_STENCIL) && rmesa->radeon.state.stencil.hwBuffer ) {
+      flags |= RADEON_STENCIL;
+      mask &= ~BUFFER_BIT_STENCIL;
+   }
+
+   if ( mask ) {
+      if (RADEON_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "%s: swrast clear, mask: %x\n", __FUNCTION__, mask);
+      _swrast_Clear( ctx, mask );
+   }
+
+   if ( !flags ) 
+      return;
+
+   if (rmesa->using_hyperz) {
+      flags |= RADEON_USE_COMP_ZBUF;
+/*      if (rmesa->radeon.radeonScreen->chipset & RADEON_CHIPSET_TCL) 
+         flags |= RADEON_USE_HIERZ; */
+      if (!(rmesa->radeon.state.stencil.hwBuffer) ||
+	 ((flags & RADEON_DEPTH) && (flags & RADEON_STENCIL) &&
+	    ((rmesa->radeon.state.stencil.clear & RADEON_STENCIL_WRITE_MASK) == RADEON_STENCIL_WRITE_MASK))) {
+	  flags |= RADEON_CLEAR_FASTZ;
+      }
+   }
+
+   if (rmesa->radeon.radeonScreen->kernel_mm)
+      radeonUserClear(ctx, flags);
+   else
+      radeonKernelClear(ctx, flags);
+
    rmesa->radeon.hw.all_dirty = GL_TRUE;
 }
 
