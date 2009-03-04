@@ -2,7 +2,7 @@
 #include "intel_be_api.h"
 #include "i915simple/i915_winsys.h"
 
-struct drm_api drm_api_hocks =
+struct drm_api drm_api_hooks =
 {
 	/* intel_be_context.c */
 	.create_context = intel_be_create_context,

@@ -25,7 +25,6 @@
  *
  **************************************************************************/
 
-#include "pipe/p_inlines.h"
 #include "util/u_hash_table.h"
 #include "util/u_memory.h"
 
@@ -134,7 +133,7 @@ trace_transfer_create(struct trace_texture *tr_tex,
    return &tr_trans->base;
    
 error:
-   pipe_transfer_reference(&transfer, NULL);
+   transfer->texture->screen->tex_transfer_destroy(transfer);
    return NULL;
 }
 
@@ -145,7 +144,7 @@ trace_transfer_destroy(struct trace_texture *tr_tex,
 {
    struct trace_transfer *tr_trans = trace_transfer(tr_tex, transfer);
    pipe_texture_reference(&tr_trans->base.texture, NULL);
-   pipe_transfer_reference(&tr_trans->transfer, NULL);
+   transfer->texture->screen->tex_transfer_destroy(tr_trans->transfer);
    FREE(tr_trans);
 }
 

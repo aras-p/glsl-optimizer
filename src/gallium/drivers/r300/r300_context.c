@@ -103,7 +103,6 @@ static void r300_destroy_context(struct pipe_context* context) {
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
-                                         struct pipe_winsys* winsys,
                                          struct r300_winsys* r300_winsys)
 {
     struct r300_context* r300 = CALLOC_STRUCT(r300_context);
@@ -111,9 +110,11 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     if (!r300)
         return NULL;
 
+    /* XXX this could be refactored now? */
     r300->winsys = r300_winsys;
-    r300->context.winsys = winsys;
-    r300->context.screen = r300_create_screen(winsys, r300_winsys);
+
+    r300->context.winsys = (struct pipe_winsys*)r300_winsys;
+    r300->context.screen = r300_screen(screen);
 
     r300->context.destroy = r300_destroy_context;
 

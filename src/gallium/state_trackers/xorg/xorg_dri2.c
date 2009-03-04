@@ -109,8 +109,8 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	    tex = ms->screen->texture_create(ms->screen, &template);
 	}
 
-	drm_api_hocks.buffer_from_texture(tex, &buf, &stride);
-	drm_api_hocks.global_handle_from_buffer(ms->screen, buf, &handle);
+	drm_api_hooks.buffer_from_texture(tex, &buf, &stride);
+	drm_api_hooks.global_handle_from_buffer(ms->screen, buf, &handle);
 
 	buffers[i].name = handle;
 	buffers[i].attachment = attachments[i];
@@ -147,7 +147,7 @@ driDestroyBuffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
 	    (*pScreen->DestroyPixmap)(private->pPixmap);
 
 	pipe_texture_reference(&private->tex, NULL);
-	pipe_buffer_reference(ms->screen, &private->buf, NULL);
+	pipe_buffer_reference(&private->buf, NULL);
     }
 
     if (buffers) {

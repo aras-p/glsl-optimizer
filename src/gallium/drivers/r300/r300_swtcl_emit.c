@@ -79,7 +79,7 @@ static boolean r300_swtcl_render_allocate_vertices(struct vbuf_render* render,
     size_t size = (size_t)vertex_size * (size_t)count;
 
     if (r300render->vbo) {
-        pipe_buffer_reference(screen, &r300render->vbo, NULL);
+        pipe_buffer_reference(&r300render->vbo, NULL);
     }
 
     r300render->vbo_size = MAX2(size, r300render->vbo_alloc_size);
@@ -125,9 +125,8 @@ static void r300_swtcl_render_unmap_vertices(struct vbuf_render* render,
 static void r300_swtcl_render_release_vertices(struct vbuf_render* render)
 {
     struct r300_swtcl_render* r300render = r300_swtcl_render(render);
-    struct pipe_screen* screen = r300render->r300->context.screen;
 
-    pipe_buffer_reference(screen, &r300render->vbo, NULL);
+    pipe_buffer_reference(&r300render->vbo, NULL);
 }
 
 static boolean r300_swtcl_render_set_primitive(struct vbuf_render* render,

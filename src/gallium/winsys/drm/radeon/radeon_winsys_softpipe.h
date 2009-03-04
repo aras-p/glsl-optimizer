@@ -32,6 +32,6 @@
 
 #include "radeon_context.h"
 
-struct pipe_context *radeon_create_softpipe(struct radeon_context *radeon_context);
+struct pipe_context *radeon_create_softpipe(struct pipe_winsys* winsys);
 
 #endif

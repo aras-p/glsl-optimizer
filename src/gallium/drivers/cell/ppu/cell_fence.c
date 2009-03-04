@@ -96,7 +96,7 @@ cell_add_buffer_to_list(struct cell_context *cell,
    struct cell_buffer_node *node = CALLOC_STRUCT(cell_buffer_node);
    /* create new list node which references the buffer, insert at head */
    if (node) {
-      pipe_buffer_reference(ps, &node->buffer, buffer);
+      pipe_buffer_reference(&node->buffer, buffer);
       node->next = list->head;
       list->head = node;
    }
@@ -127,10 +127,10 @@ cell_free_fenced_buffers(struct cell_context *cell,
          pipe_buffer_unmap(ps, node->buffer);
 #if 0
          printf("Unref buffer %p\n", node->buffer);
-         if (node->buffer->refcount == 1)
+         if (node->buffer->reference.count == 1)
             printf("   Delete!\n");
 #endif
-         pipe_buffer_reference(ps, &node->buffer, NULL);
+         pipe_buffer_reference(&node->buffer, NULL);
          FREE(node);
          node = next;
       }

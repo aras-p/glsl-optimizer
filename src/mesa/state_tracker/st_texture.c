@@ -40,7 +40,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_inlines.h"
 #include "util/u_rect.h"
 
 
@@ -108,7 +107,7 @@ st_texture_create(struct st_context *st,
 
    newtex = screen->texture_create(screen, &pt);
 
-   assert(!newtex || newtex->refcount == 1);
+   assert(!newtex || newtex->reference.count == 1);
 
    return newtex;
 }
@@ -219,7 +218,7 @@ st_texture_image_unmap(struct st_context *st,
 
    screen->transfer_unmap(screen, stImage->transfer);
 
-   screen->tex_transfer_release(screen, &stImage->transfer);
+   screen->tex_transfer_destroy(stImage->transfer);
 }
 
 
@@ -284,7 +283,7 @@ st_texture_image_data(struct pipe_context *pipe,
 		      0, 0,                             /* source x, y */
 		      dst->width[level], dst->height[level]);       /* width, height */
 
-      screen->tex_transfer_release(screen, &dst_transfer);
+      screen->tex_transfer_destroy(dst_transfer);
 
       srcUB += src_image_stride;
    }
@@ -350,8 +349,8 @@ st_texture_image_copy(struct pipe_context *pipe,
 			 0, 0, /* srcX, Y */
 			 width, height);
 
-      screen->tex_surface_release(screen, &src_surface);
-      screen->tex_surface_release(screen, &dst_surface);
+      pipe_surface_reference(&src_surface, NULL);
+      pipe_surface_reference(&dst_surface, NULL);
    }
 }
 

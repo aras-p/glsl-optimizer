@@ -44,6 +44,15 @@
 #include "util/u_memory.h"
 
 
+static void
+dri_copy_to_front(__DRIdrawablePrivate *dPriv,
+                  struct pipe_surface *from,
+                  int x, int y, unsigned w, unsigned h)
+{
+   /* TODO send a message to the Xserver to copy to the real front buffer */
+}
+
+
 static struct pipe_surface *
 dri_surface_from_handle(struct pipe_screen *screen,
                         unsigned handle,
@@ -57,7 +66,7 @@ dri_surface_from_handle(struct pipe_screen *screen,
    struct pipe_texture templat;
    struct pipe_buffer *buf = NULL;
 
-   buf = drm_api_hocks.buffer_from_handle(screen, "dri2 buffer", handle);
+   buf = drm_api_hooks.buffer_from_handle(screen, "dri2 buffer", handle);
    if (!buf)
       return NULL;
 
@@ -77,7 +86,7 @@ dri_surface_from_handle(struct pipe_screen *screen,
                                      buf);
 
    /* we don't need the buffer from this point on */
-   pipe_buffer_reference(screen, &buf, NULL);
+   pipe_buffer_reference(&buf, NULL);
 
    if (!texture)
       return NULL;
@@ -144,6 +153,10 @@ dri_get_buffers(__DRIdrawablePrivate *dPriv)
             index = ST_SURFACE_FRONT_LEFT;
             format = PIPE_FORMAT_A8R8G8B8_UNORM;
             break;
+         case __DRI_BUFFER_FAKE_FRONT_LEFT:
+            index = ST_SURFACE_FRONT_LEFT;
+            format = PIPE_FORMAT_A8R8G8B8_UNORM;
+            break;
          case __DRI_BUFFER_BACK_LEFT:
             index = ST_SURFACE_BACK_LEFT;
             format = PIPE_FORMAT_A8R8G8B8_UNORM;
@@ -185,50 +198,28 @@ dri_get_buffers(__DRIdrawablePrivate *dPriv)
 
 
 void
-dri_swap_buffers(__DRIdrawablePrivate * dPriv)
+dri_flush_frontbuffer(struct pipe_screen *screen,
+                      struct pipe_surface *surf,
+                      void *context_private)
 {
-   struct dri_drawable *drawable = dri_drawable(dPriv);
-   struct pipe_surface *back_surf;
-
-   assert(drawable);
-   assert(drawable->stfb);
-
-   st_get_framebuffer_surface(drawable->stfb,
-                              ST_SURFACE_BACK_LEFT,
-                              &back_surf);
-   if (back_surf) {
-      st_notify_swapbuffers(drawable->stfb);
-      /* TODO do stuff here */
-      st_notify_swapbuffers_complete(drawable->stfb);
-   }
+   struct dri_context *ctx = (struct dri_context *)context_private;
+   dri_copy_to_front(ctx->dPriv, surf, 0, 0, surf->width, surf->height);
 }
 
 
-/**
- * Called via glXCopySubBufferMESA() to copy a subrect of the back
- * buffer to the front buffer/screen.
- */
+void
+dri_swap_buffers(__DRIdrawablePrivate * dPriv)
+{
+   /* not needed for dri2 */
+   assert(0);
+}
+
+
 void
 dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
 {
-   struct dri_drawable *drawable = dri_drawable(dPriv);
-   struct pipe_surface *back_surf;
-
-   assert(drawable);
-   assert(drawable->stfb);
-
-   st_get_framebuffer_surface(drawable->stfb,
-                              ST_SURFACE_BACK_LEFT,
-                              &back_surf);
-   if (back_surf) {
-      drm_clip_rect_t rect;
-      rect.x1 = x;
-      rect.y1 = y;
-      rect.x2 = w;
-      rect.y2 = h;
-
-      /* do stuff here */
-   }
+   /* not needed for dri2 */
+   assert(0);
 }
 
 
@@ -288,7 +279,12 @@ dri_create_buffer(__DRIscreenPrivate *sPriv,
    /* setup dri2 buffers information */
    i = 0;
    drawable->attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
-   drawable->attachments[i++] = __DRI_BUFFER_BACK_LEFT;
+#if 0
+   /* TODO incase of double buffer visual, delay fake creation */
+   drawable->attachments[i++] = __DRI_BUFFER_FAKE_FRONT_LEFT;
+#endif
+   if (visual->doubleBufferMode)
+      drawable->attachments[i++] = __DRI_BUFFER_BACK_LEFT;
    if (visual->depthBits)
       drawable->attachments[i++] = __DRI_BUFFER_DEPTH;
    if (visual->stencilBits)

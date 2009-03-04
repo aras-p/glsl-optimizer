@@ -1603,7 +1603,7 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 {
 	struct nouveau_channel *chan = nv50->screen->nvws->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct pipe_winsys *ws = nv50->pipe.winsys;
+	struct pipe_screen *screen = nv50->pipe.screen;
 	struct nv50_program_exec *e;
 	struct nouveau_stateobj *so;
 	const unsigned flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_WR;
@@ -1611,7 +1611,7 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 	boolean upload = FALSE;
 
 	if (!p->buffer) {
-		p->buffer = ws->buffer_create(ws, 0x100, 0, p->exec_size * 4);
+		p->buffer = screen->buffer_create(screen, 0x100, 0, p->exec_size * 4);
 		upload = TRUE;
 	}
 
@@ -1775,7 +1775,7 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 	p->exec_size = 0;
 
 	if (p->buffer)
-		pipe_buffer_reference(pscreen, &p->buffer, NULL);
+		pipe_buffer_reference(&p->buffer, NULL);
 
 	nv50->screen->nvws->res_free(&p->data);
 

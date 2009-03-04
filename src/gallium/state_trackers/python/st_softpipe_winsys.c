@@ -124,7 +124,7 @@ st_softpipe_buffer_create(struct pipe_winsys *winsys,
 {
    struct st_softpipe_buffer *buffer = CALLOC_STRUCT(st_softpipe_buffer);
 
-   buffer->base.refcount = 1;
+   pipe_reference_init(&buffer->base.reference, 1);
    buffer->base.alignment = alignment;
    buffer->base.usage = usage;
    buffer->base.size = size;
@@ -149,7 +149,7 @@ st_softpipe_user_buffer_create(struct pipe_winsys *winsys,
    if(!buffer)
       return NULL;
    
-   buffer->base.refcount = 1;
+   pipe_reference_init(&buffer->base.reference, 1);
    buffer->base.size = bytes;
    buffer->userBuffer = TRUE;
    buffer->data = ptr;

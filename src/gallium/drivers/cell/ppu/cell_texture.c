@@ -101,18 +101,17 @@ static struct pipe_texture *
 cell_texture_create(struct pipe_screen *screen,
                     const struct pipe_texture *templat)
 {
-   struct pipe_winsys *ws = screen->winsys;
    struct cell_texture *ct = CALLOC_STRUCT(cell_texture);
    if (!ct)
       return NULL;
 
    ct->base = *templat;
-   ct->base.refcount = 1;
+   pipe_reference_init(&ct->base.reference, 1);
    ct->base.screen = screen;
 
    cell_texture_layout(ct);
 
-   ct->buffer = ws->buffer_create(ws, 32, PIPE_BUFFER_USAGE_PIXEL,
+   ct->buffer = screen->buffer_create(screen, 32, PIPE_BUFFER_USAGE_PIXEL,
                                    ct->buffer_size);
 
    if (!ct->buffer) {
@@ -125,28 +124,18 @@ cell_texture_create(struct pipe_screen *screen,
 
 
 static void
-cell_texture_release(struct pipe_screen *screen,
-                     struct pipe_texture **pt)
+cell_texture_destroy(struct pipe_texture *pt)
 {
-   if (!*pt)
-      return;
+   struct cell_texture *ct = cell_texture(pt);
 
-   if (--(*pt)->refcount <= 0) {
-      /* Delete this texture now.
-       * But note that the underlying pipe_buffer may linger...
-       */
-      struct cell_texture *ct = cell_texture(*pt);
-
-      if (ct->mapped) {
-         pipe_buffer_unmap(screen, ct->buffer);
-         ct->mapped = NULL;
-      }
-
-      pipe_buffer_reference(screen, &ct->buffer, NULL);
-
-      FREE(ct);
+   if (ct->mapped) {
+      pipe_buffer_unmap(screen, ct->buffer);
+      ct->mapped = NULL;
    }
-   *pt = NULL;
+
+   pipe_buffer_reference(&ct->buffer, NULL);
+
+   FREE(ct);
 }
 
 
@@ -291,7 +280,7 @@ cell_get_tex_surface(struct pipe_screen *screen,
 
    ps = CALLOC_STRUCT(pipe_surface);
    if (ps) {
-      ps->refcount = 1;
+      pipe_reference_init(&ps->reference, 1);
       pipe_texture_reference(&ps->texture, pt);
       ps->format = pt->format;
       ps->width = pt->width[level];
@@ -319,16 +308,10 @@ cell_get_tex_surface(struct pipe_screen *screen,
 
 
 static void 
-cell_tex_surface_release(struct pipe_screen *screen, 
-                         struct pipe_surface **s)
+cell_tex_surface_destroy(struct pipe_surface *s)
 {
-   struct pipe_surface *surf = *s;
-
-   if (--surf->refcount == 0) {
-      pipe_texture_reference(&surf->texture, NULL);
-      FREE(surf);
-   }
-   *s = NULL;
+   pipe_texture_reference(&surf->texture, NULL);
+   FREE(surf);
 }
 
 
@@ -353,7 +336,7 @@ cell_get_tex_transfer(struct pipe_screen *screen,
    ctrans = CALLOC_STRUCT(cell_transfer);
    if (ctrans) {
       struct pipe_transfer *pt = &ctrans->base;
-      pt->refcount = 1;
+      pipe_reference_init(&pt->reference, 1);
       pipe_texture_reference(&pt->texture, texture);
       pt->format = texture->format;
       pt->block = texture->block;
@@ -388,20 +371,16 @@ cell_get_tex_transfer(struct pipe_screen *screen,
 
 
 static void 
-cell_tex_transfer_release(struct pipe_screen *screen, 
-                          struct pipe_transfer **t)
+cell_tex_transfer_destroy(struct pipe_transfer *t)
 {
-   struct cell_transfer *transfer = cell_transfer(*t);
+   struct cell_transfer *transfer = cell_transfer(t);
    /* Effectively do the texture_update work here - if texture images
     * needed post-processing to put them into hardware layout, this is
     * where it would happen.  For cell, nothing to do.
     */
    assert (transfer->base.texture);
-   if (--transfer->base.refcount == 0) {
-      pipe_texture_reference(&transfer->base.texture, NULL);
-      FREE(transfer);
-   }
-   *t = NULL;
+   pipe_texture_reference(&transfer->base.texture, NULL);
+   FREE(transfer);
 }
 
 
@@ -511,13 +490,13 @@ void
 cell_init_screen_texture_funcs(struct pipe_screen *screen)
 {
    screen->texture_create = cell_texture_create;
-   screen->texture_release = cell_texture_release;
+   screen->texture_destroy = cell_texture_destroy;
 
    screen->get_tex_surface = cell_get_tex_surface;
-   screen->tex_surface_release = cell_tex_surface_release;
+   screen->tex_surface_destroy = cell_tex_surface_destroy;
 
    screen->get_tex_transfer = cell_get_tex_transfer;
-   screen->tex_transfer_release = cell_tex_transfer_release;
+   screen->tex_transfer_destroy = cell_tex_transfer_destroy;
 
    screen->transfer_map = cell_transfer_map;
    screen->transfer_unmap = cell_transfer_unmap;

@@ -113,8 +113,7 @@ struct pipe_screen {
                                             const unsigned *stride,
                                             struct pipe_buffer *buffer);
 
-   void (*texture_release)(struct pipe_screen *,
-                           struct pipe_texture **pt);
+   void (*texture_destroy)(struct pipe_texture *pt);
 
    /** Get a surface which is a "view" into a texture */
    struct pipe_surface *(*get_tex_surface)(struct pipe_screen *,
@@ -123,10 +122,7 @@ struct pipe_screen {
                                            unsigned zslice,
                                            unsigned usage );
 
-   /* Surfaces allocated by the above must be released here:
-    */
-   void (*tex_surface_release)( struct pipe_screen *,
-                                struct pipe_surface ** );
+   void (*tex_surface_destroy)(struct pipe_surface *);
    
 
    /** Get a transfer object for transferring data to/from a texture */
@@ -138,10 +134,7 @@ struct pipe_screen {
                                              unsigned x, unsigned y,
                                              unsigned w, unsigned h);
 
-   /* Transfer objects allocated by the above must be released here:
-    */
-   void (*tex_transfer_release)( struct pipe_screen *,
-                                 struct pipe_transfer ** );
+   void (*tex_transfer_destroy)(struct pipe_transfer *);
    
    void *(*transfer_map)( struct pipe_screen *,
                           struct pipe_transfer *transfer );
@@ -232,8 +225,7 @@ struct pipe_screen {
    void (*buffer_unmap)( struct pipe_screen *screen,
                          struct pipe_buffer *buf );
 
-   void (*buffer_destroy)( struct pipe_screen *screen,
-			   struct pipe_buffer *buf );
+   void (*buffer_destroy)( struct pipe_buffer *buf );
 
 
    /**

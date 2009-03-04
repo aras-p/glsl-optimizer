@@ -67,7 +67,7 @@ nouveau_pipe_bo_create(struct pipe_winsys *pws, unsigned alignment,
 	nvbuf = CALLOC_STRUCT(nouveau_pipe_buffer);
 	if (!nvbuf)
 		return NULL;
-	nvbuf->base.refcount = 1;
+	pipe_reference_init(&nvbuf->base.reference, 1);
 	nvbuf->base.alignment = alignment;
 	nvbuf->base.usage = usage;
 	nvbuf->base.size = size;
@@ -92,7 +92,7 @@ nouveau_pipe_bo_user_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
 	nvbuf = CALLOC_STRUCT(nouveau_pipe_buffer);
 	if (!nvbuf)
 		return NULL;
-	nvbuf->base.refcount = 1;
+	pipe_reference_init(&nvbuf->base.reference, 1);
 	nvbuf->base.size = bytes;
 
 	if (nouveau_bo_user(dev, ptr, bytes, &nvbuf->bo)) {
@@ -104,7 +104,7 @@ nouveau_pipe_bo_user_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
 }
 
 static void
-nouveau_pipe_bo_del(struct pipe_winsys *ws, struct pipe_buffer *buf)
+nouveau_pipe_bo_del(struct pipe_buffer *buf)
 {
 	struct nouveau_pipe_buffer *nvbuf = nouveau_pipe_buffer(buf);
 

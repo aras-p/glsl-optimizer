@@ -64,7 +64,6 @@ nv40_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	if (!tx)
 		return NULL;
 
-	tx->base.refcount = 1;
 	pipe_texture_reference(&tx->base.texture, pt);
 	tx->base.format = pt->format;
 	tx->base.x = x;
@@ -138,12 +137,12 @@ nv40_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 }
 
 static void
-nv40_transfer_del(struct pipe_screen *pscreen, struct pipe_transfer **pptx)
+nv40_transfer_del(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
 {
-	struct pipe_transfer *ptx = *pptx;
 	struct nv40_transfer *tx = (struct nv40_transfer *)ptx;
 
 	if (!tx->direct && ptx->usage != PIPE_TRANSFER_READ) {
+		struct pipe_screen *pscreen = ptx->texture->screen;
 		struct nv40_screen *nvscreen = nv40_screen(pscreen);
 		struct pipe_surface *dst;
 
@@ -159,10 +158,6 @@ nv40_transfer_del(struct pipe_screen *pscreen, struct pipe_transfer **pptx)
 
 		pipe_surface_reference(&dst, NULL);
 	}
-
-	*pptx = NULL;
-	if (--ptx->refcount)
-		return;
 
 	pipe_surface_reference(&tx->surface, NULL);
 	pipe_texture_reference(&ptx->texture, NULL);
@@ -195,7 +190,7 @@ void
 nv40_screen_init_transfer_functions(struct pipe_screen *pscreen)
 {
 	pscreen->get_tex_transfer = nv40_transfer_new;
-	pscreen->tex_transfer_release = nv40_transfer_del;
+	pscreen->tex_transfer_destroy = nv40_transfer_del;
 	pscreen->transfer_map = nv40_transfer_map;
 	pscreen->transfer_unmap = nv40_transfer_unmap;
 }

@@ -66,7 +66,6 @@
 #include "st_gen_mipmap.h"
 #include "st_program.h"
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
 #include "draw/draw_context.h"
 #include "cso_cache/cso_cache.h"
 #include "cso_cache/cso_context.h"
@@ -209,7 +208,7 @@ static void st_destroy_context_priv( struct st_context *st )
 
    for (i = 0; i < Elements(st->state.constants); i++) {
       if (st->state.constants[i].buffer) {
-         pipe_buffer_reference(st->pipe->screen, &st->state.constants[i].buffer, NULL);
+         pipe_buffer_reference(&st->state.constants[i].buffer, NULL);
       }
    }
 

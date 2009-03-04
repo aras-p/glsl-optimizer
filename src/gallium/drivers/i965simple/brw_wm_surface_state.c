@@ -242,7 +242,7 @@ static void upload_wm_surfaces(struct brw_context *brw )
       const struct brw_texture *texUnit = brw->attribs.Texture[i];
 
       if (texUnit &&
-	  texUnit->base.refcount/*(texUnit->refcount > 0) == really used */) {
+	  texUnit->base.reference.count/*(texUnit->reference.count > 0) == really used */) {
 
 	 brw_update_texture_surface(brw, i);
 

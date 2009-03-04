@@ -73,7 +73,7 @@ void st_upload_constants( struct st_context *st,
       /* We always need to get a new buffer, to keep the drivers simple and
        * avoid gratuitous rendering synchronization.
        */
-      pipe_buffer_reference(pipe->screen, &cbuf->buffer, NULL );
+      pipe_buffer_reference(&cbuf->buffer, NULL );
       cbuf->buffer = pipe_buffer_create(pipe->screen, 16, PIPE_BUFFER_USAGE_CONSTANT,
 					paramBytes );
 

@@ -109,8 +109,7 @@ nouveau_context_init(struct nouveau_screen *nv_screen,
 		nv_screen->nvc = nvc;
 	}
 
-	nvc->refcount++;
-	nv->nvc = nvc;
+	pipe_reference((struct pipe_reference**)&nv->nvc, &nvc->reference);
 
 	/* Find a free slot for a pipe context, allocate a new one if needed */
 	nv->pctx_id = -1;
@@ -159,7 +158,7 @@ nouveau_context_init(struct nouveau_screen *nv_screen,
 		enum pipe_format format;
 
 		fb_buf = calloc(1, sizeof(struct nouveau_pipe_buffer));
-		fb_buf->base.refcount = 1;
+		pipe_reference_init(&fb_buf->base.reference, 1);
 		fb_buf->base.usage = PIPE_BUFFER_USAGE_PIXEL;
 
 		nouveau_bo_fake(dev, nv_screen->front_offset, NOUVEAU_BO_VRAM,
@@ -195,7 +194,7 @@ nouveau_context_cleanup(struct nouveau_context *nv)
 
 	if (nv->pctx_id >= 0) {
 		nvc->pctx[nv->pctx_id] = NULL;
-		if (--nvc->refcount <= 0) {
+		if (pipe_reference((struct pipe_reference**)&nv->nvc, NULL)) {
 			nouveau_channel_context_destroy(nvc);
 			nv->nv_screen->nvc = NULL;
 		}

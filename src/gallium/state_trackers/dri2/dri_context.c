@@ -71,12 +71,13 @@ dri_create_context(const __GLcontextModes *visual,
                        sPriv->myNum,
                        "dri");
 
-   ctx->pipe = drm_api_hocks.create_context(screen->pipe_screen);
+   ctx->pipe = drm_api_hooks.create_context(screen->pipe_screen);
 
    if (ctx->pipe == NULL)
       goto fail;
 
-   ctx->pipe->priv = ctx;       /* I guess */
+   /* used in dri_flush_frontbuffer */
+   ctx->pipe->priv = ctx;
 
    ctx->st = st_create_context(ctx->pipe, visual, st_share);
    if (ctx->st == NULL)
@@ -152,6 +153,7 @@ dri_make_current(__DRIcontextPrivate *cPriv,
                       draw->stfb,
                       read->stfb);
 
+      /* used in dri_flush_frontbuffer */
       ctx->dPriv = driDrawPriv;
 
       if (driDrawPriv)

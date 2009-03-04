@@ -38,6 +38,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_shader_tokens.h"
+#include "pipe/p_state.h"
 
 #include "util/u_blit.h"
 #include "util/u_draw_quad.h"
@@ -166,7 +167,7 @@ util_destroy_blit(struct blit_state *ctx)
    FREE((void*) ctx->vert_shader.tokens);
    FREE((void*) ctx->frag_shader.tokens);
 
-   pipe_buffer_reference(pipe->screen, &ctx->vbuf, NULL);
+   pipe_buffer_reference(&ctx->vbuf, NULL);
 
    FREE(ctx);
 }
@@ -368,7 +369,7 @@ util_blit_pixels(struct blit_state *ctx,
 
    /* free the surface, update the texture if necessary.
     */
-   screen->tex_surface_release(screen, &texSurf);
+   pipe_surface_reference(&texSurf, NULL);
 
    /* save state (restored below) */
    cso_save_blend(ctx->cso);
@@ -429,7 +430,7 @@ util_blit_pixels(struct blit_state *ctx,
    cso_restore_vertex_shader(ctx->cso);
    cso_restore_viewport(ctx->cso);
 
-   screen->texture_release(screen, &tex);
+   pipe_texture_reference(&tex, NULL);
 }
 
 
@@ -438,7 +439,7 @@ util_blit_pixels(struct blit_state *ctx,
  */
 void util_blit_flush( struct blit_state *ctx )
 {
-   pipe_buffer_reference(ctx->pipe->screen, &ctx->vbuf, NULL);
+   pipe_buffer_reference(&ctx->vbuf, NULL);
    ctx->vbuf_slot = 0;
 } 
 
@@ -461,8 +462,6 @@ util_blit_pixels_tex(struct blit_state *ctx,
                  int dstX1, int dstY1,
                  float z, uint filter)
 {
-   struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_framebuffer_state fb;
    float s0, t0, s1, t1;
    unsigned offset;
@@ -478,8 +477,10 @@ util_blit_pixels_tex(struct blit_state *ctx,
    t0 = srcY0 / (float)tex->height[0];
    t1 = srcY1 / (float)tex->height[0];
 
-   assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
-                                      PIPE_TEXTURE_USAGE_RENDER_TARGET, 0));
+   assert(ctx->pipe->screen->is_format_supported(ctx->pipe->screen, dst->format,
+                                                 PIPE_TEXTURE_2D,
+                                                 PIPE_TEXTURE_USAGE_RENDER_TARGET,
+                                                 0));
 
    /* save state (restored below) */
    cso_save_blend(ctx->cso);

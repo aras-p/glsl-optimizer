@@ -108,7 +108,7 @@ pool_buffer_destroy(struct pb_buffer *buf)
    struct pool_buffer *pool_buf = pool_buffer(buf);
    struct pool_pb_manager *pool = pool_buf->mgr;
    
-   assert(pool_buf->base.base.refcount == 0);
+   assert(pool_buf->base.base.reference.count == 0);
 
    pipe_mutex_lock(pool->mutex);
    LIST_ADD(&pool_buf->head, &pool->free);
@@ -216,8 +216,8 @@ pool_bufmgr_create_buffer(struct pb_manager *mgr,
    pipe_mutex_unlock(pool->mutex);
    
    pool_buf = LIST_ENTRY(struct pool_buffer, item, head);
-   assert(pool_buf->base.base.refcount == 0);
-   pool_buf->base.base.refcount = 1;
+   assert(pool_buf->base.base.reference.count == 0);
+   pipe_reference_init(&pool_buf->base.base.reference, 1);
    pool_buf->base.base.alignment = desc->alignment;
    pool_buf->base.base.usage = desc->usage;
    
@@ -295,7 +295,7 @@ pool_bufmgr_create(struct pb_manager *provider,
 
    pool_buf = pool->bufs;
    for (i = 0; i < numBufs; ++i) {
-      pool_buf->base.base.refcount = 0;
+      pipe_reference_init(&pool_buf->base.base.reference, 0);
       pool_buf->base.base.alignment = 0;
       pool_buf->base.base.usage = 0;
       pool_buf->base.base.size = bufSize;

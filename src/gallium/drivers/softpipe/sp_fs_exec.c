@@ -35,7 +35,6 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
-#include "pipe/p_inlines.h"
 #include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_parse.h"
 

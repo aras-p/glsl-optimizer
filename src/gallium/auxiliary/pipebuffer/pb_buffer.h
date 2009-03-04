@@ -48,7 +48,6 @@
 #include "util/u_debug.h"
 #include "pipe/p_error.h"
 #include "pipe/p_state.h"
-#include "pipe/p_inlines.h"
 
 
 #ifdef __cplusplus
@@ -159,7 +158,7 @@ pb_map(struct pb_buffer *buf,
    assert(buf);
    if(!buf)
       return NULL;
-   assert(buf->base.refcount > 0);
+   assert(buf->base.reference.count > 0);
    return buf->vtbl->map(buf, flags);
 }
 
@@ -170,7 +169,7 @@ pb_unmap(struct pb_buffer *buf)
    assert(buf);
    if(!buf)
       return;
-   assert(buf->base.refcount > 0);
+   assert(buf->base.reference.count > 0);
    buf->vtbl->unmap(buf);
 }
 
@@ -186,7 +185,7 @@ pb_get_base_buffer( struct pb_buffer *buf,
       offset = 0;
       return;
    }
-   assert(buf->base.refcount > 0);
+   assert(buf->base.reference.count > 0);
    assert(buf->vtbl->get_base_buffer);
    buf->vtbl->get_base_buffer(buf, base_buf, offset);
    assert(*base_buf);
@@ -222,29 +221,18 @@ pb_destroy(struct pb_buffer *buf)
    assert(buf);
    if(!buf)
       return;
-   assert(buf->base.refcount == 0);
+   assert(buf->base.reference.count == 0);
    buf->vtbl->destroy(buf);
 }
 
-
-/* XXX: thread safety issues!
- */
 static INLINE void
 pb_reference(struct pb_buffer **dst,
              struct pb_buffer *src)
 {
-   if (src) {
-      assert(src->base.refcount);
-      src->base.refcount++;
-   }
+   struct pb_buffer *old = *dst;
 
-   if (*dst) {
-      assert((*dst)->base.refcount);
-      if(--(*dst)->base.refcount == 0)
-         pb_destroy( *dst );
-   }
-
-   *dst = src;
+   if (pipe_reference((struct pipe_reference**)dst, &src->base.reference))
+      pb_destroy( old );
 }
 
 

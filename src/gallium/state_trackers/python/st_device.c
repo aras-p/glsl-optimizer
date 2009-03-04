@@ -51,11 +51,20 @@ st_device_really_destroy(struct st_device *st_dev)
 }
 
 
+static void
+st_device_reference(struct st_device **ptr, struct st_device *st_dev)
+{
+   struct st_device *old_dev = *ptr;
+
+   if (pipe_reference((struct pipe_reference **)ptr, &st_dev->reference))
+      st_device_really_destroy(old_dev);
+}
+
+
 void
 st_device_destroy(struct st_device *st_dev) 
 {
-   if(!--st_dev->refcount)
-      st_device_really_destroy(st_dev);
+   st_device_reference(&st_dev, NULL);
 }
 
 
@@ -72,7 +81,7 @@ st_device_create_from_st_winsys(const struct st_winsys *st_ws)
    if(!st_dev)
       return NULL;
    
-   st_dev->refcount = 1;
+   pipe_reference_init(&st_dev->reference, 1);
    st_dev->st_ws = st_ws;
    
    st_dev->real_screen = st_ws->screen_create();
@@ -124,8 +133,7 @@ st_context_destroy(struct st_context *st_ctx)
 
       FREE(st_ctx);
       
-      if(!--st_dev->refcount)
-         st_device_really_destroy(st_dev);
+      st_device_reference(&st_dev, NULL);
    }
 }
 
@@ -139,8 +147,7 @@ st_context_create(struct st_device *st_dev)
    if(!st_ctx)
       return NULL;
    
-   st_ctx->st_dev = st_dev;
-   ++st_dev->refcount;
+   st_device_reference(&st_ctx->st_dev, st_dev);
    
    st_ctx->real_pipe = st_dev->st_ws->context_create(st_dev->real_screen);
    if(!st_ctx->real_pipe) {
@@ -292,8 +299,7 @@ void
 st_buffer_destroy(struct st_buffer *st_buf)
 {
    if(st_buf) {
-      struct pipe_screen *screen = st_buf->st_dev->screen;
-      pipe_buffer_reference(screen, &st_buf->buffer, NULL);
+      pipe_buffer_reference(&st_buf->buffer, NULL);
       FREE(st_buf);
    }
 }

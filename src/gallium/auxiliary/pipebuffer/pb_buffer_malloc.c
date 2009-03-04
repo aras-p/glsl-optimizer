@@ -132,7 +132,7 @@ pb_malloc_buffer_create(size_t size,
    if(!buf)
       return NULL;
 
-   buf->base.base.refcount = 1;
+   pipe_reference_init(&buf->base.base.reference, 1);
    buf->base.base.alignment = desc->alignment;
    buf->base.base.usage = desc->usage;
    buf->base.base.size = size;

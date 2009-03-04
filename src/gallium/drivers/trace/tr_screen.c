@@ -207,37 +207,18 @@ trace_screen_texture_blanket(struct pipe_screen *_screen,
 
 
 static void 
-trace_screen_texture_release(struct pipe_screen *_screen,
-                             struct pipe_texture **ptexture)
+trace_screen_texture_destroy(struct pipe_texture *texture)
 {
-   struct trace_screen *tr_scr = trace_screen(_screen);
-   struct pipe_screen *screen = tr_scr->screen;
-   struct trace_texture *tr_tex;
-   struct pipe_texture *texture;
+   struct pipe_screen *screen = texture->screen;
    
-   assert(ptexture);
-   if(*ptexture) {
-      tr_tex = trace_texture(tr_scr, *ptexture);
-      texture = tr_tex->texture;
-      assert(texture->screen == screen);
-   }
-   else
-      texture = NULL;
-   
-   if (*ptexture) {
-      if (!--(*ptexture)->refcount) {
-         trace_dump_call_begin("pipe_screen", "texture_destroy");
-         
-         trace_dump_arg(ptr, screen);
-         trace_dump_arg(ptr, texture);
-         
-         trace_texture_destroy(tr_scr, *ptexture);
-         
-         trace_dump_call_end();
-      }
-   
-      *ptexture = NULL;
-   }
+   trace_dump_call_begin("pipe_screen", "texture_destroy");
+
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(ptr, texture);
+
+   trace_texture_destroy(trace_screen(screen), texture);
+
+   trace_dump_call_end();
 }
 
 
@@ -280,38 +261,19 @@ trace_screen_get_tex_surface(struct pipe_screen *_screen,
 
 
 static void 
-trace_screen_tex_surface_release(struct pipe_screen *_screen,
-                                 struct pipe_surface **psurface)
+trace_screen_tex_surface_destroy(struct pipe_surface *surface)
 {
-   struct trace_screen *tr_scr = trace_screen(_screen);
-   struct pipe_screen *screen = tr_scr->screen;
-   struct trace_texture *tr_tex;
-   struct trace_surface *tr_surf;
-   struct pipe_surface *surface;
+   struct pipe_screen *screen = surface->texture->screen;
    
-   assert(psurface);
-   if(*psurface) {
-      tr_tex = trace_texture(tr_scr, (*psurface)->texture);
-      tr_surf = trace_surface(tr_tex, *psurface);
-      surface = tr_surf->surface;
-   }
-   else
-      surface = NULL;
-   
-   if (*psurface) {
-      if (!--(*psurface)->refcount) {
-         trace_dump_call_begin("pipe_screen", "tex_surface_destroy");
-         
-         trace_dump_arg(ptr, screen);
-         trace_dump_arg(ptr, surface);
+   trace_dump_call_begin("pipe_screen", "tex_surface_destroy");
 
-         trace_surface_destroy(tr_tex, *psurface);
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(ptr, surface);
 
-         trace_dump_call_end();
-      }
-   
-      *psurface = NULL;
-   }
+   trace_surface_destroy(trace_texture(trace_screen(screen), surface->texture),
+                         surface);
+
+   trace_dump_call_end();
 }
 
 
@@ -356,38 +318,20 @@ trace_screen_get_tex_transfer(struct pipe_screen *_screen,
 
 
 static void 
-trace_screen_tex_transfer_release(struct pipe_screen *_screen,
-                                 struct pipe_transfer **ptransfer)
+trace_screen_tex_transfer_destroy(struct pipe_transfer *transfer)
 {
-   struct trace_screen *tr_scr = trace_screen(_screen);
-   struct pipe_screen *screen = tr_scr->screen;
-   struct trace_texture *tr_tex;
-   struct trace_transfer *tr_trans;
-   struct pipe_transfer *transfer;
-   
-   assert(ptransfer);
-   if(*ptransfer) {
-      tr_tex = trace_texture(tr_scr, (*ptransfer)->texture);
-      tr_trans = trace_transfer(tr_tex, *ptransfer);
-      transfer = tr_trans->transfer;
-   }
-   else
-      transfer = NULL;
-   
-   if (*ptransfer) {
-      if (!--(*ptransfer)->refcount) {
-         trace_dump_call_begin("pipe_screen", "tex_transfer_destroy");
-         
-         trace_dump_arg(ptr, screen);
-         trace_dump_arg(ptr, transfer);
+   struct pipe_texture *texture = transfer->texture;
+   struct pipe_screen *screen = texture->screen;
 
-         trace_transfer_destroy(tr_tex, *ptransfer);
+   trace_dump_call_begin("pipe_screen", "tex_transfer_destroy");
 
-         trace_dump_call_end();
-      }
-   
-      *ptransfer = NULL;
-   }
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(ptr, transfer);
+
+   trace_transfer_destroy(trace_texture(trace_screen(screen), texture),
+                          transfer);
+
+   trace_dump_call_end();
 }
 
 
@@ -509,11 +453,11 @@ trace_screen_create(struct pipe_screen *screen)
    tr_scr->base.is_format_supported = trace_screen_is_format_supported;
    tr_scr->base.texture_create = trace_screen_texture_create;
    tr_scr->base.texture_blanket = trace_screen_texture_blanket;
-   tr_scr->base.texture_release = trace_screen_texture_release;
+   tr_scr->base.texture_destroy = trace_screen_texture_destroy;
    tr_scr->base.get_tex_surface = trace_screen_get_tex_surface;
-   tr_scr->base.tex_surface_release = trace_screen_tex_surface_release;
+   tr_scr->base.tex_surface_destroy = trace_screen_tex_surface_destroy;
    tr_scr->base.get_tex_transfer = trace_screen_get_tex_transfer;
-   tr_scr->base.tex_transfer_release = trace_screen_tex_transfer_release;
+   tr_scr->base.tex_transfer_destroy = trace_screen_tex_transfer_destroy;
    tr_scr->base.transfer_map = trace_screen_transfer_map;
    tr_scr->base.transfer_unmap = trace_screen_transfer_unmap;
    

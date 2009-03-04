@@ -37,7 +37,6 @@
 //#include "state_trackers/xlib/xmesaP.h"
 
 #include "pipe/internal/p_winsys_screen.h"
-#include "pipe/p_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "i965simple/brw_winsys.h"
@@ -57,10 +56,10 @@ buffer_from_surface(struct pipe_surface *surface)
 }
 
 struct aub_buffer {
+   struct pipe_reference reference;
    char *data;
    unsigned offset;
    unsigned size;
-   unsigned refcount;
    unsigned map_count;
    boolean dump_on_unmap;
 };
@@ -144,8 +143,7 @@ static void aub_buffer_unmap(struct pipe_winsys *winsys,
 
 
 static void
-aub_buffer_destroy(struct pipe_winsys *winsys,
-		   struct pipe_buffer *buf)
+aub_buffer_destroy(struct pipe_buffer *buf)
 {
    free(buf);
 }
@@ -189,7 +187,7 @@ aub_buffer_create(struct pipe_winsys *winsys,
    struct aub_pipe_winsys *iws = aub_pipe_winsys(winsys);
    struct aub_buffer *sbo = CALLOC_STRUCT(aub_buffer);
 
-   sbo->refcount = 1;
+   pipe_reference_init(&sbo->reference, 1);
 
    /* Could reuse buffers that are not referenced in current
     * batchbuffer.  Can't do that atm, so always reallocate:

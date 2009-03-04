@@ -636,7 +636,7 @@ static int vlFlush
 	for (i = 0; i < 3; ++i)
 	{
 		pipe->screen->transfer_unmap(pipe->screen, mc->tex_transfer[i]);
-		pipe->screen->tex_transfer_release(pipe->screen, &mc->tex_transfer[i]);
+		pipe->screen->tex_transfer_destroy(mc->tex_transfer[i]);
 	}
 
 	mc->render_target.cbufs[0] = pipe->screen->get_tex_surface
@@ -856,7 +856,7 @@ static int vlDestroy
 		pipe->delete_sampler_state(pipe, mc->samplers.all[i]);
 
 	for (i = 0; i < 3; ++i)
-		pipe_buffer_reference(pipe->screen, &mc->vertex_bufs.all[i].buffer, NULL);
+		pipe_buffer_reference(&mc->vertex_bufs.all[i].buffer, NULL);
 
 	/* Textures 3 & 4 are not created directly, no need to release them here */
 	for (i = 0; i < 3; ++i)
@@ -873,8 +873,8 @@ static int vlDestroy
 		pipe->delete_fs_state(pipe, mc->b_fs[i]);
 	}
 
-	pipe_buffer_reference(pipe->screen, &mc->vs_const_buf.buffer, NULL);
-	pipe_buffer_reference(pipe->screen, &mc->fs_const_buf.buffer, NULL);
+	pipe_buffer_reference(&mc->vs_const_buf.buffer, NULL);
+	pipe_buffer_reference(&mc->fs_const_buf.buffer, NULL);
 
 	FREE(mc->macroblocks);
 	FREE(mc);

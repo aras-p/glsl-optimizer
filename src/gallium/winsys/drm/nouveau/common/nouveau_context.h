@@ -13,8 +13,8 @@
 #include "nouveau_local.h"
 
 struct nouveau_channel_context {
+	struct pipe_reference reference;
 	struct pipe_screen *pscreen;
-	int refcount;
 
 	unsigned cur_pctx;
 	unsigned nr_pctx;

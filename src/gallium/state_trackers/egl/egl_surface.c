@@ -132,7 +132,7 @@ drm_create_texture(_EGLDriver *drv,
 	scrn->front.width = w;
 	scrn->front.height = h;
 	scrn->front.pitch = pitch;
-	drm_api_hocks.handle_from_buffer(dev->winsys, scrn->buffer, &scrn->front.handle);
+	drm_api_hooks.handle_from_buffer(screen, scrn->buffer, &scrn->front.handle);
 	if (0)
 		goto err_handle;
 
@@ -143,7 +143,7 @@ err_handle:
 err_surf:
 	pipe_texture_reference(&texture, NULL);
 err_tex:
-	pipe_buffer_reference(screen, &buf, NULL);
+	pipe_buffer_reference(&buf, NULL);
 err_buf:
 	return;
 }
@@ -173,7 +173,7 @@ drm_takedown_shown_screen(_EGLDriver *drv, struct drm_screen *screen)
 
 	pipe_surface_reference(&screen->surface, NULL);
 	pipe_texture_reference(&screen->tex, NULL);
-	pipe_buffer_reference(dev->screen, &screen->buffer, NULL);
+	pipe_buffer_reference(&screen->buffer, NULL);
 
 	screen->shown = 0;
 }
@@ -271,7 +271,6 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 	struct drm_device *dev = (struct drm_device *)drv;
 	struct drm_surface *surf = lookup_drm_surface(surface);
 	struct drm_screen *scrn = lookup_drm_screen(dpy, screen);
-	struct pipe_context *pipe;
 	_EGLMode *mode = _eglLookupMode(dpy, m);
 	int ret;
 	unsigned int i, k;
@@ -349,7 +348,7 @@ err_fb:
 err_bo:
 	pipe_surface_reference(&scrn->surface, NULL);
 	pipe_texture_reference(&scrn->tex, NULL);
-	pipe_buffer_reference(dev->screen, &scrn->buffer, NULL);
+	pipe_buffer_reference(&scrn->buffer, NULL);
 
 	return EGL_FALSE;
 }

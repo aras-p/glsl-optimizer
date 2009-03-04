@@ -184,6 +184,16 @@ dri_get_swap_info(__DRIdrawablePrivate * dPriv,
 
 
 /**
+ * NULL stub for old dri loaders
+ */
+const __DRIconfig **
+dri_init_screen(__DRIscreenPrivate *sPriv)
+{
+   return NULL;
+}
+
+
+/**
  * This is the driver specific part of the createNewScreen entry point.
  *
  * Returns the __GLcontextModes supported by this driver.
@@ -208,11 +218,14 @@ dri_init_screen2(__DRIscreenPrivate *sPriv)
    sPriv->extensions = dri_screen_extensions;
 
 
-   screen->pipe_screen = drm_api_hocks.create_screen(screen->fd, screen->deviceID);
+   screen->pipe_screen = drm_api_hooks.create_screen(screen->fd, screen->deviceID);
    if (!screen->pipe_screen) {
       debug_printf("%s: failed to create pipe_screen\n", __FUNCTION__);
       goto fail;
    }
+
+   /* We need to hook in here */
+   screen->pipe_screen->flush_frontbuffer = dri_flush_frontbuffer;
 
    driParseOptionInfo(&screen->optionCache,
                       __driConfigOptions,
@@ -240,19 +253,19 @@ dri_destroy_screen(__DRIscreenPrivate * sPriv)
 
 
 PUBLIC const struct __DriverAPIRec driDriverAPI = {
-   .InitScreen          = NULL,
+   .InitScreen          = dri_init_screen, /* not supported but exported */
    .DestroyScreen       = dri_destroy_screen,
    .CreateContext       = dri_create_context,
    .DestroyContext      = dri_destroy_context,
    .CreateBuffer        = dri_create_buffer,
    .DestroyBuffer       = dri_destroy_buffer,
-   .SwapBuffers         = dri_swap_buffers,
+   .SwapBuffers         = dri_swap_buffers, /* not supported but exported */
    .MakeCurrent         = dri_make_current,
    .UnbindContext       = dri_unbind_context,
    .GetSwapInfo         = dri_get_swap_info,
    .GetDrawableMSC      = driDrawableGetMSC32,
    .WaitForMSC          = driWaitForMSC32,
-   .CopySubBuffer       = dri_copy_sub_buffer,
+   .CopySubBuffer       = dri_copy_sub_buffer, /* not supported but exported */
    .InitScreen2         = dri_init_screen2,
 };
 

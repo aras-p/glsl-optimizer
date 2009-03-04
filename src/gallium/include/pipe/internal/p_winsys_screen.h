@@ -154,8 +154,7 @@ struct pipe_winsys
    void (*buffer_unmap)( struct pipe_winsys *ws, 
 			 struct pipe_buffer *buf );
 
-   void (*buffer_destroy)( struct pipe_winsys *ws,
-			   struct pipe_buffer *buf );
+   void (*buffer_destroy)( struct pipe_buffer *buf );
 
 
    /** Set ptr = fence, with reference counting */

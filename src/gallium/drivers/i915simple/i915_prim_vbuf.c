@@ -126,7 +126,7 @@ i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
    } else {
       i915->vbo_flushed = 0;
       if (i915_render->vbo)
-         pipe_buffer_reference(screen, &i915_render->vbo, NULL);
+         pipe_buffer_reference(&i915_render->vbo, NULL);
    }
 
    if (!i915_render->vbo) {

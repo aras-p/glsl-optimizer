@@ -68,13 +68,13 @@ struct st_context {
 
 
 struct st_device {
+   /* FIXME: we also need to refcount for textures and surfaces... */
+   struct pipe_reference reference;
+
    const struct st_winsys *st_ws; 
 
    struct pipe_screen *real_screen;
    struct pipe_screen *screen;
-   
-   /* FIXME: we also need to refcount for textures and surfaces... */
-   unsigned refcount;
 };
 
 

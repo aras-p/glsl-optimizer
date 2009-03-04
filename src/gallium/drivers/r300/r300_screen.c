@@ -268,7 +268,6 @@ r300_get_tex_transfer(struct pipe_screen *screen,
 
     trans = CALLOC_STRUCT(r300_transfer);
     if (trans) {
-        trans->transfer.refcount = 1;
         pipe_texture_reference(&trans->transfer.texture, texture);
         trans->transfer.format = trans->transfer.format;
         trans->transfer.width = w;
@@ -284,17 +283,10 @@ r300_get_tex_transfer(struct pipe_screen *screen,
 }
 
 static void
-r300_tex_transfer_release(struct pipe_screen *screen,
-                          struct pipe_transfer **transfer)
+r300_tex_transfer_destroy(struct pipe_transfer *trans)
 {
-   struct pipe_transfer *trans = *transfer;
-
-   if (--trans->refcount == 0) {
-      pipe_texture_reference(&trans->texture, NULL);
-      FREE(trans);
-   }
-
-   *transfer = NULL;
+   pipe_texture_reference(&trans->texture, NULL);
+   FREE(trans);
 }
 
 static void* r300_transfer_map(struct pipe_screen* screen,
@@ -337,8 +329,7 @@ static void r300_destroy_screen(struct pipe_screen* pscreen)
     FREE(r300screen);
 }
 
-struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys,
-                                       struct r300_winsys* r300_winsys)
+struct pipe_screen* r300_create_screen(struct r300_winsys* r300_winsys)
 {
     struct r300_screen* r300screen = CALLOC_STRUCT(r300_screen);
     struct r300_capabilities* caps = CALLOC_STRUCT(r300_capabilities);
@@ -352,7 +343,7 @@ struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys,
     r300_parse_chipset(caps);
 
     r300screen->caps = caps;
-    r300screen->screen.winsys = winsys;
+    r300screen->screen.winsys = (struct pipe_winsys*)r300_winsys;
     r300screen->screen.destroy = r300_destroy_screen;
     r300screen->screen.get_name = r300_get_name;
     r300screen->screen.get_vendor = r300_get_vendor;
@@ -360,7 +351,7 @@ struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys,
     r300screen->screen.get_paramf = r300_get_paramf;
     r300screen->screen.is_format_supported = r300_is_format_supported;
     r300screen->screen.get_tex_transfer = r300_get_tex_transfer;
-    r300screen->screen.tex_transfer_release = r300_tex_transfer_release;
+    r300screen->screen.tex_transfer_destroy = r300_tex_transfer_destroy;
     r300screen->screen.transfer_map = r300_transfer_map;
     r300screen->screen.transfer_unmap = r300_transfer_unmap;
 

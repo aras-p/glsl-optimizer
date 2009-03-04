@@ -123,7 +123,6 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	if (!tx)
 		return NULL;
 
-	tx->base.refcount = 1;
 	pipe_texture_reference(&tx->base.texture, pt);
 	tx->base.format = pt->format;
 	tx->base.width = w;
@@ -158,17 +157,13 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 }
 
 static void
-nv50_transfer_del(struct pipe_screen *pscreen, struct pipe_transfer **pptx)
+nv50_transfer_del(struct pipe_transfer *ptx)
 {
-	struct pipe_transfer *ptx = *pptx;
 	struct nv50_transfer *tx = (struct nv50_transfer *)ptx;
 	struct nv50_miptree *mt = nv50_miptree(ptx->texture);
 
-	*pptx = NULL;
-	if (--ptx->refcount)
-		return;
-
 	if (ptx->usage != PIPE_TRANSFER_READ) {
+		struct pipe_screen *pscreen = ptx->texture->screen;
 		nv50_transfer_rect_m2mf(pscreen, tx->buffer, tx->base.stride,
 					0, 0, tx->base.width, tx->base.height,
 					mt->buffer, tx->level_pitch,
@@ -179,7 +174,7 @@ nv50_transfer_del(struct pipe_screen *pscreen, struct pipe_transfer **pptx)
 					NOUVEAU_BO_VRAM | NOUVEAU_BO_GART);
 	}
 
-	pipe_buffer_reference(pscreen, &tx->buffer, NULL);
+	pipe_buffer_reference(&tx->buffer, NULL);
 	pipe_texture_reference(&ptx->texture, NULL);
 	FREE(ptx);
 }
@@ -210,7 +205,7 @@ void
 nv50_transfer_init_screen_functions(struct pipe_screen *pscreen)
 {
 	pscreen->get_tex_transfer = nv50_transfer_new;
-	pscreen->tex_transfer_release = nv50_transfer_del;
+	pscreen->tex_transfer_destroy = nv50_transfer_del;
 	pscreen->transfer_map = nv50_transfer_map;
 	pscreen->transfer_unmap = nv50_transfer_unmap;
 }

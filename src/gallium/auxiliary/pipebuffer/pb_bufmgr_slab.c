@@ -202,7 +202,7 @@ pb_slab_buffer_destroy(struct pb_buffer *_buf)
 
    pipe_mutex_lock(mgr->mutex);
    
-   assert(buf->base.base.refcount == 0);
+   assert(buf->base.base.reference.count == 0);
    
    buf->mapCount = 0;
 
@@ -340,7 +340,7 @@ pb_slab_create(struct pb_slab_manager *mgr)
 
    buf = slab->buffers;
    for (i=0; i < numBuffers; ++i) {
-      buf->base.base.refcount = 0;
+      pipe_reference_init(&buf->base.base.reference, 0);
       buf->base.base.size = mgr->bufSize;
       buf->base.base.alignment = 0;
       buf->base.base.usage = 0;
@@ -419,7 +419,7 @@ pb_slab_manager_create_buffer(struct pb_manager *_mgr,
    pipe_mutex_unlock(mgr->mutex);
    buf = LIST_ENTRY(struct pb_slab_buffer, list, head);
    
-   ++buf->base.base.refcount;
+   pipe_reference_init(&buf->base.base.reference, 1);
    buf->base.base.alignment = desc->alignment;
    buf->base.base.usage = desc->usage;
    

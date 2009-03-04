@@ -378,7 +378,7 @@ setup_interleaved_attribs(GLcontext *ctx,
          }
          else {
             vbuffer->buffer = NULL;
-            pipe_buffer_reference(pipe->screen, &vbuffer->buffer, stobj->buffer);
+            pipe_buffer_reference(&vbuffer->buffer, stobj->buffer);
             vbuffer->buffer_offset = (unsigned) low;
          }
          vbuffer->stride = stride; /* in bytes */
@@ -433,7 +433,7 @@ setup_non_interleaved_attribs(GLcontext *ctx,
          /*printf("stobj %u = %p\n", attr, (void*) stobj);*/
 
          vbuffer[attr].buffer = NULL;
-         pipe_buffer_reference(pipe->screen, &vbuffer[attr].buffer, stobj->buffer);
+         pipe_buffer_reference(&vbuffer[attr].buffer, stobj->buffer);
          vbuffer[attr].buffer_offset = (unsigned) arrays[mesaAttr]->Ptr;
          velements[attr].src_offset = 0;
       }
@@ -617,7 +617,7 @@ st_draw_vbo(GLcontext *ctx,
       if (bufobj && bufobj->Name) {
          /* elements/indexes are in a real VBO */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
-         pipe_buffer_reference(pipe->screen, &indexBuf, stobj->buffer);
+         pipe_buffer_reference(&indexBuf, stobj->buffer);
          indexOffset = (unsigned) ib->ptr / indexSize;
       }
       else {
@@ -657,7 +657,7 @@ st_draw_vbo(GLcontext *ctx,
          }
       }
 
-      pipe_buffer_reference(pipe->screen, &indexBuf, NULL);
+      pipe_buffer_reference(&indexBuf, NULL);
    }
    else {
       /* non-indexed */
@@ -673,7 +673,7 @@ st_draw_vbo(GLcontext *ctx,
 
    /* unreference buffers (frees wrapped user-space buffer objects) */
    for (attr = 0; attr < num_vbuffers; attr++) {
-      pipe_buffer_reference(pipe->screen, &vbuffer[attr].buffer, NULL);
+      pipe_buffer_reference(&vbuffer[attr].buffer, NULL);
       assert(!vbuffer[attr].buffer);
    }
 

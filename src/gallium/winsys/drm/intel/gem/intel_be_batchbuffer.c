@@ -114,10 +114,10 @@ intel_be_batchbuffer_flush(struct intel_be_batchbuffer *batch,
 
 	if (fence) {
 		if (*fence)
-			intel_be_fence_unreference(*fence);
+			intel_be_fence_reference(fence, NULL);
 
 		(*fence) = CALLOC_STRUCT(intel_be_fence);
-		(*fence)->refcount = 1;
+		pipe_reference_init(&(*fence)->reference, 1);
 		(*fence)->bo = NULL;
 	}
 }

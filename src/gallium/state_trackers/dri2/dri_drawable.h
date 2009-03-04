@@ -66,6 +66,11 @@ dri_create_buffer(__DRIscreenPrivate *sPriv,
                   boolean isPixmap);
 
 void
+dri_flush_frontbuffer(struct pipe_screen *screen,
+                      struct pipe_surface *surf,
+                      void *context_private);
+
+void
 dri_swap_buffers(__DRIdrawablePrivate * dPriv);
 
 void

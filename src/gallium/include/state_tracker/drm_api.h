@@ -42,6 +42,6 @@ struct drm_api
 /**
  * A driver needs to export this symbol
  */
-extern struct drm_api drm_api_hocks;
+extern struct drm_api drm_api_hooks;
 
 #endif

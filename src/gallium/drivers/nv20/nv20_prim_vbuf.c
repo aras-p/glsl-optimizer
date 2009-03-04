@@ -112,8 +112,8 @@ nv20__allocate_mbuffer(struct nv20_vbuf_render *nv20_render, size_t size)
 static void
 nv20__allocate_pbuffer(struct nv20_vbuf_render *nv20_render, size_t size)
 {
-	struct pipe_winsys *winsys = nv20_render->nv20->pipe.winsys;
-	nv20_render->pbuffer = winsys->buffer_create(winsys, 64,
+	struct pipe_screen *screen = nv20_render->nv20->pipe.screen;
+	nv20_render->pbuffer = screen->buffer_create(screen, 64,
 					PIPE_BUFFER_USAGE_VERTEX, size);
 }
 
@@ -361,7 +361,7 @@ nv20_vbuf_render_release_vertices( struct vbuf_render *render )
 	struct pipe_screen *pscreen = &nv20->screen->pipe;
 
 	if (nv20_render->pbuffer) {
-		pipe_buffer_reference(pscreen, &nv20_render->pbuffer, NULL);
+		pipe_buffer_reference(&nv20_render->pbuffer, NULL);
 	} else if (nv20_render->mbuffer) {
 		FREE(nv20_render->mbuffer);
 		nv20_render->mbuffer = NULL;

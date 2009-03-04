@@ -218,8 +218,8 @@ util_surface_copy(struct pipe_context *pipe,
    pipe->screen->transfer_unmap(pipe->screen, src_trans);
    pipe->screen->transfer_unmap(pipe->screen, dst_trans);
 
-   screen->tex_transfer_release(screen, &src_trans);
-   screen->tex_transfer_release(screen, &dst_trans);
+   screen->tex_transfer_destroy(src_trans);
+   screen->tex_transfer_destroy(dst_trans);
 }
 
 
@@ -297,5 +297,5 @@ util_surface_fill(struct pipe_context *pipe,
    }
 
    pipe->screen->transfer_unmap(pipe->screen, dst_trans);
-   screen->tex_transfer_release(screen, &dst_trans);
+   screen->tex_transfer_destroy(dst_trans);
 }

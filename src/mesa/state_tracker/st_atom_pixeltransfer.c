@@ -48,7 +48,6 @@
 
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
 #include "util/u_pack_color.h"
 
 
@@ -171,7 +170,7 @@ load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
    }
 
    screen->transfer_unmap(screen, transfer);
-   screen->tex_transfer_release(screen, &transfer);
+   screen->tex_transfer_destroy(transfer);
 }
 
 

@@ -32,7 +32,6 @@
  */
 
 
-#include "pipe/p_inlines.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
@@ -446,7 +445,7 @@ aaline_create_texture(struct aaline_stage *aaline)
 
       /* unmap */
       screen->transfer_unmap(screen, transfer);
-      screen->tex_transfer_release(screen, &transfer);
+      screen->tex_transfer_destroy(transfer);
    }
    return TRUE;
 }
@@ -728,7 +727,7 @@ aaline_destroy(struct draw_stage *stage)
       aaline->pipe->delete_sampler_state(aaline->pipe, aaline->sampler_cso);
 
    if (aaline->texture)
-      pipe_texture_release(&aaline->texture);
+      pipe_texture_reference(&aaline->texture, NULL);
 
    draw_free_temp_verts( stage );
 

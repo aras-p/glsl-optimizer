@@ -1,5 +1,6 @@
 /* 
  * Copyright © 2008 Jérôme Glisse
+ *             2009 Corbin Simpson
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -26,10 +27,14 @@
 /*
  * Authors:
  *      Jérôme Glisse <glisse@freedesktop.org>
+ *      Corbin Simpson <MostAwesomeDude@gmail.com>
  */
 #include <stdio.h>
-#include "dri_util.h"
+
 #include "state_tracker/st_public.h"
+
+#include "util/u_memory.h"
+
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "radeon_buffer.h"
@@ -38,25 +43,27 @@
 #include "radeon_bo.h"
 #include "radeon_drm.h"
 
+
 static const char *radeon_get_name(struct pipe_winsys *ws)
 {
-    return "RADEON/DRI2";
+    return "Radeon/GEM+KMS";
 }
 
 static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
-                                             unsigned alignment,
-                                             unsigned usage,
-                                             unsigned size)
+                                                unsigned alignment,
+                                                unsigned usage,
+                                                unsigned size)
 {
-    struct radeon_pipe_winsys *radeon_ws = (struct radeon_pipe_winsys *)ws;
+    struct radeon_winsys *radeon_ws = (struct radeon_winsys *)ws;
     struct radeon_pipe_buffer *radeon_buffer;
     uint32_t domain;
 
-    radeon_buffer = calloc(1, sizeof(*radeon_buffer));
+    radeon_buffer = CALLOC_STRUCT(radeon_pipe_buffer);
     if (radeon_buffer == NULL) {
         return NULL;
     }
-    radeon_buffer->base.refcount = 1;
+
+    pipe_reference_init(&radeon_buffer->base.reference, 1);
     radeon_buffer->base.alignment = alignment;
     radeon_buffer->base.usage = usage;
     radeon_buffer->base.size = size;
@@ -69,21 +76,21 @@ static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
     if (usage & PIPE_BUFFER_USAGE_VERTEX) {
         domain |= RADEON_GEM_DOMAIN_GTT;
     }
-
     if (usage & PIPE_BUFFER_USAGE_INDEX) {
         domain |= RADEON_GEM_DOMAIN_GTT;
     }
-    radeon_buffer->bo = radeon_bo_open(radeon_ws->radeon_screen->bom, 0,
-                                    size, alignment, domain, 0);
+
+    radeon_buffer->bo = radeon_bo_open(radeon_ws->bom, 0, size, alignment,
+                                       domain, 0);
     if (radeon_buffer->bo == NULL) {
-        free(radeon_buffer);
+        FREE(radeon_buffer);
     }
     return &radeon_buffer->base;
 }
 
 static struct pipe_buffer *radeon_buffer_user_create(struct pipe_winsys *ws,
-                                                  void *ptr,
-                                                  unsigned bytes)
+                                                     void *ptr,
+                                                     unsigned bytes)
 {
     struct radeon_pipe_buffer *radeon_buffer;
 
@@ -97,7 +104,7 @@ static struct pipe_buffer *radeon_buffer_user_create(struct pipe_winsys *ws,
     return &radeon_buffer->base;
 }
 
-static void radeon_buffer_del(struct pipe_winsys *ws, struct pipe_buffer *buffer)
+static void radeon_buffer_del(struct pipe_buffer *buffer)
 {
     struct radeon_pipe_buffer *radeon_buffer = (struct radeon_pipe_buffer*)buffer;
 
@@ -106,21 +113,20 @@ static void radeon_buffer_del(struct pipe_winsys *ws, struct pipe_buffer *buffer
 }
 
 static void *radeon_buffer_map(struct pipe_winsys *ws,
-                            struct pipe_buffer *buffer,
-                            unsigned flags)
+                               struct pipe_buffer *buffer,
+                               unsigned flags)
 {
     struct radeon_pipe_buffer *radeon_buffer = (struct radeon_pipe_buffer*)buffer;
     int write = 0;
 
     if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
-       /* Remove this when radeon_bo_map supports DONTBLOCK 
-        */
+       /* XXX Remove this when radeon_bo_map supports DONTBLOCK */
        return NULL;
     }
-
     if (flags & PIPE_BUFFER_USAGE_CPU_WRITE) {
         write = 1;
     }
+
     if (radeon_bo_map(radeon_buffer->bo, write))
         return NULL;
     return radeon_buffer->bo->ptr;
@@ -134,59 +140,58 @@ static void radeon_buffer_unmap(struct pipe_winsys *ws, struct pipe_buffer *buff
 }
 
 static void radeon_fence_reference(struct pipe_winsys *ws,
-                                struct pipe_fence_handle **ptr,
-                                struct pipe_fence_handle *pfence)
+                                   struct pipe_fence_handle **ptr,
+                                   struct pipe_fence_handle *pfence)
 {
 }
 
 static int radeon_fence_signalled(struct pipe_winsys *ws,
-                               struct pipe_fence_handle *pfence,
-                               unsigned flag)
+                                  struct pipe_fence_handle *pfence,
+                                  unsigned flag)
 {
     return 1;
 }
 
 static int radeon_fence_finish(struct pipe_winsys *ws,
-                            struct pipe_fence_handle *pfence,
-                            unsigned flag)
+                               struct pipe_fence_handle *pfence,
+                               unsigned flag)
 {
     return 0;
 }
 
 static void radeon_flush_frontbuffer(struct pipe_winsys *pipe_winsys,
-                                  struct pipe_surface *pipe_surface,
-                                  void *context_private)
+                                     struct pipe_surface *pipe_surface,
+                                     void *context_private)
 {
     /* TODO: call dri2CopyRegion */
 }
 
-struct pipe_winsys *radeon_pipe_winsys(struct radeon_screen *radeon_screen)
+struct pipe_winsys *radeon_pipe_winsys()
 {
-    struct radeon_pipe_winsys *radeon_ws;
+    struct pipe_winsys *radeon_ws;
 
-    radeon_ws = calloc(1, sizeof(struct radeon_pipe_winsys));
+    radeon_ws = CALLOC_STRUCT(pipe_winsys);
     if (radeon_ws == NULL) {
         return NULL;
     }
-    radeon_ws->radeon_screen = radeon_screen;
 
-    radeon_ws->winsys.flush_frontbuffer = radeon_flush_frontbuffer;
+    radeon_ws->flush_frontbuffer = radeon_flush_frontbuffer;
 
-    radeon_ws->winsys.buffer_create = radeon_buffer_create;
-    radeon_ws->winsys.buffer_destroy = radeon_buffer_del;
-    radeon_ws->winsys.user_buffer_create = radeon_buffer_user_create;
-    radeon_ws->winsys.buffer_map = radeon_buffer_map;
-    radeon_ws->winsys.buffer_unmap = radeon_buffer_unmap;
+    radeon_ws->buffer_create = radeon_buffer_create;
+    radeon_ws->buffer_destroy = radeon_buffer_del;
+    radeon_ws->user_buffer_create = radeon_buffer_user_create;
+    radeon_ws->buffer_map = radeon_buffer_map;
+    radeon_ws->buffer_unmap = radeon_buffer_unmap;
 
-    radeon_ws->winsys.fence_reference = radeon_fence_reference;
-    radeon_ws->winsys.fence_signalled = radeon_fence_signalled;
-    radeon_ws->winsys.fence_finish = radeon_fence_finish;
+    radeon_ws->fence_reference = radeon_fence_reference;
+    radeon_ws->fence_signalled = radeon_fence_signalled;
+    radeon_ws->fence_finish = radeon_fence_finish;
 
-    radeon_ws->winsys.get_name = radeon_get_name;
+    radeon_ws->get_name = radeon_get_name;
 
-    return &radeon_ws->winsys;
+    return radeon_ws;
 }
-
+#if 0
 static struct pipe_buffer *radeon_buffer_from_handle(struct radeon_screen *radeon_screen,
                                                   uint32_t handle)
 {
@@ -202,7 +207,7 @@ static struct pipe_buffer *radeon_buffer_from_handle(struct radeon_screen *radeo
         radeon_bo_unref(bo);
         return NULL;
     }
-    radeon_buffer->base.refcount = 1;
+    pipe_reference_init(&radeon_buffer->base.reference, 1);
     radeon_buffer->base.usage = PIPE_BUFFER_USAGE_PIXEL;
     radeon_buffer->bo = bo;
     return &radeon_buffer->base;
@@ -237,9 +242,10 @@ struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_co
 
     pt = pipe_screen->texture_blanket(pipe_screen, &tmpl, &pitch, pb);
     if (pt == NULL) {
-        pipe_buffer_reference(pipe_screen, &pb, NULL);
+        pipe_buffer_reference(&pb, NULL);
     }
     ps = pipe_screen->get_tex_surface(pipe_screen, pt, 0, 0, 0,
                                       PIPE_BUFFER_USAGE_GPU_WRITE);
     return ps;
 }
+#endif

@@ -41,7 +41,6 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
 #include "pipe/p_screen.h"
 #include "st_context.h"
 #include "st_cb_fbo.h"
@@ -357,8 +356,6 @@ st_render_texture(GLcontext *ctx,
    if (!pt) 
       return;
 
-   assert(!att->Renderbuffer);
-
    /* create new renderbuffer which wraps the texture image */
    rb = st_new_renderbuffer(ctx, 0);
    if (!rb) {
@@ -415,7 +412,6 @@ static void
 st_finish_render_texture(GLcontext *ctx,
                          struct gl_renderbuffer_attachment *att)
 {
-   struct pipe_screen *screen = ctx->st->pipe->screen;
    struct st_renderbuffer *strb = st_renderbuffer(att->Renderbuffer);
 
    if (!strb)
@@ -424,7 +420,7 @@ st_finish_render_texture(GLcontext *ctx,
    st_flush( ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL );
 
    if (strb->surface)
-      screen->tex_surface_release( screen, &strb->surface );
+      pipe_surface_reference( &strb->surface, NULL );
 
    strb->rtt = NULL;
 

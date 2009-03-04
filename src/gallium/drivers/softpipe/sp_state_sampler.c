@@ -30,7 +30,6 @@
  */
 
 #include "util/u_memory.h"
-#include "pipe/p_inlines.h"
 
 #include "draw/draw_context.h"
 
