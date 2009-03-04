@@ -83,6 +83,8 @@ pipe_buffer_map_range(struct pipe_screen *screen,
                 unsigned length,
                 unsigned usage)
 {
+   assert(offset < buf->size);
+   assert(offset + length <= buf->size);
    if(screen->buffer_map_range)
       return screen->buffer_map_range(screen, buf, offset, length, usage);
    else {
@@ -98,6 +100,8 @@ pipe_buffer_flush_mapped_range(struct pipe_screen *screen,
                                unsigned offset,
                                unsigned length)
 {
+   assert(offset < buf->size);
+   assert(offset + length <= buf->size);
    if(screen->buffer_flush_mapped_range)
       screen->buffer_flush_mapped_range(screen, buf, offset, length);
 }
