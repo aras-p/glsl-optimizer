@@ -107,22 +107,21 @@ xm_buffer_unmap(struct pipe_winsys *pws, struct pipe_buffer *buf)
 }
 
 static void
-xm_buffer_destroy(struct pipe_winsys *pws,
+xm_buffer_destroy(/*struct pipe_winsys *pws,*/
                   struct pipe_buffer *buf)
 {
    struct xm_buffer *oldBuf = xm_buffer(buf);
 
-   if (oldBuf->data) {
-      {
+   if (oldBuf) {
+      if (oldBuf->data) {
          if (!oldBuf->userBuffer) {
             align_free(oldBuf->data);
          }
+
+         oldBuf->data = NULL;
       }
-
-      oldBuf->data = NULL;
+      free(oldBuf);
    }
-
-   free(oldBuf);
 }
 
 
@@ -371,7 +370,7 @@ xlib_create_cell_winsys( void )
 
 
 static struct pipe_screen *
-xlib_create_cell_screen( struct pipe_winsys *pws )
+xlib_create_cell_screen( void )
 {
    struct pipe_winsys *winsys;
    struct pipe_screen *screen;

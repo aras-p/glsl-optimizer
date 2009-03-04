@@ -129,7 +129,7 @@ cell_texture_destroy(struct pipe_texture *pt)
    struct cell_texture *ct = cell_texture(pt);
 
    if (ct->mapped) {
-      pipe_buffer_unmap(screen, ct->buffer);
+      pipe_buffer_unmap(ct->buffer->screen, ct->buffer);
       ct->mapped = NULL;
    }
 
@@ -308,7 +308,7 @@ cell_get_tex_surface(struct pipe_screen *screen,
 
 
 static void 
-cell_tex_surface_destroy(struct pipe_surface *s)
+cell_tex_surface_destroy(struct pipe_surface *surf)
 {
    pipe_texture_reference(&surf->texture, NULL);
    FREE(surf);
@@ -336,7 +336,6 @@ cell_get_tex_transfer(struct pipe_screen *screen,
    ctrans = CALLOC_STRUCT(cell_transfer);
    if (ctrans) {
       struct pipe_transfer *pt = &ctrans->base;
-      pipe_reference_init(&pt->reference, 1);
       pipe_texture_reference(&pt->texture, texture);
       pt->format = texture->format;
       pt->block = texture->block;
