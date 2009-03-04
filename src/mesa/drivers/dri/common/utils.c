@@ -32,19 +32,14 @@
 #include <string.h>
 #include <stdlib.h>
 #include "main/mtypes.h"
+#include "main/cpuinfo.h"
 #include "main/extensions.h"
 #include "glapi/dispatch.h"
 #include "utils.h"
 
+
 int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
-#if defined(USE_X86_ASM)
-#include "x86/common_x86_asm.h"
-#endif
-
-#if defined(USE_PPC_ASM)
-#include "ppc/common_ppc_features.h"
-#endif
 
 unsigned
 driParseDebugString( const char * debug, 
@@ -93,12 +88,8 @@ unsigned
 driGetRendererString( char * buffer, const char * hardware_name,
 		      const char * driver_date, GLuint agp_mode )
 {
-#define MAX_INFO   4
-   const char * cpu[MAX_INFO];
-   unsigned   next = 0;
-   unsigned   i;
-   unsigned   offset;
-
+   unsigned offset;
+   char *cpu;
 
    offset = sprintf( buffer, "Mesa DRI %s %s", hardware_name, driver_date );
 
@@ -118,59 +109,10 @@ driGetRendererString( char * buffer, const char * hardware_name,
 
    /* Append any CPU-specific information.
     */
-#ifdef USE_X86_ASM
-   if ( _mesa_x86_cpu_features ) {
-      cpu[next] = " x86";
-      next++;
-   }
-# ifdef USE_MMX_ASM
-   if ( cpu_has_mmx ) {
-      cpu[next] = (cpu_has_mmxext) ? "/MMX+" : "/MMX";
-      next++;
-   }
-# endif
-# ifdef USE_3DNOW_ASM
-   if ( cpu_has_3dnow ) {
-      cpu[next] = (cpu_has_3dnowext) ? "/3DNow!+" : "/3DNow!";
-      next++;
-   }
-# endif
-# ifdef USE_SSE_ASM
-   if ( cpu_has_xmm ) {
-      cpu[next] = (cpu_has_xmm2) ? "/SSE2" : "/SSE";
-      next++;
-   }
-# endif
-
-#elif defined(USE_SPARC_ASM)
-
-   cpu[0] = " SPARC";
-   next = 1;
-
-#elif defined(USE_PPC_ASM)
-   if ( _mesa_ppc_cpu_features ) {
-      cpu[next] = (cpu_has_64) ? " PowerPC 64" : " PowerPC";
-      next++;
-   }
-
-# ifdef USE_VMX_ASM
-   if ( cpu_has_vmx ) {
-      cpu[next] = "/Altivec";
-      next++;
-   }
-# endif
-
-   if ( ! cpu_has_fpu ) {
-      cpu[next] = "/No FPU";
-      next++;
-   }
-#endif
-
-   for ( i = 0 ; i < next ; i++ ) {
-      const size_t len = strlen( cpu[i] );
-
-      strncpy( & buffer[ offset ], cpu[i], len );
-      offset += len;
+   cpu = _mesa_get_cpu_string();
+   if (cpu) {
+      offset += sprintf(buffer + offset, " %s", cpu);
+      _mesa_free(cpu);
    }
 
    return offset;
