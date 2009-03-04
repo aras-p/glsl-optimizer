@@ -29,7 +29,6 @@
 static struct pipe_texture *
 nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 {
-	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv50_miptree *mt = CALLOC_STRUCT(nv50_miptree);
 	struct pipe_texture *pt = &mt->base;
 	unsigned usage, width = tmp->width[0], height = tmp->height[0];
@@ -37,7 +36,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 	int i, l;
 
 	mt->base = *tmp;
-	mt->base.refcount = 1;
+	pipe_reference_init(&mt->base.reference, 1);
 	mt->base.screen = pscreen;
 
 	usage = PIPE_BUFFER_USAGE_PIXEL;
@@ -94,7 +93,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 		}
 	}
 
-	mt->buffer = ws->buffer_create(ws, 256, usage, mt->total_size);
+	mt->buffer = pscreen->buffer_create(pscreen, 256, usage, mt->total_size);
 	if (!mt->buffer) {
 		FREE(mt);
 		return NULL;
@@ -119,29 +118,23 @@ nv50_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 		return NULL;
 
 	mt->base = *pt;
-	mt->base.refcount = 1;
+	pipe_reference_init(&mt->base.reference, 1);
 	mt->base.screen = pscreen;
 	mt->image_nr = 1;
 	mt->level[0].pitch = *stride;
 	mt->level[0].image_offset = CALLOC(1, sizeof(unsigned));
 
-	pipe_buffer_reference(pscreen, &mt->buffer, pb);
+	pipe_buffer_reference(&mt->buffer, pb);
 	return &mt->base;
 }
 
 static void
-nv50_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **ppt)
+nv50_miptree_destroy(struct pipe_texture *pt)
 {
-	struct pipe_texture *pt = *ppt;
+	struct nv50_miptree *mt = nv50_miptree(pt);
 
-	*ppt = NULL;
-
-	if (--pt->refcount <= 0) {
-		struct nv50_miptree *mt = nv50_miptree(pt);
-
-		pipe_buffer_reference(pscreen, &mt->buffer, NULL);
-		FREE(mt);
-	}
+        pipe_buffer_reference(&mt->buffer, NULL);
+        FREE(mt);
 }
 
 static struct pipe_surface *
@@ -171,7 +164,7 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps->height = pt->height[level];
 	ps->usage = flags;
 	ps->status = PIPE_SURFACE_STATUS_DEFINED;
-	ps->refcount = 1;
+	pipe_reference_init(&ps->reference, 1);
 	ps->face = face;
 	ps->level = level;
 	ps->zslice = zslice;
@@ -181,18 +174,12 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 }
 
 static void
-nv50_miptree_surface_del(struct pipe_screen *pscreen,
-			 struct pipe_surface **psurface)
+nv50_miptree_surface_del(struct pipe_surface *ps)
 {
-	struct pipe_surface *ps = *psurface;
 	struct nv50_surface *s = nv50_surface(ps);
 
-	*psurface = NULL;
-
-	if (--ps->refcount <= 0) {
-		pipe_texture_reference(&ps->texture, NULL);
-		FREE(s);
-	}
+        pipe_texture_reference(&ps->texture, NULL);
+        FREE(s);
 }
 
 void
@@ -200,8 +187,8 @@ nv50_screen_init_miptree_functions(struct pipe_screen *pscreen)
 {
 	pscreen->texture_create = nv50_miptree_create;
 	pscreen->texture_blanket = nv50_miptree_blanket;
-	pscreen->texture_release = nv50_miptree_release;
+	pscreen->texture_destroy = nv50_miptree_destroy;
 	pscreen->get_tex_surface = nv50_miptree_surface_new;
-	pscreen->tex_surface_release = nv50_miptree_surface_del;
+	pscreen->tex_surface_destroy = nv50_miptree_surface_del;
 }
 

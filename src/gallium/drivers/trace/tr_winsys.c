@@ -295,18 +295,16 @@ trace_winsys_buffer_unmap(struct pipe_winsys *_winsys,
 
 
 static void
-trace_winsys_buffer_destroy(struct pipe_winsys *_winsys,
-                            struct pipe_buffer *buffer)
+trace_winsys_buffer_destroy(struct pipe_buffer *buffer)
 {
-   struct trace_winsys *tr_ws = trace_winsys(_winsys);
-   struct pipe_winsys *winsys = tr_ws->winsys;
+   struct pipe_winsys *winsys = buffer->screen->winsys;
    
    trace_dump_call_begin("pipe_winsys", "buffer_destroy");
    
    trace_dump_arg(ptr, winsys);
    trace_dump_arg(ptr, buffer);
 
-   winsys->buffer_destroy(winsys, buffer);
+   winsys->buffer_destroy(buffer);
    
    trace_dump_call_end();
 }

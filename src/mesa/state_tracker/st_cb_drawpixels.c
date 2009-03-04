@@ -392,7 +392,7 @@ make_texture(struct st_context *st,
 
       /* unmap */
       screen->transfer_unmap(screen, transfer);
-      screen->tex_transfer_release(screen, &transfer);
+      screen->tex_transfer_destroy(transfer);
 
       assert(success);
 
@@ -495,7 +495,7 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
                               PIPE_PRIM_QUADS,
                               4,  /* verts */
                               3); /* attribs/vert */
-      pipe_buffer_reference(pipe->screen, &buf, NULL);
+      pipe_buffer_reference(&buf, NULL);
    }
 }
 
@@ -808,7 +808,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
    /* unmap the stencil buffer */
    screen->transfer_unmap(screen, pt);
-   screen->tex_transfer_release(screen, &pt);
+   screen->tex_transfer_destroy(pt);
 }
 
 
@@ -951,7 +951,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    /* unmap the stencil buffer */
    screen->transfer_unmap(screen, ptDraw);
-   screen->tex_transfer_release(screen, &ptDraw);
+   screen->tex_transfer_destroy(ptDraw);
 }
 
 
@@ -1070,8 +1070,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
          _mesa_free(buf);
       }
 
-      screen->tex_transfer_release(screen, &ptRead);
-      screen->tex_transfer_release(screen, &ptTex);
+      screen->tex_transfer_destroy(ptRead);
+      screen->tex_transfer_destroy(ptTex);
    }
 
    /* draw textured quad */

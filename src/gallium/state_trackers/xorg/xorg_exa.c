@@ -147,7 +147,7 @@ ExaFinishAccess(PixmapPtr pPix, int index)
 	return;
 
     exa->scrn->transfer_unmap(exa->scrn, priv->map_transfer);
-    pipe_transfer_reference(&priv->map_transfer, NULL);
+    exa->scrn->tex_transfer_destroy(priv->map_transfer);
 
 }
 
@@ -163,7 +163,7 @@ ExaDone(PixmapPtr pPixmap)
 	return;
 
     if (priv->src_surf)
-	exa->scrn->tex_surface_release(exa->scrn, &priv->src_surf);
+	exa->scrn->tex_surface_destroy(priv->src_surf);
     priv->src_surf = NULL;
 }
 
@@ -219,7 +219,7 @@ ExaSolid(PixmapPtr pPixmap, int x0, int y0, int x1, int y1)
     exa->ctx->surface_fill(exa->ctx, surf, x0, y0, x1 - x0, y1 - y0,
 			   priv->color);
 
-    exa->scrn->tex_surface_release(exa->scrn, &surf);
+    exa->scrn->tex_surface_destroy(surf);
 }
 
 static Bool
@@ -276,7 +276,7 @@ ExaCopy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
 
     exa->ctx->surface_copy(exa->ctx, 0, surf, dstX, dstY, priv->src_surf,
 			   srcX, srcY, width, height);
-    exa->scrn->tex_surface_release(exa->scrn, &surf);
+    exa->scrn->tex_surface_destroy(surf);
 }
 
 static Bool
@@ -336,7 +336,7 @@ ExaDestroyPixmap(ScreenPtr pScreen, void *dPriv)
 	return;
 
     if (priv->tex)
-	ms->screen->texture_release(exa->scrn, &priv->tex);
+	ms->screen->texture_destroy(priv->tex);
 
     xfree(priv);
 }
@@ -382,7 +382,7 @@ xorg_exa_get_pixmap_handle(PixmapPtr pPixmap)
 
     drm_api_hooks.buffer_from_texture(priv->tex, &buffer, &stride);
     drm_api_hooks.handle_from_buffer(ms->screen, buffer, &handle);
-    pipe_buffer_reference(ms->screen, &buffer, NULL);
+    pipe_buffer_reference(&buffer, NULL);
     return handle;
 }
 

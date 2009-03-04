@@ -230,7 +230,6 @@ i915_get_tex_transfer(struct pipe_screen *screen,
 
    trans = CALLOC_STRUCT(i915_transfer);
    if (trans) {
-      trans->base.refcount = 1;
       pipe_texture_reference(&trans->base.texture, texture);
       trans->base.format = trans->base.format;
       trans->base.width = w;
@@ -246,17 +245,10 @@ i915_get_tex_transfer(struct pipe_screen *screen,
 }
 
 static void
-i915_tex_transfer_release(struct pipe_screen *screen,
-                          struct pipe_transfer **transfer)
+i915_tex_transfer_destroy(struct pipe_transfer *trans)
 {
-   struct pipe_transfer *trans = *transfer;
-
-   if (--trans->refcount == 0) {
-      pipe_texture_reference(&trans->texture, NULL);
-      FREE(trans);
-   }
-
-   *transfer = NULL;
+   pipe_texture_reference(&trans->texture, NULL);
+   FREE(trans);
 }
 
 static void *
@@ -344,7 +336,7 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
    i915screen->screen.get_paramf = i915_get_paramf;
    i915screen->screen.is_format_supported = i915_is_format_supported;
    i915screen->screen.get_tex_transfer = i915_get_tex_transfer;
-   i915screen->screen.tex_transfer_release = i915_tex_transfer_release;
+   i915screen->screen.tex_transfer_destroy = i915_tex_transfer_destroy;
    i915screen->screen.transfer_map = i915_transfer_map;
    i915screen->screen.transfer_unmap = i915_transfer_unmap;
 

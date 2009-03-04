@@ -99,7 +99,7 @@ buffer_create(struct pipe_winsys *pws,
    if (!buffer)
       return NULL;
 
-   buffer->Base.refcount = 1;
+   pipe_reference_init(&buffer->Base.reference, 1);
    buffer->Base.alignment = alignment;
    buffer->Base.usage = usage;
    buffer->Base.size = size;
@@ -121,7 +121,7 @@ user_buffer_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
    if (!buffer)
       return NULL;
 
-   buffer->Base.refcount = 1;
+   pipe_reference_init(&buffer->Base.reference, 1);
    buffer->Base.size = bytes;
    buffer->UserBuffer = TRUE;
    buffer->Data = ptr;
@@ -148,7 +148,7 @@ buffer_unmap(struct pipe_winsys *pws, struct pipe_buffer *buf)
 
 
 static void
-buffer_destroy(struct pipe_winsys *pws, struct pipe_buffer *buf)
+buffer_destroy(struct pipe_buffer *buf)
 {
    struct sw_pipe_buffer *buffer = sw_pipe_buffer(buf);
 

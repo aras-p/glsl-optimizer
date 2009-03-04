@@ -50,6 +50,14 @@ void trace_dump_block(const struct pipe_format_block *block)
 }
 
 
+static void trace_dump_reference(const struct pipe_reference *reference)
+{
+   trace_dump_struct_begin("pipe_reference");
+   trace_dump_member(uint, reference, count);
+   trace_dump_struct_end();
+}
+
+
 void trace_dump_template(const struct pipe_texture *templat)
 {
    if(!templat) {
@@ -397,6 +405,8 @@ void trace_dump_surface(const struct pipe_surface *state)
 
    trace_dump_struct_begin("pipe_surface");
 
+   trace_dump_reference(&state->reference);
+
    trace_dump_member(format, state, format);
    trace_dump_member(uint, state, status);
    trace_dump_member(uint, state, clear_value);
@@ -405,7 +415,6 @@ void trace_dump_surface(const struct pipe_surface *state)
 
    trace_dump_member(uint, state, layout);
    trace_dump_member(uint, state, offset);
-   trace_dump_member(uint, state, refcount);
    trace_dump_member(uint, state, usage);
 
    trace_dump_member(ptr, state, texture);
@@ -437,7 +446,6 @@ void trace_dump_transfer(const struct pipe_transfer *state)
    trace_dump_member(uint, state, nblocksx);
    trace_dump_member(uint, state, nblocksy);
    trace_dump_member(uint, state, stride);
-   trace_dump_member(uint, state, refcount);
    trace_dump_member(uint, state, usage);
 
    trace_dump_member(ptr, state, texture);

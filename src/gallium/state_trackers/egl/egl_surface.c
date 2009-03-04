@@ -143,7 +143,7 @@ err_handle:
 err_surf:
 	pipe_texture_reference(&texture, NULL);
 err_tex:
-	pipe_buffer_reference(screen, &buf, NULL);
+	pipe_buffer_reference(&buf, NULL);
 err_buf:
 	return;
 }
@@ -173,7 +173,7 @@ drm_takedown_shown_screen(_EGLDriver *drv, struct drm_screen *screen)
 
 	pipe_surface_reference(&screen->surface, NULL);
 	pipe_texture_reference(&screen->tex, NULL);
-	pipe_buffer_reference(dev->screen, &screen->buffer, NULL);
+	pipe_buffer_reference(&screen->buffer, NULL);
 
 	screen->shown = 0;
 }
@@ -348,7 +348,7 @@ err_fb:
 err_bo:
 	pipe_surface_reference(&scrn->surface, NULL);
 	pipe_texture_reference(&scrn->tex, NULL);
-	pipe_buffer_reference(dev->screen, &scrn->buffer, NULL);
+	pipe_buffer_reference(&scrn->buffer, NULL);
 
 	return EGL_FALSE;
 }

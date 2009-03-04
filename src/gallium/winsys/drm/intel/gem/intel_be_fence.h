@@ -15,23 +15,19 @@
  */
 struct intel_be_fence
 {
-	uint32_t refcount;
+	struct pipe_reference reference;
 	drm_intel_bo *bo;
 };
 
 static INLINE void
-intel_be_fence_reference(struct intel_be_fence *f)
+intel_be_fence_reference(struct intel_be_fence **ptr, struct intel_be_fence *f)
 {
-	f->refcount++;
-}
+	struct intel_be_fence *old_fence = *ptr;
 
-static INLINE void
-intel_be_fence_unreference(struct intel_be_fence *f)
-{
-	if (!--f->refcount) {
-		if (f->bo)
-			drm_intel_bo_unreference(f->bo);
-		free(f);
+        if (pipe_reference((struct pipe_reference**)ptr, &f->reference)) {
+		if (old_fence->bo)
+			drm_intel_bo_unreference(old_fence->bo);
+		free(old_fence);
 	}
 }
 

@@ -351,7 +351,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
 
    /* Release transfer */
    screen->transfer_unmap(screen, transfer);
-   screen->tex_transfer_release(screen, &transfer);
+   screen->tex_transfer_destroy(transfer);
 
    return pt;
 }
@@ -379,7 +379,7 @@ setup_bitmap_vertex_data(struct st_context *st,
    GLuint i;
 
    if (st->bitmap.vbuf_slot >= max_slots) {
-      pipe_buffer_reference(pipe->screen, &st->bitmap.vbuf, NULL);
+      pipe_buffer_reference(&st->bitmap.vbuf, NULL);
       st->bitmap.vbuf_slot = 0;
    }
 
@@ -571,7 +571,7 @@ reset_cache(struct st_context *st)
    cache->ymax = -1000000;
 
    if (cache->trans)
-      screen->tex_transfer_release(screen, &cache->trans);
+      screen->tex_transfer_destroy(cache->trans);
 
    assert(!cache->texture);
 
@@ -623,7 +623,7 @@ st_flush_bitmap_cache(struct st_context *st)
          screen->transfer_unmap(screen, cache->trans);
          cache->buffer = NULL;
 
-         screen->tex_transfer_release(screen, &cache->trans);
+         screen->tex_transfer_destroy(cache->trans);
 
          draw_bitmap_quad(st->ctx,
                           cache->xpos,
@@ -651,7 +651,7 @@ st_flush_bitmap( struct st_context *st )
    /* Release vertex buffer to avoid synchronous rendering if we were
     * to map it in the next frame.
     */
-   pipe_buffer_reference(st->pipe->screen, &st->bitmap.vbuf, NULL);
+   pipe_buffer_reference(&st->bitmap.vbuf, NULL);
    st->bitmap.vbuf_slot = 0;
 }
 
@@ -819,7 +819,7 @@ st_destroy_bitmap(struct st_context *st)
    struct bitmap_cache *cache = st->bitmap.cache;
 
    screen->transfer_unmap(screen, cache->trans);
-   screen->tex_transfer_release(screen, &cache->trans);
+   screen->tex_transfer_destroy(cache->trans);
 
    if (st->bitmap.vs) {
       cso_delete_vertex_shader(st->cso_context, st->bitmap.vs);
@@ -828,12 +828,12 @@ st_destroy_bitmap(struct st_context *st)
    util_free_shader(&st->bitmap.vert_shader);
 
    if (st->bitmap.vbuf) {
-      pipe_buffer_reference(pipe->screen, &st->bitmap.vbuf, NULL);
+      pipe_buffer_reference(&st->bitmap.vbuf, NULL);
       st->bitmap.vbuf = NULL;
    }
 
    if (st->bitmap.cache) {
-      pipe_texture_release(&st->bitmap.cache->texture);
+      pipe_texture_reference(&st->bitmap.cache->texture, NULL);
       _mesa_free(st->bitmap.cache);
       st->bitmap.cache = NULL;
    }

@@ -938,12 +938,12 @@ fallback_copy_texsubimage(GLcontext *ctx,
       srcY = strb->Base.Height - srcY - height;
    }
 
-   src_trans = pipe->screen->get_tex_transfer( pipe->screen,
-                                               strb->texture,
-                                               0, 0, 0,
-                                               PIPE_TRANSFER_READ,
-                                               srcX, srcY,
-                                               width, height);
+   src_trans = screen->get_tex_transfer( screen,
+                                         strb->texture,
+                                         0, 0, 0,
+                                         PIPE_TRANSFER_READ,
+                                         srcX, srcY,
+                                         width, height);
 
    texDest = st_texture_image_map(ctx->st, stImage, 0, PIPE_TRANSFER_WRITE,
                                   destX, destY, width, height);
@@ -1020,7 +1020,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
    }
 
    st_texture_image_unmap(ctx->st, stImage);
-   screen->tex_transfer_release(screen, &src_trans);
+   screen->tex_transfer_destroy(src_trans);
 }
 
 
@@ -1413,7 +1413,7 @@ st_finalize_texture(GLcontext *ctx,
           stObj->pt->depth[0] != firstImage->base.Depth2 ||
           stObj->pt->block.size/stObj->pt->block.width != cpp || /* Nominal bytes per pixel */
           stObj->pt->compressed != firstImage->base.IsCompressed) {
-         pipe_texture_release(&stObj->pt);
+         pipe_texture_reference(&stObj->pt, NULL);
          ctx->st->dirty.st |= ST_NEW_FRAMEBUFFER;
       }
    }

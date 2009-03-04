@@ -87,7 +87,6 @@ softpipe_unmap_transfers(struct softpipe_context *sp)
 static void softpipe_destroy( struct pipe_context *pipe )
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
-   struct pipe_screen *screen = pipe->screen;
    uint i;
 
    if (softpipe->draw)
@@ -116,7 +115,7 @@ static void softpipe_destroy( struct pipe_context *pipe )
 
    for (i = 0; i < Elements(softpipe->constants); i++) {
       if (softpipe->constants[i].buffer) {
-         pipe_buffer_reference(screen, &softpipe->constants[i].buffer, NULL);
+         pipe_buffer_reference(&softpipe->constants[i].buffer, NULL);
       }
    }
 

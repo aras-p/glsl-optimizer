@@ -28,6 +28,7 @@
 #include "u_simple_screen.h"
 
 #include "pipe/p_screen.h"
+#include "pipe/p_state.h"
 #include "pipe/internal/p_winsys_screen.h"
 
 
@@ -37,8 +38,12 @@ pass_buffer_create(struct pipe_screen *screen,
                    unsigned usage,
                    unsigned size)
 {
-   return screen->winsys->buffer_create(screen->winsys,
-                                        alignment, usage, size);
+   struct pipe_buffer *buffer =
+      screen->winsys->buffer_create(screen->winsys, alignment, usage, size);
+
+   buffer->screen = screen;
+
+   return buffer;
 }
 
 static struct pipe_buffer *
@@ -46,8 +51,13 @@ pass_user_buffer_create(struct pipe_screen *screen,
                         void *ptr,
                         unsigned bytes)
 {
-   return screen->winsys->user_buffer_create(screen->winsys,
+   struct pipe_buffer *buffer =
+      screen->winsys->user_buffer_create(screen->winsys,
                                              ptr, bytes);
+
+   buffer->screen = screen;
+
+   return buffer;
 }
 
 static struct pipe_buffer *
@@ -57,9 +67,14 @@ pass_surface_buffer_create(struct pipe_screen *screen,
                            unsigned usage,
                            unsigned *stride)
 {
-   return screen->winsys->surface_buffer_create(screen->winsys,
+   struct pipe_buffer *buffer =
+      screen->winsys->surface_buffer_create(screen->winsys,
                                                 width, height,
                                                 format, usage, stride);
+
+   buffer->screen = screen;
+
+   return buffer;
 }
 
 static void *
@@ -79,10 +94,9 @@ pass_buffer_unmap(struct pipe_screen *screen,
 }
 
 static void
-pass_buffer_destroy(struct pipe_screen *screen,
-                    struct pipe_buffer *buf)
+pass_buffer_destroy(struct pipe_buffer *buf)
 {
-   screen->winsys->buffer_destroy(screen->winsys, buf);
+   buf->screen->winsys->buffer_destroy(buf);
 }
 
 

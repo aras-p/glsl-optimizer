@@ -175,7 +175,7 @@ crtc_destroy(xf86CrtcPtr crtc)
     struct crtc_private *crtcp = crtc->driver_private;
 
     if (crtcp->cursor_buf)
-	pipe_buffer_reference(ms->screen, &crtcp->cursor_buf, NULL);
+	pipe_buffer_reference(&crtcp->cursor_buf, NULL);
 
     drmModeFreeCrtc(crtcp->drm_crtc);
     xfree(crtcp);
@@ -266,7 +266,7 @@ cursor_destroy(xf86CrtcPtr crtc)
     struct crtc_private *crtcp = crtc->driver_private;
 
     if (crtcp->cursor_buf) {
-	pipe_buffer_reference(ms->screen, &crtcp->cursor_buf, NULL);
+	pipe_buffer_reference(&crtcp->cursor_buf, NULL);
     }
 }
 

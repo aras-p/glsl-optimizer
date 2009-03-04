@@ -147,8 +147,8 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       screen->transfer_unmap(screen, srcTrans);
       screen->transfer_unmap(screen, dstTrans);
 
-      screen->tex_transfer_release(screen, &srcTrans);
-      screen->tex_transfer_release(screen, &dstTrans);
+      screen->tex_transfer_destroy(srcTrans);
+      screen->tex_transfer_destroy(dstTrans);
    }
 }
 

@@ -39,6 +39,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_shader_tokens.h"
+#include "pipe/p_state.h"
 
 #include "util/u_memory.h"
 #include "util/u_draw_quad.h"
@@ -1138,8 +1139,8 @@ make_1d_mipmap(struct gen_mipmap_state *ctx,
       screen->transfer_unmap(screen, srcTrans);
       screen->transfer_unmap(screen, dstTrans);
 
-      screen->tex_transfer_release(screen, &srcTrans);
-      screen->tex_transfer_release(screen, &dstTrans);
+      screen->tex_transfer_destroy(srcTrans);
+      screen->tex_transfer_destroy(dstTrans);
    }
 }
 
@@ -1183,8 +1184,8 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
       screen->transfer_unmap(screen, srcTrans);
       screen->transfer_unmap(screen, dstTrans);
 
-      screen->tex_transfer_release(screen, &srcTrans);
-      screen->tex_transfer_release(screen, &dstTrans);
+      screen->tex_transfer_destroy(srcTrans);
+      screen->tex_transfer_destroy(dstTrans);
    }
 }
 
@@ -1228,8 +1229,8 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
       screen->transfer_unmap(screen, srcTrans);
       screen->transfer_unmap(screen, dstTrans);
 
-      screen->tex_transfer_release(screen, &srcTrans);
-      screen->tex_transfer_release(screen, &dstTrans);
+      screen->tex_transfer_destroy(srcTrans);
+      screen->tex_transfer_destroy(dstTrans);
    }
 #else
    (void) reduce_3d;
@@ -1414,7 +1415,7 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
    FREE((void*) ctx->vert_shader.tokens);
    FREE((void*) ctx->frag_shader.tokens);
 
-   pipe_buffer_reference(pipe->screen, &ctx->vbuf, NULL);
+   pipe_buffer_reference(&ctx->vbuf, NULL);
 
    FREE(ctx);
 }
@@ -1426,7 +1427,7 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
  */
 void util_gen_mipmap_flush( struct gen_mipmap_state *ctx )
 {
-   pipe_buffer_reference(ctx->pipe->screen, &ctx->vbuf, NULL);
+   pipe_buffer_reference(&ctx->vbuf, NULL);
    ctx->vbuf_slot = 0;
 } 
 

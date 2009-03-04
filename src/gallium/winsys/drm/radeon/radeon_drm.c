@@ -84,7 +84,8 @@ struct pipe_buffer* radeon_buffer_from_handle(struct pipe_screen* screen,
         return NULL;
     }
 
-    radeon_buffer->base.refcount = 1;
+    pipe_reference_init(&radeon_buffer->base.reference, 1);
+    radeon_buffer->base.screen = screen;
     radeon_buffer->base.usage = PIPE_BUFFER_USAGE_PIXEL;
     radeon_buffer->bo = bo;
     return &radeon_buffer->base;

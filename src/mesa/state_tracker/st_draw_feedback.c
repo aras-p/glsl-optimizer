@@ -152,7 +152,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
          assert(stobj->buffer);
 
          vbuffers[attr].buffer = NULL;
-         pipe_buffer_reference(pipe->screen, &vbuffers[attr].buffer, stobj->buffer);
+         pipe_buffer_reference(&vbuffers[attr].buffer, stobj->buffer);
          vbuffers[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
          velements[attr].src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
       }
@@ -248,7 +248,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
       if (draw->pt.vertex_buffer[i].buffer) {
          pipe_buffer_unmap(pipe->screen, draw->pt.vertex_buffer[i].buffer);
-         pipe_buffer_reference(pipe->screen, &draw->pt.vertex_buffer[i].buffer, NULL);
+         pipe_buffer_reference(&draw->pt.vertex_buffer[i].buffer, NULL);
          draw_set_mapped_vertex_buffer(draw, i, NULL);
       }
    }

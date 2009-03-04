@@ -268,7 +268,6 @@ r300_get_tex_transfer(struct pipe_screen *screen,
 
     trans = CALLOC_STRUCT(r300_transfer);
     if (trans) {
-        trans->transfer.refcount = 1;
         pipe_texture_reference(&trans->transfer.texture, texture);
         trans->transfer.format = trans->transfer.format;
         trans->transfer.width = w;
@@ -284,17 +283,10 @@ r300_get_tex_transfer(struct pipe_screen *screen,
 }
 
 static void
-r300_tex_transfer_release(struct pipe_screen *screen,
-                          struct pipe_transfer **transfer)
+r300_tex_transfer_destroy(struct pipe_transfer *trans)
 {
-   struct pipe_transfer *trans = *transfer;
-
-   if (--trans->refcount == 0) {
-      pipe_texture_reference(&trans->texture, NULL);
-      FREE(trans);
-   }
-
-   *transfer = NULL;
+   pipe_texture_reference(&trans->texture, NULL);
+   FREE(trans);
 }
 
 static void* r300_transfer_map(struct pipe_screen* screen,
@@ -359,7 +351,7 @@ struct pipe_screen* r300_create_screen(struct r300_winsys* r300_winsys)
     r300screen->screen.get_paramf = r300_get_paramf;
     r300screen->screen.is_format_supported = r300_is_format_supported;
     r300screen->screen.get_tex_transfer = r300_get_tex_transfer;
-    r300screen->screen.tex_transfer_release = r300_tex_transfer_release;
+    r300screen->screen.tex_transfer_destroy = r300_tex_transfer_destroy;
     r300screen->screen.transfer_map = r300_transfer_map;
     r300screen->screen.transfer_unmap = r300_transfer_unmap;
 

@@ -86,7 +86,7 @@ dri_surface_from_handle(struct pipe_screen *screen,
                                      buf);
 
    /* we don't need the buffer from this point on */
-   pipe_buffer_reference(screen, &buf, NULL);
+   pipe_buffer_reference(&buf, NULL);
 
    if (!texture)
       return NULL;

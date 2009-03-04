@@ -206,9 +206,9 @@ pb_debug_buffer_check(struct pb_debug_buffer *buf)
 static void
 pb_debug_buffer_destroy(struct pb_buffer *_buf)
 {
-   struct pb_debug_buffer *buf = pb_debug_buffer(_buf);  
+   struct pb_debug_buffer *buf = pb_debug_buffer(_buf);
    
-   assert(!buf->base.base.refcount);
+   assert(!buf->base.base.reference.count);
    
    pb_debug_buffer_check(buf);
 
@@ -315,12 +315,12 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
       return NULL;
    }
    
-   assert(buf->buffer->base.refcount >= 1);
+   assert(buf->buffer->base.reference.count >= 1);
    assert(pb_check_alignment(real_desc.alignment, buf->buffer->base.alignment));
    assert(pb_check_usage(real_desc.usage, buf->buffer->base.usage));
    assert(buf->buffer->base.size >= real_size);
    
-   buf->base.base.refcount = 1;
+   pipe_reference_init(&buf->base.base.reference, 1);
    buf->base.base.alignment = desc->alignment;
    buf->base.base.usage = desc->usage;
    buf->base.base.size = size;

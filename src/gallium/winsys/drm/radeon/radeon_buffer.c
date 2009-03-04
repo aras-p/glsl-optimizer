@@ -63,7 +63,7 @@ static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
         return NULL;
     }
 
-    radeon_buffer->base.refcount = 1;
+    pipe_reference_init(&radeon_buffer->base.reference, 1);
     radeon_buffer->base.alignment = alignment;
     radeon_buffer->base.usage = usage;
     radeon_buffer->base.size = size;
@@ -104,7 +104,7 @@ static struct pipe_buffer *radeon_buffer_user_create(struct pipe_winsys *ws,
     return &radeon_buffer->base;
 }
 
-static void radeon_buffer_del(struct pipe_winsys *ws, struct pipe_buffer *buffer)
+static void radeon_buffer_del(struct pipe_buffer *buffer)
 {
     struct radeon_pipe_buffer *radeon_buffer = (struct radeon_pipe_buffer*)buffer;
 
@@ -207,7 +207,7 @@ static struct pipe_buffer *radeon_buffer_from_handle(struct radeon_screen *radeo
         radeon_bo_unref(bo);
         return NULL;
     }
-    radeon_buffer->base.refcount = 1;
+    pipe_reference_init(&radeon_buffer->base.reference, 1);
     radeon_buffer->base.usage = PIPE_BUFFER_USAGE_PIXEL;
     radeon_buffer->bo = bo;
     return &radeon_buffer->base;
@@ -242,7 +242,7 @@ struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_co
 
     pt = pipe_screen->texture_blanket(pipe_screen, &tmpl, &pitch, pb);
     if (pt == NULL) {
-        pipe_buffer_reference(pipe_screen, &pb, NULL);
+        pipe_buffer_reference(&pb, NULL);
     }
     ps = pipe_screen->get_tex_surface(pipe_screen, pt, 0, 0, 0,
                                       PIPE_BUFFER_USAGE_GPU_WRITE);

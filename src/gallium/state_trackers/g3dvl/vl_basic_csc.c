@@ -237,10 +237,10 @@ static int vlDestroy
 	pipe->delete_fs_state(pipe, basic_csc->fragment_shader);
 
 	for (i = 0; i < 2; ++i)
-		pipe_buffer_reference(pipe->screen, &basic_csc->vertex_bufs[i].buffer, NULL);
+		pipe_buffer_reference(&basic_csc->vertex_bufs[i].buffer, NULL);
 
-	pipe_buffer_reference(pipe->screen, &basic_csc->vs_const_buf.buffer, NULL);
-	pipe_buffer_reference(pipe->screen, &basic_csc->fs_const_buf.buffer, NULL);
+	pipe_buffer_reference(&basic_csc->vs_const_buf.buffer, NULL);
+	pipe_buffer_reference(&basic_csc->fs_const_buf.buffer, NULL);
 
 	FREE(basic_csc);
 

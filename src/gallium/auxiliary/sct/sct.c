@@ -372,7 +372,7 @@ sct_flush_textures(struct surface_context_tracker *sct,
 
    for (tl = ci->textures_used; tl; tl = next) {
       next = tl->next;
-      pipe_texture_release(&tl->texture);
+      pipe_texture_reference(&tl->texture, NULL);
       FREE(tl);
    }
    ci->textures_used = NULL;

@@ -39,7 +39,7 @@ static struct pipe_buffer* xsp_buffer_create(struct pipe_winsys *pws, unsigned a
 	assert(pws);
 
 	buffer = calloc(1, sizeof(struct xsp_buffer));
-	buffer->base.refcount = 1;
+	pipe_reference_init(&buffer->base.reference, 1);
 	buffer->base.alignment = alignment;
 	buffer->base.usage = usage;
 	buffer->base.size = size;
@@ -55,7 +55,7 @@ static struct pipe_buffer* xsp_user_buffer_create(struct pipe_winsys *pws, void 
 	assert(pws);
 
 	buffer = calloc(1, sizeof(struct xsp_buffer));
-	buffer->base.refcount = 1;
+	pipe_reference_init(&buffer->base.reference, 1);
 	buffer->base.size = size;
 	buffer->is_user_buffer = TRUE;
 	buffer->data = data;

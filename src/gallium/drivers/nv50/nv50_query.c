@@ -41,13 +41,13 @@ nv50_query(struct pipe_query *pipe)
 static struct pipe_query *
 nv50_query_create(struct pipe_context *pipe, unsigned type)
 {
-	struct pipe_winsys *ws = pipe->winsys;
+	struct pipe_screen *screen = pipe->winsys;
 	struct nv50_query *q = CALLOC_STRUCT(nv50_query);
 
 	assert (q->type == PIPE_QUERY_OCCLUSION_COUNTER);
 	q->type = type;
 
-	q->buffer = ws->buffer_create(ws, 256, 0, 16);
+	q->buffer = screen->buffer_create(screen, 256, 0, 16);
 	if (!q->buffer) {
 		FREE(q);
 		return NULL;
@@ -62,7 +62,7 @@ nv50_query_destroy(struct pipe_context *pipe, struct pipe_query *pq)
 	struct nv50_query *q = nv50_query(pq);
 
 	if (q) {
-		pipe_buffer_reference(pipe->screen, &q->buffer, NULL);
+		pipe_buffer_reference(&q->buffer, NULL);
 		FREE(q);
 	}
 }

@@ -171,7 +171,7 @@ load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
    }
 
    screen->transfer_unmap(screen, transfer);
-   screen->tex_transfer_release(screen, &transfer);
+   screen->tex_transfer_destroy(transfer);
 }
 
 

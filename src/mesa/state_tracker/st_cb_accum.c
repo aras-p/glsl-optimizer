@@ -149,7 +149,7 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    }
 
    screen->transfer_unmap(screen, acc_pt);
-   screen->tex_transfer_release(screen, &acc_pt);
+   screen->tex_transfer_destroy(acc_pt);
 }
 
 
@@ -187,7 +187,7 @@ accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
    }
 
    screen->transfer_unmap(screen, acc_pt);
-   screen->tex_transfer_release(screen, &acc_pt);
+   screen->tex_transfer_destroy(acc_pt);
 }
 
 
@@ -220,7 +220,7 @@ accum_accum(struct pipe_context *pipe, GLfloat value,
       accBuf[i] = accBuf[i] + colorBuf[i] * value;
    }
 
-   screen->tex_transfer_release(screen, &acc_trans);
+   screen->tex_transfer_destroy(acc_trans);
    acc_trans = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
                                         PIPE_TRANSFER_WRITE, xpos, ypos,
                                         width, height);
@@ -229,8 +229,8 @@ accum_accum(struct pipe_context *pipe, GLfloat value,
 
    _mesa_free(colorBuf);
    _mesa_free(accBuf);
-   screen->tex_transfer_release(screen, &acc_trans);
-   screen->tex_transfer_release(screen, &color_trans);
+   screen->tex_transfer_destroy(acc_trans);
+   screen->tex_transfer_destroy(color_trans);
 }
 
 
@@ -264,8 +264,8 @@ accum_load(struct pipe_context *pipe, GLfloat value,
    acc_put_tile_rgba(pipe, acc_trans, 0, 0, width, height, buf);
 
    _mesa_free(buf);
-   screen->tex_transfer_release(screen, &acc_trans);
-   screen->tex_transfer_release(screen, &color_trans);
+   screen->tex_transfer_destroy(acc_trans);
+   screen->tex_transfer_destroy(color_trans);
 }
 
 
@@ -316,8 +316,8 @@ accum_return(GLcontext *ctx, GLfloat value,
    _mesa_free(abuf);
    if (cbuf)
       _mesa_free(cbuf);
-   screen->tex_transfer_release(screen, &acc_trans);
-   screen->tex_transfer_release(screen, &color_trans);
+   screen->tex_transfer_destroy(acc_trans);
+   screen->tex_transfer_destroy(color_trans);
 }
 
 

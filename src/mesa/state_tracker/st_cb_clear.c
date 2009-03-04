@@ -95,8 +95,6 @@ st_init_clear(struct st_context *st)
 void
 st_destroy_clear(struct st_context *st)
 {
-   struct pipe_context *pipe = st->pipe;
-
    if (st->clear.vert_shader.tokens) {
       util_free_shader(&st->clear.vert_shader);
       st->clear.vert_shader.tokens = NULL;
@@ -116,7 +114,7 @@ st_destroy_clear(struct st_context *st)
       st->clear.vs = NULL;
    }
    if (st->clear.vbuf) {
-      pipe_buffer_reference(pipe->screen, &st->clear.vbuf, NULL);
+      pipe_buffer_reference(&st->clear.vbuf, NULL);
       st->clear.vbuf = NULL;
    }
 }
@@ -152,7 +150,7 @@ draw_quad(GLcontext *ctx,
    GLuint i;
 
    if (st->clear.vbuf_slot >= max_slots) {
-      pipe_buffer_reference(pipe->screen, &st->clear.vbuf, NULL);
+      pipe_buffer_reference(&st->clear.vbuf, NULL);
       st->clear.vbuf_slot = 0;
    }
 
@@ -524,7 +522,7 @@ void st_flush_clear( struct st_context *st )
    /* Release vertex buffer to avoid synchronous rendering if we were
     * to map it in the next frame.
     */
-   pipe_buffer_reference(st->pipe->screen, &st->clear.vbuf, NULL);
+   pipe_buffer_reference(&st->clear.vbuf, NULL);
    st->clear.vbuf_slot = 0;
 }
  

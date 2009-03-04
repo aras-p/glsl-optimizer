@@ -582,7 +582,6 @@ i915_texture_create(struct pipe_screen *screen,
                     const struct pipe_texture *templat)
 {
    struct i915_screen *i915screen = i915_screen(screen);
-   struct pipe_winsys *ws = screen->winsys;
    struct i915_texture *tex = CALLOC_STRUCT(i915_texture);
    size_t tex_size;
 
@@ -590,7 +589,7 @@ i915_texture_create(struct pipe_screen *screen,
       return NULL;
 
    tex->base = *templat;
-   tex->base.refcount = 1;
+   pipe_reference_init(&tex->base.reference, 1);
    tex->base.screen = screen;
 
    tex->base.nblocksx[0] = pf_get_nblocksx(&tex->base.block, tex->base.width[0]);
@@ -606,7 +605,7 @@ i915_texture_create(struct pipe_screen *screen,
 
    tex_size = tex->stride * tex->total_nblocksy;
 
-   tex->buffer = ws->buffer_create(ws, 64,
+   tex->buffer = screen->buffer_create(screen, 64,
                                     PIPE_BUFFER_USAGE_PIXEL,
                                     tex_size);
 
@@ -629,33 +628,22 @@ fail:
 
 
 static void
-i915_texture_release(struct pipe_screen *screen,
-                     struct pipe_texture **pt)
+i915_texture_destroy(struct pipe_texture *pt)
 {
-   if (!*pt)
-      return;
+   struct i915_texture *tex = (struct i915_texture *)pt;
+   uint i;
 
    /*
-   DBG("%s %p refcount will be %d\n",
-       __FUNCTION__, (void *) *pt, (*pt)->refcount - 1);
+     DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
    */
-   if (--(*pt)->refcount <= 0) {
-      struct i915_texture *tex = (struct i915_texture *)*pt;
-      uint i;
 
-      /*
-      DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
-      */
+   pipe_buffer_reference(&tex->buffer, NULL);
 
-      pipe_buffer_reference(screen, &tex->buffer, NULL);
+   for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
+      if (tex->image_offset[i])
+         FREE(tex->image_offset[i]);
 
-      for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
-         if (tex->image_offset[i])
-            FREE(tex->image_offset[i]);
-
-      FREE(tex);
-   }
-   *pt = NULL;
+   FREE(tex);
 }
 
 static struct pipe_surface *
@@ -682,7 +670,7 @@ i915_get_tex_surface(struct pipe_screen *screen,
 
    ps = CALLOC_STRUCT(pipe_surface);
    if (ps) {
-      ps->refcount = 1;
+      pipe_reference_init(&ps->reference, 1);
       pipe_texture_reference(&ps->texture, pt);
       ps->format = pt->format;
       ps->width = pt->width[level];
@@ -715,7 +703,7 @@ i915_texture_blanket(struct pipe_screen * screen,
       return NULL;
 
    tex->base = *base;
-   tex->base.refcount = 1;
+   pipe_reference_init(&tex->base.reference, 1);
    tex->base.screen = screen;
 
    tex->stride = stride[0];
@@ -723,7 +711,7 @@ i915_texture_blanket(struct pipe_screen * screen,
    i915_miptree_set_level_info(tex, 0, 1, base->width[0], base->height[0], 1);
    i915_miptree_set_image_offset(tex, 0, 0, 0, 0);
 
-   pipe_buffer_reference(screen, &tex->buffer, buffer);
+   pipe_buffer_reference(&tex->buffer, buffer);
 
    return &tex->base;
 }
@@ -735,36 +723,28 @@ i915_init_texture_functions(struct i915_context *i915)
 }
 
 static void
-i915_tex_surface_release(struct pipe_screen *screen,
-                         struct pipe_surface **surface)
+i915_tex_surface_destroy(struct pipe_surface *surf)
 {
-   struct pipe_surface *surf = *surface;
-
-   if (--surf->refcount == 0) {
-
-      /* This really should not be possible, but it's actually
-       * happening quite a bit...  Will fix.
-       */
-      if (surf->status == PIPE_SURFACE_STATUS_CLEAR) {
-         debug_printf("XXX destroying a surface with pending clears...\n");
-         assert(0);
-      }
-
-      pipe_texture_reference(&surf->texture, NULL);
-      FREE(surf);
+   /* This really should not be possible, but it's actually
+    * happening quite a bit...  Will fix.
+    */
+   if (surf->status == PIPE_SURFACE_STATUS_CLEAR) {
+      debug_printf("XXX destroying a surface with pending clears...\n");
+      assert(0);
    }
 
-   *surface = NULL;
+   pipe_texture_reference(&surf->texture, NULL);
+   FREE(surf);
 }
 
 void
 i915_init_screen_texture_functions(struct pipe_screen *screen)
 {
    screen->texture_create = i915_texture_create;
-   screen->texture_release = i915_texture_release;
+   screen->texture_destroy = i915_texture_destroy;
    screen->get_tex_surface = i915_get_tex_surface;
    screen->texture_blanket = i915_texture_blanket;
-   screen->tex_surface_release = i915_tex_surface_release;
+   screen->tex_surface_destroy = i915_tex_surface_destroy;
 }
 
 boolean i915_get_texture_buffer( struct pipe_texture *texture,
@@ -776,7 +756,7 @@ boolean i915_get_texture_buffer( struct pipe_texture *texture,
    if (!tex)
       return FALSE;
 
-   pipe_buffer_reference(texture->screen, buf, tex->buffer);
+   pipe_buffer_reference(buf, tex->buffer);
 
    if (stride)
       *stride = tex->stride;

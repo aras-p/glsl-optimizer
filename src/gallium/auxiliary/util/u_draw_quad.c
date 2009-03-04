@@ -129,6 +129,6 @@ util_draw_texquad(struct pipe_context *pipe,
          util_draw_vertex_buffer(pipe, vbuf, 0, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
       }
 
-      pipe_buffer_reference(pipe->screen, &vbuf, NULL);
+      pipe_buffer_reference(&vbuf, NULL);
    }
 }

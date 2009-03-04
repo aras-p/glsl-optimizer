@@ -680,7 +680,7 @@ void debug_dump_surface(const char *prefix,
    
    screen->transfer_unmap(screen, transfer);
 error:
-   screen->tex_transfer_release(screen, &transfer);
+   screen->tex_transfer_destroy(transfer);
 }
 
 
@@ -785,7 +785,7 @@ debug_dump_surface_bmp(const char *filename,
       }  
    }
 
-   screen->tex_transfer_release(screen, &transfer);
+   screen->tex_transfer_destroy(transfer);
    
    util_stream_close(stream);
 error2:

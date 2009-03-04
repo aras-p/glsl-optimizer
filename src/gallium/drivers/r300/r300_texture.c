@@ -68,7 +68,7 @@ static struct pipe_texture*
     }
 
     tex->tex = *template;
-    tex->tex.refcount = 1;
+    pipe_reference_init(&tex->tex.reference, 1);
     tex->tex.screen = screen;
 
     r300_setup_miptree(tex);
@@ -85,24 +85,13 @@ static struct pipe_texture*
     return (struct pipe_texture*)tex;
 }
 
-static void r300_texture_release(struct pipe_screen* screen,
-                                 struct pipe_texture** texture)
+static void r300_texture_destroy(struct pipe_texture* texture)
 {
-    if (!*texture) {
-        return;
-    }
+    struct r300_texture* tex = (struct r300_texture*)texture;
 
-    (*texture)->refcount--;
+    pipe_buffer_reference(&tex->buffer, NULL);
 
-    if ((*texture)->refcount <= 0) {
-        struct r300_texture* tex = (struct r300_texture*)*texture;
-
-        pipe_buffer_reference(screen, &tex->buffer, NULL);
-
-        FREE(tex);
-    }
-
-    *texture = NULL;
+    FREE(tex);
 }
 
 static struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
@@ -120,7 +109,7 @@ static struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
     offset = tex->offset[level];
 
     if (surface) {
-        surface->refcount = 1;
+        pipe_reference_init(&surface->reference, 1);
         pipe_texture_reference(&surface->texture, texture);
         surface->format = texture->format;
         surface->width = texture->width[level];
@@ -133,19 +122,10 @@ static struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
     return surface;
 }
 
-static void r300_tex_surface_release(struct pipe_screen* screen,
-                                     struct pipe_surface** surface)
+static void r300_tex_surface_destroy(struct pipe_surface* s)
 {
-    struct pipe_surface* s = *surface;
-
-    s->refcount--;
-
-    if (s->refcount <= 0) {
-        pipe_texture_reference(&s->texture, NULL);
-        FREE(s);
-    }
-
-    *surface = NULL;
+    pipe_texture_reference(&s->texture, NULL);
+    FREE(s);
 }
 
 static struct pipe_texture*
@@ -168,12 +148,12 @@ static struct pipe_texture*
     }
 
     tex->tex = *base;
-    tex->tex.refcount = 1;
+    pipe_reference_init(&tex->tex.reference, 1);
     tex->tex.screen = screen;
 
     tex->stride = *stride;
 
-    pipe_buffer_reference(screen, &tex->buffer, buffer);
+    pipe_buffer_reference(&tex->buffer, buffer);
 
     return (struct pipe_texture*)tex;
 }
@@ -181,9 +161,9 @@ static struct pipe_texture*
 void r300_init_screen_texture_functions(struct pipe_screen* screen)
 {
     screen->texture_create = r300_texture_create;
-    screen->texture_release = r300_texture_release;
+    screen->texture_destroy = r300_texture_destroy;
     screen->get_tex_surface = r300_get_tex_surface;
-    screen->tex_surface_release = r300_tex_surface_release;
+    screen->tex_surface_destroy = r300_tex_surface_destroy;
     screen->texture_blanket = r300_texture_blanket;
 }
 
@@ -196,7 +176,7 @@ boolean r300_get_texture_buffer(struct pipe_texture* texture,
         return FALSE;
     }
 
-    pipe_buffer_reference(texture->screen, buffer, tex->buffer);
+    pipe_buffer_reference(buffer, tex->buffer);
 
     if (stride) {
         *stride = tex->stride;

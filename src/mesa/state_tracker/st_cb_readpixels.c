@@ -134,7 +134,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
    /* unmap the stencil buffer */
    screen->transfer_unmap(screen, pt);
-   screen->tex_transfer_release(screen, &pt);
+   screen->tex_transfer_destroy(pt);
 }
 
 
@@ -224,7 +224,7 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
 
       map = screen->transfer_map(screen, trans);
       if (!map) {
-         screen->tex_transfer_release(screen, &trans);
+         screen->tex_transfer_destroy(trans);
          return GL_FALSE;
       }
 
@@ -282,7 +282,7 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
       }
 
       screen->transfer_unmap(screen, trans);
-      screen->tex_transfer_release(screen, &trans);
+      screen->tex_transfer_destroy(trans);
    }
 
    return GL_TRUE;
@@ -466,7 +466,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       }
    }
 
-   screen->tex_transfer_release(screen, &trans);
+   screen->tex_transfer_destroy(trans);
 
    _mesa_unmap_readpix_pbo(ctx, &clippedPacking);
 }

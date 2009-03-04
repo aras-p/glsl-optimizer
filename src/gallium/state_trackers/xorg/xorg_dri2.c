@@ -147,7 +147,7 @@ driDestroyBuffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
 	    (*pScreen->DestroyPixmap)(private->pPixmap);
 
 	pipe_texture_reference(&private->tex, NULL);
-	pipe_buffer_reference(ms->screen, &private->buf, NULL);
+	pipe_buffer_reference(&private->buf, NULL);
     }
 
     if (buffers) {

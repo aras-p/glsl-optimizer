@@ -39,97 +39,6 @@ extern "C" {
 
 
 /**
- * Set 'ptr' to point to 'surf' and update reference counting.
- * The old thing pointed to, if any, will be unreferenced first.
- * 'surf' may be NULL.
- */
-static INLINE void
-pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
-{
-   /* bump the refcount first */
-   if (surf) {
-      assert(surf->refcount);
-      surf->refcount++;
-   }
-
-   if (*ptr) {
-      struct pipe_screen *screen;
-      assert((*ptr)->refcount);
-      assert((*ptr)->texture);
-      screen = (*ptr)->texture->screen;
-      screen->tex_surface_release( screen, ptr );
-      assert(!*ptr);
-   }
-
-   *ptr = surf;
-}
-
-
-/**
- * \sa pipe_surface_reference
- */
-static INLINE void
-pipe_transfer_reference(struct pipe_transfer **ptr, struct pipe_transfer *trans)
-{
-   /* bump the refcount first */
-   if (trans) {
-      assert(trans->refcount);
-      trans->refcount++;
-   }
-
-   if (*ptr) {
-      struct pipe_screen *screen;
-      assert((*ptr)->refcount);
-      assert((*ptr)->texture);
-      screen = (*ptr)->texture->screen;
-      screen->tex_transfer_release( screen, ptr );
-      assert(!*ptr);
-   }
-
-   *ptr = trans;
-}
-
-
-/**
- * \sa pipe_surface_reference
- */
-static INLINE void
-pipe_texture_reference(struct pipe_texture **ptr,
-		       struct pipe_texture *pt)
-{
-   assert(ptr);
-
-   if (pt) { 
-      assert(pt->refcount);
-      pt->refcount++;
-   }
-
-   if (*ptr) {
-      struct pipe_screen *screen = (*ptr)->screen;
-      assert(screen);
-      assert((*ptr)->refcount);
-      screen->texture_release(screen, ptr);
-
-      assert(!*ptr);
-   }
-
-   *ptr = pt;
-}
-
-
-static INLINE void
-pipe_texture_release(struct pipe_texture **ptr)
-{
-   struct pipe_screen *screen;
-   assert(ptr);
-   screen = (*ptr)->screen;
-   assert((*ptr)->refcount);
-   screen->texture_release(screen, ptr);
-   *ptr = NULL;
-}
-
-
-/**
  * Convenience wrappers for screen buffer functions.
  */
 
@@ -197,28 +106,6 @@ pipe_buffer_read(struct pipe_screen *screen,
       memcpy(data, map + offset, size);
       pipe_buffer_unmap(screen, buf);
    }
-}
-
-/* XXX: thread safety issues!
- */
-static INLINE void
-pipe_buffer_reference(struct pipe_screen *screen,
-		      struct pipe_buffer **ptr,
-		      struct pipe_buffer *buf)
-{
-   if (buf) {
-      assert(buf->refcount);
-      buf->refcount++;
-   }
-
-   if (*ptr) {
-      assert((*ptr)->refcount);
-      if(--(*ptr)->refcount == 0) {
-         screen->buffer_destroy( screen, *ptr );
-      }
-   }
-
-   *ptr = buf;
 }
 
 

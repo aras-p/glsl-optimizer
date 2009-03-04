@@ -446,7 +446,7 @@ aaline_create_texture(struct aaline_stage *aaline)
 
       /* unmap */
       screen->transfer_unmap(screen, transfer);
-      screen->tex_transfer_release(screen, &transfer);
+      screen->tex_transfer_destroy(transfer);
    }
    return TRUE;
 }
@@ -728,7 +728,7 @@ aaline_destroy(struct draw_stage *stage)
       aaline->pipe->delete_sampler_state(aaline->pipe, aaline->sampler_cso);
 
    if (aaline->texture)
-      pipe_texture_release(&aaline->texture);
+      pipe_texture_reference(&aaline->texture, NULL);
 
    draw_free_temp_verts( stage );
 

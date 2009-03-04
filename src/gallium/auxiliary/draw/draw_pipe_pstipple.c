@@ -406,7 +406,7 @@ pstip_update_texture(struct pstip_stage *pstip)
 
    /* unmap */
    screen->transfer_unmap(screen, transfer);
-   screen->tex_transfer_release(screen, &transfer);
+   screen->tex_transfer_destroy(transfer);
 }
 
 
@@ -572,7 +572,7 @@ pstip_destroy(struct draw_stage *stage)
 
    pstip->pipe->delete_sampler_state(pstip->pipe, pstip->sampler_cso);
 
-   pipe_texture_release(&pstip->texture);
+   pipe_texture_reference(&pstip->texture, NULL);
 
    draw_free_temp_verts( stage );
    FREE( stage );

@@ -87,8 +87,7 @@ gdi_softpipe_buffer_unmap(struct pipe_winsys *winsys,
 
 
 static void
-gdi_softpipe_buffer_destroy(struct pipe_winsys *winsys,
-                            struct pipe_buffer *buf)
+gdi_softpipe_buffer_destroy(struct pipe_buffer *buf)
 {
    struct gdi_softpipe_buffer *oldBuf = gdi_softpipe_buffer(buf);
 
@@ -118,7 +117,7 @@ gdi_softpipe_buffer_create(struct pipe_winsys *winsys,
 {
    struct gdi_softpipe_buffer *buffer = CALLOC_STRUCT(gdi_softpipe_buffer);
 
-   buffer->base.refcount = 1;
+   pipe_reference_init(&buffer->base.reference, 1);
    buffer->base.alignment = alignment;
    buffer->base.usage = usage;
    buffer->base.size = size;
@@ -143,7 +142,7 @@ gdi_softpipe_user_buffer_create(struct pipe_winsys *winsys,
    if(!buffer)
       return NULL;
 
-   buffer->base.refcount = 1;
+   pipe_reference_init(&buffer->base.reference, 1);
    buffer->base.size = bytes;
    buffer->userBuffer = TRUE;
    buffer->data = ptr;
