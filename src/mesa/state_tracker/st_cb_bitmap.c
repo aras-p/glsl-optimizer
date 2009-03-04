@@ -624,6 +624,7 @@ st_flush_bitmap_cache(struct st_context *st)
          cache->buffer = NULL;
 
          screen->tex_transfer_destroy(cache->trans);
+         cache->trans = NULL;
 
          draw_bitmap_quad(st->ctx,
                           cache->xpos,
