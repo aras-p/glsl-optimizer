@@ -72,6 +72,24 @@ static void Draw(void)
       glClearColor((sin(f)+1)/2.0,(cos(f)+1)/2.0,0.5,1); 
       glClear(GL_COLOR_BUFFER_BIT); 
       glutSwapBuffers();
+
+      {
+         static GLint T0 = 0;
+         static GLint Frames = 0;
+         GLint t = glutGet(GLUT_ELAPSED_TIME);
+
+         Frames++;
+
+         if (t - T0 >= 5000) {
+            GLfloat seconds = (t - T0) / 1000.0;
+            GLfloat fps = Frames / seconds;
+            printf("%d frames in %6.3f seconds = %6.3f FPS\n", Frames, seconds, fps);
+            fflush(stdout);
+            T0 = t;
+            Frames = 0;
+         }
+      }
+
    }
    glutPostRedisplay();
 }
@@ -91,7 +109,7 @@ int main(int argc, char **argv)
 	exit(1);
     }
 
-    glutInitWindowPosition(0, 0); glutInitWindowSize( 250, 250);
+    glutInitWindowPosition(0, 0); glutInitWindowSize( 300, 300);
 
     type = GLUT_RGB | GLUT_ALPHA;
     type |= GLUT_DOUBLE;
