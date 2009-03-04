@@ -66,7 +66,6 @@
 #include "st_gen_mipmap.h"
 #include "st_program.h"
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
 #include "draw/draw_context.h"
 #include "cso_cache/cso_cache.h"
 #include "cso_cache/cso_context.h"

@@ -48,7 +48,6 @@
 #include "util/u_debug.h"
 #include "pipe/p_error.h"
 #include "pipe/p_state.h"
-#include "pipe/p_inlines.h"
 
 
 #ifdef __cplusplus

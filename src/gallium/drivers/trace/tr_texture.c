@@ -25,7 +25,6 @@
  *
  **************************************************************************/
 
-#include "pipe/p_inlines.h"
 #include "util/u_hash_table.h"
 #include "util/u_memory.h"
 
