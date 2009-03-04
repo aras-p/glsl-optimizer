@@ -155,6 +155,7 @@ intel_be_buffer_from_handle(struct pipe_screen *screen,
 		goto err;
 
 	pipe_reference_init(&buffer->base.reference, 1);
+	buffer->base.screen = screen;
 	buffer->base.alignment = buffer->bo->align;
 	buffer->base.usage = PIPE_BUFFER_USAGE_GPU_READ |
 	                     PIPE_BUFFER_USAGE_GPU_WRITE |
