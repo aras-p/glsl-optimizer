@@ -43,7 +43,6 @@
 #include "common_x86_features.h"
 
 #ifdef USE_X86_ASM
-#include "x86.h"
 #ifdef USE_3DNOW_ASM
 #include "3dnow.h"
 #endif

@@ -32,7 +32,6 @@
 #include "math/m_xform.h"
 #include "tnl/t_context.h"
 
-#include "x86.h"
 #include "x86_xform.h"
 #include "common_x86_asm.h"
 
