@@ -323,6 +323,7 @@ MESA_GALLIUM_SOURCES = \
 	$(VBO_SOURCES)		\
 	$(STATETRACKER_SOURCES)	\
 	$(SHADER_SOURCES)	\
+	x86/common_x86.c	\
 	$(SLANG_SOURCES)
 
 # All the core C sources, for dependency checking
