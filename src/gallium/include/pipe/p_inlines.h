@@ -85,13 +85,11 @@ pipe_buffer_map_range(struct pipe_screen *screen,
 {
    assert(offset < buf->size);
    assert(offset + length <= buf->size);
+   assert(length);
    if(screen->buffer_map_range)
       return screen->buffer_map_range(screen, buf, offset, length, usage);
-   else {
-      uint8_t *map;
-      map = screen->buffer_map(screen, buf, usage);
-      return map ? map + offset : NULL;
-   }
+   else
+      return screen->buffer_map(screen, buf, usage);
 }
 
 static INLINE void
@@ -102,6 +100,7 @@ pipe_buffer_flush_mapped_range(struct pipe_screen *screen,
 {
    assert(offset < buf->size);
    assert(offset + length <= buf->size);
+   assert(length);
    if(screen->buffer_flush_mapped_range)
       screen->buffer_flush_mapped_range(screen, buf, offset, length);
 }
@@ -116,11 +115,12 @@ pipe_buffer_write(struct pipe_screen *screen,
    
    assert(offset < buf->size);
    assert(offset + size <= buf->size);
-   
+   assert(size);
+
    map = pipe_buffer_map_range(screen, buf, offset, size, PIPE_BUFFER_USAGE_CPU_WRITE);
    assert(map);
    if(map) {
-      memcpy(map, data, size);
+      memcpy(map + offset, data, size);
       pipe_buffer_flush_mapped_range(screen, buf, offset, size);
       pipe_buffer_unmap(screen, buf);
    }
@@ -136,11 +136,12 @@ pipe_buffer_read(struct pipe_screen *screen,
    
    assert(offset < buf->size);
    assert(offset + size <= buf->size);
-   
+   assert(size);
+
    map = pipe_buffer_map_range(screen, buf, offset, size, PIPE_BUFFER_USAGE_CPU_READ);
    assert(map);
    if(map) {
-      memcpy(data, map, size);
+      memcpy(data, map + offset, size);
       pipe_buffer_unmap(screen, buf);
    }
 }

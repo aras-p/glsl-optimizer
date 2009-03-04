@@ -205,8 +205,10 @@ struct pipe_screen {
    /**
     * Map a subrange of the buffer data store into the client's address space.
     *
-    * Return pointer is always relative to offset 0, regardless of the 
-    * read/write ranges.
+    * The returned pointer is always relative to buffer start, regardless of 
+    * the specified range. This is different from the ARB_map_buffer_range
+    * semantics because we don't forbid multiple mappings of the same buffer
+    * (yet).
     */
    void *(*buffer_map_range)( struct pipe_screen *screen,
                               struct pipe_buffer *buf,
@@ -215,7 +217,12 @@ struct pipe_screen {
                               unsigned usage);
 
    /**
-    * written is the range that the client actually wrote. 
+    * Notify a range that was actually written into.
+    * 
+    * The range is relative to the buffer start, regardless of the range 
+    * specified to buffer_map_range. This is different from the 
+    * ARB_map_buffer_range semantics because we don't forbid multiple mappings 
+    * of the same buffer (yet).
     */
    void (*buffer_flush_mapped_range)( struct pipe_screen *screen,
                                       struct pipe_buffer *buf,
