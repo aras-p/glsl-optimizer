@@ -427,9 +427,9 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
 
    /* output the first 7 bytes of context */
    if (drb)
-     dwords += 4;
+     dwords += 2;
    if (rrb)
-     dwords += 4;
+     dwords += 2;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
 
    /* In the CS case we need to split this up */
@@ -438,7 +438,7 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
 
    if (drb) {
      OUT_BATCH(CP_PACKET0(RADEON_RB3D_DEPTHOFFSET, 0));
-     OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+     OUT_BATCH_RELOC(0, drb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
      OUT_BATCH(CP_PACKET0(RADEON_RB3D_DEPTHPITCH, 0));
      OUT_BATCH(zbpitch);
@@ -507,24 +507,77 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    if (t && t->mt && !t->image_override)
      dwords += 2;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
+
    OUT_BATCH_TABLE(atom->cmd, 3);
    if (t && t->mt && !t->image_override) {
      if ((ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT)) {
    	lvl = &t->mt->levels[0];
 	OUT_BATCH_RELOC(lvl->faces[5].offset, t->mt->bo, lvl->faces[5].offset,
-			RADEON_GEM_DOMAIN_VRAM, 0, 0);
+			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
      } else {
         OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
-		     RADEON_GEM_DOMAIN_VRAM, 0, 0);
+		     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
      }
    } else if (!t) {
      /* workaround for old CS mechanism */
      OUT_BATCH(r100->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP]);
      //     OUT_BATCH(r100->radeon.radeonScreen);
-   } else if (t->image_override)
+   } else {
      OUT_BATCH(t->override_offset);
+   }
 
    OUT_BATCH_TABLE((atom->cmd+4), 5);
+   END_BATCH();
+}
+
+static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r100ContextPtr r100 = R100_CONTEXT(ctx);
+   BATCH_LOCALS(&r100->radeon);
+   uint32_t dwords = atom->cmd_size;
+   int i = atom->idx;
+   radeonTexObj *t = r100->state.texture.unit[i].texobj;
+   radeon_mipmap_level *lvl;
+   int hastexture = 1;
+
+   if (!t)
+	hastexture = 0;
+   else {
+	if (!t->mt && !t->bo)
+		hastexture = 0;
+   }
+   dwords += 1;
+   if (hastexture)
+     dwords += 2;
+   else
+     dwords -= 2;
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+
+   OUT_BATCH(CP_PACKET0(RADEON_PP_TXFILTER_0 + (24 * i), 1));
+   OUT_BATCH_TABLE((atom->cmd + 1), 2);
+
+   if (hastexture) {
+     OUT_BATCH(CP_PACKET0(RADEON_PP_TXOFFSET_0 + (24 * i), 0));
+     if (t && t->mt && !t->image_override) {
+        if ((ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT)) {
+            lvl = &t->mt->levels[0];
+	    OUT_BATCH_RELOC(lvl->faces[5].offset, t->mt->bo, lvl->faces[5].offset,
+			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+        } else {
+           OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+		     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+        }
+      } else {
+	if (t->bo)
+            OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
+                            RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+      }
+   }
+
+   OUT_BATCH(CP_PACKET0(RADEON_PP_TXCBLEND_0 + (i * 24), 1));
+   OUT_BATCH_TABLE((atom->cmd+4), 2);
+   OUT_BATCH(CP_PACKET0(RADEON_PP_BORDER_COLOR_0 + (i * 4), 0));
+   OUT_BATCH((atom->cmd[TEX_PP_BORDER_COLOR]));
    END_BATCH();
 }
 
@@ -598,10 +651,14 @@ void radeonInitState( r100ContextPtr rmesa )
    ALLOC_STATE( eye, tcl_lighting, EYE_STATE_SIZE, "EYE/eye-vector", 1 );
    ALLOC_STATE_IDX( tex[0], tex0, TEX_STATE_SIZE, "TEX/tex-0", 0, 0);
    ALLOC_STATE_IDX( tex[1], tex1, TEX_STATE_SIZE, "TEX/tex-1", 0, 1);
-   ALLOC_STATE_IDX( tex[2], tex2, TEX_STATE_SIZE, "TEX/tex-2", 0, 2 );
+   ALLOC_STATE_IDX( tex[2], tex2, TEX_STATE_SIZE, "TEX/tex-2", 0, 2);
 
-   for (i = 0; i < 3; i++)
-     rmesa->hw.tex[i].emit = tex_emit;
+   for (i = 0; i < 3; i++) {
+      if (rmesa->radeon.radeonScreen->kernel_mm)
+          rmesa->hw.tex[i].emit = tex_emit_cs;
+      else
+          rmesa->hw.tex[i].emit = tex_emit;
+   }
    if (rmesa->radeon.radeonScreen->drmSupportsCubeMapsR100)
    {
       ALLOC_STATE_IDX( cube[0], cube0, CUBE_STATE_SIZE, "CUBE/cube-0", 0, 0 );
