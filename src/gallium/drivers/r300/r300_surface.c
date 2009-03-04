@@ -308,7 +308,69 @@ static void r300_surface_fill(struct pipe_context* pipe,
     r300->dirty_hw++;
 }
 
+static void r300_surface_copy(struct pipe_context* pipe,
+                              boolean do_flip,
+                              struct pipe_surface* dest,
+                              unsigned destx, unsigned desty,
+                              struct pipe_surface* src,
+                              unsigned srcx, unsigned srcy,
+                              unsigned w, unsigned h)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    CS_LOCALS(r300);
+    struct r300_texture* srctex = (struct r300_texture*)src->texture;
+    struct r300_texture* desttex = (struct r300_texture*)dest->texture;
+
+    unsigned pixpitch = srctex->stride / srctex->tex.block.size;
+    debug_printf("r300: Copying surface %p at (%d,%d) to %p at (%d, %d),"
+        " dimensions %dx%d (pixel pitch %d)\n",
+        src, srcx, srcy, dest, destx, desty, w, h, pixpitch);
+
+    if (TRUE) {
+        debug_printf("r300: Falling back on surface_copy\n");
+        return util_surface_copy(pipe, do_flip, dest, destx, desty, src,
+                srcx, srcy, w, h);
+    }
+#if 0
+    BEGIN_CS();
+    OUT_CS_REG(RADEON_DEFAULT_SC_BOTTOM_RIGHT,(RADEON_DEFAULT_SC_RIGHT_MAX |
+                RADEON_DEFAULT_SC_BOTTOM_MAX));
+    OUT_ACCEL_REG(RADEON_DP_GUI_MASTER_CNTL, (RADEON_GMC_DST_PITCH_OFFSET_CNTL |
+					  RADEON_GMC_SRC_PITCH_OFFSET_CNTL |
+					  RADEON_GMC_BRUSH_NONE |
+					  (datatype << 8) |
+					  RADEON_GMC_SRC_DATATYPE_COLOR |
+					  RADEON_ROP[rop].rop |
+					  RADEON_DP_SRC_SOURCE_MEMORY |
+					  RADEON_GMC_CLR_CMP_CNTL_DIS));
+    OUT_CS_REG(RADEON_DP_BRUSH_FRGD_CLR, 0xffffffff);
+    OUT_CS_REG(RADEON_DP_BRUSH_BKGD_CLR, 0x0);
+    OUT_CS_REG(RADEON_DP_SRC_FRGD_CLR, 0xffffffff);
+    OUT_CS_REG(RADEON_DP_SRC_BKGD_CLR, 0x0);
+    OUT_ACCEL_REG(RADEON_DP_WRITE_MASK, planemask);
+    OUT_ACCEL_REG(RADEON_DP_CNTL, ((info->accel_state->xdir >= 0 ? RADEON_DST_X_LEFT_TO_RIGHT : 0) |
+			       (info->accel_state->ydir >= 0 ? RADEON_DST_Y_TOP_TO_BOTTOM : 0));
+);
+
+    OUT_CS_REG_SEQ(RADEON_DST_PITCH_OFFSET, 1);
+    OUT_CS_RELOC(desttex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+
+    OUT_CS_REG_SEQ(RADEON_SRC_PITCH_OFFSET, 1);
+    OUT_CS_RELOC(srctex->buffer, 0,
+            RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0, 0);
+
+    OUT_CS_REG(RADEON_SRC_Y_X, (srcy << 16) | srcx);
+    OUT_CS_REG(RADEON_DST_Y_X, (desty << 16) | destx);
+    OUT_CS_REG(RADEON_DST_HEIGHT_WIDTH, (h << 16) | w);
+    OUT_CS_REG(RADEON_DSTCACHE_CTLSTAT, RADEON_RB2D_DC_FLUSH_ALL);
+    OUT_CS_REG(RADEON_WAIT_UNTIL,
+                  RADEON_WAIT_2D_IDLECLEAN | RADEON_WAIT_DMA_GUI_IDLE);
+    END_CS;
+#endif
+}
+
 void r300_init_surface_functions(struct r300_context* r300)
 {
     r300->context.surface_fill = r300_surface_fill;
+    r300->context.surface_copy = r300_surface_copy;
 }
