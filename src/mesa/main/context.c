@@ -94,6 +94,7 @@
 #include "colortab.h"
 #endif
 #include "context.h"
+#include "cpuinfo.h"
 #include "debug.h"
 #include "depth.h"
 #if FEATURE_dlist
@@ -413,6 +414,8 @@ one_time_init( GLcontext *ctx )
       assert( sizeof(GLushort) == 2 );
       assert( sizeof(GLint) == 4 );
       assert( sizeof(GLuint) == 4 );
+
+      _mesa_get_cpu_features();
 
       _mesa_init_sqrt_table();
 
