@@ -2,7 +2,7 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-SUBDIRS = core dri2
+SUBDIRS = core dri2 egl xorg
 
 default install clean:
 	@for dir in $(SUBDIRS) ; do \
