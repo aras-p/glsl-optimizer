@@ -35,6 +35,15 @@
 #include "x86_xform.h"
 #include "common_x86_asm.h"
 
+#ifdef USE_X86_ASM
+#ifdef USE_3DNOW_ASM
+#include "3dnow.h"
+#endif
+#ifdef USE_SSE_ASM
+#include "sse.h"
+#endif
+#endif
+
 #ifdef DEBUG_MATH
 #include "math/m_debug.h"
 #endif
