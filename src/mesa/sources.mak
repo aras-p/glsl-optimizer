@@ -17,6 +17,7 @@ MAIN_SOURCES = \
 	main/colortab.c \
 	main/context.c \
 	main/convolve.c \
+	main/cpuinfo.c \
 	main/debug.c \
 	main/depth.c \
 	main/depthstencil.c \
