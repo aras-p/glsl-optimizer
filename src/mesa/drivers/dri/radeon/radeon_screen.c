@@ -335,6 +335,11 @@ static const __DRItexOffsetExtension radeonTexOffsetExtension = {
     { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
     radeonSetTexOffset,
 };
+
+static const __DRItexBufferExtension radeonTexBufferExtension = {
+    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
+   radeonSetTexBuffer,
+};
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
@@ -1088,6 +1093,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
 
 #if !RADEON_COMMON
    screen->extensions[i++] = &radeonTexOffsetExtension.base;
+   screen->extensions[i++] = &radeonTexBufferExtension.base;
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)

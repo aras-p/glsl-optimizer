@@ -41,6 +41,7 @@ extern void radeonSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
                                unsigned long long offset, GLint depth,
                                GLuint pitch);
 
+extern void radeonSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv);
 extern void radeonUpdateTextureState( GLcontext *ctx );
 
 extern int radeonUploadTexImages( r100ContextPtr rmesa, radeonTexObjPtr t,

@@ -39,6 +39,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/texformat.h"
+#include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/enums.h"
 
@@ -636,6 +637,112 @@ void radeonSetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	}
 }
 
+void radeonSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
+{
+	struct gl_texture_unit *texUnit;
+	struct gl_texture_object *texObj;
+	struct gl_texture_image *texImage;
+	struct radeon_renderbuffer *rb;
+	radeon_texture_image *rImage;
+	radeonContextPtr radeon;
+	r100ContextPtr rmesa;
+	struct radeon_framebuffer *rfb;
+	radeonTexObjPtr t;
+	uint32_t pitch_val;
+
+	target = GL_TEXTURE_RECTANGLE_ARB;
+
+	radeon = pDRICtx->driverPrivate;
+	rmesa = pDRICtx->driverPrivate;
+
+	rfb = dPriv->driverPrivate;
+        texUnit = &radeon->glCtx->Texture.Unit[radeon->glCtx->Texture.CurrentUnit];
+	texObj = _mesa_select_tex_object(radeon->glCtx, texUnit, target);
+        texImage = _mesa_get_tex_image(radeon->glCtx, texObj, target, 0);
+
+	rImage = get_radeon_texture_image(texImage);
+	t = radeon_tex_obj(texObj);
+        if (t == NULL) {
+    	    return;
+    	}
+
+	radeon_update_renderbuffers(pDRICtx, dPriv);
+	/* back & depth buffer are useless free them right away */
+	rb = (void*)rfb->base.Attachment[BUFFER_DEPTH].Renderbuffer;
+	if (rb && rb->bo) {
+		radeon_bo_unref(rb->bo);
+        rb->bo = NULL;
+	}
+	rb = (void*)rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+	if (rb && rb->bo) {
+		radeon_bo_unref(rb->bo);
+		rb->bo = NULL;
+	}
+	rb = (void*)rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+	if (rb->bo == NULL) {
+		/* Failed to BO for the buffer */
+		return;
+	}
+	
+	_mesa_lock_texture(radeon->glCtx, texObj);
+	if (t->bo) {
+		radeon_bo_unref(t->bo);
+		t->bo = NULL;
+	}
+	if (rImage->bo) {
+		radeon_bo_unref(rImage->bo);
+		rImage->bo = NULL;
+	}
+	if (t->mt) {
+		radeon_miptree_unreference(t->mt);
+		t->mt = NULL;
+	}
+	if (rImage->mt) {
+		radeon_miptree_unreference(rImage->mt);
+		rImage->mt = NULL;
+	}
+	fprintf(stderr,"settexbuf %d %dx%d@%d\n", rb->pitch, rb->width, rb->height, rb->cpp);
+	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
+				   rb->width, rb->height, 1, 0, rb->cpp);
+	texImage->TexFormat = &_mesa_texformat_rgba8888_rev;
+	rImage->bo = rb->bo;
+	radeon_bo_ref(rImage->bo);
+	t->bo = rb->bo;
+	radeon_bo_ref(t->bo);
+	t->tile_bits = 0;
+	t->image_override = GL_TRUE;
+	t->override_offset = 0;
+	t->pp_txpitch &= (1 << 13) -1;
+	pitch_val = rb->pitch;
+	switch (rb->cpp) {
+	case 4:
+		t->pp_txformat = tx_table[MESA_FORMAT_ARGB8888].format;
+		t->pp_txfilter |= tx_table[MESA_FORMAT_ARGB8888].filter;
+	//	pitch_val /= 4;
+		break;
+	case 3:
+	default:
+		t->pp_txformat = tx_table[MESA_FORMAT_RGB888].format;
+		t->pp_txfilter |= tx_table[MESA_FORMAT_RGB888].filter;
+//		pitch_val /= 4;
+		break;
+	case 2:
+		t->pp_txformat = tx_table[MESA_FORMAT_RGB565].format;
+		t->pp_txfilter |= tx_table[MESA_FORMAT_RGB565].filter;
+		pitch_val /= 2;
+		break;
+	}
+        t->pp_txsize = ((rb->width - 1) << RADEON_TEX_USIZE_SHIFT)
+		   | ((rb->height - 1) << RADEON_TEX_VSIZE_SHIFT);
+        t->pp_txformat |= RADEON_TXFORMAT_NON_POWER2;
+	t->pp_txpitch = pitch_val;
+        t->pp_txpitch -= 32;
+
+	t->validated = GL_TRUE;
+	_mesa_unlock_texture(radeon->glCtx, texObj);
+	return;
+}
+
 #define TEXOBJ_TXFILTER_MASK (RADEON_MAX_MIP_LEVEL_MASK |	\
 			      RADEON_MIN_FILTER_MASK | 		\
 			      RADEON_MAG_FILTER_MASK |		\
@@ -898,6 +1005,10 @@ static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int
 {
    const struct gl_texture_image *firstImage;
    GLint log2Width, log2Height, log2Depth, texelBytes;
+
+   if ( t->image_override ) {
+	return GL_TRUE;
+   }
 
    firstImage = t->base.Image[0][t->mt->firstLevel];   
 

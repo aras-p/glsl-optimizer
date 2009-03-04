@@ -558,7 +558,7 @@ static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
 
    if (hastexture) {
      OUT_BATCH(CP_PACKET0(RADEON_PP_TXOFFSET_0 + (24 * i), 0));
-     if (t && t->mt && !t->image_override) {
+     if (t->mt && !t->image_override) {
         if ((ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT)) {
             lvl = &t->mt->levels[0];
 	    OUT_BATCH_RELOC(lvl->faces[5].offset, t->mt->bo, lvl->faces[5].offset,
