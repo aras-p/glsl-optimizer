@@ -30,6 +30,6 @@
 #ifndef __X86_H__
 #define __X86_H__
 
-extern void _mesa_init_x86_transform_asm( void );
+/*extern void _mesa_init_x86_transform_asm( void );*/
 
 #endif

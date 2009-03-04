@@ -77,7 +77,7 @@ _mesa_v16_x86_general_xform( GLfloat *dest,
 #endif
 
 
-void _mesa_init_x86_transform_asm( void )
+static void _mesa_init_x86_transform_asm( void )
 {
 #ifdef USE_X86_ASM
    ASSIGN_XFORM_GROUP( x86, 2 );
