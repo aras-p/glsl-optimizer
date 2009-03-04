@@ -199,10 +199,18 @@ void _mesa_check_os_sse_support( void )
 
 /**
  * Initialize the _mesa_x86_cpu_features bitfield.
+ * This is a no-op if called more than once.
  */
 void
 _mesa_get_x86_features(void)
 {
+   static int called = 0;
+
+   if (called)
+      return;
+
+   called = 1;
+
 #ifdef USE_X86_ASM
    _mesa_x86_cpu_features = 0x0;
 
