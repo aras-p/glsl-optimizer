@@ -675,7 +675,6 @@ void vbo_use_buffer_objects(GLcontext *ctx)
    if (exec->vtx.buffer_map) {
       _mesa_align_free(exec->vtx.buffer_map);
       exec->vtx.buffer_map = NULL;
-      exec->vtx.buffer_ptr = NULL;
    }
 
    /* Allocate a real buffer object now */
@@ -701,7 +700,6 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
 
    ASSERT(!exec->vtx.buffer_map);
    exec->vtx.buffer_map = (GLfloat *)ALIGN_MALLOC(VBO_VERT_BUFFER_SIZE, 64);
-   exec->vtx.buffer_ptr = exec->vtx.buffer_map;
 
    vbo_exec_vtxfmt_init( exec );
 
@@ -737,7 +735,6 @@ void vbo_exec_vtx_destroy( struct vbo_exec_context *exec )
       if (exec->vtx.buffer_map) {
          ALIGN_FREE(exec->vtx.buffer_map);
          exec->vtx.buffer_map = NULL;
-         exec->vtx.buffer_ptr = NULL;
       }
    }
 }
