@@ -254,7 +254,7 @@ SLANG_SOURCES =	\
 
 ASM_C_SOURCES =	\
 	x86/common_x86.c \
-	x86/x86.c \
+	x86/x86_xform.c \
 	x86/3dnow.c \
 	x86/sse.c \
 	x86/rtasm/x86sse.c \

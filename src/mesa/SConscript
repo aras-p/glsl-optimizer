@@ -252,7 +252,7 @@ if env['platform'] != 'winddk':
 		])
 		mesa_sources += [
 			'x86/common_x86.c',
-			'x86/x86.c',
+			'x86/x86_xform.c',
 			'x86/3dnow.c',
 			'x86/sse.c',
 			'x86/common_x86_asm.S',
