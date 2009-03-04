@@ -27,11 +27,40 @@
  * Authors:
  *      Jérôme Glisse <glisse@freedesktop.org>
  */
-#ifndef RADEON_WINSYS_SOFTPIPE_H
-#define RADEON_WINSYS_SOFTPIPE_H
+#ifndef RADEON_BUFFER_H
+#define RADEON_BUFFER_H
 
-#include "radeon_context.h"
+#include <stdio.h>
 
-struct pipe_context *radeon_create_softpipe(struct pipe_winsys* winsys);
+#include "pipe/internal/p_winsys_screen.h"
+#include "pipe/p_defines.h"
+#include "pipe/p_inlines.h"
+
+//#include "state_tracker/st_public.h"
+
+#include "util/u_memory.h"
+
+#include "radeon_bo.h"
+
+#include "radeon_drm.h"
+
+struct radeon_pipe_buffer {
+    struct pipe_buffer  base;
+    struct radeon_bo    *bo;
+};
+
+struct radeon_winsys {
+    /* Parent class. */
+    struct pipe_winsys base;
+
+    /* Radeon BO manager. This corresponds to void* radeon_winsys in r300_winsys. */
+    struct radeon_bo_manager* bom;
+};
+
+struct pipe_winsys *radeon_pipe_winsys();
+struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_context,
+                                             uint32_t handle,
+                                             enum pipe_format format,
+                                             int w, int h, int pitch);
 
 #endif

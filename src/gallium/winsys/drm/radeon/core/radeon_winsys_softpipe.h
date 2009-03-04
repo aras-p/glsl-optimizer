@@ -27,15 +27,18 @@
  * Authors:
  *      Jérôme Glisse <glisse@freedesktop.org>
  */
-#ifndef RADEON_SCREEN_H
-#define RADEON_SCREEN_H
+#ifndef RADEON_WINSYS_SOFTPIPE_H
+#define RADEON_WINSYS_SOFTPIPE_H
 
-#include "dri_util.h"
-#include "radeon_bo.h"
+#include <stdio.h>
 
-struct radeon_screen {
-    __DRIscreenPrivate          *dri_screen;
-    struct radeon_bo_manager    *bom;
-};
+#include "pipe/p_defines.h"
+#include "pipe/p_format.h"
+
+#include "softpipe/sp_winsys.h"
+
+#include "util/u_memory.h"
+
+struct pipe_context *radeon_create_softpipe(struct pipe_winsys* winsys);
 
 #endif

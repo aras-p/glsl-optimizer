@@ -1,5 +1,5 @@
 /* 
- * Copyright © 2008 Jérôme Glisse
+ * Copyright © 2009 Corbin Simpson
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -25,46 +25,39 @@
  */
 /*
  * Authors:
- *      Jérôme Glisse <glisse@freedesktop.org>
+ *      Corbin Simpson <MostAwesomeDude@gmail.com>
  */
-#ifndef RADEON_CONTEXT_H
-#define RADEON_CONTEXT_H
+#ifndef RADEON_DRM_H
+#define RADEON_DRM_H
 
-#include "dri_util.h"
-#include "state_tracker/st_public.h"
-#include "state_tracker/st_context.h"
-#include "radeon_screen.h"
+#include "pipe/p_screen.h"
 
+#include "util/u_memory.h"
+
+#include "state_tracker/drm_api.h"
+
+#include "radeon_buffer.h"
 #include "radeon_r300.h"
+#include "radeon_winsys_softpipe.h"
 
-struct radeon_framebuffer {
-    struct st_framebuffer   *st_framebuffer;
-    unsigned                attachments;
-};
+struct pipe_screen* radeon_create_screen(int drmFB, int pciID);
 
-struct radeon_context {
-    /* st */
-    struct st_context       *st_context;
-    /* pipe */
-    struct pipe_screen      *pipe_screen;
-    struct pipe_winsys      *pipe_winsys;
-    /* DRI */
-    __DRIscreenPrivate      *dri_screen;
-    __DRIdrawablePrivate    *dri_drawable;
-    __DRIdrawablePrivate    *dri_readable;
-    /* DRM */
-    int                     drm_fd;
-   /* RADEON */
-    struct radeon_screen       *radeon_screen;
-};
+struct pipe_context* radeon_create_context(struct pipe_screen* screen);
 
-GLboolean radeon_context_create(const __GLcontextModes*,
-                             __DRIcontextPrivate*,
-                             void*);
-void radeon_context_destroy(__DRIcontextPrivate*);
-GLboolean radeon_context_bind(__DRIcontextPrivate*,
-                           __DRIdrawablePrivate*,
-                           __DRIdrawablePrivate*);
-GLboolean radeon_context_unbind(__DRIcontextPrivate*);
+boolean radeon_buffer_from_texture(struct pipe_texture* texture,
+                                   struct pipe_buffer** buffer,
+                                   unsigned* stride);
+
+struct pipe_buffer* radeon_buffer_from_handle(struct pipe_screen* screen,
+                                              const char* name,
+                                              unsigned handle);
+
+boolean radeon_handle_from_buffer(struct pipe_screen* screen,
+                                  struct pipe_buffer* buffer,
+                                  unsigned* handle);
+
+boolean radeon_global_handle_from_buffer(struct pipe_screen* screen,
+                                         struct pipe_buffer* buffer,
+                                         unsigned* handle);
 
 #endif

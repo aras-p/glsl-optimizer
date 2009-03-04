@@ -29,20 +29,8 @@
  *      Jérôme Glisse <glisse@freedesktop.org>
  *      Corbin Simpson <MostAwesomeDude@gmail.com>
  */
-#include <stdio.h>
 
-#include "state_tracker/st_public.h"
-
-#include "util/u_memory.h"
-
-#include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
 #include "radeon_buffer.h"
-#include "radeon_screen.h"
-#include "radeon_context.h"
-#include "radeon_bo.h"
-#include "radeon_drm.h"
-
 
 static const char *radeon_get_name(struct pipe_winsys *ws)
 {

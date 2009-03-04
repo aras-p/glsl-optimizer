@@ -28,11 +28,7 @@
 /*
  * Authors: Keith Whitwell <keithw-at-tungstengraphics-dot-com>
  */
-#include <stdio.h>
-#include "pipe/p_defines.h"
-#include "pipe/p_format.h"
-#include "softpipe/sp_winsys.h"
-#include "radeon_context.h"
+
 #include "radeon_winsys_softpipe.h"
 
 struct radeon_softpipe_winsys {
@@ -58,17 +54,18 @@ static boolean radeon_is_format_supported(struct softpipe_winsys *sws, uint form
 
 struct pipe_context *radeon_create_softpipe(struct pipe_winsys* winsys)
 {
-    struct radeon_softpipe_winsys *radeon_sp_ws;
+    struct softpipe_winsys *sp_winsys;
     struct pipe_screen *pipe_screen;
 
     pipe_screen = softpipe_create_screen(winsys);
 
-    radeon_sp_ws = CALLOC_STRUCT(radeon_softpipe_winsys);
-    if (radeon_sp_ws == NULL) {
+    sp_winsys = CALLOC_STRUCT(softpipe_winsys);
+    if (sp_winsys == NULL) {
         return NULL;
     }
-    radeon_sp_ws->sp_winsys.is_format_supported = radeon_is_format_supported;
+
+    sp_winsys->is_format_supported = radeon_is_format_supported;
     return softpipe_create(pipe_screen,
                            winsys,
-                           &radeon_sp_ws->sp_winsys);
+                           sp_winsys);
 }
