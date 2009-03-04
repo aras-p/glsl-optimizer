@@ -240,6 +240,13 @@ static void vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
 
    if (exec->vtx.bufferobj->Name) {
       GLcontext *ctx = exec->ctx;
+      GLintptr offset = exec->vtx.buffer_used;
+      GLsizeiptr length = (exec->vtx.buffer_ptr - exec->vtx.buffer_map) * sizeof(float);
+      
+      if(ctx->Driver.FlushMappedBufferRange)
+         ctx->Driver.FlushMappedBufferRange(ctx, target,
+                                            offset, length,
+                                            exec->vtx.bufferobj);
 
       exec->vtx.buffer_used += (exec->vtx.buffer_ptr -
                                 exec->vtx.buffer_map) * sizeof(float);

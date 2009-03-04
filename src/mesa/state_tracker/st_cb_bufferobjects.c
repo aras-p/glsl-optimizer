@@ -233,14 +233,24 @@ st_bufferobj_map_range(GLcontext *ctx, GLenum target,
       flags |= PIPE_BUFFER_USAGE_DONTBLOCK;
 
    map = pipe_buffer_map_range(pipe->screen, st_obj->buffer, offset, length, flags);
-   /* FIXME: some code expects this to point to the buffer start, which means that
-    * the range might not be respected in all circumstances
+   /* this is expected to point to the buffer start, in order to calculate the
+    * vertices offsets 
     */
    obj->Pointer = map ? map - offset : NULL;
    return map;
 }
 
 
+static void
+st_bufferobj_flush_mapped_range(GLcontext *ctx, GLenum target, 
+                                GLintptr offset, GLsizeiptr length,
+                                struct gl_buffer_object *obj)
+{
+   struct pipe_context *pipe = st_context(ctx)->pipe;
+   struct st_buffer_object *st_obj = st_buffer_object(obj);
+
+   pipe_buffer_flush_mapped_range(pipe->screen, st_obj->buffer, offset, length);
+}
 
 
 /**
@@ -268,5 +278,6 @@ st_init_bufferobject_functions(struct dd_function_table *functions)
    functions->GetBufferSubData = st_bufferobj_get_subdata;
    functions->MapBuffer = st_bufferobj_map;
    functions->MapBufferRange = st_bufferobj_map_range;
+   functions->FlushMappedBufferRange = st_bufferobj_flush_mapped_range;
    functions->UnmapBuffer = st_bufferobj_unmap;
 }
