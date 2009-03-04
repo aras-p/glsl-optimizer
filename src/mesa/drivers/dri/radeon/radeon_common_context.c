@@ -545,6 +545,9 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	if (RADEON_DEBUG & DEBUG_DRI)
 	     fprintf(stderr, "%s ctx %p dfb %p rfb %p\n", __FUNCTION__, radeon->glCtx, drfb, readfb);
 
+	if (radeon->dri.readable != driReadPriv)
+		radeon->dri.readable = driReadPriv;
+
 	driUpdateFramebufferSize(radeon->glCtx, driDrawPriv);
 	if (driReadPriv != driDrawPriv)
 		driUpdateFramebufferSize(radeon->glCtx, driReadPriv);
@@ -554,9 +557,6 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	_mesa_update_state(radeon->glCtx);
 
 	if (radeon->glCtx->DrawBuffer == &drfb->base) {
-
-		if (radeon->dri.readable != driReadPriv)
-			radeon->dri.readable = driReadPriv;
 
 		if (radeon->dri.drawable != driDrawPriv) {
 			if (driDrawPriv->swap_interval == (unsigned)-1) {

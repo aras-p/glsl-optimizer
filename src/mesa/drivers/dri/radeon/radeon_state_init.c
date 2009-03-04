@@ -549,9 +549,7 @@ void radeonInitState( r100ContextPtr rmesa )
       rmesa->radeon.state.stencil.clear = 0xffff0000;
       break;
    default:
-      fprintf( stderr, "Error: Unsupported depth %d... exiting\n",
-	       ctx->Visual.depthBits );
-      exit( -1 );
+      break;
    }
 
    /* Only have hw stencil when depth buffer is 24 bits deep */
