@@ -201,6 +201,10 @@ st_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
    }
 
    obj->Pointer = pipe_buffer_map(pipe->screen, st_obj->buffer, flags);
+   if(obj->Pointer) {
+      obj->Offset = 0;
+      obj->Length = obj->Size;
+   }
    return obj->Pointer;
 }
 
@@ -231,11 +235,18 @@ st_bufferobj_map_range(GLcontext *ctx, GLenum target,
    if (access & MESA_MAP_NOWAIT_BIT)
       flags |= PIPE_BUFFER_USAGE_DONTBLOCK;
 
-   map = pipe_buffer_map_range(pipe->screen, st_obj->buffer, offset, length, flags);
-   /* this is expected to point to the buffer start, in order to calculate the
-    * vertices offsets 
-    */
-   obj->Pointer = map ? map - offset : NULL;
+   assert(offset >= 0);
+   assert(length >= 0);
+   assert(offset < obj->Size);
+   assert(offset + length <= obj->Size);
+
+   map = obj->Pointer = pipe_buffer_map_range(pipe->screen, st_obj->buffer, offset, length, flags);
+   if(obj->Pointer) {
+      obj->Offset = 0;
+      obj->Length = obj->Size;
+      map += offset;
+   }
+   
    return map;
 }
 
@@ -248,7 +259,14 @@ st_bufferobj_flush_mapped_range(GLcontext *ctx, GLenum target,
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
-   pipe_buffer_flush_mapped_range(pipe->screen, st_obj->buffer, offset, length);
+   /* Subrange is relative to mapped range */
+   assert(offset >= 0);
+   assert(length >= 0);
+   assert(offset < obj->Length);
+   assert(offset + length <= obj->Length);
+   
+   pipe_buffer_flush_mapped_range(pipe->screen, st_obj->buffer, 
+                                  obj->Offset + offset, length);
 }
 
 
@@ -263,6 +281,8 @@ st_bufferobj_unmap(GLcontext *ctx, GLenum target, struct gl_buffer_object *obj)
 
    pipe_buffer_unmap(pipe->screen, st_obj->buffer);
    obj->Pointer = NULL;
+   obj->Offset = 0;
+   obj->Length = 0;
    return GL_TRUE;
 }
 
