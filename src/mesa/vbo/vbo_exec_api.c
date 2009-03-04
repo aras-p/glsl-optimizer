@@ -183,8 +183,6 @@ static void vbo_exec_copy_to_current( struct vbo_exec_context *exec )
       _mesa_update_color_material(ctx, 
 				  ctx->Current.Attrib[VBO_ATTRIB_COLOR0]);
    }
-
-   ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
 }
 
 
@@ -204,8 +202,6 @@ static void vbo_exec_copy_from_current( struct vbo_exec_context *exec )
 	 break;
       }
    }
-
-   ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
 }
 
 
@@ -346,8 +342,6 @@ static void vbo_exec_fixup_vertex( GLcontext *ctx,
     */
    if (attr == 0) 
       exec->ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
-   else 
-      exec->ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
 }
 
 
@@ -750,6 +744,9 @@ void vbo_exec_BeginVertices( GLcontext *ctx )
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
    if (0) _mesa_printf("%s\n", __FUNCTION__);
    vbo_exec_vtx_map( exec );
+
+   assert(exec->ctx->Driver.NeedFlush == 0);
+   exec->ctx->Driver.NeedFlush = FLUSH_UPDATE_CURRENT;
 }
 
 void vbo_exec_FlushVertices_internal( GLcontext *ctx, GLboolean unmap )
@@ -785,6 +782,7 @@ void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags )
     */
    _mesa_restore_exec_vtxfmt( ctx );
 
+   assert(exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT);
    exec->ctx->Driver.NeedFlush = 0;
 }
 
