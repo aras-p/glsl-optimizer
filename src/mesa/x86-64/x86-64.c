@@ -35,7 +35,7 @@
 #include "math/m_xform.h"
 #include "tnl/t_context.h"
 #include "x86-64.h"
-#include "../x86/common_x86_macros.h"
+#include "../x86/x86_xform.h"
 
 #ifdef DEBUG
 #include "math/m_debug.h"

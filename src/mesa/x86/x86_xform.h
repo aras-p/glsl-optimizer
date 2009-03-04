@@ -26,8 +26,8 @@
  *    Gareth Hughes
  */
 
-#ifndef __COMMON_X86_MACROS_H__
-#define __COMMON_X86_MACROS_H__
+#ifndef X86_XFORM_H
+#define X86_XFORM_H
 
 
 /* =============================================================

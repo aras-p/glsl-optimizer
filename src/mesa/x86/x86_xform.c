@@ -33,7 +33,7 @@
 #include "tnl/t_context.h"
 
 #include "x86.h"
-#include "common_x86_macros.h"
+#include "x86_xform.h"
 #include "common_x86_asm.h"
 
 #ifdef DEBUG_MATH
