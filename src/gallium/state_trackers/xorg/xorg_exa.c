@@ -54,6 +54,7 @@ struct PixmapPriv
     struct pipe_texture *tex;
     unsigned int color;
     struct pipe_surface *src_surf; /* for copies */
+
     struct pipe_transfer *map_transfer;
     unsigned map_count;
 };
@@ -62,25 +63,34 @@ struct PixmapPriv
  * Helper functions
  */
 
-static enum pipe_format
-exa_get_pipe_format(int depth)
+static void
+exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp)
 {
     switch (depth) {
     case 32:
-	return PIPE_FORMAT_A8R8G8B8_UNORM;
+	*format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	assert(*bbp == 32);
+	break;
     case 24:
-	return PIPE_FORMAT_X8R8G8B8_UNORM;
+	*format = PIPE_FORMAT_X8R8G8B8_UNORM;
+	assert(*bbp == 32);
+	break;
     case 16:
-	return PIPE_FORMAT_R5G6B5_UNORM;
+	*format = PIPE_FORMAT_R5G6B5_UNORM;
+	assert(*bbp == 16);
+	break;
     case 15:
-	return PIPE_FORMAT_A1R5G5B5_UNORM;
+	*format = PIPE_FORMAT_A1R5G5B5_UNORM;
+	assert(*bbp == 16);
+	break;
     case 8:
     case 4:
     case 1:
-	return PIPE_FORMAT_A8R8G8B8_UNORM; /* bad bad bad */
+	*format = PIPE_FORMAT_A8R8G8B8_UNORM; /* bad bad bad */
+	break;
     default:
 	assert(0);
-	return 0;
+	break;
     }
 }
 
@@ -436,7 +446,7 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 	memset(&template, 0, sizeof(template));
 	template.target = PIPE_TEXTURE_2D;
 	template.compressed = 0;
-	template.format = exa_get_pipe_format(depth);
+	exa_get_pipe_format(depth, &template.format, &bitsPerPixel);
 	pf_get_block(template.format, &template.block);
 	template.width[0] = width;
 	template.height[0] = height;
