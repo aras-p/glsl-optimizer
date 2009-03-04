@@ -59,6 +59,7 @@ boolean radeon_buffer_from_texture(struct pipe_texture* texture,
                                    struct pipe_buffer** buffer,
                                    unsigned* stride)
 {
+    return FALSE;
 }
 
 /* Create a buffer from a handle. */
@@ -67,7 +68,8 @@ struct pipe_buffer* radeon_buffer_from_handle(struct pipe_screen* screen,
                                               const char* name,
                                               unsigned handle)
 {
-    struct radeon_bo_manager* bom = ((struct radeon_winsys*)screen->winsys)->bom;
+    struct radeon_bo_manager* bom =
+        ((struct radeon_winsys*)screen->winsys)->bom;
     struct radeon_pipe_buffer* radeon_buffer;
     struct radeon_bo* bo = NULL;
 
@@ -92,18 +94,28 @@ boolean radeon_handle_from_buffer(struct pipe_screen* screen,
                                   struct pipe_buffer* buffer,
                                   unsigned* handle)
 {
+    struct radeon_pipe_buffer* radeon_buffer =
+        (struct radeon_pipe_buffer*)buffer;
+    *handle = radeon_buffer->bo->handle;
+    return TRUE;
 }
 
 boolean radeon_global_handle_from_buffer(struct pipe_screen* screen,
                                          struct pipe_buffer* buffer,
                                          unsigned* handle)
 {
+    /* XXX WTF is the difference here? global? */
+    struct radeon_pipe_buffer* radeon_buffer =
+        (struct radeon_pipe_buffer*)buffer;
+    *handle = radeon_buffer->bo->handle;
+    return TRUE;
 }
 
 struct drm_api drm_api_hooks = {
     .create_screen = radeon_create_screen,
     .create_context = radeon_create_context,
-    .buffer_from_texture = radeon_buffer_from_texture,
+    /* XXX fix this */
+    .buffer_from_texture = r300_get_texture_buffer,
     .buffer_from_handle = radeon_buffer_from_handle,
     .handle_from_buffer = radeon_handle_from_buffer,
     .global_handle_from_buffer = radeon_global_handle_from_buffer,

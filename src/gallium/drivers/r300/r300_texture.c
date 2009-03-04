@@ -186,3 +186,21 @@ void r300_init_screen_texture_functions(struct pipe_screen* screen)
     screen->tex_surface_release = r300_tex_surface_release;
     screen->texture_blanket = r300_texture_blanket;
 }
+
+boolean r300_get_texture_buffer(struct pipe_texture* texture,
+                                struct pipe_buffer** buffer,
+                                unsigned* stride)
+{
+    struct r300_texture* tex = (struct r300_texture*)texture;
+    if (!tex) {
+        return FALSE;
+    }
+
+    pipe_buffer_reference(texture->screen, buffer, tex->buffer);
+
+    if (stride) {
+        *stride = tex->stride;
+    }
+
+    return TRUE;
+}

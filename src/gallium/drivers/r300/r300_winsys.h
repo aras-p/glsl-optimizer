@@ -92,4 +92,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 }
 #endif
 
+boolean r300_get_texture_buffer(struct pipe_texture* texture,
+                                struct pipe_buffer** buffer,
+                                unsigned* stride);
+
 #endif /* R300_WINSYS_H */
