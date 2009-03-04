@@ -438,6 +438,10 @@ nv04_surface_2d_init(struct nouveau_winsys *nvws)
 	}
 
 	switch (chan->device->chipset & 0xf0) {
+	case 0x10:
+	case 0x20:
+		class = NV10_SCALED_IMAGE_FROM_MEMORY;
+		break;
 	case 0x30:
 		class = NV30_SCALED_IMAGE_FROM_MEMORY;
 		break;
