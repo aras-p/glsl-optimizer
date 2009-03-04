@@ -28,14 +28,9 @@
  *
  */
 
-/* FIXME ! */
-#define DRI_DRIVER_PATH "/ISO/X.Org/modular/i386/lib/dri"
-
 #include "xf86.h"
-//#include "xf86_OSproc.h"
 #include "xorg_tracker.h"
 
-//#include "pipe/p_winsys.h"
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
@@ -115,10 +110,8 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
     ScreenPtr pScreen = pPix->drawable.pScreen;
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
-    //PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
     struct exa_entity *exa = ms->exa;
     struct PixmapPriv *priv;
-    //int ret;
 
     priv = exaGetPixmapDriverPrivate(pPix);
 
@@ -303,17 +296,6 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
     return FALSE;
 }
 
-#if 0
-static Bool
-ExaUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h, char *src,
-		  int src_pitch)
-{
-    ErrorF("UPLOAD\n");
-
-    return FALSE;
-}
-#endif
-
 static void
 ExaComposite(PixmapPtr pDst, int srcX, int srcY, int maskX, int maskY,
 	     int dstX, int dstY, int width, int height)
@@ -346,7 +328,6 @@ ExaDestroyPixmap(ScreenPtr pScreen, void *dPriv)
     struct PixmapPriv *priv = (struct PixmapPriv *)dPriv;
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
-    struct exa_entity *exa = ms->exa;
 
     if (!priv)
 	return;
@@ -411,7 +392,6 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     struct PixmapPriv *priv = exaGetPixmapDriverPrivate(pPixmap);
     modesettingPtr ms = modesettingPTR(pScrn);
-    //PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
     struct exa_entity *exa = ms->exa;
 
     if (!priv)
@@ -524,8 +504,6 @@ xorg_exa_init(ScrnInfoPtr pScrn)
     pExa->PixmapIsOffscreen = ExaPixmapIsOffscreen;
     pExa->PrepareAccess = ExaPrepareAccess;
     pExa->FinishAccess = ExaFinishAccess;
-    //pExa->UploadToScreen = ExaUploadToScreen;
-    pExa->UploadToScreen = NULL;
     pExa->CreatePixmap = ExaCreatePixmap;
     pExa->DestroyPixmap = ExaDestroyPixmap;
     pExa->ModifyPixmapHeader = ExaModifyPixmapHeader;
