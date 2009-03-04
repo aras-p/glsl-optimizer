@@ -437,13 +437,21 @@ nv04_surface_2d_init(struct nouveau_winsys *nvws)
 		return NULL;
 	}
 
-	if (chan->device->chipset < 0x10) {
-		class = NV04_SCALED_IMAGE_FROM_MEMORY;
-	} else
-	if (chan->device->chipset < 0x40) {
+	switch (chan->device->chipset & 0xf0) {
+	case 0x10:
+	case 0x20:
 		class = NV10_SCALED_IMAGE_FROM_MEMORY;
-	} else {
+		break;
+	case 0x30:
+		class = NV30_SCALED_IMAGE_FROM_MEMORY;
+		break;
+	case 0x40:
+	case 0x60:
 		class = NV40_SCALED_IMAGE_FROM_MEMORY;
+		break;
+	default:
+		class = NV04_SCALED_IMAGE_FROM_MEMORY;
+		break;
 	}
 
 	ret = nouveau_grobj_alloc(chan, handle++, class, &ctx->sifm);
