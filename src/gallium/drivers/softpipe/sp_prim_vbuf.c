@@ -90,7 +90,8 @@ sp_vbuf_allocate_vertices(struct vbuf_render *vbr,
    unsigned size = vertex_size * nr_vertices;
 
    if (cvbr->vertex_buffer_size < size) {
-      align_free(cvbr->vertex_buffer);
+      if (cvbr->vertex_buffer)
+         align_free(cvbr->vertex_buffer);
       cvbr->vertex_buffer = align_malloc(size, 16);
       cvbr->vertex_buffer_size = size;
    }
