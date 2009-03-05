@@ -185,11 +185,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     /* XXX */
     OUT_CS_REG(R300_SC_CLIP_RULE, 0xaaaa);
 
-    /* Pixel scissors */
-    OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
-    OUT_CS((x << R300_SCISSORS_X_SHIFT) | (y << R300_SCISSORS_Y_SHIFT));
-    OUT_CS((w << R300_SCISSORS_X_SHIFT) | (h << R300_SCISSORS_Y_SHIFT));
-
     /* RS block setup */
     if (caps->is_r500) {
         /* XXX We seem to be in disagreement about how many of these we have
@@ -263,6 +258,11 @@ static void r300_surface_fill(struct pipe_context* pipe,
             (caps->num_vert_fpus << R300_PVS_NUM_FPUS_SHIFT));
     }
     END_CS;
+
+    /* Pixel scissors */
+    OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
+    OUT_CS((x << R300_SCISSORS_X_SHIFT) | (y << R300_SCISSORS_Y_SHIFT));
+    OUT_CS((w << R300_SCISSORS_X_SHIFT) | (h << R300_SCISSORS_Y_SHIFT));
 
     /* The size of the point we're about to draw, in sixths of pixels */
     OUT_CS_REG(R300_GA_POINT_SIZE,
