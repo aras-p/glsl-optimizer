@@ -88,12 +88,12 @@ struct r300_winsys {
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          struct r300_winsys* r300_winsys);
 
-#ifdef __cplusplus
-}
-#endif
-
 boolean r300_get_texture_buffer(struct pipe_texture* texture,
                                 struct pipe_buffer** buffer,
                                 unsigned* stride);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* R300_WINSYS_H */
