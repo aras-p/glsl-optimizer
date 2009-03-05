@@ -8,7 +8,7 @@ TOP = ../..
 include $(TOP)/configs/current
 
 
-LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
+LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLEW_LIB) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
 
 SOURCES = \
 	afsmultiarb.c \
@@ -54,6 +54,7 @@ SOURCES = \
 	jkrahntest.c \
 	lineclip.c \
 	manytex.c \
+	mapbufrange.c \
 	mapvbo.c \
 	minmag.c \
 	mipmap_limits.c \
