@@ -277,6 +277,11 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
                          (ctx->Stencil._Enabled && fb->Visual.stencilBits > 0));
    }
    else {
+      /* Mesa's Stencil._Enabled field is updated when
+       * _NEW_BUFFERS | _NEW_STENCIL, but i965 code assumes that the value
+       * only changes with _NEW_STENCIL (which seems sensible).  So flag it
+       * here since this is the _NEW_BUFFERS path.
+       */
       ctx->NewState |= (_NEW_DEPTH | _NEW_STENCIL);
    }
 
