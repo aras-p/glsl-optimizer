@@ -189,13 +189,13 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 		    OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
 		    if (t && !t->image_override) {
 			    OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
-					    RADEON_GEM_DOMAIN_VRAM, 0, 0);
+					    RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
 		    } else if (!t) {
 			    OUT_BATCH(r300->radeon.radeonScreen->texOffset[0]);
 		    } else { /* override cases */
 			    if (t->bo) {
 				    OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
-						    RADEON_GEM_DOMAIN_VRAM, 0, 0);
+						    RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
 			    } else if (!r300->radeon.radeonScreen->kernel_mm) {
 				    OUT_BATCH(t->override_offset);
 			    }
