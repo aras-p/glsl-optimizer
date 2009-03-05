@@ -58,6 +58,23 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static void r200UserClear(GLcontext *ctx, GLuint flags)
 {
+  GLuint mask = 0;
+
+  if (flags & RADEON_FRONT)
+    mask |= BUFFER_BIT_FRONT_LEFT;
+
+  if (flags & RADEON_BACK)
+    mask |= BUFFER_BIT_BACK_LEFT;
+
+  if (flags & RADEON_DEPTH)
+    mask |= BUFFER_BIT_DEPTH;
+
+  if (flags & RADEON_STENCIL)
+    mask |= BUFFER_BIT_STENCIL;
+
+#if 1
+  _swrast_Clear(ctx, mask);
+#else
    if (flags & (RADEON_FRONT | RADEON_BACK)) {
 
 
@@ -67,7 +84,7 @@ static void r200UserClear(GLcontext *ctx, GLuint flags)
        && (flags & RADEON_CLEAR_FASTZ)) {
 
    }
-
+#endif
 }
 
 static void r200KernelClear(GLcontext *ctx, GLuint flags)
