@@ -219,6 +219,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/osmesa.h				\
 	$(DIRECTORY)/include/GL/svgamesa.h				\
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
+	$(DIRECTORY)/include/GL/wglext.h				\
 	$(DIRECTORY)/include/GL/wmesa.h					\
 	$(DIRECTORY)/src/Makefile					\
 	$(DIRECTORY)/src/mesa/Makefile*					\
