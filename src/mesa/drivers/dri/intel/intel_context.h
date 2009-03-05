@@ -100,7 +100,6 @@ struct intel_context
 			       GLuint num_regions);
 
       GLuint (*flush_cmd) (void);
-      void (*emit_flush) (struct intel_context *intel, GLuint unused);
 
       void (*reduced_primitive_state) (struct intel_context * intel,
                                        GLenum rprim);

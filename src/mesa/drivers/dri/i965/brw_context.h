@@ -627,8 +627,6 @@ struct brw_context
  * brw_vtbl.c
  */
 void brwInitVtbl( struct brw_context *brw );
-void brw_do_flush( struct brw_context *brw, 
-		   GLuint flags );
 
 /*======================================================================
  * brw_context.c

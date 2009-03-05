@@ -97,8 +97,6 @@ void brw_clear_batch_cache_flush( struct brw_context *brw )
 {
    clear_batch_cache(brw);
 
-/*    brw_do_flush(brw, BRW_FLUSH_STATE_CACHE|BRW_FLUSH_READ_CACHE); */
-   
    brw->state.dirty.mesa |= ~0;
    brw->state.dirty.brw |= ~0;
    brw->state.dirty.cache |= ~0;
