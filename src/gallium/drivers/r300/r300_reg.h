@@ -1150,6 +1150,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_W_ADDR_MASK                  0x0003f000
 #       define R300_HIRES_DIS                    (0 << 18)
 #       define R300_HIRES_EN                     (1 << 18)
+#       define R300_IT_COUNT(x)                  ((x) << 0)
+#       define R300_IC_COUNT(x)                  ((x) << 7)
+#       define R300_W_COUNT(x)                   ((x) << 12)
 
 #define R300_RS_INST_COUNT                       0x4304
 #       define R300_RS_INST_COUNT_SHIFT          0

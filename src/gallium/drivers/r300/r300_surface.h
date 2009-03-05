@@ -69,4 +69,24 @@ const struct r300_rs_state rs_clear_state = {
     .line_stipple_value = 0x0,
 };
 
+const struct r300_rs_block r300_rs_block_clear_state = {
+    .ip[0] = R500_RS_SEL_S(R300_RS_SEL_K0) |
+        R500_RS_SEL_T(R300_RS_SEL_K0) |
+        R500_RS_SEL_R(R300_RS_SEL_K0) |
+        R500_RS_SEL_Q(R300_RS_SEL_K1),
+    .inst[0] = R300_RS_INST_COL_CN_WRITE,
+    .count = R300_IT_COUNT(0) | R300_IC_COUNT(1) | R300_HIRES_EN,
+    .inst_count = 0,
+};
+
+const struct r300_rs_block r500_rs_block_clear_state = {
+    .ip[0] = R500_RS_SEL_S(R500_RS_IP_PTR_K0) |
+        R500_RS_SEL_T(R500_RS_IP_PTR_K0) |
+        R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
+        R500_RS_SEL_Q(R500_RS_IP_PTR_K1),
+    .inst[0] = R500_RS_INST_COL_CN_WRITE,
+    .count = R300_IT_COUNT(0) | R300_IC_COUNT(1) | R300_HIRES_EN,
+    .inst_count = 0,
+};
+
 #endif /* R300_SURFACE_H */

@@ -63,7 +63,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     r300_emit_dsa_state(r300, &dsa_clear_state);
     r300_emit_rs_state(r300, &rs_clear_state);
 
-    BEGIN_CS(129 + (caps->is_r500 ? 22 : 14) + (caps->has_tcl ? 4 : 2));
+    BEGIN_CS(128 + (caps->has_tcl ? 2 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -184,42 +184,15 @@ static void r300_surface_fill(struct pipe_context* pipe,
 
     /* XXX */
     OUT_CS_REG(R300_SC_CLIP_RULE, 0xaaaa);
-
-    /* RS block setup */
-    if (caps->is_r500) {
-        /* XXX We seem to be in disagreement about how many of these we have
-         * RS:RS_IP_[0-15] [R/W] 32 bits Access: 8/16/32 MMReg:0x4074-0x40b0
-         * Now that's from the docs. I don't care what the mesa driver says */
-        OUT_CS_REG_SEQ(R500_RS_IP_0, 16);
-        for (i = 0; i < 16; i++) {
-            OUT_CS((R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT) |
-                (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT) |
-                (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT) |
-                (R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT));
-        }
-        OUT_CS_REG_SEQ(R300_RS_COUNT, 2);
-        OUT_CS((1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
-        OUT_CS(0x00000000);
-        OUT_CS_REG(R500_RS_INST_0, R500_RS_INST_COL_CN_WRITE);
-    } else {
-        OUT_CS_REG_SEQ(R300_RS_IP_0, 8);
-        for (i = 0; i < 8; i++) {
-            OUT_CS(R300_RS_SEL_T(R300_RS_SEL_K0) |
-                R300_RS_SEL_R(R300_RS_SEL_K0) | R300_RS_SEL_Q(R300_RS_SEL_K1));
-        }
-        OUT_CS_REG_SEQ(R300_RS_COUNT, 2);
-        OUT_CS((1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
-        /* XXX Shouldn't this be 0? */
-        OUT_CS(1);
-        OUT_CS_REG(R300_RS_INST_0, R300_RS_INST_COL_CN_WRITE);
-    }
     END_CS;
 
     /* Fragment shader setup */
     if (caps->is_r500) {
         r500_emit_fragment_shader(r300, &r500_passthrough_fragment_shader);
+        r300_emit_rs_block_state(r300, &r500_rs_block_clear_state);
     } else {
         r300_emit_fragment_shader(r300, &r300_passthrough_fragment_shader);
+        r300_emit_rs_block_state(r300, &r300_rs_block_clear_state);
     }
 
     BEGIN_CS(7 + (caps->has_tcl ? 21 : 2));
