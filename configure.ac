@@ -1134,6 +1134,13 @@ yes)
     ;;
 esac
 
+AC_ARG_WITH([xorg-driver-dir],
+    [AS_HELP_STRING([--with-xorg-driver-dir=DIR],
+                    [Default xorg driver directory[[default=${libdir}/xorg/modules/drivers]]])],
+    [XORG_DRIVER_INSTALL_DIR="$withval"],
+    [XORG_DRIVER_INSTALL_DIR="${libdir}/xorg/modules/drivers"])
+AC_SUBST([XORG_DRIVER_INSTALL_DIR])
+
 dnl
 dnl Gallium Intel configuration
 dnl

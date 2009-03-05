@@ -37,6 +37,7 @@ clean:
 	rm -rf $(OBJECTS) $(TARGET)
 
 install:
-	cp $(TARGET) /opt/kms/lib/xorg/modules/drivers
+	$(INSTALL) -d $(DESTDIR)/$(XORG_DRIVER_INSTALL_DIR)
+	$(INSTALL) -m 755 $(TARGET) $(DESTDIR)/$(XORG_DRIVER_INSTALL_DIR)
 
 .PHONY	= all clean install

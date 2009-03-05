@@ -123,6 +123,9 @@ DRI_DRIVER_INSTALL_DIR = @DRI_DRIVER_INSTALL_DIR@
 # Where libGL will look for DRI hardware drivers
 DRI_DRIVER_SEARCH_DIR = $(DRI_DRIVER_INSTALL_DIR)
 
+# Xorg driver install directory (for xorg state-tracker)
+XORG_DRIVER_INSTALL_DIR = @XORG_DRIVER_INSTALL_DIR@
+
 # pkg-config substitutions
 GL_PC_REQ_PRIV = @GL_PC_REQ_PRIV@
 GL_PC_LIB_PRIV = @GL_PC_LIB_PRIV@
