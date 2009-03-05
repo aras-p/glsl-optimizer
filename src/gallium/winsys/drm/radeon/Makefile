@@ -2,7 +2,7 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-SUBDIRS = core dri2 egl xorg
+SUBDIRS = core $(GALLIUM_STATE_TRACKERS_DIRS)
 
 default install clean:
 	@for dir in $(SUBDIRS) ; do \
