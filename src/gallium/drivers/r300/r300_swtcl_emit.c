@@ -174,7 +174,7 @@ static boolean r300_swtcl_render_set_primitive(struct vbuf_render* render,
     return TRUE;
 }
 
-static void prepare_render(struct r300_swtcl_render* render)
+static void prepare_render(struct r300_swtcl_render* render, unsigned count)
 {
     struct r300_context* r300 = render->r300;
     int i;
@@ -186,7 +186,7 @@ static void prepare_render(struct r300_swtcl_render* render)
 
     debug_printf("r300: Preparing vertex buffer %p for render, "
             "vertex size %d, vertex count %d\n", render->vbo,
-            r300->vertex_info.vinfo.size, render->vbo_size);
+            r300->vertex_info.vinfo.size, count);
     /* Set the pointer to our vertex buffer. The emitted values are this:
      * PACKET3 [3D_LOAD_VBPNTR]
      * COUNT   [1]
@@ -194,7 +194,7 @@ static void prepare_render(struct r300_swtcl_render* render)
      * OFFSET  [0]
      * VBPNTR  [relocated BO]
      */
-    BEGIN_CS(5);
+    BEGIN_CS(7);
     OUT_CS(CP_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, 3));
     OUT_CS(1);
     OUT_CS(r300->vertex_info.vinfo.size |
@@ -214,7 +214,11 @@ static void r300_swtcl_render_draw_arrays(struct vbuf_render* render,
 
     CS_LOCALS(r300);
 
-    prepare_render(r300render);
+    count /= 4;
+
+    r300render->vbo_offset = start;
+
+    prepare_render(r300render, count);
 
     debug_printf("r300: Doing vbuf render, count %d\n", count);
 
@@ -237,7 +241,9 @@ static void r300_swtcl_render_draw(struct vbuf_render* render,
 
     CS_LOCALS(r300);
 
-    prepare_render(r300render);
+    count /= 4;
+
+    prepare_render(r300render, count);
 
     /* Send our indices into an index buffer. */
     index_buffer = pipe_buffer_create(screen, 64, PIPE_BUFFER_USAGE_VERTEX,
@@ -252,7 +258,7 @@ static void r300_swtcl_render_draw(struct vbuf_render* render,
     pipe_buffer_unmap(screen, index_buffer);
 
     debug_printf("r300: Doing indexbuf render, count %d\n", count);
-
+#if 0
     BEGIN_CS(5);
     OUT_CS(CP_PACKET3(R300_PACKET3_3D_DRAW_INDX_2, 0));
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
@@ -262,6 +268,7 @@ static void r300_swtcl_render_draw(struct vbuf_render* render,
     OUT_CS(R300_INDX_BUFFER_ONE_REG_WR | (R300_VAP_PORT_IDX0 >> 2));
     OUT_CS_RELOC(index_buffer, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
     END_CS;
+#endif
 }
 
 static void r300_swtcl_render_destroy(struct vbuf_render* render)
