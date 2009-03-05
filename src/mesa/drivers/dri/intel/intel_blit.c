@@ -562,7 +562,6 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
             }
          }
       }
-      intel_batchbuffer_emit_mi_flush(intel->batch);
    }
 
    UNLOCK_HARDWARE(intel);
