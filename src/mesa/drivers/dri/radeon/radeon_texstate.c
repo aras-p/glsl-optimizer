@@ -1006,7 +1006,7 @@ static GLboolean setup_hardware_state(r100ContextPtr rmesa, radeonTexObj *t, int
    const struct gl_texture_image *firstImage;
    GLint log2Width, log2Height, log2Depth, texelBytes;
 
-   if ( t->image_override ) {
+   if ( t->bo ) {
 	return GL_TRUE;
    }
 

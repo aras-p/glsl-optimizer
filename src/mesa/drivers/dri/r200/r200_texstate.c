@@ -1408,6 +1408,10 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
       t->base.Image[0][t->mt->firstLevel];
    GLint log2Width, log2Height, log2Depth, texelBytes;
    
+   if ( t->bo ) {
+       return;
+   }
+
    log2Width  = firstImage->WidthLog2;
    log2Height = firstImage->HeightLog2;
    log2Depth  = firstImage->DepthLog2;
