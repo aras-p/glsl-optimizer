@@ -191,9 +191,11 @@ align_free(void *ptr)
 #if defined(HAVE_POSIX_MEMALIGN)
    FREE(ptr);
 #else
-   void **cubbyHole = (void **) ((char *) ptr - sizeof(void *));
-   void *realAddr = *cubbyHole;
-   FREE(realAddr);
+   if (ptr) {
+      void **cubbyHole = (void **) ((char *) ptr - sizeof(void *));
+      void *realAddr = *cubbyHole;
+      FREE(realAddr);
+   }
 #endif /* defined(HAVE_POSIX_MEMALIGN) */
 }
 
