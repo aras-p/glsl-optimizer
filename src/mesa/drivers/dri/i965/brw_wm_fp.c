@@ -129,7 +129,7 @@ static struct prog_dst_register dst_reg(GLuint file, GLuint idx)
    reg.Index = idx;
    reg.WriteMask = WRITEMASK_XYZW;
    reg.RelAddr = 0;
-   reg.CondMask = 0;
+   reg.CondMask = COND_TR;
    reg.CondSwizzle = 0;
    reg.CondSrc = 0;
    reg.pad = 0;
@@ -949,7 +949,7 @@ static void print_insns( const struct prog_instruction *insn,
 				     3);
       }
       else 
-	 _mesa_printf("UNKNOWN\n");
+	 _mesa_printf("965 Opcode %d\n", insn->Opcode);
    }
 }
 
