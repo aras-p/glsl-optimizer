@@ -515,10 +515,11 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
      atom->cmd[CTX_RB3D_ZSTENCILCNTL] |= depth_fmt;
    }
 
+   dwords = 14;
    if (drb)
-     dwords += 4;
+     dwords += 6;
    if (rrb)
-     dwords += 4;
+     dwords += 6;
 
    /* output the first 7 bytes of context */
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
@@ -529,7 +530,7 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
 
    if (drb) {
      OUT_BATCH(CP_PACKET0(RADEON_RB3D_DEPTHOFFSET, 0));
-     OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+     OUT_BATCH_RELOC(0, drb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
      OUT_BATCH(CP_PACKET0(RADEON_RB3D_DEPTHPITCH, 0));
      OUT_BATCH(zbpitch);
@@ -545,9 +546,7 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    if (rrb) {
      OUT_BATCH(CP_PACKET0(RADEON_RB3D_COLOROFFSET, 0));
      OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-   }
 
-   if (rrb) {
      OUT_BATCH(CP_PACKET0(RADEON_RB3D_COLORPITCH, 0));
      OUT_BATCH(cbpitch);
    }
@@ -571,17 +570,72 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
      dwords += 2;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_BATCH_TABLE(atom->cmd, 10);
-   if (t && !t->image_override) {
-     OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
-		     RADEON_GEM_DOMAIN_VRAM, 0, 0);
+
+   if (t && t->mt && !t->image_override) {
+     if ((ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT)) {
+   	lvl = &t->mt->levels[0];
+	OUT_BATCH_RELOC(lvl->faces[5].offset, t->mt->bo, lvl->faces[5].offset,
+			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+     } else {
+        OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+		     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+     }
    } else if (!t) {
      /* workaround for old CS mechanism */
      OUT_BATCH(r200->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP]);
-   } else if (t->image_override)
+   } else {
      OUT_BATCH(t->override_offset);
+   }
 
    END_BATCH();
 }
+
+static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   uint32_t dwords = atom->cmd_size;
+   int i = atom->idx;
+   radeonTexObj *t = r200->state.texture.unit[i].texobj;
+   radeon_mipmap_level *lvl;
+   int hastexture = 1;
+
+   if (!t)
+	hastexture = 0;
+   else {
+	if (!t->mt && !t->bo)
+		hastexture = 0;
+   }
+   dwords += 1;
+   if (hastexture)
+     dwords += 2;
+   else
+     dwords -= 2;
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+
+   OUT_BATCH(CP_PACKET0(R200_PP_TXFILTER_0 + (24 * i), 8));
+   OUT_BATCH_TABLE((atom->cmd + 1), 9);
+
+   if (hastexture) {
+     OUT_BATCH(CP_PACKET0(R200_PP_TXOFFSET_0 + (24 * i), 0));
+     if (t->mt && !t->image_override) {
+        if ((ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT)) {
+            lvl = &t->mt->levels[0];
+	    OUT_BATCH_RELOC(lvl->faces[5].offset, t->mt->bo, lvl->faces[5].offset,
+			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+        } else {
+           OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+		     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+        }
+      } else {
+	if (t->bo)
+            OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
+                            RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+      }
+   }
+   END_BATCH();
+}
+
 
 static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 {
@@ -716,7 +770,10 @@ void r200InitState( r200ContextPtr rmesa )
    }
 
    for (i = 0; i < 5; i++)
-     rmesa->hw.tex[i].emit = tex_emit;
+      if (rmesa->radeon.radeonScreen->kernel_mm)
+          rmesa->hw.tex[i].emit = tex_emit_cs;
+      else
+          rmesa->hw.tex[i].emit = tex_emit;
    if (rmesa->radeon.radeonScreen->drmSupportsCubeMapsR200) {
       ALLOC_STATE( cube[0], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
       ALLOC_STATE( cube[1], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
