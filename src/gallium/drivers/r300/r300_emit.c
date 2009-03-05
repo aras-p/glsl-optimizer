@@ -260,16 +260,14 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
     CS_LOCALS(r300);
     int i;
 
-    BEGIN_CS(6);
+    BEGIN_CS(24);
     OUT_CS_REG_SEQ(R300_VAP_VTX_STATE_CNTL, 2);
     OUT_CS(r300->vertex_info.vinfo.hwfmt[0]);
     OUT_CS(r300->vertex_info.vinfo.hwfmt[1]);
     OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
     OUT_CS(r300->vertex_info.vinfo.hwfmt[2]);
     OUT_CS(r300->vertex_info.vinfo.hwfmt[3]);
-    END_CS;
 
-    BEGIN_CS(18);
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_0, 8);
     for (i = 0; i < 8; i++) {
         OUT_CS(r300->vertex_info.vap_prog_stream_cntl[i]);
