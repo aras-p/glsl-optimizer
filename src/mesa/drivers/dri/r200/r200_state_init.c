@@ -515,7 +515,7 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
      atom->cmd[CTX_RB3D_ZSTENCILCNTL] |= depth_fmt;
    }
 
-   dwords = 14;
+   dwords = 10;
    if (drb)
      dwords += 6;
    if (rrb)
@@ -565,6 +565,7 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    uint32_t dwords = atom->cmd_size;
    int i = atom->idx;
    radeonTexObj *t = r200->state.texture.unit[i].texobj;
+   radeon_mipmap_level *lvl;
 
    if (t && t->mt && !t->image_override)
      dwords += 2;
@@ -606,15 +607,16 @@ static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
 	if (!t->mt && !t->bo)
 		hastexture = 0;
    }
-   dwords += 1;
+
+   dwords += 2;
    if (hastexture)
      dwords += 2;
    else
      dwords -= 2;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
 
-   OUT_BATCH(CP_PACKET0(R200_PP_TXFILTER_0 + (24 * i), 8));
-   OUT_BATCH_TABLE((atom->cmd + 1), 9);
+   OUT_BATCH(CP_PACKET0(R200_PP_TXFILTER_0 + (24 * i), 7));
+   OUT_BATCH_TABLE((atom->cmd + 1), 8);
 
    if (hastexture) {
      OUT_BATCH(CP_PACKET0(R200_PP_TXOFFSET_0 + (24 * i), 0));
