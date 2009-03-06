@@ -129,13 +129,13 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		offset = 4;
 		EMIT_PAD(4 * sizeof(float));
 	}
-
+/*
 	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POINTSIZE )) {
 		EMIT_ATTR( _TNL_ATTRIB_POINTSIZE, EMIT_1F );
 		vap_fmt_0 |=  R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
 		offset += 1;
 	}
-
+*/
 	if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_COLOR0)) {
 		sz = VB->AttribPtr[VERT_ATTRIB_COLOR0]->size;
 	        rmesa->swtcl.coloroffset = offset;
