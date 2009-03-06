@@ -34,7 +34,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
-    BEGIN_CS(14);
+    BEGIN_CS(16);
     /* Amount of time to wait for vertex fetches in PVS */
     OUT_CS_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xffff);
     /* Various GB enables */
@@ -50,5 +50,17 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_REG(R300_GB_SELECT, R300_GB_FOG_SELECT_1_1_W);
     /* AA enable */
     OUT_CS_REG(R300_GB_AA_CONFIG, 0x0);
+    /* GA errata fixes. */
+    if (caps->is_r500) {
+        OUT_CS_REG(R300_GA_ENHANCE,
+                R300_GA_ENHANCE_DEADLOCK_CNTL_PREVENT_TCL |
+                R300_GA_ENHANCE_FASTSYNC_CNTL_ENABLE |
+                R500_GA_ENHANCE_REG_READWRITE_ENABLE |
+                R500_GA_ENHANCE_REG_NOSTALL_ENABLE);
+    } else {
+        OUT_CS_REG(R300_GA_ENHANCE,
+                R300_GA_ENHANCE_DEADLOCK_CNTL_PREVENT_TCL |
+                R300_GA_ENHANCE_FASTSYNC_CNTL_ENABLE);
+    }
     END_CS;
 }
