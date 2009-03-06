@@ -71,11 +71,12 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_END
    DRI_CONF_SECTION_DEBUG
      DRI_CONF_NO_RAST(false)
+     DRI_CONF_ALWAYS_FLUSH_BATCH(false)
      DRI_CONF_ALWAYS_FLUSH_CACHE(false)
    DRI_CONF_SECTION_END
 DRI_CONF_END;
 
-const GLuint __driNConfigOptions = 7;
+const GLuint __driNConfigOptions = 8;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;

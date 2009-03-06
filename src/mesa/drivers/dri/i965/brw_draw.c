@@ -411,6 +411,8 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
       retval = GL_TRUE;
    }
 
+   if (intel->always_flush_batch)
+      intel_batchbuffer_flush(intel->batch);
  out:
    UNLOCK_HARDWARE(intel);
 

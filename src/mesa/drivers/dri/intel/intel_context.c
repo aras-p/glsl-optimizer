@@ -618,6 +618,11 @@ intelInitContext(struct intel_context *intel,
       intel->no_rast = 1;
    }
 
+   if (driQueryOptionb(&intel->optionCache, "always_flush_batch")) {
+      fprintf(stderr, "flushing batchbuffer before/after each draw call\n");
+      intel->always_flush_batch = 1;
+   }
+
    if (driQueryOptionb(&intel->optionCache, "always_flush_cache")) {
       fprintf(stderr, "flushing GPU caches before/after each draw call\n");
       intel->always_flush_cache = 1;
