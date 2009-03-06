@@ -631,23 +631,46 @@ static void emit_dph(struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
+/**
+ * Emit a scalar instruction, like RCP, RSQ, LOG, EXP.
+ * Note that the result of the function is smeared across the dest
+ * register's X, Y, Z and W channels (subject to writemasking of course).
+ */
 static void emit_math1(struct brw_wm_compile *c,
 		struct prog_instruction *inst, GLuint func)
 {
     struct brw_compile *p = &c->func;
-    struct brw_reg src0, dst;
+    struct brw_reg src0, dst, tmp;
+    const int mark = mark_tmps( c );
+    int i;
 
+    tmp = alloc_tmp(c);
+
+    /* Get first component of source register */
     src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
-    dst = get_dst_reg(c, inst, get_scalar_dst_index(inst), 1);
+
+    /* tmp = func(src0) */
     brw_MOV(p, brw_message_reg(2), src0);
     brw_math(p,
-	    dst,
-	    func,
-	    (inst->SaturateMode != SATURATE_OFF) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
-	    2,
-	    brw_null_reg(),
-	    BRW_MATH_DATA_VECTOR,
-	    BRW_MATH_PRECISION_FULL);
+             tmp,
+             func,
+             (inst->SaturateMode != SATURATE_OFF) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
+             2,
+             brw_null_reg(),
+             BRW_MATH_DATA_VECTOR,
+             BRW_MATH_PRECISION_FULL);
+
+    /*tmp.dw1.bits.swizzle = SWIZZLE_XXXX;*/
+
+    /* replicate tmp value across enabled dest channels */
+    for (i = 0; i < 4; i++) {
+       if (inst->DstReg.WriteMask & (1 << i)) {
+          dst = get_dst_reg(c, inst, i, 1);    
+          brw_MOV(p, dst, tmp);
+       }
+    }
+
+    release_tmps(c, mark);
 }
 
 static void emit_rcp(struct brw_wm_compile *c,
