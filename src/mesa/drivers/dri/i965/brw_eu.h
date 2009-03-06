@@ -97,7 +97,7 @@ struct brw_glsl_call;
 
 
 #define BRW_EU_MAX_INSN_STACK 5
-#define BRW_EU_MAX_INSN 1200
+#define BRW_EU_MAX_INSN 4000
 
 struct brw_compile {
    struct brw_instruction store[BRW_EU_MAX_INSN];
