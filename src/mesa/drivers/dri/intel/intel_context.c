@@ -618,6 +618,11 @@ intelInitContext(struct intel_context *intel,
       intel->no_rast = 1;
    }
 
+   if (driQueryOptionb(&intel->optionCache, "always_flush_cache")) {
+      fprintf(stderr, "flushing GPU caches before/after each draw call\n");
+      intel->always_flush_cache = 1;
+   }
+
    /* Disable all hardware rendering (skip emitting batches and fences/waits
     * to the kernel)
     */

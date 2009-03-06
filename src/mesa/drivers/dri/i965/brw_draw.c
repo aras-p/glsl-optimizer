@@ -127,6 +127,7 @@ static void brw_emit_prim(struct brw_context *brw,
 			  uint32_t hw_prim)
 {
    struct brw_3d_primitive prim_packet;
+   struct intel_context *intel = &brw->intel;
 
    if (INTEL_DEBUG & DEBUG_PRIMS)
       _mesa_printf("PRIM: %s %d %d\n", _mesa_lookup_enum_by_nr(prim->mode), 
@@ -146,10 +147,27 @@ static void brw_emit_prim(struct brw_context *brw,
 
    /* Can't wrap here, since we rely on the validated state. */
    brw->no_batch_wrap = GL_TRUE;
+
+   /* If we're set to always flush, do it before and after the primitive emit.
+    * We want to catch both missed flushes that hurt instruction/state cache
+    * and missed flushes of the render cache as it heads to other parts of
+    * the besides the draw code.
+    */
+   if (intel->always_flush_cache) {
+      BEGIN_BATCH(1, IGNORE_CLIPRECTS);
+      OUT_BATCH(intel->vtbl.flush_cmd());
+      ADVANCE_BATCH();
+   }
    if (prim_packet.verts_per_instance) {
       intel_batchbuffer_data( brw->intel.batch, &prim_packet,
 			      sizeof(prim_packet), LOOP_CLIPRECTS);
    }
+   if (intel->always_flush_cache) {
+      BEGIN_BATCH(1, IGNORE_CLIPRECTS);
+      OUT_BATCH(intel->vtbl.flush_cmd());
+      ADVANCE_BATCH();
+   }
+
    brw->no_batch_wrap = GL_FALSE;
 }
 
