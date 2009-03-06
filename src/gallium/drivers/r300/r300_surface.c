@@ -125,14 +125,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_SC_EDGERULE, 0x2DA49525);
     OUT_CS_REG(R300_RB3D_CCTL, 0x00000000);
     OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0x0000000F);
-
-    /* XXX: Oh the wonderful unknown.
-     * Not writing these 8 regs seems to make no difference at all and seeing
-     * as how they're not documented, we should leave them out for now.
-    OUT_CS_REG_SEQ(0x4E54, 8);
-    for (i = 0; i < 8; i++) {
-        OUT_CS(0x00000000);
-    } */
     OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, 0x00000000);
     OUT_CS_REG(R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 0x00000000);
     OUT_CS_REG(R500_RB3D_DISCARD_SRC_PIXEL_GTE_THRESHOLD, 0xFFFFFFFF);
@@ -140,9 +132,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT, 0x00000003);
     OUT_CS_REG(R300_ZB_BW_CNTL, 0x00000000);
     OUT_CS_REG(R300_ZB_DEPTHCLEARVALUE, 0x00000000);
-    /* XXX Moar unknown that should probably be left out.
-    OUT_CS_REG(0x4F30, 0x00000000);
-    OUT_CS_REG(0x4F34, 0x00000000); */
     OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0x00000000);
     OUT_CS_REG(R300_ZB_HIZ_PITCH, 0x00000000);
     if (caps->has_tcl) {
