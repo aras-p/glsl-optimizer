@@ -220,6 +220,8 @@ static void r300_surface_fill(struct pipe_context* pipe,
     }
     END_CS;
 
+    BEGIN_CS(29);
+
     /* Pixel scissors */
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
     OUT_CS((x << R300_SCISSORS_X_SHIFT) | (y << R300_SCISSORS_Y_SHIFT));
@@ -230,7 +232,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
         ((h * 6) & R300_POINTSIZE_Y_MASK) |
         ((w * 6) << R300_POINTSIZE_X_SHIFT));
 
-    BEGIN_CS(24);
     /* Flush colorbuffer and blend caches. */
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
         R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D |
