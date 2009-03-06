@@ -254,6 +254,7 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
 GLuint
 _mesa_num_inst_src_regs(gl_inst_opcode opcode)
 {
+   ASSERT(opcode < MAX_OPCODE);
    ASSERT(opcode == InstInfo[opcode].Opcode);
    ASSERT(OPCODE_XPD == InstInfo[OPCODE_XPD].Opcode);
    return InstInfo[opcode].NumSrcRegs;
@@ -266,6 +267,7 @@ _mesa_num_inst_src_regs(gl_inst_opcode opcode)
 GLuint
 _mesa_num_inst_dst_regs(gl_inst_opcode opcode)
 {
+   ASSERT(opcode < MAX_OPCODE);
    ASSERT(opcode == InstInfo[opcode].Opcode);
    ASSERT(OPCODE_XPD == InstInfo[OPCODE_XPD].Opcode);
    return InstInfo[opcode].NumDstRegs;
