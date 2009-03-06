@@ -332,6 +332,8 @@ intelEmitCopyBlit(struct intel_context *intel,
 
    switch (cpp) {
    case 1:
+      CMD = XY_SRC_COPY_BLT_CMD;
+      break;
    case 2:
    case 3:
       BR13 |= (1 << 24);
