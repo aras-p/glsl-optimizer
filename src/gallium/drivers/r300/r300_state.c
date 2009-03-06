@@ -337,6 +337,12 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     rs->point_size = pack_float_16_6x(state->point_size) |
         (pack_float_16_6x(state->point_size) << R300_POINTSIZE_X_SHIFT);
 
+    rs->point_minmax =
+        ((int)(state->point_size_min * 6.0) <<
+         R300_GA_POINT_MINMAX_MIN_SHIFT) |
+        ((int)(state->point_size_max * 6.0) <<
+         R300_GA_POINT_MINMAX_MAX_SHIFT);
+
     rs->line_control = pack_float_16_6x(state->line_width) |
         R300_GA_LINE_CNTL_END_TYPE_COMP;
 

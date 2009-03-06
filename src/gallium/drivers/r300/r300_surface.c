@@ -63,7 +63,16 @@ static void r300_surface_fill(struct pipe_context* pipe,
     r300_emit_dsa_state(r300, &dsa_clear_state);
     r300_emit_rs_state(r300, &rs_clear_state);
 
-    BEGIN_CS(128 + (caps->has_tcl ? 2 : 0));
+    /* Fragment shader setup */
+    if (caps->is_r500) {
+        r500_emit_fragment_shader(r300, &r500_passthrough_fragment_shader);
+        r300_emit_rs_block_state(r300, &r500_rs_block_clear_state);
+    } else {
+        r300_emit_fragment_shader(r300, &r300_passthrough_fragment_shader);
+        r300_emit_rs_block_state(r300, &r300_rs_block_clear_state);
+    }
+
+    BEGIN_CS(126 + (caps->has_tcl ? 2 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -99,9 +108,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_32F(1.0);
     OUT_CS_REG(R300_GA_TRIANGLE_STIPPLE, 0x5 |
         (0x5 << R300_GA_TRIANGLE_STIPPLE_Y_SHIFT_SHIFT));
-    /* XXX should this be related to the actual point size? */
-    OUT_CS_REG(R300_GA_POINT_MINMAX, 0x6 |
-        (0x1800 << R300_GA_POINT_MINMAX_MAX_SHIFT));
     /* XXX this big chunk should be refactored into rs_state */
     OUT_CS_REG(R300_GA_LINE_S0, 0x00000000);
     OUT_CS_REG(R300_GA_LINE_S1, 0x3F800000);
@@ -185,15 +191,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     /* XXX */
     OUT_CS_REG(R300_SC_CLIP_RULE, 0xaaaa);
     END_CS;
-
-    /* Fragment shader setup */
-    if (caps->is_r500) {
-        r500_emit_fragment_shader(r300, &r500_passthrough_fragment_shader);
-        r300_emit_rs_block_state(r300, &r500_rs_block_clear_state);
-    } else {
-        r300_emit_fragment_shader(r300, &r300_passthrough_fragment_shader);
-        r300_emit_rs_block_state(r300, &r300_rs_block_clear_state);
-    }
 
     BEGIN_CS(7 + (caps->has_tcl ? 21 : 2));
     OUT_CS_REG_SEQ(R300_US_OUT_FMT_0, 4);

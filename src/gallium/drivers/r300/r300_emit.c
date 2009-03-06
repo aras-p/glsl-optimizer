@@ -196,8 +196,12 @@ void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
 
-    BEGIN_CS(13);
+    BEGIN_CS(18);
     OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
+    OUT_CS_REG(R300_GA_POINT_SIZE, rs->point_size);
+    OUT_CS_REG_SEQ(R300_GA_POINT_MINMAX, 2);
+    OUT_CS(rs->point_minmax);
+    OUT_CS(rs->line_control);
     OUT_CS_REG_SEQ(R300_SU_POLY_OFFSET_FRONT_SCALE, 6);
     OUT_CS(rs->depth_scale_front);
     OUT_CS(rs->depth_offset_front);

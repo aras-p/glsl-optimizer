@@ -58,6 +58,7 @@ const struct r300_dsa_state dsa_clear_state = {
 };
 
 const struct r300_rs_state rs_clear_state = {
+    .point_minmax = 0x36000006,
     .line_control = 0x00030006,
     .depth_scale_front = 0x0,
     .depth_offset_front = 0x0,

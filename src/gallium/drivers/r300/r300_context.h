@@ -64,6 +64,7 @@ struct r300_rs_state {
 
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
     uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
+    uint32_t point_minmax;          /* R300_GA_POINT_MINMAX: 0x4230 */
     uint32_t line_control;          /* R300_GA_LINE_CNTL: 0x4234 */
     uint32_t depth_scale_front;  /* R300_SU_POLY_OFFSET_FRONT_SCALE: 0x42a4 */
     uint32_t depth_offset_front;/* R300_SU_POLY_OFFSET_FRONT_OFFSET: 0x42a8 */
