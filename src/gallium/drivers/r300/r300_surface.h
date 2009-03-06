@@ -68,6 +68,7 @@ const struct r300_rs_state rs_clear_state = {
     .cull_mode = 0x0,
     .line_stipple_config = 0x3BAAAAAB,
     .line_stipple_value = 0x0,
+    .color_control = R300_SHADE_MODEL_FLAT,
 };
 
 const struct r300_rs_block r300_rs_block_clear_state = {

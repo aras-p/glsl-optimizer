@@ -389,6 +389,12 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         rs->line_stipple_value = state->line_stipple_pattern;
     }
 
+    if (state->flatshade) {
+        rs->color_control = R300_SHADE_MODEL_FLAT;
+    } else {
+        rs->color_control = R300_SHADE_MODEL_SMOOTH;
+    }
+
     rs->rs = *state;
 
     return (void*)rs;

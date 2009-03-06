@@ -72,7 +72,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         r300_emit_rs_block_state(r300, &r300_rs_block_clear_state);
     }
 
-    BEGIN_CS(126 + (caps->has_tcl ? 2 : 0));
+    BEGIN_CS(124 + (caps->has_tcl ? 2 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -112,7 +112,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_GA_LINE_S0, 0x00000000);
     OUT_CS_REG(R300_GA_LINE_S1, 0x3F800000);
     OUT_CS_REG(R300_GA_ENHANCE, 0x00000002);
-    OUT_CS_REG(R300_GA_COLOR_CONTROL, 0x0003AAAA);
     OUT_CS_REG(R300_GA_SOLID_RG, 0x00000000);
     OUT_CS_REG(R300_GA_SOLID_BA, 0x00000000);
     OUT_CS_REG(R300_GA_POLY_MODE, 0x00000000);

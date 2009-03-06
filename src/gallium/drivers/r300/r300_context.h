@@ -74,6 +74,7 @@ struct r300_rs_state {
     uint32_t cull_mode;             /* R300_SU_CULL_MODE: 0x42b8 */
     uint32_t line_stipple_config;   /* R300_GA_LINE_STIPPLE_CONFIG: 0x4328 */
     uint32_t line_stipple_value;    /* R300_GA_LINE_STIPPLE_VALUE: 0x4260 */
+    uint32_t color_control;         /* R300_GA_COLOR_CONTROL: 0x4278 */
 };
 
 struct r300_rs_block {
