@@ -11,6 +11,11 @@
 #include <GL/glew.h>
 #include <GL/glut.h>
 
+#include "readtex.c"
+
+
+#define TEXTURE_FILE "../images/bw.rgb"
+
 unsigned show_fps = 0;
 unsigned int frame_cnt = 0;
 void alarmhandler(int);
@@ -65,6 +70,7 @@ static void args(int argc, char *argv[])
 
 static void Init( void )
 {
+   GLuint Texture;
    GLint errno;
    GLuint prognum;
    char buf[4096];
@@ -107,7 +113,19 @@ static void Init( void )
    }
    glEnable(GL_FRAGMENT_PROGRAM_ARB);
 
-   glClearColor(.3, .3, .3, 0);
+
+   /* Load texture */
+   glGenTextures(1, &Texture);
+   glBindTexture(GL_TEXTURE_2D, Texture);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+   if (!LoadRGBMipmaps(TEXTURE_FILE, GL_RGB)) {
+      printf("Error: couldn't load texture image file %s\n", TEXTURE_FILE);
+      exit(1);
+   }
+
+   glClearColor(.1, .3, .5, 0);
 }
 
 static void Reshape(int width, int height)

@@ -1,0 +1,6 @@
+!!ARBfp1.0
+TEMP R0;
+MOV R0, {0.0}.x;
+MUL R0.xy, fragment.position, {0.008}.x;
+TEX result.color, R0, texture[0], 2D;
+END
