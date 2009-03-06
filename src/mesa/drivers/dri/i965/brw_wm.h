@@ -241,10 +241,12 @@ struct brw_wm_compile {
    GLuint max_wm_grf;
    GLuint last_scratch;
 
+   /** Mapping from Mesa registers to hardware registers */
    struct {
 	GLboolean inited;
 	struct brw_reg reg;
    } wm_regs[PROGRAM_PAYLOAD+1][256][4];
+
    struct brw_reg stack;
    struct brw_reg emit_mask_reg;
    GLuint reg_index;
