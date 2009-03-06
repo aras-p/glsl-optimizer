@@ -124,9 +124,9 @@ nv50_screen_get_param(struct pipe_screen *pscreen, int param)
 		return 1;
 	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
 		return 0;
-	case NOUVEAU_CAP_HW_VTXBUF:	
+	case NOUVEAU_CAP_HW_VTXBUF:
 		return 1;
-	case NOUVEAU_CAP_HW_IDXBUF:	
+	case NOUVEAU_CAP_HW_IDXBUF:
 		return 0;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
@@ -233,6 +233,22 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		nv50_screen_destroy(&screen->pipe);
 		return NULL;
 	}
+
+        /* Setup the pipe */
+	screen->pipe.winsys = ws;
+
+	screen->pipe.destroy = nv50_screen_destroy;
+
+	screen->pipe.get_name = nv50_screen_get_name;
+	screen->pipe.get_vendor = nv50_screen_get_vendor;
+	screen->pipe.get_param = nv50_screen_get_param;
+	screen->pipe.get_paramf = nv50_screen_get_paramf;
+
+	screen->pipe.is_format_supported = nv50_screen_is_format_supported;
+
+	nv50_screen_init_miptree_functions(&screen->pipe);
+	nv50_transfer_init_screen_functions(&screen->pipe);
+	u_simple_screen_init(&screen->pipe);
 
 	/* Static M2MF init */
 	so = so_new(32, 0);
@@ -352,21 +368,6 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_emit(nvws, so);
 	so_ref(so, &screen->static_init);
 	nvws->push_flush(nvws, 0, NULL);
-
-	screen->pipe.winsys = ws;
-
-	screen->pipe.destroy = nv50_screen_destroy;
-
-	screen->pipe.get_name = nv50_screen_get_name;
-	screen->pipe.get_vendor = nv50_screen_get_vendor;
-	screen->pipe.get_param = nv50_screen_get_param;
-	screen->pipe.get_paramf = nv50_screen_get_paramf;
-
-	screen->pipe.is_format_supported = nv50_screen_is_format_supported;
-
-	nv50_screen_init_miptree_functions(&screen->pipe);
-	nv50_transfer_init_screen_functions(&screen->pipe);
-	u_simple_screen_init(&screen->pipe);
 
 	return &screen->pipe;
 }
