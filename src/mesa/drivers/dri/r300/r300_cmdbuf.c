@@ -268,8 +268,7 @@ static void emit_zstencil_format(GLcontext *ctx, struct radeon_state_atom * atom
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	BATCH_LOCALS(&r300->radeon);
 	struct radeon_renderbuffer *rrb;
-	uint32_t zbpitch;
-	uint32_t format;
+	uint32_t format = 0;
 
 	rrb = radeon_get_depthbuffer(&r300->radeon);
 	if (!rrb)
