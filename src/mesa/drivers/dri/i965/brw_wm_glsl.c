@@ -41,6 +41,10 @@ GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
     return GL_FALSE; 
 }
 
+
+/**
+ * Record the mapping of a Mesa register to a hardware register.
+ */
 static void set_reg(struct brw_wm_compile *c, int file, int index, 
 	int component, struct brw_reg reg)
 {
@@ -48,6 +52,10 @@ static void set_reg(struct brw_wm_compile *c, int file, int index,
     c->wm_regs[file][index][component].inited = GL_TRUE;
 }
 
+/**
+ * Examine instruction's write mask to find index of first component
+ * enabled for writing.
+ */
 static int get_scalar_dst_index(struct prog_instruction *inst)
 {
     int i;
@@ -67,6 +75,10 @@ static struct brw_reg alloc_tmp(struct brw_wm_compile *c)
     return reg;
 }
 
+/**
+ * Save current temp register info.
+ * There must be a matching call to release_tmps().
+ */
 static int mark_tmps(struct brw_wm_compile *c)
 {
     return c->tmp_index;
@@ -84,6 +96,10 @@ static void release_tmps(struct brw_wm_compile *c, int mark)
 
 /**
  * Convert Mesa src register to brw register.
+ *
+ * Since we're running in SOA mode each Mesa register corresponds to four
+ * hardware registers.  We allocate the hardware registers as needed here.
+ *
  * \param file  register file, one of PROGRAM_x
  * \param index  register number
  * \param component  src component (X=0, Y=1, Z=2, W=3)
@@ -108,11 +124,17 @@ get_reg(struct brw_wm_compile *c, int file, int index, int component,
 	    break;
     }
 
-    if (c->wm_regs[file][index][component].inited)
+    /* see if we've already allocated a HW register for this Mesa register */
+    if (c->wm_regs[file][index][component].inited) {
+	/* yes, re-use */
 	reg = c->wm_regs[file][index][component].reg;
-    else 
+    }
+    else {
+	/* no, allocate new register */
 	reg = brw_vec8_grf(c->reg_index, 0);
+    }
 
+    /* if this is a new register allocation, record it in the table */
     if (!c->wm_regs[file][index][component].inited) {
 	set_reg(c, file, index, component, reg);
 	c->reg_index++;
@@ -126,6 +148,12 @@ get_reg(struct brw_wm_compile *c, int file, int index, int component,
     return reg;
 }
 
+
+/**
+ * Preallocate registers.  This sets up the Mesa to hardware register
+ * mapping for certain registers, such as constants (uniforms/state vars)
+ * and shader inputs.
+ */
 static void prealloc_reg(struct brw_wm_compile *c)
 {
     int i, j;
@@ -139,6 +167,8 @@ static void prealloc_reg(struct brw_wm_compile *c)
 	set_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, i, reg);
     }
     c->reg_index += 2*c->key.nr_depth_regs;
+
+    /* constants */
     {
 	int nr_params = c->fp->program.Base.Parameters->NumParameters;
 	struct gl_program_parameter_list *plist = 
@@ -157,6 +187,8 @@ static void prealloc_reg(struct brw_wm_compile *c)
 	c->nr_creg = 2*((4*nr_params+15)/16);
 	c->reg_index += c->nr_creg;
     }
+
+    /* fragment shader inputs */
     for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
 	if (inputs & (1<<i)) {
 	    nr_interp_regs++;
@@ -164,9 +196,9 @@ static void prealloc_reg(struct brw_wm_compile *c)
 	    for (j = 0; j < 4; j++)
 		set_reg(c, PROGRAM_PAYLOAD, i, j, reg);
 	    c->reg_index += 2;
-
 	}
     }
+
     c->prog_data.first_curbe_grf = c->key.nr_depth_regs * 2;
     c->prog_data.urb_read_length = nr_interp_regs * 2;
     c->prog_data.curb_read_length = c->nr_creg;
@@ -176,6 +208,10 @@ static void prealloc_reg(struct brw_wm_compile *c)
     c->reg_index += 2;
 }
 
+
+/**
+ * Convert Mesa dst register to brw register.
+ */
 static struct brw_reg get_dst_reg(struct brw_wm_compile *c, 
 	struct prog_instruction *inst, int component, int nr)
 {
@@ -183,6 +219,10 @@ static struct brw_reg get_dst_reg(struct brw_wm_compile *c,
 	    0, 0);
 }
 
+
+/**
+ * Convert Mesa src register to brw register.
+ */
 static struct brw_reg get_src_reg(struct brw_wm_compile *c, 
 	struct prog_src_register *src, int index, int nr)
 {
