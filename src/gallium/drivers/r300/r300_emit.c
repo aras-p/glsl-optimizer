@@ -152,7 +152,7 @@ uint32_t translate_out_fmt(enum pipe_format format)
     return 0;
 }
 
-/* XXX add pitch, stride */
+/* XXX add pitch, stride, clean up */
 void r300_emit_fb_state(struct r300_context* r300,
                         struct pipe_framebuffer_state* fb)
 {
@@ -322,6 +322,11 @@ void r300_emit_dirty_state(struct r300_context* r300)
                 (struct r300_fragment_shader*)r300->fs);
         }
         r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER;
+    }
+
+    if (r300->dirty_state & R300_NEW_FRAMEBUFFERS) {
+        r300_emit_fb_state(r300, &r300->framebuffer_state);
+        r300->dirty_state &= ~R300_NEW_FRAMEBUFFERS;
     }
 
     if (r300->dirty_state & R300_NEW_RASTERIZER) {
