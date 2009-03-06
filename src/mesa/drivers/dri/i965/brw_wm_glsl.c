@@ -82,8 +82,18 @@ static void release_tmps(struct brw_wm_compile *c, int mark)
     c->tmp_index = mark;
 }
 
+/**
+ * Convert Mesa src register to brw register.
+ * \param file  register file, one of PROGRAM_x
+ * \param index  register number
+ * \param component  src component (X=0, Y=1, Z=2, W=3)
+ * \param nr  not used?!?
+ * \param neg  negate value?
+ * \param abs  take absolute value?
+ */
 static struct brw_reg 
-get_reg(struct brw_wm_compile *c, int file, int index, int component, int nr, GLuint neg, GLuint abs)
+get_reg(struct brw_wm_compile *c, int file, int index, int component,
+        int nr, GLuint neg, GLuint abs)
 {
     struct brw_reg reg;
     switch (file) {
@@ -98,17 +108,17 @@ get_reg(struct brw_wm_compile *c, int file, int index, int component, int nr, GL
 	    break;
     }
 
-    if(c->wm_regs[file][index][component].inited)
+    if (c->wm_regs[file][index][component].inited)
 	reg = c->wm_regs[file][index][component].reg;
     else 
 	reg = brw_vec8_grf(c->reg_index, 0);
 
-    if(!c->wm_regs[file][index][component].inited) {
+    if (!c->wm_regs[file][index][component].inited) {
 	set_reg(c, file, index, component, reg);
 	c->reg_index++;
     }
 
-    if (neg & (1<< component)) {
+    if (neg & (1 << component)) {
 	reg = negate(reg);
     }
     if (abs)
