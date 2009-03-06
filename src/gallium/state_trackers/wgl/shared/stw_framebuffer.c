@@ -79,6 +79,14 @@ window_proc(
    return CallWindowProc( fb->WndProc, hWnd, uMsg, wParam, lParam );
 }
 
+static INLINE boolean
+stw_is_supported_depth_stencil(enum pipe_format format)
+{
+   struct pipe_screen *screen = stw_dev->screen;
+   return screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 
+                                      PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
+}
+
 /* Create a new framebuffer object which will correspond to the given HDC.
  */
 struct stw_framebuffer *
@@ -103,13 +111,27 @@ framebuffer_create(
       depthFormat = PIPE_FORMAT_NONE;
    else if (visual->depthBits <= 16)
       depthFormat = PIPE_FORMAT_Z16_UNORM;
-   else if (visual->depthBits <= 24)
+   else if (visual->depthBits <= 24 && visual->stencilBits != 8 &&
+            stw_is_supported_depth_stencil(PIPE_FORMAT_X8Z24_UNORM)) {
+      depthFormat = PIPE_FORMAT_X8Z24_UNORM;
+   }
+   else if (visual->depthBits <= 24 && visual->stencilBits != 8 && 
+            stw_is_supported_depth_stencil(PIPE_FORMAT_Z24X8_UNORM)) {
+      depthFormat = PIPE_FORMAT_Z24X8_UNORM;
+   }
+   else if (visual->depthBits <= 24 && visual->stencilBits == 8 && 
+            stw_is_supported_depth_stencil(PIPE_FORMAT_S8Z24_UNORM)) {
       depthFormat = PIPE_FORMAT_S8Z24_UNORM;
+   }
+   else if (visual->depthBits <= 24 && visual->stencilBits == 8 && 
+            stw_is_supported_depth_stencil(PIPE_FORMAT_Z24S8_UNORM)) {
+      depthFormat = PIPE_FORMAT_Z24S8_UNORM;
+   }
    else
       depthFormat = PIPE_FORMAT_Z32_UNORM;
 
    if (visual->stencilBits == 8) {
-      if (depthFormat == PIPE_FORMAT_S8Z24_UNORM)
+      if (depthFormat == PIPE_FORMAT_S8Z24_UNORM || depthFormat == PIPE_FORMAT_Z24S8_UNORM)
          stencilFormat = depthFormat;
       else
          stencilFormat = PIPE_FORMAT_S8_UNORM;
