@@ -1310,6 +1310,8 @@ _mesa_create_context(const GLvisual *visual,
 void
 _mesa_free_context_data( GLcontext *ctx )
 {
+   GLint RefCount;
+
    if (!_mesa_get_current_context()){
       /* No current context, but we may need one in order to delete
        * texture objs, etc.  So temporarily bind the context now.
@@ -1361,10 +1363,10 @@ _mesa_free_context_data( GLcontext *ctx )
 
    /* Shared context state (display lists, textures, etc) */
    _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
-   ctx->Shared->RefCount--;
-   assert(ctx->Shared->RefCount >= 0);
+   RefCount = --ctx->Shared->RefCount;
    _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
-   if (ctx->Shared->RefCount == 0) {
+   assert(RefCount >= 0);
+   if (RefCount == 0) {
       /* free shared state */
       free_shared_state( ctx, ctx->Shared );
    }
