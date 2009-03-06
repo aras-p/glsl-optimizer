@@ -653,7 +653,8 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
        * screen depth.  There currently seems to be a problem when
        * rendering into a rgb565 texture when the screen is abgr8888.
        */
-      if (intel->front_region->cpp == 4)
+
+      if (intel->ctx.Visual.rgbBits >= 24)
          supportedFormat = &_mesa_texformat_argb8888;
       else 
          supportedFormat = &_mesa_texformat_rgb565;
