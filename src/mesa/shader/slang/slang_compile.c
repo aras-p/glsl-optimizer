@@ -32,6 +32,7 @@
 #include "main/context.h"
 #include "shader/program.h"
 #include "shader/programopt.h"
+#include "shader/prog_optimize.h"
 #include "shader/prog_print.h"
 #include "shader/prog_parameter.h"
 #include "shader/grammar/grammar_mesa.h"
@@ -2795,6 +2796,10 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
 #endif
 
    shader->CompileStatus = success;
+
+   if (success) {
+      _mesa_optimize_program(ctx, shader->Program);
+   }
 
    if (ctx->Shader.Flags & GLSL_LOG) {
       _mesa_write_shader_to_file(shader);
