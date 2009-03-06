@@ -458,11 +458,15 @@ fprint_src_reg(FILE *f,
                gl_prog_print_mode mode,
                const struct gl_program *prog)
 {
-   _mesa_fprintf(f, "%s%s",
+   const char *abs = srcReg->Abs ? "|" : "";
+
+   _mesa_fprintf(f, "%s%s%s%s",
+                 abs,
                  reg_string((enum register_file) srcReg->File,
                             srcReg->Index, mode, srcReg->RelAddr, prog),
                  _mesa_swizzle_string(srcReg->Swizzle,
-                                      srcReg->NegateBase, GL_FALSE));
+                                      srcReg->NegateBase, GL_FALSE),
+                 abs);
 #if 0
    _mesa_fprintf(f, "%s[%d]%s",
                  file_string((enum register_file) srcReg->File, mode),
@@ -724,11 +728,16 @@ _mesa_fprint_instruction_opt(FILE *f,
       break;
    /* XXX may need other special-case instructions */
    default:
-      /* typical alu instruction */
-      fprint_alu_instruction(f, inst,
-                             _mesa_opcode_string(inst->Opcode),
-                             _mesa_num_inst_src_regs(inst->Opcode),
-                             mode, prog);
+      if (inst->Opcode < MAX_OPCODE) {
+         /* typical alu instruction */
+         fprint_alu_instruction(f, inst,
+                                _mesa_opcode_string(inst->Opcode),
+                                _mesa_num_inst_src_regs(inst->Opcode),
+                                mode, prog);
+      }
+      else {
+         _mesa_fprintf(f, "Other opcode %d\n", inst->Opcode);
+      }
       break;
    }
    return indent;
