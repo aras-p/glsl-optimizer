@@ -72,7 +72,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         r300_emit_rs_block_state(r300, &r300_rs_block_clear_state);
     }
 
-    BEGIN_CS(122 + (caps->has_tcl ? 2 : 0));
+    BEGIN_CS(112 + (caps->has_tcl ? 2 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -123,12 +123,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_SU_DEPTH_OFFSET, 0x00000000);
     OUT_CS_REG(R300_SC_HYPERZ, 0x0000001C);
     OUT_CS_REG(R300_SC_EDGERULE, 0x2DA49525);
-    OUT_CS_REG(R300_FG_FOG_BLEND, 0x00000002);
-    OUT_CS_REG(R300_FG_FOG_COLOR_R, 0x00000000);
-    OUT_CS_REG(R300_FG_FOG_COLOR_G, 0x00000000);
-    OUT_CS_REG(R300_FG_FOG_COLOR_B, 0x00000000);
-    OUT_CS_REG(R300_FG_DEPTH_SRC, 0x00000000);
-    OUT_CS_REG(R300_FG_DEPTH_SRC, 0x00000000);
     OUT_CS_REG(R300_RB3D_CCTL, 0x00000000);
     OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0x0000000F);
 
@@ -162,7 +156,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
             ((R300_LAST_VEC | (2 << R300_DST_VEC_LOC_SHIFT) |
                 R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_1_SHIFT));
     }
-    OUT_CS_REG(R300_FG_FOG_BLEND, 0x00000000);
     OUT_CS_REG(R300_VAP_PROG_STREAM_CNTL_EXT_0, 0xF688F688);
     OUT_CS_REG(R300_VAP_VTX_STATE_CNTL, 0x1);
     OUT_CS_REG(R300_VAP_VSM_VTX_ASSM, 0x405);

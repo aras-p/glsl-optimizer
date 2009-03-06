@@ -34,7 +34,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
-    BEGIN_CS(16);
+    BEGIN_CS(26);
     /* Amount of time to wait for vertex fetches in PVS */
     OUT_CS_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xffff);
     /* Various GB enables */
@@ -62,5 +62,12 @@ void r300_emit_invariant_state(struct r300_context* r300)
                 R300_GA_ENHANCE_DEADLOCK_CNTL_PREVENT_TCL |
                 R300_GA_ENHANCE_FASTSYNC_CNTL_ENABLE);
     }
+
+    /* Fog block. */
+    OUT_CS_REG(R300_FG_FOG_BLEND, 0x00000000);
+    OUT_CS_REG(R300_FG_FOG_COLOR_R, 0x00000000);
+    OUT_CS_REG(R300_FG_FOG_COLOR_G, 0x00000000);
+    OUT_CS_REG(R300_FG_FOG_COLOR_B, 0x00000000);
+    OUT_CS_REG(R300_FG_DEPTH_SRC, 0x00000000);
     END_CS;
 }
