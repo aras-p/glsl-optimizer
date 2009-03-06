@@ -38,6 +38,7 @@
 
 #include "brw_context.h"
 #include "brw_util.h"
+#include "brw_wm.h"
 
 static void brwBindProgram( GLcontext *ctx,
 			    GLenum target, 
@@ -122,6 +123,7 @@ static void brwProgramStringNotify( GLcontext *ctx,
       if (newFP == curFP)
 	 brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
       newFP->id = brw->program_id++;      
+      newFP->isGLSL = brw_wm_is_glsl(fprog);
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
       struct brw_vertex_program *newVP = (struct brw_vertex_program *) prog;

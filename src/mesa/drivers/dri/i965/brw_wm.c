@@ -149,11 +149,14 @@ static void do_wm_prog( struct brw_context *brw,
 
    brw_init_compile(brw, &c->func);
 
+   /* temporary sanity check assertion */
+   ASSERT(fp->isGLSL == brw_wm_is_glsl(&c->fp->program));
+
    /*
     * Shader which use GLSL features such as flow control are handled
     * differently from "simple" shaders.
     */
-   if (brw_wm_is_glsl(&c->fp->program)) {
+   if (fp->isGLSL) {
       brw_wm_glsl_emit(brw, c);
    }
    else {
