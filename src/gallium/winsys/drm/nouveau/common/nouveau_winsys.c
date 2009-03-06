@@ -133,8 +133,13 @@ nouveau_pipe_create(struct nouveau_context *nv)
 
 	ws = nouveau_create_pipe_winsys(nv);
 
-	if (!nvc->pscreen)
+	if (!nvc->pscreen) {
 		nvc->pscreen = hws_create(ws, nvws);
+		if (!nvc->pscreen) {
+			NOUVEAU_ERR("Couldn't create hw screen\n");
+			return NULL;
+		}
+	}
 	nvc->pctx[nv->pctx_id] = hw_create(nvc->pscreen, nv->pctx_id);
 	return nvc->pctx[nv->pctx_id];
 }

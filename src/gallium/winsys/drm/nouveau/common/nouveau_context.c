@@ -132,8 +132,10 @@ nouveau_context_init(struct nouveau_screen *nv_screen,
 		struct pipe_screen *pscreen;
 
 		pipe = nouveau_pipe_create(nv);
-		if (!pipe)
+		if (!pipe) {
 			NOUVEAU_ERR("Couldn't create hw pipe\n");
+			return 1;
+		}
 		pscreen = nvc->pscreen;
 
 		nv->cap.hw_vertex_buffer =
@@ -199,7 +201,7 @@ nouveau_context_cleanup(struct nouveau_context *nv)
 			nv->nv_screen->nvc = NULL;
 		}
 	}
-	
+
 	/* XXX: Who cleans up the pipe? */
 }
 
