@@ -203,15 +203,27 @@ static void r300SetVertexFormat( GLcontext *ctx )
 	}
 
 	R300_NEWPRIM(rmesa);
-	R300_STATECHANGE(rmesa, vir[0]);
-	((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
+	if (rmesa->radeon.radeonScreen->kernel_mm) {
+		R300_STATECHANGE(rmesa, vir[0]);
+		rmesa->hw.vir[0].cmd[0] &= 0xC000FFFF;
+		rmesa->hw.vir[1].cmd[0] &= 0xC000FFFF;
+		rmesa->hw.vir[0].cmd[0] |=
+			(r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
+					    VB->AttribPtr, inputs, tab, nr) & 0x3FFF) << 16;
+		R300_STATECHANGE(rmesa, vir[1]);
+		rmesa->hw.vir[1].cmd[0] |=
+			(r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
+					    nr) & 0x3FFF) << 16;
+	} else {
+		R300_STATECHANGE(rmesa, vir[0]);
+		((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
 		r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
 				   VB->AttribPtr, inputs, tab, nr);
-	R300_STATECHANGE(rmesa, vir[1]);
-	((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
+		R300_STATECHANGE(rmesa, vir[1]);
+		((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
 		r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
 				   nr);
-
+	}
 	R300_STATECHANGE(rmesa, vic);
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
@@ -600,7 +612,7 @@ void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, struct radeon_b
 		fprintf(stderr, "%s:  vertex_size %d, offset 0x%x \n",
 			__FUNCTION__, vertex_size, offset);
 
-	BEGIN_BATCH(5);
+	BEGIN_BATCH(7);
 	OUT_BATCH_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, 2);
 	OUT_BATCH(1);
 	OUT_BATCH(vertex_size | (vertex_size << 8));
