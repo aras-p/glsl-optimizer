@@ -120,8 +120,14 @@ get_reg(struct brw_wm_compile *c, int file, int index, int component,
 	    break;
 	case PROGRAM_UNDEFINED:
 	    return brw_null_reg();	
-	default:
+	case PROGRAM_TEMPORARY:
+	case PROGRAM_INPUT:
+	case PROGRAM_OUTPUT:
+	case PROGRAM_PAYLOAD:
 	    break;
+	default:
+	    _mesa_problem(NULL, "Unexpected file in get_reg()");
+	    return brw_null_reg();
     }
 
     /* see if we've already allocated a HW register for this Mesa register */
@@ -140,6 +146,19 @@ get_reg(struct brw_wm_compile *c, int file, int index, int component,
 	c->reg_index++;
     }
 
+    if (c->reg_index >= BRW_WM_MAX_GRF - 12) {
+	/* ran out of temporary registers! */
+#if 1
+        /* This is a big hack for now.
+         * Return bad register index, but don't just crash hange the GPU.
+         */
+        _mesa_fprintf(stderr, "out of regs %d\n", c->reg_index);
+        c->reg_index = BRW_WM_MAX_GRF - 13;
+#else
+	return brw_null_reg();
+#endif
+    }
+ 
     if (neg & (1 << component)) {
 	reg = negate(reg);
     }
@@ -2573,6 +2592,11 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
     }
     post_wm_emit(c);
+
+    if (c->reg_index >= BRW_WM_MAX_GRF) {
+        _mesa_problem(NULL, "Ran out of registers in brw_wm_emit_glsl()");
+        /* XXX we need to do some proper error recovery here */
+    }
 }
 
 
