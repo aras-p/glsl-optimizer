@@ -132,6 +132,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	so_data  (so, 0);
 
 	so_ref(so, &nv30->state.hw[NV30_STATE_FB]);
+	so_ref(NULL, &so);
 	return TRUE;
 }
 

@@ -152,5 +152,6 @@ nv50_tex_validate(struct nv50_context *nv50)
 	}
 
 	so_ref(so, &nv50->state.tic_upload);
+	so_ref(NULL, &so);
 }
 

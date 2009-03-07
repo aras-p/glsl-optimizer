@@ -366,7 +366,8 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_data  (so, 1);
 
 	so_emit(nvws, so);
-	so_ref(so, &screen->static_init);
+	so_ref (so, &screen->static_init);
+	so_ref (NULL, &so);
 	nvws->push_flush(nvws, 0, NULL);
 
 	return &screen->pipe;

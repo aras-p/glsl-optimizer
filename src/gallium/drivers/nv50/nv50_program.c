@@ -1719,6 +1719,7 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 	so_method(so, tesla, 0x140c, 1);
 	so_data  (so, 0); /* program start offset */
 	so_ref(so, &nv50->state.vertprog);
+	so_ref(NULL, &so);
 }
 
 void
@@ -1758,6 +1759,7 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	so_method(so, tesla, 0x1414, 1);
 	so_data  (so, 0); /* program start offset */
 	so_ref(so, &nv50->state.fragprog);
+	so_ref(NULL, &so);
 }
 
 void

@@ -539,10 +539,13 @@ nv30_vbo_validate(struct nv30_context *nv30)
 	so_data  (vtxbuf, 0);
 
 	so_ref(vtxbuf, &nv30->state.hw[NV30_STATE_VTXBUF]);
+	so_ref(NULL, &vtxbuf);
 	nv30->state.dirty |= (1ULL << NV30_STATE_VTXBUF);
 	so_ref(vtxfmt, &nv30->state.hw[NV30_STATE_VTXFMT]);
+	so_ref(NULL, &vtxfmt);
 	nv30->state.dirty |= (1ULL << NV30_STATE_VTXFMT);
 	so_ref(sattr, &nv30->state.hw[NV30_STATE_VTXATTR]);
+	so_ref(NULL, &sattr);
 	nv30->state.dirty |= (1ULL << NV30_STATE_VTXATTR);
 	return FALSE;
 }

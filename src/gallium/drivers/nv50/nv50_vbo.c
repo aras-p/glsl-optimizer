@@ -250,5 +250,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 
 	so_ref (vtxfmt, &nv50->state.vtxfmt);
 	so_ref (vtxbuf, &nv50->state.vtxbuf);
+	so_ref (NULL, &vtxbuf);
+	so_ref (NULL, &vtxfmt);
 }
 

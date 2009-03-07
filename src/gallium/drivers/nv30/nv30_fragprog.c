@@ -865,6 +865,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
 	so_method(so, nv30->screen->rankine, NV34TCL_TX_UNITS_ENABLE, 1);
 	so_data  (so, fp->samplers);
 	so_ref(so, &fp->so);
+	so_ref(NULL, &so);
 
 update_constants:
 	if (fp->nr_consts) {

@@ -124,6 +124,7 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	so_data  (so, h);
 
 	so_ref(so, &nv50->state.fb);
+	so_ref(NULL, &so);
 }
 
 static void
@@ -214,6 +215,7 @@ nv50_state_validate(struct nv50_context *nv50)
 		so_data  (so, fui(nv50->blend_colour.color[2]));
 		so_data  (so, fui(nv50->blend_colour.color[3]));
 		so_ref(so, &nv50->state.blend_colour);
+		so_ref(NULL, &so);
 	}
 
 	if (nv50->dirty & NV50_NEW_STIPPLE) {
@@ -222,6 +224,7 @@ nv50_state_validate(struct nv50_context *nv50)
 		for (i = 0; i < 32; i++)
 			so_data(so, nv50->stipple.stipple[i]);
 		so_ref(so, &nv50->state.stipple);
+		so_ref(NULL, &so);
 	}
 
 	if (nv50->dirty & (NV50_NEW_SCISSOR | NV50_NEW_RASTERIZER)) {
@@ -243,6 +246,7 @@ nv50_state_validate(struct nv50_context *nv50)
 			so_data(so, (8192 << 16));
 		}
 		so_ref(so, &nv50->state.scissor);
+		so_ref(NULL, &so);
 		nv50->state.dirty |= NV50_NEW_SCISSOR;
 	}
 scissor_uptodate:
@@ -283,6 +287,7 @@ scissor_uptodate:
 		}
 
 		so_ref(so, &nv50->state.viewport);
+		so_ref(NULL, &so);
 	}
 viewport_uptodate:
 
@@ -296,6 +301,7 @@ viewport_uptodate:
 		for (i = 0; i < nv50->sampler_nr; i++)
 			so_datap (so, nv50->sampler[i], 8);
 		so_ref(so, &nv50->state.tsc_upload);
+		so_ref(NULL, &so);
 	}
 
 	if (nv50->dirty & NV50_NEW_TEXTURE)
