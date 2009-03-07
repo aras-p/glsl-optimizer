@@ -93,15 +93,18 @@ static void r300_update_vertex_layout(struct r300_context* r300)
             tab[i] = tab[i-1];
         }
         tab[0] = 0;
-    }
 
-    draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_POS,
-        draw_find_vs_output(r300->draw, TGSI_SEMANTIC_POSITION, 0));
+        draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_POS,
+            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_POSITION, 0));
+    } else {
+        draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE,
+            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_POSITION, 0));
+    }
     vinfo.hwfmt[1] |= R300_INPUT_CNTL_POS;
     vinfo.hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
 
     if (psize) {
-        draw_emit_vertex_attr(&vinfo, EMIT_1F_PSIZE, INTERP_LINEAR,
+        draw_emit_vertex_attr(&vinfo, EMIT_1F_PSIZE, INTERP_POS,
             draw_find_vs_output(r300->draw, TGSI_SEMANTIC_PSIZE, 0));
         vinfo.hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
     }
@@ -161,6 +164,7 @@ static void r300_update_vertex_layout(struct r300_context* r300)
         r300->vertex_info.vap_prog_stream_cntl[i >> 1] |= (R300_LAST_VEC <<
                 (i & 1 ? 16 : 0));
 
+        memcpy(r300->vertex_info.tab, tab, sizeof(tab));
         memcpy(&r300->vertex_info, &vinfo, sizeof(struct vertex_info));
         r300->dirty_state |= R300_NEW_VERTEX_FORMAT;
     }
@@ -173,28 +177,42 @@ static void r300_update_rs_block(struct r300_context* r300)
 {
     struct r300_rs_block* rs = r300->rs_block;
     struct vertex_info* vinfo = &r300->vertex_info.vinfo;
-    int col_count = 0, fp_offset = 0, i, tex_count = 0;
+    int* tab = r300->vertex_info.tab;
+    int col_count = 0, fp_offset = 0, i, memory_pos, tex_count = 0;
 
     memset(rs, 0, sizeof(struct r300_rs_block));
 
     if (r300_screen(r300->context.screen)->caps->is_r500) {
         for (i = 0; i < vinfo->num_attribs; i++) {
+            assert(tab[vinfo->attrib[i].src_index] != -1);
+            memory_pos = tab[vinfo->attrib[i].src_index] * 4;
             switch (vinfo->attrib[i].interp_mode) {
                 case INTERP_LINEAR:
                     rs->ip[col_count] |=
-                        R500_RS_COL_PTR(vinfo->attrib[i].src_index) |
+                        R500_RS_COL_PTR(memory_pos) |
                         R500_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
                     col_count++;
                     break;
                 case INTERP_PERSPECTIVE:
                     rs->ip[tex_count] |=
-                        R500_RS_SEL_S(vinfo->attrib[i].src_index) |
-                        R500_RS_SEL_T(vinfo->attrib[i].src_index + 1) |
-                        R500_RS_SEL_R(vinfo->attrib[i].src_index + 2) |
-                        R500_RS_SEL_Q(vinfo->attrib[i].src_index + 3);
+                        R500_RS_SEL_S(memory_pos) |
+                        R500_RS_SEL_T(memory_pos + 1) |
+                        R500_RS_SEL_R(memory_pos + 2) |
+                        R500_RS_SEL_Q(memory_pos + 3);
                     tex_count++;
                     break;
+                default:
+                    break;
             }
+        }
+
+        /* Set up at least one texture pointer or RS will not be happy. */
+        if (tex_count == 0) {
+            rs->ip[0] |=
+                R500_RS_SEL_S(R500_RS_IP_PTR_K0) |
+                R500_RS_SEL_T(R500_RS_IP_PTR_K0) |
+                R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
+                R500_RS_SEL_Q(R500_RS_IP_PTR_K1);
         }
 
         for (i = 0; i < tex_count; i++) {
@@ -212,24 +230,39 @@ static void r300_update_rs_block(struct r300_context* r300)
         rs->inst_count = MAX2(col_count, tex_count);
     } else {
         for (i = 0; i < vinfo->num_attribs; i++) {
+            memory_pos = tab[vinfo->attrib[i].src_index] * 4;
+            assert(tab[vinfo->attrib[i].src_index] != -1);
             switch (vinfo->attrib[i].interp_mode) {
                 case INTERP_LINEAR:
                     rs->ip[col_count] |=
-                        R300_RS_COL_PTR(vinfo->attrib[i].src_index) |
+                        R300_RS_COL_PTR(memory_pos) |
                         R300_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
                     col_count++;
                     break;
                 case INTERP_PERSPECTIVE:
                     rs->ip[tex_count] |=
-                        R300_RS_TEX_PTR(vinfo->attrib[i].src_index) |
+                        R300_RS_TEX_PTR(memory_pos) |
                         R300_RS_SEL_S(R300_RS_SEL_C0) |
                         R300_RS_SEL_T(R300_RS_SEL_C1) |
                         R300_RS_SEL_R(R300_RS_SEL_C2) |
                         R300_RS_SEL_Q(R300_RS_SEL_C3);
-                    tex_count += 4;
+                    tex_count++;
+                    break;
+                default:
                     break;
             }
         }
+
+        if (tex_count == 0) {
+            rs->ip[0] |=
+                R300_RS_SEL_S(R300_RS_SEL_K0) |
+                R300_RS_SEL_T(R300_RS_SEL_K0) |
+                R300_RS_SEL_R(R300_RS_SEL_K0) |
+                R300_RS_SEL_Q(R300_RS_SEL_K1);
+        }
+
+        for (i = 0; i < 8; i++)
+            debug_printf("ip %d: 0x%x\n", i, rs->ip[i]);
 
         for (i = 0; i < tex_count; i++) {
             rs->inst[i] |= R300_RS_INST_TEX_ID(i) | R300_RS_INST_TEX_CN_WRITE |
@@ -242,12 +275,17 @@ static void r300_update_rs_block(struct r300_context* r300)
                 R300_RS_INST_COL_ADDR(fp_offset);
             fp_offset++;
         }
+
+        for (i = 0; i < 8; i++)
+            debug_printf("inst %d: 0x%x\n", i, rs->inst[i]);
     }
 
     rs->count = (tex_count * 4) | (col_count << R300_IC_COUNT_SHIFT) |
         R300_HIRES_EN;
 
-    rs->inst_count = MAX2(col_count, tex_count);
+    rs->inst_count = MAX2(MAX2(col_count - 1, tex_count - 1), 0);
+
+    debug_printf("count: 0x%x, inst_count: 0x%x\n", rs->count, rs->inst_count);
 }
 
 void r300_update_derived_state(struct r300_context* r300)

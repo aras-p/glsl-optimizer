@@ -208,6 +208,10 @@ struct r300_vertex_format {
     uint32_t vap_prog_stream_cntl[8];
     /* R300_VAP_PROG_STREAK_CNTL_EXT_[0-7] */
     uint32_t vap_prog_stream_cntl_ext[8];
+    /* This is a map of VAP/SW TCL outputs into the GA/RS.
+     * tab[i] is the location of input i in GA/RS input memory.
+     * Named tab for historical reasons. */
+    int tab[16];
 };
 
 struct r300_context {
