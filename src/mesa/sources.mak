@@ -74,6 +74,7 @@ MAIN_SOURCES = \
 	main/texstate.c \
 	main/texstore.c \
 	main/varray.c \
+	main/viewport.c \
 	main/vtxfmt.c
 
 GLAPI_SOURCES = \

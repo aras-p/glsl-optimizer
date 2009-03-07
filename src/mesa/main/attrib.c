@@ -55,6 +55,7 @@
 #include "texparam.h"
 #include "texstate.h"
 #include "varray.h"
+#include "viewport.h"
 #include "mtypes.h"
 
 

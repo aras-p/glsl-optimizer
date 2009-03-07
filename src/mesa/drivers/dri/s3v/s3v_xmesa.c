@@ -4,11 +4,12 @@
 
 #include "s3v_context.h"
 #include "s3v_vb.h"
+#include "s3v_dri.h"
 #include "main/context.h"
 #include "main/matrix.h"
-#include "s3v_dri.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
+#include "main/viewport.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"

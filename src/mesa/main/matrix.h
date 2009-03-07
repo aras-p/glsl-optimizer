@@ -1,13 +1,9 @@
-/**
- * \file matrix.h
- * Matrix operations.
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  7.5
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -99,15 +95,6 @@ _mesa_MultTransposeMatrixfARB( const GLfloat *m );
 extern void GLAPIENTRY
 _mesa_MultTransposeMatrixdARB( const GLdouble *m );
 
-extern void GLAPIENTRY
-_mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height );
-
-extern void 
-_mesa_set_viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height );
-
-extern void GLAPIENTRY
-_mesa_DepthRange( GLclampd nearval, GLclampd farval );
-
 
 extern void 
 _mesa_init_matrix( GLcontext * ctx );
@@ -115,14 +102,8 @@ _mesa_init_matrix( GLcontext * ctx );
 extern void 
 _mesa_init_transform( GLcontext *ctx );
 
-extern void 
-_mesa_init_viewport( GLcontext *ctx );
-
 extern void
 _mesa_free_matrix_data( GLcontext *ctx );
-
-extern void 
-_mesa_free_viewport_data( GLcontext *ctx );
 
 extern void 
 _mesa_update_modelview_project( GLcontext *ctx, GLuint newstate );

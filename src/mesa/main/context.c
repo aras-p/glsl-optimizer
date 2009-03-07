@@ -143,6 +143,7 @@
 #include "mtypes.h"
 #include "varray.h"
 #include "version.h"
+#include "viewport.h"
 #include "vtxfmt.h"
 #include "glapi/glthread.h"
 #include "glapi/glapioffsets.h"

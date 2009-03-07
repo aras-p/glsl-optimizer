@@ -33,6 +33,7 @@
 #include "main/matrix.h"
 #include "main/renderbuffer.h"
 #include "main/scissor.h"
+#include "main/viewport.h"
 #include "st_context.h"
 #include "st_cb_fbo.h"
 #include "st_public.h"

@@ -1059,6 +1059,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\viewport.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\vbo\vbo_context.c"
 				>
 			</File>
@@ -1897,6 +1901,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\varray.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\viewport.h"
 				>
 			</File>
 			<File

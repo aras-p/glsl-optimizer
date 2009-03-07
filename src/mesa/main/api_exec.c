@@ -116,6 +116,7 @@
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
+#include "viewport.h"
 #if FEATURE_NV_vertex_program
 #include "shader/nvprogram.h"
 #endif

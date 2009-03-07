@@ -41,6 +41,7 @@
 #include "main/extensions.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
+#include "main/viewport.h"
 #if defined(USE_X86_ASM)
 #include "x86/common_x86_asm.h"
 #endif

@@ -31,6 +31,7 @@
 #include "main/matrix.h"
 #include "main/buffers.h"
 #include "main/scissor.h"
+#include "main/viewport.h"
 #include "vbo/vbo.h"
 #include "shader/shader_api.h"
 #include "glapi/glapi.h"
