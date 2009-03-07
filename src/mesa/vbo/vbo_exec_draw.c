@@ -204,7 +204,7 @@ static void vbo_exec_bind_arrays( GLcontext *ctx )
 
          if (exec->vtx.bufferobj->Name) {
             /* a real buffer obj: Ptr is an offset, not a pointer*/
-            int offset;
+            GLsizeiptr offset;
             assert(exec->vtx.bufferobj->Pointer);  /* buf should be mapped */
             offset = (GLbyte *) data - (GLbyte *) exec->vtx.bufferobj->Pointer;
             assert(offset >= 0);
