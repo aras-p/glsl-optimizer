@@ -275,7 +275,7 @@ void rcommon_flush_last_swtcl_prim( GLcontext *ctx  )
 		
 
 	if (RADEON_DEBUG & DEBUG_IOCTL)
-		fprintf(stderr, "%s\n", __FUNCTION__);
+		fprintf(stderr, "%s %p\n", __FUNCTION__, dma->current);
 	dma->flush = NULL;
 
 	if (dma->current) {
@@ -300,12 +300,19 @@ rcommonAllocDmaLowVerts( radeonContextPtr rmesa, int nverts, int vsize )
 {
 	GLuint bytes = vsize * nverts;
 	void *head;
-
+restart:
 	if (!rmesa->dma.current || rmesa->dma.current_vertexptr + bytes > rmesa->dma.current->size) {
                 radeonRefillCurrentDmaRegion(rmesa, bytes);
 	}
 
         if (!rmesa->dma.flush) {
+		/* make sure we have enough space to use this in cmdbuf */
+   		rcommonEnsureCmdBufSpace(&rmesa->radeon,
+			      rmesa->hw.max_state_size + (12*sizeof(int)),
+			      __FUNCTION__);
+		/* if cmdbuf flushed DMA restart */
+		if (!rmesa->dma.current)
+			goto restart;
                 rmesa->glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
                 rmesa->dma.flush = rcommon_flush_last_swtcl_prim;
         }
