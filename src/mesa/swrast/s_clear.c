@@ -22,8 +22,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/** XXX This file should be named s_clear.c */
-
 #include "main/glheader.h"
 #include "main/colormac.h"
 #include "main/macros.h"
