@@ -1270,7 +1270,6 @@ static void position_invariant(struct gl_program *prog)
 		else
 			vpi[i].Opcode = OPCODE_MAD;
 
-		vpi[i].StringPos = 0;
 		vpi[i].Data = 0;
 
 		if (i == 3)
