@@ -72,7 +72,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         r300_emit_rs_block_state(r300, &r300_rs_block_clear_state);
     }
 
-    BEGIN_CS(106 + (caps->has_tcl ? 2 : 0));
+    BEGIN_CS(99 + (caps->has_tcl ? 9 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -86,6 +86,13 @@ static void r300_surface_fill(struct pipe_context* pipe,
     /* XXX endian */
     if (caps->has_tcl) {
         OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VC_NO_SWAP);
+        OUT_CS_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE |
+            R300_PS_UCP_MODE_CLIP_AS_TRIFAN);
+        OUT_CS_REG_SEQ(R300_VAP_GB_VERT_CLIP_ADJ, 4);
+        OUT_CS_32F(1.0);
+        OUT_CS_32F(1.0);
+        OUT_CS_32F(1.0);
+        OUT_CS_32F(1.0);
     } else {
         OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VC_NO_SWAP |
                 R300_VAP_TCL_BYPASS);
@@ -93,12 +100,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_VAP_PROG_STREAM_CNTL_0, 0x0);
     /* XXX magic number not in r300_reg */
     OUT_CS_REG(R300_VAP_PSC_SGN_NORM_CNTL, 0xAAAAAAAA);
-    OUT_CS_REG(R300_VAP_CLIP_CNTL, 0x0);
-    OUT_CS_REG_SEQ(R300_VAP_GB_VERT_CLIP_ADJ, 4);
-    OUT_CS_32F(1.0);
-    OUT_CS_32F(1.0);
-    OUT_CS_32F(1.0);
-    OUT_CS_32F(1.0);
     /* XXX point tex stuffing */
     OUT_CS_REG_SEQ(R300_GA_POINT_S0, 1);
     OUT_CS_32F(0.0);
@@ -163,11 +164,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_32F((float)y);
     OUT_CS_32F(1.0);
     OUT_CS_32F(0.0);
-
-    if (caps->has_tcl) {
-        OUT_CS_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE |
-            R300_PS_UCP_MODE_CLIP_AS_TRIFAN);
-    }
 
     /* XXX */
     OUT_CS_REG(R300_SC_CLIP_RULE, 0xaaaa);

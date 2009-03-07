@@ -34,9 +34,8 @@ void r300_emit_invariant_state(struct r300_context* r300)
     struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
-    BEGIN_CS(26);
-    /* Amount of time to wait for vertex fetches in PVS */
-    OUT_CS_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xffff);
+    BEGIN_CS(24 + (caps->has_tcl ? 2: 0));
+
     /* Various GB enables */
     OUT_CS_REG(R300_GB_ENABLE, R300_GB_POINT_STUFF_ENABLE |
         R300_GB_LINE_STUFF_ENABLE | R300_GB_TRIANGLE_STUFF_ENABLE);
@@ -69,5 +68,12 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_REG(R300_FG_FOG_COLOR_G, 0x00000000);
     OUT_CS_REG(R300_FG_FOG_COLOR_B, 0x00000000);
     OUT_CS_REG(R300_FG_DEPTH_SRC, 0x00000000);
+
+    /* TCL-only stuff */
+    if (caps->has_tcl) {
+        /* Amount of time to wait for vertex fetches in PVS */
+        OUT_CS_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xffff);
+    }
+
     END_CS;
 }
