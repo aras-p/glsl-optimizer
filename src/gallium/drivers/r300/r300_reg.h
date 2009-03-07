@@ -326,6 +326,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_WRITE_ENA_Z                         4
 #       define R300_WRITE_ENA_W                         8
 #       define R300_SWIZZLE1_SHIFT                      16
+
+#       define R300_VAP_SWIZZLE_XYZW \
+        ((R300_SWIZZLE_SELECT_X << R300_SWIZZLE_SELECT_X_SHIFT) | \
+         (R300_SWIZZLE_SELECT_Y << R300_SWIZZLE_SELECT_Y_SHIFT) | \
+         (R300_SWIZZLE_SELECT_Z << R300_SWIZZLE_SELECT_Z_SHIFT) | \
+         (R300_SWIZZLE_SELECT_W << R300_SWIZZLE_SELECT_W_SHIFT) | \
+         (0xf << R300_WRITE_ENA_SHIFT))
+
 #define R300_VAP_PROG_STREAM_CNTL_EXT_1                 0x21e4
 #define R300_VAP_PROG_STREAM_CNTL_EXT_2                 0x21e8
 #define R300_VAP_PROG_STREAM_CNTL_EXT_3                 0x21ec

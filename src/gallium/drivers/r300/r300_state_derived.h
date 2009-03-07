@@ -27,6 +27,7 @@
 
 #include "r300_context.h"
 #include "r300_reg.h"
+#include "r300_state_inlines.h"
 
 void r300_update_derived_state(struct r300_context* r300);
 

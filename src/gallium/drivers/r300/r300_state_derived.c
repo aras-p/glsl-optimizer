@@ -25,30 +25,6 @@
 /* r300_state_derived: Various bits of state which are dependent upon
  * currently bound CSO data. */
 
-static uint32_t translate_vertex_data_type(int type) {
-    switch (type) {
-        case EMIT_1F:
-        case EMIT_1F_PSIZE:
-            return R300_DATA_TYPE_FLOAT_1;
-            break;
-        case EMIT_2F:
-            return R300_DATA_TYPE_FLOAT_2;
-            break;
-        case EMIT_3F:
-            return R300_DATA_TYPE_FLOAT_3;
-            break;
-        case EMIT_4F:
-            return R300_DATA_TYPE_FLOAT_4;
-            break;
-        default:
-            debug_printf("r300: Implementation error: "
-                    "Bad vertex data type!\n");
-            break;
-    }
-
-    return 0;
-}
-
 /* Update the vertex_info struct in our r300_context.
  *
  * The vertex_info struct describes the post-TCL format of vertices. It is
@@ -156,42 +132,31 @@ static void r300_update_vertex_layout(struct r300_context* r300)
 
     if (memcmp(&r300->vertex_info, &vinfo, sizeof(struct vertex_info))) {
         uint32_t temp;
-
-#define BORING_SWIZZLE \
-        ((R300_SWIZZLE_SELECT_X << R300_SWIZZLE_SELECT_X_SHIFT) | \
-         (R300_SWIZZLE_SELECT_Y << R300_SWIZZLE_SELECT_Y_SHIFT) | \
-         (R300_SWIZZLE_SELECT_Z << R300_SWIZZLE_SELECT_Z_SHIFT) | \
-         (R300_SWIZZLE_SELECT_W << R300_SWIZZLE_SELECT_W_SHIFT) | \
-         (0xf << R300_WRITE_ENA_SHIFT))
+        debug_printf("attrib count: %d, fp input count: %d\n",
+                vinfo.num_attribs, info->num_inputs);
+        for (i = 0; i < vinfo.num_attribs; i++) {
+            debug_printf("attrib: offset %d, interp %d, size %d,"
+                   " tab %d\n", vinfo.attrib[i].src_index,
+                   vinfo.attrib[i].interp_mode, vinfo.attrib[i].emit,
+                   tab[i]);
+        }
 
         for (i = 0; i < vinfo.num_attribs; i++) {
             /* Make sure we have a proper destination for our attribute */
-            if (tab[i] == -1) {
-                debug_printf("attrib count: %d, fp input count: %d\n",
-                        vinfo.num_attribs, info->num_inputs);
-                for (i = 0; i < vinfo.num_attribs; i++) {
-                    debug_printf("attrib: offset %d, interp %d, size %d,"
-                           " tab %d\n", vinfo.attrib[i].src_index,
-                           vinfo.attrib[i].interp_mode, vinfo.attrib[i].emit,
-                           tab[i]);
-                }
-                assert(0);
-            }
+            assert(tab[i] == -1);
 
             temp = translate_vertex_data_type(vinfo.attrib[i].emit) |
-                (tab[i] << R300_DST_VEC_LOC_SHIFT) | R300_SIGNED;
+                (tab[i] << R300_DST_VEC_LOC_SHIFT);
             if (i & 1) {
-                r300->vertex_info.vap_prog_stream_cntl[i >> 1] &= 0xffff;
-                r300->vertex_info.vap_prog_stream_cntl[i >> 1] |=
-                        temp << 16;
+                r300->vertex_info.vap_prog_stream_cntl[i >> 1] &= 0x0000ffff;
+                r300->vertex_info.vap_prog_stream_cntl[i >> 1] |= temp << 16;
             } else {
                 r300->vertex_info.vap_prog_stream_cntl[i >> 1] &= 0xffff0000;
-                r300->vertex_info.vap_prog_stream_cntl[i >> 1] |=
-                    temp;
+                r300->vertex_info.vap_prog_stream_cntl[i >> 1] |= temp;
             }
 
             r300->vertex_info.vap_prog_stream_cntl_ext[i >> 1] |=
-                (BORING_SWIZZLE << (i & 1 ? 16 : 0));
+                (R300_VAP_SWIZZLE_XYZW << (i & 1 ? 16 : 0));
         }
         r300->vertex_info.vap_prog_stream_cntl[i >> 1] |= (R300_LAST_VEC <<
                 (i & 1 ? 16 : 0));

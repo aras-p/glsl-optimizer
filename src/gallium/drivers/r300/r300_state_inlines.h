@@ -344,4 +344,32 @@ static INLINE uint32_t r300_translate_gb_pipes(int pipe_count)
     return 0;
 }
 
+static uint32_t translate_vertex_data_type(int type) {
+    switch (type) {
+        case EMIT_1F:
+        case EMIT_1F_PSIZE:
+            return R300_DATA_TYPE_FLOAT_1 | R300_SIGNED;
+            break;
+        case EMIT_2F:
+            return R300_DATA_TYPE_FLOAT_2 | R300_SIGNED;
+            break;
+        case EMIT_3F:
+            return R300_DATA_TYPE_FLOAT_3 | R300_SIGNED;
+            break;
+        case EMIT_4F:
+            return R300_DATA_TYPE_FLOAT_4 | R300_SIGNED;
+            break;
+        case EMIT_4UB:
+            return R300_DATA_TYPE_BYTE;
+            break;
+        default:
+            debug_printf("r300: Implementation error: "
+                    "Bad vertex data type!\n");
+            assert(0);
+            break;
+    }
+
+    return 0;
+}
+
 #endif /* R300_STATE_INLINES_H */

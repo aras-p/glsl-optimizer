@@ -72,7 +72,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         r300_emit_rs_block_state(r300, &r300_rs_block_clear_state);
     }
 
-    BEGIN_CS(112 + (caps->has_tcl ? 2 : 0));
+    BEGIN_CS(106 + (caps->has_tcl ? 2 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -80,8 +80,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
         R300_VPORT_X_OFFSET_ENA | R300_VPORT_Y_SCALE_ENA |
         R300_VPORT_Y_OFFSET_ENA | R300_VPORT_Z_SCALE_ENA |
         R300_VPORT_Z_OFFSET_ENA | R300_VTX_W0_FMT);
-    /* Vertex size. */
-    OUT_CS_REG(R300_VAP_VTX_SIZE, 0x8);
     /* Max and min vertex index clamp. */
     OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, 0xFFFFFF);
     OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, 0x0);
@@ -145,11 +143,14 @@ static void r300_surface_fill(struct pipe_context* pipe,
             ((R300_LAST_VEC | (2 << R300_DST_VEC_LOC_SHIFT) |
                 R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_1_SHIFT));
     }
-    OUT_CS_REG(R300_VAP_PROG_STREAM_CNTL_EXT_0, 0xF688F688);
+    OUT_CS_REG(R300_VAP_PROG_STREAM_CNTL_EXT_0,
+            (R300_VAP_SWIZZLE_XYZW << R300_SWIZZLE0_SHIFT) |
+            (R300_VAP_SWIZZLE_XYZW << R300_SWIZZLE1_SHIFT));
     OUT_CS_REG(R300_VAP_VTX_STATE_CNTL, 0x1);
     OUT_CS_REG(R300_VAP_VSM_VTX_ASSM, 0x405);
     OUT_CS_REG(R300_SE_VTE_CNTL, 0x0000043F);
-    OUT_CS_REG(R300_VAP_VTX_SIZE, 0x00000008);
+    /* Vertex size. */
+    OUT_CS_REG(R300_VAP_VTX_SIZE, 0x8);
     OUT_CS_REG(R300_VAP_PSC_SGN_NORM_CNTL, 0xAAAAAAAA);
     OUT_CS_REG(R300_VAP_OUTPUT_VTX_FMT_0, 0x00000003);
     OUT_CS_REG(R300_VAP_OUTPUT_VTX_FMT_1, 0x00000000);
