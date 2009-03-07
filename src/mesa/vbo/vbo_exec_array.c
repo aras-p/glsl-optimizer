@@ -95,32 +95,33 @@ static void bind_array_obj( GLcontext *ctx )
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
+   struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    GLuint i;
 
    /* TODO: Fix the ArrayObj struct to keep legacy arrays in an array
     * rather than as individual named arrays.  Then this function can
     * go away.
     */
-   exec->array.legacy_array[VERT_ATTRIB_POS] = &ctx->Array.ArrayObj->Vertex;
+   exec->array.legacy_array[VERT_ATTRIB_POS] = &arrayObj->Vertex;
    exec->array.legacy_array[VERT_ATTRIB_WEIGHT] = &vbo->legacy_currval[VERT_ATTRIB_WEIGHT];
-   exec->array.legacy_array[VERT_ATTRIB_NORMAL] = &ctx->Array.ArrayObj->Normal;
-   exec->array.legacy_array[VERT_ATTRIB_COLOR0] = &ctx->Array.ArrayObj->Color;
-   exec->array.legacy_array[VERT_ATTRIB_COLOR1] = &ctx->Array.ArrayObj->SecondaryColor;
-   exec->array.legacy_array[VERT_ATTRIB_FOG] = &ctx->Array.ArrayObj->FogCoord;
-   exec->array.legacy_array[VERT_ATTRIB_COLOR_INDEX] = &ctx->Array.ArrayObj->Index;
-   if (ctx->Array.ArrayObj->PointSize.Enabled) {
+   exec->array.legacy_array[VERT_ATTRIB_NORMAL] = &arrayObj->Normal;
+   exec->array.legacy_array[VERT_ATTRIB_COLOR0] = &arrayObj->Color;
+   exec->array.legacy_array[VERT_ATTRIB_COLOR1] = &arrayObj->SecondaryColor;
+   exec->array.legacy_array[VERT_ATTRIB_FOG] = &arrayObj->FogCoord;
+   exec->array.legacy_array[VERT_ATTRIB_COLOR_INDEX] = &arrayObj->Index;
+   if (arrayObj->PointSize.Enabled) {
       /* this aliases COLOR_INDEX */
-      exec->array.legacy_array[VERT_ATTRIB_POINT_SIZE] = &ctx->Array.ArrayObj->PointSize;
+      exec->array.legacy_array[VERT_ATTRIB_POINT_SIZE] = &arrayObj->PointSize;
    }
-   exec->array.legacy_array[VERT_ATTRIB_EDGEFLAG] = &ctx->Array.ArrayObj->EdgeFlag;
+   exec->array.legacy_array[VERT_ATTRIB_EDGEFLAG] = &arrayObj->EdgeFlag;
 
    for (i = 0; i < 8; i++)
-      exec->array.legacy_array[VERT_ATTRIB_TEX0 + i] = &ctx->Array.ArrayObj->TexCoord[i];
+      exec->array.legacy_array[VERT_ATTRIB_TEX0 + i] = &arrayObj->TexCoord[i];
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
-      exec->array.generic_array[i] = &ctx->Array.ArrayObj->VertexAttrib[i];
+      exec->array.generic_array[i] = &arrayObj->VertexAttrib[i];
    
-   exec->array.array_obj = ctx->Array.ArrayObj->Name;
+   exec->array.array_obj = arrayObj->Name;
 }
 
 static void recalculate_input_bindings( GLcontext *ctx )
