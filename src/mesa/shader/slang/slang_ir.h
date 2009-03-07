@@ -171,7 +171,7 @@ typedef enum
  */
 struct slang_ir_storage_
 {
-   enum register_file File;  /**< PROGRAM_TEMPORARY, PROGRAM_INPUT, etc */
+   gl_register_file File;  /**< PROGRAM_TEMPORARY, PROGRAM_INPUT, etc */
    GLint Index;    /**< -1 means unallocated */
    GLint Size;     /**< number of floats or ints */
    GLuint Swizzle; /**< Swizzle AND writemask info */
@@ -180,7 +180,7 @@ struct slang_ir_storage_
    GLboolean RelAddr; /* we'll remove this eventually */
 
    GLboolean IsIndirect;
-   enum register_file IndirectFile;
+   gl_register_file IndirectFile;
    GLint IndirectIndex;
    GLuint IndirectSwizzle;
    GLuint TexTarget;  /**< If File==PROGRAM_SAMPLER, one of TEXTURE_x_INDEX */
@@ -235,15 +235,15 @@ _slang_ir_info(slang_ir_opcode opcode);
 
 extern void
 _slang_init_ir_storage(slang_ir_storage *st,
-                       enum register_file file, GLint index, GLint size,
+                       gl_register_file file, GLint index, GLint size,
                        GLuint swizzle);
 
 extern slang_ir_storage *
-_slang_new_ir_storage(enum register_file file, GLint index, GLint size);
+_slang_new_ir_storage(gl_register_file file, GLint index, GLint size);
 
 
 extern slang_ir_storage *
-_slang_new_ir_storage_swz(enum register_file file, GLint index, GLint size,
+_slang_new_ir_storage_swz(gl_register_file file, GLint index, GLint size,
                           GLuint swizzle);
 
 extern slang_ir_storage *
@@ -252,10 +252,10 @@ _slang_new_ir_storage_relative(GLint index, GLint size,
 
 
 extern slang_ir_storage *
-_slang_new_ir_storage_indirect(enum register_file file,
+_slang_new_ir_storage_indirect(gl_register_file file,
                                GLint index,
                                GLint size,
-                               enum register_file indirectFile,
+                               gl_register_file indirectFile,
                                GLint indirectIndex,
                                GLuint indirectSwizzle);
 

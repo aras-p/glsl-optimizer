@@ -48,7 +48,7 @@
  */
 static GLuint
 map_register_file(
-   enum register_file file,
+   gl_register_file file,
    GLuint index,
    const GLuint immediateMapping[],
    GLboolean indirectAccess )

@@ -446,7 +446,7 @@ new_instruction(slang_emit_info *emitInfo, gl_inst_opcode opcode)
 
 static struct prog_instruction *
 emit_arl_load(slang_emit_info *emitInfo,
-              enum register_file file, GLint index, GLuint swizzle)
+              gl_register_file file, GLint index, GLuint swizzle)
 {
    struct prog_instruction *inst = new_instruction(emitInfo, OPCODE_ARL);
    inst->SrcReg[0].File = file;

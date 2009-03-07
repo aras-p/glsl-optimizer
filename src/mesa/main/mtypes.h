@@ -1703,24 +1703,24 @@ struct gl_evaluators
  * be "uniform" variables since they can only be set outside glBegin/End.
  * They're also all stored in the same Parameters array.
  */
-enum register_file
+typedef enum
 {
-   PROGRAM_TEMPORARY = 0,   /**< machine->Temporary[] */
-   PROGRAM_LOCAL_PARAM = 1, /**< gl_program->LocalParams[] */
-   PROGRAM_ENV_PARAM = 2,   /**< gl_program->Parameters[] */
-   PROGRAM_STATE_VAR = 3,   /**< gl_program->Parameters[] */
-   PROGRAM_INPUT = 4,       /**< machine->Inputs[] */
-   PROGRAM_OUTPUT = 5,      /**< machine->Outputs[] */
-   PROGRAM_NAMED_PARAM = 6, /**< gl_program->Parameters[] */
-   PROGRAM_CONSTANT = 7,    /**< gl_program->Parameters[] */
-   PROGRAM_UNIFORM = 8,     /**< gl_program->Parameters[] */
-   PROGRAM_VARYING = 9,     /**< machine->Inputs[]/Outputs[] */
-   PROGRAM_WRITE_ONLY = 10, /**< A dummy, write-only register */
-   PROGRAM_ADDRESS = 11,    /**< machine->AddressReg */
-   PROGRAM_SAMPLER = 12,    /**< for shader samplers, compile-time only */
-   PROGRAM_UNDEFINED = 13,  /**< Invalid value */
+   PROGRAM_TEMPORARY,   /**< machine->Temporary[] */
+   PROGRAM_LOCAL_PARAM, /**< gl_program->LocalParams[] */
+   PROGRAM_ENV_PARAM,   /**< gl_program->Parameters[] */
+   PROGRAM_STATE_VAR,   /**< gl_program->Parameters[] */
+   PROGRAM_INPUT,       /**< machine->Inputs[] */
+   PROGRAM_OUTPUT,      /**< machine->Outputs[] */
+   PROGRAM_NAMED_PARAM, /**< gl_program->Parameters[] */
+   PROGRAM_CONSTANT,    /**< gl_program->Parameters[] */
+   PROGRAM_UNIFORM,     /**< gl_program->Parameters[] */
+   PROGRAM_VARYING,     /**< machine->Inputs[]/Outputs[] */
+   PROGRAM_WRITE_ONLY,  /**< A dummy, write-only register */
+   PROGRAM_ADDRESS,     /**< machine->AddressReg */
+   PROGRAM_SAMPLER,     /**< for shader samplers, compile-time only */
+   PROGRAM_UNDEFINED,   /**< Invalid/TBD value */
    PROGRAM_FILE_MAX
-};
+} gl_register_file;
 
 
 /** Vertex and fragment instructions */

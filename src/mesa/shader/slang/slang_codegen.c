@@ -2998,7 +2998,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
    slang_ir_node *varDecl, *n;
    slang_ir_storage *store;
    GLint arrayLen, size, totalSize;  /* if array then totalSize > size */
-   enum register_file file;
+   gl_register_file file;
 
    /*assert(!var->declared);*/
    var->declared = GL_TRUE;

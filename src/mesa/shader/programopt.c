@@ -375,7 +375,7 @@ _mesa_count_texture_instructions(struct gl_program *prog)
  * So, rewrite the program to use a temporary register in this case.
  */
 void
-_mesa_remove_output_reads(struct gl_program *prog, enum register_file type)
+_mesa_remove_output_reads(struct gl_program *prog, gl_register_file type)
 {
    GLuint i;
    GLint outputMap[VERT_RESULT_MAX];

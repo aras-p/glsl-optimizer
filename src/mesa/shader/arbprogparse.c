@@ -2246,7 +2246,7 @@ parse_declaration (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc
 static GLuint
 parse_masked_dst_reg (GLcontext * ctx, const GLubyte ** inst,
                       struct var_cache **vc_head, struct arb_program *Program,
-                      enum register_file *File, GLuint *Index, GLint *WriteMask)
+                      gl_register_file *File, GLuint *Index, GLint *WriteMask)
 {
    GLuint tmp, result;
    struct var_cache *dst;
@@ -2478,7 +2478,7 @@ static GLuint
 parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
                struct var_cache **vc_head,
                struct arb_program *Program,
-               enum register_file * File, GLint * Index,
+               gl_register_file * File, GLint * Index,
                GLboolean *IsRelOffset )
 {
    struct var_cache *src;
@@ -2527,7 +2527,7 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
                   return 1;
                }
 
-               *File = (enum register_file) src->param_binding_type;
+               *File = (gl_register_file) src->param_binding_type;
 
                switch (*(*inst)++) {
                   case ARRAY_INDEX_ABSOLUTE:
@@ -2573,7 +2573,7 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
                if (parse_param_use (ctx, inst, vc_head, Program, &src))
                   return 1;
 
-               *File = (enum register_file) src->param_binding_type;
+               *File = (gl_register_file) src->param_binding_type;
                *Index = src->param_binding_begin;
                break;
          }
@@ -2598,7 +2598,7 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
 
                /* XXX: We have to handle offsets someplace in here!  -- or are those above? */
             case vt_param:
-               *File = (enum register_file) src->param_binding_type;
+               *File = (gl_register_file) src->param_binding_type;
                *Index = src->param_binding_begin;
                break;
 
@@ -2623,7 +2623,7 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
    }
 
    if (*File == PROGRAM_STATE_VAR) {
-      enum register_file file;
+      gl_register_file file;
 
       /* If we're referencing the Program->Parameters[] array, check if the
        * parameter is really a constant/literal.  If so, set File to CONSTANT.
@@ -2652,7 +2652,7 @@ parse_vector_src_reg(GLcontext *ctx, const GLubyte **inst,
                      struct arb_program *program,
                      struct prog_src_register *reg)
 {
-   enum register_file file;
+   gl_register_file file;
    GLint index;
    GLubyte negateMask;
    GLubyte swizzle[4];
@@ -2686,7 +2686,7 @@ parse_scalar_src_reg(GLcontext *ctx, const GLubyte **inst,
                      struct arb_program *program,
                      struct prog_src_register *reg)
 {
-   enum register_file file;
+   gl_register_file file;
    GLint index;
    GLubyte negateMask;
    GLubyte swizzle[4];
@@ -2722,7 +2722,7 @@ parse_dst_reg(GLcontext * ctx, const GLubyte ** inst,
 {
    GLint mask;
    GLuint idx;
-   enum register_file file;
+   gl_register_file file;
 
    if (parse_masked_dst_reg (ctx, inst, vc_head, program, &file, &idx, &mask))
       return 1;
@@ -3013,7 +3013,7 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
 	 {
 	    GLubyte swizzle[4];
 	    GLubyte negateMask;
-            enum register_file file;
+            gl_register_file file;
 	    GLint index;
 
 	    if (parse_src_reg(ctx, inst, vc_head, Program, &file, &index, &rel))
@@ -3354,7 +3354,7 @@ parse_vp_instruction (GLcontext * ctx, const GLubyte ** inst,
 	    GLubyte swizzle[4]; 
 	    GLubyte negateMask;
 	    GLboolean relAddr;
-            enum register_file file;
+            gl_register_file file;
 	    GLint index;
 
 	    if (parse_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))

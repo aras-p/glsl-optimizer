@@ -126,7 +126,7 @@ static unsigned long t_dst_mask(GLuint mask)
 	return mask & VSF_FLAG_ALL;
 }
 
-static unsigned long t_dst_class(enum register_file file)
+static unsigned long t_dst_class(gl_register_file file)
 {
 
 	switch (file) {
@@ -161,7 +161,7 @@ static unsigned long t_dst_index(struct r300_vertex_program *vp,
 	return dst->Index;
 }
 
-static unsigned long t_src_class(enum register_file file)
+static unsigned long t_src_class(gl_register_file file)
 {
 	switch (file) {
 	case PROGRAM_TEMPORARY:
