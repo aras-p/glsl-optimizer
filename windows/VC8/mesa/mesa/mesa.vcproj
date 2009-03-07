@@ -743,7 +743,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\swrast\s_buffers.c"
+				RelativePath="..\..\..\..\src\mesa\swrast\s_clear.c"
 				>
 			</File>
 			<File

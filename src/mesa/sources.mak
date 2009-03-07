@@ -103,7 +103,7 @@ SWRAST_SOURCES = \
 	swrast/s_bitmap.c \
 	swrast/s_blend.c \
 	swrast/s_blit.c \
-	swrast/s_buffers.c \
+	swrast/s_clear.c \
 	swrast/s_copypix.c \
 	swrast/s_context.c \
 	swrast/s_depth.c \
