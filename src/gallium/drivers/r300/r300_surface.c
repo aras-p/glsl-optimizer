@@ -72,7 +72,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         r300_emit_rs_block_state(r300, &r300_rs_block_clear_state);
     }
 
-    BEGIN_CS(99 + (caps->has_tcl ? 9 : 0));
+    BEGIN_CS(97 + (caps->has_tcl ? 9 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -97,7 +97,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
         OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VC_NO_SWAP |
                 R300_VAP_TCL_BYPASS);
     }
-    OUT_CS_REG(R300_VAP_PROG_STREAM_CNTL_0, 0x0);
     /* XXX magic number not in r300_reg */
     OUT_CS_REG(R300_VAP_PSC_SGN_NORM_CNTL, 0xAAAAAAAA);
     /* XXX point tex stuffing */

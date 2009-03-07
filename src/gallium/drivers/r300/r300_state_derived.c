@@ -161,6 +161,8 @@ static void r300_update_vertex_layout(struct r300_context* r300)
             r300->vertex_info.vap_prog_stream_cntl_ext[i >> 1] |=
                 (R300_VAP_SWIZZLE_XYZW << (i & 1 ? 16 : 0));
         }
+        /* Set the last vector. */
+        i--;
         r300->vertex_info.vap_prog_stream_cntl[i >> 1] |= (R300_LAST_VEC <<
                 (i & 1 ? 16 : 0));
 
@@ -226,8 +228,6 @@ static void r300_update_rs_block(struct r300_context* r300)
                 R500_RS_INST_COL_ADDR(fp_offset);
             fp_offset++;
         }
-
-        rs->inst_count = MAX2(col_count, tex_count);
     } else {
         for (i = 0; i < vinfo->num_attribs; i++) {
             memory_pos = tab[vinfo->attrib[i].src_index] * 4;
@@ -261,9 +261,6 @@ static void r300_update_rs_block(struct r300_context* r300)
                 R300_RS_SEL_Q(R300_RS_SEL_K1);
         }
 
-        for (i = 0; i < 8; i++)
-            debug_printf("ip %d: 0x%x\n", i, rs->ip[i]);
-
         for (i = 0; i < tex_count; i++) {
             rs->inst[i] |= R300_RS_INST_TEX_ID(i) | R300_RS_INST_TEX_CN_WRITE |
                 R300_RS_INST_TEX_ADDR(fp_offset);
@@ -275,17 +272,12 @@ static void r300_update_rs_block(struct r300_context* r300)
                 R300_RS_INST_COL_ADDR(fp_offset);
             fp_offset++;
         }
-
-        for (i = 0; i < 8; i++)
-            debug_printf("inst %d: 0x%x\n", i, rs->inst[i]);
     }
 
     rs->count = (tex_count * 4) | (col_count << R300_IC_COUNT_SHIFT) |
         R300_HIRES_EN;
 
     rs->inst_count = MAX2(MAX2(col_count - 1, tex_count - 1), 0);
-
-    debug_printf("count: 0x%x, inst_count: 0x%x\n", rs->count, rs->inst_count);
 }
 
 void r300_update_derived_state(struct r300_context* r300)

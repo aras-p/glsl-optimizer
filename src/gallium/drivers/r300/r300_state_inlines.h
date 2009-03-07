@@ -348,16 +348,16 @@ static uint32_t translate_vertex_data_type(int type) {
     switch (type) {
         case EMIT_1F:
         case EMIT_1F_PSIZE:
-            return R300_DATA_TYPE_FLOAT_1 | R300_SIGNED;
+            return R300_DATA_TYPE_FLOAT_1;
             break;
         case EMIT_2F:
-            return R300_DATA_TYPE_FLOAT_2 | R300_SIGNED;
+            return R300_DATA_TYPE_FLOAT_2;
             break;
         case EMIT_3F:
-            return R300_DATA_TYPE_FLOAT_3 | R300_SIGNED;
+            return R300_DATA_TYPE_FLOAT_3;
             break;
         case EMIT_4F:
-            return R300_DATA_TYPE_FLOAT_4 | R300_SIGNED;
+            return R300_DATA_TYPE_FLOAT_4;
             break;
         case EMIT_4UB:
             return R300_DATA_TYPE_BYTE;

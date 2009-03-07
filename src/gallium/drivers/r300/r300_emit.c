@@ -160,7 +160,7 @@ void r300_emit_fb_state(struct r300_context* r300,
     struct r300_texture* tex;
     int i;
 
-    BEGIN_CS((5 * fb->nr_cbufs) + (fb->zsbuf ? 5 : 0) + 4);
+    BEGIN_CS((6 * fb->nr_cbufs) + (fb->zsbuf ? 5 : 0) + 4);
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = (struct r300_texture*)fb->cbufs[i]->texture;
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
@@ -334,6 +334,11 @@ void r300_emit_dirty_state(struct r300_context* r300)
     if (r300->dirty_state & R300_NEW_RASTERIZER) {
         r300_emit_rs_state(r300, r300->rs_state);
         r300->dirty_state &= ~R300_NEW_RASTERIZER;
+    }
+
+    if (r300->dirty_state & R300_NEW_RS_BLOCK) {
+        r300_emit_rs_block_state(r300, r300->rs_block);
+        r300->dirty_state &= ~R300_NEW_RS_BLOCK;
     }
 
     if (r300->dirty_state & R300_NEW_SCISSOR) {
