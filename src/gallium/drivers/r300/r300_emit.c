@@ -265,7 +265,9 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
     CS_LOCALS(r300);
     int i;
 
-    BEGIN_CS(24);
+    BEGIN_CS(26);
+    OUT_CS_REG(R300_VAP_VTX_SIZE, r300->vertex_info.vinfo.size);
+
     OUT_CS_REG_SEQ(R300_VAP_VTX_STATE_CNTL, 2);
     OUT_CS(r300->vertex_info.vinfo.hwfmt[0]);
     OUT_CS(r300->vertex_info.vinfo.hwfmt[1]);
