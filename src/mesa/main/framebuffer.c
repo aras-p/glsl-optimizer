@@ -252,22 +252,6 @@ _mesa_reference_framebuffer(struct gl_framebuffer **ptr,
 
 
 /**
- * XXX this function is deprecated.
- * Undo/remove a reference to a framebuffer object.
- * Decrement the framebuffer object's reference count and delete it when
- * the refcount hits zero.
- * Note: we pass the address of a pointer and set it to NULL.
- */
-void
-_mesa_unreference_framebuffer(struct gl_framebuffer **fb)
-{
-   _mesa_reference_framebuffer(fb, NULL);
-}
-
-
-
-
-/**
  * Resize the given framebuffer's renderbuffers to the new width and height.
  * This should only be used for window-system framebuffers, not
  * user-created renderbuffers (i.e. made with GL_EXT_framebuffer_object).

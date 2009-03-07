@@ -62,7 +62,7 @@ wmesa_free_framebuffer(HDC hdc)
 	else
 	    prev->next = pwfb->next;
         fb = &pwfb->Base;
-        _mesa_unreference_framebuffer(&fb); 
+        _mesa_reference_framebuffer(&fb, NULL); 
     }
 }
 

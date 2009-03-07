@@ -476,7 +476,7 @@ driDestroyDrawable(__DRIdrawable *buf)
 	_mesa_free(buf->row);
 
 	fb->DeletePending = GL_TRUE;
-	_mesa_unreference_framebuffer(&fb);
+	_mesa_reference_framebuffer(&fb, NULL);
     }
 }
 

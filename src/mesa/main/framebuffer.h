@@ -47,9 +47,6 @@ _mesa_reference_framebuffer(struct gl_framebuffer **ptr,
                             struct gl_framebuffer *fb);
 
 extern void
-_mesa_unreference_framebuffer(struct gl_framebuffer **fb);
-
-extern void
 _mesa_resize_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb,
                          GLuint width, GLuint height);
 

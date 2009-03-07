@@ -154,7 +154,7 @@ void st_resize_framebuffer( struct st_framebuffer *stfb,
 
 void st_unreference_framebuffer( struct st_framebuffer *stfb )
 {
-   _mesa_unreference_framebuffer((struct gl_framebuffer **) &stfb);
+   _mesa_reference_framebuffer((struct gl_framebuffer **) &stfb, NULL);
 }
 
 
