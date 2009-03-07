@@ -107,6 +107,7 @@ nouveau_context_init(struct nouveau_screen *nv_screen,
 			return 1;
 		}
 		nv_screen->nvc = nvc;
+		pipe_reference_init(&nvc->reference, 1);
 	}
 
 	pipe_reference((struct pipe_reference**)&nv->nvc, &nvc->reference);
