@@ -85,9 +85,9 @@ _mesa_v16_x86_general_xform( GLfloat *dest,
 #endif
 
 
+#ifdef USE_X86_ASM
 static void _mesa_init_x86_transform_asm( void )
 {
-#ifdef USE_X86_ASM
    ASSIGN_XFORM_GROUP( x86, 2 );
    ASSIGN_XFORM_GROUP( x86, 3 );
    ASSIGN_XFORM_GROUP( x86, 4 );
@@ -99,8 +99,8 @@ static void _mesa_init_x86_transform_asm( void )
    _math_test_all_transform_functions( "x86" );
    _math_test_all_cliptest_functions( "x86" );
 #endif
-#endif
 }
+#endif
 
 
 void _mesa_init_all_x86_transform_asm( void )
