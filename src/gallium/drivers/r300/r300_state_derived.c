@@ -143,7 +143,7 @@ static void r300_update_vertex_layout(struct r300_context* r300)
 
         for (i = 0; i < vinfo.num_attribs; i++) {
             /* Make sure we have a proper destination for our attribute */
-            assert(tab[i] == -1);
+            assert(tab[i] != -1);
 
             temp = translate_vertex_data_type(vinfo.attrib[i].emit) |
                 (tab[i] << R300_DST_VEC_LOC_SHIFT);
