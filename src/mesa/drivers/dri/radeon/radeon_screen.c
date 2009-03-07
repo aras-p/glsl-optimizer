@@ -363,7 +363,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    unsigned char *RADEONMMIO;
    int i;
    int ret;
-   uint32_t temp;
+   uint32_t temp = 0;
 
    if (sPriv->devPrivSize != sizeof(RADEONDRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(RADEONDRIRec) does not match passed size from device driver\n");
