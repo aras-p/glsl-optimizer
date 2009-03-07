@@ -181,11 +181,11 @@ static void r300_update_vertex_layout(struct r300_context* r300)
             temp = translate_vertex_data_type(vinfo.attrib[i].emit) |
                 (tab[i] << R300_DST_VEC_LOC_SHIFT) | R300_SIGNED;
             if (i & 1) {
-                r300->vertex_info.vap_prog_stream_cntl[i >> 1] &= 0xffff0000;
+                r300->vertex_info.vap_prog_stream_cntl[i >> 1] &= 0xffff;
                 r300->vertex_info.vap_prog_stream_cntl[i >> 1] |=
                         temp << 16;
             } else {
-                r300->vertex_info.vap_prog_stream_cntl[i >> 1] &= 0xffff;
+                r300->vertex_info.vap_prog_stream_cntl[i >> 1] &= 0xffff0000;
                 r300->vertex_info.vap_prog_stream_cntl[i >> 1] |=
                     temp;
             }
