@@ -29,10 +29,6 @@
 
 #include "nouveau/nouveau_stateobj.h"
 
-#define NV5X_GRCLASS5097_CHIPSETS 0x00000001
-#define NV8X_GRCLASS8297_CHIPSETS 0x00000050
-#define NV9X_GRCLASS8297_CHIPSETS 0x00000014
-
 static boolean
 nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 				enum pipe_format format,
@@ -190,27 +186,21 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	}
 
 	/* 3D object */
-	if ((chipset & 0xf0) != 0x50 && (chipset & 0xf0) != 0x80) {
-		NOUVEAU_ERR("Not a G8x chipset\n");
-		nv50_screen_destroy(&screen->pipe);
-		return NULL;
-	}
-
 	switch (chipset & 0xf0) {
 	case 0x50:
-		if (NV5X_GRCLASS5097_CHIPSETS & (1 << (chipset & 0x0f)))
-			tesla_class = 0x5097;
+		tesla_class = 0x5097;
 		break;
 	case 0x80:
-		if (NV8X_GRCLASS8297_CHIPSETS & (1 << (chipset & 0x0f)))
-			tesla_class = 0x8297;
-		break;
 	case 0x90:
-		if (NV9X_GRCLASS8297_CHIPSETS & (1 << (chipset & 0x0f)))
-			tesla_class = 0x8297;
+		tesla_class = 0x8297;
+		break;
+	case 0xa0:
+		tesla_class = 0x8397;
 		break;
 	default:
-		break;
+		NOUVEAU_ERR("Not a known NV50 chipset: NV%02x\n", chipset);
+		nv50_screen_destroy(&screen->pipe);
+		return NULL;
 	}
 
 	if (tesla_class == 0) {
