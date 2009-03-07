@@ -242,36 +242,6 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
       case GL_SELECTION_BUFFER_POINTER:
          *params = ctx->Select.Buffer;
          break;
-#if FEATURE_MESA_program_debug
-      case GL_FRAGMENT_PROGRAM_CALLBACK_FUNC_MESA:
-         if (!ctx->Extensions.MESA_program_debug) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetPointerv");
-            return;
-         }
-         *params = *(GLvoid **) &ctx->FragmentProgram.Callback;
-         break;
-      case GL_FRAGMENT_PROGRAM_CALLBACK_DATA_MESA:
-         if (!ctx->Extensions.MESA_program_debug) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetPointerv");
-            return;
-         }
-         *params = ctx->FragmentProgram.CallbackData;
-         break;
-      case GL_VERTEX_PROGRAM_CALLBACK_FUNC_MESA:
-         if (!ctx->Extensions.MESA_program_debug) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetPointerv");
-            return;
-         }
-         *params = *(GLvoid **) &ctx->VertexProgram.Callback;
-         break;
-      case GL_VERTEX_PROGRAM_CALLBACK_DATA_MESA:
-         if (!ctx->Extensions.MESA_program_debug) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetPointerv");
-            return;
-         }
-         *params = ctx->VertexProgram.CallbackData;
-         break;
-#endif
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetPointerv" );
          return;

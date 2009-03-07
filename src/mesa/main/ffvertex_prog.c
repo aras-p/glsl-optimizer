@@ -655,7 +655,6 @@ static void emit_op3fn(struct tnl_program *p,
 
    inst = &p->program->Base.Instructions[nr];
    inst->Opcode = (enum prog_opcode) op; 
-   inst->StringPos = 0;
    inst->Data = 0;
    
    emit_arg( &inst->SrcReg[0], src0 );

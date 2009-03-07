@@ -186,30 +186,6 @@ get_dst_register_pointer(const struct prog_dst_register *dest,
 
 
 
-#if FEATURE_MESA_program_debug
-static struct gl_program_machine *CurrentMachine = NULL;
-
-/**
- * For GL_MESA_program_debug.
- * Return current value (4*GLfloat) of a program register.
- * Called via ctx->Driver.GetProgramRegister().
- */
-void
-_mesa_get_program_register(GLcontext *ctx, enum register_file file,
-                           GLuint index, GLfloat val[4])
-{
-   if (CurrentMachine) {
-      struct prog_src_register srcReg;
-      const GLfloat *src;
-      srcReg.File = file;
-      srcReg.Index = index;
-      src = get_src_register_pointer(&srcReg, CurrentMachine);
-      COPY_4V(val, src);
-   }
-}
-#endif /* FEATURE_MESA_program_debug */
-
-
 /**
  * Fetch a 4-element float vector from the given source register.
  * Apply swizzling and negating as needed.
@@ -633,10 +609,6 @@ _mesa_execute_program(GLcontext * ctx,
       printf("execute program %u --------------------\n", program->Id);
    }
 
-#if FEATURE_MESA_program_debug
-   CurrentMachine = machine;
-#endif
-
    if (program->Target == GL_VERTEX_PROGRAM_ARB) {
       machine->EnvParams = ctx->VertexProgram.Parameters;
    }
@@ -646,15 +618,6 @@ _mesa_execute_program(GLcontext * ctx,
 
    for (pc = 0; pc < numInst; pc++) {
       const struct prog_instruction *inst = program->Instructions + pc;
-
-#if FEATURE_MESA_program_debug
-      if (ctx->FragmentProgram.CallbackEnabled &&
-          ctx->FragmentProgram.Callback) {
-         ctx->FragmentProgram.CurrentPosition = inst->StringPos;
-         ctx->FragmentProgram.Callback(program->Target,
-                                       ctx->FragmentProgram.CallbackData);
-      }
-#endif
 
       if (DEBUG_PROG) {
          _mesa_print_instruction(inst);
@@ -1779,10 +1742,6 @@ _mesa_execute_program(GLcontext * ctx,
       }
 
    } /* for pc */
-
-#if FEATURE_MESA_program_debug
-   CurrentMachine = NULL;
-#endif
 
    return GL_TRUE;
 }

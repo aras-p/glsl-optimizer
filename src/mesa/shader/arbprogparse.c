@@ -2752,9 +2752,6 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
 
    _mesa_init_instructions(fp, 1);
 
-   /* Record the position in the program string for debugging */
-   fp->StringPos = Program->Position;
-
    /* OP_ALU_INST or OP_TEX_INST */
    instClass = *(*inst)++;
 
@@ -3194,8 +3191,6 @@ parse_vp_instruction (GLcontext * ctx, const GLubyte ** inst,
    code = *(*inst)++;
 
    _mesa_init_instructions(vp, 1);
-   /* Record the position in the program string for debugging */
-   vp->StringPos = Program->Position;
 
    switch (type) {
          /* XXX: */
@@ -3557,10 +3552,6 @@ parse_instructions(GLcontext * ctx, const GLubyte * inst,
       const GLuint numInst = Program->Base.NumInstructions;
       _mesa_init_instructions(Program->Base.Instructions + numInst, 1);
       Program->Base.Instructions[numInst].Opcode = OPCODE_END;
-      /* YYY Wrong Position in program, whatever, at least not random -> crash
-	 Program->Position = parse_position (&inst);
-      */
-      Program->Base.Instructions[numInst].StringPos = Program->Position;
    }
    Program->Base.NumInstructions++;
 

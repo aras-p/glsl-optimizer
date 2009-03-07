@@ -266,12 +266,6 @@ extern void
 _swrast_eject_texture_images(GLcontext *ctx);
 
 
-#if FEATURE_MESA_program_debug
-extern void
-_swrast_get_program_register(GLcontext *, enum register_file file,
-                             GLuint index, GLfloat val[4]);
-#endif /* FEATURE_MESA_program_debug */
-
 
 /**
  * The driver interface for the software rasterizer.

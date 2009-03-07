@@ -902,16 +902,6 @@ StateVars = [
 	  ["ctx->Depth.BoundsMin", "ctx->Depth.BoundsMax"],
 	  "", ["EXT_depth_bounds_test"] ),
 
-	# GL_MESA_program_debug
-	( "GL_FRAGMENT_PROGRAM_CALLBACK_MESA", GLboolean,
-	  ["ctx->FragmentProgram.CallbackEnabled"], "", ["MESA_program_debug"] ),
-	( "GL_VERTEX_PROGRAM_CALLBACK_MESA", GLboolean,
-	  ["ctx->VertexProgram.CallbackEnabled"], "", ["MESA_program_debug"] ),
-	( "GL_FRAGMENT_PROGRAM_POSITION_MESA", GLint,
-	  ["ctx->FragmentProgram.CurrentPosition"], "", ["MESA_program_debug"] ),
-	( "GL_VERTEX_PROGRAM_POSITION_MESA", GLint,
-	  ["ctx->VertexProgram.CurrentPosition"], "", ["MESA_program_debug"] ),
-
 	# GL_ARB_draw_buffers
 	( "GL_MAX_DRAW_BUFFERS_ARB", GLint,
 	  ["ctx->Const.MaxDrawBuffers"], "", None ),

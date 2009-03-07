@@ -1715,22 +1715,6 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Depth.BoundsMin);
          params[1] = FLOAT_TO_BOOLEAN(ctx->Depth.BoundsMax);
          break;
-      case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
-         CHECK_EXT1(MESA_program_debug, "GetBooleanv");
-         params[0] = ctx->FragmentProgram.CallbackEnabled;
-         break;
-      case GL_VERTEX_PROGRAM_CALLBACK_MESA:
-         CHECK_EXT1(MESA_program_debug, "GetBooleanv");
-         params[0] = ctx->VertexProgram.CallbackEnabled;
-         break;
-      case GL_FRAGMENT_PROGRAM_POSITION_MESA:
-         CHECK_EXT1(MESA_program_debug, "GetBooleanv");
-         params[0] = INT_TO_BOOLEAN(ctx->FragmentProgram.CurrentPosition);
-         break;
-      case GL_VERTEX_PROGRAM_POSITION_MESA:
-         CHECK_EXT1(MESA_program_debug, "GetBooleanv");
-         params[0] = INT_TO_BOOLEAN(ctx->VertexProgram.CurrentPosition);
-         break;
       case GL_MAX_DRAW_BUFFERS_ARB:
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxDrawBuffers);
          break;
@@ -3541,22 +3525,6 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Depth.BoundsMin;
          params[1] = ctx->Depth.BoundsMax;
          break;
-      case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
-         CHECK_EXT1(MESA_program_debug, "GetFloatv");
-         params[0] = BOOLEAN_TO_FLOAT(ctx->FragmentProgram.CallbackEnabled);
-         break;
-      case GL_VERTEX_PROGRAM_CALLBACK_MESA:
-         CHECK_EXT1(MESA_program_debug, "GetFloatv");
-         params[0] = BOOLEAN_TO_FLOAT(ctx->VertexProgram.CallbackEnabled);
-         break;
-      case GL_FRAGMENT_PROGRAM_POSITION_MESA:
-         CHECK_EXT1(MESA_program_debug, "GetFloatv");
-         params[0] = (GLfloat)(ctx->FragmentProgram.CurrentPosition);
-         break;
-      case GL_VERTEX_PROGRAM_POSITION_MESA:
-         CHECK_EXT1(MESA_program_debug, "GetFloatv");
-         params[0] = (GLfloat)(ctx->VertexProgram.CurrentPosition);
-         break;
       case GL_MAX_DRAW_BUFFERS_ARB:
          params[0] = (GLfloat)(ctx->Const.MaxDrawBuffers);
          break;
@@ -5366,22 +5334,6 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          CHECK_EXT1(EXT_depth_bounds_test, "GetIntegerv");
          params[0] = IROUND(ctx->Depth.BoundsMin);
          params[1] = IROUND(ctx->Depth.BoundsMax);
-         break;
-      case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
-         CHECK_EXT1(MESA_program_debug, "GetIntegerv");
-         params[0] = BOOLEAN_TO_INT(ctx->FragmentProgram.CallbackEnabled);
-         break;
-      case GL_VERTEX_PROGRAM_CALLBACK_MESA:
-         CHECK_EXT1(MESA_program_debug, "GetIntegerv");
-         params[0] = BOOLEAN_TO_INT(ctx->VertexProgram.CallbackEnabled);
-         break;
-      case GL_FRAGMENT_PROGRAM_POSITION_MESA:
-         CHECK_EXT1(MESA_program_debug, "GetIntegerv");
-         params[0] = ctx->FragmentProgram.CurrentPosition;
-         break;
-      case GL_VERTEX_PROGRAM_POSITION_MESA:
-         CHECK_EXT1(MESA_program_debug, "GetIntegerv");
-         params[0] = ctx->VertexProgram.CurrentPosition;
          break;
       case GL_MAX_DRAW_BUFFERS_ARB:
          params[0] = ctx->Const.MaxDrawBuffers;

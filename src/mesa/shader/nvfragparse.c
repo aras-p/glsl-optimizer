@@ -1311,8 +1311,6 @@ Parse_InstructionSequence(struct parse_state *parseState,
       }
       else if (Parse_String(parseState, "END")) {
          inst->Opcode = OPCODE_END;
-         inst->StringPos = parseState->curLine - parseState->start;
-         assert(inst->StringPos >= 0);
          parseState->numInst++;
          if (Parse_Token(parseState, token)) {
             RETURN_ERROR1("Code after END opcode.");
@@ -1339,8 +1337,6 @@ Parse_InstructionSequence(struct parse_state *parseState,
          inst->SaturateMode = (instMatch.suffixes & (_S))
             ? SATURATE_ZERO_ONE : SATURATE_OFF;
          inst->CondUpdate = (instMatch.suffixes & (_C)) ? GL_TRUE : GL_FALSE;
-         inst->StringPos = parseState->curLine - parseState->start;
-         assert(inst->StringPos >= 0);
 
          /*
           * parse the input and output operands

@@ -1922,7 +1922,6 @@ fxDDInitExtensions(GLcontext * ctx)
       _mesa_enable_extension(ctx, "GL_ARB_vertex_program");
       _mesa_enable_extension(ctx, "GL_NV_vertex_program");
       _mesa_enable_extension(ctx, "GL_NV_vertex_program1_1");
-      _mesa_enable_extension(ctx, "GL_MESA_program_debug");
    }
 #if 0
    /* this requires _tnl_vertex_cull_stage in the pipeline */

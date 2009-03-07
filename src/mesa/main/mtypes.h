@@ -1856,13 +1856,6 @@ struct gl_vertex_program_state
    /** Cache of fixed-function programs */
    struct gl_program_cache *Cache;
 
-#if FEATURE_MESA_program_debug
-   GLprogramcallbackMESA Callback;
-   GLvoid *CallbackData;
-   GLboolean CallbackEnabled;
-   GLuint CurrentPosition;
-#endif
-
    GLboolean _Overriden;
 };
 
@@ -1892,13 +1885,6 @@ struct gl_fragment_program_state
 
    /** Cache of fixed-function programs */
    struct gl_program_cache *Cache;
-
-#if FEATURE_MESA_program_debug
-   GLprogramcallbackMESA Callback;
-   GLvoid *CallbackData;
-   GLboolean CallbackEnabled;
-   GLuint CurrentPosition;
-#endif
 };
 
 
@@ -2502,7 +2488,6 @@ struct gl_extensions
    GLboolean IBM_multimode_draw_arrays;
    GLboolean MESA_pack_invert;
    GLboolean MESA_packed_depth_stencil;
-   GLboolean MESA_program_debug;
    GLboolean MESA_resize_buffers;
    GLboolean MESA_ycbcr_texture;
    GLboolean MESA_texture_array;

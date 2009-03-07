@@ -220,7 +220,6 @@ SHADER_SOURCES = \
 	shader/nvvertparse.c \
 	shader/program.c \
 	shader/prog_cache.c \
-	shader/prog_debug.c \
 	shader/prog_execute.c \
 	shader/prog_instruction.c \
 	shader/prog_noise.c \
