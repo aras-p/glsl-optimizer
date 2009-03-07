@@ -58,6 +58,7 @@ MAIN_SOURCES = \
 	main/renderbuffer.c \
 	main/scissor.c \
 	main/shaders.c \
+	main/shared.c \
 	main/state.c \
 	main/stencil.c \
 	main/texcompress.c \
