@@ -48,7 +48,7 @@ libglapi.a: $(GLAPI_OBJECTS)
 ######################################################################
 # Device drivers
 driver_subdirs: libmesa.a libglapi.a
-	(cd drivers && $(MAKE))
+	@ (cd drivers && $(MAKE))
 
 
 ######################################################################
