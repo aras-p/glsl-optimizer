@@ -164,9 +164,7 @@ nouveau_context_init(struct nouveau_screen *nv_screen,
 		pipe_reference_init(&fb_buf->base.reference, 1);
 		fb_buf->base.usage = PIPE_BUFFER_USAGE_PIXEL;
 
-		nouveau_bo_fake(dev, nv_screen->front_offset, NOUVEAU_BO_VRAM,
-				nv_screen->front_pitch*nv_screen->front_height,
-				NULL, &fb_buf->bo);
+		nouveau_bo_handle_ref(dev, nv_screen->front_offset, &fb_buf->bo);
 
 		if (nv_screen->front_cpp == 4)
 			format = PIPE_FORMAT_A8R8G8B8_UNORM;
