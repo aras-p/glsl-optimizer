@@ -1,0 +1,145 @@
+TGSI Instruction Specification
+==============================
+==============================
+
+
+1  Instruction Set Operations
+=============================
+
+
+1.1  GL_NV_vertex_program
+-------------------------
+
+
+1.1.1  ARL - Address Register Load
+
+  dst.x = floor(src.x)
+
+
+1.1.2  MOV - Move
+
+  dst.x = src.x
+  dst.y = src.y
+  dst.z = src.z
+  dst.w = src.w
+
+
+1.1.3  LIT - Light Coefficients
+
+  dst.x = 1.0
+  dst.y = max(src.x, 0.0)
+  dst.z = (src.x > 0.0) ? pow(max(src.y, 0.0), clamp(src.w, -128.0, 128.0)) : 0.0
+  dst.w = 1.0
+
+
+1.1.4  RCP - Reciprocal
+
+  dst.x = 1.0 / src.x
+  dst.y = 1.0 / src.x
+  dst.z = 1.0 / src.x
+  dst.w = 1.0 / src.x
+
+
+1.1.5  RSQ - Reciprocal Square Root
+
+  dst.x = 1.0 / sqrt(abs(src.x))
+  dst.y = 1.0 / sqrt(abs(src.x))
+  dst.z = 1.0 / sqrt(abs(src.x))
+  dst.w = 1.0 / sqrt(abs(src.x))
+
+
+1.1.6  EXP - Exponential Base 2
+
+  dst.x = pow(2.0, floor(src.x))
+  dst.y = src.x - floor(src.x)
+  dst.z = pow(2.0, src.x)
+  dst.w = 1.0
+
+
+1.1.7  LOG - Logarithm Base 2
+
+  dst.x = floor(lg2(abs(src.x)))
+  dst.y = abs(src.x) / pow(2.0, floor(lg2(abs(src.x))))
+  dst.z = lg2(abs(src.x))
+  dst.w = 1.0
+
+
+1.1.8  MUL - Multiply
+
+  dst.x = src0.x * src1.x
+  dst.y = src0.y * src1.y
+  dst.z = src0.z * src1.z
+  dst.w = src0.w * src1.w
+
+
+1.1.9  ADD - Add
+
+  dst.x = src0.x + src1.x
+  dst.y = src0.y + src1.y
+  dst.z = src0.z + src1.z
+  dst.w = src0.w + src1.w
+
+
+1.1.10  DP3 - 3-component Dot Product
+
+  dst.x = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z
+  dst.y = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z
+  dst.z = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z
+  dst.w = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z
+
+
+1.1.11  DP4 - 4-component Dot Product
+
+  dst.x = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src0.w * src1.w
+  dst.y = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src0.w * src1.w
+  dst.z = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src0.w * src1.w
+  dst.w = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src0.w * src1.w
+
+
+1.1.12  DST - Distance Vector
+
+  dst.x = 1.0
+  dst.y = src0.y * src1.y
+  dst.z = src0.z
+  dst.w = src1.w
+
+
+1.1.13  MIN - Minimum
+
+  dst.x = min(src0.x, src1.x)
+  dst.y = min(src0.y, src1.y)
+  dst.z = min(src0.z, src1.z)
+  dst.w = min(src0.w, src1.w)
+
+
+1.1.14  MAX - Maximum
+
+  dst.x = max(src0.x, src1.x)
+  dst.y = max(src0.y, src1.y)
+  dst.z = max(src0.z, src1.z)
+  dst.w = max(src0.w, src1.w)
+
+
+1.1.15  SLT - Set On Less Than
+
+  dst.x = (src0.x < src1.x) ? 1.0 : 0.0
+  dst.y = (src0.y < src1.y) ? 1.0 : 0.0
+  dst.z = (src0.z < src1.z) ? 1.0 : 0.0
+  dst.w = (src0.w < src1.w) ? 1.0 : 0.0
+
+
+1.1.16  SGE - Set On Greater Equal Than
+
+  dst.x = (src0.x >= src1.x) ? 1.0 : 0.0
+  dst.y = (src0.y >= src1.y) ? 1.0 : 0.0
+  dst.z = (src0.z >= src1.z) ? 1.0 : 0.0
+  dst.w = (src0.w >= src1.w) ? 1.0 : 0.0
+
+
+1.1.17  MAD - Multiply And Add
+
+  dst.x = src0.x * src1.x + src2.x
+  dst.y = src0.y * src1.y + src2.y
+  dst.z = src0.z * src1.z + src2.z
+  dst.w = src0.w * src1.w + src2.w
+
