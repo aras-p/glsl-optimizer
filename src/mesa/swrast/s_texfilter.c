@@ -456,6 +456,168 @@ linear_repeat_texel_location(GLuint size, GLfloat s,
 
 
 /**
+ * Do clamp/wrap for a texture rectangle coord, GL_NEAREST filter mode.
+ */
+static INLINE GLint
+clamp_rect_coord_nearest(GLenum wrapMode, GLfloat coord, GLint max)
+{
+   switch (wrapMode) {
+   case GL_CLAMP:
+      return IFLOOR( CLAMP(coord, 0.0F, max - 1) );
+   case GL_CLAMP_TO_EDGE:
+      return IFLOOR( CLAMP(coord, 0.5F, max - 0.5F) );
+   case GL_CLAMP_TO_BORDER:
+      return IFLOOR( CLAMP(coord, -0.5F, max + 0.5F) );
+   default:
+      _mesa_problem(NULL, "bad wrapMode in clamp_rect_coord_nearest");
+      return 0;
+   }
+}
+
+
+/**
+ * As above, but GL_LINEAR filtering.
+ */
+static INLINE void
+clamp_rect_coord_linear(GLenum wrapMode, GLfloat coord, GLint max,
+                        GLint *i0out, GLint *i1out, GLfloat *weight)
+{
+   GLfloat fcol;
+   GLint i0, i1;
+   switch (wrapMode) {
+   case GL_CLAMP:
+      /* Not exactly what the spec says, but it matches NVIDIA output */
+      fcol = CLAMP(coord - 0.5F, 0.0, max-1);
+      i0 = IFLOOR(fcol);
+      i1 = i0 + 1;
+      break;
+   case GL_CLAMP_TO_EDGE:
+      fcol = CLAMP(coord, 0.5F, max - 0.5F);
+      fcol -= 0.5F;
+      i0 = IFLOOR(fcol);
+      i1 = i0 + 1;
+      if (i1 > max - 1)
+         i1 = max - 1;
+      break;
+   case GL_CLAMP_TO_BORDER:
+      fcol = CLAMP(coord, -0.5F, max + 0.5F);
+      fcol -= 0.5F;
+      i0 = IFLOOR(fcol);
+      i1 = i0 + 1;
+   default:
+      _mesa_problem(NULL, "bad wrapMode in clamp_rect_coord_linear");
+      i0 = i1 = 0;
+      fcol = 0.0F;
+   }
+   *i0out = i0;
+   *i1out = i1;
+   *weight = FRAC(fcol);
+}
+
+
+/**
+ * Compute nearest integer texcoords for given texobj and coordinate.
+ */
+static INLINE void
+nearest_texcoord(const struct gl_texture_object *texObj,
+                 const GLfloat texcoord[4],
+                 GLint *i, GLint *j, GLint *k)
+{
+   const GLint baseLevel = texObj->BaseLevel;
+   const struct gl_texture_image *img = texObj->Image[0][baseLevel];
+   const GLint width = img->Width;
+   const GLint height = img->Height;
+   const GLint depth = img->Depth;
+
+   switch (texObj->Target) {
+   case GL_TEXTURE_RECTANGLE_ARB:
+      *i = clamp_rect_coord_nearest(texObj->WrapS, texcoord[0], width);
+      *j = clamp_rect_coord_nearest(texObj->WrapT, texcoord[1], height);
+      *k = 0;
+      break;
+   case GL_TEXTURE_1D:
+      *i = nearest_texel_location(texObj->WrapS, img, width, texcoord[0]);
+      *j = 0;
+      *k = 0;
+      break;
+   case GL_TEXTURE_2D:
+      *i = nearest_texel_location(texObj->WrapS, img, width, texcoord[0]);
+      *j = nearest_texel_location(texObj->WrapT, img, height, texcoord[1]);
+      *k = 0;
+      break;
+   case GL_TEXTURE_1D_ARRAY_EXT:
+      *i = nearest_texel_location(texObj->WrapS, img, width, texcoord[0]);
+      *j = clamp_rect_coord_nearest(texObj->WrapT, texcoord[1], height);
+      *k = 0;
+      break;
+   case GL_TEXTURE_2D_ARRAY_EXT:
+      *i = nearest_texel_location(texObj->WrapS, img, width, texcoord[0]);
+      *j = nearest_texel_location(texObj->WrapT, img, height, texcoord[1]);
+      *k = clamp_rect_coord_nearest(texObj->WrapR, texcoord[2], depth);
+      break;
+   default:
+      *i = *j = *k = 0;
+   }
+}
+
+
+/**
+ * Compute linear integer texcoords for given texobj and coordinate.
+ */
+static INLINE void
+linear_texcoord(const struct gl_texture_object *texObj,
+                const GLfloat texcoord[4],
+                GLint *i0, GLint *i1, GLint *j0, GLint *j1, GLint *slice,
+                GLfloat *wi, GLfloat *wj)
+{
+   const GLint baseLevel = texObj->BaseLevel;
+   const struct gl_texture_image *img = texObj->Image[0][baseLevel];
+   const GLint width = img->Width;
+   const GLint height = img->Height;
+   const GLint depth = img->Depth;
+
+   switch (texObj->Target) {
+   case GL_TEXTURE_RECTANGLE_ARB:
+      clamp_rect_coord_linear(texObj->WrapS, texcoord[0],
+                              width, i0, i1, wi);
+      clamp_rect_coord_linear(texObj->WrapT, texcoord[1],
+                              height, j0, j1, wj);
+      *slice = 0;
+      break;
+
+   case GL_TEXTURE_1D:
+   case GL_TEXTURE_2D:
+      linear_texel_locations(texObj->WrapS, img, width,
+                             texcoord[0], i0, i1, wi);
+      linear_texel_locations(texObj->WrapT, img, height,
+                             texcoord[1], j0, j1, wj);
+      *slice = 0;
+      break;
+
+   case GL_TEXTURE_1D_ARRAY_EXT:
+      linear_texel_locations(texObj->WrapS, img, width,
+                             texcoord[0], i0, i1, wi);
+      *j0 = clamp_rect_coord_nearest(texObj->WrapT, texcoord[1], height);
+      *j1 = *j0;
+      *slice = 0;
+      break;
+
+   case GL_TEXTURE_2D_ARRAY_EXT:
+      linear_texel_locations(texObj->WrapS, img, width,
+                             texcoord[0], i0, i1, wi);
+      linear_texel_locations(texObj->WrapT, img, height,
+                             texcoord[1], j0, j1, wj);
+      *slice = clamp_rect_coord_nearest(texObj->WrapR, texcoord[2], depth);
+      break;
+
+   default:
+      *slice = 0;
+   }
+}
+
+
+
+/**
  * For linear interpolation between mipmap levels N and N+1, this function
  * computes N.
  */
@@ -1970,66 +2132,6 @@ sample_lambda_cube(GLcontext *ctx,
 /**********************************************************************/
 
 
-/**
- * Do clamp/wrap for a texture rectangle coord, GL_NEAREST filter mode.
- */
-static INLINE GLint
-clamp_rect_coord_nearest(GLenum wrapMode, GLfloat coord, GLint max)
-{
-   switch (wrapMode) {
-   case GL_CLAMP:
-      return IFLOOR( CLAMP(coord, 0.0F, max - 1) );
-   case GL_CLAMP_TO_EDGE:
-      return IFLOOR( CLAMP(coord, 0.5F, max - 0.5F) );
-   case GL_CLAMP_TO_BORDER:
-      return IFLOOR( CLAMP(coord, -0.5F, max + 0.5F) );
-   default:
-      _mesa_problem(NULL, "bad wrapMode in clamp_rect_coord_nearest");
-      return 0;
-   }
-}
-
-
-/**
- * As above, but GL_LINEAR filtering.
- */
-static INLINE void
-clamp_rect_coord_linear(GLenum wrapMode, GLfloat coord, GLint max,
-                        GLint *i0out, GLint *i1out, GLfloat *weight)
-{
-   GLfloat fcol;
-   GLint i0, i1;
-   switch (wrapMode) {
-   case GL_CLAMP:
-      /* Not exactly what the spec says, but it matches NVIDIA output */
-      fcol = CLAMP(coord - 0.5F, 0.0, max-1);
-      i0 = IFLOOR(fcol);
-      i1 = i0 + 1;
-      break;
-   case GL_CLAMP_TO_EDGE:
-      fcol = CLAMP(coord, 0.5F, max - 0.5F);
-      fcol -= 0.5F;
-      i0 = IFLOOR(fcol);
-      i1 = i0 + 1;
-      if (i1 > max - 1)
-         i1 = max - 1;
-      break;
-   case GL_CLAMP_TO_BORDER:
-      fcol = CLAMP(coord, -0.5F, max + 0.5F);
-      fcol -= 0.5F;
-      i0 = IFLOOR(fcol);
-      i1 = i0 + 1;
-   default:
-      _mesa_problem(NULL, "bad wrapMode in clamp_rect_coord_linear");
-      i0 = i1 = 0;
-      fcol = 0.0F;
-   }
-   *i0out = i0;
-   *i1out = i1;
-   *weight = FRAC(fcol);
-}
-
-
 static void
 sample_nearest_rect(GLcontext *ctx,
 		    const struct gl_texture_object *tObj, GLuint n,
@@ -2754,6 +2856,102 @@ sample_lambda_1d_array(GLcontext *ctx,
 
 
 /**
+ * Compare texcoord against depth sample.  Return 1.0 or the ambient value.
+ */
+static INLINE GLfloat
+shadow_compare(GLenum function, GLfloat coord, GLfloat depthSample,
+               GLfloat ambient)
+{
+   switch (function) {
+   case GL_LEQUAL:
+      return (coord <= depthSample) ? 1.0F : ambient;
+   case GL_GEQUAL:
+      return (coord >= depthSample) ? 1.0F : ambient;
+   case GL_LESS:
+      return (coord < depthSample) ? 1.0F : ambient;
+   case GL_GREATER:
+      return (coord > depthSample) ? 1.0F : ambient;
+   case GL_EQUAL:
+      return (coord == depthSample) ? 1.0F : ambient;
+   case GL_NOTEQUAL:
+      return (coord != depthSample) ? 1.0F : ambient;
+   case GL_ALWAYS:
+      return 1.0F;
+   case GL_NEVER:
+      return ambient;
+   case GL_NONE:
+      return depthSample;
+   default:
+      _mesa_problem(NULL, "Bad compare func in shadow_compare");
+      return ambient;
+   }
+}
+
+
+/**
+ * Compare texcoord against four depth samples.
+ */
+static INLINE GLfloat
+shadow_compare4(GLenum function, GLfloat coord,
+                GLfloat depth00, GLfloat depth01,
+                GLfloat depth10, GLfloat depth11,
+                GLfloat ambient, GLfloat wi, GLfloat wj)
+{
+   const GLfloat d = (1.0F - (GLfloat) ambient) * 0.25F;
+   GLfloat luminance = 1.0F;
+
+   switch (function) {
+   case GL_LEQUAL:
+      if (depth00 <= coord)  luminance -= d;
+      if (depth01 <= coord)  luminance -= d;
+      if (depth10 <= coord)  luminance -= d;
+      if (depth11 <= coord)  luminance -= d;
+      return luminance;
+   case GL_GEQUAL:
+      if (depth00 >= coord)  luminance -= d;
+      if (depth01 >= coord)  luminance -= d;
+      if (depth10 >= coord)  luminance -= d;
+      if (depth11 >= coord)  luminance -= d;
+      return luminance;
+   case GL_LESS:
+      if (depth00 < coord)  luminance -= d;
+      if (depth01 < coord)  luminance -= d;
+      if (depth10 < coord)  luminance -= d;
+      if (depth11 < coord)  luminance -= d;
+      return luminance;
+   case GL_GREATER:
+      if (depth00 > coord)  luminance -= d;
+      if (depth01 > coord)  luminance -= d;
+      if (depth10 > coord)  luminance -= d;
+      if (depth11 > coord)  luminance -= d;
+      return luminance;
+   case GL_EQUAL:
+      if (depth00 == coord)  luminance -= d;
+      if (depth01 == coord)  luminance -= d;
+      if (depth10 == coord)  luminance -= d;
+      if (depth11 == coord)  luminance -= d;
+      return luminance;
+   case GL_NOTEQUAL:
+      if (depth00 != coord)  luminance -= d;
+      if (depth01 != coord)  luminance -= d;
+      if (depth10 != coord)  luminance -= d;
+      if (depth11 != coord)  luminance -= d;
+      return luminance;
+   case GL_ALWAYS:
+      return 0.0;
+   case GL_NEVER:
+      return ambient;
+   case GL_NONE:
+      /* ordinary bilinear filtering */
+      return lerp_2d(wi, wj, depth00, depth10, depth01, depth11);
+   default:
+      _mesa_problem(NULL, "Bad compare func in sample_depth_texture");
+      return 0.0F;
+   }
+}
+
+
+/**
  * Sample a shadow/depth texture.
  */
 static void
@@ -2797,45 +2995,7 @@ sample_depth_texture( GLcontext *ctx,
          GLfloat depthSample;
          GLint col, row, slice;
 
-         switch (tObj->Target) {
-         case GL_TEXTURE_RECTANGLE_ARB:
-            col = clamp_rect_coord_nearest(tObj->WrapS, texcoords[i][0], width);
-            row = clamp_rect_coord_nearest(tObj->WrapT, texcoords[i][1], height);
-            slice = 0;
-            break;
-            
-         case GL_TEXTURE_1D:
-            col = nearest_texel_location(tObj->WrapS, img, width,
-                                         texcoords[i][0]);
-            row = 0;
-            slice = 0;
-            break;
-
-         case GL_TEXTURE_2D:
-            col = nearest_texel_location(tObj->WrapS, img, width,
-                                         texcoords[i][0]);
-            row = nearest_texel_location(tObj->WrapT, img, height,
-                                         texcoords[i][1]);
-            slice = 0;
-            break;
-
-         case GL_TEXTURE_1D_ARRAY_EXT:
-            col = nearest_texel_location(tObj->WrapS, img, width,
-                                         texcoords[i][0]);
-            row = clamp_rect_coord_nearest(tObj->WrapT, texcoords[i][1], height);
-            slice = 0;
-            break;
-
-         case GL_TEXTURE_2D_ARRAY_EXT:
-            col = nearest_texel_location(tObj->WrapS, img, width,
-                                         texcoords[i][0]);
-            row = nearest_texel_location(tObj->WrapT, img, height,
-                                         texcoords[i][1]);
-            slice = clamp_rect_coord_nearest(tObj->WrapR, texcoords[i][2], depth);
-            break;
-         default:
-            col = row = slice = 0;
-         }
+         nearest_texcoord(tObj, texcoords[i], &col, &row, &slice);
 
          if (col >= 0 && row >= 0 && col < width && row < height && 
              slice >= 0 && slice < depth) {
@@ -2845,38 +3005,8 @@ sample_depth_texture( GLcontext *ctx,
             depthSample = tObj->BorderColor[0];
          }
 
-         switch (function) {
-         case GL_LEQUAL:
-            result = (texcoords[i][compare_coord] <= depthSample) ? 1.0F : ambient;
-            break;
-         case GL_GEQUAL:
-            result = (texcoords[i][compare_coord] >= depthSample) ? 1.0F : ambient;
-            break;
-         case GL_LESS:
-            result = (texcoords[i][compare_coord] < depthSample) ? 1.0F : ambient;
-            break;
-         case GL_GREATER:
-            result = (texcoords[i][compare_coord] > depthSample) ? 1.0F : ambient;
-            break;
-         case GL_EQUAL:
-            result = (texcoords[i][compare_coord] == depthSample) ? 1.0F : ambient;
-            break;
-         case GL_NOTEQUAL:
-            result = (texcoords[i][compare_coord] != depthSample) ? 1.0F : ambient;
-            break;
-         case GL_ALWAYS:
-            result = 1.0F;
-            break;
-         case GL_NEVER:
-            result = ambient;
-            break;
-         case GL_NONE:
-            result = depthSample;
-            break;
-         default:
-            _mesa_problem(ctx, "Bad compare func in sample_depth_texture");
-            return;
-         }
+         result = shadow_compare(function, texcoords[i][compare_coord],
+                                 depthSample, ambient);
 
          switch (tObj->DepthMode) {
          case GL_LUMINANCE:
@@ -2900,45 +3030,11 @@ sample_depth_texture( GLcontext *ctx,
          GLfloat depth00, depth01, depth10, depth11;
          GLint i0, i1, j0, j1;
          GLint slice;
-         GLfloat a, b;
+         GLfloat wi, wj;
          GLuint useBorderTexel;
 
-         switch (tObj->Target) {
-         case GL_TEXTURE_RECTANGLE_ARB:
-            clamp_rect_coord_linear(tObj->WrapS, texcoords[i][0],
-                                    width, &i0, &i1, &a);
-            clamp_rect_coord_linear(tObj->WrapT, texcoords[i][1],
-                                    height, &j0, &j1, &b);
-            slice = 0;
-            break;
-
-         case GL_TEXTURE_1D:
-         case GL_TEXTURE_2D:
-            linear_texel_locations(tObj->WrapS, img, width,
-                                   texcoords[i][0], &i0, &i1, &a);
-            linear_texel_locations(tObj->WrapT, img, height,
-                                   texcoords[i][1], &j0, &j1, &b);
-            slice = 0;
-            break;
-
-         case GL_TEXTURE_1D_ARRAY_EXT:
-            linear_texel_locations(tObj->WrapS, img, width,
-                                   texcoords[i][0], &i0, &i1, &a);
-            j0 = clamp_rect_coord_nearest(tObj->WrapT, texcoords[i][1], height);
-            j1 = j0;
-            slice = 0;
-            break;
-
-         case GL_TEXTURE_2D_ARRAY_EXT:
-            linear_texel_locations(tObj->WrapS, img, width,
-                                   texcoords[i][0], &i0, &i1, &a);
-            linear_texel_locations(tObj->WrapT, img, height,
-                                   texcoords[i][1], &j0, &j1, &b);
-            slice = clamp_rect_coord_nearest(tObj->WrapR, texcoords[i][2], depth);
-            break;
-         default:
-            slice = 0;
-         }
+         linear_texcoord(tObj, texcoords[i], &i0, &i1, &j0, &j1, &slice,
+                         &wi, &wj);
 
          useBorderTexel = 0;
          if (img->Border) {
@@ -2997,111 +3093,24 @@ sample_depth_texture( GLcontext *ctx,
             }
          }
 
-         if (0) {
-            /* compute a single weighted depth sample and do one comparison */
-            const GLfloat depthSample
-               = lerp_2d(a, b, depth00, depth10, depth01, depth11);
-            if ((depthSample <= texcoords[i][compare_coord] && function == GL_LEQUAL) ||
-                (depthSample >= texcoords[i][compare_coord] && function == GL_GEQUAL)) {
-               result  = ambient;
-            }
-            else {
-               result = CHAN_MAX;
-            }
-         }
-         else {
-            /* Do four depth/R comparisons and compute a weighted result.
-             * If this touches on somebody's I.P., I'll remove this code
-             * upon request.
-             */
-            const GLfloat d = (CHAN_MAXF - (GLfloat) ambient) * 0.25F;
-            GLfloat luminance = CHAN_MAXF;
-
-            switch (function) {
-            case GL_LEQUAL:
-               if (depth00 <= texcoords[i][compare_coord])  luminance -= d;
-               if (depth01 <= texcoords[i][compare_coord])  luminance -= d;
-               if (depth10 <= texcoords[i][compare_coord])  luminance -= d;
-               if (depth11 <= texcoords[i][compare_coord])  luminance -= d;
-               result = (GLfloat) luminance;
-               break;
-            case GL_GEQUAL:
-               if (depth00 >= texcoords[i][compare_coord])  luminance -= d;
-               if (depth01 >= texcoords[i][compare_coord])  luminance -= d;
-               if (depth10 >= texcoords[i][compare_coord])  luminance -= d;
-               if (depth11 >= texcoords[i][compare_coord])  luminance -= d;
-               result = (GLfloat) luminance;
-               break;
-            case GL_LESS:
-               if (depth00 < texcoords[i][compare_coord])  luminance -= d;
-               if (depth01 < texcoords[i][compare_coord])  luminance -= d;
-               if (depth10 < texcoords[i][compare_coord])  luminance -= d;
-               if (depth11 < texcoords[i][compare_coord])  luminance -= d;
-               result = (GLfloat) luminance;
-               break;
-            case GL_GREATER:
-               if (depth00 > texcoords[i][compare_coord])  luminance -= d;
-               if (depth01 > texcoords[i][compare_coord])  luminance -= d;
-               if (depth10 > texcoords[i][compare_coord])  luminance -= d;
-               if (depth11 > texcoords[i][compare_coord])  luminance -= d;
-               result = (GLfloat) luminance;
-               break;
-            case GL_EQUAL:
-               if (depth00 == texcoords[i][compare_coord])  luminance -= d;
-               if (depth01 == texcoords[i][compare_coord])  luminance -= d;
-               if (depth10 == texcoords[i][compare_coord])  luminance -= d;
-               if (depth11 == texcoords[i][compare_coord])  luminance -= d;
-               result = (GLfloat) luminance;
-               break;
-            case GL_NOTEQUAL:
-               if (depth00 != texcoords[i][compare_coord])  luminance -= d;
-               if (depth01 != texcoords[i][compare_coord])  luminance -= d;
-               if (depth10 != texcoords[i][compare_coord])  luminance -= d;
-               if (depth11 != texcoords[i][compare_coord])  luminance -= d;
-               result = (GLfloat) luminance;
-               break;
-            case GL_ALWAYS:
-               result = 0;
-               break;
-            case GL_NEVER:
-               result = CHAN_MAX;
-               break;
-            case GL_NONE:
-               /* ordinary bilinear filtering */
-               {
-                  const GLfloat depthSample
-                     = lerp_2d(a, b, depth00, depth10, depth01, depth11);
-                  CLAMPED_FLOAT_TO_CHAN(result, depthSample);
-               }
-               break;
-            default:
-               _mesa_problem(ctx, "Bad compare func in sample_depth_texture");
-               return;
-            }
-         }
+         result = shadow_compare4(function, texcoords[i][compare_coord],
+                                  depth00, depth01, depth10, depth11,
+                                  ambient, wi, wj);
 
          switch (tObj->DepthMode) {
          case GL_LUMINANCE:
-            texel[i][RCOMP] = result;
-            texel[i][GCOMP] = result;
-            texel[i][BCOMP] = result;
-            texel[i][ACOMP] = CHAN_MAX;
+            ASSIGN_4V(texel[i], result, result, result, 1.0F);
             break;
          case GL_INTENSITY:
-            texel[i][RCOMP] = result;
-            texel[i][GCOMP] = result;
-            texel[i][BCOMP] = result;
-            texel[i][ACOMP] = result;
+            ASSIGN_4V(texel[i], result, result, result, result);
             break;
          case GL_ALPHA:
-            texel[i][RCOMP] = 0;
-            texel[i][GCOMP] = 0;
-            texel[i][BCOMP] = 0;
-            texel[i][ACOMP] = result;
+            ASSIGN_4V(texel[i], 0.0F, 0.0F, 0.0F, result);
             break;
          default:
             _mesa_problem(ctx, "Bad depth texture mode");
          }
+
       }  /* for */
    }  /* if filter */
 }
