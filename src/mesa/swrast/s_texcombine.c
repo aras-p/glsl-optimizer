@@ -62,19 +62,16 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
                  GLchan (*rgbaChan)[4] )
 {
    const struct gl_texture_unit *textureUnit = &(ctx->Texture.Unit[unit]);
+   const struct gl_tex_env_combine_state *combine = textureUnit->_CurrentCombine;
    const GLfloat (*argRGB [MAX_COMBINER_TERMS])[4];
    const GLfloat (*argA [MAX_COMBINER_TERMS])[4];
-   const GLint RGBshift = textureUnit->_CurrentCombine->ScaleShiftRGB;
-   const GLuint Ashift   = textureUnit->_CurrentCombine->ScaleShiftA;
-   const GLfloat RGBmult = (GLfloat) (1 << RGBshift);
-   const GLfloat Amult = (GLfloat) (1 << Ashift);
-   static const GLfloat one[4] = { 1, 1, 1, 1 };
-   static const GLfloat zero[4] = { 0, 0, 0, 0 };
-   const GLuint numColorArgs = textureUnit->_CurrentCombine->_NumArgsRGB;
-   const GLuint numAlphaArgs = textureUnit->_CurrentCombine->_NumArgsA;
+   const GLfloat RGBmult = (GLfloat) (1 << combine->ScaleShiftRGB);
+   const GLfloat Amult = (GLfloat) (1 << combine->ScaleShiftA);
+   const GLuint numColorArgs = combine->_NumArgsRGB;
+   const GLuint numAlphaArgs = combine->_NumArgsA;
    GLfloat ccolor[MAX_COMBINER_TERMS][MAX_WIDTH][4]; /* temp color buffers */
    GLfloat rgba[MAX_WIDTH][4];
-   GLuint i, j;
+   GLuint i, term;
 
    ASSERT(ctx->Extensions.EXT_texture_env_combine ||
           ctx->Extensions.ARB_texture_env_combine);
@@ -89,34 +86,35 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 
    /*
    printf("modeRGB 0x%x  modeA 0x%x  srcRGB1 0x%x  srcA1 0x%x  srcRGB2 0x%x  srcA2 0x%x\n",
-          textureUnit->_CurrentCombine->ModeRGB,
-          textureUnit->_CurrentCombine->ModeA,
-          textureUnit->_CurrentCombine->SourceRGB[0],
-          textureUnit->_CurrentCombine->SourceA[0],
-          textureUnit->_CurrentCombine->SourceRGB[1],
-          textureUnit->_CurrentCombine->SourceA[1]);
+          combine->ModeRGB,
+          combine->ModeA,
+          combine->SourceRGB[0],
+          combine->SourceA[0],
+          combine->SourceRGB[1],
+          combine->SourceA[1]);
    */
 
    /*
     * Do operand setup for up to 4 operands.  Loop over the terms.
     */
-   for (j = 0; j < numColorArgs; j++) {
-      const GLenum srcRGB = textureUnit->_CurrentCombine->SourceRGB[j];
+   for (term = 0; term < numColorArgs; term++) {
+      const GLenum srcRGB = combine->SourceRGB[term];
+      const GLenum operandRGB = combine->OperandRGB[term];
 
       switch (srcRGB) {
          case GL_TEXTURE:
-            argRGB[j] = (const GLfloat (*)[4])
+            argRGB[term] = (const GLfloat (*)[4])
                (texelBuffer + unit * (n * 4 * sizeof(GLfloat)));
             break;
          case GL_PRIMARY_COLOR:
-            argRGB[j] = primary_rgba;
+            argRGB[term] = primary_rgba;
             break;
          case GL_PREVIOUS:
-            argRGB[j] = (const GLfloat (*)[4]) rgba;
+            argRGB[term] = (const GLfloat (*)[4]) rgba;
             break;
          case GL_CONSTANT:
             {
-               GLfloat (*c)[4] = ccolor[j];
+               GLfloat (*c)[4] = ccolor[term];
                GLfloat red   = textureUnit->EnvColor[0];
                GLfloat green = textureUnit->EnvColor[1];
                GLfloat blue  = textureUnit->EnvColor[2];
@@ -124,27 +122,27 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
                for (i = 0; i < n; i++) {
                   ASSIGN_4V(c[i], red, green, blue, alpha);
                }
-               argRGB[j] = (const GLfloat (*)[4]) ccolor[j];
+               argRGB[term] = (const GLfloat (*)[4]) ccolor[term];
             }
             break;
 	 /* GL_ATI_texture_env_combine3 allows GL_ZERO & GL_ONE as sources.
 	  */
 	 case GL_ZERO:
             {
-               GLfloat (*c)[4] = ccolor[j];
+               GLfloat (*c)[4] = ccolor[term];
                for (i = 0; i < n; i++) {
                   ASSIGN_4V(c[i], 0.0F, 0.0F, 0.0F, 0.0F);
                }
-               argRGB[j] = (const GLfloat (*)[4]) ccolor[j];
+               argRGB[term] = (const GLfloat (*)[4]) ccolor[term];
             }
             break;
 	 case GL_ONE:
             {
-               GLfloat (*c)[4] = ccolor[j];
+               GLfloat (*c)[4] = ccolor[term];
                for (i = 0; i < n; i++) {
                   ASSIGN_4V(c[i], 1.0F, 1.0F, 1.0F, 1.0F);
                }
-               argRGB[j] = (const GLfloat (*)[4]) ccolor[j];
+               argRGB[term] = (const GLfloat (*)[4]) ccolor[term];
             }
             break;
          default:
@@ -154,39 +152,42 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
                ASSERT(srcUnit < ctx->Const.MaxTextureUnits);
                if (!ctx->Texture.Unit[srcUnit]._ReallyEnabled)
                   return;
-               argRGB[j] = (const GLfloat (*)[4])
+               argRGB[term] = (const GLfloat (*)[4])
                   (texelBuffer + srcUnit * (n * 4 * sizeof(GLfloat)));
             }
       }
 
-      if (textureUnit->_CurrentCombine->OperandRGB[j] != GL_SRC_COLOR) {
-         const GLfloat (*src)[4] = argRGB[j];
-         GLfloat (*dst)[4] = ccolor[j];
+      if (operandRGB != GL_SRC_COLOR) {
+         const GLfloat (*src)[4] = argRGB[term];
+         GLfloat (*dst)[4] = ccolor[term];
 
-         /* point to new arg[j] storage */
-         argRGB[j] = (const GLfloat (*)[4]) ccolor[j];
+         /* point to new arg[term] storage */
+         argRGB[term] = (const GLfloat (*)[4]) ccolor[term];
 
-         if (textureUnit->_CurrentCombine->OperandRGB[j] == GL_ONE_MINUS_SRC_COLOR) {
+         switch (operandRGB) {
+         case GL_ONE_MINUS_SRC_COLOR:
             for (i = 0; i < n; i++) {
                dst[i][RCOMP] = 1.0F - src[i][RCOMP];
                dst[i][GCOMP] = 1.0F - src[i][GCOMP];
                dst[i][BCOMP] = 1.0F - src[i][BCOMP];
             }
-         }
-         else if (textureUnit->_CurrentCombine->OperandRGB[j] == GL_SRC_ALPHA) {
+            break;
+         case GL_SRC_ALPHA:
             for (i = 0; i < n; i++) {
                dst[i][RCOMP] = src[i][ACOMP];
                dst[i][GCOMP] = src[i][ACOMP];
                dst[i][BCOMP] = src[i][ACOMP];
             }
-         }
-         else {
-            ASSERT(textureUnit->_CurrentCombine->OperandRGB[j] ==GL_ONE_MINUS_SRC_ALPHA);
+            break;
+         case GL_ONE_MINUS_SRC_ALPHA:
             for (i = 0; i < n; i++) {
                dst[i][RCOMP] = 1.0F - src[i][ACOMP];
                dst[i][GCOMP] = 1.0F - src[i][ACOMP];
                dst[i][BCOMP] = 1.0F - src[i][ACOMP];
             }
+            break;
+         default:
+            _mesa_problem(ctx, "Bad operandRGB");
          }
       }
    }
@@ -194,36 +195,47 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
    /*
     * Set up the argA[i] pointers
     */
-   for (j = 0; j < numAlphaArgs; j++) {
-      const GLenum srcA = textureUnit->_CurrentCombine->SourceA[j];
+   for (term = 0; term < numAlphaArgs; term++) {
+      const GLenum srcA = combine->SourceA[term];
+      const GLenum operandA = combine->OperandA[term];
 
       switch (srcA) {
          case GL_TEXTURE:
-            argA[j] = (const GLfloat (*)[4])
+            argA[term] = (const GLfloat (*)[4])
                (texelBuffer + unit * (n * 4 * sizeof(GLfloat)));
             break;
          case GL_PRIMARY_COLOR:
-            argA[j] = primary_rgba;
+            argA[term] = primary_rgba;
             break;
          case GL_PREVIOUS:
-            argA[j] = (const GLfloat (*)[4]) rgba;
+            argA[term] = (const GLfloat (*)[4]) rgba;
             break;
          case GL_CONSTANT:
             {
-               GLfloat alpha, (*c)[4] = ccolor[j];
-               alpha = textureUnit->EnvColor[3];
+               GLfloat (*c)[4] = ccolor[term];
+               GLfloat alpha = textureUnit->EnvColor[3];
                for (i = 0; i < n; i++)
                   c[i][ACOMP] = alpha;
-               argA[j] = (const GLfloat (*)[4]) ccolor[j];
+               argA[term] = (const GLfloat (*)[4]) ccolor[term];
             }
             break;
 	 /* GL_ATI_texture_env_combine3 allows GL_ZERO & GL_ONE as sources.
 	  */
 	 case GL_ZERO:
-            argA[j] = & zero;
+            {
+               GLfloat (*c)[4] = ccolor[term];
+               for (i = 0; i < n; i++)
+                  c[i][ACOMP] = 0.0F;
+               argA[term] = (const GLfloat (*)[4]) ccolor[term];
+            }
             break;
 	 case GL_ONE:
-            argA[j] = & one;
+            {
+               GLfloat (*c)[4] = ccolor[term];
+               for (i = 0; i < n; i++)
+                  c[i][ACOMP] = 1.0F;
+               argA[term] = (const GLfloat (*)[4]) ccolor[term];
+            }
             break;
          default:
             /* ARB_texture_env_crossbar source */
@@ -232,62 +244,46 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
                ASSERT(srcUnit < ctx->Const.MaxTextureUnits);
                if (!ctx->Texture.Unit[srcUnit]._ReallyEnabled)
                   return;
-               argA[j] = (const GLfloat (*)[4])
+               argA[term] = (const GLfloat (*)[4])
                   (texelBuffer + srcUnit * (n * 4 * sizeof(GLfloat)));
             }
       }
 
-      if (textureUnit->_CurrentCombine->OperandA[j] == GL_ONE_MINUS_SRC_ALPHA) {
-         const GLfloat (*src)[4] = argA[j];
-         GLfloat (*dst)[4] = ccolor[j];
-         argA[j] = (const GLfloat (*)[4]) ccolor[j];
+      if (operandA == GL_ONE_MINUS_SRC_ALPHA) {
+         const GLfloat (*src)[4] = argA[term];
+         GLfloat (*dst)[4] = ccolor[term];
+         argA[term] = (const GLfloat (*)[4]) ccolor[term];
          for (i = 0; i < n; i++) {
             dst[i][ACOMP] = 1.0F - src[i][ACOMP];
          }
       }
    }
 
-   /*
-    * Do the texture combine.
-    */
-   switch (textureUnit->_CurrentCombine->ModeRGB) {
+   /* RGB channel combine */
+   {
+      const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
+      const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argRGB[1];
+      const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argRGB[2];
+      const GLfloat (*arg3)[4] = (const GLfloat (*)[4]) argRGB[3];
+
+      switch (combine->ModeRGB) {
       case GL_REPLACE:
-         {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
-            if (RGBshift) {
-               for (i = 0; i < n; i++) {
-                  rgba[i][RCOMP] = arg0[i][RCOMP] * RGBmult;
-                  rgba[i][GCOMP] = arg0[i][GCOMP] * RGBmult;
-                  rgba[i][BCOMP] = arg0[i][BCOMP] * RGBmult;
-               }
-            }
-            else {
-               for (i = 0; i < n; i++) {
-                  rgba[i][RCOMP] = arg0[i][RCOMP];
-                  rgba[i][GCOMP] = arg0[i][GCOMP];
-                  rgba[i][BCOMP] = arg0[i][BCOMP];
-               }
-            }
+         for (i = 0; i < n; i++) {
+            rgba[i][RCOMP] = arg0[i][RCOMP] * RGBmult;
+            rgba[i][GCOMP] = arg0[i][GCOMP] * RGBmult;
+            rgba[i][BCOMP] = arg0[i][BCOMP] * RGBmult;
          }
          break;
       case GL_MODULATE:
-         {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argRGB[1];
-            for (i = 0; i < n; i++) {
-               rgba[i][RCOMP] = arg0[i][RCOMP] * arg1[i][RCOMP] * RGBmult;
-               rgba[i][GCOMP] = arg0[i][GCOMP] * arg1[i][GCOMP] * RGBmult;
-               rgba[i][BCOMP] = arg0[i][BCOMP] * arg1[i][BCOMP] * RGBmult;
-            }
+         for (i = 0; i < n; i++) {
+            rgba[i][RCOMP] = arg0[i][RCOMP] * arg1[i][RCOMP] * RGBmult;
+            rgba[i][GCOMP] = arg0[i][GCOMP] * arg1[i][GCOMP] * RGBmult;
+            rgba[i][BCOMP] = arg0[i][BCOMP] * arg1[i][BCOMP] * RGBmult;
          }
          break;
       case GL_ADD:
          if (textureUnit->EnvMode == GL_COMBINE4_NV) {
             /* (a * b) + (c * d) */
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argRGB[1];
-            const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argRGB[2];
-            const GLfloat (*arg3)[4] = (const GLfloat (*)[4]) argRGB[3];
             for (i = 0; i < n; i++) {
                rgba[i][RCOMP] = (arg0[i][RCOMP] * arg1[i][RCOMP] +
                                  arg2[i][RCOMP] * arg3[i][RCOMP]) * RGBmult;
@@ -299,8 +295,6 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
          }
          else {
             /* 2-term addition */
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argRGB[1];
             for (i = 0; i < n; i++) {
                rgba[i][RCOMP] = (arg0[i][RCOMP] + arg1[i][RCOMP]) * RGBmult;
                rgba[i][GCOMP] = (arg0[i][GCOMP] + arg1[i][GCOMP]) * RGBmult;
@@ -311,10 +305,6 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
       case GL_ADD_SIGNED:
          if (textureUnit->EnvMode == GL_COMBINE4_NV) {
             /* (a * b) + (c * d) - 0.5 */
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argRGB[1];
-            const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argRGB[2];
-            const GLfloat (*arg3)[4] = (const GLfloat (*)[4]) argRGB[3];
             for (i = 0; i < n; i++) {
                rgba[i][RCOMP] = (arg0[i][RCOMP] + arg1[i][RCOMP] *
                                  arg2[i][RCOMP] + arg3[i][RCOMP] - 0.5) * RGBmult;
@@ -325,8 +315,6 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
             }
          }
          else {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argRGB[1];
             for (i = 0; i < n; i++) {
                rgba[i][RCOMP] = (arg0[i][RCOMP] + arg1[i][RCOMP] - 0.5) * RGBmult;
                rgba[i][GCOMP] = (arg0[i][GCOMP] + arg1[i][GCOMP] - 0.5) * RGBmult;
@@ -335,106 +323,74 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
          }
          break;
       case GL_INTERPOLATE:
-         {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argRGB[1];
-            const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argRGB[2];
-            for (i = 0; i < n; i++) {
-               rgba[i][RCOMP] = (arg0[i][RCOMP] * arg2[i][RCOMP] +
-                      arg1[i][RCOMP] * (1.0F - arg2[i][RCOMP])) * RGBmult;
-               rgba[i][GCOMP] = (arg0[i][GCOMP] * arg2[i][GCOMP] +
-                      arg1[i][GCOMP] * (1.0F - arg2[i][GCOMP])) * RGBmult;
-               rgba[i][BCOMP] = (arg0[i][BCOMP] * arg2[i][BCOMP] +
-                      arg1[i][BCOMP] * (1.0F - arg2[i][BCOMP])) * RGBmult;
-            }
+         for (i = 0; i < n; i++) {
+            rgba[i][RCOMP] = (arg0[i][RCOMP] * arg2[i][RCOMP] +
+                          arg1[i][RCOMP] * (1.0F - arg2[i][RCOMP])) * RGBmult;
+            rgba[i][GCOMP] = (arg0[i][GCOMP] * arg2[i][GCOMP] +
+                          arg1[i][GCOMP] * (1.0F - arg2[i][GCOMP])) * RGBmult;
+            rgba[i][BCOMP] = (arg0[i][BCOMP] * arg2[i][BCOMP] +
+                          arg1[i][BCOMP] * (1.0F - arg2[i][BCOMP])) * RGBmult;
          }
          break;
       case GL_SUBTRACT:
-         {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argRGB[1];
-            for (i = 0; i < n; i++) {
-               rgba[i][RCOMP] = (arg0[i][RCOMP] - arg1[i][RCOMP]) * RGBmult;
-               rgba[i][GCOMP] = (arg0[i][GCOMP] - arg1[i][GCOMP]) * RGBmult;
-               rgba[i][BCOMP] = (arg0[i][BCOMP] - arg1[i][BCOMP]) * RGBmult;
-            }
+         for (i = 0; i < n; i++) {
+            rgba[i][RCOMP] = (arg0[i][RCOMP] - arg1[i][RCOMP]) * RGBmult;
+            rgba[i][GCOMP] = (arg0[i][GCOMP] - arg1[i][GCOMP]) * RGBmult;
+            rgba[i][BCOMP] = (arg0[i][BCOMP] - arg1[i][BCOMP]) * RGBmult;
          }
          break;
       case GL_DOT3_RGB_EXT:
       case GL_DOT3_RGBA_EXT:
-         {
-            /* Do not scale the result by 1 2 or 4 */
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argRGB[1];
-            for (i = 0; i < n; i++) {
-               GLfloat dot = ((arg0[i][RCOMP]-0.5F) * (arg1[i][RCOMP]-0.5F) +
-                             (arg0[i][GCOMP]-0.5F) * (arg1[i][GCOMP]-0.5F) +
-                             (arg0[i][BCOMP]-0.5F) * (arg1[i][BCOMP]-0.5F))
-                            * 4.0F;
-               dot = CLAMP(dot, 0.0F, 1.0F);
-               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = (GLfloat) dot;
-            }
+         /* Do not scale the result by 1 2 or 4 */
+         for (i = 0; i < n; i++) {
+            GLfloat dot = ((arg0[i][RCOMP]-0.5F) * (arg1[i][RCOMP]-0.5F) +
+                           (arg0[i][GCOMP]-0.5F) * (arg1[i][GCOMP]-0.5F) +
+                           (arg0[i][BCOMP]-0.5F) * (arg1[i][BCOMP]-0.5F))
+               * 4.0F;
+            dot = CLAMP(dot, 0.0F, 1.0F);
+            rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = (GLfloat) dot;
          }
          break;
       case GL_DOT3_RGB:
       case GL_DOT3_RGBA:
-         {
-            /* DO scale the result by 1 2 or 4 */
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argRGB[1];
-            for (i = 0; i < n; i++) {
-               GLfloat dot = ((arg0[i][RCOMP]-0.5F) * (arg1[i][RCOMP]-0.5F) +
-                             (arg0[i][GCOMP]-0.5F) * (arg1[i][GCOMP]-0.5F) +
-                             (arg0[i][BCOMP]-0.5F) * (arg1[i][BCOMP]-0.5F))
-                            * 4.0F * RGBmult;
-               dot = CLAMP(dot, 0.0, 1.0F);
-               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = (GLfloat) dot;
-            }
+         /* DO scale the result by 1 2 or 4 */
+         for (i = 0; i < n; i++) {
+            GLfloat dot = ((arg0[i][RCOMP]-0.5F) * (arg1[i][RCOMP]-0.5F) +
+                           (arg0[i][GCOMP]-0.5F) * (arg1[i][GCOMP]-0.5F) +
+                           (arg0[i][BCOMP]-0.5F) * (arg1[i][BCOMP]-0.5F))
+               * 4.0F * RGBmult;
+            dot = CLAMP(dot, 0.0, 1.0F);
+            rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = (GLfloat) dot;
          }
          break;
       case GL_MODULATE_ADD_ATI:
-         {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argRGB[1];
-            const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argRGB[2];
-            for (i = 0; i < n; i++) {
-               rgba[i][RCOMP] = ((arg0[i][RCOMP] * arg2[i][RCOMP]) +
-                                 arg1[i][RCOMP]) * RGBmult;
-               rgba[i][GCOMP] = ((arg0[i][GCOMP] * arg2[i][GCOMP]) +
-                                 arg1[i][GCOMP]) * RGBmult;
-               rgba[i][BCOMP] = ((arg0[i][BCOMP] * arg2[i][BCOMP]) +
-                                 arg1[i][BCOMP]) * RGBmult;
-            }
+         for (i = 0; i < n; i++) {
+            rgba[i][RCOMP] = ((arg0[i][RCOMP] * arg2[i][RCOMP]) +
+                              arg1[i][RCOMP]) * RGBmult;
+            rgba[i][GCOMP] = ((arg0[i][GCOMP] * arg2[i][GCOMP]) +
+                              arg1[i][GCOMP]) * RGBmult;
+            rgba[i][BCOMP] = ((arg0[i][BCOMP] * arg2[i][BCOMP]) +
+                              arg1[i][BCOMP]) * RGBmult;
 	 }
          break;
       case GL_MODULATE_SIGNED_ADD_ATI:
-         {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argRGB[1];
-            const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argRGB[2];
-            for (i = 0; i < n; i++) {
-               rgba[i][RCOMP] = ((arg0[i][RCOMP] * arg2[i][RCOMP]) +
-                                 arg1[i][RCOMP] - 0.5) * RGBmult;
-               rgba[i][GCOMP] = ((arg0[i][GCOMP] * arg2[i][GCOMP]) +
-                                 arg1[i][GCOMP] - 0.5) * RGBmult;
-               rgba[i][BCOMP] = ((arg0[i][BCOMP] * arg2[i][BCOMP]) +
-                                 arg1[i][BCOMP] - 0.5) * RGBmult;
-            }
+         for (i = 0; i < n; i++) {
+            rgba[i][RCOMP] = ((arg0[i][RCOMP] * arg2[i][RCOMP]) +
+                              arg1[i][RCOMP] - 0.5) * RGBmult;
+            rgba[i][GCOMP] = ((arg0[i][GCOMP] * arg2[i][GCOMP]) +
+                              arg1[i][GCOMP] - 0.5) * RGBmult;
+            rgba[i][BCOMP] = ((arg0[i][BCOMP] * arg2[i][BCOMP]) +
+                              arg1[i][BCOMP] - 0.5) * RGBmult;
 	 }
          break;
       case GL_MODULATE_SUBTRACT_ATI:
-         {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argRGB[1];
-            const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argRGB[2];
-            for (i = 0; i < n; i++) {
-               rgba[i][RCOMP] = ((arg0[i][RCOMP] * arg2[i][RCOMP]) -
-                                 arg1[i][RCOMP]) * RGBmult;
-               rgba[i][GCOMP] = ((arg0[i][GCOMP] * arg2[i][GCOMP]) -
-                                 arg1[i][GCOMP]) * RGBmult;
-               rgba[i][BCOMP] = ((arg0[i][BCOMP] * arg2[i][BCOMP]) -
-                                 arg1[i][BCOMP]) * RGBmult;
-            }
+         for (i = 0; i < n; i++) {
+            rgba[i][RCOMP] = ((arg0[i][RCOMP] * arg2[i][RCOMP]) -
+                              arg1[i][RCOMP]) * RGBmult;
+            rgba[i][GCOMP] = ((arg0[i][GCOMP] * arg2[i][GCOMP]) -
+                              arg1[i][GCOMP]) * RGBmult;
+            rgba[i][BCOMP] = ((arg0[i][BCOMP] * arg2[i][BCOMP]) -
+                              arg1[i][BCOMP]) * RGBmult;
 	 }
          break;
       case GL_BUMP_ENVMAP_ATI:
@@ -458,41 +414,31 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
          return; /* no alpha processing */
       default:
          _mesa_problem(ctx, "invalid combine mode");
+      }
    }
 
-   switch (textureUnit->_CurrentCombine->ModeA) {
+   /* Alpha channel combine */
+   {
+      const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argA[0];
+      const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argA[1];
+      const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argA[2];
+      const GLfloat (*arg3)[4] = (const GLfloat (*)[4]) argA[3];
+
+      switch (combine->ModeA) {
       case GL_REPLACE:
-         {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argA[0];
-            if (Ashift) {
-               for (i = 0; i < n; i++) {
-                  GLfloat a = arg0[i][ACOMP] * Amult;
-                  rgba[i][ACOMP] = (GLfloat) MIN2(a, 1.0F);
-               }
-            }
-            else {
-               for (i = 0; i < n; i++) {
-                  rgba[i][ACOMP] = arg0[i][ACOMP];
-               }
-            }
+         for (i = 0; i < n; i++) {
+            GLfloat a = arg0[i][ACOMP] * Amult;
+            rgba[i][ACOMP] = (GLfloat) MIN2(a, 1.0F);
          }
          break;
       case GL_MODULATE:
-         {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argA[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argA[1];
-            for (i = 0; i < n; i++) {
-               rgba[i][ACOMP] = arg0[i][ACOMP] * arg1[i][ACOMP] * Amult;
-            }
+         for (i = 0; i < n; i++) {
+            rgba[i][ACOMP] = arg0[i][ACOMP] * arg1[i][ACOMP] * Amult;
          }
          break;
       case GL_ADD:
          if (textureUnit->EnvMode == GL_COMBINE4_NV) {
             /* (a * b) + (c * d) */
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argA[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argA[1];
-            const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argA[2];
-            const GLfloat (*arg3)[4] = (const GLfloat (*)[4]) argA[3];
             for (i = 0; i < n; i++) {
                rgba[i][ACOMP] = (arg0[i][ACOMP] * arg1[i][ACOMP] +
                                  arg2[i][ACOMP] * arg3[i][ACOMP]) * Amult;
@@ -500,8 +446,6 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
          }
          else {
             /* two-term add */
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argA[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argA[1];
             for (i = 0; i < n; i++) {
                rgba[i][ACOMP] = (arg0[i][ACOMP] + arg1[i][ACOMP]) * Amult;
             }
@@ -510,10 +454,6 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
       case GL_ADD_SIGNED:
          if (textureUnit->EnvMode == GL_COMBINE4_NV) {
             /* (a * b) + (c * d) - 0.5 */
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argA[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argA[1];
-            const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argA[2];
-            const GLfloat (*arg3)[4] = (const GLfloat (*)[4]) argA[3];
             for (i = 0; i < n; i++) {
                rgba[i][ACOMP] = (arg0[i][ACOMP] * arg1[i][ACOMP] +
                                  arg2[i][ACOMP] * arg3[i][ACOMP] -
@@ -522,69 +462,44 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
          }
          else {
             /* a + b - 0.5 */
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argA[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argA[1];
             for (i = 0; i < n; i++) {
                rgba[i][ACOMP] = (arg0[i][ACOMP] + arg1[i][ACOMP] - 0.5F) * Amult;
             }
          }
          break;
       case GL_INTERPOLATE:
-         {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argA[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argA[1];
-            const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argA[2];
-            for (i=0; i<n; i++) {
-               rgba[i][ACOMP] = (arg0[i][ACOMP] * arg2[i][ACOMP] +
-                                 arg1[i][ACOMP] * (1.0F - arg2[i][ACOMP]))
-                                * Amult;
-            }
+         for (i=0; i<n; i++) {
+            rgba[i][ACOMP] = (arg0[i][ACOMP] * arg2[i][ACOMP] +
+                              arg1[i][ACOMP] * (1.0F - arg2[i][ACOMP]))
+               * Amult;
          }
          break;
       case GL_SUBTRACT:
-         {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argA[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argA[1];
-            for (i = 0; i < n; i++) {
-               rgba[i][ACOMP] = (arg0[i][ACOMP] - arg1[i][ACOMP]) * Amult;
-            }
+         for (i = 0; i < n; i++) {
+            rgba[i][ACOMP] = (arg0[i][ACOMP] - arg1[i][ACOMP]) * Amult;
          }
          break;
       case GL_MODULATE_ADD_ATI:
-         {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argA[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argA[1];
-            const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argA[2];
-            for (i = 0; i < n; i++) {
-               rgba[i][ACOMP] = ((arg0[i][ACOMP] * arg2[i][ACOMP])
-                                 + arg1[i][ACOMP]) * Amult;
-            }
+         for (i = 0; i < n; i++) {
+            rgba[i][ACOMP] = ((arg0[i][ACOMP] * arg2[i][ACOMP])
+                              + arg1[i][ACOMP]) * Amult;
          }
          break;
       case GL_MODULATE_SIGNED_ADD_ATI:
-         {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argA[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argA[1];
-            const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argA[2];
-            for (i = 0; i < n; i++) {
-               rgba[i][ACOMP] = ((arg0[i][ACOMP] * arg2[i][ACOMP]) +
-                                 arg1[i][ACOMP] - 0.5F) * Amult;
-            }
+         for (i = 0; i < n; i++) {
+            rgba[i][ACOMP] = ((arg0[i][ACOMP] * arg2[i][ACOMP]) +
+                              arg1[i][ACOMP] - 0.5F) * Amult;
          }
          break;
       case GL_MODULATE_SUBTRACT_ATI:
-         {
-            const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argA[0];
-            const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argA[1];
-            const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argA[2];
-            for (i = 0; i < n; i++) {
-               rgba[i][ACOMP] = ((arg0[i][ACOMP] * arg2[i][ACOMP])
-                                 - arg1[i][ACOMP]) * Amult;
-            }
+         for (i = 0; i < n; i++) {
+            rgba[i][ACOMP] = ((arg0[i][ACOMP] * arg2[i][ACOMP])
+                              - arg1[i][ACOMP]) * Amult;
          }
          break;
       default:
          _mesa_problem(ctx, "invalid combine mode");
+      }
    }
 
    /* Fix the alpha component for GL_DOT3_RGBA_EXT/ARB combining.
@@ -592,8 +507,8 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
     * were written such that the GL_COMBINE_ALPHA value could be set to
     * GL_DOT3.
     */
-   if (textureUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGBA_EXT ||
-       textureUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGBA) {
+   if (combine->ModeRGB == GL_DOT3_RGBA_EXT ||
+       combine->ModeRGB == GL_DOT3_RGBA) {
       for (i = 0; i < n; i++) {
 	 rgba[i][ACOMP] = rgba[i][RCOMP];
       }
