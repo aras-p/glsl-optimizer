@@ -214,8 +214,6 @@ static void r300_swtcl_render_draw_arrays(struct vbuf_render* render,
 
     CS_LOCALS(r300);
 
-    count /= 4;
-
     r300render->vbo_offset = start;
 
     prepare_render(r300render, count);
