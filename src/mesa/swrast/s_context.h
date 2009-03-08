@@ -52,7 +52,7 @@
 typedef void (*texture_sample_func)(GLcontext *ctx,
                                     const struct gl_texture_object *tObj,
                                     GLuint n, const GLfloat texcoords[][4],
-                                    const GLfloat lambda[], GLchan rgba[][4]);
+                                    const GLfloat lambda[], GLfloat rgba[][4]);
 
 typedef void (_ASMAPIP blend_func)( GLcontext *ctx, GLuint n,
                                     const GLubyte mask[],
@@ -221,7 +221,7 @@ typedef struct
    /** Buffer for saving the sampled texture colors.
     * Needed for GL_ARB_texture_env_crossbar implementation.
     */
-   GLchan *TexelBuffer;
+   GLfloat *TexelBuffer;
 
    validate_texture_image_func ValidateTextureImage;
 

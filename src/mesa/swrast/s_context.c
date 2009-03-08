@@ -820,8 +820,8 @@ _swrast_CreateContext( GLcontext *ctx )
    swrast->PointSpan.facing = 0;
    swrast->PointSpan.array = swrast->SpanArrays;
 
-   swrast->TexelBuffer = (GLchan *) MALLOC(ctx->Const.MaxTextureImageUnits *
-                                           MAX_WIDTH * 4 * sizeof(GLchan));
+   swrast->TexelBuffer = (GLfloat *) MALLOC(ctx->Const.MaxTextureImageUnits *
+                                           MAX_WIDTH * 4 * sizeof(GLfloat));
    if (!swrast->TexelBuffer) {
       FREE(swrast->SpanArrays);
       FREE(swrast);
