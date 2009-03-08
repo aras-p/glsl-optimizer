@@ -1069,7 +1069,6 @@ static void r300UpdateWindow(GLcontext * ctx)
 	GLfloat sz = v[MAT_SZ] * rmesa->radeon.state.depth.scale;
 	GLfloat tz = v[MAT_TZ] * rmesa->radeon.state.depth.scale;
 
-	radeon_firevertices(&rmesa->radeon);
 	R300_STATECHANGE(rmesa, vpt);
 
 	rmesa->hw.vpt.cmd[R300_VPT_XSCALE] = r300PackFloat32(sx);
@@ -2137,6 +2136,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
+	radeon_firevertices(&r300->radeon);
 	r300UpdateWindow(ctx);
 
 	r300ColorMask(ctx,

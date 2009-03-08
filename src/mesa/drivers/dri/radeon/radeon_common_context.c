@@ -578,7 +578,7 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 			}
 			radeon->dri.drawable = driDrawPriv;
 			
-//			radeonWindowMoved(radeon);
+			radeon_window_moved(radeon);
 		}
 		radeon_draw_buffer(radeon->glCtx, &drfb->base);
 	}

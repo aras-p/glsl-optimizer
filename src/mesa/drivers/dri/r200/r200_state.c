@@ -1618,7 +1618,6 @@ void r200UpdateWindow( GLcontext *ctx )
    float_ui32_type sz = { v[MAT_SZ] * rmesa->radeon.state.depth.scale };
    float_ui32_type tz = { v[MAT_TZ] * rmesa->radeon.state.depth.scale };
 
-   radeon_firevertices(&rmesa->radeon);
    R200_STATECHANGE( rmesa, vpt );
 
    rmesa->hw.vpt.cmd[VPT_SE_VPORT_XSCALE]  = sx.ui32;
