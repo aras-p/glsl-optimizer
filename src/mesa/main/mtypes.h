@@ -1338,18 +1338,23 @@ struct gl_texture_object
 };
 
 
+/** Up to four combiner sources are possible with GL_NV_texture_env_combine4 */
+#define MAX_COMBINER_TERMS 4
+
+
 /**
  * Texture combine environment state.
- * Up to four combiner sources are possible with GL_NV_texture_env_combine4.
  */
 struct gl_tex_env_combine_state
 {
    GLenum ModeRGB;       /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
    GLenum ModeA;         /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
-   GLenum SourceRGB[4];  /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
-   GLenum SourceA[4];    /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
-   GLenum OperandRGB[4]; /**< SRC_COLOR, ONE_MINUS_SRC_COLOR, etc */
-   GLenum OperandA[4];   /**< SRC_ALPHA, ONE_MINUS_SRC_ALPHA, etc */
+   /** Source terms: GL_PRIMARY_COLOR, GL_TEXTURE, etc */
+   GLenum SourceRGB[MAX_COMBINER_TERMS];
+   GLenum SourceA[MAX_COMBINER_TERMS];
+   /** Source operands: GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, etc */
+   GLenum OperandRGB[MAX_COMBINER_TERMS];
+   GLenum OperandA[MAX_COMBINER_TERMS];
    GLuint ScaleShiftRGB; /**< 0, 1 or 2 */
    GLuint ScaleShiftA;   /**< 0, 1 or 2 */
    GLuint _NumArgsRGB;   /**< Number of inputs used for the RGB combiner */

@@ -74,7 +74,6 @@ fetch_texel_lod( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
 
       lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
 
-      /* XXX use a float-valued TextureSample routine here!!! */
       swrast->TextureSample[unit](ctx, texObj, 1,
                                   (const GLfloat (*)[4]) texcoord,
                                   &lambda, &rgba);
@@ -116,7 +115,6 @@ fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
 
       lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
 
-      /* XXX use a float-valued TextureSample routine here!!! */
       swrast->TextureSample[unit](ctx, texObj, 1,
                                   (const GLfloat (*)[4]) texcoord,
                                   &lambda, &rgba);
