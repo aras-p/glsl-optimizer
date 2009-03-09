@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <GL/glew.h>
 #include "GL/glut.h"
 #include "readtex.h"
 
@@ -49,6 +50,45 @@ static GLboolean use_vertex_arrays = GL_FALSE;
 static GLboolean anim = GL_TRUE;
 static GLboolean NoClear = GL_FALSE;
 static GLint FrameParity = 0;
+static GLenum FilterIndex = 0;
+static GLint ClampIndex = 0;
+
+
+static struct {
+   GLenum mode;
+   const char *name;
+} ClampModes[] = {
+   { GL_CLAMP_TO_EDGE, "GL_CLAMP_TO_EDGE" },
+   { GL_CLAMP_TO_BORDER, "GL_CLAMP_TO_BORDER" },
+   { GL_CLAMP, "GL_CLAMP" },
+   { GL_REPEAT, "GL_REPEAT" }
+};
+
+#define NUM_CLAMP_MODES (sizeof(ClampModes) / sizeof(ClampModes[0]))
+
+
+static struct {
+   GLenum mag_mode, min_mode;
+   const char *name;
+} FilterModes[] = {
+   { GL_NEAREST, GL_NEAREST, "GL_NEAREST, GL_NEAREST" },
+   { GL_NEAREST, GL_LINEAR, "GL_NEAREST, GL_LINEAR" },
+   { GL_NEAREST, GL_NEAREST_MIPMAP_NEAREST, "GL_NEAREST, GL_NEAREST_MIPMAP_NEAREST" },
+   { GL_NEAREST, GL_NEAREST_MIPMAP_LINEAR, "GL_NEAREST, GL_NEAREST_MIPMAP_LINEAR" },
+   { GL_NEAREST, GL_LINEAR_MIPMAP_NEAREST, "GL_NEAREST, GL_LINEAR_MIPMAP_NEAREST" },
+   { GL_NEAREST, GL_LINEAR_MIPMAP_LINEAR, "GL_NEAREST, GL_LINEAR_MIPMAP_LINEAR" },
+
+   { GL_LINEAR, GL_NEAREST, "GL_LINEAR, GL_NEAREST" },
+   { GL_LINEAR, GL_LINEAR, "GL_LINEAR, GL_LINEAR" },
+   { GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, "GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST" },
+   { GL_LINEAR, GL_NEAREST_MIPMAP_LINEAR, "GL_LINEAR, GL_NEAREST_MIPMAP_LINEAR" },
+   { GL_LINEAR, GL_LINEAR_MIPMAP_NEAREST, "GL_LINEAR, GL_LINEAR_MIPMAP_NEAREST" },
+   { GL_LINEAR, GL_LINEAR_MIPMAP_LINEAR, "GL_LINEAR, GL_LINEAR_MIPMAP_LINEAR" }
+};
+
+#define NUM_FILTER_MODES (sizeof(FilterModes) / sizeof(FilterModes[0]))
+
+
 
 #define eps1 0.99
 #define br   20.0  /* box radius */
@@ -158,6 +198,8 @@ static void draw_skybox( void )
 
 static void draw( void )
 {
+   GLenum wrap;
+
    if (NoClear) {
       /* This demonstrates how we can avoid calling glClear.
        * This method only works if every pixel in the window is painted for
@@ -182,6 +224,16 @@ static void draw( void )
       /* ordinary clearing */
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    }
+
+   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER,
+                   FilterModes[FilterIndex].min_mode);
+   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAG_FILTER,
+                   FilterModes[FilterIndex].mag_mode);
+
+   wrap = ClampModes[ClampIndex].mode;
+   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, wrap);
+   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, wrap);
+   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_R, wrap);
 
    glPushMatrix(); /*MODELVIEW*/
       glTranslatef( 0.0, 0.0, -EyeDist );
@@ -256,6 +308,14 @@ static void key(unsigned char k, int x, int y)
          else
             glutIdleFunc(NULL);
          break;
+      case 'f':
+         FilterIndex = (FilterIndex + 1) % NUM_FILTER_MODES;
+         printf("Tex filter: %s\n", FilterModes[FilterIndex].name);
+         break;
+      case 'c':
+         ClampIndex = (ClampIndex + 1) % NUM_CLAMP_MODES;
+         printf("Tex wrap mode: %s\n", ClampModes[ClampIndex].name);
+         break;
       case 'm':
          mode = !mode;
          set_mode(mode);
@@ -321,7 +381,7 @@ static void reshape(int width, int height)
 static void init_checkers( void )
 {
 #define CUBE_TEX_SIZE 64
-   GLubyte image[CUBE_TEX_SIZE][CUBE_TEX_SIZE][3];
+   GLubyte image[CUBE_TEX_SIZE][CUBE_TEX_SIZE][4];
    static const GLubyte colors[6][3] = {
       { 255,   0,   0 },	/* face 0 - red */
       {   0, 255, 255 },	/* face 1 - cyan */
@@ -348,21 +408,25 @@ static void init_checkers( void )
       for (i = 0; i < CUBE_TEX_SIZE; i++) {
          for (j = 0; j < CUBE_TEX_SIZE; j++) {
             if ((i/4 + j/4) & 1) {
-               image[i][j][0] = colors[f][0];
+               image[i][j][0] = colors[f][2];
                image[i][j][1] = colors[f][1];
-               image[i][j][2] = colors[f][2];
+               image[i][j][2] = colors[f][0];
+               image[i][j][3] = 255;
             }
             else {
                image[i][j][0] = 255;
                image[i][j][1] = 255;
                image[i][j][2] = 255;
+               image[i][j][3] = 255;
             }
          }
       }
 
-      glTexImage2D(targets[f], 0, GL_RGB, CUBE_TEX_SIZE, CUBE_TEX_SIZE, 0,
-                   GL_RGB, GL_UNSIGNED_BYTE, image);
+      glTexImage2D(targets[f], 0, GL_RGBA8, CUBE_TEX_SIZE, CUBE_TEX_SIZE, 0,
+                   GL_BGRA, GL_UNSIGNED_BYTE, image);
    }
+
+   glGenerateMipmap(GL_TEXTURE_CUBE_MAP_ARB);
 }
 
 
@@ -431,8 +495,6 @@ static void load_envmaps(void)
 
 static void init( GLboolean useImageFiles )
 {
-   GLenum filter;
-
    /* check for extension */
    {
       char *exten = (char *) glGetString(GL_EXTENSIONS);
@@ -445,17 +507,10 @@ static void init( GLboolean useImageFiles )
 
    if (useImageFiles) {
       load_envmaps();
-      filter = GL_LINEAR;
    }
    else {
       init_checkers();
-      filter = GL_NEAREST;
    }
-
-   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, filter);
-   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAG_FILTER, filter);
-   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
    glEnable(GL_TEXTURE_CUBE_MAP_ARB);
    glEnable(GL_DEPTH_TEST);
@@ -472,6 +527,8 @@ static void usage(void)
    printf("keys:\n");
    printf("  SPACE - toggle animation\n");
    printf("  CURSOR KEYS - rotation\n");
+   printf("  c - toggle texture clamp/wrap mode\n");
+   printf("  f - toggle texture filter mode\n");
    printf("  m - toggle texgen reflection mode\n");
    printf("  z/Z - change viewing distance\n");
 }
@@ -502,6 +559,7 @@ int main( int argc, char *argv[] )
    glutInitWindowSize(600, 500);
    glutInitDisplayMode( GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
    glutCreateWindow("Texture Cube Mapping");
+   glewInit();
    glutReshapeFunc( reshape );
    glutKeyboardFunc( key );
    glutSpecialFunc( specialkey );
