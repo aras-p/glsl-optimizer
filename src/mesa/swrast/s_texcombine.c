@@ -38,6 +38,25 @@
 
 
 /**
+ * Pointer to array of float[4]
+ * This type makes the code below more concise and avoids a lot of casting.
+ */
+typedef float (*float4_array)[4];
+
+
+/**
+ * Return array of texels for given unit.
+ */
+static INLINE float4_array
+get_texel_array(const GLfloat *texelBuffer, GLuint unit, GLuint numTexels)
+{
+   return (float4_array)
+      (texelBuffer + unit * numTexels * 4 * sizeof(GLfloat));
+}
+
+
+
+/**
  * Do texture application for:
  *  GL_EXT_texture_env_combine
  *  GL_ARB_texture_env_combine
@@ -57,14 +76,14 @@
  */
 static void
 texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
-                 CONST GLfloat (*primary_rgba)[4],
-                 CONST GLfloat *texelBuffer,
+                 const float4_array primary_rgba,
+                 const GLfloat *texelBuffer,
                  GLchan (*rgbaChan)[4] )
 {
    const struct gl_texture_unit *textureUnit = &(ctx->Texture.Unit[unit]);
    const struct gl_tex_env_combine_state *combine = textureUnit->_CurrentCombine;
-   const GLfloat (*argRGB [MAX_COMBINER_TERMS])[4];
-   const GLfloat (*argA [MAX_COMBINER_TERMS])[4];
+   float4_array argRGB[MAX_COMBINER_TERMS];
+   float4_array argA[MAX_COMBINER_TERMS];
    const GLfloat scaleRGB = (GLfloat) (1 << combine->ScaleShiftRGB);
    const GLfloat scaleA = (GLfloat) (1 << combine->ScaleShiftA);
    const GLuint numArgsRGB = combine->_NumArgsRGB;
@@ -101,18 +120,17 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 
       switch (srcRGB) {
          case GL_TEXTURE:
-            argRGB[term] = (const GLfloat (*)[4])
-               (texelBuffer + unit * (n * 4 * sizeof(GLfloat)));
+            argRGB[term] = get_texel_array(texelBuffer, unit, n);
             break;
          case GL_PRIMARY_COLOR:
             argRGB[term] = primary_rgba;
             break;
          case GL_PREVIOUS:
-            argRGB[term] = (const GLfloat (*)[4]) rgba;
+            argRGB[term] = rgba;
             break;
          case GL_CONSTANT:
             {
-               GLfloat (*c)[4] = ccolor[term];
+               float4_array c = ccolor[term];
                GLfloat red   = textureUnit->EnvColor[0];
                GLfloat green = textureUnit->EnvColor[1];
                GLfloat blue  = textureUnit->EnvColor[2];
@@ -120,27 +138,27 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
                for (i = 0; i < n; i++) {
                   ASSIGN_4V(c[i], red, green, blue, alpha);
                }
-               argRGB[term] = (const GLfloat (*)[4]) ccolor[term];
+               argRGB[term] = ccolor[term];
             }
             break;
 	 /* GL_ATI_texture_env_combine3 allows GL_ZERO & GL_ONE as sources.
 	  */
 	 case GL_ZERO:
             {
-               GLfloat (*c)[4] = ccolor[term];
+               float4_array c = ccolor[term];
                for (i = 0; i < n; i++) {
                   ASSIGN_4V(c[i], 0.0F, 0.0F, 0.0F, 0.0F);
                }
-               argRGB[term] = (const GLfloat (*)[4]) ccolor[term];
+               argRGB[term] = ccolor[term];
             }
             break;
 	 case GL_ONE:
             {
-               GLfloat (*c)[4] = ccolor[term];
+               float4_array c = ccolor[term];
                for (i = 0; i < n; i++) {
                   ASSIGN_4V(c[i], 1.0F, 1.0F, 1.0F, 1.0F);
                }
-               argRGB[term] = (const GLfloat (*)[4]) ccolor[term];
+               argRGB[term] = ccolor[term];
             }
             break;
          default:
@@ -150,17 +168,16 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
                ASSERT(srcUnit < ctx->Const.MaxTextureUnits);
                if (!ctx->Texture.Unit[srcUnit]._ReallyEnabled)
                   return;
-               argRGB[term] = (const GLfloat (*)[4])
-                  (texelBuffer + srcUnit * (n * 4 * sizeof(GLfloat)));
+               argRGB[term] = get_texel_array(texelBuffer, srcUnit, n);
             }
       }
 
       if (operandRGB != GL_SRC_COLOR) {
-         const GLfloat (*src)[4] = argRGB[term];
-         GLfloat (*dst)[4] = ccolor[term];
+         float4_array src = argRGB[term];
+         float4_array dst = ccolor[term];
 
          /* point to new arg[term] storage */
-         argRGB[term] = (const GLfloat (*)[4]) ccolor[term];
+         argRGB[term] = ccolor[term];
 
          switch (operandRGB) {
          case GL_ONE_MINUS_SRC_COLOR:
@@ -199,40 +216,39 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 
       switch (srcA) {
          case GL_TEXTURE:
-            argA[term] = (const GLfloat (*)[4])
-               (texelBuffer + unit * (n * 4 * sizeof(GLfloat)));
+            argA[term] = get_texel_array(texelBuffer, unit, n);
             break;
          case GL_PRIMARY_COLOR:
             argA[term] = primary_rgba;
             break;
          case GL_PREVIOUS:
-            argA[term] = (const GLfloat (*)[4]) rgba;
+            argA[term] = rgba;
             break;
          case GL_CONSTANT:
             {
-               GLfloat (*c)[4] = ccolor[term];
+               float4_array c = ccolor[term];
                GLfloat alpha = textureUnit->EnvColor[3];
                for (i = 0; i < n; i++)
                   c[i][ACOMP] = alpha;
-               argA[term] = (const GLfloat (*)[4]) ccolor[term];
+               argA[term] = ccolor[term];
             }
             break;
 	 /* GL_ATI_texture_env_combine3 allows GL_ZERO & GL_ONE as sources.
 	  */
 	 case GL_ZERO:
             {
-               GLfloat (*c)[4] = ccolor[term];
+               float4_array c = ccolor[term];
                for (i = 0; i < n; i++)
                   c[i][ACOMP] = 0.0F;
-               argA[term] = (const GLfloat (*)[4]) ccolor[term];
+               argA[term] = ccolor[term];
             }
             break;
 	 case GL_ONE:
             {
-               GLfloat (*c)[4] = ccolor[term];
+               float4_array c = ccolor[term];
                for (i = 0; i < n; i++)
                   c[i][ACOMP] = 1.0F;
-               argA[term] = (const GLfloat (*)[4]) ccolor[term];
+               argA[term] = ccolor[term];
             }
             break;
          default:
@@ -242,15 +258,14 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
                ASSERT(srcUnit < ctx->Const.MaxTextureUnits);
                if (!ctx->Texture.Unit[srcUnit]._ReallyEnabled)
                   return;
-               argA[term] = (const GLfloat (*)[4])
-                  (texelBuffer + srcUnit * (n * 4 * sizeof(GLfloat)));
+               argA[term] = get_texel_array(texelBuffer, srcUnit, n);
             }
       }
 
       if (operandA == GL_ONE_MINUS_SRC_ALPHA) {
-         const GLfloat (*src)[4] = argA[term];
-         GLfloat (*dst)[4] = ccolor[term];
-         argA[term] = (const GLfloat (*)[4]) ccolor[term];
+         float4_array src = argA[term];
+         float4_array dst = ccolor[term];
+         argA[term] = ccolor[term];
          for (i = 0; i < n; i++) {
             dst[i][ACOMP] = 1.0F - src[i][ACOMP];
          }
@@ -259,10 +274,10 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 
    /* RGB channel combine */
    {
-      const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argRGB[0];
-      const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argRGB[1];
-      const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argRGB[2];
-      const GLfloat (*arg3)[4] = (const GLfloat (*)[4]) argRGB[3];
+      float4_array arg0 = argRGB[0];
+      float4_array arg1 = argRGB[1];
+      float4_array arg2 = argRGB[2];
+      float4_array arg3 = argRGB[3];
 
       switch (combine->ModeRGB) {
       case GL_REPLACE:
@@ -417,10 +432,10 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 
    /* Alpha channel combine */
    {
-      const GLfloat (*arg0)[4] = (const GLfloat (*)[4]) argA[0];
-      const GLfloat (*arg1)[4] = (const GLfloat (*)[4]) argA[1];
-      const GLfloat (*arg2)[4] = (const GLfloat (*)[4]) argA[2];
-      const GLfloat (*arg3)[4] = (const GLfloat (*)[4]) argA[3];
+      float4_array arg0 = argA[0];
+      float4_array arg1 = argA[1];
+      float4_array arg2 = argA[2];
+      float4_array arg3 = argA[3];
 
       switch (combine->ModeA) {
       case GL_REPLACE:
@@ -527,7 +542,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
  * See GL_EXT_texture_swizzle.
  */
 static void
-swizzle_texels(GLuint swizzle, GLuint count, GLfloat (*texels)[4])
+swizzle_texels(GLuint swizzle, GLuint count, float4_array texels)
 {
    const GLuint swzR = GET_SWZ(swizzle, 0);
    const GLuint swzG = GET_SWZ(swizzle, 1);
@@ -567,7 +582,8 @@ static void
 texture_apply( const GLcontext *ctx,
                const struct gl_texture_unit *texUnit,
                GLuint n,
-               CONST GLfloat primary_rgba[][4], CONST GLfloat texel[][4],
+               float4_array primary_rgba,
+               float4_array texel,
                GLchan rgbaChan[][4] )
 {
    GLint baseLevel;
@@ -940,7 +956,7 @@ _swrast_texture_span( GLcontext *ctx, SWspan *span )
    GLfloat primary_rgba[MAX_WIDTH][4];
    GLuint unit;
 
-   ASSERT(span->end < MAX_WIDTH);
+   ASSERT(span->end <= MAX_WIDTH);
 
    /*
     * Save copy of the incoming fragment colors (the GL_PRIMARY_COLOR)
@@ -970,8 +986,13 @@ _swrast_texture_span( GLcontext *ctx, SWspan *span )
          const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
          const struct gl_texture_object *curObj = texUnit->_Current;
          GLfloat *lambda = span->array->lambda[unit];
+#if 0
          GLchan (*texels)[4] = (GLchan (*)[4])
             (swrast->TexelBuffer + unit * (span->end * 4 * sizeof(GLchan)));
+#else
+         float4_array texels = get_texel_array(swrast->TexelBuffer, unit,
+                                               span->end);
+#endif
          GLuint i;
          GLfloat rotMatrix00 = ctx->Texture.Unit[unit].RotMatrix[0];
          GLfloat rotMatrix01 = ctx->Texture.Unit[unit].RotMatrix[1];
@@ -1035,14 +1056,13 @@ _swrast_texture_span( GLcontext *ctx, SWspan *span )
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
       if (ctx->Texture.Unit[unit]._ReallyEnabled &&
          ctx->Texture.Unit[unit]._CurrentCombine->ModeRGB != GL_BUMP_ENVMAP_ATI) {
-         const GLfloat (*texcoords)[4]
-            = (const GLfloat (*)[4])
+         const GLfloat (*texcoords)[4] = (const GLfloat (*)[4])
             span->array->attribs[FRAG_ATTRIB_TEX0 + unit];
          const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
          const struct gl_texture_object *curObj = texUnit->_Current;
          GLfloat *lambda = span->array->lambda[unit];
-         GLfloat (*texels)[4] = (GLfloat (*)[4])
-            (swrast->TexelBuffer + unit * (span->end * 4 * sizeof(GLfloat)));
+         float4_array texels =
+            get_texel_array(swrast->TexelBuffer, unit, span->end);
 
          /* adjust texture lod (lambda) */
          if (span->arrayMask & SPAN_LAMBDA) {
@@ -1095,19 +1115,16 @@ _swrast_texture_span( GLcontext *ctx, SWspan *span )
          const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
          if (texUnit->_CurrentCombine != &texUnit->_EnvMode ) {
             texture_combine( ctx, unit, span->end,
-                             (CONST GLfloat (*)[4]) primary_rgba,
+                             primary_rgba,
                              swrast->TexelBuffer,
                              span->array->rgba );
          }
          else {
             /* conventional texture blend */
-            const GLfloat (*texels)[4] = (const GLfloat (*)[4])
-               (swrast->TexelBuffer + unit *
-                (span->end * 4 * sizeof(GLfloat)));
-
-
+            float4_array texels =
+               get_texel_array(swrast->TexelBuffer, unit, span->end);
             texture_apply( ctx, texUnit, span->end,
-                           (CONST GLfloat (*)[4]) primary_rgba, texels,
+                           primary_rgba, texels,
                            span->array->rgba );
          }
       }
