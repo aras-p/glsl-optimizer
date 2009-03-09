@@ -602,10 +602,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    x1 = x + width * ctx->Pixel.ZoomX;
    y0 = (GLfloat) y;
    y1 = y + height * ctx->Pixel.ZoomY;
-   //if(!color)
+
    draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex);
-   //else
-   //printf("skip draw quad\n");
+
    /* restore state */
    cso_restore_rasterizer(cso);
    cso_restore_viewport(cso);
@@ -613,117 +612,6 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_sampler_textures(cso);
    cso_restore_fragment_shader(cso);
    cso_restore_vertex_shader(cso);
-}
-
-
-/**
- * Check if a GL format/type combination is a match to the given pipe format.
- * XXX probably move this to a re-usable place.
- */
-static GLboolean
-compatible_formats(GLenum format, GLenum type, enum pipe_format pipeFormat)
-{
-   static const GLuint one = 1;
-   GLubyte littleEndian = *((GLubyte *) &one);
-
-   if (pipeFormat == PIPE_FORMAT_R8G8B8A8_UNORM &&
-       format == GL_RGBA &&
-       type == GL_UNSIGNED_BYTE &&
-       !littleEndian) {
-      return GL_TRUE;
-   }
-   else if (pipeFormat == PIPE_FORMAT_R8G8B8A8_UNORM &&
-            format == GL_ABGR_EXT &&
-            type == GL_UNSIGNED_BYTE &&
-            littleEndian) {
-      return GL_TRUE;
-   }
-   else if (pipeFormat == PIPE_FORMAT_A8R8G8B8_UNORM &&
-            format == GL_BGRA &&
-            type == GL_UNSIGNED_BYTE &&
-            littleEndian) {
-      return GL_TRUE;
-   }
-   else if (pipeFormat == PIPE_FORMAT_R5G6B5_UNORM &&
-            format == GL_RGB &&
-            type == GL_UNSIGNED_SHORT_5_6_5) {
-      /* endian don't care */
-      return GL_TRUE;
-   }
-   else if (pipeFormat == PIPE_FORMAT_R5G6B5_UNORM &&
-            format == GL_BGR &&
-            type == GL_UNSIGNED_SHORT_5_6_5_REV) {
-      /* endian don't care */
-      return GL_TRUE;
-   }
-   else if (pipeFormat == PIPE_FORMAT_S8_UNORM &&
-            format == GL_STENCIL_INDEX &&
-            type == GL_UNSIGNED_BYTE) {
-      return GL_TRUE;
-   }
-   else if (pipeFormat == PIPE_FORMAT_Z32_UNORM &&
-            format == GL_DEPTH_COMPONENT &&
-            type == GL_UNSIGNED_INT) {
-      return GL_TRUE;
-   }
-   /* XXX add more cases */
-   else {
-      return GL_FALSE;
-   }
-}
-
-
-/**
- * Check if any per-fragment ops are enabled.
- * XXX probably move this to a re-usable place.
- */
-static GLboolean
-any_fragment_ops(const struct st_context *st)
-{
-   if (st->state.depth_stencil.alpha.enabled ||
-       st->state.depth_stencil.depth.enabled ||
-       st->state.blend.blend_enable ||
-       st->state.blend.logicop_enable)
-      /* XXX more checks */
-      return GL_TRUE;
-   else
-      return GL_FALSE;
-}
-
-
-/**
- * Check if any pixel transfer ops are enabled.
- * XXX probably move this to a re-usable place.
- */
-static GLboolean
-any_pixel_transfer_ops(const struct st_context *st)
-{
-   if (st->ctx->Pixel.RedScale != 1.0 ||
-       st->ctx->Pixel.RedBias != 0.0 ||
-       st->ctx->Pixel.GreenScale != 1.0 ||
-       st->ctx->Pixel.GreenBias != 0.0 ||
-       st->ctx->Pixel.BlueScale != 1.0 ||
-       st->ctx->Pixel.BlueBias != 0.0 ||
-       st->ctx->Pixel.AlphaScale != 1.0 ||
-       st->ctx->Pixel.AlphaBias != 0.0 ||
-       st->ctx->Pixel.MapColorFlag)
-      /* XXX more checks */
-      return GL_TRUE;
-   else
-      return GL_FALSE;
-}
-
-
-/**
- * Draw image with a blit, or other non-textured quad method.
- */
-static void
-draw_blit(struct st_context *st,
-          GLsizei width, GLsizei height,
-          GLenum format, GLenum type, const GLvoid *pixels)
-{
-
-
 }
 
 
@@ -857,10 +745,8 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    bufferFormat = ps->format;
 
-   if (1/*any_fragment_ops(st) ||
-       any_pixel_transfer_ops(st) ||
-       !compatible_formats(format, type, ps->format)*/) {
-      /* textured quad */
+   /* draw with textured quad */
+   {
       struct pipe_texture *pt
          = make_texture(ctx->st, width, height, format, type, unpack, pixels);
       if (pt) {
@@ -869,10 +755,6 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
                             pt, stvp, stfp, color, GL_FALSE);
          pipe_texture_reference(&pt, NULL);
       }
-   }
-   else {
-      /* blit */
-      draw_blit(st, width, height, format, type, pixels);
    }
 
    _mesa_set_vp_override( ctx, FALSE );
@@ -1099,5 +981,3 @@ st_destroy_drawpix(struct st_context *st)
    st_reference_vertprog(st, &st->drawpix.vert_shaders[0], NULL);
    st_reference_vertprog(st, &st->drawpix.vert_shaders[1], NULL);
 }
-
-
