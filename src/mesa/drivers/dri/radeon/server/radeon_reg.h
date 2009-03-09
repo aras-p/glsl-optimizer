@@ -1500,7 +1500,7 @@
 #       define RADEON_ALPHA_ARG_C_T1_ALPHA       (6   << 8)
 #       define RADEON_ALPHA_ARG_C_T2_ALPHA       (7   << 8)
 #       define RADEON_ALPHA_ARG_C_T3_ALPHA       (8   << 8)
-#       define RADEON_DOT_ALPHA_DONT_REPLICATE   (1   << 9)
+#       define RADEON_DOT_ALPHA_DONT_REPLICATE   (1   << 12)
 #       define RADEON_ALPHA_ARG_MASK             0xf
 
 #define RADEON_PP_TFACTOR_0                 0x1c68
