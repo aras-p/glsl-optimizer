@@ -101,6 +101,7 @@ progs = [
 	'tri-repeat',
 	'tri-scissor-tri',
 	'tri-stencil',
+	'tri-stipple',
 	'tri-tex',
 	'tri-tex-3d',
 	'tri-tri',
