@@ -125,6 +125,57 @@ static void Init( void )
       exit(1);
    }
 
+
+   glGenTextures(1, &Texture);
+   glActiveTextureARB(GL_TEXTURE0_ARB + 1);
+   glBindTexture(GL_TEXTURE_2D, Texture);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+   {
+      GLubyte data[32][32];
+      int width = 32;
+      int height = 32;
+      int i;
+      int j;
+
+      for (i = 0; i < 32; i++)
+         for (j = 0; j < 32; j++)
+	 {
+	    /**
+	     ** +-----------+
+	     ** |     W     |
+	     ** |  +-----+  |
+	     ** |  |     |  |
+	     ** |  |  B  |  |
+	     ** |  |     |  |
+	     ** |  +-----+  |
+	     ** |           |
+	     ** +-----------+
+	     **/
+	    int i2 = i - height / 2;
+	    int j2 = j - width / 2;
+	    int h8 = height / 8;
+	    int w8 = width / 8;
+	    if ( -h8 <= i2 && i2 <= h8 && -w8 <= j2 && j2 <= w8 ) {
+	       data[i][j] = 0x00;
+	    } else if ( -2 * h8 <= i2 && i2 <= 2 * h8 && -2 * w8 <= j2 && j2 <= 2 * w8 ) {
+	       data[i][j] = 0x55;
+	    } else if ( -3 * h8 <= i2 && i2 <= 3 * h8 && -3 * w8 <= j2 && j2 <= 3 * w8 ) {
+	       data[i][j] = 0xaa;
+	    } else {
+	       data[i][j] = 0xff;
+	    }
+	 }
+
+      glTexImage2D( GL_TEXTURE_2D, 0,
+                    GL_ALPHA8,
+                    32, 32, 0,
+                    GL_ALPHA, GL_UNSIGNED_BYTE, data );
+   }
+
+
    glClearColor(.1, .3, .5, 0);
 }
 
