@@ -153,7 +153,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
          vbuffers[attr].buffer = NULL;
          pipe_buffer_reference(&vbuffers[attr].buffer, stobj->buffer);
-         vbuffers[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
+         vbuffers[attr].buffer_offset = pointer_to_offset(arrays[0]->Ptr);
          velements[attr].src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
       }
       else {

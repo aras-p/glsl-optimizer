@@ -379,7 +379,7 @@ setup_interleaved_attribs(GLcontext *ctx,
          else {
             vbuffer->buffer = NULL;
             pipe_buffer_reference(&vbuffer->buffer, stobj->buffer);
-            vbuffer->buffer_offset = (unsigned) low;
+            vbuffer->buffer_offset = pointer_to_offset(low);
          }
          vbuffer->stride = stride; /* in bytes */
          vbuffer->max_index = max_index;
@@ -434,7 +434,7 @@ setup_non_interleaved_attribs(GLcontext *ctx,
 
          vbuffer[attr].buffer = NULL;
          pipe_buffer_reference(&vbuffer[attr].buffer, stobj->buffer);
-         vbuffer[attr].buffer_offset = (unsigned) arrays[mesaAttr]->Ptr;
+         vbuffer[attr].buffer_offset = pointer_to_offset(arrays[mesaAttr]->Ptr);
          velements[attr].src_offset = 0;
       }
       else {
@@ -618,7 +618,7 @@ st_draw_vbo(GLcontext *ctx,
          /* elements/indexes are in a real VBO */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
          pipe_buffer_reference(&indexBuf, stobj->buffer);
-         indexOffset = (unsigned) ib->ptr / indexSize;
+         indexOffset = pointer_to_offset(ib->ptr) / indexSize;
       }
       else {
          /* element/indicies are in user space memory */
