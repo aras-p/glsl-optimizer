@@ -80,5 +80,8 @@ pipe_reference(struct pipe_reference **ptr, struct pipe_reference *reference)
    return destroy;
 }
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* P_REFCNT_H */
