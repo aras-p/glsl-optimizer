@@ -458,7 +458,7 @@ xmesa_free_buffer(XMesaBuffer buffer)
          XDestroyImage(buffer->tempImage);
 
          /* Unreference.  If count = zero we'll really delete the buffer */
-         _mesa_unreference_framebuffer(&fb);
+         _mesa_reference_framebuffer(&fb, NULL);
 
          XFreeGC(b->xm_visual->display, b->gc);
 
