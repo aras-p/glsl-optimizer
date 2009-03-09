@@ -2105,11 +2105,23 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_CND:
-      assert (0);
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         FETCH(&r[0], 0, chan_index);
+         FETCH(&r[1], 1, chan_index);
+         FETCH(&r[2], 2, chan_index);
+         micro_lt(&r[0], &mach->Temps[TEMP_HALF_I].xyzw[TEMP_HALF_C], &r[2], &r[0], &r[1]);
+         STORE(&r[0], 0, chan_index);
+      }
       break;
 
    case TGSI_OPCODE_CND0:
-      assert (0);
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         FETCH(&r[0], 0, chan_index);
+         FETCH(&r[1], 1, chan_index);
+         FETCH(&r[2], 2, chan_index);
+         micro_le(&r[0], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &r[2], &r[0], &r[1]);
+         STORE(&r[0], 0, chan_index);
+      }
       break;
 
    case TGSI_OPCODE_DOT2ADD:
