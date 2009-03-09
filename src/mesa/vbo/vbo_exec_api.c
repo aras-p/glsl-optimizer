@@ -748,7 +748,7 @@ void vbo_exec_BeginVertices( GLcontext *ctx )
    if (0) _mesa_printf("%s\n", __FUNCTION__);
    vbo_exec_vtx_map( exec );
 
-   assert(exec->ctx->Driver.NeedFlush == 0);
+   assert((exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT) == 0);
    exec->ctx->Driver.NeedFlush = FLUSH_UPDATE_CURRENT;
 }
 
@@ -783,10 +783,12 @@ void vbo_exec_FlushVertices( GLcontext *ctx, GLuint flags )
 
    /* Need to do this to ensure BeginVertices gets called again:
     */
-   _mesa_restore_exec_vtxfmt( ctx );
+   if (flags & FLUSH_UPDATE_CURRENT) {
+      assert(exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT);
+      _mesa_restore_exec_vtxfmt( ctx );
+   }
 
-   assert(exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT);
-   exec->ctx->Driver.NeedFlush = 0;
+   exec->ctx->Driver.NeedFlush &= ~flags;
 }
 
 
