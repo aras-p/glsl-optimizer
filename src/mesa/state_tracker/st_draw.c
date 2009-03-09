@@ -545,6 +545,8 @@ st_draw_vbo(GLcontext *ctx,
    if (MESA_VERBOSE & VERBOSE_GLSL) {
       check_uniforms(ctx);
    }
+#else
+   (void) check_uniforms;
 #endif
 
    /*
