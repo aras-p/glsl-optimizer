@@ -718,18 +718,15 @@ void radeonSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPri
 	case 4:
 		t->pp_txformat = tx_table[MESA_FORMAT_ARGB8888].format;
 		t->pp_txfilter |= tx_table[MESA_FORMAT_ARGB8888].filter;
-	//	pitch_val /= 4;
 		break;
 	case 3:
 	default:
 		t->pp_txformat = tx_table[MESA_FORMAT_RGB888].format;
 		t->pp_txfilter |= tx_table[MESA_FORMAT_RGB888].filter;
-//		pitch_val /= 4;
 		break;
 	case 2:
 		t->pp_txformat = tx_table[MESA_FORMAT_RGB565].format;
 		t->pp_txfilter |= tx_table[MESA_FORMAT_RGB565].filter;
-		pitch_val /= 2;
 		break;
 	}
         t->pp_txsize = ((rb->width - 1) << RADEON_TEX_USIZE_SHIFT)
