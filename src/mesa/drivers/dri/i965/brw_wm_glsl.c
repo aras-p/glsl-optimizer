@@ -181,11 +181,13 @@ static void prealloc_reg(struct brw_wm_compile *c)
     GLuint inputs = FRAG_BIT_WPOS | c->fp_interp_emitted | c->fp_deriv_emitted;
 
     for (i = 0; i < 4; i++) {
-	reg = (i < c->key.nr_depth_regs) 
-	    ? brw_vec8_grf(i*2, 0) : brw_vec8_grf(0, 0);
+        if (i < c->key.nr_depth_regs) 
+            reg = brw_vec8_grf(i * 2, 0);
+        else
+            reg = brw_vec8_grf(0, 0);
 	set_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, i, reg);
     }
-    c->reg_index += 2*c->key.nr_depth_regs;
+    c->reg_index += 2 * c->key.nr_depth_regs;
 
     /* constants */
     {
@@ -194,10 +196,14 @@ static void prealloc_reg(struct brw_wm_compile *c)
 	    c->fp->program.Base.Parameters;
 	int index = 0;
 
+        /* number of float constants */
 	c->prog_data.nr_params = 4 * nr_params;
+
+        /* loop over program constants (float[4]) */
 	for (i = 0; i < nr_params; i++) {
+            /* loop over XYZW channels */
             for (j = 0; j < 4; j++, index++) {
-                reg = brw_vec1_grf(c->reg_index + index/8, index%8);
+                reg = brw_vec1_grf(c->reg_index + index / 8, index % 8);
                 /* Save pointer to parameter/constant value.
                  * Constants will be copied in prepare_constant_buffer()
                  */
@@ -205,6 +211,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
                 set_reg(c, PROGRAM_STATE_VAR, i, j, reg);
 	    }
 	}
+        /* number of constant regs used (each reg is float[8]) */
 	c->nr_creg = 2 * ((4 * nr_params + 15) / 16);
 	c->reg_index += c->nr_creg;
     }
