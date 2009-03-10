@@ -154,20 +154,20 @@ struct brw_state_flags {
    GLuint cache;
 };
 
+
+/** Subclass of Mesa vertex program */
 struct brw_vertex_program {
    struct gl_vertex_program program;
    GLuint id;
 };
 
 
-
+/** Subclass of Mesa fragment program */
 struct brw_fragment_program {
    struct gl_fragment_program program;
    GLuint id;  /**< serial no. to identify frag progs, never re-used */
    GLboolean isGLSL;  /**< really, any IF/LOOP/CONT/BREAK instructions */
 };
-
-
 
 
 /* Data about a particular attempt to compile a program.  Note that
@@ -683,6 +683,32 @@ brw_context( GLcontext *ctx )
 {
    return (struct brw_context *)ctx;
 }
+
+static INLINE struct brw_vertex_program *
+brw_vertex_program(struct gl_vertex_program *p)
+{
+   return (struct brw_vertex_program *) p;
+}
+
+static INLINE const struct brw_vertex_program *
+brw_vertex_program_const(const struct gl_vertex_program *p)
+{
+   return (const struct brw_vertex_program *) p;
+}
+
+static INLINE struct brw_fragment_program *
+brw_fragment_program(struct gl_fragment_program *p)
+{
+   return (struct brw_fragment_program *) p;
+}
+
+static INLINE const struct brw_fragment_program *
+brw_fragment_program_const(const struct gl_fragment_program *p)
+{
+   return (const struct brw_fragment_program *) p;
+}
+
+
 
 #define DO_SETUP_BITS ((1<<(FRAG_ATTRIB_MAX)) - 1)
 
