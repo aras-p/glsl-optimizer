@@ -1439,18 +1439,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R500_MACRO_SWITCH               (1<<22)
 #	define R500_BORDER_FIX                 (1<<31)
 
-#define R300_TX_SIZE_0                      0x4480
+#define R300_TX_FORMAT0_0                   0x4480
 #       define R300_TX_WIDTHMASK_SHIFT           0
 #       define R300_TX_WIDTHMASK_MASK            (2047 << 0)
 #       define R300_TX_HEIGHTMASK_SHIFT          11
 #       define R300_TX_HEIGHTMASK_MASK           (2047 << 11)
-#	define R300_TX_DEPTHMASK_SHIFT		 22
-#	define R300_TX_DEPTHMASK_MASK		 (0xf << 22)
+#	define R300_TX_DEPTHMASK_SHIFT           22
+#	define R300_TX_DEPTHMASK_MASK            (0xf << 22)
 #       define R300_TX_MAX_MIP_LEVEL_SHIFT       26
 #       define R300_TX_MAX_MIP_LEVEL_MASK        (0xf << 26)
-#       define R300_TX_SIZE_PROJECTED            (1<<30)
-#       define R300_TX_SIZE_TXPITCH_EN           (1<<31)
-#define R300_TX_FORMAT_0                    0x44C0
+#       define R300_TX_SIZE_PROJECTED            (1 << 30)
+#       define R300_TX_PITCH_EN                  (1 << 31)
+#       define R300_TX_WIDTH(x)                  ((x) << 0)
+#       define R300_TX_HEIGHT(x)                 ((x) << 11)
+
+#define R300_TX_FORMAT1_0                   0x44C0
 	/* The interpretation of the format word by Wladimir van der Laan */
 	/* The X, Y, Z and W refer to the layout of the components.
 	   They are given meanings as R, G, B and Alpha by the swizzle
