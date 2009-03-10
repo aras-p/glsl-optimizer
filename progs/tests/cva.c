@@ -15,6 +15,7 @@
 #include <windows.h>
 #endif
 #define GL_GLEXT_LEGACY
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include <GL/glext.h>
 
@@ -129,6 +130,7 @@ int main( int argc, char **argv )
    glutInitWindowSize( 250, 250 );
    glutInitWindowPosition( 100, 100 );
    glutCreateWindow( "CVA Test" );
+   glewInit();
 
    /* Make sure the server supports GL 1.2 vertex arrays.
     */

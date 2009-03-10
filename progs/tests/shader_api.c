@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 static void assert_test(const char *file, int line, int cond, const char *msg)
@@ -323,6 +323,7 @@ int main(int argc, char **argv)
 {
    glutInit(&argc, argv);
    glutCreateWindow("Mesa bug demo");
+   glewInit();
 
    RUN_TEST(test_uniform_size_type);
    RUN_TEST(test_attrib_size_type);

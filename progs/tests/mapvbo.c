@@ -10,9 +10,9 @@
  */
 
 
-#define GL_GLEXT_PROTOTYPES
 #include <stdio.h>
 #include <stdlib.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 static GLuint BufferID;
@@ -129,6 +129,7 @@ int main( int argc, char *argv[] )
    glutInitWindowSize( 300, 300 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
    Win = glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );

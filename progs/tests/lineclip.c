@@ -26,6 +26,7 @@
  */
 
 #include <stdlib.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 static int win_width, win_height;
@@ -164,6 +165,7 @@ main(int argc, char *argv[])
 	glutInitWindowSize(win_width, win_height);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutCreateWindow(argv[0]);
+        glewInit();
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(key);
 	glutDisplayFunc(display);

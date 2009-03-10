@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 static int Width = 400, Height = 400;
@@ -34,14 +35,14 @@ static float Xtrans = 0, Ytrans = 0;
 static float Step = 0.125;
 
 enum {
-   POINTS,
-   HLINES,
-   VLINES,
-   QUADS,
+   MODE_POINTS,
+   MODE_HLINES,
+   MODE_VLINES,
+   MODE_QUADS,
    NUM_MODES
 };
 
-static int Mode = POINTS;
+static int Mode = MODE_POINTS;
 
 
 static void
@@ -58,7 +59,7 @@ Draw(void)
    glPushMatrix();
    glTranslatef(tx + Xtrans, ty + Ytrans, 0);
 
-   if (Mode == POINTS) {
+   if (Mode == MODE_POINTS) {
       glBegin(GL_POINTS);
       for (j = 0; j < Height; j += 2) {
          for (i = 0; i < Width; i += 2) {
@@ -67,7 +68,7 @@ Draw(void)
       }
       glEnd();
    }
-   else if (Mode == HLINES) {
+   else if (Mode == MODE_HLINES) {
       glBegin(GL_LINES);
       for (i = 0; i < Height; i += 2) {
          glVertex2f(0,     i);
@@ -75,7 +76,7 @@ Draw(void)
       }
       glEnd();
    }
-   else if (Mode == VLINES) {
+   else if (Mode == MODE_VLINES) {
       glBegin(GL_LINES);
       for (i = 0; i < Width; i += 2) {
          glVertex2f(i, 0     );
@@ -83,7 +84,7 @@ Draw(void)
       }
       glEnd();
    }
-   else if (Mode == QUADS) {
+   else if (Mode == MODE_QUADS) {
       glBegin(GL_QUADS);
       for (j = 0; j < Height; j += 4) {
          for (i = 0; i < Width; i += 4) {
@@ -189,6 +190,7 @@ main(int argc, char *argv[])
    glutInitWindowSize(Width, Height);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
    Win = glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
    glutSpecialFunc(SpecialKey);

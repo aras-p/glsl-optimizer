@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#define GL_GLEXT_PROTOTYPES
+#include "GL/glew.h"
 #include "GL/glut.h"
 
 #define MAXVERTS 10000
@@ -280,6 +280,7 @@ int main(int argc, char **argv)
    glutInitWindowPosition(0, 0);
    glutInitWindowSize(400, 400);
    if (glutCreateWindow("Isosurface") <= 0) {
+      glewInit();
       exit(0);
    }
    glutReshapeFunc(Reshape);

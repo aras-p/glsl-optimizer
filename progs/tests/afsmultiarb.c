@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 #include "readtex.h"
@@ -442,6 +442,7 @@ int main( int argc, char *argv[] )
    glutInitWindowSize( 300, 300 );
    glutInitWindowPosition( 0, 0 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
+   glewInit();
    glutCreateWindow(argv[0] );
 
    Init( argc, argv );

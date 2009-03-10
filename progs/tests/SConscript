@@ -1,0 +1,133 @@
+Import('*')
+
+if not env['GLUT']:
+    Return()
+
+env = env.Clone()
+
+env.Prepend(CPPPATH = [
+	'../util',
+])
+
+env.Prepend(LIBS = [
+	util,
+	'$GLUT_LIB'
+])
+
+if env['platform'] == 'windows':
+    env.Append(CPPDEFINES = ['NOMINMAX'])
+    env.Prepend(LIBS = ['winmm'])
+
+linux_progs = [
+    'api_speed',
+]
+
+glx_progs = [
+    'auxbuffer',
+    'getprocaddress',
+    'jkrahntest',
+    'sharedtex',
+    'texcompress2',
+    'texobjshare',
+]
+
+mesa_progs = [
+    'debugger',
+]
+
+progs = [
+    'afsmultiarb',
+    'antialias',
+    'arbfpspec',
+    'arbfptest1',
+    'arbfptexture',
+    'arbfptrig',
+    'arbnpot-mipmap',
+    'arbnpot',
+    'arbvptest1',
+    'arbvptest3',
+    'arbvptorus',
+    'arbvpwarpmesh',
+    'arraytexture',
+    'blendminmax',
+    'blendsquare',
+    'blendxor',
+    'bufferobj',
+    'bug_3050',
+    'bug_3101',
+    'bug_3195',
+    'bug_texstore_i8',
+    'calibrate_rast',
+    'copypixrate',
+    'crossbar',
+    'cva',
+    'dinoshade',
+    'drawbuffers',
+    'exactrast',
+    'ext422square',
+    'fbotest1',
+    'fbotest2',
+    'fbotexture',
+    'fillrate',
+    'floattex',
+    'fog',
+    'fogcoord',
+    'fptest1',
+    'fptexture',
+    'interleave',
+    'invert',
+    'lineclip',
+    'manytex',
+    'mapbufrange',
+    'mapvbo',
+    'minmag',
+    'mipmap_limits',
+    'mipmap_view',
+    'multipal',
+    'multitexarray',
+    'multiwindow',
+    'no_s3tc',
+    'packedpixels',
+    'pbo',
+    'prog_parameter',
+    'projtex',
+    'quads',
+    'random',
+    'readrate',
+    'rubberband',
+    'seccolor',
+    'shader_api',
+    'stencil_twoside',
+    'stencil_wrap',
+    'stencilwrap',
+    'subtex',
+    'subtexrate',
+    'tex1d',
+    'texcmp',
+    'texfilt',
+    'texgenmix',
+    'texline',
+    'texrect',
+    'texwrap',
+    'unfilledclip',
+    'vao-01',
+    'vao-02',
+    'vparray',
+    'vpeval',
+    'vptest1',
+    'vptest2',
+    'vptest3',
+    'vptorus',
+    'vpwarpmesh',
+    'yuvrect',
+    'yuvsquare',
+    'zcomp',
+    'zdrawpix',
+    'zreaddraw',
+]
+
+for prog in progs:
+    env.Program(
+        target = prog,
+        source = prog + '.c',
+    )

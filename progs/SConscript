@@ -3,6 +3,7 @@ SConscript([
     'demos/SConscript',
     'redbook/SConscript',
     'samples/SConscript',
+    'tests/SConscript',
     'trivial/SConscript',
     'vp/SConscript',
     'vpglsl/SConscript',
