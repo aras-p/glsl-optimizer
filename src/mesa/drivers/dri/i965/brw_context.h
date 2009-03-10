@@ -46,7 +46,7 @@
  *
  * CURBE - constant URB entry.  An urb region (entry) used to hold
  * constant values which the fixed function units can be instructed to
- * preload into the GRF when spawining a thread.
+ * preload into the GRF when spawning a thread.
  *
  * VUE - vertex URB entry.  An urb entry holding a vertex and usually
  * a vertex header.  The header contains control information and
@@ -63,7 +63,7 @@
  * special and may be overwritten.
  *
  * MRF - message register file.  Threads communicate (and terminate)
- * by sending messages.  Message parameters are placed in contigous
+ * by sending messages.  Message parameters are placed in contiguous
  * MRF registers.  All program output is via these messages.  URB
  * entries are populated by sending a message to the shared URB
  * function containing the new data, together with a control word,
