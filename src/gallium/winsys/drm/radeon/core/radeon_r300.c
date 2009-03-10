@@ -81,10 +81,8 @@ struct r300_winsys* radeon_create_r300_winsys(int fd, struct pipe_winsys* old_wi
 
     do_ioctls(winsys, fd);
 
-    struct radeon_bo_manager* bom = radeon_bo_manager_gem_ctor(fd);
     struct radeon_cs_manager* csm = radeon_cs_manager_gem_ctor(fd);
 
-    winsys->radeon_winsys = bom;
     winsys->cs = radeon_cs_create(csm, 1024 * 64 / 4);
 
     winsys->check_cs = radeon_r300_check_cs;

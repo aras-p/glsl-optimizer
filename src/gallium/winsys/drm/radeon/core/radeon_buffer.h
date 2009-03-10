@@ -53,11 +53,12 @@ struct radeon_winsys {
     /* Parent class. */
     struct pipe_winsys base;
 
-    /* Radeon BO manager. This corresponds to void* radeon_winsys in r300_winsys. */
+    /* Radeon BO manager.
+     * This corresponds to void* radeon_winsys in r300_winsys. */
     struct radeon_bo_manager* bom;
 };
 
-struct pipe_winsys *radeon_pipe_winsys();
+struct pipe_winsys *radeon_pipe_winsys(int fb);
 struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_context,
                                              uint32_t handle,
                                              enum pipe_format format,

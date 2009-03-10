@@ -154,28 +154,32 @@ static void radeon_flush_frontbuffer(struct pipe_winsys *pipe_winsys,
     /* TODO: call dri2CopyRegion */
 }
 
-struct pipe_winsys *radeon_pipe_winsys()
+struct pipe_winsys* radeon_pipe_winsys(int fd)
 {
-    struct pipe_winsys *radeon_ws;
+    struct radeon_winsys* radeon_ws;
+    struct radeon_bo_manager* bom;
 
-    radeon_ws = CALLOC_STRUCT(pipe_winsys);
+    radeon_ws = CALLOC_STRUCT(radeon_winsys);
     if (radeon_ws == NULL) {
         return NULL;
     }
 
-    radeon_ws->flush_frontbuffer = radeon_flush_frontbuffer;
+    bom = radeon_bo_manager_gem_ctor(fd);
+    radeon_ws->bom = bom;
 
-    radeon_ws->buffer_create = radeon_buffer_create;
-    radeon_ws->buffer_destroy = radeon_buffer_del;
-    radeon_ws->user_buffer_create = radeon_buffer_user_create;
-    radeon_ws->buffer_map = radeon_buffer_map;
-    radeon_ws->buffer_unmap = radeon_buffer_unmap;
+    radeon_ws->base.flush_frontbuffer = radeon_flush_frontbuffer;
 
-    radeon_ws->fence_reference = radeon_fence_reference;
-    radeon_ws->fence_signalled = radeon_fence_signalled;
-    radeon_ws->fence_finish = radeon_fence_finish;
+    radeon_ws->base.buffer_create = radeon_buffer_create;
+    radeon_ws->base.buffer_destroy = radeon_buffer_del;
+    radeon_ws->base.user_buffer_create = radeon_buffer_user_create;
+    radeon_ws->base.buffer_map = radeon_buffer_map;
+    radeon_ws->base.buffer_unmap = radeon_buffer_unmap;
 
-    radeon_ws->get_name = radeon_get_name;
+    radeon_ws->base.fence_reference = radeon_fence_reference;
+    radeon_ws->base.fence_signalled = radeon_fence_signalled;
+    radeon_ws->base.fence_finish = radeon_fence_finish;
+
+    radeon_ws->base.get_name = radeon_get_name;
 
     return radeon_ws;
 }
