@@ -96,6 +96,9 @@ struct r300_scissor_state {
 };
 
 struct r300_texture_state {
+    uint32_t format0; /* R300_TX_FORMAT0: 0x4480 */
+    uint32_t format1; /* R300_TX_FORMAT1: 0x44c0 */
+    uint32_t format2; /* R300_TX_FORMAT2: 0x4500 */
 };
 
 #define R300_NEW_BLEND           0x0000001
@@ -107,8 +110,10 @@ struct r300_texture_state {
 #define R300_NEW_RASTERIZER      0x0000040
 #define R300_NEW_RS_BLOCK        0x0000080
 #define R300_NEW_SAMPLER         0x0000100
+#define R300_ANY_NEW_SAMPLERS    0x000ff00
 #define R300_NEW_SCISSOR         0x0010000
 #define R300_NEW_TEXTURE         0x0020000
+#define R300_ANY_NEW_TEXTURES    0x1fe0000
 #define R300_NEW_VERTEX_FORMAT   0x2000000
 #define R300_NEW_VERTEX_SHADER   0x4000000
 #define R300_NEW_KITCHEN_SINK    0x7ffffff
@@ -199,6 +204,9 @@ struct r300_texture {
 
     /* Pipe buffer backing this texture. */
     struct pipe_buffer* buffer;
+
+    /* Registers carrying texture format data. */
+    struct r300_texture_state state;
 };
 
 struct r300_vertex_format {
@@ -247,7 +255,6 @@ struct r300_context {
     struct r300_scissor_state* scissor_state;
     /* Texture states. */
     struct r300_texture* textures[8];
-    struct r300_texture_state* texture_states[8];
     int texture_count;
     /* Vertex buffers. */
     struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];

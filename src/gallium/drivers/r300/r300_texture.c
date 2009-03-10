@@ -27,6 +27,30 @@ static int minify(int i)
     return MAX2(1, i >> 1);
 }
 
+static void r300_setup_texture_state(struct r300_texture* tex,
+                                     unsigned width,
+                                     unsigned height,
+                                     unsigned pitch)
+{
+    struct r300_texture_state* state = &tex->state;
+
+    state->format0 = R300_TX_WIDTH((width - 1) & 0x7ff) |
+        R300_TX_HEIGHT((height - 1) & 0x7ff) | R300_TX_PITCH_EN;
+
+    /* XXX */
+    state->format1 = R300_TX_FORMAT_A8R8G8B8;
+
+    state->format2 = pitch - 1;
+
+    /* XXX
+    if (width > 2048) {
+        state->pitch |= R300_TXWIDTH_11;
+    }
+    if (height > 2048) {
+        state->pitch |= R300_TXHEIGHT_11;
+    } */
+}
+
 static void r300_setup_miptree(struct r300_texture* tex)
 {
     struct pipe_texture* base = &tex->tex;
@@ -44,11 +68,10 @@ static void r300_setup_miptree(struct r300_texture* tex)
         base->nblocksy[i] = pf_get_nblocksy(&base->block, base->width[i]);
 
         /* Radeons enjoy things in multiples of 32. */
-        /* XXX NPOT -> 64, not 32 */
+        /* XXX this can be 32 when POT */
         stride = (base->nblocksx[i] * base->block.size + 63) & ~63;
         size = stride * base->nblocksy[i] * base->depth[i];
 
-        /* XXX 64 for NPOT */
         tex->offset[i] = (tex->size + 63) & ~63;
         tex->size = tex->offset[i] + size;
     }
@@ -72,6 +95,10 @@ static struct pipe_texture*
     tex->tex.screen = screen;
 
     r300_setup_miptree(tex);
+
+    /* XXX */
+    r300_setup_texture_state(tex, tex->tex.width[0], tex->tex.height[0],
+            tex->tex.width[0]);
 
     tex->buffer = screen->buffer_create(screen, 64,
                                         PIPE_BUFFER_USAGE_PIXEL,
@@ -152,6 +179,9 @@ static struct pipe_texture*
     tex->tex.screen = screen;
 
     tex->stride = *stride;
+
+    r300_setup_texture_state(tex, tex->tex.width[0], tex->tex.height[0],
+            tex->stride);
 
     pipe_buffer_reference(&tex->buffer, buffer);
 

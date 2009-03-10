@@ -248,6 +248,18 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     END_CS;
 }
 
+void r300_emit_sampler(struct r300_context* r300,
+                       struct r300_sampler_state* sampler, unsigned offset)
+{
+    CS_LOCALS(r300);
+
+    BEGIN_CS(6);
+    OUT_CS_REG(R300_TX_FILTER0_0 + (offset * 4), sampler->filter0);
+    OUT_CS_REG(R300_TX_FILTER1_0 + (offset * 4), sampler->filter1);
+    OUT_CS_REG(R300_TX_BORDER_COLOR_0 + (offset * 4), sampler->border_color);
+    END_CS;
+}
+
 void r300_emit_scissor_state(struct r300_context* r300,
                              struct r300_scissor_state* scissor)
 {
@@ -257,6 +269,21 @@ void r300_emit_scissor_state(struct r300_context* r300,
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
     OUT_CS(scissor->scissor_top_left);
     OUT_CS(scissor->scissor_bottom_right);
+    END_CS;
+}
+
+void r300_emit_texture(struct r300_context* r300,
+                       struct r300_texture* tex, unsigned offset)
+{
+    CS_LOCALS(r300);
+
+    BEGIN_CS(8);
+    OUT_CS_REG(R300_TX_FORMAT0_0 + (offset * 4), tex->state.format0);
+    OUT_CS_REG(R300_TX_FORMAT1_0 + (offset * 4), tex->state.format1);
+    OUT_CS_REG(R300_TX_FORMAT2_0 + (offset * 4), tex->state.format2);
+    OUT_CS_REG_SEQ(R300_TX_OFFSET_0 + (offset * 4), 1);
+    OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_GTT |
+            RADEON_GEM_DOMAIN_VRAM, 0);
     END_CS;
 }
 
@@ -290,7 +317,7 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
 void r300_emit_dirty_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
-    CS_LOCALS(r300);
+    int i;
 
     if (!(r300->dirty_state) && !(r300->dirty_hw)) {
         return;
@@ -341,9 +368,27 @@ void r300_emit_dirty_state(struct r300_context* r300)
         r300->dirty_state &= ~R300_NEW_RS_BLOCK;
     }
 
+    if (r300->dirty_state & R300_ANY_NEW_SAMPLERS) {
+        for (i = 0; i < r300->sampler_count; i++) {
+            if (r300->dirty_state & (R300_NEW_SAMPLER << i)) {
+                r300_emit_sampler(r300, r300->sampler_states[i], i);
+                r300->dirty_state &= ~(R300_NEW_SAMPLER << i);
+            }
+        }
+    }
+
     if (r300->dirty_state & R300_NEW_SCISSOR) {
         r300_emit_scissor_state(r300, r300->scissor_state);
         r300->dirty_state &= ~R300_NEW_SCISSOR;
+    }
+
+    if (r300->dirty_state & R300_ANY_NEW_TEXTURES) {
+        for (i = 0; i < r300->texture_count; i++) {
+            if (r300->dirty_state & (R300_NEW_TEXTURE << i)) {
+                r300_emit_texture(r300, r300->textures[i], i);
+                r300->dirty_state &= ~(R300_NEW_TEXTURE << i);
+            }
+        }
     }
 
     if (r300->dirty_state & R300_NEW_VERTEX_FORMAT) {
