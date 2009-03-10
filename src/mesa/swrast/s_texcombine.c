@@ -189,15 +189,15 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
             break;
          case GL_SRC_ALPHA:
             for (i = 0; i < n; i++) {
-               dst[i][RCOMP] = src[i][ACOMP];
-               dst[i][GCOMP] = src[i][ACOMP];
+               dst[i][RCOMP] =
+               dst[i][GCOMP] =
                dst[i][BCOMP] = src[i][ACOMP];
             }
             break;
          case GL_ONE_MINUS_SRC_ALPHA:
             for (i = 0; i < n; i++) {
-               dst[i][RCOMP] = 1.0F - src[i][ACOMP];
-               dst[i][GCOMP] = 1.0F - src[i][ACOMP];
+               dst[i][RCOMP] =
+               dst[i][GCOMP] =
                dst[i][BCOMP] = 1.0F - src[i][ACOMP];
             }
             break;
@@ -361,7 +361,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
                            (arg0[i][BCOMP] - 0.5F) * (arg1[i][BCOMP] - 0.5F))
                * 4.0F;
             dot = CLAMP(dot, 0.0F, 1.0F);
-            rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = (GLfloat) dot;
+            rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = dot;
          }
          break;
       case GL_DOT3_RGB:
@@ -373,7 +373,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
                            (arg0[i][BCOMP] - 0.5F) * (arg1[i][BCOMP] - 0.5F))
                * 4.0F * scaleRGB;
             dot = CLAMP(dot, 0.0, 1.0F);
-            rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = (GLfloat) dot;
+            rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = dot;
          }
          break;
       case GL_MODULATE_ADD_ATI:
@@ -440,8 +440,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
       switch (combine->ModeA) {
       case GL_REPLACE:
          for (i = 0; i < n; i++) {
-            GLfloat a = arg0[i][ACOMP] * scaleA;
-            rgba[i][ACOMP] = (GLfloat) MIN2(a, 1.0F);
+            rgba[i][ACOMP] = arg0[i][ACOMP] * scaleA;
          }
          break;
       case GL_MODULATE:
@@ -481,7 +480,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
          }
          break;
       case GL_INTERPOLATE:
-         for (i=0; i<n; i++) {
+         for (i = 0; i < n; i++) {
             rgba[i][ACOMP] = (arg0[i][ACOMP] * arg2[i][ACOMP] +
                               arg1[i][ACOMP] * (1.0F - arg2[i][ACOMP]))
                * scaleA;
