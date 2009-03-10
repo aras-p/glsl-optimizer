@@ -41,6 +41,20 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "swrast/swrast.h"
 
+#include "main/blend.h"
+#include "main/bufferobj.h"
+#include "main/buffers.h"
+#include "main/depth.h"
+#include "main/shaders.h"
+#include "main/texstate.h"
+#include "main/varray.h"
+#include "glapi/dispatch.h"
+#include "swrast/swrast.h"
+#include "main/stencil.h"
+#include "main/matrix.h"
+#include "main/attrib.h"
+#include "main/enable.h"
+
 #include "radeon_common.h"
 #include "radeon_lock.h"
 #include "r200_context.h"
@@ -56,35 +70,220 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_TIMEOUT             512
 #define R200_IDLE_RETRY           16
 
-static void r200UserClear(GLcontext *ctx, GLuint flags)
+static void
+r200_meta_set_passthrough_transform(r200ContextPtr r200)
 {
-  GLuint mask = 0;
+   GLcontext *ctx = r200->radeon.glCtx;
 
-  if (flags & RADEON_FRONT)
-    mask |= BUFFER_BIT_FRONT_LEFT;
+   r200->meta.saved_vp_x = ctx->Viewport.X;
+   r200->meta.saved_vp_y = ctx->Viewport.Y;
+   r200->meta.saved_vp_width = ctx->Viewport.Width;
+   r200->meta.saved_vp_height = ctx->Viewport.Height;
+   r200->meta.saved_matrix_mode = ctx->Transform.MatrixMode;
 
-  if (flags & RADEON_BACK)
-    mask |= BUFFER_BIT_BACK_LEFT;
+   _mesa_Viewport(0, 0, ctx->DrawBuffer->Width, ctx->DrawBuffer->Height);
 
-  if (flags & RADEON_DEPTH)
-    mask |= BUFFER_BIT_DEPTH;
+   _mesa_MatrixMode(GL_PROJECTION);
+   _mesa_PushMatrix();
+   _mesa_LoadIdentity();
+   _mesa_Ortho(0, ctx->DrawBuffer->Width, 0, ctx->DrawBuffer->Height, 1, -1);
 
-  if (flags & RADEON_STENCIL)
-    mask |= BUFFER_BIT_STENCIL;
+   _mesa_MatrixMode(GL_MODELVIEW);
+   _mesa_PushMatrix();
+   _mesa_LoadIdentity();
+}
 
-#if 1
-  _swrast_Clear(ctx, mask);
-#else
-   if (flags & (RADEON_FRONT | RADEON_BACK)) {
+static void
+r200_meta_restore_transform(r200ContextPtr r200)
+{
+   _mesa_MatrixMode(GL_PROJECTION);
+   _mesa_PopMatrix();
+   _mesa_MatrixMode(GL_MODELVIEW);
+   _mesa_PopMatrix();
 
+   _mesa_MatrixMode(r200->meta.saved_matrix_mode);
 
+   _mesa_Viewport(r200->meta.saved_vp_x, r200->meta.saved_vp_y,
+		  r200->meta.saved_vp_width, r200->meta.saved_vp_height);
+}
+
+/**
+ * Perform glClear where mask contains only color, depth, and/or stencil.
+ *
+ * The implementation is based on calling into Mesa to set GL state and
+ * performing normal triangle rendering.  The intent of this path is to
+ * have as generic a path as possible, so that any driver could make use of
+ * it.
+ */
+static void radeon_clear_tris(GLcontext *ctx, GLbitfield mask)
+{
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   GLfloat vertices[4][3];
+   GLfloat color[4][4];
+   GLfloat dst_z;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   int i;
+   GLboolean saved_fp_enable = GL_FALSE, saved_vp_enable = GL_FALSE;
+   GLboolean saved_shader_program = 0;
+   unsigned int saved_active_texture;
+   
+   assert((mask & ~(BUFFER_BIT_BACK_LEFT | BUFFER_BIT_FRONT_LEFT |
+		    BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) == 0);
+
+   _mesa_PushAttrib(GL_COLOR_BUFFER_BIT |
+		    GL_CURRENT_BIT |
+		    GL_DEPTH_BUFFER_BIT |
+		    GL_ENABLE_BIT |
+		    GL_STENCIL_BUFFER_BIT |
+		    GL_TRANSFORM_BIT |
+		    GL_CURRENT_BIT);
+   _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
+   saved_active_texture = ctx->Texture.CurrentUnit;
+  
+  /* Disable existing GL state we don't want to apply to a clear. */
+   _mesa_Disable(GL_ALPHA_TEST);
+   _mesa_Disable(GL_BLEND);
+   _mesa_Disable(GL_CULL_FACE);
+   _mesa_Disable(GL_FOG);
+   _mesa_Disable(GL_POLYGON_SMOOTH);
+   _mesa_Disable(GL_POLYGON_STIPPLE);
+   _mesa_Disable(GL_POLYGON_OFFSET_FILL);
+   _mesa_Disable(GL_LIGHTING);
+   _mesa_Disable(GL_CLIP_PLANE0);
+   _mesa_Disable(GL_CLIP_PLANE1);
+   _mesa_Disable(GL_CLIP_PLANE2);
+   _mesa_Disable(GL_CLIP_PLANE3);
+   _mesa_Disable(GL_CLIP_PLANE4);
+   _mesa_Disable(GL_CLIP_PLANE5);
+   if (ctx->Extensions.ARB_fragment_program && ctx->FragmentProgram.Enabled) {
+      saved_fp_enable = GL_TRUE;
+      _mesa_Disable(GL_FRAGMENT_PROGRAM_ARB);
    }
-	  
-   if ((flags & (RADEON_DEPTH | RADEON_STENCIL))
-       && (flags & RADEON_CLEAR_FASTZ)) {
-
+   if (ctx->Extensions.ARB_vertex_program && ctx->VertexProgram.Enabled) {
+      saved_vp_enable = GL_TRUE;
+      _mesa_Disable(GL_VERTEX_PROGRAM_ARB);
    }
-#endif
+   if (ctx->Extensions.ARB_shader_objects && ctx->Shader.CurrentProgram) {
+      saved_shader_program = ctx->Shader.CurrentProgram->Name;
+      _mesa_UseProgramObjectARB(0);
+   }
+   
+   if (ctx->Texture._EnabledUnits != 0) {
+      int i;
+      
+      for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+	 _mesa_ActiveTextureARB(GL_TEXTURE0 + i);
+	 _mesa_Disable(GL_TEXTURE_1D);
+	 _mesa_Disable(GL_TEXTURE_2D);
+	 _mesa_Disable(GL_TEXTURE_3D);
+	 if (ctx->Extensions.ARB_texture_cube_map)
+	    _mesa_Disable(GL_TEXTURE_CUBE_MAP_ARB);
+	 if (ctx->Extensions.NV_texture_rectangle)
+	    _mesa_Disable(GL_TEXTURE_RECTANGLE_NV);
+	 if (ctx->Extensions.MESA_texture_array) {
+	    _mesa_Disable(GL_TEXTURE_1D_ARRAY_EXT);
+	    _mesa_Disable(GL_TEXTURE_2D_ARRAY_EXT);
+	 }
+      }
+   }
+  
+   r200_meta_set_passthrough_transform(rmesa);
+   
+   for (i = 0; i < 4; i++) {
+      color[i][0] = ctx->Color.ClearColor[0];
+      color[i][1] = ctx->Color.ClearColor[1];
+      color[i][2] = ctx->Color.ClearColor[2];
+      color[i][3] = ctx->Color.ClearColor[3];
+   }
+
+   /* convert clear Z from [0,1] to NDC coord in [-1,1] */
+   dst_z = -1.0 + 2.0 * ctx->Depth.Clear;
+   
+   /* Prepare the vertices, which are the same regardless of which buffer we're
+    * drawing to.
+    */
+   vertices[0][0] = fb->_Xmin;
+   vertices[0][1] = fb->_Ymin;
+   vertices[0][2] = dst_z;
+   vertices[1][0] = fb->_Xmax;
+   vertices[1][1] = fb->_Ymin;
+   vertices[1][2] = dst_z;
+   vertices[2][0] = fb->_Xmax;
+   vertices[2][1] = fb->_Ymax;
+   vertices[2][2] = dst_z;
+   vertices[3][0] = fb->_Xmin;
+   vertices[3][1] = fb->_Ymax;
+   vertices[3][2] = dst_z;
+
+   _mesa_ColorPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &color);
+   _mesa_VertexPointer(3, GL_FLOAT, 3 * sizeof(GLfloat), &vertices);
+   _mesa_Enable(GL_COLOR_ARRAY);
+   _mesa_Enable(GL_VERTEX_ARRAY);
+
+   while (mask != 0) {
+      GLuint this_mask = 0;
+
+      if (mask & BUFFER_BIT_BACK_LEFT)
+	 this_mask = BUFFER_BIT_BACK_LEFT;
+      else if (mask & BUFFER_BIT_FRONT_LEFT)
+	 this_mask = BUFFER_BIT_FRONT_LEFT;
+
+      /* Clear depth/stencil in the same pass as color. */
+      this_mask |= (mask & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL));
+
+      /* Select the current color buffer and use the color write mask if
+       * we have one, otherwise don't write any color channels.
+       */
+      if (this_mask & BUFFER_BIT_FRONT_LEFT)
+	 _mesa_DrawBuffer(GL_FRONT_LEFT);
+      else if (this_mask & BUFFER_BIT_BACK_LEFT)
+	 _mesa_DrawBuffer(GL_BACK_LEFT);
+      else
+	 _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+      /* Control writing of the depth clear value to depth. */
+      if (this_mask & BUFFER_BIT_DEPTH) {
+	 _mesa_DepthFunc(GL_ALWAYS);
+	 _mesa_Enable(GL_DEPTH_TEST);
+      } else {
+	 _mesa_Disable(GL_DEPTH_TEST);
+	 _mesa_DepthMask(GL_FALSE);
+      }
+
+      /* Control writing of the stencil clear value to stencil. */
+      if (this_mask & BUFFER_BIT_STENCIL) {
+	 _mesa_Enable(GL_STENCIL_TEST);
+	 _mesa_StencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+	 _mesa_StencilFuncSeparate(GL_FRONT, GL_ALWAYS, ctx->Stencil.Clear,
+				   ctx->Stencil.WriteMask[0]);
+      } else {
+	 _mesa_Disable(GL_STENCIL_TEST);
+      }
+
+      CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
+
+      mask &= ~this_mask;
+   }
+
+   r200_meta_restore_transform(rmesa);
+
+   _mesa_ActiveTextureARB(GL_TEXTURE0 + saved_active_texture);
+   if (saved_fp_enable)
+      _mesa_Enable(GL_FRAGMENT_PROGRAM_ARB);
+   if (saved_vp_enable)
+      _mesa_Enable(GL_VERTEX_PROGRAM_ARB);
+
+   if (saved_shader_program)
+      _mesa_UseProgramObjectARB(saved_shader_program);
+
+   _mesa_PopClientAttrib();
+   _mesa_PopAttrib();
+}
+
+
+static void r200UserClear(GLcontext *ctx, GLuint mask)
+{
+   radeon_clear_tris(ctx, mask);
 }
 
 static void r200KernelClear(GLcontext *ctx, GLuint flags)
@@ -218,6 +417,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
    GLuint flags = 0;
    GLuint color_mask = 0;
    GLint ret;
+   GLuint orig_mask = mask;
 
    if ( R200_DEBUG & DEBUG_IOCTL ) {
        fprintf( stderr, "r200Clear %x %d\n", mask, rmesa->radeon.sarea->pfCurrentPage);
@@ -275,7 +475,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
    }
 
    if (rmesa->radeon.radeonScreen->kernel_mm)
-      r200UserClear(ctx, flags);
+      r200UserClear(ctx, orig_mask);
    else
       r200KernelClear(ctx, flags);
 
