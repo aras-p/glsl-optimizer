@@ -30,6 +30,7 @@
 #include "util/u_memory.h"
 
 #include "r300_clear.h"
+#include "r300_query.h"
 #include "r300_screen.h"
 #include "r300_winsys.h"
 
