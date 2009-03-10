@@ -1670,7 +1670,7 @@ vec4 texture1DProj(const sampler1D sampler, const vec2 coord)
 
 vec4 texture1DProj(const sampler1D sampler, const vec4 coord)
 {
-   __asm vec4_tex1d_proj __retVal, sampler, coord;
+   __asm vec4_tex_1d_proj __retVal, sampler, coord;
 }
 
 
