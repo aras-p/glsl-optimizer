@@ -95,6 +95,8 @@ progs = [
 	'tri-fp',
 	'tri-fp-const-imm',
 	'tri-lit',
+	'tri-logicop-none',
+	'tri-logicop-xor',
 	'tri-mask-tri',
 	'tri-orig',
 	'tri-query',

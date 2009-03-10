@@ -89,6 +89,8 @@ SOURCES = \
 	tri-clip.c \
 	tri-cull-both.c \
 	tri-cull.c \
+	tri-logicop-none.c \
+	tri-logicop-xor.c \
 	tri-dlist.c \
 	tri-edgeflag.c \
 	tri-fbo-tex.c \
