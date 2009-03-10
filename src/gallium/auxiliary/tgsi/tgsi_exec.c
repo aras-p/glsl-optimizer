@@ -2127,7 +2127,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_DOT2ADD:
-      /* TGSI_OPCODE_DP2A */
+   /* TGSI_OPCODE_DP2A */
       FETCH( &r[0], 0, CHAN_X );
       FETCH( &r[1], 1, CHAN_X );
       micro_mul( &r[0], &r[0], &r[1] );
@@ -2165,7 +2165,14 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_CLAMP:
-      assert (0);
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         FETCH(&r[0], 0, chan_index);
+         FETCH(&r[1], 1, chan_index);
+         micro_max(&r[0], &r[0], &r[1]);
+         FETCH(&r[1], 2, chan_index);
+         micro_min(&r[0], &r[0], &r[1]);
+         STORE(&r[0], 0, chan_index);
+      }
       break;
 
    case TGSI_OPCODE_ROUND:
@@ -2178,7 +2185,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_EXPBASE2:
-    /* TGSI_OPCODE_EX2 */
+   /* TGSI_OPCODE_EX2 */
       FETCH(&r[0], 0, CHAN_X);
 
 #if FAST_MATH
@@ -2188,7 +2195,7 @@ exec_instruction(
 #endif
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-	 STORE( &r[0], 0, chan_index );
+         STORE( &r[0], 0, chan_index );
       }
       break;
 
@@ -2202,19 +2209,19 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_POWER:
-      /* TGSI_OPCODE_POW */
+   /* TGSI_OPCODE_POW */
       FETCH(&r[0], 0, CHAN_X);
       FETCH(&r[1], 1, CHAN_X);
 
       micro_pow( &r[0], &r[0], &r[1] );
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-	 STORE( &r[0], 0, chan_index );
+         STORE( &r[0], 0, chan_index );
       }
       break;
 
    case TGSI_OPCODE_CROSSPRODUCT:
-      /* TGSI_OPCODE_XPD */
+   /* TGSI_OPCODE_XPD */
       FETCH(&r[0], 0, CHAN_Y);
       FETCH(&r[1], 1, CHAN_Z);
 
