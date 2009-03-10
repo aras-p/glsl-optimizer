@@ -3014,7 +3014,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
       file = PROGRAM_TEMPORARY;
    }
 
-   totalSize = size = _slang_sizeof_type_specifier(&var->type.specifier);
+   size = _slang_sizeof_type_specifier(&var->type.specifier);
    if (size <= 0) {
       slang_info_log_error(A->log, "invalid declaration for '%s'", varName);
       return NULL;
