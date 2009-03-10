@@ -47,14 +47,11 @@ static void r300_surface_fill(struct pipe_context* pipe,
         dest, x, y, w, h, pixpitch, color);
 
     /* Fallback? */
-    /*if (0) {
+    if (tex->tex.format != PIPE_FORMAT_A8R8G8B8_UNORM) {
         debug_printf("r300: Falling back on surface clear...");
-        void* map = pipe->screen->surface_map(pipe->screen, dest,
-            PIPE_BUFFER_USAGE_CPU_WRITE);
-        pipe_fill_rect(map, &dest->block, &dest->stride, x, y, w, h, color);
-        pipe->screen->surface_unmap(pipe->screen, dest);
+        util_surface_fill(pipe, dest, x, y, w, h, color);
         return;
-    }*/
+    }
 
     r300_emit_invariant_state(r300);
 
