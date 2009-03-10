@@ -170,8 +170,8 @@ static void calc_wm_input_sizes( struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
    /* BRW_NEW_VERTEX_PROGRAM */
-   struct brw_vertex_program *vp = 
-      (struct brw_vertex_program *)brw->vertex_program;
+   const struct brw_vertex_program *vp =
+      brw_vertex_program_const(brw->vertex_program);
    /* BRW_NEW_INPUT_DIMENSIONS */
    struct tracker t;
    GLuint insn;

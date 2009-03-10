@@ -53,7 +53,7 @@ static void calculate_curbe_offsets( struct brw_context *brw )
    GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
    
    /* BRW_NEW_VERTEX_PROGRAM */
-   struct brw_vertex_program *vp = (struct brw_vertex_program *)brw->vertex_program;
+   struct brw_vertex_program *vp = brw_vertex_program(brw->vertex_program);
    GLuint nr_vp_regs = (vp->program.Base.Parameters->NumParameters * 4 + 15) / 16;
    GLuint nr_clip_regs = 0;
    GLuint total_regs;
@@ -174,8 +174,10 @@ static GLfloat fixed_plane[6][4] = {
 static void prepare_constant_buffer(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
-   const struct brw_vertex_program *vp = (struct brw_vertex_program *)brw->vertex_program;
-   const struct brw_fragment_program *fp = (struct brw_fragment_program *)brw->fragment_program;
+   const struct brw_vertex_program *vp =
+      brw_vertex_program_const(brw->vertex_program);
+   const struct brw_fragment_program *fp =
+      brw_fragment_program_const(brw->fragment_program);
    const GLuint sz = brw->curbe.total_size;
    const GLuint bufsz = sz * 16 * sizeof(GLfloat);
    GLfloat *buf;

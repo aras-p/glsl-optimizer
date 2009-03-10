@@ -113,8 +113,10 @@ static void brwProgramStringNotify( GLcontext *ctx,
    struct brw_context *brw = brw_context(ctx);
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       struct gl_fragment_program *fprog = (struct gl_fragment_program *) prog;
-      struct brw_fragment_program *newFP = (struct brw_fragment_program *) prog;
-      struct brw_fragment_program *curFP = (struct brw_fragment_program *) brw->fragment_program;
+      struct brw_fragment_program *newFP = brw_fragment_program(fprog);
+      const struct brw_fragment_program *curFP =
+         brw_fragment_program_const(brw->fragment_program);
+
       if (fprog->FogOption) {
          _mesa_append_fog_code(ctx, fprog);
          fprog->FogOption = GL_NONE;
@@ -126,8 +128,11 @@ static void brwProgramStringNotify( GLcontext *ctx,
       newFP->isGLSL = brw_wm_is_glsl(fprog);
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
-      struct brw_vertex_program *newVP = (struct brw_vertex_program *) prog;
-      struct brw_vertex_program *curVP = (struct brw_vertex_program *) brw->vertex_program;
+      struct gl_vertex_program *vprog = (struct gl_vertex_program *) prog;
+      struct brw_vertex_program *newVP = brw_vertex_program(vprog);
+      const struct brw_vertex_program *curVP =
+         brw_vertex_program_const(brw->vertex_program);
+
       if (newVP == curVP)
 	 brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
       if (newVP->program.IsPositionInvariant) {
