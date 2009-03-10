@@ -2146,10 +2146,12 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_INDEX:
+      /* XXX: considered for removal */
       assert (0);
       break;
 
    case TGSI_OPCODE_NEGATE:
+      /* XXX: considered for removal */
       assert (0);
       break;
 
@@ -2255,6 +2257,7 @@ exec_instruction(
       break;
 
     case TGSI_OPCODE_MULTIPLYMATRIX:
+       /* XXX: considered for removal */
        assert (0);
        break;
 

@@ -191,8 +191,8 @@ struct tgsi_immediate_float32
 /*
  * GL_EXT_vertex_shader
  */
-#define TGSI_OPCODE_INDEX               22
-#define TGSI_OPCODE_NEGATE              23
+#define TGSI_OPCODE_INDEX               22   /* considered for removal */
+#define TGSI_OPCODE_NEGATE              23   /* considered for removal */
 #define TGSI_OPCODE_MADD                TGSI_OPCODE_MAD
 #define TGSI_OPCODE_FRAC                24
 #define TGSI_OPCODE_SETGE               TGSI_OPCODE_SGE
@@ -206,7 +206,7 @@ struct tgsi_immediate_float32
 #define TGSI_OPCODE_RECIP               TGSI_OPCODE_RCP
 #define TGSI_OPCODE_RECIPSQRT           TGSI_OPCODE_RSQ
 #define TGSI_OPCODE_CROSSPRODUCT        31
-#define TGSI_OPCODE_MULTIPLYMATRIX      32
+#define TGSI_OPCODE_MULTIPLYMATRIX      32   /* considered for removal */
 
 /*
  * GL_NV_vertex_program1_1
