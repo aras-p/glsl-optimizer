@@ -315,10 +315,10 @@ _slang_attach_storage(slang_ir_node *n, slang_variable *var)
    n->Var = var;
 
    if (!n->Store) {
-      /* need to setup storage */
-      if (n->Var && n->Var->store) {
-         /* node storage info = var storage info */
-         n->Store = n->Var->store;
+      /* need to setup node's storage */
+      if (var->store) {
+         /* node's storage = var's storage */
+         n->Store = var->store;
       }
       else {
          /* alloc new storage info */
@@ -328,9 +328,7 @@ _slang_attach_storage(slang_ir_node *n, slang_variable *var)
                 (char*) var->a_name,
                 (void*) n->Store, n->Store->Size);
 #endif
-         if (n->Var)
-            n->Var->store = n->Store;
-         assert(n->Var->store);
+         var->store = n->Store;
       }
    }
 }
@@ -745,6 +743,7 @@ new_var(slang_assemble_ctx *A, slang_variable *var)
 {
    slang_ir_node *n = new_node0(IR_VAR);
    if (n) {
+      ASSERT(var->store);
       _slang_attach_storage(n, var);
    }
    return n;
