@@ -23,9 +23,24 @@
 #ifndef R300_STATE_SHADER_H
 #define R300_STATE_SHADER_H
 
+#include "tgsi/tgsi_parse.h"
+
 #include "r300_context.h"
 #include "r300_reg.h"
 #include "r300_screen.h"
+
+/* Temporary struct used to hold assembly state while putting together
+ * fragment programs. */
+struct r300_fs_asm {
+    /* Number of colors. */
+    unsigned color_count;
+    /* Number of texcoords. */
+    unsigned tex_count;
+    /* Offset for temporary registers. Inputs and temporaries have no
+     * distinguishing markings, so inputs start at 0 and the first usable
+     * temporary register is after all inputs. */
+    unsigned temp_offset;
+};
 
 void r300_translate_fragment_shader(struct r300_context* r300,
                            struct r300_fragment_shader* fs);
