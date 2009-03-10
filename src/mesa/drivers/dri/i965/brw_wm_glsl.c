@@ -189,21 +189,23 @@ static void prealloc_reg(struct brw_wm_compile *c)
 
     /* constants */
     {
-	int nr_params = c->fp->program.Base.Parameters->NumParameters;
-	struct gl_program_parameter_list *plist = 
+        const int nr_params = c->fp->program.Base.Parameters->NumParameters;
+        const struct gl_program_parameter_list *plist = 
 	    c->fp->program.Base.Parameters;
 	int index = 0;
-	c->prog_data.nr_params = 4*nr_params;
+
+	c->prog_data.nr_params = 4 * nr_params;
 	for (i = 0; i < nr_params; i++) {
-	    for (j = 0; j < 4; j++, index++) {
-		reg = brw_vec1_grf(c->reg_index + index/8, 
-			index%8);
-		c->prog_data.param[index] = 
-		    &plist->ParameterValues[i][j];
-		set_reg(c, PROGRAM_STATE_VAR, i, j, reg);
+            for (j = 0; j < 4; j++, index++) {
+                reg = brw_vec1_grf(c->reg_index + index/8, index%8);
+                /* Save pointer to parameter/constant value.
+                 * Constants will be copied in prepare_constant_buffer()
+                 */
+                c->prog_data.param[index] = &plist->ParameterValues[i][j];
+                set_reg(c, PROGRAM_STATE_VAR, i, j, reg);
 	    }
 	}
-	c->nr_creg = 2*((4*nr_params+15)/16);
+	c->nr_creg = 2 * ((4 * nr_params + 15) / 16);
 	c->reg_index += c->nr_creg;
     }
 
