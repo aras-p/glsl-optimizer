@@ -572,7 +572,6 @@ swizzle_texels(GLuint swizzle, GLuint count, float4_array texels)
  * Input:  textureUnit - pointer to texture unit to apply
  *         format - base internal texture format
  *         n - number of fragments
- *         primary_rgba - primary colors (may alias rgba for single texture)
  *         texels - array of texel colors
  * InOut:  rgba - incoming fragment colors modified by texel colors
  *                according to the texture environment mode.
@@ -581,7 +580,6 @@ static void
 texture_apply( const GLcontext *ctx,
                const struct gl_texture_unit *texUnit,
                GLuint n,
-               float4_array primary_rgba,
                float4_array texel,
                GLchan rgbaChan[][4] )
 {
@@ -590,8 +588,6 @@ texture_apply( const GLcontext *ctx,
    GLfloat Rc, Gc, Bc, Ac;
    GLenum format;
    GLfloat rgba[MAX_WIDTH][4];
-
-   (void) primary_rgba;
 
    ASSERT(texUnit);
    ASSERT(texUnit->_Current);
@@ -1123,8 +1119,7 @@ _swrast_texture_span( GLcontext *ctx, SWspan *span )
             float4_array texels =
                get_texel_array(swrast->TexelBuffer, unit, span->end);
             texture_apply( ctx, texUnit, span->end,
-                           primary_rgba, texels,
-                           span->array->rgba );
+                           texels, span->array->rgba );
          }
       }
    }
