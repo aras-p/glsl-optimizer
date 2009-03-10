@@ -33,10 +33,10 @@
 /* Create a pipe_screen. */
 struct pipe_screen* radeon_create_screen(int drmFB, int pciID)
 {
-    struct pipe_winsys* winsys = radeon_pipe_winsys(drmFB);
+    struct radeon_winsys* winsys = radeon_pipe_winsys(drmFB);
 
     if (getenv("RADEON_SOFTPIPE")) {
-        return softpipe_create_screen(winsys);
+        return softpipe_create_screen((struct pipe_winsys*)winsys);
     } else {
         struct r300_winsys* r300 = radeon_create_r300_winsys(drmFB, winsys);
         FREE(winsys);

@@ -154,7 +154,7 @@ static void radeon_flush_frontbuffer(struct pipe_winsys *pipe_winsys,
     /* TODO: call dri2CopyRegion */
 }
 
-struct pipe_winsys* radeon_pipe_winsys(int fd)
+struct radeon_winsys* radeon_pipe_winsys(int fd)
 {
     struct radeon_winsys* radeon_ws;
     struct radeon_bo_manager* bom;

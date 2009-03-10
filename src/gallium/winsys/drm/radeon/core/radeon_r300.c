@@ -75,7 +75,8 @@ static void do_ioctls(struct r300_winsys* winsys, int fd)
 
 }
 
-struct r300_winsys* radeon_create_r300_winsys(int fd, struct pipe_winsys* old_winsys)
+struct r300_winsys*
+radeon_create_r300_winsys(int fd, struct radeon_winsys* old_winsys)
 {
     struct r300_winsys* winsys = CALLOC_STRUCT(r300_winsys);
 
@@ -92,7 +93,7 @@ struct r300_winsys* radeon_create_r300_winsys(int fd, struct pipe_winsys* old_wi
     winsys->end_cs = radeon_cs_end;
     winsys->flush_cs = radeon_r300_flush_cs;
 
-    winsys->base = *old_winsys;
+    memcpy(winsys, old_winsys, sizeof(struct radeon_winsys));
 
     return winsys;
 }
