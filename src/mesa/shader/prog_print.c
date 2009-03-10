@@ -918,7 +918,7 @@ _mesa_write_shader_to_file(const struct gl_shader *shader)
    else
       type = "vert";
 
-   _mesa_snprintf(filename, strlen(filename), "shader_%u.%s", shader->Name, type);
+   _mesa_snprintf(filename, sizeof(filename), "shader_%u.%s", shader->Name, type);
    f = fopen(filename, "w");
    if (!f) {
       fprintf(stderr, "Unable to open %s for writing\n", filename);
