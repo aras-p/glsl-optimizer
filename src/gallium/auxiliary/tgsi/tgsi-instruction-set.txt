@@ -48,7 +48,7 @@ TGSI Instruction Specification
   dst.w = 1.0 / sqrt(abs(src.x))
 
 
-1.1.6  EXP - Exponential Base 2
+1.1.6  EXP - Approximate Exponential Base 2
 
   dst.x = pow(2.0, floor(src.x))
   dst.y = src.x - floor(src.x)
@@ -56,7 +56,7 @@ TGSI Instruction Specification
   dst.w = 1.0
 
 
-1.1.7  LOG - Logarithm Base 2
+1.1.7  LOG - Approximate Logarithm Base 2
 
   dst.x = floor(lg2(abs(src.x)))
   dst.y = abs(src.x) / pow(2.0, floor(lg2(abs(src.x))))
