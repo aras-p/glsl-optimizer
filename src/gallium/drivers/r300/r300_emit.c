@@ -193,7 +193,6 @@ void r300_emit_fb_state(struct r300_context* r300,
 
 void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
 {
-    struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
 
     BEGIN_CS(20);
@@ -313,6 +312,16 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
     END_CS;
 }
 
+static void r300_flush_textures(struct r300_context* r300)
+{
+    CS_LOCALS(r300);
+
+    BEGIN_CS(4);
+    OUT_CS_REG(R300_TX_INVALTAGS, 0);
+    OUT_CS_REG(R300_TX_ENABLE, (1 << r300->texture_count) - 1);
+    END_CS;
+}
+
 /* Emit all dirty state. */
 void r300_emit_dirty_state(struct r300_context* r300)
 {
@@ -374,6 +383,7 @@ void r300_emit_dirty_state(struct r300_context* r300)
                 r300_emit_sampler(r300, r300->sampler_states[i], i);
                 r300->dirty_state &= ~(R300_NEW_SAMPLER << i);
             }
+            r300_flush_textures(r300);
         }
     }
 
@@ -388,6 +398,7 @@ void r300_emit_dirty_state(struct r300_context* r300)
                 r300_emit_texture(r300, r300->textures[i], i);
                 r300->dirty_state &= ~(R300_NEW_TEXTURE << i);
             }
+            r300_flush_textures(r300);
         }
     }
 

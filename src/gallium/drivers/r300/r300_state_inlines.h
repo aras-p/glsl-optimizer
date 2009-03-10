@@ -344,7 +344,7 @@ static INLINE uint32_t r300_translate_gb_pipes(int pipe_count)
     return 0;
 }
 
-static uint32_t translate_vertex_data_type(int type) {
+static INLINE uint32_t translate_vertex_data_type(int type) {
     switch (type) {
         case EMIT_1F:
         case EMIT_1F_PSIZE:
