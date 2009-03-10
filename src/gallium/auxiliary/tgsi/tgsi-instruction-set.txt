@@ -197,3 +197,111 @@ TGSI Instruction Specification
   dst.z = src0.x * src1.x + src0.y * src1.y + src2.x
   dst.w = src0.x * src1.x + src0.y * src1.y + src2.x
 
+
+1.3  GL_EXT_vertex_shader
+-------------------------
+
+
+1.3.1  INDEX - Array Lookup
+
+  Considered for removal from language.
+
+
+1.3.2  NEGATE - Negate
+
+  Considered for removal from language.
+
+
+1.3.3  MADD - Multiply And Add
+
+  Alias for MAD.
+
+
+1.3.4  FRAC - Fraction
+
+  dst.x = src.x - floor(src.x)
+  dst.y = src.y - floor(src.y)
+  dst.z = src.z - floor(src.z)
+  dst.w = src.w - floor(src.w)
+
+
+1.3.5  SETGE - Set On Greater Equal
+
+  Alias for SGE.
+
+
+1.3.6  SETLT - Set On Less Than
+
+  Alias for SLT.
+
+
+1.3.7  CLAMP - Clamp
+
+  dst.x = clamp(src0.x, src1.x, src2.x)
+  dst.y = clamp(src0.y, src1.y, src2.y)
+  dst.z = clamp(src0.z, src1.z, src2.z)
+  dst.w = clamp(src0.w, src1.w, src2.w)
+
+
+1.3.8  FLOOR - Floor
+
+  dst.x = floor(src.x)
+  dst.y = floor(src.y)
+  dst.z = floor(src.z)
+  dst.w = floor(src.w)
+
+
+1.3.9  ROUND - Round
+
+  dst.x = round(src.x)
+  dst.y = round(src.y)
+  dst.z = round(src.z)
+  dst.w = round(src.w)
+
+
+1.3.10  EXPBASE2 - Exponent Base 2
+
+  dst.x = pow(2.0, src.x)
+  dst.y = pow(2.0, src.x)
+  dst.z = pow(2.0, src.x)
+  dst.w = pow(2.0, src.x)
+
+
+1.3.11  LOGBASE2 - Logarithm Base 2
+
+  dst.x = lg2(src.x)
+  dst.y = lg2(src.x)
+  dst.z = lg2(src.x)
+  dst.w = lg2(src.x)
+
+
+1.3.12  POWER - Power
+
+  dst.x = pow(src0.x, src1.x)
+  dst.y = pow(src0.x, src1.x)
+  dst.z = pow(src0.x, src1.x)
+  dst.w = pow(src0.x, src1.x)
+
+
+1.3.13  RECIP - Reciprocal
+
+  Alias for RCP.
+
+
+1.3.14  RECIPSQRT - Reciprocal Square Root
+
+  Alias for RSQ.
+
+
+1.3.15  CROSSPRODUCT - Cross Product
+
+  dst.x = src0.y * src1.z - src1.y * src0.z
+  dst.y = src0.z * src1.x - src1.z * src0.x
+  dst.z = src0.x * src1.y - src1.x * src0.y
+  dst.w = 1.0
+
+
+1.3.16  MULTIPLYMATRIX - Multiply Matrix
+
+  Considered for removal from language.
+
