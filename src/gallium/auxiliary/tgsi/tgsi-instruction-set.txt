@@ -14,6 +14,9 @@ TGSI Instruction Specification
 1.1.1  ARL - Address Register Load
 
   dst.x = floor(src.x)
+  dst.y = floor(src.y)
+  dst.z = floor(src.z)
+  dst.w = floor(src.w)
 
 
 1.1.2  MOV - Move
