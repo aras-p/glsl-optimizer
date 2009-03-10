@@ -174,10 +174,10 @@ static GLfloat fixed_plane[6][4] = {
 static void prepare_constant_buffer(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
-   struct brw_vertex_program *vp = (struct brw_vertex_program *)brw->vertex_program;
-   struct brw_fragment_program *fp = (struct brw_fragment_program *)brw->fragment_program;
-   GLuint sz = brw->curbe.total_size;
-   GLuint bufsz = sz * 16 * sizeof(GLfloat);
+   const struct brw_vertex_program *vp = (struct brw_vertex_program *)brw->vertex_program;
+   const struct brw_fragment_program *fp = (struct brw_fragment_program *)brw->fragment_program;
+   const GLuint sz = brw->curbe.total_size;
+   const GLuint bufsz = sz * 16 * sizeof(GLfloat);
    GLfloat *buf;
    GLuint i;
 
@@ -189,27 +189,25 @@ static void prepare_constant_buffer(struct brw_context *brw)
    brw->curbe.tracked_state.dirty.mesa |= fp->program.Base.Parameters->StateFlags;
 
    if (sz == 0) {
-
       if (brw->curbe.last_buf) {
 	 free(brw->curbe.last_buf);
 	 brw->curbe.last_buf = NULL;
 	 brw->curbe.last_bufsz  = 0;
       }
-
       return;
    }
 
-   buf = (GLfloat *)malloc(bufsz);
+   buf = (GLfloat *) _mesa_calloc(bufsz);
 
-   memset(buf, 0, bufsz);
-
+   /* fragment shader constants */
    if (brw->curbe.wm_size) {
       GLuint offset = brw->curbe.wm_start * 16;
 
       _mesa_load_state_parameters(ctx, fp->program.Base.Parameters); 
 
+      /* copy float constants */
       for (i = 0; i < brw->wm.prog_data->nr_params; i++) 
-	 buf[offset + i] = brw->wm.prog_data->param[i][0];
+	 buf[offset + i] = *brw->wm.prog_data->param[i];
    }
 
 
@@ -244,7 +242,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
       }
    }
 
-
+   /* vertex shader constants */
    if (brw->curbe.vs_size) {
       GLuint offset = brw->curbe.vs_start * 16;
       GLuint nr = vp->program.Base.Parameters->NumParameters;
@@ -252,10 +250,11 @@ static void prepare_constant_buffer(struct brw_context *brw)
       _mesa_load_state_parameters(ctx, vp->program.Base.Parameters); 
 
       for (i = 0; i < nr; i++) {
-	 buf[offset + i * 4 + 0] = vp->program.Base.Parameters->ParameterValues[i][0];
-	 buf[offset + i * 4 + 1] = vp->program.Base.Parameters->ParameterValues[i][1];
-	 buf[offset + i * 4 + 2] = vp->program.Base.Parameters->ParameterValues[i][2];
-	 buf[offset + i * 4 + 3] = vp->program.Base.Parameters->ParameterValues[i][3];
+         const GLfloat *value = vp->program.Base.Parameters->ParameterValues[i];
+	 buf[offset + i * 4 + 0] = value[0];
+	 buf[offset + i * 4 + 1] = value[1];
+	 buf[offset + i * 4 + 2] = value[2];
+	 buf[offset + i * 4 + 3] = value[3];
       }
    }
 
@@ -274,11 +273,14 @@ static void prepare_constant_buffer(struct brw_context *brw)
        brw->curbe.last_buf &&
        bufsz == brw->curbe.last_bufsz &&
        memcmp(buf, brw->curbe.last_buf, bufsz) == 0) {
-      free(buf);
+      /* constants have not changed */
+      _mesa_free(buf);
    } 
    else {
+      /* constants have changed */
       if (brw->curbe.last_buf)
-	 free(brw->curbe.last_buf);
+	 _mesa_free(brw->curbe.last_buf);
+
       brw->curbe.last_buf = buf;
       brw->curbe.last_bufsz = bufsz;
 
