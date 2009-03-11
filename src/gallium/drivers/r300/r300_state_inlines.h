@@ -217,34 +217,43 @@ static INLINE uint32_t r300_translate_tex_filters(int min, int mag, int mip)
     switch (min) {
         case PIPE_TEX_FILTER_NEAREST:
             retval |= R300_TX_MIN_FILTER_NEAREST;
+            break;
         case PIPE_TEX_FILTER_LINEAR:
             retval |= R300_TX_MIN_FILTER_LINEAR;
+            break;
         case PIPE_TEX_FILTER_ANISO:
             retval |= R300_TX_MIN_FILTER_ANISO;
+            break;
         default:
-            debug_printf("r300: Unknown texture filter %d", min);
+            debug_printf("r300: Unknown texture filter %d\n", min);
             break;
     }
     switch (mag) {
         case PIPE_TEX_FILTER_NEAREST:
             retval |= R300_TX_MAG_FILTER_NEAREST;
+            break;
         case PIPE_TEX_FILTER_LINEAR:
             retval |= R300_TX_MAG_FILTER_LINEAR;
+            break;
         case PIPE_TEX_FILTER_ANISO:
             retval |= R300_TX_MAG_FILTER_ANISO;
+            break;
         default:
-            debug_printf("r300: Unknown texture filter %d", mag);
+            debug_printf("r300: Unknown texture filter %d\n", mag);
             break;
     }
     switch (mip) {
         case PIPE_TEX_MIPFILTER_NONE:
             retval |= R300_TX_MIN_FILTER_MIP_NONE;
+            break;
         case PIPE_TEX_MIPFILTER_NEAREST:
             retval |= R300_TX_MIN_FILTER_MIP_NEAREST;
+            break;
         case PIPE_TEX_MIPFILTER_LINEAR:
             retval |= R300_TX_MIN_FILTER_MIP_LINEAR;
+            break;
         default:
-            debug_printf("r300: Unknown texture filter %d", mip);
+            debug_printf("r300: Unknown texture filter %d\n", mip);
             break;
     }
 
