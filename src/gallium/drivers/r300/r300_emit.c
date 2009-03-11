@@ -327,6 +327,7 @@ void r300_emit_dirty_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     int i;
+    int dirty_tex = 0;
 
     if (!(r300->dirty_state) && !(r300->dirty_hw)) {
         return;
@@ -382,8 +383,8 @@ void r300_emit_dirty_state(struct r300_context* r300)
             if (r300->dirty_state & (R300_NEW_SAMPLER << i)) {
                 r300_emit_sampler(r300, r300->sampler_states[i], i);
                 r300->dirty_state &= ~(R300_NEW_SAMPLER << i);
+                dirty_tex++;
             }
-            r300_flush_textures(r300);
         }
     }
 
@@ -397,9 +398,13 @@ void r300_emit_dirty_state(struct r300_context* r300)
             if (r300->dirty_state & (R300_NEW_TEXTURE << i)) {
                 r300_emit_texture(r300, r300->textures[i], i);
                 r300->dirty_state &= ~(R300_NEW_TEXTURE << i);
+                dirty_tex++;
             }
-            r300_flush_textures(r300);
         }
+    }
+
+    if (dirty_tex) {
+        r300_flush_textures(r300);
     }
 
     if (r300->dirty_state & R300_NEW_VERTEX_FORMAT) {
