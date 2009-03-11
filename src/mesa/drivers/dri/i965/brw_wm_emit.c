@@ -885,6 +885,9 @@ static void emit_aa( struct brw_wm_compile *c,
 
 /* Post-fragment-program processing.  Send the results to the
  * framebuffer.
+ * \param arg0  the fragment color
+ * \param arg1  the pass-through depth value
+ * \param arg2  the shader-computed depth value
  */
 static void emit_fb_write( struct brw_wm_compile *c,
 			   struct brw_reg *arg0,
