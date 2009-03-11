@@ -51,6 +51,7 @@
 #include "util/u_stream.h"
 
 #include "tr_dump.h"
+#include "tr_screen.h"
 
 
 static struct util_stream *stream = NULL;

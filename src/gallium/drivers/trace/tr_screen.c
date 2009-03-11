@@ -29,10 +29,10 @@
 
 #include "tr_dump.h"
 #include "tr_state.h"
-#include "tr_winsys.h"
 #include "tr_texture.h"
 #include "tr_screen.h"
 
+#include "pipe/p_inlines.h"
 
 static const char *
 trace_screen_get_name(struct pipe_screen *_screen)
@@ -151,6 +151,36 @@ trace_screen_is_format_supported(struct pipe_screen *_screen,
 }
 
 
+static void
+trace_screen_flush_frontbuffer(struct pipe_screen *_screen,
+                               struct pipe_surface *_surface,
+                               void *context_private)
+{
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct trace_texture *tr_tex = trace_texture(tr_scr, _surface->texture);
+   struct trace_surface *tr_surf = trace_surface(tr_tex, _surface);
+   struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_surface *surface = tr_surf->surface;
+
+   trace_dump_call_begin("pipe_winsys", "flush_frontbuffer");
+
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(ptr, surface);
+   /* XXX: hide, as there is nothing we can do with this
+   trace_dump_arg(ptr, context_private);
+   */
+
+   screen->flush_frontbuffer(screen, surface, context_private);
+
+   trace_dump_call_end();
+}
+
+
+/********************************************************************
+ * texture
+ */
+
+
 static struct pipe_texture *
 trace_screen_texture_create(struct pipe_screen *_screen,
                             const struct pipe_texture *templat)
@@ -223,8 +253,13 @@ trace_screen_texture_destroy(struct pipe_texture *_texture)
 
    trace_dump_call_end();
 
-   trace_texture_destroy(trace_screen(screen), texture);
+   trace_texture_destroy(tr_scr, _texture);
 }
+
+
+/********************************************************************
+ * surface
+ */
 
 
 static struct pipe_surface *
@@ -281,6 +316,11 @@ trace_screen_tex_surface_destroy(struct pipe_surface *_surface)
 
    trace_surface_destroy(tr_tex, _surface);
 }
+
+
+/********************************************************************
+ * transfer
+ */
 
 
 static struct pipe_transfer *
@@ -409,6 +449,379 @@ trace_screen_transfer_unmap(struct pipe_screen *_screen,
 }
 
 
+/********************************************************************
+ * buffer
+ */
+
+
+static struct pipe_buffer *
+trace_screen_surface_buffer_create(struct pipe_screen *_screen,
+                                   unsigned width, unsigned height,
+                                   enum pipe_format format,
+                                   unsigned usage,
+                                   unsigned *pstride)
+{
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct pipe_screen *screen = tr_scr->screen;
+   unsigned stride;
+   struct pipe_buffer *result;
+
+   trace_dump_call_begin("pipe_screen", "surface_buffer_create");
+
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(uint, width);
+   trace_dump_arg(uint, height);
+   trace_dump_arg(format, format);
+   trace_dump_arg(uint, usage);
+
+   result = screen->surface_buffer_create(screen,
+                                          width, height,
+                                          format,
+                                          usage,
+                                          pstride);
+
+   stride = *pstride;
+
+   trace_dump_arg(uint, stride);
+
+   trace_dump_ret(ptr, result);
+
+   trace_dump_call_end();
+
+   return result;
+}
+
+
+static struct pipe_buffer *
+trace_screen_buffer_create(struct pipe_screen *_screen,
+                           unsigned alignment,
+                           unsigned usage,
+                           unsigned size)
+{
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_buffer *result;
+
+   trace_dump_call_begin("pipe_screen", "buffer_create");
+
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(uint, alignment);
+   trace_dump_arg(uint, usage);
+   trace_dump_arg(uint, size);
+
+   result = screen->buffer_create(screen, alignment, usage, size);
+
+   trace_dump_ret(ptr, result);
+
+   trace_dump_call_end();
+
+   /* Zero the buffer to avoid dumping uninitialized memory */
+   if(result->usage & PIPE_BUFFER_USAGE_CPU_WRITE) {
+      void *map;
+      map = pipe_buffer_map(screen, result, PIPE_BUFFER_USAGE_CPU_WRITE);
+      if(map) {
+         memset(map, 0, result->size);
+         screen->buffer_unmap(screen, result);
+      }
+   }
+
+   return result;
+}
+
+
+static struct pipe_buffer *
+trace_screen_user_buffer_create(struct pipe_screen *_screen,
+                                void *data,
+                                unsigned size)
+{
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_buffer *result;
+
+   trace_dump_call_begin("pipe_screen", "user_buffer_create");
+
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg_begin("data");
+   trace_dump_bytes(data, size);
+   trace_dump_arg_end();
+   trace_dump_arg(uint, size);
+
+   result = screen->user_buffer_create(screen, data, size);
+
+   trace_dump_ret(ptr, result);
+
+   trace_dump_call_end();
+
+   /* XXX: Mark the user buffers. (we should wrap pipe_buffers, but is is
+    * impossible to do so while texture-less surfaces are still around */
+   if(result) {
+      assert(!(result->usage & TRACE_BUFFER_USAGE_USER));
+      result->usage |= TRACE_BUFFER_USAGE_USER;
+   }
+
+   return result;
+}
+
+
+/**
+ * This function is used to track if data has been changed on a user buffer
+ * without map/unmap being called.
+ */
+void
+trace_screen_user_buffer_update(struct pipe_screen *_screen,
+                                struct pipe_buffer *buffer)
+{
+#if 0
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct pipe_screen *screen = tr_scr->screen;
+   const void *map;
+
+   if(buffer && buffer->usage & TRACE_BUFFER_USAGE_USER) {
+      map = screen->buffer_map(screen, buffer, PIPE_BUFFER_USAGE_CPU_READ);
+      if(map) {
+         trace_dump_call_begin("pipe_winsys", "buffer_write");
+
+         trace_dump_arg(ptr, screen);
+
+         trace_dump_arg(ptr, buffer);
+
+         trace_dump_arg_begin("data");
+         trace_dump_bytes(map, buffer->size);
+         trace_dump_arg_end();
+
+         trace_dump_arg_begin("size");
+         trace_dump_uint(buffer->size);
+         trace_dump_arg_end();
+
+         trace_dump_call_end();
+
+         screen->buffer_unmap(screen, buffer);
+      }
+   }
+#endif
+}
+
+
+static void *
+trace_screen_buffer_map(struct pipe_screen *_screen,
+                        struct pipe_buffer *buffer,
+                        unsigned usage)
+{
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct pipe_screen *screen = tr_scr->screen;
+   void *map;
+
+   trace_dump_call_begin("pipe_screen", "buffer_map");
+
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(ptr, buffer);
+   trace_dump_arg(uint, usage);
+
+   assert(screen->buffer_map);
+   map = screen->buffer_map(screen, buffer, usage);
+
+   trace_dump_ret(ptr, map);
+#if 0
+   if(map) {
+      if(usage & PIPE_BUFFER_USAGE_CPU_WRITE) {
+         assert(!hash_table_get(tr_ws->buffer_maps, buffer));
+         hash_table_set(tr_ws->buffer_maps, buffer, map);
+      }
+   }
+#endif
+
+   return map;
+}
+
+
+static void *
+trace_screen_buffer_map_range(struct pipe_screen *_screen,
+                              struct pipe_buffer *buffer,
+                              unsigned offset,
+                              unsigned length,
+                              unsigned usage)
+{
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct pipe_screen *screen = tr_scr->screen;
+   void *map;
+
+   trace_dump_call_begin("pipe_screen", "buffer_map_range");
+
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(ptr, buffer);
+   trace_dump_arg(uint, offset);
+   trace_dump_arg(uint, length);
+   trace_dump_arg(uint, usage);
+
+   assert(screen->buffer_map_range);
+   map = screen->buffer_map_range(screen, buffer, offset, length, usage);
+
+   trace_dump_ret(ptr, map);
+
+   trace_dump_call_end();
+
+   return map;
+}
+
+
+static void
+trace_screen_buffer_flush_mapped_range(struct pipe_screen *_screen,
+                                       struct pipe_buffer *buffer,
+                                       unsigned offset,
+                                       unsigned length)
+{
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct pipe_screen *screen = tr_scr->screen;
+
+   trace_dump_call_begin("pipe_screen", "buffer_flush_mapped_range");
+
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(ptr, buffer);
+   trace_dump_arg(uint, offset);
+   trace_dump_arg(uint, length);
+
+   assert(screen->buffer_flush_mapped_range);
+   screen->buffer_flush_mapped_range(screen, buffer, offset, length);
+
+   trace_dump_call_end();
+}
+
+
+static void
+trace_screen_buffer_unmap(struct pipe_screen *_screen,
+                          struct pipe_buffer *buffer)
+{
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct pipe_screen *screen = tr_scr->screen;
+#if 0
+   const void *map;
+
+   map = hash_table_get(tr_ws->buffer_maps, buffer);
+   if(map) {
+      trace_dump_call_begin("pipe_winsys", "buffer_write");
+
+      trace_dump_arg(ptr, winsys);
+
+      trace_dump_arg(ptr, buffer);
+
+      trace_dump_arg_begin("data");
+      trace_dump_bytes(map, buffer->size);
+      trace_dump_arg_end();
+
+      trace_dump_arg_begin("size");
+      trace_dump_uint(buffer->size);
+      trace_dump_arg_end();
+
+      trace_dump_call_end();
+
+      hash_table_remove(tr_ws->buffer_maps, buffer);
+   }
+#endif
+
+   trace_dump_call_begin("pipe_screen", "buffer_flush_mapped_range");
+
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(ptr, buffer);
+
+   assert(screen->buffer_unmap);
+   screen->buffer_unmap(screen, buffer);
+
+   trace_dump_call_end();
+}
+
+
+static void
+trace_screen_buffer_destroy(struct pipe_buffer *buffer)
+{
+   struct trace_screen *tr_scr = trace_screen(buffer->screen);
+   struct pipe_screen *screen = tr_scr->screen;
+
+   trace_dump_call_begin("pipe_screen", "buffer_destroy");
+
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(ptr, buffer);
+
+   assert(screen->buffer_destroy);
+   screen->buffer_destroy(buffer);
+
+   trace_dump_call_end();
+}
+
+
+static void
+trace_screen_fence_reference(struct pipe_screen *_screen,
+                             struct pipe_fence_handle **dst,
+                             struct pipe_fence_handle *src)
+{
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct pipe_screen *screen = tr_scr->screen;
+
+   trace_dump_call_begin("pipe_screen", "fence_reference");
+
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(ptr, dst);
+   trace_dump_arg(ptr, src);
+
+   screen->fence_reference(screen, dst, src);
+
+   trace_dump_call_end();
+}
+
+
+static int
+trace_screen_fence_signalled(struct pipe_screen *_screen,
+                             struct pipe_fence_handle *fence,
+                             unsigned flag)
+{
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct pipe_screen *screen = tr_scr->screen;
+   int result;
+
+   trace_dump_call_begin("pipe_screen", "fence_signalled");
+
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(ptr, fence);
+   trace_dump_arg(uint, flag);
+
+   result = screen->fence_signalled(screen, fence, flag);
+
+   trace_dump_ret(int, result);
+
+   trace_dump_call_end();
+
+   return result;
+}
+
+
+static int
+trace_screen_fence_finish(struct pipe_screen *_screen,
+                          struct pipe_fence_handle *fence,
+                          unsigned flag)
+{
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct pipe_screen *screen = tr_scr->screen;
+   int result;
+
+   trace_dump_call_begin("pipe_screen", "fence_finish");
+
+   trace_dump_arg(ptr, screen);
+   trace_dump_arg(ptr, fence);
+   trace_dump_arg(uint, flag);
+
+   result = screen->fence_finish(screen, fence, flag);
+
+   trace_dump_ret(int, result);
+
+   trace_dump_call_end();
+
+   return result;
+}
+
+
+/********************************************************************
+ * screen
+ */
+
 static void
 trace_screen_destroy(struct pipe_screen *_screen)
 {
@@ -442,12 +855,6 @@ trace_screen_create(struct pipe_screen *screen)
       goto error1;
 
    trace_dump_call_begin("", "pipe_screen_create");
-   trace_dump_arg_begin("screen");
-   trace_dump_ptr(screen);
-   trace_dump_arg_end();
-   trace_dump_arg_begin("screen->winsys");
-   trace_dump_ptr(screen->winsys);
-   trace_dump_arg_end();
 
    tr_scr = CALLOC_STRUCT(trace_screen);
    if(!tr_scr)
@@ -477,9 +884,25 @@ trace_screen_create(struct pipe_screen *screen)
    tr_scr->base.tex_transfer_destroy = trace_screen_tex_transfer_destroy;
    tr_scr->base.transfer_map = trace_screen_transfer_map;
    tr_scr->base.transfer_unmap = trace_screen_transfer_unmap;
+   tr_scr->base.buffer_create = trace_screen_buffer_create;
+   tr_scr->base.user_buffer_create = trace_screen_user_buffer_create;
+   tr_scr->base.surface_buffer_create = trace_screen_surface_buffer_create;
+   if (screen->buffer_map)
+      tr_scr->base.buffer_map = trace_screen_buffer_map;
+   if (screen->buffer_map_range)
+      tr_scr->base.buffer_map_range = trace_screen_buffer_map_range;
+   if (screen->buffer_flush_mapped_range)
+      tr_scr->base.buffer_flush_mapped_range = trace_screen_buffer_flush_mapped_range;
+   if (screen->buffer_unmap)
+      tr_scr->base.buffer_unmap = trace_screen_buffer_unmap;
+   tr_scr->base.buffer_destroy = trace_screen_buffer_destroy;
+   tr_scr->base.fence_reference = trace_screen_fence_reference;
+   tr_scr->base.fence_signalled = trace_screen_fence_signalled;
+   tr_scr->base.fence_finish = trace_screen_fence_finish;
+   tr_scr->base.flush_frontbuffer = trace_screen_flush_frontbuffer;
    tr_scr->screen = screen;
 
-   trace_dump_ret(ptr, &tr_scr->base);
+   trace_dump_ret(ptr, screen);
    trace_dump_call_end();
 
    return &tr_scr->base;

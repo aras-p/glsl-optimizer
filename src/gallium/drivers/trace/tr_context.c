@@ -32,7 +32,6 @@
 #include "tr_state.h"
 #include "tr_screen.h"
 #include "tr_texture.h"
-#include "tr_winsys.h"
 #include "tr_context.h"
 
 
@@ -132,7 +131,7 @@ trace_context_draw_elements(struct pipe_context *_pipe,
    struct pipe_context *pipe = tr_ctx->pipe;
    boolean result;
 
-   trace_winsys_user_buffer_update(_pipe->winsys, indexBuffer);
+   trace_screen_user_buffer_update(_pipe->screen, indexBuffer);
 
    trace_dump_call_begin("pipe_context", "draw_elements");
 
@@ -167,7 +166,7 @@ trace_context_draw_range_elements(struct pipe_context *_pipe,
    struct pipe_context *pipe = tr_ctx->pipe;
    boolean result;
 
-   trace_winsys_user_buffer_update(_pipe->winsys, indexBuffer);
+   trace_screen_user_buffer_update(_pipe->screen, indexBuffer);
 
    trace_dump_call_begin("pipe_context", "draw_range_elements");
 
@@ -696,7 +695,7 @@ trace_context_set_constant_buffer(struct pipe_context *_pipe,
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
-   trace_winsys_user_buffer_update(_pipe->winsys, (struct pipe_buffer *)buffer);
+   trace_screen_user_buffer_update(_pipe->screen, (struct pipe_buffer *)buffer);
 
    trace_dump_call_begin("pipe_context", "set_constant_buffer");
 
@@ -830,7 +829,7 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
    unsigned i;
 
    for(i = 0; i < num_buffers; ++i)
-      trace_winsys_user_buffer_update(_pipe->winsys, buffers[i].buffer);
+      trace_screen_user_buffer_update(_pipe->screen, buffers[i].buffer);
 
    trace_dump_call_begin("pipe_context", "set_vertex_buffers");
 
@@ -996,10 +995,12 @@ trace_context_destroy(struct pipe_context *_pipe)
 
 
 struct pipe_context *
-trace_context_create(struct pipe_screen *screen,
+trace_context_create(struct pipe_screen *_screen,
                      struct pipe_context *pipe)
 {
+   struct trace_screen *tr_scr = trace_screen(_screen);
    struct trace_context *tr_ctx;
+   struct pipe_screen *screen = tr_scr->screen;
 
    if(!pipe)
       goto error1;
@@ -1011,8 +1012,8 @@ trace_context_create(struct pipe_screen *screen,
    if(!tr_ctx)
       goto error1;
 
-   tr_ctx->base.winsys = screen->winsys;
-   tr_ctx->base.screen = screen;
+   tr_ctx->base.winsys = _screen->winsys;
+   tr_ctx->base.screen = _screen;
    tr_ctx->base.destroy = trace_context_destroy;
    tr_ctx->base.set_edgeflags = trace_context_set_edgeflags;
    tr_ctx->base.draw_arrays = trace_context_draw_arrays;
@@ -1059,9 +1060,7 @@ trace_context_create(struct pipe_screen *screen,
    tr_ctx->pipe = pipe;
 
    trace_dump_call_begin("", "pipe_context_create");
-   trace_dump_arg_begin("screen");
-   trace_dump_ptr(pipe->screen);
-   trace_dump_arg_end();
+   trace_dump_arg(ptr, screen);
    trace_dump_ret(ptr, pipe);
    trace_dump_call_end();
 

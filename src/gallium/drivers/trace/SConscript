@@ -10,7 +10,6 @@ trace = env.ConvenienceLibrary(
         'tr_screen.c',
         'tr_state.c',
         'tr_texture.c',
-        'tr_winsys.c',
     ])
 
 Export('trace')
