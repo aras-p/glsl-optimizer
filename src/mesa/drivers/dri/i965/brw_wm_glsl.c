@@ -150,7 +150,7 @@ get_reg(struct brw_wm_compile *c, int file, int index, int component,
 	/* ran out of temporary registers! */
 #if 1
         /* This is a big hack for now.
-         * Return bad register index, but don't just crash hange the GPU.
+         * Return bad register index, just don't hang the GPU.
          */
         _mesa_fprintf(stderr, "out of regs %d\n", c->reg_index);
         c->reg_index = BRW_WM_MAX_GRF - 13;
@@ -503,6 +503,32 @@ static void emit_fb_write(struct brw_wm_compile *c,
 
        nr += 2;
     }
+
+    if (c->key.dest_depth_reg) {
+        GLuint comp = c->key.dest_depth_reg / 2;
+        GLuint off = c->key.dest_depth_reg % 2;
+
+        assert(comp == 1);
+        assert(off == 0);
+#if 0
+        /* XXX do we need this code?   comp always 1, off always 0, it seems */
+        if (off != 0) {
+            brw_push_insn_state(p);
+            brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+
+            brw_MOV(p, brw_message_reg(nr), offset(arg1[comp],1));
+            /* 2nd half? */
+            brw_MOV(p, brw_message_reg(nr+1), arg1[comp+1]);
+            brw_pop_insn_state(p);
+        }
+        else
+#endif
+        {
+           struct brw_reg src =  get_src_reg(c, &inst->SrcReg[1], 1, 1);
+           brw_MOV(p, brw_message_reg(nr), src);
+        }
+        nr += 2;
+   }
 
     target = inst->Aux >> 1;
     eot = inst->Aux & 1;
