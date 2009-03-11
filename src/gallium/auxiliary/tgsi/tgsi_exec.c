@@ -486,6 +486,32 @@ micro_f2ut(
 #endif
 
 static void
+micro_float_clamp(union tgsi_exec_channel *dst,
+                  const union tgsi_exec_channel *src)
+{
+   uint i;
+
+   for (i = 0; i < 4; i++) {
+      if (src->f[i] > 0.0f) {
+         if (src->f[i] > 1.884467e+019f)
+            dst->f[i] = 1.884467e+019f;
+         else if (src->f[i] < 5.42101e-020f)
+            dst->f[i] = 5.42101e-020f;
+         else
+            dst->f[i] = src->f[i];
+      }
+      else {
+         if (src->f[i] < -1.884467e+019f)
+            dst->f[i] = -1.884467e+019f;
+         else if (src->f[i] > -5.42101e-020f)
+            dst->f[i] = -5.42101e-020f;
+         else
+            dst->f[i] = src->f[i];
+      }
+   }
+}
+
+static void
 micro_flr(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
@@ -2279,7 +2305,12 @@ exec_instruction(
        break;
 
    case TGSI_OPCODE_RCC:
-      assert (0);
+      FETCH(&r[0], 0, CHAN_X);
+      micro_div(&r[0], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &r[0]);
+      micro_float_clamp(&r[0], &r[0]);
+      FOR_EACH_ENABLED_CHANNEL(*inst, chan_index) {
+         STORE(&r[0], 0, chan_index);
+      }
       break;
 
    case TGSI_OPCODE_DPH:
