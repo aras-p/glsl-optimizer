@@ -60,12 +60,50 @@ static void r300_fs_declare(struct r300_fs_asm* assembler,
             break;
         case TGSI_FILE_OUTPUT:
             break;
+        case TGSI_FILE_TEMPORARY:
+            assembler->temp_count++;
+            break;
         default:
             debug_printf("r300: fs: Bad file %d\n", decl->Declaration.File);
             break;
     }
 
     assembler->temp_offset = assembler->color_count + assembler->tex_count;
+}
+
+static INLINE unsigned r300_fs_src(struct r300_fs_asm* assembler,
+                                   struct tgsi_src_register* src)
+{
+    switch (src->File) {
+        case TGSI_FILE_INPUT:
+            /* XXX may be wrong */
+            return src->Index;
+            break;
+        case TGSI_FILE_TEMPORARY:
+            return src->Index + assembler->temp_offset;
+            break;
+        default:
+            debug_printf("r300: fs: Unimplemented src %d\n", src->File);
+            break;
+    }
+    return 0;
+}
+
+static INLINE unsigned r300_fs_dst(struct r300_fs_asm* assembler,
+                                   struct tgsi_dst_register* dst)
+{
+    switch (dst->File) {
+        case TGSI_FILE_OUTPUT:
+            return 0;
+            break;
+        case TGSI_FILE_TEMPORARY:
+            return dst->Index + assembler->temp_offset;
+            break;
+        default:
+            debug_printf("r300: fs: Unimplemented dst %d\n", dst->File);
+            break;
+    }
+    return 0;
 }
 
 static INLINE unsigned r500_fix_swiz(unsigned s)
@@ -80,25 +118,31 @@ static INLINE unsigned r500_fix_swiz(unsigned s)
     }
 }
 
-static INLINE uint32_t r500_rgb_swiz(struct tgsi_full_src_register* reg)
+static uint32_t r500_rgba_swiz(struct tgsi_full_src_register* reg)
 {
     if (reg->SrcRegister.Extended) {
         return r500_fix_swiz(reg->SrcRegisterExtSwz.ExtSwizzleX) |
             (r500_fix_swiz(reg->SrcRegisterExtSwz.ExtSwizzleY) << 3) |
-            (r500_fix_swiz(reg->SrcRegisterExtSwz.ExtSwizzleZ) << 6);
+            (r500_fix_swiz(reg->SrcRegisterExtSwz.ExtSwizzleZ) << 6) |
+            (r500_fix_swiz(reg->SrcRegisterExtSwz.ExtSwizzleW) << 9);
     } else {
-        return reg->SrcRegister.SwizzleX | (reg->SrcRegister.SwizzleY << 3) |
-            (reg->SrcRegister.SwizzleZ << 6);
+        return reg->SrcRegister.SwizzleX |
+            (reg->SrcRegister.SwizzleY << 3) |
+            (reg->SrcRegister.SwizzleZ << 6) |
+            (reg->SrcRegister.SwizzleW << 9);
     }
+}
+
+static INLINE uint32_t r500_rgb_swiz(struct tgsi_full_src_register* reg)
+{
+    /* Only the first 9 bits... */
+    return r500_rgba_swiz(reg) & 0x1ff;
 }
 
 static INLINE uint32_t r500_alpha_swiz(struct tgsi_full_src_register* reg)
 {
-    if (reg->SrcRegister.Extended) {
-        return r500_fix_swiz(reg->SrcRegisterExtSwz.ExtSwizzleW);
-    } else {
-        return reg->SrcRegister.SwizzleW;
-    }
+    /* Only the last 3 bits... */
+    return r500_rgba_swiz(reg) >> 9;
 }
 
 static INLINE void r500_emit_mov(struct r500_fragment_shader* fs,
@@ -107,16 +151,15 @@ static INLINE void r500_emit_mov(struct r500_fragment_shader* fs,
                                  struct tgsi_full_dst_register* dst)
 {
     int i = fs->instruction_count;
+
     fs->instructions[i].inst0 = R500_INST_TYPE_OUT |
         R500_INST_TEX_SEM_WAIT | R500_INST_LAST |
         R500_INST_RGB_OMASK_RGB | R500_INST_ALPHA_OMASK |
         R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP;
     fs->instructions[i].inst1 =
-        R500_RGB_ADDR0(0) | R500_RGB_ADDR1(0) | R500_RGB_ADDR1_CONST |
-        R500_RGB_ADDR2(0) | R500_RGB_ADDR2_CONST;
+        R500_RGB_ADDR0(r300_fs_src(assembler, &src->SrcRegister));
     fs->instructions[i].inst2 =
-        R500_ALPHA_ADDR0(0) | R500_ALPHA_ADDR1(0) | R500_ALPHA_ADDR1_CONST |
-        R500_ALPHA_ADDR2(0) | R500_ALPHA_ADDR2_CONST;
+        R500_ALPHA_ADDR0(r300_fs_src(assembler, &src->SrcRegister));
     fs->instructions[i].inst3 = R500_ALU_RGB_SEL_A_SRC0 |
         R500_SWIZ_RGB_A(r500_rgb_swiz(src)) |
         R500_ALU_RGB_SEL_B_SRC0 |
@@ -132,6 +175,27 @@ static INLINE void r500_emit_mov(struct r500_fragment_shader* fs,
     fs->instruction_count++;
 }
 
+static INLINE void r500_emit_tex(struct r500_fragment_shader* fs,
+                                 struct r300_fs_asm* assembler,
+                                 uint32_t op,
+                                 struct tgsi_full_src_register* src,
+                                 struct tgsi_full_dst_register* dst)
+{
+    int i = fs->instruction_count;
+
+    fs->instructions[i].inst0 = R500_INST_TYPE_TEX |
+        R500_INST_TEX_SEM_WAIT;
+    fs->instructions[i].inst1 = R500_TEX_ID(0) |
+        R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED |
+        R500_TEX_INST_PROJ;
+    fs->instructions[i].inst2 =
+        R500_TEX_SRC_ADDR(r300_fs_src(assembler, &src->SrcRegister)) |
+        R500_SWIZ_TEX_STRQ(r500_rgba_swiz(src)) |
+        R500_TEX_DST_ADDR(r300_fs_dst(assembler, &dst->DstRegister)) |
+        R500_TEX_DST_R_SWIZ_R | R500_TEX_DST_G_SWIZ_G |
+        R500_TEX_DST_B_SWIZ_B | R500_TEX_DST_A_SWIZ_A;
+}
+
 static void r500_fs_instruction(struct r500_fragment_shader* fs,
                                 struct r300_fs_asm* assembler,
                                 struct tgsi_full_instruction* inst)
@@ -143,6 +207,10 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
         case TGSI_OPCODE_MOV:
         case TGSI_OPCODE_SWZ:
             r500_emit_mov(fs, assembler, &inst->FullSrcRegisters[0],
+                    &inst->FullDstRegisters[0]);
+            break;
+        case TGSI_OPCODE_TXP:
+            r500_emit_tex(fs, assembler, 0, &inst->FullSrcRegisters[0],
                     &inst->FullDstRegisters[0]);
             break;
         case TGSI_OPCODE_END:
@@ -205,6 +273,7 @@ void r500_translate_fragment_shader(struct r300_context* r300,
     fs->shader.stack_size = assembler->temp_offset;
 
     tgsi_dump(fs->shader.state.tokens);
+    r500_fs_dump(fs);
 
     //r500_copy_passthrough_shader(fs);
 

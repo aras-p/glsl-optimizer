@@ -7,6 +7,7 @@ C_SOURCES = \
 	r300_chipset.c \
 	r300_clear.c \
 	r300_context.c \
+	r300_debug.c \
 	r300_emit.c \
 	r300_flush.c \
 	r300_query.c \

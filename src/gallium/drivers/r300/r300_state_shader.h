@@ -26,6 +26,7 @@
 #include "tgsi/tgsi_parse.h"
 
 #include "r300_context.h"
+#include "r300_debug.h"
 #include "r300_reg.h"
 #include "r300_screen.h"
 
@@ -63,6 +64,8 @@ struct r300_fs_asm {
      * distinguishing markings, so inputs start at 0 and the first usable
      * temporary register is after all inputs. */
     unsigned temp_offset;
+    /* Number of requested temporary registers. */
+    unsigned temp_count;
 };
 
 void r300_translate_fragment_shader(struct r300_context* r300,
