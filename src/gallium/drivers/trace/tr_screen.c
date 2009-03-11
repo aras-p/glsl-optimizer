@@ -436,14 +436,26 @@ trace_screen_create(struct pipe_screen *screen)
    if(!trace_dump_trace_begin())
       goto error1;
 
+   trace_dump_call_begin("", "pipe_screen_create");
+   trace_dump_arg_begin("screen");
+   trace_dump_ptr(screen);
+   trace_dump_arg_end();
+   trace_dump_arg_begin("screen->winsys");
+   trace_dump_ptr(screen->winsys);
+   trace_dump_arg_end();
+
    tr_scr = CALLOC_STRUCT(trace_screen);
    if(!tr_scr)
       goto error2;
 
+#if 0
    winsys = trace_winsys_create(screen->winsys);
    if(!winsys)
       goto error3;
-   
+#else
+   winsys = screen->winsys;
+#endif
+
    tr_scr->base.winsys = winsys;
    tr_scr->base.destroy = trace_screen_destroy;
    tr_scr->base.get_name = trace_screen_get_name;
@@ -460,21 +472,20 @@ trace_screen_create(struct pipe_screen *screen)
    tr_scr->base.tex_transfer_destroy = trace_screen_tex_transfer_destroy;
    tr_scr->base.transfer_map = trace_screen_transfer_map;
    tr_scr->base.transfer_unmap = trace_screen_transfer_unmap;
-   
    tr_scr->screen = screen;
 
-   trace_dump_call_begin("", "pipe_screen_create");
-   trace_dump_arg_begin("winsys");
-   trace_dump_ptr(screen->winsys);
-   trace_dump_arg_end();
-   trace_dump_ret(ptr, screen);
+   trace_dump_ret(ptr, &tr_scr->base);
    trace_dump_call_end();
 
    return &tr_scr->base;
 
+#if 0
 error3:
    FREE(tr_scr);
+#endif
 error2:
+   trace_dump_ret(ptr, screen);
+   trace_dump_call_end();
    trace_dump_trace_end();
 error1:
    return screen;
