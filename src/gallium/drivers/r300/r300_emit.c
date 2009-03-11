@@ -160,7 +160,7 @@ void r300_emit_fb_state(struct r300_context* r300,
     struct r300_texture* tex;
     int i;
 
-    BEGIN_CS((6 * fb->nr_cbufs) + (fb->zsbuf ? 5 : 0) + 4);
+    BEGIN_CS((6 * fb->nr_cbufs) + (fb->zsbuf ? 6 : 0) + 4);
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = (struct r300_texture*)fb->cbufs[i]->texture;
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
