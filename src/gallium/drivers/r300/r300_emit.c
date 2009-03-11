@@ -276,7 +276,7 @@ void r300_emit_texture(struct r300_context* r300,
 {
     CS_LOCALS(r300);
 
-    BEGIN_CS(8);
+    BEGIN_CS(10);
     OUT_CS_REG(R300_TX_FORMAT0_0 + (offset * 4), tex->state.format0);
     OUT_CS_REG(R300_TX_FORMAT1_0 + (offset * 4), tex->state.format1);
     OUT_CS_REG(R300_TX_FORMAT2_0 + (offset * 4), tex->state.format2);
