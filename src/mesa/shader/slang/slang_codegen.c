@@ -296,44 +296,6 @@ _slang_array_size(GLint elemSize, GLint arrayLen)
 }
 
 
-
-/**
- * Establish the binding between a slang_ir_node and a slang_variable.
- * Then, allocate/attach a slang_ir_storage object to the IR node if needed.
- * The IR node must be a IR_VAR or IR_VAR_DECL node.
- * \param n  the IR node
- * \param var  the variable to associate with the IR node
- */
-static void
-_slang_attach_storage(slang_ir_node *n, slang_variable *var)
-{
-   assert(n);
-   assert(var);
-   assert(n->Opcode == IR_VAR || n->Opcode == IR_VAR_DECL);
-   assert(!n->Var || n->Var == var);
-
-   n->Var = var;
-
-   if (!n->Store) {
-      /* need to setup node's storage */
-      if (var->store) {
-         /* node's storage = var's storage */
-         n->Store = var->store;
-      }
-      else {
-         /* alloc new storage info */
-         n->Store = _slang_new_ir_storage(PROGRAM_UNDEFINED, -7, -5);
-#if 0
-         printf("%s var=%s Store=%p Size=%d\n", __FUNCTION__,
-                (char*) var->a_name,
-                (void*) n->Store, n->Store->Size);
-#endif
-         var->store = n->Store;
-      }
-   }
-}
-
-
 /**
  * Return the TEXTURE_*_INDEX value that corresponds to a sampler type,
  * or -1 if the type is not a sampler.
@@ -743,8 +705,14 @@ new_var(slang_assemble_ctx *A, slang_variable *var)
 {
    slang_ir_node *n = new_node0(IR_VAR);
    if (n) {
+      ASSERT(var);
       ASSERT(var->store);
-      _slang_attach_storage(n, var);
+      ASSERT(!n->Store);
+      ASSERT(!n->Var);
+
+      /* Set IR node's Var and Store pointers */
+      n->Var = var;
+      n->Store = var->store;
    }
    return n;
 }
@@ -3027,22 +2995,23 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
    if (!varDecl)
       return NULL;
 
-   _slang_attach_storage(varDecl, var); /* undefined storage at first */
-   assert(var->store);
-   assert(varDecl->Store == var->store);
-   assert(varDecl->Store);
-   assert(varDecl->Store->Index < 0);
-   store = var->store;
-
-   assert(store == varDecl->Store);
-
-
-   /* Fill in storage fields which we now know.  store->Index/Swizzle may be
-    * set for some cases below.  Otherwise, store->Index/Swizzle will be set
-    * during code emit.
+   /* Allocate slang_ir_storage for this variable if needed.
+    * Note that we may not actually allocate a constant or temporary register
+    * until later.
     */
-   store->File = file;
-   store->Size = totalSize;
+   if (!var->store) {
+      GLint index = -7;  /* TBD / unknown */
+      var->store = _slang_new_ir_storage(file, index, totalSize);
+      if (!var->store)
+         return NULL; /* out of memory */
+   }
+
+   /* set the IR node's Var and Store pointers */
+   varDecl->Var = var;
+   varDecl->Store = var->store;
+
+
+   store = var->store;
 
    /* if there's an initializer, generate IR for the expression */
    if (initializer) {
