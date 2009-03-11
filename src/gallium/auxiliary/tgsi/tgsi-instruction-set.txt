@@ -336,3 +336,193 @@ TGSI Instruction Specification
   dst.z = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
   dst.w = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
 
+
+1.5  GL_NV_fragment_program
+---------------------------
+
+
+1.5.1  COS - Cosine
+
+  dst.x = cos(src.x)
+  dst.y = cos(src.x)
+  dst.z = cos(src.x)
+  dst.w = cos(src.w)
+
+
+1.5.2  DDX - Derivative Relative To X
+
+  dst.x = partialx(src.x)
+  dst.y = partialx(src.y)
+  dst.z = partialx(src.z)
+  dst.w = partialx(src.w)
+
+
+1.5.3  DDY - Derivative Relative To Y
+
+  dst.x = partialy(src.x)
+  dst.y = partialy(src.y)
+  dst.z = partialy(src.z)
+  dst.w = partialy(src.w)
+
+
+1.5.4  EX2 - Exponential Base 2
+
+  Alias for EXPBASE2.
+
+
+1.5.5  FLR - Floor
+
+  Alias for FLOOR.
+
+
+1.5.6  FRC - Fraction
+
+  Alias for FRAC.
+
+
+1.5.7  KILP - Predicated Discard
+
+  TBD
+
+
+1.5.8  LG2 - Logarithm Base 2
+
+  Alias for LOGBASE2.
+
+
+1.5.9  LRP - Linear Interpolate
+
+  Alias for LERP.
+
+
+1.5.10  PK2H - Pack Two 16-bit Floats
+
+  TBD
+
+
+1.5.11  PK2US - Pack Two Unsigned 16-bit Scalars
+
+  TBD
+
+
+1.5.12  PK4B - Pack Four Signed 8-bit Scalars
+
+  TBD
+
+
+1.5.13  PK4UB - Pack Four Unsigned 8-bit Scalars
+
+  TBD
+
+
+1.5.14  POW - Power
+
+  Alias for POWER.
+
+
+1.5.15  RFL - Reflection Vector
+
+  dst.x = 2.0 * (src0.x * src1.x + src0.y * src1.y + src0.z * src1.z) / (src0.x * src0.x + src0.y * src0.y + src0.z * src0.z) * src0.x - src1.x
+  dst.y = 2.0 * (src0.x * src1.x + src0.y * src1.y + src0.z * src1.z) / (src0.x * src0.x + src0.y * src0.y + src0.z * src0.z) * src0.y - src1.y
+  dst.z = 2.0 * (src0.x * src1.x + src0.y * src1.y + src0.z * src1.z) / (src0.x * src0.x + src0.y * src0.y + src0.z * src0.z) * src0.z - src1.z
+  dst.w = 1.0
+
+
+1.5.16  SEQ - Set On Equal
+
+  dst.x = (src0.x == src1.x) ? 1.0 : 0.0
+  dst.y = (src0.y == src1.y) ? 1.0 : 0.0
+  dst.z = (src0.z == src1.z) ? 1.0 : 0.0
+  dst.w = (src0.w == src1.w) ? 1.0 : 0.0
+
+
+1.5.17  SFL - Set On False
+
+  dst.x = 0.0
+  dst.y = 0.0
+  dst.z = 0.0
+  dst.w = 0.0
+
+
+1.5.18  SGT - Set On Greater Than
+
+  dst.x = (src0.x > src1.x) ? 1.0 : 0.0
+  dst.y = (src0.y > src1.y) ? 1.0 : 0.0
+  dst.z = (src0.z > src1.z) ? 1.0 : 0.0
+  dst.w = (src0.w > src1.w) ? 1.0 : 0.0
+
+
+1.5.19  SIN - Sine
+
+  dst.x = sin(src.x)
+  dst.y = sin(src.x)
+  dst.z = sin(src.x)
+  dst.w = sin(src.w)
+
+
+1.5.20  SLE - Set On Less Equal Than
+
+  dst.x = (src0.x <= src1.x) ? 1.0 : 0.0
+  dst.y = (src0.y <= src1.y) ? 1.0 : 0.0
+  dst.z = (src0.z <= src1.z) ? 1.0 : 0.0
+  dst.w = (src0.w <= src1.w) ? 1.0 : 0.0
+
+
+1.5.21  SNE - Set On Not Equal
+
+  dst.x = (src0.x != src1.x) ? 1.0 : 0.0
+  dst.y = (src0.y != src1.y) ? 1.0 : 0.0
+  dst.z = (src0.z != src1.z) ? 1.0 : 0.0
+  dst.w = (src0.w != src1.w) ? 1.0 : 0.0
+
+
+1.5.22  STR - Set On True
+
+  dst.x = 1.0
+  dst.y = 1.0
+  dst.z = 1.0
+  dst.w = 1.0
+
+
+1.5.23  TEX - Texture Lookup
+
+  TBD
+
+
+1.5.24  TXD - Texture Lookup with Derivatives
+
+  TBD
+
+
+1.5.25  TXP - Projective Texture Lookup
+
+  TBD
+
+
+1.5.26  UP2H - Unpack Two 16-Bit Floats
+
+  TBD
+
+
+1.5.27  UP2US - Unpack Two Unsigned 16-Bit Scalars
+
+  TBD
+
+
+1.5.28  UP4B - Unpack Four Signed 8-Bit Values
+
+  TBD
+
+
+1.5.29  UP4UB - Unpack Four Unsigned 8-Bit Scalars
+
+  TBD
+
+
+1.5.30  X2D - 2D Coordinate Transformation
+
+  dst.x = src0.x + src1.x * src2.x + src1.y * src2.y
+  dst.y = src0.y + src1.x * src2.z + src1.y * src2.w
+  dst.z = src0.x + src1.x * src2.x + src1.y * src2.y
+  dst.w = src0.y + src1.x * src2.z + src1.y * src2.w
+
