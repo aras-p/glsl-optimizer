@@ -35,8 +35,8 @@
 
 
 /**
- * It often happens that new data is written directly to the user buffers 
- * without mapping/unmapping. This flag marks user buffers, so that their 
+ * It often happens that new data is written directly to the user buffers
+ * without mapping/unmapping. This flag marks user buffers, so that their
  * contents can be dumpped before being used by the pipe context.
  */
 #define TRACE_BUFFER_USAGE_USER  (1 << 31)
@@ -48,9 +48,9 @@ struct hash_table;
 struct trace_winsys
 {
    struct pipe_winsys base;
-   
+
    struct pipe_winsys *winsys;
-   
+
    struct hash_table *buffer_maps;
 };
 
@@ -69,7 +69,7 @@ trace_winsys_create(struct pipe_winsys *winsys);
 
 
 void
-trace_winsys_user_buffer_update(struct pipe_winsys *winsys, 
+trace_winsys_user_buffer_update(struct pipe_winsys *winsys,
                                 struct pipe_buffer *buffer);
 
 

@@ -66,10 +66,10 @@ void trace_dump_template(const struct pipe_texture *templat)
    }
 
    trace_dump_struct_begin("pipe_texture");
-   
+
    trace_dump_member(int, templat, target);
    trace_dump_member(format, templat, format);
-   
+
    trace_dump_member_begin("width");
    trace_dump_array(uint, templat->width, 1);
    trace_dump_member_end();
@@ -85,10 +85,10 @@ void trace_dump_template(const struct pipe_texture *templat)
    trace_dump_member_begin("block");
    trace_dump_block(&templat->block);
    trace_dump_member_end();
-   
+
    trace_dump_member(uint, templat, last_level);
    trace_dump_member(uint, templat, tex_usage);
-   
+
    trace_dump_struct_end();
 }
 
@@ -134,9 +134,9 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
    trace_dump_member(float, state, point_size_max);
    trace_dump_member(float, state, offset_units);
    trace_dump_member(float, state, offset_scale);
-   
+
    trace_dump_member_array(uint, state, sprite_coord_mode);
-   
+
    trace_dump_struct_end();
 }
 
@@ -152,10 +152,10 @@ void trace_dump_poly_stipple(const struct pipe_poly_stipple *state)
 
    trace_dump_member_begin("stipple");
    trace_dump_array(uint,
-                    state->stipple, 
+                    state->stipple,
                     Elements(state->stipple));
    trace_dump_member_end();
-   
+
    trace_dump_struct_end();
 }
 
@@ -171,7 +171,7 @@ void trace_dump_viewport_state(const struct pipe_viewport_state *state)
 
    trace_dump_member_array(float, state, scale);
    trace_dump_member_array(float, state, translate);
-   
+
    trace_dump_struct_end();
 }
 
@@ -197,7 +197,7 @@ void trace_dump_scissor_state(const struct pipe_scissor_state *state)
 void trace_dump_clip_state(const struct pipe_clip_state *state)
 {
    unsigned i;
-   
+
    if(!state) {
       trace_dump_null();
       return;
@@ -246,7 +246,7 @@ void trace_dump_shader_state(const struct pipe_shader_state *state)
    }
 
    tgsi_dump_str(state->tokens, 0, str, sizeof(str));
-   
+
    trace_dump_struct_begin("pipe_shader_state");
 
    trace_dump_member_begin("tokens");
@@ -260,7 +260,7 @@ void trace_dump_shader_state(const struct pipe_shader_state *state)
 void trace_dump_depth_stencil_alpha_state(const struct pipe_depth_stencil_alpha_state *state)
 {
    unsigned i;
-   
+
    if(!state) {
       trace_dump_null();
       return;
@@ -276,7 +276,7 @@ void trace_dump_depth_stencil_alpha_state(const struct pipe_depth_stencil_alpha_
    trace_dump_member(bool, &state->depth, occlusion_count);
    trace_dump_struct_end();
    trace_dump_member_end();
-   
+
    trace_dump_member_begin("stencil");
    trace_dump_array_begin();
    for(i = 0; i < Elements(state->stencil); ++i) {
@@ -442,7 +442,7 @@ void trace_dump_transfer(const struct pipe_transfer *state)
    trace_dump_member_begin("block");
    trace_dump_block(&state->block);
    trace_dump_member_end();
-   
+
    trace_dump_member(uint, state, nblocksx);
    trace_dump_member(uint, state, nblocksy);
    trace_dump_member(uint, state, stride);
@@ -488,7 +488,7 @@ void trace_dump_vertex_element(const struct pipe_vertex_element *state)
 
    trace_dump_member(uint, state, vertex_buffer_index);
    trace_dump_member(uint, state, nr_components);
- 
+
    trace_dump_member(format, state, src_format);
 
    trace_dump_struct_end();

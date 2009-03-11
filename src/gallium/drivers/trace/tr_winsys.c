@@ -46,29 +46,29 @@ static int trace_buffer_compare(void *buffer1, void *buffer2)
    return (char *)buffer2 - (char *)buffer1;
 }
 
-                  
+
 static const char *
 trace_winsys_get_name(struct pipe_winsys *_winsys)
 {
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
    const char *result;
-   
+
    trace_dump_call_begin("pipe_winsys", "get_name");
-   
+
    trace_dump_arg(ptr, winsys);
 
    result = winsys->get_name(winsys);
-   
+
    trace_dump_ret(string, result);
-   
+
    trace_dump_call_end();
-   
+
    return result;
 }
 
 
-static void 
+static void
 trace_winsys_flush_frontbuffer(struct pipe_winsys *_winsys,
                                struct pipe_surface *surface,
                                void *context_private)
@@ -83,9 +83,9 @@ trace_winsys_flush_frontbuffer(struct pipe_winsys *_winsys,
       struct trace_surface *tr_surf = trace_surface(tr_tex, surface);
       surface = tr_surf->surface;
    }
-   
+
    trace_dump_call_begin("pipe_winsys", "flush_frontbuffer");
-   
+
    trace_dump_arg(ptr, winsys);
    trace_dump_arg(ptr, surface);
    /* XXX: hide, as there is nothing we can do with this
@@ -93,7 +93,7 @@ trace_winsys_flush_frontbuffer(struct pipe_winsys *_winsys,
    */
 
    winsys->flush_frontbuffer(winsys, surface, context_private);
-   
+
    trace_dump_call_end();
 }
 
@@ -109,9 +109,9 @@ trace_winsys_surface_buffer_create(struct pipe_winsys *_winsys,
    struct pipe_winsys *winsys = tr_ws->winsys;
    unsigned stride;
    struct pipe_buffer *result;
-   
+
    trace_dump_call_begin("pipe_winsys", "surface_buffer_create");
-   
+
    trace_dump_arg(ptr, winsys);
    trace_dump_arg(uint, width);
    trace_dump_arg(uint, height);
@@ -123,40 +123,40 @@ trace_winsys_surface_buffer_create(struct pipe_winsys *_winsys,
                                           format,
                                           usage,
                                           pstride);
-   
+
    stride = *pstride;
-   
+
    trace_dump_arg(uint, stride);
-   
+
    trace_dump_ret(ptr, result);
-   
+
    trace_dump_call_end();
-   
+
    return result;
 }
 
 
 static struct pipe_buffer *
-trace_winsys_buffer_create(struct pipe_winsys *_winsys, 
-                           unsigned alignment, 
+trace_winsys_buffer_create(struct pipe_winsys *_winsys,
+                           unsigned alignment,
                            unsigned usage,
                            unsigned size)
 {
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
    struct pipe_buffer *buffer;
-   
+
    trace_dump_call_begin("pipe_winsys", "buffer_create");
-   
+
    trace_dump_arg(ptr, winsys);
    trace_dump_arg(uint, alignment);
    trace_dump_arg(uint, usage);
    trace_dump_arg(uint, size);
 
    buffer = winsys->buffer_create(winsys, alignment, usage, size);
-   
+
    trace_dump_ret(ptr, buffer);
-   
+
    trace_dump_call_end();
 
    /* Zero the buffer to avoid dumping uninitialized memory */
@@ -168,22 +168,22 @@ trace_winsys_buffer_create(struct pipe_winsys *_winsys,
          winsys->buffer_unmap(winsys, buffer);
       }
    }
-   
+
    return buffer;
 }
 
 
 static struct pipe_buffer *
-trace_winsys_user_buffer_create(struct pipe_winsys *_winsys, 
+trace_winsys_user_buffer_create(struct pipe_winsys *_winsys,
                                 void *data,
                                 unsigned size)
 {
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
    struct pipe_buffer *result;
-   
+
    trace_dump_call_begin("pipe_winsys", "user_buffer_create");
-   
+
    trace_dump_arg(ptr, winsys);
    trace_dump_arg_begin("data");
    trace_dump_bytes(data, size);
@@ -191,49 +191,49 @@ trace_winsys_user_buffer_create(struct pipe_winsys *_winsys,
    trace_dump_arg(uint, size);
 
    result = winsys->user_buffer_create(winsys, data, size);
-   
+
    trace_dump_ret(ptr, result);
-   
+
    trace_dump_call_end();
-   
-   /* XXX: Mark the user buffers. (we should wrap pipe_buffers, but is is 
+
+   /* XXX: Mark the user buffers. (we should wrap pipe_buffers, but is is
     * impossible to do so while texture-less surfaces are still around */
    if(result) {
       assert(!(result->usage & TRACE_BUFFER_USAGE_USER));
       result->usage |= TRACE_BUFFER_USAGE_USER;
    }
-   
+
    return result;
 }
 
 
 void
-trace_winsys_user_buffer_update(struct pipe_winsys *_winsys, 
+trace_winsys_user_buffer_update(struct pipe_winsys *_winsys,
                                 struct pipe_buffer *buffer)
 {
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
    const void *map;
-   
+
    if(buffer && buffer->usage & TRACE_BUFFER_USAGE_USER) {
       map = winsys->buffer_map(winsys, buffer, PIPE_BUFFER_USAGE_CPU_READ);
       if(map) {
          trace_dump_call_begin("pipe_winsys", "buffer_write");
-         
+
          trace_dump_arg(ptr, winsys);
-         
+
          trace_dump_arg(ptr, buffer);
-         
+
          trace_dump_arg_begin("data");
          trace_dump_bytes(map, buffer->size);
          trace_dump_arg_end();
-      
+
          trace_dump_arg_begin("size");
          trace_dump_uint(buffer->size);
          trace_dump_arg_end();
-      
+
          trace_dump_call_end();
-         
+
          winsys->buffer_unmap(winsys, buffer);
       }
    }
@@ -241,14 +241,14 @@ trace_winsys_user_buffer_update(struct pipe_winsys *_winsys,
 
 
 static void *
-trace_winsys_buffer_map(struct pipe_winsys *_winsys, 
+trace_winsys_buffer_map(struct pipe_winsys *_winsys,
                         struct pipe_buffer *buffer,
                         unsigned usage)
 {
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
    void *map;
-   
+
    map = winsys->buffer_map(winsys, buffer, usage);
    if(map) {
       if(usage & PIPE_BUFFER_USAGE_CPU_WRITE) {
@@ -256,27 +256,27 @@ trace_winsys_buffer_map(struct pipe_winsys *_winsys,
          hash_table_set(tr_ws->buffer_maps, buffer, map);
       }
    }
-   
+
    return map;
 }
 
 
 static void
-trace_winsys_buffer_unmap(struct pipe_winsys *_winsys, 
+trace_winsys_buffer_unmap(struct pipe_winsys *_winsys,
                           struct pipe_buffer *buffer)
 {
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
    const void *map;
-   
+
    map = hash_table_get(tr_ws->buffer_maps, buffer);
    if(map) {
       trace_dump_call_begin("pipe_winsys", "buffer_write");
-      
+
       trace_dump_arg(ptr, winsys);
-      
+
       trace_dump_arg(ptr, buffer);
-      
+
       trace_dump_arg_begin("data");
       trace_dump_bytes(map, buffer->size);
       trace_dump_arg_end();
@@ -284,12 +284,12 @@ trace_winsys_buffer_unmap(struct pipe_winsys *_winsys,
       trace_dump_arg_begin("size");
       trace_dump_uint(buffer->size);
       trace_dump_arg_end();
-   
+
       trace_dump_call_end();
 
       hash_table_remove(tr_ws->buffer_maps, buffer);
    }
-   
+
    winsys->buffer_unmap(winsys, buffer);
 }
 
@@ -298,14 +298,14 @@ static void
 trace_winsys_buffer_destroy(struct pipe_buffer *buffer)
 {
    struct pipe_winsys *winsys = buffer->screen->winsys;
-   
+
    trace_dump_call_begin("pipe_winsys", "buffer_destroy");
-   
+
    trace_dump_arg(ptr, winsys);
    trace_dump_arg(ptr, buffer);
 
    winsys->buffer_destroy(buffer);
-   
+
    trace_dump_call_end();
 }
 
@@ -318,15 +318,15 @@ trace_winsys_fence_reference(struct pipe_winsys *_winsys,
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
    struct pipe_fence_handle *dst = *pdst;
-   
+
    trace_dump_call_begin("pipe_winsys", "fence_reference");
-   
+
    trace_dump_arg(ptr, winsys);
    trace_dump_arg(ptr, dst);
    trace_dump_arg(ptr, src);
 
    winsys->fence_reference(winsys, pdst, src);
-   
+
    trace_dump_call_end();
 }
 
@@ -339,19 +339,19 @@ trace_winsys_fence_signalled(struct pipe_winsys *_winsys,
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
    int result;
-   
+
    trace_dump_call_begin("pipe_winsys", "fence_signalled");
-   
+
    trace_dump_arg(ptr, winsys);
    trace_dump_arg(ptr, fence);
    trace_dump_arg(uint, flag);
 
    result = winsys->fence_signalled(winsys, fence, flag);
-   
+
    trace_dump_ret(int, result);
-   
+
    trace_dump_call_end();
-   
+
    return result;
 }
 
@@ -364,19 +364,19 @@ trace_winsys_fence_finish(struct pipe_winsys *_winsys,
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
    int result;
-   
+
    trace_dump_call_begin("pipe_winsys", "fence_finish");
-   
+
    trace_dump_arg(ptr, winsys);
    trace_dump_arg(ptr, fence);
    trace_dump_arg(uint, flag);
 
    result = winsys->fence_finish(winsys, fence, flag);
-   
+
    trace_dump_ret(int, result);
-   
+
    trace_dump_call_end();
-   
+
    return result;
 }
 
@@ -386,17 +386,17 @@ trace_winsys_destroy(struct pipe_winsys *_winsys)
 {
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
-   
+
    trace_dump_call_begin("pipe_winsys", "destroy");
-   
+
    trace_dump_arg(ptr, winsys);
 
-   /* 
-   winsys->destroy(winsys); 
+   /*
+   winsys->destroy(winsys);
    */
-   
+
    trace_dump_call_end();
-   
+
    hash_table_destroy(tr_ws->buffer_maps);
 
    FREE(tr_ws);
@@ -407,10 +407,10 @@ struct pipe_winsys *
 trace_winsys_create(struct pipe_winsys *winsys)
 {
    struct trace_winsys *tr_ws;
-   
+
    if(!winsys)
       goto error1;
-   
+
    tr_ws = CALLOC_STRUCT(trace_winsys);
    if(!tr_ws)
       goto error1;
@@ -427,20 +427,20 @@ trace_winsys_create(struct pipe_winsys *winsys)
    tr_ws->base.fence_reference = trace_winsys_fence_reference;
    tr_ws->base.fence_signalled = trace_winsys_fence_signalled;
    tr_ws->base.fence_finish = trace_winsys_fence_finish;
-   
+
    tr_ws->winsys = winsys;
 
-   tr_ws->buffer_maps = hash_table_create(trace_buffer_hash, 
+   tr_ws->buffer_maps = hash_table_create(trace_buffer_hash,
                                           trace_buffer_compare);
    if(!tr_ws->buffer_maps)
       goto error2;
-   
+
    trace_dump_call_begin("", "pipe_winsys_create");
    trace_dump_ret(ptr, winsys);
    trace_dump_call_end();
 
    return &tr_ws->base;
-   
+
 error2:
    FREE(tr_ws);
 error1:

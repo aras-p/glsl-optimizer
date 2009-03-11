@@ -56,13 +56,13 @@ struct trace_transfer
    struct pipe_transfer base;
 
    struct pipe_transfer *transfer;
-   
+
    void *map;
 };
 
 
 static INLINE struct trace_texture *
-trace_texture(struct trace_screen *tr_scr, 
+trace_texture(struct trace_screen *tr_scr,
               struct pipe_texture *texture)
 {
    if(!texture)
@@ -74,7 +74,7 @@ trace_texture(struct trace_screen *tr_scr,
 
 
 static INLINE struct trace_surface *
-trace_surface(struct trace_texture *tr_tex, 
+trace_surface(struct trace_texture *tr_tex,
               struct pipe_surface *surface)
 {
    if(!surface)
@@ -86,7 +86,7 @@ trace_surface(struct trace_texture *tr_tex,
 
 
 static INLINE struct trace_transfer *
-trace_transfer(struct trace_texture *tr_tex, 
+trace_transfer(struct trace_texture *tr_tex,
                struct pipe_transfer *transfer)
 {
    if(!transfer)
@@ -98,15 +98,15 @@ trace_transfer(struct trace_texture *tr_tex,
 
 
 struct pipe_texture *
-trace_texture_create(struct trace_screen *tr_scr, 
+trace_texture_create(struct trace_screen *tr_scr,
                      struct pipe_texture *texture);
 
 void
-trace_texture_destroy(struct trace_screen *tr_scr, 
+trace_texture_destroy(struct trace_screen *tr_scr,
                       struct pipe_texture *texture);
 
 struct pipe_surface *
-trace_surface_create(struct trace_texture *tr_tex, 
+trace_surface_create(struct trace_texture *tr_tex,
                      struct pipe_surface *surface);
 
 void
@@ -114,7 +114,7 @@ trace_surface_destroy(struct trace_texture *tr_tex,
                       struct pipe_surface *surface);
 
 struct pipe_transfer *
-trace_transfer_create(struct trace_texture *tr_tex, 
+trace_transfer_create(struct trace_texture *tr_tex,
                       struct pipe_transfer *transfer);
 
 void

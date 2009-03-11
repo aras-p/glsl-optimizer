@@ -66,7 +66,7 @@ void trace_dump_ptr(const void *value);
 
 
 /*
- * Code saving macros. 
+ * Code saving macros.
  */
 
 #define trace_dump_arg(_type, _arg) \

@@ -38,11 +38,11 @@
 extern "C" {
 #endif
 
-   
+
 struct trace_context
 {
    struct pipe_context base;
-   
+
    struct pipe_context *pipe;
 };
 
