@@ -308,3 +308,31 @@ TGSI Instruction Specification
 
   Considered for removal from language.
 
+
+1.4  GL_NV_vertex_program1_1
+----------------------------
+
+
+1.4.1  ABS - Absolute
+
+  dst.x = abs(src.x)
+  dst.y = abs(src.y)
+  dst.z = abs(src.z)
+  dst.w = abs(src.w)
+
+
+1.4.2  RCC - Reciprocal Clamped
+
+  dst.x = (1.0 / src.x) > 0.0 ? clamp(1.0 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1.0 / src.x, -1.884467e+019, -5.42101e-020)
+  dst.y = (1.0 / src.x) > 0.0 ? clamp(1.0 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1.0 / src.x, -1.884467e+019, -5.42101e-020)
+  dst.z = (1.0 / src.x) > 0.0 ? clamp(1.0 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1.0 / src.x, -1.884467e+019, -5.42101e-020)
+  dst.w = (1.0 / src.x) > 0.0 ? clamp(1.0 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1.0 / src.x, -1.884467e+019, -5.42101e-020)
+
+
+1.4.3  DPH - Homogeneous Dot Product
+
+  dst.x = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
+  dst.y = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
+  dst.z = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
+  dst.w = src0.x * src1.x + src0.y * src1.y + src0.z * src1.z + src1.w
+
