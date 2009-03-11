@@ -29,7 +29,6 @@
 #include "main/colormac.h"
 #include "main/image.h"
 #include "main/imports.h"
-#include "main/macros.h"
 #include "main/pixel.h"
 #include "shader/prog_instruction.h"
 
@@ -91,8 +90,6 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
    GLfloat ccolor[MAX_COMBINER_TERMS][MAX_WIDTH][4]; /* temp color buffers */
    GLfloat rgba[MAX_WIDTH][4];
    GLuint i, term;
-
-   ASSERT(CONST_SWRAST_CONTEXT(ctx)->_AnyTextureCombine);
 
    for (i = 0; i < n; i++) {
       rgba[i][RCOMP] = CHAN_TO_FLOAT(rgbaChan[i][RCOMP]);
@@ -535,7 +532,6 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 }
 
 
-
 /**
  * Apply X/Y/Z/W/0/1 swizzle to an array of colors/texels.
  * See GL_EXT_texture_swizzle.
@@ -567,382 +563,6 @@ swizzle_texels(GLuint swizzle, GLuint count, float4_array texels)
 
 
 /**
- * Apply a conventional OpenGL texture env mode (REPLACE, ADD, BLEND,
- * MODULATE, or DECAL) to an array of fragments.
- * Input:  textureUnit - pointer to texture unit to apply
- *         format - base internal texture format
- *         n - number of fragments
- *         texels - array of texel colors
- * InOut:  rgba - incoming fragment colors modified by texel colors
- *                according to the texture environment mode.
- */
-static void
-texture_apply( const GLcontext *ctx,
-               const struct gl_texture_unit *texUnit,
-               GLuint n,
-               float4_array texel,
-               GLchan rgbaChan[][4] )
-{
-   GLint baseLevel;
-   GLuint i;
-   GLfloat Rc, Gc, Bc, Ac;
-   GLenum format;
-   GLfloat rgba[MAX_WIDTH][4];
-
-   ASSERT(texUnit);
-   ASSERT(texUnit->_Current);
-
-   baseLevel = texUnit->_Current->BaseLevel;
-   ASSERT(texUnit->_Current->Image[0][baseLevel]);
-
-   format = texUnit->_Current->Image[0][baseLevel]->_BaseFormat;
-
-   if (format == GL_COLOR_INDEX || format == GL_YCBCR_MESA) {
-      format = GL_RGBA;  /* a bit of a hack */
-   }
-   else if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_STENCIL_EXT) {
-      format = texUnit->_Current->DepthMode;
-   }
-
-   /* skip chan->float conversion when not needed */
-   if (texUnit->EnvMode != GL_REPLACE || format != GL_RGBA) {
-      /* convert GLchan colors to GLfloat */
-      for (i = 0; i < n; i++) {
-         rgba[i][RCOMP] = CHAN_TO_FLOAT(rgbaChan[i][RCOMP]);
-         rgba[i][GCOMP] = CHAN_TO_FLOAT(rgbaChan[i][GCOMP]);
-         rgba[i][BCOMP] = CHAN_TO_FLOAT(rgbaChan[i][BCOMP]);
-         rgba[i][ACOMP] = CHAN_TO_FLOAT(rgbaChan[i][ACOMP]);
-      }
-   }
-
-   switch (texUnit->EnvMode) {
-      case GL_REPLACE:
-	 switch (format) {
-	    case GL_ALPHA:
-	       for (i=0;i<n;i++) {
-		  /* Cv = Cf */
-                  /* Av = At */
-                  rgba[i][ACOMP] = texel[i][ACOMP];
-	       }
-	       break;
-	    case GL_LUMINANCE:
-	       for (i=0;i<n;i++) {
-		  /* Cv = Lt */
-                  GLfloat Lt = texel[i][RCOMP];
-                  rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = Lt;
-                  /* Av = Af */
-	       }
-	       break;
-	    case GL_LUMINANCE_ALPHA:
-	       for (i=0;i<n;i++) {
-                  GLfloat Lt = texel[i][RCOMP];
-		  /* Cv = Lt */
-		  rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = Lt;
-		  /* Av = At */
-		  rgba[i][ACOMP] = texel[i][ACOMP];
-	       }
-	       break;
-	    case GL_INTENSITY:
-	       for (i=0;i<n;i++) {
-		  /* Cv = It */
-                  GLfloat It = texel[i][RCOMP];
-                  rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = It;
-                  /* Av = It */
-                  rgba[i][ACOMP] = It;
-	       }
-	       break;
-	    case GL_RGB:
-	       for (i=0;i<n;i++) {
-		  /* Cv = Ct */
-		  rgba[i][RCOMP] = texel[i][RCOMP];
-		  rgba[i][GCOMP] = texel[i][GCOMP];
-		  rgba[i][BCOMP] = texel[i][BCOMP];
-		  /* Av = Af */
-	       }
-	       break;
-	    case GL_RGBA:
-	       for (i=0;i<n;i++) {
-		  /* Cv = Ct */
-		  rgba[i][RCOMP] = texel[i][RCOMP];
-		  rgba[i][GCOMP] = texel[i][GCOMP];
-		  rgba[i][BCOMP] = texel[i][BCOMP];
-		  /* Av = At */
-		  rgba[i][ACOMP] = texel[i][ACOMP];
-	       }
-	       break;
-            default:
-               _mesa_problem(ctx, "Bad format (GL_REPLACE) in texture_apply");
-               return;
-	 }
-	 break;
-
-      case GL_MODULATE:
-         switch (format) {
-	    case GL_ALPHA:
-	       for (i=0;i<n;i++) {
-		  /* Cv = Cf */
-		  /* Av = AfAt */
-		  rgba[i][ACOMP] = rgba[i][ACOMP] * texel[i][ACOMP];
-	       }
-	       break;
-	    case GL_LUMINANCE:
-	       for (i=0;i<n;i++) {
-		  /* Cv = LtCf */
-                  GLfloat Lt = texel[i][RCOMP];
-		  rgba[i][RCOMP] = rgba[i][RCOMP] * Lt;
-		  rgba[i][GCOMP] = rgba[i][GCOMP] * Lt;
-		  rgba[i][BCOMP] = rgba[i][BCOMP] * Lt;
-		  /* Av = Af */
-	       }
-	       break;
-	    case GL_LUMINANCE_ALPHA:
-	       for (i=0;i<n;i++) {
-		  /* Cv = CfLt */
-                  GLfloat Lt = texel[i][RCOMP];
-		  rgba[i][RCOMP] = rgba[i][RCOMP] * Lt;
-		  rgba[i][GCOMP] = rgba[i][GCOMP] * Lt;
-		  rgba[i][BCOMP] = rgba[i][BCOMP] * Lt;
-		  /* Av = AfAt */
-		  rgba[i][ACOMP] = rgba[i][ACOMP] * texel[i][ACOMP];
-	       }
-	       break;
-	    case GL_INTENSITY:
-	       for (i=0;i<n;i++) {
-		  /* Cv = CfIt */
-                  GLfloat It = texel[i][RCOMP];
-		  rgba[i][RCOMP] = rgba[i][RCOMP] * It;
-		  rgba[i][GCOMP] = rgba[i][GCOMP] * It;
-		  rgba[i][BCOMP] = rgba[i][BCOMP] * It;
-		  /* Av = AfIt */
-		  rgba[i][ACOMP] = rgba[i][ACOMP] * It;
-	       }
-	       break;
-	    case GL_RGB:
-	       for (i=0;i<n;i++) {
-		  /* Cv = CfCt */
-		  rgba[i][RCOMP] = rgba[i][RCOMP] * texel[i][RCOMP];
-		  rgba[i][GCOMP] = rgba[i][GCOMP] * texel[i][GCOMP];
-		  rgba[i][BCOMP] = rgba[i][BCOMP] * texel[i][BCOMP];
-		  /* Av = Af */
-	       }
-	       break;
-	    case GL_RGBA:
-	       for (i=0;i<n;i++) {
-		  /* Cv = CfCt */
-		  rgba[i][RCOMP] = rgba[i][RCOMP] * texel[i][RCOMP];
-		  rgba[i][GCOMP] = rgba[i][GCOMP] * texel[i][GCOMP];
-		  rgba[i][BCOMP] = rgba[i][BCOMP] * texel[i][BCOMP];
-		  /* Av = AfAt */
-		  rgba[i][ACOMP] = rgba[i][ACOMP] * texel[i][ACOMP];
-	       }
-	       break;
-            default:
-               _mesa_problem(ctx, "Bad format (GL_MODULATE) in texture_apply");
-               return;
-	 }
-	 break;
-
-      case GL_DECAL:
-         switch (format) {
-            case GL_ALPHA:
-            case GL_LUMINANCE:
-            case GL_LUMINANCE_ALPHA:
-            case GL_INTENSITY:
-               /* undefined */
-               break;
-	    case GL_RGB:
-	       for (i=0;i<n;i++) {
-		  /* Cv = Ct */
-		  rgba[i][RCOMP] = texel[i][RCOMP];
-		  rgba[i][GCOMP] = texel[i][GCOMP];
-		  rgba[i][BCOMP] = texel[i][BCOMP];
-		  /* Av = Af */
-	       }
-	       break;
-	    case GL_RGBA:
-	       for (i=0;i<n;i++) {
-		  /* Cv = Cf(1-At) + CtAt */
-		  GLfloat t = texel[i][ACOMP], s = 1.0F - t;
-		  rgba[i][RCOMP] = rgba[i][RCOMP] * s + texel[i][RCOMP] * t;
-		  rgba[i][GCOMP] = rgba[i][GCOMP] * s + texel[i][GCOMP] * t;
-		  rgba[i][BCOMP] = rgba[i][BCOMP] * s + texel[i][BCOMP] * t;
-		  /* Av = Af */
-	       }
-	       break;
-            default:
-               _mesa_problem(ctx, "Bad format (GL_DECAL) in texture_apply");
-               return;
-	 }
-	 break;
-
-      case GL_BLEND:
-         Rc = texUnit->EnvColor[0];
-         Gc = texUnit->EnvColor[1];
-         Bc = texUnit->EnvColor[2];
-         Ac = texUnit->EnvColor[3];
-	 switch (format) {
-	    case GL_ALPHA:
-	       for (i=0;i<n;i++) {
-		  /* Cv = Cf */
-		  /* Av = AfAt */
-                  rgba[i][ACOMP] = rgba[i][ACOMP] * texel[i][ACOMP];
-	       }
-	       break;
-            case GL_LUMINANCE:
-	       for (i=0;i<n;i++) {
-		  /* Cv = Cf(1-Lt) + CcLt */
-		  GLfloat Lt = texel[i][RCOMP], s = 1.0F - Lt;
-		  rgba[i][RCOMP] = rgba[i][RCOMP] * s + Rc * Lt;
-		  rgba[i][GCOMP] = rgba[i][GCOMP] * s + Gc * Lt;
-		  rgba[i][BCOMP] = rgba[i][BCOMP] * s + Bc * Lt;
-		  /* Av = Af */
-	       }
-	       break;
-	    case GL_LUMINANCE_ALPHA:
-	       for (i=0;i<n;i++) {
-		  /* Cv = Cf(1-Lt) + CcLt */
-		  GLfloat Lt = texel[i][RCOMP], s = 1.0F - Lt;
-		  rgba[i][RCOMP] = rgba[i][RCOMP] * s + Rc * Lt;
-		  rgba[i][GCOMP] = rgba[i][GCOMP] * s + Gc * Lt;
-		  rgba[i][BCOMP] = rgba[i][BCOMP] * s + Bc * Lt;
-		  /* Av = AfAt */
-		  rgba[i][ACOMP] = rgba[i][ACOMP] * texel[i][ACOMP];
-	       }
-	       break;
-            case GL_INTENSITY:
-	       for (i=0;i<n;i++) {
-		  /* Cv = Cf(1-It) + CcIt */
-		  GLfloat It = texel[i][RCOMP], s = 1.0F - It;
-		  rgba[i][RCOMP] = rgba[i][RCOMP] * s + Rc * It;
-		  rgba[i][GCOMP] = rgba[i][GCOMP] * s + Gc * It;
-		  rgba[i][BCOMP] = rgba[i][BCOMP] * s + Bc * It;
-                  /* Av = Af(1-It) + Ac*It */
-                  rgba[i][ACOMP] = rgba[i][ACOMP] * s + Ac * It;
-               }
-               break;
-	    case GL_RGB:
-	       for (i=0;i<n;i++) {
-		  /* Cv = Cf(1-Ct) + CcCt */
-		  rgba[i][RCOMP] = rgba[i][RCOMP] * (1.0F - texel[i][RCOMP])
-                     + Rc * texel[i][RCOMP];
-		  rgba[i][GCOMP] = rgba[i][GCOMP] * (1.0F - texel[i][GCOMP])
-                     + Gc * texel[i][GCOMP];
-		  rgba[i][BCOMP] = rgba[i][BCOMP] * (1.0F - texel[i][BCOMP])
-                     + Bc * texel[i][BCOMP];
-		  /* Av = Af */
-	       }
-	       break;
-	    case GL_RGBA:
-	       for (i=0;i<n;i++) {
-		  /* Cv = Cf(1-Ct) + CcCt */
-		  rgba[i][RCOMP] = rgba[i][RCOMP] * (1.0F - texel[i][RCOMP])
-                     + Rc * texel[i][RCOMP];
-		  rgba[i][GCOMP] = rgba[i][GCOMP] * (1.0F - texel[i][GCOMP])
-                     + Gc * texel[i][GCOMP];
-		  rgba[i][BCOMP] = rgba[i][BCOMP] * (1.0F - texel[i][BCOMP])
-                     + Bc * texel[i][BCOMP];
-		  /* Av = AfAt */
-		  rgba[i][ACOMP] = rgba[i][ACOMP] * texel[i][ACOMP];
-	       }
-	       break;
-            default:
-               _mesa_problem(ctx, "Bad format (GL_BLEND) in texture_apply");
-               return;
-	 }
-	 break;
-
-      case GL_ADD:  /* GL_EXT_texture_add_env */
-         switch (format) {
-            case GL_ALPHA:
-               for (i=0;i<n;i++) {
-                  /* Rv = Rf */
-                  /* Gv = Gf */
-                  /* Bv = Bf */
-                  rgba[i][ACOMP] = rgba[i][ACOMP] * texel[i][ACOMP];
-               }
-               break;
-            case GL_LUMINANCE:
-               for (i=0;i<n;i++) {
-                  GLfloat Lt = texel[i][RCOMP];
-                  GLfloat r = rgba[i][RCOMP] + Lt;
-                  GLfloat g = rgba[i][GCOMP] + Lt;
-                  GLfloat b = rgba[i][BCOMP] + Lt;
-                  rgba[i][RCOMP] = MIN2(r, 1.0F);
-                  rgba[i][GCOMP] = MIN2(g, 1.0F);
-                  rgba[i][BCOMP] = MIN2(b, 1.0F);
-                  /* Av = Af */
-               }
-               break;
-            case GL_LUMINANCE_ALPHA:
-               for (i=0;i<n;i++) {
-                  GLfloat Lt = texel[i][RCOMP];
-                  GLfloat r = rgba[i][RCOMP] + Lt;
-                  GLfloat g = rgba[i][GCOMP] + Lt;
-                  GLfloat b = rgba[i][BCOMP] + Lt;
-                  rgba[i][RCOMP] = MIN2(r, 1.0F);
-                  rgba[i][GCOMP] = MIN2(g, 1.0F);
-                  rgba[i][BCOMP] = MIN2(b, 1.0F);
-                  rgba[i][ACOMP] = rgba[i][ACOMP] * texel[i][ACOMP];
-               }
-               break;
-            case GL_INTENSITY:
-               for (i=0;i<n;i++) {
-                  GLfloat It = texel[i][RCOMP];
-                  GLfloat r = rgba[i][RCOMP] + It;
-                  GLfloat g = rgba[i][GCOMP] + It;
-                  GLfloat b = rgba[i][BCOMP] + It;
-                  GLfloat a = rgba[i][ACOMP] + It;
-                  rgba[i][RCOMP] = MIN2(r, 1.0F);
-                  rgba[i][GCOMP] = MIN2(g, 1.0F);
-                  rgba[i][BCOMP] = MIN2(b, 1.0F);
-                  rgba[i][ACOMP] = MIN2(a, 1.0F);
-               }
-               break;
-	    case GL_RGB:
-	       for (i=0;i<n;i++) {
-                  GLfloat r = rgba[i][RCOMP] + texel[i][RCOMP];
-                  GLfloat g = rgba[i][GCOMP] + texel[i][GCOMP];
-                  GLfloat b = rgba[i][BCOMP] + texel[i][BCOMP];
-		  rgba[i][RCOMP] = MIN2(r, 1.0F);
-		  rgba[i][GCOMP] = MIN2(g, 1.0F);
-		  rgba[i][BCOMP] = MIN2(b, 1.0F);
-		  /* Av = Af */
-	       }
-	       break;
-	    case GL_RGBA:
-	       for (i=0;i<n;i++) {
-                  GLfloat r = rgba[i][RCOMP] + texel[i][RCOMP];
-                  GLfloat g = rgba[i][GCOMP] + texel[i][GCOMP];
-                  GLfloat b = rgba[i][BCOMP] + texel[i][BCOMP];
-		  rgba[i][RCOMP] = MIN2(r, 1.0F);
-		  rgba[i][GCOMP] = MIN2(g, 1.0F);
-		  rgba[i][BCOMP] = MIN2(b, 1.0F);
-                  rgba[i][ACOMP] = rgba[i][ACOMP] * texel[i][ACOMP];
-               }
-               break;
-            default:
-               _mesa_problem(ctx, "Bad format (GL_ADD) in texture_apply");
-               return;
-	 }
-	 break;
-
-      default:
-         _mesa_problem(ctx, "Bad env mode in texture_apply");
-         return;
-   }
-
-   /* convert GLfloat colors to GLchan */
-   for (i = 0; i < n; i++) {
-      CLAMPED_FLOAT_TO_CHAN(rgbaChan[i][RCOMP], rgba[i][RCOMP]);
-      CLAMPED_FLOAT_TO_CHAN(rgbaChan[i][GCOMP], rgba[i][GCOMP]);
-      CLAMPED_FLOAT_TO_CHAN(rgbaChan[i][BCOMP], rgba[i][BCOMP]);
-      CLAMPED_FLOAT_TO_CHAN(rgbaChan[i][ACOMP], rgba[i][ACOMP]);
-   }
-}
-
-
-
-/**
  * Apply texture mapping to a span of fragments.
  */
 void
@@ -957,7 +577,7 @@ _swrast_texture_span( GLcontext *ctx, SWspan *span )
    /*
     * Save copy of the incoming fragment colors (the GL_PRIMARY_COLOR)
     */
-   if (swrast->_AnyTextureCombine) {
+   if (swrast->_TextureCombinePrimary) {
       GLuint i;
       for (i = 0; i < span->end; i++) {
          primary_rgba[i][RCOMP] = CHAN_TO_FLOAT(span->array->rgba[i][RCOMP]);
@@ -1101,27 +721,16 @@ _swrast_texture_span( GLcontext *ctx, SWspan *span )
       }
    }
 
-
    /*
     * OK, now apply the texture (aka texture combine/blend).
     * We modify the span->color.rgba values.
     */
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
       if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-         const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-         if (texUnit->_CurrentCombine != &texUnit->_EnvMode ) {
-            texture_combine( ctx, unit, span->end,
-                             primary_rgba,
-                             swrast->TexelBuffer,
-                             span->array->rgba );
-         }
-         else {
-            /* conventional texture blend */
-            float4_array texels =
-               get_texel_array(swrast->TexelBuffer, unit, span->end);
-            texture_apply( ctx, texUnit, span->end,
-                           texels, span->array->rgba );
-         }
+         texture_combine( ctx, unit, span->end,
+                          primary_rgba,
+                          swrast->TexelBuffer,
+                          span->array->rgba );
       }
    }
 }

@@ -172,19 +172,29 @@ _swrast_update_fog_hint( GLcontext *ctx )
 
 
 /**
- * Update the swrast->_AnyTextureCombine flag.
+ * Update the swrast->_TextureCombinePrimary flag.
  */
 static void
 _swrast_update_texture_env( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint i;
-   swrast->_AnyTextureCombine = GL_FALSE;
+
+   swrast->_TextureCombinePrimary = GL_FALSE;
+
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-      if (ctx->Texture.Unit[i].EnvMode == GL_COMBINE_EXT ||
-          ctx->Texture.Unit[i].EnvMode == GL_COMBINE4_NV) {
-         swrast->_AnyTextureCombine = GL_TRUE;
-         return;
+      const struct gl_tex_env_combine_state *combine =
+         ctx->Texture.Unit[i]._CurrentCombine;
+      GLuint term;
+      for (term = 0; term < combine->_NumArgsRGB; term++) {
+         if (combine->SourceRGB[term] == GL_PRIMARY_COLOR) {
+            swrast->_TextureCombinePrimary = GL_TRUE;
+            return;
+         }
+         if (combine->SourceA[term] == GL_PRIMARY_COLOR) {
+            swrast->_TextureCombinePrimary = GL_TRUE;
+            return;
+         }
       }
    }
 }

@@ -131,7 +131,7 @@ typedef struct
    GLfloat _BackfaceSign;      /** +1 or -1 */
    GLfloat _BackfaceCullSign;  /** +1, 0, or -1 */
    GLboolean _PreferPixelFog;    /* Compute fog blend factor per fragment? */
-   GLboolean _AnyTextureCombine;
+   GLboolean _TextureCombinePrimary;
    GLboolean _FogEnabled;
    GLboolean _DeferredTexture;
    GLenum _FogMode;  /* either GL_FOG_MODE or fragment program's fog mode */
