@@ -41,17 +41,19 @@
 #define R500_SWIZ_MOD_ABS 2
 #define R500_SWIZ_MOD_NEG_ABS 3
 /* Swizzles for inst2 */
-#define R500_SWIZ_TEX_STRQ(x) (x << 8)
-#define R500_SWIZ_TEX_RGBA(x) (x << 24)
+#define R500_SWIZ_TEX_STRQ(x) ((x) << 8)
+#define R500_SWIZ_TEX_RGBA(x) ((x) << 24)
 /* Swizzles for inst3 */
-#define R500_SWIZ_RGB_A(x) (x << 2)
-#define R500_SWIZ_RGB_B(x) (x << 15)
+#define R500_SWIZ_RGB_A(x) ((x) << 2)
+#define R500_SWIZ_RGB_B(x) ((x) << 15)
 /* Swizzles for inst4 */
-#define R500_SWIZ_ALPHA_A(x) (x << 14)
-#define R500_SWIZ_ALPHA_B(x) (x << 21)
+#define R500_SWIZ_ALPHA_A(x) ((x) << 14)
+#define R500_SWIZ_ALPHA_B(x) ((x) << 21)
 /* Swizzle for inst5 */
-#define R500_SWIZ_RGBA_C(x) (x << 14)
-#define R500_SWIZ_ALPHA_C(x) (x << 27)
+#define R500_SWIZ_RGBA_C(x) ((x) << 14)
+#define R500_SWIZ_ALPHA_C(x) ((x) << 27)
+/* Writemasks */
+#define R500_TEX_WMASK(x) ((x) << 11)
 
 /* Temporary struct used to hold assembly state while putting together
  * fragment programs. */

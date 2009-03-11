@@ -200,15 +200,15 @@ void r500_fs_dump(struct r500_fragment_shader* fs)
                 debug_printf("    2: TEX_ADDR  0x%08x: "
                         "src: %d%s %s/%s/%s/%s dst: %d%s %s/%s/%s/%s\n",
                         inst, inst & 0x7f, inst & (1 << 7) ? "(rel)" : "",
-                        r500_fs_swiz[(inst >> 8) & 0x7],
-                        r500_fs_swiz[(inst >> 10) & 0x7],
-                        r500_fs_swiz[(inst >> 12) & 0x7],
-                        r500_fs_swiz[(inst >> 14) & 0x7],
+                        r500_fs_swiz[(inst >> 8) & 0x3],
+                        r500_fs_swiz[(inst >> 10) & 0x3],
+                        r500_fs_swiz[(inst >> 12) & 0x3],
+                        r500_fs_swiz[(inst >> 14) & 0x3],
                         (inst >> 16) & 0x7f, inst & (1 << 23) ? "(rel)" : "",
-                        r500_fs_swiz[(inst >> 24) & 0x7],
-                        r500_fs_swiz[(inst >> 26) & 0x7],
-                        r500_fs_swiz[(inst >> 28) & 0x7],
-                        r500_fs_swiz[(inst >> 30) & 0x7]);
+                        r500_fs_swiz[(inst >> 24) & 0x3],
+                        r500_fs_swiz[(inst >> 26) & 0x3],
+                        r500_fs_swiz[(inst >> 28) & 0x3],
+                        r500_fs_swiz[(inst >> 30) & 0x3]);
                 
                 inst = fs->instructions[i].inst3;
                 debug_printf("    3: TEX_DXDY  0x%08x\n", inst);

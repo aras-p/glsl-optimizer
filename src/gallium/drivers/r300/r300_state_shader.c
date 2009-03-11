@@ -133,6 +133,14 @@ static uint32_t r500_rgba_swiz(struct tgsi_full_src_register* reg)
     }
 }
 
+static uint32_t r500_strq_swiz(struct tgsi_full_src_register* reg)
+{
+    return reg->SrcRegister.SwizzleX |
+        (reg->SrcRegister.SwizzleY << 2) |
+        (reg->SrcRegister.SwizzleZ << 4) |
+        (reg->SrcRegister.SwizzleW << 6);
+}
+
 static INLINE uint32_t r500_rgb_swiz(struct tgsi_full_src_register* reg)
 {
     /* Only the first 9 bits... */
@@ -184,16 +192,19 @@ static INLINE void r500_emit_tex(struct r500_fragment_shader* fs,
     int i = fs->instruction_count;
 
     fs->instructions[i].inst0 = R500_INST_TYPE_TEX |
+        R500_TEX_WMASK(dst->DstRegister.WriteMask) |
         R500_INST_TEX_SEM_WAIT;
     fs->instructions[i].inst1 = R500_TEX_ID(0) |
         R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED |
         R500_TEX_INST_PROJ;
     fs->instructions[i].inst2 =
         R500_TEX_SRC_ADDR(r300_fs_src(assembler, &src->SrcRegister)) |
-        R500_SWIZ_TEX_STRQ(r500_rgba_swiz(src)) |
+        R500_SWIZ_TEX_STRQ(r500_strq_swiz(src)) |
         R500_TEX_DST_ADDR(r300_fs_dst(assembler, &dst->DstRegister)) |
         R500_TEX_DST_R_SWIZ_R | R500_TEX_DST_G_SWIZ_G |
         R500_TEX_DST_B_SWIZ_B | R500_TEX_DST_A_SWIZ_A;
+
+    fs->instruction_count++;
 }
 
 static void r500_fs_instruction(struct r500_fragment_shader* fs,
