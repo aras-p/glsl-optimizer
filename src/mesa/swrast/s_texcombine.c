@@ -604,7 +604,8 @@ texture_apply( const GLcontext *ctx,
       format = texUnit->_Current->DepthMode;
    }
 
-   if (texUnit->EnvMode != GL_REPLACE) {
+   /* skip chan->float conversion when not needed */
+   if (texUnit->EnvMode != GL_REPLACE || format != GL_RGBA) {
       /* convert GLchan colors to GLfloat */
       for (i = 0; i < n; i++) {
          rgba[i][RCOMP] = CHAN_TO_FLOAT(rgbaChan[i][RCOMP]);
