@@ -29,6 +29,29 @@
 #include "r300_reg.h"
 #include "r300_screen.h"
 
+/* Swizzle tools */
+#define R500_SWIZZLE_ZERO 4
+#define R500_SWIZZLE_HALF 5
+#define R500_SWIZZLE_ONE 6
+#define R500_SWIZ_RGB_ZERO ((4 << 0) | (4 << 3) | (4 << 6))
+#define R500_SWIZ_RGB_ONE ((6 << 0) | (6 << 3) | (6 << 6))
+#define R500_SWIZ_RGB_RGB ((0 << 0) | (1 << 3) | (2 << 6))
+#define R500_SWIZ_MOD_NEG 1
+#define R500_SWIZ_MOD_ABS 2
+#define R500_SWIZ_MOD_NEG_ABS 3
+/* Swizzles for inst2 */
+#define R500_SWIZ_TEX_STRQ(x) (x << 8)
+#define R500_SWIZ_TEX_RGBA(x) (x << 24)
+/* Swizzles for inst3 */
+#define R500_SWIZ_RGB_A(x) (x << 2)
+#define R500_SWIZ_RGB_B(x) (x << 15)
+/* Swizzles for inst4 */
+#define R500_SWIZ_ALPHA_A(x) (x << 14)
+#define R500_SWIZ_ALPHA_B(x) (x << 21)
+/* Swizzle for inst5 */
+#define R500_SWIZ_RGBA_C(x) (x << 14)
+#define R500_SWIZ_ALPHA_C(x) (x << 27)
+
 /* Temporary struct used to hold assembly state while putting together
  * fragment programs. */
 struct r300_fs_asm {

@@ -68,6 +68,19 @@ static void r300_fs_declare(struct r300_fs_asm* assembler,
     assembler->temp_offset = assembler->color_count + assembler->tex_count;
 }
 
+/* XXX cover extended cases */
+static INLINE uint32_t r500_rgb_swiz(struct tgsi_src_register* reg)
+{
+    uint32_t temp = reg->SwizzleX | (reg->SwizzleY << 3) |
+        (reg->SwizzleZ << 6);
+    return temp;
+}
+
+static INLINE uint32_t r500_alpha_swiz(struct tgsi_src_register* reg)
+{
+    return reg->SwizzleZ;
+}
+
 static INLINE void r500_emit_mov(struct r500_fragment_shader* fs,
                                  struct r300_fs_asm* assembler,
                                  struct tgsi_full_src_register* src,
@@ -84,13 +97,13 @@ static INLINE void r500_emit_mov(struct r500_fragment_shader* fs,
     fs->instructions[i].inst2 =
         R500_ALPHA_ADDR0(0) | R500_ALPHA_ADDR1(0) | R500_ALPHA_ADDR1_CONST |
         R500_ALPHA_ADDR2(0) | R500_ALPHA_ADDR2_CONST;
-    fs->instructions[i].inst3 =
-        R500_ALU_RGB_SEL_A_SRC0 | R500_ALU_RGB_R_SWIZ_A_R |
-        R500_ALU_RGB_G_SWIZ_A_G | R500_ALU_RGB_B_SWIZ_A_B |
-        R500_ALU_RGB_SEL_B_SRC0 | R500_ALU_RGB_R_SWIZ_B_R |
-        R500_ALU_RGB_B_SWIZ_B_G | R500_ALU_RGB_G_SWIZ_B_B,
-    fs->instructions[i].inst4 =
-        R500_ALPHA_OP_CMP | R500_ALPHA_SWIZ_A_A | R500_ALPHA_SWIZ_B_A;
+    fs->instructions[i].inst3 = R500_ALU_RGB_SEL_A_SRC0 |
+        R500_SWIZ_RGB_A(r500_rgb_swiz(&src->SrcRegister)) |
+        R500_ALU_RGB_SEL_B_SRC0 |
+        R500_SWIZ_RGB_B(r500_rgb_swiz(&src->SrcRegister));
+    fs->instructions[i].inst4 = R500_ALPHA_OP_CMP |
+        R500_SWIZ_ALPHA_A(r500_alpha_swiz(&src->SrcRegister)) |
+        R500_SWIZ_ALPHA_B(r500_alpha_swiz(&src->SrcRegister));
     fs->instructions[i].inst5 =
         R500_ALU_RGBA_OP_CMP | R500_ALU_RGBA_R_SWIZ_0 |
         R500_ALU_RGBA_G_SWIZ_0 | R500_ALU_RGBA_B_SWIZ_0 |
