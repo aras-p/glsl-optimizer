@@ -125,10 +125,11 @@ trace_transfer_create(struct trace_texture *tr_tex,
       goto error;
    
    memcpy(&tr_trans->base, transfer, sizeof(struct pipe_transfer));
-   
+
    tr_trans->base.texture = NULL;
    pipe_texture_reference(&tr_trans->base.texture, &tr_tex->base);
    tr_trans->transfer = transfer;
+   assert(tr_trans->base.texture == &tr_tex->base);
 
    return &tr_trans->base;
    
@@ -143,8 +144,9 @@ trace_transfer_destroy(struct trace_texture *tr_tex,
                       struct pipe_transfer *transfer)
 {
    struct trace_transfer *tr_trans = trace_transfer(tr_tex, transfer);
+   struct pipe_screen *screen = tr_trans->transfer->texture->screen;
    pipe_texture_reference(&tr_trans->base.texture, NULL);
-   transfer->texture->screen->tex_transfer_destroy(tr_trans->transfer);
+   screen->tex_transfer_destroy(tr_trans->transfer);
    FREE(tr_trans);
 }
 

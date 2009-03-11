@@ -207,36 +207,39 @@ trace_screen_texture_blanket(struct pipe_screen *_screen,
 
 
 static void 
-trace_screen_texture_destroy(struct pipe_texture *texture)
+trace_screen_texture_destroy(struct pipe_texture *_texture)
 {
-   struct pipe_screen *screen = texture->screen;
-   
+   struct trace_screen *tr_scr = trace_screen(_texture->screen);
+   struct trace_texture *tr_tex = trace_texture(tr_scr, _texture);
+   struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_texture *texture = tr_tex->texture;
+
+   assert(texture->screen == screen);
+
    trace_dump_call_begin("pipe_screen", "texture_destroy");
 
    trace_dump_arg(ptr, screen);
    trace_dump_arg(ptr, texture);
 
-   trace_texture_destroy(trace_screen(screen), texture);
-
    trace_dump_call_end();
+
+   trace_texture_destroy(trace_screen(screen), texture);
 }
 
 
 static struct pipe_surface *
 trace_screen_get_tex_surface(struct pipe_screen *_screen,
-                             struct pipe_texture *texture,
+                             struct pipe_texture *_texture,
                              unsigned face, unsigned level,
                              unsigned zslice,
                              unsigned usage)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
+   struct trace_texture *tr_tex = trace_texture(tr_scr, _texture);
    struct pipe_screen *screen = tr_scr->screen;
-   struct trace_texture *tr_tex;
-   struct pipe_surface *result;
-   
-   assert(texture);
-   tr_tex = trace_texture(tr_scr, texture);
-   texture = tr_tex->texture;
+   struct pipe_texture *texture = tr_tex->texture;
+   struct pipe_surface *result = NULL;
+
    assert(texture->screen == screen);
    
    trace_dump_call_begin("pipe_screen", "get_tex_surface");
@@ -261,48 +264,54 @@ trace_screen_get_tex_surface(struct pipe_screen *_screen,
 
 
 static void 
-trace_screen_tex_surface_destroy(struct pipe_surface *surface)
+trace_screen_tex_surface_destroy(struct pipe_surface *_surface)
 {
-   struct pipe_screen *screen = surface->texture->screen;
-   
+   struct trace_screen *tr_scr = trace_screen(_surface->texture->screen);
+   struct trace_texture *tr_tex = trace_texture(tr_scr, _surface->texture);
+   struct trace_surface *tr_surf = trace_surface(tr_tex, _surface);
+   struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_surface *surface = tr_surf->surface;
+
    trace_dump_call_begin("pipe_screen", "tex_surface_destroy");
 
    trace_dump_arg(ptr, screen);
    trace_dump_arg(ptr, surface);
 
-   trace_surface_destroy(trace_texture(trace_screen(screen), surface->texture),
-                         surface);
-
    trace_dump_call_end();
+
+   trace_surface_destroy(tr_tex, _surface);
 }
 
 
 static struct pipe_transfer *
 trace_screen_get_tex_transfer(struct pipe_screen *_screen,
-                              struct pipe_texture *texture,
+                              struct pipe_texture *_texture,
                               unsigned face, unsigned level,
                               unsigned zslice,
                               enum pipe_transfer_usage usage,
                               unsigned x, unsigned y, unsigned w, unsigned h)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
+   struct trace_texture *tr_tex = trace_texture(tr_scr, _texture);
    struct pipe_screen *screen = tr_scr->screen;
-   struct trace_texture *tr_tex;
-   struct pipe_transfer *result;
-   
-   assert(texture);
-   tr_tex = trace_texture(tr_scr, texture);
-   texture = tr_tex->texture;
+   struct pipe_texture *texture = tr_tex->texture;
+   struct pipe_transfer *result = NULL;
+
    assert(texture->screen == screen);
-   
+
    trace_dump_call_begin("pipe_screen", "get_tex_transfer");
-   
+
    trace_dump_arg(ptr, screen);
    trace_dump_arg(ptr, texture);
    trace_dump_arg(uint, face);
    trace_dump_arg(uint, level);
    trace_dump_arg(uint, zslice);
    trace_dump_arg(uint, usage);
+
+   trace_dump_arg(uint, x);
+   trace_dump_arg(uint, y);
+   trace_dump_arg(uint, w);
+   trace_dump_arg(uint, h);
 
    result = screen->get_tex_transfer(screen, texture, face, level, zslice, usage,
                                      x, y, w, h);
@@ -318,36 +327,35 @@ trace_screen_get_tex_transfer(struct pipe_screen *_screen,
 
 
 static void 
-trace_screen_tex_transfer_destroy(struct pipe_transfer *transfer)
+trace_screen_tex_transfer_destroy(struct pipe_transfer *_transfer)
 {
-   struct pipe_texture *texture = transfer->texture;
-   struct pipe_screen *screen = texture->screen;
+   struct trace_screen *tr_scr = trace_screen(_transfer->texture->screen);
+   struct trace_texture *tr_tex = trace_texture(tr_scr, _transfer->texture);
+   struct trace_transfer *tr_tran = trace_transfer(tr_tex, _transfer);
+   struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_transfer *transfer = tr_tran->transfer;
 
    trace_dump_call_begin("pipe_screen", "tex_transfer_destroy");
 
    trace_dump_arg(ptr, screen);
    trace_dump_arg(ptr, transfer);
 
-   trace_transfer_destroy(trace_texture(trace_screen(screen), texture),
-                          transfer);
-
    trace_dump_call_end();
+
+   trace_transfer_destroy(tr_tex, _transfer);
 }
 
 
 static void *
 trace_screen_transfer_map(struct pipe_screen *_screen,
-                          struct pipe_transfer *transfer)
+                          struct pipe_transfer *_transfer)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
+   struct trace_texture *tr_tex = trace_texture(tr_scr, _transfer->texture);
+   struct trace_transfer *tr_trans = trace_transfer(tr_tex, _transfer);
    struct pipe_screen *screen = tr_scr->screen;
-   struct trace_texture *tr_tex;
-   struct trace_transfer *tr_trans;
+   struct pipe_transfer *transfer = tr_trans->transfer;
    void *map;
-   
-   tr_tex = trace_texture(tr_scr, transfer->texture);
-   tr_trans = trace_transfer(tr_tex, transfer);
-   transfer = tr_trans->transfer;
 
    map = screen->transfer_map(screen, transfer);
    if(map) {
@@ -363,21 +371,18 @@ trace_screen_transfer_map(struct pipe_screen *_screen,
 
 static void 
 trace_screen_transfer_unmap(struct pipe_screen *_screen,
-                           struct pipe_transfer *transfer)
+                           struct pipe_transfer *_transfer)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
+   struct trace_texture *tr_tex = trace_texture(tr_scr, _transfer->texture);
+   struct trace_transfer *tr_trans = trace_transfer(tr_tex, _transfer);
    struct pipe_screen *screen = tr_scr->screen;
-   struct trace_texture *tr_tex;
-   struct trace_transfer *tr_trans;
-   
-   tr_tex = trace_texture(tr_scr, transfer->texture);
-   tr_trans = trace_transfer(tr_tex, transfer);
-   transfer = tr_trans->transfer;
-   
+   struct pipe_transfer *transfer = tr_trans->transfer;
+
    if(tr_trans->map) {
       size_t size = transfer->nblocksy * transfer->stride;
       
-      trace_dump_call_begin("pipe_winsys", "transfer_write");
+      trace_dump_call_begin("pipe_screen", "transfer_write");
       
       trace_dump_arg(ptr, screen);
       

@@ -67,6 +67,7 @@ trace_texture(struct trace_screen *tr_scr,
 {
    if(!texture)
       return NULL;
+   assert(tr_scr);
    assert(texture->screen == &tr_scr->base);
    return (struct trace_texture *)texture;
 }
@@ -78,6 +79,7 @@ trace_surface(struct trace_texture *tr_tex,
 {
    if(!surface)
       return NULL;
+   assert(tr_tex);
    assert(surface->texture == &tr_tex->base);
    return (struct trace_surface *)surface;
 }
@@ -89,6 +91,7 @@ trace_transfer(struct trace_texture *tr_tex,
 {
    if(!transfer)
       return NULL;
+   assert(tr_tex);
    assert(transfer->texture == &tr_tex->base);
    return (struct trace_transfer *)transfer;
 }
