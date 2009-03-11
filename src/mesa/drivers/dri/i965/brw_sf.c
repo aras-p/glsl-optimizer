@@ -167,8 +167,14 @@ static void upload_sf_prog(struct brw_context *brw)
    key.do_twoside_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
 
    /* _NEW_POLYGON */
-   if (key.do_twoside_color)
-      key.frontface_ccw = (ctx->Polygon.FrontFace == GL_CCW);
+   if (key.do_twoside_color) {
+      /* If we're rendering to a FBO, we have to invert the polygon
+       * face orientation, just as we invert the viewport in
+       * sf_unit_create_from_key().  ctx->DrawBuffer->Name will be
+       * nonzero if we're rendering to such an FBO.
+       */
+      key.frontface_ccw = (ctx->Polygon.FrontFace == GL_CCW) ^ (ctx->DrawBuffer->Name != 0);
+   }
 
    dri_bo_unreference(brw->sf.prog_bo);
    brw->sf.prog_bo = brw_search_cache(&brw->cache, BRW_SF_PROG,
