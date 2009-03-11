@@ -587,7 +587,7 @@ Usage(void)
    printf("Usage:\n");
    printf("  -ds  Use combined depth/stencil renderbuffer\n");
    printf("  -arb Try GL_ARB_framebuffer_object's mismatched buffer sizes\n");
-   printf("  -ds2 Tye GL_ARB_framebuffer_object's GL_DEPTH_STENCIL_ATTACHMENT\n");
+   printf("  -ds2 Try GL_ARB_framebuffer_object's GL_DEPTH_STENCIL_ATTACHMENT\n");
    printf("Keys:\n");
    printf("  a    Toggle animation\n");
    printf("  s/s  Step/rotate\n");
