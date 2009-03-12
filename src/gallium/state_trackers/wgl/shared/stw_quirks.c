@@ -111,3 +111,6 @@ void gl_dispatch_stub_770(void){}
 void gl_dispatch_stub_771(void){}
 void gl_dispatch_stub_772(void){}
 void gl_dispatch_stub_773(void){}
+void gl_dispatch_stub_774(void){}
+void gl_dispatch_stub_750(void){}
+void gl_dispatch_stub_742(void){}
