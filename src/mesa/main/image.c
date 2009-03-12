@@ -3996,6 +3996,8 @@ _mesa_unpack_dudv_span_byte( GLcontext *ctx,
    {
       GLint dstComponents;
       GLfloat rgba[MAX_WIDTH][4];
+      GLbyte *dst = dest;
+      GLuint i;
 
       dstComponents = _mesa_components_in_format( dstFormat );
       /* source & dest image formats should have been error checked by now */
@@ -4014,8 +4016,6 @@ _mesa_unpack_dudv_span_byte( GLcontext *ctx,
        */
 
       /* Now pack results in the requested dstFormat */
-      GLbyte *dst = dest;
-      GLuint i;
       for (i = 0; i < n; i++) {
          /* not sure - need clamp[-1,1] here? */
          dst[0] = FLOAT_TO_BYTE(rgba[i][RCOMP]);
