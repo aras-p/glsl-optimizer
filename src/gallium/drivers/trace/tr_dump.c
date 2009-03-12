@@ -52,6 +52,8 @@
 
 #include "tr_dump.h"
 #include "tr_screen.h"
+#include "tr_texture.h"
+#include "tr_buffer.h"
 
 
 static struct util_stream *stream = NULL;
@@ -402,4 +404,50 @@ void trace_dump_ptr(const void *value)
       trace_dump_writef("<ptr>0x%08lx</ptr>", (unsigned long)(uintptr_t)value);
    else
       trace_dump_null();
+}
+
+void trace_dump_buffer_ptr(struct pipe_buffer *_buffer)
+{
+   if (_buffer) {
+      struct trace_screen *tr_scr = trace_screen(_buffer->screen);
+      struct trace_buffer *tr_buf = trace_buffer(tr_scr, _buffer);
+      trace_dump_ptr(tr_buf->buffer);
+   } else {
+      trace_dump_null();
+   }
+}
+
+void trace_dump_texture_ptr(struct pipe_texture *_texture)
+{
+   if (_texture) {
+      struct trace_screen *tr_scr = trace_screen(_texture->screen);
+      struct trace_texture *tr_tex = trace_texture(tr_scr, _texture);
+      trace_dump_ptr(tr_tex->texture);
+   } else {
+      trace_dump_null();
+   }
+}
+
+void trace_dump_surface_ptr(struct pipe_surface *_surface)
+{
+   if (_surface) {
+      struct trace_screen *tr_scr = trace_screen(_surface->texture->screen);
+      struct trace_texture *tr_tex = trace_texture(tr_scr, _surface->texture);
+      struct trace_surface *tr_surf = trace_surface(tr_tex, _surface);
+      trace_dump_ptr(tr_surf->surface);
+   } else {
+      trace_dump_null();
+   }
+}
+
+void trace_dump_transfer_ptr(struct pipe_transfer *_transfer)
+{
+   if (_transfer) {
+      struct trace_screen *tr_scr = trace_screen(_transfer->texture->screen);
+      struct trace_texture *tr_tex = trace_texture(tr_scr, _transfer->texture);
+      struct trace_transfer *tr_tran = trace_transfer(tr_tex, _transfer);
+      trace_dump_ptr(tr_tran->transfer);
+   } else {
+      trace_dump_null();
+   }
 }

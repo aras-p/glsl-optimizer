@@ -37,6 +37,11 @@
 #include "pipe/p_compiler.h"
 
 
+struct pipe_buffer;
+struct pipe_texture;
+struct pipe_surface;
+struct pipe_transfer;
+
 boolean trace_dump_trace_begin(void);
 boolean trace_dump_enabled(void);
 void trace_dump_trace_end(void);
@@ -63,7 +68,11 @@ void trace_dump_member_begin(const char *name);
 void trace_dump_member_end(void);
 void trace_dump_null(void);
 void trace_dump_ptr(const void *value);
-
+/* will turn a wrapped object into the real one and dump ptr */
+void trace_dump_buffer_ptr(struct pipe_buffer *_buffer);
+void trace_dump_texture_ptr(struct pipe_texture *_texture);
+void trace_dump_surface_ptr(struct pipe_surface *_surface);
+void trace_dump_transfer_ptr(struct pipe_transfer *_transfer);
 
 /*
  * Code saving macros.
