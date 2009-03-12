@@ -89,8 +89,8 @@ intel_flush_inline_primitive(struct intel_context *intel)
 
 static void intel_start_inline(struct intel_context *intel, uint32_t prim)
 {
-   BATCH_LOCALS;
    uint32_t batch_flags = LOOP_CLIPRECTS;
+   BATCH_LOCALS;
 
    intel->vtbl.emit_state(intel);
 
@@ -201,10 +201,10 @@ uint32_t *intel_get_prim_space(struct intel_context *intel, unsigned int count)
 /** Dispatches the accumulated primitive to the batchbuffer. */
 void intel_flush_prim(struct intel_context *intel)
 {
-   BATCH_LOCALS;
    dri_bo *aper_array[2];
    dri_bo *vb_bo;
    unsigned int offset, count;
+   BATCH_LOCALS;
 
    /* Must be called after an intel_start_prim. */
    assert(intel->prim.primitive != ~0);
