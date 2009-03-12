@@ -19,6 +19,7 @@ progs = [
 	'dlist-edgeflag',
 	'dlist-degenerate',
 	'drawarrays',
+	'draw2arrays',
 	'drawelements',
 	'drawrange',
 	'flat-clip',

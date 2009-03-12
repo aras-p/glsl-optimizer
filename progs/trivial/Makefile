@@ -23,6 +23,7 @@ SOURCES = \
 	dlist-edgeflag.c \
 	dlist-degenerate.c \
 	drawarrays.c \
+	draw2arrays.c \
 	drawelements.c \
 	drawrange.c \
 	flat-clip.c \
