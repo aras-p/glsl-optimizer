@@ -5,6 +5,10 @@ if not env['GLUT']:
 
 env = env.Clone()
 
+env.Prepend(CPPPATH = [
+	'../util',
+])
+
 env.Prepend(LIBS = ['$GLUT_LIB'])
 
 env.Program(
