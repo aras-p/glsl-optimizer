@@ -589,6 +589,9 @@ _mesa_init_constants(GLcontext *ctx)
    /* GL_ARB_framebuffer_object */
    ctx->Const.MaxSamples = 0;
 
+   /* GL_ATI_envmap_bumpmap */
+   ctx->Const.SupportedBumpUnits = SUPPORTED_ATI_BUMP_UNITS;
+
    /* sanity checks */
    ASSERT(ctx->Const.MaxTextureUnits == MIN2(ctx->Const.MaxTextureImageUnits,
                                              ctx->Const.MaxTextureCoordUnits));

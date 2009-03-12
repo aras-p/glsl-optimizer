@@ -161,7 +161,14 @@ enum _format {
    MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32,
    MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16,
    MESA_FORMAT_INTENSITY_FLOAT32,
-   MESA_FORMAT_INTENSITY_FLOAT16
+   MESA_FORMAT_INTENSITY_FLOAT16,
+   /*@}*/
+
+   /**
+    * \name Signed fixed point texture formats.
+    */
+   /*@{*/
+   MESA_FORMAT_DUDV8
    /*@}*/
 };
 
@@ -207,6 +214,11 @@ extern const struct gl_texture_format _mesa_texformat_luminance_alpha_float32;
 extern const struct gl_texture_format _mesa_texformat_luminance_alpha_float16;
 extern const struct gl_texture_format _mesa_texformat_intensity_float32;
 extern const struct gl_texture_format _mesa_texformat_intensity_float16;
+/*@}*/
+
+/** Signed fixed point texture formats */
+/*@{*/
+extern const struct gl_texture_format _mesa_texformat_dudv8;
 /*@}*/
 
 /** \name Assorted hardware-friendly formats */

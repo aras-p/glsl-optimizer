@@ -839,6 +839,12 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_SetFragmentShaderConstantATI(exec, _mesa_SetFragmentShaderConstantATI);
 #endif
 
+  /* GL_ATI_envmap_bumpmap */
+   SET_GetTexBumpParameterivATI(exec, _mesa_GetTexBumpParameterivATI);
+   SET_GetTexBumpParameterfvATI(exec, _mesa_GetTexBumpParameterfvATI);
+   SET_TexBumpParameterivATI(exec, _mesa_TexBumpParameterivATI);
+   SET_TexBumpParameterfvATI(exec, _mesa_TexBumpParameterfvATI);
+
 #if FEATURE_EXT_framebuffer_object
    SET_IsRenderbufferEXT(exec, _mesa_IsRenderbufferEXT);
    SET_BindRenderbufferEXT(exec, _mesa_BindRenderbufferEXT);

@@ -95,6 +95,11 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
       /* GL_EXT_texture_env_combine */
       dst->Texture.Unit[u].Combine = src->Texture.Unit[u].Combine;
 
+      /* GL_ATI_envmap_bumpmap - need this? */
+      dst->Texture.Unit[u].BumpTarget = src->Texture.Unit[u].BumpTarget;
+      COPY_4V(dst->Texture.Unit[u].RotMatrix, src->Texture.Unit[u].RotMatrix);
+
+
       /* copy texture object bindings, not contents of texture objects */
       _mesa_lock_context_textures(dst);
 
@@ -411,6 +416,10 @@ update_tex_combine(GLcontext *ctx, struct gl_texture_unit *texUnit)
    case GL_MODULATE_SUBTRACT_ATI:
       combine->_NumArgsRGB = 3;
       break;
+   case GL_BUMP_ENVMAP_ATI:
+      /* no real arguments for this case */
+      combine->_NumArgsRGB = 0;
+      break;
    default:
       combine->_NumArgsRGB = 0;
       _mesa_problem(ctx, "invalid RGB combine mode in update_texture_state");
@@ -682,6 +691,7 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    texUnit->Combine = default_combine_state;
    texUnit->_EnvMode = default_combine_state;
    texUnit->_CurrentCombine = & texUnit->_EnvMode;
+   texUnit->BumpTarget = GL_TEXTURE0;
 
    texUnit->TexGenEnabled = 0x0;
    texUnit->GenS.Mode = GL_EYE_LINEAR;
@@ -702,6 +712,16 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    ASSIGN_4V( texUnit->GenT.EyePlane, 0.0, 1.0, 0.0, 0.0 );
    ASSIGN_4V( texUnit->GenR.EyePlane, 0.0, 0.0, 0.0, 0.0 );
    ASSIGN_4V( texUnit->GenQ.EyePlane, 0.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenS.ObjectPlane, 1.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenT.ObjectPlane, 0.0, 1.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenR.ObjectPlane, 0.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenQ.ObjectPlane, 0.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenS.EyePlane, 1.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenT.EyePlane, 0.0, 1.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenR.EyePlane, 0.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( texUnit->GenQ.EyePlane, 0.0, 0.0, 0.0, 0.0 );
+   /* no mention of this in spec, but maybe id matrix expected? */
+   ASSIGN_4V( texUnit->RotMatrix, 1.0, 0.0, 0.0, 1.0 );
 
    /* initialize current texture object ptrs to the shared default objects */
    for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {

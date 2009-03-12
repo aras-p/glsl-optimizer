@@ -11681,6 +11681,56 @@
     <enum name="DEPTH_STENCIL_TO_BGRA_NV"                 value="0x886F"/>
 </category>
 
+<category name="GL_ATI_envmap_bumpmap" number="244">
+    <enum name="BUMP_ROT_MATRIX_ATI"          count="4"   value="0x8775">
+        <size name="TexBumpParameterfv"/>
+        <size name="TexBumpParameteriv"/>
+        <size name="GetTexBumpParameterfv" mode="get"/>
+        <size name="GetTexBumpParameteriv" mode="get"/>
+    </enum>
+    <enum name="BUMP_ROT_MATRIX_SIZE_ATI"     count="1"   value="0x8776">
+        <size name="GetTexBumpParameterfv" mode="get"/>
+        <size name="GetTexBumpParameteriv" mode="get"/>
+    </enum>
+    <enum name="BUMP_NUM_TEX_UNITS_ATI"       count="1"   value="0x8777">
+        <size name="GetTexBumpParameterfv" mode="get"/>
+        <size name="GetTexBumpParameteriv" mode="get"/>
+    </enum>
+    <enum name="BUMP_TEX_UNITS_ATI"           count="-1"  value="0x8778">
+        <size name="GetTexBumpParameterfv" mode="get"/>
+        <size name="GetTexBumpParameteriv" mode="get"/>
+    </enum>
+    <enum name="DUDV_ATI"                                 value="0x8779"/>
+    <enum name="DU8DV8_ATI"                               value="0x877A"/>
+    <enum name="BUMP_ENVMAP_ATI"                          value="0x877B"/>
+    <enum name="BUMP_TARGET_ATI"              count="1"   value="0x877C">
+        <size name="TexEnviv"/>
+        <size name="TexEnvfv"/>
+        <size name="GetTexEnviv" mode="get"/>
+        <size name="GetTexEnvfv" mode="get"/>
+    </enum>
+    <function name="TexBumpParameterfvATI" offset="assign">
+      <param name="pname" type="GLenum"/>
+      <param name="param" type="const GLfloat *" variable_param="pname"/>
+      <glx ignore="true"/>
+    </function>
+    <function name="TexBumpParameterivATI" offset="assign">
+      <param name="pname" type="GLenum"/>
+      <param name="param" type="const GLint *" variable_param="pname"/>
+      <glx ignore="true"/>
+    </function>
+    <function name="GetTexBumpParameterfvATI" offset="assign">
+      <param name="pname" type="GLenum"/>
+      <param name="param" type="GLfloat *" variable_param="pname"/>
+      <glx ignore="true"/>
+    </function>
+    <function name="GetTexBumpParameterivATI" offset="assign">
+      <param name="pname" type="GLenum"/>
+      <param name="param" type="GLint *" variable_param="pname"/>
+      <glx ignore="true"/>
+    </function>
+</category>
+
 <category name="GL_ATI_fragment_shader" number="245">
     <function name="GenFragmentShadersATI" offset="assign">
       <return type="GLuint"/>

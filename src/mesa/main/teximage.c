@@ -339,6 +339,17 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
       }
    }
 
+   if (ctx->Extensions.ATI_envmap_bumpmap) {
+      switch (internalFormat) {
+         case GL_DUDV_ATI:
+         case GL_DU8DV8_ATI:
+            return GL_DUDV_ATI;
+         default:
+            ; /* fallthrough */
+      }
+   }
+
+
    if (ctx->Extensions.EXT_packed_depth_stencil) {
       switch (internalFormat) {
          case GL_DEPTH_STENCIL_EXT:
@@ -568,6 +579,20 @@ is_depthstencil_format(GLenum format)
    }
 }
 
+/**
+ * Test if the given image format is a dudv format.
+ */
+static GLboolean
+is_dudv_format(GLenum format)
+{
+   switch (format) {
+      case GL_DUDV_ATI:
+      case GL_DU8DV8_ATI:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
 
 
 /**
@@ -1539,7 +1564,8 @@ texture_error_check( GLcontext *ctx, GLenum target,
        (is_index_format(internalFormat) && !indexFormat) ||
        (is_depth_format(internalFormat) != is_depth_format(format)) ||
        (is_ycbcr_format(internalFormat) != is_ycbcr_format(format)) ||
-       (is_depthstencil_format(internalFormat) != is_depthstencil_format(format))) {
+       (is_depthstencil_format(internalFormat) != is_depthstencil_format(format)) ||
+       (is_dudv_format(internalFormat) != is_dudv_format(format))) {
       if (!isProxy)
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glTexImage(internalFormat/format)");
@@ -2273,6 +2299,12 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
+   if (!ctx->Extensions.ATI_envmap_bumpmap
+       && is_dudv_format(format)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+      return;
+   }
+
    _mesa_lock_texture(ctx, texObj);
    {
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
@@ -2310,6 +2342,11 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       }
       else if (is_depthstencil_format(format)
 	       && !is_depthstencil_format(texImage->TexFormat->BaseFormat)) {
+	 _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+	 goto out;
+      }
+      else if (is_dudv_format(format)
+	       && !is_dudv_format(texImage->TexFormat->BaseFormat)) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
 	 goto out;
       }

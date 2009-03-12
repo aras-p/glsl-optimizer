@@ -2471,6 +2471,95 @@ _mesa_texstore_ycbcr(TEXSTORE_PARAMS)
    return GL_TRUE;
 }
 
+GLboolean
+_mesa_texstore_dudv8(TEXSTORE_PARAMS)
+{
+   const GLboolean littleEndian = _mesa_little_endian();
+
+   ASSERT(dstFormat == &_mesa_texformat_dudv8);
+   ASSERT(dstFormat->TexelBytes == 2);
+   ASSERT(ctx->Extensions.ATI_envmap_bumpmap);
+   ASSERT((srcFormat == GL_DU8DV8_ATI) ||
+	  (srcFormat == GL_DUDV_ATI));
+   ASSERT(baseInternalFormat == GL_DUDV_ATI);
+
+   if (!srcPacking->SwapBytes && srcType == GL_BYTE &&
+       littleEndian) {
+      /* simple memcpy path */
+      memcpy_texture(ctx, dims,
+                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
+                     dstRowStride,
+                     dstImageOffsets,
+                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                     srcAddr, srcPacking);
+   }
+   else if (srcType == GL_BYTE) {
+
+      GLubyte dstmap[4];
+
+      /* dstmap - how to swizzle from RGBA to dst format:
+       */
+      if (littleEndian) {
+	 dstmap[0] = 0;
+	 dstmap[1] = 3;
+      }
+      else {
+	 dstmap[0] = 3;
+	 dstmap[1] = 0;
+      }
+      dstmap[2] = ZERO;		/* ? */
+      dstmap[3] = ONE;		/* ? */
+      
+      _mesa_swizzle_ubyte_image(ctx, dims,
+				GL_LUMINANCE_ALPHA, /* hack */
+				GL_UNSIGNED_BYTE, /* hack */
+				GL_LUMINANCE_ALPHA, /* hack */
+				dstmap, 2,
+				dstAddr, dstXoffset, dstYoffset, dstZoffset,
+				dstRowStride, dstImageOffsets,
+				srcWidth, srcHeight, srcDepth, srcAddr,
+				srcPacking);      
+   }   
+   else {
+      /* general path - note this is defined for 2d textures only */
+      const GLint components = _mesa_components_in_format(baseInternalFormat);
+      const GLint srcStride = _mesa_image_row_stride(srcPacking,
+                                                 srcWidth, srcFormat, srcType);
+      GLbyte *tempImage, *dst, *src;
+      GLint row;
+
+      tempImage = (GLbyte *) _mesa_malloc(srcWidth * srcHeight * srcDepth
+                                          * components * sizeof(GLbyte));
+      if (!tempImage)
+         return GL_FALSE;
+
+      src = (GLbyte *) _mesa_image_address(dims, srcPacking, srcAddr,
+                                           srcWidth, srcHeight,
+                                           srcFormat, srcType,
+                                           0, 0, 0);
+
+      dst = tempImage;
+      for (row = 0; row < srcHeight; row++) {
+         _mesa_unpack_dudv_span_byte(ctx, srcWidth, baseInternalFormat,
+                                     dst, srcFormat, srcType, src,
+                                     srcPacking, 0);
+         dst += srcWidth * components;
+         src += srcStride;
+      }
+ 
+      src = tempImage;
+      dst = (GLbyte *) dstAddr
+            + dstYoffset * dstRowStride
+            + dstXoffset * dstFormat->TexelBytes;
+      for (row = 0; row < srcHeight; row++) {
+         memcpy(dst, src, srcWidth * dstFormat->TexelBytes);
+         dst += dstRowStride;
+         src += srcWidth * dstFormat->TexelBytes;
+      }
+      _mesa_free((void *) tempImage);
+   }
+   return GL_TRUE;
+}
 
 
 /**
@@ -3882,7 +3971,7 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                GLint col;
                GLbitfield transferOps = 0x0;
 
-               if (type == GL_FLOAT && 
+               if (type == GL_FLOAT && texImage->TexFormat->BaseFormat != GL_DUDV_ATI &&
                    ((ctx->Color.ClampReadColor == GL_TRUE) ||
                     (ctx->Color.ClampReadColor == GL_FIXED_ONLY_ARB &&
                      texImage->TexFormat->DataType != GL_FLOAT)))

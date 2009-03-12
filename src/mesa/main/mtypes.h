@@ -1390,6 +1390,8 @@ struct gl_texture_unit
    GLbitfield _GenFlags;	/**< Bitwise-OR of Gen[STRQ]._ModeBit */
 
    GLfloat LodBias;		/**< for biasing mipmap levels */
+   GLenum BumpTarget;
+   GLfloat RotMatrix[4]; /* 2x2 matrix */
 
    /** 
     * \name GL_EXT_texture_env_combine 
@@ -2388,6 +2390,8 @@ struct gl_constants
    GLuint MaxSamples;            /**< GL_ARB_framebuffer_object */
 
    GLuint MaxVarying;  /**< Number of float[4] varying parameters */
+
+   GLbitfield SupportedBumpUnits; /**> units supporting GL_ATI_envmap_bumpmap as targets */
 };
 
 
@@ -2484,6 +2488,7 @@ struct gl_extensions
    GLboolean APPLE_client_storage;
    GLboolean APPLE_packed_pixels;
    GLboolean APPLE_vertex_array_object;
+   GLboolean ATI_envmap_bumpmap;
    GLboolean ATI_texture_mirror_once;
    GLboolean ATI_texture_env_combine3;
    GLboolean ATI_fragment_shader;
