@@ -474,7 +474,7 @@ static void savageSetTexFilter(savageTexObjPtr t, GLenum minf, GLenum magf)
 
 /* Need a fallback ?
  */
-static void savageSetTexBorderColor(savageTexObjPtr t, GLubyte color[4])
+static void savageSetTexBorderColor(savageTexObjPtr t, const GLfloat color[4])
 {
 /*    t->Setup[SAVAGE_TEXREG_TEXBORDERCOL] =  */
     /*t->setup.borderColor = SAVAGEPACKCOLOR8888(color[0],color[1],color[2],color[3]); */
@@ -512,7 +512,7 @@ savageAllocTexObj( struct gl_texture_object *texObj )
 
       savageSetTexWrapping(t,texObj->WrapS,texObj->WrapT);
       savageSetTexFilter(t,texObj->MinFilter,texObj->MagFilter);
-      savageSetTexBorderColor(t,texObj->_BorderChan);
+      savageSetTexBorderColor(t,texObj->BorderColor);
    }
 
    return t;
@@ -2018,7 +2018,7 @@ static void savageTexParameter( GLcontext *ctx, GLenum target,
       break;
   
    case GL_TEXTURE_BORDER_COLOR:
-      savageSetTexBorderColor(t,tObj->_BorderChan);
+      savageSetTexBorderColor(t,tObj->BorderColor);
       break;
 
    default:

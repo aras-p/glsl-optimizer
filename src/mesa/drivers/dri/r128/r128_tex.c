@@ -135,8 +135,13 @@ static void r128SetTexFilter( r128TexObjPtr t, GLenum minf, GLenum magf )
    }
 }
 
-static void r128SetTexBorderColor( r128TexObjPtr t, GLubyte c[4] )
+static void r128SetTexBorderColor( r128TexObjPtr t, const GLfloat color[4] )
 {
+   GLubyte c[4];
+   CLAMPED_FLOAT_TO_UBYTE(c[0], color[0]);
+   CLAMPED_FLOAT_TO_UBYTE(c[1], color[1]);
+   CLAMPED_FLOAT_TO_UBYTE(c[2], color[2]);
+   CLAMPED_FLOAT_TO_UBYTE(c[3], color[3]);
    t->setup.tex_border_color = r128PackColor( 4, c[0], c[1], c[2], c[3] );
 }
 
@@ -165,7 +170,7 @@ static r128TexObjPtr r128AllocTexObj( struct gl_texture_object *texObj )
 
       r128SetTexWrap( t, texObj->WrapS, texObj->WrapT );
       r128SetTexFilter( t, texObj->MinFilter, texObj->MagFilter );
-      r128SetTexBorderColor( t, texObj->_BorderChan );
+      r128SetTexBorderColor( t, texObj->BorderColor );
    }
 
    return t;
@@ -531,7 +536,7 @@ static void r128TexParameter( GLcontext *ctx, GLenum target,
 
    case GL_TEXTURE_BORDER_COLOR:
       if ( t->base.bound ) FLUSH_BATCH( rmesa );
-      r128SetTexBorderColor( t, tObj->_BorderChan );
+      r128SetTexBorderColor( t, tObj->BorderColor );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:
