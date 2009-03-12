@@ -160,10 +160,18 @@ static INLINE void r500_emit_mov(struct r500_fragment_shader* fs,
 {
     int i = fs->instruction_count;
 
-    fs->instructions[i].inst0 = R500_INST_TYPE_OUT |
-        R500_INST_TEX_SEM_WAIT | R500_INST_LAST |
-        R500_INST_RGB_OMASK_RGB | R500_INST_ALPHA_OMASK |
+    if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
+        fs->instructions[i].inst0 = R500_INST_TYPE_OUT |
+        R500_ALU_OMASK(dst->DstRegister.WriteMask);
+    } else {
+        fs->instructions[i].inst0 = R500_INST_TYPE_ALU |
+        R500_ALU_WMASK(dst->DstRegister.WriteMask);
+    }
+
+    fs->instructions[i].inst0 |=
+        R500_INST_TEX_SEM_WAIT |
         R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP;
+
     fs->instructions[i].inst1 =
         R500_RGB_ADDR0(r300_fs_src(assembler, &src->SrcRegister));
     fs->instructions[i].inst2 =
@@ -233,6 +241,17 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
     }
 }
 
+static void r500_fs_finalize(struct r500_fragment_shader* fs,
+                             struct r300_fs_asm* assembler)
+{
+    /* XXX subtly wrong */
+    fs->shader.stack_size = assembler->temp_offset;
+
+    /* XXX should this just go with OPCODE_END? */
+    fs->instructions[fs->instruction_count - 1].inst0 |=
+        R500_INST_LAST;
+}
+
 void r300_translate_fragment_shader(struct r300_context* r300,
                                     struct r300_fragment_shader* fs)
 {
@@ -280,8 +299,7 @@ void r500_translate_fragment_shader(struct r300_context* r300,
             assembler->tex_count, assembler->color_count,
             assembler->tex_count + assembler->color_count);
 
-    /* XXX subtly wrong */
-    fs->shader.stack_size = assembler->temp_offset;
+    r500_fs_finalize(fs, assembler);
 
     tgsi_dump(fs->shader.state.tokens);
     r500_fs_dump(fs);

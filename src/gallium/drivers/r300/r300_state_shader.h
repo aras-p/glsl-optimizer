@@ -54,6 +54,8 @@
 #define R500_SWIZ_ALPHA_C(x) ((x) << 27)
 /* Writemasks */
 #define R500_TEX_WMASK(x) ((x) << 11)
+#define R500_ALU_WMASK(x) ((x) << 11)
+#define R500_ALU_OMASK(x) ((x) << 15)
 
 /* Temporary struct used to hold assembly state while putting together
  * fragment programs. */
