@@ -74,6 +74,10 @@ static void r300_setup_miptree(struct r300_texture* tex)
 
         tex->offset[i] = (tex->size + 63) & ~63;
         tex->size = tex->offset[i] + size;
+
+        if (i == 0) {
+            tex->stride = stride;
+        }
     }
 }
 
