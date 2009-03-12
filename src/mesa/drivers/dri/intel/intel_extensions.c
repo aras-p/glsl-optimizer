@@ -49,6 +49,7 @@
 #define need_GL_EXT_secondary_color
 #define need_GL_EXT_stencil_two_side
 #define need_GL_ATI_separate_stencil
+#define need_GL_ATI_envmap_bumpmap
 #define need_GL_NV_point_sprite
 #define need_GL_NV_vertex_program
 #define need_GL_VERSION_2_0
@@ -138,6 +139,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_EXT_texture_sRGB",		  NULL },
    { "GL_EXT_texture_swizzle",		  NULL },
    { "GL_EXT_vertex_array_bgra",	  NULL },
+   { "GL_ATI_envmap_bumpmap",             GL_ATI_envmap_bumpmap_functions },
    { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
    { "GL_ATI_texture_env_combine3",       NULL },
    { "GL_NV_texture_env_combine4",        NULL },

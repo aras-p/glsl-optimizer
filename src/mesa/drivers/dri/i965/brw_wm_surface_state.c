@@ -149,6 +149,9 @@ static GLuint translate_tex_format( GLuint mesa_format, GLenum depth_mode )
       else
          return BRW_SURFACEFORMAT_L24X8_UNORM;
 
+   case MESA_FORMAT_DUDV8:
+      return BRW_SURFACEFORMAT_R8G8_SNORM;
+
    default:
       assert(0);
       return 0;
