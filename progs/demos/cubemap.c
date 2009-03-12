@@ -495,7 +495,7 @@ static void load_envmaps(void)
 
 static void init( GLboolean useImageFiles )
 {
-   /* check for extension */
+   /* check for extensions */
    {
       char *exten = (char *) glGetString(GL_EXTENSIONS);
       if (!strstr(exten, "GL_ARB_texture_cube_map")) {
@@ -506,7 +506,7 @@ static void init( GLboolean useImageFiles )
       /* Needed for glGenerateMipmapEXT
        */
       if (!strstr(exten, "GL_EXT_framebuffer_object")) {
-         printf("Sorry, this demo requires GL_ARB_texture_cube_map\n");
+         printf("Sorry, this demo requires GL_EXT_framebuffer_object\n");
          exit(0);
       }
    }
