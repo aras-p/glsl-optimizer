@@ -614,3 +614,81 @@ TGSI Instruction Specification
 
   TBD
 
+
+1.9  GL_NV_fragment_program2
+----------------------------
+
+
+1.9.1  NRM - 3-component Vector Normalise
+
+  dst.x = src.x / (src.x * src.x + src.y * src.y + src.z * src.z)
+  dst.y = src.y / (src.x * src.x + src.y * src.y + src.z * src.z)
+  dst.z = src.z / (src.x * src.x + src.y * src.y + src.z * src.z)
+  dst.w = 1.0
+
+
+1.9.2  DIV - Divide
+
+  dst.x = src0.x / src1.x
+  dst.y = src0.y / src1.y
+  dst.z = src0.z / src1.z
+  dst.w = src0.w / src1.w
+
+
+1.9.3  DP2 - 2-component Dot Product
+
+  dst.x = src0.x * src1.x + src0.y * src1.y
+  dst.y = src0.x * src1.x + src0.y * src1.y
+  dst.z = src0.x * src1.x + src0.y * src1.y
+  dst.w = src0.x * src1.x + src0.y * src1.y
+
+
+1.9.4  DP2A - 2-component Dot Product And Add
+
+  Alias for DOT2ADD.
+
+
+1.9.5  TXL - Texture Lookup With LOD
+
+  TBD
+
+
+1.9.6  BRK - Break
+
+  TBD
+
+
+1.9.7  IF - If
+
+  TBD
+
+
+1.9.8  LOOP - Loop
+
+  TBD
+
+
+1.9.9  REP - Repeat
+
+  TBD
+
+
+1.9.10  ELSE - Else
+
+  TBD
+
+
+1.9.11  ENDIF - End If
+
+  TBD
+
+
+1.9.12  ENDLOOP - End Loop
+
+  TBD
+
+
+1.9.13  ENDREP - End Repeat
+
+  TBD
+
