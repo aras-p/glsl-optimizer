@@ -2934,7 +2934,6 @@ struct __GLcontextRec
    GLfloat _ModelViewInvScale;
    GLboolean _NeedEyeCoords;
    GLboolean _ForceEyeCoords; 
-   GLenum _CurrentProgram;    /**< currently executing program */
 
    GLuint TextureStateTimestamp; /**< detect changes to shared state */
 

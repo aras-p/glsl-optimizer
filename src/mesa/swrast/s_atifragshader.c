@@ -591,8 +591,6 @@ _swrast_exec_fragment_shader(GLcontext * ctx, SWspan *span)
    /* incoming colors should be floats */
    ASSERT(span->array->ChanType == GL_FLOAT);
 
-   ctx->_CurrentProgram = GL_FRAGMENT_SHADER_ATI;
-
    for (i = 0; i < span->end; i++) {
       if (span->array->mask[i]) {
 	 init_machine(ctx, &machine, shader, span, i);
@@ -608,6 +606,4 @@ _swrast_exec_fragment_shader(GLcontext * ctx, SWspan *span)
 	 }
       }
    }
-
-   ctx->_CurrentProgram = 0;
 }

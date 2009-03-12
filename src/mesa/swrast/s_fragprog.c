@@ -255,8 +255,6 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
       ASSERT(span->array->ChanType == GL_FLOAT);
    }
 
-   ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
-
    run_program(ctx, span, 0, span->end);
 
    if (program->Base.OutputsWritten & (1 << FRAG_RESULT_COLOR)) {
@@ -268,7 +266,5 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
       span->interpMask &= ~SPAN_Z;
       span->arrayMask |= SPAN_Z;
    }
-
-   ctx->_CurrentProgram = 0;
 }
 

@@ -597,8 +597,7 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   if (!ctx->_CurrentProgram)
-      ASSERT_OUTSIDE_BEGIN_END(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target == GL_FRAGMENT_PROGRAM_ARB
        && ctx->Extensions.ARB_fragment_program) {
@@ -818,8 +817,7 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
    struct gl_program *prog;
    GET_CURRENT_CONTEXT(ctx);
 
-   if (!ctx->_CurrentProgram)
-      ASSERT_OUTSIDE_BEGIN_END(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target == GL_VERTEX_PROGRAM_ARB
        && ctx->Extensions.ARB_vertex_program) {
@@ -1000,8 +998,7 @@ _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string)
    char *dst = (char *) string;
    GET_CURRENT_CONTEXT(ctx);
 
-   if (!ctx->_CurrentProgram)
-      ASSERT_OUTSIDE_BEGIN_END(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target == GL_VERTEX_PROGRAM_ARB) {
       prog = &(ctx->VertexProgram.Current->Base);

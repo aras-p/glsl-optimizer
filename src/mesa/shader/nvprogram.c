@@ -246,8 +246,7 @@ _mesa_GetProgramivNV(GLuint id, GLenum pname, GLint *params)
    struct gl_program *prog;
    GET_CURRENT_CONTEXT(ctx);
 
-   if (!ctx->_CurrentProgram)
-      ASSERT_OUTSIDE_BEGIN_END(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    prog = _mesa_lookup_program(ctx, id);
    if (!prog) {
@@ -283,8 +282,7 @@ _mesa_GetProgramStringNV(GLuint id, GLenum pname, GLubyte *program)
    struct gl_program *prog;
    GET_CURRENT_CONTEXT(ctx);
 
-   if (!ctx->_CurrentProgram)
-      ASSERT_OUTSIDE_BEGIN_END(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (pname != GL_PROGRAM_STRING_NV) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramStringNV(pname)");
@@ -773,8 +771,7 @@ _mesa_GetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
 
    GET_CURRENT_CONTEXT(ctx);
 
-   if (!ctx->_CurrentProgram)
-      ASSERT_OUTSIDE_BEGIN_END(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    prog = _mesa_lookup_program(ctx, id);
    if (!prog || prog->Target != GL_FRAGMENT_PROGRAM_NV) {
