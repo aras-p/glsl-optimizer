@@ -30,6 +30,7 @@
 #include "main/context.h"
 #include "main/enable.h"
 #include "main/matrix.h"
+#include "main/viewport.h"
 #include "swrast/swrast.h"
 #include "shader/arbprogram.h"
 #include "shader/program.h"
