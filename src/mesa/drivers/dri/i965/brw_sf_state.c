@@ -44,6 +44,7 @@ static void upload_sf_vp(struct brw_context *brw)
    struct brw_sf_viewport sfv;
    GLfloat y_scale, y_bias;
    const GLboolean render_to_fbo = (ctx->DrawBuffer->Name != 0);
+   const GLfloat *v = ctx->Viewport._WindowMap.m;
 
    memset(&sfv, 0, sizeof(sfv));
 
@@ -57,8 +58,6 @@ static void upload_sf_vp(struct brw_context *brw)
    }
 
    /* _NEW_VIEWPORT */
-
-   const GLfloat *v = ctx->Viewport._WindowMap.m;
 
    sfv.viewport.m00 = v[MAT_SX];
    sfv.viewport.m11 = v[MAT_SY] * y_scale;
