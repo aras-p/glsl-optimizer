@@ -568,3 +568,19 @@ TGSI Instruction Specification
   dst.w = (src.w > 0.0) ? 1.0 : (src.w < 0.0) ? -1.0 : 0.0
 
 
+1.7  GL_ARB_vertex_program
+--------------------------
+
+
+1.7.1  SWZ - Extended Swizzle
+
+  dst.x = src.x
+  dst.y = src.y
+  dst.z = src.z
+  dst.w = src.w
+
+
+1.7.2  XPD - Cross Product
+
+  Alias for CROSSPRODUCT.
+
