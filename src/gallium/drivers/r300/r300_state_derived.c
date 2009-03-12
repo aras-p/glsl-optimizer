@@ -208,6 +208,10 @@ static void r300_update_rs_block(struct r300_context* r300)
             }
         }
 
+        if (col_count == 0) {
+            rs->ip[0] |= R500_RS_COL_FMT(R300_RS_COL_FMT_0001);
+        }
+
         /* Set up at least one texture pointer or RS will not be happy. */
         if (tex_count == 0) {
             rs->ip[0] |=
@@ -251,6 +255,10 @@ static void r300_update_rs_block(struct r300_context* r300)
                 default:
                     break;
             }
+        }
+
+        if (col_count == 0) {
+            rs->ip[0] |= R300_RS_COL_FMT(R300_RS_COL_FMT_0001);
         }
 
         if (tex_count == 0) {
