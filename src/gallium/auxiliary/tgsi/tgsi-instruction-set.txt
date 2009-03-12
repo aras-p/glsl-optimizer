@@ -526,3 +526,45 @@ TGSI Instruction Specification
   dst.z = src0.x + src1.x * src2.x + src1.y * src2.y
   dst.w = src0.y + src1.x * src2.z + src1.y * src2.w
 
+
+1.6  GL_NV_vertex_program2
+--------------------------
+
+
+1.6.1  ARA - Address Register Add
+
+  TBD
+
+
+1.6.2  ARR - Address Register Load With Round
+
+  dst.x = round(src.x)
+  dst.y = round(src.y)
+  dst.z = round(src.z)
+  dst.w = round(src.w)
+
+
+1.6.3  BRA - Branch
+
+  TBD
+
+
+1.6.4  CAL - Subroutine Call
+
+  push(pc)
+  pc = target
+
+
+1.6.5  RET - Subroutine Call Return
+
+  pc = pop()
+
+
+1.6.6  SSG - Set Sign
+
+  dst.x = (src.x > 0.0) ? 1.0 : (src.x < 0.0) ? -1.0 : 0.0
+  dst.y = (src.y > 0.0) ? 1.0 : (src.y < 0.0) ? -1.0 : 0.0
+  dst.z = (src.z > 0.0) ? 1.0 : (src.z < 0.0) ? -1.0 : 0.0
+  dst.w = (src.w > 0.0) ? 1.0 : (src.w < 0.0) ? -1.0 : 0.0
+
+
