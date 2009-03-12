@@ -2669,14 +2669,14 @@ exec_instruction(
    case TGSI_OPCODE_SCS:
       if( IS_CHANNEL_ENABLED( *inst, CHAN_X ) || IS_CHANNEL_ENABLED( *inst, CHAN_Y ) ) {
          FETCH( &r[0], 0, CHAN_X );
-      }
-      if( IS_CHANNEL_ENABLED( *inst, CHAN_X ) ) {
-         micro_cos( &r[1], &r[0] );
-         STORE( &r[1], 0, CHAN_X );
-      }
-      if( IS_CHANNEL_ENABLED( *inst, CHAN_Y ) ) {
-         micro_sin( &r[1], &r[0] );
-         STORE( &r[1], 0, CHAN_Y );
+         if (IS_CHANNEL_ENABLED(*inst, CHAN_X)) {
+            micro_cos(&r[1], &r[0]);
+            STORE(&r[1], 0, CHAN_X);
+         }
+         if (IS_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+            micro_sin(&r[1], &r[0]);
+            STORE(&r[1], 0, CHAN_Y);
+         }
       }
       if( IS_CHANNEL_ENABLED( *inst, CHAN_Z ) ) {
          STORE( &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], 0, CHAN_Z );
