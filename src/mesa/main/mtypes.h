@@ -932,12 +932,12 @@ struct gl_pixel_attrib
 
    /*--- End Pixel Transfer State ---*/
 
-   /* Pixel Zoom */
+   /** glPixelZoom */
    GLfloat ZoomX, ZoomY;
 
    /** GL_SGI_texture_color_table */
-   GLfloat TextureColorTableScale[4];
-   GLfloat TextureColorTableBias[4];
+   GLfloat TextureColorTableScale[4]; /**< RGBA */
+   GLfloat TextureColorTableBias[4];  /**< RGBA */
 };
 
 
