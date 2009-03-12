@@ -2241,9 +2241,9 @@ struct gl_framebuffer
    /**
     * If zero, this is a window system framebuffer.  If non-zero, this
     * is a FBO framebuffer; note that for some devices (i.e. those with
-    * a natural pixel coordinate system for FBOs that differs from the 
-    * OpenGL/Mesa coordinate system), this means that both the viewport
-    * and polygon face orientation will have to be inverted.
+    * a natural pixel coordinate system for FBOs that differs from the
+    * OpenGL/Mesa coordinate system), this means that the viewport,
+    * polygon face orientation, and polygon stipple will have to be inverted.
     */
    GLuint Name;
 

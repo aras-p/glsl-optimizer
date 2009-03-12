@@ -290,8 +290,21 @@ static void upload_polygon_stipple(struct brw_context *brw)
    bps.header.opcode = CMD_POLY_STIPPLE_PATTERN;
    bps.header.length = sizeof(bps)/4-2;
 
-   for (i = 0; i < 32; i++)
-      bps.stipple[i] = ctx->PolygonStipple[31 - i]; /* invert */
+   /* Polygon stipple is provided in OpenGL order, i.e. bottom
+    * row first.  If we're rendering to a window (i.e. the
+    * default frame buffer object, 0), then we need to invert
+    * it to match our pixel layout.  But if we're rendering
+    * to a FBO (i.e. any named frame buffer object), we *don't*
+    * need to invert - we already match the layout.
+    */
+   if (ctx->DrawBuffer->Name == 0) {
+      for (i = 0; i < 32; i++)
+         bps.stipple[i] = ctx->PolygonStipple[31 - i]; /* invert */
+   }
+   else {
+      for (i = 0; i < 32; i++)
+         bps.stipple[i] = ctx->PolygonStipple[i]; /* don't invert */
+   }
 
    BRW_CACHED_BATCH_STRUCT(brw, &bps);
 }
@@ -319,8 +332,22 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
    bpso.header.opcode = CMD_POLY_STIPPLE_OFFSET;
    bpso.header.length = sizeof(bpso)/4-2;
 
-   bpso.bits0.x_offset = (32 - (dPriv->x & 31)) & 31;
-   bpso.bits0.y_offset = (32 - ((dPriv->y + dPriv->h) & 31)) & 31;
+   /* If we're drawing to a system window (ctx->DrawBuffer->Name == 0),
+    * we have to invert the Y axis in order to match the OpenGL
+    * pixel coordinate system, and our offset must be matched
+    * to the window position.  If we're drawing to a FBO
+    * (ctx->DrawBuffer->Name != 0), then our native pixel coordinate
+    * system works just fine, and there's no window system to
+    * worry about.
+    */
+   if (brw->intel.ctx.DrawBuffer->Name == 0) {
+      bpso.bits0.x_offset = (32 - (dPriv->x & 31)) & 31;
+      bpso.bits0.y_offset = (32 - ((dPriv->y + dPriv->h) & 31)) & 31;
+   }
+   else {
+      bpso.bits0.y_offset = 0;
+      bpso.bits0.x_offset = 0;
+   }
 
    BRW_CACHED_BATCH_STRUCT(brw, &bpso);
 }
