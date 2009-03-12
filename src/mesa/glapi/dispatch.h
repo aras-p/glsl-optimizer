@@ -2214,6 +2214,18 @@
 #define CALL_VertexAttribs4ubvNV(disp, parameters) (*((disp)->VertexAttribs4ubvNV)) parameters
 #define GET_VertexAttribs4ubvNV(disp) ((disp)->VertexAttribs4ubvNV)
 #define SET_VertexAttribs4ubvNV(disp, fn) ((disp)->VertexAttribs4ubvNV = fn)
+#define CALL_GetTexBumpParameterfvATI(disp, parameters) (*((disp)->GetTexBumpParameterfvATI)) parameters
+#define GET_GetTexBumpParameterfvATI(disp) ((disp)->GetTexBumpParameterfvATI)
+#define SET_GetTexBumpParameterfvATI(disp, fn) ((disp)->GetTexBumpParameterfvATI = fn)
+#define CALL_GetTexBumpParameterivATI(disp, parameters) (*((disp)->GetTexBumpParameterivATI)) parameters
+#define GET_GetTexBumpParameterivATI(disp) ((disp)->GetTexBumpParameterivATI)
+#define SET_GetTexBumpParameterivATI(disp, fn) ((disp)->GetTexBumpParameterivATI = fn)
+#define CALL_TexBumpParameterfvATI(disp, parameters) (*((disp)->TexBumpParameterfvATI)) parameters
+#define GET_TexBumpParameterfvATI(disp) ((disp)->TexBumpParameterfvATI)
+#define SET_TexBumpParameterfvATI(disp, fn) ((disp)->TexBumpParameterfvATI = fn)
+#define CALL_TexBumpParameterivATI(disp, parameters) (*((disp)->TexBumpParameterivATI)) parameters
+#define GET_TexBumpParameterivATI(disp) ((disp)->TexBumpParameterivATI)
+#define SET_TexBumpParameterivATI(disp, fn) ((disp)->TexBumpParameterivATI = fn)
 #define CALL_AlphaFragmentOp1ATI(disp, parameters) (*((disp)->AlphaFragmentOp1ATI)) parameters
 #define GET_AlphaFragmentOp1ATI(disp) ((disp)->AlphaFragmentOp1ATI)
 #define SET_AlphaFragmentOp1ATI(disp, fn) ((disp)->AlphaFragmentOp1ATI = fn)
@@ -2376,7 +2388,7 @@
 
 #else
 
-#define driDispatchRemapTable_size 363
+#define driDispatchRemapTable_size 367
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define AttachShader_remap_index 0
@@ -2689,59 +2701,63 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define VertexAttribs4fvNV_remap_index 307
 #define VertexAttribs4svNV_remap_index 308
 #define VertexAttribs4ubvNV_remap_index 309
-#define AlphaFragmentOp1ATI_remap_index 310
-#define AlphaFragmentOp2ATI_remap_index 311
-#define AlphaFragmentOp3ATI_remap_index 312
-#define BeginFragmentShaderATI_remap_index 313
-#define BindFragmentShaderATI_remap_index 314
-#define ColorFragmentOp1ATI_remap_index 315
-#define ColorFragmentOp2ATI_remap_index 316
-#define ColorFragmentOp3ATI_remap_index 317
-#define DeleteFragmentShaderATI_remap_index 318
-#define EndFragmentShaderATI_remap_index 319
-#define GenFragmentShadersATI_remap_index 320
-#define PassTexCoordATI_remap_index 321
-#define SampleMapATI_remap_index 322
-#define SetFragmentShaderConstantATI_remap_index 323
-#define PointParameteriNV_remap_index 324
-#define PointParameterivNV_remap_index 325
-#define ActiveStencilFaceEXT_remap_index 326
-#define BindVertexArrayAPPLE_remap_index 327
-#define DeleteVertexArraysAPPLE_remap_index 328
-#define GenVertexArraysAPPLE_remap_index 329
-#define IsVertexArrayAPPLE_remap_index 330
-#define GetProgramNamedParameterdvNV_remap_index 331
-#define GetProgramNamedParameterfvNV_remap_index 332
-#define ProgramNamedParameter4dNV_remap_index 333
-#define ProgramNamedParameter4dvNV_remap_index 334
-#define ProgramNamedParameter4fNV_remap_index 335
-#define ProgramNamedParameter4fvNV_remap_index 336
-#define DepthBoundsEXT_remap_index 337
-#define BlendEquationSeparateEXT_remap_index 338
-#define BindFramebufferEXT_remap_index 339
-#define BindRenderbufferEXT_remap_index 340
-#define CheckFramebufferStatusEXT_remap_index 341
-#define DeleteFramebuffersEXT_remap_index 342
-#define DeleteRenderbuffersEXT_remap_index 343
-#define FramebufferRenderbufferEXT_remap_index 344
-#define FramebufferTexture1DEXT_remap_index 345
-#define FramebufferTexture2DEXT_remap_index 346
-#define FramebufferTexture3DEXT_remap_index 347
-#define GenFramebuffersEXT_remap_index 348
-#define GenRenderbuffersEXT_remap_index 349
-#define GenerateMipmapEXT_remap_index 350
-#define GetFramebufferAttachmentParameterivEXT_remap_index 351
-#define GetRenderbufferParameterivEXT_remap_index 352
-#define IsFramebufferEXT_remap_index 353
-#define IsRenderbufferEXT_remap_index 354
-#define RenderbufferStorageEXT_remap_index 355
-#define BlitFramebufferEXT_remap_index 356
-#define FramebufferTextureLayerEXT_remap_index 357
-#define StencilFuncSeparateATI_remap_index 358
-#define ProgramEnvParameters4fvEXT_remap_index 359
-#define ProgramLocalParameters4fvEXT_remap_index 360
-#define GetQueryObjecti64vEXT_remap_index 361
-#define GetQueryObjectui64vEXT_remap_index 362
+#define GetTexBumpParameterfvATI_remap_index 310
+#define GetTexBumpParameterivATI_remap_index 311
+#define TexBumpParameterfvATI_remap_index 312
+#define TexBumpParameterivATI_remap_index 313
+#define AlphaFragmentOp1ATI_remap_index 314
+#define AlphaFragmentOp2ATI_remap_index 315
+#define AlphaFragmentOp3ATI_remap_index 316
+#define BeginFragmentShaderATI_remap_index 317
+#define BindFragmentShaderATI_remap_index 318
+#define ColorFragmentOp1ATI_remap_index 319
+#define ColorFragmentOp2ATI_remap_index 320
+#define ColorFragmentOp3ATI_remap_index 321
+#define DeleteFragmentShaderATI_remap_index 322
+#define EndFragmentShaderATI_remap_index 323
+#define GenFragmentShadersATI_remap_index 324
+#define PassTexCoordATI_remap_index 325
+#define SampleMapATI_remap_index 326
+#define SetFragmentShaderConstantATI_remap_index 327
+#define PointParameteriNV_remap_index 328
+#define PointParameterivNV_remap_index 329
+#define ActiveStencilFaceEXT_remap_index 330
+#define BindVertexArrayAPPLE_remap_index 331
+#define DeleteVertexArraysAPPLE_remap_index 332
+#define GenVertexArraysAPPLE_remap_index 333
+#define IsVertexArrayAPPLE_remap_index 334
+#define GetProgramNamedParameterdvNV_remap_index 335
+#define GetProgramNamedParameterfvNV_remap_index 336
+#define ProgramNamedParameter4dNV_remap_index 337
+#define ProgramNamedParameter4dvNV_remap_index 338
+#define ProgramNamedParameter4fNV_remap_index 339
+#define ProgramNamedParameter4fvNV_remap_index 340
+#define DepthBoundsEXT_remap_index 341
+#define BlendEquationSeparateEXT_remap_index 342
+#define BindFramebufferEXT_remap_index 343
+#define BindRenderbufferEXT_remap_index 344
+#define CheckFramebufferStatusEXT_remap_index 345
+#define DeleteFramebuffersEXT_remap_index 346
+#define DeleteRenderbuffersEXT_remap_index 347
+#define FramebufferRenderbufferEXT_remap_index 348
+#define FramebufferTexture1DEXT_remap_index 349
+#define FramebufferTexture2DEXT_remap_index 350
+#define FramebufferTexture3DEXT_remap_index 351
+#define GenFramebuffersEXT_remap_index 352
+#define GenRenderbuffersEXT_remap_index 353
+#define GenerateMipmapEXT_remap_index 354
+#define GetFramebufferAttachmentParameterivEXT_remap_index 355
+#define GetRenderbufferParameterivEXT_remap_index 356
+#define IsFramebufferEXT_remap_index 357
+#define IsRenderbufferEXT_remap_index 358
+#define RenderbufferStorageEXT_remap_index 359
+#define BlitFramebufferEXT_remap_index 360
+#define FramebufferTextureLayerEXT_remap_index 361
+#define StencilFuncSeparateATI_remap_index 362
+#define ProgramEnvParameters4fvEXT_remap_index 363
+#define ProgramLocalParameters4fvEXT_remap_index 364
+#define GetQueryObjecti64vEXT_remap_index 365
+#define GetQueryObjectui64vEXT_remap_index 366
 
 #define CALL_AttachShader(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), driDispatchRemapTable[AttachShader_remap_index], parameters)
 #define GET_AttachShader(disp) GET_by_offset(disp, driDispatchRemapTable[AttachShader_remap_index])
@@ -3673,6 +3689,18 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_VertexAttribs4ubvNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const GLubyte *)), driDispatchRemapTable[VertexAttribs4ubvNV_remap_index], parameters)
 #define GET_VertexAttribs4ubvNV(disp) GET_by_offset(disp, driDispatchRemapTable[VertexAttribs4ubvNV_remap_index])
 #define SET_VertexAttribs4ubvNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[VertexAttribs4ubvNV_remap_index], fn)
+#define CALL_GetTexBumpParameterfvATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLfloat *)), driDispatchRemapTable[GetTexBumpParameterfvATI_remap_index], parameters)
+#define GET_GetTexBumpParameterfvATI(disp) GET_by_offset(disp, driDispatchRemapTable[GetTexBumpParameterfvATI_remap_index])
+#define SET_GetTexBumpParameterfvATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetTexBumpParameterfvATI_remap_index], fn)
+#define CALL_GetTexBumpParameterivATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint *)), driDispatchRemapTable[GetTexBumpParameterivATI_remap_index], parameters)
+#define GET_GetTexBumpParameterivATI(disp) GET_by_offset(disp, driDispatchRemapTable[GetTexBumpParameterivATI_remap_index])
+#define SET_GetTexBumpParameterivATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetTexBumpParameterivATI_remap_index], fn)
+#define CALL_TexBumpParameterfvATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLfloat *)), driDispatchRemapTable[TexBumpParameterfvATI_remap_index], parameters)
+#define GET_TexBumpParameterfvATI(disp) GET_by_offset(disp, driDispatchRemapTable[TexBumpParameterfvATI_remap_index])
+#define SET_TexBumpParameterfvATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[TexBumpParameterfvATI_remap_index], fn)
+#define CALL_TexBumpParameterivATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, const GLint *)), driDispatchRemapTable[TexBumpParameterivATI_remap_index], parameters)
+#define GET_TexBumpParameterivATI(disp) GET_by_offset(disp, driDispatchRemapTable[TexBumpParameterivATI_remap_index])
+#define SET_TexBumpParameterivATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[TexBumpParameterivATI_remap_index], fn)
 #define CALL_AlphaFragmentOp1ATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLuint, GLuint, GLuint)), driDispatchRemapTable[AlphaFragmentOp1ATI_remap_index], parameters)
 #define GET_AlphaFragmentOp1ATI(disp) GET_by_offset(disp, driDispatchRemapTable[AlphaFragmentOp1ATI_remap_index])
 #define SET_AlphaFragmentOp1ATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[AlphaFragmentOp1ATI_remap_index], fn)

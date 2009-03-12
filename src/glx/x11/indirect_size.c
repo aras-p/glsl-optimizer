@@ -240,6 +240,7 @@ __glTexEnvfv_size(GLenum e)
     case GL_OPERAND1_ALPHA:
     case GL_OPERAND2_ALPHA:
     case GL_OPERAND3_ALPHA_NV:
+    case GL_BUMP_TARGET_ATI:
     case GL_COORD_REPLACE_ARB:
 /*      case GL_COORD_REPLACE_NV:*/
         return 1;
