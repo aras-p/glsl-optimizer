@@ -34,6 +34,7 @@
 #include "state_tracker/st_context.h"
 
 #define need_GL_ARB_multisample
+#define need_GL_ARB_occlusion_query
 #define need_GL_ARB_point_parameters
 #define need_GL_ARB_texture_compression
 #define need_GL_ARB_vertex_buffer_object
@@ -58,6 +59,7 @@
 const struct dri_extension card_extensions[] = {
    {"GL_ARB_multisample", GL_ARB_multisample_functions},
    {"GL_ARB_multitexture", NULL},
+   {"GL_ARB_occlusion_query", GL_ARB_occlusion_query_functions},
    {"GL_ARB_point_parameters", GL_ARB_point_parameters_functions},
    {"GL_ARB_texture_border_clamp", NULL},
    {"GL_ARB_texture_compression", GL_ARB_texture_compression_functions},
