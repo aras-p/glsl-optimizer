@@ -53,7 +53,7 @@ static void calculate_curbe_offsets( struct brw_context *brw )
    GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
    
    /* BRW_NEW_VERTEX_PROGRAM */
-   struct brw_vertex_program *vp = brw_vertex_program(brw->vertex_program);
+   const struct brw_vertex_program *vp = brw_vertex_program_const(brw->vertex_program);
    GLuint nr_vp_regs = (vp->program.Base.Parameters->NumParameters * 4 + 15) / 16;
    GLuint nr_clip_regs = 0;
    GLuint total_regs;
