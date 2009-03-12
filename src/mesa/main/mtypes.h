@@ -1296,7 +1296,6 @@ struct gl_texture_object
    GLenum Target;               /**< GL_TEXTURE_1D, GL_TEXTURE_2D, etc. */
    GLfloat Priority;		/**< in [0,1] */
    GLfloat BorderColor[4];	/**< unclamped */
-   GLchan _BorderChan[4];	/**< clamped, as GLchan */
    GLenum WrapS;		/**< S-axis texture image wrap mode */
    GLenum WrapT;		/**< T-axis texture image wrap mode */
    GLenum WrapR;		/**< R-axis texture image wrap mode */

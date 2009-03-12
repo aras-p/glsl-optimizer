@@ -483,10 +483,6 @@ set_tex_parameterf(GLcontext *ctx,
       texObj->BorderColor[GCOMP] = params[1];
       texObj->BorderColor[BCOMP] = params[2];
       texObj->BorderColor[ACOMP] = params[3];
-      UNCLAMPED_FLOAT_TO_CHAN(texObj->_BorderChan[RCOMP], params[0]);
-      UNCLAMPED_FLOAT_TO_CHAN(texObj->_BorderChan[GCOMP], params[1]);
-      UNCLAMPED_FLOAT_TO_CHAN(texObj->_BorderChan[BCOMP], params[2]);
-      UNCLAMPED_FLOAT_TO_CHAN(texObj->_BorderChan[ACOMP], params[3]);
       return;
 
    default:
