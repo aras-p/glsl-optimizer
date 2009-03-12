@@ -426,7 +426,7 @@ static void init_checkers( void )
                    GL_BGRA, GL_UNSIGNED_BYTE, image);
    }
 
-   glGenerateMipmap(GL_TEXTURE_CUBE_MAP_ARB);
+   glGenerateMipmapEXT(GL_TEXTURE_CUBE_MAP_ARB);
 }
 
 
@@ -499,6 +499,13 @@ static void init( GLboolean useImageFiles )
    {
       char *exten = (char *) glGetString(GL_EXTENSIONS);
       if (!strstr(exten, "GL_ARB_texture_cube_map")) {
+         printf("Sorry, this demo requires GL_ARB_texture_cube_map\n");
+         exit(0);
+      }
+
+      /* Needed for glGenerateMipmapEXT
+       */
+      if (!strstr(exten, "GL_EXT_framebuffer_object")) {
          printf("Sorry, this demo requires GL_ARB_texture_cube_map\n");
          exit(0);
       }
