@@ -27,12 +27,14 @@
 
 #include "util/u_memory.h"
 
+#include "tr_buffer.h"
 #include "tr_dump.h"
 #include "tr_state.h"
 #include "tr_texture.h"
 #include "tr_screen.h"
 
 #include "pipe/p_inlines.h"
+
 
 static const char *
 trace_screen_get_name(struct pipe_screen *_screen)
@@ -488,7 +490,7 @@ trace_screen_surface_buffer_create(struct pipe_screen *_screen,
 
    trace_dump_call_end();
 
-   return result;
+   return trace_buffer_create(tr_scr, result);
 }
 
 
@@ -525,7 +527,7 @@ trace_screen_buffer_create(struct pipe_screen *_screen,
       }
    }
 
-   return result;
+   return trace_buffer_create(tr_scr, result);
 }
 
 
@@ -559,7 +561,7 @@ trace_screen_user_buffer_create(struct pipe_screen *_screen,
       result->usage |= TRACE_BUFFER_USAGE_USER;
    }
 
-   return result;
+   return trace_buffer_create(tr_scr, result);
 }
 
 
@@ -569,7 +571,7 @@ trace_screen_user_buffer_create(struct pipe_screen *_screen,
  */
 void
 trace_screen_user_buffer_update(struct pipe_screen *_screen,
-                                struct pipe_buffer *buffer)
+                                struct pipe_buffer *_buffer)
 {
 #if 0
    struct trace_screen *tr_scr = trace_screen(_screen);
@@ -604,11 +606,13 @@ trace_screen_user_buffer_update(struct pipe_screen *_screen,
 
 static void *
 trace_screen_buffer_map(struct pipe_screen *_screen,
-                        struct pipe_buffer *buffer,
+                        struct pipe_buffer *_buffer,
                         unsigned usage)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
+   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _buffer);
    struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_buffer *buffer = tr_buf->buffer;
    void *map;
 
    trace_dump_call_begin("pipe_screen", "buffer_map");
@@ -636,13 +640,15 @@ trace_screen_buffer_map(struct pipe_screen *_screen,
 
 static void *
 trace_screen_buffer_map_range(struct pipe_screen *_screen,
-                              struct pipe_buffer *buffer,
+                              struct pipe_buffer *_buffer,
                               unsigned offset,
                               unsigned length,
                               unsigned usage)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
+   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _buffer);
    struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_buffer *buffer = tr_buf->buffer;
    void *map;
 
    trace_dump_call_begin("pipe_screen", "buffer_map_range");
@@ -666,12 +672,14 @@ trace_screen_buffer_map_range(struct pipe_screen *_screen,
 
 static void
 trace_screen_buffer_flush_mapped_range(struct pipe_screen *_screen,
-                                       struct pipe_buffer *buffer,
+                                       struct pipe_buffer *_buffer,
                                        unsigned offset,
                                        unsigned length)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
+   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _buffer);
    struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_buffer *buffer = tr_buf->buffer;
 
    trace_dump_call_begin("pipe_screen", "buffer_flush_mapped_range");
 
@@ -689,10 +697,12 @@ trace_screen_buffer_flush_mapped_range(struct pipe_screen *_screen,
 
 static void
 trace_screen_buffer_unmap(struct pipe_screen *_screen,
-                          struct pipe_buffer *buffer)
+                          struct pipe_buffer *_buffer)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
+   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _buffer);
    struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_buffer *buffer = tr_buf->buffer;
 #if 0
    const void *map;
 
@@ -731,21 +741,27 @@ trace_screen_buffer_unmap(struct pipe_screen *_screen,
 
 
 static void
-trace_screen_buffer_destroy(struct pipe_buffer *buffer)
+trace_screen_buffer_destroy(struct pipe_buffer *_buffer)
 {
-   struct trace_screen *tr_scr = trace_screen(buffer->screen);
+   struct trace_screen *tr_scr = trace_screen(_buffer->screen);
+   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _buffer);
    struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_buffer *buffer = tr_buf->buffer;
 
    trace_dump_call_begin("pipe_screen", "buffer_destroy");
 
    trace_dump_arg(ptr, screen);
    trace_dump_arg(ptr, buffer);
 
-   assert(screen->buffer_destroy);
-   screen->buffer_destroy(buffer);
-
    trace_dump_call_end();
+
+   trace_buffer_destroy(tr_scr, _buffer);
 }
+
+
+/********************************************************************
+ * fence
+ */
 
 
 static void

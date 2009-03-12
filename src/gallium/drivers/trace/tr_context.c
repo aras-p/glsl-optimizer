@@ -30,9 +30,28 @@
 
 #include "tr_dump.h"
 #include "tr_state.h"
+#include "tr_buffer.h"
 #include "tr_screen.h"
 #include "tr_texture.h"
 #include "tr_context.h"
+
+
+static INLINE struct pipe_buffer *
+trace_buffer_unwrap(struct trace_context *tr_ctx,
+                     struct pipe_buffer *buffer)
+{
+   struct trace_screen *tr_scr = trace_screen(tr_ctx->base.screen);
+   struct trace_buffer *tr_buf;
+
+   if(!buffer)
+      return NULL;
+
+   tr_buf = trace_buffer(tr_scr, buffer);
+
+   assert(tr_buf->buffer);
+   assert(tr_buf->buffer->screen == tr_scr->screen);
+   return tr_buf->buffer;
+}
 
 
 static INLINE struct pipe_texture *
@@ -123,12 +142,15 @@ trace_context_draw_arrays(struct pipe_context *_pipe,
 
 static INLINE boolean
 trace_context_draw_elements(struct pipe_context *_pipe,
-                          struct pipe_buffer *indexBuffer,
+                          struct pipe_buffer *_indexBuffer,
                           unsigned indexSize,
                           unsigned mode, unsigned start, unsigned count)
 {
+   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
    struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _indexBuffer);
    struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_buffer *indexBuffer = tr_buf->buffer;
    boolean result;
 
    trace_screen_user_buffer_update(_pipe->screen, indexBuffer);
@@ -154,7 +176,7 @@ trace_context_draw_elements(struct pipe_context *_pipe,
 
 static INLINE boolean
 trace_context_draw_range_elements(struct pipe_context *_pipe,
-                                  struct pipe_buffer *indexBuffer,
+                                  struct pipe_buffer *_indexBuffer,
                                   unsigned indexSize,
                                   unsigned minIndex,
                                   unsigned maxIndex,
@@ -162,8 +184,11 @@ trace_context_draw_range_elements(struct pipe_context *_pipe,
                                   unsigned start,
                                   unsigned count)
 {
+   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
    struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _indexBuffer);
    struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_buffer *indexBuffer = tr_buf->buffer;
    boolean result;
 
    trace_screen_user_buffer_update(_pipe->screen, indexBuffer);
@@ -695,7 +720,8 @@ trace_context_set_constant_buffer(struct pipe_context *_pipe,
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
-   trace_screen_user_buffer_update(_pipe->screen, (struct pipe_buffer *)buffer);
+   if (buffer)
+      trace_screen_user_buffer_update(_pipe->screen, buffer->buffer);
 
    trace_dump_call_begin("pipe_context", "set_constant_buffer");
 
@@ -704,7 +730,13 @@ trace_context_set_constant_buffer(struct pipe_context *_pipe,
    trace_dump_arg(uint, index);
    trace_dump_arg(constant_buffer, buffer);
 
-   pipe->set_constant_buffer(pipe, shader, index, buffer);;
+   if (buffer) {
+      struct pipe_constant_buffer _buffer;
+      _buffer.buffer = trace_buffer_unwrap(tr_ctx, buffer->buffer);
+      pipe->set_constant_buffer(pipe, shader, index, &_buffer);
+   } else {
+      pipe->set_constant_buffer(pipe, shader, index, buffer);
+   }
 
    trace_dump_call_end();
 }
@@ -840,7 +872,15 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
    trace_dump_struct_array(vertex_buffer, buffers, num_buffers);
    trace_dump_arg_end();
 
-   pipe->set_vertex_buffers(pipe, num_buffers, buffers);;
+   if (num_buffers) {
+      struct pipe_vertex_buffer *_buffers = malloc(num_buffers * sizeof(*_buffers));
+      memcpy(_buffers, buffers, num_buffers * sizeof(*_buffers));
+      for (i = 0; i < num_buffers; i++)
+         _buffers[i].buffer = trace_buffer_unwrap(tr_ctx, buffers[i].buffer);
+      pipe->set_vertex_buffers(pipe, num_buffers, _buffers);
+   } else {
+      pipe->set_vertex_buffers(pipe, num_buffers, buffers);
+   }
 
    trace_dump_call_end();
 }
