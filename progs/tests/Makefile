@@ -28,6 +28,7 @@ SOURCES = \
 	blendsquare.c \
 	blendxor.c \
 	bufferobj.c \
+	bumpmap.c \
 	bug_3050.c \
 	bug_3101.c \
 	bug_3195.c \
@@ -146,6 +147,12 @@ afsmultiarb: afsmultiarb.o readtex.o
 
 afsmultiarb.o: afsmultiarb.c readtex.h
 	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) afsmultiarb.c -o $@
+
+bumpmap: bumpmap.o readtex.o
+	$(CC) $(CFLAGS) $(LDFLAGS) bumpmap.o readtex.o $(LIBS) -o $@
+
+bumpmap.o: bumpmap.c readtex.h
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) bumpmap.c -o $@
 
 drawbuffers: drawbuffers.o
 	$(APP_CC) $(CFLAGS) $(LDFLAGS) drawbuffers.o $(LIBS) -o $@
