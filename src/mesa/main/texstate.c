@@ -354,37 +354,6 @@ update_texture_matrices( GLcontext *ctx )
 
 
 /**
- * Update texture object's _Function field.  We need to do this
- * whenever any of the texture object's shadow-related fields change
- * or when we start/stop using a fragment program.
- *
- * This function could be expanded someday to update additional per-object
- * fields that depend on assorted state changes.
- */
-static void
-update_texture_compare_function(GLcontext *ctx,
-                                struct gl_texture_object *tObj)
-{
-   /* XXX temporarily disable this test since it breaks the GLSL
-    * shadow2D(), etc. functions.
-    */
-   if (0 /*ctx->FragmentProgram._Current*/) {
-      /* Texel/coordinate comparison is ignored for programs.
-       * See GL_ARB_fragment_program/shader spec for details.
-       */
-      tObj->_Function = GL_NONE;
-   }
-   else if (tObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
-      /* GL_ARB_shadow */
-      tObj->_Function = tObj->CompareFunc;
-   }
-   else {
-      tObj->_Function = GL_NONE;  /* pass depth through as grayscale */
-   }
-}
-
-
-/**
  * Examine texture unit's combine/env state to update derived state.
  */
 static void
@@ -589,7 +558,6 @@ update_texture_state( GLcontext *ctx )
          enabledFragUnits |= (1 << unit);
 
       update_tex_combine(ctx, texUnit);
-      update_texture_compare_function(ctx, texUnit->_Current);
    }
 
 
