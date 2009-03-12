@@ -584,3 +584,33 @@ TGSI Instruction Specification
 
   Alias for CROSSPRODUCT.
 
+
+1.8  GL_ARB_fragment_program
+----------------------------
+
+
+1.8.1  CMP - Compare
+
+  dst.x = (src0.x < 0.0) ? src1.x : src2.x
+  dst.y = (src0.y < 0.0) ? src1.y : src2.y
+  dst.z = (src0.z < 0.0) ? src1.z : src2.z
+  dst.w = (src0.w < 0.0) ? src1.w : src2.w
+
+
+1.8.2  KIL - Conditional Discard
+
+  TBD
+
+
+1.8.3  SCS - Sine Cosine
+
+  dst.x = cos(src.x)
+  dst.y = sin(src.x)
+  dst.z = 0.0
+  dst.y = 1.0
+
+
+1.8.4  TXB - Texture Lookup With Bias
+
+  TBD
+
