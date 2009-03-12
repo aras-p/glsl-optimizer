@@ -719,9 +719,9 @@ static void store_texel_rgb888(struct gl_texture_image *texImage,
 {
    const GLubyte *rgba = (const GLubyte *) texel;
    GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
-   dst[0] = rgba[RCOMP];
+   dst[0] = rgba[BCOMP];
    dst[1] = rgba[GCOMP];
-   dst[2] = rgba[BCOMP];
+   dst[2] = rgba[RCOMP];
 }
 #endif
 
@@ -745,9 +745,9 @@ static void store_texel_bgr888(struct gl_texture_image *texImage,
 {
    const GLubyte *rgba = (const GLubyte *) texel;
    GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
-   dst[0] = rgba[BCOMP];
+   dst[0] = rgba[RCOMP];
    dst[1] = rgba[GCOMP];
-   dst[2] = rgba[RCOMP];
+   dst[2] = rgba[BCOMP];
 }
 #endif
 
