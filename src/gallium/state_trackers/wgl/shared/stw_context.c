@@ -80,7 +80,7 @@ stw_create_layer_context(
    struct stw_context *ctx = NULL;
    GLvisual *visual = NULL;
    struct pipe_context *pipe = NULL;
-   UINT_PTR hglrc;
+   UINT_PTR hglrc = 0;
 
    if(!stw_dev)
       return 0;
@@ -140,25 +140,21 @@ stw_create_layer_context(
       UINT_PTR i;
 
       for (i = 0; i < STW_CONTEXT_MAX; i++) {
-         if (stw_dev->ctx_array[i].ctx == NULL)
+         if (stw_dev->ctx_array[i].ctx == NULL) {
+            /* success:
+             */
+            stw_dev->ctx_array[i].ctx = ctx;
+            hglrc = i + 1;
             break;
+         }
       }
-   
-      /* No slot available, fail:
-       */
-      if (i == STW_CONTEXT_MAX)
-         goto done;
-
-      stw_dev->ctx_array[i].ctx = ctx;
-      
-      /* success:
-       */
-      hglrc = i + 1;
    }
-done:
    pipe_mutex_unlock( stw_dev->mutex );
 
-   return hglrc;
+   /* Success?
+    */
+   if (hglrc != 0)
+      return hglrc;
 
 fail:
    if (visual)
