@@ -294,6 +294,7 @@ _mesa_components_in_format( GLenum format )
       case GL_DEPTH_STENCIL_EXT:
          return 2;
       case GL_DUDV_ATI:
+      case GL_DU8DV8_ATI:
          return 2;
       default:
          return -1;
