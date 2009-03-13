@@ -1304,11 +1304,9 @@ static void store_texel_sla8(struct gl_texture_image *texImage,
 }
 #endif
 
-
-
 #endif /* FEATURE_EXT_texture_sRGB */
 
-#if DIM == 2
+
 /* MESA_FORMAT_DUDV8 ********************************************************/
 
 /* this format by definition produces 0,0,0,1 as rgba values,
@@ -1321,9 +1319,8 @@ static void FETCH(dudv8)(const struct gl_texture_image *texImage,
    texel[GCOMP] = BYTE_TO_FLOAT(src[1]);
    texel[BCOMP] = 0;
    texel[ACOMP] = 0;
-
 }
-#endif
+
 
 /* MESA_FORMAT_YCBCR *********************************************************/
 

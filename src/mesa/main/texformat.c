@@ -716,11 +716,11 @@ const struct gl_texture_format _mesa_texformat_dudv8 = {
    2,					/* TexelBytes */
    _mesa_texstore_dudv8,		/* StoreTexImageFunc */
    NULL,				/* FetchTexel1D */
-   NULL,		/* FetchTexel2D */
+   NULL,				/* FetchTexel2D */
    NULL,				/* FetchTexel3D */
-   NULL,				/* FetchTexel1Df */
+   fetch_texel_1d_dudv8,		/* FetchTexel1Df */
    fetch_texel_2d_dudv8,		/* FetchTexel2Df */
-   NULL,				/* FetchTexel3Df */
+   fetch_texel_3d_dudv8,		/* FetchTexel3Df */
    NULL					/* StoreTexel */
 };
 
