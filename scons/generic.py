@@ -409,12 +409,10 @@ def generate(env):
             '-Wall',
             '-Wmissing-prototypes',
             '-Wno-long-long',
+            '-Wdeclaration-after-statement',
             '-ffast-math',
             '-pedantic',
             '-fmessage-length=0', # be nice to Eclipse
-        ]
-        cflags += [
-            '-Wmissing-prototypes',
         ]
     if msvc:
         # See also:

@@ -334,6 +334,7 @@ def generate(env):
             '-Wall',
             '-Wmissing-prototypes',
             '-Wno-long-long',
+            '-Wdeclaration-after-statement',
             '-ffast-math',
             '-std=gnu99',
             '-fmessage-length=0', # be nice to Eclipse
