@@ -97,7 +97,7 @@ mm_buffer_destroy(struct pb_buffer *buf)
    struct mm_buffer *mm_buf = mm_buffer(buf);
    struct mm_pb_manager *mm = mm_buf->mgr;
    
-   assert(mm_buf->base.base.reference.count == 0);
+   assert(p_atomic_read(&mm_buf->base.base.reference.count) == 0);
    
    pipe_mutex_lock(mm->mutex);
    u_mmFreeMem(mm_buf->block);

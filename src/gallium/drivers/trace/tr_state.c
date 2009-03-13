@@ -53,7 +53,7 @@ void trace_dump_block(const struct pipe_format_block *block)
 static void trace_dump_reference(const struct pipe_reference *reference)
 {
    trace_dump_struct_begin("pipe_reference");
-   trace_dump_member(uint, reference, count);
+   trace_dump_member(int, &reference->count, count);
    trace_dump_struct_end();
 }
 

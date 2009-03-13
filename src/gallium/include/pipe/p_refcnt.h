@@ -30,6 +30,7 @@
 
 
 #include "p_defines.h"
+#include "p_atomic.h"
 
 
 #ifdef __cplusplus
@@ -39,14 +40,14 @@ extern "C" {
 
 struct pipe_reference
 {
-   unsigned count;
+   struct pipe_atomic count;
 };
 
 
 static INLINE void
 pipe_reference_init(struct pipe_reference *reference, unsigned count)
 {
-   reference->count = count;
+   p_atomic_set(&reference->count, count);
 }
 
 
@@ -64,13 +65,13 @@ pipe_reference(struct pipe_reference **ptr, struct pipe_reference *reference)
 
    /* bump the reference.count first */
    if (reference) {
-      assert(reference->count);
-      reference->count++;
+      assert(p_atomic_read(&reference->count) != 0);
+      p_atomic_inc(&reference->count);
    }
 
    if (*ptr) {
-      assert((*ptr)->count);
-      if (--(*ptr)->count == 0) {
+      assert(p_atomic_read(&(*ptr)->count) != 0);
+      if (p_atomic_dec_zero(&(*ptr)->count)) {
          destroy = TRUE;
       }
    }

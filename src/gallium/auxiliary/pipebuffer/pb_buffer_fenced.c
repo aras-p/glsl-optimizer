@@ -115,7 +115,7 @@ _fenced_buffer_add(struct fenced_buffer *fenced_buf)
 {
    struct fenced_buffer_list *fenced_list = fenced_buf->list;
 
-   assert(fenced_buf->base.base.reference.count);
+   assert(p_atomic_read(&fenced_buf->base.base.reference.count));
    assert(fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE);
    assert(fenced_buf->fence);
 
@@ -137,7 +137,7 @@ _fenced_buffer_destroy(struct fenced_buffer *fenced_buf)
 {
    struct fenced_buffer_list *fenced_list = fenced_buf->list;
    
-   assert(!fenced_buf->base.base.reference.count);
+   assert(p_atomic_read(&fenced_buf->base.base.reference.count) == 0);
    assert(!fenced_buf->fence);
 #ifdef DEBUG
    assert(fenced_buf->head.prev);
@@ -177,7 +177,11 @@ _fenced_buffer_remove(struct fenced_buffer_list *fenced_list,
    ++fenced_list->numUnfenced;
 #endif
    
-   if(!fenced_buf->base.base.reference.count)
+   /**
+    * FIXME!!!
+    */
+
+   if(!p_atomic_read(&fenced_buf->base.base.reference.count))
       _fenced_buffer_destroy(fenced_buf);
 }
 
@@ -253,7 +257,7 @@ fenced_buffer_destroy(struct pb_buffer *buf)
    struct fenced_buffer_list *fenced_list = fenced_buf->list;
 
    pipe_mutex_lock(fenced_list->mutex);
-   assert(fenced_buf->base.base.reference.count == 0);
+   assert(p_atomic_read(&fenced_buf->base.base.reference.count) == 0);
    if (fenced_buf->fence) {
       struct pb_fence_ops *ops = fenced_list->ops;
       if(ops->fence_signalled(ops, fenced_buf->fence, 0) == 0) {

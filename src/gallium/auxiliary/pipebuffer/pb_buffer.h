@@ -158,7 +158,7 @@ pb_map(struct pb_buffer *buf,
    assert(buf);
    if(!buf)
       return NULL;
-   assert(buf->base.reference.count > 0);
+   assert(p_atomic_read(&buf->base.reference.count) > 0);
    return buf->vtbl->map(buf, flags);
 }
 
@@ -169,7 +169,7 @@ pb_unmap(struct pb_buffer *buf)
    assert(buf);
    if(!buf)
       return;
-   assert(buf->base.reference.count > 0);
+   assert(p_atomic_read(&buf->base.reference.count) > 0);
    buf->vtbl->unmap(buf);
 }
 
@@ -185,7 +185,7 @@ pb_get_base_buffer( struct pb_buffer *buf,
       offset = 0;
       return;
    }
-   assert(buf->base.reference.count > 0);
+   assert(p_atomic_read(&buf->base.reference.count) > 0);
    assert(buf->vtbl->get_base_buffer);
    buf->vtbl->get_base_buffer(buf, base_buf, offset);
    assert(*base_buf);
@@ -221,7 +221,7 @@ pb_destroy(struct pb_buffer *buf)
    assert(buf);
    if(!buf)
       return;
-   assert(buf->base.reference.count == 0);
+   assert(p_atomic_read(&buf->base.reference.count) == 0);
    buf->vtbl->destroy(buf);
 }
 
