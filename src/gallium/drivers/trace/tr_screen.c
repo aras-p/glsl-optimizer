@@ -164,7 +164,7 @@ trace_screen_flush_frontbuffer(struct pipe_screen *_screen,
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_surface *surface = tr_surf->surface;
 
-   trace_dump_call_begin("pipe_winsys", "flush_frontbuffer");
+   trace_dump_call_begin("pipe_screen", "flush_frontbuffer");
 
    trace_dump_arg(ptr, screen);
    trace_dump_arg(ptr, surface);
@@ -728,7 +728,7 @@ trace_screen_buffer_unmap(struct pipe_screen *_screen,
    }
 #endif
 
-   trace_dump_call_begin("pipe_screen", "buffer_flush_mapped_range");
+   trace_dump_call_begin("pipe_screen", "buffer_unmap");
 
    trace_dump_arg(ptr, screen);
    trace_dump_arg(ptr, buffer);
