@@ -573,12 +573,12 @@ static void emit_linterp(struct brw_wm_compile *c,
     struct brw_reg interp[4];
     struct brw_reg dst, delta0, delta1;
     struct brw_reg src0;
+    GLuint nr, i;
 
     src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
     delta0 = get_src_reg(c, &inst->SrcReg[1], 0, 1);
     delta1 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
-    GLuint nr = src0.nr;
-    int i;
+    nr = src0.nr;
 
     interp[0] = brw_vec1_grf(nr, 0);
     interp[1] = brw_vec1_grf(nr, 4);
@@ -602,10 +602,10 @@ static void emit_cinterp(struct brw_wm_compile *c,
 
     struct brw_reg interp[4];
     struct brw_reg dst, src0;
+    GLuint nr, i;
 
     src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
-    GLuint nr = src0.nr;
-    int i;
+    nr = src0.nr;
 
     interp[0] = brw_vec1_grf(nr, 0);
     interp[1] = brw_vec1_grf(nr, 4);
@@ -629,13 +629,13 @@ static void emit_pinterp(struct brw_wm_compile *c,
     struct brw_reg interp[4];
     struct brw_reg dst, delta0, delta1;
     struct brw_reg src0, w;
+    GLuint nr, i;
 
     src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
     delta0 = get_src_reg(c, &inst->SrcReg[1], 0, 1);
     delta1 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
     w = get_src_reg(c, &inst->SrcReg[2], 3, 1);
-    GLuint nr = src0.nr;
-    int i;
+    nr = src0.nr;
 
     interp[0] = brw_vec1_grf(nr, 0);
     interp[1] = brw_vec1_grf(nr, 4);
