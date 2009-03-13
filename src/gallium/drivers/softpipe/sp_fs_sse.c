@@ -145,7 +145,7 @@ softpipe_create_fs_sse(struct softpipe_context *softpipe,
       return NULL;
    }
 
-   shader->base.shader = *templ;
+   shader->base.shader.tokens = NULL; /* don't hold reference to templ->tokens */
    shader->base.prepare = fs_sse_prepare;
    shader->base.run = fs_sse_run;
    shader->base.delete = fs_sse_delete;

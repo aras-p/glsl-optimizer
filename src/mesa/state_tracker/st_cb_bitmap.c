@@ -740,8 +740,7 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       const uint semantic_indexes[] = { 0, 0, 0 };
       st->bitmap.vs = util_make_vertex_passthrough_shader(st->pipe, 3,
                                                           semantic_names,
-                                                          semantic_indexes,
-                                                          &st->bitmap.vert_shader);
+                                                          semantic_indexes);
    }
 
    if (UseBitmapCache && accum_bitmap(st, x, y, width, height, unpack, bitmap))
@@ -830,7 +829,6 @@ st_destroy_bitmap(struct st_context *st)
       cso_delete_vertex_shader(st->cso_context, st->bitmap.vs);
       st->bitmap.vs = NULL;
    }
-   util_free_shader(&st->bitmap.vert_shader);
 
    if (st->bitmap.vbuf) {
       pipe_buffer_reference(&st->bitmap.vbuf, NULL);

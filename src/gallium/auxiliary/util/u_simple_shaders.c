@@ -55,20 +55,17 @@ void *
 util_make_vertex_passthrough_shader(struct pipe_context *pipe,
                                     uint num_attribs,
                                     const uint *semantic_names,
-                                    const uint *semantic_indexes,
-                                    struct pipe_shader_state *shader)
+                                    const uint *semantic_indexes)
                                     
 {
-   uint maxTokens = 100;
-   struct tgsi_token *tokens;
+   struct pipe_shader_state shader;
+   struct tgsi_token tokens[100];
    struct tgsi_header *header;
    struct tgsi_processor *processor;
    struct tgsi_full_declaration decl;
    struct tgsi_full_instruction inst;
    const uint procType = TGSI_PROCESSOR_VERTEX;
    uint ti, i;
-
-   tokens = (struct tgsi_token *) MALLOC(maxTokens * sizeof(tokens[0]));
 
    /* shader header
     */
@@ -96,7 +93,7 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
       ti += tgsi_build_full_declaration(&decl,
                                         &tokens[ti],
                                         header,
-                                        maxTokens - ti);
+                                        Elements(tokens) - ti);
    }
 
    /* declare outputs */
@@ -111,7 +108,7 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
       ti += tgsi_build_full_declaration(&decl,
                                         &tokens[ti],
                                         header,
-                                        maxTokens - ti);
+                                        Elements(tokens) - ti);
    }
 
    /* emit MOV instructions */
@@ -128,7 +125,7 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
       ti += tgsi_build_full_instruction(&inst,
                                         &tokens[ti],
                                         header,
-                                        maxTokens - ti );
+                                        Elements(tokens) - ti );
    }
 
    /* END instruction */
@@ -139,16 +136,15 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
    ti += tgsi_build_full_instruction(&inst,
                                      &tokens[ti],
                                      header,
-                                     maxTokens - ti );
+                                     Elements(tokens) - ti );
 
 #if 0 /*debug*/
    tgsi_dump(tokens, 0);
 #endif
 
-   shader->tokens = tokens;
-   /*shader->num_tokens = ti;*/
+   shader.tokens = tokens;
 
-   return pipe->create_vs_state(pipe, shader);
+   return pipe->create_vs_state(pipe, &shader);
 }
 
 
@@ -160,19 +156,16 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
  *  END;
  */
 void *
-util_make_fragment_tex_shader(struct pipe_context *pipe,
-                              struct pipe_shader_state *shader)
+util_make_fragment_tex_shader(struct pipe_context *pipe)
 {
-   uint maxTokens = 100;
-   struct tgsi_token *tokens;
+   struct pipe_shader_state shader;
+   struct tgsi_token tokens[100];
    struct tgsi_header *header;
    struct tgsi_processor *processor;
    struct tgsi_full_declaration decl;
    struct tgsi_full_instruction inst;
    const uint procType = TGSI_PROCESSOR_FRAGMENT;
    uint ti;
-
-   tokens = (struct tgsi_token *) MALLOC(maxTokens * sizeof(tokens[0]));
 
    /* shader header
     */
@@ -199,7 +192,7 @@ util_make_fragment_tex_shader(struct pipe_context *pipe,
    ti += tgsi_build_full_declaration(&decl,
                                      &tokens[ti],
                                      header,
-                                     maxTokens - ti);
+                                     Elements(tokens) - ti);
 
    /* declare color[0] output */
    decl = tgsi_default_full_declaration();
@@ -212,7 +205,7 @@ util_make_fragment_tex_shader(struct pipe_context *pipe,
    ti += tgsi_build_full_declaration(&decl,
                                      &tokens[ti],
                                      header,
-                                     maxTokens - ti);
+                                     Elements(tokens) - ti);
 
    /* declare sampler */
    decl = tgsi_default_full_declaration();
@@ -222,7 +215,7 @@ util_make_fragment_tex_shader(struct pipe_context *pipe,
    ti += tgsi_build_full_declaration(&decl,
                                      &tokens[ti],
                                      header,
-                                     maxTokens - ti);
+                                     Elements(tokens) - ti);
 
    /* TEX instruction */
    inst = tgsi_default_full_instruction();
@@ -239,7 +232,7 @@ util_make_fragment_tex_shader(struct pipe_context *pipe,
    ti += tgsi_build_full_instruction(&inst,
                                      &tokens[ti],
                                      header,
-                                     maxTokens - ti );
+                                     Elements(tokens) - ti );
 
    /* END instruction */
    inst = tgsi_default_full_instruction();
@@ -249,16 +242,15 @@ util_make_fragment_tex_shader(struct pipe_context *pipe,
    ti += tgsi_build_full_instruction(&inst,
                                      &tokens[ti],
                                      header,
-                                     maxTokens - ti );
+                                     Elements(tokens) - ti );
 
 #if 0 /*debug*/
    tgsi_dump(tokens, 0);
 #endif
 
-   shader->tokens = tokens;
-   /*shader->num_tokens = ti;*/
+   shader.tokens = tokens;
 
-   return pipe->create_fs_state(pipe, shader);
+   return pipe->create_fs_state(pipe, &shader);
 }
 
 
@@ -269,19 +261,16 @@ util_make_fragment_tex_shader(struct pipe_context *pipe,
  * Make simple fragment color pass-through shader.
  */
 void *
-util_make_fragment_passthrough_shader(struct pipe_context *pipe,
-                                      struct pipe_shader_state *shader)
+util_make_fragment_passthrough_shader(struct pipe_context *pipe)
 {
-   uint maxTokens = 40;
-   struct tgsi_token *tokens;
+   struct pipe_shader_state shader;
+   struct tgsi_token tokens[40];
    struct tgsi_header *header;
    struct tgsi_processor *processor;
    struct tgsi_full_declaration decl;
    struct tgsi_full_instruction inst;
    const uint procType = TGSI_PROCESSOR_FRAGMENT;
    uint ti;
-
-   tokens = (struct tgsi_token *) MALLOC(maxTokens * sizeof(tokens[0]));
 
    /* shader header
     */
@@ -306,7 +295,7 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe,
    ti += tgsi_build_full_declaration(&decl,
                                      &tokens[ti],
                                      header,
-                                     maxTokens - ti);
+                                     Elements(tokens) - ti);
 
    /* declare output */
    decl = tgsi_default_full_declaration();
@@ -319,7 +308,7 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe,
    ti += tgsi_build_full_declaration(&decl,
                                      &tokens[ti],
                                      header,
-                                     maxTokens - ti);
+                                     Elements(tokens) - ti);
 
 
    /* MOVE out[0], in[0]; */
@@ -334,7 +323,7 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe,
    ti += tgsi_build_full_instruction(&inst,
                                      &tokens[ti],
                                      header,
-                                     maxTokens - ti );
+                                     Elements(tokens) - ti );
 
    /* END instruction */
    inst = tgsi_default_full_instruction();
@@ -344,24 +333,17 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe,
    ti += tgsi_build_full_instruction(&inst,
                                      &tokens[ti],
                                      header,
-                                     maxTokens - ti );
+                                     Elements(tokens) - ti );
 
-   assert(ti < maxTokens);
+   assert(ti < Elements(tokens));
 
 #if 0 /*debug*/
    tgsi_dump(tokens, 0);
 #endif
 
-   shader->tokens = tokens;
-   /*shader->num_tokens = ti;*/
+   shader.tokens = tokens;
 
-   return pipe->create_fs_state(pipe, shader);
+   return pipe->create_fs_state(pipe, &shader);
 }
 
 
-void
-util_free_shader(struct pipe_shader_state *shader)
-{
-   FREE((struct tgsi_token *)shader->tokens);
-   shader->tokens = NULL;
-}

@@ -36,6 +36,7 @@
 #include "draw/draw_context.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_scan.h"
+#include "tgsi/tgsi_parse.h"
 
 
 void *
@@ -97,17 +98,28 @@ softpipe_create_vs_state(struct pipe_context *pipe,
    struct sp_vertex_shader *state;
 
    state = CALLOC_STRUCT(sp_vertex_shader);
-   if (state == NULL ) {
-      return NULL;
-   }
+   if (state == NULL ) 
+      goto fail;
+
+   /* copy shader tokens, the ones passed in will go away.
+    */
+   state->shader.tokens = tgsi_dup_tokens(templ->tokens);
+   if (state->shader.tokens == NULL)
+      goto fail;
 
    state->draw_data = draw_create_vertex_shader(softpipe->draw, templ);
-   if (state->draw_data == NULL) {
-      FREE( state );
-      return NULL;
-   }
+   if (state->draw_data == NULL) 
+      goto fail;
 
    return state;
+
+fail:
+   if (state) {
+      FREE( (void *)state->shader.tokens );
+      FREE( state->draw_data );
+      FREE( state );
+   }
+   return NULL;
 }
 
 

@@ -64,8 +64,6 @@ struct gen_mipmap_state
    struct pipe_sampler_state sampler;
    struct pipe_viewport_state viewport;
 
-   struct pipe_shader_state vert_shader;
-   struct pipe_shader_state frag_shader;
    void *vs;
    void *fs;
 
@@ -1322,12 +1320,11 @@ util_create_gen_mipmap(struct pipe_context *pipe,
                                       TGSI_SEMANTIC_GENERIC };
       const uint semantic_indexes[] = { 0, 0 };
       ctx->vs = util_make_vertex_passthrough_shader(pipe, 2, semantic_names,
-                                                    semantic_indexes,
-                                                    &ctx->vert_shader);
+                                                    semantic_indexes);
    }
 
    /* fragment shader */
-   ctx->fs = util_make_fragment_tex_shader(pipe, &ctx->frag_shader);
+   ctx->fs = util_make_fragment_tex_shader(pipe);
 
    /* vertex data that doesn't change */
    for (i = 0; i < 4; i++) {
@@ -1411,9 +1408,6 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
 
    pipe->delete_vs_state(pipe, ctx->vs);
    pipe->delete_fs_state(pipe, ctx->fs);
-
-   FREE((void*) ctx->vert_shader.tokens);
-   FREE((void*) ctx->frag_shader.tokens);
 
    pipe_buffer_reference(&ctx->vbuf, NULL);
 

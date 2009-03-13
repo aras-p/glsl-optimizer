@@ -77,7 +77,7 @@ st_init_clear(struct st_context *st)
 
    /* fragment shader state: color pass-through program */
    st->clear.fs =
-      util_make_fragment_passthrough_shader(pipe, &st->clear.frag_shader);
+      util_make_fragment_passthrough_shader(pipe);
 
    /* vertex shader state: color/position pass-through */
    {
@@ -86,8 +86,7 @@ st_init_clear(struct st_context *st)
       const uint semantic_indexes[] = { 0, 0 };
       st->clear.vs = util_make_vertex_passthrough_shader(pipe, 2,
                                                          semantic_names,
-                                                         semantic_indexes,
-                                                         &st->clear.vert_shader);
+                                                         semantic_indexes);
    }
 }
 
@@ -95,16 +94,6 @@ st_init_clear(struct st_context *st)
 void
 st_destroy_clear(struct st_context *st)
 {
-   if (st->clear.vert_shader.tokens) {
-      util_free_shader(&st->clear.vert_shader);
-      st->clear.vert_shader.tokens = NULL;
-   }
-
-   if (st->clear.frag_shader.tokens) {
-      util_free_shader(&st->clear.frag_shader);
-      st->clear.frag_shader.tokens = NULL;
-   }
-
    if (st->clear.fs) {
       cso_delete_fragment_shader(st->cso_context, st->clear.fs);
       st->clear.fs = NULL;

@@ -307,14 +307,9 @@ st_free_translated_vertex_programs(struct st_context *st,
 static void *
 get_passthrough_fs(struct st_context *st)
 {
-   struct pipe_shader_state shader;
-
    if (!st->passthrough_fs) {
       st->passthrough_fs =
-         util_make_fragment_passthrough_shader(st->pipe, &shader);
-#if 0      /* We actually need to keep the tokens around at this time */
-      util_free_shader(&shader);
-#endif
+         util_make_fragment_passthrough_shader(st->pipe);
    }
 
    return st->passthrough_fs;

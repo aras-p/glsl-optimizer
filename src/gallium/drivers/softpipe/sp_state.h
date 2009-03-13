@@ -85,7 +85,7 @@ struct sp_fragment_shader {
 
 /** Subclass of pipe_shader_state */
 struct sp_vertex_shader {
-   struct pipe_shader_state shader;  /* Note: this field not actually used */
+   struct pipe_shader_state shader;
    struct draw_vertex_shader *draw_data;
 };
 
