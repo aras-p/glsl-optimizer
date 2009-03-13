@@ -149,8 +149,6 @@ struct brw_wm_instruction {
 };
 
 
-#define PROGRAM_INTERNAL_PARAM 
-
 #define BRW_WM_MAX_INSN  (MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS*3 + FRAG_ATTRIB_MAX + 3)
 #define BRW_WM_MAX_GRF   128		/* hardware limit */
 #define BRW_WM_MAX_VREG  (BRW_WM_MAX_INSN * 4)
@@ -249,7 +247,7 @@ struct brw_wm_compile {
 
    struct brw_reg stack;
    struct brw_reg emit_mask_reg;
-   GLuint reg_index;
+   GLuint reg_index;  /**< Index of next free GRF register */
    GLuint tmp_regs[BRW_WM_MAX_GRF];
    GLuint tmp_index;
    GLuint tmp_max;
