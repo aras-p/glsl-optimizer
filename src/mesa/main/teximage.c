@@ -2440,6 +2440,49 @@ update_fbo_texture(GLcontext *ctx, struct gl_texture_object *texObj,
 }
 
 
+/** Debug helper: override the user-requested internal format */
+static GLenum
+override_internal_format(GLenum internalFormat, GLint width, GLint height)
+{
+#if 0
+   if (internalFormat == GL_RGBA16F_ARB ||
+       internalFormat == GL_RGBA32F_ARB) {
+      printf("Convert rgba float tex to int %d x %d\n", width, height);
+      return GL_RGBA;
+   }
+   else if (internalFormat == GL_RGB16F_ARB ||
+            internalFormat == GL_RGB32F_ARB) {
+      printf("Convert rgb float tex to int %d x %d\n", width, height);
+      return GL_RGB;
+   }
+   else if (internalFormat == GL_LUMINANCE_ALPHA16F_ARB ||
+            internalFormat == GL_LUMINANCE_ALPHA32F_ARB) {
+      printf("Convert luminance float tex to int %d x %d\n", width, height);
+      return GL_LUMINANCE_ALPHA;
+   }
+   else if (internalFormat == GL_LUMINANCE16F_ARB ||
+            internalFormat == GL_LUMINANCE32F_ARB) {
+      printf("Convert luminance float tex to int %d x %d\n", width, height);
+      return GL_LUMINANCE;
+   }
+   else if (internalFormat == GL_ALPHA16F_ARB ||
+            internalFormat == GL_ALPHA32F_ARB) {
+      printf("Convert luminance float tex to int %d x %d\n", width, height);
+      return GL_ALPHA;
+   }
+   /*
+   else if (internalFormat == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) {
+      internalFormat = GL_RGBA;
+   }
+   */
+   else {
+      return internalFormat;
+   }
+#else
+   return internalFormat;
+#endif
+}
+
 
 /*
  * Called from the API.  Note that width includes the border.
@@ -2452,6 +2495,8 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
    GLsizei postConvWidth = width;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   internalFormat = override_internal_format(internalFormat, width, 1);
 
 #if FEATURE_convolve
    if (_mesa_is_color_format(internalFormat)) {
@@ -2549,6 +2594,8 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
    GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   internalFormat = override_internal_format(internalFormat, width, height);
 
 #if FEATURE_convolve
    if (_mesa_is_color_format(internalFormat)) {
@@ -2663,6 +2710,8 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   internalFormat = override_internal_format(internalFormat, width, height);
 
    if (target == GL_TEXTURE_3D ||
        (ctx->Extensions.MESA_texture_array &&
