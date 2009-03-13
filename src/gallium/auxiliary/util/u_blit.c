@@ -102,8 +102,7 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
    ctx->rasterizer.front_winding = PIPE_WINDING_CW;
    ctx->rasterizer.cull_mode = PIPE_WINDING_NONE;
-   ctx->rasterizer.bypass_clipping = 1;
-   /*ctx->rasterizer.bypass_vs = 1;*/
+   ctx->rasterizer.bypass_vs_clip_and_viewport = 1;
    ctx->rasterizer.gl_rasterization_rules = 1;
 
    /* samplers */
@@ -116,17 +115,10 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    ctx->sampler.mag_img_filter = 0; /* set later */
    ctx->sampler.normalized_coords = 1;
 
-   /* viewport (identity, we setup vertices in wincoords) */
-   ctx->viewport.scale[0] = 1.0;
-   ctx->viewport.scale[1] = 1.0;
-   ctx->viewport.scale[2] = 1.0;
-   ctx->viewport.scale[3] = 1.0;
-   ctx->viewport.translate[0] = 0.0;
-   ctx->viewport.translate[1] = 0.0;
-   ctx->viewport.translate[2] = 0.0;
-   ctx->viewport.translate[3] = 0.0;
 
-   /* vertex shader */
+   /* vertex shader - still required to provide the linkage between
+    * fragment shader input semantics and vertex_element/buffers.
+    */
    {
       const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
                                       TGSI_SEMANTIC_GENERIC };
@@ -374,13 +366,11 @@ util_blit_pixels(struct blit_state *ctx,
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
-   cso_save_viewport(ctx->cso);
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
-   cso_set_viewport(ctx->cso, &ctx->viewport);
 
    /* sampler */
    ctx->sampler.min_img_filter = filter;
@@ -422,7 +412,6 @@ util_blit_pixels(struct blit_state *ctx,
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
-   cso_restore_viewport(ctx->cso);
 
    pipe_texture_reference(&tex, NULL);
 }
@@ -485,13 +474,11 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
-   cso_save_viewport(ctx->cso);
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
-   cso_set_viewport(ctx->cso, &ctx->viewport);
 
    /* sampler */
    ctx->sampler.min_img_filter = filter;
@@ -536,5 +523,4 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
-   cso_restore_viewport(ctx->cso);
 }

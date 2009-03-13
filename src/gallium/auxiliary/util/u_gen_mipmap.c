@@ -62,7 +62,6 @@ struct gen_mipmap_state
    struct pipe_depth_stencil_alpha_state depthstencil;
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
-   struct pipe_viewport_state viewport;
 
    void *vs;
    void *fs;
@@ -1292,8 +1291,7 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
    ctx->rasterizer.front_winding = PIPE_WINDING_CW;
    ctx->rasterizer.cull_mode = PIPE_WINDING_NONE;
-   ctx->rasterizer.bypass_clipping = 1;
-   /*ctx->rasterizer.bypass_vs = 1;*/
+   ctx->rasterizer.bypass_vs_clip_and_viewport = 1;
    ctx->rasterizer.gl_rasterization_rules = 1;
 
    /* sampler state */
@@ -1304,17 +1302,9 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    ctx->sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
    ctx->sampler.normalized_coords = 1;
 
-   /* viewport state (identity, verts are in wincoords) */
-   ctx->viewport.scale[0] = 1.0;
-   ctx->viewport.scale[1] = 1.0;
-   ctx->viewport.scale[2] = 1.0;
-   ctx->viewport.scale[3] = 1.0;
-   ctx->viewport.translate[0] = 0.0;
-   ctx->viewport.translate[1] = 0.0;
-   ctx->viewport.translate[2] = 0.0;
-   ctx->viewport.translate[3] = 0.0;
-
-   /* vertex shader */
+   /* vertex shader - still needed to specify mapping from fragment
+    * shader input semantics to vertex elements 
+    */
    {
       const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
                                       TGSI_SEMANTIC_GENERIC };
@@ -1465,13 +1455,11 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
-   cso_save_viewport(ctx->cso);
 
    /* bind our state */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
-   cso_set_viewport(ctx->cso, &ctx->viewport);
 
    cso_set_fragment_shader_handle(ctx->cso, ctx->fs);
    cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
@@ -1517,7 +1505,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
       cso_set_sampler_textures(ctx->cso, 1, &pt);
 
-      /* quad coords in window coords (bypassing clipping, viewport mapping) */
+      /* quad coords in window coords (bypassing vs, clip and viewport) */
       offset = set_vertex_data(ctx,
                                (float) pt->width[dstLevel],
                                (float) pt->height[dstLevel]);
@@ -1544,5 +1532,4 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
-   cso_restore_viewport(ctx->cso);
 }

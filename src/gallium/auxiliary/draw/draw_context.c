@@ -127,7 +127,7 @@ void draw_set_rasterizer_state( struct draw_context *draw,
 
    draw->rasterizer = raster;
    draw->bypass_clipping =
-      ((draw->rasterizer && draw->rasterizer->bypass_clipping) ||
+      ((draw->rasterizer && draw->rasterizer->bypass_vs_clip_and_viewport) ||
        draw->driver.bypass_clipping);
 }
 
@@ -139,7 +139,7 @@ void draw_set_driver_clipping( struct draw_context *draw,
 
    draw->driver.bypass_clipping = bypass_clipping;
    draw->bypass_clipping =
-      ((draw->rasterizer && draw->rasterizer->bypass_clipping) ||
+      ((draw->rasterizer && draw->rasterizer->bypass_vs_clip_and_viewport) ||
        draw->driver.bypass_clipping);
 }
 

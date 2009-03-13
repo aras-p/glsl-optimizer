@@ -108,9 +108,15 @@ struct pipe_rasterizer_state
    unsigned line_stipple_factor:8;  /**< [1..256] actually */
    unsigned line_stipple_pattern:16;
    unsigned line_last_pixel:1;
-   unsigned bypass_clipping:1;
-   unsigned bypass_vs:1; /**< Skip the vertex shader.  Note that the shader is
-                            still needed though, to indicate inputs/outputs */
+
+   /** 
+    * Vertex coordinates are pre-transformed to screen space.  Skip
+    * the vertex shader, clipping and viewport processing.  Note that
+    * a vertex shader is still needed though, to indicate the mapping
+    * from vertex elements to fragment shader input semantics.
+    */
+   unsigned bypass_vs_clip_and_viewport:1;
+
    unsigned origin_lower_left:1;  /**< Is (0,0) the lower-left corner? */
    unsigned flatshade_first:1;   /**< take color attribute from the first vertex of a primitive */
    unsigned gl_rasterization_rules:1; /**< enable tweaks for GL rasterization?  */

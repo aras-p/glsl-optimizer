@@ -87,7 +87,7 @@ draw_pt_arrays(struct draw_context *draw,
          opt |= PT_CLIPTEST;
       }
       
-      if (!draw->rasterizer->bypass_vs) {
+      if (!draw->rasterizer->bypass_vs_clip_and_viewport) {
          opt |= PT_SHADE;
       }
    }
