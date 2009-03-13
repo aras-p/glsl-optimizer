@@ -39,7 +39,7 @@ nouveau_copy_buffer(__DRIdrawablePrivate *dPriv, struct pipe_surface *surf,
 		w  = pbox->x2 - pbox->x1;
 		h  = pbox->y2 - pbox->y1;
 
-		pipe->surface_copy(pipe, FALSE, nv->base.frontbuffer,
+		pipe->surface_copy(pipe, nv->base.frontbuffer,
 				   dx, dy, surf, sx, sy, w, h);
 	}
 

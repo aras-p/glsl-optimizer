@@ -328,7 +328,7 @@ util_blit_pixels(struct blit_state *ctx,
 
    if(dst->format == src->format && (dstX1 - dstX0) == srcW && (dstY1 - dstY0) == srcH) {
       /* FIXME: this will most surely fail for overlapping rectangles */
-      pipe->surface_copy(pipe, FALSE,
+      pipe->surface_copy(pipe,
 			 dst, dstX0, dstY0,   /* dest */
 			 src, srcX0, srcY0, /* src */
 			 srcW, srcH);     /* size */
@@ -362,7 +362,7 @@ util_blit_pixels(struct blit_state *ctx,
                                      PIPE_BUFFER_USAGE_GPU_WRITE);
 
    /* load temp texture */
-   pipe->surface_copy(pipe, FALSE,
+   pipe->surface_copy(pipe,
                       texSurf, 0, 0,   /* dest */
                       src, srcLeft, srcTop, /* src */
                       srcW, srcH);     /* size */

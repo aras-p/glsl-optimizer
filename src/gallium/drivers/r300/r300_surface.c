@@ -253,7 +253,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
 }
 
 static void r300_surface_copy(struct pipe_context* pipe,
-                              boolean do_flip,
                               struct pipe_surface* dest,
                               unsigned destx, unsigned desty,
                               struct pipe_surface* src,
@@ -272,7 +271,7 @@ static void r300_surface_copy(struct pipe_context* pipe,
 
     if (TRUE) {
         debug_printf("r300: Falling back on surface_copy\n");
-        return util_surface_copy(pipe, do_flip, dest, destx, desty, src,
+        return util_surface_copy(pipe, FALSE, dest, destx, desty, src,
                 srcx, srcy, w, h);
     }
 #if 0

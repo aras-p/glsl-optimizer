@@ -144,7 +144,7 @@ nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
 }
 
 static void
-nv50_surface_copy(struct pipe_context *pipe, boolean flip,
+nv50_surface_copy(struct pipe_context *pipe,
 		  struct pipe_surface *dest, unsigned destx, unsigned desty,
 		  struct pipe_surface *src, unsigned srcx, unsigned srcy,
 		  unsigned width, unsigned height)
@@ -154,16 +154,8 @@ nv50_surface_copy(struct pipe_context *pipe, boolean flip,
 
 	assert(src->format == dest->format);
 
-	if (flip) {
-		desty += height;
-		while (height--) {
-			nv50_surface_do_copy(screen, dest, destx, desty--, src,
-					     srcx, srcy++, width, 1);
-		}
-	} else {
-		nv50_surface_do_copy(screen, dest, destx, desty, src, srcx,
+	nv50_surface_do_copy(screen, dest, destx, desty, src, srcx,
 				     srcy, width, height);
-	}
 }
 
 static void

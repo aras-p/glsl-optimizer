@@ -283,7 +283,7 @@ ExaCopy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
 				   PIPE_BUFFER_USAGE_GPU_READ |
 				   PIPE_BUFFER_USAGE_GPU_WRITE);
 
-    exa->ctx->surface_copy(exa->ctx, 0, surf, dstX, dstY, priv->src_surf,
+    exa->ctx->surface_copy(exa->ctx, surf, dstX, dstY, priv->src_surf,
 			   srcX, srcY, width, height);
     exa->scrn->tex_surface_destroy(surf);
 }

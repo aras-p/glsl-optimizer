@@ -266,13 +266,12 @@ error1:
     * Surface functions
     */
    
-   void surface_copy(int do_flip,
-                     struct pipe_surface *dest,
+   void surface_copy(struct pipe_surface *dest,
                      unsigned destx, unsigned desty,
                      struct pipe_surface *src,
                      unsigned srcx, unsigned srcy,
                      unsigned width, unsigned height) {
-      $self->pipe->surface_copy($self->pipe, do_flip, dest, destx, desty, src, srcx, srcy, width, height);
+      $self->pipe->surface_copy($self->pipe, dest, destx, desty, src, srcx, srcy, width, height);
    }
 
    void surface_fill(struct pipe_surface *dst,

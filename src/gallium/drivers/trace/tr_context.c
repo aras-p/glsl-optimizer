@@ -911,7 +911,6 @@ trace_context_set_vertex_elements(struct pipe_context *_pipe,
 
 static INLINE void
 trace_context_surface_copy(struct pipe_context *_pipe,
-                           boolean do_flip,
                            struct pipe_surface *dest,
                            unsigned destx, unsigned desty,
                            struct pipe_surface *src,
@@ -927,7 +926,6 @@ trace_context_surface_copy(struct pipe_context *_pipe,
    trace_dump_call_begin("pipe_context", "surface_copy");
 
    trace_dump_arg(ptr, pipe);
-   trace_dump_arg(bool, do_flip);
    trace_dump_arg(ptr, dest);
    trace_dump_arg(uint, destx);
    trace_dump_arg(uint, desty);
@@ -937,7 +935,7 @@ trace_context_surface_copy(struct pipe_context *_pipe,
    trace_dump_arg(uint, width);
    trace_dump_arg(uint, height);
 
-   pipe->surface_copy(pipe, do_flip,
+   pipe->surface_copy(pipe,
                       dest, destx, desty,
                       src, srcx, srcy, width, height);
 

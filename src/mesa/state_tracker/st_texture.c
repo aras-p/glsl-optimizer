@@ -342,7 +342,6 @@ st_texture_image_copy(struct pipe_context *pipe,
                                             PIPE_BUFFER_USAGE_GPU_READ);
 
       pipe->surface_copy(pipe,
-                         FALSE,
 			 dst_surface,
 			 0, 0, /* destX, Y */
 			 src_surface,

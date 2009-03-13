@@ -154,7 +154,6 @@ update_framebuffer_state( struct st_context *st )
          (void) st_get_framebuffer_surface(stfb, ST_SURFACE_BACK_LEFT, &surf_back);
 
          st->pipe->surface_copy(st->pipe,
-                                FALSE,
                                 surf_front, 0, 0,  /* dest */
                                 surf_back, 0, 0,   /* src */
                                 fb->Width, fb->Height);

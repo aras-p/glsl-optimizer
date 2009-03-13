@@ -33,22 +33,13 @@
 #include "util/u_tile.h"
 
 static void
-nv04_surface_copy(struct pipe_context *pipe, boolean do_flip,
+nv04_surface_copy(struct pipe_context *pipe,
 		  struct pipe_surface *dest, unsigned destx, unsigned desty,
 		  struct pipe_surface *src, unsigned srcx, unsigned srcy,
 		  unsigned width, unsigned height)
 {
 	struct nv04_context *nv04 = nv04_context(pipe);
 	struct nv04_surface_2d *eng2d = nv04->screen->eng2d;
-
-	if (do_flip) {
-		desty += height;
-		while (height--) {
-			eng2d->copy(eng2d, dest, destx, desty--, src,
-				    srcx, srcy++, width, 1);
-		}
-		return;
-	}
 
 	eng2d->copy(eng2d, dest, destx, desty, src, srcx, srcy, width, height);
 }

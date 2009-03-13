@@ -41,7 +41,6 @@
  */
 static void
 i915_surface_copy(struct pipe_context *pipe,
-                  boolean do_flip,
 		  struct pipe_surface *dst,
 		  unsigned dstx, unsigned dsty,
 		  struct pipe_surface *src,
@@ -58,7 +57,7 @@ i915_surface_copy(struct pipe_context *pipe,
    assert( dst_tex->base.block.height == 1 );
 
    i915_copy_blit( i915_context(pipe),
-                   do_flip,
+                   FALSE,
                    dst_tex->base.block.size,
                    (unsigned short) src_tex->stride, src_tex->buffer, src->offset,
                    (unsigned short) dst_tex->stride, dst_tex->buffer, dst->offset,

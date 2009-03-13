@@ -916,7 +916,6 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       struct pipe_surface *psTex = screen->get_tex_surface(screen, pt, 0, 0, 0, 
                                       PIPE_BUFFER_USAGE_GPU_WRITE );
       pipe->surface_copy(pipe,
-                         FALSE,
 			 psTex, /* dest */
 			 0, 0, /* destx/y */
 			 psRead,

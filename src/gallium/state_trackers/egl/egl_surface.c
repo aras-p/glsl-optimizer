@@ -391,7 +391,6 @@ drm_swap_buffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 		if (surf->screen) {
 			surf->user->pipe->flush(surf->user->pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE, NULL);
 			surf->user->pipe->surface_copy(surf->user->pipe,
-				0,
 				surf->screen->surface,
 				0, 0,
 				back_surf,

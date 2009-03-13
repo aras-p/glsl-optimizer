@@ -1089,21 +1089,19 @@ st_copy_texsubimage(GLcontext *ctx,
    if (matching_base_formats && ctx->_ImageTransferState == 0x0) {
       /* try potential hardware path */
       struct pipe_surface *dest_surface = NULL;
+      boolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
 
-      if (src_format == dest_format) {
+      if (src_format == dest_format && !do_flip) {
          /* use surface_copy() / blit */
-         boolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
+
 
          dest_surface = screen->get_tex_surface(screen, stImage->pt,
                                                 stImage->face, stImage->level,
                                                 destZ,
                                                 PIPE_BUFFER_USAGE_GPU_WRITE);
-         if (do_flip)
-            srcY = strb->surface->height - srcY - height;
 
          /* for surface_copy(), y=0=top, always */
          pipe->surface_copy(pipe,
-                            do_flip,
                             /* dest */
                             dest_surface,
                             destX, destY,
@@ -1123,7 +1121,6 @@ st_copy_texsubimage(GLcontext *ctx,
                                            PIPE_TEXTURE_USAGE_RENDER_TARGET,
                                            0)) {
          /* draw textured quad to do the copy */
-         boolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
          int srcY0, srcY1;
 
          dest_surface = screen->get_tex_surface(screen, stImage->pt,
