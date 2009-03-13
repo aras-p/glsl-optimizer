@@ -43,18 +43,11 @@
 #define FRAC(f)  ((f) - IFLOOR(f))
 
 
-/**
- * Constants for integer linear interpolation.
- */
-#define ILERP_SCALE 65536.0F
-#define ILERP_SHIFT 16
-
 
 /**
- * Linear interpolation macros
+ * Linear interpolation macro
  */
 #define LERP(T, A, B)  ( (A) + (T) * ((B) - (A)) )
-#define ILERP(IT, A, B)  ( (A) + (((IT) * ((B) - (A))) >> ILERP_SHIFT) )
 
 
 /**
@@ -76,21 +69,6 @@ lerp_2d(GLfloat a, GLfloat b,
 
 
 /**
- * Do 2D/biliner interpolation of integer values.
- * \sa lerp_2d
- */
-static INLINE GLint
-ilerp_2d(GLint ia, GLint ib,
-         GLint v00, GLint v10, GLint v01, GLint v11)
-{
-   /* fixed point interpolants in [0, ILERP_SCALE] */
-   const GLint temp0 = ILERP(ia, v00, v10);
-   const GLint temp1 = ILERP(ia, v01, v11);
-   return ILERP(ib, temp0, temp1);
-}
-
-
-/**
  * Do 3D/trilinear interpolation of float values.
  * \sa lerp_2d
  */
@@ -106,26 +84,6 @@ lerp_3d(GLfloat a, GLfloat b, GLfloat c,
    const GLfloat temp0 = LERP(b, temp00, temp10);
    const GLfloat temp1 = LERP(b, temp01, temp11);
    return LERP(c, temp0, temp1);
-}
-
-
-/**
- * Do 3D/trilinear interpolation of integer values.
- * \sa lerp_2d
- */
-static INLINE GLint
-ilerp_3d(GLint ia, GLint ib, GLint ic,
-         GLint v000, GLint v100, GLint v010, GLint v110,
-         GLint v001, GLint v101, GLint v011, GLint v111)
-{
-   /* fixed point interpolants in [0, ILERP_SCALE] */
-   const GLint temp00 = ILERP(ia, v000, v100);
-   const GLint temp10 = ILERP(ia, v010, v110);
-   const GLint temp01 = ILERP(ia, v001, v101);
-   const GLint temp11 = ILERP(ia, v011, v111);
-   const GLint temp0 = ILERP(ib, temp00, temp10);
-   const GLint temp1 = ILERP(ib, temp01, temp11);
-   return ILERP(ic, temp0, temp1);
 }
 
 
