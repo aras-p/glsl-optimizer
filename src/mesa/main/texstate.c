@@ -183,7 +183,9 @@ calculate_derived_texenv( struct gl_tex_env_combine_state *state,
       break;
       
    default:
-      _mesa_problem(NULL, "Invalid texBaseFormat in calculate_derived_texenv");
+      _mesa_problem(NULL,
+                    "Invalid texBaseFormat 0x%x in calculate_derived_texenv",
+                    texBaseFormat);
       return;
    }
 
