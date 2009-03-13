@@ -1552,7 +1552,8 @@ texture_error_check( GLcontext *ctx, GLenum target,
        */
       if (!isProxy) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glTexImage%dD(format or type)", dimensions);
+                     "glTexImage%dD(incompatible format 0x%x, type 0x%x)",
+                     dimensions, format, type);
       }
       return GL_TRUE;
    }
@@ -1568,7 +1569,8 @@ texture_error_check( GLcontext *ctx, GLenum target,
        (is_dudv_format(internalFormat) != is_dudv_format(format))) {
       if (!isProxy)
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glTexImage(internalFormat/format)");
+                     "glTexImage%dD(incompatible internalFormat 0x%x, format 0x%x)",
+                     dimensions, internalFormat, format);
       return GL_TRUE;
    }
 
@@ -1742,7 +1744,8 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
 
    if (!_mesa_is_legal_format_and_type(ctx, format, type)) {
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glTexSubImage%dD(format or type)", dimensions);
+                  "glTexSubImage%dD(incompatible format 0x%x, type 0x%x)",
+                  dimensions, format, type);
       return GL_TRUE;
    }
 
