@@ -156,6 +156,12 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    c->prog_data.urb_entry_size = (c->nr_outputs+2+3)/4;
    c->prog_data.total_grf = reg;
+
+   if (INTEL_DEBUG & DEBUG_VS) {
+      _mesa_printf("%s NumAddrRegs %d\n", __FUNCTION__, c->vp->program.Base.NumAddressRegs);
+      _mesa_printf("%s NumTemps %d\n", __FUNCTION__, c->vp->program.Base.NumTemporaries);
+      _mesa_printf("%s reg = %d\n", __FUNCTION__, reg);
+   }
 }
 
 
@@ -658,7 +664,7 @@ static void emit_nrm( struct brw_vs_compile *c,
 /* TODO: relative addressing!
  */
 static struct brw_reg get_reg( struct brw_vs_compile *c,
-			       GLuint file,
+			       gl_register_file file,
 			       GLuint index )
 {
 
