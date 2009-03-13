@@ -262,7 +262,8 @@ calculate_derived_texenv( struct gl_tex_env_combine_state *state,
 
    default:
       _mesa_problem(NULL,
-                    "Invalid texture env mode in calculate_derived_texenv");
+                    "Invalid texture env mode 0x%x in calculate_derived_texenv",
+                    mode);
       return;
    }
    
