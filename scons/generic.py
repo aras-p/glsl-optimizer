@@ -405,13 +405,17 @@ def generate(env):
             ]
         if env['machine'] == 'x86_64':
             ccflags += ['-m64']
+        # See also:
+        # - http://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
         ccflags += [
+            '-Werror=declaration-after-statement',
             '-Wall',
             '-Wmissing-prototypes',
+            '-Wmissing-field-initializers',
+            '-Wpointer-arith',
             '-Wno-long-long',
-            '-Wdeclaration-after-statement',
             '-ffast-math',
-            '-pedantic',
+            '-std=gnu99',
             '-fmessage-length=0', # be nice to Eclipse
         ]
     if msvc:

@@ -330,11 +330,15 @@ def generate(env):
             ]
         if env['machine'] == 'x86_64':
             cflags += ['-m64']
+        # See also:
+        # - http://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
         cflags += [
+            '-Werror=declaration-after-statement',
             '-Wall',
             '-Wmissing-prototypes',
+            '-Wmissing-field-initializers',
+            '-Wpointer-arith',
             '-Wno-long-long',
-            '-Wdeclaration-after-statement',
             '-ffast-math',
             '-std=gnu99',
             '-fmessage-length=0', # be nice to Eclipse
