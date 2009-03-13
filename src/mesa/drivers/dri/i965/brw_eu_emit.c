@@ -55,6 +55,9 @@ static void guess_execution_size( struct brw_instruction *insn,
 static void brw_set_dest( struct brw_instruction *insn,
 			  struct brw_reg dest )
 {
+   if (dest.type != BRW_ARCHITECTURE_REGISTER_FILE)
+      assert(dest.nr < 128);
+
    insn->bits1.da1.dest_reg_file = dest.file;
    insn->bits1.da1.dest_reg_type = dest.type;
    insn->bits1.da1.dest_address_mode = dest.address_mode;
@@ -99,6 +102,9 @@ static void brw_set_src0( struct brw_instruction *insn,
                           struct brw_reg reg )
 {
    assert(reg.file != BRW_MESSAGE_REGISTER_FILE);
+
+   if (reg.type != BRW_ARCHITECTURE_REGISTER_FILE)
+      assert(reg.nr < 128);
 
    insn->bits1.da1.src0_reg_file = reg.file;
    insn->bits1.da1.src0_reg_type = reg.type;
@@ -172,6 +178,8 @@ void brw_set_src1( struct brw_instruction *insn,
                    struct brw_reg reg )
 {
    assert(reg.file != BRW_MESSAGE_REGISTER_FILE);
+
+   assert(reg.nr < 128);
 
    insn->bits1.da1.src1_reg_file = reg.file;
    insn->bits1.da1.src1_reg_type = reg.type;
