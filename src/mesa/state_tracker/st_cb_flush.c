@@ -117,12 +117,15 @@ static void st_glFlush(GLcontext *ctx)
 {
    struct st_context *st = ctx->st;
 
+   /* Don't call st_finish() here.  It is not the state tracker's
+    * responsibilty to inject sleeps in the hope of avoiding buffer
+    * synchronization issues.  Calling finish() here will just hide
+    * problems that need to be fixed elsewhere.
+    */
+   st_flush(st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, NULL);
+
    if (is_front_buffer_dirty(st)) {
-      st_finish(st);
       display_front_buffer(st);
-   }
-   else {
-      st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
    }
 }
 
