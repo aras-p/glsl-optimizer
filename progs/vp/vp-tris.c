@@ -18,6 +18,8 @@ static const char *filename = NULL;
 static GLuint nr_steps = 4;
 static GLuint prim = GL_TRIANGLES;
 static GLfloat psz = 1.0;
+static GLboolean pointsmooth = 0;
+static GLboolean program_point_size = 0;
 
 static void usage( char *name )
 {
@@ -188,6 +190,14 @@ static void subdiv( union vert *v0,
    }
 }
 
+static void enable( GLenum value, GLboolean flag )
+{
+   if (flag)
+      glEnable(value);
+   else
+      glDisable(value);
+}
+
 /** Assignment */
 #define ASSIGN_3V( V, V0, V1, V2 )  \
 do {                                \
@@ -201,6 +211,9 @@ static void Display( void )
    glClearColor(0.3, 0.3, 0.3, 1);
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
    glPointSize(psz);
+
+   enable( GL_POINT_SMOOTH, pointsmooth );
+   enable( GL_VERTEX_PROGRAM_POINT_SIZE_ARB, program_point_size );
 
    glBegin(prim);
 
@@ -258,6 +271,12 @@ static void Key( unsigned char key, int x, int y )
    case 'S':
       if (psz > .5)
          psz -= .5;
+      break;
+   case 'm':
+      pointsmooth = !pointsmooth;
+      break;
+   case 'z':
+      program_point_size = !program_point_size;
       break;
    case '+':
       nr_steps++;
