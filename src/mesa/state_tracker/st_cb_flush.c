@@ -63,16 +63,19 @@ display_front_buffer(struct st_context *st)
    GLframebuffer *fb = st->ctx->DrawBuffer;
    struct st_renderbuffer *strb
       = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
-   struct pipe_surface *front_surf = strb->surface;
 
-   /* Hook for copying "fake" frontbuffer if necessary:
-    */
-   st->pipe->screen->flush_frontbuffer( st->pipe->screen, front_surf,
-                                        st->pipe->priv );
+   if (strb) {
+      struct pipe_surface *front_surf = strb->surface;
+      
+      /* Hook for copying "fake" frontbuffer if necessary:
+       */
+      st->pipe->screen->flush_frontbuffer( st->pipe->screen, front_surf,
+                                           st->pipe->priv );
 
-   /*
-   st->frontbuffer_status = FRONT_STATUS_UNDEFINED;
-   */
+      /*
+        st->frontbuffer_status = FRONT_STATUS_UNDEFINED;
+      */
+   }
 }
 
 
