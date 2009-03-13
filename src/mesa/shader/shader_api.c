@@ -1495,6 +1495,17 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
                      "glUseProgram(program %u not linked)", program);
          return;
       }
+
+      /* debug code */
+      if (0) {
+         GLuint i;
+         _mesa_printf("Use Shader %u\n", shProg->Name);
+         for (i = 0; i < shProg->NumShaders; i++) {
+            _mesa_printf(" shader %u, type 0x%x\n",
+                         shProg->Shaders[i]->Name,
+                         shProg->Shaders[i]->Type);
+         }
+      }
    }
    else {
       shProg = NULL;
