@@ -554,8 +554,6 @@ trace_screen_user_buffer_create(struct pipe_screen *_screen,
 
    trace_dump_call_end();
 
-   /* XXX: Mark the user buffers. (we should wrap pipe_buffers, but is is
-    * impossible to do so while texture-less surfaces are still around */
    if(result) {
       assert(!(result->usage & TRACE_BUFFER_USAGE_USER));
       result->usage |= TRACE_BUFFER_USAGE_USER;
@@ -615,24 +613,13 @@ trace_screen_buffer_map(struct pipe_screen *_screen,
    struct pipe_buffer *buffer = tr_buf->buffer;
    void *map;
 
-   trace_dump_call_begin("pipe_screen", "buffer_map");
-
-   trace_dump_arg(ptr, screen);
-   trace_dump_arg(ptr, buffer);
-   trace_dump_arg(uint, usage);
-
    assert(screen->buffer_map);
    map = screen->buffer_map(screen, buffer, usage);
-
-   trace_dump_ret(ptr, map);
-#if 0
    if(map) {
       if(usage & PIPE_BUFFER_USAGE_CPU_WRITE) {
-         assert(!hash_table_get(tr_ws->buffer_maps, buffer));
-         hash_table_set(tr_ws->buffer_maps, buffer, map);
+         tr_buf->map = map;
       }
    }
-#endif
 
    return map;
 }
@@ -651,22 +638,42 @@ trace_screen_buffer_map_range(struct pipe_screen *_screen,
    struct pipe_buffer *buffer = tr_buf->buffer;
    void *map;
 
-   trace_dump_call_begin("pipe_screen", "buffer_map_range");
-
-   trace_dump_arg(ptr, screen);
-   trace_dump_arg(ptr, buffer);
-   trace_dump_arg(uint, offset);
-   trace_dump_arg(uint, length);
-   trace_dump_arg(uint, usage);
-
    assert(screen->buffer_map_range);
    map = screen->buffer_map_range(screen, buffer, offset, length, usage);
+   if(map) {
+      if(usage & PIPE_BUFFER_USAGE_CPU_WRITE) {
+         tr_buf->map = map;
+      }
+   }
 
-   trace_dump_ret(ptr, map);
+   return map;
+}
+
+
+static void
+buffer_write(struct pipe_screen *screen,
+             struct pipe_buffer *buffer,
+             const char *map,
+             unsigned offset,
+             unsigned length)
+{
+   assert(map);
+
+   trace_dump_call_begin("pipe_screen", "buffer_write");
+
+   trace_dump_arg(ptr, screen);
+
+   trace_dump_arg(ptr, buffer);
+
+   trace_dump_arg_begin("data");
+   trace_dump_bytes(map + offset, length);
+   trace_dump_arg_end();
+
+   trace_dump_arg(uint, offset);
+   trace_dump_arg(uint, length);
 
    trace_dump_call_end();
 
-   return map;
 }
 
 
@@ -681,17 +688,10 @@ trace_screen_buffer_flush_mapped_range(struct pipe_screen *_screen,
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_buffer *buffer = tr_buf->buffer;
 
-   trace_dump_call_begin("pipe_screen", "buffer_flush_mapped_range");
-
-   trace_dump_arg(ptr, screen);
-   trace_dump_arg(ptr, buffer);
-   trace_dump_arg(uint, offset);
-   trace_dump_arg(uint, length);
-
-   assert(screen->buffer_flush_mapped_range);
+   assert(tr_buf->map);
+   buffer_write(screen, buffer, tr_buf->map, offset, length);
+   tr_buf->range_flushed = TRUE;
    screen->buffer_flush_mapped_range(screen, buffer, offset, length);
-
-   trace_dump_call_end();
 }
 
 
@@ -703,40 +703,12 @@ trace_screen_buffer_unmap(struct pipe_screen *_screen,
    struct trace_buffer *tr_buf = trace_buffer(tr_scr, _buffer);
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_buffer *buffer = tr_buf->buffer;
-#if 0
-   const void *map;
 
-   map = hash_table_get(tr_ws->buffer_maps, buffer);
-   if(map) {
-      trace_dump_call_begin("pipe_winsys", "buffer_write");
-
-      trace_dump_arg(ptr, winsys);
-
-      trace_dump_arg(ptr, buffer);
-
-      trace_dump_arg_begin("data");
-      trace_dump_bytes(map, buffer->size);
-      trace_dump_arg_end();
-
-      trace_dump_arg_begin("size");
-      trace_dump_uint(buffer->size);
-      trace_dump_arg_end();
-
-      trace_dump_call_end();
-
-      hash_table_remove(tr_ws->buffer_maps, buffer);
-   }
-#endif
-
-   trace_dump_call_begin("pipe_screen", "buffer_unmap");
-
-   trace_dump_arg(ptr, screen);
-   trace_dump_arg(ptr, buffer);
-
-   assert(screen->buffer_unmap);
+   if (tr_buf->map && !tr_buf->range_flushed)
+      buffer_write(screen, buffer, tr_buf->map, 0, buffer->size);
+   tr_buf->map = NULL;
+   tr_buf->range_flushed = FALSE;
    screen->buffer_unmap(screen, buffer);
-
-   trace_dump_call_end();
 }
 
 
