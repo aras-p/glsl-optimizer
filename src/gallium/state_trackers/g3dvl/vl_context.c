@@ -41,9 +41,7 @@ static int vlInitCommon(struct vlContext *context)
 	rast.line_stipple_factor = 0;
 	rast.line_stipple_pattern = 0;
 	rast.line_last_pixel = 0;
-	/* Don't need clipping, but viewport mapping done here */
-	rast.bypass_clipping = 0;
-	rast.bypass_vs = 0;
+	rast.bypass_vs_clip_and_viewport = 0;
 	rast.origin_lower_left = 0;
 	rast.line_width = 1;
 	rast.point_smooth = 0;

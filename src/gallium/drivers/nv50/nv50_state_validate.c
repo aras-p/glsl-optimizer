@@ -254,7 +254,7 @@ scissor_uptodate:
 	if (nv50->dirty & NV50_NEW_VIEWPORT) {
 		unsigned bypass;
 
-		if (!nv50->rasterizer->pipe.bypass_clipping)
+		if (!nv50->rasterizer->pipe.bypass_vs_clip_and_viewport)
 			bypass = 0;
 		else
 			bypass = 1;

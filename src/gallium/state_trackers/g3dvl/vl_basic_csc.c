@@ -371,7 +371,7 @@ static int vlCreateVertexShader
 	unsigned int			ti;
 	unsigned int			i;
 
-	assert(context);
+	assert(csc);
 
 	pipe = csc->pipe;
 	tokens = (struct tgsi_token*)MALLOC(max_tokens * sizeof(struct tgsi_token));
@@ -458,7 +458,7 @@ static int vlCreateFragmentShader
 	unsigned int			ti;
 	unsigned int			i;
 
-	assert(context);
+	assert(csc);
 
 	pipe = csc->pipe;
 	tokens = (struct tgsi_token*)MALLOC(max_tokens * sizeof(struct tgsi_token));
