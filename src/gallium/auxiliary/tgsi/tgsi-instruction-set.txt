@@ -712,3 +712,110 @@ TGSI Instruction Specification
   dst.y = pop()
   dst.x = pop()
 
+
+1.11  GL_NV_gpu_program4
+------------------------
+
+
+1.11.1  CEIL - Ceiling
+
+  dst.x = ceil(src.x)
+  dst.y = ceil(src.y)
+  dst.z = ceil(src.z)
+  dst.w = ceil(src.w)
+
+
+1.11.2  I2F - Integer To Float
+
+  dst.x = (float) src.x
+  dst.y = (float) src.y
+  dst.z = (float) src.z
+  dst.w = (float) src.w
+
+
+1.11.3  NOT - Bitwise Not
+
+  dst.x = ~src.x
+  dst.y = ~src.y
+  dst.z = ~src.z
+  dst.w = ~src.w
+
+
+1.11.4  TRUNC - Truncate
+
+  dst.x = trunc(src.x)
+  dst.y = trunc(src.y)
+  dst.z = trunc(src.z)
+  dst.w = trunc(src.w)
+
+
+1.11.5  SHL - Shift Left
+
+  dst.x = src0.x << src1.x
+  dst.y = src0.y << src1.x
+  dst.z = src0.z << src1.x
+  dst.w = src0.w << src1.x
+
+
+1.11.6  SHR - Shift Right
+
+  dst.x = src0.x >> src1.x
+  dst.y = src0.y >> src1.x
+  dst.z = src0.z >> src1.x
+  dst.w = src0.w >> src1.x
+
+
+1.11.7  AND - Bitwise And
+
+  dst.x = src0.x & src1.x
+  dst.y = src0.y & src1.y
+  dst.z = src0.z & src1.z
+  dst.w = src0.w & src1.w
+
+
+1.11.8  OR - Bitwise Or
+
+  dst.x = src0.x | src1.x
+  dst.y = src0.y | src1.y
+  dst.z = src0.z | src1.z
+  dst.w = src0.w | src1.w
+
+
+1.11.9  MOD - Modulus
+
+  dst.x = src0.x % src1.x
+  dst.y = src0.y % src1.y
+  dst.z = src0.z % src1.z
+  dst.w = src0.w % src1.w
+
+
+1.11.10  XOR - Bitwise Xor
+
+  dst.x = src0.x ^ src1.x
+  dst.y = src0.y ^ src1.y
+  dst.z = src0.z ^ src1.z
+  dst.w = src0.w ^ src1.w
+
+
+1.11.11  SAD - Sum Of Absolute Differences
+
+  dst.x = abs(src0.x - src1.x) + src2.x
+  dst.y = abs(src0.y - src1.y) + src2.y
+  dst.z = abs(src0.z - src1.z) + src2.z
+  dst.w = abs(src0.w - src1.w) + src2.w
+
+
+1.11.12  TXF - Texel Fetch
+
+  TBD
+
+
+1.11.13  TXQ - Texture Size Query
+
+  TBD
+
+
+1.11.14  CONT - Continue
+
+  TBD
+
