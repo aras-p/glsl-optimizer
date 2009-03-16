@@ -878,8 +878,9 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
       for (i = 0; i < num_buffers; i++)
          _buffers[i].buffer = trace_buffer_unwrap(tr_ctx, buffers[i].buffer);
       pipe->set_vertex_buffers(pipe, num_buffers, _buffers);
+      free(_buffers);
    } else {
-      pipe->set_vertex_buffers(pipe, num_buffers, buffers);
+      pipe->set_vertex_buffers(pipe, num_buffers, NULL);
    }
 
    trace_dump_call_end();
