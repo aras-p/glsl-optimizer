@@ -301,8 +301,8 @@ void r300_emit_texture(struct r300_context* r300,
     OUT_CS_REG(R300_TX_FORMAT1_0 + (offset * 4), tex->state.format1);
     OUT_CS_REG(R300_TX_FORMAT2_0 + (offset * 4), tex->state.format2);
     OUT_CS_REG_SEQ(R300_TX_OFFSET_0 + (offset * 4), 1);
-    OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_GTT |
-            RADEON_GEM_DOMAIN_VRAM, 0);
+    OUT_CS_RELOC(tex->buffer, 0,
+            RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0, 0);
     END_CS;
 }
 
