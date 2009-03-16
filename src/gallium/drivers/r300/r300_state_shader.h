@@ -30,6 +30,7 @@
 #include "r300_reg.h"
 #include "r300_screen.h"
 
+/* XXX this all should find its way back to r300_reg */
 /* Swizzle tools */
 #define R500_SWIZZLE_ZERO 4
 #define R500_SWIZZLE_HALF 5
@@ -56,6 +57,28 @@
 #define R500_TEX_WMASK(x) ((x) << 11)
 #define R500_ALU_WMASK(x) ((x) << 11)
 #define R500_ALU_OMASK(x) ((x) << 15)
+
+/* TGSI constants. TGSI is like XML: If it can't solve your problems, you're
+ * not using enough of it. */
+static const struct tgsi_full_src_register r500_constant_zero = {
+    .SrcRegister.Extended = TRUE,
+    .SrcRegister.File = TGSI_FILE_TEMPORARY,
+    .SrcRegister.Index = 0,
+    .SrcRegisterExtSwz.ExtSwizzleX = TGSI_EXTSWIZZLE_ZERO,
+    .SrcRegisterExtSwz.ExtSwizzleY = TGSI_EXTSWIZZLE_ZERO,
+    .SrcRegisterExtSwz.ExtSwizzleZ = TGSI_EXTSWIZZLE_ZERO,
+    .SrcRegisterExtSwz.ExtSwizzleW = TGSI_EXTSWIZZLE_ZERO,
+};
+
+static const struct tgsi_full_src_register r500_constant_one = {
+    .SrcRegister.Extended = TRUE,
+    .SrcRegister.File = TGSI_FILE_TEMPORARY,
+    .SrcRegister.Index = 0,
+    .SrcRegisterExtSwz.ExtSwizzleX = TGSI_EXTSWIZZLE_ONE,
+    .SrcRegisterExtSwz.ExtSwizzleY = TGSI_EXTSWIZZLE_ONE,
+    .SrcRegisterExtSwz.ExtSwizzleZ = TGSI_EXTSWIZZLE_ONE,
+    .SrcRegisterExtSwz.ExtSwizzleW = TGSI_EXTSWIZZLE_ONE,
+};
 
 /* Temporary struct used to hold assembly state while putting together
  * fragment programs. */

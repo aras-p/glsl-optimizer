@@ -366,6 +366,13 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
             fs->instructions[i].inst4 &= ~R500_SWIZ_ALPHA_A(0x7);
             fs->instructions[i].inst4 |= R500_SWIZ_ALPHA_A(R500_SWIZZLE_ONE);
             break;
+        case TGSI_OPCODE_MUL:
+            /* Force our src2 to zero */
+            inst->FullSrcRegisters[2] = r500_constant_zero;
+            r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3,
+                    false);
+            break;
         case TGSI_OPCODE_MAD:
             r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3,
