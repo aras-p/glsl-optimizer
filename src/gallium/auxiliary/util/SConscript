@@ -3,6 +3,7 @@ Import('*')
 util = env.ConvenienceLibrary(
 	target = 'util',
 	source = [
+		'u_bitmask.c',
 		'u_blit.c',
 		'u_cache.c',
 		'u_debug.c',
