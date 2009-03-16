@@ -66,7 +66,71 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t new)
    return __sync_val_compare_and_swap(&v->count, old, new);
 }
 
-#elif (defined(PIPE_SUBSYSTEM_WINDOWS_USER)) /* (defined(PIPE_CC_GCC)) */
+#elif (defined(PIPE_ARCH_X86) && defined(PIPE_CC_MSVC)) /* (defined(PIPE_CC_GCC)) */
+
+struct pipe_atomic
+{
+   int32_t count;
+};
+
+#define p_atomic_set(_v, _i) ((_v)->count = (_i))
+#define p_atomic_read(_v) ((_v)->count)
+
+static INLINE boolean
+p_atomic_dec_zero(struct pipe_atomic *v)
+{
+   int32_t *pcount = &v->count;
+   unsigned char c;
+
+   __asm {
+      mov       eax, [pcount]
+      lock dec  dword ptr [eax]
+      sete      byte ptr [c]
+   }
+
+   return c != 0;
+}
+
+static INLINE void
+p_atomic_inc(struct pipe_atomic *v)
+{
+   int32_t *pcount = &v->count;
+
+   __asm {
+      mov       eax, [pcount]
+      lock inc  dword ptr [eax]
+   }
+}
+
+static INLINE void
+p_atomic_dec(struct pipe_atomic *v)
+{
+   int32_t *pcount = &v->count;
+
+   __asm {
+      mov       eax, [pcount]
+      lock dec  dword ptr [eax]
+   }
+}
+
+static INLINE int32_t
+p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t new)
+{
+   int32_t *pcount = &v->count;
+   int32_t orig;
+
+   __asm {
+      mov ecx, [pcount]
+      mov eax, [old]
+      mov edx, [new]
+      lock cmpxchg [ecx], edx
+      mov [orig], eax
+   }
+
+   return orig;
+}
+
+#elif (defined(PIPE_SUBSYSTEM_WINDOWS_USER)) /* (defined(PIPE_ARCH_X86) && defined(PIPE_CC_MSVC)) */
 
 struct pipe_atomic
 {
