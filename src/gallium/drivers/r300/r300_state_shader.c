@@ -84,7 +84,7 @@ static INLINE unsigned r300_fs_src(struct r300_fs_asm* assembler,
             return src->Index + assembler->temp_offset;
             break;
         case TGSI_FILE_IMMEDIATE:
-            return src->Index + assembler->imm_offset | (1 << 8);
+            return (src->Index + assembler->imm_offset) | (1 << 8);
             break;
         case TGSI_FILE_CONSTANT:
             /* XXX magic */
@@ -227,6 +227,11 @@ static INLINE void r500_emit_alu(struct r500_fragment_shader* fs,
     fs->instructions[i].inst0 |=
         R500_INST_TEX_SEM_WAIT |
         R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP;
+
+    fs->instructions[i].inst4 =
+        R500_ALPHA_ADDRD(r300_fs_dst(assembler, &dst->DstRegister));
+    fs->instructions[i].inst5 =
+        R500_ALU_RGBA_ADDRD(r300_fs_dst(assembler, &dst->DstRegister));
 }
 
 static INLINE void r500_emit_maths(struct r500_fragment_shader* fs,
@@ -247,7 +252,7 @@ static INLINE void r500_emit_maths(struct r500_fragment_shader* fs,
                 R500_RGB_ADDR2(r300_fs_src(assembler, &src[2].SrcRegister));
             fs->instructions[i].inst2 =
                 R500_ALPHA_ADDR2(r300_fs_src(assembler, &src[2].SrcRegister));
-            fs->instructions[i].inst5 =
+            fs->instructions[i].inst5 |=
                 R500_ALU_RGBA_ALPHA_SEL_C_SRC2 |
                 R500_SWIZ_RGBA_C(r500_rgb_swiz(&src[2])) |
                 R500_SWIZ_ALPHA_C(r500_alpha_swiz(&src[2]));
@@ -259,7 +264,7 @@ static INLINE void r500_emit_maths(struct r500_fragment_shader* fs,
             fs->instructions[i].inst3 =
                 R500_ALU_RGB_SEL_B_SRC1 |
                 R500_SWIZ_RGB_B(r500_rgb_swiz(&src[1]));
-            fs->instructions[i].inst4 =
+            fs->instructions[i].inst4 |=
                 R500_SWIZ_ALPHA_B(r500_alpha_swiz(&src[1])) |
                 R500_ALPHA_SEL_B_SRC1;
         case 1:
@@ -302,10 +307,10 @@ static INLINE void r500_emit_mov(struct r500_fragment_shader* fs,
         R500_SWIZ_RGB_A(r500_rgb_swiz(src)) |
         R500_ALU_RGB_SEL_B_SRC0 |
         R500_SWIZ_RGB_B(r500_rgb_swiz(src));
-    fs->instructions[i].inst4 = R500_ALPHA_OP_CMP |
+    fs->instructions[i].inst4 |= R500_ALPHA_OP_CMP |
         R500_SWIZ_ALPHA_A(r500_alpha_swiz(src)) |
         R500_SWIZ_ALPHA_B(r500_alpha_swiz(src));
-    fs->instructions[i].inst5 =
+    fs->instructions[i].inst5 |=
         R500_ALU_RGBA_OP_CMP | R500_ALU_RGBA_R_SWIZ_0 |
         R500_ALU_RGBA_G_SWIZ_0 | R500_ALU_RGBA_B_SWIZ_0 |
         R500_ALU_RGBA_A_SWIZ_0;
@@ -480,8 +485,6 @@ void r500_translate_fragment_shader(struct r300_context* r300,
 
     tgsi_dump(fs->shader.state.tokens);
     r500_fs_dump(fs);
-
-    //r500_copy_passthrough_shader(fs);
 
     tgsi_parse_free(&parser);
     FREE(assembler);
