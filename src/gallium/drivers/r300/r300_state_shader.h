@@ -76,6 +76,8 @@ struct r300_fs_asm {
      * inline constants per source, so instead we copy immediates into the
      * constant buffer. */
     unsigned imm_offset;
+    /* Number of immediate constants. */
+    unsigned imm_count;
 };
 
 void r300_translate_fragment_shader(struct r300_context* r300,
