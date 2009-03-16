@@ -524,26 +524,42 @@ st_sample_pixel_block(enum pipe_format format,
 void
 st_sample_surface(struct pipe_surface *surface, float *rgba) 
 {
-   const struct pipe_format_block *block = &surface->block;
-   unsigned rgba_stride = surface->width*4;
+   struct pipe_screen *screen = surface->texture->screen;
+   uint rgba_stride = surface->width * 4;
+   struct pipe_transfer *transfer;
    void *raw;
-   unsigned x, y;
 
-   raw = pipe_surface_map(surface, PIPE_BUFFER_USAGE_CPU_READ);
-   if(!raw)
+   transfer = screen->get_tex_transfer(screen,
+                                       surface->texture,
+                                       surface->face,
+                                       surface->level,
+                                       surface->zslice,
+                                       PIPE_TRANSFER_READ,
+                                       0, 0,
+                                       surface->width,
+                                       surface->height);
+   if (!transfer)
       return;
 
-   for (y = 0; y < surface->nblocksy; ++y) {
-      for(x = 0; x < surface->nblocksx; ++x) {
-         st_sample_pixel_block(surface->format,
-                               block,
-                               (uint8_t*)raw + y*surface->stride + x*block->size, 
-                               rgba + y*block->height*rgba_stride + x*block->width*4,
-                               rgba_stride,
-                               MIN2(block->width, surface->width - x*block->width), 
-                               MIN2(block->height, surface->height - y*block->height));
-       }
+   raw = screen->transfer_map(screen, transfer);
+   if (raw) {
+      const struct pipe_format_block *block = &transfer->block;
+      uint x, y;
+
+      for (y = 0; y < transfer->nblocksy; ++y) {
+         for (x = 0; x < transfer->nblocksx; ++x) {
+            st_sample_pixel_block(surface->format,
+                                  block,
+                                  (uint8_t *) raw + y * transfer->stride + x * block->size,
+                                  rgba + y * block->height * rgba_stride + x * block->width * 4,
+                                  rgba_stride,
+                                  MIN2(block->width, surface->width - x*block->width),
+                                  MIN2(block->height, surface->height - y*block->height));
+         }
+      }
+
+      screen->transfer_unmap(screen, transfer);
    }
    
-   pipe_surface_unmap(surface);
+   screen->tex_transfer_destroy(transfer);
 }
