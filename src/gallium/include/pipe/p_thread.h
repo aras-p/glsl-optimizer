@@ -134,20 +134,20 @@ static INLINE int pipe_thread_destroy( pipe_thread thread )
 
 typedef CRITICAL_SECTION pipe_mutex;
 
-#define pipe_static_mutex(name) \
-   /*static*/ pipe_mutex name = {0,0,0,0,0,0}
+#define pipe_static_mutex(mutex) \
+   /*static*/ pipe_mutex mutex = {0,0,0,0,0,0}
 
-#define pipe_mutex_init(name) \
-   InitializeCriticalSection(&name)
+#define pipe_mutex_init(mutex) \
+   InitializeCriticalSection(&mutex)
 
-#define pipe_mutex_destroy(name) \
-   DeleteCriticalSection(&name)
+#define pipe_mutex_destroy(mutex) \
+   DeleteCriticalSection(&mutex)
 
-#define pipe_mutex_lock(name) \
-   EnterCriticalSection(&name)
+#define pipe_mutex_lock(mutex) \
+   EnterCriticalSection(&mutex)
 
-#define pipe_mutex_unlock(name) \
-   LeaveCriticalSection(&name)
+#define pipe_mutex_unlock(mutex) \
+   LeaveCriticalSection(&mutex)
 
 /* XXX: dummy definitions, make it compile */
 
