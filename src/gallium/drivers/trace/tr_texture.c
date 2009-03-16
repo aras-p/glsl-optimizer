@@ -48,6 +48,8 @@ trace_texture_create(struct trace_screen *tr_scr,
       goto error;
 
    memcpy(&tr_tex->base, texture, sizeof(struct pipe_texture));
+
+   pipe_reference_init(&tr_tex->base.reference, 1);
    tr_tex->base.screen = &tr_scr->base;
    tr_tex->texture = texture;
 
@@ -86,6 +88,7 @@ trace_surface_create(struct trace_texture *tr_tex,
 
    memcpy(&tr_surf->base, surface, sizeof(struct pipe_surface));
 
+   pipe_reference_init(&tr_surf->base.reference, 1);
    tr_surf->base.texture = NULL;
    pipe_texture_reference(&tr_surf->base.texture, &tr_tex->base);
    tr_surf->surface = surface;

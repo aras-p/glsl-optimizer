@@ -47,6 +47,8 @@ trace_buffer_create(struct trace_screen *tr_scr,
       goto error;
 
    memcpy(&tr_buf->base, buffer, sizeof(struct pipe_buffer));
+
+   pipe_reference_init(&tr_buf->base.reference, 1);
    tr_buf->base.screen = &tr_scr->base;
    tr_buf->buffer = buffer;
 
