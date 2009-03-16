@@ -121,7 +121,6 @@ struct st_context {
       struct pipe_constant_buffer state;
       memset(&state, 0, sizeof(state));
       state.buffer = buffer ? buffer->buffer : NULL;
-      state.size = buffer->buffer->size;
       $self->pipe->set_constant_buffer($self->pipe, shader, index, &state);
    }
 
