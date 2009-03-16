@@ -420,7 +420,6 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 		fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *) rmesa->glCtx );
 	}
 
-	LOCK_HARDWARE( rmesa );
 	nbox = dPriv->numClipRects; /* must be in locked region */
 
 	for ( i = 0 ; i < nbox ; ) {
@@ -509,8 +508,6 @@ static GLboolean radeonPageFlip( __DRIdrawablePrivate *dPriv )
 	rrb = (void *)rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
 
 	psp = dPriv->driScreenPriv;
-
-	LOCK_HARDWARE( radeon );
 
 	if ( RADEON_DEBUG & DEBUG_IOCTL ) {
 		fprintf(stderr, "%s: pfCurrentPage: %d %d\n", __FUNCTION__,
@@ -605,6 +602,8 @@ void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
 			rect.x2 = rect.x1 + w;
 			rect.y2 = rect.y1 + h;
 			_mesa_notifySwapBuffers(ctx);	/* flush pending rendering comands */
+			LOCK_HARDWARE( (radeonContextPtr)
+				       dPriv->driContextPriv->driverPrivate );
 			radeonCopyBuffer(dPriv, &rect);
 		}
 	} else {
