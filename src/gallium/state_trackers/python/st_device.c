@@ -273,24 +273,19 @@ st_context_create(struct st_device *st_dev)
    
    /* vertex shader */
    {
-      struct pipe_shader_state vert_shader;
-
       const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
                                       TGSI_SEMANTIC_GENERIC };
       const uint semantic_indexes[] = { 0, 0 };
       st_ctx->vs = util_make_vertex_passthrough_shader(st_ctx->pipe, 
                                                        2, 
                                                        semantic_names,
-                                                       semantic_indexes,
-                                                       &vert_shader);
+                                                       semantic_indexes);
       cso_set_vertex_shader_handle(st_ctx->cso, st_ctx->vs);
    }
 
    /* fragment shader */
    {
-      struct pipe_shader_state frag_shader;
-      st_ctx->fs = util_make_fragment_passthrough_shader(st_ctx->pipe, 
-                                                         &frag_shader);
+      st_ctx->fs = util_make_fragment_passthrough_shader(st_ctx->pipe);
       cso_set_fragment_shader_handle(st_ctx->cso, st_ctx->fs);
    }
 
