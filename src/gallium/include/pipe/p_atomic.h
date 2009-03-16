@@ -66,7 +66,41 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t new)
    return __sync_val_compare_and_swap(&v->count, old, new);
 }
 
-#else /* (defined(PIPE_CC_GCC)) */
+#elif (defined(PIPE_SUBSYSTEM_WINDOWS_USER)) /* (defined(PIPE_CC_GCC)) */
+
+struct pipe_atomic
+{
+   long count;
+};
+
+#define p_atomic_set(_v, _i) ((_v)->count = (_i))
+#define p_atomic_read(_v) ((_v)->count)
+
+static INLINE boolean
+p_atomic_dec_zero(struct pipe_atomic *v)
+{
+   return InterlockedDecrement(&v->count);
+}
+
+static INLINE void
+p_atomic_inc(struct pipe_atomic *v)
+{
+   InterlockedIncrement(&v->count);
+}
+
+static INLINE void
+p_atomic_dec(struct pipe_atomic *v)
+{
+   InterlockedDecrement(&v->count);
+}
+
+static INLINE int32_t
+p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t new)
+{
+   return InterlockedCompareExchange(&v->count, new, old);
+}
+
+#else /* (defined(PIPE_SUBSYSTEM_WINDOWS_USER)) */
 
 #include "pipe/p_thread.h"
 
