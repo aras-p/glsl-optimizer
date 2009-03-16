@@ -160,7 +160,7 @@ struct st_context {
       struct pipe_vertex_buffer state;
       
       memset(&state, 0, sizeof(state));
-      state.pitch = pitch;
+      state.stride = pitch;
       state.max_index = max_index;
       state.buffer_offset = buffer_offset;
       state.buffer = buffer ? buffer->buffer : NULL;
