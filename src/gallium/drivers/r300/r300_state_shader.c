@@ -82,6 +82,13 @@ static INLINE unsigned r300_fs_src(struct r300_fs_asm* assembler,
         case TGSI_FILE_TEMPORARY:
             return src->Index + assembler->temp_offset;
             break;
+        case TGSI_FILE_IMMEDIATE:
+            return src->Index + assembler->imm_offset | (1 << 8);
+            break;
+        case TGSI_FILE_CONSTANT:
+            /* XXX magic */
+            return src->Index | (1 << 8);
+            break;
         default:
             debug_printf("r300: fs: Unimplemented src %d\n", src->File);
             break;
@@ -269,11 +276,13 @@ void r300_translate_fragment_shader(struct r300_context* r300,
 void r500_translate_fragment_shader(struct r300_context* r300,
                                     struct r500_fragment_shader* fs)
 {
+    struct tgsi_parse_context parser;
+    int i, imm_const_offset;
+
     struct r300_fs_asm* assembler = CALLOC_STRUCT(r300_fs_asm);
     if (assembler == NULL) {
         return;
     }
-    struct tgsi_parse_context parser;
 
     tgsi_parse_init(&parser, fs->shader.state.tokens);
 
@@ -288,9 +297,24 @@ void r500_translate_fragment_shader(struct r300_context* r300,
                  * of the program. */
                 r300_fs_declare(assembler, &parser.FullToken.FullDeclaration);
                 break;
+            case TGSI_TOKEN_TYPE_IMMEDIATE:
+                assembler->imm_offset++;
+                imm_const_offset = assembler->imm_offset +
+                    r300->shader_constants[PIPE_SHADER_FRAGMENT].user_count;
+                /* I am not amused by the length of these. */
+                for (i = 0; i < 4; i++) {
+                    r300->shader_constants[PIPE_SHADER_FRAGMENT].constants
+                        [imm_const_offset][i] =
+                        parser.FullToken.FullImmediate.u.ImmediateFloat32[i]
+                        .Float;
+                }
+                r300->shader_constants[PIPE_SHADER_FRAGMENT].count =
+                    imm_const_offset;
+                break;
             case TGSI_TOKEN_TYPE_INSTRUCTION:
                 r500_fs_instruction(fs, assembler,
                         &parser.FullToken.FullInstruction);
+                break;
         }
 
     }

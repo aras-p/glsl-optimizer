@@ -60,6 +60,8 @@
 /* Temporary struct used to hold assembly state while putting together
  * fragment programs. */
 struct r300_fs_asm {
+    /* Pipe context. */
+    struct r300_context* r300;
     /* Number of colors. */
     unsigned color_count;
     /* Number of texcoords. */
@@ -70,6 +72,10 @@ struct r300_fs_asm {
     unsigned temp_offset;
     /* Number of requested temporary registers. */
     unsigned temp_count;
+    /* Offset for immediate constants. Neither R300 nor R500 can do four
+     * inline constants per source, so instead we copy immediates into the
+     * constant buffer. */
+    unsigned imm_offset;
 };
 
 void r300_translate_fragment_shader(struct r300_context* r300,

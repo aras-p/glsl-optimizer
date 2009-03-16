@@ -115,17 +115,19 @@ void r500_emit_fragment_shader(struct r300_context* r300,
                                struct r500_fragment_shader* fs)
 {
     CS_LOCALS(r300);
+    struct r300_constant_buffer* constants =
+        &r300->shader_constants[PIPE_SHADER_FRAGMENT];
     int i;
 
-    BEGIN_CS(9 + (fs->instruction_count * 6));
+    BEGIN_CS(9 + (fs->instruction_count * 6) + (constants->count ? 3 : 0) +
+            (constants->count * 4));
     OUT_CS_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
     OUT_CS_REG(R500_US_PIXSIZE, fs->shader.stack_size);
     OUT_CS_REG(R500_US_CODE_ADDR, R500_US_CODE_START_ADDR(0) |
-        R500_US_CODE_END_ADDR(fs->instruction_count));
+            R500_US_CODE_END_ADDR(fs->instruction_count));
 
     OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_INSTR);
-    OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA,
-        fs->instruction_count * 6);
+    OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, fs->instruction_count * 6);
     for (i = 0; i < fs->instruction_count; i++) {
         OUT_CS(fs->instructions[i].inst0);
         OUT_CS(fs->instructions[i].inst1);
@@ -134,6 +136,19 @@ void r500_emit_fragment_shader(struct r300_context* r300,
         OUT_CS(fs->instructions[i].inst4);
         OUT_CS(fs->instructions[i].inst5);
     }
+
+    if (constants->count) {
+        OUT_CS_REG(R500_GA_US_VECTOR_INDEX,
+                R500_GA_US_VECTOR_INDEX_TYPE_CONST);
+        OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, constants->count * 4);
+        for (i = 0; i < constants->count; i++) {
+            OUT_CS(constants->constants[i][0]);
+            OUT_CS(constants->constants[i][1]);
+            OUT_CS(constants->constants[i][2]);
+            OUT_CS(constants->constants[i][3]);
+        }
+    }
+
     END_CS;
 }
 
@@ -229,6 +244,7 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     }
     for (i = 0; i < 8; i++) {
         OUT_CS(rs->ip[i]);
+        //debug_printf("ip %d: 0x%08x\n", i, rs->ip[i]);
     }
 
     OUT_CS_REG_SEQ(R300_RS_COUNT, 2);
@@ -242,7 +258,11 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     }
     for (i = 0; i < 8; i++) {
         OUT_CS(rs->inst[i]);
+        //debug_printf("inst %d: 0x%08x\n", i, rs->inst[i]);
     }
+
+    /* debug_printf("count: 0x%08x inst_count: 0x%08x\n", rs->count,
+            rs->inst_count); */
 
     END_CS;
 }

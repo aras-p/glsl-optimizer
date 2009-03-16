@@ -59,7 +59,6 @@ static boolean r300_draw_range_elements(struct pipe_context* pipe,
             r300->shader_constants[PIPE_SHADER_VERTEX].user_count *
                 (sizeof(float) * 4));
 
-    /* Abandon all hope, ye who enter here. */
     draw_arrays(r300->draw, mode, start, count);
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {

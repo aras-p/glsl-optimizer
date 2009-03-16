@@ -36,9 +36,9 @@ static void r300_surface_fill(struct pipe_context* pipe,
     struct r300_capabilities* caps = r300_screen(pipe->screen)->caps;
     struct r300_texture* tex = (struct r300_texture*)dest->texture;
     int i;
-
-    float r, g, b, a;
+    float r, g, b, a, depth;
     unsigned pixpitch = tex->stride / tex->tex.block.size;
+
     r = (float)((color >> 16) & 0xff) / 255.0f;
     g = (float)((color >>  8) & 0xff) / 255.0f;
     b = (float)((color >>  0) & 0xff) / 255.0f;
