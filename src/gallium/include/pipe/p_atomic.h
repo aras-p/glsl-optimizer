@@ -9,8 +9,8 @@
 #ifndef P_ATOMIC_H
 #define P_ATOMIC_H
 
+#include "p_compiler.h"
 #include "p_defines.h"
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
