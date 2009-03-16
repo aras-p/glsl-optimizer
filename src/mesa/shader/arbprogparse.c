@@ -969,6 +969,7 @@ parse_output_color_num (GLcontext * ctx, const GLubyte ** inst,
    GLint i = parse_integer (inst, Program);
 
    if ((i < 0) || (i >= (int)ctx->Const.MaxDrawBuffers)) {
+      *color = 0;
       program_error(ctx, Program->Position, "Invalid draw buffer index");
       return 1;
    }
