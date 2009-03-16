@@ -161,6 +161,33 @@ static INLINE uint32_t r500_alpha_swiz(struct tgsi_full_src_register* reg)
     return r500_rgba_swiz(reg) >> 9;
 }
 
+static INLINE uint32_t r500_rgba_op(unsigned op)
+{
+    switch (op) {
+        case TGSI_OPCODE_DP3:
+            return R500_ALU_RGBA_OP_DP3;
+        case TGSI_OPCODE_DP4:
+            return R500_ALU_RGBA_OP_DP4;
+        case TGSI_OPCODE_MAD:
+            return R500_ALU_RGBA_OP_MAD;
+        default:
+            return 0;
+    }
+}
+
+static INLINE uint32_t r500_alpha_op(unsigned op)
+{
+    switch (op) {
+        case TGSI_OPCODE_DP3:
+        case TGSI_OPCODE_DP4:
+            return R500_ALPHA_OP_DP;
+        case TGSI_OPCODE_MAD:
+            return R500_ALPHA_OP_MAD;
+        default:
+            return 0;
+    }
+}
+
 /* Setup an ALU operation. */
 static INLINE void r500_emit_alu(struct r500_fragment_shader* fs,
                                  struct r300_fs_asm* assembler,
@@ -181,36 +208,56 @@ static INLINE void r500_emit_alu(struct r500_fragment_shader* fs,
         R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP;
 }
 
-static INLINE void r500_emit_mad(struct r500_fragment_shader* fs,
-                                 struct r300_fs_asm* assembler,
-                                 struct tgsi_full_src_register* src,
-                                 struct tgsi_full_dst_register* dst)
+static INLINE void r500_emit_maths(struct r500_fragment_shader* fs,
+                                   struct r300_fs_asm* assembler,
+                                   struct tgsi_full_src_register* src,
+                                   struct tgsi_full_dst_register* dst,
+                                   unsigned op,
+                                   unsigned count)
 {
     int i = fs->instruction_count;
 
     r500_emit_alu(fs, assembler, dst);
 
-    fs->instructions[i].inst1 =
-        R500_RGB_ADDR0(r300_fs_src(assembler, &src[0].SrcRegister)) |
-        R500_RGB_ADDR1(r300_fs_src(assembler, &src[1].SrcRegister)) |
-        R500_RGB_ADDR2(r300_fs_src(assembler, &src[2].SrcRegister));
-    fs->instructions[i].inst2 =
-        R500_ALPHA_ADDR0(r300_fs_src(assembler, &src[0].SrcRegister)) |
-        R500_ALPHA_ADDR1(r300_fs_src(assembler, &src[1].SrcRegister)) |
-        R500_ALPHA_ADDR2(r300_fs_src(assembler, &src[2].SrcRegister));
-    fs->instructions[i].inst3 = R500_ALU_RGB_SEL_A_SRC0 |
-        R500_SWIZ_RGB_A(r500_rgb_swiz(&src[0])) |
-        R500_ALU_RGB_SEL_B_SRC1 |
-        R500_SWIZ_RGB_B(r500_rgb_swiz(&src[1]));
-    fs->instructions[i].inst4 = R500_ALPHA_OP_MAD |
-        R500_SWIZ_ALPHA_A(r500_alpha_swiz(&src[0])) |
-        R500_ALPHA_SEL_A_SRC0 |
-        R500_SWIZ_ALPHA_B(r500_alpha_swiz(&src[1])) |
-        R500_ALPHA_SEL_B_SRC1;
-    fs->instructions[i].inst5 = R500_ALU_RGBA_OP_MAD |
-        R500_ALU_RGBA_ALPHA_SEL_C_SRC2 |
-        R500_SWIZ_RGBA_C(r500_rgb_swiz(&src[2]));
-        R500_SWIZ_ALPHA_C(r500_alpha_swiz(&src[2]));
+    switch (count) {
+        case 3:
+            fs->instructions[i].inst1 =
+                R500_RGB_ADDR2(r300_fs_src(assembler, &src[2].SrcRegister));
+            fs->instructions[i].inst2 =
+                R500_ALPHA_ADDR2(r300_fs_src(assembler, &src[2].SrcRegister));
+            fs->instructions[i].inst5 =
+                R500_ALU_RGBA_ALPHA_SEL_C_SRC2 |
+                R500_SWIZ_RGBA_C(r500_rgb_swiz(&src[2]));
+                R500_SWIZ_ALPHA_C(r500_alpha_swiz(&src[2]));
+        case 2:
+            fs->instructions[i].inst1 |=
+                R500_RGB_ADDR1(r300_fs_src(assembler, &src[1].SrcRegister));
+            fs->instructions[i].inst2 |=
+                R500_ALPHA_ADDR1(r300_fs_src(assembler, &src[1].SrcRegister));
+            fs->instructions[i].inst3 =
+                R500_ALU_RGB_SEL_B_SRC1 |
+                R500_SWIZ_RGB_B(r500_rgb_swiz(&src[1]));
+            fs->instructions[i].inst4 =
+                R500_SWIZ_ALPHA_B(r500_alpha_swiz(&src[1])) |
+                R500_ALPHA_SEL_B_SRC1;
+        case 1:
+        case 0:
+        default:
+            fs->instructions[i].inst1 |=
+                R500_RGB_ADDR0(r300_fs_src(assembler, &src[0].SrcRegister));
+            fs->instructions[i].inst2 |=
+                R500_ALPHA_ADDR0(r300_fs_src(assembler, &src[0].SrcRegister));
+            fs->instructions[i].inst3 |=
+                R500_ALU_RGB_SEL_A_SRC0 |
+                R500_SWIZ_RGB_A(r500_rgb_swiz(&src[0]));
+            fs->instructions[i].inst4 |=
+                R500_SWIZ_ALPHA_A(r500_alpha_swiz(&src[0])) |
+                R500_ALPHA_SEL_A_SRC0;
+            break;
+    }
+
+    fs->instructions[i].inst4 |= r500_alpha_op(op);
+    fs->instructions[i].inst5 |= r500_rgba_op(op);
 
     fs->instruction_count++;
 }
@@ -275,9 +322,14 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
      * AMD/ATI names for opcodes, please, as it facilitates using the
      * documentation. */
     switch (inst->Instruction.Opcode) {
+        case TGSI_OPCODE_DP3:
+        case TGSI_OPCODE_DP4:
+            r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 2);
+            break;
         case TGSI_OPCODE_MAD:
-            r500_emit_mad(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0]);
+            r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3);
             break;
         case TGSI_OPCODE_MOV:
         case TGSI_OPCODE_SWZ:
