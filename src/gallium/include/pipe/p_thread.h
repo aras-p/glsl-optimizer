@@ -73,7 +73,7 @@ typedef pthread_cond_t pipe_condvar;
    static pipe_mutex mutex = PTHREAD_MUTEX_INITIALIZER
 
 #define pipe_mutex_init(mutex) \
-   pthread_mutex_init(&(mutex), NULL)
+   (void) pthread_mutex_init(&(mutex), NULL)
 
 #define pipe_mutex_destroy(mutex) \
    pthread_mutex_destroy(&(mutex))

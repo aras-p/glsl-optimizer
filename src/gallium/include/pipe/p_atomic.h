@@ -84,10 +84,7 @@ struct pipe_atomic {
 static INLINE void
 p_atomic_set(struct pipe_atomic *v, int32_t i)
 {
-   int ret;
-   ret = pipe_mutex_init(v->mutex);
-   if (ret)
-      abort();
+   pipe_mutex_init(v->mutex);
    pipe_mutex_lock(v->mutex);
    v->count = i;
    pipe_mutex_unlock(v->mutex);
