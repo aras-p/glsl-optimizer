@@ -167,6 +167,7 @@ static INLINE uint32_t r500_rgba_op(unsigned op)
         case TGSI_OPCODE_DP3:
             return R500_ALU_RGBA_OP_DP3;
         case TGSI_OPCODE_DP4:
+        case TGSI_OPCODE_DPH:
             return R500_ALU_RGBA_OP_DP4;
         case TGSI_OPCODE_MAD:
             return R500_ALU_RGBA_OP_MAD;
@@ -180,6 +181,7 @@ static INLINE uint32_t r500_alpha_op(unsigned op)
     switch (op) {
         case TGSI_OPCODE_DP3:
         case TGSI_OPCODE_DP4:
+        case TGSI_OPCODE_DPH:
             return R500_ALPHA_OP_DP;
         case TGSI_OPCODE_MAD:
             return R500_ALPHA_OP_MAD;
@@ -227,7 +229,7 @@ static INLINE void r500_emit_maths(struct r500_fragment_shader* fs,
                 R500_ALPHA_ADDR2(r300_fs_src(assembler, &src[2].SrcRegister));
             fs->instructions[i].inst5 =
                 R500_ALU_RGBA_ALPHA_SEL_C_SRC2 |
-                R500_SWIZ_RGBA_C(r500_rgb_swiz(&src[2]));
+                R500_SWIZ_RGBA_C(r500_rgb_swiz(&src[2])) |
                 R500_SWIZ_ALPHA_C(r500_alpha_swiz(&src[2]));
         case 2:
             fs->instructions[i].inst1 |=
@@ -318,6 +320,7 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
                                 struct r300_fs_asm* assembler,
                                 struct tgsi_full_instruction* inst)
 {
+    int i;
     /* Switch between opcodes. When possible, prefer using the official
      * AMD/ATI names for opcodes, please, as it facilitates using the
      * documentation. */
@@ -326,6 +329,14 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
         case TGSI_OPCODE_DP4:
             r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode, 2);
+            break;
+        case TGSI_OPCODE_DPH:
+            r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 2);
+            /* Force alpha swizzle to one */
+            i = fs->instruction_count - 1;
+            fs->instructions[i].inst4 &= ~R500_SWIZ_ALPHA_A(0x7);
+            fs->instructions[i].inst4 |= R500_SWIZ_ALPHA_A(R500_SWIZZLE_ONE);
             break;
         case TGSI_OPCODE_MAD:
             r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
