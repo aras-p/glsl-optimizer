@@ -228,9 +228,7 @@ static INLINE void r500_emit_alu(struct r500_fragment_shader* fs,
         R500_ALU_WMASK(dst->DstRegister.WriteMask);
     }
 
-    fs->instructions[i].inst0 |=
-        R500_INST_TEX_SEM_WAIT |
-        R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP;
+    fs->instructions[i].inst0 |= R500_INST_TEX_SEM_WAIT;
 
     fs->instructions[i].inst4 =
         R500_ALPHA_ADDRD(r300_fs_dst(assembler, &dst->DstRegister));
@@ -420,6 +418,12 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
             debug_printf("r300: fs: Bad opcode %d\n",
                     inst->Instruction.Opcode);
             break;
+    }
+
+    /* Clamp, if saturation flags are set. */
+    if (inst->Instruction.Saturate == TGSI_SAT_ZERO_ONE) {
+        fs->instructions[fs->instruction_count - 1].inst0 |=
+            R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP;
     }
 }
 
