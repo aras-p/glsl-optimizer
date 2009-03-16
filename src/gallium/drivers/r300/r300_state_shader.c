@@ -161,9 +161,20 @@ static INLINE uint32_t r500_alpha_swiz(struct tgsi_full_src_register* reg)
     return r500_rgba_swiz(reg) >> 9;
 }
 
+static INLINE uint32_t r500_sop_swiz(struct tgsi_full_src_register* reg)
+{
+    /* Only the first 3 bits... */
+    return r500_rgba_swiz(reg) & 0x7;
+}
+
 static INLINE uint32_t r500_rgba_op(unsigned op)
 {
     switch (op) {
+        case TGSI_OPCODE_EX2:
+        case TGSI_OPCODE_LG2:
+        case TGSI_OPCODE_RCP:
+        case TGSI_OPCODE_RSQ:
+            return R500_ALU_RGBA_OP_SOP;
         case TGSI_OPCODE_DP3:
             return R500_ALU_RGBA_OP_DP3;
         case TGSI_OPCODE_DP4:
@@ -179,6 +190,14 @@ static INLINE uint32_t r500_rgba_op(unsigned op)
 static INLINE uint32_t r500_alpha_op(unsigned op)
 {
     switch (op) {
+        case TGSI_OPCODE_EX2:
+            return R500_ALPHA_OP_EX2;
+        case TGSI_OPCODE_LG2:
+            return R500_ALPHA_OP_LN2;
+        case TGSI_OPCODE_RCP:
+            return R500_ALPHA_OP_RCP;
+        case TGSI_OPCODE_RSQ:
+            return R500_ALPHA_OP_RSQ;
         case TGSI_OPCODE_DP3:
         case TGSI_OPCODE_DP4:
         case TGSI_OPCODE_DPH:
@@ -215,7 +234,8 @@ static INLINE void r500_emit_maths(struct r500_fragment_shader* fs,
                                    struct tgsi_full_src_register* src,
                                    struct tgsi_full_dst_register* dst,
                                    unsigned op,
-                                   unsigned count)
+                                   unsigned count,
+                                   boolean is_sop)
 {
     int i = fs->instruction_count;
 
@@ -253,7 +273,8 @@ static INLINE void r500_emit_maths(struct r500_fragment_shader* fs,
                 R500_ALU_RGB_SEL_A_SRC0 |
                 R500_SWIZ_RGB_A(r500_rgb_swiz(&src[0]));
             fs->instructions[i].inst4 |=
-                R500_SWIZ_ALPHA_A(r500_alpha_swiz(&src[0])) |
+                R500_SWIZ_ALPHA_A(is_sop ? r500_sop_swiz(&src[0]) :
+                        r500_alpha_swiz(&src[0])) |
                 R500_ALPHA_SEL_A_SRC0;
             break;
     }
@@ -325,14 +346,21 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
      * AMD/ATI names for opcodes, please, as it facilitates using the
      * documentation. */
     switch (inst->Instruction.Opcode) {
+        case TGSI_OPCODE_EX2:
+            r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 1,
+                    true);
+            break;
         case TGSI_OPCODE_DP3:
         case TGSI_OPCODE_DP4:
             r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 2);
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 2,
+                    false);
             break;
         case TGSI_OPCODE_DPH:
             r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 2);
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 2,
+                    false);
             /* Force alpha swizzle to one */
             i = fs->instruction_count - 1;
             fs->instructions[i].inst4 &= ~R500_SWIZ_ALPHA_A(0x7);
@@ -340,7 +368,8 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
             break;
         case TGSI_OPCODE_MAD:
             r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3);
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3,
+                    false);
             break;
         case TGSI_OPCODE_MOV:
         case TGSI_OPCODE_SWZ:
