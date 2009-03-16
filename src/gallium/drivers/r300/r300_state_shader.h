@@ -62,8 +62,7 @@
  * not using enough of it. */
 static const struct tgsi_full_src_register r500_constant_zero = {
     .SrcRegister.Extended = TRUE,
-    .SrcRegister.File = TGSI_FILE_TEMPORARY,
-    .SrcRegister.Index = 0,
+    .SrcRegister.File = TGSI_FILE_NULL,
     .SrcRegisterExtSwz.ExtSwizzleX = TGSI_EXTSWIZZLE_ZERO,
     .SrcRegisterExtSwz.ExtSwizzleY = TGSI_EXTSWIZZLE_ZERO,
     .SrcRegisterExtSwz.ExtSwizzleZ = TGSI_EXTSWIZZLE_ZERO,
@@ -72,8 +71,7 @@ static const struct tgsi_full_src_register r500_constant_zero = {
 
 static const struct tgsi_full_src_register r500_constant_one = {
     .SrcRegister.Extended = TRUE,
-    .SrcRegister.File = TGSI_FILE_TEMPORARY,
-    .SrcRegister.Index = 0,
+    .SrcRegister.File = TGSI_FILE_NULL,
     .SrcRegisterExtSwz.ExtSwizzleX = TGSI_EXTSWIZZLE_ONE,
     .SrcRegisterExtSwz.ExtSwizzleY = TGSI_EXTSWIZZLE_ONE,
     .SrcRegisterExtSwz.ExtSwizzleZ = TGSI_EXTSWIZZLE_ONE,
