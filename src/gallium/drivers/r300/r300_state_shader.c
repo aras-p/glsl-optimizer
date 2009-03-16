@@ -398,6 +398,19 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3,
                     false);
             break;
+        case TGSI_OPCODE_ABS:
+            r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3,
+                    false);
+            /* Set absolute value modifiers. */
+            i = fs->instruction_count - 1;
+            fs->instructions[i].inst3 |=
+                R500_ALU_RGB_MOD_A_ABS |
+                R500_ALU_RGB_MOD_B_ABS;
+            fs->instructions[i].inst4 |=
+                R500_ALPHA_MOD_A_ABS |
+                R500_ALPHA_MOD_B_ABS;
+            break;
         case TGSI_OPCODE_MAD:
             r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3,
