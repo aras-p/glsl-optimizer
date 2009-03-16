@@ -231,7 +231,7 @@ st_context_create(struct st_device *st_dev)
    {
       struct pipe_screen *screen = st_dev->screen;
       struct pipe_texture templat;
-      struct pipe_surface *surface;
+      struct pipe_transfer *transfer;
       unsigned i;
 
       memset( &templat, 0, sizeof( templat ) );
@@ -247,17 +247,21 @@ st_context_create(struct st_device *st_dev)
    
       st_ctx->default_texture = screen->texture_create( screen, &templat );
       if(st_ctx->default_texture) {
-         surface = screen->get_tex_surface( screen, 
-                                            st_ctx->default_texture, 0, 0, 0,
-                                            PIPE_BUFFER_USAGE_CPU_WRITE );
-         if(surface) {
+         transfer = screen->get_tex_transfer(screen,
+                                             st_ctx->default_texture,
+                                             0, 0, 0,
+                                             PIPE_TRANSFER_WRITE,
+                                             0, 0,
+                                             st_ctx->default_texture->width[0],
+                                             st_ctx->default_texture->height[0]);
+         if (transfer) {
             uint32_t *map;
-            map = (uint32_t *) pipe_surface_map(surface, PIPE_BUFFER_USAGE_CPU_WRITE );
+            map = (uint32_t *) screen->transfer_map(screen, transfer);
             if(map) {
                *map = 0x00000000;
-               pipe_surface_unmap( surface );
+               screen->transfer_unmap(screen, transfer);
             }
-            pipe_surface_reference(&surface, NULL);
+            screen->tex_transfer_destroy(transfer);
          }
       }
    
