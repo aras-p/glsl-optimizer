@@ -175,6 +175,8 @@ static INLINE uint32_t r500_rgba_op(unsigned op)
         case TGSI_OPCODE_RCP:
         case TGSI_OPCODE_RSQ:
             return R500_ALU_RGBA_OP_SOP;
+        case TGSI_OPCODE_FRC:
+            return R500_ALU_RGBA_OP_FRC;
         case TGSI_OPCODE_DP3:
             return R500_ALU_RGBA_OP_DP3;
         case TGSI_OPCODE_DP4:
@@ -198,6 +200,8 @@ static INLINE uint32_t r500_alpha_op(unsigned op)
             return R500_ALPHA_OP_RCP;
         case TGSI_OPCODE_RSQ:
             return R500_ALPHA_OP_RSQ;
+        case TGSI_OPCODE_FRC:
+            return R500_ALPHA_OP_FRC;
         case TGSI_OPCODE_DP3:
         case TGSI_OPCODE_DP4:
         case TGSI_OPCODE_DPH:
@@ -253,8 +257,9 @@ static INLINE void r500_emit_maths(struct r500_fragment_shader* fs,
             fs->instructions[i].inst2 =
                 R500_ALPHA_ADDR2(r300_fs_src(assembler, &src[2].SrcRegister));
             fs->instructions[i].inst5 |=
-                R500_ALU_RGBA_ALPHA_SEL_C_SRC2 |
+                R500_ALU_RGBA_SEL_C_SRC2 |
                 R500_SWIZ_RGBA_C(r500_rgb_swiz(&src[2])) |
+                R500_ALU_RGBA_ALPHA_SEL_C_SRC2 |
                 R500_SWIZ_ALPHA_C(r500_alpha_swiz(&src[2]));
         case 2:
             fs->instructions[i].inst1 |=
@@ -352,9 +357,17 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
      * documentation. */
     switch (inst->Instruction.Opcode) {
         case TGSI_OPCODE_EX2:
+        case TGSI_OPCODE_LG2:
+        case TGSI_OPCODE_RCP:
+        case TGSI_OPCODE_RSQ:
             r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode, 1,
                     true);
+            break;
+        case TGSI_OPCODE_FRC:
+            r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 1,
+                    false);
             break;
         case TGSI_OPCODE_DP3:
         case TGSI_OPCODE_DP4:
@@ -370,6 +383,15 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
             i = fs->instruction_count - 1;
             fs->instructions[i].inst4 &= ~R500_SWIZ_ALPHA_A(0x7);
             fs->instructions[i].inst4 |= R500_SWIZ_ALPHA_A(R500_SWIZZLE_ONE);
+            break;
+        case TGSI_OPCODE_ADD:
+            /* Force src0 to one, move all registers over */
+            inst->FullSrcRegisters[2] = inst->FullSrcRegisters[1];
+            inst->FullSrcRegisters[1] = inst->FullSrcRegisters[0];
+            inst->FullSrcRegisters[0] = r500_constant_one;
+            r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3,
+                    false);
             break;
         case TGSI_OPCODE_MUL:
             /* Force our src2 to zero */
