@@ -692,3 +692,23 @@ TGSI Instruction Specification
 
   TBD
 
+
+1.10  GL_NV_vertex_program3
+---------------------------
+
+
+1.10.1  PUSHA - Push Address Register On Stack
+
+  push(src.x)
+  push(src.y)
+  push(src.z)
+  push(src.w)
+
+
+1.10.2  POPA - Pop Address Register From Stack
+
+  dst.w = pop()
+  dst.z = pop()
+  dst.y = pop()
+  dst.x = pop()
+
