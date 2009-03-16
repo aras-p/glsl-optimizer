@@ -142,10 +142,10 @@ void r500_emit_fragment_shader(struct r300_context* r300,
                 R500_GA_US_VECTOR_INDEX_TYPE_CONST);
         OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, constants->count * 4);
         for (i = 0; i < constants->count; i++) {
-            OUT_CS(constants->constants[i][0]);
-            OUT_CS(constants->constants[i][1]);
-            OUT_CS(constants->constants[i][2]);
-            OUT_CS(constants->constants[i][3]);
+            OUT_CS_32F(constants->constants[i][0]);
+            OUT_CS_32F(constants->constants[i][1]);
+            OUT_CS_32F(constants->constants[i][2]);
+            OUT_CS_32F(constants->constants[i][3]);
         }
     }
 
