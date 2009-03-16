@@ -9,6 +9,7 @@ dlist-dangling
 dlist-degenerate
 dlist-edgeflag
 dlist-edgeflag-dangling
+draw2arrays
 drawarrays
 drawelements
 drawrange
@@ -90,6 +91,8 @@ tri-fog
 tri-fp
 tri-fp-const-imm
 tri-lit
+tri-logicop-none
+tri-logicop-xor
 tri-mask-tri
 tri-orig
 tri-query
