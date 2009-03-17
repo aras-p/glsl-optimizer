@@ -819,3 +819,17 @@ TGSI Instruction Specification
 
   TBD
 
+
+1.12  GL_NV_geometry_program4
+-----------------------------
+
+
+1.12.1  EMIT - Emit
+
+  TBD
+
+
+1.12.2  ENDPRIM - End Primitive
+
+  TBD
+
