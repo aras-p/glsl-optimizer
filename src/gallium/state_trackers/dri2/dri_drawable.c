@@ -233,7 +233,9 @@ dri_create_buffer(__DRIscreenPrivate *sPriv,
                   boolean isPixmap)
 {
    enum pipe_format colorFormat, depthFormat, stencilFormat;
+   struct dri_screen *screen = sPriv->private;
    struct dri_drawable *drawable = NULL;
+   struct pipe_screen *pscreen = screen->pipe_screen;
    int i;
 
    if (isPixmap)
@@ -252,14 +254,26 @@ dri_create_buffer(__DRIscreenPrivate *sPriv,
 
    colorFormat = PIPE_FORMAT_A8R8G8B8_UNORM;
 
-   if (visual->depthBits)
-      depthFormat = PIPE_FORMAT_S8Z24_UNORM;
-   else
+   if (visual->depthBits) {
+      if (pscreen->is_format_supported(pscreen, PIPE_FORMAT_Z24S8_UNORM,
+                                       PIPE_TEXTURE_2D,
+                                       PIPE_TEXTURE_USAGE_RENDER_TARGET |
+                                       PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
+         depthFormat = PIPE_FORMAT_Z24S8_UNORM;
+      else
+         depthFormat = PIPE_FORMAT_S8Z24_UNORM;
+   } else
       depthFormat = PIPE_FORMAT_NONE;
 
-   if (visual->stencilBits)
-      stencilFormat = PIPE_FORMAT_S8Z24_UNORM;
-   else
+   if (visual->stencilBits) {
+      if (pscreen->is_format_supported(pscreen, PIPE_FORMAT_Z24S8_UNORM,
+                                       PIPE_TEXTURE_2D,
+                                       PIPE_TEXTURE_USAGE_RENDER_TARGET |
+                                       PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
+         stencilFormat = PIPE_FORMAT_Z24S8_UNORM;
+      else
+         stencilFormat = PIPE_FORMAT_S8Z24_UNORM;
+   } else
       stencilFormat = PIPE_FORMAT_NONE;
 
    drawable->stfb = st_create_framebuffer(visual,
