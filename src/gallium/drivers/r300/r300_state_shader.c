@@ -541,10 +541,12 @@ void r500_translate_fragment_shader(struct r300_context* r300,
                 break;
             case TGSI_TOKEN_TYPE_IMMEDIATE:
                 debug_printf("r300: Emitting immediate to constant buffer, "
-                        "position %d\n", consts->user_count);
+                        "position %d\n",
+                        assembler->imm_offset + assembler->imm_count);
                 /* I am not amused by the length of these. */
                 for (i = 0; i < 4; i++) {
-                    consts->constants[assembler->imm_offset][i] =
+                    consts->constants[assembler->imm_offset +
+                        assembler->imm_count][i] =
                         parser.FullToken.FullImmediate.u.ImmediateFloat32[i]
                         .Float;
                 }
