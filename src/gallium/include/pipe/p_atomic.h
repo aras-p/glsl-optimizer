@@ -66,7 +66,21 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t new)
    return __sync_val_compare_and_swap(&v->count, old, new);
 }
 
-#elif (defined(PIPE_ARCH_X86) && defined(PIPE_CC_MSVC)) /* (defined(PIPE_CC_GCC)) */
+#elif (defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)) /* (defined(PIPE_CC_GCC)) */
+
+struct pipe_atomic
+{
+   int32_t count;
+};
+
+#define p_atomic_set(_v, _i) ((_v)->count = (_i))
+#define p_atomic_read(_v) ((_v)->count)
+#define p_atomic_dec_zero(_v) ((boolean) --(_v)->count)
+#define p_atomic_inc(_v) ((void) (_v)->count++)
+#define p_atomic_dec(_v) ((void) (_v)->count--)
+#define p_atomic_cmpxchg(_v, old, new) ((_v)->count == old ? (_v)->count = (new) : (_v)->count)
+
+#elif (defined(PIPE_ARCH_X86) && defined(PIPE_CC_MSVC)) /* (defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)) */
 
 struct pipe_atomic
 {
