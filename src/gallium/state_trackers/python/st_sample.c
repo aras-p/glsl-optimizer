@@ -451,6 +451,7 @@ st_sample_dxt_pixel_block(enum pipe_format format,
       break;
    default:
       assert(0);
+      return;
    }
    
    i = st_random() % n;
