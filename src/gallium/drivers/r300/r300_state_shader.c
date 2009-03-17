@@ -350,11 +350,21 @@ static INLINE void r500_emit_tex(struct r500_fragment_shader* fs,
 
     if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
         fs->instructions[i].inst2 |=
-            R500_TEX_DST_ADDR(assembler->temp_offset +
-                    assembler->temp_count);
-    }
+            R500_TEX_DST_ADDR(assembler->temp_count +
+                    assembler->temp_offset);
 
-    fs->instruction_count++;
+        fs->instruction_count++;
+
+        /* Setup and emit a MOV. */
+        src[0].SrcRegister.Index = assembler->temp_count;
+        src[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+
+        src[1] = src[0];
+        src[2] = r500_constant_zero;
+        r500_emit_maths(fs, assembler, src, dst, TGSI_OPCODE_MOV, 3);
+    } else {
+        fs->instruction_count++;
+    }
 }
 
 static void r500_fs_instruction(struct r500_fragment_shader* fs,
