@@ -85,6 +85,7 @@ tri-dlist
 tri-edgeflag
 tri-fbo
 tri-fbo-tex
+tri-fbo-tex-mip
 tri-flat
 tri-flat-clip
 tri-fog

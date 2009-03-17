@@ -88,6 +88,7 @@ progs = [
 	'tri-cull',
 	'tri-dlist',
 	'tri-edgeflag',
+	'tri-fbo-tex-mip',
 	'tri-fbo-tex',
 	'tri-fbo',
 	'tri-flat-clip',

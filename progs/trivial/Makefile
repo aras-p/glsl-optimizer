@@ -94,6 +94,7 @@ SOURCES = \
 	tri-logicop-xor.c \
 	tri-dlist.c \
 	tri-edgeflag.c \
+	tri-fbo-tex-mip.c \
 	tri-fbo-tex.c \
 	tri-fbo.c \
 	tri-flat-clip.c \
