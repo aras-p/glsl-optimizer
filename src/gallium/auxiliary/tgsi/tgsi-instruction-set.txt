@@ -887,3 +887,12 @@ TGSI Instruction Specification
 
   Do nothing.
 
+
+1.14  ps_1_1
+------------
+
+
+1.14.1  TEXKILL - Conditional Discard
+
+  Alias for KIL.
+
