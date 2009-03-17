@@ -69,7 +69,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         r300_emit_rs_block_state(r300, &r300_rs_block_clear_state);
     }
 
-    BEGIN_CS(97 + (caps->has_tcl ? 9 : 0));
+    BEGIN_CS(99 + (caps->has_tcl ? 28 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -152,20 +152,10 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(R300_VAP_OUTPUT_VTX_FMT_0, 0x00000003);
     OUT_CS_REG(R300_VAP_OUTPUT_VTX_FMT_1, 0x00000000);
     OUT_CS_REG(R300_TX_ENABLE, 0x0);
-    /* XXX viewport setup */
-    OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
-    OUT_CS_32F(1.0);
-    OUT_CS_32F((float)x);
-    OUT_CS_32F(1.0);
-    OUT_CS_32F((float)y);
-    OUT_CS_32F(1.0);
-    OUT_CS_32F(0.0);
 
     /* XXX */
     OUT_CS_REG(R300_SC_CLIP_RULE, 0xaaaa);
-    END_CS;
 
-    BEGIN_CS(7 + (caps->has_tcl ? 21 : 2));
     OUT_CS_REG_SEQ(R300_US_OUT_FMT_0, 4);
     OUT_CS(R300_C0_SEL_B | R300_C1_SEL_G | R300_C2_SEL_R | R300_C3_SEL_A);
     OUT_CS(R300_US_OUT_FMT_UNUSED);
@@ -202,7 +192,16 @@ static void r300_surface_fill(struct pipe_context* pipe,
     }
     END_CS;
 
-    BEGIN_CS(29);
+    BEGIN_CS(36);
+
+    /* Viewport setup */
+    OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
+    OUT_CS_32F(1.0);
+    OUT_CS_32F((float)x);
+    OUT_CS_32F(1.0);
+    OUT_CS_32F((float)y);
+    OUT_CS_32F(1.0);
+    OUT_CS_32F(0.0);
 
     /* Pixel scissors */
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
