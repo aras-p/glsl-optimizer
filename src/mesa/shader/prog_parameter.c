@@ -517,7 +517,7 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
  * swizzling to find a match.
  * \param list  the parameter list to search
  * \param v  the float vector to search for
- * \param size  number of element in v
+ * \param vSize  number of element in v
  * \param posOut  returns the position of the constant, if found
  * \param swizzleOut  returns a swizzle mask describing location of the
  *                    vector elements if found.

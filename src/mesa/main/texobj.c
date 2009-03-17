@@ -180,7 +180,7 @@ finish_texture_init(GLcontext *ctx, GLenum target,
  * Called via ctx->Driver.DeleteTexture() if not overriden by a driver.
  *
  * \param shared the shared GL state to which the object belongs.
- * \param texOjb the texture object to delete.
+ * \param texObj the texture object to delete.
  */
 void
 _mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )

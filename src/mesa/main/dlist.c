@@ -707,7 +707,7 @@ unpack_image(GLuint dimensions, GLsizei width, GLsizei height, GLsizei depth,
 /**
  * Allocate space for a display list instruction.
  * \param opcode  the instruction opcode (OPCODE_* value)
- * \param size   instruction size in bytes, not counting opcode.
+ * \param bytes   instruction size in bytes, not counting opcode.
  * \return pointer to the usable data area (not including the internal
  *         opcode).
  */

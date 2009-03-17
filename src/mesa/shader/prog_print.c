@@ -213,7 +213,7 @@ arb_output_attrib_string(GLint index, GLenum progType)
  * Return string representation of the given register.
  * Note that some types of registers (like PROGRAM_UNIFORM) aren't defined
  * by the ARB/NV program languages so we've taken some liberties here.
- * \param file  the register file (PROGRAM_INPUT, PROGRAM_TEMPORARY, etc)
+ * \param f  the register file (PROGRAM_INPUT, PROGRAM_TEMPORARY, etc)
  * \param index  number of the register in the register file
  * \param mode  the output format/mode/style
  * \param prog  pointer to containing program

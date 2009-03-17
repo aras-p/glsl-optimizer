@@ -197,8 +197,8 @@ _mesa_SelectBuffer( GLsizei size, GLuint *buffer )
 /**
  * Write a value of a record into the selection buffer.
  * 
- * \param CTX GL context.
- * \param V value.
+ * \param ctx GL context.
+ * \param value value.
  *
  * Verifies there is free space in the buffer to write the value and
  * increments the pointer.

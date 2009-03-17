@@ -1186,7 +1186,7 @@ make_1d_stack_mipmap(GLenum datatype, GLuint comps, GLint border,
 
 
 /**
- * \bugs
+ * \bug
  * There is quite a bit of refactoring that could be done with this function
  * and \c make_2d_mipmap.
  */

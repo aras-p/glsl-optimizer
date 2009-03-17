@@ -23,7 +23,7 @@
  */
 
 /**
- * \file glapi_getproc.
+ * \file glapi_getproc.c
  *
  * Code for implementing glXGetProcAddress(), etc.
  * This was originally in glapi.c but refactored out.

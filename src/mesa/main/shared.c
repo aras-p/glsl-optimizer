@@ -278,7 +278,7 @@ delete_renderbuffer_cb(GLuint id, void *data, void *userData)
  * Deallocate a shared state object and all children structures.
  *
  * \param ctx GL context.
- * \param ss shared state pointer.
+ * \param shared shared state pointer.
  * 
  * Frees the display lists, the texture objects (calling the driver texture
  * deletion callback to free its private data) and the vertex programs, as well

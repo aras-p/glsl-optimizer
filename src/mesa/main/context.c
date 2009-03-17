@@ -179,7 +179,7 @@ GLfloat _mesa_ubyte_to_float_color_tab[256];
 /**
  * Swap buffers notification callback.
  * 
- * \param gc GL context.
+ * \param ctx GL context.
  *
  * Called by window system just before swapping buffers.
  * We have to finish any pending rendering.
@@ -923,7 +923,7 @@ _mesa_initialize_context(GLcontext *ctx,
  * \param share_list another context to share display lists with or NULL
  * \param driverFunctions points to the dd_function_table into which the
  *        driver has plugged in all its special functions.
- * \param driverCtx points to the device driver's private context state
+ * \param driverContext points to the device driver's private context state
  * 
  * \return pointer to a new __GLcontextRec or NULL if error.
  */

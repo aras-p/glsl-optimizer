@@ -24,7 +24,7 @@
 
 
 /**
- * \file exemem.c
+ * \file execmem.c
  * Functions for allocating executable memory.
  *
  * \author Keith Whitwell

@@ -712,7 +712,7 @@ _mesa_new_texture_image( GLcontext *ctx )
  * Free texture image data.
  * This function is a fallback called via ctx->Driver.FreeTexImageData().
  *
- * \param teximage texture image.
+ * \param texImage texture image.
  *
  * Free the texture image data if it's not marked as client data.
  */
@@ -734,7 +734,7 @@ _mesa_free_texture_image_data(GLcontext *ctx,
 /**
  * Free texture image.
  *
- * \param teximage texture image.
+ * \param texImage texture image.
  *
  * Free the texture image structure and the associated image data.
  */
@@ -844,7 +844,7 @@ _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
  * of the given texture unit.
  *
  * \param ctx GL context.
- * \param texUnit texture unit.
+ * \param texObj texture unit.
  * \param target texture target.
  * \param level image level.
  *
@@ -1852,7 +1852,6 @@ subtexture_error_check2( GLcontext *ctx, GLuint dimensions,
  * \param internalFormat internal format given by the user.
  * \param width image width given by the user.
  * \param height image height given by the user.
- * \param depth image depth given by the user.
  * \param border texture border.
  * 
  * \return GL_TRUE if an error was detected, or GL_FALSE if no errors.
