@@ -905,3 +905,60 @@ TGSI Instruction Specification
 
   Alias for TEX.
 
+
+1.16  ps_2_0
+------------
+
+
+1.16.1  M4X4 - Multiply Matrix
+
+  Alias for MULTIPLYMATRIX.
+
+
+1.16.2  M4X3 - Multiply Matrix
+
+  Considered for removal from language.
+
+
+1.16.3  M3X4 - Multiply Matrix
+
+  Considered for removal from language.
+
+
+1.16.4  M3X3 - Multiply Matrix
+
+  Considered for removal from language.
+
+
+1.16.5  M3X2 - Multiply Matrix
+
+  Considered for removal from language.
+
+
+1.16.6  CRS - Cross Product
+
+  Alias for XPD.
+
+
+1.16.7  NRM4 - 4-component Vector Normalise
+
+  dst.x = src.x / (src.x * src.x + src.y * src.y + src.z * src.z + src.w * src.w)
+  dst.y = src.y / (src.x * src.x + src.y * src.y + src.z * src.z + src.w * src.w)
+  dst.z = src.z / (src.x * src.x + src.y * src.y + src.z * src.z + src.w * src.w)
+  dst.w = src.w / (src.x * src.x + src.y * src.y + src.z * src.z + src.w * src.w)
+
+
+1.16.8  SINCOS - Sine Cosine
+
+  Alias for SCS.
+
+
+1.16.9  TEXLDB - Texture Lookup With Bias
+
+  Alias for TXB.
+
+
+1.16.10  DP2ADD - 2-component Dot Product And Add
+
+  Alias for DP2A.
+
