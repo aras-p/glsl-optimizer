@@ -833,3 +833,57 @@ TGSI Instruction Specification
 
   TBD
 
+
+1.13  GLSL
+----------
+
+
+1.13.1  BGNLOOP2 - Begin Loop
+
+  TBD
+
+
+1.13.2  BGNSUB - Begin Subroutine
+
+  TBD
+
+
+1.13.3  ENDLOOP2 - End Loop
+
+  TBD
+
+
+1.13.4  ENDSUB - End Subroutine
+
+  TBD
+
+
+1.13.5  INT - Truncate
+
+  Alias for TRUNC.
+
+
+1.13.6  NOISE1 - 1D Noise
+
+  TBD
+
+
+1.13.7  NOISE2 - 2D Noise
+
+  TBD
+
+
+1.13.8  NOISE3 - 3D Noise
+
+  TBD
+
+
+1.13.9  NOISE4 - 4D Noise
+
+  TBD
+
+
+1.13.10  NOP - No Operation
+
+  Do nothing.
+
