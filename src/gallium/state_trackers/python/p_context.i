@@ -247,7 +247,7 @@ struct st_context {
       util_draw_vertex_buffer(pipe, vbuf, 0, prim, num_verts, num_attribs);
       
 error2:
-      pipe_buffer_reference(screen, &vbuf, NULL);
+      pipe_buffer_reference(&vbuf, NULL);
 error1:
       ;
    }
