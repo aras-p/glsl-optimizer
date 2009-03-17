@@ -112,8 +112,8 @@ util_bitmask_resize(struct util_bitmask *bm,
    assert(new_size % UTIL_BITMASK_BITS_PER_WORD == 0);
    
    new_words = (util_bitmask_word *)REALLOC((void *)bm->words,
-                                            bm->size / UTIL_BITMASK_BITS_PER_WORD,
-                                            new_size / UTIL_BITMASK_BITS_PER_WORD);
+                                            bm->size / UTIL_BITMASK_BITS_PER_BYTE,
+                                            new_size / UTIL_BITMASK_BITS_PER_BYTE);
    if(!new_words)
       return FALSE;
    
