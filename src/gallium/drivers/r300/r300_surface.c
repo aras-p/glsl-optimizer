@@ -53,8 +53,6 @@ static void r300_surface_fill(struct pipe_context* pipe,
         return;
     }
 
-    r300_emit_invariant_state(r300);
-
     r300_emit_blend_state(r300, &blend_clear_state);
     r300_emit_blend_color_state(r300, &blend_color_clear_state);
     r300_emit_dsa_state(r300, &dsa_clear_state);

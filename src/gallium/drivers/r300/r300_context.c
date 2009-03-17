@@ -138,6 +138,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300_init_state_functions(r300);
 
+    r300_emit_invariant_state(r300);
     r300->dirty_state = R300_NEW_KITCHEN_SINK;
     r300->dirty_hw++;
 
