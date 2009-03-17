@@ -225,7 +225,7 @@ struct st_buffer {
    
    unsigned __len__(void) 
    {
-      assert($self->buffer->refcount);
+      assert(p_atomic_read(&$self->buffer->reference.count) > 0);
       return $self->buffer->size;
    }
    
@@ -235,7 +235,7 @@ struct st_buffer {
       struct pipe_screen *screen = $self->st_dev->screen;
       const char *map;
       
-      assert($self->buffer->refcount);
+      assert(p_atomic_read(&$self->buffer->reference.count) > 0);
       
       *LENGTH = $self->buffer->size;
       *STRING = (char *) malloc($self->buffer->size);
@@ -255,7 +255,7 @@ struct st_buffer {
       struct pipe_screen *screen = $self->st_dev->screen;
       char *map;
       
-      assert($self->buffer->refcount);
+      assert(p_atomic_read(&$self->buffer->reference.count) > 0);
       
       if(offset > $self->buffer->size) {
          PyErr_SetString(PyExc_ValueError, "offset must be smaller than buffer size");
