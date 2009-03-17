@@ -896,3 +896,12 @@ TGSI Instruction Specification
 
   Alias for KIL.
 
+
+1.15  ps_1_4
+------------
+
+
+1.15.1  TEXLD - Texture Lookup
+
+  Alias for TEX.
+
