@@ -28,6 +28,7 @@
 #include <pipe/p_thread.h>
 #include "nouveau_context.h"
 #include "nouveau_screen.h"
+#include "nouveau_drmif.h"
 
 pipe_static_mutex(lockMutex);
 
@@ -36,7 +37,7 @@ pipe_static_mutex(lockMutex);
 void
 LOCK_HARDWARE(struct nouveau_context *nv)
 {
-	struct nouveau_screen *nv_screen = nv->nv_screen;
+	struct nouveau_screen *nv_screen = nv->dri_screen->private;
 	struct nouveau_device *dev = nv_screen->device;
 	struct nouveau_device_priv *nvdev = nouveau_device(dev);
 	char __ret=0;
@@ -59,7 +60,7 @@ LOCK_HARDWARE(struct nouveau_context *nv)
 void
 UNLOCK_HARDWARE(struct nouveau_context *nv)
 {
-	struct nouveau_screen *nv_screen = nv->nv_screen;
+	struct nouveau_screen *nv_screen = nv->dri_screen->private;
 	struct nouveau_device *dev = nv_screen->device;
 	struct nouveau_device_priv *nvdev = nouveau_device(dev);
 

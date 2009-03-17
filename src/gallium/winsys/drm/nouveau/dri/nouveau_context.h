@@ -3,15 +3,16 @@
 
 #include <dri_util.h>
 #include <xmlconfig.h>
-#include <nouveau/nouveau_winsys.h>
-#include "../common/nouveau_context.h"
+
+#include "nouveau/nouveau_winsys.h"
+
+#define NOUVEAU_ERR(fmt, args...) debug_printf("%s: "fmt, __func__, ##args)
 
 struct nouveau_framebuffer {
 	struct st_framebuffer *stfb;
 };
 
-struct nouveau_context_dri {
-	struct nouveau_context base;
+struct nouveau_context {
 	struct st_context *st;
 
 	/* DRI stuff */
@@ -21,6 +22,7 @@ struct nouveau_context_dri {
 	driOptionCache         dri_option_cache;
 	drm_context_t          drm_context;
 	drmLock                drm_lock;
+	int                    locked;
 };
 
 extern GLboolean nouveau_context_create(const __GLcontextModes *,
@@ -30,6 +32,10 @@ extern GLboolean nouveau_context_bind(__DRIcontextPrivate *,
 				      __DRIdrawablePrivate *draw,
 				      __DRIdrawablePrivate *read);
 extern GLboolean nouveau_context_unbind(__DRIcontextPrivate *);
+
+extern void nouveau_contended_lock(struct nouveau_context *nv);
+extern void LOCK_HARDWARE(struct nouveau_context *nv);
+extern void UNLOCK_HARDWARE(struct nouveau_context *nv);
 
 #ifdef DEBUG
 extern int __nouveau_debug;

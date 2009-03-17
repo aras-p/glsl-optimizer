@@ -5,23 +5,15 @@
 
 #include <state_tracker/st_public.h>
 #include <state_tracker/st_context.h>
+#include <state_tracker/drm_api.h>
 #include <pipe/p_defines.h>
 #include <pipe/p_context.h>
 #include <pipe/p_screen.h>
 
-#include "../common/nouveau_winsys_pipe.h"
-#include "../common/nouveau_dri.h"
-#include "../common/nouveau_local.h"
-#include "nouveau_context_dri.h"
-#include "nouveau_screen_dri.h"
+#include "nouveau_context.h"
+#include "nouveau_screen.h"
 
-#ifdef DEBUG
-static const struct dri_debug_control debug_control[] = {
-	{ "bo", DEBUG_BO },
-	{ NULL, 0 }
-};
-int __nouveau_debug = 0;
-#endif
+#include "nouveau_drmif.h"
 
 GLboolean
 nouveau_context_create(const __GLcontextModes *glVis,
@@ -29,34 +21,38 @@ nouveau_context_create(const __GLcontextModes *glVis,
 		       void *sharedContextPrivate)
 {
 	__DRIscreenPrivate *driScrnPriv = driContextPriv->driScreenPriv;
-	struct nouveau_screen_dri  *nv_screen = driScrnPriv->private;
-	struct nouveau_context_dri *nv = CALLOC_STRUCT(nouveau_context_dri);
-	struct st_context *st_share = NULL;
-	struct nouveau_context_dri *nv_share = NULL;
+	struct nouveau_screen  *nv_screen = driScrnPriv->private;
+	struct nouveau_context *nv;
 	struct pipe_context *pipe;
+	struct st_context *st_share = NULL;
 
-	if (sharedContextPrivate) {
-		st_share = ((struct nouveau_context_dri *)sharedContextPrivate)->st;
-		nv_share = st_share->pipe->priv;
+	if (sharedContextPrivate)
+		st_share = ((struct nouveau_context *)sharedContextPrivate)->st;
+
+	nv = CALLOC_STRUCT(nouveau_context);
+	if (!nv)
+		return GL_FALSE;
+
+	{
+		struct nouveau_device_priv *nvdev =
+			nouveau_device(nv_screen->device);
+
+		nvdev->ctx  = driContextPriv->hHWContext;
+		nvdev->lock = (drmLock *)&driScrnPriv->pSAREA->lock;
 	}
 
-	if (nouveau_context_init(&nv_screen->base, driContextPriv->hHWContext,
-	                         (drmLock *)&driScrnPriv->pSAREA->lock,
-	                         &nv_share->base, &nv->base)) {
+	pipe = drm_api_hooks.create_context(nv_screen->pscreen);
+	if (!pipe) {
+		FREE(nv);
 		return GL_FALSE;
 	}
+	pipe->priv = nv;
 
-	pipe = nv->base.nvc->pctx[nv->base.pctx_id];
-	driContextPriv->driverPrivate = (void *)nv;
-	//nv->nv_screen  = nv_screen;
+	driContextPriv->driverPrivate = nv;
 	nv->dri_screen = driScrnPriv;
 
 	driParseConfigFiles(&nv->dri_option_cache, &nv_screen->option_cache,
 			    nv->dri_screen->myNum, "nouveau");
-#ifdef DEBUG
-	__nouveau_debug = driParseDebugString(getenv("NOUVEAU_DEBUG"),
-					      debug_control);
-#endif
 
 	nv->st = st_create_context(pipe, glVis, st_share);
 	return GL_TRUE;
@@ -65,14 +61,12 @@ nouveau_context_create(const __GLcontextModes *glVis,
 void
 nouveau_context_destroy(__DRIcontextPrivate *driContextPriv)
 {
-	struct nouveau_context_dri *nv = driContextPriv->driverPrivate;
+	struct nouveau_context *nv = driContextPriv->driverPrivate;
 
 	assert(nv);
 
 	st_finish(nv->st);
 	st_destroy_context(nv->st);
-
-	nouveau_context_cleanup(&nv->base);
 
 	FREE(nv);
 }
@@ -82,7 +76,7 @@ nouveau_context_bind(__DRIcontextPrivate *driContextPriv,
 		     __DRIdrawablePrivate *driDrawPriv,
 		     __DRIdrawablePrivate *driReadPriv)
 {
-	struct nouveau_context_dri *nv;
+	struct nouveau_context *nv;
 	struct nouveau_framebuffer *draw, *read;
 
 	if (!driContextPriv) {
@@ -115,7 +109,7 @@ nouveau_context_bind(__DRIcontextPrivate *driContextPriv,
 GLboolean
 nouveau_context_unbind(__DRIcontextPrivate *driContextPriv)
 {
-	struct nouveau_context_dri *nv = driContextPriv->driverPrivate;
+	struct nouveau_context *nv = driContextPriv->driverPrivate;
 	(void)nv;
 
 	st_flush(nv->st, 0, NULL);

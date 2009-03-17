@@ -5,12 +5,15 @@
 #include <pipe/p_context.h>
 #include <state_tracker/st_public.h>
 #include <state_tracker/st_cb_fbo.h>
-#include <nouveau_drm.h>
-#include "../common/nouveau_dri.h"
-#include "../common/nouveau_local.h"
-#include "nouveau_context_dri.h"
-#include "nouveau_screen_dri.h"
+#include <state_tracker/drm_api.h>
+
+#include "nouveau_context.h"
+#include "nouveau_screen.h"
 #include "nouveau_swapbuffers.h"
+#include "nouveau_dri.h"
+
+#include "nouveau_drm.h"
+#include "nouveau_drmif.h"
 
 #if NOUVEAU_DRM_HEADER_PATCHLEVEL != 12
 #error nouveau_drm.h version does not match expected version
@@ -178,11 +181,58 @@ nouveau_fill_in_modes(__DRIscreenPrivate *psp,
 	return configs;
 }
 
+static struct pipe_surface *
+dri_surface_from_handle(struct pipe_screen *screen,
+                        unsigned handle,
+                        enum pipe_format format,
+                        unsigned width,
+                        unsigned height,
+                        unsigned pitch)
+{
+   struct pipe_surface *surface = NULL;
+   struct pipe_texture *texture = NULL;
+   struct pipe_texture templat;
+   struct pipe_buffer *buf = NULL;
+
+   buf = drm_api_hooks.buffer_from_handle(screen, "front buffer", handle);
+   if (!buf)
+      return NULL;
+
+   memset(&templat, 0, sizeof(templat));
+   templat.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
+   templat.target = PIPE_TEXTURE_2D;
+   templat.last_level = 0;
+   templat.depth[0] = 1;
+   templat.format = format;
+   templat.width[0] = width;
+   templat.height[0] = height;
+   pf_get_block(templat.format, &templat.block);
+
+   texture = screen->texture_blanket(screen,
+                                     &templat,
+                                     &pitch,
+                                     buf);
+
+   /* we don't need the buffer from this point on */
+   pipe_buffer_reference(&buf, NULL);
+
+   if (!texture)
+      return NULL;
+
+   surface = screen->get_tex_surface(screen, texture, 0, 0, 0,
+                                     PIPE_BUFFER_USAGE_GPU_READ |
+                                     PIPE_BUFFER_USAGE_GPU_WRITE);
+
+   /* we don't need the texture from this point on */
+   pipe_texture_reference(&texture, NULL);
+   return surface;
+}
+
 static const __DRIconfig **
 nouveau_screen_create(__DRIscreenPrivate *psp)
 {
 	struct nouveau_dri *nv_dri = psp->pDevPriv;
-	struct nouveau_screen_dri *nv_screen;
+	struct nouveau_screen *nv_screen;
 	static const __DRIversion ddx_expected =
 		{ 0, 0, NOUVEAU_DRM_HEADER_PATCHLEVEL };
 	static const __DRIversion dri_expected = { 4, 0, 0 };
@@ -210,17 +260,38 @@ nouveau_screen_create(__DRIscreenPrivate *psp)
 		return NULL;
 	}
 
-	nv_screen = CALLOC_STRUCT(nouveau_screen_dri);
+	nv_screen = CALLOC_STRUCT(nouveau_screen);
 	if (!nv_screen)
 		return NULL;
 
-	driParseOptionInfo(&nv_screen->option_cache,
-			   __driConfigOptions, __driNConfigOptions);
+	nouveau_device_open_existing(&nv_screen->device, 0, psp->fd, 0);
 
-	if (nouveau_screen_init(nv_dri, psp->fd, &nv_screen->base)) {
+	nv_screen->pscreen = drm_api_hooks.create_screen(psp->fd, 0);
+	if (!nv_screen->pscreen) {
 		FREE(nv_screen);
 		return NULL;
 	}
+	nv_screen->pscreen->flush_frontbuffer = nouveau_flush_frontbuffer;
+
+	{
+		enum pipe_format format;
+
+		if (nv_dri->bpp == 16)
+			format = PIPE_FORMAT_R5G6B5_UNORM;
+		else
+			format = PIPE_FORMAT_A8R8G8B8_UNORM;
+
+		nv_screen->fb = dri_surface_from_handle(nv_screen->pscreen,
+							nv_dri->front_offset,
+							format,
+							nv_dri->width,
+							nv_dri->height,
+							nv_dri->front_pitch *
+							nv_dri->bpp / 8);
+	}
+						
+	driParseOptionInfo(&nv_screen->option_cache,
+			   __driConfigOptions, __driNConfigOptions);
 
 	nv_screen->driScrnPriv = psp;
 	psp->private = (void *)nv_screen;
@@ -234,10 +305,9 @@ nouveau_screen_create(__DRIscreenPrivate *psp)
 static void
 nouveau_screen_destroy(__DRIscreenPrivate *driScrnPriv)
 {
-	struct nouveau_screen_dri *nv_screen = driScrnPriv->private;
+	struct nouveau_screen *nv_screen = driScrnPriv->private;
 
 	driScrnPriv->private = NULL;
-	nouveau_screen_cleanup(&nv_screen->base);
 	FREE(nv_screen);
 }
 

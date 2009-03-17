@@ -1,18 +1,14 @@
 #include "util/u_memory.h"
 
-#include "nouveau_context.h"
-#include "nouveau_screen.h"
 #include "nouveau_winsys_pipe.h"
-
-#include "nouveau/nouveau_winsys.h"
 
 static int
 nouveau_pipe_notifier_alloc(struct nouveau_winsys *nvws, int count,
 			    struct nouveau_notifier **notify)
 {
-	struct nouveau_context *nv = nvws->nv;
+	struct nouveau_pipe_winsys *nvpws = nouveau_pipe_winsys(nvws->ws);
 
-	return nouveau_notifier_alloc(nv->nvc->channel, nv->nvc->next_handle++,
+	return nouveau_notifier_alloc(nvpws->channel, nvpws->next_handle++,
 				      count, notify);
 }
 
@@ -20,12 +16,11 @@ static int
 nouveau_pipe_grobj_alloc(struct nouveau_winsys *nvws, int grclass,
 			 struct nouveau_grobj **grobj)
 {
-	struct nouveau_context *nv = nvws->nv;
-	struct nouveau_channel *chan = nv->nvc->channel;
+	struct nouveau_pipe_winsys *nvpws = nouveau_pipe_winsys(nvws->ws);
+	struct nouveau_channel *chan = nvpws->channel;
 	int ret;
 
-	ret = nouveau_grobj_alloc(chan, nv->nvc->next_handle++,
-				  grclass, grobj);
+	ret = nouveau_grobj_alloc(chan, nvpws->next_handle++, grclass, grobj);
 	if (ret)
 		return ret;
 
@@ -62,55 +57,18 @@ nouveau_pipe_get_bo(struct pipe_buffer *pb)
 	return nouveau_pipe_buffer(pb)->bo;
 }
 
-struct pipe_context *
-nouveau_pipe_create(struct nouveau_context *nv)
+struct nouveau_winsys *
+nouveau_winsys_new(struct pipe_winsys *ws)
 {
-	struct nouveau_channel_context *nvc = nv->nvc;
-	struct nouveau_winsys *nvws = CALLOC_STRUCT(nouveau_winsys);
-	struct pipe_screen *(*hws_create)(struct pipe_winsys *,
-					  struct nouveau_winsys *);
-	struct pipe_context *(*hw_create)(struct pipe_screen *, unsigned);
-	struct pipe_winsys *ws;
-	unsigned chipset = nv->nv_screen->device->chipset;
+	struct nouveau_pipe_winsys *nvpws = nouveau_pipe_winsys(ws);
+	struct nouveau_winsys *nvws;
 
+	nvws = CALLOC_STRUCT(nouveau_winsys);
 	if (!nvws)
 		return NULL;
 
-	switch (chipset & 0xf0) {
-	case 0x00:
-		hws_create = nv04_screen_create;
-		hw_create = nv04_create;
-		break;
-	case 0x10:
-		hws_create = nv10_screen_create;
-		hw_create = nv10_create;
-		break;
-	case 0x20:
-		hws_create = nv20_screen_create;
-		hw_create = nv20_create;
-		break;
-	case 0x30:
-		hws_create = nv30_screen_create;
-		hw_create = nv30_create;
-		break;
-	case 0x40:
-	case 0x60:
-		hws_create = nv40_screen_create;
-		hw_create = nv40_create;
-		break;
-	case 0x50:
-	case 0x80:
-	case 0x90:
-		hws_create = nv50_screen_create;
-		hw_create = nv50_create;
-		break;
-	default:
-		NOUVEAU_ERR("Unknown chipset NV%02x\n", chipset);
-		return NULL;
-	}
-
-	nvws->nv		= nv;
-	nvws->channel		= nv->nvc->channel;
+	nvws->ws		= ws;
+	nvws->channel		= nvpws->channel;
 
 	nvws->res_init		= nouveau_resource_init;
 	nvws->res_alloc		= nouveau_resource_alloc;
@@ -131,16 +89,6 @@ nouveau_pipe_create(struct nouveau_context *nv)
 
 	nvws->get_bo		= nouveau_pipe_get_bo;
 
-	ws = nouveau_create_pipe_winsys(nv);
-
-	if (!nvc->pscreen) {
-		nvc->pscreen = hws_create(ws, nvws);
-		if (!nvc->pscreen) {
-			NOUVEAU_ERR("Couldn't create hw screen\n");
-			return NULL;
-		}
-	}
-	nvc->pctx[nv->pctx_id] = hw_create(nvc->pscreen, nv->pctx_id);
-	return nvc->pctx[nv->pctx_id];
+	return nvws;
 }
 

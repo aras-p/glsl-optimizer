@@ -2,7 +2,7 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-SUBDIRS = common dri
+SUBDIRS = drm dri dri2
 
 default install clean:
 	@for dir in $(SUBDIRS) ; do \

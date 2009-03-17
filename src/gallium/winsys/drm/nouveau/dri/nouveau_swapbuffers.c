@@ -7,23 +7,25 @@
 #include <state_tracker/st_context.h>
 #include <state_tracker/st_cb_fbo.h>
 
-#include "../common/nouveau_local.h"
-#include "nouveau_context_dri.h"
-#include "nouveau_screen_dri.h"
+#include "nouveau_context.h"
+#include "nouveau_screen.h"
 #include "nouveau_swapbuffers.h"
+
+#include "nouveau_pushbuf.h"
 
 void
 nouveau_copy_buffer(__DRIdrawablePrivate *dPriv, struct pipe_surface *surf,
 		    const drm_clip_rect_t *rect)
 {
-	struct nouveau_context_dri *nv = dPriv->driContextPriv->driverPrivate;
-	struct pipe_context *pipe = nv->base.nvc->pctx[nv->base.pctx_id];
+	struct nouveau_context *nv = dPriv->driContextPriv->driverPrivate;
+	struct nouveau_screen *nv_screen = nv->dri_screen->private;
+	struct pipe_context *pipe = nv->st->pipe;
 	drm_clip_rect_t *pbox;
 	int nbox, i;
 
-	LOCK_HARDWARE(&nv->base);
+	LOCK_HARDWARE(nv);
 	if (!dPriv->numClipRects) {
-		UNLOCK_HARDWARE(&nv->base);
+		UNLOCK_HARDWARE(nv);
 		return;
 	}
 	pbox = dPriv->pClipRects;
@@ -39,12 +41,12 @@ nouveau_copy_buffer(__DRIdrawablePrivate *dPriv, struct pipe_surface *surf,
 		w  = pbox->x2 - pbox->x1;
 		h  = pbox->y2 - pbox->y1;
 
-		pipe->surface_copy(pipe, nv->base.frontbuffer,
-				   dx, dy, surf, sx, sy, w, h);
+		pipe->surface_copy(pipe, nv_screen->fb, dx, dy, surf,
+				   sx, sy, w, h);
 	}
 
-	FIRE_RING(nv->base.nvc->channel);
-	UNLOCK_HARDWARE(&nv->base);
+	pipe->flush(pipe, 0, NULL);
+	UNLOCK_HARDWARE(nv);
 
 	if (nv->last_stamp != dPriv->lastStamp) {
 		struct nouveau_framebuffer *nvfb = dPriv->driverPrivate;
@@ -86,19 +88,19 @@ nouveau_swap_buffers(__DRIdrawablePrivate *dPriv)
 }
 
 void
-nouveau_flush_frontbuffer(struct pipe_winsys *pws, struct pipe_surface *surf,
+nouveau_flush_frontbuffer(struct pipe_screen *pscreen, struct pipe_surface *ps,
 			  void *context_private)
 {
-	struct nouveau_context_dri *nv = context_private;
+	struct nouveau_context *nv = context_private;
 	__DRIdrawablePrivate *dPriv = nv->dri_drawable;
 
-	nouveau_copy_buffer(dPriv, surf, NULL);
+	nouveau_copy_buffer(dPriv, ps, NULL);
 }
 
 void
 nouveau_contended_lock(struct nouveau_context *nv)
 {
-	struct nouveau_context_dri *nv_sub = (struct nouveau_context_dri*)nv;
+	struct nouveau_context *nv_sub = (struct nouveau_context*)nv;
 	__DRIdrawablePrivate *dPriv = nv_sub->dri_drawable;
 	__DRIscreenPrivate *sPriv = nv_sub->dri_screen;
 

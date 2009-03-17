@@ -24,7 +24,7 @@
 #define NOUVEAU_BUFFER_USAGE_TRANSFER (1 << 18)
 
 struct nouveau_winsys {
-	struct nouveau_context *nv;
+	struct pipe_winsys *ws;
 
 	struct nouveau_channel *channel;
 
