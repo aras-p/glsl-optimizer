@@ -30,20 +30,30 @@ static struct pipe_query* r300_create_query(struct pipe_context* pipe,
     q->type = query_type;
     assert(q->type == PIPE_QUERY_OCCLUSION_COUNTER);
 
+    /* XXX this is to force winsys to give us a GTT buffer */
+    q->buf = pipe->screen->buffer_create(pipe->screen, 64,
+            PIPE_BUFFER_USAGE_VERTEX, 64);
+
     return (struct pipe_query*)q;
 }
 
 static void r300_destroy_query(struct pipe_context* pipe,
-                               struct pipe_query* q)
+                               struct pipe_query* query)
 {
-    FREE(q);
+    FREE(query);
 }
 
 static void r300_begin_query(struct pipe_context* pipe,
-                             struct pipe_query* q)
+                             struct pipe_query* query)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_query* q = (struct r300_query*)query;
     CS_LOCALS(r300);
+
+    uint32_t* map = pipe_buffer_map(pipe->screen, q->buf,
+            PIPE_BUFFER_USAGE_CPU_WRITE);
+    *map = ~0;
+    pipe_buffer_unmap(pipe->screen, q->buf);
 
     BEGIN_CS(2);
     OUT_CS_REG(R300_ZB_ZPASS_DATA, 0);
@@ -51,17 +61,44 @@ static void r300_begin_query(struct pipe_context* pipe,
 }
 
 static void r300_end_query(struct pipe_context* pipe,
-                           struct pipe_query* q)
+                           struct pipe_query* query)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_query* q = (struct r300_query*)query;
+    CS_LOCALS(r300);
+
+    BEGIN_CS(4);
+    OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
+    OUT_CS_RELOC(q->buf, 0, 0, RADEON_GEM_DOMAIN_GTT, 0);
+    END_CS;
 }
 
 static boolean r300_get_query_result(struct pipe_context* pipe,
-                                     struct pipe_query* q,
+                                     struct pipe_query* query,
                                      boolean wait,
                                      uint64_t* result)
 {
-    *result = 0;
+    struct r300_query* q = (struct r300_query*)query;
+    uint32_t temp;
+
+    if (wait) {
+        /* Well, we're expected to just sit here and spin, so let's go ahead
+         * and flush so we can be sure that the card's spinning... */
+        /* XXX double-check these params */
+        pipe->flush(pipe, 0, NULL);
+    }
+
+    uint32_t* map = pipe_buffer_map(pipe->screen, q->buf,
+            PIPE_BUFFER_USAGE_CPU_READ);
+    temp = *map;
+    pipe_buffer_unmap(pipe->screen, q->buf);
+
+    if (temp < 0) {
+        /* Our results haven't been written yet... */
+        return FALSE;
+    }
+
+    *result = temp;
     return TRUE;
 }
 
