@@ -170,12 +170,6 @@ AddWindow(Display *dpy, const char *displayName, int xpos, int ypos,
 
    XMapWindow(dpy, win);
 
-   if (!glXMakeCurrent(dpy, win, ctx)) {
-      Error(displayName, "glXMakeCurrent failed");
-      printf("glXMakeCurrent failed in AddWindow()\n");
-      return NULL;
-   }
-
    /* save the info for this window */
    {
       static int id = 0;
@@ -299,6 +293,13 @@ InitGLstuff(void)
 static void
 Redraw(struct window *h)
 {
+   pthread_mutex_lock(&h->drawMutex);
+   if (!glXMakeCurrent(h->Dpy, h->Win, h->Context)) {
+      Error(h->DisplayName, "glXMakeCurrent failed in Redraw");
+      pthread_mutex_unlock(&h->drawMutex);
+      return;
+   }
+
    h->Angle += 1.0;
 
    glShadeModel(GL_FLAT);
@@ -364,9 +365,12 @@ Redraw(struct window *h)
 
    glPopMatrix();
 
-   XLockDisplay(h->Dpy);
    glXSwapBuffers(h->Dpy, h->Win);
-   XUnlockDisplay(h->Dpy);
+
+   if (!glXMakeCurrent(h->Dpy, None, NULL)) {
+      Error(h->DisplayName, "glXMakeCurrent failed in Redraw");
+   }
+   pthread_mutex_unlock(&h->drawMutex);
 }
 
 static void *threadRunner (void *arg)
@@ -375,23 +379,12 @@ static void *threadRunner (void *arg)
    struct window *win;
 
    win = &Windows[tia->id];
-   XLockDisplay(win->Dpy);
-   if (!glXMakeCurrent(win->Dpy, win->Win, win->Context)) {
-      Error(win->DisplayName, "glXMakeCurrent failed in threadRunner");
-      XUnlockDisplay(win->Dpy);
-      return NULL;
-   }
-   XUnlockDisplay(win->Dpy);
 
    while(!terminate) {
       usleep(1000);
-      pthread_mutex_lock(&win->drawMutex);
       Redraw(win);
-      glFinish();
-      pthread_mutex_unlock(&win->drawMutex);
    }
 
-   pthread_mutex_destroy(&win->drawMutex);
    return NULL;
 }
 
@@ -399,15 +392,12 @@ static void
 Resize(struct window *h, unsigned int width, unsigned int height)
 {
    pthread_mutex_lock(&h->drawMutex);
-   XLockDisplay(h->Dpy);
 
    if (!glXMakeCurrent(h->Dpy, h->Win, h->Context)) {
       Error(h->DisplayName, "glXMakeCurrent failed in Resize()");
-      XUnlockDisplay(h->Dpy);
       pthread_mutex_unlock(&h->drawMutex);
       return;
    }
-   XUnlockDisplay(h->Dpy);
 
    glViewport(0, 0, width, height);
    glMatrixMode(GL_PROJECTION);
@@ -416,7 +406,9 @@ Resize(struct window *h, unsigned int width, unsigned int height)
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
    glTranslatef(0, 0, -4.5);
-   glFinish();
+   if (!glXMakeCurrent(h->Dpy, None, NULL)) {
+      Error(h->DisplayName, "glXMakeCurrent failed in Resize()");
+   }
    pthread_mutex_unlock(&h->drawMutex);
 }
 
@@ -426,55 +418,26 @@ EventLoop(void)
 {
    while (1) {
       int i;
-      XLockDisplay(gDpy);
-      while (XPending(gDpy) > 0) {
-	 XEvent event;
-	 XNextEvent(gDpy, &event);
-	 XUnlockDisplay(gDpy);
-	 for (i = 0; i < NumWindows; i++) {
-	    struct window *h = &Windows[i];
-            if (event.xany.window == h->Win) {
-               switch (event.type) {
-	       case Expose:
-
-		  /*
-		   * Note, that here the main thread is actually sharing
-		   * context
-		   * with window h's thread. This sharing is protected by
-		   * the h->drawMutex, and is a bit nasty.
-		   * We always need to call glFinish() before releasing
-		   * the mutex. One might think that glFlush() would be enough,
-		   * but glFlush() doesn't imply that all driver buffers are
-		   * _immediately_ flushed to the hardware.
-		   */
-
-		  pthread_mutex_lock(&h->drawMutex);
-		  XLockDisplay(gDpy);
-		  if (!glXMakeCurrent(gDpy, h->Win, h->Context)) {
-		     Error(h->DisplayName, "glXMakeCurrent failed in Expose");
-		     XUnlockDisplay(gDpy);
-		     return;
-		  }
-		  XUnlockDisplay(gDpy);
-		  Redraw(h);
-		  glFinish();
-		  pthread_mutex_unlock(&h->drawMutex);
-		  break;
-	       case ConfigureNotify:
-		  Resize(h, event.xconfigure.width, event.xconfigure.height);
-		  break;
-	       case KeyPress:
-		  terminate = 1;
-		  return;
-	       default:
-		  /*no-op*/ ;
-               }
-            }
+      XEvent event;
+      XNextEvent(gDpy, &event);
+      for (i = 0; i < NumWindows; i++) {
+	 struct window *h = &Windows[i];
+	 if (event.xany.window == h->Win) {
+	    switch (event.type) {
+	    case Expose:
+	       Redraw(h);
+	       break;
+	    case ConfigureNotify:
+	       Resize(h, event.xconfigure.width, event.xconfigure.height);
+	       break;
+	    case KeyPress:
+	       terminate = 1;
+	       return;
+	    default:
+	       /*no-op*/ ;
+	    }
 	 }
-	 XLockDisplay(gDpy);
       }
-      XUnlockDisplay(gDpy);
-      usleep(1000);
    }
 }
 
