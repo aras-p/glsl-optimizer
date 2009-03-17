@@ -61,9 +61,9 @@ p_atomic_dec(struct pipe_atomic *v)
 }
 
 static INLINE int32_t
-p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t new)
+p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 {
-   return __sync_val_compare_and_swap(&v->count, old, new);
+   return __sync_val_compare_and_swap(&v->count, old, _new);
 }
 
 #elif (defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)) /* (defined(PIPE_CC_GCC)) */
@@ -78,7 +78,7 @@ struct pipe_atomic
 #define p_atomic_dec_zero(_v) ((boolean) --(_v)->count)
 #define p_atomic_inc(_v) ((void) (_v)->count++)
 #define p_atomic_dec(_v) ((void) (_v)->count--)
-#define p_atomic_cmpxchg(_v, old, new) ((_v)->count == old ? (_v)->count = (new) : (_v)->count)
+#define p_atomic_cmpxchg(_v, old, _new) ((_v)->count == old ? (_v)->count = (_new) : (_v)->count)
 
 #elif (defined(PIPE_ARCH_X86) && defined(PIPE_CC_MSVC)) /* (defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)) */
 
@@ -128,7 +128,7 @@ p_atomic_dec(struct pipe_atomic *v)
 }
 
 static INLINE int32_t
-p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t new)
+p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 {
    int32_t *pcount = &v->count;
    int32_t orig;
@@ -136,7 +136,7 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t new)
    __asm {
       mov ecx, [pcount]
       mov eax, [old]
-      mov edx, [new]
+      mov edx, [_new]
       lock cmpxchg [ecx], edx
       mov [orig], eax
    }
@@ -173,9 +173,9 @@ p_atomic_dec(struct pipe_atomic *v)
 }
 
 static INLINE int32_t
-p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t new)
+p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 {
-   return InterlockedCompareExchange(&v->count, new, old);
+   return InterlockedCompareExchange(&v->count, _new, old);
 }
 
 #else /* (defined(PIPE_SUBSYSTEM_WINDOWS_USER)) */
@@ -241,14 +241,14 @@ p_atomic_dec_zero(struct pipe_atomic *v)
 }
 
 static INLINE int32_t
-p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t new)
+p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 {
    int32_t ret;
 
    pipe_mutex_lock(v->mutex);
    ret = v->count;
    if (ret == old)
-      v->count = new;
+      v->count = _new;
    pipe_mutex_unlock(v->mutex);
 
    return ret;
