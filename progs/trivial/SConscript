@@ -66,6 +66,7 @@ progs = [
 	'quad-tex-3d',
 	'quad-tex-alpha',
 	'quad-tex-pbo',
+	'quad-tex-sub',
 	'quad-unfilled-clip',
 	'quad-unfilled-stipple',
 	'quad-unfilled',

@@ -70,6 +70,7 @@ SOURCES = \
 	quad-tex-3d.c \
 	quad-tex-alpha.c \
 	quad-tex-pbo.c \
+	quad-tex-sub.c \
 	quad-unfilled-clip.c \
 	quad-unfilled-stipple.c \
 	quad-unfilled.c \
