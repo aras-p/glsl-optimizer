@@ -254,6 +254,11 @@ void st_make_current(struct st_context *st,
                      struct st_framebuffer *draw,
                      struct st_framebuffer *read)
 {
+   /* Call this periodically to detect when the user has begun using
+    * GL rendering from multiple threads.
+    */
+   _glapi_check_multithread();
+
    if (st) {
       GLboolean firstTime = st->ctx->FirstTimeCurrent;
       _mesa_make_current(st->ctx, &draw->Base, &read->Base);
