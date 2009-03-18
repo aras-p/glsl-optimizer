@@ -76,15 +76,15 @@ struct gen_mipmap_state
 
 enum dtype
 {
-   UBYTE,
-   UBYTE_3_3_2,
-   USHORT,
-   USHORT_4_4_4_4,
-   USHORT_5_6_5,
-   USHORT_1_5_5_5_REV,
-   UINT,
-   FLOAT,
-   HALF_FLOAT
+   DTYPE_UBYTE,
+   DTYPE_UBYTE_3_3_2,
+   DTYPE_USHORT,
+   DTYPE_USHORT_4_4_4_4,
+   DTYPE_USHORT_5_6_5,
+   DTYPE_USHORT_1_5_5_5_REV,
+   DTYPE_UINT,
+   DTYPE_FLOAT,
+   DTYPE_HALF_FLOAT
 };
 
 
@@ -192,7 +192,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
    assert(srcWidth == dstWidth || srcWidth == 2 * dstWidth);
    */
 
-   if (datatype == UBYTE && comps == 4) {
+   if (datatype == DTYPE_UBYTE && comps == 4) {
       uint i, j, k;
       const ubyte(*rowA)[4] = (const ubyte(*)[4]) srcRowA;
       const ubyte(*rowB)[4] = (const ubyte(*)[4]) srcRowB;
@@ -205,7 +205,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
          dst[i][3] = (rowA[j][3] + rowA[k][3] + rowB[j][3] + rowB[k][3]) / 4;
       }
    }
-   else if (datatype == UBYTE && comps == 3) {
+   else if (datatype == DTYPE_UBYTE && comps == 3) {
       uint i, j, k;
       const ubyte(*rowA)[3] = (const ubyte(*)[3]) srcRowA;
       const ubyte(*rowB)[3] = (const ubyte(*)[3]) srcRowB;
@@ -217,7 +217,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
          dst[i][2] = (rowA[j][2] + rowA[k][2] + rowB[j][2] + rowB[k][2]) / 4;
       }
    }
-   else if (datatype == UBYTE && comps == 2) {
+   else if (datatype == DTYPE_UBYTE && comps == 2) {
       uint i, j, k;
       const ubyte(*rowA)[2] = (const ubyte(*)[2]) srcRowA;
       const ubyte(*rowB)[2] = (const ubyte(*)[2]) srcRowB;
@@ -228,7 +228,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
          dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) >> 2;
       }
    }
-   else if (datatype == UBYTE && comps == 1) {
+   else if (datatype == DTYPE_UBYTE && comps == 1) {
       uint i, j, k;
       const ubyte *rowA = (const ubyte *) srcRowA;
       const ubyte *rowB = (const ubyte *) srcRowB;
@@ -239,7 +239,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
       }
    }
 
-   else if (datatype == USHORT && comps == 4) {
+   else if (datatype == DTYPE_USHORT && comps == 4) {
       uint i, j, k;
       const ushort(*rowA)[4] = (const ushort(*)[4]) srcRowA;
       const ushort(*rowB)[4] = (const ushort(*)[4]) srcRowB;
@@ -252,7 +252,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
          dst[i][3] = (rowA[j][3] + rowA[k][3] + rowB[j][3] + rowB[k][3]) / 4;
       }
    }
-   else if (datatype == USHORT && comps == 3) {
+   else if (datatype == DTYPE_USHORT && comps == 3) {
       uint i, j, k;
       const ushort(*rowA)[3] = (const ushort(*)[3]) srcRowA;
       const ushort(*rowB)[3] = (const ushort(*)[3]) srcRowB;
@@ -264,7 +264,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
          dst[i][2] = (rowA[j][2] + rowA[k][2] + rowB[j][2] + rowB[k][2]) / 4;
       }
    }
-   else if (datatype == USHORT && comps == 2) {
+   else if (datatype == DTYPE_USHORT && comps == 2) {
       uint i, j, k;
       const ushort(*rowA)[2] = (const ushort(*)[2]) srcRowA;
       const ushort(*rowB)[2] = (const ushort(*)[2]) srcRowB;
@@ -275,7 +275,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
          dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) / 4;
       }
    }
-   else if (datatype == USHORT && comps == 1) {
+   else if (datatype == DTYPE_USHORT && comps == 1) {
       uint i, j, k;
       const ushort *rowA = (const ushort *) srcRowA;
       const ushort *rowB = (const ushort *) srcRowB;
@@ -286,7 +286,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
       }
    }
 
-   else if (datatype == FLOAT && comps == 4) {
+   else if (datatype == DTYPE_FLOAT && comps == 4) {
       uint i, j, k;
       const float(*rowA)[4] = (const float(*)[4]) srcRowA;
       const float(*rowB)[4] = (const float(*)[4]) srcRowB;
@@ -303,7 +303,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
                       rowB[j][3] + rowB[k][3]) * 0.25F;
       }
    }
-   else if (datatype == FLOAT && comps == 3) {
+   else if (datatype == DTYPE_FLOAT && comps == 3) {
       uint i, j, k;
       const float(*rowA)[3] = (const float(*)[3]) srcRowA;
       const float(*rowB)[3] = (const float(*)[3]) srcRowB;
@@ -318,7 +318,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
                       rowB[j][2] + rowB[k][2]) * 0.25F;
       }
    }
-   else if (datatype == FLOAT && comps == 2) {
+   else if (datatype == DTYPE_FLOAT && comps == 2) {
       uint i, j, k;
       const float(*rowA)[2] = (const float(*)[2]) srcRowA;
       const float(*rowB)[2] = (const float(*)[2]) srcRowB;
@@ -331,7 +331,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
                       rowB[j][1] + rowB[k][1]) * 0.25F;
       }
    }
-   else if (datatype == FLOAT && comps == 1) {
+   else if (datatype == DTYPE_FLOAT && comps == 1) {
       uint i, j, k;
       const float *rowA = (const float *) srcRowA;
       const float *rowB = (const float *) srcRowB;
@@ -343,7 +343,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
    }
 
 #if 0
-   else if (datatype == HALF_FLOAT && comps == 4) {
+   else if (datatype == HALF_DTYPE_FLOAT && comps == 4) {
       uint i, j, k, comp;
       const half_float(*rowA)[4] = (const half_float(*)[4]) srcRowA;
       const half_float(*rowB)[4] = (const half_float(*)[4]) srcRowB;
@@ -360,7 +360,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
          }
       }
    }
-   else if (datatype == HALF_FLOAT && comps == 3) {
+   else if (datatype == DTYPE_HALF_FLOAT && comps == 3) {
       uint i, j, k, comp;
       const half_float(*rowA)[3] = (const half_float(*)[3]) srcRowA;
       const half_float(*rowB)[3] = (const half_float(*)[3]) srcRowB;
@@ -377,7 +377,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
          }
       }
    }
-   else if (datatype == HALF_FLOAT && comps == 2) {
+   else if (datatype == DTYPE_HALF_FLOAT && comps == 2) {
       uint i, j, k, comp;
       const half_float(*rowA)[2] = (const half_float(*)[2]) srcRowA;
       const half_float(*rowB)[2] = (const half_float(*)[2]) srcRowB;
@@ -394,7 +394,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
          }
       }
    }
-   else if (datatype == HALF_FLOAT && comps == 1) {
+   else if (datatype == DTYPE_HALF_FLOAT && comps == 1) {
       uint i, j, k;
       const half_float *rowA = (const half_float *) srcRowA;
       const half_float *rowB = (const half_float *) srcRowB;
@@ -411,7 +411,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
    }
 #endif
 
-   else if (datatype == UINT && comps == 1) {
+   else if (datatype == DTYPE_UINT && comps == 1) {
       uint i, j, k;
       const uint *rowA = (const uint *) srcRowA;
       const uint *rowB = (const uint *) srcRowB;
@@ -422,7 +422,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
       }
    }
 
-   else if (datatype == USHORT_5_6_5 && comps == 3) {
+   else if (datatype == DTYPE_USHORT_5_6_5 && comps == 3) {
       uint i, j, k;
       const ushort *rowA = (const ushort *) srcRowA;
       const ushort *rowB = (const ushort *) srcRowB;
@@ -447,7 +447,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
          dst[i] = (blue << 11) | (green << 5) | red;
       }
    }
-   else if (datatype == USHORT_4_4_4_4 && comps == 4) {
+   else if (datatype == DTYPE_USHORT_4_4_4_4 && comps == 4) {
       uint i, j, k;
       const ushort *rowA = (const ushort *) srcRowA;
       const ushort *rowB = (const ushort *) srcRowB;
@@ -477,7 +477,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
          dst[i] = (alpha << 12) | (blue << 8) | (green << 4) | red;
       }
    }
-   else if (datatype == USHORT_1_5_5_5_REV && comps == 4) {
+   else if (datatype == DTYPE_USHORT_1_5_5_5_REV && comps == 4) {
       uint i, j, k;
       const ushort *rowA = (const ushort *) srcRowA;
       const ushort *rowB = (const ushort *) srcRowB;
@@ -507,7 +507,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
          dst[i] = (alpha << 15) | (blue << 10) | (green << 5) | red;
       }
    }
-   else if (datatype == UBYTE_3_3_2 && comps == 3) {
+   else if (datatype == DTYPE_UBYTE_3_3_2 && comps == 3) {
       uint i, j, k;
       const ubyte *rowA = (const ubyte *) srcRowA;
       const ubyte *rowB = (const ubyte *) srcRowB;
@@ -568,7 +568,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
    assert(comps >= 1);
    assert(comps <= 4);
 
-   if ((datatype == UBYTE) && (comps == 4)) {
+   if ((datatype == DTYPE_UBYTE) && (comps == 4)) {
       DECLARE_ROW_POINTERS(ubyte, 4);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -579,7 +579,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_3D(3);
       }
    }
-   else if ((datatype == UBYTE) && (comps == 3)) {
+   else if ((datatype == DTYPE_UBYTE) && (comps == 3)) {
       DECLARE_ROW_POINTERS(ubyte, 3);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -589,7 +589,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_3D(2);
       }
    }
-   else if ((datatype == UBYTE) && (comps == 2)) {
+   else if ((datatype == DTYPE_UBYTE) && (comps == 2)) {
       DECLARE_ROW_POINTERS(ubyte, 2);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -598,7 +598,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_3D(1);
       }
    }
-   else if ((datatype == UBYTE) && (comps == 1)) {
+   else if ((datatype == DTYPE_UBYTE) && (comps == 1)) {
       DECLARE_ROW_POINTERS(ubyte, 1);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -606,7 +606,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_3D(0);
       }
    }
-   else if ((datatype == USHORT) && (comps == 4)) {
+   else if ((datatype == DTYPE_USHORT) && (comps == 4)) {
       DECLARE_ROW_POINTERS(ushort, 4);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -617,7 +617,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_3D(3);
       }
    }
-   else if ((datatype == USHORT) && (comps == 3)) {
+   else if ((datatype == DTYPE_USHORT) && (comps == 3)) {
       DECLARE_ROW_POINTERS(ushort, 3);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -627,7 +627,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_3D(2);
       }
    }
-   else if ((datatype == USHORT) && (comps == 2)) {
+   else if ((datatype == DTYPE_USHORT) && (comps == 2)) {
       DECLARE_ROW_POINTERS(ushort, 2);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -636,7 +636,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_3D(1);
       }
    }
-   else if ((datatype == USHORT) && (comps == 1)) {
+   else if ((datatype == DTYPE_USHORT) && (comps == 1)) {
       DECLARE_ROW_POINTERS(ushort, 1);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -644,7 +644,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_3D(0);
       }
    }
-   else if ((datatype == FLOAT) && (comps == 4)) {
+   else if ((datatype == DTYPE_FLOAT) && (comps == 4)) {
       DECLARE_ROW_POINTERS(float, 4);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -655,7 +655,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_F_3D(3);
       }
    }
-   else if ((datatype == FLOAT) && (comps == 3)) {
+   else if ((datatype == DTYPE_FLOAT) && (comps == 3)) {
       DECLARE_ROW_POINTERS(float, 3);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -665,7 +665,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_F_3D(2);
       }
    }
-   else if ((datatype == FLOAT) && (comps == 2)) {
+   else if ((datatype == DTYPE_FLOAT) && (comps == 2)) {
       DECLARE_ROW_POINTERS(float, 2);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -674,7 +674,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_F_3D(1);
       }
    }
-   else if ((datatype == FLOAT) && (comps == 1)) {
+   else if ((datatype == DTYPE_FLOAT) && (comps == 1)) {
       DECLARE_ROW_POINTERS(float, 1);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -682,7 +682,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_F_3D(0);
       }
    }
-   else if ((datatype == HALF_FLOAT) && (comps == 4)) {
+   else if ((datatype == DTYPE_HALF_FLOAT) && (comps == 4)) {
       DECLARE_ROW_POINTERS(half_float, 4);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -693,7 +693,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_HF_3D(3);
       }
    }
-   else if ((datatype == HALF_FLOAT) && (comps == 3)) {
+   else if ((datatype == DTYPE_HALF_FLOAT) && (comps == 3)) {
       DECLARE_ROW_POINTERS(half_float, 4);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -703,7 +703,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_HF_3D(2);
       }
    }
-   else if ((datatype == HALF_FLOAT) && (comps == 2)) {
+   else if ((datatype == DTYPE_HALF_FLOAT) && (comps == 2)) {
       DECLARE_ROW_POINTERS(half_float, 4);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -712,7 +712,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_HF_3D(1);
       }
    }
-   else if ((datatype == HALF_FLOAT) && (comps == 1)) {
+   else if ((datatype == DTYPE_HALF_FLOAT) && (comps == 1)) {
       DECLARE_ROW_POINTERS(half_float, 4);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -720,7 +720,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          FILTER_HF_3D(0);
       }
    }
-   else if ((datatype == UINT) && (comps == 1)) {
+   else if ((datatype == DTYPE_UINT) && (comps == 1)) {
       const uint *rowA = (const uint *) srcRowA;
       const uint *rowB = (const uint *) srcRowB;
       const uint *rowC = (const uint *) srcRowC;
@@ -736,7 +736,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          dst[i] = (float)((double) tmp * 0.125);
       }
    }
-   else if ((datatype == USHORT_5_6_5) && (comps == 3)) {
+   else if ((datatype == DTYPE_USHORT_5_6_5) && (comps == 3)) {
       DECLARE_ROW_POINTERS0(ushort);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -774,7 +774,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          dst[i] = (b << 11) | (g << 5) | r;
       }
    }
-   else if ((datatype == USHORT_4_4_4_4) && (comps == 4)) {
+   else if ((datatype == DTYPE_USHORT_4_4_4_4) && (comps == 4)) {
       DECLARE_ROW_POINTERS0(ushort);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -823,7 +823,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          dst[i] = (a << 12) | (b << 8) | (g << 4) | r;
       }
    }
-   else if ((datatype == USHORT_1_5_5_5_REV) && (comps == 4)) {
+   else if ((datatype == DTYPE_USHORT_1_5_5_5_REV) && (comps == 4)) {
       DECLARE_ROW_POINTERS0(ushort);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -872,7 +872,7 @@ do_row_3D(enum dtype datatype, uint comps, int srcWidth,
          dst[i] = (a << 15) | (b << 10) | (g << 5) | r;
       }
    }
-   else if ((datatype == UBYTE_3_3_2) && (comps == 3)) {
+   else if ((datatype == DTYPE_UBYTE_3_3_2) && (comps == 3)) {
       DECLARE_ROW_POINTERS0(ushort);
 
       for (i = j = 0, k = k0; i < (uint) dstWidth;
@@ -926,34 +926,34 @@ format_to_type_comps(enum pipe_format pformat,
    case PIPE_FORMAT_X8R8G8B8_UNORM:
    case PIPE_FORMAT_B8G8R8A8_UNORM:
    case PIPE_FORMAT_B8G8R8X8_UNORM:
-      *datatype = UBYTE;
+      *datatype = DTYPE_UBYTE;
       *comps = 4;
       return;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
-      *datatype = USHORT_1_5_5_5_REV;
+      *datatype = DTYPE_USHORT_1_5_5_5_REV;
       *comps = 4;
       return;
    case PIPE_FORMAT_A4R4G4B4_UNORM:
-      *datatype = USHORT_4_4_4_4;
+      *datatype = DTYPE_USHORT_4_4_4_4;
       *comps = 4;
       return;
    case PIPE_FORMAT_R5G6B5_UNORM:
-      *datatype = USHORT_5_6_5;
+      *datatype = DTYPE_USHORT_5_6_5;
       *comps = 3;
       return;
    case PIPE_FORMAT_L8_UNORM:
    case PIPE_FORMAT_A8_UNORM:
    case PIPE_FORMAT_I8_UNORM:
-      *datatype = UBYTE;
+      *datatype = DTYPE_UBYTE;
       *comps = 1;
       return;
    case PIPE_FORMAT_A8L8_UNORM:
-      *datatype = UBYTE;
+      *datatype = DTYPE_UBYTE;
       *comps = 2;
       return;
    default:
       assert(0);
-      *datatype = UBYTE;
+      *datatype = DTYPE_UBYTE;
       *comps = 0;
       break;
    }
