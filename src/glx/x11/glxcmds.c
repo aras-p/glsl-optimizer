@@ -2631,11 +2631,19 @@ static void __glXBindTexImageEXT(Display *dpy,
     if (gc->driContext) {
 	__GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
 
-	if (pdraw != NULL)
-	    (*pdraw->psc->texBuffer->setTexBuffer)(gc->__driContext,
-						   pdraw->textureTarget,
-						   pdraw->driDrawable);
-
+	if (pdraw != NULL) {
+	    if (pdraw->psc->texBuffer->base.version >= 2 &&
+		pdraw->psc->texBuffer->setTexBuffer2 != NULL) {
+		(*pdraw->psc->texBuffer->setTexBuffer2)(gc->__driContext,
+							pdraw->textureTarget,
+							pdraw->textureFormat,
+							pdraw->driDrawable);
+	    } else {
+		(*pdraw->psc->texBuffer->setTexBuffer)(gc->__driContext,
+						       pdraw->textureTarget,
+						       pdraw->driDrawable);
+	    }
+	}
 	return;
     }
 #endif

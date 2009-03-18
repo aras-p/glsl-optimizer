@@ -149,6 +149,8 @@ void intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 		       unsigned long long offset, GLint depth, GLuint pitch);
 void intelSetTexBuffer(__DRIcontext *pDRICtx,
 		       GLint target, __DRIdrawable *pDraw);
+void intelSetTexBuffer2(__DRIcontext *pDRICtx,
+			GLint target, GLint format, __DRIdrawable *pDraw);
 
 GLuint intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit);
 
