@@ -43,17 +43,17 @@ static void MakeImage()
 
    for (s = 0; s < SIZE; s++) {
       for (t = 0; t < SIZE; t++) {
-         tex2d[s][t][0] = s*255/(SIZE-1);
-         tex2d[s][t][1] = t*255/(SIZE-1);
-         tex2d[s][t][2] = 0*255/(SIZE-1);
+         tex2d[t][s][0] = s*255/(SIZE-1);
+         tex2d[t][s][1] = t*255/(SIZE-1);
+         tex2d[t][s][2] = 0*255/(SIZE-1);
       }
    }
 
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-         SIZE, SIZE,
-         0,
-         GL_RGB, GL_UNSIGNED_BYTE, tex2d);
+                SIZE, SIZE,
+                0,
+                GL_RGB, GL_UNSIGNED_BYTE, tex2d);
    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
    glEnable(GL_TEXTURE_2D);
 }
@@ -61,14 +61,19 @@ static void MakeImage()
 static void UpdateLine()
 {
    GLubyte tex[SIZE][3];
+   GLubyte b = 0;
    GLint s, t;
 
    t = line % SIZE;
+   if (line % (SIZE * 2) < SIZE)
+      b = 255;
+   else
+      b = 0;
 
    for (s = 0; s < SIZE; s++) {
       tex[s][0] = s*255/(SIZE-1);
       tex[s][1] = t*255/(SIZE-1);
-      tex[s][2] = 255;
+      tex[s][2] = b;
    }
 
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
