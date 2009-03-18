@@ -81,6 +81,7 @@ progs = [
     'mapbufrange',
     'mapvbo',
     'minmag',
+    'mipgen',
     'mipmap_limits',
     'mipmap_view',
     'multipal',

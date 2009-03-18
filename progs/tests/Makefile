@@ -58,6 +58,7 @@ SOURCES = \
 	mapbufrange.c \
 	mapvbo.c \
 	minmag.c \
+	mipgen.c \
 	mipmap_limits.c \
 	mipmap_view.c \
 	multipal.c \
