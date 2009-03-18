@@ -102,6 +102,15 @@ struct r300_texture_state {
     uint32_t format2; /* R300_TX_FORMAT2: 0x4500 */
 };
 
+struct r300_viewport_state {
+    float xscale;  /* R300_VAP_VPORT_XSCALE:  0x2098 */
+    float xoffset; /* R300_VAP_VPORT_XOFFSET: 0x209c */
+    float yscale;  /* R300_VAP_VPORT_YSCALE:  0x20a0 */
+    float yoffset; /* R300_VAP_VPORT_YOFFSET: 0x20a4 */
+    float zscale;  /* R300_VAP_VPORT_ZSCALE:  0x20a8 */
+    float zoffset; /* R300_VAP_VPORT_ZOFFSET: 0x20ac */
+};
+
 #define R300_NEW_BLEND           0x0000001
 #define R300_NEW_BLEND_COLOR     0x0000002
 #define R300_NEW_CONSTANTS       0x0000004
@@ -117,7 +126,8 @@ struct r300_texture_state {
 #define R300_ANY_NEW_TEXTURES    0x1fe0000
 #define R300_NEW_VERTEX_FORMAT   0x2000000
 #define R300_NEW_VERTEX_SHADER   0x4000000
-#define R300_NEW_KITCHEN_SINK    0x7ffffff
+#define R300_NEW_VIEWPORT        0x8000000
+#define R300_NEW_KITCHEN_SINK    0xfffffff
 
 /* The next several objects are not pure Radeon state; they inherit from
  * various Gallium classes. */
@@ -262,6 +272,8 @@ struct r300_context {
     int vertex_buffer_count;
     /* Vertex information. */
     struct r300_vertex_format vertex_info;
+    /* Viewport state. */
+    struct r300_viewport_state* viewport_state;
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */
