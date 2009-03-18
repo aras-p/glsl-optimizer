@@ -1,0 +1,23 @@
+Import('*')
+
+if env['platform'] != 'windows':
+    Return()
+
+env = env.Clone()
+
+env.Append(LIBS = [
+    'kernel32',
+    'user32',
+    'gdi32',
+])
+
+progs = [
+    'sharedtex_mt',
+    'wglthreads',
+]
+
+for prog in progs:
+    env.Program(
+        target = prog,
+        source = prog + '/' + prog + '.c',
+    )
