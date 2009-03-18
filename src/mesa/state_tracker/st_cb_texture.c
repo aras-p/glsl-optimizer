@@ -802,8 +802,7 @@ st_TexSubimage(GLcontext * ctx,
       texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset, 
                                             PIPE_TRANSFER_WRITE,
                                             xoffset, yoffset,
-                                            stImage->base.Width,
-                                            stImage->base.Height);
+                                            width, height);
       dstRowStride = stImage->transfer->stride;
    }
 
@@ -832,8 +831,7 @@ st_TexSubimage(GLcontext * ctx,
 	 texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset + i,
                                                PIPE_TRANSFER_WRITE,
                                                xoffset, yoffset,
-                                               stImage->base.Width,
-                                               stImage->base.Height);
+                                               width, height);
 	 src += srcImageStride;
       }
    }
