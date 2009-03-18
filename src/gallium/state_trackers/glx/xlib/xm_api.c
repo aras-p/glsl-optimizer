@@ -763,7 +763,8 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    c->xm_visual = v;
    c->xm_buffer = NULL;   /* set later by XMesaMakeCurrent */
-   
+   c->xm_read_buffer = NULL;
+
    /* XXX: create once per Xlib Display.
     */
    screen = driver.create_pipe_screen();
@@ -1037,22 +1038,25 @@ PUBLIC
 GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
                              XMesaBuffer readBuffer )
 {
+   XMesaContext old_ctx = XMesaGetCurrentContext();
+
+   if (old_ctx && old_ctx != c) {
+      XMesaFlush(old_ctx);
+      old_ctx->xm_buffer = NULL;
+      old_ctx->xm_read_buffer = NULL;
+   }
+
    if (c) {
       if (!drawBuffer || !readBuffer)
          return GL_FALSE;  /* must specify buffers! */
 
-#if 0
-      /* XXX restore this optimization */
-      if (&(c->mesa) == _mesa_get_current_context()
-          && c->mesa.DrawBuffer == &drawBuffer->mesa_buffer
-          && c->mesa.ReadBuffer == &readBuffer->mesa_buffer
-          && xmesa_buffer(c->mesa.DrawBuffer)->wasCurrent) {
-         /* same context and buffer, do nothing */
-         return GL_TRUE;
-      }
-#endif
+      if (c == old_ctx &&
+	  c->xm_buffer == drawBuffer &&
+	  c->xm_read_buffer == readBuffer)
+	 return GL_TRUE;
 
       c->xm_buffer = drawBuffer;
+      c->xm_read_buffer = readBuffer;
 
       /* Call this periodically to detect when the user has begun using
        * GL rendering from multiple threads.
@@ -1071,6 +1075,7 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
    else {
       /* Detach */
       st_make_current( NULL, NULL, NULL );
+
    }
    return GL_TRUE;
 }
