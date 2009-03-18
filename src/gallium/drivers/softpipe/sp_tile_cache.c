@@ -172,6 +172,7 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
       }
 
       screen->tex_transfer_destroy(tc->transfer);
+      tc->transfer = NULL;
    }
 
    tc->surface = ps;
