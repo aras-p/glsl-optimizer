@@ -283,6 +283,7 @@ stw_make_current(
    struct stw_framebuffer *fb;
    GLuint width = 0;
    GLuint height = 0;
+   struct stw_context *curctx;
 
    if (!stw_dev)
       return FALSE;
@@ -297,6 +298,13 @@ stw_make_current(
    current_hdc = hdc;
    current_hglrc = hglrc;
 
+   if (glcurctx != NULL) {
+      curctx = (struct stw_context *) glcurctx->DriverCtx;
+
+      if (curctx != ctx)
+	 st_flush(glcurctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+   }
+
    if (hdc == NULL || hglrc == 0) {
       st_make_current( NULL, NULL, NULL );
       return TRUE;
@@ -305,8 +313,6 @@ stw_make_current(
    /* Return if already current.
     */
    if (glcurctx != NULL) {
-      struct stw_context *curctx = (struct stw_context *) glcurctx->DriverCtx;
-
       if (curctx != NULL && curctx == ctx && ctx->hdc == hdc)
          return TRUE;
    }
