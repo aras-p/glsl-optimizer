@@ -143,7 +143,7 @@ static struct x86_reg get_reg_ptr(struct aos_compilation *cp,
       return x86_make_disp(aos_get_x86(cp, 1, X86_CONSTANTS), idx * 4 * sizeof(float));
 
    default:
-      ERROR(cp, "unknown reg file");
+      AOS_ERROR(cp, "unknown reg file");
       return x86_make_reg(0,0);
    }
 }
@@ -177,7 +177,7 @@ static void spill( struct aos_compilation *cp, unsigned idx )
        (cp->xmm[idx].file != TGSI_FILE_INPUT && /* inputs are fetched into xmm & set dirty */
         cp->xmm[idx].file != TGSI_FILE_OUTPUT &&
         cp->xmm[idx].file != TGSI_FILE_TEMPORARY)) {
-      ERROR(cp, "invalid spill");
+      AOS_ERROR(cp, "invalid spill");
       return;
    }
    else {
@@ -543,7 +543,7 @@ static struct x86_reg fetch_src( struct aos_compilation *cp,
       switch (swizzle) {
       case TGSI_EXTSWIZZLE_ZERO:
       case TGSI_EXTSWIZZLE_ONE:
-         ERROR(cp, "not supporting full swizzles yet in tgsi_aos_sse2");
+         AOS_ERROR(cp, "not supporting full swizzles yet in tgsi_aos_sse2");
          break;
 
       default:
@@ -564,7 +564,7 @@ static struct x86_reg fetch_src( struct aos_compilation *cp,
          break;
 
       default:
-         ERROR(cp, "unsupported sign-mode");
+         AOS_ERROR(cp, "unsupported sign-mode");
          break;
       }
    }
@@ -603,7 +603,7 @@ static struct x86_reg fetch_src( struct aos_compilation *cp,
 
 
       if (abs && abs != 0xf) {
-         ERROR(cp, "unsupported partial abs");
+         AOS_ERROR(cp, "unsupported partial abs");
       }
       else if (abs) {
          struct x86_reg neg = aos_get_internal(cp, IMM_NEGS);
@@ -670,7 +670,7 @@ static void x87_fld_src( struct aos_compilation *cp,
       break;
 
    default:
-      ERROR(cp, "unsupported sign-mode");
+      AOS_ERROR(cp, "unsupported sign-mode");
       break;
    }
 }
