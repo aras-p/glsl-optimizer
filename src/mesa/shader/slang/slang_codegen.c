@@ -2642,6 +2642,9 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
 
       /* do IR codegen for body */
       n = _slang_gen_operation(A, body);
+      if (!n)
+         return NULL;
+
       root = new_seq(root, n);
 
       slang_operation_delete(body);
@@ -2783,12 +2786,16 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
    if (is_operation_type(&oper->children[1], SLANG_OPER_BREAK)
        && !haveElseClause) {
       /* Special case: generate a conditional break */
+      if (!A->CurLoop) /* probably trying to unroll */
+         return NULL;
       ifBody = new_break_if_true(A->CurLoop, cond);
       return ifBody;
    }
    else if (is_operation_type(&oper->children[1], SLANG_OPER_CONTINUE)
             && !haveElseClause) {
-      /* Special case: generate a conditional break */
+      /* Special case: generate a conditional continue */
+      if (!A->CurLoop) /* probably trying to unroll */
+         return NULL;
       ifBody = new_cont_if_true(A->CurLoop, cond);
       return ifBody;
    }
