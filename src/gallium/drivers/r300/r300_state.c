@@ -529,8 +529,26 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
                                     const struct pipe_viewport_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
-    /* XXX handing this off to Draw for now */
-    draw_set_viewport_state(r300->draw, state);
+
+    r300->viewport_state->xscale = state->scale[0];
+    r300->viewport_state->yscale = state->scale[1];
+    r300->viewport_state->zscale = state->scale[2];
+
+    r300->viewport_state->xoffset = state->translate[0];
+    r300->viewport_state->yoffset = state->translate[1];
+    r300->viewport_state->zoffset = state->translate[2];
+
+    r300->viewport_state->vte_control = 0;
+    if (r300_screen(r300->context.screen)->caps->has_tcl) {
+        /* Do the transform in HW. */
+        r300->viewport_state->vte_control |=
+            R300_VPORT_X_SCALE_ENA | R300_VPORT_X_OFFSET_ENA |
+            R300_VPORT_Y_SCALE_ENA | R300_VPORT_Y_OFFSET_ENA |
+            R300_VPORT_Z_SCALE_ENA | R300_VPORT_Z_OFFSET_ENA;
+    } else {
+        /* Have Draw do the actual transform. */
+        draw_set_viewport_state(r300->draw, state);
+    }
 }
 
 static void r300_set_vertex_buffers(struct pipe_context* pipe,

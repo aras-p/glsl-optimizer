@@ -103,12 +103,13 @@ struct r300_texture_state {
 };
 
 struct r300_viewport_state {
-    float xscale;  /* R300_VAP_VPORT_XSCALE:  0x2098 */
-    float xoffset; /* R300_VAP_VPORT_XOFFSET: 0x209c */
-    float yscale;  /* R300_VAP_VPORT_YSCALE:  0x20a0 */
-    float yoffset; /* R300_VAP_VPORT_YOFFSET: 0x20a4 */
-    float zscale;  /* R300_VAP_VPORT_ZSCALE:  0x20a8 */
-    float zoffset; /* R300_VAP_VPORT_ZOFFSET: 0x20ac */
+    float xscale;         /* R300_VAP_VPORT_XSCALE:  0x2098 */
+    float xoffset;        /* R300_VAP_VPORT_XOFFSET: 0x209c */
+    float yscale;         /* R300_VAP_VPORT_YSCALE:  0x20a0 */
+    float yoffset;        /* R300_VAP_VPORT_YOFFSET: 0x20a4 */
+    float zscale;         /* R300_VAP_VPORT_ZSCALE:  0x20a8 */
+    float zoffset;        /* R300_VAP_VPORT_ZOFFSET: 0x20ac */
+    uint32_t vte_control; /* R300_VAP_VTE_CNTL:      0x20b0 */
 };
 
 #define R300_NEW_BLEND           0x0000001

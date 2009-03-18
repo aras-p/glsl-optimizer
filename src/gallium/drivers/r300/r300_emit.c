@@ -340,6 +340,24 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
     END_CS;
 }
 
+void r300_emit_viewport_state(struct r300_context* r300,
+                              struct r300_viewport_state* viewport)
+{
+    return;
+    CS_LOCALS(r300);
+
+    BEGIN_CS(7);
+    OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 7);
+    OUT_CS_32F(viewport->xscale);
+    OUT_CS_32F(viewport->xoffset);
+    OUT_CS_32F(viewport->yscale);
+    OUT_CS_32F(viewport->yoffset);
+    OUT_CS_32F(viewport->zscale);
+    OUT_CS_32F(viewport->zoffset);
+    OUT_CS(viewport->vte_control);
+    END_CS;
+}
+
 static void r300_flush_textures(struct r300_context* r300)
 {
     CS_LOCALS(r300);
@@ -429,6 +447,11 @@ void r300_emit_dirty_state(struct r300_context* r300)
                 dirty_tex++;
             }
         }
+    }
+
+    if (r300->dirty_state & R300_NEW_VIEWPORT) {
+        r300_emit_viewport_state(r300, r300->viewport_state);
+        r300->dirty_state &= ~R300_NEW_VIEWPORT;
     }
 
     if (dirty_tex) {
