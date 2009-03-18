@@ -467,6 +467,7 @@ st_TexImage(GLcontext * ctx,
     */
    if (stObj->pt) {
       if (stObj->teximage_realloc ||
+          level > stObj->pt->last_level ||
           (stObj->pt->last_level == level &&
            stObj->pt->target != PIPE_TEXTURE_CUBE &&
            !st_texture_match_image(stObj->pt, &stImage->base,
