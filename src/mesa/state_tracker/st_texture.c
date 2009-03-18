@@ -114,10 +114,7 @@ st_texture_create(struct st_context *st,
 
 
 /**
- * Check if a texture image be pulled into a unified mipmap texture.
- * This mirrors the completeness test in a lot of ways.
- *
- * Not sure whether I want to pass gl_texture_image here.
+ * Check if a texture image can be pulled into a unified mipmap texture.
  */
 GLboolean
 st_texture_match_image(const struct pipe_texture *pt,
@@ -129,13 +126,14 @@ st_texture_match_image(const struct pipe_texture *pt,
    if (image->Border) 
       return GL_FALSE;
 
+   /* Check if this image's format matches the established texture's format.
+    */
    if (st_mesa_format_to_pipe_format(image->TexFormat->MesaFormat) != pt->format ||
        image->IsCompressed != pt->compressed)
       return GL_FALSE;
 
-   /* Test image dimensions against the base level image adjusted for
-    * minification.  This will also catch images not present in the
-    * texture, changed targets, etc.
+   /* Test if this image's size matches what's expected in the
+    * established texture.
     */
    if (image->Width != pt->width[level] ||
        image->Height != pt->height[level] ||
