@@ -24,7 +24,8 @@ extern "C" {
     defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT))
 
 #define PIPE_ATOMIC_OS_MS_INTERLOCK             \
-   (!PIPE_ATOMIC_OS_UNLOCKED &&                 \
+   (!defined(PIPE_CC_GCC) &&                    \
+    !PIPE_ATOMIC_OS_UNLOCKED &&                 \
     defined(PIPE_SUBSYSTEM_WINDOWS_USER))
 
 #define PIPE_ATOMIC_OS_PROVIDED                 \
