@@ -719,6 +719,23 @@ new_var(slang_assemble_ctx *A, slang_variable *var)
 
 
 /**
+ * Determine if the given operation is of a specific type.
+ */
+static GLboolean
+is_operation_type(const slang_operation *oper, slang_operation_type type)
+{
+   if (oper->type == type)
+      return GL_TRUE;
+   else if ((oper->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
+             oper->type == SLANG_OPER_BLOCK_NO_NEW_SCOPE) &&
+            oper->num_children == 1)
+      return is_operation_type(&oper->children[0], type);
+   else
+      return GL_FALSE;
+}
+
+
+/**
  * Check if the given function is really just a wrapper for a
  * basic assembly instruction.
  */
@@ -2619,6 +2636,17 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
       if (!slang_operation_copy(body, &oper->children[3]))
          return NULL;
 
+      /* 
+       * If we detect an if/break or if/continue lets do the real loop
+       * and forget unrolling.
+       */
+      if (body->children[1].type == SLANG_OPER_IF) {
+         if (is_operation_type(&body->children[1].children[1], SLANG_OPER_BREAK))
+	    return NULL;
+         if (is_operation_type(&body->children[1].children[1], SLANG_OPER_CONTINUE))
+	    return NULL;
+      }
+
       /* in body, replace instances of 'varId' with literal 'iter' */
       {
          slang_variable *oldVar;
@@ -2715,23 +2743,6 @@ _slang_gen_continue(slang_assemble_ctx * A, const slang_operation *oper)
       loopNode->List = n;
    }
    return n;
-}
-
-
-/**
- * Determine if the given operation is of a specific type.
- */
-static GLboolean
-is_operation_type(const slang_operation *oper, slang_operation_type type)
-{
-   if (oper->type == type)
-      return GL_TRUE;
-   else if ((oper->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
-             oper->type == SLANG_OPER_BLOCK_NO_NEW_SCOPE) &&
-            oper->num_children == 1)
-      return is_operation_type(&oper->children[0], type);
-   else
-      return GL_FALSE;
 }
 
 
