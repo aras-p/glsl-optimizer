@@ -139,17 +139,25 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_VAP_OUTPUT_VTX_FMT_1__3_COMPONENTS 3
 #	define R300_VAP_OUTPUT_VTX_FMT_1__4_COMPONENTS 4
 
-#define R300_SE_VTE_CNTL                  0x20b0
-#	define     R300_VPORT_X_SCALE_ENA                (1 << 0)
-#	define     R300_VPORT_X_OFFSET_ENA               (1 << 1)
-#	define     R300_VPORT_Y_SCALE_ENA                (1 << 2)
-#	define     R300_VPORT_Y_OFFSET_ENA               (1 << 3)
-#	define     R300_VPORT_Z_SCALE_ENA                (1 << 4)
-#	define     R300_VPORT_Z_OFFSET_ENA               (1 << 5)
-#	define     R300_VTX_XY_FMT                       (1 << 8)
-#	define     R300_VTX_Z_FMT                        (1 << 9)
-#	define     R300_VTX_W0_FMT                       (1 << 10)
-#	define     R300_SERIAL_PROC_ENA                  (1 << 11)
+#define R300_VAP_VPORT_XSCALE                     0x2098
+#define R300_VAP_VPORT_XOFFSET                    0x209c
+#define R300_VAP_VPORT_YSCALE                     0x20a0
+#define R300_VAP_VPORT_YOFFSET                    0x20a4
+#define R300_VAP_VPORT_ZSCALE                     0x20a8
+#define R300_VAP_VPORT_ZOFFSET                    0x20ac
+
+#define R300_VAP_VTE_CNTL                         0x20b0
+#define R300_SE_VTE_CNTL R300_VAP_VTE_CNTL
+#   define R300_VPORT_X_SCALE_ENA                           (1 << 0)
+#   define R300_VPORT_X_OFFSET_ENA                          (1 << 1)
+#   define R300_VPORT_Y_SCALE_ENA                           (1 << 2)
+#   define R300_VPORT_Y_OFFSET_ENA                          (1 << 3)
+#   define R300_VPORT_Z_SCALE_ENA                           (1 << 4)
+#   define R300_VPORT_Z_OFFSET_ENA                          (1 << 5)
+#   define R300_VTX_XY_FMT                                  (1 << 8)
+#   define R300_VTX_Z_FMT                                   (1 << 9)
+#   define R300_VTX_W0_FMT                                  (1 << 10)
+#   define R300_SERIAL_PROC_ENA                             (1 << 11)
 
 #define R300_VAP_VTX_SIZE               0x20b4
 
