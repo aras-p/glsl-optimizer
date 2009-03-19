@@ -4354,13 +4354,25 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (prog) {
          /* user-defined uniform */
          if (datatype == GL_NONE) {
-            if (var->type.specifier.type == SLANG_SPEC_STRUCT) {
+	    if ((var->type.specifier.type == SLANG_SPEC_ARRAY &&
+	         var->type.specifier._array->type == SLANG_SPEC_STRUCT) ||
+                (var->type.specifier.type == SLANG_SPEC_STRUCT)) {
                /* temporary work-around */
                GLenum datatype = GL_FLOAT;
                GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName,
                                                     totalSize, datatype, NULL);
                store = _slang_new_ir_storage_swz(PROGRAM_UNIFORM, uniformLoc,
                                                  totalSize, swizzle);
+	 
+	       if (arrayLen > 0) {
+	          GLint a = arrayLen - 1;
+	          GLint i;
+	          for (i = 0; i < a; i++) {
+                     GLfloat value = (GLfloat)(i + uniformLoc + 1);
+                     (void) _mesa_add_parameter(prog->Parameters, PROGRAM_UNIFORM,
+                                 varName, 1, datatype, &value, NULL, 0x0);
+                  }
+	       }
 
                /* XXX what we need to do is unroll the struct into its
                 * basic types, creating a uniform variable for each.
