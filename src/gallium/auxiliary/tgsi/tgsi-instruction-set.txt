@@ -1020,3 +1020,17 @@ TGSI Instruction Specification
 
   Alias for LG2.
 
+
+1.19  vs_2_0
+------------
+
+
+1.19.1  SGN - Set Sign
+
+  Alias for SSG.
+
+
+1.19.2  MOVA - Move Address Register
+
+  Alias for ARR.
+
