@@ -962,3 +962,47 @@ TGSI Instruction Specification
 
   Alias for DP2A.
 
+
+1.17  ps_2_x
+------------
+
+
+1.17.1  CALL - Subroutine Call
+
+  Alias for CAL.
+
+
+1.17.2  CALLNZ - Subroutine Call If Not Zero
+
+  TBD
+
+
+1.17.3  IFC - If
+
+  TBD
+
+
+1.17.4  BREAK - Break
+
+  Alias for BRK.
+
+
+1.17.5  BREAKC - Break Conditional
+
+  TBD
+
+
+1.17.6  DSX - Derivative Relative To X
+
+  Alias for DDX.
+
+
+1.17.7  DSY - Derivative Relative To Y
+
+  Alias for DDY.
+
+
+1.17.8  TEXLDD - Texture Lookup with Derivatives
+
+  Alias for TXD.
+
