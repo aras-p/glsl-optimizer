@@ -430,12 +430,12 @@ trace_screen_transfer_unmap(struct pipe_screen *_screen,
 
       trace_dump_arg(ptr, transfer);
 
-      trace_dump_arg_begin("data");
-      trace_dump_bytes(tr_trans->map, size);
-      trace_dump_arg_end();
-
       trace_dump_arg_begin("stride");
       trace_dump_uint(transfer->stride);
+      trace_dump_arg_end();
+
+      trace_dump_arg_begin("data");
+      trace_dump_bytes(tr_trans->map, size);
       trace_dump_arg_end();
 
       trace_dump_arg_begin("size");
@@ -653,9 +653,9 @@ trace_screen_buffer_map_range(struct pipe_screen *_screen,
 static void
 buffer_write(struct pipe_screen *screen,
              struct pipe_buffer *buffer,
-             const char *map,
              unsigned offset,
-             unsigned length)
+             const char *map,
+             unsigned size)
 {
    assert(map);
 
@@ -665,12 +665,13 @@ buffer_write(struct pipe_screen *screen,
 
    trace_dump_arg(ptr, buffer);
 
+   trace_dump_arg(uint, offset);
+
    trace_dump_arg_begin("data");
-   trace_dump_bytes(map + offset, length);
+   trace_dump_bytes(map + offset, size);
    trace_dump_arg_end();
 
-   trace_dump_arg(uint, offset);
-   trace_dump_arg(uint, length);
+   trace_dump_arg(uint, size);
 
    trace_dump_call_end();
 
@@ -689,7 +690,7 @@ trace_screen_buffer_flush_mapped_range(struct pipe_screen *_screen,
    struct pipe_buffer *buffer = tr_buf->buffer;
 
    assert(tr_buf->map);
-   buffer_write(screen, buffer, tr_buf->map, offset, length);
+   buffer_write(screen, buffer, offset, tr_buf->map, length);
    tr_buf->range_flushed = TRUE;
    screen->buffer_flush_mapped_range(screen, buffer, offset, length);
 }
