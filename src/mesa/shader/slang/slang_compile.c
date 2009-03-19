@@ -2056,6 +2056,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
    /* emit code for global var decl */
    if (C->global_scope) {
       slang_assemble_ctx A;
+      memset(&A, 0, sizeof(slang_assemble_ctx));
       A.atoms = C->atoms;
       A.space.funcs = O->funs;
       A.space.structs = O->structs;
@@ -2073,7 +2074,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
    if (C->global_scope) {
       if (var->initializer != NULL) {
          slang_assemble_ctx A;
-
+         memset(&A, 0, sizeof(slang_assemble_ctx));
          A.atoms = C->atoms;
          A.space.funcs = O->funs;
          A.space.structs = O->structs;
@@ -2415,7 +2416,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
    if (mainFunc) {
       /* assemble (generate code) for main() */
       slang_assemble_ctx A;
-
+      memset(&A, 0, sizeof(slang_assemble_ctx));
       A.atoms = C->atoms;
       A.space.funcs = o.funs;
       A.space.structs = o.structs;
