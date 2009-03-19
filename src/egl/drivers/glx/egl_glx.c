@@ -798,9 +798,9 @@ static _EGLProc
 GLX_eglGetProcAddress(const char *procname)
 {
    /* This is a bit of a hack to get at the gallium/Mesa state tracker
-    *     * function st_get_proc_address().  This will probably change at
-    *         * some point.
-    *             */
+    * function st_get_proc_address().  This will probably change at
+    * some point.
+    */
    _EGLProc (*get_proc_addr)(const char *procname);
    get_proc_addr = dlsym(NULL, "st_get_proc_address");
    if (get_proc_addr)
