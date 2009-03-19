@@ -70,6 +70,8 @@ typedef struct radeon_context *radeonContextPtr;
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
+#define RADEON_RB_CLASS 0xdeadbeef
+
 struct radeon_renderbuffer
 {
 	struct gl_renderbuffer base;

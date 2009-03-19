@@ -90,15 +90,6 @@ void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 	rmesa->lost_context = GL_TRUE;
 }
 
-static INLINE struct radeon_renderbuffer *
-radeon_get_renderbuffer(struct gl_framebuffer *fb, int attIndex)
-{
-	if (attIndex >= 0)
-		return (struct radeon_renderbuffer *)fb->Attachment[attIndex].Renderbuffer;
-	else
-		return NULL;
-}
-
 void radeon_lock_hardware(radeonContextPtr radeon)
 {
 	__DRIdrawable *dPriv = radeon->dri.drawable;

@@ -1197,6 +1197,7 @@ radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
 	return NULL;
 
     _mesa_init_renderbuffer(&ret->base, 0);
+    ret->base.ClassID = RADEON_RB_CLASS;
 
     /* XXX format junk */
     switch (format) {

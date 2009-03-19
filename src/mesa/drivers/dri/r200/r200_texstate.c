@@ -806,7 +806,7 @@ void r200SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 		radeon_bo_unref(rb->bo);
 		rb->bo = NULL;
 	}
-	rb = (void*)rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+	rb = rfb->color_rb[0];
 	if (rb->bo == NULL) {
 		/* Failed to BO for the buffer */
 		return;

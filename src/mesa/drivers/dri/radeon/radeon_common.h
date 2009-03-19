@@ -30,6 +30,23 @@ void radeonDrawBuffer( GLcontext *ctx, GLenum mode );
 void radeonReadBuffer( GLcontext *ctx, GLenum mode );
 void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height);
 
+static inline struct radeon_renderbuffer *radeon_renderbuffer(struct gl_renderbuffer *rb)
+{
+	struct radeon_renderbuffer *rrb = (struct radeon_renderbuffer *)rb;
+	if (rrb && rrb->base.ClassID == RADEON_RB_CLASS)
+		return rrb;
+	else
+		return NULL;
+}
+
+static inline struct radeon_renderbuffer *radeon_get_renderbuffer(struct gl_framebuffer *fb, int att_index)
+{
+	if (att_index >= 0)
+		return radeon_renderbuffer(fb->Attachment[att_index].Renderbuffer);
+	else
+		return NULL;
+}
+
 static inline struct radeon_renderbuffer *radeon_get_depthbuffer(radeonContextPtr rmesa)
 {
 	struct radeon_renderbuffer *rrb;
@@ -47,7 +64,7 @@ static inline struct radeon_renderbuffer *radeon_get_colorbuffer(radeonContextPt
 
 	rrb = rmesa->state.color.rrb;
 	if (rmesa->radeonScreen->driScreen->dri2.enabled) {
-		rrb = (struct radeon_renderbuffer *)rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+		rrb = radeon_get_renderbuffer(&rfb->base, BUFFER_BACK_LEFT);
 	}
 	if (!rrb)
 		return NULL;

@@ -183,33 +183,33 @@ void radeonCleanupContext(radeonContextPtr radeon)
 	_mesa_destroy_context(radeon->glCtx);
 	
 	rfb = (void*)radeon->dri.drawable->driverPrivate;
-	rb = (void *)rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+	rb = rfb->color_rb[0];
 	if (rb && rb->bo) {
 		radeon_bo_unref(rb->bo);
 		rb->bo = NULL;
 	}
-	rb = (void *)rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+	rb = rfb->color_rb[1];
 	if (rb && rb->bo) {
 		radeon_bo_unref(rb->bo);
 		rb->bo = NULL;
 	}
-	rb = (void *)rfb->base.Attachment[BUFFER_DEPTH].Renderbuffer;
+	rb = radeon_get_renderbuffer(&rfb->base, BUFFER_DEPTH);
 	if (rb && rb->bo) {
 		radeon_bo_unref(rb->bo);
 		rb->bo = NULL;
 	}
 	rfb = (void*)radeon->dri.readable->driverPrivate;
-	rb = (void *)rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+	rb = rfb->color_rb[0];
 	if (rb && rb->bo) {
 		radeon_bo_unref(rb->bo);
 		rb->bo = NULL;
 	}
-	rb = (void *)rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+	rb = rfb->color_rb[1];
 	if (rb && rb->bo) {
 		radeon_bo_unref(rb->bo);
 		rb->bo = NULL;
 	}
-	rb = (void *)rfb->base.Attachment[BUFFER_DEPTH].Renderbuffer;
+	rb = radeon_get_renderbuffer(&rfb->base, BUFFER_DEPTH);
 	if (rb && rb->bo) {
 		radeon_bo_unref(rb->bo);
 		rb->bo = NULL;
@@ -391,6 +391,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	int i, count;
 	struct radeon_framebuffer *draw;
 	radeonContextPtr radeon;
+	char *regname;
 
 	if (RADEON_DEBUG & DEBUG_DRI)
 	    fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);
@@ -399,15 +400,14 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	screen = context->driScreenPriv;
 	radeon = (radeonContextPtr) context->driverPrivate;
 	i = 0;
-	if ((rb = (void *)draw->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer)) {
+	if (draw->color_rb[0])
 		attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
-	}
-	if ((rb = (void *)draw->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer)) {
+	if (draw->color_rb[1])
 		attachments[i++] = __DRI_BUFFER_BACK_LEFT;
-	}
-	if ((rb = (void *)draw->base.Attachment[BUFFER_DEPTH].Renderbuffer)) {
+	if (radeon_get_renderbuffer(&draw->base, BUFFER_DEPTH))
 		attachments[i++] = __DRI_BUFFER_DEPTH;
-	}
+	if (radeon_get_renderbuffer(&draw->base, BUFFER_STENCIL))
+		attachments[i++] = __DRI_BUFFER_STENCIL;
 	
 	buffers = (*screen->dri2.loader->getBuffers)(drawable,
 						     &drawable->w,
@@ -436,64 +436,20 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	for (i = 0; i < count; i++) {
 		switch (buffers[i].attachment) {
 		case __DRI_BUFFER_FRONT_LEFT:
-			rb = (void *)draw->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-			if (rb->bo) {
-				radeon_bo_unref(rb->bo);
-				rb->bo = NULL;
-			}
-			rb->cpp = buffers[i].cpp;
-			rb->pitch = buffers[i].pitch;
-			rb->width = drawable->w;
-			rb->height = drawable->h;
-			rb->has_surface = 0;
-			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
-						buffers[i].name,
-						0,
-						0,
-						RADEON_GEM_DOMAIN_VRAM,
-						buffers[i].flags);
-			if (rb->bo == NULL) {
-				fprintf(stderr, "failled to attach front %d\n",
-					buffers[i].name);
-			}
+			rb = draw->color_rb[0];
+			regname = "dri2 front buffer";
 			break;
 		case __DRI_BUFFER_BACK_LEFT:
-			rb = (void *)draw->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-			if (rb->bo) {
-				radeon_bo_unref(rb->bo);
-				rb->bo = NULL;
-			}
-			rb->cpp = buffers[i].cpp;
-			rb->pitch = buffers[i].pitch;
-			rb->width = drawable->w;
-			rb->height = drawable->h;
-			rb->has_surface = 0;
-			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
-						buffers[i].name,
-						0,
-						0,
-						RADEON_GEM_DOMAIN_VRAM,
-						buffers[i].flags);
+			rb = draw->color_rb[1];
+			regname = "dri2 back buffer";
 			break;
 		case __DRI_BUFFER_DEPTH:
-			rb = (void *)draw->base.Attachment[BUFFER_DEPTH].Renderbuffer;
-			if (rb->bo) {
-				radeon_bo_unref(rb->bo);
-				rb->bo = NULL;
-			}
-			rb->cpp = buffers[i].cpp;
-			rb->pitch = buffers[i].pitch;
-			rb->width = drawable->w;
-			rb->height = drawable->h;
-			rb->has_surface = 0;
-			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
-						buffers[i].name,
-						0,
-						0,
-						RADEON_GEM_DOMAIN_VRAM,
-						buffers[i].flags);
+			rb = radeon_get_renderbuffer(&draw->base, BUFFER_DEPTH);
+			regname = "dri2 depth buffer";
 			break;
 		case __DRI_BUFFER_STENCIL:
+			rb = radeon_get_renderbuffer(&draw->base, BUFFER_DEPTH);
+			regname = "dri2 stencil buffer";
 			break;
 		case __DRI_BUFFER_ACCUM:
 		default:
@@ -502,8 +458,32 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 				buffers[i].attachment);
 			return;
 		}
+
+		if (rb == NULL)
+			continue;
+
+		if (rb->bo) {
+			radeon_bo_unref(rb->bo);
+			rb->bo = NULL;
+		}
+		rb->cpp = buffers[i].cpp;
+		rb->pitch = buffers[i].pitch;
+		rb->width = drawable->w;
+		rb->height = drawable->h;
+		rb->has_surface = 0;
+		rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+					buffers[i].name,
+					0,
+					0,
+					RADEON_GEM_DOMAIN_VRAM,
+					buffers[i].flags);
+		if (rb->bo == NULL) {
+			fprintf(stderr, "failed to attach %s %d\n",
+				regname, buffers[i].name);
+
+		}
 	}
-	radeon = (radeonContextPtr) context->driverPrivate;
+
 	driUpdateFramebufferSize(radeon->glCtx, drawable);
 }
 
@@ -534,9 +514,9 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 		if (driDrawPriv != driReadPriv)
 			radeon_update_renderbuffers(driContextPriv, driReadPriv);
 		radeon->state.color.rrb =
-			(void *)drfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+			radeon_get_renderbuffer(&drfb->base, BUFFER_BACK_LEFT);
 		radeon->state.depth.rrb =
-			(void *)drfb->base.Attachment[BUFFER_DEPTH].Renderbuffer;
+			radeon_get_renderbuffer(&drfb->base, BUFFER_DEPTH);
 	} else {
 		radeon_make_renderbuffer_current(radeon, drfb);
 	}
