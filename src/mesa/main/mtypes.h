@@ -1956,6 +1956,8 @@ struct gl_query_state
 /** Set by #pragma directives */
 struct gl_sl_pragmas
 {
+   GLboolean IgnoreOptimize;  /**< ignore #pragma optimize(on/off) ? */
+   GLboolean IgnoreDebug;     /**< ignore #pragma debug(on/off) ? */
    GLboolean Optimize;  /**< defaults on */
    GLboolean Debug;     /**< defaults off */
 };
@@ -2026,6 +2028,7 @@ struct gl_shader_state
    GLboolean EmitComments;              /**< Annotated instructions */
    void *MemPool;
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
+   struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */
 };
 
 

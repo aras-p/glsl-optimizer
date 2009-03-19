@@ -410,6 +410,12 @@ _mesa_init_shader_state(GLcontext * ctx)
    ctx->Shader.EmitCondCodes = GL_FALSE;
    ctx->Shader.EmitComments = GL_FALSE;
    ctx->Shader.Flags = get_shader_flags();
+
+   /* Default pragma settings */
+   ctx->Shader.DefaultPragmas.IgnoreOptimize = GL_FALSE;
+   ctx->Shader.DefaultPragmas.IgnoreDebug = GL_FALSE;
+   ctx->Shader.DefaultPragmas.Optimize = GL_TRUE;
+   ctx->Shader.DefaultPragmas.Debug = GL_FALSE;
 }
 
 
@@ -1443,6 +1449,9 @@ _mesa_compile_shader(GLcontext *ctx, GLuint shaderObj)
    sh = _mesa_lookup_shader_err(ctx, shaderObj, "glCompileShader");
    if (!sh)
       return;
+
+   /* set default pragma state for shader */
+   sh->Pragmas = ctx->Shader.DefaultPragmas;
 
    /* this call will set the sh->CompileStatus field to indicate if
     * compilation was successful.
