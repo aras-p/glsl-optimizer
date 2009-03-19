@@ -34,11 +34,11 @@ void r300_emit_invariant_state(struct r300_context* r300)
     struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
-    BEGIN_CS(24 + (caps->has_tcl ? 2: 0));
+    BEGIN_CS(30 + (caps->has_tcl ? 2: 0));
 
+    /*** Graphics Backend (GB) ***/
     /* Various GB enables */
-    OUT_CS_REG(R300_GB_ENABLE, R300_GB_POINT_STUFF_ENABLE |
-        R300_GB_LINE_STUFF_ENABLE | R300_GB_TRIANGLE_STUFF_ENABLE);
+    OUT_CS_REG(R300_GB_ENABLE, 0x0);
     /* Subpixel multisampling for AA */
     OUT_CS_REG(R300_GB_MSPOS0, 0x66666666);
     OUT_CS_REG(R300_GB_MSPOS1, 0x66666666);
@@ -49,6 +49,8 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_REG(R300_GB_SELECT, R300_GB_FOG_SELECT_1_1_W);
     /* AA enable */
     OUT_CS_REG(R300_GB_AA_CONFIG, 0x0);
+
+    /*** Geometry Assembly (GA) ***/
     /* GA errata fixes. */
     if (caps->is_r500) {
         OUT_CS_REG(R300_GA_ENHANCE,
@@ -62,13 +64,19 @@ void r300_emit_invariant_state(struct r300_context* r300)
                 R300_GA_ENHANCE_FASTSYNC_CNTL_ENABLE);
     }
 
-    /* Fog block. */
-    OUT_CS_REG(R300_FG_FOG_BLEND, 0x00000000);
-    OUT_CS_REG(R300_FG_FOG_COLOR_R, 0x00000000);
-    OUT_CS_REG(R300_FG_FOG_COLOR_G, 0x00000000);
-    OUT_CS_REG(R300_FG_FOG_COLOR_B, 0x00000000);
-    OUT_CS_REG(R300_FG_DEPTH_SRC, 0x00000000);
+    /*** Fog (FG) ***/
+    OUT_CS_REG(R300_FG_FOG_BLEND, 0x0);
+    OUT_CS_REG(R300_FG_FOG_COLOR_R, 0x0);
+    OUT_CS_REG(R300_FG_FOG_COLOR_G, 0x0);
+    OUT_CS_REG(R300_FG_FOG_COLOR_B, 0x0);
+    OUT_CS_REG(R300_FG_DEPTH_SRC, 0x0);
 
+    /*** VAP ***/
+    /* Max and min vertex index clamp. */
+    OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, 0x0);
+    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, 0xffffff);
+    /* Sign/normalize control */
+    OUT_CS_REG(R300_VAP_PSC_SGN_NORM_CNTL, R300_SGN_NORM_NO_ZERO);
     /* TCL-only stuff */
     if (caps->has_tcl) {
         /* Amount of time to wait for vertex fetches in PVS */
@@ -78,7 +86,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(99 + (caps->has_tcl ? 26 : 0));
+    BEGIN_CS(91 + (caps->has_tcl ? 26 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -86,9 +94,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
         R300_VPORT_X_OFFSET_ENA | R300_VPORT_Y_SCALE_ENA |
         R300_VPORT_Y_OFFSET_ENA | R300_VPORT_Z_SCALE_ENA |
         R300_VPORT_Z_OFFSET_ENA | R300_VTX_W0_FMT);
-    /* Max and min vertex index clamp. */
-    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, 0xFFFFFF);
-    OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, 0x0);
     /* XXX endian */
     if (caps->has_tcl) {
         OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VC_NO_SWAP);
@@ -103,8 +108,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
         OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VC_NO_SWAP |
                 R300_VAP_TCL_BYPASS);
     }
-    /* XXX magic number not in r300_reg */
-    OUT_CS_REG(R300_VAP_PSC_SGN_NORM_CNTL, 0xAAAAAAAA);
     /* XXX point tex stuffing */
     OUT_CS_REG_SEQ(R300_GA_POINT_S0, 1);
     OUT_CS_32F(0.0);
@@ -157,7 +160,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_REG(R300_SE_VTE_CNTL, 0x0000043F);
     /* Vertex size. */
     OUT_CS_REG(R300_VAP_VTX_SIZE, 0x8);
-    OUT_CS_REG(R300_VAP_PSC_SGN_NORM_CNTL, 0xAAAAAAAA);
     OUT_CS_REG(R300_VAP_OUTPUT_VTX_FMT_0, 0x00000003);
     OUT_CS_REG(R300_VAP_OUTPUT_VTX_FMT_1, 0x00000000);
     OUT_CS_REG(R300_TX_ENABLE, 0x0);

@@ -293,10 +293,19 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_INPUT_CNTL_TC7               0x00020000 /* GUESS */
 
 /* Programmable Stream Control Signed Normalize Control */
-#define R300_VAP_PSC_SGN_NORM_CNTL         0x21dc
-#	define SGN_NORM_ZERO                 0
-#	define SGN_NORM_ZERO_CLAMP_MINUS_ONE 1
-#	define SGN_NORM_NO_ZERO              2
+#define R300_VAP_PSC_SGN_NORM_CNTL                0x21dc
+#   define SGN_NORM_ZERO                                    0
+#   define SGN_NORM_ZERO_CLAMP_MINUS_ONE                    1
+#   define SGN_NORM_NO_ZERO                                 2
+#   define R300_SGN_NORM_NO_ZERO (SGN_NORM_NO_ZERO | \
+        (SGN_NORM_NO_ZERO << 2) | (SGN_NORM_NO_ZERO << 4) | \
+        (SGN_NORM_NO_ZERO << 6) | (SGN_NORM_NO_ZERO << 8) | \
+        (SGN_NORM_NO_ZERO << 10) | (SGN_NORM_NO_ZERO << 12) | \
+        (SGN_NORM_NO_ZERO << 14) | (SGN_NORM_NO_ZERO << 16) | \
+        (SGN_NORM_NO_ZERO << 18) | (SGN_NORM_NO_ZERO << 20) | \
+        (SGN_NORM_NO_ZERO << 22) | (SGN_NORM_NO_ZERO << 24) | \
+        (SGN_NORM_NO_ZERO << 26) | (SGN_NORM_NO_ZERO << 28) | \
+        (SGN_NORM_NO_ZERO << 30))
 
 /* gap */
 
