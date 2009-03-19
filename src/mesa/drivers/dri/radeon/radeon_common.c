@@ -414,6 +414,8 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
    
 	rmesa = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
 
+	LOCK_HARDWARE(rmesa);
+
 	rfb = dPriv->driverPrivate;
 
 	if ( RADEON_DEBUG & DEBUG_IOCTL ) {
@@ -486,8 +488,7 @@ static int radeonScheduleSwap(__DRIdrawablePrivate *dPriv, GLboolean *missed_tar
 
 	UNLOCK_HARDWARE(rmesa);
 	driWaitForVBlank(dPriv, missed_target);
-	LOCK_HARDWARE(rmesa);
-
+	
 	return 0;
 }
 
@@ -509,6 +510,8 @@ static GLboolean radeonPageFlip( __DRIdrawablePrivate *dPriv )
 
 	psp = dPriv->driScreenPriv;
 
+	LOCK_HARDWARE(radeon);
+
 	if ( RADEON_DEBUG & DEBUG_IOCTL ) {
 		fprintf(stderr, "%s: pfCurrentPage: %d %d\n", __FUNCTION__,
 			radeon->sarea->pfCurrentPage, radeon->sarea->pfState);
@@ -520,7 +523,7 @@ static GLboolean radeonPageFlip( __DRIdrawablePrivate *dPriv )
 
 	ret = drmCommandNone( radeon->dri.fd, DRM_RADEON_FLIP );
 	
-	UNLOCK_HARDWARE( radeon );
+	UNLOCK_HARDWARE(radeon);
 
 	if ( ret ) {
 		fprintf( stderr, "DRM_RADEON_FLIP: return = %d\n", ret );
@@ -602,8 +605,6 @@ void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
 			rect.x2 = rect.x1 + w;
 			rect.y2 = rect.y1 + h;
 			_mesa_notifySwapBuffers(ctx);	/* flush pending rendering comands */
-			LOCK_HARDWARE( (radeonContextPtr)
-				       dPriv->driContextPriv->driverPrivate );
 			radeonCopyBuffer(dPriv, &rect);
 		}
 	} else {
