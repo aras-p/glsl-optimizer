@@ -504,7 +504,7 @@ do {							\
 
 #define LOCAL_VARS(n)							\
    r300ContextPtr rmesa = R300_CONTEXT(ctx);			\
-   GLuint color[n], spec[n];						\
+   GLuint color[n] = { 0, }, spec[n] = { 0, };				\
    GLuint coloroffset = rmesa->swtcl.coloroffset;	\
    GLuint specoffset = rmesa->swtcl.specoffset;			\
    (void) color; (void) spec; (void) coloroffset; (void) specoffset;
@@ -629,7 +629,6 @@ static void r300ChooseRenderState( GLcontext *ctx )
 static void r300RenderStart(GLcontext *ctx)
 {
         r300ContextPtr rmesa = R300_CONTEXT( ctx );
-	//	fprintf(stderr, "%s\n", __FUNCTION__);
 
 	r300ChooseRenderState(ctx);
 	r300SetVertexFormat(ctx);
@@ -669,8 +668,6 @@ static void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 	  return;
 
 	r300RasterPrimitive( ctx, reduced_prim[prim] );
-	//	fprintf(stderr, "%s\n", __FUNCTION__);
-
 }
 
 static void r300ResetLineStipple(GLcontext *ctx)
@@ -713,11 +710,6 @@ void r300InitSwtcl(GLcontext *ctx)
 
 	_tnl_need_projected_coords( ctx, GL_FALSE );
 	r300ChooseRenderState(ctx);
-
-	_mesa_validate_all_lighting_tables( ctx );
-
-	tnl->Driver.NotifyMaterialChange =
-	  _mesa_validate_all_lighting_tables;
 }
 
 void r300DestroySwtcl(GLcontext *ctx)
