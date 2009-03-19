@@ -112,15 +112,17 @@ update_framebuffer_state( struct st_context *st )
    for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
       strb = st_renderbuffer(fb->_ColorDrawBuffers[i]);
 
-      /*printf("--------- framebuffer surface rtt %p\n", strb->rtt);*/
-      if (strb->rtt) {
-         /* rendering to a GL texture, may have to update surface */
-         update_renderbuffer_surface(st, strb);
-      }
+      if (strb) {
+         /*printf("--------- framebuffer surface rtt %p\n", strb->rtt);*/
+         if (strb->rtt) {
+            /* rendering to a GL texture, may have to update surface */
+            update_renderbuffer_surface(st, strb);
+         }
 
-      if (strb->surface) {
-         framebuffer->cbufs[framebuffer->nr_cbufs] = strb->surface;
-         framebuffer->nr_cbufs++;
+         if (strb->surface) {
+            framebuffer->cbufs[framebuffer->nr_cbufs] = strb->surface;
+            framebuffer->nr_cbufs++;
+         }
       }
    }
 
