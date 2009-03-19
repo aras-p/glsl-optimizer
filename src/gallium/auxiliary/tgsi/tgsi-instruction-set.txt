@@ -1006,3 +1006,17 @@ TGSI Instruction Specification
 
   Alias for TXD.
 
+
+1.18  vs_1_1
+------------
+
+
+1.18.1  EXPP - Approximate Exponential Base 2
+
+  Alias for EXP.
+
+
+1.18.2  LOGP - Logarithm Base 2
+
+  Alias for LG2.
+
