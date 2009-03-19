@@ -30,6 +30,7 @@
  *  -l                       Enable application-side locking
  *  -n <num threads>         Number of threads to create (default is 2)
  *  -t                       Use texture mapping
+ *  -s                       Force single-threaded.
  *
  * Brian Paul  20 July 2000
  */
@@ -83,6 +84,7 @@ static HANDLE ExitEvent = NULL;
 
 static GLboolean Locking = 0;
 static GLboolean Texture = GL_FALSE;
+static GLboolean SingleThreaded = GL_FALSE;
 static GLuint TexObj = 12;
 static GLboolean Animate = GL_TRUE;
 
@@ -518,6 +520,7 @@ usage(void)
    printf("   -n NUMTHREADS  Number of threads to create\n");
    printf("   -l  Use application-side locking\n");
    printf("   -t  Enable texturing\n");
+   printf("   -s  Force single-threaded\n");
    printf("Keyboard:\n");
    printf("   Esc  Exit\n");
    printf("   t    Change texture image (requires -t option)\n");
@@ -530,7 +533,6 @@ int
 main(int argc, char *argv[])
 {
    int i;
-   HANDLE threads[MAX_WINTHREADS];
 
    for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "-h") == 0) {
@@ -550,11 +552,17 @@ main(int argc, char *argv[])
             NumWinThreads = MAX_WINTHREADS;
          i++;
       }
+      else if (strcmp(argv[i], "-s") == 0) {
+         SingleThreaded = GL_TRUE;
+      }
       else {
          usage();
          exit(1);
       }
    }
+
+   if (SingleThreaded)
+      printf("wglthreads: Forcing single-threaded, no other threads will be created.\n");
    
    if (Locking)
       printf("wglthreads: Using explicit locks around WGL calls.\n");
@@ -564,30 +572,43 @@ main(int argc, char *argv[])
    InitializeCriticalSection(&Mutex);
    ExitEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-   printf("wglthreads: creating threads\n");
+   if (SingleThreaded) {
+      NumWinThreads = 1;
 
-   /* Create the threads */
-   for (i = 0; i < NumWinThreads; i++) {
-      DWORD id;
+      WinThreads[0].Index = 0;
+      WinThreads[0].hEventInitialised = CreateEvent(NULL, TRUE, FALSE, NULL);
+      WinThreads[0].hEventRedraw = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-      WinThreads[i].Index = i;
-      WinThreads[i].hEventInitialised = CreateEvent(NULL, TRUE, FALSE, NULL);
-      WinThreads[i].hEventRedraw = CreateEvent(NULL, FALSE, FALSE, NULL);
-      WinThreads[i].Thread = CreateThread(NULL,
-                                          0,
-                                          ThreadProc,
-                                          (void*) &WinThreads[i],
-                                          0,
-                                          &id);
-      printf("wglthreads: Created thread %p\n", (void *) WinThreads[i].Thread);
-
-      WaitForSingleObject(WinThreads[i].hEventInitialised, INFINITE);
-
-      threads[i] = WinThreads[i].Thread;
+      ThreadProc((void*) &WinThreads[0]);
    }
+   else {
+      HANDLE threads[MAX_WINTHREADS];
 
-   /* Wait for all threads to finish. */
-   WaitForMultipleObjects(NumWinThreads, threads, TRUE, INFINITE);
+      printf("wglthreads: creating threads\n");
+
+      /* Create the threads */
+      for (i = 0; i < NumWinThreads; i++) {
+         DWORD id;
+
+         WinThreads[i].Index = i;
+         WinThreads[i].hEventInitialised = CreateEvent(NULL, TRUE, FALSE, NULL);
+         WinThreads[i].hEventRedraw = CreateEvent(NULL, FALSE, FALSE, NULL);
+         WinThreads[i].Thread = CreateThread(NULL,
+                                             0,
+                                             ThreadProc,
+                                             (void*) &WinThreads[i],
+                                             0,
+                                             &id);
+         printf("wglthreads: Created thread %p\n", (void *) WinThreads[i].Thread);
+
+         WaitForSingleObject(WinThreads[i].hEventInitialised, INFINITE);
+
+         threads[i] = WinThreads[i].Thread;
+      }
+
+      /* Wait for all threads to finish. */
+      WaitForMultipleObjects(NumWinThreads, threads, TRUE, INFINITE);
+   }
 
    return 0;
 }
