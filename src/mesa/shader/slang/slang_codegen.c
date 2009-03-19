@@ -1439,6 +1439,12 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    /*_slang_label_delete(A->curFuncEndLabel);*/
    A->curFuncEndLabel = prevFuncEndLabel;
 
+   if (A->pragmas->Debug) {
+      char s[1000];
+      snprintf(s, sizeof(s), "Call/inline %s()", (char *) fun->header.a_name);
+      n->Comment = _slang_strdup(s);
+   }
+
    return n;
 }
 

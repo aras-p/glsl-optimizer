@@ -212,6 +212,7 @@ typedef struct slang_ir_node_
    struct slang_ir_node_ *List;  /**< For various linked lists */
    struct slang_ir_node_ *Parent;  /**< Pointer to logical parent (ie. loop) */
    slang_label *Label;  /**< Used for branches */
+   const char *Comment; /**< If Opcode == IR_COMMENT */
 } slang_ir_node;
 
 

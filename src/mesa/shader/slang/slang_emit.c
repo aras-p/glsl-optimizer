@@ -2194,6 +2194,12 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
       return NULL;
    }
 
+   if (n->Comment) {
+      inst = new_instruction(emitInfo, OPCODE_NOP);
+      inst->Comment = _mesa_strdup(n->Comment);
+      inst = NULL;
+   }
+
    switch (n->Opcode) {
    case IR_SEQ:
       /* sequence of two sub-trees */
