@@ -37,6 +37,7 @@
 #include "main/texrender.h"
 
 #include "radeon_common.h"
+#include "radeon_mipmap_tree.h"
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 #define DBG(...) do {                                           \
@@ -442,7 +443,74 @@ radeon_render_texture(GLcontext * ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
+   struct gl_texture_image *newImage
+      = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+   struct radeon_renderbuffer *rrb = radeon_renderbuffer(att->Renderbuffer);
+   radeon_texture_image *radeon_image;
+   GLuint imageOffset;
 
+   (void) fb;
+
+   ASSERT(newImage);
+
+   if (newImage->Border != 0) {
+      /* Fallback on drawing to a texture with a border, which won't have a
+       * miptree.
+       */
+      _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
+      _mesa_render_texture(ctx, fb, att);
+      return;
+   }
+   else if (!rrb) {
+      rrb = radeon_wrap_texture(ctx, newImage);
+      if (rrb) {
+         /* bind the wrapper to the attachment point */
+         _mesa_reference_renderbuffer(&att->Renderbuffer, &rrb->base);
+      }
+      else {
+         /* fallback to software rendering */
+         _mesa_render_texture(ctx, fb, att);
+         return;
+      }
+   }
+
+   if (!radeon_update_wrapper(ctx, rrb, newImage)) {
+       _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
+       _mesa_render_texture(ctx, fb, att);
+       return;
+   }
+
+   DBG("Begin render texture tid %x tex=%u w=%d h=%d refcount=%d\n",
+       _glthread_GetID(),
+       att->Texture->Name, newImage->Width, newImage->Height,
+       rrb->base.RefCount);
+
+   /* point the renderbufer's region to the texture image region */
+   radeon_image = (radeon_texture_image *)newImage;
+   if (rrb->bo != radeon_image->mt->bo) {
+      if (rrb->bo)
+  	radeon_bo_unref(rrb->bo);
+      rrb->bo = radeon_image->mt->bo;
+      radeon_bo_ref(rrb->bo);
+   }
+
+#if 0
+   /* compute offset of the particular 2D image within the texture region */
+   imageOffset = radeon_miptree_image_offset(radeon_image->mt,
+                                            att->CubeMapFace,
+                                            att->TextureLevel);
+
+   if (att->Texture->Target == GL_TEXTURE_3D) {
+      const GLuint *offsets = radeon_miptree_depth_offsets(radeon_image->mt,
+                                                          att->TextureLevel);
+      imageOffset += offsets[att->Zoffset];
+   }
+
+   /* store that offset in the region */
+   radeon_image->mt->draw_offset = imageOffset;
+#endif
+   /* update drawing region, etc */
+   radeon_draw_buffer(ctx, fb);
 }
 
 static void
