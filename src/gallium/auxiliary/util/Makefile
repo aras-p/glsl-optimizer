@@ -24,6 +24,7 @@ C_SOURCES = \
 	u_tile.c \
 	u_time.c \
 	u_timed_winsys.c \
+	u_upload_mgr.c \
 	u_simple_screen.c
 
 include ../../Makefile.template
