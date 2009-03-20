@@ -128,7 +128,7 @@
 #define CP_PACKET3(op, count) \
     (RADEON_CP_PACKET3 | (op) | ((count) << 16))
 
-#define R300_CS_PKT3(op, count) do { \
+#define OUT_CS_PKT3(op, count) do { \
     OUT_CS(CP_PACKET3(op, count)); \
 } while (0)
 
