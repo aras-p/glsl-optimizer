@@ -281,9 +281,6 @@ stw_make_current(
    pipe_mutex_lock( stw_dev->mutex ); 
    ctx = stw_lookup_context( hglrc );
    pipe_mutex_unlock( stw_dev->mutex );
-   
-   if (ctx == NULL)
-      return FALSE;
 
    stw_tls_get_data()->currentDC = hdc;
    stw_tls_get_data()->currentGLRC = hglrc;
