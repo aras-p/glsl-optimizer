@@ -152,21 +152,6 @@ void r500_emit_fragment_shader(struct r300_context* r300,
     END_CS;
 }
 
-/* Translate pipe_format into US_OUT_FMT. Note that formats are stored from
- * C3 to C0. */
-uint32_t translate_out_fmt(enum pipe_format format)
-{
-    switch (format) {
-        case PIPE_FORMAT_A8R8G8B8_UNORM:
-            return R300_US_OUT_FMT_C4_8 |
-                R300_C0_SEL_B | R300_C1_SEL_G |
-                R300_C2_SEL_R | R300_C3_SEL_A;
-        default:
-            return R300_US_OUT_FMT_UNUSED;
-    }
-    return 0;
-}
-
 /* XXX add pitch, stride, clean up */
 void r300_emit_fb_state(struct r300_context* r300,
                         struct pipe_framebuffer_state* fb)
@@ -182,7 +167,7 @@ void r300_emit_fb_state(struct r300_context* r300,
         OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
         OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i),
-            translate_out_fmt(fb->cbufs[i]->format));
+            r300_translate_out_fmt(fb->cbufs[i]->format));
     }
 
     if (fb->zsbuf) {
