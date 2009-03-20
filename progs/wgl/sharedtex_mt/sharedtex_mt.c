@@ -49,6 +49,7 @@ struct window {
    HGLRC Context;
    float Angle;
    int Id;
+   HGLRC sharedContext;
 };
 
 
@@ -172,8 +173,6 @@ AddWindow(int xpos, int ypos, HGLRC sCtx)
 {
    struct window *win = &Windows[NumWindows];
    WNDCLASS wc = {0};
-   PIXELFORMATDESCRIPTOR pfd = {0};
-   int visinfo;
    int width = 300, height = 300;
 
    if (NumWindows >= MAX_WINDOWS)
@@ -208,33 +207,7 @@ AddWindow(int xpos, int ypos, HGLRC sCtx)
       Error("Couldn't create window");
    }
 
-   win->hDC = GetDC(win->Win);
-   if (!win->hDC) {
-      Error("Couldn't obtain HDC");
-   }
-
-   pfd.cColorBits = 24;
-   pfd.cDepthBits = 24;
-   pfd.dwFlags = PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
-   pfd.iLayerType = PFD_MAIN_PLANE;
-   pfd.iPixelType = PFD_TYPE_RGBA;
-   pfd.nSize = sizeof(pfd);
-   pfd.nVersion = 1;
-
-   visinfo = ChoosePixelFormat(win->hDC, &pfd);
-   if (!visinfo) {
-      Error("Unable to find RGB, Z, double-buffered visual");
-   }
-
-   SetPixelFormat(win->hDC, visinfo, &pfd);
-   win->Context = wglCreateContext(win->hDC);
-   if (!win->Context) {
-      Error("Couldn't create WGL context");
-   }
-
-   if (sCtx) {
-      wglShareLists(sCtx, win->Context);
-   }
+   win->sharedContext = sCtx;
 
    ShowWindow(win->Win, SW_SHOW);
 
@@ -244,7 +217,6 @@ AddWindow(int xpos, int ypos, HGLRC sCtx)
 
 static void
 InitGLstuff(void)
-
 {
    glGenTextures(3, Textures);
 
@@ -432,8 +404,38 @@ threadRunner (void *arg)
 {
    struct thread_init_arg *tia = (struct thread_init_arg *) arg;
    struct window *win;
+   PIXELFORMATDESCRIPTOR pfd = {0};
+   int visinfo;
 
    win = &Windows[tia->id];
+
+   win->hDC = GetDC(win->Win);
+   if (!win->hDC) {
+      Error("Couldn't obtain HDC");
+   }
+
+   pfd.cColorBits = 24;
+   pfd.cDepthBits = 24;
+   pfd.dwFlags = PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
+   pfd.iLayerType = PFD_MAIN_PLANE;
+   pfd.iPixelType = PFD_TYPE_RGBA;
+   pfd.nSize = sizeof(pfd);
+   pfd.nVersion = 1;
+
+   visinfo = ChoosePixelFormat(win->hDC, &pfd);
+   if (!visinfo) {
+      Error("Unable to find RGB, Z, double-buffered visual");
+   }
+
+   SetPixelFormat(win->hDC, visinfo, &pfd);
+   win->Context = wglCreateContext(win->hDC);
+   if (!win->Context) {
+      Error("Couldn't create WGL context");
+   }
+
+   if (win->sharedContext) {
+      wglShareLists(win->sharedContext, win->Context);
+   }
 
    while (1) {
       MSG msg;
@@ -464,6 +466,9 @@ threadRunner (void *arg)
 static void
 Resize(struct window *h, unsigned int width, unsigned int height)
 {
+   if (!h->Context)
+      return;
+
    EnterCriticalSection(&h->drawMutex);
 
    if (!wglMakeCurrent(h->hDC, h->Context)) {
