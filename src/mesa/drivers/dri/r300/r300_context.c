@@ -439,7 +439,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300->disable_lowimpact_fallback =
 	    driQueryOptionb(&r300->radeon.optionCache,
 			    "disable_lowimpact_fallback");
-
+	radeon_fbo_init(&r300->radeon);
    	radeonInitSpanFuncs( ctx );
 	r300InitCmdBuf(r300);
 	r300InitState(r300);
