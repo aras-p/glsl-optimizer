@@ -437,6 +437,8 @@ threadRunner (void *arg)
       wglShareLists(win->sharedContext, win->Context);
    }
 
+   SendMessage(win->Win, WM_SIZE, 0, 0);
+
    while (1) {
       MSG msg;
 
