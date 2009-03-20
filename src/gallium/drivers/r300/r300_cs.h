@@ -115,6 +115,21 @@
     cs_winsys->flush_cs(cs); \
 } while (0)
 
-#include "r300_cs_inlines.h"
+#define RADEON_ONE_REG_WR        (1 << 15)
+
+#define OUT_CS_ONE_REG(register, count) do { \
+    if (VERY_VERBOSE_REGISTERS) \
+        debug_printf("r300: writing data sequence of %d to 0x%04X\n", \
+            count, register); \
+    assert(register); \
+    OUT_CS(CP_PACKET0(register, ((count) - 1)) | RADEON_ONE_REG_WR); \
+} while (0)
+
+#define CP_PACKET3(op, count) \
+    (RADEON_CP_PACKET3 | (op) | ((count) << 16))
+
+#define R300_CS_PKT3(op, count) do { \
+    OUT_CS(CP_PACKET3(op, count)); \
+} while (0)
 
 #endif /* R300_CS_H */
