@@ -80,8 +80,16 @@ static void r300_surface_fill(struct pipe_context* pipe,
 
     /* Pixel scissors */
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
-    OUT_CS((x << R300_SCISSORS_X_SHIFT) | (y << R300_SCISSORS_Y_SHIFT));
-    OUT_CS((w << R300_SCISSORS_X_SHIFT) | (h << R300_SCISSORS_Y_SHIFT));
+    if (caps->is_r500) {
+        OUT_CS((x << R300_SCISSORS_X_SHIFT) | (y << R300_SCISSORS_Y_SHIFT));
+        OUT_CS((w << R300_SCISSORS_X_SHIFT) | (h << R300_SCISSORS_Y_SHIFT));
+    } else {
+        /* Non-R500 chipsets have an offset of 1440 in their scissors. */
+        OUT_CS(((x + 1440) << R300_SCISSORS_X_SHIFT) |
+                ((y + 1440) << R300_SCISSORS_Y_SHIFT));
+        OUT_CS(((w + 1440) << R300_SCISSORS_X_SHIFT) |
+                ((h + 1440) << R300_SCISSORS_Y_SHIFT));
+    }
 
     /* The size of the point we're about to draw, in sixths of pixels */
     OUT_CS_REG(R300_GA_POINT_SIZE,
