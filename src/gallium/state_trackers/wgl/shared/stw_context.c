@@ -135,17 +135,7 @@ stw_create_layer_context(
 
    pipe_mutex_lock( stw_dev->mutex );
    {
-      UINT_PTR i;
-
-      for (i = 0; i < STW_CONTEXT_MAX; i++) {
-         if (stw_dev->ctx_array[i].ctx == NULL) {
-            /* success:
-             */
-            stw_dev->ctx_array[i].ctx = ctx;
-            hglrc = i + 1;
-            break;
-         }
-      }
+      hglrc = handle_table_add(stw_dev->ctx_table, ctx);
    }
    pipe_mutex_unlock( stw_dev->mutex );
 
@@ -195,12 +185,14 @@ stw_delete_context(
       if (WindowFromDC( ctx->hdc ) != NULL)
          ReleaseDC( WindowFromDC( ctx->hdc ), ctx->hdc );
 
-      st_destroy_context( ctx->st );
+      pipe_mutex_lock(stw_dev->mutex);
+      {
+         st_destroy_context(ctx->st);
+         FREE(ctx);
+         handle_table_remove(stw_dev->ctx_table, hglrc);
+      }
+      pipe_mutex_unlock(stw_dev->mutex);
 
-      FREE( ctx );
-      
-      stw_dev->ctx_array[hglrc - 1].ctx = NULL;
-      
       ret = TRUE;
    }
 

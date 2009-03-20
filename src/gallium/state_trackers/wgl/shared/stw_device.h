@@ -31,9 +31,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_thread.h"
-
-
-#define STW_CONTEXT_MAX 32
+#include "util/u_handle_table.h"
 
 
 struct pipe_screen;
@@ -45,9 +43,7 @@ struct stw_device
    
    pipe_mutex mutex;
 
-   struct {
-      struct stw_context *ctx;
-   } ctx_array[STW_CONTEXT_MAX];
+   struct handle_table *ctx_table;
    
 #ifdef DEBUG
    unsigned long memdbg_no;

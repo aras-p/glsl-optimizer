@@ -94,6 +94,11 @@ st_init(const struct stw_winsys *stw_winsys)
    
    pipe_mutex_init( stw_dev->mutex );
 
+   stw_dev->ctx_table = handle_table_create();
+   if (!stw_dev->ctx_table) {
+      goto error1;
+   }
+
    pixelformat_init();
 
    return TRUE;
@@ -135,9 +140,12 @@ st_cleanup(void)
    pipe_mutex_lock( stw_dev->mutex );
    {
       /* Ensure all contexts are destroyed */
-      for (i = 0; i < STW_CONTEXT_MAX; i++)
-         if (stw_dev->ctx_array[i].ctx) 
-            stw_delete_context( i + 1 );
+      i = handle_table_get_first_handle(stw_dev->ctx_table);
+      while (i) {
+         stw_delete_context(i);
+         i = handle_table_get_next_handle(stw_dev->ctx_table, i);
+      }
+      handle_table_destroy(stw_dev->ctx_table);
    }
    pipe_mutex_unlock( stw_dev->mutex );
 
@@ -163,13 +171,12 @@ st_cleanup(void)
 struct stw_context *
 stw_lookup_context( UINT_PTR dhglrc )
 {
-   if (dhglrc == 0 || 
-       dhglrc >= STW_CONTEXT_MAX)
+   if (dhglrc == 0)
       return NULL;
 
    if (stw_dev == NULL)
       return NULL;
 
-   return stw_dev->ctx_array[dhglrc - 1].ctx;
+   return (struct stw_context *) handle_table_get(stw_dev->ctx_table, dhglrc);
 }
 
