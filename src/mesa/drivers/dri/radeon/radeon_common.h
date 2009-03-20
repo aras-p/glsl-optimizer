@@ -30,6 +30,8 @@ void radeonDrawBuffer( GLcontext *ctx, GLenum mode );
 void radeonReadBuffer( GLcontext *ctx, GLenum mode );
 void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height);
 
+void radeon_fbo_init(struct radeon_context *radeon);
+
 static inline struct radeon_renderbuffer *radeon_renderbuffer(struct gl_renderbuffer *rb)
 {
 	struct radeon_renderbuffer *rrb = (struct radeon_renderbuffer *)rb;
