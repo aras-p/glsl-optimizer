@@ -28,14 +28,13 @@
 #include "util/u_debug.h"
 #include "stw_pixelformat.h"
 #include "stw_public.h"
+#include "stw_tls.h"
 
 #define MAX_PIXELFORMATS   16
 
 static struct pixelformat_info pixelformats[MAX_PIXELFORMATS];
 static uint pixelformat_count = 0;
 static uint pixelformat_extended_count = 0;
-
-static uint currentpixelformat = 0;
 
 
 static void
@@ -248,7 +247,7 @@ int
 stw_pixelformat_get(
    HDC hdc )
 {
-   return currentpixelformat;
+   return stw_tls_get_data()->currentPixelFormat;
 }
 
 
@@ -267,8 +266,8 @@ stw_pixelformat_set(
    if (index >= count)
       return FALSE;
 
-   currentpixelformat = iPixelFormat;
-   
+   stw_tls_get_data()->currentPixelFormat = iPixelFormat;
+
    /* Some applications mistakenly use the undocumented wglSetPixelFormat 
     * function instead of SetPixelFormat, so we call SetPixelFormat here to 
     * avoid opengl32.dll's wglCreateContext to fail */

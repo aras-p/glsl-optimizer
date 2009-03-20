@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2009 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,41 +25,77 @@
  *
  **************************************************************************/
 
-#ifndef STW_WINSYS_H
-#define STW_WINSYS_H
-
-#include <windows.h> /* for HDC */
+#include <windows.h>
 
 #include "pipe/p_compiler.h"
+#include "util/u_memory.h"
+#include "stw_tls.h"
 
-struct pipe_screen;
-struct pipe_context;
-struct pipe_surface;
+static DWORD tlsIndex = TLS_OUT_OF_INDEXES;
 
-struct stw_winsys
+boolean
+stw_tls_init(void)
 {
-   struct pipe_screen *
-   (*create_screen)( void );
+   tlsIndex = TlsAlloc();
+   if (tlsIndex == TLS_OUT_OF_INDEXES) {
+      return FALSE;
+   }
 
-   struct pipe_context *
-   (*create_context)( struct pipe_screen *screen );
-
-   void
-   (*flush_frontbuffer)( struct pipe_screen *screen,
-                         struct pipe_surface *surf,
-                         HDC hDC );
-};
+   return TRUE;
+}
 
 boolean
-st_init(const struct stw_winsys *stw_winsys);
+stw_tls_init_thread(void)
+{
+   struct stw_tls_data *data;
 
-boolean
-st_init_thread(void);
+   if (tlsIndex == TLS_OUT_OF_INDEXES) {
+      return FALSE;
+   }
+
+   data = MALLOC(sizeof(*data));
+   if (!data) {
+      return FALSE;
+   }
+
+   data->currentPixelFormat = 0;
+   data->currentDC = NULL;
+   data->currentGLRC = 0;
+
+   TlsSetValue(tlsIndex, data);
+
+   return TRUE;
+}
 
 void
-st_cleanup_thread(void);
+stw_tls_cleanup_thread(void)
+{
+   struct stw_tls_data *data;
+
+   if (tlsIndex == TLS_OUT_OF_INDEXES) {
+      return;
+   }
+
+   data = (struct stw_tls_data *) TlsGetValue(tlsIndex);
+   TlsSetValue(tlsIndex, NULL);
+   FREE(data);
+}
 
 void
-st_cleanup(void);
+stw_tls_cleanup(void)
+{
+   if (tlsIndex != TLS_OUT_OF_INDEXES) {
+      TlsFree(tlsIndex);
+      tlsIndex = TLS_OUT_OF_INDEXES;
+   }
+}
 
-#endif /* STW_WINSYS_H */
+struct stw_tls_data *
+stw_tls_get_data(void)
+{
+   if (tlsIndex == TLS_OUT_OF_INDEXES) {
+      return NULL;
+   }
+
+   return (struct stw_tls_data *) TlsGetValue(tlsIndex);
+}

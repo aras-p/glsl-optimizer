@@ -39,9 +39,7 @@
 #include "shared/stw_pixelformat.h"
 #include "stw_public.h"
 #include "stw_context.h"
-
-static HDC current_hdc = NULL;
-static UINT_PTR current_hglrc = 0;
+#include "stw_tls.h"
 
 BOOL
 stw_copy_context(
@@ -264,13 +262,13 @@ get_window_size( HDC hdc, GLuint *width, GLuint *height )
 UINT_PTR
 stw_get_current_context( void )
 {
-   return current_hglrc;
+   return stw_tls_get_data()->currentGLRC;
 }
 
 HDC
 stw_get_current_dc( void )
 {
-    return current_hdc;
+    return stw_tls_get_data()->currentDC;
 }
 
 BOOL
@@ -295,8 +293,8 @@ stw_make_current(
    if (ctx == NULL)
       return FALSE;
 
-   current_hdc = hdc;
-   current_hglrc = hglrc;
+   stw_tls_get_data()->currentDC = hdc;
+   stw_tls_get_data()->currentGLRC = hglrc;
 
    if (glcurctx != NULL) {
       curctx = (struct stw_context *) glcurctx->DriverCtx;

@@ -30,6 +30,7 @@ if env['platform'] in ['windows']:
         'shared/stw_arbextensionsstring.c',
         'shared/stw_getprocaddress.c',
         'shared/stw_arbpixelformat.c',
+        'shared/stw_tls.c',
     ]
 
     wgl = env.ConvenienceLibrary(

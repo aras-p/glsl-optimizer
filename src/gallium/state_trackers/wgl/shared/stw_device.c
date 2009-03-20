@@ -35,6 +35,7 @@
 #include "shared/stw_winsys.h"
 #include "shared/stw_pixelformat.h"
 #include "shared/stw_public.h"
+#include "shared/stw_tls.h"
 
 #ifdef WIN32_THREADS
 extern _glthread_Mutex OneTimeLock;
@@ -70,6 +71,8 @@ st_init(const struct stw_winsys *stw_winsys)
    
    assert(!stw_dev);
 
+   stw_tls_init();
+
    stw_dev = &stw_dev_storage;
    memset(stw_dev, 0, sizeof(*stw_dev));
 
@@ -98,6 +101,24 @@ st_init(const struct stw_winsys *stw_winsys)
 error1:
    stw_dev = NULL;
    return FALSE;
+}
+
+
+boolean
+st_init_thread(void)
+{
+   if (!stw_tls_init_thread()) {
+      return FALSE;
+   }
+
+   return TRUE;
+}
+
+
+void
+st_cleanup_thread(void)
+{
+   stw_tls_cleanup_thread();
 }
 
 
@@ -132,6 +153,8 @@ st_cleanup(void)
 #ifdef DEBUG
    debug_memory_end(stw_dev->memdbg_no);
 #endif
+
+   stw_tls_cleanup();
 
    stw_dev = NULL;
 }

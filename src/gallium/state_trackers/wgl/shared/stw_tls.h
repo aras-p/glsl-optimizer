@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2009 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,41 +25,29 @@
  *
  **************************************************************************/
 
-#ifndef STW_WINSYS_H
-#define STW_WINSYS_H
+#ifndef STW_TLS_H
+#define STW_TLS_H
 
-#include <windows.h> /* for HDC */
-
-#include "pipe/p_compiler.h"
-
-struct pipe_screen;
-struct pipe_context;
-struct pipe_surface;
-
-struct stw_winsys
+struct stw_tls_data
 {
-   struct pipe_screen *
-   (*create_screen)( void );
-
-   struct pipe_context *
-   (*create_context)( struct pipe_screen *screen );
-
-   void
-   (*flush_frontbuffer)( struct pipe_screen *screen,
-                         struct pipe_surface *surf,
-                         HDC hDC );
+   uint currentPixelFormat;
+   HDC currentDC;
+   UINT_PTR currentGLRC;
 };
 
 boolean
-st_init(const struct stw_winsys *stw_winsys);
+stw_tls_init(void);
 
 boolean
-st_init_thread(void);
+stw_tls_init_thread(void);
 
 void
-st_cleanup_thread(void);
+stw_tls_cleanup_thread(void);
 
 void
-st_cleanup(void);
+stw_tls_cleanup(void);
 
-#endif /* STW_WINSYS_H */
+struct stw_tls_data *
+stw_tls_get_data(void);
+
+#endif /* STW_TLS_H */
