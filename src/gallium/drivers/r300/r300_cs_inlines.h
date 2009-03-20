@@ -36,15 +36,24 @@
     OUT_CS(CP_PACKET0(register, ((count) - 1)) | RADEON_ONE_REG_WR); \
 } while (0)
 
+/* XXX might no longer be needed */
 #define R300_PACIFY do { \
     OUT_CS_REG(RADEON_WAIT_UNTIL, (1 << 14) | (1 << 15) | (1 << 16) | (1 << 17) | \
         (1 << 18)); \
 } while (0)
 
+/* XXX do we still use this? */
 #define R300_SCREENDOOR do { \
     OUT_CS_REG(R300_SC_SCREENDOOR, 0x0); \
     R300_PACIFY; \
     OUT_CS_REG(R300_SC_SCREENDOOR, 0xffffff); \
+} while (0)
+
+#define CP_PACKET3(op, count) \
+    (RADEON_CP_PACKET3 | (op) | ((count) << 16))
+
+#define R300_CS_PKT3(op, count) do { \
+    OUT_CS(CP_PACKET3(op, count)); \
 } while (0)
 
 #endif /* R300_CS_H */

@@ -47,9 +47,6 @@
 #define CP_PACKET0(register, count) \
     (RADEON_CP_PACKET0 | ((count) << 16) | ((register) >> 2))
 
-#define CP_PACKET3(op, count) \
-    (RADEON_CP_PACKET3 | (op) | ((count) << 16))
-
 #define CS_LOCALS(context) \
     struct r300_winsys* cs_winsys = context->winsys; \
     struct radeon_cs* cs = cs_winsys->cs; \

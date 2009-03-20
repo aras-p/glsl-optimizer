@@ -129,8 +129,8 @@ static void r300_surface_fill(struct pipe_context* pipe,
         ((h * 6) & R300_POINTSIZE_Y_MASK) |
         ((w * 6) << R300_POINTSIZE_X_SHIFT));
 
-    /* XXX Packet3 */
-    OUT_CS(CP_PACKET3(R200_3D_DRAW_IMMD_2, 8));
+    /* Packet3 with our point vertex */
+    OUT_CS_PKT3(R200_3D_DRAW_IMMD_2, 8);
     OUT_CS(R300_PRIM_TYPE_POINT | R300_PRIM_WALK_RING |
     (1 << R300_PRIM_NUM_VERTICES_SHIFT));
     OUT_CS_32F(w / 2.0);
