@@ -706,7 +706,7 @@ trace_screen_buffer_unmap(struct pipe_screen *_screen,
    struct pipe_buffer *buffer = tr_buf->buffer;
 
    if (tr_buf->map && !tr_buf->range_flushed)
-      buffer_write(screen, buffer, tr_buf->map, 0, buffer->size);
+      buffer_write(screen, buffer, 0, tr_buf->map, buffer->size);
    tr_buf->map = NULL;
    tr_buf->range_flushed = FALSE;
    screen->buffer_unmap(screen, buffer);
