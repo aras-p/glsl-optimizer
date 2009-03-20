@@ -696,6 +696,33 @@ const struct gl_texture_format _mesa_texformat_intensity_float16 = {
    store_texel_intensity_f16		/* StoreTexel */
 };
 
+const struct gl_texture_format _mesa_texformat_dudv8 = {
+   MESA_FORMAT_DUDV8,			/* MesaFormat */
+   GL_DUDV_ATI,				/* BaseFormat */
+   /* FIXME: spec doesn't say since that parameter didn't exist then,
+      but this should be something like SIGNED_NORMALIZED */
+   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
+   /* maybe should add dudvBits field, but spec seems to be
+      lacking the ability to query with GetTexLevelParameter anyway */
+   0,					/* RedBits */
+   0,					/* GreenBits */
+   0,					/* BlueBits */
+   0,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   0,					/* StencilBits */
+   2,					/* TexelBytes */
+   _mesa_texstore_dudv8,		/* StoreTexImageFunc */
+   NULL,				/* FetchTexel1D */
+   NULL,				/* FetchTexel2D */
+   NULL,				/* FetchTexel3D */
+   fetch_texel_1d_dudv8,		/* FetchTexel1Df */
+   fetch_texel_2d_dudv8,		/* FetchTexel2Df */
+   fetch_texel_3d_dudv8,		/* FetchTexel3Df */
+   NULL					/* StoreTexel */
+};
 
 /*@}*/
 
@@ -1634,6 +1661,16 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       }
    }
 
+   if (ctx->Extensions.ATI_envmap_bumpmap) {
+      switch (internalFormat) {
+         case GL_DUDV_ATI:
+         case GL_DU8DV8_ATI:
+            return &_mesa_texformat_dudv8;
+         default:
+            ; /* fallthrough */
+      }
+   }
+
 #if FEATURE_EXT_texture_sRGB
    if (ctx->Extensions.EXT_texture_sRGB) {
       switch (internalFormat) {
@@ -1776,6 +1813,11 @@ _mesa_format_to_type_and_comps(const struct gl_texture_format *format,
    case MESA_FORMAT_Z32:
       *datatype = GL_UNSIGNED_INT;
       *comps = 1;
+      return;
+
+   case MESA_FORMAT_DUDV8:
+      *datatype = GL_BYTE;
+      *comps = 2;
       return;
 
 #if FEATURE_EXT_texture_sRGB

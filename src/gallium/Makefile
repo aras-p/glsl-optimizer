@@ -1,26 +1,12 @@
+# src/gallium/Makefile
 TOP = ../..
 include $(TOP)/configs/current
 
-
 SUBDIRS = $(GALLIUM_DIRS)
-# Note winsys/ needs to be built after src/mesa
 
-
-default: subdirs
-
-
-subdirs:
+default install clean:
 	@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \
-			(cd $$dir && $(MAKE)) || exit 1 ; \
+			(cd $$dir && $(MAKE) $@) || exit 1; \
 		fi \
 	done
-
-
-clean:
-	rm -f `find . -name \*.[oa]`
-	rm -f `find . -name depend`
-
-
-# Dummy install target
-install:

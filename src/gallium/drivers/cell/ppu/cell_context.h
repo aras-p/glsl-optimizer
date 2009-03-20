@@ -130,9 +130,6 @@ struct cell_context
    ubyte *cbuf_map[PIPE_MAX_COLOR_BUFS];
    ubyte *zsbuf_map;
 
-   struct pipe_surface *tex_surf;
-   uint *tex_map;
-
    uint dirty;
    uint dirty_textures;  /* bitmask of texture units */
    uint dirty_samplers;  /* bitmask of sampler units */

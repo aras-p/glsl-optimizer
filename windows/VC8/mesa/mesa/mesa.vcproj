@@ -743,7 +743,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\swrast\s_buffers.c"
+				RelativePath="..\..\..\..\src\mesa\swrast\s_clear.c"
 				>
 			</File>
 			<File
@@ -836,6 +836,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\shaders.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\shared.c"
 				>
 			</File>
 			<File
@@ -1056,6 +1060,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\varray.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\viewport.c"
 				>
 			</File>
 			<File
@@ -1700,6 +1708,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\shared.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\simple_list.h"
 				>
 			</File>
@@ -1897,6 +1909,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\varray.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\viewport.h"
 				>
 			</File>
 			<File

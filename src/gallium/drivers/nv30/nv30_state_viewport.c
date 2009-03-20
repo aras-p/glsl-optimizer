@@ -7,7 +7,8 @@ nv30_state_viewport_validate(struct nv30_context *nv30)
 	struct nouveau_stateobj *so;
 	unsigned bypass;
 
-	if (/*nv30->render_mode == HW &&*/ !nv30->rasterizer->pipe.bypass_clipping)
+	if (/*nv30->render_mode == HW &&*/
+	    !nv30->rasterizer->pipe.bypass_vs_clip_and_viewport)
 		bypass = 0;
 	else
 		bypass = 1;
@@ -58,6 +59,7 @@ nv30_state_viewport_validate(struct nv30_context *nv30)
 	so_data  (so, 1);
 
 	so_ref(so, &nv30->state.hw[NV30_STATE_VIEWPORT]);
+	so_ref(NULL, &so);
 	return TRUE;
 }
 

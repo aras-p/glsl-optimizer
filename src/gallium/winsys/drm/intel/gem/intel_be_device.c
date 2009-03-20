@@ -9,17 +9,9 @@
 
 #include "intel_be_fence.h"
 
-#include "i915simple/i915_screen.h"
+#include "i915simple/i915_winsys.h"
 
-
-/**
- *  Turn a pipe winsys into an intel/pipe winsys:
- */
-static INLINE struct intel_be_device *
-intel_be_device(struct pipe_winsys *winsys)
-{
-	return (struct intel_be_device *)winsys;
-}
+#include "intel_be_api.h"
 
 /*
  * Buffer
@@ -33,6 +25,12 @@ intel_be_buffer_map(struct pipe_winsys *winsys,
 	drm_intel_bo *bo = intel_bo(buf);
 	int write = 0;
 	int ret;
+
+        if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
+           /* Remove this when drm_intel_bo_map supports DONTBLOCK 
+            */
+           return NULL;
+        }
 
 	if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
 		write = 1;
@@ -53,8 +51,7 @@ intel_be_buffer_unmap(struct pipe_winsys *winsys,
 }
 
 static void
-intel_be_buffer_destroy(struct pipe_winsys *winsys,
-			struct pipe_buffer *buf)
+intel_be_buffer_destroy(struct pipe_buffer *buf)
 {
 	drm_intel_bo_unreference(intel_bo(buf));
 	free(buf);
@@ -74,10 +71,12 @@ intel_be_buffer_create(struct pipe_winsys *winsys,
 	if (!buffer)
 		return NULL;
 
-	buffer->base.refcount = 1;
+	pipe_reference_init(&buffer->base.reference, 1);
 	buffer->base.alignment = alignment;
 	buffer->base.usage = usage;
 	buffer->base.size = size;
+	buffer->flinked = FALSE;
+	buffer->flink = 0;
 
 	if (usage & (PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_CONSTANT)) {
 		/* Local buffer */
@@ -115,7 +114,7 @@ intel_be_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned byte
 	if (!buffer)
 		return NULL;
 
-	buffer->base.refcount = 1;
+	pipe_reference_init(&buffer->base.reference, 1);
 	buffer->base.alignment = 0;
 	buffer->base.usage = 0;
 	buffer->base.size = bytes;
@@ -141,10 +140,10 @@ err:
 }
 
 struct pipe_buffer *
-intel_be_buffer_from_handle(struct pipe_winsys *winsys,
+intel_be_buffer_from_handle(struct pipe_screen *screen,
                             const char* name, unsigned handle)
 {
-	struct intel_be_device *dev = intel_be_device(winsys);
+	struct intel_be_device *dev = intel_be_device(screen->winsys);
 	struct intel_be_buffer *buffer = CALLOC_STRUCT(intel_be_buffer);
 
 	if (!buffer)
@@ -155,7 +154,8 @@ intel_be_buffer_from_handle(struct pipe_winsys *winsys,
 	if (!buffer->bo)
 		goto err;
 
-	buffer->base.refcount = 1;
+	pipe_reference_init(&buffer->base.reference, 1);
+	buffer->base.screen = screen;
 	buffer->base.alignment = buffer->bo->align;
 	buffer->base.usage = PIPE_BUFFER_USAGE_GPU_READ |
 	                     PIPE_BUFFER_USAGE_GPU_WRITE |
@@ -170,14 +170,39 @@ err:
 	return NULL;
 }
 
-unsigned
-intel_be_handle_from_buffer(struct pipe_winsys *winsys,
-                            struct pipe_buffer *buf)
+boolean
+intel_be_handle_from_buffer(struct pipe_screen *screen,
+                            struct pipe_buffer *buffer,
+                            unsigned *handle)
 {
-	drm_intel_bo *bo = intel_bo(buf);
-	return bo->handle;
+	drm_intel_bo *bo;
+
+	if (!buffer)
+		return FALSE;
+
+	*handle = intel_bo(buffer)->handle;
+	return TRUE;
 }
 
+boolean
+intel_be_global_handle_from_buffer(struct pipe_screen *screen,
+				   struct pipe_buffer *buffer,
+				   unsigned *handle)
+{
+	struct intel_be_buffer *buf = intel_be_buffer(buffer);
+
+	if (!buffer)
+		return FALSE;
+
+	if (!buf->flinked) {
+		if (drm_intel_bo_flink(intel_bo(buffer), &buf->flink))
+			return FALSE;
+		buf->flinked = TRUE;
+	}
+
+	*handle = buf->flink;
+	return TRUE;
+}
 /*
  * Fence
  */
@@ -190,15 +215,7 @@ intel_be_fence_refunref(struct pipe_winsys *sws,
 	struct intel_be_fence **p = (struct intel_be_fence **)ptr;
 	struct intel_be_fence *f = (struct intel_be_fence *)fence;
 
-	assert(p);
-
-	if (f)
-		intel_be_fence_reference(f);
-
-	if (*p)
-		intel_be_fence_unreference(*p);
-
-	*p = f;
+        intel_be_fence_reference(p, f);
 }
 
 static int
@@ -233,10 +250,21 @@ intel_be_fence_finish(struct pipe_winsys *sws,
  * Misc functions
  */
 
+static void
+intel_be_destroy_winsys(struct pipe_winsys *winsys)
+{
+	struct intel_be_device *dev = intel_be_device(winsys);
+
+	drm_intel_bufmgr_destroy(dev->pools.gem);
+
+	free(dev);
+}
+
 boolean
 intel_be_init_device(struct intel_be_device *dev, int fd, unsigned id)
 {
 	dev->fd = fd;
+	dev->id = id;
 	dev->max_batch_size = 16 * 4096;
 	dev->max_vertex_size = 128 * 4096;
 
@@ -253,13 +281,28 @@ intel_be_init_device(struct intel_be_device *dev, int fd, unsigned id)
 	dev->base.fence_signalled = intel_be_fence_signalled;
 	dev->base.fence_finish = intel_be_fence_finish;
 
+	dev->base.destroy = intel_be_destroy_winsys;
+
 	dev->pools.gem = drm_intel_bufmgr_gem_init(dev->fd, dev->max_batch_size);
 
 	return true;
 }
 
-void
-intel_be_destroy_device(struct intel_be_device *dev)
+struct pipe_screen *
+intel_be_create_screen(int drmFD, int deviceID)
 {
-	drm_intel_bufmgr_destroy(dev->pools.gem);
+	struct intel_be_device *dev;
+	struct pipe_screen *screen;
+
+	/* Allocate the private area */
+	dev = malloc(sizeof(*dev));
+	if (!dev)
+		return NULL;
+	memset(dev, 0, sizeof(*dev));
+
+	intel_be_init_device(dev, drmFD, deviceID);
+
+	screen = i915_create_screen(&dev->base, deviceID);
+
+	return screen;
 }

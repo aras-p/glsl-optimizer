@@ -37,17 +37,6 @@ struct stw_context
    struct st_context *st;
    HDC hdc;
    DWORD color_bits;
-   struct stw_context *next;
 };
-
-struct stw_context *
-stw_context_from_hdc(HDC hdc );
-
-
-
-
-
-
-
 
 #endif /* STW_CONTEXT_H */

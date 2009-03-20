@@ -66,7 +66,7 @@ struct vlR16SnormBufferedMC
 	struct vlVertex2f			zero_block[3];
 	unsigned int				num_macroblocks;
 	struct vlMpeg2MacroBlock		*macroblocks;
-	struct pipe_surface			*tex_surface[3];
+	struct pipe_transfer			*tex_transfer[3];
 	short					*texels[3];
 
 	struct pipe_context			*pipe;
@@ -187,7 +187,7 @@ static inline int vlGrabBlocks
 	assert(mc);
 	assert(blocks);
 
-	tex_pitch = mc->tex_surface[0]->stride / mc->tex_surface[0]->block.size;
+	tex_pitch = mc->tex_transfer[0]->stride / mc->tex_transfer[0]->block.size;
 	texels = mc->texels[0] + mbpy * tex_pitch + mbpx;
 
 	for (y = 0; y < 2; ++y)
@@ -235,7 +235,7 @@ static inline int vlGrabBlocks
 
 	for (tb = 0; tb < 2; ++tb)
 	{
-		tex_pitch = mc->tex_surface[tb + 1]->stride / mc->tex_surface[tb + 1]->block.size;
+		tex_pitch = mc->tex_transfer[tb + 1]->stride / mc->tex_transfer[tb + 1]->block.size;
 		texels = mc->texels[tb + 1] + mbpy * tex_pitch + mbpx;
 
 		if ((coded_block_pattern >> (1 - tb)) & 1)
@@ -635,8 +635,8 @@ static int vlFlush
 
 	for (i = 0; i < 3; ++i)
 	{
-		pipe_surface_unmap(mc->tex_surface[i]);
-		pipe_surface_reference(&mc->tex_surface[i], NULL);
+		pipe->screen->transfer_unmap(pipe->screen, mc->tex_transfer[i]);
+		pipe->screen->tex_transfer_destroy(mc->tex_transfer[i]);
 	}
 
 	mc->render_target.cbufs[0] = pipe->screen->get_tex_surface
@@ -809,14 +809,16 @@ static int vlRenderMacroBlocksMpeg2R16SnormBuffered
 
 		for (i = 0; i < 3; ++i)
 		{
-			mc->tex_surface[i] = mc->pipe->screen->get_tex_surface
+			mc->tex_transfer[i] = mc->pipe->screen->get_tex_transfer
 			(
 				mc->pipe->screen,
 				mc->textures.all[i],
-				0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
+				0, 0, 0, PIPE_TRANSFER_WRITE, 0, 0,
+				surface->texture->width[0],
+				surface->texture->height[0]
 			);
 
-			mc->texels[i] = pipe_surface_map(mc->tex_surface[i], PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD);
+			mc->texels[i] = mc->pipe->screen->transfer_map(mc->pipe->screen, mc->tex_transfer[i]);
 		}
 	}
 
@@ -854,7 +856,7 @@ static int vlDestroy
 		pipe->delete_sampler_state(pipe, mc->samplers.all[i]);
 
 	for (i = 0; i < 3; ++i)
-		pipe_buffer_reference(pipe->screen, &mc->vertex_bufs.all[i].buffer, NULL);
+		pipe_buffer_reference(&mc->vertex_bufs.all[i].buffer, NULL);
 
 	/* Textures 3 & 4 are not created directly, no need to release them here */
 	for (i = 0; i < 3; ++i)
@@ -871,8 +873,8 @@ static int vlDestroy
 		pipe->delete_fs_state(pipe, mc->b_fs[i]);
 	}
 
-	pipe_buffer_reference(pipe->screen, &mc->vs_const_buf.buffer, NULL);
-	pipe_buffer_reference(pipe->screen, &mc->fs_const_buf.buffer, NULL);
+	pipe_buffer_reference(&mc->vs_const_buf.buffer, NULL);
+	pipe_buffer_reference(&mc->fs_const_buf.buffer, NULL);
 
 	FREE(mc->macroblocks);
 	FREE(mc);

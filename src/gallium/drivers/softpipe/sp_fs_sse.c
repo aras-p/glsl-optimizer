@@ -29,13 +29,12 @@
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_fs.h"
-#include "sp_headers.h"
+#include "sp_quad.h"
 
 
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
-#include "pipe/p_inlines.h"
 #include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_sse2.h"
 
@@ -146,7 +145,7 @@ softpipe_create_fs_sse(struct softpipe_context *softpipe,
       return NULL;
    }
 
-   shader->base.shader = *templ;
+   shader->base.shader.tokens = NULL; /* don't hold reference to templ->tokens */
    shader->base.prepare = fs_sse_prepare;
    shader->base.run = fs_sse_run;
    shader->base.delete = fs_sse_delete;

@@ -32,7 +32,6 @@
 
 #include "draw/draw_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "sp_clear.h"
@@ -53,15 +52,15 @@
  * Map any drawing surfaces which aren't already mapped
  */
 void
-softpipe_map_surfaces(struct softpipe_context *sp)
+softpipe_map_transfers(struct softpipe_context *sp)
 {
    unsigned i;
 
    for (i = 0; i < sp->framebuffer.nr_cbufs; i++) {
-      sp_tile_cache_map_surfaces(sp->cbuf_cache[i]);
+      sp_tile_cache_map_transfers(sp->cbuf_cache[i]);
    }
 
-   sp_tile_cache_map_surfaces(sp->zsbuf_cache);
+   sp_tile_cache_map_transfers(sp->zsbuf_cache);
 }
 
 
@@ -69,7 +68,7 @@ softpipe_map_surfaces(struct softpipe_context *sp)
  * Unmap any mapped drawing surfaces
  */
 void
-softpipe_unmap_surfaces(struct softpipe_context *sp)
+softpipe_unmap_transfers(struct softpipe_context *sp)
 {
    uint i;
 
@@ -78,16 +77,15 @@ softpipe_unmap_surfaces(struct softpipe_context *sp)
    sp_flush_tile_cache(sp, sp->zsbuf_cache);
 
    for (i = 0; i < sp->framebuffer.nr_cbufs; i++) {
-      sp_tile_cache_unmap_surfaces(sp->cbuf_cache[i]);
+      sp_tile_cache_unmap_transfers(sp->cbuf_cache[i]);
    }
-   sp_tile_cache_unmap_surfaces(sp->zsbuf_cache);
+   sp_tile_cache_unmap_transfers(sp->zsbuf_cache);
 }
 
 
 static void softpipe_destroy( struct pipe_context *pipe )
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
-   struct pipe_screen *screen = pipe->screen;
    uint i;
 
    if (softpipe->draw)
@@ -116,7 +114,7 @@ static void softpipe_destroy( struct pipe_context *pipe )
 
    for (i = 0; i < Elements(softpipe->constants); i++) {
       if (softpipe->constants[i].buffer) {
-         pipe_buffer_reference(screen, &softpipe->constants[i].buffer, NULL);
+         pipe_buffer_reference(&softpipe->constants[i].buffer, NULL);
       }
    }
 

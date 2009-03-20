@@ -38,7 +38,7 @@
 #include "pipe/p_compiler.h"
 
 
-#if defined(PIPE_OS_LINUX)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
 
 #include <pthread.h> /* POSIX threads headers */
 #include <stdio.h> /* for perror() */
@@ -73,7 +73,7 @@ typedef pthread_cond_t pipe_condvar;
    static pipe_mutex mutex = PTHREAD_MUTEX_INITIALIZER
 
 #define pipe_mutex_init(mutex) \
-   pthread_mutex_init(&(mutex), NULL)
+   (void) pthread_mutex_init(&(mutex), NULL)
 
 #define pipe_mutex_destroy(mutex) \
    pthread_mutex_destroy(&(mutex))
@@ -134,20 +134,20 @@ static INLINE int pipe_thread_destroy( pipe_thread thread )
 
 typedef CRITICAL_SECTION pipe_mutex;
 
-#define pipe_static_mutex(name) \
-   /*static*/ pipe_mutex name = {0,0,0,0,0,0}
+#define pipe_static_mutex(mutex) \
+   /*static*/ pipe_mutex mutex = {0,0,0,0,0,0}
 
-#define pipe_mutex_init(name) \
-   InitializeCriticalSection(&name)
+#define pipe_mutex_init(mutex) \
+   InitializeCriticalSection(&mutex)
 
-#define pipe_mutex_destroy(name) \
-   DeleteCriticalSection(&name)
+#define pipe_mutex_destroy(mutex) \
+   DeleteCriticalSection(&mutex)
 
-#define pipe_mutex_lock(name) \
-   EnterCriticalSection(&name)
+#define pipe_mutex_lock(mutex) \
+   EnterCriticalSection(&mutex)
 
-#define pipe_mutex_unlock(name) \
-   LeaveCriticalSection(&name)
+#define pipe_mutex_unlock(mutex) \
+   LeaveCriticalSection(&mutex)
 
 /* XXX: dummy definitions, make it compile */
 
@@ -210,7 +210,7 @@ typedef unsigned pipe_condvar;
  */
 
 typedef struct {
-#if defined(PIPE_OS_LINUX)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
    pthread_key_t key;
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    DWORD key;
@@ -225,7 +225,7 @@ typedef struct {
 static INLINE void
 pipe_tsd_init(pipe_tsd *tsd)
 {
-#if defined(PIPE_OS_LINUX)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
    if (pthread_key_create(&tsd->key, NULL/*free*/) != 0) {
       perror("pthread_key_create(): failed to allocate key for thread specific data");
       exit(-1);
@@ -242,7 +242,7 @@ pipe_tsd_get(pipe_tsd *tsd)
    if (tsd->initMagic != (int) PIPE_TSD_INIT_MAGIC) {
       pipe_tsd_init(tsd);
    }
-#if defined(PIPE_OS_LINUX)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
    return pthread_getspecific(tsd->key);
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    assert(0);
@@ -259,7 +259,7 @@ pipe_tsd_set(pipe_tsd *tsd, void *value)
    if (tsd->initMagic != (int) PIPE_TSD_INIT_MAGIC) {
       pipe_tsd_init(tsd);
    }
-#if defined(PIPE_OS_LINUX)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
    if (pthread_setspecific(tsd->key, value) != 0) {
       perror("pthread_set_specific() failed");
       exit(-1);

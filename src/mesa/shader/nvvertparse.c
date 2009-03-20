@@ -799,7 +799,6 @@ Parse_UnaryOpInstruction(struct parse_state *parseState,
       RETURN_ERROR1("ABS illegal for vertex program 1.0");
 
    inst->Opcode = opcode;
-   inst->StringPos = parseState->curLine - parseState->start;
 
    /* dest reg */
    if (!Parse_MaskedDstReg(parseState, &inst->DstReg))
@@ -832,7 +831,6 @@ Parse_BiOpInstruction(struct parse_state *parseState,
       RETURN_ERROR1("SUB illegal for vertex program 1.0");
 
    inst->Opcode = opcode;
-   inst->StringPos = parseState->curLine - parseState->start;
 
    /* dest reg */
    if (!Parse_MaskedDstReg(parseState, &inst->DstReg))
@@ -880,7 +878,6 @@ Parse_TriOpInstruction(struct parse_state *parseState,
                        enum prog_opcode opcode)
 {
    inst->Opcode = opcode;
-   inst->StringPos = parseState->curLine - parseState->start;
 
    /* dest reg */
    if (!Parse_MaskedDstReg(parseState, &inst->DstReg))
@@ -951,7 +948,6 @@ Parse_ScalarInstruction(struct parse_state *parseState,
       RETURN_ERROR1("RCC illegal for vertex program 1.0");
 
    inst->Opcode = opcode;
-   inst->StringPos = parseState->curLine - parseState->start;
 
    /* dest reg */
    if (!Parse_MaskedDstReg(parseState, &inst->DstReg))
@@ -977,7 +973,6 @@ static GLboolean
 Parse_AddressInstruction(struct parse_state *parseState, struct prog_instruction *inst)
 {
    inst->Opcode = OPCODE_ARL;
-   inst->StringPos = parseState->curLine - parseState->start;
 
    /* Make ARB_vp backends happy */
    inst->DstReg.File = PROGRAM_ADDRESS;
@@ -1010,7 +1005,6 @@ Parse_EndInstruction(struct parse_state *parseState, struct prog_instruction *in
    GLubyte token[100];
 
    inst->Opcode = OPCODE_END;
-   inst->StringPos = parseState->curLine - parseState->start;
 
    /* this should fail! */
    if (Parse_Token(parseState, token))
@@ -1044,7 +1038,6 @@ Parse_PrintInstruction(struct parse_state *parseState, struct prog_instruction *
    GLint idx;
 
    inst->Opcode = OPCODE_PRINT;
-   inst->StringPos = parseState->curLine - parseState->start;
 
    /* The first argument is a literal string 'just like this' */
    if (!Parse_String(parseState, "'"))

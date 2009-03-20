@@ -37,7 +37,6 @@
 #include "mtypes.h"
 #include "enums.h"
 #include "math/m_matrix.h"
-#include "math/m_xform.h"
 #include "api_arrayelt.h"
 
 
@@ -603,11 +602,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          ctx->Texture.SharedPalette = state;
          break;
       case GL_STENCIL_TEST:
-         if (state && ctx->DrawBuffer->Visual.stencilBits == 0) {
-            _mesa_warning(ctx,
-                          "glEnable(GL_STENCIL_TEST) but no stencil buffer");
-            return;
-         }
          if (ctx->Stencil.Enabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_STENCIL);
@@ -949,18 +943,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          FLUSH_VERTICES(ctx, _NEW_DEPTH);
          ctx->Depth.BoundsTest = state;
          break;
-
-      /* GL_MESA_program_debug */
-#if FEATURE_MESA_program_debug
-      case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
-         CHECK_EXTENSION(MESA_program_debug, cap);
-         ctx->FragmentProgram.CallbackEnabled = state;
-         break;
-      case GL_VERTEX_PROGRAM_CALLBACK_MESA:
-         CHECK_EXTENSION(MESA_program_debug, cap);
-         ctx->VertexProgram.CallbackEnabled = state;
-         break;
-#endif
 
 #if FEATURE_ATI_fragment_shader
       case GL_FRAGMENT_SHADER_ATI:
@@ -1403,16 +1385,6 @@ _mesa_IsEnabled( GLenum cap )
       case GL_DEPTH_BOUNDS_TEST_EXT:
          CHECK_EXTENSION(EXT_depth_bounds_test);
          return ctx->Depth.BoundsTest;
-
-      /* GL_MESA_program_debug */
-#if FEATURE_MESA_program_debug
-      case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
-         CHECK_EXTENSION(MESA_program_debug);
-         return ctx->FragmentProgram.CallbackEnabled;
-      case GL_VERTEX_PROGRAM_CALLBACK_MESA:
-         CHECK_EXTENSION(MESA_program_debug);
-         return ctx->VertexProgram.CallbackEnabled;
-#endif
 
 #if FEATURE_ATI_fragment_shader
       case GL_FRAGMENT_SHADER_ATI:

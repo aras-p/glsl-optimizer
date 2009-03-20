@@ -31,6 +31,7 @@
 #include "main/matrix.h"
 #include "main/buffers.h"
 #include "main/scissor.h"
+#include "main/viewport.h"
 #include "vbo/vbo.h"
 #include "shader/shader_api.h"
 #include "glapi/glapi.h"
@@ -59,13 +60,13 @@
 #include "st_cb_texture.h"
 #include "st_cb_flush.h"
 #include "st_cb_strings.h"
+#include "st_cb_viewport.h"
 #include "st_atom.h"
 #include "st_draw.h"
 #include "st_extensions.h"
 #include "st_gen_mipmap.h"
 #include "st_program.h"
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
 #include "draw/draw_context.h"
 #include "cso_cache/cso_cache.h"
 #include "cso_cache/cso_context.h"
@@ -105,7 +106,7 @@ static struct st_context *
 st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 {
    uint i;
-   struct st_context *st = CALLOC_STRUCT( st_context );
+   struct st_context *st = ST_CALLOC_STRUCT( st_context );
    
    ctx->st = st;
 
@@ -208,7 +209,7 @@ static void st_destroy_context_priv( struct st_context *st )
 
    for (i = 0; i < Elements(st->state.constants); i++) {
       if (st->state.constants[i].buffer) {
-         pipe_buffer_reference(st->pipe->screen, &st->state.constants[i].buffer, NULL);
+         pipe_buffer_reference(&st->state.constants[i].buffer, NULL);
       }
    }
 
@@ -217,7 +218,7 @@ static void st_destroy_context_priv( struct st_context *st )
       st->default_texture = NULL;
    }
 
-   free( st );
+   _mesa_free( st );
 }
 
  
@@ -245,7 +246,7 @@ void st_destroy_context( struct st_context *st )
 
    pipe->destroy( pipe );
 
-   free(ctx);
+   _mesa_free(ctx);
 }
 
 
@@ -253,6 +254,11 @@ void st_make_current(struct st_context *st,
                      struct st_framebuffer *draw,
                      struct st_framebuffer *read)
 {
+   /* Call this periodically to detect when the user has begun using
+    * GL rendering from multiple threads.
+    */
+   _glapi_check_multithread();
+
    if (st) {
       GLboolean firstTime = st->ctx->FirstTimeCurrent;
       _mesa_make_current(st->ctx, &draw->Base, &read->Base);
@@ -320,6 +326,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
    st_init_texture_functions(functions);
    st_init_flush_functions(functions);
    st_init_string_functions(functions);
+   st_init_viewport_functions(functions);
 
    functions->UpdateState = st_invalidate_state;
 }

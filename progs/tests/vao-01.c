@@ -49,6 +49,7 @@ typedef void (* PFNGLGENVERTEXARRAYSAPPLEPROC) (GLsizei n, GLuint *arrays);
 typedef GLboolean (* PFNGLISVERTEXARRAYAPPLEPROC) (GLuint array);
 
 #else
+#include <GL/glew.h>
 #include <GL/glut.h>
 #endif
 
@@ -166,6 +167,7 @@ int main( int argc, char *argv[] )
    glutInitWindowSize( Width, Height );
    glutInitDisplayMode( GLUT_RGB );
    glutCreateWindow( "GL_APPLE_vertex_array_object demo" );
+   glewInit();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );

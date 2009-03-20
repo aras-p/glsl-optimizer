@@ -1,12 +1,4 @@
-/*
- * Test GL_EXT_framebuffer_object render-to-texture
- *
- * Draw a teapot into a texture image with stenciling.
- * Then draw a textured quad using that texture.
- *
- * Brian Paul
- * 18 Apr 2005
- */
+/* Framebuffer object test */
 
 
 #include <GL/glew.h>

@@ -34,7 +34,6 @@
  */
 
 
-#include "pipe/p_inlines.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
@@ -372,7 +371,7 @@ pstip_update_texture(struct pstip_stage *pstip)
    static const uint bit31 = 1 << 31;
    struct pipe_context *pipe = pstip->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_surface *surface;
+   struct pipe_transfer *transfer;
    const uint *stipple = pstip->state.stipple->stipple;
    uint i, j;
    ubyte *data;
@@ -381,10 +380,9 @@ pstip_update_texture(struct pstip_stage *pstip)
     */
    pipe->flush( pipe, PIPE_FLUSH_TEXTURE_CACHE, NULL );
 
-   surface = screen->get_tex_surface(screen, pstip->texture, 0, 0, 0,
-                                     PIPE_BUFFER_USAGE_CPU_WRITE);
-   data = screen->surface_map(screen, surface,
-                              PIPE_BUFFER_USAGE_CPU_WRITE);
+   transfer = screen->get_tex_transfer(screen, pstip->texture, 0, 0, 0,
+                                       PIPE_TRANSFER_WRITE, 0, 0, 32, 32);
+   data = screen->transfer_map(screen, transfer);
 
    /*
     * Load alpha texture.
@@ -396,18 +394,18 @@ pstip_update_texture(struct pstip_stage *pstip)
       for (j = 0; j < 32; j++) {
          if (stipple[i] & (bit31 >> j)) {
             /* fragment "on" */
-            data[i * surface->stride + j] = 0;
+            data[i * transfer->stride + j] = 0;
          }
          else {
             /* fragment "off" */
-            data[i * surface->stride + j] = 255;
+            data[i * transfer->stride + j] = 255;
          }
       }
    }
 
    /* unmap */
-   screen->surface_unmap(screen, surface);
-   screen->tex_surface_release(screen, &surface);
+   screen->transfer_unmap(screen, transfer);
+   screen->tex_transfer_destroy(transfer);
 }
 
 
@@ -573,7 +571,7 @@ pstip_destroy(struct draw_stage *stage)
 
    pstip->pipe->delete_sampler_state(pstip->pipe, pstip->sampler_cso);
 
-   pipe_texture_release(&pstip->texture);
+   pipe_texture_reference(&pstip->texture, NULL);
 
    draw_free_temp_verts( stage );
    FREE( stage );

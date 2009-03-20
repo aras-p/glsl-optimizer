@@ -144,7 +144,7 @@ int main(int argc, char **argv)
     type = GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH | GLUT_STENCIL;
     glutInitDisplayMode(type);
 
-    if (glutCreateWindow("Stencil Test") == GL_FALSE) {
+    if (glutCreateWindow(*argv) == GL_FALSE) {
 	exit(1);
     }
 

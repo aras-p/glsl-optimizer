@@ -48,7 +48,6 @@
 
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
 #include "util/u_pack_color.h"
 
 
@@ -140,7 +139,7 @@ load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
 {
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_surface *surface;
+   struct pipe_transfer *transfer;
    const GLuint rSize = ctx->PixelMaps.RtoR.Size;
    const GLuint gSize = ctx->PixelMaps.GtoG.Size;
    const GLuint bSize = ctx->PixelMaps.BtoB.Size;
@@ -149,10 +148,9 @@ load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
    uint *dest;
    uint i, j;
 
-   surface = screen->get_tex_surface(screen, pt, 0, 0, 0, 
-                                     PIPE_BUFFER_USAGE_CPU_WRITE);
-   dest = (uint *) screen->surface_map(screen, surface,
-                                       PIPE_BUFFER_USAGE_CPU_WRITE);
+   transfer = screen->get_tex_transfer(screen, pt, 0, 0, 0, PIPE_TRANSFER_WRITE,
+                                       0, 0, texSize, texSize);
+   dest = (uint *) screen->transfer_map(screen, transfer);
 
    /* Pack four 1D maps into a 2D texture:
     * R map is placed horizontally, indexed by S, in channel 0
@@ -171,8 +169,8 @@ load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
       }
    }
 
-   screen->surface_unmap(screen, surface);
-   pipe_surface_reference(&surface, NULL);
+   screen->transfer_unmap(screen, transfer);
+   screen->tex_transfer_destroy(transfer);
 }
 
 
@@ -213,7 +211,7 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
    inst[ic].TexSrcTarget = TEXTURE_2D_INDEX;
    ic++;
    fp->Base.InputsRead = (1 << FRAG_ATTRIB_TEX0);
-   fp->Base.OutputsWritten = (1 << FRAG_RESULT_COLR);
+   fp->Base.OutputsWritten = (1 << FRAG_RESULT_COLOR);
    fp->Base.SamplersUsed = 0x1;  /* sampler 0 (bit 0) is used */
 
    if (key->scaleAndBias) {
@@ -401,7 +399,7 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
    {
       struct prog_instruction *last = &inst[ic - 1];
       last->DstReg.File = PROGRAM_OUTPUT;
-      last->DstReg.Index = FRAG_RESULT_COLR;
+      last->DstReg.Index = FRAG_RESULT_COLOR;
    }
 
    /* END; */

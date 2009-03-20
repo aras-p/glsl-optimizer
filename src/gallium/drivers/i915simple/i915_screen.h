@@ -50,16 +50,29 @@ struct i915_screen
 };
 
 
-/** cast wrapper */
+/**
+ * Subclass of pipe_transfer
+ */
+struct i915_transfer
+{
+   struct pipe_transfer base;
+
+   unsigned offset;
+};
+
+
+/** cast wrappers */
 static INLINE struct i915_screen *
 i915_screen(struct pipe_screen *pscreen)
 {
    return (struct i915_screen *) pscreen;
 }
 
-
-extern struct pipe_screen *
-i915_create_screen(struct pipe_winsys *winsys, uint pci_id);
+static INLINE struct i915_transfer *
+i915_transfer( struct pipe_transfer *transfer )
+{
+   return (struct i915_transfer *)transfer;
+}
 
 
 #ifdef __cplusplus

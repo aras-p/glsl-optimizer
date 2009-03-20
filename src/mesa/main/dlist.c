@@ -33,6 +33,7 @@
 #include "api_arrayelt.h"
 #include "api_loopback.h"
 #include "config.h"
+#include "mfeatures.h"
 #include "attrib.h"
 #include "blend.h"
 #include "buffers.h"
@@ -85,7 +86,6 @@
 #endif
 
 #include "math/m_matrix.h"
-#include "math/m_xform.h"
 
 #include "glapi/dispatch.h"
 
@@ -319,6 +319,8 @@ typedef enum
    OPCODE_END_QUERY_ARB,
    /* GL_ARB_draw_buffers */
    OPCODE_DRAW_BUFFERS_ARB,
+   /* GL_ATI_fragment_shader */
+   OPCODE_TEX_BUMP_PARAMETER_ATI,
    /* GL_ATI_fragment_shader */
    OPCODE_BIND_FRAGMENT_SHADER_ATI,
    OPCODE_SET_FRAGMENT_SHADER_CONSTANTS_ATI,
@@ -705,7 +707,7 @@ unpack_image(GLuint dimensions, GLsizei width, GLsizei height, GLsizei depth,
 /**
  * Allocate space for a display list instruction.
  * \param opcode  the instruction opcode (OPCODE_* value)
- * \param size   instruction size in bytes, not counting opcode.
+ * \param bytes   instruction size in bytes, not counting opcode.
  * \return pointer to the usable data area (not including the internal
  *         opcode).
  */
@@ -4803,6 +4805,36 @@ save_DrawBuffersARB(GLsizei count, const GLenum * buffers)
    }
 }
 
+static void GLAPIENTRY
+save_TexBumpParameterfvATI(GLenum pname, const GLfloat *param)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+
+   n = ALLOC_INSTRUCTION(ctx, OPCODE_TEX_BUMP_PARAMETER_ATI, 5);
+   if (n) {
+      n[1].ui = pname;
+      n[2].f = param[0];
+      n[3].f = param[1];
+      n[4].f = param[2];
+      n[5].f = param[3];
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_TexBumpParameterfvATI(ctx->Exec, (pname, param));
+   }
+}
+
+static void GLAPIENTRY
+save_TexBumpParameterivATI(GLenum pname, const GLint *param)
+{
+   GLfloat p[4];
+   p[0] = INT_TO_FLOAT(param[0]);
+   p[1] = INT_TO_FLOAT(param[1]);
+   p[2] = INT_TO_FLOAT(param[2]);
+   p[3] = INT_TO_FLOAT(param[3]);
+   save_TexBumpParameterfvATI(pname, p);
+}
+
 #if FEATURE_ATI_fragment_shader
 static void GLAPIENTRY
 save_BindFragmentShaderATI(GLuint id)
@@ -6505,6 +6537,16 @@ execute_list(GLcontext *ctx, GLuint list)
                                                 n[9].i, n[10].e));
 	    break;
 #endif
+         case OPCODE_TEX_BUMP_PARAMETER_ATI:
+            {
+               GLfloat values[4];
+               GLuint i, pname = n[1].ui;
+
+               for (i = 0; i < 4; i++)
+                  values[i] = n[1 + i].f;
+               CALL_TexBumpParameterfvATI(ctx->Exec, (pname, values));
+            }
+            break;
 #if FEATURE_ATI_fragment_shader
          case OPCODE_BIND_FRAGMENT_SHADER_ATI:
             CALL_BindFragmentShaderATI(ctx->Exec, (n[1].i));
@@ -8042,6 +8084,10 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_TrackMatrixNV(table, save_TrackMatrixNV);
    SET_VertexAttribPointerNV(table, _mesa_VertexAttribPointerNV);
 #endif
+
+   /* 244. GL_ATI_envmap_bumpmap */
+   SET_TexBumpParameterivATI(table, save_TexBumpParameterivATI);
+   SET_TexBumpParameterfvATI(table, save_TexBumpParameterfvATI);
 
    /* 245. GL_ATI_fragment_shader */
 #if FEATURE_ATI_fragment_shader

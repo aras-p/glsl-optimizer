@@ -64,4 +64,19 @@ st_feedback_draw_vbo(GLcontext *ctx,
 extern GLuint
 st_pipe_vertex_format(GLenum type, GLuint size, GLboolean normalized);
 
+
+/**
+ * When drawing with VBOs, the addresses specified with
+ * glVertex/Color/TexCoordPointer() are really offsets into the VBO, not real
+ * addresses.  At some point we need to convert those pointers to offsets.
+ * This function is basically a cast wrapper to avoid warnings when building
+ * in 64-bit mode.
+ */
+static INLINE unsigned
+pointer_to_offset(const void *ptr)
+{
+   return (unsigned) (((unsigned long) ptr) & 0xffffffffUL);
+}
+
+
 #endif

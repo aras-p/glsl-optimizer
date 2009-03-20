@@ -1,19 +1,16 @@
 TOP = ../../../../../..
+GALLIUMDIR = ../../../..
 include $(TOP)/configs/current
 
 LIBNAME = EGL_i915.so
 
 PIPE_DRIVERS = \
-	../gem/libinteldrm.a \
-	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
-	$(TOP)/src/gallium/drivers/i915simple/libi915simple.a \
 	$(TOP)/src/gallium/state_trackers/egl/libegldrm.a \
+	$(GALLIUMDIR)/winsys/drm/intel/gem/libinteldrm.a \
+	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
+	$(TOP)/src/gallium/drivers/i915simple/libi915simple.a
 
-
-DRIVER_SOURCES = \
-	intel_context.c \
-	intel_device.c \
-	intel_api.c
+DRIVER_SOURCES =
 
 C_SOURCES = \
 	$(COMMON_GALLIUM_SOURCES) \

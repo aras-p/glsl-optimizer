@@ -34,7 +34,7 @@
  */
 
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "util/u_memory.h"
 
 #include "pb_buffer.h"
@@ -79,6 +79,10 @@ fenced_bufmgr_create_buffer(struct pb_manager *mgr,
       
       buf = fenced_mgr->provider->create_buffer(fenced_mgr->provider, size, desc);
       if(!buf) {
+#if 0
+         fenced_buffer_list_dump(fenced_mgr->fenced_list);
+#endif
+         
          /* give up */
          return NULL;
       }

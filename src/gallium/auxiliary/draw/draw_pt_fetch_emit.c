@@ -234,9 +234,11 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
       return;
    }
 
-   hw_verts = draw->render->allocate_vertices( draw->render,
-                                               (ushort)feme->translate->key.output_stride,
-                                               (ushort)fetch_count );
+   draw->render->allocate_vertices( draw->render,
+                                    (ushort)feme->translate->key.output_stride,
+                                    (ushort)fetch_count );
+
+   hw_verts = draw->render->map_vertices( draw->render );
    if (!hw_verts) {
       assert(0);
       return;
@@ -259,6 +261,10 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
       }
    }
 
+   draw->render->unmap_vertices( draw->render, 
+                                 0, 
+                                 (ushort)(fetch_count - 1) );
+
    /* XXX: Draw arrays path to avoid re-emitting index list again and
     * again.
     */
@@ -268,10 +274,7 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
 
    /* Done -- that was easy, wasn't it: 
     */
-   draw->render->release_vertices( draw->render, 
-                                   hw_verts, 
-                                   feme->translate->key.output_stride, 
-                                   fetch_count );
+   draw->render->release_vertices( draw->render );
 
 }
 
@@ -288,18 +291,17 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   if (count >= UNDEFINED_VERTEX_ID) {
-      assert(0);
-      return;
-   }
+   if (count >= UNDEFINED_VERTEX_ID) 
+      goto fail;
 
-   hw_verts = draw->render->allocate_vertices( draw->render,
-                                               (ushort)feme->translate->key.output_stride,
-                                               (ushort)count );
-   if (!hw_verts) {
-      assert(0);
-      return;
-   }
+   if (!draw->render->allocate_vertices( draw->render,
+                                         (ushort)feme->translate->key.output_stride,
+                                         (ushort)count )) 
+      goto fail;
+
+   hw_verts = draw->render->map_vertices( draw->render );
+   if (!hw_verts) 
+      goto fail;
 
    /* Single routine to fetch vertices and emit HW verts.
     */
@@ -317,20 +319,21 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
       }
    }
 
+   draw->render->unmap_vertices( draw->render, 0, count - 1 );
+
    /* XXX: Draw arrays path to avoid re-emitting index list again and
     * again.
     */
-   draw->render->draw_arrays( draw->render,
-                              0, /*start*/
-                              count );
+   draw->render->draw_arrays( draw->render, 0, count );
 
    /* Done -- that was easy, wasn't it:
     */
-   draw->render->release_vertices( draw->render,
-                                   hw_verts,
-                                   feme->translate->key.output_stride,
-                                   count );
+   draw->render->release_vertices( draw->render );
+   return;
 
+fail:
+   assert(0);
+   return;
 }
 
 
@@ -351,9 +354,12 @@ static boolean fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
    if (count >= UNDEFINED_VERTEX_ID)
       return FALSE;
 
-   hw_verts = draw->render->allocate_vertices( draw->render,
-                                               (ushort)feme->translate->key.output_stride,
-                                               (ushort)count );
+   if (!draw->render->allocate_vertices( draw->render,
+                                         (ushort)feme->translate->key.output_stride,
+                                         (ushort)count ))
+      return FALSE;
+
+   hw_verts = draw->render->map_vertices( draw->render );
    if (!hw_verts) 
       return FALSE;
 
@@ -364,6 +370,8 @@ static boolean fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
                          count,
                          hw_verts );
 
+   draw->render->unmap_vertices( draw->render, 0, (ushort)(count - 1) );
+
    /* XXX: Draw arrays path to avoid re-emitting index list again and
     * again.
     */
@@ -373,10 +381,7 @@ static boolean fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
 
    /* Done -- that was easy, wasn't it:
     */
-   draw->render->release_vertices( draw->render,
-                                   hw_verts,
-                                   feme->translate->key.output_stride,
-                                   count );
+   draw->render->release_vertices( draw->render );
 
    return TRUE;
 }

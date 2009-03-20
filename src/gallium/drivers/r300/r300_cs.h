@@ -23,26 +23,18 @@
 #ifndef R300_CS_H
 #define R300_CS_H
 
+#include "util/u_math.h"
+
 #include "r300_reg.h"
 #include "r300_winsys.h"
-
-/* Pack a 32-bit float into a dword. */
-static uint32_t pack_float_32(float f)
-{
-    union {
-        float f;
-        uint32_t u;
-    } u;
-
-    u.f = f;
-    return u.u;
-}
 
 /* Yes, I know macros are ugly. However, they are much prettier than the code
  * that they neatly hide away, and don't have the cost of function setup,so
  * we're going to use them. */
 
 #define MAX_CS_SIZE 64 * 1024 / 4
+
+#define VERY_VERBOSE_REGISTERS 0
 
 /* XXX stolen from radeon_drm.h */
 #define RADEON_GEM_DOMAIN_CPU  0x1
@@ -80,13 +72,14 @@ static uint32_t pack_float_32(float f)
 } while (0)
 
 #define OUT_CS_32F(value) do { \
-    cs_winsys->write_cs_dword(cs, pack_float_32(value)); \
+    cs_winsys->write_cs_dword(cs, fui(value)); \
     cs_count--; \
 } while (0)
 
 #define OUT_CS_REG(register, value) do { \
-    debug_printf("r300: writing 0x%08X to register 0x%04X\n", \
-        value, register); \
+    if (VERY_VERBOSE_REGISTERS) \
+        debug_printf("r300: writing 0x%08X to register 0x%04X\n", \
+            value, register); \
     assert(register); \
     OUT_CS(CP_PACKET0(register, 0)); \
     OUT_CS(value); \
@@ -95,8 +88,9 @@ static uint32_t pack_float_32(float f)
 /* Note: This expects count to be the number of registers,
  * not the actual packet0 count! */
 #define OUT_CS_REG_SEQ(register, count) do { \
-    debug_printf("r300: writing register sequence of %d to 0x%04X\n", \
-        count, register); \
+    if (VERY_VERBOSE_REGISTERS) \
+        debug_printf("r300: writing register sequence of %d to 0x%04X\n", \
+            count, register); \
     assert(register); \
     OUT_CS(CP_PACKET0(register, ((count) - 1))); \
 } while (0)
@@ -119,7 +113,7 @@ static uint32_t pack_float_32(float f)
 } while (0)
 
 #define FLUSH_CS do { \
-    debug_printf("r300: FLUSH_CS in %s (%s:%d)\n", __FUNCTION__, __FILE__, \
+    debug_printf("r300: FLUSH_CS in %s (%s:%d)\n\n", __FUNCTION__, __FILE__, \
         __LINE__); \
     cs_winsys->flush_cs(cs); \
 } while (0)

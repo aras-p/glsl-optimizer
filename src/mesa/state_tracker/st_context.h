@@ -149,7 +149,6 @@ struct st_context
    struct {
       struct pipe_rasterizer_state rasterizer;
       struct pipe_sampler_state sampler;
-      struct pipe_shader_state vert_shader;
       enum pipe_format tex_format;
       void *vs;
       float vertices[4][3][4];  /**< vertex pos + color + texcoord */
@@ -166,8 +165,6 @@ struct st_context
 
    /** for glClear */
    struct {
-      struct pipe_shader_state vert_shader;
-      struct pipe_shader_state frag_shader;
       struct pipe_rasterizer_state raster;
       struct pipe_viewport_state viewport;
       void *vs;
@@ -240,6 +237,10 @@ st_fb_orientation(const struct gl_framebuffer *fb)
       return Y_0_BOTTOM;
    }
 }
+
+
+/** clear-alloc a struct-sized object, with casting */
+#define ST_CALLOC_STRUCT(T)   (struct T *) _mesa_calloc(sizeof(struct T))
 
 
 extern int

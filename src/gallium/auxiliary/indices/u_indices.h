@@ -80,4 +80,27 @@ int u_index_generator( unsigned hw_mask,
                        u_generate_func *out_generate );
 
 
+void u_unfilled_init( void );
+
+int u_unfilled_translator( unsigned prim,
+                           unsigned in_index_size,
+                           unsigned nr,
+                           unsigned unfilled_mode,
+                           unsigned *out_prim,
+                           unsigned *out_index_size,
+                           unsigned *out_nr,
+                           u_translate_func *out_translate );
+
+int u_unfilled_generator( unsigned prim,
+                          unsigned start,
+                          unsigned nr,
+                          unsigned unfilled_mode,
+                          unsigned *out_prim,
+                          unsigned *out_index_size,
+                          unsigned *out_nr,
+                          u_generate_func *out_generate );
+
+
+
+
 #endif

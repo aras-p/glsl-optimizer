@@ -102,9 +102,15 @@ static rawImageRec *RawImageOpen(const char *fileName)
       fprintf(stderr, "Out of memory!\n");
       return NULL;
    }
-   if ((raw->file = fopen(fileName, "rb")) == NULL) {
-      perror(fileName);
-      return NULL;
+   raw->file = fopen(fileName, "rb");
+   if (raw->file == NULL) {
+      const char *baseName = strrchr(fileName, '/');
+      if(baseName)
+         raw->file = fopen(baseName + 1, "rb");
+      if(raw->file == NULL) {
+         perror(fileName);
+         return NULL;
+      }
    }
 
    fread(raw, 1, 12, raw->file);

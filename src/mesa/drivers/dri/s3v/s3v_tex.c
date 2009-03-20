@@ -502,20 +502,20 @@ static void s3vInitTextureObjects( GLcontext *ctx )
 #if 1
 	ctx->Texture.CurrentUnit = 0;
 
-	texObj = ctx->Texture.Unit[0].Current1D;
+	texObj = ctx->Texture.Unit[0].CurrentTex[TEXTURE_1D_INDEX];
 	s3vBindTexture( ctx, GL_TEXTURE_1D, texObj );
 
-	texObj = ctx->Texture.Unit[0].Current2D;
+	texObj = ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX];
 	s3vBindTexture( ctx, GL_TEXTURE_2D, texObj );
 #endif
 
 #if 0
 	ctx->Texture.CurrentUnit = 1;
 
-	texObj = ctx->Texture.Unit[1].Current1D;
+	texObj = ctx->Texture.Unit[1].CurrentTex[TEXTURE_1D_INDEX];
 	s3vBindTexture( ctx, GL_TEXTURE_1D, texObj );
 
-	texObj = ctx->Texture.Unit[1].Current2D;
+	texObj = ctx->Texture.Unit[1].CurrentTex[TEXTURE_2D_INDEX];
 	s3vBindTexture( ctx, GL_TEXTURE_2D, texObj );
 #endif
 

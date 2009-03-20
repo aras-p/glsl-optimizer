@@ -472,7 +472,7 @@ static void GGItriangle_flat_depth(GLcontext *ctx, const SWvertex *v0, const SWv
 
 static swrast_tri_func ggimesa_stubs_get_triangle_func(GLcontext *ctx)
 {
-	if (ctx->Stencil.Enabled) return NULL;
+	if (ctx->Stencil._Enabled) return NULL;
 	if (ctx->Polygon.SmoothFlag) return NULL;
 	if (ctx->Polygon.StippleFlag) return NULL;
 	if (ctx->Texture._ReallyEnabled) return NULL;  

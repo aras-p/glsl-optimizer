@@ -229,6 +229,7 @@ alloc_back_buffer(XMesaBuffer b, GLuint width, GLuint height)
       }
 
       b->backxrb->ximage = NULL;
+      b->backxrb->drawable = b->backxrb->pixmap;
    }
 }
 

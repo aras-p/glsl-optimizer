@@ -117,6 +117,8 @@ typedef enum gl_state_index_ {
    STATE_PCM_SCALE,             /**< Post color matrix RGBA scale */
    STATE_PCM_BIAS,              /**< Post color matrix RGBA bias */
    STATE_SHADOW_AMBIENT,        /**< ARB_shadow_ambient fail value; token[2] is texture unit index */
+   STATE_ROT_MATRIX_0,          /**< ATI_envmap_bumpmap, rot matrix row 0 */
+   STATE_ROT_MATRIX_1,          /**< ATI_envmap_bumpmap, rot matrix row 1 */
    STATE_INTERNAL_DRIVER	/* first available state index for drivers (must be last) */
 } gl_state_index;
 

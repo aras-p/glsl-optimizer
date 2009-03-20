@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 
@@ -336,6 +337,7 @@ int main( int argc, char *argv[] )
    glutInitWindowSize( WinWidth, WinHeight );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
    Win = glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );

@@ -35,8 +35,8 @@
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
 #include "sp_context.h"
-#include "sp_headers.h"
 #include "sp_quad.h"
+#include "sp_quad_pipe.h"
 
 
 /**
@@ -46,10 +46,11 @@ static void
 coverage_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
+   const uint prim = quad->input.prim;
 
-   if ((softpipe->rasterizer->poly_smooth && quad->input.prim == PRIM_TRI) ||
-       (softpipe->rasterizer->line_smooth && quad->input.prim == PRIM_LINE) ||
-       (softpipe->rasterizer->point_smooth && quad->input.prim == PRIM_POINT)) {
+   if ((softpipe->rasterizer->poly_smooth && prim == QUAD_PRIM_TRI) ||
+       (softpipe->rasterizer->line_smooth && prim == QUAD_PRIM_LINE) ||
+       (softpipe->rasterizer->point_smooth && prim == QUAD_PRIM_POINT)) {
       uint cbuf;
 
       /* loop over colorbuffer outputs */

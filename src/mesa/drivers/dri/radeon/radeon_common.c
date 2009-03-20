@@ -245,7 +245,7 @@ static uint32_t radeonGetLastFrame(radeonContextPtr radeon)
 {
 	drm_radeon_getparam_t gp;
 	int ret;
-	uint32_t frame;
+	uint32_t frame = 0;
 
 	gp.param = RADEON_PARAM_LAST_FRAME;
 	gp.value = (int *)&frame;

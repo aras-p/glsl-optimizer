@@ -75,6 +75,12 @@ typedef struct {
 } SWvertex;
 
 
+/**
+ * Fixed point data type.
+ */
+typedef int GLfixed;
+
+
 #define FRAG_ATTRIB_CI FRAG_ATTRIB_COL0
 
 
@@ -259,12 +265,6 @@ _swrast_copy_texsubimage3d(GLcontext *ctx,
 extern void
 _swrast_eject_texture_images(GLcontext *ctx);
 
-
-#if FEATURE_MESA_program_debug
-extern void
-_swrast_get_program_register(GLcontext *, enum register_file file,
-                             GLuint index, GLfloat val[4]);
-#endif /* FEATURE_MESA_program_debug */
 
 
 /**

@@ -2830,7 +2830,9 @@ sample_depth_texture( GLcontext *ctx,
 
    /* XXXX if tObj->MinFilter != tObj->MagFilter, we're ignoring lambda */
 
-   function = tObj->_Function;
+   function = (tObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) ?
+      tObj->CompareFunc : GL_NONE;
+
    if (tObj->MagFilter == GL_NEAREST) {
       GLuint i;
       for (i = 0; i < n; i++) {

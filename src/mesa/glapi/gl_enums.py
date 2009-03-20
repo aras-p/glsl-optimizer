@@ -43,6 +43,7 @@ class PrintGlEnums(gl_XML.gl_print_base):
 
 	def printRealHeader(self):
 		print '#include "glheader.h"'
+		print '#include "mfeatures.h"'
 		print '#include "enums.h"'
 		print '#include "imports.h"'
 		print ''
@@ -55,8 +56,6 @@ class PrintGlEnums(gl_XML.gl_print_base):
 
 	def print_code(self):
 		print """
-#define Elements(x) sizeof(x)/sizeof(*x)
-
 typedef int (*cfunc)(const void *, const void *);
 
 /**

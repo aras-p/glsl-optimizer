@@ -94,11 +94,11 @@ struct state_key {
       GLuint ScaleShiftA:2;
 
       GLuint NumArgsRGB:3;
-      GLuint ModeRGB:4;
+      GLuint ModeRGB:5;
       struct mode_opt OptRGB[MAX_TERMS];
 
       GLuint NumArgsA:3;
-      GLuint ModeA:4;
+      GLuint ModeA:5;
       struct mode_opt OptA[MAX_TERMS];
    } unit[8];
 };
@@ -194,7 +194,8 @@ static GLuint translate_source( GLenum src )
 #define MODE_MODULATE_SUBTRACT_ATI      12  /* r = a0 * a2 - a1 */
 #define MODE_ADD_PRODUCTS               13  /* r = a0 * a1 + a2 * a3 */
 #define MODE_ADD_PRODUCTS_SIGNED        14  /* r = a0 * a1 + a2 * a3 - 0.5 */
-#define MODE_UNKNOWN                    15
+#define MODE_BUMP_ENVMAP_ATI            15  /* special */
+#define MODE_UNKNOWN                    16
 
 /**
  * Translate GL combiner state into a MODE_x value
@@ -223,6 +224,7 @@ static GLuint translate_mode( GLenum envMode, GLenum mode )
    case GL_MODULATE_ADD_ATI: return MODE_MODULATE_ADD_ATI;
    case GL_MODULATE_SIGNED_ADD_ATI: return MODE_MODULATE_SIGNED_ADD_ATI;
    case GL_MODULATE_SUBTRACT_ATI: return MODE_MODULATE_SUBTRACT_ATI;
+   case GL_BUMP_ENVMAP_ATI: return MODE_BUMP_ENVMAP_ATI;
    default:
       assert(0);
       return MODE_UNKNOWN;
@@ -383,7 +385,7 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
 	 translate_mode(texUnit->EnvMode, texUnit->_CurrentCombine->ModeRGB);
       key->unit[i].ModeA =
 	 translate_mode(texUnit->EnvMode, texUnit->_CurrentCombine->ModeA);
-		
+
       key->unit[i].ScaleShiftRGB = texUnit->_CurrentCombine->ScaleShiftRGB;
       key->unit[i].ScaleShiftA = texUnit->_CurrentCombine->ScaleShiftA;
 
@@ -397,8 +399,18 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
          key->unit[i].OptA[j].Source =
 	    translate_source(texUnit->_CurrentCombine->SourceA[j]);
       }
+
+      if (key->unit[i].ModeRGB == MODE_BUMP_ENVMAP_ATI) {
+         /* requires some special translation */
+         key->unit[i].NumArgsRGB = 2;
+         key->unit[i].ScaleShiftRGB = 0;
+         key->unit[i].OptRGB[0].Operand = OPR_SRC_COLOR;
+         key->unit[i].OptRGB[0].Source = SRC_TEXTURE;
+         key->unit[i].OptRGB[1].Operand = OPR_SRC_COLOR;
+         key->unit[i].OptRGB[1].Source = texUnit->BumpTarget - GL_TEXTURE0 + SRC_TEXTURE0;
+       }
    }
-	
+
    if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
       key->separate_specular = 1;
       inputs_referenced |= FRAG_BIT_COL1;
@@ -462,6 +474,11 @@ struct texenv_fragment_program {
    struct ureg src_texture[MAX_TEXTURE_COORD_UNITS];   
    /* Reg containing each texture unit's sampled texture color,
     * else undef.
+    */
+
+   struct ureg texcoord_tex[MAX_TEXTURE_COORD_UNITS];
+   /* Reg containing texcoord for a texture unit,
+    * needed for bump mapping, else undef.
     */
 
    struct ureg src_previous;	/**< Reg containing color from previous 
@@ -736,6 +753,7 @@ static struct ureg emit_texld( struct texenv_fragment_program *p,
 			       GLuint destmask,
 			       GLuint tex_unit,
 			       GLuint tex_idx,
+                               GLuint tex_shadow,
 			       struct ureg coord )
 {
    struct prog_instruction *inst = emit_op( p, op, 
@@ -747,6 +765,7 @@ static struct ureg emit_texld( struct texenv_fragment_program *p,
    
    inst->TexSrcTarget = tex_idx;
    inst->TexSrcUnit = tex_unit;
+   inst->TexShadow = tex_shadow;
 
    p->program->Base.NumTexInstructions++;
 
@@ -754,6 +773,7 @@ static struct ureg emit_texld( struct texenv_fragment_program *p,
     */
    reserve_temp(p, dest);
 
+#if 0
    /* Is this a texture indirection?
     */
    if ((coord.file == PROGRAM_TEMPORARY &&
@@ -765,6 +785,7 @@ static struct ureg emit_texld( struct texenv_fragment_program *p,
       p->alu_temps = 0;
       assert(0);		/* KW: texture env crossbar */
    }
+#endif
 
    return dest;
 }
@@ -1050,6 +1071,10 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
          emit_arith( p, OPCODE_SUB, dest, mask, saturate, tmp0, half, undef );
       }
       return dest;
+   case MODE_BUMP_ENVMAP_ATI:
+      /* special - not handled here */
+      assert(0);
+      return src[0];
    default: 
       assert(0);
       return src[0];
@@ -1070,6 +1095,10 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
    struct ureg dest;
 
    if (!key->unit[unit].enabled) {
+      return get_source(p, SRC_PREVIOUS, 0);
+   }
+   if (key->unit[unit].ModeRGB == MODE_BUMP_ENVMAP_ATI) {
+      /* this isn't really a env stage delivering a color and handled elsewhere */
       return get_source(p, SRC_PREVIOUS, 0);
    }
    
@@ -1096,7 +1125,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
        rgb_shift)
       dest = get_temp( p );
    else
-      dest = make_ureg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
+      dest = make_ureg(PROGRAM_OUTPUT, FRAG_RESULT_COLOR);
 
    /* Emit the RGB and A combine ops
     */
@@ -1160,22 +1189,35 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 {
    if (is_undef(p->src_texture[unit])) {
-      GLuint dim = p->state->unit[unit].source_index;
-      struct ureg texcoord = register_input(p, FRAG_ATTRIB_TEX0+unit);
+      GLuint texTarget = p->state->unit[unit].source_index;
+      struct ureg texcoord;
       struct ureg tmp = get_tex_temp( p );
 
-      if (dim == TEXTURE_UNKNOWN_INDEX)
+      if (is_undef(p->texcoord_tex[unit])) {
+         texcoord = register_input(p, FRAG_ATTRIB_TEX0+unit);
+      }
+      else {
+         /* might want to reuse this reg for tex output actually */
+         texcoord = p->texcoord_tex[unit];
+      }
+
+      if (texTarget == TEXTURE_UNKNOWN_INDEX)
          program_error(p, "TexSrcBit");
 			  
       /* TODO: Use D0_MASK_XY where possible.
        */
       if (p->state->unit[unit].enabled) {
+         GLboolean shadow = GL_FALSE;
+
+	 if (p->state->unit[unit].shadow) {
+	    p->program->Base.ShadowSamplers |= 1 << unit;
+            shadow = GL_TRUE;
+         }
+
 	 p->src_texture[unit] = emit_texld( p, OPCODE_TXP,
 					    tmp, WRITEMASK_XYZW, 
-					    unit, dim, texcoord );
-
-	 if (p->state->unit[unit].shadow)
-	    p->program->Base.ShadowSamplers |= 1 << unit;
+					    unit, texTarget, shadow,
+                                            texcoord );
 
          p->program->Base.SamplersUsed |= (1 << unit);
          /* This identity mapping should already be in place
@@ -1226,7 +1268,7 @@ load_texunit_sources( struct texenv_fragment_program *p, int unit )
    GLuint i;
 
    for (i = 0; i < key->unit[unit].NumArgsRGB; i++) {
-      load_texenv_source( p, key->unit[unit].OptRGB[i].Source, unit);
+      load_texenv_source( p, key->unit[unit].OptRGB[i].Source, unit );
    }
 
    for (i = 0; i < key->unit[unit].NumArgsA; i++) {
@@ -1236,6 +1278,40 @@ load_texunit_sources( struct texenv_fragment_program *p, int unit )
    return GL_TRUE;
 }
 
+/**
+ * Generate instructions for loading bump map textures.
+ */
+static GLboolean
+load_texunit_bumpmap( struct texenv_fragment_program *p, int unit )
+{
+   struct state_key *key = p->state;
+   GLuint bumpedUnitNr = key->unit[unit].OptRGB[1].Source - SRC_TEXTURE0;
+   struct ureg texcDst, bumpMapRes;
+   struct ureg constdudvcolor = register_const4f(p, 0.0, 0.0, 0.0, 1.0);
+   struct ureg texcSrc = register_input(p, FRAG_ATTRIB_TEX0 + bumpedUnitNr);
+   struct ureg rotMat0 = register_param3( p, STATE_INTERNAL, STATE_ROT_MATRIX_0, unit );
+   struct ureg rotMat1 = register_param3( p, STATE_INTERNAL, STATE_ROT_MATRIX_1, unit );
+
+   load_texenv_source( p, unit + SRC_TEXTURE0, unit );
+
+   bumpMapRes = get_source(p, key->unit[unit].OptRGB[0].Source, unit);
+   texcDst = get_tex_temp( p );
+   p->texcoord_tex[bumpedUnitNr] = texcDst;
+
+   /* apply rot matrix and add coords to be available in next phase */
+   /* dest = (Arg0.xxxx * rotMat0 + Arg1) + (Arg0.yyyy * rotMat1) */
+   /* note only 2 coords are affected the rest are left unchanged (mul by 0) */
+   emit_arith( p, OPCODE_MAD, texcDst, WRITEMASK_XYZW, 0,
+               swizzle1(bumpMapRes, SWIZZLE_X), rotMat0, texcSrc );
+   emit_arith( p, OPCODE_MAD, texcDst, WRITEMASK_XYZW, 0,
+               swizzle1(bumpMapRes, SWIZZLE_Y), rotMat1, texcDst );
+
+   /* move 0,0,0,1 into bumpmap src if someone (crossbar) is foolish
+      enough to access this later, should optimize away */
+   emit_arith( p, OPCODE_MOV, bumpMapRes, WRITEMASK_XYZW, 0, constdudvcolor, undef, undef );
+
+   return GL_TRUE;
+}
 
 /**
  * Generate a new fragment program which implements the context's
@@ -1260,7 +1336,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
     */
    p.program->Base.Instructions = instBuffer;
    p.program->Base.Target = GL_FRAGMENT_PROGRAM_ARB;
-   p.program->Base.NumTexIndirections = 1;	/* correct? */
+   p.program->Base.NumTexIndirections = 1;
    p.program->Base.NumTexInstructions = 0;
    p.program->Base.NumAluInstructions = 0;
    p.program->Base.String = NULL;
@@ -1271,10 +1347,12 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    p.program->Base.Parameters = _mesa_new_parameter_list();
 
    p.program->Base.InputsRead = 0;
-   p.program->Base.OutputsWritten = 1 << FRAG_RESULT_COLR;
+   p.program->Base.OutputsWritten = 1 << FRAG_RESULT_COLOR;
 
-   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
+   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
       p.src_texture[unit] = undef;
+      p.texcoord_tex[unit] = undef;
+   }
 
    p.src_previous = undef;
    p.half = undef;
@@ -1285,6 +1363,16 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    release_temps(ctx, &p);
 
    if (key->enabled_units) {
+       GLboolean needbumpstage = GL_FALSE;
+      /* Zeroth pass - bump map textures first */
+      for (unit = 0 ; unit < ctx->Const.MaxTextureUnits ; unit++)
+	 if (key->unit[unit].enabled && key->unit[unit].ModeRGB == MODE_BUMP_ENVMAP_ATI) {
+	    needbumpstage = GL_TRUE;
+	    load_texunit_bumpmap( &p, unit );
+	 }
+      if (needbumpstage)
+	 p.program->Base.NumTexIndirections++;
+
       /* First pass - to support texture_env_crossbar, first identify
        * all referenced texture sources and emit texld instructions
        * for each:
@@ -1306,7 +1394,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    }
 
    cf = get_source( &p, SRC_PREVIOUS, 0 );
-   out = make_ureg( PROGRAM_OUTPUT, FRAG_RESULT_COLR );
+   out = make_ureg( PROGRAM_OUTPUT, FRAG_RESULT_COLOR );
 
    if (key->separate_specular) {
       /* Emit specular add.

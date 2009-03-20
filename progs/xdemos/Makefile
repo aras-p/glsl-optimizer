@@ -31,6 +31,7 @@ PROGS = \
 	pbinfo \
 	pbdemo \
 	sharedtex \
+        sharedtex_mt \
 	texture_from_pixmap \
 	wincopy \
 	xfont \

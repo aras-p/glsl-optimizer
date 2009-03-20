@@ -25,12 +25,8 @@
 #define VEC_SIZE_3   	7
 #define VEC_SIZE_4   	15
 
-#if defined(SVR4) || defined(__SVR4) || defined(__svr4__)
-        /* Solaris requires this for 64-bit. */
         .register %g2, #scratch
         .register %g3, #scratch
-        .register %g7, #scratch
-#endif
 
 	.text
 	.align		64
@@ -78,7 +74,7 @@ _mesa_sparc_cliptest_points4:
 	add		%g1, 0x4, %g1
 
 	ld		[%i0 + V4F_STRIDE], %l1
-	ld		[%i0 + V4F_COUNT], %g7
+	ld		[%i0 + V4F_COUNT], %l3
 	LDPTR		[%i0 + V4F_START], %i0
 	LDPTR		[%i1 + V4F_START], %i5
 	ldub		[%i3], %g2
@@ -91,12 +87,12 @@ _mesa_sparc_cliptest_points4:
 	st		%g3, [%i1 + V4F_FLAGS]
 	mov		3, %g3
 	st		%g3, [%i1 + V4F_SIZE]
-	st		%g7, [%i1 + V4F_COUNT]
+	st		%l3, [%i1 + V4F_COUNT]
 	clr		%l2
 	clr		%l0
 
 	/* l0:	i
-	 * g7:	count
+	 * l3:	count
 	 * l1:	stride
 	 * l2:	c
 	 * g2:	(tmpAndMask << 8) | tmpOrMask
@@ -153,12 +149,12 @@ _mesa_sparc_cliptest_points4:
 3:	add		%i5, 0x10, %i5		! IEU1
 	add		%l0, 1, %l0		! IEU0	Group
 	add		%i2, 1, %i2		! IEU0	Group
-	cmp		%l0, %g7		! IEU1	Group
+	cmp		%l0, %l3		! IEU1	Group
 	bne		1b			! CTI
 	 add		%i0, %l1, %i0		! IEU0	Group
 	stb		%g2, [%i3]		! LSU
 	srl		%g2, 8, %g3		! IEU0	Group
-	cmp		%l2, %g7		! IEU1	Group
+	cmp		%l2, %l3		! IEU1	Group
 	bl,a		1f			! CTI
 	 clr		%g3			! IEU0
 1:	stb		%g3, [%i4]		! LSU	Group
@@ -174,25 +170,18 @@ _mesa_sparc_cliptest_points4_np:
 	add		%g1, 0x4, %g1
 
 	ld		[%i0 + V4F_STRIDE], %l1
-	ld		[%i0 + V4F_COUNT], %g7
+	ld		[%i0 + V4F_COUNT], %l3
 	LDPTR		[%i0 + V4F_START], %i0
-	LDPTR		[%i1 + V4F_START], %i5
 	ldub		[%i3], %g2
 	ldub		[%i4], %g3
 	sll		%g3, 8, %g3
 	or		%g2, %g3, %g2
 
-	ld		[%i1 + V4F_FLAGS], %g3
-	or		%g3, VEC_SIZE_4, %g3
-	st		%g3, [%i1 + V4F_FLAGS]
-	mov		3, %g3
-	st		%g3, [%i1 + V4F_SIZE]
-	st		%g7, [%i1 + V4F_COUNT]
 	clr		%l2
 	clr		%l0
 
 	/* l0:	i
-	 * g7:	count
+	 * l3:	count
 	 * l1:	stride
 	 * l2:	c
 	 * g2:	(tmpAndMask << 8) | tmpOrMask
@@ -230,12 +219,12 @@ _mesa_sparc_cliptest_points4_np:
 	and		%g2, %g4, %g2		! IEU0	Group
 2:	add		%l0, 1, %l0		! IEU0	Group
 	add		%i2, 1, %i2		! IEU0	Group
-	cmp		%l0, %g7		! IEU1	Group
+	cmp		%l0, %l3		! IEU1	Group
 	bne		1b			! CTI
 	 add		%i0, %l1, %i0		! IEU0	Group
 	stb		%g2, [%i3]		! LSU
 	srl		%g2, 8, %g3		! IEU0	Group
-	cmp		%l2, %g7		! IEU1	Group
+	cmp		%l2, %l3		! IEU1	Group
 	bl,a		1f			! CTI
 	 clr		%g3			! IEU0
 1:	stb		%g3, [%i4]		! LSU	Group

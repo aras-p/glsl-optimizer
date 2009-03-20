@@ -61,9 +61,9 @@
 static INLINE void *
 mem_dup(const void *src, uint size)
 {
-   void *dup = MALLOC(size);
+   void *dup = _mesa_malloc(size);
    if (dup)
-      memcpy(dup, src, size);
+      _mesa_memcpy(dup, src, size);
    return dup;
 }
 
@@ -307,7 +307,7 @@ st_translate_vertex_program(struct st_context *st,
 
    /* free old shader state, if any */
    if (stvp->state.tokens) {
-      FREE((void *) stvp->state.tokens);
+      _mesa_free((void *) stvp->state.tokens);
       stvp->state.tokens = NULL;
    }
    if (stvp->driver_shader) {
@@ -466,23 +466,23 @@ st_translate_fragment_program(struct st_context *st,
       GLbitfield outputsWritten = stfp->Base.Base.OutputsWritten;
 
       /* if z is written, emit that first */
-      if (outputsWritten & (1 << FRAG_RESULT_DEPR)) {
+      if (outputsWritten & (1 << FRAG_RESULT_DEPTH)) {
          fs_output_semantic_name[fs_num_outputs] = TGSI_SEMANTIC_POSITION;
          fs_output_semantic_index[fs_num_outputs] = 0;
-         outputMapping[FRAG_RESULT_DEPR] = fs_num_outputs;
+         outputMapping[FRAG_RESULT_DEPTH] = fs_num_outputs;
          fs_num_outputs++;
-         outputsWritten &= ~(1 << FRAG_RESULT_DEPR);
+         outputsWritten &= ~(1 << FRAG_RESULT_DEPTH);
       }
 
       /* handle remaning outputs (color) */
       for (attr = 0; attr < FRAG_RESULT_MAX; attr++) {
          if (outputsWritten & (1 << attr)) {
             switch (attr) {
-            case FRAG_RESULT_DEPR:
+            case FRAG_RESULT_DEPTH:
                /* handled above */
                assert(0);
                break;
-            case FRAG_RESULT_COLR:
+            case FRAG_RESULT_COLOR:
                fs_output_semantic_name[fs_num_outputs] = TGSI_SEMANTIC_COLOR;
                fs_output_semantic_index[fs_num_outputs] = numColors;
                outputMapping[attr] = fs_num_outputs;

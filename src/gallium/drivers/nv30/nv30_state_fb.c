@@ -5,7 +5,7 @@ static boolean
 nv30_state_framebuffer_validate(struct nv30_context *nv30)
 {
 	struct pipe_framebuffer_state *fb = &nv30->framebuffer;
-	struct pipe_surface *rt[2], *zeta = NULL;
+	struct nv04_surface *rt[2], *zeta = NULL;
 	uint32_t rt_enable, rt_format;
 	int i, colour_format = 0, zeta_format = 0;
 	struct nouveau_stateobj *so = so_new(64, 10);
@@ -21,7 +21,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 		} else {
 			colour_format = fb->cbufs[i]->format;
 			rt_enable |= (NV34TCL_RT_ENABLE_COLOR0 << i);
-			rt[i] = fb->cbufs[i];
+			rt[i] = (struct nv04_surface *)fb->cbufs[i];
 		}
 	}
 
@@ -30,13 +30,13 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 
 	if (fb->zsbuf) {
 		zeta_format = fb->zsbuf->format;
-		zeta = fb->zsbuf;
+		zeta = (struct nv04_surface *)fb->zsbuf;
 	}
 
-	if (!(rt[0]->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
+	if (!(rt[0]->base.texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
 		assert(!(fb->width & (fb->width - 1)) && !(fb->height & (fb->height - 1)));
 		for (i = 1; i < fb->nr_cbufs; i++)
-			assert(!(rt[i]->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR));
+			assert(!(rt[i]->base.texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR));
 
 		/* FIXME: NV34TCL_RT_FORMAT_LOG2_[WIDTH/HEIGHT] */
 		rt_format = NV34TCL_RT_FORMAT_TYPE_SWIZZLED |
@@ -71,44 +71,44 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	}
 
 	if (rt_enable & NV34TCL_RT_ENABLE_COLOR0) {
-		uint32_t pitch = rt[0]->stride;
+		uint32_t pitch = rt[0]->pitch;
 		if (zeta) {
-			pitch |= (zeta->stride << 16);
+			pitch |= (zeta->pitch << 16);
 		} else {
 			pitch |= (pitch << 16);
 		}
 
-		nv30mt = (struct nv30_miptree *)rt[0]->texture;
+		nv30mt = (struct nv30_miptree *)rt[0]->base.texture;
 		so_method(so, nv30->screen->rankine, NV34TCL_DMA_COLOR0, 1);
 		so_reloc (so, nv30mt->buffer, 0, rt_flags | NOUVEAU_BO_OR,
 			  nv30->nvws->channel->vram->handle,
 			  nv30->nvws->channel->gart->handle);
 		so_method(so, nv30->screen->rankine, NV34TCL_COLOR0_PITCH, 2);
 		so_data  (so, pitch);
-		so_reloc (so, nv30mt->buffer, rt[0]->offset, rt_flags |
+		so_reloc (so, nv30mt->buffer, rt[0]->base.offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 	}
 
 	if (rt_enable & NV34TCL_RT_ENABLE_COLOR1) {
-		nv30mt = (struct nv30_miptree *)rt[1]->texture;
+		nv30mt = (struct nv30_miptree *)rt[1]->base.texture;
 		so_method(so, nv30->screen->rankine, NV34TCL_DMA_COLOR1, 1);
 		so_reloc (so, nv30mt->buffer, 0, rt_flags | NOUVEAU_BO_OR,
 			  nv30->nvws->channel->vram->handle,
 			  nv30->nvws->channel->gart->handle);
 		so_method(so, nv30->screen->rankine, NV34TCL_COLOR1_OFFSET, 2);
-		so_reloc (so, nv30mt->buffer, rt[1]->offset, rt_flags |
+		so_reloc (so, nv30mt->buffer, rt[1]->base.offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
-		so_data  (so, rt[1]->stride);
+		so_data  (so, rt[1]->pitch);
 	}
 
 	if (zeta_format) {
-		nv30mt = (struct nv30_miptree *)zeta->texture;
+		nv30mt = (struct nv30_miptree *)zeta->base.texture;
 		so_method(so, nv30->screen->rankine, NV34TCL_DMA_ZETA, 1);
 		so_reloc (so, nv30mt->buffer, 0, rt_flags | NOUVEAU_BO_OR,
 			  nv30->nvws->channel->vram->handle,
 			  nv30->nvws->channel->gart->handle);
 		so_method(so, nv30->screen->rankine, NV34TCL_ZETA_OFFSET, 1);
-		so_reloc (so, nv30mt->buffer, zeta->offset, rt_flags |
+		so_reloc (so, nv30mt->buffer, zeta->base.offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 		/* TODO: allocate LMA depth buffer */
 	}
@@ -132,6 +132,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	so_data  (so, 0);
 
 	so_ref(so, &nv30->state.hw[NV30_STATE_FB]);
+	so_ref(NULL, &so);
 	return TRUE;
 }
 

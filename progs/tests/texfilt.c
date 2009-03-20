@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 const GLenum filter_modes[] = {
@@ -219,8 +220,8 @@ static void Init( void )
 static void generate_tunnel( unsigned num_segs, GLfloat ** pos_data,
 			     GLfloat ** tex_data )
 {
-   const GLfloat far = 20.0f;
-   const GLfloat near = -90.0f;
+   const GLfloat far_distance = 20.0f;
+   const GLfloat near_distance = -90.0f;
    const GLfloat far_tex = 30.0f;
    const GLfloat near_tex = 0.0f;
    const GLfloat angle_step = (2 * M_PI) / num_segs;
@@ -241,12 +242,12 @@ static void generate_tunnel( unsigned num_segs, GLfloat ** pos_data,
    for ( i = 0 ; i < num_segs ; i++ ) {
       position[0] = 2.5 * sinf( angle );
       position[1] = 2.5 * cosf( angle );
-      position[2] = (i & 1) ? far : near;
+      position[2] = (i & 1) ? far_distance : near_distance;
       position[3] = 1.0f;
 
       position[4] = position[0];
       position[5] = position[1];
-      position[6] = (i & 1) ? near : far;
+      position[6] = (i & 1) ? near_distance : far_distance;
       position[7] = 1.0f;
 
       position += 8;
@@ -264,12 +265,12 @@ static void generate_tunnel( unsigned num_segs, GLfloat ** pos_data,
 
       position[0] = 2.5 * sinf( angle );
       position[1] = 2.5 * cosf( angle );
-      position[2] = (i & 1) ? near : far;
+      position[2] = (i & 1) ? near_distance : far_distance;
       position[3] = 1.0f;
 
       position[4] = position[0];
       position[5] = position[1];
-      position[6] = (i & 1) ? far : near;
+      position[6] = (i & 1) ? far_distance : near_distance;
       position[7] = 1.0f;
 
       position += 8;
@@ -381,6 +382,7 @@ int main( int argc, char ** argv )
    glutInitWindowSize( 800, 600 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
    glutCreateWindow( "Texture Filter Test" );
+   glewInit();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutSpecialFunc( SpecialKey );

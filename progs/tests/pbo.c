@@ -5,12 +5,12 @@
  * 11 March 2004
  */
 
-#define GL_GLEXT_PROTOTYPES
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 #include "../util/readtex.c"  /* a hack, I know */
@@ -287,6 +287,7 @@ main( int argc, char *argv[] )
    glutInitWindowSize( 750, 250 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
    glutCreateWindow(argv[0]);
+   glewInit();
    Init();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );

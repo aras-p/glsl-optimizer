@@ -295,6 +295,7 @@ struct xmesa_context {
    struct st_context *st;
    XMesaVisual xm_visual;	/** pixel format info */
    XMesaBuffer xm_buffer;	/** current drawbuffer */
+   XMesaBuffer xm_read_buffer;  /** current readbuffer */
 };
 
 

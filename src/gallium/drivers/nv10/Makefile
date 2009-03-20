@@ -3,7 +3,7 @@ include $(TOP)/configs/current
 
 LIBNAME = nv10
 
-DRIVER_SOURCES = \
+C_SOURCES = \
 	nv10_clear.c \
 	nv10_context.c \
 	nv10_fragprog.c \
@@ -14,15 +14,7 @@ DRIVER_SOURCES = \
 	nv10_state.c \
 	nv10_state_emit.c \
 	nv10_surface.c \
+	nv10_transfer.c \
 	nv10_vbo.c
 
-C_SOURCES = \
-	$(COMMON_SOURCES) \
-	$(DRIVER_SOURCES)
-
-ASM_SOURCES = 
-
 include ../../Makefile.template
-
-symlinks:
-

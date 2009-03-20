@@ -31,14 +31,18 @@
 
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/p_thread.h"
 #include "util/u_memory.h"
 
 #include "rtasm_execmem.h"
 
+#if defined(PIPE_OS_BSD)
+#define MAP_ANONYMOUS MAP_ANON
+#endif
 
-#if defined(PIPE_OS_LINUX)
+
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
 
 
 /*
@@ -114,7 +118,7 @@ rtasm_exec_free(void *addr)
 }
 
 
-#else /* PIPE_OS_LINUX */
+#else /* PIPE_OS_LINUX || PIPE_OS_BSD */
 
 /*
  * Just use regular memory.
@@ -134,4 +138,4 @@ rtasm_exec_free(void *addr)
 }
 
 
-#endif /* PIPE_OS_LINUX */
+#endif /* PIPE_OS_LINUX || PIPE_OS_BSD */

@@ -29,10 +29,21 @@
 #include "sp_context.h"
 
 
+static void
+sp_surface_copy(struct pipe_context *pipe,
+                struct pipe_surface *dest, unsigned destx, unsigned desty,
+                struct pipe_surface *src, unsigned srcx, unsigned srcy,
+                unsigned width, unsigned height)
+{
+   util_surface_copy(pipe, FALSE,
+                     dest, destx, desty,
+                     src, srcx, srcy,
+                     width, height);
+}
 
 void
 sp_init_surface_functions(struct softpipe_context *sp)
 {
-   sp->pipe.surface_copy = util_surface_copy;
+   sp->pipe.surface_copy = sp_surface_copy;
    sp->pipe.surface_fill = util_surface_fill;
 }

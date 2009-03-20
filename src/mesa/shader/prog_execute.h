@@ -73,7 +73,7 @@ struct gl_program_machine
 
 
 extern void
-_mesa_get_program_register(GLcontext *ctx, enum register_file file,
+_mesa_get_program_register(GLcontext *ctx, gl_register_file file,
                            GLuint index, GLfloat val[4]);
 
 extern GLboolean

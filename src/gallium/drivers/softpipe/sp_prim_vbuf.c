@@ -60,6 +60,8 @@ struct softpipe_vbuf_render
    struct softpipe_context *softpipe;
    uint prim;
    uint vertex_size;
+   uint nr_vertices;
+   uint vertex_buffer_size;
    void *vertex_buffer;
 };
 
@@ -80,26 +82,76 @@ sp_vbuf_get_vertex_info(struct vbuf_render *vbr)
 }
 
 
-static void *
+static boolean
 sp_vbuf_allocate_vertices(struct vbuf_render *vbr,
-                            ushort vertex_size, ushort nr_vertices)
+                          ushort vertex_size, ushort nr_vertices)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
-   assert(!cvbr->vertex_buffer);
-   cvbr->vertex_buffer = align_malloc(vertex_size * nr_vertices, 16);
+   unsigned size = vertex_size * nr_vertices;
+
+   if (cvbr->vertex_buffer_size < size) {
+      align_free(cvbr->vertex_buffer);
+      cvbr->vertex_buffer = align_malloc(size, 16);
+      cvbr->vertex_buffer_size = size;
+   }
+
    cvbr->vertex_size = vertex_size;
+   cvbr->nr_vertices = nr_vertices;
+   
+   return cvbr->vertex_buffer != NULL;
+}
+
+static void
+sp_vbuf_release_vertices(struct vbuf_render *vbr)
+{
+#if 0
+   {
+      struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
+      const struct vertex_info *info = 
+         softpipe_get_vbuf_vertex_info(cvbr->softpipe);
+      const float *vtx = (const float *) cvbr->vertex_buffer;
+      uint i, j;
+      debug_printf("%s (vtx_size = %u,  vtx_used = %u)\n",
+             __FUNCTION__, cvbr->vertex_size, cvbr->nr_vertices);
+      for (i = 0; i < cvbr->nr_vertices; i++) {
+         for (j = 0; j < info->num_attribs; j++) {
+            uint k;
+            switch (info->attrib[j].emit) {
+            case EMIT_4F:  k = 4;   break;
+            case EMIT_3F:  k = 3;   break;
+            case EMIT_2F:  k = 2;   break;
+            case EMIT_1F:  k = 1;   break;
+            default: assert(0);
+            }
+            debug_printf("Vert %u attr %u: ", i, j);
+            while (k-- > 0) {
+               debug_printf("%g ", vtx[0]);
+               vtx++;
+            }
+            debug_printf("\n");
+         }
+      }
+   }
+#endif
+
+   /* keep the old allocation for next time */
+}
+
+static void *
+sp_vbuf_map_vertices(struct vbuf_render *vbr)
+{
+   struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    return cvbr->vertex_buffer;
 }
 
-
-static void
-sp_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices,
-                           unsigned vertex_size, unsigned vertices_used)
+static void 
+sp_vbuf_unmap_vertices(struct vbuf_render *vbr, 
+                       ushort min_index,
+                       ushort max_index )
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
-   align_free(vertices);
-   assert(vertices == cvbr->vertex_buffer);
-   cvbr->vertex_buffer = NULL;
+   assert( cvbr->vertex_buffer_size >= (max_index+1) * cvbr->vertex_size );
+   /* do nothing */
 }
 
 
@@ -114,8 +166,6 @@ sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
    struct setup_context *setup_ctx = sp_draw_setup_context(cvbr->softpipe->setup);
    
    setup_prepare( setup_ctx );
-
-
 
    cvbr->prim = prim;
    return TRUE;
@@ -394,6 +444,8 @@ sp_init_vbuf(struct softpipe_context *sp)
 
    sp->vbuf_render->base.get_vertex_info = sp_vbuf_get_vertex_info;
    sp->vbuf_render->base.allocate_vertices = sp_vbuf_allocate_vertices;
+   sp->vbuf_render->base.map_vertices = sp_vbuf_map_vertices;
+   sp->vbuf_render->base.unmap_vertices = sp_vbuf_unmap_vertices;
    sp->vbuf_render->base.set_primitive = sp_vbuf_set_primitive;
    sp->vbuf_render->base.draw = sp_vbuf_draw;
    sp->vbuf_render->base.draw_arrays = sp_vbuf_draw_arrays;

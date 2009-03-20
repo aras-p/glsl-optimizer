@@ -28,8 +28,6 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "pipe/p_inlines.h"
-
 #include "fo_context.h"
 
 

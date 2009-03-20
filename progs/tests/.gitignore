@@ -14,7 +14,9 @@ arbvpwarpmesh
 arraytexture
 blendminmax
 blendsquare
+blendxor
 bufferobj
+bumpmap
 bug_3050
 bug_3101
 bug_3195
@@ -59,6 +61,8 @@ readtex.h
 seccolor
 sharedtex
 shader_api
+shaderutil.c
+shaderutil.h
 stencil_twoside
 stencil_wrap
 stencilwrap

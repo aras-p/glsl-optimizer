@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "util/u_string.h"
 #include "tgsi_dump.h"
 #include "tgsi_info.h"
@@ -245,8 +245,12 @@ iter_declaration(
       }
    }
 
-   TXT( ", " );
-   ENM( decl->Declaration.Interpolate, interpolate_names );
+   if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT &&
+       decl->Declaration.File == TGSI_FILE_INPUT)
+   {
+      TXT( ", " );
+      ENM( decl->Declaration.Interpolate, interpolate_names );
+   }
 
    if (decl->Declaration.Centroid) {
       TXT( ", CENTROID" );

@@ -51,6 +51,7 @@ nv30_blend_state_create(struct pipe_context *pipe,
 	so_data  (so, cso->dither ? 1 : 0);
 
 	so_ref(so, &bso->so);
+	so_ref(NULL, &so);
 	bso->pipe = *cso;
 	return (void *)bso;
 }
@@ -404,6 +405,7 @@ nv30_rasterizer_state_create(struct pipe_context *pipe,
 	}
 
 	so_ref(so, &rsso->so);
+	so_ref(NULL, &so);
 	rsso->pipe = *cso;
 	return (void *)rsso;
 }
@@ -477,6 +479,7 @@ nv30_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	}
 
 	so_ref(so, &zsaso->so);
+	so_ref(NULL, &so);
 	zsaso->pipe = *cso;
 	return (void *)zsaso;
 }

@@ -33,10 +33,16 @@ extern "C" {
 
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
+#include "pipe/internal/p_winsys_screen.h"
 
 struct radeon_cs;
 
 struct r300_winsys {
+    /* Parent class */
+    struct pipe_winsys base;
+
+    /* Opaque Radeon-specific winsys object. */
+    void* radeon_winsys;
 
     /* PCI ID */
     uint32_t pci_id;
@@ -47,10 +53,6 @@ struct r300_winsys {
     /* CS object. This is very much like Intel's batchbuffer.
      * Fill it full of dwords and relocs and then submit.
      * Repeat as needed. */
-    /* Note: Unlike Mesa's version of this, we don't keep a copy of the CSM
-     * that was used to create this CS. Is this a good idea? */
-    /* Note: The pipe driver doesn't know how to use this. This is purely
-     * for the winsys. */
     struct radeon_cs* cs;
 
     /* Check to see if there's room for commands. */
@@ -84,8 +86,11 @@ struct r300_winsys {
 };
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
-                                         struct pipe_winsys* winsys,
                                          struct r300_winsys* r300_winsys);
+
+boolean r300_get_texture_buffer(struct pipe_texture* texture,
+                                struct pipe_buffer** buffer,
+                                unsigned* stride);
 
 #ifdef __cplusplus
 }

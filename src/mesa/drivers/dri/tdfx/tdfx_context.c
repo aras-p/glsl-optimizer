@@ -67,7 +67,6 @@
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_paletted_texture
 /* #define need_GL_EXT_secondary_color */
-/* #define need_GL_MESA_program_debug */
 /* #define need_GL_NV_vertex_program */
 #include "extension_helper.h"
 
@@ -101,9 +100,6 @@ const struct dri_extension card_extensions[] =
 #ifdef need_GL_NV_vertex_program
     { "GL_NV_vertex_program",              GL_NV_vertex_program_functions }
     { "GL_NV_vertex_program1_1",           NULL },
-#endif
-#ifdef need_GL_MESA_program_debug
-    { "GL_MESA_program_debug",             GL_MESA_program_debug_functions },
 #endif
     { NULL,                                NULL }
 };

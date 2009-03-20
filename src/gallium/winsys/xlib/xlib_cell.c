@@ -107,22 +107,21 @@ xm_buffer_unmap(struct pipe_winsys *pws, struct pipe_buffer *buf)
 }
 
 static void
-xm_buffer_destroy(struct pipe_winsys *pws,
+xm_buffer_destroy(/*struct pipe_winsys *pws,*/
                   struct pipe_buffer *buf)
 {
    struct xm_buffer *oldBuf = xm_buffer(buf);
 
-   if (oldBuf->data) {
-      {
+   if (oldBuf) {
+      if (oldBuf->data) {
          if (!oldBuf->userBuffer) {
             align_free(oldBuf->data);
          }
+
+         oldBuf->data = NULL;
       }
-
-      oldBuf->data = NULL;
+      free(oldBuf);
    }
-
-   free(oldBuf);
 }
 
 
@@ -222,7 +221,8 @@ xm_flush_frontbuffer(struct pipe_winsys *pws,
     * This function copies that XImage to the actual X Window.
     */
    XMesaContext xmctx = (XMesaContext) context_private;
-   xlib_cell_display_surface(xmctx->xm_buffer, surf);
+   if (xmctx)
+      xlib_cell_display_surface(xmctx->xm_buffer, surf);
 }
 
 
@@ -242,7 +242,7 @@ xm_buffer_create(struct pipe_winsys *pws,
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
 
-   buffer->base.refcount = 1;
+   pipe_reference_init(&buffer->base.reference, 1);
    buffer->base.alignment = alignment;
    buffer->base.usage = usage;
    buffer->base.size = size;
@@ -266,7 +266,7 @@ static struct pipe_buffer *
 xm_user_buffer_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
-   buffer->base.refcount = 1;
+   pipe_reference_init(&buffer->base.reference, 1);
    buffer->base.size = bytes;
    buffer->userBuffer = TRUE;
    buffer->data = ptr;
@@ -370,7 +370,7 @@ xlib_create_cell_winsys( void )
 
 
 static struct pipe_screen *
-xlib_create_cell_screen( struct pipe_winsys *pws )
+xlib_create_cell_screen( void )
 {
    struct pipe_winsys *winsys;
    struct pipe_screen *screen;

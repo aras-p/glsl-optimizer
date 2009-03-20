@@ -34,7 +34,7 @@
 
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/p_thread.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -78,7 +78,8 @@ struct pb_debug_manager
 
    struct pb_manager *provider;
 
-   size_t band_size;
+   size_t underflow_size;
+   size_t overflow_size;
 };
 
 
@@ -205,9 +206,9 @@ pb_debug_buffer_check(struct pb_debug_buffer *buf)
 static void
 pb_debug_buffer_destroy(struct pb_buffer *_buf)
 {
-   struct pb_debug_buffer *buf = pb_debug_buffer(_buf);  
+   struct pb_debug_buffer *buf = pb_debug_buffer(_buf);
    
-   assert(!buf->base.base.refcount);
+   assert(p_atomic_read(&buf->base.base.reference.count) == 0);
    
    pb_debug_buffer_check(buf);
 
@@ -301,7 +302,7 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
    if(!buf)
       return NULL;
    
-   real_size = size + 2*mgr->band_size;
+   real_size = mgr->underflow_size + size + mgr->overflow_size;
    real_desc = *desc;
    real_desc.usage |= PIPE_BUFFER_USAGE_CPU_WRITE;
    real_desc.usage |= PIPE_BUFFER_USAGE_CPU_READ;
@@ -314,12 +315,12 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
       return NULL;
    }
    
-   assert(buf->buffer->base.refcount >= 1);
+   assert(p_atomic_read(&buf->buffer->base.reference.count) >= 1);
    assert(pb_check_alignment(real_desc.alignment, buf->buffer->base.alignment));
    assert(pb_check_usage(real_desc.usage, buf->buffer->base.usage));
    assert(buf->buffer->base.size >= real_size);
    
-   buf->base.base.refcount = 1;
+   pipe_reference_init(&buf->base.base.reference, 1);
    buf->base.base.alignment = desc->alignment;
    buf->base.base.usage = desc->usage;
    buf->base.base.size = size;
@@ -327,7 +328,7 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
    buf->base.vtbl = &pb_debug_buffer_vtbl;
    buf->mgr = mgr;
 
-   buf->underflow_size = mgr->band_size;
+   buf->underflow_size = mgr->underflow_size;
    buf->overflow_size = buf->buffer->base.size - buf->underflow_size - size;
    
    pb_debug_buffer_fill(buf);
@@ -356,7 +357,8 @@ pb_debug_manager_destroy(struct pb_manager *_mgr)
 
 
 struct pb_manager *
-pb_debug_manager_create(struct pb_manager *provider, size_t band_size) 
+pb_debug_manager_create(struct pb_manager *provider, 
+                        size_t underflow_size, size_t overflow_size) 
 {
    struct pb_debug_manager *mgr;
 
@@ -371,7 +373,8 @@ pb_debug_manager_create(struct pb_manager *provider, size_t band_size)
    mgr->base.create_buffer = pb_debug_manager_create_buffer;
    mgr->base.flush = pb_debug_manager_flush;
    mgr->provider = provider;
-   mgr->band_size = band_size;
+   mgr->underflow_size = underflow_size;
+   mgr->overflow_size = overflow_size;
       
    return &mgr->base;
 }
@@ -381,7 +384,8 @@ pb_debug_manager_create(struct pb_manager *provider, size_t band_size)
 
 
 struct pb_manager *
-pb_debug_manager_create(struct pb_manager *provider, size_t band_size) 
+pb_debug_manager_create(struct pb_manager *provider, 
+                        size_t underflow_size, size_t overflow_size) 
 {
    return provider;
 }

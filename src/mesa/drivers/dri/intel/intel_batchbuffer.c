@@ -207,7 +207,7 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
 	      used);
 
    /* Emit a flush if the bufmgr doesn't do it for us. */
-   if (!intel->ttm) {
+   if (intel->always_flush_cache || !intel->ttm) {
       *(GLuint *) (batch->ptr) = intel->vtbl.flush_cmd();
       batch->ptr += 4;
       used = batch->ptr - batch->map;

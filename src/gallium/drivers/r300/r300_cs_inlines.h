@@ -26,12 +26,25 @@
 
 #ifdef R300_CS_H
 
-#define R300_PACIFY do { \
-    OUT_CS_REG(R300_SC_SCREENDOOR, 0x0); \
-    OUT_CS_REG(RADEON_WAIT_UNTIL, (1 << 15) | (1 << 17) | \
-        (1 << 18) | (1 << 31)); \
-    OUT_CS_REG(R300_SC_SCREENDOOR, 0xffffff); \
+#define RADEON_ONE_REG_WR        (1 << 15)
+
+#define OUT_CS_ONE_REG(register, count) do { \
+    if (VERY_VERBOSE_REGISTERS) \
+        debug_printf("r300: writing data sequence of %d to 0x%04X\n", \
+            count, register); \
+    assert(register); \
+    OUT_CS(CP_PACKET0(register, ((count) - 1)) | RADEON_ONE_REG_WR); \
 } while (0)
 
+#define R300_PACIFY do { \
+    OUT_CS_REG(RADEON_WAIT_UNTIL, (1 << 14) | (1 << 15) | (1 << 16) | (1 << 17) | \
+        (1 << 18)); \
+} while (0)
+
+#define R300_SCREENDOOR do { \
+    OUT_CS_REG(R300_SC_SCREENDOOR, 0x0); \
+    R300_PACIFY; \
+    OUT_CS_REG(R300_SC_SCREENDOOR, 0xffffff); \
+} while (0)
 
 #endif /* R300_CS_H */

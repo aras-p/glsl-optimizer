@@ -204,7 +204,7 @@ struct x86_reg aos_get_internal_xmm( struct aos_compilation *cp,
                                      unsigned imm );
 
 
-#define ERROR(cp, msg)                                                  \
+#define AOS_ERROR(cp, msg)                                                  \
 do {                                                                    \
    if (0) debug_printf("%s: x86 translation failed: %s\n", __FUNCTION__, msg); \
    cp->error = 1;                                                       \

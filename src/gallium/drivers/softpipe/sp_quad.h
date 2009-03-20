@@ -31,39 +31,76 @@
 #ifndef SP_QUAD_H
 #define SP_QUAD_H
 
+#include "pipe/p_state.h"
+#include "tgsi/tgsi_exec.h"
 
-struct softpipe_context;
-struct quad_header;
+
+#define QUAD_PRIM_POINT 1
+#define QUAD_PRIM_LINE  2
+#define QUAD_PRIM_TRI   3
 
 
-struct quad_stage {
-   struct softpipe_context *softpipe;
+/* The rasterizer generates 2x2 quads of fragment and feeds them to
+ * the current fp_machine (see below).
+ * Remember that Y=0=top with Y increasing down the window.
+ */
+#define QUAD_TOP_LEFT     0
+#define QUAD_TOP_RIGHT    1
+#define QUAD_BOTTOM_LEFT  2
+#define QUAD_BOTTOM_RIGHT 3
 
-   struct quad_stage *next;
+#define MASK_TOP_LEFT     (1 << QUAD_TOP_LEFT)
+#define MASK_TOP_RIGHT    (1 << QUAD_TOP_RIGHT)
+#define MASK_BOTTOM_LEFT  (1 << QUAD_BOTTOM_LEFT)
+#define MASK_BOTTOM_RIGHT (1 << QUAD_BOTTOM_RIGHT)
+#define MASK_ALL          0xf
 
-   void (*begin)(struct quad_stage *qs);
 
-   /** the stage action */
-   void (*run)(struct quad_stage *qs, struct quad_header *quad);
-
-   void (*destroy)(struct quad_stage *qs);
+/**
+ * Quad stage inputs (pos, coverage, front/back face, etc)
+ */
+struct quad_header_input
+{
+   int x0, y0;                /**< quad window pos, always even */
+   float coverage[QUAD_SIZE]; /**< fragment coverage for antialiasing */
+   unsigned facing:1;         /**< Front (0) or back (1) facing? */
+   unsigned prim:2;           /**< QUAD_PRIM_POINT, LINE, TRI */
 };
 
 
-struct quad_stage *sp_quad_polygon_stipple_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_earlyz_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_alpha_test_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_stencil_test_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_depth_test_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_occlusion_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_coverage_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_blend_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_colormask_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_output_stage( struct softpipe_context *softpipe );
+/**
+ * Quad stage inputs/outputs.
+ */
+struct quad_header_inout
+{
+   unsigned mask:4;
+};
 
-void sp_build_quad_pipeline(struct softpipe_context *sp);
 
-void sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad);
+/**
+ * Quad stage outputs (color & depth).
+ */
+struct quad_header_output
+{
+   /** colors in SOA format (rrrr, gggg, bbbb, aaaa) */
+   float color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][QUAD_SIZE];
+   float depth[QUAD_SIZE];
+};
+
+
+/**
+ * Encodes everything we need to know about a 2x2 pixel block.  Uses
+ * "Channel-Serial" or "SoA" layout.  
+ */
+struct quad_header {
+   struct quad_header_input input;
+   struct quad_header_inout inout;
+   struct quad_header_output output;
+
+   const struct tgsi_interp_coef *coef;
+   const struct tgsi_interp_coef *posCoef;
+
+   unsigned nr_attrs;
+};
 
 #endif /* SP_QUAD_H */

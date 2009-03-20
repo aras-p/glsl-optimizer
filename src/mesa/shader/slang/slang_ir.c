@@ -94,6 +94,9 @@ static const slang_ir_info IrInfo[] = {
    { IR_TEX, "IR_TEX", OPCODE_TEX, 4, 1 },
    { IR_TEXB, "IR_TEXB", OPCODE_TXB, 4, 1 },
    { IR_TEXP, "IR_TEXP", OPCODE_TXP, 4, 1 },
+   { IR_TEX_SH, "IR_TEX_SH", OPCODE_TEX, 4, 1 },
+   { IR_TEXB_SH, "IR_TEXB_SH", OPCODE_TXB, 4, 1 },
+   { IR_TEXP_SH, "IR_TEXP_SH", OPCODE_TXP, 4, 1 },
    { IR_FLOAT, "IR_FLOAT", OPCODE_NOP, 0, 0 }, /* float literal */
    { IR_FIELD, "IR_FIELD", OPCODE_NOP, 0, 0 },
    { IR_ELEMENT, "IR_ELEMENT", OPCODE_NOP, 0, 0 },
@@ -118,7 +121,7 @@ _slang_ir_info(slang_ir_opcode opcode)
 
 void
 _slang_init_ir_storage(slang_ir_storage *st,
-                       enum register_file file, GLint index, GLint size,
+                       gl_register_file file, GLint index, GLint size,
                        GLuint swizzle)
 {
    st->File = file;
@@ -134,7 +137,7 @@ _slang_init_ir_storage(slang_ir_storage *st,
  * Return a new slang_ir_storage object.
  */
 slang_ir_storage *
-_slang_new_ir_storage(enum register_file file, GLint index, GLint size)
+_slang_new_ir_storage(gl_register_file file, GLint index, GLint size)
 {
    slang_ir_storage *st;
    st = (slang_ir_storage *) _slang_alloc(sizeof(slang_ir_storage));
@@ -154,7 +157,7 @@ _slang_new_ir_storage(enum register_file file, GLint index, GLint size)
  * Return a new slang_ir_storage object.
  */
 slang_ir_storage *
-_slang_new_ir_storage_swz(enum register_file file, GLint index, GLint size,
+_slang_new_ir_storage_swz(gl_register_file file, GLint index, GLint size,
                           GLuint swizzle)
 {
    slang_ir_storage *st;
@@ -193,10 +196,10 @@ _slang_new_ir_storage_relative(GLint index, GLint size,
 
 
 slang_ir_storage *
-_slang_new_ir_storage_indirect(enum register_file file,
+_slang_new_ir_storage_indirect(gl_register_file file,
                                GLint index,
                                GLint size,
-                               enum register_file indirectFile,
+                               gl_register_file indirectFile,
                                GLint indirectIndex,
                                GLuint indirectSwizzle)
 {

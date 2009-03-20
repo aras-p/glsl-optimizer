@@ -237,10 +237,10 @@ static int vlDestroy
 	pipe->delete_fs_state(pipe, basic_csc->fragment_shader);
 
 	for (i = 0; i < 2; ++i)
-		pipe_buffer_reference(pipe->screen, &basic_csc->vertex_bufs[i].buffer, NULL);
+		pipe_buffer_reference(&basic_csc->vertex_bufs[i].buffer, NULL);
 
-	pipe_buffer_reference(pipe->screen, &basic_csc->vs_const_buf.buffer, NULL);
-	pipe_buffer_reference(pipe->screen, &basic_csc->fs_const_buf.buffer, NULL);
+	pipe_buffer_reference(&basic_csc->vs_const_buf.buffer, NULL);
+	pipe_buffer_reference(&basic_csc->fs_const_buf.buffer, NULL);
 
 	FREE(basic_csc);
 
@@ -371,7 +371,7 @@ static int vlCreateVertexShader
 	unsigned int			ti;
 	unsigned int			i;
 
-	assert(context);
+	assert(csc);
 
 	pipe = csc->pipe;
 	tokens = (struct tgsi_token*)MALLOC(max_tokens * sizeof(struct tgsi_token));
@@ -458,7 +458,7 @@ static int vlCreateFragmentShader
 	unsigned int			ti;
 	unsigned int			i;
 
-	assert(context);
+	assert(csc);
 
 	pipe = csc->pipe;
 	tokens = (struct tgsi_token*)MALLOC(max_tokens * sizeof(struct tgsi_token));

@@ -25,8 +25,15 @@
  *
  **************************************************************************/
 
-#ifndef ST_DEVICE_H_
-#define ST_DEVICE_H_
+#ifndef STW_DEVICE_H_
+#define STW_DEVICE_H_
+
+
+#include "pipe/p_compiler.h"
+#include "pipe/p_thread.h"
+
+
+#define STW_CONTEXT_MAX 32
 
 
 struct pipe_screen;
@@ -35,10 +42,22 @@ struct stw_device
 {
    const struct stw_winsys *stw_winsys;
    struct pipe_screen *screen;
+   
+   pipe_mutex mutex;
+
+   struct {
+      struct stw_context *ctx;
+   } ctx_array[STW_CONTEXT_MAX];
+   
+#ifdef DEBUG
+   unsigned long memdbg_no;
+#endif
 };
 
+struct stw_context *
+stw_lookup_context( UINT_PTR hglrc );
 
 extern struct stw_device *stw_dev;
 
 
-#endif /* ST_DEVICE_H_ */
+#endif /* STW_DEVICE_H_ */

@@ -3,7 +3,7 @@ include $(TOP)/configs/current
 
 LIBNAME = nv40
 
-DRIVER_SOURCES = \
+C_SOURCES = \
 	nv40_clear.c \
 	nv40_context.c \
 	nv40_draw.c \
@@ -22,16 +22,8 @@ DRIVER_SOURCES = \
 	nv40_state_viewport.c \
 	nv40_state_zsa.c \
 	nv40_surface.c \
+	nv40_transfer.c \
 	nv40_vbo.c \
 	nv40_vertprog.c
 
-C_SOURCES = \
-	$(COMMON_SOURCES) \
-	$(DRIVER_SOURCES)
-
-ASM_SOURCES = 
-
 include ../../Makefile.template
-
-symlinks:
-

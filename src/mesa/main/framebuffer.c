@@ -116,6 +116,7 @@ _mesa_new_framebuffer(GLcontext *ctx, GLuint name)
       fb->ColorReadBuffer = GL_COLOR_ATTACHMENT0_EXT;
       fb->_ColorReadBufferIndex = BUFFER_COLOR0;
       fb->Delete = _mesa_destroy_framebuffer;
+      _glthread_INIT_MUTEX(fb->Mutex);
    }
    return fb;
 }
@@ -249,22 +250,6 @@ _mesa_reference_framebuffer(struct gl_framebuffer **ptr,
       *ptr = fb;
    }
 }
-
-
-/**
- * XXX this function is deprecated.
- * Undo/remove a reference to a framebuffer object.
- * Decrement the framebuffer object's reference count and delete it when
- * the refcount hits zero.
- * Note: we pass the address of a pointer and set it to NULL.
- */
-void
-_mesa_unreference_framebuffer(struct gl_framebuffer **fb)
-{
-   _mesa_reference_framebuffer(fb, NULL);
-}
-
-
 
 
 /**

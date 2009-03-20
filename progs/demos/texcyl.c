@@ -79,6 +79,7 @@ static void Display( void )
          GLfloat seconds = (t - T0) / 1000.0;
          GLfloat fps = Frames / seconds;
          printf("%d frames in %g seconds = %g FPS\n", Frames, seconds, fps);
+         fflush(stdout);
          T0 = t;
          Frames = 0;
       }

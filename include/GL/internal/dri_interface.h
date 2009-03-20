@@ -78,6 +78,7 @@ typedef struct __DRIswrastExtensionRec		__DRIswrastExtension;
 typedef struct __DRIbufferRec			__DRIbuffer;
 typedef struct __DRIdri2ExtensionRec		__DRIdri2Extension;
 typedef struct __DRIdri2LoaderExtensionRec	__DRIdri2LoaderExtension;
+typedef struct __DRI2flushExtensionRec	__DRI2flushExtension;
 
 /*@}*/
 
@@ -243,6 +244,16 @@ struct __DRItexBufferExtensionRec {
     void (*setTexBuffer)(__DRIcontext *pDRICtx,
 			 GLint target,
 			 __DRIdrawable *pDraw);
+};
+
+/**
+ * Used by drivers that implement DRI2
+ */
+#define __DRI2_FLUSH "DRI2_Flush"
+#define __DRI2_FLUSH_VERSION 1
+struct __DRI2flushExtensionRec {
+    __DRIextension base;
+    void (*flush)(__DRIdrawable *drawable);
 };
 
 

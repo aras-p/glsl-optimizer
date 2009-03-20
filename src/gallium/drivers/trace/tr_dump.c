@@ -29,35 +29,38 @@
 /**
  * @file
  * Trace dumping functions.
- * 
+ *
  * For now we just use standard XML for dumping the trace calls, as this is
- * simple to write, parse, and visually inspect, but the actual representation 
- * is abstracted out of this file, so that we can switch to a binary 
+ * simple to write, parse, and visually inspect, but the actual representation
+ * is abstracted out of this file, so that we can switch to a binary
  * representation if/when it becomes justified.
- * 
- * @author Jose Fonseca <jrfonseca@tungstengraphics.com>   
+ *
+ * @author Jose Fonseca <jrfonseca@tungstengraphics.com>
  */
 
 #include "pipe/p_config.h"
 
-#if defined(PIPE_OS_LINUX)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
 #include <stdlib.h>
 #endif
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
 #include "util/u_stream.h"
 
 #include "tr_dump.h"
+#include "tr_screen.h"
+#include "tr_texture.h"
+#include "tr_buffer.h"
 
 
 static struct util_stream *stream = NULL;
 static unsigned refcount = 0;
 
 
-static INLINE void 
+static INLINE void
 trace_dump_write(const char *buf, size_t size)
 {
    if(stream)
@@ -65,14 +68,14 @@ trace_dump_write(const char *buf, size_t size)
 }
 
 
-static INLINE void 
+static INLINE void
 trace_dump_writes(const char *s)
 {
    trace_dump_write(s, strlen(s));
 }
 
 
-static INLINE void 
+static INLINE void
 trace_dump_writef(const char *format, ...)
 {
    static char buf[1024];
@@ -85,8 +88,8 @@ trace_dump_writef(const char *format, ...)
 }
 
 
-static INLINE void 
-trace_dump_escape(const char *str) 
+static INLINE void
+trace_dump_escape(const char *str)
 {
    const unsigned char *p = (const unsigned char *)str;
    unsigned char c;
@@ -109,7 +112,7 @@ trace_dump_escape(const char *str)
 }
 
 
-static INLINE void 
+static INLINE void
 trace_dump_indent(unsigned level)
 {
    unsigned i;
@@ -118,14 +121,14 @@ trace_dump_indent(unsigned level)
 }
 
 
-static INLINE void 
-trace_dump_newline(void) 
+static INLINE void
+trace_dump_newline(void)
 {
    trace_dump_writes("\n");
 }
 
 
-static INLINE void 
+static INLINE void
 trace_dump_tag(const char *name)
 {
    trace_dump_writes("<");
@@ -134,7 +137,7 @@ trace_dump_tag(const char *name)
 }
 
 
-static INLINE void 
+static INLINE void
 trace_dump_tag_begin(const char *name)
 {
    trace_dump_writes("<");
@@ -142,8 +145,8 @@ trace_dump_tag_begin(const char *name)
    trace_dump_writes(">");
 }
 
-static INLINE void 
-trace_dump_tag_begin1(const char *name, 
+static INLINE void
+trace_dump_tag_begin1(const char *name,
                       const char *attr1, const char *value1)
 {
    trace_dump_writes("<");
@@ -156,8 +159,8 @@ trace_dump_tag_begin1(const char *name,
 }
 
 
-static INLINE void 
-trace_dump_tag_begin2(const char *name, 
+static INLINE void
+trace_dump_tag_begin2(const char *name,
                       const char *attr1, const char *value1,
                       const char *attr2, const char *value2)
 {
@@ -175,8 +178,8 @@ trace_dump_tag_begin2(const char *name,
 }
 
 
-static INLINE void 
-trace_dump_tag_begin3(const char *name, 
+static INLINE void
+trace_dump_tag_begin3(const char *name,
                       const char *attr1, const char *value1,
                       const char *attr2, const char *value2,
                       const char *attr3, const char *value3)
@@ -207,7 +210,7 @@ trace_dump_tag_end(const char *name)
    trace_dump_writes(">");
 }
 
-static void 
+static void
 trace_dump_trace_close(void)
 {
    if(stream) {
@@ -221,30 +224,30 @@ trace_dump_trace_close(void)
 boolean trace_dump_trace_begin()
 {
    const char *filename;
-   
+
    filename = debug_get_option("GALLIUM_TRACE", NULL);
    if(!filename)
       return FALSE;
-   
+
    if(!stream) {
-   
+
       stream = util_stream_create(filename, 0);
       if(!stream)
          return FALSE;
-      
+
       trace_dump_writes("<?xml version='1.0' encoding='UTF-8'?>\n");
       trace_dump_writes("<?xml-stylesheet type='text/xsl' href='trace.xsl'?>\n");
       trace_dump_writes("<trace version='0.1'>\n");
-      
-#if defined(PIPE_OS_LINUX)
-      /* Linux applications rarely cleanup GL / Gallium resources so catch 
-       * application exit here */ 
+
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
+      /* Linux applications rarely cleanup GL / Gallium resources so catch
+       * application exit here */
       atexit(trace_dump_trace_close);
 #endif
    }
-   
+
    ++refcount;
-   
+
    return TRUE;
 }
 
@@ -401,4 +404,50 @@ void trace_dump_ptr(const void *value)
       trace_dump_writef("<ptr>0x%08lx</ptr>", (unsigned long)(uintptr_t)value);
    else
       trace_dump_null();
+}
+
+void trace_dump_buffer_ptr(struct pipe_buffer *_buffer)
+{
+   if (_buffer) {
+      struct trace_screen *tr_scr = trace_screen(_buffer->screen);
+      struct trace_buffer *tr_buf = trace_buffer(tr_scr, _buffer);
+      trace_dump_ptr(tr_buf->buffer);
+   } else {
+      trace_dump_null();
+   }
+}
+
+void trace_dump_texture_ptr(struct pipe_texture *_texture)
+{
+   if (_texture) {
+      struct trace_screen *tr_scr = trace_screen(_texture->screen);
+      struct trace_texture *tr_tex = trace_texture(tr_scr, _texture);
+      trace_dump_ptr(tr_tex->texture);
+   } else {
+      trace_dump_null();
+   }
+}
+
+void trace_dump_surface_ptr(struct pipe_surface *_surface)
+{
+   if (_surface) {
+      struct trace_screen *tr_scr = trace_screen(_surface->texture->screen);
+      struct trace_texture *tr_tex = trace_texture(tr_scr, _surface->texture);
+      struct trace_surface *tr_surf = trace_surface(tr_tex, _surface);
+      trace_dump_ptr(tr_surf->surface);
+   } else {
+      trace_dump_null();
+   }
+}
+
+void trace_dump_transfer_ptr(struct pipe_transfer *_transfer)
+{
+   if (_transfer) {
+      struct trace_screen *tr_scr = trace_screen(_transfer->texture->screen);
+      struct trace_texture *tr_tex = trace_texture(tr_scr, _transfer->texture);
+      struct trace_transfer *tr_tran = trace_transfer(tr_tex, _transfer);
+      trace_dump_ptr(tr_tran->transfer);
+   } else {
+      trace_dump_null();
+   }
 }

@@ -7,6 +7,3 @@ C_SOURCES = \
 	sct.c
 
 include ../../Makefile.template
-
-symlinks:
-

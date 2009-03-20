@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "GL/glew.h"
 #include "GL/glut.h"
 
 static GLuint Window = 0;
@@ -207,6 +208,7 @@ int main( int argc, char *argv[] )
    glutInitDisplayMode( GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
 
    Window = glutCreateWindow("Texture Objects");
+   glewInit();
    if (!Window) {
       exit(1);
    }

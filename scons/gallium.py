@@ -330,9 +330,14 @@ def generate(env):
             ]
         if env['machine'] == 'x86_64':
             cflags += ['-m64']
+        # See also:
+        # - http://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
         cflags += [
+            '-Werror=declaration-after-statement',
             '-Wall',
             '-Wmissing-prototypes',
+            '-Wmissing-field-initializers',
+            '-Wpointer-arith',
             '-Wno-long-long',
             '-ffast-math',
             '-std=gnu99',
@@ -347,6 +352,7 @@ def generate(env):
               '/Od', # disable optimizations
               '/Oi', # enable intrinsic functions
               '/Oy-', # disable frame pointer omission
+              '/GL-', # disable whole program optimization
             ]
         else:
             cflags += [
@@ -437,9 +443,14 @@ def generate(env):
             linkflags += ['-m32']
         if env['machine'] == 'x86_64':
             linkflags += ['-m64']
-    if platform == 'winddk':
+    if platform == 'windows' and msvc:
         # See also:
         # - http://msdn2.microsoft.com/en-us/library/y0zzbyt4.aspx
+        linkflags += [
+            '/fixed:no',
+            '/incremental:no',
+        ]
+    if platform == 'winddk':
         linkflags += [
             '/merge:_PAGE=PAGE',
             '/merge:_TEXT=.text',
@@ -467,7 +478,7 @@ def generate(env):
 
             '/entry:DrvEnableDriver',
         ]
-        if env['profile']:
+        if env['debug'] or env['profile']:
             linkflags += [
                 '/MAP', # http://msdn.microsoft.com/en-us/library/k7xkk3e2.aspx
             ]

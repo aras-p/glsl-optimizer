@@ -834,6 +834,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
 	struct nv30_fragment_program *fp = nv30->fragprog;
 	struct pipe_buffer *constbuf =
 		nv30->constbuf[PIPE_SHADER_FRAGMENT];
+	struct pipe_screen *screen = nv30->pipe.screen;
 	struct pipe_winsys *ws = nv30->pipe.winsys;
 	struct nouveau_stateobj *so;
 	boolean new_consts = FALSE;
@@ -849,7 +850,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
 		return FALSE;
 	}
 
-	fp->buffer = ws->buffer_create(ws, 0x100, 0, fp->insn_len * 4);
+	fp->buffer = screen->buffer_create(screen, 0x100, 0, fp->insn_len * 4);
 	nv30_fragprog_upload(nv30, fp);
 
 	so = so_new(8, 1);
@@ -864,6 +865,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
 	so_method(so, nv30->screen->rankine, NV34TCL_TX_UNITS_ENABLE, 1);
 	so_data  (so, fp->samplers);
 	so_ref(so, &fp->so);
+	so_ref(NULL, &so);
 
 update_constants:
 	if (fp->nr_consts) {

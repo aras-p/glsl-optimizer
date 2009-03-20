@@ -54,13 +54,16 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 #define FLOAT_TO_BYTE(X)    ( (((GLint) (255.0F * (X))) - 1) / 2 )
 
 
-/** Convert GLushort in [0,65536] to GLfloat in [0.0,1.0] */
+/** Convert GLushort in [0,65535] to GLfloat in [0.0,1.0] */
 #define USHORT_TO_FLOAT(S)  ((GLfloat) (S) * (1.0F / 65535.0F))
+
+/** Convert GLfloat in [0.0,1.0] to GLushort in [0, 65535] */
+#define FLOAT_TO_USHORT(X)   ((GLuint) ((X) * 65535.0))
 
 /** Convert GLshort in [-32768,32767] to GLfloat in [-1.0,1.0] */
 #define SHORT_TO_FLOAT(S)   ((2.0F * (S) + 1.0F) * (1.0F/65535.0F))
 
-/** Convert GLfloat in [0.0,1.0] to GLshort in [-32768,32767] */
+/** Convert GLfloat in [-1.0,1.0] to GLshort in [-32768,32767] */
 #define FLOAT_TO_SHORT(X)   ( (((GLint) (65535.0F * (X))) - 1) / 2 )
 
 

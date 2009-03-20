@@ -127,6 +127,7 @@ static void brw_emit_prim(struct brw_context *brw,
 			  uint32_t hw_prim)
 {
    struct brw_3d_primitive prim_packet;
+   struct intel_context *intel = &brw->intel;
 
    if (INTEL_DEBUG & DEBUG_PRIMS)
       _mesa_printf("PRIM: %s %d %d\n", _mesa_lookup_enum_by_nr(prim->mode), 
@@ -146,10 +147,27 @@ static void brw_emit_prim(struct brw_context *brw,
 
    /* Can't wrap here, since we rely on the validated state. */
    brw->no_batch_wrap = GL_TRUE;
+
+   /* If we're set to always flush, do it before and after the primitive emit.
+    * We want to catch both missed flushes that hurt instruction/state cache
+    * and missed flushes of the render cache as it heads to other parts of
+    * the besides the draw code.
+    */
+   if (intel->always_flush_cache) {
+      BEGIN_BATCH(1, IGNORE_CLIPRECTS);
+      OUT_BATCH(intel->vtbl.flush_cmd());
+      ADVANCE_BATCH();
+   }
    if (prim_packet.verts_per_instance) {
       intel_batchbuffer_data( brw->intel.batch, &prim_packet,
 			      sizeof(prim_packet), LOOP_CLIPRECTS);
    }
+   if (intel->always_flush_cache) {
+      BEGIN_BATCH(1, IGNORE_CLIPRECTS);
+      OUT_BATCH(intel->vtbl.flush_cmd());
+      ADVANCE_BATCH();
+   }
+
    brw->no_batch_wrap = GL_FALSE;
 }
 
@@ -194,8 +212,15 @@ static GLboolean check_fallbacks( struct brw_context *brw,
    GLcontext *ctx = &brw->intel.ctx;
    GLuint i;
 
-   if (!brw->intel.strict_conformance)
+   /* If we don't require strict OpenGL conformance, never 
+    * use fallbacks.  If we're forcing fallbacks, always
+    * use fallfacks.
+    */
+   if (brw->intel.conformance_mode == 0)
       return GL_FALSE;
+
+   if (brw->intel.conformance_mode == 2)
+      return GL_TRUE;
 
    if (ctx->Polygon.SmoothFlag) {
       for (i = 0; i < nr_prims; i++)
@@ -220,7 +245,7 @@ static GLboolean check_fallbacks( struct brw_context *brw,
 	 /* GS doesn't get enough information to know when to reset
 	  * the stipple counter?!?
 	  */
-	 if (prim[i].mode == GL_LINE_LOOP) 
+	 if (prim[i].mode == GL_LINE_LOOP || prim[i].mode == GL_LINE_STRIP) 
 	    return GL_TRUE;
 	    
 	 if (prim[i].mode == GL_POLYGON &&
@@ -230,13 +255,46 @@ static GLboolean check_fallbacks( struct brw_context *brw,
       }
    }
 
-
    if (ctx->Point.SmoothFlag) {
       for (i = 0; i < nr_prims; i++)
 	 if (prim[i].mode == GL_POINTS) 
 	    return GL_TRUE;
    }
+
+   /* BRW hardware doesn't handle GL_CLAMP texturing correctly;
+    * brw_wm_sampler_state:translate_wrap_mode() treats GL_CLAMP
+    * as GL_CLAMP_TO_EDGE instead.  If we're using GL_CLAMP, and
+    * we want strict conformance, force the fallback.
+    * Right now, we only do this for 2D textures.
+    */
+   {
+      int u;
+      for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
+         struct gl_texture_unit *texUnit = &ctx->Texture.Unit[u];
+         if (texUnit->Enabled) {
+            if (texUnit->Enabled & TEXTURE_1D_BIT) {
+               if (texUnit->CurrentTex[TEXTURE_1D_INDEX]->WrapS == GL_CLAMP) {
+                   return GL_TRUE;
+               }
+            }
+            if (texUnit->Enabled & TEXTURE_2D_BIT) {
+               if (texUnit->CurrentTex[TEXTURE_2D_INDEX]->WrapS == GL_CLAMP ||
+                   texUnit->CurrentTex[TEXTURE_2D_INDEX]->WrapT == GL_CLAMP) {
+                   return GL_TRUE;
+               }
+            }
+            if (texUnit->Enabled & TEXTURE_3D_BIT) {
+               if (texUnit->CurrentTex[TEXTURE_3D_INDEX]->WrapS == GL_CLAMP ||
+                   texUnit->CurrentTex[TEXTURE_3D_INDEX]->WrapT == GL_CLAMP ||
+                   texUnit->CurrentTex[TEXTURE_3D_INDEX]->WrapR == GL_CLAMP) {
+                   return GL_TRUE;
+               }
+            }
+         }
+      }
+   }
       
+   /* Nothing stopping us from the fast path now */
    return GL_FALSE;
 }
 
@@ -261,10 +319,17 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    if (ctx->NewState)
       _mesa_update_state( ctx );
 
+   /* We have to validate the textures *before* checking for fallbacks;
+    * otherwise, the software fallback won't be able to rely on the
+    * texture state, the firstLevel and lastLevel fields won't be
+    * set in the intel texture object (they'll both be 0), and the 
+    * software fallback will segfault if it attempts to access any
+    * texture level other than level 0.
+    */
+   brw_validate_textures( brw );
+
    if (check_fallbacks(brw, prim, nr_prims))
       return GL_FALSE;
-
-   brw_validate_textures( brw );
 
    /* Bind all inputs, derive varying and size information:
     */
@@ -346,6 +411,8 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
       retval = GL_TRUE;
    }
 
+   if (intel->always_flush_batch)
+      intel_batchbuffer_flush(intel->batch);
  out:
    UNLOCK_HARDWARE(intel);
 

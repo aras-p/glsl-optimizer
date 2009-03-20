@@ -49,9 +49,11 @@
 #define CONTEXT_H
 
 
-#include "glapi/glapi.h"
 #include "imports.h"
 #include "mtypes.h"
+
+
+struct _glapi_table;
 
 
 /** \name Visual-related functions */

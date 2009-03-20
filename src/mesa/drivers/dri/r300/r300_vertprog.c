@@ -126,7 +126,7 @@ static unsigned long t_dst_mask(GLuint mask)
 	return mask & VSF_FLAG_ALL;
 }
 
-static unsigned long t_dst_class(enum register_file file)
+static unsigned long t_dst_class(gl_register_file file)
 {
 
 	switch (file) {
@@ -161,7 +161,7 @@ static unsigned long t_dst_index(struct r300_vertex_program *vp,
 	return dst->Index;
 }
 
-static unsigned long t_src_class(enum register_file file)
+static unsigned long t_src_class(gl_register_file file)
 {
 	switch (file) {
 	case PROGRAM_TEMPORARY:
@@ -993,16 +993,15 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 		    vp->outputs[VERT_RESULT_COL0] + 3;
 		cur_reg = vp->outputs[VERT_RESULT_BFC1] + 1;
 	}
-#if 0
-	if (vp->key.OutputsWritten & (1 << VERT_RESULT_FOGC)) {
-		vp->outputs[VERT_RESULT_FOGC] = cur_reg++;
-	}
-#endif
 
 	for (i = VERT_RESULT_TEX0; i <= VERT_RESULT_TEX7; i++) {
 		if (vp->key.OutputsWritten & (1 << i)) {
 			vp->outputs[i] = cur_reg++;
 		}
+	}
+
+	if (vp->key.OutputsWritten & (1 << VERT_RESULT_FOGC)) {
+		vp->outputs[VERT_RESULT_FOGC] = cur_reg++;
 	}
 }
 
@@ -1271,7 +1270,6 @@ static void position_invariant(struct gl_program *prog)
 		else
 			vpi[i].Opcode = OPCODE_MAD;
 
-		vpi[i].StringPos = 0;
 		vpi[i].Data = 0;
 
 		if (i == 3)

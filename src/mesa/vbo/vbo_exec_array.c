@@ -31,6 +31,7 @@
 #include "main/api_validate.h"
 #include "main/api_noop.h"
 #include "main/varray.h"
+#include "main/bufferobj.h"
 #include "glapi/dispatch.h"
 
 #include "vbo_context.h"
@@ -94,32 +95,33 @@ static void bind_array_obj( GLcontext *ctx )
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
+   struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    GLuint i;
 
    /* TODO: Fix the ArrayObj struct to keep legacy arrays in an array
     * rather than as individual named arrays.  Then this function can
     * go away.
     */
-   exec->array.legacy_array[VERT_ATTRIB_POS] = &ctx->Array.ArrayObj->Vertex;
+   exec->array.legacy_array[VERT_ATTRIB_POS] = &arrayObj->Vertex;
    exec->array.legacy_array[VERT_ATTRIB_WEIGHT] = &vbo->legacy_currval[VERT_ATTRIB_WEIGHT];
-   exec->array.legacy_array[VERT_ATTRIB_NORMAL] = &ctx->Array.ArrayObj->Normal;
-   exec->array.legacy_array[VERT_ATTRIB_COLOR0] = &ctx->Array.ArrayObj->Color;
-   exec->array.legacy_array[VERT_ATTRIB_COLOR1] = &ctx->Array.ArrayObj->SecondaryColor;
-   exec->array.legacy_array[VERT_ATTRIB_FOG] = &ctx->Array.ArrayObj->FogCoord;
-   exec->array.legacy_array[VERT_ATTRIB_COLOR_INDEX] = &ctx->Array.ArrayObj->Index;
-   if (ctx->Array.ArrayObj->PointSize.Enabled) {
+   exec->array.legacy_array[VERT_ATTRIB_NORMAL] = &arrayObj->Normal;
+   exec->array.legacy_array[VERT_ATTRIB_COLOR0] = &arrayObj->Color;
+   exec->array.legacy_array[VERT_ATTRIB_COLOR1] = &arrayObj->SecondaryColor;
+   exec->array.legacy_array[VERT_ATTRIB_FOG] = &arrayObj->FogCoord;
+   exec->array.legacy_array[VERT_ATTRIB_COLOR_INDEX] = &arrayObj->Index;
+   if (arrayObj->PointSize.Enabled) {
       /* this aliases COLOR_INDEX */
-      exec->array.legacy_array[VERT_ATTRIB_POINT_SIZE] = &ctx->Array.ArrayObj->PointSize;
+      exec->array.legacy_array[VERT_ATTRIB_POINT_SIZE] = &arrayObj->PointSize;
    }
-   exec->array.legacy_array[VERT_ATTRIB_EDGEFLAG] = &ctx->Array.ArrayObj->EdgeFlag;
+   exec->array.legacy_array[VERT_ATTRIB_EDGEFLAG] = &arrayObj->EdgeFlag;
 
    for (i = 0; i < 8; i++)
-      exec->array.legacy_array[VERT_ATTRIB_TEX0 + i] = &ctx->Array.ArrayObj->TexCoord[i];
+      exec->array.legacy_array[VERT_ATTRIB_TEX0 + i] = &arrayObj->TexCoord[i];
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
-      exec->array.generic_array[i] = &ctx->Array.ArrayObj->VertexAttrib[i];
+      exec->array.generic_array[i] = &arrayObj->VertexAttrib[i];
    
-   exec->array.array_obj = ctx->Array.ArrayObj->Name;
+   exec->array.array_obj = arrayObj->Name;
 }
 
 static void recalculate_input_bindings( GLcontext *ctx )
@@ -291,6 +293,47 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
    prim[0].indexed = 0;
 
    vbo->draw_prims( ctx, exec->array.inputs, prim, 1, NULL, start, start + count - 1 );
+
+#if 0
+   {
+      int i;
+
+      _mesa_printf("vbo_exec_DrawArrays(mode 0x%x, start %d, count %d):\n",
+                   mode, start, count);
+
+      for (i = 0; i < 32; i++) {
+         GLuint bufName = exec->array.inputs[i]->BufferObj->Name;
+         GLint stride = exec->array.inputs[i]->Stride;
+         _mesa_printf("attr %2d: size %d stride %d  enabled %d  "
+                      "ptr %p  Bufobj %u\n",
+                      i,
+                      exec->array.inputs[i]->Size,
+                      stride,
+                      /*exec->array.inputs[i]->Enabled,*/
+                      exec->array.legacy_array[i]->Enabled,
+                      exec->array.inputs[i]->Ptr,
+                      bufName);
+         
+         if (bufName) {
+            struct gl_buffer_object *buf = _mesa_lookup_bufferobj(ctx, bufName);
+            GLubyte *p = ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER_ARB,
+                                            GL_READ_ONLY_ARB, buf);
+            int offset = (int) exec->array.inputs[i]->Ptr;
+            float *f = (float *) (p + offset);
+            int *k = (int *) f;
+            int i;
+            int n = (count * stride) / 4;
+            if (n > 32)
+               n = 32;
+            _mesa_printf("  Data at offset %d:\n", offset);
+            for (i = 0; i < n; i++) {
+               _mesa_printf("    float[%d] = 0x%08x %f\n", i, k[i], f[i]);
+            }
+            ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, buf);
+         }
+      }
+   }
+#endif
 }
 
 

@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "tgsi_info.h"
 
 static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =

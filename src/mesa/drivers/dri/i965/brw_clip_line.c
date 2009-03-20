@@ -181,34 +181,54 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
 	 brw_DP4(p, vec4(c->reg.dp1), deref_4f(vtx1, c->offset[VERT_RESULT_HPOS]), c->reg.plane_equation);
 	 is_negative = brw_IF(p, BRW_EXECUTE_1);
 	 {
-	    brw_ADD(p, c->reg.t, c->reg.dp1, negate(c->reg.dp0));
-	    brw_math_invert(p, c->reg.t, c->reg.t);
-	    brw_MUL(p, c->reg.t, c->reg.t, c->reg.dp1);
+             /*
+              * Both can be negative on GM965/G965 due to RHW workaround
+              * if so, this object should be rejected.
+              */
+             if (!BRW_IS_G4X(p->brw)) {
+                 brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_LE, c->reg.dp0, brw_imm_f(0.0));
+                 is_neg2 = brw_IF(p, BRW_EXECUTE_1);
+                 {
+                     brw_clip_kill_thread(c);
+                 }
+                 brw_ENDIF(p, is_neg2);
+             }
 
-	    brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_G, c->reg.t, c->reg.t1 );
-	    brw_MOV(p, c->reg.t1, c->reg.t);
-	    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+             brw_ADD(p, c->reg.t, c->reg.dp1, negate(c->reg.dp0));
+             brw_math_invert(p, c->reg.t, c->reg.t);
+             brw_MUL(p, c->reg.t, c->reg.t, c->reg.dp1);
+
+             brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_G, c->reg.t, c->reg.t1 );
+             brw_MOV(p, c->reg.t1, c->reg.t);
+             brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 	 } 
 	 is_negative = brw_ELSE(p, is_negative);
 	 {
-	    /* Coming back in.  We know that both cannot be negative
-	     * because the line would have been culled in that case.
-	     */
+             /* Coming back in.  We know that both cannot be negative
+              * because the line would have been culled in that case.
+              */
 
-	    /* If both are positive, do nothing */
-             brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_L, c->reg.dp0, brw_imm_f(0.0));
-             is_neg2 = brw_IF(p, BRW_EXECUTE_1);
+             /* If both are positive, do nothing */
+             /* Only on GM965/G965 */
+             if (!BRW_IS_G4X(p->brw)) {
+                 brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_L, c->reg.dp0, brw_imm_f(0.0));
+                 is_neg2 = brw_IF(p, BRW_EXECUTE_1);
+             }
+
              {
-		brw_ADD(p, c->reg.t, c->reg.dp0, negate(c->reg.dp1));
-		brw_math_invert(p, c->reg.t, c->reg.t);
-		brw_MUL(p, c->reg.t, c->reg.t, c->reg.dp0);
+                 brw_ADD(p, c->reg.t, c->reg.dp0, negate(c->reg.dp1));
+                 brw_math_invert(p, c->reg.t, c->reg.t);
+                 brw_MUL(p, c->reg.t, c->reg.t, c->reg.dp0);
 
-		brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_G, c->reg.t, c->reg.t0 );
-		brw_MOV(p, c->reg.t0, c->reg.t);
-		brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-	     }
-	     brw_ENDIF(p, is_neg2);
-	 }
+                 brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_G, c->reg.t, c->reg.t0 );
+                 brw_MOV(p, c->reg.t0, c->reg.t);
+                 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+             }
+
+             if (!BRW_IS_G4X(p->brw)) {
+                 brw_ENDIF(p, is_neg2);
+             }
+         }
 	 brw_ENDIF(p, is_negative);	 
       }
       brw_ENDIF(p, plane_active);

@@ -1922,7 +1922,6 @@ fxDDInitExtensions(GLcontext * ctx)
       _mesa_enable_extension(ctx, "GL_ARB_vertex_program");
       _mesa_enable_extension(ctx, "GL_NV_vertex_program");
       _mesa_enable_extension(ctx, "GL_NV_vertex_program1_1");
-      _mesa_enable_extension(ctx, "GL_MESA_program_debug");
    }
 #if 0
    /* this requires _tnl_vertex_cull_stage in the pipeline */
@@ -1948,7 +1947,7 @@ fx_check_IsInHardware(GLcontext * ctx)
       return FX_FALLBACK_RENDER_MODE;
    }
 
-   if (ctx->Stencil.Enabled && !fxMesa->haveHwStencil) {
+   if (ctx->Stencil._Enabled && !fxMesa->haveHwStencil) {
       return FX_FALLBACK_STENCIL;
    }
 

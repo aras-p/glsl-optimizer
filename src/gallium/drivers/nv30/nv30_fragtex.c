@@ -137,6 +137,7 @@ nv30_fragtex_validate(struct nv30_context *nv30)
 		so_method(so, nv30->screen->rankine, NV34TCL_TX_ENABLE(unit), 1);
 		so_data  (so, 0);
 		so_ref(so, &nv30->state.hw[NV30_STATE_FRAGTEX0 + unit]);
+		so_ref(NULL, &so);
 		state->dirty |= (1ULL << (NV30_STATE_FRAGTEX0 + unit));
 	}
 
@@ -147,6 +148,7 @@ nv30_fragtex_validate(struct nv30_context *nv30)
 
 		so = nv30_fragtex_build(nv30, unit);
 		so_ref(so, &nv30->state.hw[NV30_STATE_FRAGTEX0 + unit]);
+		so_ref(NULL, &so);
 		state->dirty |= (1ULL << (NV30_STATE_FRAGTEX0 + unit));
 	}
 

@@ -21,7 +21,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "r300_chipset.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 
 /* r300_chipset: A file all to itself for deducing the various properties of
  * Radeons. */
@@ -30,7 +30,7 @@
 void r300_parse_chipset(struct r300_capabilities* caps)
 {
     /* Reasonable defaults */
-    caps->has_tcl = TRUE;
+    caps->has_tcl = getenv("RADEON_NO_TCL") ? TRUE : FALSE;
     caps->is_r500 = FALSE;
     caps->num_vert_fpus = 4;
 
@@ -204,6 +204,13 @@ void r300_parse_chipset(struct r300_capabilities* caps)
             caps->has_tcl = FALSE;
             break;
 
+        case 0x793F:
+        case 0x7941:
+        case 0x7942:
+            caps->family = CHIP_FAMILY_RS600;
+            caps->has_tcl = FALSE;
+            break;
+
         case 0x796C:
         case 0x796D:
         case 0x796E:
@@ -343,6 +350,6 @@ void r300_parse_chipset(struct r300_capabilities* caps)
             break;
     }
 
-    /* Force off TCL for now */
-    caps->has_tcl = FALSE;
+    /* XXX SW TCL is broken so no forcing it off right now
+    caps->has_tcl = FALSE; */
 }

@@ -296,46 +296,6 @@ _slang_array_size(GLint elemSize, GLint arrayLen)
 }
 
 
-
-/**
- * Establish the binding between a slang_ir_node and a slang_variable.
- * Then, allocate/attach a slang_ir_storage object to the IR node if needed.
- * The IR node must be a IR_VAR or IR_VAR_DECL node.
- * \param n  the IR node
- * \param var  the variable to associate with the IR node
- */
-static void
-_slang_attach_storage(slang_ir_node *n, slang_variable *var)
-{
-   assert(n);
-   assert(var);
-   assert(n->Opcode == IR_VAR || n->Opcode == IR_VAR_DECL);
-   assert(!n->Var || n->Var == var);
-
-   n->Var = var;
-
-   if (!n->Store) {
-      /* need to setup storage */
-      if (n->Var && n->Var->store) {
-         /* node storage info = var storage info */
-         n->Store = n->Var->store;
-      }
-      else {
-         /* alloc new storage info */
-         n->Store = _slang_new_ir_storage(PROGRAM_UNDEFINED, -7, -5);
-#if 0
-         printf("%s var=%s Store=%p Size=%d\n", __FUNCTION__,
-                (char*) var->a_name,
-                (void*) n->Store, n->Store->Size);
-#endif
-         if (n->Var)
-            n->Var->store = n->Store;
-         assert(n->Var->store);
-      }
-   }
-}
-
-
 /**
  * Return the TEXTURE_*_INDEX value that corresponds to a sampler type,
  * or -1 if the type is not a sampler.
@@ -450,8 +410,8 @@ _slang_output_index(const char *name, GLenum target)
       { NULL, 0 }
    };
    static const struct output_info fragOutputs[] = {
-      { "gl_FragColor", FRAG_RESULT_COLR },
-      { "gl_FragDepth", FRAG_RESULT_DEPR },
+      { "gl_FragColor", FRAG_RESULT_COLOR },
+      { "gl_FragDepth", FRAG_RESULT_DEPTH },
       { "gl_FragData", FRAG_RESULT_DATA0 },
       { NULL, 0 }
    };
@@ -516,18 +476,28 @@ static slang_asm_info AsmInfo[] = {
    /* float binary op */
    { "float_power", IR_POW, 1, 2 },
    /* texture / sampler */
-   { "vec4_tex1d", IR_TEX, 1, 2 },
-   { "vec4_texb1d", IR_TEXB, 1, 2 },  /* 1d w/ bias */
-   { "vec4_texp1d", IR_TEXP, 1, 2 },  /* 1d w/ projection */
-   { "vec4_tex2d", IR_TEX, 1, 2 },
-   { "vec4_texb2d", IR_TEXB, 1, 2 },  /* 2d w/ bias */
-   { "vec4_texp2d", IR_TEXP, 1, 2 },  /* 2d w/ projection */
-   { "vec4_tex3d", IR_TEX, 1, 2 },
-   { "vec4_texb3d", IR_TEXB, 1, 2 },  /* 3d w/ bias */
-   { "vec4_texp3d", IR_TEXP, 1, 2 },  /* 3d w/ projection */
-   { "vec4_texcube", IR_TEX, 1, 2 },  /* cubemap */
-   { "vec4_tex_rect", IR_TEX, 1, 2 }, /* rectangle */
-   { "vec4_texp_rect", IR_TEX, 1, 2 },/* rectangle w/ projection */
+   { "vec4_tex_1d", IR_TEX, 1, 2 },
+   { "vec4_tex_1d_bias", IR_TEXB, 1, 2 },  /* 1d w/ bias */
+   { "vec4_tex_1d_proj", IR_TEXP, 1, 2 },  /* 1d w/ projection */
+   { "vec4_tex_2d", IR_TEX, 1, 2 },
+   { "vec4_tex_2d_bias", IR_TEXB, 1, 2 },  /* 2d w/ bias */
+   { "vec4_tex_2d_proj", IR_TEXP, 1, 2 },  /* 2d w/ projection */
+   { "vec4_tex_3d", IR_TEX, 1, 2 },
+   { "vec4_tex_3d_bias", IR_TEXB, 1, 2 },  /* 3d w/ bias */
+   { "vec4_tex_3d_proj", IR_TEXP, 1, 2 },  /* 3d w/ projection */
+   { "vec4_tex_cube", IR_TEX, 1, 2 },      /* cubemap */
+   { "vec4_tex_rect", IR_TEX, 1, 2 },      /* rectangle */
+   { "vec4_tex_rect_bias", IR_TEX, 1, 2 }, /* rectangle w/ projection */
+
+   /* texture / sampler but with shadow comparison */
+   { "vec4_tex_1d_shadow", IR_TEX_SH, 1, 2 },
+   { "vec4_tex_1d_bias_shadow", IR_TEXB_SH, 1, 2 },
+   { "vec4_tex_1d_proj_shadow", IR_TEXP_SH, 1, 2 },
+   { "vec4_tex_2d_shadow", IR_TEX_SH, 1, 2 },
+   { "vec4_tex_2d_bias_shadow", IR_TEXB_SH, 1, 2 },
+   { "vec4_tex_2d_proj_shadow", IR_TEXP_SH, 1, 2 },
+   { "vec4_tex_rect_shadow", IR_TEX_SH, 1, 2 },
+   { "vec4_tex_rect_proj_shadow", IR_TEXP_SH, 1, 2 },
 
    /* unary op */
    { "ivec4_to_vec4", IR_I_TO_F, 1, 1 }, /* int[4] to float[4] */
@@ -735,7 +705,14 @@ new_var(slang_assemble_ctx *A, slang_variable *var)
 {
    slang_ir_node *n = new_node0(IR_VAR);
    if (n) {
-      _slang_attach_storage(n, var);
+      ASSERT(var);
+      ASSERT(var->store);
+      ASSERT(!n->Store);
+      ASSERT(!n->Var);
+
+      /* Set IR node's Var and Store pointers */
+      n->Var = var;
+      n->Store = var->store;
    }
    return n;
 }
@@ -1461,6 +1438,12 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
 
    /*_slang_label_delete(A->curFuncEndLabel);*/
    A->curFuncEndLabel = prevFuncEndLabel;
+
+   if (A->pragmas->Debug) {
+      char s[1000];
+      snprintf(s, sizeof(s), "Call/inline %s()", (char *) fun->header.a_name);
+      n->Comment = _slang_strdup(s);
+   }
 
    return n;
 }
@@ -2598,6 +2581,20 @@ _slang_can_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
 }
 
 
+static void
+_unroll_loop_inc(slang_assemble_ctx * A)
+{
+   A->UnrollLoop++;
+}
+
+
+static void
+_unroll_loop_dec(slang_assemble_ctx * A)
+{
+   A->UnrollLoop--;
+}
+
+
 /**
  * Unroll a for-loop.
  * First we determine the number of iterations to unroll.
@@ -2613,6 +2610,9 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
    GLint start, end, iter;
    slang_ir_node *n, *root = NULL;
    slang_atom varId;
+
+   /* Set flag so code generator knows we're unrolling loops */
+   _unroll_loop_inc( A );
 
    if (oper->children[0].type == SLANG_OPER_BLOCK_NO_NEW_SCOPE) {
       /* for (int i=0; ... */
@@ -2636,11 +2636,15 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
 
       /* make a copy of the loop body */
       body = slang_operation_new(1);
-      if (!body)
+      if (!body) {
+         _unroll_loop_dec( A );
          return NULL;
+      }
 
-      if (!slang_operation_copy(body, &oper->children[3]))
+      if (!slang_operation_copy(body, &oper->children[3])) {
+         _unroll_loop_dec( A );
          return NULL;
+      }
 
       /* in body, replace instances of 'varId' with literal 'iter' */
       {
@@ -2651,6 +2655,7 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
          if (!oldVar) {
             /* undeclared loop variable */
             slang_operation_delete(body);
+            _unroll_loop_dec( A );
             return NULL;
          }
 
@@ -2665,10 +2670,17 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
 
       /* do IR codegen for body */
       n = _slang_gen_operation(A, body);
+      if (!n) {
+         _unroll_loop_dec( A );
+         return NULL;
+      }
+
       root = new_seq(root, n);
 
       slang_operation_delete(body);
    }
+
+   _unroll_loop_dec( A );
 
    return root;
 }
@@ -2806,18 +2818,24 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
    if (is_operation_type(&oper->children[1], SLANG_OPER_BREAK)
        && !haveElseClause) {
       /* Special case: generate a conditional break */
+      if (!A->CurLoop && A->UnrollLoop) /* trying to unroll */
+         return NULL;
       ifBody = new_break_if_true(A->CurLoop, cond);
       return ifBody;
    }
    else if (is_operation_type(&oper->children[1], SLANG_OPER_CONTINUE)
             && !haveElseClause) {
-      /* Special case: generate a conditional break */
+      /* Special case: generate a conditional continue */
+      if (!A->CurLoop && A->UnrollLoop) /* trying to unroll */
+         return NULL;
       ifBody = new_cont_if_true(A->CurLoop, cond);
       return ifBody;
    }
    else {
       /* general case */
       ifBody = _slang_gen_operation(A, &oper->children[1]);
+      if (!ifBody)
+         return NULL;
       if (haveElseClause)
          elseBody = _slang_gen_operation(A, &oper->children[2]);
       else
@@ -2988,7 +3006,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
    slang_ir_node *varDecl, *n;
    slang_ir_storage *store;
    GLint arrayLen, size, totalSize;  /* if array then totalSize > size */
-   enum register_file file;
+   gl_register_file file;
 
    /*assert(!var->declared);*/
    var->declared = GL_TRUE;
@@ -3004,7 +3022,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
       file = PROGRAM_TEMPORARY;
    }
 
-   totalSize = size = _slang_sizeof_type_specifier(&var->type.specifier);
+   size = _slang_sizeof_type_specifier(&var->type.specifier);
    if (size <= 0) {
       slang_info_log_error(A->log, "invalid declaration for '%s'", varName);
       return NULL;
@@ -3018,22 +3036,23 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
    if (!varDecl)
       return NULL;
 
-   _slang_attach_storage(varDecl, var); /* undefined storage at first */
-   assert(var->store);
-   assert(varDecl->Store == var->store);
-   assert(varDecl->Store);
-   assert(varDecl->Store->Index < 0);
-   store = var->store;
-
-   assert(store == varDecl->Store);
-
-
-   /* Fill in storage fields which we now know.  store->Index/Swizzle may be
-    * set for some cases below.  Otherwise, store->Index/Swizzle will be set
-    * during code emit.
+   /* Allocate slang_ir_storage for this variable if needed.
+    * Note that we may not actually allocate a constant or temporary register
+    * until later.
     */
-   store->File = file;
-   store->Size = totalSize;
+   if (!var->store) {
+      GLint index = -7;  /* TBD / unknown */
+      var->store = _slang_new_ir_storage(file, index, totalSize);
+      if (!var->store)
+         return NULL; /* out of memory */
+   }
+
+   /* set the IR node's Var and Store pointers */
+   varDecl->Var = var;
+   varDecl->Store = var->store;
+
+
+   store = var->store;
 
    /* if there's an initializer, generate IR for the expression */
    if (initializer) {
@@ -3662,7 +3681,7 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
       if (lhs && rhs) {
          /* convert lhs swizzle into writemask */
          const GLuint swizzle = root_swizzle(lhs->Store);
-         GLuint writemask, newSwizzle;
+         GLuint writemask, newSwizzle = 0x0;
          if (!swizzle_to_writemask(A, swizzle, &writemask, &newSwizzle)) {
             /* Non-simple writemask, need to swizzle right hand side in
              * order to put components into the right place.
@@ -4029,13 +4048,15 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       return _slang_gen_while(A, oper);
    case SLANG_OPER_BREAK:
       if (!A->CurLoop) {
-         slang_info_log_error(A->log, "'break' not in loop");
+         if (!A->UnrollLoop)
+            slang_info_log_error(A->log, "'break' not in loop");
          return NULL;
       }
       return new_break(A->CurLoop);
    case SLANG_OPER_CONTINUE:
       if (!A->CurLoop) {
-         slang_info_log_error(A->log, "'continue' not in loop");
+         if (!A->UnrollLoop)
+            slang_info_log_error(A->log, "'continue' not in loop");
          return NULL;
       }
       return _slang_gen_continue(A, oper);
@@ -4333,13 +4354,25 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (prog) {
          /* user-defined uniform */
          if (datatype == GL_NONE) {
-            if (var->type.specifier.type == SLANG_SPEC_STRUCT) {
+	    if ((var->type.specifier.type == SLANG_SPEC_ARRAY &&
+	         var->type.specifier._array->type == SLANG_SPEC_STRUCT) ||
+                (var->type.specifier.type == SLANG_SPEC_STRUCT)) {
                /* temporary work-around */
                GLenum datatype = GL_FLOAT;
                GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName,
                                                     totalSize, datatype, NULL);
                store = _slang_new_ir_storage_swz(PROGRAM_UNIFORM, uniformLoc,
                                                  totalSize, swizzle);
+	 
+	       if (arrayLen > 0) {
+	          GLint a = arrayLen - 1;
+	          GLint i;
+	          for (i = 0; i < a; i++) {
+                     GLfloat value = (GLfloat)(i + uniformLoc + 1);
+                     (void) _mesa_add_parameter(prog->Parameters, PROGRAM_UNIFORM,
+                                 varName, 1, datatype, &value, NULL, 0x0);
+                  }
+	       }
 
                /* XXX what we need to do is unroll the struct into its
                 * basic types, creating a uniform variable for each.

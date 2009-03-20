@@ -38,95 +38,6 @@ extern "C" {
 #endif
 
 
-/* XXX: these are a kludge.  will fix when all surfaces are views into
- * textures, and free-floating winsys surfaces go away.
- */
-static INLINE void *
-pipe_surface_map( struct pipe_surface *surf, unsigned flags )
-{
-   struct pipe_screen *screen;
-   assert(surf->texture);
-   screen = surf->texture->screen;
-   return screen->surface_map( screen, surf, flags );
-}
-
-static INLINE void
-pipe_surface_unmap( struct pipe_surface *surf )
-{
-   struct pipe_screen *screen;
-   assert(surf->texture);
-   screen = surf->texture->screen;
-   screen->surface_unmap( screen, surf );
-}
-
-
-
-/**
- * Set 'ptr' to point to 'surf' and update reference counting.
- * The old thing pointed to, if any, will be unreferenced first.
- * 'surf' may be NULL.
- */
-static INLINE void
-pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
-{
-   /* bump the refcount first */
-   if (surf) {
-      assert(surf->refcount);
-      surf->refcount++;
-   }
-
-   if (*ptr) {
-      struct pipe_screen *screen;
-      assert((*ptr)->refcount);
-      assert((*ptr)->texture);
-      screen = (*ptr)->texture->screen;
-      screen->tex_surface_release( screen, ptr );
-      assert(!*ptr);
-   }
-
-   *ptr = surf;
-}
-
-
-/**
- * \sa pipe_surface_reference
- */
-static INLINE void
-pipe_texture_reference(struct pipe_texture **ptr,
-		       struct pipe_texture *pt)
-{
-   assert(ptr);
-
-   if (pt) { 
-      assert(pt->refcount);
-      pt->refcount++;
-   }
-
-   if (*ptr) {
-      struct pipe_screen *screen = (*ptr)->screen;
-      assert(screen);
-      assert((*ptr)->refcount);
-      screen->texture_release(screen, ptr);
-
-      assert(!*ptr);
-   }
-
-   *ptr = pt;
-}
-
-
-static INLINE void
-pipe_texture_release(struct pipe_texture **ptr)
-{
-   struct pipe_screen *screen;
-   assert(ptr);
-   screen = (*ptr)->screen;
-   assert((*ptr)->refcount);
-   screen->texture_release(screen, ptr);
-   *ptr = NULL;
-}
-
-
 /**
  * Convenience wrappers for screen buffer functions.
  */
@@ -149,7 +60,13 @@ pipe_buffer_map(struct pipe_screen *screen,
                 struct pipe_buffer *buf,
                 unsigned usage)
 {
-   return screen->buffer_map(screen, buf, usage);
+   if(screen->buffer_map_range) {
+      unsigned offset = 0;
+      unsigned length = buf->size;
+      return screen->buffer_map_range(screen, buf, offset, length, usage);
+   }
+   else
+      return screen->buffer_map(screen, buf, usage);
 }
 
 static INLINE void
@@ -159,26 +76,74 @@ pipe_buffer_unmap(struct pipe_screen *screen,
    screen->buffer_unmap(screen, buf);
 }
 
-/* XXX: thread safety issues!
- */
-static INLINE void
-pipe_buffer_reference(struct pipe_screen *screen,
-		      struct pipe_buffer **ptr,
-		      struct pipe_buffer *buf)
+static INLINE void *
+pipe_buffer_map_range(struct pipe_screen *screen,
+                struct pipe_buffer *buf,
+                unsigned offset,
+                unsigned length,
+                unsigned usage)
 {
-   if (buf) {
-      assert(buf->refcount);
-      buf->refcount++;
-   }
+   assert(offset < buf->size);
+   assert(offset + length <= buf->size);
+   assert(length);
+   if(screen->buffer_map_range)
+      return screen->buffer_map_range(screen, buf, offset, length, usage);
+   else
+      return screen->buffer_map(screen, buf, usage);
+}
 
-   if (*ptr) {
-      assert((*ptr)->refcount);
-      if(--(*ptr)->refcount == 0) {
-         screen->buffer_destroy( screen, *ptr );
-      }
-   }
+static INLINE void
+pipe_buffer_flush_mapped_range(struct pipe_screen *screen,
+                               struct pipe_buffer *buf,
+                               unsigned offset,
+                               unsigned length)
+{
+   assert(offset < buf->size);
+   assert(offset + length <= buf->size);
+   assert(length);
+   if(screen->buffer_flush_mapped_range)
+      screen->buffer_flush_mapped_range(screen, buf, offset, length);
+}
 
-   *ptr = buf;
+static INLINE void
+pipe_buffer_write(struct pipe_screen *screen,
+                  struct pipe_buffer *buf,
+                  unsigned offset, unsigned size,
+                  const void *data)
+{
+   uint8_t *map;
+   
+   assert(offset < buf->size);
+   assert(offset + size <= buf->size);
+   assert(size);
+
+   map = pipe_buffer_map_range(screen, buf, offset, size, PIPE_BUFFER_USAGE_CPU_WRITE);
+   assert(map);
+   if(map) {
+      memcpy(map + offset, data, size);
+      pipe_buffer_flush_mapped_range(screen, buf, offset, size);
+      pipe_buffer_unmap(screen, buf);
+   }
+}
+
+static INLINE void
+pipe_buffer_read(struct pipe_screen *screen,
+                 struct pipe_buffer *buf,
+                 unsigned offset, unsigned size,
+                 void *data)
+{
+   uint8_t *map;
+   
+   assert(offset < buf->size);
+   assert(offset + size <= buf->size);
+   assert(size);
+
+   map = pipe_buffer_map_range(screen, buf, offset, size, PIPE_BUFFER_USAGE_CPU_READ);
+   assert(map);
+   if(map) {
+      memcpy(data, map + offset, size);
+      pipe_buffer_unmap(screen, buf);
+   }
 }
 
 

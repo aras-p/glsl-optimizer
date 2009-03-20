@@ -35,7 +35,7 @@
 
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/p_thread.h"
 #include "util/u_memory.h"
 #include "util/u_double_list.h"
@@ -112,7 +112,7 @@ _pb_cache_buffer_destroy(struct pb_cache_buffer *buf)
    LIST_DEL(&buf->head);
    assert(mgr->numDelayed);
    --mgr->numDelayed;
-   assert(!buf->base.base.refcount);
+   assert(p_atomic_read(&buf->base.base.reference.count) == 0);
    pb_reference(&buf->buffer, NULL);
    FREE(buf);
 }
@@ -153,7 +153,7 @@ pb_cache_buffer_destroy(struct pb_buffer *_buf)
    struct pb_cache_manager *mgr = buf->mgr;
 
    pipe_mutex_lock(mgr->mutex);
-   assert(buf->base.base.refcount == 0);
+   assert(p_atomic_read(&buf->base.base.reference.count) == 0);
    
    _pb_cache_buffer_list_check_free(mgr);
    
@@ -293,7 +293,8 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
    if(buf) {
       LIST_DEL(&buf->head);
       pipe_mutex_unlock(mgr->mutex);
-      ++buf->base.base.refcount;
+      /* Increase refcount */
+      pb_reference((struct pb_buffer**)&buf, &buf->base);
       return &buf->base;
    }
    
@@ -309,12 +310,12 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
       return NULL;
    }
    
-   assert(buf->buffer->base.refcount >= 1);
+   assert(p_atomic_read(&buf->buffer->base.reference.count) >= 1);
    assert(pb_check_alignment(desc->alignment, buf->buffer->base.alignment));
    assert(pb_check_usage(desc->usage, buf->buffer->base.usage));
    assert(buf->buffer->base.size >= size);
    
-   buf->base.base.refcount = 1;
+   pipe_reference_init(&buf->base.base.reference, 1);
    buf->base.base.alignment = buf->buffer->base.alignment;
    buf->base.base.usage = buf->buffer->base.usage;
    buf->base.base.size = buf->buffer->base.size;

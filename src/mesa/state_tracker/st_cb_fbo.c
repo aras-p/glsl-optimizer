@@ -41,7 +41,6 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
 #include "pipe/p_screen.h"
 #include "st_context.h"
 #include "st_cb_fbo.h"
@@ -172,12 +171,8 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
    assert(strb->surface->texture);
    assert(strb->surface->format);
-   assert(strb->surface->block.size);
-   assert(strb->surface->block.width);
-   assert(strb->surface->block.height);
    assert(strb->surface->width == width);
    assert(strb->surface->height == height);
-   assert(strb->surface->stride);
 
 
    return strb->surface != NULL;
@@ -194,7 +189,7 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
    ASSERT(strb);
    pipe_surface_reference(&strb->surface, NULL);
    pipe_texture_reference(&strb->texture, NULL);
-   free(strb);
+   _mesa_free(strb);
 }
 
 
@@ -232,7 +227,7 @@ st_new_framebuffer(GLcontext *ctx, GLuint name)
 static struct gl_renderbuffer *
 st_new_renderbuffer(GLcontext *ctx, GLuint name)
 {
-   struct st_renderbuffer *strb = CALLOC_STRUCT(st_renderbuffer);
+   struct st_renderbuffer *strb = ST_CALLOC_STRUCT(st_renderbuffer);
    if (strb) {
       _mesa_init_renderbuffer(&strb->Base, name);
       strb->Base.Delete = st_renderbuffer_delete;
@@ -254,7 +249,7 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples)
 {
    struct st_renderbuffer *strb;
 
-   strb = CALLOC_STRUCT(st_renderbuffer);
+   strb = ST_CALLOC_STRUCT(st_renderbuffer);
    if (!strb) {
       _mesa_error(NULL, GL_OUT_OF_MEMORY, "creating renderbuffer");
       return NULL;
@@ -361,8 +356,6 @@ st_render_texture(GLcontext *ctx,
    if (!pt) 
       return;
 
-   assert(!att->Renderbuffer);
-
    /* create new renderbuffer which wraps the texture image */
    rb = st_new_renderbuffer(ctx, 0);
    if (!rb) {
@@ -419,7 +412,6 @@ static void
 st_finish_render_texture(GLcontext *ctx,
                          struct gl_renderbuffer_attachment *att)
 {
-   struct pipe_screen *screen = ctx->st->pipe->screen;
    struct st_renderbuffer *strb = st_renderbuffer(att->Renderbuffer);
 
    if (!strb)
@@ -428,7 +420,7 @@ st_finish_render_texture(GLcontext *ctx,
    st_flush( ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL );
 
    if (strb->surface)
-      screen->tex_surface_release( screen, &strb->surface );
+      pipe_surface_reference( &strb->surface, NULL );
 
    strb->rtt = NULL;
 
@@ -443,6 +435,25 @@ st_finish_render_texture(GLcontext *ctx,
 }
 
 
+/**
+ * Check that the framebuffer configuration is valid in terms of what
+ * the driver can support.
+ *
+ * For Gallium we only supports combined Z+stencil, not separate buffers.
+ */
+static void
+st_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
+{
+   const struct gl_renderbuffer *depthRb =
+      fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+   const struct gl_renderbuffer *stencilRb =
+      fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+
+   if (stencilRb && depthRb && stencilRb != depthRb) {
+      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+   }
+}
+
 
 void st_init_fbo_functions(struct dd_function_table *functions)
 {
@@ -452,6 +463,7 @@ void st_init_fbo_functions(struct dd_function_table *functions)
    functions->FramebufferRenderbuffer = st_framebuffer_renderbuffer;
    functions->RenderTexture = st_render_texture;
    functions->FinishRenderTexture = st_finish_render_texture;
+   functions->ValidateFramebuffer = st_validate_framebuffer;
    /* no longer needed by core Mesa, drivers handle resizes...
    functions->ResizeBuffers = st_resize_buffers;
    */

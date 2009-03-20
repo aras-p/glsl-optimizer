@@ -5,8 +5,7 @@ Import('*')
 
 if env['platform'] == 'linux' \
         and 'mesa' in env['statetrackers'] \
-        and ('softpipe' or 'i915simple' or 'trace') in env['drivers'] \
-        and not env['dri']:
+        and ('softpipe' or 'i915simple' or 'trace') in env['drivers']:
 
     env = env.Clone()
 
@@ -14,6 +13,8 @@ if env['platform'] == 'linux' \
         '#/src/mesa',
         '#/src/mesa/main',
     ])
+
+    env.Append(CPPDEFINES = ['USE_XSHM'])
 
     st_xlib = env.ConvenienceLibrary(
 	target = 'st_xlib',

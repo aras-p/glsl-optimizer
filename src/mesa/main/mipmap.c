@@ -85,7 +85,7 @@ bytes_per_pixel(GLenum datatype, GLuint comps)
                                 rowC[j][e], rowC[k][e], \
                                 rowD[j][e], rowD[k][e]); \
    } while(0)
-   
+
 #define FILTER_F_3D(e) \
    do { \
       dst[i][e] = (rowA[j][e] + rowA[k][e] \
@@ -226,7 +226,6 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
          dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) / 4;
       }
    }
-
    else if (datatype == GL_FLOAT && comps == 4) {
       GLuint i, j, k;
       const GLfloat(*rowA)[4] = (const GLfloat(*)[4]) srcRowA;
@@ -469,6 +468,17 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
          const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 2;
          const GLint blue = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 2;
          dst[i] = (blue << 5) | (green << 2) | red;
+      }
+   }
+   else if (datatype == GL_BYTE && comps == 2) {
+      GLuint i, j, k;
+      const GLbyte(*rowA)[2] = (const GLbyte(*)[2]) srcRowA;
+      const GLbyte(*rowB)[2] = (const GLbyte(*)[2]) srcRowB;
+      GLbyte(*dst)[2] = (GLbyte(*)[2]) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) >> 2;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) >> 2;
       }
    }
    else {
@@ -1176,7 +1186,7 @@ make_1d_stack_mipmap(GLenum datatype, GLuint comps, GLint border,
 
 
 /**
- * \bugs
+ * \bug
  * There is quite a bit of refactoring that could be done with this function
  * and \c make_2d_mipmap.
  */

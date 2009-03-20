@@ -177,12 +177,21 @@ GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
 
 GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
 {
-	GLuint i, ret = 0;
+	GLuint i, ret = 0, first_free_texcoord = 0;
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 		if (OutputsWritten & (1 << (VERT_RESULT_TEX0 + i))) {
 			ret |= (4 << (3 * i));
+			++first_free_texcoord;
 		}
+	}
+
+	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) {
+		if (first_free_texcoord > 8) {
+			fprintf(stderr, "\tout of free texcoords to write fog coord\n");
+			_mesa_exit(-1);
+		}
+		ret |= 4 << (3 * first_free_texcoord);
 	}
 
 	return ret;

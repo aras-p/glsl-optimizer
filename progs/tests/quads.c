@@ -3,10 +3,10 @@
  */
 
 
-#define GL_GLEXT_PROTOTYPES
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 #define NUM_QUADS 20
@@ -19,7 +19,7 @@ static GLuint Vbuffer = 0;
 
 static GLfloat buf[NUM_QUADS * 6 * 4];
 
-static GLboolean SwapBuffers = GL_TRUE;
+static GLboolean doSwapBuffers = GL_TRUE;
 
 static GLint Frames = 0, T0 = 0;
 
@@ -48,7 +48,7 @@ Draw(void)
 
    glPopMatrix();
 
-   if (SwapBuffers)
+   if (doSwapBuffers)
       glutSwapBuffers();
    /*
    else
@@ -91,7 +91,7 @@ Key(unsigned char key, int x, int y)
    (void) y;
    switch (key) {
       case 's':
-         SwapBuffers = !SwapBuffers;
+         doSwapBuffers = !doSwapBuffers;
          break;
       case 'a':
          Anim = !Anim;
@@ -246,6 +246,7 @@ main(int argc, char *argv[])
    glutInitWindowSize(600, 600);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    Win = glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
    glutSpecialFunc(SpecialKey);

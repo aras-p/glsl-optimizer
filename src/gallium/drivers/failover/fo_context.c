@@ -145,7 +145,7 @@ struct pipe_context *failover_create( struct pipe_context *hw,
 
 #if 0
    failover->pipe.texture_create = hw->texture_create;
-   failover->pipe.texture_release = hw->texture_release;
+   failover->pipe.texture_destroy = hw->texture_destroy;
    failover->pipe.get_tex_surface = hw->get_tex_surface;
    failover->pipe.texture_update = hw->texture_update;
 #endif

@@ -53,6 +53,15 @@ _mesa_init_program(GLcontext *ctx)
 {
    GLuint i;
 
+   /*
+    * If this assertion fails, we need to increase the field
+    * size for register indexes.
+    */
+   ASSERT(ctx->Const.VertexProgram.MaxUniformComponents / 4
+          <= (1 << INST_INDEX_BITS));
+   ASSERT(ctx->Const.FragmentProgram.MaxUniformComponents / 4
+          <= (1 << INST_INDEX_BITS));
+
    ctx->Program.ErrorPos = -1;
    ctx->Program.ErrorString = _mesa_strdup("");
 
@@ -729,7 +738,7 @@ _mesa_combine_programs(GLcontext *ctx,
       /* Connect color outputs of fprogA to color inputs of fprogB, via a
        * new temporary register.
        */
-      if ((progA->OutputsWritten & (1 << FRAG_RESULT_COLR)) &&
+      if ((progA->OutputsWritten & (1 << FRAG_RESULT_COLOR)) &&
           (progB_inputsRead & FRAG_BIT_COL0)) {
          GLint tempReg = _mesa_find_free_register(newProg, PROGRAM_TEMPORARY);
          if (tempReg < 0) {
@@ -739,7 +748,7 @@ _mesa_combine_programs(GLcontext *ctx,
          }
          /* replace writes to result.color[0] with tempReg */
          replace_registers(newInst, lenA,
-                           PROGRAM_OUTPUT, FRAG_RESULT_COLR,
+                           PROGRAM_OUTPUT, FRAG_RESULT_COLOR,
                            PROGRAM_TEMPORARY, tempReg);
          /* replace reads from the input color with tempReg */
          replace_registers(newInst + lenA, lenB,
@@ -749,7 +758,7 @@ _mesa_combine_programs(GLcontext *ctx,
 
       /* compute combined program's InputsRead */
       inputsB = progB_inputsRead;
-      if (progA->OutputsWritten & (1 << FRAG_RESULT_COLR)) {
+      if (progA->OutputsWritten & (1 << FRAG_RESULT_COLOR)) {
          inputsB &= ~(1 << FRAG_ATTRIB_COL0);
       }
       newProg->InputsRead = progA->InputsRead | inputsB;

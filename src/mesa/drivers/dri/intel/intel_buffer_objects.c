@@ -35,9 +35,6 @@
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
 
-static GLboolean intel_bufferobj_unmap(GLcontext * ctx,
-				       GLenum target,
-				       struct gl_buffer_object *obj);
 
 /** Allocates a new dri_bo to store the data for the buffer object. */
 static void
@@ -103,12 +100,7 @@ intel_bufferobj_free(GLcontext * ctx, struct gl_buffer_object *obj)
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
-
-   /* Buffer objects are automatically unmapped when deleting according
-    * to the spec.
-    */
-   if (obj->Pointer)
-      intel_bufferobj_unmap(ctx, 0, obj);
+   assert(!obj->Pointer); /* Mesa should have unmapped it */
 
    if (intel_obj->region) {
       intel_bufferobj_release_region(intel, intel_obj);
@@ -141,11 +133,7 @@ intel_bufferobj_data(GLcontext * ctx,
    intel_obj->Base.Size = size;
    intel_obj->Base.Usage = usage;
 
-   /* Buffer objects are automatically unmapped when creating new data buffers
-    * according to the spec.
-    */
-   if (obj->Pointer)
-      intel_bufferobj_unmap(ctx, 0, obj);
+   assert(!obj->Pointer); /* Mesa should have unmapped it */
 
    if (intel_obj->region)
       intel_bufferobj_release_region(intel, intel_obj);

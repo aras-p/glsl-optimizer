@@ -45,46 +45,32 @@ static tnl_triangle_func tri_tab[SS_MAX_TRIFUNC];
 static tnl_quad_func     quad_tab[SS_MAX_TRIFUNC];
 
 
-static void _swsetup_render_line_tri( GLcontext *ctx,
-				      GLuint e0, GLuint e1, GLuint e2,
-                                      GLuint facing )
+/*
+ * Render a triangle respecting edge flags.
+ */
+typedef void (* swsetup_edge_render_prim_tri)(GLcontext *ctx,
+                                              const GLubyte *ef,
+                                              GLuint e0,
+                                              GLuint e1,
+                                              GLuint e2,
+                                              const SWvertex *v0,
+                                              const SWvertex *v1,
+                                              const SWvertex *v2);
+
+/*
+ * Render a triangle using lines and respecting edge flags.
+ */
+static void
+_swsetup_edge_render_line_tri(GLcontext *ctx,
+                              const GLubyte *ef,
+                              GLuint e0,
+                              GLuint e1,
+                              GLuint e2,
+                              const SWvertex *v0,
+                              const SWvertex *v1,
+                              const SWvertex *v2)
 {
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLubyte *ef = VB->EdgeFlag;
-   SWvertex *verts = swsetup->verts;
-   SWvertex *v0 = &verts[e0];
-   SWvertex *v1 = &verts[e1];
-   SWvertex *v2 = &verts[e2];
-   GLchan c[2][4];
-   GLfloat s[2][4];
-   GLfloat i[2];
-
-   /* cull testing */
-   if (ctx->Polygon.CullFlag) {
-      if (facing == 1 && ctx->Polygon.CullFaceMode != GL_FRONT)
-         return;
-      if (facing == 0 && ctx->Polygon.CullFaceMode != GL_BACK)
-         return;
-   }
-
-   _swrast_SetFacing(ctx, facing);
-
-   if (ctx->Light.ShadeModel == GL_FLAT) {
-      COPY_CHAN4(c[0], v0->color);
-      COPY_CHAN4(c[1], v1->color);
-      COPY_4V(s[0], v0->attrib[FRAG_ATTRIB_COL1]);
-      COPY_4V(s[1], v1->attrib[FRAG_ATTRIB_COL1]);
-      i[0] = v0->attrib[FRAG_ATTRIB_CI][0];
-      i[1] = v1->attrib[FRAG_ATTRIB_CI][0];
-
-      COPY_CHAN4(v0->color, v2->color);
-      COPY_CHAN4(v1->color, v2->color);
-      COPY_4V(v0->attrib[FRAG_ATTRIB_COL1], v2->attrib[FRAG_ATTRIB_COL1]);
-      COPY_4V(v1->attrib[FRAG_ATTRIB_COL1], v2->attrib[FRAG_ATTRIB_COL1]);
-      v0->attrib[FRAG_ATTRIB_CI][0] = v2->attrib[FRAG_ATTRIB_CI][0];
-      v1->attrib[FRAG_ATTRIB_CI][0] = v2->attrib[FRAG_ATTRIB_CI][0];
-   }
 
    if (swsetup->render_prim == GL_POLYGON) {
       if (ef[e2]) _swrast_Line( ctx, v2, v0 );
@@ -95,20 +81,37 @@ static void _swsetup_render_line_tri( GLcontext *ctx,
       if (ef[e1]) _swrast_Line( ctx, v1, v2 );
       if (ef[e2]) _swrast_Line( ctx, v2, v0 );
    }
-
-   if (ctx->Light.ShadeModel == GL_FLAT) {
-      COPY_CHAN4(v0->color, c[0]);
-      COPY_CHAN4(v1->color, c[1]);
-      COPY_4V(v0->attrib[FRAG_ATTRIB_COL1], s[0]);
-      COPY_4V(v1->attrib[FRAG_ATTRIB_COL1], s[1]);
-      v0->attrib[FRAG_ATTRIB_CI][0] = i[0];
-      v1->attrib[FRAG_ATTRIB_CI][0] = i[1];
-   }
 }
 
-static void _swsetup_render_point_tri( GLcontext *ctx,
-				       GLuint e0, GLuint e1, GLuint e2,
-                                       GLuint facing )
+/*
+ * Render a triangle using points and respecting edge flags.
+ */
+static void
+_swsetup_edge_render_point_tri(GLcontext *ctx,
+                               const GLubyte *ef,
+                               GLuint e0,
+                               GLuint e1,
+                               GLuint e2,
+                               const SWvertex *v0,
+                               const SWvertex *v1,
+                               const SWvertex *v2)
+{
+   if (ef[e0]) _swrast_Point( ctx, v0 );
+   if (ef[e1]) _swrast_Point( ctx, v1 );
+   if (ef[e2]) _swrast_Point( ctx, v2 );
+
+   _swrast_flush(ctx);
+}
+
+/*
+ * Render a triangle respecting cull and shade model.
+ */
+static void _swsetup_render_tri(GLcontext *ctx,
+                                GLuint e0,
+                                GLuint e1,
+                                GLuint e2,
+                                GLuint facing,
+                                swsetup_edge_render_prim_tri render)
 {
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -117,9 +120,6 @@ static void _swsetup_render_point_tri( GLcontext *ctx,
    SWvertex *v0 = &verts[e0];
    SWvertex *v1 = &verts[e1];
    SWvertex *v2 = &verts[e2];
-   GLchan c[2][4];
-   GLfloat s[2][4];
-   GLfloat i[2];
 
    /* cull testing */
    if (ctx->Polygon.CullFlag) {
@@ -132,6 +132,10 @@ static void _swsetup_render_point_tri( GLcontext *ctx,
    _swrast_SetFacing(ctx, facing);
 
    if (ctx->Light.ShadeModel == GL_FLAT) {
+      GLchan c[2][4];
+      GLfloat s[2][4];
+      GLfloat i[2];
+
       /* save colors/indexes for v0, v1 vertices */
       COPY_CHAN4(c[0], v0->color);
       COPY_CHAN4(c[1], v1->color);
@@ -147,14 +151,9 @@ static void _swsetup_render_point_tri( GLcontext *ctx,
       COPY_4V(v1->attrib[FRAG_ATTRIB_COL1], v2->attrib[FRAG_ATTRIB_COL1]);
       v0->attrib[FRAG_ATTRIB_CI][0] = v2->attrib[FRAG_ATTRIB_CI][0];
       v1->attrib[FRAG_ATTRIB_CI][0] = v2->attrib[FRAG_ATTRIB_CI][0];
-   }
 
-   if (ef[e0]) _swrast_Point( ctx, v0 );
-   if (ef[e1]) _swrast_Point( ctx, v1 );
-   if (ef[e2]) _swrast_Point( ctx, v2 );
+      render(ctx, ef, e0, e1, e2, v0, v1, v2);
 
-   if (ctx->Light.ShadeModel == GL_FLAT) {
-      /* restore v0, v1 colores/indexes */
       COPY_CHAN4(v0->color, c[0]);
       COPY_CHAN4(v1->color, c[1]);
       COPY_4V(v0->attrib[FRAG_ATTRIB_COL1], s[0]);
@@ -162,7 +161,9 @@ static void _swsetup_render_point_tri( GLcontext *ctx,
       v0->attrib[FRAG_ATTRIB_CI][0] = i[0];
       v1->attrib[FRAG_ATTRIB_CI][0] = i[1];
    }
-   _swrast_flush(ctx);
+   else {
+      render(ctx, ef, e0, e1, e2, v0, v1, v2);
+   }
 }
 
 #define SS_COLOR(a,b) UNCLAMPED_FLOAT_TO_RGBA_CHAN(a,b)

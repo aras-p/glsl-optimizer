@@ -31,6 +31,8 @@
 #include "r300_context.h"
 #include "r300_cs.h"
 #include "r300_emit.h"
+#include "r300_state_shader.h"
+#include "r300_state_inlines.h"
 
 const struct r300_blend_state blend_clear_state = {
     .blend_control = 0x0,
@@ -53,6 +55,40 @@ const struct r300_dsa_state dsa_clear_state = {
     .stencil_ref_mask = R300_STENCILWRITEMASK_MASK,
     .z_buffer_top = R300_ZTOP_ENABLE,
     .stencil_ref_bf = 0x0,
+};
+
+const struct r300_rs_state rs_clear_state = {
+    .point_minmax = 0x36000006,
+    .line_control = 0x00030006,
+    .depth_scale_front = 0x0,
+    .depth_offset_front = 0x0,
+    .depth_scale_back = 0x0,
+    .depth_offset_back = 0x0,
+    .polygon_offset_enable = 0x0,
+    .cull_mode = 0x0,
+    .line_stipple_config = 0x3BAAAAAB,
+    .line_stipple_value = 0x0,
+    .color_control = R300_SHADE_MODEL_FLAT,
+};
+
+const struct r300_rs_block r300_rs_block_clear_state = {
+    .ip[0] = R500_RS_SEL_S(R300_RS_SEL_K0) |
+        R500_RS_SEL_T(R300_RS_SEL_K0) |
+        R500_RS_SEL_R(R300_RS_SEL_K0) |
+        R500_RS_SEL_Q(R300_RS_SEL_K1),
+    .inst[0] = R300_RS_INST_COL_CN_WRITE,
+    .count = R300_IT_COUNT(0) | R300_IC_COUNT(1) | R300_HIRES_EN,
+    .inst_count = 0,
+};
+
+const struct r300_rs_block r500_rs_block_clear_state = {
+    .ip[0] = R500_RS_SEL_S(R500_RS_IP_PTR_K0) |
+        R500_RS_SEL_T(R500_RS_IP_PTR_K0) |
+        R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
+        R500_RS_SEL_Q(R500_RS_IP_PTR_K1),
+    .inst[0] = R500_RS_INST_COL_CN_WRITE,
+    .count = R300_IT_COUNT(0) | R300_IC_COUNT(1) | R300_HIRES_EN,
+    .inst_count = 0,
 };
 
 #endif /* R300_SURFACE_H */

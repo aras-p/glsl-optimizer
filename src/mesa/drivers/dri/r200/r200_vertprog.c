@@ -202,7 +202,7 @@ static unsigned long t_dst(struct prog_dst_register *dst)
    }
 }
 
-static unsigned long t_src_class(enum register_file file)
+static unsigned long t_src_class(gl_register_file file)
 {
 
    switch(file){

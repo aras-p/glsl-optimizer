@@ -917,6 +917,7 @@ nv40_fragprog_validate(struct nv40_context *nv40)
 	struct nv40_fragment_program *fp = nv40->fragprog;
 	struct pipe_buffer *constbuf =
 		nv40->constbuf[PIPE_SHADER_FRAGMENT];
+	struct pipe_screen *screen = nv40->pipe.screen;
 	struct pipe_winsys *ws = nv40->pipe.winsys;
 	struct nouveau_stateobj *so;
 	boolean new_consts = FALSE;
@@ -932,7 +933,7 @@ nv40_fragprog_validate(struct nv40_context *nv40)
 		return FALSE;
 	}
 
-	fp->buffer = ws->buffer_create(ws, 0x100, 0, fp->insn_len * 4);
+	fp->buffer = screen->buffer_create(screen, 0x100, 0, fp->insn_len * 4);
 	nv40_fragprog_upload(nv40, fp);
 
 	so = so_new(4, 1);
@@ -943,6 +944,7 @@ nv40_fragprog_validate(struct nv40_context *nv40)
 	so_method(so, nv40->screen->curie, NV40TCL_FP_CONTROL, 1);
 	so_data  (so, fp->fp_control);
 	so_ref(so, &fp->so);
+	so_ref(NULL, &so);
 
 update_constants:
 	if (fp->nr_consts) {

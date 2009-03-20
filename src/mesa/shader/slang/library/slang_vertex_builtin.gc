@@ -78,7 +78,7 @@ vec4 texture1DLod(const sampler1D sampler, const float coord, const float lod)
    vec4 coord4;
    coord4.x = coord;
    coord4.w = lod;
-   __asm vec4_texb1d __retVal, sampler, coord4;
+   __asm vec4_tex_1d_bias __retVal, sampler, coord4;
 }
 
 vec4 texture1DProjLod(const sampler1D sampler, const vec2 coord, const float lod)
@@ -86,7 +86,7 @@ vec4 texture1DProjLod(const sampler1D sampler, const vec2 coord, const float lod
    vec4 pcoord;
    pcoord.x = coord.x / coord.y;
    pcoord.w = lod;
-   __asm vec4_texb1d __retVal, sampler, pcoord;
+   __asm vec4_tex_1d_bias __retVal, sampler, pcoord;
 }
 
 vec4 texture1DProjLod(const sampler1D sampler, const vec4 coord, const float lod)
@@ -94,7 +94,7 @@ vec4 texture1DProjLod(const sampler1D sampler, const vec4 coord, const float lod
    vec4 pcoord;
    pcoord.x = coord.x / coord.z;
    pcoord.w = lod;
-   __asm vec4_texb1d __retVal, sampler, pcoord;
+   __asm vec4_tex_1d_bias __retVal, sampler, pcoord;
 }
 
 
@@ -104,7 +104,7 @@ vec4 texture2DLod(const sampler2D sampler, const vec2 coord, const float lod)
    vec4 coord4;
    coord4.xy = coord.xy;
    coord4.w = lod;
-   __asm vec4_texb2d __retVal, sampler, coord4;
+   __asm vec4_tex_2d_bias __retVal, sampler, coord4;
 }
 
 vec4 texture2DProjLod(const sampler2D sampler, const vec3 coord, const float lod)
@@ -112,7 +112,7 @@ vec4 texture2DProjLod(const sampler2D sampler, const vec3 coord, const float lod
    vec4 pcoord;
    pcoord.xy = coord.xy / coord.z;
    pcoord.w = lod;
-   __asm vec4_texb2d __retVal, sampler, pcoord;
+   __asm vec4_tex_2d_bias __retVal, sampler, pcoord;
 }
 
 vec4 texture2DProjLod(const sampler2D sampler, const vec4 coord, const float lod)
@@ -120,7 +120,7 @@ vec4 texture2DProjLod(const sampler2D sampler, const vec4 coord, const float lod
    vec4 pcoord;
    pcoord.xy = coord.xy / coord.z;
    pcoord.w = lod;
-   __asm vec4_texb2d __retVal, sampler, pcoord;
+   __asm vec4_tex_2d_bias __retVal, sampler, pcoord;
 }
 
 
@@ -129,16 +129,16 @@ vec4 texture3DLod(const sampler3D sampler, const vec3 coord, const float lod)
    vec4 coord4;
    coord4.xyz = coord.xyz;
    coord4.w = lod;
-   __asm vec4_texb3d __retVal, sampler, coord4;
+   __asm vec4_tex_3d_bias __retVal, sampler, coord4;
 }
 
 vec4 texture3DProjLod(const sampler3D sampler, const vec4 coord, const float lod)
 {
-   // do projection here (there's no vec4_texbp3d instruction)
+   // do projection here (there's no vec4_tex_3d_bias_proj instruction)
    vec4 pcoord;
    pcoord.xyz = coord.xyz / coord.w;
    pcoord.w = lod;
-   __asm vec4_texb3d __retVal, sampler, pcoord;
+   __asm vec4_tex_3d_bias __retVal, sampler, pcoord;
 }
 
 
@@ -147,7 +147,7 @@ vec4 textureCubeLod(const samplerCube sampler, const vec3 coord, const float lod
    vec4 coord4;
    coord4.xyz = coord;
    coord4.w = lod;
-   __asm vec4_texcube __retVal, sampler, coord4;
+   __asm vec4_tex_cube __retVal, sampler, coord4;
 }
 
 
@@ -156,7 +156,7 @@ vec4 shadow1DLod(const sampler1DShadow sampler, const vec3 coord, const float lo
    vec4 coord4;
    coord4.xyz = coord;
    coord4.w = lod;
-   __asm vec4_texb1d __retVal, sampler, coord4;
+   __asm vec4_tex_1d_bias_shadow __retVal, sampler, coord4;
 }
 
 vec4 shadow1DProjLod(const sampler1DShadow sampler, const vec4 coord,
@@ -166,7 +166,7 @@ vec4 shadow1DProjLod(const sampler1DShadow sampler, const vec4 coord,
    pcoord.x = coord.x / coord.w;
    pcoord.z = coord.z;
    pcoord.w = lod;
-   __asm vec4_texb1d __retVal, sampler, pcoord;
+   __asm vec4_tex_1d_bias_shadow __retVal, sampler, pcoord;
 }
 
 
@@ -175,7 +175,7 @@ vec4 shadow2DLod(const sampler2DShadow sampler, const vec3 coord, const float lo
    vec4 coord4;
    coord4.xyz = coord;
    coord4.w = lod;
-   __asm vec4_texb2d __retVal, sampler, coord4;
+   __asm vec4_tex_2d_bias_shadow __retVal, sampler, coord4;
 }
 
 vec4 shadow2DProjLod(const sampler2DShadow sampler, const vec4 coord,
@@ -185,6 +185,6 @@ vec4 shadow2DProjLod(const sampler2DShadow sampler, const vec4 coord,
    pcoord.xy = coord.xy / coord.w;
    pcoord.z = coord.z;
    pcoord.w = lod;
-   __asm vec4_texb2d __retVal, sampler, pcoord;
+   __asm vec4_tex_2d_bias_shadow __retVal, sampler, pcoord;
 }
 

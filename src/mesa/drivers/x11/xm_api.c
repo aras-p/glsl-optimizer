@@ -1584,6 +1584,14 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       return NULL;
    }
 
+   /* Enable this to exercise fixed function -> shader translation
+    * with software rendering.
+    */
+   if (0) {
+      mesaCtx->VertexProgram._MaintainTnlProgram = GL_TRUE;
+      mesaCtx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
+   }
+
    _mesa_enable_sw_extensions(mesaCtx);
    _mesa_enable_1_3_extensions(mesaCtx);
    _mesa_enable_1_4_extensions(mesaCtx);
@@ -2410,11 +2418,8 @@ xbuffer_to_renderbuffer(int buffer)
    case GLX_AUX0_EXT:
       return BUFFER_AUX0;
    case GLX_AUX1_EXT:
-      return BUFFER_AUX1;
    case GLX_AUX2_EXT:
-      return BUFFER_AUX2;
    case GLX_AUX3_EXT:
-      return BUFFER_AUX3;
    case GLX_AUX4_EXT:
    case GLX_AUX5_EXT:
    case GLX_AUX6_EXT:
@@ -2461,13 +2466,13 @@ XMesaBindTexImage(XMesaDisplay *dpy, XMesaBuffer drawable, int buffer,
 #if 0
    switch (drawable->TextureTarget) {
    case GLX_TEXTURE_1D_EXT:
-      texObj = texUnit->Current1D;
+      texObj = texUnit->CurrentTex[TEXTURE_1D_INDEX];
       break;
    case GLX_TEXTURE_2D_EXT:
-      texObj = texUnit->Current2D;
+      texObj = texUnit->CurrentTex[TEXTURE_2D_INDEX];
       break;
    case GLX_TEXTURE_RECTANGLE_EXT:
-      texObj = texUnit->CurrentRect;
+      texObj = texUnit->CurrentTex[TEXTURE_RECT_INDEX];
       break;
    default:
       return; /* BadMatch error */

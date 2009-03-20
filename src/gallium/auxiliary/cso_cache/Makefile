@@ -9,6 +9,3 @@ C_SOURCES = \
 	cso_hash.c
 
 include ../../Makefile.template
-
-symlinks:
-

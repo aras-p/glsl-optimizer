@@ -29,13 +29,12 @@
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_fs.h"
-#include "sp_headers.h"
+#include "sp_quad.h"
 
 
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
-#include "pipe/p_inlines.h"
 #include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_parse.h"
 

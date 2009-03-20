@@ -122,8 +122,8 @@ feedback_tri( struct draw_stage *stage, struct prim_header *prim )
 {
    struct feedback_stage *fs = feedback_stage(stage);
    struct draw_context *draw = stage->draw;
-   FEEDBACK_TOKEN(fs->ctx, (GLfloat) GL_POLYGON_TOKEN);
-   FEEDBACK_TOKEN(fs->ctx, (GLfloat) 3); /* three vertices */
+   _mesa_feedback_token(fs->ctx, (GLfloat) GL_POLYGON_TOKEN);
+   _mesa_feedback_token(fs->ctx, (GLfloat) 3); /* three vertices */
    feedback_vertex(fs->ctx, draw, prim->v[0]);
    feedback_vertex(fs->ctx, draw, prim->v[1]);
    feedback_vertex(fs->ctx, draw, prim->v[2]);
@@ -136,11 +136,11 @@ feedback_line( struct draw_stage *stage, struct prim_header *prim )
    struct feedback_stage *fs = feedback_stage(stage);
    struct draw_context *draw = stage->draw;
    if (fs->reset_stipple_counter) {
-      FEEDBACK_TOKEN(fs->ctx, (GLfloat) GL_LINE_RESET_TOKEN);
+      _mesa_feedback_token(fs->ctx, (GLfloat) GL_LINE_RESET_TOKEN);
       fs->reset_stipple_counter = GL_FALSE;
    }
    else {
-      FEEDBACK_TOKEN(fs->ctx, (GLfloat) GL_LINE_TOKEN);
+      _mesa_feedback_token(fs->ctx, (GLfloat) GL_LINE_TOKEN);
    }
    feedback_vertex(fs->ctx, draw, prim->v[0]);
    feedback_vertex(fs->ctx, draw, prim->v[1]);
@@ -152,7 +152,7 @@ feedback_point( struct draw_stage *stage, struct prim_header *prim )
 {
    struct feedback_stage *fs = feedback_stage(stage);
    struct draw_context *draw = stage->draw;
-   FEEDBACK_TOKEN(fs->ctx, (GLfloat) GL_POINT_TOKEN);
+   _mesa_feedback_token(fs->ctx, (GLfloat) GL_POINT_TOKEN);
    feedback_vertex(fs->ctx, draw, prim->v[0]);
 }
 
@@ -184,7 +184,7 @@ feedback_destroy( struct draw_stage *stage )
 static struct draw_stage *
 draw_glfeedback_stage(GLcontext *ctx, struct draw_context *draw)
 {
-   struct feedback_stage *fs = CALLOC_STRUCT(feedback_stage);
+   struct feedback_stage *fs = ST_CALLOC_STRUCT(feedback_stage);
 
    fs->stage.draw = draw;
    fs->stage.next = NULL;
@@ -257,7 +257,7 @@ select_destroy( struct draw_stage *stage )
 static struct draw_stage *
 draw_glselect_stage(GLcontext *ctx, struct draw_context *draw)
 {
-   struct feedback_stage *fs = CALLOC_STRUCT(feedback_stage);
+   struct feedback_stage *fs = ST_CALLOC_STRUCT(feedback_stage);
 
    fs->stage.draw = draw;
    fs->stage.next = NULL;

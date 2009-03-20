@@ -10,6 +10,3 @@ C_SOURCES = \
         translate_cache.c
 
 include ../../Makefile.template
-
-symlinks:
-

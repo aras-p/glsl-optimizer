@@ -121,7 +121,6 @@ struct st_context {
       struct pipe_constant_buffer state;
       memset(&state, 0, sizeof(state));
       state.buffer = buffer ? buffer->buffer : NULL;
-      state.size = buffer->buffer->size;
       $self->pipe->set_constant_buffer($self->pipe, shader, index, &state);
    }
 
@@ -161,7 +160,7 @@ struct st_context {
       struct pipe_vertex_buffer state;
       
       memset(&state, 0, sizeof(state));
-      state.pitch = pitch;
+      state.stride = pitch;
       state.max_index = max_index;
       state.buffer_offset = buffer_offset;
       state.buffer = buffer ? buffer->buffer : NULL;
@@ -248,7 +247,7 @@ struct st_context {
       util_draw_vertex_buffer(pipe, vbuf, 0, prim, num_verts, num_attribs);
       
 error2:
-      pipe_buffer_reference(screen, &vbuf, NULL);
+      pipe_buffer_reference(&vbuf, NULL);
 error1:
       ;
    }
@@ -266,13 +265,12 @@ error1:
     * Surface functions
     */
    
-   void surface_copy(int do_flip,
-                     struct pipe_surface *dest,
+   void surface_copy(struct pipe_surface *dest,
                      unsigned destx, unsigned desty,
                      struct pipe_surface *src,
                      unsigned srcx, unsigned srcy,
                      unsigned width, unsigned height) {
-      $self->pipe->surface_copy($self->pipe, do_flip, dest, destx, desty, src, srcx, srcy, width, height);
+      $self->pipe->surface_copy($self->pipe, dest, destx, desty, src, srcx, srcy, width, height);
    }
 
    void surface_fill(struct pipe_surface *dst,

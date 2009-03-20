@@ -123,6 +123,10 @@ intelGetString(GLcontext * ctx, GLenum name)
       case PCI_CHIP_Q33_G:
 	 chipset = "Intel(R) Q33";
 	 break;
+      case PCI_CHIP_IGD_GM:
+      case PCI_CHIP_IGD_G:
+	 chipset = "Intel(R) IGD";
+	 break;
       case PCI_CHIP_I965_Q:
 	 chipset = "Intel(R) 965Q";
 	 break;
@@ -502,10 +506,16 @@ intelInitContext(struct intel_context *intel,
     * start.
     */
    if (getenv("INTEL_STRICT_CONFORMANCE")) {
-      intel->strict_conformance = 1;
+      unsigned int value = atoi(getenv("INTEL_STRICT_CONFORMANCE"));
+      if (value > 0) {
+         intel->conformance_mode = value;
+      }
+      else {
+         intel->conformance_mode = 1;
+      }
    }
 
-   if (intel->strict_conformance) {
+   if (intel->conformance_mode > 0) {
       ctx->Const.MinLineWidth = 1.0;
       ctx->Const.MinLineWidthAA = 1.0;
       ctx->Const.MaxLineWidth = 1.0;
@@ -573,8 +583,6 @@ intelInitContext(struct intel_context *intel,
 
    intel->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
-   _math_matrix_ctr(&intel->ViewportMatrix);
-
    if (IS_965(intelScreen->deviceID) && !intel->intelScreen->irq_active) {
       _mesa_printf("IRQs not active.  Exiting\n");
       exit(1);
@@ -608,6 +616,16 @@ intelInitContext(struct intel_context *intel,
    if (driQueryOptionb(&intel->optionCache, "no_rast")) {
       fprintf(stderr, "disabling 3D rasterization\n");
       intel->no_rast = 1;
+   }
+
+   if (driQueryOptionb(&intel->optionCache, "always_flush_batch")) {
+      fprintf(stderr, "flushing batchbuffer before/after each draw call\n");
+      intel->always_flush_batch = 1;
+   }
+
+   if (driQueryOptionb(&intel->optionCache, "always_flush_cache")) {
+      fprintf(stderr, "flushing GPU caches before/after each draw call\n");
+      intel->always_flush_cache = 1;
    }
 
    /* Disable all hardware rendering (skip emitting batches and fences/waits

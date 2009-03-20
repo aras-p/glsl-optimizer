@@ -38,7 +38,7 @@
  */
 
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/p_inlines.h"
 #include "pipe/internal/p_winsys_screen.h"
 
@@ -109,18 +109,15 @@ nv20__allocate_mbuffer(struct nv20_vbuf_render *nv20_render, size_t size)
 	return nv20_render->mbuffer;
 }
 
-static void *
+static void
 nv20__allocate_pbuffer(struct nv20_vbuf_render *nv20_render, size_t size)
 {
-	struct pipe_winsys *winsys = nv20_render->nv20->pipe.winsys;
-	nv20_render->pbuffer = winsys->buffer_create(winsys, 64,
+	struct pipe_screen *screen = nv20_render->nv20->pipe.screen;
+	nv20_render->pbuffer = screen->buffer_create(screen, 64,
 					PIPE_BUFFER_USAGE_VERTEX, size);
-	return winsys->buffer_map(winsys,
-			nv20_render->pbuffer,
-			PIPE_BUFFER_USAGE_CPU_WRITE);
 }
 
-static void *
+static boolean
 nv20_vbuf_render_allocate_vertices( struct vbuf_render *render,
 		ushort vertex_size,
 		ushort nr_vertices )
@@ -137,15 +134,49 @@ nv20_vbuf_render_allocate_vertices( struct vbuf_render *render,
 	 * buffer, the data will be passed directly via the fifo.
 	 */
 	/* XXX: Pipe vertex buffers don't work. */
-	if (0 && size > 16 * 1024)
-		buf = nv20__allocate_pbuffer(nv20_render, size);
-	else
+	if (0 && size > 16 * 1024) {
+		nv20__allocate_pbuffer(nv20_render, size);
+		/* umm yeah so this is ugly */
+		buf = nv20_render->pbuffer;
+	} else {
 		buf = nv20__allocate_mbuffer(nv20_render, size);
+	}
 
 	if (buf)
 		nv20_render->nv20->dirty |= NV20_NEW_VTXARRAYS;
 
-	return buf;
+	return buf ? TRUE : FALSE;
+}
+
+static void *
+nv20_vbuf_render_map_vertices( struct vbuf_render *render )
+{
+	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
+	struct pipe_winsys *winsys = nv20_render->nv20->pipe.winsys;
+
+	if (nv20_render->pbuffer) {
+		return winsys->buffer_map(winsys,
+				nv20_render->pbuffer,
+				PIPE_BUFFER_USAGE_CPU_WRITE);
+	} else if (nv20_render->mbuffer) {
+		return nv20_render->mbuffer;
+	} else
+		assert(0);
+
+	/* warnings be gone */
+	return NULL;
+}
+
+static void
+nv20_vbuf_render_unmap_vertices( struct vbuf_render *render,
+		ushort min_index,
+		ushort max_index )
+{
+	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
+	struct pipe_winsys *winsys = nv20_render->nv20->pipe.winsys;
+
+	if (nv20_render->pbuffer)
+		winsys->buffer_unmap(winsys, nv20_render->pbuffer);
 }
 
 static boolean
@@ -323,19 +354,14 @@ nv20_vbuf_render_draw( struct vbuf_render *render,
 
 
 static void
-nv20_vbuf_render_release_vertices( struct vbuf_render *render,
-		void *vertices, 
-		unsigned vertex_size,
-		unsigned vertices_used )
+nv20_vbuf_render_release_vertices( struct vbuf_render *render )
 {
 	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
 	struct nv20_context *nv20 = nv20_render->nv20;
-	struct pipe_winsys *winsys = nv20->pipe.winsys;
 	struct pipe_screen *pscreen = &nv20->screen->pipe;
 
 	if (nv20_render->pbuffer) {
-		winsys->buffer_unmap(winsys, nv20_render->pbuffer);
-		pipe_buffer_reference(pscreen, &nv20_render->pbuffer, NULL);
+		pipe_buffer_reference(&nv20_render->pbuffer, NULL);
 	} else if (nv20_render->mbuffer) {
 		FREE(nv20_render->mbuffer);
 		nv20_render->mbuffer = NULL;
@@ -371,6 +397,8 @@ nv20_vbuf_render_create( struct nv20_context *nv20 )
 	nv20_render->base.get_vertex_info = nv20_vbuf_render_get_vertex_info;
 	nv20_render->base.allocate_vertices =
 					nv20_vbuf_render_allocate_vertices;
+	nv20_render->base.map_vertices = nv20_vbuf_render_map_vertices;
+	nv20_render->base.unmap_vertices = nv20_vbuf_render_unmap_vertices;
 	nv20_render->base.set_primitive = nv20_vbuf_render_set_primitive;
 	nv20_render->base.draw = nv20_vbuf_render_draw;
 	nv20_render->base.release_vertices = nv20_vbuf_render_release_vertices;

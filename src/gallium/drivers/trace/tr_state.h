@@ -68,6 +68,8 @@ void trace_dump_sampler_state(const struct pipe_sampler_state *state);
 
 void trace_dump_surface(const struct pipe_surface *state);
 
+void trace_dump_transfer(const struct pipe_transfer *state);
+
 void trace_dump_vertex_buffer(const struct pipe_vertex_buffer *state);
 
 void trace_dump_vertex_element(const struct pipe_vertex_element *state);

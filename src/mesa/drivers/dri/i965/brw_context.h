@@ -46,7 +46,7 @@
  *
  * CURBE - constant URB entry.  An urb region (entry) used to hold
  * constant values which the fixed function units can be instructed to
- * preload into the GRF when spawining a thread.
+ * preload into the GRF when spawning a thread.
  *
  * VUE - vertex URB entry.  An urb entry holding a vertex and usually
  * a vertex header.  The header contains control information and
@@ -63,7 +63,7 @@
  * special and may be overwritten.
  *
  * MRF - message register file.  Threads communicate (and terminate)
- * by sending messages.  Message parameters are placed in contigous
+ * by sending messages.  Message parameters are placed in contiguous
  * MRF registers.  All program output is via these messages.  URB
  * entries are populated by sending a message to the shared URB
  * function containing the new data, together with a control word,
@@ -154,19 +154,20 @@ struct brw_state_flags {
    GLuint cache;
 };
 
+
+/** Subclass of Mesa vertex program */
 struct brw_vertex_program {
    struct gl_vertex_program program;
    GLuint id;
 };
 
 
-
+/** Subclass of Mesa fragment program */
 struct brw_fragment_program {
    struct gl_fragment_program program;
-   GLuint id;
+   GLuint id;  /**< serial no. to identify frag progs, never re-used */
+   GLboolean isGLSL;  /**< really, any IF/LOOP/CONT/BREAK instructions */
 };
-
-
 
 
 /* Data about a particular attempt to compile a program.  Note that
@@ -418,8 +419,8 @@ struct brw_context
       struct brw_tracked_state **atoms;
       GLuint nr_atoms;
 
-      GLuint nr_draw_regions;
-      struct intel_region *draw_regions[MAX_DRAW_BUFFERS];
+      GLuint nr_color_regions;
+      struct intel_region *color_regions[MAX_DRAW_BUFFERS];
       struct intel_region *depth_region;
 
       /**
@@ -627,8 +628,6 @@ struct brw_context
  * brw_vtbl.c
  */
 void brwInitVtbl( struct brw_context *brw );
-void brw_do_flush( struct brw_context *brw, 
-		   GLuint flags );
 
 /*======================================================================
  * brw_context.c
@@ -670,7 +669,9 @@ void brwInitFragProgFuncs( struct dd_function_table *functions );
  */
 void brw_upload_urb_fence(struct brw_context *brw);
 
-void brw_upload_constant_buffer_state(struct brw_context *brw);
+/* brw_curbe.c
+ */
+void brw_upload_cs_urb_state(struct brw_context *brw);
 
 
 /*======================================================================
@@ -682,6 +683,32 @@ brw_context( GLcontext *ctx )
 {
    return (struct brw_context *)ctx;
 }
+
+static INLINE struct brw_vertex_program *
+brw_vertex_program(struct gl_vertex_program *p)
+{
+   return (struct brw_vertex_program *) p;
+}
+
+static INLINE const struct brw_vertex_program *
+brw_vertex_program_const(const struct gl_vertex_program *p)
+{
+   return (const struct brw_vertex_program *) p;
+}
+
+static INLINE struct brw_fragment_program *
+brw_fragment_program(struct gl_fragment_program *p)
+{
+   return (struct brw_fragment_program *) p;
+}
+
+static INLINE const struct brw_fragment_program *
+brw_fragment_program_const(const struct gl_fragment_program *p)
+{
+   return (const struct brw_fragment_program *) p;
+}
+
+
 
 #define DO_SETUP_BITS ((1<<(FRAG_ATTRIB_MAX)) - 1)
 

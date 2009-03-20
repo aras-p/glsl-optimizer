@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.5
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,7 +43,6 @@
 #include "matrix.h"
 #include "mtypes.h"
 #include "math/m_matrix.h"
-#include "math/m_xform.h"
 
 
 /**
@@ -536,120 +536,6 @@ _mesa_MultTransposeMatrixdARB( const GLdouble *m )
 }
 #endif
 
-/**
- * Set the viewport.
- * 
- * \param x, y coordinates of the lower-left corner of the viewport rectangle.
- * \param width width of the viewport rectangle.
- * \param height height of the viewport rectangle.
- *
- * \sa Called via glViewport() or display list execution.
- *
- * Flushes the vertices and calls _mesa_set_viewport() with the given
- * parameters.
- */
-void GLAPIENTRY
-_mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-   _mesa_set_viewport(ctx, x, y, width, height);
-}
-
-
-/**
- * Set new viewport parameters and update derived state (the _WindowMap
- * matrix).  Usually called from _mesa_Viewport().
- * 
- * \param ctx GL context.
- * \param x, y coordinates of the lower left corner of the viewport rectangle.
- * \param width width of the viewport rectangle.
- * \param height height of the viewport rectangle.
- */
-void
-_mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
-                    GLsizei width, GLsizei height )
-{
-   if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glViewport %d %d %d %d\n", x, y, width, height);
-
-   if (width < 0 || height < 0) {
-      _mesa_error( ctx,  GL_INVALID_VALUE,
-                   "glViewport(%d, %d, %d, %d)", x, y, width, height );
-      return;
-   }
-
-   /* clamp width and height to the implementation dependent range */
-   width  = CLAMP(width,  1, (GLsizei) ctx->Const.MaxViewportWidth);
-   height = CLAMP(height, 1, (GLsizei) ctx->Const.MaxViewportHeight);
-
-   ctx->Viewport.X = x;
-   ctx->Viewport.Width = width;
-   ctx->Viewport.Y = y;
-   ctx->Viewport.Height = height;
-   ctx->NewState |= _NEW_VIEWPORT;
-
-#if 1
-   /* XXX remove this someday.  Currently the DRI drivers rely on
-    * the WindowMap matrix being up to date in the driver's Viewport
-    * and DepthRange functions.
-    */
-   _math_matrix_viewport(&ctx->Viewport._WindowMap,
-                         ctx->Viewport.X, ctx->Viewport.Y,
-                         ctx->Viewport.Width, ctx->Viewport.Height,
-                         ctx->Viewport.Near, ctx->Viewport.Far,
-                         ctx->DrawBuffer->_DepthMaxF);
-#endif
-
-   if (ctx->Driver.Viewport) {
-      /* Many drivers will use this call to check for window size changes
-       * and reallocate the z/stencil/accum/etc buffers if needed.
-       */
-      (*ctx->Driver.Viewport)( ctx, x, y, width, height );
-   }
-}
-
-
-#if _HAVE_FULL_GL
-/**
- * Called by glDepthRange
- *
- * \param nearval  specifies the Z buffer value which should correspond to
- *                 the near clip plane
- * \param farval  specifies the Z buffer value which should correspond to
- *                the far clip plane
- */
-void GLAPIENTRY
-_mesa_DepthRange( GLclampd nearval, GLclampd farval )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
-   if (MESA_VERBOSE&VERBOSE_API)
-      _mesa_debug(ctx, "glDepthRange %f %f\n", nearval, farval);
-
-   ctx->Viewport.Near = (GLfloat) CLAMP( nearval, 0.0, 1.0 );
-   ctx->Viewport.Far = (GLfloat) CLAMP( farval, 0.0, 1.0 );
-   ctx->NewState |= _NEW_VIEWPORT;
-
-#if 1
-   /* XXX remove this someday.  Currently the DRI drivers rely on
-    * the WindowMap matrix being up to date in the driver's Viewport
-    * and DepthRange functions.
-    */
-   _math_matrix_viewport(&ctx->Viewport._WindowMap,
-                         ctx->Viewport.X, ctx->Viewport.Y,
-                         ctx->Viewport.Width, ctx->Viewport.Height,
-                         ctx->Viewport.Near, ctx->Viewport.Far,
-                         ctx->DrawBuffer->_DepthMaxF);
-#endif
-
-   if (ctx->Driver.DepthRange) {
-      (*ctx->Driver.DepthRange)( ctx, nearval, farval );
-   }
-}
-#endif
-
 
 
 /**********************************************************************/
@@ -892,42 +778,5 @@ void _mesa_init_transform( GLcontext *ctx )
    ASSIGN_4V( ctx->Transform.CullEyePos, 0.0, 0.0, 1.0, 0.0 );
 }
 
-
-/** 
- * Initialize the context viewport attribute group.
- *
- * \param ctx GL context.
- * 
- * \todo Move this to a new file with other 'viewport' routines.
- */
-void _mesa_init_viewport( GLcontext *ctx )
-{
-   GLfloat depthMax = 65535.0F; /* sorf of arbitrary */
-
-   /* Viewport group */
-   ctx->Viewport.X = 0;
-   ctx->Viewport.Y = 0;
-   ctx->Viewport.Width = 0;
-   ctx->Viewport.Height = 0;
-   ctx->Viewport.Near = 0.0;
-   ctx->Viewport.Far = 1.0;
-   _math_matrix_ctr(&ctx->Viewport._WindowMap);
-
-   _math_matrix_viewport(&ctx->Viewport._WindowMap, 0, 0, 0, 0,
-                         0.0F, 1.0F, depthMax);
-}
-
-
-/** 
- * Free the context viewport attribute group data.
- *
- * \param ctx GL context.
- * 
- * \todo Move this to a new file with other 'viewport' routines.
- */
-void _mesa_free_viewport_data( GLcontext *ctx )
-{
-   _math_matrix_dtr(&ctx->Viewport._WindowMap);
-}
 
 /*@}*/

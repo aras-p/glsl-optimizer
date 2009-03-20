@@ -34,7 +34,7 @@
 #include "tnl/t_context.h"
 
 #include "3dnow.h"
-#include "common_x86_macros.h"
+#include "x86_xform.h"
 
 #ifdef DEBUG_MATH
 #include "math/m_debug.h"

@@ -223,7 +223,7 @@ setup_edgeflags(GLcontext *ctx, GLenum primMode, GLint start, GLint count,
       if (!stobj)
          return NULL;
 
-      vec = (unsigned *) calloc(sizeof(unsigned), (count + 31) / 32);
+      vec = (unsigned *) _mesa_calloc(sizeof(unsigned) * ((count + 31) / 32));
       if (!vec)
          return NULL;
 
@@ -378,8 +378,8 @@ setup_interleaved_attribs(GLcontext *ctx,
          }
          else {
             vbuffer->buffer = NULL;
-            pipe_buffer_reference(pipe->screen, &vbuffer->buffer, stobj->buffer);
-            vbuffer->buffer_offset = (unsigned) low;
+            pipe_buffer_reference(&vbuffer->buffer, stobj->buffer);
+            vbuffer->buffer_offset = pointer_to_offset(low);
          }
          vbuffer->stride = stride; /* in bytes */
          vbuffer->max_index = max_index;
@@ -433,8 +433,8 @@ setup_non_interleaved_attribs(GLcontext *ctx,
          /*printf("stobj %u = %p\n", attr, (void*) stobj);*/
 
          vbuffer[attr].buffer = NULL;
-         pipe_buffer_reference(pipe->screen, &vbuffer[attr].buffer, stobj->buffer);
-         vbuffer[attr].buffer_offset = (unsigned) arrays[mesaAttr]->Ptr;
+         pipe_buffer_reference(&vbuffer[attr].buffer, stobj->buffer);
+         vbuffer[attr].buffer_offset = pointer_to_offset(arrays[mesaAttr]->Ptr);
          velements[attr].src_offset = 0;
       }
       else {
@@ -545,6 +545,8 @@ st_draw_vbo(GLcontext *ctx,
    if (MESA_VERBOSE & VERBOSE_GLSL) {
       check_uniforms(ctx);
    }
+#else
+   (void) check_uniforms;
 #endif
 
    /*
@@ -617,8 +619,8 @@ st_draw_vbo(GLcontext *ctx,
       if (bufobj && bufobj->Name) {
          /* elements/indexes are in a real VBO */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
-         pipe_buffer_reference(pipe->screen, &indexBuf, stobj->buffer);
-         indexOffset = (unsigned) ib->ptr / indexSize;
+         pipe_buffer_reference(&indexBuf, stobj->buffer);
+         indexOffset = pointer_to_offset(ib->ptr) / indexSize;
       }
       else {
          /* element/indicies are in user space memory */
@@ -657,7 +659,7 @@ st_draw_vbo(GLcontext *ctx,
          }
       }
 
-      pipe_buffer_reference(pipe->screen, &indexBuf, NULL);
+      pipe_buffer_reference(&indexBuf, NULL);
    }
    else {
       /* non-indexed */
@@ -673,7 +675,7 @@ st_draw_vbo(GLcontext *ctx,
 
    /* unreference buffers (frees wrapped user-space buffer objects) */
    for (attr = 0; attr < num_vbuffers; attr++) {
-      pipe_buffer_reference(pipe->screen, &vbuffer[attr].buffer, NULL);
+      pipe_buffer_reference(&vbuffer[attr].buffer, NULL);
       assert(!vbuffer[attr].buffer);
    }
 

@@ -101,6 +101,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	struct nouveau_grobj *sifm = ctx->sifm;
 	struct nouveau_bo *src_bo = ctx->nvws->get_bo(ctx->buf(src));
 	struct nouveau_bo *dst_bo = ctx->nvws->get_bo(ctx->buf(dst));
+	const unsigned src_pitch = ((struct nv04_surface *)src)->pitch;
 	const unsigned max_w = 1024;
 	const unsigned max_h = 1024;
 	const unsigned sub_w = w > max_w ? max_w : w;
@@ -110,6 +111,8 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 
 	/* POT or GTFO */
 	assert(!(w & (w - 1)) && !(h & (h - 1)));
+	/* That's the way she likes it */
+	assert(src_pitch == ((struct nv04_surface *)dst)->pitch);
 
 	BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_DMA_IMAGE, 1);
 	OUT_RELOCo(chan, dst_bo,
@@ -130,7 +133,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	  for (cx = 0; cx < w; cx += sub_w) {
 	    BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
 	    OUT_RELOCl(chan, dst_bo, dst->offset + nv04_swizzle_bits(cx, cy) *
-			     dst->block.size, NOUVEAU_BO_GART |
+			     dst->texture->block.size, NOUVEAU_BO_GART |
 			     NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 9);
@@ -146,11 +149,11 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 
 	    BEGIN_RING(chan, sifm, NV04_SCALED_IMAGE_FROM_MEMORY_SIZE, 4);
 	    OUT_RING  (chan, sub_h << 16 | sub_w);
-	    OUT_RING  (chan, src->stride |
+	    OUT_RING  (chan, src_pitch |
 			     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
 			     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
-	    OUT_RELOCl(chan, src_bo, src->offset + cy * src->stride +
-			     cx * src->block.size, NOUVEAU_BO_GART |
+	    OUT_RELOCl(chan, src_bo, src->offset + cy * src_pitch +
+			     cx * src->texture->block.size, NOUVEAU_BO_GART |
 			     NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	    OUT_RING  (chan, 0);
 	  }
@@ -168,10 +171,12 @@ nv04_surface_copy_m2mf(struct nv04_surface_2d *ctx,
 	struct nouveau_grobj *m2mf = ctx->m2mf;
 	struct nouveau_bo *src_bo = ctx->nvws->get_bo(ctx->buf(src));
 	struct nouveau_bo *dst_bo = ctx->nvws->get_bo(ctx->buf(dst));
-	unsigned dst_offset, src_offset;
-
-	dst_offset = dst->offset + (dy * dst->stride) + (dx * dst->block.size);
-	src_offset = src->offset + (sy * src->stride) + (sx * src->block.size);
+	unsigned src_pitch = ((struct nv04_surface *)src)->pitch;
+	unsigned dst_pitch = ((struct nv04_surface *)dst)->pitch;
+	unsigned dst_offset = dst->offset + dy * dst_pitch +
+	                      dx * dst->texture->block.size;
+	unsigned src_offset = src->offset + sy * src_pitch +
+	                      sx * src->texture->block.size;
 
 	WAIT_RING (chan, 3 + ((h / 2047) + 1) * 9);
 	BEGIN_RING(chan, m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_DMA_BUFFER_IN, 2);
@@ -188,16 +193,16 @@ nv04_surface_copy_m2mf(struct nv04_surface_2d *ctx,
 			   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
 		OUT_RELOCl(chan, dst_bo, dst_offset,
 			   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_WR);
-		OUT_RING  (chan, src->stride);
-		OUT_RING  (chan, dst->stride);
-		OUT_RING  (chan, w * src->block.size);
+		OUT_RING  (chan, src_pitch);
+		OUT_RING  (chan, dst_pitch);
+		OUT_RING  (chan, w * src->texture->block.size);
 		OUT_RING  (chan, count);
 		OUT_RING  (chan, 0x0101);
 		OUT_RING  (chan, 0);
 
 		h -= count;
-		src_offset += src->stride * count;
-		dst_offset += dst->stride * count;
+		src_offset += src_pitch * count;
+		dst_offset += dst_pitch * count;
 	}
 
 	return 0;
@@ -213,6 +218,8 @@ nv04_surface_copy_blit(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	struct nouveau_grobj *blit = ctx->blit;
 	struct nouveau_bo *src_bo = ctx->nvws->get_bo(ctx->buf(src));
 	struct nouveau_bo *dst_bo = ctx->nvws->get_bo(ctx->buf(dst));
+	unsigned src_pitch = ((struct nv04_surface *)src)->pitch;
+	unsigned dst_pitch = ((struct nv04_surface *)dst)->pitch;
 	int format;
 
 	format = nv04_surface_format(dst->format);
@@ -225,7 +232,7 @@ nv04_surface_copy_blit(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	OUT_RELOCo(chan, dst_bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	BEGIN_RING(chan, surf2d, NV04_CONTEXT_SURFACES_2D_FORMAT, 4);
 	OUT_RING  (chan, format);
-	OUT_RING  (chan, (dst->stride << 16) | src->stride);
+	OUT_RING  (chan, (dst_pitch << 16) | src_pitch);
 	OUT_RELOCl(chan, src_bo, src->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	OUT_RELOCl(chan, dst_bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
@@ -242,6 +249,8 @@ nv04_surface_copy(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 		  int dx, int dy, struct pipe_surface *src, int sx, int sy,
 		  int w, int h)
 {
+	unsigned src_pitch = ((struct nv04_surface *)src)->pitch;
+	unsigned dst_pitch = ((struct nv04_surface *)dst)->pitch;
 	int src_linear = src->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR;
 	int dst_linear = dst->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR;
 
@@ -257,7 +266,8 @@ nv04_surface_copy(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	 * to NV_MEMORY_TO_MEMORY_FORMAT in this case.
 	 */
 	if ((src->offset & 63) || (dst->offset & 63) ||
-	    (src->stride & 63) || (dst->stride & 63)) {
+	    (src_pitch & 63) || (dst_pitch & 63) ||
+	    debug_get_bool_option("NOUVEAU_NO_COPYBLIT", FALSE)) {
 		nv04_surface_copy_m2mf(ctx, dst, dx, dy, src, sx, sy, w, h);
 		return;
 	}
@@ -273,6 +283,7 @@ nv04_surface_fill(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	struct nouveau_grobj *surf2d = ctx->surf2d;
 	struct nouveau_grobj *rect = ctx->rect;
 	struct nouveau_bo *dst_bo = ctx->nvws->get_bo(ctx->buf(dst));
+	unsigned dst_pitch = ((struct nv04_surface *)dst)->pitch;
 	int cs2d_format, gdirect_format;
 
 	cs2d_format = nv04_surface_format(dst->format);
@@ -287,7 +298,7 @@ nv04_surface_fill(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 	OUT_RELOCo(chan, dst_bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	BEGIN_RING(chan, surf2d, NV04_CONTEXT_SURFACES_2D_FORMAT, 4);
 	OUT_RING  (chan, cs2d_format);
-	OUT_RING  (chan, (dst->stride << 16) | dst->stride);
+	OUT_RING  (chan, (dst_pitch << 16) | dst_pitch);
 	OUT_RELOCl(chan, dst_bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	OUT_RELOCl(chan, dst_bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
@@ -426,13 +437,21 @@ nv04_surface_2d_init(struct nouveau_winsys *nvws)
 		return NULL;
 	}
 
-	if (chan->device->chipset < 0x10) {
-		class = NV04_SCALED_IMAGE_FROM_MEMORY;
-	} else
-	if (chan->device->chipset < 0x40) {
+	switch (chan->device->chipset & 0xf0) {
+	case 0x10:
+	case 0x20:
 		class = NV10_SCALED_IMAGE_FROM_MEMORY;
-	} else {
+		break;
+	case 0x30:
+		class = NV30_SCALED_IMAGE_FROM_MEMORY;
+		break;
+	case 0x40:
+	case 0x60:
 		class = NV40_SCALED_IMAGE_FROM_MEMORY;
+		break;
+	default:
+		class = NV04_SCALED_IMAGE_FROM_MEMORY;
+		break;
 	}
 
 	ret = nouveau_grobj_alloc(chan, handle++, class, &ctx->sifm);

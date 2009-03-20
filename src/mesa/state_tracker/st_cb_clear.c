@@ -60,24 +60,15 @@ st_init_clear(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
 
-   /* rasterizer state: bypass clipping */
    memset(&st->clear.raster, 0, sizeof(st->clear.raster));
    st->clear.raster.gl_rasterization_rules = 1;
-   st->clear.raster.bypass_clipping = 1;
 
-   /* viewport state: identity since we're drawing in window coords */
-   st->clear.viewport.scale[0] = 1.0;
-   st->clear.viewport.scale[1] = 1.0;
-   st->clear.viewport.scale[2] = 1.0;
-   st->clear.viewport.scale[3] = 1.0;
-   st->clear.viewport.translate[0] = 0.0;
-   st->clear.viewport.translate[1] = 0.0;
-   st->clear.viewport.translate[2] = 0.0;
-   st->clear.viewport.translate[3] = 0.0;
+   /* rasterizer state: bypass vertex shader, clipping and viewport */
+   st->clear.raster.bypass_vs_clip_and_viewport = 1;
 
    /* fragment shader state: color pass-through program */
    st->clear.fs =
-      util_make_fragment_passthrough_shader(pipe, &st->clear.frag_shader);
+      util_make_fragment_passthrough_shader(pipe);
 
    /* vertex shader state: color/position pass-through */
    {
@@ -86,8 +77,7 @@ st_init_clear(struct st_context *st)
       const uint semantic_indexes[] = { 0, 0 };
       st->clear.vs = util_make_vertex_passthrough_shader(pipe, 2,
                                                          semantic_names,
-                                                         semantic_indexes,
-                                                         &st->clear.vert_shader);
+                                                         semantic_indexes);
    }
 }
 
@@ -95,18 +85,6 @@ st_init_clear(struct st_context *st)
 void
 st_destroy_clear(struct st_context *st)
 {
-   struct pipe_context *pipe = st->pipe;
-
-   if (st->clear.vert_shader.tokens) {
-      FREE((void *) st->clear.vert_shader.tokens);
-      st->clear.vert_shader.tokens = NULL;
-   }
-
-   if (st->clear.frag_shader.tokens) {
-      FREE((void *) st->clear.frag_shader.tokens);
-      st->clear.frag_shader.tokens = NULL;
-   }
-
    if (st->clear.fs) {
       cso_delete_fragment_shader(st->cso_context, st->clear.fs);
       st->clear.fs = NULL;
@@ -116,7 +94,7 @@ st_destroy_clear(struct st_context *st)
       st->clear.vs = NULL;
    }
    if (st->clear.vbuf) {
-      pipe_buffer_reference(pipe->screen, &st->clear.vbuf, NULL);
+      pipe_buffer_reference(&st->clear.vbuf, NULL);
       st->clear.vbuf = NULL;
    }
 }
@@ -138,8 +116,9 @@ is_depth_stencil_format(enum pipe_format pipeFormat)
 
 /**
  * Draw a screen-aligned quadrilateral.
- * Coords are window coords with y=0=bottom.  These coords will be transformed
- * by the vertex shader and viewport transform (which will flip Y if needed).
+ * Coords are window coords with y=0=bottom.  These will be passed
+ * through unmodified to the rasterizer as we have set
+ * rasterizer->bypass_vs_clip_and_viewport.
  */
 static void
 draw_quad(GLcontext *ctx,
@@ -150,10 +129,9 @@ draw_quad(GLcontext *ctx,
    struct pipe_context *pipe = st->pipe;
    const GLuint max_slots = 1024 / sizeof(st->clear.vertices);
    GLuint i;
-   void *buf;
 
    if (st->clear.vbuf_slot >= max_slots) {
-      pipe_buffer_reference(pipe->screen, &st->clear.vbuf, NULL);
+      pipe_buffer_reference(&st->clear.vbuf, NULL);
       st->clear.vbuf_slot = 0;
    }
 
@@ -186,13 +164,10 @@ draw_quad(GLcontext *ctx,
    }
 
    /* put vertex data into vbuf */
-   buf = pipe_buffer_map(pipe->screen, st->clear.vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
-
-   memcpy((char *)buf + st->clear.vbuf_slot * sizeof(st->clear.vertices), 
-          st->clear.vertices, 
-          sizeof(st->clear.vertices));
-
-   pipe_buffer_unmap(pipe->screen, st->clear.vbuf);
+   pipe_buffer_write(pipe->screen, st->clear.vbuf, 
+                     st->clear.vbuf_slot * sizeof(st->clear.vertices),
+                     sizeof(st->clear.vertices),
+                     st->clear.vertices);
 
    /* draw */
    util_draw_vertex_buffer(pipe, 
@@ -243,7 +218,6 @@ clear_with_quad(GLcontext *ctx,
    cso_save_blend(st->cso_context);
    cso_save_depth_stencil_alpha(st->cso_context);
    cso_save_rasterizer(st->cso_context);
-   cso_save_viewport(st->cso_context);
    cso_save_fragment_shader(st->cso_context);
    cso_save_vertex_shader(st->cso_context);
 
@@ -295,7 +269,6 @@ clear_with_quad(GLcontext *ctx,
    }
 
    cso_set_rasterizer(st->cso_context, &st->clear.raster);
-   cso_set_viewport(st->cso_context, &st->clear.viewport);
 
    cso_set_fragment_shader_handle(st->cso_context, st->clear.fs);
    cso_set_vertex_shader_handle(st->cso_context, st->clear.vs);
@@ -307,7 +280,6 @@ clear_with_quad(GLcontext *ctx,
    cso_restore_blend(st->cso_context);
    cso_restore_depth_stencil_alpha(st->cso_context);
    cso_restore_rasterizer(st->cso_context);
-   cso_restore_viewport(st->cso_context);
    cso_restore_fragment_shader(st->cso_context);
    cso_restore_vertex_shader(st->cso_context);
 }
@@ -528,7 +500,7 @@ void st_flush_clear( struct st_context *st )
    /* Release vertex buffer to avoid synchronous rendering if we were
     * to map it in the next frame.
     */
-   pipe_buffer_reference(st->pipe->screen, &st->clear.vbuf, NULL);
+   pipe_buffer_reference(&st->clear.vbuf, NULL);
    st->clear.vbuf_slot = 0;
 }
  

@@ -23,6 +23,7 @@ nv30_state_scissor_validate(struct nv30_context *nv30)
 	}
 
 	so_ref(so, &nv30->state.hw[NV30_STATE_SCISSOR]);
+	so_ref(NULL, &so);
 	return TRUE;
 }
 

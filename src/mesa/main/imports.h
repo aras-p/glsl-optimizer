@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.5
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
@@ -36,35 +36,13 @@
 #define IMPORTS_H
 
 
-/* XXX some of the stuff in glheader.h should be moved into this file.
- */
+#include "compiler.h"
 #include "glheader.h"
-#include <GL/internal/glcore.h>
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-/**********************************************************************/
-/** \name General macros */
-/*@{*/
-
-#ifndef NULL
-#define NULL 0
-#endif
-
-
-/** gcc -pedantic warns about long string literals, LONGSTRING silences that */
-#if !defined(__GNUC__) || (__GNUC__ < 2) || \
-    ((__GNUC__ == 2) && (__GNUC_MINOR__ <= 7))
-# define LONGSTRING
-#else
-# define LONGSTRING __extension__
-#endif
-
-/*@}*/
 
 
 /**********************************************************************/
@@ -130,46 +108,8 @@ typedef union { GLfloat f; GLint i; } fi_type;
 #define MAX_GLUSHORT	0xffff
 #define MAX_GLUINT	0xffffffff
 
-#ifndef M_PI
-#define M_PI (3.1415926536)
-#endif
-
-#ifndef M_E
-#define M_E (2.7182818284590452354)
-#endif
-
-#ifndef ONE_DIV_LN2
-#define ONE_DIV_LN2 (1.442695040888963456)
-#endif
-
-#ifndef ONE_DIV_SQRT_LN2
-#define ONE_DIV_SQRT_LN2 (1.201122408786449815)
-#endif
-
-#ifndef FLT_MAX_EXP
-#define FLT_MAX_EXP 128
-#endif
-
 /* Degrees to radians conversion: */
 #define DEG2RAD (M_PI/180.0)
-
-
-/***
- *** USE_IEEE: Determine if we're using IEEE floating point
- ***/
-#if defined(__i386__) || defined(__386__) || defined(__sparc__) || \
-    defined(__s390x__) || defined(__powerpc__) || \
-    defined(__x86_64__) || \
-    defined(ia64) || defined(__ia64__) || \
-    defined(__hppa__) || defined(hpux) || \
-    defined(__mips) || defined(_MIPS_ARCH) || \
-    defined(__arm__) || \
-    defined(__sh__) || defined(__m32r__) || \
-    (defined(__sun) && defined(_IEEE_754)) || \
-    (defined(__alpha__) && (defined(__IEEE_FLOAT) || !defined(VMS)))
-#define USE_IEEE
-#define IEEE_ONE 0x3f800000
-#endif
 
 
 /***
@@ -316,16 +256,9 @@ static INLINE int GET_FLOAT_BITS( float x )
 /***
  *** IROUND: return (as an integer) float rounded to nearest integer
  ***/
-#if defined(USE_SPARC_ASM) && defined(__GNUC__) && defined(__sparc__)
-static INLINE int iround(float f)
-{
-   int r;
-   __asm__ ("fstoi %1, %0" : "=f" (r) : "f" (f));
-   return r;
-}
-#define IROUND(x)  iround(x)
-#elif defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__) && \
-			(!defined(__BEOS__) || (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)))
+#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__) && \
+			(!(defined(__BEOS__) || defined(__HAIKU__))  || \
+			(__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)))
 static INLINE int iround(float f)
 {
    int r;
@@ -505,113 +438,6 @@ _mesa_is_pow_two(int x)
 	ub = ((GLubyte) IROUND(CLAMP((f), 0.0F, 1.0F) * 255.0F))
 #define CLAMPED_FLOAT_TO_UBYTE(ub, f) \
 	ub = ((GLubyte) IROUND((f) * 255.0F))
-#endif
-
-
-/***
- *** START_FAST_MATH: Set x86 FPU to faster, 32-bit precision mode (and save
- ***                  original mode to a temporary).
- *** END_FAST_MATH: Restore x86 FPU to original mode.
- ***/
-#if defined(__GNUC__) && defined(__i386__)
-/*
- * Set the x86 FPU control word to guarentee only 32 bits of precision
- * are stored in registers.  Allowing the FPU to store more introduces
- * differences between situations where numbers are pulled out of memory
- * vs. situations where the compiler is able to optimize register usage.
- *
- * In the worst case, we force the compiler to use a memory access to
- * truncate the float, by specifying the 'volatile' keyword.
- */
-/* Hardware default: All exceptions masked, extended double precision,
- * round to nearest (IEEE compliant):
- */
-#define DEFAULT_X86_FPU		0x037f
-/* All exceptions masked, single precision, round to nearest:
- */
-#define FAST_X86_FPU		0x003f
-/* The fldcw instruction will cause any pending FP exceptions to be
- * raised prior to entering the block, and we clear any pending
- * exceptions before exiting the block.  Hence, asm code has free
- * reign over the FPU while in the fast math block.
- */
-#if defined(NO_FAST_MATH)
-#define START_FAST_MATH(x)						\
-do {									\
-   static GLuint mask = DEFAULT_X86_FPU;				\
-   __asm__ ( "fnstcw %0" : "=m" (*&(x)) );				\
-   __asm__ ( "fldcw %0" : : "m" (mask) );				\
-} while (0)
-#else
-#define START_FAST_MATH(x)						\
-do {									\
-   static GLuint mask = FAST_X86_FPU;					\
-   __asm__ ( "fnstcw %0" : "=m" (*&(x)) );				\
-   __asm__ ( "fldcw %0" : : "m" (mask) );				\
-} while (0)
-#endif
-/* Restore original FPU mode, and clear any exceptions that may have
- * occurred in the FAST_MATH block.
- */
-#define END_FAST_MATH(x)						\
-do {									\
-   __asm__ ( "fnclex ; fldcw %0" : : "m" (*&(x)) );			\
-} while (0)
-
-#elif defined(__WATCOMC__) && defined(__386__)
-#define DEFAULT_X86_FPU		0x037f /* See GCC comments above */
-#define FAST_X86_FPU		0x003f /* See GCC comments above */
-void _watcom_start_fast_math(unsigned short *x,unsigned short *mask);
-#pragma aux _watcom_start_fast_math =                                   \
-   "fnstcw  word ptr [eax]"                                             \
-   "fldcw   word ptr [ecx]"                                             \
-   parm [eax] [ecx]                                                     \
-   modify exact [];
-void _watcom_end_fast_math(unsigned short *x);
-#pragma aux _watcom_end_fast_math =                                     \
-   "fnclex"                                                             \
-   "fldcw   word ptr [eax]"                                             \
-   parm [eax]                                                           \
-   modify exact [];
-#if defined(NO_FAST_MATH)
-#define START_FAST_MATH(x)                                              \
-do {                                                                    \
-   static GLushort mask = DEFAULT_X86_FPU;	                            \
-   _watcom_start_fast_math(&x,&mask);                                   \
-} while (0)
-#else
-#define START_FAST_MATH(x)                                              \
-do {                                                                    \
-   static GLushort mask = FAST_X86_FPU;                                 \
-   _watcom_start_fast_math(&x,&mask);                                   \
-} while (0)
-#endif
-#define END_FAST_MATH(x)  _watcom_end_fast_math(&x)
-
-#elif defined(_MSC_VER) && defined(_M_IX86)
-#define DEFAULT_X86_FPU		0x037f /* See GCC comments above */
-#define FAST_X86_FPU		0x003f /* See GCC comments above */
-#if defined(NO_FAST_MATH)
-#define START_FAST_MATH(x) do {\
-	static GLuint mask = DEFAULT_X86_FPU;\
-	__asm fnstcw word ptr [x]\
-	__asm fldcw word ptr [mask]\
-} while(0)
-#else
-#define START_FAST_MATH(x) do {\
-	static GLuint mask = FAST_X86_FPU;\
-	__asm fnstcw word ptr [x]\
-	__asm fldcw word ptr [mask]\
-} while(0)
-#endif
-#define END_FAST_MATH(x) do {\
-	__asm fnclex\
-	__asm fldcw word ptr [x]\
-} while(0)
-
-#else
-#define START_FAST_MATH(x)  x = 0
-#define END_FAST_MATH(x)  (void)(x)
 #endif
 
 

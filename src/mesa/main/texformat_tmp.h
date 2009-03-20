@@ -719,9 +719,9 @@ static void store_texel_rgb888(struct gl_texture_image *texImage,
 {
    const GLubyte *rgba = (const GLubyte *) texel;
    GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
-   dst[0] = rgba[RCOMP];
+   dst[0] = rgba[BCOMP];
    dst[1] = rgba[GCOMP];
-   dst[2] = rgba[BCOMP];
+   dst[2] = rgba[RCOMP];
 }
 #endif
 
@@ -745,9 +745,9 @@ static void store_texel_bgr888(struct gl_texture_image *texImage,
 {
    const GLubyte *rgba = (const GLubyte *) texel;
    GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
-   dst[0] = rgba[BCOMP];
+   dst[0] = rgba[RCOMP];
    dst[1] = rgba[GCOMP];
-   dst[2] = rgba[RCOMP];
+   dst[2] = rgba[BCOMP];
 }
 #endif
 
@@ -1269,7 +1269,7 @@ static void FETCH(sl8)(const struct gl_texture_image *texImage,
    texel[RCOMP] = 
    texel[GCOMP] = 
    texel[BCOMP] = nonlinear_to_linear(src[0]);
-   texel[ACOMP] = CHAN_MAX;
+   texel[ACOMP] = 1.0F;
 }
 
 #if DIM == 3
@@ -1304,10 +1304,22 @@ static void store_texel_sla8(struct gl_texture_image *texImage,
 }
 #endif
 
-
-
 #endif /* FEATURE_EXT_texture_sRGB */
 
+
+/* MESA_FORMAT_DUDV8 ********************************************************/
+
+/* this format by definition produces 0,0,0,1 as rgba values,
+   however we'll return the dudv values as rg and fix up elsewhere */
+static void FETCH(dudv8)(const struct gl_texture_image *texImage,
+                         GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLbyte *src = TEXEL_ADDR(GLbyte, texImage, i, j, k, 2);
+   texel[RCOMP] = BYTE_TO_FLOAT(src[0]);
+   texel[GCOMP] = BYTE_TO_FLOAT(src[1]);
+   texel[BCOMP] = 0;
+   texel[ACOMP] = 0;
+}
 
 
 /* MESA_FORMAT_YCBCR *********************************************************/

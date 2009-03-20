@@ -164,7 +164,7 @@ _slang_var_swizzle(GLint size, GLint comp)
 {
    switch (size) {
    case 1:
-      return MAKE_SWIZZLE4(comp, comp, comp, comp);
+      return MAKE_SWIZZLE4(comp, SWIZZLE_NIL, SWIZZLE_NIL, SWIZZLE_NIL);
    case 2:
       return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_NIL, SWIZZLE_NIL);
    case 3:
@@ -446,12 +446,12 @@ new_instruction(slang_emit_info *emitInfo, gl_inst_opcode opcode)
 
 static struct prog_instruction *
 emit_arl_load(slang_emit_info *emitInfo,
-              enum register_file file, GLint index, GLuint swizzle)
+              gl_register_file file, GLint index, GLuint swizzle)
 {
    struct prog_instruction *inst = new_instruction(emitInfo, OPCODE_ARL);
    inst->SrcReg[0].File = file;
    inst->SrcReg[0].Index = index;
-   inst->SrcReg[0].Swizzle = swizzle;
+   inst->SrcReg[0].Swizzle = fix_swizzle(swizzle);
    inst->DstReg.File = PROGRAM_ADDRESS;
    inst->DstReg.Index = 0;
    inst->DstReg.WriteMask = WRITEMASK_X;
@@ -873,6 +873,7 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
 
    if (n->Children[0]->Store->Size != n->Children[1]->Store->Size) {
       slang_info_log_error(emitInfo->log, "invalid operands to == or !=");
+      n->Store = NULL;
       return NULL;
    }
 
@@ -902,6 +903,7 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
       slang_ir_storage tempStore;
 
       if (!alloc_local_temp(emitInfo, &tempStore, 4)) {
+         n->Store = NULL;
          return NULL;
          /* out of temps */
       }
@@ -1259,16 +1261,33 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct prog_instruction *inst;
    gl_inst_opcode opcode;
+   GLboolean shadow = GL_FALSE;
 
-   if (n->Opcode == IR_TEX) {
+   switch (n->Opcode) {
+   case IR_TEX:
       opcode = OPCODE_TEX;
-   }
-   else if (n->Opcode == IR_TEXB) {
+      break;
+   case IR_TEX_SH:
+      opcode = OPCODE_TEX;
+      shadow = GL_TRUE;
+      break;
+   case IR_TEXB:
       opcode = OPCODE_TXB;
-   }
-   else {
-      assert(n->Opcode == IR_TEXP);
+      break;
+   case IR_TEXB_SH:
+      opcode = OPCODE_TXB;
+      shadow = GL_TRUE;
+      break;
+   case IR_TEXP:
       opcode = OPCODE_TXP;
+      break;
+   case IR_TEXP_SH:
+      opcode = OPCODE_TXP;
+      shadow = GL_TRUE;
+      break;
+   default:
+      _mesa_problem(NULL, "Bad IR TEX code");
+      return NULL;
    }
 
    if (n->Children[0]->Opcode == IR_ELEMENT) {
@@ -1299,6 +1318,8 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
                            n->Children[1]->Store,
                            NULL,
                            NULL);
+
+   inst->TexShadow = shadow;
 
    /* Store->Index is the uniform/sampler index */
    assert(n->Children[0]->Store->Index >= 0);
@@ -1358,6 +1379,7 @@ emit_copy(slang_emit_info *emitInfo, slang_ir_node *n)
 
 #if PEEPHOLE_OPTIMIZATIONS
    if (inst &&
+       (n->Children[1]->Opcode != IR_SWIZZLE) &&
        _slang_is_temp(emitInfo->vt, n->Children[1]->Store) &&
        (inst->DstReg.File == n->Children[1]->Store->File) &&
        (inst->DstReg.Index == n->Children[1]->Store->Index) &&
@@ -1374,13 +1396,9 @@ emit_copy(slang_emit_info *emitInfo, slang_ir_node *n)
        * becomes:
        *   MUL a, x, y;
        */
-      if (n->Children[1]->Opcode != IR_SWIZZLE)
-         _slang_free_temp(emitInfo->vt, n->Children[1]->Store);
-      *n->Children[1]->Store = *n->Children[0]->Store;
 
       /* fixup the previous instruction (which stored the RHS result) */
       assert(n->Children[0]->Store->Index >= 0);
-
       storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store);
       return inst;
    }
@@ -1813,6 +1831,25 @@ emit_cont_break_if_true(slang_emit_info *emitInfo, slang_ir_node *n)
 }
 
 
+/**
+ * Return the size of a swizzle mask given that some swizzle components
+ * may be NIL/undefined.  For example:
+ *  swizzle_size(".zzxx") = 4
+ *  swizzle_size(".xy??") = 2
+ *  swizzle_size(".w???") = 1
+ */
+static GLuint
+swizzle_size(GLuint swizzle)
+{
+   GLuint i;
+   for (i = 0; i < 4; i++) {
+      if (GET_SWZ(swizzle, i) == SWIZZLE_NIL)
+         return i;
+   }
+   return 4;
+}
+
+
 static struct prog_instruction *
 emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
 {
@@ -1820,14 +1857,25 @@ emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
 
    inst = emit(emitInfo, n->Children[0]);
 
-#if 0
-   assert(n->Store->Parent);
-   /* Apply this node's swizzle to parent's storage */
-   GLuint swizzle = n->Store->Swizzle;
-   _slang_copy_ir_storage(n->Store, n->Store->Parent);
-   n->Store->Swizzle = _slang_swizzle_swizzle(n->Store->Swizzle, swizzle);
+   if (!n->Store->Parent) {
+      /* this covers a case such as "(b ? p : q).x" */
+      n->Store->Parent = n->Children[0]->Store;
+      assert(n->Store->Parent);
+   }
+
+   {
+      const GLuint swizzle = n->Store->Swizzle;
+      /* new storage is parent storage with updated Swizzle + Size fields */
+      _slang_copy_ir_storage(n->Store, n->Store->Parent);
+      /* Apply this node's swizzle to parent's storage */
+      n->Store->Swizzle = _slang_swizzle_swizzle(n->Store->Swizzle, swizzle);
+      /* Update size */
+      n->Store->Size = swizzle_size(n->Store->Swizzle);
+   }
+
    assert(!n->Store->Parent);
-#endif
+   assert(n->Store->Index >= 0);
+
    return inst;
 }
 
@@ -2146,6 +2194,12 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
       return NULL;
    }
 
+   if (n->Comment) {
+      inst = new_instruction(emitInfo, OPCODE_NOP);
+      inst->Comment = _mesa_strdup(n->Comment);
+      inst = NULL;
+   }
+
    switch (n->Opcode) {
    case IR_SEQ:
       /* sequence of two sub-trees */
@@ -2239,6 +2293,9 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_TEX:
    case IR_TEXB:
    case IR_TEXP:
+   case IR_TEX_SH:
+   case IR_TEXB_SH:
+   case IR_TEXP_SH:
       return emit_tex(emitInfo, n);
    case IR_NEG:
       return emit_negation(emitInfo, n);
@@ -2428,7 +2485,9 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
       maxUniforms = ctx->Const.VertexProgram.MaxUniformComponents / 4;
    }
    if (prog->Parameters->NumParameters > maxUniforms) {
-      slang_info_log_error(log, "Constant/uniform register limit exceeded");
+      slang_info_log_error(log, "Constant/uniform register limit exceeded "
+                           "(max=%u vec4)", maxUniforms);
+
       return GL_FALSE;
    }
 

@@ -1,13 +1,9 @@
-/**
- * \file feedback.c
- * Selection and feedback modes functions.
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  7.5
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,6 +21,11 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * \file feedback.c
+ * Selection and feedback modes functions.
  */
 
 
@@ -110,60 +111,49 @@ _mesa_PassThrough( GLfloat token )
 
    if (ctx->RenderMode==GL_FEEDBACK) {
       FLUSH_VERTICES(ctx, 0);
-      FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_PASS_THROUGH_TOKEN );
-      FEEDBACK_TOKEN( ctx, token );
+      _mesa_feedback_token( ctx, (GLfloat) (GLint) GL_PASS_THROUGH_TOKEN );
+      _mesa_feedback_token( ctx, token );
    }
 }
 
 
-
-/*
+/**
  * Put a vertex into the feedback buffer.
  */
-void _mesa_feedback_vertex( GLcontext *ctx,
-                            const GLfloat win[4],
-                            const GLfloat color[4],
-                            GLfloat index,
-                            const GLfloat texcoord[4] )
+void
+_mesa_feedback_vertex(GLcontext *ctx,
+                      const GLfloat win[4],
+                      const GLfloat color[4],
+                      GLfloat index,
+                      const GLfloat texcoord[4])
 {
-#if 0
-   {
-      /* snap window x, y to fractional pixel position */
-      const GLint snapMask = ~((FIXED_ONE / (1 << SUB_PIXEL_BITS)) - 1);
-      GLfixed x, y;
-      x = FloatToFixed(win[0]) & snapMask;
-      y = FloatToFixed(win[1]) & snapMask;
-      FEEDBACK_TOKEN(ctx, FixedToFloat(x));
-      FEEDBACK_TOKEN(ctx, FixedToFloat(y) );
-   }
-#else
-   FEEDBACK_TOKEN( ctx, win[0] );
-   FEEDBACK_TOKEN( ctx, win[1] );
-#endif
+   _mesa_feedback_token( ctx, win[0] );
+   _mesa_feedback_token( ctx, win[1] );
    if (ctx->Feedback._Mask & FB_3D) {
-      FEEDBACK_TOKEN( ctx, win[2] );
+      _mesa_feedback_token( ctx, win[2] );
    }
    if (ctx->Feedback._Mask & FB_4D) {
-      FEEDBACK_TOKEN( ctx, win[3] );
+      _mesa_feedback_token( ctx, win[3] );
    }
    if (ctx->Feedback._Mask & FB_INDEX) {
-      FEEDBACK_TOKEN( ctx, (GLfloat) index );
+      _mesa_feedback_token( ctx, (GLfloat) index );
    }
    if (ctx->Feedback._Mask & FB_COLOR) {
-      FEEDBACK_TOKEN( ctx, color[0] );
-      FEEDBACK_TOKEN( ctx, color[1] );
-      FEEDBACK_TOKEN( ctx, color[2] );
-      FEEDBACK_TOKEN( ctx, color[3] );
+      _mesa_feedback_token( ctx, color[0] );
+      _mesa_feedback_token( ctx, color[1] );
+      _mesa_feedback_token( ctx, color[2] );
+      _mesa_feedback_token( ctx, color[3] );
    }
    if (ctx->Feedback._Mask & FB_TEXTURE) {
-      FEEDBACK_TOKEN( ctx, texcoord[0] );
-      FEEDBACK_TOKEN( ctx, texcoord[1] );
-      FEEDBACK_TOKEN( ctx, texcoord[2] );
-      FEEDBACK_TOKEN( ctx, texcoord[3] );
+      _mesa_feedback_token( ctx, texcoord[0] );
+      _mesa_feedback_token( ctx, texcoord[1] );
+      _mesa_feedback_token( ctx, texcoord[2] );
+      _mesa_feedback_token( ctx, texcoord[3] );
    }
 }
 
-#endif
+
+#endif /* _HAVE_FULL_GL */
 
 
 /**********************************************************************/
@@ -207,17 +197,20 @@ _mesa_SelectBuffer( GLsizei size, GLuint *buffer )
 /**
  * Write a value of a record into the selection buffer.
  * 
- * \param CTX GL context.
- * \param V value.
+ * \param ctx GL context.
+ * \param value value.
  *
  * Verifies there is free space in the buffer to write the value and
  * increments the pointer.
  */
-#define WRITE_RECORD( CTX, V )					\
-	if (CTX->Select.BufferCount < CTX->Select.BufferSize) {	\
-	   CTX->Select.Buffer[CTX->Select.BufferCount] = (V);	\
-	}							\
-	CTX->Select.BufferCount++;
+static INLINE void
+write_record(GLcontext *ctx, GLuint value)
+{
+   if (ctx->Select.BufferCount < ctx->Select.BufferSize) {
+      ctx->Select.Buffer[ctx->Select.BufferCount] = value;
+   }
+   ctx->Select.BufferCount++;
+}
 
 
 /**
@@ -229,7 +222,8 @@ _mesa_SelectBuffer( GLsizei size, GLuint *buffer )
  * Sets gl_selection::HitFlag and updates gl_selection::HitMinZ and
  * gl_selection::HitMaxZ.
  */
-void _mesa_update_hitflag( GLcontext *ctx, GLfloat z )
+void
+_mesa_update_hitflag(GLcontext *ctx, GLfloat z)
 {
    ctx->Select.HitFlag = GL_TRUE;
    if (z < ctx->Select.HitMinZ) {
@@ -252,7 +246,8 @@ void _mesa_update_hitflag( GLcontext *ctx, GLfloat z )
  *
  * \sa gl_selection.
  */
-static void write_hit_record( GLcontext *ctx )
+static void
+write_hit_record(GLcontext *ctx)
 {
    GLuint i;
    GLuint zmin, zmax, zscale = (~0u);
@@ -264,11 +259,11 @@ static void write_hit_record( GLcontext *ctx )
    zmin = (GLuint) ((GLfloat) zscale * ctx->Select.HitMinZ);
    zmax = (GLuint) ((GLfloat) zscale * ctx->Select.HitMaxZ);
 
-   WRITE_RECORD( ctx, ctx->Select.NameStackDepth );
-   WRITE_RECORD( ctx, zmin );
-   WRITE_RECORD( ctx, zmax );
+   write_record( ctx, ctx->Select.NameStackDepth );
+   write_record( ctx, zmin );
+   write_record( ctx, zmax );
    for (i = 0; i < ctx->Select.NameStackDepth; i++) {
-      WRITE_RECORD( ctx, ctx->Select.NameStack[i] );
+      write_record( ctx, ctx->Select.NameStack[i] );
    }
 
    ctx->Select.Hits++;

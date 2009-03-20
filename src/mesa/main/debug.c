@@ -23,6 +23,7 @@
  */
 
 #include "mtypes.h"
+#include "colormac.h"
 #include "context.h"
 #include "hash.h"
 #include "imports.h"
@@ -273,6 +274,27 @@ write_texture_image(struct gl_texture_object *texObj)
          break;
       case MESA_FORMAT_ARGB8888:
          write_ppm(s, img->Data, img->Width, img->Height, 4, 2, 1, 0);
+         break;
+      case MESA_FORMAT_RGB888:
+         write_ppm(s, img->Data, img->Width, img->Height, 3, 2, 1, 0);
+         break;
+      case MESA_FORMAT_RGB565:
+         {
+            GLubyte *buf2 = (GLubyte *) _mesa_malloc(img->Width * img->Height * 3);
+            GLint i;
+            for (i = 0; i < img->Width * img->Height; i++) {
+               GLint r, g, b;
+               GLushort s = ((GLushort *) img->Data)[i];
+               r = UBYTE_TO_CHAN( ((s >> 8) & 0xf8) | ((s >> 13) & 0x7) );
+               g = UBYTE_TO_CHAN( ((s >> 3) & 0xfc) | ((s >>  9) & 0x3) );
+               b = UBYTE_TO_CHAN( ((s << 3) & 0xf8) | ((s >>  2) & 0x7) );
+               buf2[i*3+1] = r;
+               buf2[i*3+2] = g;
+               buf2[i*3+3] = b;
+            }
+            write_ppm(s, buf2, img->Width, img->Height, 3, 2, 1, 0);
+            _mesa_free(buf2);
+         }
          break;
       default:
          printf("XXXX unsupported mesa tex format %d in %s\n",

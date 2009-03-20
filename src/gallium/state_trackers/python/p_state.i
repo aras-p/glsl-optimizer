@@ -37,6 +37,7 @@
 %ignore winsys;
 %ignore pipe_vertex_buffer::buffer;
 
+%include "pipe/p_compiler.h";
 %include "pipe/p_state.h";
 
 

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#define GL_GLEXT_PROTOTYPES 1
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 #include "readtex.c" /* I know, this is a hack. */
@@ -371,6 +371,7 @@ int main( int argc, char *argv[] )
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
 
    if (glutCreateWindow(argv[0]) <= 0) {
+      glewInit();
       printf("Couldn't create window\n");
       exit(0);
    }

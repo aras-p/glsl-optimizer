@@ -151,7 +151,14 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
-         info->immediate_count++;
+         {
+            uint reg = info->immediate_count++;
+            uint file = TGSI_FILE_IMMEDIATE;
+
+            info->file_mask[file] |= (1 << reg);
+            info->file_count[file]++;
+            info->file_max[file] = MAX2(info->file_max[file], (int)reg);
+         }
          break;
 
       default:

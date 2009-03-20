@@ -50,6 +50,14 @@ void trace_dump_block(const struct pipe_format_block *block)
 }
 
 
+static void trace_dump_reference(const struct pipe_reference *reference)
+{
+   trace_dump_struct_begin("pipe_reference");
+   trace_dump_member(int, &reference->count, count);
+   trace_dump_struct_end();
+}
+
+
 void trace_dump_template(const struct pipe_texture *templat)
 {
    if(!templat) {
@@ -58,10 +66,10 @@ void trace_dump_template(const struct pipe_texture *templat)
    }
 
    trace_dump_struct_begin("pipe_texture");
-   
+
    trace_dump_member(int, templat, target);
    trace_dump_member(format, templat, format);
-   
+
    trace_dump_member_begin("width");
    trace_dump_array(uint, templat->width, 1);
    trace_dump_member_end();
@@ -77,10 +85,10 @@ void trace_dump_template(const struct pipe_texture *templat)
    trace_dump_member_begin("block");
    trace_dump_block(&templat->block);
    trace_dump_member_end();
-   
+
    trace_dump_member(uint, templat, last_level);
    trace_dump_member(uint, templat, tex_usage);
-   
+
    trace_dump_struct_end();
 }
 
@@ -114,8 +122,7 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
    trace_dump_member(uint, state, line_stipple_factor);
    trace_dump_member(uint, state, line_stipple_pattern);
    trace_dump_member(bool, state, line_last_pixel);
-   trace_dump_member(bool, state, bypass_clipping);
-   trace_dump_member(bool, state, bypass_vs);
+   trace_dump_member(bool, state, bypass_vs_clip_and_viewport);
    trace_dump_member(bool, state, origin_lower_left);
    trace_dump_member(bool, state, flatshade_first);
    trace_dump_member(bool, state, gl_rasterization_rules);
@@ -126,9 +133,9 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
    trace_dump_member(float, state, point_size_max);
    trace_dump_member(float, state, offset_units);
    trace_dump_member(float, state, offset_scale);
-   
+
    trace_dump_member_array(uint, state, sprite_coord_mode);
-   
+
    trace_dump_struct_end();
 }
 
@@ -144,10 +151,10 @@ void trace_dump_poly_stipple(const struct pipe_poly_stipple *state)
 
    trace_dump_member_begin("stipple");
    trace_dump_array(uint,
-                    state->stipple, 
+                    state->stipple,
                     Elements(state->stipple));
    trace_dump_member_end();
-   
+
    trace_dump_struct_end();
 }
 
@@ -163,7 +170,7 @@ void trace_dump_viewport_state(const struct pipe_viewport_state *state)
 
    trace_dump_member_array(float, state, scale);
    trace_dump_member_array(float, state, translate);
-   
+
    trace_dump_struct_end();
 }
 
@@ -189,7 +196,7 @@ void trace_dump_scissor_state(const struct pipe_scissor_state *state)
 void trace_dump_clip_state(const struct pipe_clip_state *state)
 {
    unsigned i;
-   
+
    if(!state) {
       trace_dump_null();
       return;
@@ -222,7 +229,7 @@ void trace_dump_constant_buffer(const struct pipe_constant_buffer *state)
 
    trace_dump_struct_begin("pipe_constant_buffer");
 
-   trace_dump_member(ptr, state, buffer);
+   trace_dump_member(buffer_ptr, state, buffer);
 
    trace_dump_struct_end();
 }
@@ -238,7 +245,7 @@ void trace_dump_shader_state(const struct pipe_shader_state *state)
    }
 
    tgsi_dump_str(state->tokens, 0, str, sizeof(str));
-   
+
    trace_dump_struct_begin("pipe_shader_state");
 
    trace_dump_member_begin("tokens");
@@ -252,7 +259,7 @@ void trace_dump_shader_state(const struct pipe_shader_state *state)
 void trace_dump_depth_stencil_alpha_state(const struct pipe_depth_stencil_alpha_state *state)
 {
    unsigned i;
-   
+
    if(!state) {
       trace_dump_null();
       return;
@@ -268,7 +275,7 @@ void trace_dump_depth_stencil_alpha_state(const struct pipe_depth_stencil_alpha_
    trace_dump_member(bool, &state->depth, occlusion_count);
    trace_dump_struct_end();
    trace_dump_member_end();
-   
+
    trace_dump_member_begin("stencil");
    trace_dump_array_begin();
    for(i = 0; i < Elements(state->stencil); ++i) {
@@ -397,22 +404,47 @@ void trace_dump_surface(const struct pipe_surface *state)
 
    trace_dump_struct_begin("pipe_surface");
 
+   trace_dump_reference(&state->reference);
+
    trace_dump_member(format, state, format);
    trace_dump_member(uint, state, status);
    trace_dump_member(uint, state, clear_value);
    trace_dump_member(uint, state, width);
    trace_dump_member(uint, state, height);
 
+   trace_dump_member(uint, state, layout);
+   trace_dump_member(uint, state, offset);
+   trace_dump_member(uint, state, usage);
+
+   trace_dump_member(ptr, state, texture);
+   trace_dump_member(uint, state, face);
+   trace_dump_member(uint, state, level);
+   trace_dump_member(uint, state, zslice);
+
+   trace_dump_struct_end();
+}
+
+
+void trace_dump_transfer(const struct pipe_transfer *state)
+{
+   if(!state) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_transfer");
+
+   trace_dump_member(format, state, format);
+   trace_dump_member(uint, state, width);
+   trace_dump_member(uint, state, height);
+
    trace_dump_member_begin("block");
    trace_dump_block(&state->block);
    trace_dump_member_end();
-   
+
    trace_dump_member(uint, state, nblocksx);
    trace_dump_member(uint, state, nblocksy);
    trace_dump_member(uint, state, stride);
-   trace_dump_member(uint, state, layout);
-   trace_dump_member(uint, state, offset);
-   trace_dump_member(uint, state, refcount);
    trace_dump_member(uint, state, usage);
 
    trace_dump_member(ptr, state, texture);
@@ -436,7 +468,7 @@ void trace_dump_vertex_buffer(const struct pipe_vertex_buffer *state)
    trace_dump_member(uint, state, stride);
    trace_dump_member(uint, state, max_index);
    trace_dump_member(uint, state, buffer_offset);
-   trace_dump_member(ptr, state, buffer);
+   trace_dump_member(buffer_ptr, state, buffer);
 
    trace_dump_struct_end();
 }
@@ -455,7 +487,7 @@ void trace_dump_vertex_element(const struct pipe_vertex_element *state)
 
    trace_dump_member(uint, state, vertex_buffer_index);
    trace_dump_member(uint, state, nr_components);
- 
+
    trace_dump_member(format, state, src_format);
 
    trace_dump_struct_end();

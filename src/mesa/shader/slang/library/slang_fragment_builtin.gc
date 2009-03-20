@@ -46,7 +46,7 @@ vec4 texture1D(const sampler1D sampler, const float coord, const float bias)
    vec4 coord4;
    coord4.x = coord;
    coord4.w = bias;
-   __asm vec4_texb1d __retVal, sampler, coord4;
+   __asm vec4_tex_1d_bias __retVal, sampler, coord4;
 }
 
 vec4 texture1DProj(const sampler1D sampler, const vec2 coord, const float bias)
@@ -55,7 +55,7 @@ vec4 texture1DProj(const sampler1D sampler, const vec2 coord, const float bias)
    vec4 pcoord;
    pcoord.x = coord.x / coord.y;
    pcoord.w = bias;
-   __asm vec4_texb1d __retVal, sampler, pcoord;
+   __asm vec4_tex_1d_bias __retVal, sampler, pcoord;
 }
 
 vec4 texture1DProj(const sampler1D sampler, const vec4 coord, const float bias)
@@ -64,7 +64,7 @@ vec4 texture1DProj(const sampler1D sampler, const vec4 coord, const float bias)
    vec4 pcoord;
    pcoord.x = coord.x / coord.z;
    pcoord.w = bias;
-   __asm vec4_texb1d __retVal, sampler, pcoord;
+   __asm vec4_tex_1d_bias __retVal, sampler, pcoord;
 }
 
 
@@ -75,7 +75,7 @@ vec4 texture2D(const sampler2D sampler, const vec2 coord, const float bias)
    vec4 coord4;
    coord4.xy = coord.xy;
    coord4.w = bias;
-   __asm vec4_texb2d __retVal, sampler, coord4;
+   __asm vec4_tex_2d_bias __retVal, sampler, coord4;
 }
 
 vec4 texture2DProj(const sampler2D sampler, const vec3 coord, const float bias)
@@ -84,7 +84,7 @@ vec4 texture2DProj(const sampler2D sampler, const vec3 coord, const float bias)
    vec4 pcoord;
    pcoord.xy = coord.xy / coord.z;
    pcoord.w = bias;
-   __asm vec4_texb2d __retVal, sampler, pcoord;
+   __asm vec4_tex_2d_bias __retVal, sampler, pcoord;
 }
 
 vec4 texture2DProj(const sampler2D sampler, const vec4 coord, const float bias)
@@ -93,7 +93,7 @@ vec4 texture2DProj(const sampler2D sampler, const vec4 coord, const float bias)
    vec4 pcoord;
    pcoord.xy = coord.xy / coord.w;
    pcoord.w = bias;
-   __asm vec4_texb2d __retVal, sampler, pcoord;
+   __asm vec4_tex_2d_bias __retVal, sampler, pcoord;
 }
 
 
@@ -104,7 +104,7 @@ vec4 texture3D(const sampler3D sampler, const vec3 coord, const float bias)
    vec4 coord4;
    coord4.xyz = coord.xyz;
    coord4.w = bias;
-   __asm vec4_texb3d __retVal, sampler, coord4;
+   __asm vec4_tex_3d_bias __retVal, sampler, coord4;
 }
 
 vec4 texture3DProj(const sampler3D sampler, const vec4 coord, const float bias)
@@ -113,7 +113,7 @@ vec4 texture3DProj(const sampler3D sampler, const vec4 coord, const float bias)
    vec4 pcoord;
    pcoord.xyz = coord.xyz / coord.w;
    pcoord.w = bias;
-   __asm vec4_texb3d __retVal, sampler, pcoord;
+   __asm vec4_tex_3d_bias __retVal, sampler, pcoord;
 }
 
 
@@ -124,21 +124,17 @@ vec4 textureCube(const samplerCube sampler, const vec3 coord, const float bias)
    vec4 coord4;
    coord4.xyz = coord;
    coord4.w = bias;
-   __asm vec4_texcube __retVal, sampler, coord4;
+   __asm vec4_tex_cube __retVal, sampler, coord4;
 }
 
 
-
-
-// For shadow textures, we use the regular tex instructions since they should
-// do the depth comparison step.
 
 vec4 shadow1D(const sampler1DShadow sampler, const vec3 coord, const float bias)
 {
    vec4 coord4;
    coord4.xyz = coord;
    coord4.w = bias;
-   __asm vec4_texb1d __retVal, sampler, coord4;
+   __asm vec4_tex_1d_bias_shadow __retVal, sampler, coord4;
 }
 
 vec4 shadow1DProj(const sampler1DShadow sampler, const vec4 coord, const float bias)
@@ -147,7 +143,7 @@ vec4 shadow1DProj(const sampler1DShadow sampler, const vec4 coord, const float b
    pcoord.x = coord.x / coord.w;
    pcoord.z = coord.z;
    pcoord.w = bias;
-   __asm vec4_texb1d __retVal, sampler, pcoord;
+   __asm vec4_tex_1d_bias_shadow __retVal, sampler, pcoord;
 }
 
 vec4 shadow2D(const sampler2DShadow sampler, const vec3 coord, const float bias)
@@ -155,7 +151,7 @@ vec4 shadow2D(const sampler2DShadow sampler, const vec3 coord, const float bias)
    vec4 coord4;
    coord4.xyz = coord;
    coord4.w = bias;
-   __asm vec4_texb2d __retVal, sampler, coord4;
+   __asm vec4_tex_2d_bias_shadow __retVal, sampler, coord4;
 }
 
 vec4 shadow2DProj(const sampler2DShadow sampler, const vec4 coord, const float bias)
@@ -164,7 +160,7 @@ vec4 shadow2DProj(const sampler2DShadow sampler, const vec4 coord, const float b
    pcoord.xy = coord.xy / coord.w;
    pcoord.z = coord.z;
    pcoord.w = bias;
-   __asm vec4_texb2d __retVal, sampler, pcoord;
+   __asm vec4_tex_2d_bias_shadow __retVal, sampler, pcoord;
 }
 
 

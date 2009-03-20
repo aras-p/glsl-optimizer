@@ -4,7 +4,7 @@ include $(TOP)/configs/current
 LIBNAME = util
 
 C_SOURCES = \
-	p_debug.c \
+	u_debug.c \
 	u_blit.c \
 	u_cache.c \
 	u_draw_quad.c \
@@ -27,6 +27,3 @@ C_SOURCES = \
 	u_simple_screen.c
 
 include ../../Makefile.template
-
-symlinks:
-

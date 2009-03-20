@@ -62,7 +62,7 @@ cell_texture_layout(struct cell_texture *ct)
 
    ct->buffer_size = 0;
 
-   for ( level = 0 ; level <= pt->last_level ; level++ ) {
+   for (level = 0; level <= pt->last_level; level++) {
       unsigned size;
       unsigned w_tile, h_tile;
 
@@ -90,7 +90,7 @@ cell_texture_layout(struct cell_texture *ct)
 
       ct->buffer_size += size;
 
-      width  = minify(width);
+      width = minify(width);
       height = minify(height);
       depth = minify(depth);
    }
@@ -101,18 +101,17 @@ static struct pipe_texture *
 cell_texture_create(struct pipe_screen *screen,
                     const struct pipe_texture *templat)
 {
-   struct pipe_winsys *ws = screen->winsys;
    struct cell_texture *ct = CALLOC_STRUCT(cell_texture);
    if (!ct)
       return NULL;
 
    ct->base = *templat;
-   ct->base.refcount = 1;
+   pipe_reference_init(&ct->base.reference, 1);
    ct->base.screen = screen;
 
    cell_texture_layout(ct);
 
-   ct->buffer = ws->buffer_create(ws, 32, PIPE_BUFFER_USAGE_PIXEL,
+   ct->buffer = screen->buffer_create(screen, 32, PIPE_BUFFER_USAGE_PIXEL,
                                    ct->buffer_size);
 
    if (!ct->buffer) {
@@ -125,42 +124,18 @@ cell_texture_create(struct pipe_screen *screen,
 
 
 static void
-cell_texture_release(struct pipe_screen *screen,
-                     struct pipe_texture **pt)
+cell_texture_destroy(struct pipe_texture *pt)
 {
-   if (!*pt)
-      return;
+   struct cell_texture *ct = cell_texture(pt);
 
-   /*
-   DBG("%s %p refcount will be %d\n",
-       __FUNCTION__, (void *) *pt, (*pt)->refcount - 1);
-   */
-   if (--(*pt)->refcount <= 0) {
-      /* Delete this texture now.
-       * But note that the underlying pipe_buffer may linger...
-       */
-      struct cell_texture *ct = cell_texture(*pt);
-      uint i;
-
-      /*
-      DBG("%s deleting %p\n", __FUNCTION__, (void *) ct);
-      */
-
-      pipe_buffer_reference(screen, &ct->buffer, NULL);
-
-      for (i = 0; i < CELL_MAX_TEXTURE_LEVELS; i++) {
-         /* Unreference the tiled image buffer.
-          * It may not actually be deleted until a fence is hit.
-          */
-         if (ct->tiled_buffer[i]) {
-            ct->tiled_mapped[i] = NULL;
-            pipe_buffer_reference(screen, &ct->tiled_buffer[i], NULL);
-         }
-      }
-
-      FREE(ct);
+   if (ct->mapped) {
+      pipe_buffer_unmap(ct->buffer->screen, ct->buffer);
+      ct->mapped = NULL;
    }
-   *pt = NULL;
+
+   pipe_buffer_reference(&ct->buffer, NULL);
+
+   FREE(ct);
 }
 
 
@@ -294,103 +269,6 @@ untwiddle_image_uint(uint w, uint h, uint tile_size, uint *dst,
 }
 
 
-/**
- * Convert linear texture image data to tiled format for SPU usage.
- */
-static void
-cell_twiddle_texture(struct pipe_screen *screen,
-                     struct pipe_surface *surface)
-{
-   struct cell_texture *ct = cell_texture(surface->texture);
-   const uint level = surface->level;
-   const uint texWidth = ct->base.width[level];
-   const uint texHeight = ct->base.height[level];
-   const uint bufWidth = align(texWidth, TILE_SIZE);
-   const uint bufHeight = align(texHeight, TILE_SIZE);
-   const void *map = screen->surface_map(screen, surface, PIPE_BUFFER_USAGE_CPU_READ);
-   const uint *src = (const uint *) map;
-
-   switch (ct->base.format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
-   case PIPE_FORMAT_S8Z24_UNORM:
-      {
-         int numFaces = ct->base.target == PIPE_TEXTURE_CUBE ? 6 : 1;
-         int offset = bufWidth * bufHeight * 4 * surface->face;
-         uint *dst;
-
-         if (!ct->tiled_buffer[level]) {
-            /* allocate buffer for tiled data now */
-            struct pipe_winsys *ws = screen->winsys;
-            uint bytes = bufWidth * bufHeight * 4 * numFaces;
-            ct->tiled_buffer[level] =
-               ws->buffer_create(ws, 16, PIPE_BUFFER_USAGE_PIXEL, bytes);
-            /* and map it */
-            ct->tiled_mapped[level] =
-               ws->buffer_map(ws, ct->tiled_buffer[level],
-                              PIPE_BUFFER_USAGE_GPU_READ);
-         }
-         dst = (uint *) ((ubyte *) ct->tiled_mapped[level] + offset);
-
-         twiddle_image_uint(texWidth, texHeight, TILE_SIZE, dst,
-                            surface->stride, src);
-      }
-      break;
-   default:
-      printf("Cell: twiddle unsupported texture format %s\n",
-             pf_name(ct->base.format));
-   }
-
-   screen->surface_unmap(screen, surface);
-}
-
-
-/**
- * Convert SPU tiled texture image data to linear format for app usage.
- */
-static void
-cell_untwiddle_texture(struct pipe_screen *screen,
-                     struct pipe_surface *surface)
-{
-   struct cell_texture *ct = cell_texture(surface->texture);
-   const uint level = surface->level;
-   const uint texWidth = ct->base.width[level];
-   const uint texHeight = ct->base.height[level];
-   const void *map = screen->surface_map(screen, surface, PIPE_BUFFER_USAGE_CPU_READ);
-   const uint *src = (const uint *) ((const ubyte *) map + surface->offset);
-
-   switch (ct->base.format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
-   case PIPE_FORMAT_S8Z24_UNORM:
-      {
-         int numFaces = ct->base.target == PIPE_TEXTURE_CUBE ? 6 : 1;
-         int offset = surface->stride * texHeight * 4 * surface->face;
-         uint *dst;
-
-         if (!ct->untiled_data[level]) {
-            ct->untiled_data[level] =
-               align_malloc(surface->stride * texHeight * 4 * numFaces, 16);
-         }
-
-         dst = (uint *) ((ubyte *) ct->untiled_data[level] + offset);
-
-         untwiddle_image_uint(texWidth, texHeight, TILE_SIZE, dst,
-                              surface->stride, src);
-      }
-      break;
-   default:
-      {
-         ct->untiled_data[level] = NULL;
-         printf("Cell: untwiddle unsupported texture format %s\n",
-                pf_name(ct->base.format));
-      }
-   }
-
-   screen->surface_unmap(screen, surface);
-}
-
-
 static struct pipe_surface *
 cell_get_tex_surface(struct pipe_screen *screen,
                      struct pipe_texture *pt,
@@ -402,38 +280,27 @@ cell_get_tex_surface(struct pipe_screen *screen,
 
    ps = CALLOC_STRUCT(pipe_surface);
    if (ps) {
-      ps->refcount = 1;
+      pipe_reference_init(&ps->reference, 1);
       pipe_texture_reference(&ps->texture, pt);
       ps->format = pt->format;
-      ps->block = pt->block;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
-      ps->nblocksx = pt->nblocksx[level];
-      ps->nblocksy = pt->nblocksy[level];
-      ps->stride = ct->stride[level];
       ps->offset = ct->level_offset[level];
-      ps->usage = usage;
-
       /* XXX may need to override usage flags (see sp_texture.c) */
-
-      pipe_texture_reference(&ps->texture, pt); 
+      ps->usage = usage;
       ps->face = face;
       ps->level = level;
       ps->zslice = zslice;
 
-      if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
-         ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
-            ps->nblocksy *
-            ps->stride;
+      if (pt->target == PIPE_TEXTURE_CUBE) {
+         ps->offset += face * pt->nblocksy[level] * ct->stride[level];
+      }
+      else if (pt->target == PIPE_TEXTURE_3D) {
+         ps->offset += zslice * pt->nblocksy[level] * ct->stride[level];
       }
       else {
          assert(face == 0);
          assert(zslice == 0);
-      }
-
-      if (ps->usage & PIPE_BUFFER_USAGE_CPU_READ) {
-         /* convert from tiled to linear layout */
-         cell_untwiddle_texture(screen, ps);
       }
    }
    return ps;
@@ -441,91 +308,195 @@ cell_get_tex_surface(struct pipe_screen *screen,
 
 
 static void 
-cell_tex_surface_release(struct pipe_screen *screen, 
-                         struct pipe_surface **s)
+cell_tex_surface_destroy(struct pipe_surface *surf)
 {
-   struct cell_texture *ct = cell_texture((*s)->texture);
-   const uint level = (*s)->level;
-   struct pipe_surface *surf = *s;
-
-   if ((surf->usage & PIPE_BUFFER_USAGE_CPU_READ) && (ct->untiled_data[level]))
-   {
-      align_free(ct->untiled_data[level]);
-      ct->untiled_data[level] = NULL;
-   }
-
-   if ((ct->base.tex_usage & PIPE_TEXTURE_USAGE_SAMPLER) &&
-       (surf->usage & PIPE_BUFFER_USAGE_CPU_WRITE)) {
-      /* convert from linear to tiled layout */
-      cell_twiddle_texture(screen, surf);
-   }
-
-   /* XXX if done rendering to teximage, re-tile */
-
-   if (--surf->refcount == 0) {
-      pipe_texture_reference(&surf->texture, NULL);
-      FREE(surf);
-   }
-   *s = NULL;
+   pipe_texture_reference(&surf->texture, NULL);
+   FREE(surf);
 }
 
 
-static void *
-cell_surface_map(struct pipe_screen *screen,
-                 struct pipe_surface *surface,
-                 unsigned flags)
+/**
+ * Create new pipe_transfer object.
+ * This is used by the user to put tex data into a texture (and get it
+ * back out for glGetTexImage).
+ */
+static struct pipe_transfer *
+cell_get_tex_transfer(struct pipe_screen *screen,
+                      struct pipe_texture *texture,
+                      unsigned face, unsigned level, unsigned zslice,
+                      enum pipe_transfer_usage usage,
+                      unsigned x, unsigned y, unsigned w, unsigned h)
 {
-   ubyte *map;
-   struct cell_texture *ct = cell_texture(surface->texture);
-   const uint level = surface->level;
+   struct cell_texture *ct = cell_texture(texture);
+   struct cell_transfer *ctrans;
 
-   assert(ct);
+   assert(texture);
+   assert(level <= texture->last_level);
 
-#if 0
-   if (flags & ~surface->usage) {
-      assert(0);
-      return NULL;
-   }
-#endif
+   ctrans = CALLOC_STRUCT(cell_transfer);
+   if (ctrans) {
+      struct pipe_transfer *pt = &ctrans->base;
+      pipe_texture_reference(&pt->texture, texture);
+      pt->format = texture->format;
+      pt->block = texture->block;
+      pt->x = x;
+      pt->y = y;
+      pt->width = w;
+      pt->height = h;
+      pt->nblocksx = texture->nblocksx[level];
+      pt->nblocksy = texture->nblocksy[level];
+      pt->stride = ct->stride[level];
+      pt->usage = usage;
+      pt->face = face;
+      pt->level = level;
+      pt->zslice = zslice;
 
-   map = pipe_buffer_map( screen, ct->buffer, flags );
-   if (map == NULL) {
-      return NULL;
-   }
-   else {
-      if ((surface->usage & PIPE_BUFFER_USAGE_CPU_READ) &&
-          (ct->untiled_data[level])) {
-         return (void *) ((ubyte *) ct->untiled_data[level] + surface->offset);
+      ctrans->offset = ct->level_offset[level];
+
+      if (texture->target == PIPE_TEXTURE_CUBE) {
+         ctrans->offset += face * pt->nblocksy * pt->stride;
+      }
+      else if (texture->target == PIPE_TEXTURE_3D) {
+         ctrans->offset += zslice * pt->nblocksy * pt->stride;
       }
       else {
-         return (void *) (map + surface->offset);
+         assert(face == 0);
+         assert(zslice == 0);
+      }
+      return pt;
+   }
+   return NULL;
+}
+
+
+static void 
+cell_tex_transfer_destroy(struct pipe_transfer *t)
+{
+   struct cell_transfer *transfer = cell_transfer(t);
+   /* Effectively do the texture_update work here - if texture images
+    * needed post-processing to put them into hardware layout, this is
+    * where it would happen.  For cell, nothing to do.
+    */
+   assert (transfer->base.texture);
+   pipe_texture_reference(&transfer->base.texture, NULL);
+   FREE(transfer);
+}
+
+
+/**
+ * Return pointer to texture image data in linear layout.
+ */
+static void *
+cell_transfer_map(struct pipe_screen *screen, struct pipe_transfer *transfer)
+{
+   struct cell_transfer *ctrans = cell_transfer(transfer);
+   struct pipe_texture *pt = transfer->texture;
+   struct cell_texture *ct = cell_texture(pt);
+   const uint level = ctrans->base.level;
+   const uint texWidth = pt->width[level];
+   const uint texHeight = pt->height[level];
+   const uint stride = ct->stride[level];
+   unsigned flags = 0x0;
+   unsigned size;
+
+   assert(transfer->texture);
+
+   if (transfer->usage != PIPE_TRANSFER_READ) {
+      flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
+   }
+
+   if (transfer->usage != PIPE_TRANSFER_WRITE) {
+      flags |= PIPE_BUFFER_USAGE_CPU_READ;
+   }
+
+   if (!ct->mapped) {
+      /* map now */
+      ct->mapped = pipe_buffer_map(screen, ct->buffer, flags);
+   }
+
+   /*
+    * Create a buffer of ordinary memory for the linear texture.
+    * This is the memory that the user will read/write.
+    */
+   size = pt->nblocksx[level] * pt->nblocksy[level] * pt->block.size;
+
+   ctrans->map = align_malloc(size, 16);
+   if (!ctrans->map)
+      return NULL; /* out of memory */
+
+   if (transfer->usage & PIPE_TRANSFER_READ) {
+      /* need to untwiddle the texture to make a linear version */
+      const uint bpp = pf_get_size(ct->base.format);
+      if (bpp == 4) {
+         const uint *src = (uint *) (ct->mapped + ctrans->offset);
+         uint *dst = ctrans->map;
+         untwiddle_image_uint(texWidth, texHeight, TILE_SIZE,
+                              dst, stride, src);
+      }
+      else {
+         // xxx fix
       }
    }
+
+   return ctrans->map;
 }
 
 
+/**
+ * Called when user is done reading/writing texture data.
+ * If new data was written, this is where we convert the linear data
+ * to tiled data.
+ */
 static void
-cell_surface_unmap(struct pipe_screen *screen,
-                   struct pipe_surface *surface)
+cell_transfer_unmap(struct pipe_screen *screen,
+                    struct pipe_transfer *transfer)
 {
-   struct cell_texture *ct = cell_texture(surface->texture);
+   struct cell_transfer *ctrans = cell_transfer(transfer);
+   struct pipe_texture *pt = transfer->texture;
+   struct cell_texture *ct = cell_texture(pt);
+   const uint level = ctrans->base.level;
+   const uint texWidth = pt->width[level];
+   const uint texHeight = pt->height[level];
+   const uint stride = ct->stride[level];
 
-   assert(ct);
+   if (!ct->mapped) {
+      /* map now */
+      ct->mapped = pipe_buffer_map(screen, ct->buffer,
+                                   PIPE_BUFFER_USAGE_CPU_READ);
+   }
 
-   pipe_buffer_unmap( screen, ct->buffer );
+   if (transfer->usage & PIPE_TRANSFER_WRITE) {
+      /* The user wrote new texture data into the mapped buffer.
+       * We need to convert the new linear data into the twiddled/tiled format.
+       */
+      const uint bpp = pf_get_size(ct->base.format);
+      if (bpp == 4) {
+         const uint *src = ctrans->map;
+         uint *dst = (uint *) (ct->mapped + ctrans->offset);
+         twiddle_image_uint(texWidth, texHeight, TILE_SIZE, dst, stride, src);
+      }
+      else {
+         // xxx fix
+      }
+   }
+
+   align_free(ctrans->map);
+   ctrans->map = NULL;
 }
-
 
 
 void
 cell_init_screen_texture_funcs(struct pipe_screen *screen)
 {
    screen->texture_create = cell_texture_create;
-   screen->texture_release = cell_texture_release;
+   screen->texture_destroy = cell_texture_destroy;
 
    screen->get_tex_surface = cell_get_tex_surface;
-   screen->tex_surface_release = cell_tex_surface_release;
+   screen->tex_surface_destroy = cell_tex_surface_destroy;
 
-   screen->surface_map = cell_surface_map;
-   screen->surface_unmap = cell_surface_unmap;
+   screen->get_tex_transfer = cell_get_tex_transfer;
+   screen->tex_transfer_destroy = cell_tex_transfer_destroy;
+
+   screen->transfer_map = cell_transfer_map;
+   screen->transfer_unmap = cell_transfer_unmap;
 }

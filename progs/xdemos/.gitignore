@@ -18,6 +18,7 @@ overlay
 pbdemo
 pbinfo
 sharedtex
+sharedtex_mt
 texture_from_pixmap
 wincopy
 xdemo

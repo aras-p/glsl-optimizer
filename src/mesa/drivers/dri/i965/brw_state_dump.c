@@ -162,6 +162,14 @@ static void brw_debug_prog(const char *name, dri_bo *prog)
       fprintf(stderr, "%8s: 0x%08x: 0x%08x 0x%08x 0x%08x 0x%08x\n",
 	      name, (unsigned int)prog->offset + i * 4 * 4,
 	      data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]);
+      /* Stop at the end of the program.  It'd be nice to keep track of the actual
+       * intended program size instead of guessing like this.
+       */
+      if (data[i * 4 + 0] == 0 &&
+	  data[i * 4 + 1] == 0 &&
+	  data[i * 4 + 2] == 0 &&
+	  data[i * 4 + 3] == 0)
+	 break;
    }
 
    dri_bo_unmap(prog);

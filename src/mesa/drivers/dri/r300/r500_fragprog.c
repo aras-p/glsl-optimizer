@@ -298,8 +298,8 @@ static void insert_WPOS_trailer(struct r500_fragment_program_compiler *compiler)
 
 static void nqssadce_init(struct nqssadce_state* s)
 {
-	s->Outputs[FRAG_RESULT_COLR].Sourced = WRITEMASK_XYZW;
-	s->Outputs[FRAG_RESULT_DEPR].Sourced = WRITEMASK_W;
+	s->Outputs[FRAG_RESULT_COLOR].Sourced = WRITEMASK_XYZW;
+	s->Outputs[FRAG_RESULT_DEPTH].Sourced = WRITEMASK_W;
 }
 
 static GLboolean is_native_swizzle(GLuint opcode, struct prog_src_register reg)

@@ -87,8 +87,7 @@ gdi_softpipe_buffer_unmap(struct pipe_winsys *winsys,
 
 
 static void
-gdi_softpipe_buffer_destroy(struct pipe_winsys *winsys,
-                            struct pipe_buffer *buf)
+gdi_softpipe_buffer_destroy(struct pipe_buffer *buf)
 {
    struct gdi_softpipe_buffer *oldBuf = gdi_softpipe_buffer(buf);
 
@@ -118,7 +117,7 @@ gdi_softpipe_buffer_create(struct pipe_winsys *winsys,
 {
    struct gdi_softpipe_buffer *buffer = CALLOC_STRUCT(gdi_softpipe_buffer);
 
-   buffer->base.refcount = 1;
+   pipe_reference_init(&buffer->base.reference, 1);
    buffer->base.alignment = alignment;
    buffer->base.usage = usage;
    buffer->base.size = size;
@@ -143,7 +142,7 @@ gdi_softpipe_user_buffer_create(struct pipe_winsys *winsys,
    if(!buffer)
       return NULL;
 
-   buffer->base.refcount = 1;
+   pipe_reference_init(&buffer->base.reference, 1);
    buffer->base.size = bytes;
    buffer->userBuffer = TRUE;
    buffer->data = ptr;
@@ -273,14 +272,17 @@ gdi_softpipe_flush_frontbuffer(struct pipe_screen *screen,
                                struct pipe_surface *surface,
                                HDC hDC)
 {
+    struct softpipe_texture *texture;
     struct gdi_softpipe_buffer *buffer;
     BITMAPINFO bmi;
 
-    buffer = gdi_softpipe_buffer(softpipe_texture(surface->texture)->buffer);
+    texture = softpipe_texture(surface->texture);
+                                               
+    buffer = gdi_softpipe_buffer(texture->buffer);
 
     memset(&bmi, 0, sizeof(BITMAPINFO));
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = surface->stride / pf_get_size(surface->format);
+    bmi.bmiHeader.biWidth = texture->stride[surface->level] / pf_get_size(surface->format);
     bmi.bmiHeader.biHeight= -(long)surface->height;
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biBitCount = pf_get_bits(surface->format);

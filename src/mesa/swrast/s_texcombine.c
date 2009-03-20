@@ -591,6 +591,25 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
             }
 	 }
          break;
+      case GL_BUMP_ENVMAP_ATI:
+         {
+            /* this produces a fixed rgba color, and the coord calc is done elsewhere */
+            for (i = 0; i < n; i++) {
+            /* rgba result is 0,0,0,1 */
+#if CHAN_TYPE == GL_FLOAT
+               rgba[i][RCOMP] = 0.0;
+               rgba[i][GCOMP] = 0.0;
+               rgba[i][BCOMP] = 0.0;
+               rgba[i][ACOMP] = 1.0;
+#else
+               rgba[i][RCOMP] = 0;
+               rgba[i][GCOMP] = 0;
+               rgba[i][BCOMP] = 0;
+               rgba[i][ACOMP] = CHAN_MAX;
+#endif
+            }
+	 }
+         return; /* no alpha processing */
       default:
          _mesa_problem(ctx, "invalid combine mode");
    }
@@ -1218,12 +1237,86 @@ _swrast_texture_span( GLcontext *ctx, SWspan *span )
    if (swrast->_AnyTextureCombine)
       MEMCPY(primary_rgba, span->array->rgba, 4 * span->end * sizeof(GLchan));
 
+   /* First must sample all bump maps */
+   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
+      if (ctx->Texture.Unit[unit]._ReallyEnabled &&
+         ctx->Texture.Unit[unit]._CurrentCombine->ModeRGB == GL_BUMP_ENVMAP_ATI) {
+         const GLfloat (*texcoords)[4]
+            = (const GLfloat (*)[4])
+            span->array->attribs[FRAG_ATTRIB_TEX0 + unit];
+         GLfloat (*targetcoords)[4]
+            = (GLfloat (*)[4])
+            span->array->attribs[FRAG_ATTRIB_TEX0 +
+               ctx->Texture.Unit[unit].BumpTarget - GL_TEXTURE0];
+
+         const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+         const struct gl_texture_object *curObj = texUnit->_Current;
+         GLfloat *lambda = span->array->lambda[unit];
+         GLchan (*texels)[4] = (GLchan (*)[4])
+            (swrast->TexelBuffer + unit * (span->end * 4 * sizeof(GLchan)));
+         GLuint i;
+         GLfloat rotMatrix00 = ctx->Texture.Unit[unit].RotMatrix[0];
+         GLfloat rotMatrix01 = ctx->Texture.Unit[unit].RotMatrix[1];
+         GLfloat rotMatrix10 = ctx->Texture.Unit[unit].RotMatrix[2];
+         GLfloat rotMatrix11 = ctx->Texture.Unit[unit].RotMatrix[3];
+
+         /* adjust texture lod (lambda) */
+         if (span->arrayMask & SPAN_LAMBDA) {
+            if (texUnit->LodBias + curObj->LodBias != 0.0F) {
+               /* apply LOD bias, but don't clamp yet */
+               const GLfloat bias = CLAMP(texUnit->LodBias + curObj->LodBias,
+                                          -ctx->Const.MaxTextureLodBias,
+                                          ctx->Const.MaxTextureLodBias);
+               GLuint i;
+               for (i = 0; i < span->end; i++) {
+                  lambda[i] += bias;
+               }
+            }
+
+            if (curObj->MinLod != -1000.0 || curObj->MaxLod != 1000.0) {
+               /* apply LOD clamping to lambda */
+               const GLfloat min = curObj->MinLod;
+               const GLfloat max = curObj->MaxLod;
+               GLuint i;
+               for (i = 0; i < span->end; i++) {
+                  GLfloat l = lambda[i];
+                  lambda[i] = CLAMP(l, min, max);
+               }
+            }
+         }
+
+         /* Sample the texture (span->end = number of fragments) */
+         swrast->TextureSample[unit]( ctx, texUnit->_Current, span->end,
+                                      texcoords, lambda, texels );
+
+         /* manipulate the span values of the bump target
+            not sure this can work correctly even ignoring
+            the problem that channel is unsigned */
+         for (i = 0; i < span->end; i++) {
+#if CHAN_TYPE == GL_FLOAT
+            targetcoords[i][0] += (texels[i][0] * rotMatrix00 + texels[i][1] *
+                                  rotMatrix01) / targetcoords[i][3];
+            targetcoords[i][1] += (texels[i][0] * rotMatrix10 + texels[i][1] *
+                                  rotMatrix11) / targetcoords[i][3];
+#else
+            targetcoords[i][0] += (CHAN_TO_FLOAT(texels[i][1]) * rotMatrix00 +
+                                  CHAN_TO_FLOAT(texels[i][1]) * rotMatrix01) /
+                                  targetcoords[i][3];
+            targetcoords[i][1] += (CHAN_TO_FLOAT(texels[i][0]) * rotMatrix10 + 
+                                  CHAN_TO_FLOAT(texels[i][1]) * rotMatrix11) /
+                                  targetcoords[i][3];
+#endif
+         }
+      }
+   }
+
    /*
     * Must do all texture sampling before combining in order to
     * accomodate GL_ARB_texture_env_crossbar.
     */
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-      if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+      if (ctx->Texture.Unit[unit]._ReallyEnabled &&
+         ctx->Texture.Unit[unit]._CurrentCombine->ModeRGB != GL_BUMP_ENVMAP_ATI) {
          const GLfloat (*texcoords)[4]
             = (const GLfloat (*)[4])
             span->array->attribs[FRAG_ATTRIB_TEX0 + unit];

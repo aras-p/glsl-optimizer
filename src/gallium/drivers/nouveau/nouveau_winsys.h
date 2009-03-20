@@ -19,11 +19,12 @@
 
 #define NOUVEAU_TEXTURE_USAGE_LINEAR (1 << 16)
 
-#define NOUVEAU_BUFFER_USAGE_TEXTURE (1 << 16)
-#define NOUVEAU_BUFFER_USAGE_ZETA    (1 << 17)
+#define NOUVEAU_BUFFER_USAGE_TEXTURE  (1 << 16)
+#define NOUVEAU_BUFFER_USAGE_ZETA     (1 << 17)
+#define NOUVEAU_BUFFER_USAGE_TRANSFER (1 << 18)
 
 struct nouveau_winsys {
-	struct nouveau_context *nv;
+	struct pipe_winsys *ws;
 
 	struct nouveau_channel *channel;
 

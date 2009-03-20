@@ -40,7 +40,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_inlines.h"
 #include "util/u_rect.h"
 
 
@@ -108,17 +107,14 @@ st_texture_create(struct st_context *st,
 
    newtex = screen->texture_create(screen, &pt);
 
-   assert(!newtex || newtex->refcount == 1);
+   assert(!newtex || p_atomic_read(&newtex->reference.count) == 1);
 
    return newtex;
 }
 
 
 /**
- * Check if a texture image be pulled into a unified mipmap texture.
- * This mirrors the completeness test in a lot of ways.
- *
- * Not sure whether I want to pass gl_texture_image here.
+ * Check if a texture image can be pulled into a unified mipmap texture.
  */
 GLboolean
 st_texture_match_image(const struct pipe_texture *pt,
@@ -130,13 +126,14 @@ st_texture_match_image(const struct pipe_texture *pt,
    if (image->Border) 
       return GL_FALSE;
 
+   /* Check if this image's format matches the established texture's format.
+    */
    if (st_mesa_format_to_pipe_format(image->TexFormat->MesaFormat) != pt->format ||
        image->IsCompressed != pt->compressed)
       return GL_FALSE;
 
-   /* Test image dimensions against the base level image adjusted for
-    * minification.  This will also catch images not present in the
-    * texture, changed targets, etc.
+   /* Test if this image's size matches what's expected in the
+    * established texture.
     */
    if (image->Width != pt->width[level] ||
        image->Height != pt->height[level] ||
@@ -191,19 +188,19 @@ st_texture_image_offset(const struct pipe_texture * pt,
  */
 GLubyte *
 st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
-		     GLuint zoffset,
-                     GLuint flags )
+		     GLuint zoffset, enum pipe_transfer_usage usage,
+                     GLuint x, GLuint y, GLuint w, GLuint h)
 {
    struct pipe_screen *screen = st->pipe->screen;
    struct pipe_texture *pt = stImage->pt;
    DBG("%s \n", __FUNCTION__);
 
-   stImage->surface = screen->get_tex_surface(screen, pt, stImage->face,
-                                              stImage->level, zoffset, 
-                                              flags);
+   stImage->transfer = screen->get_tex_transfer(screen, pt, stImage->face,
+                                                stImage->level, zoffset, 
+                                                usage, x, y, w, h);
 
-   if (stImage->surface)
-      return screen->surface_map(screen, stImage->surface, flags);
+   if (stImage->transfer)
+      return screen->transfer_map(screen, stImage->transfer);
    else
       return NULL;
 }
@@ -217,9 +214,9 @@ st_texture_image_unmap(struct st_context *st,
 
    DBG("%s\n", __FUNCTION__);
 
-   screen->surface_unmap(screen, stImage->surface);
+   screen->transfer_unmap(screen, stImage->transfer);
 
-   pipe_surface_reference(&stImage->surface, NULL);
+   screen->tex_transfer_destroy(stImage->transfer);
 }
 
 
@@ -234,13 +231,13 @@ st_texture_image_unmap(struct st_context *st,
  */
 static void
 st_surface_data(struct pipe_context *pipe,
-		struct pipe_surface *dst,
+		struct pipe_transfer *dst,
 		unsigned dstx, unsigned dsty,
 		const void *src, unsigned src_stride,
 		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
    struct pipe_screen *screen = pipe->screen;
-   void *map = screen->surface_map(screen, dst, PIPE_BUFFER_USAGE_CPU_WRITE);
+   void *map = screen->transfer_map(screen, dst);
 
    pipe_copy_rect(map,
                   &dst->block,
@@ -250,7 +247,7 @@ st_surface_data(struct pipe_context *pipe,
                   src, src_stride, 
                   srcx, srcy);
 
-   screen->surface_unmap(screen, dst);
+   screen->transfer_unmap(screen, dst);
 }
 
 
@@ -268,21 +265,23 @@ st_texture_image_data(struct pipe_context *pipe,
    GLuint depth = dst->depth[level];
    GLuint i;
    const GLubyte *srcUB = src;
-   struct pipe_surface *dst_surface;
+   struct pipe_transfer *dst_transfer;
 
    DBG("%s\n", __FUNCTION__);
    for (i = 0; i < depth; i++) {
-      dst_surface = screen->get_tex_surface(screen, dst, face, level, i,
-                                            PIPE_BUFFER_USAGE_CPU_WRITE);
+      dst_transfer = screen->get_tex_transfer(screen, dst, face, level, i,
+                                              PIPE_TRANSFER_WRITE, 0, 0,
+                                              dst->width[level],
+                                              dst->height[level]);
 
-      st_surface_data(pipe, dst_surface,
+      st_surface_data(pipe, dst_transfer,
 		      0, 0,                             /* dstx, dsty */
 		      srcUB,
 		      src_row_stride,
 		      0, 0,                             /* source x, y */
 		      dst->width[level], dst->height[level]);       /* width, height */
 
-      screen->tex_surface_release(screen, &dst_surface);
+      screen->tex_transfer_destroy(dst_transfer);
 
       srcUB += src_image_stride;
    }
@@ -341,15 +340,14 @@ st_texture_image_copy(struct pipe_context *pipe,
                                             PIPE_BUFFER_USAGE_GPU_READ);
 
       pipe->surface_copy(pipe,
-                         FALSE,
 			 dst_surface,
 			 0, 0, /* destX, Y */
 			 src_surface,
 			 0, 0, /* srcX, Y */
 			 width, height);
 
-      screen->tex_surface_release(screen, &src_surface);
-      screen->tex_surface_release(screen, &dst_surface);
+      pipe_surface_reference(&src_surface, NULL);
+      pipe_surface_reference(&dst_surface, NULL);
    }
 }
 
@@ -427,7 +425,7 @@ st_bind_teximage(struct st_framebuffer *stfb, uint surfIndex,
    }
 
    if (target == ST_TEXTURE_2D) {
-      texObj = texUnit->Current2D;
+      texObj = texUnit->CurrentTex[TEXTURE_2D_INDEX];
       texImage = _mesa_get_tex_image(ctx, texObj, GL_TEXTURE_2D, level);
       stImage = st_texture_image(texImage);
    }

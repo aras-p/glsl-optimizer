@@ -40,26 +40,38 @@
 #include "stw_public.h"
 #include "stw_context.h"
 
-static struct stw_context *ctx_head = NULL;
-
 static HDC current_hdc = NULL;
-static struct stw_context *current_hrc = NULL;
+static UINT_PTR current_hglrc = 0;
 
 BOOL
 stw_copy_context(
-   struct stw_context *src,
-   struct stw_context *dst,
+   UINT_PTR hglrcSrc,
+   UINT_PTR hglrcDst,
    UINT mask )
 {
-   (void) src;
-   (void) dst;
-   (void) mask;
+   struct stw_context *src;
+   struct stw_context *dst;
+   BOOL ret = FALSE;
 
-   return FALSE;
+   pipe_mutex_lock( stw_dev->mutex );
+   
+   src = stw_lookup_context( hglrcSrc );
+   dst = stw_lookup_context( hglrcDst );
+
+   if (src && dst) { 
+      /* FIXME */
+      (void) src;
+      (void) dst;
+      (void) mask;
+   }
+
+   pipe_mutex_unlock( stw_dev->mutex );
+   
+   return ret;
 }
 
-struct stw_context *
-stw_create_context(
+UINT_PTR
+stw_create_layer_context(
    HDC hdc,
    int iLayerPlane )
 {
@@ -68,19 +80,23 @@ stw_create_context(
    struct stw_context *ctx = NULL;
    GLvisual *visual = NULL;
    struct pipe_context *pipe = NULL;
+   UINT_PTR hglrc = 0;
 
+   if(!stw_dev)
+      return 0;
+   
    if (iLayerPlane != 0)
-      return NULL;
+      return 0;
 
    pfi = stw_pixelformat_get( hdc );
    if (pfi == 0)
-      return NULL;
+      return 0;
 
    pf = pixelformat_get_info( pfi - 1 );
 
    ctx = CALLOC_STRUCT( stw_context );
    if (ctx == NULL)
-      return NULL;
+      return 0;
 
    ctx->hdc = hdc;
    ctx->color_bits = GetDeviceCaps( ctx->hdc, BITSPIXEL );
@@ -119,10 +135,26 @@ stw_create_context(
 
    ctx->st->ctx->DriverCtx = ctx;
 
-   ctx->next = ctx_head;
-   ctx_head = ctx;
+   pipe_mutex_lock( stw_dev->mutex );
+   {
+      UINT_PTR i;
 
-   return ctx;
+      for (i = 0; i < STW_CONTEXT_MAX; i++) {
+         if (stw_dev->ctx_array[i].ctx == NULL) {
+            /* success:
+             */
+            stw_dev->ctx_array[i].ctx = ctx;
+            hglrc = i + 1;
+            break;
+         }
+      }
+   }
+   pipe_mutex_unlock( stw_dev->mutex );
+
+   /* Success?
+    */
+   if (hglrc != 0)
+      return hglrc;
 
 fail:
    if (visual)
@@ -132,47 +164,83 @@ fail:
       pipe->destroy( pipe );
       
    FREE( ctx );
-   return NULL;
+   return 0;
 }
-
 
 BOOL
 stw_delete_context(
-   struct stw_context *hglrc )
+   UINT_PTR hglrc )
 {
-   struct stw_context **link = &ctx_head;
-   struct stw_context *ctx = ctx_head;
+   struct stw_context *ctx ;
+   BOOL ret = FALSE;
+   
+   if (!stw_dev)
+      return FALSE;
 
-   while (ctx != NULL) {
-      if (ctx == hglrc) {
-         GLcontext *glctx = ctx->st->ctx;
-         GET_CURRENT_CONTEXT( glcurctx );
-         struct stw_framebuffer *fb;
+   pipe_mutex_lock( stw_dev->mutex );
 
-         /* Unbind current if deleting current context.
-          */
-         if (glcurctx == glctx)
-            st_make_current( NULL, NULL, NULL );
+   ctx = stw_lookup_context(hglrc);
+   if (ctx) {
+      GLcontext *glctx = ctx->st->ctx;
+      GET_CURRENT_CONTEXT( glcurctx );
+      struct stw_framebuffer *fb;
 
-         fb = framebuffer_from_hdc( ctx->hdc );
-         if (fb)
-            framebuffer_destroy( fb );
+      /* Unbind current if deleting current context.
+       */
+      if (glcurctx == glctx)
+         st_make_current( NULL, NULL, NULL );
 
-         if (WindowFromDC( ctx->hdc ) != NULL)
-            ReleaseDC( WindowFromDC( ctx->hdc ), ctx->hdc );
+      fb = framebuffer_from_hdc( ctx->hdc );
+      if (fb)
+         framebuffer_destroy( fb );
 
-         st_destroy_context( ctx->st );
+      if (WindowFromDC( ctx->hdc ) != NULL)
+         ReleaseDC( WindowFromDC( ctx->hdc ), ctx->hdc );
 
-         *link = ctx->next;
-         FREE( ctx );
-         return TRUE;
-      }
+      st_destroy_context( ctx->st );
 
-      link = &ctx->next;
-      ctx = ctx->next;
+      FREE( ctx );
+      
+      stw_dev->ctx_array[hglrc - 1].ctx = NULL;
+      
+      ret = TRUE;
    }
 
-   return FALSE;
+   pipe_mutex_unlock( stw_dev->mutex );
+   
+   return ret;
+}
+
+BOOL
+stw_release_context(
+   UINT_PTR hglrc )
+{
+   BOOL ret = FALSE;
+
+   if (!stw_dev)
+      return ret;
+
+   pipe_mutex_lock( stw_dev->mutex );
+   {
+      struct stw_context *ctx;
+
+      /* XXX: The expectation is that ctx is the same context which is
+       * current for this thread.  We should check that and return False
+       * if not the case.
+       */
+      ctx = stw_lookup_context( hglrc );
+      if (ctx == NULL) 
+         goto done;
+
+      if (stw_make_current( NULL, 0 ) == FALSE)
+         goto done;
+
+      ret = TRUE;
+   }
+done:
+   pipe_mutex_unlock( stw_dev->mutex );
+
+   return ret;
 }
 
 /* Find the width and height of the window named by hdc.
@@ -193,10 +261,10 @@ get_window_size( HDC hdc, GLuint *width, GLuint *height )
    }
 }
 
-struct stw_context *
+UINT_PTR
 stw_get_current_context( void )
 {
-   return current_hrc;
+   return current_hglrc;
 }
 
 HDC
@@ -208,35 +276,43 @@ stw_get_current_dc( void )
 BOOL
 stw_make_current(
    HDC hdc,
-   struct stw_context *hglrc )
+   UINT_PTR hglrc )
 {
-   struct stw_context *ctx = ctx_head;
+   struct stw_context *ctx;
    GET_CURRENT_CONTEXT( glcurctx );
    struct stw_framebuffer *fb;
    GLuint width = 0;
    GLuint height = 0;
+   struct stw_context *curctx;
+
+   if (!stw_dev)
+      return FALSE;
+
+   pipe_mutex_lock( stw_dev->mutex ); 
+   ctx = stw_lookup_context( hglrc );
+   pipe_mutex_unlock( stw_dev->mutex );
+   
+   if (ctx == NULL)
+      return FALSE;
 
    current_hdc = hdc;
-   current_hrc = hglrc;
+   current_hglrc = hglrc;
 
-   if (hdc == NULL || hglrc == NULL) {
+   if (glcurctx != NULL) {
+      curctx = (struct stw_context *) glcurctx->DriverCtx;
+
+      if (curctx != ctx)
+	 st_flush(glcurctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+   }
+
+   if (hdc == NULL || hglrc == 0) {
       st_make_current( NULL, NULL, NULL );
       return TRUE;
    }
 
-   while (ctx != NULL) {
-      if (ctx == hglrc)
-         break;
-      ctx = ctx->next;
-   }
-   if (ctx == NULL)
-      return FALSE;
-
    /* Return if already current.
     */
    if (glcurctx != NULL) {
-      struct stw_context *curctx = (struct stw_context *) glcurctx->DriverCtx;
-
       if (curctx != NULL && curctx == ctx && ctx->hdc == hdc)
          return TRUE;
    }
@@ -273,20 +349,3 @@ stw_make_current(
 
    return TRUE;
 }
-
-struct stw_context *
-stw_context_from_hdc(
-   HDC hdc )
-{
-   struct stw_context *ctx = ctx_head;
-
-   while (ctx != NULL) {
-      if (ctx->hdc == hdc)
-         return ctx;
-      ctx = ctx->next;
-   }
-   return NULL;
-}
-
-
-

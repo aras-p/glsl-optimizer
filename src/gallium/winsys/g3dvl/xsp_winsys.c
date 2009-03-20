@@ -1,10 +1,12 @@
 #include "vl_winsys.h"
 #include <X11/Xutil.h>
-#include <pipe/p_winsys.h>
+#include <pipe/internal/p_winsys_screen.h>
 #include <pipe/p_state.h>
 #include <pipe/p_inlines.h>
 #include <util/u_memory.h>
+#include <util/u_math.h>
 #include <softpipe/sp_winsys.h>
+#include <softpipe/sp_texture.h>
 
 /* pipe_winsys implementation */
 
@@ -37,7 +39,7 @@ static struct pipe_buffer* xsp_buffer_create(struct pipe_winsys *pws, unsigned a
 	assert(pws);
 
 	buffer = calloc(1, sizeof(struct xsp_buffer));
-	buffer->base.refcount = 1;
+	pipe_reference_init(&buffer->base.reference, 1);
 	buffer->base.alignment = alignment;
 	buffer->base.usage = usage;
 	buffer->base.size = size;
@@ -53,7 +55,7 @@ static struct pipe_buffer* xsp_user_buffer_create(struct pipe_winsys *pws, void 
 	assert(pws);
 
 	buffer = calloc(1, sizeof(struct xsp_buffer));
-	buffer->base.refcount = 1;
+	pipe_reference_init(&buffer->base.reference, 1);
 	buffer->base.size = size;
 	buffer->is_user_buffer = TRUE;
 	buffer->data = data;
@@ -96,12 +98,6 @@ static void xsp_buffer_destroy(struct pipe_winsys *pws, struct pipe_buffer *buff
 	free(xsp_buf);
 }
 
-/* Borrowed from Mesa's xm_winsys */
-static unsigned int round_up(unsigned n, unsigned multiple)
-{
-   return (n + multiple - 1) & ~(multiple - 1);
-}
-
 static struct pipe_buffer* xsp_surface_buffer_create
 (
 	struct pipe_winsys *pws,
@@ -119,11 +115,11 @@ static struct pipe_buffer* xsp_surface_buffer_create
 	pf_get_block(format, &block);
 	nblocksx = pf_get_nblocksx(&block, width);
 	nblocksy = pf_get_nblocksy(&block, height);
-	*stride = round_up(nblocksx * block.size, ALIGNMENT);
+	*stride = align(nblocksx * block.size, ALIGNMENT);
 
-	return winsys->buffer_create(winsys, ALIGNMENT,
-				     usage,
-				     *stride * nblocksy);
+	return pws->buffer_create(pws, ALIGNMENT,
+				  usage,
+				  *stride * nblocksy);
 }
 
 static void xsp_fence_reference(struct pipe_winsys *pws, struct pipe_fence_handle **ptr, struct pipe_fence_handle *fence)
@@ -167,7 +163,7 @@ static void xsp_flush_frontbuffer(struct pipe_winsys *pws, struct pipe_surface *
 	xsp_winsys->fbimage.width = surface->width;
 	xsp_winsys->fbimage.height = surface->height;
 	xsp_winsys->fbimage.bytes_per_line = surface->width * (xsp_winsys->fbimage.bits_per_pixel >> 3);
-	xsp_winsys->fbimage.data = pipe_surface_map(surface, 0);
+	xsp_winsys->fbimage.data = ((struct xsp_buffer *)softpipe_texture(surface->texture)->buffer)->data + surface->offset;
 
 	XPutImage
 	(
@@ -183,7 +179,6 @@ static void xsp_flush_frontbuffer(struct pipe_winsys *pws, struct pipe_surface *
 		surface->height
 	);
 	XFlush(xsp_context->display);
-	pipe_surface_unmap(surface);
 }
 
 static const char* xsp_get_name(struct pipe_winsys *pws)

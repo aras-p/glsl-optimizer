@@ -34,7 +34,7 @@
 
 
 #include "pipe/p_defines.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/p_thread.h"
 #include "util/u_memory.h"
 #include "util/u_double_list.h"
@@ -97,11 +97,11 @@ mm_buffer_destroy(struct pb_buffer *buf)
    struct mm_buffer *mm_buf = mm_buffer(buf);
    struct mm_pb_manager *mm = mm_buf->mgr;
    
-   assert(buf->base.refcount == 0);
+   assert(p_atomic_read(&mm_buf->base.base.reference.count) == 0);
    
    pipe_mutex_lock(mm->mutex);
    u_mmFreeMem(mm_buf->block);
-   FREE(buf);
+   FREE(mm_buf);
    pipe_mutex_unlock(mm->mutex);
 }
 
@@ -189,7 +189,7 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
       return NULL;
    }
 
-   mm_buf->base.base.refcount = 1;
+   pipe_reference_init(&mm_buf->base.base.reference, 1);
    mm_buf->base.base.alignment = desc->alignment;
    mm_buf->base.base.usage = desc->usage;
    mm_buf->base.base.size = size;
@@ -204,13 +204,9 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
 #if 0
       mmDumpMemInfo(mm->heap);
 #endif
-      
-      mm_buf->block = u_mmAllocMem(mm->heap, size, mm->align2, 0);
-      if(!mm_buf->block) {
-         FREE(mm_buf);
-         pipe_mutex_unlock(mm->mutex);
-         return NULL;
-      }
+      FREE(mm_buf);
+      pipe_mutex_unlock(mm->mutex);
+      return NULL;
    }
    
    /* Some sanity checks */

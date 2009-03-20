@@ -42,10 +42,6 @@
 
 
 extern void
-_mesa_transform_vector(GLfloat u[4], CONST GLfloat v[4], CONST GLfloat m[16]);
-
-
-extern void
 _math_init_transformation(void);
 
 
@@ -148,18 +144,6 @@ typedef void (_XFORMAPIP transform_func)( GLvector4f *to_vec,
 					  CONST GLvector4f *from_vec );
 
 
-extern GLvector4f *_mesa_project_points( GLvector4f *to,
-					 CONST GLvector4f *from );
-
-extern void _mesa_transform_bounds3( GLubyte *orMask, GLubyte *andMask,
-				     CONST GLfloat m[16],
-				     CONST GLfloat src[][3] );
-
-extern void _mesa_transform_bounds2( GLubyte *orMask, GLubyte *andMask,
-				     CONST GLfloat m[16],
-				     CONST GLfloat src[][3] );
-
-
 extern dotprod_func  _mesa_dotprod_tab[5];
 extern vec_copy_func _mesa_copy_tab[0x10];
 extern vec_copy_func _mesa_copy_clean_tab[5];
@@ -172,9 +156,6 @@ extern normal_func   _mesa_normal_tab[0xf];
  */
 extern transform_func *_mesa_transform_tab[5];
 
-
-extern void _mesa_transform_point_sz( GLfloat Q[4], CONST GLfloat M[16],
-				      CONST GLfloat P[4], GLuint sz );
 
 
 #define TransformRaw( to, mat, from ) \

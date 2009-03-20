@@ -287,19 +287,23 @@ cell_emit_state(struct cell_context *cell)
       for (i = 0;i < CELL_MAX_SAMPLERS; i++) {
          if (cell->dirty_textures & (1 << i)) {
             STATIC_ASSERT(sizeof(struct cell_command_texture) % 16 == 0);
-            struct cell_command_texture *texture
-               =  (struct cell_command_texture *)cell_batch_alloc16(cell, sizeof(*texture));
+            struct cell_command_texture *texture =
+               (struct cell_command_texture *)
+               cell_batch_alloc16(cell, sizeof(*texture));
+
             texture->opcode[0] = CELL_CMD_STATE_TEXTURE;
             texture->unit = i;
             if (cell->texture[i]) {
+               struct cell_texture *ct = cell->texture[i];
                uint level;
                for (level = 0; level < CELL_MAX_TEXTURE_LEVELS; level++) {
-                  texture->start[level] = cell->texture[i]->tiled_mapped[level];
-                  texture->width[level] = cell->texture[i]->base.width[level];
-                  texture->height[level] = cell->texture[i]->base.height[level];
-                  texture->depth[level] = cell->texture[i]->base.depth[level];
+                  texture->start[level] = (ct->mapped +
+                                           ct->level_offset[level]);
+                  texture->width[level] = ct->base.width[level];
+                  texture->height[level] = ct->base.height[level];
+                  texture->depth[level] = ct->base.depth[level];
                }
-               texture->target = cell->texture[i]->base.target;
+               texture->target = ct->base.target;
             }
             else {
                uint level;

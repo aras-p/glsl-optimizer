@@ -134,7 +134,7 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
    if (sp->dirty)
       softpipe_update_derived( sp );
 
-   softpipe_map_surfaces(sp);
+   softpipe_map_transfers(sp);
    softpipe_map_constant_buffers(sp);
 
    /*

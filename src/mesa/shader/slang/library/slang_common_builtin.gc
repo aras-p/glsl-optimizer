@@ -1659,76 +1659,76 @@ bvec4 not (const bvec4 v)
 
 vec4 texture1D(const sampler1D sampler, const float coord)
 {
-   __asm vec4_tex1d __retVal, sampler, coord;
+   __asm vec4_tex_1d __retVal, sampler, coord;
 }
 
 vec4 texture1DProj(const sampler1D sampler, const vec2 coord)
 {
    // need to swizzle .y into .w
-   __asm vec4_texp1d __retVal, sampler, coord.xyyy;
+   __asm vec4_tex_1d_proj __retVal, sampler, coord.xyyy;
 }
 
 vec4 texture1DProj(const sampler1D sampler, const vec4 coord)
 {
-   __asm vec4_texp1d __retVal, sampler, coord;
+   __asm vec4_tex_1d_proj __retVal, sampler, coord;
 }
 
 
 vec4 texture2D(const sampler2D sampler, const vec2 coord)
 {
-   __asm vec4_tex2d __retVal, sampler, coord;
+   __asm vec4_tex_2d __retVal, sampler, coord;
 }
 
 vec4 texture2DProj(const sampler2D sampler, const vec3 coord)
 {
    // need to swizzle 'z' into 'w'.
-   __asm vec4_texp2d __retVal, sampler, coord.xyzz;
+   __asm vec4_tex_2d_proj __retVal, sampler, coord.xyzz;
 }
 
 vec4 texture2DProj(const sampler2D sampler, const vec4 coord)
 {
-   __asm vec4_texp2d __retVal, sampler, coord;
+   __asm vec4_tex_2d_proj __retVal, sampler, coord;
 }
 
 
 vec4 texture3D(const sampler3D sampler, const vec3 coord)
 {
-   __asm vec4_tex3d __retVal, sampler, coord;
+   __asm vec4_tex_3d __retVal, sampler, coord;
 }
 
 vec4 texture3DProj(const sampler3D sampler, const vec4 coord)
 {
-   __asm vec4_texp3d __retVal, sampler, coord;
+   __asm vec4_tex_3d_proj __retVal, sampler, coord;
 }
 
 
 vec4 textureCube(const samplerCube sampler, const vec3 coord)
 {
-   __asm vec4_texcube __retVal, sampler, coord;
+   __asm vec4_tex_cube __retVal, sampler, coord;
 }
 
 
 
 vec4 shadow1D(const sampler1DShadow sampler, const vec3 coord)
 {
-   __asm vec4_tex1d __retVal, sampler, coord;
+   __asm vec4_tex_1d_shadow __retVal, sampler, coord;
 }
 
 vec4 shadow1DProj(const sampler1DShadow sampler, const vec4 coord)
 {
    // .s and .p will be divided by .q
-   __asm vec4_texp1d __retVal, sampler, coord;
+   __asm vec4_tex_1d_proj_shadow __retVal, sampler, coord;
 }
 
 vec4 shadow2D(const sampler2DShadow sampler, const vec3 coord)
 {
-   __asm vec4_tex2d __retVal, sampler, coord;
+   __asm vec4_tex_2d_shadow __retVal, sampler, coord;
 }
 
 vec4 shadow2DProj(const sampler2DShadow sampler, const vec4 coord)
 {
    // .s, .t and .p will be divided by .q
-   __asm vec4_texp2d __retVal, sampler, coord;
+   __asm vec4_tex_2d_proj_shadow __retVal, sampler, coord;
 }
 
 
@@ -1741,22 +1741,22 @@ vec4 texture2DRect(const sampler2DRect sampler, const vec2 coord)
 vec4 texture2DRectProj(const sampler2DRect sampler, const vec3 coord)
 {
    // need to swizzle .y into .w
-   __asm vec4_texp_rect __retVal, sampler, coord.xyzz;
+   __asm vec4_tex_rect_proj __retVal, sampler, coord.xyzz;
 }
 
 vec4 texture2DRectProj(const sampler2DRect sampler, const vec4 coord)
 {
-   __asm vec4_texp_rect __retVal, sampler, ccoord;
+   __asm vec4_tex_rect_proj __retVal, sampler, ccoord;
 }
 
 vec4 shadow2DRect(const sampler2DRectShadow sampler, const vec3 coord)
 {
-   __asm vec4_tex_rect __retVal, sampler, coord;
+   __asm vec4_tex_rect_shadow __retVal, sampler, coord;
 }
 
 vec4 shadow2DRectProj(const sampler2DRectShadow sampler, const vec4 coord)
 {
-   __asm vec4_texp_rect __retVal, sampler, coord;
+   __asm vec4_tex_rect_proj_shadow __retVal, sampler, coord;
 }
 
 

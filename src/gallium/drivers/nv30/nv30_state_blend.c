@@ -28,6 +28,7 @@ nv30_state_blend_colour_validate(struct nv30_context *nv30)
 		       (float_to_ubyte(bcol->color[2]) <<  0)));
 
 	so_ref(so, &nv30->state.hw[NV30_STATE_BCOL]);
+	so_ref(NULL, &so);
 	return TRUE;
 }
 

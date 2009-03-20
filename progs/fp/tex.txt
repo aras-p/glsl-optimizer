@@ -1,0 +1,3 @@
+!!ARBfp1.0
+TEX result.color, fragment.color, texture[0], 2D;
+END

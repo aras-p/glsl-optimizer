@@ -23,7 +23,7 @@
  */
 
 /**
- * \file glapi_getproc.
+ * \file glapi_getproc.c
  *
  * Code for implementing glXGetProcAddress(), etc.
  * This was originally in glapi.c but refactored out.
@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "main/glheader.h"
+#include "main/compiler.h"
 #include "glapi.h"
 #include "glapioffsets.h"
 #include "glapitable.h"
@@ -87,7 +88,13 @@ find_entry( const char * n )
    GLuint i;
    for (i = 0; static_functions[i].Name_offset >= 0; i++) {
       const char *testName = gl_string_table + static_functions[i].Name_offset;
-      if (strcmp(testName, n) == 0) {
+#ifdef MANGLE
+      /* skip the "m" prefix on the name */
+      if (strcmp(testName, n + 1) == 0)
+#else
+      if (strcmp(testName, n) == 0)
+#endif
+      {
 	 return &static_functions[i];
       }
    }
@@ -252,53 +259,30 @@ generate_entrypoint(GLuint functionOffset)
    }
 
    return (_glapi_proc) code;
-#elif defined(USE_SPARC_ASM)
-
-#ifdef __arch64__
-   static const unsigned int insn_template[] = {
-	   0x05000000,	/* sethi	%uhi(_glapi_Dispatch), %g2	*/
-	   0x03000000,	/* sethi	%hi(_glapi_Dispatch), %g1	*/
-	   0x8410a000,	/* or		%g2, %ulo(_glapi_Dispatch), %g2	*/
-	   0x82106000,	/* or		%g1, %lo(_glapi_Dispatch), %g1	*/
-	   0x8528b020,	/* sllx		%g2, 32, %g2			*/
-	   0xc2584002,	/* ldx		[%g1 + %g2], %g1		*/
-	   0x05000000,	/* sethi	%hi(8 * glapioffset), %g2	*/
-	   0x8410a000,	/* or		%g2, %lo(8 * glapioffset), %g2	*/
-	   0xc6584002,	/* ldx		[%g1 + %g2], %g3		*/
-	   0x81c0c000,	/* jmpl		%g3, %g0			*/
-	   0x01000000	/*  nop						*/
+#elif defined(USE_SPARC_ASM) && (defined(PTHREADS) || defined(GLX_USE_TLS))
+   static const unsigned int template[] = {
+      0x07000000, /* sethi %hi(0), %g3 */
+      0x8210000f, /* mov  %o7, %g1 */
+      0x40000000, /* call */
+      0x9e100001, /* mov  %g1, %o7 */
    };
+#ifdef GLX_USE_TLS
+   extern unsigned int __glapi_sparc_tls_stub;
+   unsigned long call_dest = (unsigned long ) &__glapi_sparc_tls_stub;
 #else
-   static const unsigned int insn_template[] = {
-	   0x03000000,	/* sethi	%hi(_glapi_Dispatch), %g1	  */
-	   0xc2006000,	/* ld		[%g1 + %lo(_glapi_Dispatch)], %g1 */
-	   0xc6006000,	/* ld		[%g1 + %lo(4*glapioffset)], %g3	  */
-	   0x81c0c000,	/* jmpl		%g3, %g0			  */
-	   0x01000000	/*  nop						  */
-   };
-#endif /* __arch64__ */
-   unsigned int *code = (unsigned int *) malloc(sizeof(insn_template));
-   unsigned long glapi_addr = (unsigned long) &_glapi_Dispatch;
+   extern unsigned int __glapi_sparc_pthread_stub;
+   unsigned long call_dest = (unsigned long ) &__glapi_sparc_pthread_stub;
+#endif
+   unsigned int *code = (unsigned int *) malloc(sizeof(template));
    if (code) {
-      memcpy(code, insn_template, sizeof(insn_template));
-
-#ifdef __arch64__
-      code[0] |= (glapi_addr >> (32 + 10));
-      code[1] |= ((glapi_addr & 0xffffffff) >> 10);
+      code[0] = template[0] | (functionOffset & 0x3fffff);
+      code[1] = template[1];
       __glapi_sparc_icache_flush(&code[0]);
-      code[2] |= ((glapi_addr >> 32) & ((1 << 10) - 1));
-      code[3] |= (glapi_addr & ((1 << 10) - 1));
+      code[2] = template[2] |
+         (((call_dest - ((unsigned long) &code[2]))
+	   >> 2) & 0x3fffffff);
+      code[3] = template[3];
       __glapi_sparc_icache_flush(&code[2]);
-      code[6] |= ((functionOffset * 8) >> 10);
-      code[7] |= ((functionOffset * 8) & ((1 << 10) - 1));
-      __glapi_sparc_icache_flush(&code[6]);
-#else
-      code[0] |= (glapi_addr >> 10);
-      code[1] |= (glapi_addr & ((1 << 10) - 1));
-      __glapi_sparc_icache_flush(&code[0]);
-      code[2] |= (functionOffset * 4);
-      __glapi_sparc_icache_flush(&code[2]);
-#endif /* __arch64__ */
    }
    return (_glapi_proc) code;
 #else
@@ -330,21 +314,10 @@ fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
 #endif
 
 #elif defined(USE_SPARC_ASM)
-
-   /* XXX this hasn't been tested! */
    unsigned int *code = (unsigned int *) entrypoint;
-#ifdef __arch64__
-   code[6] = 0x05000000;  /* sethi	%hi(8 * glapioffset), %g2	*/
-   code[7] = 0x8410a000;  /* or		%g2, %lo(8 * glapioffset), %g2	*/
-   code[6] |= ((offset * 8) >> 10);
-   code[7] |= ((offset * 8) & ((1 << 10) - 1));
-   __glapi_sparc_icache_flush(&code[6]);
-#else /* __arch64__ */
-   code[2] = 0xc6006000;  /* ld		[%g1 + %lo(4*glapioffset)], %g3	  */
-   code[2] |= (offset * 4);
-   __glapi_sparc_icache_flush(&code[2]);
-#endif /* __arch64__ */
-
+   code[0] &= ~0x3fffff;
+   code[0] |= (offset * sizeof(void *)) & 0x3fffff;
+   __glapi_sparc_icache_flush(&code[0]);
 #else
 
    /* an unimplemented architecture */

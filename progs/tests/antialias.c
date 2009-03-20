@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 
@@ -29,7 +30,7 @@ PrintString(const char *s)
 
 
 static void
-Polygon( GLint verts, GLfloat radius, GLfloat z )
+doPolygon( GLint verts, GLfloat radius, GLfloat z )
 {
    int i;
    for (i = 0; i < verts; i++) {
@@ -47,33 +48,33 @@ DrawObject( void )
    glLineWidth(3.0);
    glColor3f(1, 1, 1);
    glBegin(GL_LINE_LOOP);
-   Polygon(12, 1.2, 0);
+   doPolygon(12, 1.2, 0);
    glEnd();
 
    glLineWidth(1.0);
    glColor3f(1, 1, 1);
    glBegin(GL_LINE_LOOP);
-   Polygon(12, 1.1, 0);
+   doPolygon(12, 1.1, 0);
    glEnd();
 
    glColor3f(1, 0, 0);
    glBegin(GL_POLYGON);
-   Polygon(12, 0.4, 0.3);
+   doPolygon(12, 0.4, 0.3);
    glEnd();
 
    glColor3f(0, 1, 0);
    glBegin(GL_POLYGON);
-   Polygon(12, 0.6, 0.2);
+   doPolygon(12, 0.6, 0.2);
    glEnd();
 
    glColor3f(0, 0, 1);
    glBegin(GL_POLYGON);
-   Polygon(12, 0.8, 0.1);
+   doPolygon(12, 0.8, 0.1);
    glEnd();
 
    glColor3f(1, 1, 1);
    glBegin(GL_POLYGON);
-   Polygon(12, 1.0, 0);
+   doPolygon(12, 1.0, 0);
    glEnd();
 }
 
@@ -225,6 +226,7 @@ main( int argc, char *argv[] )
    glutInitDisplayMode( GLUT_RGB | GLUT_ALPHA | GLUT_DOUBLE |
                         GLUT_DEPTH | GLUT_MULTISAMPLE );
    glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );

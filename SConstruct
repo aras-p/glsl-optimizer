@@ -32,7 +32,7 @@ import common
 default_statetrackers = 'mesa'
 
 if common.default_platform in ('linux', 'freebsd', 'darwin'):
-	default_drivers = 'softpipe,failover,i915simple,i965simple,trace'
+	default_drivers = 'softpipe,failover,i915simple,trace'
 	default_winsys = 'xlib'
 elif common.default_platform in ('winddk',):
 	default_drivers = 'softpipe,i915simple,trace'
@@ -133,7 +133,7 @@ if dri:
 # LLVM
 if llvm:
 	# See also http://www.scons.org/wiki/UsingPkgConfig
-	env.ParseConfig('llvm-config --cflags --ldflags --libs backend bitreader engine ipo')
+	env.ParseConfig('llvm-config --cflags --ldflags --libs backend bitreader engine instrumentation interpreter ipo')
 	env.Append(CPPDEFINES = ['MESA_LLVM'])
         # Force C++ linkage
 	env['LINK'] = env['CXX']

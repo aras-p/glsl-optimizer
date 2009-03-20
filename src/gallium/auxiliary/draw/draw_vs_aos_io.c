@@ -199,7 +199,7 @@ static boolean load_input( struct aos_compilation *cp,
       emit_load_R8G8B8A8_UNORM(cp, dataXMM, src);
       break;
    default:
-      ERROR(cp, "unhandled input format");
+      AOS_ERROR(cp, "unhandled input format");
       return FALSE;
    }
 
@@ -410,7 +410,7 @@ static boolean emit_output( struct aos_compilation *cp,
       }
       break;
    default:
-      ERROR(cp, "unhandled output format");
+      AOS_ERROR(cp, "unhandled output format");
       return FALSE;
    }
 

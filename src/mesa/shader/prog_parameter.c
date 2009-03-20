@@ -78,7 +78,7 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
  */
 GLint
 _mesa_add_parameter(struct gl_program_parameter_list *paramList,
-                    enum register_file type, const char *name,
+                    gl_register_file type, const char *name,
                     GLuint size, GLenum datatype, const GLfloat *values,
                     const gl_state_index state[STATE_LENGTH],
                     GLbitfield flags)
@@ -517,7 +517,7 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
  * swizzling to find a match.
  * \param list  the parameter list to search
  * \param v  the float vector to search for
- * \param size  number of element in v
+ * \param vSize  number of element in v
  * \param posOut  returns the position of the constant, if found
  * \param swizzleOut  returns a swizzle mask describing location of the
  *                    vector elements if found.
@@ -681,7 +681,7 @@ _mesa_combine_parameter_lists(const struct gl_program_parameter_list *listA,
  */
 GLuint
 _mesa_longest_parameter_name(const struct gl_program_parameter_list *list,
-                             enum register_file type)
+                             gl_register_file type)
 {
    GLuint i, maxLen = 0;
    if (!list)
@@ -702,7 +702,7 @@ _mesa_longest_parameter_name(const struct gl_program_parameter_list *list,
  */
 GLuint
 _mesa_num_parameters_of_type(const struct gl_program_parameter_list *list,
-                             enum register_file type)
+                             gl_register_file type)
 {
    GLuint i, count = 0;
    if (list) {

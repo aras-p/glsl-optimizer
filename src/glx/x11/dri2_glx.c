@@ -77,6 +77,9 @@ struct __GLXDRIdrawablePrivateRec {
     int bufferCount;
     int width, height;
     unsigned long configureSeqno;
+    int have_back;
+    int have_front;
+    int have_fake_front;
 };
 
 static void dri2DestroyContext(__GLXDRIcontext *context,
@@ -196,12 +199,22 @@ static void dri2CopySubBuffer(__GLXDRIdrawable *pdraw,
     XRectangle xrect;
     XserverRegion region;
 
+    /* Check we have the right attachments */
+    if (!(priv->have_front && priv->have_back))
+    	return;
+
     xrect.x = x;
     xrect.y = priv->height - y - height;
     xrect.width = width;
     xrect.height = height;
 
+#ifdef __DRI2_FLUSH
+    if (pdraw->psc->f)
+    	(*pdraw->psc->f->flush)(pdraw->driDrawable);
+#endif
+
     region = XFixesCreateRegion(pdraw->psc->dpy, &xrect, 1);
+    /* should get a fence ID back from here at some point */
     DRI2CopyRegion(pdraw->psc->dpy, pdraw->drawable, region,
 		   DRI2BufferFrontLeft, DRI2BufferBackLeft);
     XFixesDestroyRegion(pdraw->psc->dpy, region);
@@ -212,6 +225,57 @@ static void dri2SwapBuffers(__GLXDRIdrawable *pdraw)
     __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
 
     dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height);
+}
+
+static void dri2WaitX(__GLXDRIdrawable *pdraw)
+{
+    __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
+    XRectangle xrect;
+    XserverRegion region;
+
+    /* Check we have the right attachments */
+    if (!(priv->have_fake_front && priv->have_front))
+    	return;
+
+    xrect.x = 0;
+    xrect.y = 0;
+    xrect.width = priv->width;
+    xrect.height = priv->height;
+
+#ifdef __DRI2_FLUSH
+    if (pdraw->psc->f)
+    	(*pdraw->psc->f->flush)(pdraw->driDrawable);
+#endif
+
+    region = XFixesCreateRegion(pdraw->psc->dpy, &xrect, 1);
+    DRI2CopyRegion(pdraw->psc->dpy, pdraw->drawable, region,
+		   DRI2BufferFakeFrontLeft, DRI2BufferFrontLeft);
+    XFixesDestroyRegion(pdraw->psc->dpy, region);
+}
+
+static void dri2WaitGL(__GLXDRIdrawable *pdraw)
+{
+    __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
+    XRectangle xrect;
+    XserverRegion region;
+
+    if (!(priv->have_fake_front && priv->have_front))
+    	return;
+
+    xrect.x = 0;
+    xrect.y = 0;
+    xrect.width = priv->width;
+    xrect.height = priv->height;
+
+#ifdef __DRI2_FLUSH
+    if (pdraw->psc->f)
+    	(*pdraw->psc->f->flush)(pdraw->driDrawable);
+#endif
+
+    region = XFixesCreateRegion(pdraw->psc->dpy, &xrect, 1);
+    DRI2CopyRegion(pdraw->psc->dpy, pdraw->drawable, region,
+		   DRI2BufferFrontLeft, DRI2BufferFakeFrontLeft);
+    XFixesDestroyRegion(pdraw->psc->dpy, region);
 }
 
 static void dri2DestroyScreen(__GLXscreenConfigs *psc)
@@ -261,6 +325,9 @@ dri2GetBuffers(__DRIdrawable *driDrawable,
     pdraw->width = *width;
     pdraw->height = *height;
     pdraw->bufferCount = *out_count;
+    pdraw->have_front = 0;
+    pdraw->have_fake_front = 0;
+    pdraw->have_back = 0;
 
     /* This assumes the DRI2 buffer attachment tokens matches the
      * __DRIbuffer tokens. */
@@ -270,6 +337,12 @@ dri2GetBuffers(__DRIdrawable *driDrawable,
 	pdraw->buffers[i].pitch = buffers[i].pitch;
 	pdraw->buffers[i].cpp = buffers[i].cpp;
 	pdraw->buffers[i].flags = buffers[i].flags;
+	if (pdraw->buffers[i].attachment == __DRI_BUFFER_FRONT_LEFT)
+	    pdraw->have_front = 1;
+	if (pdraw->buffers[i].attachment == __DRI_BUFFER_FAKE_FRONT_LEFT)
+	    pdraw->have_fake_front = 1;
+	if (pdraw->buffers[i].attachment == __DRI_BUFFER_BACK_LEFT)
+	    pdraw->have_back = 1;
     }
 
     Xfree(buffers);
@@ -366,6 +439,8 @@ static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
     psp->createContext = dri2CreateContext;
     psp->createDrawable = dri2CreateDrawable;
     psp->swapBuffers = dri2SwapBuffers;
+    psp->waitGL = dri2WaitGL;
+    psp->waitX = dri2WaitX;
 
     /* DRI2 suports SubBuffer through DRI2CopyRegion, so it's always
      * available.*/

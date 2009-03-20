@@ -133,7 +133,7 @@ check_color_per_fragment_ops( const GLcontext *ctx )
 		    ctx->Depth.Test ||
 		    ctx->Fog.Enabled ||
 		    ctx->Scissor.Enabled ||
-		    ctx->Stencil.Enabled ||
+		    ctx->Stencil._Enabled ||
 		    !ctx->Color.ColorMask[0] ||
 		    !ctx->Color.ColorMask[1] ||
 		    !ctx->Color.ColorMask[2] ||

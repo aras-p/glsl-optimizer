@@ -11,6 +11,3 @@ C_SOURCES = \
 	rtasm_ppc_spe.c
 
 include ../../Makefile.template
-
-symlinks:
-

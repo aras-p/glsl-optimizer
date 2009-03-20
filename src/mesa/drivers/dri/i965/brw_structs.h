@@ -439,7 +439,7 @@ struct brw_urb_fence
    } bits1;
 };
 
-struct brw_constant_buffer_state /* previously brw_command_streamer */
+struct brw_cs_urb_state
 {
    struct header header;
 

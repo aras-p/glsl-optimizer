@@ -42,17 +42,11 @@
  */
 #include "common_x86_features.h"
 
-#ifdef USE_X86_ASM
-#include "x86.h"
-#ifdef USE_3DNOW_ASM
-#include "3dnow.h"
-#endif
-#ifdef USE_SSE_ASM
-#include "sse.h"
-#endif
-#endif
-
 extern int _mesa_x86_cpu_features;
+
+extern void _mesa_get_x86_features(void);
+
+extern void _mesa_check_os_sse_support(void);
 
 extern void _mesa_init_all_x86_transform_asm( void );
 

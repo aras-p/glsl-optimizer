@@ -69,7 +69,7 @@ void st_init_atoms( struct st_context *st )
 {
    GLuint i;
 
-   st->atoms = malloc(sizeof(atoms));
+   st->atoms = _mesa_malloc(sizeof(atoms));
    st->nr_atoms = sizeof(atoms)/sizeof(*atoms);
    memcpy(st->atoms, atoms, sizeof(atoms));
 
@@ -92,7 +92,7 @@ void st_init_atoms( struct st_context *st )
 void st_destroy_atoms( struct st_context *st )
 {
    if (st->atoms) {
-      free(st->atoms);
+      _mesa_free(st->atoms);
       st->atoms = NULL;
    }
 }

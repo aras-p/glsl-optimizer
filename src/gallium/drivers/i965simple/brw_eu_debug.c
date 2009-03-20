@@ -30,7 +30,7 @@
   */
     
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 
 #include "brw_eu.h"
 

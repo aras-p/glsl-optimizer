@@ -43,16 +43,23 @@ struct cell_texture
    unsigned long level_offset[CELL_MAX_TEXTURE_LEVELS];
    unsigned long stride[CELL_MAX_TEXTURE_LEVELS];
 
-   /* The data is held here:
-    */
+   /** The tiled texture data is held in this buffer */
    struct pipe_buffer *buffer;
    unsigned long buffer_size;
 
-   /** Texture data in tiled layout is held here */
-   struct pipe_buffer *tiled_buffer[CELL_MAX_TEXTURE_LEVELS];
-   /** Mapped, tiled texture data */
-   void *tiled_mapped[CELL_MAX_TEXTURE_LEVELS];
-   void *untiled_data[CELL_MAX_TEXTURE_LEVELS];
+   /** The buffer above, mapped.  This is the memory from which the
+    * SPUs will fetch texels.  This texture data is in the tiled layout.
+    */
+   ubyte *mapped;
+};
+
+
+struct cell_transfer
+{
+   struct pipe_transfer base;
+
+   unsigned long offset;
+   void *map;
 };
 
 
@@ -63,6 +70,13 @@ cell_texture(struct pipe_texture *pt)
    return (struct cell_texture *) pt;
 }
 
+
+/** cast wrapper */
+static INLINE struct cell_transfer *
+cell_transfer(struct pipe_transfer *pt)
+{
+   return (struct cell_transfer *) pt;
+}
 
 
 extern void

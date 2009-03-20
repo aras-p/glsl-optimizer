@@ -51,11 +51,20 @@ st_device_really_destroy(struct st_device *st_dev)
 }
 
 
+static void
+st_device_reference(struct st_device **ptr, struct st_device *st_dev)
+{
+   struct st_device *old_dev = *ptr;
+
+   if (pipe_reference((struct pipe_reference **)ptr, &st_dev->reference))
+      st_device_really_destroy(old_dev);
+}
+
+
 void
 st_device_destroy(struct st_device *st_dev) 
 {
-   if(!--st_dev->refcount)
-      st_device_really_destroy(st_dev);
+   st_device_reference(&st_dev, NULL);
 }
 
 
@@ -72,7 +81,7 @@ st_device_create_from_st_winsys(const struct st_winsys *st_ws)
    if(!st_dev)
       return NULL;
    
-   st_dev->refcount = 1;
+   pipe_reference_init(&st_dev->reference, 1);
    st_dev->st_ws = st_ws;
    
    st_dev->real_screen = st_ws->screen_create();
@@ -124,8 +133,7 @@ st_context_destroy(struct st_context *st_ctx)
 
       FREE(st_ctx);
       
-      if(!--st_dev->refcount)
-         st_device_really_destroy(st_dev);
+      st_device_reference(&st_dev, NULL);
    }
 }
 
@@ -139,8 +147,7 @@ st_context_create(struct st_device *st_dev)
    if(!st_ctx)
       return NULL;
    
-   st_ctx->st_dev = st_dev;
-   ++st_dev->refcount;
+   st_device_reference(&st_ctx->st_dev, st_dev);
    
    st_ctx->real_pipe = st_dev->st_ws->context_create(st_dev->real_screen);
    if(!st_ctx->real_pipe) {
@@ -185,8 +192,7 @@ st_context_create(struct st_device *st_dev)
       memset(&rasterizer, 0, sizeof(rasterizer));
       rasterizer.front_winding = PIPE_WINDING_CW;
       rasterizer.cull_mode = PIPE_WINDING_NONE;
-      rasterizer.bypass_clipping = 1;
-      /*rasterizer.bypass_vs = 1;*/
+      rasterizer.bypass_vs_clip_and_viewport = 1;
       cso_set_rasterizer(st_ctx->cso, &rasterizer);
    }
 
@@ -225,7 +231,7 @@ st_context_create(struct st_device *st_dev)
    {
       struct pipe_screen *screen = st_dev->screen;
       struct pipe_texture templat;
-      struct pipe_surface *surface;
+      struct pipe_transfer *transfer;
       unsigned i;
 
       memset( &templat, 0, sizeof( templat ) );
@@ -241,17 +247,21 @@ st_context_create(struct st_device *st_dev)
    
       st_ctx->default_texture = screen->texture_create( screen, &templat );
       if(st_ctx->default_texture) {
-         surface = screen->get_tex_surface( screen, 
-                                            st_ctx->default_texture, 0, 0, 0,
-                                            PIPE_BUFFER_USAGE_CPU_WRITE );
-         if(surface) {
+         transfer = screen->get_tex_transfer(screen,
+                                             st_ctx->default_texture,
+                                             0, 0, 0,
+                                             PIPE_TRANSFER_WRITE,
+                                             0, 0,
+                                             st_ctx->default_texture->width[0],
+                                             st_ctx->default_texture->height[0]);
+         if (transfer) {
             uint32_t *map;
-            map = (uint32_t *) pipe_surface_map(surface, PIPE_BUFFER_USAGE_CPU_WRITE );
+            map = (uint32_t *) screen->transfer_map(screen, transfer);
             if(map) {
                *map = 0x00000000;
-               pipe_surface_unmap( surface );
+               screen->transfer_unmap(screen, transfer);
             }
-            pipe_surface_reference(&surface, NULL);
+            screen->tex_transfer_destroy(transfer);
          }
       }
    
@@ -263,24 +273,19 @@ st_context_create(struct st_device *st_dev)
    
    /* vertex shader */
    {
-      struct pipe_shader_state vert_shader;
-
       const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
                                       TGSI_SEMANTIC_GENERIC };
       const uint semantic_indexes[] = { 0, 0 };
       st_ctx->vs = util_make_vertex_passthrough_shader(st_ctx->pipe, 
                                                        2, 
                                                        semantic_names,
-                                                       semantic_indexes,
-                                                       &vert_shader);
+                                                       semantic_indexes);
       cso_set_vertex_shader_handle(st_ctx->cso, st_ctx->vs);
    }
 
    /* fragment shader */
    {
-      struct pipe_shader_state frag_shader;
-      st_ctx->fs = util_make_fragment_passthrough_shader(st_ctx->pipe, 
-                                                         &frag_shader);
+      st_ctx->fs = util_make_fragment_passthrough_shader(st_ctx->pipe);
       cso_set_fragment_shader_handle(st_ctx->cso, st_ctx->fs);
    }
 
@@ -292,8 +297,7 @@ void
 st_buffer_destroy(struct st_buffer *st_buf)
 {
    if(st_buf) {
-      struct pipe_screen *screen = st_buf->st_dev->screen;
-      pipe_buffer_reference(screen, &st_buf->buffer, NULL);
+      pipe_buffer_reference(&st_buf->buffer, NULL);
       FREE(st_buf);
    }
 }

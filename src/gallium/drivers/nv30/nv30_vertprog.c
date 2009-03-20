@@ -685,6 +685,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 		so_method(so, rankine, NV34TCL_VP_START_FROM_ID, 1);
 		so_data  (so, vp->exec->start);
 		so_ref(so, &vp->so);
+		so_ref(NULL, &so);
 
 		upload_code = TRUE;
 	}

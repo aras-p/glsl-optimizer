@@ -30,7 +30,7 @@
   *   Zack Rusin <zack@tungstengraphics.com>
   */
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "util/u_memory.h"
 
 #include "cso_hash.h"

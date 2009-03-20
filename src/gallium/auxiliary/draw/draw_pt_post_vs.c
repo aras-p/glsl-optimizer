@@ -200,11 +200,11 @@ boolean draw_pt_post_vs_run( struct pt_post_vs *pvs,
 
 void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 			      boolean bypass_clipping,
-			      boolean identity_viewport,
+			      boolean bypass_viewport,
 			      boolean opengl )
 {
    if (bypass_clipping) {
-      if (identity_viewport)
+      if (bypass_viewport)
 	 pvs->run = post_vs_none;
       else
 	 pvs->run = post_vs_viewport;

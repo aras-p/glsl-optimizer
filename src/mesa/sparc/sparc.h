@@ -32,6 +32,5 @@
 #define SPARC_H
 
 extern void _mesa_init_all_sparc_transform_asm(void);
-extern void _mesa_init_sparc_glapi_relocs(void);
 
 #endif /* !(SPARC_H) */

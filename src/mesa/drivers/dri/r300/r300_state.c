@@ -728,134 +728,6 @@ static void r300ColorMask(GLcontext * ctx,
 }
 
 /* =============================================================
- * Fog
- */
-static void r300Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
-{
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	union {
-		int i;
-		float f;
-	} fogScale, fogStart;
-
-	(void)param;
-
-	fogScale.i = r300->hw.fogp.cmd[R300_FOGP_SCALE];
-	fogStart.i = r300->hw.fogp.cmd[R300_FOGP_START];
-
-	switch (pname) {
-	case GL_FOG_MODE:
-		switch (ctx->Fog.Mode) {
-		case GL_LINEAR:
-			R300_STATECHANGE(r300, fogs);
-			r300->hw.fogs.cmd[R300_FOGS_STATE] =
-			    (r300->hw.fogs.
-			     cmd[R300_FOGS_STATE] & ~R300_FG_FOG_BLEND_FN_MASK) |
-			    R300_FG_FOG_BLEND_FN_LINEAR;
-
-			if (ctx->Fog.Start == ctx->Fog.End) {
-				fogScale.f = -1.0;
-				fogStart.f = 1.0;
-			} else {
-				fogScale.f =
-				    1.0 / (ctx->Fog.End - ctx->Fog.Start);
-				fogStart.f =
-				    -ctx->Fog.Start / (ctx->Fog.End -
-						       ctx->Fog.Start);
-			}
-			break;
-		case GL_EXP:
-			R300_STATECHANGE(r300, fogs);
-			r300->hw.fogs.cmd[R300_FOGS_STATE] =
-			    (r300->hw.fogs.
-			     cmd[R300_FOGS_STATE] & ~R300_FG_FOG_BLEND_FN_MASK) |
-			    R300_FG_FOG_BLEND_FN_EXP;
-			fogScale.f = 0.0933 * ctx->Fog.Density;
-			fogStart.f = 0.0;
-			break;
-		case GL_EXP2:
-			R300_STATECHANGE(r300, fogs);
-			r300->hw.fogs.cmd[R300_FOGS_STATE] =
-			    (r300->hw.fogs.
-			     cmd[R300_FOGS_STATE] & ~R300_FG_FOG_BLEND_FN_MASK) |
-			    R300_FG_FOG_BLEND_FN_EXP2;
-			fogScale.f = 0.3 * ctx->Fog.Density;
-			fogStart.f = 0.0;
-                        break;
-		default:
-			return;
-		}
-		break;
-	case GL_FOG_DENSITY:
-		switch (ctx->Fog.Mode) {
-		case GL_EXP:
-			fogScale.f = 0.0933 * ctx->Fog.Density;
-			fogStart.f = 0.0;
-			break;
-		case GL_EXP2:
-			fogScale.f = 0.3 * ctx->Fog.Density;
-			fogStart.f = 0.0;
-		default:
-			break;
-		}
-		break;
-	case GL_FOG_START:
-	case GL_FOG_END:
-		if (ctx->Fog.Mode == GL_LINEAR) {
-			if (ctx->Fog.Start == ctx->Fog.End) {
-				fogScale.f = -1.0;
-				fogStart.f = 1.0;
-			} else {
-				fogScale.f =
-				    1.0 / (ctx->Fog.End - ctx->Fog.Start);
-				fogStart.f =
-				    -ctx->Fog.Start / (ctx->Fog.End -
-						       ctx->Fog.Start);
-			}
-		}
-		break;
-	case GL_FOG_COLOR:
-		R300_STATECHANGE(r300, fogc);
-		r300->hw.fogc.cmd[R300_FOGC_R] =
-		    (GLuint) (ctx->Fog.Color[0] * 1023.0F) & 0x3FF;
-		r300->hw.fogc.cmd[R300_FOGC_G] =
-		    (GLuint) (ctx->Fog.Color[1] * 1023.0F) & 0x3FF;
-		r300->hw.fogc.cmd[R300_FOGC_B] =
-		    (GLuint) (ctx->Fog.Color[2] * 1023.0F) & 0x3FF;
-		break;
-	case GL_FOG_COORD_SRC:
-		break;
-	default:
-		return;
-	}
-
-	if (fogScale.i != r300->hw.fogp.cmd[R300_FOGP_SCALE] ||
-	    fogStart.i != r300->hw.fogp.cmd[R300_FOGP_START]) {
-		R300_STATECHANGE(r300, fogp);
-		r300->hw.fogp.cmd[R300_FOGP_SCALE] = fogScale.i;
-		r300->hw.fogp.cmd[R300_FOGP_START] = fogStart.i;
-	}
-}
-
-static void r300SetFogState(GLcontext * ctx, GLboolean state)
-{
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-
-	R300_STATECHANGE(r300, fogs);
-	if (state) {
-		r300->hw.fogs.cmd[R300_FOGS_STATE] |= R300_FG_FOG_BLEND_ENABLE;
-
-		r300Fogfv(ctx, GL_FOG_MODE, NULL);
-		r300Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
-		r300Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
-		r300Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
-		r300Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
-	} else {
-		r300->hw.fogs.cmd[R300_FOGS_STATE] &= ~R300_FG_FOG_BLEND_ENABLE;
-	}
-}
-
-/* =============================================================
  * Point state
  */
 static void r300PointSize(GLcontext * ctx, GLfloat size)
@@ -1140,7 +1012,7 @@ r300FetchStateParameter(GLcontext * ctx,
 
 		case STATE_R300_TEXRECT_FACTOR:{
 				struct gl_texture_object *t =
-				    ctx->Texture.Unit[state[2]].CurrentRect;
+				    ctx->Texture.Unit[state[2]].CurrentTex[TEXTURE_RECT_INDEX];
 
 				if (t && t->Image[0][t->BaseLevel]) {
 					struct gl_texture_image *image =
@@ -1531,18 +1403,14 @@ union r300_outputs_written {
 static void r300SetupRSUnit(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	/* I'm still unsure if these are needed */
-	GLuint interp_col[8];
         TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *VB = &tnl->vb;
 	union r300_outputs_written OutputsWritten;
 	GLuint InputsRead;
 	int fp_reg, high_rr;
-	int col_interp_nr;
-	int rs_tex_count = 0, rs_col_count = 0;
-	int i, count;
-
-	memset(interp_col, 0, sizeof(interp_col));
+	int col_ip, tex_ip;
+	int rs_tex_count = 0;
+	int i, count, col_fmt;
 
 	if (hw_tcl_on)
 		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
@@ -1560,51 +1428,66 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	R300_STATECHANGE(r300, rc);
 	R300_STATECHANGE(r300, rr);
 
-	fp_reg = col_interp_nr = high_rr = 0;
+	fp_reg = col_ip = tex_ip = col_fmt = 0;
 
-	r300->hw.rr.cmd[R300_RR_INST_1] = 0;
+	r300->hw.rc.cmd[1] = 0;
+	r300->hw.rc.cmd[2] = 0;
+	for (i=0; i<R300_RR_CMDSIZE-1; ++i)
+		r300->hw.rr.cmd[R300_RR_INST_0 + i] = 0;
 
-	if (InputsRead & FRAG_BIT_WPOS) {
-		for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
-			if (!(InputsRead & (FRAG_BIT_TEX0 << i)))
-				break;
+	for (i=0; i<R300_RI_CMDSIZE-1; ++i)
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = 0;
 
-		if (i == ctx->Const.MaxTextureUnits) {
-			fprintf(stderr, "\tno free texcoord found...\n");
-			_mesa_exit(-1);
-		}
-
-		InputsRead |= (FRAG_BIT_TEX0 << i);
-		InputsRead &= ~FRAG_BIT_WPOS;
-	}
 
 	if (InputsRead & FRAG_BIT_COL0) {
-		count = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size;
-		interp_col[0] |= R300_RS_COL_PTR(rs_col_count);
-		if (count == 3)
-			interp_col[0] |= R300_RS_COL_FMT(R300_RS_COL_FMT_RGB1);
-		rs_col_count += count;
+		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL0, _TNL_ATTRIB_COLOR0)) {
+			count = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size;
+			if (count == 4)
+			    col_fmt = R300_RS_COL_FMT_RGBA;
+			else if (count == 3)
+			    col_fmt = R300_RS_COL_FMT_RGB1;
+			else
+			    col_fmt = R300_RS_COL_FMT_0001;
+
+			r300->hw.ri.cmd[R300_RI_INTERP_0 + col_ip] = R300_RS_COL_PTR(col_ip) | R300_RS_COL_FMT(col_fmt);
+			r300->hw.rr.cmd[R300_RR_INST_0 + col_ip] = R300_RS_INST_COL_ID(col_ip) | R300_RS_INST_COL_CN_WRITE | R300_RS_INST_COL_ADDR(fp_reg);
+			InputsRead &= ~FRAG_BIT_COL0;
+			++col_ip;
+			++fp_reg;
+		} else {
+			WARN_ONCE("fragprog wants col0, vp doesn't provide it\n");
+		}
 	}
-	else
-		interp_col[0] = R300_RS_COL_FMT(R300_RS_COL_FMT_0001);
 
 	if (InputsRead & FRAG_BIT_COL1) {
-		count = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->size;
-		if (count == 3)
-			interp_col[1] |= R300_RS_COL_FMT(R300_RS_COL_FMT_RGB0);
-		interp_col[1] |= R300_RS_COL_PTR(1);
-		rs_col_count += count;
-	}
+		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL1, _TNL_ATTRIB_COLOR1)) {
+			count = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->size;
+			if (count == 4)
+			    col_fmt = R300_RS_COL_FMT_RGBA;
+			else if (count == 3)
+			    col_fmt = R300_RS_COL_FMT_RGB1;
+			else
+			    col_fmt = R300_RS_COL_FMT_0001;
 
-	if (InputsRead & FRAG_BIT_FOGC) {
-		/* XXX FIX THIS
-		 * Just turn off the bit for now.
-		 * Need to do something similar to the color/texcoord inputs.
-		 */
-		InputsRead &= ~FRAG_BIT_FOGC;
+			r300->hw.ri.cmd[R300_RI_INTERP_0 + col_ip] = R300_RS_COL_PTR(col_ip) | R300_RS_COL_FMT(col_fmt);
+			r300->hw.rr.cmd[R300_RR_INST_0 + col_ip] = R300_RS_INST_COL_ID(col_ip) | R300_RS_INST_COL_CN_WRITE | R300_RS_INST_COL_ADDR(fp_reg);
+			InputsRead &= ~FRAG_BIT_COL1;
+			++col_ip;
+			++fp_reg;
+		} else {
+			WARN_ONCE("fragprog wants col1, vp doesn't provide it\n");
+		}
 	}
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+		if (! ( InputsRead & FRAG_BIT_TEX(i) ) )
+		    continue;
+
+		if (!R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_TEX0 + i, _TNL_ATTRIB_TEX(i))) {
+		    WARN_ONCE("fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
+		    continue;
+		}
+
 		int swiz;
 
 		/* with TCL we always seem to route 4 components */
@@ -1613,7 +1496,6 @@ static void r300SetupRSUnit(GLcontext * ctx)
 		else
 		  count = VB->AttribPtr[_TNL_ATTRIB_TEX(i)]->size;
 
-		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = interp_col[i] | rs_tex_count;
 		switch(count) {
 		case 4: swiz = R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3); break;
 		case 3: swiz = R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(R300_RS_SEL_K1); break;
@@ -1622,63 +1504,48 @@ static void r300SetupRSUnit(GLcontext * ctx)
 		case 2: swiz = R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(R300_RS_SEL_K0) | R300_RS_SEL_Q(R300_RS_SEL_K1); break;
 		};
 
-		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] |= swiz;
-
-		r300->hw.rr.cmd[R300_RR_INST_0 + fp_reg] = 0;
-		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
-
-			rs_tex_count += count;
-
-			//assert(r300->state.texture.tc_count != 0);
-			r300->hw.rr.cmd[R300_RR_INST_0 + fp_reg] |= R300_RS_INST_TEX_CN_WRITE | i	/* source INTERP */
-			    | (fp_reg << R300_RS_INST_TEX_ADDR_SHIFT);
-			high_rr = fp_reg;
-
-			/* Passing invalid data here can lock the GPU. */
-			if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_TEX0 + i, _TNL_ATTRIB_TEX(i))) {
-				InputsRead &= ~(FRAG_BIT_TEX0 << i);
-				fp_reg++;
-			} else {
-				WARN_ONCE("fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
-			}
-		}
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= swiz | R300_RS_TEX_PTR(rs_tex_count);
+		r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R300_RS_INST_TEX_ID(tex_ip) | R300_RS_INST_TEX_CN_WRITE | R300_RS_INST_TEX_ADDR(fp_reg);
+		InputsRead &= ~(FRAG_BIT_TEX0 << i);
+		rs_tex_count += count;
+		++tex_ip;
+		++fp_reg;
 	}
 
-	if (InputsRead & FRAG_BIT_COL0) {
-		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL0, _TNL_ATTRIB_COLOR0)) {
-			r300->hw.rr.cmd[R300_RR_INST_0] |= R300_RS_INST_COL_ID(0) | R300_RS_INST_COL_CN_WRITE | (fp_reg++ << R300_RS_INST_COL_ADDR_SHIFT);
-			InputsRead &= ~FRAG_BIT_COL0;
-			col_interp_nr++;
+	if (InputsRead & FRAG_BIT_FOGC) {
+		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_FOGC, _TNL_ATTRIB_FOG)) {
+			r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |=  R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3) |  R300_RS_TEX_PTR(rs_tex_count);
+			r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R300_RS_INST_TEX_ID(tex_ip) | R300_RS_INST_TEX_CN_WRITE | R300_RS_INST_TEX_ADDR(fp_reg);
+			InputsRead &= ~FRAG_BIT_FOGC;
+			rs_tex_count += 4;
+			++tex_ip;
+			++fp_reg;
 		} else {
-			WARN_ONCE("fragprog wants col0, vp doesn't provide it\n");
+			WARN_ONCE("fragprog wants fogc, vp doesn't provide it\n");
 		}
 	}
 
-	if (InputsRead & FRAG_BIT_COL1) {
-		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL1, _TNL_ATTRIB_COLOR1)) {
-			r300->hw.rr.cmd[R300_RR_INST_1] |= R300_RS_INST_COL_ID(1) | R300_RS_INST_COL_CN_WRITE | (fp_reg++ << R300_RS_INST_COL_ADDR_SHIFT);
-			InputsRead &= ~FRAG_BIT_COL1;
-			if (high_rr < 1)
-				high_rr = 1;
-			col_interp_nr++;
-		} else {
-			WARN_ONCE("fragprog wants col1, vp doesn't provide it\n");
-		}
+	if (InputsRead & FRAG_BIT_WPOS) {
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |=  R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3) |  R300_RS_TEX_PTR(rs_tex_count);
+		r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R300_RS_INST_TEX_ID(tex_ip) | R300_RS_INST_TEX_CN_WRITE | R300_RS_INST_TEX_ADDR(fp_reg);
+		InputsRead &= ~FRAG_BIT_WPOS;
+		rs_tex_count += 4;
+		++tex_ip;
+		++fp_reg;
+	}
+	InputsRead &= ~FRAG_BIT_WPOS;
+
+	/* Setup default color if no color or tex was set */
+	if (rs_tex_count == 0 && col_ip == 0) {
+		r300->hw.rr.cmd[R300_RR_INST_0] = R300_RS_INST_COL_ID(0) | R300_RS_INST_COL_CN_WRITE | R300_RS_INST_COL_ADDR(0) | R300_RS_COL_FMT(R300_RS_COL_FMT_0001);
+		++col_ip;
 	}
 
-	/* Need at least one. This might still lock as the values are undefined... */
-	if (rs_tex_count == 0 && col_interp_nr == 0) {
-		r300->hw.rr.cmd[R300_RR_INST_0] |= R300_RS_INST_COL_ID(0) | R300_RS_INST_COL_CN_WRITE | (fp_reg++ << R300_RS_INST_COL_ADDR_SHIFT);
-		col_interp_nr++;
-	}
+	high_rr = (col_ip > tex_ip) ? col_ip : tex_ip;
+	r300->hw.rc.cmd[1] |= (rs_tex_count << R300_IT_COUNT_SHIFT)  | (col_ip << R300_IC_COUNT_SHIFT) | R300_HIRES_EN;
+	r300->hw.rc.cmd[2] |= high_rr - 1;
 
-	r300->hw.rc.cmd[1] = 0 | (rs_tex_count << R300_IT_COUNT_SHIFT)
-	  | (col_interp_nr << R300_IC_COUNT_SHIFT)
-	  | R300_HIRES_EN;
-
-	assert(high_rr >= 0);
-	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R300_RS_INST_0, high_rr + 1);
-	r300->hw.rc.cmd[2] = high_rr;
+	 r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R300_RS_INST_0, high_rr);
 
 	if (InputsRead)
 		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);
@@ -1687,18 +1554,15 @@ static void r300SetupRSUnit(GLcontext * ctx)
 static void r500SetupRSUnit(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	/* I'm still unsure if these are needed */
-	GLuint interp_col[8];
-	union r300_outputs_written OutputsWritten;
         TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *VB = &tnl->vb;
+	union r300_outputs_written OutputsWritten;
 	GLuint InputsRead;
 	int fp_reg, high_rr;
-	int rs_col_count = 0;
-	int in_texcoords, col_interp_nr;
-	int i, count;
+	int col_ip, tex_ip;
+	int rs_tex_count = 0;
+	int i, count, col_fmt;
 
-	memset(interp_col, 0, sizeof(interp_col));
 	if (hw_tcl_on)
 		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
 	else
@@ -1715,100 +1579,32 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	R300_STATECHANGE(r300, rc);
 	R300_STATECHANGE(r300, rr);
 
-	fp_reg = col_interp_nr = high_rr = in_texcoords = 0;
+	fp_reg = col_ip = tex_ip = col_fmt = 0;
 
-	r300->hw.rr.cmd[R300_RR_INST_1] = 0;
+	r300->hw.rc.cmd[1] = 0;
+	r300->hw.rc.cmd[2] = 0;
+	for (i=0; i<R300_RR_CMDSIZE-1; ++i)
+		r300->hw.rr.cmd[R300_RR_INST_0 + i] = 0;
 
-	if (InputsRead & FRAG_BIT_WPOS) {
-		for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
-			if (!(InputsRead & (FRAG_BIT_TEX0 << i)))
-				break;
+	for (i=0; i<R500_RI_CMDSIZE-1; ++i)
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = 0;
 
-		if (i == ctx->Const.MaxTextureUnits) {
-			fprintf(stderr, "\tno free texcoord found...\n");
-			_mesa_exit(-1);
-		}
-
-		InputsRead |= (FRAG_BIT_TEX0 << i);
-		InputsRead &= ~FRAG_BIT_WPOS;
-	}
-
-	if (InputsRead & FRAG_BIT_COL0) {
-		count = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size;
-		interp_col[0] |= R500_RS_COL_PTR(rs_col_count);
-		if (count == 3)
-			interp_col[0] |= R500_RS_COL_FMT(R300_RS_COL_FMT_RGB1);
-		rs_col_count += count;
-	}
-	else
-		interp_col[0] = R500_RS_COL_FMT(R300_RS_COL_FMT_0001);
-
-	if (InputsRead & FRAG_BIT_COL1) {
-		count = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->size;
-		interp_col[1] |= R500_RS_COL_PTR(1);
-		if (count == 3)
-			interp_col[1] |= R500_RS_COL_FMT(R300_RS_COL_FMT_RGB0);
-		rs_col_count += count;
-	}
-
-	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-		GLuint swiz = 0;
-
-		/* with TCL we always seem to route 4 components */
-		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
-
-		  if (hw_tcl_on)
-		    count = 4;
-		  else
-		    count = VB->AttribPtr[_TNL_ATTRIB_TEX(i)]->size;
-
-		  /* always have on texcoord */
-		  swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_S_SHIFT;
-		  if (count >= 2)
-		    swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_T_SHIFT;
-		  else
-		    swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT;
-
-		  if (count >= 3)
-		    swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_R_SHIFT;
-		  else
-		    swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT;
-
-		  if (count == 4)
-		    swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_Q_SHIFT;
-		  else
-		    swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
-
-		} else
-		   swiz = (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT) |
-		          (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT) |
-		          (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT) |
-		          (R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT);
-
-		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = interp_col[i] | swiz;
-
-		r300->hw.rr.cmd[R300_RR_INST_0 + fp_reg] = 0;
-		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
-			//assert(r300->state.texture.tc_count != 0);
-			r300->hw.rr.cmd[R300_RR_INST_0 + fp_reg] |= R500_RS_INST_TEX_CN_WRITE | i	/* source INTERP */
-			    | (fp_reg << R500_RS_INST_TEX_ADDR_SHIFT);
-			high_rr = fp_reg;
-
-			/* Passing invalid data here can lock the GPU. */
-			if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_TEX0 + i, _TNL_ATTRIB_TEX(i))) {
-				InputsRead &= ~(FRAG_BIT_TEX0 << i);
-				fp_reg++;
-			} else {
-				WARN_ONCE("fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
-			}
-		}
-	}
 
 	if (InputsRead & FRAG_BIT_COL0) {
 		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL0, _TNL_ATTRIB_COLOR0)) {
-			r300->hw.rr.cmd[R300_RR_INST_0] |= R500_RS_INST_COL_CN_WRITE | (fp_reg++ << R500_RS_INST_COL_ADDR_SHIFT);
+			count = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size;
+			if (count == 4)
+			    col_fmt = R300_RS_COL_FMT_RGBA;
+			else if (count == 3)
+			    col_fmt = R300_RS_COL_FMT_RGB1;
+			else
+			    col_fmt = R300_RS_COL_FMT_0001;
+
+			r300->hw.ri.cmd[R300_RI_INTERP_0 + col_ip] = R500_RS_COL_PTR(col_ip) | R500_RS_COL_FMT(col_fmt);
+			r300->hw.rr.cmd[R300_RR_INST_0 + col_ip] = R500_RS_INST_COL_ID(col_ip) | R500_RS_INST_COL_CN_WRITE | R500_RS_INST_COL_ADDR(fp_reg);
 			InputsRead &= ~FRAG_BIT_COL0;
-			col_interp_nr++;
+			++col_ip;
+			++fp_reg;
 		} else {
 			WARN_ONCE("fragprog wants col0, vp doesn't provide it\n");
 		}
@@ -1816,29 +1612,118 @@ static void r500SetupRSUnit(GLcontext * ctx)
 
 	if (InputsRead & FRAG_BIT_COL1) {
 		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL1, _TNL_ATTRIB_COLOR1)) {
-			r300->hw.rr.cmd[R300_RR_INST_1] |= (1 << 12) | R500_RS_INST_COL_CN_WRITE |  (fp_reg++ << R500_RS_INST_COL_ADDR_SHIFT);
+			count = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->size;
+			if (count == 4)
+			    col_fmt = R300_RS_COL_FMT_RGBA;
+			else if (count == 3)
+			    col_fmt = R300_RS_COL_FMT_RGB1;
+			else
+			    col_fmt = R300_RS_COL_FMT_0001;
+
+			r300->hw.ri.cmd[R300_RI_INTERP_0 + col_ip] = R500_RS_COL_PTR(col_ip) | R500_RS_COL_FMT(col_fmt);
+			r300->hw.rr.cmd[R300_RR_INST_0 + col_ip] = R500_RS_INST_COL_ID(col_ip) | R500_RS_INST_COL_CN_WRITE | R500_RS_INST_COL_ADDR(fp_reg);
 			InputsRead &= ~FRAG_BIT_COL1;
-			if (high_rr < 1)
-				high_rr = 1;
-			col_interp_nr++;
+			++col_ip;
+			++fp_reg;
 		} else {
 			WARN_ONCE("fragprog wants col1, vp doesn't provide it\n");
 		}
 	}
 
-	/* Need at least one. This might still lock as the values are undefined... */
-	if (in_texcoords == 0 && col_interp_nr == 0) {
-		r300->hw.rr.cmd[R300_RR_INST_0] |= 0 | R500_RS_INST_COL_CN_WRITE | (fp_reg++ << R500_RS_INST_COL_ADDR_SHIFT);
-		col_interp_nr++;
+
+	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+		if (! ( InputsRead & FRAG_BIT_TEX(i) ) )
+		    continue;
+
+		if (!R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_TEX0 + i, _TNL_ATTRIB_TEX(i))) {
+		    WARN_ONCE("fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
+		    continue;
+		}
+
+		int swiz = 0;
+
+		/* with TCL we always seem to route 4 components */
+		if (hw_tcl_on)
+		  count = 4;
+		else
+		  count = VB->AttribPtr[_TNL_ATTRIB_TEX(i)]->size;
+
+		if (count == 4) {
+			swiz |= (rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT;
+			swiz |= (rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT;
+			swiz |= (rs_tex_count + 2) << R500_RS_IP_TEX_PTR_R_SHIFT;
+			swiz |= (rs_tex_count + 3) << R500_RS_IP_TEX_PTR_Q_SHIFT;
+		} else if (count == 3) {
+			swiz |= (rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT;
+			swiz |= (rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT;
+			swiz |= (rs_tex_count + 2) << R500_RS_IP_TEX_PTR_R_SHIFT;
+			swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
+		} else if (count == 2) {
+			swiz |= (rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT;
+			swiz |= (rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT;
+			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT;
+			swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
+		} else if (count == 1) {
+			swiz |= (rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT;
+			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT;
+			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT;
+			swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
+		} else {
+			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT;
+			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT;
+			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT;
+			swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
+		}
+
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= swiz;
+		r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R500_RS_INST_TEX_ID(tex_ip) | R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_reg);
+		InputsRead &= ~(FRAG_BIT_TEX0 << i);
+		rs_tex_count += count;
+		++tex_ip;
+		++fp_reg;
 	}
 
-	r300->hw.rc.cmd[1] = 0 | (in_texcoords << R300_IT_COUNT_SHIFT)
-	  | (col_interp_nr << R300_IC_COUNT_SHIFT)
-	  | R300_HIRES_EN;
+	if (InputsRead & FRAG_BIT_FOGC) {
+		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_FOGC, _TNL_ATTRIB_FOG)) {
+			r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= ((rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT) |
+				((rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT) |
+				((rs_tex_count + 2) << R500_RS_IP_TEX_PTR_R_SHIFT) |
+				((rs_tex_count + 3) << R500_RS_IP_TEX_PTR_Q_SHIFT);
 
-	assert(high_rr >= 0);
-	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R500_RS_INST_0, high_rr + 1);
-	r300->hw.rc.cmd[2] = 0xC0 | high_rr;
+			r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R500_RS_INST_TEX_ID(tex_ip) | R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_reg);
+			InputsRead &= ~FRAG_BIT_FOGC;
+			rs_tex_count += 4;
+			++tex_ip;
+			++fp_reg;
+		} else {
+			WARN_ONCE("fragprog wants fogc, vp doesn't provide it\n");
+		}
+	}
+
+	if (InputsRead & FRAG_BIT_WPOS) {
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= ((rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT) |
+				((rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT) |
+				((rs_tex_count + 2) << R500_RS_IP_TEX_PTR_R_SHIFT) |
+				((rs_tex_count + 3) << R500_RS_IP_TEX_PTR_Q_SHIFT);
+
+		r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R500_RS_INST_TEX_ID(tex_ip) | R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_reg);
+		InputsRead &= ~FRAG_BIT_WPOS;
+		rs_tex_count += 4;
+		++tex_ip;
+		++fp_reg;
+	}
+
+	/* Setup default color if no color or tex was set */
+	if (rs_tex_count == 0 && col_ip == 0) {
+		r300->hw.rr.cmd[R300_RR_INST_0] |= R500_RS_INST_COL_ID(0) | R500_RS_INST_COL_CN_WRITE | R500_RS_INST_COL_ADDR(0) | R500_RS_COL_FMT(R300_RS_COL_FMT_0001);
+		++col_ip;
+	}
+
+	high_rr = (col_ip > tex_ip) ? col_ip : tex_ip;
+	r300->hw.rc.cmd[1] |= (rs_tex_count << R300_IT_COUNT_SHIFT)  | (col_ip << R300_IC_COUNT_SHIFT) | R300_HIRES_EN;
+	r300->hw.rc.cmd[2] |= 0xC0 | (high_rr - 1);
+
+	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R500_RS_INST_0, high_rr);
 
 	if (InputsRead)
 		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);
@@ -2078,7 +1963,7 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 		/* empty */
 		break;
 	case GL_FOG:
-		r300SetFogState(ctx, state);
+		/* empty */
 		break;
 	case GL_ALPHA_TEST:
 		r300SetAlphaState(ctx);
@@ -2149,7 +2034,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300DepthFunc(ctx, ctx->Depth.Func);
 
 	/* stencil */
-	r300Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
+	r300Enable(ctx, GL_STENCIL_TEST, ctx->Stencil._Enabled);
 	r300StencilMaskSeparate(ctx, 0, ctx->Stencil.WriteMask[0]);
 	r300StencilFuncSeparate(ctx, 0, ctx->Stencil.Function[0],
 				ctx->Stencil.Ref[0], ctx->Stencil.ValueMask[0]);
@@ -2236,11 +2121,9 @@ static void r300ResetHwState(r300ContextPtr r300)
 		break;
 	}
 
-	/* XXX: set to 0 when fog is disabled? */
-	r300->hw.gb_misc.cmd[R300_GB_MISC_SELECT] = R300_GB_FOG_SELECT_1_1_W;
-
 	/* XXX: Enable anti-aliasing? */
 	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = GB_AA_CONFIG_AA_DISABLE;
+	r300->hw.gb_misc.cmd[R300_GB_MISC_SELECT] = 0;
 
 	r300->hw.ga_point_s0.cmd[1] = r300PackFloat32(0.0);
 	r300->hw.ga_point_s0.cmd[2] = r300PackFloat32(0.0);
@@ -2289,17 +2172,11 @@ static void r300ResetHwState(r300ContextPtr r300)
 	  R500_C0_SEL_B | R500_C1_SEL_G | R500_C2_SEL_R | R500_C3_SEL_A;
 	r300->hw.us_out_fmt.cmd[4] = R500_OUT_FMT_UNUSED |
 	  R500_C0_SEL_B | R500_C1_SEL_G | R500_C2_SEL_R | R500_C3_SEL_A;
-	r300->hw.us_out_fmt.cmd[5] = R300_W_FMT_W24;
+	r300->hw.us_out_fmt.cmd[5] = R300_W_FMT_W0 | R300_W_SRC_US;
 
-	r300Enable(ctx, GL_FOG, ctx->Fog.Enabled);
-	r300Fogfv(ctx, GL_FOG_MODE, NULL);
-	r300Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
-	r300Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
-	r300Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
-	r300Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
-	r300Fogfv(ctx, GL_FOG_COORDINATE_SOURCE_EXT, NULL);
-
-	r300->hw.fg_depth_src.cmd[1] = 0;
+	/* disable fog unit */
+	r300->hw.fogs.cmd[R300_FOGS_STATE] = 0;
+	r300->hw.fg_depth_src.cmd[1] = R300_FG_DEPTH_SRC_SCAN;
 
 	r300->hw.rb3d_cctl.cmd[1] = 0;
 
@@ -2524,16 +2401,6 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 	}
 	code = &fp->code;
 
-	if (fp->mesa_program.FogOption != GL_NONE) {
-		/* Enable HW fog. Try not to squish GL context.
-		 * (Anybody sane remembered to set glFog() opts first!) */
-		r300SetFogState(ctx, GL_TRUE);
-		ctx->Fog.Mode = fp->mesa_program.FogOption;
-		r300Fogfv(ctx, GL_FOG_MODE, NULL);
-	} else
-		/* Make sure HW is matching GL context. */
-		r300SetFogState(ctx, ctx->Fog.Enabled);
-
 	r300SetupTextures(ctx);
 
 	R300_STATECHANGE(rmesa, fp);
@@ -2581,9 +2448,22 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 
 	r300SetEarlyZState(ctx);
 
-	GLuint fgdepthsrc = R300_FG_DEPTH_SRC_SCAN;
-	if (current_fragment_program_writes_depth(ctx))
+	/* w_fmt value is set to get best performance
+	 * see p.130 R5xx 3D acceleration guide v1.3 */
+	GLuint w_fmt, fgdepthsrc;
+	if (current_fragment_program_writes_depth(ctx)) {
 		fgdepthsrc = R300_FG_DEPTH_SRC_SHADER;
+		w_fmt = R300_W_FMT_W24 | R300_W_SRC_US;
+	} else {
+		fgdepthsrc = R300_FG_DEPTH_SRC_SCAN;
+		w_fmt = R300_W_FMT_W0 | R300_W_SRC_US;
+	}
+
+	if (w_fmt != rmesa->hw.us_out_fmt.cmd[5]) {
+		R300_STATECHANGE(rmesa, us_out_fmt);
+		rmesa->hw.us_out_fmt.cmd[5] = w_fmt;
+	}
+
 	if (fgdepthsrc != rmesa->hw.fg_depth_src.cmd[1]) {
 		R300_STATECHANGE(rmesa, fg_depth_src);
 		rmesa->hw.fg_depth_src.cmd[1] = fgdepthsrc;
@@ -2690,7 +2570,6 @@ void r300InitStateFuncs(struct dd_function_table *functions)
 	functions->DepthFunc = r300DepthFunc;
 	functions->DepthMask = r300DepthMask;
 	functions->CullFace = r300CullFace;
-	functions->Fogfv = r300Fogfv;
 	functions->FrontFace = r300FrontFace;
 	functions->ShadeModel = r300ShadeModel;
 	functions->LogicOpcode = r300LogicOpcode;

@@ -8,12 +8,17 @@ enum _subroutine {
     SUB_NOISE1, SUB_NOISE2, SUB_NOISE3, SUB_NOISE4
 };
 
-/* Only guess, need a flag in gl_fragment_program later */
+
+/**
+ * Determine if the given fragment program uses GLSL features such
+ * as flow conditionals, loops, subroutines.
+ * Some GLSL shaders may use these features, others might not.
+ */
 GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
 {
     int i;
     for (i = 0; i < fp->Base.NumInstructions; i++) {
-	struct prog_instruction *inst = &fp->Base.Instructions[i];
+	const struct prog_instruction *inst = &fp->Base.Instructions[i];
 	switch (inst->Opcode) {
 	    case OPCODE_IF:
 	    case OPCODE_TRUNC:
@@ -36,6 +41,10 @@ GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
     return GL_FALSE; 
 }
 
+
+/**
+ * Record the mapping of a Mesa register to a hardware register.
+ */
 static void set_reg(struct brw_wm_compile *c, int file, int index, 
 	int component, struct brw_reg reg)
 {
@@ -43,6 +52,10 @@ static void set_reg(struct brw_wm_compile *c, int file, int index,
     c->wm_regs[file][index][component].inited = GL_TRUE;
 }
 
+/**
+ * Examine instruction's write mask to find index of first component
+ * enabled for writing.
+ */
 static int get_scalar_dst_index(struct prog_instruction *inst)
 {
     int i;
@@ -62,6 +75,10 @@ static struct brw_reg alloc_tmp(struct brw_wm_compile *c)
     return reg;
 }
 
+/**
+ * Save current temp register info.
+ * There must be a matching call to release_tmps().
+ */
 static int mark_tmps(struct brw_wm_compile *c)
 {
     return c->tmp_index;
@@ -77,8 +94,22 @@ static void release_tmps(struct brw_wm_compile *c, int mark)
     c->tmp_index = mark;
 }
 
+/**
+ * Convert Mesa src register to brw register.
+ *
+ * Since we're running in SOA mode each Mesa register corresponds to four
+ * hardware registers.  We allocate the hardware registers as needed here.
+ *
+ * \param file  register file, one of PROGRAM_x
+ * \param index  register number
+ * \param component  src component (X=0, Y=1, Z=2, W=3)
+ * \param nr  not used?!?
+ * \param neg  negate value?
+ * \param abs  take absolute value?
+ */
 static struct brw_reg 
-get_reg(struct brw_wm_compile *c, int file, int index, int component, int nr, GLuint neg, GLuint abs)
+get_reg(struct brw_wm_compile *c, int file, int index, int component,
+        int nr, GLuint neg, GLuint abs)
 {
     struct brw_reg reg;
     switch (file) {
@@ -89,21 +120,46 @@ get_reg(struct brw_wm_compile *c, int file, int index, int component, int nr, GL
 	    break;
 	case PROGRAM_UNDEFINED:
 	    return brw_null_reg();	
-	default:
+	case PROGRAM_TEMPORARY:
+	case PROGRAM_INPUT:
+	case PROGRAM_OUTPUT:
+	case PROGRAM_PAYLOAD:
 	    break;
+	default:
+	    _mesa_problem(NULL, "Unexpected file in get_reg()");
+	    return brw_null_reg();
     }
 
-    if(c->wm_regs[file][index][component].inited)
+    /* see if we've already allocated a HW register for this Mesa register */
+    if (c->wm_regs[file][index][component].inited) {
+	/* yes, re-use */
 	reg = c->wm_regs[file][index][component].reg;
-    else 
+    }
+    else {
+	/* no, allocate new register */
 	reg = brw_vec8_grf(c->reg_index, 0);
+    }
 
-    if(!c->wm_regs[file][index][component].inited) {
+    /* if this is a new register allocation, record it in the table */
+    if (!c->wm_regs[file][index][component].inited) {
 	set_reg(c, file, index, component, reg);
 	c->reg_index++;
     }
 
-    if (neg & (1<< component)) {
+    if (c->reg_index >= BRW_WM_MAX_GRF - 12) {
+	/* ran out of temporary registers! */
+#if 1
+        /* This is a big hack for now.
+         * Return bad register index, just don't hang the GPU.
+         */
+        _mesa_fprintf(stderr, "out of regs %d\n", c->reg_index);
+        c->reg_index = BRW_WM_MAX_GRF - 13;
+#else
+	return brw_null_reg();
+#endif
+    }
+ 
+    if (neg & (1 << component)) {
 	reg = negate(reg);
     }
     if (abs)
@@ -111,6 +167,12 @@ get_reg(struct brw_wm_compile *c, int file, int index, int component, int nr, GL
     return reg;
 }
 
+
+/**
+ * Preallocate registers.  This sets up the Mesa to hardware register
+ * mapping for certain registers, such as constants (uniforms/state vars)
+ * and shader inputs.
+ */
 static void prealloc_reg(struct brw_wm_compile *c)
 {
     int i, j;
@@ -119,29 +181,42 @@ static void prealloc_reg(struct brw_wm_compile *c)
     GLuint inputs = FRAG_BIT_WPOS | c->fp_interp_emitted | c->fp_deriv_emitted;
 
     for (i = 0; i < 4; i++) {
-	reg = (i < c->key.nr_depth_regs) 
-	    ? brw_vec8_grf(i*2, 0) : brw_vec8_grf(0, 0);
+        if (i < c->key.nr_depth_regs) 
+            reg = brw_vec8_grf(i * 2, 0);
+        else
+            reg = brw_vec8_grf(0, 0);
 	set_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, i, reg);
     }
-    c->reg_index += 2*c->key.nr_depth_regs;
+    c->reg_index += 2 * c->key.nr_depth_regs;
+
+    /* constants */
     {
-	int nr_params = c->fp->program.Base.Parameters->NumParameters;
-	struct gl_program_parameter_list *plist = 
+        const int nr_params = c->fp->program.Base.Parameters->NumParameters;
+        const struct gl_program_parameter_list *plist = 
 	    c->fp->program.Base.Parameters;
 	int index = 0;
-	c->prog_data.nr_params = 4*nr_params;
+
+        /* number of float constants */
+	c->prog_data.nr_params = 4 * nr_params;
+
+        /* loop over program constants (float[4]) */
 	for (i = 0; i < nr_params; i++) {
-	    for (j = 0; j < 4; j++, index++) {
-		reg = brw_vec1_grf(c->reg_index + index/8, 
-			index%8);
-		c->prog_data.param[index] = 
-		    &plist->ParameterValues[i][j];
-		set_reg(c, PROGRAM_STATE_VAR, i, j, reg);
+            /* loop over XYZW channels */
+            for (j = 0; j < 4; j++, index++) {
+                reg = brw_vec1_grf(c->reg_index + index / 8, index % 8);
+                /* Save pointer to parameter/constant value.
+                 * Constants will be copied in prepare_constant_buffer()
+                 */
+                c->prog_data.param[index] = &plist->ParameterValues[i][j];
+                set_reg(c, PROGRAM_STATE_VAR, i, j, reg);
 	    }
 	}
-	c->nr_creg = 2*((4*nr_params+15)/16);
+        /* number of constant regs used (each reg is float[8]) */
+	c->nr_creg = 2 * ((4 * nr_params + 15) / 16);
 	c->reg_index += c->nr_creg;
     }
+
+    /* fragment shader inputs */
     for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
 	if (inputs & (1<<i)) {
 	    nr_interp_regs++;
@@ -149,9 +224,9 @@ static void prealloc_reg(struct brw_wm_compile *c)
 	    for (j = 0; j < 4; j++)
 		set_reg(c, PROGRAM_PAYLOAD, i, j, reg);
 	    c->reg_index += 2;
-
 	}
     }
+
     c->prog_data.first_curbe_grf = c->key.nr_depth_regs * 2;
     c->prog_data.urb_read_length = nr_interp_regs * 2;
     c->prog_data.curb_read_length = c->nr_creg;
@@ -161,6 +236,10 @@ static void prealloc_reg(struct brw_wm_compile *c)
     c->reg_index += 2;
 }
 
+
+/**
+ * Convert Mesa dst register to brw register.
+ */
 static struct brw_reg get_dst_reg(struct brw_wm_compile *c, 
 	struct prog_instruction *inst, int component, int nr)
 {
@@ -168,6 +247,10 @@ static struct brw_reg get_dst_reg(struct brw_wm_compile *c,
 	    0, 0);
 }
 
+
+/**
+ * Convert Mesa src register to brw register.
+ */
 static struct brw_reg get_src_reg(struct brw_wm_compile *c, 
 	struct prog_src_register *src, int index, int nr)
 {
@@ -176,13 +259,15 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
 	    src->NegateBase, src->Abs);
 }
 
-/* Subroutines are minimal support for resusable instruction sequences.
-   They are implemented as simply as possible to minimise overhead: there
-   is no explicit support for communication between the caller and callee
-   other than saving the return address in a temporary register, nor is
-   there any automatic local storage.  This implies that great care is
-   required before attempting reentrancy or any kind of nested
-   subroutine invocations. */
+/**
+ * Subroutines are minimal support for resusable instruction sequences.
+ * They are implemented as simply as possible to minimise overhead: there
+ * is no explicit support for communication between the caller and callee
+ * other than saving the return address in a temporary register, nor is
+ * there any automatic local storage.  This implies that great care is
+ * required before attempting reentrancy or any kind of nested
+ * subroutine invocations.
+ */
 static void invoke_subroutine( struct brw_wm_compile *c,
 			       enum _subroutine subroutine,
 			       void (*emit)( struct brw_wm_compile * ) )
@@ -319,11 +404,10 @@ static void emit_pixel_xy(struct brw_wm_compile *c,
 		stride(suboffset(r1_uw, 5), 2, 4, 0),
 		brw_imm_v(0x11001100));
     }
-
 }
 
 static void emit_delta_xy(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                          struct prog_instruction *inst)
 {
     struct brw_reg r1 = brw_vec1_grf(1, 0);
     struct brw_reg dst0, dst1, src0, src1;
@@ -351,9 +435,7 @@ static void emit_delta_xy(struct brw_wm_compile *c,
 		negate(suboffset(r1,1)));
 
     }
-
 }
-
 
 static void fire_fb_write( struct brw_wm_compile *c,
                            GLuint base_reg,
@@ -397,33 +479,59 @@ static void emit_fb_write(struct brw_wm_compile *c,
      */
     if (c->key.aa_dest_stencil_reg)
 	nr += 1;
-    {
-	brw_push_insn_state(p);
-	for (channel = 0; channel < 4; channel++) {
-	    src0 = get_src_reg(c,  &inst->SrcReg[0], channel, 1);
-	    /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
-	    /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
-	    brw_MOV(p, brw_message_reg(nr + channel), src0);
-	}
-	/* skip over the regs populated above: */
-	nr += 8;
-	brw_pop_insn_state(p);
+
+    brw_push_insn_state(p);
+    for (channel = 0; channel < 4; channel++) {
+        src0 = get_src_reg(c,  &inst->SrcReg[0], channel, 1);
+        /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
+        /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
+        brw_MOV(p, brw_message_reg(nr + channel), src0);
+    }
+    /* skip over the regs populated above: */
+    nr += 8;
+    brw_pop_insn_state(p);
+
+    if (c->key.source_depth_to_render_target) {
+       if (c->key.computes_depth) {
+          src0 = get_src_reg(c, &inst->SrcReg[2], 2, 1);
+          brw_MOV(p, brw_message_reg(nr), src0);
+       }
+       else {
+          src0 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
+          brw_MOV(p, brw_message_reg(nr), src0);
+       }
+
+       nr += 2;
     }
 
-   if (c->key.source_depth_to_render_target)
-   {
-      if (c->key.computes_depth) {
-         src0 = get_src_reg(c, &inst->SrcReg[2], 2, 1);
-         brw_MOV(p, brw_message_reg(nr), src0);
-      } else {
-         src0 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
-         brw_MOV(p, brw_message_reg(nr), src0);
-      }
+    if (c->key.dest_depth_reg) {
+        GLuint comp = c->key.dest_depth_reg / 2;
+        GLuint off = c->key.dest_depth_reg % 2;
 
-      nr += 2;
+        assert(comp == 1);
+        assert(off == 0);
+#if 0
+        /* XXX do we need this code?   comp always 1, off always 0, it seems */
+        if (off != 0) {
+            brw_push_insn_state(p);
+            brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+
+            brw_MOV(p, brw_message_reg(nr), offset(arg1[comp],1));
+            /* 2nd half? */
+            brw_MOV(p, brw_message_reg(nr+1), arg1[comp+1]);
+            brw_pop_insn_state(p);
+        }
+        else
+#endif
+        {
+           struct brw_reg src =  get_src_reg(c, &inst->SrcReg[1], 1, 1);
+           brw_MOV(p, brw_message_reg(nr), src);
+        }
+        nr += 2;
    }
-    target = inst->Sampler >> 1;
-    eot = inst->Sampler & 1;
+
+    target = inst->Aux >> 1;
+    eot = inst->Aux & 1;
     fire_fb_write(c, 0, nr, target, eot);
 }
 
@@ -465,12 +573,12 @@ static void emit_linterp(struct brw_wm_compile *c,
     struct brw_reg interp[4];
     struct brw_reg dst, delta0, delta1;
     struct brw_reg src0;
+    GLuint nr, i;
 
     src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
     delta0 = get_src_reg(c, &inst->SrcReg[1], 0, 1);
     delta1 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
-    GLuint nr = src0.nr;
-    int i;
+    nr = src0.nr;
 
     interp[0] = brw_vec1_grf(nr, 0);
     interp[1] = brw_vec1_grf(nr, 4);
@@ -494,10 +602,10 @@ static void emit_cinterp(struct brw_wm_compile *c,
 
     struct brw_reg interp[4];
     struct brw_reg dst, src0;
+    GLuint nr, i;
 
     src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
-    GLuint nr = src0.nr;
-    int i;
+    nr = src0.nr;
 
     interp[0] = brw_vec1_grf(nr, 0);
     interp[1] = brw_vec1_grf(nr, 4);
@@ -521,13 +629,13 @@ static void emit_pinterp(struct brw_wm_compile *c,
     struct brw_reg interp[4];
     struct brw_reg dst, delta0, delta1;
     struct brw_reg src0, w;
+    GLuint nr, i;
 
     src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
     delta0 = get_src_reg(c, &inst->SrcReg[1], 0, 1);
     delta1 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
     w = get_src_reg(c, &inst->SrcReg[2], 3, 1);
-    GLuint nr = src0.nr;
-    int i;
+    nr = src0.nr;
 
     interp[0] = brw_vec1_grf(nr, 0);
     interp[1] = brw_vec1_grf(nr, 4);
@@ -627,23 +735,46 @@ static void emit_dph(struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
+/**
+ * Emit a scalar instruction, like RCP, RSQ, LOG, EXP.
+ * Note that the result of the function is smeared across the dest
+ * register's X, Y, Z and W channels (subject to writemasking of course).
+ */
 static void emit_math1(struct brw_wm_compile *c,
 		struct prog_instruction *inst, GLuint func)
 {
     struct brw_compile *p = &c->func;
-    struct brw_reg src0, dst;
+    struct brw_reg src0, dst, tmp;
+    const int mark = mark_tmps( c );
+    int i;
 
+    tmp = alloc_tmp(c);
+
+    /* Get first component of source register */
     src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
-    dst = get_dst_reg(c, inst, get_scalar_dst_index(inst), 1);
+
+    /* tmp = func(src0) */
     brw_MOV(p, brw_message_reg(2), src0);
     brw_math(p,
-	    dst,
-	    func,
-	    (inst->SaturateMode != SATURATE_OFF) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
-	    2,
-	    brw_null_reg(),
-	    BRW_MATH_DATA_VECTOR,
-	    BRW_MATH_PRECISION_FULL);
+             tmp,
+             func,
+             (inst->SaturateMode != SATURATE_OFF) ? BRW_MATH_SATURATE_SATURATE : BRW_MATH_SATURATE_NONE,
+             2,
+             brw_null_reg(),
+             BRW_MATH_DATA_VECTOR,
+             BRW_MATH_PRECISION_FULL);
+
+    /*tmp.dw1.bits.swizzle = SWIZZLE_XXXX;*/
+
+    /* replicate tmp value across enabled dest channels */
+    for (i = 0; i < 4; i++) {
+       if (inst->DstReg.WriteMask & (1 << i)) {
+          dst = get_dst_reg(c, inst, i, 1);    
+          brw_MOV(p, dst, tmp);
+       }
+    }
+
+    release_tmps(c, mark);
 }
 
 static void emit_rcp(struct brw_wm_compile *c,
@@ -1045,23 +1176,23 @@ static void emit_ddy(struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
-static __inline struct brw_reg high_words( struct brw_reg reg )
+static INLINE struct brw_reg high_words( struct brw_reg reg )
 {
     return stride( suboffset( retype( reg, BRW_REGISTER_TYPE_W ), 1 ),
 		   0, 8, 2 );
 }
 
-static __inline struct brw_reg low_words( struct brw_reg reg )
+static INLINE struct brw_reg low_words( struct brw_reg reg )
 {
     return stride( retype( reg, BRW_REGISTER_TYPE_W ), 0, 8, 2 );
 }
 
-static __inline struct brw_reg even_bytes( struct brw_reg reg )
+static INLINE struct brw_reg even_bytes( struct brw_reg reg )
 {
     return stride( retype( reg, BRW_REGISTER_TYPE_B ), 0, 16, 2 );
 }
 
-static __inline struct brw_reg odd_bytes( struct brw_reg reg )
+static INLINE struct brw_reg odd_bytes( struct brw_reg reg )
 {
     return stride( suboffset( retype( reg, BRW_REGISTER_TYPE_B ), 1 ),
 		   0, 16, 2 );
@@ -1366,9 +1497,11 @@ static void emit_noise2( struct brw_wm_compile *c,
     release_tmps( c, mark );
 }
 
-/* The three-dimensional case is much like the one- and two- versions above,
-   but since the number of corners is rapidly growing we now pack 16 16-bit
-   hashes into each register to extract more parallelism from the EUs. */
+/**
+ * The three-dimensional case is much like the one- and two- versions above,
+ * but since the number of corners is rapidly growing we now pack 16 16-bit
+ * hashes into each register to extract more parallelism from the EUs.
+ */
 static void noise3_sub( struct brw_wm_compile *c ) {
 
     struct brw_compile *p = &c->func;
@@ -1670,13 +1803,15 @@ static void emit_noise3( struct brw_wm_compile *c,
     release_tmps( c, mark );
 }
     
-/* For the four-dimensional case, the little micro-optimisation benefits
-   we obtain by unrolling all the loops aren't worth the massive bloat it
-   now causes.  Instead, we loop twice around performing a similar operation
-   to noise3, once for the w=0 cube and once for the w=1, with a bit more
-   code to glue it all together. */
-static void noise4_sub( struct brw_wm_compile *c ) {
-
+/**
+ * For the four-dimensional case, the little micro-optimisation benefits
+ * we obtain by unrolling all the loops aren't worth the massive bloat it
+ * now causes.  Instead, we loop twice around performing a similar operation
+ * to noise3, once for the w=0 cube and once for the w=1, with a bit more
+ * code to glue it all together.
+ */
+static void noise4_sub( struct brw_wm_compile *c )
+{
     struct brw_compile *p = &c->func;
     struct brw_reg param[ 4 ],
 	x0y0, x0y1, x1y0, x1y1, /* gradients at four of the corners */
@@ -2244,28 +2379,12 @@ static void emit_tex(struct brw_wm_compile *c,
 	brw_MOV(p, dst[3], brw_imm_f(1.0));
 }
 
+/**
+ * Resolve subroutine calls after code emit is done.
+ */
 static void post_wm_emit( struct brw_wm_compile *c )
 {
-    GLuint nr_insns = c->fp->program.Base.NumInstructions;
-    GLuint insn, target_insn;
-    struct prog_instruction *inst1, *inst2;
-    struct brw_instruction *brw_inst1, *brw_inst2;
-    int offset;
-    for (insn = 0; insn < nr_insns; insn++) {
-	inst1 = &c->fp->program.Base.Instructions[insn];
-	brw_inst1 = inst1->Data;
-	switch (inst1->Opcode) {
-	    case OPCODE_CAL:
-		target_insn = inst1->BranchTarget;
-		inst2 = &c->fp->program.Base.Instructions[target_insn];
-		brw_inst2 = inst2->Data;
-		offset = brw_inst2 - brw_inst1;
-		brw_set_src1(brw_inst1, brw_imm_d(offset*16));
-		break;
-	    default:
-		break;
-	}
-    }
+    brw_resolve_cals(&c->func);
 }
 
 static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
@@ -2285,10 +2404,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 
     for (i = 0; i < c->nr_fp_insns; i++) {
 	struct prog_instruction *inst = &c->prog_instructions[i];
-	struct prog_instruction *orig_inst;
-
-	if ((orig_inst = inst->Data) != 0)
-	    orig_inst->Data = current_insn(p);
 
 	if (inst->CondUpdate)
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
@@ -2446,7 +2561,10 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		brw_ENDIF(p, if_inst[--if_insn]);
 		break;
 	    case OPCODE_BGNSUB:
+		brw_save_label(p, inst->Comment, p->nr_insn);
+		break;
 	    case OPCODE_ENDSUB:
+		/* no-op */
 		break;
 	    case OPCODE_CAL: 
 		brw_push_insn_state(p);
@@ -2456,8 +2574,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
                 brw_set_access_mode(p, BRW_ALIGN_16);
                 brw_ADD(p, get_addr_reg(stack_index),
                          get_addr_reg(stack_index), brw_imm_d(4));
-                orig_inst = inst->Data;
-                orig_inst->Data = &p->store[p->nr_insn];
+		brw_save_call(&c->func, inst->Comment, p->nr_insn);
                 brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
                 brw_pop_insn_state(p);
 		break;
@@ -2510,14 +2627,34 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
     }
     post_wm_emit(c);
-    for (i = 0; i < c->fp->program.Base.NumInstructions; i++)
-	c->fp->program.Base.Instructions[i].Data = NULL;
+
+    if (c->reg_index >= BRW_WM_MAX_GRF) {
+        _mesa_problem(NULL, "Ran out of registers in brw_wm_emit_glsl()");
+        /* XXX we need to do some proper error recovery here */
+    }
 }
 
+
+/**
+ * Do GPU code generation for shaders that use GLSL features such as
+ * flow control.  Other shaders will be compiled with the 
+ */
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
+    if (INTEL_DEBUG & DEBUG_WM) {
+        _mesa_printf("brw_wm_glsl_emit:\n");
+    }
+
+    /* initial instruction translation/simplification */
     brw_wm_pass_fp(c);
+
+    /* actual code generation */
     brw_wm_emit_glsl(brw, c);
+
+    if (INTEL_DEBUG & DEBUG_WM) {
+        brw_wm_print_program(c, "brw_wm_glsl_emit done");
+    }
+
     c->prog_data.total_grf = c->reg_index;
     c->prog_data.total_scratch = 0;
 }

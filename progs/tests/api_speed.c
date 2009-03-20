@@ -37,9 +37,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
-#include <GL/glext.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 #define inline __inline__
@@ -127,6 +125,7 @@ int main( int argc, char *argv[] )
    glutInitDisplayMode( GLUT_RGB );
 
    glutCreateWindow( argv[0] );
+   glewInit();
 
    if ( argc > 1 ) {
       count = strtoul( argv[1], NULL, 0 );

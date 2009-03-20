@@ -84,7 +84,8 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
     */
    draw_pt_post_vs_prepare( fpme->post_vs,
 			    (boolean)draw->bypass_clipping,
-			    (boolean)draw->identity_viewport,
+			    (boolean)(draw->identity_viewport ||
+                                      draw->rasterizer->bypass_vs_clip_and_viewport),
 			    (boolean)draw->rasterizer->gl_rasterization_rules );
 			    
 
@@ -140,9 +141,9 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
 		      (char *)pipeline_verts );
 
    /* Run the shader, note that this overwrites the data[] parts of
-    * the pipeline verts.  If there is no shader, ie a bypass shader,
-    * then the inputs == outputs, and are already in the correct
-    * place.
+    * the pipeline verts.  If there is no shader, eg if
+    * bypass_vs_clip_and_viewport, then the inputs == outputs, and are
+    * already in the correct place.
     */
    if (opt & PT_SHADE)
    {
@@ -216,9 +217,9 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
                              (char *)pipeline_verts );
 
    /* Run the shader, note that this overwrites the data[] parts of
-    * the pipeline verts.  If there is no shader, ie a bypass shader,
-    * then the inputs == outputs, and are already in the correct
-    * place.
+    * the pipeline verts.  If there is no shader, ie if
+    * bypass_vs_clip_and_viewport, then the inputs == outputs, and are
+    * already in the correct place.
     */
    if (opt & PT_SHADE)
    {
@@ -251,9 +252,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
    else {
       draw_pt_emit_linear( fpme->emit,
                            (const float (*)[4])pipeline_verts->data,
-                           count,
                            fpme->vertex_size,
-                           0, /*start*/
                            count );
    }
 
@@ -288,9 +287,9 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
                              (char *)pipeline_verts );
 
    /* Run the shader, note that this overwrites the data[] parts of
-    * the pipeline verts.  If there is no shader, ie a bypass shader,
-    * then the inputs == outputs, and are already in the correct
-    * place.
+    * the pipeline verts.  If there is no shader, ie if
+    * bypass_vs_clip_and_viewport, then the inputs == outputs, and are
+    * already in the correct place.
     */
    if (opt & PT_SHADE)
    {

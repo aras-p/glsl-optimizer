@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/p_shader_tokens.h"
 #include "tgsi_parse.h"
 #include "tgsi_build.h"
@@ -154,10 +154,17 @@ tgsi_parse_token(
 
       switch (imm->Immediate.DataType) {
       case TGSI_IMM_FLOAT32:
-         imm->u.Pointer = MALLOC(
-            sizeof( struct tgsi_immediate_float32 ) * (imm->Immediate.NrTokens - 1) );
-         for( i = 0; i < imm->Immediate.NrTokens - 1; i++ ) {
-            next_token( ctx, (struct tgsi_immediate_float32 *) &imm->u.ImmediateFloat32[i] );
+         {
+            uint imm_count = imm->Immediate.NrTokens - 1;
+            struct tgsi_immediate_float32 *data;
+
+            data = (struct tgsi_immediate_float32 *) MALLOC(sizeof(struct tgsi_immediate_float32) * imm_count);
+            if (data) {
+               for (i = 0; i < imm_count; i++) {
+                  next_token(ctx, &data[i]);
+               }
+               imm->u.ImmediateFloat32 = data;
+            }
          }
          break;
 

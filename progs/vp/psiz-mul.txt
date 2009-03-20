@@ -1,0 +1,6 @@
+!!ARBvp1.0
+MOV result.color, vertex.color; 
+MUL result.pointsize, vertex.color.x, {10.0}.x; 
+MOV  result.position, vertex.position;
+END
+

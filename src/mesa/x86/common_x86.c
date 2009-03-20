@@ -52,7 +52,10 @@
 #include "common_x86_asm.h"
 
 
-int _mesa_x86_cpu_features = 0;
+/** Bitmask of X86_FEATURE_x bits */
+int _mesa_x86_cpu_features = 0x0;
+
+
 
 /* No reason for this to be public.
  */
@@ -73,8 +76,11 @@ extern GLuint	_ASMAPI _mesa_x86_cpuid_edx(GLuint op);
  * kernels provide full SSE support on all processors that expose SSE via
  * the CPUID mechanism.
  */
+
+/* These are assembly functions: */
 extern void _mesa_test_os_sse_support( void );
 extern void _mesa_test_os_sse_exception_support( void );
+
 
 #if defined(WIN32)
 #ifndef STATUS_FLOAT_MULTIPLE_TRAPS
@@ -107,7 +113,11 @@ static LONG WINAPI ExceptionFilter(LPEXCEPTION_POINTERS exp)
 #endif /* WIN32 */
 
 
-static void check_os_sse_support( void )
+/**
+ * Check if SSE is supported.
+ * If not, turn off the X86_FEATURE_XMM flag in _mesa_x86_cpu_features.
+ */
+void _mesa_check_os_sse_support( void )
 {
 #if defined(__FreeBSD__)
    {
@@ -187,10 +197,26 @@ static void check_os_sse_support( void )
 #endif /* USE_SSE_ASM */
 
 
-void _mesa_init_all_x86_transform_asm( void )
+/**
+ * Initialize the _mesa_x86_cpu_features bitfield.
+ * This is a no-op if called more than once.
+ */
+void
+_mesa_get_x86_features(void)
 {
+   static int called = 0;
+
+   if (called)
+      return;
+
+   called = 1;
+
 #ifdef USE_X86_ASM
-   _mesa_x86_cpu_features = 0;
+   _mesa_x86_cpu_features = 0x0;
+
+   if (_mesa_getenv( "MESA_NO_ASM")) {
+      return;
+   }
 
    if (!_mesa_x86_has_cpuid()) {
        _mesa_debug(NULL, "CPUID not detected\n");
@@ -263,52 +289,5 @@ void _mesa_init_all_x86_transform_asm( void )
        }
 
    }
-   
-   if ( _mesa_getenv( "MESA_NO_ASM" ) ) {
-      _mesa_x86_cpu_features = 0;
-   }
-
-   if ( _mesa_x86_cpu_features ) {
-      _mesa_init_x86_transform_asm();
-   }
-
-#ifdef USE_MMX_ASM
-   if ( cpu_has_mmx ) {
-      if ( _mesa_getenv( "MESA_NO_MMX" ) == 0 ) {
-         _mesa_debug(NULL, "MMX cpu detected.\n");
-      } else {
-         _mesa_x86_cpu_features &= ~(X86_FEATURE_MMX);
-      }
-   }
-#endif
-
-#ifdef USE_3DNOW_ASM
-   if ( cpu_has_3dnow ) {
-      if ( _mesa_getenv( "MESA_NO_3DNOW" ) == 0 ) {
-         _mesa_debug(NULL, "3DNow! cpu detected.\n");
-         _mesa_init_3dnow_transform_asm();
-      } else {
-         _mesa_x86_cpu_features &= ~(X86_FEATURE_3DNOW);
-      }
-   }
-#endif
-
-#ifdef USE_SSE_ASM
-   if ( cpu_has_xmm ) {
-      if ( _mesa_getenv( "MESA_NO_SSE" ) == 0 ) {
-         _mesa_debug(NULL, "SSE cpu detected.\n");
-         if ( _mesa_getenv( "MESA_FORCE_SSE" ) == 0 ) {
-            check_os_sse_support();
-         }
-         if ( cpu_has_xmm ) {
-            _mesa_init_sse_transform_asm();
-         }
-      } else {
-         _mesa_debug(NULL, "SSE cpu detected, but switched off by user.\n");
-         _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
-      }
-   }
-#endif
-#endif
+#endif /* USE_X86_ASM */
 }
-

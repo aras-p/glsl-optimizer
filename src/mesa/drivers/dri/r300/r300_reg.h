@@ -1224,6 +1224,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R500_RS_INST_COL_ADDR_SHIFT			18
 #define R500_RS_INST_TEX_ADJ				(1 << 25)
 #define R500_RS_INST_W_CN				(1 << 26)
+#define R500_RS_INST_TEX_ID(x)				((x) << R500_RS_INST_TEX_ID_SHIFT)
+#define R500_RS_INST_TEX_ADDR(x)			((x) << R500_RS_INST_TEX_ADDR_SHIFT)
+#define R500_RS_INST_COL_ID(x)				((x) << R500_RS_INST_COL_ID_SHIFT)
+#define R500_RS_INST_COL_ADDR(x)			((x) << R500_RS_INST_COL_ADDR_SHIFT)
 
 /* These DWORDs control how vertex data is routed into fragment program
  * registers, after interpolators.
@@ -1239,9 +1243,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_RS_INST_TEX_ID(x)  		((x) << 0)
 #	define R300_RS_INST_TEX_CN_WRITE 	(1 << 3)
 #	define R300_RS_INST_TEX_ADDR_SHIFT 	6
+#	define R300_RS_INST_TEX_ADDR(x)		((x) << R300_RS_INST_TEX_ADDR_SHIFT)
 #	define R300_RS_INST_COL_ID(x)		((x) << 11)
 #	define R300_RS_INST_COL_CN_WRITE	(1 << 14)
 #	define R300_RS_INST_COL_ADDR_SHIFT	17
+#	define R300_RS_INST_COL_ADDR(x)		((x) << R300_RS_INST_COL_ADDR_SHIFT)
 #	define R300_RS_INST_TEX_ADJ		(1 << 22)
 #	define R300_RS_COL_BIAS_UNUSED_SHIFT    23
 

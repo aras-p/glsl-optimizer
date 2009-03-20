@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "stw_pixelformat.h"
 #include "stw_public.h"
 
@@ -71,6 +71,18 @@ add_standard_pixelformats(
    pf->flags = PF_FLAG_DOUBLEBUFFER | flags;
    pf->color = color24;
    pf->alpha = noalpha;
+   pf->depth = depth24s8;
+   pf++;
+
+   pf->flags = flags;
+   pf->color = color24;
+   pf->alpha = alpha8;
+   pf->depth = depth16;
+   pf++;
+
+   pf->flags = flags;
+   pf->color = color24;
+   pf->alpha = alpha8;
    pf->depth = depth24s8;
    pf++;
 

@@ -55,8 +55,105 @@
 #include "texparam.h"
 #include "texstate.h"
 #include "varray.h"
+#include "viewport.h"
 #include "mtypes.h"
-#include "math/m_xform.h"
+
+
+/**
+ * glEnable()/glDisable() attribute group (GL_ENABLE_BIT).
+ */
+struct gl_enable_attrib
+{
+   GLboolean AlphaTest;
+   GLboolean AutoNormal;
+   GLboolean Blend;
+   GLbitfield ClipPlanes;
+   GLboolean ColorMaterial;
+   GLboolean ColorTable[COLORTABLE_MAX];
+   GLboolean Convolution1D;
+   GLboolean Convolution2D;
+   GLboolean Separable2D;
+   GLboolean CullFace;
+   GLboolean DepthTest;
+   GLboolean Dither;
+   GLboolean Fog;
+   GLboolean Histogram;
+   GLboolean Light[MAX_LIGHTS];
+   GLboolean Lighting;
+   GLboolean LineSmooth;
+   GLboolean LineStipple;
+   GLboolean IndexLogicOp;
+   GLboolean ColorLogicOp;
+
+   GLboolean Map1Color4;
+   GLboolean Map1Index;
+   GLboolean Map1Normal;
+   GLboolean Map1TextureCoord1;
+   GLboolean Map1TextureCoord2;
+   GLboolean Map1TextureCoord3;
+   GLboolean Map1TextureCoord4;
+   GLboolean Map1Vertex3;
+   GLboolean Map1Vertex4;
+   GLboolean Map1Attrib[16];  /* GL_NV_vertex_program */
+   GLboolean Map2Color4;
+   GLboolean Map2Index;
+   GLboolean Map2Normal;
+   GLboolean Map2TextureCoord1;
+   GLboolean Map2TextureCoord2;
+   GLboolean Map2TextureCoord3;
+   GLboolean Map2TextureCoord4;
+   GLboolean Map2Vertex3;
+   GLboolean Map2Vertex4;
+   GLboolean Map2Attrib[16];  /* GL_NV_vertex_program */
+
+   GLboolean MinMax;
+   GLboolean Normalize;
+   GLboolean PixelTexture;
+   GLboolean PointSmooth;
+   GLboolean PolygonOffsetPoint;
+   GLboolean PolygonOffsetLine;
+   GLboolean PolygonOffsetFill;
+   GLboolean PolygonSmooth;
+   GLboolean PolygonStipple;
+   GLboolean RescaleNormals;
+   GLboolean Scissor;
+   GLboolean Stencil;
+   GLboolean StencilTwoSide;          /* GL_EXT_stencil_two_side */
+   GLboolean MultisampleEnabled;      /* GL_ARB_multisample */
+   GLboolean SampleAlphaToCoverage;   /* GL_ARB_multisample */
+   GLboolean SampleAlphaToOne;        /* GL_ARB_multisample */
+   GLboolean SampleCoverage;          /* GL_ARB_multisample */
+   GLboolean SampleCoverageInvert;    /* GL_ARB_multisample */
+   GLboolean RasterPositionUnclipped; /* GL_IBM_rasterpos_clip */
+
+   GLbitfield Texture[MAX_TEXTURE_UNITS];
+   GLbitfield TexGen[MAX_TEXTURE_UNITS];
+
+   /* SGI_texture_color_table */
+   GLboolean TextureColorTable[MAX_TEXTURE_UNITS];
+
+   /* GL_ARB_vertex_program / GL_NV_vertex_program */
+   GLboolean VertexProgram;
+   GLboolean VertexProgramPointSize;
+   GLboolean VertexProgramTwoSide;
+
+   /* GL_ARB_point_sprite / GL_NV_point_sprite */
+   GLboolean PointSprite;
+   GLboolean FragmentShaderATI;
+};
+
+
+/**
+ * Node for the attribute stack.
+ */
+struct gl_attrib_node
+{
+   GLbitfield kind;
+   void *data;
+   struct gl_attrib_node *next;
+};
+
+
 
 /**
  * Special struct for saving/restoring texture state (GL_TEXTURE_BIT)
@@ -365,7 +462,7 @@ _mesa_PushAttrib(GLbitfield mask)
 
    if (mask & GL_TEXTURE_BIT) {
       struct texture_state *texstate = CALLOC_STRUCT(texture_state);
-      GLuint u;
+      GLuint u, tex;
 
       if (!texstate) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushAttrib(GL_TEXTURE_BIT)");
@@ -381,38 +478,18 @@ _mesa_PushAttrib(GLbitfield mask)
        * accidentally get deleted while referenced in the attribute stack.
        */
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-         _mesa_reference_texobj(&texstate->SavedTexRef[u][TEXTURE_1D_INDEX],
-                                ctx->Texture.Unit[u].Current1D);
-         _mesa_reference_texobj(&texstate->SavedTexRef[u][TEXTURE_2D_INDEX],
-                                ctx->Texture.Unit[u].Current2D);
-         _mesa_reference_texobj(&texstate->SavedTexRef[u][TEXTURE_3D_INDEX],
-                                ctx->Texture.Unit[u].Current3D);
-         _mesa_reference_texobj(&texstate->SavedTexRef[u][TEXTURE_CUBE_INDEX],
-                                ctx->Texture.Unit[u].CurrentCubeMap);
-         _mesa_reference_texobj(&texstate->SavedTexRef[u][TEXTURE_RECT_INDEX],
-                                ctx->Texture.Unit[u].CurrentRect);
-         _mesa_reference_texobj(&texstate->SavedTexRef[u][TEXTURE_1D_ARRAY_INDEX],
-                                ctx->Texture.Unit[u].Current1DArray);
-         _mesa_reference_texobj(&texstate->SavedTexRef[u][TEXTURE_2D_ARRAY_INDEX],
-                                ctx->Texture.Unit[u].Current2DArray);
+         for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
+            _mesa_reference_texobj(&texstate->SavedTexRef[u][tex],
+                                   ctx->Texture.Unit[u].CurrentTex[tex]);
+         }
       }
 
       /* copy state/contents of the currently bound texture objects */
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-         _mesa_copy_texture_object(&texstate->SavedObj[u][TEXTURE_1D_INDEX],
-                                   ctx->Texture.Unit[u].Current1D);
-         _mesa_copy_texture_object(&texstate->SavedObj[u][TEXTURE_2D_INDEX],
-                                   ctx->Texture.Unit[u].Current2D);
-         _mesa_copy_texture_object(&texstate->SavedObj[u][TEXTURE_3D_INDEX],
-                                   ctx->Texture.Unit[u].Current3D);
-         _mesa_copy_texture_object(&texstate->SavedObj[u][TEXTURE_CUBE_INDEX],
-                                   ctx->Texture.Unit[u].CurrentCubeMap);
-         _mesa_copy_texture_object(&texstate->SavedObj[u][TEXTURE_RECT_INDEX],
-                                   ctx->Texture.Unit[u].CurrentRect);
-         _mesa_copy_texture_object(&texstate->SavedObj[u][TEXTURE_1D_ARRAY_INDEX],
-                                   ctx->Texture.Unit[u].Current1DArray);
-         _mesa_copy_texture_object(&texstate->SavedObj[u][TEXTURE_2D_ARRAY_INDEX],
-                                   ctx->Texture.Unit[u].Current2DArray);
+         for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
+            _mesa_copy_texture_object(&texstate->SavedObj[u][tex],
+                                      ctx->Texture.Unit[u].CurrentTex[tex]);
+         }
       }
 
       _mesa_unlock_context_textures(ctx);
@@ -699,26 +776,26 @@ pop_texture_group(GLcontext *ctx, struct texture_state *texstate)
       }
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, unit->EnvMode);
       _mesa_TexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, unit->EnvColor);
-      _mesa_TexGeni(GL_S, GL_TEXTURE_GEN_MODE, unit->GenModeS);
-      _mesa_TexGeni(GL_T, GL_TEXTURE_GEN_MODE, unit->GenModeT);
-      _mesa_TexGeni(GL_R, GL_TEXTURE_GEN_MODE, unit->GenModeR);
-      _mesa_TexGeni(GL_Q, GL_TEXTURE_GEN_MODE, unit->GenModeQ);
-      _mesa_TexGenfv(GL_S, GL_OBJECT_PLANE, unit->ObjectPlaneS);
-      _mesa_TexGenfv(GL_T, GL_OBJECT_PLANE, unit->ObjectPlaneT);
-      _mesa_TexGenfv(GL_R, GL_OBJECT_PLANE, unit->ObjectPlaneR);
-      _mesa_TexGenfv(GL_Q, GL_OBJECT_PLANE, unit->ObjectPlaneQ);
+      _mesa_TexGeni(GL_S, GL_TEXTURE_GEN_MODE, unit->GenS.Mode);
+      _mesa_TexGeni(GL_T, GL_TEXTURE_GEN_MODE, unit->GenT.Mode);
+      _mesa_TexGeni(GL_R, GL_TEXTURE_GEN_MODE, unit->GenR.Mode);
+      _mesa_TexGeni(GL_Q, GL_TEXTURE_GEN_MODE, unit->GenQ.Mode);
+      _mesa_TexGenfv(GL_S, GL_OBJECT_PLANE, unit->GenS.ObjectPlane);
+      _mesa_TexGenfv(GL_T, GL_OBJECT_PLANE, unit->GenT.ObjectPlane);
+      _mesa_TexGenfv(GL_R, GL_OBJECT_PLANE, unit->GenR.ObjectPlane);
+      _mesa_TexGenfv(GL_Q, GL_OBJECT_PLANE, unit->GenQ.ObjectPlane);
       /* Eye plane done differently to avoid re-transformation */
       {
          struct gl_texture_unit *destUnit = &ctx->Texture.Unit[u];
-         COPY_4FV(destUnit->EyePlaneS, unit->EyePlaneS);
-         COPY_4FV(destUnit->EyePlaneT, unit->EyePlaneT);
-         COPY_4FV(destUnit->EyePlaneR, unit->EyePlaneR);
-         COPY_4FV(destUnit->EyePlaneQ, unit->EyePlaneQ);
+         COPY_4FV(destUnit->GenS.EyePlane, unit->GenS.EyePlane);
+         COPY_4FV(destUnit->GenT.EyePlane, unit->GenT.EyePlane);
+         COPY_4FV(destUnit->GenR.EyePlane, unit->GenR.EyePlane);
+         COPY_4FV(destUnit->GenQ.EyePlane, unit->GenQ.EyePlane);
          if (ctx->Driver.TexGen) {
-            ctx->Driver.TexGen(ctx, GL_S, GL_EYE_PLANE, unit->EyePlaneS);
-            ctx->Driver.TexGen(ctx, GL_T, GL_EYE_PLANE, unit->EyePlaneT);
-            ctx->Driver.TexGen(ctx, GL_R, GL_EYE_PLANE, unit->EyePlaneR);
-            ctx->Driver.TexGen(ctx, GL_Q, GL_EYE_PLANE, unit->EyePlaneQ);
+            ctx->Driver.TexGen(ctx, GL_S, GL_EYE_PLANE, unit->GenS.EyePlane);
+            ctx->Driver.TexGen(ctx, GL_T, GL_EYE_PLANE, unit->GenT.EyePlane);
+            ctx->Driver.TexGen(ctx, GL_R, GL_EYE_PLANE, unit->GenR.EyePlane);
+            ctx->Driver.TexGen(ctx, GL_Q, GL_EYE_PLANE, unit->GenQ.EyePlane);
          }
       }
       _mesa_set_enable(ctx, GL_TEXTURE_GEN_S,

@@ -202,7 +202,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nouveau_stateobj *vtxbuf, *vtxfmt;
-	int i, vpi = 0;
+	int i;
 
 	vtxbuf = so_new(nv50->vtxelt_nr * 4, nv50->vtxelt_nr * 2);
 	vtxfmt = so_new(nv50->vtxelt_nr + 1, 0);
@@ -250,5 +250,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 
 	so_ref (vtxfmt, &nv50->state.vtxfmt);
 	so_ref (vtxbuf, &nv50->state.vtxbuf);
+	so_ref (NULL, &vtxbuf);
+	so_ref (NULL, &vtxfmt);
 }
 

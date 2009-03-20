@@ -25,12 +25,13 @@
  * 
  **************************************************************************/
 
-#include "main/imports.h"
+#include "main/mfeatures.h"
 #if FEATURE_convolve
 #include "main/convolve.h"
 #endif
 #include "main/enums.h"
 #include "main/image.h"
+#include "main/imports.h"
 #include "main/macros.h"
 #include "main/mipmap.h"
 #include "main/pixel.h"
@@ -114,7 +115,7 @@ st_NewTextureImage(GLcontext * ctx)
 {
    DBG("%s\n", __FUNCTION__);
    (void) ctx;
-   return (struct gl_texture_image *) CALLOC_STRUCT(st_texture_image);
+   return (struct gl_texture_image *) ST_CALLOC_STRUCT(st_texture_image);
 }
 
 
@@ -122,7 +123,7 @@ st_NewTextureImage(GLcontext * ctx)
 static struct gl_texture_object *
 st_NewTextureObject(GLcontext * ctx, GLuint name, GLenum target)
 {
-   struct st_texture_object *obj = CALLOC_STRUCT(st_texture_object);
+   struct st_texture_object *obj = ST_CALLOC_STRUCT(st_texture_object);
 
    DBG("%s\n", __FUNCTION__);
    _mesa_initialize_texture_object(&obj->base, name, target);
@@ -204,7 +205,7 @@ __memcpy(void *to, const void *from, size_t n)
 static void *
 do_memcpy(void *dest, const void *src, size_t n)
 {
-   if ((((unsigned) src) & 63) || (((unsigned) dest) & 63)) {
+   if ((((unsigned long) src) & 63) || (((unsigned long) dest) & 63)) {
       return __memcpy(dest, src, n);
    }
    else
@@ -464,18 +465,18 @@ st_TexImage(GLcontext * ctx,
     * bmBufferData with NULL data to free the old block and avoid
     * waiting on any outstanding fences.
     */
-   if (stObj->pt &&
-       (stObj->teximage_realloc ||
-        (/*stObj->pt->first_level == level &&*/
-         stObj->pt->last_level == level &&
-         stObj->pt->target != PIPE_TEXTURE_CUBE &&
-         !st_texture_match_image(stObj->pt, &stImage->base,
-                                 stImage->face, stImage->level)))) {
-
-      DBG("release it\n");
-      pipe_texture_reference(&stObj->pt, NULL);
-      assert(!stObj->pt);
-      stObj->teximage_realloc = FALSE;
+   if (stObj->pt) {
+      if (stObj->teximage_realloc ||
+          level > stObj->pt->last_level ||
+          (stObj->pt->last_level == level &&
+           stObj->pt->target != PIPE_TEXTURE_CUBE &&
+           !st_texture_match_image(stObj->pt, &stImage->base,
+                                   stImage->face, stImage->level))) {
+         DBG("release it\n");
+         pipe_texture_reference(&stObj->pt, NULL);
+         assert(!stObj->pt);
+         stObj->teximage_realloc = FALSE;
+      }
    }
 
    if (!stObj->pt) {
@@ -524,9 +525,10 @@ st_TexImage(GLcontext * ctx,
 
    if (stImage->pt) {
       texImage->Data = st_texture_image_map(ctx->st, stImage, 0,
-                                            PIPE_BUFFER_USAGE_CPU_WRITE);
-      if (stImage->surface)
-         dstRowStride = stImage->surface->stride;
+                                            PIPE_TRANSFER_WRITE, 0, 0,
+                                            stImage->base.Width,
+                                            stImage->base.Height);
+      dstRowStride = stImage->transfer->stride;
    }
    else {
       /* Allocate regular memory and store the image there temporarily.   */
@@ -581,7 +583,9 @@ st_TexImage(GLcontext * ctx,
 	 if (stImage->pt && i < depth) {
 	    st_texture_image_unmap(ctx->st, stImage);
 	    texImage->Data = st_texture_image_map(ctx->st, stImage, i,
-                                                  PIPE_BUFFER_USAGE_CPU_WRITE);
+                                                  PIPE_TRANSFER_WRITE, 0, 0,
+                                                  stImage->base.Width,
+                                                  stImage->base.Height);
 	    src += srcImageStride;
 	 }
       }
@@ -688,8 +692,10 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
        * kernel.  Need to explicitly map and unmap it.
        */
       texImage->Data = st_texture_image_map(ctx->st, stImage, 0,
-                                            PIPE_BUFFER_USAGE_CPU_READ);
-      texImage->RowStride = stImage->surface->stride / stImage->pt->block.size;
+                                            PIPE_TRANSFER_READ, 0, 0,
+                                            stImage->base.Width,
+                                            stImage->base.Height);
+      texImage->RowStride = stImage->transfer->stride / stImage->pt->block.size;
    }
    else {
       /* Otherwise, the image should actually be stored in
@@ -720,7 +726,9 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
       if (stImage->pt && i < depth) {
 	 st_texture_image_unmap(ctx->st, stImage);
 	 texImage->Data = st_texture_image_map(ctx->st, stImage, i,
-                                               PIPE_BUFFER_USAGE_CPU_READ);
+                                               PIPE_TRANSFER_READ, 0, 0,
+                                               stImage->base.Width,
+                                               stImage->base.Height);
 	 dest += dstImageStride;
       }
    }
@@ -792,9 +800,10 @@ st_TexSubimage(GLcontext * ctx,
     */
    if (stImage->pt) {
       texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset, 
-                                            PIPE_BUFFER_USAGE_CPU_WRITE);
-      if (stImage->surface)
-         dstRowStride = stImage->surface->stride;
+                                            PIPE_TRANSFER_WRITE,
+                                            xoffset, yoffset,
+                                            width, height);
+      dstRowStride = stImage->transfer->stride;
    }
 
    if (!texImage->Data) {
@@ -808,7 +817,7 @@ st_TexSubimage(GLcontext * ctx,
       if (!texImage->TexFormat->StoreImage(ctx, dims, texImage->_BaseFormat,
 					   texImage->TexFormat,
 					   texImage->Data,
-					   xoffset, yoffset, 0,
+					   0, 0, 0,
 					   dstRowStride,
 					   texImage->ImageOffsets,
 					   width, height, 1,
@@ -820,7 +829,9 @@ st_TexSubimage(GLcontext * ctx,
          /* map next slice of 3D texture */
 	 st_texture_image_unmap(ctx->st, stImage);
 	 texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset + i,
-                                               PIPE_BUFFER_USAGE_CPU_WRITE);
+                                               PIPE_TRANSFER_WRITE,
+                                               xoffset, yoffset,
+                                               width, height);
 	 src += srcImageStride;
       }
    }
@@ -898,26 +909,8 @@ st_TexSubImage1D(GLcontext * ctx,
 
 
 /**
- * Return 0 for GL_TEXTURE_CUBE_MAP_POSITIVE_X,
- *        1 for GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
- *        etc.
- * XXX duplicated from main/teximage.c
- */
-static uint
-texture_face(GLenum target)
-{
-   if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
-       target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)
-      return (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-   else
-      return 0;
-}
-
-
-
-/**
- * Do a CopyTexSubImage operation by mapping the source surface and
- * dest surface and using get_tile()/put_tile() to access the pixels/texels.
+ * Do a CopyTexSubImage operation using a read transfer from the source, a write
+ * transfer to the destination and get_tile()/put_tile() to access the pixels/texels.
  *
  * Note: srcY=0=TOP of renderbuffer
  */
@@ -934,20 +927,24 @@ fallback_copy_texsubimage(GLcontext *ctx,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   const uint face = texture_face(target);
-   struct pipe_texture *pt = stImage->pt;
-   struct pipe_surface *src_surf, *dest_surf;
-
-   /* We'd use strb->surface, here but it's created for GPU read/write only */
-   src_surf = pipe->screen->get_tex_surface( pipe->screen,
-                                             strb->texture,
-                                             0, 0, 0,
-                                             PIPE_BUFFER_USAGE_CPU_READ);
-
-   dest_surf = screen->get_tex_surface(screen, pt, face, level, destZ,
-                                       PIPE_BUFFER_USAGE_CPU_WRITE);
+   struct pipe_transfer *src_trans;
+   GLvoid *texDest;
 
    assert(width <= MAX_WIDTH);
+
+   if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+      srcY = strb->Base.Height - srcY - height;
+   }
+
+   src_trans = screen->get_tex_transfer( screen,
+                                         strb->texture,
+                                         0, 0, 0,
+                                         PIPE_TRANSFER_READ,
+                                         srcX, srcY,
+                                         width, height);
+
+   texDest = st_texture_image_map(ctx->st, stImage, 0, PIPE_TRANSFER_WRITE,
+                                  destX, destY, width, height);
 
    if (baseFormat == GL_DEPTH_COMPONENT) {
       const GLboolean scaleOrBias = (ctx->Pixel.DepthScale != 1.0F ||
@@ -956,39 +953,36 @@ fallback_copy_texsubimage(GLcontext *ctx,
 
       /* determine bottom-to-top vs. top-to-bottom order for src buffer */
       if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
-         srcY = strb->Base.Height - 1 - srcY;
+         srcY = height - 1;
          yStep = -1;
       }
       else {
+         srcY = 0;
          yStep = 1;
       }
 
       /* To avoid a large temp memory allocation, do copy row by row */
-      for (row = 0; row < height; row++, srcY += yStep, destY++) {
+      for (row = 0; row < height; row++, srcY += yStep) {
          uint data[MAX_WIDTH];
-         pipe_get_tile_z(src_surf, srcX, srcY, width, 1, data);
+         pipe_get_tile_z(src_trans, 0, srcY, width, 1, data);
          if (scaleOrBias) {
             _mesa_scale_and_bias_depth_uint(ctx, width, data);
          }
-         pipe_put_tile_z(dest_surf, destX, destY, width, 1, data);
+         pipe_put_tile_z(stImage->transfer, 0, row, width, 1, data);
       }
    }
    else {
       /* RGBA format */
       GLfloat *tempSrc =
          (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
-      GLvoid *texDest =
-         st_texture_image_map(ctx->st, stImage, 0,PIPE_BUFFER_USAGE_CPU_WRITE);
 
       if (tempSrc && texDest) {
          const GLint dims = 2;
          struct gl_texture_image *texImage = &stImage->base;
-         GLint dstRowStride = stImage->surface->stride;
+         GLint dstRowStride = stImage->transfer->stride;
          struct gl_pixelstore_attrib unpack = ctx->DefaultPacking;
 
          if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
-            /* need to invert src */
-            srcY = strb->Base.Height - srcY - height;
             unpack.Invert = GL_TRUE;
          }
 
@@ -996,7 +990,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
          /* XXX this usually involves a lot of int/float conversion.
           * try to avoid that someday.
           */
-         pipe_get_tile_rgba(src_surf, srcX, srcY, width, height, tempSrc);
+         pipe_get_tile_rgba(src_trans, 0, 0, width, height, tempSrc);
 
          /* Store into texture memory.
           * Note that this does some special things such as pixel transfer
@@ -1008,7 +1002,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
                                          texImage->_BaseFormat, 
                                          texImage->TexFormat, 
                                          texDest,
-                                         destX, destY, destZ,
+                                         0, 0, 0,
                                          dstRowStride,
                                          texImage->ImageOffsets,
                                          width, height, 1,
@@ -1021,12 +1015,10 @@ fallback_copy_texsubimage(GLcontext *ctx,
 
       if (tempSrc)
          _mesa_free(tempSrc);
-      if (texDest)
-         st_texture_image_unmap(ctx->st, stImage);
    }
 
-   screen->tex_surface_release(screen, &dest_surf);
-   screen->tex_surface_release(screen, &src_surf);
+   st_texture_image_unmap(ctx->st, stImage);
+   screen->tex_transfer_destroy(src_trans);
 }
 
 
@@ -1095,21 +1087,19 @@ st_copy_texsubimage(GLcontext *ctx,
    if (matching_base_formats && ctx->_ImageTransferState == 0x0) {
       /* try potential hardware path */
       struct pipe_surface *dest_surface = NULL;
+      boolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
 
-      if (src_format == dest_format) {
+      if (src_format == dest_format && !do_flip) {
          /* use surface_copy() / blit */
-         boolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
+
 
          dest_surface = screen->get_tex_surface(screen, stImage->pt,
                                                 stImage->face, stImage->level,
                                                 destZ,
                                                 PIPE_BUFFER_USAGE_GPU_WRITE);
-         if (do_flip)
-            srcY = strb->surface->height - srcY - height;
 
          /* for surface_copy(), y=0=top, always */
          pipe->surface_copy(pipe,
-                            do_flip,
                             /* dest */
                             dest_surface,
                             destX, destY,
@@ -1129,7 +1119,6 @@ st_copy_texsubimage(GLcontext *ctx,
                                            PIPE_TEXTURE_USAGE_RENDER_TARGET,
                                            0)) {
          /* draw textured quad to do the copy */
-         boolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
          int srcY0, srcY1;
 
          dest_surface = screen->get_tex_surface(screen, stImage->pt,
@@ -1419,7 +1408,7 @@ st_finalize_texture(GLcontext *ctx,
           stObj->pt->depth[0] != firstImage->base.Depth2 ||
           stObj->pt->block.size/stObj->pt->block.width != cpp || /* Nominal bytes per pixel */
           stObj->pt->compressed != firstImage->base.IsCompressed) {
-         pipe_texture_release(&stObj->pt);
+         pipe_texture_reference(&stObj->pt, NULL);
          ctx->st->dirty.st |= ST_NEW_FRAMEBUFFER;
       }
    }

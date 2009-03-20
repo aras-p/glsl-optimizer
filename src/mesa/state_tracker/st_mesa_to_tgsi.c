@@ -41,14 +41,14 @@
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 
 /*
  * Map mesa register file to TGSI register file.
  */
 static GLuint
 map_register_file(
-   enum register_file file,
+   gl_register_file file,
    GLuint index,
    const GLuint immediateMapping[],
    GLboolean indirectAccess )
@@ -132,19 +132,35 @@ map_register_file_index(
  */
 static GLuint
 map_texture_target(
-   GLuint textarget )
+    GLuint textarget,
+    GLboolean shadow )
 {
+#if 1
+   /* XXX remove this line after we've checked that the rest of gallium
+    * can handle the TGSI_TEXTURE_SHADOWx tokens.
+    */
+   shadow = GL_FALSE;
+#endif
    switch( textarget ) {
    case TEXTURE_1D_INDEX:
-      return TGSI_TEXTURE_1D;
+      if (shadow)
+         return TGSI_TEXTURE_SHADOW1D;
+      else
+         return TGSI_TEXTURE_1D;
    case TEXTURE_2D_INDEX:
-      return TGSI_TEXTURE_2D;
+      if (shadow)
+         return TGSI_TEXTURE_SHADOW2D;
+      else
+         return TGSI_TEXTURE_2D;
    case TEXTURE_3D_INDEX:
       return TGSI_TEXTURE_3D;
    case TEXTURE_CUBE_INDEX:
       return TGSI_TEXTURE_CUBE;
    case TEXTURE_RECT_INDEX:
-      return TGSI_TEXTURE_RECT;
+      if (shadow)
+         return TGSI_TEXTURE_SHADOWRECT;
+      else
+         return TGSI_TEXTURE_RECT;
    default:
       assert( 0 );
    }
@@ -475,15 +491,6 @@ compile_instruction(
       break;
    case OPCODE_RSQ:
       fullinst->Instruction.Opcode = TGSI_OPCODE_RSQ;
-
-      /* KW: Don't do this here.  If particular hardware needs to do
-       * this, can do so in the driver..
-       */
-#if 0
-       tgsi_util_set_full_src_register_sign_mode(
-          &fullinst->FullSrcRegisters[0],
-          TGSI_UTIL_SIGN_CLEAR ); 
-#endif
       break;
    case OPCODE_SCS:
       fullinst->Instruction.Opcode = TGSI_OPCODE_SCS;
@@ -523,7 +530,8 @@ compile_instruction(
       /* ordinary texture lookup */
       fullinst->Instruction.Opcode = TGSI_OPCODE_TEX;
       fullinst->Instruction.NumSrcRegs = 2;
-      fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
+      fullinst->InstructionExtTexture.Texture =
+         map_texture_target( inst->TexSrcTarget, inst->TexShadow );
       fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
       fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
       break;
@@ -531,7 +539,8 @@ compile_instruction(
       /* texture lookup with LOD bias */
       fullinst->Instruction.Opcode = TGSI_OPCODE_TXB;
       fullinst->Instruction.NumSrcRegs = 2;
-      fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
+      fullinst->InstructionExtTexture.Texture =
+         map_texture_target( inst->TexSrcTarget, inst->TexShadow );
       fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
       fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
       break;
@@ -539,7 +548,8 @@ compile_instruction(
       /* texture lookup with explicit partial derivatives */
       fullinst->Instruction.Opcode = TGSI_OPCODE_TXD;
       fullinst->Instruction.NumSrcRegs = 4;
-      fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
+      fullinst->InstructionExtTexture.Texture =
+         map_texture_target( inst->TexSrcTarget, inst->TexShadow );
       /* src[0] = coord, src[1] = d[strq]/dx, src[2] = d[strq]/dy */
       fullinst->FullSrcRegisters[3].SrcRegister.File = TGSI_FILE_SAMPLER;
       fullinst->FullSrcRegisters[3].SrcRegister.Index = inst->TexSrcUnit;
@@ -548,7 +558,8 @@ compile_instruction(
       /* texture lookup with explicit LOD */
       fullinst->Instruction.Opcode = TGSI_OPCODE_TXL;
       fullinst->Instruction.NumSrcRegs = 2;
-      fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
+      fullinst->InstructionExtTexture.Texture =
+         map_texture_target( inst->TexSrcTarget, inst->TexShadow );
       fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
       fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
       break;
@@ -557,7 +568,8 @@ compile_instruction(
       /* convert to TEX w/ special flag for division */
       fullinst->Instruction.Opcode = TGSI_OPCODE_TXP;
       fullinst->Instruction.NumSrcRegs = 2;
-      fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
+      fullinst->InstructionExtTexture.Texture =
+         map_texture_target( inst->TexSrcTarget, inst->TexShadow );
       fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
       fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
       break;

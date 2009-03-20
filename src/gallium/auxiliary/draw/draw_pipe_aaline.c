@@ -32,7 +32,6 @@
  */
 
 
-#include "pipe/p_inlines.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
@@ -410,7 +409,7 @@ aaline_create_texture(struct aaline_stage *aaline)
     * texels which are zero.  Special case the 1x1 and 2x2 levels.
     */
    for (level = 0; level <= MAX_TEXTURE_LEVEL; level++) {
-      struct pipe_surface *surface;
+      struct pipe_transfer *transfer;
       const uint size = aaline->texture->width[level];
       ubyte *data;
       uint i, j;
@@ -419,9 +418,9 @@ aaline_create_texture(struct aaline_stage *aaline)
 
       /* This texture is new, no need to flush. 
        */
-      surface = screen->get_tex_surface(screen, aaline->texture, 0, level, 0,
-                                        PIPE_BUFFER_USAGE_CPU_WRITE);
-      data = screen->surface_map(screen, surface, PIPE_BUFFER_USAGE_CPU_WRITE);
+      transfer = screen->get_tex_transfer(screen, aaline->texture, 0, level, 0,
+                                         PIPE_TRANSFER_WRITE, 0, 0, size, size);
+      data = screen->transfer_map(screen, transfer);
       if (data == NULL)
          return FALSE;
 
@@ -440,13 +439,13 @@ aaline_create_texture(struct aaline_stage *aaline)
             else {
                d = 255;
             }
-            data[i * surface->stride + j] = d;
+            data[i * transfer->stride + j] = d;
          }
       }
 
       /* unmap */
-      screen->surface_unmap(screen, surface);
-      screen->tex_surface_release(screen, &surface);
+      screen->transfer_unmap(screen, transfer);
+      screen->tex_transfer_destroy(transfer);
    }
    return TRUE;
 }
@@ -728,7 +727,7 @@ aaline_destroy(struct draw_stage *stage)
       aaline->pipe->delete_sampler_state(aaline->pipe, aaline->sampler_cso);
 
    if (aaline->texture)
-      pipe_texture_release(&aaline->texture);
+      pipe_texture_reference(&aaline->texture, NULL);
 
    draw_free_temp_verts( stage );
 

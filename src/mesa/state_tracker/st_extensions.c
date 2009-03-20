@@ -208,6 +208,7 @@ void st_init_extensions(struct st_context *st)
 
    if (screen->get_param(screen, PIPE_CAP_TWO_SIDED_STENCIL)) {
       ctx->Extensions.ATI_separate_stencil = GL_TRUE;
+      ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
    }
 
    if (screen->get_param(screen, PIPE_CAP_ANISOTROPIC_FILTER)) {

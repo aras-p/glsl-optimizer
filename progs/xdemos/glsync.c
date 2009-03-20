@@ -112,6 +112,7 @@ int main(int argc, char *argv[])
 	int attrib[14];
 	GLint last_val = -1, count = 0;
 	Window winGL;
+	GLXContext context;
 	int dummy;
 	Atom wmDelete;
 	enum sync_type waitforsync = none;
@@ -185,7 +186,6 @@ int main(int argc, char *argv[])
 		attrib[10] = None;
 	}
 
-	GLXContext context;
 	pvi = glXChooseVisual(disp, DefaultScreen(disp), attrib);
 	if (!pvi) {
 		fprintf(stderr, "failed to choose visual, exiting\n");

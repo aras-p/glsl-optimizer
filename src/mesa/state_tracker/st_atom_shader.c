@@ -165,7 +165,7 @@ find_translated_vp(struct st_context *st,
 
    /* No?  Allocate translated vp object now */
    if (!xvp) {
-      xvp = CALLOC_STRUCT(translated_vertex_program);
+      xvp = ST_CALLOC_STRUCT(translated_vertex_program);
       xvp->frag_inputs = fragInputsRead;
       xvp->master = stvp;
 
@@ -298,7 +298,7 @@ st_free_translated_vertex_programs(struct st_context *st,
 
    while (xvp) {
       next = xvp->next;
-      free(xvp);
+      _mesa_free(xvp);
       xvp = next;
    }
 }
@@ -307,14 +307,9 @@ st_free_translated_vertex_programs(struct st_context *st,
 static void *
 get_passthrough_fs(struct st_context *st)
 {
-   struct pipe_shader_state shader;
-
    if (!st->passthrough_fs) {
       st->passthrough_fs =
-         util_make_fragment_passthrough_shader(st->pipe, &shader);
-#if 0      /* We actually need to keep the tokens around at this time */
-      free((void *) shader.tokens);
-#endif
+         util_make_fragment_passthrough_shader(st->pipe);
    }
 
    return st->passthrough_fs;

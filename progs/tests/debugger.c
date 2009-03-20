@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 
@@ -81,6 +81,7 @@ find_line_column(const GLubyte *string, const GLubyte *pos,
 #define NV_FRAGMENT_PROGRAM   4
 
 
+
 struct breakpoint {
    enum {PIXEL, LINE} type;
    int x, y;
@@ -101,7 +102,7 @@ static void Debugger2(GLenum target, GLvoid *data)
 {
    static GLuint skipCount = 0;
    const GLubyte *ln;
-   GLint pos, line, column;
+   GLint pos = 0, line, column;
    GLint id;
    int progType;
    GLint len;
@@ -721,6 +722,7 @@ int main( int argc, char *argv[] )
    glutInitWindowSize( 200, 200 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
    glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutSpecialFunc( SpecialKey );

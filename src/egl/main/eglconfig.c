@@ -133,6 +133,9 @@ _eglParseConfigAttribs(_EGLConfig *config, const EGLint *attrib_list)
       config->Attrib[i] = EGL_DONT_CARE;
    }
 
+   /* by default choose windows unless otherwise specified */
+   config->Attrib[EGL_SURFACE_TYPE - FIRST_ATTRIB] = EGL_WINDOW_BIT;
+
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
       const EGLint attr = attrib_list[i];
       if (attr >= EGL_BUFFER_SIZE &&

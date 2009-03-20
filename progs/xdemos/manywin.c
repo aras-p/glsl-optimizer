@@ -286,7 +286,7 @@ EventLoop(void)
                         XLookupString(&event.xkey, buf, sizeof(buf), &keySym, &stat);
                         switch (keySym) {
                            case XK_Escape:
-                              exit(0);
+                              return;
                               break;
                            case XK_d:
                            case XK_D:

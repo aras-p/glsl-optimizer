@@ -339,6 +339,17 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
       }
    }
 
+   if (ctx->Extensions.ATI_envmap_bumpmap) {
+      switch (internalFormat) {
+         case GL_DUDV_ATI:
+         case GL_DU8DV8_ATI:
+            return GL_DUDV_ATI;
+         default:
+            ; /* fallthrough */
+      }
+   }
+
+
    if (ctx->Extensions.EXT_packed_depth_stencil) {
       switch (internalFormat) {
          case GL_DEPTH_STENCIL_EXT:
@@ -568,6 +579,20 @@ is_depthstencil_format(GLenum format)
    }
 }
 
+/**
+ * Test if the given image format is a dudv format.
+ */
+static GLboolean
+is_dudv_format(GLenum format)
+{
+   switch (format) {
+      case GL_DUDV_ATI:
+      case GL_DU8DV8_ATI:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
 
 
 /**
@@ -687,7 +712,7 @@ _mesa_new_texture_image( GLcontext *ctx )
  * Free texture image data.
  * This function is a fallback called via ctx->Driver.FreeTexImageData().
  *
- * \param teximage texture image.
+ * \param texImage texture image.
  *
  * Free the texture image data if it's not marked as client data.
  */
@@ -709,7 +734,7 @@ _mesa_free_texture_image_data(GLcontext *ctx,
 /**
  * Free texture image.
  *
- * \param teximage texture image.
+ * \param texImage texture image.
  *
  * Free the texture image structure and the associated image data.
  */
@@ -766,15 +791,15 @@ _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
 {
    switch (target) {
       case GL_TEXTURE_1D:
-         return texUnit->Current1D;
+         return texUnit->CurrentTex[TEXTURE_1D_INDEX];
       case GL_PROXY_TEXTURE_1D:
          return ctx->Texture.ProxyTex[TEXTURE_1D_INDEX];
       case GL_TEXTURE_2D:
-         return texUnit->Current2D;
+         return texUnit->CurrentTex[TEXTURE_2D_INDEX];
       case GL_PROXY_TEXTURE_2D:
          return ctx->Texture.ProxyTex[TEXTURE_2D_INDEX];
       case GL_TEXTURE_3D:
-         return texUnit->Current3D;
+         return texUnit->CurrentTex[TEXTURE_3D_INDEX];
       case GL_PROXY_TEXTURE_3D:
          return ctx->Texture.ProxyTex[TEXTURE_3D_INDEX];
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
@@ -785,25 +810,25 @@ _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
       case GL_TEXTURE_CUBE_MAP_ARB:
          return ctx->Extensions.ARB_texture_cube_map
-                ? texUnit->CurrentCubeMap : NULL;
+                ? texUnit->CurrentTex[TEXTURE_CUBE_INDEX] : NULL;
       case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
          return ctx->Extensions.ARB_texture_cube_map
                 ? ctx->Texture.ProxyTex[TEXTURE_CUBE_INDEX] : NULL;
       case GL_TEXTURE_RECTANGLE_NV:
          return ctx->Extensions.NV_texture_rectangle
-                ? texUnit->CurrentRect : NULL;
+                ? texUnit->CurrentTex[TEXTURE_RECT_INDEX] : NULL;
       case GL_PROXY_TEXTURE_RECTANGLE_NV:
          return ctx->Extensions.NV_texture_rectangle
                 ? ctx->Texture.ProxyTex[TEXTURE_RECT_INDEX] : NULL;
       case GL_TEXTURE_1D_ARRAY_EXT:
          return ctx->Extensions.MESA_texture_array
-                ? texUnit->Current1DArray : NULL;
+                ? texUnit->CurrentTex[TEXTURE_1D_ARRAY_INDEX] : NULL;
       case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
          return ctx->Extensions.MESA_texture_array
                 ? ctx->Texture.ProxyTex[TEXTURE_1D_ARRAY_INDEX] : NULL;
       case GL_TEXTURE_2D_ARRAY_EXT:
          return ctx->Extensions.MESA_texture_array
-                ? texUnit->Current2DArray : NULL;
+                ? texUnit->CurrentTex[TEXTURE_2D_ARRAY_INDEX] : NULL;
       case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
          return ctx->Extensions.MESA_texture_array
                 ? ctx->Texture.ProxyTex[TEXTURE_2D_ARRAY_INDEX] : NULL;
@@ -819,7 +844,7 @@ _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
  * of the given texture unit.
  *
  * \param ctx GL context.
- * \param texUnit texture unit.
+ * \param texObj texture unit.
  * \param target texture target.
  * \param level image level.
  *
@@ -1527,7 +1552,8 @@ texture_error_check( GLcontext *ctx, GLenum target,
        */
       if (!isProxy) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glTexImage%dD(format or type)", dimensions);
+                     "glTexImage%dD(incompatible format 0x%x, type 0x%x)",
+                     dimensions, format, type);
       }
       return GL_TRUE;
    }
@@ -1539,10 +1565,12 @@ texture_error_check( GLcontext *ctx, GLenum target,
        (is_index_format(internalFormat) && !indexFormat) ||
        (is_depth_format(internalFormat) != is_depth_format(format)) ||
        (is_ycbcr_format(internalFormat) != is_ycbcr_format(format)) ||
-       (is_depthstencil_format(internalFormat) != is_depthstencil_format(format))) {
+       (is_depthstencil_format(internalFormat) != is_depthstencil_format(format)) ||
+       (is_dudv_format(internalFormat) != is_dudv_format(format))) {
       if (!isProxy)
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glTexImage(internalFormat/format)");
+                     "glTexImage%dD(incompatible internalFormat 0x%x, format 0x%x)",
+                     dimensions, internalFormat, format);
       return GL_TRUE;
    }
 
@@ -1716,7 +1744,8 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
 
    if (!_mesa_is_legal_format_and_type(ctx, format, type)) {
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glTexSubImage%dD(format or type)", dimensions);
+                  "glTexSubImage%dD(incompatible format 0x%x, type 0x%x)",
+                  dimensions, format, type);
       return GL_TRUE;
    }
 
@@ -1823,7 +1852,6 @@ subtexture_error_check2( GLcontext *ctx, GLuint dimensions,
  * \param internalFormat internal format given by the user.
  * \param width image width given by the user.
  * \param height image height given by the user.
- * \param depth image depth given by the user.
  * \param border texture border.
  * 
  * \return GL_TRUE if an error was detected, or GL_FALSE if no errors.
@@ -2273,6 +2301,12 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
+   if (!ctx->Extensions.ATI_envmap_bumpmap
+       && is_dudv_format(format)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
+      return;
+   }
+
    _mesa_lock_texture(ctx, texObj);
    {
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
@@ -2310,6 +2344,11 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       }
       else if (is_depthstencil_format(format)
 	       && !is_depthstencil_format(texImage->TexFormat->BaseFormat)) {
+	 _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+	 goto out;
+      }
+      else if (is_dudv_format(format)
+	       && !is_dudv_format(texImage->TexFormat->BaseFormat)) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
 	 goto out;
       }
@@ -2400,6 +2439,49 @@ update_fbo_texture(GLcontext *ctx, struct gl_texture_object *texObj,
 }
 
 
+/** Debug helper: override the user-requested internal format */
+static GLenum
+override_internal_format(GLenum internalFormat, GLint width, GLint height)
+{
+#if 0
+   if (internalFormat == GL_RGBA16F_ARB ||
+       internalFormat == GL_RGBA32F_ARB) {
+      printf("Convert rgba float tex to int %d x %d\n", width, height);
+      return GL_RGBA;
+   }
+   else if (internalFormat == GL_RGB16F_ARB ||
+            internalFormat == GL_RGB32F_ARB) {
+      printf("Convert rgb float tex to int %d x %d\n", width, height);
+      return GL_RGB;
+   }
+   else if (internalFormat == GL_LUMINANCE_ALPHA16F_ARB ||
+            internalFormat == GL_LUMINANCE_ALPHA32F_ARB) {
+      printf("Convert luminance float tex to int %d x %d\n", width, height);
+      return GL_LUMINANCE_ALPHA;
+   }
+   else if (internalFormat == GL_LUMINANCE16F_ARB ||
+            internalFormat == GL_LUMINANCE32F_ARB) {
+      printf("Convert luminance float tex to int %d x %d\n", width, height);
+      return GL_LUMINANCE;
+   }
+   else if (internalFormat == GL_ALPHA16F_ARB ||
+            internalFormat == GL_ALPHA32F_ARB) {
+      printf("Convert luminance float tex to int %d x %d\n", width, height);
+      return GL_ALPHA;
+   }
+   /*
+   else if (internalFormat == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) {
+      internalFormat = GL_RGBA;
+   }
+   */
+   else {
+      return internalFormat;
+   }
+#else
+   return internalFormat;
+#endif
+}
+
 
 /*
  * Called from the API.  Note that width includes the border.
@@ -2412,6 +2494,8 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
    GLsizei postConvWidth = width;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   internalFormat = override_internal_format(internalFormat, width, 1);
 
 #if FEATURE_convolve
    if (_mesa_is_color_format(internalFormat)) {
@@ -2509,6 +2593,8 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
    GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   internalFormat = override_internal_format(internalFormat, width, height);
 
 #if FEATURE_convolve
    if (_mesa_is_color_format(internalFormat)) {
@@ -2623,6 +2709,8 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   internalFormat = override_internal_format(internalFormat, width, height);
 
    if (target == GL_TEXTURE_3D ||
        (ctx->Extensions.MESA_texture_array &&

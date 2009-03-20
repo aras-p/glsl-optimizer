@@ -54,7 +54,7 @@
 struct gl_program_parameter
 {
    const char *Name;        /**< Null-terminated string */
-   enum register_file Type; /**< PROGRAM_NAMED_PARAM, CONSTANT or STATE_VAR */
+   gl_register_file Type;   /**< PROGRAM_NAMED_PARAM, CONSTANT or STATE_VAR */
    GLenum DataType;         /**< GL_FLOAT, GL_FLOAT_VEC2, etc */
    GLuint Size;             /**< Number of components (1..4) */
    GLboolean Used;          /**< Helper flag for GLSL uniform tracking */
@@ -102,7 +102,7 @@ _mesa_num_parameters(const struct gl_program_parameter_list *list)
 
 extern GLint
 _mesa_add_parameter(struct gl_program_parameter_list *paramList,
-                    enum register_file type, const char *name,
+                    gl_register_file type, const char *name,
                     GLuint size, GLenum datatype, const GLfloat *values,
                     const gl_state_index state[STATE_LENGTH],
                     GLbitfield flags);
@@ -161,11 +161,11 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
 
 extern GLuint
 _mesa_longest_parameter_name(const struct gl_program_parameter_list *list,
-                             enum register_file type);
+                             gl_register_file type);
 
 extern GLuint
 _mesa_num_parameters_of_type(const struct gl_program_parameter_list *list,
-                             enum register_file type);
+                             gl_register_file type);
 
 
 #endif /* PROG_PARAMETER_H */

@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 #if 0
 #include "texture.h"
@@ -1005,6 +1006,7 @@ main(int argc, char **argv)
 
   glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
   (void) glutCreateWindow("projtex");
+  glewInit();
 
   loadTexture = loadImageTextures;
   drawObject = drawCube;

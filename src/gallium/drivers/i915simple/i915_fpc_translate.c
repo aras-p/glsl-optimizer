@@ -321,16 +321,27 @@ static uint
 translate_tex_src_target(struct i915_fp_compile *p, uint tex)
 {
    switch (tex) {
+   case TGSI_TEXTURE_SHADOW1D:
+      /* fall-through */
    case TGSI_TEXTURE_1D:
       return D0_SAMPLE_TYPE_2D;
+
+   case TGSI_TEXTURE_SHADOW2D:
+      /* fall-through */
    case TGSI_TEXTURE_2D:
       return D0_SAMPLE_TYPE_2D;
+
+   case TGSI_TEXTURE_SHADOWRECT:
+      /* fall-through */
    case TGSI_TEXTURE_RECT:
       return D0_SAMPLE_TYPE_2D;
+
    case TGSI_TEXTURE_3D:
       return D0_SAMPLE_TYPE_VOLUME;
+
    case TGSI_TEXTURE_CUBE:
       return D0_SAMPLE_TYPE_CUBE;
+
    default:
       i915_program_error(p, "TexSrc type");
       return 0;

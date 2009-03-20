@@ -384,16 +384,10 @@ static const char *InputRegisters[MAX_NV_FRAGMENT_PROGRAM_INPUTS + 1] = {
    "TEX0", "TEX1", "TEX2", "TEX3", "TEX4", "TEX5", "TEX6", "TEX7", NULL
 };
 
+
 static const char *OutputRegisters[MAX_NV_FRAGMENT_PROGRAM_OUTPUTS + 1] = {
-   "COLR", "COLH",
-   /* These are only allows for register combiners */
-   /*
-   "TEX0", "TEX1", "TEX2", "TEX3",
-   */
-   "DEPR", NULL
+   "DEPR", "COLR", "DATA0", NULL
 };
-
-
 
 
 /**********************************************************************/
@@ -828,7 +822,6 @@ static GLboolean
 Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
 {
    GLubyte token[100];
-   GLint j;
 
    /* Match "o[" */
    if (!Parse_String(parseState, "o["))
@@ -839,19 +832,19 @@ Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
       RETURN_ERROR;
 
    /* try to match an output register name */
-   for (j = 0; OutputRegisters[j]; j++) {
-      if (_mesa_strcmp((const char *) token, OutputRegisters[j]) == 0) {
-         static GLuint bothColors = (1 << FRAG_RESULT_COLR) | (1 << FRAG_RESULT_COLH);
-         *outputRegNum = j;
-         parseState->outputsWritten |= (1 << j);
-         if ((parseState->outputsWritten & bothColors) == bothColors) {
-            RETURN_ERROR1("Illegal to write to both o[COLR] and o[COLH]");
-         }
-         break;
-      }
+   if (_mesa_strcmp((char *) token, "COLR") == 0 ||
+       _mesa_strcmp((char *) token, "COLH") == 0) {
+      /* note that we don't distinguish between COLR and COLH */
+      *outputRegNum = FRAG_RESULT_COLOR;
+      parseState->outputsWritten |= (1 << FRAG_RESULT_COLOR);
    }
-   if (!OutputRegisters[j])
+   else if (_mesa_strcmp((char *) token, "DEPR") == 0) {
+      *outputRegNum = FRAG_RESULT_DEPTH;
+      parseState->outputsWritten |= (1 << FRAG_RESULT_DEPTH);
+   }
+   else {
       RETURN_ERROR1("Invalid output register name");
+   }
 
    /* Match ']' */
    if (!Parse_String(parseState, "]"))
@@ -1318,8 +1311,6 @@ Parse_InstructionSequence(struct parse_state *parseState,
       }
       else if (Parse_String(parseState, "END")) {
          inst->Opcode = OPCODE_END;
-         inst->StringPos = parseState->curLine - parseState->start;
-         assert(inst->StringPos >= 0);
          parseState->numInst++;
          if (Parse_Token(parseState, token)) {
             RETURN_ERROR1("Code after END opcode.");
@@ -1346,8 +1337,6 @@ Parse_InstructionSequence(struct parse_state *parseState,
          inst->SaturateMode = (instMatch.suffixes & (_S))
             ? SATURATE_ZERO_ONE : SATURATE_OFF;
          inst->CondUpdate = (instMatch.suffixes & (_C)) ? GL_TRUE : GL_FALSE;
-         inst->StringPos = parseState->curLine - parseState->start;
-         assert(inst->StringPos >= 0);
 
          /*
           * parse the input and output operands
@@ -1826,10 +1815,3 @@ _mesa_nv_fragment_input_register_name(GLuint i)
    return InputRegisters[i];
 }
 
-
-const char *
-_mesa_nv_fragment_output_register_name(GLuint i)
-{
-   ASSERT(i < MAX_NV_FRAGMENT_PROGRAM_OUTPUTS);
-   return OutputRegisters[i];
-}

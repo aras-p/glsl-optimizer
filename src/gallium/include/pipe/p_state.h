@@ -43,6 +43,8 @@
 #include "p_compiler.h"
 #include "p_defines.h"
 #include "p_format.h"
+#include "p_refcnt.h"
+#include "p_screen.h"
 
 
 #ifdef __cplusplus
@@ -64,9 +66,7 @@ extern "C" {
 
 
 /* fwd decls */
-struct pipe_screen;
 struct pipe_surface;
-
 
 
 /**
@@ -75,12 +75,11 @@ struct pipe_surface;
  */
 struct pipe_buffer
 {
+   struct pipe_reference reference;
+   struct pipe_screen *screen;
    unsigned alignment;
    unsigned usage;
    unsigned size;
-
-   /** Reference count */
-   unsigned refcount;
 };
 
 
@@ -109,9 +108,15 @@ struct pipe_rasterizer_state
    unsigned line_stipple_factor:8;  /**< [1..256] actually */
    unsigned line_stipple_pattern:16;
    unsigned line_last_pixel:1;
-   unsigned bypass_clipping:1;
-   unsigned bypass_vs:1; /**< Skip the vertex shader.  Note that the shader is
-                            still needed though, to indicate inputs/outputs */
+
+   /** 
+    * Vertex coordinates are pre-transformed to screen space.  Skip
+    * the vertex shader, clipping and viewport processing.  Note that
+    * a vertex shader is still needed though, to indicate the mapping
+    * from vertex elements to fragment shader input semantics.
+    */
+   unsigned bypass_vs_clip_and_viewport:1;
+
    unsigned origin_lower_left:1;  /**< Is (0,0) the lower-left corner? */
    unsigned flatshade_first:1;   /**< take color attribute from the first vertex of a primitive */
    unsigned gl_rasterization_rules:1; /**< enable tweaks for GL rasterization?  */
@@ -275,21 +280,40 @@ struct pipe_sampler_state
  */
 struct pipe_surface
 {
+   struct pipe_reference reference;
    enum pipe_format format;      /**< PIPE_FORMAT_x */
    unsigned status;              /**< PIPE_SURFACE_STATUS_x */
    unsigned clear_value;         /**< XXX may be temporary */
+   unsigned width;               /**< logical width in pixels */
+   unsigned height;              /**< logical height in pixels */
+   unsigned layout;              /**< PIPE_SURFACE_LAYOUT_x */
+   unsigned offset;              /**< offset from start of buffer, in bytes */
+   unsigned usage;               /**< PIPE_BUFFER_USAGE_*  */
+
+   struct pipe_texture *texture; /**< texture into which this is a view  */
+   unsigned face;
+   unsigned level;
+   unsigned zslice;
+};
+
+
+/**
+ * Transfer object.  For data transfer to/from a texture.
+ */
+struct pipe_transfer
+{
+   enum pipe_format format;      /**< PIPE_FORMAT_x */
+   unsigned x;                   /**< x offset from start of texture image */
+   unsigned y;                   /**< y offset from start of texture image */
    unsigned width;               /**< logical width in pixels */
    unsigned height;              /**< logical height in pixels */
    struct pipe_format_block block;
    unsigned nblocksx;            /**< allocated width in blocks */
    unsigned nblocksy;            /**< allocated height in blocks */
    unsigned stride;              /**< stride in bytes between rows of blocks */
-   unsigned layout;              /**< PIPE_SURFACE_LAYOUT_x */
-   unsigned offset;              /**< offset from start of buffer, in bytes */
-   unsigned refcount;
-   unsigned usage;               /**< PIPE_BUFFER_USAGE_*  */
+   unsigned usage;               /**< PIPE_TRANSFER_*  */
 
-   struct pipe_texture *texture; /**< texture into which this is a view  */
+   struct pipe_texture *texture; /**< texture to transfer to/from  */
    unsigned face;
    unsigned level;
    unsigned zslice;
@@ -301,6 +325,8 @@ struct pipe_surface
  */
 struct pipe_texture
 { 
+   struct pipe_reference reference;
+
    enum pipe_texture_target target; /**< PIPE_TEXTURE_x */
    enum pipe_format format;         /**< PIPE_FORMAT_x */
 
@@ -318,10 +344,6 @@ struct pipe_texture
    unsigned nr_samples:8;    /**< for multisampled surfaces, nr of samples */
 
    unsigned tex_usage;       /* PIPE_TEXTURE_USAGE_* */
-
-   /* These are also refcounted:
-    */
-   unsigned refcount;
 
    struct pipe_screen *screen; /**< screen that this texture belongs to */
 };
@@ -357,6 +379,35 @@ struct pipe_vertex_element
  
    enum pipe_format src_format; 	   /**< PIPE_FORMAT_* */
 };
+
+
+/* Reference counting helper functions */
+static INLINE void
+pipe_buffer_reference(struct pipe_buffer **ptr, struct pipe_buffer *buf)
+{
+   struct pipe_buffer *old_buf = *ptr;
+
+   if (pipe_reference((struct pipe_reference **)ptr, &buf->reference))
+      old_buf->screen->buffer_destroy(old_buf);
+}
+
+static INLINE void
+pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
+{
+   struct pipe_surface *old_surf = *ptr;
+
+   if (pipe_reference((struct pipe_reference **)ptr, &surf->reference))
+      old_surf->texture->screen->tex_surface_destroy(old_surf);
+}
+
+static INLINE void
+pipe_texture_reference(struct pipe_texture **ptr, struct pipe_texture *tex)
+{
+   struct pipe_texture *old_tex = *ptr;
+
+   if (pipe_reference((struct pipe_reference **)ptr, &tex->reference))
+      old_tex->screen->texture_destroy(old_tex);
+}
 
 
 #ifdef __cplusplus

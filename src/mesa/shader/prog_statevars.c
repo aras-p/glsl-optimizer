@@ -206,28 +206,28 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          /* state[2] is the texgen attribute */
          switch (state[2]) {
          case STATE_TEXGEN_EYE_S:
-            COPY_4V(value, ctx->Texture.Unit[unit].EyePlaneS);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenS.EyePlane);
             return;
          case STATE_TEXGEN_EYE_T:
-            COPY_4V(value, ctx->Texture.Unit[unit].EyePlaneT);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenT.EyePlane);
             return;
          case STATE_TEXGEN_EYE_R:
-            COPY_4V(value, ctx->Texture.Unit[unit].EyePlaneR);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenR.EyePlane);
             return;
          case STATE_TEXGEN_EYE_Q:
-            COPY_4V(value, ctx->Texture.Unit[unit].EyePlaneQ);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenQ.EyePlane);
             return;
          case STATE_TEXGEN_OBJECT_S:
-            COPY_4V(value, ctx->Texture.Unit[unit].ObjectPlaneS);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenS.ObjectPlane);
             return;
          case STATE_TEXGEN_OBJECT_T:
-            COPY_4V(value, ctx->Texture.Unit[unit].ObjectPlaneT);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenT.ObjectPlane);
             return;
          case STATE_TEXGEN_OBJECT_R:
-            COPY_4V(value, ctx->Texture.Unit[unit].ObjectPlaneR);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenR.ObjectPlane);
             return;
          case STATE_TEXGEN_OBJECT_Q:
-            COPY_4V(value, ctx->Texture.Unit[unit].ObjectPlaneQ);
+            COPY_4V(value, ctx->Texture.Unit[unit].GenQ.ObjectPlane);
             return;
          default:
             _mesa_problem(ctx, "Invalid texgen state in fetch_state");
@@ -506,6 +506,26 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
             }
          }
          return;
+      case STATE_ROT_MATRIX_0:
+         {
+            const int unit = (int) state[2];
+            GLfloat *rotMat22 = ctx->Texture.Unit[unit].RotMatrix;
+            value[0] = rotMat22[0]; 
+            value[1] = rotMat22[2];
+            value[2] = 0.0;
+            value[3] = 0.0;
+         }
+         break;
+      case STATE_ROT_MATRIX_1:
+         {
+            const int unit = (int) state[2];
+            GLfloat *rotMat22 = ctx->Texture.Unit[unit].RotMatrix;
+            value[0] = rotMat22[1];
+            value[1] = rotMat22[3];
+            value[2] = 0.0;
+            value[3] = 0.0;
+         }
+         break;
 
          /* XXX: make sure new tokens added here are also handled in the 
           * _mesa_program_state_flags() switch, below.
@@ -591,6 +611,8 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
 
       case STATE_TEXRECT_SCALE:
       case STATE_SHADOW_AMBIENT:
+      case STATE_ROT_MATRIX_0:
+      case STATE_ROT_MATRIX_1:
 	 return _NEW_TEXTURE;
       case STATE_FOG_PARAMS_OPTIMIZED:
 	 return _NEW_FOG;
@@ -805,6 +827,12 @@ append_token(char *dst, gl_state_index k)
       break;
    case STATE_SHADOW_AMBIENT:
       append(dst, "CompareFailValue");
+      break;
+   case STATE_ROT_MATRIX_0:
+      append(dst, "rotMatrixRow0");
+      break;
+   case STATE_ROT_MATRIX_1:
+      append(dst, "rotMatrixRow1");
       break;
    default:
       /* probably STATE_INTERNAL_DRIVER+i (driver private state) */

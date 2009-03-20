@@ -55,7 +55,7 @@
 static struct gl_buffer_object *
 st_bufferobj_alloc(GLcontext *ctx, GLuint name, GLenum target)
 {
-   struct st_buffer_object *st_obj = CALLOC_STRUCT(st_buffer_object);
+   struct st_buffer_object *st_obj = ST_CALLOC_STRUCT(st_buffer_object);
 
    if (!st_obj)
       return NULL;
@@ -74,13 +74,12 @@ st_bufferobj_alloc(GLcontext *ctx, GLuint name, GLenum target)
 static void
 st_bufferobj_free(GLcontext *ctx, struct gl_buffer_object *obj)
 {
-   struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
    if (st_obj->buffer) 
-      pipe_buffer_reference(pipe->screen, &st_obj->buffer, NULL);
+      pipe_buffer_reference(&st_obj->buffer, NULL);
 
-   free(st_obj);
+   _mesa_free(st_obj);
 }
 
 
@@ -100,14 +99,11 @@ st_bufferobj_subdata(GLcontext *ctx,
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
-   char *map;
 
    if (offset >= st_obj->size || size > (st_obj->size - offset))
       return;
 
-   map = pipe_buffer_map(pipe->screen, st_obj->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
-   memcpy(map + offset, data, size);
-   pipe_buffer_unmap(pipe->screen, st_obj->buffer);
+   pipe_buffer_write(pipe->screen, st_obj->buffer, offset, size, data);
 }
 
 
@@ -123,14 +119,11 @@ st_bufferobj_get_subdata(GLcontext *ctx,
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
-   char *map;
 
    if (offset >= st_obj->size || size > (st_obj->size - offset))
       return;
 
-   map = pipe_buffer_map(pipe->screen, st_obj->buffer, PIPE_BUFFER_USAGE_CPU_READ);
-   memcpy(data, map + offset, size);
-   pipe_buffer_unmap(pipe->screen, st_obj->buffer);
+   pipe_buffer_read(pipe->screen, st_obj->buffer, offset, size, data);
 }
 
 
@@ -171,7 +164,7 @@ st_bufferobj_data(GLcontext *ctx,
       buffer_usage = 0;
    }
 
-   pipe_buffer_reference( pipe->screen, &st_obj->buffer, NULL );
+   pipe_buffer_reference( &st_obj->buffer, NULL );
 
    st_obj->buffer = pipe_buffer_create( pipe->screen, 32, buffer_usage, size );
 
@@ -208,12 +201,77 @@ st_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
    }
 
    obj->Pointer = pipe_buffer_map(pipe->screen, st_obj->buffer, flags);
+   if(obj->Pointer) {
+      obj->Offset = 0;
+      obj->Length = obj->Size;
+   }
    return obj->Pointer;
 }
 
 
+
 /**
- * Called via glMapBufferARB().
+ * Called via glMapBufferRange().
+ */
+static void *
+st_bufferobj_map_range(GLcontext *ctx, GLenum target, 
+                       GLintptr offset, GLsizeiptr length, GLbitfield access,
+                       struct gl_buffer_object *obj)
+{
+   struct pipe_context *pipe = st_context(ctx)->pipe;
+   struct st_buffer_object *st_obj = st_buffer_object(obj);
+   GLuint flags = 0;
+   char *map;
+
+   if (access & GL_MAP_WRITE_BIT)
+      flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
+
+   if (access & GL_MAP_READ_BIT)
+      flags |= PIPE_BUFFER_USAGE_CPU_READ;
+
+   /* ... other flags ...
+    */
+
+   if (access & MESA_MAP_NOWAIT_BIT)
+      flags |= PIPE_BUFFER_USAGE_DONTBLOCK;
+
+   assert(offset >= 0);
+   assert(length >= 0);
+   assert(offset < obj->Size);
+   assert(offset + length <= obj->Size);
+
+   map = obj->Pointer = pipe_buffer_map_range(pipe->screen, st_obj->buffer, offset, length, flags);
+   if(obj->Pointer) {
+      obj->Offset = 0;
+      obj->Length = obj->Size;
+      map += offset;
+   }
+   
+   return map;
+}
+
+
+static void
+st_bufferobj_flush_mapped_range(GLcontext *ctx, GLenum target, 
+                                GLintptr offset, GLsizeiptr length,
+                                struct gl_buffer_object *obj)
+{
+   struct pipe_context *pipe = st_context(ctx)->pipe;
+   struct st_buffer_object *st_obj = st_buffer_object(obj);
+
+   /* Subrange is relative to mapped range */
+   assert(offset >= 0);
+   assert(length >= 0);
+   assert(offset < obj->Length);
+   assert(offset + length <= obj->Length);
+   
+   pipe_buffer_flush_mapped_range(pipe->screen, st_obj->buffer, 
+                                  obj->Offset + offset, length);
+}
+
+
+/**
+ * Called via glUnmapBufferARB().
  */
 static GLboolean
 st_bufferobj_unmap(GLcontext *ctx, GLenum target, struct gl_buffer_object *obj)
@@ -223,6 +281,8 @@ st_bufferobj_unmap(GLcontext *ctx, GLenum target, struct gl_buffer_object *obj)
 
    pipe_buffer_unmap(pipe->screen, st_obj->buffer);
    obj->Pointer = NULL;
+   obj->Offset = 0;
+   obj->Length = 0;
    return GL_TRUE;
 }
 
@@ -236,5 +296,7 @@ st_init_bufferobject_functions(struct dd_function_table *functions)
    functions->BufferSubData = st_bufferobj_subdata;
    functions->GetBufferSubData = st_bufferobj_get_subdata;
    functions->MapBuffer = st_bufferobj_map;
+   functions->MapBufferRange = st_bufferobj_map_range;
+   functions->FlushMappedBufferRange = st_bufferobj_flush_mapped_range;
    functions->UnmapBuffer = st_bufferobj_unmap;
 }

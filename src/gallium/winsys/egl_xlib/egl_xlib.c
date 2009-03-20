@@ -277,6 +277,7 @@ display_surface(struct pipe_winsys *pws,
                 struct pipe_surface *psurf,
                 struct xlib_egl_surface *xsurf)
 {
+   struct softpipe_texture *spt = softpipe_texture(psurf->texture);
    XImage *ximage;
    void *data;
 
@@ -293,13 +294,13 @@ display_surface(struct pipe_winsys *pws,
    assert(ximage->format);
    assert(ximage->bitmap_unit);
 
-   data = pws->buffer_map(pws, softpipe_texture(psurf->texture)->buffer, 0);
+   data = pws->buffer_map(pws, spt->buffer, 0);
 
    /* update XImage's fields */
    ximage->data = data;
    ximage->width = psurf->width;
    ximage->height = psurf->height;
-   ximage->bytes_per_line = psurf->stride;
+   ximage->bytes_per_line = spt->stride[psurf->level];
    
    XPutImage(xsurf->Dpy, xsurf->Win, xsurf->Gc,
              ximage, 0, 0, 0, 0, psurf->width, psurf->height);
@@ -309,7 +310,7 @@ display_surface(struct pipe_winsys *pws,
    ximage->data = NULL;
    XDestroyImage(ximage);
 
-   pws->buffer_unmap(pws, softpipe_texture(psurf->texture)->buffer);
+   pws->buffer_unmap(pws, spt->buffer);
 }
 
 

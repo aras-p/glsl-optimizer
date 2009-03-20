@@ -16,6 +16,7 @@ if env['platform'] != 'winddk':
 		env.Append(CPPDEFINES = [
 			'_GDI32_', # prevent gl* being declared __declspec(dllimport) in MS headers
 			'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers 
+			'WIN32_THREADS', # use Win32 thread API
 		])	 
 
 	#
@@ -39,6 +40,7 @@ if env['platform'] != 'winddk':
 		'main/colortab.c',
 		'main/context.c',
 		'main/convolve.c',
+		'main/cpuinfo.c',
 		'main/debug.c',
 		'main/depth.c',
 		'main/depthstencil.c',
@@ -79,6 +81,7 @@ if env['platform'] != 'winddk':
 		'main/renderbuffer.c',
 		'main/scissor.c',
 		'main/shaders.c',
+		'main/shared.c',
 		'main/state.c',
 		'main/stencil.c',
 		'main/texcompress.c',
@@ -95,6 +98,7 @@ if env['platform'] != 'winddk':
 		'main/texstate.c',
 		'main/texstore.c',
 		'main/varray.c',
+		'main/viewport.c',
 		'main/vtxfmt.c',
 	]
 	
@@ -163,6 +167,7 @@ if env['platform'] != 'winddk':
 		'state_tracker/st_cb_readpixels.c',
 		'state_tracker/st_cb_strings.c',
 		'state_tracker/st_cb_texture.c',
+		'state_tracker/st_cb_viewport.c',
 		'state_tracker/st_context.c',
 		'state_tracker/st_debug.c',
 		'state_tracker/st_draw.c',
@@ -186,10 +191,10 @@ if env['platform'] != 'winddk':
 		'shader/nvvertparse.c',
 		'shader/program.c',
 		'shader/prog_cache.c',
-		'shader/prog_debug.c',
 		'shader/prog_execute.c',
 		'shader/prog_instruction.c',
 		'shader/prog_noise.c',
+		'shader/prog_optimize.c',
 		'shader/prog_parameter.c',
 		'shader/prog_print.c',
 		'shader/prog_statevars.c',
@@ -250,7 +255,7 @@ if env['platform'] != 'winddk':
 		])
 		mesa_sources += [
 			'x86/common_x86.c',
-			'x86/x86.c',
+			'x86/x86_xform.c',
 			'x86/3dnow.c',
 			'x86/sse.c',
 			'x86/common_x86_asm.S',

@@ -2640,6 +2640,13 @@ static const char GetProgramStringARB_names[] =
     "";
 #endif
 
+#if defined(need_GL_ATI_envmap_bumpmap)
+static const char TexBumpParameterfvATI_names[] = 
+    "ip\0" /* Parameter signature */
+    "glTexBumpParameterfvATI\0"
+    "";
+#endif
+
 #if defined(need_GL_VERSION_2_0) || defined(need_GL_ARB_shader_objects)
 static const char CompileShaderARB_names[] = 
     "i\0" /* Parameter signature */
@@ -2977,6 +2984,13 @@ static const char GetVertexAttribdvARB_names[] =
     "iip\0" /* Parameter signature */
     "glGetVertexAttribdv\0"
     "glGetVertexAttribdvARB\0"
+    "";
+#endif
+
+#if defined(need_GL_ATI_envmap_bumpmap)
+static const char TexBumpParameterivATI_names[] = 
+    "ip\0" /* Parameter signature */
+    "glTexBumpParameterivATI\0"
     "";
 #endif
 
@@ -3888,6 +3902,13 @@ static const char VertexAttrib4dARB_names[] =
     "idddd\0" /* Parameter signature */
     "glVertexAttrib4d\0"
     "glVertexAttrib4dARB\0"
+    "";
+#endif
+
+#if defined(need_GL_ATI_envmap_bumpmap)
+static const char GetTexBumpParameterfvATI_names[] = 
+    "ip\0" /* Parameter signature */
+    "glGetTexBumpParameterfvATI\0"
     "";
 #endif
 
@@ -4834,6 +4855,13 @@ static const char VertexAttribs1svNV_names[] =
     "";
 #endif
 
+#if defined(need_GL_ATI_envmap_bumpmap)
+static const char GetTexBumpParameterivATI_names[] = 
+    "ip\0" /* Parameter signature */
+    "glGetTexBumpParameterivATI\0"
+    "";
+#endif
+
 #if defined(need_GL_EXT_coordinate_frame)
 static const char Binormal3bEXT_names[] = 
     "iii\0" /* Parameter signature */
@@ -5194,6 +5222,16 @@ static const struct dri_extension_function GL_ATI_blend_equation_separate_functi
 #if defined(need_GL_ATI_draw_buffers)
 static const struct dri_extension_function GL_ATI_draw_buffers_functions[] = {
     { DrawBuffersARB_names, DrawBuffersARB_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_ATI_envmap_bumpmap)
+static const struct dri_extension_function GL_ATI_envmap_bumpmap_functions[] = {
+    { TexBumpParameterfvATI_names, TexBumpParameterfvATI_remap_index, -1 },
+    { TexBumpParameterivATI_names, TexBumpParameterivATI_remap_index, -1 },
+    { GetTexBumpParameterfvATI_names, GetTexBumpParameterfvATI_remap_index, -1 },
+    { GetTexBumpParameterivATI_names, GetTexBumpParameterivATI_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif

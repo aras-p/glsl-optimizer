@@ -1011,7 +1011,7 @@ _mesa_warning( GLcontext *ctx, const char *fmtString, ... )
  * Prints the message to stderr via fprintf().
  *
  * \param ctx GL context.
- * \param s problem description string.
+ * \param fmtString problem description string.
  */
 void
 _mesa_problem( const GLcontext *ctx, const char *fmtString, ... )

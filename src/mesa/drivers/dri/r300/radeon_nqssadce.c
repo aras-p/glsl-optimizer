@@ -191,7 +191,7 @@ static void process_instruction(struct nqssadce_state* s)
 
 	if (inst->Opcode != OPCODE_KIL) {
 		if (s->Descr->RewriteDepthOut) {
-			if (inst->DstReg.File == PROGRAM_OUTPUT && inst->DstReg.Index == FRAG_RESULT_DEPR)
+			if (inst->DstReg.File == PROGRAM_OUTPUT && inst->DstReg.Index == FRAG_RESULT_DEPTH)
 				rewrite_depth_out(inst);
 		}
 

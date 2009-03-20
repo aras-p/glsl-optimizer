@@ -200,10 +200,11 @@ pb_ondemand_manager_create(struct pb_manager *provider);
 /** 
  * Debug buffer manager to detect buffer under- and overflows.
  *
- * Band size should be a multiple of the largest alignment
+ * Under/overflow sizes should be a multiple of the largest alignment
  */
 struct pb_manager *
-pb_debug_manager_create(struct pb_manager *provider, size_t band_size); 
+pb_debug_manager_create(struct pb_manager *provider,
+                        size_t underflow_size, size_t overflow_size); 
 
 
 #ifdef __cplusplus

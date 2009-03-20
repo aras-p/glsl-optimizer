@@ -30,6 +30,7 @@
 #include "main/context.h"
 #include "main/enable.h"
 #include "main/matrix.h"
+#include "main/viewport.h"
 #include "swrast/swrast.h"
 #include "shader/arbprogram.h"
 #include "shader/program.h"
@@ -112,7 +113,7 @@ intel_check_blit_fragment_ops(GLcontext * ctx, GLboolean src_alpha_is_one)
       return GL_FALSE;
    }
 
-   if (ctx->Stencil.Enabled) {
+   if (ctx->Stencil._Enabled) {
       DBG("fallback due to image stencil\n");
       return GL_FALSE;
    }

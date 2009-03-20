@@ -1,0 +1,9 @@
+!!ARBfp1.0
+TEMP R0;
+SUB R0.xy, fragment.position, {125}.x;
+MOV R0.zw, {0}.x;
+DP3 R0, R0, R0;
+SUB R0.x, R0, {10000}.x;
+KIL -R0.x;
+MOV result.color, fragment.color;
+END

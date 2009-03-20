@@ -137,6 +137,7 @@ static const struct {
    { ON,  "GL_APPLE_packed_pixels",            F(APPLE_packed_pixels) },
    { OFF, "GL_APPLE_vertex_array_object",      F(APPLE_vertex_array_object) },
    { OFF, "GL_ATI_blend_equation_separate",    F(EXT_blend_equation_separate) },
+   { OFF, "GL_ATI_envmap_bumpmap",             F(ATI_envmap_bumpmap) },
    { OFF, "GL_ATI_texture_env_combine3",       F(ATI_texture_env_combine3)},
    { OFF, "GL_ATI_texture_mirror_once",        F(ATI_texture_mirror_once)},
    { OFF, "GL_ATI_fragment_shader",            F(ATI_fragment_shader)},
@@ -147,7 +148,6 @@ static const struct {
    { OFF, "GL_INGR_blend_func_separate",       F(EXT_blend_func_separate) },
    { OFF, "GL_MESA_pack_invert",               F(MESA_pack_invert) },
    { OFF, "GL_MESA_packed_depth_stencil",      F(MESA_packed_depth_stencil) },
-   { OFF, "GL_MESA_program_debug",             F(MESA_program_debug) },
    { OFF, "GL_MESA_resize_buffers",            F(MESA_resize_buffers) },
    { OFF, "GL_MESA_texture_array",             F(MESA_texture_array) },
    { OFF, "GL_MESA_ycbcr_texture",             F(MESA_ycbcr_texture) },
@@ -208,7 +208,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
 #endif
 #if FEATURE_ARB_shading_language_120
-   ctx->Extensions.ARB_shading_language_120 = GL_FALSE; /* not quite done */
+   ctx->Extensions.ARB_shading_language_120 = GL_TRUE;
 #endif
    ctx->Extensions.ARB_shadow = GL_TRUE;
    ctx->Extensions.ARB_shadow_ambient = GL_TRUE;
@@ -230,6 +230,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    /*ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;*/
 #endif
    ctx->Extensions.APPLE_vertex_array_object = GL_TRUE;
+   ctx->Extensions.ATI_envmap_bumpmap = GL_TRUE;
 #if FEATURE_ATI_fragment_shader
    ctx->Extensions.ATI_fragment_shader = GL_TRUE;
 #endif
@@ -276,9 +277,6 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_vertex_array_bgra = GL_TRUE;
    /*ctx->Extensions.IBM_multimode_draw_arrays = GL_TRUE;*/
    ctx->Extensions.MESA_pack_invert = GL_TRUE;
-#if FEATURE_MESA_program_debug
-   ctx->Extensions.MESA_program_debug = GL_TRUE;
-#endif
    ctx->Extensions.MESA_resize_buffers = GL_TRUE;
    ctx->Extensions.MESA_texture_array = GL_TRUE;
    ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
@@ -433,7 +431,7 @@ _mesa_enable_2_1_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
 #endif
 #ifdef FEATURE_ARB_shading_language_120
-   ctx->Extensions.ARB_shading_language_120 = GL_FALSE; /* not quite done */
+   ctx->Extensions.ARB_shading_language_120 = GL_TRUE;
 #endif
 }
 

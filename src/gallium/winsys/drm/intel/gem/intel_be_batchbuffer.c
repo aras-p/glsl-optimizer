@@ -21,7 +21,7 @@ intel_be_batchbuffer_alloc(struct intel_be_context *intel)
 	batch->base.size = 0;
 	batch->base.actual_size = intel->device->max_batch_size;
 	batch->base.relocs = 0;
-	batch->base.max_relocs = INTEL_DEFAULT_RELOCS;
+	batch->base.max_relocs = 500;/*INTEL_DEFAULT_RELOCS;*/
 
 	batch->base.map = malloc(batch->base.actual_size);
 	memset(batch->base.map, 0, batch->base.actual_size);
@@ -47,7 +47,6 @@ intel_be_batchbuffer_reset(struct intel_be_batchbuffer *batch)
 	batch->base.size = batch->base.actual_size - BATCH_RESERVED;
 
 	batch->base.relocs = 0;
-	batch->base.max_relocs = INTEL_DEFAULT_RELOCS;
 
 	batch->bo = drm_intel_bo_alloc(dev->pools.gem,
 	                               "gallium3d_batch_buffer",
@@ -115,10 +114,10 @@ intel_be_batchbuffer_flush(struct intel_be_batchbuffer *batch,
 
 	if (fence) {
 		if (*fence)
-			intel_be_fence_unreference(*fence);
+			intel_be_fence_reference(fence, NULL);
 
 		(*fence) = CALLOC_STRUCT(intel_be_fence);
-		(*fence)->refcount = 1;
+		pipe_reference_init(&(*fence)->reference, 1);
 		(*fence)->bo = NULL;
 	}
 }

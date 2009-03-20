@@ -72,6 +72,8 @@ struct options {
    const char *VertFile;
    const char *FragFile;
    const char *OutputFile;
+   GLboolean Params;
+   struct gl_sl_pragmas Pragmas;
 };
 
 static struct options Options;
@@ -146,6 +148,9 @@ CreateContext(void)
    }
    TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
    _swsetup_Wakeup( ctx );
+
+   /* Override the context's default pragma settings */
+   ctx->Shader.DefaultPragmas = Options.Pragmas;
 
    _mesa_make_current(ctx, buf, buf);
 
@@ -228,6 +233,8 @@ PrintShaderInstructions(GLuint shader, FILE *f)
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
    struct gl_program *prog = sh->Program;
    _mesa_fprint_program_opt(stdout, prog, Options.Mode, Options.LineNumbers);
+   if (Options.Params)
+      _mesa_print_program_parameters(ctx, prog);
 }
 
 
@@ -253,11 +260,15 @@ Usage(void)
    printf("Usage:\n");
    printf("  --vs FILE          vertex shader input filename\n");
    printf("  --fs FILE          fragment shader input filename\n");
-   printf("  --arb              emit ARB-style instructions (the default)\n");
+   printf("  --arb              emit ARB-style instructions\n");
    printf("  --nv               emit NV-style instructions\n");
-   printf("  --debug            emit debug-style instructions\n");
-   printf("  --number, -n       emit line numbers\n");
+   printf("  --debug            force #pragma debug(on)\n");
+   printf("  --nodebug          force #pragma debug(off)\n");
+   printf("  --opt              force #pragma optimize(on)\n");
+   printf("  --noopt            force #pragma optimize(off)\n");
+   printf("  --number, -n       emit line numbers (if --arb or --nv)\n");
    printf("  --output, -o FILE  output filename\n");
+   printf("  --params           also emit program parameter info\n");
    printf("  --help             display this information\n");
 }
 
@@ -268,10 +279,15 @@ ParseOptions(int argc, char *argv[])
    int i;
 
    Options.LineNumbers = GL_FALSE;
-   Options.Mode = PROG_PRINT_ARB;
+   Options.Mode = PROG_PRINT_DEBUG;
    Options.VertFile = NULL;
    Options.FragFile = NULL;
    Options.OutputFile = NULL;
+   Options.Params = GL_FALSE;
+   Options.Pragmas.IgnoreOptimize = GL_FALSE;
+   Options.Pragmas.IgnoreDebug = GL_FALSE;
+   Options.Pragmas.Debug = GL_FALSE;
+   Options.Pragmas.Optimize = GL_TRUE;
 
    if (argc == 1) {
       Usage();
@@ -294,7 +310,20 @@ ParseOptions(int argc, char *argv[])
          Options.Mode = PROG_PRINT_NV;
       }
       else if (strcmp(argv[i], "--debug") == 0) {
-         Options.Mode = PROG_PRINT_DEBUG;
+         Options.Pragmas.IgnoreDebug = GL_TRUE;
+         Options.Pragmas.Debug = GL_TRUE;
+      }
+      else if (strcmp(argv[i], "--nodebug") == 0) {
+         Options.Pragmas.IgnoreDebug = GL_TRUE;
+         Options.Pragmas.Debug = GL_FALSE;
+      }
+      else if (strcmp(argv[i], "--opt") == 0) {
+         Options.Pragmas.IgnoreOptimize = GL_TRUE;
+         Options.Pragmas.Optimize = GL_TRUE;
+      }
+      else if (strcmp(argv[i], "--noopt") == 0) {
+         Options.Pragmas.IgnoreOptimize = GL_TRUE;
+         Options.Pragmas.Optimize = GL_FALSE;
       }
       else if (strcmp(argv[i], "--number") == 0 ||
                strcmp(argv[i], "-n") == 0) {
@@ -304,6 +333,9 @@ ParseOptions(int argc, char *argv[])
                strcmp(argv[i], "-o") == 0) {
          Options.OutputFile = argv[i + 1];
          i++;
+      }
+      else if (strcmp(argv[i], "--params") == 0) {
+         Options.Params = GL_TRUE;
       }
       else if (strcmp(argv[i], "--help") == 0) {
          Usage();
@@ -315,6 +347,11 @@ ParseOptions(int argc, char *argv[])
          exit(1);
       }
    }
+
+   if (Options.Mode == PROG_PRINT_DEBUG) {
+      /* always print line numbers when emitting debug-style output */
+      Options.LineNumbers = GL_TRUE;
+   }
 }
 
 
@@ -323,12 +360,12 @@ main(int argc, char *argv[])
 {
    GLuint shader = 0;
 
+   ParseOptions(argc, argv);
+
    if (!CreateContext()) {
       fprintf(stderr, "%s: Failed to create compiler context\n", Prog);
       exit(1);
    }
-
-   ParseOptions(argc, argv);
 
    if (Options.VertFile) {
       shader = CompileShader(Options.VertFile, GL_VERTEX_SHADER);

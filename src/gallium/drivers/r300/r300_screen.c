@@ -50,6 +50,7 @@ static const char* chip_families[] = {
     "RC410",
     "RS480",
     "RS482",
+    "RS600",
     "RS690",
     "RS740",
     "RV515",
@@ -100,11 +101,9 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
             /* IN THEORY */
             return 0;
         case PIPE_CAP_MAX_RENDER_TARGETS:
-            /* XXX 4 eventually */
-            return 1;
+            return 4;
         case PIPE_CAP_OCCLUSION_QUERY:
-            /* IN THEORY */
-            return 0;
+            return 1;
         case PIPE_CAP_TEXTURE_SHADOW_MAP:
             /* IN THEORY */
             return 0;
@@ -121,7 +120,7 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
              * shows why this is silly. Assuming RGBA, 4cpp, we can see that
              * 4096*4096*4096 = 64.0 GiB exactly, so it's not exactly
              * practical. However, if at some point a game really wants this,
-             * then we can remove this limit. */
+             * then we can remove or raise this limit. */
             if (r300screen->caps->is_r500) {
                 /* 9 == 256x256x256 */
                 return 9;
@@ -142,7 +141,7 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
         case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
             return 1;
         case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-            /* XXX guessing */
+            /* XXX guessing (what a terrible guess) */
             return 2;
         default:
             debug_printf("r300: Implementation error: Bad param %d\n",
@@ -175,15 +174,44 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param)
     }
 }
 
-/* XXX moar formats */
-static boolean check_tex_2d_format(enum pipe_format format)
+static boolean check_tex_2d_format(enum pipe_format format, boolean is_r500)
 {
     switch (format) {
+        /* Colorbuffer */
+        case PIPE_FORMAT_A4R4G4B4_UNORM:
+        case PIPE_FORMAT_R5G6B5_UNORM:
+        case PIPE_FORMAT_A1R5G5B5_UNORM:
         case PIPE_FORMAT_A8R8G8B8_UNORM:
+        /* Colorbuffer or texture */
         case PIPE_FORMAT_I8_UNORM:
+        /* Z buffer */
+        case PIPE_FORMAT_Z16_UNORM:
+        /* Z buffer with stencil */
+        case PIPE_FORMAT_Z24S8_UNORM:
             return TRUE;
+
+        /* XXX These don't even exist
+        case PIPE_FORMAT_A32R32G32B32:
+        case PIPE_FORMAT_A16R16G16B16: */
+        /* XXX Insert YUV422 packed VYUY and YVYU here */
+        /* XXX What the deuce is UV88? (r3xx accel page 14)
+            debug_printf("r300: Warning: Got unimplemented format: %s in %s\n",
+                pf_name(format), __FUNCTION__);
+            return FALSE; */
+
+        /* XXX Supported yet unimplemented r5xx formats: */
+        /* XXX Again, what is UV1010 this time? (r5xx accel page 148) */
+        /* XXX Even more that don't exist
+        case PIPE_FORMAT_A10R10G10B10_UNORM:
+        case PIPE_FORMAT_A2R10G10B10_UNORM:
+        case PIPE_FORMAT_I10_UNORM:
+            debug_printf(
+                "r300: Warning: Got unimplemented r500 format: %s in %s\n",
+                pf_name(format), __FUNCTION__);
+            return FALSE; */
+
         default:
-            debug_printf("r300: Warning: Got unknown format: %s, in %s\n",
+            debug_printf("r300: Warning: Got unsupported format: %s in %s\n",
                 pf_name(format), __FUNCTION__);
             break;
     }
@@ -200,7 +228,8 @@ static boolean r300_is_format_supported(struct pipe_screen* pscreen,
 {
     switch (target) {
         case PIPE_TEXTURE_2D:
-            return check_tex_2d_format(format);
+            return check_tex_2d_format(format,
+                r300_screen(pscreen)->caps->is_r500);
         default:
             debug_printf("r300: Warning: Got unknown format target: %d\n",
                 format);
@@ -210,24 +239,84 @@ static boolean r300_is_format_supported(struct pipe_screen* pscreen,
     return FALSE;
 }
 
-static void* r300_surface_map(struct pipe_screen* screen,
-                              struct pipe_surface* surface,
-                              unsigned flags)
+static struct pipe_transfer*
+r300_get_tex_transfer(struct pipe_screen *screen,
+                      struct pipe_texture *texture,
+                      unsigned face, unsigned level, unsigned zslice,
+                      enum pipe_transfer_usage usage, unsigned x, unsigned y,
+                      unsigned w, unsigned h)
 {
-    struct r300_texture* tex = (struct r300_texture*)surface->texture;
-    char* map = pipe_buffer_map(screen, tex->buffer, flags);
+    struct r300_texture *tex = (struct r300_texture *)texture;
+    struct r300_transfer *trans;
+    unsigned offset;  /* in bytes */
+
+    /* XXX Add support for these things */
+    if (texture->target == PIPE_TEXTURE_CUBE) {
+        debug_printf("PIPE_TEXTURE_CUBE is not yet supported.\n");
+        /* offset = tex->image_offset[level][face]; */
+    }
+    else if (texture->target == PIPE_TEXTURE_3D) {
+        debug_printf("PIPE_TEXTURE_3D is not yet supported.\n");
+        /* offset = tex->image_offset[level][zslice]; */
+    }
+    else {
+        offset = tex->offset[level];
+        assert(face == 0);
+        assert(zslice == 0);
+    }
+
+    trans = CALLOC_STRUCT(r300_transfer);
+    if (trans) {
+        pipe_texture_reference(&trans->transfer.texture, texture);
+        trans->transfer.format = trans->transfer.format;
+        trans->transfer.width = w;
+        trans->transfer.height = h;
+        trans->transfer.block = texture->block;
+        trans->transfer.nblocksx = texture->nblocksx[level];
+        trans->transfer.nblocksy = texture->nblocksy[level];
+        trans->transfer.stride = tex->stride;
+        trans->transfer.usage = usage;
+        trans->offset = offset;
+    }
+    return &trans->transfer;
+}
+
+static void
+r300_tex_transfer_destroy(struct pipe_transfer *trans)
+{
+   pipe_texture_reference(&trans->texture, NULL);
+   FREE(trans);
+}
+
+static void* r300_transfer_map(struct pipe_screen* screen,
+                              struct pipe_transfer* transfer)
+{
+    struct r300_texture* tex = (struct r300_texture*)transfer->texture;
+    char* map;
+    unsigned flags = 0;
+
+    if (transfer->usage != PIPE_TRANSFER_WRITE) {
+        flags |= PIPE_BUFFER_USAGE_CPU_READ;
+    }
+    if (transfer->usage != PIPE_TRANSFER_READ) {
+        flags |= PIPE_BUFFER_USAGE_CPU_WRITE;
+    }
+    
+    map = pipe_buffer_map(screen, tex->buffer, flags);
 
     if (!map) {
         return NULL;
     }
 
-    return map + surface->offset;
+    return map + r300_transfer(transfer)->offset +
+        transfer->y / transfer->block.height * transfer->stride +
+        transfer->x / transfer->block.width * transfer->block.size;
 }
 
-static void r300_surface_unmap(struct pipe_screen* screen,
-                               struct pipe_surface* surface)
+static void r300_transfer_unmap(struct pipe_screen* screen,
+                                struct pipe_transfer* transfer)
 {
-    struct r300_texture* tex = (struct r300_texture*)surface->texture;
+    struct r300_texture* tex = (struct r300_texture*)transfer->texture;
     pipe_buffer_unmap(screen, tex->buffer);
 }
 
@@ -239,8 +328,7 @@ static void r300_destroy_screen(struct pipe_screen* pscreen)
     FREE(r300screen);
 }
 
-struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys,
-                                       struct r300_winsys* r300_winsys)
+struct pipe_screen* r300_create_screen(struct r300_winsys* r300_winsys)
 {
     struct r300_screen* r300screen = CALLOC_STRUCT(r300_screen);
     struct r300_capabilities* caps = CALLOC_STRUCT(r300_capabilities);
@@ -254,15 +342,17 @@ struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys,
     r300_parse_chipset(caps);
 
     r300screen->caps = caps;
-    r300screen->screen.winsys = winsys;
+    r300screen->screen.winsys = (struct pipe_winsys*)r300_winsys;
     r300screen->screen.destroy = r300_destroy_screen;
     r300screen->screen.get_name = r300_get_name;
     r300screen->screen.get_vendor = r300_get_vendor;
     r300screen->screen.get_param = r300_get_param;
     r300screen->screen.get_paramf = r300_get_paramf;
     r300screen->screen.is_format_supported = r300_is_format_supported;
-    r300screen->screen.surface_map = r300_surface_map;
-    r300screen->screen.surface_unmap = r300_surface_unmap;
+    r300screen->screen.get_tex_transfer = r300_get_tex_transfer;
+    r300screen->screen.tex_transfer_destroy = r300_tex_transfer_destroy;
+    r300screen->screen.transfer_map = r300_transfer_map;
+    r300screen->screen.transfer_unmap = r300_transfer_unmap;
 
     r300_init_screen_texture_functions(&r300screen->screen);
     u_simple_screen_init(&r300screen->screen);

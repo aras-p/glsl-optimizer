@@ -139,6 +139,8 @@ struct __GLXDRIscreenRec {
     void (*swapBuffers)(__GLXDRIdrawable *pdraw);
     void (*copySubBuffer)(__GLXDRIdrawable *pdraw,
 			  int x, int y, int width, int height);
+    void (*waitX)(__GLXDRIdrawable *pdraw);
+    void (*waitGL)(__GLXDRIdrawable *pdraw);
 };
 
 struct __GLXDRIcontextRec {
@@ -515,6 +517,10 @@ struct __GLXscreenConfigsRec {
 
 #ifdef __DRI_TEX_BUFFER
     const __DRItexBufferExtension *texBuffer;
+#endif
+
+#ifdef __DRI2_FLUSH
+    const __DRI2flushExtension *f;
 #endif
 
 #endif

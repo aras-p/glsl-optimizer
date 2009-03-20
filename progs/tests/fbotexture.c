@@ -9,7 +9,7 @@
  */
 
 
-#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include <assert.h>
 #include <stdio.h>
@@ -26,9 +26,16 @@
 static int Win = 0;
 static int Width = 400, Height = 400;
 
-static GLenum TexTarget = GL_TEXTURE_2D; /*GL_TEXTURE_RECTANGLE_ARB;*/
+#if 1
+static GLenum TexTarget = GL_TEXTURE_2D;
 static int TexWidth = 512, TexHeight = 512;
-/*static int TexWidth = 600, TexHeight = 600;*/
+static GLenum TexIntFormat = GL_RGB; /* either GL_RGB or GL_RGBA */
+#else
+static GLenum TexTarget = GL_TEXTURE_RECTANGLE_ARB;
+static int TexWidth = 200, TexHeight = 200;
+static GLenum TexIntFormat = GL_RGB5; /* either GL_RGB or GL_RGBA */
+#endif
+static GLuint TextureLevel = 0;  /* which texture level to render to */
 
 static GLuint MyFB;
 static GLuint TexObj;
@@ -38,8 +45,6 @@ static GLfloat Rot = 0.0;
 static GLboolean UsePackedDepthStencil = GL_FALSE;
 static GLboolean UsePackedDepthStencilBoth = GL_FALSE;
 static GLboolean Use_ARB_fbo = GL_FALSE;
-static GLuint TextureLevel = 0;  /* which texture level to render to */
-static GLenum TexIntFormat = GL_RGB; /* either GL_RGB or GL_RGBA */
 static GLboolean Cull = GL_FALSE;
 static GLboolean Wireframe = GL_FALSE;
 
@@ -404,8 +409,12 @@ AttachDepthAndStencilBuffers(GLuint fbo,
          return GL_FALSE;
 
       status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-      if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
+      if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+         glDeleteRenderbuffersEXT(1, depthRbOut);
+         *depthRbOut = 0;
+         glDeleteRenderbuffersEXT(1, &rb);
          return GL_FALSE;
+      }
 
       *stencilRbOut = rb;
    }
@@ -554,15 +563,17 @@ Init(void)
       /* make two image levels */
       glTexImage2D(TexTarget, 0, TexIntFormat, TexWidth, TexHeight, 0,
                    GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-      glTexImage2D(TexTarget, 1, TexIntFormat, TexWidth/2, TexHeight/2, 0,
-                   GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-      TexWidth = TexWidth >> TextureLevel;
-      TexHeight = TexHeight >> TextureLevel;
+      if (TexTarget == GL_TEXTURE_2D) {
+         glTexImage2D(TexTarget, 1, TexIntFormat, TexWidth/2, TexHeight/2, 0,
+                      GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+         TexWidth = TexWidth >> TextureLevel;
+         TexHeight = TexHeight >> TextureLevel;
+         glTexParameteri(TexTarget, GL_TEXTURE_MAX_LEVEL, TextureLevel);
+      }
 
       glTexParameteri(TexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(TexTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       glTexParameteri(TexTarget, GL_TEXTURE_BASE_LEVEL, TextureLevel);
-      glTexParameteri(TexTarget, GL_TEXTURE_MAX_LEVEL, TextureLevel);
       glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
    }
 
@@ -576,7 +587,7 @@ Usage(void)
    printf("Usage:\n");
    printf("  -ds  Use combined depth/stencil renderbuffer\n");
    printf("  -arb Try GL_ARB_framebuffer_object's mismatched buffer sizes\n");
-   printf("  -ds2 Tye GL_ARB_framebuffer_object's GL_DEPTH_STENCIL_ATTACHMENT\n");
+   printf("  -ds2 Try GL_ARB_framebuffer_object's GL_DEPTH_STENCIL_ATTACHMENT\n");
    printf("Keys:\n");
    printf("  a    Toggle animation\n");
    printf("  s/s  Step/rotate\n");
@@ -594,6 +605,7 @@ main(int argc, char *argv[])
    glutInitWindowSize(Width, Height);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
    Win = glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
    glutDisplayFunc(Display);

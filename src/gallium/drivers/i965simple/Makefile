@@ -50,5 +50,3 @@ C_SOURCES = \
 	brw_wm_surface_state.c
 
 include ../../Makefile.template
-
-symlinks:

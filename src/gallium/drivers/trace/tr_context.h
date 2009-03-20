@@ -30,7 +30,7 @@
 
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/p_context.h"
 
 
@@ -38,11 +38,11 @@
 extern "C" {
 #endif
 
-   
+
 struct trace_context
 {
    struct pipe_context base;
-   
+
    struct pipe_context *pipe;
 };
 

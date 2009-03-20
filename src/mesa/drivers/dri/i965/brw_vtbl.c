@@ -67,11 +67,13 @@ static void brw_destroy_context( struct intel_context *intel )
    brw_destroy_state(brw);
    brw_draw_destroy( brw );
 
+   _mesa_free(brw->wm.compile_data);
+
    brw_FrameBufferTexDestroy( brw );
 
-   for (i = 0; i < brw->state.nr_draw_regions; i++)
-      intel_region_release(&brw->state.draw_regions[i]);
-   brw->state.nr_draw_regions = 0;
+   for (i = 0; i < brw->state.nr_color_regions; i++)
+      intel_region_release(&brw->state.color_regions[i]);
+   brw->state.nr_color_regions = 0;
    intel_region_release(&brw->state.depth_region);
 
    dri_bo_release(&brw->curbe.curbe_bo);
@@ -90,6 +92,7 @@ static void brw_destroy_context( struct intel_context *intel )
    dri_bo_release(&brw->wm.bind_bo);
    for (i = 0; i < BRW_WM_MAX_SURF; i++)
       dri_bo_release(&brw->wm.surf_bo[i]);
+   dri_bo_release(&brw->wm.sampler_bo);
    dri_bo_release(&brw->wm.prog_bo);
    dri_bo_release(&brw->wm.state_bo);
    dri_bo_release(&brw->cc.prog_bo);
@@ -102,25 +105,25 @@ static void brw_destroy_context( struct intel_context *intel )
  * called from intelDrawBuffer()
  */
 static void brw_set_draw_region( struct intel_context *intel, 
-                                 struct intel_region *draw_regions[],
+                                 struct intel_region *color_regions[],
                                  struct intel_region *depth_region,
-                                 GLuint num_regions)
+                                 GLuint num_color_regions)
 {
    struct brw_context *brw = brw_context(&intel->ctx);
-   int i;
+   GLuint i;
 
    /* release old color/depth regions */
    if (brw->state.depth_region != depth_region)
       brw->state.dirty.brw |= BRW_NEW_DEPTH_BUFFER;
-   for (i = 0; i < brw->state.nr_draw_regions; i++)
-       intel_region_release(&brw->state.draw_regions[i]);
+   for (i = 0; i < brw->state.nr_color_regions; i++)
+       intel_region_release(&brw->state.color_regions[i]);
    intel_region_release(&brw->state.depth_region);
 
    /* reference new color/depth regions */
-   for (i = 0; i < num_regions; i++)
-       intel_region_reference(&brw->state.draw_regions[i], draw_regions[i]);
+   for (i = 0; i < num_color_regions; i++)
+       intel_region_reference(&brw->state.color_regions[i], color_regions[i]);
    intel_region_reference(&brw->state.depth_region, depth_region);
-   brw->state.nr_draw_regions = num_regions;
+   brw->state.nr_color_regions = num_color_regions;
 }
 
 
@@ -181,23 +184,6 @@ static void brw_note_unlock( struct intel_context *intel )
 }
 
 
-void brw_do_flush( struct brw_context *brw, GLuint flags )
-{
-   struct brw_mi_flush flush;
-   memset(&flush, 0, sizeof(flush));      
-   flush.opcode = CMD_MI_FLUSH;
-   flush.flags = flags;
-   BRW_BATCH_STRUCT(brw, &flush);
-}
-
-
-static void brw_emit_flush( struct intel_context *intel, GLuint unused )
-{
-   brw_do_flush(brw_context(&intel->ctx),
-		BRW_FLUSH_STATE_CACHE|BRW_FLUSH_READ_CACHE);
-}
-
-
 /* called from intelWaitForIdle() and intelFlush()
  *
  * For now, just flush everything.  Could be smarter later.
@@ -234,6 +220,5 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.destroy = brw_destroy_context;
    brw->intel.vtbl.set_draw_region = brw_set_draw_region;
    brw->intel.vtbl.flush_cmd = brw_flush_cmd;
-   brw->intel.vtbl.emit_flush = brw_emit_flush;
    brw->intel.vtbl.debug_batch = brw_debug_batch;
 }

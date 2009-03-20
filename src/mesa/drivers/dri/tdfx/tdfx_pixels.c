@@ -610,7 +610,7 @@ tdfx_drawpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
        ctx->Depth.Test ||
        ctx->Fog.Enabled ||
        ctx->Scissor.Enabled ||
-       ctx->Stencil.Enabled ||
+       ctx->Stencil._Enabled ||
        !ctx->Color.ColorMask[0] ||
        !ctx->Color.ColorMask[1] ||
        !ctx->Color.ColorMask[2] ||

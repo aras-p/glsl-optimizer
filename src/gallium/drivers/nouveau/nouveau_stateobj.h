@@ -1,7 +1,7 @@
 #ifndef __NOUVEAU_STATEOBJ_H__
 #define __NOUVEAU_STATEOBJ_H__
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 
 struct nouveau_stateobj_reloc {
 	struct pipe_buffer *bo;
@@ -16,7 +16,7 @@ struct nouveau_stateobj_reloc {
 };
 
 struct nouveau_stateobj {
-	int refcount;
+	struct pipe_reference reference;
 
 	unsigned *push;
 	struct nouveau_stateobj_reloc *reloc;
@@ -32,7 +32,7 @@ so_new(unsigned push, unsigned reloc)
 	struct nouveau_stateobj *so;
 
 	so = MALLOC(sizeof(struct nouveau_stateobj));
-	so->refcount = 0;
+	pipe_reference_init(&so->reference, 1);
 	so->push = MALLOC(sizeof(unsigned) * push);
 	so->reloc = MALLOC(sizeof(struct nouveau_stateobj_reloc) * reloc);
 
@@ -47,17 +47,11 @@ so_ref(struct nouveau_stateobj *ref, struct nouveau_stateobj **pso)
 {
 	struct nouveau_stateobj *so = *pso;
 
-	if (ref) {
-		ref->refcount++;
-	}
-
-	if (so && --so->refcount <= 0) {
+        if (pipe_reference((struct pipe_reference**)pso, &ref->reference)) {
 		free(so->push);
 		free(so->reloc);
 		free(so);
 	}
-
-	*pso = ref;
 }
 
 static INLINE void

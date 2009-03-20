@@ -732,7 +732,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    unsigned char *RADEONMMIO = NULL;
    int i;
    int ret;
-   uint32_t temp;
+   uint32_t temp = 0;
 
    if (sPriv->devPrivSize != sizeof(RADEONDRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(RADEONDRIRec) does not match passed size from device driver\n");
@@ -1359,7 +1359,7 @@ radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
         radeon_bo_unref(rb->bo);
         rb->bo = NULL;
     }
-   _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
+    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)

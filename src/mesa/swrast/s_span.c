@@ -442,11 +442,10 @@ _swrast_span_interpolate_z( const GLcontext *ctx, SWspan *span )
  * Compute mipmap LOD from partial derivatives.
  * This the ideal solution, as given in the OpenGL spec.
  */
-#if 0
-static GLfloat
-compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
-               GLfloat dqdx, GLfloat dqdy, GLfloat texW, GLfloat texH,
-               GLfloat s, GLfloat t, GLfloat q, GLfloat invQ)
+GLfloat
+_swrast_compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
+                       GLfloat dqdx, GLfloat dqdy, GLfloat texW, GLfloat texH,
+                       GLfloat s, GLfloat t, GLfloat q, GLfloat invQ)
 {
    GLfloat dudx = texW * ((s + dsdx) / (q + dqdx) - s * invQ);
    GLfloat dvdx = texH * ((t + dtdx) / (q + dqdx) - t * invQ);
@@ -458,13 +457,13 @@ compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
    GLfloat lambda = LOG2(rho);
    return lambda;
 }
-#endif
 
 
 /**
  * Compute mipmap LOD from partial derivatives.
  * This is a faster approximation than above function.
  */
+#if 0
 GLfloat
 _swrast_compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
                      GLfloat dqdx, GLfloat dqdy, GLfloat texW, GLfloat texH,
@@ -485,6 +484,7 @@ _swrast_compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
    lambda = LOG2(rho);
    return lambda;
 }
+#endif
 
 
 /**
@@ -846,11 +846,11 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
    }
 
    /* Stencil and Z testing */
-   if (ctx->Depth.Test || ctx->Stencil.Enabled) {
+   if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
 
-      if (ctx->Stencil.Enabled) {
+      if (ctx->Stencil._Enabled) {
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
             span->arrayMask = origArrayMask;
             return;
@@ -1211,7 +1211,7 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
          _swrast_exec_fragment_shader(ctx, span);
       }
    }
-   else if (ctx->Texture._EnabledUnits) {
+   else if (ctx->Texture._EnabledCoordUnits) {
       /* conventional texturing */
 
 #if CHAN_BITS == 32
@@ -1250,7 +1250,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    void * const origRgba = span->array->rgba;
    const GLboolean shader = (ctx->FragmentProgram._Current
                              || ctx->ATIFragmentShader._Enabled);
-   const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledUnits;
+   const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledCoordUnits;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
 
    /*
@@ -1317,11 +1317,11 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    }
 
    /* Stencil and Z testing */
-   if (ctx->Stencil.Enabled || ctx->Depth.Test) {
+   if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
 
-      if (ctx->Stencil.Enabled && fb->Visual.stencilBits > 0) {
+      if (ctx->Stencil._Enabled) {
          /* Combined Z/stencil tests */
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
             /* all fragments failed test */

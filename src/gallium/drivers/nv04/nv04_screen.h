@@ -24,4 +24,7 @@ nv04_screen(struct pipe_screen *screen)
 	return (struct nv04_screen *)screen;
 }
 
+void
+nv04_screen_init_transfer_functions(struct pipe_screen *pscreen);
+
 #endif

@@ -100,7 +100,6 @@ struct intel_context
 			       GLuint num_regions);
 
       GLuint (*flush_cmd) (void);
-      void (*emit_flush) (struct intel_context *intel, GLuint unused);
 
       void (*reduced_primitive_state) (struct intel_context * intel,
                                        GLenum rprim);
@@ -229,7 +228,14 @@ struct intel_context
    GLboolean hw_stipple;
    GLboolean depth_buffer_is_float;
    GLboolean no_rast;
-   GLboolean strict_conformance;
+   GLboolean always_flush_batch;
+   GLboolean always_flush_cache;
+
+   /* 0 - nonconformant, best performance;
+    * 1 - fallback to sw for known conformance bugs
+    * 2 - always fallback to sw
+    */
+   GLuint conformance_mode;
 
    /* State for intelvb.c and inteltris.c.
     */

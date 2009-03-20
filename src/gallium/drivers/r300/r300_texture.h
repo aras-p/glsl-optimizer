@@ -28,7 +28,16 @@
 #include "util/u_math.h"
 
 #include "r300_context.h"
+#include "r300_reg.h"
 
 void r300_init_screen_texture_functions(struct pipe_screen* screen);
+
+#ifndef R300_WINSYS_H
+
+boolean r300_get_texture_buffer(struct pipe_texture* texture,
+                                struct pipe_buffer** buffer,
+                                unsigned* stride);
+
+#endif /* R300_WINSYS_H */
 
 #endif /* R300_TEXTURE_H */

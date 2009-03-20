@@ -18,6 +18,7 @@ samplers
 samplers_array
 shaderutil.c
 shaderutil.h
+shadow_sampler
 skinning
 texdemo1
 toyball

@@ -48,48 +48,78 @@ struct trace_surface
    struct pipe_surface base;
 
    struct pipe_surface *surface;
-   
+};
+
+
+struct trace_transfer
+{
+   struct pipe_transfer base;
+
+   struct pipe_transfer *transfer;
+
    void *map;
 };
 
 
 static INLINE struct trace_texture *
-trace_texture(struct trace_screen *tr_scr, 
+trace_texture(struct trace_screen *tr_scr,
               struct pipe_texture *texture)
 {
    if(!texture)
       return NULL;
+   assert(tr_scr);
    assert(texture->screen == &tr_scr->base);
    return (struct trace_texture *)texture;
 }
 
 
 static INLINE struct trace_surface *
-trace_surface(struct trace_texture *tr_tex, 
+trace_surface(struct trace_texture *tr_tex,
               struct pipe_surface *surface)
 {
    if(!surface)
       return NULL;
+   assert(tr_tex);
    assert(surface->texture == &tr_tex->base);
    return (struct trace_surface *)surface;
 }
 
 
+static INLINE struct trace_transfer *
+trace_transfer(struct trace_texture *tr_tex,
+               struct pipe_transfer *transfer)
+{
+   if(!transfer)
+      return NULL;
+   assert(tr_tex);
+   assert(transfer->texture == &tr_tex->base);
+   return (struct trace_transfer *)transfer;
+}
+
+
 struct pipe_texture *
-trace_texture_create(struct trace_screen *tr_scr, 
+trace_texture_create(struct trace_screen *tr_scr,
                      struct pipe_texture *texture);
 
 void
-trace_texture_destroy(struct trace_screen *tr_scr, 
+trace_texture_destroy(struct trace_screen *tr_scr,
                       struct pipe_texture *texture);
 
 struct pipe_surface *
-trace_surface_create(struct trace_texture *tr_tex, 
+trace_surface_create(struct trace_texture *tr_tex,
                      struct pipe_surface *surface);
 
 void
 trace_surface_destroy(struct trace_texture *tr_tex,
                       struct pipe_surface *surface);
+
+struct pipe_transfer *
+trace_transfer_create(struct trace_texture *tr_tex,
+                      struct pipe_transfer *transfer);
+
+void
+trace_transfer_destroy(struct trace_texture *tr_tex,
+                       struct pipe_transfer *transfer);
 
 
 #endif /* TR_TEXTURE_H_ */

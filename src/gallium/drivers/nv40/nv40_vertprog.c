@@ -916,6 +916,7 @@ check_gpu_resources:
 		so_method(so, curie,  NV40TCL_CLIP_PLANE_ENABLE, 1);
 		so_data  (so, vp->clip_ctrl);
 		so_ref(so, &vp->so);
+		so_ref(NULL, &so);
 
 		upload_code = TRUE;
 	}

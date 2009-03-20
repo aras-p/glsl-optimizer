@@ -51,19 +51,25 @@
  */
 #include <stdlib.h>
 #include <stdio.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
-static GLint BaseLevel = 0, MaxLevel = 8;
+#include "readtex.h"
+
+#define TEXTURE_FILE "../images/girl.rgb"
+
+static GLint BaseLevel = 0, MaxLevel = 9;
 static GLfloat MinLod = -1, MaxLod = 9;
 static GLfloat LodBias = 0.0;
 static GLboolean NearestFilter = GL_TRUE;
+static GLuint texImage, texColor, texCurrent;
 
 
 static void
 InitValues(void)
 {
    BaseLevel = 0;
-   MaxLevel = 8;
+   MaxLevel = 9;
    MinLod = -1;
    MaxLod = 9;
    LodBias = 0.0;
@@ -74,7 +80,7 @@ InitValues(void)
 static void MakeImage(int level, int width, int height, const GLubyte color[4])
 {
    const int makeStripes = 0;
-   GLubyte img[256*256*3];
+   GLubyte img[512*512*3];
    int i, j;
    for (i = 0; i < height; i++) {
       for (j = 0; j < width; j++) {
@@ -98,87 +104,138 @@ static void MakeImage(int level, int width, int height, const GLubyte color[4])
 }
 
 
-static void makeImages(void)
+static void makeImages(int image)
 {
-   static const GLubyte colors[8][3] = {
-      {128, 128, 128 },
-      { 0, 255, 255 },
-      { 255, 255, 0 },
-      { 255, 0, 255 },
-      { 255, 0, 0 },
-      { 0, 255, 0 },
-      { 0, 0, 255 },
-      { 255, 255, 255 }
-   };
-   int i, sz = 128;
+#define WIDTH 512
+#define HEIGHT 512
+   if (glutExtensionSupported("GL_SGIS_generate_mipmap") && image) {
+      /* test auto mipmap generation */
+      GLint width, height, i;
+      GLenum format;
+      GLubyte *image = LoadRGBImage(TEXTURE_FILE, &width, &height, &format);
+      if (!image) {
+         printf("Error: could not load texture image %s\n", TEXTURE_FILE);
+         exit(1);
+      }
+      /* resize */
+      if (width != WIDTH || height != HEIGHT) {
+         GLubyte *newImage = malloc(WIDTH * HEIGHT * 4);
+         gluScaleImage(format, width, height, GL_UNSIGNED_BYTE, image,
+               WIDTH, HEIGHT, GL_UNSIGNED_BYTE, newImage);
+         free(image);
+         image = newImage;
+      }
+      printf("Using GL_SGIS_generate_mipmap\n");
+      glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+      glTexImage2D(GL_TEXTURE_2D, 0, format, WIDTH, HEIGHT, 0,
+            format, GL_UNSIGNED_BYTE, image);
+      glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
+      free(image);
 
-   for (i = 0; i < 8; i++) {
-      MakeImage(i, sz, sz, colors[i]);
-      sz /= 2;
+      /* make sure mipmap was really generated correctly */
+      width = WIDTH; height = HEIGHT;
+      for (i = 0; i < 10; i++) {
+         GLint w, h;
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, i, GL_TEXTURE_WIDTH, &w);
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, i, GL_TEXTURE_HEIGHT, &h);
+         printf("Level %d size: %d x %d\n", i, w, h);
+         width /= 2;
+         height /= 2;
+      }
+   } else {
+      static const GLubyte colors[10][3] = {
+         {128, 128, 128 },
+         { 0, 255, 255 },
+         { 255, 255, 0 },
+         { 255, 0, 255 },
+         { 255, 0, 0 },
+         { 0, 255, 0 },
+         { 0, 0, 255 },
+         { 0, 255, 255 },
+         { 255, 255, 0 },
+         { 255, 255, 255 }
+      };
+      int i, sz = 512;
+
+      for (i = 0; i < 10; i++) {
+         MakeImage(i, sz, sz, colors[i]);
+         printf("Level %d size: %d x %d\n", i, sz, sz);
+         sz /= 2;
+      }
    }
 }
 
 static void myinit(void)
 {
-    InitValues();
+   InitValues();
 
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    glShadeModel(GL_FLAT);
+   glEnable(GL_DEPTH_TEST);
+   glDepthFunc(GL_LESS);
+   glShadeModel(GL_FLAT);
 
-    glTranslatef(0.0, 0.0, -3.6);
+   glTranslatef(0.0, 0.0, -3.6);
 
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    makeImages();
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-    glEnable(GL_TEXTURE_2D);
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+   glGenTextures(1, &texImage);
+   glBindTexture(GL_TEXTURE_2D, texImage);
+   makeImages(1);
+   glGenTextures(1, &texColor);
+   glBindTexture(GL_TEXTURE_2D, texColor);
+   makeImages(0);
+
+   texCurrent = texImage;
+
+   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+   glEnable(GL_TEXTURE_2D);
 }
 
 static void display(void)
 {
-   GLfloat tcm = 4.0;
-    printf("BASE_LEVEL=%d  MAX_LEVEL=%d  MIN_LOD=%.2g  MAX_LOD=%.2g  Bias=%.2g  Filter=%s\n",
-           BaseLevel, MaxLevel, MinLod, MaxLod, LodBias,
-           NearestFilter ? "NEAREST" : "LINEAR");
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, BaseLevel);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MaxLevel);
+   GLfloat tcm = 1.0;
+   glBindTexture(GL_TEXTURE_2D, texCurrent);
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_LOD, MinLod);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, MaxLod);
+   printf("BASE_LEVEL=%d  MAX_LEVEL=%d  MIN_LOD=%.2g  MAX_LOD=%.2g  Bias=%.2g  Filter=%s\n",
+         BaseLevel, MaxLevel, MinLod, MaxLod, LodBias,
+         NearestFilter ? "NEAREST" : "LINEAR");
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, BaseLevel);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MaxLevel);
 
-    if (NearestFilter) {
-       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                       GL_NEAREST_MIPMAP_NEAREST);
-    }
-    else {
-       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                       GL_LINEAR_MIPMAP_LINEAR);
-    }
+   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_LOD, MinLod);
+   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, MaxLod);
 
-    glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, LodBias);
+   if (NearestFilter) {
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+            GL_NEAREST_MIPMAP_NEAREST);
+   }
+   else {
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+            GL_LINEAR_MIPMAP_LINEAR);
+   }
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0, 0.0); glVertex3f(-2.0, -1.0, 0.0);
-    glTexCoord2f(0.0, tcm); glVertex3f(-2.0, 1.0, 0.0);
-    glTexCoord2f(tcm, tcm); glVertex3f(3000.0, 1.0, -6000.0);
-    glTexCoord2f(tcm, 0.0); glVertex3f(3000.0, -1.0, -6000.0);
-    glEnd();
-    glFlush();
+   glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, LodBias);
+
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   glBegin(GL_QUADS);
+   glTexCoord2f(0.0, 0.0); glVertex3f(-2.0, -1.0, 0.0);
+   glTexCoord2f(0.0, tcm); glVertex3f(-2.0, 1.0, 0.0);
+   glTexCoord2f(tcm * 3000.0, tcm); glVertex3f(3000.0, 1.0, -6000.0);
+   glTexCoord2f(tcm * 3000.0, 0.0); glVertex3f(3000.0, -1.0, -6000.0);
+   glEnd();
+   glFlush();
 }
 
 static void myReshape(int w, int h)
 {
-    glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(60.0, 1.0*(GLfloat)w/(GLfloat)h, 1.0, 30000.0);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+   glViewport(0, 0, w, h);
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   gluPerspective(60.0, 1.0*(GLfloat)w/(GLfloat)h, 1.0, 30000.0);
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
 }
 
 static void
@@ -228,6 +285,12 @@ key(unsigned char k, int x, int y)
   case 'f':
      NearestFilter = !NearestFilter;
      break;
+  case 't':
+     if (texCurrent == texColor)
+        texCurrent = texImage;
+     else
+        texCurrent = texColor;
+     break;
   case ' ':
      InitValues();
      break;
@@ -250,6 +313,7 @@ static void usage(void)
    printf("  x/X    decrease/increase GL_TEXTURE_MAX_LOD\n");
    printf("  l/L    decrease/increase GL_TEXTURE_LOD_BIAS\n");
    printf("  f      toggle nearest/linear filtering\n");
+   printf("  t      toggle texture color/image\n");
    printf("  SPACE  reset values\n");
 }
 
@@ -260,6 +324,7 @@ int main(int argc, char** argv)
     glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize (600, 600);
     glutCreateWindow (argv[0]);
+    glewInit();
     myinit();
     glutReshapeFunc (myReshape);
     glutDisplayFunc(display);

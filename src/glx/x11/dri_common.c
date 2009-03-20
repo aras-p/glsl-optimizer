@@ -392,6 +392,13 @@ driBindExtensions(__GLXscreenConfigs *psc, int dri2)
 	}
 #endif
 
+#ifdef __DRI2_FLUSH
+	if ((strcmp(extensions[i]->name, __DRI2_FLUSH) == 0) && dri2) {
+	    psc->f = (__DRI2flushExtension *) extensions[i];
+	    /* internal driver extension, no GL extension exposed */
+	}
+#endif
+
 	/* Ignore unknown extensions */
     }
 }

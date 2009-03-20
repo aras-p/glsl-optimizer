@@ -537,10 +537,13 @@ nv40_vbo_validate(struct nv40_context *nv40)
 	so_data  (vtxbuf, 0);
 
 	so_ref(vtxbuf, &nv40->state.hw[NV40_STATE_VTXBUF]);
+	so_ref(NULL, &vtxbuf);
 	nv40->state.dirty |= (1ULL << NV40_STATE_VTXBUF);
 	so_ref(vtxfmt, &nv40->state.hw[NV40_STATE_VTXFMT]);
+	so_ref(NULL, &vtxfmt);
 	nv40->state.dirty |= (1ULL << NV40_STATE_VTXFMT);
 	so_ref(sattr, &nv40->state.hw[NV40_STATE_VTXATTR]);
+	so_ref(NULL, &sattr);
 	nv40->state.dirty |= (1ULL << NV40_STATE_VTXATTR);
 	return FALSE;
 }

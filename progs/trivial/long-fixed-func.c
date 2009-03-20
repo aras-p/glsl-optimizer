@@ -139,7 +139,7 @@ main(int argc, char **argv)
     glutInitWindowPosition(0, 0);
     glutInitWindowSize( 250, 250);
     glutInitDisplayMode(type);
-    if (glutCreateWindow("tri-long-fixedfunc") == GL_FALSE) {
+    if (glutCreateWindow(*argv) == GL_FALSE) {
        exit(1);
     }
     glewInit();

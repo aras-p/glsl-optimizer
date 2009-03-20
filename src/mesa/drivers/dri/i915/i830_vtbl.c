@@ -422,10 +422,10 @@ i830_emit_state(struct intel_context *intel)
    struct i830_hw_state *state = i830->current;
    int i, count;
    GLuint dirty;
-   GET_CURRENT_CONTEXT(ctx);
-   BATCH_LOCALS;
    dri_bo *aper_array[3 + I830_TEX_UNITS];
    int aper_count;
+   GET_CURRENT_CONTEXT(ctx);
+   BATCH_LOCALS;
 
    /* We don't hold the lock at this point, so want to make sure that
     * there won't be a buffer wrap between the state emits and the primitive

@@ -82,14 +82,15 @@ static void r300SetVertexFormat( GLcontext *ctx )
 	struct vertex_buffer *VB = &tnl->vb;
 	DECLARE_RENDERINPUTS(index_bitset);
 	GLuint InputsRead = 0, OutputsWritten = 0;
-	int vap_fmt_0 = 0;
+	int vap_fmt_1 = 0;
 	int offset = 0;
 	int vte = 0;
+	int fog_id;
 	GLint inputs[VERT_ATTRIB_MAX];
 	GLint tab[VERT_ATTRIB_MAX];
 	int swizzle[VERT_ATTRIB_MAX][4];
 	GLuint i, nr;
-	GLuint sz, vap_fmt_1 = 0;
+	GLuint sz;
 
 	DECLARE_RENDERINPUTS(render_inputs_bitset);
 	RENDERINPUTS_COPY(render_inputs_bitset, tnl->render_inputs_bitset);
@@ -125,13 +126,12 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		offset = 4;
 		EMIT_PAD(4 * sizeof(float));
 	}
-
+/*
 	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POINTSIZE )) {
 		EMIT_ATTR( _TNL_ATTRIB_POINTSIZE, EMIT_1F );
-		vap_fmt_0 |=  R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
 		offset += 1;
 	}
-
+*/
 	if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_COLOR0)) {
 		sz = VB->AttribPtr[VERT_ATTRIB_COLOR0]->size;
 	        rmesa->swtcl.coloroffset = offset;
@@ -150,6 +150,33 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		OutputsWritten |= 1 << VERT_RESULT_COL1;
 	}
 
+	fog_id = -1;
+	if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_FOG)) {
+		/* find first free tex coord slot */
+		if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
+			int i;
+			for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+				if (!RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
+					fog_id = i;
+					break;
+				}
+			}
+		} else {
+			fog_id = 0;
+		}
+
+		if (fog_id == -1) {
+			fprintf(stderr, "\tout of free texcoords to do fog\n");
+			_mesa_exit(-1);
+		}
+
+		sz = VB->AttribPtr[VERT_ATTRIB_FOG]->size;
+		EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1F + sz - 1);
+		InputsRead |= 1 << VERT_ATTRIB_FOG;
+		OutputsWritten |= 1 << VERT_RESULT_FOGC;
+		vap_fmt_1 |= sz << (3 * fog_id);
+	}
+
 	if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
 		int i;
 
@@ -162,6 +189,37 @@ static void r300SetVertexFormat( GLcontext *ctx )
 				vap_fmt_1 |= sz << (3 * i);
 			}
 		}
+	}
+
+	/* RS can't put fragment position on the pixel stack, so stuff it in texcoord if needed */
+	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POS) && (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_WPOS)) {
+		int first_free_tex = -1;
+		if (fog_id >= 0) {
+			first_free_tex = fog_id+1;
+		} else {
+			if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
+				int i;
+				for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+					if (!RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
+						first_free_tex = i;
+						break;
+					}
+				}
+			} else {
+				first_free_tex = 0;
+			}
+		}
+
+		if (first_free_tex == -1) {
+			fprintf(stderr, "\tout of free texcoords to write w pos\n");
+			_mesa_exit(-1);
+		}
+
+		sz = VB->AttribPtr[VERT_ATTRIB_POS]->size;
+		InputsRead |= 1 << (VERT_ATTRIB_TEX0 + first_free_tex);
+		OutputsWritten |= 1 << (VERT_RESULT_TEX0 + first_free_tex);
+		EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_1F + sz - 1 );
+		vap_fmt_1 |= sz << (3 * first_free_tex);
 	}
 
 	for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++) {
@@ -179,6 +237,8 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		inputs[VERT_ATTRIB_COLOR0] = 2;
 	if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
 		inputs[VERT_ATTRIB_COLOR1] = 3;
+	if (InputsRead & (1 << VERT_ATTRIB_FOG))
+		inputs[VERT_ATTRIB_FOG] = 6 + fog_id;
 	for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
 		if (InputsRead & (1 << i))
 			inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
@@ -224,6 +284,7 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
 				   nr);
 	}
+
 	R300_STATECHANGE(rmesa, vic);
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
@@ -520,9 +581,12 @@ static void r300RenderStart(GLcontext *ctx)
 	r300UpdateShaderStates(rmesa);
 
 	r300EmitCacheFlush(rmesa);
+
+	/* investigate if we can put back flush optimisation if needed */
 	if (rmesa->radeon.dma.flush != NULL) {
 		rmesa->radeon.dma.flush(ctx);
 	}
+
 }
 
 static void r300RenderFinish(GLcontext *ctx)
@@ -652,5 +716,4 @@ void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 		   rmesa->radeon.swtcl.numverts);
   r300EmitCacheFlush(rmesa);
   COMMIT_BATCH();
-
 }

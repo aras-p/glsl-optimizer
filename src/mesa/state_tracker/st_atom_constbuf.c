@@ -73,7 +73,7 @@ void st_upload_constants( struct st_context *st,
       /* We always need to get a new buffer, to keep the drivers simple and
        * avoid gratuitous rendering synchronization.
        */
-      pipe_buffer_reference(pipe->screen, &cbuf->buffer, NULL );
+      pipe_buffer_reference(&cbuf->buffer, NULL );
       cbuf->buffer = pipe_buffer_create(pipe->screen, 16, PIPE_BUFFER_USAGE_CONSTANT,
 					paramBytes );
 
@@ -85,12 +85,10 @@ void st_upload_constants( struct st_context *st,
       }
 
       /* load Mesa constants into the constant buffer */
-      if (cbuf->buffer) {
-         void *map = pipe_buffer_map(pipe->screen, cbuf->buffer,
-                                     PIPE_BUFFER_USAGE_CPU_WRITE);
-         memcpy(map, params->ParameterValues, paramBytes);
-         pipe_buffer_unmap(pipe->screen, cbuf->buffer);
-      }
+      if (cbuf->buffer)
+         pipe_buffer_write(pipe->screen, cbuf->buffer, 
+                           0, paramBytes, 
+                           params->ParameterValues);
 
       st->pipe->set_constant_buffer(st->pipe, id, 0, cbuf);
    }

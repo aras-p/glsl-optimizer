@@ -51,9 +51,11 @@ util_draw_vertex_buffer(struct pipe_context *pipe,
    assert(num_attribs <= PIPE_MAX_ATTRIBS);
 
    /* tell pipe about the vertex buffer */
+   memset(&vbuffer, 0, sizeof(vbuffer));
    vbuffer.buffer = vbuf;
    vbuffer.stride = num_attribs * 4 * sizeof(float);  /* vertex size */
    vbuffer.buffer_offset = offset;
+   vbuffer.max_index = num_verts - 1;
    pipe->set_vertex_buffers(pipe, 1, &vbuffer);
 
    /* tell pipe about the vertex attributes */
@@ -127,6 +129,6 @@ util_draw_texquad(struct pipe_context *pipe,
          util_draw_vertex_buffer(pipe, vbuf, 0, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
       }
 
-      pipe_buffer_reference(pipe->screen, &vbuf, NULL);
+      pipe_buffer_reference(&vbuf, NULL);
    }
 }

@@ -68,6 +68,11 @@ struct pipe_winsys
    const char *(*get_name)( struct pipe_winsys *ws );
 
    /**
+    * Do any special operations to ensure buffer size is correct
+    */
+   void (*update_buffer)( struct pipe_winsys *ws,
+                          void *context_private );
+   /**
     * Do any special operations to ensure frontbuffer contents are
     * displayed, eg copy fake frontbuffer.
     */
@@ -149,8 +154,7 @@ struct pipe_winsys
    void (*buffer_unmap)( struct pipe_winsys *ws, 
 			 struct pipe_buffer *buf );
 
-   void (*buffer_destroy)( struct pipe_winsys *ws,
-			   struct pipe_buffer *buf );
+   void (*buffer_destroy)( struct pipe_buffer *buf );
 
 
    /** Set ptr = fence, with reference counting */

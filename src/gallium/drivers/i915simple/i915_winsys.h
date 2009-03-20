@@ -30,7 +30,8 @@
  * This is the interface that i915simple requires any window system
  * hosting it to implement.  This is the only include file in i915simple
  * which is public.
- * 
+ *
+ * This isn't currently true as the winsys needs i915_batchbuffer.h
  */
 
 #ifndef I915_WINSYS_H
@@ -45,10 +46,9 @@ extern "C" {
 #endif
 
    
-/* Pipe drivers are (meant to be!) independent of both GL and the
- * window system.  The window system provides a buffer manager and a
- * set of additional hooks for things like command buffer submission,
- * etc.
+/* Pipe drivers are independent of both GL and the window system.
+ * The window system provides a buffer manager and a set of additional
+ * hooks for things like command buffer submission, etc.
  *
  * There clearly has to be some agreement between the window system
  * driver and the hardware driver about the format of command buffers,
@@ -56,6 +56,7 @@ extern "C" {
  */
 
 struct i915_batchbuffer;
+struct pipe_texture;
 struct pipe_buffer;
 struct pipe_fence_handle;
 struct pipe_winsys;
@@ -64,7 +65,7 @@ struct pipe_screen;
 
 /**
  * Additional winsys interface for i915simple.
- * 
+ *
  * It is an over-simple batchbuffer mechanism.  Will want to improve the
  * performance of this, perhaps based on the cmdstream stuff.  It
  * would be pretty impossible to implement swz on top of this
@@ -110,12 +111,33 @@ struct i915_winsys {
 #define I915_BUFFER_USAGE_LIT_VERTEX  (PIPE_BUFFER_USAGE_CUSTOM << 0)
 
 
-struct pipe_context *i915_create_context( struct pipe_screen *,
-                                          struct pipe_winsys *,
-                                          struct i915_winsys * );
+/**
+ * Create i915 pipe_screen.
+ */
+struct pipe_screen *i915_create_screen( struct pipe_winsys *winsys,
+                                        uint pci_id );
+
+/**
+ * Create a i915 pipe_context.
+ */
+struct pipe_context *i915_create_context( struct pipe_screen *screen,
+                                          struct pipe_winsys *winsys,
+                                          struct i915_winsys *i915 );
+
+/**
+ * Used for the winsys to get the buffer used for a texture
+ * and also the stride used for the texture.
+ *
+ * Buffer is referenced for you so you need to unref after use.
+ *
+ * This is needed for example kms.
+ */
+boolean i915_get_texture_buffer( struct pipe_texture *texture,
+                                 struct pipe_buffer **buf,
+                                 unsigned *stride );
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif 
+#endif

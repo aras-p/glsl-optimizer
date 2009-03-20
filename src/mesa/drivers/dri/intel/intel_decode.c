@@ -1595,7 +1595,7 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 		  "3DPRIMITIVE: %s %s\n",
 		  get_965_prim_type(data[0]),
 		  (data[0] & (1 << 15)) ? "random" : "sequential");
-	instr_out(data, hw_offset, 1, "primitive count\n");
+	instr_out(data, hw_offset, 1, "vertex count\n");
 	instr_out(data, hw_offset, 2, "start vertex\n");
 	instr_out(data, hw_offset, 3, "instance count\n");
 	instr_out(data, hw_offset, 4, "start instance\n");

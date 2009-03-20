@@ -30,82 +30,17 @@
 
 #include "GL/gl.h"
 
-#include "pipe/p_debug.h"
+#include "util/u_debug.h"
 #include "pipe/p_thread.h"
 
 #include "shared/stw_public.h"
 #include "icd/stw_icd.h"
-#include "stw.h"
 
+#define DBG 0
 
-#define DRV_CONTEXT_MAX 32
+static GLCLTPROCTABLE cpt;
+static boolean cpt_initialized = FALSE;
 
-struct stw_icd
-{
-   pipe_mutex mutex;
-
-   GLCLTPROCTABLE cpt;
-   boolean cpt_initialized;
-
-   struct {
-      struct stw_context *ctx;
-   } ctx_array[DRV_CONTEXT_MAX];
-};
-
-
-static struct stw_icd *stw_icd = NULL;
-
-
-boolean
-stw_icd_init( void )
-{
-   static struct stw_icd stw_icd_storage;
-
-   assert(!stw_icd);
-
-   stw_icd = &stw_icd_storage;
-   memset(stw_icd, 0, sizeof *stw_icd);
-
-   pipe_mutex_init( stw_icd->mutex );
-
-   return TRUE;
-}
-
-void
-stw_icd_cleanup(void)
-{
-   int i;
-
-   if (!stw_icd)
-      return;
-   
-   pipe_mutex_lock( stw_icd->mutex );
-   {
-      /* Ensure all contexts are destroyed */
-      for (i = 0; i < DRV_CONTEXT_MAX; i++)
-         if (stw_icd->ctx_array[i].ctx) 
-            stw_delete_context( stw_icd->ctx_array[i].ctx );
-   }
-   pipe_mutex_unlock( stw_icd->mutex );
-
-   pipe_mutex_init( stw_icd->mutex );
-   stw_icd = NULL;
-}
-
-
-static struct stw_context *
-lookup_context( struct stw_icd *icd, 
-                DHGLRC dhglrc )
-{
-   if (dhglrc == 0 || 
-       dhglrc >= DRV_CONTEXT_MAX)
-      return NULL;
-
-   if (icd == NULL)
-      return NULL;
-
-   return icd->ctx_array[dhglrc - 1].ctx;
-}
 
 BOOL APIENTRY
 DrvCopyContext(
@@ -113,63 +48,16 @@ DrvCopyContext(
    DHGLRC dhrcDest,
    UINT fuMask )
 {
-   BOOL ret = FALSE;
-
-   if (!stw_icd)
-      return FALSE;
-
-   pipe_mutex_lock( stw_icd->mutex );
-   {
-      struct stw_context *src = lookup_context( stw_icd, dhrcSource );
-      struct stw_context *dst = lookup_context( stw_icd, dhrcDest );
-   
-      if (src == NULL || dst == NULL) 
-         goto done;
-
-      ret = stw_copy_context( src, dst, fuMask );
-   }
-done:
-   pipe_mutex_unlock( stw_icd->mutex );
-
-   return ret;
+   return stw_copy_context(dhrcSource, dhrcDest, fuMask);
 }
+
 
 DHGLRC APIENTRY
 DrvCreateLayerContext(
    HDC hdc,
    INT iLayerPlane )
 {
-   DHGLRC handle = 0;
-
-   if (!stw_icd)
-      return handle;
-
-   pipe_mutex_lock( stw_icd->mutex );
-   {
-      int i;
-
-      for (i = 0; i < DRV_CONTEXT_MAX; i++) {
-         if (stw_icd->ctx_array[i].ctx == NULL)
-            break;
-      }
-   
-      /* No slot available, fail:
-       */
-      if (i == DRV_CONTEXT_MAX)
-         goto done;
-
-      stw_icd->ctx_array[i].ctx = stw_create_context( hdc, iLayerPlane );
-      if (stw_icd->ctx_array[i].ctx == NULL) 
-         goto done;
-      
-      /* success:
-       */
-      handle = (DHGLRC) i + 1;
-   }
-done:
-   pipe_mutex_unlock( stw_icd->mutex );
-
-   return handle;
+   return stw_create_layer_context( hdc, iLayerPlane );
 }
 
 DHGLRC APIENTRY
@@ -183,30 +71,7 @@ BOOL APIENTRY
 DrvDeleteContext(
    DHGLRC dhglrc )
 {
-   BOOL ret = FALSE;
-
-   if (!stw_icd)
-      return ret;
-
-   pipe_mutex_lock( stw_icd->mutex );
-   {
-      struct stw_context *ctx;
-
-      ctx = lookup_context( stw_icd, dhglrc );
-      if (ctx == NULL) 
-         goto done;
-      
-      if (stw_delete_context( ctx ) == FALSE)
-         goto done;
-      
-      stw_icd->ctx_array[dhglrc - 1].ctx = NULL;
-      ret = TRUE;
-
-   }
-done:
-   pipe_mutex_unlock( stw_icd->mutex );
-   
-   return ret;
+   return stw_delete_context( dhglrc );
 }
 
 BOOL APIENTRY
@@ -217,7 +82,8 @@ DrvDescribeLayerPlane(
    UINT nBytes,
    LPLAYERPLANEDESCRIPTOR plpd )
 {
-   debug_printf( "%s\n", __FUNCTION__ );
+   if (DBG) 
+      debug_printf( "%s\n", __FUNCTION__ );
 
    return FALSE;
 }
@@ -233,8 +99,9 @@ DrvDescribePixelFormat(
 
    r = stw_pixelformat_describe( hdc, iPixelFormat, cjpfd, ppfd );
 
-   debug_printf( "%s( %p, %d, %u, %p ) = %d\n",
-                 __FUNCTION__, hdc, iPixelFormat, cjpfd, ppfd, r );
+   if (DBG)
+      debug_printf( "%s( %p, %d, %u, %p ) = %d\n",
+                    __FUNCTION__, hdc, iPixelFormat, cjpfd, ppfd, r );
 
    return r;
 }
@@ -247,7 +114,8 @@ DrvGetLayerPaletteEntries(
    INT cEntries,
    COLORREF *pcr )
 {
-   debug_printf( "%s\n", __FUNCTION__ );
+   if (DBG)
+      debug_printf( "%s\n", __FUNCTION__ );
 
    return 0;
 }
@@ -260,7 +128,8 @@ DrvGetProcAddress(
 
    r = stw_get_proc_address( lpszProc );
 
-   debug_printf( "%s( \", __FUNCTION__%s\" ) = %p\n", lpszProc, r );
+   if (DBG)
+      debug_printf( "%s( \", __FUNCTION__%s\" ) = %p\n", lpszProc, r );
 
    return r;
 }
@@ -271,7 +140,8 @@ DrvRealizeLayerPalette(
    INT iLayerPlane,
    BOOL bRealize )
 {
-   debug_printf( "%s\n", __FUNCTION__ );
+   if (DBG)
+      debug_printf( "%s\n", __FUNCTION__ );
 
    return FALSE;
 }
@@ -280,32 +150,7 @@ BOOL APIENTRY
 DrvReleaseContext(
    DHGLRC dhglrc )
 {
-   BOOL ret = FALSE;
-
-   if (!stw_icd)
-      return ret;
-
-   pipe_mutex_lock( stw_icd->mutex );
-   {
-      struct stw_context *ctx;
-
-      /* XXX: The expectation is that ctx is the same context which is
-       * current for this thread.  We should check that and return False
-       * if not the case.
-       */
-      ctx = lookup_context( stw_icd, dhglrc );
-      if (ctx == NULL) 
-         goto done;
-
-      if (stw_make_current( NULL, NULL ) == FALSE)
-         goto done;
-
-      ret = TRUE;
-   }
-done:
-   pipe_mutex_unlock( stw_icd->mutex );
-
-   return ret;
+   return stw_release_context(dhglrc);
 }
 
 void APIENTRY
@@ -313,7 +158,8 @@ DrvSetCallbackProcs(
    INT nProcs,
    PROC *pProcs )
 {
-   debug_printf( "%s( %d, %p )\n", __FUNCTION__, nProcs, pProcs );
+   if (DBG)
+      debug_printf( "%s( %d, %p )\n", __FUNCTION__, nProcs, pProcs );
 
    return;
 }
@@ -671,38 +517,21 @@ DrvSetContext(
    DHGLRC dhglrc,
    PFN_SETPROCTABLE pfnSetProcTable )
 {
-   PGLCLTPROCTABLE result = NULL;
-
-   if (!stw_icd)
-      return result;
-
-   pipe_mutex_lock( stw_icd->mutex ); 
-   {
-      struct stw_context *ctx;
-
+   if (DBG)
       debug_printf( "%s( 0x%p, %u, 0x%p )\n", 
                     __FUNCTION__, hdc, dhglrc, pfnSetProcTable );
 
-      /* Although WGL allows different dispatch entrypoints per 
-       */
-      if (!stw_icd->cpt_initialized) {
-         init_proc_table( &stw_icd->cpt );
-         stw_icd->cpt_initialized = TRUE;
-      }
-
-      ctx = lookup_context( stw_icd, dhglrc );
-      if (ctx == NULL)
-         goto done;
-
-      if (!stw_make_current( hdc, ctx ))
-         goto done;
-
-      result = &stw_icd->cpt;
+   /* Although WGL allows different dispatch entrypoints per 
+    */
+   if (!cpt_initialized) {
+      init_proc_table( &cpt );
+      cpt_initialized = TRUE;
    }
-done:
-   pipe_mutex_unlock( stw_icd->mutex );
 
-   return result;
+   if (!stw_make_current( hdc, dhglrc ))
+      return NULL;
+      
+   return &cpt;
 }
 
 int APIENTRY
@@ -713,7 +542,8 @@ DrvSetLayerPaletteEntries(
    INT cEntries,
    CONST COLORREF *pcr )
 {
-   debug_printf( "%s\n", __FUNCTION__ );
+   if (DBG)
+      debug_printf( "%s\n", __FUNCTION__ );
 
    return 0;
 }
@@ -727,7 +557,8 @@ DrvSetPixelFormat(
 
    r = stw_pixelformat_set( hdc, iPixelFormat );
 
-   debug_printf( "%s( %p, %d ) = %s\n", __FUNCTION__, hdc, iPixelFormat, r ? "TRUE" : "FALSE" );
+   if (DBG)
+      debug_printf( "%s( %p, %d ) = %s\n", __FUNCTION__, hdc, iPixelFormat, r ? "TRUE" : "FALSE" );
 
    return r;
 }
@@ -737,7 +568,8 @@ DrvShareLists(
    DHGLRC dhglrc1,
    DHGLRC dhglrc2 )
 {
-   debug_printf( "%s\n", __FUNCTION__ );
+   if (DBG)
+      debug_printf( "%s\n", __FUNCTION__ );
 
    return FALSE;
 }
@@ -746,7 +578,8 @@ BOOL APIENTRY
 DrvSwapBuffers(
    HDC hdc )
 {
-   debug_printf( "%s( %p )\n", __FUNCTION__, hdc );
+   if (DBG)
+      debug_printf( "%s( %p )\n", __FUNCTION__, hdc );
 
    return stw_swap_buffers( hdc );
 }
@@ -756,7 +589,8 @@ DrvSwapLayerBuffers(
    HDC hdc,
    UINT fuPlanes )
 {
-   debug_printf( "%s\n", __FUNCTION__ );
+   if (DBG)
+      debug_printf( "%s\n", __FUNCTION__ );
 
    return FALSE;
 }
@@ -765,7 +599,8 @@ BOOL APIENTRY
 DrvValidateVersion(
    ULONG ulVersion )
 {
-   debug_printf( "%s( %u )\n", __FUNCTION__, ulVersion );
+   if (DBG)
+      debug_printf( "%s( %u )\n", __FUNCTION__, ulVersion );
 
    /* TODO: get the expected version from the winsys */
    

@@ -143,12 +143,11 @@ struct brw_wm_instruction {
    GLuint writemask:4;
    GLuint tex_unit:4;   /* texture unit for TEX, TXD, TXP instructions */
    GLuint tex_idx:3;    /* TEXTURE_1D,2D,3D,CUBE,RECT_INDEX source target */
+   GLuint tex_shadow:1; /* do shadow comparison? */
    GLuint eot:1;    	/* End of thread indicator for FB_WRITE*/
    GLuint target:10;    /* target binding table index for FB_WRITE*/
 };
 
-
-#define PROGRAM_INTERNAL_PARAM 
 
 #define BRW_WM_MAX_INSN  (MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS*3 + FRAG_ATTRIB_MAX + 3)
 #define BRW_WM_MAX_GRF   128		/* hardware limit */
@@ -240,13 +239,15 @@ struct brw_wm_compile {
    GLuint max_wm_grf;
    GLuint last_scratch;
 
+   /** Mapping from Mesa registers to hardware registers */
    struct {
 	GLboolean inited;
 	struct brw_reg reg;
    } wm_regs[PROGRAM_PAYLOAD+1][256][4];
+
    struct brw_reg stack;
    struct brw_reg emit_mask_reg;
-   GLuint reg_index;
+   GLuint reg_index;  /**< Index of next free GRF register */
    GLuint tmp_regs[BRW_WM_MAX_GRF];
    GLuint tmp_index;
    GLuint tmp_max;
@@ -281,4 +282,6 @@ void brw_wm_lookup_iz( GLuint line_aa,
 
 GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c);
+
+
 #endif

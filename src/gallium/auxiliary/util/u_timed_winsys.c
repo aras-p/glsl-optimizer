@@ -29,6 +29,7 @@
  * Authors: Keith Whitwell <keithw-at-tungstengraphics-dot-com>
  */
 
+#include "pipe/p_state.h"
 #include "pipe/internal/p_winsys_screen.h"
 #include "u_timed_winsys.h"
 #include "util/u_memory.h"
@@ -178,13 +179,13 @@ timed_buffer_unmap(struct pipe_winsys *winsys,
 
 
 static void
-timed_buffer_destroy(struct pipe_winsys *winsys,
-                         struct pipe_buffer *buf)
+timed_buffer_destroy(struct pipe_buffer *buf)
 {
+   struct pipe_winsys *winsys = buf->screen->winsys;
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
    uint64_t start = time_start();
 
-   backend->buffer_destroy( backend, buf );
+   backend->buffer_destroy( buf );
 
    time_finish(winsys, start, 4, __FUNCTION__);
 }

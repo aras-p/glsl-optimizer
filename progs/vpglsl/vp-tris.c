@@ -4,7 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#define GL_GLEXT_PROTOTYPES
+
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 static const char *filename = NULL;
@@ -99,27 +100,29 @@ static void setup_uniforms()
 
    }
 
-   GLuint loc1f = glGetUniformLocationARB(program, "KernelValue1f");
-   GLuint loc2f = glGetUniformLocationARB(program, "KernelValue2f");
-   GLuint loc4f = glGetUniformLocationARB(program, "KernelValue4f");
-   GLfloat vecKer[] =
-      { 1.0, 0.0, 0.0,  0.25,
-        0.0, 1.0, 0.0,  0.25,
-        0.0, 0.0, 1.0,  0.25,
-        0.0, 0.0, 0.0,  0.25,
-        0.5, 0.0, 0.0,  0.35,
-        0.0, 0.5, 0.0,  0.35,
-        0.0, 0.0, 0.5,  0.35,
-        0.0, 0.0, 0.0,  0.35
-      };
-   if (loc1f >= 0)
-      glUniform1fv(loc1f, 16, vecKer);
+   {
+      GLuint loc1f = glGetUniformLocationARB(program, "KernelValue1f");
+      GLuint loc2f = glGetUniformLocationARB(program, "KernelValue2f");
+      GLuint loc4f = glGetUniformLocationARB(program, "KernelValue4f");
+      GLfloat vecKer[] =
+         { 1.0, 0.0, 0.0,  0.25,
+           0.0, 1.0, 0.0,  0.25,
+           0.0, 0.0, 1.0,  0.25,
+           0.0, 0.0, 0.0,  0.25,
+           0.5, 0.0, 0.0,  0.35,
+           0.0, 0.5, 0.0,  0.35,
+           0.0, 0.0, 0.5,  0.35,
+           0.0, 0.0, 0.0,  0.35
+         };
+      if (loc1f >= 0)
+         glUniform1fv(loc1f, 16, vecKer);
 
-   if (loc2f >= 0)
-      glUniform2fv(loc2f, 8, vecKer);
+      if (loc2f >= 0)
+         glUniform2fv(loc2f, 8, vecKer);
 
-   if (loc4f >= 0)
-      glUniform4fv(loc4f, 4, vecKer);
+      if (loc4f >= 0)
+         glUniform4fv(loc4f, 4, vecKer);
+   }
 }
 
 static void prepare_shaders()
@@ -303,6 +306,7 @@ int main( int argc, char *argv[] )
    glutInitWindowSize( 250, 250 );
    glutInitDisplayMode( GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH );
    glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );

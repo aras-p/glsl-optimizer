@@ -265,8 +265,20 @@ typedef xmutex_rec _glthread_Mutex;
  */
 #ifdef BEOS_THREADS
 
+/* Problem with OS.h and this file on haiku */
+#ifndef __HAIKU__
 #include <kernel/OS.h>
+#endif
+
 #include <support/TLS.h>
+
+/* The only two typedefs required here
+ * this is cause of the OS.h problem
+ */
+#ifdef __HAIKU__
+typedef int32 thread_id;
+typedef int32 sem_id;
+#endif
 
 typedef struct {
    int32        key;
@@ -299,11 +311,11 @@ typedef benaphore _glthread_Mutex;
  * THREADS not defined
  */
 
-typedef GLuint _glthread_TSD;
+typedef unsigned _glthread_TSD;
 
-typedef GLuint _glthread_Thread;
+typedef unsigned _glthread_Thread;
 
-typedef GLuint _glthread_Mutex;
+typedef unsigned _glthread_Mutex;
 
 #define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = 0
 
