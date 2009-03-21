@@ -79,6 +79,7 @@ static void update_raster_state( struct st_context *st )
 
    memset(raster, 0, sizeof(*raster));
 
+   /* XXX obsolete field, remove someday */
    raster->origin_lower_left = 1; /* Always true for OpenGL */
    
    /* _NEW_POLYGON, _NEW_BUFFERS
