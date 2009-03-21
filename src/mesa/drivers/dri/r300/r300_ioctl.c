@@ -583,6 +583,11 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 		mask &= ~BUFFER_BIT_STENCIL;
 	}
 
+	if (mask & BUFFER_BIT_COLOR0) {
+		flags |= BUFFER_BIT_COLOR0;
+		mask &= ~BUFFER_BIT_COLOR0;
+	}
+
 	if (mask) {
 		if (RADEON_DEBUG & DEBUG_FALLBACKS)
 			fprintf(stderr, "%s: swrast clear, mask: %x\n",
@@ -596,6 +601,12 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 		r300EmitClearState(ctx);
 	rrbd = (void *)rfb->base.Attachment[BUFFER_DEPTH].Renderbuffer;
 
+	if (flags & BUFFER_BIT_COLOR0) {
+		rrb = (void *)rfb->base.Attachment[BUFFER_COLOR0].Renderbuffer;
+		r300ClearBuffer(r300, CLEARBUFFER_COLOR, rrb, NULL);
+		bits = 0;
+	}
+		
 	if (flags & BUFFER_BIT_FRONT_LEFT) {
 		rrb = (void *)rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
 		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, rrb, rrbd);
