@@ -453,7 +453,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 #endif
    /* plug in a few more device driver functions */
    /* XXX these should really go right after _mesa_init_driver_functions() */
-   radeon_fbo_init(&r200->radeon);
+   radeon_fbo_init(&rmesa->radeon);
    radeonInitSpanFuncs( ctx );
    r200InitPixelFuncs( ctx );
    r200InitTnlFuncs( ctx );
