@@ -49,6 +49,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define DBG 0
 
+static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb);
+
 static GLubyte *radeon_ptr32(const struct radeon_renderbuffer * rrb,
 			     GLint x, GLint y)
 {
@@ -366,6 +368,8 @@ static void map_buffer(struct gl_renderbuffer *rb, GLboolean write)
 				__FUNCTION__, r);
 		}
 	}
+
+	radeonSetSpanFunctions(rrb);
 }
 
 static void unmap_buffer(struct gl_renderbuffer *rb)
@@ -375,6 +379,8 @@ static void unmap_buffer(struct gl_renderbuffer *rb)
 	if (rrb->bo) {
 		radeon_bo_unmap(rrb->bo);
 	}
+	rb->GetRow = NULL;
+	rb->PutRow = NULL;
 }
 
 static void radeonSpanRenderStart(GLcontext * ctx)
@@ -446,7 +452,7 @@ void radeonInitSpanFuncs(GLcontext * ctx)
 /**
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
-void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
+static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
 {
 	if (rrb->base.InternalFormat == GL_RGB5) {
 		radeonInitPointers_RGB565(&rrb->base);

@@ -180,7 +180,14 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    }
    else {
      /* TODO Alloc a BO */
+     uint32_t size = width * height * cpp;
 
+     rrb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+			      0,
+			      size,
+			      0,
+			      RADEON_GEM_DOMAIN_VRAM,
+			      0);
      //     rrb->bo = radeon_bo_open();
      rb->Width = width;
      rb->Height = height;
@@ -313,8 +320,6 @@ radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
     rrb->base.AllocStorage = radeon_alloc_window_storage;
     rrb->base.GetPointer = radeon_get_pointer;
 
-    radeonSetSpanFunctions(rrb);
-
     rrb->bo = NULL;
     return &rrb->base;
 }
@@ -337,7 +342,6 @@ radeon_new_renderbuffer(GLcontext * ctx, GLuint name)
 
   return &rrb->base;
 }
-
 
 static void
 radeon_bind_framebuffer(GLcontext * ctx, GLenum target,
