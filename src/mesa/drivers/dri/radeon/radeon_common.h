@@ -67,12 +67,8 @@ static inline struct radeon_renderbuffer *radeon_get_depthbuffer(radeonContextPt
 static inline struct radeon_renderbuffer *radeon_get_colorbuffer(radeonContextPtr rmesa)
 {
 	struct radeon_renderbuffer *rrb;
-	struct radeon_framebuffer *rfb = rmesa->dri.drawable->driverPrivate;
 
 	rrb = rmesa->state.color.rrb;
-	if (rmesa->radeonScreen->driScreen->dri2.enabled) {
-		rrb = radeon_get_renderbuffer(&rfb->base, BUFFER_BACK_LEFT);
-	}
 	if (!rrb)
 		return NULL;
 	return rrb;
