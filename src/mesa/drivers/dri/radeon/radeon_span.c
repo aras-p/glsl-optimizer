@@ -55,14 +55,10 @@ static GLubyte *radeon_ptr32(const struct radeon_renderbuffer * rrb,
 			     GLint x, GLint y)
 {
     GLubyte *ptr = rrb->bo->ptr;
-    const __DRIdrawablePrivate *dPriv = rrb->dPriv;
     uint32_t mask = RADEON_BO_FLAGS_MACRO_TILE | RADEON_BO_FLAGS_MICRO_TILE;
     GLint offset;
     GLint nmacroblkpl;
     GLint nmicroblkpl;
-
-    x += dPriv->x;
-    y += dPriv->y;
 
     if (rrb->has_surface || !(rrb->bo->flags & mask)) {
         offset = x * rrb->cpp + y * rrb->pitch;
@@ -99,14 +95,10 @@ static GLubyte *radeon_ptr16(const struct radeon_renderbuffer * rrb,
 			     GLint x, GLint y)
 {
     GLubyte *ptr = rrb->bo->ptr;
-    const __DRIdrawablePrivate *dPriv = rrb->dPriv;
     uint32_t mask = RADEON_BO_FLAGS_MACRO_TILE | RADEON_BO_FLAGS_MICRO_TILE;
     GLint offset;
     GLint nmacroblkpl;
     GLint nmicroblkpl;
-
-    x += dPriv->x;
-    y += dPriv->y;
 
     if (rrb->has_surface || !(rrb->bo->flags & mask)) {
         offset = x * rrb->cpp + y * rrb->pitch;
@@ -143,16 +135,12 @@ static GLubyte *radeon_ptr(const struct radeon_renderbuffer * rrb,
 			   GLint x, GLint y)
 {
     GLubyte *ptr = rrb->bo->ptr;
-    const __DRIdrawablePrivate *dPriv = rrb->dPriv;
     uint32_t mask = RADEON_BO_FLAGS_MACRO_TILE | RADEON_BO_FLAGS_MICRO_TILE;
     GLint offset;
     GLint microblkxs;
     GLint macroblkxs;
     GLint nmacroblkpl;
     GLint nmicroblkpl;
-
-    x += dPriv->x;
-    y += dPriv->y;
 
     if (rrb->has_surface || !(rrb->bo->flags & mask)) {
         offset = x * rrb->cpp + y * rrb->pitch;
