@@ -241,6 +241,16 @@ static GLubyte *radeon_ptr(const struct radeon_renderbuffer * rrb,
 #define GET_PTR(X,Y) radeon_ptr16(rrb, (X) + x_off, (Y) + y_off)
 #include "spantmp2.h"
 
+/* 32 bit, xRGB8888 color spanline and pixel functions
+ */
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
+
+#define TAG(x)    radeon##x##_xRGB8888
+#define TAG2(x,y) radeon##x##_xRGB8888##y
+#define GET_PTR(X,Y) radeon_ptr32(rrb, (X) + x_off, (Y) + y_off)
+#include "spantmp2.h"
+
 /* 32 bit, ARGB8888 color spanline and pixel functions
  */
 #define SPANTMP_PIXEL_FMT GL_BGRA
@@ -468,7 +478,7 @@ static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
 	if (rrb->base._ActualFormat == GL_RGB5) {
 		radeonInitPointers_RGB565(&rrb->base);
 	} else if (rrb->base._ActualFormat == GL_RGB8) {
-		radeonInitPointers_ARGB8888(&rrb->base);
+		radeonInitPointers_xRGB8888(&rrb->base);
 	} else if (rrb->base._ActualFormat == GL_RGBA8) {
 		radeonInitPointers_ARGB8888(&rrb->base);
 	} else if (rrb->base._ActualFormat == GL_DEPTH_COMPONENT16) {
