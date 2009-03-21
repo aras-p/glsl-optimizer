@@ -352,7 +352,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
       _mesa_enable_extension( ctx, "GL_NV_texture_rectangle");
 
    /* XXX these should really go right after _mesa_init_driver_functions() */
-   radeon_fbo_init(&r300->radeon);
+   radeon_fbo_init(&rmesa->radeon);
    radeonInitSpanFuncs( ctx );
    radeonInitIoctlFuncs( ctx );
    radeonInitStateFuncs( ctx );
