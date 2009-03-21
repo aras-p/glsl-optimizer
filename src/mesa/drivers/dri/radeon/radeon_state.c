@@ -1390,11 +1390,21 @@ void radeonUpdateWindow( GLcontext *ctx )
    GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
    GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
+   const GLboolean render_to_fbo = (ctx->DrawBuffer ? (ctx->DrawBuffer->Name != 0) : 0);
+   GLfloat y_scale, y_bias;
+
+   if (render_to_fbo) {
+      y_scale = 1.0;
+      y_bias = 0;
+   } else {
+      y_scale = -1.0;
+      y_bias = yoffset;
+   }
 
    float_ui32_type sx = { v[MAT_SX] };
    float_ui32_type tx = { v[MAT_TX] + xoffset + SUBPIXEL_X };
-   float_ui32_type sy = { - v[MAT_SY] };
-   float_ui32_type ty = { (- v[MAT_TY]) + yoffset + SUBPIXEL_Y };
+   float_ui32_type sy = { v[MAT_SY] * y_scale };
+   float_ui32_type ty = { (v[MAT_TY] * y_scale) + y_bias + SUBPIXEL_Y };
    float_ui32_type sz = { v[MAT_SZ] * rmesa->radeon.state.depth.scale };
    float_ui32_type tz = { v[MAT_TZ] * rmesa->radeon.state.depth.scale };
 
