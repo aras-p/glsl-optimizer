@@ -933,11 +933,21 @@ static void r300UpdateWindow(GLcontext * ctx)
 	GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
 	GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
 	const GLfloat *v = ctx->Viewport._WindowMap.m;
+	const GLboolean render_to_fbo = (ctx->DrawBuffer ? (ctx->DrawBuffer->Name != 0) : 0);
+	GLfloat y_scale, y_bias;
+
+	if (render_to_fbo) {
+		y_scale = 1.0;
+		y_bias = 0;
+	} else {
+		y_scale = -1.0;
+		y_bias = yoffset;
+	}
 
 	GLfloat sx = v[MAT_SX];
 	GLfloat tx = v[MAT_TX] + xoffset + SUBPIXEL_X;
-	GLfloat sy = -v[MAT_SY];
-	GLfloat ty = (-v[MAT_TY]) + yoffset + SUBPIXEL_Y;
+	GLfloat sy = v[MAT_SY] * y_scale;
+	GLfloat ty = (v[MAT_TY] * y_scale) + y_bias + SUBPIXEL_Y;
 	GLfloat sz = v[MAT_SZ] * rmesa->radeon.state.depth.scale;
 	GLfloat tz = v[MAT_TZ] * rmesa->radeon.state.depth.scale;
 
