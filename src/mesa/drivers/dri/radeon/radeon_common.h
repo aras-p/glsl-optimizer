@@ -29,6 +29,10 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb);
 void radeonDrawBuffer( GLcontext *ctx, GLenum mode );
 void radeonReadBuffer( GLcontext *ctx, GLenum mode );
 void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height);
+void radeon_get_cliprects(radeonContextPtr radeon,
+			  struct drm_clip_rect **cliprects,
+			  unsigned int *num_cliprects,
+			  int *x_off, int *y_off);
 
 void radeon_fbo_init(struct radeon_context *radeon);
 struct gl_renderbuffer *

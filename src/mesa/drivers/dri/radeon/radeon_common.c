@@ -132,10 +132,10 @@ void radeonRecalcScissorRects(radeonContextPtr radeon)
 	}
 }
 
-static void radeon_get_cliprects(radeonContextPtr radeon,
-				 struct drm_clip_rect **cliprects,
-				 unsigned int *num_cliprects,
-				 int *x_off, int *y_off)
+void radeon_get_cliprects(radeonContextPtr radeon,
+			  struct drm_clip_rect **cliprects,
+			  unsigned int *num_cliprects,
+			  int *x_off, int *y_off)
 {
 	__DRIdrawablePrivate *dPriv = radeon->dri.drawable;
 	struct radeon_framebuffer *rfb = dPriv->driverPrivate;

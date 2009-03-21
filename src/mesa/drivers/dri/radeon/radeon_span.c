@@ -197,25 +197,48 @@ static GLubyte *radeon_ptr(const struct radeon_renderbuffer * rrb,
  * information.
  */
 #define LOCAL_VARS						\
+   struct radeon_context *radeon = RADEON_CONTEXT(ctx);			\
    struct radeon_renderbuffer *rrb = (void *) rb;		\
-   const __DRIdrawablePrivate *dPriv = rrb->dPriv;		\
-   const GLuint bottom = dPriv->h - 1;				\
+   const GLint yScale = ctx->DrawBuffer->Name ? 1 : -1;			\
+   const GLint yBias = ctx->DrawBuffer->Name ? 0 : rrb->base.Height - 1;\
+   unsigned int num_cliprects;						\
+   struct drm_clip_rect *cliprects;					\
+   int x_off, y_off;							\
    GLuint p;						\
-   (void)p;
+   (void)p;						\
+   radeon_get_cliprects(radeon, &cliprects, &num_cliprects, &x_off, &y_off);
 
 #define LOCAL_DEPTH_VARS				\
+   struct radeon_context *radeon = RADEON_CONTEXT(ctx);			\
    struct radeon_renderbuffer *rrb = (void *) rb;	\
-   const __DRIdrawablePrivate *dPriv = rrb->dPriv;	\
-   const GLuint bottom = dPriv->h - 1;
+   const GLint yScale = ctx->DrawBuffer->Name ? 1 : -1;			\
+   const GLint yBias = ctx->DrawBuffer->Name ? 0 : rrb->base.Height - 1;\
+   unsigned int num_cliprects;						\
+   struct drm_clip_rect *cliprects;					\
+   int x_off, y_off;							\
+  radeon_get_cliprects(radeon, &cliprects, &num_cliprects, &x_off, &y_off);
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
 
-#define Y_FLIP(Y) (bottom - (Y))
+#define Y_FLIP(_y) ((_y) * yScale + yBias)
 
 #define HW_LOCK()
 
 #define HW_UNLOCK()
 
+/* XXX FBO: this is identical to the macro in spantmp2.h except we get
+ * the cliprect info from the context, not the driDrawable.
+ * Move this into spantmp2.h someday.
+ */
+#define HW_CLIPLOOP()							\
+   do {									\
+      int _nc = num_cliprects;						\
+      while ( _nc-- ) {							\
+	 int minx = cliprects[_nc].x1 - x_off;				\
+	 int miny = cliprects[_nc].y1 - y_off;				\
+	 int maxx = cliprects[_nc].x2 - x_off;				\
+	 int maxy = cliprects[_nc].y2 - y_off;
+	
 /* ================================================================
  * Color buffer
  */
@@ -454,15 +477,17 @@ void radeonInitSpanFuncs(GLcontext * ctx)
  */
 static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
 {
-	if (rrb->base.InternalFormat == GL_RGB5) {
+	if (rrb->base._ActualFormat == GL_RGB5) {
 		radeonInitPointers_RGB565(&rrb->base);
-	} else if (rrb->base.InternalFormat == GL_RGBA8) {
+	} else if (rrb->base._ActualFormat == GL_RGB8) {
 		radeonInitPointers_ARGB8888(&rrb->base);
-	} else if (rrb->base.InternalFormat == GL_DEPTH_COMPONENT16) {
+	} else if (rrb->base._ActualFormat == GL_RGBA8) {
+		radeonInitPointers_ARGB8888(&rrb->base);
+	} else if (rrb->base._ActualFormat == GL_DEPTH_COMPONENT16) {
 		radeonInitDepthPointers_z16(&rrb->base);
-	} else if (rrb->base.InternalFormat == GL_DEPTH_COMPONENT24) {
+	} else if (rrb->base._ActualFormat == GL_DEPTH_COMPONENT24) {
 		radeonInitDepthPointers_z24_s8(&rrb->base);
-	} else if (rrb->base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+	} else if (rrb->base._ActualFormat == GL_STENCIL_INDEX8_EXT) {
 		radeonInitStencilPointers_z24_s8(&rrb->base);
 	}
 }
