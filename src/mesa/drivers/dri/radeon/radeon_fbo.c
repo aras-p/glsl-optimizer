@@ -182,6 +182,8 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
      /* TODO Alloc a BO */
      uint32_t size = width * height * cpp;
 
+     rrb->pitch = width * cpp;
+     rrb->cpp = cpp;
      rrb->bo = radeon_bo_open(radeon->radeonScreen->bom,
 			      0,
 			      size,
