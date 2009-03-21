@@ -270,10 +270,10 @@ static GLubyte *radeon_ptr(const struct radeon_renderbuffer * rrb,
 #define VALUE_TYPE GLushort
 
 #define WRITE_DEPTH( _x, _y, d )					\
-   *(GLushort *)radeon_ptr(rrb, _x, _y) = d
+   *(GLushort *)radeon_ptr(rrb, _x + x_off, _y + y_off) = d
 
 #define READ_DEPTH( d, _x, _y )						\
-   d = *(GLushort *)radeon_ptr(rrb, _x, _y)
+   d = *(GLushort *)radeon_ptr(rrb, _x + x_off, _y + y_off)
 
 #define TAG(x) radeon##x##_z16
 #include "depthtmp.h"
@@ -288,7 +288,7 @@ static GLubyte *radeon_ptr(const struct radeon_renderbuffer * rrb,
 #ifdef COMPILE_R300
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x, _y );		\
+   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );		\
    GLuint tmp = *_ptr;				\
    tmp &= 0x000000ff;							\
    tmp |= ((d << 8) & 0xffffff00);					\
@@ -297,7 +297,7 @@ do {									\
 #else
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x, _y );		\
+   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );		\_
    GLuint tmp = *_ptr;				\
    tmp &= 0xff000000;							\
    tmp |= ((d) & 0x00ffffff);						\
@@ -308,11 +308,11 @@ do {									\
 #ifdef COMPILE_R300
 #define READ_DEPTH( d, _x, _y )						\
   do { \
-    d = (*(GLuint*)(radeon_ptr32(rrb, _x, _y)) & 0xffffff00) >> 8; \
+    d = (*(GLuint*)(radeon_ptr32(rrb, _x + x_off, _y + y_off)) & 0xffffff00) >> 8; \
   }while(0)
 #else
 #define READ_DEPTH( d, _x, _y )						\
-   d = *(GLuint*)(radeon_ptr32(rrb, _x,	_y )) & 0x00ffffff;
+   d = *(GLuint*)(radeon_ptr32(rrb, _x + x_off,	_y + y_off )) & 0x00ffffff;
 #endif
 /*
     fprintf(stderr, "dval(%d, %d, %d, %d)=0x%08X\n", _x, xo, _y, yo, d);\
@@ -330,7 +330,7 @@ do {									\
 #ifdef COMPILE_R300
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x, _y);		\
+   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x + x_off, _y + y_off);		\
    GLuint tmp = *_ptr;				\
    tmp &= 0xffffff00;							\
    tmp |= (d) & 0xff;							\
@@ -339,7 +339,7 @@ do {									\
 #else
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x, _y);		\
+   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x + x_off, _y + y_off);		\
    GLuint tmp = *_ptr;				\
    tmp &= 0x00ffffff;							\
    tmp |= (((d) & 0xff) << 24);						\
@@ -350,14 +350,14 @@ do {									\
 #ifdef COMPILE_R300
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x, _y );		\
+   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );		\
    GLuint tmp = *_ptr;				\
    d = tmp & 0x000000ff;						\
 } while (0)
 #else
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x, _y );		\
+   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );		\
    GLuint tmp = *_ptr;				\
    d = (tmp & 0xff000000) >> 24;					\
 } while (0)
