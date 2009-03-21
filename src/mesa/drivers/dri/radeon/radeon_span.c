@@ -238,7 +238,7 @@ static GLubyte *radeon_ptr(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_RGB565
 #define TAG2(x,y) radeon##x##_RGB565##y
-#define GET_PTR(X,Y) radeon_ptr16(rrb, (X), (Y))
+#define GET_PTR(X,Y) radeon_ptr16(rrb, (X) + x_off, (Y) + y_off)
 #include "spantmp2.h"
 
 /* 32 bit, ARGB8888 color spanline and pixel functions
@@ -248,7 +248,7 @@ static GLubyte *radeon_ptr(const struct radeon_renderbuffer * rrb,
 
 #define TAG(x)    radeon##x##_ARGB8888
 #define TAG2(x,y) radeon##x##_ARGB8888##y
-#define GET_PTR(X,Y) radeon_ptr32(rrb, (X), (Y))
+#define GET_PTR(X,Y) radeon_ptr32(rrb, (X) + x_off, (Y) + y_off)
 #include "spantmp2.h"
 
 /* ================================================================
@@ -297,8 +297,8 @@ do {									\
 #else
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );		\_
-   GLuint tmp = *_ptr;				\
+   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );	\
+   GLuint tmp = *_ptr;							\
    tmp &= 0xff000000;							\
    tmp |= ((d) & 0x00ffffff);						\
    *_ptr = tmp;					\
