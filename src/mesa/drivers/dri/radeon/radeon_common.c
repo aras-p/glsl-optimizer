@@ -619,6 +619,7 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_renderbuffer *rrbDepth = NULL, *rrbStencil = NULL,
 		*rrbColor = NULL;
+	uint32_t offset = 0;
        
 
 	if (!fb) {
@@ -667,6 +668,7 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 		/* user FBO in theory */
 		struct radeon_renderbuffer *rrb;
 		rrb = (void *)fb->_ColorDrawBuffers[0];
+		offset = rrb->draw_offset;
 		rrbColor = rrb;
 		radeon->constant_cliprect = GL_TRUE;
 	}
@@ -737,6 +739,7 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 	radeon->state.depth.rrb = rrbDepth;
 
 	radeon->state.color.rrb = rrbColor;
+	radeon->state.color.draw_offset = offset;
 
 	/* update viewport since it depends on window size */
 	if (ctx->Driver.Viewport) {

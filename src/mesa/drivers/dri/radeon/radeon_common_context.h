@@ -82,6 +82,7 @@ struct radeon_renderbuffer
 	unsigned int width;
 	unsigned int height;
 
+	uint32_t draw_offset; /* FBO */
 	/* boo Xorg 6.8.2 compat */
 	int has_surface;
 
@@ -117,6 +118,7 @@ struct radeon_colorbuffer_state {
 	GLuint clear;
 	int roundEnable;
 	struct radeon_renderbuffer *rrb;
+	uint32_t draw_offset; /* offset into color renderbuffer - FBOs */
 };
 
 struct radeon_depthbuffer_state {

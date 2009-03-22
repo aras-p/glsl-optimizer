@@ -377,24 +377,28 @@ radeon_update_wrapper(GLcontext *ctx, struct radeon_renderbuffer *rrb,
 		     struct gl_texture_image *texImage)
 {
    if (texImage->TexFormat == &_mesa_texformat_argb8888) {
+      rrb->cpp = 4;
       rrb->base._ActualFormat = GL_RGBA8;
       rrb->base._BaseFormat = GL_RGBA;
       rrb->base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to RGBA8 texture OK\n");
    }
    else if (texImage->TexFormat == &_mesa_texformat_rgb565) {
+      rrb->cpp = 2;
       rrb->base._ActualFormat = GL_RGB5;
       rrb->base._BaseFormat = GL_RGB;
       rrb->base.DataType = GL_UNSIGNED_SHORT;
       DBG("Render to RGB5 texture OK\n");
    }
    else if (texImage->TexFormat == &_mesa_texformat_z16) {
+      rrb->cpp = 2;
       rrb->base._ActualFormat = GL_DEPTH_COMPONENT16;
       rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
       rrb->base.DataType = GL_UNSIGNED_SHORT;
       DBG("Render to DEPTH16 texture OK\n");
    }
    else if (texImage->TexFormat == &_mesa_texformat_s8_z24) {
+      rrb->cpp = 4;
       rrb->base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
       rrb->base._BaseFormat = GL_DEPTH_STENCIL_EXT;
       rrb->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
@@ -406,6 +410,7 @@ radeon_update_wrapper(GLcontext *ctx, struct radeon_renderbuffer *rrb,
       return GL_FALSE;
    }
 
+   rrb->pitch = texImage->Width * rrb->cpp;
    rrb->base.InternalFormat = rrb->base._ActualFormat;
    rrb->base.Width = texImage->Width;
    rrb->base.Height = texImage->Height;
@@ -488,7 +493,7 @@ radeon_render_texture(GLcontext * ctx,
        return;
    }
 
-   DBG("Begin render texture tid %x tex=%u w=%d h=%d refcount=%d\n",
+   fprintf(stderr,"Begin render texture tid %x tex=%u w=%d h=%d refcount=%d\n",
        _glthread_GetID(),
        att->Texture->Name, newImage->Width, newImage->Height,
        rrb->base.RefCount);
@@ -514,7 +519,7 @@ radeon_render_texture(GLcontext * ctx,
    }
 
    /* store that offset in the region */
-   //TODO   radeon_image->mt->draw_offset = imageOffset;
+   rrb->draw_offset = imageOffset;
 
    /* update drawing region, etc */
    radeon_draw_buffer(ctx, fb);

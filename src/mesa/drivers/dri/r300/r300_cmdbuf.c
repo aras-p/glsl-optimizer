@@ -213,6 +213,7 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	BATCH_LOCALS(&r300->radeon);
 	struct radeon_renderbuffer *rrb;
 	uint32_t cbpitch;
+	uint32_t offset = r300->radeon.state.color.draw_offset;
 
 	rrb = radeon_get_colorbuffer(&r300->radeon);
 	if (!rrb || !rrb->bo) {
@@ -231,7 +232,7 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 
 	BEGIN_BATCH_NO_AUTOSTATE(6);
 	OUT_BATCH_REGSEQ(R300_RB3D_COLOROFFSET0, 1);
-	OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+	OUT_BATCH_RELOC(offset, rrb->bo, offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 	OUT_BATCH_REGSEQ(R300_RB3D_COLORPITCH0, 1);
 	OUT_BATCH(cbpitch);
 	END_BATCH();
