@@ -502,7 +502,6 @@ radeon_render_texture(GLcontext * ctx,
       radeon_bo_ref(rrb->bo);
    }
 
-#if 0
    /* compute offset of the particular 2D image within the texture region */
    imageOffset = radeon_miptree_image_offset(radeon_image->mt,
                                             att->CubeMapFace,
@@ -515,8 +514,8 @@ radeon_render_texture(GLcontext * ctx,
    }
 
    /* store that offset in the region */
-   radeon_image->mt->draw_offset = imageOffset;
-#endif
+   //TODO   radeon_image->mt->draw_offset = imageOffset;
+
    /* update drawing region, etc */
    radeon_draw_buffer(ctx, fb);
 }
