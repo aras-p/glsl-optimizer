@@ -16,6 +16,7 @@ C_SOURCES = \
 	u_hash.c \
 	u_keymap.c \
 	u_linear.c \
+	u_network.c \
 	u_math.c \
 	u_mm.c \
 	u_rect.c \
