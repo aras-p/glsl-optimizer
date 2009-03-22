@@ -40,6 +40,9 @@ extern void r300SetDepthTexMode(struct gl_texture_object *tObj);
 extern void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target,
 			     __DRIdrawable *dPriv);
 
+extern void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
+			      GLint format, __DRIdrawable *dPriv);
+
 extern void r300SetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 			     unsigned long long offset, GLint depth,
 			     GLuint pitch);

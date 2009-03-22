@@ -339,6 +339,7 @@ static const __DRItexOffsetExtension radeonTexOffsetExtension = {
 static const __DRItexBufferExtension radeonTexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
    radeonSetTexBuffer,
+   radeonSetTexBuffer2,
 };
 #endif
 
@@ -358,6 +359,7 @@ static const __DRItexOffsetExtension r200texOffsetExtension = {
 static const __DRItexBufferExtension r200TexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
    r200SetTexBuffer,
+   r200SetTexBuffer2,
 };
 #endif
 
@@ -370,6 +372,7 @@ static const __DRItexOffsetExtension r300texOffsetExtension = {
 static const __DRItexBufferExtension r300TexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
    r300SetTexBuffer,
+   r300SetTexBuffer2,
 };
 #endif
 
