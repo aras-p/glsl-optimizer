@@ -1,4 +1,6 @@
 
+See the OpenGL ARB enum registry at http://www.opengl.org/registry/api/enum.spec
+
 Blocks allocated to Mesa:
        0x8750-0x875F
        0x8BB0-0x8BBF
@@ -30,12 +32,12 @@ MESA_ycbcr_texture.spec:
 GL_MESA_pack_invert.spec
 	GL_PACK_INVERT_MESA              0x8758
 
-GL_MESA_shader_debug.spec:
+GL_MESA_shader_debug.spec: (obsolete)
         GL_DEBUG_OBJECT_MESA             0x8759
         GL_DEBUG_PRINT_MESA              0x875A
         GL_DEBUG_ASSERT_MESA             0x875B
 
-GL_MESA_program_debug.spec:
+GL_MESA_program_debug.spec: (obsolete)
 	GL_FRAGMENT_PROGRAM_CALLBACK_MESA      0x????
 	GL_VERTEX_PROGRAM_CALLBACK_MESA        0x????
 	GL_FRAGMENT_PROGRAM_POSITION_MESA      0x????
@@ -44,4 +46,12 @@ GL_MESA_program_debug.spec:
 	GL_FRAGMENT_PROGRAM_CALLBACK_DATA_MESA 0x????
 	GL_VERTEX_PROGRAM_CALLBACK_FUNC_MESA   0x????
 	GL_VERTEX_PROGRAM_CALLBACK_DATA_MESA   0x????
+
+GL_MESAX_texture_stack:
+	GL_TEXTURE_1D_STACK_MESAX            0x8759
+	GL_TEXTURE_2D_STACK_MESAX            0x875A
+	GL_PROXY_TEXTURE_1D_STACK_MESAX      0x875B
+	GL_PROXY_TEXTURE_2D_STACK_MESAX      0x875C
+	GL_TEXTURE_1D_STACK_BINDING_MESAX    0x875D
+	GL_TEXTURE_2D_STACK_BINDING_MESAX    0x875E
 

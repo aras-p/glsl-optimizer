@@ -93,12 +93,13 @@ struct st_context
       struct pipe_constant_buffer constants[2];
       struct pipe_framebuffer_state framebuffer;
       struct pipe_texture *sampler_texture[PIPE_MAX_SAMPLERS];
-      struct pipe_poly_stipple poly_stipple;
       struct pipe_scissor_state scissor;
       struct pipe_viewport_state viewport;
 
       GLuint num_samplers;
       GLuint num_textures;
+
+      GLuint poly_stipple[32];  /**< In OpenGL's bottom-to-top order */
    } state;
 
    struct {

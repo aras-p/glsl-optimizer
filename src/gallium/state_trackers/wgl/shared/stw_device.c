@@ -35,6 +35,7 @@
 #include "shared/stw_winsys.h"
 #include "shared/stw_pixelformat.h"
 #include "shared/stw_public.h"
+#include "shared/stw_tls.h"
 
 #ifdef WIN32_THREADS
 extern _glthread_Mutex OneTimeLock;
@@ -70,6 +71,8 @@ st_init(const struct stw_winsys *stw_winsys)
    
    assert(!stw_dev);
 
+   stw_tls_init();
+
    stw_dev = &stw_dev_storage;
    memset(stw_dev, 0, sizeof(*stw_dev));
 
@@ -91,6 +94,11 @@ st_init(const struct stw_winsys *stw_winsys)
    
    pipe_mutex_init( stw_dev->mutex );
 
+   stw_dev->ctx_table = handle_table_create();
+   if (!stw_dev->ctx_table) {
+      goto error1;
+   }
+
    pixelformat_init();
 
    return TRUE;
@@ -98,6 +106,24 @@ st_init(const struct stw_winsys *stw_winsys)
 error1:
    stw_dev = NULL;
    return FALSE;
+}
+
+
+boolean
+st_init_thread(void)
+{
+   if (!stw_tls_init_thread()) {
+      return FALSE;
+   }
+
+   return TRUE;
+}
+
+
+void
+st_cleanup_thread(void)
+{
+   stw_tls_cleanup_thread();
 }
 
 
@@ -114,9 +140,12 @@ st_cleanup(void)
    pipe_mutex_lock( stw_dev->mutex );
    {
       /* Ensure all contexts are destroyed */
-      for (i = 0; i < STW_CONTEXT_MAX; i++)
-         if (stw_dev->ctx_array[i].ctx) 
-            stw_delete_context( i + 1 );
+      i = handle_table_get_first_handle(stw_dev->ctx_table);
+      while (i) {
+         stw_delete_context(i);
+         i = handle_table_get_next_handle(stw_dev->ctx_table, i);
+      }
+      handle_table_destroy(stw_dev->ctx_table);
    }
    pipe_mutex_unlock( stw_dev->mutex );
 
@@ -133,6 +162,8 @@ st_cleanup(void)
    debug_memory_end(stw_dev->memdbg_no);
 #endif
 
+   stw_tls_cleanup();
+
    stw_dev = NULL;
 }
 
@@ -140,13 +171,12 @@ st_cleanup(void)
 struct stw_context *
 stw_lookup_context( UINT_PTR dhglrc )
 {
-   if (dhglrc == 0 || 
-       dhglrc >= STW_CONTEXT_MAX)
+   if (dhglrc == 0)
       return NULL;
 
    if (stw_dev == NULL)
       return NULL;
 
-   return stw_dev->ctx_array[dhglrc - 1].ctx;
+   return (struct stw_context *) handle_table_get(stw_dev->ctx_table, dhglrc);
 }
 

@@ -39,24 +39,52 @@
 #include "pipe/p_defines.h"
 
 
-static void 
-update_stipple( struct st_context *st )
+/**
+ * OpenGL's polygon stipple is indexed with window coordinates in which
+ * the origin (0,0) is the lower-left corner of the window.
+ * With Gallium, the origin is the upper-left corner of the window.
+ * To convert GL's polygon stipple to what gallium expects we need to
+ * invert the pattern vertically and rotate the stipple rows according
+ * to the window height.
+ */
+static void
+invert_stipple(GLuint dest[32], const GLuint src[32], GLuint winHeight)
 {
-   const GLuint sz = sizeof(st->state.poly_stipple.stipple);
-   assert(sz == sizeof(st->ctx->PolygonStipple));
+   GLuint i;
 
-   if (memcmp(&st->state.poly_stipple.stipple, st->ctx->PolygonStipple, sz)) {
-      /* state has changed */
-      memcpy(st->state.poly_stipple.stipple, st->ctx->PolygonStipple, sz);
-      st->pipe->set_polygon_stipple(st->pipe, &st->state.poly_stipple);
+   for (i = 0; i < 32; i++) {
+      dest[i] = src[(winHeight - 1 - i) & 0x1f];
    }
 }
 
 
+
+static void 
+update_stipple( struct st_context *st )
+{
+   const GLuint sz = sizeof(st->state.poly_stipple);
+   assert(sz == sizeof(st->ctx->PolygonStipple));
+
+   if (memcmp(st->state.poly_stipple, st->ctx->PolygonStipple, sz)) {
+      /* state has changed */
+      struct pipe_poly_stipple newStipple;
+
+      memcpy(st->state.poly_stipple, st->ctx->PolygonStipple, sz);
+
+      invert_stipple(newStipple.stipple, st->ctx->PolygonStipple,
+                     st->ctx->DrawBuffer->Height);
+
+      st->pipe->set_polygon_stipple(st->pipe, &newStipple);
+   }
+}
+
+
+/** Update the stipple when the pattern or window height changes */
 const struct st_tracked_state st_update_polygon_stipple = {
    "st_update_polygon_stipple",				/* name */
    {							/* dirty */
-      (_NEW_POLYGONSTIPPLE),				/* mesa */
+      (_NEW_POLYGONSTIPPLE |
+       _NEW_BUFFERS),					/* mesa */
       0,						/* st */
    },
    update_stipple					/* update */

@@ -231,7 +231,7 @@ struct __DRItexOffsetExtensionRec {
 
 
 #define __DRI_TEX_BUFFER "DRI_TexBuffer"
-#define __DRI_TEX_BUFFER_VERSION 1
+#define __DRI_TEX_BUFFER_VERSION 2
 struct __DRItexBufferExtensionRec {
     __DRIextension base;
 
@@ -239,11 +239,23 @@ struct __DRItexBufferExtensionRec {
      * Method to override base texture image with the contents of a
      * __DRIdrawable. 
      *
-     * For GLX_EXT_texture_from_pixmap with AIGLX.
+     * For GLX_EXT_texture_from_pixmap with AIGLX.  Deprecated in favor of
+     * setTexBuffer2 in version 2 of this interface
      */
     void (*setTexBuffer)(__DRIcontext *pDRICtx,
 			 GLint target,
 			 __DRIdrawable *pDraw);
+
+    /**
+     * Method to override base texture image with the contents of a
+     * __DRIdrawable, including the required texture format attribute.
+     *
+     * For GLX_EXT_texture_from_pixmap with AIGLX.
+     */
+    void (*setTexBuffer2)(__DRIcontext *pDRICtx,
+			  GLint target,
+			  GLint format,
+			  __DRIdrawable *pDraw);
 };
 
 /**

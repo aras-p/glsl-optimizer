@@ -219,8 +219,9 @@ compile_instruction(
    const GLuint immediateMapping[],
    GLboolean indirectAccess,
    GLuint preamble_size,
-   GLuint processor,
-   GLboolean *insideSubroutine)
+   GLuint procType,
+   GLboolean *insideSubroutine,
+   GLint wposTemp)
 {
    GLuint i;
    struct tgsi_full_dst_register *fulldst;
@@ -247,19 +248,29 @@ compile_instruction(
       GLuint j;
 
       fullsrc = &fullinst->FullSrcRegisters[i];
-      fullsrc->SrcRegister.File = map_register_file(
-         inst->SrcReg[i].File,
-         inst->SrcReg[i].Index,
-         immediateMapping,
-         indirectAccess );
-      fullsrc->SrcRegister.Index = map_register_file_index(
-         fullsrc->SrcRegister.File,
-         inst->SrcReg[i].Index,
-         inputMapping,
-         outputMapping,
-         immediateMapping,
-         indirectAccess );
 
+      if (procType == TGSI_PROCESSOR_FRAGMENT &&
+          inst->SrcReg[i].File == PROGRAM_INPUT &&
+          inst->SrcReg[i].Index == FRAG_ATTRIB_WPOS) {
+         /* special case of INPUT[WPOS] */
+         fullsrc->SrcRegister.File = TGSI_FILE_TEMPORARY;
+         fullsrc->SrcRegister.Index = wposTemp;
+      }
+      else {
+         /* any other src register */
+         fullsrc->SrcRegister.File = map_register_file(
+            inst->SrcReg[i].File,
+            inst->SrcReg[i].Index,
+            immediateMapping,
+            indirectAccess );
+         fullsrc->SrcRegister.Index = map_register_file_index(
+            fullsrc->SrcRegister.File,
+            inst->SrcReg[i].Index,
+            inputMapping,
+            outputMapping,
+            immediateMapping,
+            indirectAccess );
+      }
 
       /* swizzle (ext swizzle also depends on negation) */
       {
@@ -733,6 +744,111 @@ find_temporaries(const struct gl_program *program,
 }
 
 
+/**
+ * Find an unused temporary in the tempsUsed array.
+ */
+static int
+find_free_temporary(GLboolean tempsUsed[MAX_PROGRAM_TEMPS])
+{
+   int i;
+   for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
+      if (!tempsUsed[i]) {
+         tempsUsed[i] = GL_TRUE;
+         return i;
+      }
+   }
+   return -1;
+}
+
+
+/** helper for building simple TGSI instruction, one src register */
+static void
+build_tgsi_instruction1(struct tgsi_full_instruction *inst,
+                        int opcode,
+                        int dstFile, int dstIndex, int writemask,
+                        int srcFile1, int srcIndex1)
+{
+   *inst = tgsi_default_full_instruction();
+
+   inst->Instruction.Opcode = opcode;
+
+   inst->Instruction.NumDstRegs = 1;
+   inst->FullDstRegisters[0].DstRegister.File = dstFile;
+   inst->FullDstRegisters[0].DstRegister.Index = dstIndex;
+   inst->FullDstRegisters[0].DstRegister.WriteMask = writemask;
+
+   inst->Instruction.NumSrcRegs = 1;
+   inst->FullSrcRegisters[0].SrcRegister.File = srcFile1;
+   inst->FullSrcRegisters[0].SrcRegister.Index = srcIndex1;
+}
+
+
+/** helper for building simple TGSI instruction, two src registers */
+static void
+build_tgsi_instruction2(struct tgsi_full_instruction *inst,
+                        int opcode,
+                        int dstFile, int dstIndex, int writemask,
+                        int srcFile1, int srcIndex1,
+                        int srcFile2, int srcIndex2)
+{
+   *inst = tgsi_default_full_instruction();
+
+   inst->Instruction.Opcode = opcode;
+
+   inst->Instruction.NumDstRegs = 1;
+   inst->FullDstRegisters[0].DstRegister.File = dstFile;
+   inst->FullDstRegisters[0].DstRegister.Index = dstIndex;
+   inst->FullDstRegisters[0].DstRegister.WriteMask = writemask;
+
+   inst->Instruction.NumSrcRegs = 2;
+   inst->FullSrcRegisters[0].SrcRegister.File = srcFile1;
+   inst->FullSrcRegisters[0].SrcRegister.Index = srcIndex1;
+   inst->FullSrcRegisters[1].SrcRegister.File = srcFile2;
+   inst->FullSrcRegisters[1].SrcRegister.Index = srcIndex2;
+}
+
+
+
+/**
+ * Emit the TGSI instructions for inverting the WPOS y coordinate.
+ */
+static int
+emit_inverted_wpos(struct tgsi_token *tokens,
+                   int wpos_temp,
+                   int winsize_const,
+                   int wpos_input,
+                   struct tgsi_header *header, int maxTokens)
+{
+   struct tgsi_full_instruction fullinst;
+   int ti = 0;
+
+   /* MOV wpos_temp.xzw, input[wpos]; */
+   build_tgsi_instruction1(&fullinst,
+                           TGSI_OPCODE_MOV,
+                           TGSI_FILE_TEMPORARY, wpos_temp, WRITEMASK_XZW,
+                           TGSI_FILE_INPUT, 0);
+
+   ti += tgsi_build_full_instruction(&fullinst,
+                                     &tokens[ti],
+                                     header,
+                                     maxTokens - ti);
+
+   /* SUB wpos_temp.y, const[winsize_const] - input[wpos_input]; */
+   build_tgsi_instruction2(&fullinst,
+                           TGSI_OPCODE_SUB,
+                           TGSI_FILE_TEMPORARY, wpos_temp, WRITEMASK_Y,
+                           TGSI_FILE_CONSTANT, winsize_const,
+                           TGSI_FILE_INPUT, wpos_input);
+
+   ti += tgsi_build_full_instruction(&fullinst,
+                                     &tokens[ti],
+                                     header,
+                                     maxTokens - ti);
+
+   return ti;
+}
+
+
 
 
 /**
@@ -778,15 +894,33 @@ st_translate_mesa_program(
    GLuint ti;  /* token index */
    struct tgsi_header *header;
    struct tgsi_processor *processor;
-   struct tgsi_full_instruction fullinst;
    GLuint preamble_size = 0;
    GLuint immediates[1000];
    GLuint numImmediates = 0;
    GLboolean insideSubroutine = GL_FALSE;
    GLboolean indirectAccess = GL_FALSE;
+   GLboolean tempsUsed[MAX_PROGRAM_TEMPS + 1];
+   GLint wposTemp = -1, winHeightConst = -1;
 
    assert(procType == TGSI_PROCESSOR_FRAGMENT ||
           procType == TGSI_PROCESSOR_VERTEX);
+
+   find_temporaries(program, tempsUsed);
+
+   if (procType == TGSI_PROCESSOR_FRAGMENT) {
+      if (program->InputsRead & FRAG_BIT_WPOS) {
+         /* Fragment program uses fragment position input.
+          * Need to replace instances of INPUT[WPOS] with temp T
+          * where T = INPUT[WPOS] by y is inverted.
+          */
+         static const gl_state_index winSizeState[STATE_LENGTH]
+            = { STATE_INTERNAL, STATE_FB_SIZE, 0, 0, 0 };
+         winHeightConst = _mesa_add_state_reference(program->Parameters,
+                                                    winSizeState);
+         wposTemp = find_free_temporary(tempsUsed);
+      }
+   }
+
 
    *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
 
@@ -884,11 +1018,9 @@ st_translate_mesa_program(
 
    /* temporary decls */
    {
-      GLboolean tempsUsed[MAX_PROGRAM_TEMPS + 1];
       GLboolean inside_range = GL_FALSE;
       GLuint start_range = 0;
 
-      find_temporaries(program, tempsUsed);
       tempsUsed[MAX_PROGRAM_TEMPS] = GL_FALSE;
       for (i = 0; i < MAX_PROGRAM_TEMPS + 1; i++) {
          if (tempsUsed[i] && !inside_range) {
@@ -1018,7 +1150,17 @@ st_translate_mesa_program(
       }
    }
 
+   /* invert WPOS fragment input */
+   if (wposTemp >= 0) {
+      ti += emit_inverted_wpos(&tokens[ti], wposTemp, winHeightConst,
+                               inputMapping[FRAG_ATTRIB_WPOS],
+                               header, maxTokens - ti);
+      preamble_size = 2; /* two instructions added */
+   }
+
    for (i = 0; i < program->NumInstructions; i++) {
+      struct tgsi_full_instruction fullinst;
+
       compile_instruction(
          &program->Instructions[i],
          &fullinst,
@@ -1028,7 +1170,8 @@ st_translate_mesa_program(
          indirectAccess,
          preamble_size,
          procType,
-         &insideSubroutine );
+         &insideSubroutine,
+         wposTemp);
 
       ti += tgsi_build_full_instruction(
          &fullinst,

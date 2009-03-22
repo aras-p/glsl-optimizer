@@ -483,7 +483,9 @@ create_window(struct winthread *wt, HGLRC shareCtx)
    wt->WinHeight = height;
    wt->NewSize = GL_TRUE;
 
+   wglMakeCurrent(hdc, ctx);
    printf("wglthreads: %d: GL_RENDERER = %s\n", wt->Index, (char *) glGetString(GL_RENDERER));
+   wglMakeCurrent(NULL, NULL);
 
    if (Texture/* && wt->Index == 0*/) {
       MakeNewTexture(wt);

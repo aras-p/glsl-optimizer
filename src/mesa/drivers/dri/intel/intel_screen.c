@@ -211,6 +211,7 @@ static const __DRItexOffsetExtension intelTexOffsetExtension = {
 static const __DRItexBufferExtension intelTexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
    intelSetTexBuffer,
+   intelSetTexBuffer2,
 };
 
 static const __DRIextension *intelScreenExtensions[] = {

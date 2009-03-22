@@ -223,6 +223,13 @@ struct pipe_screen {
     * specified to buffer_map_range. This is different from the 
     * ARB_map_buffer_range semantics because we don't forbid multiple mappings 
     * of the same buffer (yet).
+    * 
+    * If the buffer was mapped for writing and no buffer_flush_mapped_range 
+    * call was done until the buffer_unmap is called then the pipe driver will
+    * assumed that the whole buffer was written. This is for backward 
+    * compatibility purposes and may affect performance -- the state tracker 
+    * should always specify exactly what got written while the buffer was 
+    * mapped.  
     */
    void (*buffer_flush_mapped_range)( struct pipe_screen *screen,
                                       struct pipe_buffer *buf,

@@ -382,7 +382,9 @@ TGSI Instruction Specification
 
 1.5.7  KILP - Predicated Discard
 
-  TBD
+  if (cc.x || cc.y || cc.z || cc.w)
+    discard
+  endif
 
 
 1.5.8  LG2 - Logarithm Base 2
@@ -599,7 +601,9 @@ TGSI Instruction Specification
 
 1.8.2  KIL - Conditional Discard
 
-  TBD
+  if (src.x < 0.0 || src.y < 0.0 || src.z < 0.0 || src.w < 0.0)
+    discard
+  endif
 
 
 1.8.3  SCS - Sine Cosine

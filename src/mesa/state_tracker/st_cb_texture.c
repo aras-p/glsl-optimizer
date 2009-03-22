@@ -467,7 +467,7 @@ st_TexImage(GLcontext * ctx,
     */
    if (stObj->pt) {
       if (stObj->teximage_realloc ||
-          level > stObj->pt->last_level ||
+          level > (GLint) stObj->pt->last_level ||
           (stObj->pt->last_level == level &&
            stObj->pt->target != PIPE_TEXTURE_CUBE &&
            !st_texture_match_image(stObj->pt, &stImage->base,
@@ -803,7 +803,6 @@ st_TexSubimage(GLcontext * ctx,
                                             PIPE_TRANSFER_WRITE,
                                             xoffset, yoffset,
                                             width, height);
-      dstRowStride = stImage->transfer->stride;
    }
 
    if (!texImage->Data) {
@@ -812,6 +811,7 @@ st_TexSubimage(GLcontext * ctx,
    }
 
    src = (const GLubyte *) pixels;
+   dstRowStride = stImage->transfer->stride;
 
    for (i = 0; i++ < depth;) {
       if (!texImage->TexFormat->StoreImage(ctx, dims, texImage->_BaseFormat,

@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2009 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,35 +25,77 @@
  *
  **************************************************************************/
 
-#ifndef STW_DEVICE_H_
-#define STW_DEVICE_H_
-
+#include <windows.h>
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_thread.h"
-#include "util/u_handle_table.h"
+#include "util/u_memory.h"
+#include "stw_tls.h"
 
+static DWORD tlsIndex = TLS_OUT_OF_INDEXES;
 
-struct pipe_screen;
-
-struct stw_device
+boolean
+stw_tls_init(void)
 {
-   const struct stw_winsys *stw_winsys;
-   struct pipe_screen *screen;
-   
-   pipe_mutex mutex;
+   tlsIndex = TlsAlloc();
+   if (tlsIndex == TLS_OUT_OF_INDEXES) {
+      return FALSE;
+   }
 
-   struct handle_table *ctx_table;
-   
-#ifdef DEBUG
-   unsigned long memdbg_no;
-#endif
-};
+   return TRUE;
+}
 
-struct stw_context *
-stw_lookup_context( UINT_PTR hglrc );
+boolean
+stw_tls_init_thread(void)
+{
+   struct stw_tls_data *data;
 
-extern struct stw_device *stw_dev;
+   if (tlsIndex == TLS_OUT_OF_INDEXES) {
+      return FALSE;
+   }
 
+   data = MALLOC(sizeof(*data));
+   if (!data) {
+      return FALSE;
+   }
 
-#endif /* STW_DEVICE_H_ */
+   data->currentPixelFormat = 0;
+   data->currentDC = NULL;
+   data->currentGLRC = 0;
+
+   TlsSetValue(tlsIndex, data);
+
+   return TRUE;
+}
+
+void
+stw_tls_cleanup_thread(void)
+{
+   struct stw_tls_data *data;
+
+   if (tlsIndex == TLS_OUT_OF_INDEXES) {
+      return;
+   }
+
+   data = (struct stw_tls_data *) TlsGetValue(tlsIndex);
+   TlsSetValue(tlsIndex, NULL);
+   FREE(data);
+}
+
+void
+stw_tls_cleanup(void)
+{
+   if (tlsIndex != TLS_OUT_OF_INDEXES) {
+      TlsFree(tlsIndex);
+      tlsIndex = TLS_OUT_OF_INDEXES;
+   }
+}
+
+struct stw_tls_data *
+stw_tls_get_data(void)
+{
+   if (tlsIndex == TLS_OUT_OF_INDEXES) {
+      return NULL;
+   }
+
+   return (struct stw_tls_data *) TlsGetValue(tlsIndex);
+}

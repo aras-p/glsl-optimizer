@@ -161,6 +161,7 @@ struct __GLXDRIdrawableRec {
     __GLXscreenConfigs *psc;
     GLenum textureTarget;
     __DRIdrawable *driDrawable;
+    GLenum textureFormat; /* EXT_texture_from_pixmap support */
 };
 
 /*

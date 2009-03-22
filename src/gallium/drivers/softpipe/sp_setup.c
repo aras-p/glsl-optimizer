@@ -732,18 +732,9 @@ setup_fragcoord_coeff(struct setup_context *setup, uint slot)
    setup->coef[slot].dadx[0] = 1.0;
    setup->coef[slot].dady[0] = 0.0;
    /*Y*/
-   if (setup->softpipe->rasterizer->origin_lower_left) {
-      /* y=0=bottom */
-      const int winHeight = setup->softpipe->framebuffer.height;
-      setup->coef[slot].a0[1] = (float) (winHeight - 1);
-      setup->coef[slot].dady[1] = -1.0;
-   }
-   else {
-      /* y=0=top */
-      setup->coef[slot].a0[1] = 0.0;
-      setup->coef[slot].dady[1] = 1.0;
-   }
+   setup->coef[slot].a0[1] = 0.0;
    setup->coef[slot].dadx[1] = 0.0;
+   setup->coef[slot].dady[1] = 1.0;
    /*Z*/
    setup->coef[slot].a0[2] = setup->posCoef.a0[2];
    setup->coef[slot].dadx[2] = setup->posCoef.dadx[2];

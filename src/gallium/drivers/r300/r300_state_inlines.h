@@ -297,8 +297,7 @@ static INLINE uint32_t r300_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_A32R32G32B32:
             return R300_COLOR_FORMAT_ARGB32323232;
         case PIPE_FORMAT_A16R16G16B16:
-            return R300_COLOR_FORMAT_ARGB16161616; */
-        /* XXX Not in pipe_format
+            return R300_COLOR_FORMAT_ARGB16161616;
         case PIPE_FORMAT_A10R10G10B10_UNORM:
             return R500_COLOR_FORMAT_ARGB10101010;
         case PIPE_FORMAT_A2R10G10B10_UNORM:
@@ -306,7 +305,7 @@ static INLINE uint32_t r300_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_I10_UNORM:
             return R500_COLOR_FORMAT_I10; */
         default:
-            debug_printf("r300: Implementation error: " \
+            debug_printf("r300: Implementation error: "
                 "Got unsupported color format %s in %s\n",
                 pf_name(format), __FUNCTION__);
             break;
@@ -324,10 +323,28 @@ static INLINE uint32_t r300_translate_zsformat(enum pipe_format format)
         case PIPE_FORMAT_Z24S8_UNORM:
             return R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
         default:
-            debug_printf("r300: Implementation error: " \
+            debug_printf("r300: Implementation error: "
                 "Got unsupported ZS format %s in %s\n",
                 pf_name(format), __FUNCTION__);
             break;
+    }
+    return 0;
+}
+
+/* Translate pipe_format into US_OUT_FMT.
+ * Note that formats are stored from C3 to C0. */
+static INLINE uint32_t r300_translate_out_fmt(enum pipe_format format)
+{
+    switch (format) {
+        case PIPE_FORMAT_A8R8G8B8_UNORM:
+            return R300_US_OUT_FMT_C4_8 |
+                R300_C0_SEL_B | R300_C1_SEL_G |
+                R300_C2_SEL_R | R300_C3_SEL_A;
+        default:
+            debug_printf("r300: Implementation error: "
+                "Got unsupported output format %s in %s\n",
+                pf_name(format), __FUNCTION__);
+            return R300_US_OUT_FMT_UNUSED;
     }
     return 0;
 }

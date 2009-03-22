@@ -53,6 +53,12 @@ struct stw_winsys
 boolean
 st_init(const struct stw_winsys *stw_winsys);
 
+boolean
+st_init_thread(void);
+
+void
+st_cleanup_thread(void);
+
 void
 st_cleanup(void);
 

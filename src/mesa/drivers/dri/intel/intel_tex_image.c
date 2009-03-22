@@ -714,7 +714,9 @@ intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 }
 
 void
-intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
+intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
+		   GLint glx_texture_format,
+		   __DRIdrawable *dPriv)
 {
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
    struct intel_context *intel = pDRICtx->driverPrivate;
@@ -745,7 +747,10 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 
    type = GL_BGRA;
    format = GL_UNSIGNED_BYTE;
-   internalFormat = (rb->region->cpp == 3 ? 3 : 4);
+   if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT)
+      internalFormat = GL_RGB;
+   else
+      internalFormat = GL_RGBA;
 
    mt = intel_miptree_create_for_region(intel, target,
 					internalFormat,
@@ -784,4 +789,13 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
    }
 
    _mesa_unlock_texture(&intel->ctx, texObj);
+}
+
+void
+intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
+{
+   /* The old interface didn't have the format argument, so copy our
+    * implementation's behavior at the time.
+    */
+   intelSetTexBuffer2(pDRICtx, target, GLX_TEXTURE_FORMAT_RGBA_EXT, dPriv);
 }

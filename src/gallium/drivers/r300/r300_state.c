@@ -515,12 +515,22 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     draw_flush(r300->draw);
 
-    r300->scissor_state->scissor_top_left =
-        (state->minx << R300_SCISSORS_X_SHIFT) |
-        (state->miny << R300_SCISSORS_Y_SHIFT);
-    r300->scissor_state->scissor_bottom_right =
-        (state->maxx << R300_SCISSORS_X_SHIFT) |
-        (state->maxy << R300_SCISSORS_Y_SHIFT);
+    if (r300_screen(r300->context.screen)->caps->is_r500) {
+        r300->scissor_state->scissor_top_left =
+            (state->minx << R300_SCISSORS_X_SHIFT) |
+            (state->miny << R300_SCISSORS_Y_SHIFT);
+        r300->scissor_state->scissor_bottom_right =
+            (state->maxx << R300_SCISSORS_X_SHIFT) |
+            (state->maxy << R300_SCISSORS_Y_SHIFT);
+    } else {
+        /* Offset of 1440 in non-R500 chipsets. */
+        r300->scissor_state->scissor_top_left =
+            ((state->minx + 1440) << R300_SCISSORS_X_SHIFT) |
+            ((state->miny + 1440) << R300_SCISSORS_Y_SHIFT);
+        r300->scissor_state->scissor_bottom_right =
+            ((state->maxx + 1440) << R300_SCISSORS_X_SHIFT) |
+            ((state->maxy + 1440) << R300_SCISSORS_Y_SHIFT);
+    }
 
     r300->dirty_state |= R300_NEW_SCISSOR;
 }

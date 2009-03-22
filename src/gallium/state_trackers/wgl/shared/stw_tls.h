@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2009 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,35 +25,29 @@
  *
  **************************************************************************/
 
-#ifndef STW_DEVICE_H_
-#define STW_DEVICE_H_
+#ifndef STW_TLS_H
+#define STW_TLS_H
 
-
-#include "pipe/p_compiler.h"
-#include "pipe/p_thread.h"
-#include "util/u_handle_table.h"
-
-
-struct pipe_screen;
-
-struct stw_device
+struct stw_tls_data
 {
-   const struct stw_winsys *stw_winsys;
-   struct pipe_screen *screen;
-   
-   pipe_mutex mutex;
-
-   struct handle_table *ctx_table;
-   
-#ifdef DEBUG
-   unsigned long memdbg_no;
-#endif
+   uint currentPixelFormat;
+   HDC currentDC;
+   UINT_PTR currentGLRC;
 };
 
-struct stw_context *
-stw_lookup_context( UINT_PTR hglrc );
+boolean
+stw_tls_init(void);
 
-extern struct stw_device *stw_dev;
+boolean
+stw_tls_init_thread(void);
 
+void
+stw_tls_cleanup_thread(void);
 
-#endif /* STW_DEVICE_H_ */
+void
+stw_tls_cleanup(void);
+
+struct stw_tls_data *
+stw_tls_get_data(void);
+
+#endif /* STW_TLS_H */

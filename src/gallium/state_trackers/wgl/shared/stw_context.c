@@ -39,9 +39,7 @@
 #include "shared/stw_pixelformat.h"
 #include "stw_public.h"
 #include "stw_context.h"
-
-static HDC current_hdc = NULL;
-static UINT_PTR current_hglrc = 0;
+#include "stw_tls.h"
 
 BOOL
 stw_copy_context(
@@ -137,17 +135,7 @@ stw_create_layer_context(
 
    pipe_mutex_lock( stw_dev->mutex );
    {
-      UINT_PTR i;
-
-      for (i = 0; i < STW_CONTEXT_MAX; i++) {
-         if (stw_dev->ctx_array[i].ctx == NULL) {
-            /* success:
-             */
-            stw_dev->ctx_array[i].ctx = ctx;
-            hglrc = i + 1;
-            break;
-         }
-      }
+      hglrc = handle_table_add(stw_dev->ctx_table, ctx);
    }
    pipe_mutex_unlock( stw_dev->mutex );
 
@@ -197,12 +185,14 @@ stw_delete_context(
       if (WindowFromDC( ctx->hdc ) != NULL)
          ReleaseDC( WindowFromDC( ctx->hdc ), ctx->hdc );
 
-      st_destroy_context( ctx->st );
+      pipe_mutex_lock(stw_dev->mutex);
+      {
+         st_destroy_context(ctx->st);
+         FREE(ctx);
+         handle_table_remove(stw_dev->ctx_table, hglrc);
+      }
+      pipe_mutex_unlock(stw_dev->mutex);
 
-      FREE( ctx );
-      
-      stw_dev->ctx_array[hglrc - 1].ctx = NULL;
-      
       ret = TRUE;
    }
 
@@ -264,13 +254,13 @@ get_window_size( HDC hdc, GLuint *width, GLuint *height )
 UINT_PTR
 stw_get_current_context( void )
 {
-   return current_hglrc;
+   return stw_tls_get_data()->currentGLRC;
 }
 
 HDC
 stw_get_current_dc( void )
 {
-    return current_hdc;
+    return stw_tls_get_data()->currentDC;
 }
 
 BOOL
@@ -291,12 +281,9 @@ stw_make_current(
    pipe_mutex_lock( stw_dev->mutex ); 
    ctx = stw_lookup_context( hglrc );
    pipe_mutex_unlock( stw_dev->mutex );
-   
-   if (ctx == NULL)
-      return FALSE;
 
-   current_hdc = hdc;
-   current_hglrc = hglrc;
+   stw_tls_get_data()->currentDC = hdc;
+   stw_tls_get_data()->currentGLRC = hglrc;
 
    if (glcurctx != NULL) {
       curctx = (struct stw_context *) glcurctx->DriverCtx;
