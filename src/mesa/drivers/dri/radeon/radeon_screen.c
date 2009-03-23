@@ -1047,6 +1047,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
    int i;
    int ret;
    uint32_t device_id;
+   uint32_t temp = 0;
 
    /* Allocate the private area */
    screen = (radeonScreenPtr) CALLOC( sizeof(*screen) );
@@ -1082,6 +1083,36 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
    ret = radeon_set_screen_flags(screen, device_id);
    if (ret == -1)
      return NULL;
+
+   if (screen->chip_family >= CHIP_FAMILY_R300) {
+       ret = radeonGetParam( sPriv->fd, RADEON_PARAM_NUM_GB_PIPES,
+			     &temp);
+       if (ret) {
+	   fprintf(stderr, "Unable to get num_pipes, need newer drm\n");
+	   switch (screen->chip_family) {
+	   case CHIP_FAMILY_R300:
+	   case CHIP_FAMILY_R350:
+	       screen->num_gb_pipes = 2;
+	       break;
+	   case CHIP_FAMILY_R420:
+	   case CHIP_FAMILY_R520:
+	   case CHIP_FAMILY_R580:
+	   case CHIP_FAMILY_RV560:
+	   case CHIP_FAMILY_RV570:
+	       screen->num_gb_pipes = 4;
+	       break;
+	   case CHIP_FAMILY_RV350:
+	   case CHIP_FAMILY_RV515:
+	   case CHIP_FAMILY_RV530:
+	   case CHIP_FAMILY_RV410:
+	   default:
+	       screen->num_gb_pipes = 1;
+	       break;
+	   }
+       } else {
+	   screen->num_gb_pipes = temp;
+       }
+   }
 
    if (screen->chip_family <= CHIP_FAMILY_RS200)
       screen->chip_flags |= RADEON_CLASS_R100;
