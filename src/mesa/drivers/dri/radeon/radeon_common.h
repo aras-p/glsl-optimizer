@@ -5,6 +5,18 @@
 #include "radeon_dma.h"
 #include "radeon_texture.h"
 
+
+#define TRI_CLEAR_COLOR_BITS (BUFFER_BIT_BACK_LEFT |			\
+			      BUFFER_BIT_FRONT_LEFT |			\
+			      BUFFER_BIT_COLOR0 |			\
+			      BUFFER_BIT_COLOR1 |			\
+			      BUFFER_BIT_COLOR2 |			\
+			      BUFFER_BIT_COLOR3 |			\
+			      BUFFER_BIT_COLOR4 |			\
+			      BUFFER_BIT_COLOR5 |			\
+			      BUFFER_BIT_COLOR6 |			\
+			      BUFFER_BIT_COLOR7)
+
 void radeonRecalcScissorRects(radeonContextPtr radeon);
 void radeonSetCliprects(radeonContextPtr radeon);
 void radeonUpdateScissor( GLcontext *ctx );
@@ -24,12 +36,24 @@ void radeonFlush(GLcontext *ctx);
 void radeonFinish(GLcontext * ctx);
 void radeonEmitState(radeonContextPtr radeon);
 
+void radeon_clear_tris(GLcontext *ctx, GLbitfield mask);
+
 void radeon_window_moved(radeonContextPtr radeon);
 void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb);
 void radeonDrawBuffer( GLcontext *ctx, GLenum mode );
 void radeonReadBuffer( GLcontext *ctx, GLenum mode );
 void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height);
+void radeon_get_cliprects(radeonContextPtr radeon,
+			  struct drm_clip_rect **cliprects,
+			  unsigned int *num_cliprects,
+			  int *x_off, int *y_off);
 
+void radeon_fbo_init(struct radeon_context *radeon);
+void
+radeon_renderbuffer_set_bo(struct radeon_renderbuffer *rb,
+			   struct radeon_bo *bo);
+struct radeon_renderbuffer *
+radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv);
 static inline struct radeon_renderbuffer *radeon_renderbuffer(struct gl_renderbuffer *rb)
 {
 	struct radeon_renderbuffer *rrb = (struct radeon_renderbuffer *)rb;
@@ -60,12 +84,8 @@ static inline struct radeon_renderbuffer *radeon_get_depthbuffer(radeonContextPt
 static inline struct radeon_renderbuffer *radeon_get_colorbuffer(radeonContextPtr rmesa)
 {
 	struct radeon_renderbuffer *rrb;
-	struct radeon_framebuffer *rfb = rmesa->dri.drawable->driverPrivate;
 
 	rrb = rmesa->state.color.rrb;
-	if (rmesa->radeonScreen->driScreen->dri2.enabled) {
-		rrb = radeon_get_renderbuffer(&rfb->base, BUFFER_BACK_LEFT);
-	}
 	if (!rrb)
 		return NULL;
 	return rrb;

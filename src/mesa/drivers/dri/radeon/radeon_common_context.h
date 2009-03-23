@@ -82,6 +82,7 @@ struct radeon_renderbuffer
 	unsigned int width;
 	unsigned int height;
 
+	uint32_t draw_offset; /* FBO */
 	/* boo Xorg 6.8.2 compat */
 	int has_surface;
 
@@ -117,11 +118,11 @@ struct radeon_colorbuffer_state {
 	GLuint clear;
 	int roundEnable;
 	struct radeon_renderbuffer *rrb;
+	uint32_t draw_offset; /* offset into color renderbuffer - FBOs */
 };
 
 struct radeon_depthbuffer_state {
 	GLuint clear;
-	GLfloat scale;
 	struct radeon_renderbuffer *rrb;
 };
 
@@ -135,7 +136,6 @@ struct radeon_scissor_state {
 };
 
 struct radeon_stencilbuffer_state {
-	GLboolean hwBuffer;
 	GLuint clear;		/* rb3d_stencilrefmask value */
 };
 
@@ -442,9 +442,23 @@ struct radeon_context {
 
    struct radeon_cmdbuf cmdbuf;
 	
-	drm_clip_rect_t fboRect;
-	GLboolean constant_cliprect; /* use for FBO or DRI2 rendering */
-	GLboolean front_cliprects;
+  drm_clip_rect_t fboRect;
+  GLboolean constant_cliprect; /* use for FBO or DRI2 rendering */
+  GLboolean front_cliprects;
+
+  struct {
+      struct gl_fragment_program *bitmap_fp;
+      struct gl_vertex_program *passthrough_vp;
+
+      struct gl_fragment_program *saved_fp;
+      GLboolean saved_fp_enable;
+      struct gl_vertex_program *saved_vp;
+      GLboolean saved_vp_enable;
+
+      GLint saved_vp_x, saved_vp_y;
+      GLsizei saved_vp_width, saved_vp_height;
+      GLenum saved_matrix_mode;
+   } meta;
 
    struct {
 	   void (*get_lock)(radeonContextPtr radeon);

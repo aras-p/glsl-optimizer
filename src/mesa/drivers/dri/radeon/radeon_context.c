@@ -66,6 +66,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_EXT_blend_minmax
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
+#define need_GL_EXT_framebuffer_object
 #include "extension_helper.h"
 
 #define DRIVER_DATE	"20061018"
@@ -88,6 +89,7 @@ const struct dri_extension card_extensions[] =
     { "GL_EXT_blend_logic_op",             NULL },
     { "GL_EXT_blend_subtract",             GL_EXT_blend_minmax_functions },
     { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
+    { "GL_EXT_packed_depth_stencil",	   NULL},
     { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
     { "GL_EXT_stencil_wrap",               NULL },
     { "GL_EXT_texture_edge_clamp",         NULL },
@@ -102,6 +104,11 @@ const struct dri_extension card_extensions[] =
     { "GL_NV_blend_square",                NULL },
     { "GL_SGIS_generate_mipmap",           NULL },
     { NULL,                                NULL }
+};
+
+const struct dri_extension mm_extensions[] = {
+  { "GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions },
+  { NULL, NULL }
 };
 
 extern const struct tnl_pipeline_stage _radeon_render_stage;
@@ -338,6 +345,8 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    }
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
+   if (rmesa->radeon.radeonScreen->kernel_mm)
+     driInitExtensions(ctx, mm_extensions, GL_FALSE);
    if (rmesa->radeon.radeonScreen->drmSupportsCubeMapsR100)
       _mesa_enable_extension( ctx, "GL_ARB_texture_cube_map" );
    if (rmesa->radeon.glCtx->Mesa_DXTn) {
@@ -352,6 +361,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
       _mesa_enable_extension( ctx, "GL_NV_texture_rectangle");
 
    /* XXX these should really go right after _mesa_init_driver_functions() */
+   radeon_fbo_init(&rmesa->radeon);
    radeonInitSpanFuncs( ctx );
    radeonInitIoctlFuncs( ctx );
    radeonInitStateFuncs( ctx );

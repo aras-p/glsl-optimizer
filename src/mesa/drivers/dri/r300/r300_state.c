@@ -587,8 +587,14 @@ static void r300SetDepthState(GLcontext * ctx)
 static void r300SetStencilState(GLcontext * ctx, GLboolean state)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	GLboolean hw_stencil = GL_FALSE;
+	if (ctx->DrawBuffer) {
+		struct radeon_renderbuffer *rrbStencil
+			= radeon_get_renderbuffer(ctx->DrawBuffer, BUFFER_STENCIL);
+		hw_stencil = (rrbStencil && rrbStencil->bo);
+	}
 
-	if (r300->radeon.state.stencil.hwBuffer) {
+	if (hw_stencil) {
 		R300_STATECHANGE(r300, zs);
 		if (state) {
 			r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
@@ -933,13 +939,24 @@ static void r300UpdateWindow(GLcontext * ctx)
 	GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
 	GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
 	const GLfloat *v = ctx->Viewport._WindowMap.m;
+	const GLfloat depthScale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
+	const GLboolean render_to_fbo = (ctx->DrawBuffer->Name != 0);
+	GLfloat y_scale, y_bias;
+
+	if (render_to_fbo) {
+		y_scale = 1.0;
+		y_bias = 0;
+	} else {
+		y_scale = -1.0;
+		y_bias = yoffset;
+	}
 
 	GLfloat sx = v[MAT_SX];
 	GLfloat tx = v[MAT_TX] + xoffset + SUBPIXEL_X;
-	GLfloat sy = -v[MAT_SY];
-	GLfloat ty = (-v[MAT_TY]) + yoffset + SUBPIXEL_Y;
-	GLfloat sz = v[MAT_SZ] * rmesa->radeon.state.depth.scale;
-	GLfloat tz = v[MAT_TZ] * rmesa->radeon.state.depth.scale;
+	GLfloat sy = v[MAT_SY] * y_scale;
+	GLfloat ty = (v[MAT_TY] * y_scale) + y_bias + SUBPIXEL_Y;
+	GLfloat sz = v[MAT_SZ] * depthScale;
+	GLfloat tz = v[MAT_TZ] * depthScale;
 
 	R300_STATECHANGE(rmesa, vpt);
 
@@ -2022,7 +2039,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
 	radeon_firevertices(&r300->radeon);
-	r300UpdateWindow(ctx);
+	//r300UpdateWindow(ctx);
 
 	r300ColorMask(ctx,
 		      ctx->Color.ColorMask[RCOMP],
@@ -2196,16 +2213,6 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[1] = 0x00000000;
 	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[2] = 0xffffffff;
-
-	rrb = r300->radeon.state.depth.rrb;
-	if (rrb && rrb->bo && (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)) {
-		/* XXX: Turn off when clearing buffers ? */
-		r300->hw.zb.cmd[R300_ZB_PITCH] |= R300_DEPTHMACROTILE_ENABLE;
-
-		if (ctx->Visual.depthBits == 24)
-			r300->hw.zb.cmd[R300_ZB_PITCH] |=
-			    R300_DEPTHMICROTILE_TILED;
-	}
 
 	r300->hw.zb_depthclearvalue.cmd[1] = 0;
 
@@ -2519,10 +2526,6 @@ void r300InitState(r300ContextPtr r300)
 {
 	GLcontext *ctx = r300->radeon.glCtx;
 	GLuint depth_fmt;
-
-	/* Only have hw stencil when depth buffer is 24 bits deep */
-	r300->radeon.state.stencil.hwBuffer = (ctx->Visual.stencilBits > 0 &&
-					       ctx->Visual.depthBits == 24);
 
 	memset(&(r300->state.texture), 0, sizeof(r300->state.texture));
 

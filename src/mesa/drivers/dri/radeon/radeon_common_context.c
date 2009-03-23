@@ -392,6 +392,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	struct radeon_framebuffer *draw;
 	radeonContextPtr radeon;
 	char *regname;
+	struct radeon_bo *depth_bo, *bo;
 
 	if (RADEON_DEBUG & DEBUG_DRI)
 	    fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);
@@ -448,7 +449,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 			regname = "dri2 depth buffer";
 			break;
 		case __DRI_BUFFER_STENCIL:
-			rb = radeon_get_renderbuffer(&draw->base, BUFFER_DEPTH);
+			rb = radeon_get_renderbuffer(&draw->base, BUFFER_STENCIL);
 			regname = "dri2 stencil buffer";
 			break;
 		case __DRI_BUFFER_ACCUM:
@@ -463,25 +464,49 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 			continue;
 
 		if (rb->bo) {
-			radeon_bo_unref(rb->bo);
-			rb->bo = NULL;
+			uint32_t name = radeon_gem_name_bo(rb->bo);
+			if (name == buffers[i].name)
+				continue;
 		}
+
+		if (RADEON_DEBUG & DEBUG_DRI)
+			fprintf(stderr,
+				"attaching buffer %s, %d, at %d, cpp %d, pitch %d\n",
+				regname, buffers[i].name, buffers[i].attachment,
+				buffers[i].cpp, buffers[i].pitch);
+
 		rb->cpp = buffers[i].cpp;
 		rb->pitch = buffers[i].pitch;
 		rb->width = drawable->w;
 		rb->height = drawable->h;
 		rb->has_surface = 0;
-		rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
-					buffers[i].name,
-					0,
-					0,
-					RADEON_GEM_DOMAIN_VRAM,
-					buffers[i].flags);
-		if (rb->bo == NULL) {
-			fprintf(stderr, "failed to attach %s %d\n",
-				regname, buffers[i].name);
 
+		if (buffers[i].attachment == __DRI_BUFFER_STENCIL && depth_bo) {
+			if (RADEON_DEBUG & DEBUG_DRI)
+				fprintf(stderr, "(reusing depth buffer as stencil)\n");
+			bo = depth_bo;
+			radeon_bo_ref(bo);
+		} else {
+			bo = radeon_bo_open(radeon->radeonScreen->bom,
+						buffers[i].name,
+						0,
+						0,
+						RADEON_GEM_DOMAIN_VRAM,
+						buffers[i].flags);
+			if (bo == NULL) {
+
+				fprintf(stderr, "failed to attach %s %d\n",
+					regname, buffers[i].name);
+				
+			}
 		}
+
+		if (buffers[i].attachment == __DRI_BUFFER_DEPTH)
+			depth_bo = bo;
+
+		radeon_renderbuffer_set_bo(rb, bo);
+		radeon_bo_unref(bo);
+		    
 	}
 
 	driUpdateFramebufferSize(radeon->glCtx, drawable);

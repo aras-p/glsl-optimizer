@@ -1089,6 +1089,9 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
    else
       screen->chip_flags |= RADEON_CLASS_R300;
 
+   if (getenv("R300_NO_TCL"))
+     screen->chip_flags &= ~RADEON_CHIPSET_TCL;
+
    i = 0;
    screen->extensions[i++] = &driCopySubBufferExtension.base;
    screen->extensions[i++] = &driFrameTrackingExtension.base;
@@ -1178,90 +1181,7 @@ radeonInitDriver( __DRIscreenPrivate *sPriv )
     return GL_TRUE;
 }
 
-static GLboolean
-radeon_alloc_window_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
-			    GLenum intFormat, GLuint w, GLuint h)
-{
-    rb->Width = w;
-    rb->Height = h;
-    rb->_ActualFormat = intFormat;
 
-    return GL_TRUE;
-}
-
-
-static struct radeon_renderbuffer *
-radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
-{
-    struct radeon_renderbuffer *ret;
-
-    ret = CALLOC_STRUCT(radeon_renderbuffer);
-    if (!ret)
-	return NULL;
-
-    _mesa_init_renderbuffer(&ret->base, 0);
-    ret->base.ClassID = RADEON_RB_CLASS;
-
-    /* XXX format junk */
-    switch (format) {
-	case GL_RGB5:
-	    ret->base._ActualFormat = GL_RGB5;
-	    ret->base._BaseFormat = GL_RGBA;
-	    ret->base.RedBits = 5;
-	    ret->base.GreenBits = 6;
-	    ret->base.BlueBits = 5;
-	    ret->base.DataType = GL_UNSIGNED_BYTE;
-	    break;
-	case GL_RGBA8:
-	    ret->base._ActualFormat = GL_RGBA8;
-	    ret->base._BaseFormat = GL_RGBA;
-	    ret->base.RedBits = 8;
-	    ret->base.GreenBits = 8;
-	    ret->base.BlueBits = 8;
-	    ret->base.AlphaBits = 8;
-	    ret->base.DataType = GL_UNSIGNED_BYTE;
-	    break;
-	case GL_STENCIL_INDEX8_EXT:
-	    ret->base._ActualFormat = GL_STENCIL_INDEX8_EXT;
-	    ret->base._BaseFormat = GL_STENCIL_INDEX;
-	    ret->base.StencilBits = 8;
-	    ret->base.DataType = GL_UNSIGNED_BYTE;
-	    break;
-	case GL_DEPTH_COMPONENT16:
-	    ret->base._ActualFormat = GL_DEPTH_COMPONENT16;
-	    ret->base._BaseFormat = GL_DEPTH_COMPONENT;
-	    ret->base.DepthBits = 16;
-	    ret->base.DataType = GL_UNSIGNED_SHORT;
-	    break;
-	case GL_DEPTH_COMPONENT24:
-	    ret->base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
-	    ret->base._BaseFormat = GL_DEPTH_COMPONENT;
-	    ret->base.DepthBits = 24;
-	    ret->base.DataType = GL_UNSIGNED_INT;
-	    break;
-	case GL_DEPTH24_STENCIL8_EXT:
-	    ret->base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
-	    ret->base._BaseFormat = GL_DEPTH_STENCIL_EXT;
-	    ret->base.DepthBits = 24;
-	    ret->base.StencilBits = 8;
-	    ret->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
-	    break;
-	default:
-	    fprintf(stderr, "%s: Unknown format 0x%04x\n", __FUNCTION__, format);
-	    _mesa_delete_renderbuffer(&ret->base);
-	    return NULL;
-    }
-
-    ret->dPriv = driDrawPriv;
-    ret->base.InternalFormat = format;
-
-    ret->base.AllocStorage = radeon_alloc_window_storage;
-
-    radeonSetSpanFunctions(ret);
-
-    ret->bo = NULL;
-    return ret;
-}
 
 /**
  * Create the Mesa framebuffer and renderbuffers for a given window/drawable.
@@ -1283,7 +1203,6 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
     const GLboolean swStencil = mesaVis->stencilBits > 0 &&
 	mesaVis->depthBits != 24;
     GLenum rgbFormat = (mesaVis->redBits == 5 ? GL_RGB5 : GL_RGBA8);
-    GLenum depthFormat = GL_NONE;
     struct radeon_framebuffer *rfb;
 
     if (isPixmap)
@@ -1295,11 +1214,6 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
     _mesa_initialize_framebuffer(&rfb->base, mesaVis);
 
-    if (mesaVis->depthBits == 16)
-	depthFormat = GL_DEPTH_COMPONENT16;
-    else if (mesaVis->depthBits == 24)
-	depthFormat = GL_DEPTH_COMPONENT24;
-
     /* front color renderbuffer */
     rfb->color_rb[0] = radeon_create_renderbuffer(rgbFormat, driDrawPriv);
     _mesa_add_renderbuffer(&rfb->base, BUFFER_FRONT_LEFT, &rfb->color_rb[0]->base);
@@ -1307,25 +1221,28 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
     /* back color renderbuffer */
     if (mesaVis->doubleBufferMode) {
-	rfb->color_rb[1] = radeon_create_renderbuffer(rgbFormat, driDrawPriv);
+      rfb->color_rb[1] = radeon_create_renderbuffer(rgbFormat, driDrawPriv);
 	_mesa_add_renderbuffer(&rfb->base, BUFFER_BACK_LEFT, &rfb->color_rb[1]->base);
 	rfb->color_rb[1]->has_surface = 1;
     }
 
-    /* depth renderbuffer */
-    if (depthFormat != GL_NONE) {
-	struct radeon_renderbuffer *depth =
-	    radeon_create_renderbuffer(depthFormat, driDrawPriv);
+    if (mesaVis->depthBits == 24) {
+      if (mesaVis->stencilBits == 8) {
+	struct radeon_renderbuffer *depthStencilRb = radeon_create_renderbuffer(GL_DEPTH24_STENCIL8_EXT, driDrawPriv);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depthStencilRb->base);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_STENCIL, &depthStencilRb->base);
+	depthStencilRb->has_surface = screen->depthHasSurface;
+      } else {
+	/* depth renderbuffer */
+	struct radeon_renderbuffer *depth = radeon_create_renderbuffer(GL_DEPTH_COMPONENT24, driDrawPriv);
 	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depth->base);
 	depth->has_surface = screen->depthHasSurface;
-    }
-
-    /* stencil renderbuffer */
-    if (mesaVis->stencilBits > 0 && !swStencil) {
-	struct radeon_renderbuffer *stencil =
-	    radeon_create_renderbuffer(GL_STENCIL_INDEX8_EXT, driDrawPriv);
-	_mesa_add_renderbuffer(&rfb->base, BUFFER_STENCIL, &stencil->base);
-	stencil->has_surface = screen->depthHasSurface;
+      }
+    } else if (mesaVis->depthBits == 16) {
+      /* just 16-bit depth buffer, no hw stencil */
+	struct radeon_renderbuffer *depth = radeon_create_renderbuffer(GL_DEPTH_COMPONENT16, driDrawPriv);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depth->base);
+	depth->has_surface = screen->depthHasSurface;
     }
 
     _mesa_add_soft_renderbuffers(&rfb->base,
