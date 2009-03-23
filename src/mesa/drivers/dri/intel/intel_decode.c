@@ -1513,7 +1513,7 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 
 	for (i = 1; i < len;) {
 	    instr_out(data, hw_offset, i, "buffer %d: %svalid, type 0x%04x, "
-		      "src offset 0x%04xd bytes\n",
+		      "src offset 0x%04x bytes\n",
 		      data[i] >> 27,
 		      data[i] & (1 << 26) ? "" : "in",
 		      (data[i] >> 16) & 0x1ff,
