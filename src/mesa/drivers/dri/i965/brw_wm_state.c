@@ -142,7 +142,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    if (key->total_scratch != 0) {
       wm.thread2.scratch_space_base_pointer =
-	 brw->wm.scratch_buffer->offset >> 10; /* reloc */
+	 brw->wm.scratch_bo->offset >> 10; /* reloc */
       wm.thread2.per_thread_scratch_space = key->total_scratch / 1024 - 1;
    } else {
       wm.thread2.scratch_space_base_pointer = 0;
@@ -220,7 +220,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 			0, 0,
 			wm.thread2.per_thread_scratch_space,
 			offsetof(struct brw_wm_unit_state, thread2),
-			brw->wm.scratch_buffer);
+			brw->wm.scratch_bo);
    }
 
    /* Emit sampler state relocation */
@@ -251,20 +251,20 @@ static void upload_wm_unit( struct brw_context *brw )
    if (key.total_scratch) {
       GLuint total = key.total_scratch * key.max_threads;
 
-      if (brw->wm.scratch_buffer && total > brw->wm.scratch_buffer->size) {
-	 dri_bo_unreference(brw->wm.scratch_buffer);
-	 brw->wm.scratch_buffer = NULL;
+      if (brw->wm.scratch_bo && total > brw->wm.scratch_bo->size) {
+	 dri_bo_unreference(brw->wm.scratch_bo);
+	 brw->wm.scratch_bo = NULL;
       }
-      if (brw->wm.scratch_buffer == NULL) {
-	 brw->wm.scratch_buffer = dri_bo_alloc(intel->bufmgr,
-					       "wm scratch",
-					       total,
-					       4096);
+      if (brw->wm.scratch_bo == NULL) {
+	 brw->wm.scratch_bo = dri_bo_alloc(intel->bufmgr,
+                                           "wm scratch",
+                                           total,
+                                           4096);
       }
    }
 
    reloc_bufs[0] = brw->wm.prog_bo;
-   reloc_bufs[1] = brw->wm.scratch_buffer;
+   reloc_bufs[1] = brw->wm.scratch_bo;
    reloc_bufs[2] = brw->wm.sampler_bo;
 
    dri_bo_unreference(brw->wm.state_bo);
