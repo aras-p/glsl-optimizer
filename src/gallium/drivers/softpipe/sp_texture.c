@@ -138,7 +138,6 @@ softpipe_texture_create(struct pipe_screen *screen,
          goto fail;
    }
     
-   assert(p_atomic_read(&spt->base.reference.count) == 1);
    return &spt->base;
 
  fail:

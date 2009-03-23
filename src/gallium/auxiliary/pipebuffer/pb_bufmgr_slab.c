@@ -202,7 +202,7 @@ pb_slab_buffer_destroy(struct pb_buffer *_buf)
 
    pipe_mutex_lock(mgr->mutex);
    
-   assert(p_atomic_read(&buf->base.base.reference.count) == 0);
+   assert(!pipe_is_referenced(&buf->base.base.reference));
    
    buf->mapCount = 0;
 
