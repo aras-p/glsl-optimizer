@@ -653,6 +653,36 @@ static void emit_pinterp(struct brw_wm_compile *c,
     }
 }
 
+/* Sets the destination channels to 1.0 or 0.0 according to glFrontFacing. */
+static void emit_frontfacing(struct brw_wm_compile *c,
+			     struct prog_instruction *inst)
+{
+    struct brw_compile *p = &c->func;
+    struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
+    struct brw_reg dst;
+    GLuint mask = inst->DstReg.WriteMask;
+    int i;
+
+    for (i = 0; i < 4; i++) {
+	if (mask & (1<<i)) {
+	    dst = get_dst_reg(c, inst, i, 1);
+	    brw_MOV(p, dst, brw_imm_f(0.0));
+	}
+    }
+
+    /* bit 31 is "primitive is back face", so checking < (1 << 31) gives
+     * us front face
+     */
+    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, r1_6ud, brw_imm_ud(1 << 31));
+    for (i = 0; i < 4; i++) {
+	if (mask & (1<<i)) {
+	    dst = get_dst_reg(c, inst, i, 1);
+	    brw_MOV(p, dst, brw_imm_f(1.0));
+	}
+    }
+    brw_set_predicate_control_flag_value(p, 0xff);
+}
+
 static void emit_xpd(struct brw_wm_compile *c,
 		struct prog_instruction *inst)
 {
@@ -2434,6 +2464,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		break;
 	    case WM_FB_WRITE:
 		emit_fb_write(c, inst);
+		break;
+	    case WM_FRONTFACING:
+		emit_frontfacing(c, inst);
 		break;
 	    case OPCODE_ABS:
 		emit_abs(c, inst);

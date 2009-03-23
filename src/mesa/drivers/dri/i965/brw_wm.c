@@ -40,6 +40,8 @@
 GLuint brw_wm_nr_args( GLuint opcode )
 {
    switch (opcode) {
+   case WM_FRONTFACING:
+      return 0;
    case WM_PIXELXY:
    case WM_CINTERP:
    case WM_WPOSXY:

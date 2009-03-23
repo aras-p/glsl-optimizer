@@ -254,6 +254,34 @@ static void emit_cinterp( struct brw_compile *p,
    }
 }
 
+/* Sets the destination channels to 1.0 or 0.0 according to glFrontFacing. */
+static void emit_frontfacing( struct brw_compile *p,
+			      const struct brw_reg *dst,
+			      GLuint mask )
+{
+   struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
+   GLuint i;
+
+   if (!(mask & WRITEMASK_XYZW))
+      return;
+
+   for (i = 0; i < 4; i++) {
+      if (mask & (1<<i)) {
+	 brw_MOV(p, dst[i], brw_imm_f(0.0));
+      }
+   }
+
+   /* bit 31 is "primitive is back face", so checking < (1 << 31) gives
+    * us front face
+    */
+   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, r1_6ud, brw_imm_ud(1 << 31));
+   for (i = 0; i < 4; i++) {
+      if (mask & (1<<i)) {
+	 brw_MOV(p, dst[i], brw_imm_f(1.0));
+      }
+   }
+   brw_set_predicate_control_flag_value(p, 0xff);
+}
 
 static void emit_alu1( struct brw_compile *p, 
 		       struct brw_instruction *(*func)(struct brw_compile *, 
@@ -1158,6 +1186,10 @@ void brw_wm_emit( struct brw_wm_compile *c )
 
       case WM_FB_WRITE:
 	 emit_fb_write(c, args[0], args[1], args[2], inst->target, inst->eot);
+	 break;
+
+      case WM_FRONTFACING:
+	 emit_frontfacing(p, dst, dst_flags);
 	 break;
 
 	 /* Straightforward arithmetic:

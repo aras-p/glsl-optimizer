@@ -172,7 +172,8 @@ struct brw_wm_instruction {
 #define WM_CINTERP        (MAX_OPCODE + 5)
 #define WM_WPOSXY         (MAX_OPCODE + 6)
 #define WM_FB_WRITE       (MAX_OPCODE + 7)
-#define MAX_WM_OPCODE     (MAX_OPCODE + 8)
+#define WM_FRONTFACING    (MAX_OPCODE + 8)
+#define MAX_WM_OPCODE     (MAX_OPCODE + 9)
 
 #define PROGRAM_PAYLOAD   (PROGRAM_FILE_MAX)
 #define PAYLOAD_DEPTH     (FRAG_ATTRIB_MAX)

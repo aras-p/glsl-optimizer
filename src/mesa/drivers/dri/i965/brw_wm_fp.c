@@ -58,7 +58,8 @@ static const char *wm_opcode_strings[] = {
    "PINTERP",
    "CINTERP",
    "WPOSXY",
-   "FB_WRITE"
+   "FB_WRITE",
+   "FRONTFACING",
 };
 
 #if 0
@@ -384,12 +385,12 @@ static void emit_interp( struct brw_wm_compile *c,
       /* Move the front facing value into FOGC.y if it's needed. */
       if (c->fp->program.UsesFrontFacing) {
 	 emit_op(c,
-		 WM_PINTERP,
+		 WM_FRONTFACING,
 		 dst_mask(dst, WRITEMASK_Y),
 		 0,
-		 interp,
-		 deltas,
-		 get_pixel_w(c));
+		 src_undef(),
+		 src_undef(),
+		 src_undef());
       } else {
 	 emit_op(c,
 		 OPCODE_MOV,
