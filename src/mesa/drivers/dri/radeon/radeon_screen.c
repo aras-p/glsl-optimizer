@@ -241,6 +241,7 @@ static const struct dri_debug_control debug_control[] = {
 #endif /* RADEON_COMMON && defined(RADEON_COMMON_FOR_R300) */
 
 extern const struct dri_extension card_extensions[];
+extern const struct dri_extension mm_extensions[];
 
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
@@ -1413,6 +1414,7 @@ __DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
     * Hello chicken.  Hello egg.  How are you two today?
     */
    driInitExtensions( NULL, card_extensions, GL_FALSE );
+   driInitExtensions( NULL, mm_extensions, GL_FALSE );
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
    driInitExtensions( NULL, blend_extensions, GL_FALSE );
    driInitSingleExtension( NULL, ARB_vp_extension );
