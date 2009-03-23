@@ -113,7 +113,7 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    /* temporary sanity check assertion */
    ASSERT(bfp->isGLSL == brw_wm_is_glsl(fp));
 
-   /* XXX: This needs a flag to indicate when it changes. */
+   /* _NEW_DEPTH */
    key->stats_wm = intel->stats_wm;
 
    /* _NEW_LINE */
@@ -282,7 +282,8 @@ const struct brw_tracked_state brw_wm_unit = {
       .mesa = (_NEW_POLYGON | 
 	       _NEW_POLYGONSTIPPLE | 
 	       _NEW_LINE | 
-	       _NEW_COLOR),
+	       _NEW_COLOR |
+	       _NEW_DEPTH),
 
       .brw = (BRW_NEW_FRAGMENT_PROGRAM | 
 	      BRW_NEW_CURBE_OFFSETS |
