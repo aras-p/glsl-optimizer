@@ -375,17 +375,6 @@ if test "x$enable_selinux" = "xyes"; then
     DEFINES="$DEFINES -DMESA_SELINUX"
 fi
 
-dnl OS-specific libraries
-OS_LIBS=""
-case "$host_os" in
-solaris*)
-    OS_LIBS="-lc"
-    if test "x$GXX" != xyes; then
-        OS_CPLUSPLUS_LIBS="-lCrun $OS_LIBS"
-    fi
-    ;;
-esac
-
 dnl
 dnl Driver configuration. Options are xlib, dri and osmesa right now.
 dnl More later: directfb, fbdev, ...
@@ -561,8 +550,8 @@ xlib)
         GL_PC_LIB_PRIV="$GL_LIB_DEPS"
         GL_PC_CFLAGS="$X11_INCLUDES"
     fi
-    GL_LIB_DEPS="$GL_LIB_DEPS $SELINUX_LIBS -lm -lpthread $OS_LIBS"
-    GL_PC_LIB_PRIV="$GL_PC_LIB_PRIV $SELINUX_LIBS -lm -lpthread $OS_LIBS"
+    GL_LIB_DEPS="$GL_LIB_DEPS $SELINUX_LIBS -lm -lpthread"
+    GL_PC_LIB_PRIV="$GL_PC_LIB_PRIV $SELINUX_LIBS -lm -lpthread"
 
     # if static, move the external libraries to the programs
     # and empty the libraries for libGL
@@ -612,12 +601,12 @@ dri)
     fi
 
     # need DRM libs, -lpthread, etc.
-    GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS $OS_LIBS"
-    GL_PC_LIB_PRIV="-lm -lpthread $DLOPEN_LIBS $OS_LIBS"
+    GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"
+    GL_PC_LIB_PRIV="-lm -lpthread $DLOPEN_LIBS"
     ;;
 osmesa)
     # No libGL for osmesa
-    GL_LIB_DEPS="$OS_LIBS"
+    GL_LIB_DEPS=""
     ;;
 esac
 AC_SUBST([GL_LIB_DEPS])
@@ -860,9 +849,9 @@ osmesa)
     ;;
 esac
 if test "$enable_static" = no; then
-    OSMESA_LIB_DEPS="$OSMESA_LIB_DEPS $OS_LIBS"
+    OSMESA_LIB_DEPS="$OSMESA_LIB_DEPS"
 fi
-OSMESA_PC_LIB_PRIV="$OSMESA_PC_LIB_PRIV $OS_LIBS"
+OSMESA_PC_LIB_PRIV="$OSMESA_PC_LIB_PRIV"
 AC_SUBST([OSMESA_LIB_DEPS])
 AC_SUBST([OSMESA_MESA_DEPS])
 AC_SUBST([OSMESA_PC_REQ])
@@ -878,7 +867,7 @@ else
     # should check these...
     EGL_LIB_DEPS="$X_LIBS -lX11"
 fi
-EGL_LIB_DEPS="$EGL_LIB_DEPS $DLOPEN_LIBS $OS_LIBS"
+EGL_LIB_DEPS="$EGL_LIB_DEPS $DLOPEN_LIBS"
 AC_SUBST([EGL_LIB_DEPS])
 
 dnl
@@ -988,10 +977,10 @@ if test "x$enable_glw" = xyes; then
     fi
 
     # If static, empty GLW_LIB_DEPS and add libs for programs to link
-    GLW_PC_LIB_PRIV="$GLW_PC_LIB_PRIV $OS_LIBS"
+    GLW_PC_LIB_PRIV="$GLW_PC_LIB_PRIV"
     if test "$enable_static" = no; then
         GLW_MESA_DEPS='-l$(GL_LIB)'
-        GLW_LIB_DEPS="$GLW_LIB_DEPS $OS_LIBS"
+        GLW_LIB_DEPS="$GLW_LIB_DEPS"
     else
         APP_LIB_DEPS="$APP_LIB_DEPS $GLW_LIB_DEPS"
         GLW_LIB_DEPS=""
@@ -1047,8 +1036,8 @@ if test "x$enable_glut" = xyes; then
         GLUT_PC_LIB_PRIV="$GLUT_LIB_DEPS"
         GLUT_PC_CFLAGS="$X11_INCLUDES"
     fi
-    GLUT_LIB_DEPS="$GLUT_LIB_DEPS -lm $OS_LIBS"
-    GLUT_PC_LIB_PRIV="$GLUT_PC_LIB_PRIV -lm $OS_LIBS"
+    GLUT_LIB_DEPS="$GLUT_LIB_DEPS -lm"
+    GLUT_PC_LIB_PRIV="$GLUT_PC_LIB_PRIV -lm"
 
     # If glut is available, we can build most programs
     if test "$with_demos" = yes; then
