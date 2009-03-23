@@ -36,7 +36,7 @@ struct drm_radeon_gem_info {
 #endif
 
 
-uint32_t radeon_gem_bo_name(struct radeon_bo *dummy)
+static inline uint32_t radeon_gem_name_bo(struct radeon_bo *dummy)
 {
   return 0;
 }
