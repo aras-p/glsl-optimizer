@@ -242,8 +242,8 @@ struct brw_wm_compile {
 
    /** Mapping from Mesa registers to hardware registers */
    struct {
-	GLboolean inited;
-	struct brw_reg reg;
+      GLboolean inited;
+      struct brw_reg reg;
    } wm_regs[PROGRAM_PAYLOAD+1][256][4];
 
    struct brw_reg stack;
