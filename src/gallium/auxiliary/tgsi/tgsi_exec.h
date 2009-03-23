@@ -205,8 +205,8 @@ struct tgsi_exec_machine
    const float                   (*Consts)[4];
    struct tgsi_exec_vector       *Inputs;
    struct tgsi_exec_vector       *Outputs;
-   const struct tgsi_token       *Tokens;
-   unsigned                      Processor;
+   const struct tgsi_token       *Tokens;   /**< Declarations, instructions */
+   unsigned                      Processor; /**< TGSI_PROCESSOR_x */
 
    /* GEOMETRY processor only. */
    unsigned                      *Primitives;
