@@ -740,7 +740,8 @@ static void r200PolygonOffset( GLcontext *ctx,
 			       GLfloat factor, GLfloat units )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   float_ui32_type constant =  { units * rmesa->radeon.state.depth.scale };
+   const GLfloat depthScale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
+   float_ui32_type constant =  { units * depthScale };
    float_ui32_type factoru = { factor };
 
 /*    factor *= 2; */
@@ -1611,6 +1612,7 @@ void r200UpdateWindow( GLcontext *ctx )
    GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
    const GLboolean render_to_fbo = (ctx->DrawBuffer ? (ctx->DrawBuffer->Name != 0) : 0);
+   const GLfloat depthScale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    GLfloat y_scale, y_bias;
 
    if (render_to_fbo) {
@@ -1625,8 +1627,8 @@ void r200UpdateWindow( GLcontext *ctx )
    float_ui32_type tx = { v[MAT_TX] + xoffset + SUBPIXEL_X };
    float_ui32_type sy = { v[MAT_SY] * y_scale };
    float_ui32_type ty = { (v[MAT_TY] * y_scale) + y_bias + SUBPIXEL_Y };
-   float_ui32_type sz = { v[MAT_SZ] * rmesa->radeon.state.depth.scale };
-   float_ui32_type tz = { v[MAT_TZ] * rmesa->radeon.state.depth.scale };
+   float_ui32_type sz = { v[MAT_SZ] * depthScale };
+   float_ui32_type tz = { v[MAT_TZ] * depthScale };
 
    R200_STATECHANGE( rmesa, vpt );
 
@@ -2014,15 +2016,24 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
 
    case GL_STENCIL_TEST:
-      if ( rmesa->radeon.state.stencil.hwBuffer ) {
-	 R200_STATECHANGE( rmesa, ctx );
-	 if ( state ) {
-	    rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  R200_STENCIL_ENABLE;
-	 } else {
-	    rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~R200_STENCIL_ENABLE;
+      {
+	 GLboolean hw_stencil = GL_FALSE;
+	 if (ctx->DrawBuffer) {
+	    struct radeon_renderbuffer *rrbStencil
+	       = radeon_get_renderbuffer(ctx->DrawBuffer, BUFFER_STENCIL);
+	    hw_stencil = (rrbStencil && rrbStencil->bo);
 	 }
-      } else {
-	 FALLBACK( rmesa, R200_FALLBACK_STENCIL, state );
+
+	 if (hw_stencil) {
+	    R200_STATECHANGE( rmesa, ctx );
+	    if ( state ) {
+	       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  R200_STENCIL_ENABLE;
+	    } else {
+	       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~R200_STENCIL_ENABLE;
+	    }
+	 } else {
+	    FALLBACK( rmesa, R200_FALLBACK_STENCIL, state );
+	 }
       }
       break;
 

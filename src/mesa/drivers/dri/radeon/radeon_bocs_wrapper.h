@@ -36,7 +36,10 @@ struct drm_radeon_gem_info {
 #endif
 
 
-
+uint32_t radeon_gem_bo_name(struct radeon_bo *dummy)
+{
+  return 0;
+}
 
 static inline void *radeon_bo_manager_gem_ctor(int fd)
 {

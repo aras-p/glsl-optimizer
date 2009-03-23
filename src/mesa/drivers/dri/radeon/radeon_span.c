@@ -377,33 +377,64 @@ do {									\
 #include "stenciltmp.h"
 
 
-static void map_buffer(struct gl_renderbuffer *rb, GLboolean write)
+void map_unmap_rb(struct gl_renderbuffer *rb, int flag)
 {
-	struct radeon_renderbuffer *rrb = (void*)rb;
+	struct radeon_renderbuffer *rrb = radeon_renderbuffer(rb);
 	int r;
 	
-	if (rrb->bo) {
-		r = radeon_bo_map(rrb->bo, write);
+	if (rrb == NULL || !rrb->bo)
+		return;
+
+	if (flag) {
+		r = radeon_bo_map(rrb->bo, 1);
 		if (r) {
 			fprintf(stderr, "(%s) error(%d) mapping buffer.\n",
 				__FUNCTION__, r);
 		}
-	}
 
-	radeonSetSpanFunctions(rrb);
-}
-
-static void unmap_buffer(struct gl_renderbuffer *rb)
-{
-	struct radeon_renderbuffer *rrb = (void*)rb;
-
-	if (rrb->bo) {
+		radeonSetSpanFunctions(rrb);
+	} else {
 		radeon_bo_unmap(rrb->bo);
+		rb->GetRow = NULL;
+		rb->PutRow = NULL;
 	}
-	rb->GetRow = NULL;
-	rb->PutRow = NULL;
 }
 
+static void
+radeon_map_unmap_buffers(GLcontext *ctx, GLboolean map)
+{
+	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+	GLuint i, j;
+
+	/* color draw buffers */
+	for (j = 0; j < ctx->DrawBuffer->_NumColorDrawBuffers; j++)
+		map_unmap_rb(ctx->DrawBuffer->_ColorDrawBuffers[j], map);
+
+	/* check for render to textures */
+	for (i = 0; i < BUFFER_COUNT; i++) {
+		struct gl_renderbuffer_attachment *att =
+			ctx->DrawBuffer->Attachment + i;
+		struct gl_texture_object *tex = att->Texture;
+		if (tex) {
+			/* render to texture */
+			ASSERT(att->Renderbuffer);
+			if (map)
+				ctx->Driver.MapTexture(ctx, tex);
+			else
+				ctx->Driver.UnmapTexture(ctx, tex);
+		}
+	}
+	
+	map_unmap_rb(ctx->ReadBuffer->_ColorReadBuffer, map);
+
+	/* depth buffer (Note wrapper!) */
+	if (ctx->DrawBuffer->_DepthBuffer)
+		map_unmap_rb(ctx->DrawBuffer->_DepthBuffer->Wrapped, map);
+	
+	if (ctx->DrawBuffer->_StencilBuffer)
+		map_unmap_rb(ctx->DrawBuffer->_StencilBuffer->Wrapped, map);
+
+}
 static void radeonSpanRenderStart(GLcontext * ctx)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
@@ -416,18 +447,7 @@ static void radeonSpanRenderStart(GLcontext * ctx)
 			ctx->Driver.MapTexture(ctx, ctx->Texture.Unit[i]._Current);
 	}
 
-	/* color draw buffers */
-	for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-		map_buffer(ctx->DrawBuffer->_ColorDrawBuffers[i], GL_TRUE);
-	}
-
-	map_buffer(ctx->ReadBuffer->_ColorReadBuffer, GL_FALSE);
-
-	if (ctx->DrawBuffer->_DepthBuffer) {
-		map_buffer(ctx->DrawBuffer->_DepthBuffer->Wrapped, GL_TRUE);
-	}
-	if (ctx->DrawBuffer->_StencilBuffer)
-		map_buffer(ctx->DrawBuffer->_StencilBuffer->Wrapped, GL_TRUE);
+	radeon_map_unmap_buffers(ctx, 1);
 
 	/* The locking and wait for idle should really only be needed in classic mode.
 	 * In a future memory manager based implementation, this should become
@@ -450,16 +470,7 @@ static void radeonSpanRenderFinish(GLcontext * ctx)
 			ctx->Driver.UnmapTexture(ctx, ctx->Texture.Unit[i]._Current);
 	}
 
-	/* color draw buffers */
-	for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++)
-		unmap_buffer(ctx->DrawBuffer->_ColorDrawBuffers[i]);
-
-	unmap_buffer(ctx->ReadBuffer->_ColorReadBuffer);
-
-	if (ctx->DrawBuffer->_DepthBuffer)
-		unmap_buffer(ctx->DrawBuffer->_DepthBuffer->Wrapped);
-	if (ctx->DrawBuffer->_StencilBuffer)
-		unmap_buffer(ctx->DrawBuffer->_StencilBuffer->Wrapped);
+	radeon_map_unmap_buffers(ctx, 0);
 }
 
 void radeonInitSpanFuncs(GLcontext * ctx)
@@ -485,6 +496,8 @@ static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
 		radeonInitDepthPointers_z16(&rrb->base);
 	} else if (rrb->base._ActualFormat == GL_DEPTH_COMPONENT24) {
 		radeonInitDepthPointers_z24_s8(&rrb->base);
+	} else if (rrb->base._ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
+		radeonInitStencilPointers_z24_s8(&rrb->base);
 	} else if (rrb->base._ActualFormat == GL_STENCIL_INDEX8_EXT) {
 		radeonInitStencilPointers_z24_s8(&rrb->base);
 	}

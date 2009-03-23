@@ -66,6 +66,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define CLEARBUFFER_DEPTH	0x2
 #define CLEARBUFFER_STENCIL	0x4
 
+static void r300EmitClearState(GLcontext * ctx);
+
+static void r300UserClear(GLcontext *ctx, GLuint mask)
+{
+	radeon_clear_tris(ctx, mask);
+}
+
 static void r300ClearBuffer(r300ContextPtr r300, int flags,
 			    struct radeon_renderbuffer *rrb,
 			    struct radeon_renderbuffer *rrbd)
@@ -534,6 +541,47 @@ static void r300EmitClearState(GLcontext * ctx)
 	}
 }
 
+static void r300KernelClear(GLcontext *ctx, GLuint flags)
+{	  	
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
+	struct radeon_framebuffer *rfb = dPriv->driverPrivate;
+	struct radeon_renderbuffer *rrb;
+	struct radeon_renderbuffer *rrbd;
+	int bits = 0;
+
+	/* Make sure it fits there. */
+	rcommonEnsureCmdBufSpace(&r300->radeon, 421 * 3, __FUNCTION__);
+	if (flags || bits)
+		r300EmitClearState(ctx);
+	rrbd = radeon_get_renderbuffer(&rfb->base, BUFFER_DEPTH);
+	if (rrbd && (flags & BUFFER_BIT_DEPTH))
+		bits |= CLEARBUFFER_DEPTH;
+
+	if (flags & BUFFER_BIT_COLOR0) {
+		rrb = radeon_get_renderbuffer(&rfb->base, BUFFER_COLOR0);
+		r300ClearBuffer(r300, CLEARBUFFER_COLOR, rrb, NULL);
+		bits = 0;
+	}
+		
+	if (flags & BUFFER_BIT_FRONT_LEFT) {
+		rrb = radeon_get_renderbuffer(&rfb->base, BUFFER_FRONT_LEFT);
+		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, rrb, rrbd);
+		bits = 0;
+	}
+
+	if (flags & BUFFER_BIT_BACK_LEFT) {
+		rrb = radeon_get_renderbuffer(&rfb->base, BUFFER_BACK_LEFT);
+		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, rrb, rrbd);
+		bits = 0;
+	}
+
+	if (bits)
+		r300ClearBuffer(r300, bits, NULL, rrbd);
+
+	COMMIT_BATCH();
+}
+
 /**
  * Buffer clear
  */
@@ -541,16 +589,15 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
-	struct radeon_framebuffer *rfb = dPriv->driverPrivate;
-	struct radeon_renderbuffer *rrb;
-	struct radeon_renderbuffer *rrbd;
-	int flags = 0;
-	int bits = 0;
+	const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask);
+	GLbitfield swrast_mask = 0, tri_mask = 0;
+	int i;
+	struct gl_framebuffer *fb = ctx->DrawBuffer;
 
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "r300Clear\n");
 
-	{
+	if (!r300->radeon.radeonScreen->driScreen->dri2.enabled) {
 		LOCK_HARDWARE(&r300->radeon);
 		UNLOCK_HARDWARE(&r300->radeon);
 		if (dPriv->numClipRects == 0)
@@ -563,67 +610,51 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 	 */
 	R300_NEWPRIM(r300);
 
-	if (mask & BUFFER_BIT_FRONT_LEFT) {
-		flags |= BUFFER_BIT_FRONT_LEFT;
-		mask &= ~BUFFER_BIT_FRONT_LEFT;
+	if (colorMask == ~0)
+	  tri_mask |= (mask & BUFFER_BITS_COLOR);
+
+
+	/* HW stencil */
+	if (mask & BUFFER_BIT_STENCIL) {
+		tri_mask |= BUFFER_BIT_STENCIL;
 	}
 
-	if (mask & BUFFER_BIT_BACK_LEFT) {
-		flags |= BUFFER_BIT_BACK_LEFT;
-		mask &= ~BUFFER_BIT_BACK_LEFT;
-	}
-
+	/* HW depth */
 	if (mask & BUFFER_BIT_DEPTH) {
-		bits |= CLEARBUFFER_DEPTH;
-		mask &= ~BUFFER_BIT_DEPTH;
+    	  tri_mask |= BUFFER_BIT_DEPTH;
 	}
 
-	if ((mask & BUFFER_BIT_STENCIL) && r300->radeon.state.stencil.hwBuffer) {
-		bits |= CLEARBUFFER_STENCIL;
-		mask &= ~BUFFER_BIT_STENCIL;
+	/* If we're doing a tri pass for depth/stencil, include a likely color
+	 * buffer with it.
+	 */
+
+	for (i = 0; i < BUFFER_COUNT; i++) {
+	  GLuint bufBit = 1 << i;
+	  if ((tri_mask) & bufBit) {
+	    if (!fb->Attachment[i].Renderbuffer->ClassID) {
+	      tri_mask &= ~bufBit;
+	      swrast_mask |= bufBit;
+	    }
+	  }
 	}
 
-	if (mask & BUFFER_BIT_COLOR0) {
-		flags |= BUFFER_BIT_COLOR0;
-		mask &= ~BUFFER_BIT_COLOR0;
-	}
+	/* SW fallback clearing */
+	swrast_mask = mask & ~tri_mask;
 
-	if (mask) {
+	if (tri_mask) {
+		if (r300->radeon.radeonScreen->kernel_mm)
+			r300UserClear(ctx, tri_mask);
+		else
+			r300KernelClear(ctx, tri_mask);
+	}
+	if (swrast_mask) {
 		if (RADEON_DEBUG & DEBUG_FALLBACKS)
 			fprintf(stderr, "%s: swrast clear, mask: %x\n",
-				__FUNCTION__, mask);
-		_swrast_Clear(ctx, mask);
+				__FUNCTION__, swrast_mask);
+		_swrast_Clear(ctx, swrast_mask);
 	}
-
-	/* Make sure it fits there. */
-	rcommonEnsureCmdBufSpace(&r300->radeon, 421 * 3, __FUNCTION__);
-	if (flags || bits)
-		r300EmitClearState(ctx);
-	rrbd = (void *)rfb->base.Attachment[BUFFER_DEPTH].Renderbuffer;
-
-	if (flags & BUFFER_BIT_COLOR0) {
-		rrb = (void *)rfb->base.Attachment[BUFFER_COLOR0].Renderbuffer;
-		r300ClearBuffer(r300, CLEARBUFFER_COLOR, rrb, NULL);
-		bits = 0;
-	}
-		
-	if (flags & BUFFER_BIT_FRONT_LEFT) {
-		rrb = (void *)rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, rrb, rrbd);
-		bits = 0;
-	}
-
-	if (flags & BUFFER_BIT_BACK_LEFT) {
-		rrb = (void *)rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, rrb, rrbd);
-		bits = 0;
-	}
-
-	if (bits)
-		r300ClearBuffer(r300, bits, NULL, rrbd);
-
-	COMMIT_BATCH();
 }
+
 
 void r300InitIoctlFuncs(struct dd_function_table *functions)
 {

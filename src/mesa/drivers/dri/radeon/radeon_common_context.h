@@ -123,7 +123,6 @@ struct radeon_colorbuffer_state {
 
 struct radeon_depthbuffer_state {
 	GLuint clear;
-	GLfloat scale;
 	struct radeon_renderbuffer *rrb;
 };
 
@@ -137,7 +136,6 @@ struct radeon_scissor_state {
 };
 
 struct radeon_stencilbuffer_state {
-	GLboolean hwBuffer;
 	GLuint clear;		/* rb3d_stencilrefmask value */
 };
 
@@ -444,9 +442,23 @@ struct radeon_context {
 
    struct radeon_cmdbuf cmdbuf;
 	
-	drm_clip_rect_t fboRect;
-	GLboolean constant_cliprect; /* use for FBO or DRI2 rendering */
-	GLboolean front_cliprects;
+  drm_clip_rect_t fboRect;
+  GLboolean constant_cliprect; /* use for FBO or DRI2 rendering */
+  GLboolean front_cliprects;
+
+  struct {
+      struct gl_fragment_program *bitmap_fp;
+      struct gl_vertex_program *passthrough_vp;
+
+      struct gl_fragment_program *saved_fp;
+      GLboolean saved_fp_enable;
+      struct gl_vertex_program *saved_vp;
+      GLboolean saved_vp_enable;
+
+      GLint saved_vp_x, saved_vp_y;
+      GLsizei saved_vp_width, saved_vp_height;
+      GLenum saved_matrix_mode;
+   } meta;
 
    struct {
 	   void (*get_lock)(radeonContextPtr radeon);

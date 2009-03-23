@@ -592,21 +592,15 @@ void radeonInitState( r100ContextPtr rmesa )
    switch ( ctx->Visual.depthBits ) {
    case 16:
       rmesa->radeon.state.depth.clear = 0x0000ffff;
-      rmesa->radeon.state.depth.scale = 1.0 / (GLfloat)0xffff;
       rmesa->radeon.state.stencil.clear = 0x00000000;
       break;
    case 24:
       rmesa->radeon.state.depth.clear = 0x00ffffff;
-      rmesa->radeon.state.depth.scale = 1.0 / (GLfloat)0xffffff;
       rmesa->radeon.state.stencil.clear = 0xffff0000;
       break;
    default:
       break;
    }
-
-   /* Only have hw stencil when depth buffer is 24 bits deep */
-   rmesa->radeon.state.stencil.hwBuffer = ( ctx->Visual.stencilBits > 0 &&
-				     ctx->Visual.depthBits == 24 );
 
    rmesa->radeon.Fallback = 0;
 

@@ -54,7 +54,6 @@ radeon_new_framebuffer(GLcontext *ctx, GLuint name)
 static void
 radeon_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
-  GET_CURRENT_CONTEXT(ctx);
   struct radeon_renderbuffer *rrb = radeon_renderbuffer(rb);
 
   ASSERT(rrb);
@@ -62,8 +61,6 @@ radeon_delete_renderbuffer(struct gl_renderbuffer *rb)
   if (rrb && rrb->bo) {
     radeon_bo_unref(rrb->bo);
   }
-
-
   _mesa_free(rrb);
 }
 
@@ -255,7 +252,7 @@ radeon_nop_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    return GL_FALSE;
 }
 
-struct gl_renderbuffer *
+struct radeon_renderbuffer *
 radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
 {
     struct radeon_renderbuffer *rrb;
@@ -325,7 +322,7 @@ radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
     rrb->base.GetPointer = radeon_get_pointer;
 
     rrb->bo = NULL;
-    return &rrb->base;
+    return rrb;
 }
 
 static struct gl_renderbuffer *
@@ -382,6 +379,13 @@ radeon_update_wrapper(GLcontext *ctx, struct radeon_renderbuffer *rrb,
       rrb->base._BaseFormat = GL_RGBA;
       rrb->base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to RGBA8 texture OK\n");
+   }
+   else if (texImage->TexFormat == &_mesa_texformat_argb4444) {
+      rrb->cpp = 2;
+      rrb->base._ActualFormat = GL_RGBA4;
+      rrb->base._BaseFormat = GL_RGBA;
+      rrb->base.DataType = GL_UNSIGNED_BYTE;
+      DBG("Render to RGBA4 texture OK\n");
    }
    else if (texImage->TexFormat == &_mesa_texformat_rgb565) {
       rrb->cpp = 2;
@@ -493,7 +497,7 @@ radeon_render_texture(GLcontext * ctx,
        return;
    }
 
-   fprintf(stderr,"Begin render texture tid %x tex=%u w=%d h=%d refcount=%d\n",
+   DBG("Begin render texture tid %x tex=%u w=%d h=%d refcount=%d\n",
        _glthread_GetID(),
        att->Texture->Name, newImage->Width, newImage->Height,
        rrb->base.RefCount);
@@ -558,4 +562,13 @@ void radeon_fbo_init(struct radeon_context *radeon)
 }
 
   
-  
+void radeon_renderbuffer_set_bo(struct radeon_renderbuffer *rb,
+				struct radeon_bo *bo)
+{
+  struct radeon_bo *old;
+  old = rb->bo;
+  rb->bo = bo;
+  radeon_bo_ref(bo);
+  if (old)
+    radeon_bo_unref(old);
+}

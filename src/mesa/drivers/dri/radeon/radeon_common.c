@@ -58,6 +58,21 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
 
+#include "main/blend.h"
+#include "main/bufferobj.h"
+#include "main/buffers.h"
+#include "main/depth.h"
+#include "main/shaders.h"
+#include "main/texstate.h"
+#include "main/varray.h"
+#include "glapi/dispatch.h"
+#include "swrast/swrast.h"
+#include "main/stencil.h"
+#include "main/matrix.h"
+#include "main/attrib.h"
+#include "main/enable.h"
+#include "main/viewport.h"
+
 #include "dri_util.h"
 #include "vblank.h"
 
@@ -658,18 +673,20 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 		/* none */
 	if (fb->Name == 0) {
 		if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
-			rrbColor = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+			rrbColor = radeon_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
 			radeon->front_cliprects = GL_TRUE;
 		} else {
-			rrbColor = (void *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+			rrbColor = radeon_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
 			radeon->front_cliprects = GL_FALSE;
 		}
 	} else {
 		/* user FBO in theory */
 		struct radeon_renderbuffer *rrb;
-		rrb = (void *)fb->_ColorDrawBuffers[0];
-		offset = rrb->draw_offset;
-		rrbColor = rrb;
+		rrb = radeon_renderbuffer(fb->_ColorDrawBuffers[0]);
+		if (rrb) {
+			offset = rrb->draw_offset;
+			rrbColor = rrb;
+		}
 		radeon->constant_cliprect = GL_TRUE;
 	}
 
@@ -679,9 +696,8 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 		radeon->vtbl.fallback(ctx, RADEON_FALLBACK_DRAW_BUFFER, GL_FALSE);
 
 
-
 	if (fb->_DepthBuffer && fb->_DepthBuffer->Wrapped) {
-		rrbDepth = (struct radeon_renderbuffer *)fb->_DepthBuffer->Wrapped;
+		rrbDepth = radeon_renderbuffer(fb->_DepthBuffer->Wrapped);
 		if (rrbDepth && rrbDepth->bo) {
 			radeon->vtbl.fallback(ctx, RADEON_FALLBACK_DEPTH_BUFFER, GL_FALSE);
 		} else {
@@ -692,16 +708,11 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 		rrbDepth = NULL;
 	}
 
-	/* TODO stencil things */
 	if (fb->_StencilBuffer && fb->_StencilBuffer->Wrapped) {
-		rrbStencil = (struct radeon_renderbuffer *)fb->_DepthBuffer->Wrapped;
+		rrbStencil = radeon_renderbuffer(fb->_DepthBuffer->Wrapped);
 		if (rrbStencil && rrbStencil->bo) {
 			radeon->vtbl.fallback(ctx, RADEON_FALLBACK_STENCIL_BUFFER, GL_FALSE);
 			/* need to re-compute stencil hw state */
-			if (ctx->Driver.Enable != NULL)
-				ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
-			else
-				ctx->NewState |= _NEW_STENCIL;
 			if (!rrbDepth)
 				rrbDepth = rrbStencil;
 		} else {
@@ -727,27 +738,28 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 	 * Update depth test state
 	 */
 	if (ctx->Driver.Enable) {
-		if (ctx->Depth.Test && fb->Visual.depthBits > 0) {
-			ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_TRUE);
-		} else {
-			ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_FALSE);
-		}
+		ctx->Driver.Enable(ctx, GL_DEPTH_TEST,
+				   (ctx->Depth.Test && fb->Visual.depthBits > 0));
+		ctx->Driver.Enable(ctx, GL_STENCIL_TEST,
+				   (ctx->Stencil._Enabled && fb->Visual.stencilBits > 0));
 	} else {
-		ctx->NewState |= _NEW_DEPTH;
+		ctx->NewState |= (_NEW_DEPTH | _NEW_STENCIL);
 	}
 	
 	radeon->state.depth.rrb = rrbDepth;
-
 	radeon->state.color.rrb = rrbColor;
 	radeon->state.color.draw_offset = offset;
 
+#if 0
 	/* update viewport since it depends on window size */
 	if (ctx->Driver.Viewport) {
 		ctx->Driver.Viewport(ctx, ctx->Viewport.X, ctx->Viewport.Y,
 				     ctx->Viewport.Width, ctx->Viewport.Height);
 	} else {
-		ctx->NewState |= _NEW_VIEWPORT;
+	
 	}
+#endif
+	ctx->NewState |= _NEW_VIEWPORT;
 
 	/* Set state we know depends on drawable parameters:
 	 */
@@ -755,6 +767,19 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 		ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
 				    ctx->Scissor.Width, ctx->Scissor.Height);
 	radeon->NewGLState |= _NEW_SCISSOR;
+
+	if (ctx->Driver.DepthRange)
+		ctx->Driver.DepthRange(ctx,
+				       ctx->Viewport.Near,
+				       ctx->Viewport.Far);
+
+	/* Update culling direction which changes depending on the
+	 * orientation of the buffer:
+	 */
+	if (ctx->Driver.FrontFace)
+		ctx->Driver.FrontFace(ctx, ctx->Polygon.FrontFace);
+	else
+		ctx->NewState |= _NEW_POLYGON;
 }
 
 /**
@@ -802,10 +827,6 @@ void radeonUpdatePageFlipping(radeonContextPtr radeon)
 
 void radeon_window_moved(radeonContextPtr radeon)
 {
-	GLcontext *ctx = radeon->glCtx;
-	__DRIdrawablePrivate *dPriv = radeon->dri.drawable;
-	struct radeon_framebuffer *rfb = dPriv->driverPrivate;
-
 	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
 		radeonUpdatePageFlipping(radeon);
 	}
@@ -949,8 +970,14 @@ void radeonFinish(GLcontext * ctx)
 	if (radeon->radeonScreen->kernel_mm) {
 		for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
 			struct radeon_renderbuffer *rrb;
-			rrb = (struct radeon_renderbuffer *)fb->_ColorDrawBuffers[i];
-			if (rrb->bo)
+			rrb = radeon_renderbuffer(fb->_ColorDrawBuffers[i]);
+			if (rrb && rrb->bo)
+				radeon_bo_wait(rrb->bo);
+		}
+		{
+			struct radeon_renderbuffer *rrb;
+			rrb = radeon_get_depthbuffer(radeon);
+			if (rrb && rrb->bo)
 				radeon_bo_wait(rrb->bo);
 		}
 	} else if (radeon->do_irqs) {
@@ -1108,3 +1135,219 @@ void rcommonBeginBatch(radeonContextPtr rmesa, int n,
 
 
 
+static void
+radeon_meta_set_passthrough_transform(radeonContextPtr radeon)
+{
+   GLcontext *ctx = radeon->glCtx;
+
+   radeon->meta.saved_vp_x = ctx->Viewport.X;
+   radeon->meta.saved_vp_y = ctx->Viewport.Y;
+   radeon->meta.saved_vp_width = ctx->Viewport.Width;
+   radeon->meta.saved_vp_height = ctx->Viewport.Height;
+   radeon->meta.saved_matrix_mode = ctx->Transform.MatrixMode;
+
+   _mesa_Viewport(0, 0, ctx->DrawBuffer->Width, ctx->DrawBuffer->Height);
+
+   _mesa_MatrixMode(GL_PROJECTION);
+   _mesa_PushMatrix();
+   _mesa_LoadIdentity();
+   _mesa_Ortho(0, ctx->DrawBuffer->Width, 0, ctx->DrawBuffer->Height, 1, -1);
+
+   _mesa_MatrixMode(GL_MODELVIEW);
+   _mesa_PushMatrix();
+   _mesa_LoadIdentity();
+}
+
+static void
+radeon_meta_restore_transform(radeonContextPtr radeon)
+{
+   _mesa_MatrixMode(GL_PROJECTION);
+   _mesa_PopMatrix();
+   _mesa_MatrixMode(GL_MODELVIEW);
+   _mesa_PopMatrix();
+
+   _mesa_MatrixMode(radeon->meta.saved_matrix_mode);
+
+   _mesa_Viewport(radeon->meta.saved_vp_x, radeon->meta.saved_vp_y,
+		  radeon->meta.saved_vp_width, radeon->meta.saved_vp_height);
+}
+
+
+/**
+ * Perform glClear where mask contains only color, depth, and/or stencil.
+ *
+ * The implementation is based on calling into Mesa to set GL state and
+ * performing normal triangle rendering.  The intent of this path is to
+ * have as generic a path as possible, so that any driver could make use of
+ * it.
+ */
+
+
+void radeon_clear_tris(GLcontext *ctx, GLbitfield mask)
+{
+   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   GLfloat vertices[4][3];
+   GLfloat color[4][4];
+   GLfloat dst_z;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   int i;
+   GLboolean saved_fp_enable = GL_FALSE, saved_vp_enable = GL_FALSE;
+   GLboolean saved_shader_program = 0;
+   unsigned int saved_active_texture;
+
+   assert((mask & ~(TRI_CLEAR_COLOR_BITS | BUFFER_BIT_DEPTH |
+		    BUFFER_BIT_STENCIL)) == 0);   
+
+   _mesa_PushAttrib(GL_COLOR_BUFFER_BIT |
+		    GL_CURRENT_BIT |
+		    GL_DEPTH_BUFFER_BIT |
+		    GL_ENABLE_BIT |
+		    GL_STENCIL_BUFFER_BIT |
+		    GL_TRANSFORM_BIT |
+		    GL_CURRENT_BIT);
+   _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
+   saved_active_texture = ctx->Texture.CurrentUnit;
+  
+  /* Disable existing GL state we don't want to apply to a clear. */
+   _mesa_Disable(GL_ALPHA_TEST);
+   _mesa_Disable(GL_BLEND);
+   _mesa_Disable(GL_CULL_FACE);
+   _mesa_Disable(GL_FOG);
+   _mesa_Disable(GL_POLYGON_SMOOTH);
+   _mesa_Disable(GL_POLYGON_STIPPLE);
+   _mesa_Disable(GL_POLYGON_OFFSET_FILL);
+   _mesa_Disable(GL_LIGHTING);
+   _mesa_Disable(GL_CLIP_PLANE0);
+   _mesa_Disable(GL_CLIP_PLANE1);
+   _mesa_Disable(GL_CLIP_PLANE2);
+   _mesa_Disable(GL_CLIP_PLANE3);
+   _mesa_Disable(GL_CLIP_PLANE4);
+   _mesa_Disable(GL_CLIP_PLANE5);
+   if (ctx->Extensions.ARB_fragment_program && ctx->FragmentProgram.Enabled) {
+      saved_fp_enable = GL_TRUE;
+      _mesa_Disable(GL_FRAGMENT_PROGRAM_ARB);
+   }
+   if (ctx->Extensions.ARB_vertex_program && ctx->VertexProgram.Enabled) {
+      saved_vp_enable = GL_TRUE;
+      _mesa_Disable(GL_VERTEX_PROGRAM_ARB);
+   }
+   if (ctx->Extensions.ARB_shader_objects && ctx->Shader.CurrentProgram) {
+      saved_shader_program = ctx->Shader.CurrentProgram->Name;
+      _mesa_UseProgramObjectARB(0);
+   }
+   
+   if (ctx->Texture._EnabledUnits != 0) {
+      int i;
+      
+      for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+	 _mesa_ActiveTextureARB(GL_TEXTURE0 + i);
+	 _mesa_Disable(GL_TEXTURE_1D);
+	 _mesa_Disable(GL_TEXTURE_2D);
+	 _mesa_Disable(GL_TEXTURE_3D);
+	 if (ctx->Extensions.ARB_texture_cube_map)
+	    _mesa_Disable(GL_TEXTURE_CUBE_MAP_ARB);
+	 if (ctx->Extensions.NV_texture_rectangle)
+	    _mesa_Disable(GL_TEXTURE_RECTANGLE_NV);
+	 if (ctx->Extensions.MESA_texture_array) {
+	    _mesa_Disable(GL_TEXTURE_1D_ARRAY_EXT);
+	    _mesa_Disable(GL_TEXTURE_2D_ARRAY_EXT);
+	 }
+      }
+   }
+  
+   radeon_meta_set_passthrough_transform(rmesa);
+   
+   for (i = 0; i < 4; i++) {
+      color[i][0] = ctx->Color.ClearColor[0];
+      color[i][1] = ctx->Color.ClearColor[1];
+      color[i][2] = ctx->Color.ClearColor[2];
+      color[i][3] = ctx->Color.ClearColor[3];
+   }
+
+   /* convert clear Z from [0,1] to NDC coord in [-1,1] */
+
+   dst_z = -1.0 + 2.0 * ctx->Depth.Clear;
+   /* Prepare the vertices, which are the same regardless of which buffer we're
+    * drawing to.
+    */
+   vertices[0][0] = fb->_Xmin;
+   vertices[0][1] = fb->_Ymin;
+   vertices[0][2] = dst_z;
+   vertices[1][0] = fb->_Xmax;
+   vertices[1][1] = fb->_Ymin;
+   vertices[1][2] = dst_z;
+   vertices[2][0] = fb->_Xmax;
+   vertices[2][1] = fb->_Ymax;
+   vertices[2][2] = dst_z;
+   vertices[3][0] = fb->_Xmin;
+   vertices[3][1] = fb->_Ymax;
+   vertices[3][2] = dst_z;
+
+   _mesa_ColorPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &color);
+   _mesa_VertexPointer(3, GL_FLOAT, 3 * sizeof(GLfloat), &vertices);
+   _mesa_Enable(GL_COLOR_ARRAY);
+   _mesa_Enable(GL_VERTEX_ARRAY);
+
+   while (mask != 0) {
+      GLuint this_mask = 0;
+      GLuint color_bit;
+
+      color_bit = _mesa_ffs(mask & TRI_CLEAR_COLOR_BITS);
+      if (color_bit != 0)
+	 this_mask |= (1 << (color_bit - 1));
+
+      /* Clear depth/stencil in the same pass as color. */
+      this_mask |= (mask & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL));
+
+      /* Select the current color buffer and use the color write mask if
+       * we have one, otherwise don't write any color channels.
+       */
+      if (this_mask & BUFFER_BIT_FRONT_LEFT)
+	 _mesa_DrawBuffer(GL_FRONT_LEFT);
+      else if (this_mask & BUFFER_BIT_BACK_LEFT)
+	 _mesa_DrawBuffer(GL_BACK_LEFT);
+      else if (color_bit != 0)
+	 _mesa_DrawBuffer(GL_COLOR_ATTACHMENT0 +
+			  (color_bit - BUFFER_COLOR0 - 1));
+      else
+	 _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+      /* Control writing of the depth clear value to depth. */
+      if (this_mask & BUFFER_BIT_DEPTH) {
+	 _mesa_DepthFunc(GL_ALWAYS);
+	 _mesa_DepthMask(GL_TRUE);
+	 _mesa_Enable(GL_DEPTH_TEST);
+      } else {
+	 _mesa_Disable(GL_DEPTH_TEST);
+	 _mesa_DepthMask(GL_FALSE);
+      }
+
+      /* Control writing of the stencil clear value to stencil. */
+      if (this_mask & BUFFER_BIT_STENCIL) {
+	 _mesa_Enable(GL_STENCIL_TEST);
+	 _mesa_StencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+	 _mesa_StencilFuncSeparate(GL_FRONT, GL_ALWAYS, ctx->Stencil.Clear,
+				   ctx->Stencil.WriteMask[0]);
+      } else {
+	 _mesa_Disable(GL_STENCIL_TEST);
+      }
+
+      CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
+
+      mask &= ~this_mask;
+   }
+
+   radeon_meta_restore_transform(rmesa);
+
+   _mesa_ActiveTextureARB(GL_TEXTURE0 + saved_active_texture);
+   if (saved_fp_enable)
+      _mesa_Enable(GL_FRAGMENT_PROGRAM_ARB);
+   if (saved_vp_enable)
+      _mesa_Enable(GL_VERTEX_PROGRAM_ARB);
+
+   if (saved_shader_program)
+      _mesa_UseProgramObjectARB(saved_shader_program);
+
+   _mesa_PopClientAttrib();
+   _mesa_PopAttrib();
+}

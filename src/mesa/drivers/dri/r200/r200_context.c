@@ -72,6 +72,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_EXT_blend_func_separate
 #define need_GL_NV_vertex_program
 #define need_GL_ARB_point_parameters
+#define need_GL_EXT_framebuffer_object
 #include "extension_helper.h"
 
 #define DRIVER_DATE	"20060602"
@@ -124,6 +125,7 @@ const struct dri_extension card_extensions[] =
     { "GL_EXT_blend_minmax",               GL_EXT_blend_minmax_functions },
     { "GL_EXT_blend_subtract",             NULL },
     { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
+    { "GL_EXT_packed_depth_stencil",	   NULL},
     { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
     { "GL_EXT_stencil_wrap",               NULL },
     { "GL_EXT_texture_edge_clamp",         NULL },
@@ -163,6 +165,11 @@ const struct dri_extension point_extensions[] = {
     { "GL_ARB_point_sprite",               NULL },
     { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
     { NULL,                                NULL }
+};
+
+const struct dri_extension mm_extensions[] = {
+  { "GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions },
+  { NULL, NULL }
 };
 
 extern const struct tnl_pipeline_stage _r200_render_stage;
@@ -418,6 +425,9 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    _math_matrix_set_identity( &rmesa->tmpmat );
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
+
+   if (rmesa->radeon.radeonScreen->kernel_mm)
+     driInitExtensions(ctx, mm_extensions, GL_FALSE);
    if (!(rmesa->radeon.radeonScreen->chip_flags & R200_CHIPSET_YCBCR_BROKEN)) {
      /* yuv textures don't work with some chips - R200 / rv280 okay so far
 	others get the bit ordering right but don't actually do YUV-RGB conversion */

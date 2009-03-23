@@ -113,7 +113,7 @@ const struct dri_extension card_extensions[] = {
   {"GL_EXT_blend_func_separate",	GL_EXT_blend_func_separate_functions},
   {"GL_EXT_blend_minmax",		GL_EXT_blend_minmax_functions},
   {"GL_EXT_blend_subtract",		NULL},
-   { "GL_EXT_framebuffer_object",       GL_EXT_framebuffer_object_functions },
+  {"GL_EXT_packed_depth_stencil",	NULL},
   {"GL_EXT_fog_coord",			GL_EXT_fog_coord_functions },
   {"GL_EXT_gpu_program_parameters",     GL_EXT_gpu_program_parameters_functions},
   {"GL_EXT_secondary_color", 		GL_EXT_secondary_color_functions},
@@ -140,6 +140,11 @@ const struct dri_extension card_extensions[] = {
   /* *INDENT-ON* */
 };
 
+
+const struct dri_extension mm_extensions[] = {
+  { "GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions },
+  { NULL, NULL }
+};
 
 /**
  * The GL 2.0 functions are needed to make display lists work with
@@ -421,6 +426,8 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
+	if (r300->radeon.radeonScreen->kernel_mm)
+	  driInitExtensions(ctx, mm_extensions, GL_FALSE);
 
 	if (driQueryOptionb
 	    (&r300->radeon.optionCache, "disable_stencil_two_side"))

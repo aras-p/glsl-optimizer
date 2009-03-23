@@ -5,6 +5,18 @@
 #include "radeon_dma.h"
 #include "radeon_texture.h"
 
+
+#define TRI_CLEAR_COLOR_BITS (BUFFER_BIT_BACK_LEFT |			\
+			      BUFFER_BIT_FRONT_LEFT |			\
+			      BUFFER_BIT_COLOR0 |			\
+			      BUFFER_BIT_COLOR1 |			\
+			      BUFFER_BIT_COLOR2 |			\
+			      BUFFER_BIT_COLOR3 |			\
+			      BUFFER_BIT_COLOR4 |			\
+			      BUFFER_BIT_COLOR5 |			\
+			      BUFFER_BIT_COLOR6 |			\
+			      BUFFER_BIT_COLOR7)
+
 void radeonRecalcScissorRects(radeonContextPtr radeon);
 void radeonSetCliprects(radeonContextPtr radeon);
 void radeonUpdateScissor( GLcontext *ctx );
@@ -24,6 +36,8 @@ void radeonFlush(GLcontext *ctx);
 void radeonFinish(GLcontext * ctx);
 void radeonEmitState(radeonContextPtr radeon);
 
+void radeon_clear_tris(GLcontext *ctx, GLbitfield mask);
+
 void radeon_window_moved(radeonContextPtr radeon);
 void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb);
 void radeonDrawBuffer( GLcontext *ctx, GLenum mode );
@@ -35,7 +49,10 @@ void radeon_get_cliprects(radeonContextPtr radeon,
 			  int *x_off, int *y_off);
 
 void radeon_fbo_init(struct radeon_context *radeon);
-struct gl_renderbuffer *
+void
+radeon_renderbuffer_set_bo(struct radeon_renderbuffer *rb,
+			   struct radeon_bo *bo);
+struct radeon_renderbuffer *
 radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv);
 static inline struct radeon_renderbuffer *radeon_renderbuffer(struct gl_renderbuffer *rb)
 {
