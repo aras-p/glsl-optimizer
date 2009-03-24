@@ -380,13 +380,6 @@ radeon_update_wrapper(GLcontext *ctx, struct radeon_renderbuffer *rrb,
       rrb->base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to RGBA8 texture OK\n");
    }
-   else if (texImage->TexFormat == &_mesa_texformat_argb4444) {
-      rrb->cpp = 2;
-      rrb->base._ActualFormat = GL_RGBA8;
-      rrb->base._BaseFormat = GL_RGBA;
-      rrb->base.DataType = GL_UNSIGNED_BYTE;
-      DBG("Render to RGBA4 texture OK\n");
-   }
    else if (texImage->TexFormat == &_mesa_texformat_rgb565) {
       rrb->cpp = 2;
       rrb->base._ActualFormat = GL_RGB5;

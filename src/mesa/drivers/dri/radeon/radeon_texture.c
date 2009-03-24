@@ -139,9 +139,12 @@ void radeonMapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 	radeonTexObj* t = radeon_tex_obj(texObj);
 	int face, level;
 
+	if (!radeon_validate_texture_miptree(ctx, texObj))
+	  return;
+
 	/* for r100 3D sw fallbacks don't have mt */
 	if (!t->mt)
-	  return;
+	    return;
 
 	radeon_bo_map(t->mt->bo, GL_FALSE);
 	for(face = 0; face < t->mt->faces; ++face) {
