@@ -313,18 +313,13 @@ static void emit_interp( struct brw_wm_compile *c,
    struct prog_dst_register dst = dst_reg(PROGRAM_INPUT, idx);
    struct prog_src_register interp = src_reg(PROGRAM_PAYLOAD, idx);
    struct prog_src_register deltas = get_delta_xy(c);
-   struct prog_src_register arg2;
-   GLuint opcode;
-   
+
    /* Need to use PINTERP on attributes which have been
     * multiplied by 1/W in the SF program, and LINTERP on those
     * which have not:
     */
    switch (idx) {
    case FRAG_ATTRIB_WPOS:
-      opcode = WM_LINTERP;
-      arg2 = src_undef();
-
       /* Have to treat wpos.xy specially:
        */
       emit_op(c,
@@ -345,7 +340,7 @@ static void emit_interp( struct brw_wm_compile *c,
 	      0,
 	      interp,
 	      deltas,
-	      arg2);
+	      src_undef());
       break;
    case FRAG_ATTRIB_COL0:
    case FRAG_ATTRIB_COL1:
