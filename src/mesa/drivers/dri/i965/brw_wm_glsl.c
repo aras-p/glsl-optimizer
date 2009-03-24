@@ -258,8 +258,31 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
     const int nr = 1;
     int component = GET_SWZ(src->Swizzle, index);
     return get_reg(c, src->File, src->Index, component, nr, 
-	    src->NegateBase, src->Abs);
+                   src->NegateBase, src->Abs);
 }
+
+
+/**
+ * Same as \sa get_src_reg() but if the register is a literal, emit
+ * a brw_reg encoding the literal.
+ * Note that a brw instruction only allows one src operand to be a literal.
+ * For instructions with more than one operand, only the second can be a literal.
+ */
+static struct brw_reg get_src_reg_imm(struct brw_wm_compile *c, 
+                                      struct prog_src_register *src, int index)
+{
+    if (src->File == PROGRAM_CONSTANT) {
+       /* a literal */
+       const int component = GET_SWZ(src->Swizzle, index);
+       const GLfloat *param =
+          c->fp->program.Base.Parameters->ParameterValues[src->Index];
+       return brw_imm_f(param[component]);
+    }
+    else {
+       return get_src_reg(c, src, index);
+    }
+}
+
 
 /**
  * Subroutines are minimal support for resusable instruction sequences.
@@ -371,7 +394,7 @@ static void emit_mov( struct brw_wm_compile *c,
 	if (mask & (1<<i)) {
 	    struct brw_reg src, dst;
 	    dst = get_dst_reg(c, inst, i);
-	    src = get_src_reg(c, &inst->SrcReg[0], i);
+	    src = get_src_reg_imm(c, &inst->SrcReg[0], i);
 	    brw_MOV(p, dst, src);
 	}
     }
@@ -698,10 +721,10 @@ static void emit_xpd(struct brw_wm_compile *c,
 	    struct brw_reg src0, src1, dst;
 	    dst = get_dst_reg(c, inst, i);
 	    src0 = negate(get_src_reg(c, &inst->SrcReg[0], i2));
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i1);
+	    src1 = get_src_reg_imm(c, &inst->SrcReg[1], i1);
 	    brw_MUL(p, brw_null_reg(), src0, src1);
 	    src0 = get_src_reg(c, &inst->SrcReg[0], i1);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i2);
+	    src1 = get_src_reg_imm(c, &inst->SrcReg[1], i2);
 	    brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
 	    brw_MAC(p, dst, src0, src1);
 	    brw_set_saturate(p, 0);
@@ -718,7 +741,7 @@ static void emit_dp3(struct brw_wm_compile *c,
     struct brw_compile *p = &c->func;
     for (i = 0; i < 3; i++) {
 	src0[i] = get_src_reg(c, &inst->SrcReg[0], i);
-	src1[i] = get_src_reg(c, &inst->SrcReg[1], i);
+	src1[i] = get_src_reg_imm(c, &inst->SrcReg[1], i);
     }
 
     dst = get_dst_reg(c, inst, get_scalar_dst_index(inst));
@@ -737,7 +760,7 @@ static void emit_dp4(struct brw_wm_compile *c,
     struct brw_compile *p = &c->func;
     for (i = 0; i < 4; i++) {
 	src0[i] = get_src_reg(c, &inst->SrcReg[0], i);
-	src1[i] = get_src_reg(c, &inst->SrcReg[1], i);
+	src1[i] = get_src_reg_imm(c, &inst->SrcReg[1], i);
     }
     dst = get_dst_reg(c, inst, get_scalar_dst_index(inst));
     brw_MUL(p, brw_null_reg(), src0[0], src1[0]);
@@ -756,7 +779,7 @@ static void emit_dph(struct brw_wm_compile *c,
     struct brw_compile *p = &c->func;
     for (i = 0; i < 4; i++) {
 	src0[i] = get_src_reg(c, &inst->SrcReg[0], i);
-	src1[i] = get_src_reg(c, &inst->SrcReg[1], i);
+	src1[i] = get_src_reg_imm(c, &inst->SrcReg[1], i);
     }
     dst = get_dst_reg(c, inst, get_scalar_dst_index(inst));
     brw_MUL(p, brw_null_reg(), src0[0], src1[0]);
@@ -857,7 +880,7 @@ static void emit_add(struct brw_wm_compile *c,
 	if (mask & (1<<i)) {
 	    dst = get_dst_reg(c, inst, i);
 	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
+	    src1 = get_src_reg_imm(c, &inst->SrcReg[1], i);
 	    brw_ADD(p, dst, src0, src1);
 	}
     }
@@ -876,7 +899,7 @@ static void emit_sub(struct brw_wm_compile *c,
 	if (mask & (1<<i)) {
 	    dst = get_dst_reg(c, inst, i);
 	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
+	    src1 = get_src_reg_imm(c, &inst->SrcReg[1], i);
 	    brw_ADD(p, dst, src0, negate(src1));
 	}
     }
@@ -895,7 +918,7 @@ static void emit_mul(struct brw_wm_compile *c,
 	if (mask & (1<<i)) {
 	    dst = get_dst_reg(c, inst, i);
 	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
+	    src1 = get_src_reg_imm(c, &inst->SrcReg[1], i);
 	    brw_MUL(p, dst, src0, src1);
 	}
     }
@@ -913,7 +936,7 @@ static void emit_frc(struct brw_wm_compile *c,
     for (i = 0 ; i < 4; i++) {
 	if (mask & (1<<i)) {
 	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
+	    src0 = get_src_reg_imm(c, &inst->SrcReg[0], i);
 	    brw_FRC(p, dst, src0);
 	}
     }
@@ -932,7 +955,7 @@ static void emit_flr(struct brw_wm_compile *c,
     for (i = 0 ; i < 4; i++) {
 	if (mask & (1<<i)) {
 	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
+	    src0 = get_src_reg_imm(c, &inst->SrcReg[0], i);
 	    brw_RNDD(p, dst, src0);
 	}
     }
@@ -951,7 +974,7 @@ static void emit_max(struct brw_wm_compile *c,
 	if (mask & (1<<i)) {
 	    dst = get_dst_reg(c, inst, i);
 	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
+	    src1 = get_src_reg_imm(c, &inst->SrcReg[1], i);
 	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
 	    brw_MOV(p, dst, src0);
 	    brw_set_saturate(p, 0);
@@ -978,7 +1001,7 @@ static void emit_min(struct brw_wm_compile *c,
     for (i = 0; i < 4; i++) {
 	if (mask & (1<<i)) {
 	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
+	    src0 = get_src_reg_imm(c, &inst->SrcReg[0], i);
 	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
 	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
 	    brw_MOV(p, dst, src0);
@@ -1001,8 +1024,8 @@ static void emit_pow(struct brw_wm_compile *c,
     struct brw_compile *p = &c->func;
     struct brw_reg dst, src0, src1;
     dst = get_dst_reg(c, inst, get_scalar_dst_index(inst));
-    src0 = get_src_reg(c, &inst->SrcReg[0], 0);
-    src1 = get_src_reg(c, &inst->SrcReg[1], 0);
+    src0 = get_src_reg_imm(c, &inst->SrcReg[0], 0);
+    src1 = get_src_reg_imm(c, &inst->SrcReg[1], 0);
 
     brw_MOV(p, brw_message_reg(2), src0);
     brw_MOV(p, brw_message_reg(3), src1);
@@ -1030,7 +1053,7 @@ static void emit_lrp(struct brw_wm_compile *c,
 	    dst = get_dst_reg(c, inst, i);
 	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
 
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
+	    src1 = get_src_reg_imm(c, &inst->SrcReg[1], i);
 
 	    if (src1.nr == dst.nr) {
 		tmp1 = alloc_tmp(c);
@@ -1082,8 +1105,8 @@ static void emit_mad(struct brw_wm_compile *c,
 	if (mask & (1<<i)) {
 	    dst = get_dst_reg(c, inst, i);
 	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
-	    src2 = get_src_reg(c, &inst->SrcReg[2], i);
+	    src1 = get_src_reg_imm(c, &inst->SrcReg[1], i);
+	    src2 = get_src_reg_imm(c, &inst->SrcReg[2], i);
 	    brw_MUL(p, dst, src0, src1);
 
 	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
@@ -1105,7 +1128,7 @@ static void emit_sop(struct brw_wm_compile *c,
 	if (mask & (1<<i)) {
 	    dst = get_dst_reg(c, inst, i);
 	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
+	    src1 = get_src_reg_imm(c, &inst->SrcReg[1], i);
 	    brw_push_insn_state(p);
 	    brw_CMP(p, brw_null_reg(), cond, src0, src1);
 	    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
