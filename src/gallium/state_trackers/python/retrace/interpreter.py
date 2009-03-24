@@ -424,7 +424,7 @@ class Context(Object):
             vbuf = vbufs[i]
             self.real.set_vertex_buffer(
                 i,
-                pitch = vbuf.pitch,
+                stride = vbuf.stride,
                 max_index = vbuf.max_index,
                 buffer_offset = vbuf.buffer_offset,
                 buffer = vbuf.buffer,
@@ -452,7 +452,7 @@ class Context(Object):
             for velem in self.velems:
                 vbuf = self.vbufs[velem.vertex_buffer_index]
 
-                offset = vbuf.buffer_offset + velem.src_offset + vbuf.pitch*index
+                offset = vbuf.buffer_offset + velem.src_offset + vbuf.stride*index
                 format = {
                     gallium.PIPE_FORMAT_R32_FLOAT: 'f',
                     gallium.PIPE_FORMAT_R32G32_FLOAT: '2f',

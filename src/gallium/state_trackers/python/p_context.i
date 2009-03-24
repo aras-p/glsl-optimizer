@@ -151,7 +151,7 @@ struct st_context {
    }
 
    void set_vertex_buffer(unsigned index,
-                          unsigned pitch, 
+                          unsigned stride, 
                           unsigned max_index,
                           unsigned buffer_offset,
                           struct st_buffer *buffer)
@@ -160,7 +160,7 @@ struct st_context {
       struct pipe_vertex_buffer state;
       
       memset(&state, 0, sizeof(state));
-      state.stride = pitch;
+      state.stride = stride;
       state.max_index = max_index;
       state.buffer_offset = buffer_offset;
       state.buffer = buffer ? buffer->buffer : NULL;
