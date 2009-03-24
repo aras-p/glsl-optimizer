@@ -49,7 +49,8 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    /* r0 -- reserved as usual
     */
-   c->r0 = brw_vec8_grf(reg, 0); reg++;
+   c->r0 = brw_vec8_grf(reg, 0);
+   reg++;
 
    /* User clip planes from curbe: 
     */
@@ -60,7 +61,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
       /* Deal with curbe alignment:
        */
-      reg += ((6+c->key.nr_userclip + 3) / 4) * 2;
+      reg += ((6 + c->key.nr_userclip + 3) / 4) * 2;
    }
 
    /* Vertex program parameters from curbe:
@@ -69,7 +70,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    for (i = 0; i < nr_params; i++) {
       c->regs[PROGRAM_STATE_VAR][i] = stride( brw_vec4_grf(reg+i/2, (i%2) * 4), 0, 4, 1);
    }     
-   reg += (nr_params+1)/2;
+   reg += (nr_params + 1) / 2;
 
    c->prog_data.curb_read_length = reg - 1;
 
