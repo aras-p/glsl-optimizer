@@ -124,10 +124,29 @@ typedef unsigned char boolean;
 #    define INLINE inline
 #  elif defined(__WATCOMC__) && (__WATCOMC__ >= 1100)
 #    define INLINE __inline
+#  elif defined(__SUNPRO_C) && defined(__C99FEATURES__)
+#    define INLINE inline
+#  elif (__STDC_VERSION__ >= 199901L) /* C99 */
+#    define INLINE inline
 #  else
 #    define INLINE
 #  endif
 #endif
+
+/* The __FUNCTION__ gcc variable is generally only used for debugging.
+ * If we're not using gcc, define __FUNCTION__ as a cpp symbol here.
+ */
+#ifndef __FUNCTION__
+# if (!defined(__GNUC__) || (__GNUC__ < 2))
+#  if (__STDC_VERSION__ >= 199901L) /* C99 */ || \
+    (defined(__SUNPRO_C) && defined(__C99FEATURES__))
+#   define __FUNCTION__ __func__
+#  else
+#   define __FUNCTION__ "<unknown>"
+#  endif
+# endif
+#endif
+
 
 
 /* This should match linux gcc cdecl semantics everywhere, so that we

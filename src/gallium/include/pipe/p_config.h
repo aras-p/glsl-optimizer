@@ -77,11 +77,11 @@
  * Processor architecture
  */
 
-#if defined(__i386__) /* gcc */ || defined(_M_IX86) /* msvc */ || defined(_X86_) || defined(__386__) || defined(i386)
+#if defined(__i386__) /* gcc */ || defined(_M_IX86) /* msvc */ || defined(_X86_) || defined(__386__) || defined(i386) || defined(__i386) /* Sun cc */
 #define PIPE_ARCH_X86
 #endif
 
-#if defined(__x86_64__) /* gcc */ || defined(_M_X64) /* msvc */ || defined(_M_AMD64) /* msvc */
+#if defined(__x86_64__) /* gcc */ || defined(_M_X64) /* msvc */ || defined(_M_AMD64) /* msvc */ || defined(__x86_64) /* Sun cc */
 #define PIPE_ARCH_X86_64
 #endif
 
@@ -115,6 +115,10 @@
 #define PIPE_OS_BSD
 #endif
 
+#if defined(__sun)
+#define PIPE_OS_SOLARIS
+#endif
+
 #if defined(_WIN32) || defined(WIN32)
 #define PIPE_OS_WINDOWS
 #endif
@@ -126,9 +130,9 @@
  * NOTE: There is no way to auto-detect most of these.
  */
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
 #define PIPE_SUBSYSTEM_DRI
-#endif /* PIPE_OS_LINUX || PIPE_OS_BSD */
+#endif /* PIPE_OS_LINUX || PIPE_OS_BSD || PIPE_OS_SOLARIS */
 
 #if defined(PIPE_OS_WINDOWS)
 #if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
