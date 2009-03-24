@@ -2293,7 +2293,7 @@ static void emit_wpos_xy(struct brw_wm_compile *c,
 }
 
 /* TODO
-   BIAS on SIMD8 not workind yet...
+   BIAS on SIMD8 not working yet...
  */	
 static void emit_txb(struct brw_wm_compile *c,
 		struct prog_instruction *inst)
