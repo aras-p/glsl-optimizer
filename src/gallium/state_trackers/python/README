@@ -9,6 +9,10 @@ To build you'll need:
 * SWIG
 * Python Imaging Library with TK support (for the samples)
 
+On a debian-based distro you can simply do:
+
+  aptitude install python-dev scons swig python-imaging python-imaging-tk
+
 Invoke scons on the top dir as
  
   scons debug=yes statetrackers=python driver=softpipe,trace
