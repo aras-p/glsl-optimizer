@@ -477,7 +477,8 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    GLuint i;
    int old_nr_surfaces;
 
-   if (brw->state.nr_color_regions  > 1) {
+   /* Update surfaces for drawing buffers */
+   if (brw->state.nr_color_regions > 1) {
       for (i = 0; i < brw->state.nr_color_regions; i++) {
          brw_update_region_surface(brw, brw->state.color_regions[i], i,
 				   GL_FALSE);
@@ -489,25 +490,28 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    old_nr_surfaces = brw->wm.nr_surfaces;
    brw->wm.nr_surfaces = MAX_DRAW_BUFFERS;
 
+   /* Update surfaces for textures */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+      const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+      const GLuint j = MAX_DRAW_BUFFERS + i;
 
       /* _NEW_TEXTURE, BRW_NEW_TEXDATA */
-      if(texUnit->_ReallyEnabled) {
+      if (texUnit->_ReallyEnabled) {
          if (texUnit->_Current == intel->frame_buffer_texobj) {
-            dri_bo_unreference(brw->wm.surf_bo[i+MAX_DRAW_BUFFERS]);
-            brw->wm.surf_bo[i+MAX_DRAW_BUFFERS] = brw->wm.surf_bo[0];
-            dri_bo_reference(brw->wm.surf_bo[i+MAX_DRAW_BUFFERS]);
-            brw->wm.nr_surfaces = i + MAX_DRAW_BUFFERS + 1;
+            /* render to texture */
+            dri_bo_unreference(brw->wm.surf_bo[j]);
+            brw->wm.surf_bo[j] = brw->wm.surf_bo[0];
+            dri_bo_reference(brw->wm.surf_bo[j]);
+            brw->wm.nr_surfaces = j + 1;
          } else {
+            /* regular texture */
             brw_update_texture_surface(ctx, i);
-            brw->wm.nr_surfaces = i + MAX_DRAW_BUFFERS + 1;
+            brw->wm.nr_surfaces = j + 1;
          }
       } else {
-         dri_bo_unreference(brw->wm.surf_bo[i+MAX_DRAW_BUFFERS]);
-         brw->wm.surf_bo[i+MAX_DRAW_BUFFERS] = NULL;
+         dri_bo_unreference(brw->wm.surf_bo[j]);
+         brw->wm.surf_bo[j] = NULL;
       }
-
    }
 
    dri_bo_unreference(brw->wm.bind_bo);
