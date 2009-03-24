@@ -11,11 +11,11 @@ To build you'll need:
 
 Invoke scons on the top dir as
  
- scons statetrackers=python
+  scons debug=yes statetrackers=python driver=softpipe,trace
 
 To use do
 
- export PYTHONPATH=build/XXXX-XXXX-XXXX/gallium/state_trackers/python
+  export PYTHONPATH=$PWD/build/XXXX-XXXX-XXXX/gallium/state_trackers/python
 
 and then try running
 
