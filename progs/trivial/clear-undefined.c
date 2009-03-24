@@ -17,6 +17,7 @@ static void Init(void)
    fprintf(stderr, "GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
    fprintf(stderr, "Top right corner should be red\n");
+   fflush(stderr);
 }
 
 static void Reshape(int width, int height)
