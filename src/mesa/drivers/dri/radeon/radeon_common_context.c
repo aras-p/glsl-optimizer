@@ -36,6 +36,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 #include "utils.h"
 #include "vblank.h"
+#include "drirenderbuffer.h"
 #include "main/state.h"
 
 #define DRIVER_DATE "20090101"
@@ -398,7 +399,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	struct radeon_framebuffer *draw;
 	radeonContextPtr radeon;
 	char *regname;
-	struct radeon_bo *depth_bo, *bo;
+	struct radeon_bo *depth_bo = NULL, *bo;
 
 	if (RADEON_DEBUG & DEBUG_DRI)
 	    fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);

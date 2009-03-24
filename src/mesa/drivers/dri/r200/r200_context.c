@@ -243,7 +243,6 @@ static void r200_get_lock(radeonContextPtr radeon)
 {
    r200ContextPtr rmesa = (r200ContextPtr)radeon;
    drm_radeon_sarea_t *sarea = radeon->sarea;
-   int i;
 
    R200_STATECHANGE( rmesa, ctx );
    if (rmesa->radeon.sarea->tiling_enabled) {

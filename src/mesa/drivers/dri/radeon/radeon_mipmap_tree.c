@@ -94,8 +94,6 @@ static void compute_tex_image_offset(radeon_mipmap_tree *mt,
 	/* Find image size in bytes */
 	if (mt->compressed) {
 		/* TODO: Is this correct? Need test cases for compressed textures! */
-		GLuint align;
-
 		lvl->rowstride = (lvl->width * mt->bpp + 63) & ~63;
 		lvl->size = radeon_compressed_texture_size(mt->radeon->glCtx,
 							   lvl->width, lvl->height, lvl->depth, mt->compressed);
@@ -365,14 +363,16 @@ void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t,
  *
  * These functions present that view to mesa:
  */
-const GLuint *
-radeon_miptree_depth_offsets(radeon_mipmap_tree *mt, GLuint level)
+void
+radeon_miptree_depth_offsets(radeon_mipmap_tree *mt, GLuint level, GLuint *offsets)
 {
-     static const GLuint zero = 0;
      if (mt->target != GL_TEXTURE_3D || mt->faces == 1)
-       return &zero;
-     else
-       return mt->levels[level].faces[0].offset;
+        offsets[0] = 0;
+     else {
+	int i;
+	for (i = 0; i < 6; i++)
+		offsets[i] = mt->levels[level].faces[i].offset;
+     }
 }
 
 GLuint

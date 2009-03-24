@@ -112,7 +112,6 @@ void r200EmitVbufPrim( r200ContextPtr rmesa,
                        GLuint primitive,
                        GLuint vertex_nr )
 {
-   drm_radeon_cmd_header_t *cmd;
    BATCH_LOCALS(&rmesa->radeon);
 
    assert(!(primitive & R200_VF_PRIM_WALK_IND));
@@ -164,8 +163,7 @@ static void r200FireEB(r200ContextPtr rmesa, int vertex_count, int type)
 
 void r200FlushElts(GLcontext *ctx)
 {
-  r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   int dwords;
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
    int nr, elt_used = rmesa->tcl.elt_used;
 
    if (R200_DEBUG & (DEBUG_IOCTL|DEBUG_PRIMS))
@@ -345,14 +343,3 @@ void r200EmitAOS(r200ContextPtr rmesa, GLuint nr, GLuint offset)
    }
    END_BATCH();
 }
-
-void r200FireAOS(r200ContextPtr rmesa, int vertex_count, int type)
-{
-	BATCH_LOCALS(&rmesa->radeon);
-
-	BEGIN_BATCH(3);
-	OUT_BATCH_PACKET3(R200_CP_CMD_3D_DRAW_VBUF_2, 0);
-	OUT_BATCH(R200_VF_PRIM_WALK_LIST | (vertex_count << 16) | type);
-	END_BATCH();
-}
-

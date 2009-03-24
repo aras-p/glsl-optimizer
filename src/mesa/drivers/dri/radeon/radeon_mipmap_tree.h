@@ -94,6 +94,5 @@ void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t,
 			      struct gl_texture_image *texImage, GLuint face, GLuint level);
 GLuint radeon_miptree_image_offset(radeon_mipmap_tree *mt,
 				   GLuint face, GLuint level);
-const GLuint *
-radeon_miptree_depth_offsets(radeon_mipmap_tree *mt, GLuint level);
+void radeon_miptree_depth_offsets(radeon_mipmap_tree *mt, GLuint level, GLuint *offsets);
 #endif /* __RADEON_MIPMAP_TREE_H_ */

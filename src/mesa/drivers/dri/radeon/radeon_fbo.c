@@ -510,8 +510,9 @@ radeon_render_texture(GLcontext * ctx,
                                             att->TextureLevel);
 
    if (att->Texture->Target == GL_TEXTURE_3D) {
-      const GLuint *offsets = radeon_miptree_depth_offsets(radeon_image->mt,
-                                                          att->TextureLevel);
+      GLuint offsets[6];
+      radeon_miptree_depth_offsets(radeon_image->mt, att->TextureLevel,
+				   offsets);
       imageOffset += offsets[att->Zoffset];
    }
 

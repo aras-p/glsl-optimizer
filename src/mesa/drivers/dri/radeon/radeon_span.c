@@ -377,7 +377,7 @@ do {									\
 #include "stenciltmp.h"
 
 
-void map_unmap_rb(struct gl_renderbuffer *rb, int flag)
+static void map_unmap_rb(struct gl_renderbuffer *rb, int flag)
 {
 	struct radeon_renderbuffer *rrb = radeon_renderbuffer(rb);
 	int r;
@@ -403,7 +403,6 @@ void map_unmap_rb(struct gl_renderbuffer *rb, int flag)
 static void
 radeon_map_unmap_buffers(GLcontext *ctx, GLboolean map)
 {
-	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	GLuint i, j;
 
 	/* color draw buffers */

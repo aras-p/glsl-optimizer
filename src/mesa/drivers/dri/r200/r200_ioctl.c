@@ -193,7 +193,6 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
    __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
    GLuint flags = 0;
    GLuint color_mask = 0;
-   GLint ret;
    GLuint orig_mask = mask;
 
    if ( R200_DEBUG & DEBUG_IOCTL ) {

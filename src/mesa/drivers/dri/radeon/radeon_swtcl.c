@@ -825,6 +825,4 @@ void radeonInitSwtcl( GLcontext *ctx )
 
 void radeonDestroySwtcl( GLcontext *ctx )
 {
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-
 }

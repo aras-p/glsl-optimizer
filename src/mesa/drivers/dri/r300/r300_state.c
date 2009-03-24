@@ -42,6 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/macros.h"
 #include "main/context.h"
 #include "main/dd.h"
+#include "main/framebuffer.h"
 #include "main/simple_list.h"
 #include "main/api_arrayelt.h"
 #include "main/texformat.h"
@@ -2029,7 +2030,6 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 static void r300ResetHwState(r300ContextPtr r300)
 {
 	GLcontext *ctx = r300->radeon.glCtx;
-	struct radeon_renderbuffer *rrb;
 	int has_tcl = 1;
 
 	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
@@ -2039,7 +2039,6 @@ static void r300ResetHwState(r300ContextPtr r300)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
 	radeon_firevertices(&r300->radeon);
-	//r300UpdateWindow(ctx);
 
 	r300ColorMask(ctx,
 		      ctx->Color.ColorMask[RCOMP],
@@ -2524,9 +2523,6 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
  */
 void r300InitState(r300ContextPtr r300)
 {
-	GLcontext *ctx = r300->radeon.glCtx;
-	GLuint depth_fmt;
-
 	memset(&(r300->state.texture), 0, sizeof(r300->state.texture));
 
 	r300ResetHwState(r300);

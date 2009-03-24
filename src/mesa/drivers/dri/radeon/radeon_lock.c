@@ -61,7 +61,6 @@ void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 	__DRIdrawablePrivate *const drawable = rmesa->dri.drawable;
 	__DRIdrawablePrivate *const readable = rmesa->dri.readable;
 	__DRIscreenPrivate *sPriv = rmesa->dri.screen;
-	drm_radeon_sarea_t *sarea = rmesa->sarea;
 
 	assert(drawable != NULL);
 
@@ -92,7 +91,6 @@ void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 
 void radeon_lock_hardware(radeonContextPtr radeon)
 {
-	__DRIdrawable *dPriv = radeon->dri.drawable;
 	char ret = 0;
 	struct radeon_framebuffer *rfb = NULL;
 	struct radeon_renderbuffer *rrb = NULL;

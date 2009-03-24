@@ -775,11 +775,6 @@ void radeonSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPri
 static void disable_tex_obj_state( r100ContextPtr rmesa, 
 				   int unit )
 {
-   /* do not use RADEON_DB_STATE to avoid stale texture caches */
-   uint32_t *cmd = &rmesa->hw.tex[unit].cmd[TEX_CMD_0];
-   GLuint se_coord_fmt = rmesa->hw.set.cmd[SET_SE_COORDFMT];
-   GLuint *txr_cmd = RADEON_DB_STATE( txr[unit] );
-
    RADEON_STATECHANGE( rmesa, tex[unit] );
 
    RADEON_STATECHANGE( rmesa, tcl );
@@ -1142,8 +1137,6 @@ static GLboolean radeon_validate_texture(GLcontext *ctx, struct gl_texture_objec
 static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-
 
    if (ctx->Texture.Unit[unit]._ReallyEnabled & TEXTURE_3D_BIT) {
      return GL_FALSE;
