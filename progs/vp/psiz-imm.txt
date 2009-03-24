@@ -1,0 +1,5 @@
+!!ARBvp1.0
+MOV result.color, vertex.color; 
+MOV result.pointsize, {2.0, 0, 0, 1};
+MOV  result.position, vertex.position;
+END
