@@ -1024,8 +1024,8 @@ static void emit_fb_write( struct brw_wm_compile *c,
 }
 
 
-/* Post-fragment-program processing.  Send the results to the
- * framebuffer.
+/**
+ * Move a GPR to scratch memory. 
  */
 static void emit_spill( struct brw_wm_compile *c,
 			struct brw_reg reg,
@@ -1049,6 +1049,9 @@ static void emit_spill( struct brw_wm_compile *c,
 }
 
 
+/**
+ * Load a GPR from scratch memory. 
+ */
 static void emit_unspill( struct brw_wm_compile *c,
 			  struct brw_reg reg,
 			  GLuint slot )
@@ -1069,13 +1072,14 @@ static void emit_unspill( struct brw_wm_compile *c,
 
    brw_dp_READ_16(p,
 		  retype(vec16(reg), BRW_REGISTER_TYPE_UW),
-		  1, 
+		  1,
 		  slot);
 }
 
 
 /**
- * Retrieve upto 4 GEN4 register pairs for the given wm reg:
+ * Retrieve up to 4 GEN4 register pairs for the given wm reg:
+ * Args with unspill_reg != 0 will be loaded from scratch memory.
  */
 static void get_argument_regs( struct brw_wm_compile *c,
 			       struct brw_wm_ref *arg[],
@@ -1085,13 +1089,12 @@ static void get_argument_regs( struct brw_wm_compile *c,
 
    for (i = 0; i < 4; i++) {
       if (arg[i]) {
-
-	 if (arg[i]->unspill_reg) 
-	    emit_unspill(c, 
+	 if (arg[i]->unspill_reg)
+	    emit_unspill(c,
 			 brw_vec8_grf(arg[i]->unspill_reg, 0),
 			 arg[i]->value->spill_slot);
 
-	 regs[i] = arg[i]->hw_reg;	 
+	 regs[i] = arg[i]->hw_reg;
       }
       else {
 	 regs[i] = brw_null_reg();
@@ -1100,6 +1103,9 @@ static void get_argument_regs( struct brw_wm_compile *c,
 }
 
 
+/**
+ * For values that have a spill_slot!=0, write those regs to scratch memory.
+ */
 static void spill_values( struct brw_wm_compile *c,
 			  struct brw_wm_value *values,
 			  GLuint nr )
