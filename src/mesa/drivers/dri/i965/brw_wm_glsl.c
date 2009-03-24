@@ -241,8 +241,9 @@ static void prealloc_reg(struct brw_wm_compile *c)
  * Convert Mesa dst register to brw register.
  */
 static struct brw_reg get_dst_reg(struct brw_wm_compile *c, 
-	struct prog_instruction *inst, int component, int nr)
+                                  struct prog_instruction *inst, int component)
 {
+    const int nr = 1;
     return get_reg(c, inst->DstReg.File, inst->DstReg.Index, component, nr,
 	    0, 0);
 }
@@ -252,8 +253,9 @@ static struct brw_reg get_dst_reg(struct brw_wm_compile *c,
  * Convert Mesa src register to brw register.
  */
 static struct brw_reg get_src_reg(struct brw_wm_compile *c, 
-	struct prog_src_register *src, int index, int nr)
+                                  struct prog_src_register *src, int index)
 {
+    const int nr = 1;
     int component = GET_SWZ(src->Swizzle, index);
     return get_reg(c, src->File, src->Index, component, nr, 
 	    src->NegateBase, src->Abs);
@@ -332,8 +334,8 @@ static void emit_abs( struct brw_wm_compile *c,
     for (i = 0; i < 4; i++) {
 	if (inst->DstReg.WriteMask & (1<<i)) {
 	    struct brw_reg src, dst;
-	    dst = get_dst_reg(c, inst, i, 1);
-	    src = get_src_reg(c, &inst->SrcReg[0], i, 1);
+	    dst = get_dst_reg(c, inst, i);
+	    src = get_src_reg(c, &inst->SrcReg[0], i);
 	    brw_MOV(p, dst, brw_abs(src));
 	}
     }
@@ -350,8 +352,8 @@ static void emit_trunc( struct brw_wm_compile *c,
     for (i = 0; i < 4; i++) {
 	if (mask & (1<<i)) {
 	    struct brw_reg src, dst;
-	    dst = get_dst_reg(c, inst, i, 1) ;
-	    src = get_src_reg(c, &inst->SrcReg[0], i, 1);
+	    dst = get_dst_reg(c, inst, i);
+	    src = get_src_reg(c, &inst->SrcReg[0], i);
 	    brw_RNDZ(p, dst, src);
 	}
     }
@@ -368,8 +370,8 @@ static void emit_mov( struct brw_wm_compile *c,
     for (i = 0; i < 4; i++) {
 	if (mask & (1<<i)) {
 	    struct brw_reg src, dst;
-	    dst = get_dst_reg(c, inst, i, 1);
-	    src = get_src_reg(c, &inst->SrcReg[0], i, 1);
+	    dst = get_dst_reg(c, inst, i);
+	    src = get_src_reg(c, &inst->SrcReg[0], i);
 	    brw_MOV(p, dst, src);
 	}
     }
@@ -386,8 +388,8 @@ static void emit_pixel_xy(struct brw_wm_compile *c,
     struct brw_compile *p = &c->func;
     GLuint mask = inst->DstReg.WriteMask;
 
-    dst0 = get_dst_reg(c, inst, 0, 1);
-    dst1 = get_dst_reg(c, inst, 1, 1);
+    dst0 = get_dst_reg(c, inst, 0);
+    dst1 = get_dst_reg(c, inst, 1);
     /* Calculate pixel centers by adding 1 or 0 to each of the
      * micro-tile coordinates passed in r1.
      */
@@ -414,10 +416,10 @@ static void emit_delta_xy(struct brw_wm_compile *c,
     struct brw_compile *p = &c->func;
     GLuint mask = inst->DstReg.WriteMask;
 
-    dst0 = get_dst_reg(c, inst, 0, 1);
-    dst1 = get_dst_reg(c, inst, 1, 1);
-    src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
-    src1 = get_src_reg(c, &inst->SrcReg[0], 1, 1);
+    dst0 = get_dst_reg(c, inst, 0);
+    dst1 = get_dst_reg(c, inst, 1);
+    src0 = get_src_reg(c, &inst->SrcReg[0], 0);
+    src1 = get_src_reg(c, &inst->SrcReg[0], 1);
     /* Calc delta X,Y by subtracting origin in r1 from the pixel
      * centers.
      */
@@ -482,7 +484,7 @@ static void emit_fb_write(struct brw_wm_compile *c,
 
     brw_push_insn_state(p);
     for (channel = 0; channel < 4; channel++) {
-        src0 = get_src_reg(c,  &inst->SrcReg[0], channel, 1);
+        src0 = get_src_reg(c,  &inst->SrcReg[0], channel);
         /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
         /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
         brw_MOV(p, brw_message_reg(nr + channel), src0);
@@ -493,11 +495,11 @@ static void emit_fb_write(struct brw_wm_compile *c,
 
     if (c->key.source_depth_to_render_target) {
        if (c->key.computes_depth) {
-          src0 = get_src_reg(c, &inst->SrcReg[2], 2, 1);
+          src0 = get_src_reg(c, &inst->SrcReg[2], 2);
           brw_MOV(p, brw_message_reg(nr), src0);
        }
        else {
-          src0 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
+          src0 = get_src_reg(c, &inst->SrcReg[1], 1);
           brw_MOV(p, brw_message_reg(nr), src0);
        }
 
@@ -524,7 +526,7 @@ static void emit_fb_write(struct brw_wm_compile *c,
         else
 #endif
         {
-           struct brw_reg src =  get_src_reg(c, &inst->SrcReg[1], 1, 1);
+           struct brw_reg src =  get_src_reg(c, &inst->SrcReg[1], 1);
            brw_MOV(p, brw_message_reg(nr), src);
         }
         nr += 2;
@@ -544,10 +546,10 @@ static void emit_pixel_w( struct brw_wm_compile *c,
 	struct brw_reg dst, src0, delta0, delta1;
 	struct brw_reg interp3;
 
-	dst = get_dst_reg(c, inst, 3, 1);
-	src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
-	delta0 = get_src_reg(c, &inst->SrcReg[1], 0, 1);
-	delta1 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
+	dst = get_dst_reg(c, inst, 3);
+	src0 = get_src_reg(c, &inst->SrcReg[0], 0);
+	delta0 = get_src_reg(c, &inst->SrcReg[1], 0);
+	delta1 = get_src_reg(c, &inst->SrcReg[1], 1);
 
 	interp3 = brw_vec1_grf(src0.nr+1, 4);
 	/* Calc 1/w - just linterp wpos[3] optimized by putting the
@@ -575,9 +577,9 @@ static void emit_linterp(struct brw_wm_compile *c,
     struct brw_reg src0;
     GLuint nr, i;
 
-    src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
-    delta0 = get_src_reg(c, &inst->SrcReg[1], 0, 1);
-    delta1 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
+    src0 = get_src_reg(c, &inst->SrcReg[0], 0);
+    delta0 = get_src_reg(c, &inst->SrcReg[1], 0);
+    delta1 = get_src_reg(c, &inst->SrcReg[1], 1);
     nr = src0.nr;
 
     interp[0] = brw_vec1_grf(nr, 0);
@@ -587,7 +589,7 @@ static void emit_linterp(struct brw_wm_compile *c,
 
     for(i = 0; i < 4; i++ ) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
+	    dst = get_dst_reg(c, inst, i);
 	    brw_LINE(p, brw_null_reg(), interp[i], delta0);
 	    brw_MAC(p, dst, suboffset(interp[i],1), delta1);
 	}
@@ -604,7 +606,7 @@ static void emit_cinterp(struct brw_wm_compile *c,
     struct brw_reg dst, src0;
     GLuint nr, i;
 
-    src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
+    src0 = get_src_reg(c, &inst->SrcReg[0], 0);
     nr = src0.nr;
 
     interp[0] = brw_vec1_grf(nr, 0);
@@ -614,7 +616,7 @@ static void emit_cinterp(struct brw_wm_compile *c,
 
     for(i = 0; i < 4; i++ ) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
+	    dst = get_dst_reg(c, inst, i);
 	    brw_MOV(p, dst, suboffset(interp[i],3));
 	}
     }
@@ -631,10 +633,10 @@ static void emit_pinterp(struct brw_wm_compile *c,
     struct brw_reg src0, w;
     GLuint nr, i;
 
-    src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
-    delta0 = get_src_reg(c, &inst->SrcReg[1], 0, 1);
-    delta1 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
-    w = get_src_reg(c, &inst->SrcReg[2], 3, 1);
+    src0 = get_src_reg(c, &inst->SrcReg[0], 0);
+    delta0 = get_src_reg(c, &inst->SrcReg[1], 0);
+    delta1 = get_src_reg(c, &inst->SrcReg[1], 1);
+    w = get_src_reg(c, &inst->SrcReg[2], 3);
     nr = src0.nr;
 
     interp[0] = brw_vec1_grf(nr, 0);
@@ -644,7 +646,7 @@ static void emit_pinterp(struct brw_wm_compile *c,
 
     for(i = 0; i < 4; i++ ) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
+	    dst = get_dst_reg(c, inst, i);
 	    brw_LINE(p, brw_null_reg(), interp[i], delta0);
 	    brw_MAC(p, dst, suboffset(interp[i],1), 
 		    delta1);
@@ -665,7 +667,7 @@ static void emit_frontfacing(struct brw_wm_compile *c,
 
     for (i = 0; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
+	    dst = get_dst_reg(c, inst, i);
 	    brw_MOV(p, dst, brw_imm_f(0.0));
 	}
     }
@@ -676,7 +678,7 @@ static void emit_frontfacing(struct brw_wm_compile *c,
     brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, r1_6ud, brw_imm_ud(1 << 31));
     for (i = 0; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
+	    dst = get_dst_reg(c, inst, i);
 	    brw_MOV(p, dst, brw_imm_f(1.0));
 	}
     }
@@ -694,12 +696,12 @@ static void emit_xpd(struct brw_wm_compile *c,
 	GLuint i1 = (i+1)%3;
 	if (mask & (1<<i)) {
 	    struct brw_reg src0, src1, dst;
-	    dst = get_dst_reg(c, inst, i, 1);
-	    src0 = negate(get_src_reg(c, &inst->SrcReg[0], i2, 1));
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i1, 1);
+	    dst = get_dst_reg(c, inst, i);
+	    src0 = negate(get_src_reg(c, &inst->SrcReg[0], i2));
+	    src1 = get_src_reg(c, &inst->SrcReg[1], i1);
 	    brw_MUL(p, brw_null_reg(), src0, src1);
-	    src0 = get_src_reg(c, &inst->SrcReg[0], i1, 1);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i2, 1);
+	    src0 = get_src_reg(c, &inst->SrcReg[0], i1);
+	    src1 = get_src_reg(c, &inst->SrcReg[1], i2);
 	    brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
 	    brw_MAC(p, dst, src0, src1);
 	    brw_set_saturate(p, 0);
@@ -715,11 +717,11 @@ static void emit_dp3(struct brw_wm_compile *c,
     int i;
     struct brw_compile *p = &c->func;
     for (i = 0; i < 3; i++) {
-	src0[i] = get_src_reg(c, &inst->SrcReg[0], i, 1);
-	src1[i] = get_src_reg(c, &inst->SrcReg[1], i, 1);
+	src0[i] = get_src_reg(c, &inst->SrcReg[0], i);
+	src1[i] = get_src_reg(c, &inst->SrcReg[1], i);
     }
 
-    dst = get_dst_reg(c, inst, get_scalar_dst_index(inst), 1);
+    dst = get_dst_reg(c, inst, get_scalar_dst_index(inst));
     brw_MUL(p, brw_null_reg(), src0[0], src1[0]);
     brw_MAC(p, brw_null_reg(), src0[1], src1[1]);
     brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
@@ -734,10 +736,10 @@ static void emit_dp4(struct brw_wm_compile *c,
     int i;
     struct brw_compile *p = &c->func;
     for (i = 0; i < 4; i++) {
-	src0[i] = get_src_reg(c, &inst->SrcReg[0], i, 1);
-	src1[i] = get_src_reg(c, &inst->SrcReg[1], i, 1);
+	src0[i] = get_src_reg(c, &inst->SrcReg[0], i);
+	src1[i] = get_src_reg(c, &inst->SrcReg[1], i);
     }
-    dst = get_dst_reg(c, inst, get_scalar_dst_index(inst), 1);
+    dst = get_dst_reg(c, inst, get_scalar_dst_index(inst));
     brw_MUL(p, brw_null_reg(), src0[0], src1[0]);
     brw_MAC(p, brw_null_reg(), src0[1], src1[1]);
     brw_MAC(p, brw_null_reg(), src0[2], src1[2]);
@@ -753,10 +755,10 @@ static void emit_dph(struct brw_wm_compile *c,
     int i;
     struct brw_compile *p = &c->func;
     for (i = 0; i < 4; i++) {
-	src0[i] = get_src_reg(c, &inst->SrcReg[0], i, 1);
-	src1[i] = get_src_reg(c, &inst->SrcReg[1], i, 1);
+	src0[i] = get_src_reg(c, &inst->SrcReg[0], i);
+	src1[i] = get_src_reg(c, &inst->SrcReg[1], i);
     }
-    dst = get_dst_reg(c, inst, get_scalar_dst_index(inst), 1);
+    dst = get_dst_reg(c, inst, get_scalar_dst_index(inst));
     brw_MUL(p, brw_null_reg(), src0[0], src1[0]);
     brw_MAC(p, brw_null_reg(), src0[1], src1[1]);
     brw_MAC(p, dst, src0[2], src1[2]);
@@ -781,7 +783,7 @@ static void emit_math1(struct brw_wm_compile *c,
     tmp = alloc_tmp(c);
 
     /* Get first component of source register */
-    src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
+    src0 = get_src_reg(c, &inst->SrcReg[0], 0);
 
     /* tmp = func(src0) */
     brw_MOV(p, brw_message_reg(2), src0);
@@ -799,7 +801,7 @@ static void emit_math1(struct brw_wm_compile *c,
     /* replicate tmp value across enabled dest channels */
     for (i = 0; i < 4; i++) {
        if (inst->DstReg.WriteMask & (1 << i)) {
-          dst = get_dst_reg(c, inst, i, 1);    
+          dst = get_dst_reg(c, inst, i);
           brw_MOV(p, dst, tmp);
        }
     }
@@ -853,9 +855,9 @@ static void emit_add(struct brw_wm_compile *c,
     brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
     for (i = 0 ; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
-	    src0 = get_src_reg(c, &inst->SrcReg[0], i, 1);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i, 1);
+	    dst = get_dst_reg(c, inst, i);
+	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
+	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
 	    brw_ADD(p, dst, src0, src1);
 	}
     }
@@ -872,9 +874,9 @@ static void emit_sub(struct brw_wm_compile *c,
     brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
     for (i = 0 ; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
-	    src0 = get_src_reg(c, &inst->SrcReg[0], i, 1);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i, 1);
+	    dst = get_dst_reg(c, inst, i);
+	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
+	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
 	    brw_ADD(p, dst, src0, negate(src1));
 	}
     }
@@ -891,9 +893,9 @@ static void emit_mul(struct brw_wm_compile *c,
     brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
     for (i = 0 ; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
-	    src0 = get_src_reg(c, &inst->SrcReg[0], i, 1);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i, 1);
+	    dst = get_dst_reg(c, inst, i);
+	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
+	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
 	    brw_MUL(p, dst, src0, src1);
 	}
     }
@@ -910,8 +912,8 @@ static void emit_frc(struct brw_wm_compile *c,
     brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
     for (i = 0 ; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
-	    src0 = get_src_reg(c, &inst->SrcReg[0], i, 1);
+	    dst = get_dst_reg(c, inst, i);
+	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
 	    brw_FRC(p, dst, src0);
 	}
     }
@@ -929,8 +931,8 @@ static void emit_flr(struct brw_wm_compile *c,
     brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
     for (i = 0 ; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
-	    src0 = get_src_reg(c, &inst->SrcReg[0], i, 1);
+	    dst = get_dst_reg(c, inst, i);
+	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
 	    brw_RNDD(p, dst, src0);
 	}
     }
@@ -947,9 +949,9 @@ static void emit_max(struct brw_wm_compile *c,
     brw_push_insn_state(p);
     for (i = 0; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
-	    src0 = get_src_reg(c, &inst->SrcReg[0], i, 1);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i, 1);
+	    dst = get_dst_reg(c, inst, i);
+	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
+	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
 	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
 	    brw_MOV(p, dst, src0);
 	    brw_set_saturate(p, 0);
@@ -975,9 +977,9 @@ static void emit_min(struct brw_wm_compile *c,
     brw_push_insn_state(p);
     for (i = 0; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
-	    src0 = get_src_reg(c, &inst->SrcReg[0], i, 1);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i, 1);
+	    dst = get_dst_reg(c, inst, i);
+	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
+	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
 	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
 	    brw_MOV(p, dst, src0);
 	    brw_set_saturate(p, 0);
@@ -998,9 +1000,9 @@ static void emit_pow(struct brw_wm_compile *c,
 {
     struct brw_compile *p = &c->func;
     struct brw_reg dst, src0, src1;
-    dst = get_dst_reg(c, inst, get_scalar_dst_index(inst), 1);
-    src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
-    src1 = get_src_reg(c, &inst->SrcReg[1], 0, 1);
+    dst = get_dst_reg(c, inst, get_scalar_dst_index(inst));
+    src0 = get_src_reg(c, &inst->SrcReg[0], 0);
+    src1 = get_src_reg(c, &inst->SrcReg[1], 0);
 
     brw_MOV(p, brw_message_reg(2), src0);
     brw_MOV(p, brw_message_reg(3), src1);
@@ -1025,10 +1027,10 @@ static void emit_lrp(struct brw_wm_compile *c,
     int mark = mark_tmps(c);
     for (i = 0; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
-	    src0 = get_src_reg(c, &inst->SrcReg[0], i, 1);
+	    dst = get_dst_reg(c, inst, i);
+	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
 
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i, 1);
+	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
 
 	    if (src1.nr == dst.nr) {
 		tmp1 = alloc_tmp(c);
@@ -1036,7 +1038,7 @@ static void emit_lrp(struct brw_wm_compile *c,
 	    } else
 		tmp1 = src1;
 
-	    src2 = get_src_reg(c, &inst->SrcReg[2], i, 1);
+	    src2 = get_src_reg(c, &inst->SrcReg[2], i);
 	    if (src2.nr == dst.nr) {
 		tmp2 = alloc_tmp(c);
 		brw_MOV(p, tmp2, src2);
@@ -1078,10 +1080,10 @@ static void emit_mad(struct brw_wm_compile *c,
 
     for (i = 0; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
-	    src0 = get_src_reg(c, &inst->SrcReg[0], i, 1);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i, 1);
-	    src2 = get_src_reg(c, &inst->SrcReg[2], i, 1);
+	    dst = get_dst_reg(c, inst, i);
+	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
+	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
+	    src2 = get_src_reg(c, &inst->SrcReg[2], i);
 	    brw_MUL(p, dst, src0, src1);
 
 	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
@@ -1101,9 +1103,9 @@ static void emit_sop(struct brw_wm_compile *c,
 
     for (i = 0; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
-	    src0 = get_src_reg(c, &inst->SrcReg[0], i, 1);
-	    src1 = get_src_reg(c, &inst->SrcReg[1], i, 1);
+	    dst = get_dst_reg(c, inst, i);
+	    src0 = get_src_reg(c, &inst->SrcReg[0], i);
+	    src1 = get_src_reg(c, &inst->SrcReg[1], i);
 	    brw_push_insn_state(p);
 	    brw_CMP(p, brw_null_reg(), cond, src0, src1);
 	    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
@@ -1160,8 +1162,8 @@ static void emit_ddx(struct brw_wm_compile *c,
     struct brw_reg dst;
     struct brw_reg src0, w;
     GLuint nr, i;
-    src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
-    w = get_src_reg(c, &inst->SrcReg[1], 3, 1);
+    src0 = get_src_reg(c, &inst->SrcReg[0], 0);
+    w = get_src_reg(c, &inst->SrcReg[1], 3);
     nr = src0.nr;
     interp[0] = brw_vec1_grf(nr, 0);
     interp[1] = brw_vec1_grf(nr, 4);
@@ -1170,7 +1172,7 @@ static void emit_ddx(struct brw_wm_compile *c,
     brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
     for(i = 0; i < 4; i++ ) {
         if (mask & (1<<i)) {
-            dst = get_dst_reg(c, inst, i, 1);
+            dst = get_dst_reg(c, inst, i);
             brw_MOV(p, dst, interp[i]);
             brw_MUL(p, dst, dst, w);
         }
@@ -1188,9 +1190,9 @@ static void emit_ddy(struct brw_wm_compile *c,
     struct brw_reg src0, w;
     GLuint nr, i;
 
-    src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
+    src0 = get_src_reg(c, &inst->SrcReg[0], 0);
     nr = src0.nr;
-    w = get_src_reg(c, &inst->SrcReg[1], 3, 1);
+    w = get_src_reg(c, &inst->SrcReg[1], 3);
     interp[0] = brw_vec1_grf(nr, 0);
     interp[1] = brw_vec1_grf(nr, 4);
     interp[2] = brw_vec1_grf(nr+1, 0);
@@ -1198,7 +1200,7 @@ static void emit_ddy(struct brw_wm_compile *c,
     brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
     for(i = 0; i < 4; i++ ) {
         if (mask & (1<<i)) {
-            dst = get_dst_reg(c, inst, i, 1);
+            dst = get_dst_reg(c, inst, i);
             brw_MOV(p, dst, suboffset(interp[i], 1));
             brw_MUL(p, dst, dst, w);
         }
@@ -1332,7 +1334,7 @@ static void emit_noise1( struct brw_wm_compile *c,
 
     assert( mark == 0 );
     
-    src = get_src_reg( c, inst->SrcReg, 0, 1 );
+    src = get_src_reg( c, inst->SrcReg, 0 );
 
     param = alloc_tmp( c );
 
@@ -1344,7 +1346,7 @@ static void emit_noise1( struct brw_wm_compile *c,
     brw_set_saturate( p, inst->SaturateMode == SATURATE_ZERO_ONE );
     for (i = 0 ; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
+	    dst = get_dst_reg(c, inst, i);
 	    brw_MOV( p, dst, param );
 	}
     }
@@ -1502,8 +1504,8 @@ static void emit_noise2( struct brw_wm_compile *c,
 
     assert( mark == 0 );
     
-    src0 = get_src_reg( c, inst->SrcReg, 0, 1 );
-    src1 = get_src_reg( c, inst->SrcReg, 1, 1 );
+    src0 = get_src_reg( c, inst->SrcReg, 0 );
+    src1 = get_src_reg( c, inst->SrcReg, 1 );
 
     param0 = alloc_tmp( c );
     param1 = alloc_tmp( c );
@@ -1517,7 +1519,7 @@ static void emit_noise2( struct brw_wm_compile *c,
     brw_set_saturate( p, inst->SaturateMode == SATURATE_ZERO_ONE );
     for (i = 0 ; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
+	    dst = get_dst_reg(c, inst, i);
 	    brw_MOV( p, dst, param0 );
 	}
     }
@@ -1805,9 +1807,9 @@ static void emit_noise3( struct brw_wm_compile *c,
 
     assert( mark == 0 );
     
-    src0 = get_src_reg( c, inst->SrcReg, 0, 1 );
-    src1 = get_src_reg( c, inst->SrcReg, 1, 1 );
-    src2 = get_src_reg( c, inst->SrcReg, 2, 1 );
+    src0 = get_src_reg( c, inst->SrcReg, 0 );
+    src1 = get_src_reg( c, inst->SrcReg, 1 );
+    src2 = get_src_reg( c, inst->SrcReg, 2 );
 
     param0 = alloc_tmp( c );
     param1 = alloc_tmp( c );
@@ -1823,7 +1825,7 @@ static void emit_noise3( struct brw_wm_compile *c,
     brw_set_saturate( p, inst->SaturateMode == SATURATE_ZERO_ONE );
     for (i = 0 ; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
+	    dst = get_dst_reg(c, inst, i);
 	    brw_MOV( p, dst, param0 );
 	}
     }
@@ -2228,10 +2230,10 @@ static void emit_noise4( struct brw_wm_compile *c,
 
     assert( mark == 0 );
     
-    src0 = get_src_reg( c, inst->SrcReg, 0, 1 );
-    src1 = get_src_reg( c, inst->SrcReg, 1, 1 );
-    src2 = get_src_reg( c, inst->SrcReg, 2, 1 );
-    src3 = get_src_reg( c, inst->SrcReg, 3, 1 );
+    src0 = get_src_reg( c, inst->SrcReg, 0 );
+    src1 = get_src_reg( c, inst->SrcReg, 1 );
+    src2 = get_src_reg( c, inst->SrcReg, 2 );
+    src3 = get_src_reg( c, inst->SrcReg, 3 );
 
     param0 = alloc_tmp( c );
     param1 = alloc_tmp( c );
@@ -2249,7 +2251,7 @@ static void emit_noise4( struct brw_wm_compile *c,
     brw_set_saturate( p, inst->SaturateMode == SATURATE_ZERO_ONE );
     for (i = 0 ; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i, 1);
+	    dst = get_dst_reg(c, inst, i);
 	    brw_MOV( p, dst, param0 );
 	}
     }
@@ -2266,11 +2268,11 @@ static void emit_wpos_xy(struct brw_wm_compile *c,
     GLuint mask = inst->DstReg.WriteMask;
     struct brw_reg src0[2], dst[2];
 
-    dst[0] = get_dst_reg(c, inst, 0, 1);
-    dst[1] = get_dst_reg(c, inst, 1, 1);
+    dst[0] = get_dst_reg(c, inst, 0);
+    dst[1] = get_dst_reg(c, inst, 1);
 
-    src0[0] = get_src_reg(c, &inst->SrcReg[0], 0, 1);
-    src0[1] = get_src_reg(c, &inst->SrcReg[0], 1, 1);
+    src0[0] = get_src_reg(c, &inst->SrcReg[0], 0);
+    src0[1] = get_src_reg(c, &inst->SrcReg[0], 1);
 
     /* Calculate the pixel offset from window bottom left into destination
      * X and Y channels.
@@ -2305,9 +2307,9 @@ static void emit_txb(struct brw_wm_compile *c,
     GLuint i;
     payload_reg = get_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, 0, 1, 0, 0);
     for (i = 0; i < 4; i++) 
-	dst[i] = get_dst_reg(c, inst, i, 1);
+	dst[i] = get_dst_reg(c, inst, i);
     for (i = 0; i < 4; i++)
-	src[i] = get_src_reg(c, &inst->SrcReg[0], i, 1);
+	src[i] = get_src_reg(c, &inst->SrcReg[0], i);
 
     switch (inst->TexSrcTarget) {
 	case TEXTURE_1D_INDEX:
@@ -2357,9 +2359,9 @@ static void emit_tex(struct brw_wm_compile *c,
     payload_reg = get_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, 0, 1, 0, 0);
 
     for (i = 0; i < 4; i++) 
-	dst[i] = get_dst_reg(c, inst, i, 1);
+	dst[i] = get_dst_reg(c, inst, i);
     for (i = 0; i < 4; i++)
-	src[i] = get_src_reg(c, &inst->SrcReg[0], i, 1);
+	src[i] = get_src_reg(c, &inst->SrcReg[0], i);
 
 
     switch (inst->TexSrcTarget) {
