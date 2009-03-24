@@ -75,7 +75,13 @@ def show_image(surface):
     root.mainloop()
 
 
+# Verbosity level: 0, 1, 2 
 verbose = 1
+# Dump images to disk instead of showing: True, False
+images = False
+
+
+image_no = 0
 
 
 class Struct:
@@ -538,7 +544,13 @@ class Context(Object):
         self.real.flush()
     
         if self.cbufs and self.cbufs[0]:
-            show_image(self.cbufs[0])
+            if images:
+                global image_no
+                image_no += 1
+                filename = 'cbuf_%04u.png' % image_no 
+                save_image(filename, self.cbufs[0])
+            else:
+                show_image(self.cbufs[0])
     
 
 class Interpreter(parser.TraceDumper):
