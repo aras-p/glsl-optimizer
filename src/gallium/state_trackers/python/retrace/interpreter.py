@@ -396,7 +396,7 @@ class Context(Object):
         _state = gallium.Framebuffer()
         _state.width = state.width
         _state.height = state.height
-        _state.num_cbufs = state.num_cbufs
+        _state.nr_cbufs = state.nr_cbufs
         for i in range(len(state.cbufs)):
             _state.set_cbuf(i, state.cbufs[i])
         _state.set_zsbuf(state.zsbuf)    

@@ -139,7 +139,7 @@ def test(dev):
     fb = Framebuffer()
     fb.width = width
     fb.height = height
-    fb.num_cbufs = 1
+    fb.nr_cbufs = 1
     fb.set_cbuf(0, _cbuf)
     ctx.set_framebuffer(fb)
     _cbuf.clear_value = 0x00000000
