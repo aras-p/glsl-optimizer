@@ -328,12 +328,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	}
 
 	/* Init r300 context data */
-	r300->radeon.texture_depth = driQueryOptioni(&r300->radeon.optionCache,
-					      "texture_depth");
-	if (r300->radeon.texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
-		r300->radeon.texture_depth = (screen->cpp == 4) ?
-		    DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
-
 	/* Set the maximum texture size small enough that we can guarentee that
 	 * all texture units can bind a maximal texture and have them both in
 	 * texturable memory at once.

@@ -338,12 +338,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
      return GL_FALSE;
    }
 
-   rmesa->radeon.texture_depth = driQueryOptioni (&rmesa->radeon.optionCache,
-					   "texture_depth");
-   if (rmesa->radeon.texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
-      rmesa->radeon.texture_depth = ( screen->cpp == 4 ) ?
-	 DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
-
    rmesa->radeon.swtcl.RenderIndex = ~0;
    rmesa->radeon.hw.all_dirty = 1;
 

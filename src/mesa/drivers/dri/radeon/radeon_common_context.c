@@ -163,6 +163,12 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 			"IRQ's not enabled, falling back to %s: %d %d\n",
 			radeon->do_usleeps ? "usleeps" : "busy waits",
 			fthrottle_mode, radeon->radeonScreen->irq);
+	
+        radeon->texture_depth = driQueryOptioni (&radeon->optionCache,
+					        "texture_depth");
+        if (radeon->texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
+                radeon->texture_depth = ( glVisual->rgbBits > 16 ) ?
+	        DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
 	return GL_TRUE;
 }
