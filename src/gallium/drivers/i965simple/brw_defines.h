@@ -289,6 +289,24 @@
 
 #define BRW_RASTRULE_UPPER_LEFT  0
 #define BRW_RASTRULE_UPPER_RIGHT 1
+/* These are listed as "Reserved, but not seen as useful"
+ * in Intel documentation (page 212, "Point Rasterization Rule",
+ * section 7.4 "SF Pipeline State Summary", of document
+ * "Intel® 965 Express Chipset Family and Intel® G35 Express
+ * Chipset Graphics Controller Programmer's Reference Manual,
+ * Volume 2: 3D/Media", Revision 1.0b as of January 2008,
+ * available at 
+ *     http://intellinuxgraphics.org/documentation.html
+ * at the time of this writing).
+ *
+ * These appear to be supported on at least some
+ * i965-family devices, and the BRW_RASTRULE_LOWER_RIGHT
+ * is useful when using OpenGL to render to a FBO
+ * (which has the pixel coordinate Y orientation inverted
+ * with respect to the normal OpenGL pixel coordinate system).
+ */
+#define BRW_RASTRULE_LOWER_LEFT  2
+#define BRW_RASTRULE_LOWER_RIGHT 3
 
 #define BRW_RENDERTARGET_CLAMPRANGE_UNORM    0
 #define BRW_RENDERTARGET_CLAMPRANGE_SNORM    1
