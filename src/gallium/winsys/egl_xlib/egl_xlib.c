@@ -588,7 +588,9 @@ find_supported_apis(void)
    EGLint mask = 0;
    void *handle;
 
-   handle = dlopen(NULL, 0);
+   handle = dlopen(NULL, RTLD_LAZY | RTLD_LOCAL);
+   if(!handle)
+      return mask;
 
    if (dlsym(handle, "st_api_OpenGL_ES1"))
       mask |= EGL_OPENGL_ES_BIT;
