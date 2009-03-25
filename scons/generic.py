@@ -303,14 +303,17 @@ def generate(env):
     # Load tool chain
     env.Tool(env['toolchain'])
 
+    env['gcc'] = 'gcc' in os.path.basename(env['CC']).split('-')
+    env['msvc'] = env['CC'] == 'cl'
+
     # shortcuts
     debug = env['debug']
     machine = env['machine']
     platform = env['platform']
     x86 = env['machine'] == 'x86'
     ppc = env['machine'] == 'ppc'
-    gcc = env['platform'] in ('linux', 'freebsd', 'darwin') or env['toolchain'] == 'crossmingw'
-    msvc = env['platform'] in ('windows', 'winddk', 'wince') and env['toolchain'] != 'crossmingw'
+    gcc = env['gcc']
+    msvc = env['msvc']
 
     # C preprocessor options
     cppdefines = []
