@@ -22,6 +22,14 @@
 
 #include "r300_debug.h"
 
+static void r300_dump_fs(struct r300_fragment_shader* fs)
+{
+    int i;
+
+    for (i = 0; i < fs->alu_instruction_count; i++) {
+    }
+}
+
 static char* r500_fs_swiz[] = {
     " R",
     " G",

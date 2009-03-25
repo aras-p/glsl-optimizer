@@ -278,22 +278,20 @@ static INLINE void r300_emit_maths(struct r300_fragment_shader* fs,
 {
     int i = fs->alu_instruction_count;
 
-    fs->instructions[0].alu_rgb_inst = R300_RGB_SWIZA(R300_ALU_ARGC_SRC0C_XYZ) |
-        R300_RGB_SWIZB(R300_ALU_ARGC_ONE) |
+    fs->instructions[i].alu_rgb_inst = R300_RGB_SWIZA(R300_ALU_ARGC_SRC0C_XYZ) |
+        R300_RGB_SWIZB(R300_ALU_ARGC_SRC0C_XYZ) |
         R300_RGB_SWIZC(R300_ALU_ARGC_ZERO) |
-        R300_ALU_OUTC_MAD;
-    fs->instructions[0].alu_rgb_addr = R300_RGB_ADDR0(0) | R300_RGB_ADDR1(0) |
+        r300_rgb_op(op);
+    fs->instructions[i].alu_rgb_addr = R300_RGB_ADDR0(0) | R300_RGB_ADDR1(0) |
         R300_RGB_ADDR2(0) | R300_ALU_DSTC_OUTPUT_XYZ;
-    fs->instructions[0].alu_alpha_inst = R300_ALPHA_SWIZA(R300_ALU_ARGA_SRC0A) |
-        R300_ALPHA_SWIZB(R300_ALU_ARGA_ONE) |
+    fs->instructions[i].alu_alpha_inst = R300_ALPHA_SWIZA(R300_ALU_ARGA_SRC0A) |
+        R300_ALPHA_SWIZB(R300_ALU_ARGA_SRC0A) |
         R300_ALPHA_SWIZC(R300_ALU_ARGA_ZERO) |
-        R300_ALU_OUTA_MAD;
-    fs->instructions[0].alu_alpha_addr = R300_ALPHA_ADDR0(0) |
+        r300_alpha_op(op);
+    fs->instructions[i].alu_alpha_addr = R300_ALPHA_ADDR0(0) |
         R300_ALPHA_ADDR1(0) | R300_ALPHA_ADDR2(0) | R300_ALU_DSTA_OUTPUT;
 
     fs->alu_instruction_count++;
-    fs->indirections = 0;
-    fs->shader.stack_size = 2;
 }
 
 /* Setup an ALU operation. */
@@ -554,11 +552,15 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
     }
 }
 
+static void r300_fs_finalize(struct r3xx_fragment_shader* fs,
+                             struct r300_fs_asm* assembler)
+{
+    fs->stack_size = assembler->temp_count + assembler->temp_offset;
+}
+
 static void r500_fs_finalize(struct r500_fragment_shader* fs,
                              struct r300_fs_asm* assembler)
 {
-    fs->shader.stack_size = assembler->temp_count + assembler->temp_offset;
-
     /* XXX should this just go with OPCODE_END? */
     fs->instructions[fs->instruction_count - 1].inst0 |=
         R500_INST_LAST;
@@ -627,10 +629,16 @@ void r300_translate_fragment_shader(struct r300_context* r300,
     debug_printf("r300: %d total constants, "
             "%d from user and %d from immediates\n", consts->count,
             consts->user_count, assembler->imm_count);
-    //r500_fs_finalize(fs, assembler);
+    r300_fs_finalize(fs, assembler);
+    if (is_r500) {
+        r500_fs_finalize((struct r500_fragment_shader*)fs, assembler);
+    }
 
     tgsi_dump(fs->state.tokens);
-    //r500_fs_dump(fs);
+    /* XXX finish r300 dumper too */
+    if (is_r500) {
+        r500_fs_dump((struct r500_fragment_shader*)fs);
+    }
 
     tgsi_parse_free(&parser);
     FREE(assembler);

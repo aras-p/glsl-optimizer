@@ -169,10 +169,7 @@ struct r300_fragment_shader {
     int indirections;
 
     /* Indirection node offsets */
-    int offset0;
-    int offset1;
-    int offset2;
-    int offset3;
+    int alu_offset[4];
 
     /* Machine instructions */
     struct {

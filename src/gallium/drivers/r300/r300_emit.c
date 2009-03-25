@@ -90,12 +90,12 @@ void r300_emit_fragment_shader(struct r300_context* r300,
     OUT_CS_REG(R300_US_CONFIG, fs->indirections);
     OUT_CS_REG(R300_US_PIXSIZE, fs->shader.stack_size);
     /* XXX figure out exactly how big the sizes are on this reg */
-    OUT_CS_REG(R300_US_CODE_OFFSET, 0x0);
+    OUT_CS_REG(R300_US_CODE_OFFSET, 0x40);
     /* XXX figure these ones out a bit better kthnx */
     OUT_CS_REG(R300_US_CODE_ADDR_0, 0x0);
     OUT_CS_REG(R300_US_CODE_ADDR_1, 0x0);
     OUT_CS_REG(R300_US_CODE_ADDR_2, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_3, R300_RGBA_OUT);
+    OUT_CS_REG(R300_US_CODE_ADDR_3, 0x40 | R300_RGBA_OUT);
 
     for (i = 0; i < fs->alu_instruction_count; i++) {
         OUT_CS_REG(R300_US_ALU_RGB_INST_0 + (4 * i),

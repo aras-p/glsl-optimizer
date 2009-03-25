@@ -115,8 +115,8 @@ static const struct r300_fragment_shader r300_passthrough_fragment_shader = {
 */
     .alu_instruction_count = 1,
     .tex_instruction_count = 0,
-    .indirections = 1,
-    .shader.stack_size = 2,
+    .indirections = 0,
+    .shader.stack_size = 1,
 
     .instructions[0].alu_rgb_inst = R300_RGB_SWIZA(R300_ALU_ARGC_SRC0C_XYZ) |
         R300_RGB_SWIZB(R300_ALU_ARGC_ONE) |
