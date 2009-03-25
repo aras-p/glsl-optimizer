@@ -371,7 +371,6 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
                                 struct r300_fs_asm* assembler,
                                 struct tgsi_full_instruction* inst)
 {
-    int i;
     /* Switch between opcodes. When possible, prefer using the official
      * AMD/ATI names for opcodes, please, as it facilitates using the
      * documentation. */
