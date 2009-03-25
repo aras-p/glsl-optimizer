@@ -54,14 +54,14 @@ def save_image(filename, surface):
     outimage = make_image(surface)
     outimage.save(filename, "PNG")
 
-def show_image(surface):
+def show_image(surface, title):
     outimage = make_image(surface)
     
     import Tkinter as tk
     from PIL import Image, ImageTk
     root = tk.Tk()
     
-    root.title('background image')
+    root.title(title)
     
     image1 = ImageTk.PhotoImage(outimage)
     w = image1.width()
@@ -609,7 +609,8 @@ class Interpreter(parser.TraceDumper):
             filename = '%s_%04u.png' % (description, self.call_no)
             save_image(filename, surface)
         else:
-            show_image(surface)
+            title = '%u. %s' % (self.call_no, description)
+            show_image(surface, title)
     
 
 class Main(parser.Main):
