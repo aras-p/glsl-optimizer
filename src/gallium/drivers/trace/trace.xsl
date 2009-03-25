@@ -68,6 +68,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	<xsl:template match="call">
 		<li>
+			<xsl:attribute name="value">
+				<xsl:apply-templates select="@no"/>
+			</xsl:attribute>
 			<span class="fun">
 				<xsl:value-of select="@class"/>
 				<xsl:text>::</xsl:text>

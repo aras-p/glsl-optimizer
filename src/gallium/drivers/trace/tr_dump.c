@@ -265,8 +265,16 @@ void trace_dump_trace_end(void)
 
 void trace_dump_call_begin(const char *klass, const char *method)
 {
+   static long unsigned no = 0;
+   ++no;
    trace_dump_indent(1);
-   trace_dump_tag_begin2("call", "class", klass, "method", method);
+   trace_dump_writes("<call no=\'");
+   trace_dump_writef("%lu", no);
+   trace_dump_writes("\' class =\'");
+   trace_dump_escape(klass);
+   trace_dump_writes("\' method=\'");
+   trace_dump_escape(method);
+   trace_dump_writes("\'>");
    trace_dump_newline();
 }
 
