@@ -66,9 +66,12 @@ drm_get_device_id(struct drm_device *device)
 {
 	char path[512];
 	FILE *file;
+	char *ret;
 
 	/* TODO get the real minor */
 	int minor = 0;
+
+	device->deviceID = 0;
 
 	snprintf(path, sizeof(path), "/sys/class/drm/card%d/device/device", minor);
 	file = fopen(path, "r");
@@ -77,7 +80,10 @@ drm_get_device_id(struct drm_device *device)
 		return;
 	}
 
-	fgets(path, sizeof( path ), file);
+	ret = fgets(path, sizeof( path ), file);
+	if (!ret)
+		return;
+
 	sscanf(path, "%x", &device->deviceID);
 	fclose(file);
 }
