@@ -114,6 +114,9 @@ struct drm_screen
 	drmModeConnectorPtr connector;
 	uint32_t connectorID;
 
+	/* dpms property */
+	drmModePropertyPtr dpms;
+
 	/* Has this screen been shown */
 	int shown;
 

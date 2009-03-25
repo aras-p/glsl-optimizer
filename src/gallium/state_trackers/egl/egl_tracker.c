@@ -107,6 +107,25 @@ drm_add_modes_from_connector(_EGLScreen *screen, drmModeConnectorPtr connector)
 	}
 }
 
+static void
+drm_find_dpms(struct drm_device *dev, struct drm_screen *screen)
+{
+	drmModeConnectorPtr c = screen->connector;
+	drmModePropertyPtr p;
+	int i;
+
+	for (i = 0; i < c->count_props; i++) {
+		p = drmModeGetProperty(dev->drmFD, c->props[i]);
+		if (!strcmp(p->name, "DPMS"))
+			break;
+
+		drmModeFreeProperty(p);
+		p = NULL;
+	}
+
+	screen->dpms = p;
+}
+
 EGLBoolean
 drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 {
@@ -160,6 +179,7 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 		_eglInitScreen(&screen->base);
 		_eglAddScreen(disp, &screen->base);
 		drm_add_modes_from_connector(&screen->base, connector);
+		drm_find_dpms(dev, screen);
 		dev->screens[num_screens++] = screen;
 	}
 	dev->count_screens = num_screens;
@@ -206,6 +226,7 @@ drm_terminate(_EGLDriver *drv, EGLDisplay dpy)
 		if (screen->shown)
 			drm_takedown_shown_screen(drv, screen);
 
+		drmModeFreeProperty(screen->dpms);
 		drmModeFreeConnector(screen->connector);
 		_eglDestroyScreen(&screen->base);
 		dev->screens[i] = NULL;

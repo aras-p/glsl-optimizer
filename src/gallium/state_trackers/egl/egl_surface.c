@@ -330,6 +330,13 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 	if (ret)
 		goto err_crtc;
 
+
+	if (scrn->dpms)
+		drmModeConnectorSetProperty(dev->drmFD,
+		                            scrn->connectorID,
+		                            scrn->dpms->prop_id,
+		                            DRM_MODE_DPMS_ON);
+
 	surf->screen = scrn;
 
 	scrn->surf = surf;
