@@ -966,7 +966,11 @@ void brw_fb_WRITE(struct brw_compile *p,
 }
 
 
-
+/**
+ * Texture sample instruction.
+ * Note: the msg_type plus msg_length values determine exactly what kind
+ * of sampling operation is performed.  See volume 4, page 161 of docs.
+ */
 void brw_SAMPLE(struct brw_compile *p,
 		struct brw_reg dest,
 		GLuint msg_reg_nr,
