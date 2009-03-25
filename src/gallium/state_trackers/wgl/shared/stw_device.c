@@ -130,7 +130,7 @@ st_cleanup_thread(void)
 void
 st_cleanup(void)
 {
-   UINT_PTR i;
+   unsigned i;
 
    debug_printf("%s\n", __FUNCTION__);
 
