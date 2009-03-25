@@ -15,6 +15,7 @@
 
 #if !defined(_WIN32_WCE)
 #include <sys/types.h>
+#include <stdint.h>
 #endif
 
 /* Macros used in EGL function prototype declarations.
