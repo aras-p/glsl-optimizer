@@ -27,6 +27,9 @@
 ##########################################################################
 
 
+import sys
+
+
 class Formatter:
     '''Plain formatter'''
 
@@ -93,7 +96,7 @@ class AnsiFormatter(Formatter):
 
 
 def DefaultFormatter(stream):
-    if stream.isatty():
+    if sys.platform in ('linux2', 'cygwin'):
         return AnsiFormatter(stream)
     else:
         return Formatter(stream)
