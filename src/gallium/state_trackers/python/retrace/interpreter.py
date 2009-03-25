@@ -555,7 +555,7 @@ class Interpreter(parser.TraceDumper):
         self.objects = {}
         self.result = None
         self.globl = Global(self, None)
-        self.image_no = 0
+        self.call_no = None
 
     def register_object(self, address, object):
         self.objects[address] = object
@@ -576,6 +576,8 @@ class Interpreter(parser.TraceDumper):
         if (call.klass, call.method) in self.ignore_calls:
             return
 
+        self.call_no = call.no
+
         if self.verbosity(1):
             parser.TraceDumper.handle_call(self, call)
         
@@ -593,6 +595,8 @@ class Interpreter(parser.TraceDumper):
         if call.ret and isinstance(call.ret, model.Pointer):
             self.register_object(call.ret.address, ret)
 
+        self.call_no = None
+
     def interpret_arg(self, node):
         translator = Translator(self)
         return translator.visit(node)
@@ -602,8 +606,7 @@ class Interpreter(parser.TraceDumper):
 
     def present(self, surface, description):
         if self.options.images:
-            self.image_no += 1
-            filename = '%s_%04u.png' % (description, self.image_no)
+            filename = '%s_%04u.png' % (description, self.call_no)
             save_image(filename, surface)
         else:
             show_image(surface)
