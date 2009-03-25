@@ -251,9 +251,12 @@ def generate(env):
             ('WINVER', '0x0501'),
             # http://msdn2.microsoft.com/en-us/library/6dwk3a1z.aspx,
             'WIN32_LEAN_AND_MEAN',
-            'VC_EXTRALEAN',
-            '_CRT_SECURE_NO_DEPRECATE',
         ]
+        if msvc:
+            cppdefines += [
+                'VC_EXTRALEAN',
+                '_CRT_SECURE_NO_DEPRECATE',
+            ]
         if debug:
             cppdefines += ['_DEBUG']
     if platform == 'winddk':
