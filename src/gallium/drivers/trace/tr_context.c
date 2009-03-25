@@ -1037,15 +1037,18 @@ struct pipe_context *
 trace_context_create(struct pipe_screen *_screen,
                      struct pipe_context *pipe)
 {
-   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct trace_screen *tr_scr;
    struct trace_context *tr_ctx;
-   struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_screen *screen;
 
    if(!pipe)
       goto error1;
 
    if(!trace_dump_enabled())
       goto error1;
+
+   tr_scr = trace_screen(_screen);
+   screen = tr_scr->screen;
 
    tr_ctx = CALLOC_STRUCT(trace_context);
    if(!tr_ctx)
