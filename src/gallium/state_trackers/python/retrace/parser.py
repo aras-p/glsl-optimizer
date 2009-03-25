@@ -190,6 +190,10 @@ class XmlParser:
 
 class TraceParser(XmlParser):
 
+    def __init__(self, fp):
+        XmlParser.__init__(self, fp)
+        self.last_call_no = 0
+    
     def parse(self):
         self.element_start('trace')
         while self.token.type not in (ELEMENT_END, EOF):
@@ -200,6 +204,13 @@ class TraceParser(XmlParser):
 
     def parse_call(self):
         attrs = self.element_start('call')
+        try:
+            no = int(attrs['no'])
+        except KeyError:
+            self.last_call_no += 1
+            no = self.last_call_no
+        else:
+            self.last_call_no = no
         klass = attrs['class']
         method = attrs['method']
         args = []
@@ -217,7 +228,7 @@ class TraceParser(XmlParser):
                 raise TokenMismatch("<arg ...> or <ret ...>", self.token)
         self.element_end('call')
         
-        return Call(klass, method, args, ret)
+        return Call(no, klass, method, args, ret)
 
     def parse_arg(self):
         attrs = self.element_start('arg')
