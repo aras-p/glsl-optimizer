@@ -836,6 +836,7 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 	fprintf(stderr,"settexbuf %d %dx%d@%d\n", rb->pitch, rb->width, rb->height, rb->cpp);
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
 				   rb->width, rb->height, 1, 0, rb->cpp);
+	texImage->RowStride = rb->pitch / rb->cpp;
 	texImage->TexFormat = radeonChooseTextureFormat(radeon->glCtx,
 							internalFormat,
 							type, format);
