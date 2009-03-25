@@ -49,7 +49,7 @@ debug_backtrace_capture(struct debug_stack_frame *backtrace,
 
 #if defined(PIPE_CC_GCC)
    frame_pointer = ((const void **)__builtin_frame_address(1));
-#elif defined(PIPE_CC_MSVC)
+#elif defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
    __asm {
       mov frame_pointer, ebp
    }

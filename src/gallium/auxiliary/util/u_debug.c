@@ -169,18 +169,18 @@ void debug_print_blob( const char *name,
 #endif
 
 
-void _debug_break(void) 
+#ifndef debug_break
+void debug_break(void) 
 {
-#if defined(PIPE_ARCH_X86) && defined(PIPE_CC_GCC)
-   __asm("int3");
-#elif defined(PIPE_ARCH_X86) && defined(PIPE_CC_MSVC)
-   _asm {int 3};
+#if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
+   DebugBreak();
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
    EngDebugBreak();
 #else
    abort();
 #endif
 }
+#endif
 
 
 #ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY

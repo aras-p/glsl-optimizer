@@ -125,19 +125,16 @@ void debug_print_format(const char *msg, unsigned fmt );
 #endif
 
 
-void _debug_break(void);
-
-
 /**
  * Hard-coded breakpoint.
  */
 #ifdef DEBUG
 #if defined(PIPE_ARCH_X86) && defined(PIPE_CC_GCC)
 #define debug_break() __asm("int3")
-#elif defined(PIPE_ARCH_X86) && defined(PIPE_CC_MSVC)
-#define debug_break()  do { _asm {int 3} } while(0)
+#elif defined(PIPE_CC_MSVC)
+#define debug_break()  __debugbreak()
 #else
-#define debug_break() _debug_break()
+void debug_break(void);
 #endif
 #else /* !DEBUG */
 #define debug_break() ((void)0)
