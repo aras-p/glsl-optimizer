@@ -490,6 +490,9 @@ static GLboolean r300RunNonTCLRender(GLcontext * ctx,
 	if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
  	        return GL_TRUE;
 
+	if (!r300ValidateBuffers(ctx))
+	    return GL_TRUE;
+	
 	return r300RunRender(ctx, stage);
 }
 
