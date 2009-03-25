@@ -167,10 +167,10 @@ framebuffer_create(
     */
    fb->hWnd = WindowFromDC( hdc );
    if (fb->hWnd != NULL) {
-      fb->WndProc = (WNDPROC) SetWindowLong(
+      fb->WndProc = (WNDPROC) SetWindowLongPtr(
          fb->hWnd,
-         GWL_WNDPROC,
-         (LONG) window_proc );
+         GWLP_WNDPROC,
+         (LONG_PTR) window_proc );
    }
 
    fb->next = fb_head;
@@ -188,10 +188,10 @@ framebuffer_destroy(
    while (pfb != NULL) {
       if (pfb == fb) {
          if (fb->hWnd != NULL) {
-            SetWindowLong(
+            SetWindowLongPtr(
                fb->hWnd,
-               GWL_WNDPROC,
-               (LONG) fb->WndProc );
+               GWLP_WNDPROC,
+               (LONG_PTR) fb->WndProc );
          }
 
          *link = fb->next;
