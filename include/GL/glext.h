@@ -46,9 +46,9 @@ extern "C" {
 /*************************************************************/
 
 /* Header file version number, required by OpenGL ABI for Linux */
-/* glext.h last updated 2009/03/04 */
+/* glext.h last updated 2009/03/19 */
 /* Current version at http://www.opengl.org/registry/ */
-#define GL_GLEXT_VERSION 46
+#define GL_GLEXT_VERSION 48
 
 #ifndef GL_VERSION_1_2
 #define GL_UNSIGNED_BYTE_3_3_2            0x8032
@@ -3878,6 +3878,26 @@ extern "C" {
 #define GL_PERFMON_RESULT_AMD             0x8BC6
 #endif
 
+#ifndef GL_AMD_texture_texture4
+#endif
+
+#ifndef GL_AMD_vertex_shader_tesselator
+#define GL_SAMPLER_BUFFER_AMD             0x9001
+#define GL_INT_SAMPLER_BUFFER_AMD         0x9002
+#define GL_UNSIGNED_INT_SAMPLER_BUFFER_AMD 0x9003
+#define GL_TESSELLATION_MODE_AMD          0x9004
+#define GL_TESSELLATION_FACTOR_AMD        0x9005
+#define GL_DISCRETE_AMD                   0x9006
+#define GL_CONTINUOUS_AMD                 0x9007
+#endif
+
+#ifndef GL_EXT_provoking_vertex
+#define GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION_EXT 0x8E4C
+#define GL_FIRST_VERTEX_CONVENTION_EXT    0x8E4D
+#define GL_LAST_VERTEX_CONVENTION_EXT     0x8E4E
+#define GL_PROVOKING_VERTEX_EXT           0x8E4F
+#endif
+
 
 /*************************************************************/
 
@@ -4503,8 +4523,8 @@ GLAPI void APIENTRY glBeginTransformFeedback (GLenum);
 GLAPI void APIENTRY glEndTransformFeedback (void);
 GLAPI void APIENTRY glBindBufferRange (GLenum, GLuint, GLuint, GLintptr, GLsizeiptr);
 GLAPI void APIENTRY glBindBufferBase (GLenum, GLuint, GLuint);
-GLAPI void APIENTRY glTransformFeedbackVaryings (GLuint, GLsizei, const GLint *, GLenum);
-GLAPI void APIENTRY glGetTransformFeedbackVarying (GLuint, GLuint, GLint *);
+GLAPI void APIENTRY glTransformFeedbackVaryings (GLuint, GLsizei, const GLchar* *, GLenum);
+GLAPI void APIENTRY glGetTransformFeedbackVarying (GLuint, GLuint, GLsizei, GLsizei *, GLsizei *, GLenum *, GLchar *);
 GLAPI void APIENTRY glClampColor (GLenum, GLenum);
 GLAPI void APIENTRY glBeginConditionalRender (GLuint, GLenum);
 GLAPI void APIENTRY glEndConditionalRender (void);
@@ -4562,8 +4582,8 @@ typedef void (APIENTRYP PFNGLBEGINTRANSFORMFEEDBACKPROC) (GLenum primitiveMode);
 typedef void (APIENTRYP PFNGLENDTRANSFORMFEEDBACKPROC) (void);
 typedef void (APIENTRYP PFNGLBINDBUFFERRANGEPROC) (GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
 typedef void (APIENTRYP PFNGLBINDBUFFERBASEPROC) (GLenum target, GLuint index, GLuint buffer);
-typedef void (APIENTRYP PFNGLTRANSFORMFEEDBACKVARYINGSPROC) (GLuint program, GLsizei count, const GLint *locations, GLenum bufferMode);
-typedef void (APIENTRYP PFNGLGETTRANSFORMFEEDBACKVARYINGPROC) (GLuint program, GLuint index, GLint *location);
+typedef void (APIENTRYP PFNGLTRANSFORMFEEDBACKVARYINGSPROC) (GLuint program, GLsizei count, const GLchar* *varyings, GLenum bufferMode);
+typedef void (APIENTRYP PFNGLGETTRANSFORMFEEDBACKVARYINGPROC) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLsizei *size, GLenum *type, GLchar *name);
 typedef void (APIENTRYP PFNGLCLAMPCOLORPROC) (GLenum target, GLenum clamp);
 typedef void (APIENTRYP PFNGLBEGINCONDITIONALRENDERPROC) (GLuint id, GLenum mode);
 typedef void (APIENTRYP PFNGLENDCONDITIONALRENDERPROC) (void);
@@ -8053,16 +8073,16 @@ GLAPI void APIENTRY glEndTransformFeedbackEXT (void);
 GLAPI void APIENTRY glBindBufferRangeEXT (GLenum, GLuint, GLuint, GLintptr, GLsizeiptr);
 GLAPI void APIENTRY glBindBufferOffsetEXT (GLenum, GLuint, GLuint, GLintptr);
 GLAPI void APIENTRY glBindBufferBaseEXT (GLenum, GLuint, GLuint);
-GLAPI void APIENTRY glTransformFeedbackVaryingsEXT (GLuint, GLsizei, const GLint *, GLenum);
-GLAPI void APIENTRY glGetTransformFeedbackVaryingEXT (GLuint, GLuint, GLint *);
+GLAPI void APIENTRY glTransformFeedbackVaryingsEXT (GLuint, GLsizei, const GLchar* *, GLenum);
+GLAPI void APIENTRY glGetTransformFeedbackVaryingEXT (GLuint, GLuint, GLsizei, GLsizei *, GLsizei *, GLenum *, GLchar *);
 #endif /* GL_GLEXT_PROTOTYPES */
 typedef void (APIENTRYP PFNGLBEGINTRANSFORMFEEDBACKEXTPROC) (GLenum primitiveMode);
 typedef void (APIENTRYP PFNGLENDTRANSFORMFEEDBACKEXTPROC) (void);
 typedef void (APIENTRYP PFNGLBINDBUFFERRANGEEXTPROC) (GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
 typedef void (APIENTRYP PFNGLBINDBUFFEROFFSETEXTPROC) (GLenum target, GLuint index, GLuint buffer, GLintptr offset);
 typedef void (APIENTRYP PFNGLBINDBUFFERBASEEXTPROC) (GLenum target, GLuint index, GLuint buffer);
-typedef void (APIENTRYP PFNGLTRANSFORMFEEDBACKVARYINGSEXTPROC) (GLuint program, GLsizei count, const GLint *locations, GLenum bufferMode);
-typedef void (APIENTRYP PFNGLGETTRANSFORMFEEDBACKVARYINGEXTPROC) (GLuint program, GLuint index, GLint *location);
+typedef void (APIENTRYP PFNGLTRANSFORMFEEDBACKVARYINGSEXTPROC) (GLuint program, GLsizei count, const GLchar* *varyings, GLenum bufferMode);
+typedef void (APIENTRYP PFNGLGETTRANSFORMFEEDBACKVARYINGEXTPROC) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLsizei *size, GLenum *type, GLchar *name);
 #endif
 
 #ifndef GL_EXT_direct_state_access
@@ -8513,6 +8533,28 @@ typedef void (APIENTRYP PFNGLSELECTPERFMONITORCOUNTERSAMDPROC) (GLuint monitor, 
 typedef void (APIENTRYP PFNGLBEGINPERFMONITORAMDPROC) (GLuint monitor);
 typedef void (APIENTRYP PFNGLENDPERFMONITORAMDPROC) (GLuint monitor);
 typedef void (APIENTRYP PFNGLGETPERFMONITORCOUNTERDATAAMDPROC) (GLuint monitor, GLenum pname, GLsizei dataSize, GLuint *data, GLint *bytesWritten);
+#endif
+
+#ifndef GL_AMD_texture_texture4
+#define GL_AMD_texture_texture4 1
+#endif
+
+#ifndef GL_AMD_vertex_shader_tesselator
+#define GL_AMD_vertex_shader_tesselator 1
+#ifdef GL_GLEXT_PROTOTYPES
+GLAPI void APIENTRY glTessellationFactorAMD (GLfloat);
+GLAPI void APIENTRY glTessellationModeAMD (GLenum);
+#endif /* GL_GLEXT_PROTOTYPES */
+typedef void (APIENTRYP PFNGLTESSELLATIONFACTORAMDPROC) (GLfloat factor);
+typedef void (APIENTRYP PFNGLTESSELLATIONMODEAMDPROC) (GLenum mode);
+#endif
+
+#ifndef GL_EXT_provoking_vertex
+#define GL_EXT_provoking_vertex 1
+#ifdef GL_GLEXT_PROTOTYPES
+GLAPI void APIENTRY glProvokingVertexEXT (GLenum);
+#endif /* GL_GLEXT_PROTOTYPES */
+typedef void (APIENTRYP PFNGLPROVOKINGVERTEXEXTPROC) (GLenum mode);
 #endif
 
 
