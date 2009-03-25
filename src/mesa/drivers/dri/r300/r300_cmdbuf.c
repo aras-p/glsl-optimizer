@@ -139,7 +139,7 @@ static void r300PrintStateAtom(r300ContextPtr r300, struct r300_state_atom *stat
 
 	if (RADEON_DEBUG & DEBUG_VERBOSE) {
 		for (i = 0; i < dwords;) {
-			cmd = (drm_r300_cmd_header_t) state->cmd[i];
+			cmd = *((drm_r300_cmd_header_t *) &state->cmd[i]);
 			reg = (cmd.packet0.reghi << 8) | cmd.packet0.reglo;
 			fprintf(stderr, "      %s[%d]: cmdpacket0 (first reg=0x%04x, count=%d)\n",
 					state->name, i, reg, cmd.packet0.count);
