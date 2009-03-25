@@ -10,15 +10,14 @@ This directory contains a Gallium3D pipe driver which traces all incoming calls.
 
 To build, invoke scons on the top dir as
  
- scons statetrackers=mesa drivers=softpipe,i965simple,trace winsys=xlib
+ scons dri=no statetrackers=mesa drivers=softpipe,i965simple,trace winsys=xlib
 
 
 = Usage =
 
 To use do
 
- ln -s libGL.so build/linux-x86-debug/gallium/winsys/xlib/libGL.so.1
- export LD_LIBRARY_PATH=$PWD/build/linux-x86-debug/gallium/winsys/xlib
+ export LD_LIBRARY_PATH=$PWD/build/linux-x86-debug/lib
 
 ensure the right libGL.so is being picked by doing
 
@@ -26,6 +25,7 @@ ensure the right libGL.so is being picked by doing
 
 and then try running
 
+ export XMESA_TRACE=y
  GALLIUM_TRACE=tri.trace progs/trivial/tri
 
 which should create a tri.trace file, which is an XML file. You can view copying 
