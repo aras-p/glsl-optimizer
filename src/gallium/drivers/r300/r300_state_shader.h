@@ -102,10 +102,7 @@ struct r300_fs_asm {
 };
 
 void r300_translate_fragment_shader(struct r300_context* r300,
-                           struct r300_fragment_shader* fs);
-
-void r500_translate_fragment_shader(struct r300_context* r300,
-                           struct r500_fragment_shader* fs);
+                           struct r3xx_fragment_shader* fs);
 
 static const struct r300_fragment_shader r300_passthrough_fragment_shader = {
     /* XXX This is the emission code. TODO: decode

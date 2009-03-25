@@ -171,6 +171,26 @@ static INLINE uint32_t r500_alpha_swiz(struct tgsi_full_src_register* reg)
         (reg->SrcRegisterExtMod.Absolute ? (1 << 10) : 0);
 }
 
+static INLINE uint32_t r300_rgb_op(unsigned op)
+{
+    switch (op) {
+        case TGSI_OPCODE_MOV:
+            return R300_ALU_OUTC_CMP;
+        default:
+            return 0;
+    }
+}
+
+static INLINE uint32_t r300_alpha_op(unsigned op)
+{
+    switch (op) {
+        case TGSI_OPCODE_MOV:
+            return R300_ALU_OUTA_CMP;
+        default:
+            return 0;
+    }
+}
+
 static INLINE uint32_t r500_rgba_op(unsigned op)
 {
     switch (op) {
@@ -247,6 +267,33 @@ static INLINE uint32_t r500_tex_op(unsigned op)
         default:
             return 0;
     }
+}
+
+static INLINE void r300_emit_maths(struct r300_fragment_shader* fs,
+                                   struct r300_fs_asm* assembler,
+                                   struct tgsi_full_src_register* src,
+                                   struct tgsi_full_dst_register* dst,
+                                   unsigned op,
+                                   unsigned count)
+{
+    int i = fs->alu_instruction_count;
+
+    fs->instructions[0].alu_rgb_inst = R300_RGB_SWIZA(R300_ALU_ARGC_SRC0C_XYZ) |
+        R300_RGB_SWIZB(R300_ALU_ARGC_ONE) |
+        R300_RGB_SWIZC(R300_ALU_ARGC_ZERO) |
+        R300_ALU_OUTC_MAD;
+    fs->instructions[0].alu_rgb_addr = R300_RGB_ADDR0(0) | R300_RGB_ADDR1(0) |
+        R300_RGB_ADDR2(0) | R300_ALU_DSTC_OUTPUT_XYZ;
+    fs->instructions[0].alu_alpha_inst = R300_ALPHA_SWIZA(R300_ALU_ARGA_SRC0A) |
+        R300_ALPHA_SWIZB(R300_ALU_ARGA_ONE) |
+        R300_ALPHA_SWIZC(R300_ALU_ARGA_ZERO) |
+        R300_ALU_OUTA_MAD;
+    fs->instructions[0].alu_alpha_addr = R300_ALPHA_ADDR0(0) |
+        R300_ALPHA_ADDR1(0) | R300_ALPHA_ADDR2(0) | R300_ALU_DSTA_OUTPUT;
+
+    fs->alu_instruction_count++;
+    fs->indirections = 0;
+    fs->shader.stack_size = 2;
 }
 
 /* Setup an ALU operation. */
@@ -364,6 +411,27 @@ static INLINE void r500_emit_tex(struct r500_fragment_shader* fs,
         r500_emit_maths(fs, assembler, src, dst, TGSI_OPCODE_MOV, 3);
     } else {
         fs->instruction_count++;
+    }
+}
+
+static void r300_fs_instruction(struct r300_fragment_shader* fs,
+                                struct r300_fs_asm* assembler,
+                                struct tgsi_full_instruction* inst)
+{
+    switch (inst->Instruction.Opcode) {
+        case TGSI_OPCODE_MOV:
+            /* src0 -> src1 and src2 forced to zero */
+            inst->FullSrcRegisters[1] = inst->FullSrcRegisters[0];
+            inst->FullSrcRegisters[2] = r500_constant_zero;
+            r300_emit_maths(fs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3);
+            break;
+        case TGSI_OPCODE_END:
+            break;
+        default:
+            debug_printf("r300: fs: Bad opcode %d\n",
+                    inst->Instruction.Opcode);
+            break;
     }
 }
 
@@ -497,24 +565,11 @@ static void r500_fs_finalize(struct r500_fragment_shader* fs,
 }
 
 void r300_translate_fragment_shader(struct r300_context* r300,
-                                    struct r300_fragment_shader* fs)
-{
-    struct tgsi_parse_context parser;
-
-    tgsi_parse_init(&parser, fs->shader.state.tokens);
-
-    while (!tgsi_parse_end_of_tokens(&parser)) {
-        tgsi_parse_token(&parser);
-    }
-
-    r300_copy_passthrough_shader(fs);
-}
-
-void r500_translate_fragment_shader(struct r300_context* r300,
-                                    struct r500_fragment_shader* fs)
+                                    struct r3xx_fragment_shader* fs)
 {
     struct tgsi_parse_context parser;
     int i;
+    boolean is_r500 = r300_screen(r300->context.screen)->caps->is_r500;
     struct r300_constant_buffer* consts =
         &r300->shader_constants[PIPE_SHADER_FRAGMENT];
 
@@ -525,7 +580,7 @@ void r500_translate_fragment_shader(struct r300_context* r300,
     /* Setup starting offset for immediates. */
     assembler->imm_offset = consts->user_count;
 
-    tgsi_parse_init(&parser, fs->shader.state.tokens);
+    tgsi_parse_init(&parser, fs->state.tokens);
 
     while (!tgsi_parse_end_of_tokens(&parser)) {
         tgsi_parse_token(&parser);
@@ -552,8 +607,13 @@ void r500_translate_fragment_shader(struct r300_context* r300,
                 assembler->imm_count++;
                 break;
             case TGSI_TOKEN_TYPE_INSTRUCTION:
-                r500_fs_instruction(fs, assembler,
-                        &parser.FullToken.FullInstruction);
+                if (is_r500) {
+                    r500_fs_instruction((struct r500_fragment_shader*)fs,
+                            assembler, &parser.FullToken.FullInstruction);
+                } else {
+                    r300_fs_instruction((struct r300_fragment_shader*)fs,
+                            assembler, &parser.FullToken.FullInstruction);
+                }
                 break;
         }
 
@@ -567,10 +627,10 @@ void r500_translate_fragment_shader(struct r300_context* r300,
     debug_printf("r300: %d total constants, "
             "%d from user and %d from immediates\n", consts->count,
             consts->user_count, assembler->imm_count);
-    r500_fs_finalize(fs, assembler);
+    //r500_fs_finalize(fs, assembler);
 
-    tgsi_dump(fs->shader.state.tokens);
-    r500_fs_dump(fs);
+    tgsi_dump(fs->state.tokens);
+    //r500_fs_dump(fs);
 
     tgsi_parse_free(&parser);
     FREE(assembler);

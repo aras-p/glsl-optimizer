@@ -293,11 +293,7 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
         r300->fs = NULL;
         return;
     } else if (!fs->translated) {
-        if (r300_screen(r300->context.screen)->caps->is_r500) {
-            r500_translate_fragment_shader(r300, (struct r500_fragment_shader*)fs);
-        } else {
-            r300_translate_fragment_shader(r300, (struct r300_fragment_shader*)fs);
-        }
+        r300_translate_fragment_shader(r300, fs);
     }
 
     fs->translated = TRUE;
