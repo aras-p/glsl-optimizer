@@ -30,6 +30,7 @@
 import sys
 import xml.parsers.expat
 import binascii
+import optparse
 
 from model import *
 
@@ -342,16 +343,39 @@ class TraceDumper(TraceParser):
         self.formatter.newline()
         
 
-def main(ParserFactory):
-    for arg in sys.argv[1:]:
-        if arg.endswith('.gz'):
-            import gzip
-            stream = gzip.GzipFile(arg, 'rt')
+class Main:
+    '''Common main class for all retrace command line utilities.''' 
+
+    def __init__(self):
+        pass
+
+    def main(self):
+        optparser = self.get_optparser()
+        (options, args) = optparser.parse_args(sys.argv[1:])
+    
+        if args:
+            for arg in args:
+                if arg.endswith('.gz'):
+                    from gzip import GzipFile
+                    stream = GzipFile(arg, 'rt')
+                elif arg.endswith('.bz2'):
+                    from bz2 import BZ2File
+                    stream = BZ2File(arg, 'rt')
+                else:
+                    stream = open(arg, 'rt')
+                self.process_arg(stream, options)
         else:
-            stream = open(arg, 'rt')
-        parser = ParserFactory(stream)
+            self.process_arg(stream, options)
+
+    def get_optparser(self):
+        optparser = optparse.OptionParser(
+            usage="\n\t%prog [options] [traces] ...")
+        return optparser
+
+    def process_arg(self, stream, options):
+        parser = TraceDumper(stream)
         parser.parse()
 
 
 if __name__ == '__main__':
-    main(TraceDumper)
+    Main().main()
