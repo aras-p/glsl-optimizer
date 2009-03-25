@@ -130,7 +130,7 @@ static INLINE char *
 util_strstr(const char *haystack, const char *needle)
 {
    const char *p = haystack;
-   int len = strlen(needle);
+   size_t len = strlen(needle);
 
    for (; (p = util_strchr(p, *needle)) != 0; p++) {
       if (util_strncmp(p, needle, len) == 0) {
