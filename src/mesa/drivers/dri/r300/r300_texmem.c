@@ -306,7 +306,7 @@ static void r300UploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
 	ASSERT(face < 6);
 
 	/* Ensure we have a valid texture to upload */
-	if ((hwlevel < 0) || (hwlevel >= RADEON_MAX_TEXTURE_LEVELS)) {
+	if ((hwlevel < 0) || (hwlevel >= R300_MAX_TEXTURE_LEVELS)) {
 		_mesa_problem(NULL, "bad texture level in %s", __FUNCTION__);
 		return;
 	}

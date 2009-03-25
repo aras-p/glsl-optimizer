@@ -288,10 +288,23 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 	ctx->Const.MaxTextureLodBias = 16.0;
 
-	if (screen->chip_family >= CHIP_FAMILY_RV515) {
+	if (screen->chip_family >= CHIP_FAMILY_RV515)
 	    ctx->Const.MaxTextureLevels = 13;
-	    ctx->Const.MaxTextureRectSize = 4096;
-	}
+	else
+	    ctx->Const.MaxTextureLevels = 12;
+
+        driCalculateMaxTextureLevels( r300->texture_heaps,
+                                      r300->nr_heaps,
+                                      & ctx->Const,
+                                      4,
+                                      ctx->Const.MaxTextureLevels - 1,
+                                      MIN2(ctx->Const.MaxTextureLevels,
+                                           MAX_3D_TEXTURE_LEVELS) - 1,
+                                      ctx->Const.MaxTextureLevels - 1,
+                                      ctx->Const.MaxTextureLevels - 1,
+                                      ctx->Const.MaxTextureLevels - 1,
+                                      GL_FALSE,
+                                      2 );
 
 	ctx->Const.MinPointSize = 1.0;
 	ctx->Const.MinPointSizeAA = 1.0;

@@ -170,6 +170,10 @@ struct r300_dma {
 
 typedef struct r300_tex_obj r300TexObj, *r300TexObjPtr;
 
+/* Maximum number of mipmap levels supported by any supported GPU
+ */
+#define R300_MAX_TEXTURE_LEVELS 13
+
 /* Texture object in locally shared texture space.
  */
 struct r300_tex_obj {
@@ -178,7 +182,7 @@ struct r300_tex_obj {
 	GLuint bufAddr;		/* Offset to start of locally
 				   shared texture block */
 
-	drm_radeon_tex_image_t image[6][RADEON_MAX_TEXTURE_LEVELS];
+	drm_radeon_tex_image_t image[6][R300_MAX_TEXTURE_LEVELS];
 	/* Six, for the cube faces */
 
 	GLboolean image_override;	/* Image overridden by GLX_EXT_tfp */

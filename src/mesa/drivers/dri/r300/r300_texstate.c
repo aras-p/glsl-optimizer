@@ -345,7 +345,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 
 	numLevels = t->base.lastLevel - t->base.firstLevel + 1;
 
-	assert(numLevels <= RADEON_MAX_TEXTURE_LEVELS);
+	assert(numLevels <= R300_MAX_TEXTURE_LEVELS);
 
 	/* Calculate mipmap offsets and dimensions for blitting (uploading)
 	 * The idea is that we lay out the mipmap levels within a block of
