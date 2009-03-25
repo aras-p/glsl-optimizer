@@ -2336,9 +2336,9 @@ static void emit_txb(struct brw_wm_compile *c,
 
     switch (inst->TexSrcTarget) {
 	case TEXTURE_1D_INDEX:
-	    brw_MOV(p, brw_message_reg(2), src[0]);
-	    brw_MOV(p, brw_message_reg(3), brw_imm_f(0));
-	    brw_MOV(p, brw_message_reg(4), brw_imm_f(0));
+	    brw_MOV(p, brw_message_reg(2), src[0]);         /* s coord */
+	    brw_MOV(p, brw_message_reg(3), brw_imm_f(0));   /* t coord */
+	    brw_MOV(p, brw_message_reg(4), brw_imm_f(0));   /* r coord */
 	    break;
 	case TEXTURE_2D_INDEX:
 	case TEXTURE_RECT_INDEX:
@@ -2352,19 +2352,19 @@ static void emit_txb(struct brw_wm_compile *c,
 	    brw_MOV(p, brw_message_reg(4), src[2]);
 	    break;
     }
-    brw_MOV(p, brw_message_reg(5), src[3]);
-    brw_MOV(p, brw_message_reg(6), brw_imm_f(0));
+    brw_MOV(p, brw_message_reg(5), src[3]);          /* bias */
+    brw_MOV(p, brw_message_reg(6), brw_imm_f(0));    /* ref (unused?) */
     brw_SAMPLE(p,
-	    retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW),
-	    1,
-	    retype(payload_reg, BRW_REGISTER_TYPE_UW),
-	    unit + MAX_DRAW_BUFFERS, /* surface */
-	    unit,     /* sampler */
-	    inst->DstReg.WriteMask,
-	    BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS,
-	    4,
-	    4,
-	    0);
+               retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW),  /* dest */
+               1,                                           /* msg_reg_nr */
+               retype(payload_reg, BRW_REGISTER_TYPE_UW),   /* src0 */
+               unit + MAX_DRAW_BUFFERS,                     /* surface */
+               unit,                                        /* sampler */
+               inst->DstReg.WriteMask,                      /* writemask */
+               BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS,      /* msg_type */
+               4,                                           /* response_length */
+               4,                                           /* msg_length */
+               0);                                          /* eot */
 }
 
 static void emit_tex(struct brw_wm_compile *c,
@@ -2386,7 +2386,6 @@ static void emit_tex(struct brw_wm_compile *c,
     for (i = 0; i < 4; i++)
 	src[i] = get_src_reg(c, &inst->SrcReg[0], i);
 
-
     switch (inst->TexSrcTarget) {
 	case TEXTURE_1D_INDEX:
 	    emit = WRITEMASK_X;
@@ -2404,6 +2403,7 @@ static void emit_tex(struct brw_wm_compile *c,
     }
     msg_len = 1;
 
+    /* move/load S, T, R coords */
     for (i = 0; i < nr; i++) {
 	static const GLuint swz[4] = {0,1,2,2};
 	if (emit & (1<<i))
@@ -2414,21 +2414,21 @@ static void emit_tex(struct brw_wm_compile *c,
     }
 
     if (shadow) {
-	brw_MOV(p, brw_message_reg(5), brw_imm_f(0));
-	brw_MOV(p, brw_message_reg(6), src[2]);
+       brw_MOV(p, brw_message_reg(5), brw_imm_f(0));  /* lod / bais */
+       brw_MOV(p, brw_message_reg(6), src[2]);        /* ref value / R coord */
     }
 
     brw_SAMPLE(p,
-	    retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW),
-	    1,
-	    retype(payload_reg, BRW_REGISTER_TYPE_UW),
-	    unit + MAX_DRAW_BUFFERS, /* surface */
-	    unit,     /* sampler */
-	    inst->DstReg.WriteMask,
-	    BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE,
-	    4,
-	    shadow ? 6 : 4,
-	    0);
+               retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW), /* dest */
+               1,                                          /* msg_reg_nr */
+               retype(payload_reg, BRW_REGISTER_TYPE_UW),  /* src0 */
+               unit + MAX_DRAW_BUFFERS,                    /* surface */
+               unit,                                       /* sampler */
+               inst->DstReg.WriteMask,                     /* writemask */
+               BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE,           /* msg_type */
+               4,                                          /* response_length */
+               shadow ? 6 : 4,                             /* msg_length */
+               0);                                         /* eot */
 
     if (shadow)
 	brw_MOV(p, dst[3], brw_imm_f(1.0));
