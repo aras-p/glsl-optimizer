@@ -119,15 +119,15 @@ static const struct r300_fragment_shader r300_passthrough_fragment_shader = {
     .shader.stack_size = 1,
 
     .instructions[0].alu_rgb_inst = R300_RGB_SWIZA(R300_ALU_ARGC_SRC0C_XYZ) |
-        R300_RGB_SWIZB(R300_ALU_ARGC_ONE) |
+        R300_RGB_SWIZB(R300_ALU_ARGC_SRC0C_XYZ) |
         R300_RGB_SWIZC(R300_ALU_ARGC_ZERO) |
-        R300_ALU_OUTC_MAD,
+        R300_ALU_OUTC_CMP,
     .instructions[0].alu_rgb_addr = R300_RGB_ADDR0(0) | R300_RGB_ADDR1(0) |
         R300_RGB_ADDR2(0) | R300_ALU_DSTC_OUTPUT_XYZ,
     .instructions[0].alu_alpha_inst = R300_ALPHA_SWIZA(R300_ALU_ARGA_SRC0A) |
-        R300_ALPHA_SWIZB(R300_ALU_ARGA_ONE) |
+        R300_ALPHA_SWIZB(R300_ALU_ARGA_SRC0A) |
         R300_ALPHA_SWIZC(R300_ALU_ARGA_ZERO) |
-        R300_ALU_OUTA_MAD,
+        R300_ALU_OUTA_CMP,
     .instructions[0].alu_alpha_addr = R300_ALPHA_ADDR0(0) |
         R300_ALPHA_ADDR1(0) | R300_ALPHA_ADDR2(0) | R300_ALU_DSTA_OUTPUT,
 };
