@@ -131,6 +131,25 @@ void radeon_teximage_unmap(radeon_texture_image *image)
 	}
 }
 
+static void map_override(GLcontext *ctx, radeonTexObj *t)
+{
+	radeon_texture_image *img = get_radeon_texture_image(t->base.Image[0][0]);
+
+	radeon_bo_map(t->bo, GL_FALSE);
+
+	img->base.Data = t->bo->ptr;
+	_mesa_set_fetch_functions(&img->base, 2);
+}
+
+static void unmap_override(GLcontext *ctx, radeonTexObj *t)
+{
+	radeon_texture_image *img = get_radeon_texture_image(t->base.Image[0][0]);
+
+	radeon_bo_unmap(t->bo);
+
+	img->base.Data = NULL;
+}
+
 /**
  * Map a validated texture for reading during software rendering.
  */
@@ -143,8 +162,11 @@ void radeonMapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 	  return;
 
 	/* for r100 3D sw fallbacks don't have mt */
+	if (t->image_override && t->bo)
+		map_override(ctx, t);
+
 	if (!t->mt)
-	    return;
+		return;
 
 	radeon_bo_map(t->mt->bo, GL_FALSE);
 	for(face = 0; face < t->mt->faces; ++face) {
@@ -158,6 +180,8 @@ void radeonUnmapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 	radeonTexObj* t = radeon_tex_obj(texObj);
 	int face, level;
 
+	if (t->image_override && t->bo)
+		unmap_override(ctx, t);
 	/* for r100 3D sw fallbacks don't have mt */
 	if (!t->mt)
 	  return;
