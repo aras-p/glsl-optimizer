@@ -192,8 +192,14 @@ st_context_create(struct st_device *st_dev)
       memset(&rasterizer, 0, sizeof(rasterizer));
       rasterizer.front_winding = PIPE_WINDING_CW;
       rasterizer.cull_mode = PIPE_WINDING_NONE;
-      rasterizer.bypass_vs_clip_and_viewport = 1;
       cso_set_rasterizer(st_ctx->cso, &rasterizer);
+   }
+
+   /* clip */
+   {
+      struct pipe_clip_state clip;
+      memset(&clip, 0, sizeof(clip));
+      st_ctx->pipe->set_clip_state(st_ctx->pipe, &clip);
    }
 
    /* identity viewport */
