@@ -327,7 +327,6 @@ struct st_buffer {
    void read(char **STRING, int *LENGTH)
    {
       struct pipe_screen *screen = $self->st_dev->screen;
-      const char *map;
       
       assert(p_atomic_read(&$self->buffer->reference.count) > 0);
       
@@ -336,18 +335,13 @@ struct st_buffer {
       if(!*STRING)
          return;
       
-      map = pipe_buffer_map(screen, $self->buffer, PIPE_BUFFER_USAGE_CPU_READ);
-      if(map) {
-         memcpy(*STRING, map, $self->buffer->size);
-         pipe_buffer_unmap(screen, $self->buffer);
-      }
+      pipe_buffer_read(screen, $self->buffer, 0, $self->buffer->size, STRING);
    }
    
    %cstring_input_binary(const char *STRING, unsigned LENGTH);
    void write(const char *STRING, unsigned LENGTH, unsigned offset = 0) 
    {
       struct pipe_screen *screen = $self->st_dev->screen;
-      char *map;
       
       assert(p_atomic_read(&$self->buffer->reference.count) > 0);
       
@@ -361,10 +355,6 @@ struct st_buffer {
          return;
       }
 
-      map = pipe_buffer_map(screen, $self->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
-      if(map) {
-         memcpy(map + offset, STRING, LENGTH);
-         pipe_buffer_unmap(screen, $self->buffer);
-      }
+      pipe_buffer_write(screen, $self->buffer, offset, LENGTH, STRING);
    }
 };
