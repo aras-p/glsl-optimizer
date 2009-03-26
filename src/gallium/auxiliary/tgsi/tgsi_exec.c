@@ -123,6 +123,10 @@
 #define UPDATE_EXEC_MASK(MACH) \
       MACH->ExecMask = MACH->CondMask & MACH->LoopMask & MACH->ContMask & MACH->FuncMask
 
+
+static const union tgsi_exec_channel ZeroVec =
+   { { 0.0, 0.0, 0.0, 0.0 } };
+
 /**
  * Initialize machine state by expanding tokens to full instructions,
  * allocating temporary storage, setting up constants, etc.
@@ -1643,7 +1647,7 @@ exec_tex(struct tgsi_exec_machine *mach,
          lodBias = 0.0;
 
       fetch_texel(mach->Samplers[unit],
-                  &r[0], NULL, NULL, lodBias,  /* S, T, P, BIAS */
+                  &r[0], &ZeroVec, &ZeroVec, lodBias,  /* S, T, P, BIAS */
                   &r[0], &r[1], &r[2], &r[3]); /* R, G, B, A */
       break;
 
