@@ -35,11 +35,11 @@
 
 %nodefaultctor pipe_texture;
 %nodefaultctor pipe_surface;
-%nodefaultctor st_buffer;
+%nodefaultctor pipe_buffer;
 
 %nodefaultdtor pipe_texture;
 %nodefaultdtor pipe_surface;
-%nodefaultdtor st_buffer;
+%nodefaultdtor pipe_buffer;
 
 %ignore pipe_texture::screen;
 
@@ -308,53 +308,55 @@
 
 };
 
-struct st_buffer {
-};
+/* Avoid naming conflict with p_inlines.h's pipe_buffer_read/write */ 
+%rename(read) pipe_buffer_read_; 
+%rename(write) pipe_buffer_write_; 
 
-%extend st_buffer {
+%extend pipe_buffer {
    
-   ~st_buffer() {
-      st_buffer_destroy($self);
+   ~pipe_buffer() {
+      struct pipe_buffer *ptr = $self;
+      pipe_buffer_reference(&ptr, NULL);
    }
    
    unsigned __len__(void) 
    {
-      assert(p_atomic_read(&$self->buffer->reference.count) > 0);
-      return $self->buffer->size;
+      assert(p_atomic_read(&$self->reference.count) > 0);
+      return $self->size;
    }
    
    %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));
-   void read(char **STRING, int *LENGTH)
+   void read_(char **STRING, int *LENGTH)
    {
-      struct pipe_screen *screen = $self->st_dev->screen;
+      struct pipe_screen *screen = $self->screen;
       
-      assert(p_atomic_read(&$self->buffer->reference.count) > 0);
+      assert(p_atomic_read(&$self->reference.count) > 0);
       
-      *LENGTH = $self->buffer->size;
-      *STRING = (char *) malloc($self->buffer->size);
+      *LENGTH = $self->size;
+      *STRING = (char *) malloc($self->size);
       if(!*STRING)
          return;
       
-      pipe_buffer_read(screen, $self->buffer, 0, $self->buffer->size, STRING);
+      pipe_buffer_read(screen, $self, 0, $self->size, STRING);
    }
    
    %cstring_input_binary(const char *STRING, unsigned LENGTH);
-   void write(const char *STRING, unsigned LENGTH, unsigned offset = 0) 
+   void write_(const char *STRING, unsigned LENGTH, unsigned offset = 0) 
    {
-      struct pipe_screen *screen = $self->st_dev->screen;
+      struct pipe_screen *screen = $self->screen;
       
-      assert(p_atomic_read(&$self->buffer->reference.count) > 0);
+      assert(p_atomic_read(&$self->reference.count) > 0);
       
-      if(offset > $self->buffer->size) {
+      if(offset > $self->size) {
          PyErr_SetString(PyExc_ValueError, "offset must be smaller than buffer size");
          return;
       }
 
-      if(offset + LENGTH > $self->buffer->size) {
+      if(offset + LENGTH > $self->size) {
          PyErr_SetString(PyExc_ValueError, "data length must fit inside the buffer");
          return;
       }
 
-      pipe_buffer_write(screen, $self->buffer, offset, LENGTH, STRING);
+      pipe_buffer_write(screen, $self, offset, LENGTH, STRING);
    }
 };

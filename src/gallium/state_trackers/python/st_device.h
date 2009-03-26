@@ -38,13 +38,6 @@ struct pipe_context;
 struct st_winsys; 
 
 
-struct st_buffer {
-   struct st_device *st_dev;
-   
-   struct pipe_buffer *buffer;
-};
-
-
 struct st_context {
    struct st_device *st_dev;
    
@@ -77,13 +70,6 @@ struct st_device {
    struct pipe_screen *screen;
 };
 
-
-struct st_buffer *
-st_buffer_create(struct st_device *st_dev,
-                 unsigned alignment, unsigned usage, unsigned size);
-
-void
-st_buffer_destroy(struct st_buffer *st_buf);
 
 struct st_context *
 st_context_create(struct st_device *st_dev);

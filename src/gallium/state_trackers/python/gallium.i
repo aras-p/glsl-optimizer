@@ -72,7 +72,7 @@
 %rename(Context) st_context;
 %rename(Texture) pipe_texture;
 %rename(Surface) pipe_surface;
-%rename(Buffer) st_buffer;
+%rename(Buffer) pipe_buffer;
 
 %rename(BlendColor) pipe_blend_color;
 %rename(Blend) pipe_blend_state;
