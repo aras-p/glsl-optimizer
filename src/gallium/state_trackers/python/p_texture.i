@@ -106,11 +106,9 @@
                                           $self->level,
                                           $self->zslice,
                                           PIPE_TRANSFER_READ,
-                                          0, 0,
-                                          $self->width,
-                                          $self->height);
+                                          x, y, w, h);
       if(transfer) {
-         pipe_get_tile_raw(transfer, x, y, w, h, raw, stride);
+         pipe_get_tile_raw(transfer, 0, 0, w, h, raw, stride);
          screen->tex_transfer_destroy(transfer);
       }
    }
@@ -126,11 +124,9 @@
                                           $self->level,
                                           $self->zslice,
                                           PIPE_TRANSFER_WRITE,
-                                          0, 0,
-                                          $self->width,
-                                          $self->height);
+                                          x, y, w, h);
       if(transfer) {
-         pipe_put_tile_raw(transfer, x, y, w, h, raw, stride);
+         pipe_put_tile_raw(transfer, 0, 0, w, h, raw, stride);
          screen->tex_transfer_destroy(transfer);
       }
    }
@@ -146,11 +142,9 @@
                                           $self->level,
                                           $self->zslice,
                                           PIPE_TRANSFER_READ,
-                                          0, 0,
-                                          $self->width,
-                                          $self->height);
+                                          x, y, w, h);
       if(transfer) {
-         pipe_get_tile_rgba(transfer, x, y, w, h, rgba);
+         pipe_get_tile_rgba(transfer, 0, 0, w, h, rgba);
          screen->tex_transfer_destroy(transfer);
       }
    }
@@ -166,11 +160,9 @@
                                           $self->level,
                                           $self->zslice,
                                           PIPE_TRANSFER_WRITE,
-                                          0, 0,
-                                          $self->width,
-                                          $self->height);
+                                          x, y, w, h);
       if(transfer) {
-         pipe_put_tile_rgba(transfer, x, y, w, h, rgba);
+         pipe_put_tile_rgba(transfer, 0, 0, w, h, rgba);
          screen->tex_transfer_destroy(transfer);
       }
    }
@@ -209,12 +201,12 @@
                                              $self->level,
                                              $self->zslice,
                                              PIPE_TRANSFER_READ,
-                                             0, 0,
-                                             $self->width,
-                                             $self->height);
+                                             x, y + j,
+                                             w,
+                                             1);
          if(transfer) {
             pipe_get_tile_rgba(transfer,
-                               x, y + j, w, 1,
+                               0, 0, w, 1,
                                rgba);
             for(i = 0; i < w; ++i)
                for(k = 0; k <4; ++k)
@@ -237,11 +229,9 @@
                                           $self->level,
                                           $self->zslice,
                                           PIPE_TRANSFER_READ,
-                                          0, 0,
-                                          $self->width,
-                                          $self->height);
+                                          x, y, w, h);
       if(transfer) {
-         pipe_get_tile_z(transfer, x, y, w, h, z);
+         pipe_get_tile_z(transfer, 0, 0, w, h, z);
          screen->tex_transfer_destroy(transfer);
       }
    }
@@ -257,11 +247,9 @@
                                           $self->level,
                                           $self->zslice,
                                           PIPE_TRANSFER_WRITE,
-                                          0, 0,
-                                          $self->width,
-                                          $self->height);
+                                          x, y, w, h);
       if(transfer) {
-         pipe_put_tile_z(transfer, x, y, w, h, z);
+         pipe_put_tile_z(transfer, 0, 0, w, h, z);
          screen->tex_transfer_destroy(transfer);
       }
    }
@@ -291,15 +279,13 @@
                                           $self->level,
                                           $self->zslice,
                                           PIPE_TRANSFER_WRITE,
-                                          0, 0,
-                                          $self->width,
-                                          $self->height);
+                                          x, y, w, h);
       if(!transfer) {
          FREE(rgba2);
          return ~0;
       }
 
-      pipe_get_tile_rgba(transfer, x, y, w, h, rgba2);
+      pipe_get_tile_rgba(transfer, 0, 0, w, h, rgba2);
       screen->tex_transfer_destroy(transfer);
 
       p1 = rgba;
