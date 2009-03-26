@@ -86,7 +86,5 @@ nv50_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 	pipe->set_framebuffer_state(pipe, &s_fb);
 	pipe->set_scissor_state(pipe, &s_sc);
 	nv50->dirty |= dirty;
-
-	ps->status = PIPE_SURFACE_STATUS_CLEAR;
 }
 

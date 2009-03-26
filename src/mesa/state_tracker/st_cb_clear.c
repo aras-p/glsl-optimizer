@@ -291,11 +291,6 @@ clear_with_quad(GLcontext *ctx,
 static INLINE GLboolean
 check_clear_color_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   const struct st_renderbuffer *strb = st_renderbuffer(rb);
-
-   if (strb->surface->status == PIPE_SURFACE_STATUS_UNDEFINED)
-      return FALSE;
-
    if (ctx->Scissor.Enabled)
       return TRUE;
 
@@ -312,13 +307,9 @@ check_clear_color_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 static INLINE GLboolean
 check_clear_depth_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   const struct st_renderbuffer *strb = st_renderbuffer(rb);
    const GLuint stencilMax = (1 << rb->StencilBits) - 1;
    GLboolean maskStencil
       = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
-
-   if (strb->surface->status == PIPE_SURFACE_STATUS_UNDEFINED)
-      return FALSE;
 
    if (ctx->Scissor.Enabled)
       return TRUE;
@@ -339,14 +330,10 @@ check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
    const struct st_renderbuffer *strb = st_renderbuffer(rb);
    const GLboolean isDS = is_depth_stencil_format(strb->surface->format);
 
-   if (strb->surface->status == PIPE_SURFACE_STATUS_UNDEFINED)
-      return FALSE;
-
    if (ctx->Scissor.Enabled)
       return TRUE;
 
    if (isDS && 
-       strb->surface->status == PIPE_SURFACE_STATUS_DEFINED &&
        ctx->DrawBuffer->Visual.stencilBits > 0)
       return TRUE;
 
@@ -366,9 +353,6 @@ check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
    const GLboolean maskStencil
       = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
 
-   if (strb->surface->status == PIPE_SURFACE_STATUS_UNDEFINED)
-      return FALSE;
-
    if (maskStencil) 
       return TRUE;
 
@@ -381,7 +365,6 @@ check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
     * current state.
     */
    if (isDS && 
-       strb->surface->status == PIPE_SURFACE_STATUS_DEFINED &&
        ctx->DrawBuffer->Visual.depthBits > 0)
       return TRUE;
 

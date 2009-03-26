@@ -281,8 +281,6 @@ struct pipe_surface
 {
    struct pipe_reference reference;
    enum pipe_format format;      /**< PIPE_FORMAT_x */
-   unsigned status;              /**< PIPE_SURFACE_STATUS_x */
-   unsigned clear_value;         /**< XXX may be temporary */
    unsigned width;               /**< logical width in pixels */
    unsigned height;              /**< logical height in pixels */
    unsigned layout;              /**< PIPE_SURFACE_LAYOUT_x */

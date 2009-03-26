@@ -79,7 +79,6 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 
    if (ps == sp_tile_cache_get_surface(softpipe->zsbuf_cache)) {
       sp_tile_cache_clear(softpipe->zsbuf_cache, clearValue);
-      softpipe->framebuffer.zsbuf->status = PIPE_SURFACE_STATUS_CLEAR;
 #if TILE_CLEAR_OPTIMIZATION
       return;
 #endif
@@ -96,7 +95,6 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
             cv = clearValue;
          }
          sp_tile_cache_clear(softpipe->cbuf_cache[i], cv);
-         softpipe->framebuffer.cbufs[i]->status = PIPE_SURFACE_STATUS_CLEAR;
       }
    }
 

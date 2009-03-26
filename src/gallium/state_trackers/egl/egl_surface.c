@@ -406,8 +406,6 @@ drm_swap_buffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 			surf->user->pipe->flush(surf->user->pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE, NULL);
 			/* TODO stuff here */
 		}
-
-		st_notify_swapbuffers_complete(surf->stfb);
 	}
 
 	return EGL_TRUE;

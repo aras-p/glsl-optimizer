@@ -163,7 +163,6 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];
 	ps->usage = flags;
-	ps->status = PIPE_SURFACE_STATUS_DEFINED;
 	pipe_reference_init(&ps->reference, 1);
 	ps->face = face;
 	ps->level = level;

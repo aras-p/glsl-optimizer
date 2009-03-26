@@ -29,5 +29,4 @@ void r300_clear(struct pipe_context* pipe,
                 unsigned color)
 {
     pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, color);
-    ps->status = PIPE_SURFACE_STATUS_DEFINED;
 }

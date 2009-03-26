@@ -1489,16 +1489,6 @@ void setup_prepare( struct setup_context *setup )
       softpipe_update_derived(sp);
    }
 
-   /* Mark surfaces as defined now */
-   for (i = 0; i < sp->framebuffer.nr_cbufs; i++){
-      if (sp->framebuffer.cbufs[i]) {
-         sp->framebuffer.cbufs[i]->status = PIPE_SURFACE_STATUS_DEFINED;
-      }
-   }
-   if (sp->framebuffer.zsbuf) {
-      sp->framebuffer.zsbuf->status = PIPE_SURFACE_STATUS_DEFINED;
-   }
-
    /* Note: nr_attrs is only used for debugging (vertex printing) */
    setup->quad.nr_attrs = draw_num_vs_outputs(sp->draw);
 
