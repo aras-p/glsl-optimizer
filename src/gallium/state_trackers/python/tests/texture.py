@@ -168,25 +168,8 @@ class TextureTest(TestCase):
         rasterizer = Rasterizer()
         rasterizer.front_winding = PIPE_WINDING_CW
         rasterizer.cull_mode = PIPE_WINDING_NONE
-        rasterizer.bypass_clipping = 1
-        #rasterizer.bypass_vs = 1
+        rasterizer.bypass_vs_clip_and_viewport = 1
         ctx.set_rasterizer(rasterizer)
-    
-        # viewport (identity, we setup vertices in wincoords)
-        viewport = Viewport()
-        scale = FloatArray(4)
-        scale[0] = 1.0
-        scale[1] = 1.0
-        scale[2] = 1.0
-        scale[3] = 1.0
-        viewport.scale = scale
-        translate = FloatArray(4)
-        translate[0] = 0.0
-        translate[1] = 0.0
-        translate[2] = 0.0
-        translate[3] = 0.0
-        viewport.translate = translate
-        ctx.set_viewport(viewport)
     
         # samplers
         sampler = Sampler()
