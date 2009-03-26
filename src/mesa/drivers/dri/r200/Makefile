@@ -22,7 +22,8 @@ RADEON_COMMON_SOURCES = \
 	radeon_bo_legacy.c \
 	radeon_cs_legacy.c \
 	radeon_mipmap_tree.c \
-	radeon_span.c
+	radeon_span.c \
+	radeon_fbo.c
 
 
 DRIVER_SOURCES = r200_context.c \
@@ -80,7 +81,8 @@ COMMON_SYMLINKS = \
 	radeon_texture.c \
 	radeon_texture.h \
 	radeon_dma.c \
-	radeon_dma.h
+	radeon_dma.h \
+	radeon_fbo.c
 
 DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 
