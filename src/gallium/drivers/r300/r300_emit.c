@@ -343,7 +343,7 @@ void r300_emit_viewport_state(struct r300_context* r300,
     END_CS;
 }
 
-static void r300_flush_textures(struct r300_context* r300)
+void r300_flush_textures(struct r300_context* r300)
 {
     CS_LOCALS(r300);
 

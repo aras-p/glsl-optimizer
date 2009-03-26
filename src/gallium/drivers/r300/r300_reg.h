@@ -1191,6 +1191,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_RS_INST_COUNT_MASK           0x0000000f
 #       define R300_RS_TX_OFFSET_SHIFT           5
 #	define R300_RS_TX_OFFSET_MASK            0x000000e0
+#       define R300_RS_TX_OFFSET(x)              ((x) << 5)
 
 /* gap */
 
@@ -1434,6 +1435,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_MAX_ANISO_8_TO_1          (3 << 21)
 #	define R300_TX_MAX_ANISO_16_TO_1         (4 << 21)
 #	define R300_TX_MAX_ANISO_MASK            (7 << 21)
+#       define R300_TX_WRAP_S(x)                 ((x) << 0)
+#       define R300_TX_WRAP_T(x)                 ((x) << 3)
 
 #define R300_TX_FILTER1_0                      0x4440
 #	define R300_CHROMA_KEY_MODE_DISABLE    0
