@@ -67,6 +67,8 @@ def test(dev):
 
     width = 255
     height = 255
+    minz = 0.0
+    maxz = 0.0
 
     # disabled blending/masking
     blend = Blend()
@@ -85,23 +87,21 @@ def test(dev):
     rasterizer = Rasterizer()
     rasterizer.front_winding = PIPE_WINDING_CW
     rasterizer.cull_mode = PIPE_WINDING_NONE
-    rasterizer.bypass_clipping = 1
     rasterizer.scissor = 1
-    #rasterizer.bypass_vs = 1
     ctx.set_rasterizer(rasterizer)
 
-    # viewport (identity, we setup vertices in wincoords)
+    # viewport
     viewport = Viewport()
     scale = FloatArray(4)
-    scale[0] = 1.0
-    scale[1] = 1.0
-    scale[2] = 1.0
+    scale[0] = width / 2.0
+    scale[1] = -height / 2.0
+    scale[2] = (maxz - minz) / 2.0
     scale[3] = 1.0
     viewport.scale = scale
     translate = FloatArray(4)
-    translate[0] = 0.0
-    translate[1] = 0.0
-    translate[2] = 0.0
+    translate[0] = width / 2.0
+    translate[1] = height / 2.0
+    translate[2] = (maxz - minz) / 2.0
     translate[3] = 0.0
     viewport.translate = translate
     ctx.set_viewport(viewport)
@@ -173,24 +173,24 @@ def test(dev):
     nattrs = 2
     verts = FloatArray(nverts * nattrs * 4)
 
-    verts[ 0] = 128.0 # x1
-    verts[ 1] =  32.0 # y1
+    verts[ 0] =   0.0 # x1
+    verts[ 1] =   0.8 # y1
     verts[ 2] =   0.0 # z1
     verts[ 3] =   1.0 # w1
     verts[ 4] =   1.0 # r1
     verts[ 5] =   0.0 # g1
     verts[ 6] =   0.0 # b1
     verts[ 7] =   1.0 # a1
-    verts[ 8] =  32.0 # x2
-    verts[ 9] = 224.0 # y2
+    verts[ 8] =  -0.8 # x2
+    verts[ 9] =  -0.8 # y2
     verts[10] =   0.0 # z2
     verts[11] =   1.0 # w2
     verts[12] =   0.0 # r2
     verts[13] =   1.0 # g2
     verts[14] =   0.0 # b2
     verts[15] =   1.0 # a2
-    verts[16] = 224.0 # x3
-    verts[17] = 224.0 # y3
+    verts[16] =   0.8 # x3
+    verts[17] =  -0.8 # y3
     verts[18] =   0.0 # z3
     verts[19] =   1.0 # w3
     verts[20] =   0.0 # r3
