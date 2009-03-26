@@ -347,16 +347,15 @@
       
       assert(p_atomic_read(&$self->reference.count) > 0);
       
-      if(offset > $self->size) {
-         PyErr_SetString(PyExc_ValueError, "offset must be smaller than buffer size");
-         return;
-      }
+      if(offset > $self->size)
+         SWIG_exception(SWIG_ValueError, "offset must be smaller than buffer size");
 
-      if(offset + LENGTH > $self->size) {
-         PyErr_SetString(PyExc_ValueError, "data length must fit inside the buffer");
-         return;
-      }
+      if(offset + LENGTH > $self->size)
+         SWIG_exception(SWIG_ValueError, "data length must fit inside the buffer");
 
       pipe_buffer_write(screen, $self, offset, LENGTH, STRING);
+
+fail:
+      return;
    }
 };

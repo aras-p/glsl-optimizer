@@ -37,7 +37,6 @@
 %{
 
 #include <stdio.h>
-#include <Python.h>
 
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
@@ -58,7 +57,7 @@
 %}
 
 %include "typemaps.i"
-
+%include "exception.i"
 %include "cstring.i"
 
 %include "carrays.i"
