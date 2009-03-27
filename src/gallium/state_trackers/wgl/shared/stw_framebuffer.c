@@ -44,16 +44,6 @@ framebuffer_resize(
    GLuint width,
    GLuint height )
 {
-   if (fb->hbmDIB == NULL || fb->stfb->Base.Width != width || fb->stfb->Base.Height != height) {
-      if (fb->hbmDIB)
-         DeleteObject( fb->hbmDIB );
-
-      fb->hbmDIB = CreateCompatibleBitmap(
-         fb->hDC,
-         width,
-         height );
-   }
-
    st_resize_framebuffer( fb->stfb, width, height );
 }
 

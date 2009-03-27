@@ -317,10 +317,6 @@ stw_make_current(
       fb = framebuffer_create( hdc, visual, width, height );
       if (fb == NULL)
          return FALSE;
-
-      fb->dib_hDC = CreateCompatibleDC( hdc );
-      fb->hbmDIB = NULL;
-      fb->pbPixels = NULL;
    }
 
    if (ctx && fb) {
