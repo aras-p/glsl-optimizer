@@ -225,11 +225,14 @@ stw_swap_buffers(
     */
    st_notify_swapbuffers( fb->stfb );
 
-   st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surf );
-
-   stw_dev->stw_winsys->flush_frontbuffer(stw_dev->screen,
-                                          surf,
-                                          hdc );
+   if(st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surf )) {
+      stw_dev->stw_winsys->flush_frontbuffer(stw_dev->screen,
+                                             surf,
+                                             hdc );
+   }
+   else {
+       /* FIXME: this shouldn't happen, but does on glean */
+   }
 
    return TRUE;
 }
