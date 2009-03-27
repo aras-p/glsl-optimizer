@@ -716,6 +716,24 @@ extern "C" {
 /* reuse GL_VERTEX_ARRAY_BINDING */
 #endif
 
+#ifndef GL_VERSION_3_1
+#define GL_RED_SNORM                      0x8F90
+#define GL_RG_SNORM                       0x8F91
+#define GL_RGB_SNORM                      0x8F92
+#define GL_RGBA_SNORM                     0x8F93
+#define GL_R8_SNORM                       0x8F94
+#define GL_RG8_SNORM                      0x8F95
+#define GL_RGB8_SNORM                     0x8F96
+#define GL_RGBA8_SNORM                    0x8F97
+#define GL_R16_SNORM                      0x8F98
+#define GL_RG16_SNORM                     0x8F99
+#define GL_RGB16_SNORM                    0x8F9A
+#define GL_RGBA16_SNORM                   0x8F9B
+#define GL_SIGNED_NORMALIZED              0x8F9C
+#define GL_PRIMITIVE_RESTART              0x8F9D
+#define GL_PRIMITIVE_RESTART_INDEX        0x8F9E
+#endif
+
 #ifndef GL_ARB_multitexture
 #define GL_TEXTURE0_ARB                   0x84C0
 #define GL_TEXTURE1_ARB                   0x84C1
