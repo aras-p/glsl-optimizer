@@ -686,6 +686,17 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                   }
                }
                break;
+            case PIPE_FORMAT_Z24S8_UNORM:
+               {
+                  uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
+                  GLint k;
+                  for (k = 0; k < spanWidth; k++) {
+                     uint p = dest[k];
+                     p = (p & 0xffffff00) | (values[k] & 0xff);
+                     dest[k] = p;
+                  }
+               }
+               break;
             default:
                assert(0);
             }
@@ -817,6 +828,16 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
             int j;
             for (j = 0; j < width; j++) {
                *dst4 = (*dst4 & 0xffffff) | (src[j] << 24);
+               dst4++;
+            }
+         }
+         break;
+      case PIPE_FORMAT_Z24S8_UNORM:
+         {
+            uint *dst4 = (uint *) dst;
+            int j;
+            for (j = 0; j < width; j++) {
+               *dst4 = (*dst4 & 0xffffff00) | (src[j] & 0xff);
                dst4++;
             }
          }

@@ -420,6 +420,33 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             }
          }
       }
+      else if (trans->format == PIPE_FORMAT_Z24S8_UNORM ||
+               trans->format == PIPE_FORMAT_Z24X8_UNORM) {
+         if (format == GL_DEPTH_COMPONENT) {
+            for (i = 0; i < height; i++) {
+               GLuint ztemp[MAX_WIDTH];
+               GLfloat zfloat[MAX_WIDTH];
+               const double scale = 1.0 / ((1 << 24) - 1);
+               pipe_get_tile_raw(trans, 0, y, width, 1, ztemp, 0);
+               y += yStep;
+               for (j = 0; j < width; j++) {
+                  zfloat[j] = (float) (scale * ((ztemp[j] >> 8) & 0xffffff));
+               }
+               _mesa_pack_depth_span(ctx, width, dst, type,
+                                     zfloat, &clippedPacking);
+               dst += dstStride;
+            }
+         }
+         else {
+            /* untested, but simple: */
+            assert(format == GL_DEPTH_STENCIL_EXT);
+            for (i = 0; i < height; i++) {
+               pipe_get_tile_raw(trans, 0, y, width, 1, dst, 0);
+               y += yStep;
+               dst += dstStride;
+            }
+         }
+      }
       else if (trans->format == PIPE_FORMAT_Z16_UNORM) {
          for (i = 0; i < height; i++) {
             GLushort ztemp[MAX_WIDTH];
