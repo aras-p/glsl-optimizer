@@ -175,9 +175,13 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
       return &_mesa_texformat_srgb_dxt1;
 
+   /* i915 could also do this */
    case GL_DUDV_ATI:
    case GL_DU8DV8_ATI:
       return &_mesa_texformat_dudv8;
+   case GL_RGBA_SNORM:
+   case GL_RGBA8_SNORM:
+      return &_mesa_texformat_signed_rgba8888_rev;
 #endif
 
    default:

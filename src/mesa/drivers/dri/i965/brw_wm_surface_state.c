@@ -142,6 +142,7 @@ static GLuint translate_tex_format( GLuint mesa_format, GLenum internal_format,
 
    case MESA_FORMAT_SRGBA8:
       return BRW_SURFACEFORMAT_R8G8B8A8_UNORM_SRGB;
+
    case MESA_FORMAT_SRGB_DXT1:
       return BRW_SURFACEFORMAT_BC1_UNORM_SRGB;
 
@@ -158,6 +159,9 @@ static GLuint translate_tex_format( GLuint mesa_format, GLenum internal_format,
 
    case MESA_FORMAT_DUDV8:
       return BRW_SURFACEFORMAT_R8G8_SNORM;
+
+   case MESA_FORMAT_SIGNED_RGBA8888_REV:
+      return BRW_SURFACEFORMAT_R8G8B8A8_SNORM;
 
    default:
       assert(0);
