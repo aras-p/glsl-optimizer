@@ -486,7 +486,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             df += dfStride;
             if (!dfStride) {
                _mesa_pack_rgba_span_float(ctx, width, temp, format, type, dst,
-                                          &clippedPacking, transferOps);
+                                          &clippedPacking, transferOps, GL_FALSE);
                dst += dstStride;
             }
          }

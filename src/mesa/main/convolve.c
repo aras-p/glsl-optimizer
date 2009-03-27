@@ -626,7 +626,7 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type,
                                           row, 0);
       GLfloat (*src)[4] = (GLfloat (*)[4]) (filter->Filter + row * filter->Width * 4);
       _mesa_pack_rgba_span_float(ctx, filter->Width, src,
-                                 format, type, dst, &ctx->Pack, 0x0);
+                                 format, type, dst, &ctx->Pack, 0x0, GL_FALSE);
    }
 
    if (ctx->Pack.BufferObj->Name) {
@@ -836,7 +836,7 @@ _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type,
                                           format, type, 0);
       _mesa_pack_rgba_span_float(ctx, filter->Width,
                                  (GLfloat (*)[4]) filter->Filter,
-                                 format, type, dst, &ctx->Pack, 0x0);
+                                 format, type, dst, &ctx->Pack, 0x0, GL_FALSE);
    }
 
    /* Column filter */
@@ -845,7 +845,7 @@ _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type,
                                           format, type, 0);
       GLfloat (*src)[4] = (GLfloat (*)[4]) (filter->Filter + colStart);
       _mesa_pack_rgba_span_float(ctx, filter->Height, src,
-                                 format, type, dst, &ctx->Pack, 0x0);
+                                 format, type, dst, &ctx->Pack, 0x0, GL_FALSE);
    }
 
    (void) span;  /* unused at this time */

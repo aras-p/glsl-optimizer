@@ -79,6 +79,7 @@ extern GLboolean _mesa_texstore_sl8(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_sla8(TEXSTORE_PARAMS);
 #endif
 extern GLboolean _mesa_texstore_dudv8(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS);
 
 extern GLchan *
 _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,

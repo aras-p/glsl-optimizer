@@ -168,7 +168,8 @@ enum _format {
     * \name Signed fixed point texture formats.
     */
    /*@{*/
-   MESA_FORMAT_DUDV8
+   MESA_FORMAT_DUDV8,
+   MESA_FORMAT_SIGNED_RGBA8888
    /*@}*/
 };
 
@@ -219,6 +220,7 @@ extern const struct gl_texture_format _mesa_texformat_intensity_float16;
 /** Signed fixed point texture formats */
 /*@{*/
 extern const struct gl_texture_format _mesa_texformat_dudv8;
+extern const struct gl_texture_format _mesa_texformat_signed_rgba8888;
 /*@}*/
 
 /** \name Assorted hardware-friendly formats */

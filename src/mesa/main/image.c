@@ -1686,24 +1686,13 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
                            GLenum dstFormat, GLenum dstType,
                            GLvoid *dstAddr,
                            const struct gl_pixelstore_attrib *dstPacking,
-                           GLbitfield transferOps)
+                           GLbitfield transferOps, GLboolean noClamp)
 {
    GLfloat luminance[MAX_WIDTH];
    const GLint comps = _mesa_components_in_format(dstFormat);
    GLuint i;
-   /* clamping only applies to colors, not the dudv values, but still need
-      it if converting to unsigned values (which doesn't make much sense) */
-   if (dstFormat == GL_DUDV_ATI || dstFormat == GL_DU8DV8_ATI) {
-      switch (dstType) {
-         case GL_UNSIGNED_BYTE:
-         case GL_UNSIGNED_SHORT:
-         case GL_UNSIGNED_INT:
-            transferOps |= IMAGE_CLAMP_BIT;
-            break;
-            /* actually might want clamp to [-1,1] otherwise but shouldn't matter? */
-      }
-   }
-   else if (dstType != GL_FLOAT || ctx->Color.ClampReadColor == GL_TRUE) {
+
+   if ((!noClamp) && (dstType != GL_FLOAT || ctx->Color.ClampReadColor == GL_TRUE)) {
       /* need to clamp to [0, 1] */
       transferOps |= IMAGE_CLAMP_BIT;
    }

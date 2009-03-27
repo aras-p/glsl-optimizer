@@ -417,7 +417,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
                                           (GLfloat (*)[4]) src,
                                           logicalBaseFormat, GL_FLOAT,
                                           dst, &ctx->DefaultPacking,
-                                          postConvTransferOps);
+                                          postConvTransferOps, GL_FALSE);
                src += convWidth * 4;
                dst += convWidth * logComponents;
             }
@@ -798,6 +798,7 @@ static const GLubyte *
 type_mapping( GLenum srcType )
 {
    switch (srcType) {
+   case GL_BYTE:
    case GL_UNSIGNED_BYTE:
       return map_identity;
    case GL_UNSIGNED_INT_8_8_8_8:
@@ -819,6 +820,7 @@ byteswap_mapping( GLboolean swapBytes,
       return map_identity;
 
    switch (srcType) {
+   case GL_BYTE:
    case GL_UNSIGNED_BYTE:
       return map_identity;
    case GL_UNSIGNED_INT_8_8_8_8:
@@ -2561,6 +2563,99 @@ _mesa_texstore_dudv8(TEXSTORE_PARAMS)
    return GL_TRUE;
 }
 
+/**
+ * Store a texture in MESA_FORMAT_RGBA8888 or MESA_FORMAT_RGBA8888_REV.
+ */
+GLboolean
+_mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
+{
+   const GLboolean littleEndian = _mesa_little_endian();
+
+   ASSERT(dstFormat == &_mesa_texformat_signed_rgba8888);
+   ASSERT(dstFormat->TexelBytes == 4);
+
+   if (!ctx->_ImageTransferState &&
+       !srcPacking->SwapBytes &&
+       dstFormat == &_mesa_texformat_signed_rgba8888 &&
+       baseInternalFormat == GL_RGBA &&
+      ((srcFormat == GL_RGBA && srcType == GL_BYTE && !littleEndian) ||
+       (srcFormat == GL_ABGR_EXT && srcType == GL_BYTE && littleEndian))) {
+       /* simple memcpy path */
+      memcpy_texture(ctx, dims,
+                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
+                     dstRowStride,
+                     dstImageOffsets,
+                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                     srcAddr, srcPacking);
+   }
+   else if (!ctx->_ImageTransferState &&
+	    (srcType == GL_BYTE) &&
+	    can_swizzle(baseInternalFormat) &&
+	    can_swizzle(srcFormat)) {
+
+      GLubyte dstmap[4];
+
+      /* dstmap - how to swizzle from RGBA to dst format:
+       */
+      if (littleEndian && dstFormat == &_mesa_texformat_signed_rgba8888) {
+	 dstmap[3] = 0;
+	 dstmap[2] = 1;
+	 dstmap[1] = 2;
+	 dstmap[0] = 3;
+      }
+      else {
+	 dstmap[3] = 3;
+	 dstmap[2] = 2;
+	 dstmap[1] = 1;
+	 dstmap[0] = 0;
+      }
+      
+      _mesa_swizzle_ubyte_image(ctx, dims,
+				srcFormat,
+				srcType,
+				baseInternalFormat,
+				dstmap, 4,
+				dstAddr, dstXoffset, dstYoffset, dstZoffset,
+				dstRowStride, dstImageOffsets,
+				srcWidth, srcHeight, srcDepth, srcAddr,
+				srcPacking);      
+   }
+   else {
+      /* general path */
+      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+                                                 baseInternalFormat,
+                                                 dstFormat->BaseFormat,
+                                                 srcWidth, srcHeight, srcDepth,
+                                                 srcFormat, srcType, srcAddr,
+                                                 srcPacking);
+      const GLfloat *srcRow = tempImage;
+      GLint img, row, col;
+      if (!tempImage)
+         return GL_FALSE;
+      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
+      for (img = 0; img < srcDepth; img++) {
+         GLubyte *dstRow = (GLubyte *) dstAddr
+            + dstImageOffsets[dstZoffset + img] * dstFormat->TexelBytes
+            + dstYoffset * dstRowStride
+            + dstXoffset * dstFormat->TexelBytes;
+         for (row = 0; row < srcHeight; row++) {
+            GLuint *dstUI = (GLuint *) dstRow;
+            if (dstFormat == &_mesa_texformat_signed_rgba8888) {
+               for (col = 0; col < srcWidth; col++) {
+                  dstUI[col] = PACK_COLOR_8888( FLOAT_TO_BYTE_TEX(srcRow[RCOMP]),
+                                                FLOAT_TO_BYTE_TEX(srcRow[GCOMP]),
+                                                FLOAT_TO_BYTE_TEX(srcRow[BCOMP]),
+                                                FLOAT_TO_BYTE_TEX(srcRow[ACOMP]) );
+                  srcRow += 4;
+               }
+            }
+            dstRow += dstRowStride;
+         }
+      }
+      _mesa_free((void *) tempImage);
+   }
+   return GL_TRUE;
+}
 
 /**
  * Store a combined depth/stencil texture image.
@@ -3820,6 +3915,21 @@ linear_to_nonlinear(GLfloat cl)
 
 #endif /* FEATURE_EXT_texture_sRGB */
 
+static INLINE GLboolean
+type_with_negative_values(GLenum type)
+{
+    switch (type) {
+    case GL_BYTE:
+    case GL_SHORT:
+    case GL_INT:
+    case GL_FLOAT:
+    case GL_HALF_FLOAT_ARB:
+       return GL_TRUE;
+   default:
+      return GL_FALSE;
+    }
+}
+
 /**
  * This is the software fallback for Driver.GetTexImage().
  * All error checking will have been done before this routine is called.
@@ -3962,7 +4072,7 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                }
                _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
                                           format, type, dest,
-                                          &ctx->Pack, transferOps /*image xfer ops*/);
+                                          &ctx->Pack, transferOps, GL_TRUE);
             }
 #endif /* FEATURE_EXT_texture_sRGB */
             else {
@@ -3971,10 +4081,13 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                GLint col;
                GLbitfield transferOps = 0x0;
 
-               if (type == GL_FLOAT && texImage->TexFormat->BaseFormat != GL_DUDV_ATI &&
-                   ((ctx->Color.ClampReadColor == GL_TRUE) ||
-                    (ctx->Color.ClampReadColor == GL_FIXED_ONLY_ARB &&
-                     texImage->TexFormat->DataType != GL_FLOAT)))
+               /* clamp does not apply to GetTexImage (final conversion)?
+                  Looks like we need clamp though when going from format containing
+                  negative values to unsigned format */
+
+               if (!type_with_negative_values(type) &&
+                   (texImage->TexFormat->DataType == GL_FLOAT ||
+                   texImage->TexFormat->DataType == GL_SIGNED_NORMALIZED))
                   transferOps |= IMAGE_CLAMP_BIT;
 
                for (col = 0; col < width; col++) {
@@ -4001,7 +4114,7 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                }
                _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
                                           format, type, dest,
-                                          &ctx->Pack, transferOps /*image xfer ops*/);
+                                          &ctx->Pack, transferOps, GL_TRUE);
             } /* format */
          } /* row */
       } /* img */

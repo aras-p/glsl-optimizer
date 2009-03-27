@@ -12326,6 +12326,12 @@
     </function>
 </category>
 
+<category name="GL_MESA_texture_signed_rgba">
+    <enum name="SIGNED_NORMALIZED"                        value="0x8F9C"/>
+    <enum name="RGBA_SNORM"                               value="0x8F93"/>
+    <enum name="RGBA8_SNORM"                              value="0x8F97"/>
+</category>
+
 <category name="GL_MESA_shader_debug">
     <enum name="DEBUG_OBJECT_MESA"                        value="0x8759"/>
     <enum name="DEBUG_PRINT_MESA"                         value="0x875A"/>

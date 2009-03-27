@@ -684,7 +684,7 @@ _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvo
       minmax[1][BCOMP] = CLAMP(ctx->MinMax.Max[BCOMP], 0.0F, 1.0F);
       minmax[1][ACOMP] = CLAMP(ctx->MinMax.Max[ACOMP], 0.0F, 1.0F);
       _mesa_pack_rgba_span_float(ctx, 2, minmax,
-                                 format, type, values, &ctx->Pack, 0x0);
+                                 format, type, values, &ctx->Pack, 0x0, GL_FALSE);
    }
 
    if (ctx->Pack.BufferObj->Name) {

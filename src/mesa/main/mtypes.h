@@ -2503,6 +2503,7 @@ struct gl_extensions
    GLboolean MESA_resize_buffers;
    GLboolean MESA_ycbcr_texture;
    GLboolean MESA_texture_array;
+   GLboolean MESA_texture_signed_rgba;
    GLboolean NV_blend_square;
    GLboolean NV_fragment_program;
    GLboolean NV_light_max_exponent;
