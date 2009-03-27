@@ -1327,6 +1327,7 @@ extern "C" {
 #endif
 
 #ifndef GL_ARB_instanced_arrays
+#define GL_VERTEX_ATTRIB_ARRAY_DIVISOR_ARB 0x88FE
 #endif
 
 #ifndef GL_ARB_map_buffer_range
@@ -1380,6 +1381,51 @@ extern "C" {
 
 #ifndef GL_ARB_vertex_array_object
 #define GL_VERTEX_ARRAY_BINDING           0x85B5
+#endif
+
+#ifndef GL_ARB_uniform_buffer_object
+#define GL_UNIFORM_BUFFER                 0x8A11
+#define GL_UNIFORM_BUFFER_BINDING         0x8A28
+#define GL_UNIFORM_BUFFER_START           0x8A29
+#define GL_UNIFORM_BUFFER_SIZE            0x8A2A
+#define GL_MAX_VERTEX_UNIFORM_BLOCKS      0x8A2B
+#define GL_MAX_GEOMETRY_UNIFORM_BLOCKS    0x8A2C
+#define GL_MAX_FRAGMENT_UNIFORM_BLOCKS    0x8A2D
+#define GL_MAX_COMBINED_UNIFORM_BLOCKS    0x8A2E
+#define GL_MAX_UNIFORM_BUFFER_BINDINGS    0x8A2F
+#define GL_MAX_UNIFORM_BLOCK_SIZE         0x8A30
+#define GL_MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS 0x8A31
+#define GL_MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS 0x8A32
+#define GL_MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS 0x8A33
+#define GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT 0x8A34
+#define GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH 0x8A35
+#define GL_ACTIVE_UNIFORM_BLOCKS          0x8A36
+#define GL_UNIFORM_TYPE                   0x8A37
+#define GL_UNIFORM_SIZE                   0x8A38
+#define GL_UNIFORM_NAME_LENGTH            0x8A39
+#define GL_UNIFORM_BLOCK_INDEX            0x8A3A
+#define GL_UNIFORM_OFFSET                 0x8A3B
+#define GL_UNIFORM_ARRAY_STRIDE           0x8A3C
+#define GL_UNIFORM_MATRIX_STRIDE          0x8A3D
+#define GL_UNIFORM_IS_ROW_MAJOR           0x8A3E
+#define GL_UNIFORM_BLOCK_BINDING          0x8A3F
+#define GL_UNIFORM_BLOCK_DATA_SIZE        0x8A40
+#define GL_UNIFORM_BLOCK_NAME_LENGTH      0x8A41
+#define GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS  0x8A42
+#define GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES 0x8A43
+#define GL_UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER 0x8A44
+#define GL_UNIFORM_BLOCK_REFERENCED_BY_GEOMETRY_SHADER 0x8A45
+#define GL_UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER 0x8A46
+#define GL_INVALID_INDEX_ARB              0xFFFFFFFFu
+#endif
+
+#ifndef GL_ARB_compatibility
+/* ARB_compatibility just defines tokens from core 3.0 */
+#endif
+
+#ifndef GL_ARB_copy_buffer
+#define GL_COPY_READ_BUFFER               0x8F36
+#define GL_COPY_WRITE_BUFFER              0x8F37
 #endif
 
 #ifndef GL_EXT_abgr
@@ -5339,6 +5385,38 @@ typedef void (APIENTRYP PFNGLBINDVERTEXARRAYPROC) (GLuint array);
 typedef void (APIENTRYP PFNGLDELETEVERTEXARRAYSPROC) (GLsizei n, const GLuint *arrays);
 typedef void (APIENTRYP PFNGLGENVERTEXARRAYSPROC) (GLsizei n, GLuint *arrays);
 typedef GLboolean (APIENTRYP PFNGLISVERTEXARRAYPROC) (GLuint array);
+#endif
+
+#ifndef GL_ARB_uniform_buffer_object
+#define GL_ARB_uniform_buffer_object 1
+#ifdef GL_GLEXT_PROTOTYPES
+GLAPI void APIENTRY glGetUniformIndices (GLuint, GLsizei, const GLchar* *, GLuint *);
+GLAPI void APIENTRY glGetActiveUniformsiv (GLuint, GLsizei, const GLuint *, GLenum, GLint *);
+GLAPI void APIENTRY glGetActiveUniformName (GLuint, GLuint, GLsizei, GLsizei *, GLchar *);
+GLAPI GLuint APIENTRY glGetUniformBlockIndex (GLuint, const GLchar *);
+GLAPI void APIENTRY glGetActiveUniformBlockiv (GLuint, GLuint, GLenum, GLint *);
+GLAPI void APIENTRY glGetActiveUniformBlockName (GLuint, GLuint, GLsizei, GLsizei *, GLchar *);
+GLAPI void APIENTRY glUniformBlockBinding (GLuint, GLuint, GLuint);
+#endif /* GL_GLEXT_PROTOTYPES */
+typedef void (APIENTRYP PFNGLGETUNIFORMINDICESPROC) (GLuint program, GLsizei uniformCount, const GLchar* *uniformNames, GLuint *uniformIndices);
+typedef void (APIENTRYP PFNGLGETACTIVEUNIFORMSIVPROC) (GLuint program, GLsizei uniformCount, const GLuint *uniformIndices, GLenum pname, GLint *params);
+typedef void (APIENTRYP PFNGLGETACTIVEUNIFORMNAMEPROC) (GLuint program, GLuint uniformIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformName);
+typedef GLuint (APIENTRYP PFNGLGETUNIFORMBLOCKINDEXPROC) (GLuint program, const GLchar *uniformBlockName);
+typedef void (APIENTRYP PFNGLGETACTIVEUNIFORMBLOCKIVPROC) (GLuint program, GLuint uniformBlockIndex, GLenum pname, GLint *params);
+typedef void (APIENTRYP PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC) (GLuint program, GLuint uniformBlockIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformBlockName);
+typedef void (APIENTRYP PFNGLUNIFORMBLOCKBINDINGPROC) (GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding);
+#endif
+
+#ifndef GL_ARB_compatibility
+#define GL_ARB_compatibility 1
+#endif
+
+#ifndef GL_ARB_copy_buffer
+#define GL_ARB_copy_buffer 1
+#ifdef GL_GLEXT_PROTOTYPES
+GLAPI void APIENTRY glCopyBufferSubData (GLenum, GLenum, GLintptr, GLintptr, GLsizeiptr);
+#endif /* GL_GLEXT_PROTOTYPES */
+typedef void (APIENTRYP PFNGLCOPYBUFFERSUBDATAPROC) (GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
 #endif
 
 #ifndef GL_EXT_abgr
