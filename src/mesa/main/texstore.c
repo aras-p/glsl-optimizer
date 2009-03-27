@@ -2564,14 +2564,15 @@ _mesa_texstore_dudv8(TEXSTORE_PARAMS)
 }
 
 /**
- * Store a texture in MESA_FORMAT_RGBA8888 or MESA_FORMAT_RGBA8888_REV.
+ * Store a texture in MESA_FORMAT_SIGNED_RGBA8888 or MESA_FORMAT_SIGNED_RGBA8888_REV
  */
 GLboolean
 _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
 
-   ASSERT(dstFormat == &_mesa_texformat_signed_rgba8888);
+   ASSERT(dstFormat == &_mesa_texformat_signed_rgba8888 ||
+          dstFormat == &_mesa_texformat_signed_rgba8888_rev);
    ASSERT(dstFormat->TexelBytes == 4);
 
    if (!ctx->_ImageTransferState &&
@@ -2589,6 +2590,20 @@ _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
                      srcAddr, srcPacking);
    }
    else if (!ctx->_ImageTransferState &&
+       !srcPacking->SwapBytes &&
+       dstFormat == &_mesa_texformat_signed_rgba8888_rev &&
+       baseInternalFormat == GL_RGBA &&
+      ((srcFormat == GL_RGBA && srcType == GL_BYTE && littleEndian) ||
+       (srcFormat == GL_ABGR_EXT && srcType == GL_BYTE && !littleEndian))) {
+      /* simple memcpy path */
+      memcpy_texture(ctx, dims,
+                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
+                     dstRowStride,
+                     dstImageOffsets,
+                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                     srcAddr, srcPacking);
+   }
+   else if (!ctx->_ImageTransferState &&
 	    (srcType == GL_BYTE) &&
 	    can_swizzle(baseInternalFormat) &&
 	    can_swizzle(srcFormat)) {
@@ -2597,7 +2612,8 @@ _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
 
       /* dstmap - how to swizzle from RGBA to dst format:
        */
-      if (littleEndian && dstFormat == &_mesa_texformat_signed_rgba8888) {
+      if ((littleEndian && dstFormat == &_mesa_texformat_signed_rgba8888) ||
+	  (!littleEndian && dstFormat == &_mesa_texformat_signed_rgba8888_rev)) {
 	 dstmap[3] = 0;
 	 dstmap[2] = 1;
 	 dstmap[1] = 2;
@@ -2646,6 +2662,15 @@ _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
                                                 FLOAT_TO_BYTE_TEX(srcRow[GCOMP]),
                                                 FLOAT_TO_BYTE_TEX(srcRow[BCOMP]),
                                                 FLOAT_TO_BYTE_TEX(srcRow[ACOMP]) );
+                  srcRow += 4;
+               }
+            }
+            else {
+               for (col = 0; col < srcWidth; col++) {
+                  dstUI[col] = PACK_COLOR_8888_REV( FLOAT_TO_BYTE_TEX(srcRow[RCOMP]),
+                                                    FLOAT_TO_BYTE_TEX(srcRow[GCOMP]),
+                                                    FLOAT_TO_BYTE_TEX(srcRow[BCOMP]),
+                                                    FLOAT_TO_BYTE_TEX(srcRow[ACOMP]) );
                   srcRow += 4;
                }
             }

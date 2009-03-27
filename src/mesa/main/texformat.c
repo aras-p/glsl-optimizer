@@ -746,6 +746,30 @@ const struct gl_texture_format _mesa_texformat_signed_rgba8888 = {
    store_texel_signed_rgba8888		/* StoreTexel */
 };
 
+const struct gl_texture_format _mesa_texformat_signed_rgba8888_rev = {
+   MESA_FORMAT_SIGNED_RGBA8888_REV,	/* MesaFormat */
+   GL_RGBA,				/* BaseFormat */
+   GL_SIGNED_NORMALIZED,		/* DataType */
+   8,					/* RedBits */
+   8,					/* GreenBits */
+   8,					/* BlueBits */
+   8,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   0,					/* StencilBits */
+   4,					/* TexelBytes */
+   _mesa_texstore_signed_rgba8888,	/* StoreTexImageFunc */
+   NULL,				/* FetchTexel1D */
+   NULL,				/* FetchTexel2D */
+   NULL,				/* FetchTexel3D */
+   fetch_texel_1d_signed_rgba8888_rev,	/* FetchTexel1Df */
+   fetch_texel_2d_signed_rgba8888_rev,	/* FetchTexel2Df */
+   fetch_texel_3d_signed_rgba8888_rev,	/* FetchTexel3Df */
+   store_texel_signed_rgba8888_rev		/* StoreTexel */
+};
+
 /*@}*/
 
 
@@ -1854,6 +1878,7 @@ _mesa_format_to_type_and_comps(const struct gl_texture_format *format,
       return;
 
    case MESA_FORMAT_SIGNED_RGBA8888:
+   case MESA_FORMAT_SIGNED_RGBA8888_REV:
       *datatype = GL_BYTE;
       *comps = 4;
       return;

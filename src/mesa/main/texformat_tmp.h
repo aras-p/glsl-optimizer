@@ -1321,7 +1321,7 @@ static void FETCH(dudv8)(const struct gl_texture_image *texImage,
    texel[ACOMP] = 0;
 }
 
-/* MESA_FORMAT_SIGNED_ARGB8888 ***********************************************/
+/* MESA_FORMAT_SIGNED_RGBA8888 ***********************************************/
 
 static void FETCH(signed_rgba8888)( const struct gl_texture_image *texImage,
 			            GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1342,6 +1342,27 @@ static void store_texel_signed_rgba8888(struct gl_texture_image *texImage,
    *dst = PACK_COLOR_8888(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], rgba[ACOMP]);
 }
 #endif
+
+static void FETCH(signed_rgba8888_rev)( const struct gl_texture_image *texImage,
+                                        GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   texel[RCOMP] = BYTE_TO_FLOAT_TEX( (s      ) & 0xff );
+   texel[GCOMP] = BYTE_TO_FLOAT_TEX( (s >>  8) & 0xff );
+   texel[BCOMP] = BYTE_TO_FLOAT_TEX( (s >> 16) & 0xff );
+   texel[ACOMP] = BYTE_TO_FLOAT_TEX( (s >> 24)        );
+}
+
+#if DIM == 3
+static void store_texel_signed_rgba8888_rev(struct gl_texture_image *texImage,
+                                            GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLubyte *rgba = (const GLubyte *) texel;
+   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   *dst = PACK_COLOR_8888_REV(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], rgba[ACOMP]);
+}
+#endif
+
 
 
 /* MESA_FORMAT_YCBCR *********************************************************/
