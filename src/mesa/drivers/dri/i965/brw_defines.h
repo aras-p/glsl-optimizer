@@ -367,9 +367,10 @@
 #define BRW_SURFACEFORMAT_L8A8_UNORM                     0x114 
 #define BRW_SURFACEFORMAT_I16_FLOAT                      0x115
 #define BRW_SURFACEFORMAT_L16_FLOAT                      0x116
-#define BRW_SURFACEFORMAT_A16_FLOAT                      0x117 
-#define BRW_SURFACEFORMAT_R5G5_SNORM_B6_UNORM            0x119 
-#define BRW_SURFACEFORMAT_B5G5R5X1_UNORM                 0x11A 
+#define BRW_SURFACEFORMAT_A16_FLOAT                      0x117
+#define BRW_SURFACEFORMAT_L8A8_UNORM_SRGB                0x118
+#define BRW_SURFACEFORMAT_R5G5_SNORM_B6_UNORM            0x119
+#define BRW_SURFACEFORMAT_B5G5R5X1_UNORM                 0x11A
 #define BRW_SURFACEFORMAT_B5G5R5X1_UNORM_SRGB            0x11B
 #define BRW_SURFACEFORMAT_R8G8_SSCALED                   0x11C
 #define BRW_SURFACEFORMAT_R8G8_USCALED                   0x11D
@@ -386,6 +387,7 @@
 #define BRW_SURFACEFORMAT_A4P4_UNORM                     0x148
 #define BRW_SURFACEFORMAT_R8_SSCALED                     0x149
 #define BRW_SURFACEFORMAT_R8_USCALED                     0x14A
+#define BRW_SURFACEFORMAT_L8_UNORM_SRGB                  0x14C
 #define BRW_SURFACEFORMAT_R1_UINT                        0x181 
 #define BRW_SURFACEFORMAT_YCRCB_NORMAL                   0x182 
 #define BRW_SURFACEFORMAT_YCRCB_SWAPUVY                  0x183 
