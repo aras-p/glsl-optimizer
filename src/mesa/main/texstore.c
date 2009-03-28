@@ -4078,18 +4078,18 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
 
                for (col = 0; col < width; col++) {
                   (*texImage->FetchTexelf)(texImage, col, row, img, rgba[col]);
-                  if (texImage->TexFormat->BaseFormat == GL_LUMINANCE) {
+                  if (texImage->_BaseFormat == GL_LUMINANCE) {
                      rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
                      rgba[col][GCOMP] = 0.0;
                      rgba[col][BCOMP] = 0.0;
                   }
-                  else if (texImage->TexFormat->BaseFormat == GL_LUMINANCE_ALPHA) {
+                  else if (texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
                      rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
                      rgba[col][GCOMP] = 0.0;
                      rgba[col][BCOMP] = 0.0;
                   }
-                  else if (texImage->TexFormat->BaseFormat == GL_RGB ||
-                     texImage->TexFormat->BaseFormat == GL_RGBA) {
+                  else if (texImage->_BaseFormat == GL_RGB ||
+                     texImage->_BaseFormat == GL_RGBA) {
                      rgba[col][RCOMP] = linear_to_nonlinear(rgba[col][RCOMP]);
                      rgba[col][GCOMP] = linear_to_nonlinear(rgba[col][GCOMP]);
                      rgba[col][BCOMP] = linear_to_nonlinear(rgba[col][BCOMP]);
@@ -4117,21 +4117,21 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
 
                for (col = 0; col < width; col++) {
                   (*texImage->FetchTexelf)(texImage, col, row, img, rgba[col]);
-                  if (texImage->TexFormat->BaseFormat == GL_ALPHA) {
+                  if (texImage->_BaseFormat == GL_ALPHA) {
                      rgba[col][RCOMP] = 0.0;
                      rgba[col][GCOMP] = 0.0;
                      rgba[col][BCOMP] = 0.0;
                   }
-                  else if (texImage->TexFormat->BaseFormat == GL_LUMINANCE) {
+                  else if (texImage->_BaseFormat == GL_LUMINANCE) {
                      rgba[col][GCOMP] = 0.0;
                      rgba[col][BCOMP] = 0.0;
                      rgba[col][ACOMP] = 1.0;
                   }
-                  else if (texImage->TexFormat->BaseFormat == GL_LUMINANCE_ALPHA) {
+                  else if (texImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
                      rgba[col][GCOMP] = 0.0;
                      rgba[col][BCOMP] = 0.0;
                   }
-                  else if (texImage->TexFormat->BaseFormat == GL_INTENSITY) {
+                  else if (texImage->_BaseFormat == GL_INTENSITY) {
                      rgba[col][GCOMP] = 0.0;
                      rgba[col][BCOMP] = 0.0;
                      rgba[col][ACOMP] = 1.0;

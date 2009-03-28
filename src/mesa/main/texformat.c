@@ -382,6 +382,7 @@ const struct gl_texture_format _mesa_texformat_sl8 = {
    store_texel_sl8			/* StoreTexel */
 };
 
+/* Note: this format name looks like a misnomer, make it sal8? */
 const struct gl_texture_format _mesa_texformat_sla8 = {
    MESA_FORMAT_SLA8,			/* MesaFormat */
    GL_LUMINANCE_ALPHA,			/* BaseFormat */
