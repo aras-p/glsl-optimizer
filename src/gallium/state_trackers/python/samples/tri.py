@@ -142,8 +142,7 @@ def test(dev):
     fb.nr_cbufs = 1
     fb.set_cbuf(0, _cbuf)
     ctx.set_framebuffer(fb)
-    _cbuf.clear_value = 0x00000000
-    ctx.surface_clear(_cbuf, _cbuf.clear_value)
+    ctx.surface_clear(_cbuf, 0x00000000)
     del _cbuf
     
     # vertex shader
