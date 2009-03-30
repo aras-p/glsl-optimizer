@@ -482,12 +482,13 @@ intelTexImage(GLcontext * ctx,
    LOCK_HARDWARE(intel);
 
    if (intelImage->mt) {
-      texImage->Data = intel_miptree_image_map(intel,
-                                               intelImage->mt,
-                                               intelImage->face,
-                                               intelImage->level,
-                                               &dstRowStride,
-                                               intelImage->base.ImageOffsets);
+      if (pixels)
+         texImage->Data = intel_miptree_image_map(intel,
+                                                  intelImage->mt,
+                                                  intelImage->face,
+                                                  intelImage->level,
+                                                  &dstRowStride,
+                                                  intelImage->base.ImageOffsets);
       texImage->RowStride = dstRowStride / intelImage->mt->cpp;
    }
    else {
@@ -537,17 +538,18 @@ intelTexImage(GLcontext * ctx,
 						   format, type, pixels, unpack)) {
 	   _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
        }
-   }
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      intel_generate_mipmap(ctx, target, texObj);
+       /* GL_SGIS_generate_mipmap */
+       if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+	  intel_generate_mipmap(ctx, target, texObj);
+       }
    }
 
    _mesa_unmap_teximage_pbo(ctx, unpack);
 
    if (intelImage->mt) {
-      intel_miptree_image_unmap(intel, intelImage->mt);
+      if (pixels)
+         intel_miptree_image_unmap(intel, intelImage->mt);
       texImage->Data = NULL;
    }
 
