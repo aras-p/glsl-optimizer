@@ -84,7 +84,7 @@
    {
       struct st_surface *surface;
       
-      if(face >= ($self->target == PIPE_TEXTURE_CUBE ? 6 : 1))
+      if(face >= ($self->target == PIPE_TEXTURE_CUBE ? 6U : 1U))
          SWIG_exception(SWIG_ValueError, "face out of bounds");
       if(level > $self->last_level)
          SWIG_exception(SWIG_ValueError, "level out of bounds");
