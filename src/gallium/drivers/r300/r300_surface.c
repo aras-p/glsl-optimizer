@@ -88,6 +88,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     float r, g, b, a, depth;
     unsigned pixpitch = tex->stride / tex->tex.block.size;
 
+    a = (float)((color >> 24) & 0xff) / 255.0f;
     r = (float)((color >> 16) & 0xff) / 255.0f;
     g = (float)((color >>  8) & 0xff) / 255.0f;
     b = (float)((color >>  0) & 0xff) / 255.0f;
@@ -158,11 +159,12 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_PKT3(R200_3D_DRAW_IMMD_2, 8);
     OUT_CS(R300_PRIM_TYPE_POINT | R300_PRIM_WALK_RING |
             (1 << R300_PRIM_NUM_VERTICES_SHIFT));
+    /* Position */
     OUT_CS_32F(w / 2.0);
     OUT_CS_32F(h / 2.0);
-    /* XXX this should be the depth value to clear to */
     OUT_CS_32F(1.0);
     OUT_CS_32F(1.0);
+    /* Color */
     OUT_CS_32F(r);
     OUT_CS_32F(g);
     OUT_CS_32F(b);
