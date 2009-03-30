@@ -272,7 +272,7 @@ class Screen(Object):
         pass
 
     def get_tex_surface(self, texture, face, level, zslice, usage):
-        return texture.get_surface(face, level, zslice, usage)
+        return texture.get_surface(face, level, zslice)
     
     def tex_surface_destroy(self, surface):
         self.interpreter.unregister_object(surface)

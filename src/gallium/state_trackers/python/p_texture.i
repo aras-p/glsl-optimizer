@@ -79,8 +79,9 @@
    
    /** Get a surface which is a "view" into a texture */
    struct pipe_surface *
-   get_surface(unsigned face=0, unsigned level=0, unsigned zslice=0, unsigned usage=0 )
+   get_surface(unsigned face=0, unsigned level=0, unsigned zslice=0 )
    {
+      const usage = PIPE_BUFFER_USAGE_GPU_READ_WRITE;
       struct pipe_screen *screen = $self->screen;
       return screen->get_tex_surface(screen, $self, face, level, zslice, usage);
    }

@@ -197,7 +197,6 @@ class TextureTest(TestCase):
         
         expected_rgba = FloatArray(height*width*4) 
         texture.get_surface(
-            usage = PIPE_BUFFER_USAGE_CPU_READ|PIPE_BUFFER_USAGE_CPU_WRITE,
             face = face,
             level = level,
             zslice = zslice,
@@ -213,7 +212,7 @@ class TextureTest(TestCase):
             tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET,
         )
 
-        cbuf = cbuf_tex.get_surface(usage = PIPE_BUFFER_USAGE_GPU_WRITE|PIPE_BUFFER_USAGE_GPU_READ)
+        cbuf = cbuf_tex.get_surface()
         fb = Framebuffer()
         fb.width = width
         fb.height = height
@@ -290,7 +289,7 @@ class TextureTest(TestCase):
     
         ctx.flush()
     
-        cbuf = cbuf_tex.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ)
+        cbuf = cbuf_tex.get_surface()
         
         total = h*w
         different = cbuf.compare_tile_rgba(x, y, w, h, expected_rgba, tol=4.0/256)

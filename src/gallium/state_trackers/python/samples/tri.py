@@ -135,7 +135,7 @@ def test(dev):
         width, height,
         tex_usage=PIPE_TEXTURE_USAGE_DISPLAY_TARGET,
     )
-    _cbuf = cbuf.get_surface(usage = PIPE_BUFFER_USAGE_GPU_READ|PIPE_BUFFER_USAGE_GPU_WRITE)
+    _cbuf = cbuf.get_surface()
     fb = Framebuffer()
     fb.width = width
     fb.height = height
@@ -205,8 +205,8 @@ def test(dev):
 
     ctx.flush()
     
-    show_image(cbuf.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ|PIPE_BUFFER_USAGE_CPU_WRITE))
-    #save_image('tri.png', cbuf.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ|PIPE_BUFFER_USAGE_CPU_WRITE))
+    show_image(cbuf.get_surface())
+    #save_image('tri.png', cbuf.get_surface())
 
 
 
