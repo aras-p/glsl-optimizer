@@ -132,6 +132,7 @@ static void
                              const struct pipe_constant_buffer* buffer)
 {
     struct r300_context* r300 = r300_context(pipe);
+    int i = r300->shader_constants[shader].user_count;
 
     /* This entire chunk of code seems ever-so-slightly baked.
      * It's as if I've got pipe_buffer* matryoshkas... */
@@ -149,6 +150,12 @@ static void
     }
 
     r300->dirty_state |= R300_NEW_CONSTANTS;
+
+    /* If the number of constants have changed, invalidate the shader. */
+    if (r300->shader_constants[shader].user_count != i) {
+        r300->fs->translated = FALSE;
+        r300_translate_fragment_shader(r300, r300->fs);
+    }
 }
 
 /* Create a new depth, stencil, and alpha state based on the CSO dsa state.
