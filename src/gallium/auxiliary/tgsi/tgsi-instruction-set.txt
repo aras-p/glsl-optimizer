@@ -382,9 +382,7 @@ TGSI Instruction Specification
 
 1.5.7  KILP - Predicated Discard
 
-  if (cc.x || cc.y || cc.z || cc.w)
-    discard
-  endif
+  discard
 
 
 1.5.8  LG2 - Logarithm Base 2
