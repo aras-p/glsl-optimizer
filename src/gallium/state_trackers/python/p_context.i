@@ -257,8 +257,8 @@ error1:
       struct pipe_fence_handle *fence = NULL; 
       $self->pipe->flush($self->pipe, flags | PIPE_FLUSH_RENDER_CACHE, &fence);
       /* TODO: allow asynchronous operation */ 
-      $self->pipe->winsys->fence_finish( $self->pipe->winsys, fence, 0 );
-      $self->pipe->winsys->fence_reference( $self->pipe->winsys, &fence, NULL );
+      $self->pipe->screen->fence_finish( $self->pipe->screen, fence, 0 );
+      $self->pipe->screen->fence_reference( $self->pipe->screen, &fence, NULL );
    }
 
    /*
