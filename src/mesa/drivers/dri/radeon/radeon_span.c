@@ -441,13 +441,6 @@ static void radeonSpanRenderStart(GLcontext * ctx)
 
 	radeon_firevertices(rmesa);
 
-	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
-		if (ctx->Texture.Unit[i]._ReallyEnabled)
-			ctx->Driver.MapTexture(ctx, ctx->Texture.Unit[i]._Current);
-	}
-
-	radeon_map_unmap_buffers(ctx, 1);
-
 	/* The locking and wait for idle should really only be needed in classic mode.
 	 * In a future memory manager based implementation, this should become
 	 * unnecessary due to the fact that mapping our buffers, textures, etc.
@@ -455,6 +448,16 @@ static void radeonSpanRenderStart(GLcontext * ctx)
 	 * be waited on. */
 	LOCK_HARDWARE(rmesa);
 	radeonWaitForIdleLocked(rmesa);
+
+	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
+		if (ctx->Texture.Unit[i]._ReallyEnabled)
+			ctx->Driver.MapTexture(ctx, ctx->Texture.Unit[i]._Current);
+	}
+
+	radeon_map_unmap_buffers(ctx, 1);
+
+
+
 }
 
 static void radeonSpanRenderFinish(GLcontext * ctx)
