@@ -100,31 +100,18 @@ def is_pot(n):
                 
 class TextureTest(TestCase):
     
-    def description(self):
-        target = {
-            PIPE_TEXTURE_1D: "1d", 
-            PIPE_TEXTURE_2D: "2d", 
-            PIPE_TEXTURE_3D: "3d", 
-            PIPE_TEXTURE_CUBE: "cube",
-        }[self.target]
-        format = formats[self.format]
-        if self.target == PIPE_TEXTURE_CUBE:
-            face = {
-                PIPE_TEX_FACE_POS_X: "+x",
-                PIPE_TEX_FACE_NEG_X: "-x",
-                PIPE_TEX_FACE_POS_Y: "+y",
-                PIPE_TEX_FACE_NEG_Y: "-y", 
-                PIPE_TEX_FACE_POS_Z: "+z", 
-                PIPE_TEX_FACE_NEG_Z: "-z",
-            }[self.face]
-        else:
-            face = ""
-        return "%s %s %ux%ux%u last_level=%u face=%s level=%u zslice=%u" % (
-            target, format, 
-            self.width, self.height, self.depth, self.last_level, 
-            face, self.level, self.zslice, 
-        )
-    
+    tags = (
+        'target',
+        'format',
+        'width',
+        'height',
+        'depth',
+        'last_level',
+        'face',
+        'level',
+        'zslice',
+    )
+
     def test(self):
         dev = self.dev
         

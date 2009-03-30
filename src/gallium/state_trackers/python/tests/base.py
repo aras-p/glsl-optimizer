@@ -137,14 +137,54 @@ class Test:
 
 class TestCase(Test):
     
+    tags = ()
+
     def __init__(self, dev, **kargs):
         Test.__init__(self)
         self.dev = dev
         self.__dict__.update(kargs)
 
     def description(self):
-        raise NotImplementedError
-        
+        descriptions = []
+        for tag in self.tags:
+            try:
+                method = getattr(self, '_describe_' + tag)
+            except AttributeError:
+                description = str(getattr(self, tag, None))
+            else:
+                description = method()
+            if description is not None:
+                descriptions.append(tag + '=' + description)
+        return ' '.join(descriptions)
+
+    def _describe_target(self):
+        return {
+            PIPE_TEXTURE_1D: "1d", 
+            PIPE_TEXTURE_2D: "2d", 
+            PIPE_TEXTURE_3D: "3d", 
+            PIPE_TEXTURE_CUBE: "cube",
+        }[self.target]
+
+    def _describe_format(self):
+        name = formats[self.format]
+        if name.startswith('PIPE_FORMAT_'):
+            name  = name[12:]
+        name = name.lower()
+        return name
+
+    def _describe_face(self):
+        if self.target == PIPE_TEXTURE_CUBE:
+            return {
+                PIPE_TEX_FACE_POS_X: "+x",
+                PIPE_TEX_FACE_NEG_X: "-x",
+                PIPE_TEX_FACE_POS_Y: "+y",
+                PIPE_TEX_FACE_NEG_Y: "-y", 
+                PIPE_TEX_FACE_POS_Z: "+z", 
+                PIPE_TEX_FACE_NEG_Z: "-z",
+            }[self.face]
+        else:
+            return None
+
     def test(self):
         raise NotImplementedError
     
