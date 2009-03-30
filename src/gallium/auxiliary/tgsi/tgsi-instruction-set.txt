@@ -548,7 +548,7 @@ TGSI Instruction Specification
 
 1.6.3  BRA - Branch
 
-  TBD
+  pc = target
 
 
 1.6.4  CAL - Subroutine Call
