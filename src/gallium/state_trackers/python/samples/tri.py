@@ -68,7 +68,7 @@ def test(dev):
     width = 255
     height = 255
     minz = 0.0
-    maxz = 0.0
+    maxz = 1.0
 
     # disabled blending/masking
     blend = Blend()
@@ -79,8 +79,11 @@ def test(dev):
     blend.colormask = PIPE_MASK_RGBA
     ctx.set_blend(blend)
 
-    # no-op depth/stencil/alpha
+    # depth/stencil/alpha
     depth_stencil_alpha = DepthStencilAlpha()
+    depth_stencil_alpha.depth.enabled = 1
+    depth_stencil_alpha.depth.writemask = 1
+    depth_stencil_alpha.depth.func = PIPE_FUNC_LESS
     ctx.set_depth_stencil_alpha(depth_stencil_alpha)
 
     # rasterizer
@@ -135,14 +138,20 @@ def test(dev):
         width, height,
         tex_usage=PIPE_TEXTURE_USAGE_DISPLAY_TARGET,
     ).get_surface()
- 
+    zbuf = dev.texture_create(
+        PIPE_FORMAT_Z32_UNORM, 
+        width, height,
+        tex_usage=PIPE_TEXTURE_USAGE_DEPTH_STENCIL,
+    ).get_surface()
     fb = Framebuffer()
     fb.width = width
     fb.height = height
     fb.nr_cbufs = 1
     fb.set_cbuf(0, cbuf)
+    fb.set_zsbuf(zbuf)
     ctx.set_framebuffer(fb)
     ctx.surface_clear(cbuf, 0x00000000)
+    ctx.surface_clear(zbuf, 0xffffffff)
     
     # vertex shader
     vs = Shader('''
@@ -173,7 +182,7 @@ def test(dev):
 
     verts[ 0] =   0.0 # x1
     verts[ 1] =   0.8 # y1
-    verts[ 2] =   0.0 # z1
+    verts[ 2] =   0.2 # z1
     verts[ 3] =   1.0 # w1
     verts[ 4] =   1.0 # r1
     verts[ 5] =   0.0 # g1
@@ -181,7 +190,7 @@ def test(dev):
     verts[ 7] =   1.0 # a1
     verts[ 8] =  -0.8 # x2
     verts[ 9] =  -0.8 # y2
-    verts[10] =   0.0 # z2
+    verts[10] =   0.5 # z2
     verts[11] =   1.0 # w2
     verts[12] =   0.0 # r2
     verts[13] =   1.0 # g2
@@ -189,7 +198,7 @@ def test(dev):
     verts[15] =   1.0 # a2
     verts[16] =   0.8 # x3
     verts[17] =  -0.8 # y3
-    verts[18] =   0.0 # z3
+    verts[18] =   0.8 # z3
     verts[19] =   1.0 # w3
     verts[20] =   0.0 # r3
     verts[21] =   0.0 # g3
@@ -204,7 +213,9 @@ def test(dev):
     ctx.flush()
     
     show_image(cbuf)
-    #save_image('tri.png', cbuf)
+    #show_image(zbuf)
+    #save_image('cbuf.png', cbuf)
+    #save_image('zbuf.png', zbuf)
 
 
 
