@@ -165,10 +165,10 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_32F(1.0);
     OUT_CS_32F(1.0);
     /* Color */
+    OUT_CS_32F(a);
     OUT_CS_32F(r);
     OUT_CS_32F(g);
     OUT_CS_32F(b);
-    OUT_CS_32F(1.0);
 
     /* XXX figure out why this is 0xA and not 0x2 */
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT, 0xA);
