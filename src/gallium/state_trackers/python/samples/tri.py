@@ -134,16 +134,15 @@ def test(dev):
         PIPE_FORMAT_X8R8G8B8_UNORM, 
         width, height,
         tex_usage=PIPE_TEXTURE_USAGE_DISPLAY_TARGET,
-    )
-    _cbuf = cbuf.get_surface()
+    ).get_surface()
+ 
     fb = Framebuffer()
     fb.width = width
     fb.height = height
     fb.nr_cbufs = 1
-    fb.set_cbuf(0, _cbuf)
+    fb.set_cbuf(0, cbuf)
     ctx.set_framebuffer(fb)
-    ctx.surface_clear(_cbuf, 0x00000000)
-    del _cbuf
+    ctx.surface_clear(cbuf, 0x00000000)
     
     # vertex shader
     vs = Shader('''
@@ -204,8 +203,8 @@ def test(dev):
 
     ctx.flush()
     
-    show_image(cbuf.get_surface())
-    #save_image('tri.png', cbuf.get_surface())
+    show_image(cbuf)
+    #save_image('tri.png', cbuf)
 
 
 
