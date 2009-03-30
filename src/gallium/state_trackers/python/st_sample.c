@@ -539,7 +539,7 @@ st_sample_surface(struct st_surface *surface, float *rgba)
                                        surface->face,
                                        surface->level,
                                        surface->zslice,
-                                       PIPE_TRANSFER_READ,
+                                       PIPE_TRANSFER_WRITE,
                                        0, 0,
                                        width,
                                        height);

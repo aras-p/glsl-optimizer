@@ -315,7 +315,7 @@ struct st_surface
                                           $self->face,
                                           $self->level,
                                           $self->zslice,
-                                          PIPE_TRANSFER_WRITE,
+                                          PIPE_TRANSFER_READ,
                                           x, y, w, h);
       if(!transfer) {
          FREE(rgba2);
