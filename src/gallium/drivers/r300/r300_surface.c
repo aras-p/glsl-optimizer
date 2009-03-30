@@ -97,7 +97,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         dest, x, y, w, h, pixpitch, color);
 
     /* Fallback? */
-    if (tex->tex.format != PIPE_FORMAT_A8R8G8B8_UNORM) {
+    if (FALSE) {
         debug_printf("r300: Falling back on surface clear...");
         util_surface_fill(pipe, dest, x, y, w, h, color);
         return;
