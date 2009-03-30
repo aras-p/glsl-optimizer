@@ -34,18 +34,19 @@
 
 
 %nodefaultctor pipe_texture;
-%nodefaultctor pipe_surface;
+%nodefaultctor st_surface;
 %nodefaultctor pipe_buffer;
 
 %nodefaultdtor pipe_texture;
-%nodefaultdtor pipe_surface;
+%nodefaultdtor st_surface;
 %nodefaultdtor pipe_buffer;
 
 %ignore pipe_texture::screen;
 
-%ignore pipe_surface::winsys;
-%immutable pipe_surface::texture;
-%immutable pipe_surface::buffer;
+%immutable st_surface::texture;
+%immutable st_surface::face;
+%immutable st_surface::level;
+%immutable st_surface::zslice;
 
 %newobject pipe_texture::get_surface;
 
@@ -78,22 +79,57 @@
    }
    
    /** Get a surface which is a "view" into a texture */
-   struct pipe_surface *
-   get_surface(unsigned face=0, unsigned level=0, unsigned zslice=0 )
+   struct st_surface *
+   get_surface(unsigned face=0, unsigned level=0, unsigned zslice=0)
    {
-      const usage = PIPE_BUFFER_USAGE_GPU_READ_WRITE;
-      struct pipe_screen *screen = $self->screen;
-      return screen->get_tex_surface(screen, $self, face, level, zslice, usage);
+      struct st_surface *surface;
+      
+      if(face >= ($self->target == PIPE_TEXTURE_CUBE ? 6 : 1))
+         SWIG_exception(SWIG_ValueError, "face out of bounds");
+      if(level > $self->last_level)
+         SWIG_exception(SWIG_ValueError, "level out of bounds");
+      if(zslice >= $self->depth[level])
+         SWIG_exception(SWIG_ValueError, "zslice out of bounds");
+      
+      surface = CALLOC_STRUCT(st_surface);
+      if(!surface)
+         return NULL;
+      
+      pipe_texture_reference(&surface->texture, $self);
+      surface->face = face;
+      surface->level = level;
+      surface->zslice = zslice;
+      
+      return surface;
+
+   fail:
+      return NULL;
    }
    
 };
 
-
-%extend pipe_surface {
+struct st_surface
+{
+   %immutable;
    
-   ~pipe_surface() {
-      struct pipe_surface *ptr = $self;
-      pipe_surface_reference(&ptr, NULL);
+   struct pipe_texture *texture;
+   unsigned face;
+   unsigned level;
+   unsigned zslice;
+   
+};
+
+%extend st_surface {
+   
+   %immutable;
+   
+   unsigned format;
+   unsigned width;
+   unsigned height;
+   
+   ~st_surface() {
+      pipe_texture_reference(&$self->texture, NULL);
+      FREE($self);
    }
    
    void
@@ -308,6 +344,26 @@
    }
 
 };
+
+%{
+   static enum pipe_format
+   st_surface_format_get(struct st_surface *surface)
+   {
+      return surface->texture->format;
+   }
+   
+   static unsigned
+   st_surface_width_get(struct st_surface *surface)
+   {
+      return surface->texture->width[surface->level];
+   }
+   
+   static unsigned
+   st_surface_height_get(struct st_surface *surface)
+   {
+      return surface->texture->height[surface->level];
+   }
+%}
 
 /* Avoid naming conflict with p_inlines.h's pipe_buffer_read/write */ 
 %rename(read) pipe_buffer_read_; 

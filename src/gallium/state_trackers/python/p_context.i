@@ -124,7 +124,9 @@ struct st_context {
       $self->pipe->set_constant_buffer($self->pipe, shader, index, &state);
    }
 
-   void set_framebuffer(const struct pipe_framebuffer_state *state ) {
+   void set_framebuffer(const struct pipe_framebuffer_state *state ) 
+   {
+      memcpy(&$self->framebuffer, state, sizeof *state);
       cso_set_framebuffer($self->cso, state);
    }
 
@@ -265,23 +267,86 @@ error1:
     * Surface functions
     */
    
-   void surface_copy(struct pipe_surface *dest,
+   void surface_copy(struct st_surface *dst,
                      unsigned destx, unsigned desty,
-                     struct pipe_surface *src,
+                     struct st_surface *src,
                      unsigned srcx, unsigned srcy,
-                     unsigned width, unsigned height) {
-      $self->pipe->surface_copy($self->pipe, dest, destx, desty, src, srcx, srcy, width, height);
+                     unsigned width, unsigned height) 
+   {
+      struct pipe_surface *_dst = NULL;
+      struct pipe_surface *_src = NULL;
+      
+      _dst = st_pipe_surface(dst, PIPE_BUFFER_USAGE_GPU_WRITE);
+      if(!_dst)
+         SWIG_exception(SWIG_ValueError, "couldn't acquire destination surface for writing");
+
+      _src = st_pipe_surface(src, PIPE_BUFFER_USAGE_GPU_READ);
+      if(!_src)
+         SWIG_exception(SWIG_ValueError, "couldn't acquire source surface for reading");
+      
+      $self->pipe->surface_copy($self->pipe, _dst, destx, desty, _src, srcx, srcy, width, height);
+      
+   fail:
+      pipe_surface_reference(&_src, NULL);
+      pipe_surface_reference(&_dst, NULL);
    }
 
-   void surface_fill(struct pipe_surface *dst,
+   void surface_fill(struct st_surface *dst,
                      unsigned x, unsigned y,
                      unsigned width, unsigned height,
-                     unsigned value) {
-      $self->pipe->surface_fill($self->pipe, dst, x, y, width, height, value);
+                     unsigned value) 
+   {
+      struct pipe_surface *_dst = NULL;
+      
+      _dst = st_pipe_surface(dst, PIPE_BUFFER_USAGE_GPU_WRITE);
+      if(!_dst)
+         SWIG_exception(SWIG_ValueError, "couldn't acquire destination surface for writing");
+
+      $self->pipe->surface_fill($self->pipe, _dst, x, y, width, height, value);
+      
+   fail:
+      pipe_surface_reference(&_dst, NULL);
    }
 
-   void surface_clear(struct pipe_surface *surface, unsigned value = 0) {
-      $self->pipe->clear($self->pipe, surface, value);
+   void surface_clear(struct st_surface *surface, unsigned value = 0) 
+   {
+      unsigned i;
+      struct pipe_surface *_surface = NULL;
+ 
+      if(!surface)
+          SWIG_exception(SWIG_TypeError, "surface must not be null");
+  
+      for(i = 0; i < $self->framebuffer.nr_cbufs; ++i) {
+         struct pipe_surface *cbuf = $self->framebuffer.cbufs[i];
+         if(cbuf) {
+            if(cbuf->texture == surface->texture &&
+               cbuf->face == surface->face &&
+               cbuf->level == surface->level &&
+               cbuf->zslice == surface->zslice) {                  
+               _surface = cbuf;
+               break;
+            }
+         }
+      }
+
+      if(!_surface) {
+         struct pipe_surface *zsbuf = $self->framebuffer.zsbuf;
+         if(zsbuf) {
+            if(zsbuf->texture == surface->texture &&
+               zsbuf->face == surface->face &&
+               zsbuf->level == surface->level &&
+               zsbuf->zslice == surface->zslice) {                  
+               _surface = zsbuf;
+            }
+         }
+      }
+
+      if(!_surface)
+         SWIG_exception(SWIG_ValueError, "surface not bound");
+      
+      $self->pipe->clear($self->pipe, _surface, value);
+   fail:
+      return;
    }
 
 };

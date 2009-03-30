@@ -69,7 +69,7 @@
 %rename(Device) st_device;
 %rename(Context) st_context;
 %rename(Texture) pipe_texture;
-%rename(Surface) pipe_surface;
+%rename(Surface) st_surface;
 %rename(Buffer) pipe_buffer;
 
 %rename(BlendColor) pipe_blend_color;
