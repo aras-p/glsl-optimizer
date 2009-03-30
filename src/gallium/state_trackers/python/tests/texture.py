@@ -27,7 +27,6 @@
 ##########################################################################
 
 
-import sys
 from gallium import *
 from base import *
 
@@ -291,22 +290,7 @@ class TextureTest(TestCase):
     
         cbuf = cbuf_tex.get_surface()
         
-        total = h*w
-        different = cbuf.compare_tile_rgba(x, y, w, h, expected_rgba, tol=4.0/256)
-        if different:
-            sys.stderr.write("%u out of %u pixels differ\n" % (different, total))
-
-        if float(total - different)/float(total) < 0.85:
-        
-            if 0:
-                rgba = FloatArray(h*w*4)
-                cbuf.get_tile_rgba(x, y, w, h, rgba)
-                show_image(w, h, Result=rgba, Expected=expected_rgba)
-                save_image(w, h, rgba, "result.png")
-                save_image(w, h, expected_rgba, "expected.png")
-            #sys.exit(0)
-            
-            raise TestFailure
+        self.assert_rgba(cbuf, x, y, w, h, expected_rgba, 4.0/256, 0.85)
 
         del ctx
         
