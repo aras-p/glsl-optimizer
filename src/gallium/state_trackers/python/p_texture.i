@@ -225,31 +225,28 @@ struct st_surface
       if(!*STRING)
          return;
       
-      rgba = malloc(w*4*sizeof(float));
+      rgba = malloc(h*w*4*sizeof(float));
       if(!rgba)
          return;
       
       rgba8 = (unsigned char *) *STRING;
 
-      for(j = 0; j < h; ++j) {
-         transfer = screen->get_tex_transfer(screen,
-                                             $self->texture,
-                                             $self->face,
-                                             $self->level,
-                                             $self->zslice,
-                                             PIPE_TRANSFER_READ,
-                                             x, y + j,
-                                             w,
-                                             1);
-         if(transfer) {
-            pipe_get_tile_rgba(transfer,
-                               0, 0, w, 1,
-                               rgba);
+      transfer = screen->get_tex_transfer(screen,
+                                          $self->texture,
+                                          $self->face,
+                                          $self->level,
+                                          $self->zslice,
+                                          PIPE_TRANSFER_READ,
+                                          x, y,
+                                          w, h);
+      if(transfer) {
+         pipe_get_tile_rgba(transfer, 0, 0, w, h, rgba);
+         for(j = 0; j < h; ++j) {
             for(i = 0; i < w; ++i)
                for(k = 0; k <4; ++k)
-                  rgba8[j*w*4 + i*4 + k] = float_to_ubyte(rgba[i*4 + k]);
-            screen->tex_transfer_destroy(transfer);
+                  rgba8[j*w*4 + i*4 + k] = float_to_ubyte(rgba[j*w*4 + i*4 + k]);
          }
+         screen->tex_transfer_destroy(transfer);
       }
       
       free(rgba);
