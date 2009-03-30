@@ -1038,3 +1038,74 @@ TGSI Instruction Specification
 
   Alias for ARR.
 
+
+2  Explanation of symbols used
+==============================
+
+
+2.1  Functions
+--------------
+
+
+  abs(x)            Absolute value of x.
+                    |x|
+                    (x < 0.0) ? -x : x
+
+  ceil(x)           Ceiling of x.
+
+  clamp(x,y,z)      Clamp x between y and z.
+                    (x < y) ? y : (x > z) ? z : x
+
+  cos(x)            Cosine of x.
+
+  floor(x)          Floor of x.
+
+  lg2(x)            Logarithm base 2 of x.
+
+  max(x,y)          Maximum of x and y.
+                    (x > y) ? x : y
+
+  min(x,y)          Minimum of x and y.
+                    (x < y) ? x : y
+
+  partialx(x)       Derivative of x relative to fragment's X.
+
+  partialy(x)       Derivative of x relative to fragment's Y.
+
+  pop()             Pop from stack.
+
+  pow(x,y)          Raise x to power of y.
+
+  push(x)           Push x on stack.
+
+  round(x)          Round x.
+
+  sin(x)            Sine of x.
+
+  sqrt(x)           Square root of x.
+
+  trunc(x)          Truncate x.
+
+
+2.2  Keywords
+-------------
+
+
+  discard           Discard fragment.
+
+  dst               First destination register.
+
+  dst0              First destination register.
+
+  pc                Program counter.
+
+  src               First source register.
+
+  src0              First source register.
+
+  src1              Second source register.
+
+  src2              Third source register.
+
+  target            Label of target instruction.
+
