@@ -99,12 +99,6 @@ st_get_stobj_texture(struct st_texture_object *stObj)
    return stObj ? stObj->pt : NULL;
 }
 
-static INLINE GLboolean pf_is_depth_stencil( enum pipe_format format )
-{
-   return (pf_get_component_bits( format, PIPE_FORMAT_COMP_Z ) +
-           pf_get_component_bits( format, PIPE_FORMAT_COMP_S )) != 0;
-}
-
 
 extern struct pipe_texture *
 st_texture_create(struct st_context *st,

@@ -537,6 +537,13 @@ pf_get_nblocks(const struct pipe_format_block *block, unsigned width, unsigned h
 }
 
 static INLINE boolean 
+pf_is_depth_stencil( enum pipe_format format )
+{
+   return (pf_get_component_bits( format, PIPE_FORMAT_COMP_Z ) +
+           pf_get_component_bits( format, PIPE_FORMAT_COMP_S )) != 0;
+}
+
+static INLINE boolean 
 pf_is_compressed( enum pipe_format format )
 {
    return pf_layout(format) == PIPE_FORMAT_LAYOUT_DXT ? TRUE : FALSE;
