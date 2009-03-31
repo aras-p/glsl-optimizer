@@ -134,11 +134,20 @@ struct st_surface
       FREE($self);
    }
    
-   void
-   get_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, char *raw, unsigned stride)
+   %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));
+   void get_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, char **STRING, int *LENGTH)
    {
-      struct pipe_screen *screen = $self->texture->screen;
+      struct pipe_texture *texture = $self->texture;
+      struct pipe_screen *screen = texture->screen;
       struct pipe_transfer *transfer;
+      unsigned stride;
+
+      stride = pf_get_nblocksx(&texture->block, w) * texture->block.size;
+      *LENGTH = pf_get_nblocksy(&texture->block, h) * stride;
+      *STRING = (char *) malloc(*LENGTH);
+      if(!*STRING)
+         return;
+
       transfer = screen->get_tex_transfer(screen,
                                           $self->texture,
                                           $self->face,
@@ -147,16 +156,24 @@ struct st_surface
                                           PIPE_TRANSFER_READ,
                                           x, y, w, h);
       if(transfer) {
-         pipe_get_tile_raw(transfer, 0, 0, w, h, raw, stride);
+         pipe_get_tile_raw(transfer, 0, 0, w, h, *STRING, stride);
          screen->tex_transfer_destroy(transfer);
       }
    }
 
-   void
-   put_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, const char *raw, unsigned stride)
+   %cstring_input_binary(const char *STRING, unsigned LENGTH);
+   void put_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, const char *STRING, unsigned LENGTH, unsigned stride = 0)
    {
-      struct pipe_screen *screen = $self->texture->screen;
+      struct pipe_texture *texture = $self->texture;
+      struct pipe_screen *screen = texture->screen;
       struct pipe_transfer *transfer;
+     
+      if(stride == 0)
+         stride = pf_get_nblocksx(&texture->block, w) * texture->block.size;
+      
+      if(LENGTH < pf_get_nblocksy(&texture->block, h) * stride)
+         SWIG_exception(SWIG_ValueError, "offset must be smaller than buffer size");
+         
       transfer = screen->get_tex_transfer(screen,
                                           $self->texture,
                                           $self->face,
@@ -164,10 +181,14 @@ struct st_surface
                                           $self->zslice,
                                           PIPE_TRANSFER_WRITE,
                                           x, y, w, h);
-      if(transfer) {
-         pipe_put_tile_raw(transfer, 0, 0, w, h, raw, stride);
-         screen->tex_transfer_destroy(transfer);
-      }
+      if(!transfer)
+         SWIG_exception(SWIG_MemoryError, "couldn't initiate transfer");
+         
+      pipe_put_tile_raw(transfer, 0, 0, w, h, STRING, stride);
+      screen->tex_transfer_destroy(transfer);
+
+   fail:
+      return;
    }
 
    void
