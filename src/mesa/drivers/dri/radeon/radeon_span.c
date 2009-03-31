@@ -178,6 +178,19 @@ static GLubyte *radeon_ptr(const struct radeon_renderbuffer * rrb,
     return &ptr[offset];
 }
 
+#ifndef COMPILE_R300
+static uint32_t
+z24s8_to_s8z24(uint32_t val)
+{
+   return (val << 24) | (val >> 8);
+}
+
+static uint32_t
+s8z24_to_z24s8(uint32_t val)
+{
+   return (val >> 24) | (val << 8);
+}
+#endif
 
 /*
  * Note that all information needed to access pixels in a renderbuffer
@@ -288,7 +301,7 @@ static GLubyte *radeon_ptr(const struct radeon_renderbuffer * rrb,
 #define TAG(x) radeon##x##_z16
 #include "depthtmp.h"
 
-/* 24 bit depth, 8 bit stencil depthbuffer functions
+/* 24 bit depth
  *
  * Careful: It looks like the R300 uses ZZZS byte order while the R200
  * uses SZZZ for 24 bit depth, 8 bit stencil mode.
@@ -317,12 +330,52 @@ do {									\
 
 #ifdef COMPILE_R300
 #define READ_DEPTH( d, _x, _y )						\
-  do { \
+  do {									\
     d = (*(GLuint*)(radeon_ptr32(rrb, _x + x_off, _y + y_off)) & 0xffffff00) >> 8; \
   }while(0)
 #else
+#define READ_DEPTH( d, _x, _y )	\
+  d = *(GLuint*)(radeon_ptr32(rrb, _x + x_off,	_y + y_off)) & 0x00ffffff;
+#endif
+/*
+    fprintf(stderr, "dval(%d, %d, %d, %d)=0x%08X\n", _x, xo, _y, yo, d);\
+   d = *(GLuint*)(radeon_ptr(rrb, _x,	_y )) & 0x00ffffff;
+*/
+#define TAG(x) radeon##x##_z24
+#include "depthtmp.h"
+
+/* 24 bit depth, 8 bit stencil depthbuffer functions
+ * EXT_depth_stencil
+ *
+ * Careful: It looks like the R300 uses ZZZS byte order while the R200
+ * uses SZZZ for 24 bit depth, 8 bit stencil mode.
+ */
+#define VALUE_TYPE GLuint
+
+#ifdef COMPILE_R300
+#define WRITE_DEPTH( _x, _y, d )					\
+do {									\
+   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );		\
+   *_ptr = d;								\
+} while (0)
+#else
+#define WRITE_DEPTH( _x, _y, d )					\
+do {									\
+   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );	\
+   GLuint tmp = z24s8_to_s8z24(d);					\
+   *_ptr = tmp;					\
+} while (0)
+#endif
+
+#ifdef COMPILE_R300
 #define READ_DEPTH( d, _x, _y )						\
-   d = *(GLuint*)(radeon_ptr32(rrb, _x + x_off,	_y + y_off )) & 0x00ffffff;
+  do { \
+    d = (*(GLuint*)(radeon_ptr32(rrb, _x + x_off, _y + y_off)));	\
+  }while(0)
+#else
+#define READ_DEPTH( d, _x, _y )	do {					\
+    d = s8z24_to_z24s8(*(GLuint*)(radeon_ptr32(rrb, _x + x_off,	_y + y_off ))); \
+  } while (0)
 #endif
 /*
     fprintf(stderr, "dval(%d, %d, %d, %d)=0x%08X\n", _x, xo, _y, yo, d);\
@@ -497,9 +550,9 @@ static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
 	} else if (rrb->base._ActualFormat == GL_DEPTH_COMPONENT16) {
 		radeonInitDepthPointers_z16(&rrb->base);
 	} else if (rrb->base._ActualFormat == GL_DEPTH_COMPONENT24) {
-		radeonInitDepthPointers_z24_s8(&rrb->base);
+		radeonInitDepthPointers_z24(&rrb->base);
 	} else if (rrb->base._ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
-		radeonInitStencilPointers_z24_s8(&rrb->base);
+		radeonInitDepthPointers_z24_s8(&rrb->base);
 	} else if (rrb->base._ActualFormat == GL_STENCIL_INDEX8_EXT) {
 		radeonInitStencilPointers_z24_s8(&rrb->base);
 	}

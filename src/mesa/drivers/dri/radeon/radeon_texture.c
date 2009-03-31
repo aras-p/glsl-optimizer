@@ -458,25 +458,13 @@ const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,
 	case GL_DEPTH_COMPONENT16:
 	case GL_DEPTH_COMPONENT24:
 	case GL_DEPTH_COMPONENT32:
-#if 0
-		switch (type) {
-		case GL_UNSIGNED_BYTE:
-		case GL_UNSIGNED_SHORT:
-			return &_mesa_texformat_z16;
-		case GL_UNSIGNED_INT:
-			return &_mesa_texformat_z32;
-		case GL_UNSIGNED_INT_24_8_EXT:
-		default:
-			return &_mesa_texformat_z24_s8;
-		}
-#else
-		return &_mesa_texformat_z16;
-#endif
-
+	case GL_DEPTH_STENCIL_EXT:
+	case GL_DEPTH24_STENCIL8_EXT:
+		return &_mesa_texformat_s8_z24;
 	default:
 		_mesa_problem(ctx,
-			      "unexpected internalFormat 0x%x in r300ChooseTextureFormat",
-			      (int)internalFormat);
+			      "unexpected internalFormat 0x%x in %s",
+			      (int)internalFormat, __func__);
 		return NULL;
 	}
 
