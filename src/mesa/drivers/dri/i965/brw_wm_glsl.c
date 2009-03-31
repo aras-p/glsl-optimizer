@@ -276,7 +276,12 @@ static struct brw_reg get_src_reg_imm(struct brw_wm_compile *c,
        const int component = GET_SWZ(src->Swizzle, index);
        const GLfloat *param =
           c->fp->program.Base.Parameters->ParameterValues[src->Index];
-       return brw_imm_f(param[component]);
+       GLfloat value = param[component];
+       if (src->NegateBase)
+          value = -value;
+       if (src->Abs)
+          value = FABSF(value);
+       return brw_imm_f(value);
     }
     else {
        return get_src_reg(c, src, index);
