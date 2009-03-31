@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##########################################################################
 # 
+# Copyright 2009 VMware, Inc.
 # Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
 # All Rights Reserved.
 # 
@@ -19,7 +20,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 # MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
-# IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+# IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
 # ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -278,8 +279,6 @@ class TextureTest(TestCase):
         cbuf = cbuf_tex.get_surface()
         
         self.assert_rgba(cbuf, x, y, w, h, expected_rgba, 4.0/256, 0.85)
-
-        del ctx
         
 
 
@@ -287,43 +286,57 @@ def main():
     dev = Device()
     suite = TestSuite()
     
-    targets = []
-    targets += [PIPE_TEXTURE_2D]
-    targets += [PIPE_TEXTURE_CUBE]
-    targets += [PIPE_TEXTURE_3D]
+    targets = [
+        PIPE_TEXTURE_2D,
+        PIPE_TEXTURE_CUBE,
+        PIPE_TEXTURE_3D,
+    ]
     
-    formats = []
-    formats += [PIPE_FORMAT_A8R8G8B8_UNORM]
-    formats += [PIPE_FORMAT_R5G6B5_UNORM]
-    formats += [PIPE_FORMAT_L8_UNORM]
-    formats += [PIPE_FORMAT_YCBCR]
-    formats += [PIPE_FORMAT_DXT1_RGB]
+    formats = [
+        PIPE_FORMAT_A8R8G8B8_UNORM,
+        PIPE_FORMAT_X8R8G8B8_UNORM,
+        #PIPE_FORMAT_A8R8G8B8_SRGB,
+        PIPE_FORMAT_R5G6B5_UNORM,
+        PIPE_FORMAT_A1R5G5B5_UNORM,
+        PIPE_FORMAT_A4R4G4B4_UNORM,
+        #PIPE_FORMAT_Z32_UNORM,
+        #PIPE_FORMAT_Z24S8_UNORM,
+        #PIPE_FORMAT_Z24X8_UNORM,
+        #PIPE_FORMAT_Z16_UNORM,
+        #PIPE_FORMAT_S8_UNORM,
+        PIPE_FORMAT_A8_UNORM,
+        PIPE_FORMAT_L8_UNORM,
+        PIPE_FORMAT_YCBCR,
+        PIPE_FORMAT_DXT1_RGB,
+        #PIPE_FORMAT_DXT1_RGBA,
+        #PIPE_FORMAT_DXT3_RGBA,
+        #PIPE_FORMAT_DXT5_RGBA,
+    ]
     
     sizes = [64, 32, 16, 8, 4, 2, 1]
     #sizes = [1020, 508, 252, 62, 30, 14, 6, 3]
     #sizes = [64]
     #sizes = [63]
     
+    faces = [
+        PIPE_TEX_FACE_POS_X,
+        PIPE_TEX_FACE_NEG_X,
+        PIPE_TEX_FACE_POS_Y,
+        PIPE_TEX_FACE_NEG_Y, 
+        PIPE_TEX_FACE_POS_Z, 
+        PIPE_TEX_FACE_NEG_Z,
+    ]
+
     for target in targets:
         for format in formats:
             for size in sizes:
-                if target == PIPE_TEXTURE_CUBE:
-                    faces = [
-                        PIPE_TEX_FACE_POS_X,
-                        PIPE_TEX_FACE_NEG_X,
-                        PIPE_TEX_FACE_POS_Y,
-                        PIPE_TEX_FACE_NEG_Y, 
-                        PIPE_TEX_FACE_POS_Z, 
-                        PIPE_TEX_FACE_NEG_Z,
-                    ]
-                    #faces = [PIPE_TEX_FACE_NEG_X]
-                else:
-                    faces = [0]
                 if target == PIPE_TEXTURE_3D:
                     depth = size
                 else:
                     depth = 1
                 for face in faces:
+                    if target != PIPE_TEXTURE_CUBE and face:
+                        continue
                     levels = lods(size)
                     for last_level in range(levels):
                         for level in range(0, last_level + 1):
