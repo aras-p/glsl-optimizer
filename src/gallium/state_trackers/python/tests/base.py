@@ -237,21 +237,25 @@ class TestResult:
         self.rows = []
     
     def test_start(self, test):
-        print "Running %s..." % test.description()
+        sys.stdout.write("Running %s...\n" % test.description())
+        sys.stdout.flush()
         self.tests += 1
     
     def test_passed(self, test):
-        print "PASS"
+        sys.stdout.write("PASS\n")
+        sys.stdout.flush()
         self.passed += 1
         self.log_result(test, 'pass')
             
     def test_skipped(self, test):
-        print "SKIP"
+        sys.stdout.write("SKIP\n")
+        sys.stdout.flush()
         self.skipped += 1
         #self.log_result(test, 'skip')
         
     def test_failed(self, test):
-        print "FAIL"
+        sys.stdout.write("FAIL\n")
+        sys.stdout.flush()
         self.failed += 1
         self.log_result(test, 'fail')
 
@@ -282,7 +286,8 @@ class TestResult:
         self.rows.append(row)
 
     def summary(self):
-        print "%u tests, %u passed, %u skipped, %u failed" % (self.tests, self.passed, self.skipped, self.failed)
+        sys.stdout.write("%u tests, %u passed, %u skipped, %u failed\n\n" % (self.tests, self.passed, self.skipped, self.failed))
+        sys.stdout.flush()
 
         name, ext = os.path.splitext(os.path.basename(sys.argv[0]))
         filename = name + '.tsv'
