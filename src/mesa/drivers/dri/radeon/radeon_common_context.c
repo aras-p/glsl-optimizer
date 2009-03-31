@@ -508,8 +508,11 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 			}
 		}
 
-		if (buffers[i].attachment == __DRI_BUFFER_DEPTH)
+		if (buffers[i].attachment == __DRI_BUFFER_DEPTH) {
+			if (draw->base.Visual.depthBits == 16)
+				rb->cpp = 2;
 			depth_bo = bo;
+		}
 
 		radeon_renderbuffer_set_bo(rb, bo);
 		radeon_bo_unref(bo);
