@@ -125,6 +125,9 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    key->offset_factor = ctx->Polygon.OffsetFactor;
 }
 
+/**
+ * Setup wm hardware state.  See page 225 of Volume 2
+ */
 static dri_bo *
 wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 			dri_bo **reloc_bufs)
@@ -151,9 +154,9 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    wm.thread3.dispatch_grf_start_reg = key->dispatch_grf_start_reg;
    wm.thread3.urb_entry_read_length = key->urb_entry_read_length;
+   wm.thread3.urb_entry_read_offset = 0;
    wm.thread3.const_urb_entry_read_length = key->curb_entry_read_length;
    wm.thread3.const_urb_entry_read_offset = key->curbe_offset * 2;
-   wm.thread3.urb_entry_read_offset = 0;
 
    wm.wm4.sampler_count = (key->sampler_count + 1) / 4;
    if (brw->wm.sampler_bo != NULL) {
