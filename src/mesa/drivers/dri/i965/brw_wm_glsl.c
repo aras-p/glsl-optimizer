@@ -192,28 +192,41 @@ static void prealloc_reg(struct brw_wm_compile *c)
     /* constants */
     {
         const int nr_params = c->fp->program.Base.Parameters->NumParameters;
-        const struct gl_program_parameter_list *plist = 
-	    c->fp->program.Base.Parameters;
-	int index = 0;
 
-        /* number of float constants */
-	c->prog_data.nr_params = 4 * nr_params;
+        if (1 /* XXX threshold: nr_params <= 8 */) {
+           const struct gl_program_parameter_list *plist = 
+              c->fp->program.Base.Parameters;
+           int index = 0;
 
-        /* loop over program constants (float[4]) */
-	for (i = 0; i < nr_params; i++) {
-            /* loop over XYZW channels */
-            for (j = 0; j < 4; j++, index++) {
-                reg = brw_vec1_grf(c->reg_index + index / 8, index % 8);
-                /* Save pointer to parameter/constant value.
-                 * Constants will be copied in prepare_constant_buffer()
-                 */
-                c->prog_data.param[index] = &plist->ParameterValues[i][j];
-                set_reg(c, PROGRAM_STATE_VAR, i, j, reg);
-	    }
-	}
-        /* number of constant regs used (each reg is float[8]) */
-	c->nr_creg = 2 * ((4 * nr_params + 15) / 16);
-	c->reg_index += c->nr_creg;
+           /* number of float constants in CURBE */
+           c->prog_data.nr_params = 4 * nr_params;
+
+           /* loop over program constants (float[4]) */
+           for (i = 0; i < nr_params; i++) {
+              /* loop over XYZW channels */
+              for (j = 0; j < 4; j++, index++) {
+                 reg = brw_vec1_grf(c->reg_index + index / 8, index % 8);
+                 /* Save pointer to parameter/constant value.
+                  * Constants will be copied in prepare_constant_buffer()
+                  */
+                 c->prog_data.param[index] = &plist->ParameterValues[i][j];
+                 set_reg(c, PROGRAM_STATE_VAR, i, j, reg);
+              }
+           }
+           /* number of constant regs used (each reg is float[8]) */
+           c->nr_creg = 2 * ((4 * nr_params + 15) / 16);
+           c->reg_index += c->nr_creg;
+        }
+        else {
+           /* number of float constants in CURBE */
+           c->prog_data.nr_params = 0;
+
+           /* When there's a lot of FP constanst we'll store them in a
+            * texture-like buffer instead of using the CURBE buffer.
+            * This means we won't use GRF registers for constants and we'll
+            * have to fetch constants with a dataport read.
+            */
+        }
     }
 
     /* fragment shader inputs */
@@ -889,6 +902,19 @@ static void emit_add(struct brw_wm_compile *c,
 	    brw_ADD(p, dst, src0, src1);
 	}
     }
+    brw_set_saturate(p, 0);
+}
+
+static void emit_arl(struct brw_wm_compile *c,
+                     struct prog_instruction *inst)
+{
+    struct brw_compile *p = &c->func;
+    struct brw_reg src0, addr_reg;
+    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
+    addr_reg = brw_uw8_reg(BRW_ARCHITECTURE_REGISTER_FILE, 
+                           BRW_ARF_ADDRESS, 0);
+    src0 = get_src_reg(c, &inst->SrcReg[0], 0); /* channel 0 */
+    brw_MOV(p, addr_reg, src0);
     brw_set_saturate(p, 0);
 }
 
@@ -2331,9 +2357,10 @@ static void emit_txb(struct brw_wm_compile *c,
     struct brw_compile *p = &c->func;
     struct brw_reg dst[4], src[4], payload_reg;
     GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
-
     GLuint i;
+
     payload_reg = get_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, 0, 1, 0, 0);
+
     for (i = 0; i < 4; i++) 
 	dst[i] = get_dst_reg(c, inst, i);
     for (i = 0; i < 4; i++)
@@ -2372,13 +2399,13 @@ static void emit_txb(struct brw_wm_compile *c,
                0);                                          /* eot */
 }
 
+
 static void emit_tex(struct brw_wm_compile *c,
 		struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     struct brw_reg dst[4], src[4], payload_reg;
     GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
-
     GLuint msg_len;
     GLuint i, nr;
     GLuint emit;
@@ -2419,7 +2446,7 @@ static void emit_tex(struct brw_wm_compile *c,
     }
 
     if (shadow) {
-       brw_MOV(p, brw_message_reg(5), brw_imm_f(0));  /* lod / bais */
+       brw_MOV(p, brw_message_reg(5), brw_imm_f(0));  /* lod / bias */
        brw_MOV(p, brw_message_reg(6), src[2]);        /* ref value / R coord */
     }
 
@@ -2438,6 +2465,49 @@ static void emit_tex(struct brw_wm_compile *c,
     if (shadow)
 	brw_MOV(p, dst[3], brw_imm_f(1.0));
 }
+
+
+static void emit_get_constant(struct brw_context *brw,
+                              struct brw_wm_compile *c,
+                              struct prog_instruction *inst,
+                              GLuint constIndex)
+{
+   struct brw_compile *p = &c->func;
+   struct brw_reg dst[4];
+   GLuint i;
+   const int mark = mark_tmps( c );
+   struct brw_reg writeback_reg[4];
+
+   /* XXX only need 1 temp reg??? */
+   for (i = 0; i < 4; i++) {
+      writeback_reg[i] = alloc_tmp(c);
+   }
+
+   for (i = 0; i < 4; i++) {
+      dst[i] = get_dst_reg(c, inst, i);
+   }
+
+   /* Get float[4] vector from constant buffer */
+   brw_dp_READ_4(p,
+                 writeback_reg[0],     /* first writeback dest */
+                 1,                    /* msg_reg */
+                 GL_FALSE,             /* rel addr? */
+                 16 * constIndex,      /* byte offset */
+                 BRW_WM_MAX_SURF - 1   /* surface, binding table index */
+                 );
+
+   /* Extract the four channel values, smear across dest registers */
+   for (i = 0; i < 4; i++) {
+      /* extract 1 float from the writeback reg */
+      struct brw_reg new_src = stride(writeback_reg[0], 0, 1, 0);
+      new_src.subnr = i * 4;
+      /* and smear it into the dest register */
+      brw_MOV(p, dst[i], new_src);
+   }
+
+   release_tmps( c, mark );
+}
+
 
 /**
  * Resolve subroutine calls after code emit is done.
@@ -2504,6 +2574,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_ADD:
 		emit_add(c, inst);
 		break;
+	    case OPCODE_ARL:
+		emit_arl(c, inst);
+		break;
 	    case OPCODE_SUB:
 		emit_sub(c, inst);
 		break;
@@ -2520,7 +2593,17 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_trunc(c, inst);
 		break;
 	    case OPCODE_MOV:
+#if 0
+                /* test hook for new constant buffer code */
+                if (inst->SrcReg[0].File == PROGRAM_UNIFORM) {
+                   emit_get_constant(brw, c, inst, inst->SrcReg[0].Index);
+                }
+                else {
+                   emit_mov(c, inst);
+                }
+#else
 		emit_mov(c, inst);
+#endif
 		break;
 	    case OPCODE_DP3:
 		emit_dp3(c, inst);
