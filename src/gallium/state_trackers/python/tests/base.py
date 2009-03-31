@@ -329,6 +329,6 @@ class TestResult:
 
         tree = orngTree.TreeLearner(data, sameMajorityPruning=1, mForPruning=2)
 
-        orngTree.printTxt(tree)
+        orngTree.printTxt(tree, maxDepth=4)
 
         orngTree.printDot(tree, fileName=name+'.dot', nodeShape='ellipse', leafShape='box')
