@@ -558,6 +558,9 @@ static void r300KernelClear(GLcontext *ctx, GLuint flags)
 	if (rrbd && (flags & BUFFER_BIT_DEPTH))
 		bits |= CLEARBUFFER_DEPTH;
 
+	if (rrbd && (flags & BUFFER_BIT_STENCIL))
+		bits |= CLEARBUFFER_STENCIL;
+
 	if (flags & BUFFER_BIT_COLOR0) {
 		rrb = radeon_get_renderbuffer(&rfb->base, BUFFER_COLOR0);
 		r300ClearBuffer(r300, CLEARBUFFER_COLOR, rrb, NULL);
