@@ -582,6 +582,11 @@ void r300_translate_fragment_shader(struct r300_context* r300,
     /* Setup starting offset for immediates. */
     assembler->imm_offset = consts->user_count;
 
+    /* Make sure we start at the beginning of the shader. */
+    if (is_r500) {
+        ((struct r500_fragment_shader*)fs)->instruction_count = 0;
+    }
+
     tgsi_parse_init(&parser, fs->state.tokens);
 
     while (!tgsi_parse_end_of_tokens(&parser)) {
