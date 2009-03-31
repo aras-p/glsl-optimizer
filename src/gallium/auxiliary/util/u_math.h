@@ -320,6 +320,18 @@ util_iround(float f)
 
 
 /**
+ * Test if x is NaN or +/- infinity.
+ */
+static INLINE boolean
+util_is_inf_or_nan(float x)
+{
+   union fi tmp;
+   tmp.f = x;
+   return !(int)((unsigned int)((tmp.i & 0x7fffffff)-0x7f800000) >> 31);
+}
+
+
+/**
  * Find first bit set in word.  Least significant bit is 1.
  * Return 0 if no bits set.
  */
