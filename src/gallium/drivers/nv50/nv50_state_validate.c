@@ -244,7 +244,7 @@ nv50_state_validate(struct nv50_context *nv50)
 	}
 scissor_uptodate:
 
-	if (nv50->dirty & NV50_NEW_VIEWPORT) {
+	if (nv50->dirty & (NV50_NEW_VIEWPORT | NV50_NEW_RASTERIZER)) {
 		unsigned bypass;
 
 		if (!nv50->rasterizer->pipe.bypass_vs_clip_and_viewport)
@@ -281,6 +281,7 @@ scissor_uptodate:
 
 		so_ref(so, &nv50->state.viewport);
 		so_ref(NULL, &so);
+		nv50->state.dirty |= NV50_NEW_VIEWPORT;
 	}
 viewport_uptodate:
 
