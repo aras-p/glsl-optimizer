@@ -305,11 +305,12 @@ VP_CHECK( tcl_vpp_size, ctx->VertexProgram.Current->Base.NumNativeParameters > 9
     OUT_BATCH_TABLE((data), h.vectors.count);				\
   } while(0)
 
-#define OUT_VECLINEAR(hdr, data) do {			\
-    drm_radeon_cmd_header_t h;					\
-    uint32_t _start = h.veclinear.addr_lo | (h.veclinear.addr_hi << 8);	\
-    uint32_t _sz = h.veclinear.count * 4;				\
+#define OUT_VECLINEAR(hdr, data) do {					\
+    drm_radeon_cmd_header_t h;						\
+    uint32_t _start, _sz;						\
     h.i = hdr;								\
+    _start = h.veclinear.addr_lo | (h.veclinear.addr_hi << 8);		\
+    _sz = h.veclinear.count * 4;					\
     OUT_BATCH(CP_PACKET0(RADEON_SE_TCL_STATE_FLUSH, 0));		\
     OUT_BATCH(0);							\
     OUT_BATCH(CP_PACKET0(R200_SE_TCL_VECTOR_INDX_REG, 0));		\
