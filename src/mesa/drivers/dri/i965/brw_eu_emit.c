@@ -950,6 +950,56 @@ void brw_dp_READ_16( struct brw_compile *p,
 }
 
 
+/**
+ * Read a float[4] vector from the data port Data Cache (const buffer).
+ * Scratch offset should be a multiple of 16.
+ * Used for fetching shader constants.
+ * If relAddr is true, we'll do an indirect fetch using the address register.
+ */
+void brw_dp_READ_4( struct brw_compile *p,
+                    struct brw_reg dest,
+                    GLuint msg_reg_nr,
+                    GLboolean relAddr,
+                    GLuint scratch_offset,
+                    GLuint bind_table_index )
+{
+   {
+      brw_push_insn_state(p);
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+      brw_set_mask_control(p, BRW_MASK_DISABLE);
+
+      /* set message header global offset field (reg 0, element 2) */
+      brw_MOV(p,
+	      retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_UD),
+	      brw_imm_d(scratch_offset));
+      brw_pop_insn_state(p);
+   }
+
+   {
+      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+   
+      insn->header.predicate_control = 0; /* XXX */
+      insn->header.compression_control = BRW_COMPRESSION_NONE; 
+      insn->header.destreg__conditonalmod = msg_reg_nr;
+  
+      /* cast dest to a uword[8] vector */
+      dest = retype(vec8(dest), BRW_REGISTER_TYPE_UW);
+
+      brw_set_dest(insn, dest);
+      brw_set_src0(insn, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
+
+      brw_set_dp_read_message(insn,
+			      bind_table_index, /* binding table index (255=stateless) */
+			      0,  /* msg_control (0 means 1 Oword) */
+			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
+			      0, /* source cache = data cache */
+			      1, /* msg_length */
+			      2, /* response_length */
+			      0); /* eot */
+   }
+}
+
+
 void brw_fb_WRITE(struct brw_compile *p,
                   struct brw_reg dest,
                   GLuint msg_reg_nr,
