@@ -331,4 +331,6 @@ class TestResult:
 
         orngTree.printTxt(tree, maxDepth=4)
 
+        file(name+'.txt', 'wt').write(orngTree.dumpTree(tree))
+
         orngTree.printDot(tree, fileName=name+'.dot', nodeShape='ellipse', leafShape='box')

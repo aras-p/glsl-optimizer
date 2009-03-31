@@ -18,4 +18,6 @@ for arg in sys.argv[1:]:
 
     orngTree.printTxt(tree)
 
+    file(name+'.txt', 'wt').write(orngTree.dumpTree(tree) + '\n')
+
     orngTree.printDot(tree, fileName=name+'.dot', nodeShape='ellipse', leafShape='box')
