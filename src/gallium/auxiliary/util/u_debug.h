@@ -129,7 +129,7 @@ void debug_print_format(const char *msg, unsigned fmt );
  * Hard-coded breakpoint.
  */
 #ifdef DEBUG
-#if defined(PIPE_ARCH_X86) && defined(PIPE_CC_GCC)
+#if (defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)) && defined(PIPE_CC_GCC)
 #define debug_break() __asm("int3")
 #elif defined(PIPE_CC_MSVC)
 #define debug_break()  __debugbreak()
