@@ -251,10 +251,10 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
 
    if (rmesa->radeon.radeonScreen->kernel_mm)
       r200UserClear(ctx, orig_mask);
-   else
+   else {
       r200KernelClear(ctx, flags);
-
-   rmesa->radeon.hw.all_dirty = GL_TRUE;
+      rmesa->radeon.hw.all_dirty = GL_TRUE;
+   }
 }
 
 /* This version of AllocateMemoryMESA allocates only GART memory, and
