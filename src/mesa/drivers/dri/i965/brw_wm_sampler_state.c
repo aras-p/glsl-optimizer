@@ -218,44 +218,6 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
 }
 
 
-#if 0
-/**
- * Setup the sampler state for the "constant buffer texture".
- * The constant buffer texture is basically a 1D float[4] texture whose
- * width == the number of program parameters/constants.
- */
-static void
-brwm_wm_setup_constant_sampler(struct brw_context *brw,
-                               struct wm_sampler_key *key)
-{
-   static const GLfloat black[4] = {0.0F, 0.0F, 0.0F, 0.0F};
-   const GLuint unit = BRW_MAX_TEX_UNIT - 1;
-   struct wm_sampler_entry *entry = &key->sampler[unit];
-
-   entry->tex_target = GL_TEXTURE_1D;
-
-   entry->wrap_r = GL_CLAMP_TO_EDGE;
-   entry->wrap_s = GL_CLAMP_TO_EDGE;
-   entry->wrap_t = GL_CLAMP_TO_EDGE;
-
-   entry->maxlod = 0.0F;
-   entry->minlod = 0.0F;
-   entry->lod_bias = 0.0F;
-   entry->max_aniso = 0.0F;
-   entry->minfilter = GL_NEAREST;
-   entry->magfilter = GL_NEAREST;
-   entry->comparemode = GL_NONE;
-   entry->comparefunc = GL_ALWAYS;
-
-   dri_bo_unreference(brw->wm.sdc_bo[unit]);
-
-   brw->wm.sdc_bo[unit] = upload_default_color(brw, black);
-
-   key->sampler_count = unit + 1;
-}
-#endif
-
-
 /** Sets up the cache key for sampler state for all texture units */
 static void
 brw_wm_sampler_populate_key(struct brw_context *brw,
@@ -310,10 +272,6 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 key->sampler_count = unit + 1;
       }
    }
-
-#if 0
-   brwm_wm_setup_constant_sampler(brw, key);
-#endif
 }
 
 /* All samplers must be uploaded in a single contiguous array, which
