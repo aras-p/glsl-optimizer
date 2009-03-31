@@ -126,6 +126,8 @@ struct st_surface
    unsigned format;
    unsigned width;
    unsigned height;
+   unsigned nblocksx;
+   unsigned nblocksy;
    
    ~st_surface() {
       pipe_texture_reference(&$self->texture, NULL);
@@ -359,6 +361,18 @@ struct st_surface
    st_surface_height_get(struct st_surface *surface)
    {
       return surface->texture->height[surface->level];
+   }
+
+   static unsigned
+   st_surface_nblocksx_get(struct st_surface *surface)
+   {
+      return surface->texture->nblocksx[surface->level];
+   }
+   
+   static unsigned
+   st_surface_nblocksy_get(struct st_surface *surface)
+   {
+      return surface->texture->nblocksy[surface->level];
    }
 %}
 
