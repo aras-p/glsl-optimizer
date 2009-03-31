@@ -276,6 +276,8 @@ static const struct gl_texture_format *radeonChoose8888TexFormat(radeonContextPt
 		   (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_INT_8_8_8_8) ||
 		   (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_BYTE && !littleEndian)) {
 		return &_mesa_texformat_rgba8888_rev;
+	} else if (IS_R200_CLASS(rmesa->radeonScreen)) {
+		return _dri_texformat_argb8888;
 	} else if (srcFormat == GL_BGRA && ((srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
 					    srcType == GL_UNSIGNED_INT_8_8_8_8)) {
 		return &_mesa_texformat_argb8888_rev;
@@ -376,8 +378,12 @@ const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,
 	case GL_ALPHA12:
 	case GL_ALPHA16:
 	case GL_COMPRESSED_ALPHA:
-		return _dri_texformat_a8;
-
+		/* r200: can't use a8 format since interpreting hw I8 as a8 would result
+		   in wrong rgb values (same as alpha value instead of 0). */
+		if (IS_R200_CLASS(rmesa->radeonScreen))
+			return _dri_texformat_al88;
+		else
+			return _dri_texformat_a8;
 	case 1:
 	case GL_LUMINANCE:
 	case GL_LUMINANCE4:
