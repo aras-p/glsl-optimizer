@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##########################################################################
 # 
+# Copyright 2009 VMware, Inc.
 # Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
 # All Rights Reserved.
 # 
@@ -19,7 +20,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 # MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
-# IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+# IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
 # ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -33,6 +34,7 @@ Loosely inspired on Python's unittest module.
 """
 
 
+import os.path
 import sys
 
 from gallium import *
@@ -147,15 +149,18 @@ class TestCase(Test):
     def description(self):
         descriptions = []
         for tag in self.tags:
-            try:
-                method = getattr(self, '_describe_' + tag)
-            except AttributeError:
-                description = str(getattr(self, tag, None))
-            else:
-                description = method()
+            description = self.describe(tag)
             if description is not None:
                 descriptions.append(tag + '=' + description)
         return ' '.join(descriptions)
+
+    def describe(self, tag):
+        try:
+            method = getattr(self, '_describe_' + tag)
+        except AttributeError:
+            return str(getattr(self, tag, None))
+        else:
+            return method()
 
     def _describe_target(self):
         return {
@@ -226,27 +231,87 @@ class TestResult:
         self.passed = 0
         self.skipped = 0
         self.failed = 0
-        self.failed_descriptions = []
+
+        self.names = ['result']
+        self.types = ['pass skip fail']
+        self.rows = []
     
     def test_start(self, test):
-        self.tests += 1
         print "Running %s..." % test.description()
+        self.tests += 1
     
     def test_passed(self, test):
-        self.passed += 1
         print "PASS"
+        self.passed += 1
+        self.log_result(test, 'pass')
             
     def test_skipped(self, test):
-        self.skipped += 1
         print "SKIP"
+        self.skipped += 1
+        #self.log_result(test, 'skip')
         
     def test_failed(self, test):
-        self.failed += 1
-        self.failed_descriptions.append(test.description())
         print "FAIL"
+        self.failed += 1
+        self.log_result(test, 'fail')
+
+    def log_result(self, test, result):
+        row = [None]*len(self.names)
+
+        # add result
+        assert self.names[0] == 'result'
+        assert result in ('pass', 'skip', 'fail')
+        row[0] = result
+
+        # add tags
+        for tag in test.tags:
+            value = test.describe(tag)
+            if value is None:
+                value = ''
+            else:
+                value = str(value)
+            try:
+                col = self.names.index(tag, 1)
+            except ValueError:
+                self.names.append(tag)
+                self.types.append('d')
+                row.append(value)
+            else:
+                row[col] = value
+        
+        self.rows.append(row)
 
     def summary(self):
         print "%u tests, %u passed, %u skipped, %u failed" % (self.tests, self.passed, self.skipped, self.failed)
-        for description in self.failed_descriptions:
-            print "  %s" % description
- 
+
+        name, ext = os.path.splitext(os.path.basename(sys.argv[0]))
+        filename = name + '.tsv'
+        stream = file(filename, 'wt')
+
+        # header
+        stream.write('\t'.join(self.names) + '\n')
+        stream.write('\t'.join(self.types) + '\n')
+        stream.write('class\n')
+
+        # rows
+        for row in self.rows:
+            row += [None]*(len(self.names) - len(row))
+            stream.write('\t'.join(row) + '\n')
+
+        stream.close()
+
+        # See http://www.ailab.si/orange/doc/ofb/c_otherclass.htm
+        try:
+            import orange
+            import orngTree
+        except ImportError:
+            sys.stderr.write('Install Orange from http://www.ailab.si/orange/ for a classification tree.\n')
+            return
+
+        data = orange.ExampleTable(filename)
+
+        tree = orngTree.TreeLearner(data, sameMajorityPruning=1, mForPruning=2)
+
+        orngTree.printTxt(tree)
+
+        orngTree.printDot(tree, fileName=name+'.dot', nodeShape='ellipse', leafShape='box')
