@@ -149,20 +149,20 @@ class TestCase(Test):
     def description(self):
         descriptions = []
         for tag in self.tags:
-            description = self.describe(tag)
-            if description is not None:
-                descriptions.append(tag + '=' + description)
+            value = self.get(tag)
+            if value is not None and value != '':
+                descriptions.append(tag + '=' + str(value))
         return ' '.join(descriptions)
 
-    def describe(self, tag):
+    def get(self, tag):
         try:
-            method = getattr(self, '_describe_' + tag)
+            method = getattr(self, '_get_' + tag)
         except AttributeError:
-            return str(getattr(self, tag, None))
+            return getattr(self, tag, None)
         else:
             return method()
 
-    def _describe_target(self):
+    def _get_target(self):
         return {
             PIPE_TEXTURE_1D: "1d", 
             PIPE_TEXTURE_2D: "2d", 
@@ -170,14 +170,14 @@ class TestCase(Test):
             PIPE_TEXTURE_CUBE: "cube",
         }[self.target]
 
-    def _describe_format(self):
+    def _get_format(self):
         name = formats[self.format]
         if name.startswith('PIPE_FORMAT_'):
             name  = name[12:]
         name = name.lower()
         return name
 
-    def _describe_face(self):
+    def _get_face(self):
         if self.target == PIPE_TEXTURE_CUBE:
             return {
                 PIPE_TEX_FACE_POS_X: "+x",
@@ -188,7 +188,7 @@ class TestCase(Test):
                 PIPE_TEX_FACE_NEG_Z: "-z",
             }[self.face]
         else:
-            return None
+            return ''
 
     def test(self):
         raise NotImplementedError
@@ -260,7 +260,7 @@ class TestResult:
         self.log_result(test, 'fail')
 
     def log_result(self, test, result):
-        row = [None]*len(self.names)
+        row = ['']*len(self.names)
 
         # add result
         assert self.names[0] == 'result'
@@ -269,19 +269,31 @@ class TestResult:
 
         # add tags
         for tag in test.tags:
-            value = test.describe(tag)
+            value = test.get(tag)
+
+            # infer type
             if value is None:
-                value = ''
-            else:
+                continue
+            elif isinstance(value, (int, float)):
                 value = str(value)
+                type = 'c' # continous
+            elif isinstance(value, basestring):
+                type = 'd' # discrete
+            else:
+                assert False
+                value = str(value)
+                type = 'd' # discrete
+
+            # insert value
             try:
                 col = self.names.index(tag, 1)
             except ValueError:
                 self.names.append(tag)
-                self.types.append('d')
+                self.types.append(type)
                 row.append(value)
             else:
                 row[col] = value
+                assert self.types[col] == type
         
         self.rows.append(row)
 
@@ -300,7 +312,7 @@ class TestResult:
 
         # rows
         for row in self.rows:
-            row += [None]*(len(self.names) - len(row))
+            row += ['']*(len(self.names) - len(row))
             stream.write('\t'.join(row) + '\n')
 
         stream.close()
