@@ -127,6 +127,49 @@
 static const union tgsi_exec_channel ZeroVec =
    { { 0.0, 0.0, 0.0, 0.0 } };
 
+
+#ifdef DEBUG
+static void
+check_inf_or_nan(const union tgsi_exec_channel *chan)
+{
+   assert(!util_is_inf_or_nan(chan->f[0]));
+   assert(!util_is_inf_or_nan(chan->f[1]));
+   assert(!util_is_inf_or_nan(chan->f[2]));
+   assert(!util_is_inf_or_nan(chan->f[3]));
+}
+#endif
+
+
+#ifdef DEBUG
+static void
+print_chan(const char *msg, const union tgsi_exec_channel *chan)
+{
+   debug_printf("%s = {%f, %f, %f, %f}\n",
+                msg, chan->f[0], chan->f[1], chan->f[2], chan->f[3]);
+}
+#endif
+
+
+#ifdef DEBUG
+static void
+print_temp(const struct tgsi_exec_machine *mach, uint index)
+{
+   const struct tgsi_exec_vector *tmp = &mach->Temps[index];
+   int i;
+   debug_printf("Temp[%u] =\n", index);
+   for (i = 0; i < 4; i++) {
+      debug_printf("  %c: { %f, %f, %f, %f }\n",
+                   "XYZW"[i],
+                   tmp->xyzw[i].f[0],
+                   tmp->xyzw[i].f[1],
+                   tmp->xyzw[i].f[2],
+                   tmp->xyzw[i].f[3]);
+   }
+}
+#endif
+
+
+
 /**
  * Initialize machine state by expanding tokens to full instructions,
  * allocating temporary storage, setting up constants, etc.
@@ -282,6 +325,12 @@ tgsi_exec_machine_init(
       mach->Temps[TEMP_3_I].xyzw[TEMP_3_C].f[i] = 3.0f;
       mach->Temps[TEMP_HALF_I].xyzw[TEMP_HALF_C].f[i] = 0.5f;
    }
+
+#ifdef DEBUG
+   /* silence warnings */
+   (void) print_chan;
+   (void) print_temp;
+#endif
 }
 
 
@@ -1284,6 +1333,10 @@ store_dest(
    union tgsi_exec_channel null;
    union tgsi_exec_channel *dst;
    uint execmask = mach->ExecMask;
+
+#ifdef DEBUG
+   check_inf_or_nan(chan);
+#endif
 
    switch (reg->DstRegister.File) {
    case TGSI_FILE_NULL:
