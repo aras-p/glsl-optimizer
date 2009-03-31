@@ -195,7 +195,7 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
       }
    }
 
-   if (datatype == GL_BYTE && comps == 4) {
+   else if (datatype == GL_BYTE && comps == 4) {
       GLuint i, j, k;
       const GLbyte(*rowA)[4] = (const GLbyte(*)[4]) srcRowA;
       const GLbyte(*rowB)[4] = (const GLbyte(*)[4]) srcRowB;
