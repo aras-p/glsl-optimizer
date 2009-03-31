@@ -1234,7 +1234,7 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
     const GLboolean swAccum = mesaVis->accumRedBits > 0;
     const GLboolean swStencil = mesaVis->stencilBits > 0 &&
 	mesaVis->depthBits != 24;
-    GLenum rgbFormat = (mesaVis->redBits == 5 ? GL_RGB5 : GL_RGBA8);
+    GLenum rgbFormat;
     struct radeon_framebuffer *rfb;
 
     if (isPixmap)
@@ -1245,6 +1245,13 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       return GL_FALSE;
 
     _mesa_initialize_framebuffer(&rfb->base, mesaVis);
+
+    if (mesaVis->redBits == 5)
+        rgbFormat = GL_RGB5;
+    else if (mesaVis->alphaBits == 0)
+        rgbFormat = GL_RGB8;
+    else
+        rgbFormat = GL_RGBA8;
 
     /* front color renderbuffer */
     rfb->color_rb[0] = radeon_create_renderbuffer(rgbFormat, driDrawPriv);
