@@ -86,7 +86,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(81 + (caps->has_tcl ? 26 : 0));
+    BEGIN_CS(79 + (caps->has_tcl ? 7 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 

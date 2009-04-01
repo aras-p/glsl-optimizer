@@ -67,6 +67,7 @@ struct r300_vs_asm {
 };
 
 static struct r300_vertex_shader r300_passthrough_vertex_shader = {
+        /* XXX translate these back into normal instructions */
     .instruction_count = 2,
     .instructions[0].inst0 = 0xF00203,
     .instructions[0].inst1 = 0xD10001,

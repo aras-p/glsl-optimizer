@@ -73,6 +73,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_PVS_NUM_CNTLRS_SHIFT                4
 #       define R300_PVS_NUM_FPUS_SHIFT                  8
 #       define R300_VF_MAX_VTX_NUM_SHIFT                18
+#       define R300_PVS_NUM_SLOTS(x)                    ((x) << 0)
+#       define R300_PVS_NUM_CNTLRS(x)                   ((x) << 4)
+#       define R300_PVS_NUM_FPUS(x)                     ((x) << 8)
+#       define R300_PVS_VF_MAX_VTX_NUM(x)               ((x) << 18)
 #       define R300_GL_CLIP_SPACE_DEF                   (0 << 22)
 #       define R300_DX_CLIP_SPACE_DEF                   (1 << 22)
 #       define R500_TCL_STATE_OPTIMIZATION              (1 << 23)
@@ -506,6 +510,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_PVS_FIRST_INST_SHIFT         0
 #       define R300_PVS_XYZW_VALID_INST_SHIFT    10
 #       define R300_PVS_LAST_INST_SHIFT          20
+#       define R300_PVS_FIRST_INST(x)            ((x) << 0)
+#       define R300_PVS_LAST_INST(x)             ((x) << 20)
 /* Addresses are relative the the vertex program parameters area. */
 #define R300_VAP_PVS_CONST_CNTL             0x22D4
 #       define R300_PVS_CONST_BASE_OFFSET_SHIFT  0

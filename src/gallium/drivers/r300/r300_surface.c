@@ -42,22 +42,12 @@ static void r300_surface_setup(struct pipe_context* pipe,
     /* XXX these magic numbers should be explained when
      * this becomes a cached state object */
     if (caps->has_tcl) {
-        OUT_CS_REG(R300_VAP_CNTL, 0xA |
-            (0x5 << R300_PVS_NUM_CNTLRS_SHIFT) |
-            (0xB << R300_VF_MAX_VTX_NUM_SHIFT) |
-            (caps->num_vert_fpus << R300_PVS_NUM_FPUS_SHIFT));
-        OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_0, 0x00100000);
-        OUT_CS_REG(R300_VAP_PVS_CONST_CNTL, 0x00000000);
-        OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_1, 0x00000001);
-        /* XXX translate these back into normal instructions */
-        OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x1);
-        OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG, 0x0);
         r300_emit_vertex_shader(r300, &r300_passthrough_vertex_shader);
     } else {
-        OUT_CS_REG(R300_VAP_CNTL, 0xA |
-            (0x5 << R300_PVS_NUM_CNTLRS_SHIFT) |
-            (0x5 << R300_VF_MAX_VTX_NUM_SHIFT) |
-            (caps->num_vert_fpus << R300_PVS_NUM_FPUS_SHIFT));
+        OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(5) |
+                R300_PVS_NUM_CNTLRS(5) |
+                R300_PVS_NUM_FPUS(caps->num_vert_fpus) |
+                R300_PVS_VF_MAX_VTX_NUM(12));
     }
 
     BEGIN_CS(15);
