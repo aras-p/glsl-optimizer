@@ -323,7 +323,7 @@ void r300InitTextureFuncs(struct dd_function_table *functions)
 	functions->MapTexture = radeonMapTexture;
 	functions->UnmapTexture = radeonUnmapTexture;
 
-	functions->ChooseTextureFormat = radeonChooseTextureFormat;
+	functions->ChooseTextureFormat = radeonChooseTextureFormat_mesa;
 	functions->TexImage1D = radeonTexImage1D;
 	functions->TexImage2D = radeonTexImage2D;
 	functions->TexImage3D = radeonTexImage3D;

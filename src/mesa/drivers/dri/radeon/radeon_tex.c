@@ -447,7 +447,7 @@ radeonNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 
 void radeonInitTextureFuncs( struct dd_function_table *functions )
 {
-   functions->ChooseTextureFormat	= radeonChooseTextureFormat;
+   functions->ChooseTextureFormat	= radeonChooseTextureFormat_mesa;
    functions->TexImage1D		= radeonTexImage1D;
    functions->TexImage2D		= radeonTexImage2D;
    functions->TexSubImage1D		= radeonTexSubImage1D;

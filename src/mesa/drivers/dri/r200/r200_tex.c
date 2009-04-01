@@ -493,7 +493,7 @@ void r200InitTextureFuncs( struct dd_function_table *functions )
    /* Note: we only plug in the functions we implement in the driver
     * since _mesa_init_driver_functions() was already called.
     */
-   functions->ChooseTextureFormat	= radeonChooseTextureFormat;
+   functions->ChooseTextureFormat	= radeonChooseTextureFormat_mesa;
    functions->TexImage1D		= radeonTexImage1D;
    functions->TexImage2D		= radeonTexImage2D;
 #if ENABLE_HW_3D_TEXTURE

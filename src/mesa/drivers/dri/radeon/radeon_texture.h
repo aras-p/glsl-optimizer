@@ -40,10 +40,14 @@ void radeonUnmapTexture(GLcontext *ctx, struct gl_texture_object *texObj);
 void radeonGenerateMipmap(GLcontext* ctx, GLenum target, struct gl_texture_object *texObj);
 int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *texObj);
 GLuint radeon_face_for_target(GLenum target);
-const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,
+const struct gl_texture_format *radeonChooseTextureFormat_mesa(GLcontext * ctx,
 							  GLint internalFormat,
 							  GLenum format,
 							  GLenum type);
+const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,
+							  GLint internalFormat,
+							  GLenum format,
+							  GLenum type, GLboolean fbo);
 
 void radeonTexImage1D(GLcontext * ctx, GLenum target, GLint level,
 		      GLint internalFormat,

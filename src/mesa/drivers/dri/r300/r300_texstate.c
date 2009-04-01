@@ -457,7 +457,7 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 	texImage->RowStride = rb->pitch / rb->cpp;
 	texImage->TexFormat = radeonChooseTextureFormat(radeon->glCtx,
 							internalFormat,
-							type, format);
+							type, format, 0);
 	rImage->bo = rb->bo;
 	radeon_bo_ref(rImage->bo);
 	t->bo = rb->bo;

@@ -257,13 +257,13 @@ void radeonGenerateMipmap(GLcontext* ctx, GLenum target, struct gl_texture_objec
 /* try to find a format which will only need a memcopy */
 static const struct gl_texture_format *radeonChoose8888TexFormat(radeonContextPtr rmesa,
 								 GLenum srcFormat,
-								 GLenum srcType)
+								 GLenum srcType, GLboolean fbo)
 {
 	const GLuint ui = 1;
 	const GLubyte littleEndian = *((const GLubyte *)&ui);
 
 	/* r100 can only do this */
-	if (IS_R100_CLASS(rmesa->radeonScreen))
+	if (IS_R100_CLASS(rmesa->radeonScreen) || fbo)
 	  return _dri_texformat_argb8888;
 
 	if ((srcFormat == GL_RGBA && srcType == GL_UNSIGNED_INT_8_8_8_8) ||
@@ -288,10 +288,19 @@ static const struct gl_texture_format *radeonChoose8888TexFormat(radeonContextPt
 		return _dri_texformat_argb8888;
 }
 
-const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,
+const struct gl_texture_format *radeonChooseTextureFormat_mesa(GLcontext * ctx,
 							  GLint internalFormat,
 							  GLenum format,
 							  GLenum type)
+{
+	return radeonChooseTextureFormat(ctx, internalFormat, format,
+					 type, 0);
+}
+
+const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,
+							  GLint internalFormat,
+							  GLenum format,
+							  GLenum type, GLboolean fbo)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	const GLboolean do32bpt =
@@ -323,7 +332,7 @@ const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,
 		case GL_UNSIGNED_SHORT_1_5_5_5_REV:
 			return _dri_texformat_argb1555;
 		default:
-			return do32bpt ? radeonChoose8888TexFormat(rmesa, format, type) :
+			return do32bpt ? radeonChoose8888TexFormat(rmesa, format, type, fbo) :
 			    _dri_texformat_argb4444;
 		}
 
@@ -350,7 +359,7 @@ const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,
 	case GL_RGBA12:
 	case GL_RGBA16:
 		return !force16bpt ?
-			radeonChoose8888TexFormat(rmesa, format,type) :
+			radeonChoose8888TexFormat(rmesa, format, type, fbo) :
 			_dri_texformat_argb4444;
 
 	case GL_RGBA4:
@@ -510,7 +519,7 @@ static void radeon_teximage(
 	}
 
 	/* Choose and fill in the texture format for this image */
-	texImage->TexFormat = radeonChooseTextureFormat(ctx, internalFormat, format, type);
+	texImage->TexFormat = radeonChooseTextureFormat(ctx, internalFormat, format, type, 0);
 	_mesa_set_fetch_functions(texImage, dims);
 
 	if (texImage->TexFormat->TexelBytes == 0) {
