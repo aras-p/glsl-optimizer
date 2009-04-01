@@ -741,6 +741,26 @@ static const char *texture_names[TGSI_TEXTURE_COUNT] =
 };
 
 static boolean
+match_inst_mnemonic(const char **pcur,
+                    const struct tgsi_opcode_info *info)
+{
+   if (str_match_no_case(pcur, info->mnemonic)) {
+      return TRUE;
+   }
+   if (info->alt_mnemonic1) {
+      if (str_match_no_case(pcur, info->alt_mnemonic1)) {
+         return TRUE;
+      }
+      if (info->alt_mnemonic2) {
+         if (str_match_no_case(pcur, info->alt_mnemonic2)) {
+            return TRUE;
+         }
+      }
+   }
+   return FALSE;
+}
+
+static boolean
 parse_instruction(
    struct translate_ctx *ctx,
    boolean has_label )
@@ -758,7 +778,7 @@ parse_instruction(
       const char *cur = ctx->cur;
 
       info = tgsi_get_opcode_info( i );
-      if (str_match_no_case( &cur, info->mnemonic )) {
+      if (match_inst_mnemonic(&cur, info)) {
          if (str_match_no_case( &cur, "_SATNV" ))
             saturate = TGSI_SAT_MINUS_PLUS_ONE;
          else if (str_match_no_case( &cur, "_SAT" ))
