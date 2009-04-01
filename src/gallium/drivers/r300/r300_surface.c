@@ -39,17 +39,6 @@ static void r300_surface_setup(struct pipe_context* pipe,
     r300_emit_dsa_state(r300, &dsa_clear_state);
     r300_emit_rs_state(r300, &rs_clear_state);
 
-    /* XXX these magic numbers should be explained when
-     * this becomes a cached state object */
-    if (caps->has_tcl) {
-        r300_emit_vertex_shader(r300, &r300_passthrough_vertex_shader);
-    } else {
-        OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(5) |
-                R300_PVS_NUM_CNTLRS(5) |
-                R300_PVS_NUM_FPUS(caps->num_vert_fpus) |
-                R300_PVS_VF_MAX_VTX_NUM(12));
-    }
-
     BEGIN_CS(15);
 
     /* Pixel scissors. */
@@ -115,6 +104,18 @@ static void r300_surface_fill(struct pipe_context* pipe,
     }
 
     r300_surface_setup(r300, dest, x, y, w, h);
+
+    /* Vertex shader setup */
+    if (caps->has_tcl) {
+        r300_emit_vertex_shader(r300, &r300_passthrough_vertex_shader);
+    } else {
+        BEGIN_CS(2);
+        OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(5) |
+                R300_PVS_NUM_CNTLRS(5) |
+                R300_PVS_NUM_FPUS(caps->num_vert_fpus) |
+                R300_PVS_VF_MAX_VTX_NUM(12));
+        END_CS;
+    }
 
     /* Fragment shader setup */
     if (caps->is_r500) {
@@ -221,6 +222,18 @@ static void r300_surface_copy(struct pipe_context* pipe,
     r300_emit_sampler(r300, &r300_sampler_copy_state, 0);
     r300_emit_texture(r300, srctex, 0);
     r300_flush_textures(r300);
+
+    /* Vertex shader setup */
+    if (caps->has_tcl) {
+        r300_emit_vertex_shader(r300, &r300_texture_vertex_shader);
+    } else {
+        BEGIN_CS(2);
+        OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(5) |
+                R300_PVS_NUM_CNTLRS(5) |
+                R300_PVS_NUM_FPUS(caps->num_vert_fpus) |
+                R300_PVS_VF_MAX_VTX_NUM(12));
+        END_CS;
+    }
 
     /* Fragment shader setup */
     if (caps->is_r500) {

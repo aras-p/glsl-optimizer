@@ -79,6 +79,19 @@ static struct r300_vertex_shader r300_passthrough_vertex_shader = {
     .instructions[1].inst3 = 0x0,
 };
 
+static struct r300_vertex_shader r300_texture_vertex_shader = {
+        /* XXX translate these back into normal instructions */
+    .instruction_count = 2,
+    .instructions[0].inst0 = 0xF00203,
+    .instructions[0].inst1 = 0xD10001,
+    .instructions[0].inst2 = 0x1248001,
+    .instructions[0].inst3 = 0x0,
+    .instructions[1].inst0 = 0xF00203,
+    .instructions[1].inst1 = 0xD10061,
+    .instructions[1].inst2 = 0x1248061,
+    .instructions[1].inst3 = 0x0,
+};
+
 void r300_translate_vertex_shader(struct r300_context* r300,
                                   struct r300_vertex_shader* vs);
 
