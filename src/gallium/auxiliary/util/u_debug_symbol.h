@@ -25,74 +25,29 @@
  * 
  **************************************************************************/
 
+#ifndef U_DEBUG_SYMBOL_H_
+#define U_DEBUG_SYMBOL_H_
+
+
 /**
  * @file
- * Stack backtracing.
+ * Symbol lookup.
  * 
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
 
-#include "u_debug.h"
-#include "u_debug_symbol.h"
-#include "u_debug_stack.h"
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
 
 
 void
-debug_backtrace_capture(struct debug_stack_frame *backtrace,
-                        unsigned start_frame, 
-                        unsigned nr_frames)
-{
-   const void **frame_pointer = NULL;
-   unsigned i = 0;
+debug_symbol_print(const void *addr);
 
-   if(!nr_frames)
-      return;
 
-#if defined(PIPE_CC_GCC)
-   frame_pointer = ((const void **)__builtin_frame_address(1));
-#elif defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
-   __asm {
-      mov frame_pointer, ebp
-   }
-   frame_pointer = (const void **)frame_pointer[0];
-#else
-   frame_pointer = NULL;
-#endif
-  
-   
-#ifdef PIPE_ARCH_X86
-   while(nr_frames) {
-      if(!frame_pointer)
-         break;
-      
-      if(start_frame)
-         --start_frame;
-      else {
-         backtrace[i++].function = frame_pointer[1];
-         --nr_frames;
-      }
-      
-      frame_pointer = (const void **)frame_pointer[0];
-   }
-#endif
-   
-   while(nr_frames) {
-      backtrace[i++].function = NULL;
-      --nr_frames;
-   }
+#ifdef	__cplusplus
 }
-   
+#endif
 
-void
-debug_backtrace_dump(const struct debug_stack_frame *backtrace, 
-                     unsigned nr_frames)
-{
-   unsigned i;
-   
-   for(i = 0; i < nr_frames; ++i) {
-      if(!backtrace[i].function)
-         break;
-      debug_symbol_print(backtrace[i].function);
-   }
-}
-
+#endif /* U_DEBUG_SYMBOL_H_ */
