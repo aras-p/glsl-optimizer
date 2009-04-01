@@ -325,9 +325,29 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
     END_CS;
 }
 
+void r300_emit_vertex_shader(struct r300_context* r300,
+                             struct r300_vertex_shader* vs)
+{
+    CS_LOCALS(r300);
+    int i;
+
+    BEGIN_CS(1 + (vs->instruction_count * 4));
+
+    OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, vs->instruction_count * 4);
+    for (i = 0; i < vs->instruction_count; i++) {
+        OUT_CS(vs->instructions[i].inst0);
+        OUT_CS(vs->instructions[i].inst1);
+        OUT_CS(vs->instructions[i].inst2);
+        OUT_CS(vs->instructions[i].inst3);
+    }
+    END_CS;
+
+}
+
 void r300_emit_viewport_state(struct r300_context* r300,
                               struct r300_viewport_state* viewport)
 {
+    /* XXX has_tcl */
     return;
     CS_LOCALS(r300);
 

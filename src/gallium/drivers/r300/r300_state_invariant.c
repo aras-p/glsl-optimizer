@@ -156,33 +156,5 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS(R300_US_OUT_FMT_UNUSED);
     OUT_CS(R300_US_OUT_FMT_UNUSED);
     OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W0);
-    /* XXX these magic numbers should be explained when
-     * this becomes a cached state object */
-    if (caps->has_tcl) {
-        OUT_CS_REG(R300_VAP_CNTL, 0xA |
-            (0x5 << R300_PVS_NUM_CNTLRS_SHIFT) |
-            (0xB << R300_VF_MAX_VTX_NUM_SHIFT) |
-            (caps->num_vert_fpus << R300_PVS_NUM_FPUS_SHIFT));
-        OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_0, 0x00100000);
-        OUT_CS_REG(R300_VAP_PVS_CONST_CNTL, 0x00000000);
-        OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_1, 0x00000001);
-        /* XXX translate these back into normal instructions */
-        OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x1);
-        OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG, 0x0);
-        OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, 8);
-        OUT_CS(0x00F00203);
-        OUT_CS(0x00D10001);
-        OUT_CS(0x01248001);
-        OUT_CS(0x00000000);
-        OUT_CS(0x00F02203);
-        OUT_CS(0x00D10021);
-        OUT_CS(0x01248021);
-        OUT_CS(0x00000000);
-    } else {
-        OUT_CS_REG(R300_VAP_CNTL, 0xA |
-            (0x5 << R300_PVS_NUM_CNTLRS_SHIFT) |
-            (0x5 << R300_VF_MAX_VTX_NUM_SHIFT) |
-            (caps->num_vert_fpus << R300_PVS_NUM_FPUS_SHIFT));
-    }
     END_CS;
 }

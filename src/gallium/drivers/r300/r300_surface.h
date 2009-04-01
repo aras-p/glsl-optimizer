@@ -32,6 +32,7 @@
 #include "r300_cs.h"
 #include "r300_emit.h"
 #include "r300_state_shader.h"
+#include "r300_state_tcl.h"
 #include "r300_state_inlines.h"
 
 const struct r300_blend_state blend_clear_state = {
