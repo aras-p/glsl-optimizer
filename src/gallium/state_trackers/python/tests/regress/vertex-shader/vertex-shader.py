@@ -218,6 +218,7 @@ def main():
         'dst',
         'ex2',
         'frc',
+        'lrp',
         'mov',
         'mul',
         'sub',
