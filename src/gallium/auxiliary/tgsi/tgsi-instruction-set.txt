@@ -262,7 +262,7 @@ TGSI Instruction Specification
   dst.w = round(src.w)
 
 
-1.3.10  EXPBASE2 - Exponent Base 2
+1.3.10  EXPBASE2 - Exponential Base 2
 
   dst.x = pow(2.0, src.x)
   dst.y = pow(2.0, src.x)
