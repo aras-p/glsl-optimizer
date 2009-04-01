@@ -218,6 +218,7 @@ def main():
         'mov',
         'mul',
         'sub',
+        'xpd',
     ]
     
     html = '''<html>
