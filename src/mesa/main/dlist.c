@@ -975,7 +975,7 @@ _mesa_save_CallList(GLuint list)
    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
 
    if (ctx->ExecuteFlag) {
-      CALL_CallList(ctx->Exec, (list));
+      _mesa_CallList(list);
    }
 }
 
