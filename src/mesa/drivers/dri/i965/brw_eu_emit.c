@@ -994,7 +994,7 @@ void brw_dp_READ_4( struct brw_compile *p,
 			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
 			      0, /* source cache = data cache */
 			      1, /* msg_length */
-			      2, /* response_length */
+			      1, /* response_length (1 Oword) */
 			      0); /* eot */
    }
 }
