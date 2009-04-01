@@ -217,6 +217,7 @@ def main():
         'dp4',
         'dst',
         'ex2',
+        'frc',
         'mov',
         'mul',
         'sub',
