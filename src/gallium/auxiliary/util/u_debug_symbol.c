@@ -241,7 +241,7 @@ debug_symbol_print_imagehlp(const void *addr)
 void
 debug_symbol_print(const void *addr)
 {
-#if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
+#if defined(PIPE_SUBSYSTEM_WINDOWS_USER) && defined(PIPE_ARCH_X86)
    if(debug_symbol_print_imagehlp(addr))
       return;
 #endif
