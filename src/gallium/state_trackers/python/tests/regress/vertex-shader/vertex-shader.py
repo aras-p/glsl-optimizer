@@ -215,6 +215,7 @@ def main():
         'add',
         'dp3',
         'dp4',
+        'dst',
         'mov',
         'mul',
         'sub',
