@@ -760,28 +760,28 @@ append_token(char *dst, gl_state_index k)
       append(dst, ".spot.cutoff");
       break;
    case STATE_TEXGEN_EYE_S:
-      append(dst, "eye.s");
+      append(dst, ".eye.s");
       break;
    case STATE_TEXGEN_EYE_T:
-      append(dst, "eye.t");
+      append(dst, ".eye.t");
       break;
    case STATE_TEXGEN_EYE_R:
-      append(dst, "eye.r");
+      append(dst, ".eye.r");
       break;
    case STATE_TEXGEN_EYE_Q:
-      append(dst, "eye.q");
+      append(dst, ".eye.q");
       break;
    case STATE_TEXGEN_OBJECT_S:
-      append(dst, "object.s");
+      append(dst, ".object.s");
       break;
    case STATE_TEXGEN_OBJECT_T:
-      append(dst, "object.t");
+      append(dst, ".object.t");
       break;
    case STATE_TEXGEN_OBJECT_R:
-      append(dst, "object.r");
+      append(dst, ".object.r");
       break;
    case STATE_TEXGEN_OBJECT_Q:
-      append(dst, "object.q");
+      append(dst, ".object.q");
       break;
    case STATE_TEXENV_COLOR:
       append(dst, "texenv");
