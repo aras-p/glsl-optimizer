@@ -118,4 +118,5 @@ typedef struct radeon_screen {
 #define IS_R300_CLASS(screen) \
 	((screen->chip_flags & RADEON_CLASS_MASK) == RADEON_CLASS_R300)
 
+extern void radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv);
 #endif /* __RADEON_SCREEN_H__ */

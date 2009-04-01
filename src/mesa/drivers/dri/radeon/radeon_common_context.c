@@ -37,6 +37,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "vblank.h"
 #include "drirenderbuffer.h"
+#include "main/framebuffer.h"
 #include "main/state.h"
 
 #define DRIVER_DATE "20090101"
@@ -183,45 +184,14 @@ void radeonCleanupContext(radeonContextPtr radeon)
 #ifdef RADEON_BO_TRACK
 	FILE *track;
 #endif
-	struct radeon_renderbuffer *rb;
 	struct radeon_framebuffer *rfb;
+
+	radeonDestroyBuffer(radeon->dri.drawable);
+	radeonDestroyBuffer(radeon->dri.readable);
 
 	/* free the Mesa context */
 	_mesa_destroy_context(radeon->glCtx);
-	
-	rfb = (void*)radeon->dri.drawable->driverPrivate;
-	rb = rfb->color_rb[0];
-	if (rb && rb->bo) {
-		radeon_bo_unref(rb->bo);
-		rb->bo = NULL;
-	}
-	rb = rfb->color_rb[1];
-	if (rb && rb->bo) {
-		radeon_bo_unref(rb->bo);
-		rb->bo = NULL;
-	}
-	rb = radeon_get_renderbuffer(&rfb->base, BUFFER_DEPTH);
-	if (rb && rb->bo) {
-		radeon_bo_unref(rb->bo);
-		rb->bo = NULL;
-	}
-	rfb = (void*)radeon->dri.readable->driverPrivate;
-	rb = rfb->color_rb[0];
-	if (rb && rb->bo) {
-		radeon_bo_unref(rb->bo);
-		rb->bo = NULL;
-	}
-	rb = rfb->color_rb[1];
-	if (rb && rb->bo) {
-		radeon_bo_unref(rb->bo);
-		rb->bo = NULL;
-	}
-	rb = radeon_get_renderbuffer(&rfb->base, BUFFER_DEPTH);
-	if (rb && rb->bo) {
-		radeon_bo_unref(rb->bo);
-		rb->bo = NULL;
-	}
-	
+
 	/* _mesa_destroy_context() might result in calls to functions that
 	 * depend on the DriverCtx, so don't set it to NULL before.
 	 *

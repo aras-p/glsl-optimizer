@@ -1296,28 +1296,39 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
     return (driDrawPriv->driverPrivate != NULL);
 }
 
-static void
+
+static void radeon_cleanup_renderbuffers(struct radeon_framebuffer *rfb)
+{
+	struct radeon_renderbuffer *rb;
+
+	rb = rfb->color_rb[0];
+	if (rb && rb->bo) {
+		radeon_bo_unref(rb->bo);
+		rb->bo = NULL;
+	}
+	rb = rfb->color_rb[1];
+	if (rb && rb->bo) {
+		radeon_bo_unref(rb->bo);
+		rb->bo = NULL;
+	}
+	rb = radeon_get_renderbuffer(&rfb->base, BUFFER_DEPTH);
+	if (rb && rb->bo) {
+		radeon_bo_unref(rb->bo);
+		rb->bo = NULL;
+	}
+}
+
+void
 radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-    struct radeon_renderbuffer *rb;
     struct radeon_framebuffer *rfb;
-    
+    if (!driDrawPriv)
+	return;
+
     rfb = (void*)driDrawPriv->driverPrivate;
-    rb = (void *)rfb->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-    if (rb && rb->bo) {
-        radeon_bo_unref(rb->bo);
-        rb->bo = NULL;
-    }
-    rb = (void *)rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-    if (rb && rb->bo) {
-        radeon_bo_unref(rb->bo);
-        rb->bo = NULL;
-    }
-    rb = (void *)rfb->base.Attachment[BUFFER_DEPTH].Renderbuffer;
-    if (rb && rb->bo) {
-        radeon_bo_unref(rb->bo);
-        rb->bo = NULL;
-    }
+    if (!rfb)
+	return;
+    radeon_cleanup_renderbuffers(rfb);
     _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
