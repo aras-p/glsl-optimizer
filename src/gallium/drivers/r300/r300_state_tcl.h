@@ -41,7 +41,33 @@
 #   define R300_PVS_DST_REG_ALT_TEMPORARY 4
 #   define R300_PVS_DST_REG_INPUT         5
 #define R300_PVS_DST_OFFSET(x)   ((x) << 13)
-#define R300_PVS_DST_WE_SHIFT    20
+#define R300_PVS_DST_WE(x)       ((x) << 20)
+#define R300_PVS_DST_WE_XYZW     (0xf << 20)
+
+#define R300_PVS_SRC_REG_TYPE(x) ((x) << 0)
+#   define R300_PVS_SRC_REG_TEMPORARY     0
+#   define R300_PVS_SRC_REG_INPUT         1
+#   define R300_PVS_SRC_REG_CONSTANT      2
+#   define R300_PVS_SRC_REG_ALT_TEMPORARY 3
+#define R300_PVS_SRC_OFFSET(x)   ((x) << 5)
+#define R300_PVS_SRC_SWIZZLE(x)  ((x) << 13)
+#   define R300_PVS_SRC_SELECT_X          0
+#   define R300_PVS_SRC_SELECT_Y          1
+#   define R300_PVS_SRC_SELECT_Z          2
+#   define R300_PVS_SRC_SELECT_W          3
+#   define R300_PVS_SRC_SELECT_FORCE_0    4
+#   define R300_PVS_SRC_SELECT_FORCE_1    5
+#   define R300_PVS_SRC_SWIZZLE_XYZW \
+    ((R300_PVS_SRC_SELECT_X | (R300_PVS_SRC_SELECT_Y << 3) | \
+     (R300_PVS_SRC_SELECT_Z << 6) | (R300_PVS_SRC_SELECT_W << 9)) << 13)
+#   define R300_PVS_SRC_SWIZZLE_ZERO \
+    ((R300_PVS_SRC_SELECT_FORCE_0 | (R300_PVS_SRC_SELECT_FORCE_0 << 3) | \
+     (R300_PVS_SRC_SELECT_FORCE_0 << 6) | \
+      (R300_PVS_SRC_SELECT_FORCE_0 << 9)) << 13)
+#   define R300_PVS_SRC_SWIZZLE_ONE \
+    ((R300_PVS_SRC_SELECT_FORCE_1 | (R300_PVS_SRC_SELECT_FORCE_1 << 3) | \
+     (R300_PVS_SRC_SELECT_FORCE_1 << 6) | \
+      (R300_PVS_SRC_SELECT_FORCE_1 << 9)) << 13)
 
 /* Temporary struct used to hold assembly state while putting together
  * fragment programs. */
@@ -69,26 +95,38 @@ struct r300_vs_asm {
 static struct r300_vertex_shader r300_passthrough_vertex_shader = {
         /* XXX translate these back into normal instructions */
     .instruction_count = 2,
-    .instructions[0].inst0 = 0xF00203,
-    .instructions[0].inst1 = 0xD10001,
-    .instructions[0].inst2 = 0x1248001,
+    .instructions[0].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
+        R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
+        R300_PVS_DST_OFFSET(0) | R300_PVS_DST_WE_XYZW,
+    .instructions[0].inst1 = R300_PVS_SRC_REG_TYPE(R300_PVS_SRC_REG_INPUT) |
+        R300_PVS_SRC_OFFSET(0) | R300_PVS_SRC_SWIZZLE_XYZW,
+    .instructions[0].inst2 = R300_PVS_SRC_SWIZZLE_ZERO,
     .instructions[0].inst3 = 0x0,
-    .instructions[1].inst0 = 0xF00203,
-    .instructions[1].inst1 = 0xD10021,
-    .instructions[1].inst2 = 0x1248021,
+    .instructions[1].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
+        R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
+        R300_PVS_DST_OFFSET(2) | R300_PVS_DST_WE_XYZW,
+    .instructions[1].inst1 = R300_PVS_SRC_REG_TYPE(R300_PVS_SRC_REG_INPUT) |
+        R300_PVS_SRC_OFFSET(1) | R300_PVS_SRC_SWIZZLE_XYZW,
+    .instructions[1].inst2 = R300_PVS_SRC_SWIZZLE_ZERO,
     .instructions[1].inst3 = 0x0,
 };
 
 static struct r300_vertex_shader r300_texture_vertex_shader = {
         /* XXX translate these back into normal instructions */
     .instruction_count = 2,
-    .instructions[0].inst0 = 0xF00203,
-    .instructions[0].inst1 = 0xD10001,
-    .instructions[0].inst2 = 0x1248001,
+    .instructions[0].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
+        R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
+        R300_PVS_DST_OFFSET(0) | R300_PVS_DST_WE_XYZW,
+    .instructions[0].inst1 = R300_PVS_SRC_REG_TYPE(R300_PVS_SRC_REG_INPUT) |
+        R300_PVS_SRC_OFFSET(0) | R300_PVS_SRC_SWIZZLE_XYZW,
+    .instructions[0].inst2 = R300_PVS_SRC_SWIZZLE_ZERO,
     .instructions[0].inst3 = 0x0,
-    .instructions[1].inst0 = 0xF00203,
-    .instructions[1].inst1 = 0xD10061,
-    .instructions[1].inst2 = 0x1248061,
+    .instructions[1].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
+        R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
+        R300_PVS_DST_OFFSET(6) | R300_PVS_DST_WE_XYZW,
+    .instructions[1].inst1 = R300_PVS_SRC_REG_TYPE(R300_PVS_SRC_REG_INPUT) |
+        R300_PVS_SRC_OFFSET(1) | R300_PVS_SRC_SWIZZLE_XYZW,
+    .instructions[1].inst2 = R300_PVS_SRC_SWIZZLE_ZERO,
     .instructions[1].inst3 = 0x0,
 };
 
