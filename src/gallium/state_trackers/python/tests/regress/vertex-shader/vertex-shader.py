@@ -132,7 +132,7 @@ def test(dev, name):
     ctx.surface_clear(zbuf, 0xffffffff)
 
     # vertex shader
-    vs = Shader(file('vert-' + name + '.txt', 'rt').read())
+    vs = Shader(file('vert-' + name + '.sh', 'rt').read())
     ctx.set_vertex_shader(vs)
 
     # fragment shader
