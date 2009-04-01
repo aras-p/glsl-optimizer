@@ -104,7 +104,7 @@ struct r300_fs_asm {
 void r300_translate_fragment_shader(struct r300_context* r300,
                            struct r3xx_fragment_shader* fs);
 
-static const struct r300_fragment_shader r300_passthrough_fragment_shader = {
+static struct r300_fragment_shader r300_passthrough_fragment_shader = {
     /* XXX This is the emission code. TODO: decode
     OUT_CS_REG(R300_US_CONFIG, 0);
     OUT_CS_REG(R300_US_CODE_OFFSET, 0x0);
@@ -132,7 +132,7 @@ static const struct r300_fragment_shader r300_passthrough_fragment_shader = {
         R300_ALPHA_ADDR1(0) | R300_ALPHA_ADDR2(0) | R300_ALU_DSTA_OUTPUT,
 };
 
-static const struct r500_fragment_shader r500_passthrough_fragment_shader = {
+static struct r500_fragment_shader r500_passthrough_fragment_shader = {
     .shader.stack_size = 0,
     .instruction_count = 1,
     .instructions[0].inst0 = R500_INST_TYPE_OUT |
@@ -158,7 +158,7 @@ static const struct r500_fragment_shader r500_passthrough_fragment_shader = {
         R500_ALU_RGBA_A_SWIZ_0,
 };
 
-static const struct r300_fragment_shader r300_texture_fragment_shader = {
+static struct r300_fragment_shader r300_texture_fragment_shader = {
     /* XXX This is the emission code. TODO: decode
     OUT_CS_REG(R300_US_CONFIG, 0);
     OUT_CS_REG(R300_US_CODE_OFFSET, 0x0);
@@ -186,7 +186,7 @@ static const struct r300_fragment_shader r300_texture_fragment_shader = {
         R300_ALPHA_ADDR1(0) | R300_ALPHA_ADDR2(0) | R300_ALU_DSTA_OUTPUT,
 };
 
-static const struct r500_fragment_shader r500_texture_fragment_shader = {
+static struct r500_fragment_shader r500_texture_fragment_shader = {
     .shader.stack_size = 0,
     .instruction_count = 1,
     .instructions[0].inst0 = R500_INST_TYPE_OUT |
