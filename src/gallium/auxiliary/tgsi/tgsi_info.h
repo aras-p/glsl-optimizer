@@ -41,6 +41,8 @@ struct tgsi_opcode_info
    boolean is_tex;
    boolean is_branch;
    const char *mnemonic;
+   const char *alt_mnemonic1;
+   const char *alt_mnemonic2;
 };
 
 const struct tgsi_opcode_info *
