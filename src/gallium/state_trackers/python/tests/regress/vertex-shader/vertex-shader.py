@@ -214,7 +214,10 @@ def main():
         'abs',
         'add',
         'dp3',
+        'dp4',
         'mov',
+        'mul',
+        'sub',
     ]
     
     html = '''<html>
