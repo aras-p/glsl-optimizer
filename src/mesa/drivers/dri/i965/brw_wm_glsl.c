@@ -193,7 +193,19 @@ static void prealloc_reg(struct brw_wm_compile *c)
     {
         const int nr_params = c->fp->program.Base.Parameters->NumParameters;
 
-        if (1 /* XXX threshold: nr_params <= 8 */) {
+        /* use a real constant buffer, or just use a section of the GRF? */
+        c->use_const_buffer = GL_FALSE; /* (nr_params > 8);*/
+        /*printf("USE CONST BUFFER? %d\n", c->use_const_buffer);*/
+
+        if (c->use_const_buffer) {
+           /* We'll use a real constant buffer and fetch constants from
+            * it with a dataport read message.
+            */
+
+           /* number of float constants in CURBE */
+           c->prog_data.nr_params = 0;
+        }
+        else {
            const struct gl_program_parameter_list *plist = 
               c->fp->program.Base.Parameters;
            int index = 0;
@@ -217,16 +229,6 @@ static void prealloc_reg(struct brw_wm_compile *c)
            c->nr_creg = 2 * ((4 * nr_params + 15) / 16);
            c->reg_index += c->nr_creg;
         }
-        else {
-           /* number of float constants in CURBE */
-           c->prog_data.nr_params = 0;
-
-           /* When there's a lot of FP constanst we'll store them in a
-            * texture-like buffer instead of using the CURBE buffer.
-            * This means we won't use GRF registers for constants and we'll
-            * have to fetch constants with a dataport read.
-            */
-        }
     }
 
     /* fragment shader inputs */
@@ -247,6 +249,49 @@ static void prealloc_reg(struct brw_wm_compile *c)
     c->reg_index++;
     c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, c->reg_index, 0);
     c->reg_index += 2;
+
+    /* An instruction may reference up to three constants.
+     * They'll be found in these registers.
+     * XXX alloc these on demand!
+     */
+    if (c->use_const_buffer) {
+       c->current_const[0].reg = alloc_tmp(c);
+       c->current_const[1].reg = alloc_tmp(c);
+       c->current_const[2].reg = alloc_tmp(c);
+    }
+    /*printf("AFTER PRE_ALLOC, reg_index = %d\n", c->reg_index);*/
+}
+
+
+/**
+ * Check if any of the instruction's src registers are constants, uniforms,
+ * or statevars.  If so, fetch any constants that we don't already have in
+ * the three GRF slots.
+ */
+static void fetch_constants(struct brw_wm_compile *c,
+                            const struct prog_instruction *inst)
+{
+   struct brw_compile *p = &c->func;
+   GLuint i;
+
+   /* loop over instruction src regs */
+   for (i = 0; i < 3; i++) {
+      const struct prog_src_register *src = &inst->SrcReg[i];
+      if (src->File == PROGRAM_STATE_VAR ||
+          src->File == PROGRAM_UNIFORM) {
+         if (c->current_const[i].index != src->Index) {
+            /* need to fetch the constant now */
+            brw_dp_READ_4(p,
+                          c->current_const[i].reg,  /* writeback dest */
+                          1,                        /* msg_reg */
+                          src->RelAddr,             /* relative indexing? */
+                          16 * src->Index,          /* byte offset */
+                          BRW_WM_MAX_SURF - 1       /* binding table index */
+                          );
+            c->current_const[i].index = src->Index;
+         }
+      }
+   }
 }
 
 
@@ -263,6 +308,43 @@ static struct brw_reg get_dst_reg(struct brw_wm_compile *c,
 }
 
 
+static struct brw_reg
+get_src_reg_const(struct brw_wm_compile *c,
+                  const struct prog_instruction *inst,
+                  GLuint srcRegIndex, GLuint component)
+{
+   /* We should have already fetched the constant from the constant
+    * buffer in fetch_constants().  Now we just have to return a
+    * register description that extracts the needed component and
+    * smears it across all eight vector components.
+    */
+   const struct prog_src_register *src = &inst->SrcReg[srcRegIndex];
+   struct brw_reg const_reg;
+
+   assert(srcRegIndex < 3);
+   assert(c->current_const[srcRegIndex].index != -1);
+   const_reg = c->current_const[srcRegIndex].reg;
+
+   /*
+   printf("get const reg %d in slot %d, comp %d\n",
+          c->current_const[srcRegIndex].index,
+          srcRegIndex,
+          component);
+   */
+
+   /* extract desired float from the const_reg, and smear */
+   const_reg = stride(const_reg, 0, 1, 0);
+   const_reg.subnr = component * 4;
+
+   if (src->NegateBase)
+      const_reg = negate(const_reg);
+   if (src->Abs)
+      const_reg = brw_abs(const_reg);
+
+   return const_reg;
+}
+
+
 /**
  * Convert Mesa src register to brw register.
  */
@@ -274,8 +356,16 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
     const GLuint nr = 1;
     const GLuint component = GET_SWZ(src->Swizzle, channel);
 
-    return get_reg(c, src->File, src->Index, component, nr, 
-                   src->NegateBase, src->Abs);
+    if (c->use_const_buffer &&
+        (src->File == PROGRAM_STATE_VAR ||
+         src->File == PROGRAM_UNIFORM)) {
+       return get_src_reg_const(c, inst, srcRegIndex, component);
+    }
+    else {
+       /* other type of source register */
+       return get_reg(c, src->File, src->Index, component, nr, 
+                      src->NegateBase, src->Abs);
+    }
 }
 
 
@@ -2473,48 +2563,6 @@ static void emit_tex(struct brw_wm_compile *c,
 }
 
 
-static void emit_get_constant(struct brw_context *brw,
-                              struct brw_wm_compile *c,
-                              struct prog_instruction *inst,
-                              GLuint constIndex)
-{
-   struct brw_compile *p = &c->func;
-   struct brw_reg dst[4];
-   GLuint i;
-   const int mark = mark_tmps( c );
-   struct brw_reg writeback_reg[4];
-
-   /* XXX only need 1 temp reg??? */
-   for (i = 0; i < 4; i++) {
-      writeback_reg[i] = alloc_tmp(c);
-   }
-
-   for (i = 0; i < 4; i++) {
-      dst[i] = get_dst_reg(c, inst, i);
-   }
-
-   /* Get float[4] vector from constant buffer */
-   brw_dp_READ_4(p,
-                 writeback_reg[0],     /* first writeback dest */
-                 1,                    /* msg_reg */
-                 GL_FALSE,             /* rel addr? */
-                 16 * constIndex,      /* byte offset */
-                 BRW_WM_MAX_SURF - 1   /* surface, binding table index */
-                 );
-
-   /* Extract the four channel values, smear across dest registers */
-   for (i = 0; i < 4; i++) {
-      /* extract 1 float from the writeback reg */
-      struct brw_reg new_src = stride(writeback_reg[0], 0, 1, 0);
-      new_src.subnr = i * 4;
-      /* and smear it into the dest register */
-      brw_MOV(p, dst[i], new_src);
-   }
-
-   release_tmps( c, mark );
-}
-
-
 /**
  * Resolve subroutine calls after code emit is done.
  */
@@ -2545,6 +2593,10 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
 	else
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NONE);
+
+        /* fetch any constants that this instruction needs */
+        if (c->use_const_buffer)
+           fetch_constants(c, inst);
 
 	switch (inst->Opcode) {
 	    case WM_PIXELXY:
@@ -2599,17 +2651,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_trunc(c, inst);
 		break;
 	    case OPCODE_MOV:
-#if 0
-                /* test hook for new constant buffer code */
-                if (inst->SrcReg[0].File == PROGRAM_UNIFORM) {
-                   emit_get_constant(brw, c, inst, inst->SrcReg[0].Index);
-                }
-                else {
-                   emit_mov(c, inst);
-                }
-#else
 		emit_mov(c, inst);
-#endif
 		break;
 	    case OPCODE_DP3:
 		emit_dp3(c, inst);
