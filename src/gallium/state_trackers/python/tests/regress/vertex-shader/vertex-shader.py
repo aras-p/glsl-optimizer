@@ -59,7 +59,7 @@ def test(dev, name):
 
     # depth/stencil/alpha
     depth_stencil_alpha = DepthStencilAlpha()
-    depth_stencil_alpha.depth.enabled = 1
+    depth_stencil_alpha.depth.enabled = 0
     depth_stencil_alpha.depth.writemask = 1
     depth_stencil_alpha.depth.func = PIPE_FUNC_LESS
     ctx.set_depth_stencil_alpha(depth_stencil_alpha)
@@ -116,20 +116,13 @@ def test(dev, name):
         width, height,
         tex_usage=PIPE_TEXTURE_USAGE_DISPLAY_TARGET,
     ).get_surface()
-    zbuf = dev.texture_create(
-        PIPE_FORMAT_Z32_UNORM, 
-        width, height,
-        tex_usage=PIPE_TEXTURE_USAGE_DEPTH_STENCIL,
-    ).get_surface()
     fb = Framebuffer()
     fb.width = width
     fb.height = height
     fb.nr_cbufs = 1
     fb.set_cbuf(0, cbuf)
-    fb.set_zsbuf(zbuf)
     ctx.set_framebuffer(fb)
     ctx.surface_clear(cbuf, 0x80808080)
-    ctx.surface_clear(zbuf, 0xffffffff)
 
     # vertex shader
     vs = Shader(file('vert-' + name + '.sh', 'rt').read())
