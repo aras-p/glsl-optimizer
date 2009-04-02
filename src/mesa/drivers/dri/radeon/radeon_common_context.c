@@ -219,7 +219,6 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 	if (radeon) {
 
 		if (radeon->dma.current) {
-			radeonReleaseDmaRegion( radeon );
 			rcommonFlushCmdBuf( radeon, __FUNCTION__ );
 		}
 

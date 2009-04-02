@@ -13,6 +13,10 @@
 #include "dri_util.h"
 #include "tnl/t_vertex.h"
 
+struct radeon_context;
+
+#include "radeon_bocs_wrapper.h"
+
 /* This union is used to avoid warnings/miscompilation
    with float to uint32_t casts due to strict-aliasing */
 typedef union { GLfloat f; uint32_t ui32; } float_ui32_type;
@@ -384,11 +388,15 @@ typedef void (*radeon_line_func) (radeonContextPtr,
 
 typedef void (*radeon_point_func) (radeonContextPtr, radeonVertex *);
 
+#define RADEON_MAX_BOS 24
 struct radeon_state {
 	struct radeon_colorbuffer_state color;
 	struct radeon_depthbuffer_state depth;
 	struct radeon_scissor_state scissor;
 	struct radeon_stencilbuffer_state stencil;
+
+	struct radeon_cs_space_check bos[RADEON_MAX_BOS];
+	int validated_bo_count;
 };
 
 /**

@@ -906,6 +906,49 @@ static INLINE void radeonEmitAtoms(radeonContextPtr radeon, GLboolean dirty)
 	COMMIT_BATCH();
 }
 
+GLboolean radeon_revalidate_bos(GLcontext *ctx)
+{
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	int flushed = 0;
+	int ret;
+again:
+	ret = radeon_cs_space_check(radeon->cmdbuf.cs, radeon->state.bos, radeon->state.validated_bo_count);
+	if (ret == RADEON_CS_SPACE_OP_TO_BIG)
+		return GL_FALSE;
+	if (ret == RADEON_CS_SPACE_FLUSH) {
+		radeonFlush(ctx);
+		if (flushed)
+			return GL_FALSE;
+		flushed = 1;
+		goto again;
+	}
+	return GL_TRUE;
+}
+
+void radeon_validate_reset_bos(radeonContextPtr radeon)
+{
+	int i;
+
+	for (i = 0; i < radeon->state.validated_bo_count; i++) {
+		radeon->state.bos[i].bo = NULL;
+		radeon->state.bos[i].read_domains = 0;
+		radeon->state.bos[i].write_domain = 0;
+		radeon->state.bos[i].new_accounted = 0;
+	}
+	radeon->state.validated_bo_count = 0;
+}
+
+void radeon_validate_bo(radeonContextPtr radeon, struct radeon_bo *bo, uint32_t read_domains, uint32_t write_domain)
+{
+	radeon->state.bos[radeon->state.validated_bo_count].bo = bo;
+	radeon->state.bos[radeon->state.validated_bo_count].read_domains = read_domains;
+	radeon->state.bos[radeon->state.validated_bo_count].write_domain = write_domain;
+	radeon->state.bos[radeon->state.validated_bo_count].new_accounted = 0;
+	radeon->state.validated_bo_count++;
+
+	assert(radeon->state.validated_bo_count < RADEON_MAX_BOS);
+}
+
 void radeonEmitState(radeonContextPtr radeon)
 {
 	if (RADEON_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
@@ -946,6 +989,14 @@ void radeonFlush(GLcontext *ctx)
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s %d\n", __FUNCTION__, radeon->cmdbuf.cs->cdw);
+
+	/* okay if we have no cmds in the buffer &&
+	   we have no DMA flush &&
+	   we have no DMA buffer allocated.
+	   then no point flushing anything at all.
+	*/
+	if (!radeon->dma.flush && !radeon->cmdbuf.cs->cdw && !radeon->dma.current)
+		return;
 
 	if (radeon->dma.flush)
 		radeon->dma.flush( ctx );
@@ -1015,6 +1066,11 @@ int rcommonFlushCmdBufLocked(radeonContextPtr rmesa, const char *caller)
 	}
 	radeon_cs_erase(rmesa->cmdbuf.cs);
 	rmesa->cmdbuf.flushing = 0;
+
+	if (radeon_revalidate_bos(rmesa->glCtx) == GL_FALSE) {
+		fprintf(stderr,"failed to revalidate buffers\n");
+	}
+
 	return ret;
 }
 

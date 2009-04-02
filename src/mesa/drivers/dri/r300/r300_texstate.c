@@ -268,40 +268,29 @@ static GLboolean r300_validate_texture(GLcontext * ctx, struct gl_texture_object
 	return GL_TRUE;
 }
 
-
 /**
  * Ensure all enabled and complete textures are uploaded along with any buffers being used.
  */
 GLboolean r300ValidateBuffers(GLcontext * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct radeon_cs_space_check bos[16];
 	struct radeon_renderbuffer *rrb;
-	int num_bo = 0;
 	int i;
-	int flushed = 0, ret;
-again:
-	num_bo = 0;
+
+	radeon_validate_reset_bos(&rmesa->radeon);
 
 	rrb = radeon_get_colorbuffer(&rmesa->radeon);
 	/* color buffer */
 	if (rrb && rrb->bo) {
-		bos[num_bo].bo = rrb->bo;
-		bos[num_bo].read_domains = 0;
-		bos[num_bo].write_domain = RADEON_GEM_DOMAIN_VRAM;
-		bos[num_bo].new_accounted = 0;
-		num_bo++;
+		radeon_validate_bo(&rmesa->radeon, rrb->bo,
+				   0, RADEON_GEM_DOMAIN_VRAM);
 	}
 
 	/* depth buffer */
 	rrb = radeon_get_depthbuffer(&rmesa->radeon);
-	/* color buffer */
 	if (rrb && rrb->bo) {
-		bos[num_bo].bo = rrb->bo;
-		bos[num_bo].read_domains = 0;
-		bos[num_bo].write_domain = RADEON_GEM_DOMAIN_VRAM;
-		bos[num_bo].new_accounted = 0;
-		num_bo++;
+		radeon_validate_bo(&rmesa->radeon, rrb->bo,
+				   0, RADEON_GEM_DOMAIN_VRAM);
 	}
 	
 	for (i = 0; i < ctx->Const.MaxTextureImageUnits; ++i) {
@@ -317,26 +306,15 @@ again:
 		}
 		t = radeon_tex_obj(ctx->Texture.Unit[i]._Current);
 		if (t->image_override && t->bo)
-			bos[num_bo].bo = t->bo;
+			radeon_validate_bo(&rmesa->radeon, t->bo,
+					   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
+
 		else if (t->mt->bo)
-			bos[num_bo].bo = t->mt->bo;
-		bos[num_bo].read_domains = RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM;
-		bos[num_bo].write_domain = 0;
-		bos[num_bo].new_accounted = 0;
-		num_bo++;
+			radeon_validate_bo(&rmesa->radeon, t->mt->bo,
+					   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
 	}
 
-	ret = radeon_cs_space_check(rmesa->radeon.cmdbuf.cs, bos, num_bo);
-	if (ret == RADEON_CS_SPACE_OP_TO_BIG)
-		return GL_FALSE;
-	if (ret == RADEON_CS_SPACE_FLUSH) {
-		radeonFlush(ctx);
-		if (flushed)
-			return GL_FALSE;
-		flushed = 1;
-		goto again;
-	}
-	return GL_TRUE;
+	return radeon_revalidate_bos(ctx);
 }
 
 void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,

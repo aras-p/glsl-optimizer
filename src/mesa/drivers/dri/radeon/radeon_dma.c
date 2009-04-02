@@ -163,8 +163,6 @@ void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 
 void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 {
-	struct radeon_cs_space_check bos[1];
-	int flushed = 0, ret;
 
 	size = MAX2(size, MAX_DMA_BUF_SZ * 16);
 
@@ -200,24 +198,11 @@ again_alloc:
 	rmesa->dma.current_used = 0;
 	rmesa->dma.current_vertexptr = 0;
 	
-	bos[0].bo = rmesa->dma.current;
-	bos[0].read_domains = RADEON_GEM_DOMAIN_GTT;
-	bos[0].write_domain =0 ;
-	bos[0].new_accounted = 0;
+	radeon_validate_bo(rmesa, rmesa->dma.current, RADEON_GEM_DOMAIN_GTT, 0);
 
-	ret = radeon_cs_space_check(rmesa->cmdbuf.cs, bos, 1);
-	if (ret == RADEON_CS_SPACE_OP_TO_BIG) {
-		fprintf(stderr,"Got OPEARTION TO BIG ILLEGAL - this cannot happen");
-		assert(0);
-	} else if (ret == RADEON_CS_SPACE_FLUSH) {
-		rcommonFlushCmdBuf(rmesa, __FUNCTION__);
-		if (flushed) {
-			fprintf(stderr,"flushed but still no space\n");
-			assert(0);
-		}
-		flushed = 1;
-		goto again_alloc;
-	}
+	if (radeon_revalidate_bos(rmesa->glCtx) == GL_FALSE)
+	  fprintf(stderr,"failure to revalidate BOs - badness\n");
+	  
 	radeon_bo_map(rmesa->dma.current, 1);
 }
 

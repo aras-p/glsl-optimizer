@@ -47,6 +47,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast_setup/swrast_setup.h"
 
 #include "radeon_context.h"
+#include "radeon_mipmap_tree.h"
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
 #include "radeon_tcl.h"
@@ -2043,8 +2044,48 @@ static void update_texturematrix( GLcontext *ctx )
    }
 }
 
+static GLboolean r100ValidateBuffers(GLcontext *ctx)
+{
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   struct radeon_renderbuffer *rrb;
+   int i;
 
-void radeonValidateState( GLcontext *ctx )
+   radeon_validate_reset_bos(&rmesa->radeon);
+   
+   rrb = radeon_get_colorbuffer(&rmesa->radeon);
+   /* color buffer */
+   if (rrb && rrb->bo) {
+     radeon_validate_bo(&rmesa->radeon, rrb->bo,
+			0, RADEON_GEM_DOMAIN_VRAM);
+   }
+
+   /* depth buffer */
+   rrb = radeon_get_depthbuffer(&rmesa->radeon);
+   /* color buffer */
+   if (rrb && rrb->bo) {
+     radeon_validate_bo(&rmesa->radeon, rrb->bo,
+			0, RADEON_GEM_DOMAIN_VRAM);
+   }
+
+   for (i = 0; i < ctx->Const.MaxTextureImageUnits; ++i) {
+      radeonTexObj *t;
+      
+      if (!ctx->Texture.Unit[i]._ReallyEnabled)
+	 continue;
+
+      t = radeon_tex_obj(ctx->Texture.Unit[i]._Current);
+      if (t->image_override && t->bo)
+	radeon_validate_bo(&rmesa->radeon, t->bo,
+			   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
+      else if (t->mt->bo)
+	radeon_validate_bo(&rmesa->radeon, t->mt->bo,
+			   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
+   }
+
+   return radeon_revalidate_bos(ctx);
+}
+
+GLboolean radeonValidateState( GLcontext *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLuint new_state = rmesa->radeon.NewGLState;
@@ -2060,6 +2101,10 @@ void radeonValidateState( GLcontext *ctx )
       radeonUpdateTextureState( ctx );
       new_state |= rmesa->radeon.NewGLState; /* may add TEXTURE_MATRIX */
    }
+
+   /* we need to do a space check here */
+   if (!r100ValidateBuffers(ctx))
+     return GL_FALSE;
 
    /* Need an event driven matrix update?
     */
@@ -2136,7 +2181,8 @@ static void radeonWrapRunPipeline( GLcontext *ctx )
    /* Validate state:
     */
    if (rmesa->radeon.NewGLState)
-      radeonValidateState( ctx );
+      if (!radeonValidateState( ctx ))
+	 FALLBACK(rmesa, RADEON_FALLBACK_TEXTURE, GL_TRUE);
 
    has_material = (ctx->Light.Enabled && check_material( ctx ));
 

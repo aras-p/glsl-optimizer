@@ -50,7 +50,7 @@ extern void radeonUpdateDrawBuffer( GLcontext *ctx );
 extern void radeonUploadTexMatrix( r100ContextPtr rmesa,
 				   int unit, GLboolean swapcols );
 
-extern void radeonValidateState( GLcontext *ctx );
+extern GLboolean radeonValidateState( GLcontext *ctx );
 
 
 extern void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
