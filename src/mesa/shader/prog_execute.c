@@ -1540,8 +1540,8 @@ _mesa_execute_program(GLcontext * ctx,
       case OPCODE_TXB:         /* GL_ARB_fragment_program only */
          /* Texel lookup with LOD bias */
          {
-            const struct gl_texture_unit *texUnit
-               = &ctx->Texture.Unit[inst->TexSrcUnit];
+            const GLuint unit = machine->Samplers[inst->TexSrcUnit];
+            const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
             GLfloat texcoord[4], color[4], lodBias;
 
             fetch_vector4(&inst->SrcReg[0], machine, texcoord);
