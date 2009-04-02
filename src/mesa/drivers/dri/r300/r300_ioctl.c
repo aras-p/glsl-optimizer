@@ -624,7 +624,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 
 	/* HW depth */
 	if (mask & BUFFER_BIT_DEPTH) {
-    	  tri_mask |= BUFFER_BIT_DEPTH;
+    	        tri_mask |= BUFFER_BIT_DEPTH;
 	}
 
 	/* If we're doing a tri pass for depth/stencil, include a likely color

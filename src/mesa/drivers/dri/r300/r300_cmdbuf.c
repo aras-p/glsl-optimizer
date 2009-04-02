@@ -230,11 +230,11 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
 		cbpitch |= R300_COLOR_TILE_ENABLE;
 
-	BEGIN_BATCH_NO_AUTOSTATE(6);
+	BEGIN_BATCH_NO_AUTOSTATE(8);
 	OUT_BATCH_REGSEQ(R300_RB3D_COLOROFFSET0, 1);
 	OUT_BATCH_RELOC(offset, rrb->bo, offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 	OUT_BATCH_REGSEQ(R300_RB3D_COLORPITCH0, 1);
-	OUT_BATCH(cbpitch);
+	OUT_BATCH_RELOC(cbpitch, rrb->bo, cbpitch, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 	END_BATCH();
 }
 
@@ -282,7 +282,7 @@ static void emit_zstencil_format(GLcontext *ctx, struct radeon_state_atom * atom
 	}
 
 	OUT_BATCH(atom->cmd[0]);
-	atom->cmd[1] &= ~(3 << 0);
+	atom->cmd[1] &= ~0xf;
 	atom->cmd[1] |= format;
 	OUT_BATCH(atom->cmd[1]);
 	OUT_BATCH(atom->cmd[2]);
