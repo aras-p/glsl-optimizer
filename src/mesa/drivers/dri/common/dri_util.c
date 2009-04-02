@@ -200,9 +200,8 @@ static int driBindContext(__DRIcontext *pcp,
     }
 
     /* Call device-specific MakeCurrent */
-    (*psp->DriverAPI.MakeCurrent)(pcp, pdp, prp);
 
-    return GL_TRUE;
+    return (*psp->DriverAPI.MakeCurrent)(pcp, pdp, prp);
 }
 
 /*@}*/
