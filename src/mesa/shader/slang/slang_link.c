@@ -562,6 +562,9 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
       }
    }
 
+   if (totalLen == 0)
+      return NULL;
+
    source = (GLchar *) _mesa_malloc(totalLen + 1);
    if (!source)
       return NULL;
@@ -620,14 +623,16 @@ get_main_shader(GLcontext *ctx,
     */
    shader = concat_shaders(shProg, type);
 
-   _slang_compile(ctx, shader);
+   if (shader) {
+      _slang_compile(ctx, shader);
 
-   /* Finally, check if recompiling failed */
-   if (!shader->CompileStatus ||
-       !shader->Main ||
-       shader->UnresolvedRefs) {
-      link_error(shProg, "Unresolved symbols");
-      return NULL;
+      /* Finally, check if recompiling failed */
+      if (!shader->CompileStatus ||
+          !shader->Main ||
+          shader->UnresolvedRefs) {
+         link_error(shProg, "Unresolved symbols");
+         return NULL;
+      }
    }
 
    return shader;
@@ -650,8 +655,8 @@ _slang_link(GLcontext *ctx,
             GLhandleARB programObj,
             struct gl_shader_program *shProg)
 {
-   const struct gl_vertex_program *vertProg;
-   const struct gl_fragment_program *fragProg;
+   const struct gl_vertex_program *vertProg = NULL;
+   const struct gl_fragment_program *fragProg = NULL;
    GLuint numSamplers = 0;
    GLuint i;
 
