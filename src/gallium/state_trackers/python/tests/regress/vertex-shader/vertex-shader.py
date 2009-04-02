@@ -226,25 +226,10 @@ def main():
         'sub',
         'xpd',
     ]
-    
-    html = '''<html>
-<head>
-<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"screen.css\">
-</head>
-<body>
-<div class=\"main\">
-<h2>regression tests for <span style=\"color: #FF8000\">vertex</span> shader</h2>
-<table><tbody>
-'''
 
     dev = Device()
     for t in tests:
         test(dev, t)
-        html += '<tr><td width=\"300px\">' + t + '</td>'
-        html += '<td><img src=\"vert-' + t + '.png\"></img></td></tr>\n'
-
-    html += '</tbody></table>\n</body>\n</html>\n'
-    file('vertex-shader.htm', 'wt').write(html)
 
 if __name__ == '__main__':
     main()
