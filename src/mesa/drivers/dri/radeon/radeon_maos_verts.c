@@ -374,15 +374,15 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 	 break;
 
    if (rmesa->tcl.vertex_format == setup_tab[i].vertex_format &&
-       rmesa->tcl.aos[0].bo)
+       rmesa->radeon.tcl.aos[0].bo)
       return;
 
-   if (rmesa->tcl.aos[0].bo)
+   if (rmesa->radeon.tcl.aos[0].bo)
       radeonReleaseArrays( ctx, ~0 );
 
    radeonAllocDmaRegion( &rmesa->radeon,
-			 &rmesa->tcl.aos[0].bo,
-			 &rmesa->tcl.aos[0].offset,
+			 &rmesa->radeon.tcl.aos[0].bo,
+			 &rmesa->radeon.tcl.aos[0].offset,
 			 VB->Count * setup_tab[i].vertex_size * 4, 
 			 4);
 
@@ -422,25 +422,12 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 
 
    setup_tab[i].emit( ctx, 0, VB->Count, 
-		      rmesa->tcl.aos[0].bo->ptr + rmesa->tcl.aos[0].offset);
+		      rmesa->radeon.tcl.aos[0].bo->ptr + rmesa->radeon.tcl.aos[0].offset);
 
-   //   rmesa->tcl.aos[0].size = setup_tab[i].vertex_size;
-   rmesa->tcl.aos[0].stride = setup_tab[i].vertex_size;
+   //   rmesa->radeon.tcl.aos[0].size = setup_tab[i].vertex_size;
+   rmesa->radeon.tcl.aos[0].stride = setup_tab[i].vertex_size;
    rmesa->tcl.vertex_format = setup_tab[i].vertex_format;
-   rmesa->tcl.nr_aos_components = 1;
+   rmesa->radeon.tcl.aos_count = 1;
 }
 
 
-
-void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
-{
-   r100ContextPtr rmesa = R100_CONTEXT( ctx );
-   int i;
-
-   for (i = 0; i < rmesa->tcl.nr_aos_components; i++) {
-      if (rmesa->tcl.aos[i].bo) {
-         radeon_bo_unref(rmesa->tcl.aos[i].bo);
-         rmesa->tcl.aos[i].bo = NULL;
-      }
-   }
-}

@@ -908,7 +908,3 @@ void r200InitSwtcl( GLcontext *ctx )
    rmesa->radeon.swtcl.hw_primitive = 0;
 }
 
-
-void r200DestroySwtcl( GLcontext *ctx )
-{
-}

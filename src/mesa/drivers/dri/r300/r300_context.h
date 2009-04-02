@@ -633,11 +633,7 @@ struct r300_state {
 	struct r300_texture_state texture;
 	int sw_tcl_inputs[VERT_ATTRIB_MAX];
 	struct r300_vertex_shader_state vertex_shader;
-	struct radeon_aos aos[R300_MAX_AOS_ARRAYS];
-	int aos_count;
 
-	struct radeon_bo *elt_dma_bo; /** Buffer object that contains element indices */
-	int elt_dma_offset; /** Offset into this buffer object, in bytes */
 
 	DECLARE_RENDERINPUTS(render_inputs_bitset);	/* actual render inputs that R300 was configured for.
 							   They are the same as tnl->render_inputs for fixed pipeline */

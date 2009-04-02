@@ -324,16 +324,3 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
    rmesa->tcl.vertex_format = vfmt;
 }
 
-
-void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
-{
-   r100ContextPtr rmesa = R100_CONTEXT( ctx );
-   int i;
-
-   for (i = 0; i < rmesa->tcl.nr_aos_components; i++) {
-     if (rmesa->tcl.aos[i].bo) {
-       radeon_bo_unref(rmesa->tcl.aos[i].bo);
-       rmesa->tcl.aos[i].bo = NULL;
-     }
-   }
-}

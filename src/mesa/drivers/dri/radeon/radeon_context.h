@@ -332,7 +332,7 @@ struct r100_state {
 #define R200_ELT_BUF_SZ  (8*1024)
 /* radeon_tcl.c
  */
-struct radeon_tcl_info {
+struct r100_tcl_info {
 	GLuint vertex_format;
 	GLuint hw_primitive;
 
@@ -341,14 +341,9 @@ struct radeon_tcl_info {
 	 */
 	GLvector4f ObjClean;
 
-        struct radeon_aos aos[8];
-	GLuint nr_aos_components;
-
 	GLuint *Elts;
 
-	struct radeon_bo *indexed_bo;
-
-        int elt_cmd_offset; /** Offset into the cmdbuf */
+        int elt_cmd_offset;
 	int elt_cmd_start;
         int elt_used;
 };
@@ -416,7 +411,7 @@ struct r100_context {
 
 	/* radeon_tcl.c
 	 */
-	struct radeon_tcl_info tcl;
+	struct r100_tcl_info tcl;
 
 	/* radeon_swtcl.c
 	 */
@@ -443,15 +438,10 @@ struct r100_context {
 
 #define RADEON_OLD_PACKETS 1
 
-extern void radeonDestroyContext(__DRIcontextPrivate * driContextPriv);
-extern GLboolean radeonCreateContext(const __GLcontextModes * glVisual,
-				     __DRIcontextPrivate * driContextPriv,
-				     void *sharedContextPrivate);
-extern GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
-				   __DRIdrawablePrivate * driDrawPriv,
-				   __DRIdrawablePrivate * driReadPriv);
-extern GLboolean radeonUnbindContext(__DRIcontextPrivate * driContextPriv);
-
+extern GLboolean r100CreateContext( const __GLcontextModes *glVisual,
+				    __DRIcontextPrivate *driContextPriv,
+				    void *sharedContextPrivate);
+  
 
 
 #endif				/* __RADEON_CONTEXT_H__ */

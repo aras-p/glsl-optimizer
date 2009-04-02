@@ -19,7 +19,8 @@ RADEON_COMMON_SOURCES = \
 	radeon_bo_legacy.c \
 	radeon_cs_legacy.c \
 	radeon_mipmap_tree.c \
-	radeon_span.c
+	radeon_span.c \
+	radeon_fbo.c
 
 DRIVER_SOURCES = \
 	radeon_context.c \

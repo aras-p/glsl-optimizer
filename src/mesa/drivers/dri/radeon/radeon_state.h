@@ -52,9 +52,6 @@ extern void radeonUploadTexMatrix( r100ContextPtr rmesa,
 
 extern void radeonValidateState( GLcontext *ctx );
 
-extern void radeonPrintDirty( r100ContextPtr rmesa,
-			      const char *msg );
-
 
 extern void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( rmesa, bit, mode ) do {				\

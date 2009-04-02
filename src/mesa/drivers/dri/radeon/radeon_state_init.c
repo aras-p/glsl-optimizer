@@ -161,22 +161,6 @@ static struct {
 /* =============================================================
  * State initialization
  */
-
-void radeonPrintDirty( r100ContextPtr rmesa, const char *msg )
-{
-   struct radeon_state_atom *l;
-
-   fprintf(stderr, msg);
-   fprintf(stderr, ": ");
-
-   foreach(l, &rmesa->radeon.hw.atomlist) {
-      if (l->dirty || rmesa->radeon.hw.all_dirty)
-	 fprintf(stderr, "%s, ", l->name);
-   }
-
-   fprintf(stderr, "\n");
-}
-
 static int cmdpkt( r100ContextPtr rmesa, int id ) 
 {
    drm_radeon_cmd_header_t h;

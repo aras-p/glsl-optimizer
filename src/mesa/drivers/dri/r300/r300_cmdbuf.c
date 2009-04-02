@@ -649,16 +649,3 @@ void r300InitCmdBuf(r300ContextPtr r300)
 
 	rcommonInitCmdBuf(&r300->radeon);
 }
-
-/**
- * Destroy the command buffer and state atoms.
- */
-void r300DestroyCmdBuf(r300ContextPtr r300)
-{
-	struct radeon_state_atom *atom;
-
-	foreach(atom, &r300->radeon.hw.atomlist) {
-		FREE(atom->cmd);
-	}
-
-}

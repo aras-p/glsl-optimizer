@@ -526,14 +526,8 @@ struct r200_state {
 struct r200_tcl_info {
    GLuint hw_primitive;
 
-/* hw can handle 12 components max */
-  struct radeon_aos aos[12];
-   GLuint nr_aos_components;
-
    GLuint *Elts;
 
-   struct radeon_bo *elt_dma_bo;
-   int elt_dma_offset; /** Offset into this buffer object, in bytes */
    int elt_used;
 
 };

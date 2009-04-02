@@ -48,4 +48,5 @@ void radeonReleaseDmaRegion(radeonContextPtr rmesa);
 void rcommon_flush_last_swtcl_prim(GLcontext *ctx);
 
 void *rcommonAllocDmaLowVerts(radeonContextPtr rmesa, int nverts, int vsize);
+void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs );
 #endif

@@ -302,7 +302,7 @@ int r300EmitArrays(GLcontext * ctx)
 		for (ci = 0; ci < vb->AttribPtr[tab[i]]->size; ci++) {
 			swizzle[i][ci] = ci;
 		}
-		rcommon_emit_vector(ctx, &rmesa->state.aos[i],
+		rcommon_emit_vector(ctx, &rmesa->radeon.tcl.aos[i],
 				    vb->AttribPtr[tab[i]]->data,
 				    vb->AttribPtr[tab[i]]->size,
 				    vb->AttribPtr[tab[i]]->stride, count);
@@ -343,26 +343,9 @@ int r300EmitArrays(GLcontext * ctx)
 	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] =
 	    r300VAPOutputCntl1(ctx, OutputsWritten);
 
-	rmesa->state.aos_count = nr;
+	rmesa->radeon.tcl.aos_count = nr;
 
 	return R300_FALLBACK_NONE;
-}
-
-void r300ReleaseArrays(GLcontext * ctx)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	int i;
-
-	if (rmesa->state.elt_dma_bo) {
-		radeon_bo_unref(rmesa->state.elt_dma_bo);
-		rmesa->state.elt_dma_bo = NULL;
-	}
-	for (i = 0; i < rmesa->state.aos_count; i++) {
-		if (rmesa->state.aos[i].bo) {
-			radeon_bo_unref(rmesa->state.aos[i].bo);
-			rmesa->state.aos[i].bo = NULL;
-		}
-	}
 }
 
 void r300EmitCacheFlush(r300ContextPtr rmesa)

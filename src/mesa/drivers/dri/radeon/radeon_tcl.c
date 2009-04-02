@@ -150,10 +150,10 @@ static GLushort *radeonAllocElts( r100ContextPtr rmesa, GLuint nr )
 	 rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
 
       rcommonEnsureCmdBufSpace(&rmesa->radeon, rmesa->radeon.hw.max_state_size + ELTS_BUFSZ(nr) + 
-			       AOS_BUFSZ(rmesa->tcl.nr_aos_components), __FUNCTION__);
+			       AOS_BUFSZ(rmesa->radeon.tcl.aos_count), __FUNCTION__);
 
       radeonEmitAOS( rmesa,
-		     rmesa->tcl.nr_aos_components, 0 );
+		     rmesa->radeon.tcl.aos_count, 0 );
 
       return radeonAllocEltsOpenEnded( rmesa, rmesa->tcl.vertex_format,
 				       rmesa->tcl.hw_primitive, nr );
@@ -177,11 +177,11 @@ static void radeonEmitPrim( GLcontext *ctx,
    radeonTclPrimitive( ctx, prim, hwprim );
    
    rcommonEnsureCmdBufSpace( &rmesa->radeon,
-			     AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
+			     AOS_BUFSZ(rmesa->radeon.tcl.aos_count) +
 			     rmesa->radeon.hw.max_state_size + VBUF_BUFSZ, __FUNCTION__ );
 
    radeonEmitAOS( rmesa,
-		  rmesa->tcl.nr_aos_components,
+		  rmesa->radeon.tcl.aos_count,
 		  start );
    
    /* Why couldn't this packet have taken an offset param?

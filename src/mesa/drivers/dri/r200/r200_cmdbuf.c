@@ -143,18 +143,18 @@ static void r200FireEB(r200ContextPtr rmesa, int vertex_count, int type)
 		if (!rmesa->radeon.radeonScreen->kernel_mm) {
 			OUT_BATCH_PACKET3(R200_CP_CMD_INDX_BUFFER, 2);
 			OUT_BATCH((0x80 << 24) | (0 << 16) | 0x810);
-			OUT_BATCH_RELOC(rmesa->tcl.elt_dma_offset,
-					rmesa->tcl.elt_dma_bo,
-					rmesa->tcl.elt_dma_offset,
+			OUT_BATCH_RELOC(rmesa->radeon.tcl.elt_dma_offset,
+					rmesa->radeon.tcl.elt_dma_bo,
+					rmesa->radeon.tcl.elt_dma_offset,
 					RADEON_GEM_DOMAIN_GTT, 0, 0);
 			OUT_BATCH(vertex_count/2);
 		} else {
 			OUT_BATCH_PACKET3(R200_CP_CMD_INDX_BUFFER, 2);
 			OUT_BATCH((0x80 << 24) | (0 << 16) | 0x810);
-			OUT_BATCH(rmesa->tcl.elt_dma_offset);
+			OUT_BATCH(rmesa->radeon.tcl.elt_dma_offset);
 			OUT_BATCH(vertex_count/2);
 			radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
-					      rmesa->tcl.elt_dma_bo,
+					      rmesa->radeon.tcl.elt_dma_bo,
 					      RADEON_GEM_DOMAIN_GTT, 0, 0);
 		}
 		END_BATCH();
@@ -176,12 +176,12 @@ void r200FlushElts(GLcontext *ctx)
 
    nr = elt_used / 2;
 
-   radeon_bo_unmap(rmesa->tcl.elt_dma_bo);
+   radeon_bo_unmap(rmesa->radeon.tcl.elt_dma_bo);
 
    r200FireEB(rmesa, nr, rmesa->tcl.hw_primitive);
 
-   radeon_bo_unref(rmesa->tcl.elt_dma_bo);
-   rmesa->tcl.elt_dma_bo = NULL;
+   radeon_bo_unref(rmesa->radeon.tcl.elt_dma_bo);
+   rmesa->radeon.tcl.elt_dma_bo = NULL;
 
    if (R200_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "%s: Syncing\n", __FUNCTION__);
@@ -203,14 +203,14 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
    
    radeonEmitState(&rmesa->radeon);
 
-   rmesa->tcl.elt_dma_bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
+   rmesa->radeon.tcl.elt_dma_bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
 					  0, R200_ELT_BUF_SZ, 4,
 					  RADEON_GEM_DOMAIN_GTT, 0);
-   rmesa->tcl.elt_dma_offset = 0;
+   rmesa->radeon.tcl.elt_dma_offset = 0;
    rmesa->tcl.elt_used = min_nr * 2;
 
-   radeon_bo_map(rmesa->tcl.elt_dma_bo, 1);
-   retval = rmesa->tcl.elt_dma_bo->ptr + rmesa->tcl.elt_dma_offset;
+   radeon_bo_map(rmesa->radeon.tcl.elt_dma_bo, 1);
+   retval = rmesa->radeon.tcl.elt_dma_bo->ptr + rmesa->radeon.tcl.elt_dma_offset;
    
 
    if (R200_DEBUG & DEBUG_PRIMS)
@@ -264,79 +264,79 @@ void r200EmitAOS(r200ContextPtr rmesa, GLuint nr, GLuint offset)
     
    if (!rmesa->radeon.radeonScreen->kernel_mm) {
       for (i = 0; i + 1 < nr; i += 2) {
-	 OUT_BATCH((rmesa->tcl.aos[i].components << 0) |
-		   (rmesa->tcl.aos[i].stride << 8) |
-		   (rmesa->tcl.aos[i + 1].components << 16) |
-		   (rmesa->tcl.aos[i + 1].stride << 24));
+	 OUT_BATCH((rmesa->radeon.tcl.aos[i].components << 0) |
+		   (rmesa->radeon.tcl.aos[i].stride << 8) |
+		   (rmesa->radeon.tcl.aos[i + 1].components << 16) |
+		   (rmesa->radeon.tcl.aos[i + 1].stride << 24));
 			
-	 voffset =  rmesa->tcl.aos[i + 0].offset +
-	    offset * 4 * rmesa->tcl.aos[i + 0].stride;
+	 voffset =  rmesa->radeon.tcl.aos[i + 0].offset +
+	    offset * 4 * rmesa->radeon.tcl.aos[i + 0].stride;
 	 OUT_BATCH_RELOC(voffset,
-			 rmesa->tcl.aos[i].bo,
+			 rmesa->radeon.tcl.aos[i].bo,
 			 voffset,
 			 RADEON_GEM_DOMAIN_GTT,
 			 0, 0);
-	 voffset =  rmesa->tcl.aos[i + 1].offset +
-	    offset * 4 * rmesa->tcl.aos[i + 1].stride;
+	 voffset =  rmesa->radeon.tcl.aos[i + 1].offset +
+	    offset * 4 * rmesa->radeon.tcl.aos[i + 1].stride;
 	 OUT_BATCH_RELOC(voffset,
-			 rmesa->tcl.aos[i+1].bo,
+			 rmesa->radeon.tcl.aos[i+1].bo,
 			 voffset,
 			 RADEON_GEM_DOMAIN_GTT,
 			 0, 0);
       }
       
       if (nr & 1) {
-	 OUT_BATCH((rmesa->tcl.aos[nr - 1].components << 0) |
-		   (rmesa->tcl.aos[nr - 1].stride << 8));
-	 voffset =  rmesa->tcl.aos[nr - 1].offset +
-	    offset * 4 * rmesa->tcl.aos[nr - 1].stride;
+	 OUT_BATCH((rmesa->radeon.tcl.aos[nr - 1].components << 0) |
+		   (rmesa->radeon.tcl.aos[nr - 1].stride << 8));
+	 voffset =  rmesa->radeon.tcl.aos[nr - 1].offset +
+	    offset * 4 * rmesa->radeon.tcl.aos[nr - 1].stride;
 	 OUT_BATCH_RELOC(voffset,
-			 rmesa->tcl.aos[nr - 1].bo,
+			 rmesa->radeon.tcl.aos[nr - 1].bo,
 			 voffset,
 			 RADEON_GEM_DOMAIN_GTT,
 			 0, 0);
       }
    } else {
       for (i = 0; i + 1 < nr; i += 2) {
-	 OUT_BATCH((rmesa->tcl.aos[i].components << 0) |
-		   (rmesa->tcl.aos[i].stride << 8) |
-		   (rmesa->tcl.aos[i + 1].components << 16) |
-		   (rmesa->tcl.aos[i + 1].stride << 24));
+	 OUT_BATCH((rmesa->radeon.tcl.aos[i].components << 0) |
+		   (rmesa->radeon.tcl.aos[i].stride << 8) |
+		   (rmesa->radeon.tcl.aos[i + 1].components << 16) |
+		   (rmesa->radeon.tcl.aos[i + 1].stride << 24));
 	 
-	 voffset =  rmesa->tcl.aos[i + 0].offset +
-	    offset * 4 * rmesa->tcl.aos[i + 0].stride;
+	 voffset =  rmesa->radeon.tcl.aos[i + 0].offset +
+	    offset * 4 * rmesa->radeon.tcl.aos[i + 0].stride;
 	 OUT_BATCH(voffset);
-	 voffset =  rmesa->tcl.aos[i + 1].offset +
-	    offset * 4 * rmesa->tcl.aos[i + 1].stride;
+	 voffset =  rmesa->radeon.tcl.aos[i + 1].offset +
+	    offset * 4 * rmesa->radeon.tcl.aos[i + 1].stride;
 	 OUT_BATCH(voffset);
       }
       
       if (nr & 1) {
-	 OUT_BATCH((rmesa->tcl.aos[nr - 1].components << 0) |
-		   (rmesa->tcl.aos[nr - 1].stride << 8));
-	 voffset =  rmesa->tcl.aos[nr - 1].offset +
-	    offset * 4 * rmesa->tcl.aos[nr - 1].stride;
+	 OUT_BATCH((rmesa->radeon.tcl.aos[nr - 1].components << 0) |
+		   (rmesa->radeon.tcl.aos[nr - 1].stride << 8));
+	 voffset =  rmesa->radeon.tcl.aos[nr - 1].offset +
+	    offset * 4 * rmesa->radeon.tcl.aos[nr - 1].stride;
 	 OUT_BATCH(voffset);
       }
       for (i = 0; i + 1 < nr; i += 2) {
-	 voffset =  rmesa->tcl.aos[i + 0].offset +
-	    offset * 4 * rmesa->tcl.aos[i + 0].stride;
+	 voffset =  rmesa->radeon.tcl.aos[i + 0].offset +
+	    offset * 4 * rmesa->radeon.tcl.aos[i + 0].stride;
 	 radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
-			       rmesa->tcl.aos[i+0].bo,
+			       rmesa->radeon.tcl.aos[i+0].bo,
 			       RADEON_GEM_DOMAIN_GTT,
 			       0, 0);
-	 voffset =  rmesa->tcl.aos[i + 1].offset +
-	    offset * 4 * rmesa->tcl.aos[i + 1].stride;
+	 voffset =  rmesa->radeon.tcl.aos[i + 1].offset +
+	    offset * 4 * rmesa->radeon.tcl.aos[i + 1].stride;
 	 radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
-			       rmesa->tcl.aos[i+1].bo,
+			       rmesa->radeon.tcl.aos[i+1].bo,
 			       RADEON_GEM_DOMAIN_GTT,
 			       0, 0);
       }
       if (nr & 1) {
-	 voffset =  rmesa->tcl.aos[nr - 1].offset +
-	    offset * 4 * rmesa->tcl.aos[nr - 1].stride;
+	 voffset =  rmesa->radeon.tcl.aos[nr - 1].offset +
+	    offset * 4 * rmesa->radeon.tcl.aos[nr - 1].stride;
 	 radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
-			       rmesa->tcl.aos[nr-1].bo,
+			       rmesa->radeon.tcl.aos[nr-1].bo,
 			       RADEON_GEM_DOMAIN_GTT,
 			       0, 0);
       }

@@ -822,7 +822,3 @@ void radeonInitSwtcl( GLcontext *ctx )
    rmesa->radeon.swtcl.hw_primitive = 0;
 }
 
-
-void radeonDestroySwtcl( GLcontext *ctx )
-{
-}

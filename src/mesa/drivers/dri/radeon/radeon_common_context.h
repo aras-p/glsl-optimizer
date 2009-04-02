@@ -290,6 +290,14 @@ struct radeon_swtcl_info {
 
 };
 
+#define RADEON_MAX_AOS_ARRAYS		16
+struct radeon_tcl_info {
+	struct radeon_aos aos[RADEON_MAX_AOS_ARRAYS];
+	GLuint aos_count;
+	struct radeon_bo *elt_dma_bo; /** Buffer object that contains element indices */
+	int elt_dma_offset; /** Offset into this buffer object, in bytes */
+};
+
 struct radeon_ioctl {
 	GLuint vertex_offset;
         struct radeon_bo *bo;
@@ -367,7 +375,6 @@ struct radeon_dri_mirror {
 #define DEBUG_MEMORY    0x4000
 
 
-
 typedef void (*radeon_tri_func) (radeonContextPtr,
 				 radeonVertex *,
 				 radeonVertex *, radeonVertex *);
@@ -436,6 +443,7 @@ struct radeon_context {
    struct radeon_state state;
 
    struct radeon_swtcl_info swtcl;
+   struct radeon_tcl_info tcl;
    /* Configuration cache
     */
    driOptionCache optionCache;
@@ -468,6 +476,7 @@ struct radeon_context {
 	   void (*pre_emit_atoms)(radeonContextPtr rmesa);
 	   void (*pre_emit_state)(radeonContextPtr rmesa);
 	   void (*fallback)(GLcontext *ctx, GLuint bit, GLboolean mode);
+	   void (*free_context)(GLcontext *ctx);
    } vtbl;
 };
 
@@ -530,6 +539,7 @@ void radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 			    __DRIdrawablePrivate * driDrawPriv,
 			    __DRIdrawablePrivate * driReadPriv);
+extern void radeonDestroyContext(__DRIcontextPrivate * driContextPriv);
 
 /* ================================================================
  * Debugging:

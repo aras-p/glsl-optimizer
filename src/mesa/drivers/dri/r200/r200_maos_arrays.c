@@ -142,17 +142,17 @@ void r200EmitArrays( GLcontext *ctx, GLubyte *vimap_rev )
 	 case 3:
 	    /* special handling to fix up fog. Will get us into trouble with vbos...*/
 	    assert(attrib == VERT_ATTRIB_FOG);
-	    if (!rmesa->tcl.aos[i].bo) {
+	    if (!rmesa->radeon.tcl.aos[i].bo) {
 	       if (ctx->VertexProgram._Enabled)
 		  rcommon_emit_vector( ctx,
-				       &(rmesa->tcl.aos[nr]),
+				       &(rmesa->radeon.tcl.aos[nr]),
 				       (char *)VB->AttribPtr[attrib]->data,
 				       1,
 				       VB->AttribPtr[attrib]->stride,
 				       count);
 	       else
 		 r200_emit_vecfog( ctx,
-				   &(rmesa->tcl.aos[nr]),
+				   &(rmesa->radeon.tcl.aos[nr]),
 				   (char *)VB->AttribPtr[attrib]->data,
 				   VB->AttribPtr[attrib]->stride,
 				   count);
@@ -199,9 +199,9 @@ void r200EmitArrays( GLcontext *ctx, GLubyte *vimap_rev )
 	 default:
 	    assert(0);
 	 }
-	 if (!rmesa->tcl.aos[nr].bo) {
+	 if (!rmesa->radeon.tcl.aos[nr].bo) {
 	   rcommon_emit_vector( ctx,
-				&(rmesa->tcl.aos[nr]),
+				&(rmesa->radeon.tcl.aos[nr]),
 				(char *)VB->AttribPtr[attrib]->data,
 				emitsize,
 				VB->AttribPtr[attrib]->stride,
@@ -220,18 +220,6 @@ after_emit:
       rmesa->hw.vtx.cmd[VTX_VTXFMT_1] = vfmt1;
    }
 
-   rmesa->tcl.nr_aos_components = nr;
+   rmesa->radeon.tcl.aos_count = nr;
 }
 
-
-void r200ReleaseArrays( GLcontext *ctx, GLuint newinputs )
-{
-   r200ContextPtr rmesa = R200_CONTEXT( ctx );
-   int i;
-   for (i = 0; i < rmesa->tcl.nr_aos_components; i++) {
-     if (rmesa->tcl.aos[i].bo) {
-       radeon_bo_unref(rmesa->tcl.aos[i].bo);
-       rmesa->tcl.aos[i].bo = NULL;
-     }
-   }
-}

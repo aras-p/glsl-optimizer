@@ -188,6 +188,11 @@ static void r100_vtbl_pre_emit_state(radeonContextPtr radeon)
    radeon->hw.is_dirty = 1;
 }
 
+static void r100_vtbl_free_context(GLcontext *ctx)
+{
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   _mesa_vector4f_free( &rmesa->tcl.ObjClean );
+}
 
 static void r100_init_vtbl(radeonContextPtr radeon)
 {
@@ -202,7 +207,7 @@ static void r100_init_vtbl(radeonContextPtr radeon)
 /* Create the device specific context.
  */
 GLboolean
-radeonCreateContext( const __GLcontextModes *glVisual,
+r100CreateContext( const __GLcontextModes *glVisual,
                      __DRIcontextPrivate *driContextPriv,
                      void *sharedContextPrivate)
 {
@@ -397,50 +402,3 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    }
    return GL_TRUE;
 }
-
-
-/* Destroy the device specific context.
- */
-/* Destroy the Mesa and driver specific context data.
- */
-void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   r100ContextPtr rmesa = (r100ContextPtr) driContextPriv->driverPrivate;
-   r100ContextPtr current = ctx ? R100_CONTEXT(ctx) : NULL;
-
-   /* check if we're deleting the currently bound context */
-   if (rmesa == current) {
-      radeon_firevertices(&rmesa->radeon);
-      _mesa_make_current(NULL, NULL, NULL);
-   }
-
-   /* Free radeon context resources */
-   assert(rmesa); /* should never be null */
-   if ( rmesa ) {
-
-      _swsetup_DestroyContext( rmesa->radeon.glCtx );
-      _tnl_DestroyContext( rmesa->radeon.glCtx );
-      _vbo_DestroyContext( rmesa->radeon.glCtx );
-      _swrast_DestroyContext( rmesa->radeon.glCtx );
-
-      radeonDestroySwtcl( rmesa->radeon.glCtx );
-      radeonReleaseArrays( rmesa->radeon.glCtx, ~0 );
-      if (rmesa->radeon.dma.current) {
-	 radeonReleaseDmaRegion( &rmesa->radeon );
-	 rcommonFlushCmdBuf( &rmesa->radeon, __FUNCTION__ );
-      }
-
-      _mesa_vector4f_free( &rmesa->tcl.ObjClean );
-
-      if (rmesa->radeon.state.scissor.pClipRects) {
-	 FREE(rmesa->radeon.state.scissor.pClipRects);
-	 rmesa->radeon.state.scissor.pClipRects = NULL;
-      }
-
-      radeonCleanupContext(&rmesa->radeon);
-
-      FREE( rmesa );
-   }
-}
-

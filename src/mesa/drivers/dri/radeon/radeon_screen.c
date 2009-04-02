@@ -1332,7 +1332,6 @@ radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
     _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 /**
  * Choose the appropriate CreateContext function based on the chipset.
  * Eventually, all drivers will go through this process.
@@ -1343,25 +1342,21 @@ static GLboolean radeonCreateContext(const __GLcontextModes * glVisual,
 {
 	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
-
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 	if (IS_R300_CLASS(screen))
 		return r300CreateContext(glVisual, driContextPriv, sharedContextPriv);
-        return GL_FALSE;
-}
-
-/**
- * Choose the appropriate DestroyContext function based on the chipset.
- */
-static void radeonDestroyContext(__DRIcontextPrivate * driContextPriv)
-{
-	radeonContextPtr radeon = (radeonContextPtr) driContextPriv->driverPrivate;
-
-	if (IS_R300_CLASS(radeon->radeonScreen))
-		return r300DestroyContext(driContextPriv);
-}
-
-
 #endif
+
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+	if (IS_R200_CLASS(screen))
+		return r200CreateContext(glVisual, driContextPriv, sharedContextPriv);
+#endif
+
+#if !RADEON_COMMON
+	return r100CreateContext(glVisual, driContextPriv, sharedContextPriv);
+#endif
+	return GL_FALSE;
+}
 
 
 /**
@@ -1547,7 +1542,6 @@ getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
    return 0;
 }
 
-#if !RADEON_COMMON || (RADEON_COMMON && defined(RADEON_COMMON_FOR_R300))
 const struct __DriverAPIRec driDriverAPI = {
    .InitScreen      = radeonInitScreen,
    .DestroyScreen   = radeonDestroyScreen,
@@ -1567,24 +1561,4 @@ const struct __DriverAPIRec driDriverAPI = {
     /* DRI2 */
    .InitScreen2     = radeonInitScreen2,
 };
-#else
-const struct __DriverAPIRec driDriverAPI = {
-   .InitScreen      = radeonInitScreen,
-   .DestroyScreen   = radeonDestroyScreen,
-   .CreateContext   = r200CreateContext,
-   .DestroyContext  = r200DestroyContext,
-   .CreateBuffer    = radeonCreateBuffer,
-   .DestroyBuffer   = radeonDestroyBuffer,
-   .SwapBuffers     = radeonSwapBuffers,
-   .MakeCurrent     = radeonMakeCurrent,
-   .UnbindContext   = radeonUnbindContext,
-   .GetSwapInfo     = getSwapInfo,
-   .GetDrawableMSC  = driDrawableGetMSC32,
-   .WaitForMSC      = driWaitForMSC32,
-   .WaitForSBC      = NULL,
-   .SwapBuffersMSC  = NULL,
-   .CopySubBuffer   = radeonCopySubBuffer,
-   .InitScreen2     = radeonInitScreen2,
-};
-#endif
 

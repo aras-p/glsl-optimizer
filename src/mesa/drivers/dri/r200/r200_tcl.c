@@ -145,7 +145,7 @@ static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr )
    if (rmesa->radeon.dma.flush == r200FlushElts &&
        rmesa->tcl.elt_used + nr*2 < R200_ELT_BUF_SZ) {
 
-      GLushort *dest = (GLushort *)(rmesa->tcl.elt_dma_bo->ptr +
+      GLushort *dest = (GLushort *)(rmesa->radeon.tcl.elt_dma_bo->ptr +
 				    rmesa->tcl.elt_used);
 
       rmesa->tcl.elt_used += nr*2;
@@ -156,10 +156,10 @@ static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr )
       if (rmesa->radeon.dma.flush)
 	 rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
 
-      rcommonEnsureCmdBufSpace(&rmesa->radeon, AOS_BUFSZ(rmesa->tcl.nr_aos_components), __FUNCTION__);
+      rcommonEnsureCmdBufSpace(&rmesa->radeon, AOS_BUFSZ(rmesa->radeon.tcl.aos_count), __FUNCTION__);
 
       r200EmitAOS( rmesa,
-		   rmesa->tcl.nr_aos_components, 0 );
+		   rmesa->radeon.tcl.aos_count, 0 );
 
       return r200AllocEltsOpenEnded( rmesa, rmesa->tcl.hw_primitive, nr );
    }
@@ -186,13 +186,13 @@ static void r200EmitPrim( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    r200TclPrimitive( ctx, prim, hwprim );
    
-   //   fprintf(stderr,"Emit prim %d\n", rmesa->tcl.nr_aos_components);
+   //   fprintf(stderr,"Emit prim %d\n", rmesa->radeon.tcl.aos_count);
    rcommonEnsureCmdBufSpace( &rmesa->radeon,
-			     AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
+			     AOS_BUFSZ(rmesa->radeon.tcl.aos_count) +
 			     rmesa->radeon.hw.max_state_size + VBUF_BUFSZ, __FUNCTION__ );
 
    r200EmitAOS( rmesa,
-		rmesa->tcl.nr_aos_components,
+		rmesa->radeon.tcl.aos_count,
 		start );
    
    /* Why couldn't this packet have taken an offset param?
@@ -481,7 +481,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
 
    /* Do the actual work:
     */
-   r200ReleaseArrays( ctx, ~0 /* stage->changed_inputs */ );
+   radeonReleaseArrays( ctx, ~0 /* stage->changed_inputs */ );
    r200EmitArrays( ctx, vimap_rev );
 
    rmesa->tcl.Elts = VB->Elts;
@@ -545,7 +545,7 @@ static void transition_to_swtnl( GLcontext *ctx )
    tnl->Driver.NotifyMaterialChange = 
       _mesa_validate_all_lighting_tables;
 
-   r200ReleaseArrays( ctx, ~0 );
+   radeonReleaseArrays( ctx, ~0 );
 
    /* Still using the D3D based hardware-rasterizer from the radeon;
     * need to put the card into D3D mode to make it work:

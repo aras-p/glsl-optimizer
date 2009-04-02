@@ -49,10 +49,6 @@ extern void r200UpdateDrawBuffer(GLcontext *ctx);
 
 extern GLboolean r200ValidateState( GLcontext *ctx );
 
-extern void r200PrintDirty( r200ContextPtr rmesa,
-			      const char *msg );
-
-
 extern void r200Fallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( rmesa, bit, mode ) do {				\
    if ( 0 ) fprintf( stderr, "FALLBACK in %s: #%d=%d\n",		\

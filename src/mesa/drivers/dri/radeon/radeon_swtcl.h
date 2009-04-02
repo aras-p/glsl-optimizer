@@ -40,7 +40,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_context.h"
 
 extern void radeonInitSwtcl( GLcontext *ctx );
-extern void radeonDestroySwtcl( GLcontext *ctx );
 
 extern void radeonChooseRenderState( GLcontext *ctx );
 extern void radeonChooseVertexState( GLcontext *ctx );
