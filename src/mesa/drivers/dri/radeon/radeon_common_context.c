@@ -223,7 +223,7 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 			rcommonFlushCmdBuf( radeon, __FUNCTION__ );
 		}
 
-		radeonReleaseArrays(ctx, ~0);
+		radeonReleaseArrays(radeon->glCtx, ~0);
 
 		if (radeon->vtbl.free_context)
 			radeon->vtbl.free_context(radeon->glCtx);
