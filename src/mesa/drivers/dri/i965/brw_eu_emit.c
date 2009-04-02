@@ -1127,7 +1127,7 @@ void brw_SAMPLE(struct brw_compile *p,
       /*  mov (8) r9.0<1>:f    r9.0<8;8,1>:f    { Align1 }
        */
       brw_push_insn_state(p);
-      brw_set_compression_control(p, GL_FALSE);
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_MOV(p, reg, reg);	      
       brw_pop_insn_state(p);
    }
