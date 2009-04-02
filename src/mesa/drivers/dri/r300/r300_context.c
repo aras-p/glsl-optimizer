@@ -498,7 +498,7 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 		_vbo_DestroyContext(r300->radeon.glCtx);
 		_swrast_DestroyContext(r300->radeon.glCtx);
 
-		rcommonFlushCmdBuf(&r300->radeon, __FUNCTION__);
+		radeon_firevertices(&r300->radeon);
 
 		if (radeon->state.scissor.pClipRects) {
 			FREE(radeon->state.scissor.pClipRects);
