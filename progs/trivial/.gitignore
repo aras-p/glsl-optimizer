@@ -96,6 +96,7 @@ tri-lit
 tri-logicop-none
 tri-logicop-xor
 tri-mask-tri
+tri-multitex-vbo
 tri-orig
 tri-query
 tri-repeat

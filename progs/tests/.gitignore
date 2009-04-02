@@ -45,7 +45,10 @@ invert
 jkrahntest
 lineclip
 manytex
+mapbufrange
+mapvbo
 minmag
+mipgen
 mipmap_limits
 mipmap_view
 multipal
@@ -54,10 +57,12 @@ packedpixels
 pbo
 prog_parameter
 projtex
+quads
 random
 readrate
 readtex.c
 readtex.h
+rubberband
 seccolor
 sharedtex
 shader_api
