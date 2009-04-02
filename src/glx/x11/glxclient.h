@@ -426,6 +426,11 @@ struct __GLXcontextRec {
    int server_minor;        /**< Minor version number. */
     /*@}*/
 
+   /**
+    * Thread ID we're currently current in. Zero if none.
+    */
+   unsigned long thread_id;
+
     char gl_extension_bits[ __GL_EXT_BYTES ];
 };
 
