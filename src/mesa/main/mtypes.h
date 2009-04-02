@@ -1974,6 +1974,7 @@ struct gl_shader
    GLboolean DeletePending;
    GLboolean CompileStatus;
    GLboolean Main;  /**< shader defines main() */
+   GLboolean UnresolvedRefs;
    const GLchar *Source;  /**< Source code string */
    struct gl_program *Program;  /**< Post-compile assembly code */
    GLchar *InfoLog;

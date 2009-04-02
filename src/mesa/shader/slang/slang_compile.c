@@ -2435,6 +2435,8 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
       _slang_codegen_function(&A, mainFunc);
 
       shader->Main = GL_TRUE; /* this shader defines main() */
+
+      shader->UnresolvedRefs = A.UnresolvedRefs;
    }
 
    _slang_pop_var_table(o.vartable);
