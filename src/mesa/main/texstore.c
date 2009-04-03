@@ -3940,20 +3940,25 @@ linear_to_nonlinear(GLfloat cl)
 
 #endif /* FEATURE_EXT_texture_sRGB */
 
+
+/**
+ * Can the given type represent negative values?
+ */
 static INLINE GLboolean
 type_with_negative_values(GLenum type)
 {
-    switch (type) {
-    case GL_BYTE:
-    case GL_SHORT:
-    case GL_INT:
-    case GL_FLOAT:
-    case GL_HALF_FLOAT_ARB:
-       return GL_TRUE;
+   switch (type) {
+   case GL_BYTE:
+   case GL_SHORT:
+   case GL_INT:
+   case GL_FLOAT:
+   case GL_HALF_FLOAT_ARB:
+      return GL_TRUE;
    default:
       return GL_FALSE;
-    }
+   }
 }
+
 
 /**
  * This is the software fallback for Driver.GetTexImage().
@@ -4107,9 +4112,9 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                GLbitfield transferOps = 0x0;
 
                /* clamp does not apply to GetTexImage (final conversion)?
-                  Looks like we need clamp though when going from format containing
-                  negative values to unsigned format */
-
+                * Looks like we need clamp though when going from format
+                * containing negative values to unsigned format.
+                */
                if (!type_with_negative_values(type) &&
                    (texImage->TexFormat->DataType == GL_FLOAT ||
                    texImage->TexFormat->DataType == GL_SIGNED_NORMALIZED))
