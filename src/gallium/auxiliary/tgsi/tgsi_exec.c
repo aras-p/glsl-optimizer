@@ -1904,7 +1904,7 @@ exec_instruction(
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
-   /* TGSI_OPCODE_FLOOR */
+   case TGSI_OPCODE_FLOOR:
    /* TGSI_OPCODE_FLR */
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
