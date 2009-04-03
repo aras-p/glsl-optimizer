@@ -1929,10 +1929,10 @@ parse_param_elements (GLcontext * ctx, const GLubyte ** inst,
 
    /* Make sure we haven't blown past our parameter limits */
    if (((Program->Base.Target == GL_VERTEX_PROGRAM_ARB) &&
-        (Program->Base.NumParameters >=
+        (Program->Base.NumParameters >
          ctx->Const.VertexProgram.MaxLocalParams))
        || ((Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB)
-           && (Program->Base.NumParameters >=
+           && (Program->Base.NumParameters >
                ctx->Const.FragmentProgram.MaxLocalParams))) {
       program_error(ctx, Program->Position, "Too many parameter variables");
       return 1;
