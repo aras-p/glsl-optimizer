@@ -194,7 +194,6 @@ determineTextureTarget(const int *attribs, int numAttribs)
 static GLenum
 determineTextureFormat(const int *attribs, int numAttribs)
 {
-   GLenum target = 0;
    int i;
 
    for (i = 0; i < numAttribs; i++) {
