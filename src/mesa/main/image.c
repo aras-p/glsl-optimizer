@@ -1677,7 +1677,6 @@ _mesa_apply_stencil_transfer_ops(const GLcontext *ctx, GLuint n,
  * Used to pack an array [][4] of RGBA float colors as specified
  * by the dstFormat, dstType and dstPacking.  Used by glReadPixels,
  * glGetConvolutionFilter(), etc.
- * Incoming colors will be clamped to [0,1] if needed.
  * Note: the rgba values will be modified by this function when any pixel
  * transfer ops are enabled.
  */
@@ -1686,13 +1685,17 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
                            GLenum dstFormat, GLenum dstType,
                            GLvoid *dstAddr,
                            const struct gl_pixelstore_attrib *dstPacking,
-                           GLbitfield transferOps, GLboolean noClamp)
+                           GLbitfield transferOps)
 {
    GLfloat luminance[MAX_WIDTH];
    const GLint comps = _mesa_components_in_format(dstFormat);
    GLuint i;
 
-   if ((!noClamp) && (dstType != GL_FLOAT || ctx->Color.ClampReadColor == GL_TRUE)) {
+   /* XXX
+    * This test should probably go away.  Have the caller set/clear the
+    * IMAGE_CLAMP_BIT as needed.
+    */
+   if (dstType != GL_FLOAT || ctx->Color.ClampReadColor == GL_TRUE) {
       /* need to clamp to [0, 1] */
       transferOps |= IMAGE_CLAMP_BIT;
    }

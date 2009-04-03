@@ -178,7 +178,7 @@ extern void
 _mesa_pack_rgba_span_float( GLcontext *ctx, GLuint n, GLfloat rgba[][4],
                             GLenum dstFormat, GLenum dstType, GLvoid *dstAddr,
                             const struct gl_pixelstore_attrib *dstPacking,
-                            GLbitfield transferOps, GLboolean noClamp );
+                            GLbitfield transferOps );
 
 
 extern void

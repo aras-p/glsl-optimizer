@@ -417,7 +417,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
                                           (GLfloat (*)[4]) src,
                                           logicalBaseFormat, GL_FLOAT,
                                           dst, &ctx->DefaultPacking,
-                                          postConvTransferOps, GL_FALSE);
+                                          postConvTransferOps);
                src += convWidth * 4;
                dst += convWidth * logComponents;
             }
@@ -4102,7 +4102,7 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                }
                _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
                                           format, type, dest,
-                                          &ctx->Pack, transferOps, GL_TRUE);
+                                          &ctx->Pack, transferOps);
             }
 #endif /* FEATURE_EXT_texture_sRGB */
             else {
@@ -4146,7 +4146,7 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                }
                _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
                                           format, type, dest,
-                                          &ctx->Pack, transferOps, GL_FALSE);
+                                          &ctx->Pack, transferOps);
             } /* format */
          } /* row */
       } /* img */

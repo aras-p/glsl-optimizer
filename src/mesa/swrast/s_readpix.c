@@ -396,7 +396,7 @@ read_rgba_pixels( GLcontext *ctx,
                                       format, type, row, 0);
          _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) src,
                                     format, type, dest, packing,
-                                    transferOps & IMAGE_POST_CONVOLUTION_BITS, GL_FALSE);
+                                    transferOps & IMAGE_POST_CONVOLUTION_BITS);
          src += width * 4;
       }
       _mesa_free(convImage);
@@ -441,7 +441,7 @@ read_rgba_pixels( GLcontext *ctx,
 
          /* pack the row of RGBA pixels into user's buffer */
          _mesa_pack_rgba_span_float(ctx, width, rgba, format, type, dst,
-                                    packing, transferOps, GL_FALSE);
+                                    packing, transferOps);
 
          dst += dstStride;
       }
