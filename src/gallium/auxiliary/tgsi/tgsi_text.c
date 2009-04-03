@@ -562,6 +562,7 @@ parse_src_operand(
    uint ind_file;
    int ind_index;
    uint swizzle[4];
+   boolean parsed_ext_negate_paren = FALSE;
    boolean parsed_swizzle;
    boolean parsed_extswizzle;
 
@@ -574,10 +575,17 @@ parse_src_operand(
          src->SrcRegisterExtMod.Negate = 1;
          eat_opt_white( &cur );
          ctx->cur = cur;
+         parsed_ext_negate_paren = TRUE;
+      }
+      else if (*cur == '|') {
+         cur++;
+         src->SrcRegisterExtMod.Negate = 1;
+         src->SrcRegisterExtMod.Absolute = 1;
+         eat_opt_white(&cur);
+         ctx->cur = cur;
       }
    }
-
-   if (*ctx->cur == '|') {
+   else if (*ctx->cur == '|') {
       ctx->cur++;
       eat_opt_white( &ctx->cur );
       src->SrcRegisterExtMod.Absolute = 1;
@@ -715,7 +723,7 @@ parse_src_operand(
       ctx->cur++;
    }
 
-   if (src->SrcRegisterExtMod.Negate) {
+   if (parsed_ext_negate_paren) {
       eat_opt_white( &ctx->cur );
       if (*ctx->cur != ')') {
          report_error( ctx, "Expected `)'" );
