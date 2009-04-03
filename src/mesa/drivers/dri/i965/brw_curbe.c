@@ -339,7 +339,6 @@ static void prepare_constant_buffer(struct brw_context *brw)
 static void
 update_texture_constant_buffer(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
    const struct gl_program_parameter_list *params = fp->program.Base.Parameters;
