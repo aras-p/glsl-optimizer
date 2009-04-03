@@ -608,18 +608,21 @@ sp_tile_cache_clear(struct softpipe_tile_cache *tc, uint clearValue)
 
    switch (tc->transfer->format) {
    case PIPE_FORMAT_R8G8B8A8_UNORM:
+   case PIPE_FORMAT_R8G8B8X8_UNORM:
       r = (clearValue >> 24) & 0xff;
       g = (clearValue >> 16) & 0xff;
       b = (clearValue >>  8) & 0xff;
       a = (clearValue      ) & 0xff;
       break;
    case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
       r = (clearValue >> 16) & 0xff;
       g = (clearValue >>  8) & 0xff;
       b = (clearValue      ) & 0xff;
       a = (clearValue >> 24) & 0xff;
       break;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
       r = (clearValue >>  8) & 0xff;
       g = (clearValue >> 16) & 0xff;
       b = (clearValue >> 24) & 0xff;
