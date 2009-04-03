@@ -720,8 +720,8 @@ debug_dump_surface_bmp(const char *filename,
                        struct pipe_surface *surface)
 {
    struct pipe_transfer *transfer;
-   struct pipe_texture *texture;
-   struct pipe_screen *screen;
+   struct pipe_texture *texture = surface->texture;
+   struct pipe_screen *screen = texture->screen;
 
    transfer = screen->get_tex_transfer(screen, texture, surface->face,
                                        surface->level, surface->zslice,
