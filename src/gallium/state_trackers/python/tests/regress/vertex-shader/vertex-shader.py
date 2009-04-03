@@ -206,10 +206,13 @@ def main():
     tests = [
         'abs',
         'add',
+        'arl',
+        'arr',
         'dp3',
         'dp4',
         'dst',
         'ex2',
+        'flr',
         'frc',
         'lg2',
         'lit',
