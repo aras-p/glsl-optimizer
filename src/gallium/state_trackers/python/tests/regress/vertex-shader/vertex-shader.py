@@ -223,6 +223,10 @@ def main():
         'rsq',
         'sge',
         'slt',
+        'srcmod-abs',
+        'srcmod-absneg',
+        'srcmod-neg',
+        'srcmod-swz',
         'sub',
         'xpd',
     ]
