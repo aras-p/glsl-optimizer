@@ -167,7 +167,7 @@ shade_rastpos(GLcontext *ctx,
 				light->QuadraticAttenuation));
 
 	 if (light->_Flags & LIGHT_SPOT) {
-	    GLfloat PV_dot_dir = - DOT3(VP, light->_NormDirection);
+	    GLfloat PV_dot_dir = - DOT3(VP, light->_NormSpotDirection);
 
 	    if (PV_dot_dir<light->_CosCutoff) {
 	       continue;

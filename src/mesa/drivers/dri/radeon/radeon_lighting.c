@@ -246,7 +246,7 @@ void radeonUpdateMaterial( GLcontext *ctx )
  *       _VP_inf_norm
  *       _h_inf_norm
  *       _Position
- *       _NormDirection
+ *       _NormSpotDirection
  *       _ModelViewInvScale
  *       _NeedEyeCoords
  *       _EyeZDir
@@ -308,9 +308,9 @@ void radeonUpdateLighting( GLcontext *ctx )
 	       fcmd[LIT_DIRECTION_W] = 0;
 	    } else {
 	       COPY_4V( &fcmd[LIT_POSITION_X], l->_Position );
-	       fcmd[LIT_DIRECTION_X] = -l->_NormDirection[0];
-	       fcmd[LIT_DIRECTION_Y] = -l->_NormDirection[1];
-	       fcmd[LIT_DIRECTION_Z] = -l->_NormDirection[2];
+	       fcmd[LIT_DIRECTION_X] = -l->_NormSpotDirection[0];
+	       fcmd[LIT_DIRECTION_Y] = -l->_NormSpotDirection[1];
+	       fcmd[LIT_DIRECTION_Z] = -l->_NormSpotDirection[2];
 	       fcmd[LIT_DIRECTION_W] = 0;
 	    }
 

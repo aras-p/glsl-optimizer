@@ -460,7 +460,7 @@ struct gl_light
    GLfloat Diffuse[4];		/**< diffuse color */
    GLfloat Specular[4];		/**< specular color */
    GLfloat EyePosition[4];	/**< position in eye coordinates */
-   GLfloat EyeDirection[4];	/**< spotlight dir in eye coordinates */
+   GLfloat SpotDirection[4];	/**< spotlight direction in eye coordinates */
    GLfloat SpotExponent;
    GLfloat SpotCutoff;		/**< in degrees */
    GLfloat _CosCutoffNeg;	/**< = cos(SpotCutoff) */
@@ -479,7 +479,7 @@ struct gl_light
    GLfloat _Position[4];	/**< position in eye/obj coordinates */
    GLfloat _VP_inf_norm[3];	/**< Norm direction to infinite light */
    GLfloat _h_inf_norm[3];	/**< Norm( _VP_inf_norm + <0,0,1> ) */
-   GLfloat _NormDirection[4];	/**< normalized spotlight direction */
+   GLfloat _NormSpotDirection[4]; /**< normalized spotlight direction */
    GLfloat _VP_inf_spot_attenuation;
 
    GLfloat _SpotExpTable[EXP_TABLE_SIZE][2];  /**< to replace a pow() call */

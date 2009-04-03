@@ -112,7 +112,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
             value[3] = ctx->Light.Light[ln].SpotExponent;
             return;
          case STATE_SPOT_DIRECTION:
-            COPY_3V(value, ctx->Light.Light[ln].EyeDirection);
+            COPY_3V(value, ctx->Light.Light[ln].SpotDirection);
             value[3] = ctx->Light.Light[ln]._CosCutoff;
             return;
          case STATE_SPOT_CUTOFF:
@@ -449,7 +449,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
             /* here, state[2] is the light number */
             /* pre-normalize spot dir */
             const GLuint ln = (GLuint) state[2];
-            COPY_3V(value, ctx->Light.Light[ln]._NormDirection);
+            COPY_3V(value, ctx->Light.Light[ln]._NormSpotDirection);
             value[3] = ctx->Light.Light[ln]._CosCutoff;
          }
          return;
