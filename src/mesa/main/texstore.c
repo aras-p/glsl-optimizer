@@ -4115,9 +4115,11 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                 * Looks like we need clamp though when going from format
                 * containing negative values to unsigned format.
                 */
-               if (!type_with_negative_values(type) &&
-                   (texImage->TexFormat->DataType == GL_FLOAT ||
-                   texImage->TexFormat->DataType == GL_SIGNED_NORMALIZED))
+               if (format == GL_LUMINANCE || format == GL_LUMINANCE_ALPHA)
+                  transferOps |= IMAGE_CLAMP_BIT;
+               else if (!type_with_negative_values(type) &&
+                        (texImage->TexFormat->DataType == GL_FLOAT ||
+                         texImage->TexFormat->DataType == GL_SIGNED_NORMALIZED))
                   transferOps |= IMAGE_CLAMP_BIT;
 
                for (col = 0; col < width; col++) {
@@ -4144,7 +4146,7 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                }
                _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
                                           format, type, dest,
-                                          &ctx->Pack, transferOps, GL_TRUE);
+                                          &ctx->Pack, transferOps, GL_FALSE);
             } /* format */
          } /* row */
       } /* img */
