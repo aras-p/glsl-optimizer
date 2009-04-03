@@ -195,7 +195,6 @@ static void prealloc_reg(struct brw_wm_compile *c)
 
         /* use a real constant buffer, or just use a section of the GRF? */
         c->use_const_buffer = GL_FALSE; /* (nr_params > 8);*/
-        /*printf("USE CONST BUFFER? %d\n", c->use_const_buffer);*/
 
         if (c->use_const_buffer) {
            /* We'll use a real constant buffer and fetch constants from
@@ -259,7 +258,10 @@ static void prealloc_reg(struct brw_wm_compile *c)
        c->current_const[1].reg = alloc_tmp(c);
        c->current_const[2].reg = alloc_tmp(c);
     }
-    /*printf("AFTER PRE_ALLOC, reg_index = %d\n", c->reg_index);*/
+    /*
+    printf("USE CONST BUFFER? %d\n", c->use_const_buffer);
+    printf("AFTER PRE_ALLOC, reg_index = %d\n", c->reg_index);
+    */
 }
 
 
@@ -278,8 +280,18 @@ static void fetch_constants(struct brw_wm_compile *c,
    for (i = 0; i < 3; i++) {
       const struct prog_src_register *src = &inst->SrcReg[i];
       if (src->File == PROGRAM_STATE_VAR ||
+          src->File == PROGRAM_CONSTANT ||
           src->File == PROGRAM_UNIFORM) {
          if (c->current_const[i].index != src->Index) {
+
+            c->current_const[i].index = src->Index;
+            /*c->current_const[i].reg = alloc_tmp(c);*/
+
+            /*
+            printf("  fetch const[%d] for arg %d into reg %d\n",
+                   src->Index, i, c->current_const[i].reg.nr);
+            */
+
             /* need to fetch the constant now */
             brw_dp_READ_4(p,
                           c->current_const[i].reg,  /* writeback dest */
@@ -288,7 +300,26 @@ static void fetch_constants(struct brw_wm_compile *c,
                           16 * src->Index,          /* byte offset */
                           BRW_WM_MAX_SURF - 1       /* binding table index */
                           );
-            c->current_const[i].index = src->Index;
+
+#if 0
+            /* dependency stall */
+            {
+               int response_length = 1;
+               int mark = mark_tmps( c );
+               struct brw_reg src = c->current_const[i].reg;
+               struct brw_reg tmp = alloc_tmp(c);
+
+               /*  mov (8) r9.0<1>:f    r9.0<8;8,1>:f    { Align1 }
+                */
+               brw_push_insn_state(p);
+               brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+               brw_MOV(p, tmp, src);	      
+               brw_MOV(p, src, tmp);	      
+               brw_pop_insn_state(p);
+
+               release_tmps( c, mark );
+            }
+#endif
          }
       }
    }
@@ -321,16 +352,10 @@ get_src_reg_const(struct brw_wm_compile *c,
    const struct prog_src_register *src = &inst->SrcReg[srcRegIndex];
    struct brw_reg const_reg;
 
+   assert(component < 4);
    assert(srcRegIndex < 3);
    assert(c->current_const[srcRegIndex].index != -1);
    const_reg = c->current_const[srcRegIndex].reg;
-
-   /*
-   printf("get const reg %d in slot %d, comp %d\n",
-          c->current_const[srcRegIndex].index,
-          srcRegIndex,
-          component);
-   */
 
    /* extract desired float from the const_reg, and smear */
    const_reg = stride(const_reg, 0, 1, 0);
@@ -340,6 +365,14 @@ get_src_reg_const(struct brw_wm_compile *c,
       const_reg = negate(const_reg);
    if (src->Abs)
       const_reg = brw_abs(const_reg);
+
+   /*
+   printf("  form const[%d] for arg %d, comp %d, reg %d\n",
+          c->current_const[srcRegIndex].index,
+          srcRegIndex,
+          component,
+          const_reg.nr);
+   */
 
    return const_reg;
 }
@@ -358,6 +391,7 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
 
     if (c->use_const_buffer &&
         (src->File == PROGRAM_STATE_VAR ||
+         src->File == PROGRAM_CONSTANT ||
          src->File == PROGRAM_UNIFORM)) {
        return get_src_reg_const(c, inst, srcRegIndex, component);
     }
@@ -373,7 +407,10 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
  * Same as \sa get_src_reg() but if the register is a literal, emit
  * a brw_reg encoding the literal.
  * Note that a brw instruction only allows one src operand to be a literal.
- * For instructions with more than one operand, only the second can be a literal.
+ * For instructions with more than one operand, only the second can be a
+ * literal.  This means that we treat some literals as constants/uniforms
+ * (which why PROGRAM_CONSTANT is checked in fetch_constants()).
+ * 
  */
 static struct brw_reg get_src_reg_imm(struct brw_wm_compile *c, 
                                       const struct prog_instruction *inst,
@@ -390,6 +427,7 @@ static struct brw_reg get_src_reg_imm(struct brw_wm_compile *c,
           value = -value;
        if (src->Abs)
           value = FABSF(value);
+       /*printf("  form imm reg %f\n", value);*/
        return brw_imm_f(value);
     }
     else {
@@ -1089,60 +1127,53 @@ static void emit_flr(struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
-static void emit_max(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+
+static void emit_min_max(struct brw_wm_compile *c,
+                         const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    struct brw_reg src0, src1, dst;
+    const GLuint mask = inst->DstReg.WriteMask;
+    const int mark = mark_tmps(c);
     int i;
     brw_push_insn_state(p);
     for (i = 0; i < 4; i++) {
 	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg(c, inst, 0, i);
-	    src1 = get_src_reg_imm(c, inst, 1, i);
+            struct brw_reg real_dst = get_dst_reg(c, inst, i);
+	    struct brw_reg src0 = get_src_reg(c, inst, 0, i);
+	    struct brw_reg src1 = get_src_reg(c, inst, 1, i);
+            struct brw_reg dst;
+            /* if dst==src0 or dst==src1 we need to use a temp reg */
+            GLboolean use_temp = brw_same_reg(dst, src0) ||
+                                 brw_same_reg(dst, src1);
+            if (use_temp)
+               dst = alloc_tmp(c);
+            else
+               dst = real_dst;
+
+            /*
+            printf("  Min/max: dst %d  src0 %d  src1 %d\n",
+                   dst.nr, src0.nr, src1.nr);
+            */
 	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
 	    brw_MOV(p, dst, src0);
 	    brw_set_saturate(p, 0);
 
-	    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, src0, src1);
+            if (inst->Opcode == OPCODE_MIN)
+               brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, src1, src0);
+            else
+               brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_G, src1, src0);
+
 	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
 	    brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
 	    brw_MOV(p, dst, src1);
 	    brw_set_saturate(p, 0);
 	    brw_set_predicate_control_flag_value(p, 0xff);
+            if (use_temp)
+               brw_MOV(p, real_dst, dst);
 	}
     }
     brw_pop_insn_state(p);
-}
-
-static void emit_min(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
-{
-    struct brw_compile *p = &c->func;
-    GLuint mask = inst->DstReg.WriteMask;
-    struct brw_reg src0, src1, dst;
-    int i;
-    brw_push_insn_state(p);
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    dst = get_dst_reg(c, inst, i);
-	    src0 = get_src_reg_imm(c, inst, 0, i);
-	    src1 = get_src_reg(c, inst, 1, i);
-	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-	    brw_MOV(p, dst, src0);
-	    brw_set_saturate(p, 0);
-
-	    brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, src1, src0);
-	    brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-	    brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
-	    brw_MOV(p, dst, src1);
-	    brw_set_saturate(p, 0);
-	    brw_set_predicate_control_flag_value(p, 0xff);
-	}
-    }
-    brw_pop_insn_state(p);
+    release_tmps(c, mark);
 }
 
 static void emit_pow(struct brw_wm_compile *c,
@@ -2594,6 +2625,11 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	else
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NONE);
 
+        /*
+        _mesa_printf("Inst %d: ", i);
+        _mesa_print_instruction(inst);
+        */
+
         /* fetch any constants that this instruction needs */
         if (c->use_const_buffer)
            fetch_constants(c, inst);
@@ -2683,11 +2719,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_LG2:
 		emit_lg2(c, inst);
 		break;
-	    case OPCODE_MAX:	
-		emit_max(c, inst);
-		break;
 	    case OPCODE_MIN:	
-		emit_min(c, inst);
+	    case OPCODE_MAX:	
+		emit_min_max(c, inst);
 		break;
 	    case OPCODE_DDX:
 		emit_ddx(c, inst);
