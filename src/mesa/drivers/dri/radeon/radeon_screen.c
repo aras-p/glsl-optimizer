@@ -246,15 +246,31 @@ extern const struct dri_extension mm_extensions[];
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
 static int
-radeonGetParam(int fd, int param, void *value)
+radeonGetParam(__DRIscreenPrivate *sPriv, int param, void *value)
 {
   int ret;
   drm_radeon_getparam_t gp;
+  struct drm_radeon_info info;
 
-  gp.param = param;
-  gp.value = value;
+  if (sPriv->drm_version.major >= 2) {
+      info.value = (uint64_t)value;
+      switch (param) {
+      case RADEON_PARAM_DEVICE_ID:
+          info.request = RADEON_INFO_DEVICE_ID;
+          break;
+      case RADEON_PARAM_NUM_GB_PIPES:
+          info.request = RADEON_INFO_NUM_GB_PIPES;
+          break;
+      default:
+          return -EINVAL;
+      }
+      ret = drmCommandWriteRead(sPriv->fd, DRM_RADEON_INFO, &info, sizeof(info));
+  } else {
+      gp.param = param;
+      gp.value = value;
 
-  ret = drmCommandWriteRead( fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
+      ret = drmCommandWriteRead(sPriv->fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
+  }
   return ret;
 }
 
@@ -767,8 +783,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       int ret;
 
 #ifdef RADEON_PARAM_KERNEL_MM
-     ret = radeonGetParam( sPriv->fd, RADEON_PARAM_KERNEL_MM,
-                            &screen->kernel_mm);
+     ret = radeonGetParam(sPriv, RADEON_PARAM_KERNEL_MM, &screen->kernel_mm);
 
       if (ret && ret != -EINVAL) {
          FREE( screen );
@@ -780,7 +795,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
           screen->kernel_mm = 0;
 #endif
 
-      ret = radeonGetParam( sPriv->fd, RADEON_PARAM_GART_BUFFER_OFFSET,
+      ret = radeonGetParam(sPriv, RADEON_PARAM_GART_BUFFER_OFFSET,
 			    &screen->gart_buffer_offset);
 
       if (ret) {
@@ -789,7 +804,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	 return NULL;
       }
 
-      ret = radeonGetParam( sPriv->fd, RADEON_PARAM_GART_BASE,
+      ret = radeonGetParam(sPriv, RADEON_PARAM_GART_BASE,
 			    &screen->gart_base);
       if (ret) {
 	 FREE( screen );
@@ -797,7 +812,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	 return NULL;
       }
 
-      ret = radeonGetParam( sPriv->fd, RADEON_PARAM_IRQ_NR,
+      ret = radeonGetParam(sPriv, RADEON_PARAM_IRQ_NR,
 			    &screen->irq);
       if (ret) {
 	 FREE( screen );
@@ -898,8 +913,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    screen->cpp = dri_priv->bpp / 8;
    screen->AGPMode = dri_priv->AGPMode;
 
-   ret = radeonGetParam( sPriv->fd, RADEON_PARAM_FB_LOCATION,
-                         &temp);
+   ret = radeonGetParam(sPriv, RADEON_PARAM_FB_LOCATION, &temp);
    if (ret) {
        if (screen->chip_family < CHIP_FAMILY_RS600 && !screen->kernel_mm)
 	   screen->fbLocation      = ( INREG( RADEON_MC_FB_LOCATION ) & 0xffff) << 16;
@@ -913,8 +927,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    }
 
    if (screen->chip_family >= CHIP_FAMILY_R300) {
-       ret = radeonGetParam( sPriv->fd, RADEON_PARAM_NUM_GB_PIPES,
-			     &temp);
+       ret = radeonGetParam(sPriv, RADEON_PARAM_NUM_GB_PIPES, &temp);
        if (ret) {
 	   fprintf(stderr, "Unable to get num_pipes, need newer drm\n");
 	   switch (screen->chip_family) {
@@ -1069,11 +1082,9 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
    screen->kernel_mm = 1;
    screen->chip_flags = 0;
 
-   ret = radeonGetParam( sPriv->fd, RADEON_PARAM_IRQ_NR,
-			 &screen->irq);
+   ret = radeonGetParam(sPriv, RADEON_PARAM_IRQ_NR, &screen->irq);
 
-   ret = radeonGetParam( sPriv->fd, RADEON_PARAM_DEVICE_ID,
-			 &device_id);
+   ret = radeonGetParam(sPriv, RADEON_PARAM_DEVICE_ID, &device_id);
    if (ret) {
      FREE( screen );
      fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_DEVICE_ID): %d\n", ret);
@@ -1085,8 +1096,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
      return NULL;
 
    if (screen->chip_family >= CHIP_FAMILY_R300) {
-       ret = radeonGetParam( sPriv->fd, RADEON_PARAM_NUM_GB_PIPES,
-			     &temp);
+       ret = radeonGetParam(sPriv, RADEON_PARAM_NUM_GB_PIPES, &temp);
        if (ret) {
 	   fprintf(stderr, "Unable to get num_pipes, need newer drm\n");
 	   switch (screen->chip_family) {

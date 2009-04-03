@@ -377,9 +377,11 @@ void radeonWaitForIdleLocked(radeonContextPtr radeon)
 
 static void radeonWaitForIdle(radeonContextPtr radeon)
 {
-	LOCK_HARDWARE(radeon);
-	radeonWaitForIdleLocked(radeon);
-	UNLOCK_HARDWARE(radeon);
+	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
+        LOCK_HARDWARE(radeon);
+	    radeonWaitForIdleLocked(radeon);
+	    UNLOCK_HARDWARE(radeon);
+    }
 }
 
 static void radeon_flip_renderbuffers(struct radeon_framebuffer *rfb)

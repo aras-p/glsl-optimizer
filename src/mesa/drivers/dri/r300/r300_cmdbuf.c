@@ -236,6 +236,24 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	OUT_BATCH_REGSEQ(R300_RB3D_COLORPITCH0, 1);
 	OUT_BATCH_RELOC(cbpitch, rrb->bo, cbpitch, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 	END_BATCH();
+    if (r300->radeon.radeonScreen->driScreen->dri2.enabled) {
+        if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
+            BEGIN_BATCH_NO_AUTOSTATE(3);
+            OUT_BATCH_REGSEQ(R300_SC_SCISSORS_TL, 2);
+            OUT_BATCH(0);
+            OUT_BATCH((rrb->width << R300_SCISSORS_X_SHIFT) |
+                    (rrb->height << R300_SCISSORS_Y_SHIFT));
+            END_BATCH();
+        } else {
+            BEGIN_BATCH_NO_AUTOSTATE(3);
+            OUT_BATCH_REGSEQ(R300_SC_SCISSORS_TL, 2);
+            OUT_BATCH((R300_SCISSORS_OFFSET << R300_SCISSORS_X_SHIFT) |
+                    (R300_SCISSORS_OFFSET << R300_SCISSORS_Y_SHIFT));
+            OUT_BATCH(((rrb->width + R300_SCISSORS_OFFSET) << R300_SCISSORS_X_SHIFT) |
+                    ((rrb->height + R300_SCISSORS_OFFSET) << R300_SCISSORS_Y_SHIFT));
+            END_BATCH();
+        }
+    }
 }
 
 static void emit_zb_offset(GLcontext *ctx, struct radeon_state_atom * atom)

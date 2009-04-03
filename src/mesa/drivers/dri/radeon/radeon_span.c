@@ -503,9 +503,10 @@ static void radeonSpanRenderStart(GLcontext * ctx)
 	 * unnecessary due to the fact that mapping our buffers, textures, etc.
 	 * should implicitly wait for any previous rendering commands that must
 	 * be waited on. */
-	LOCK_HARDWARE(rmesa);
-	radeonWaitForIdleLocked(rmesa);
-
+	if (!rmesa->radeonScreen->driScreen->dri2.enabled) {
+		LOCK_HARDWARE(rmesa);
+		radeonWaitForIdleLocked(rmesa);
+	}
 	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
 		if (ctx->Texture.Unit[i]._ReallyEnabled)
 			ctx->Driver.MapTexture(ctx, ctx->Texture.Unit[i]._Current);
@@ -522,8 +523,9 @@ static void radeonSpanRenderFinish(GLcontext * ctx)
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	int i;
 	_swrast_flush(ctx);
-	UNLOCK_HARDWARE(rmesa);
-
+	if (!rmesa->radeonScreen->driScreen->dri2.enabled) {
+		UNLOCK_HARDWARE(rmesa);
+	}
 	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
 		if (ctx->Texture.Unit[i]._ReallyEnabled)
 			ctx->Driver.UnmapTexture(ctx, ctx->Texture.Unit[i]._Current);
