@@ -12,6 +12,7 @@
 #include "main/simple_list.h"
 #include "main/texcompress.h"
 #include "main/texformat.h"
+#include "main/texgetimage.h"
 #include "main/texobj.h"
 #include "main/texstore.h"
 #include "main/teximage.h"
