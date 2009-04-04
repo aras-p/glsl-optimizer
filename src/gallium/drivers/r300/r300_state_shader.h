@@ -187,26 +187,41 @@ static struct r300_fragment_shader r300_texture_fragment_shader = {
 };
 
 static struct r500_fragment_shader r500_texture_fragment_shader = {
-    .shader.stack_size = 0,
-    .instruction_count = 1,
-    .instructions[0].inst0 = R500_INST_TYPE_OUT |
+    .shader.stack_size = 1,
+    .instruction_count = 2,
+    .instructions[0].inst0 = R500_INST_TYPE_TEX |
+        R500_INST_TEX_SEM_WAIT |
+        R500_INST_RGB_OMASK_RGB | R500_INST_ALPHA_OMASK |
+        R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP,
+    .instructions[0].inst1 = R500_TEX_ID(0) | R500_TEX_INST_LD |
+        R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED,
+    .instructions[0].inst2 = R500_TEX_SRC_ADDR(0) |
+        R500_TEX_SRC_S_SWIZ_R | R500_TEX_SRC_T_SWIZ_G |
+        R500_TEX_SRC_R_SWIZ_B | R500_TEX_SRC_Q_SWIZ_A |
+        R500_TEX_DST_ADDR(0) |
+        R500_TEX_DST_R_SWIZ_R | R500_TEX_DST_G_SWIZ_G |
+        R500_TEX_DST_B_SWIZ_B | R500_TEX_DST_A_SWIZ_A,
+    .instructions[0].inst3 = 0x0,
+    .instructions[0].inst4 = 0x0,
+    .instructions[0].inst5 = 0x0,
+    .instructions[1].inst0 = R500_INST_TYPE_OUT |
         R500_INST_TEX_SEM_WAIT | R500_INST_LAST |
         R500_INST_RGB_OMASK_RGB | R500_INST_ALPHA_OMASK |
         R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP,
-    .instructions[0].inst1 =
+    .instructions[1].inst1 =
         R500_RGB_ADDR0(0) | R500_RGB_ADDR1(0) | R500_RGB_ADDR1_CONST |
         R500_RGB_ADDR2(0) | R500_RGB_ADDR2_CONST,
-    .instructions[0].inst2 =
+    .instructions[1].inst2 =
         R500_ALPHA_ADDR0(0) | R500_ALPHA_ADDR1(0) | R500_ALPHA_ADDR1_CONST |
         R500_ALPHA_ADDR2(0) | R500_ALPHA_ADDR2_CONST,
-    .instructions[0].inst3 =
+    .instructions[1].inst3 =
         R500_ALU_RGB_SEL_A_SRC0 | R500_ALU_RGB_R_SWIZ_A_R |
         R500_ALU_RGB_G_SWIZ_A_G | R500_ALU_RGB_B_SWIZ_A_B |
         R500_ALU_RGB_SEL_B_SRC0 | R500_ALU_RGB_R_SWIZ_B_R |
         R500_ALU_RGB_B_SWIZ_B_G | R500_ALU_RGB_G_SWIZ_B_B,
-    .instructions[0].inst4 =
+    .instructions[1].inst4 =
         R500_ALPHA_OP_CMP | R500_ALPHA_SWIZ_A_A | R500_ALPHA_SWIZ_B_A,
-    .instructions[0].inst5 =
+    .instructions[1].inst5 =
         R500_ALU_RGBA_OP_CMP | R500_ALU_RGBA_R_SWIZ_0 |
         R500_ALU_RGBA_G_SWIZ_0 | R500_ALU_RGBA_B_SWIZ_0 |
         R500_ALU_RGBA_A_SWIZ_0,
