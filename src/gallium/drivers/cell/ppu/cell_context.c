@@ -119,7 +119,7 @@ cell_create_context(struct pipe_screen *screen,
    cell->pipe.screen = screen;
    cell->pipe.destroy = cell_destroy_context;
 
-   cell->pipe.clear = cell_clear_surface;
+   cell->pipe.clear = cell_clear;
    cell->pipe.flush = cell_flush;
 
 #if 0
