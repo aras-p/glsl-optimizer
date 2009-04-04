@@ -59,9 +59,10 @@ struct radeon_winsys {
 };
 
 struct radeon_winsys* radeon_pipe_winsys(int fb);
+#if 0
 struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_context,
                                              uint32_t handle,
                                              enum pipe_format format,
                                              int w, int h, int pitch);
-
+#endif
 #endif

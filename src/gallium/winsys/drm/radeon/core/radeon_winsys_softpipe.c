@@ -39,16 +39,17 @@ struct radeon_softpipe_winsys {
 /**
  * Return list of surface formats supported by this driver.
  */
-static boolean radeon_is_format_supported(struct softpipe_winsys *sws, uint format)
+static boolean radeon_is_format_supported(struct softpipe_winsys *sws,
+                                          uint format)
 {
     switch (format) {
-    case PIPE_FORMAT_A8R8G8B8_UNORM:
-    case PIPE_FORMAT_R5G6B5_UNORM:
-    case PIPE_FORMAT_Z24S8_UNORM:
-        return TRUE;
-    default:
-        break;
-    };
+        case PIPE_FORMAT_A8R8G8B8_UNORM:
+        case PIPE_FORMAT_R5G6B5_UNORM:
+        case PIPE_FORMAT_Z24S8_UNORM:
+            return TRUE;
+        default:
+            break;
+    }
     return FALSE;
 }
 
