@@ -531,8 +531,8 @@ class Context(Object):
             self.dirty = False
         return None
 
-    def clear(self, surface, value):
-        self.real.surface_clear(surface, value)
+    def clear(self, buffers, rgba, depth, stencil):
+        self.real.clear(buffers, rgba, depth, stencil)
         
     def _present(self):
         self.real.flush()

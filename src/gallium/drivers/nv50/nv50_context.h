@@ -184,8 +184,8 @@ extern boolean nv50_draw_elements(struct pipe_context *pipe,
 extern void nv50_vbo_validate(struct nv50_context *nv50);
 
 /* nv50_clear.c */
-extern void nv50_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-		       unsigned clearValue);
+extern void nv50_clear(struct pipe_context *pipe, unsigned buffers,
+		       const float *rgba, double depth, unsigned stencil);
 
 /* nv50_program.c */
 extern void nv50_vertprog_validate(struct nv50_context *nv50);

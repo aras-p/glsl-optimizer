@@ -1,7 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
- * All Rights Reserved.
+ * Copyright 2009 VMware, Inc.  All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -25,19 +24,37 @@
  * 
  **************************************************************************/
 
-/* Author:
- *    Brian Paul
+/* Authors:
+ *    Michel Dänzer
  */
 
-#ifndef SP_CLEAR_H
-#define SP_CLEAR_H
 
+#include "pipe/p_context.h"
 #include "pipe/p_state.h"
-struct pipe_context;
-
-extern void
-softpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
-               double depth, unsigned stencil);
+#include "util/u_pack_color.h"
 
 
-#endif /* SP_CLEAR_H */
+/**
+ * Clear the given buffers to the specified values.
+ * No masking, no scissor (clear entire buffer).
+ */
+static INLINE void
+util_clear(struct pipe_context *pipe,
+           struct pipe_framebuffer_state *framebuffer, unsigned buffers,
+           const float *rgba, double depth, unsigned stencil)
+{
+   if (buffers & PIPE_CLEAR_COLOR) {
+      struct pipe_surface *ps = framebuffer->cbufs[0];
+      unsigned color;
+
+      util_pack_color(rgba, ps->format, &color);
+      pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, color);
+   }
+
+   if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {
+      struct pipe_surface *ps = framebuffer->zsbuf;
+
+      pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height,
+                         util_pack_z_stencil(ps->format, depth, stencil));
+   }
+}

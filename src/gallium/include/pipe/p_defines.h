@@ -186,6 +186,15 @@ enum pipe_texture_target {
 
 
 /**
+ * Clear buffer bits
+ */
+/** All color buffers currently bound */
+#define PIPE_CLEAR_COLOR        (1 << 0)
+/** Depth/stencil combined */
+#define PIPE_CLEAR_DEPTHSTENCIL (1 << 1)
+
+
+/**
  * Transfer object usage flags
  */
 enum pipe_transfer_usage {

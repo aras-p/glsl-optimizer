@@ -973,21 +973,26 @@ trace_context_surface_fill(struct pipe_context *_pipe,
 
 static INLINE void
 trace_context_clear(struct pipe_context *_pipe,
-                    struct pipe_surface *surface,
-                    unsigned clearValue)
+                    unsigned surfaces,
+                    const float *rgba,
+                    double depth,
+                    unsigned stencil)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
-   surface = trace_surface_unwrap(tr_ctx, surface);
-
    trace_dump_call_begin("pipe_context", "clear");
 
    trace_dump_arg(ptr, pipe);
-   trace_dump_arg(ptr, surface);
-   trace_dump_arg(uint, clearValue);
+   trace_dump_arg(uint, surfaces);
+   trace_dump_arg(float, rgba[0]);
+   trace_dump_arg(float, rgba[1]);
+   trace_dump_arg(float, rgba[2]);
+   trace_dump_arg(float, rgba[3]);
+   trace_dump_arg(float, depth);
+   trace_dump_arg(uint, stencil);
 
-   pipe->clear(pipe, surface, clearValue);;
+   pipe->clear(pipe, surfaces, rgba, depth, stencil);
 
    trace_dump_call_end();
 }

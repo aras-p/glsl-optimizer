@@ -314,8 +314,8 @@ void i915_emit_hardware_state(struct i915_context *i915 );
 /***********************************************************************
  * i915_clear.c: 
  */
-void i915_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-		unsigned clearValue);
+void i915_clear( struct pipe_context *pipe, unsigned buffers, const float *rgba,
+                 double depth, unsigned stencil);
 
 
 /***********************************************************************

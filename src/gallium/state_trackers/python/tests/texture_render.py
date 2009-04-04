@@ -161,7 +161,12 @@ class TextureTest(TestCase):
         fb.nr_cbufs = 1
         fb.set_cbuf(0, dst_surface)
         ctx.set_framebuffer(fb)
-        ctx.surface_clear(dst_surface, 0x00000000)
+        rgba = FloatArray(4);
+        rgba[0] = 0.0
+        rgba[1] = 0.0
+        rgba[2] = 0.0
+        rgba[3] = 0.0
+        ctx.clear(PIPE_CLEAR_COLOR, rgba, 0.0, 0)
         del fb
     
         # vertex shader

@@ -1,12 +1,14 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
+#include "util/u_clear.h"
 
 #include "nv10_context.h"
 
 void
-nv10_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-	   unsigned clearValue)
+nv10_clear(struct pipe_context *pipe, unsigned buffers,
+           const float *rgba, double depth, unsigned stencil)
 {
-	pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, clearValue);
+	util_clear(pipe, nv10_context(pipe)->framebuffer, buffers, rgba, depth,
+		   stencil);
 }
