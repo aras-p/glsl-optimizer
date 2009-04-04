@@ -460,19 +460,9 @@ clear_depth_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    }
    else {
       /* clear whole buffer w/out masking */
-      GLuint clearValue = util_pack_z(strb->surface->format, ctx->Depth.Clear);
-
-      switch (strb->surface->format) {
-      case PIPE_FORMAT_S8Z24_UNORM:
-         clearValue |= ctx->Stencil.Clear << 24;
-         break;
-      case PIPE_FORMAT_Z24S8_UNORM:
-         clearValue |= ctx->Stencil.Clear;
-         break;
-      default:
-         assert(0);
-      }  
-
+      GLuint clearValue = util_pack_z_stencil(strb->surface->format,
+                                              ctx->Depth.Clear,
+                                              ctx->Stencil.Clear);
       ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
    }
 }

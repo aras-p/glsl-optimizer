@@ -440,6 +440,26 @@ util_pack_z(enum pipe_format format, double z)
       return 0;
    }
 }
+ 
+
+/**
+ * Note: it's assumed that z is in [0,1] and s in [0,255]
+ */
+static INLINE uint
+util_pack_z_stencil(enum pipe_format format, double z, uint s)
+{
+   switch (format) {
+   case PIPE_FORMAT_S8Z24_UNORM:
+      return util_pack_z(format, z) | s << 24;
+   case PIPE_FORMAT_Z24S8_UNORM:
+      return util_pack_z(format, z) | s;
+   default:
+      debug_print_format("gallium: unhandled format in util_pack_z_stencil()",
+                         format);
+      assert(0);
+      return 0;
+   }
+}
 
 
 /**
