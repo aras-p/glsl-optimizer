@@ -1,0 +1,14 @@
+Import('*')
+
+env = drienv.Clone()
+
+drivers = [
+    softpipe,
+    r300
+]
+
+env.SharedLibrary(
+    target ='radeon_dri.so',
+    source = COMMON_GALLIUM_SOURCES,
+    LIBS = drivers + mesa + auxiliaries + env['LIBS'],
+)
