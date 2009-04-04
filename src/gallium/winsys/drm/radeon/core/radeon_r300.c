@@ -39,7 +39,13 @@ static void radeon_r300_write_cs_reloc(struct radeon_cs* cs,
 
 static void radeon_r300_flush_cs(struct radeon_cs* cs)
 {
-    radeon_cs_emit(cs);
+    int retval = 0;
+
+    retval = radeon_cs_emit(cs);
+    if (retval) {
+        debug_printf("radeon: Bad CS, dumping...\n");
+        radeon_cs_print(cs, stderr);
+    }
     radeon_cs_erase(cs);
 }
 
