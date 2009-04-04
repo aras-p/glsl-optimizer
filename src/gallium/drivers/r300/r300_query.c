@@ -46,12 +46,12 @@ static void r300_destroy_query(struct pipe_context* pipe,
 static void r300_begin_query(struct pipe_context* pipe,
                              struct pipe_query* query)
 {
+    uint32_t* map;
     struct r300_context* r300 = r300_context(pipe);
     struct r300_query* q = (struct r300_query*)query;
     CS_LOCALS(r300);
 
-    uint32_t* map = pipe_buffer_map(pipe->screen, q->buf,
-            PIPE_BUFFER_USAGE_CPU_WRITE);
+    map = pipe_buffer_map(pipe->screen, q->buf, PIPE_BUFFER_USAGE_CPU_WRITE);
     *map = ~0;
     pipe_buffer_unmap(pipe->screen, q->buf);
 
@@ -79,6 +79,7 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
                                      uint64_t* result)
 {
     struct r300_query* q = (struct r300_query*)query;
+    uint32_t* map;
     uint32_t temp;
 
     if (wait) {
@@ -88,8 +89,7 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
         pipe->flush(pipe, 0, NULL);
     }
 
-    uint32_t* map = pipe_buffer_map(pipe->screen, q->buf,
-            PIPE_BUFFER_USAGE_CPU_READ);
+    map = pipe_buffer_map(pipe->screen, q->buf, PIPE_BUFFER_USAGE_CPU_READ);
     temp = *map;
     pipe_buffer_unmap(pipe->screen, q->buf);
 

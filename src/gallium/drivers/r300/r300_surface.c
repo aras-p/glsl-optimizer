@@ -29,10 +29,10 @@ static void r300_surface_setup(struct pipe_context* pipe,
                                unsigned w, unsigned h)
 {
     struct r300_context* r300 = r300_context(pipe);
-    CS_LOCALS(r300);
     struct r300_capabilities* caps = r300_screen(pipe->screen)->caps;
     struct r300_texture* tex = (struct r300_texture*)dest->texture;
     unsigned pixpitch = tex->stride / tex->tex.block.size;
+    CS_LOCALS(r300);
 
     r300_emit_blend_state(r300, &blend_clear_state);
     r300_emit_blend_color_state(r300, &blend_color_clear_state);
@@ -80,13 +80,13 @@ static void r300_surface_fill(struct pipe_context* pipe,
                               unsigned w, unsigned h,
                               unsigned color)
 {
-    struct r300_context* r300 = r300_context(pipe);
-    CS_LOCALS(r300);
-    struct r300_capabilities* caps = r300_screen(pipe->screen)->caps;
-    struct r300_texture* tex = (struct r300_texture*)dest->texture;
     int i;
     float r, g, b, a, depth;
+    struct r300_context* r300 = r300_context(pipe);
+    struct r300_capabilities* caps = r300_screen(pipe->screen)->caps;
+    struct r300_texture* tex = (struct r300_texture*)dest->texture;
     unsigned pixpitch = tex->stride / tex->tex.block.size;
+    CS_LOCALS(r300);
 
     a = (float)((color >> 24) & 0xff) / 255.0f;
     r = (float)((color >> 16) & 0xff) / 255.0f;
@@ -201,12 +201,12 @@ static void r300_surface_copy(struct pipe_context* pipe,
                               unsigned w, unsigned h)
 {
     struct r300_context* r300 = r300_context(pipe);
-    CS_LOCALS(r300);
     struct r300_capabilities* caps = r300_screen(pipe->screen)->caps;
     struct r300_texture* srctex = (struct r300_texture*)src->texture;
     struct r300_texture* desttex = (struct r300_texture*)dest->texture;
-
     unsigned pixpitch = srctex->stride / srctex->tex.block.size;
+    CS_LOCALS(r300);
+
     debug_printf("r300: Copying surface %p at (%d,%d) to %p at (%d, %d),"
         " dimensions %dx%d (pixel pitch %d)\n",
         src, srcx, srcy, dest, destx, desty, w, h, pixpitch);

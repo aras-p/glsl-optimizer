@@ -82,8 +82,8 @@ void r300_emit_dsa_state(struct r300_context* r300,
 void r300_emit_fragment_shader(struct r300_context* r300,
                                struct r300_fragment_shader* fs)
 {
-    CS_LOCALS(r300);
     int i;
+    CS_LOCALS(r300);
 
     BEGIN_CS(22);
 
@@ -114,10 +114,10 @@ void r300_emit_fragment_shader(struct r300_context* r300,
 void r500_emit_fragment_shader(struct r300_context* r300,
                                struct r500_fragment_shader* fs)
 {
-    CS_LOCALS(r300);
+    int i;
     struct r300_constant_buffer* constants =
         &r300->shader_constants[PIPE_SHADER_FRAGMENT];
-    int i;
+    CS_LOCALS(r300);
 
     BEGIN_CS(9 + (fs->instruction_count * 6) + (constants->count ? 3 : 0) +
             (constants->count * 4));
@@ -156,9 +156,9 @@ void r500_emit_fragment_shader(struct r300_context* r300,
 void r300_emit_fb_state(struct r300_context* r300,
                         struct pipe_framebuffer_state* fb)
 {
-    CS_LOCALS(r300);
-    struct r300_texture* tex;
     int i;
+    struct r300_texture* tex;
+    CS_LOCALS(r300);
 
     BEGIN_CS((6 * fb->nr_cbufs) + (fb->zsbuf ? 6 : 0) + 4);
     for (i = 0; i < fb->nr_cbufs; i++) {
@@ -217,9 +217,9 @@ void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
 void r300_emit_rs_block_state(struct r300_context* r300,
                               struct r300_rs_block* rs)
 {
+    int i;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
-    int i;
 
     BEGIN_CS(21);
     if (r300screen->caps->is_r500) {
@@ -293,8 +293,8 @@ void r300_emit_texture(struct r300_context* r300,
 
 void r300_emit_vertex_format_state(struct r300_context* r300)
 {
-    CS_LOCALS(r300);
     int i;
+    CS_LOCALS(r300);
 
     BEGIN_CS(26);
     OUT_CS_REG(R300_VAP_VTX_SIZE, r300->vertex_info.vinfo.size);
@@ -328,9 +328,9 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
 void r300_emit_vertex_shader(struct r300_context* r300,
                              struct r300_vertex_shader* vs)
 {
-    CS_LOCALS(r300);
-    struct r300_screen* r300screen = r300_screen(r300->context.screen);
     int i;
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    CS_LOCALS(r300);
 
     if (!r300screen->caps->has_tcl) {
         debug_printf("r300: Implementation error: emit_vertex_shader called,"
@@ -368,8 +368,6 @@ void r300_emit_vertex_shader(struct r300_context* r300,
 void r300_emit_viewport_state(struct r300_context* r300,
                               struct r300_viewport_state* viewport)
 {
-    /* XXX has_tcl */
-    return;
     CS_LOCALS(r300);
 
     BEGIN_CS(7);

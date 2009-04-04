@@ -593,6 +593,7 @@ static void* r300_create_vs_state(struct pipe_context* pipe,
                                   const struct pipe_shader_state* state)
 {
     struct r300_context* context = r300_context(pipe);
+    tgsi_dump(state->tokens);
     /* XXX handing this off to Draw for now */
     return draw_create_vertex_shader(context->draw, state);
 }
