@@ -87,10 +87,6 @@ struct r300_vs_asm {
     unsigned color_count;
     /* Number of texcoords. */
     unsigned tex_count;
-    /* Offset for temporary registers. Inputs and temporaries have no
-     * distinguishing markings, so inputs start at 0 and the first usable
-     * temporary register is after all inputs. */
-    unsigned temp_offset;
     /* Number of requested temporary registers. */
     unsigned temp_count;
     /* Offset for immediate constants. Neither R300 nor R500 can do four
@@ -99,6 +95,8 @@ struct r300_vs_asm {
     unsigned imm_offset;
     /* Number of immediate constants. */
     unsigned imm_count;
+    /* Offsets into vertex output memory. */
+    unsigned tab[16];
 };
 
 static struct r300_vertex_shader r300_passthrough_vertex_shader = {

@@ -27,12 +27,18 @@ static void r300_vs_declare(struct r300_vs_asm* assembler,
 {
     switch (decl->Declaration.File) {
         case TGSI_FILE_INPUT:
+            break;
+        case TGSI_FILE_OUTPUT:
             switch (decl->Semantic.SemanticName) {
+                case TGSI_SEMANTIC_POSITION:
+                    assembler->tab[decl->DeclarationRange.First] = 0;
+                    break;
                 case TGSI_SEMANTIC_COLOR:
-                    assembler->color_count++;
+                    assembler->tab[decl->DeclarationRange.First] = 2;
                     break;
                 case TGSI_SEMANTIC_GENERIC:
-                    assembler->tex_count++;
+                    /* XXX multiple? */
+                    assembler->tab[decl->DeclarationRange.First] = 6;
                     break;
                 default:
                     debug_printf("r300: vs: Bad semantic declaration %d\n",
@@ -40,7 +46,6 @@ static void r300_vs_declare(struct r300_vs_asm* assembler,
                     break;
             }
             break;
-        case TGSI_FILE_OUTPUT:
         case TGSI_FILE_CONSTANT:
             break;
         case TGSI_FILE_TEMPORARY:
@@ -50,8 +55,6 @@ static void r300_vs_declare(struct r300_vs_asm* assembler,
             debug_printf("r300: vs: Bad file %d\n", decl->Declaration.File);
             break;
     }
-
-    assembler->temp_offset = assembler->color_count + assembler->tex_count;
 }
 
 static INLINE unsigned r300_vs_src_type(struct r300_vs_asm* assembler,
@@ -88,46 +91,15 @@ static INLINE unsigned r300_vs_dst_type(struct r300_vs_asm* assembler,
     return 0;
 }
 
-static INLINE unsigned r300_vs_src(struct r300_vs_asm* assembler,
-                                   struct tgsi_src_register* src)
-{
-    switch (src->File) {
-        case TGSI_FILE_NULL:
-            return 0;
-        case TGSI_FILE_INPUT:
-            /* XXX may be wrong */
-            return src->Index;
-            break;
-        case TGSI_FILE_TEMPORARY:
-            return src->Index + assembler->temp_offset;
-            break;
-        case TGSI_FILE_IMMEDIATE:
-            return (src->Index + assembler->imm_offset) | (1 << 8);
-            break;
-        case TGSI_FILE_CONSTANT:
-            /* XXX magic */
-            return src->Index | (1 << 8);
-            break;
-        default:
-            debug_printf("r300: vs: Unimplemented src %d\n", src->File);
-            break;
-    }
-    return 0;
-}
-
 static INLINE unsigned r300_vs_dst(struct r300_vs_asm* assembler,
                                    struct tgsi_dst_register* dst)
 {
     switch (dst->File) {
-        case TGSI_FILE_NULL:
-            /* This happens during KIL instructions. */
-            return 0;
+        case TGSI_FILE_TEMPORARY:
+            return dst->Index;
             break;
         case TGSI_FILE_OUTPUT:
-            return 0;
-            break;
-        case TGSI_FILE_TEMPORARY:
-            return dst->Index + assembler->temp_offset;
+            return assembler->tab[dst->Index];
             break;
         default:
             debug_printf("r300: vs: Unimplemented dst %d\n", dst->File);
@@ -161,7 +133,7 @@ static void r300_vs_emit_inst(struct r300_vertex_shader* vs,
     int i = vs->instruction_count;
     vs->instructions[i].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
         R300_PVS_DST_REG_TYPE(r300_vs_dst_type(assembler, &dst->DstRegister)) |
-        R300_PVS_DST_OFFSET(dst->DstRegister.Index);
+        R300_PVS_DST_OFFSET(r300_vs_dst(assembler, &dst->DstRegister));
     switch (count) {
         case 3:
             vs->instructions[i].inst3 =
@@ -264,6 +236,9 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     debug_printf("r300: vs: %d total constants, "
             "%d from user and %d from immediates\n", consts->count,
             consts->user_count, assembler->imm_count);
+
+    debug_printf("r300: vs: tab: %d %d %d %d\n", assembler->tab[0],
+            assembler->tab[1], assembler->tab[2], assembler->tab[3]);
 
     tgsi_dump(vs->state.tokens);
     /* XXX finish r300 vertex shader dumper */
