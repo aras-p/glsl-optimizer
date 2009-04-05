@@ -22,11 +22,14 @@
 
 #include "r300_clear.h"
 
-/* This gets its own file because Intel's is in its own file.
- * I assume there's a good reason. */
+/* Clears currently bound buffers. */
 void r300_clear(struct pipe_context* pipe,
-                struct pipe_surface* ps,
-                unsigned color)
+                unsigned buffers,
+                const float* rgba,
+                double depth,
+                unsigned stencil)
 {
-    pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, color);
+    /* XXX we can and should do one clear if both color and zs are set */
+    util_clear(pipe, &r300_context(pipe)->framebuffer_state,
+            buffers, rgba, depth, stencil);
 }
