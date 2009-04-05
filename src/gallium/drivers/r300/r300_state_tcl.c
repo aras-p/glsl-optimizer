@@ -61,6 +61,10 @@ static INLINE unsigned r300_vs_src_type(struct r300_vs_asm* assembler,
                                         struct tgsi_src_register* src)
 {
     switch (src->File) {
+        case TGSI_FILE_NULL:
+            /* Probably a zero or one swizzle */
+            return R300_PVS_SRC_REG_INPUT;
+            break;
         case TGSI_FILE_INPUT:
             return R300_PVS_SRC_REG_INPUT;
             break;
@@ -108,6 +112,19 @@ static INLINE unsigned r300_vs_dst(struct r300_vs_asm* assembler,
     return 0;
 }
 
+static uint32_t r300_vs_op(unsigned op)
+{
+    switch (op) {
+        case TGSI_OPCODE_ADD:
+        case TGSI_OPCODE_MOV:
+        case TGSI_OPCODE_SWZ:
+            return R300_VE_ADD;
+        default:
+            break;
+    }
+    return 0;
+}
+
 static uint32_t r300_vs_swiz(struct tgsi_full_src_register* reg)
 {
     if (reg->SrcRegister.Extended) {
@@ -131,9 +148,10 @@ static void r300_vs_emit_inst(struct r300_vertex_shader* vs,
                               unsigned count)
 {
     int i = vs->instruction_count;
-    vs->instructions[i].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
+    vs->instructions[i].inst0 = R300_PVS_DST_OPCODE(r300_vs_op(op)) |
         R300_PVS_DST_REG_TYPE(r300_vs_dst_type(assembler, &dst->DstRegister)) |
-        R300_PVS_DST_OFFSET(r300_vs_dst(assembler, &dst->DstRegister));
+        R300_PVS_DST_OFFSET(r300_vs_dst(assembler, &dst->DstRegister)) |
+        R300_PVS_DST_WE_XYZW;
     switch (count) {
         case 3:
             vs->instructions[i].inst3 =
@@ -157,6 +175,7 @@ static void r300_vs_emit_inst(struct r300_vertex_shader* vs,
                 R300_PVS_SRC_SWIZZLE(r300_vs_swiz(&src[0]));
             break;
     }
+    vs->instruction_count++;
 }
 
 static void r300_vs_instruction(struct r300_vertex_shader* vs,
@@ -164,6 +183,11 @@ static void r300_vs_instruction(struct r300_vertex_shader* vs,
                                 struct tgsi_full_instruction* inst)
 {
     switch (inst->Instruction.Opcode) {
+        case TGSI_OPCODE_ADD:
+            r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode,
+                    2);
+            break;
         case TGSI_OPCODE_MOV:
         case TGSI_OPCODE_SWZ:
             inst->FullSrcRegisters[1] = r300_constant_zero;
