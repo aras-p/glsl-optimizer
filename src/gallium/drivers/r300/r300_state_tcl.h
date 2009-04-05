@@ -69,6 +69,15 @@
      (R300_PVS_SRC_SELECT_FORCE_1 << 6) | \
       (R300_PVS_SRC_SELECT_FORCE_1 << 9)) << 13)
 
+static const struct tgsi_full_src_register r300_constant_zero = {
+    .SrcRegister.Extended = TRUE,
+    .SrcRegister.File = TGSI_FILE_NULL,
+    .SrcRegisterExtSwz.ExtSwizzleX = TGSI_EXTSWIZZLE_ZERO,
+    .SrcRegisterExtSwz.ExtSwizzleY = TGSI_EXTSWIZZLE_ZERO,
+    .SrcRegisterExtSwz.ExtSwizzleZ = TGSI_EXTSWIZZLE_ZERO,
+    .SrcRegisterExtSwz.ExtSwizzleW = TGSI_EXTSWIZZLE_ZERO,
+};
+
 /* Temporary struct used to hold assembly state while putting together
  * fragment programs. */
 struct r300_vs_asm {
