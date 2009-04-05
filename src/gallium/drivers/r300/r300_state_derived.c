@@ -305,7 +305,8 @@ static void r300_update_rs_block(struct r300_context* r300)
 
 void r300_update_derived_state(struct r300_context* r300)
 {
-    if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER) {
+    if (r300->dirty_state &
+            (R300_NEW_FRAGMENT_SHADER | R300_NEW_VERTEX_SHADER)) {
         r300_update_vertex_layout(r300);
     }
 
