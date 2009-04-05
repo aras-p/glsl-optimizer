@@ -54,6 +54,34 @@ static void r300_vs_declare(struct r300_vs_asm* assembler,
     assembler->temp_offset = assembler->color_count + assembler->tex_count;
 }
 
+static INLINE unsigned r300_vs_src_type(struct r300_vs_asm* assembler,
+                                        struct tgsi_src_register* src)
+{
+    switch (src->File) {
+        case TGSI_FILE_TEMPORARY:
+            return R300_PVS_SRC_REG_TEMPORARY;
+            break;
+        default:
+            debug_printf("r300: vs: Unimplemented src type %d\n", src->File);
+            break;
+    }
+    return 0;
+}
+
+static INLINE unsigned r300_vs_dst_type(struct r300_vs_asm* assembler,
+                                        struct tgsi_dst_register* dst)
+{
+    switch (dst->File) {
+        case TGSI_FILE_OUTPUT:
+            return R300_PVS_DST_REG_OUT;
+            break;
+        default:
+            debug_printf("r300: vs: Unimplemented dst type %d\n", dst->File);
+            break;
+    }
+    return 0;
+}
+
 static INLINE unsigned r300_vs_src(struct r300_vs_asm* assembler,
                                    struct tgsi_src_register* src)
 {
@@ -105,12 +133,37 @@ static INLINE unsigned r300_vs_dst(struct r300_vs_asm* assembler,
 static void r300_vs_emit_inst(struct r300_vertex_shader* vs,
                               struct r300_vs_asm* assembler,
                               struct tgsi_full_src_register* src,
-                              struct tgsi_full_dst_register* dst)
+                              struct tgsi_full_dst_register* dst,
+                              unsigned op,
+                              unsigned count)
 {
     int i = vs->instruction_count;
     vs->instructions[i].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
-        R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
+        R300_PVS_DST_REG_TYPE(r300_vs_dst_type(assembler, dst->DstRegister)) |
         R300_PVS_DST_OFFSET(dst->DstRegister.Index);
+    switch (count) {
+        case 3:
+            vs->instructions[i].inst3 =
+                R300_PVS_SRC_REG_TYPE(r300_vs_src_type(assembler,
+                            &src[2].SrcRegister)) |
+                R300_PVS_SRC_OFFSET(src[2].SrcRegister.Index) |
+                R300_PVS_SRC_SWIZZLE(R300_PVS_SRC_SWIZZLE_XYZW);
+            /* Fall through */
+        case 2:
+            vs->instructions[i].inst2 =
+                R300_PVS_SRC_REG_TYPE(r300_vs_src_type(assembler,
+                            &src[1].SrcRegister)) |
+                R300_PVS_SRC_OFFSET(src[1].SrcRegister.Index) |
+                R300_PVS_SRC_SWIZZLE(R300_PVS_SRC_SWIZZLE_XYZW);
+            /* Fall through */
+        case 1:
+            vs->instructions[i].inst1 =
+                R300_PVS_SRC_REG_TYPE(r300_vs_src_type(assembler,
+                            &src[0].SrcRegister)) |
+                R300_PVS_SRC_OFFSET(src[0].SrcRegister.Index) |
+                R300_PVS_SRC_SWIZZLE(R300_PVS_SRC_SWIZZLE_XYZW);
+            break;
+    }
 }
 
 static void r300_vs_instruction(struct r300_vertex_shader* vs,
