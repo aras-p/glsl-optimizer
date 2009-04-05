@@ -267,6 +267,7 @@ void r300_translate_vertex_shader(struct r300_context* r300,
 
     tgsi_dump(vs->state.tokens);
     /* XXX finish r300 vertex shader dumper */
+    r300_vs_dump(vs);
 
     tgsi_parse_free(&parser);
     FREE(assembler);

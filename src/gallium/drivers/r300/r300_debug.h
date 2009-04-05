@@ -25,7 +25,10 @@
 
 #include "r300_reg.h"
 #include "r300_state_shader.h"
+#include "r300_state_tcl.h"
 
 void r500_fs_dump(struct r500_fragment_shader* fs);
+
+void r300_vs_dump(struct r300_vertex_shader* vs);
 
 #endif /* R300_DEBUG_H */

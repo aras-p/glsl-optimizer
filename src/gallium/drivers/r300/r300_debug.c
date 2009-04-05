@@ -224,3 +224,15 @@ void r500_fs_dump(struct r500_fragment_shader* fs)
         }
     }
 }
+
+void r300_vs_dump(struct r300_vertex_shader* vs)
+{
+    int i;
+
+    for (i = 0; i < vs->instruction_count; i++) {
+        debug_printf("inst0: 0x%x\n", vs->instructions[i].inst0);
+        debug_printf("inst1: 0x%x\n", vs->instructions[i].inst1);
+        debug_printf("inst2: 0x%x\n", vs->instructions[i].inst2);
+        debug_printf("inst3: 0x%x\n", vs->instructions[i].inst3);
+    }
+}
