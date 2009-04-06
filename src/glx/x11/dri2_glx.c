@@ -273,6 +273,15 @@ static void dri2WaitGL(__GLXDRIdrawable *pdraw)
     XFixesDestroyRegion(pdraw->psc->dpy, region);
 }
 
+
+static void dri2FlushFrontBuffer(__DRIdrawable *driDrawable,
+				 void *loaderPrivate)
+{
+    (void) driDrawable;
+    dri2WaitGL((__GLXDRIdrawable *) loaderPrivate);
+}
+
+
 static void dri2DestroyScreen(__GLXscreenConfigs *psc)
 {
     /* Free the direct rendering per screen data */
@@ -327,6 +336,7 @@ dri2GetBuffers(__DRIdrawable *driDrawable,
 static const __DRIdri2LoaderExtension dri2LoaderExtension = {
     { __DRI_DRI2_LOADER, __DRI_DRI2_LOADER_VERSION },
     dri2GetBuffers,
+    dri2FlushFrontBuffer
 };
 
 static const __DRIextension *loader_extensions[] = {

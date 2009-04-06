@@ -659,7 +659,7 @@ struct __DRIbufferRec {
 };
 
 #define __DRI_DRI2_LOADER "DRI_DRI2Loader"
-#define __DRI_DRI2_LOADER_VERSION 1
+#define __DRI_DRI2_LOADER_VERSION 2
 struct __DRIdri2LoaderExtensionRec {
     __DRIextension base;
 
@@ -667,6 +667,19 @@ struct __DRIdri2LoaderExtensionRec {
 			       int *width, int *height,
 			       unsigned int *attachments, int count,
 			       int *out_count, void *loaderPrivate);
+
+    /**
+     * Flush pending front-buffer rendering
+     *
+     * Any rendering that has been performed to the
+     * \c __DRI_BUFFER_FAKE_FRONT_LEFT will be flushed to the
+     * \c __DRI_BUFFER_FRONT_LEFT.
+     *
+     * \param driDrawable    Drawable whose front-buffer is to be flushed
+     * \param loaderPrivate  Loader's private data that was previously passed
+     *                       into __DRIdri2ExtensionRec::createNewDrawable
+     */
+    void (*flushFrontBuffer)(__DRIdrawable *driDrawable, void *loaderPrivate);
 };
 
 /**
