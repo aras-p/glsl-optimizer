@@ -316,12 +316,12 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
          if (textureUnit->EnvMode == GL_COMBINE4_NV) {
             /* (a * b) + (c * d) - 0.5 */
             for (i = 0; i < n; i++) {
-               rgba[i][RCOMP] = (arg0[i][RCOMP] + arg1[i][RCOMP] *
-                                 arg2[i][RCOMP] + arg3[i][RCOMP] - 0.5) * scaleRGB;
-               rgba[i][GCOMP] = (arg0[i][GCOMP] + arg1[i][GCOMP] *
-                                 arg2[i][GCOMP] + arg3[i][GCOMP] - 0.5) * scaleRGB;
-               rgba[i][BCOMP] = (arg0[i][BCOMP] + arg1[i][BCOMP] *
-                                 arg2[i][BCOMP] + arg3[i][BCOMP] - 0.5) * scaleRGB;
+               rgba[i][RCOMP] = (arg0[i][RCOMP] * arg1[i][RCOMP] +
+                                 arg2[i][RCOMP] * arg3[i][RCOMP] - 0.5) * scaleRGB;
+               rgba[i][GCOMP] = (arg0[i][GCOMP] * arg1[i][GCOMP] +
+                                 arg2[i][GCOMP] * arg3[i][GCOMP] - 0.5) * scaleRGB;
+               rgba[i][BCOMP] = (arg0[i][BCOMP] * arg1[i][BCOMP] +
+                                 arg2[i][BCOMP] * arg3[i][BCOMP] - 0.5) * scaleRGB;
             }
          }
          else {
