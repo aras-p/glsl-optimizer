@@ -65,7 +65,7 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
          struct pipe_surface *ps = softpipe->framebuffer.cbufs[i];
 
          util_pack_color(rgba, ps->format, &cv);
-         sp_tile_cache_clear(softpipe->cbuf_cache[i], cv);
+         sp_tile_cache_clear(softpipe->cbuf_cache[i], rgba, cv);
 
 #if !TILE_CLEAR_OPTIMIZATION
          /* non-cached surface */
@@ -75,10 +75,11 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
    }
 
    if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {
+      static const float zero[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
       struct pipe_surface *ps = softpipe->framebuffer.zsbuf;
 
       cv = util_pack_z_stencil(ps->format, depth, stencil);
-      sp_tile_cache_clear(softpipe->zsbuf_cache, cv);
+      sp_tile_cache_clear(softpipe->zsbuf_cache, zero, cv);
 
 #if !TILE_CLEAR_OPTIMIZATION
       /* non-cached surface */
