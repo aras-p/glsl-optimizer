@@ -70,6 +70,14 @@ window_proc(
 }
 
 static INLINE boolean
+stw_is_supported_color(enum pipe_format format)
+{
+   struct pipe_screen *screen = stw_dev->screen;
+   return screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 
+                                      PIPE_TEXTURE_USAGE_RENDER_TARGET, 0);
+}
+
+static INLINE boolean
 stw_is_supported_depth_stencil(enum pipe_format format)
 {
    struct pipe_screen *screen = stw_dev->screen;
@@ -89,13 +97,33 @@ framebuffer_create(
    struct stw_framebuffer *fb;
    enum pipe_format colorFormat, depthFormat, stencilFormat;
 
-   fb = CALLOC_STRUCT( stw_framebuffer );
-   if (fb == NULL)
-      return NULL;
-
    /* Determine PIPE_FORMATs for buffers.
     */
-   colorFormat = PIPE_FORMAT_A8R8G8B8_UNORM;
+
+   if(visual->alphaBits <= 0 && visual->redBits <= 5 && visual->blueBits <= 6 && visual->greenBits <= 5 && 
+      stw_is_supported_color(PIPE_FORMAT_R5G6B5_UNORM)) {
+      colorFormat = PIPE_FORMAT_R5G6B5_UNORM;
+   }
+   else if(visual->alphaBits <= 0 && visual->redBits <= 8 && visual->blueBits <= 8 && visual->greenBits <= 8 && 
+      stw_is_supported_color(PIPE_FORMAT_X8R8G8B8_UNORM)) {
+      colorFormat = PIPE_FORMAT_X8R8G8B8_UNORM;
+   }
+   else if(visual->alphaBits <= 1 && visual->redBits <= 5 && visual->blueBits <= 5 && visual->greenBits <= 5 &&
+      stw_is_supported_color(PIPE_FORMAT_A1R5G5B5_UNORM)) {
+      colorFormat = PIPE_FORMAT_A1R5G5B5_UNORM;
+   }
+   else if(visual->alphaBits <= 4 && visual->redBits <= 4 && visual->blueBits <= 4 && visual->greenBits <= 4 && 
+      stw_is_supported_color(PIPE_FORMAT_A4R4G4B4_UNORM)) {
+      colorFormat = PIPE_FORMAT_A4R4G4B4_UNORM;
+   }
+   else if(visual->alphaBits <= 8 && visual->redBits <= 8 && visual->blueBits <= 8 && visual->greenBits <= 8 && 
+      stw_is_supported_color(PIPE_FORMAT_A8R8G8B8_UNORM)) {
+      colorFormat = PIPE_FORMAT_A8R8G8B8_UNORM;
+   }
+   else {
+      assert(0);
+      return NULL;
+   }
 
    if (visual->depthBits == 0)
       depthFormat = PIPE_FORMAT_NONE;
@@ -140,6 +168,10 @@ framebuffer_create(
    else {
       stencilFormat = PIPE_FORMAT_NONE;
    }
+
+   fb = CALLOC_STRUCT( stw_framebuffer );
+   if (fb == NULL)
+      return NULL;
 
    fb->stfb = st_create_framebuffer(
       visual,
