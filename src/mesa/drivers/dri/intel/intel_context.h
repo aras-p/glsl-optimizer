@@ -262,11 +262,29 @@ struct intel_context
     * flush time while the lock is held.
     */
    GLboolean constant_cliprect;
+
    /**
     * In !constant_cliprect mode, set to true if the front cliprects should be
     * used instead of back.
     */
    GLboolean front_cliprects;
+
+   /**
+    * Set if rendering has occured to the drawable's front buffer.
+    *
+    * This is used in the DRI2 case to detect that glFlush should also copy
+    * the contents of the fake front buffer to the real front buffer.
+    */
+   GLboolean front_buffer_dirty;
+
+   /**
+    * Track whether front-buffer rendering is currently enabled
+    *
+    * A separate flag is used to track this in order to support MRT more
+    * easily.
+    */
+   GLboolean is_front_buffer_rendering;
+
    drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
 
    int perf_boxes;
