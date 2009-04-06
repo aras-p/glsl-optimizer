@@ -1377,8 +1377,8 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 
    ASSERT(span->arrayMask & SPAN_RGBA);
 
-   if (!shader) {
-      /* Add base and specular colors */
+   if (span->primitive == GL_BITMAP || !swrast->SpecularVertexAdd) {
+      /* Add primary and specular (diffuse + specular) colors */
       if (ctx->Fog.ColorSumEnabled ||
           (ctx->Light.Enabled &&
            ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)) {

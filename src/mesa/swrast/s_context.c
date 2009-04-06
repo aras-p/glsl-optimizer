@@ -275,6 +275,24 @@ _swrast_update_fragment_program(GLcontext *ctx, GLbitfield newState)
 }
 
 
+/**
+ * See if we can do early diffuse+specular (primary+secondary) color
+ * add per vertex instead of per-fragment.
+ */
+static void
+_swrast_update_specular_vertex_add(GLcontext *ctx)
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GLboolean separateSpecular = ctx->Fog.ColorSumEnabled ||
+      (ctx->Light.Enabled &&
+       ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR);
+
+   swrast->SpecularVertexAdd = (separateSpecular
+                                && ctx->Texture._EnabledUnits == 0x0
+                                && !ctx->FragmentProgram._Current
+                                && !ctx->ATIFragmentShader._Enabled);
+}
+
 
 #define _SWRAST_NEW_DERIVED (_SWRAST_NEW_RASTERMASK |	\
 			     _NEW_TEXTURE |		\
@@ -336,9 +354,7 @@ _swrast_validate_triangle( GLcontext *ctx,
    swrast->choose_triangle( ctx );
    ASSERT(swrast->Triangle);
 
-   if (ctx->Texture._EnabledUnits == 0
-       && NEED_SECONDARY_COLOR(ctx)
-       && !ctx->FragmentProgram._Current) {
+   if (swrast->SpecularVertexAdd) {
       /* separate specular color, but no texture */
       swrast->SpecTriangle = swrast->Triangle;
       swrast->Triangle = _swrast_add_spec_terms_triangle;
@@ -360,9 +376,7 @@ _swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
    swrast->choose_line( ctx );
    ASSERT(swrast->Line);
 
-   if (ctx->Texture._EnabledUnits == 0
-       && NEED_SECONDARY_COLOR(ctx)
-       && !ctx->FragmentProgram._Current) {
+   if (swrast->SpecularVertexAdd) {
       swrast->SpecLine = swrast->Line;
       swrast->Line = _swrast_add_spec_terms_line;
    }
@@ -382,9 +396,7 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
    _swrast_validate_derived( ctx );
    swrast->choose_point( ctx );
 
-   if (ctx->Texture._EnabledUnits == 0
-       && NEED_SECONDARY_COLOR(ctx)
-       && !ctx->FragmentProgram._Current) {
+   if (swrast->SpecularVertexAdd) {
       swrast->SpecPoint = swrast->Point;
       swrast->Point = _swrast_add_spec_terms_point;
    }
@@ -665,6 +677,12 @@ _swrast_validate_derived( GLcontext *ctx )
                               _NEW_PROGRAM |
                               _NEW_TEXTURE))
          _swrast_update_active_attribs(ctx);
+
+      if (swrast->NewState & (_NEW_FOG | 
+                              _NEW_PROGRAM |
+                              _NEW_LIGHT |
+                              _NEW_TEXTURE))
+         _swrast_update_specular_vertex_add(ctx);
 
       swrast->NewState = 0;
       swrast->StateChanges = 0;
