@@ -48,7 +48,7 @@
  * Convert GLenum texcoord wrap tokens to pipe tokens.
  */
 static GLuint
-gl_wrap_to_sp(GLenum wrap)
+gl_wrap_xlate(GLenum wrap)
 {
    switch (wrap) {
    case GL_REPEAT:
@@ -149,9 +149,9 @@ update_samplers(struct st_context *st)
             texobj = st_get_default_texture(st);
          }
 
-         sampler->wrap_s = gl_wrap_to_sp(texobj->WrapS);
-         sampler->wrap_t = gl_wrap_to_sp(texobj->WrapT);
-         sampler->wrap_r = gl_wrap_to_sp(texobj->WrapR);
+         sampler->wrap_s = gl_wrap_xlate(texobj->WrapS);
+         sampler->wrap_t = gl_wrap_xlate(texobj->WrapT);
+         sampler->wrap_r = gl_wrap_xlate(texobj->WrapR);
 
          sampler->min_img_filter = gl_filter_to_img_filter(texobj->MinFilter);
          sampler->min_mip_filter = gl_filter_to_mip_filter(texobj->MinFilter);
