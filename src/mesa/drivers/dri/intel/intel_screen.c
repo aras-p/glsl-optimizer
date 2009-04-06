@@ -563,6 +563,7 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
    GLboolean gem_supported;
    struct drm_i915_getparam gp;
    __DRIscreenPrivate *spriv = intelScreen->driScrnPriv;
+   int num_fences;
 
    intelScreen->no_hw = getenv("INTEL_NO_HW") != NULL;
 
@@ -612,6 +613,11 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
 				(unsigned int * volatile)
 				&intelScreen->sarea->last_dispatch);
    }
+
+   if (intel_get_param(spriv, I915_PARAM_NUM_FENCES_AVAIL, &num_fences))
+      intelScreen->kernel_exec_fencing = !!num_fences;
+   else
+      intelScreen->kernel_exec_fencing = GL_FALSE;
 
    return GL_TRUE;
 }
