@@ -68,7 +68,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    GLint j;
 
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
-      y = ctx->DrawBuffer->Height - y - 1;
+      y = ctx->DrawBuffer->Height - y - height;
    }
 
    /* Create a read transfer from the renderbuffer's texture */
