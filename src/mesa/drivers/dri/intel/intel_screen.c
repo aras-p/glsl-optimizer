@@ -613,9 +613,6 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
 				&intelScreen->sarea->last_dispatch);
    }
 
-   /* XXX bufmgr should be per-screen, not per-context */
-   intelScreen->ttm = intelScreen->ttm;
-
    return GL_TRUE;
 }
 
