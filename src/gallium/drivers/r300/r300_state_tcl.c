@@ -115,6 +115,8 @@ static INLINE unsigned r300_vs_dst(struct r300_vs_asm* assembler,
 static uint32_t r300_vs_op(unsigned op)
 {
     switch (op) {
+        case TGSI_OPCODE_MUL:
+            return R300_VE_MULTIPLY;
         case TGSI_OPCODE_ADD:
         case TGSI_OPCODE_MOV:
         case TGSI_OPCODE_SWZ:
@@ -184,6 +186,7 @@ static void r300_vs_instruction(struct r300_vertex_shader* vs,
 {
     switch (inst->Instruction.Opcode) {
         case TGSI_OPCODE_ADD:
+        case TGSI_OPCODE_MUL:
             r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode,
                     2);
