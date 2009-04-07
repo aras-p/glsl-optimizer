@@ -235,6 +235,11 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	   region_name = "dri2 front buffer";
 	   break;
 
+       case __DRI_BUFFER_FAKE_FRONT_LEFT:
+	   rb = intel_fb->color_rb[0];
+	   region_name = "dri2 fake front buffer";
+	   break;
+
        case __DRI_BUFFER_BACK_LEFT:
 	   rb = intel_fb->color_rb[1];
 	   region_name = "dri2 back buffer";
