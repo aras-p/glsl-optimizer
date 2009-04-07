@@ -2801,7 +2801,8 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
    shader->CompileStatus = success;
 
    if (success) {
-      if (shader->Pragmas.Optimize) {
+      if (shader->Pragmas.Optimize &&
+          (ctx->Shader.Flags & GLSL_NO_OPT) == 0) {
          _mesa_optimize_program(ctx, shader->Program);
       }
    }
