@@ -803,11 +803,11 @@ _mesa_optimize_program(GLcontext *ctx, struct gl_program *program)
    if (1)
       _mesa_remove_dead_code(program);
 
-   if (0) /* not test much yet */
+   if (0) /* not tested much yet */
       _mesa_remove_extra_moves(program);
 
-   if (1)
+   if (0)
       _mesa_consolidate_registers(program);
-   else /*NEW*/
+   else
       _mesa_reallocate_registers(program);
 }
