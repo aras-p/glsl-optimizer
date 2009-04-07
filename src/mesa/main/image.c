@@ -4546,6 +4546,17 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
          }
          return;
       }
+      if (srcType == GL_UNSIGNED_INT_24_8
+          && dstType == GL_UNSIGNED_INT
+          && depthMax == 0xffffff) {
+         const GLuint *src = (const GLuint *) source;
+         GLuint *dst = (GLuint *) dest;
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            dst[i] = src[i] >> 8;
+         }
+         return;
+      }
       /* XXX may want to add additional cases here someday */
    }
 
