@@ -121,6 +121,8 @@ static uint32_t r300_vs_op(unsigned op)
         case TGSI_OPCODE_MOV:
         case TGSI_OPCODE_SWZ:
             return R300_VE_ADD;
+        case TGSI_OPCODE_MAD:
+            return R300_PVS_DST_MACRO_INST | R300_PVS_MACRO_OP_2CLK_MADD;
         default:
             break;
     }
@@ -197,6 +199,11 @@ static void r300_vs_instruction(struct r300_vertex_shader* vs,
             r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode,
                     2);
+            break;
+        case TGSI_OPCODE_MAD:
+            r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode,
+                    3);
             break;
         case TGSI_OPCODE_END:
             break;
