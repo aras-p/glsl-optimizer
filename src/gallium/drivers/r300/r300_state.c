@@ -338,11 +338,17 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 {
     struct r300_rs_state* rs = CALLOC_STRUCT(r300_rs_state);
 
-    /* XXX endian control */
-    if (r300_screen(pipe->screen)->caps->has_tcl) {
-        rs->vap_control_status = 0;
-    } else {
+    /* Copy rasterizer state for Draw. */
+    rs->rs = *state;
+
+    /* If bypassing TCL, or if no TCL engine is present, turn off the HW TCL.
+     * Else, enable HW TCL and force Draw's TCL off. */
+    if (state->bypass_vs_clip_and_viewport ||
+            !r300_screen(pipe->screen)->caps->has_tcl) {
         rs->vap_control_status = R300_VAP_TCL_BYPASS;
+    } else {
+        rs->rs.bypass_vs_clip_and_viewport = TRUE;
+        rs->vap_control_status = 0;
     }
 
     rs->point_size = pack_float_16_6x(state->point_size) |
@@ -404,13 +410,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         rs->color_control = R300_SHADE_MODEL_FLAT;
     } else {
         rs->color_control = R300_SHADE_MODEL_SMOOTH;
-    }
-
-    rs->rs = *state;
-
-    /* If using HW TCL, tell Draw to not do its magic. */
-    if (r300_screen(pipe->screen)->caps->has_tcl) {
-        rs->rs.bypass_vs_clip_and_viewport = TRUE;
     }
 
     return (void*)rs;
