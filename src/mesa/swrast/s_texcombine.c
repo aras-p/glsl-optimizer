@@ -47,10 +47,10 @@ typedef float (*float4_array)[4];
  * Return array of texels for given unit.
  */
 static INLINE float4_array
-get_texel_array(const GLfloat *texelBuffer, GLuint unit, GLuint numTexels)
+get_texel_array(SWcontext *swrast, GLuint unit)
 {
    return (float4_array)
-      (texelBuffer + unit * numTexels * 4 * sizeof(GLfloat));
+      (swrast->TexelBuffer + unit * MAX_WIDTH * 4 * sizeof(GLfloat));
 }
 
 
@@ -74,11 +74,12 @@ get_texel_array(const GLfloat *texelBuffer, GLuint unit, GLuint numTexels)
  * \param rgba         incoming/result fragment colors
  */
 static void
-texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
+texture_combine( GLcontext *ctx, GLuint unit, GLuint n,
                  const float4_array primary_rgba,
                  const GLfloat *texelBuffer,
                  GLchan (*rgbaChan)[4] )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const struct gl_texture_unit *textureUnit = &(ctx->Texture.Unit[unit]);
    const struct gl_tex_env_combine_state *combine = textureUnit->_CurrentCombine;
    float4_array argRGB[MAX_COMBINER_TERMS];
@@ -117,7 +118,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 
       switch (srcRGB) {
          case GL_TEXTURE:
-            argRGB[term] = get_texel_array(texelBuffer, unit, n);
+            argRGB[term] = get_texel_array(swrast, unit);
             break;
          case GL_PRIMARY_COLOR:
             argRGB[term] = primary_rgba;
@@ -165,7 +166,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
                ASSERT(srcUnit < ctx->Const.MaxTextureUnits);
                if (!ctx->Texture.Unit[srcUnit]._ReallyEnabled)
                   return;
-               argRGB[term] = get_texel_array(texelBuffer, srcUnit, n);
+               argRGB[term] = get_texel_array(swrast, srcUnit);
             }
       }
 
@@ -213,7 +214,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 
       switch (srcA) {
          case GL_TEXTURE:
-            argA[term] = get_texel_array(texelBuffer, unit, n);
+            argA[term] = get_texel_array(swrast, unit);
             break;
          case GL_PRIMARY_COLOR:
             argA[term] = primary_rgba;
@@ -255,7 +256,7 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
                ASSERT(srcUnit < ctx->Const.MaxTextureUnits);
                if (!ctx->Texture.Unit[srcUnit]._ReallyEnabled)
                   return;
-               argA[term] = get_texel_array(texelBuffer, srcUnit, n);
+               argA[term] = get_texel_array(swrast, srcUnit);
             }
       }
 
@@ -589,26 +590,19 @@ _swrast_texture_span( GLcontext *ctx, SWspan *span )
 
    /* First must sample all bump maps */
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-      if (ctx->Texture.Unit[unit]._ReallyEnabled &&
-         ctx->Texture.Unit[unit]._CurrentCombine->ModeRGB == GL_BUMP_ENVMAP_ATI) {
-         const GLfloat (*texcoords)[4]
-            = (const GLfloat (*)[4])
+      const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+
+      if (texUnit->_ReallyEnabled &&
+         texUnit->_CurrentCombine->ModeRGB == GL_BUMP_ENVMAP_ATI) {
+         const GLfloat (*texcoords)[4] = (const GLfloat (*)[4])
             span->array->attribs[FRAG_ATTRIB_TEX0 + unit];
-         GLfloat (*targetcoords)[4]
-            = (GLfloat (*)[4])
+         float4_array targetcoords =
             span->array->attribs[FRAG_ATTRIB_TEX0 +
                ctx->Texture.Unit[unit].BumpTarget - GL_TEXTURE0];
 
-         const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
          const struct gl_texture_object *curObj = texUnit->_Current;
          GLfloat *lambda = span->array->lambda[unit];
-#if 0
-         GLchan (*texels)[4] = (GLchan (*)[4])
-            (swrast->TexelBuffer + unit * (span->end * 4 * sizeof(GLchan)));
-#else
-         float4_array texels = get_texel_array(swrast->TexelBuffer, unit,
-                                               span->end);
-#endif
+         float4_array texels = get_texel_array(swrast, unit);
          GLuint i;
          GLfloat rotMatrix00 = ctx->Texture.Unit[unit].RotMatrix[0];
          GLfloat rotMatrix01 = ctx->Texture.Unit[unit].RotMatrix[1];
@@ -670,15 +664,14 @@ _swrast_texture_span( GLcontext *ctx, SWspan *span )
     * accomodate GL_ARB_texture_env_crossbar.
     */
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-      if (ctx->Texture.Unit[unit]._ReallyEnabled &&
-         ctx->Texture.Unit[unit]._CurrentCombine->ModeRGB != GL_BUMP_ENVMAP_ATI) {
+      const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+      if (texUnit->_ReallyEnabled &&
+          texUnit->_CurrentCombine->ModeRGB != GL_BUMP_ENVMAP_ATI) {
          const GLfloat (*texcoords)[4] = (const GLfloat (*)[4])
             span->array->attribs[FRAG_ATTRIB_TEX0 + unit];
-         const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
          const struct gl_texture_object *curObj = texUnit->_Current;
          GLfloat *lambda = span->array->lambda[unit];
-         float4_array texels =
-            get_texel_array(swrast->TexelBuffer, unit, span->end);
+         float4_array texels = get_texel_array(swrast, unit);
 
          /* adjust texture lod (lambda) */
          if (span->arrayMask & SPAN_LAMBDA) {
