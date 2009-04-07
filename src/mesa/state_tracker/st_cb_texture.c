@@ -947,7 +947,8 @@ fallback_copy_texsubimage(GLcontext *ctx,
    texDest = st_texture_image_map(ctx->st, stImage, 0, PIPE_TRANSFER_WRITE,
                                   destX, destY, width, height);
 
-   if (baseFormat == GL_DEPTH_COMPONENT) {
+   if (baseFormat == GL_DEPTH_COMPONENT ||
+       baseFormat == GL_DEPTH24_STENCIL8) {
       const GLboolean scaleOrBias = (ctx->Pixel.DepthScale != 1.0F ||
                                      ctx->Pixel.DepthBias != 0.0F);
       GLint row, yStep;
@@ -1057,7 +1058,8 @@ st_copy_texsubimage(GLcontext *ctx,
    st_finish(ctx->st);
 
    /* determine if copying depth or color data */
-   if (texBaseFormat == GL_DEPTH_COMPONENT) {
+   if (texBaseFormat == GL_DEPTH_COMPONENT ||
+       texBaseFormat == GL_DEPTH24_STENCIL8) {
       strb = st_renderbuffer(fb->_DepthBuffer);
    }
    else if (texBaseFormat == GL_DEPTH_STENCIL_EXT) {
