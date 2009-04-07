@@ -656,6 +656,16 @@ struct r300_swtcl_info {
     * Offset of the 3UB specular color data within a hardware (swtcl) vertex.
     */
    GLuint specoffset;
+
+   struct vertex_attribute{
+       GLuint attr;
+       GLubyte format;
+       GLubyte dst_loc;
+       GLuint swizzle;
+       GLubyte write_mask;
+   } vert_attrs[VERT_ATTRIB_MAX];
+
+   GLubyte vertex_attr_count;
 };
 
 
@@ -678,15 +688,8 @@ struct r300_context {
 
 	GLboolean disable_lowimpact_fallback;
 
-	DECLARE_RENDERINPUTS(tnl_index_bitset);	/* index of bits for last tnl_install_attrs */
-	
 	struct r300_swtcl_info swtcl;
 	GLboolean vap_flush_needed;
-};
-
-struct r300_buffer_object {
-	struct gl_buffer_object mesa_obj;
-	int id;
 };
 
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))

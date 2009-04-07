@@ -28,38 +28,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors:
  *   Dave Airlie <airlied@linux.ie>
+ *   Maciej Cencora <m.cencora@gmail.com>
  */
 
-/* derived from r200 swtcl path */
-
-
-
-#include "main/glheader.h"
-#include "main/mtypes.h"
-#include "main/colormac.h"
-#include "main/enums.h"
-#include "main/image.h"
-#include "main/imports.h"
-#include "main/light.h"
-#include "main/macros.h"
-
-#include "swrast/s_context.h"
-#include "swrast/s_fog.h"
-#include "swrast_setup/swrast_setup.h"
-#include "math/m_translate.h"
 #include "tnl/tnl.h"
-#include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 
-#include "r300_context.h"
 #include "r300_swtcl.h"
-#include "r300_state.h"
-#include "r300_ioctl.h"
 #include "r300_emit.h"
 #include "r300_tex.h"
 
-void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, struct radeon_bo *bo, GLuint offset);
-void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr);
 #define EMIT_ATTR( ATTR, STYLE )					\
 do {									\
    rmesa->radeon.swtcl.vertex_attrs[rmesa->radeon.swtcl.vertex_attr_count].attrib = (ATTR);	\
@@ -75,27 +53,93 @@ do {									\
    rmesa->radeon.swtcl.vertex_attr_count++;					\
 } while (0)
 
-static void r300SetVertexFormat( GLcontext *ctx )
+#define ADD_ATTR(_attr, _format, _dst_loc, _swizzle, _write_mask) \
+do { \
+	attrs[num_attrs].attr = (_attr); \
+	attrs[num_attrs].format = (_format); \
+	attrs[num_attrs].dst_loc = (_dst_loc); \
+	attrs[num_attrs].swizzle = (_swizzle); \
+	attrs[num_attrs].write_mask = (_write_mask); \
+	++num_attrs; \
+} while (0)
+
+static void r300SwtclVAPSetup(GLcontext *ctx, GLuint InputsRead, GLuint OutputsWritten)
 {
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *VB = &tnl->vb;
-	DECLARE_RENDERINPUTS(index_bitset);
-	GLuint InputsRead = 0, OutputsWritten = 0;
-	int vap_fmt_1 = 0;
-	int offset = 0;
+	struct vertex_attribute *attrs = rmesa->swtcl.vert_attrs;
 	int vte = 0;
-	int fog_id;
-	GLint inputs[VERT_ATTRIB_MAX];
-	GLint tab[VERT_ATTRIB_MAX];
-	int swizzle[VERT_ATTRIB_MAX][4];
-	GLuint i, nr;
-	GLuint sz;
+	int i, j, reg_count;
+	uint32_t *vir0 = &rmesa->hw.vir[0].cmd[1];
+	uint32_t *vir1 = &rmesa->hw.vir[1].cmd[1];
 
-	DECLARE_RENDERINPUTS(render_inputs_bitset);
-	RENDERINPUTS_COPY(render_inputs_bitset, tnl->render_inputs_bitset);
-	RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
-	RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, render_inputs_bitset);
+	for (i = 0; i < R300_VIR_CMDSIZE-1; ++i)
+		vir0[i] = vir1[i] = 0;
+
+	for (i = 0, j = 0; i < rmesa->radeon.swtcl.vertex_attr_count; ++i) {
+		int tmp, data_format;
+		switch (attrs[i].format) {
+			case EMIT_1F:
+				data_format = R300_DATA_TYPE_FLOAT_1;
+				break;
+			case EMIT_2F:
+				data_format = R300_DATA_TYPE_FLOAT_2;
+				break;
+			case EMIT_3F:
+				data_format = R300_DATA_TYPE_FLOAT_3;
+				break;
+			case EMIT_4F:
+				data_format = R300_DATA_TYPE_FLOAT_4;
+				break;
+			case EMIT_4UB_4F_RGBA:
+			case EMIT_4UB_4F_ABGR:
+				data_format = R300_DATA_TYPE_BYTE | R300_NORMALIZE;
+				break;
+			default:
+				fprintf(stderr, "%s: Invalid data format type", __FUNCTION__);
+				_mesa_exit(-1);
+				break;
+		}
+
+		tmp = data_format | (attrs[i].dst_loc << R300_DST_VEC_LOC_SHIFT);
+		if (i % 2 == 0) {
+			vir0[j] = tmp << R300_DATA_TYPE_0_SHIFT;
+			vir1[j] = attrs[i].swizzle | (attrs[i].write_mask << R300_WRITE_ENA_SHIFT);
+		} else {
+			vir0[j] |= tmp << R300_DATA_TYPE_1_SHIFT;
+			vir1[j] |= (attrs[i].swizzle | (attrs[i].write_mask << R300_WRITE_ENA_SHIFT)) << R300_SWIZZLE1_SHIFT;
+			++j;
+		}
+	}
+
+	reg_count = (rmesa->radeon.swtcl.vertex_attr_count + 1) >> 1;
+	if (rmesa->radeon.swtcl.vertex_attr_count % 2 != 0) {
+		vir0[reg_count-1] |= R300_LAST_VEC << R300_DATA_TYPE_0_SHIFT;
+	} else {
+		vir0[reg_count-1] |= R300_LAST_VEC << R300_DATA_TYPE_1_SHIFT;
+	}
+
+	R300_STATECHANGE(rmesa, vir[0]);
+	R300_STATECHANGE(rmesa, vir[1]);
+	R300_STATECHANGE(rmesa, vof);
+	R300_STATECHANGE(rmesa, vte);
+	R300_STATECHANGE(rmesa, vic);
+
+	if (rmesa->radeon.radeonScreen->kernel_mm) {
+		rmesa->hw.vir[0].cmd[0] &= 0xC000FFFF;
+		rmesa->hw.vir[1].cmd[0] &= 0xC000FFFF;
+		rmesa->hw.vir[0].cmd[0] |= (reg_count & 0x3FFF) << 16;
+		rmesa->hw.vir[1].cmd[0] |= (reg_count & 0x3FFF) << 16;
+	} else {
+		((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count = reg_count;
+		((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count = reg_count;
+	}
+
+	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
+	rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
+	rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
+	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = r300VAPOutputCntl1(ctx, OutputsWritten);
 
 	vte = rmesa->hw.vte.cmd[1];
 	vte &= ~(R300_VTX_XY_FMT | R300_VTX_Z_FMT | R300_VTX_W0_FMT);
@@ -111,52 +155,74 @@ static void r300SetVertexFormat( GLcontext *ctx )
 	}
 
 	assert( VB->AttribPtr[VERT_ATTRIB_POS] != NULL );
+
+	rmesa->hw.vte.cmd[1] = vte;
+	rmesa->hw.vte.cmd[2] = rmesa->radeon.swtcl.vertex_size;
+}
+
+
+static void r300SetVertexFormat( GLcontext *ctx )
+{
+	r300ContextPtr rmesa = R300_CONTEXT( ctx );
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct vertex_buffer *VB = &tnl->vb;
+	int fog_id = -1;
+	GLuint InputsRead = 0;
+	GLuint OutputsWritten = 0;
+	int num_attrs = 0;
+	struct vertex_attribute *attrs = rmesa->swtcl.vert_attrs;
+
+	rmesa->swtcl.coloroffset = rmesa->swtcl.specoffset = 0;
 	rmesa->radeon.swtcl.vertex_attr_count = 0;
 
-	/* EMIT_ATTR's must be in order as they tell t_vertex.c how to
-	 * build up a hardware vertex.
-	 */
-	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POS)) {
-		sz = VB->AttribPtr[VERT_ATTRIB_POS]->size;
+	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_POS)) {
 		InputsRead |= 1 << VERT_ATTRIB_POS;
 		OutputsWritten |= 1 << VERT_RESULT_HPOS;
-		EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_1F + sz - 1 );
-		offset = sz;
-	} else {
-		offset = 4;
-		EMIT_PAD(4 * sizeof(float));
+		EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F );
+		ADD_ATTR(VERT_ATTRIB_POS, EMIT_4F, SWTCL_OVM_POS, SWIZZLE_XYZW, MASK_XYZW);
+		rmesa->swtcl.coloroffset = 4;
 	}
-/*
-	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POINTSIZE )) {
-		EMIT_ATTR( _TNL_ATTRIB_POINTSIZE, EMIT_1F );
-		offset += 1;
-	}
-*/
-	if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_COLOR0)) {
-		sz = VB->AttribPtr[VERT_ATTRIB_COLOR0]->size;
-	        rmesa->swtcl.coloroffset = offset;
+
+	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR0)) {
 		InputsRead |= 1 << VERT_ATTRIB_COLOR0;
 		OutputsWritten |= 1 << VERT_RESULT_COL0;
-		EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_1F + sz - 1 );
-		offset += sz;
+#if MESA_LITTLE_ENDIAN
+		EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA );
+		ADD_ATTR(VERT_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA, SWTCL_OVM_COLOR0, SWIZZLE_XYZW, MASK_XYZW);
+#else
+		EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_ABGR );
+		ADD_ATTR(VERT_ATTRIB_COLOR0, EMIT_4UB_4F_ABGR, SWTCL_OVM_COLOR0, SWIZZLE_XYZW, MASK_XYZW);
+#endif
 	}
 
-	rmesa->swtcl.specoffset = 0;
-	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
-		sz = VB->AttribPtr[VERT_ATTRIB_COLOR1]->size;
-		rmesa->swtcl.specoffset = offset;
-		EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_1F + sz - 1 );
+	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR1 )) {
+		GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
 		InputsRead |= 1 << VERT_ATTRIB_COLOR1;
 		OutputsWritten |= 1 << VERT_RESULT_COL1;
+#if MESA_LITTLE_ENDIAN
+		EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_4UB_4F_RGBA );
+		ADD_ATTR(VERT_ATTRIB_COLOR1, EMIT_4UB_4F_RGBA, SWTCL_OVM_COLOR1, swiz, MASK_XYZW);
+#else
+		EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_4UB_4F_ABGR );
+		ADD_ATTR(VERT_ATTRIB_COLOR1, EMIT_4UB_4F_ABGR, SWTCL_OVM_COLOR1, swiz, MASK_XYZW);
+#endif
+		rmesa->swtcl.specoffset = rmesa->swtcl.coloroffset + 1;
 	}
 
-	fog_id = -1;
-	if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_FOG)) {
+	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_POINTSIZE )) {
+		GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO);
+		InputsRead |= 1 << VERT_ATTRIB_POINT_SIZE;
+		OutputsWritten |= 1 << VERT_RESULT_PSIZ;
+		EMIT_ATTR( _TNL_ATTRIB_POINTSIZE, EMIT_1F );
+		ADD_ATTR(VERT_ATTRIB_POINT_SIZE, EMIT_1F, SWTCL_OVM_POINT_SIZE, swiz, MASK_X);
+	}
+
+	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_FOG)) {
 		/* find first free tex coord slot */
-		if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
+		if (RENDERINPUTS_TEST_RANGE(tnl->render_inputs_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
 			int i;
 			for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-				if (!RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
+				if (!RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) )) {
 					fog_id = i;
 					break;
 				}
@@ -170,37 +236,56 @@ static void r300SetVertexFormat( GLcontext *ctx )
 			_mesa_exit(-1);
 		}
 
-		sz = VB->AttribPtr[VERT_ATTRIB_FOG]->size;
-		EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1F + sz - 1);
 		InputsRead |= 1 << VERT_ATTRIB_FOG;
 		OutputsWritten |= 1 << VERT_RESULT_FOGC;
-		vap_fmt_1 |= sz << (3 * fog_id);
+		GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO);
+		EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1F );
+		ADD_ATTR(VERT_ATTRIB_FOG, EMIT_1F, SWTCL_OVM_TEX(fog_id), swiz, MASK_X);
 	}
 
-	if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
+	if (RENDERINPUTS_TEST_RANGE(tnl->render_inputs_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
 		int i;
-
+		GLuint swiz, mask, format;
 		for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-			if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
-				sz = VB->TexCoordPtr[i]->size;
+			if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) )) {
+				switch (VB->TexCoordPtr[i]->size) {
+					case 1:
+					case 2:
+						format = EMIT_2F;
+						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_ZERO, SWIZZLE_ZERO);
+						mask = MASK_X | MASK_Y;
+						break;
+					case 3:
+						format = EMIT_3F;
+						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+						mask = MASK_X | MASK_Y | MASK_Z;
+						break;
+					case 4:
+						format = EMIT_4F;
+						swiz = SWIZZLE_XYZW;
+						mask = MASK_XYZW;
+						break;
+					default:
+						continue;
+				}
 				InputsRead |= 1 << (VERT_ATTRIB_TEX0 + i);
 				OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
-				EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_1F + sz - 1 );
-				vap_fmt_1 |= sz << (3 * i);
+				EMIT_ATTR(_TNL_ATTRIB_TEX(i), format);
+				ADD_ATTR(VERT_ATTRIB_TEX0 + i, format, SWTCL_OVM_TEX(i), swiz, mask);
 			}
 		}
 	}
 
 	/* RS can't put fragment position on the pixel stack, so stuff it in texcoord if needed */
-	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POS) && (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_WPOS)) {
+	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_POS) && (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_WPOS)) {
 		int first_free_tex = -1;
 		if (fog_id >= 0) {
 			first_free_tex = fog_id+1;
 		} else {
-			if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
+			if (RENDERINPUTS_TEST_RANGE(tnl->render_inputs_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
 				int i;
 				for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-					if (!RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
+					if (!RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) )) {
 						first_free_tex = i;
 						break;
 					}
@@ -215,83 +300,14 @@ static void r300SetVertexFormat( GLcontext *ctx )
 			_mesa_exit(-1);
 		}
 
-		sz = VB->AttribPtr[VERT_ATTRIB_POS]->size;
 		InputsRead |= 1 << (VERT_ATTRIB_TEX0 + first_free_tex);
 		OutputsWritten |= 1 << (VERT_RESULT_TEX0 + first_free_tex);
-		EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_1F + sz - 1 );
-		vap_fmt_1 |= sz << (3 * first_free_tex);
-	}
-
-	for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++) {
-		if (InputsRead & (1 << i)) {
-			inputs[i] = nr++;
-		} else {
-			inputs[i] = -1;
-		}
-	}
-
-	/* Fixed, apply to vir0 only */
-	if (InputsRead & (1 << VERT_ATTRIB_POS))
-		inputs[VERT_ATTRIB_POS] = 0;
-	if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
-		inputs[VERT_ATTRIB_COLOR0] = 2;
-	if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
-		inputs[VERT_ATTRIB_COLOR1] = 3;
-	if (InputsRead & (1 << VERT_ATTRIB_FOG))
-		inputs[VERT_ATTRIB_FOG] = 6 + fog_id;
-	for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
-		if (InputsRead & (1 << i))
-			inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
-
-	for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++) {
-		if (InputsRead & (1 << i)) {
-			tab[nr++] = i;
-		}
-	}
-
-	for (i = 0; i < nr; i++) {
-		int ci;
-
-		swizzle[i][0] = SWIZZLE_ZERO;
-		swizzle[i][1] = SWIZZLE_ZERO;
-		swizzle[i][2] = SWIZZLE_ZERO;
-		swizzle[i][3] = SWIZZLE_ONE;
-
-		for (ci = 0; ci < VB->AttribPtr[tab[i]]->size; ci++) {
-			swizzle[i][ci] = ci;
-		}
+		EMIT_ATTR( _TNL_ATTRIB_TEX(first_free_tex), EMIT_4F );
+		ADD_ATTR(VERT_ATTRIB_TEX0 + first_free_tex, EMIT_4F, SWTCL_OVM_TEX(first_free_tex), SWIZZLE_XYZW, MASK_XYZW);
 	}
 
 	R300_NEWPRIM(rmesa);
-	if (rmesa->radeon.radeonScreen->kernel_mm) {
-		R300_STATECHANGE(rmesa, vir[0]);
-		rmesa->hw.vir[0].cmd[0] &= 0xC000FFFF;
-		rmesa->hw.vir[1].cmd[0] &= 0xC000FFFF;
-		rmesa->hw.vir[0].cmd[0] |=
-			(r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
-					    VB->AttribPtr, inputs, tab, nr) & 0x3FFF) << 16;
-		R300_STATECHANGE(rmesa, vir[1]);
-		rmesa->hw.vir[1].cmd[0] |=
-			(r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
-					    nr) & 0x3FFF) << 16;
-	} else {
-		R300_STATECHANGE(rmesa, vir[0]);
-		((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
-		r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
-				   VB->AttribPtr, inputs, tab, nr);
-		R300_STATECHANGE(rmesa, vir[1]);
-		((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
-		r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
-				   nr);
-	}
-
-	R300_STATECHANGE(rmesa, vic);
-	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
-	rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
-
-	R300_STATECHANGE(rmesa, vof);
-	rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
-	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = vap_fmt_1;
+	r300SwtclVAPSetup(ctx, InputsRead, OutputsWritten);
 
 	rmesa->radeon.swtcl.vertex_size =
 		_tnl_install_attrs( ctx,
@@ -301,30 +317,25 @@ static void r300SetVertexFormat( GLcontext *ctx )
 
 	rmesa->radeon.swtcl.vertex_size /= 4;
 
-	RENDERINPUTS_COPY( rmesa->tnl_index_bitset, index_bitset );
-
-
-	R300_STATECHANGE(rmesa, vte);
-	rmesa->hw.vte.cmd[1] = vte;
-	rmesa->hw.vte.cmd[2] = rmesa->radeon.swtcl.vertex_size;
+	RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, tnl->render_inputs_bitset);
 }
 
+
 static GLuint reduced_prim[] = {
-  GL_POINTS,
-  GL_LINES,
-  GL_LINES,
-  GL_LINES,
-  GL_TRIANGLES,
-  GL_TRIANGLES,
-  GL_TRIANGLES,
-  GL_TRIANGLES,
-  GL_TRIANGLES,
-  GL_TRIANGLES,
+	GL_POINTS,
+	GL_LINES,
+	GL_LINES,
+	GL_LINES,
+	GL_TRIANGLES,
+	GL_TRIANGLES,
+	GL_TRIANGLES,
+	GL_TRIANGLES,
+	GL_TRIANGLES,
+	GL_TRIANGLES,
 };
 
 static void r300RasterPrimitive( GLcontext *ctx, GLuint prim );
 static void r300RenderPrimitive( GLcontext *ctx, GLenum prim );
-//static void r300ResetLineStipple( GLcontext *ctx );
 
 /***********************************************************************
  *                    Emit primitives as inline vertices               *
@@ -353,8 +364,6 @@ static void r300RenderPrimitive( GLcontext *ctx, GLenum prim );
    const char *r300verts = (char *)rmesa->radeon.swtcl.verts;
 #define VERT(x) (r300Vertex *)(r300verts + ((x) * vertsize * sizeof(int)))
 #define VERTEX r300Vertex
-#define DO_DEBUG_VERTS (1 && (RADEON_DEBUG & DEBUG_VERTS))
-#define PRINT_VERTEX(x)
 #undef TAG
 #define TAG(x) r300_##x
 #include "tnl_dd/t_dd_triemit.h"
@@ -411,31 +420,37 @@ static struct {
 #define AREA_IS_CCW( a ) (a < 0)
 #define GET_VERTEX(e) (rmesa->radeon.swtcl.verts + (e*rmesa->radeon.swtcl.vertex_size*sizeof(int)))
 
-/* Only used to pull back colors into vertices (ie, we know color is
- * floating point).
- */
-#define R300_COLOR( dst, src )				\
-do {							\
-   UNCLAMPED_FLOAT_TO_UBYTE((dst)[0], (src)[2]);	\
-   UNCLAMPED_FLOAT_TO_UBYTE((dst)[1], (src)[1]);	\
-   UNCLAMPED_FLOAT_TO_UBYTE((dst)[2], (src)[0]);	\
-   UNCLAMPED_FLOAT_TO_UBYTE((dst)[3], (src)[3]);	\
+#define VERT_SET_RGBA( v, c ) \
+do { \
+   r300_color_t *color = (r300_color_t *)&((v)->ui[coloroffset]); \
+   UNCLAMPED_FLOAT_TO_UBYTE(color->red, (c)[0]); \
+   UNCLAMPED_FLOAT_TO_UBYTE(color->green, (c)[1]); \
+   UNCLAMPED_FLOAT_TO_UBYTE(color->blue, (c)[2]); \
+   UNCLAMPED_FLOAT_TO_UBYTE(color->alpha, (c)[3]); \
 } while (0)
 
-#define VERT_SET_RGBA( v, c )    if (coloroffset) R300_COLOR( v->ub4[coloroffset], c )
-#define VERT_COPY_RGBA( v0, v1 ) if (coloroffset) v0->ui[coloroffset] = v1->ui[coloroffset]
-#define VERT_SAVE_RGBA( idx )    if (coloroffset) color[idx] = v[idx]->ui[coloroffset]
-#define VERT_RESTORE_RGBA( idx ) if (coloroffset) v[idx]->ui[coloroffset] = color[idx]
+#define VERT_COPY_RGBA( v0, v1 ) v0->ui[coloroffset] = v1->ui[coloroffset]
 
-#define R300_SPEC( dst, src )				\
-do {							\
-   UNCLAMPED_FLOAT_TO_UBYTE((dst)[0], (src)[2]);	\
-   UNCLAMPED_FLOAT_TO_UBYTE((dst)[1], (src)[1]);	\
-   UNCLAMPED_FLOAT_TO_UBYTE((dst)[2], (src)[0]);	\
+#define VERT_SET_SPEC( v0, c ) \
+do { \
+   if (specoffset) { \
+   UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.red, (c)[0]); \
+   UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.green, (c)[1]); \
+   UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.blue, (c)[2]); \
+   } \
 } while (0)
 
-#define VERT_SET_SPEC( v, c )    if (specoffset) R300_SPEC( v->ub4[specoffset], c )
-#define VERT_COPY_SPEC( v0, v1 ) if (specoffset) COPY_3V(v0->ub4[specoffset], v1->ub4[specoffset])
+#define VERT_COPY_SPEC( v0, v1 ) \
+do { \
+   if (specoffset) { \
+       v0->v.specular.red = v1->v.specular.red; \
+       v0->v.specular.green = v1->v.specular.green; \
+       v0->v.specular.blue = v1->v.specular.blue; \
+   } \
+} while (0)
+
+#define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[coloroffset]
+#define VERT_RESTORE_RGBA( idx ) v[idx]->ui[coloroffset] = color[idx]
 #define VERT_SAVE_SPEC( idx )    if (specoffset) spec[idx] = v[idx]->ui[specoffset]
 #define VERT_RESTORE_SPEC( idx ) if (specoffset) v[idx]->ui[specoffset] = spec[idx]
 
@@ -445,7 +460,7 @@ do {							\
 
 #define LOCAL_VARS(n)							\
    r300ContextPtr rmesa = R300_CONTEXT(ctx);			\
-   GLuint color[n], spec[n];						\
+   GLuint color[n] = { 0, }, spec[n] = { 0, };						\
    GLuint coloroffset = rmesa->swtcl.coloroffset;	\
    GLuint specoffset = rmesa->swtcl.specoffset;			\
    (void) color; (void) spec; (void) coloroffset; (void) specoffset;
@@ -569,8 +584,7 @@ static void r300ChooseRenderState( GLcontext *ctx )
 
 static void r300RenderStart(GLcontext *ctx)
 {
-        r300ContextPtr rmesa = R300_CONTEXT( ctx );
-	//	fprintf(stderr, "%s\n", __FUNCTION__);
+	r300ContextPtr rmesa = R300_CONTEXT( ctx );
 
 	r300ChooseRenderState(ctx);
 	r300SetVertexFormat(ctx);
@@ -586,7 +600,6 @@ static void r300RenderStart(GLcontext *ctx)
 	if (rmesa->radeon.dma.flush != NULL) {
 		rmesa->radeon.dma.flush(ctx);
 	}
-
 }
 
 static void r300RenderFinish(GLcontext *ctx)
@@ -598,7 +611,7 @@ static void r300RasterPrimitive( GLcontext *ctx, GLuint hwprim )
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
 	if (rmesa->radeon.swtcl.hw_primitive != hwprim) {
-	        R300_NEWPRIM( rmesa );
+		R300_NEWPRIM( rmesa );
 		rmesa->radeon.swtcl.hw_primitive = hwprim;
 	}
 }
@@ -610,17 +623,13 @@ static void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 	rmesa->radeon.swtcl.render_primitive = prim;
 
 	if ((prim == GL_TRIANGLES) && (ctx->_TriangleCaps & DD_TRI_UNFILLED))
-	  return;
+		return;
 
 	r300RasterPrimitive( ctx, reduced_prim[prim] );
-	//	fprintf(stderr, "%s\n", __FUNCTION__);
-
 }
 
 static void r300ResetLineStipple(GLcontext *ctx)
 {
-
-
 }
 
 void r300InitSwtcl(GLcontext *ctx)
@@ -653,22 +662,16 @@ void r300InitSwtcl(GLcontext *ctx)
 
 	_tnl_invalidate_vertex_state( ctx, ~0 );
 	_tnl_invalidate_vertices( ctx, ~0 );
-	RENDERINPUTS_ZERO( rmesa->tnl_index_bitset );
 
 	_tnl_need_projected_coords( ctx, GL_FALSE );
 	r300ChooseRenderState(ctx);
-
-	_mesa_validate_all_lighting_tables( ctx );
-
-	tnl->Driver.NotifyMaterialChange =
-	  _mesa_validate_all_lighting_tables;
 }
 
 void r300DestroySwtcl(GLcontext *ctx)
 {
 }
 
-void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, struct radeon_bo *bo, GLuint offset)
+static void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, struct radeon_bo *bo, GLuint offset)
 {
 	BATCH_LOCALS(&rmesa->radeon);
 
@@ -684,7 +687,7 @@ void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, struct radeon_b
 	END_BATCH();
 }
 
-void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr)
+static void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr)
 {
 	BATCH_LOCALS(&rmesa->radeon);
 	int type, num_verts;
@@ -700,20 +703,20 @@ void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr)
 
 void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 {
-  r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
-  rcommonEnsureCmdBufSpace(&rmesa->radeon,
+	rcommonEnsureCmdBufSpace(&rmesa->radeon,
 			   rmesa->radeon.hw.max_state_size + (12*sizeof(int)),
 			   __FUNCTION__);
-  radeonEmitState(&rmesa->radeon);
-  r300EmitVertexAOS(rmesa,
-		    rmesa->radeon.swtcl.vertex_size,
-		    rmesa->radeon.dma.current,
-		    current_offset);
-  
-  r300EmitVbufPrim(rmesa,
+	radeonEmitState(&rmesa->radeon);
+	r300EmitVertexAOS(rmesa,
+			rmesa->radeon.swtcl.vertex_size,
+			rmesa->radeon.dma.current,
+			current_offset);
+
+	r300EmitVbufPrim(rmesa,
 		   rmesa->radeon.swtcl.hw_primitive,
 		   rmesa->radeon.swtcl.numverts);
-  r300EmitCacheFlush(rmesa);
-  COMMIT_BATCH();
+	r300EmitCacheFlush(rmesa);
+	COMMIT_BATCH();
 }
