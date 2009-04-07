@@ -2142,6 +2142,8 @@ GLboolean radeonValidateState( GLcontext *ctx )
 
 
    rmesa->radeon.NewGLState = 0;
+
+   return GL_TRUE;
 }
 
 
