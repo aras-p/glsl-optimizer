@@ -22,6 +22,7 @@ Last updated on 15 December 2008.
 Contents
 </p>
 <ul>
+<li><a href="#envvars">Environment variables</a>
 <li><a href="#120">GLSL 1.20 support</a>
 <li><a href="#unsup">Unsupported Features</a>
 <li><a href="#notes">Implementation Notes</a>
@@ -33,11 +34,32 @@ Contents
 
 
 
+<a name="envvars">
+<h2>Environment Variables</h2>
+
+<p>
+The <b>MESA_GLSL</b> environment variable can be set to a comma-separated
+list of keywords to control some aspects of the GLSL compiler:
+</p>
+<ul>
+<li>dump - print GLSL shader code to stdout at link time
+<li>log - log all GLSL shaders to files.
+    The filenames will be "shader_X.vert" or "shader_X.frag" where X
+    the shader ID.
+<li>nopt - disable compiler optimizations
+<li>opt - force compiler optimizations
+<li>uniform - print message to stdout when glUniform is called
+</ul>
+<p>
+Example:  export MESA_GLSL=dump,nopt
+</p>
+
+
 <a name="120">
 <h2>GLSL 1.20 support</h2>
 
 <p>
-GLSL version 1.20 is supported in Mesa 7.3.
+GLSL version 1.20 is supported in Mesa 7.3 and later.
 Among the features/differences of GLSL 1.20 are:
 <ul>
 <li><code>mat2x3, mat2x4</code>, etc. types and functions
@@ -59,12 +81,14 @@ Among the features/differences of GLSL 1.20 are:
 <h2>Unsupported Features</h2>
 
 <p>
-The following features of the shading language are not yet supported
+The following features of the shading language are not yet fully supported
 in Mesa:
 </p>
 
 <ul>
-<li>Linking of multiple shaders is not supported
+<li>Linking of multiple shaders does not always work.  Currently, linking
+    is implemented through shader concatenation and re-compiling.  This
+    doesn't always work because of some #pragma and preprocessor issues.
 <li>gl_ClipVertex
 <li>The gl_Color and gl_SecondaryColor varying vars are interpolated
     without perspective correction
@@ -177,6 +201,8 @@ This tool is useful for:
 After building Mesa, the glslcompiler can be built by manually running:
 </p>
 <pre>
+    make realclean
+    make linux
     cd src/mesa/drivers/glslcompiler
     make
 </pre>
