@@ -228,7 +228,8 @@ static void r300_surface_copy(struct pipe_context* pipe,
     if (caps->has_tcl) {
         r300_emit_vertex_shader(r300, &r300_texture_vertex_shader);
     } else {
-        BEGIN_CS(2);
+        BEGIN_CS(4);
+        OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VAP_TCL_BYPASS);
         OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(5) |
                 R300_PVS_NUM_CNTLRS(5) |
                 R300_PVS_NUM_FPUS(caps->num_vert_fpus) |
