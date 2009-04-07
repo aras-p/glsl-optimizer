@@ -789,13 +789,9 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
  */
 void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
 {
-	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-	
 	if (RADEON_DEBUG & DEBUG_DRI)
 		fprintf(stderr, "%s %s\n", __FUNCTION__,
 			_mesa_lookup_enum_by_nr( mode ));
-	
-	radeon_firevertices(radeon);	/* don't pipeline cliprect changes */
 	
 	radeon_draw_buffer(ctx, ctx->DrawBuffer);
 }

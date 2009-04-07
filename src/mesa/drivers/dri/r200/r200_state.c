@@ -2308,6 +2308,9 @@ static GLboolean r200ValidateBuffers(GLcontext *ctx)
 			   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
    }
 
+   if (rmesa->radeon.dma.current)
+      radeon_validate_bo(&rmesa->radeon, rmesa->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
+
    return radeon_revalidate_bos(ctx);
 }
 

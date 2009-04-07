@@ -313,6 +313,8 @@ GLboolean r300ValidateBuffers(GLcontext * ctx)
 			radeon_validate_bo(&rmesa->radeon, t->mt->bo,
 					   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
 	}
+	if (rmesa->radeon.dma.current)
+		radeon_validate_bo(&rmesa->radeon, rmesa->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
 
 	return radeon_revalidate_bos(ctx);
 }
