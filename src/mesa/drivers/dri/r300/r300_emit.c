@@ -191,7 +191,7 @@ GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
 			fprintf(stderr, "\tout of free texcoords to write fog coord\n");
 			_mesa_exit(-1);
 		}
-		ret |= 4 << (3 * first_free_texcoord);
+		ret |= 1 << (3 * first_free_texcoord);
 	}
 
 	return ret;
