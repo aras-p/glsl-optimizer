@@ -71,6 +71,8 @@ static INLINE unsigned r300_vs_src_type(struct r300_vs_asm* assembler,
         case TGSI_FILE_TEMPORARY:
             return R300_PVS_SRC_REG_TEMPORARY;
             break;
+        case TGSI_FILE_CONSTANT:
+            return R300_PVS_SRC_REG_CONSTANT;
         default:
             debug_printf("r300: vs: Unimplemented src type %d\n", src->File);
             break;

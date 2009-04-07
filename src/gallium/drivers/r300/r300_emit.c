@@ -330,6 +330,8 @@ void r300_emit_vertex_shader(struct r300_context* r300,
 {
     int i;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    struct r300_constant_buffer* constants =
+        &r300->shader_constants[PIPE_SHADER_VERTEX];
     CS_LOCALS(r300);
 
     if (!r300screen->caps->has_tcl) {
@@ -338,8 +340,7 @@ void r300_emit_vertex_shader(struct r300_context* r300,
         return;
     }
 
-    BEGIN_CS(13 + (vs->instruction_count * 4));
-    OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
+    BEGIN_CS(13 + (vs->instruction_count * 4) + (constants->count * 4));
 
     OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_0, R300_PVS_FIRST_INST(0) |
             R300_PVS_LAST_INST(vs->instruction_count - 1));
@@ -357,10 +358,24 @@ void r300_emit_vertex_shader(struct r300_context* r300,
         OUT_CS(vs->instructions[i].inst3);
     }
 
+    if (constants->count) {
+        OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
+                (r300screen->caps->is_r500 ?
+                 R500_PVS_CONST_START : R300_PVS_CONST_START));
+        OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, constants->count * 4);
+        for (i = 0; i < constants->count; i++) {
+            OUT_CS_32F(constants->constants[i][0]);
+            OUT_CS_32F(constants->constants[i][1]);
+            OUT_CS_32F(constants->constants[i][2]);
+            OUT_CS_32F(constants->constants[i][3]);
+        }
+    }
+
     OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(10) |
             R300_PVS_NUM_CNTLRS(5) |
             R300_PVS_NUM_FPUS(r300screen->caps->num_vert_fpus) |
             R300_PVS_VF_MAX_VTX_NUM(12));
+    OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
     END_CS;
 
 }
