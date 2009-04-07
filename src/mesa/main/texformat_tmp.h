@@ -1164,14 +1164,15 @@ static void store_texel_ci8(struct gl_texture_image *texImage,
 #if FEATURE_EXT_texture_sRGB
 
 /* Fetch texel from 1D, 2D or 3D srgb8 texture, return 4 GLfloats */
+/* Note: component order is same as for MESA_FORMAT_RGB888 */
 static void FETCH(srgb8)(const struct gl_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
-   texel[RCOMP] = nonlinear_to_linear(src[0]);
+   texel[RCOMP] = nonlinear_to_linear(src[2]);
    texel[GCOMP] = nonlinear_to_linear(src[1]);
-   texel[BCOMP] = nonlinear_to_linear(src[2]);
-   texel[ACOMP] = CHAN_MAX;
+   texel[BCOMP] = nonlinear_to_linear(src[0]);
+   texel[ACOMP] = 1.0F;
 }
 
 #if DIM == 3
@@ -1180,9 +1181,9 @@ static void store_texel_srgb8(struct gl_texture_image *texImage,
 {
    const GLubyte *rgba = (const GLubyte *) texel;
    GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
-   dst[0] = rgba[RCOMP]; /* no conversion */
+   dst[0] = rgba[BCOMP]; /* no conversion */
    dst[1] = rgba[GCOMP];
-   dst[2] = rgba[BCOMP];
+   dst[2] = rgba[RCOMP];
 }
 #endif
 
