@@ -660,7 +660,8 @@ find_live_intervals(struct gl_program *prog,
 }
 
 
-static GLuint
+/** Scan the array of used register flags to find free entry */
+static GLint
 alloc_register(GLboolean usedRegs[MAX_PROGRAM_TEMPS])
 {
    GLuint k;
@@ -670,7 +671,7 @@ alloc_register(GLboolean usedRegs[MAX_PROGRAM_TEMPS])
          return k;
       }
    }
-   return MAX_PROGRAM_TEMPS;
+   return -1;
 }
 
 
@@ -689,7 +690,7 @@ _mesa_reallocate_registers(struct gl_program *prog)
    GLint registerMap[MAX_PROGRAM_TEMPS];
    GLboolean usedRegs[MAX_PROGRAM_TEMPS];
    GLuint i;
-   GLuint maxTemp = 0;
+   GLint maxTemp = -1;
 
    if (dbg) {
       _mesa_printf("Optimize: Begin live-interval register reallocation\n");
@@ -754,15 +755,15 @@ _mesa_reallocate_registers(struct gl_program *prog)
 
          /* find a free register for this live interval */
          {
-            const GLuint k = alloc_register(usedRegs);
-            if (k == MAX_PROGRAM_TEMPS) {
+            const GLint k = alloc_register(usedRegs);
+            if (k < 0) {
                /* out of registers, give up */
                return;
             }
             registerMap[live->Reg] = k;
             maxTemp = MAX2(maxTemp, k);
             if (dbg)
-               _mesa_printf("  remap register %d -> %d\n", live->Reg, k);
+               _mesa_printf("  remap register %u -> %d\n", live->Reg, k);
          }
 
          /* Insert this live interval into the active list which is sorted
