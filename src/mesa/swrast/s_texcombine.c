@@ -405,22 +405,20 @@ texture_combine( GLcontext *ctx, GLuint unit, GLuint n,
 	 }
          break;
       case GL_BUMP_ENVMAP_ATI:
-         {
-            /* this produces a fixed rgba color, and the coord calc is done elsewhere */
-            for (i = 0; i < n; i++) {
+         /* this produces a fixed rgba color, and the coord calc is done elsewhere */
+         for (i = 0; i < n; i++) {
             /* rgba result is 0,0,0,1 */
 #if CHAN_TYPE == GL_FLOAT
-               rgba[i][RCOMP] = 0.0;
-               rgba[i][GCOMP] = 0.0;
-               rgba[i][BCOMP] = 0.0;
-               rgba[i][ACOMP] = 1.0;
+            rgba[i][RCOMP] = 0.0;
+            rgba[i][GCOMP] = 0.0;
+            rgba[i][BCOMP] = 0.0;
+            rgba[i][ACOMP] = 1.0;
 #else
-               rgba[i][RCOMP] = 0;
-               rgba[i][GCOMP] = 0;
-               rgba[i][BCOMP] = 0;
-               rgba[i][ACOMP] = CHAN_MAX;
+            rgba[i][RCOMP] = 0;
+            rgba[i][GCOMP] = 0;
+            rgba[i][BCOMP] = 0;
+            rgba[i][ACOMP] = CHAN_MAX;
 #endif
-            }
 	 }
          return; /* no alpha processing */
       default:
@@ -642,19 +640,10 @@ _swrast_texture_span( GLcontext *ctx, SWspan *span )
             not sure this can work correctly even ignoring
             the problem that channel is unsigned */
          for (i = 0; i < span->end; i++) {
-#if CHAN_TYPE == GL_FLOAT
             targetcoords[i][0] += (texels[i][0] * rotMatrix00 + texels[i][1] *
                                   rotMatrix01) / targetcoords[i][3];
             targetcoords[i][1] += (texels[i][0] * rotMatrix10 + texels[i][1] *
                                   rotMatrix11) / targetcoords[i][3];
-#else
-            targetcoords[i][0] += (CHAN_TO_FLOAT(texels[i][1]) * rotMatrix00 +
-                                  CHAN_TO_FLOAT(texels[i][1]) * rotMatrix01) /
-                                  targetcoords[i][3];
-            targetcoords[i][1] += (CHAN_TO_FLOAT(texels[i][0]) * rotMatrix10 + 
-                                  CHAN_TO_FLOAT(texels[i][1]) * rotMatrix11) /
-                                  targetcoords[i][3];
-#endif
          }
       }
    }
