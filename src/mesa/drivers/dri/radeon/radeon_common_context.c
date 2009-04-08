@@ -60,7 +60,9 @@ static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
 
 	switch (name) {
 	case GL_VENDOR:
-		if (IS_R300_CLASS(radeon->radeonScreen))
+		if (IS_R600_CLASS(radeon->radeonScreen))
+			return (GLubyte *) "Advanced Micro Devices, Inc.";
+		else if (IS_R300_CLASS(radeon->radeonScreen))
 			return (GLubyte *) "DRI R300 Project";
 		else
 			return (GLubyte *) "Tungsten Graphics, Inc.";
@@ -72,7 +74,9 @@ static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
 			radeon->radeonScreen->AGPMode;
 		const char* chipname;
 
-		if (IS_R300_CLASS(radeon->radeonScreen))
+		if (IS_R600_CLASS(radeon->radeonScreen))
+			chipname = "R600";
+		else if (IS_R300_CLASS(radeon->radeonScreen))
 			chipname = "R300";
 		else if (IS_R200_CLASS(radeon->radeonScreen))
 			chipname = "R200";
@@ -82,7 +86,9 @@ static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
 		offset = driGetRendererString(buffer, chipname, DRIVER_DATE,
 					      agp_mode);
 
-		if (IS_R300_CLASS(radeon->radeonScreen)) {
+		if (IS_R600_CLASS(radeon->radeonScreen)) {
+			sprintf(&buffer[offset], " TCL");
+		} else if (IS_R300_CLASS(radeon->radeonScreen)) {
 			sprintf(&buffer[offset], " %sTCL",
 				(radeon->radeonScreen->chip_flags & RADEON_CHIPSET_TCL)
 				? "" : "NO-");

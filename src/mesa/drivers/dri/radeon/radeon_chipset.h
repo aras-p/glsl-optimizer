@@ -255,6 +255,124 @@
 #define PCI_CHIP_RS740_796E             0x796E
 #define PCI_CHIP_RS740_796F             0x796F
 
+#define PCI_CHIP_R600_9400              0x9400
+#define PCI_CHIP_R600_9401              0x9401
+#define PCI_CHIP_R600_9402              0x9402
+#define PCI_CHIP_R600_9403              0x9403
+#define PCI_CHIP_R600_9405              0x9405
+#define PCI_CHIP_R600_940A              0x940A
+#define PCI_CHIP_R600_940B              0x940B
+#define PCI_CHIP_R600_940F              0x940F
+
+#define PCI_CHIP_RV610_94C0             0x94C0
+#define PCI_CHIP_RV610_94C1             0x94C1
+#define PCI_CHIP_RV610_94C3             0x94C3
+#define PCI_CHIP_RV610_94C4             0x94C4
+#define PCI_CHIP_RV610_94C5             0x94C5
+#define PCI_CHIP_RV610_94C6             0x94C6
+#define PCI_CHIP_RV610_94C7             0x94C7
+#define PCI_CHIP_RV610_94C8             0x94C8
+#define PCI_CHIP_RV610_94C9             0x94C9
+#define PCI_CHIP_RV610_94CB             0x94CB
+#define PCI_CHIP_RV610_94CC             0x94CC
+#define PCI_CHIP_RV610_94CD             0x94CD
+
+#define PCI_CHIP_RV630_9580             0x9580
+#define PCI_CHIP_RV630_9581             0x9581
+#define PCI_CHIP_RV630_9583             0x9583
+#define PCI_CHIP_RV630_9586             0x9586
+#define PCI_CHIP_RV630_9587             0x9587
+#define PCI_CHIP_RV630_9588             0x9588
+#define PCI_CHIP_RV630_9589             0x9589
+#define PCI_CHIP_RV630_958A             0x958A
+#define PCI_CHIP_RV630_958B             0x958B
+#define PCI_CHIP_RV630_958C             0x958C
+#define PCI_CHIP_RV630_958D             0x958D
+#define PCI_CHIP_RV630_958E             0x958E
+#define PCI_CHIP_RV630_958F             0x958F
+
+#define PCI_CHIP_RV670_9500             0x9500
+#define PCI_CHIP_RV670_9501             0x9501
+#define PCI_CHIP_RV670_9504             0x9504
+#define PCI_CHIP_RV670_9505             0x9505
+#define PCI_CHIP_RV670_9506             0x9506
+#define PCI_CHIP_RV670_9507             0x9507
+#define PCI_CHIP_RV670_9508             0x9508
+#define PCI_CHIP_RV670_9509             0x9509
+#define PCI_CHIP_RV670_950F             0x950F
+#define PCI_CHIP_RV670_9511             0x9511
+#define PCI_CHIP_RV670_9515             0x9515
+#define PCI_CHIP_RV670_9517             0x9517
+#define PCI_CHIP_RV670_9519             0x9519
+
+#define PCI_CHIP_RV620_95C0             0x95C0
+#define PCI_CHIP_RV620_95C2             0x95C2
+#define PCI_CHIP_RV620_95C4             0x95C4
+#define PCI_CHIP_RV620_95C5             0x95C5
+#define PCI_CHIP_RV620_95C6             0x95C6
+#define PCI_CHIP_RV620_95C7             0x95C7
+#define PCI_CHIP_RV620_95C9             0x95C9
+#define PCI_CHIP_RV620_95CC             0x95CC
+#define PCI_CHIP_RV620_95CD             0x95CD
+#define PCI_CHIP_RV620_95CE             0x95CE
+#define PCI_CHIP_RV620_95CF             0x95CF
+
+#define PCI_CHIP_RV635_9590             0x9590
+#define PCI_CHIP_RV635_9591             0x9591
+#define PCI_CHIP_RV635_9593             0x9593
+#define PCI_CHIP_RV635_9595             0x9595
+#define PCI_CHIP_RV635_9596             0x9596
+#define PCI_CHIP_RV635_9597             0x9597
+#define PCI_CHIP_RV635_9598             0x9598
+#define PCI_CHIP_RV635_9599             0x9599
+#define PCI_CHIP_RV635_959B             0x959B
+
+#define PCI_CHIP_RS780_9611             0x9611
+#define PCI_CHIP_RS780_9612             0x9612
+#define PCI_CHIP_RS780_9613             0x9613
+#define PCI_CHIP_RS780_9614             0x9614
+#define PCI_CHIP_RS780_9615             0x9615
+#define PCI_CHIP_RS780_9616             0x9616
+
+#define PCI_CHIP_RV770_9440             0x9440
+#define PCI_CHIP_RV770_9441             0x9441
+#define PCI_CHIP_RV770_9442             0x9442
+#define PCI_CHIP_RV770_9444             0x9444
+#define PCI_CHIP_RV770_9446             0x9446
+#define PCI_CHIP_RV770_944A             0x944A
+#define PCI_CHIP_RV770_944B             0x944B
+#define PCI_CHIP_RV770_944C             0x944C
+#define PCI_CHIP_RV770_944E             0x944E
+#define PCI_CHIP_RV770_9450             0x9450
+#define PCI_CHIP_RV770_9452             0x9452
+#define PCI_CHIP_RV770_9456             0x9456
+#define PCI_CHIP_RV770_945A             0x945A
+#define PCI_CHIP_RV770_945B             0x945B
+#define PCI_CHIP_RV790_9460             0x9460
+#define PCI_CHIP_RV790_9462             0x9462
+#define PCI_CHIP_RV770_946A             0x946A
+#define PCI_CHIP_RV770_946B             0x946B
+#define PCI_CHIP_RV770_947A             0x947A
+#define PCI_CHIP_RV770_947B             0x947B
+
+#define PCI_CHIP_RV730_9487             0x9487
+#define PCI_CHIP_RV730_9489             0x9489
+#define PCI_CHIP_RV730_948F             0x948F
+#define PCI_CHIP_RV730_9490             0x9490
+#define PCI_CHIP_RV730_9491             0x9491
+#define PCI_CHIP_RV730_9498             0x9498
+#define PCI_CHIP_RV730_949C             0x949C
+#define PCI_CHIP_RV730_949E             0x949E
+#define PCI_CHIP_RV730_949F             0x949F
+
+#define PCI_CHIP_RV710_9540             0x9540
+#define PCI_CHIP_RV710_9541             0x9541
+#define PCI_CHIP_RV710_9542             0x9542
+#define PCI_CHIP_RV710_954E             0x954E
+#define PCI_CHIP_RV710_954F             0x954F
+#define PCI_CHIP_RV710_9552             0x9552
+#define PCI_CHIP_RV710_9553             0x9553
+#define PCI_CHIP_RV710_9555             0x9555
 
 enum {
    CHIP_FAMILY_R100,
@@ -282,6 +400,16 @@ enum {
    CHIP_FAMILY_R580,
    CHIP_FAMILY_RV560,
    CHIP_FAMILY_RV570,
+   CHIP_FAMILY_R600,
+   CHIP_FAMILY_RV610,
+   CHIP_FAMILY_RV630,
+   CHIP_FAMILY_RV670,
+   CHIP_FAMILY_RV620,
+   CHIP_FAMILY_RV635,
+   CHIP_FAMILY_RS780,
+   CHIP_FAMILY_RV770,
+   CHIP_FAMILY_RV730,
+   CHIP_FAMILY_RV710,
    CHIP_FAMILY_LAST
 };
 
@@ -289,6 +417,7 @@ enum {
 #define RADEON_CLASS_R100		(0 << 0)
 #define RADEON_CLASS_R200		(1 << 0)
 #define RADEON_CLASS_R300		(2 << 0)
+#define RADEON_CLASS_R600		(3 << 0)
 #define RADEON_CLASS_MASK		(3 << 0)
 
 #define RADEON_CHIPSET_TCL		(1 << 2)	/* tcl support - any radeon */
