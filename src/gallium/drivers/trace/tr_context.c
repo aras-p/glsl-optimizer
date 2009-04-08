@@ -58,16 +58,14 @@ static INLINE struct pipe_texture *
 trace_texture_unwrap(struct trace_context *tr_ctx,
                      struct pipe_texture *texture)
 {
-   struct trace_screen *tr_scr = trace_screen(tr_ctx->base.screen);
    struct trace_texture *tr_tex;
 
    if(!texture)
       return NULL;
 
-   tr_tex = trace_texture(tr_scr, texture);
+   tr_tex = trace_texture(texture);
 
    assert(tr_tex->texture);
-   assert(tr_tex->texture->screen == tr_scr->screen);
    return tr_tex->texture;
 }
 
@@ -77,7 +75,6 @@ trace_surface_unwrap(struct trace_context *tr_ctx,
                      struct pipe_surface *surface)
 {
    struct trace_screen *tr_scr = trace_screen(tr_ctx->base.screen);
-   struct trace_texture *tr_tex;
    struct trace_surface *tr_surf;
 
    if(!surface)
@@ -87,8 +84,7 @@ trace_surface_unwrap(struct trace_context *tr_ctx,
    if(!surface->texture)
       return surface;
 
-   tr_tex = trace_texture(tr_scr, surface->texture);
-   tr_surf = trace_surface(tr_tex, surface);
+   tr_surf = trace_surface(surface);
 
    assert(tr_surf->surface);
    assert(tr_surf->surface->texture->screen == tr_scr->screen);

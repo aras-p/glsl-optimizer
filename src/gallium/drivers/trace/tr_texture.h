@@ -62,37 +62,31 @@ struct trace_transfer
 
 
 static INLINE struct trace_texture *
-trace_texture(struct trace_screen *tr_scr,
-              struct pipe_texture *texture)
+trace_texture(struct pipe_texture *texture)
 {
    if(!texture)
       return NULL;
-   assert(tr_scr);
-   assert(texture->screen == &tr_scr->base);
+   (void)trace_screen(texture->screen);
    return (struct trace_texture *)texture;
 }
 
 
 static INLINE struct trace_surface *
-trace_surface(struct trace_texture *tr_tex,
-              struct pipe_surface *surface)
+trace_surface(struct pipe_surface *surface)
 {
    if(!surface)
       return NULL;
-   assert(tr_tex);
-   assert(surface->texture == &tr_tex->base);
+   (void)trace_texture(surface->texture);
    return (struct trace_surface *)surface;
 }
 
 
 static INLINE struct trace_transfer *
-trace_transfer(struct trace_texture *tr_tex,
-               struct pipe_transfer *transfer)
+trace_transfer(struct pipe_transfer *transfer)
 {
    if(!transfer)
       return NULL;
-   assert(tr_tex);
-   assert(transfer->texture == &tr_tex->base);
+   (void)trace_texture(transfer->texture);
    return (struct trace_transfer *)transfer;
 }
 
@@ -102,24 +96,21 @@ trace_texture_create(struct trace_screen *tr_scr,
                      struct pipe_texture *texture);
 
 void
-trace_texture_destroy(struct trace_screen *tr_scr,
-                      struct pipe_texture *texture);
+trace_texture_destroy(struct trace_texture *tr_tex);
 
 struct pipe_surface *
 trace_surface_create(struct trace_texture *tr_tex,
                      struct pipe_surface *surface);
 
 void
-trace_surface_destroy(struct trace_texture *tr_tex,
-                      struct pipe_surface *surface);
+trace_surface_destroy(struct trace_surface *tr_surf);
 
 struct pipe_transfer *
 trace_transfer_create(struct trace_texture *tr_tex,
                       struct pipe_transfer *transfer);
 
 void
-trace_transfer_destroy(struct trace_texture *tr_tex,
-                       struct pipe_transfer *transfer);
+trace_transfer_destroy(struct trace_transfer *tr_trans);
 
 
 #endif /* TR_TEXTURE_H_ */
