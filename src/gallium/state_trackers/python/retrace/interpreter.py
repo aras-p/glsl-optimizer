@@ -286,6 +286,8 @@ class Screen(Object):
         pass
 
     def get_tex_surface(self, texture, face, level, zslice, usage):
+        if texture is None:
+            return None
         return texture.get_surface(face, level, zslice)
     
     def tex_surface_destroy(self, surface):
@@ -295,16 +297,22 @@ class Screen(Object):
         pass
 
     def surface_write(self, surface, data, stride, size):
+        if surface is None:
+            return
         assert surface.nblocksy * stride == size 
         surface.put_tile_raw(0, 0, surface.width, surface.height, data, stride)
 
     def get_tex_transfer(self, texture, face, level, zslice, usage, x, y, w, h):
+        if texture is None:
+            return None
         return Transfer(texture.get_surface(face, level, zslice), x, y, w, h)
     
     def tex_transfer_destroy(self, transfer):
         self.interpreter.unregister_object(transfer)
 
     def transfer_write(self, transfer, stride, data, size):
+        if transfer is None:
+            return
         transfer.surface.put_tile_raw(transfer.x, transfer.y, transfer.w, transfer.h, data, stride)
 
     def user_buffer_create(self, data, size):
@@ -650,6 +658,8 @@ class Interpreter(parser.TraceDumper):
         ret = method(**dict(args))
         
         if call.ret and isinstance(call.ret, model.Pointer):
+            if ret is None:
+                sys.stderr.write('warning: NULL returned\n')
             self.register_object(call.ret.address, ret)
 
         self.call_no = None
