@@ -241,7 +241,7 @@ static void r300_render_draw(struct vbuf_render* render,
 
     /* Send our indices into an index buffer. */
     index_buffer = pipe_buffer_create(screen, 64, PIPE_BUFFER_USAGE_VERTEX,
-                                      count);
+                                      count * 2);
     if (!index_buffer) {
         return;
     }
@@ -253,14 +253,13 @@ static void r300_render_draw(struct vbuf_render* render,
 
     debug_printf("r300: Doing indexbuf render, count %d\n", count);
 
-    BEGIN_CS(5);
+    BEGIN_CS(6);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 0);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
-           r300render->hwprim | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
-
+           r300render->hwprim);
     OUT_CS_PKT3(R300_PACKET3_INDX_BUFFER, 2);
     OUT_CS(R300_INDX_BUFFER_ONE_REG_WR | (R300_VAP_PORT_IDX0 >> 2));
-    OUT_CS_RELOC(index_buffer, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
+    OUT_CS_INDEX_RELOC(index_buffer, 0, count, RADEON_GEM_DOMAIN_GTT, 0, 0);
     END_CS;
 }
 
