@@ -27,6 +27,7 @@ if env['platform'] == 'windows':
 		sources += ['#src/gallium/state_trackers/wgl/opengl32.def']
 		
 	drivers = [
+		trace,
 		softpipe,
 	]
 

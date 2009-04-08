@@ -32,6 +32,12 @@
 #include "pipe/p_screen.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
+
+#ifdef DEBUG
+#include "trace/tr_screen.h"
+#include "trace/tr_texture.h"
+#endif
+
 #include "stw_framebuffer.h"
 #include "stw_device.h"
 #include "stw_public.h"
@@ -246,7 +252,8 @@ stw_swap_buffers(
    HDC hdc )
 {
    struct stw_framebuffer *fb;
-   struct pipe_surface *surf;
+   struct pipe_screen *screen;
+   struct pipe_surface *surface;
 
    fb = framebuffer_from_hdc( hdc );
    if (fb == NULL)
@@ -257,14 +264,20 @@ stw_swap_buffers(
     */
    st_notify_swapbuffers( fb->stfb );
 
-   if(st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surf )) {
-      stw_dev->stw_winsys->flush_frontbuffer(stw_dev->screen,
-                                             surf,
-                                             hdc );
-   }
-   else {
-       /* FIXME: this shouldn't happen, but does on glean */
-   }
+   screen = stw_dev->screen;
+   
+   if(!st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surface ))
+      /* FIXME: this shouldn't happen, but does on glean */
+      return FALSE;
 
+#ifdef DEBUG
+   if(stw_dev->trace_running) {
+      screen = trace_screen(screen)->screen;
+      surface = trace_surface(surface)->surface;
+   }
+#endif
+
+   stw_dev->stw_winsys->flush_frontbuffer( screen, surface, hdc );
+   
    return TRUE;
 }
