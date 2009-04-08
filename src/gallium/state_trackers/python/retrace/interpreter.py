@@ -181,8 +181,12 @@ class Global(Object):
     def pipe_winsys_create(self):
         return Winsys(self.interpreter, gallium.Device())
 
-    def pipe_screen_create(self, winsys):
-        return Screen(self.interpreter, winsys.real)
+    def pipe_screen_create(self, winsys=None):
+        if winsys is None:
+            real = gallium.Device()
+        else:
+            real = winsys.real
+        return Screen(self.interpreter, real)
     
     def pipe_context_create(self, screen):
         context = screen.real.context_create()
@@ -234,6 +238,16 @@ class Winsys(Object):
         pass
 
 
+class Transfer:
+
+    def __init__(self, surface, x, y, w, h):
+        self.surface = surface
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+
+
 class Screen(Object):
     
     def destroy(self):
@@ -254,15 +268,15 @@ class Screen(Object):
     def is_format_supported(self, format, target, tex_usage, geom_flags):
         return self.real.is_format_supported(format, target, tex_usage, geom_flags)
     
-    def texture_create(self, template):
+    def texture_create(self, templat):
         return self.real.texture_create(
-            format = template.format,
-            width = template.width[0],
-            height = template.height[0],
-            depth = template.depth[0],
-            last_level = template.last_level,
-            target = template.target,
-            tex_usage = template.tex_usage,
+            format = templat.format,
+            width = templat.width[0],
+            height = templat.height[0],
+            depth = templat.depth[0],
+            last_level = templat.last_level,
+            target = templat.target,
+            tex_usage = templat.tex_usage,
         )
 
     def texture_destroy(self, texture):
@@ -283,6 +297,44 @@ class Screen(Object):
     def surface_write(self, surface, data, stride, size):
         assert surface.nblocksy * stride == size 
         surface.put_tile_raw(0, 0, surface.width, surface.height, data, stride)
+
+    def get_tex_transfer(self, texture, face, level, zslice, usage, x, y, w, h):
+        return Transfer(texture.get_surface(face, level, zslice), x, y, w, h)
+    
+    def tex_transfer_destroy(self, transfer):
+        self.interpreter.unregister_object(transfer)
+
+    def transfer_write(self, transfer, stride, data, size):
+        transfer.surface.put_tile_raw(transfer.x, transfer.y, transfer.w, transfer.h, data, stride)
+
+    def user_buffer_create(self, data, size):
+        # We don't really care to distinguish between user and regular buffers
+        buffer = self.real.buffer_create(size, 
+                                         4, 
+                                         gallium.PIPE_BUFFER_USAGE_CPU_READ |
+                                         gallium.PIPE_BUFFER_USAGE_CPU_WRITE )
+        assert size == len(data)
+        buffer.write(data)
+        return buffer
+    
+    def buffer_create(self, alignment, usage, size):
+        return self.real.buffer_create(size, alignment, usage)
+    
+    def buffer_destroy(self, buffer):
+        pass
+    
+    def buffer_write(self, buffer, data, size, offset=0):
+        assert size == len(data)
+        buffer.write(data)
+        
+    def fence_finish(self, fence, flags):
+        pass
+    
+    def fence_reference(self, dst, src):
+        pass
+    
+    def flush_frontbuffer(self, surface):
+        pass
 
 
 class Context(Object):
@@ -314,8 +366,8 @@ class Context(Object):
     def delete_sampler_state(self, state):
         pass
 
-    def bind_sampler_states(self, n, states):
-        for i in range(n):
+    def bind_sampler_states(self, num_states, states):
+        for i in range(num_states):
             self.real.set_sampler(i, states[i])
         
     def create_rasterizer_state(self, state):
@@ -383,11 +435,11 @@ class Context(Object):
             sys.stdout.write('\tCONST[%2u] = {%10.4f, %10.4f, %10.4f, %10.4f}\n' % (index, x, y, z, w))
             index += 1
 
-    def set_constant_buffer(self, shader, index, state):
-        if state is not None:
-            self.real.set_constant_buffer(shader, index, state.buffer)
+    def set_constant_buffer(self, shader, index, buffer):
+        if buffer is not None:
+            self.real.set_constant_buffer(shader, index, buffer.buffer)
 
-            self.dump_constant_buffer(state.buffer)
+            self.dump_constant_buffer(buffer.buffer)
 
     def set_framebuffer_state(self, state):
         _state = gallium.Framebuffer()
@@ -411,14 +463,14 @@ class Context(Object):
     def set_viewport_state(self, state):
         self.real.set_viewport(state)
 
-    def set_sampler_textures(self, n, textures):
-        for i in range(n):
+    def set_sampler_textures(self, num_textures, textures):
+        for i in range(num_textures):
             self.real.set_sampler_texture(i, textures[i])
 
-    def set_vertex_buffers(self, n, vbufs):
-        self.vbufs = vbufs[0:n]
-        for i in range(n):
-            vbuf = vbufs[i]
+    def set_vertex_buffers(self, num_buffers, buffers):
+        self.vbufs = buffers[0:num_buffers]
+        for i in range(num_buffers):
+            vbuf = buffers[i]
             self.real.set_vertex_buffer(
                 i,
                 stride = vbuf.stride,
@@ -427,11 +479,11 @@ class Context(Object):
                 buffer = vbuf.buffer,
             )
 
-    def set_vertex_elements(self, n, elements):
-        self.velems = elements[0:n]
-        for i in range(n):
+    def set_vertex_elements(self, num_elements, elements):
+        self.velems = elements[0:num_elements]
+        for i in range(num_elements):
             self.real.set_vertex_element(i, elements[i])
-        self.real.set_vertex_elements(n)
+        self.real.set_vertex_elements(num_elements)
 
     def set_edgeflags(self, bitfield):
         # FIXME
@@ -532,7 +584,10 @@ class Context(Object):
         return None
 
     def clear(self, buffers, rgba, depth, stencil):
-        self.real.clear(buffers, rgba, depth, stencil)
+        _rgba = gallium.FloatArray(4)
+        for i in range(4):
+            _rgba[i] = rgba[i]
+        self.real.clear(buffers, _rgba, depth, stencil)
         
     def _present(self):
         self.real.flush()
@@ -581,16 +636,16 @@ class Interpreter(parser.TraceDumper):
         if self.verbosity(1):
             parser.TraceDumper.handle_call(self, call)
         
-        args = [self.interpret_arg(arg) for name, arg in call.args] 
+        args = [(str(name), self.interpret_arg(arg)) for name, arg in call.args] 
         
         if call.klass:
-            obj = args[0]
+            name, obj = args[0]
             args = args[1:]
         else:
             obj = self.globl
             
         method = getattr(obj, call.method)
-        ret = method(*args)
+        ret = method(**dict(args))
         
         if call.ret and isinstance(call.ret, model.Pointer):
             self.register_object(call.ret.address, ret)
