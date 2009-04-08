@@ -58,6 +58,7 @@
 
 static struct util_stream *stream = NULL;
 static unsigned refcount = 0;
+static long unsigned call_no = 0;
 
 
 static INLINE void
@@ -218,6 +219,7 @@ trace_dump_trace_close(void)
       util_stream_close(stream);
       stream = NULL;
       refcount = 0;
+      call_no = 0;
    }
 }
 
@@ -265,11 +267,10 @@ void trace_dump_trace_end(void)
 
 void trace_dump_call_begin(const char *klass, const char *method)
 {
-   static long unsigned no = 0;
-   ++no;
+   ++call_no;
    trace_dump_indent(1);
    trace_dump_writes("<call no=\'");
-   trace_dump_writef("%lu", no);
+   trace_dump_writef("%lu", call_no);
    trace_dump_writes("\' class =\'");
    trace_dump_escape(klass);
    trace_dump_writes("\' method=\'");
