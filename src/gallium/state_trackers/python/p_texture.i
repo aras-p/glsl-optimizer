@@ -398,8 +398,8 @@ struct st_surface
 %}
 
 /* Avoid naming conflict with p_inlines.h's pipe_buffer_read/write */ 
-%rename(read) pipe_buffer_read_; 
-%rename(write) pipe_buffer_write_; 
+%rename(read) read_; 
+%rename(write) write_; 
 
 %extend pipe_buffer {
    
