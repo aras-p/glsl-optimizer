@@ -2620,6 +2620,10 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
     for (i = 0; i < c->nr_fp_insns; i++) {
 	struct prog_instruction *inst = &c->prog_instructions[i];
 
+        /* fetch any constants that this instruction needs */
+        if (c->use_const_buffer)
+           fetch_constants(c, inst);
+
 	if (inst->CondUpdate)
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
 	else
@@ -2629,10 +2633,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
         _mesa_printf("Inst %d: ", i);
         _mesa_print_instruction(inst);
         */
-
-        /* fetch any constants that this instruction needs */
-        if (c->use_const_buffer)
-           fetch_constants(c, inst);
 
 	switch (inst->Opcode) {
 	    case WM_PIXELXY:
