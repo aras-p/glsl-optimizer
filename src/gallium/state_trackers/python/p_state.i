@@ -66,9 +66,11 @@
       if(index >= PIPE_MAX_COLOR_BUFS)
          SWIG_exception(SWIG_ValueError, "index out of bounds");
       
-      _surface = st_pipe_surface(surface, PIPE_BUFFER_USAGE_GPU_WRITE);
-      if(!_surface)
-         SWIG_exception(SWIG_ValueError, "couldn't acquire surface for writing");
+      if(surface) {
+         _surface = st_pipe_surface(surface, PIPE_BUFFER_USAGE_GPU_WRITE);
+         if(!_surface)
+            SWIG_exception(SWIG_ValueError, "couldn't acquire surface for writing");
+      }
 
       pipe_surface_reference(&$self->cbufs[index], _surface);
       
@@ -81,9 +83,11 @@
    {
       struct pipe_surface *_surface = NULL;
 
-      _surface = st_pipe_surface(surface, PIPE_BUFFER_USAGE_GPU_WRITE);
-      if(!_surface)
-         SWIG_exception(SWIG_ValueError, "couldn't acquire surface for writing");
+      if(surface) {
+         _surface = st_pipe_surface(surface, PIPE_BUFFER_USAGE_GPU_WRITE);
+         if(!_surface)
+            SWIG_exception(SWIG_ValueError, "couldn't acquire surface for writing");
+      }
 
       pipe_surface_reference(&$self->zsbuf, _surface);
 
