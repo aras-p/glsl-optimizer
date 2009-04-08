@@ -627,6 +627,8 @@ class Interpreter(parser.TraceDumper):
             self.interpret_call(call)
 
     def handle_call(self, call):
+        if self.options.stop and call.no >= self.options.stop:
+            sys.exit(0)
 
         if (call.klass, call.method) in self.ignore_calls:
             return
@@ -660,6 +662,9 @@ class Interpreter(parser.TraceDumper):
         return self.options.verbosity >= level
 
     def present(self, surface, description):
+        if self.call_no < self.options.start:
+            return
+
         if self.options.images:
             filename = '%s_%04u.png' % (description, self.call_no)
             save_image(filename, surface)
@@ -676,6 +681,8 @@ class Main(parser.Main):
         optparser.add_option("-v", "--verbose", action="count", dest="verbosity", default=1, help="increase verbosity level")
         optparser.add_option("-i", "--images", action="store_true", dest="images", default=False, help="save images instead of showing them")
         optparser.add_option("-s", "--step", action="store_true", dest="step", default=False, help="step trhough every draw")
+        optparser.add_option("-f", "--from", action="store", type="int", dest="start", default=0, help="from call no")
+        optparser.add_option("-t", "--to", action="store", type="int", dest="stop", default=0, help="until call no")
         return optparser
 
     def process_arg(self, stream, options):
