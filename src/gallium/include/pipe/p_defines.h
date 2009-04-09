@@ -200,7 +200,7 @@ enum pipe_texture_target {
 enum pipe_transfer_usage {
    PIPE_TRANSFER_READ,
    PIPE_TRANSFER_WRITE,
-   PIPE_TRANSFER_READ_WRITE //< Read/modify/write
+   PIPE_TRANSFER_READ_WRITE  /**< Read/modify/write */
 };
 
 
