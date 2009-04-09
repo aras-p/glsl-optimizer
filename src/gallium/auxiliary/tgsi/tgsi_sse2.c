@@ -1477,7 +1477,7 @@ emit_instruction(
    case TGSI_OPCODE_ARL:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
-         emit_flr(func, 0);
+         emit_flr(func, 0, 0);
          emit_f2it( func, 0 );
          STORE( func, *inst, 0, 0, chan_index );
       }
