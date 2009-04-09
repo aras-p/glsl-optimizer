@@ -51,6 +51,13 @@ pipe_reference_init(struct pipe_reference *reference, unsigned count)
 }
 
 
+static INLINE bool
+pipe_is_referenced(struct pipe_reference *reference)
+{
+   return p_atomic_read(&reference->count) != 0;
+}
+
+
 /**
  * Set 'ptr' to point to 'reference' and update reference counting.
  * The old thing pointed to, if any, will be unreferenced first.
@@ -65,12 +72,12 @@ pipe_reference(struct pipe_reference **ptr, struct pipe_reference *reference)
 
    /* bump the reference.count first */
    if (reference) {
-      assert(p_atomic_read(&reference->count) != 0);
+      assert(pipe_is_referenced(reference));
       p_atomic_inc(&reference->count);
    }
 
    if (*ptr) {
-      assert(p_atomic_read(&(*ptr)->count) != 0);
+      assert(pipe_is_referenced(*ptr));
       if (p_atomic_dec_zero(&(*ptr)->count)) {
          destroy = TRUE;
       }
@@ -80,6 +87,7 @@ pipe_reference(struct pipe_reference **ptr, struct pipe_reference *reference)
 
    return destroy;
 }
+
 
 #ifdef __cplusplus
 }

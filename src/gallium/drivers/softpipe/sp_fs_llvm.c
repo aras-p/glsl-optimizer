@@ -25,14 +25,15 @@
  * 
  **************************************************************************/
 
-/* Authors:
+/**
+ * Execute fragment shader using LLVM code generation.
+ * Authors:
  *   Zack Rusin
  */
 
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_fs.h"
-
 
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
@@ -41,10 +42,15 @@
 
 #if 0
 
-struct sp_llvm_fragment_shader {
+/**
+ * Subclass of sp_fragment_shader
+ */
+struct sp_llvm_fragment_shader
+{
    struct sp_fragment_shader base;
    struct gallivm_prog *llvm_prog;
 };
+
 
 static void
 shade_quad_llvm(struct quad_stage *qs,
@@ -160,7 +166,7 @@ delete_llvm_fs( struct sp_fragment_shader *base )
 
 struct sp_fragment_shader *
 softpipe_create_fs_llvm(struct softpipe_context *softpipe,
-		       const struct pipe_shader_state *templ)
+                        const struct pipe_shader_state *templ)
 {
    struct sp_llvm_fragment_shader *shader = NULL;
 

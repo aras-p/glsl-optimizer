@@ -39,7 +39,13 @@ static void radeon_r300_write_cs_reloc(struct radeon_cs* cs,
 
 static void radeon_r300_flush_cs(struct radeon_cs* cs)
 {
-    radeon_cs_emit(cs);
+    int retval = 0;
+
+    retval = radeon_cs_emit(cs);
+    if (retval) {
+        debug_printf("radeon: Bad CS, dumping...\n");
+        radeon_cs_print(cs, stderr);
+    }
     radeon_cs_erase(cs);
 }
 
@@ -79,10 +85,15 @@ struct r300_winsys*
 radeon_create_r300_winsys(int fd, struct radeon_winsys* old_winsys)
 {
     struct r300_winsys* winsys = CALLOC_STRUCT(r300_winsys);
+    struct radeon_cs_manager* csm;
+
+    if (winsys == NULL) {
+        return NULL;
+    }
 
     do_ioctls(winsys, fd);
 
-    struct radeon_cs_manager* csm = radeon_cs_manager_gem_ctor(fd);
+    csm = radeon_cs_manager_gem_ctor(fd);
 
     winsys->cs = radeon_cs_create(csm, 1024 * 64 / 4);
 

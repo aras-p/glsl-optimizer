@@ -82,20 +82,20 @@ void r300_emit_dsa_state(struct r300_context* r300,
 void r300_emit_fragment_shader(struct r300_context* r300,
                                struct r300_fragment_shader* fs)
 {
-    CS_LOCALS(r300);
     int i;
+    CS_LOCALS(r300);
 
     BEGIN_CS(22);
 
-    OUT_CS_REG(R300_US_CONFIG, MAX2(fs->indirections - 1, 0));
+    OUT_CS_REG(R300_US_CONFIG, fs->indirections);
     OUT_CS_REG(R300_US_PIXSIZE, fs->shader.stack_size);
     /* XXX figure out exactly how big the sizes are on this reg */
-    OUT_CS_REG(R300_US_CODE_OFFSET, 0x0);
+    OUT_CS_REG(R300_US_CODE_OFFSET, 0x40);
     /* XXX figure these ones out a bit better kthnx */
     OUT_CS_REG(R300_US_CODE_ADDR_0, 0x0);
     OUT_CS_REG(R300_US_CODE_ADDR_1, 0x0);
     OUT_CS_REG(R300_US_CODE_ADDR_2, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_3, R300_RGBA_OUT);
+    OUT_CS_REG(R300_US_CODE_ADDR_3, 0x40 | R300_RGBA_OUT);
 
     for (i = 0; i < fs->alu_instruction_count; i++) {
         OUT_CS_REG(R300_US_ALU_RGB_INST_0 + (4 * i),
@@ -114,10 +114,10 @@ void r300_emit_fragment_shader(struct r300_context* r300,
 void r500_emit_fragment_shader(struct r300_context* r300,
                                struct r500_fragment_shader* fs)
 {
-    CS_LOCALS(r300);
+    int i;
     struct r300_constant_buffer* constants =
         &r300->shader_constants[PIPE_SHADER_FRAGMENT];
-    int i;
+    CS_LOCALS(r300);
 
     BEGIN_CS(9 + (fs->instruction_count * 6) + (constants->count ? 3 : 0) +
             (constants->count * 4));
@@ -156,9 +156,9 @@ void r500_emit_fragment_shader(struct r300_context* r300,
 void r300_emit_fb_state(struct r300_context* r300,
                         struct pipe_framebuffer_state* fb)
 {
-    CS_LOCALS(r300);
-    struct r300_texture* tex;
     int i;
+    struct r300_texture* tex;
+    CS_LOCALS(r300);
 
     BEGIN_CS((6 * fb->nr_cbufs) + (fb->zsbuf ? 6 : 0) + 4);
     for (i = 0; i < fb->nr_cbufs; i++) {
@@ -217,9 +217,9 @@ void r300_emit_rs_state(struct r300_context* r300, struct r300_rs_state* rs)
 void r300_emit_rs_block_state(struct r300_context* r300,
                               struct r300_rs_block* rs)
 {
+    int i;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
-    int i;
 
     BEGIN_CS(21);
     if (r300screen->caps->is_r500) {
@@ -293,8 +293,8 @@ void r300_emit_texture(struct r300_context* r300,
 
 void r300_emit_vertex_format_state(struct r300_context* r300)
 {
-    CS_LOCALS(r300);
     int i;
+    CS_LOCALS(r300);
 
     BEGIN_CS(26);
     OUT_CS_REG(R300_VAP_VTX_SIZE, r300->vertex_info.vinfo.size);
@@ -325,25 +325,80 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
     END_CS;
 }
 
+void r300_emit_vertex_shader(struct r300_context* r300,
+                             struct r300_vertex_shader* vs)
+{
+    int i;
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    struct r300_constant_buffer* constants =
+        &r300->shader_constants[PIPE_SHADER_VERTEX];
+    CS_LOCALS(r300);
+
+    if (!r300screen->caps->has_tcl) {
+        debug_printf("r300: Implementation error: emit_vertex_shader called,"
+                " but has_tcl is FALSE!\n");
+        return;
+    }
+
+    BEGIN_CS(13 + (vs->instruction_count * 4) + (constants->count * 4));
+
+    OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_0, R300_PVS_FIRST_INST(0) |
+            R300_PVS_LAST_INST(vs->instruction_count - 1));
+    OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_1, vs->instruction_count - 1);
+
+    /* XXX */
+    OUT_CS_REG(R300_VAP_PVS_CONST_CNTL, 0x0);
+
+    OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG, 0);
+    OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, vs->instruction_count * 4);
+    for (i = 0; i < vs->instruction_count; i++) {
+        OUT_CS(vs->instructions[i].inst0);
+        OUT_CS(vs->instructions[i].inst1);
+        OUT_CS(vs->instructions[i].inst2);
+        OUT_CS(vs->instructions[i].inst3);
+    }
+
+    if (constants->count) {
+        OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
+                (r300screen->caps->is_r500 ?
+                 R500_PVS_CONST_START : R300_PVS_CONST_START));
+        OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, constants->count * 4);
+        for (i = 0; i < constants->count; i++) {
+            OUT_CS_32F(constants->constants[i][0]);
+            OUT_CS_32F(constants->constants[i][1]);
+            OUT_CS_32F(constants->constants[i][2]);
+            OUT_CS_32F(constants->constants[i][3]);
+        }
+    }
+
+    OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(10) |
+            R300_PVS_NUM_CNTLRS(5) |
+            R300_PVS_NUM_FPUS(r300screen->caps->num_vert_fpus) |
+            R300_PVS_VF_MAX_VTX_NUM(12));
+    OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
+    END_CS;
+
+}
+
 void r300_emit_viewport_state(struct r300_context* r300,
                               struct r300_viewport_state* viewport)
 {
-    return;
     CS_LOCALS(r300);
 
-    BEGIN_CS(7);
-    OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 7);
+    BEGIN_CS(9);
+    OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
     OUT_CS_32F(viewport->xscale);
     OUT_CS_32F(viewport->xoffset);
     OUT_CS_32F(viewport->yscale);
     OUT_CS_32F(viewport->yoffset);
     OUT_CS_32F(viewport->zscale);
     OUT_CS_32F(viewport->zoffset);
-    OUT_CS(viewport->vte_control);
+
+    OUT_CS_REG(R300_VAP_VTE_CNTL, viewport->vte_control);
     END_CS;
 }
 
-static void r300_flush_textures(struct r300_context* r300)
+void r300_flush_textures(struct r300_context* r300)
 {
     CS_LOCALS(r300);
 

@@ -27,6 +27,9 @@
 ##########################################################################
 
 
+import sys
+
+
 class Formatter:
     '''Plain formatter'''
 
@@ -91,10 +94,80 @@ class AnsiFormatter(Formatter):
         self._escape(self._normal)
 
 
+class WindowsConsoleFormatter(Formatter):
+    '''Formatter for the Windows Console. See 
+    http://code.activestate.com/recipes/496901/ for more information.
+    '''
+
+    STD_INPUT_HANDLE  = -10
+    STD_OUTPUT_HANDLE = -11
+    STD_ERROR_HANDLE  = -12
+
+    FOREGROUND_BLUE      = 0x01
+    FOREGROUND_GREEN     = 0x02
+    FOREGROUND_RED       = 0x04
+    FOREGROUND_INTENSITY = 0x08
+    BACKGROUND_BLUE      = 0x10
+    BACKGROUND_GREEN     = 0x20
+    BACKGROUND_RED       = 0x40
+    BACKGROUND_INTENSITY = 0x80
+
+    _normal = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED
+    _bold = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY
+    _italic = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED
+    _red = FOREGROUND_RED | FOREGROUND_INTENSITY
+    _green = FOREGROUND_GREEN | FOREGROUND_INTENSITY
+    _blue = FOREGROUND_BLUE | FOREGROUND_INTENSITY
+
+    def __init__(self, stream):
+        Formatter.__init__(self, stream)
+
+        if stream is sys.stdin:
+            nStdHandle = self.STD_INPUT_HANDLE
+        elif stream is sys.stdout:
+            nStdHandle = self.STD_OUTPUT_HANDLE
+        elif stream is sys.stderr:
+            nStdHandle = self.STD_ERROR_HANDLE
+        else:
+            nStdHandle = None
+
+        if nStdHandle:
+            import ctypes
+            self.handle = ctypes.windll.kernel32.GetStdHandle(nStdHandle)
+        else:
+            self.handle = None
+
+    def _attribute(self, attr):
+        if self.handle:
+            import ctypes
+            ctypes.windll.kernel32.SetConsoleTextAttribute(self.handle, attr)
+
+    def function(self, name):
+        self._attribute(self._bold)
+        Formatter.function(self, name)
+        self._attribute(self._normal)
+
+    def variable(self, name):
+        self._attribute(self._italic)
+        Formatter.variable(self, name)
+        self._attribute(self._normal)
+
+    def literal(self, value):
+        self._attribute(self._blue)
+        Formatter.literal(self, value)
+        self._attribute(self._normal)
+
+    def address(self, value):
+        self._attribute(self._green)
+        Formatter.address(self, value)
+        self._attribute(self._normal)
+
 
 def DefaultFormatter(stream):
-    if stream.isatty():
+    if sys.platform in ('linux2', 'cygwin'):
         return AnsiFormatter(stream)
+    elif sys.platform in ('win32',):
+        return WindowsConsoleFormatter(stream)
     else:
         return Formatter(stream)
 

@@ -151,6 +151,7 @@ vs_exec_run_linear( struct draw_vertex_shader *shader,
 			 output[slot][1],
 			 output[slot][2],
 			 output[slot][3]);
+            assert(!util_is_inf_or_nan(output[slot][0]));
          }
 #endif
 

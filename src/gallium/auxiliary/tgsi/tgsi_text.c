@@ -358,9 +358,9 @@ parse_register_dst(
 
 /* Parse source register operand.
  *    <register_src> ::= <register_file_bracket_index> `]' |
- *                       <register_file_bracket> <register_dst> `]' |
- *                       <register_file_bracket> <register_dst> `+' <uint> `]' |
- *                       <register_file_bracket> <register_dst> `-' <uint> `]'
+ *                       <register_file_bracket> <register_dst> [`.' (`x' | `y' | `z' | `w')] `]' |
+ *                       <register_file_bracket> <register_dst> [`.' (`x' | `y' | `z' | `w')] `+' <uint> `]' |
+ *                       <register_file_bracket> <register_dst> [`.' (`x' | `y' | `z' | `w')] `-' <uint> `]'
  */
 static boolean
 parse_register_src(
@@ -368,11 +368,13 @@ parse_register_src(
    uint *file,
    int *index,
    uint *ind_file,
-   int *ind_index )
+   int *ind_index,
+   uint *ind_comp)
 {
    const char *cur;
    uint uindex;
 
+   *ind_comp = TGSI_SWIZZLE_X;
    if (!parse_register_file_bracket( ctx, file ))
       return FALSE;
    eat_opt_white( &ctx->cur );
@@ -381,6 +383,32 @@ parse_register_src(
       if (!parse_register_dst( ctx, ind_file, ind_index ))
          return FALSE;
       eat_opt_white( &ctx->cur );
+
+      if (*ctx->cur == '.') {
+         ctx->cur++;
+         eat_opt_white(&ctx->cur);
+
+         switch (uprcase(*ctx->cur)) {
+         case 'X':
+            *ind_comp = TGSI_SWIZZLE_X;
+            break;
+         case 'Y':
+            *ind_comp = TGSI_SWIZZLE_Y;
+            break;
+         case 'Z':
+            *ind_comp = TGSI_SWIZZLE_Z;
+            break;
+         case 'W':
+            *ind_comp = TGSI_SWIZZLE_W;
+            break;
+         default:
+            report_error(ctx, "Expected indirect register swizzle component `x', `y', `z' or `w'");
+            return FALSE;
+         }
+         ctx->cur++;
+         eat_opt_white(&ctx->cur);
+      }
+
       if (*ctx->cur == '+' || *ctx->cur == '-') {
          boolean negate;
 
@@ -561,7 +589,9 @@ parse_src_operand(
    int index;
    uint ind_file;
    int ind_index;
+   uint ind_comp;
    uint swizzle[4];
+   boolean parsed_ext_negate_paren = FALSE;
    boolean parsed_swizzle;
    boolean parsed_extswizzle;
 
@@ -574,10 +604,17 @@ parse_src_operand(
          src->SrcRegisterExtMod.Negate = 1;
          eat_opt_white( &cur );
          ctx->cur = cur;
+         parsed_ext_negate_paren = TRUE;
+      }
+      else if (*cur == '|') {
+         cur++;
+         src->SrcRegisterExtMod.Negate = 1;
+         src->SrcRegisterExtMod.Absolute = 1;
+         eat_opt_white(&cur);
+         ctx->cur = cur;
       }
    }
-
-   if (*ctx->cur == '|') {
+   else if (*ctx->cur == '|') {
       ctx->cur++;
       eat_opt_white( &ctx->cur );
       src->SrcRegisterExtMod.Absolute = 1;
@@ -635,7 +672,7 @@ parse_src_operand(
       }
    }
 
-   if (!parse_register_src( ctx, &file, &index, &ind_file, &ind_index ))
+   if (!parse_register_src(ctx, &file, &index, &ind_file, &ind_index, &ind_comp))
       return FALSE;
    src->SrcRegister.File = file;
    src->SrcRegister.Index = index;
@@ -643,6 +680,10 @@ parse_src_operand(
       src->SrcRegister.Indirect = 1;
       src->SrcRegisterInd.File = ind_file;
       src->SrcRegisterInd.Index = ind_index;
+      src->SrcRegisterInd.SwizzleX = ind_comp;
+      src->SrcRegisterInd.SwizzleY = ind_comp;
+      src->SrcRegisterInd.SwizzleZ = ind_comp;
+      src->SrcRegisterInd.SwizzleW = ind_comp;
    }
 
    /* Parse optional swizzle.
@@ -715,7 +756,7 @@ parse_src_operand(
       ctx->cur++;
    }
 
-   if (src->SrcRegisterExtMod.Negate) {
+   if (parsed_ext_negate_paren) {
       eat_opt_white( &ctx->cur );
       if (*ctx->cur != ')') {
          report_error( ctx, "Expected `)'" );
@@ -741,6 +782,26 @@ static const char *texture_names[TGSI_TEXTURE_COUNT] =
 };
 
 static boolean
+match_inst_mnemonic(const char **pcur,
+                    const struct tgsi_opcode_info *info)
+{
+   if (str_match_no_case(pcur, info->mnemonic)) {
+      return TRUE;
+   }
+   if (info->alt_mnemonic1) {
+      if (str_match_no_case(pcur, info->alt_mnemonic1)) {
+         return TRUE;
+      }
+      if (info->alt_mnemonic2) {
+         if (str_match_no_case(pcur, info->alt_mnemonic2)) {
+            return TRUE;
+         }
+      }
+   }
+   return FALSE;
+}
+
+static boolean
 parse_instruction(
    struct translate_ctx *ctx,
    boolean has_label )
@@ -758,7 +819,7 @@ parse_instruction(
       const char *cur = ctx->cur;
 
       info = tgsi_get_opcode_info( i );
-      if (str_match_no_case( &cur, info->mnemonic )) {
+      if (match_inst_mnemonic(&cur, info)) {
          if (str_match_no_case( &cur, "_SATNV" ))
             saturate = TGSI_SAT_MINUS_PLUS_ONE;
          else if (str_match_no_case( &cur, "_SAT" ))

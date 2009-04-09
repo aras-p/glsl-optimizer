@@ -206,7 +206,7 @@ extern boolean nv30_draw_elements(struct pipe_context *pipe,
 				  unsigned count);
 
 /* nv30_clear.c */
-extern void nv30_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-		       unsigned clearValue);
+extern void nv30_clear(struct pipe_context *pipe, unsigned buffers,
+		       const float *rgba, double depth, unsigned stencil);
 
 #endif

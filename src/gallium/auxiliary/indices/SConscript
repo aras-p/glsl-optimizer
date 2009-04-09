@@ -1,17 +1,19 @@
 Import('*')
 
+from sys import executable as python_cmd
+
 env.CodeGenerate(
 	target = 'u_indices_gen.c', 
 	script = 'u_indices_gen.py', 
 	source = [],
-	command = 'python $SCRIPT > $TARGET'
+	command = python_cmd + ' $SCRIPT > $TARGET'
 )
 
 env.CodeGenerate(
 	target = 'u_unfilled_gen.c', 
 	script = 'u_unfilled_gen.py', 
 	source = [],
-	command = 'python $SCRIPT > $TARGET'
+	command = python_cmd + ' $SCRIPT > $TARGET'
 )
 
 indices = env.ConvenienceLibrary(

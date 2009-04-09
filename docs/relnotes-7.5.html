@@ -12,6 +12,13 @@
 
 <p>
 Mesa 7.5 is a new development release.
+People who are concerned with stability and reliability should stick
+with the 7.4.x branch or wait for Mesa 7.6.
+</p>
+<p>
+The main new feature of Mesa 7.5 is the
+<a href="http://www.tungstengraphics.com/wiki/index.php/Gallium3D"
+target="_parent">Gallium3D</a> infrastructure.
 </p>
 <p>
 Mesa 7.5 implements the OpenGL 2.1 API, but the version reported by
@@ -32,6 +39,17 @@ tbd
 
 <h2>New features</h2>
 <ul>
+<li>Gallium - this is the new architecture for OS-independent and
+    API-independent 3D drivers.
+    Gallium3D is intended for GPUs that fully support  vertex/fragment shaders.
+    The Gallium3D drivers currently included are:
+    <ul>
+    <li>softpipe - a software/reference driver
+    <li>i915 - Intel 915/945 driver
+    <li><a href="cell.html">Cell</a> - IBM/Sony/Toshiba Cell processor driver
+    <li>nouveau - preliminary driver for NVIDIA GPUs (still under development)
+    <li>r300 - preliminary driver for R300 (still under development)
+    </ul>
 <li>GL_ARB_framebuffer_object extension (software drivers, i965 driver)
 <li>Reworked two-sided stencil support.
 This allows a driver to support all three variations of two-sided stencil
@@ -45,7 +63,9 @@ including GL_ATI_separate_stencil, GL_EXT_stencil_two_side and OpenGL 2.0
 
 <h2>Bug fixes</h2>
 <ul>
+<li>Lots of i965 driver bug fixes
 </ul>
+
 
 <h2>Changes</h2>
 <ul>

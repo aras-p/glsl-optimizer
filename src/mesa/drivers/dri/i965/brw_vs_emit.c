@@ -49,7 +49,8 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    /* r0 -- reserved as usual
     */
-   c->r0 = brw_vec8_grf(reg, 0); reg++;
+   c->r0 = brw_vec8_grf(reg, 0);
+   reg++;
 
    /* User clip planes from curbe: 
     */
@@ -60,7 +61,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
       /* Deal with curbe alignment:
        */
-      reg += ((6+c->key.nr_userclip+3)/4)*2;
+      reg += ((6 + c->key.nr_userclip + 3) / 4) * 2;
    }
 
    /* Vertex program parameters from curbe:
@@ -69,7 +70,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    for (i = 0; i < nr_params; i++) {
       c->regs[PROGRAM_STATE_VAR][i] = stride( brw_vec4_grf(reg+i/2, (i%2) * 4), 0, 4, 1);
    }     
-   reg += (nr_params+1)/2;
+   reg += (nr_params + 1) / 2;
 
    c->prog_data.curb_read_length = reg - 1;
 
@@ -77,7 +78,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    c->nr_inputs = 0;
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      if (c->prog_data.inputs_read & (1<<i)) {
+      if (c->prog_data.inputs_read & (1 << i)) {
 	 c->nr_inputs++;
 	 c->regs[PROGRAM_INPUT][i] = brw_vec8_grf(reg, 0);
 	 reg++;
@@ -91,7 +92,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    c->first_output = reg;
    mrf = 4;
    for (i = 0; i < VERT_RESULT_MAX; i++) {
-      if (c->prog_data.outputs_written & (1<<i)) {
+      if (c->prog_data.outputs_written & (1 << i)) {
 	 c->nr_outputs++;
 	 if (i == VERT_RESULT_HPOS) {
 	    c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
@@ -133,16 +134,15 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    }
 
    for (i = 0; i < 128; i++) {
-       if (c->output_regs[i].used_in_src) {
-            c->output_regs[i].reg = brw_vec8_grf(reg, 0);
-            reg++;
-        }
+      if (c->output_regs[i].used_in_src) {
+         c->output_regs[i].reg = brw_vec8_grf(reg, 0);
+         reg++;
+      }
    }
 
    c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, reg, 0);
    reg += 2;
- 
-   
+
    /* Some opcodes need an internal temporary:
     */
    c->first_tmp = reg;
@@ -152,9 +152,9 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     * urb_read_length is the number of registers read from *each*
     * vertex urb, so is half the amount:
     */
-   c->prog_data.urb_read_length = (c->nr_inputs+1)/2;
+   c->prog_data.urb_read_length = (c->nr_inputs + 1) / 2;
 
-   c->prog_data.urb_entry_size = (c->nr_outputs+2+3)/4;
+   c->prog_data.urb_entry_size = (c->nr_outputs + 2 + 3) / 4;
    c->prog_data.total_grf = reg;
 
    if (INTEL_DEBUG & DEBUG_VS) {
@@ -187,6 +187,10 @@ static void release_tmps( struct brw_vs_compile *c )
 }
 
 
+/**
+ * If an instruction uses a temp reg both as a src and the dest, we
+ * sometimes need to allocate an intermediate temporary.
+ */
 static void unalias1( struct brw_vs_compile *c,
 		      struct brw_reg dst,
 		      struct brw_reg arg0,
@@ -206,6 +210,10 @@ static void unalias1( struct brw_vs_compile *c,
    }
 }
 
+/**
+ * \sa unalias2
+ * Checkes if 2-operand instruction needs an intermediate temporary.
+ */
 static void unalias2( struct brw_vs_compile *c,
 		      struct brw_reg dst,
 		      struct brw_reg arg0,
@@ -228,6 +236,10 @@ static void unalias2( struct brw_vs_compile *c,
    }
 }
 
+/**
+ * \sa unalias2
+ * Checkes if 3-operand instruction needs an intermediate temporary.
+ */
 static void unalias3( struct brw_vs_compile *c,
 		      struct brw_reg dst,
 		      struct brw_reg arg0,
@@ -981,7 +993,7 @@ post_vs_emit( struct brw_vs_compile *c,
 }
 
 
-/* Emit the fragment program instructions here.
+/* Emit the vertex program instructions here.
  */
 void brw_vs_emit(struct brw_vs_compile *c )
 {
@@ -1038,7 +1050,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	      struct prog_src_register *src = &inst->SrcReg[i];
 	      index = src->Index;
 	      file = src->File;	
-	      if (file == PROGRAM_OUTPUT&&c->output_regs[index].used_in_src)
+	      if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src)
 		  args[i] = c->output_regs[index].reg;
 	      else
 		  args[i] = get_arg(c, src);

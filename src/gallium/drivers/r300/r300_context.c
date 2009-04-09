@@ -125,7 +125,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.draw_range_elements = r300_draw_range_elements;
 
     r300->draw = draw_create();
-    draw_set_rasterize_stage(r300->draw, r300_draw_swtcl_stage(r300));
+    draw_set_rasterize_stage(r300->draw, r300_draw_stage(r300));
 
     r300->blend_color_state = CALLOC_STRUCT(r300_blend_color_state);
     r300->rs_block = CALLOC_STRUCT(r300_rs_block);

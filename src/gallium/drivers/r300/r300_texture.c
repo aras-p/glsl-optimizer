@@ -147,7 +147,6 @@ static struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
         surface->height = texture->height[level];
         surface->offset = offset;
         surface->usage = flags;
-        surface->status = PIPE_SURFACE_STATUS_DEFINED;
     }
 
     return surface;

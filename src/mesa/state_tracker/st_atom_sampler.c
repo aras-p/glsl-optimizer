@@ -48,7 +48,7 @@
  * Convert GLenum texcoord wrap tokens to pipe tokens.
  */
 static GLuint
-gl_wrap_to_sp(GLenum wrap)
+gl_wrap_xlate(GLenum wrap)
 {
    switch (wrap) {
    case GL_REPEAT:
@@ -118,6 +118,37 @@ gl_filter_to_img_filter(GLenum filter)
 }
 
 
+static void
+xlate_border_color(const GLfloat *colorIn, GLenum baseFormat, GLfloat *colorOut)
+{
+   switch (baseFormat) {
+   case GL_RGB:
+      colorOut[0] = colorIn[0];
+      colorOut[1] = colorIn[1];
+      colorOut[2] = colorIn[2];
+      colorOut[3] = 1.0F;
+      break;
+   case GL_ALPHA:
+      colorOut[0] = colorOut[1] = colorOut[2] = 0.0;
+      colorOut[3] = colorIn[3];
+      break;
+   case GL_LUMINANCE:
+      colorOut[0] = colorOut[1] = colorOut[2] = colorIn[0];
+      colorOut[3] = 1.0;
+      break;
+   case GL_LUMINANCE_ALPHA:
+      colorOut[0] = colorOut[1] = colorOut[2] = colorIn[0];
+      colorOut[3] = colorIn[3];
+      break;
+   case GL_INTENSITY:
+      colorOut[0] = colorOut[1] = colorOut[2] = colorOut[3] = colorIn[0];
+      break;
+   default:
+      COPY_4V(colorOut, colorIn);
+   }
+}
+
+
 static void 
 update_samplers(struct st_context *st)
 {
@@ -137,6 +168,7 @@ update_samplers(struct st_context *st)
 
       if (samplersUsed & (1 << su)) {
          struct gl_texture_object *texobj;
+         struct gl_texture_image *teximg;
          GLuint texUnit;
 
          if (fprog->Base.SamplersUsed & (1 << su))
@@ -149,9 +181,11 @@ update_samplers(struct st_context *st)
             texobj = st_get_default_texture(st);
          }
 
-         sampler->wrap_s = gl_wrap_to_sp(texobj->WrapS);
-         sampler->wrap_t = gl_wrap_to_sp(texobj->WrapT);
-         sampler->wrap_r = gl_wrap_to_sp(texobj->WrapR);
+         teximg = texobj->Image[0][texobj->BaseLevel];
+
+         sampler->wrap_s = gl_wrap_xlate(texobj->WrapS);
+         sampler->wrap_t = gl_wrap_xlate(texobj->WrapT);
+         sampler->wrap_r = gl_wrap_xlate(texobj->WrapR);
 
          sampler->min_img_filter = gl_filter_to_img_filter(texobj->MinFilter);
          sampler->min_mip_filter = gl_filter_to_mip_filter(texobj->MinFilter);
@@ -174,10 +208,9 @@ update_samplers(struct st_context *st)
             assert(sampler->min_lod <= sampler->max_lod);
          }
 
-         sampler->border_color[0] = texobj->BorderColor[RCOMP];
-         sampler->border_color[1] = texobj->BorderColor[GCOMP];
-         sampler->border_color[2] = texobj->BorderColor[BCOMP];
-         sampler->border_color[3] = texobj->BorderColor[ACOMP];
+         xlate_border_color(texobj->BorderColor,
+                            teximg ? teximg->TexFormat->BaseFormat : GL_RGBA,
+                            sampler->border_color);
 
 	 sampler->max_anisotropy = texobj->MaxAnisotropy;
          if (sampler->max_anisotropy > 1.0) {

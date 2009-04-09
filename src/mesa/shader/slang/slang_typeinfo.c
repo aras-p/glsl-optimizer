@@ -790,6 +790,7 @@ _slang_typeof_operation(slang_operation * op,
                return GL_FALSE;
             }
             ti->can_be_referenced = _ti.can_be_referenced;
+            ti->array_len = field->array_len;
          }
          else {
             GLuint rows;

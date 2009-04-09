@@ -394,6 +394,30 @@ case $ARCH in
 		fi
 	    fi
 
+	    # If using Sun C++ compiler, need to tell it not to add runpaths
+	    # that are specific to the build machine
+	    if [ ${LINK} = "CC" ] ; then
+		OPTS="${OPTS} -norunpath"
+	    fi
+
+	    # Solaris linker requires explicitly listing the Standard C & C++
+	    # libraries in the link path when building shared objects
+	    if [ ${LINK} = "CC" ] ; then
+		DEPS="${DEPS} -lCrun"
+	    fi
+	    DEPS="${DEPS} -lc"
+
+	    if [ $EXPORTS ] ; then
+		# Make the 'mapfile.scope' linker mapfile
+		echo "{" > mapfile.scope
+		echo "global:" >> mapfile.scope
+		sed 's/$/;/' ${EXPORTS} >> mapfile.scope
+		echo "local:" >> mapfile.scope
+		echo "    *;" >> mapfile.scope
+		echo "};" >> mapfile.scope
+		OPTS="${OPTS} -Wl,-Mmapfile.scope"
+	    fi
+
 	    # Check if objects are SPARC v9
 	    # file says: ELF 64-bit MSB relocatable SPARCV9 Version 1
 	    set ${OBJECTS}
@@ -406,17 +430,19 @@ case $ARCH in
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
             fi
+
 	    # for debug:
 	    #echo "mklib: linker is" ${LINK} ${OPTS}
 	    if [ $NOPREFIX = 1 ] ; then
 		rm -f ${LIBNAME}
 		${LINK} ${OPTS} ${LDFLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+		FINAL_LIBS="${LIBNAME}"
 	    else
 		rm -f ${LIBNAME}.${MAJOR} ${LIBNAME}
 		${LINK} ${OPTS} ${LDFLAGS} -o ${LIBNAME}.${MAJOR} -h ${LIBNAME}.${MAJOR} ${OBJECTS} ${DEPS}
 		ln -s ${LIBNAME}.${MAJOR} ${LIBNAME}
+		FINAL_LIBS="${LIBNAME}.${MAJOR} ${LIBNAME}"
 	    fi
-	    FINAL_LIBS="${LIBNAME}.${MAJOR} ${LIBNAME}"
 	fi
 	;;
 

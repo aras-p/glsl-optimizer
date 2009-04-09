@@ -319,11 +319,33 @@ util_iround(float f)
 
 
 
-#if defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
+/**
+ * Test if x is NaN or +/- infinity.
+ */
+static INLINE boolean
+util_is_inf_or_nan(float x)
+{
+   union fi tmp;
+   tmp.f = x;
+   return !(int)((unsigned int)((tmp.i & 0x7fffffff)-0x7f800000) >> 31);
+}
+
+
 /**
  * Find first bit set in word.  Least significant bit is 1.
  * Return 0 if no bits set.
  */
+#if defined(_MSC_VER) && _MSC_VER >= 1300
+static INLINE
+unsigned long ffs( unsigned long u )
+{
+   unsigned long i;
+   if(_BitScanForward(&i, u))
+      return i + 1;
+   else
+      return 0;
+}
+#elif defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
 static INLINE
 unsigned ffs( unsigned u )
 {
@@ -339,9 +361,7 @@ unsigned ffs( unsigned u )
 
    return i;
 }
-#endif
-
-#ifdef __MINGW32__
+#elif defined(__MINGW32__)
 #define ffs __builtin_ffs
 #endif
 

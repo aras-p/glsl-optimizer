@@ -20,8 +20,17 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "pipe/p_context.h"
+#ifndef R300_CLEAR_H
+#define R300_CLEAR_H
+
+#include "util/u_clear.h"
+
+#include "r300_context.h"
 
 void r300_clear(struct pipe_context* pipe,
-                struct pipe_surface* ps,
-                unsigned color);
+                unsigned buffers,
+                const float* rgba,
+                double depth,
+                unsigned stencil);
+
+#endif /* R300_CLEAR_H */

@@ -42,7 +42,7 @@
 #endif
 
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
 
 
 /*
@@ -118,7 +118,7 @@ rtasm_exec_free(void *addr)
 }
 
 
-#else /* PIPE_OS_LINUX || PIPE_OS_BSD */
+#else /* PIPE_OS_LINUX || PIPE_OS_BSD || PIPE_OS_SOLARIS */
 
 /*
  * Just use regular memory.
@@ -138,4 +138,4 @@ rtasm_exec_free(void *addr)
 }
 
 
-#endif /* PIPE_OS_LINUX || PIPE_OS_BSD */
+#endif /* PIPE_OS_LINUX || PIPE_OS_BSD || PIPE_OS_SOLARIS */

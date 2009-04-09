@@ -107,6 +107,7 @@ progs = [
 	'tri-scissor-tri',
 	'tri-stencil',
 	'tri-stipple',
+	'tri-multitex-vbo',
 	'tri-tex',
 	'tri-tex-3d',
 	'tri-tri',

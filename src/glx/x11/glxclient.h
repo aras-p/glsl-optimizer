@@ -426,6 +426,11 @@ struct __GLXcontextRec {
    int server_minor;        /**< Minor version number. */
     /*@}*/
 
+   /**
+    * Thread ID we're currently current in. Zero if none.
+    */
+   unsigned long thread_id;
+
     char gl_extension_bits[ __GL_EXT_BYTES ];
 };
 
@@ -609,7 +614,6 @@ extern void __glXSendLargeCommand(__GLXcontext *, const GLvoid *, GLint,
 				  const GLvoid *, GLint);
 
 /* Initialize the GLX extension for dpy */
-extern __GLXdisplayPrivate * __glXGetPrivateFromDisplay(Display *dpy);
 extern __GLXdisplayPrivate *__glXInitialize(Display*);
 
 extern void __glXPreferEGL(int state);

@@ -48,7 +48,8 @@ $(TOP)/$(LIB_DIR)/libEGLdri.so: $(OBJECTS)
 		-major 1 -minor 0 \
 		-install $(TOP)/$(LIB_DIR) -ldl $(OBJECTS) $(LIBS)
 
-install: $(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
+install:
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) $(TOP)/$(LIB_DIR)/libEGLdri.so $(DESTDIR)$(INSTALL_LIB_DIR)
 
 clean:

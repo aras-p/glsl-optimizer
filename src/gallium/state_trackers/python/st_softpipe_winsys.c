@@ -84,8 +84,7 @@ st_softpipe_buffer_unmap(struct pipe_winsys *winsys,
 
 
 static void
-st_softpipe_buffer_destroy(struct pipe_winsys *winsys,
-                           struct pipe_buffer *buf)
+st_softpipe_buffer_destroy(struct pipe_buffer *buf)
 {
    struct st_softpipe_buffer *oldBuf = st_softpipe_buffer(buf);
 

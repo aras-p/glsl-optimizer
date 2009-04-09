@@ -677,7 +677,6 @@ i915_get_tex_surface(struct pipe_screen *screen,
       ps->height = pt->height[level];
       ps->offset = offset;
       ps->usage = flags;
-      ps->status = PIPE_SURFACE_STATUS_DEFINED;
    }
    return ps;
 }
@@ -725,14 +724,6 @@ i915_init_texture_functions(struct i915_context *i915)
 static void
 i915_tex_surface_destroy(struct pipe_surface *surf)
 {
-   /* This really should not be possible, but it's actually
-    * happening quite a bit...  Will fix.
-    */
-   if (surf->status == PIPE_SURFACE_STATUS_CLEAR) {
-      debug_printf("XXX destroying a surface with pending clears...\n");
-      assert(0);
-   }
-
    pipe_texture_reference(&surf->texture, NULL);
    FREE(surf);
 }

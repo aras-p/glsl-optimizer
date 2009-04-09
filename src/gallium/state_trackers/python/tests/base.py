@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 ##########################################################################
 # 
+# Copyright 2009 VMware, Inc.
 # Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
 # All Rights Reserved.
 # 
@@ -19,7 +20,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 # MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
-# IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+# IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
 # ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -32,6 +33,9 @@
 Loosely inspired on Python's unittest module.
 """
 
+
+import os.path
+import sys
 
 from gallium import *
 
@@ -115,17 +119,77 @@ class Test:
         self._run(result)
         result.summary()
 
+    def assert_rgba(self, surface, x, y, w, h, expected_rgba, pixel_tol=4.0/256, surface_tol=0.85):
+        total = h*w
+        different = surface.compare_tile_rgba(x, y, w, h, expected_rgba, tol=pixel_tol)
+        if different:
+            sys.stderr.write("%u out of %u pixels differ\n" % (different, total))
+
+        if float(total - different)/float(total) < surface_tol:
+            if 0:
+                rgba = FloatArray(h*w*4)
+                surface.get_tile_rgba(x, y, w, h, rgba)
+                show_image(w, h, Result=rgba, Expected=expected_rgba)
+                save_image(w, h, rgba, "result.png")
+                save_image(w, h, expected_rgba, "expected.png")
+            #sys.exit(0)
+            
+            raise TestFailure
+
 
 class TestCase(Test):
     
+    tags = ()
+
     def __init__(self, dev, **kargs):
         Test.__init__(self)
         self.dev = dev
         self.__dict__.update(kargs)
 
     def description(self):
-        raise NotImplementedError
-        
+        descriptions = []
+        for tag in self.tags:
+            value = self.get(tag)
+            if value is not None and value != '':
+                descriptions.append(tag + '=' + str(value))
+        return ' '.join(descriptions)
+
+    def get(self, tag):
+        try:
+            method = getattr(self, '_get_' + tag)
+        except AttributeError:
+            return getattr(self, tag, None)
+        else:
+            return method()
+
+    def _get_target(self):
+        return {
+            PIPE_TEXTURE_1D: "1d", 
+            PIPE_TEXTURE_2D: "2d", 
+            PIPE_TEXTURE_3D: "3d", 
+            PIPE_TEXTURE_CUBE: "cube",
+        }[self.target]
+
+    def _get_format(self):
+        name = formats[self.format]
+        if name.startswith('PIPE_FORMAT_'):
+            name  = name[12:]
+        name = name.lower()
+        return name
+
+    def _get_face(self):
+        if self.target == PIPE_TEXTURE_CUBE:
+            return {
+                PIPE_TEX_FACE_POS_X: "+x",
+                PIPE_TEX_FACE_NEG_X: "-x",
+                PIPE_TEX_FACE_POS_Y: "+y",
+                PIPE_TEX_FACE_NEG_Y: "-y", 
+                PIPE_TEX_FACE_POS_Z: "+z", 
+                PIPE_TEX_FACE_NEG_Z: "-z",
+            }[self.face]
+        else:
+            return ''
+
     def test(self):
         raise NotImplementedError
     
@@ -167,27 +231,106 @@ class TestResult:
         self.passed = 0
         self.skipped = 0
         self.failed = 0
-        self.failed_descriptions = []
+
+        self.names = ['result']
+        self.types = ['pass skip fail']
+        self.rows = []
     
     def test_start(self, test):
+        sys.stdout.write("Running %s...\n" % test.description())
+        sys.stdout.flush()
         self.tests += 1
-        print "Running %s..." % test.description()
     
     def test_passed(self, test):
+        sys.stdout.write("PASS\n")
+        sys.stdout.flush()
         self.passed += 1
-        print "PASS"
+        self.log_result(test, 'pass')
             
     def test_skipped(self, test):
+        sys.stdout.write("SKIP\n")
+        sys.stdout.flush()
         self.skipped += 1
-        print "SKIP"
+        #self.log_result(test, 'skip')
         
     def test_failed(self, test):
+        sys.stdout.write("FAIL\n")
+        sys.stdout.flush()
         self.failed += 1
-        self.failed_descriptions.append(test.description())
-        print "FAIL"
+        self.log_result(test, 'fail')
+
+    def log_result(self, test, result):
+        row = ['']*len(self.names)
+
+        # add result
+        assert self.names[0] == 'result'
+        assert result in ('pass', 'skip', 'fail')
+        row[0] = result
+
+        # add tags
+        for tag in test.tags:
+            value = test.get(tag)
+
+            # infer type
+            if value is None:
+                continue
+            elif isinstance(value, (int, float)):
+                value = str(value)
+                type = 'c' # continous
+            elif isinstance(value, basestring):
+                type = 'd' # discrete
+            else:
+                assert False
+                value = str(value)
+                type = 'd' # discrete
+
+            # insert value
+            try:
+                col = self.names.index(tag, 1)
+            except ValueError:
+                self.names.append(tag)
+                self.types.append(type)
+                row.append(value)
+            else:
+                row[col] = value
+                assert self.types[col] == type
+        
+        self.rows.append(row)
 
     def summary(self):
-        print "%u tests, %u passed, %u skipped, %u failed" % (self.tests, self.passed, self.skipped, self.failed)
-        for description in self.failed_descriptions:
-            print "  %s" % description
- 
+        sys.stdout.write("%u tests, %u passed, %u skipped, %u failed\n\n" % (self.tests, self.passed, self.skipped, self.failed))
+        sys.stdout.flush()
+
+        name, ext = os.path.splitext(os.path.basename(sys.argv[0]))
+        filename = name + '.tsv'
+        stream = file(filename, 'wt')
+
+        # header
+        stream.write('\t'.join(self.names) + '\n')
+        stream.write('\t'.join(self.types) + '\n')
+        stream.write('class\n')
+
+        # rows
+        for row in self.rows:
+            row += ['']*(len(self.names) - len(row))
+            stream.write('\t'.join(row) + '\n')
+
+        stream.close()
+
+        # See http://www.ailab.si/orange/doc/ofb/c_otherclass.htm
+        try:
+            import orange
+            import orngTree
+        except ImportError:
+            sys.stderr.write('Install Orange from http://www.ailab.si/orange/ for a classification tree.\n')
+            return
+
+        data = orange.ExampleTable(filename)
+
+        tree = orngTree.TreeLearner(data, sameMajorityPruning=1, mForPruning=2)
+
+        orngTree.printTxt(tree, maxDepth=4)
+
+        file(name+'.txt', 'wt').write(orngTree.dumpTree(tree))
+
+        orngTree.printDot(tree, fileName=name+'.dot', nodeShape='ellipse', leafShape='box')

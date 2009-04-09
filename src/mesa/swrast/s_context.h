@@ -52,7 +52,7 @@
 typedef void (*texture_sample_func)(GLcontext *ctx,
                                     const struct gl_texture_object *tObj,
                                     GLuint n, const GLfloat texcoords[][4],
-                                    const GLfloat lambda[], GLchan rgba[][4]);
+                                    const GLfloat lambda[], GLfloat rgba[][4]);
 
 typedef void (_ASMAPIP blend_func)( GLcontext *ctx, GLuint n,
                                     const GLubyte mask[],
@@ -131,7 +131,7 @@ typedef struct
    GLfloat _BackfaceSign;      /** +1 or -1 */
    GLfloat _BackfaceCullSign;  /** +1, 0, or -1 */
    GLboolean _PreferPixelFog;    /* Compute fog blend factor per fragment? */
-   GLboolean _AnyTextureCombine;
+   GLboolean _TextureCombinePrimary;
    GLboolean _FogEnabled;
    GLboolean _DeferredTexture;
    GLenum _FogMode;  /* either GL_FOG_MODE or fragment program's fog mode */
@@ -157,6 +157,7 @@ typedef struct
    GLbitfield NewState;
    GLuint StateChanges;
    GLenum Primitive;    /* current primitive being drawn (ala glBegin) */
+   GLboolean SpecularVertexAdd; /**< Add specular/secondary color per vertex */
 
    void (*InvalidateState)( GLcontext *ctx, GLbitfield new_state );
 
@@ -221,7 +222,7 @@ typedef struct
    /** Buffer for saving the sampled texture colors.
     * Needed for GL_ARB_texture_env_crossbar implementation.
     */
-   GLchan *TexelBuffer;
+   GLfloat *TexelBuffer;
 
    validate_texture_image_func ValidateTextureImage;
 

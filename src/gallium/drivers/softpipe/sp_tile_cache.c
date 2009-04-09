@@ -57,9 +57,9 @@ struct softpipe_tile_cache
    struct pipe_texture *texture;  /**< if caching a texture */
    struct softpipe_cached_tile entries[NUM_ENTRIES];
    uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
-   float clear_color[4];
-   uint clear_val;
-   boolean depth_stencil; /** Is the surface a depth/stencil format? */
+   float clear_color[4];  /**< for color bufs */
+   uint clear_val;        /**< for z+stencil, or packed color clear value */
+   boolean depth_stencil; /**< Is the surface a depth/stencil format? */
 
    struct pipe_transfer *tex_trans;
    void *tex_trans_map;
@@ -599,40 +599,17 @@ sp_get_cached_tile_tex(struct softpipe_context *sp,
  * Save the color and set a 'clearflag' for each tile of the screen.
  */
 void
-sp_tile_cache_clear(struct softpipe_tile_cache *tc, uint clearValue)
+sp_tile_cache_clear(struct softpipe_tile_cache *tc, const float *rgba,
+                    uint clearValue)
 {
-   uint r, g, b, a;
    uint pos;
 
+   tc->clear_color[0] = rgba[0];
+   tc->clear_color[1] = rgba[1];
+   tc->clear_color[2] = rgba[2];
+   tc->clear_color[3] = rgba[3];
+
    tc->clear_val = clearValue;
-
-   switch (tc->transfer->format) {
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
-      r = (clearValue >> 24) & 0xff;
-      g = (clearValue >> 16) & 0xff;
-      b = (clearValue >>  8) & 0xff;
-      a = (clearValue      ) & 0xff;
-      break;
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      r = (clearValue >> 16) & 0xff;
-      g = (clearValue >>  8) & 0xff;
-      b = (clearValue      ) & 0xff;
-      a = (clearValue >> 24) & 0xff;
-      break;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
-      r = (clearValue >>  8) & 0xff;
-      g = (clearValue >> 16) & 0xff;
-      b = (clearValue >> 24) & 0xff;
-      a = (clearValue      ) & 0xff;
-      break;
-   default:
-      r = g = b = a = 0;
-   }
-
-   tc->clear_color[0] = r / 255.0f;
-   tc->clear_color[1] = g / 255.0f;
-   tc->clear_color[2] = b / 255.0f;
-   tc->clear_color[3] = a / 255.0f;
 
 #if TILE_CLEAR_OPTIMIZATION
    /* set flags to indicate all the tiles are cleared */

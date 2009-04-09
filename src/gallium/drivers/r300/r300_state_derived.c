@@ -30,9 +30,9 @@
  * The vertex_info struct describes the post-TCL format of vertices. It is
  * required for Draw when doing SW TCL, and also for describing the
  * dreaded RS block on R300 chipsets. */
-/* XXX this function should be able to handle vert shaders as well as draw */
 static void r300_update_vertex_layout(struct r300_context* r300)
 {
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct r300_vertex_format vformat;
     struct vertex_info vinfo;
     boolean pos = FALSE, psize = FALSE, fog = FALSE;
@@ -71,6 +71,13 @@ static void r300_update_vertex_layout(struct r300_context* r300)
                 debug_printf("r300: Unknown vertex input %d\n",
                     info->input_semantic_name[i]);
                 break;
+        }
+    }
+
+    if (r300screen->caps->has_tcl) {
+        for (i = 0; i < info->num_inputs; i++) {
+            /* XXX should probably do real lookup with vert shader */
+            tab[i] = i;
         }
     }
 
@@ -211,7 +218,6 @@ static void r300_update_rs_block(struct r300_context* r300)
             rs->ip[0] |= R500_RS_COL_FMT(R300_RS_COL_FMT_0001);
         }
 
-        /* Set up at least one texture pointer or RS will not be happy. */
         if (tex_count == 0) {
             rs->ip[0] |=
                 R500_RS_SEL_S(R500_RS_IP_PTR_K0) |
@@ -220,15 +226,20 @@ static void r300_update_rs_block(struct r300_context* r300)
                 R500_RS_SEL_Q(R500_RS_IP_PTR_K1);
         }
 
+        /* Rasterize at least one color, or bad things happen. */
+        if ((col_count == 0) && (tex_count == 0)) {
+            col_count++;
+        }
+
         for (i = 0; i < tex_count; i++) {
-            rs->inst[i] |= R500_RS_INST_TEX_ID(i) | R500_RS_INST_TEX_CN_WRITE |
-                R500_RS_INST_TEX_ADDR(fp_offset);
+            rs->inst[i] |= R500_RS_INST_TEX_ID(i) |
+                R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_offset);
             fp_offset++;
         }
 
         for (i = 0; i < col_count; i++) {
-            rs->inst[i] |= R500_RS_INST_COL_ID(i) | R500_RS_INST_COL_CN_WRITE |
-                R500_RS_INST_COL_ADDR(fp_offset);
+            rs->inst[i] |= R500_RS_INST_COL_ID(i) |
+                R500_RS_INST_COL_CN_WRITE | R500_RS_INST_COL_ADDR(fp_offset);
             fp_offset++;
         }
     } else {
@@ -268,15 +279,20 @@ static void r300_update_rs_block(struct r300_context* r300)
                 R300_RS_SEL_Q(R300_RS_SEL_K1);
         }
 
+        /* Rasterize at least one color, or bad things happen. */
+        if ((col_count == 0) && (tex_count == 0)) {
+            col_count++;
+        }
+
         for (i = 0; i < tex_count; i++) {
-            rs->inst[i] |= R300_RS_INST_TEX_ID(i) | R300_RS_INST_TEX_CN_WRITE |
-                R300_RS_INST_TEX_ADDR(fp_offset);
+            rs->inst[i] |= R300_RS_INST_TEX_ID(i) |
+                R300_RS_INST_TEX_CN_WRITE | R300_RS_INST_TEX_ADDR(fp_offset);
             fp_offset++;
         }
 
         for (i = 0; i < col_count; i++) {
-            rs->inst[i] |= R300_RS_INST_COL_ID(i) | R300_RS_INST_COL_CN_WRITE |
-                R300_RS_INST_COL_ADDR(fp_offset);
+            rs->inst[i] |= R300_RS_INST_COL_ID(i) |
+                R300_RS_INST_COL_CN_WRITE | R300_RS_INST_COL_ADDR(fp_offset);
             fp_offset++;
         }
     }
@@ -289,7 +305,8 @@ static void r300_update_rs_block(struct r300_context* r300)
 
 void r300_update_derived_state(struct r300_context* r300)
 {
-    if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER) {
+    if (r300->dirty_state &
+            (R300_NEW_FRAGMENT_SHADER | R300_NEW_VERTEX_SHADER)) {
         r300_update_vertex_layout(r300);
     }
 

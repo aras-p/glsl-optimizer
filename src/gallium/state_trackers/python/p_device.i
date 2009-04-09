@@ -122,9 +122,9 @@ struct st_device {
       return $self->screen->texture_create($self->screen, &templat);
    }
    
-   struct st_buffer *
+   struct pipe_buffer *
    buffer_create(unsigned size, unsigned alignment = 0, unsigned usage = 0) {
-      return st_buffer_create($self, alignment, usage, size);
+      return pipe_buffer_create($self->screen, alignment, usage, size);
    }
 
 };

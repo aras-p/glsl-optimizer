@@ -40,11 +40,12 @@
 
 #include "pipe/p_config.h"
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
 #include <stdlib.h>
 #endif
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_thread.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
@@ -58,6 +59,8 @@
 
 static struct util_stream *stream = NULL;
 static unsigned refcount = 0;
+static pipe_mutex call_mutex;
+static long unsigned call_no = 0;
 
 
 static INLINE void
@@ -218,6 +221,8 @@ trace_dump_trace_close(void)
       util_stream_close(stream);
       stream = NULL;
       refcount = 0;
+      call_no = 0;
+      pipe_mutex_destroy(call_mutex);
    }
 }
 
@@ -235,11 +240,13 @@ boolean trace_dump_trace_begin()
       if(!stream)
          return FALSE;
 
+      pipe_mutex_init(call_mutex);
+
       trace_dump_writes("<?xml version='1.0' encoding='UTF-8'?>\n");
       trace_dump_writes("<?xml-stylesheet type='text/xsl' href='trace.xsl'?>\n");
       trace_dump_writes("<trace version='0.1'>\n");
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
       /* Linux applications rarely cleanup GL / Gallium resources so catch
        * application exit here */
       atexit(trace_dump_trace_close);
@@ -265,8 +272,16 @@ void trace_dump_trace_end(void)
 
 void trace_dump_call_begin(const char *klass, const char *method)
 {
+   pipe_mutex_lock(call_mutex);
+   ++call_no;
    trace_dump_indent(1);
-   trace_dump_tag_begin2("call", "class", klass, "method", method);
+   trace_dump_writes("<call no=\'");
+   trace_dump_writef("%lu", call_no);
+   trace_dump_writes("\' class =\'");
+   trace_dump_escape(klass);
+   trace_dump_writes("\' method=\'");
+   trace_dump_escape(method);
+   trace_dump_writes("\'>");
    trace_dump_newline();
 }
 
@@ -276,6 +291,7 @@ void trace_dump_call_end(void)
    trace_dump_tag_end("call");
    trace_dump_newline();
    util_stream_flush(stream);
+   pipe_mutex_unlock(call_mutex);
 }
 
 void trace_dump_arg_begin(const char *name)
@@ -420,8 +436,7 @@ void trace_dump_buffer_ptr(struct pipe_buffer *_buffer)
 void trace_dump_texture_ptr(struct pipe_texture *_texture)
 {
    if (_texture) {
-      struct trace_screen *tr_scr = trace_screen(_texture->screen);
-      struct trace_texture *tr_tex = trace_texture(tr_scr, _texture);
+      struct trace_texture *tr_tex = trace_texture(_texture);
       trace_dump_ptr(tr_tex->texture);
    } else {
       trace_dump_null();
@@ -431,9 +446,7 @@ void trace_dump_texture_ptr(struct pipe_texture *_texture)
 void trace_dump_surface_ptr(struct pipe_surface *_surface)
 {
    if (_surface) {
-      struct trace_screen *tr_scr = trace_screen(_surface->texture->screen);
-      struct trace_texture *tr_tex = trace_texture(tr_scr, _surface->texture);
-      struct trace_surface *tr_surf = trace_surface(tr_tex, _surface);
+      struct trace_surface *tr_surf = trace_surface(_surface);
       trace_dump_ptr(tr_surf->surface);
    } else {
       trace_dump_null();
@@ -443,9 +456,7 @@ void trace_dump_surface_ptr(struct pipe_surface *_surface)
 void trace_dump_transfer_ptr(struct pipe_transfer *_transfer)
 {
    if (_transfer) {
-      struct trace_screen *tr_scr = trace_screen(_transfer->texture->screen);
-      struct trace_texture *tr_tex = trace_texture(tr_scr, _transfer->texture);
-      struct trace_transfer *tr_tran = trace_transfer(tr_tex, _transfer);
+      struct trace_transfer *tr_tran = trace_transfer(_transfer);
       trace_dump_ptr(tr_tran->transfer);
    } else {
       trace_dump_null();

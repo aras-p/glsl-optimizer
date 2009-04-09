@@ -22,6 +22,14 @@
 
 #include "r300_debug.h"
 
+static void r300_dump_fs(struct r300_fragment_shader* fs)
+{
+    int i;
+
+    for (i = 0; i < fs->alu_instruction_count; i++) {
+    }
+}
+
 static char* r500_fs_swiz[] = {
     " R",
     " G",
@@ -214,5 +222,17 @@ void r500_fs_dump(struct r500_fragment_shader* fs)
                 debug_printf("    3: TEX_DXDY   0x%08x\n", inst);
                 break;
         }
+    }
+}
+
+void r300_vs_dump(struct r300_vertex_shader* vs)
+{
+    int i;
+
+    for (i = 0; i < vs->instruction_count; i++) {
+        debug_printf("inst0: 0x%x\n", vs->instructions[i].inst0);
+        debug_printf("inst1: 0x%x\n", vs->instructions[i].inst1);
+        debug_printf("inst2: 0x%x\n", vs->instructions[i].inst2);
+        debug_printf("inst3: 0x%x\n", vs->instructions[i].inst3);
     }
 }

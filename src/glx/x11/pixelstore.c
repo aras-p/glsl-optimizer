@@ -31,6 +31,10 @@
 #include "glxclient.h"
 #include "indirect.h"
 
+#if !defined __GNUC__ || __GNUC__ < 3
+#  define __builtin_expect(x, y) x
+#endif
+
 /**
  * Send glPixelStore command to the server
  * 

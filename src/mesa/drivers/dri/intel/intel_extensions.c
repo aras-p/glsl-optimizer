@@ -132,6 +132,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions },
    { "GL_ARB_shading_language_120",       GL_VERSION_2_1_functions },
    { "GL_ARB_shadow",                     NULL },
+   { "GL_MESA_texture_signed_rgba",       NULL },
    { "GL_ARB_texture_non_power_of_two",   NULL },
    { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions },
    { "GL_EXT_shadow_funcs",               NULL },

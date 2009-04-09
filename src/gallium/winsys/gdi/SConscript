@@ -21,12 +21,13 @@ if env['platform'] == 'windows':
 		'gdi_softpipe_winsys.c',
 	]
 	
-	if env['toolchain'] == 'crossmingw':
+	if env['gcc']:
 		sources += ['#src/gallium/state_trackers/wgl/opengl32.mingw.def']
 	else:
 		sources += ['#src/gallium/state_trackers/wgl/opengl32.def']
 		
 	drivers = [
+		trace,
 		softpipe,
 	]
 

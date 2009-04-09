@@ -293,32 +293,6 @@ st_notify_swapbuffers(struct st_framebuffer *stfb)
 }
 
 
-/** 
- * Quick hack - allows the winsys to inform the driver that surface
- * states are now undefined after a glXSwapBuffers or similar.
- */
-void
-st_notify_swapbuffers_complete(struct st_framebuffer *stfb)
-{
-   GET_CURRENT_CONTEXT(ctx);
-
-   if (ctx && ctx->DrawBuffer == &stfb->Base) {
-      struct st_renderbuffer *strb;
-
-      /* Mark back color buffers as undefined */
-      strb = st_renderbuffer(stfb->Base.Attachment[BUFFER_BACK_LEFT].
-                             Renderbuffer);
-      if (strb && strb->surface)
-         strb->surface->status = PIPE_SURFACE_STATUS_UNDEFINED;
-
-      strb = st_renderbuffer(stfb->Base.Attachment[BUFFER_BACK_RIGHT].
-                             Renderbuffer);
-      if (strb && strb->surface)
-         strb->surface->status = PIPE_SURFACE_STATUS_UNDEFINED;
-   }
-}
-
-
 void *st_framebuffer_private( struct st_framebuffer *stfb )
 {
    return stfb->Private;

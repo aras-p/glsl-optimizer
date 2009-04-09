@@ -169,18 +169,18 @@ void debug_print_blob( const char *name,
 #endif
 
 
-void _debug_break(void) 
+#ifndef debug_break
+void debug_break(void) 
 {
-#if defined(PIPE_ARCH_X86) && defined(PIPE_CC_GCC)
-   __asm("int3");
-#elif defined(PIPE_ARCH_X86) && defined(PIPE_CC_MSVC)
-   _asm {int 3};
+#if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
+   DebugBreak();
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
    EngDebugBreak();
 #else
    abort();
 #endif
 }
+#endif
 
 
 #ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
@@ -715,78 +715,85 @@ struct bmp_rgb_quad {
    uint8_t rgbAlpha;
 };
 
-void 
+void
 debug_dump_surface_bmp(const char *filename,
                        struct pipe_surface *surface)
 {
-#ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
-   struct pipe_texture *texture;
-   struct pipe_screen *screen;
-   struct util_stream *stream;
    struct pipe_transfer *transfer;
-   struct bmp_file_header bmfh;
-   struct bmp_info_header bmih;
-   float *rgba;
-   unsigned x, y;
+   struct pipe_texture *texture = surface->texture;
+   struct pipe_screen *screen = texture->screen;
 
-   if (!surface)
-      goto error1;
-
-   rgba = MALLOC(surface->width*4*sizeof(float));
-   if(!rgba)
-      goto error1;
-   
-   bmfh.bfType = 0x4d42;
-   bmfh.bfSize = 14 + 40 + surface->height*surface->width*4;
-   bmfh.bfReserved1 = 0;
-   bmfh.bfReserved2 = 0;
-   bmfh.bfOffBits = 14 + 40;
-   
-   bmih.biSize = 40;
-   bmih.biWidth = surface->width;
-   bmih.biHeight = surface->height;
-   bmih.biPlanes = 1;
-   bmih.biBitCount = 32;
-   bmih.biCompression = 0;
-   bmih.biSizeImage = surface->height*surface->width*4;
-   bmih.biXPelsPerMeter = 0;
-   bmih.biYPelsPerMeter = 0;
-   bmih.biClrUsed = 0;
-   bmih.biClrImportant = 0;
-   
-   stream = util_stream_create(filename, bmfh.bfSize);
-   if(!stream)
-      goto error2;
-   
-   util_stream_write(stream, &bmfh, 14);
-   util_stream_write(stream, &bmih, 40);
-
-   texture = surface->texture;
-   screen = texture->screen;
-   
    transfer = screen->get_tex_transfer(screen, texture, surface->face,
                                        surface->level, surface->zslice,
                                        PIPE_TRANSFER_READ, 0, 0, surface->width,
                                        surface->height);
 
-   y = surface->height;
-   while(y--) {
-      pipe_get_tile_rgba(transfer,
-                         0, y, surface->width, 1,
-                         rgba);
-      for(x = 0; x < surface->width; ++x)
-      {
-         struct bmp_rgb_quad pixel;
-         pixel.rgbRed   = float_to_ubyte(rgba[x*4 + 0]);
-         pixel.rgbGreen = float_to_ubyte(rgba[x*4 + 1]);
-         pixel.rgbBlue  = float_to_ubyte(rgba[x*4 + 2]);
-         pixel.rgbAlpha = float_to_ubyte(rgba[x*4 + 3]);
-         util_stream_write(stream, &pixel, 4);
-      }  
-   }
+   debug_dump_transfer_bmp(filename, transfer);
 
    screen->tex_transfer_destroy(transfer);
-   
+}
+
+void
+debug_dump_transfer_bmp(const char *filename,
+                        struct pipe_transfer *transfer)
+{
+#ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
+   struct util_stream *stream;
+   struct bmp_file_header bmfh;
+   struct bmp_info_header bmih;
+   float *rgba;
+   unsigned x, y;
+
+   if (!transfer)
+      goto error1;
+
+   rgba = MALLOC(transfer->width*transfer->height*4*sizeof(float));
+   if(!rgba)
+      goto error1;
+
+   bmfh.bfType = 0x4d42;
+   bmfh.bfSize = 14 + 40 + transfer->height*transfer->width*4;
+   bmfh.bfReserved1 = 0;
+   bmfh.bfReserved2 = 0;
+   bmfh.bfOffBits = 14 + 40;
+
+   bmih.biSize = 40;
+   bmih.biWidth = transfer->width;
+   bmih.biHeight = transfer->height;
+   bmih.biPlanes = 1;
+   bmih.biBitCount = 32;
+   bmih.biCompression = 0;
+   bmih.biSizeImage = transfer->height*transfer->width*4;
+   bmih.biXPelsPerMeter = 0;
+   bmih.biYPelsPerMeter = 0;
+   bmih.biClrUsed = 0;
+   bmih.biClrImportant = 0;
+
+   stream = util_stream_create(filename, bmfh.bfSize);
+   if(!stream)
+      goto error2;
+
+   util_stream_write(stream, &bmfh, 14);
+   util_stream_write(stream, &bmih, 40);
+
+   pipe_get_tile_rgba(transfer, 0, 0,
+                      transfer->width, transfer->height,
+                      rgba);
+
+   y = transfer->height;
+   while(y--) {
+      float *ptr = rgba + (transfer->width * y * 4);
+      for(x = 0; x < transfer->width; ++x)
+      {
+         struct bmp_rgb_quad pixel;
+         pixel.rgbRed   = float_to_ubyte(ptr[x*4 + 0]);
+         pixel.rgbGreen = float_to_ubyte(ptr[x*4 + 1]);
+         pixel.rgbBlue  = float_to_ubyte(ptr[x*4 + 2]);
+         pixel.rgbAlpha = 255;
+         util_stream_write(stream, &pixel, 4);
+      }
+   }
+
    util_stream_close(stream);
 error2:
    FREE(rgba);

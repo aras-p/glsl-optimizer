@@ -130,6 +130,9 @@ void brw_wm_print_insn( struct brw_wm_compile *c,
    case WM_FB_WRITE:
       _mesa_printf(" = FB_WRITE");
       break;
+   case WM_FRONTFACING:
+      _mesa_printf(" = FRONTFACING");
+      break;
    default:
       _mesa_printf(" = %s", _mesa_opcode_string(inst->opcode));
       break;

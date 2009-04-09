@@ -406,8 +406,6 @@ void trace_dump_surface(const struct pipe_surface *state)
    trace_dump_reference(&state->reference);
 
    trace_dump_member(format, state, format);
-   trace_dump_member(uint, state, status);
-   trace_dump_member(uint, state, clear_value);
    trace_dump_member(uint, state, width);
    trace_dump_member(uint, state, height);
 

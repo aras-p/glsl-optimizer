@@ -132,6 +132,7 @@ static void
                              const struct pipe_constant_buffer* buffer)
 {
     struct r300_context* r300 = r300_context(pipe);
+    int i = r300->shader_constants[shader].user_count;
 
     /* This entire chunk of code seems ever-so-slightly baked.
      * It's as if I've got pipe_buffer* matryoshkas... */
@@ -149,6 +150,17 @@ static void
     }
 
     r300->dirty_state |= R300_NEW_CONSTANTS;
+
+    /* If the number of constants have changed, invalidate the shader. */
+    if (r300->shader_constants[shader].user_count != i) {
+        if (shader == PIPE_SHADER_FRAGMENT && r300->fs) {
+            r300->fs->translated = FALSE;
+            r300_translate_fragment_shader(r300, r300->fs);
+        } else if (shader == PIPE_SHADER_VERTEX && r300->vs) {
+            r300->vs->translated = FALSE;
+            r300_translate_vertex_shader(r300, r300->vs);
+        }
+    }
 }
 
 /* Create a new depth, stencil, and alpha state based on the CSO dsa state.
@@ -293,11 +305,7 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
         r300->fs = NULL;
         return;
     } else if (!fs->translated) {
-        if (r300_screen(r300->context.screen)->caps->is_r500) {
-            r500_translate_fragment_shader(r300, (struct r500_fragment_shader*)fs);
-        } else {
-            r300_translate_fragment_shader(r300, (struct r300_fragment_shader*)fs);
-        }
+        r300_translate_fragment_shader(r300, fs);
     }
 
     fs->translated = TRUE;
@@ -330,9 +338,18 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 {
     struct r300_rs_state* rs = CALLOC_STRUCT(r300_rs_state);
 
-    /* XXX this is part of HW TCL */
-    /* XXX endian control */
-    rs->vap_control_status = R300_VAP_TCL_BYPASS;
+    /* Copy rasterizer state for Draw. */
+    rs->rs = *state;
+
+    /* If bypassing TCL, or if no TCL engine is present, turn off the HW TCL.
+     * Else, enable HW TCL and force Draw's TCL off. */
+    if (state->bypass_vs_clip_and_viewport ||
+            !r300_screen(pipe->screen)->caps->has_tcl) {
+        rs->vap_control_status = R300_VAP_TCL_BYPASS;
+    } else {
+        rs->rs.bypass_vs_clip_and_viewport = TRUE;
+        rs->vap_control_status = 0;
+    }
 
     rs->point_size = pack_float_16_6x(state->point_size) |
         (pack_float_16_6x(state->point_size) << R300_POINTSIZE_X_SHIFT);
@@ -394,8 +411,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     } else {
         rs->color_control = R300_SHADE_MODEL_SMOOTH;
     }
-
-    rs->rs = *state;
 
     return (void*)rs;
 }
@@ -581,30 +596,68 @@ static void r300_set_vertex_elements(struct pipe_context* pipe,
                                     const struct pipe_vertex_element* elements)
 {
     struct r300_context* r300 = r300_context(pipe);
-    /* XXX Draw */
+
     draw_flush(r300->draw);
     draw_set_vertex_elements(r300->draw, count, elements);
 }
 
 static void* r300_create_vs_state(struct pipe_context* pipe,
-                                  const struct pipe_shader_state* state)
+                                  const struct pipe_shader_state* shader)
 {
-    struct r300_context* context = r300_context(pipe);
-    /* XXX handing this off to Draw for now */
-    return draw_create_vertex_shader(context->draw, state);
+    struct r300_context* r300 = r300_context(pipe);
+
+    if (r300_screen(pipe->screen)->caps->has_tcl) {
+        struct r300_vertex_shader* vs = CALLOC_STRUCT(r300_vertex_shader);
+        /* Copy state directly into shader. */
+        vs->state = *shader;
+
+        tgsi_scan_shader(shader->tokens, &vs->info);
+
+        /* Appease Draw. */
+        vs->draw = draw_create_vertex_shader(r300->draw, shader);
+
+        return (void*)vs;
+    } else {
+        return draw_create_vertex_shader(r300->draw, shader);
+    }
 }
 
-static void r300_bind_vs_state(struct pipe_context* pipe, void* state) {
-    struct r300_context* context = r300_context(pipe);
-    /* XXX handing this off to Draw for now */
-    draw_bind_vertex_shader(context->draw, (struct draw_vertex_shader*)state);
+static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
+{
+    struct r300_context* r300 = r300_context(pipe);
+
+    if (r300_screen(pipe->screen)->caps->has_tcl) {
+        struct r300_vertex_shader* vs = (struct r300_vertex_shader*)shader;
+
+        if (vs == NULL) {
+            r300->vs = NULL;
+            return;
+        } else if (!vs->translated) {
+            r300_translate_vertex_shader(r300, vs);
+        }
+
+        draw_bind_vertex_shader(r300->draw, vs->draw);
+        r300->vs = vs;
+        r300->dirty_state |= R300_NEW_VERTEX_SHADER;
+    } else {
+        draw_bind_vertex_shader(r300->draw,
+                (struct draw_vertex_shader*)shader);
+    }
 }
 
-static void r300_delete_vs_state(struct pipe_context* pipe, void* state)
+static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
 {
-    struct r300_context* context = r300_context(pipe);
-    /* XXX handing this off to Draw for now */
-    draw_delete_vertex_shader(context->draw, (struct draw_vertex_shader*)state);
+    struct r300_context* r300 = r300_context(pipe);
+
+    if (r300_screen(pipe->screen)->caps->has_tcl) {
+        struct r300_vertex_shader* vs = (struct r300_vertex_shader*)shader;
+
+        draw_delete_vertex_shader(r300->draw, vs->draw);
+        FREE(shader);
+    } else {
+        draw_delete_vertex_shader(r300->draw,
+                (struct draw_vertex_shader*)shader);
+    }
 }
 
 void r300_init_state_functions(struct r300_context* r300)

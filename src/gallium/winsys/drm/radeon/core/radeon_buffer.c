@@ -82,7 +82,8 @@ static struct pipe_buffer *radeon_buffer_user_create(struct pipe_winsys *ws,
 {
     struct radeon_pipe_buffer *radeon_buffer;
 
-    radeon_buffer = (struct radeon_pipe_buffer*)radeon_buffer_create(ws, 0, 0, bytes);
+    radeon_buffer =
+        (struct radeon_pipe_buffer*)radeon_buffer_create(ws, 0, 0, bytes);
     if (radeon_buffer == NULL) {
         return NULL;
     }
@@ -94,7 +95,8 @@ static struct pipe_buffer *radeon_buffer_user_create(struct pipe_winsys *ws,
 
 static void radeon_buffer_del(struct pipe_buffer *buffer)
 {
-    struct radeon_pipe_buffer *radeon_buffer = (struct radeon_pipe_buffer*)buffer;
+    struct radeon_pipe_buffer *radeon_buffer =
+        (struct radeon_pipe_buffer*)buffer;
 
     radeon_bo_unref(radeon_buffer->bo);
     free(radeon_buffer);
@@ -104,7 +106,8 @@ static void *radeon_buffer_map(struct pipe_winsys *ws,
                                struct pipe_buffer *buffer,
                                unsigned flags)
 {
-    struct radeon_pipe_buffer *radeon_buffer = (struct radeon_pipe_buffer*)buffer;
+    struct radeon_pipe_buffer *radeon_buffer =
+        (struct radeon_pipe_buffer*)buffer;
     int write = 0;
 
     if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
@@ -120,9 +123,11 @@ static void *radeon_buffer_map(struct pipe_winsys *ws,
     return radeon_buffer->bo->ptr;
 }
 
-static void radeon_buffer_unmap(struct pipe_winsys *ws, struct pipe_buffer *buffer)
+static void radeon_buffer_unmap(struct pipe_winsys *ws,
+                                struct pipe_buffer *buffer)
 {
-    struct radeon_pipe_buffer *radeon_buffer = (struct radeon_pipe_buffer*)buffer;
+    struct radeon_pipe_buffer *radeon_buffer =
+        (struct radeon_pipe_buffer*)buffer;
 
     radeon_bo_unmap(radeon_buffer->bo);
 }
@@ -151,7 +156,7 @@ static void radeon_flush_frontbuffer(struct pipe_winsys *pipe_winsys,
                                      struct pipe_surface *pipe_surface,
                                      void *context_private)
 {
-    /* TODO: call dri2CopyRegion */
+    /* XXX TODO: call dri2CopyRegion */
 }
 
 struct radeon_winsys* radeon_pipe_winsys(int fd)

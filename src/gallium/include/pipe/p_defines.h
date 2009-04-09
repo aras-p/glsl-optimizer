@@ -186,11 +186,12 @@ enum pipe_texture_target {
 
 
 /**
- * Surface status
+ * Clear buffer bits
  */
-#define PIPE_SURFACE_STATUS_UNDEFINED  0
-#define PIPE_SURFACE_STATUS_DEFINED    1
-#define PIPE_SURFACE_STATUS_CLEAR      2
+/** All color buffers currently bound */
+#define PIPE_CLEAR_COLOR        (1 << 0)
+/** Depth/stencil combined */
+#define PIPE_CLEAR_DEPTHSTENCIL (1 << 1)
 
 
 /**

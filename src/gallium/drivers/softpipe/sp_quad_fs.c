@@ -65,14 +65,11 @@ quad_shade_stage(struct quad_stage *qs)
 }
 
 
-
 /**
  * Execute fragment shader for the four fragments in the quad.
  */
 static void
-shade_quad(
-   struct quad_stage *qs,
-   struct quad_header *quad )
+shade_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct softpipe_context *softpipe = qs->softpipe;
@@ -85,9 +82,7 @@ shade_quad(
    machine->InterpCoefs = quad->coef;
 
    /* run shader */
-   quad->inout.mask &= softpipe->fs->run( softpipe->fs, 
-				    &qss->machine,
-				    quad );
+   quad->inout.mask &= softpipe->fs->run( softpipe->fs, machine, quad );
 
    /* store outputs */
    z_written = FALSE;
@@ -135,15 +130,17 @@ shade_quad(
    }
 
    /* shader may cull fragments */
-   if( quad->inout.mask ) {
+   if (quad->inout.mask) {
       qs->next->run( qs->next, quad );
    }
 }
 
+
 /**
  * Per-primitive (or per-begin?) setup
  */
-static void shade_begin(struct quad_stage *qs)
+static void
+shade_begin(struct quad_stage *qs)
 {
    struct quad_shade_stage *qss = quad_shade_stage(qs);
    struct softpipe_context *softpipe = qs->softpipe;
@@ -157,7 +154,8 @@ static void shade_begin(struct quad_stage *qs)
 }
 
 
-static void shade_destroy(struct quad_stage *qs)
+static void
+shade_destroy(struct quad_stage *qs)
 {
    struct quad_shade_stage *qss = (struct quad_shade_stage *) qs;
 
@@ -168,7 +166,8 @@ static void shade_destroy(struct quad_stage *qs)
 }
 
 
-struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
+struct quad_stage *
+sp_quad_shade_stage( struct softpipe_context *softpipe )
 {
    struct quad_shade_stage *qss = CALLOC_STRUCT(quad_shade_stage);
 

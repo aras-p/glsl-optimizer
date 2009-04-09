@@ -32,22 +32,23 @@
 #include "r300_cs.h"
 #include "r300_emit.h"
 #include "r300_state_shader.h"
+#include "r300_state_tcl.h"
 #include "r300_state_inlines.h"
 
-const struct r300_blend_state blend_clear_state = {
+static struct r300_blend_state blend_clear_state = {
     .blend_control = 0x0,
     .alpha_blend_control = 0x0,
     .rop = 0x0,
     .dither = 0x0,
 };
 
-const struct r300_blend_color_state blend_color_clear_state = {
+static struct r300_blend_color_state blend_color_clear_state = {
     .blend_color = 0x0,
     .blend_color_red_alpha = 0x0,
     .blend_color_green_blue = 0x0,
 };
 
-const struct r300_dsa_state dsa_clear_state = {
+static struct r300_dsa_state dsa_clear_state = {
     .alpha_function = 0x0,
     .alpha_reference = 0x0,
     .z_buffer_control = 0x0,
@@ -57,7 +58,7 @@ const struct r300_dsa_state dsa_clear_state = {
     .stencil_ref_bf = 0x0,
 };
 
-const struct r300_rs_state rs_clear_state = {
+static struct r300_rs_state rs_clear_state = {
     .point_minmax = 0x36000006,
     .line_control = 0x00030006,
     .depth_scale_front = 0x0,
@@ -71,7 +72,7 @@ const struct r300_rs_state rs_clear_state = {
     .color_control = R300_SHADE_MODEL_FLAT,
 };
 
-const struct r300_rs_block r300_rs_block_clear_state = {
+static struct r300_rs_block r300_rs_block_clear_state = {
     .ip[0] = R500_RS_SEL_S(R300_RS_SEL_K0) |
         R500_RS_SEL_T(R300_RS_SEL_K0) |
         R500_RS_SEL_R(R300_RS_SEL_K0) |
@@ -81,7 +82,7 @@ const struct r300_rs_block r300_rs_block_clear_state = {
     .inst_count = 0,
 };
 
-const struct r300_rs_block r500_rs_block_clear_state = {
+static struct r300_rs_block r500_rs_block_clear_state = {
     .ip[0] = R500_RS_SEL_S(R500_RS_IP_PTR_K0) |
         R500_RS_SEL_T(R500_RS_IP_PTR_K0) |
         R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
@@ -89,6 +90,35 @@ const struct r300_rs_block r500_rs_block_clear_state = {
     .inst[0] = R500_RS_INST_COL_CN_WRITE,
     .count = R300_IT_COUNT(0) | R300_IC_COUNT(1) | R300_HIRES_EN,
     .inst_count = 0,
+};
+
+/* The following state is used for surface_copy only. */
+
+static struct r300_rs_block r300_rs_block_copy_state = {
+    .ip[0] = R500_RS_SEL_S(R300_RS_SEL_K0) |
+        R500_RS_SEL_T(R300_RS_SEL_K0) |
+        R500_RS_SEL_R(R300_RS_SEL_K0) |
+        R500_RS_SEL_Q(R300_RS_SEL_K1),
+    .inst[0] = R300_RS_INST_COL_CN_WRITE,
+    .count = R300_IT_COUNT(2) | R300_IC_COUNT(0) | R300_HIRES_EN,
+    .inst_count = R300_RS_TX_OFFSET(6),
+};
+
+static struct r300_rs_block r500_rs_block_copy_state = {
+    .ip[0] = R500_RS_SEL_S(0) |
+        R500_RS_SEL_T(1) |
+        R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
+        R500_RS_SEL_Q(R500_RS_IP_PTR_K1),
+    .inst[0] = R500_RS_INST_TEX_CN_WRITE,
+    .count = R300_IT_COUNT(2) | R300_IC_COUNT(0) | R300_HIRES_EN,
+    .inst_count = R300_RS_TX_OFFSET(6),
+};
+
+static struct r300_sampler_state r300_sampler_copy_state = {
+    .filter0 = R300_TX_WRAP_S(R300_TX_CLAMP) |
+        R300_TX_WRAP_T(R300_TX_CLAMP) |
+        R300_TX_MAG_FILTER_NEAREST |
+        R300_TX_MIN_FILTER_NEAREST,
 };
 
 #endif /* R300_SURFACE_H */

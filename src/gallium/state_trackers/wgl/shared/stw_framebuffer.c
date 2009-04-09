@@ -32,6 +32,12 @@
 #include "pipe/p_screen.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
+
+#ifdef DEBUG
+#include "trace/tr_screen.h"
+#include "trace/tr_texture.h"
+#endif
+
 #include "stw_framebuffer.h"
 #include "stw_device.h"
 #include "stw_public.h"
@@ -44,16 +50,6 @@ framebuffer_resize(
    GLuint width,
    GLuint height )
 {
-   if (fb->hbmDIB == NULL || fb->stfb->Base.Width != width || fb->stfb->Base.Height != height) {
-      if (fb->hbmDIB)
-         DeleteObject( fb->hbmDIB );
-
-      fb->hbmDIB = CreateCompatibleBitmap(
-         fb->hDC,
-         width,
-         height );
-   }
-
    st_resize_framebuffer( fb->stfb, width, height );
 }
 
@@ -80,6 +76,14 @@ window_proc(
 }
 
 static INLINE boolean
+stw_is_supported_color(enum pipe_format format)
+{
+   struct pipe_screen *screen = stw_dev->screen;
+   return screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 
+                                      PIPE_TEXTURE_USAGE_RENDER_TARGET, 0);
+}
+
+static INLINE boolean
 stw_is_supported_depth_stencil(enum pipe_format format)
 {
    struct pipe_screen *screen = stw_dev->screen;
@@ -99,13 +103,33 @@ framebuffer_create(
    struct stw_framebuffer *fb;
    enum pipe_format colorFormat, depthFormat, stencilFormat;
 
-   fb = CALLOC_STRUCT( stw_framebuffer );
-   if (fb == NULL)
-      return NULL;
-
    /* Determine PIPE_FORMATs for buffers.
     */
-   colorFormat = PIPE_FORMAT_A8R8G8B8_UNORM;
+
+   if(visual->alphaBits <= 0 && visual->redBits <= 5 && visual->blueBits <= 6 && visual->greenBits <= 5 && 
+      stw_is_supported_color(PIPE_FORMAT_R5G6B5_UNORM)) {
+      colorFormat = PIPE_FORMAT_R5G6B5_UNORM;
+   }
+   else if(visual->alphaBits <= 0 && visual->redBits <= 8 && visual->blueBits <= 8 && visual->greenBits <= 8 && 
+      stw_is_supported_color(PIPE_FORMAT_X8R8G8B8_UNORM)) {
+      colorFormat = PIPE_FORMAT_X8R8G8B8_UNORM;
+   }
+   else if(visual->alphaBits <= 1 && visual->redBits <= 5 && visual->blueBits <= 5 && visual->greenBits <= 5 &&
+      stw_is_supported_color(PIPE_FORMAT_A1R5G5B5_UNORM)) {
+      colorFormat = PIPE_FORMAT_A1R5G5B5_UNORM;
+   }
+   else if(visual->alphaBits <= 4 && visual->redBits <= 4 && visual->blueBits <= 4 && visual->greenBits <= 4 && 
+      stw_is_supported_color(PIPE_FORMAT_A4R4G4B4_UNORM)) {
+      colorFormat = PIPE_FORMAT_A4R4G4B4_UNORM;
+   }
+   else if(visual->alphaBits <= 8 && visual->redBits <= 8 && visual->blueBits <= 8 && visual->greenBits <= 8 && 
+      stw_is_supported_color(PIPE_FORMAT_A8R8G8B8_UNORM)) {
+      colorFormat = PIPE_FORMAT_A8R8G8B8_UNORM;
+   }
+   else {
+      assert(0);
+      return NULL;
+   }
 
    if (visual->depthBits == 0)
       depthFormat = PIPE_FORMAT_NONE;
@@ -151,6 +175,10 @@ framebuffer_create(
       stencilFormat = PIPE_FORMAT_NONE;
    }
 
+   fb = CALLOC_STRUCT( stw_framebuffer );
+   if (fb == NULL)
+      return NULL;
+
    fb->stfb = st_create_framebuffer(
       visual,
       colorFormat,
@@ -167,10 +195,10 @@ framebuffer_create(
     */
    fb->hWnd = WindowFromDC( hdc );
    if (fb->hWnd != NULL) {
-      fb->WndProc = (WNDPROC) SetWindowLong(
+      fb->WndProc = (WNDPROC) SetWindowLongPtr(
          fb->hWnd,
-         GWL_WNDPROC,
-         (LONG) window_proc );
+         GWLP_WNDPROC,
+         (LONG_PTR) window_proc );
    }
 
    fb->next = fb_head;
@@ -188,10 +216,10 @@ framebuffer_destroy(
    while (pfb != NULL) {
       if (pfb == fb) {
          if (fb->hWnd != NULL) {
-            SetWindowLong(
+            SetWindowLongPtr(
                fb->hWnd,
-               GWL_WNDPROC,
-               (LONG) fb->WndProc );
+               GWLP_WNDPROC,
+               (LONG_PTR) fb->WndProc );
          }
 
          *link = fb->next;
@@ -224,7 +252,8 @@ stw_swap_buffers(
    HDC hdc )
 {
    struct stw_framebuffer *fb;
-   struct pipe_surface *surf;
+   struct pipe_screen *screen;
+   struct pipe_surface *surface;
 
    fb = framebuffer_from_hdc( hdc );
    if (fb == NULL)
@@ -235,11 +264,20 @@ stw_swap_buffers(
     */
    st_notify_swapbuffers( fb->stfb );
 
-   st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surf );
+   screen = stw_dev->screen;
+   
+   if(!st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surface ))
+      /* FIXME: this shouldn't happen, but does on glean */
+      return FALSE;
 
-   stw_dev->stw_winsys->flush_frontbuffer(stw_dev->screen,
-                                          surf,
-                                          hdc );
+#ifdef DEBUG
+   if(stw_dev->trace_running) {
+      screen = trace_screen(screen)->screen;
+      surface = trace_surface(surface)->surface;
+   }
+#endif
 
+   stw_dev->stw_winsys->flush_frontbuffer( screen, surface, hdc );
+   
    return TRUE;
 }

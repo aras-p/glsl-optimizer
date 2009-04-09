@@ -730,6 +730,13 @@ static INLINE struct brw_indirect brw_indirect( GLuint addr_subnr, GLint offset 
    return ptr;
 }
 
+/** Do two brw_regs refer to the same register? */
+static INLINE GLboolean
+brw_same_reg(struct brw_reg r1, struct brw_reg r2)
+{
+   return r1.file == r2.file && r1.nr == r2.nr;
+}
+
 static INLINE struct brw_instruction *current_insn( struct brw_compile *p)
 {
    return &p->store[p->nr_insn];
@@ -850,6 +857,13 @@ void brw_dp_READ_16( struct brw_compile *p,
 		     struct brw_reg dest,
 		     GLuint msg_reg_nr,
 		     GLuint scratch_offset );
+
+void brw_dp_READ_4( struct brw_compile *p,
+                    struct brw_reg dest,
+                    GLuint msg_reg_nr,
+                    GLboolean relAddr,
+                    GLuint scratch_offset,
+                    GLuint bind_table_index );
 
 void brw_dp_WRITE_16( struct brw_compile *p,
 		      struct brw_reg src,

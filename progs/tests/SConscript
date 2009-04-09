@@ -105,6 +105,7 @@ progs = [
     'subtexrate',
     'tex1d',
     'texcmp',
+    'texcompress2',
     'texfilt',
     'texgenmix',
     'texline',

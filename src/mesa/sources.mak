@@ -68,6 +68,7 @@ MAIN_SOURCES = \
 	main/texenvprogram.c \
 	main/texformat.c \
 	main/texgen.c \
+	main/texgetimage.c \
 	main/teximage.c \
 	main/texobj.c \
 	main/texparam.c \

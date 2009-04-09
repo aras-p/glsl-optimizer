@@ -15,6 +15,7 @@
 
 #if !defined(_WIN32_WCE)
 #include <sys/types.h>
+#include <stdint.h>
 #endif
 
 /* Macros used in EGL function prototype declarations.
@@ -57,7 +58,7 @@
 #endif
 
 typedef long	int32_t;
-typedef unsigned long u_int32_t;
+typedef unsigned long uint32_t;
 typedef unsigned char uint8_t;
 #define snprintf _snprintf
 #define strcasecmp _stricmp
@@ -68,7 +69,7 @@ typedef HWND	NativeWindowType;
 typedef HBITMAP NativePixmapType;
 /** END Added for Windows **/
 
-#elif defined(__gnu_linux__) || defined(__FreeBSD__)
+#elif defined(__gnu_linux__) || defined(__FreeBSD__) || defined(__sun)
 
 /** BEGIN Added for X (Mesa) **/
 #ifndef EGLAPI

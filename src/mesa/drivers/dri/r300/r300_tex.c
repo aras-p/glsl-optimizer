@@ -176,8 +176,13 @@ static void r300SetTexFilter(radeonTexObjPtr t, GLenum minf, GLenum magf, GLfloa
 	}
 }
 
-static void r300SetTexBorderColor(radeonTexObjPtr t, GLubyte c[4])
+static void r300SetTexBorderColor(radeonTexObjPtr t, const GLfloat color[4])
 {
+	GLubyte c[4];
+	CLAMPED_FLOAT_TO_UBYTE(c[0], color[0]);
+	CLAMPED_FLOAT_TO_UBYTE(c[1], color[1]);
+	CLAMPED_FLOAT_TO_UBYTE(c[2], color[2]);
+	CLAMPED_FLOAT_TO_UBYTE(c[3], color[3]);
 	t->pp_border_color = PACK_COLOR_8888(c[3], c[0], c[1], c[2]);
 }
 
@@ -211,7 +216,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 		break;
 
 	case GL_TEXTURE_BORDER_COLOR:
-		r300SetTexBorderColor(t, texObj->_BorderChan);
+		r300SetTexBorderColor(t, texObj->BorderColor);
 		break;
 
 	case GL_TEXTURE_BASE_LEVEL:
@@ -308,7 +313,7 @@ static struct gl_texture_object *r300NewTextureObject(GLcontext * ctx,
 	/* Initialize hardware state */
 	r300UpdateTexWrap(t);
 	r300SetTexFilter(t, t->base.MinFilter, t->base.MagFilter, t->base.MaxAnisotropy);
-	r300SetTexBorderColor(t, t->base._BorderChan);
+	r300SetTexBorderColor(t, t->base.BorderColor);
 
 	return &t->base;
 }

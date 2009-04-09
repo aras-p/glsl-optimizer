@@ -14,16 +14,7 @@ The Mesa
 driver is part of the 
 <a href="http://www.tungstengraphics.com/wiki/index.php/Gallium3D" target="_parent">Gallium3D</a>
 architecture.
-</p>
-
-<p>
-<a href="http://www.tungstengraphics.com/" target="_parent">Tungsten Graphics</a>
-is leading the project.
-Two phases are planned.
-First, to implement the framework for parallel rasterization using the Cell
-SPEs, including texture mapping.
-Second, to implement a full-featured OpenGL driver with support for GLSL, etc.
-The second phase is now underway.
+Tungsten Graphics did the original implementation of the Cell driver.
 </p>
 
 
@@ -60,7 +51,7 @@ Mesa tree, then set <code>LD_LIBRARY_PATH</code> like this:
 Verify that the Cell driver is being used by running
 <code>progs/xdemos/glxinfo</code> and looking for:
 <pre>
-  OpenGL renderer string: Gallium 0.2, Cell on Xlib
+  OpenGL renderer string: Gallium 0.3, Cell on Xlib
 </pre>
 
 

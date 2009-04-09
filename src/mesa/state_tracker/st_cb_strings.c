@@ -39,7 +39,7 @@
 #include "st_context.h"
 #include "st_cb_strings.h"
 
-#define ST_VERSION_STRING "0.2"
+#define ST_VERSION_STRING "0.3"
 
 static const GLubyte *
 st_get_string(GLcontext * ctx, GLenum name)
@@ -50,18 +50,7 @@ st_get_string(GLcontext * ctx, GLenum name)
    switch (name) {
    case GL_VENDOR: {
       const char *vendor = screen->get_vendor( screen );
-      const char *tungsten = "Tungsten Graphics, Inc.";
-
-      /* Tungsten Graphics, Inc. developed the state_tracker module
-       * (and much of Mesa), but the driver itself may come from elsewhere.
-       * The additional string allows "and XyzCorp" to reflect this.
-       */
-      if (vendor && strcmp(vendor, tungsten) != 0)
-	 util_snprintf(st->vendor, sizeof(st->vendor),
-                  "%s and %s", tungsten, vendor);
-      else
-	 util_snprintf(st->vendor, sizeof(st->vendor), "%s", tungsten);
-
+      util_snprintf(st->vendor, sizeof(st->vendor), "%s", vendor);
       return (GLubyte *) st->vendor;
    }
 

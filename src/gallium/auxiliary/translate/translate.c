@@ -42,6 +42,8 @@ struct translate *translate_create( const struct translate_key *key )
    translate = translate_sse2_create( key );
    if (translate)
       return translate;
+#else
+   (void)translate;
 #endif
 
    return translate_generic_create( key );

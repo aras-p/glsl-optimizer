@@ -363,7 +363,6 @@ brw_get_tex_surface_screen(struct pipe_screen *screen,
       ps->nblocksy = pt->nblocksy[level];
       ps->stride = tex->stride;
       ps->offset = offset;
-      ps->status = PIPE_SURFACE_STATUS_DEFINED;
    }
    return ps;
 }

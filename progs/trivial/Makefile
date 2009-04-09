@@ -111,6 +111,7 @@ SOURCES = \
 	tri-scissor-tri.c \
 	tri-stencil.c \
 	tri-stipple.c \
+	tri-multitex-vbo.c \
 	tri-tex.c \
 	tri-tex-3d.c \
 	tri-tri.c \

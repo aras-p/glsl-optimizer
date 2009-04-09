@@ -153,10 +153,14 @@ mgaSetTexFilter( mgaTextureObjectPtr t, GLenum minf, GLenum magf )
    t->setup.texfilter |= val;
 }
 
-static void mgaSetTexBorderColor(mgaTextureObjectPtr t, GLubyte color[4])
+static void mgaSetTexBorderColor(mgaTextureObjectPtr t, const GLfloat color[4])
 {
-   t->setup.texbordercol = PACK_COLOR_8888(color[3], color[0], 
-					   color[1], color[2] );
+   GLubyte c[4];
+   CLAMPED_FLOAT_TO_UBYTE(c[0], color[0]);
+   CLAMPED_FLOAT_TO_UBYTE(c[1], color[1]);
+   CLAMPED_FLOAT_TO_UBYTE(c[2], color[2]);
+   CLAMPED_FLOAT_TO_UBYTE(c[3], color[3]);
+   t->setup.texbordercol = PACK_COLOR_8888(c[3], c[0], c[1], c[2] );
 }
 
 
@@ -329,7 +333,7 @@ mgaAllocTexObj( struct gl_texture_object *tObj )
 
       mgaSetTexWrapping( t, tObj->WrapS, tObj->WrapT );
       mgaSetTexFilter( t, tObj->MinFilter, tObj->MagFilter );
-      mgaSetTexBorderColor( t, tObj->_BorderChan );
+      mgaSetTexBorderColor( t, tObj->BorderColor );
    }
 
    return( t );
@@ -458,7 +462,7 @@ mgaTexParameter( GLcontext *ctx, GLenum target,
 
    case GL_TEXTURE_BORDER_COLOR:
       FLUSH_BATCH(mmesa);
-      mgaSetTexBorderColor(t, tObj->_BorderChan);
+      mgaSetTexBorderColor(t, tObj->BorderColor);
       break;
 
    case GL_TEXTURE_BASE_LEVEL:

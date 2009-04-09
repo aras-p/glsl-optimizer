@@ -30,7 +30,7 @@
 void r300_parse_chipset(struct r300_capabilities* caps)
 {
     /* Reasonable defaults */
-    caps->has_tcl = getenv("RADEON_NO_TCL") ? TRUE : FALSE;
+    caps->has_tcl = getenv("RADEON_NO_TCL") ? FALSE : TRUE;
     caps->is_r500 = FALSE;
     caps->num_vert_fpus = 4;
 

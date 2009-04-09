@@ -38,6 +38,7 @@
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 #include "intel_batchbuffer.h"
+#include "intel_regions.h"
 #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_state.h"
@@ -251,6 +252,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
 
       _mesa_load_state_parameters(ctx, vp->program.Base.Parameters); 
 
+      /* XXX just use a memcpy here */
       for (i = 0; i < nr; i++) {
          const GLfloat *value = vp->program.Base.Parameters->ParameterValues[i];
 	 buf[offset + i * 4 + 0] = value[0];
@@ -330,10 +332,38 @@ static void prepare_constant_buffer(struct brw_context *brw)
 }
 
 
+/**
+ * Vertex/fragment shader constants are stored in a pseudo 1D texture.
+ * This function updates the constants in that buffer.
+ */
+static void
+update_texture_constant_buffer(struct brw_context *brw)
+{
+   struct brw_fragment_program *fp =
+      (struct brw_fragment_program *) brw->fragment_program;
+   const struct gl_program_parameter_list *params = fp->program.Base.Parameters;
+   const int size = params->NumParameters * 4 * sizeof(GLfloat);
+
+   assert(fp->const_buffer);
+   assert(fp->const_buffer->size >= size);
+
+   /* copy constants into the buffer */
+   if (size > 0) {
+      GLubyte *map;
+      dri_bo_map(fp->const_buffer, GL_TRUE);
+      map = fp->const_buffer->virtual;
+      memcpy(map, params->ParameterValues, size);
+      dri_bo_unmap(fp->const_buffer);
+   }
+}
+
+
 static void emit_constant_buffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    GLuint sz = brw->curbe.total_size;
+
+   update_texture_constant_buffer(brw);
 
    BEGIN_BATCH(2, IGNORE_CLIPRECTS);
    if (sz == 0) {

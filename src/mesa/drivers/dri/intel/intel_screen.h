@@ -79,6 +79,7 @@ typedef struct
    GLboolean no_vbo;
    int ttm;
    dri_bufmgr *bufmgr;
+   GLboolean kernel_exec_fencing;
 
    /**
    * Configuration cache with default values for all contexts

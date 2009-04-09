@@ -99,7 +99,7 @@ xrotfontdemo.o: xrotfontdemo.c xuserotfont.h
 	$(APP_CC) -c -I. -I$(INCDIR) $(X11_INCLUDES) $(CFLAGS) xrotfontdemo.c
 
 corender: corender.o ipc.o
-	$(APP_CC) $(CFLAGS) corender.o ipc.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) corender.o ipc.o $(LIBS) -o $@
 
 corender.o: corender.c ipc.h
 	$(APP_CC) -c -I. -I$(INCDIR) $(X11_INCLUDES) $(CFLAGS) corender.c

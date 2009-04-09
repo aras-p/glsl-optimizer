@@ -39,7 +39,12 @@ struct pipe_screen;
 struct stw_device
 {
    const struct stw_winsys *stw_winsys;
+   
    struct pipe_screen *screen;
+   
+#ifdef DEBUG
+   boolean trace_running;
+#endif
    
    pipe_mutex mutex;
 

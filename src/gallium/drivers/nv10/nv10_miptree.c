@@ -136,7 +136,6 @@ nv10_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 	ns->base.width = pt->width[level];
 	ns->base.height = pt->height[level];
 	ns->base.usage = flags;
-	ns->base.status = PIPE_SURFACE_STATUS_DEFINED;
 	pipe_reference_init(&ns->base.reference, 1);
 	ns->base.face = face;
 	ns->base.level = level;

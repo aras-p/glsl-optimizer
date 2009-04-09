@@ -184,7 +184,7 @@
 #define MAX_PROGRAM_MATRICES 8
 #define MAX_PROGRAM_MATRIX_STACK_DEPTH 4
 #define MAX_PROGRAM_CALL_DEPTH 8
-#define MAX_PROGRAM_TEMPS 128
+#define MAX_PROGRAM_TEMPS 256
 #define MAX_PROGRAM_ADDRESS_REGS 2
 #define MAX_UNIFORMS 1024  /**< number of vec4 uniforms */
 #define MAX_VARYING 8      /**< number of float[4] vectors */

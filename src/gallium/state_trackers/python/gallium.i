@@ -37,13 +37,11 @@
 %{
 
 #include <stdio.h>
-#include <Python.h>
 
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_shader_tokens.h"
-#include "pipe/internal/p_winsys_screen.h"
 #include "cso_cache/cso_context.h"
 #include "util/u_draw_quad.h"
 #include "util/u_tile.h"
@@ -58,7 +56,7 @@
 %}
 
 %include "typemaps.i"
-
+%include "exception.i"
 %include "cstring.i"
 
 %include "carrays.i"
@@ -71,8 +69,8 @@
 %rename(Device) st_device;
 %rename(Context) st_context;
 %rename(Texture) pipe_texture;
-%rename(Surface) pipe_surface;
-%rename(Buffer) st_buffer;
+%rename(Surface) st_surface;
+%rename(Buffer) pipe_buffer;
 
 %rename(BlendColor) pipe_blend_color;
 %rename(Blend) pipe_blend_state;

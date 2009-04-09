@@ -2,6 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2009 VMware, Inc.  All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -29,6 +30,7 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   *   Brian Paul
+  *   Michel Dänzer
   */
 
 #include "main/glheader.h"
@@ -291,11 +293,6 @@ clear_with_quad(GLcontext *ctx,
 static INLINE GLboolean
 check_clear_color_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   const struct st_renderbuffer *strb = st_renderbuffer(rb);
-
-   if (strb->surface->status == PIPE_SURFACE_STATUS_UNDEFINED)
-      return FALSE;
-
    if (ctx->Scissor.Enabled)
       return TRUE;
 
@@ -312,13 +309,9 @@ check_clear_color_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 static INLINE GLboolean
 check_clear_depth_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   const struct st_renderbuffer *strb = st_renderbuffer(rb);
    const GLuint stencilMax = (1 << rb->StencilBits) - 1;
    GLboolean maskStencil
       = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
-
-   if (strb->surface->status == PIPE_SURFACE_STATUS_UNDEFINED)
-      return FALSE;
 
    if (ctx->Scissor.Enabled)
       return TRUE;
@@ -339,14 +332,10 @@ check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
    const struct st_renderbuffer *strb = st_renderbuffer(rb);
    const GLboolean isDS = is_depth_stencil_format(strb->surface->format);
 
-   if (strb->surface->status == PIPE_SURFACE_STATUS_UNDEFINED)
-      return FALSE;
-
    if (ctx->Scissor.Enabled)
       return TRUE;
 
    if (isDS && 
-       strb->surface->status == PIPE_SURFACE_STATUS_DEFINED &&
        ctx->DrawBuffer->Visual.stencilBits > 0)
       return TRUE;
 
@@ -366,9 +355,6 @@ check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
    const GLboolean maskStencil
       = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
 
-   if (strb->surface->status == PIPE_SURFACE_STATUS_UNDEFINED)
-      return FALSE;
-
    if (maskStencil) 
       return TRUE;
 
@@ -381,118 +367,12 @@ check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
     * current state.
     */
    if (isDS && 
-       strb->surface->status == PIPE_SURFACE_STATUS_DEFINED &&
        ctx->DrawBuffer->Visual.depthBits > 0)
       return TRUE;
 
    return FALSE;
 }
 
-
-
-static void
-clear_color_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
-{
-   struct st_renderbuffer *strb = st_renderbuffer(rb);
-
-   if (!strb->surface)
-      return;
-
-   if (check_clear_color_with_quad( ctx, rb )) {
-      /* masking or scissoring */
-      clear_with_quad(ctx, GL_TRUE, GL_FALSE, GL_FALSE);
-   }
-   else {
-      /* clear whole buffer w/out masking */
-      uint clearValue;
-      /* NOTE: we always pass the clear color as PIPE_FORMAT_A8R8G8B8_UNORM
-       * at this time!
-       */
-      util_pack_color(ctx->Color.ClearColor, PIPE_FORMAT_A8R8G8B8_UNORM, &clearValue);
-      ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
-   }
-}
-
-
-static void
-clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
-{
-   struct st_renderbuffer *strb = st_renderbuffer(rb);
-
-   if (!strb->surface)
-      return;
-
-   if (check_clear_depth_with_quad(ctx, rb)) {
-      /* scissoring or we have a combined depth/stencil buffer */
-      clear_with_quad(ctx, GL_FALSE, GL_TRUE, GL_FALSE);
-   }
-   else {
-      /* simple clear of whole buffer */
-      uint clearValue = util_pack_z(strb->surface->format, ctx->Depth.Clear);
-      ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
-   }
-}
-
-
-static void
-clear_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
-{
-   struct st_renderbuffer *strb = st_renderbuffer(rb);
-
-   if (!strb->surface)
-      return;
-
-   if (check_clear_stencil_with_quad(ctx, rb)) {
-      /* masking or scissoring or combined depth/stencil buffer */
-      clear_with_quad(ctx, GL_FALSE, GL_FALSE, GL_TRUE);
-   }
-   else {
-      /* simple clear of whole buffer */
-      GLuint clearValue = ctx->Stencil.Clear;
-
-      switch (strb->surface->format) {
-      case PIPE_FORMAT_S8Z24_UNORM:
-         clearValue <<= 24;
-         break;
-      default:
-         ; /* no-op, stencil value is in least significant bits */
-      }  
-
-      ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
-   }
-}
-
-
-static void
-clear_depth_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
-{
-   struct st_renderbuffer *strb = st_renderbuffer(rb);
-
-   if (!strb->surface)
-      return;
-
-   if (check_clear_depth_stencil_with_quad(ctx, rb)) {
-      /* masking or scissoring */
-      clear_with_quad(ctx, GL_FALSE, GL_TRUE, GL_TRUE);
-   }
-   else {
-      /* clear whole buffer w/out masking */
-      GLuint clearValue = util_pack_z(strb->surface->format, ctx->Depth.Clear);
-
-      switch (strb->surface->format) {
-      case PIPE_FORMAT_S8Z24_UNORM:
-         clearValue |= ctx->Stencil.Clear << 24;
-         break;
-      case PIPE_FORMAT_Z24S8_UNORM:
-         clearValue |= ctx->Stencil.Clear;
-         break;
-      default:
-         assert(0);
-      }  
-
-      ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
-   }
-}
 
 
 void st_flush_clear( struct st_context *st )
@@ -520,51 +400,89 @@ static void st_clear(GLcontext *ctx, GLbitfield mask)
       = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
    struct gl_renderbuffer *stencilRb
       = ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
-   GLbitfield cmask = mask & BUFFER_BITS_COLOR;
+   GLbitfield quad_buffers = 0;
+   GLbitfield clear_buffers = 0;
+   GLuint i;
 
-   /* This makes sure the softpipe has the latest scissor, etc values */
+   /* This makes sure the pipe has the latest scissor, etc values */
    st_validate_state( st );
 
-   /*
-    * XXX TO-DO:
-    * If we're going to use clear_with_quad() for any reason, use it to
-    * clear as many other buffers as possible.
-    * As it is now, we sometimes call clear_with_quad() three times to clear
-    * color/depth/stencil individually...
-    */
+   if (mask & BUFFER_BITS_COLOR) {
+      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
+         GLuint b = ctx->DrawBuffer->_ColorDrawBufferIndexes[i];
 
-   if (cmask) {
-      GLuint b;
-      for (b = 0; cmask; b++) {
-         if (cmask & (1 << b)) {
+         if (mask & (1 << b)) {
             struct gl_renderbuffer *rb
                = ctx->DrawBuffer->Attachment[b].Renderbuffer;
-            assert(rb);
-            clear_color_buffer(ctx, rb);
-            cmask &= ~(1 << b); /* turn off bit */
-         }
-         assert(b < BUFFER_COUNT);
-      }
-   }
+            struct st_renderbuffer *strb;
 
-   if (mask & BUFFER_BIT_ACCUM) {
-      st_clear_accum_buffer(ctx,
-                       ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
+            assert(rb);
+
+            strb = st_renderbuffer(rb);
+
+            if (!strb->surface)
+               continue;
+
+            if (check_clear_color_with_quad( ctx, rb ))
+               quad_buffers |= PIPE_CLEAR_COLOR;
+            else
+               clear_buffers |= PIPE_CLEAR_COLOR;
+         }
+      }
    }
 
    if ((mask & BUFFER_BITS_DS) == BUFFER_BITS_DS && depthRb == stencilRb) {
       /* clearing combined depth + stencil */
-      clear_depth_stencil_buffer(ctx, depthRb);
+      struct st_renderbuffer *strb = st_renderbuffer(depthRb);
+
+      if (strb->surface) {
+         if (check_clear_depth_stencil_with_quad(ctx, depthRb))
+            quad_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+         else
+            clear_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+      }
    }
    else {
       /* separate depth/stencil clears */
       if (mask & BUFFER_BIT_DEPTH) {
-         clear_depth_buffer(ctx, depthRb);
+         struct st_renderbuffer *strb = st_renderbuffer(depthRb);
+
+         if (strb->surface) {
+            if (check_clear_depth_with_quad(ctx, depthRb))
+               quad_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+            else
+               clear_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+         }
       }
       if (mask & BUFFER_BIT_STENCIL) {
-         clear_stencil_buffer(ctx, stencilRb);
+         struct st_renderbuffer *strb = st_renderbuffer(stencilRb);
+
+         if (strb->surface) {
+            if (check_clear_stencil_with_quad(ctx, stencilRb))
+               quad_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+            else
+               clear_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+         }
       }
    }
+
+   /*
+    * If we're going to use clear_with_quad() for any reason, use it for
+    * everything possible.
+    */
+   if (quad_buffers) {
+      quad_buffers |= clear_buffers;
+      clear_with_quad(ctx,
+                      quad_buffers & PIPE_CLEAR_COLOR,
+                      mask & BUFFER_BIT_DEPTH,
+                      mask & BUFFER_BIT_STENCIL);
+   } else if (clear_buffers)
+      ctx->st->pipe->clear(ctx->st->pipe, clear_buffers, ctx->Color.ClearColor,
+                           ctx->Depth.Clear, ctx->Stencil.Clear);
+
+   if (mask & BUFFER_BIT_ACCUM)
+      st_clear_accum_buffer(ctx,
+                            ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
 }
 
 

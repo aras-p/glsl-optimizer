@@ -98,7 +98,8 @@ static int vlResizeFrameBuffer
 	);
 
 	/* Clear to black, in case video doesn't fill the entire window */
-	pipe->clear(pipe, basic_csc->framebuffer.cbufs[0], 0);
+	pipe->set_framebuffer_state(pipe, &basic_csc->framebuffer);
+	pipe->clear(pipe, PIPE_CLEAR_COLOR, 0, 0.0f, 0);
 
 	return 0;
 }

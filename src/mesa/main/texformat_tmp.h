@@ -72,14 +72,6 @@
 
 /* MESA_FORMAT_RGBA **********************************************************/
 
-/* Fetch texel from 1D, 2D or 3D RGBA texture, returning 4 GLchans */
-static void FETCH(rgba)( const struct gl_texture_image *texImage,
-			 GLint i, GLint j, GLint k, GLchan *texel )
-{
-   const GLchan *src = TEXEL_ADDR(GLchan, texImage, i, j, k, 4);
-   COPY_CHAN4( texel, src );
-}
-
 /* Fetch texel from 1D, 2D or 3D RGBA texture, returning 4 GLfloats */
 static void FETCH(f_rgba)( const struct gl_texture_image *texImage,
                            GLint i, GLint j, GLint k, GLfloat *texel )
@@ -107,17 +99,6 @@ static void store_texel_rgba(struct gl_texture_image *texImage,
 
 /* MESA_FORMAT_RGB ***********************************************************/
 
-/* Fetch texel from 1D, 2D or 3D RGB texture, returning 4 GLchans */
-static void FETCH(rgb)( const struct gl_texture_image *texImage,
-			GLint i, GLint j, GLint k, GLchan *texel )
-{
-   const GLchan *src = TEXEL_ADDR(GLchan, texImage, i, j, k, 3);
-   texel[RCOMP] = src[0];
-   texel[GCOMP] = src[1];
-   texel[BCOMP] = src[2];
-   texel[ACOMP] = CHAN_MAX;
-}
-
 /* Fetch texel from 1D, 2D or 3D RGB texture, returning 4 GLfloats */
 static void FETCH(f_rgb)( const struct gl_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
@@ -144,14 +125,14 @@ static void store_texel_rgb(struct gl_texture_image *texImage,
 /* MESA_FORMAT_ALPHA *********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D ALPHA texture, returning 4 GLchans */
-static void FETCH(alpha)( const struct gl_texture_image *texImage,
-			  GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_alpha)( const struct gl_texture_image *texImage,
+			  GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLchan *src = TEXEL_ADDR(GLchan, texImage, i, j, k, 1);
    texel[RCOMP] =
    texel[GCOMP] =
-   texel[BCOMP] = 0;
-   texel[ACOMP] = src[0];
+   texel[BCOMP] = 0.0F;
+   texel[ACOMP] = CHAN_TO_FLOAT(src[0]);
 }
 
 #if DIM == 3
@@ -167,14 +148,14 @@ static void store_texel_alpha(struct gl_texture_image *texImage,
 /* MESA_FORMAT_LUMINANCE *****************************************************/
 
 /* Fetch texel from 1D, 2D or 3D LUMIN texture, returning 4 GLchans */
-static void FETCH(luminance)( const struct gl_texture_image *texImage,
-			      GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_luminance)( const struct gl_texture_image *texImage,
+                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLchan *src = TEXEL_ADDR(GLchan, texImage, i, j, k, 1);
    texel[RCOMP] =
    texel[GCOMP] =
-   texel[BCOMP] = src[0];
-   texel[ACOMP] = CHAN_MAX;
+   texel[BCOMP] = CHAN_TO_FLOAT(src[0]);
+   texel[ACOMP] = 1.0F;
 }
 
 #if DIM == 3
@@ -190,14 +171,14 @@ static void store_texel_luminance(struct gl_texture_image *texImage,
 /* MESA_FORMAT_LUMINANCE_ALPHA ***********************************************/
 
 /* Fetch texel from 1D, 2D or 3D L_A texture, returning 4 GLchans */
-static void FETCH(luminance_alpha)( const struct gl_texture_image *texImage,
-				    GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_luminance_alpha)(const struct gl_texture_image *texImage,
+                                     GLint i, GLint j, GLint k, GLfloat *texel)
 {
    const GLchan *src = TEXEL_ADDR(GLchan, texImage, i, j, k, 2);
-   texel[RCOMP] = src[0];
-   texel[GCOMP] = src[0];
-   texel[BCOMP] = src[0];
-   texel[ACOMP] = src[1];
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = CHAN_TO_FLOAT(src[0]);
+   texel[ACOMP] = CHAN_TO_FLOAT(src[1]);
 }
 
 #if DIM == 3
@@ -214,14 +195,14 @@ static void store_texel_luminance_alpha(struct gl_texture_image *texImage,
 /* MESA_FORMAT_INTENSITY *****************************************************/
 
 /* Fetch texel from 1D, 2D or 3D INT. texture, returning 4 GLchans */
-static void FETCH(intensity)( const struct gl_texture_image *texImage,
-			      GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_intensity)( const struct gl_texture_image *texImage,
+                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLchan *src = TEXEL_ADDR(GLchan, texImage, i, j, k, 1);
-   texel[RCOMP] = src[0];
-   texel[GCOMP] = src[0];
-   texel[BCOMP] = src[0];
-   texel[ACOMP] = src[0];
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] =
+   texel[ACOMP] = CHAN_TO_FLOAT(src[0]);
 }
 
 #if DIM == 3
@@ -606,16 +587,18 @@ static void store_texel_intensity_f16(struct gl_texture_image *texImage,
 
 /* MESA_FORMAT_RGBA8888 ******************************************************/
 
-/* Fetch texel from 1D, 2D or 3D rgba8888 texture, return 4 GLchans */
-static void FETCH(rgba8888)( const struct gl_texture_image *texImage,
-			     GLint i, GLint j, GLint k, GLchan *texel )
+/* Fetch texel from 1D, 2D or 3D rgba8888 texture, return 4 GLfloats */
+static void FETCH(f_rgba8888)( const struct gl_texture_image *texImage,
+                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   texel[RCOMP] = UBYTE_TO_CHAN( (s >> 24)        );
-   texel[GCOMP] = UBYTE_TO_CHAN( (s >> 16) & 0xff );
-   texel[BCOMP] = UBYTE_TO_CHAN( (s >>  8) & 0xff );
-   texel[ACOMP] = UBYTE_TO_CHAN( (s      ) & 0xff );
+   texel[RCOMP] = UBYTE_TO_FLOAT( (s >> 24)        );
+   texel[GCOMP] = UBYTE_TO_FLOAT( (s >> 16) & 0xff );
+   texel[BCOMP] = UBYTE_TO_FLOAT( (s >>  8) & 0xff );
+   texel[ACOMP] = UBYTE_TO_FLOAT( (s      ) & 0xff );
 }
+
+
 
 #if DIM == 3
 static void store_texel_rgba8888(struct gl_texture_image *texImage,
@@ -631,14 +614,14 @@ static void store_texel_rgba8888(struct gl_texture_image *texImage,
 /* MESA_FORMAT_RGBA888_REV ***************************************************/
 
 /* Fetch texel from 1D, 2D or 3D abgr8888 texture, return 4 GLchans */
-static void FETCH(rgba8888_rev)( const struct gl_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_rgba8888_rev)( const struct gl_texture_image *texImage,
+                                   GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   texel[RCOMP] = UBYTE_TO_CHAN( (s      ) & 0xff );
-   texel[GCOMP] = UBYTE_TO_CHAN( (s >>  8) & 0xff );
-   texel[BCOMP] = UBYTE_TO_CHAN( (s >> 16) & 0xff );
-   texel[ACOMP] = UBYTE_TO_CHAN( (s >> 24)        );
+   texel[RCOMP] = UBYTE_TO_FLOAT( (s      ) & 0xff );
+   texel[GCOMP] = UBYTE_TO_FLOAT( (s >>  8) & 0xff );
+   texel[BCOMP] = UBYTE_TO_FLOAT( (s >> 16) & 0xff );
+   texel[ACOMP] = UBYTE_TO_FLOAT( (s >> 24)        );
 }
 
 #if DIM == 3
@@ -655,14 +638,14 @@ static void store_texel_rgba8888_rev(struct gl_texture_image *texImage,
 /* MESA_FORMAT_ARGB8888 ******************************************************/
 
 /* Fetch texel from 1D, 2D or 3D argb8888 texture, return 4 GLchans */
-static void FETCH(argb8888)( const struct gl_texture_image *texImage,
-			     GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_argb8888)( const struct gl_texture_image *texImage,
+                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   texel[RCOMP] = UBYTE_TO_CHAN( (s >> 16) & 0xff );
-   texel[GCOMP] = UBYTE_TO_CHAN( (s >>  8) & 0xff );
-   texel[BCOMP] = UBYTE_TO_CHAN( (s      ) & 0xff );
-   texel[ACOMP] = UBYTE_TO_CHAN( (s >> 24)        );
+   texel[RCOMP] = UBYTE_TO_FLOAT( (s >> 16) & 0xff );
+   texel[GCOMP] = UBYTE_TO_FLOAT( (s >>  8) & 0xff );
+   texel[BCOMP] = UBYTE_TO_FLOAT( (s      ) & 0xff );
+   texel[ACOMP] = UBYTE_TO_FLOAT( (s >> 24)        );
 }
 
 #if DIM == 3
@@ -678,15 +661,15 @@ static void store_texel_argb8888(struct gl_texture_image *texImage,
 
 /* MESA_FORMAT_ARGB8888_REV **************************************************/
 
-/* Fetch texel from 1D, 2D or 3D argb8888_rev texture, return 4 GLchans */
-static void FETCH(argb8888_rev)( const struct gl_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, GLchan *texel )
+/* Fetch texel from 1D, 2D or 3D argb8888_rev texture, return 4 GLfloats */
+static void FETCH(f_argb8888_rev)( const struct gl_texture_image *texImage,
+                                   GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   texel[RCOMP] = UBYTE_TO_CHAN( (s >>  8) & 0xff );
-   texel[GCOMP] = UBYTE_TO_CHAN( (s >> 16) & 0xff );
-   texel[BCOMP] = UBYTE_TO_CHAN( (s >> 24)        );
-   texel[ACOMP] = UBYTE_TO_CHAN( (s      ) & 0xff );
+   texel[RCOMP] = UBYTE_TO_FLOAT( (s >>  8) & 0xff );
+   texel[GCOMP] = UBYTE_TO_FLOAT( (s >> 16) & 0xff );
+   texel[BCOMP] = UBYTE_TO_FLOAT( (s >> 24)        );
+   texel[ACOMP] = UBYTE_TO_FLOAT( (s      ) & 0xff );
 }
 
 #if DIM == 3
@@ -703,14 +686,14 @@ static void store_texel_argb8888_rev(struct gl_texture_image *texImage,
 /* MESA_FORMAT_RGB888 ********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D rgb888 texture, return 4 GLchans */
-static void FETCH(rgb888)( const struct gl_texture_image *texImage,
-			   GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_rgb888)( const struct gl_texture_image *texImage,
+                             GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
-   texel[RCOMP] = UBYTE_TO_CHAN( src[2] );
-   texel[GCOMP] = UBYTE_TO_CHAN( src[1] );
-   texel[BCOMP] = UBYTE_TO_CHAN( src[0] );
-   texel[ACOMP] = CHAN_MAX;
+   texel[RCOMP] = UBYTE_TO_FLOAT( src[2] );
+   texel[GCOMP] = UBYTE_TO_FLOAT( src[1] );
+   texel[BCOMP] = UBYTE_TO_FLOAT( src[0] );
+   texel[ACOMP] = 1.0F;
 }
 
 #if DIM == 3
@@ -729,14 +712,14 @@ static void store_texel_rgb888(struct gl_texture_image *texImage,
 /* MESA_FORMAT_BGR888 ********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D bgr888 texture, return 4 GLchans */
-static void FETCH(bgr888)( const struct gl_texture_image *texImage,
-			   GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_bgr888)( const struct gl_texture_image *texImage,
+                             GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
-   texel[RCOMP] = UBYTE_TO_CHAN( src[0] );
-   texel[GCOMP] = UBYTE_TO_CHAN( src[1] );
-   texel[BCOMP] = UBYTE_TO_CHAN( src[2] );
-   texel[ACOMP] = CHAN_MAX;
+   texel[RCOMP] = UBYTE_TO_FLOAT( src[0] );
+   texel[GCOMP] = UBYTE_TO_FLOAT( src[1] );
+   texel[BCOMP] = UBYTE_TO_FLOAT( src[2] );
+   texel[ACOMP] = 1.0F;
 }
 
 #if DIM == 3
@@ -758,15 +741,15 @@ static void store_texel_bgr888(struct gl_texture_image *texImage,
 /* MESA_FORMAT_RGB565 ********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D rgb565 texture, return 4 GLchans */
-static void FETCH(rgb565)( const struct gl_texture_image *texImage,
-			   GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_rgb565)( const struct gl_texture_image *texImage,
+                             GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
    const GLushort s = *src;
-   texel[RCOMP] = UBYTE_TO_CHAN( ((s >> 8) & 0xf8) | ((s >> 13) & 0x7) );
-   texel[GCOMP] = UBYTE_TO_CHAN( ((s >> 3) & 0xfc) | ((s >>  9) & 0x3) );
-   texel[BCOMP] = UBYTE_TO_CHAN( ((s << 3) & 0xf8) | ((s >>  2) & 0x7) );
-   texel[ACOMP] = CHAN_MAX;
+   texel[RCOMP] = ((s >> 11) & 0x1f) * (1.0F / 31.0F);
+   texel[GCOMP] = ((s >> 5 ) & 0x3f) * (1.0F / 63.0F);
+   texel[BCOMP] = ((s      ) & 0x1f) * (1.0F / 31.0F);
+   texel[ACOMP] = 1.0F;
 }
 
 #if DIM == 3
@@ -783,15 +766,15 @@ static void store_texel_rgb565(struct gl_texture_image *texImage,
 /* MESA_FORMAT_RGB565_REV ****************************************************/
 
 /* Fetch texel from 1D, 2D or 3D rgb565_rev texture, return 4 GLchans */
-static void FETCH(rgb565_rev)( const struct gl_texture_image *texImage,
-                               GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_rgb565_rev)( const struct gl_texture_image *texImage,
+                                 GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
    const GLushort s = (*src >> 8) | (*src << 8); /* byte swap */
-   texel[RCOMP] = UBYTE_TO_CHAN( ((s >> 8) & 0xf8) | ((s >> 13) & 0x7) );
-   texel[GCOMP] = UBYTE_TO_CHAN( ((s >> 3) & 0xfc) | ((s >>  9) & 0x3) );
-   texel[BCOMP] = UBYTE_TO_CHAN( ((s << 3) & 0xf8) | ((s >>  2) & 0x7) );
-   texel[ACOMP] = CHAN_MAX;
+   texel[RCOMP] = UBYTE_TO_FLOAT( ((s >> 8) & 0xf8) | ((s >> 13) & 0x7) );
+   texel[GCOMP] = UBYTE_TO_FLOAT( ((s >> 3) & 0xfc) | ((s >>  9) & 0x3) );
+   texel[BCOMP] = UBYTE_TO_FLOAT( ((s << 3) & 0xf8) | ((s >>  2) & 0x7) );
+   texel[ACOMP] = 1.0F;
 }
 
 #if DIM == 3
@@ -807,15 +790,15 @@ static void store_texel_rgb565_rev(struct gl_texture_image *texImage,
 /* MESA_FORMAT_RGBA4444 ******************************************************/
 
 /* Fetch texel from 1D, 2D or 3D argb444 texture, return 4 GLchans */
-static void FETCH(rgba4444)( const struct gl_texture_image *texImage,
-			     GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_rgba4444)( const struct gl_texture_image *texImage,
+                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
    const GLushort s = *src;
-   texel[RCOMP] = UBYTE_TO_CHAN( ((s >> 12) & 0xf) | ((s >> 8) & 0xf0) );
-   texel[GCOMP] = UBYTE_TO_CHAN( ((s >>  8) & 0xf) | ((s >> 4) & 0xf0) );
-   texel[BCOMP] = UBYTE_TO_CHAN( ((s >>  4) & 0xf) | ((s     ) & 0xf0) );
-   texel[ACOMP] = UBYTE_TO_CHAN( ((s      ) & 0xf) | ((s << 4) & 0xf0) );
+   texel[RCOMP] = ((s >> 12) & 0xf) * (1.0F / 15.0F);
+   texel[GCOMP] = ((s >>  8) & 0xf) * (1.0F / 15.0F);
+   texel[BCOMP] = ((s >>  4) & 0xf) * (1.0F / 15.0F);
+   texel[ACOMP] = ((s      ) & 0xf) * (1.0F / 15.0F);
 }
 
 #if DIM == 3
@@ -832,15 +815,15 @@ static void store_texel_rgba4444(struct gl_texture_image *texImage,
 /* MESA_FORMAT_ARGB4444 ******************************************************/
 
 /* Fetch texel from 1D, 2D or 3D argb444 texture, return 4 GLchans */
-static void FETCH(argb4444)( const struct gl_texture_image *texImage,
-			     GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_argb4444)( const struct gl_texture_image *texImage,
+                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
    const GLushort s = *src;
-   texel[RCOMP] = UBYTE_TO_CHAN( ((s >>  8) & 0xf) | ((s >> 4) & 0xf0) );
-   texel[GCOMP] = UBYTE_TO_CHAN( ((s >>  4) & 0xf) | ((s     ) & 0xf0) );
-   texel[BCOMP] = UBYTE_TO_CHAN( ((s      ) & 0xf) | ((s << 4) & 0xf0) );
-   texel[ACOMP] = UBYTE_TO_CHAN( ((s >> 12) & 0xf) | ((s >> 8) & 0xf0) );
+   texel[RCOMP] = ((s >>  8) & 0xf) * (1.0F / 15.0F);
+   texel[GCOMP] = ((s >>  4) & 0xf) * (1.0F / 15.0F);
+   texel[BCOMP] = ((s      ) & 0xf) * (1.0F / 15.0F);
+   texel[ACOMP] = ((s >> 12) & 0xf) * (1.0F / 15.0F);
 }
 
 #if DIM == 3
@@ -857,14 +840,14 @@ static void store_texel_argb4444(struct gl_texture_image *texImage,
 /* MESA_FORMAT_ARGB4444_REV **************************************************/
 
 /* Fetch texel from 1D, 2D or 3D argb4444_rev texture, return 4 GLchans */
-static void FETCH(argb4444_rev)( const struct gl_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_argb4444_rev)( const struct gl_texture_image *texImage,
+                                   GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort s = *TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   texel[RCOMP] = UBYTE_TO_CHAN( ((s      ) & 0xf) | ((s << 4) & 0xf0) );
-   texel[GCOMP] = UBYTE_TO_CHAN( ((s >> 12) & 0xf) | ((s >> 8) & 0xf0) );
-   texel[BCOMP] = UBYTE_TO_CHAN( ((s >>  8) & 0xf) | ((s >> 4) & 0xf0) );
-   texel[ACOMP] = UBYTE_TO_CHAN( ((s >>  4) & 0xf) | ((s     ) & 0xf0) );
+   texel[RCOMP] = ((s      ) & 0xf) * (1.0F / 15.0F);
+   texel[GCOMP] = ((s >> 12) & 0xf) * (1.0F / 15.0F);
+   texel[BCOMP] = ((s >>  8) & 0xf) * (1.0F / 15.0F);
+   texel[ACOMP] = ((s >>  4) & 0xf) * (1.0F / 15.0F);
 }
 
 #if DIM == 3
@@ -880,15 +863,15 @@ static void store_texel_argb4444_rev(struct gl_texture_image *texImage,
 /* MESA_FORMAT_RGBA5551 ******************************************************/
 
 /* Fetch texel from 1D, 2D or 3D argb1555 texture, return 4 GLchans */
-static void FETCH(rgba5551)( const struct gl_texture_image *texImage,
-			     GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_rgba5551)( const struct gl_texture_image *texImage,
+                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
    const GLushort s = *src;
-   texel[RCOMP] = UBYTE_TO_CHAN( ((s >>  8) & 0xf8) | ((s >> 13) & 0x7) );
-   texel[GCOMP] = UBYTE_TO_CHAN( ((s >>  3) & 0xf8) | ((s >>  8) & 0x7) );
-   texel[BCOMP] = UBYTE_TO_CHAN( ((s <<  2) & 0xf8) | ((s >>  3) & 0x7) );
-   texel[ACOMP] = UBYTE_TO_CHAN( ((s) & 0x01) ? 255 : 0);
+   texel[RCOMP] = ((s >> 11) & 0x1f) * (1.0F / 31.0F);
+   texel[GCOMP] = ((s >>  6) & 0x1f) * (1.0F / 31.0F);
+   texel[BCOMP] = ((s >>  1) & 0x1f) * (1.0F / 31.0F);
+   texel[ACOMP] = ((s      ) & 0x01) * 1.0F;
 }
 
 #if DIM == 3
@@ -904,15 +887,15 @@ static void store_texel_rgba5551(struct gl_texture_image *texImage,
 /* MESA_FORMAT_ARGB1555 ******************************************************/
 
 /* Fetch texel from 1D, 2D or 3D argb1555 texture, return 4 GLchans */
-static void FETCH(argb1555)( const struct gl_texture_image *texImage,
-			     GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_argb1555)( const struct gl_texture_image *texImage,
+			     GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
    const GLushort s = *src;
-   texel[RCOMP] = UBYTE_TO_CHAN( ((s >>  7) & 0xf8) | ((s >> 12) & 0x7) );
-   texel[GCOMP] = UBYTE_TO_CHAN( ((s >>  2) & 0xf8) | ((s >>  7) & 0x7) );
-   texel[BCOMP] = UBYTE_TO_CHAN( ((s <<  3) & 0xf8) | ((s >>  2) & 0x7) );
-   texel[ACOMP] = UBYTE_TO_CHAN( ((s >> 15) & 0x01) * 255 );
+   texel[RCOMP] = ((s >> 10) & 0x1f) * (1.0F / 31.0F);
+   texel[GCOMP] = ((s >>  5) & 0x1f) * (1.0F / 31.0F);
+   texel[BCOMP] = ((s >>  0) & 0x1f) * (1.0F / 31.0F);
+   texel[ACOMP] = ((s >> 15) & 0x01) * 1.0F;
 }
 
 #if DIM == 3
@@ -929,15 +912,15 @@ static void store_texel_argb1555(struct gl_texture_image *texImage,
 /* MESA_FORMAT_ARGB1555_REV **************************************************/
 
 /* Fetch texel from 1D, 2D or 3D argb1555_rev texture, return 4 GLchans */
-static void FETCH(argb1555_rev)( const struct gl_texture_image *texImage,
-                                 GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_argb1555_rev)( const struct gl_texture_image *texImage,
+                                   GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
    const GLushort s = (*src << 8) | (*src >> 8); /* byteswap */
-   texel[RCOMP] = UBYTE_TO_CHAN( ((s >>  7) & 0xf8) | ((s >> 12) & 0x7) );
-   texel[GCOMP] = UBYTE_TO_CHAN( ((s >>  2) & 0xf8) | ((s >>  7) & 0x7) );
-   texel[BCOMP] = UBYTE_TO_CHAN( ((s <<  3) & 0xf8) | ((s >>  2) & 0x7) );
-   texel[ACOMP] = UBYTE_TO_CHAN( ((s >> 15) & 0x01) * 255 );
+   texel[RCOMP] = UBYTE_TO_FLOAT( ((s >>  7) & 0xf8) | ((s >> 12) & 0x7) );
+   texel[GCOMP] = UBYTE_TO_FLOAT( ((s >>  2) & 0xf8) | ((s >>  7) & 0x7) );
+   texel[BCOMP] = UBYTE_TO_FLOAT( ((s <<  3) & 0xf8) | ((s >>  2) & 0x7) );
+   texel[ACOMP] = UBYTE_TO_FLOAT( ((s >> 15) & 0x01) * 255 );
 }
 
 #if DIM == 3
@@ -954,14 +937,14 @@ static void store_texel_argb1555_rev(struct gl_texture_image *texImage,
 /* MESA_FORMAT_AL88 **********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D al88 texture, return 4 GLchans */
-static void FETCH(al88)( const struct gl_texture_image *texImage,
-			 GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_al88)( const struct gl_texture_image *texImage,
+                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort s = *TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
    texel[RCOMP] = 
    texel[GCOMP] = 
-   texel[BCOMP] = UBYTE_TO_CHAN( s & 0xff );
-   texel[ACOMP] = UBYTE_TO_CHAN( s >> 8 );
+   texel[BCOMP] = UBYTE_TO_FLOAT( s & 0xff );
+   texel[ACOMP] = UBYTE_TO_FLOAT( s >> 8 );
 }
 
 #if DIM == 3
@@ -978,14 +961,14 @@ static void store_texel_al88(struct gl_texture_image *texImage,
 /* MESA_FORMAT_AL88_REV ******************************************************/
 
 /* Fetch texel from 1D, 2D or 3D al88_rev texture, return 4 GLchans */
-static void FETCH(al88_rev)( const struct gl_texture_image *texImage,
-                             GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_al88_rev)( const struct gl_texture_image *texImage,
+                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort s = *TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
    texel[RCOMP] = 
    texel[GCOMP] = 
-   texel[BCOMP] = UBYTE_TO_CHAN( s >> 8 );
-   texel[ACOMP] = UBYTE_TO_CHAN( s & 0xff );
+   texel[BCOMP] = UBYTE_TO_FLOAT( s >> 8 );
+   texel[ACOMP] = UBYTE_TO_FLOAT( s & 0xff );
 }
 
 #if DIM == 3
@@ -1002,17 +985,15 @@ static void store_texel_al88_rev(struct gl_texture_image *texImage,
 /* MESA_FORMAT_RGB332 ********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D rgb332 texture, return 4 GLchans */
-static void FETCH(rgb332)( const struct gl_texture_image *texImage,
-			   GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_rgb332)( const struct gl_texture_image *texImage,
+                             GLint i, GLint j, GLint k, GLfloat *texel )
 {
-   static const GLubyte lut2to8[4] = {0, 85, 170, 255};
-   static const GLubyte lut3to8[8] = {0, 36, 73, 109, 146, 182, 219, 255};
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
    const GLubyte s = *src;
-   texel[RCOMP] = UBYTE_TO_CHAN( lut3to8[(s >> 5) & 0x7] );
-   texel[GCOMP] = UBYTE_TO_CHAN( lut3to8[(s >> 2) & 0x7] );
-   texel[BCOMP] = UBYTE_TO_CHAN( lut2to8[(s     ) & 0x3] );
-   texel[ACOMP] = CHAN_MAX;
+   texel[RCOMP] = ((s >> 5) & 0x7) * (1.0F / 7.0F);
+   texel[GCOMP] = ((s >> 2) & 0x7) * (1.0F / 7.0F);
+   texel[BCOMP] = ((s     ) & 0x3) * (1.0F / 3.0F);
+   texel[ACOMP] = 1.0F;
 }
 
 #if DIM == 3
@@ -1029,14 +1010,14 @@ static void store_texel_rgb332(struct gl_texture_image *texImage,
 /* MESA_FORMAT_A8 ************************************************************/
 
 /* Fetch texel from 1D, 2D or 3D a8 texture, return 4 GLchans */
-static void FETCH(a8)( const struct gl_texture_image *texImage,
-		       GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_a8)( const struct gl_texture_image *texImage,
+                         GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
    texel[RCOMP] =
    texel[GCOMP] =
-   texel[BCOMP] = 0;
-   texel[ACOMP] = UBYTE_TO_CHAN( src[0] );
+   texel[BCOMP] = 0.0F;
+   texel[ACOMP] = UBYTE_TO_FLOAT( src[0] );
 }
 
 #if DIM == 3
@@ -1053,14 +1034,14 @@ static void store_texel_a8(struct gl_texture_image *texImage,
 /* MESA_FORMAT_L8 ************************************************************/
 
 /* Fetch texel from 1D, 2D or 3D l8 texture, return 4 GLchans */
-static void FETCH(l8)( const struct gl_texture_image *texImage,
-		       GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_l8)( const struct gl_texture_image *texImage,
+                         GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
    texel[RCOMP] =
    texel[GCOMP] =
-   texel[BCOMP] = UBYTE_TO_CHAN( src[0] );
-   texel[ACOMP] = CHAN_MAX;
+   texel[BCOMP] = UBYTE_TO_FLOAT( src[0] );
+   texel[ACOMP] = 1.0F;
 }
 
 #if DIM == 3
@@ -1077,14 +1058,14 @@ static void store_texel_l8(struct gl_texture_image *texImage,
 /* MESA_FORMAT_I8 ************************************************************/
 
 /* Fetch texel from 1D, 2D or 3D i8 texture, return 4 GLchans */
-static void FETCH(i8)( const struct gl_texture_image *texImage,
-		       GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_i8)( const struct gl_texture_image *texImage,
+                         GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
    texel[RCOMP] =
    texel[GCOMP] =
    texel[BCOMP] =
-   texel[ACOMP] = UBYTE_TO_CHAN( src[0] );
+   texel[ACOMP] = UBYTE_TO_FLOAT( src[0] );
 }
 
 #if DIM == 3
@@ -1103,12 +1084,11 @@ static void store_texel_i8(struct gl_texture_image *texImage,
 /* Fetch CI texel from 1D, 2D or 3D ci8 texture, lookup the index in a
  * color table, and return 4 GLchans.
  */
-static void FETCH(ci8)( const struct gl_texture_image *texImage,
-			GLint i, GLint j, GLint k, GLchan *texel )
+static void FETCH(f_ci8)( const struct gl_texture_image *texImage,
+                          GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
    const struct gl_color_table *palette;
-   GLubyte texelUB[4];
    GLuint index;
    GET_CURRENT_CONTEXT(ctx);
 
@@ -1125,61 +1105,48 @@ static void FETCH(ci8)( const struct gl_texture_image *texImage,
    index = (*src) & (palette->Size - 1);
 
    {
-      const GLubyte *table = palette->TableUB;
+      const GLfloat *table = palette->TableF;
       switch (palette->_BaseFormat) {
       case GL_ALPHA:
-         texelUB[RCOMP] =
-         texelUB[GCOMP] =
-         texelUB[BCOMP] = 0;
-         texelUB[ACOMP] = table[index];
-         break;;
+         texel[RCOMP] =
+         texel[GCOMP] =
+         texel[BCOMP] = 0.0F;
+         texel[ACOMP] = table[index];
+         break;
       case GL_LUMINANCE:
-         texelUB[RCOMP] =
-         texelUB[GCOMP] =
-         texelUB[BCOMP] = table[index];
-         texelUB[ACOMP] = 255;
+         texel[RCOMP] =
+         texel[GCOMP] =
+         texel[BCOMP] = table[index];
+         texel[ACOMP] = 1.0F;
          break;
       case GL_INTENSITY:
-         texelUB[RCOMP] =
-         texelUB[GCOMP] =
-         texelUB[BCOMP] =
-         texelUB[ACOMP] = table[index];
-         break;;
+         texel[RCOMP] =
+         texel[GCOMP] =
+         texel[BCOMP] =
+         texel[ACOMP] = table[index];
+         break;
       case GL_LUMINANCE_ALPHA:
-         texelUB[RCOMP] =
-         texelUB[GCOMP] =
-         texelUB[BCOMP] = table[index * 2 + 0];
-         texelUB[ACOMP] = table[index * 2 + 1];
-         break;;
+         texel[RCOMP] =
+         texel[GCOMP] =
+         texel[BCOMP] = table[index * 2 + 0];
+         texel[ACOMP] = table[index * 2 + 1];
+         break;
       case GL_RGB:
-         texelUB[RCOMP] = table[index * 3 + 0];
-         texelUB[GCOMP] = table[index * 3 + 1];
-         texelUB[BCOMP] = table[index * 3 + 2];
-         texelUB[ACOMP] = 255;
-         break;;
+         texel[RCOMP] = table[index * 3 + 0];
+         texel[GCOMP] = table[index * 3 + 1];
+         texel[BCOMP] = table[index * 3 + 2];
+         texel[ACOMP] = 1.0F;
+         break;
       case GL_RGBA:
-         texelUB[RCOMP] = table[index * 4 + 0];
-         texelUB[GCOMP] = table[index * 4 + 1];
-         texelUB[BCOMP] = table[index * 4 + 2];
-         texelUB[ACOMP] = table[index * 4 + 3];
-         break;;
+         texel[RCOMP] = table[index * 4 + 0];
+         texel[GCOMP] = table[index * 4 + 1];
+         texel[BCOMP] = table[index * 4 + 2];
+         texel[ACOMP] = table[index * 4 + 3];
+         break;
       default:
          _mesa_problem(ctx, "Bad palette format in fetch_texel_ci8");
          return;
       }
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-      COPY_4UBV(texel, texelUB);
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-      texel[0] = UBYTE_TO_USHORT(texelUB[0]);
-      texel[1] = UBYTE_TO_USHORT(texelUB[1]);
-      texel[2] = UBYTE_TO_USHORT(texelUB[2]);
-      texel[3] = UBYTE_TO_USHORT(texelUB[3]);
-#else
-      texel[0] = UBYTE_TO_FLOAT(texelUB[0]);
-      texel[1] = UBYTE_TO_FLOAT(texelUB[1]);
-      texel[2] = UBYTE_TO_FLOAT(texelUB[2]);
-      texel[3] = UBYTE_TO_FLOAT(texelUB[3]);
-#endif
    }
 }
 
@@ -1197,14 +1164,15 @@ static void store_texel_ci8(struct gl_texture_image *texImage,
 #if FEATURE_EXT_texture_sRGB
 
 /* Fetch texel from 1D, 2D or 3D srgb8 texture, return 4 GLfloats */
+/* Note: component order is same as for MESA_FORMAT_RGB888 */
 static void FETCH(srgb8)(const struct gl_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
-   texel[RCOMP] = nonlinear_to_linear(src[0]);
+   texel[RCOMP] = nonlinear_to_linear(src[2]);
    texel[GCOMP] = nonlinear_to_linear(src[1]);
-   texel[BCOMP] = nonlinear_to_linear(src[2]);
-   texel[ACOMP] = CHAN_MAX;
+   texel[BCOMP] = nonlinear_to_linear(src[0]);
+   texel[ACOMP] = 1.0F;
 }
 
 #if DIM == 3
@@ -1213,9 +1181,9 @@ static void store_texel_srgb8(struct gl_texture_image *texImage,
 {
    const GLubyte *rgba = (const GLubyte *) texel;
    GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
-   dst[0] = rgba[RCOMP]; /* no conversion */
+   dst[0] = rgba[BCOMP]; /* no conversion */
    dst[1] = rgba[GCOMP];
-   dst[2] = rgba[BCOMP];
+   dst[2] = rgba[RCOMP];
 }
 #endif
 
@@ -1321,14 +1289,57 @@ static void FETCH(dudv8)(const struct gl_texture_image *texImage,
    texel[ACOMP] = 0;
 }
 
+/* MESA_FORMAT_SIGNED_RGBA8888 ***********************************************/
+
+static void FETCH(signed_rgba8888)( const struct gl_texture_image *texImage,
+			            GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   texel[RCOMP] = BYTE_TO_FLOAT_TEX( (s >> 24)        );
+   texel[GCOMP] = BYTE_TO_FLOAT_TEX( (s >> 16) & 0xff );
+   texel[BCOMP] = BYTE_TO_FLOAT_TEX( (s >>  8) & 0xff );
+   texel[ACOMP] = BYTE_TO_FLOAT_TEX( (s      ) & 0xff );
+}
+
+#if DIM == 3
+static void store_texel_signed_rgba8888(struct gl_texture_image *texImage,
+                                        GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLbyte *rgba = (const GLbyte *) texel;
+   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   *dst = PACK_COLOR_8888(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], rgba[ACOMP]);
+}
+#endif
+
+static void FETCH(signed_rgba8888_rev)( const struct gl_texture_image *texImage,
+                                        GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   texel[RCOMP] = BYTE_TO_FLOAT_TEX( (s      ) & 0xff );
+   texel[GCOMP] = BYTE_TO_FLOAT_TEX( (s >>  8) & 0xff );
+   texel[BCOMP] = BYTE_TO_FLOAT_TEX( (s >> 16) & 0xff );
+   texel[ACOMP] = BYTE_TO_FLOAT_TEX( (s >> 24)        );
+}
+
+#if DIM == 3
+static void store_texel_signed_rgba8888_rev(struct gl_texture_image *texImage,
+                                            GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLubyte *rgba = (const GLubyte *) texel;
+   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   *dst = PACK_COLOR_8888_REV(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], rgba[ACOMP]);
+}
+#endif
+
+
 
 /* MESA_FORMAT_YCBCR *********************************************************/
 
-/* Fetch texel from 1D, 2D or 3D ycbcr texture, return 4 GLchans */
-/* We convert YCbCr to RGB here */
-/* XXX this may break if GLchan != GLubyte */
-static void FETCH(ycbcr)( const struct gl_texture_image *texImage,
-                          GLint i, GLint j, GLint k, GLchan *texel )
+/* Fetch texel from 1D, 2D or 3D ycbcr texture, return 4 GLfloats.
+ * We convert YCbCr to RGB here.
+ */
+static void FETCH(f_ycbcr)( const struct gl_texture_image *texImage,
+                            GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src0 = TEXEL_ADDR(GLushort, texImage, (i & ~1), j, k, 1); /* even */
    const GLushort *src1 = src0 + 1;                               /* odd */
@@ -1336,23 +1347,17 @@ static void FETCH(ycbcr)( const struct gl_texture_image *texImage,
    const GLubyte cb = *src0 & 0xff;         /* chroma U */
    const GLubyte y1 = (*src1 >> 8) & 0xff;  /* luminance */
    const GLubyte cr = *src1 & 0xff;         /* chroma V */
-   GLint r, g, b;
-   if (i & 1) {
-      /* odd pixel: use y1,cr,cb */
-      r = (GLint) (1.164 * (y1-16) + 1.596 * (cr-128));
-      g = (GLint) (1.164 * (y1-16) - 0.813 * (cr-128) - 0.391 * (cb-128));
-      b = (GLint) (1.164 * (y1-16) + 2.018 * (cb-128));
-   }
-   else {
-      /* even pixel: use y0,cr,cb */
-      r = (GLint) (1.164 * (y0-16) + 1.596 * (cr-128));
-      g = (GLint) (1.164 * (y0-16) - 0.813 * (cr-128) - 0.391 * (cb-128));
-      b = (GLint) (1.164 * (y0-16) + 2.018 * (cb-128));
-   }
-   texel[RCOMP] = CLAMP(r, 0, CHAN_MAX);
-   texel[GCOMP] = CLAMP(g, 0, CHAN_MAX);
-   texel[BCOMP] = CLAMP(b, 0, CHAN_MAX);
-   texel[ACOMP] = CHAN_MAX;
+   const GLfloat y = (i & 1) ? y1 : y0;     /* choose even/odd luminance */
+   GLfloat r = 1.164 * (y - 16) + 1.596 * (cr - 128);
+   GLfloat g = 1.164 * (y - 16) - 0.813 * (cr - 128) - 0.391 * (cb - 128);
+   GLfloat b = 1.164 * (y - 16) + 2.018 * (cb - 128);
+   r *= (1.0 / 255.0F);
+   g *= (1.0 / 255.0F);
+   b *= (1.0 / 255.0F);
+   texel[RCOMP] = CLAMP(r, 0.0F, 1.0F);
+   texel[GCOMP] = CLAMP(g, 0.0F, 1.0F);
+   texel[BCOMP] = CLAMP(b, 0.0F, 1.0F);
+   texel[ACOMP] = 1.0F;
 }
 
 #if DIM == 3
@@ -1371,11 +1376,11 @@ static void store_texel_ycbcr(struct gl_texture_image *texImage,
 
 /* MESA_FORMAT_YCBCR_REV *****************************************************/
 
-/* Fetch texel from 1D, 2D or 3D ycbcr_rev texture, return 4 GLchans */
-/* We convert YCbCr to RGB here */
-/* XXX this may break if GLchan != GLubyte */
-static void FETCH(ycbcr_rev)( const struct gl_texture_image *texImage,
-                              GLint i, GLint j, GLint k, GLchan *texel )
+/* Fetch texel from 1D, 2D or 3D ycbcr_rev texture, return 4 GLfloats.
+ * We convert YCbCr to RGB here.
+ */
+static void FETCH(f_ycbcr_rev)( const struct gl_texture_image *texImage,
+                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src0 = TEXEL_ADDR(GLushort, texImage, (i & ~1), j, k, 1); /* even */
    const GLushort *src1 = src0 + 1;                               /* odd */
@@ -1383,23 +1388,17 @@ static void FETCH(ycbcr_rev)( const struct gl_texture_image *texImage,
    const GLubyte cr = (*src0 >> 8) & 0xff;  /* chroma V */
    const GLubyte y1 = *src1 & 0xff;         /* luminance */
    const GLubyte cb = (*src1 >> 8) & 0xff;  /* chroma U */
-   GLint r, g, b;
-   if (i & 1) {
-      /* odd pixel: use y1,cr,cb */
-      r = (GLint) (1.164 * (y1-16) + 1.596 * (cr-128));
-      g = (GLint) (1.164 * (y1-16) - 0.813 * (cr-128) - 0.391 * (cb-128));
-      b = (GLint) (1.164 * (y1-16) + 2.018 * (cb-128));
-   }
-   else {
-      /* even pixel: use y0,cr,cb */
-      r = (GLint) (1.164 * (y0-16) + 1.596 * (cr-128));
-      g = (GLint) (1.164 * (y0-16) - 0.813 * (cr-128) - 0.391 * (cb-128));
-      b = (GLint) (1.164 * (y0-16) + 2.018 * (cb-128));
-   }
-   texel[RCOMP] = CLAMP(r, 0, CHAN_MAX);
-   texel[GCOMP] = CLAMP(g, 0, CHAN_MAX);
-   texel[BCOMP] = CLAMP(b, 0, CHAN_MAX);
-   texel[ACOMP] = CHAN_MAX;
+   const GLfloat y = (i & 1) ? y1 : y0;     /* choose even/odd luminance */
+   GLfloat r = 1.164 * (y - 16) + 1.596 * (cr - 128);
+   GLfloat g = 1.164 * (y - 16) - 0.813 * (cr - 128) - 0.391 * (cb - 128);
+   GLfloat b = 1.164 * (y - 16) + 2.018 * (cb - 128);
+   r *= (1.0 / 255.0F);
+   g *= (1.0 / 255.0F);
+   b *= (1.0 / 255.0F);
+   texel[RCOMP] = CLAMP(r, 0.0F, 1.0F);
+   texel[GCOMP] = CLAMP(g, 0.0F, 1.0F);
+   texel[BCOMP] = CLAMP(b, 0.0F, 1.0F);
+   texel[ACOMP] = 1.0F;
 }
 
 #if DIM == 3

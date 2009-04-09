@@ -73,6 +73,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_PVS_NUM_CNTLRS_SHIFT                4
 #       define R300_PVS_NUM_FPUS_SHIFT                  8
 #       define R300_VF_MAX_VTX_NUM_SHIFT                18
+#       define R300_PVS_NUM_SLOTS(x)                    ((x) << 0)
+#       define R300_PVS_NUM_CNTLRS(x)                   ((x) << 4)
+#       define R300_PVS_NUM_FPUS(x)                     ((x) << 8)
+#       define R300_PVS_VF_MAX_VTX_NUM(x)               ((x) << 18)
 #       define R300_GL_CLIP_SPACE_DEF                   (0 << 22)
 #       define R300_DX_CLIP_SPACE_DEF                   (1 << 22)
 #       define R500_TCL_STATE_OPTIMIZATION              (1 << 23)
@@ -506,6 +510,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_PVS_FIRST_INST_SHIFT         0
 #       define R300_PVS_XYZW_VALID_INST_SHIFT    10
 #       define R300_PVS_LAST_INST_SHIFT          20
+#       define R300_PVS_FIRST_INST(x)            ((x) << 0)
+#       define R300_PVS_LAST_INST(x)             ((x) << 20)
 /* Addresses are relative the the vertex program parameters area. */
 #define R300_VAP_PVS_CONST_CNTL             0x22D4
 #       define R300_PVS_CONST_BASE_OFFSET_SHIFT  0
@@ -1191,6 +1197,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_RS_INST_COUNT_MASK           0x0000000f
 #       define R300_RS_TX_OFFSET_SHIFT           5
 #	define R300_RS_TX_OFFSET_MASK            0x000000e0
+#       define R300_RS_TX_OFFSET(x)              ((x) << 5)
 
 /* gap */
 
@@ -1434,6 +1441,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_MAX_ANISO_8_TO_1          (3 << 21)
 #	define R300_TX_MAX_ANISO_16_TO_1         (4 << 21)
 #	define R300_TX_MAX_ANISO_MASK            (7 << 21)
+#       define R300_TX_WRAP_S(x)                 ((x) << 0)
+#       define R300_TX_WRAP_T(x)                 ((x) << 3)
 
 #define R300_TX_FILTER1_0                      0x4440
 #	define R300_CHROMA_KEY_MODE_DISABLE    0

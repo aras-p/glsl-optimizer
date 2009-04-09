@@ -225,6 +225,24 @@
 
 #define BRW_RASTRULE_UPPER_LEFT  0    
 #define BRW_RASTRULE_UPPER_RIGHT 1
+/* These are listed as "Reserved, but not seen as useful"
+ * in Intel documentation (page 212, "Point Rasterization Rule",
+ * section 7.4 "SF Pipeline State Summary", of document
+ * "Intel® 965 Express Chipset Family and Intel® G35 Express
+ * Chipset Graphics Controller Programmer's Reference Manual,
+ * Volume 2: 3D/Media", Revision 1.0b as of January 2008,
+ * available at 
+ *     http://intellinuxgraphics.org/documentation.html
+ * at the time of this writing).
+ *
+ * These appear to be supported on at least some
+ * i965-family devices, and the BRW_RASTRULE_LOWER_RIGHT
+ * is useful when using OpenGL to render to a FBO
+ * (which has the pixel coordinate Y orientation inverted
+ * with respect to the normal OpenGL pixel coordinate system).
+ */
+#define BRW_RASTRULE_LOWER_LEFT  2
+#define BRW_RASTRULE_LOWER_RIGHT 3
 
 #define BRW_RENDERTARGET_CLAMPRANGE_UNORM    0
 #define BRW_RENDERTARGET_CLAMPRANGE_SNORM    1
@@ -349,9 +367,10 @@
 #define BRW_SURFACEFORMAT_L8A8_UNORM                     0x114 
 #define BRW_SURFACEFORMAT_I16_FLOAT                      0x115
 #define BRW_SURFACEFORMAT_L16_FLOAT                      0x116
-#define BRW_SURFACEFORMAT_A16_FLOAT                      0x117 
-#define BRW_SURFACEFORMAT_R5G5_SNORM_B6_UNORM            0x119 
-#define BRW_SURFACEFORMAT_B5G5R5X1_UNORM                 0x11A 
+#define BRW_SURFACEFORMAT_A16_FLOAT                      0x117
+#define BRW_SURFACEFORMAT_L8A8_UNORM_SRGB                0x118
+#define BRW_SURFACEFORMAT_R5G5_SNORM_B6_UNORM            0x119
+#define BRW_SURFACEFORMAT_B5G5R5X1_UNORM                 0x11A
 #define BRW_SURFACEFORMAT_B5G5R5X1_UNORM_SRGB            0x11B
 #define BRW_SURFACEFORMAT_R8G8_SSCALED                   0x11C
 #define BRW_SURFACEFORMAT_R8G8_USCALED                   0x11D
@@ -368,6 +387,7 @@
 #define BRW_SURFACEFORMAT_A4P4_UNORM                     0x148
 #define BRW_SURFACEFORMAT_R8_SSCALED                     0x149
 #define BRW_SURFACEFORMAT_R8_USCALED                     0x14A
+#define BRW_SURFACEFORMAT_L8_UNORM_SRGB                  0x14C
 #define BRW_SURFACEFORMAT_R1_UINT                        0x181 
 #define BRW_SURFACEFORMAT_YCRCB_NORMAL                   0x182 
 #define BRW_SURFACEFORMAT_YCRCB_SWAPUVY                  0x183 

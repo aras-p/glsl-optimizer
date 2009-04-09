@@ -339,6 +339,20 @@ FetchDRIDrawable(Display * dpy, GLXDrawable glxDrawable, GLXContext gc)
 }
 #endif /* GLX_DIRECT_RENDERING */
 
+static void
+__glXGenerateError(Display *dpy, GLXContext gc, XID resource,
+		   BYTE errorCode, CARD16 minorCode)
+{
+   xError error;
+
+   error.errorCode = errorCode;
+   error.resourceID = resource;
+   error.sequenceNumber = dpy->request;
+   error.type = X_Error;
+   error.majorCode = gc->majorOpcode;
+   error.minorCode = minorCode;
+   _XError(dpy, &error);
+}
 
 /**
  * Make a particular context current.
@@ -369,7 +383,25 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
       return GL_FALSE;
    }
 
+   if (gc == NULL && (draw != None || read != None)) {
+      __glXGenerateError(dpy, gc, (draw != None) ? draw : read,
+			 BadMatch, X_GLXMakeContextCurrent);
+      return False;
+   }
+   if (gc != NULL && (draw == None || read == None)) {
+      __glXGenerateError(dpy, gc, None,
+			 BadMatch, X_GLXMakeContextCurrent);
+      return False;
+   }
+
    _glapi_check_multithread();
+
+   if (gc != NULL && gc->thread_id != 0 &&
+       gc->thread_id != _glthread_GetID()) {
+      __glXGenerateError(dpy, gc, gc->xid,
+			 BadAccess, X_GLXMakeContextCurrent);
+      return False;
+   }
 
 #ifdef GLX_DIRECT_RENDERING
    /* Bind the direct rendering context to the drawable */
@@ -378,20 +410,16 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
       __GLXDRIdrawable *pread = FetchDRIDrawable(dpy, read, gc);
 
       if ((pdraw == NULL) || (pread == NULL)) {
-         xError error;
-
-         error.errorCode = GLXBadDrawable;
-         error.resourceID = (pdraw == NULL) ? draw : read;
-         error.sequenceNumber = dpy->request;
-         error.type = X_Error;
-         error.majorCode = gc->majorOpcode;
-         error.minorCode = X_GLXMakeContextCurrent;
-         _XError(dpy, &error);
+         __glXGenerateError(dpy, gc, (pdraw == NULL) ? draw : read,
+			    GLXBadDrawable, X_GLXMakeContextCurrent);
          return False;
       }
 
       bindReturnValue =
          (gc->driContext->bindContext) (gc->driContext, pdraw, pread);
+   }
+   else if (!gc && oldGC && oldGC->driContext) {
+      bindReturnValue = True;
    }
    else
 #endif
@@ -453,6 +481,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
          oldGC->currentDrawable = None;
          oldGC->currentReadable = None;
          oldGC->currentContextTag = 0;
+         oldGC->thread_id = 0;
 
          if (oldGC->xid == None) {
             /* We are switching away from a context that was
@@ -477,6 +506,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
          gc->currentDpy = dpy;
          gc->currentDrawable = draw;
          gc->currentReadable = read;
+         gc->thread_id = _glthread_GetID();
 
 #ifdef GLX_DIRECT_RENDERING
          if (!gc->driContext) {

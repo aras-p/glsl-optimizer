@@ -205,12 +205,20 @@ struct pipe_context {
 			unsigned dstx, unsigned dsty,
 			unsigned width, unsigned height,
 			unsigned value);
-
-   void (*clear)(struct pipe_context *pipe, 
-		 struct pipe_surface *ps,
-		 unsigned clearValue);
    /*@}*/
 
+   /**
+    * Clear the specified set of currently bound buffers to specified values.
+    *
+    * buffers is a bitfield of PIPE_CLEAR_* values.
+    *
+    * rgba is a pointer to an array of one float for each of r, g, b, a.
+    */
+   void (*clear)(struct pipe_context *pipe,
+                 unsigned buffers,
+		 const float *rgba,
+                 double depth,
+		 unsigned stencil);
 
    /** Flush rendering (flags = bitmask of PIPE_FLUSH_x tokens) */
    void (*flush)( struct pipe_context *pipe,

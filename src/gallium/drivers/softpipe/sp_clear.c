@@ -2,6 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2009 VMware, Inc.  All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -27,6 +28,7 @@
 
 /* Author:
  *    Brian Paul
+ *    Michel Dänzer
  */
 
 
@@ -40,34 +42,15 @@
 
 
 /**
- * Convert packed pixel from one format to another.
- */
-static unsigned
-convert_color(enum pipe_format srcFormat, unsigned srcColor,
-              enum pipe_format dstFormat)
-{
-   ubyte r, g, b, a;
-   unsigned dstColor;
-
-   util_unpack_color_ub(srcFormat, &srcColor, &r, &g, &b, &a);
-   util_pack_color_ub(r, g, b, a, dstFormat, &dstColor);
-
-   return dstColor;
-}
-
-
-
-/**
- * Clear the given surface to the specified value.
+ * Clear the given buffers to the specified values.
  * No masking, no scissor (clear entire buffer).
- * Note: when clearing a color buffer, the clearValue is always
- * encoded as PIPE_FORMAT_A8R8G8B8_UNORM.
  */
 void
-softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-               unsigned clearValue)
+softpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+               double depth, unsigned stencil)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+   unsigned cv;
    uint i;
 
    if (softpipe->no_rast)
@@ -77,31 +60,30 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
    softpipe_update_derived(softpipe); /* not needed?? */
 #endif
 
-   if (ps == sp_tile_cache_get_surface(softpipe->zsbuf_cache)) {
-      sp_tile_cache_clear(softpipe->zsbuf_cache, clearValue);
-      softpipe->framebuffer.zsbuf->status = PIPE_SURFACE_STATUS_CLEAR;
-#if TILE_CLEAR_OPTIMIZATION
-      return;
-#endif
-   }
+   if (buffers & PIPE_CLEAR_COLOR) {
+      for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++) {
+         struct pipe_surface *ps = softpipe->framebuffer.cbufs[i];
 
-   for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++) {
-      if (ps == sp_tile_cache_get_surface(softpipe->cbuf_cache[i])) {
-         unsigned cv;
-         if (ps->format != PIPE_FORMAT_A8R8G8B8_UNORM) {
-            cv = convert_color(PIPE_FORMAT_A8R8G8B8_UNORM, clearValue,
-                               ps->format);
-         }
-         else {
-            cv = clearValue;
-         }
-         sp_tile_cache_clear(softpipe->cbuf_cache[i], cv);
-         softpipe->framebuffer.cbufs[i]->status = PIPE_SURFACE_STATUS_CLEAR;
+         util_pack_color(rgba, ps->format, &cv);
+         sp_tile_cache_clear(softpipe->cbuf_cache[i], rgba, cv);
+
+#if !TILE_CLEAR_OPTIMIZATION
+         /* non-cached surface */
+         pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, cv);
+#endif
       }
    }
 
+   if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {
+      static const float zero[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
+      struct pipe_surface *ps = softpipe->framebuffer.zsbuf;
+
+      cv = util_pack_z_stencil(ps->format, depth, stencil);
+      sp_tile_cache_clear(softpipe->zsbuf_cache, zero, cv);
+
 #if !TILE_CLEAR_OPTIMIZATION
-   /* non-cached surface */
-   pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, clearValue);
+      /* non-cached surface */
+      pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, cv);
 #endif
+      }
 }

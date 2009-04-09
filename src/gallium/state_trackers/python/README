@@ -6,16 +6,27 @@ the python script perspective.
 To build you'll need:
 * Python (with development packages)
 * SCons
-* SWIG
-* Python Imaging Library with TK support (for the samples)
+* SWIG, http://www.swig.org/download.html
+* Python Imaging Library with TK support, http://www.pythonware.com/products/pil/, 
+  for the samples
+
+On a debian-based distro you can simply do:
+
+  aptitude install python-dev scons swig python-imaging python-imaging-tk
+
+On a Windows machine ensure the swig command is in your PATH.
 
 Invoke scons on the top dir as
  
- scons statetrackers=python
+  scons debug=yes statetrackers=python drivers=softpipe,trace winsys=none
 
-To use do
+To use it set PYTHONPATH appropriately, e.g, in Linux do:
 
- export PYTHONPATH=build/XXXX-XXXX-XXXX/gallium/state_trackers/python
+  export PYTHONPATH=$PWD/build/linux-x86-debug/gallium/state_trackers/python
+
+or (in Windows)
+
+  set PYTHONPATH=%CD%\build\windows-x86-debug\gallium\state_trackers\python
 
 and then try running
 
@@ -27,7 +38,6 @@ which should show a triangle.
 This is still work in progress:
 - errors are not handled properly and almost always result in crash
 - state atoms with array members are awkward to set
-- there no efficient way to view images
 
 --
-Jose Fonseca <jrfonseca@tungstengraphics.com>
+Jose Fonseca <jfonseca@vmware.com>

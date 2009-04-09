@@ -25,24 +25,24 @@
  * 
  **************************************************************************/
 
-/* Author:
+/* Authors:
  *    Brian Paul
  */
 
 
-#include "pipe/p_defines.h"
+#include "util/u_clear.h"
 #include "i915_context.h"
 #include "i915_state.h"
 
 
 /**
- * Clear the given surface to the specified value.
+ * Clear the given buffers to the specified values.
  * No masking, no scissor (clear entire buffer).
  */
 void
-i915_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-	   unsigned clearValue)
+i915_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+	   double depth, unsigned stencil)
 {
-   pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, clearValue);
-   ps->status = PIPE_SURFACE_STATUS_DEFINED;
+   util_clear(pipe, &i915_context(pipe)->framebuffer, buffers, rgba, depth,
+              stencil);
 }

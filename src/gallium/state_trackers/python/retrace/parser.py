@@ -30,6 +30,7 @@
 import sys
 import xml.parsers.expat
 import binascii
+import optparse
 
 from model import *
 
@@ -189,6 +190,10 @@ class XmlParser:
 
 class TraceParser(XmlParser):
 
+    def __init__(self, fp):
+        XmlParser.__init__(self, fp)
+        self.last_call_no = 0
+    
     def parse(self):
         self.element_start('trace')
         while self.token.type not in (ELEMENT_END, EOF):
@@ -199,6 +204,13 @@ class TraceParser(XmlParser):
 
     def parse_call(self):
         attrs = self.element_start('call')
+        try:
+            no = int(attrs['no'])
+        except KeyError:
+            self.last_call_no += 1
+            no = self.last_call_no
+        else:
+            self.last_call_no = no
         klass = attrs['class']
         method = attrs['method']
         args = []
@@ -216,7 +228,7 @@ class TraceParser(XmlParser):
                 raise TokenMismatch("<arg ...> or <ret ...>", self.token)
         self.element_end('call')
         
-        return Call(klass, method, args, ret)
+        return Call(no, klass, method, args, ret)
 
     def parse_arg(self):
         attrs = self.element_start('arg')
@@ -342,16 +354,39 @@ class TraceDumper(TraceParser):
         self.formatter.newline()
         
 
-def main(ParserFactory):
-    for arg in sys.argv[1:]:
-        if arg.endswith('.gz'):
-            import gzip
-            stream = gzip.GzipFile(arg, 'rt')
+class Main:
+    '''Common main class for all retrace command line utilities.''' 
+
+    def __init__(self):
+        pass
+
+    def main(self):
+        optparser = self.get_optparser()
+        (options, args) = optparser.parse_args(sys.argv[1:])
+    
+        if args:
+            for arg in args:
+                if arg.endswith('.gz'):
+                    from gzip import GzipFile
+                    stream = GzipFile(arg, 'rt')
+                elif arg.endswith('.bz2'):
+                    from bz2 import BZ2File
+                    stream = BZ2File(arg, 'rt')
+                else:
+                    stream = open(arg, 'rt')
+                self.process_arg(stream, options)
         else:
-            stream = open(arg, 'rt')
-        parser = ParserFactory(stream)
+            self.process_arg(stream, options)
+
+    def get_optparser(self):
+        optparser = optparse.OptionParser(
+            usage="\n\t%prog [options] [traces] ...")
+        return optparser
+
+    def process_arg(self, stream, options):
+        parser = TraceDumper(stream)
         parser.parse()
 
 
 if __name__ == '__main__':
-    main(TraceDumper)
+    Main().main()

@@ -349,6 +349,15 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
       }
    }
 
+   if (ctx->Extensions.MESA_texture_signed_rgba) {
+      switch (internalFormat) {
+         case GL_RGBA_SNORM:
+         case GL_RGBA8_SNORM:
+            return GL_RGBA;
+         default:
+            ; /* fallthrough */
+      }
+   }
 
    if (ctx->Extensions.EXT_packed_depth_stencil) {
       switch (internalFormat) {
@@ -501,6 +510,10 @@ _mesa_is_color_format(GLenum format)
       case GL_COMPRESSED_SLUMINANCE_EXT:
       case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
 #endif /* FEATURE_EXT_texture_sRGB */
+         return GL_TRUE;
+      /* signed texture formats */
+      case GL_RGBA_SNORM:
+      case GL_RGBA8_SNORM:
          return GL_TRUE;
       case GL_YCBCR_MESA:  /* not considered to be RGB */
          /* fall-through */

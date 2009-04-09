@@ -132,4 +132,14 @@
     OUT_CS(CP_PACKET3(op, count)); \
 } while (0)
 
+#define OUT_CS_INDEX_RELOC(bo, offset, count, rd, wd, flags) do { \
+    debug_printf("r300: writing relocation for index buffer %p," \
+            "offset %d\n", bo, offset); \
+    assert(bo); \
+    OUT_CS(offset); \
+    OUT_CS(count); \
+    cs_winsys->write_cs_reloc(cs, bo, rd, wd, flags); \
+    cs_count -= 2; \
+} while (0)
+
 #endif /* R300_CS_H */

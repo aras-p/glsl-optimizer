@@ -79,6 +79,7 @@ extern GLboolean _mesa_texstore_sl8(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_sla8(TEXSTORE_PARAMS);
 #endif
 extern GLboolean _mesa_texstore_dudv8(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS);
 
 extern GLchan *
 _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
@@ -208,19 +209,6 @@ _mesa_store_compressed_texsubimage3d(GLcontext *ctx, GLenum target,
                                 struct gl_texture_object *texObj,
                                 struct gl_texture_image *texImage);
 
-
-extern void
-_mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
-                   GLenum format, GLenum type, GLvoid *pixels,
-                   struct gl_texture_object *texObj,
-                   struct gl_texture_image *texImage);
-
-
-extern void
-_mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
-                              GLvoid *img,
-                              struct gl_texture_object *texObj,
-                              struct gl_texture_image *texImage);
 
 extern const GLvoid *
 _mesa_validate_pbo_teximage(GLcontext *ctx, GLuint dimensions,

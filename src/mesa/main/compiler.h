@@ -230,7 +230,10 @@ extern "C" {
 #if defined(__linux__)
 #include <byteswap.h>
 #define CPU_TO_LE32( x )	bswap_32( x )
-#else /*__linux__*/
+#elif defined(__APPLE__)
+#include <CoreFoundation/CFByteOrder.h>
+#define CPU_TO_LE32( x )	CFSwapInt32HostToLittle( x )
+#else /*__linux__ __APPLE__*/
 #include <sys/endian.h>
 #define CPU_TO_LE32( x )	bswap32( x )
 #endif /*__linux__*/

@@ -270,14 +270,15 @@ static void r200SetTexFilter( radeonTexObjPtr t, GLenum minf, GLenum magf )
    }
 }
 
-static void r200SetTexBorderColor( radeonTexObjPtr t, GLubyte c[4] )
+static void r200SetTexBorderColor( radeonTexObjPtr t, const GLfloat color[4] )
 {
+   GLubyte c[4];
+   CLAMPED_FLOAT_TO_UBYTE(c[0], color[0]);
+   CLAMPED_FLOAT_TO_UBYTE(c[1], color[1]);
+   CLAMPED_FLOAT_TO_UBYTE(c[2], color[2]);
+   CLAMPED_FLOAT_TO_UBYTE(c[3], color[3]);
    t->pp_border_color = radeonPackColor( 4, c[0], c[1], c[2], c[3] );
 }
-
-
-
-
 
 static void r200TexEnv( GLcontext *ctx, GLenum target,
 			  GLenum pname, const GLfloat *param )
@@ -378,7 +379,7 @@ static void r200TexParameter( GLcontext *ctx, GLenum target,
       break;
 
    case GL_TEXTURE_BORDER_COLOR:
-      r200SetTexBorderColor( t, texObj->_BorderChan );
+      r200SetTexBorderColor( t, texObj->BorderColor );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:
@@ -481,7 +482,7 @@ static struct gl_texture_object *r200NewTextureObject(GLcontext * ctx,
    r200SetTexWrap( t, t->base.WrapS, t->base.WrapT, t->base.WrapR );
    r200SetTexMaxAnisotropy( t, t->base.MaxAnisotropy );
    r200SetTexFilter(t, t->base.MinFilter, t->base.MagFilter);
-   r200SetTexBorderColor(t, t->base._BorderChan);
+   r200SetTexBorderColor(t, t->base.BorderColor);
 
    return &t->base;
 }

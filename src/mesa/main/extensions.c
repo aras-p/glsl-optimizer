@@ -150,6 +150,7 @@ static const struct {
    { OFF, "GL_MESA_packed_depth_stencil",      F(MESA_packed_depth_stencil) },
    { OFF, "GL_MESA_resize_buffers",            F(MESA_resize_buffers) },
    { OFF, "GL_MESA_texture_array",             F(MESA_texture_array) },
+   { OFF, "GL_MESA_texture_signed_rgba",       F(MESA_texture_signed_rgba) },
    { OFF, "GL_MESA_ycbcr_texture",             F(MESA_ycbcr_texture) },
    { ON,  "GL_MESA_window_pos",                F(ARB_window_pos) },
    { OFF, "GL_NV_blend_square",                F(NV_blend_square) },
