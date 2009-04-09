@@ -755,7 +755,7 @@ trace_screen_fence_reference(struct pipe_screen *_screen,
 static int
 trace_screen_fence_signalled(struct pipe_screen *_screen,
                              struct pipe_fence_handle *fence,
-                             unsigned flag)
+                             unsigned flags)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
    struct pipe_screen *screen = tr_scr->screen;
@@ -765,9 +765,9 @@ trace_screen_fence_signalled(struct pipe_screen *_screen,
 
    trace_dump_arg(ptr, screen);
    trace_dump_arg(ptr, fence);
-   trace_dump_arg(uint, flag);
+   trace_dump_arg(uint, flags);
 
-   result = screen->fence_signalled(screen, fence, flag);
+   result = screen->fence_signalled(screen, fence, flags);
 
    trace_dump_ret(int, result);
 
@@ -780,7 +780,7 @@ trace_screen_fence_signalled(struct pipe_screen *_screen,
 static int
 trace_screen_fence_finish(struct pipe_screen *_screen,
                           struct pipe_fence_handle *fence,
-                          unsigned flag)
+                          unsigned flags)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
    struct pipe_screen *screen = tr_scr->screen;
@@ -790,9 +790,9 @@ trace_screen_fence_finish(struct pipe_screen *_screen,
 
    trace_dump_arg(ptr, screen);
    trace_dump_arg(ptr, fence);
-   trace_dump_arg(uint, flag);
+   trace_dump_arg(uint, flags);
 
-   result = screen->fence_finish(screen, fence, flag);
+   result = screen->fence_finish(screen, fence, flags);
 
    trace_dump_ret(int, result);
 
