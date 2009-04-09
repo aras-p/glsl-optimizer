@@ -87,7 +87,7 @@ struct pipe_screen {
     * Check if the given pipe_format is supported as a texture or
     * drawing surface.
     * \param tex_usage  bitmask of PIPE_TEXTURE_USAGE_*
-    * \param flags  bitmask of PIPE_TEXTURE_GEOM_*
+    * \param geom_flags  bitmask of PIPE_TEXTURE_GEOM_*
     */
    boolean (*is_format_supported)( struct pipe_screen *,
                                    enum pipe_format format,
@@ -102,7 +102,7 @@ struct pipe_screen {
                                            const struct pipe_texture *templat);
 
    /**
-    * Create a new texture object, using the given template info, but on top of 
+    * Create a new texture object, using the given template info, but on top of
     * existing memory.
     * 
     * It is assumed that the buffer data is layed out according to the expected
@@ -144,8 +144,10 @@ struct pipe_screen {
 
 
    /**
-    * Buffer management. Buffer attributes are mostly fixed over its lifetime.
-    *
+    * Create a new buffer.
+    * \param alignment  buffer start address alignment in bytes
+    * \param usage  bitmask of PIPE_BUFFER_USAGE_x
+    * \param size  size in bytes
     */
    struct pipe_buffer *(*buffer_create)( struct pipe_screen *screen,
                                          unsigned alignment,
