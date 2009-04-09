@@ -1394,8 +1394,9 @@ st_finalize_texture(GLcontext *ctx,
           stObj->pt->width[0] != firstImage->base.Width2 ||
           stObj->pt->height[0] != firstImage->base.Height2 ||
           stObj->pt->depth[0] != firstImage->base.Depth2 ||
-          stObj->pt->block.size/stObj->pt->block.width != cpp || /* Nominal bytes per pixel */
-          stObj->pt->compressed != firstImage->base.IsCompressed) {
+          /* Nominal bytes per pixel: */
+          stObj->pt->block.size / stObj->pt->block.width != cpp)
+      {
          pipe_texture_reference(&stObj->pt, NULL);
          ctx->st->dirty.st |= ST_NEW_FRAMEBUFFER;
       }
