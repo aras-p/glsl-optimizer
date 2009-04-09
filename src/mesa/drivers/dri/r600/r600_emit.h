@@ -34,7 +34,7 @@
  *   Jerome Glisse <j.glisse@gmail.com>
  */
 
-/* This files defines functions for accessing R300 hardware.
+/* This files defines functions for accessing R600 hardware.
  */
 #ifndef __R600_EMIT_H__
 #define __R600_EMIT_H__
@@ -165,7 +165,7 @@ void static INLINE end_3d(radeonContextPtr radeon)
 	}
 }
 
-void static INLINE cp_delay(r300ContextPtr rmesa, unsigned short count)
+void static INLINE cp_delay(r600ContextPtr rmesa, unsigned short count)
 {
 	BATCH_LOCALS(&rmesa->radeon);
 
@@ -216,19 +216,19 @@ void static INLINE cp_wait(radeonContextPtr radeon, unsigned char flags)
 	}
 }
 
-extern int r300EmitArrays(GLcontext * ctx);
+extern int r600EmitArrays(GLcontext * ctx);
 
-extern int r300PrimitiveType(r300ContextPtr rmesa, int prim);
-extern int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim);
+extern int r600PrimitiveType(r600ContextPtr rmesa, int prim);
+extern int r600NumVerts(r600ContextPtr rmesa, int num_verts, int prim);
 
-extern void r300EmitCacheFlush(r300ContextPtr rmesa);
+extern void r600EmitCacheFlush(r600ContextPtr rmesa);
 
-extern GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
+extern GLuint r600VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 				 int *inputs, GLint * tab, GLuint nr);
-extern GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr);
-extern GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead);
-extern GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead);
-extern GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten);
-extern GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten);
+extern GLuint r600VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr);
+extern GLuint r600VAPInputCntl0(GLcontext * ctx, GLuint InputsRead);
+extern GLuint r600VAPInputCntl1(GLcontext * ctx, GLuint InputsRead);
+extern GLuint r600VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten);
+extern GLuint r600VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten);
 
 #endif

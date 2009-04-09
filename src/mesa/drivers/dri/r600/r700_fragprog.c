@@ -189,13 +189,13 @@ static GLboolean transform_TEX(
 }
 
 
-static void update_params(r300ContextPtr r300, struct r500_fragment_program *fp)
+static void update_params(r600ContextPtr r600, struct r500_fragment_program *fp)
 {
 	struct gl_fragment_program *mp = &fp->mesa_program;
 
 	/* Ask Mesa nicely to fill in ParameterValues for us */
 	if (mp->Base.Parameters)
-		_mesa_load_state_parameters(r300->radeon.glCtx, mp->Base.Parameters);
+		_mesa_load_state_parameters(r600->radeon.glCtx, mp->Base.Parameters);
 }
 
 
@@ -218,7 +218,7 @@ static void insert_WPOS_trailer(struct r500_fragment_program_compiler *compiler)
 		return;
 
 	static gl_state_index tokens[STATE_LENGTH] = {
-		STATE_INTERNAL, STATE_R300_WINDOW_DIMENSION, 0, 0, 0
+		STATE_INTERNAL, STATE_R600_WINDOW_DIMENSION, 0, 0, 0
 	};
 	struct prog_instruction *fpi;
 	GLuint window_index;
@@ -419,7 +419,7 @@ static GLuint build_func(GLuint comparefunc)
  * fragment program.
  */
 static void build_state(
-	r300ContextPtr r300,
+	r600ContextPtr r600,
 	struct r500_fragment_program *fp,
 	struct r500_fragment_program_external_state *state)
 {
@@ -429,7 +429,7 @@ static void build_state(
 
 	for(unit = 0; unit < 16; ++unit) {
 		if (fp->mesa_program.Base.ShadowSamplers & (1 << unit)) {
-			struct gl_texture_object* tex = r300->radeon.glCtx->Texture.Unit[unit]._Current;
+			struct gl_texture_object* tex = r600->radeon.glCtx->Texture.Unit[unit]._Current;
 
 			state->unit[unit].depth_texture_mode = build_dtm(tex->DepthMode);
 			state->unit[unit].texture_compare_func = build_func(tex->CompareFunc);
@@ -439,12 +439,12 @@ static void build_state(
 
 static void dump_program(struct r500_fragment_program_code *code);
 
-void r500TranslateFragmentShader(r300ContextPtr r300,
+void r500TranslateFragmentShader(r600ContextPtr r600,
 				 struct r500_fragment_program *fp)
 {
 	struct r500_fragment_program_external_state state;
 
-	build_state(r300, fp, &state);
+	build_state(r600, fp, &state);
 	if (_mesa_memcmp(&fp->state, &state, sizeof(state))) {
 		/* TODO: cache compiled programs */
 		fp->translated = GL_FALSE;
@@ -454,10 +454,10 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 	if (!fp->translated) {
 		struct r500_fragment_program_compiler compiler;
 
-		compiler.r300 = r300;
+		compiler.r600 = r600;
 		compiler.fp = fp;
 		compiler.code = &fp->code;
-		compiler.program = _mesa_clone_program(r300->radeon.glCtx, &fp->mesa_program.Base);
+		compiler.program = _mesa_clone_program(r600->radeon.glCtx, &fp->mesa_program.Base);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			_mesa_printf("Compiler: Initial program:\n");
@@ -472,7 +472,7 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 			{ &radeonTransformDeriv, 0 },
 			{ &radeonTransformTrigScale, 0 }
 		};
-		radeonLocalTransform(r300->radeon.glCtx, compiler.program,
+		radeonLocalTransform(r600->radeon.glCtx, compiler.program,
 			4, transformations);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
@@ -486,7 +486,7 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 			.BuildSwizzle = &nqssadce_build_swizzle,
 			.RewriteDepthOut = GL_TRUE
 		};
-		radeonNqssaDce(r300->radeon.glCtx, compiler.program, &nqssadce);
+		radeonNqssaDce(r600->radeon.glCtx, compiler.program, &nqssadce);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			_mesa_printf("Compiler: after NqSSA-DCE:\n");
@@ -500,9 +500,9 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 		fp->mesa_program.Base.Parameters = compiler.program->Parameters;
 		compiler.program->Parameters = 0;
 
-		_mesa_reference_program(r300->radeon.glCtx, &compiler.program, 0);
+		_mesa_reference_program(r600->radeon.glCtx, &compiler.program, 0);
 
-		r300UpdateStateParameters(r300->radeon.glCtx, _NEW_PROGRAM);
+		r600UpdateStateParameters(r600->radeon.glCtx, _NEW_PROGRAM);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			if (fp->translated) {
@@ -513,7 +513,7 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 
 	}
 
-	update_params(r300, fp);
+	update_params(r600, fp);
 
 }
 

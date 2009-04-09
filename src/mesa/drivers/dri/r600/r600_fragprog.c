@@ -85,8 +85,8 @@ static GLboolean transform_TEX(
 	struct radeon_transform_context *t,
 	struct prog_instruction* orig_inst, void* data)
 {
-	struct r300_fragment_program_compiler *compiler =
-		(struct r300_fragment_program_compiler*)data;
+	struct r600_fragment_program_compiler *compiler =
+		(struct r600_fragment_program_compiler*)data;
 	struct prog_instruction inst = *orig_inst;
 	struct prog_instruction* tgt;
 	GLboolean destredirect = GL_FALSE;
@@ -127,7 +127,7 @@ static GLboolean transform_TEX(
 	 */
 	if (inst.Opcode != OPCODE_KIL && inst.TexSrcTarget == TEXTURE_RECT_INDEX) {
 		gl_state_index tokens[STATE_LENGTH] = {
-			STATE_INTERNAL, STATE_R300_TEXRECT_FACTOR, 0, 0,
+			STATE_INTERNAL, STATE_R600_TEXRECT_FACTOR, 0, 0,
 			0
 		};
 
@@ -247,13 +247,13 @@ static GLboolean transform_TEX(
 }
 
 
-static void update_params(r300ContextPtr r300, struct r300_fragment_program *fp)
+static void update_params(r600ContextPtr r600, struct r600_fragment_program *fp)
 {
 	struct gl_fragment_program *mp = &fp->mesa_program;
 
 	/* Ask Mesa nicely to fill in ParameterValues for us */
 	if (mp->Base.Parameters)
-		_mesa_load_state_parameters(r300->radeon.glCtx, mp->Base.Parameters);
+		_mesa_load_state_parameters(r600->radeon.glCtx, mp->Base.Parameters);
 }
 
 
@@ -268,7 +268,7 @@ static void update_params(r300ContextPtr r300, struct r300_fragment_program *fp)
  * \todo if/when r5xx supports the radeon_program architecture, this is a
  * likely candidate for code sharing.
  */
-static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
+static void insert_WPOS_trailer(struct r600_fragment_program_compiler *compiler)
 {
 	GLuint InputsRead = compiler->fp->mesa_program.Base.InputsRead;
 
@@ -276,7 +276,7 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 		return;
 
 	static gl_state_index tokens[STATE_LENGTH] = {
-		STATE_INTERNAL, STATE_R300_WINDOW_DIMENSION, 0, 0, 0
+		STATE_INTERNAL, STATE_R600_WINDOW_DIMENSION, 0, 0, 0
 	};
 	struct prog_instruction *fpi;
 	GLuint window_index;
@@ -382,9 +382,9 @@ static GLuint build_func(GLuint comparefunc)
  * fragment program.
  */
 static void build_state(
-	r300ContextPtr r300,
-	struct r300_fragment_program *fp,
-	struct r300_fragment_program_external_state *state)
+	r600ContextPtr r600,
+	struct r600_fragment_program *fp,
+	struct r600_fragment_program_external_state *state)
 {
 	int unit;
 
@@ -392,7 +392,7 @@ static void build_state(
 
 	for(unit = 0; unit < 16; ++unit) {
 		if (fp->mesa_program.Base.ShadowSamplers & (1 << unit)) {
-			struct gl_texture_object* tex = r300->radeon.glCtx->Texture.Unit[unit]._Current;
+			struct gl_texture_object* tex = r600->radeon.glCtx->Texture.Unit[unit]._Current;
 
 			state->unit[unit].depth_texture_mode = build_dtm(tex->DepthMode);
 			state->unit[unit].texture_compare_func = build_func(tex->CompareFunc);
@@ -401,12 +401,12 @@ static void build_state(
 }
 
 
-void r300TranslateFragmentShader(r300ContextPtr r300,
-				 struct r300_fragment_program *fp)
+void r600TranslateFragmentShader(r600ContextPtr r600,
+				 struct r600_fragment_program *fp)
 {
-	struct r300_fragment_program_external_state state;
+	struct r600_fragment_program_external_state state;
 
-	build_state(r300, fp, &state);
+	build_state(r600, fp, &state);
 	if (_mesa_memcmp(&fp->state, &state, sizeof(state))) {
 		/* TODO: cache compiled programs */
 		fp->translated = GL_FALSE;
@@ -414,12 +414,12 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 	}
 
 	if (!fp->translated) {
-		struct r300_fragment_program_compiler compiler;
+		struct r600_fragment_program_compiler compiler;
 
-		compiler.r300 = r300;
+		compiler.r600 = r600;
 		compiler.fp = fp;
 		compiler.code = &fp->code;
-		compiler.program = _mesa_clone_program(r300->radeon.glCtx, &fp->mesa_program.Base);
+		compiler.program = _mesa_clone_program(r600->radeon.glCtx, &fp->mesa_program.Base);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			_mesa_printf("Fragment Program: Initial program:\n");
@@ -434,7 +434,7 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 			{ &radeonTransformTrigSimple, 0 }
 		};
 		radeonLocalTransform(
-			r300->radeon.glCtx,
+			r600->radeon.glCtx,
 			compiler.program,
 			3, transformations);
 
@@ -445,18 +445,18 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 
 		struct radeon_nqssadce_descr nqssadce = {
 			.Init = &nqssadce_init,
-			.IsNativeSwizzle = &r300FPIsNativeSwizzle,
-			.BuildSwizzle = &r300FPBuildSwizzle,
+			.IsNativeSwizzle = &r600FPIsNativeSwizzle,
+			.BuildSwizzle = &r600FPBuildSwizzle,
 			.RewriteDepthOut = GL_TRUE
 		};
-		radeonNqssaDce(r300->radeon.glCtx, compiler.program, &nqssadce);
+		radeonNqssaDce(r600->radeon.glCtx, compiler.program, &nqssadce);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			_mesa_printf("Compiler: after NqSSA-DCE:\n");
 			_mesa_print_program(compiler.program);
 		}
 
-		if (!r300FragmentProgramEmit(&compiler))
+		if (!r600FragmentProgramEmit(&compiler))
 			fp->error = GL_TRUE;
 
 		/* Subtle: Rescue any parameters that have been added during transformations */
@@ -464,22 +464,22 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 		fp->mesa_program.Base.Parameters = compiler.program->Parameters;
 		compiler.program->Parameters = 0;
 
-		_mesa_reference_program(r300->radeon.glCtx, &compiler.program, NULL);
+		_mesa_reference_program(r600->radeon.glCtx, &compiler.program, NULL);
 
 		if (!fp->error)
 			fp->translated = GL_TRUE;
 		if (fp->error || (RADEON_DEBUG & DEBUG_PIXEL))
-			r300FragmentProgramDump(fp, &fp->code);
-		r300UpdateStateParameters(r300->radeon.glCtx, _NEW_PROGRAM);
+			r600FragmentProgramDump(fp, &fp->code);
+		r600UpdateStateParameters(r600->radeon.glCtx, _NEW_PROGRAM);
 	}
 
-	update_params(r300, fp);
+	update_params(r600, fp);
 }
 
 /* just some random things... */
-void r300FragmentProgramDump(
-	struct r300_fragment_program *fp,
-	struct r300_fragment_program_code *code)
+void r600FragmentProgramDump(
+	struct r600_fragment_program *fp,
+	struct r600_fragment_program_code *code)
 {
 	int n, i, j;
 	static int pc = 0;
@@ -505,18 +505,18 @@ void r300FragmentProgramDump(
 				const char *instr;
 
 				switch ((code->tex.
-					 inst[i] >> R300_TEX_INST_SHIFT) &
+					 inst[i] >> R600_TEX_INST_SHIFT) &
 					15) {
-				case R300_TEX_OP_LD:
+				case R600_TEX_OP_LD:
 					instr = "TEX";
 					break;
-				case R300_TEX_OP_KIL:
+				case R600_TEX_OP_KIL:
 					instr = "KIL";
 					break;
-				case R300_TEX_OP_TXP:
+				case R600_TEX_OP_TXP:
 					instr = "TXP";
 					break;
-				case R300_TEX_OP_TXB:
+				case R600_TEX_OP_TXB:
 					instr = "TXB";
 					break;
 				default:
@@ -527,13 +527,13 @@ void r300FragmentProgramDump(
 					"    %s t%i, %c%i, texture[%i]   (%08x)\n",
 					instr,
 					(code->tex.
-					 inst[i] >> R300_DST_ADDR_SHIFT) & 31,
+					 inst[i] >> R600_DST_ADDR_SHIFT) & 31,
 					't',
 					(code->tex.
-					 inst[i] >> R300_SRC_ADDR_SHIFT) & 31,
+					 inst[i] >> R600_SRC_ADDR_SHIFT) & 31,
 					(code->tex.
-					 inst[i] & R300_TEX_ID_MASK) >>
-					R300_TEX_ID_SHIFT,
+					 inst[i] & R600_TEX_ID_MASK) >>
+					R600_TEX_ID_SHIFT,
 					code->tex.inst[i]);
 			}
 		}
@@ -559,45 +559,45 @@ void r300FragmentProgramDump(
 			dstc[0] = 0;
 			sprintf(flags, "%s%s%s",
 				(code->alu.inst[i].
-				 inst1 & R300_ALU_DSTC_REG_X) ? "x" : "",
+				 inst1 & R600_ALU_DSTC_REG_X) ? "x" : "",
 				(code->alu.inst[i].
-				 inst1 & R300_ALU_DSTC_REG_Y) ? "y" : "",
+				 inst1 & R600_ALU_DSTC_REG_Y) ? "y" : "",
 				(code->alu.inst[i].
-				 inst1 & R300_ALU_DSTC_REG_Z) ? "z" : "");
+				 inst1 & R600_ALU_DSTC_REG_Z) ? "z" : "");
 			if (flags[0] != 0) {
 				sprintf(dstc, "t%i.%s ",
 					(code->alu.inst[i].
-					 inst1 >> R300_ALU_DSTC_SHIFT) & 31,
+					 inst1 >> R600_ALU_DSTC_SHIFT) & 31,
 					flags);
 			}
 			sprintf(flags, "%s%s%s",
 				(code->alu.inst[i].
-				 inst1 & R300_ALU_DSTC_OUTPUT_X) ? "x" : "",
+				 inst1 & R600_ALU_DSTC_OUTPUT_X) ? "x" : "",
 				(code->alu.inst[i].
-				 inst1 & R300_ALU_DSTC_OUTPUT_Y) ? "y" : "",
+				 inst1 & R600_ALU_DSTC_OUTPUT_Y) ? "y" : "",
 				(code->alu.inst[i].
-				 inst1 & R300_ALU_DSTC_OUTPUT_Z) ? "z" : "");
+				 inst1 & R600_ALU_DSTC_OUTPUT_Z) ? "z" : "");
 			if (flags[0] != 0) {
 				sprintf(tmp, "o%i.%s",
 					(code->alu.inst[i].
-					 inst1 >> R300_ALU_DSTC_SHIFT) & 31,
+					 inst1 >> R600_ALU_DSTC_SHIFT) & 31,
 					flags);
 				strcat(dstc, tmp);
 			}
 
 			dsta[0] = 0;
-			if (code->alu.inst[i].inst3 & R300_ALU_DSTA_REG) {
+			if (code->alu.inst[i].inst3 & R600_ALU_DSTA_REG) {
 				sprintf(dsta, "t%i.w ",
 					(code->alu.inst[i].
-					 inst3 >> R300_ALU_DSTA_SHIFT) & 31);
+					 inst3 >> R600_ALU_DSTA_SHIFT) & 31);
 			}
-			if (code->alu.inst[i].inst3 & R300_ALU_DSTA_OUTPUT) {
+			if (code->alu.inst[i].inst3 & R600_ALU_DSTA_OUTPUT) {
 				sprintf(tmp, "o%i.w ",
 					(code->alu.inst[i].
-					 inst3 >> R300_ALU_DSTA_SHIFT) & 31);
+					 inst3 >> R600_ALU_DSTA_SHIFT) & 31);
 				strcat(dsta, tmp);
 			}
-			if (code->alu.inst[i].inst3 & R300_ALU_DSTA_DEPTH) {
+			if (code->alu.inst[i].inst3 & R600_ALU_DSTA_DEPTH) {
 				strcat(dsta, "Z");
 			}
 
@@ -617,19 +617,19 @@ void r300FragmentProgramDump(
 				d = regc & 31;
 				if (d < 12) {
 					switch (d % 4) {
-					case R300_ALU_ARGC_SRC0C_XYZ:
+					case R600_ALU_ARGC_SRC0C_XYZ:
 						sprintf(buf, "%s.xyz",
 							srcc[d / 4]);
 						break;
-					case R300_ALU_ARGC_SRC0C_XXX:
+					case R600_ALU_ARGC_SRC0C_XXX:
 						sprintf(buf, "%s.xxx",
 							srcc[d / 4]);
 						break;
-					case R300_ALU_ARGC_SRC0C_YYY:
+					case R600_ALU_ARGC_SRC0C_YYY:
 						sprintf(buf, "%s.yyy",
 							srcc[d / 4]);
 						break;
-					case R300_ALU_ARGC_SRC0C_ZZZ:
+					case R600_ALU_ARGC_SRC0C_ZZZ:
 						sprintf(buf, "%s.zzz",
 							srcc[d / 4]);
 						break;

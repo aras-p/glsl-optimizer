@@ -47,11 +47,11 @@
 
 struct r500_fragment_program;
 
-extern void r500TranslateFragmentShader(r300ContextPtr r300,
+extern void r500TranslateFragmentShader(r600ContextPtr r600,
 					struct r500_fragment_program *fp);
 
 struct r500_fragment_program_compiler {
-	r300ContextPtr r300;
+	r600ContextPtr r600;
 	struct r500_fragment_program *fp;
 	struct r500_fragment_program_code *code;
 	struct gl_program *program;

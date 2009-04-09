@@ -48,9 +48,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/mtypes.h"
 #include "main/colormac.h"
 
-struct r300_context;
-typedef struct r300_context r300ContextRec;
-typedef struct r300_context *r300ContextPtr;
+struct r600_context;
+typedef struct r600_context r600ContextRec;
+typedef struct r600_context *r600ContextPtr;
 
 
 #include "main/mm.h"
@@ -80,116 +80,116 @@ typedef struct r300_context *r300ContextPtr;
 
 /* The blit width for texture uploads
  */
-#define R300_BLIT_WIDTH_BYTES 1024
-#define R300_MAX_TEXTURE_UNITS 8
+#define R600_BLIT_WIDTH_BYTES 1024
+#define R600_MAX_TEXTURE_UNITS 8
 
-struct r300_texture_state {
+struct r600_texture_state {
 	int tc_count;		/* number of incoming texture coordinates from VAP */
 };
 
 
-#define R300_VPT_CMD_0		0
-#define R300_VPT_XSCALE		1
-#define R300_VPT_XOFFSET	2
-#define R300_VPT_YSCALE		3
-#define R300_VPT_YOFFSET	4
-#define R300_VPT_ZSCALE		5
-#define R300_VPT_ZOFFSET	6
-#define R300_VPT_CMDSIZE	7
+#define R600_VPT_CMD_0		0
+#define R600_VPT_XSCALE		1
+#define R600_VPT_XOFFSET	2
+#define R600_VPT_YSCALE		3
+#define R600_VPT_YOFFSET	4
+#define R600_VPT_ZSCALE		5
+#define R600_VPT_ZOFFSET	6
+#define R600_VPT_CMDSIZE	7
 
-#define R300_VIR_CMD_0		0	/* vir is variable size (at least 1) */
-#define R300_VIR_CNTL_0		1
-#define R300_VIR_CNTL_1		2
-#define R300_VIR_CNTL_2		3
-#define R300_VIR_CNTL_3		4
-#define R300_VIR_CNTL_4		5
-#define R300_VIR_CNTL_5		6
-#define R300_VIR_CNTL_6		7
-#define R300_VIR_CNTL_7		8
-#define R300_VIR_CMDSIZE	9
+#define R600_VIR_CMD_0		0	/* vir is variable size (at least 1) */
+#define R600_VIR_CNTL_0		1
+#define R600_VIR_CNTL_1		2
+#define R600_VIR_CNTL_2		3
+#define R600_VIR_CNTL_3		4
+#define R600_VIR_CNTL_4		5
+#define R600_VIR_CNTL_5		6
+#define R600_VIR_CNTL_6		7
+#define R600_VIR_CNTL_7		8
+#define R600_VIR_CMDSIZE	9
 
-#define R300_VIC_CMD_0		0
-#define R300_VIC_CNTL_0		1
-#define R300_VIC_CNTL_1		2
-#define R300_VIC_CMDSIZE	3
+#define R600_VIC_CMD_0		0
+#define R600_VIC_CNTL_0		1
+#define R600_VIC_CNTL_1		2
+#define R600_VIC_CMDSIZE	3
 
-#define R300_VOF_CMD_0		0
-#define R300_VOF_CNTL_0		1
-#define R300_VOF_CNTL_1		2
-#define R300_VOF_CMDSIZE	3
+#define R600_VOF_CMD_0		0
+#define R600_VOF_CNTL_0		1
+#define R600_VOF_CNTL_1		2
+#define R600_VOF_CMDSIZE	3
 
-#define R300_PVS_CMD_0		0
-#define R300_PVS_CNTL_1		1
-#define R300_PVS_CNTL_2		2
-#define R300_PVS_CNTL_3		3
-#define R300_PVS_CMDSIZE	4
+#define R600_PVS_CMD_0		0
+#define R600_PVS_CNTL_1		1
+#define R600_PVS_CNTL_2		2
+#define R600_PVS_CNTL_3		3
+#define R600_PVS_CMDSIZE	4
 
-#define R300_GB_MISC_CMD_0		0
-#define R300_GB_MISC_MSPOS_0		1
-#define R300_GB_MISC_MSPOS_1		2
-#define R300_GB_MISC_TILE_CONFIG	3
-#define R300_GB_MISC_SELECT		4
-#define R300_GB_MISC_AA_CONFIG		5
-#define R300_GB_MISC_CMDSIZE		6
+#define R600_GB_MISC_CMD_0		0
+#define R600_GB_MISC_MSPOS_0		1
+#define R600_GB_MISC_MSPOS_1		2
+#define R600_GB_MISC_TILE_CONFIG	3
+#define R600_GB_MISC_SELECT		4
+#define R600_GB_MISC_AA_CONFIG		5
+#define R600_GB_MISC_CMDSIZE		6
 
-#define R300_TXE_CMD_0		0
-#define R300_TXE_ENABLE		1
-#define R300_TXE_CMDSIZE	2
+#define R600_TXE_CMD_0		0
+#define R600_TXE_ENABLE		1
+#define R600_TXE_CMDSIZE	2
 
-#define R300_PS_CMD_0		0
-#define R300_PS_POINTSIZE	1
-#define R300_PS_CMDSIZE		2
+#define R600_PS_CMD_0		0
+#define R600_PS_POINTSIZE	1
+#define R600_PS_CMDSIZE		2
 
-#define R300_ZBS_CMD_0		0
-#define R300_ZBS_T_FACTOR	1
-#define R300_ZBS_T_CONSTANT	2
-#define R300_ZBS_W_FACTOR	3
-#define R300_ZBS_W_CONSTANT	4
-#define R300_ZBS_CMDSIZE	5
+#define R600_ZBS_CMD_0		0
+#define R600_ZBS_T_FACTOR	1
+#define R600_ZBS_T_CONSTANT	2
+#define R600_ZBS_W_FACTOR	3
+#define R600_ZBS_W_CONSTANT	4
+#define R600_ZBS_CMDSIZE	5
 
-#define R300_CUL_CMD_0		0
-#define R300_CUL_CULL		1
-#define R300_CUL_CMDSIZE	2
+#define R600_CUL_CMD_0		0
+#define R600_CUL_CULL		1
+#define R600_CUL_CMDSIZE	2
 
-#define R300_RC_CMD_0		0
-#define R300_RC_CNTL_0		1
-#define R300_RC_CNTL_1		2
-#define R300_RC_CMDSIZE		3
+#define R600_RC_CMD_0		0
+#define R600_RC_CNTL_0		1
+#define R600_RC_CNTL_1		2
+#define R600_RC_CMDSIZE		3
 
-#define R300_RI_CMD_0		0
-#define R300_RI_INTERP_0	1
-#define R300_RI_INTERP_1	2
-#define R300_RI_INTERP_2	3
-#define R300_RI_INTERP_3	4
-#define R300_RI_INTERP_4	5
-#define R300_RI_INTERP_5	6
-#define R300_RI_INTERP_6	7
-#define R300_RI_INTERP_7	8
-#define R300_RI_CMDSIZE		9
+#define R600_RI_CMD_0		0
+#define R600_RI_INTERP_0	1
+#define R600_RI_INTERP_1	2
+#define R600_RI_INTERP_2	3
+#define R600_RI_INTERP_3	4
+#define R600_RI_INTERP_4	5
+#define R600_RI_INTERP_5	6
+#define R600_RI_INTERP_6	7
+#define R600_RI_INTERP_7	8
+#define R600_RI_CMDSIZE		9
 
 #define R500_RI_CMDSIZE	       17
 
-#define R300_RR_CMD_0		0	/* rr is variable size (at least 1) */
-#define R300_RR_INST_0		1
-#define R300_RR_INST_1		2
-#define R300_RR_INST_2		3
-#define R300_RR_INST_3		4
-#define R300_RR_INST_4		5
-#define R300_RR_INST_5		6
-#define R300_RR_INST_6		7
-#define R300_RR_INST_7		8
-#define R300_RR_CMDSIZE		9
+#define R600_RR_CMD_0		0	/* rr is variable size (at least 1) */
+#define R600_RR_INST_0		1
+#define R600_RR_INST_1		2
+#define R600_RR_INST_2		3
+#define R600_RR_INST_3		4
+#define R600_RR_INST_4		5
+#define R600_RR_INST_5		6
+#define R600_RR_INST_6		7
+#define R600_RR_INST_7		8
+#define R600_RR_CMDSIZE		9
 
-#define R300_FP_CMD_0		0
-#define R300_FP_CNTL0		1
-#define R300_FP_CNTL1		2
-#define R300_FP_CNTL2		3
-#define R300_FP_CMD_1		4
-#define R300_FP_NODE0		5
-#define R300_FP_NODE1		6
-#define R300_FP_NODE2		7
-#define R300_FP_NODE3		8
-#define R300_FP_CMDSIZE		9
+#define R600_FP_CMD_0		0
+#define R600_FP_CNTL0		1
+#define R600_FP_CNTL1		2
+#define R600_FP_CNTL2		3
+#define R600_FP_CMD_1		4
+#define R600_FP_NODE0		5
+#define R600_FP_NODE1		6
+#define R600_FP_NODE2		7
+#define R600_FP_NODE3		8
+#define R600_FP_CMDSIZE		9
 
 #define R500_FP_CMD_0           0
 #define R500_FP_CNTL            1
@@ -202,107 +202,107 @@ struct r300_texture_state {
 #define R500_FP_FC_CNTL         8
 #define R500_FP_CMDSIZE         9
 
-#define R300_FPT_CMD_0		0
-#define R300_FPT_INSTR_0	1
-#define R300_FPT_CMDSIZE	65
+#define R600_FPT_CMD_0		0
+#define R600_FPT_INSTR_0	1
+#define R600_FPT_CMDSIZE	65
 
-#define R300_FPI_CMD_0		0
-#define R300_FPI_INSTR_0	1
-#define R300_FPI_CMDSIZE	65
+#define R600_FPI_CMD_0		0
+#define R600_FPI_INSTR_0	1
+#define R600_FPI_CMDSIZE	65
 /* R500 has space for 512 instructions - 6 dwords per instruction */
 #define R500_FPI_CMDSIZE	(512*6+1)
 
-#define R300_FPP_CMD_0		0
-#define R300_FPP_PARAM_0	1
-#define R300_FPP_CMDSIZE	(32*4+1)
+#define R600_FPP_CMD_0		0
+#define R600_FPP_PARAM_0	1
+#define R600_FPP_CMDSIZE	(32*4+1)
 /* R500 has spcae for 256 constants - 4 dwords per constant */
 #define R500_FPP_CMDSIZE	(256*4+1)
 
-#define R300_FOGS_CMD_0		0
-#define R300_FOGS_STATE		1
-#define R300_FOGS_CMDSIZE	2
+#define R600_FOGS_CMD_0		0
+#define R600_FOGS_STATE		1
+#define R600_FOGS_CMDSIZE	2
 
-#define R300_FOGC_CMD_0		0
-#define R300_FOGC_R		1
-#define R300_FOGC_G		2
-#define R300_FOGC_B		3
-#define R300_FOGC_CMDSIZE	4
+#define R600_FOGC_CMD_0		0
+#define R600_FOGC_R		1
+#define R600_FOGC_G		2
+#define R600_FOGC_B		3
+#define R600_FOGC_CMDSIZE	4
 
-#define R300_FOGP_CMD_0		0
-#define R300_FOGP_SCALE		1
-#define R300_FOGP_START		2
-#define R300_FOGP_CMDSIZE	3
+#define R600_FOGP_CMD_0		0
+#define R600_FOGP_SCALE		1
+#define R600_FOGP_START		2
+#define R600_FOGP_CMDSIZE	3
 
-#define R300_AT_CMD_0		0
-#define R300_AT_ALPHA_TEST	1
-#define R300_AT_UNKNOWN		2
-#define R300_AT_CMDSIZE		3
+#define R600_AT_CMD_0		0
+#define R600_AT_ALPHA_TEST	1
+#define R600_AT_UNKNOWN		2
+#define R600_AT_CMDSIZE		3
 
-#define R300_BLD_CMD_0		0
-#define R300_BLD_CBLEND		1
-#define R300_BLD_ABLEND		2
-#define R300_BLD_CMDSIZE	3
+#define R600_BLD_CMD_0		0
+#define R600_BLD_CBLEND		1
+#define R600_BLD_ABLEND		2
+#define R600_BLD_CMDSIZE	3
 
-#define R300_CMK_CMD_0		0
-#define R300_CMK_COLORMASK	1
-#define R300_CMK_CMDSIZE	2
+#define R600_CMK_CMD_0		0
+#define R600_CMK_COLORMASK	1
+#define R600_CMK_CMDSIZE	2
 
-#define R300_CB_CMD_0		0
-#define R300_CB_OFFSET		1
-#define R300_CB_CMD_1		2
-#define R300_CB_PITCH		3
-#define R300_CB_CMDSIZE		4
+#define R600_CB_CMD_0		0
+#define R600_CB_OFFSET		1
+#define R600_CB_CMD_1		2
+#define R600_CB_PITCH		3
+#define R600_CB_CMDSIZE		4
 
-#define R300_ZS_CMD_0		0
-#define R300_ZS_CNTL_0		1
-#define R300_ZS_CNTL_1		2
-#define R300_ZS_CNTL_2		3
-#define R300_ZS_CMDSIZE		4
+#define R600_ZS_CMD_0		0
+#define R600_ZS_CNTL_0		1
+#define R600_ZS_CNTL_1		2
+#define R600_ZS_CNTL_2		3
+#define R600_ZS_CMDSIZE		4
 
-#define R300_ZB_CMD_0		0
-#define R300_ZB_OFFSET		1
-#define R300_ZB_PITCH		2
-#define R300_ZB_CMDSIZE		3
+#define R600_ZB_CMD_0		0
+#define R600_ZB_OFFSET		1
+#define R600_ZB_PITCH		2
+#define R600_ZB_CMDSIZE		3
 
-#define R300_VAP_CNTL_FLUSH     0
-#define R300_VAP_CNTL_FLUSH_1   1
-#define R300_VAP_CNTL_CMD       2
-#define R300_VAP_CNTL_INSTR     3
-#define R300_VAP_CNTL_SIZE      4
+#define R600_VAP_CNTL_FLUSH     0
+#define R600_VAP_CNTL_FLUSH_1   1
+#define R600_VAP_CNTL_CMD       2
+#define R600_VAP_CNTL_INSTR     3
+#define R600_VAP_CNTL_SIZE      4
 
-#define R300_VPI_CMD_0		0
-#define R300_VPI_INSTR_0	1
-#define R300_VPI_CMDSIZE	1025	/* 256 16 byte instructions */
+#define R600_VPI_CMD_0		0
+#define R600_VPI_INSTR_0	1
+#define R600_VPI_CMDSIZE	1025	/* 256 16 byte instructions */
 
-#define R300_VPP_CMD_0		0
-#define R300_VPP_PARAM_0	1
-#define R300_VPP_CMDSIZE	1025	/* 256 4-component parameters */
+#define R600_VPP_CMD_0		0
+#define R600_VPP_PARAM_0	1
+#define R600_VPP_CMDSIZE	1025	/* 256 4-component parameters */
 
-#define R300_VPUCP_CMD_0		0
-#define R300_VPUCP_X            1
-#define R300_VPUCP_Y            2
-#define R300_VPUCP_Z            3
-#define R300_VPUCP_W            4
-#define R300_VPUCP_CMDSIZE	5	/* 256 4-component parameters */
+#define R600_VPUCP_CMD_0		0
+#define R600_VPUCP_X            1
+#define R600_VPUCP_Y            2
+#define R600_VPUCP_Z            3
+#define R600_VPUCP_W            4
+#define R600_VPUCP_CMDSIZE	5	/* 256 4-component parameters */
 
-#define R300_VPS_CMD_0		0
-#define R300_VPS_ZERO_0		1
-#define R300_VPS_ZERO_1		2
-#define R300_VPS_POINTSIZE	3
-#define R300_VPS_ZERO_3		4
-#define R300_VPS_CMDSIZE	5
+#define R600_VPS_CMD_0		0
+#define R600_VPS_ZERO_0		1
+#define R600_VPS_ZERO_1		2
+#define R600_VPS_POINTSIZE	3
+#define R600_VPS_ZERO_3		4
+#define R600_VPS_CMDSIZE	5
 
 	/* the layout is common for all fields inside tex */
-#define R300_TEX_CMD_0		0
-#define R300_TEX_VALUE_0	1
+#define R600_TEX_CMD_0		0
+#define R600_TEX_VALUE_0	1
 /* We don't really use this, instead specify mtu+1 dynamically
-#define R300_TEX_CMDSIZE	(MAX_TEXTURE_UNITS+1)
+#define R600_TEX_CMDSIZE	(MAX_TEXTURE_UNITS+1)
 */
 
 /**
  * Cache for hardware register state.
  */
-struct r300_hw_state {
+struct r600_hw_state {
 	struct radeon_state_atom vpt;	/* viewport (1D98) */
 	struct radeon_state_atom vap_cntl;
         struct radeon_state_atom vap_index_offset; /* 0x208c r5xx only */
@@ -388,7 +388,7 @@ struct r300_hw_state {
 	} tex;
 	struct radeon_state_atom txe;	/* tex enable (4104) */
 
-	radeonTexObj *textures[R300_MAX_TEXTURE_UNITS];
+	radeonTexObj *textures[R600_MAX_TEXTURE_UNITS];
 };
 
 /**
@@ -398,16 +398,16 @@ struct r300_hw_state {
 /* Vertex shader state */
 
 /* Perhaps more if we store programs in vmem? */
-/* drm_r300_cmd_header_t->vpu->count is unsigned char */
+/* drm_r600_cmd_header_t->vpu->count is unsigned char */
 #define VSF_MAX_FRAGMENT_LENGTH (255*4)
 
 /* Can be tested with colormat currently. */
 #define VSF_MAX_FRAGMENT_TEMPS (14)
 
-#define STATE_R300_WINDOW_DIMENSION (STATE_INTERNAL_DRIVER+0)
-#define STATE_R300_TEXRECT_FACTOR (STATE_INTERNAL_DRIVER+1)
+#define STATE_R600_WINDOW_DIMENSION (STATE_INTERNAL_DRIVER+0)
+#define STATE_R600_TEXRECT_FACTOR (STATE_INTERNAL_DRIVER+1)
 
-struct r300_vertex_shader_fragment {
+struct r600_vertex_shader_fragment {
 	int length;
 	union {
 		GLuint d[VSF_MAX_FRAGMENT_LENGTH];
@@ -416,39 +416,39 @@ struct r300_vertex_shader_fragment {
 	} body;
 };
 
-struct r300_vertex_shader_state {
-	struct r300_vertex_shader_fragment program;
+struct r600_vertex_shader_state {
+	struct r600_vertex_shader_fragment program;
 };
 
 extern int hw_tcl_on;
 
 #define COLOR_IS_RGBA
-#define TAG(x) r300##x
+#define TAG(x) r600##x
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
 //#define CURRENT_VERTEX_SHADER(ctx) (ctx->VertexProgram._Current)
-#define CURRENT_VERTEX_SHADER(ctx) (R300_CONTEXT(ctx)->selected_vp)
+#define CURRENT_VERTEX_SHADER(ctx) (R600_CONTEXT(ctx)->selected_vp)
 
 /* Should but doesnt work */
-//#define CURRENT_VERTEX_SHADER(ctx) (R300_CONTEXT(ctx)->curr_vp)
+//#define CURRENT_VERTEX_SHADER(ctx) (R600_CONTEXT(ctx)->curr_vp)
 
-/* r300_vertex_shader_state and r300_vertex_program should probably be merged together someday.
+/* r600_vertex_shader_state and r600_vertex_program should probably be merged together someday.
  * Keeping them them seperate for now should ensure fixed pipeline keeps functioning properly.
  */
 
-struct r300_vertex_program_key {
+struct r600_vertex_program_key {
 	GLuint InputsRead;
 	GLuint OutputsWritten;
 	GLuint OutputsAdded;
 };
 
-struct r300_vertex_program {
-	struct r300_vertex_program *next;
-	struct r300_vertex_program_key key;
+struct r600_vertex_program {
+	struct r600_vertex_program *next;
+	struct r600_vertex_program_key key;
 	int translated;
 
-	struct r300_vertex_shader_fragment program;
+	struct r600_vertex_shader_fragment program;
 
 	int pos_end;
 	int num_temporaries;	/* Number of temp vars used by program */
@@ -460,10 +460,10 @@ struct r300_vertex_program {
 	int use_ref_count;
 };
 
-struct r300_vertex_program_cont {
+struct r600_vertex_program_cont {
 	struct gl_vertex_program mesa_program;	/* Must be first */
-	struct r300_vertex_shader_fragment params;
-	struct r300_vertex_program *progs;
+	struct r600_vertex_shader_fragment params;
+	struct r600_vertex_program *progs;
 };
 
 #define PFS_MAX_ALU_INST	64
@@ -472,13 +472,13 @@ struct r300_vertex_program_cont {
 #define PFS_NUM_TEMP_REGS	32
 #define PFS_NUM_CONST_REGS	16
 
-struct r300_pfs_compile_state;
+struct r600_pfs_compile_state;
 
 
 /**
  * Stores state that influences the compilation of a fragment program.
  */
-struct r300_fragment_program_external_state {
+struct r600_fragment_program_external_state {
 	struct {
 		/**
 		 * If the sampler is used as a shadow sampler,
@@ -502,7 +502,7 @@ struct r300_fragment_program_external_state {
 };
 
 
-struct r300_fragment_program_node {
+struct r600_fragment_program_node {
 	int tex_offset; /**< first tex instruction */
 	int tex_end; /**< last tex instruction, relative to tex_offset */
 	int alu_offset; /**< first ALU instruction */
@@ -511,9 +511,9 @@ struct r300_fragment_program_node {
 };
 
 /**
- * Stores an R300 fragment program in its compiled-to-hardware form.
+ * Stores an R600 fragment program in its compiled-to-hardware form.
  */
-struct r300_fragment_program_code {
+struct r600_fragment_program_code {
 	struct {
 		int length; /**< total # of texture instructions used */
 		GLuint inst[PFS_MAX_TEX_INST];
@@ -529,7 +529,7 @@ struct r300_fragment_program_code {
 		} inst[PFS_MAX_ALU_INST];
 	} alu;
 
-	struct r300_fragment_program_node node[4];
+	struct r600_fragment_program_node node[4];
 	int cur_node;
 	int first_node_has_tex;
 
@@ -547,14 +547,14 @@ struct r300_fragment_program_code {
  * Store everything about a fragment program that is needed
  * to render with that program.
  */
-struct r300_fragment_program {
+struct r600_fragment_program {
 	struct gl_fragment_program mesa_program;
 
 	GLboolean translated;
 	GLboolean error;
 
-	struct r300_fragment_program_external_state state;
-	struct r300_fragment_program_code code;
+	struct r600_fragment_program_external_state state;
+	struct r600_fragment_program_code code;
 
 	GLboolean WritesDepth;
 	GLuint optimization;
@@ -623,30 +623,30 @@ struct r500_fragment_program {
 	GLuint optimization;
 };
 
-#define R300_MAX_AOS_ARRAYS		16
+#define R600_MAX_AOS_ARRAYS		16
 
 #define REG_COORDS	0
 #define REG_COLOR0	1
 #define REG_TEX0	2
 
-struct r300_state {
-	struct r300_texture_state texture;
+struct r600_state {
+	struct r600_texture_state texture;
 	int sw_tcl_inputs[VERT_ATTRIB_MAX];
-	struct r300_vertex_shader_state vertex_shader;
+	struct r600_vertex_shader_state vertex_shader;
 
 
-	DECLARE_RENDERINPUTS(render_inputs_bitset);	/* actual render inputs that R300 was configured for.
+	DECLARE_RENDERINPUTS(render_inputs_bitset);	/* actual render inputs that R600 was configured for.
 							   They are the same as tnl->render_inputs for fixed pipeline */
 
 };
 
-#define R300_FALLBACK_NONE 0
-#define R300_FALLBACK_TCL 1
-#define R300_FALLBACK_RAST 2
+#define R600_FALLBACK_NONE 0
+#define R600_FALLBACK_TCL 1
+#define R600_FALLBACK_RAST 2
 
-/* r300_swtcl.c
+/* r600_swtcl.c
  */
-struct r300_swtcl_info {
+struct r600_swtcl_info {
   /*
     * Offset of the 4UB color data within a hardware (swtcl) vertex.
     */
@@ -670,16 +670,16 @@ struct r300_swtcl_info {
 
 
 /**
- * \brief R300 context structure.
+ * \brief R600 context structure.
  */
-struct r300_context {
+struct r600_context {
 	struct radeon_context radeon;	/* parent class, must be first */
 
-	struct r300_hw_state hw;
+	struct r600_hw_state hw;
 
-	struct r300_state state;
+	struct r600_state state;
 	struct gl_vertex_program *curr_vp;
-	struct r300_vertex_program *selected_vp;
+	struct r600_vertex_program *selected_vp;
 
 	/* Vertex buffers
 	 */
@@ -688,21 +688,21 @@ struct r300_context {
 
 	GLboolean disable_lowimpact_fallback;
 
-	struct r300_swtcl_info swtcl;
+	struct r600_swtcl_info swtcl;
 	GLboolean vap_flush_needed;
 };
 
-#define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))
+#define R600_CONTEXT(ctx)		((r600ContextPtr)(ctx->DriverCtx))
 
-extern void r300DestroyContext(__DRIcontextPrivate * driContextPriv);
-extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
+extern void r600DestroyContext(__DRIcontextPrivate * driContextPriv);
+extern GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 				   __DRIcontextPrivate * driContextPriv,
 				   void *sharedContextPrivate);
 
-extern void r300SelectVertexShader(r300ContextPtr r300);
-extern void r300InitShaderFuncs(struct dd_function_table *functions);
-extern int r300VertexProgUpdateParams(GLcontext * ctx,
-				      struct r300_vertex_program_cont *vp,
+extern void r600SelectVertexShader(r600ContextPtr r600);
+extern void r600InitShaderFuncs(struct dd_function_table *functions);
+extern int r600VertexProgUpdateParams(GLcontext * ctx,
+				      struct r600_vertex_program_cont *vp,
 				      float *dst);
 
 #define RADEON_D_CAPTURE 0
@@ -710,7 +710,7 @@ extern int r300VertexProgUpdateParams(GLcontext * ctx,
 #define RADEON_D_PLAYBACK_RAW 2
 #define RADEON_D_T 3
 
-#define r300PackFloat32 radeonPackFloat32
-#define r300PackFloat24 radeonPackFloat24
+#define r600PackFloat32 radeonPackFloat32
+#define r600PackFloat24 radeonPackFloat24
 
-#endif				/* __R300_CONTEXT_H__ */
+#endif				/* __R600_CONTEXT_H__ */

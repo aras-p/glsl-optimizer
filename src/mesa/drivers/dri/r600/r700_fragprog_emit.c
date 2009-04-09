@@ -308,7 +308,7 @@ GLboolean r500FragmentProgramEmit(struct r500_fragment_program_compiler *compile
 	code->inst_offset = 0;
 	code->inst_end = -1;
 
-	if (!radeonPairProgram(compiler->r300->radeon.glCtx, compiler->program, &pair_handler, compiler))
+	if (!radeonPairProgram(compiler->r600->radeon.glCtx, compiler->program, &pair_handler, compiler))
 		return GL_FALSE;
 
 	if ((code->inst[code->inst_end].inst0 & R500_INST_TYPE_MASK) != R500_INST_TYPE_OUT) {

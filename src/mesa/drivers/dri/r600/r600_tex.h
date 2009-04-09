@@ -35,20 +35,20 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __r600_TEX_H__
 #define __r600_TEX_H__
 
-extern void r300SetDepthTexMode(struct gl_texture_object *tObj);
+extern void r600SetDepthTexMode(struct gl_texture_object *tObj);
 
-extern void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target,
+extern void r600SetTexBuffer(__DRIcontext *pDRICtx, GLint target,
 			     __DRIdrawable *dPriv);
 
-extern void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
+extern void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 			      GLint format, __DRIdrawable *dPriv);
 
-extern void r300SetTexOffset(__DRIcontext *pDRICtx, GLint texname,
+extern void r600SetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 			     unsigned long long offset, GLint depth,
 			     GLuint pitch);
 
-extern GLboolean r300ValidateBuffers(GLcontext * ctx);
+extern GLboolean r600ValidateBuffers(GLcontext * ctx);
 
-extern void r300InitTextureFuncs(struct dd_function_table *functions);
+extern void r600InitTextureFuncs(struct dd_function_table *functions);
 
 #endif				/* __r600_TEX_H__ */

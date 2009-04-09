@@ -59,14 +59,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 static unsigned int translate_wrap_mode(GLenum wrapmode)
 {
 	switch(wrapmode) {
-	case GL_REPEAT: return R300_TX_REPEAT;
-	case GL_CLAMP: return R300_TX_CLAMP;
-	case GL_CLAMP_TO_EDGE: return R300_TX_CLAMP_TO_EDGE;
-	case GL_CLAMP_TO_BORDER: return R300_TX_CLAMP_TO_BORDER;
-	case GL_MIRRORED_REPEAT: return R300_TX_REPEAT | R300_TX_MIRRORED;
-	case GL_MIRROR_CLAMP_EXT: return R300_TX_CLAMP | R300_TX_MIRRORED;
-	case GL_MIRROR_CLAMP_TO_EDGE_EXT: return R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
-	case GL_MIRROR_CLAMP_TO_BORDER_EXT: return R300_TX_CLAMP_TO_BORDER | R300_TX_MIRRORED;
+	case GL_REPEAT: return R600_TX_REPEAT;
+	case GL_CLAMP: return R600_TX_CLAMP;
+	case GL_CLAMP_TO_EDGE: return R600_TX_CLAMP_TO_EDGE;
+	case GL_CLAMP_TO_BORDER: return R600_TX_CLAMP_TO_BORDER;
+	case GL_MIRRORED_REPEAT: return R600_TX_REPEAT | R600_TX_MIRRORED;
+	case GL_MIRROR_CLAMP_EXT: return R600_TX_CLAMP | R600_TX_MIRRORED;
+	case GL_MIRROR_CLAMP_TO_EDGE_EXT: return R600_TX_CLAMP_TO_EDGE | R600_TX_MIRRORED;
+	case GL_MIRROR_CLAMP_TO_BORDER_EXT: return R600_TX_CLAMP_TO_BORDER | R600_TX_MIRRORED;
 	default:
 		_mesa_problem(NULL, "bad wrap mode in %s", __FUNCTION__);
 		return 0;
@@ -79,35 +79,35 @@ static unsigned int translate_wrap_mode(GLenum wrapmode)
  *
  * \param t Texture object whose wrap modes are to be set
  */
-static void r300UpdateTexWrap(radeonTexObjPtr t)
+static void r600UpdateTexWrap(radeonTexObjPtr t)
 {
 	struct gl_texture_object *tObj = &t->base;
 
 	t->pp_txfilter &=
-	    ~(R300_TX_WRAP_S_MASK | R300_TX_WRAP_T_MASK | R300_TX_WRAP_R_MASK);
+	    ~(R600_TX_WRAP_S_MASK | R600_TX_WRAP_T_MASK | R600_TX_WRAP_R_MASK);
 
-	t->pp_txfilter |= translate_wrap_mode(tObj->WrapS) << R300_TX_WRAP_S_SHIFT;
+	t->pp_txfilter |= translate_wrap_mode(tObj->WrapS) << R600_TX_WRAP_S_SHIFT;
 
 	if (tObj->Target != GL_TEXTURE_1D) {
-		t->pp_txfilter |= translate_wrap_mode(tObj->WrapT) << R300_TX_WRAP_T_SHIFT;
+		t->pp_txfilter |= translate_wrap_mode(tObj->WrapT) << R600_TX_WRAP_T_SHIFT;
 
 		if (tObj->Target == GL_TEXTURE_3D)
-			t->pp_txfilter |= translate_wrap_mode(tObj->WrapR) << R300_TX_WRAP_R_SHIFT;
+			t->pp_txfilter |= translate_wrap_mode(tObj->WrapR) << R600_TX_WRAP_R_SHIFT;
 	}
 }
 
 static GLuint aniso_filter(GLfloat anisotropy)
 {
 	if (anisotropy >= 16.0) {
-		return R300_TX_MAX_ANISO_16_TO_1;
+		return R600_TX_MAX_ANISO_16_TO_1;
 	} else if (anisotropy >= 8.0) {
-		return R300_TX_MAX_ANISO_8_TO_1;
+		return R600_TX_MAX_ANISO_8_TO_1;
 	} else if (anisotropy >= 4.0) {
-		return R300_TX_MAX_ANISO_4_TO_1;
+		return R600_TX_MAX_ANISO_4_TO_1;
 	} else if (anisotropy >= 2.0) {
-		return R300_TX_MAX_ANISO_2_TO_1;
+		return R600_TX_MAX_ANISO_2_TO_1;
 	} else {
-		return R300_TX_MAX_ANISO_1_TO_1;
+		return R600_TX_MAX_ANISO_1_TO_1;
 	}
 }
 
@@ -119,13 +119,13 @@ static GLuint aniso_filter(GLfloat anisotropy)
  * \param magf Texture magnification mode
  * \param anisotropy Maximum anisotropy level
  */
-static void r300SetTexFilter(radeonTexObjPtr t, GLenum minf, GLenum magf, GLfloat anisotropy)
+static void r600SetTexFilter(radeonTexObjPtr t, GLenum minf, GLenum magf, GLfloat anisotropy)
 {
 	/* Force revalidation to account for switches from/to mipmapping. */
 	t->validated = GL_FALSE;
 
-	t->pp_txfilter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MIN_FILTER_MIP_MASK | R300_TX_MAG_FILTER_MASK | R300_TX_MAX_ANISO_MASK);
-	t->pp_txfilter_1 &= ~R300_EDGE_ANISO_EDGE_ONLY;
+	t->pp_txfilter &= ~(R600_TX_MIN_FILTER_MASK | R600_TX_MIN_FILTER_MIP_MASK | R600_TX_MAG_FILTER_MASK | R600_TX_MAX_ANISO_MASK);
+	t->pp_txfilter_1 &= ~R600_EDGE_ANISO_EDGE_ONLY;
 
 	/* Note that EXT_texture_filter_anisotropic is extremely vague about
 	 * how anisotropic filtering interacts with the "normal" filter modes.
@@ -133,9 +133,9 @@ static void r300SetTexFilter(radeonTexObjPtr t, GLenum minf, GLenum magf, GLfloa
 	 * filter settings completely. This includes driconf's settings.
 	 */
 	if (anisotropy >= 2.0 && (minf != GL_NEAREST) && (magf != GL_NEAREST)) {
-		t->pp_txfilter |= R300_TX_MAG_FILTER_ANISO
-			| R300_TX_MIN_FILTER_ANISO
-			| R300_TX_MIN_FILTER_MIP_LINEAR
+		t->pp_txfilter |= R600_TX_MAG_FILTER_ANISO
+			| R600_TX_MIN_FILTER_ANISO
+			| R600_TX_MIN_FILTER_MIP_LINEAR
 			| aniso_filter(anisotropy);
 		if (RADEON_DEBUG & DEBUG_TEXTURE)
 			fprintf(stderr, "Using maximum anisotropy of %f\n", anisotropy);
@@ -144,22 +144,22 @@ static void r300SetTexFilter(radeonTexObjPtr t, GLenum minf, GLenum magf, GLfloa
 
 	switch (minf) {
 	case GL_NEAREST:
-		t->pp_txfilter |= R300_TX_MIN_FILTER_NEAREST;
+		t->pp_txfilter |= R600_TX_MIN_FILTER_NEAREST;
 		break;
 	case GL_LINEAR:
-		t->pp_txfilter |= R300_TX_MIN_FILTER_LINEAR;
+		t->pp_txfilter |= R600_TX_MIN_FILTER_LINEAR;
 		break;
 	case GL_NEAREST_MIPMAP_NEAREST:
-		t->pp_txfilter |= R300_TX_MIN_FILTER_NEAREST|R300_TX_MIN_FILTER_MIP_NEAREST;
+		t->pp_txfilter |= R600_TX_MIN_FILTER_NEAREST|R600_TX_MIN_FILTER_MIP_NEAREST;
 		break;
 	case GL_NEAREST_MIPMAP_LINEAR:
-		t->pp_txfilter |= R300_TX_MIN_FILTER_NEAREST|R300_TX_MIN_FILTER_MIP_LINEAR;
+		t->pp_txfilter |= R600_TX_MIN_FILTER_NEAREST|R600_TX_MIN_FILTER_MIP_LINEAR;
 		break;
 	case GL_LINEAR_MIPMAP_NEAREST:
-		t->pp_txfilter |= R300_TX_MIN_FILTER_LINEAR|R300_TX_MIN_FILTER_MIP_NEAREST;
+		t->pp_txfilter |= R600_TX_MIN_FILTER_LINEAR|R600_TX_MIN_FILTER_MIP_NEAREST;
 		break;
 	case GL_LINEAR_MIPMAP_LINEAR:
-		t->pp_txfilter |= R300_TX_MIN_FILTER_LINEAR|R300_TX_MIN_FILTER_MIP_LINEAR;
+		t->pp_txfilter |= R600_TX_MIN_FILTER_LINEAR|R600_TX_MIN_FILTER_MIP_LINEAR;
 		break;
 	}
 
@@ -168,15 +168,15 @@ static void r300SetTexFilter(radeonTexObjPtr t, GLenum minf, GLenum magf, GLfloa
 	 */
 	switch (magf) {
 	case GL_NEAREST:
-		t->pp_txfilter |= R300_TX_MAG_FILTER_NEAREST;
+		t->pp_txfilter |= R600_TX_MAG_FILTER_NEAREST;
 		break;
 	case GL_LINEAR:
-		t->pp_txfilter |= R300_TX_MAG_FILTER_LINEAR;
+		t->pp_txfilter |= R600_TX_MAG_FILTER_LINEAR;
 		break;
 	}
 }
 
-static void r300SetTexBorderColor(radeonTexObjPtr t, GLubyte c[4])
+static void r600SetTexBorderColor(radeonTexObjPtr t, GLubyte c[4])
 {
 	t->pp_border_color = PACK_COLOR_8888(c[3], c[0], c[1], c[2]);
 }
@@ -186,7 +186,7 @@ static void r300SetTexBorderColor(radeonTexObjPtr t, GLubyte c[4])
  * next UpdateTextureState
  */
 
-static void r300TexParameter(GLcontext * ctx, GLenum target,
+static void r600TexParameter(GLcontext * ctx, GLenum target,
 			     struct gl_texture_object *texObj,
 			     GLenum pname, const GLfloat * params)
 {
@@ -201,17 +201,17 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 	case GL_TEXTURE_MIN_FILTER:
 	case GL_TEXTURE_MAG_FILTER:
 	case GL_TEXTURE_MAX_ANISOTROPY_EXT:
-		r300SetTexFilter(t, texObj->MinFilter, texObj->MagFilter, texObj->MaxAnisotropy);
+		r600SetTexFilter(t, texObj->MinFilter, texObj->MagFilter, texObj->MaxAnisotropy);
 		break;
 
 	case GL_TEXTURE_WRAP_S:
 	case GL_TEXTURE_WRAP_T:
 	case GL_TEXTURE_WRAP_R:
-		r300UpdateTexWrap(t);
+		r600UpdateTexWrap(t);
 		break;
 
 	case GL_TEXTURE_BORDER_COLOR:
-		r300SetTexBorderColor(t, texObj->_BorderChan);
+		r600SetTexBorderColor(t, texObj->_BorderChan);
 		break;
 
 	case GL_TEXTURE_BASE_LEVEL:
@@ -235,7 +235,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 			return;
 		if (texObj->Image[0][texObj->BaseLevel]->TexFormat->BaseFormat
 		    == GL_DEPTH_COMPONENT) {
-			r300SetDepthTexMode(texObj);
+			r600SetDepthTexMode(texObj);
 			break;
 		} else {
 			/* If the texture isn't a depth texture, changing this
@@ -250,9 +250,9 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 	}
 }
 
-static void r300DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
+static void r600DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	r600ContextPtr rmesa = R600_CONTEXT(ctx);
 	radeonTexObj* t = radeon_tex_obj(texObj);
 
 	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_TEXTURE)) {
@@ -265,7 +265,7 @@ static void r300DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 		int i;
 		radeon_firevertices(&rmesa->radeon);
 
-		for(i = 0; i < R300_MAX_TEXTURE_UNITS; ++i)
+		for(i = 0; i < R600_MAX_TEXTURE_UNITS; ++i)
 			if (rmesa->hw.textures[i] == t)
 				rmesa->hw.textures[i] = 0;
 	}
@@ -289,11 +289,11 @@ static void r300DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
  * allocate the default texture objects.
  * Fixup MaxAnisotropy according to user preference.
  */
-static struct gl_texture_object *r300NewTextureObject(GLcontext * ctx,
+static struct gl_texture_object *r600NewTextureObject(GLcontext * ctx,
 						      GLuint name,
 						      GLenum target)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	r600ContextPtr rmesa = R600_CONTEXT(ctx);
 	radeonTexObj* t = CALLOC_STRUCT(radeon_tex_obj);
 
 
@@ -306,14 +306,14 @@ static struct gl_texture_object *r300NewTextureObject(GLcontext * ctx,
 	t->base.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
 
 	/* Initialize hardware state */
-	r300UpdateTexWrap(t);
-	r300SetTexFilter(t, t->base.MinFilter, t->base.MagFilter, t->base.MaxAnisotropy);
-	r300SetTexBorderColor(t, t->base._BorderChan);
+	r600UpdateTexWrap(t);
+	r600SetTexFilter(t, t->base.MinFilter, t->base.MagFilter, t->base.MaxAnisotropy);
+	r600SetTexBorderColor(t, t->base._BorderChan);
 
 	return &t->base;
 }
 
-void r300InitTextureFuncs(struct dd_function_table *functions)
+void r600InitTextureFuncs(struct dd_function_table *functions)
 {
 	/* Note: we only plug in the functions we implement in the driver
 	 * since _mesa_init_driver_functions() was already called.
@@ -332,11 +332,11 @@ void r300InitTextureFuncs(struct dd_function_table *functions)
 	functions->TexSubImage3D = radeonTexSubImage3D;
 	functions->GetTexImage = radeonGetTexImage;
 	functions->GetCompressedTexImage = radeonGetCompressedTexImage;
-	functions->NewTextureObject = r300NewTextureObject;
-	functions->DeleteTexture = r300DeleteTexture;
+	functions->NewTextureObject = r600NewTextureObject;
+	functions->DeleteTexture = r600DeleteTexture;
 	functions->IsTextureResident = driIsTextureResident;
 
-	functions->TexParameter = r300TexParameter;
+	functions->TexParameter = r600TexParameter;
 
 	functions->CompressedTexImage2D = radeonCompressedTexImage2D;
 	functions->CompressedTexSubImage2D = radeonCompressedTexSubImage2D;

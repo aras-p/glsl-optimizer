@@ -155,14 +155,14 @@ const struct dri_extension gl_20_extension[] = {
 };
 
 
-extern struct tnl_pipeline_stage _r300_render_stage;
-extern const struct tnl_pipeline_stage _r300_tcl_stage;
+extern struct tnl_pipeline_stage _r600_render_stage;
+extern const struct tnl_pipeline_stage _r600_tcl_stage;
 
-static const struct tnl_pipeline_stage *r300_pipeline[] = {
+static const struct tnl_pipeline_stage *r600_pipeline[] = {
 
 	/* Try and go straight to t&l
 	 */
-	&_r300_tcl_stage,
+	&_r600_tcl_stage,
 
 	/* Catch any t&l fallbacks
 	 */
@@ -186,12 +186,12 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
 	/* Else do them here.
 	 */
-	&_r300_render_stage,
+	&_r600_render_stage,
 	&_tnl_render_stage,	/* FALLBACK  */
 	0,
 };
 
-static void r300RunPipeline(GLcontext * ctx)
+static void r600RunPipeline(GLcontext * ctx)
 {
     _mesa_lock_context_textures(ctx);
 
@@ -202,7 +202,7 @@ static void r300RunPipeline(GLcontext * ctx)
     _mesa_unlock_context_textures(ctx);
 }
 
-static void r300_get_lock(radeonContextPtr rmesa)
+static void r600_get_lock(radeonContextPtr rmesa)
 {
 	drm_radeon_sarea_t *sarea = rmesa->sarea;
 
@@ -213,79 +213,79 @@ static void r300_get_lock(radeonContextPtr rmesa)
 	}
 }		  
 
-static void r300_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)
+static void r600_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)
 {
     /* please flush pipe do all pending work */
     radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
-                                  R300_SC_SCREENDOOR, 1));
+                                  R600_SC_SCREENDOOR, 1));
     radeon_cs_write_dword(cs, 0x0);
     radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
-                                  R300_SC_SCREENDOOR, 1));
+                                  R600_SC_SCREENDOOR, 1));
     radeon_cs_write_dword(cs, 0x00FFFFFF);
     radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
-                                  R300_SC_HYPERZ, 1));
+                                  R600_SC_HYPERZ, 1));
     radeon_cs_write_dword(cs, 0x0);
     radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
-                                  R300_US_CONFIG, 1));
+                                  R600_US_CONFIG, 1));
     radeon_cs_write_dword(cs, 0x0);
     radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
-                                  R300_ZB_CNTL, 1));
+                                  R600_ZB_CNTL, 1));
     radeon_cs_write_dword(cs, 0x0);
     radeon_cs_write_dword(cs, cmdwait(rmesa->radeonScreen, R300_WAIT_3D));
     radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
-                                  R300_RB3D_DSTCACHE_CTLSTAT, 1));
-    radeon_cs_write_dword(cs, R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
+                                  R600_RB3D_DSTCACHE_CTLSTAT, 1));
+    radeon_cs_write_dword(cs, R600_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
     radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
-                                  R300_ZB_ZCACHE_CTLSTAT, 1));
-    radeon_cs_write_dword(cs, R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE);
+                                  R600_ZB_ZCACHE_CTLSTAT, 1));
+    radeon_cs_write_dword(cs, R600_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE);
     radeon_cs_write_dword(cs, cmdwait(rmesa->radeonScreen,
                                R300_WAIT_3D | R300_WAIT_3D_CLEAN));
 }
 
-static void r300_vtbl_pre_emit_atoms(radeonContextPtr radeon)
+static void r600_vtbl_pre_emit_atoms(radeonContextPtr radeon)
 {
-	r300ContextPtr r300 = (r300ContextPtr)radeon;
+	r600ContextPtr r600 = (r600ContextPtr)radeon;
 	BATCH_LOCALS(radeon);
 	
-	r300->vap_flush_needed = GL_TRUE;
+	r600->vap_flush_needed = GL_TRUE;
 	
 	cp_wait(radeon, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
 	BEGIN_BATCH_NO_AUTOSTATE(2);
-	OUT_BATCH_REGVAL(R300_TX_INVALTAGS, R300_TX_FLUSH);
+	OUT_BATCH_REGVAL(R600_TX_INVALTAGS, R600_TX_FLUSH);
 	END_BATCH();
 	end_3d(radeon);
 }
 
-static void r300_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
+static void r600_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	r600ContextPtr r600 = R600_CONTEXT(ctx);
 	if (mode)
-		r300->radeon.Fallback |= bit;
+		r600->radeon.Fallback |= bit;
 	else
-		r300->radeon.Fallback &= ~bit;
+		r600->radeon.Fallback &= ~bit;
 }
 
-static void r300_init_vtbl(radeonContextPtr radeon)
+static void r600_init_vtbl(radeonContextPtr radeon)
 {
-	radeon->vtbl.get_lock = r300_get_lock;
-	radeon->vtbl.update_viewport_offset = r300UpdateViewportOffset;
-	radeon->vtbl.emit_cs_header = r300_vtbl_emit_cs_header;
-	radeon->vtbl.swtcl_flush = r300_swtcl_flush;
-	radeon->vtbl.pre_emit_atoms = r300_vtbl_pre_emit_atoms;
-	radeon->vtbl.fallback = r300_fallback;
+	radeon->vtbl.get_lock = r600_get_lock;
+	radeon->vtbl.update_viewport_offset = r600UpdateViewportOffset;
+	radeon->vtbl.emit_cs_header = r600_vtbl_emit_cs_header;
+	radeon->vtbl.swtcl_flush = r600_swtcl_flush;
+	radeon->vtbl.pre_emit_atoms = r600_vtbl_pre_emit_atoms;
+	radeon->vtbl.fallback = r600_fallback;
 }
 
 
 /* Create the device specific rendering context.
  */
-GLboolean r300CreateContext(const __GLcontextModes * glVisual,
+GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 			    __DRIcontextPrivate * driContextPriv,
 			    void *sharedContextPrivate)
 {
 	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
 	struct dd_function_table functions;
-	r300ContextPtr r300;
+	r600ContextPtr r600;
 	GLcontext *ctx;
 	int tcl_mode;
 
@@ -293,52 +293,52 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	assert(driContextPriv);
 	assert(screen);
 
-	/* Allocate the R300 context */
-	r300 = (r300ContextPtr) CALLOC(sizeof(*r300));
-	if (!r300)
+	/* Allocate the R600 context */
+	r600 = (r600ContextPtr) CALLOC(sizeof(*r600));
+	if (!r600)
 		return GL_FALSE;
 
 	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
 		hw_tcl_on = future_hw_tcl_on = 0;
 
-	r300_init_vtbl(&r300->radeon);
+	r600_init_vtbl(&r600->radeon);
 	/* Parse configuration files.
 	 * Do this here so that initialMaxAnisotropy is set before we create
 	 * the default textures.
 	 */
-	driParseConfigFiles(&r300->radeon.optionCache, &screen->optionCache,
-			    screen->driScreen->myNum, "r300");
-	r300->radeon.initialMaxAnisotropy = driQueryOptionf(&r300->radeon.optionCache,
+	driParseConfigFiles(&r600->radeon.optionCache, &screen->optionCache,
+			    screen->driScreen->myNum, "r600");
+	r600->radeon.initialMaxAnisotropy = driQueryOptionf(&r600->radeon.optionCache,
 						     "def_max_anisotropy");
 
-	/* Init default driver functions then plug in our R300-specific functions
+	/* Init default driver functions then plug in our R600-specific functions
 	 * (the texture functions are especially important)
 	 */
 	_mesa_init_driver_functions(&functions);
-	r300InitIoctlFuncs(&functions);
-	r300InitStateFuncs(&functions);
-	r300InitTextureFuncs(&functions);
-	r300InitShaderFuncs(&functions);
+	r600InitIoctlFuncs(&functions);
+	r600InitStateFuncs(&functions);
+	r600InitTextureFuncs(&functions);
+	r600InitShaderFuncs(&functions);
 
-	if (!radeonInitContext(&r300->radeon, &functions,
+	if (!radeonInitContext(&r600->radeon, &functions,
 			       glVisual, driContextPriv,
 			       sharedContextPrivate)) {
-		FREE(r300);
+		FREE(r600);
 		return GL_FALSE;
 	}
 
-	/* Init r300 context data */
+	/* Init r600 context data */
 	/* Set the maximum texture size small enough that we can guarentee that
 	 * all texture units can bind a maximal texture and have them both in
 	 * texturable memory at once.
 	 */
 
-	ctx = r300->radeon.glCtx;
+	ctx = r600->radeon.glCtx;
 
 	ctx->Const.MaxTextureImageUnits =
-	    driQueryOptioni(&r300->radeon.optionCache, "texture_image_units");
+	    driQueryOptioni(&r600->radeon.optionCache, "texture_image_units");
 	ctx->Const.MaxTextureCoordUnits =
-	    driQueryOptioni(&r300->radeon.optionCache, "texture_coord_units");
+	    driQueryOptioni(&r600->radeon.optionCache, "texture_coord_units");
 	ctx->Const.MaxTextureUnits =
 	    MIN2(ctx->Const.MaxTextureImageUnits,
 		 ctx->Const.MaxTextureCoordUnits);
@@ -352,13 +352,13 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 	ctx->Const.MinPointSize = 1.0;
 	ctx->Const.MinPointSizeAA = 1.0;
-	ctx->Const.MaxPointSize = R300_POINTSIZE_MAX;
-	ctx->Const.MaxPointSizeAA = R300_POINTSIZE_MAX;
+	ctx->Const.MaxPointSize = R600_POINTSIZE_MAX;
+	ctx->Const.MaxPointSizeAA = R600_POINTSIZE_MAX;
 
 	ctx->Const.MinLineWidth = 1.0;
 	ctx->Const.MinLineWidthAA = 1.0;
-	ctx->Const.MaxLineWidth = R300_LINESIZE_MAX;
-	ctx->Const.MaxLineWidthAA = R300_LINESIZE_MAX;
+	ctx->Const.MaxLineWidth = R600_LINESIZE_MAX;
+	ctx->Const.MaxLineWidthAA = R600_LINESIZE_MAX;
 
 	/* Needs further modifications */
 #if 0
@@ -380,7 +380,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	/* Install the customized pipeline:
 	 */
 	_tnl_destroy_pipeline(ctx);
-	_tnl_install_pipeline(ctx, r300_pipeline);
+	_tnl_install_pipeline(ctx, r600_pipeline);
 
 	/* Try and keep materials and vertices separate:
 	 */
@@ -420,50 +420,50 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
-	if (r300->radeon.radeonScreen->kernel_mm)
+	if (r600->radeon.radeonScreen->kernel_mm)
 	  driInitExtensions(ctx, mm_extensions, GL_FALSE);
 
 	if (driQueryOptionb
-	    (&r300->radeon.optionCache, "disable_stencil_two_side"))
+	    (&r600->radeon.optionCache, "disable_stencil_two_side"))
 		_mesa_disable_extension(ctx, "GL_EXT_stencil_two_side");
 
-	if (r300->radeon.glCtx->Mesa_DXTn
-	    && !driQueryOptionb(&r300->radeon.optionCache, "disable_s3tc")) {
+	if (r600->radeon.glCtx->Mesa_DXTn
+	    && !driQueryOptionb(&r600->radeon.optionCache, "disable_s3tc")) {
 		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 		_mesa_enable_extension(ctx, "GL_S3_s3tc");
 	} else
-	    if (driQueryOptionb(&r300->radeon.optionCache, "force_s3tc_enable"))
+	    if (driQueryOptionb(&r600->radeon.optionCache, "force_s3tc_enable"))
 	{
 		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 	}
 
-	r300->disable_lowimpact_fallback =
-	    driQueryOptionb(&r300->radeon.optionCache,
+	r600->disable_lowimpact_fallback =
+	    driQueryOptionb(&r600->radeon.optionCache,
 			    "disable_lowimpact_fallback");
-	radeon_fbo_init(&r300->radeon);
+	radeon_fbo_init(&r600->radeon);
    	radeonInitSpanFuncs( ctx );
-	r300InitCmdBuf(r300);
-	r300InitState(r300);
+	r600InitCmdBuf(r600);
+	r600InitState(r600);
 	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
-	        r300InitSwtcl(ctx);
+	        r600InitSwtcl(ctx);
 
-	TNL_CONTEXT(ctx)->Driver.RunPipeline = r300RunPipeline;
+	TNL_CONTEXT(ctx)->Driver.RunPipeline = r600RunPipeline;
 
-	tcl_mode = driQueryOptioni(&r300->radeon.optionCache, "tcl_mode");
-	if (driQueryOptionb(&r300->radeon.optionCache, "no_rast")) {
+	tcl_mode = driQueryOptioni(&r600->radeon.optionCache, "tcl_mode");
+	if (driQueryOptionb(&r600->radeon.optionCache, "no_rast")) {
 		fprintf(stderr, "disabling 3D acceleration\n");
 #if R200_MERGED
-		FALLBACK(&r300->radeon, RADEON_FALLBACK_DISABLE, 1);
+		FALLBACK(&r600->radeon, RADEON_FALLBACK_DISABLE, 1);
 #endif
 	}
 	if (tcl_mode == DRI_CONF_TCL_SW ||
-	    !(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
-		if (r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
-			r300->radeon.radeonScreen->chip_flags &=
+	    !(r600->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
+		if (r600->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
+			r600->radeon.radeonScreen->chip_flags &=
 			    ~RADEON_CHIPSET_TCL;
 			fprintf(stderr, "Disabling HW TCL support\n");
 		}
-		TCL_FALLBACK(r300->radeon.glCtx,
+		TCL_FALLBACK(r600->radeon.glCtx,
 			     RADEON_TCL_FALLBACK_TCL_DISABLE, 1);
 	}
 

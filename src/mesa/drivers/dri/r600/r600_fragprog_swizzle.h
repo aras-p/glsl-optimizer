@@ -33,10 +33,10 @@
 
 struct nqssadce_state;
 
-GLboolean r300FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg);
-void r300FPBuildSwizzle(struct nqssadce_state*, struct prog_dst_register dst, struct prog_src_register src);
+GLboolean r600FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg);
+void r600FPBuildSwizzle(struct nqssadce_state*, struct prog_dst_register dst, struct prog_src_register src);
 
-GLuint r300FPTranslateRGBSwizzle(GLuint src, GLuint swizzle);
-GLuint r300FPTranslateAlphaSwizzle(GLuint src, GLuint swizzle);
+GLuint r600FPTranslateRGBSwizzle(GLuint src, GLuint swizzle);
+GLuint r600FPTranslateAlphaSwizzle(GLuint src, GLuint swizzle);
 
-#endif /* __R300_FRAGPROG_SWIZZLE_H_ */
+#endif /* __R600_FRAGPROG_SWIZZLE_H_ */

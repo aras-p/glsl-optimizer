@@ -66,67 +66,67 @@
 #define FP_SELC_MASK_XYZ	7
 
 #define FP_SELC(destidx,regmask,outmask,src0,src1,src2) \
-	(((destidx) << R300_ALU_DSTC_SHIFT) |		\
+	(((destidx) << R600_ALU_DSTC_SHIFT) |		\
 	 (FP_SELC_MASK_##regmask << 23) |		\
 	 (FP_SELC_MASK_##outmask << 26) |		\
-	 ((src0) << R300_ALU_SRC0C_SHIFT) |		\
-	 ((src1) << R300_ALU_SRC1C_SHIFT) |		\
-	 ((src2) << R300_ALU_SRC2C_SHIFT))
+	 ((src0) << R600_ALU_SRC0C_SHIFT) |		\
+	 ((src1) << R600_ALU_SRC1C_SHIFT) |		\
+	 ((src2) << R600_ALU_SRC2C_SHIFT))
 
 #define FP_SELA_MASK_NO		0
 #define FP_SELA_MASK_W		1
 
 #define FP_SELA(destidx,regmask,outmask,src0,src1,src2) \
-	(((destidx) << R300_ALU_DSTA_SHIFT) |		\
+	(((destidx) << R600_ALU_DSTA_SHIFT) |		\
 	 (FP_SELA_MASK_##regmask << 23) |		\
 	 (FP_SELA_MASK_##outmask << 24) |		\
-	 ((src0) << R300_ALU_SRC0A_SHIFT) |		\
-	 ((src1) << R300_ALU_SRC1A_SHIFT) |		\
-	 ((src2) << R300_ALU_SRC2A_SHIFT))
+	 ((src0) << R600_ALU_SRC0A_SHIFT) |		\
+	 ((src1) << R600_ALU_SRC1A_SHIFT) |		\
+	 ((src2) << R600_ALU_SRC2A_SHIFT))
 
 /* Produce unshifted argument selectors */
-#define FP_ARGC(source)	R300_ALU_ARGC_##source
-#define FP_ARGA(source) R300_ALU_ARGA_##source
+#define FP_ARGC(source)	R600_ALU_ARGC_##source
+#define FP_ARGA(source) R600_ALU_ARGA_##source
 #define FP_ABS(arg) ((arg) | (1 << 6))
 #define FP_NEG(arg) ((arg) ^ (1 << 5))
 
 /* Produce instruction dword */
 #define FP_INSTRC(opcode,arg0,arg1,arg2) \
-	(R300_ALU_OUTC_##opcode | 		\
-	((arg0) << R300_ALU_ARG0C_SHIFT) |	\
-	((arg1) << R300_ALU_ARG1C_SHIFT) |	\
-	((arg2) << R300_ALU_ARG2C_SHIFT))
+	(R600_ALU_OUTC_##opcode | 		\
+	((arg0) << R600_ALU_ARG0C_SHIFT) |	\
+	((arg1) << R600_ALU_ARG1C_SHIFT) |	\
+	((arg2) << R600_ALU_ARG2C_SHIFT))
 
 #define FP_INSTRA(opcode,arg0,arg1,arg2) \
-	(R300_ALU_OUTA_##opcode | 		\
-	((arg0) << R300_ALU_ARG0A_SHIFT) |	\
-	((arg1) << R300_ALU_ARG1A_SHIFT) |	\
-	((arg2) << R300_ALU_ARG2A_SHIFT))
+	(R600_ALU_OUTA_##opcode | 		\
+	((arg0) << R600_ALU_ARG0A_SHIFT) |	\
+	((arg1) << R600_ALU_ARG1A_SHIFT) |	\
+	((arg2) << R600_ALU_ARG2A_SHIFT))
 
 #endif
 
-struct r300_fragment_program;
+struct r600_fragment_program;
 
-extern void r300TranslateFragmentShader(r300ContextPtr r300,
-					struct r300_fragment_program *fp);
+extern void r600TranslateFragmentShader(r600ContextPtr r600,
+					struct r600_fragment_program *fp);
 
 
 /**
- * Used internally by the r300 fragment program code to store compile-time
+ * Used internally by the r600 fragment program code to store compile-time
  * only data.
  */
-struct r300_fragment_program_compiler {
-	r300ContextPtr r300;
-	struct r300_fragment_program *fp;
-	struct r300_fragment_program_code *code;
+struct r600_fragment_program_compiler {
+	r600ContextPtr r600;
+	struct r600_fragment_program *fp;
+	struct r600_fragment_program_code *code;
 	struct gl_program *program;
 };
 
-extern GLboolean r300FragmentProgramEmit(struct r300_fragment_program_compiler *compiler);
+extern GLboolean r600FragmentProgramEmit(struct r600_fragment_program_compiler *compiler);
 
 
-extern void r300FragmentProgramDump(
-	struct r300_fragment_program *fp,
-	struct r300_fragment_program_code *code);
+extern void r600FragmentProgramDump(
+	struct r600_fragment_program *fp,
+	struct r600_fragment_program_code *code);
 
 #endif

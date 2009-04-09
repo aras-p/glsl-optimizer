@@ -69,8 +69,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 		u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1; \
 	} while (0)
 
-int r300VertexProgUpdateParams(GLcontext * ctx,
-			       struct r300_vertex_program_cont *vp, float *dst)
+int r600VertexProgUpdateParams(GLcontext * ctx,
+			       struct r600_vertex_program_cont *vp, float *dst)
 {
 	int pi;
 	struct gl_vertex_program *mesa_vp = &vp->mesa_program;
@@ -152,7 +152,7 @@ static unsigned long t_dst_class(gl_register_file file)
 	}
 }
 
-static unsigned long t_dst_index(struct r300_vertex_program *vp,
+static unsigned long t_dst_index(struct r600_vertex_program *vp,
 				 struct prog_dst_register *dst)
 {
 	if (dst->File == PROGRAM_OUTPUT)
@@ -193,7 +193,7 @@ static INLINE unsigned long t_swizzle(GLubyte swizzle)
 }
 
 #if 0
-static void vp_dump_inputs(struct r300_vertex_program *vp, char *caller)
+static void vp_dump_inputs(struct r600_vertex_program *vp, char *caller)
 {
 	int i;
 
@@ -211,7 +211,7 @@ static void vp_dump_inputs(struct r300_vertex_program *vp, char *caller)
 }
 #endif
 
-static unsigned long t_src_index(struct r300_vertex_program *vp,
+static unsigned long t_src_index(struct r600_vertex_program *vp,
 				 struct prog_src_register *src)
 {
 	int i;
@@ -242,7 +242,7 @@ static unsigned long t_src_index(struct r300_vertex_program *vp,
 
 /* these two functions should probably be merged... */
 
-static unsigned long t_src(struct r300_vertex_program *vp,
+static unsigned long t_src(struct r600_vertex_program *vp,
 			   struct prog_src_register *src)
 {
 	/* src->NegateBase uses the NEGATE_ flags from program_instruction.h,
@@ -257,7 +257,7 @@ static unsigned long t_src(struct r300_vertex_program *vp,
 			       src->NegateBase) | (src->RelAddr << 4);
 }
 
-static unsigned long t_src_scalar(struct r300_vertex_program *vp,
+static unsigned long t_src_scalar(struct r600_vertex_program *vp,
 				  struct prog_src_register *src)
 {
 	/* src->NegateBase uses the NEGATE_ flags from program_instruction.h,
@@ -274,7 +274,7 @@ static unsigned long t_src_scalar(struct r300_vertex_program *vp,
 	    (src->RelAddr << 4);
 }
 
-static GLboolean valid_dst(struct r300_vertex_program *vp,
+static GLboolean valid_dst(struct r600_vertex_program *vp,
 			   struct prog_dst_register *dst)
 {
 	if (dst->File == PROGRAM_OUTPUT && vp->outputs[dst->Index] == -1) {
@@ -286,7 +286,7 @@ static GLboolean valid_dst(struct r300_vertex_program *vp,
 	return GL_TRUE;
 }
 
-static GLuint *r300TranslateOpcodeABS(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeABS(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -314,7 +314,7 @@ static GLuint *r300TranslateOpcodeABS(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeADD(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeADD(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -332,7 +332,7 @@ static GLuint *r300TranslateOpcodeADD(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeARL(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeARL(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -350,7 +350,7 @@ static GLuint *r300TranslateOpcodeARL(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeDP3(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeDP3(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -386,7 +386,7 @@ static GLuint *r300TranslateOpcodeDP3(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeDP4(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeDP4(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -404,7 +404,7 @@ static GLuint *r300TranslateOpcodeDP4(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeDPH(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeDPH(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -431,7 +431,7 @@ static GLuint *r300TranslateOpcodeDPH(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeDST(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeDST(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -449,7 +449,7 @@ static GLuint *r300TranslateOpcodeDST(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeEX2(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeEX2(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -467,7 +467,7 @@ static GLuint *r300TranslateOpcodeEX2(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeEXP(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeEXP(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -485,7 +485,7 @@ static GLuint *r300TranslateOpcodeEXP(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeFLR(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeFLR(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3],
@@ -527,7 +527,7 @@ static GLuint *r300TranslateOpcodeFLR(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeFRC(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeFRC(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -545,7 +545,7 @@ static GLuint *r300TranslateOpcodeFRC(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeLG2(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeLG2(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -573,7 +573,7 @@ static GLuint *r300TranslateOpcodeLG2(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeLIT(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeLIT(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -615,7 +615,7 @@ static GLuint *r300TranslateOpcodeLIT(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeLOG(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeLOG(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -633,7 +633,7 @@ static GLuint *r300TranslateOpcodeLOG(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeMAD(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeMAD(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -651,7 +651,7 @@ static GLuint *r300TranslateOpcodeMAD(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeMAX(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeMAX(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -669,7 +669,7 @@ static GLuint *r300TranslateOpcodeMAX(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeMIN(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeMIN(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -687,7 +687,7 @@ static GLuint *r300TranslateOpcodeMIN(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeMOV(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeMOV(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -707,7 +707,7 @@ static GLuint *r300TranslateOpcodeMOV(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeMUL(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeMUL(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -725,7 +725,7 @@ static GLuint *r300TranslateOpcodeMUL(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodePOW(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodePOW(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -743,7 +743,7 @@ static GLuint *r300TranslateOpcodePOW(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeRCP(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeRCP(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -761,7 +761,7 @@ static GLuint *r300TranslateOpcodeRCP(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeRSQ(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeRSQ(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -779,7 +779,7 @@ static GLuint *r300TranslateOpcodeRSQ(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeSGE(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeSGE(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -797,7 +797,7 @@ static GLuint *r300TranslateOpcodeSGE(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeSLT(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeSLT(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -815,7 +815,7 @@ static GLuint *r300TranslateOpcodeSLT(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeSUB(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeSUB(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -864,7 +864,7 @@ static GLuint *r300TranslateOpcodeSUB(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeSWZ(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeSWZ(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3])
@@ -884,7 +884,7 @@ static GLuint *r300TranslateOpcodeSWZ(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static GLuint *r300TranslateOpcodeXPD(struct r300_vertex_program *vp,
+static GLuint *r600TranslateOpcodeXPD(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi,
 				      GLuint * inst,
 				      struct prog_src_register src[3],
@@ -951,7 +951,7 @@ static GLuint *r300TranslateOpcodeXPD(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static void t_inputs_outputs(struct r300_vertex_program *vp)
+static void t_inputs_outputs(struct r600_vertex_program *vp)
 {
 	int i;
 	int cur_reg = 0;
@@ -1005,14 +1005,14 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 	}
 }
 
-static void r300TranslateVertexShader(struct r300_vertex_program *vp,
+static void r600TranslateVertexShader(struct r600_vertex_program *vp,
 				      struct prog_instruction *vpi)
 {
 	int i;
 	GLuint *inst;
 	unsigned long num_operands;
 	/* Initial value should be last tmp reg that hw supports.
-	   Strangely enough r300 doesnt mind even though these would be out of range.
+	   Strangely enough r600 doesnt mind even though these would be out of range.
 	   Smart enough to realize that it doesnt need it? */
 	int u_temp_i = VSF_MAX_FRAGMENT_TEMPS - 1;
 	struct prog_src_register src[3];
@@ -1104,86 +1104,86 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 
 		switch (vpi->Opcode) {
 		case OPCODE_ABS:
-			inst = r300TranslateOpcodeABS(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeABS(vp, vpi, inst, src);
 			break;
 		case OPCODE_ADD:
-			inst = r300TranslateOpcodeADD(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeADD(vp, vpi, inst, src);
 			break;
 		case OPCODE_ARL:
-			inst = r300TranslateOpcodeARL(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeARL(vp, vpi, inst, src);
 			break;
 		case OPCODE_DP3:
-			inst = r300TranslateOpcodeDP3(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeDP3(vp, vpi, inst, src);
 			break;
 		case OPCODE_DP4:
-			inst = r300TranslateOpcodeDP4(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeDP4(vp, vpi, inst, src);
 			break;
 		case OPCODE_DPH:
-			inst = r300TranslateOpcodeDPH(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeDPH(vp, vpi, inst, src);
 			break;
 		case OPCODE_DST:
-			inst = r300TranslateOpcodeDST(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeDST(vp, vpi, inst, src);
 			break;
 		case OPCODE_EX2:
-			inst = r300TranslateOpcodeEX2(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeEX2(vp, vpi, inst, src);
 			break;
 		case OPCODE_EXP:
-			inst = r300TranslateOpcodeEXP(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeEXP(vp, vpi, inst, src);
 			break;
 		case OPCODE_FLR:
-			inst = r300TranslateOpcodeFLR(vp, vpi, inst, src,	/* FIXME */
+			inst = r600TranslateOpcodeFLR(vp, vpi, inst, src,	/* FIXME */
 						      &u_temp_i);
 			break;
 		case OPCODE_FRC:
-			inst = r300TranslateOpcodeFRC(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeFRC(vp, vpi, inst, src);
 			break;
 		case OPCODE_LG2:
-			inst = r300TranslateOpcodeLG2(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeLG2(vp, vpi, inst, src);
 			break;
 		case OPCODE_LIT:
-			inst = r300TranslateOpcodeLIT(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeLIT(vp, vpi, inst, src);
 			break;
 		case OPCODE_LOG:
-			inst = r300TranslateOpcodeLOG(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeLOG(vp, vpi, inst, src);
 			break;
 		case OPCODE_MAD:
-			inst = r300TranslateOpcodeMAD(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeMAD(vp, vpi, inst, src);
 			break;
 		case OPCODE_MAX:
-			inst = r300TranslateOpcodeMAX(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeMAX(vp, vpi, inst, src);
 			break;
 		case OPCODE_MIN:
-			inst = r300TranslateOpcodeMIN(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeMIN(vp, vpi, inst, src);
 			break;
 		case OPCODE_MOV:
-			inst = r300TranslateOpcodeMOV(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeMOV(vp, vpi, inst, src);
 			break;
 		case OPCODE_MUL:
-			inst = r300TranslateOpcodeMUL(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeMUL(vp, vpi, inst, src);
 			break;
 		case OPCODE_POW:
-			inst = r300TranslateOpcodePOW(vp, vpi, inst, src);
+			inst = r600TranslateOpcodePOW(vp, vpi, inst, src);
 			break;
 		case OPCODE_RCP:
-			inst = r300TranslateOpcodeRCP(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeRCP(vp, vpi, inst, src);
 			break;
 		case OPCODE_RSQ:
-			inst = r300TranslateOpcodeRSQ(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeRSQ(vp, vpi, inst, src);
 			break;
 		case OPCODE_SGE:
-			inst = r300TranslateOpcodeSGE(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeSGE(vp, vpi, inst, src);
 			break;
 		case OPCODE_SLT:
-			inst = r300TranslateOpcodeSLT(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeSLT(vp, vpi, inst, src);
 			break;
 		case OPCODE_SUB:
-			inst = r300TranslateOpcodeSUB(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeSUB(vp, vpi, inst, src);
 			break;
 		case OPCODE_SWZ:
-			inst = r300TranslateOpcodeSWZ(vp, vpi, inst, src);
+			inst = r600TranslateOpcodeSWZ(vp, vpi, inst, src);
 			break;
 		case OPCODE_XPD:
-			inst = r300TranslateOpcodeXPD(vp, vpi, inst, src,	/* FIXME */
+			inst = r600TranslateOpcodeXPD(vp, vpi, inst, src,	/* FIXME */
 						      &u_temp_i);
 			break;
 		default:
@@ -1309,7 +1309,7 @@ static void position_invariant(struct gl_program *prog)
 	assert(vpi->Opcode == OPCODE_END);
 }
 
-static void insert_wpos(struct r300_vertex_program *vp, struct gl_program *prog,
+static void insert_wpos(struct r600_vertex_program *vp, struct gl_program *prog,
 			GLuint temp_index)
 {
 	struct prog_instruction *vpi;
@@ -1361,7 +1361,7 @@ static void insert_wpos(struct r300_vertex_program *vp, struct gl_program *prog,
 	assert(vpi->Opcode == OPCODE_END);
 }
 
-static void pos_as_texcoord(struct r300_vertex_program *vp,
+static void pos_as_texcoord(struct r600_vertex_program *vp,
 			    struct gl_program *prog)
 {
 	struct prog_instruction *vpi;
@@ -1379,11 +1379,11 @@ static void pos_as_texcoord(struct r300_vertex_program *vp,
 	insert_wpos(vp, prog, tempregi);
 }
 
-static struct r300_vertex_program *build_program(struct r300_vertex_program_key
+static struct r600_vertex_program *build_program(struct r600_vertex_program_key
 						 *wanted_key, struct gl_vertex_program
 						 *mesa_vp, GLint wpos_idx)
 {
-	struct r300_vertex_program *vp;
+	struct r600_vertex_program *vp;
 
 	vp = _mesa_calloc(sizeof(*vp));
 	_mesa_memcpy(&vp->key, wanted_key, sizeof(vp->key));
@@ -1399,12 +1399,12 @@ static struct r300_vertex_program *build_program(struct r300_vertex_program_key
 
 	assert(mesa_vp->Base.NumInstructions);
 	vp->num_temporaries = mesa_vp->Base.NumTemporaries;
-	r300TranslateVertexShader(vp, mesa_vp->Base.Instructions);
+	r600TranslateVertexShader(vp, mesa_vp->Base.Instructions);
 
 	return vp;
 }
 
-static void add_outputs(struct r300_vertex_program_key *key, GLint vert)
+static void add_outputs(struct r600_vertex_program_key *key, GLint vert)
 {
 	if (key->OutputsWritten & (1 << vert))
 		return;
@@ -1413,17 +1413,17 @@ static void add_outputs(struct r300_vertex_program_key *key, GLint vert)
 	key->OutputsAdded |= 1 << vert;
 }
 
-void r300SelectVertexShader(r300ContextPtr r300)
+void r600SelectVertexShader(r600ContextPtr r600)
 {
-	GLcontext *ctx = ctx = r300->radeon.glCtx;
+	GLcontext *ctx = ctx = r600->radeon.glCtx;
 	GLuint InputsRead;
-	struct r300_vertex_program_key wanted_key = { 0 };
+	struct r600_vertex_program_key wanted_key = { 0 };
 	GLint i;
-	struct r300_vertex_program_cont *vpc;
-	struct r300_vertex_program *vp;
+	struct r600_vertex_program_cont *vpc;
+	struct r600_vertex_program *vp;
 	GLint wpos_idx;
 
-	vpc = (struct r300_vertex_program_cont *)ctx->VertexProgram._Current;
+	vpc = (struct r600_vertex_program_cont *)ctx->VertexProgram._Current;
 	wanted_key.InputsRead = vpc->mesa_program.Base.InputsRead;
 	wanted_key.OutputsWritten = vpc->mesa_program.Base.OutputsWritten;
 	InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
@@ -1467,7 +1467,7 @@ void r300SelectVertexShader(r300ContextPtr r300)
 	for (vp = vpc->progs; vp; vp = vp->next)
 		if (_mesa_memcmp(&vp->key, &wanted_key, sizeof(wanted_key))
 		    == 0) {
-			r300->selected_vp = vp;
+			r600->selected_vp = vp;
 			return;
 		}
 	//_mesa_print_program(&vpc->mesa_program.Base);
@@ -1475,5 +1475,5 @@ void r300SelectVertexShader(r300ContextPtr r300)
 	vp = build_program(&wanted_key, &vpc->mesa_program, wpos_idx);
 	vp->next = vpc->progs;
 	vpc->progs = vp;
-	r300->selected_vp = vp;
+	r600->selected_vp = vp;
 }

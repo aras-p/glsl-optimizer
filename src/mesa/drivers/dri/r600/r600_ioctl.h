@@ -39,6 +39,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r600_context.h"
 #include "radeon_drm.h"
 
-extern void r300InitIoctlFuncs(struct dd_function_table *functions);
+extern void r600InitIoctlFuncs(struct dd_function_table *functions);
 
 #endif				/* __R600_IOCTL_H__ */

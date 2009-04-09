@@ -37,29 +37,29 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r600_context.h"
 
-#define R300_NEWPRIM( rmesa )			\
+#define R600_NEWPRIM( rmesa )			\
   do {						\
   if ( rmesa->radeon.dma.flush )			\
     rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	\
   } while (0)
 
-#define R300_STATECHANGE(r300, atom) \
+#define R600_STATECHANGE(r600, atom) \
 	do {						\
-	  R300_NEWPRIM(r300);				\
-		r300->hw.atom.dirty = GL_TRUE;		\
-		r300->radeon.hw.is_dirty = GL_TRUE;		\
+	  R600_NEWPRIM(r600);				\
+		r600->hw.atom.dirty = GL_TRUE;		\
+		r600->radeon.hw.is_dirty = GL_TRUE;		\
 	} while(0)
 
-// r300_state.c
+// r600_state.c
 extern int future_hw_tcl_on;
 void _tnl_UpdateFixedFunctionProgram (GLcontext * ctx);
-void r300UpdateViewportOffset (GLcontext * ctx);
-void r300UpdateDrawBuffer (GLcontext * ctx);
-void r300UpdateStateParameters (GLcontext * ctx, GLuint new_state);
-void r300UpdateShaders (r300ContextPtr rmesa);
-void r300UpdateShaderStates (r300ContextPtr rmesa);
-void r300InitState (r300ContextPtr r300);
-void r300UpdateClipPlanes (GLcontext * ctx);
-void r300InitStateFuncs (struct dd_function_table *functions);
+void r600UpdateViewportOffset (GLcontext * ctx);
+void r600UpdateDrawBuffer (GLcontext * ctx);
+void r600UpdateStateParameters (GLcontext * ctx, GLuint new_state);
+void r600UpdateShaders (r600ContextPtr rmesa);
+void r600UpdateShaderStates (r600ContextPtr rmesa);
+void r600InitState (r600ContextPtr r600);
+void r600UpdateClipPlanes (GLcontext * ctx);
+void r600InitStateFuncs (struct dd_function_table *functions);
 
-#endif				/* __R300_STATE_H__ */
+#endif				/* __R600_STATE_H__ */

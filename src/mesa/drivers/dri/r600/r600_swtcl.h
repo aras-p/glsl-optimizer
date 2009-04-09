@@ -39,11 +39,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 #include "r600_context.h"
 
-#define MASK_XYZW (R300_WRITE_ENA_X | R300_WRITE_ENA_Y | R300_WRITE_ENA_Z | R300_WRITE_ENA_W)
-#define MASK_X R300_WRITE_ENA_X
-#define MASK_Y R300_WRITE_ENA_Y
-#define MASK_Z R300_WRITE_ENA_Z
-#define MASK_W R300_WRITE_ENA_W
+#define MASK_XYZW (R600_WRITE_ENA_X | R600_WRITE_ENA_Y | R600_WRITE_ENA_Z | R600_WRITE_ENA_W)
+#define MASK_X R600_WRITE_ENA_X
+#define MASK_Y R600_WRITE_ENA_Y
+#define MASK_Z R600_WRITE_ENA_Z
+#define MASK_W R600_WRITE_ENA_W
 
 /*
  * Here are definitions of OVM locations of vertex attributes for non TCL hw
@@ -55,8 +55,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define SWTCL_OVM_POINT_SIZE 15
 
 
-extern void r300InitSwtcl( GLcontext *ctx );
-extern void r300DestroySwtcl( GLcontext *ctx );
+extern void r600InitSwtcl( GLcontext *ctx );
+extern void r600DestroySwtcl( GLcontext *ctx );
 
-extern void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset);
+extern void r600_swtcl_flush(GLcontext *ctx, uint32_t current_offset);
 #endif

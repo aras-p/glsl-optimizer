@@ -28,7 +28,7 @@
 /**
  * \file
  *
- * Emit the r300_fragment_program_code that can be understood by the hardware.
+ * Emit the r600_fragment_program_code that can be understood by the hardware.
  * Input is a pre-transformed radeon_program.
  *
  * \author Ben Skeggs <darktama@iinet.net.au>
@@ -46,8 +46,8 @@
 
 
 #define PROG_CODE \
-	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)data; \
-	struct r300_fragment_program_code *code = c->code
+	struct r600_fragment_program_compiler *c = (struct r600_fragment_program_compiler*)data; \
+	struct r600_fragment_program_code *code = c->code
 
 #define error(fmt, args...) do {			\
 		fprintf(stderr, "%s::%s(): " fmt "\n",	\
@@ -83,7 +83,7 @@ static GLboolean emit_const(void* data, GLuint file, GLuint index, GLuint *hwind
 /**
  * Mark a temporary register as used.
  */
-static void use_temporary(struct r300_fragment_program_code *code, GLuint index)
+static void use_temporary(struct r600_fragment_program_code *code, GLuint index)
 {
 	if (index > code->max_temp_idx)
 		code->max_temp_idx = index;
@@ -93,41 +93,41 @@ static void use_temporary(struct r300_fragment_program_code *code, GLuint index)
 static GLuint translate_rgb_opcode(GLuint opcode)
 {
 	switch(opcode) {
-	case OPCODE_CMP: return R300_ALU_OUTC_CMP;
-	case OPCODE_DP3: return R300_ALU_OUTC_DP3;
-	case OPCODE_DP4: return R300_ALU_OUTC_DP4;
-	case OPCODE_FRC: return R300_ALU_OUTC_FRC;
+	case OPCODE_CMP: return R600_ALU_OUTC_CMP;
+	case OPCODE_DP3: return R600_ALU_OUTC_DP3;
+	case OPCODE_DP4: return R600_ALU_OUTC_DP4;
+	case OPCODE_FRC: return R600_ALU_OUTC_FRC;
 	default:
 		error("translate_rgb_opcode(%i): Unknown opcode", opcode);
 		/* fall through */
 	case OPCODE_NOP:
 		/* fall through */
-	case OPCODE_MAD: return R300_ALU_OUTC_MAD;
-	case OPCODE_MAX: return R300_ALU_OUTC_MAX;
-	case OPCODE_MIN: return R300_ALU_OUTC_MIN;
-	case OPCODE_REPL_ALPHA: return R300_ALU_OUTC_REPL_ALPHA;
+	case OPCODE_MAD: return R600_ALU_OUTC_MAD;
+	case OPCODE_MAX: return R600_ALU_OUTC_MAX;
+	case OPCODE_MIN: return R600_ALU_OUTC_MIN;
+	case OPCODE_REPL_ALPHA: return R600_ALU_OUTC_REPL_ALPHA;
 	}
 }
 
 static GLuint translate_alpha_opcode(GLuint opcode)
 {
 	switch(opcode) {
-	case OPCODE_CMP: return R300_ALU_OUTA_CMP;
-	case OPCODE_DP3: return R300_ALU_OUTA_DP4;
-	case OPCODE_DP4: return R300_ALU_OUTA_DP4;
-	case OPCODE_EX2: return R300_ALU_OUTA_EX2;
-	case OPCODE_FRC: return R300_ALU_OUTA_FRC;
-	case OPCODE_LG2: return R300_ALU_OUTA_LG2;
+	case OPCODE_CMP: return R600_ALU_OUTA_CMP;
+	case OPCODE_DP3: return R600_ALU_OUTA_DP4;
+	case OPCODE_DP4: return R600_ALU_OUTA_DP4;
+	case OPCODE_EX2: return R600_ALU_OUTA_EX2;
+	case OPCODE_FRC: return R600_ALU_OUTA_FRC;
+	case OPCODE_LG2: return R600_ALU_OUTA_LG2;
 	default:
 		error("translate_rgb_opcode(%i): Unknown opcode", opcode);
 		/* fall through */
 	case OPCODE_NOP:
 		/* fall through */
-	case OPCODE_MAD: return R300_ALU_OUTA_MAD;
-	case OPCODE_MAX: return R300_ALU_OUTA_MAX;
-	case OPCODE_MIN: return R300_ALU_OUTA_MIN;
-	case OPCODE_RCP: return R300_ALU_OUTA_RCP;
-	case OPCODE_RSQ: return R300_ALU_OUTA_RSQ;
+	case OPCODE_MAD: return R600_ALU_OUTA_MAD;
+	case OPCODE_MAX: return R600_ALU_OUTA_MAX;
+	case OPCODE_MIN: return R600_ALU_OUTA_MIN;
+	case OPCODE_RCP: return R600_ALU_OUTA_RCP;
+	case OPCODE_RSQ: return R600_ALU_OUTA_RSQ;
 	}
 }
 
@@ -161,46 +161,46 @@ static GLboolean emit_alu(void* data, struct radeon_pair_instruction* inst)
 			use_temporary(code, inst->Alpha.Src[j].Index);
 		code->alu.inst[ip].inst3 |= src << (6*j);
 
-		GLuint arg = r300FPTranslateRGBSwizzle(inst->RGB.Arg[j].Source, inst->RGB.Arg[j].Swizzle);
+		GLuint arg = r600FPTranslateRGBSwizzle(inst->RGB.Arg[j].Source, inst->RGB.Arg[j].Swizzle);
 		arg |= inst->RGB.Arg[j].Abs << 6;
 		arg |= inst->RGB.Arg[j].Negate << 5;
 		code->alu.inst[ip].inst0 |= arg << (7*j);
 
-		arg = r300FPTranslateAlphaSwizzle(inst->Alpha.Arg[j].Source, inst->Alpha.Arg[j].Swizzle);
+		arg = r600FPTranslateAlphaSwizzle(inst->Alpha.Arg[j].Source, inst->Alpha.Arg[j].Swizzle);
 		arg |= inst->Alpha.Arg[j].Abs << 6;
 		arg |= inst->Alpha.Arg[j].Negate << 5;
 		code->alu.inst[ip].inst2 |= arg << (7*j);
 	}
 
 	if (inst->RGB.Saturate)
-		code->alu.inst[ip].inst0 |= R300_ALU_OUTC_CLAMP;
+		code->alu.inst[ip].inst0 |= R600_ALU_OUTC_CLAMP;
 	if (inst->Alpha.Saturate)
-		code->alu.inst[ip].inst2 |= R300_ALU_OUTA_CLAMP;
+		code->alu.inst[ip].inst2 |= R600_ALU_OUTA_CLAMP;
 
 	if (inst->RGB.WriteMask) {
 		use_temporary(code, inst->RGB.DestIndex);
 		code->alu.inst[ip].inst1 |=
-			(inst->RGB.DestIndex << R300_ALU_DSTC_SHIFT) |
-			(inst->RGB.WriteMask << R300_ALU_DSTC_REG_MASK_SHIFT);
+			(inst->RGB.DestIndex << R600_ALU_DSTC_SHIFT) |
+			(inst->RGB.WriteMask << R600_ALU_DSTC_REG_MASK_SHIFT);
 	}
 	if (inst->RGB.OutputWriteMask) {
-		code->alu.inst[ip].inst1 |= (inst->RGB.OutputWriteMask << R300_ALU_DSTC_OUTPUT_MASK_SHIFT);
-		code->node[code->cur_node].flags |= R300_RGBA_OUT;
+		code->alu.inst[ip].inst1 |= (inst->RGB.OutputWriteMask << R600_ALU_DSTC_OUTPUT_MASK_SHIFT);
+		code->node[code->cur_node].flags |= R600_RGBA_OUT;
 	}
 
 	if (inst->Alpha.WriteMask) {
 		use_temporary(code, inst->Alpha.DestIndex);
 		code->alu.inst[ip].inst3 |=
-			(inst->Alpha.DestIndex << R300_ALU_DSTA_SHIFT) |
-			R300_ALU_DSTA_REG;
+			(inst->Alpha.DestIndex << R600_ALU_DSTA_SHIFT) |
+			R600_ALU_DSTA_REG;
 	}
 	if (inst->Alpha.OutputWriteMask) {
-		code->alu.inst[ip].inst3 |= R300_ALU_DSTA_OUTPUT;
-		code->node[code->cur_node].flags |= R300_RGBA_OUT;
+		code->alu.inst[ip].inst3 |= R600_ALU_DSTA_OUTPUT;
+		code->node[code->cur_node].flags |= R600_RGBA_OUT;
 	}
 	if (inst->Alpha.DepthWriteMask) {
-		code->alu.inst[ip].inst3 |= R300_ALU_DSTA_DEPTH;
-		code->node[code->cur_node].flags |= R300_W_OUT;
+		code->alu.inst[ip].inst3 |= R600_ALU_DSTA_DEPTH;
+		code->node[code->cur_node].flags |= R600_W_OUT;
 		c->fp->WritesDepth = GL_TRUE;
 	}
 
@@ -211,10 +211,10 @@ static GLboolean emit_alu(void* data, struct radeon_pair_instruction* inst)
 /**
  * Finish the current node without advancing to the next one.
  */
-static GLboolean finish_node(struct r300_fragment_program_compiler *c)
+static GLboolean finish_node(struct r600_fragment_program_compiler *c)
 {
-	struct r300_fragment_program_code *code = c->code;
-	struct r300_fragment_program_node *node = &code->node[code->cur_node];
+	struct r600_fragment_program_code *code = c->code;
+	struct r600_fragment_program_node *node = &code->node[code->cur_node];
 
 	if (node->alu_end < 0) {
 		/* Generate a single NOP for this node */
@@ -262,7 +262,7 @@ static GLboolean begin_tex(void* data)
 	if (!finish_node(c))
 		return GL_FALSE;
 
-	struct r300_fragment_program_node *node = &code->node[++code->cur_node];
+	struct r600_fragment_program_node *node = &code->node[++code->cur_node];
 	node->alu_offset = code->alu.length;
 	node->alu_end = -1;
 	node->tex_offset = code->tex.length;
@@ -285,10 +285,10 @@ static GLboolean emit_tex(void* data, struct prog_instruction* inst)
 	GLuint opcode;
 
 	switch(inst->Opcode) {
-	case OPCODE_KIL: opcode = R300_TEX_OP_KIL; break;
-	case OPCODE_TEX: opcode = R300_TEX_OP_LD; break;
-	case OPCODE_TXB: opcode = R300_TEX_OP_TXB; break;
-	case OPCODE_TXP: opcode = R300_TEX_OP_TXP; break;
+	case OPCODE_KIL: opcode = R600_TEX_OP_KIL; break;
+	case OPCODE_TEX: opcode = R600_TEX_OP_LD; break;
+	case OPCODE_TXB: opcode = R600_TEX_OP_TXB; break;
+	case OPCODE_TXP: opcode = R600_TEX_OP_TXP; break;
 	default:
 		error("Unknown texture opcode %i", inst->Opcode);
 		return GL_FALSE;
@@ -305,10 +305,10 @@ static GLboolean emit_tex(void* data, struct prog_instruction* inst)
 
 	code->node[code->cur_node].tex_end++;
 	code->tex.inst[code->tex.length++] =
-		(inst->SrcReg[0].Index << R300_SRC_ADDR_SHIFT) |
-		(dest << R300_DST_ADDR_SHIFT) |
-		(unit << R300_TEX_ID_SHIFT) |
-		(opcode << R300_TEX_INST_SHIFT);
+		(inst->SrcReg[0].Index << R600_SRC_ADDR_SHIFT) |
+		(dest << R600_DST_ADDR_SHIFT) |
+		(unit << R600_TEX_ID_SHIFT) |
+		(opcode << R600_TEX_INST_SHIFT);
 	return GL_TRUE;
 }
 
@@ -325,15 +325,15 @@ static const struct radeon_pair_handler pair_handler = {
  * Final compilation step: Turn the intermediate radeon_program into
  * machine-readable instructions.
  */
-GLboolean r300FragmentProgramEmit(struct r300_fragment_program_compiler *compiler)
+GLboolean r600FragmentProgramEmit(struct r600_fragment_program_compiler *compiler)
 {
-	struct r300_fragment_program_code *code = compiler->code;
+	struct r600_fragment_program_code *code = compiler->code;
 
-	_mesa_bzero(code, sizeof(struct r300_fragment_program_code));
+	_mesa_bzero(code, sizeof(struct r600_fragment_program_code));
 	code->node[0].alu_end = -1;
 	code->node[0].tex_end = -1;
 
-	if (!radeonPairProgram(compiler->r300->radeon.glCtx, compiler->program, &pair_handler, compiler))
+	if (!radeonPairProgram(compiler->r600->radeon.glCtx, compiler->program, &pair_handler, compiler))
 		return GL_FALSE;
 
 	if (!finish_node(compiler))

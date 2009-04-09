@@ -6,18 +6,18 @@
 #include "r600_context.h"
 #include "r600_fragprog.h"
 
-static struct gl_program *r300NewProgram(GLcontext * ctx, GLenum target,
+static struct gl_program *r600NewProgram(GLcontext * ctx, GLenum target,
 					 GLuint id)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r300_vertex_program_cont *vp;
-	struct r300_fragment_program *r300_fp;
+	r600ContextPtr rmesa = R600_CONTEXT(ctx);
+	struct r600_vertex_program_cont *vp;
+	struct r600_fragment_program *r600_fp;
 	struct r500_fragment_program *r500_fp;
 
 	switch (target) {
 	case GL_VERTEX_STATE_PROGRAM_NV:
 	case GL_VERTEX_PROGRAM_ARB:
-		vp = CALLOC_STRUCT(r300_vertex_program_cont);
+		vp = CALLOC_STRUCT(r600_vertex_program_cont);
 		return _mesa_init_vertex_program(ctx, &vp->mesa_program,
 						 target, id);
 	case GL_FRAGMENT_PROGRAM_ARB:
@@ -27,8 +27,8 @@ static struct gl_program *r300NewProgram(GLcontext * ctx, GLenum target,
 			return _mesa_init_fragment_program(ctx, &r500_fp->mesa_program,
 							   target, id);
 		} else {
-			r300_fp = CALLOC_STRUCT(r300_fragment_program);
-			return _mesa_init_fragment_program(ctx, &r300_fp->mesa_program,
+			r600_fp = CALLOC_STRUCT(r600_fragment_program);
+			return _mesa_init_fragment_program(ctx, &r600_fp->mesa_program,
 							   target, id);
 		}
 
@@ -38,28 +38,28 @@ static struct gl_program *r300NewProgram(GLcontext * ctx, GLenum target,
 			return _mesa_init_fragment_program(ctx, &r500_fp->mesa_program,
 							   target, id);
 		} else {
-			r300_fp = CALLOC_STRUCT(r300_fragment_program);
-			return _mesa_init_fragment_program(ctx, &r300_fp->mesa_program,
+			r600_fp = CALLOC_STRUCT(r600_fragment_program);
+			return _mesa_init_fragment_program(ctx, &r600_fp->mesa_program,
 							   target, id);
 		}
 	default:
-		_mesa_problem(ctx, "Bad target in r300NewProgram");
+		_mesa_problem(ctx, "Bad target in r600NewProgram");
 	}
 
 	return NULL;
 }
 
-static void r300DeleteProgram(GLcontext * ctx, struct gl_program *prog)
+static void r600DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 {
 	_mesa_delete_program(ctx, prog);
 }
 
 static void
-r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
+r600ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r300_vertex_program_cont *vp = (void *)prog;
-	struct r300_fragment_program *r300_fp = (struct r300_fragment_program *)prog;
+	r600ContextPtr rmesa = R600_CONTEXT(ctx);
+	struct r600_vertex_program_cont *vp = (void *)prog;
+	struct r600_fragment_program *r600_fp = (struct r600_fragment_program *)prog;
 	struct r500_fragment_program *r500_fp = (struct r500_fragment_program *)prog;
 
 	switch (target) {
@@ -70,7 +70,7 @@ r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 		if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
 			r500_fp->translated = GL_FALSE;
 		else
-			r300_fp->translated = GL_FALSE;
+			r600_fp->translated = GL_FALSE;
 		break;
 	}
 
@@ -79,15 +79,15 @@ r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 }
 
 static GLboolean
-r300IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
+r600IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
 	return GL_TRUE;
 }
 
-void r300InitShaderFuncs(struct dd_function_table *functions)
+void r600InitShaderFuncs(struct dd_function_table *functions)
 {
-	functions->NewProgram = r300NewProgram;
-	functions->DeleteProgram = r300DeleteProgram;
-	functions->ProgramStringNotify = r300ProgramStringNotify;
-	functions->IsProgramNative = r300IsProgramNative;
+	functions->NewProgram = r600NewProgram;
+	functions->DeleteProgram = r600DeleteProgram;
+	functions->ProgramStringNotify = r600ProgramStringNotify;
+	functions->IsProgramNative = r600IsProgramNative;
 }

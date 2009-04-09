@@ -27,7 +27,7 @@
 
 /**
  * @file
- * Utilities to deal with the somewhat odd restriction on R300 fragment
+ * Utilities to deal with the somewhat odd restriction on R600 fragment
  * program swizzles.
  */
 
@@ -45,16 +45,16 @@ struct swizzle_data {
 };
 
 static const struct swizzle_data native_swizzles[] = {
-	{MAKE_SWZ3(X, Y, Z), R300_ALU_ARGC_SRC0C_XYZ, 4},
-	{MAKE_SWZ3(X, X, X), R300_ALU_ARGC_SRC0C_XXX, 4},
-	{MAKE_SWZ3(Y, Y, Y), R300_ALU_ARGC_SRC0C_YYY, 4},
-	{MAKE_SWZ3(Z, Z, Z), R300_ALU_ARGC_SRC0C_ZZZ, 4},
-	{MAKE_SWZ3(W, W, W), R300_ALU_ARGC_SRC0A, 1},
-	{MAKE_SWZ3(Y, Z, X), R300_ALU_ARGC_SRC0C_YZX, 1},
-	{MAKE_SWZ3(Z, X, Y), R300_ALU_ARGC_SRC0C_ZXY, 1},
-	{MAKE_SWZ3(W, Z, Y), R300_ALU_ARGC_SRC0CA_WZY, 1},
-	{MAKE_SWZ3(ONE, ONE, ONE), R300_ALU_ARGC_ONE, 0},
-	{MAKE_SWZ3(ZERO, ZERO, ZERO), R300_ALU_ARGC_ZERO, 0}
+	{MAKE_SWZ3(X, Y, Z), R600_ALU_ARGC_SRC0C_XYZ, 4},
+	{MAKE_SWZ3(X, X, X), R600_ALU_ARGC_SRC0C_XXX, 4},
+	{MAKE_SWZ3(Y, Y, Y), R600_ALU_ARGC_SRC0C_YYY, 4},
+	{MAKE_SWZ3(Z, Z, Z), R600_ALU_ARGC_SRC0C_ZZZ, 4},
+	{MAKE_SWZ3(W, W, W), R600_ALU_ARGC_SRC0A, 1},
+	{MAKE_SWZ3(Y, Z, X), R600_ALU_ARGC_SRC0C_YZX, 1},
+	{MAKE_SWZ3(Z, X, Y), R600_ALU_ARGC_SRC0C_ZXY, 1},
+	{MAKE_SWZ3(W, Z, Y), R600_ALU_ARGC_SRC0CA_WZY, 1},
+	{MAKE_SWZ3(ONE, ONE, ONE), R600_ALU_ARGC_ONE, 0},
+	{MAKE_SWZ3(ZERO, ZERO, ZERO), R600_ALU_ARGC_ZERO, 0}
 };
 
 static const int num_native_swizzles = sizeof(native_swizzles)/sizeof(native_swizzles[0]);
@@ -89,7 +89,7 @@ static const struct swizzle_data* lookup_native_swizzle(GLuint swizzle)
  * Check whether the given instruction supports the swizzle and negate
  * combinations in the given source register.
  */
-GLboolean r300FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
+GLboolean r600FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 {
 	if (reg.Abs)
 		reg.NegateBase = 0;
@@ -134,7 +134,7 @@ GLboolean r300FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 /**
  * Generate MOV dst, src using only native swizzles.
  */
-void r300FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, struct prog_src_register src)
+void r600FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, struct prog_src_register src)
 {
 	if (src.Abs)
 		src.NegateBase = 0;
@@ -196,7 +196,7 @@ void r300FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, 
  * Translate an RGB (XYZ) swizzle into the hardware code for the given
  * instruction source.
  */
-GLuint r300FPTranslateRGBSwizzle(GLuint src, GLuint swizzle)
+GLuint r600FPTranslateRGBSwizzle(GLuint src, GLuint swizzle)
 {
 	const struct swizzle_data* sd = lookup_native_swizzle(swizzle);
 
@@ -213,15 +213,15 @@ GLuint r300FPTranslateRGBSwizzle(GLuint src, GLuint swizzle)
  * Translate an Alpha (W) swizzle into the hardware code for the given
  * instruction source.
  */
-GLuint r300FPTranslateAlphaSwizzle(GLuint src, GLuint swizzle)
+GLuint r600FPTranslateAlphaSwizzle(GLuint src, GLuint swizzle)
 {
 	if (swizzle < 3)
 		return swizzle + 3*src;
 
 	switch(swizzle) {
-	case SWIZZLE_W: return R300_ALU_ARGA_SRC0A + src;
-	case SWIZZLE_ONE: return R300_ALU_ARGA_ONE;
-	case SWIZZLE_ZERO: return R300_ALU_ARGA_ZERO;
-	default: return R300_ALU_ARGA_ONE;
+	case SWIZZLE_W: return R600_ALU_ARGA_SRC0A + src;
+	case SWIZZLE_ONE: return R600_ALU_ARGA_ONE;
+	case SWIZZLE_ZERO: return R600_ALU_ARGA_ZERO;
+	default: return R600_ALU_ARGA_ONE;
 	}
 }

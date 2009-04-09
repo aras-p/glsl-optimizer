@@ -51,21 +51,21 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r600_ioctl.h"
 
 
-#if SWIZZLE_X != R300_INPUT_ROUTE_SELECT_X || \
-    SWIZZLE_Y != R300_INPUT_ROUTE_SELECT_Y || \
-    SWIZZLE_Z != R300_INPUT_ROUTE_SELECT_Z || \
-    SWIZZLE_W != R300_INPUT_ROUTE_SELECT_W || \
-    SWIZZLE_ZERO != R300_INPUT_ROUTE_SELECT_ZERO || \
-    SWIZZLE_ONE != R300_INPUT_ROUTE_SELECT_ONE
+#if SWIZZLE_X != R600_INPUT_ROUTE_SELECT_X || \
+    SWIZZLE_Y != R600_INPUT_ROUTE_SELECT_Y || \
+    SWIZZLE_Z != R600_INPUT_ROUTE_SELECT_Z || \
+    SWIZZLE_W != R600_INPUT_ROUTE_SELECT_W || \
+    SWIZZLE_ZERO != R600_INPUT_ROUTE_SELECT_ZERO || \
+    SWIZZLE_ONE != R600_INPUT_ROUTE_SELECT_ONE
 #error Cannot change these!
 #endif
 
 #define DEBUG_ALL DEBUG_VERTS
 
-#define DW_SIZE(x) ((inputs[tab[(x)]] << R300_DST_VEC_LOC_SHIFT) |	\
-		    (attribptr[tab[(x)]]->size - 1) << R300_DATA_TYPE_0_SHIFT)
+#define DW_SIZE(x) ((inputs[tab[(x)]] << R600_DST_VEC_LOC_SHIFT) |	\
+		    (attribptr[tab[(x)]]->size - 1) << R600_DATA_TYPE_0_SHIFT)
 
-GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
+GLuint r600VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 				 int *inputs, GLint * tab, GLuint nr)
 {
 	GLuint i, dw;
@@ -74,15 +74,15 @@ GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 	for (i = 0; i < nr; i += 2) {
 		/* make sure input is valid, would lockup the gpu */
 		assert(inputs[tab[i]] != -1);
-		dw = (R300_SIGNED | DW_SIZE(i));
+		dw = (R600_SIGNED | DW_SIZE(i));
 		if (i + 1 == nr) {
-			dw |= R300_LAST_VEC << R300_DATA_TYPE_0_SHIFT;
+			dw |= R600_LAST_VEC << R600_DATA_TYPE_0_SHIFT;
 		} else {
 			assert(inputs[tab[i + 1]] != -1);
-			dw |= (R300_SIGNED |
-			       DW_SIZE(i + 1)) << R300_DATA_TYPE_1_SHIFT;
+			dw |= (R600_SIGNED |
+			       DW_SIZE(i + 1)) << R600_DATA_TYPE_1_SHIFT;
 			if (i + 2 == nr) {
-				dw |= R300_LAST_VEC << R300_DATA_TYPE_1_SHIFT;
+				dw |= R600_LAST_VEC << R600_DATA_TYPE_1_SHIFT;
 			}
 		}
 		dst[i >> 1] = dw;
@@ -91,26 +91,26 @@ GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 	return (nr + 1) >> 1;
 }
 
-static GLuint r300VAPInputRoute1Swizzle(int swizzle[4])
+static GLuint r600VAPInputRoute1Swizzle(int swizzle[4])
 {
-	return (swizzle[0] << R300_SWIZZLE_SELECT_X_SHIFT) |
-	    (swizzle[1] << R300_SWIZZLE_SELECT_Y_SHIFT) |
-	    (swizzle[2] << R300_SWIZZLE_SELECT_Z_SHIFT) |
-	    (swizzle[3] << R300_SWIZZLE_SELECT_W_SHIFT);
+	return (swizzle[0] << R600_SWIZZLE_SELECT_X_SHIFT) |
+	    (swizzle[1] << R600_SWIZZLE_SELECT_Y_SHIFT) |
+	    (swizzle[2] << R600_SWIZZLE_SELECT_Z_SHIFT) |
+	    (swizzle[3] << R600_SWIZZLE_SELECT_W_SHIFT);
 }
 
-GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
+GLuint r600VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
 {
 	GLuint i, dw;
 
 	for (i = 0; i < nr; i += 2) {
-		dw = (r300VAPInputRoute1Swizzle(swizzle[i]) |
-		      ((R300_WRITE_ENA_X | R300_WRITE_ENA_Y |
-			R300_WRITE_ENA_Z | R300_WRITE_ENA_W) << R300_WRITE_ENA_SHIFT)) << R300_SWIZZLE0_SHIFT;
+		dw = (r600VAPInputRoute1Swizzle(swizzle[i]) |
+		      ((R600_WRITE_ENA_X | R600_WRITE_ENA_Y |
+			R600_WRITE_ENA_Z | R600_WRITE_ENA_W) << R600_WRITE_ENA_SHIFT)) << R600_SWIZZLE0_SHIFT;
 		if (i + 1 < nr) {
-			dw |= (r300VAPInputRoute1Swizzle(swizzle[i + 1]) |
-			       ((R300_WRITE_ENA_X | R300_WRITE_ENA_Y |
-				 R300_WRITE_ENA_Z | R300_WRITE_ENA_W) << R300_WRITE_ENA_SHIFT)) << R300_SWIZZLE1_SHIFT;
+			dw |= (r600VAPInputRoute1Swizzle(swizzle[i + 1]) |
+			       ((R600_WRITE_ENA_X | R600_WRITE_ENA_Y |
+				 R600_WRITE_ENA_Z | R600_WRITE_ENA_W) << R600_WRITE_ENA_SHIFT)) << R600_SWIZZLE1_SHIFT;
 		}
 		dst[i >> 1] = dw;
 	}
@@ -118,64 +118,64 @@ GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
 	return (nr + 1) >> 1;
 }
 
-GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead)
+GLuint r600VAPInputCntl0(GLcontext * ctx, GLuint InputsRead)
 {
 	/* No idea what this value means. I have seen other values written to
 	 * this register... */
 	return 0x5555;
 }
 
-GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
+GLuint r600VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	r600ContextPtr rmesa = R600_CONTEXT(ctx);
 	GLuint i, vic_1 = 0;
 
 	if (InputsRead & (1 << VERT_ATTRIB_POS))
-		vic_1 |= R300_INPUT_CNTL_POS;
+		vic_1 |= R600_INPUT_CNTL_POS;
 
 	if (InputsRead & (1 << VERT_ATTRIB_NORMAL))
-		vic_1 |= R300_INPUT_CNTL_NORMAL;
+		vic_1 |= R600_INPUT_CNTL_NORMAL;
 
 	if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
-		vic_1 |= R300_INPUT_CNTL_COLOR;
+		vic_1 |= R600_INPUT_CNTL_COLOR;
 
 	rmesa->state.texture.tc_count = 0;
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
 		if (InputsRead & (1 << (VERT_ATTRIB_TEX0 + i))) {
 			rmesa->state.texture.tc_count++;
-			vic_1 |= R300_INPUT_CNTL_TC0 << i;
+			vic_1 |= R600_INPUT_CNTL_TC0 << i;
 		}
 
 	return vic_1;
 }
 
-GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
+GLuint r600VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
 {
 	GLuint ret = 0;
 
 	if (OutputsWritten & (1 << VERT_RESULT_HPOS))
-		ret |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
+		ret |= R600_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
 
 	if (OutputsWritten & (1 << VERT_RESULT_COL0))
-		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT;
+		ret |= R600_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT;
 
 	if (OutputsWritten & (1 << VERT_RESULT_COL1))
-		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
+		ret |= R600_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
 
 	if (OutputsWritten & (1 << VERT_RESULT_BFC0)
 	    || OutputsWritten & (1 << VERT_RESULT_BFC1))
 		ret |=
-		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT |
-		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT |
-		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;
+		    R600_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT |
+		    R600_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT |
+		    R600_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;
 
 	if (OutputsWritten & (1 << VERT_RESULT_PSIZ))
-		ret |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
+		ret |= R600_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
 
 	return ret;
 }
 
-GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
+GLuint r600VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
 {
 	GLuint i, ret = 0, first_free_texcoord = 0;
 
@@ -199,11 +199,11 @@ GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
 
 /* Emit vertex data to GART memory
  * Route inputs to the vertex processor
- * This function should never return R300_FALLBACK_TCL when using software tcl.
+ * This function should never return R600_FALLBACK_TCL when using software tcl.
  */
-int r300EmitArrays(GLcontext * ctx)
+int r600EmitArrays(GLcontext * ctx)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	r600ContextPtr rmesa = R600_CONTEXT(ctx);
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *vb = &tnl->vb;
 	GLuint nr;
@@ -214,8 +214,8 @@ int r300EmitArrays(GLcontext * ctx)
 	int vir_inputs[VERT_ATTRIB_MAX];
 	GLint tab[VERT_ATTRIB_MAX];
 	int swizzle[VERT_ATTRIB_MAX][4];
-	struct r300_vertex_program *prog =
-	    (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
+	struct r600_vertex_program *prog =
+	    (struct r600_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 
 	if (hw_tcl_on) {
 		inputs = prog->inputs;
@@ -287,8 +287,8 @@ int r300EmitArrays(GLcontext * ctx)
 		}
 	}
 
-	if (nr > R300_MAX_AOS_ARRAYS) {
-		return R300_FALLBACK_TCL;
+	if (nr > R600_MAX_AOS_ARRAYS) {
+		return R600_FALLBACK_TCL;
 	}
 
 	for (i = 0; i < nr; i++) {
@@ -310,55 +310,55 @@ int r300EmitArrays(GLcontext * ctx)
 
 	/* Setup INPUT_ROUTE. */
 	if (rmesa->radeon.radeonScreen->kernel_mm) {
-		R300_STATECHANGE(rmesa, vir[0]);
+		R600_STATECHANGE(rmesa, vir[0]);
 		rmesa->hw.vir[0].cmd[0] &= 0xC000FFFF;
 		rmesa->hw.vir[1].cmd[0] &= 0xC000FFFF;
 		rmesa->hw.vir[0].cmd[0] |=
-			(r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
+			(r600VAPInputRoute0(&rmesa->hw.vir[0].cmd[R600_VIR_CNTL_0],
 					    vb->AttribPtr, inputs, tab, nr) & 0x3FFF) << 16;
-		R300_STATECHANGE(rmesa, vir[1]);
+		R600_STATECHANGE(rmesa, vir[1]);
 		rmesa->hw.vir[1].cmd[0] |=
-			(r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
+			(r600VAPInputRoute1(&rmesa->hw.vir[1].cmd[R600_VIR_CNTL_0], swizzle,
 					    nr) & 0x3FFF) << 16;
 	} else {
-		R300_STATECHANGE(rmesa, vir[0]);
+		R600_STATECHANGE(rmesa, vir[0]);
 		((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
-			r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
+			r600VAPInputRoute0(&rmesa->hw.vir[0].cmd[R600_VIR_CNTL_0],
 					   vb->AttribPtr, inputs, tab, nr);
-		R300_STATECHANGE(rmesa, vir[1]);
+		R600_STATECHANGE(rmesa, vir[1]);
 		((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
-			r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
+			r600VAPInputRoute1(&rmesa->hw.vir[1].cmd[R600_VIR_CNTL_0], swizzle,
 					   nr);
 	}
 	
 	/* Setup INPUT_CNTL. */
-	R300_STATECHANGE(rmesa, vic);
-	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
-	rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
+	R600_STATECHANGE(rmesa, vic);
+	rmesa->hw.vic.cmd[R600_VIC_CNTL_0] = r600VAPInputCntl0(ctx, InputsRead);
+	rmesa->hw.vic.cmd[R600_VIC_CNTL_1] = r600VAPInputCntl1(ctx, InputsRead);
 
 	/* Setup OUTPUT_VTX_FMT. */
-	R300_STATECHANGE(rmesa, vof);
-	rmesa->hw.vof.cmd[R300_VOF_CNTL_0] =
-	    r300VAPOutputCntl0(ctx, OutputsWritten);
-	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] =
-	    r300VAPOutputCntl1(ctx, OutputsWritten);
+	R600_STATECHANGE(rmesa, vof);
+	rmesa->hw.vof.cmd[R600_VOF_CNTL_0] =
+	    r600VAPOutputCntl0(ctx, OutputsWritten);
+	rmesa->hw.vof.cmd[R600_VOF_CNTL_1] =
+	    r600VAPOutputCntl1(ctx, OutputsWritten);
 
 	rmesa->radeon.tcl.aos_count = nr;
 
-	return R300_FALLBACK_NONE;
+	return R600_FALLBACK_NONE;
 }
 
-void r300EmitCacheFlush(r300ContextPtr rmesa)
+void r600EmitCacheFlush(r600ContextPtr rmesa)
 {
 	BATCH_LOCALS(&rmesa->radeon);
 
 	BEGIN_BATCH_NO_AUTOSTATE(4);
-	OUT_BATCH_REGVAL(R300_RB3D_DSTCACHE_CTLSTAT,
-		R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
-		R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
-	OUT_BATCH_REGVAL(R300_ZB_ZCACHE_CTLSTAT,
-		R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
-		R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
+	OUT_BATCH_REGVAL(R600_RB3D_DSTCACHE_CTLSTAT,
+		R600_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
+		R600_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
+	OUT_BATCH_REGVAL(R600_ZB_ZCACHE_CTLSTAT,
+		R600_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
+		R600_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
 	END_BATCH();
 	COMMIT_BATCH();
 }

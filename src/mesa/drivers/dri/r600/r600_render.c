@@ -28,7 +28,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /**
  * \file
  *
- * \brief R300 Render (Vertex Buffer Implementation)
+ * \brief R600 Render (Vertex Buffer Implementation)
  *
  * The immediate implementation has been removed from CVS in favor of the vertex
  * buffer implementation.
@@ -76,40 +76,40 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern int future_hw_tcl_on;
 
 /**
- * \brief Convert a OpenGL primitive type into a R300 primitive type.
+ * \brief Convert a OpenGL primitive type into a R600 primitive type.
  */
-int r300PrimitiveType(r300ContextPtr rmesa, int prim)
+int r600PrimitiveType(r600ContextPtr rmesa, int prim)
 {
 	switch (prim & PRIM_MODE_MASK) {
 	case GL_POINTS:
-		return R300_VAP_VF_CNTL__PRIM_POINTS;
+		return R600_VAP_VF_CNTL__PRIM_POINTS;
 		break;
 	case GL_LINES:
-		return R300_VAP_VF_CNTL__PRIM_LINES;
+		return R600_VAP_VF_CNTL__PRIM_LINES;
 		break;
 	case GL_LINE_STRIP:
-		return R300_VAP_VF_CNTL__PRIM_LINE_STRIP;
+		return R600_VAP_VF_CNTL__PRIM_LINE_STRIP;
 		break;
 	case GL_LINE_LOOP:
-		return R300_VAP_VF_CNTL__PRIM_LINE_LOOP;
+		return R600_VAP_VF_CNTL__PRIM_LINE_LOOP;
 		break;
 	case GL_TRIANGLES:
-		return R300_VAP_VF_CNTL__PRIM_TRIANGLES;
+		return R600_VAP_VF_CNTL__PRIM_TRIANGLES;
 		break;
 	case GL_TRIANGLE_STRIP:
-		return R300_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP;
+		return R600_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP;
 		break;
 	case GL_TRIANGLE_FAN:
-		return R300_VAP_VF_CNTL__PRIM_TRIANGLE_FAN;
+		return R600_VAP_VF_CNTL__PRIM_TRIANGLE_FAN;
 		break;
 	case GL_QUADS:
-		return R300_VAP_VF_CNTL__PRIM_QUADS;
+		return R600_VAP_VF_CNTL__PRIM_QUADS;
 		break;
 	case GL_QUAD_STRIP:
-		return R300_VAP_VF_CNTL__PRIM_QUAD_STRIP;
+		return R600_VAP_VF_CNTL__PRIM_QUAD_STRIP;
 		break;
 	case GL_POLYGON:
-		return R300_VAP_VF_CNTL__PRIM_POLYGON;
+		return R600_VAP_VF_CNTL__PRIM_POLYGON;
 		break;
 	default:
 		assert(0);
@@ -118,7 +118,7 @@ int r300PrimitiveType(r300ContextPtr rmesa, int prim)
 	}
 }
 
-int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
+int r600NumVerts(r600ContextPtr rmesa, int num_verts, int prim)
 {
 	int verts_off = 0;
 
@@ -170,9 +170,9 @@ int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 	return num_verts - verts_off;
 }
 
-static void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts)
+static void r600EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	r600ContextPtr rmesa = R600_CONTEXT(ctx);
 	void *out;
 
 	radeonAllocDmaRegion(&rmesa->radeon, &rmesa->radeon.tcl.elt_dma_bo,
@@ -183,31 +183,31 @@ static void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts)
 	radeon_bo_unmap(rmesa->radeon.tcl.elt_dma_bo);
 }
 
-static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type)
+static void r600FireEB(r600ContextPtr rmesa, int vertex_count, int type)
 {
 	BATCH_LOCALS(&rmesa->radeon);
 
 	if (vertex_count > 0) {
 		BEGIN_BATCH(10);
-		OUT_BATCH_PACKET3(R300_PACKET3_3D_DRAW_INDX_2, 0);
-		OUT_BATCH(R300_VAP_VF_CNTL__PRIM_WALK_INDICES |
+		OUT_BATCH_PACKET3(R600_PACKET3_3D_DRAW_INDX_2, 0);
+		OUT_BATCH(R600_VAP_VF_CNTL__PRIM_WALK_INDICES |
 			  ((vertex_count + 0) << 16) |
 			  type |
-			  R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
+			  R600_VAP_VF_CNTL__INDEX_SIZE_32bit);
 		
 		if (!rmesa->radeon.radeonScreen->kernel_mm) {
-			OUT_BATCH_PACKET3(R300_PACKET3_INDX_BUFFER, 2);
-			OUT_BATCH(R300_INDX_BUFFER_ONE_REG_WR | (0 << R300_INDX_BUFFER_SKIP_SHIFT) |
-	    			 (R300_VAP_PORT_IDX0 >> 2));
+			OUT_BATCH_PACKET3(R600_PACKET3_INDX_BUFFER, 2);
+			OUT_BATCH(R600_INDX_BUFFER_ONE_REG_WR | (0 << R600_INDX_BUFFER_SKIP_SHIFT) |
+	    			 (R600_VAP_PORT_IDX0 >> 2));
 			OUT_BATCH_RELOC(rmesa->radeon.tcl.elt_dma_offset,
 					rmesa->radeon.tcl.elt_dma_bo,
 					rmesa->radeon.tcl.elt_dma_offset,
 					RADEON_GEM_DOMAIN_GTT, 0, 0);
 			OUT_BATCH(vertex_count);
 		} else {
-			OUT_BATCH_PACKET3(R300_PACKET3_INDX_BUFFER, 2);
-			OUT_BATCH(R300_INDX_BUFFER_ONE_REG_WR | (0 << R300_INDX_BUFFER_SKIP_SHIFT) |
-	    			 (R300_VAP_PORT_IDX0 >> 2));
+			OUT_BATCH_PACKET3(R600_PACKET3_INDX_BUFFER, 2);
+			OUT_BATCH(R600_INDX_BUFFER_ONE_REG_WR | (0 << R600_INDX_BUFFER_SKIP_SHIFT) |
+	    			 (R600_VAP_PORT_IDX0 >> 2));
 			OUT_BATCH(rmesa->radeon.tcl.elt_dma_offset);
 			OUT_BATCH(vertex_count);
 			radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
@@ -218,7 +218,7 @@ static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type)
 	}
 }
 
-static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
+static void r600EmitAOS(r600ContextPtr rmesa, GLuint nr, GLuint offset)
 {
 	BATCH_LOCALS(&rmesa->radeon);
 	uint32_t voffset;
@@ -232,7 +232,7 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
     
 	if (!rmesa->radeon.radeonScreen->kernel_mm) {
 		BEGIN_BATCH(sz+2+(nr * 2));
-		OUT_BATCH_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, sz - 1);
+		OUT_BATCH_PACKET3(R600_PACKET3_3D_LOAD_VBPNTR, sz - 1);
 		OUT_BATCH(nr);
 
 		for (i = 0; i + 1 < nr; i += 2) {
@@ -272,7 +272,7 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 	} else {
 
 		BEGIN_BATCH(sz+2+(nr * 2));
-		OUT_BATCH_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, sz - 1);
+		OUT_BATCH_PACKET3(R600_PACKET3_3D_LOAD_VBPNTR, sz - 1);
 		OUT_BATCH(nr);
 
 		for (i = 0; i + 1 < nr; i += 2) {
@@ -323,25 +323,25 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 
 }
 
-static void r300FireAOS(r300ContextPtr rmesa, int vertex_count, int type)
+static void r600FireAOS(r600ContextPtr rmesa, int vertex_count, int type)
 {
 	BATCH_LOCALS(&rmesa->radeon);
 
 	BEGIN_BATCH(3);
-	OUT_BATCH_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
-	OUT_BATCH(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (vertex_count << 16) | type);
+	OUT_BATCH_PACKET3(R600_PACKET3_3D_DRAW_VBUF_2, 0);
+	OUT_BATCH(R600_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (vertex_count << 16) | type);
 	END_BATCH();
 }
 
-static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
+static void r600RunRenderPrimitive(r600ContextPtr rmesa, GLcontext * ctx,
 				   int start, int end, int prim)
 {
 	int type, num_verts;
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *vb = &tnl->vb;
 
-	type = r300PrimitiveType(rmesa, prim);
-	num_verts = r300NumVerts(rmesa, end - start, prim);
+	type = r600PrimitiveType(rmesa, prim);
+	num_verts = r600NumVerts(rmesa, end - start, prim);
 
 	if (type < 0 || num_verts <= 0)
 		return;
@@ -369,20 +369,20 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 		 * allocating the index array might actually evict the vertex
 		 * arrays. *sigh*
 		 */
-		r300EmitElts(ctx, vb->Elts, num_verts);
-		r300EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, start);
-		r300FireEB(rmesa, num_verts, type);
+		r600EmitElts(ctx, vb->Elts, num_verts);
+		r600EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, start);
+		r600FireEB(rmesa, num_verts, type);
 	} else {
-		r300EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, start);
-		r300FireAOS(rmesa, num_verts, type);
+		r600EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, start);
+		r600FireAOS(rmesa, num_verts, type);
 	}
 	COMMIT_BATCH();
 }
 
-static GLboolean r300RunRender(GLcontext * ctx,
+static GLboolean r600RunRender(GLcontext * ctx,
 			       struct tnl_pipeline_stage *stage)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	r600ContextPtr rmesa = R600_CONTEXT(ctx);
 	int i;
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *vb = &tnl->vb;
@@ -390,23 +390,23 @@ static GLboolean r300RunRender(GLcontext * ctx,
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	r300UpdateShaders(rmesa);
-	if (r300EmitArrays(ctx))
+	r600UpdateShaders(rmesa);
+	if (r600EmitArrays(ctx))
 		return GL_TRUE;
 
-	r300UpdateShaderStates(rmesa);
+	r600UpdateShaderStates(rmesa);
 
-	r300EmitCacheFlush(rmesa);
+	r600EmitCacheFlush(rmesa);
 	radeonEmitState(&rmesa->radeon);
 
 	for (i = 0; i < vb->PrimitiveCount; i++) {
 		GLuint prim = _tnl_translate_prim(&vb->Primitive[i]);
 		GLuint start = vb->Primitive[i].start;
 		GLuint end = vb->Primitive[i].start + vb->Primitive[i].count;
-		r300RunRenderPrimitive(rmesa, ctx, start, end, prim);
+		r600RunRenderPrimitive(rmesa, ctx, start, end, prim);
 	}
 
-	r300EmitCacheFlush(rmesa);
+	r600EmitCacheFlush(rmesa);
 
 	radeonReleaseArrays(ctx, ~0);
 
@@ -419,33 +419,33 @@ static GLboolean r300RunRender(GLcontext * ctx,
 			if (1 || RADEON_DEBUG & DEBUG_FALLBACKS)	\
 				WARN_ONCE("Software fallback:%s\n",	\
 					  #expr);			\
-			return R300_FALLBACK_RAST;			\
+			return R600_FALLBACK_RAST;			\
 		}							\
 	} while(0)
 
-static int r300Fallback(GLcontext * ctx)
+static int r600Fallback(GLcontext * ctx)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	r600ContextPtr r600 = R600_CONTEXT(ctx);
 	const unsigned back = ctx->Stencil._BackFace;
 	
-	FALLBACK_IF(r300->radeon.Fallback);
+	FALLBACK_IF(r600->radeon.Fallback);
 	/* Do we need to use new-style shaders?
 	 * Also is there a better way to do this? */
-	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
+	if (r600->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
 		struct r500_fragment_program *fp = (struct r500_fragment_program *)
 	    (char *)ctx->FragmentProgram._Current;
 		if (fp) {
 			if (!fp->translated) {
-				r500TranslateFragmentShader(r300, fp);
+				r500TranslateFragmentShader(r600, fp);
 				FALLBACK_IF(!fp->translated);
 			}
 		}
 	} else {
-		struct r300_fragment_program *fp = (struct r300_fragment_program *)
+		struct r600_fragment_program *fp = (struct r600_fragment_program *)
 	    (char *)ctx->FragmentProgram._Current;
 		if (fp) {
 			if (!fp->translated) {
-				r300TranslateFragmentShader(r300, fp);
+				r600TranslateFragmentShader(r600, fp);
 				FALLBACK_IF(!fp->translated);
 			}
 		}
@@ -465,7 +465,7 @@ static int r300Fallback(GLcontext * ctx)
 	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
 		FALLBACK_IF(ctx->Point.PointSprite);
 
-	if (!r300->disable_lowimpact_fallback) {
+	if (!r600->disable_lowimpact_fallback) {
 		FALLBACK_IF(ctx->Polygon.StippleFlag);
 		FALLBACK_IF(ctx->Multisample._Enabled);
 		FALLBACK_IF(ctx->Line.StippleFlag);
@@ -473,34 +473,34 @@ static int r300Fallback(GLcontext * ctx)
 		FALLBACK_IF(ctx->Point.SmoothFlag);
 	}
 
-	return R300_FALLBACK_NONE;
+	return R600_FALLBACK_NONE;
 }
 
-static GLboolean r300RunNonTCLRender(GLcontext * ctx,
+static GLboolean r600RunNonTCLRender(GLcontext * ctx,
 				     struct tnl_pipeline_stage *stage)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	r600ContextPtr rmesa = R600_CONTEXT(ctx);
 
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	if (r300Fallback(ctx) >= R300_FALLBACK_RAST)
+	if (r600Fallback(ctx) >= R600_FALLBACK_RAST)
 		return GL_TRUE;
 
 	if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
  	        return GL_TRUE;
 
-	if (!r300ValidateBuffers(ctx))
+	if (!r600ValidateBuffers(ctx))
 	    return GL_TRUE;
 	
-	return r300RunRender(ctx, stage);
+	return r600RunRender(ctx, stage);
 }
 
-static GLboolean r300RunTCLRender(GLcontext * ctx,
+static GLboolean r600RunTCLRender(GLcontext * ctx,
 				  struct tnl_pipeline_stage *stage)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r300_vertex_program *vp;
+	r600ContextPtr rmesa = R600_CONTEXT(ctx);
+	struct r600_vertex_program *vp;
 
 	hw_tcl_on = future_hw_tcl_on;
 
@@ -510,39 +510,39 @@ static GLboolean r300RunTCLRender(GLcontext * ctx,
 	if (hw_tcl_on == GL_FALSE)
 		return GL_TRUE;
 
-	if (r300Fallback(ctx) >= R300_FALLBACK_TCL) {
+	if (r600Fallback(ctx) >= R600_FALLBACK_TCL) {
 		hw_tcl_on = GL_FALSE;
 		return GL_TRUE;
 	}
 
-	if (!r300ValidateBuffers(ctx))
+	if (!r600ValidateBuffers(ctx))
 	    return GL_TRUE;
 	
-	r300UpdateShaders(rmesa);
+	r600UpdateShaders(rmesa);
 
-	vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
+	vp = (struct r600_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 	if (vp->native == GL_FALSE) {
 		hw_tcl_on = GL_FALSE;
 		return GL_TRUE;
 	}
 
-	return r300RunRender(ctx, stage);
+	return r600RunRender(ctx, stage);
 }
 
-const struct tnl_pipeline_stage _r300_render_stage = {
-	"r300 Hardware Rasterization",
+const struct tnl_pipeline_stage _r600_render_stage = {
+	"r600 Hardware Rasterization",
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-	r300RunNonTCLRender
+	r600RunNonTCLRender
 };
 
-const struct tnl_pipeline_stage _r300_tcl_stage = {
-	"r300 Hardware Transform, Clipping and Lighting",
+const struct tnl_pipeline_stage _r600_tcl_stage = {
+	"r600 Hardware Transform, Clipping and Lighting",
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-	r300RunTCLRender
+	r600RunTCLRender
 };

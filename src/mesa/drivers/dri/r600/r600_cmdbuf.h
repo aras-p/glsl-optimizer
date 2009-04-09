@@ -38,7 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r600_context.h"
 
-extern void r300InitCmdBuf(r300ContextPtr r300);
+extern void r600InitCmdBuf(r600ContextPtr r600);
 
 void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom);
 int check_vpu(GLcontext *ctx, struct radeon_state_atom *atom);

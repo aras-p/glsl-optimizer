@@ -398,15 +398,15 @@ static const __DRItexBufferExtension r300TexBufferExtension = {
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
-static const __DRItexOffsetExtension r300texOffsetExtension = {
+static const __DRItexOffsetExtension r600texOffsetExtension = {
     { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
-   r300SetTexOffset,
+   r600SetTexOffset,
 };
 
-static const __DRItexBufferExtension r300TexBufferExtension = {
+static const __DRItexBufferExtension r600TexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-   r300SetTexBuffer,
-   r300SetTexBuffer2,
+   r600SetTexBuffer,
+   r600SetTexBuffer2,
 };
 #endif
 
@@ -1201,7 +1201,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
-        screen->extensions[i++] = &r300texOffsetExtension.base;
+        screen->extensions[i++] = &r600texOffsetExtension.base;
 #endif
    }
 
@@ -1334,7 +1334,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
-   screen->extensions[i++] = &r300TexBufferExtension.base;
+   screen->extensions[i++] = &r600TexBufferExtension.base;
 #endif
 
    screen->extensions[i++] = NULL;
@@ -1532,7 +1532,7 @@ static GLboolean radeonCreateContext(const __GLcontextModes * glVisual,
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
 	if (IS_R600_CLASS(screen))
-		return r300CreateContext(glVisual, driContextPriv, sharedContextPriv);
+		return r600CreateContext(glVisual, driContextPriv, sharedContextPriv);
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
