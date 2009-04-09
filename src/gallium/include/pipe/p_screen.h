@@ -264,7 +264,7 @@ struct pipe_screen {
     */
    int (*fence_signalled)( struct pipe_screen *screen,
                            struct pipe_fence_handle *fence,
-                           unsigned flag );
+                           unsigned flags );
 
    /**
     * Wait for the fence to finish.
@@ -273,7 +273,7 @@ struct pipe_screen {
     */
    int (*fence_finish)( struct pipe_screen *screen,
                         struct pipe_fence_handle *fence,
-                        unsigned flag );
+                        unsigned flags );
 
 };
 
