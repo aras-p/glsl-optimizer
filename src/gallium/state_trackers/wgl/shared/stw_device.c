@@ -41,6 +41,7 @@
 #include "shared/stw_pixelformat.h"
 #include "shared/stw_public.h"
 #include "shared/stw_tls.h"
+#include "shared/stw_framebuffer.h"
 
 #ifdef WIN32_THREADS
 extern _glthread_Mutex OneTimeLock;
@@ -132,9 +133,11 @@ error1:
 boolean
 st_init_thread(void)
 {
-   if (!stw_tls_init_thread()) {
+   if (!stw_tls_init_thread())
       return FALSE;
-   }
+
+   if (!stw_framebuffer_init_thread())
+      return FALSE;
 
    return TRUE;
 }
@@ -143,6 +146,7 @@ st_init_thread(void)
 void
 st_cleanup_thread(void)
 {
+   stw_framebuffer_cleanup_thread();
    stw_tls_cleanup_thread();
 }
 

@@ -39,7 +39,6 @@ struct stw_framebuffer
    HDC hDC;
    BYTE cColorBits;
    HWND hWnd;
-   WNDPROC WndProc;
    struct stw_framebuffer *next;
 };
 
@@ -63,5 +62,11 @@ stw_framebuffer_resize(
 struct stw_framebuffer *
 stw_framebuffer_from_hdc(
    HDC hdc );
+
+boolean
+stw_framebuffer_init_thread(void);
+
+void
+stw_framebuffer_cleanup_thread(void);
 
 #endif /* STW_FRAMEBUFFER_H */

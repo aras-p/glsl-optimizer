@@ -42,6 +42,7 @@
 #include "stw_device.h"
 #include "stw_public.h"
 #include "stw_winsys.h"
+#include "stw_tls.h"
 
 
 void
@@ -53,26 +54,43 @@ stw_framebuffer_resize(
    st_resize_framebuffer( fb->stfb, width, height );
 }
 
+/**
+ * @sa http://msdn.microsoft.com/en-us/library/ms644975(VS.85).aspx
+ * @sa http://msdn.microsoft.com/en-us/library/ms644960(VS.85).aspx
+ */
 static LRESULT CALLBACK
-stw_window_proc(
-   HWND hWnd,
-   UINT uMsg,
+stw_call_window_proc(
+   int nCode,
    WPARAM wParam,
    LPARAM lParam )
 {
-   struct stw_framebuffer *fb;
+   struct stw_tls_data *tls_data;
+   PCWPSTRUCT pParams = (PCWPSTRUCT)lParam;
+   
+   tls_data = stw_tls_get_data();
+   if(!tls_data)
+      return 0;
+   
+   if (nCode < 0)
+       return CallNextHookEx(tls_data->hCallWndProcHook, nCode, wParam, lParam);
 
-   pipe_mutex_lock( stw_dev->mutex );
-   for (fb = stw_dev->fb_head; fb != NULL; fb = fb->next)
-      if (fb->hWnd == hWnd)
-         break;
-   pipe_mutex_unlock( stw_dev->mutex );
-   assert( fb != NULL );
+   if (pParams->message == WM_SIZE && pParams->wParam != SIZE_MINIMIZED) {
+      struct stw_framebuffer *fb;
 
-   if (uMsg == WM_SIZE && wParam != SIZE_MINIMIZED)
-      stw_framebuffer_resize( fb, LOWORD( lParam ), HIWORD( lParam ) );
+      pipe_mutex_lock( stw_dev->mutex );
+      for (fb = stw_dev->fb_head; fb != NULL; fb = fb->next)
+         if (fb->hWnd == pParams->hwnd)
+            break;
+      pipe_mutex_unlock( stw_dev->mutex );
+      
+      if(fb) {
+         unsigned width = LOWORD( pParams->lParam );
+         unsigned height = HIWORD( pParams->lParam );
+         stw_framebuffer_resize( fb, width, height );
+      }
+   }
 
-   return CallWindowProc( fb->WndProc, hWnd, uMsg, wParam, lParam );
+   return CallNextHookEx(tls_data->hCallWndProcHook, nCode, wParam, lParam);
 }
 
 static INLINE boolean
@@ -190,16 +208,7 @@ stw_framebuffer_create(
 
    fb->cColorBits = GetDeviceCaps( hdc, BITSPIXEL );
    fb->hDC = hdc;
-
-   /* Subclass a window associated with the device context.
-    */
    fb->hWnd = WindowFromDC( hdc );
-   if (fb->hWnd != NULL) {
-      fb->WndProc = (WNDPROC) SetWindowLongPtr(
-         fb->hWnd,
-         GWLP_WNDPROC,
-         (LONG_PTR) stw_window_proc );
-   }
 
    pipe_mutex_lock( stw_dev->mutex );
    fb->next = stw_dev->fb_head;
@@ -226,9 +235,6 @@ stw_framebuffer_destroy(
    fb->next = NULL;
 
    pipe_mutex_unlock( stw_dev->mutex );
-
-   if (fb->hWnd)
-      SetWindowLongPtr( fb->hWnd, GWLP_WNDPROC, (LONG_PTR)fb->WndProc );
 
    FREE( fb );
 }
@@ -285,4 +291,39 @@ stw_swap_buffers(
    stw_dev->stw_winsys->flush_frontbuffer( screen, surface, hdc );
    
    return TRUE;
+}
+
+
+boolean
+stw_framebuffer_init_thread(void)
+{
+   struct stw_tls_data *tls_data;
+   
+   tls_data = stw_tls_get_data();
+   if(!tls_data)
+      return FALSE;
+   
+   tls_data->hCallWndProcHook = SetWindowsHookEx(WH_CALLWNDPROC,
+                                                 stw_call_window_proc,
+                                                 NULL,
+                                                 GetCurrentThreadId());
+   if(tls_data->hCallWndProcHook == NULL)
+      return FALSE;
+   
+   return TRUE;
+}
+
+void
+stw_framebuffer_cleanup_thread(void)
+{
+   struct stw_tls_data *tls_data;
+   
+   tls_data = stw_tls_get_data();
+   if(!tls_data)
+      return;
+   
+   if(tls_data->hCallWndProcHook) {
+      UnhookWindowsHookEx(tls_data->hCallWndProcHook);
+      tls_data->hCallWndProcHook = NULL;
+   }
 }
