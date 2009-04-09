@@ -35,6 +35,7 @@
 
 
 struct pipe_screen;
+struct stw_framebuffer;
 
 struct stw_device
 {
@@ -50,13 +51,15 @@ struct stw_device
 
    struct handle_table *ctx_table;
    
+   struct stw_framebuffer *fb_head;
+   
 #ifdef DEBUG
    unsigned long memdbg_no;
 #endif
 };
 
 struct stw_context *
-stw_lookup_context( UINT_PTR hglrc );
+stw_lookup_context_locked( UINT_PTR hglrc );
 
 extern struct stw_device *stw_dev;
 

@@ -189,7 +189,7 @@ st_cleanup(void)
 
 
 struct stw_context *
-stw_lookup_context( UINT_PTR dhglrc )
+stw_lookup_context_locked( UINT_PTR dhglrc )
 {
    if (dhglrc == 0)
       return NULL;

@@ -59,8 +59,8 @@ stw_copy_context(
 
    pipe_mutex_lock( stw_dev->mutex );
    
-   src = stw_lookup_context( hglrcSrc );
-   dst = stw_lookup_context( hglrcDst );
+   src = stw_lookup_context_locked( hglrcSrc );
+   dst = stw_lookup_context_locked( hglrcDst );
 
    if (src && dst) { 
       /* FIXME */
@@ -155,9 +155,7 @@ stw_create_layer_context(
    ctx->st->ctx->DriverCtx = ctx;
 
    pipe_mutex_lock( stw_dev->mutex );
-   {
-      hglrc = handle_table_add(stw_dev->ctx_table, ctx);
-   }
+   hglrc = handle_table_add(stw_dev->ctx_table, ctx);
    pipe_mutex_unlock( stw_dev->mutex );
 
    /* Success?
@@ -187,8 +185,10 @@ stw_delete_context(
       return FALSE;
 
    pipe_mutex_lock( stw_dev->mutex );
+   ctx = stw_lookup_context_locked(hglrc);
+   handle_table_remove(stw_dev->ctx_table, hglrc);
+   pipe_mutex_unlock( stw_dev->mutex );
 
-   ctx = stw_lookup_context(hglrc);
    if (ctx) {
       GLcontext *glctx = ctx->st->ctx;
       GET_CURRENT_CONTEXT( glcurctx );
@@ -206,19 +206,12 @@ stw_delete_context(
       if (WindowFromDC( ctx->hdc ) != NULL)
          ReleaseDC( WindowFromDC( ctx->hdc ), ctx->hdc );
 
-      pipe_mutex_lock(stw_dev->mutex);
-      {
-         st_destroy_context(ctx->st);
-         FREE(ctx);
-         handle_table_remove(stw_dev->ctx_table, hglrc);
-      }
-      pipe_mutex_unlock(stw_dev->mutex);
+      st_destroy_context(ctx->st);
+      FREE(ctx);
 
       ret = TRUE;
    }
 
-   pipe_mutex_unlock( stw_dev->mutex );
-   
    return ret;
 }
 
@@ -226,32 +219,27 @@ BOOL
 stw_release_context(
    UINT_PTR hglrc )
 {
-   BOOL ret = FALSE;
+   struct stw_context *ctx;
 
    if (!stw_dev)
-      return ret;
+      return FALSE;
 
    pipe_mutex_lock( stw_dev->mutex );
-   {
-      struct stw_context *ctx;
-
-      /* XXX: The expectation is that ctx is the same context which is
-       * current for this thread.  We should check that and return False
-       * if not the case.
-       */
-      ctx = stw_lookup_context( hglrc );
-      if (ctx == NULL) 
-         goto done;
-
-      if (stw_make_current( NULL, 0 ) == FALSE)
-         goto done;
-
-      ret = TRUE;
-   }
-done:
+   ctx = stw_lookup_context_locked( hglrc );
    pipe_mutex_unlock( stw_dev->mutex );
 
-   return ret;
+   if (!ctx)
+      return FALSE;
+   
+   /* XXX: The expectation is that ctx is the same context which is
+    * current for this thread.  We should check that and return False
+    * if not the case.
+    */
+
+   if (stw_make_current( NULL, 0 ) == FALSE)
+      return FALSE;
+
+   return TRUE;
 }
 
 /* Find the width and height of the window named by hdc.
@@ -300,7 +288,7 @@ stw_make_current(
       return FALSE;
 
    pipe_mutex_lock( stw_dev->mutex ); 
-   ctx = stw_lookup_context( hglrc );
+   ctx = stw_lookup_context_locked( hglrc );
    pipe_mutex_unlock( stw_dev->mutex );
 
    stw_tls_get_data()->currentDC = hdc;

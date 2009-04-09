@@ -53,8 +53,6 @@ stw_framebuffer_resize(
    st_resize_framebuffer( fb->stfb, width, height );
 }
 
-static struct stw_framebuffer *fb_head = NULL;
-
 static LRESULT CALLBACK
 stw_window_proc(
    HWND hWnd,
@@ -64,9 +62,11 @@ stw_window_proc(
 {
    struct stw_framebuffer *fb;
 
-   for (fb = fb_head; fb != NULL; fb = fb->next)
+   pipe_mutex_lock( stw_dev->mutex );
+   for (fb = stw_dev->fb_head; fb != NULL; fb = fb->next)
       if (fb->hWnd == hWnd)
          break;
+   pipe_mutex_unlock( stw_dev->mutex );
    assert( fb != NULL );
 
    if (uMsg == WM_SIZE && wParam != SIZE_MINIMIZED)
@@ -201,8 +201,11 @@ stw_framebuffer_create(
          (LONG_PTR) stw_window_proc );
    }
 
-   fb->next = fb_head;
-   fb_head = fb;
+   pipe_mutex_lock( stw_dev->mutex );
+   fb->next = stw_dev->fb_head;
+   stw_dev->fb_head = fb;
+   pipe_mutex_unlock( stw_dev->mutex );
+
    return fb;
 }
 
@@ -210,29 +213,28 @@ void
 stw_framebuffer_destroy(
    struct stw_framebuffer *fb )
 {
-   struct stw_framebuffer **link = &fb_head;
-   struct stw_framebuffer *pfb = fb_head;
+   struct stw_framebuffer **link;
 
-   while (pfb != NULL) {
-      if (pfb == fb) {
-         if (fb->hWnd != NULL) {
-            SetWindowLongPtr(
-               fb->hWnd,
-               GWLP_WNDPROC,
-               (LONG_PTR) fb->WndProc );
-         }
+   pipe_mutex_lock( stw_dev->mutex );
 
-         *link = fb->next;
-         FREE( fb );
-         return;
-      }
+   link = &stw_dev->fb_head;
+   while (link && *link != fb)
+      link = &(*link)->next;
+   assert(*link);
+   if (link)
+      *link = fb->next;
+   fb->next = NULL;
 
-      link = &pfb->next;
-      pfb = pfb->next;
-   }
+   pipe_mutex_unlock( stw_dev->mutex );
+
+   if (fb->hWnd)
+      SetWindowLongPtr( fb->hWnd, GWLP_WNDPROC, (LONG_PTR)fb->WndProc );
+
+   FREE( fb );
 }
 
-/* Given an hdc, return the corresponding stw_framebuffer.
+/**
+ * Given an hdc, return the corresponding stw_framebuffer.
  */
 struct stw_framebuffer *
 stw_framebuffer_from_hdc(
@@ -240,10 +242,13 @@ stw_framebuffer_from_hdc(
 {
    struct stw_framebuffer *fb;
 
-   for (fb = fb_head; fb != NULL; fb = fb->next)
+   pipe_mutex_lock( stw_dev->mutex );
+   for (fb = stw_dev->fb_head; fb != NULL; fb = fb->next)
       if (fb->hDC == hdc)
-         return fb;
-   return NULL;
+         break;
+   pipe_mutex_unlock( stw_dev->mutex );
+
+   return fb;
 }
 
 
