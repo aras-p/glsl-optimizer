@@ -254,9 +254,10 @@ static void prealloc_reg(struct brw_wm_compile *c)
      * XXX alloc these on demand!
      */
     if (c->use_const_buffer) {
-       c->current_const[0].reg = alloc_tmp(c);
-       c->current_const[1].reg = alloc_tmp(c);
-       c->current_const[2].reg = alloc_tmp(c);
+       for (i = 0; i < 3; i++) {
+          c->current_const[i].index = -1;
+          c->current_const[i].reg = alloc_tmp(c);
+       }
     }
     /*
     printf("USE CONST BUFFER? %d\n", c->use_const_buffer);
