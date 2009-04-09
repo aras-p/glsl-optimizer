@@ -108,7 +108,6 @@ st_texture_create(struct st_context *st,
                   GLuint width0,
                   GLuint height0,
                   GLuint depth0,
-                  GLuint compress_byte,
                   GLuint tex_usage );
 
 

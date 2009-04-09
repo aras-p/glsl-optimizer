@@ -78,7 +78,6 @@ st_texture_create(struct st_context *st,
 		  GLuint width0,
 		  GLuint height0,
 		  GLuint depth0,
-		  GLuint compress_byte,
                   GLuint usage )
 {
    struct pipe_texture pt, *newtex;
@@ -101,7 +100,7 @@ st_texture_create(struct st_context *st,
    pt.width[0] = width0;
    pt.height[0] = height0;
    pt.depth[0] = depth0;
-   pt.compressed = compress_byte ? 1 : 0;
+   pt.compressed = pf_is_compressed(format);
    pf_get_block(format, &pt.block);
    pt.tex_usage = usage;
 

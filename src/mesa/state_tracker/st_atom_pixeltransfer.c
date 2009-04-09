@@ -125,8 +125,7 @@ create_color_map_texture(GLcontext *ctx)
 
    /* create texture for color map/table */
    pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0,
-                          texSize, texSize, 1, 0,
-                          PIPE_TEXTURE_USAGE_SAMPLER);
+                          texSize, texSize, 1, PIPE_TEXTURE_USAGE_SAMPLER);
    return pt;
 }
 

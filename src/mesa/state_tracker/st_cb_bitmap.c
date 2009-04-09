@@ -330,7 +330,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
     * Create texture to hold bitmap pattern.
     */
    pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, ctx->st->bitmap.tex_format,
-                          0, width, height, 1, 0,
+                          0, width, height, 1,
                           PIPE_TEXTURE_USAGE_SAMPLER);
    if (!pt) {
       _mesa_unmap_bitmap_pbo(ctx, unpack);
@@ -579,8 +579,7 @@ reset_cache(struct st_context *st)
    cache->texture = st_texture_create(st, PIPE_TEXTURE_2D,
                                       st->bitmap.tex_format, 0,
                                       BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
-                                      1, 0,
-                                      PIPE_TEXTURE_USAGE_SAMPLER);
+                                      1, PIPE_TEXTURE_USAGE_SAMPLER);
 
    /* Map the texture transfer.
     * Subsequent glBitmap calls will write into the texture image.

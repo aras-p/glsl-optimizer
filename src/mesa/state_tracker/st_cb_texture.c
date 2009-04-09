@@ -265,7 +265,7 @@ guess_and_alloc_texture(struct st_context *st,
    GLuint width = stImage->base.Width2;  /* size w/out border */
    GLuint height = stImage->base.Height2;
    GLuint depth = stImage->base.Depth2;
-   GLuint i, comp_byte = 0, usage;
+   GLuint i, usage;
    enum pipe_format fmt;
 
    DBG("%s\n", __FUNCTION__);
@@ -323,9 +323,6 @@ guess_and_alloc_texture(struct st_context *st,
       lastLevel = firstLevel + MAX2(MAX2(l2width, l2height), l2depth);
    }
 
-   if (stImage->base.IsCompressed)
-      comp_byte = compressed_num_bytes(stImage->base.TexFormat->MesaFormat);
-
    fmt = st_mesa_format_to_pipe_format(stImage->base.TexFormat->MesaFormat);
 
    usage = default_usage(fmt);
@@ -337,7 +334,6 @@ guess_and_alloc_texture(struct st_context *st,
                                  width,
                                  height,
                                  depth,
-                                 comp_byte,
                                  usage);
 
    DBG("%s - success\n", __FUNCTION__);
@@ -1353,7 +1349,7 @@ st_finalize_texture(GLcontext *ctx,
 {
    struct st_texture_object *stObj = st_texture_object(tObj);
    const GLuint nr_faces = (stObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
-   GLuint comp_byte = 0, cpp, face;
+   GLuint cpp, face;
    struct st_texture_image *firstImage;
 
    *needFlush = GL_FALSE;
@@ -1380,8 +1376,7 @@ st_finalize_texture(GLcontext *ctx,
 
    /* FIXME: determine format block instead of cpp */
    if (firstImage->base.IsCompressed) {
-      comp_byte = compressed_num_bytes(firstImage->base.TexFormat->MesaFormat);
-      cpp = comp_byte;
+      cpp = compressed_num_bytes(firstImage->base.TexFormat->MesaFormat);
    }
    else {
       cpp = firstImage->base.TexFormat->TexelBytes;
@@ -1420,7 +1415,6 @@ st_finalize_texture(GLcontext *ctx,
                                     firstImage->base.Width2,
                                     firstImage->base.Height2,
                                     firstImage->base.Depth2,
-                                    comp_byte,
                                     usage);
 
       if (!stObj->pt) {
