@@ -734,19 +734,23 @@ trace_screen_buffer_destroy(struct pipe_buffer *_buffer)
 
 static void
 trace_screen_fence_reference(struct pipe_screen *_screen,
-                             struct pipe_fence_handle **dst,
+                             struct pipe_fence_handle **pdst,
                              struct pipe_fence_handle *src)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
    struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_fence_handle *dst;
 
+   assert(pdst);
+   dst = *pdst;
+   
    trace_dump_call_begin("pipe_screen", "fence_reference");
 
    trace_dump_arg(ptr, screen);
    trace_dump_arg(ptr, dst);
    trace_dump_arg(ptr, src);
 
-   screen->fence_reference(screen, dst, src);
+   screen->fence_reference(screen, pdst, src);
 
    trace_dump_call_end();
 }
