@@ -127,8 +127,7 @@ st_texture_match_image(const struct pipe_texture *pt,
 
    /* Check if this image's format matches the established texture's format.
     */
-   if (st_mesa_format_to_pipe_format(image->TexFormat->MesaFormat) != pt->format ||
-       image->IsCompressed != pt->compressed)
+   if (st_mesa_format_to_pipe_format(image->TexFormat->MesaFormat) != pt->format)
       return GL_FALSE;
 
    /* Test if this image's size matches what's expected in the
