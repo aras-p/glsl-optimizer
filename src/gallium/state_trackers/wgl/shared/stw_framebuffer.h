@@ -37,7 +37,6 @@ struct stw_framebuffer
 {
    struct st_framebuffer *stfb;
    HDC hDC;
-   BYTE cColorBits;
    HWND hWnd;
    struct stw_framebuffer *next;
 };

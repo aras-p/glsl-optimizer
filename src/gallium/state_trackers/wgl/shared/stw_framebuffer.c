@@ -206,7 +206,6 @@ stw_framebuffer_create(
       height,
       (void *) fb );
 
-   fb->cColorBits = GetDeviceCaps( hdc, BITSPIXEL );
    fb->hDC = hdc;
    fb->hWnd = WindowFromDC( hdc );
 
