@@ -316,7 +316,7 @@ intelTexImage(GLcontext * ctx,
    GLint postConvHeight = height;
    GLint texelBytes, sizeInBytes;
    GLuint dstRowStride, srcRowStride = texImage->RowStride;
-
+   GLboolean needs_map;
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
@@ -482,8 +482,15 @@ intelTexImage(GLcontext * ctx,
 
    LOCK_HARDWARE(intel);
 
+   /* Two cases where we need a mapping of the miptree: when the user supplied
+    * data is mapped as well (non-PBO, memcpy upload) or when we're going to do
+    * (software) mipmap generation.
+    */
+   needs_map = (pixels != NULL) || (level == texObj->BaseLevel &&
+				  texObj->GenerateMipmap);
+
    if (intelImage->mt) {
-      if (pixels)
+      if (needs_map)
          texImage->Data = intel_miptree_image_map(intel,
                                                   intelImage->mt,
                                                   intelImage->face,
@@ -549,7 +556,7 @@ intelTexImage(GLcontext * ctx,
    _mesa_unmap_teximage_pbo(ctx, unpack);
 
    if (intelImage->mt) {
-      if (pixels)
+      if (needs_map)
          intel_miptree_image_unmap(intel, intelImage->mt);
       texImage->Data = NULL;
    }
