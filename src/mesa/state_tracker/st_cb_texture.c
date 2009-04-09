@@ -568,7 +568,7 @@ st_TexImage(GLcontext * ctx,
       GLint i;
       const GLubyte *src = (const GLubyte *) pixels;
 
-      for (i = 0; i++ < depth;) {
+      for (i = 0; i < depth; i++) {
 	 if (!texImage->TexFormat->StoreImage(ctx, dims, 
 					      texImage->_BaseFormat, 
 					      texImage->TexFormat, 
@@ -581,9 +581,11 @@ st_TexImage(GLcontext * ctx,
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
 	 }
 
-	 if (stImage->pt && i < depth) {
+	 if (stImage->pt && i + 1 < depth) {
+            /* unmap this slice */
 	    st_texture_image_unmap(ctx->st, stImage);
-	    texImage->Data = st_texture_image_map(ctx->st, stImage, i,
+            /* map next slice of 3D texture */
+	    texImage->Data = st_texture_image_map(ctx->st, stImage, i + 1,
                                                   PIPE_TRANSFER_WRITE, 0, 0,
                                                   stImage->base.Width,
                                                   stImage->base.Height);
@@ -711,7 +713,7 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
 
    dest = (GLubyte *) pixels;
 
-   for (i = 0; i++ < depth;) {
+   for (i = 0; i < depth; i++) {
       if (compressed) {
 	 _mesa_get_compressed_teximage(ctx, target, level, dest,
 				       texObj, texImage);
@@ -721,9 +723,11 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
 			    texObj, texImage);
       }
 
-      if (stImage->pt && i < depth) {
+      if (stImage->pt && i + 1 < depth) {
+         /* unmap this slice */
 	 st_texture_image_unmap(ctx->st, stImage);
-	 texImage->Data = st_texture_image_map(ctx->st, stImage, i,
+         /* map next slice of 3D texture */
+	 texImage->Data = st_texture_image_map(ctx->st, stImage, i + 1,
                                                PIPE_TRANSFER_READ, 0, 0,
                                                stImage->base.Width,
                                                stImage->base.Height);
@@ -808,7 +812,7 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
    src = (const GLubyte *) pixels;
    dstRowStride = stImage->transfer->stride;
 
-   for (i = 0; i++ < depth;) {
+   for (i = 0; i < depth; i++) {
       if (!texImage->TexFormat->StoreImage(ctx, dims, texImage->_BaseFormat,
 					   texImage->TexFormat,
 					   texImage->Data,
@@ -820,10 +824,12 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
 	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
       }
 
-      if (stImage->pt && i < depth) {
-         /* map next slice of 3D texture */
+      if (stImage->pt && i + 1 < depth) {
+         /* unmap this slice */
 	 st_texture_image_unmap(ctx->st, stImage);
-	 texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset + i,
+         /* map next slice of 3D texture */
+	 texImage->Data = st_texture_image_map(ctx->st, stImage,
+                                               zoffset + i + 1,
                                                PIPE_TRANSFER_WRITE,
                                                xoffset, yoffset,
                                                width, height);
