@@ -978,9 +978,10 @@ void brw_dp_READ_4( struct brw_compile *p,
    {
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
    
-      insn->header.predicate_control = 0; /* XXX */
+      insn->header.predicate_control = BRW_PREDICATE_NONE;
       insn->header.compression_control = BRW_COMPRESSION_NONE; 
       insn->header.destreg__conditonalmod = msg_reg_nr;
+      insn->header.mask_control = BRW_MASK_DISABLE;
   
       /* cast dest to a uword[8] vector */
       dest = retype(vec8(dest), BRW_REGISTER_TYPE_UW);
