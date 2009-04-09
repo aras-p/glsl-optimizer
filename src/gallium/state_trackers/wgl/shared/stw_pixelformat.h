@@ -31,8 +31,8 @@
 #include <windows.h>
 #include "pipe/p_compiler.h"
 
-#define PF_FLAG_DOUBLEBUFFER  0x00000001
-#define PF_FLAG_MULTISAMPLED  0x00000002
+#define STW_PF_FLAG_DOUBLEBUFFER  0x00000001
+#define STW_PF_FLAG_MULTISAMPLED  0x00000002
 
 struct stw_pixelformat_color_info
 {

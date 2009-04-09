@@ -89,7 +89,7 @@ stw_query_attrib(
       return TRUE;
 
    case WGL_SWAP_METHOD_ARB:
-      if (pf->flags & PF_FLAG_DOUBLEBUFFER)
+      if (pf->flags & STW_PF_FLAG_DOUBLEBUFFER)
          *pvalue = WGL_SWAP_COPY_ARB;
       else
          *pvalue = WGL_SWAP_UNDEFINED_ARB;
@@ -142,7 +142,7 @@ stw_query_attrib(
       break;
 
    case WGL_DOUBLE_BUFFER_ARB:
-      if (pf->flags & PF_FLAG_DOUBLEBUFFER)
+      if (pf->flags & STW_PF_FLAG_DOUBLEBUFFER)
          *pvalue = TRUE;
       else
          *pvalue = FALSE;
@@ -213,14 +213,14 @@ stw_query_attrib(
       break;
 
    case WGL_SAMPLE_BUFFERS_ARB:
-      if (pf->flags & PF_FLAG_MULTISAMPLED)
+      if (pf->flags & STW_PF_FLAG_MULTISAMPLED)
          *pvalue = stw_query_sample_buffers();
       else
          *pvalue = 0;
       break;
 
    case WGL_SAMPLES_ARB:
-      if (pf->flags & PF_FLAG_MULTISAMPLED)
+      if (pf->flags & STW_PF_FLAG_MULTISAMPLED)
          *pvalue = stw_query_samples();
       else
          *pvalue = 0;

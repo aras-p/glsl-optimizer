@@ -110,7 +110,7 @@ stw_create_layer_context(
     */
    visual = _mesa_create_visual(
       GL_TRUE,
-      (pf->flags & PF_FLAG_DOUBLEBUFFER) ? GL_TRUE : GL_FALSE,
+      (pf->flags & STW_PF_FLAG_DOUBLEBUFFER) ? GL_TRUE : GL_FALSE,
       GL_FALSE,
       pf->color.redbits,
       pf->color.greenbits,
@@ -123,7 +123,7 @@ stw_create_layer_context(
       0,
       0,
       0,
-      (pf->flags & PF_FLAG_MULTISAMPLED) ? stw_query_samples() : 0 );
+      (pf->flags & STW_PF_FLAG_MULTISAMPLED) ? stw_query_samples() : 0 );
    if (visual == NULL) 
       goto fail;
 

@@ -32,13 +32,13 @@
 
 #define STW_MAX_PIXELFORMATS   16
 
-static struct stw_pixelformat_info pixelformats[STW_MAX_PIXELFORMATS];
+static struct stw_pixelformat_info stw_pixelformats[STW_MAX_PIXELFORMATS];
 static uint stw_pixelformat_count = 0;
 static uint stw_pixelformat_extended_count = 0;
 
 
 static void
-add_standard_pixelformats(
+stw_add_standard_pixelformats(
    struct stw_pixelformat_info **ppf,
    uint flags )
 {
@@ -49,25 +49,25 @@ add_standard_pixelformats(
    struct stw_pixelformat_depth_info depth24s8 = { 24, 8 };
    struct stw_pixelformat_depth_info depth16 = { 16, 0 };
 
-   pf->flags = PF_FLAG_DOUBLEBUFFER | flags;
+   pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
    pf->color = color24;
    pf->alpha = alpha8;
    pf->depth = depth16;
    pf++;
 
-   pf->flags = PF_FLAG_DOUBLEBUFFER | flags;
+   pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
    pf->color = color24;
    pf->alpha = alpha8;
    pf->depth = depth24s8;
    pf++;
 
-   pf->flags = PF_FLAG_DOUBLEBUFFER | flags;
+   pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
    pf->color = color24;
    pf->alpha = noalpha;
    pf->depth = depth16;
    pf++;
 
-   pf->flags = PF_FLAG_DOUBLEBUFFER | flags;
+   pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
    pf->color = color24;
    pf->alpha = noalpha;
    pf->depth = depth24s8;
@@ -103,13 +103,13 @@ add_standard_pixelformats(
 void
 stw_pixelformat_init( void )
 {
-   struct stw_pixelformat_info *pf = pixelformats;
+   struct stw_pixelformat_info *pf = stw_pixelformats;
 
-   add_standard_pixelformats( &pf, 0 );
-   stw_pixelformat_count = pf - pixelformats;
+   stw_add_standard_pixelformats( &pf, 0 );
+   stw_pixelformat_count = pf - stw_pixelformats;
 
-   add_standard_pixelformats( &pf, PF_FLAG_MULTISAMPLED );
-   stw_pixelformat_extended_count = pf - pixelformats;
+   stw_add_standard_pixelformats( &pf, STW_PF_FLAG_MULTISAMPLED );
+   stw_pixelformat_extended_count = pf - stw_pixelformats;
 
    assert( stw_pixelformat_extended_count <= STW_MAX_PIXELFORMATS );
 }
@@ -131,7 +131,7 @@ stw_pixelformat_get_info( uint index )
 {
    assert( index < stw_pixelformat_extended_count );
 
-   return &pixelformats[index];
+   return &stw_pixelformats[index];
 }
 
 
@@ -161,7 +161,7 @@ stw_pixelformat_describe(
    ppfd->nSize = sizeof( PIXELFORMATDESCRIPTOR );
    ppfd->nVersion = 1;
    ppfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
-   if (pf->flags & PF_FLAG_DOUBLEBUFFER)
+   if (pf->flags & STW_PF_FLAG_DOUBLEBUFFER)
       ppfd->dwFlags |= PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
    ppfd->iPixelType = PFD_TYPE_RGBA;
    ppfd->cColorBits = pf->color.redbits + pf->color.greenbits + pf->color.bluebits;
@@ -213,7 +213,7 @@ int stw_pixelformat_choose( HDC hdc,
 
       if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE) &&
           !!(ppfd->dwFlags & PFD_DOUBLEBUFFER) !=
-          !!(pf->flags & PF_FLAG_DOUBLEBUFFER))
+          !!(pf->flags & STW_PF_FLAG_DOUBLEBUFFER))
          continue;
 
       if (ppfd->cColorBits != pf->color.redbits + pf->color.greenbits + pf->color.bluebits)
