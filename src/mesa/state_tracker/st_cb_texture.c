@@ -227,6 +227,21 @@ logbase2(int n)
 
 
 /**
+ * Return default texture usage bitmask for the given texture format.
+ */
+static GLuint
+default_usage(enum pipe_format fmt)
+{
+   GLuint usage = PIPE_TEXTURE_USAGE_SAMPLER;
+   if (pf_is_depth_stencil(fmt))
+      usage |= PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+   else
+      usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
+   return usage;
+}
+
+
+/**
  * Allocate a pipe_texture object for the given st_texture_object using
  * the given st_texture_image to guess the mipmap size/levels.
  *
@@ -250,7 +265,7 @@ guess_and_alloc_texture(struct st_context *st,
    GLuint width = stImage->base.Width2;  /* size w/out border */
    GLuint height = stImage->base.Height2;
    GLuint depth = stImage->base.Depth2;
-   GLuint i, comp_byte = 0;
+   GLuint i, comp_byte = 0, usage;
    enum pipe_format fmt;
 
    DBG("%s\n", __FUNCTION__);
@@ -312,6 +327,9 @@ guess_and_alloc_texture(struct st_context *st,
       comp_byte = compressed_num_bytes(stImage->base.TexFormat->MesaFormat);
 
    fmt = st_mesa_format_to_pipe_format(stImage->base.TexFormat->MesaFormat);
+
+   usage = default_usage(fmt);
+
    stObj->pt = st_texture_create(st,
                                  gl_target_to_pipe(stObj->base.Target),
                                  fmt,
@@ -320,10 +338,7 @@ guess_and_alloc_texture(struct st_context *st,
                                  height,
                                  depth,
                                  comp_byte,
-                                 ( (pf_is_depth_stencil(fmt) ?
-                                   PIPE_TEXTURE_USAGE_DEPTH_STENCIL :
-                                   PIPE_TEXTURE_USAGE_RENDER_TARGET) |
-                                   PIPE_TEXTURE_USAGE_SAMPLER ));
+                                 usage);
 
    DBG("%s - success\n", __FUNCTION__);
 }
@@ -1396,6 +1411,8 @@ st_finalize_texture(GLcontext *ctx,
    if (!stObj->pt) {
       const enum pipe_format fmt =
          st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat);
+      GLuint usage = default_usage(fmt);
+
       stObj->pt = st_texture_create(ctx->st,
                                     gl_target_to_pipe(stObj->base.Target),
                                     fmt,
@@ -1404,10 +1421,7 @@ st_finalize_texture(GLcontext *ctx,
                                     firstImage->base.Height2,
                                     firstImage->base.Depth2,
                                     comp_byte,
-                                    ( (pf_is_depth_stencil(fmt) ?
-                                      PIPE_TEXTURE_USAGE_DEPTH_STENCIL :
-                                      PIPE_TEXTURE_USAGE_RENDER_TARGET) |
-                                      PIPE_TEXTURE_USAGE_SAMPLER ));
+                                    usage);
 
       if (!stObj->pt) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
