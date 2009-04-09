@@ -76,7 +76,7 @@ st_flush_frontbuffer(struct pipe_screen *screen,
 
 
 boolean
-st_init(const struct stw_winsys *stw_winsys)
+stw_init(const struct stw_winsys *stw_winsys)
 {
    static struct stw_device stw_dev_storage;
    struct pipe_screen *screen;
@@ -131,7 +131,7 @@ error1:
 
 
 boolean
-st_init_thread(void)
+stw_init_thread(void)
 {
    if (!stw_tls_init_thread())
       return FALSE;
@@ -144,7 +144,7 @@ st_init_thread(void)
 
 
 void
-st_cleanup_thread(void)
+stw_cleanup_thread(void)
 {
    stw_framebuffer_cleanup_thread();
    stw_tls_cleanup_thread();
@@ -152,7 +152,7 @@ st_cleanup_thread(void)
 
 
 void
-st_cleanup(void)
+stw_cleanup(void)
 {
    unsigned i;
 
