@@ -34,7 +34,7 @@
 #define PF_FLAG_DOUBLEBUFFER  0x00000001
 #define PF_FLAG_MULTISAMPLED  0x00000002
 
-struct pixelformat_color_info
+struct stw_pixelformat_color_info
 {
    uint redbits;
    uint redshift;
@@ -44,37 +44,37 @@ struct pixelformat_color_info
    uint blueshift;
 };
 
-struct pixelformat_alpha_info
+struct stw_pixelformat_alpha_info
 {
    uint alphabits;
    uint alphashift;
 };
 
-struct pixelformat_depth_info
+struct stw_pixelformat_depth_info
 {
    uint depthbits;
    uint stencilbits;
 };
 
-struct pixelformat_info
+struct stw_pixelformat_info
 {
    uint flags;
-   struct pixelformat_color_info color;
-   struct pixelformat_alpha_info alpha;
-   struct pixelformat_depth_info depth;
+   struct stw_pixelformat_color_info color;
+   struct stw_pixelformat_alpha_info alpha;
+   struct stw_pixelformat_depth_info depth;
 };
 
 void
-pixelformat_init( void );
+stw_pixelformat_init( void );
 
 uint
-pixelformat_get_count( void );
+stw_pixelformat_get_count( void );
 
 uint
-pixelformat_get_extended_count( void );
+stw_pixelformat_get_extended_count( void );
 
-const struct pixelformat_info *
-pixelformat_get_info( uint index );
+const struct stw_pixelformat_info *
+stw_pixelformat_get_info( uint index );
 
 int stw_query_sample_buffers( void );
 int stw_query_samples( void );

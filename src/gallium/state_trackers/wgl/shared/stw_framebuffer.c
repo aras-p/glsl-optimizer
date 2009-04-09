@@ -45,7 +45,7 @@
 
 
 void
-framebuffer_resize(
+stw_framebuffer_resize(
    struct stw_framebuffer *fb,
    GLuint width,
    GLuint height )
@@ -56,7 +56,7 @@ framebuffer_resize(
 static struct stw_framebuffer *fb_head = NULL;
 
 static LRESULT CALLBACK
-window_proc(
+stw_window_proc(
    HWND hWnd,
    UINT uMsg,
    WPARAM wParam,
@@ -70,7 +70,7 @@ window_proc(
    assert( fb != NULL );
 
    if (uMsg == WM_SIZE && wParam != SIZE_MINIMIZED)
-      framebuffer_resize( fb, LOWORD( lParam ), HIWORD( lParam ) );
+      stw_framebuffer_resize( fb, LOWORD( lParam ), HIWORD( lParam ) );
 
    return CallWindowProc( fb->WndProc, hWnd, uMsg, wParam, lParam );
 }
@@ -94,7 +94,7 @@ stw_is_supported_depth_stencil(enum pipe_format format)
 /* Create a new framebuffer object which will correspond to the given HDC.
  */
 struct stw_framebuffer *
-framebuffer_create(
+stw_framebuffer_create(
    HDC hdc,
    GLvisual *visual,
    GLuint width,
@@ -198,7 +198,7 @@ framebuffer_create(
       fb->WndProc = (WNDPROC) SetWindowLongPtr(
          fb->hWnd,
          GWLP_WNDPROC,
-         (LONG_PTR) window_proc );
+         (LONG_PTR) stw_window_proc );
    }
 
    fb->next = fb_head;
@@ -207,7 +207,7 @@ framebuffer_create(
 }
 
 void
-framebuffer_destroy(
+stw_framebuffer_destroy(
    struct stw_framebuffer *fb )
 {
    struct stw_framebuffer **link = &fb_head;
@@ -235,7 +235,7 @@ framebuffer_destroy(
 /* Given an hdc, return the corresponding stw_framebuffer.
  */
 struct stw_framebuffer *
-framebuffer_from_hdc(
+stw_framebuffer_from_hdc(
    HDC hdc )
 {
    struct stw_framebuffer *fb;
@@ -255,7 +255,7 @@ stw_swap_buffers(
    struct pipe_screen *screen;
    struct pipe_surface *surface;
 
-   fb = framebuffer_from_hdc( hdc );
+   fb = stw_framebuffer_from_hdc( hdc );
    if (fb == NULL)
       return FALSE;
 

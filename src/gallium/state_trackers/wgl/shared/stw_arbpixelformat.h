@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-#ifndef WGL_ARBPIXELFORMAT_H
-#define WGL_ARBPIXELFORMAT_H
+#ifndef STW_ARBPIXELFORMAT_H
+#define STW_ARBPIXELFORMAT_H
 
 
 /* Extension functions for get_proc_address:
@@ -58,4 +58,4 @@ wglGetPixelFormatAttribivARB(
    const int *piAttributes,
    int *piValues );
 
-#endif /* WGL_ARBPIXELFORMAT_H */
+#endif /* STW_ARBPIXELFORMAT_H */

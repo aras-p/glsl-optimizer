@@ -101,9 +101,9 @@ query_attrib(
 {
    uint count;
    uint index;
-   const struct pixelformat_info *pf;
+   const struct stw_pixelformat_info *pf;
 
-   count = pixelformat_get_extended_count();
+   count = stw_pixelformat_get_extended_count();
 
    if (attrib == WGL_NUMBER_PIXEL_FORMATS_ARB) {
       *pvalue = (int) count;
@@ -114,7 +114,7 @@ query_attrib(
    if (index >= count)
       return FALSE;
 
-   pf = pixelformat_get_info( index );
+   pf = stw_pixelformat_get_info( index );
 
    switch (attrib) {
    case WGL_DRAW_TO_WINDOW_ARB:
@@ -324,7 +324,7 @@ static const struct attrib_match_info attrib_match[] = {
    { WGL_SAMPLES_ARB,             2, FALSE }
 };
 
-struct pixelformat_score
+struct stw_pixelformat_score
 {
    int points;
    uint index;
@@ -332,7 +332,7 @@ struct pixelformat_score
 
 static BOOL
 score_pixelformats(
-   struct pixelformat_score *scores,
+   struct stw_pixelformat_score *scores,
    uint count,
    int attribute,
    int expected_value )
@@ -395,7 +395,7 @@ wglChoosePixelFormatARB(
    UINT *nNumFormats )
 {
    uint count;
-   struct pixelformat_score *scores;
+   struct stw_pixelformat_score *scores;
    uint i;
 
    *nNumFormats = 0;
@@ -405,8 +405,8 @@ wglChoosePixelFormatARB(
     * points for a mismatch when the match does not have to be exact.
     * Set a score to 0 if there is a mismatch for an exact match criteria.
     */
-   count = pixelformat_get_extended_count();
-   scores = (struct pixelformat_score *) MALLOC( count * sizeof( struct pixelformat_score ) );
+   count = stw_pixelformat_get_extended_count();
+   scores = (struct stw_pixelformat_score *) MALLOC( count * sizeof( struct stw_pixelformat_score ) );
    if (scores == NULL)
       return FALSE;
    for (i = 0; i < count; i++) {
@@ -446,7 +446,7 @@ wglChoosePixelFormatARB(
          swapped = FALSE;
          for (i = 1; i < n; i++) {
             if (scores[i - 1].points < scores[i].points) {
-               struct pixelformat_score score = scores[i - 1];
+               struct stw_pixelformat_score score = scores[i - 1];
 
                scores[i - 1] = scores[i];
                scores[i] = score;

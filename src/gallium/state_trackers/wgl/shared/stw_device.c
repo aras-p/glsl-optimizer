@@ -119,7 +119,7 @@ st_init(const struct stw_winsys *stw_winsys)
       goto error1;
    }
 
-   pixelformat_init();
+   stw_pixelformat_init();
 
    return TRUE;
 

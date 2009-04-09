@@ -30,24 +30,24 @@
 #include "stw_public.h"
 #include "stw_tls.h"
 
-#define MAX_PIXELFORMATS   16
+#define STW_MAX_PIXELFORMATS   16
 
-static struct pixelformat_info pixelformats[MAX_PIXELFORMATS];
-static uint pixelformat_count = 0;
-static uint pixelformat_extended_count = 0;
+static struct stw_pixelformat_info pixelformats[STW_MAX_PIXELFORMATS];
+static uint stw_pixelformat_count = 0;
+static uint stw_pixelformat_extended_count = 0;
 
 
 static void
 add_standard_pixelformats(
-   struct pixelformat_info **ppf,
+   struct stw_pixelformat_info **ppf,
    uint flags )
 {
-   struct pixelformat_info *pf = *ppf;
-   struct pixelformat_color_info color24 = { 8, 0, 8, 8, 8, 16 };
-   struct pixelformat_alpha_info alpha8 = { 8, 24 };
-   struct pixelformat_alpha_info noalpha = { 0, 0 };
-   struct pixelformat_depth_info depth24s8 = { 24, 8 };
-   struct pixelformat_depth_info depth16 = { 16, 0 };
+   struct stw_pixelformat_info *pf = *ppf;
+   struct stw_pixelformat_color_info color24 = { 8, 0, 8, 8, 8, 16 };
+   struct stw_pixelformat_alpha_info alpha8 = { 8, 24 };
+   struct stw_pixelformat_alpha_info noalpha = { 0, 0 };
+   struct stw_pixelformat_depth_info depth24s8 = { 24, 8 };
+   struct stw_pixelformat_depth_info depth16 = { 16, 0 };
 
    pf->flags = PF_FLAG_DOUBLEBUFFER | flags;
    pf->color = color24;
@@ -101,35 +101,35 @@ add_standard_pixelformats(
 }
 
 void
-pixelformat_init( void )
+stw_pixelformat_init( void )
 {
-   struct pixelformat_info *pf = pixelformats;
+   struct stw_pixelformat_info *pf = pixelformats;
 
    add_standard_pixelformats( &pf, 0 );
-   pixelformat_count = pf - pixelformats;
+   stw_pixelformat_count = pf - pixelformats;
 
    add_standard_pixelformats( &pf, PF_FLAG_MULTISAMPLED );
-   pixelformat_extended_count = pf - pixelformats;
+   stw_pixelformat_extended_count = pf - pixelformats;
 
-   assert( pixelformat_extended_count <= MAX_PIXELFORMATS );
+   assert( stw_pixelformat_extended_count <= STW_MAX_PIXELFORMATS );
 }
 
 uint
-pixelformat_get_count( void )
+stw_pixelformat_get_count( void )
 {
-   return pixelformat_count;
+   return stw_pixelformat_count;
 }
 
 uint
-pixelformat_get_extended_count( void )
+stw_pixelformat_get_extended_count( void )
 {
-   return pixelformat_extended_count;
+   return stw_pixelformat_extended_count;
 }
 
-const struct pixelformat_info *
-pixelformat_get_info( uint index )
+const struct stw_pixelformat_info *
+stw_pixelformat_get_info( uint index )
 {
-   assert( index < pixelformat_extended_count );
+   assert( index < stw_pixelformat_extended_count );
 
    return &pixelformats[index];
 }
@@ -144,11 +144,11 @@ stw_pixelformat_describe(
 {
    uint count;
    uint index;
-   const struct pixelformat_info *pf;
+   const struct stw_pixelformat_info *pf;
 
    (void) hdc;
 
-   count = pixelformat_get_extended_count();
+   count = stw_pixelformat_get_extended_count();
    index = (uint) iPixelFormat - 1;
 
    if (ppfd == NULL)
@@ -156,7 +156,7 @@ stw_pixelformat_describe(
    if (index >= count || nBytes != sizeof( PIXELFORMATDESCRIPTOR ))
       return 0;
 
-   pf = pixelformat_get_info( index );
+   pf = stw_pixelformat_get_info( index );
 
    ppfd->nSize = sizeof( PIXELFORMATDESCRIPTOR );
    ppfd->nVersion = 1;
@@ -203,13 +203,13 @@ int stw_pixelformat_choose( HDC hdc,
 
    (void) hdc;
 
-   count = pixelformat_get_count();
+   count = stw_pixelformat_get_count();
    bestindex = count;
    bestdelta = 0xffffffff;
 
    for (index = 0; index < count; index++) {
       uint delta = 0;
-      const struct pixelformat_info *pf = pixelformat_get_info( index );
+      const struct stw_pixelformat_info *pf = stw_pixelformat_get_info( index );
 
       if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE) &&
           !!(ppfd->dwFlags & PFD_DOUBLEBUFFER) !=
@@ -262,7 +262,7 @@ stw_pixelformat_set(
    (void) hdc;
 
    index = (uint) iPixelFormat - 1;
-   count = pixelformat_get_extended_count();
+   count = stw_pixelformat_get_extended_count();
    if (index >= count)
       return FALSE;
 

@@ -25,11 +25,11 @@
  * 
  **************************************************************************/
 
-#ifndef WGL_ARBEXTENSIONSSTRING_H
-#define WGL_ARBEXTENSIONSSTRING_H
+#ifndef STW_ARBEXTENSIONSSTRING_H
+#define STW_ARBEXTENSIONSSTRING_H
 
 WINGDIAPI const char * APIENTRY
 wglGetExtensionsStringARB(
    HDC hdc );
 
-#endif /* WGL_ARBEXTENSIONSSTRING_H */
+#endif /* STW_ARBEXTENSIONSSTRING_H */

@@ -80,7 +80,7 @@ stw_create_layer_context(
    int iLayerPlane )
 {
    uint pfi;
-   const struct pixelformat_info *pf = NULL;
+   const struct stw_pixelformat_info *pf = NULL;
    struct stw_context *ctx = NULL;
    GLvisual *visual = NULL;
    struct pipe_screen *screen = NULL;
@@ -97,7 +97,7 @@ stw_create_layer_context(
    if (pfi == 0)
       return 0;
 
-   pf = pixelformat_get_info( pfi - 1 );
+   pf = stw_pixelformat_get_info( pfi - 1 );
 
    ctx = CALLOC_STRUCT( stw_context );
    if (ctx == NULL)
@@ -199,9 +199,9 @@ stw_delete_context(
       if (glcurctx == glctx)
          st_make_current( NULL, NULL, NULL );
 
-      fb = framebuffer_from_hdc( ctx->hdc );
+      fb = stw_framebuffer_from_hdc( ctx->hdc );
       if (fb)
-         framebuffer_destroy( fb );
+         stw_framebuffer_destroy( fb );
 
       if (WindowFromDC( ctx->hdc ) != NULL)
          ReleaseDC( WindowFromDC( ctx->hdc ), ctx->hdc );
@@ -257,7 +257,7 @@ done:
 /* Find the width and height of the window named by hdc.
  */
 static void
-get_window_size( HDC hdc, GLuint *width, GLuint *height )
+stw_get_window_size( HDC hdc, GLuint *width, GLuint *height )
 {
    if (WindowFromDC( hdc )) {
       RECT rect;
@@ -325,24 +325,24 @@ stw_make_current(
          return TRUE;
    }
 
-   fb = framebuffer_from_hdc( hdc );
+   fb = stw_framebuffer_from_hdc( hdc );
 
    if (hdc != NULL)
-      get_window_size( hdc, &width, &height );
+      stw_get_window_size( hdc, &width, &height );
 
-   /* Lazy creation of framebuffers.
+   /* Lazy creation of stw_framebuffers.
     */
    if (fb == NULL && ctx != NULL && hdc != NULL) {
       GLvisual *visual = &ctx->st->ctx->Visual;
 
-      fb = framebuffer_create( hdc, visual, width, height );
+      fb = stw_framebuffer_create( hdc, visual, width, height );
       if (fb == NULL)
          return FALSE;
    }
 
    if (ctx && fb) {
       st_make_current( ctx->st, fb->stfb, fb->stfb );
-      framebuffer_resize( fb, width, height );
+      stw_framebuffer_resize( fb, width, height );
       ctx->hdc = hdc;
       ctx->st->pipe->priv = hdc;
    }

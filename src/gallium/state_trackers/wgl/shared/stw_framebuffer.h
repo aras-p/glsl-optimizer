@@ -30,7 +30,8 @@
 
 #include "main/mtypes.h"
 
-/* Windows framebuffer, derived from gl_framebuffer.
+/**
+ * Windows framebuffer, derived from gl_framebuffer.
  */
 struct stw_framebuffer
 {
@@ -43,24 +44,24 @@ struct stw_framebuffer
 };
 
 struct stw_framebuffer *
-framebuffer_create(
+stw_framebuffer_create(
    HDC hdc,
    GLvisual *visual,
    GLuint width,
    GLuint height );
 
 void
-framebuffer_destroy(
+stw_framebuffer_destroy(
    struct stw_framebuffer *fb );
 
 void
-framebuffer_resize(
+stw_framebuffer_resize(
    struct stw_framebuffer *fb,
    GLuint width,
    GLuint height );
 
 struct stw_framebuffer *
-framebuffer_from_hdc(
+stw_framebuffer_from_hdc(
    HDC hdc );
 
 #endif /* STW_FRAMEBUFFER_H */
