@@ -47,21 +47,10 @@
 static INLINE uint32_t cmdpacket0(struct radeon_screen *rscrn,
                                   int reg, int count)
 {
-    if (!rscrn->kernel_mm) {
-	    drm_r300_cmd_header_t cmd;
-
-	cmd.u = 0;
-    	cmd.packet0.cmd_type = R300_CMD_PACKET0;
-	    cmd.packet0.count = count;
-    	cmd.packet0.reghi = ((unsigned int)reg & 0xFF00) >> 8;
-	    cmd.packet0.reglo = ((unsigned int)reg & 0x00FF);
-
-    	return cmd.u;
-    }
-    if (count) {
-        return CP_PACKET0(reg, count - 1);
-    }
-    return CP_PACKET2;
+	if (count) {
+		return CP_PACKET0(reg, count - 1);
+	}
+	return CP_PACKET2;
 }
 
 static INLINE uint32_t cmdvpu(struct radeon_screen *rscrn, int addr, int count)
