@@ -40,7 +40,7 @@ struct extension_entry
 
 #define EXTENTRY(P) { #P, (PROC) P }
 
-static struct extension_entry extension_entries[] = {
+static const struct extension_entry extension_entries[] = {
 
    /* WGL_ARB_extensions_string */
    EXTENTRY( wglGetExtensionsStringARB ),
@@ -57,9 +57,9 @@ PROC
 stw_get_proc_address(
    LPCSTR lpszProc )
 {
-   struct extension_entry *entry;
+   const struct extension_entry *entry;
 
-   PROC p = (PROC) _glapi_get_proc_address( (const char *) lpszProc );
+   PROC p = (PROC) _glapi_get_proc_address( lpszProc );
    if (p)
       return p;
 

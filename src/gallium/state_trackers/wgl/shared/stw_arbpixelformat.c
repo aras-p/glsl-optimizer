@@ -285,7 +285,7 @@ struct attrib_match_info
    BOOL exact;
 };
 
-static struct attrib_match_info attrib_match[] = {
+static const struct attrib_match_info attrib_match[] = {
 
    /* WGL_ARB_pixel_format */
    { WGL_DRAW_TO_WINDOW_ARB,      0, TRUE },
@@ -338,7 +338,7 @@ score_pixelformats(
    int expected_value )
 {
    uint i;
-   struct attrib_match_info *ami = NULL;
+   const struct attrib_match_info *ami = NULL;
    uint index;
 
    /* Find out if a given attribute should be considered for score calculation.
