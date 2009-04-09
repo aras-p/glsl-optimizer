@@ -214,6 +214,7 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	struct radeon_renderbuffer *rrb;
 	uint32_t cbpitch;
 	uint32_t offset = r300->radeon.state.color.draw_offset;
+	uint32_t dw = 6;
 
 	rrb = radeon_get_colorbuffer(&r300->radeon);
 	if (!rrb || !rrb->bo) {
@@ -230,11 +231,16 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
 		cbpitch |= R300_COLOR_TILE_ENABLE;
 
-	BEGIN_BATCH_NO_AUTOSTATE(8);
+    	if (r300->radeon.radeonScreen->kernel_mm)
+		dw += 2;
+	BEGIN_BATCH_NO_AUTOSTATE(dw);
 	OUT_BATCH_REGSEQ(R300_RB3D_COLOROFFSET0, 1);
 	OUT_BATCH_RELOC(offset, rrb->bo, offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 	OUT_BATCH_REGSEQ(R300_RB3D_COLORPITCH0, 1);
-	OUT_BATCH_RELOC(cbpitch, rrb->bo, cbpitch, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+    	if (!r300->radeon.radeonScreen->kernel_mm)
+		OUT_BATCH(cbpitch);
+	else
+		OUT_BATCH_RELOC(cbpitch, rrb->bo, cbpitch, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 	END_BATCH();
     if (r300->radeon.radeonScreen->driScreen->dri2.enabled) {
         if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
