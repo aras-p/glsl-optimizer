@@ -259,10 +259,10 @@ static void prealloc_reg(struct brw_wm_compile *c)
           c->current_const[i].reg = alloc_tmp(c);
        }
     }
-    /*
+#if 0
     printf("USE CONST BUFFER? %d\n", c->use_const_buffer);
     printf("AFTER PRE_ALLOC, reg_index = %d\n", c->reg_index);
-    */
+#endif
 }
 
 
@@ -284,14 +284,12 @@ static void fetch_constants(struct brw_wm_compile *c,
           src->File == PROGRAM_CONSTANT ||
           src->File == PROGRAM_UNIFORM) {
          if (c->current_const[i].index != src->Index) {
-
             c->current_const[i].index = src->Index;
-            /*c->current_const[i].reg = alloc_tmp(c);*/
 
-            /*
+#if 0
             printf("  fetch const[%d] for arg %d into reg %d\n",
                    src->Index, i, c->current_const[i].reg.nr);
-            */
+#endif
 
             /* need to fetch the constant now */
             brw_dp_READ_4(p,
@@ -301,26 +299,6 @@ static void fetch_constants(struct brw_wm_compile *c,
                           16 * src->Index,          /* byte offset */
                           BRW_WM_MAX_SURF - 1       /* binding table index */
                           );
-
-#if 0
-            /* dependency stall */
-            {
-               int response_length = 1;
-               int mark = mark_tmps( c );
-               struct brw_reg src = c->current_const[i].reg;
-               struct brw_reg tmp = alloc_tmp(c);
-
-               /*  mov (8) r9.0<1>:f    r9.0<8;8,1>:f    { Align1 }
-                */
-               brw_push_insn_state(p);
-               brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-               brw_MOV(p, tmp, src);	      
-               brw_MOV(p, src, tmp);	      
-               brw_pop_insn_state(p);
-
-               release_tmps( c, mark );
-            }
-#endif
          }
       }
    }
@@ -367,13 +345,13 @@ get_src_reg_const(struct brw_wm_compile *c,
    if (src->Abs)
       const_reg = brw_abs(const_reg);
 
-   /*
+#if 0
    printf("  form const[%d] for arg %d, comp %d, reg %d\n",
           c->current_const[srcRegIndex].index,
           srcRegIndex,
           component,
           const_reg.nr);
-   */
+#endif
 
    return const_reg;
 }
@@ -428,7 +406,9 @@ static struct brw_reg get_src_reg_imm(struct brw_wm_compile *c,
           value = -value;
        if (src->Abs)
           value = FABSF(value);
-       /*printf("  form imm reg %f\n", value);*/
+#if 0
+       printf("  form imm reg %f\n", value);
+#endif
        return brw_imm_f(value);
     }
     else {
@@ -2621,6 +2601,11 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
     for (i = 0; i < c->nr_fp_insns; i++) {
 	struct prog_instruction *inst = &c->prog_instructions[i];
 
+#if 0
+        _mesa_printf("Inst %d: ", i);
+        _mesa_print_instruction(inst);
+#endif
+
         /* fetch any constants that this instruction needs */
         if (c->use_const_buffer)
            fetch_constants(c, inst);
@@ -2629,11 +2614,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
 	else
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NONE);
-
-        /*
-        _mesa_printf("Inst %d: ", i);
-        _mesa_print_instruction(inst);
-        */
 
 	switch (inst->Opcode) {
 	    case WM_PIXELXY:
@@ -2820,6 +2800,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 
 		break;
 	    case OPCODE_BGNLOOP:
+                /* XXX may need to invalidate the current_constant regs */
 		loop_inst[loop_insn++] = brw_DO(p, BRW_EXECUTE_8);
 		break;
 	    case OPCODE_BRK:
