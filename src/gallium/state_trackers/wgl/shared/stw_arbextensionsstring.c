@@ -27,7 +27,11 @@
 
 #include <windows.h>
 
-#include "stw_arbextensionsstring.h"
+#define WGL_WGLEXT_PROTOTYPES
+
+#include <GL/gl.h>
+#include <GL/wglext.h>
+
 
 WINGDIAPI const char * APIENTRY
 wglGetExtensionsStringARB(

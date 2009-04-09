@@ -27,9 +27,12 @@
 
 #include <windows.h>
 
+#define WGL_WGLEXT_PROTOTYPES
+
+#include <GL/gl.h>
+#include <GL/wglext.h>
+
 #include "glapi/glapi.h"
-#include "stw_arbextensionsstring.h"
-#include "stw_arbpixelformat.h"
 #include "stw_public.h"
 
 struct stw_extension_entry
