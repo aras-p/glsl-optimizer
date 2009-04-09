@@ -88,7 +88,7 @@ gl_target_to_pipe(GLenum target)
  * Return nominal bytes per texel for a compressed format, 0 for non-compressed
  * format.
  */
-static int
+static GLuint
 compressed_num_bytes(GLuint mesaFormat)
 {
    switch(mesaFormat) {
@@ -563,8 +563,8 @@ st_TexImage(GLcontext * ctx,
       memcpy(texImage->Data, pixels, imageSize);
    }
    else {
-      GLuint srcImageStride = _mesa_image_image_stride(unpack, width, height,
-						       format, type);
+      const GLuint srcImageStride =
+         _mesa_image_image_stride(unpack, width, height, format, type);
       GLint i;
       const GLubyte *src = (const GLubyte *) pixels;
 
@@ -678,10 +678,9 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
                  struct gl_texture_image *texImage, GLboolean compressed)
 {
    struct st_texture_image *stImage = st_texture_image(texImage);
-   GLuint dstImageStride = _mesa_image_image_stride(&ctx->Pack,
-                                                    texImage->Width,
-						    texImage->Height,
-                                                    format, type);
+   const GLuint dstImageStride =
+      _mesa_image_image_stride(&ctx->Pack, texImage->Width, texImage->Height,
+                               format, type);
    GLuint depth, i;
    GLubyte *dest;
 
@@ -779,8 +778,8 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
 {
    struct st_texture_image *stImage = st_texture_image(texImage);
    GLuint dstRowStride;
-   GLuint srcImageStride = _mesa_image_image_stride(packing, width, height,
-						    format, type);
+   const GLuint srcImageStride =
+      _mesa_image_image_stride(packing, width, height, format, type);
    GLint i;
    const GLubyte *src;
 
@@ -1106,7 +1105,7 @@ st_copy_texsubimage(GLcontext *ctx,
                                            PIPE_TEXTURE_USAGE_RENDER_TARGET,
                                            0)) {
          /* draw textured quad to do the copy */
-         int srcY0, srcY1;
+         GLint srcY0, srcY1;
 
          dest_surface = screen->get_tex_surface(screen, stImage->pt,
                                                 stImage->face, stImage->level,
@@ -1339,9 +1338,7 @@ st_finalize_texture(GLcontext *ctx,
 {
    struct st_texture_object *stObj = st_texture_object(tObj);
    const GLuint nr_faces = (stObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
-   int comp_byte = 0;
-   int cpp;
-   GLuint face;
+   GLuint comp_byte = 0, cpp, face;
    struct st_texture_image *firstImage;
 
    *needFlush = GL_FALSE;
