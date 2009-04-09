@@ -1553,7 +1553,7 @@ emit_instruction(
                func,
                make_xmm( 2 ),
                make_xmm( 0 ),
-               cc_LessThanEqual );
+               cc_LessThan );
             sse_andps(
                func,
                make_xmm( 2 ),
