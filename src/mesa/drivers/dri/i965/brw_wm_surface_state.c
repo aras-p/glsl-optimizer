@@ -288,7 +288,7 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage = tObj->Image[0][intelObj->firstLevel];
    struct brw_wm_surface_key key;
-   const GLuint j = MAX_DRAW_BUFFERS + unit;
+   const GLuint surf = SURF_INDEX_TEXTURE(unit);
 
    memset(&key, 0, sizeof(key));
 
@@ -315,13 +315,13 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    key.cpp = intelObj->mt->cpp;
    key.tiling = intelObj->mt->region->tiling;
 
-   dri_bo_unreference(brw->wm.surf_bo[j]);
-   brw->wm.surf_bo[j] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
+   dri_bo_unreference(brw->wm.surf_bo[surf]);
+   brw->wm.surf_bo[surf] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
                                          &key, sizeof(key),
                                          &key.bo, key.bo ? 1 : 0,
                                          NULL);
-   if (brw->wm.surf_bo[j] == NULL) {
-      brw->wm.surf_bo[j] = brw_create_texture_surface(brw, &key);
+   if (brw->wm.surf_bo[surf] == NULL) {
+      brw->wm.surf_bo[surf] = brw_create_texture_surface(brw, &key);
    }
 }
 
@@ -387,7 +387,7 @@ brw_update_constant_surface( GLcontext *ctx,
 {
    struct brw_context *brw = brw_context(ctx);
    struct brw_wm_surface_key key;
-   const GLuint j = BRW_WM_MAX_SURF - 1;
+   const GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER;
    const GLuint numParams = fp->program.Base.Parameters->NumParameters;
 
    memset(&key, 0, sizeof(key));
@@ -409,13 +409,13 @@ brw_update_constant_surface( GLcontext *ctx,
           key.width, key.height, key.depth, key.cpp, key.pitch);
    */
 
-   dri_bo_unreference(brw->wm.surf_bo[j]);
-   brw->wm.surf_bo[j] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
-                                         &key, sizeof(key),
-                                         &key.bo, key.bo ? 1 : 0,
-                                         NULL);
-   if (brw->wm.surf_bo[j] == NULL) {
-      brw->wm.surf_bo[j] = brw_create_constant_surface(brw, &key);
+   dri_bo_unreference(brw->wm.surf_bo[surf]);
+   brw->wm.surf_bo[surf] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
+                                            &key, sizeof(key),
+                                            &key.bo, key.bo ? 1 : 0,
+                                            NULL);
+   if (brw->wm.surf_bo[surf] == NULL) {
+      brw->wm.surf_bo[surf] = brw_create_constant_surface(brw, &key);
    }
 }
 
@@ -587,40 +587,40 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    old_nr_surfaces = brw->wm.nr_surfaces;
    brw->wm.nr_surfaces = MAX_DRAW_BUFFERS;
 
+   /* Update surface for fragment shader constant buffer */
+   {
+      const GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER + 1;
+      const struct brw_fragment_program *fp =
+         brw_fragment_program_const(brw->fragment_program);
+
+      brw_update_constant_surface(ctx, fp);
+      brw->wm.nr_surfaces = surf + 1;
+   }
+
+
    /* Update surfaces for textures */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
-      const GLuint j = MAX_DRAW_BUFFERS + i;
+      const GLuint surf = SURF_INDEX_TEXTURE(i);
 
       /* _NEW_TEXTURE, BRW_NEW_TEXDATA */
       if (texUnit->_ReallyEnabled) {
          if (texUnit->_Current == intel->frame_buffer_texobj) {
             /* render to texture */
-            dri_bo_unreference(brw->wm.surf_bo[j]);
-            brw->wm.surf_bo[j] = brw->wm.surf_bo[0];
-            dri_bo_reference(brw->wm.surf_bo[j]);
-            brw->wm.nr_surfaces = j + 1;
+            dri_bo_unreference(brw->wm.surf_bo[surf]);
+            brw->wm.surf_bo[surf] = brw->wm.surf_bo[0];
+            dri_bo_reference(brw->wm.surf_bo[surf]);
+            brw->wm.nr_surfaces = surf + 1;
          } else {
             /* regular texture */
             brw_update_texture_surface(ctx, i);
-            brw->wm.nr_surfaces = j + 1;
+            brw->wm.nr_surfaces = surf + 1;
          }
       } else {
-         dri_bo_unreference(brw->wm.surf_bo[j]);
-         brw->wm.surf_bo[j] = NULL;
+         dri_bo_unreference(brw->wm.surf_bo[surf]);
+         brw->wm.surf_bo[surf] = NULL;
       }
    }
-
-   /* Update surface for fragment shader constant buffer */
-   {
-      const GLuint j = BRW_WM_MAX_SURF - 1;
-      const struct brw_fragment_program *fp =
-         brw_fragment_program_const(brw->fragment_program);
-
-      brw_update_constant_surface(ctx, fp);
-      brw->wm.nr_surfaces = j + 1;
-   }
-
 
    dri_bo_unreference(brw->wm.bind_bo);
    brw->wm.bind_bo = brw_wm_get_binding_table(brw);

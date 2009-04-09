@@ -990,7 +990,7 @@ void brw_dp_READ_4( struct brw_compile *p,
       brw_set_src0(insn, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
 
       brw_set_dp_read_message(insn,
-			      bind_table_index, /* binding table index (255=stateless) */
+			      bind_table_index,
 			      0,  /* msg_control (0 means 1 Oword) */
 			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
 			      0, /* source cache = data cache */

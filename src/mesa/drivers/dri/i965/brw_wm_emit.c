@@ -742,7 +742,7 @@ static void emit_tex( struct brw_wm_compile *c,
 	      retype(vec16(dst[0]), BRW_REGISTER_TYPE_UW),
 	      1,
 	      retype(c->payload.depth[0].hw_reg, BRW_REGISTER_TYPE_UW),
-	      inst->tex_unit + MAX_DRAW_BUFFERS, /* surface */
+              SURF_INDEX_TEXTURE(inst->tex_unit),
 	      inst->tex_unit,	  /* sampler */
 	      inst->writemask,
 	      (inst->tex_shadow ? 
@@ -791,7 +791,7 @@ static void emit_txb( struct brw_wm_compile *c,
 	      retype(vec16(dst[0]), BRW_REGISTER_TYPE_UW),
 	      1,
 	      retype(c->payload.depth[0].hw_reg, BRW_REGISTER_TYPE_UW),
-	      inst->tex_unit + MAX_DRAW_BUFFERS, /* surface */
+              SURF_INDEX_TEXTURE(inst->tex_unit),
 	      inst->tex_unit,	  /* sampler */
 	      inst->writemask,
 	      BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS,

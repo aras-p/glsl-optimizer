@@ -247,9 +247,18 @@ struct brw_vs_ouput_sizes {
 /**
  * Size of our surface binding table.
  * This contains pointers to the drawing surfaces and current texture
- * objects and shader constant buffer (+1).
+ * objects and shader constant buffers (+2).
  */
-#define BRW_WM_MAX_SURF (MAX_DRAW_BUFFERS + BRW_MAX_TEX_UNIT + 1)
+#define BRW_WM_MAX_SURF (MAX_DRAW_BUFFERS + BRW_MAX_TEX_UNIT + 2)
+
+/**
+ * Helpers to convert drawing buffers, textures and constant buffers
+ * to surface binding table indexes.
+ */
+#define SURF_INDEX_DRAW(d)           (d)
+#define SURF_INDEX_FRAG_CONST_BUFFER (MAX_DRAW_BUFFERS + 0) 
+#define SURF_INDEX_VERT_CONST_BUFFER (MAX_DRAW_BUFFERS + 1)
+#define SURF_INDEX_TEXTURE(t)        (MAX_DRAW_BUFFERS + 2 + t)
 
 
 enum brw_cache_id {

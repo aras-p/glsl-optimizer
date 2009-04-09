@@ -297,7 +297,7 @@ static void fetch_constants(struct brw_wm_compile *c,
                           1,                        /* msg_reg */
                           src->RelAddr,             /* relative indexing? */
                           16 * src->Index,          /* byte offset */
-                          BRW_WM_MAX_SURF - 1       /* binding table index */
+                          SURF_INDEX_FRAG_CONST_BUFFER/* binding table index */
                           );
          }
       }
@@ -2498,7 +2498,7 @@ static void emit_txb(struct brw_wm_compile *c,
                retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW),  /* dest */
                1,                                           /* msg_reg_nr */
                retype(payload_reg, BRW_REGISTER_TYPE_UW),   /* src0 */
-               unit + MAX_DRAW_BUFFERS,                     /* surface */
+               SURF_INDEX_TEXTURE(unit),
                unit,                                        /* sampler */
                inst->DstReg.WriteMask,                      /* writemask */
                BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS,      /* msg_type */
@@ -2562,7 +2562,7 @@ static void emit_tex(struct brw_wm_compile *c,
                retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW), /* dest */
                1,                                          /* msg_reg_nr */
                retype(payload_reg, BRW_REGISTER_TYPE_UW),  /* src0 */
-               unit + MAX_DRAW_BUFFERS,                    /* surface */
+               SURF_INDEX_TEXTURE(unit),
                unit,                                       /* sampler */
                inst->DstReg.WriteMask,                     /* writemask */
                BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE,           /* msg_type */
