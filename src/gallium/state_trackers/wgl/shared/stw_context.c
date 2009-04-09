@@ -231,10 +231,17 @@ stw_release_context(
    if (!ctx)
       return FALSE;
    
-   /* XXX: The expectation is that ctx is the same context which is
+   /* The expectation is that ctx is the same context which is
     * current for this thread.  We should check that and return False
     * if not the case.
     */
+   {
+      GLcontext *glctx = ctx->st->ctx;
+      GET_CURRENT_CONTEXT( glcurctx );
+
+      if (glcurctx != glctx)
+         return FALSE;
+   }
 
    if (stw_make_current( NULL, 0 ) == FALSE)
       return FALSE;
