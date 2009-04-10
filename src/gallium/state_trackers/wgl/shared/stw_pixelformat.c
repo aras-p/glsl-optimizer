@@ -25,6 +25,10 @@
  * 
  **************************************************************************/
 
+#include "pipe/p_format.h"
+#include "pipe/p_defines.h"
+#include "pipe/p_screen.h"
+
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 
@@ -36,6 +40,7 @@
 
 struct stw_pf_color_info
 {
+   enum pipe_format format;
    struct {
       unsigned char red;
       unsigned char green;
@@ -52,6 +57,7 @@ struct stw_pf_color_info
 
 struct stw_pf_depth_info
 {
+   enum pipe_format format;
    struct {
       unsigned char depth;
       unsigned char stencil;
@@ -59,23 +65,47 @@ struct stw_pf_depth_info
 };
 
 
-static const struct stw_pf_color_info 
+/* NOTE: order matters, since in otherwise equal circunstances the first
+ * format listed will get chosen */
+
+static const struct stw_pf_color_info
 stw_pf_color[] = {
-   { {8, 8, 8, 0}, { 0,  8, 16,  0} },
-   { {8, 8, 8, 8}, { 0,  8, 16, 24} }
+   /* no-alpha */
+   { PIPE_FORMAT_R5G6B5_UNORM,      { 5,  6,  5,  0}, {11,  5,  0,  0} },
+   { PIPE_FORMAT_X8R8G8B8_UNORM,    { 8,  8,  8,  0}, {16,  8,  0,  0} },
+   { PIPE_FORMAT_B8G8R8X8_UNORM,    { 8,  8,  8,  0}, { 8, 16, 24,  0} },
+   /* alpha */
+   { PIPE_FORMAT_A1R5G5B5_UNORM,    { 5,  5,  5,  1}, {10,  5,  0, 15} },
+   { PIPE_FORMAT_A4R4G4B4_UNORM,    { 4,  4,  4,  4}, {16,  4,  0, 12} },
+   { PIPE_FORMAT_A8R8G8B8_UNORM,    { 8,  8,  8,  8}, {16,  8,  0, 24} },
+   { PIPE_FORMAT_B8G8R8A8_UNORM,    { 8,  8,  8,  8}, { 8, 16, 24,  0} }
+#if 0
+   { PIPE_FORMAT_A2B10G10R10_UNORM, {10, 10, 10,  2}, { 0, 10, 20, 30} }
+#endif
 };
+
 
 static const struct stw_pf_depth_info 
 stw_pf_depth_stencil[] = {
-   { {16, 0} },
-   { {24, 8} }
+   /* pure depth */
+   { PIPE_FORMAT_Z16_UNORM,   {16, 0} },
+   { PIPE_FORMAT_Z24X8_UNORM, {24, 0} },
+   { PIPE_FORMAT_X8Z24_UNORM, {24, 0} },
+   { PIPE_FORMAT_Z32_UNORM,   {32, 0} },
+   /* pure stencil */
+   { PIPE_FORMAT_S8_UNORM,    { 0, 8} },
+   /* combined depth-stencil */
+   { PIPE_FORMAT_S8Z24_UNORM, {24, 8} },
+   { PIPE_FORMAT_Z24S8_UNORM, {24, 8} }
 };
+
 
 static const boolean 
 stw_pf_doublebuffer[] = {
    FALSE,
    TRUE,
 };
+
 
 const unsigned 
 stw_pf_multisample[] = {
@@ -97,10 +127,6 @@ stw_pixelformat_add(
    
    assert(stw_dev->pixelformat_extended_count < STW_MAX_PIXELFORMATS);
    if(stw_dev->pixelformat_extended_count >= STW_MAX_PIXELFORMATS)
-      return;
-   
-   /* FIXME: re-enabled MSAA when we can query it */
-   if(samples)
       return;
    
    pfi = &stw_dev->pixelformats[stw_dev->pixelformat_extended_count];
@@ -160,6 +186,7 @@ stw_pixelformat_add(
 void
 stw_pixelformat_init( void )
 {
+   struct pipe_screen *screen = stw_dev->screen;
    unsigned i, j, k, l;
    
    assert( !stw_dev->pixelformat_count );
@@ -167,12 +194,28 @@ stw_pixelformat_init( void )
 
    for(i = 0; i < Elements(stw_pf_multisample); ++i) {
       unsigned samples = stw_pf_multisample[i];
+      
+      /* FIXME: re-enabled MSAA when we can query it */
+      if(samples)
+         continue;
+
       for(j = 0; j < Elements(stw_pf_color); ++j) {
          const struct stw_pf_color_info *color = &stw_pf_color[j];
+         
+         if(!screen->is_format_supported(screen, color->format, PIPE_TEXTURE_2D, 
+                                         PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
+            continue;
+         
          for(k = 0; k < Elements(stw_pf_doublebuffer); ++k) {
             unsigned doublebuffer = stw_pf_doublebuffer[k];
+            
             for(l = 0; l < Elements(stw_pf_depth_stencil); ++l) {
                const struct stw_pf_depth_info *depth = &stw_pf_depth_stencil[l];
+               
+               if(!screen->is_format_supported(screen, depth->format, PIPE_TEXTURE_2D, 
+                                               PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
+                  continue;
+
                stw_pixelformat_add( stw_dev, color, depth, doublebuffer, samples );
             }
          }
