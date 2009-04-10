@@ -28,7 +28,11 @@
 #ifndef STW_FRAMEBUFFER_H
 #define STW_FRAMEBUFFER_H
 
+#include <windows.h>
+
 #include "main/mtypes.h"
+
+#include "pipe/p_thread.h"
 
 struct stw_pixelformat_info;
 
@@ -37,9 +41,13 @@ struct stw_pixelformat_info;
  */
 struct stw_framebuffer
 {
-   struct st_framebuffer *stfb;
    HDC hDC;
    HWND hWnd;
+
+   pipe_mutex mutex;
+   struct st_framebuffer *stfb;
+   
+   /** This is protected by stw_device::mutex, not the mutex above */
    struct stw_framebuffer *next;
 };
 
@@ -54,12 +62,6 @@ stw_framebuffer_create(
 void
 stw_framebuffer_destroy(
    struct stw_framebuffer *fb );
-
-void
-stw_framebuffer_resize(
-   struct stw_framebuffer *fb,
-   GLuint width,
-   GLuint height );
 
 struct stw_framebuffer *
 stw_framebuffer_from_hdc(

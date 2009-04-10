@@ -45,15 +45,6 @@
 #include "stw_tls.h"
 
 
-void
-stw_framebuffer_resize(
-   struct stw_framebuffer *fb,
-   GLuint width,
-   GLuint height )
-{
-   st_resize_framebuffer( fb->stfb, width, height );
-}
-
 /**
  * @sa http://msdn.microsoft.com/en-us/library/ms644975(VS.85).aspx
  * @sa http://msdn.microsoft.com/en-us/library/ms644960(VS.85).aspx
@@ -86,7 +77,16 @@ stw_call_window_proc(
       if(fb) {
          unsigned width = LOWORD( pParams->lParam );
          unsigned height = HIWORD( pParams->lParam );
-         stw_framebuffer_resize( fb, width, height );
+         
+         /* FIXME: The mesa statetracker makes the assumptions that only
+          * one context is using the framebuffer, and that that context is the 
+          * current one. However neither holds true, as WGL allows more than
+          * one context to be bound to the same drawable, and this function can 
+          * be called from any thread.
+          */
+         pipe_mutex_lock( fb->mutex );
+         st_resize_framebuffer( fb->stfb, width, height );
+         pipe_mutex_unlock( fb->mutex );
       }
    }
 
@@ -125,6 +125,11 @@ stw_framebuffer_create(
    if (fb == NULL)
       return NULL;
 
+   fb->hDC = hdc;
+   fb->hWnd = WindowFromDC( hdc );
+
+   pipe_mutex_init( fb->mutex );
+
    fb->stfb = st_create_framebuffer(
       visual,
       colorFormat,
@@ -133,9 +138,10 @@ stw_framebuffer_create(
       width,
       height,
       (void *) fb );
-
-   fb->hDC = hdc;
-   fb->hWnd = WindowFromDC( hdc );
+   if(!fb->stfb) {
+      FREE(fb);
+      return NULL;
+   }
 
    pipe_mutex_lock( stw_dev->mutex );
    fb->next = stw_dev->fb_head;
@@ -164,6 +170,8 @@ stw_framebuffer_destroy(
    pipe_mutex_unlock( stw_dev->mutex );
 
    st_unreference_framebuffer(fb->stfb);
+   
+   pipe_mutex_destroy( fb->mutex );
    
    FREE( fb );
 }
@@ -199,6 +207,8 @@ stw_swap_buffers(
    if (fb == NULL)
       return FALSE;
 
+   pipe_mutex_lock( fb->mutex );
+
    /* If we're swapping the buffer associated with the current context
     * we have to flush any pending rendering commands first.
     */
@@ -206,9 +216,11 @@ stw_swap_buffers(
 
    screen = stw_dev->screen;
    
-   if(!st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surface ))
+   if(!st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surface )) {
       /* FIXME: this shouldn't happen, but does on glean */
+      pipe_mutex_unlock( fb->mutex );
       return FALSE;
+   }
 
 #ifdef DEBUG
    if(stw_dev->trace_running) {
@@ -218,6 +230,8 @@ stw_swap_buffers(
 #endif
 
    stw_dev->stw_winsys->flush_frontbuffer( screen, surface, hdc );
+   
+   pipe_mutex_unlock( fb->mutex );
    
    return TRUE;
 }

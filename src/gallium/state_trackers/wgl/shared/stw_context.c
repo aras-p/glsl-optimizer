@@ -337,8 +337,11 @@ stw_make_current(
    }
 
    if (ctx && fb) {
+      pipe_mutex_lock( fb->mutex );
       st_make_current( ctx->st, fb->stfb, fb->stfb );
-      stw_framebuffer_resize( fb, width, height );
+      st_resize_framebuffer( fb->stfb, width, height );
+      pipe_mutex_unlock( fb->mutex );
+
       ctx->hdc = hdc;
       ctx->st->pipe->priv = hdc;
    }
