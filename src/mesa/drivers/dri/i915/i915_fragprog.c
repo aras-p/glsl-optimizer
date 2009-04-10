@@ -323,7 +323,8 @@ upload_program(struct i915_fragment_program *p)
       p->ctx->FragmentProgram._Current;
    const struct prog_instruction *inst = program->Base.Instructions;
 
-/*    _mesa_debug_fp_inst(program->Base.NumInstructions, inst); */
+   if (INTEL_DEBUG & DEBUG_WM)
+      _mesa_print_program(&program->Base);
 
    /* Is this a parse-failed program?  Ensure a valid program is
     * loaded, as the flagging of an error isn't sufficient to stop
@@ -1049,9 +1050,6 @@ i915ProgramStringNotify(GLcontext * ctx,
          _mesa_append_fog_code(ctx, &p->FragProg);
          p->FragProg.FogOption = GL_NONE;
       }
-
-      if (INTEL_DEBUG & DEBUG_STATE)
-	 _mesa_print_program(prog);
    }
 
    _tnl_program_string(ctx, target, prog);
