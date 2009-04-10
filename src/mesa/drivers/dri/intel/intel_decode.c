@@ -800,6 +800,7 @@ static int
 decode_3d_1d(uint32_t *data, int count, uint32_t hw_offset, int *failures, int i830)
 {
     unsigned int len, i, c, opcode, word, map, sampler, instr;
+    char *format;
 
     struct {
 	uint32_t opcode;
@@ -1000,6 +1001,35 @@ decode_3d_1d(uint32_t *data, int count, uint32_t hw_offset, int *failures, int i
 	    fprintf(out, "Bad count in 3DSTATE_SAMPLER_STATE\n");
 	    (*failures)++;
 	}
+	return len;
+    case 0x85:
+	len = (data[0] & 0x0000000f) + 2;
+
+	if (len != 2)
+	    fprintf(out, "Bad count in 3DSTATE_DEST_BUFFER_VARIABLES\n");
+	if (count < 2)
+	    BUFFER_FAIL(count, len, "3DSTATE_DEST_BUFFER_VARIABLES");
+
+	instr_out(data, hw_offset, 0,
+		  "3DSTATE_DEST_BUFFER_VARIABLES\n");
+
+	switch ((data[1] >> 8) & 0xf) {
+	case 0x0: format = "g8"; break;
+	case 0x1: format = "x1r5g5b5"; break;
+	case 0x2: format = "r5g6b5"; break;
+	case 0x3: format = "a8r8g8b8"; break;
+	case 0x4: format = "ycrcb_swapy"; break;
+	case 0x5: format = "ycrcb_normal"; break;
+	case 0x6: format = "ycrcb_swapuv"; break;
+	case 0x7: format = "ycrcb_swapuvy"; break;
+	case 0x8: format = "a4r4g4b4"; break;
+	case 0x9: format = "a1r5g5b5"; break;
+	case 0xa: format = "a2r10g10b10"; break;
+	default: format = "BAD"; break;
+	}
+	instr_out(data, hw_offset, 1, "%s format, early Z %sabled\n",
+		  format,
+		  (data[1] & (1 << 31)) ? "en" : "dis");
 	return len;
     }
 
