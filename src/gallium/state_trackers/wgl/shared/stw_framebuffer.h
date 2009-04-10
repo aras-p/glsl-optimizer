@@ -30,6 +30,8 @@
 
 #include "main/mtypes.h"
 
+struct stw_pixelformat_info;
+
 /**
  * Windows framebuffer, derived from gl_framebuffer.
  */
@@ -45,6 +47,7 @@ struct stw_framebuffer *
 stw_framebuffer_create(
    HDC hdc,
    GLvisual *visual,
+   const struct stw_pixelformat_info *pfi,
    GLuint width,
    GLuint height );
 

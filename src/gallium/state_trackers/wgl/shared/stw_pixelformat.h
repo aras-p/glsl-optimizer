@@ -31,9 +31,13 @@
 #include <windows.h>
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_format.h"
 
 struct stw_pixelformat_info
 {
+   enum pipe_format color_format;
+   enum pipe_format depth_stencil_format;
+   
    PIXELFORMATDESCRIPTOR pfd;
    
    unsigned numSampleBuffers;

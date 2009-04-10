@@ -128,10 +128,22 @@ stw_pixelformat_add(
    assert(stw_dev->pixelformat_extended_count < STW_MAX_PIXELFORMATS);
    if(stw_dev->pixelformat_extended_count >= STW_MAX_PIXELFORMATS)
       return;
+
+   assert(pf_layout( color->format ) == PIPE_FORMAT_LAYOUT_RGBAZS );
+   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_R ) == color->bits.red );
+   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_G ) == color->bits.green );
+   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_B ) == color->bits.blue );
+   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_A ) == color->bits.alpha );
+   assert(pf_layout( depth->format ) == PIPE_FORMAT_LAYOUT_RGBAZS );
+   assert(pf_get_component_bits( depth->format, PIPE_FORMAT_COMP_Z ) == depth->bits.depth );
+   assert(pf_get_component_bits( depth->format, PIPE_FORMAT_COMP_S ) == depth->bits.stencil );
    
    pfi = &stw_dev->pixelformats[stw_dev->pixelformat_extended_count];
    
    memset(pfi, 0, sizeof *pfi);
+   
+   pfi->color_format = color->format;
+   pfi->depth_stencil_format = depth->format;
    
    pfi->pfd.nSize = sizeof pfi->pfd;
    pfi->pfd.nVersion = 1;

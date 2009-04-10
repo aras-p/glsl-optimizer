@@ -153,6 +153,7 @@ stw_create_layer_context(
       goto fail;
 
    ctx->st->ctx->DriverCtx = ctx;
+   ctx->pfi = pf;
 
    pipe_mutex_lock( stw_dev->mutex );
    hglrc = handle_table_add(stw_dev->ctx_table, ctx);
@@ -330,7 +331,7 @@ stw_make_current(
    if (fb == NULL && ctx != NULL && hdc != NULL) {
       GLvisual *visual = &ctx->st->ctx->Visual;
 
-      fb = stw_framebuffer_create( hdc, visual, width, height );
+      fb = stw_framebuffer_create( hdc, visual, ctx->pfi, width, height );
       if (fb == NULL)
          return FALSE;
    }

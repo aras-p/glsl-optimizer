@@ -93,21 +93,6 @@ stw_call_window_proc(
    return CallNextHookEx(tls_data->hCallWndProcHook, nCode, wParam, lParam);
 }
 
-static INLINE boolean
-stw_is_supported_color(enum pipe_format format)
-{
-   struct pipe_screen *screen = stw_dev->screen;
-   return screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 
-                                      PIPE_TEXTURE_USAGE_RENDER_TARGET, 0);
-}
-
-static INLINE boolean
-stw_is_supported_depth_stencil(enum pipe_format format)
-{
-   struct pipe_screen *screen = stw_dev->screen;
-   return screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 
-                                      PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
-}
 
 /* Create a new framebuffer object which will correspond to the given HDC.
  */
@@ -115,83 +100,26 @@ struct stw_framebuffer *
 stw_framebuffer_create(
    HDC hdc,
    GLvisual *visual,
+   const struct stw_pixelformat_info *pfi,
    GLuint width,
    GLuint height )
 {
-   struct stw_framebuffer *fb;
    enum pipe_format colorFormat, depthFormat, stencilFormat;
+   struct stw_framebuffer *fb;
 
-   /* Determine PIPE_FORMATs for buffers.
-    */
+   colorFormat = pfi->color_format;
+   
+   assert(pf_layout( pfi->depth_stencil_format ) == PIPE_FORMAT_LAYOUT_RGBAZS );
 
-   if(visual->alphaBits <= 0 && visual->redBits <= 5 && visual->blueBits <= 6 && visual->greenBits <= 5 && 
-      stw_is_supported_color(PIPE_FORMAT_R5G6B5_UNORM)) {
-      colorFormat = PIPE_FORMAT_R5G6B5_UNORM;
-   }
-   else if(visual->alphaBits <= 0 && visual->redBits <= 8 && visual->blueBits <= 8 && visual->greenBits <= 8 && 
-      stw_is_supported_color(PIPE_FORMAT_X8R8G8B8_UNORM)) {
-      colorFormat = PIPE_FORMAT_X8R8G8B8_UNORM;
-   }
-   else if(visual->alphaBits <= 1 && visual->redBits <= 5 && visual->blueBits <= 5 && visual->greenBits <= 5 &&
-      stw_is_supported_color(PIPE_FORMAT_A1R5G5B5_UNORM)) {
-      colorFormat = PIPE_FORMAT_A1R5G5B5_UNORM;
-   }
-   else if(visual->alphaBits <= 4 && visual->redBits <= 4 && visual->blueBits <= 4 && visual->greenBits <= 4 && 
-      stw_is_supported_color(PIPE_FORMAT_A4R4G4B4_UNORM)) {
-      colorFormat = PIPE_FORMAT_A4R4G4B4_UNORM;
-   }
-   else if(visual->alphaBits <= 8 && visual->redBits <= 8 && visual->blueBits <= 8 && visual->greenBits <= 8 && 
-      stw_is_supported_color(PIPE_FORMAT_A8R8G8B8_UNORM)) {
-      colorFormat = PIPE_FORMAT_A8R8G8B8_UNORM;
-   }
-   else {
-      assert(0);
-      return NULL;
-   }
-
-   if (visual->depthBits == 0)
+   if(pf_get_component_bits( pfi->depth_stencil_format, PIPE_FORMAT_COMP_Z ))
+      depthFormat = pfi->depth_stencil_format;
+   else
       depthFormat = PIPE_FORMAT_NONE;
-   else if (visual->depthBits <= 16 &&
-            stw_is_supported_depth_stencil(PIPE_FORMAT_Z16_UNORM))
-      depthFormat = PIPE_FORMAT_Z16_UNORM;
-   else if (visual->depthBits <= 24 && visual->stencilBits != 8 &&
-            stw_is_supported_depth_stencil(PIPE_FORMAT_X8Z24_UNORM)) {
-      depthFormat = PIPE_FORMAT_X8Z24_UNORM;
-   }
-   else if (visual->depthBits <= 24 && visual->stencilBits != 8 && 
-            stw_is_supported_depth_stencil(PIPE_FORMAT_Z24X8_UNORM)) {
-      depthFormat = PIPE_FORMAT_Z24X8_UNORM;
-   }
-   else if (visual->depthBits <= 24 && visual->stencilBits == 8 && 
-            stw_is_supported_depth_stencil(PIPE_FORMAT_S8Z24_UNORM)) {
-      depthFormat = PIPE_FORMAT_S8Z24_UNORM;
-   }
-   else if (visual->depthBits <= 24 && visual->stencilBits == 8 && 
-            stw_is_supported_depth_stencil(PIPE_FORMAT_Z24S8_UNORM)) {
-      depthFormat = PIPE_FORMAT_Z24S8_UNORM;
-   }
-   else if(stw_is_supported_depth_stencil(PIPE_FORMAT_Z32_UNORM)) {
-      depthFormat = PIPE_FORMAT_Z32_UNORM;
-   }
-   else if(stw_is_supported_depth_stencil(PIPE_FORMAT_Z32_FLOAT)) {
-      depthFormat = PIPE_FORMAT_Z32_FLOAT;
-   }
-   else {
-      assert(0);
-      depthFormat = PIPE_FORMAT_NONE;
-   }
 
-   if (depthFormat == PIPE_FORMAT_S8Z24_UNORM || 
-       depthFormat == PIPE_FORMAT_Z24S8_UNORM) {
-      stencilFormat = depthFormat;
-   }
-   else if (visual->stencilBits == 8 && 
-            stw_is_supported_depth_stencil(PIPE_FORMAT_S8_UNORM)) {
-      stencilFormat = PIPE_FORMAT_S8_UNORM;
-   }
-   else {
+   if(pf_get_component_bits( pfi->depth_stencil_format, PIPE_FORMAT_COMP_S ))
+      stencilFormat = pfi->depth_stencil_format;
+   else
       stencilFormat = PIPE_FORMAT_NONE;
-   }
 
    fb = CALLOC_STRUCT( stw_framebuffer );
    if (fb == NULL)

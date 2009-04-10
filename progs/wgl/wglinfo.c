@@ -586,8 +586,8 @@ print_visual_info(HDC hdc, InfoMode mode)
       if(!DescribePixelFormat(hdc, i, sizeof(PIXELFORMATDESCRIPTOR), &pfd))
 	 continue;
 
-      if(!(pfd.dwFlags & PFD_SUPPORT_OPENGL))
-         continue;
+      //if(!(pfd.dwFlags & PFD_SUPPORT_OPENGL))
+      //   continue;
 
       ++numWglVisuals;
    }
@@ -603,8 +603,8 @@ print_visual_info(HDC hdc, InfoMode mode)
       if(!DescribePixelFormat(hdc, i, sizeof(PIXELFORMATDESCRIPTOR), &pfd))
 	 continue;
 
-      if(!(pfd.dwFlags & PFD_SUPPORT_OPENGL))
-         continue;
+      //if(!(pfd.dwFlags & PFD_SUPPORT_OPENGL))
+      //   continue;
 
       if (mode == Verbose)
 	 print_visual_attribs_verbose(i, &pfd);
