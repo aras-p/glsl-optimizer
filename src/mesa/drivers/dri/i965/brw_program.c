@@ -117,7 +117,6 @@ static void brwProgramStringNotify( GLcontext *ctx,
 				    struct gl_program *prog )
 {
    struct brw_context *brw = brw_context(ctx);
-   struct intel_context *intel = &brw->intel;
 
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       struct gl_fragment_program *fprog = (struct gl_fragment_program *) prog;
