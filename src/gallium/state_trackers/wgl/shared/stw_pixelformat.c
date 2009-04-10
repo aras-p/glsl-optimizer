@@ -34,70 +34,62 @@
 
 
 static void
-stw_add_standard_pixelformats(
-   struct stw_pixelformat_info **ppf,
-   uint flags )
+stw_pixelformat_add(
+   struct stw_device *stw_dev,
+   unsigned flags,
+   const struct stw_pixelformat_color_info *color,
+   const struct stw_pixelformat_depth_info *depth,
+   boolean extended )
 {
-   struct stw_pixelformat_info *pf = *ppf;
-   struct stw_pixelformat_color_info color24 = { 8, 0, 8, 8, 8, 16, 0, 0 };
-   struct stw_pixelformat_color_info color24a8 = { 8, 0, 8, 8, 8, 16, 8, 24 };
-   struct stw_pixelformat_depth_info depth24s8 = { 24, 8 };
-   struct stw_pixelformat_depth_info depth16 = { 16, 0 };
-
-   pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
-   pf->color = color24;
-   pf->depth = depth24s8;
-   pf++;
-
-   pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
-   pf->color = color24a8;
-   pf->depth = depth24s8;
-   pf++;
-
-   pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
-   pf->color = color24;
-   pf->depth = depth16;
-   pf++;
-
-   pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
-   pf->color = color24a8;
-   pf->depth = depth16;
-   pf++;
-
+   struct stw_pixelformat_info *pf;
+   
+   assert(stw_dev->pixelformat_extended_count < STW_MAX_PIXELFORMATS);
+   if(stw_dev->pixelformat_extended_count >= STW_MAX_PIXELFORMATS)
+      return;
+   
+   pf = &stw_dev->pixelformats[stw_dev->pixelformat_extended_count];
+   
    pf->flags = flags;
-   pf->color = color24;
-   pf->depth = depth24s8;
-   pf++;
+   pf->color = *color;
+   pf->depth = *depth;
 
-   pf->flags = flags;
-   pf->color = color24a8;
-   pf->depth = depth24s8;
-   pf++;
+   ++stw_dev->pixelformat_extended_count;
+   
+   if(!extended) {
+      ++stw_dev->pixelformat_count;
+      assert(stw_dev->pixelformat_count == stw_dev->pixelformat_extended_count);
+   }
+}
 
-   pf->flags = flags;
-   pf->color = color24;
-   pf->depth = depth16;
-   pf++;
+static void
+stw_add_standard_pixelformats(
+   struct stw_device *stw_dev,
+   uint flags,
+   boolean extended )
+{
+   const struct stw_pixelformat_color_info color24 = { 8, 0, 8, 8, 8, 16, 0, 0 };
+   const struct stw_pixelformat_color_info color24a8 = { 8, 0, 8, 8, 8, 16, 8, 24 };
+   const struct stw_pixelformat_depth_info depth24s8 = { 24, 8 };
+   const struct stw_pixelformat_depth_info depth16 = { 16, 0 };
 
-   pf->flags = flags;
-   pf->color = color24a8;
-   pf->depth = depth16;
-   pf++;
+   stw_pixelformat_add( stw_dev, flags, &color24, &depth24s8, extended );
 
-   *ppf = pf;
+   stw_pixelformat_add( stw_dev, flags, &color24a8, &depth24s8, extended );
+
+   stw_pixelformat_add( stw_dev, flags, &color24, &depth16, extended );
+
+   stw_pixelformat_add( stw_dev, flags, &color24a8, &depth16, extended );
 }
 
 void
 stw_pixelformat_init( void )
 {
-   struct stw_pixelformat_info *pf = stw_dev->pixelformats;
+   stw_add_standard_pixelformats( stw_dev, STW_PF_FLAG_DOUBLEBUFFER | 0 ,                       FALSE );
+   stw_add_standard_pixelformats( stw_dev, 0                        | 0,                        FALSE );
+   stw_add_standard_pixelformats( stw_dev, STW_PF_FLAG_DOUBLEBUFFER | STW_PF_FLAG_MULTISAMPLED, TRUE  );
+   stw_add_standard_pixelformats( stw_dev, 0                        | STW_PF_FLAG_MULTISAMPLED, TRUE  );
 
-   stw_add_standard_pixelformats( &pf, 0 );
-   stw_dev->pixelformat_count = pf - stw_dev->pixelformats;
-
-   stw_add_standard_pixelformats( &pf, STW_PF_FLAG_MULTISAMPLED );
-   stw_dev->pixelformat_extended_count = pf - stw_dev->pixelformats;
-
+   assert( stw_dev->pixelformat_count <= STW_MAX_PIXELFORMATS );
    assert( stw_dev->pixelformat_extended_count <= STW_MAX_PIXELFORMATS );
 }
 
