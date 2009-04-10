@@ -26,12 +26,14 @@
  **************************************************************************/
 
 #include "glapi/glapi.h"
+#include "main/texformat.h"
 
 #include "i830_context.h"
 #include "i830_reg.h"
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
 #include "intel_tris.h"
+#include "intel_fbo.h"
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"
 
@@ -614,6 +616,8 @@ i830_state_draw_region(struct intel_context *intel,
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    GLcontext *ctx = &intel->ctx;
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    GLuint value;
 
    ASSERT(state == &i830->state || state == &i830->meta);
@@ -651,13 +655,27 @@ i830_state_draw_region(struct intel_context *intel,
     */
    value = (DSTORG_HORT_BIAS(0x8) |     /* .5 */
             DSTORG_VERT_BIAS(0x8) | DEPTH_IS_Z);    /* .5 */
-            
-   if (color_region && color_region->cpp == 4) {
-      value |= DV_PF_8888;
+
+   if (irb != NULL) {
+      switch (irb->texformat->MesaFormat) {
+      case MESA_FORMAT_ARGB8888:
+	 value |= DV_PF_8888;
+	 break;
+      case MESA_FORMAT_RGB565:
+	 value |= DV_PF_565;
+	 break;
+      case MESA_FORMAT_ARGB1555:
+	 value |= DV_PF_1555;
+	 break;
+      case MESA_FORMAT_ARGB4444:
+	 value |= DV_PF_4444;
+	 break;
+      default:
+	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n",
+		       irb->texformat->MesaFormat);
+      }
    }
-   else {
-      value |= DV_PF_565;
-   }
+
    if (depth_region && depth_region->cpp == 4) {
       value |= DEPTH_FRMT_24_FIXED_8_OTHER;
    }

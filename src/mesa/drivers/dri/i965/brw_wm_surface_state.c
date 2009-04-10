@@ -38,7 +38,7 @@
 #include "intel_mipmap_tree.h"
 #include "intel_batchbuffer.h"
 #include "intel_tex.h"
-
+#include "intel_fbo.h"
 
 #include "brw_context.h"
 #include "brw_state.h"
@@ -505,15 +505,18 @@ brw_update_vs_constant_surface( GLcontext *ctx,
  * usable for further buffers when doing ARB_draw_buffer support.
  */
 static void
-brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
-			  unsigned int unit, GLboolean cached)
+brw_update_renderbuffer_surface(struct brw_context *brw,
+				struct gl_renderbuffer *rb,
+				unsigned int unit, GLboolean cached)
 {
    GLcontext *ctx = &brw->intel.ctx;
    dri_bo *region_bo = NULL;
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   struct intel_region *region = irb ? irb->region : NULL;
    struct {
       unsigned int surface_type;
       unsigned int surface_format;
-      unsigned int width, height, cpp;
+      unsigned int width, height, pitch, cpp;
       GLubyte color_mask[4];
       GLboolean color_blend;
       uint32_t tiling;
@@ -525,13 +528,27 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
       region_bo = region->buffer;
 
       key.surface_type = BRW_SURFACE_2D;
-      if (region->cpp == 4)
+      switch (irb->texformat->MesaFormat) {
+      case MESA_FORMAT_ARGB8888:
 	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-      else
+	 break;
+      case MESA_FORMAT_RGB565:
 	 key.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
+	 break;
+      case MESA_FORMAT_ARGB1555:
+	 key.surface_format = BRW_SURFACEFORMAT_B5G5R5A1_UNORM;
+	 break;
+      case MESA_FORMAT_ARGB4444:
+	 key.surface_format = BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
+	 break;
+      default:
+	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n",
+		       irb->texformat->MesaFormat);
+      }
       key.tiling = region->tiling;
-      key.width = region->pitch; /* XXX: not really! */
-      key.height = region->height;
+      key.width = rb->Width;
+      key.height = rb->Height;
+      key.pitch = region->pitch;
       key.cpp = region->cpp;
    } else {
       key.surface_type = BRW_SURFACE_NULL;
@@ -567,7 +584,7 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
       surf.ss2.width = key.width - 1;
       surf.ss2.height = key.height - 1;
       brw_set_surface_tiling(&surf, key.tiling);
-      surf.ss3.pitch = (key.width * key.cpp) - 1;
+      surf.ss3.pitch = (key.pitch * key.cpp) - 1;
 
       /* _NEW_COLOR */
       surf.ss0.color_blend = key.color_blend;
@@ -655,14 +672,17 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    GLuint i;
    int old_nr_surfaces;
 
+   /* _NEW_BUFFERS */
    /* Update surfaces for drawing buffers */
-   if (brw->state.nr_color_regions > 1) {
-      for (i = 0; i < brw->state.nr_color_regions; i++) {
-         brw_update_region_surface(brw, brw->state.color_regions[i], i,
-				   GL_FALSE);
+   if (ctx->DrawBuffer->_NumColorDrawBuffers >= 1) {
+      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
+         brw_update_renderbuffer_surface(brw,
+					 ctx->DrawBuffer->_ColorDrawBuffers[i],
+					 i,
+					 GL_FALSE);
       }
    } else {
-      brw_update_region_surface(brw, brw->state.color_regions[0], 0, GL_TRUE);
+      brw_update_renderbuffer_surface(brw, NULL, 0, GL_TRUE);
    }
 
    old_nr_surfaces = brw->wm.nr_surfaces;

@@ -29,6 +29,7 @@
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/colormac.h"
+#include "main/texformat.h"
 
 #include "intel_buffers.h"
 #include "intel_fbo.h"
@@ -313,6 +314,22 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 #define INTEL_TAG(x) x##_RGB565
 #include "intel_spantmp.h"
 
+/* a4r4g4b4 color span and pixel functions */
+#define INTEL_PIXEL_FMT GL_BGRA
+#define INTEL_PIXEL_TYPE GL_UNSIGNED_SHORT_4_4_4_4_REV
+#define INTEL_READ_VALUE(offset) pread_16(irb, offset)
+#define INTEL_WRITE_VALUE(offset, v) pwrite_16(irb, offset, v)
+#define INTEL_TAG(x) x##_ARGB4444
+#include "intel_spantmp.h"
+
+/* a1r5g5b5 color span and pixel functions */
+#define INTEL_PIXEL_FMT GL_BGRA
+#define INTEL_PIXEL_TYPE GL_UNSIGNED_SHORT_1_5_5_5_REV
+#define INTEL_READ_VALUE(offset) pread_16(irb, offset)
+#define INTEL_WRITE_VALUE(offset, v) pwrite_16(irb, offset, v)
+#define INTEL_TAG(x) x##_ARGB1555
+#include "intel_spantmp.h"
+
 /* a8r8g8b8 color span and pixel functions */
 #define INTEL_PIXEL_FMT GL_BGRA
 #define INTEL_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
@@ -561,8 +578,8 @@ intel_set_span_functions(struct intel_context *intel,
    else
       tiling = I915_TILING_NONE;
 
-   if (rb->_ActualFormat == GL_RGB5) {
-      /* 565 RGB */
+   switch (irb->texformat->MesaFormat) {
+   case MESA_FORMAT_RGB565:
       switch (tiling) {
       case I915_TILING_NONE:
       default:
@@ -575,38 +592,67 @@ intel_set_span_functions(struct intel_context *intel,
 	 intel_YTile_InitPointers_RGB565(rb);
 	 break;
       }
-   }
-   else if (rb->_ActualFormat == GL_RGB8) {
-      /* 8888 RGBx */
+      break;
+   case MESA_FORMAT_ARGB4444:
       switch (tiling) {
       case I915_TILING_NONE:
       default:
-	 intelInitPointers_xRGB8888(rb);
+	 intelInitPointers_ARGB4444(rb);
 	 break;
       case I915_TILING_X:
-	 intel_XTile_InitPointers_xRGB8888(rb);
+	 intel_XTile_InitPointers_ARGB4444(rb);
 	 break;
       case I915_TILING_Y:
-	 intel_YTile_InitPointers_xRGB8888(rb);
+	 intel_YTile_InitPointers_ARGB4444(rb);
 	 break;
       }
-   }
-   else if (rb->_ActualFormat == GL_RGBA8) {
-      /* 8888 RGBA */
+      break;
+   case MESA_FORMAT_ARGB1555:
       switch (tiling) {
       case I915_TILING_NONE:
       default:
-	 intelInitPointers_ARGB8888(rb);
+	 intelInitPointers_ARGB1555(rb);
 	 break;
       case I915_TILING_X:
-	 intel_XTile_InitPointers_ARGB8888(rb);
+	 intel_XTile_InitPointers_ARGB1555(rb);
 	 break;
       case I915_TILING_Y:
-	 intel_YTile_InitPointers_ARGB8888(rb);
+	 intel_YTile_InitPointers_ARGB1555(rb);
 	 break;
       }
-   }
-   else if (rb->_ActualFormat == GL_DEPTH_COMPONENT16) {
+      break;
+   case MESA_FORMAT_ARGB8888:
+      if (rb->AlphaBits == 0) { /* XXX: Need xRGB8888 Mesa format */
+	 /* 8888 RGBx */
+	 switch (tiling) {
+	 case I915_TILING_NONE:
+	 default:
+	    intelInitPointers_xRGB8888(rb);
+	    break;
+	 case I915_TILING_X:
+	    intel_XTile_InitPointers_xRGB8888(rb);
+	    break;
+	 case I915_TILING_Y:
+	    intel_YTile_InitPointers_xRGB8888(rb);
+	    break;
+	 }
+      } else {
+	 /* 8888 RGBA */
+	 switch (tiling) {
+	 case I915_TILING_NONE:
+	 default:
+	    intelInitPointers_ARGB8888(rb);
+	    break;
+	 case I915_TILING_X:
+	    intel_XTile_InitPointers_ARGB8888(rb);
+	    break;
+	 case I915_TILING_Y:
+	    intel_YTile_InitPointers_ARGB8888(rb);
+	    break;
+	 }
+      }
+      break;
+   case MESA_FORMAT_Z16:
       switch (tiling) {
       case I915_TILING_NONE:
       default:
@@ -619,51 +665,57 @@ intel_set_span_functions(struct intel_context *intel,
 	 intel_YTile_InitDepthPointers_z16(rb);
 	 break;
       }
-   }
-   else if (rb->_ActualFormat == GL_DEPTH_COMPONENT24) {
-      switch (tiling) {
-      case I915_TILING_NONE:
-      default:
-	 intelInitDepthPointers_z24(rb);
-	 break;
-      case I915_TILING_X:
-	 intel_XTile_InitDepthPointers_z24(rb);
-	 break;
-      case I915_TILING_Y:
-	 intel_YTile_InitDepthPointers_z24(rb);
-	 break;
+      break;
+   case MESA_FORMAT_S8_Z24:
+      /* There are a few different ways SW asks us to access the S8Z24 data:
+       * Z24 depth-only depth reads
+       * S8Z24 depth reads
+       * S8Z24 stencil reads.
+       */
+      if (rb->_ActualFormat == GL_DEPTH_COMPONENT24) {
+	 switch (tiling) {
+	 case I915_TILING_NONE:
+	 default:
+	    intelInitDepthPointers_z24(rb);
+	    break;
+	 case I915_TILING_X:
+	    intel_XTile_InitDepthPointers_z24(rb);
+	    break;
+	 case I915_TILING_Y:
+	    intel_YTile_InitDepthPointers_z24(rb);
+	    break;
+	 }
+      } else if (rb->_ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
+	 switch (tiling) {
+	 case I915_TILING_NONE:
+	 default:
+	    intelInitDepthPointers_z24_s8(rb);
+	    break;
+	 case I915_TILING_X:
+	    intel_XTile_InitDepthPointers_z24_s8(rb);
+	    break;
+	 case I915_TILING_Y:
+	    intel_YTile_InitDepthPointers_z24_s8(rb);
+	    break;
+	 }
+      } else if (rb->_ActualFormat == GL_STENCIL_INDEX8_EXT) {
+	 switch (tiling) {
+	 case I915_TILING_NONE:
+	 default:
+	    intelInitStencilPointers_z24_s8(rb);
+	    break;
+	 case I915_TILING_X:
+	    intel_XTile_InitStencilPointers_z24_s8(rb);
+	    break;
+	 case I915_TILING_Y:
+	    intel_YTile_InitStencilPointers_z24_s8(rb);
+	    break;
+	 }
       }
-   }
-   else if (rb->_ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
-      switch (tiling) {
-      case I915_TILING_NONE:
-      default:
-	 intelInitDepthPointers_z24_s8(rb);
-	 break;
-      case I915_TILING_X:
-	 intel_XTile_InitDepthPointers_z24_s8(rb);
-	 break;
-      case I915_TILING_Y:
-	 intel_YTile_InitDepthPointers_z24_s8(rb);
-	 break;
-      }
-   }
-   else if (rb->_ActualFormat == GL_STENCIL_INDEX8_EXT) {
-      switch (tiling) {
-      case I915_TILING_NONE:
-      default:
-	 intelInitStencilPointers_z24_s8(rb);
-	 break;
-      case I915_TILING_X:
-	 intel_XTile_InitStencilPointers_z24_s8(rb);
-	 break;
-      case I915_TILING_Y:
-	 intel_YTile_InitStencilPointers_z24_s8(rb);
-	 break;
-      }
-   }
-   else {
+      break;
+   default:
       _mesa_problem(NULL,
-                    "Unexpected _ActualFormat in intelSetSpanFunctions");
+                    "Unexpected MesaFormat in intelSetSpanFunctions");
+      break;
    }
 }

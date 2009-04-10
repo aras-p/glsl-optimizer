@@ -48,6 +48,8 @@
 #define DV_PF_555  (1<<8)
 #define DV_PF_565  (2<<8)
 #define DV_PF_8888 (3<<8)
+#define DV_PF_4444 (8<<8)
+#define DV_PF_1555 (9<<8)
 
 struct intel_region;
 struct intel_context;
@@ -337,6 +339,7 @@ extern char *__progname;
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
+#define IS_POWER_OF_TWO(val) (((val) & (val - 1)) == 0)
 
 #define INTEL_FIREVERTICES(intel)		\
 do {						\
