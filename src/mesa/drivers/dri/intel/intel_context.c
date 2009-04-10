@@ -400,7 +400,8 @@ intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
    if ((ctx->DrawBuffer->Name == 0) && intel->front_buffer_dirty) {
       __DRIscreen *const screen = intel->intelScreen->driScrnPriv;
 
-      if ((screen->dri2.loader->base.version >= 2)
+      if (screen->dri2.loader &&
+          (screen->dri2.loader->base.version >= 2)
 	  && (screen->dri2.loader->flushFrontBuffer != NULL)) {
 	 (*screen->dri2.loader->flushFrontBuffer)(intel->driDrawable,
 						  intel->driDrawable->loaderPrivate);
