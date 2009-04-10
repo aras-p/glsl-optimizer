@@ -37,7 +37,7 @@
 #include "stw_pixelformat.h"
 
 
-#define STW_MAX_PIXELFORMATS   16
+#define STW_MAX_PIXELFORMATS   128
 
 
 struct pipe_screen;

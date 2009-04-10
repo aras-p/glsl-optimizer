@@ -32,24 +32,6 @@
 
 #include "pipe/p_compiler.h"
 
-struct stw_pixelformat_color_info
-{
-   uint redbits;
-   uint redshift;
-   uint greenbits;
-   uint greenshift;
-   uint bluebits;
-   uint blueshift;
-   uint alphabits;
-   uint alphashift;
-};
-
-struct stw_pixelformat_depth_info
-{
-   uint depthbits;
-   uint stencilbits;
-};
-
 struct stw_pixelformat_info
 {
    PIXELFORMATDESCRIPTOR pfd;

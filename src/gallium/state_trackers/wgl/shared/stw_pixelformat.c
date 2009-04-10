@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "util/u_debug.h"
+#include "util/u_memory.h"
 
 #include "stw_device.h"
 #include "stw_pixelformat.h"
@@ -33,19 +34,73 @@
 #include "stw_tls.h"
 
 
+struct stw_pf_color_info
+{
+   struct {
+      unsigned char red;
+      unsigned char green;
+      unsigned char blue;
+      unsigned char alpha;
+   } bits;
+   struct {
+      unsigned char red;
+      unsigned char green;
+      unsigned char blue;
+      unsigned char alpha;
+   } shift;
+};
+
+struct stw_pf_depth_info
+{
+   struct {
+      unsigned char depth;
+      unsigned char stencil;
+   } bits;
+};
+
+
+static const struct stw_pf_color_info 
+stw_pf_color[] = {
+   { {8, 8, 8, 0}, { 0,  8, 16,  0} },
+   { {8, 8, 8, 8}, { 0,  8, 16, 24} }
+};
+
+static const struct stw_pf_depth_info 
+stw_pf_depth_stencil[] = {
+   { {16, 0} },
+   { {24, 8} }
+};
+
+static const boolean 
+stw_pf_doublebuffer[] = {
+   FALSE,
+   TRUE,
+};
+
+const unsigned 
+stw_pf_multisample[] = {
+   0,
+   4
+};
+
+
 static void
 stw_pixelformat_add(
    struct stw_device *stw_dev,
-   const struct stw_pixelformat_color_info *color,
-   const struct stw_pixelformat_depth_info *depth,
+   const struct stw_pf_color_info *color,
+   const struct stw_pf_depth_info *depth,
    boolean doublebuffer,
-   boolean multisampled,
-   boolean extended )
+   unsigned samples )
 {
+   boolean extended = FALSE;
    struct stw_pixelformat_info *pfi;
    
    assert(stw_dev->pixelformat_extended_count < STW_MAX_PIXELFORMATS);
    if(stw_dev->pixelformat_extended_count >= STW_MAX_PIXELFORMATS)
+      return;
+   
+   /* FIXME: re-enabled MSAA when we can query it */
+   if(samples)
       return;
    
    pfi = &stw_dev->pixelformats[stw_dev->pixelformat_extended_count];
@@ -65,22 +120,22 @@ stw_pixelformat_add(
    
    pfi->pfd.iPixelType = PFD_TYPE_RGBA;
 
-   pfi->pfd.cColorBits = color->redbits + color->greenbits + color->bluebits;
-   pfi->pfd.cRedBits = color->redbits;
-   pfi->pfd.cRedShift = color->redshift;
-   pfi->pfd.cGreenBits = color->greenbits;
-   pfi->pfd.cGreenShift = color->greenshift;
-   pfi->pfd.cBlueBits = color->bluebits;
-   pfi->pfd.cBlueShift = color->blueshift;
-   pfi->pfd.cAlphaBits = color->alphabits;
-   pfi->pfd.cAlphaShift = color->alphashift;
+   pfi->pfd.cColorBits = color->bits.red + color->bits.green + color->bits.blue;
+   pfi->pfd.cRedBits = color->bits.red;
+   pfi->pfd.cRedShift = color->shift.red;
+   pfi->pfd.cGreenBits = color->bits.green;
+   pfi->pfd.cGreenShift = color->shift.green;
+   pfi->pfd.cBlueBits = color->bits.blue;
+   pfi->pfd.cBlueShift = color->shift.blue;
+   pfi->pfd.cAlphaBits = color->bits.alpha;
+   pfi->pfd.cAlphaShift = color->shift.alpha;
    pfi->pfd.cAccumBits = 0;
    pfi->pfd.cAccumRedBits = 0;
    pfi->pfd.cAccumGreenBits = 0;
    pfi->pfd.cAccumBlueBits = 0;
    pfi->pfd.cAccumAlphaBits = 0;
-   pfi->pfd.cDepthBits = depth->depthbits;
-   pfi->pfd.cStencilBits = depth->stencilbits;
+   pfi->pfd.cDepthBits = depth->bits.depth;
+   pfi->pfd.cStencilBits = depth->bits.stencil;
    pfi->pfd.cAuxBuffers = 0;
    pfi->pfd.iLayerType = 0;
    pfi->pfd.bReserved = 0;
@@ -88,14 +143,10 @@ stw_pixelformat_add(
    pfi->pfd.dwVisibleMask = 0;
    pfi->pfd.dwDamageMask = 0;
 
-   if(multisampled) {
-      /* FIXME: re-enable when we can query this */
-#if 0
+   if(samples) {
       pfi->numSampleBuffers = 1;
-      pfi->numSamples = 4;
-#else
-      return;
-#endif
+      pfi->numSamples = samples;
+      extended = TRUE;
    }
    
    ++stw_dev->pixelformat_extended_count;
@@ -106,36 +157,29 @@ stw_pixelformat_add(
    }
 }
 
-static void
-stw_add_standard_pixelformats(
-   struct stw_device *stw_dev,
-   boolean doublebuffer,
-   boolean multisampled,
-   boolean extended )
-{
-   const struct stw_pixelformat_color_info color24 = { 8, 0, 8, 8, 8, 16, 0, 0 };
-   const struct stw_pixelformat_color_info color24a8 = { 8, 0, 8, 8, 8, 16, 8, 24 };
-   const struct stw_pixelformat_depth_info depth24s8 = { 24, 8 };
-   const struct stw_pixelformat_depth_info depth16 = { 16, 0 };
-
-   stw_pixelformat_add( stw_dev, &color24, &depth24s8, doublebuffer, multisampled, extended );
-
-   stw_pixelformat_add( stw_dev, &color24a8, &depth24s8, doublebuffer, multisampled, extended );
-
-   stw_pixelformat_add( stw_dev, &color24, &depth16, doublebuffer, multisampled, extended );
-
-   stw_pixelformat_add( stw_dev, &color24a8, &depth16, doublebuffer, multisampled, extended );
-}
-
 void
 stw_pixelformat_init( void )
 {
-   stw_add_standard_pixelformats( stw_dev, FALSE, FALSE, FALSE );
-   stw_add_standard_pixelformats( stw_dev, TRUE,  FALSE, FALSE );
-   stw_add_standard_pixelformats( stw_dev, FALSE, TRUE, TRUE  );
-   stw_add_standard_pixelformats( stw_dev, TRUE,  TRUE, TRUE  );
+   unsigned i, j, k, l;
+   
+   assert( !stw_dev->pixelformat_count );
+   assert( !stw_dev->pixelformat_extended_count );
 
-   assert( stw_dev->pixelformat_count <= STW_MAX_PIXELFORMATS );
+   for(i = 0; i < Elements(stw_pf_multisample); ++i) {
+      unsigned samples = stw_pf_multisample[i];
+      for(j = 0; j < Elements(stw_pf_color); ++j) {
+         const struct stw_pf_color_info *color = &stw_pf_color[j];
+         for(k = 0; k < Elements(stw_pf_doublebuffer); ++k) {
+            unsigned doublebuffer = stw_pf_doublebuffer[k];
+            for(l = 0; l < Elements(stw_pf_depth_stencil); ++l) {
+               const struct stw_pf_depth_info *depth = &stw_pf_depth_stencil[l];
+               stw_pixelformat_add( stw_dev, color, depth, doublebuffer, samples );
+            }
+         }
+      }
+   }
+   
+   assert( stw_dev->pixelformat_count <= stw_dev->pixelformat_extended_count );
    assert( stw_dev->pixelformat_extended_count <= STW_MAX_PIXELFORMATS );
 }
 
