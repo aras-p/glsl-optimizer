@@ -25,10 +25,11 @@
  * 
  **************************************************************************/
 
-#ifndef PIXELFORMAT_H
-#define PIXELFORMAT_H
+#ifndef STW_PIXELFORMAT_H
+#define STW_PIXELFORMAT_H
 
 #include <windows.h>
+
 #include "pipe/p_compiler.h"
 
 #define STW_PF_FLAG_DOUBLEBUFFER  0x00000001
@@ -75,4 +76,4 @@ int stw_query_sample_buffers( void );
 int stw_query_samples( void );
 
 
-#endif /* PIXELFORMAT_H */
+#endif /* STW_PIXELFORMAT_H */

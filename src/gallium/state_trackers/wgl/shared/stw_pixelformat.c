@@ -26,15 +26,11 @@
  **************************************************************************/
 
 #include "util/u_debug.h"
+
+#include "stw_device.h"
 #include "stw_pixelformat.h"
 #include "stw_public.h"
 #include "stw_tls.h"
-
-#define STW_MAX_PIXELFORMATS   16
-
-static struct stw_pixelformat_info stw_pixelformats[STW_MAX_PIXELFORMATS];
-static uint stw_pixelformat_count = 0;
-static uint stw_pixelformat_extended_count = 0;
 
 
 static void
@@ -94,35 +90,35 @@ stw_add_standard_pixelformats(
 void
 stw_pixelformat_init( void )
 {
-   struct stw_pixelformat_info *pf = stw_pixelformats;
+   struct stw_pixelformat_info *pf = stw_dev->pixelformats;
 
    stw_add_standard_pixelformats( &pf, 0 );
-   stw_pixelformat_count = pf - stw_pixelformats;
+   stw_dev->pixelformat_count = pf - stw_dev->pixelformats;
 
    stw_add_standard_pixelformats( &pf, STW_PF_FLAG_MULTISAMPLED );
-   stw_pixelformat_extended_count = pf - stw_pixelformats;
+   stw_dev->pixelformat_extended_count = pf - stw_dev->pixelformats;
 
-   assert( stw_pixelformat_extended_count <= STW_MAX_PIXELFORMATS );
+   assert( stw_dev->pixelformat_extended_count <= STW_MAX_PIXELFORMATS );
 }
 
 uint
 stw_pixelformat_get_count( void )
 {
-   return stw_pixelformat_count;
+   return stw_dev->pixelformat_count;
 }
 
 uint
 stw_pixelformat_get_extended_count( void )
 {
-   return stw_pixelformat_extended_count;
+   return stw_dev->pixelformat_extended_count;
 }
 
 const struct stw_pixelformat_info *
 stw_pixelformat_get_info( uint index )
 {
-   assert( index < stw_pixelformat_extended_count );
+   assert( index < stw_dev->pixelformat_extended_count );
 
-   return &stw_pixelformats[index];
+   return &stw_dev->pixelformats[index];
 }
 
 
