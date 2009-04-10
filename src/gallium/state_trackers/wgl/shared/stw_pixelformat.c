@@ -44,15 +44,15 @@ stw_add_standard_pixelformats(
 {
    struct stw_pixelformat_info *pf = *ppf;
    struct stw_pixelformat_color_info color24 = { 8, 0, 8, 8, 8, 16 };
-   struct stw_pixelformat_alpha_info alpha8 = { 8, 24 };
    struct stw_pixelformat_alpha_info noalpha = { 0, 0 };
+   struct stw_pixelformat_alpha_info alpha8 = { 8, 24 };
    struct stw_pixelformat_depth_info depth24s8 = { 24, 8 };
    struct stw_pixelformat_depth_info depth16 = { 16, 0 };
 
    pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
    pf->color = color24;
-   pf->alpha = alpha8;
-   pf->depth = depth16;
+   pf->alpha = noalpha;
+   pf->depth = depth24s8;
    pf++;
 
    pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
@@ -69,6 +69,12 @@ stw_add_standard_pixelformats(
 
    pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
    pf->color = color24;
+   pf->alpha = alpha8;
+   pf->depth = depth16;
+   pf++;
+
+   pf->flags = flags;
+   pf->color = color24;
    pf->alpha = noalpha;
    pf->depth = depth24s8;
    pf++;
@@ -76,25 +82,19 @@ stw_add_standard_pixelformats(
    pf->flags = flags;
    pf->color = color24;
    pf->alpha = alpha8;
+   pf->depth = depth24s8;
+   pf++;
+
+   pf->flags = flags;
+   pf->color = color24;
+   pf->alpha = noalpha;
    pf->depth = depth16;
    pf++;
 
    pf->flags = flags;
    pf->color = color24;
    pf->alpha = alpha8;
-   pf->depth = depth24s8;
-   pf++;
-
-   pf->flags = flags;
-   pf->color = color24;
-   pf->alpha = noalpha;
    pf->depth = depth16;
-   pf++;
-
-   pf->flags = flags;
-   pf->color = color24;
-   pf->alpha = noalpha;
-   pf->depth = depth24s8;
    pf++;
 
    *ppf = pf;
