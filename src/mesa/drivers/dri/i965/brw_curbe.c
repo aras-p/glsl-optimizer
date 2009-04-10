@@ -343,7 +343,7 @@ update_constant_buffer(struct brw_context *brw,
    const int size = params->NumParameters * 4 * sizeof(GLfloat);
 
    /* copy Mesa program constants into the buffer */
-   if (size > 0) {
+   if (const_buffer && size > 0) {
       GLubyte *map;
 
       assert(const_buffer);
