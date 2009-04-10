@@ -159,6 +159,7 @@ struct brw_state_flags {
 struct brw_vertex_program {
    struct gl_vertex_program program;
    GLuint id;
+   dri_bo *const_buffer;    /** Program constant buffer/surface */
 };
 
 
@@ -168,8 +169,7 @@ struct brw_fragment_program {
    GLuint id;  /**< serial no. to identify frag progs, never re-used */
    GLboolean isGLSL;  /**< really, any IF/LOOP/CONT/BREAK instructions */
 
-   /** Program constant buffer/surface */
-   dri_bo *const_buffer;
+   dri_bo *const_buffer;    /** Program constant buffer/surface */
 };
 
 

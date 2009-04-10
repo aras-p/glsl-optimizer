@@ -379,26 +379,40 @@ brw_create_constant_surface( struct brw_context *brw,
 
 
 /**
- * Update the constant buffer surface.
+ * Update the surface state for a constant buffer.
+ * The constant buffer will be (re)allocated here if needed.
  */
-static void
+static dri_bo *
 brw_update_constant_surface( GLcontext *ctx,
-                             const struct brw_fragment_program *fp )
+                             GLuint surf,
+                             dri_bo *const_buffer,
+                             const struct gl_program_parameter_list *params)
 {
    struct brw_context *brw = brw_context(ctx);
    struct brw_wm_surface_key key;
-   const GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER;
-   const GLuint numParams = fp->program.Base.Parameters->NumParameters;
+   struct intel_context *intel = &brw->intel;
+   const int size = params->NumParameters * 4 * sizeof(GLfloat);
+
+   /* free old const buffer if too small */
+   if (const_buffer && const_buffer->size < size) {
+      dri_bo_unreference(const_buffer);
+      const_buffer = NULL;
+   }
+
+   /* alloc new buffer if needed */
+   if (!const_buffer) {
+      const_buffer =
+         drm_intel_bo_alloc(intel->bufmgr, "vp/fp_const_buffer", size, 64);
+   }
 
    memset(&key, 0, sizeof(key));
 
    key.format = MESA_FORMAT_RGBA_FLOAT32;
    key.internal_format = GL_RGBA;
-   key.bo = fp->const_buffer;
-
+   key.bo = const_buffer;
    key.depthmode = GL_NONE;
-   key.pitch = numParams;
-   key.width = numParams;
+   key.pitch = params->NumParameters;
+   key.width = params->NumParameters;
    key.height = 1;
    key.depth = 1;
    key.cpp = 16;
@@ -417,6 +431,8 @@ brw_update_constant_surface( GLcontext *ctx,
    if (brw->wm.surf_bo[surf] == NULL) {
       brw->wm.surf_bo[surf] = brw_create_constant_surface(brw, &key);
    }
+
+   return const_buffer;
 }
 
 
@@ -587,16 +603,33 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    old_nr_surfaces = brw->wm.nr_surfaces;
    brw->wm.nr_surfaces = MAX_DRAW_BUFFERS;
 
-   /* Update surface for fragment shader constant buffer */
+   /* Update surface / buffer for vertex shader constant buffer */
    {
-      const GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER + 1;
-      const struct brw_fragment_program *fp =
-         brw_fragment_program_const(brw->fragment_program);
+      const GLuint surf = SURF_INDEX_VERT_CONST_BUFFER + 1;
+      struct brw_vertex_program *vp =
+         (struct brw_vertex_program *) brw->vertex_program;
+      vp->const_buffer =
+         brw_update_constant_surface(ctx,
+                                     SURF_INDEX_VERT_CONST_BUFFER,
+                                     vp->const_buffer,
+                                     vp->program.Base.Parameters);
 
-      brw_update_constant_surface(ctx, fp);
       brw->wm.nr_surfaces = surf + 1;
    }
 
+   /* Update surface / buffer for fragment shader constant buffer */
+   {
+      const GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER + 1;
+      struct brw_fragment_program *fp =
+         (struct brw_fragment_program *) brw->fragment_program;
+      fp->const_buffer =
+         brw_update_constant_surface(ctx,
+                                     SURF_INDEX_FRAG_CONST_BUFFER,
+                                     fp->const_buffer,
+                                     fp->program.Base.Parameters);
+
+      brw->wm.nr_surfaces = surf + 1;
+   }
 
    /* Update surfaces for textures */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {

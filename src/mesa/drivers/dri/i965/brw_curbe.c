@@ -333,28 +333,45 @@ static void prepare_constant_buffer(struct brw_context *brw)
 
 
 /**
- * Vertex/fragment shader constants are stored in a pseudo 1D texture.
- * This function updates the constants in that buffer.
+ * Copy Mesa program parameters into given constant buffer.
  */
 static void
-update_texture_constant_buffer(struct brw_context *brw)
+update_constant_buffer(struct brw_context *brw,
+                       const struct gl_program_parameter_list *params,
+                       dri_bo *const_buffer)
+{
+   const int size = params->NumParameters * 4 * sizeof(GLfloat);
+
+   /* copy Mesa program constants into the buffer */
+   if (size > 0) {
+      GLubyte *map;
+
+      assert(const_buffer);
+      assert(const_buffer->size >= size);
+
+      dri_bo_map(const_buffer, GL_TRUE);
+      map = const_buffer->virtual;
+      memcpy(map, params->ParameterValues, size);
+      dri_bo_unmap(const_buffer);
+   }
+}
+
+
+static void
+update_vertex_constant_buffer(struct brw_context *brw)
+{
+   struct brw_vertex_program *vp =
+      (struct brw_vertex_program *) brw->vertex_program;
+   update_constant_buffer(brw, vp->program.Base.Parameters, vp->const_buffer);
+}
+
+
+static void
+update_fragment_constant_buffer(struct brw_context *brw)
 {
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
-   const struct gl_program_parameter_list *params = fp->program.Base.Parameters;
-   const int size = params->NumParameters * 4 * sizeof(GLfloat);
-
-   assert(fp->const_buffer);
-   assert(fp->const_buffer->size >= size);
-
-   /* copy constants into the buffer */
-   if (size > 0) {
-      GLubyte *map;
-      dri_bo_map(fp->const_buffer, GL_TRUE);
-      map = fp->const_buffer->virtual;
-      memcpy(map, params->ParameterValues, size);
-      dri_bo_unmap(fp->const_buffer);
-   }
+   update_constant_buffer(brw, fp->program.Base.Parameters, fp->const_buffer);
 }
 
 
@@ -363,7 +380,8 @@ static void emit_constant_buffer(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    GLuint sz = brw->curbe.total_size;
 
-   update_texture_constant_buffer(brw);
+   update_vertex_constant_buffer(brw);
+   update_fragment_constant_buffer(brw);
 
    BEGIN_BATCH(2, IGNORE_CLIPRECTS);
    if (sz == 0) {
