@@ -51,8 +51,6 @@ DRIVER_SOURCES = \
 		 r600_fragprog.c \
 		 r600_fragprog_swizzle.c \
 		 r600_fragprog_emit.c \
-		 r700_fragprog.c \
-		 r700_fragprog_emit.c \
 		 r600_shader.c \
 		 r600_emit.c \
 		 r600_swtcl.c \

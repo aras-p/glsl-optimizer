@@ -239,12 +239,6 @@ static void setup_hardware_state(r600ContextPtr rmesa, radeonTexObj *t)
 			t->pp_txpitch = ((firstImage->Width + align) & ~align) - 1;
 	}
 
-	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
-	    if (firstImage->Width > 2048)
-		t->pp_txpitch |= R500_TXWIDTH_BIT11;
-	    if (firstImage->Height > 2048)
-		t->pp_txpitch |= R500_TXHEIGHT_BIT11;
-	}
 }
 
 /**
@@ -471,12 +465,6 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 	t->pp_txsize |= R600_TX_SIZE_TXPITCH_EN;
 	t->pp_txpitch |= pitch_val;
 
-	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
-	    if (rb->width > 2048)
-		t->pp_txpitch |= R500_TXWIDTH_BIT11;
-	    if (rb->height > 2048)
-		t->pp_txpitch |= R500_TXHEIGHT_BIT11;
-	}
 	t->validated = GL_TRUE;
 	_mesa_unlock_texture(radeon->glCtx, texObj);
 	return;

@@ -70,27 +70,17 @@ extern void _tnl_UpdateFixedFunctionProgram(GLcontext * ctx);
 static void r600BlendColor(GLcontext * ctx, const GLfloat cf[4])
 {
 	r600ContextPtr rmesa = R600_CONTEXT(ctx);
+	GLubyte color[4];
 
 	R600_STATECHANGE(rmesa, blend_color);
 
-	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
-		GLuint r = IROUND(cf[0]*1023.0f);
-		GLuint g = IROUND(cf[1]*1023.0f);
-		GLuint b = IROUND(cf[2]*1023.0f);
-		GLuint a = IROUND(cf[3]*1023.0f);
+	CLAMPED_FLOAT_TO_UBYTE(color[0], cf[0]);
+	CLAMPED_FLOAT_TO_UBYTE(color[1], cf[1]);
+	CLAMPED_FLOAT_TO_UBYTE(color[2], cf[2]);
+	CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
 
-		rmesa->hw.blend_color.cmd[1] = r | (a << 16);
-		rmesa->hw.blend_color.cmd[2] = b | (g << 16);
-	} else {
-		GLubyte color[4];
-		CLAMPED_FLOAT_TO_UBYTE(color[0], cf[0]);
-		CLAMPED_FLOAT_TO_UBYTE(color[1], cf[1]);
-		CLAMPED_FLOAT_TO_UBYTE(color[2], cf[2]);
-		CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
-
-		rmesa->hw.blend_color.cmd[1] = PACK_COLOR_8888(color[3], color[0],
-							color[1], color[2]);
-	}
+	rmesa->hw.blend_color.cmd[1] = PACK_COLOR_8888(color[3], color[0],
+						       color[1], color[2]);
 }
 
 /**
@@ -364,10 +354,6 @@ static void r600ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq )
 	GLint p;
 	GLint *ip;
 
-	/* no VAP UCP on non-TCL chipsets */
-	if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
-			return;
-
 	p = (GLint) plane - (GLint) GL_CLIP_PLANE0;
 	ip = (GLint *)ctx->Transform._ClipUserPlane[p];
 
@@ -382,10 +368,6 @@ static void r600SetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state)
 {
 	r600ContextPtr r600 = R600_CONTEXT(ctx);
 	GLuint p;
-
-	/* no VAP UCP on non-TCL chipsets */
-	if (!(r600->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
-		return;
 
 	p = cap - GL_CLIP_PLANE0;
 	R600_STATECHANGE(r600, vap_clip_cntl);
@@ -452,16 +434,10 @@ static GLboolean current_fragment_program_writes_depth(GLcontext* ctx)
 {
 	r600ContextPtr r600 = R600_CONTEXT(ctx);
 
-	if (r600->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515) {
-		struct r600_fragment_program *fp = (struct r600_fragment_program *)
-			(char *)ctx->FragmentProgram._Current;
-		return (fp && fp->WritesDepth);
-	} else {
-		struct r500_fragment_program* fp =
-			(struct r500_fragment_program*)(char*)
-			ctx->FragmentProgram._Current;
-		return (fp && fp->writes_depth);
-	}
+	struct r600_fragment_program *fp = (struct r600_fragment_program *)
+		(char *)ctx->FragmentProgram._Current;
+	return (fp && fp->WritesDepth);
+
 }
 
 static void r600SetEarlyZState(GLcontext * ctx)
@@ -523,7 +499,6 @@ static void r600SetAlphaState(GLcontext * ctx)
 
 	if (really_enabled) {
 		pp_misc |= R600_FG_ALPHA_FUNC_ENABLE;
-		pp_misc |= R500_FG_ALPHA_FUNC_8BIT;
 		pp_misc |= (refByte & R600_FG_ALPHA_FUNC_VAL_MASK);
 	} else {
 		pp_misc = 0x0;
@@ -1232,41 +1207,6 @@ static void r600SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
                    R600_US_TEX_INST_0, code->tex.length);
 }
 
-static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
-{
-	int i;
-	struct r500_fragment_program *fp = (struct r500_fragment_program *)
-	    (char *)ctx->FragmentProgram._Current;
-	struct r500_fragment_program_code *code = &fp->code;
-
-	/* find all the texture instructions and relocate the texture units */
-	for (i = 0; i < code->inst_end + 1; i++) {
-		if ((code->inst[i].inst0 & 0x3) == R500_INST_TYPE_TEX) {
-			uint32_t val;
-			int unit, opcode, new_unit;
-
-			val = code->inst[i].inst1;
-
-			unit = (val >> 16) & 0xf;
-
-			val &= ~(0xf << 16);
-
-			opcode = val & (0x7 << 22);
-			if (opcode == R500_TEX_INST_TEXKILL) {
-				new_unit = 0;
-			} else {
-				if (tmu_mappings[unit] >= 0) {
-					new_unit = tmu_mappings[unit];
-				} else {
-					new_unit = 0;
-				}
-			}
-			val |= R500_TEX_ID(new_unit);
-			code->inst[i].inst1 = val;
-		}
-	}
-}
-
 static GLuint translate_lod_bias(GLfloat bias)
 {
 	GLint b = (int)(bias*32);
@@ -1391,18 +1331,15 @@ static void r600SetupTextures(GLcontext * ctx)
 	if (!fp)		/* should only happenen once, just after context is created */
 		return;
 
-	if (r600->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515) {
-		if (fp->mesa_program.UsesKill && last_hw_tmu < 0) {
-			// The KILL operation requires the first texture unit
-			// to be enabled.
-			r600->hw.txe.cmd[R600_TXE_ENABLE] |= 1;
-			r600->hw.tex.filter.cmd[R600_TEX_VALUE_0] = 0;
-			r600->hw.tex.filter.cmd[R600_TEX_CMD_0] =
-				cmdpacket0(r600->radeon.radeonScreen, R600_TX_FILTER0_0, 1);
-		}
-		r600SetupFragmentShaderTextures(ctx, tmu_mappings);
-	} else
-		r500SetupFragmentShaderTextures(ctx, tmu_mappings);
+	if (fp->mesa_program.UsesKill && last_hw_tmu < 0) {
+		// The KILL operation requires the first texture unit
+		// to be enabled.
+		r600->hw.txe.cmd[R600_TXE_ENABLE] |= 1;
+		r600->hw.tex.filter.cmd[R600_TEX_VALUE_0] = 0;
+		r600->hw.tex.filter.cmd[R600_TEX_CMD_0] =
+			cmdpacket0(r600->radeon.radeonScreen, R600_TX_FILTER0_0, 1);
+	}
+	r600SetupFragmentShaderTextures(ctx, tmu_mappings);
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "TX_ENABLE: %08x  last_hw_tmu=%d\n",
@@ -1569,187 +1506,6 @@ static void r600SetupRSUnit(GLcontext * ctx)
 		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);
 }
 
-static void r500SetupRSUnit(GLcontext * ctx)
-{
-	r600ContextPtr r600 = R600_CONTEXT(ctx);
-        TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *VB = &tnl->vb;
-	union r600_outputs_written OutputsWritten;
-	GLuint InputsRead;
-	int fp_reg, high_rr;
-	int col_ip, tex_ip;
-	int rs_tex_count = 0;
-	int i, count, col_fmt;
-
-	if (hw_tcl_on)
-		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
-	else
-		RENDERINPUTS_COPY(OutputsWritten.index_bitset, r600->state.render_inputs_bitset);
-
-	if (ctx->FragmentProgram._Current)
-		InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
-	else {
-		fprintf(stderr, "No ctx->FragmentProgram._Current!!\n");
-		return;		/* This should only ever happen once.. */
-	}
-
-	R600_STATECHANGE(r600, ri);
-	R600_STATECHANGE(r600, rc);
-	R600_STATECHANGE(r600, rr);
-
-	fp_reg = col_ip = tex_ip = col_fmt = 0;
-
-	r600->hw.rc.cmd[1] = 0;
-	r600->hw.rc.cmd[2] = 0;
-	for (i=0; i<R600_RR_CMDSIZE-1; ++i)
-		r600->hw.rr.cmd[R600_RR_INST_0 + i] = 0;
-
-	for (i=0; i<R500_RI_CMDSIZE-1; ++i)
-		r600->hw.ri.cmd[R600_RI_INTERP_0 + i] = 0;
-
-
-	if (InputsRead & FRAG_BIT_COL0) {
-		if (R600_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL0, _TNL_ATTRIB_COLOR0)) {
-			count = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size;
-			if (count == 4)
-			    col_fmt = R600_RS_COL_FMT_RGBA;
-			else if (count == 3)
-			    col_fmt = R600_RS_COL_FMT_RGB1;
-			else
-			    col_fmt = R600_RS_COL_FMT_0001;
-
-			r600->hw.ri.cmd[R600_RI_INTERP_0 + col_ip] = R500_RS_COL_PTR(col_ip) | R500_RS_COL_FMT(col_fmt);
-			r600->hw.rr.cmd[R600_RR_INST_0 + col_ip] = R500_RS_INST_COL_ID(col_ip) | R500_RS_INST_COL_CN_WRITE | R500_RS_INST_COL_ADDR(fp_reg);
-			InputsRead &= ~FRAG_BIT_COL0;
-			++col_ip;
-			++fp_reg;
-		} else {
-			WARN_ONCE("fragprog wants col0, vp doesn't provide it\n");
-		}
-	}
-
-	if (InputsRead & FRAG_BIT_COL1) {
-		if (R600_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL1, _TNL_ATTRIB_COLOR1)) {
-			count = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->size;
-			if (count == 4)
-			    col_fmt = R600_RS_COL_FMT_RGBA;
-			else if (count == 3)
-			    col_fmt = R600_RS_COL_FMT_RGB1;
-			else
-			    col_fmt = R600_RS_COL_FMT_0001;
-
-			r600->hw.ri.cmd[R600_RI_INTERP_0 + col_ip] = R500_RS_COL_PTR(col_ip) | R500_RS_COL_FMT(col_fmt);
-			r600->hw.rr.cmd[R600_RR_INST_0 + col_ip] = R500_RS_INST_COL_ID(col_ip) | R500_RS_INST_COL_CN_WRITE | R500_RS_INST_COL_ADDR(fp_reg);
-			InputsRead &= ~FRAG_BIT_COL1;
-			++col_ip;
-			++fp_reg;
-		} else {
-			WARN_ONCE("fragprog wants col1, vp doesn't provide it\n");
-		}
-	}
-
-
-	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-		if (! ( InputsRead & FRAG_BIT_TEX(i) ) )
-		    continue;
-
-		if (!R600_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_TEX0 + i, _TNL_ATTRIB_TEX(i))) {
-		    WARN_ONCE("fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
-		    continue;
-		}
-
-		int swiz = 0;
-
-		/* with TCL we always seem to route 4 components */
-		if (hw_tcl_on)
-		  count = 4;
-		else
-		  count = VB->AttribPtr[_TNL_ATTRIB_TEX(i)]->size;
-
-		if (count == 4) {
-			swiz |= (rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT;
-			swiz |= (rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT;
-			swiz |= (rs_tex_count + 2) << R500_RS_IP_TEX_PTR_R_SHIFT;
-			swiz |= (rs_tex_count + 3) << R500_RS_IP_TEX_PTR_Q_SHIFT;
-		} else if (count == 3) {
-			swiz |= (rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT;
-			swiz |= (rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT;
-			swiz |= (rs_tex_count + 2) << R500_RS_IP_TEX_PTR_R_SHIFT;
-			swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
-		} else if (count == 2) {
-			swiz |= (rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT;
-			swiz |= (rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT;
-			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT;
-			swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
-		} else if (count == 1) {
-			swiz |= (rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT;
-			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT;
-			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT;
-			swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
-		} else {
-			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT;
-			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT;
-			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT;
-			swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
-		}
-
-		r600->hw.ri.cmd[R600_RI_INTERP_0 + tex_ip] |= swiz;
-		r600->hw.rr.cmd[R600_RR_INST_0 + tex_ip] |= R500_RS_INST_TEX_ID(tex_ip) | R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_reg);
-		InputsRead &= ~(FRAG_BIT_TEX0 << i);
-		rs_tex_count += count;
-		++tex_ip;
-		++fp_reg;
-	}
-
-	if (InputsRead & FRAG_BIT_FOGC) {
-		if (R600_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_FOGC, _TNL_ATTRIB_FOG)) {
-			r600->hw.ri.cmd[R600_RI_INTERP_0 + tex_ip] |= ((rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT) |
-				((rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT) |
-				((rs_tex_count + 2) << R500_RS_IP_TEX_PTR_R_SHIFT) |
-				((rs_tex_count + 3) << R500_RS_IP_TEX_PTR_Q_SHIFT);
-
-			r600->hw.rr.cmd[R600_RR_INST_0 + tex_ip] |= R500_RS_INST_TEX_ID(tex_ip) | R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_reg);
-			InputsRead &= ~FRAG_BIT_FOGC;
-			rs_tex_count += 4;
-			++tex_ip;
-			++fp_reg;
-		} else {
-			WARN_ONCE("fragprog wants fogc, vp doesn't provide it\n");
-		}
-	}
-
-	if (InputsRead & FRAG_BIT_WPOS) {
-		r600->hw.ri.cmd[R600_RI_INTERP_0 + tex_ip] |= ((rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT) |
-				((rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT) |
-				((rs_tex_count + 2) << R500_RS_IP_TEX_PTR_R_SHIFT) |
-				((rs_tex_count + 3) << R500_RS_IP_TEX_PTR_Q_SHIFT);
-
-		r600->hw.rr.cmd[R600_RR_INST_0 + tex_ip] |= R500_RS_INST_TEX_ID(tex_ip) | R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_reg);
-		InputsRead &= ~FRAG_BIT_WPOS;
-		rs_tex_count += 4;
-		++tex_ip;
-		++fp_reg;
-	}
-
-	/* Setup default color if no color or tex was set */
-	if (rs_tex_count == 0 && col_ip == 0) {
-		r600->hw.rr.cmd[R600_RR_INST_0] |= R500_RS_INST_COL_ID(0) | R500_RS_INST_COL_CN_WRITE | R500_RS_INST_COL_ADDR(0) | R500_RS_COL_FMT(R600_RS_COL_FMT_0001);
-		++col_ip;
-	}
-
-	high_rr = (col_ip > tex_ip) ? col_ip : tex_ip;
-	r600->hw.rc.cmd[1] |= (rs_tex_count << R600_IT_COUNT_SHIFT)  | (col_ip << R600_IC_COUNT_SHIFT) | R600_HIRES_EN;
-	r600->hw.rc.cmd[2] |= 0xC0 | (high_rr - 1);
-
-	r600->hw.rr.cmd[R600_RR_CMD_0] = cmdpacket0(r600->radeon.radeonScreen, R500_RS_INST_0, high_rr);
-
-	if (InputsRead)
-		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);
-}
-
-
-
-
 #define bump_vpu_count(ptr, new_count)   do{\
 	drm_r300_cmd_header_t* _p=((drm_r300_cmd_header_t*)(ptr));\
 	int _nc=(new_count)/4; \
@@ -1827,8 +1583,6 @@ static void r600VapCntl(r600ContextPtr rmesa, GLuint input_count,
 	    (pvs_num_slots << R600_PVS_NUM_SLOTS_SHIFT) |
 	    (pvs_num_cntrls << R600_PVS_NUM_CNTLRS_SHIFT) |
 	    (12 << R600_VF_MAX_VTX_NUM_SHIFT);
-	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
-	    rmesa->hw.vap_cntl.cmd[R600_VAP_CNTL_INSTR] |= R500_TCL_STATE_OPTIMIZATION;
     } else
 	/* not sure about non-tcl */
 	rmesa->hw.vap_cntl.cmd[R600_VAP_CNTL_INSTR] = ((10 << R600_PVS_NUM_SLOTS_SHIFT) |
@@ -2030,10 +1784,6 @@ static void r600Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 static void r600ResetHwState(r600ContextPtr r600)
 {
 	GLcontext *ctx = r600->radeon.glCtx;
-	int has_tcl = 1;
-
-	if (!(r600->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
-		has_tcl = 0;
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
@@ -2083,29 +1833,22 @@ static void r600ResetHwState(r600ContextPtr r600)
 	r600->hw.vap_cntl_status.cmd[1] = R600_VC_32BIT_SWAP;
 #endif
 
-	/* disable VAP/TCL on non-TCL capable chips */
-	if (!has_tcl)
-		r600->hw.vap_cntl_status.cmd[1] |= R600_VAP_TCL_BYPASS;
-
 	r600->hw.vap_psc_sgn_norm_cntl.cmd[1] = 0xAAAAAAAA;
 
-	/* XXX: Other families? */
-	if (has_tcl) {
-		r600->hw.vap_clip_cntl.cmd[1] = R600_PS_UCP_MODE_DIST_COP;
+	r600->hw.vap_clip_cntl.cmd[1] = R600_PS_UCP_MODE_DIST_COP;
 
-		r600->hw.vap_clip.cmd[1] = r600PackFloat32(1.0); /* X */
-		r600->hw.vap_clip.cmd[2] = r600PackFloat32(1.0); /* X */
-		r600->hw.vap_clip.cmd[3] = r600PackFloat32(1.0); /* Y */
-		r600->hw.vap_clip.cmd[4] = r600PackFloat32(1.0); /* Y */
+	r600->hw.vap_clip.cmd[1] = r600PackFloat32(1.0); /* X */
+	r600->hw.vap_clip.cmd[2] = r600PackFloat32(1.0); /* X */
+	r600->hw.vap_clip.cmd[3] = r600PackFloat32(1.0); /* Y */
+	r600->hw.vap_clip.cmd[4] = r600PackFloat32(1.0); /* Y */
 
-		switch (r600->radeon.radeonScreen->chip_family) {
-		case CHIP_FAMILY_R600:
-			r600->hw.vap_pvs_vtx_timeout_reg.cmd[1] = R600_2288_R600;
-			break;
-		default:
-			r600->hw.vap_pvs_vtx_timeout_reg.cmd[1] = R600_2288_RV350;
-			break;
-		}
+	switch (r600->radeon.radeonScreen->chip_family) {
+	case CHIP_FAMILY_R600:
+		r600->hw.vap_pvs_vtx_timeout_reg.cmd[1] = R600_2288_R600;
+		break;
+	default:
+		r600->hw.vap_pvs_vtx_timeout_reg.cmd[1] = R600_2288_RV350;
+		break;
 	}
 
 	r600->hw.gb_enable.cmd[1] = R600_GB_POINT_STUFF_ENABLE
@@ -2180,14 +1923,6 @@ static void r600ResetHwState(r600ContextPtr r600)
 
 	r600->hw.sc_screendoor.cmd[1] = 0x00FFFFFF;
 
-	r600->hw.us_out_fmt.cmd[1] = R500_OUT_FMT_C4_8  |
-	  R500_C0_SEL_B | R500_C1_SEL_G | R500_C2_SEL_R | R500_C3_SEL_A;
-	r600->hw.us_out_fmt.cmd[2] = R500_OUT_FMT_UNUSED |
-	  R500_C0_SEL_B | R500_C1_SEL_G | R500_C2_SEL_R | R500_C3_SEL_A;
-	r600->hw.us_out_fmt.cmd[3] = R500_OUT_FMT_UNUSED |
-	  R500_C0_SEL_B | R500_C1_SEL_G | R500_C2_SEL_R | R500_C3_SEL_A;
-	r600->hw.us_out_fmt.cmd[4] = R500_OUT_FMT_UNUSED |
-	  R500_C0_SEL_B | R500_C1_SEL_G | R500_C2_SEL_R | R500_C3_SEL_A;
 	r600->hw.us_out_fmt.cmd[5] = R600_W_FMT_W0 | R600_W_SRC_US;
 
 	/* disable fog unit */
@@ -2210,9 +1945,6 @@ static void r600ResetHwState(r600ContextPtr r600)
 
 	r600->hw.rb3d_aaresolve_ctl.cmd[1] = 0;
 
-	r600->hw.rb3d_discard_src_pixel_lte_threshold.cmd[1] = 0x00000000;
-	r600->hw.rb3d_discard_src_pixel_lte_threshold.cmd[2] = 0xffffffff;
-
 	r600->hw.zb_depthclearvalue.cmd[1] = 0;
 
 	r600->hw.zstencil_format.cmd[2] = R600_ZTOP_DISABLE;
@@ -2228,12 +1960,11 @@ static void r600ResetHwState(r600ContextPtr r600)
 	r600->hw.zb_hiz_pitch.cmd[1] = 0;
 
 	r600VapCntl(r600, 0, 0, 0);
-	if (has_tcl) {
-		r600->hw.vps.cmd[R600_VPS_ZERO_0] = 0;
-		r600->hw.vps.cmd[R600_VPS_ZERO_1] = 0;
-		r600->hw.vps.cmd[R600_VPS_POINTSIZE] = r600PackFloat32(1.0);
-		r600->hw.vps.cmd[R600_VPS_ZERO_3] = 0;
-	}
+
+	r600->hw.vps.cmd[R600_VPS_ZERO_0] = 0;
+	r600->hw.vps.cmd[R600_VPS_ZERO_1] = 0;
+	r600->hw.vps.cmd[R600_VPS_POINTSIZE] = r600PackFloat32(1.0);
+	r600->hw.vps.cmd[R600_VPS_ZERO_3] = 0;
 
 	r600->radeon.hw.all_dirty = GL_TRUE;
 }
@@ -2371,82 +2102,6 @@ static void r600SetupPixelShader(r600ContextPtr rmesa)
 	}
 }
 
-#define bump_r500fp_count(ptr, new_count)   do{\
-	drm_r300_cmd_header_t* _p=((drm_r300_cmd_header_t*)(ptr));\
-	int _nc=(new_count)/6; \
-	assert(_nc < 256); \
-	if(_nc>_p->r500fp.count)_p->r500fp.count=_nc;\
-} while(0)
-
-#define bump_r500fp_const_count(ptr, new_count)   do{\
-	drm_r300_cmd_header_t* _p=((drm_r300_cmd_header_t*)(ptr));\
-	int _nc=(new_count)/4; \
-	assert(_nc < 256); \
-	if(_nc>_p->r500fp.count)_p->r500fp.count=_nc;\
-} while(0)
-
-static void r500SetupPixelShader(r600ContextPtr rmesa)
-{
-	GLcontext *ctx = rmesa->radeon.glCtx;
-	struct r500_fragment_program *fp = (struct r500_fragment_program *)
-	    (char *)ctx->FragmentProgram._Current;
-	int i;
-	struct r500_fragment_program_code *code;
-
-	if (!fp)		/* should only happenen once, just after context is created */
-		return;
-
-	((drm_r300_cmd_header_t *) rmesa->hw.r500fp.cmd)->r500fp.count = 0;
-	((drm_r300_cmd_header_t *) rmesa->hw.r500fp_const.cmd)->r500fp.count = 0;
-
-	r500TranslateFragmentShader(rmesa, fp);
-	if (!fp->translated) {
-		fprintf(stderr, "%s: No valid fragment shader, exiting\n",
-			__FUNCTION__);
-		return;
-	}
-	code = &fp->code;
-
-	r600SetupTextures(ctx);
-
-	R600_STATECHANGE(rmesa, fp);
-	rmesa->hw.fp.cmd[R500_FP_PIXSIZE] = code->max_temp_idx;
-
-	rmesa->hw.fp.cmd[R500_FP_CODE_ADDR] =
-	    R500_US_CODE_START_ADDR(code->inst_offset) |
-	    R500_US_CODE_END_ADDR(code->inst_end);
-	rmesa->hw.fp.cmd[R500_FP_CODE_RANGE] =
-	    R500_US_CODE_RANGE_ADDR(code->inst_offset) |
-	    R500_US_CODE_RANGE_SIZE(code->inst_end);
-	rmesa->hw.fp.cmd[R500_FP_CODE_OFFSET] =
-	    R500_US_CODE_OFFSET_ADDR(0); /* FIXME when we add flow control */
-
-	R600_STATECHANGE(rmesa, r500fp);
-	/* Emit our shader... */
-	for (i = 0; i < code->inst_end+1; i++) {
-		rmesa->hw.r500fp.cmd[i*6+1] = code->inst[i].inst0;
-		rmesa->hw.r500fp.cmd[i*6+2] = code->inst[i].inst1;
-		rmesa->hw.r500fp.cmd[i*6+3] = code->inst[i].inst2;
-		rmesa->hw.r500fp.cmd[i*6+4] = code->inst[i].inst3;
-		rmesa->hw.r500fp.cmd[i*6+5] = code->inst[i].inst4;
-		rmesa->hw.r500fp.cmd[i*6+6] = code->inst[i].inst5;
-	}
-
-	bump_r500fp_count(rmesa->hw.r500fp.cmd, (code->inst_end + 1) * 6);
-
-	R600_STATECHANGE(rmesa, r500fp_const);
-	for (i = 0; i < code->const_nr; i++) {
-		const GLfloat *constant = get_fragmentprogram_constant(ctx,
-			&fp->mesa_program.Base, code->constant[i]);
-		rmesa->hw.r500fp_const.cmd[R600_FPP_PARAM_0 + 4 * i + 0] = r600PackFloat32(constant[0]);
-		rmesa->hw.r500fp_const.cmd[R600_FPP_PARAM_0 + 4 * i + 1] = r600PackFloat32(constant[1]);
-		rmesa->hw.r500fp_const.cmd[R600_FPP_PARAM_0 + 4 * i + 2] = r600PackFloat32(constant[2]);
-		rmesa->hw.r500fp_const.cmd[R600_FPP_PARAM_0 + 4 * i + 3] = r600PackFloat32(constant[3]);
-	}
-	bump_r500fp_const_count(rmesa->hw.r500fp_const.cmd, code->const_nr * 4);
-
-}
-
 void r600UpdateShaderStates(r600ContextPtr rmesa)
 {
 	GLcontext *ctx;
@@ -2475,18 +2130,11 @@ void r600UpdateShaderStates(r600ContextPtr rmesa)
 		rmesa->hw.fg_depth_src.cmd[1] = fgdepthsrc;
 	}
 
-	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
-		r500SetupPixelShader(rmesa);
-	else
-		r600SetupPixelShader(rmesa);
+	r600SetupPixelShader(rmesa);
 
-	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
-		r500SetupRSUnit(ctx);
-	else
-		r600SetupRSUnit(ctx);
+	r600SetupRSUnit(ctx);
 
-	if ((rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
-		r600SetupVertexProgram(rmesa);
+	r600SetupVertexProgram(rmesa);
 
 }
 

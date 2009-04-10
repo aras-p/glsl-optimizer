@@ -431,18 +431,9 @@ static int r600Fallback(GLcontext * ctx)
 	FALLBACK_IF(r600->radeon.Fallback);
 	/* Do we need to use new-style shaders?
 	 * Also is there a better way to do this? */
-	if (r600->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
-		struct r500_fragment_program *fp = (struct r500_fragment_program *)
-	    (char *)ctx->FragmentProgram._Current;
-		if (fp) {
-			if (!fp->translated) {
-				r500TranslateFragmentShader(r600, fp);
-				FALLBACK_IF(!fp->translated);
-			}
-		}
-	} else {
+	{
 		struct r600_fragment_program *fp = (struct r600_fragment_program *)
-	    (char *)ctx->FragmentProgram._Current;
+			(char *)ctx->FragmentProgram._Current;
 		if (fp) {
 			if (!fp->translated) {
 				r600TranslateFragmentShader(r600, fp);

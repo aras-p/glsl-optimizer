@@ -12,7 +12,6 @@ static struct gl_program *r600NewProgram(GLcontext * ctx, GLenum target,
 	r600ContextPtr rmesa = R600_CONTEXT(ctx);
 	struct r600_vertex_program_cont *vp;
 	struct r600_fragment_program *r600_fp;
-	struct r500_fragment_program *r500_fp;
 
 	switch (target) {
 	case GL_VERTEX_STATE_PROGRAM_NV:
@@ -21,27 +20,13 @@ static struct gl_program *r600NewProgram(GLcontext * ctx, GLenum target,
 		return _mesa_init_vertex_program(ctx, &vp->mesa_program,
 						 target, id);
 	case GL_FRAGMENT_PROGRAM_ARB:
-		if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
-			r500_fp = CALLOC_STRUCT(r500_fragment_program);
-			r500_fp->ctx = ctx;
-			return _mesa_init_fragment_program(ctx, &r500_fp->mesa_program,
-							   target, id);
-		} else {
-			r600_fp = CALLOC_STRUCT(r600_fragment_program);
-			return _mesa_init_fragment_program(ctx, &r600_fp->mesa_program,
-							   target, id);
-		}
-
+		r600_fp = CALLOC_STRUCT(r600_fragment_program);
+		return _mesa_init_fragment_program(ctx, &r600_fp->mesa_program,
+						   target, id);
 	case GL_FRAGMENT_PROGRAM_NV:
-		if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
-			r500_fp = CALLOC_STRUCT(r500_fragment_program);
-			return _mesa_init_fragment_program(ctx, &r500_fp->mesa_program,
-							   target, id);
-		} else {
-			r600_fp = CALLOC_STRUCT(r600_fragment_program);
-			return _mesa_init_fragment_program(ctx, &r600_fp->mesa_program,
-							   target, id);
-		}
+		r600_fp = CALLOC_STRUCT(r600_fragment_program);
+		return _mesa_init_fragment_program(ctx, &r600_fp->mesa_program,
+						   target, id);
 	default:
 		_mesa_problem(ctx, "Bad target in r600NewProgram");
 	}
@@ -60,17 +45,13 @@ r600ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 	r600ContextPtr rmesa = R600_CONTEXT(ctx);
 	struct r600_vertex_program_cont *vp = (void *)prog;
 	struct r600_fragment_program *r600_fp = (struct r600_fragment_program *)prog;
-	struct r500_fragment_program *r500_fp = (struct r500_fragment_program *)prog;
 
 	switch (target) {
 	case GL_VERTEX_PROGRAM_ARB:
 		vp->progs = NULL;
 		break;
 	case GL_FRAGMENT_PROGRAM_ARB:
-		if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
-			r500_fp->translated = GL_FALSE;
-		else
-			r600_fp->translated = GL_FALSE;
+		r600_fp->translated = GL_FALSE;
 		break;
 	}
 

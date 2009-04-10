@@ -345,10 +345,8 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 	ctx->Const.MaxTextureLodBias = 16.0;
 
-	if (screen->chip_family >= CHIP_FAMILY_RV515) {
-	    ctx->Const.MaxTextureLevels = 13;
-	    ctx->Const.MaxTextureRectSize = 4096;
-	}
+	ctx->Const.MaxTextureLevels = 13;
+	ctx->Const.MaxTextureRectSize = 4096;
 
 	ctx->Const.MinPointSize = 1.0;
 	ctx->Const.MinPointSizeAA = 1.0;
@@ -394,17 +392,15 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	_tnl_allow_vertex_fog(ctx, GL_TRUE);
 
 	/* currently bogus data */
-	if (screen->chip_flags & RADEON_CHIPSET_TCL) {
-	        ctx->Const.VertexProgram.MaxInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
-		ctx->Const.VertexProgram.MaxNativeInstructions =
-		  VSF_MAX_FRAGMENT_LENGTH / 4;
-		ctx->Const.VertexProgram.MaxNativeAttribs = 16;	/* r420 */
-		ctx->Const.VertexProgram.MaxTemps = 32;
-		ctx->Const.VertexProgram.MaxNativeTemps =
-		  /*VSF_MAX_FRAGMENT_TEMPS */ 32;
-		ctx->Const.VertexProgram.MaxNativeParameters = 256;	/* r420 */
-		ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
-	}
+	ctx->Const.VertexProgram.MaxInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
+	ctx->Const.VertexProgram.MaxNativeInstructions =
+		VSF_MAX_FRAGMENT_LENGTH / 4;
+	ctx->Const.VertexProgram.MaxNativeAttribs = 16;	/* r420 */
+	ctx->Const.VertexProgram.MaxTemps = 32;
+	ctx->Const.VertexProgram.MaxNativeTemps =
+		/*VSF_MAX_FRAGMENT_TEMPS */ 32;
+	ctx->Const.VertexProgram.MaxNativeParameters = 256;	/* r420 */
+	ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
 
 	ctx->Const.FragmentProgram.MaxNativeTemps = PFS_NUM_TEMP_REGS;
 	ctx->Const.FragmentProgram.MaxNativeAttribs = 11;	/* copy i915... */
