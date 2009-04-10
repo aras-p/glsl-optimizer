@@ -605,13 +605,11 @@ static void prepare_wm_surfaces(struct brw_context *brw )
 
    /* Update surface / buffer for vertex shader constant buffer */
    {
-      const GLuint surf = SURF_INDEX_VERT_CONST_BUFFER + 1;
+      const GLuint surf = SURF_INDEX_VERT_CONST_BUFFER;
       struct brw_vertex_program *vp =
          (struct brw_vertex_program *) brw->vertex_program;
       vp->const_buffer =
-         brw_update_constant_surface(ctx,
-                                     SURF_INDEX_VERT_CONST_BUFFER,
-                                     vp->const_buffer,
+         brw_update_constant_surface(ctx, surf, vp->const_buffer,
                                      vp->program.Base.Parameters);
 
       brw->wm.nr_surfaces = surf + 1;
@@ -619,13 +617,11 @@ static void prepare_wm_surfaces(struct brw_context *brw )
 
    /* Update surface / buffer for fragment shader constant buffer */
    {
-      const GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER + 1;
+      const GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER;
       struct brw_fragment_program *fp =
          (struct brw_fragment_program *) brw->fragment_program;
       fp->const_buffer =
-         brw_update_constant_surface(ctx,
-                                     SURF_INDEX_FRAG_CONST_BUFFER,
-                                     fp->const_buffer,
+         brw_update_constant_surface(ctx, surf, fp->const_buffer,
                                      fp->program.Base.Parameters);
 
       brw->wm.nr_surfaces = surf + 1;
