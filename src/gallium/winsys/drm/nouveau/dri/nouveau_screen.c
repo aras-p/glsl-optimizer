@@ -199,7 +199,8 @@ dri_surface_from_handle(struct pipe_screen *screen,
       return NULL;
 
    memset(&templat, 0, sizeof(templat));
-   templat.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
+   templat.tex_usage = PIPE_TEXTURE_USAGE_PRIMARY |
+                       NOUVEAU_TEXTURE_USAGE_LINEAR;
    templat.target = PIPE_TEXTURE_2D;
    templat.last_level = 0;
    templat.depth[0] = 1;

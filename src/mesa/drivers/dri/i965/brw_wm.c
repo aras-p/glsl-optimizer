@@ -40,6 +40,8 @@
 GLuint brw_wm_nr_args( GLuint opcode )
 {
    switch (opcode) {
+   case WM_FRONTFACING:
+      return 0;
    case WM_PIXELXY:
    case WM_CINTERP:
    case WM_WPOSXY:
@@ -103,12 +105,17 @@ brw_wm_non_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
    brw_wm_pass1(c);
 
    /* Register allocation.
+    * Divide by two because we operate on 16 pixels at a time and require
+    * two GRF entries for each logical shader register.
     */
    c->grf_limit = BRW_WM_MAX_GRF / 2;
 
    brw_wm_pass2(c);
 
+   /* how many general-purpose registers are used */
    c->prog_data.total_grf = c->max_wm_grf;
+
+   /* Scratch space is used for register spilling */
    if (c->last_scratch) {
       c->prog_data.total_scratch = c->last_scratch + 0x40;
    }

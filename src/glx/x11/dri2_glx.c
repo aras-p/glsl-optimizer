@@ -60,9 +60,6 @@ struct __GLXDRIdisplayPrivateRec {
     int driMajor;
     int driMinor;
     int driPatch;
-
-    unsigned long configureSeqno;
-    Bool (*oldConfigProc)(Display *, XEvent *, xEvent *);
 };
 
 struct __GLXDRIcontextPrivateRec {
@@ -76,7 +73,6 @@ struct __GLXDRIdrawablePrivateRec {
     __DRIbuffer buffers[5];
     int bufferCount;
     int width, height;
-    unsigned long configureSeqno;
     int have_back;
     int have_front;
     int have_fake_front;
@@ -174,7 +170,6 @@ static __GLXDRIdrawable *dri2CreateDrawable(__GLXscreenConfigs *psc,
     pdraw->base.drawable = drawable;
     pdraw->base.psc = psc;
     pdraw->bufferCount = 0;
-    pdraw->configureSeqno = ~0;
 
     DRI2CreateDrawable(psc->dpy, xDrawable);
 
@@ -293,29 +288,8 @@ dri2GetBuffers(__DRIdrawable *driDrawable,
 	       int *out_count, void *loaderPrivate)
 {
     __GLXDRIdrawablePrivate *pdraw = loaderPrivate;
-    __GLXdisplayPrivate *dpyPriv = __glXInitialize(pdraw->base.psc->dpy);
-    __GLXDRIdisplayPrivate *pdp = (__GLXDRIdisplayPrivate *)dpyPriv->dri2Display;
     DRI2Buffer *buffers;
     int i;
-
-    /**
-     * Check if a ConfigureNotify has come in since we last asked for the
-     * buffers associated with this drawable.  If not, we can assume that they're
-     * the same set at glViewport time, and save a synchronous round-trip to the
-     * X Server.
-     */
-    if (pdraw->configureSeqno == pdp->configureSeqno &&
-	count == pdraw->bufferCount) {
-	for (i = 0; i < count; i++) {
-	    if (pdraw->buffers[i].attachment != attachments[i])
-		break;
-	}
-	if (i == count) {
-	    *out_count = pdraw->bufferCount;
-	    return pdraw->buffers;
-	}
-    }
-    pdraw->configureSeqno = pdp->configureSeqno;
 
     buffers = DRI2GetBuffers(pdraw->base.psc->dpy, pdraw->base.xDrawable,
 			     width, height, attachments, count, out_count);
@@ -468,28 +442,6 @@ static void dri2DestroyDisplay(__GLXDRIdisplay *dpy)
     Xfree(dpy);
 }
 
-/**
- * Makes a note on receiving ConfigureNotify that we need to re-check the
- * DRI2 buffers, as window sizes may have resulted in reallocation.
- */
-static Bool dri2ConfigureNotifyProc(Display *dpy, XEvent *re, xEvent *event)
-{
-    __GLXdisplayPrivate *dpyPriv = __glXInitialize(dpy);
-    __GLXDRIdisplayPrivate *pdp;
-    Bool ret;
-
-    /* We should always be able to find our pdp, as it only gets torn down
-     * when the Display is torn down.
-     */
-    pdp = (__GLXDRIdisplayPrivate *)dpyPriv->dri2Display;
-
-    ret = pdp->oldConfigProc(dpy, re, event);
-
-    pdp->configureSeqno = re->xconfigure.serial;
-
-    return ret;
-}
-
 /*
  * Allocate, initialize and return a __DRIdisplayPrivate object.
  * This is called from __glXInitialize() when we are given a new
@@ -512,11 +464,7 @@ _X_HIDDEN __GLXDRIdisplay *dri2CreateDisplay(Display *dpy)
 	return NULL;
     }
 
-    pdp->oldConfigProc = XESetWireToEvent(dpy, ConfigureNotify,
-					  dri2ConfigureNotifyProc);
-
     pdp->driPatch = 0;
-    pdp->configureSeqno = 0;
 
     pdp->base.destroyDisplay = dri2DestroyDisplay;
     pdp->base.createScreen = dri2CreateScreen;

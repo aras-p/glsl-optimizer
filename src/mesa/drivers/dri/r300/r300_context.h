@@ -76,8 +76,6 @@ typedef struct r300_context *r300ContextPtr;
 
 
 
-/************ DMA BUFFERS **************/
-
 /* The blit width for texture uploads
  */
 #define R300_BLIT_WIDTH_BYTES 1024

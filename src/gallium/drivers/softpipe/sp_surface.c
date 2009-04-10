@@ -27,6 +27,7 @@
 
 #include "util/u_rect.h"
 #include "sp_context.h"
+#include "sp_surface.h"
 
 
 static void

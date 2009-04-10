@@ -1104,7 +1104,7 @@ _mesa_PopAttrib(void)
 		  _mesa_light(ctx, i, GL_DIFFUSE, l->Diffuse);
 		  _mesa_light(ctx, i, GL_SPECULAR, l->Specular );
 		  _mesa_light(ctx, i, GL_POSITION, l->EyePosition);
-		  _mesa_light(ctx, i, GL_SPOT_DIRECTION, l->EyeDirection);
+		  _mesa_light(ctx, i, GL_SPOT_DIRECTION, l->SpotDirection);
 		  _mesa_light(ctx, i, GL_SPOT_EXPONENT, &l->SpotExponent);
 		  _mesa_light(ctx, i, GL_SPOT_CUTOFF, &l->SpotCutoff);
 		  _mesa_light(ctx, i, GL_CONSTANT_ATTENUATION,

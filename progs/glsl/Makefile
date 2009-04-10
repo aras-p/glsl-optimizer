@@ -17,6 +17,7 @@ PROGS = \
 	deriv \
 	identity \
 	fragcoord \
+	linktest \
 	mandelbrot \
 	multinoise \
 	multitex \
@@ -127,6 +128,12 @@ fragcoord.o: fragcoord.c extfuncs.h shaderutil.h
 fragcoord: fragcoord.o shaderutil.o
 	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) fragcoord.o shaderutil.o $(LIBS) -o $@
 
+
+linktest.o: linktest.c extfuncs.h shaderutil.h
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) linktest.c
+
+linktest: linktest.o shaderutil.o
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) linktest.o shaderutil.o $(LIBS) -o $@
 
 mandelbrot.o: mandelbrot.c extfuncs.h shaderutil.h
 	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) mandelbrot.c

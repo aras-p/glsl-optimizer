@@ -41,7 +41,7 @@ nv50_query(struct pipe_query *pipe)
 static struct pipe_query *
 nv50_query_create(struct pipe_context *pipe, unsigned type)
 {
-	struct pipe_screen *screen = pipe->winsys;
+	struct pipe_screen *screen = pipe->screen;
 	struct nv50_query *q = CALLOC_STRUCT(nv50_query);
 
 	assert (q->type == PIPE_QUERY_OCCLUSION_COUNTER);

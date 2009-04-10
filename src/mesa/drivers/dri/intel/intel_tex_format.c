@@ -1,5 +1,6 @@
 #include "intel_context.h"
 #include "intel_tex.h"
+#include "intel_chipset.h"
 #include "main/texformat.h"
 #include "main/enums.h"
 
@@ -160,24 +161,36 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
    case GL_SRGB8_EXT:
    case GL_SRGB_ALPHA_EXT:
    case GL_SRGB8_ALPHA8_EXT:
-   case GL_SLUMINANCE_EXT:
-   case GL_SLUMINANCE8_EXT:
-   case GL_SLUMINANCE_ALPHA_EXT:
-   case GL_SLUMINANCE8_ALPHA8_EXT:
    case GL_COMPRESSED_SRGB_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_EXT:
    case GL_COMPRESSED_SLUMINANCE_EXT:
    case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
-       return &_mesa_texformat_srgba8;
+      return &_mesa_texformat_sargb8;
+   case GL_SLUMINANCE_EXT:
+   case GL_SLUMINANCE8_EXT:
+      if (IS_G4X(intel->intelScreen->deviceID))
+         return &_mesa_texformat_sl8;
+      else
+         return &_mesa_texformat_sargb8;
+   case GL_SLUMINANCE_ALPHA_EXT:
+   case GL_SLUMINANCE8_ALPHA8_EXT:
+      if (IS_G4X(intel->intelScreen->deviceID))
+         return &_mesa_texformat_sla8;
+      else
+         return &_mesa_texformat_sargb8;
    case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
       return &_mesa_texformat_srgb_dxt1;
 
+   /* i915 could also do this */
    case GL_DUDV_ATI:
    case GL_DU8DV8_ATI:
       return &_mesa_texformat_dudv8;
+   case GL_RGBA_SNORM:
+   case GL_RGBA8_SNORM:
+      return &_mesa_texformat_signed_rgba8888_rev;
 #endif
 
    default:

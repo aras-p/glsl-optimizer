@@ -58,7 +58,8 @@ static const char *wm_opcode_strings[] = {
    "PINTERP",
    "CINTERP",
    "WPOSXY",
-   "FB_WRITE"
+   "FB_WRITE",
+   "FRONTFACING",
 };
 
 #if 0
@@ -313,18 +314,13 @@ static void emit_interp( struct brw_wm_compile *c,
    struct prog_dst_register dst = dst_reg(PROGRAM_INPUT, idx);
    struct prog_src_register interp = src_reg(PROGRAM_PAYLOAD, idx);
    struct prog_src_register deltas = get_delta_xy(c);
-   struct prog_src_register arg2;
-   GLuint opcode;
-   
+
    /* Need to use PINTERP on attributes which have been
     * multiplied by 1/W in the SF program, and LINTERP on those
     * which have not:
     */
    switch (idx) {
    case FRAG_ATTRIB_WPOS:
-      opcode = WM_LINTERP;
-      arg2 = src_undef();
-
       /* Have to treat wpos.xy specially:
        */
       emit_op(c,
@@ -345,7 +341,7 @@ static void emit_interp( struct brw_wm_compile *c,
 	      0,
 	      interp,
 	      deltas,
-	      arg2);
+	      src_undef());
       break;
    case FRAG_ATTRIB_COL0:
    case FRAG_ATTRIB_COL1:
@@ -367,6 +363,56 @@ static void emit_interp( struct brw_wm_compile *c,
 		 deltas,
 		 src_undef());
       }
+      break;
+   case FRAG_ATTRIB_FOGC:
+      /* The FOGC input is really special.  When a program uses glFogFragCoord,
+       * the results returned are supposed to be (f,0,0,1).  But for Mesa GLSL,
+       * the glFrontFacing and glPointCoord values are also stashed in FOGC.
+       * So, write the interpolated fog value to X, then either 0, 1, or the
+       * stashed values to Y, Z, W.  Note that this means that
+       * glFogFragCoord.yzw can be wrong in those cases!
+       */
+
+      /* Interpolate the fog coordinate */
+      emit_op(c,
+	      WM_PINTERP,
+	      dst_mask(dst, WRITEMASK_X),
+	      0,
+	      interp,
+	      deltas,
+	      get_pixel_w(c));
+
+      /* Move the front facing value into FOGC.y if it's needed. */
+      if (c->fp->program.UsesFrontFacing) {
+	 emit_op(c,
+		 WM_FRONTFACING,
+		 dst_mask(dst, WRITEMASK_Y),
+		 0,
+		 src_undef(),
+		 src_undef(),
+		 src_undef());
+      } else {
+	 emit_op(c,
+		 OPCODE_MOV,
+		 dst_mask(dst, WRITEMASK_Y),
+		 0,
+		 src_swizzle1(interp, SWIZZLE_ZERO),
+		 src_undef(),
+		 src_undef());
+      }
+
+      /* Should do the PointCoord thing here. */
+      emit_op(c,
+	      OPCODE_MOV,
+	      dst_mask(dst, WRITEMASK_ZW),
+	      0,
+	      src_swizzle(interp,
+			  SWIZZLE_ZERO,
+			  SWIZZLE_ZERO,
+			  SWIZZLE_ZERO,
+			  SWIZZLE_ONE),
+	      src_undef(),
+	      src_undef());
       break;
    default:
       emit_op(c,

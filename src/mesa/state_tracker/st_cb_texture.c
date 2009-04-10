@@ -37,6 +37,7 @@
 #include "main/pixel.h"
 #include "main/texcompress.h"
 #include "main/texformat.h"
+#include "main/texgetimage.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
 #include "main/texstore.h"
@@ -946,7 +947,8 @@ fallback_copy_texsubimage(GLcontext *ctx,
    texDest = st_texture_image_map(ctx->st, stImage, 0, PIPE_TRANSFER_WRITE,
                                   destX, destY, width, height);
 
-   if (baseFormat == GL_DEPTH_COMPONENT) {
+   if (baseFormat == GL_DEPTH_COMPONENT ||
+       baseFormat == GL_DEPTH24_STENCIL8) {
       const GLboolean scaleOrBias = (ctx->Pixel.DepthScale != 1.0F ||
                                      ctx->Pixel.DepthBias != 0.0F);
       GLint row, yStep;
@@ -1056,7 +1058,8 @@ st_copy_texsubimage(GLcontext *ctx,
    st_finish(ctx->st);
 
    /* determine if copying depth or color data */
-   if (texBaseFormat == GL_DEPTH_COMPONENT) {
+   if (texBaseFormat == GL_DEPTH_COMPONENT ||
+       texBaseFormat == GL_DEPTH24_STENCIL8) {
       strb = st_renderbuffer(fb->_DepthBuffer);
    }
    else if (texBaseFormat == GL_DEPTH_STENCIL_EXT) {
@@ -1471,9 +1474,19 @@ st_get_default_texture(struct st_context *st)
       GLubyte pixels[16][16][4];
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImg;
+      GLuint i, j;
 
-      /* init image to gray */
-      memset(pixels, 127, sizeof(pixels));
+      /* The ARB_fragment_program spec says (0,0,0,1) should be returned
+       * when attempting to sample incomplete textures.
+       */
+      for (i = 0; i < 16; i++) {
+         for (j = 0; j < 16; j++) {
+            pixels[i][j][0] = 0;
+            pixels[i][j][1] = 0;
+            pixels[i][j][2] = 0;
+            pixels[i][j][3] = 255;
+         }
+      }
 
       texObj = st->ctx->Driver.NewTextureObject(st->ctx, 0, target);
 

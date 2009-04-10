@@ -118,8 +118,9 @@ extern void nv10_init_surface_functions(struct nv10_context *nv10);
 extern void nv10_screen_init_miptree_functions(struct pipe_screen *pscreen);
 
 /* nv10_clear.c */
-extern void nv10_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-		       unsigned clearValue);
+extern void nv10_clear(struct pipe_context *pipe, unsigned buffers,
+		       const float *rgba, double depth, unsigned stencil);
+
 
 /* nv10_draw.c */
 extern struct draw_stage *nv10_draw_render_stage(struct nv10_context *nv10);

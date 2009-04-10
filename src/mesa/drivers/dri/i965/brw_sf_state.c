@@ -231,7 +231,33 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
        sf.sf6.line_width = 0;
 
    /* _NEW_POINT */
-   sf.sf6.point_rast_rule = BRW_RASTRULE_UPPER_RIGHT;	/* opengl conventions */
+   key->render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
+   if (!key->render_to_fbo) {
+      /* Rendering to an OpenGL window */
+      sf.sf6.point_rast_rule = BRW_RASTRULE_UPPER_RIGHT;
+   }
+   else {
+      /* If rendering to an FBO, the pixel coordinate system is
+       * inverted with respect to the normal OpenGL coordinate
+       * system, so BRW_RASTRULE_LOWER_RIGHT is correct.
+       * But this value is listed as "Reserved, but not seen as useful"
+       * in Intel documentation (page 212, "Point Rasterization Rule",
+       * section 7.4 "SF Pipeline State Summary", of document
+       * "Intel® 965 Express Chipset Family and Intel® G35 Express
+       * Chipset Graphics Controller Programmer's Reference Manual,
+       * Volume 2: 3D/Media", Revision 1.0b as of January 2008,
+       * available at 
+       *     http://intellinuxgraphics.org/documentation.html
+       * at the time of this writing).
+       *
+       * It does work on at least some devices, if not all;
+       * if devices that don't support it can be identified,
+       * the likely failure case is that points are rasterized
+       * incorrectly, which is no worse than occurs without
+       * the value, so we're using it here.
+       */
+      sf.sf6.point_rast_rule = BRW_RASTRULE_LOWER_RIGHT;
+   }
    /* XXX clamp max depends on AA vs. non-AA */
 
    sf.sf7.sprite_point = key->point_sprite;

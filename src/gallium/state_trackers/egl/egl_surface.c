@@ -330,6 +330,13 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 	if (ret)
 		goto err_crtc;
 
+
+	if (scrn->dpms)
+		drmModeConnectorSetProperty(dev->drmFD,
+		                            scrn->connectorID,
+		                            scrn->dpms->prop_id,
+		                            DRM_MODE_DPMS_ON);
+
 	surf->screen = scrn;
 
 	scrn->surf = surf;
@@ -399,8 +406,6 @@ drm_swap_buffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 			surf->user->pipe->flush(surf->user->pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE, NULL);
 			/* TODO stuff here */
 		}
-
-		st_notify_swapbuffers_complete(surf->stfb);
 	}
 
 	return EGL_TRUE;

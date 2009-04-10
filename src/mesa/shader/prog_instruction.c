@@ -291,7 +291,9 @@ _mesa_is_tex_instruction(gl_inst_opcode opcode)
 const char *
 _mesa_opcode_string(gl_inst_opcode opcode)
 {
-   ASSERT(opcode < MAX_OPCODE);
-   return InstInfo[opcode].Name;
+   if (opcode < MAX_OPCODE)
+      return InstInfo[opcode].Name;
+   else
+      return "OP?";
 }
 

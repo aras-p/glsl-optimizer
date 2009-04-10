@@ -141,7 +141,7 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
 
 	    /* spotlight attenuation */
 	    if (light->_Flags & LIGHT_SPOT) {
-	       GLfloat PV_dot_dir = - DOT3(VP, light->_NormDirection);
+	       GLfloat PV_dot_dir = - DOT3(VP, light->_NormSpotDirection);
 
 	       if (PV_dot_dir<light->_CosCutoff) {
 		  continue; /* this light makes no contribution */
@@ -325,7 +325,7 @@ static void TAG(light_rgba)( GLcontext *ctx,
 
 	    /* spotlight attenuation */
 	    if (light->_Flags & LIGHT_SPOT) {
-	       GLfloat PV_dot_dir = - DOT3(VP, light->_NormDirection);
+	       GLfloat PV_dot_dir = - DOT3(VP, light->_NormSpotDirection);
 
 	       if (PV_dot_dir<light->_CosCutoff) {
 		  continue; /* this light makes no contribution */
@@ -721,7 +721,7 @@ static void TAG(light_ci)( GLcontext *ctx,
 
 	    /* spotlight attenuation */
 	    if (light->_Flags & LIGHT_SPOT) {
-	       GLfloat PV_dot_dir = - DOT3(VP, light->_NormDirection);
+	       GLfloat PV_dot_dir = - DOT3(VP, light->_NormSpotDirection);
 	       if (PV_dot_dir < light->_CosCutoff) {
 		  continue; /* this light makes no contribution */
 	       }

@@ -99,7 +99,7 @@ static void mach64SetTexFilter( mach64TexObjPtr t,
    }
 }
 
-static void mach64SetTexBorderColor( mach64TexObjPtr t, GLubyte c[4] )
+static void mach64SetTexBorderColor( mach64TexObjPtr t, const GLfloat c[4] )
 {
 #if 0
    GLuint border = mach64PackColor( 4, c[0], c[1], c[2], c[3] );
@@ -131,7 +131,7 @@ mach64AllocTexObj( struct gl_texture_object *texObj )
 
    mach64SetTexWrap( t, texObj->WrapS, texObj->WrapT );
    mach64SetTexFilter( t, texObj->MinFilter, texObj->MagFilter );
-   mach64SetTexBorderColor( t, texObj->_BorderChan );
+   mach64SetTexBorderColor( t, texObj->BorderColor );
 
    return t;
 }
@@ -471,7 +471,7 @@ static void mach64DDTexParameter( GLcontext *ctx, GLenum target,
 
    case GL_TEXTURE_BORDER_COLOR:
       if ( t->base.bound ) FLUSH_BATCH( mmesa );
-      mach64SetTexBorderColor( t, tObj->_BorderChan );
+      mach64SetTexBorderColor( t, tObj->BorderColor );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:

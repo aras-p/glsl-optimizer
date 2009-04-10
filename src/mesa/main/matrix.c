@@ -161,7 +161,8 @@ _mesa_MatrixMode( GLenum mode )
       break;
    case GL_TEXTURE:
       if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureCoordUnits) {
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glMatrixMode(texcoord unit)");
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glMatrixMode(invalid unit %d)",
+                     ctx->Texture.CurrentUnit);
          return;
       }
       ctx->CurrentStack = &ctx->TextureMatrixStack[ctx->Texture.CurrentUnit];

@@ -44,10 +44,12 @@ static void Init(void)
    fprintf(stderr, "GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
    fprintf(stderr, "GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
+   fflush(stderr);
    glGetFloatv(GL_LINE_WIDTH_RANGE, aarange);
    glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, range);
    printf("Non-AA line width range: %f .. %f\n", range[0], range[1]);
    printf("AA line width range: %f .. %f\n", aarange[0], aarange[1]);
+   fflush(stdout);
 }
 
 

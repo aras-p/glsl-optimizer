@@ -95,5 +95,8 @@ struct list_head
 #define LIST_ENTRY(__type, __item, __field)   \
     ((__type *)(((char *)(__item)) - offsetof(__type, __field)))
 
+#define LIST_IS_EMPTY(__list)                   \
+    ((__list)->next == (__list))
+
 
 #endif /*_U_DOUBLE_LIST_H_*/

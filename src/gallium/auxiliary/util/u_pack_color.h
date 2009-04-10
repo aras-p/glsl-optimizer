@@ -434,11 +434,41 @@ util_pack_z(enum pipe_format format, double z)
       if (z == 1.0)
          return 0xffffff00;
       return ((uint) (z * 0xffffff)) << 8;
+   case PIPE_FORMAT_S8_UNORM:
+      /* this case can get it via util_pack_z_stencil() */
+      return 0;
    default:
       debug_print_format("gallium: unhandled format in util_pack_z()", format);
       assert(0);
       return 0;
    }
+}
+ 
+
+/**
+ * Pack Z and/or stencil values into a 32-bit value described by format.
+ * Note: it's assumed that z is in [0,1] and s in [0,255]
+ */
+static INLINE uint
+util_pack_z_stencil(enum pipe_format format, double z, uint s)
+{
+   unsigned packed = util_pack_z(format, z);
+
+   switch (format) {
+   case PIPE_FORMAT_S8Z24_UNORM:
+      packed |= s << 24;
+      break;
+   case PIPE_FORMAT_Z24S8_UNORM:
+      packed |= s;
+      break;
+   case PIPE_FORMAT_S8_UNORM:
+      packed |= s;
+      break;
+   default:
+      break;
+   }
+
+   return packed;
 }
 
 

@@ -252,16 +252,6 @@ static PIPE_THREAD_ROUTINE( quad_thread, param )
 
 #endif
 
-/**
- * Test if x is NaN or +/- infinity.
- */
-static INLINE boolean
-is_inf_or_nan(float x)
-{
-   union fi tmp;
-   tmp.f = x;
-   return !(int)((unsigned int)((tmp.i & 0x7fffffff)-0x7f800000) >> 31);
-}
 
 
 /**
@@ -506,6 +496,9 @@ static void print_vertex(const struct setup_context *setup,
    for (i = 0; i < setup->quad.nr_attrs; i++) {
       debug_printf("     %d: %f %f %f %f\n",  i,
               v[i][0], v[i][1], v[i][2], v[i][3]);
+      if (util_is_inf_or_nan(v[i][0])) {
+         debug_printf("   NaN!\n");
+      }
    }
 }
 #endif
@@ -595,7 +588,7 @@ static boolean setup_sort_vertices( struct setup_context *setup,
       debug_printf("%s one-over-area %f  area %f  det %f\n",
                    __FUNCTION__, setup->oneoverarea, area, det );
       */
-      if (is_inf_or_nan(setup->oneoverarea))
+      if (util_is_inf_or_nan(setup->oneoverarea))
          return FALSE;
    }
 
@@ -1065,7 +1058,7 @@ setup_line_coefficients(struct setup_context *setup,
 
    /* NOTE: this is not really area but something proportional to it */
    area = setup->emaj.dx * setup->emaj.dx + setup->emaj.dy * setup->emaj.dy;
-   if (area == 0.0f || is_inf_or_nan(area))
+   if (area == 0.0f || util_is_inf_or_nan(area))
       return FALSE;
    setup->oneoverarea = 1.0f / area;
 
@@ -1487,16 +1480,6 @@ void setup_prepare( struct setup_context *setup )
 
    if (sp->dirty) {
       softpipe_update_derived(sp);
-   }
-
-   /* Mark surfaces as defined now */
-   for (i = 0; i < sp->framebuffer.nr_cbufs; i++){
-      if (sp->framebuffer.cbufs[i]) {
-         sp->framebuffer.cbufs[i]->status = PIPE_SURFACE_STATUS_DEFINED;
-      }
-   }
-   if (sp->framebuffer.zsbuf) {
-      sp->framebuffer.zsbuf->status = PIPE_SURFACE_STATUS_DEFINED;
    }
 
    /* Note: nr_attrs is only used for debugging (vertex printing) */

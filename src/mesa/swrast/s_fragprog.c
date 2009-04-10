@@ -37,20 +37,17 @@
  * and return results in 'colorOut'.
  */
 static INLINE void
-swizzle_texel(const GLchan texel[4], GLfloat colorOut[4], GLuint swizzle)
+swizzle_texel(const GLfloat texel[4], GLfloat colorOut[4], GLuint swizzle)
 {
    if (swizzle == SWIZZLE_NOOP) {
-      colorOut[0] = CHAN_TO_FLOAT(texel[0]);
-      colorOut[1] = CHAN_TO_FLOAT(texel[1]);
-      colorOut[2] = CHAN_TO_FLOAT(texel[2]);
-      colorOut[3] = CHAN_TO_FLOAT(texel[3]);
+      COPY_4V(colorOut, texel);
    }
    else {
       GLfloat vector[6];
-      vector[SWIZZLE_X] = CHAN_TO_FLOAT(texel[0]);
-      vector[SWIZZLE_Y] = CHAN_TO_FLOAT(texel[1]);
-      vector[SWIZZLE_Z] = CHAN_TO_FLOAT(texel[2]);
-      vector[SWIZZLE_W] = CHAN_TO_FLOAT(texel[3]);
+      vector[SWIZZLE_X] = texel[0];
+      vector[SWIZZLE_Y] = texel[1];
+      vector[SWIZZLE_Z] = texel[2];
+      vector[SWIZZLE_W] = texel[3];
       vector[SWIZZLE_ZERO] = 0.0F;
       vector[SWIZZLE_ONE] = 1.0F;
       colorOut[0] = vector[GET_SWZ(swizzle, 0)];
@@ -73,11 +70,10 @@ fetch_texel_lod( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
 
    if (texObj) {
       SWcontext *swrast = SWRAST_CONTEXT(ctx);
-      GLchan rgba[4];
+      GLfloat rgba[4];
 
       lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
 
-      /* XXX use a float-valued TextureSample routine here!!! */
       swrast->TextureSample[unit](ctx, texObj, 1,
                                   (const GLfloat (*)[4]) texcoord,
                                   &lambda, &rgba);
@@ -108,7 +104,7 @@ fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
       const GLfloat texW = (GLfloat) texImg->WidthScale;
       const GLfloat texH = (GLfloat) texImg->HeightScale;
       GLfloat lambda;
-      GLchan rgba[4];
+      GLfloat rgba[4];
 
       lambda = _swrast_compute_lambda(texdx[0], texdy[0], /* ds/dx, ds/dy */
                                       texdx[1], texdy[1], /* dt/dx, dt/dy */
@@ -119,7 +115,6 @@ fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
 
       lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
 
-      /* XXX use a float-valued TextureSample routine here!!! */
       swrast->TextureSample[unit](ctx, texObj, 1,
                                   (const GLfloat (*)[4]) texcoord,
                                   &lambda, &rgba);

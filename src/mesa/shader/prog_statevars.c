@@ -112,7 +112,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
             value[3] = ctx->Light.Light[ln].SpotExponent;
             return;
          case STATE_SPOT_DIRECTION:
-            COPY_3V(value, ctx->Light.Light[ln].EyeDirection);
+            COPY_3V(value, ctx->Light.Light[ln].SpotDirection);
             value[3] = ctx->Light.Light[ln]._CosCutoff;
             return;
          case STATE_SPOT_CUTOFF:
@@ -359,10 +359,10 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          switch (state[1]) {
             case STATE_ENV:
                COPY_4V(value, ctx->FragmentProgram.Parameters[idx]);
-               break;
+               return;
             case STATE_LOCAL:
                COPY_4V(value, ctx->FragmentProgram.Current->Base.LocalParams[idx]);
-               break;
+               return;
             default:
                _mesa_problem(ctx, "Bad state switch in _mesa_fetch_state()");
                return;
@@ -378,10 +378,10 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          switch (state[1]) {
             case STATE_ENV:
                COPY_4V(value, ctx->VertexProgram.Parameters[idx]);
-               break;
+               return;
             case STATE_LOCAL:
                COPY_4V(value, ctx->VertexProgram.Current->Base.LocalParams[idx]);
-               break;
+               return;
             default:
                _mesa_problem(ctx, "Bad state switch in _mesa_fetch_state()");
                return;
@@ -395,11 +395,12 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
 
    case STATE_INTERNAL:
       switch (state[1]) {
-      case STATE_CURRENT_ATTRIB: {
-         const GLuint idx = (GLuint) state[2];
-         COPY_4V(value, ctx->Current.Attrib[idx]);
+      case STATE_CURRENT_ATTRIB:
+         {
+            const GLuint idx = (GLuint) state[2];
+            COPY_4V(value, ctx->Current.Attrib[idx]);
+         }
          return;
-      }						  
 
       case STATE_NORMAL_SCALE:
          ASSIGN_4V(value, 
@@ -408,19 +409,25 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
                    ctx->_ModelViewInvScale, 
                    1);
          return;
+
       case STATE_TEXRECT_SCALE:
+         /* Value = { 1/texWidth, 1/texHeight, 0, 1 }.
+          * Used to convert unnormalized texcoords to normalized texcoords.
+          */
          {
             const int unit = (int) state[2];
             const struct gl_texture_object *texObj
                = ctx->Texture.Unit[unit]._Current;
             if (texObj) {
                struct gl_texture_image *texImage = texObj->Image[0][0];
-               ASSIGN_4V(value, (GLfloat) (1.0 / texImage->Width),
-                         (GLfloat)(1.0 / texImage->Height),
+               ASSIGN_4V(value,
+                         (GLfloat) (1.0 / texImage->Width),
+                         (GLfloat) (1.0 / texImage->Height),
                          0.0f, 1.0f);
             }
          }
          return;
+
       case STATE_FOG_PARAMS_OPTIMIZED:
          /* for simpler per-vertex/pixel fog calcs. POW (for EXP/EXP2 fog)
           * might be more expensive than EX2 on some hw, plus it needs
@@ -437,62 +444,69 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          value[3] = (GLfloat)(ctx->Fog.Density * ONE_DIV_SQRT_LN2);
          return;
 
-      case STATE_LIGHT_SPOT_DIR_NORMALIZED: {
-         /* here, state[2] is the light number */
-         /* pre-normalize spot dir */
-         const GLuint ln = (GLuint) state[2];
-         COPY_3V(value, ctx->Light.Light[ln]._NormDirection);
-         value[3] = ctx->Light.Light[ln]._CosCutoff;
+      case STATE_LIGHT_SPOT_DIR_NORMALIZED:
+         {
+            /* here, state[2] is the light number */
+            /* pre-normalize spot dir */
+            const GLuint ln = (GLuint) state[2];
+            COPY_3V(value, ctx->Light.Light[ln]._NormSpotDirection);
+            value[3] = ctx->Light.Light[ln]._CosCutoff;
+         }
          return;
-      }
 
-      case STATE_LIGHT_POSITION: {
-         const GLuint ln = (GLuint) state[2];
-         COPY_4V(value, ctx->Light.Light[ln]._Position);
+      case STATE_LIGHT_POSITION:
+         {
+            const GLuint ln = (GLuint) state[2];
+            COPY_4V(value, ctx->Light.Light[ln]._Position);
+         }
          return;
-      }
 
-      case STATE_LIGHT_POSITION_NORMALIZED: {
-         const GLuint ln = (GLuint) state[2];
-         COPY_4V(value, ctx->Light.Light[ln]._Position);
-         NORMALIZE_3FV( value );
+      case STATE_LIGHT_POSITION_NORMALIZED:
+         {
+            const GLuint ln = (GLuint) state[2];
+            COPY_4V(value, ctx->Light.Light[ln]._Position);
+            NORMALIZE_3FV( value );
+         }
          return;
-      }
 
-      case STATE_LIGHT_HALF_VECTOR: {
-         const GLuint ln = (GLuint) state[2];
-         GLfloat p[3];
-         /* Compute infinite half angle vector:
-          *   halfVector = normalize(normalize(lightPos) + (0, 0, 1))
-          * light.EyePosition.w should be 0 for infinite lights.
-          */
-         COPY_3V(p, ctx->Light.Light[ln]._Position);
-         NORMALIZE_3FV(p);
-         ADD_3V(value, p, ctx->_EyeZDir);
-         NORMALIZE_3FV(value);
-         value[3] = 1.0;
+      case STATE_LIGHT_HALF_VECTOR:
+         {
+            const GLuint ln = (GLuint) state[2];
+            GLfloat p[3];
+            /* Compute infinite half angle vector:
+             *   halfVector = normalize(normalize(lightPos) + (0, 0, 1))
+             * light.EyePosition.w should be 0 for infinite lights.
+             */
+            COPY_3V(p, ctx->Light.Light[ln]._Position);
+            NORMALIZE_3FV(p);
+            ADD_3V(value, p, ctx->_EyeZDir);
+            NORMALIZE_3FV(value);
+            value[3] = 1.0;
+         }
          return;
-      }						  
-
 
       case STATE_PT_SCALE:
          value[0] = ctx->Pixel.RedScale;
          value[1] = ctx->Pixel.GreenScale;
          value[2] = ctx->Pixel.BlueScale;
          value[3] = ctx->Pixel.AlphaScale;
-         break;
+         return;
+
       case STATE_PT_BIAS:
          value[0] = ctx->Pixel.RedBias;
          value[1] = ctx->Pixel.GreenBias;
          value[2] = ctx->Pixel.BlueBias;
          value[3] = ctx->Pixel.AlphaBias;
-         break;
+         return;
+
       case STATE_PCM_SCALE:
          COPY_4V(value, ctx->Pixel.PostColorMatrixScale);
-         break;
+         return;
+
       case STATE_PCM_BIAS:
          COPY_4V(value, ctx->Pixel.PostColorMatrixBias);
-         break;
+         return;
+
       case STATE_SHADOW_AMBIENT:
          {
             const int unit = (int) state[2];
@@ -506,6 +520,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
             }
          }
          return;
+
       case STATE_FB_SIZE:
          value[0] = (GLfloat) (ctx->DrawBuffer->Width - 1);
          value[1] = (GLfloat) (ctx->DrawBuffer->Height - 1);
@@ -522,7 +537,8 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
             value[2] = 0.0;
             value[3] = 0.0;
          }
-         break;
+         return;
+
       case STATE_ROT_MATRIX_1:
          {
             const int unit = (int) state[2];
@@ -532,14 +548,14 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
             value[2] = 0.0;
             value[3] = 0.0;
          }
-         break;
+         return;
 
-         /* XXX: make sure new tokens added here are also handled in the 
-          * _mesa_program_state_flags() switch, below.
-          */
+      /* XXX: make sure new tokens added here are also handled in the 
+       * _mesa_program_state_flags() switch, below.
+       */
       default:
-         /* unknown state indexes are silently ignored
-          *  should be handled by the driver.
+         /* Unknown state indexes are silently ignored here.
+          * Drivers may do something special.
           */
          return;
       }
@@ -760,28 +776,28 @@ append_token(char *dst, gl_state_index k)
       append(dst, ".spot.cutoff");
       break;
    case STATE_TEXGEN_EYE_S:
-      append(dst, "eye.s");
+      append(dst, ".eye.s");
       break;
    case STATE_TEXGEN_EYE_T:
-      append(dst, "eye.t");
+      append(dst, ".eye.t");
       break;
    case STATE_TEXGEN_EYE_R:
-      append(dst, "eye.r");
+      append(dst, ".eye.r");
       break;
    case STATE_TEXGEN_EYE_Q:
-      append(dst, "eye.q");
+      append(dst, ".eye.q");
       break;
    case STATE_TEXGEN_OBJECT_S:
-      append(dst, "object.s");
+      append(dst, ".object.s");
       break;
    case STATE_TEXGEN_OBJECT_T:
-      append(dst, "object.t");
+      append(dst, ".object.t");
       break;
    case STATE_TEXGEN_OBJECT_R:
-      append(dst, "object.r");
+      append(dst, ".object.r");
       break;
    case STATE_TEXGEN_OBJECT_Q:
-      append(dst, "object.q");
+      append(dst, ".object.q");
       break;
    case STATE_TEXENV_COLOR:
       append(dst, "texenv");

@@ -1,29 +1,7 @@
 Import('*')
 
+SConscript(['core/SConscript',])
+
 if 'mesa' in env['statetrackers']:
 
-	env = drienv.Clone()
-
-	DRIVER_SOURCES = [
-		'radeon_buffer.c',
-		'radeon_context.c',
-		'radeon_screen.c',
-		'radeon_winsys_softpipe.c',
-	]
-
-	sources = \
-		COMMON_GALLIUM_SOURCES + \
-		DRIVER_SOURCES
-
-	drivers = [
-		softpipe,
-		r300
-	]
-
-	# TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
-	env.SharedLibrary(
-		target ='radeon_dri.so',
-		source = sources,
-		LIBS = drivers + mesa + auxiliaries + env['LIBS'],
-	)
-
+    SConscript(['dri2/SConscript'])

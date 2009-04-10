@@ -101,7 +101,8 @@ class Pointer(Node):
 
 class Call:
     
-    def __init__(self, klass, method, args, ret):
+    def __init__(self, no, klass, method, args, ret):
+        self.no = no
         self.klass = klass
         self.method = method
         self.args = args
@@ -187,6 +188,7 @@ class PrettyPrinter:
         self.formatter.address(node.address)
     
     def visit_call(self, node):
+        self.formatter.text('%s ' % node.no)
         if node.klass is not None:
             self.formatter.function(node.klass + '::' + node.method)
         else:

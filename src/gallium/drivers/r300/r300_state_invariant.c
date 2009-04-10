@@ -86,7 +86,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(91 + (caps->has_tcl ? 26 : 0));
+    BEGIN_CS(79 + (caps->has_tcl ? 7 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -141,28 +141,11 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_REG(R300_ZB_DEPTHCLEARVALUE, 0x00000000);
     OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0x00000000);
     OUT_CS_REG(R300_ZB_HIZ_PITCH, 0x00000000);
-    if (caps->has_tcl) {
-        OUT_CS_REG(R300_VAP_PROG_STREAM_CNTL_0,
-            (R300_DATA_TYPE_FLOAT_4 << R300_DATA_TYPE_0_SHIFT) |
-            ((R300_LAST_VEC | (1 << R300_DST_VEC_LOC_SHIFT) |
-                R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_1_SHIFT));
-    } else {
-        OUT_CS_REG(R300_VAP_PROG_STREAM_CNTL_0,
-            (R300_DATA_TYPE_FLOAT_4 << R300_DATA_TYPE_0_SHIFT) |
-            ((R300_LAST_VEC | (2 << R300_DST_VEC_LOC_SHIFT) |
-                R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_1_SHIFT));
-    }
-    OUT_CS_REG(R300_VAP_PROG_STREAM_CNTL_EXT_0,
-            (R300_VAP_SWIZZLE_XYZW << R300_SWIZZLE0_SHIFT) |
-            (R300_VAP_SWIZZLE_XYZW << R300_SWIZZLE1_SHIFT));
     OUT_CS_REG(R300_VAP_VTX_STATE_CNTL, 0x1);
     OUT_CS_REG(R300_VAP_VSM_VTX_ASSM, 0x405);
     OUT_CS_REG(R300_SE_VTE_CNTL, 0x0000043F);
     /* Vertex size. */
     OUT_CS_REG(R300_VAP_VTX_SIZE, 0x8);
-    OUT_CS_REG(R300_VAP_OUTPUT_VTX_FMT_0, 0x00000003);
-    OUT_CS_REG(R300_VAP_OUTPUT_VTX_FMT_1, 0x00000000);
-    OUT_CS_REG(R300_TX_ENABLE, 0x0);
 
     /* XXX */
     OUT_CS_REG(R300_SC_CLIP_RULE, 0xaaaa);
@@ -173,33 +156,5 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS(R300_US_OUT_FMT_UNUSED);
     OUT_CS(R300_US_OUT_FMT_UNUSED);
     OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W0);
-    /* XXX these magic numbers should be explained when
-     * this becomes a cached state object */
-    if (caps->has_tcl) {
-        OUT_CS_REG(R300_VAP_CNTL, 0xA |
-            (0x5 << R300_PVS_NUM_CNTLRS_SHIFT) |
-            (0xB << R300_VF_MAX_VTX_NUM_SHIFT) |
-            (caps->num_vert_fpus << R300_PVS_NUM_FPUS_SHIFT));
-        OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_0, 0x00100000);
-        OUT_CS_REG(R300_VAP_PVS_CONST_CNTL, 0x00000000);
-        OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_1, 0x00000001);
-        /* XXX translate these back into normal instructions */
-        OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x1);
-        OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG, 0x0);
-        OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, 8);
-        OUT_CS(0x00F00203);
-        OUT_CS(0x00D10001);
-        OUT_CS(0x01248001);
-        OUT_CS(0x00000000);
-        OUT_CS(0x00F02203);
-        OUT_CS(0x00D10021);
-        OUT_CS(0x01248021);
-        OUT_CS(0x00000000);
-    } else {
-        OUT_CS_REG(R300_VAP_CNTL, 0xA |
-            (0x5 << R300_PVS_NUM_CNTLRS_SHIFT) |
-            (0x5 << R300_VF_MAX_VTX_NUM_SHIFT) |
-            (caps->num_vert_fpus << R300_PVS_NUM_FPUS_SHIFT));
-    }
     END_CS;
 }

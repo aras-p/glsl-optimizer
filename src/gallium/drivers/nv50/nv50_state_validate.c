@@ -178,16 +178,9 @@ nv50_state_emit(struct nv50_context *nv50)
 boolean
 nv50_state_validate(struct nv50_context *nv50)
 {
-	const struct pipe_framebuffer_state *fb = &nv50->framebuffer;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nouveau_stateobj *so;
 	unsigned i;
-
-	for (i = 0; i < fb->nr_cbufs; i++)
-		fb->cbufs[i]->status = PIPE_SURFACE_STATUS_DEFINED;
-
-	if (fb->zsbuf)
-		fb->zsbuf->status = PIPE_SURFACE_STATUS_DEFINED;
 
 	if (nv50->dirty & NV50_NEW_FRAMEBUFFER)
 		nv50_state_validate_fb(nv50);
@@ -251,7 +244,7 @@ nv50_state_validate(struct nv50_context *nv50)
 	}
 scissor_uptodate:
 
-	if (nv50->dirty & NV50_NEW_VIEWPORT) {
+	if (nv50->dirty & (NV50_NEW_VIEWPORT | NV50_NEW_RASTERIZER)) {
 		unsigned bypass;
 
 		if (!nv50->rasterizer->pipe.bypass_vs_clip_and_viewport)
@@ -288,6 +281,7 @@ scissor_uptodate:
 
 		so_ref(so, &nv50->state.viewport);
 		so_ref(NULL, &so);
+		nv50->state.dirty |= NV50_NEW_VIEWPORT;
 	}
 viewport_uptodate:
 

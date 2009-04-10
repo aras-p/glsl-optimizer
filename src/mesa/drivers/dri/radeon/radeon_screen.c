@@ -287,8 +287,6 @@ radeonFillInModes( __DRIscreenPrivate *psp,
     __GLcontextModes *m;
     unsigned depth_buffer_factor;
     unsigned back_buffer_factor;
-    GLenum fb_format;
-    GLenum fb_type;
     int i;
 
     /* Right now GLX_SWAP_COPY_OML isn't supported, but it would be easy
@@ -319,20 +317,27 @@ radeonFillInModes( __DRIscreenPrivate *psp,
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
 
-    if ( pixel_bits == 16 ) {
-        fb_format = GL_RGB;
-        fb_type = GL_UNSIGNED_SHORT_5_6_5;
-    }
-    else {
-        fb_format = GL_BGRA;
-        fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
-    }
+    if (pixel_bits == 16) {
+	__DRIconfig **configs_a8r8g8b8;
+	__DRIconfig **configs_r5g6b5;
 
-    configs = driCreateConfigs(fb_format, fb_type,
-			       depth_bits_array, stencil_bits_array,
-			       depth_buffer_factor,
-			       back_buffer_modes, back_buffer_factor,
-			       msaa_samples_array, 1);
+	configs_r5g6b5 = driCreateConfigs(GL_RGB, GL_UNSIGNED_SHORT_5_6_5,
+					  depth_bits_array, stencil_bits_array,
+					  depth_buffer_factor, back_buffer_modes,
+					  back_buffer_factor, msaa_samples_array,
+					  1);
+	configs_a8r8g8b8 = driCreateConfigs(GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+					    depth_bits_array, stencil_bits_array,
+					    1, back_buffer_modes, 1,
+					    msaa_samples_array, 1);
+	configs = driConcatConfigs(configs_r5g6b5, configs_a8r8g8b8);
+   } else
+	configs = driCreateConfigs(GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+				   depth_bits_array, stencil_bits_array,
+				   depth_buffer_factor,
+				   back_buffer_modes, back_buffer_factor,
+				   msaa_samples_array, 1);
+
     if (configs == NULL) {
 	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
 		 __func__, __LINE__ );

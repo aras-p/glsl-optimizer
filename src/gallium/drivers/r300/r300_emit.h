@@ -64,8 +64,13 @@ void r300_emit_texture(struct r300_context* r300,
 
 void r300_emit_vertex_format_state(struct r300_context* r300);
 
+void r300_emit_vertex_shader(struct r300_context* r300,
+                             struct r300_vertex_shader* vs);
+
 void r300_emit_viewport_state(struct r300_context* r300,
                               struct r300_viewport_state* viewport);
+
+void r300_flush_textures(struct r300_context* r300);
 
 /* Emit all dirty state. */
 void r300_emit_dirty_state(struct r300_context* r300);

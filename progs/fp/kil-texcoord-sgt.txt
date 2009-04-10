@@ -1,0 +1,8 @@
+!!ARBfp1.0
+TEMP R0;
+MUL R0.xy, fragment.texcoord[0], fragment.texcoord[0];
+ADD R0.x, R0.x, R0.y;
+SGE R0.y, R0.x, fragment.texcoord[0].w;
+KIL -R0.y;
+MOV result.color, fragment.color;
+END

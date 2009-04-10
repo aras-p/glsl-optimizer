@@ -112,7 +112,7 @@ _pb_cache_buffer_destroy(struct pb_cache_buffer *buf)
    LIST_DEL(&buf->head);
    assert(mgr->numDelayed);
    --mgr->numDelayed;
-   assert(p_atomic_read(&buf->base.base.reference.count) == 0);
+   assert(!pipe_is_referenced(&buf->base.base.reference));
    pb_reference(&buf->buffer, NULL);
    FREE(buf);
 }
@@ -153,7 +153,7 @@ pb_cache_buffer_destroy(struct pb_buffer *_buf)
    struct pb_cache_manager *mgr = buf->mgr;
 
    pipe_mutex_lock(mgr->mutex);
-   assert(p_atomic_read(&buf->base.base.reference.count) == 0);
+   assert(!pipe_is_referenced(&buf->base.base.reference));
    
    _pb_cache_buffer_list_check_free(mgr);
    
@@ -310,7 +310,7 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
       return NULL;
    }
    
-   assert(p_atomic_read(&buf->buffer->base.reference.count) >= 1);
+   assert(pipe_is_referenced(&buf->buffer->base.reference));
    assert(pb_check_alignment(desc->alignment, buf->buffer->base.alignment));
    assert(pb_check_usage(desc->usage, buf->buffer->base.usage));
    assert(buf->buffer->base.size >= size);

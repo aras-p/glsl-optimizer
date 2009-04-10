@@ -268,6 +268,7 @@ void brw_wm_pass1( struct brw_wm_compile *c )
 	 break;
 
       case OPCODE_DST:
+      case WM_FRONTFACING:
       default:
 	 break;
       }

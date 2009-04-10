@@ -71,9 +71,6 @@
 /** \def COPY_CHAN4
  * Copy a GLchan[4] array */
 
-/** \def CHAN_PRODUCT
- * Scaled product (usually approximated) between two GLchan arguments */
-
 #if CHAN_BITS == 8
 
 #define BYTE_TO_CHAN(b)   ((b) < 0 ? 0 : (GLchan) (b))
@@ -90,8 +87,6 @@
 #define UNCLAMPED_FLOAT_TO_CHAN(c, f)  UNCLAMPED_FLOAT_TO_UBYTE(c, f)
 
 #define COPY_CHAN4(DST, SRC)  COPY_4UBV(DST, SRC)
-
-#define CHAN_PRODUCT(a, b)  ((GLubyte) (((GLint)(a) * ((GLint)(b) + 1)) >> 8))
 
 #elif CHAN_BITS == 16
 
@@ -110,8 +105,6 @@
 
 #define COPY_CHAN4(DST, SRC)  COPY_4V(DST, SRC)
 
-#define CHAN_PRODUCT(a, b) ((GLchan) ((((GLuint) (a)) * ((GLuint) (b))) / 65535))
-
 #elif CHAN_BITS == 32
 
 /* XXX floating-point color channels not fully thought-out */
@@ -129,8 +122,6 @@
 #define UNCLAMPED_FLOAT_TO_CHAN(c, f)      c = (f)
 
 #define COPY_CHAN4(DST, SRC)  COPY_4V(DST, SRC)
-
-#define CHAN_PRODUCT(a, b)    ((a) * (b))
 
 #else
 

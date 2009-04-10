@@ -210,11 +210,17 @@ static void Display(void)
    glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, 1.0, 1.0, 0.0, 0.0);
    glProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1, 0.0, 0.0, 1.0, 1.0);
    glBegin(GL_TRIANGLES);
+
    glColor3f(0,0,1);
+   glTexCoord3f(1,1,0);
    glVertex3f( 0.9, -0.9, -30.0);
+
    glColor3f(1,0,0);
+   glTexCoord3f(1,-1,0);
    glVertex3f( 0.9,  0.9, -30.0);
+
    glColor3f(0,1,0);
+   glTexCoord3f(-1,0,0);
    glVertex3f(-0.9,  0.0, -30.0);
    glEnd();
 

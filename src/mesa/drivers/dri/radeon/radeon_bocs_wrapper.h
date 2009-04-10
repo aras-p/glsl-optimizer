@@ -5,6 +5,17 @@
 #define RADEON_PARAM_DEVICE_ID 16
 #endif
 
+#ifndef RADEON_INFO_DEVICE_ID
+#define RADEON_INFO_DEVICE_ID 0
+#endif
+#ifndef RADEON_INFO_NUM_GB_PIPES
+#define RADEON_INFO_NUM_GB_PIPES 0
+#endif
+
+#ifndef DRM_RADEON_INFO
+#define DRM_RADEON_INFO 0x1
+#endif
+
 #ifdef HAVE_LIBDRM_RADEON
 
 #include "radeon_bo.h"
@@ -27,11 +38,15 @@
 #define DRM_RADEON_GEM_INFO 0x1c
 
 struct drm_radeon_gem_info {
-        uint64_t gart_start;
         uint64_t gart_size;
-        uint64_t vram_start;
         uint64_t vram_size;
         uint64_t vram_visible;
+};
+
+struct drm_radeon_info {
+	uint32_t request;
+	uint32_t pad;
+	uint32_t value;
 };
 #endif
 

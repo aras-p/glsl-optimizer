@@ -108,7 +108,7 @@ pool_buffer_destroy(struct pb_buffer *buf)
    struct pool_buffer *pool_buf = pool_buffer(buf);
    struct pool_pb_manager *pool = pool_buf->mgr;
    
-   assert(p_atomic_read(&pool_buf->base.base.reference.count) == 0);
+   assert(!pipe_is_referenced(&pool_buf->base.base.reference));
 
    pipe_mutex_lock(pool->mutex);
    LIST_ADD(&pool_buf->head, &pool->free);
@@ -216,7 +216,7 @@ pool_bufmgr_create_buffer(struct pb_manager *mgr,
    pipe_mutex_unlock(pool->mutex);
    
    pool_buf = LIST_ENTRY(struct pool_buffer, item, head);
-   assert(p_atomic_read(&pool_buf->base.base.reference.count) == 0);
+   assert(!pipe_is_referenced(&pool_buf->base.base.reference));
    pipe_reference_init(&pool_buf->base.base.reference, 1);
    pool_buf->base.base.alignment = desc->alignment;
    pool_buf->base.base.usage = desc->usage;

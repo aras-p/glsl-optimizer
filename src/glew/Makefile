@@ -6,7 +6,7 @@ include $(TOP)/configs/current
 
 ##### MACROS #####
 
-GLEW_LIB_NAME = libglew.a
+GLEW_LIB_NAME = libGLEW.a
 
 MAJOR = 1
 MINOR = 5

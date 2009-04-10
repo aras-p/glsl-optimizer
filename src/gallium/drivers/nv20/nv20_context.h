@@ -118,8 +118,8 @@ extern void nv20_init_surface_functions(struct nv20_context *nv20);
 extern void nv20_screen_init_miptree_functions(struct pipe_screen *pscreen);
 
 /* nv20_clear.c */
-extern void nv20_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-		       unsigned clearValue);
+extern void nv20_clear(struct pipe_context *pipe, unsigned buffers,
+		       const float *rgba, double depth, unsigned stencil);
 
 /* nv20_draw.c */
 extern struct draw_stage *nv20_draw_render_stage(struct nv20_context *nv20);

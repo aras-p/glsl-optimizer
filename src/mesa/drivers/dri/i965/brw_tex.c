@@ -32,21 +32,12 @@
 
 #include "main/glheader.h"
 #include "main/mtypes.h"
-#include "main/imports.h"
-#include "main/simple_list.h"
-#include "main/enums.h"
-#include "main/image.h"
 #include "main/teximage.h"
-#include "main/texstore.h"
-#include "main/texformat.h"
-
-#include "texmem.h"
 
 #include "intel_context.h"
 #include "intel_regions.h"
 #include "intel_tex.h"
 #include "brw_context.h"
-#include "brw_defines.h"
 
 
 void brw_FrameBufferTexInit( struct brw_context *brw,

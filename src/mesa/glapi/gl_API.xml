@@ -5039,7 +5039,7 @@
 
     <type name="char"   size="1" glx_name="CARD8"/>
 
-    <enum name="GL_BLEND_EQUATION_RGB"            value="0x8009"/>
+    <enum name="BLEND_EQUATION_RGB"            value="0x8009"/>
     <enum name="VERTEX_ATTRIB_ARRAY_ENABLED"      value="0x8622"/>
     <enum name="VERTEX_ATTRIB_ARRAY_SIZE"         value="0x8623"/>
     <enum name="VERTEX_ATTRIB_ARRAY_STRIDE"       value="0x8624"/>
@@ -5684,29 +5684,29 @@
     <!-- XXX some of the enums and functions probably need additional -->
     <!-- flags/attributes. -->
 
-    <enum name="GL_CURRENT_RASTER_SECONDARY_COLOR" value="0x845F"/>
-    <enum name="GL_PIXEL_PACK_BUFFER"              value="0x88EB"/>
-    <enum name="GL_PIXEL_UNPACK_BUFFER"            value="0x88EC"/>
-    <enum name="GL_PIXEL_PACK_BUFFER_BINDING"      value="0x88ED"/>
-    <enum name="GL_PIXEL_UNPACK_BUFFER_BINDING"    value="0x88EF"/>
-    <enum name="GL_FLOAT_MAT2x3"                   value="0x8B65"/>
-    <enum name="GL_FLOAT_MAT2x4"                   value="0x8B66"/>
-    <enum name="GL_FLOAT_MAT3x2"                   value="0x8B67"/>
-    <enum name="GL_FLOAT_MAT3x4"                   value="0x8B68"/>
-    <enum name="GL_FLOAT_MAT4x2"                   value="0x8B69"/>
-    <enum name="GL_FLOAT_MAT4x3"                   value="0x8B6A"/>
-    <enum name="GL_SRGB"                           value="0x8C40"/>
-    <enum name="GL_SRGB8"                          value="0x8C41"/>
-    <enum name="GL_SRGB_ALPHA"                     value="0x8C42"/>
-    <enum name="GL_SRGB8_ALPHA8"                   value="0x8C43"/>
-    <enum name="GL_SLUMINANCE_ALPHA"               value="0x8C44"/>
-    <enum name="GL_SLUMINANCE8_ALPHA8"             value="0x8C45"/>
-    <enum name="GL_SLUMINANCE"                     value="0x8C46"/>
-    <enum name="GL_SLUMINANCE8"                    value="0x8C47"/>
-    <enum name="GL_COMPRESSED_SRGB"                value="0x8C48"/>
-    <enum name="GL_COMPRESSED_SRGB_ALPHA"          value="0x8C49"/>
-    <enum name="GL_COMPRESSED_SLUMINANCE"          value="0x8C4A"/>
-    <enum name="GL_COMPRESSED_SLUMINANCE_ALPHA"    value="0x8C4B"/>
+    <enum name="CURRENT_RASTER_SECONDARY_COLOR" value="0x845F"/>
+    <enum name="PIXEL_PACK_BUFFER"              value="0x88EB"/>
+    <enum name="PIXEL_UNPACK_BUFFER"            value="0x88EC"/>
+    <enum name="PIXEL_PACK_BUFFER_BINDING"      value="0x88ED"/>
+    <enum name="PIXEL_UNPACK_BUFFER_BINDING"    value="0x88EF"/>
+    <enum name="FLOAT_MAT2x3"                   value="0x8B65"/>
+    <enum name="FLOAT_MAT2x4"                   value="0x8B66"/>
+    <enum name="FLOAT_MAT3x2"                   value="0x8B67"/>
+    <enum name="FLOAT_MAT3x4"                   value="0x8B68"/>
+    <enum name="FLOAT_MAT4x2"                   value="0x8B69"/>
+    <enum name="FLOAT_MAT4x3"                   value="0x8B6A"/>
+    <enum name="SRGB"                           value="0x8C40"/>
+    <enum name="SRGB8"                          value="0x8C41"/>
+    <enum name="SRGB_ALPHA"                     value="0x8C42"/>
+    <enum name="SRGB8_ALPHA8"                   value="0x8C43"/>
+    <enum name="SLUMINANCE_ALPHA"               value="0x8C44"/>
+    <enum name="SLUMINANCE8_ALPHA8"             value="0x8C45"/>
+    <enum name="SLUMINANCE"                     value="0x8C46"/>
+    <enum name="SLUMINANCE8"                    value="0x8C47"/>
+    <enum name="COMPRESSED_SRGB"                value="0x8C48"/>
+    <enum name="COMPRESSED_SRGB_ALPHA"          value="0x8C49"/>
+    <enum name="COMPRESSED_SLUMINANCE"          value="0x8C4A"/>
+    <enum name="COMPRESSED_SLUMINANCE_ALPHA"    value="0x8C4B"/>
 
     <function name="UniformMatrix2x3fv" offset="assign">
         <param name="location" type="GLint"/>
@@ -12324,6 +12324,12 @@
         <param name="sfactorAlpha" type="GLenum"/>
         <param name="dfactorAlpha" type="GLenum"/>
     </function>
+</category>
+
+<category name="GL_MESA_texture_signed_rgba">
+    <enum name="SIGNED_NORMALIZED"                        value="0x8F9C"/>
+    <enum name="RGBA_SNORM"                               value="0x8F93"/>
+    <enum name="RGBA8_SNORM"                              value="0x8F97"/>
 </category>
 
 <category name="GL_MESA_shader_debug">

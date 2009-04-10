@@ -87,18 +87,17 @@ struct vertex_info
    } attrib[PIPE_MAX_SHADER_INPUTS];
 };
 
-static INLINE int
+static INLINE size_t
 draw_vinfo_size( const struct vertex_info *a )
 {
-   return ((const char *)&a->attrib[a->num_attribs] -
-           (const char *)a);
+   return offsetof(const struct vertex_info, attrib[a->num_attribs]);
 }
 
 static INLINE int
 draw_vinfo_compare( const struct vertex_info *a,
                     const struct vertex_info *b )
 {
-   unsigned sizea = draw_vinfo_size( a );
+   size_t sizea = draw_vinfo_size( a );
    return memcmp( a, b, sizea );
 }
 
@@ -106,7 +105,7 @@ static INLINE void
 draw_vinfo_copy( struct vertex_info *dst,
                  const struct vertex_info *src )
 {
-   unsigned size = draw_vinfo_size( src );
+   size_t size = draw_vinfo_size( src );
    memcpy( dst, src, size );
 }
 

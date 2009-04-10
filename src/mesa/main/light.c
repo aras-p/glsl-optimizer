@@ -110,10 +110,10 @@ _mesa_light(GLcontext *ctx, GLuint lnum, GLenum pname, const GLfloat *params)
       break;
    case GL_SPOT_DIRECTION:
       /* NOTE: Direction already transformed by inverse ModelView! */
-      if (TEST_EQ_3V(light->EyeDirection, params))
+      if (TEST_EQ_3V(light->SpotDirection, params))
 	 return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
-      COPY_3V(light->EyeDirection, params);
+      COPY_3V(light->SpotDirection, params);
       break;
    case GL_SPOT_EXPONENT:
       ASSERT(params[0] >= 0.0);
@@ -209,7 +209,6 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 	 _math_matrix_analyse(ctx->ModelviewMatrixStack.Top);
       }
       TRANSFORM_DIRECTION(temp, params, ctx->ModelviewMatrixStack.Top->m);
-      NORMALIZE_3FV(temp);
       params = temp;
       break;
    case GL_SPOT_EXPONENT:
@@ -326,7 +325,7 @@ _mesa_GetLightfv( GLenum light, GLenum pname, GLfloat *params )
          COPY_4V( params, ctx->Light.Light[l].EyePosition );
          break;
       case GL_SPOT_DIRECTION:
-         COPY_3V( params, ctx->Light.Light[l].EyeDirection );
+         COPY_3V( params, ctx->Light.Light[l].SpotDirection );
          break;
       case GL_SPOT_EXPONENT:
          params[0] = ctx->Light.Light[l].SpotExponent;
@@ -388,9 +387,9 @@ _mesa_GetLightiv( GLenum light, GLenum pname, GLint *params )
          params[3] = (GLint) ctx->Light.Light[l].EyePosition[3];
          break;
       case GL_SPOT_DIRECTION:
-         params[0] = (GLint) ctx->Light.Light[l].EyeDirection[0];
-         params[1] = (GLint) ctx->Light.Light[l].EyeDirection[1];
-         params[2] = (GLint) ctx->Light.Light[l].EyeDirection[2];
+         params[0] = (GLint) ctx->Light.Light[l].SpotDirection[0];
+         params[1] = (GLint) ctx->Light.Light[l].SpotDirection[1];
+         params[2] = (GLint) ctx->Light.Light[l].SpotDirection[2];
          break;
       case GL_SPOT_EXPONENT:
          params[0] = (GLint) ctx->Light.Light[l].SpotExponent;
@@ -1137,20 +1136,26 @@ compute_light_positions( GLcontext *ctx )
       }
 
       if (light->_Flags & LIGHT_SPOT) {
+         /* Note: we normalize the spot direction now */
+
 	 if (ctx->_NeedEyeCoords) {
-	    COPY_3V( light->_NormDirection, light->EyeDirection );
+	    COPY_3V( light->_NormSpotDirection, light->SpotDirection );
+            NORMALIZE_3FV( light->_NormSpotDirection );
 	 }
          else {
-	    TRANSFORM_NORMAL( light->_NormDirection,
-			      light->EyeDirection,
+            GLfloat spotDir[3];
+            COPY_3V(spotDir, light->SpotDirection);
+            NORMALIZE_3FV(spotDir);
+	    TRANSFORM_NORMAL( light->_NormSpotDirection,
+			      spotDir,
 			      ctx->ModelviewMatrixStack.Top->m);
 	 }
 
-	 NORMALIZE_3FV( light->_NormDirection );
+	 NORMALIZE_3FV( light->_NormSpotDirection );
 
 	 if (!(light->_Flags & LIGHT_POSITIONAL)) {
 	    GLfloat PV_dot_dir = - DOT3(light->_VP_inf_norm,
-					light->_NormDirection);
+					light->_NormSpotDirection);
 
 	    if (PV_dot_dir > light->_CosCutoff) {
 	       double x = PV_dot_dir * (EXP_TABLE_SIZE-1);
@@ -1274,7 +1279,7 @@ init_light( struct gl_light *l, GLuint n )
       ASSIGN_4V( l->Specular, 0.0, 0.0, 0.0, 1.0 );
    }
    ASSIGN_4V( l->EyePosition, 0.0, 0.0, 1.0, 0.0 );
-   ASSIGN_3V( l->EyeDirection, 0.0, 0.0, -1.0 );
+   ASSIGN_3V( l->SpotDirection, 0.0, 0.0, -1.0 );
    l->SpotExponent = 0.0;
    _mesa_invalidate_spot_exp_table( l );
    l->SpotCutoff = 180.0;

@@ -159,9 +159,11 @@ delete_program_cb(GLuint id, void *data, void *userData)
 {
    struct gl_program *prog = (struct gl_program *) data;
    GLcontext *ctx = (GLcontext *) userData;
-   ASSERT(prog->RefCount == 1); /* should only be referenced by hash table */
-   prog->RefCount = 0;  /* now going away */
-   ctx->Driver.DeleteProgram(ctx, prog);
+   if(prog != &_mesa_DummyProgram) {
+      ASSERT(prog->RefCount == 1); /* should only be referenced by hash table */
+      prog->RefCount = 0;  /* now going away */
+      ctx->Driver.DeleteProgram(ctx, prog);
+   }
 }
 
 

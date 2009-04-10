@@ -98,11 +98,11 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       ASSERT(src->cpp == dst->cpp);
 
       if (cpp == 2) {
-	 BR13 = (0xCC << 16) | (1 << 24);
+	 BR13 = (0xCC << 16) | BR13_565;
 	 CMD = XY_SRC_COPY_BLT_CMD;
       }
       else {
-	 BR13 = (0xCC << 16) | (1 << 24) | (1 << 25);
+	 BR13 = (0xCC << 16) | BR13_8888;
 	 CMD = XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       }
 
@@ -194,13 +194,15 @@ intelEmitFillBlit(struct intel_context *intel,
 
    switch (cpp) {
    case 1:
+      BR13 = (0xF0 << 16);
+      CMD = XY_COLOR_BLT_CMD;
+      break;
    case 2:
-   case 3:
-      BR13 = (0xF0 << 16) | (1 << 24);
+      BR13 = (0xF0 << 16) | BR13_565;
       CMD = XY_COLOR_BLT_CMD;
       break;
    case 4:
-      BR13 = (0xF0 << 16) | (1 << 24) | (1 << 25);
+      BR13 = (0xF0 << 16) | BR13_8888;
       CMD = XY_COLOR_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       break;
    default:
@@ -335,12 +337,11 @@ intelEmitCopyBlit(struct intel_context *intel,
       CMD = XY_SRC_COPY_BLT_CMD;
       break;
    case 2:
-   case 3:
-      BR13 |= (1 << 24);
+      BR13 |= BR13_565;
       CMD = XY_SRC_COPY_BLT_CMD;
       break;
    case 4:
-      BR13 |= (1 << 24) | (1 << 25);
+      BR13 |= BR13_8888;
       CMD = XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       break;
    default:
@@ -510,7 +511,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 
                /* Setup the blit command */
                if (cpp == 4) {
-                  BR13 |= (1 << 24) | (1 << 25);
+                  BR13 |= BR13_8888;
                   if (buf == BUFFER_DEPTH || buf == BUFFER_STENCIL) {
                      if (clearMask & BUFFER_BIT_DEPTH)
                         CMD |= XY_BLT_WRITE_RGB;
@@ -523,8 +524,8 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                   }
                }
                else {
-                  ASSERT(cpp == 2 || cpp == 0);
-                  BR13 |= (1 << 24);
+                  ASSERT(cpp == 2);
+                  BR13 |= BR13_565;
                }
 
 #ifndef I915

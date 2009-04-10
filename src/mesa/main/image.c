@@ -1677,7 +1677,6 @@ _mesa_apply_stencil_transfer_ops(const GLcontext *ctx, GLuint n,
  * Used to pack an array [][4] of RGBA float colors as specified
  * by the dstFormat, dstType and dstPacking.  Used by glReadPixels,
  * glGetConvolutionFilter(), etc.
- * Incoming colors will be clamped to [0,1] if needed.
  * Note: the rgba values will be modified by this function when any pixel
  * transfer ops are enabled.
  */
@@ -1691,19 +1690,12 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
    GLfloat luminance[MAX_WIDTH];
    const GLint comps = _mesa_components_in_format(dstFormat);
    GLuint i;
-   /* clamping only applies to colors, not the dudv values, but still need
-      it if converting to unsigned values (which doesn't make much sense) */
-   if (dstFormat == GL_DUDV_ATI || dstFormat == GL_DU8DV8_ATI) {
-      switch (dstType) {
-         case GL_UNSIGNED_BYTE:
-         case GL_UNSIGNED_SHORT:
-         case GL_UNSIGNED_INT:
-            transferOps |= IMAGE_CLAMP_BIT;
-            break;
-            /* actually might want clamp to [-1,1] otherwise but shouldn't matter? */
-      }
-   }
-   else if (dstType != GL_FLOAT || ctx->Color.ClampReadColor == GL_TRUE) {
+
+   /* XXX
+    * This test should probably go away.  Have the caller set/clear the
+    * IMAGE_CLAMP_BIT as needed.
+    */
+   if (dstType != GL_FLOAT || ctx->Color.ClampReadColor == GL_TRUE) {
       /* need to clamp to [0, 1] */
       transferOps |= IMAGE_CLAMP_BIT;
    }
@@ -4551,6 +4543,17 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
          GLuint i;
          for (i = 0; i < n; i++) {
             dst[i] = src[i] | (src[i] << 16);
+         }
+         return;
+      }
+      if (srcType == GL_UNSIGNED_INT_24_8
+          && dstType == GL_UNSIGNED_INT
+          && depthMax == 0xffffff) {
+         const GLuint *src = (const GLuint *) source;
+         GLuint *dst = (GLuint *) dest;
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            dst[i] = src[i] >> 8;
          }
          return;
       }

@@ -1510,9 +1510,9 @@ static void r300SetupRSUnit(GLcontext * ctx)
 
 		/* with TCL we always seem to route 4 components */
 		if (hw_tcl_on)
-		  count = 4;
+			count = 4;
 		else
-		  count = VB->AttribPtr[_TNL_ATTRIB_TEX(i)]->size;
+			count = VB->AttribPtr[_TNL_ATTRIB_TEX(i)]->size;
 
 		switch(count) {
 		case 4: swiz = R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3); break;
@@ -1530,28 +1530,28 @@ static void r300SetupRSUnit(GLcontext * ctx)
 		++fp_reg;
 	}
 
-	if (InputsRead & FRAG_BIT_FOGC) {
-		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_FOGC, _TNL_ATTRIB_FOG)) {
-			r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |=  R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3) |  R300_RS_TEX_PTR(rs_tex_count);
-			r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R300_RS_INST_TEX_ID(tex_ip) | R300_RS_INST_TEX_CN_WRITE | R300_RS_INST_TEX_ADDR(fp_reg);
-			InputsRead &= ~FRAG_BIT_FOGC;
-			rs_tex_count += 4;
-			++tex_ip;
-			++fp_reg;
-		} else {
-			WARN_ONCE("fragprog wants fogc, vp doesn't provide it\n");
-		}
-	}
-
 	if (InputsRead & FRAG_BIT_WPOS) {
-		r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |=  R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3) |  R300_RS_TEX_PTR(rs_tex_count);
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3) | R300_RS_TEX_PTR(rs_tex_count);
 		r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R300_RS_INST_TEX_ID(tex_ip) | R300_RS_INST_TEX_CN_WRITE | R300_RS_INST_TEX_ADDR(fp_reg);
 		InputsRead &= ~FRAG_BIT_WPOS;
 		rs_tex_count += 4;
 		++tex_ip;
 		++fp_reg;
 	}
-	InputsRead &= ~FRAG_BIT_WPOS;
+
+	if (InputsRead & FRAG_BIT_FOGC) {
+		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_FOGC, _TNL_ATTRIB_FOG)) {
+			r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= R300_RS_SEL_S(0) | R300_RS_SEL_T(R300_RS_SEL_K0) | R300_RS_SEL_R(R300_RS_SEL_K0);
+			r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= R300_RS_SEL_Q(R300_RS_SEL_K1) | R300_RS_TEX_PTR(rs_tex_count);
+			r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R300_RS_INST_TEX_ID(tex_ip) | R300_RS_INST_TEX_CN_WRITE | R300_RS_INST_TEX_ADDR(fp_reg);
+			InputsRead &= ~FRAG_BIT_FOGC;
+			rs_tex_count += 1;
+			++tex_ip;
+			++fp_reg;
+		} else {
+			WARN_ONCE("fragprog wants fogc, vp doesn't provide it\n");
+		}
+	}
 
 	/* Setup default color if no color or tex was set */
 	if (rs_tex_count == 0 && col_ip == 0) {
@@ -1560,10 +1560,10 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	}
 
 	high_rr = (col_ip > tex_ip) ? col_ip : tex_ip;
-	r300->hw.rc.cmd[1] |= (rs_tex_count << R300_IT_COUNT_SHIFT)  | (col_ip << R300_IC_COUNT_SHIFT) | R300_HIRES_EN;
+	r300->hw.rc.cmd[1] |= (rs_tex_count << R300_IT_COUNT_SHIFT) | (col_ip << R300_IC_COUNT_SHIFT) | R300_HIRES_EN;
 	r300->hw.rc.cmd[2] |= high_rr - 1;
 
-	 r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R300_RS_INST_0, high_rr);
+	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R300_RS_INST_0, high_rr);
 
 	if (InputsRead)
 		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);

@@ -113,7 +113,7 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    /* temporary sanity check assertion */
    ASSERT(bfp->isGLSL == brw_wm_is_glsl(fp));
 
-   /* XXX: This needs a flag to indicate when it changes. */
+   /* _NEW_DEPTH */
    key->stats_wm = intel->stats_wm;
 
    /* _NEW_LINE */
@@ -125,6 +125,9 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    key->offset_factor = ctx->Polygon.OffsetFactor;
 }
 
+/**
+ * Setup wm hardware state.  See page 225 of Volume 2
+ */
 static dri_bo *
 wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 			dri_bo **reloc_bufs)
@@ -142,7 +145,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    if (key->total_scratch != 0) {
       wm.thread2.scratch_space_base_pointer =
-	 brw->wm.scratch_buffer->offset >> 10; /* reloc */
+	 brw->wm.scratch_bo->offset >> 10; /* reloc */
       wm.thread2.per_thread_scratch_space = key->total_scratch / 1024 - 1;
    } else {
       wm.thread2.scratch_space_base_pointer = 0;
@@ -151,9 +154,9 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    wm.thread3.dispatch_grf_start_reg = key->dispatch_grf_start_reg;
    wm.thread3.urb_entry_read_length = key->urb_entry_read_length;
+   wm.thread3.urb_entry_read_offset = 0;
    wm.thread3.const_urb_entry_read_length = key->curb_entry_read_length;
    wm.thread3.const_urb_entry_read_offset = key->curbe_offset * 2;
-   wm.thread3.urb_entry_read_offset = 0;
 
    wm.wm4.sampler_count = (key->sampler_count + 1) / 4;
    if (brw->wm.sampler_bo != NULL) {
@@ -220,7 +223,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 			0, 0,
 			wm.thread2.per_thread_scratch_space,
 			offsetof(struct brw_wm_unit_state, thread2),
-			brw->wm.scratch_buffer);
+			brw->wm.scratch_bo);
    }
 
    /* Emit sampler state relocation */
@@ -251,20 +254,20 @@ static void upload_wm_unit( struct brw_context *brw )
    if (key.total_scratch) {
       GLuint total = key.total_scratch * key.max_threads;
 
-      if (brw->wm.scratch_buffer && total > brw->wm.scratch_buffer->size) {
-	 dri_bo_unreference(brw->wm.scratch_buffer);
-	 brw->wm.scratch_buffer = NULL;
+      if (brw->wm.scratch_bo && total > brw->wm.scratch_bo->size) {
+	 dri_bo_unreference(brw->wm.scratch_bo);
+	 brw->wm.scratch_bo = NULL;
       }
-      if (brw->wm.scratch_buffer == NULL) {
-	 brw->wm.scratch_buffer = dri_bo_alloc(intel->bufmgr,
-					       "wm scratch",
-					       total,
-					       4096);
+      if (brw->wm.scratch_bo == NULL) {
+	 brw->wm.scratch_bo = dri_bo_alloc(intel->bufmgr,
+                                           "wm scratch",
+                                           total,
+                                           4096);
       }
    }
 
    reloc_bufs[0] = brw->wm.prog_bo;
-   reloc_bufs[1] = brw->wm.scratch_buffer;
+   reloc_bufs[1] = brw->wm.scratch_bo;
    reloc_bufs[2] = brw->wm.sampler_bo;
 
    dri_bo_unreference(brw->wm.state_bo);
@@ -282,7 +285,8 @@ const struct brw_tracked_state brw_wm_unit = {
       .mesa = (_NEW_POLYGON | 
 	       _NEW_POLYGONSTIPPLE | 
 	       _NEW_LINE | 
-	       _NEW_COLOR),
+	       _NEW_COLOR |
+	       _NEW_DEPTH),
 
       .brw = (BRW_NEW_FRAGMENT_PROGRAM | 
 	      BRW_NEW_CURBE_OFFSETS |

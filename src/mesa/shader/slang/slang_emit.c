@@ -62,6 +62,8 @@ typedef struct
 
    GLuint MaxInstructions;  /**< size of prog->Instructions[] buffer */
 
+   GLboolean UnresolvedFunctions;
+
    /* code-gen options */
    GLboolean EmitHighLevelInstructions;
    GLboolean EmitCondCodes;
@@ -872,6 +874,7 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
    emit(emitInfo, n->Children[1]);
 
    if (n->Children[0]->Store->Size != n->Children[1]->Store->Size) {
+      /* XXX this error should have been caught in slang_codegen.c */
       slang_info_log_error(emitInfo->log, "invalid operands to == or !=");
       n->Store = NULL;
       return NULL;
@@ -1356,7 +1359,8 @@ emit_copy(slang_emit_info *emitInfo, slang_ir_node *n)
    inst = emit(emitInfo, n->Children[1]);
 
    if (!n->Children[1]->Store || n->Children[1]->Store->Index < 0) {
-      if (!emitInfo->log->text) {
+      if (!emitInfo->log->text && !emitInfo->UnresolvedFunctions) {
+         /* XXX this error should have been caught in slang_codegen.c */
          slang_info_log_error(emitInfo->log, "invalid assignment");
       }
       return NULL;
@@ -2155,6 +2159,7 @@ emit_var_ref(slang_emit_info *emitInfo, slang_ir_node *n)
       if (index < 0) {
          /* error */
          char s[100];
+         /* XXX isn't this really an out of memory/resources error? */
          _mesa_snprintf(s, sizeof(s), "Undefined variable '%s'",
                         (char *) n->Var->a_name);
          slang_info_log_error(emitInfo->log, s);

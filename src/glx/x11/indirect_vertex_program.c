@@ -30,6 +30,10 @@
 #include "indirect_vertex_array.h"
 #include <GL/glxproto.h>
 
+#if !defined __GNUC__ || __GNUC__ < 3
+#  define __builtin_expect(x, y) x
+#endif
+
 static void
 do_vertex_attrib_enable(GLuint index, GLboolean val)
 {

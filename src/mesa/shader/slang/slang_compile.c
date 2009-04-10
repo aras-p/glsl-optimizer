@@ -2435,6 +2435,8 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
       _slang_codegen_function(&A, mainFunc);
 
       shader->Main = GL_TRUE; /* this shader defines main() */
+
+      shader->UnresolvedRefs = A.UnresolvedRefs;
    }
 
    _slang_pop_var_table(o.vartable);
@@ -2799,7 +2801,8 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
    shader->CompileStatus = success;
 
    if (success) {
-      if (shader->Pragmas.Optimize) {
+      if (shader->Pragmas.Optimize &&
+          (ctx->Shader.Flags & GLSL_NO_OPT) == 0) {
          _mesa_optimize_program(ctx, shader->Program);
       }
    }

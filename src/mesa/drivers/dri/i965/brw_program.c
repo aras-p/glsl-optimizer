@@ -111,6 +111,8 @@ static void brwProgramStringNotify( GLcontext *ctx,
 				    struct gl_program *prog )
 {
    struct brw_context *brw = brw_context(ctx);
+   struct intel_context *intel = &brw->intel;
+
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       struct gl_fragment_program *fprog = (struct gl_fragment_program *) prog;
       struct brw_fragment_program *newFP = brw_fragment_program(fprog);
@@ -126,6 +128,24 @@ static void brwProgramStringNotify( GLcontext *ctx,
 	 brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
       newFP->id = brw->program_id++;      
       newFP->isGLSL = brw_wm_is_glsl(fprog);
+
+      /* alloc constant buffer/surface */
+      {
+         const struct gl_program_parameter_list *params = prog->Parameters;
+         const int size = params->NumParameters * 4 * sizeof(GLfloat);
+
+         /* free old const buffer if too small */
+         if (newFP->const_buffer && newFP->const_buffer->size < size) {
+            dri_bo_unreference(newFP->const_buffer);
+            newFP->const_buffer = NULL;
+         }
+
+         if (!newFP->const_buffer) {
+            newFP->const_buffer = drm_intel_bo_alloc(intel->bufmgr,
+                                                     "fp_const_buffer",
+                                                     size, 64);
+         }
+      }
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
       struct gl_vertex_program *vprog = (struct gl_vertex_program *) prog;

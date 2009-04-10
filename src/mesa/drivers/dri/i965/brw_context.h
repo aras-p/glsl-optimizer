@@ -167,6 +167,9 @@ struct brw_fragment_program {
    struct gl_fragment_program program;
    GLuint id;  /**< serial no. to identify frag progs, never re-used */
    GLboolean isGLSL;  /**< really, any IF/LOOP/CONT/BREAK instructions */
+
+   /** Program constant buffer/surface */
+   dri_bo *const_buffer;
 };
 
 
@@ -238,8 +241,16 @@ struct brw_vs_ouput_sizes {
 };
 
 
+/** Number of texture sampler units */
 #define BRW_MAX_TEX_UNIT 16
-#define BRW_WM_MAX_SURF BRW_MAX_TEX_UNIT + MAX_DRAW_BUFFERS
+
+/**
+ * Size of our surface binding table.
+ * This contains pointers to the drawing surfaces and current texture
+ * objects and shader constant buffer (+1).
+ */
+#define BRW_WM_MAX_SURF (MAX_DRAW_BUFFERS + BRW_MAX_TEX_UNIT + 1)
+
 
 enum brw_cache_id {
    BRW_CC_VP,
@@ -513,8 +524,8 @@ struct brw_context
    /* BRW_NEW_CURBE_OFFSETS: 
     */
    struct {
-      GLuint wm_start;
-      GLuint wm_size;
+      GLuint wm_start;  /**< pos of first wm const in CURBE buffer */
+      GLuint wm_size;   /**< number of float[4] consts, multiple of 16 */
       GLuint clip_start;
       GLuint clip_size;
       GLuint vs_start;
@@ -588,7 +599,7 @@ struct brw_context
       GLuint nr_surfaces;      
 
       GLuint max_threads;
-      dri_bo *scratch_buffer;
+      dri_bo *scratch_bo;
 
       GLuint sampler_count;
       dri_bo *sampler_bo;

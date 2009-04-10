@@ -534,6 +534,111 @@ _slang_update_inputs_outputs(struct gl_program *prog)
 }
 
 
+
+
+
+/**
+ * Return a new shader whose source code is the concatenation of
+ * all the shader sources of the given type.
+ */
+static struct gl_shader *
+concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
+{
+   struct gl_shader *newShader;
+   const struct gl_shader *firstShader = NULL;
+   GLuint shaderLengths[100];
+   GLchar *source;
+   GLuint totalLen = 0, len = 0;
+   GLuint i;
+
+   /* compute total size of new shader source code */
+   for (i = 0; i < shProg->NumShaders; i++) {
+      const struct gl_shader *shader = shProg->Shaders[i];
+      if (shader->Type == shaderType) {
+         shaderLengths[i] = _mesa_strlen(shader->Source);
+         totalLen += shaderLengths[i];
+         if (!firstShader)
+            firstShader = shader;
+      }
+   }
+
+   if (totalLen == 0)
+      return NULL;
+
+   source = (GLchar *) _mesa_malloc(totalLen + 1);
+   if (!source)
+      return NULL;
+
+   /* concatenate shaders */
+   for (i = 0; i < shProg->NumShaders; i++) {
+      const struct gl_shader *shader = shProg->Shaders[i];
+      if (shader->Type == shaderType) {
+         _mesa_memcpy(source + len, shader->Source, shaderLengths[i]);
+         len += shaderLengths[i];
+      }
+   }
+   source[len] = '\0';
+   /*
+   _mesa_printf("---NEW CONCATENATED SHADER---:\n%s\n------------\n", source);
+   */
+
+   newShader = CALLOC_STRUCT(gl_shader);
+   newShader->Type = shaderType;
+   newShader->Source = source;
+   newShader->Pragmas = firstShader->Pragmas;
+
+   return newShader;
+}
+
+
+/**
+ * Search the shader program's list of shaders to find the one that
+ * defines main().
+ * This will involve shader concatenation and recompilation if needed.
+ */
+static struct gl_shader *
+get_main_shader(GLcontext *ctx,
+                struct gl_shader_program *shProg, GLenum type)
+{
+   struct gl_shader *shader = NULL;
+   GLuint i;
+
+   /*
+    * Look for a shader that defines main() and has no unresolved references.
+    */
+   for (i = 0; i < shProg->NumShaders; i++) {
+      shader = shProg->Shaders[i];
+      if (shader->Type == type &&
+          shader->Main &&
+          !shader->UnresolvedRefs) {
+         /* All set! */
+         return shader;
+      }
+   }
+
+   /*
+    * There must have been unresolved references during the original
+    * compilation.  Try concatenating all the shaders of the given type
+    * and recompile that.
+    */
+   shader = concat_shaders(shProg, type);
+
+   if (shader) {
+      _slang_compile(ctx, shader);
+
+      /* Finally, check if recompiling failed */
+      if (!shader->CompileStatus ||
+          !shader->Main ||
+          shader->UnresolvedRefs) {
+         link_error(shProg, "Unresolved symbols");
+         return NULL;
+      }
+   }
+
+   return shader;
+}
+
+
 /**
  * Shader linker.  Currently:
  *
@@ -550,12 +655,15 @@ _slang_link(GLcontext *ctx,
             GLhandleARB programObj,
             struct gl_shader_program *shProg)
 {
-   const struct gl_vertex_program *vertProg;
-   const struct gl_fragment_program *fragProg;
+   const struct gl_vertex_program *vertProg = NULL;
+   const struct gl_fragment_program *fragProg = NULL;
    GLuint numSamplers = 0;
    GLuint i;
 
    _mesa_clear_shader_program_data(ctx, shProg);
+
+   /* Initialize LinkStatus to "success".  Will be cleared if error. */
+   shProg->LinkStatus = GL_TRUE;
 
    /* check that all programs compiled successfully */
    for (i = 0; i < shProg->NumShaders; i++) {
@@ -568,24 +676,19 @@ _slang_link(GLcontext *ctx,
    shProg->Uniforms = _mesa_new_uniform_list();
    shProg->Varying = _mesa_new_parameter_list();
 
-   /**
-    * Find attached vertex, fragment shaders defining main()
+   /*
+    * Find the vertex and fragment shaders which define main()
     */
-   vertProg = NULL;
-   fragProg = NULL;
-   for (i = 0; i < shProg->NumShaders; i++) {
-      struct gl_shader *shader = shProg->Shaders[i];
-      if (shader->Type == GL_VERTEX_SHADER) {
-         if (shader->Main)
-            vertProg = vertex_program(shader->Program);
-      }
-      else if (shader->Type == GL_FRAGMENT_SHADER) {
-         if (shader->Main)
-            fragProg = fragment_program(shader->Program);
-      }
-      else {
-         _mesa_problem(ctx, "unexpected shader target in slang_link()");
-      }
+   {
+      struct gl_shader *vertShader, *fragShader;
+      vertShader = get_main_shader(ctx, shProg, GL_VERTEX_SHADER);
+      fragShader = get_main_shader(ctx, shProg, GL_FRAGMENT_SHADER);
+      if (vertShader)
+         vertProg = vertex_program(vertShader->Program);
+      if (fragShader)
+         fragProg = fragment_program(fragShader->Program);
+      if (!shProg->LinkStatus)
+         return;
    }
 
 #if FEATURE_es2_glsl

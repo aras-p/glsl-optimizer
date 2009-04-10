@@ -38,7 +38,7 @@ import os.path
 def generate(env):
     # See http://www.scons.org/wiki/PythonExtensions
     
-    if sys.platform in ['windows']:
+    if sys.platform in ['win32']:
         python_root = sys.prefix
         python_version = '%u%u' % sys.version_info[:2]
         python_include = os.path.join(python_root, 'include')
@@ -56,6 +56,8 @@ def generate(env):
         cppdefines = env['CPPDEFINES']
         cppdefines = [define for define in cppdefines if define != '_DEBUG']
         env.Replace(CPPDEFINES = cppdefines)
+        env.AppendUnique(CPPFLAGS = ['/U_DEBUG'])
+        env.AppendUnique(LINKFLAGS = ['/nodefaultlib:python25_d.lib'])
     else:
         #env.ParseConfig('python-config --cflags --ldflags --libs')
         env.AppendUnique(CPPPATH = [distutils.sysconfig.get_python_inc()])

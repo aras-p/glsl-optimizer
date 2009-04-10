@@ -363,7 +363,7 @@ struct tnl_program {
 };
 
 
-static const struct ureg undef = { 
+static const struct ureg undef = {
    PROGRAM_UNDEFINED,
    0,
    0,
@@ -398,7 +398,7 @@ static struct ureg negate( struct ureg reg )
 {
    reg.negate ^= 1;
    return reg;
-} 
+}
 
 
 static struct ureg swizzle( struct ureg reg, int x, int y, int z, int w )
@@ -407,7 +407,6 @@ static struct ureg swizzle( struct ureg reg, int x, int y, int z, int w )
 			   GET_SWZ(reg.swz, y),
 			   GET_SWZ(reg.swz, z),
 			   GET_SWZ(reg.swz, w));
-
    return reg;
 }
 
@@ -898,8 +897,7 @@ static void build_hpos( struct tnl_program *p )
 
 static GLuint material_attrib( GLuint side, GLuint property )
 {
-   return ((property - STATE_AMBIENT) * 2 + 
-	   side);
+   return (property - STATE_AMBIENT) * 2 + side;
 }
 
 
@@ -960,7 +958,7 @@ static struct ureg get_scenecolor( struct tnl_program *p, GLuint side )
       struct ureg material_ambient = get_material(p, side, STATE_AMBIENT);
       struct ureg material_diffuse = get_material(p, side, STATE_DIFFUSE);
       struct ureg tmp = make_temp(p, material_diffuse);
-      emit_op3(p, OPCODE_MAD, tmp,  WRITEMASK_XYZ, lm_ambient, 
+      emit_op3(p, OPCODE_MAD, tmp, WRITEMASK_XYZ, lm_ambient, 
 	       material_ambient, material_emission);
       return tmp;
    }
@@ -978,7 +976,7 @@ static struct ureg get_lightprod( struct tnl_program *p, GLuint light,
 	 register_param3(p, STATE_LIGHT, light, property);
       struct ureg material_value = get_material(p, side, property);
       struct ureg tmp = get_temp(p);
-      emit_op2(p, OPCODE_MUL, tmp,  0, light_value, material_value);
+      emit_op2(p, OPCODE_MUL, tmp, 0, light_value, material_value);
       return tmp;
    }
    else
@@ -1015,7 +1013,6 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
    /* Calculate distance attenuation:
     */
    if (p->state->unit[i].light_attenuated) {
-
       /* 1/d,d,d,1/d */
       emit_op1(p, OPCODE_RCP, dist, WRITEMASK_YZ, dist); 
       /* 1,d,d*d,1/d */
@@ -1028,7 +1025,8 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
 	 emit_op1(p, OPCODE_RCP, dist, 0, dist); 
 	 /* spot-atten * dist-atten */
 	 emit_op2(p, OPCODE_MUL, att, 0, dist, att);	
-      } else {
+      }
+      else {
 	 /* dist-atten */
 	 emit_op1(p, OPCODE_RCP, att, 0, dist); 
       }
@@ -1082,10 +1080,10 @@ static void build_lighting( struct tnl_program *p )
 
    /*
     * NOTE:
-    * dot.x = dot(normal, VPpli)
-    * dot.y = dot(normal, halfAngle)
-    * dot.z = back.shininess
-    * dot.w = front.shininess
+    * dots.x = dot(normal, VPpli)
+    * dots.y = dot(normal, halfAngle)
+    * dots.z = back.shininess
+    * dots.w = front.shininess
     */
 
    for (i = 0; i < MAX_LIGHTS; i++) 
@@ -1097,7 +1095,7 @@ static void build_lighting( struct tnl_program *p )
    {
       if (!p->state->material_shininess_is_zero) {
          struct ureg shininess = get_material(p, 0, STATE_SHININESS);
-         emit_op1(p, OPCODE_MOV, dots,  WRITEMASK_W, swizzle1(shininess,X));
+         emit_op1(p, OPCODE_MOV, dots, WRITEMASK_W, swizzle1(shininess,X));
          release_temp(p, shininess);
       }
 
@@ -1106,11 +1104,13 @@ static void build_lighting( struct tnl_program *p )
 	 _col1 = make_temp(p, get_identity_param(p));
       else
 	 _col1 = _col0;
-
    }
 
    if (twoside) {
       if (!p->state->material_shininess_is_zero) {
+         /* Note that we negate the back-face specular exponent here.
+          * The negation will be un-done later in the back-face code below.
+          */
          struct ureg shininess = get_material(p, 1, STATE_SHININESS);
          emit_op1(p, OPCODE_MOV, dots, WRITEMASK_Z, 
                   negate(swizzle1(shininess,X)));
@@ -1171,12 +1171,13 @@ static void build_lighting( struct tnl_program *p )
                   half = get_temp(p);
                   emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
                   emit_normalize_vec3(p, half, half);
-               } else {
+               }
+               else {
                   half = register_param3(p, STATE_INTERNAL, 
                                          STATE_LIGHT_HALF_VECTOR, i);
                }
             }
-	 } 
+	 }
 	 else {
 	    struct ureg Ppli = register_param3(p, STATE_INTERNAL, 
 					       STATE_LIGHT_POSITION, i); 
@@ -1255,7 +1256,8 @@ static void build_lighting( struct tnl_program *p )
 		  res0 = _col0;
 		  res1 = register_output( p, VERT_RESULT_COL0 );
 	       }
-	    } else {
+	    }
+            else {
 	       mask0 = 0;
 	       mask1 = 0;
 	       res0 = _col0;
@@ -1267,12 +1269,12 @@ static void build_lighting( struct tnl_program *p )
                emit_op1(p, OPCODE_LIT, lit, 0, dots);
                emit_op2(p, OPCODE_MUL, lit, 0, lit, att);
                emit_op3(p, OPCODE_MAD, _col0, 0, swizzle1(lit,X), ambient, _col0);
-            } 
+            }
             else if (!p->state->material_shininess_is_zero) {
                /* there's a non-zero specular term */
                emit_op1(p, OPCODE_LIT, lit, 0, dots);
                emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
-            } 
+            }
             else {
                /* no attenutation, no specular */
                emit_degenerate_lit(p, lit, dots);
@@ -1309,13 +1311,19 @@ static void build_lighting( struct tnl_program *p )
 		  res0 = _bfc0;
 		  res1 = register_output( p, VERT_RESULT_BFC0 );
 	       }
-	    } else {
+	    }
+            else {
 	       res0 = _bfc0;
 	       res1 = _bfc1;
 	       mask0 = 0;
 	       mask1 = 0;
 	    }
 
+            /* For the back face we need to negate the X and Y component
+             * dot products.  dots.Z has the negated back-face specular
+             * exponent.  We swizzle that into the W position.  This
+             * negation makes the back-face specular term positive again.
+             */
             dots = negate(swizzle(dots,X,Y,W,Z));
 
 	    if (!is_undef(att)) {
@@ -1325,8 +1333,8 @@ static void build_lighting( struct tnl_program *p )
             }
             else if (!p->state->material_shininess_is_zero) {
                emit_op1(p, OPCODE_LIT, lit, 0, dots);
-               emit_op2(p, OPCODE_ADD, _bfc0, 0, ambient, _bfc0);
-            } 
+               emit_op2(p, OPCODE_ADD, _bfc0, 0, ambient, _bfc0); /**/
+            }
             else {
                emit_degenerate_lit(p, lit, dots);
                emit_op2(p, OPCODE_ADD, _bfc0, 0, ambient, _bfc0);
@@ -1334,8 +1342,10 @@ static void build_lighting( struct tnl_program *p )
 
 	    emit_op3(p, OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _bfc0);
 	    emit_op3(p, OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _bfc1);
-            /* restore negate flag for next lighting */
-            dots = negate(dots);
+            /* restore dots to its original state for subsequent lights
+             * by negating and swizzling again.
+             */
+            dots = negate(swizzle(dots,X,Y,W,Z));
 
 	    release_temp(p, ambient);
 	    release_temp(p, diffuse);
@@ -1578,7 +1588,7 @@ static void build_texture_transform( struct tnl_program *p )
 	 }
 
 	 release_temps(p);
-      } 
+      }
       else {
 	 emit_passthrough(p, VERT_ATTRIB_TEX0+i, VERT_RESULT_TEX0+i);
       }
@@ -1647,7 +1657,8 @@ static void build_array_pointsize( struct tnl_program *p )
 
 
 static void build_tnl_program( struct tnl_program *p )
-{   /* Emit the program, starting with modelviewproject:
+{
+   /* Emit the program, starting with modelviewproject:
     */
    build_hpos(p);
 

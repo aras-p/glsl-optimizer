@@ -46,53 +46,24 @@
 
 
 /**
- * Convert packed pixel from one format to another.
- */
-static unsigned
-convert_color(enum pipe_format srcFormat, unsigned srcColor,
-              enum pipe_format dstFormat)
-{
-   ubyte r, g, b, a;
-   unsigned dstColor;
-
-   util_unpack_color_ub(srcFormat, &srcColor, &r, &g, &b, &a);
-   util_pack_color_ub(r, g, b, a, dstFormat, &dstColor);
-
-   return dstColor;
-}
-
-
-
-/**
  * Called via pipe->clear()
  */
 void
-cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
-                   unsigned clearValue)
+cell_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+           double depth, unsigned stencil)
 {
    struct cell_context *cell = cell_context(pipe);
-   uint surfIndex;
 
    if (cell->dirty)
       cell_update_derived(cell);
 
-   if (ps == cell->framebuffer.zsbuf) {
-      /* clear z/stencil buffer */
-      surfIndex = 1;
-   }
-   else {
-      /* clear color buffer */
-      surfIndex = 0;
+   if (buffers & PIPE_CLEAR_COLOR) {
+      uint surfIndex = 0;
+      uint clearValue;
 
-      if (ps->format != PIPE_FORMAT_A8R8G8B8_UNORM) {
-         clearValue = convert_color(PIPE_FORMAT_A8R8G8B8_UNORM, clearValue,
-                                    ps->format);
-      }
-   }
+      util_pack_color(rgba, cell->framebuffer.cbufs[0]->format, &clearValue);
 
-
-   /* Build a CLEAR command and place it in the current batch buffer */
-   {
+      /* Build a CLEAR command and place it in the current batch buffer */
       STATIC_ASSERT(sizeof(struct cell_command_clear_surface) % 16 == 0);
       struct cell_command_clear_surface *clr
          = (struct cell_command_clear_surface *)
@@ -102,16 +73,20 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
       clr->value = clearValue;
    }
 
-   /* Technically, the surface's contents are now known and cleared,
-    * so we could set the status to PIPE_SURFACE_STATUS_CLEAR.  But
-    * it turns out it's quite painful to recognize when any particular
-    * surface goes from PIPE_SURFACE_STATUS_CLEAR to 
-    * PIPE_SURFACE_STATUS_DEFINED (i.e. with known contents), because
-    * the drawing commands could be operating on numerous draw buffers,
-    * which we'd have to iterate through to set all their stati...
-    * For now, we cheat a bit and set the surface's status to DEFINED
-    * right here.  Later we should revisit this and set the status to
-    * CLEAR here, and find a better place to set the status to DEFINED.
-    */
-   ps->status = PIPE_SURFACE_STATUS_DEFINED;
+   if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {
+      uint surfIndex = 1;
+      uint clearValue;
+
+      clearValue = util_pack_z_stencil(cell->framebuffer.zsbuf->format,
+                                       depth, stencil);
+
+      /* Build a CLEAR command and place it in the current batch buffer */
+      STATIC_ASSERT(sizeof(struct cell_command_clear_surface) % 16 == 0);
+      struct cell_command_clear_surface *clr
+         = (struct cell_command_clear_surface *)
+         cell_batch_alloc16(cell, sizeof(*clr));
+      clr->opcode[0] = CELL_CMD_CLEAR_SURFACE;
+      clr->surface = surfIndex;
+      clr->value = clearValue;
+   }
 }

@@ -36,12 +36,7 @@ struct stw_framebuffer
 {
    struct st_framebuffer *stfb;
    HDC hDC;
-   int pixelformat;
    BYTE cColorBits;
-   HDC dib_hDC;
-   HBITMAP hbmDIB;
-   HBITMAP hOldBitmap;
-   PBYTE pbPixels;
    HWND hWnd;
    WNDPROC WndProc;
    struct stw_framebuffer *next;

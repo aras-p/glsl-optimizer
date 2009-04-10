@@ -63,6 +63,7 @@ texenv.c \
 texenvprogram.c \
 texformat.c \
 texgen.c \
+texgetimage.c \
 teximage.c \
 texobj.c \
 texparam.c \

@@ -217,6 +217,7 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
    sampler->ss2.default_color_pointer = sdc_bo->offset >> 5; /* reloc */
 }
 
+
 /** Sets up the cache key for sampler state for all texture units */
 static void
 brw_wm_sampler_populate_key(struct brw_context *brw,

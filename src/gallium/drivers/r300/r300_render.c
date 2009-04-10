@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2009 Corbin Simpson <MostAwesomeDude@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,9 +29,9 @@
 #include "r300_reg.h"
 #include "r300_state_derived.h"
 
-/* r300_swtcl_emit: Vertex and index buffer primitive emission. No HW TCL. */
+/* r300_render: Vertex and index buffer primitive emission. */
 
-struct r300_swtcl_render {
+struct r300_render {
     /* Parent class */
     struct vbuf_render base;
     
@@ -52,16 +52,16 @@ struct r300_swtcl_render {
     size_t vbo_max_used;
 };
 
-static INLINE struct r300_swtcl_render*
-r300_swtcl_render(struct vbuf_render* render)
+static INLINE struct r300_render*
+r300_render(struct vbuf_render* render)
 {
-    return (struct r300_swtcl_render*)render;
+    return (struct r300_render*)render;
 }
 
 static const struct vertex_info*
-r300_swtcl_render_get_vertex_info(struct vbuf_render* render)
+r300_render_get_vertex_info(struct vbuf_render* render)
 {
-    struct r300_swtcl_render* r300render = r300_swtcl_render(render);
+    struct r300_render* r300render = r300_render(render);
     struct r300_context* r300 = r300render->r300;
 
     r300_update_derived_state(r300);
@@ -69,11 +69,11 @@ r300_swtcl_render_get_vertex_info(struct vbuf_render* render)
     return &r300->vertex_info.vinfo;
 }
 
-static boolean r300_swtcl_render_allocate_vertices(struct vbuf_render* render,
+static boolean r300_render_allocate_vertices(struct vbuf_render* render,
                                                    ushort vertex_size,
                                                    ushort count)
 {
-    struct r300_swtcl_render* r300render = r300_swtcl_render(render);
+    struct r300_render* r300render = r300_render(render);
     struct r300_context* r300 = r300render->r300;
     struct pipe_screen* screen = r300->context.screen;
     size_t size = (size_t)vertex_size * (size_t)count;
@@ -98,9 +98,9 @@ static boolean r300_swtcl_render_allocate_vertices(struct vbuf_render* render,
     }
 }
 
-static void* r300_swtcl_render_map_vertices(struct vbuf_render* render)
+static void* r300_render_map_vertices(struct vbuf_render* render)
 {
-    struct r300_swtcl_render* r300render = r300_swtcl_render(render);
+    struct r300_render* r300render = r300_render(render);
     struct pipe_screen* screen = r300render->r300->context.screen;
 
     r300render->vbo_map = pipe_buffer_map(screen, r300render->vbo,
@@ -109,11 +109,11 @@ static void* r300_swtcl_render_map_vertices(struct vbuf_render* render)
     return (unsigned char*)r300render->vbo_map + r300render->vbo_offset;
 }
 
-static void r300_swtcl_render_unmap_vertices(struct vbuf_render* render,
+static void r300_render_unmap_vertices(struct vbuf_render* render,
                                              ushort min,
                                              ushort max)
 {
-    struct r300_swtcl_render* r300render = r300_swtcl_render(render);
+    struct r300_render* r300render = r300_render(render);
     struct pipe_screen* screen = r300render->r300->context.screen;
 
     r300render->vbo_max_used = MAX2(r300render->vbo_max_used,
@@ -122,17 +122,17 @@ static void r300_swtcl_render_unmap_vertices(struct vbuf_render* render,
     pipe_buffer_unmap(screen, r300render->vbo);
 }
 
-static void r300_swtcl_render_release_vertices(struct vbuf_render* render)
+static void r300_render_release_vertices(struct vbuf_render* render)
 {
-    struct r300_swtcl_render* r300render = r300_swtcl_render(render);
+    struct r300_render* r300render = r300_render(render);
 
     pipe_buffer_reference(&r300render->vbo, NULL);
 }
 
-static boolean r300_swtcl_render_set_primitive(struct vbuf_render* render,
+static boolean r300_render_set_primitive(struct vbuf_render* render,
                                                unsigned prim)
 {
-    struct r300_swtcl_render* r300render = r300_swtcl_render(render);
+    struct r300_render* r300render = r300_render(render);
     r300render->prim = prim;
 
     switch (prim) {
@@ -174,7 +174,7 @@ static boolean r300_swtcl_render_set_primitive(struct vbuf_render* render,
     return TRUE;
 }
 
-static void prepare_render(struct r300_swtcl_render* render, unsigned count)
+static void prepare_render(struct r300_render* render, unsigned count)
 {
     struct r300_context* r300 = render->r300;
 
@@ -203,11 +203,11 @@ static void prepare_render(struct r300_swtcl_render* render, unsigned count)
     END_CS;
 }
 
-static void r300_swtcl_render_draw_arrays(struct vbuf_render* render,
+static void r300_render_draw_arrays(struct vbuf_render* render,
                                           unsigned start,
                                           unsigned count)
 {
-    struct r300_swtcl_render* r300render = r300_swtcl_render(render);
+    struct r300_render* r300render = r300_render(render);
     struct r300_context* r300 = r300render->r300;
 
     CS_LOCALS(r300);
@@ -225,11 +225,11 @@ static void r300_swtcl_render_draw_arrays(struct vbuf_render* render,
     END_CS;
 }
 
-static void r300_swtcl_render_draw(struct vbuf_render* render,
+static void r300_render_draw(struct vbuf_render* render,
                                    const ushort* indices,
                                    uint count)
 {
-    struct r300_swtcl_render* r300render = r300_swtcl_render(render);
+    struct r300_render* r300render = r300_render(render);
     struct r300_context* r300 = r300render->r300;
     struct pipe_screen* screen = r300->context.screen;
     struct pipe_buffer* index_buffer;
@@ -241,7 +241,7 @@ static void r300_swtcl_render_draw(struct vbuf_render* render,
 
     /* Send our indices into an index buffer. */
     index_buffer = pipe_buffer_create(screen, 64, PIPE_BUFFER_USAGE_VERTEX,
-                                      count);
+                                      count * 2);
     if (!index_buffer) {
         return;
     }
@@ -253,25 +253,24 @@ static void r300_swtcl_render_draw(struct vbuf_render* render,
 
     debug_printf("r300: Doing indexbuf render, count %d\n", count);
 
-    BEGIN_CS(5);
+    BEGIN_CS(6);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 0);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
-           r300render->hwprim | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
-
+           r300render->hwprim);
     OUT_CS_PKT3(R300_PACKET3_INDX_BUFFER, 2);
     OUT_CS(R300_INDX_BUFFER_ONE_REG_WR | (R300_VAP_PORT_IDX0 >> 2));
-    OUT_CS_RELOC(index_buffer, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
+    OUT_CS_INDEX_RELOC(index_buffer, 0, count, RADEON_GEM_DOMAIN_GTT, 0, 0);
     END_CS;
 }
 
-static void r300_swtcl_render_destroy(struct vbuf_render* render)
+static void r300_render_destroy(struct vbuf_render* render)
 {
     FREE(render);
 }
 
-static struct vbuf_render* r300_swtcl_render_create(struct r300_context* r300)
+static struct vbuf_render* r300_render_create(struct r300_context* r300)
 {
-    struct r300_swtcl_render* r300render = CALLOC_STRUCT(r300_swtcl_render);
+    struct r300_render* r300render = CALLOC_STRUCT(r300_render);
 
     r300render->r300 = r300;
 
@@ -279,25 +278,25 @@ static struct vbuf_render* r300_swtcl_render_create(struct r300_context* r300)
     r300render->base.max_vertex_buffer_bytes = 128 * 1024;
     r300render->base.max_indices = 16 * 1024;
 
-    r300render->base.get_vertex_info = r300_swtcl_render_get_vertex_info;
-    r300render->base.allocate_vertices = r300_swtcl_render_allocate_vertices;
-    r300render->base.map_vertices = r300_swtcl_render_map_vertices;
-    r300render->base.unmap_vertices = r300_swtcl_render_unmap_vertices;
-    r300render->base.set_primitive = r300_swtcl_render_set_primitive;
-    r300render->base.draw = r300_swtcl_render_draw;
-    r300render->base.draw_arrays = r300_swtcl_render_draw_arrays;
-    r300render->base.release_vertices = r300_swtcl_render_release_vertices;
-    r300render->base.destroy = r300_swtcl_render_destroy;
+    r300render->base.get_vertex_info = r300_render_get_vertex_info;
+    r300render->base.allocate_vertices = r300_render_allocate_vertices;
+    r300render->base.map_vertices = r300_render_map_vertices;
+    r300render->base.unmap_vertices = r300_render_unmap_vertices;
+    r300render->base.set_primitive = r300_render_set_primitive;
+    r300render->base.draw = r300_render_draw;
+    r300render->base.draw_arrays = r300_render_draw_arrays;
+    r300render->base.release_vertices = r300_render_release_vertices;
+    r300render->base.destroy = r300_render_destroy;
 
     return &r300render->base;
 }
 
-struct draw_stage* r300_draw_swtcl_stage(struct r300_context* r300)
+struct draw_stage* r300_draw_stage(struct r300_context* r300)
 {
     struct vbuf_render* render;
     struct draw_stage* stage;
 
-    render = r300_swtcl_render_create(r300);
+    render = r300_render_create(r300);
 
     if (!render) {
         return NULL;

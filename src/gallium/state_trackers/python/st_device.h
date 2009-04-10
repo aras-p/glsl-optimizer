@@ -38,10 +38,12 @@ struct pipe_context;
 struct st_winsys; 
 
 
-struct st_buffer {
-   struct st_device *st_dev;
-   
-   struct pipe_buffer *buffer;
+struct st_surface
+{
+   struct pipe_texture *texture;
+   unsigned face;
+   unsigned level;
+   unsigned zslice;
 };
 
 
@@ -64,6 +66,8 @@ struct st_context {
    
    unsigned num_vertex_elements;
    struct pipe_vertex_element vertex_elements[PIPE_MAX_ATTRIBS];
+   
+   struct pipe_framebuffer_state framebuffer;
 };
 
 
@@ -78,12 +82,13 @@ struct st_device {
 };
 
 
-struct st_buffer *
-st_buffer_create(struct st_device *st_dev,
-                 unsigned alignment, unsigned usage, unsigned size);
-
-void
-st_buffer_destroy(struct st_buffer *st_buf);
+static INLINE struct pipe_surface *
+st_pipe_surface(struct st_surface *surface, unsigned usage) 
+{
+   struct pipe_texture *texture = surface->texture;
+   struct pipe_screen *screen = texture->screen;
+   return screen->get_tex_surface(screen, texture, surface->face, surface->level, surface->zslice, usage);
+}
 
 struct st_context *
 st_context_create(struct st_device *st_dev);

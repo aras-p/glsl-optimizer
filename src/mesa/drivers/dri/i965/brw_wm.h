@@ -172,7 +172,8 @@ struct brw_wm_instruction {
 #define WM_CINTERP        (MAX_OPCODE + 5)
 #define WM_WPOSXY         (MAX_OPCODE + 6)
 #define WM_FB_WRITE       (MAX_OPCODE + 7)
-#define MAX_WM_OPCODE     (MAX_OPCODE + 8)
+#define WM_FRONTFACING    (MAX_OPCODE + 8)
+#define MAX_WM_OPCODE     (MAX_OPCODE + 9)
 
 #define PROGRAM_PAYLOAD   (PROGRAM_FILE_MAX)
 #define PAYLOAD_DEPTH     (FRAG_ATTRIB_MAX)
@@ -241,8 +242,8 @@ struct brw_wm_compile {
 
    /** Mapping from Mesa registers to hardware registers */
    struct {
-	GLboolean inited;
-	struct brw_reg reg;
+      GLboolean inited;
+      struct brw_reg reg;
    } wm_regs[PROGRAM_PAYLOAD+1][256][4];
 
    struct brw_reg stack;
@@ -252,6 +253,14 @@ struct brw_wm_compile {
    GLuint tmp_index;
    GLuint tmp_max;
    GLuint subroutines[BRW_WM_MAX_SUBROUTINE];
+
+   /** using a real constant buffer? */
+   GLboolean use_const_buffer;
+   /** we may need up to 3 constants per instruction (if use_const_buffer) */
+   struct {
+      GLint index;
+      struct brw_reg reg;
+   } current_const[3];
 };
 
 

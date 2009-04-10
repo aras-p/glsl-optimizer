@@ -63,7 +63,7 @@ do { \
 	++num_attrs; \
 } while (0)
 
-static void r300SwtclVAPSetup(GLcontext *ctx, GLuint InputsRead, GLuint OutputsWritten)
+static void r300SwtclVAPSetup(GLcontext *ctx, GLuint InputsRead, GLuint OutputsWritten, GLuint vap_out_fmt_1)
 {
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -139,7 +139,12 @@ static void r300SwtclVAPSetup(GLcontext *ctx, GLuint InputsRead, GLuint OutputsW
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
 	rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
-	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = r300VAPOutputCntl1(ctx, OutputsWritten);
+	/**
+	  * Can't use r300VAPOutputCntl1 function because it assumes
+	  * that all texture coords have 4 components and that's the case
+	  * for HW TCL path, but not for SW TCL.
+	  */
+	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = vap_out_fmt_1;
 
 	vte = rmesa->hw.vte.cmd[1];
 	vte &= ~(R300_VTX_XY_FMT | R300_VTX_Z_FMT | R300_VTX_W0_FMT);
@@ -166,7 +171,7 @@ static void r300SetVertexFormat( GLcontext *ctx )
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *VB = &tnl->vb;
-	int fog_id = -1;
+	int first_free_tex = 0, vap_out_fmt_1 = 0;
 	GLuint InputsRead = 0;
 	GLuint OutputsWritten = 0;
 	int num_attrs = 0;
@@ -217,34 +222,8 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		ADD_ATTR(VERT_ATTRIB_POINT_SIZE, EMIT_1F, SWTCL_OVM_POINT_SIZE, swiz, MASK_X);
 	}
 
-	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_FOG)) {
-		/* find first free tex coord slot */
-		if (RENDERINPUTS_TEST_RANGE(tnl->render_inputs_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
-			int i;
-			for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-				if (!RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) )) {
-					fog_id = i;
-					break;
-				}
-			}
-		} else {
-			fog_id = 0;
-		}
-
-		if (fog_id == -1) {
-			fprintf(stderr, "\tout of free texcoords to do fog\n");
-			_mesa_exit(-1);
-		}
-
-		InputsRead |= 1 << VERT_ATTRIB_FOG;
-		OutputsWritten |= 1 << VERT_RESULT_FOGC;
-		GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO);
-		EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1F );
-		ADD_ATTR(VERT_ATTRIB_FOG, EMIT_1F, SWTCL_OVM_TEX(fog_id), swiz, MASK_X);
-	}
-
 	if (RENDERINPUTS_TEST_RANGE(tnl->render_inputs_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
-		int i;
+		int i, size;
 		GLuint swiz, mask, format;
 		for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 			if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) )) {
@@ -254,16 +233,19 @@ static void r300SetVertexFormat( GLcontext *ctx )
 						format = EMIT_2F;
 						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_ZERO, SWIZZLE_ZERO);
 						mask = MASK_X | MASK_Y;
+						size = 2;
 						break;
 					case 3:
 						format = EMIT_3F;
 						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
 						mask = MASK_X | MASK_Y | MASK_Z;
+						size = 3;
 						break;
 					case 4:
 						format = EMIT_4F;
 						swiz = SWIZZLE_XYZW;
 						mask = MASK_XYZW;
+						size = 4;
 						break;
 					default:
 						continue;
@@ -272,42 +254,43 @@ static void r300SetVertexFormat( GLcontext *ctx )
 				OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
 				EMIT_ATTR(_TNL_ATTRIB_TEX(i), format);
 				ADD_ATTR(VERT_ATTRIB_TEX0 + i, format, SWTCL_OVM_TEX(i), swiz, mask);
+				vap_out_fmt_1 |= size << (i * 3);
+				++first_free_tex;
 			}
 		}
 	}
 
 	/* RS can't put fragment position on the pixel stack, so stuff it in texcoord if needed */
 	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_POS) && (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_WPOS)) {
-		int first_free_tex = -1;
-		if (fog_id >= 0) {
-			first_free_tex = fog_id+1;
-		} else {
-			if (RENDERINPUTS_TEST_RANGE(tnl->render_inputs_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
-				int i;
-				for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-					if (!RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) )) {
-						first_free_tex = i;
-						break;
-					}
-				}
-			} else {
-				first_free_tex = 0;
-			}
-		}
-
-		if (first_free_tex == -1) {
+		if (first_free_tex >= ctx->Const.MaxTextureUnits) {
 			fprintf(stderr, "\tout of free texcoords to write w pos\n");
 			_mesa_exit(-1);
 		}
 
 		InputsRead |= 1 << (VERT_ATTRIB_TEX0 + first_free_tex);
 		OutputsWritten |= 1 << (VERT_RESULT_TEX0 + first_free_tex);
-		EMIT_ATTR( _TNL_ATTRIB_TEX(first_free_tex), EMIT_4F );
-		ADD_ATTR(VERT_ATTRIB_TEX0 + first_free_tex, EMIT_4F, SWTCL_OVM_TEX(first_free_tex), SWIZZLE_XYZW, MASK_XYZW);
+		EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F );
+		ADD_ATTR(VERT_ATTRIB_POS, EMIT_4F, SWTCL_OVM_TEX(first_free_tex), SWIZZLE_XYZW, MASK_XYZW);
+		vap_out_fmt_1 |= 4 << (first_free_tex * 3);
+		++first_free_tex;
+	}
+
+	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_FOG)) {
+		if (first_free_tex >= ctx->Const.MaxTextureUnits) {
+			fprintf(stderr, "\tout of free texcoords to write fog coordinate\n");
+			_mesa_exit(-1);
+		}
+
+		InputsRead |= 1 << VERT_ATTRIB_FOG;
+		OutputsWritten |= 1 << VERT_RESULT_FOGC;
+		GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO);
+		EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1F );
+		ADD_ATTR(VERT_ATTRIB_FOG, EMIT_1F, SWTCL_OVM_TEX(first_free_tex), swiz, MASK_X);
+		vap_out_fmt_1 |=  1 << (first_free_tex * 3);
 	}
 
 	R300_NEWPRIM(rmesa);
-	r300SwtclVAPSetup(ctx, InputsRead, OutputsWritten);
+	r300SwtclVAPSetup(ctx, InputsRead, OutputsWritten, vap_out_fmt_1);
 
 	rmesa->radeon.swtcl.vertex_size =
 		_tnl_install_attrs( ctx,
@@ -460,7 +443,7 @@ do { \
 
 #define LOCAL_VARS(n)							\
    r300ContextPtr rmesa = R300_CONTEXT(ctx);			\
-   GLuint color[n] = { 0, }, spec[n] = { 0, };						\
+   GLuint color[n] = { 0, }, spec[n] = { 0, };				\
    GLuint coloroffset = rmesa->swtcl.coloroffset;	\
    GLuint specoffset = rmesa->swtcl.specoffset;			\
    (void) color; (void) spec; (void) coloroffset; (void) specoffset;

@@ -23,6 +23,7 @@
 #ifndef R300_STATE_INVARIANT_H
 #define R300_STATE_INVARIANT_H
 
+#include "r300_chipset.h"
 #include "r300_context.h"
 #include "r300_cs.h"
 #include "r300_reg.h"

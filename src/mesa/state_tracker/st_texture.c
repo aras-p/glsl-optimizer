@@ -107,7 +107,7 @@ st_texture_create(struct st_context *st,
 
    newtex = screen->texture_create(screen, &pt);
 
-   assert(!newtex || p_atomic_read(&newtex->reference.count) == 1);
+   assert(!newtex || pipe_is_referenced(&newtex->reference));
 
    return newtex;
 }

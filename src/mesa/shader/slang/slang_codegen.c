@@ -2199,12 +2199,13 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
                            name);
       return NULL;
    }
+
    if (!fun->body) {
-      slang_info_log_error(A->log,
-                           "Function '%s' prototyped but not defined.  "
-                           "Separate compilation units not supported.",
-                           name);
-      return NULL;
+      /* The function body may be in another compilation unit.
+       * We'll try concatenating the shaders and recompile at link time.
+       */
+      A->UnresolvedRefs = GL_TRUE;
+      return new_node1(IR_NOP, NULL);
    }
 
    /* type checking to be sure function's return type matches 'dest' type */
@@ -4647,6 +4648,14 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 #if 0
    printf("************* End codegen function ************\n\n");
 #endif
+
+   if (A->UnresolvedRefs) {
+      /* Can't codegen at this time.
+       * At link time we'll concatenate all the vertex shaders and/or all
+       * the fragment shaders and try recompiling.
+       */
+      return GL_TRUE;
+   }
 
    /* Emit program instructions */
    success = _slang_emit_code(n, A->vartable, A->program, A->pragmas, GL_TRUE, A->log);

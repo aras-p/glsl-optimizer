@@ -307,9 +307,11 @@ intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     if (!driContext->driScreenPriv->dri2.enabled)
 	return;
 
-    intel_update_renderbuffers(driContext, driContext->driDrawablePriv);
-    if (driContext->driDrawablePriv != driContext->driReadablePriv)
-	intel_update_renderbuffers(driContext, driContext->driReadablePriv);
+    if (!intel->internal_viewport_call) {
+       intel_update_renderbuffers(driContext, driContext->driDrawablePriv);
+       if (driContext->driDrawablePriv != driContext->driReadablePriv)
+	  intel_update_renderbuffers(driContext, driContext->driReadablePriv);
+    }
 
     old_viewport = ctx->Driver.Viewport;
     ctx->Driver.Viewport = NULL;

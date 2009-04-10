@@ -162,7 +162,7 @@ static void i810SetTexFilter(i810ContextPtr imesa,
 
 
 static void
-i810SetTexBorderColor( i810TextureObjectPtr t, GLubyte color[4] )
+i810SetTexBorderColor( i810TextureObjectPtr t, const GLfloat color[4] )
 {
    /* Need a fallback.
     */
@@ -211,7 +211,7 @@ i810AllocTexObj( GLcontext *ctx, struct gl_texture_object *texObj )
       i810SetTexWrapping( t, texObj->WrapS, texObj->WrapT );
       /*i830SetTexMaxAnisotropy( t, texObj->MaxAnisotropy );*/
       i810SetTexFilter( imesa, t, texObj->MinFilter, texObj->MagFilter, bias );
-      i810SetTexBorderColor( t, texObj->_BorderChan );
+      i810SetTexBorderColor( t, texObj->BorderColor );
    }
 
    return t;
@@ -252,7 +252,7 @@ static void i810TexParameter( GLcontext *ctx, GLenum target,
       break;
   
    case GL_TEXTURE_BORDER_COLOR:
-      i810SetTexBorderColor( t, tObj->_BorderChan );
+      i810SetTexBorderColor( t, tObj->BorderColor );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:

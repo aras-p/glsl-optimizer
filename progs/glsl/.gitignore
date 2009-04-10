@@ -6,6 +6,7 @@ deriv
 extfuncs.h
 fragcoord
 identity
+linktest
 mandelbrot
 multinoise
 multitex

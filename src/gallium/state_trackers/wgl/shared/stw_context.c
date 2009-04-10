@@ -33,6 +33,12 @@
 #include "pipe/p_context.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
+
+#ifdef DEBUG
+#include "trace/tr_screen.h"
+#include "trace/tr_context.h"
+#endif
+
 #include "shared/stw_device.h"
 #include "shared/stw_winsys.h"
 #include "shared/stw_framebuffer.h"
@@ -77,6 +83,7 @@ stw_create_layer_context(
    const struct pixelformat_info *pf = NULL;
    struct stw_context *ctx = NULL;
    GLvisual *visual = NULL;
+   struct pipe_screen *screen = NULL;
    struct pipe_context *pipe = NULL;
    UINT_PTR hglrc = 0;
 
@@ -120,9 +127,23 @@ stw_create_layer_context(
    if (visual == NULL) 
       goto fail;
 
-   pipe = stw_dev->stw_winsys->create_context( stw_dev->screen );
+   screen = stw_dev->screen;
+
+#ifdef DEBUG
+   /* Unwrap screen */
+   if(stw_dev->trace_running)
+      screen = trace_screen(screen)->screen;
+#endif
+
+   pipe = stw_dev->stw_winsys->create_context( screen );
    if (pipe == NULL) 
       goto fail;
+
+#ifdef DEBUG
+   /* Wrap context */
+   if(stw_dev->trace_running)
+      pipe = trace_context_create(stw_dev->screen, pipe);
+#endif
 
    assert(!pipe->priv);
    pipe->priv = hdc;
@@ -317,10 +338,6 @@ stw_make_current(
       fb = framebuffer_create( hdc, visual, width, height );
       if (fb == NULL)
          return FALSE;
-
-      fb->dib_hDC = CreateCompatibleDC( hdc );
-      fb->hbmDIB = NULL;
-      fb->pbPixels = NULL;
    }
 
    if (ctx && fb) {

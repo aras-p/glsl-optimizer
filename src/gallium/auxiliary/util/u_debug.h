@@ -125,19 +125,16 @@ void debug_print_format(const char *msg, unsigned fmt );
 #endif
 
 
-void _debug_break(void);
-
-
 /**
  * Hard-coded breakpoint.
  */
 #ifdef DEBUG
-#if defined(PIPE_ARCH_X86) && defined(PIPE_CC_GCC)
+#if (defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)) && defined(PIPE_CC_GCC)
 #define debug_break() __asm("int3")
-#elif defined(PIPE_ARCH_X86) && defined(PIPE_CC_MSVC)
-#define debug_break()  do { _asm {int 3} } while(0)
+#elif defined(PIPE_CC_MSVC)
+#define debug_break()  __debugbreak()
 #else
-#define debug_break() _debug_break()
+void debug_break(void);
 #endif
 #else /* !DEBUG */
 #define debug_break() ((void)0)
@@ -338,6 +335,7 @@ debug_profile_stop(void);
 
 #ifdef DEBUG
 struct pipe_surface;
+struct pipe_transfer;
 void debug_dump_image(const char *prefix,
                       unsigned format, unsigned cpp,
                       unsigned width, unsigned height,
@@ -347,6 +345,8 @@ void debug_dump_surface(const char *prefix,
                         struct pipe_surface *surface);   
 void debug_dump_surface_bmp(const char *filename,
                             struct pipe_surface *surface);
+void debug_dump_transfer_bmp(const char *filename,
+                             struct pipe_transfer *transfer);
 #else
 #define debug_dump_image(prefix, format, cpp, width, height, stride, data) ((void)0)
 #define debug_dump_surface(prefix, surface) ((void)0)

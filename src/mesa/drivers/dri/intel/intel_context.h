@@ -180,6 +180,7 @@ struct intel_context
    struct intel_region *front_region;
    struct intel_region *back_region;
    struct intel_region *depth_region;
+   GLboolean internal_viewport_call;
 
    /**
     * This value indicates that the kernel memory manager is being used

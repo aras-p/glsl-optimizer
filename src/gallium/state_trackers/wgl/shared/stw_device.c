@@ -31,6 +31,11 @@
 #include "util/u_debug.h"
 #include "pipe/p_screen.h"
 
+#ifdef DEBUG
+#include "trace/tr_screen.h"
+#include "trace/tr_texture.h"
+#endif
+
 #include "shared/stw_device.h"
 #include "shared/stw_winsys.h"
 #include "shared/stw_pixelformat.h"
@@ -52,13 +57,20 @@ struct stw_device *stw_dev = NULL;
  */
 static void 
 st_flush_frontbuffer(struct pipe_screen *screen,
-                     struct pipe_surface *surf,
+                     struct pipe_surface *surface,
                      void *context_private )
 {
    const struct stw_winsys *stw_winsys = stw_dev->stw_winsys;
    HDC hdc = (HDC)context_private;
    
-   stw_winsys->flush_frontbuffer(screen, surf, hdc);
+#ifdef DEBUG
+   if(stw_dev->trace_running) {
+      screen = trace_screen(screen)->screen;
+      surface = trace_surface(surface)->surface;
+   }
+#endif
+   
+   stw_winsys->flush_frontbuffer(screen, surface, hdc);
 }
 
 
@@ -66,6 +78,7 @@ boolean
 st_init(const struct stw_winsys *stw_winsys)
 {
    static struct stw_device stw_dev_storage;
+   struct pipe_screen *screen;
 
    debug_printf("%s\n", __FUNCTION__);
    
@@ -86,10 +99,17 @@ st_init(const struct stw_winsys *stw_winsys)
    _glthread_INIT_MUTEX(OneTimeLock);
 #endif
 
-   stw_dev->screen = stw_winsys->create_screen();
-   if(!stw_dev->screen)
+   screen = stw_winsys->create_screen();
+   if(!screen)
       goto error1;
 
+#ifdef DEBUG
+   stw_dev->screen = trace_screen_create(screen);
+   stw_dev->trace_running = stw_dev->screen != screen ? TRUE : FALSE;
+#else
+   stw_dev->screen = screen;
+#endif
+   
    stw_dev->screen->flush_frontbuffer = st_flush_frontbuffer;
    
    pipe_mutex_init( stw_dev->mutex );
@@ -130,7 +150,7 @@ st_cleanup_thread(void)
 void
 st_cleanup(void)
 {
-   UINT_PTR i;
+   unsigned i;
 
    debug_printf("%s\n", __FUNCTION__);
 

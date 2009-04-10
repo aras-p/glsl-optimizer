@@ -31,13 +31,11 @@
 
 
 struct pipe_context;
-struct pipe_surface;
 
 
 extern void
-cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
-                   unsigned clearValue);
-
+cell_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+           double depth, unsigned stencil);
 
 
 #endif /* CELL_CLEAR_H */

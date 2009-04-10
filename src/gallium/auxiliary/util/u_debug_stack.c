@@ -33,6 +33,7 @@
  */
 
 #include "u_debug.h"
+#include "u_debug_symbol.h"
 #include "u_debug_stack.h"
 
 
@@ -49,7 +50,7 @@ debug_backtrace_capture(struct debug_stack_frame *backtrace,
 
 #if defined(PIPE_CC_GCC)
    frame_pointer = ((const void **)__builtin_frame_address(1));
-#elif defined(PIPE_CC_MSVC)
+#elif defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
    __asm {
       mov frame_pointer, ebp
    }
@@ -91,7 +92,7 @@ debug_backtrace_dump(const struct debug_stack_frame *backtrace,
    for(i = 0; i < nr_frames; ++i) {
       if(!backtrace[i].function)
          break;
-      debug_printf("\t%p\n", backtrace[i].function);
+      debug_symbol_print(backtrace[i].function);
    }
 }
 

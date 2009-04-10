@@ -36,8 +36,8 @@
 struct pipe_context;
 
 extern void
-softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-               unsigned clearValue);
+softpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+               double depth, unsigned stencil);
 
 
 #endif /* SP_CLEAR_H */

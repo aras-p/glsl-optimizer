@@ -46,9 +46,12 @@ static INLINE void
 so_ref(struct nouveau_stateobj *ref, struct nouveau_stateobj **pso)
 {
 	struct nouveau_stateobj *so = *pso;
+	int i;
 
         if (pipe_reference((struct pipe_reference**)pso, &ref->reference)) {
 		free(so->push);
+		for (i = 0; i < so->cur_reloc; i++)
+			pipe_buffer_reference(&so->reloc[i].bo, NULL);
 		free(so->reloc);
 		free(so);
 	}
@@ -83,7 +86,8 @@ so_reloc(struct nouveau_stateobj *so, struct pipe_buffer *bo,
 {
 	struct nouveau_stateobj_reloc *r = &so->reloc[so->cur_reloc++];
 	
-	r->bo = bo;
+	r->bo = NULL;
+	pipe_buffer_reference(&r->bo, bo);
 	r->offset = so->cur - so->push;
 	r->packet = so->cur_packet;
 	r->data = data;

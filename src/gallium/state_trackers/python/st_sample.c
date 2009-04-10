@@ -34,6 +34,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
+#include "st_device.h"
 #include "st_sample.h"
 
 
@@ -523,10 +524,13 @@ st_sample_pixel_block(enum pipe_format format,
 
 
 void
-st_sample_surface(struct pipe_surface *surface, float *rgba) 
+st_sample_surface(struct st_surface *surface, float *rgba) 
 {
-   struct pipe_screen *screen = surface->texture->screen;
-   uint rgba_stride = surface->width * 4;
+   struct pipe_texture *texture = surface->texture;
+   struct pipe_screen *screen = texture->screen;
+   unsigned width = texture->width[surface->level];
+   unsigned height = texture->height[surface->level];
+   uint rgba_stride = width * 4;
    struct pipe_transfer *transfer;
    void *raw;
 
@@ -535,27 +539,27 @@ st_sample_surface(struct pipe_surface *surface, float *rgba)
                                        surface->face,
                                        surface->level,
                                        surface->zslice,
-                                       PIPE_TRANSFER_READ,
+                                       PIPE_TRANSFER_WRITE,
                                        0, 0,
-                                       surface->width,
-                                       surface->height);
+                                       width,
+                                       height);
    if (!transfer)
       return;
 
    raw = screen->transfer_map(screen, transfer);
    if (raw) {
-      const struct pipe_format_block *block = &transfer->block;
+      const struct pipe_format_block *block = &texture->block;
       uint x, y;
 
       for (y = 0; y < transfer->nblocksy; ++y) {
          for (x = 0; x < transfer->nblocksx; ++x) {
-            st_sample_pixel_block(surface->format,
+            st_sample_pixel_block(texture->format,
                                   block,
                                   (uint8_t *) raw + y * transfer->stride + x * block->size,
                                   rgba + y * block->height * rgba_stride + x * block->width * 4,
                                   rgba_stride,
-                                  MIN2(block->width, surface->width - x*block->width),
-                                  MIN2(block->height, surface->height - y*block->height));
+                                  MIN2(block->width, width - x*block->width),
+                                  MIN2(block->height, height - y*block->height));
          }
       }
 

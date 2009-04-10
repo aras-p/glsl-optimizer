@@ -56,7 +56,8 @@ $(TOP)/$(LIB_DIR)/$(DRIVER_NAME): $(OBJECTS)
 		-install $(TOP)/$(LIB_DIR) \
 		$(OBJECTS) $(DRM_LIB) $(MISC_LIBS)
 
-install: $(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
+install:
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) $(TOP)/$(LIB_DIR)/$(DRIVER_NAME) $(DESTDIR)$(INSTALL_LIB_DIR)
 
 clean:

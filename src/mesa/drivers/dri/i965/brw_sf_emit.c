@@ -59,37 +59,6 @@ static GLboolean have_attr(struct brw_sf_compile *c,
    return (c->key.attrs & (1<<attr)) ? 1 : 0;
 }
 
-/**
- * Sets VERT_RESULT_FOGC.Y  for gl_FrontFacing
- *
- * This is currently executed if the fragment program uses VERT_RESULT_FOGC
- * at all, but this could be eliminated with a scan of the FP contents.
- */
-static void
-do_front_facing( struct brw_sf_compile *c )
-{
-   struct brw_compile *p = &c->func; 
-   int i;
-
-   if (!have_attr(c, VERT_RESULT_FOGC))
-      return;
-
-   brw_push_insn_state(p);
-   brw_CMP(p, brw_null_reg(), 
-        c->key.frontface_ccw ? BRW_CONDITIONAL_G : BRW_CONDITIONAL_L,
-        c->det, brw_imm_f(0));
-   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-   for (i = 0; i < 3; i++) {
-       struct brw_reg fogc = get_vert_attr(c, c->vert[i],FRAG_ATTRIB_FOGC);
-       brw_MOV(p, get_element(fogc, 1), brw_imm_f(0));
-       brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
-       brw_MOV(p, get_element(fogc, 1), brw_imm_f(1));
-       brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-   }
-   brw_pop_insn_state(p);
-}
-
-			 
 /*********************************************************************** 
  * Twoside lighting
  */
@@ -384,7 +353,6 @@ void brw_emit_tri_setup( struct brw_sf_compile *c, GLboolean allocate)
 
    invert_det(c);
    copy_z_inv_w(c);
-   do_front_facing(c);
 
    if (c->key.do_twoside_color) 
       do_twoside_color(c);

@@ -48,7 +48,7 @@ opts.Add(ListOption('statetrackers', 'state trackers to build', default_statetra
 opts.Add(ListOption('drivers', 'pipe drivers to build', default_drivers,
                      ['softpipe', 'failover', 'i915simple', 'i965simple', 'cell', 'trace', 'r300']))
 opts.Add(ListOption('winsys', 'winsys drivers to build', default_winsys,
-                     ['xlib', 'intel', 'gdi', 'amd']))
+                     ['xlib', 'intel', 'gdi', 'radeon']))
 
 opts.Add(EnumOption('MSVS_VERSION', 'MS Visual C++ version', None, allowed_values=('7.1', '8.0', '9.0')))
 

@@ -159,8 +159,7 @@ trace_screen_flush_frontbuffer(struct pipe_screen *_screen,
                                void *context_private)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
-   struct trace_texture *tr_tex = trace_texture(tr_scr, _surface->texture);
-   struct trace_surface *tr_surf = trace_surface(tr_tex, _surface);
+   struct trace_surface *tr_surf = trace_surface(_surface);
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_surface *surface = tr_surf->surface;
 
@@ -242,7 +241,7 @@ static void
 trace_screen_texture_destroy(struct pipe_texture *_texture)
 {
    struct trace_screen *tr_scr = trace_screen(_texture->screen);
-   struct trace_texture *tr_tex = trace_texture(tr_scr, _texture);
+   struct trace_texture *tr_tex = trace_texture(_texture);
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_texture *texture = tr_tex->texture;
 
@@ -255,7 +254,7 @@ trace_screen_texture_destroy(struct pipe_texture *_texture)
 
    trace_dump_call_end();
 
-   trace_texture_destroy(tr_scr, _texture);
+   trace_texture_destroy(tr_tex);
 }
 
 
@@ -272,7 +271,7 @@ trace_screen_get_tex_surface(struct pipe_screen *_screen,
                              unsigned usage)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
-   struct trace_texture *tr_tex = trace_texture(tr_scr, _texture);
+   struct trace_texture *tr_tex = trace_texture(_texture);
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_texture *texture = tr_tex->texture;
    struct pipe_surface *result = NULL;
@@ -304,8 +303,7 @@ static void
 trace_screen_tex_surface_destroy(struct pipe_surface *_surface)
 {
    struct trace_screen *tr_scr = trace_screen(_surface->texture->screen);
-   struct trace_texture *tr_tex = trace_texture(tr_scr, _surface->texture);
-   struct trace_surface *tr_surf = trace_surface(tr_tex, _surface);
+   struct trace_surface *tr_surf = trace_surface(_surface);
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_surface *surface = tr_surf->surface;
 
@@ -316,7 +314,7 @@ trace_screen_tex_surface_destroy(struct pipe_surface *_surface)
 
    trace_dump_call_end();
 
-   trace_surface_destroy(tr_tex, _surface);
+   trace_surface_destroy(tr_surf);
 }
 
 
@@ -334,7 +332,7 @@ trace_screen_get_tex_transfer(struct pipe_screen *_screen,
                               unsigned x, unsigned y, unsigned w, unsigned h)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
-   struct trace_texture *tr_tex = trace_texture(tr_scr, _texture);
+   struct trace_texture *tr_tex = trace_texture(_texture);
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_texture *texture = tr_tex->texture;
    struct pipe_transfer *result = NULL;
@@ -372,10 +370,9 @@ static void
 trace_screen_tex_transfer_destroy(struct pipe_transfer *_transfer)
 {
    struct trace_screen *tr_scr = trace_screen(_transfer->texture->screen);
-   struct trace_texture *tr_tex = trace_texture(tr_scr, _transfer->texture);
-   struct trace_transfer *tr_tran = trace_transfer(tr_tex, _transfer);
+   struct trace_transfer *tr_trans = trace_transfer(_transfer);
    struct pipe_screen *screen = tr_scr->screen;
-   struct pipe_transfer *transfer = tr_tran->transfer;
+   struct pipe_transfer *transfer = tr_trans->transfer;
 
    trace_dump_call_begin("pipe_screen", "tex_transfer_destroy");
 
@@ -384,7 +381,7 @@ trace_screen_tex_transfer_destroy(struct pipe_transfer *_transfer)
 
    trace_dump_call_end();
 
-   trace_transfer_destroy(tr_tex, _transfer);
+   trace_transfer_destroy(tr_trans);
 }
 
 
@@ -393,8 +390,7 @@ trace_screen_transfer_map(struct pipe_screen *_screen,
                           struct pipe_transfer *_transfer)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
-   struct trace_texture *tr_tex = trace_texture(tr_scr, _transfer->texture);
-   struct trace_transfer *tr_trans = trace_transfer(tr_tex, _transfer);
+   struct trace_transfer *tr_trans = trace_transfer(_transfer);
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_transfer *transfer = tr_trans->transfer;
    void *map;
@@ -416,8 +412,7 @@ trace_screen_transfer_unmap(struct pipe_screen *_screen,
                            struct pipe_transfer *_transfer)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
-   struct trace_texture *tr_tex = trace_texture(tr_scr, _transfer->texture);
-   struct trace_transfer *tr_trans = trace_transfer(tr_tex, _transfer);
+   struct trace_transfer *tr_trans = trace_transfer(_transfer);
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_transfer *transfer = tr_trans->transfer;
 
@@ -706,7 +701,7 @@ trace_screen_buffer_unmap(struct pipe_screen *_screen,
    struct pipe_buffer *buffer = tr_buf->buffer;
 
    if (tr_buf->map && !tr_buf->range_flushed)
-      buffer_write(screen, buffer, tr_buf->map, 0, buffer->size);
+      buffer_write(screen, buffer, 0, tr_buf->map, buffer->size);
    tr_buf->map = NULL;
    tr_buf->range_flushed = FALSE;
    screen->buffer_unmap(screen, buffer);
