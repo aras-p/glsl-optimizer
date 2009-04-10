@@ -36,23 +36,68 @@
 static void
 stw_pixelformat_add(
    struct stw_device *stw_dev,
-   unsigned flags,
    const struct stw_pixelformat_color_info *color,
    const struct stw_pixelformat_depth_info *depth,
+   boolean doublebuffer,
+   boolean multisampled,
    boolean extended )
 {
-   struct stw_pixelformat_info *pf;
+   struct stw_pixelformat_info *pfi;
    
    assert(stw_dev->pixelformat_extended_count < STW_MAX_PIXELFORMATS);
    if(stw_dev->pixelformat_extended_count >= STW_MAX_PIXELFORMATS)
       return;
    
-   pf = &stw_dev->pixelformats[stw_dev->pixelformat_extended_count];
+   pfi = &stw_dev->pixelformats[stw_dev->pixelformat_extended_count];
    
-   pf->flags = flags;
-   pf->color = *color;
-   pf->depth = *depth;
+   memset(pfi, 0, sizeof *pfi);
+   
+   pfi->pfd.nSize = sizeof pfi->pfd;
+   pfi->pfd.nVersion = 1;
 
+   pfi->pfd.dwFlags = PFD_SUPPORT_OPENGL;
+   
+   /* TODO: also support non-native pixel formats */
+   pfi->pfd.dwFlags |= PFD_DRAW_TO_WINDOW ;
+   
+   if (doublebuffer)
+      pfi->pfd.dwFlags |= PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
+   
+   pfi->pfd.iPixelType = PFD_TYPE_RGBA;
+
+   pfi->pfd.cColorBits = color->redbits + color->greenbits + color->bluebits;
+   pfi->pfd.cRedBits = color->redbits;
+   pfi->pfd.cRedShift = color->redshift;
+   pfi->pfd.cGreenBits = color->greenbits;
+   pfi->pfd.cGreenShift = color->greenshift;
+   pfi->pfd.cBlueBits = color->bluebits;
+   pfi->pfd.cBlueShift = color->blueshift;
+   pfi->pfd.cAlphaBits = color->alphabits;
+   pfi->pfd.cAlphaShift = color->alphashift;
+   pfi->pfd.cAccumBits = 0;
+   pfi->pfd.cAccumRedBits = 0;
+   pfi->pfd.cAccumGreenBits = 0;
+   pfi->pfd.cAccumBlueBits = 0;
+   pfi->pfd.cAccumAlphaBits = 0;
+   pfi->pfd.cDepthBits = depth->depthbits;
+   pfi->pfd.cStencilBits = depth->stencilbits;
+   pfi->pfd.cAuxBuffers = 0;
+   pfi->pfd.iLayerType = 0;
+   pfi->pfd.bReserved = 0;
+   pfi->pfd.dwLayerMask = 0;
+   pfi->pfd.dwVisibleMask = 0;
+   pfi->pfd.dwDamageMask = 0;
+
+   if(multisampled) {
+      /* FIXME: re-enable when we can query this */
+#if 0
+      pfi->numSampleBuffers = 1;
+      pfi->numSamples = 4;
+#else
+      return;
+#endif
+   }
+   
    ++stw_dev->pixelformat_extended_count;
    
    if(!extended) {
@@ -64,7 +109,8 @@ stw_pixelformat_add(
 static void
 stw_add_standard_pixelformats(
    struct stw_device *stw_dev,
-   uint flags,
+   boolean doublebuffer,
+   boolean multisampled,
    boolean extended )
 {
    const struct stw_pixelformat_color_info color24 = { 8, 0, 8, 8, 8, 16, 0, 0 };
@@ -72,22 +118,22 @@ stw_add_standard_pixelformats(
    const struct stw_pixelformat_depth_info depth24s8 = { 24, 8 };
    const struct stw_pixelformat_depth_info depth16 = { 16, 0 };
 
-   stw_pixelformat_add( stw_dev, flags, &color24, &depth24s8, extended );
+   stw_pixelformat_add( stw_dev, &color24, &depth24s8, doublebuffer, multisampled, extended );
 
-   stw_pixelformat_add( stw_dev, flags, &color24a8, &depth24s8, extended );
+   stw_pixelformat_add( stw_dev, &color24a8, &depth24s8, doublebuffer, multisampled, extended );
 
-   stw_pixelformat_add( stw_dev, flags, &color24, &depth16, extended );
+   stw_pixelformat_add( stw_dev, &color24, &depth16, doublebuffer, multisampled, extended );
 
-   stw_pixelformat_add( stw_dev, flags, &color24a8, &depth16, extended );
+   stw_pixelformat_add( stw_dev, &color24a8, &depth16, doublebuffer, multisampled, extended );
 }
 
 void
 stw_pixelformat_init( void )
 {
-   stw_add_standard_pixelformats( stw_dev, STW_PF_FLAG_DOUBLEBUFFER | 0 ,                       FALSE );
-   stw_add_standard_pixelformats( stw_dev, 0                        | 0,                        FALSE );
-   stw_add_standard_pixelformats( stw_dev, STW_PF_FLAG_DOUBLEBUFFER | STW_PF_FLAG_MULTISAMPLED, TRUE  );
-   stw_add_standard_pixelformats( stw_dev, 0                        | STW_PF_FLAG_MULTISAMPLED, TRUE  );
+   stw_add_standard_pixelformats( stw_dev, FALSE, FALSE, FALSE );
+   stw_add_standard_pixelformats( stw_dev, TRUE,  FALSE, FALSE );
+   stw_add_standard_pixelformats( stw_dev, FALSE, TRUE, TRUE  );
+   stw_add_standard_pixelformats( stw_dev, TRUE,  TRUE, TRUE  );
 
    assert( stw_dev->pixelformat_count <= STW_MAX_PIXELFORMATS );
    assert( stw_dev->pixelformat_extended_count <= STW_MAX_PIXELFORMATS );
@@ -123,7 +169,7 @@ stw_pixelformat_describe(
 {
    uint count;
    uint index;
-   const struct stw_pixelformat_info *pf;
+   const struct stw_pixelformat_info *pfi;
 
    (void) hdc;
 
@@ -135,36 +181,9 @@ stw_pixelformat_describe(
    if (index >= count || nBytes != sizeof( PIXELFORMATDESCRIPTOR ))
       return 0;
 
-   pf = stw_pixelformat_get_info( index );
-
-   ppfd->nSize = sizeof( PIXELFORMATDESCRIPTOR );
-   ppfd->nVersion = 1;
-   ppfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
-   if (pf->flags & STW_PF_FLAG_DOUBLEBUFFER)
-      ppfd->dwFlags |= PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
-   ppfd->iPixelType = PFD_TYPE_RGBA;
-   ppfd->cColorBits = pf->color.redbits + pf->color.greenbits + pf->color.bluebits;
-   ppfd->cRedBits = pf->color.redbits;
-   ppfd->cRedShift = pf->color.redshift;
-   ppfd->cGreenBits = pf->color.greenbits;
-   ppfd->cGreenShift = pf->color.greenshift;
-   ppfd->cBlueBits = pf->color.bluebits;
-   ppfd->cBlueShift = pf->color.blueshift;
-   ppfd->cAlphaBits = pf->color.alphabits;
-   ppfd->cAlphaShift = pf->color.alphashift;
-   ppfd->cAccumBits = 0;
-   ppfd->cAccumRedBits = 0;
-   ppfd->cAccumGreenBits = 0;
-   ppfd->cAccumBlueBits = 0;
-   ppfd->cAccumAlphaBits = 0;
-   ppfd->cDepthBits = pf->depth.depthbits;
-   ppfd->cStencilBits = pf->depth.stencilbits;
-   ppfd->cAuxBuffers = 0;
-   ppfd->iLayerType = 0;
-   ppfd->bReserved = 0;
-   ppfd->dwLayerMask = 0;
-   ppfd->dwVisibleMask = 0;
-   ppfd->dwDamageMask = 0;
+   pfi = stw_pixelformat_get_info( index );
+   
+   memcpy(ppfd, &pfi->pfd, sizeof( PIXELFORMATDESCRIPTOR ));
 
    return count;
 }
@@ -188,23 +207,24 @@ int stw_pixelformat_choose( HDC hdc,
 
    for (index = 0; index < count; index++) {
       uint delta = 0;
-      const struct stw_pixelformat_info *pf = stw_pixelformat_get_info( index );
+      const struct stw_pixelformat_info *pfi = stw_pixelformat_get_info( index );
 
       if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE) &&
           !!(ppfd->dwFlags & PFD_DOUBLEBUFFER) !=
-          !!(pf->flags & STW_PF_FLAG_DOUBLEBUFFER))
+          !!(pfi->pfd.dwFlags & PFD_DOUBLEBUFFER))
          continue;
 
-      if (ppfd->cColorBits != pf->color.redbits + pf->color.greenbits + pf->color.bluebits)
+      /* FIXME: Take in account individual channel bits */
+      if (ppfd->cColorBits != pfi->pfd.cColorBits)
          delta += 8;
 
-      if (ppfd->cDepthBits != pf->depth.depthbits)
+      if (ppfd->cDepthBits != pfi->pfd.cDepthBits)
          delta += 4;
 
-      if (ppfd->cStencilBits != pf->depth.stencilbits)
+      if (ppfd->cStencilBits != pfi->pfd.cStencilBits)
          delta += 2;
 
-      if (ppfd->cAlphaBits != pf->color.alphabits)
+      if (ppfd->cAlphaBits != pfi->pfd.cAlphaBits)
          delta++;
 
       if (delta < bestdelta) {
@@ -256,21 +276,3 @@ stw_pixelformat_set(
    
    return TRUE;
 }
-
-
-
-/* XXX: this needs to be turned into queries on pipe_screen or
- * stw_winsys.
- */
-int
-stw_query_sample_buffers( void )
-{
-   return 1;
-}
-
-int
-stw_query_samples( void )
-{
-   return 4;
-}
-

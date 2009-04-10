@@ -109,21 +109,21 @@ stw_create_layer_context(
    /* Create visual based on flags
     */
    visual = _mesa_create_visual(
-      GL_TRUE,
-      (pf->flags & STW_PF_FLAG_DOUBLEBUFFER) ? GL_TRUE : GL_FALSE,
-      GL_FALSE,
-      pf->color.redbits,
-      pf->color.greenbits,
-      pf->color.bluebits,
-      pf->color.alphabits,
-      0,
-      pf->depth.depthbits,
-      pf->depth.stencilbits,
-      0,
-      0,
-      0,
-      0,
-      (pf->flags & STW_PF_FLAG_MULTISAMPLED) ? stw_query_samples() : 0 );
+      (pf->pfd.iPixelType == PFD_TYPE_RGBA) ? GL_TRUE : GL_FALSE,
+      (pf->pfd.dwFlags & PFD_DOUBLEBUFFER) ? GL_TRUE : GL_FALSE,
+      (pf->pfd.dwFlags & PFD_STEREO) ? GL_TRUE : GL_FALSE,
+      pf->pfd.cRedBits,
+      pf->pfd.cGreenBits,
+      pf->pfd.cBlueBits,
+      pf->pfd.cAlphaBits,
+      (pf->pfd.iPixelType == PFD_TYPE_COLORINDEX) ? pf->pfd.cColorBits : 0,
+      pf->pfd.cDepthBits,
+      pf->pfd.cStencilBits,
+      pf->pfd.cAccumRedBits,
+      pf->pfd.cAccumGreenBits,
+      pf->pfd.cAccumBlueBits,
+      pf->pfd.cAccumAlphaBits,
+      pf->numSamples );
    if (visual == NULL) 
       goto fail;
 

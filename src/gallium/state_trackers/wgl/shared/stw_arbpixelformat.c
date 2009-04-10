@@ -56,7 +56,7 @@ stw_query_attrib(
 {
    uint count;
    uint index;
-   const struct stw_pixelformat_info *pf;
+   const struct stw_pixelformat_info *pfi;
 
    count = stw_pixelformat_get_extended_count();
 
@@ -69,30 +69,27 @@ stw_query_attrib(
    if (index >= count)
       return FALSE;
 
-   pf = stw_pixelformat_get_info( index );
+   pfi = stw_pixelformat_get_info( index );
 
    switch (attrib) {
    case WGL_DRAW_TO_WINDOW_ARB:
-      *pvalue = TRUE;
+      *pvalue = pfi->pfd.dwFlags & PFD_DRAW_TO_WINDOW ? TRUE : FALSE;
       return TRUE;
 
    case WGL_DRAW_TO_BITMAP_ARB:
-      *pvalue = FALSE;
+      *pvalue = pfi->pfd.dwFlags & PFD_DRAW_TO_BITMAP ? TRUE : FALSE;
       return TRUE;
 
    case WGL_NEED_PALETTE_ARB:
-      *pvalue = FALSE;
+      *pvalue = pfi->pfd.dwFlags & PFD_NEED_PALETTE ? TRUE : FALSE;
       return TRUE;
 
    case WGL_NEED_SYSTEM_PALETTE_ARB:
-      *pvalue = FALSE;
+      *pvalue = pfi->pfd.dwFlags & PFD_NEED_SYSTEM_PALETTE ? TRUE : FALSE;
       return TRUE;
 
    case WGL_SWAP_METHOD_ARB:
-      if (pf->flags & STW_PF_FLAG_DOUBLEBUFFER)
-         *pvalue = WGL_SWAP_COPY_ARB;
-      else
-         *pvalue = WGL_SWAP_UNDEFINED_ARB;
+      *pvalue = pfi->pfd.dwFlags & PFD_SWAP_COPY ? WGL_SWAP_COPY_ARB : WGL_SWAP_UNDEFINED_ARB;
       return TRUE;
 
    case WGL_SWAP_LAYER_BUFFERS_ARB:
@@ -134,96 +131,108 @@ stw_query_attrib(
       break;
 
    case WGL_SUPPORT_GDI_ARB:
-      *pvalue = FALSE;
+      *pvalue = pfi->pfd.dwFlags & PFD_SUPPORT_GDI ? TRUE : FALSE;
       break;
 
    case WGL_SUPPORT_OPENGL_ARB:
-      *pvalue = TRUE;
+      *pvalue = pfi->pfd.dwFlags & PFD_SUPPORT_OPENGL ? TRUE : FALSE;
       break;
 
    case WGL_DOUBLE_BUFFER_ARB:
-      if (pf->flags & STW_PF_FLAG_DOUBLEBUFFER)
-         *pvalue = TRUE;
-      else
-         *pvalue = FALSE;
+      *pvalue = pfi->pfd.dwFlags & PFD_DOUBLEBUFFER ? TRUE : FALSE;
       break;
 
    case WGL_STEREO_ARB:
-      *pvalue = FALSE;
+      *pvalue = pfi->pfd.dwFlags & PFD_STEREO ? TRUE : FALSE;
       break;
 
    case WGL_PIXEL_TYPE_ARB:
-      *pvalue = WGL_TYPE_RGBA_ARB;
+      switch (pfi->pfd.iPixelType) {
+      case PFD_TYPE_RGBA:
+         *pvalue = WGL_TYPE_RGBA_ARB;
+         break;
+      case PFD_TYPE_COLORINDEX:
+         *pvalue = WGL_TYPE_COLORINDEX_ARB;
+         break;
+      default:
+         return FALSE;
+      }
       break;
 
    case WGL_COLOR_BITS_ARB:
-      *pvalue = (int) (pf->color.redbits + pf->color.greenbits + pf->color.bluebits);
+      *pvalue = pfi->pfd.cColorBits;
       break;
 
    case WGL_RED_BITS_ARB:
-      *pvalue = (int) pf->color.redbits;
+      *pvalue = pfi->pfd.cRedBits;
       break;
 
    case WGL_RED_SHIFT_ARB:
-      *pvalue = (int) pf->color.redshift;
+      *pvalue = pfi->pfd.cRedShift;
       break;
 
    case WGL_GREEN_BITS_ARB:
-      *pvalue = (int) pf->color.greenbits;
+      *pvalue = pfi->pfd.cGreenBits;
       break;
 
    case WGL_GREEN_SHIFT_ARB:
-      *pvalue = (int) pf->color.greenshift;
+      *pvalue = pfi->pfd.cGreenShift;
       break;
 
    case WGL_BLUE_BITS_ARB:
-      *pvalue = (int) pf->color.bluebits;
+      *pvalue = pfi->pfd.cBlueBits;
       break;
 
    case WGL_BLUE_SHIFT_ARB:
-      *pvalue = (int) pf->color.blueshift;
+      *pvalue = pfi->pfd.cBlueShift;
       break;
 
    case WGL_ALPHA_BITS_ARB:
-      *pvalue = (int) pf->color.alphabits;
+      *pvalue = pfi->pfd.cAlphaBits;
       break;
 
    case WGL_ALPHA_SHIFT_ARB:
-      *pvalue = (int) pf->color.alphashift;
+      *pvalue = pfi->pfd.cAlphaShift;
       break;
 
    case WGL_ACCUM_BITS_ARB:
+      *pvalue = pfi->pfd.cAccumBits;
+      break;
+
    case WGL_ACCUM_RED_BITS_ARB:
+      *pvalue = pfi->pfd.cAccumRedBits;
+      break;
+
    case WGL_ACCUM_GREEN_BITS_ARB:
+      *pvalue = pfi->pfd.cAccumGreenBits;
+      break;
+
    case WGL_ACCUM_BLUE_BITS_ARB:
+      *pvalue = pfi->pfd.cAccumBlueBits;
+      break;
+
    case WGL_ACCUM_ALPHA_BITS_ARB:
-      *pvalue = 0;
+      *pvalue = pfi->pfd.cAccumAlphaBits;
       break;
 
    case WGL_DEPTH_BITS_ARB:
-      *pvalue = (int) pf->depth.depthbits;
+      *pvalue = pfi->pfd.cDepthBits;
       break;
 
    case WGL_STENCIL_BITS_ARB:
-      *pvalue = (int) pf->depth.stencilbits;
+      *pvalue = pfi->pfd.cStencilBits;
       break;
 
    case WGL_AUX_BUFFERS_ARB:
-      *pvalue = 0;
+      *pvalue = pfi->pfd.cAuxBuffers;
       break;
 
    case WGL_SAMPLE_BUFFERS_ARB:
-      if (pf->flags & STW_PF_FLAG_MULTISAMPLED)
-         *pvalue = stw_query_sample_buffers();
-      else
-         *pvalue = 0;
+      *pvalue = pfi->numSampleBuffers;
       break;
 
    case WGL_SAMPLES_ARB:
-      if (pf->flags & STW_PF_FLAG_MULTISAMPLED)
-         *pvalue = stw_query_samples();
-      else
-         *pvalue = 0;
+      *pvalue = pfi->numSamples;
       break;
 
    default:

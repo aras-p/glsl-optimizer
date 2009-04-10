@@ -32,9 +32,6 @@
 
 #include "pipe/p_compiler.h"
 
-#define STW_PF_FLAG_DOUBLEBUFFER  0x00000001
-#define STW_PF_FLAG_MULTISAMPLED  0x00000002
-
 struct stw_pixelformat_color_info
 {
    uint redbits;
@@ -55,9 +52,10 @@ struct stw_pixelformat_depth_info
 
 struct stw_pixelformat_info
 {
-   uint flags;
-   struct stw_pixelformat_color_info color;
-   struct stw_pixelformat_depth_info depth;
+   PIXELFORMATDESCRIPTOR pfd;
+   
+   unsigned numSampleBuffers;
+   unsigned numSamples;
 };
 
 void
@@ -71,9 +69,6 @@ stw_pixelformat_get_extended_count( void );
 
 const struct stw_pixelformat_info *
 stw_pixelformat_get_info( uint index );
-
-int stw_query_sample_buffers( void );
-int stw_query_samples( void );
 
 
 #endif /* STW_PIXELFORMAT_H */
