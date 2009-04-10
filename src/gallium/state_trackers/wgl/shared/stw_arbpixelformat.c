@@ -185,11 +185,11 @@ stw_query_attrib(
       break;
 
    case WGL_ALPHA_BITS_ARB:
-      *pvalue = (int) pf->alpha.alphabits;
+      *pvalue = (int) pf->color.alphabits;
       break;
 
    case WGL_ALPHA_SHIFT_ARB:
-      *pvalue = (int) pf->alpha.alphashift;
+      *pvalue = (int) pf->color.alphashift;
       break;
 
    case WGL_ACCUM_BITS_ARB:

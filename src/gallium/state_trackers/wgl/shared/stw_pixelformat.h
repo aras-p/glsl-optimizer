@@ -42,10 +42,6 @@ struct stw_pixelformat_color_info
    uint greenshift;
    uint bluebits;
    uint blueshift;
-};
-
-struct stw_pixelformat_alpha_info
-{
    uint alphabits;
    uint alphashift;
 };
@@ -60,7 +56,6 @@ struct stw_pixelformat_info
 {
    uint flags;
    struct stw_pixelformat_color_info color;
-   struct stw_pixelformat_alpha_info alpha;
    struct stw_pixelformat_depth_info depth;
 };
 

@@ -115,7 +115,7 @@ stw_create_layer_context(
       pf->color.redbits,
       pf->color.greenbits,
       pf->color.bluebits,
-      pf->alpha.alphabits,
+      pf->color.alphabits,
       0,
       pf->depth.depthbits,
       pf->depth.stencilbits,

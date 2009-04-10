@@ -43,57 +43,48 @@ stw_add_standard_pixelformats(
    uint flags )
 {
    struct stw_pixelformat_info *pf = *ppf;
-   struct stw_pixelformat_color_info color24 = { 8, 0, 8, 8, 8, 16 };
-   struct stw_pixelformat_alpha_info noalpha = { 0, 0 };
-   struct stw_pixelformat_alpha_info alpha8 = { 8, 24 };
+   struct stw_pixelformat_color_info color24 = { 8, 0, 8, 8, 8, 16, 0, 0 };
+   struct stw_pixelformat_color_info color24a8 = { 8, 0, 8, 8, 8, 16, 8, 24 };
    struct stw_pixelformat_depth_info depth24s8 = { 24, 8 };
    struct stw_pixelformat_depth_info depth16 = { 16, 0 };
 
    pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
    pf->color = color24;
-   pf->alpha = noalpha;
+   pf->depth = depth24s8;
+   pf++;
+
+   pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
+   pf->color = color24a8;
    pf->depth = depth24s8;
    pf++;
 
    pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
    pf->color = color24;
-   pf->alpha = alpha8;
-   pf->depth = depth24s8;
-   pf++;
-
-   pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
-   pf->color = color24;
-   pf->alpha = noalpha;
    pf->depth = depth16;
    pf++;
 
    pf->flags = STW_PF_FLAG_DOUBLEBUFFER | flags;
-   pf->color = color24;
-   pf->alpha = alpha8;
+   pf->color = color24a8;
    pf->depth = depth16;
    pf++;
 
    pf->flags = flags;
    pf->color = color24;
-   pf->alpha = noalpha;
+   pf->depth = depth24s8;
+   pf++;
+
+   pf->flags = flags;
+   pf->color = color24a8;
    pf->depth = depth24s8;
    pf++;
 
    pf->flags = flags;
    pf->color = color24;
-   pf->alpha = alpha8;
-   pf->depth = depth24s8;
-   pf++;
-
-   pf->flags = flags;
-   pf->color = color24;
-   pf->alpha = noalpha;
    pf->depth = depth16;
    pf++;
 
    pf->flags = flags;
-   pf->color = color24;
-   pf->alpha = alpha8;
+   pf->color = color24a8;
    pf->depth = depth16;
    pf++;
 
@@ -171,8 +162,8 @@ stw_pixelformat_describe(
    ppfd->cGreenShift = pf->color.greenshift;
    ppfd->cBlueBits = pf->color.bluebits;
    ppfd->cBlueShift = pf->color.blueshift;
-   ppfd->cAlphaBits = pf->alpha.alphabits;
-   ppfd->cAlphaShift = pf->alpha.alphashift;
+   ppfd->cAlphaBits = pf->color.alphabits;
+   ppfd->cAlphaShift = pf->color.alphashift;
    ppfd->cAccumBits = 0;
    ppfd->cAccumRedBits = 0;
    ppfd->cAccumGreenBits = 0;
@@ -225,7 +216,7 @@ int stw_pixelformat_choose( HDC hdc,
       if (ppfd->cStencilBits != pf->depth.stencilbits)
          delta += 2;
 
-      if (ppfd->cAlphaBits != pf->alpha.alphabits)
+      if (ppfd->cAlphaBits != pf->color.alphabits)
          delta++;
 
       if (delta < bestdelta) {
