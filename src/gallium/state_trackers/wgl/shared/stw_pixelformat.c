@@ -205,7 +205,7 @@ int stw_pixelformat_choose( HDC hdc,
 
    count = stw_pixelformat_get_count();
    bestindex = count;
-   bestdelta = 0xffffffff;
+   bestdelta = ~0U;
 
    for (index = 0; index < count; index++) {
       uint delta = 0;
