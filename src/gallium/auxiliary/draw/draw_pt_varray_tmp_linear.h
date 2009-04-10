@@ -9,7 +9,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
                  unsigned count)
 {
    struct varray_frontend *varray = (struct varray_frontend *)frontend;
-   unsigned start = (unsigned)elts;
+   unsigned start = (unsigned) ((char *) elts - (char *) NULL);
 
    unsigned j;
    unsigned first, incr;
