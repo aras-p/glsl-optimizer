@@ -201,10 +201,10 @@ fillrate.o: fillrate.c readtex.h
 
 
 floattex: floattex.o readtex.o shaderutil.o
-	$(CC) $(CFLAGS) $(LDFLAGS) floattex.o readtex.o shaderutil.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) floattex.o readtex.o shaderutil.o $(LIBS) -o $@
 
 floattex.o: floattex.c readtex.h shaderutil.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) floattex.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) floattex.c -o $@
 
 
 readtex.o: readtex.c
@@ -230,7 +230,7 @@ shaderutil.h: $(TOP)/progs/util/shaderutil.h
 	cp $< .
 
 shaderutil.o: shaderutil.c shaderutil.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) shaderutil.c
+	$(APP_CC) -c -I$(INCDIR) $(INCLUDES) $(CFLAGS) shaderutil.c
 
 
 
