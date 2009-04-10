@@ -60,7 +60,7 @@ struct r300_dsa_state {
 };
 
 struct r300_rs_state {
-    /* XXX icky as fucking hell */
+    /* Draw-specific rasterizer state */
     struct pipe_rasterizer_state rs;
 
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
@@ -225,10 +225,11 @@ struct r300_vertex_format {
     uint32_t vap_prog_stream_cntl[8];
     /* R300_VAP_PROG_STREAK_CNTL_EXT_[0-7] */
     uint32_t vap_prog_stream_cntl_ext[8];
-    /* This is a map of VAP/SW TCL outputs into the GA/RS.
-     * tab[i] is the location of input i in GA/RS input memory.
-     * Named tab for historical reasons. */
-    int tab[16];
+    /* Map of vertex attributes into PVS memory for HW TCL,
+     * or GA memory for SW TCL. */
+    int vs_tab[16];
+    /* Map of rasterizer attributes from GB through RS to US. */
+    int fs_tab[16];
 };
 
 struct r300_vertex_shader {
