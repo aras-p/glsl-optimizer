@@ -100,7 +100,6 @@ st_texture_create(struct st_context *st,
    pt.width[0] = width0;
    pt.height[0] = height0;
    pt.depth[0] = depth0;
-   pt.compressed = pf_is_compressed(format);
    pf_get_block(format, &pt.block);
    pt.tex_usage = usage;
 

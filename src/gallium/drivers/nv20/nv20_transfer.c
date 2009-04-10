@@ -43,7 +43,6 @@ nv20_compatible_transfer_tex(struct pipe_texture *pt, unsigned level,
 	template->nblocksx[0] = pt->nblocksx[level];
 	template->nblocksy[0] = pt->nblocksx[level];
 	template->last_level = 0;
-	template->compressed = pt->compressed;
 	template->nr_samples = pt->nr_samples;
 
 	template->tex_usage = PIPE_TEXTURE_USAGE_DYNAMIC |

@@ -336,7 +336,6 @@ struct pipe_texture
    unsigned nblocksy[PIPE_MAX_TEXTURE_LEVELS]; /**< allocated height in blocks */
 
    unsigned last_level:8;    /**< Index of last mipmap level present/defined */
-   unsigned compressed:1;
 
    unsigned nr_samples:8;    /**< for multisampled surfaces, nr of samples */
 
