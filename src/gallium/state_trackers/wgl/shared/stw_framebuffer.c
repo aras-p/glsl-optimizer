@@ -235,6 +235,8 @@ stw_framebuffer_destroy(
 
    pipe_mutex_unlock( stw_dev->mutex );
 
+   st_unreference_framebuffer(fb->stfb);
+   
    FREE( fb );
 }
 
