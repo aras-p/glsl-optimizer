@@ -108,13 +108,6 @@ WGLAPI int   GLAPIENTRY GetPixelFormat(HDC);
 WGLAPI int   GLAPIENTRY SetPixelFormat(HDC,int,const PIXELFORMATDESCRIPTOR *);
 #endif
 
-#ifndef WGL_ARB_extensions_string
-#define WGL_ARB_extensions_string 1
-
-WGLAPI const char * GLAPIENTRY wglGetExtensionsStringARB(HDC hdc);
-
-#endif /* WGL_ARB_extensions_string */
-
 
 #ifdef _MSC_VER
 #  pragma warning( pop )
