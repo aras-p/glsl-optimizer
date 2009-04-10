@@ -389,7 +389,7 @@ linux*)
     ;;
 *freebsd* | dragonfly*)
     case "$host_cpu" in
-    i*86|x86_64) default_driver="dri";;
+    i*86|x86_64|powerpc*|sparc*) default_driver="dri";;
     esac
     ;;
 esac
