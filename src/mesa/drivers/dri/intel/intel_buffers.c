@@ -321,7 +321,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 static void
 intelDrawBuffer(GLcontext * ctx, GLenum mode)
 {
-   if (ctx->DrawBuffer->Name == 0) {
+   if ((ctx->DrawBuffer != NULL) && (ctx->DrawBuffer->Name == 0)) {
       struct intel_context *const intel = intel_context(ctx);
 
       intel->is_front_buffer_rendering = (mode == GL_FRONT_LEFT);
