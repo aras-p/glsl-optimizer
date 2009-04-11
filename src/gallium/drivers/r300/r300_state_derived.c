@@ -46,7 +46,7 @@ static void r300_vs_tab_routes(struct r300_context* r300,
 
     assert(info->num_inputs <= 16);
     for (i = 0; i < info->num_inputs; i++) {
-        switch (info->output_semantic_name[i]) {
+        switch (info->input_semantic_name[i]) {
             case TGSI_SEMANTIC_POSITION:
                 pos = TRUE;
                 tab[i] = 0;
@@ -98,13 +98,9 @@ static void r300_vs_tab_routes(struct r300_context* r300,
             tab[i] = tab[i-1];
         }
         tab[0] = 0;
-
-        draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_POS,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_POSITION, 0));
-    } else {
-        draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_POSITION, 0));
     }
+    draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
+        draw_find_vs_output(r300->draw, TGSI_SEMANTIC_POSITION, 0));
     vinfo->hwfmt[1] |= R300_INPUT_CNTL_POS;
     vinfo->hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
 
@@ -209,30 +205,92 @@ static void r300_update_vertex_format(struct r300_context* r300)
     }
 }
 
+/* Set up the mappings from GB to US, for RS block. */
+static void r300_update_fs_tab(struct r300_context* r300)
+{
+    struct r300_vertex_format* vformat = &r300->vertex_info;
+    struct tgsi_shader_info* info = &r300->fs->info;
+    int i, cols = 0, texs = 0, cols_emitted = 0;
+    int* tab = vformat->fs_tab;
+
+    for (i = 0; i < 16; i++) {
+        tab[i] = -1;
+    }
+
+    assert(info->num_inputs <= 16);
+    for (i = 0; i < info->num_inputs; i++) {
+        switch (info->input_semantic_name[i]) {
+            case TGSI_SEMANTIC_COLOR:
+                tab[i] = INTERP_LINEAR;
+                cols++;
+                break;
+            case TGSI_SEMANTIC_POSITION:
+            case TGSI_SEMANTIC_PSIZE:
+                debug_printf("r300: Implementation error: Can't use "
+                        "pos attribs in fragshader yet!\n");
+                /* Pass through for now */
+            case TGSI_SEMANTIC_FOG:
+            case TGSI_SEMANTIC_GENERIC:
+                tab[i] = INTERP_PERSPECTIVE;
+                break;
+            default:
+                debug_printf("r300: Unknown vertex input %d\n",
+                    info->input_semantic_name[i]);
+                break;
+        }
+    }
+
+    /* Now that we know where everything is... */
+    debug_printf("r300: fp input count: %d\n", info->num_inputs);
+    for (i = 0; i < info->num_inputs; i++) {
+        switch (tab[i]) {
+            case INTERP_LINEAR:
+                debug_printf("r300: attrib: "
+                        "stack offset %d, color,    tab %d\n",
+                        i, cols_emitted);
+                tab[i] = cols_emitted;
+                cols_emitted++;
+                break;
+            case INTERP_PERSPECTIVE:
+                debug_printf("r300: attrib: "
+                        "stack offset %d, texcoord, tab %d\n",
+                        i, cols + texs);
+                tab[i] = cols + texs;
+                texs++;
+                break;
+            case -1:
+                debug_printf("r300: Implementation error: Bad fp interp!\n");
+            default:
+                break;
+        }
+    }
+
+}
+
 /* Set up the RS block. This is the part of the chipset that actually does
  * the rasterization of vertices into fragments. This is also the part of the
  * chipset that locks up if any part of it is even slightly wrong. */
 static void r300_update_rs_block(struct r300_context* r300)
 {
     struct r300_rs_block* rs = r300->rs_block;
-    struct vertex_info* vinfo = &r300->vertex_info.vinfo;
-    int* tab = r300->vertex_info.vs_tab;
+    struct tgsi_shader_info* info = &r300->fs->info;
+    int* tab = r300->vertex_info.fs_tab;
     int col_count = 0, fp_offset = 0, i, memory_pos, tex_count = 0;
 
     memset(rs, 0, sizeof(struct r300_rs_block));
 
     if (r300_screen(r300->context.screen)->caps->is_r500) {
-        for (i = 0; i < vinfo->num_attribs; i++) {
-            assert(tab[vinfo->attrib[i].src_index] != -1);
-            memory_pos = tab[vinfo->attrib[i].src_index] * 4;
-            switch (vinfo->attrib[i].interp_mode) {
-                case INTERP_LINEAR:
+        for (i = 0; i < info->num_inputs; i++) {
+            assert(tab[i] != -1);
+            memory_pos = tab[i] * 4;
+            switch (info->input_semantic_name[i]) {
+                case TGSI_SEMANTIC_COLOR:
                     rs->ip[col_count] |=
                         R500_RS_COL_PTR(memory_pos) |
                         R500_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
                     col_count++;
                     break;
-                case INTERP_PERSPECTIVE:
+                case TGSI_SEMANTIC_GENERIC:
                     rs->ip[tex_count] |=
                         R500_RS_SEL_S(memory_pos) |
                         R500_RS_SEL_T(memory_pos + 1) |
@@ -274,17 +332,17 @@ static void r300_update_rs_block(struct r300_context* r300)
             fp_offset++;
         }
     } else {
-        for (i = 0; i < vinfo->num_attribs; i++) {
-            memory_pos = tab[vinfo->attrib[i].src_index] * 4;
-            assert(tab[vinfo->attrib[i].src_index] != -1);
-            switch (vinfo->attrib[i].interp_mode) {
-                case INTERP_LINEAR:
+        for (i = 0; i < info->num_inputs; i++) {
+            assert(tab[i] != -1);
+            memory_pos = tab[i] * 4;
+            switch (info->input_semantic_name[i]) {
+                case TGSI_SEMANTIC_COLOR:
                     rs->ip[col_count] |=
                         R300_RS_COL_PTR(memory_pos) |
                         R300_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
                     col_count++;
                     break;
-                case INTERP_PERSPECTIVE:
+                case TGSI_SEMANTIC_GENERIC:
                     rs->ip[tex_count] |=
                         R300_RS_TEX_PTR(memory_pos) |
                         R300_RS_SEL_S(R300_RS_SEL_C0) |
@@ -342,6 +400,7 @@ void r300_update_derived_state(struct r300_context* r300)
     }
 
     if (r300->dirty_state & R300_NEW_VERTEX_FORMAT) {
+        r300_update_fs_tab(r300);
         r300_update_rs_block(r300);
     }
 }
