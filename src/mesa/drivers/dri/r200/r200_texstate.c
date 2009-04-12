@@ -1422,8 +1422,8 @@ void set_re_cntl_d3d( GLcontext *ctx, int unit, GLboolean use_d3d )
  */
 static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
 {
-   const struct gl_texture_image *firstImage =
-      t->base.Image[0][t->mt->firstLevel];
+   int firstlevel = t->mt ? t->mt->firstLevel : 0;
+   const struct gl_texture_image *firstImage = t->base.Image[0][firstlevel];
    GLint log2Width, log2Height, log2Depth, texelBytes;
    
    if ( t->bo ) {
