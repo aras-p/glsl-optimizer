@@ -448,6 +448,17 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    // }
 
    END_BATCH();
+   BEGIN_BATCH_NO_AUTOSTATE(4);
+   OUT_BATCH(CP_PACKET0(RADEON_RE_TOP_LEFT, 0));
+   OUT_BATCH(0);
+   OUT_BATCH(CP_PACKET0(RADEON_RE_WIDTH_HEIGHT, 0));
+   if (rrb) {
+       OUT_BATCH(((rrb->width - 1) << RADEON_RE_WIDTH_SHIFT) |
+                 ((rrb->height - 1) << RADEON_RE_HEIGHT_SHIFT));
+   } else {
+       OUT_BATCH(0);
+   }
+   END_BATCH();
 }
 
 static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
