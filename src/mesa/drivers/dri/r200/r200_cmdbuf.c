@@ -209,6 +209,11 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
    rmesa->radeon.tcl.elt_dma_offset = 0;
    rmesa->tcl.elt_used = min_nr * 2;
 
+   radeon_validate_bo(&rmesa->radeon, rmesa->radeon.tcl.elt_dma_bo,
+                      RADEON_GEM_DOMAIN_GTT, 0);
+   if (radeon_revalidate_bos(rmesa->radeon.glCtx) == GL_FALSE)
+      fprintf(stderr,"failure to revalidate BOs - badness\n");
+
    radeon_bo_map(rmesa->radeon.tcl.elt_dma_bo, 1);
    retval = rmesa->radeon.tcl.elt_dma_bo->ptr + rmesa->radeon.tcl.elt_dma_offset;
    
