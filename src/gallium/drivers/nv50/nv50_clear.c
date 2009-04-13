@@ -39,14 +39,12 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
 	if (!nv50_state_validate(nv50))
 		return;
 
-	if (buffers & PIPE_CLEAR_COLOR) {
-		BEGIN_RING(chan, tesla, NV50TCL_CLEAR_COLOR(0), 4*fb->nr_cbufs);
-		for (i = 0; i < fb->nr_cbufs; i++) {
-			OUT_RING  (chan, fui(rgba[0]));
-			OUT_RING  (chan, fui(rgba[1]));
-			OUT_RING  (chan, fui(rgba[2]));
-			OUT_RING  (chan, fui(rgba[3]));
-		}
+	if (buffers & PIPE_CLEAR_COLOR && fb->nr_cbufs) {
+		BEGIN_RING(chan, tesla, NV50TCL_CLEAR_COLOR(0), 4);
+		OUT_RING  (chan, fui(rgba[0]));
+		OUT_RING  (chan, fui(rgba[1]));
+		OUT_RING  (chan, fui(rgba[2]));
+		OUT_RING  (chan, fui(rgba[3]));
 		mode |= 0x3c;
 	}
 
@@ -61,5 +59,10 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
 
 	BEGIN_RING(chan, tesla, NV50TCL_CLEAR_BUFFERS, 1);
 	OUT_RING  (chan, mode);
+
+	for (i = 1; i < fb->nr_cbufs; i++) {
+		BEGIN_RING(chan, tesla, NV50TCL_CLEAR_BUFFERS, 1);
+		OUT_RING  (chan, (i << 6) | 0x3c);
+	}
 }
 
