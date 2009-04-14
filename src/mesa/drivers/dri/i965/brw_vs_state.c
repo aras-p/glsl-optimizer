@@ -44,6 +44,8 @@ struct brw_vs_unit_key {
    unsigned int curbe_offset;
 
    unsigned int nr_urb_entries, urb_size;
+
+   unsigned int nr_surfaces;
 };
 
 static void
@@ -61,6 +63,9 @@ vs_unit_populate_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    /* BRW_NEW_URB_FENCE */
    key->nr_urb_entries = brw->urb.nr_vs_entries;
    key->urb_size = brw->urb.vsize;
+
+   /* BRW_NEW_NR_VS_SURFACES */
+   key->nr_surfaces = brw->vs.nr_surfaces;
 
    /* BRW_NEW_CURBE_OFFSETS, _NEW_TRANSFORM */
    if (ctx->Transform.ClipPlanesEnabled) {
@@ -92,6 +97,8 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
     * brw_urb_WRITE() results.
     */
    vs.thread1.single_program_flow = 0;
+   vs.thread1.binding_table_entry_count = key->nr_surfaces;
+
    vs.thread3.urb_entry_read_length = key->urb_entry_read_length;
    vs.thread3.const_urb_entry_read_length = key->curb_entry_read_length;
    vs.thread3.dispatch_grf_start_reg = 1;
@@ -158,6 +165,7 @@ const struct brw_tracked_state brw_vs_unit = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM,
       .brw   = (BRW_NEW_CURBE_OFFSETS |
+                BRW_NEW_NR_VS_SURFACES |
 		BRW_NEW_URB_FENCE),
       .cache = CACHE_NEW_VS_PROG
    },

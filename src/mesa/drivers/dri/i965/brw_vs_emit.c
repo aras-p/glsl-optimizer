@@ -38,14 +38,45 @@
 #include "brw_vs.h"
 
 
+static struct brw_reg get_tmp( struct brw_vs_compile *c )
+{
+   struct brw_reg tmp = brw_vec8_grf(c->last_tmp, 0);
 
-/* Do things as simply as possible.  Allocate and populate all regs
+   if (++c->last_tmp > c->prog_data.total_grf)
+      c->prog_data.total_grf = c->last_tmp;
+
+   return tmp;
+}
+
+static void release_tmp( struct brw_vs_compile *c, struct brw_reg tmp )
+{
+   if (tmp.nr == c->last_tmp-1)
+      c->last_tmp--;
+}
+			       
+static void release_tmps( struct brw_vs_compile *c )
+{
+   c->last_tmp = c->first_tmp;
+}
+
+
+/**
+ * Preallocate GRF register before code emit.
+ * Do things as simply as possible.  Allocate and populate all regs
  * ahead of time.
  */
 static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
    GLuint i, reg = 0, mrf;
    GLuint nr_params;
+
+#if 0
+   if (c->vp->program.Base.Parameters->NumParameters >= 6)
+      c->use_const_buffer = 1;
+   else
+#endif
+      c->use_const_buffer = GL_FALSE;
+   /*printf("use_const_buffer = %d\n", c->use_const_buffer);*/
 
    /* r0 -- reserved as usual
     */
@@ -66,13 +97,19 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    /* Vertex program parameters from curbe:
     */
-   nr_params = c->vp->program.Base.Parameters->NumParameters;
-   for (i = 0; i < nr_params; i++) {
-      c->regs[PROGRAM_STATE_VAR][i] = stride( brw_vec4_grf(reg+i/2, (i%2) * 4), 0, 4, 1);
-   }     
-   reg += (nr_params + 1) / 2;
-
-   c->prog_data.curb_read_length = reg - 1;
+   if (c->use_const_buffer) {
+      /* get constants from a real constant buffer */
+      c->prog_data.curb_read_length = 0;
+   }
+   else {
+      /* use a section of the GRF for constants */
+      nr_params = c->vp->program.Base.Parameters->NumParameters;
+      for (i = 0; i < nr_params; i++) {
+         c->regs[PROGRAM_STATE_VAR][i] = stride( brw_vec4_grf(reg+i/2, (i%2) * 4), 0, 4, 1);
+      }
+      reg += (nr_params + 1) / 2;
+      c->prog_data.curb_read_length = reg - 1;
+   }
 
    /* Allocate input regs:  
     */
@@ -157,33 +194,18 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    c->prog_data.urb_entry_size = (c->nr_outputs + 2 + 3) / 4;
    c->prog_data.total_grf = reg;
 
+   if (c->use_const_buffer) {
+       for (i = 0; i < 3; i++) {
+          c->current_const[i].index = -1;
+          c->current_const[i].reg = get_tmp(c);
+       }
+   }
+
    if (INTEL_DEBUG & DEBUG_VS) {
       _mesa_printf("%s NumAddrRegs %d\n", __FUNCTION__, c->vp->program.Base.NumAddressRegs);
       _mesa_printf("%s NumTemps %d\n", __FUNCTION__, c->vp->program.Base.NumTemporaries);
       _mesa_printf("%s reg = %d\n", __FUNCTION__, reg);
    }
-}
-
-
-static struct brw_reg get_tmp( struct brw_vs_compile *c )
-{
-   struct brw_reg tmp = brw_vec8_grf(c->last_tmp, 0);
-
-   if (++c->last_tmp > c->prog_data.total_grf)
-      c->prog_data.total_grf = c->last_tmp;
-
-   return tmp;
-}
-
-static void release_tmp( struct brw_vs_compile *c, struct brw_reg tmp )
-{
-   if (tmp.nr == c->last_tmp-1)
-      c->last_tmp--;
-}
-			       
-static void release_tmps( struct brw_vs_compile *c )
-{
-   c->last_tmp = c->first_tmp;
 }
 
 
@@ -673,13 +695,59 @@ static void emit_nrm( struct brw_vs_compile *c,
 }
 
 
+static struct brw_reg
+get_constant(struct brw_vs_compile *c,
+             const struct prog_instruction *inst,
+             GLuint argIndex)
+{
+   const struct prog_src_register *src = &inst->SrcReg[argIndex];
+   struct brw_compile *p = &c->func;
+   struct brw_reg const_reg;
+
+   if (c->current_const[argIndex].index != src->Index) {
+      struct brw_reg src_reg = get_tmp(c);
+      struct brw_reg t = get_tmp(c);
+
+      c->current_const[argIndex].index = src->Index;
+
+      brw_MOV(p, t, brw_vec8_grf(0, 0));/*SAVE*/
+
+#if 0
+      printf("  fetch const[%d] for arg %d into reg %d\n",
+             src->Index, argIndex, c->current_const[argIndex].reg.nr);
+#endif
+
+      /* need to fetch the constant now */
+      brw_dp_READ_4_vs(p,
+                       c->current_const[argIndex].reg, /* writeback dest */
+                       src_reg,                        /* src reg */
+                       1,                              /* msg_reg */
+                       src->RelAddr,                   /* relative indexing? */
+                       16 * src->Index,                /* byte offset */
+                       SURF_INDEX_VERT_CONST_BUFFER    /* binding table index */
+                       );
+
+      brw_MOV(p, brw_vec8_grf(0, 0), t);/*RESTORE*/
+      release_tmp(c, src_reg);
+      release_tmp(c, t);
+   }
+
+   /* replicate lower four floats into upper four floats (to get XYZWXYZW) */
+   const_reg = c->current_const[argIndex].reg;
+   const_reg = stride(const_reg, 0, 4, 0);
+   const_reg.subnr = 0;
+
+   return const_reg;
+}
+
+
+
 /* TODO: relative addressing!
  */
 static struct brw_reg get_reg( struct brw_vs_compile *c,
 			       gl_register_file file,
 			       GLuint index )
 {
-
    switch (file) {
    case PROGRAM_TEMPORARY:
    case PROGRAM_INPUT:
@@ -708,13 +776,63 @@ static struct brw_reg get_reg( struct brw_vs_compile *c,
 }
 
 
+/**
+ * Get brw reg corresponding to the instruction's [argIndex] src reg.
+ * TODO: relative addressing!
+ */
+static struct brw_reg
+get_src_reg( struct brw_vs_compile *c,
+             const struct prog_instruction *inst,
+             GLuint argIndex )
+{
+   const GLuint file = inst->SrcReg[argIndex].File;
+   const GLint index = inst->SrcReg[argIndex].Index;
+
+   switch (file) {
+   case PROGRAM_TEMPORARY:
+   case PROGRAM_INPUT:
+   case PROGRAM_OUTPUT:
+      assert(c->regs[file][index].nr != 0);
+      return c->regs[file][index];
+   case PROGRAM_STATE_VAR:
+   case PROGRAM_CONSTANT:
+   case PROGRAM_UNIFORM:
+      if (c->use_const_buffer) {
+         return get_constant(c, inst, argIndex);
+      }
+      else {
+         assert(c->regs[PROGRAM_STATE_VAR][index].nr != 0);
+         return c->regs[PROGRAM_STATE_VAR][index];
+      }
+   case PROGRAM_ADDRESS:
+      assert(index == 0);
+      return c->regs[file][index];
+
+   case PROGRAM_UNDEFINED:
+      /* this is a normal case since we loop over all three src args */
+      return brw_null_reg();
+
+   case PROGRAM_LOCAL_PARAM: 
+   case PROGRAM_ENV_PARAM: 
+   case PROGRAM_WRITE_ONLY:
+   default:
+      assert(0);
+      return brw_null_reg();
+   }
+}
+
+
+/**
+ * Indirect addressing:  get reg[[arg] + offset].
+ */
 static struct brw_reg deref( struct brw_vs_compile *c,
 			     struct brw_reg arg,
 			     GLint offset)
 {
    struct brw_compile *p = &c->func;
    struct brw_reg tmp = vec4(get_tmp(c));
-   struct brw_reg vp_address = retype(vec1(get_reg(c, PROGRAM_ADDRESS, 0)), BRW_REGISTER_TYPE_UW);
+   struct brw_reg addr_reg = c->regs[PROGRAM_ADDRESS][0];
+   struct brw_reg vp_address = retype(vec1(addr_reg), BRW_REGISTER_TYPE_UW);
    GLuint byte_offset = arg.nr * 32 + arg.subnr + offset * 16;
    struct brw_reg indirect = brw_vec4_indirect(0,0);
 
@@ -758,22 +876,29 @@ static void emit_arl( struct brw_vs_compile *c,
 }
 
 
-/* Will return mangled results for SWZ op.  The emit_swz() function
+/**
+ * Return the brw reg for the given instruction's src argument.
+ * Will return mangled results for SWZ op.  The emit_swz() function
  * ignores this result and recalculates taking extended swizzles into
  * account.
  */
 static struct brw_reg get_arg( struct brw_vs_compile *c,
-			       struct prog_src_register *src )
+                               const struct prog_instruction *inst,
+                               GLuint argIndex )
 {
+   const struct prog_src_register *src = &inst->SrcReg[argIndex];
    struct brw_reg reg;
 
    if (src->File == PROGRAM_UNDEFINED)
       return brw_null_reg();
 
-   if (src->RelAddr) 
+   if (src->RelAddr) {
+      /* XXX fix */
       reg = deref(c, c->regs[PROGRAM_STATE_VAR][0], src->Index);
-   else
-      reg = get_reg(c, src->File, src->Index);
+   }
+   else {
+      reg = get_src_reg(c, inst, argIndex);
+   }
 
    /* Convert 3-bit swizzle to 2-bit.  
     */
@@ -790,10 +915,28 @@ static struct brw_reg get_arg( struct brw_vs_compile *c,
 }
 
 
+/**
+ * Get brw register for the given program dest register.
+ */
 static struct brw_reg get_dst( struct brw_vs_compile *c,
 			       struct prog_dst_register dst )
 {
-   struct brw_reg reg = get_reg(c, dst.File, dst.Index);
+   struct brw_reg reg;
+
+   switch (dst.File) {
+   case PROGRAM_TEMPORARY:
+   case PROGRAM_OUTPUT:
+      assert(c->regs[dst.File][dst.Index].nr != 0);
+      reg = c->regs[dst.File][dst.Index];
+      break;
+   case PROGRAM_UNDEFINED:
+      /* we may hit this for OPCODE_END, OPCODE_KIL, etc */
+      reg = brw_null_reg();
+      break;
+   default:
+      assert(0);
+      reg = brw_null_reg();
+   }
 
    reg.dw1.bits.writemask = dst.WriteMask;
 
@@ -803,8 +946,10 @@ static struct brw_reg get_dst( struct brw_vs_compile *c,
 
 static void emit_swz( struct brw_vs_compile *c, 
 		      struct brw_reg dst,
-		      struct prog_src_register src )
+                      const struct prog_instruction *inst)
 {
+   const GLuint argIndex = 0;
+   const struct prog_src_register src = inst->SrcReg[argIndex];
    struct brw_compile *p = &c->func;
    GLuint zeros_mask = 0;
    GLuint ones_mask = 0;
@@ -847,7 +992,7 @@ static void emit_swz( struct brw_vs_compile *c,
       if (src.RelAddr) 
 	 arg0 = deref(c, c->regs[PROGRAM_STATE_VAR][0], src.Index);
       else
-	 arg0 = get_reg(c, src.File, src.Index);
+	 arg0 = get_src_reg(c, inst, argIndex);
 
       arg0 = brw_swizzle(arg0, 
 			 src_swz[0], src_swz[1], 
@@ -1053,7 +1198,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	      if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src)
 		  args[i] = c->output_regs[index].reg;
 	      else
-		  args[i] = get_arg(c, src);
+                  args[i] = get_arg(c, inst, i);
 	  }
 
       /* Get dest regs.  Note that it is possible for a reg to be both
@@ -1181,7 +1326,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 /* The args[0] value can't be used here as it won't have
 	  * correctly encoded the full swizzle:
 	  */
-	 emit_swz(c, dst, inst->SrcReg[0] );
+	 emit_swz(c, dst, inst);
 	 break;
       case OPCODE_TRUNC:
          /* round toward zero */

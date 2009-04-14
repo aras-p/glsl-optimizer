@@ -141,7 +141,8 @@ struct brw_context;
 #define BRW_NEW_BATCH			0x10000
 /** brw->depth_region updated */
 #define BRW_NEW_DEPTH_BUFFER		0x20000
-#define BRW_NEW_NR_SURFACES		0x40000
+#define BRW_NEW_NR_WM_SURFACES		0x40000
+#define BRW_NEW_NR_VS_SURFACES		0x80000
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -245,20 +246,30 @@ struct brw_vs_ouput_sizes {
 #define BRW_MAX_TEX_UNIT 16
 
 /**
- * Size of our surface binding table.
+ * Size of our surface binding table for the WM.
  * This contains pointers to the drawing surfaces and current texture
  * objects and shader constant buffers (+2).
  */
-#define BRW_WM_MAX_SURF (MAX_DRAW_BUFFERS + BRW_MAX_TEX_UNIT + 2)
+#define BRW_WM_MAX_SURF (MAX_DRAW_BUFFERS + BRW_MAX_TEX_UNIT + 1)
 
 /**
  * Helpers to convert drawing buffers, textures and constant buffers
- * to surface binding table indexes.
+ * to surface binding table indexes, for WM.
  */
 #define SURF_INDEX_DRAW(d)           (d)
-#define SURF_INDEX_FRAG_CONST_BUFFER (MAX_DRAW_BUFFERS + 0) 
-#define SURF_INDEX_VERT_CONST_BUFFER (MAX_DRAW_BUFFERS + 1)
-#define SURF_INDEX_TEXTURE(t)        (MAX_DRAW_BUFFERS + 2 + t)
+#define SURF_INDEX_FRAG_CONST_BUFFER (MAX_DRAW_BUFFERS) 
+#define SURF_INDEX_TEXTURE(t)        (MAX_DRAW_BUFFERS + 1 + (t))
+
+/**
+ * Size of surface binding table for the VS.
+ * Only one constant buffer for now.
+ */
+#define BRW_VS_MAX_SURF 1
+
+/**
+ * Only a VS constant buffer
+ */
+#define SURF_INDEX_VERT_CONST_BUFFER 0
 
 
 enum brw_cache_id {
@@ -566,6 +577,11 @@ struct brw_context
 
       dri_bo *prog_bo;
       dri_bo *state_bo;
+
+      /** Binding table of pointers to surf_bo entries */
+      dri_bo *bind_bo;
+      dri_bo *surf_bo[BRW_VS_MAX_SURF];
+      GLuint nr_surfaces;      
    } vs;
 
    struct {

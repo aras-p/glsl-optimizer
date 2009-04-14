@@ -357,6 +357,7 @@ update_constant_buffer(struct brw_context *brw,
 }
 
 
+/** Copy current vertex program's parameters into the constant buffer */
 static void
 update_vertex_constant_buffer(struct brw_context *brw)
 {
@@ -366,6 +367,7 @@ update_vertex_constant_buffer(struct brw_context *brw)
 }
 
 
+/** Copy current fragment program's parameters into the constant buffer */
 static void
 update_fragment_constant_buffer(struct brw_context *brw)
 {
