@@ -705,12 +705,8 @@ get_constant(struct brw_vs_compile *c,
    struct brw_reg const_reg;
 
    if (c->current_const[argIndex].index != src->Index) {
-      struct brw_reg src_reg = get_tmp(c);
-      struct brw_reg t = get_tmp(c);
 
       c->current_const[argIndex].index = src->Index;
-
-      brw_MOV(p, t, brw_vec8_grf(0, 0));/*SAVE*/
 
 #if 0
       printf("  fetch const[%d] for arg %d into reg %d\n",
@@ -720,16 +716,10 @@ get_constant(struct brw_vs_compile *c,
       /* need to fetch the constant now */
       brw_dp_READ_4_vs(p,
                        c->current_const[argIndex].reg, /* writeback dest */
-                       src_reg,                        /* src reg */
-                       1,                              /* msg_reg */
                        src->RelAddr,                   /* relative indexing? */
                        16 * src->Index,                /* byte offset */
                        SURF_INDEX_VERT_CONST_BUFFER    /* binding table index */
                        );
-
-      brw_MOV(p, brw_vec8_grf(0, 0), t);/*RESTORE*/
-      release_tmp(c, src_reg);
-      release_tmp(c, t);
    }
 
    /* replicate lower four floats into upper four floats (to get XYZWXYZW) */

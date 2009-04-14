@@ -969,6 +969,7 @@ void brw_dp_READ_4( struct brw_compile *p,
       brw_set_mask_control(p, BRW_MASK_DISABLE);
 
       /* set message header global offset field (reg 0, element 2) */
+      /* Note that grf[0] will be copied to mrf[1] implicitly by the SEND instr */
       brw_MOV(p,
 	      retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_UD),
 	      brw_imm_d(location));
@@ -1001,30 +1002,39 @@ void brw_dp_READ_4( struct brw_compile *p,
 }
 
 
-/* XXX this function is temporary - merge with brw_dp_READ_4() above. */
+/**
+ * Read float[4] constant from VS constant buffer.
+ */
 void brw_dp_READ_4_vs(struct brw_compile *p,
                       struct brw_reg dest,
-                      struct brw_reg src,
-                      GLuint msg_reg_nr,
                       GLboolean relAddr,
                       GLuint location,
                       GLuint bind_table_index)
 {
+   const GLuint msg_reg_nr = 1;
+
+   /*
+   printf("vs const read msg, location %u, msg_reg_nr %d\n",
+          location, msg_reg_nr);
+   */
+
+   /* Setup MRF[1] with location/offset into const buffer */
    {
+      struct brw_reg b;
+
       brw_push_insn_state(p);
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+      /*brw_set_access_mode(p, BRW_ALIGN_16);*/
 
-      /*src.nr = 0;*/
-
-      /* set message header global offset field (reg 0, element 2) */
-      brw_MOV(p,
-#if 1
-	      retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_UD),
-#elif 0
-	      retype(brw_vec1_grf(src.nr, 2), BRW_REGISTER_TYPE_UD),
-#endif
-	      brw_imm_d(location));
+      /* XXX I think we're setting all the dwords of MRF[1] to 'location'.
+       * when the docs say only dword[2] should be set.  Hmmm.  But it works.
+       */
+      b = brw_message_reg(msg_reg_nr);
+      b = retype(b, BRW_REGISTER_TYPE_UD);
+      /*b = get_element_ud(b, 2);*/
+      brw_MOV(p, b, brw_imm_ud(location));
 
       brw_pop_insn_state(p);
    }
@@ -1036,18 +1046,11 @@ void brw_dp_READ_4_vs(struct brw_compile *p,
       insn->header.compression_control = BRW_COMPRESSION_NONE; 
       insn->header.destreg__conditonalmod = msg_reg_nr;
       insn->header.mask_control = BRW_MASK_DISABLE;
+      /*insn->header.access_mode = BRW_ALIGN_16;*/
   
-      /* cast dest to a uword[8] vector */
-      //      dest = retype(vec8(dest), BRW_REGISTER_TYPE_UW);
-
       brw_set_dest(insn, dest);
-#if 1
-      brw_set_src0(insn, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
-#elif 0
-      brw_set_src0(insn, retype(brw_vec8_grf(src.nr, 0), BRW_REGISTER_TYPE_UW));
-#endif
+      brw_set_src0(insn, brw_null_reg());
 
-      printf("vs const read msg, location %u, msg_reg_nr %d\n", location, msg_reg_nr);
       brw_set_dp_read_message(insn,
 			      bind_table_index,
 			      0,  /* msg_control (0 means 1 Oword) */

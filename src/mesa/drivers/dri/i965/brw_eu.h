@@ -865,11 +865,8 @@ void brw_dp_READ_4( struct brw_compile *p,
                     GLuint location,
                     GLuint bind_table_index );
 
-/* XXX this function is temporary - merge with brw_dp_READ_4() above. */
 void brw_dp_READ_4_vs( struct brw_compile *p,
                        struct brw_reg dest,
-                       struct brw_reg src,
-                       GLuint msg_reg_nr,
                        GLboolean relAddr,
                        GLuint location,
                        GLuint bind_table_index );
