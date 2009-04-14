@@ -169,7 +169,7 @@ st_FreeTextureImageData(GLcontext * ctx, struct gl_texture_image *texImage)
  * than COPY_DWORDS would:
  * XXX Put this in src/mesa/main/imports.h ???
  */
-#if defined(i386) || defined(__i386__)
+#if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86)
 static INLINE void *
 __memcpy(void *to, const void *from, size_t n)
 {
