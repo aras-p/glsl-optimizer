@@ -255,8 +255,7 @@ static void final_rewrite(struct pair_state *s, struct prog_instruction *inst)
 		inst->SrcReg[2] = inst->SrcReg[1];
 		inst->SrcReg[1].File = PROGRAM_BUILTIN;
 		inst->SrcReg[1].Swizzle = SWIZZLE_1111;
-		inst->SrcReg[1].NegateBase = 0;
-		inst->SrcReg[1].NegateAbs = 0;
+		inst->SrcReg[1].Negate = NEGATE_NONE;
 		inst->Opcode = OPCODE_MAD;
 		break;
 	case OPCODE_CMP:
@@ -730,7 +729,7 @@ static GLboolean fill_instruction_into_pair(struct pair_state *s, struct radeon_
 					srcrgb = GL_TRUE;
 				else if (swz < 4)
 					srcalpha = GL_TRUE;
-				if (swz != SWIZZLE_NIL && GET_BIT(inst->SrcReg[i].NegateBase, j))
+				if (swz != SWIZZLE_NIL && GET_BIT(inst->SrcReg[i].Negate, j))
 					negatebase = 1;
 			}
 			source = alloc_pair_source(s, pair, inst->SrcReg[i], srcrgb, srcalpha);
@@ -739,12 +738,12 @@ static GLboolean fill_instruction_into_pair(struct pair_state *s, struct radeon_
 			pair->RGB.Arg[i].Source = source;
 			pair->RGB.Arg[i].Swizzle = inst->SrcReg[i].Swizzle & 0x1ff;
 			pair->RGB.Arg[i].Abs = inst->SrcReg[i].Abs;
-			pair->RGB.Arg[i].Negate = (negatebase & ~pair->RGB.Arg[i].Abs) ^ inst->SrcReg[i].NegateAbs;
+			pair->RGB.Arg[i].Negate = (negatebase & ~pair->RGB.Arg[i].Abs) ^ inst->SrcReg[i].Negate;
 		}
 		if (pairinst->NeedAlpha) {
 			GLboolean srcrgb = GL_FALSE;
 			GLboolean srcalpha = GL_FALSE;
-			GLuint negatebase = GET_BIT(inst->SrcReg[i].NegateBase, pairinst->IsTranscendent ? 0 : 3);
+			GLuint negatebase = GET_BIT(inst->SrcReg[i].Negate, pairinst->IsTranscendent ? 0 : 3);
 			GLuint swz = GET_SWZ(inst->SrcReg[i].Swizzle, pairinst->IsTranscendent ? 0 : 3);
 			if (swz < 3)
 				srcrgb = GL_TRUE;
@@ -756,7 +755,7 @@ static GLboolean fill_instruction_into_pair(struct pair_state *s, struct radeon_
 			pair->Alpha.Arg[i].Source = source;
 			pair->Alpha.Arg[i].Swizzle = swz;
 			pair->Alpha.Arg[i].Abs = inst->SrcReg[i].Abs;
-			pair->Alpha.Arg[i].Negate = (negatebase & ~pair->RGB.Arg[i].Abs) ^ inst->SrcReg[i].NegateAbs;
+			pair->Alpha.Arg[i].Negate = (negatebase & ~pair->RGB.Arg[i].Abs) ^ inst->SrcReg[i].Negate;
 		}
 	}
 

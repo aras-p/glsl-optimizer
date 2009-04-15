@@ -2669,7 +2669,7 @@ parse_vector_src_reg(GLcontext *ctx, const GLubyte **inst,
    reg->File = file;
    reg->Index = index;
    reg->Swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1], swizzle[2], swizzle[3]);
-   reg->NegateBase = negateMask;
+   reg->Negate = negateMask;
    reg->RelAddr = isRelOffset;
    return 0;
 }
@@ -2703,7 +2703,7 @@ parse_scalar_src_reg(GLcontext *ctx, const GLubyte **inst,
    reg->File = file;
    reg->Index = index;
    reg->Swizzle = (swizzle[0] << 0);
-   reg->NegateBase = negateMask;
+   reg->Negate = negateMask;
    reg->RelAddr = isRelOffset;
    return 0;
 }
@@ -3019,7 +3019,7 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
 	    parse_extended_swizzle_mask(inst, swizzle, &negateMask);
 	    fp->SrcReg[0].File = file;
 	    fp->SrcReg[0].Index = index;
-	    fp->SrcReg[0].NegateBase = negateMask;
+	    fp->SrcReg[0].Negate = negateMask;
 	    fp->SrcReg[0].Swizzle = MAKE_SWIZZLE4(swizzle[0],
                                                   swizzle[1],
                                                   swizzle[2],
@@ -3363,7 +3363,7 @@ parse_vp_instruction (GLcontext * ctx, const GLubyte ** inst,
 	    parse_extended_swizzle_mask (inst, swizzle, &negateMask);
 	    vp->SrcReg[0].File = file;
 	    vp->SrcReg[0].Index = index;
-	    vp->SrcReg[0].NegateBase = negateMask;
+	    vp->SrcReg[0].Negate = negateMask;
 	    vp->SrcReg[0].Swizzle = MAKE_SWIZZLE4(swizzle[0],
                                                   swizzle[1],
                                                   swizzle[2],

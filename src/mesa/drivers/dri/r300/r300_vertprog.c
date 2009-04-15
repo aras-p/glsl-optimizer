@@ -245,7 +245,7 @@ static unsigned long t_src_index(struct r300_vertex_program *vp,
 static unsigned long t_src(struct r300_vertex_program *vp,
 			   struct prog_src_register *src)
 {
-	/* src->NegateBase uses the NEGATE_ flags from program_instruction.h,
+	/* src->Negate uses the NEGATE_ flags from program_instruction.h,
 	 * which equal our VSF_FLAGS_ values, so it's safe to just pass it here.
 	 */
 	return PVS_SRC_OPERAND(t_src_index(vp, src),
@@ -254,13 +254,13 @@ static unsigned long t_src(struct r300_vertex_program *vp,
 			       t_swizzle(GET_SWZ(src->Swizzle, 2)),
 			       t_swizzle(GET_SWZ(src->Swizzle, 3)),
 			       t_src_class(src->File),
-			       src->NegateBase) | (src->RelAddr << 4);
+			       src->Negate) | (src->RelAddr << 4);
 }
 
 static unsigned long t_src_scalar(struct r300_vertex_program *vp,
 				  struct prog_src_register *src)
 {
-	/* src->NegateBase uses the NEGATE_ flags from program_instruction.h,
+	/* src->Negate uses the NEGATE_ flags from program_instruction.h,
 	 * which equal our VSF_FLAGS_ values, so it's safe to just pass it here.
 	 */
 	return PVS_SRC_OPERAND(t_src_index(vp, src),
@@ -269,8 +269,7 @@ static unsigned long t_src_scalar(struct r300_vertex_program *vp,
 			       t_swizzle(GET_SWZ(src->Swizzle, 0)),
 			       t_swizzle(GET_SWZ(src->Swizzle, 0)),
 			       t_src_class(src->File),
-			       src->
-			       NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+			       src->Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
 	    (src->RelAddr << 4);
 }
 
@@ -307,7 +306,7 @@ static GLuint *r300TranslateOpcodeABS(struct r300_vertex_program *vp,
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),
 				  t_src_class(src[0].File),
 				  (!src[0].
-				   NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+				   Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
 	    (src[0].RelAddr << 4);
 	inst[3] = 0;
 
@@ -369,8 +368,7 @@ static GLuint *r300TranslateOpcodeDP3(struct r300_vertex_program *vp,
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
 				  SWIZZLE_ZERO,
 				  t_src_class(src[0].File),
-				  src[0].
-				  NegateBase ? VSF_FLAG_XYZ : VSF_FLAG_NONE) |
+				  src[0].Negate ? VSF_FLAG_XYZ : VSF_FLAG_NONE) |
 	    (src[0].RelAddr << 4);
 	inst[2] =
 	    PVS_SRC_OPERAND(t_src_index(vp, &src[1]),
@@ -378,8 +376,7 @@ static GLuint *r300TranslateOpcodeDP3(struct r300_vertex_program *vp,
 			    t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
 			    t_swizzle(GET_SWZ(src[1].Swizzle, 2)), SWIZZLE_ZERO,
 			    t_src_class(src[1].File),
-			    src[1].
-			    NegateBase ? VSF_FLAG_XYZ : VSF_FLAG_NONE) |
+			    src[1].Negate ? VSF_FLAG_XYZ : VSF_FLAG_NONE) |
 	    (src[1].RelAddr << 4);
 	inst[3] = __CONST(1, SWIZZLE_ZERO);
 
@@ -422,8 +419,7 @@ static GLuint *r300TranslateOpcodeDPH(struct r300_vertex_program *vp,
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
 				  PVS_SRC_SELECT_FORCE_1,
 				  t_src_class(src[0].File),
-				  src[0].
-				  NegateBase ? VSF_FLAG_XYZ : VSF_FLAG_NONE) |
+				  src[0].Negate ? VSF_FLAG_XYZ : VSF_FLAG_NONE) |
 	    (src[0].RelAddr << 4);
 	inst[2] = t_src(vp, &src[1]);
 	inst[3] = __CONST(1, SWIZZLE_ZERO);
@@ -519,7 +515,7 @@ static GLuint *r300TranslateOpcodeFLR(struct r300_vertex_program *vp,
 				  PVS_SRC_SELECT_W, PVS_SRC_REG_TEMPORARY,
 				  /* Not 100% sure about this */
 				  (!src[0].
-				   NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE
+				   Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE
 				  /*VSF_FLAG_ALL */ );
 	inst[3] = __CONST(0, SWIZZLE_ZERO);
 	(*u_temp_i)--;
@@ -564,8 +560,7 @@ static GLuint *r300TranslateOpcodeLG2(struct r300_vertex_program *vp,
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
 				  t_src_class(src[0].File),
-				  src[0].
-				  NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+				  src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
 	    (src[0].RelAddr << 4);
 	inst[2] = __CONST(0, SWIZZLE_ZERO);
 	inst[3] = __CONST(0, SWIZZLE_ZERO);
@@ -592,24 +587,21 @@ static GLuint *r300TranslateOpcodeLIT(struct r300_vertex_program *vp,
 				  PVS_SRC_SELECT_FORCE_0,	// Z
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// Y
 				  t_src_class(src[0].File),
-				  src[0].
-				  NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+				  src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
 	    (src[0].RelAddr << 4);
 	inst[2] = PVS_SRC_OPERAND(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// Y
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),	// W
 				  PVS_SRC_SELECT_FORCE_0,	// Z
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// X
 				  t_src_class(src[0].File),
-				  src[0].
-				  NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+				  src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
 	    (src[0].RelAddr << 4);
 	inst[3] = PVS_SRC_OPERAND(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// Y
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// X
 				  PVS_SRC_SELECT_FORCE_0,	// Z
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),	// W
 				  t_src_class(src[0].File),
-				  src[0].
-				  NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+				  src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
 	    (src[0].RelAddr << 4);
 
 	return inst;
@@ -837,7 +829,7 @@ static GLuint *r300TranslateOpcodeSUB(struct r300_vertex_program *vp,
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 3)),
 				  t_src_class(src[1].File),
 				  (!src[1].
-				   NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+				   Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
 	    (src[1].RelAddr << 4);
 	inst[3] = 0;
 #else
@@ -857,7 +849,7 @@ static GLuint *r300TranslateOpcodeSUB(struct r300_vertex_program *vp,
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 3)),
 				  t_src_class(src[1].File),
 				  (!src[1].
-				   NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+				   Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
 	    (src[1].RelAddr << 4);
 #endif
 
@@ -905,16 +897,14 @@ static GLuint *r300TranslateOpcodeXPD(struct r300_vertex_program *vp,
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// X
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),	// W
 				  t_src_class(src[0].File),
-				  src[0].
-				  NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+				  src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
 	    (src[0].RelAddr << 4);
 	inst[2] = PVS_SRC_OPERAND(t_src_index(vp, &src[1]), t_swizzle(GET_SWZ(src[1].Swizzle, 2)),	// Z
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 0)),	// X
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 1)),	// Y
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 3)),	// W
 				  t_src_class(src[1].File),
-				  src[1].
-				  NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+				  src[1].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
 	    (src[1].RelAddr << 4);
 	inst[3] = __CONST(1, SWIZZLE_ZERO);
 	inst += 4;
@@ -931,15 +921,14 @@ static GLuint *r300TranslateOpcodeXPD(struct r300_vertex_program *vp,
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 3)),	// W
 				  t_src_class(src[1].File),
 				  (!src[1].
-				   NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+				   Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
 	    (src[1].RelAddr << 4);
 	inst[2] = PVS_SRC_OPERAND(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 2)),	// Z
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// X
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// Y
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),	// W
 				  t_src_class(src[0].File),
-				  src[0].
-				  NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+				  src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
 	    (src[0].RelAddr << 4);
 	inst[3] =
 	    PVS_SRC_OPERAND(*u_temp_i, PVS_SRC_SELECT_X, PVS_SRC_SELECT_Y,

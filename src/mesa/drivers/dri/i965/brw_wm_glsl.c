@@ -340,7 +340,7 @@ get_src_reg_const(struct brw_wm_compile *c,
    const_reg = stride(const_reg, 0, 1, 0);
    const_reg.subnr = component * 4;
 
-   if (src->NegateBase)
+   if (src->Negate & (1 << component))
       const_reg = negate(const_reg);
    if (src->Abs)
       const_reg = brw_abs(const_reg);
@@ -377,7 +377,7 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
     else {
        /* other type of source register */
        return get_reg(c, src->File, src->Index, component, nr, 
-                      src->NegateBase, src->Abs);
+                      src->Negate, src->Abs);
     }
 }
 
@@ -402,7 +402,7 @@ static struct brw_reg get_src_reg_imm(struct brw_wm_compile *c,
        const GLfloat *param =
           c->fp->program.Base.Parameters->ParameterValues[src->Index];
        GLfloat value = param[component];
-       if (src->NegateBase)
+       if (src->Negate & (1 << channel))
           value = -value;
        if (src->Abs)
           value = FABSF(value);

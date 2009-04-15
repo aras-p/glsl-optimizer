@@ -1135,7 +1135,7 @@ emit_negation(slang_emit_info *emitInfo, slang_ir_node *n)
                            n->Children[0]->Store,
                            NULL,
                            NULL);
-   inst->SrcReg[0].NegateBase = NEGATE_XYZW;
+   inst->SrcReg[0].Negate = NEGATE_XYZW;
    return inst;
 }
 

@@ -89,8 +89,9 @@ static void set_swizzle(struct prog_src_register *SrcReg, int coordinate, int sw
 
 static void set_negate_base(struct prog_src_register *SrcReg, int coordinate, int negate)
 {
-	SrcReg->NegateBase &= ~(1 << coordinate);
-	SrcReg->NegateBase |= (negate << coordinate);
+	/* XXX note sure about this negation logic here */
+	SrcReg->Negate &= ~(1 << coordinate);
+	SrcReg->Negate |= (negate << coordinate);
 }
 
 static struct prog_dst_register dstreg(int file, int index)
@@ -156,15 +157,14 @@ static struct prog_src_register absolute(struct prog_src_register reg)
 {
 	struct prog_src_register newreg = reg;
 	newreg.Abs = 1;
-	newreg.NegateBase = 0;
-	newreg.NegateAbs = 0;
+	newreg.Negate = NEGATE_NONE;
 	return newreg;
 }
 
 static struct prog_src_register negate(struct prog_src_register reg)
 {
 	struct prog_src_register newreg = reg;
-	newreg.NegateAbs = !newreg.NegateAbs;
+	newreg.Negate = newreg.Negate ^ NEGATE_XYZW;
 	return newreg;
 }
 
@@ -189,8 +189,7 @@ static void transform_ABS(struct radeon_transform_context* t,
 {
 	struct prog_src_register src = inst->SrcReg[0];
 	src.Abs = 1;
-	src.NegateBase = 0;
-	src.NegateAbs = 0;
+	src.Negate = NEGATE_NONE;
 	emit1(t->Program, OPCODE_MOV, inst->SaturateMode, inst->DstReg, src);
 }
 
@@ -198,14 +197,13 @@ static void transform_DPH(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
 	struct prog_src_register src0 = inst->SrcReg[0];
-	if (src0.NegateAbs) {
+	if (src0.Negate) {
 		if (src0.Abs) {
 			int tempreg = radeonFindFreeTemporary(t);
 			emit1(t->Program, OPCODE_MOV, 0, dstreg(PROGRAM_TEMPORARY, tempreg), src0);
 			src0 = srcreg(src0.File, src0.Index);
 		} else {
-			src0.NegateAbs = 0;
-			src0.NegateBase ^= NEGATE_XYZW;
+			src0.Negate ^= NEGATE_XYZW;
 		}
 	}
 	set_swizzle(&src0, 3, SWIZZLE_ONE);
@@ -649,7 +647,7 @@ GLboolean radeonTransformDeriv(struct radeon_transform_context* t,
 
 	B.Swizzle = MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE,
 						SWIZZLE_ONE, SWIZZLE_ONE);
-	B.NegateBase = NEGATE_XYZW;
+	B.Negate = NEGATE_XYZW;
 
 	emit2(t->Program, inst->Opcode, inst->SaturateMode, inst->DstReg,
 		inst->SrcReg[0], B);

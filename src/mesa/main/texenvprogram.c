@@ -663,9 +663,8 @@ static void emit_arg( struct prog_src_register *reg,
    reg->File = ureg.file;
    reg->Index = ureg.idx;
    reg->Swizzle = ureg.swz;
-   reg->NegateBase = ureg.negatebase ? 0xf : 0x0;
+   reg->Negate = ureg.negatebase ? NEGATE_XYZW : NEGATE_NONE;
    reg->Abs = ureg.abs;
-   reg->NegateAbs = ureg.negateabs;
 }
 
 static void emit_dst( struct prog_dst_register *dst,

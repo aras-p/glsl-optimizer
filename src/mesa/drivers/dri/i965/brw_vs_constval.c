@@ -96,7 +96,7 @@ static GLubyte get_active( struct tracker *t,
 			   struct prog_src_register src )
 {
    GLuint i;
-   GLubyte active = src.NegateBase; /* NOTE! */
+   GLubyte active = src.Negate; /* NOTE! */
 
    if (src.RelAddr)
       return 0xf;

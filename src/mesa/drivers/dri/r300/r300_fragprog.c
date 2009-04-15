@@ -214,9 +214,9 @@ static GLboolean transform_TEX(
 		 *   r  < tex  <=>      -tex+r < 0
 		 *   r >= tex  <=> not (-tex+r < 0 */
 		if (comparefunc == GL_LESS || comparefunc == GL_GEQUAL)
-			tgt[1].SrcReg[2].NegateBase = tgt[0].SrcReg[2].NegateBase ^ NEGATE_XYZW;
+			tgt[1].SrcReg[2].Negate = tgt[0].SrcReg[2].Negate ^ NEGATE_XYZW;
 		else
-			tgt[1].SrcReg[0].NegateBase = tgt[0].SrcReg[0].NegateBase ^ NEGATE_XYZW;
+			tgt[1].SrcReg[0].Negate = tgt[0].SrcReg[0].Negate ^ NEGATE_XYZW;
 
 		tgt[2].Opcode = OPCODE_CMP;
 		tgt[2].DstReg = orig_inst->DstReg;

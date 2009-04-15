@@ -212,19 +212,14 @@ fetch_vector4(const struct prog_src_register *source,
       result[3] = src[GET_SWZ(source->Swizzle, 3)];
    }
 
-   if (source->NegateBase) {
-      result[0] = -result[0];
-      result[1] = -result[1];
-      result[2] = -result[2];
-      result[3] = -result[3];
-   }
    if (source->Abs) {
       result[0] = FABSF(result[0]);
       result[1] = FABSF(result[1]);
       result[2] = FABSF(result[2]);
       result[3] = FABSF(result[3]);
    }
-   if (source->NegateAbs) {
+   if (source->Negate) {
+      ASSERT(source->Negate == NEGATE_XYZW);
       result[0] = -result[0];
       result[1] = -result[1];
       result[2] = -result[2];
@@ -259,7 +254,7 @@ fetch_vector4ui(const struct prog_src_register *source,
       result[3] = src[GET_SWZ(source->Swizzle, 3)];
    }
 
-   /* Note: no NegateBase, Abs, NegateAbs here */
+   /* Note: no Negate or Abs here */
 }
 
 
@@ -299,19 +294,14 @@ fetch_vector4_deriv(GLcontext * ctx,
       result[2] = deriv[GET_SWZ(source->Swizzle, 2)];
       result[3] = deriv[GET_SWZ(source->Swizzle, 3)];
       
-      if (source->NegateBase) {
-         result[0] = -result[0];
-         result[1] = -result[1];
-         result[2] = -result[2];
-         result[3] = -result[3];
-      }
       if (source->Abs) {
          result[0] = FABSF(result[0]);
          result[1] = FABSF(result[1]);
          result[2] = FABSF(result[2]);
          result[3] = FABSF(result[3]);
       }
-      if (source->NegateAbs) {
+      if (source->Negate) {
+         ASSERT(source->Negate == NEGATE_XYZW);
          result[0] = -result[0];
          result[1] = -result[1];
          result[2] = -result[2];
@@ -336,13 +326,10 @@ fetch_vector1(const struct prog_src_register *source,
 
    result[0] = src[GET_SWZ(source->Swizzle, 0)];
 
-   if (source->NegateBase) {
-      result[0] = -result[0];
-   }
    if (source->Abs) {
       result[0] = FABSF(result[0]);
    }
-   if (source->NegateAbs) {
+   if (source->Negate) {
       result[0] = -result[0];
    }
 }
@@ -1514,7 +1501,7 @@ _mesa_execute_program(GLcontext * ctx,
                   ASSERT(swz <= 3);
                   result[i] = src[swz];
                }
-               if (source->NegateBase & (1 << i))
+               if (source->Negate & (1 << i))
                   result[i] = -result[i];
             }
             store_vector4(inst, machine, result);

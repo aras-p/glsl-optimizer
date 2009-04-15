@@ -325,19 +325,19 @@ reg_string(gl_register_file f, GLint index, gl_prog_print_mode mode,
  * \param extended  if true, also allow 0, 1 values
  */
 const char *
-_mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
+_mesa_swizzle_string(GLuint swizzle, GLuint negateMask, GLboolean extended)
 {
    static const char swz[] = "xyzw01!?";  /* See SWIZZLE_x definitions */
    static char s[20];
    GLuint i = 0;
 
-   if (!extended && swizzle == SWIZZLE_NOOP && negateBase == 0)
+   if (!extended && swizzle == SWIZZLE_NOOP && negateMask == 0)
       return ""; /* no swizzle/negation */
 
    if (!extended)
       s[i++] = '.';
 
-   if (negateBase & NEGATE_X)
+   if (negateMask & NEGATE_X)
       s[i++] = '-';
    s[i++] = swz[GET_SWZ(swizzle, 0)];
 
@@ -345,7 +345,7 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
       s[i++] = ',';
    }
 
-   if (negateBase & NEGATE_Y)
+   if (negateMask & NEGATE_Y)
       s[i++] = '-';
    s[i++] = swz[GET_SWZ(swizzle, 1)];
 
@@ -353,7 +353,7 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
       s[i++] = ',';
    }
 
-   if (negateBase & NEGATE_Z)
+   if (negateMask & NEGATE_Z)
       s[i++] = '-';
    s[i++] = swz[GET_SWZ(swizzle, 2)];
 
@@ -361,7 +361,7 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
       s[i++] = ',';
    }
 
-   if (negateBase & NEGATE_W)
+   if (negateMask & NEGATE_W)
       s[i++] = '-';
    s[i++] = swz[GET_SWZ(swizzle, 3)];
 
@@ -465,14 +465,14 @@ fprint_src_reg(FILE *f,
                  reg_string((gl_register_file) srcReg->File,
                             srcReg->Index, mode, srcReg->RelAddr, prog),
                  _mesa_swizzle_string(srcReg->Swizzle,
-                                      srcReg->NegateBase, GL_FALSE),
+                                      srcReg->Negate, GL_FALSE),
                  abs);
 #if 0
    _mesa_fprintf(f, "%s[%d]%s",
                  file_string((gl_register_file) srcReg->File, mode),
                  srcReg->Index,
                  _mesa_swizzle_string(srcReg->Swizzle,
-                                      srcReg->NegateBase, GL_FALSE));
+                                      srcReg->Negate, GL_FALSE));
 #endif
 }
 
@@ -566,7 +566,7 @@ _mesa_fprint_instruction_opt(FILE *f,
                                   mode),
                       inst->SrcReg[0].Index,
                       _mesa_swizzle_string(inst->SrcReg[0].Swizzle,
-                                           inst->SrcReg[0].NegateBase, GL_FALSE));
+                                           inst->SrcReg[0].Negate, GL_FALSE));
       }
       if (inst->Comment)
          _mesa_fprintf(f, "  # %s", inst->Comment);
@@ -583,7 +583,7 @@ _mesa_fprint_instruction_opt(FILE *f,
                                mode),
                    inst->SrcReg[0].Index,
                    _mesa_swizzle_string(inst->SrcReg[0].Swizzle,
-                                        inst->SrcReg[0].NegateBase, GL_TRUE));
+                                        inst->SrcReg[0].Negate, GL_TRUE));
       fprint_comment(f, inst);
       break;
    case OPCODE_TEX:
