@@ -44,6 +44,7 @@
 #include "nvprogram.h"
 #include "nvvertparse.h"
 #include "prog_instruction.h"
+#include "prog_print.h"
 #include "program.h"
 
 
@@ -1394,7 +1395,7 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
 
 #ifdef DEBUG_foo
       _mesa_printf("--- glLoadProgramNV result ---\n");
-      _mesa_print_nv_vertex_program(program);
+      _mesa_fprint_program_opt(stdout, &program->Base, PROG_PRINT_NV, 0);
       _mesa_printf("------------------------------\n");
 #endif
    }
@@ -1406,161 +1407,6 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
        * so we reset it here.
        */
       _mesa_set_program_error(ctx, ctx->Program.ErrorPos, NULL);
-   }
-}
-
-
-static void
-PrintSrcReg(const struct prog_src_register *src)
-{
-   static const char comps[5] = "xyzw";
-   if (src->NegateBase)
-      _mesa_printf("-");
-   if (src->RelAddr) {
-      if (src->Index > 0)
-         _mesa_printf("c[A0.x + %d]", src->Index);
-      else if (src->Index < 0)
-         _mesa_printf("c[A0.x - %d]", -src->Index);
-      else
-         _mesa_printf("c[A0.x]");
-   }
-   else if (src->File == PROGRAM_OUTPUT) {
-      _mesa_printf("o[%s]", OutputRegisters[src->Index]);
-   }
-   else if (src->File == PROGRAM_INPUT) {
-      _mesa_printf("v[%s]", InputRegisters[src->Index]);
-   }
-   else if (src->File == PROGRAM_ENV_PARAM) {
-      _mesa_printf("c[%d]", src->Index);
-   }
-   else {
-      ASSERT(src->File == PROGRAM_TEMPORARY);
-      _mesa_printf("R%d", src->Index);
-   }
-
-   if (GET_SWZ(src->Swizzle, 0) == GET_SWZ(src->Swizzle, 1) &&
-       GET_SWZ(src->Swizzle, 0) == GET_SWZ(src->Swizzle, 2) &&
-       GET_SWZ(src->Swizzle, 0) == GET_SWZ(src->Swizzle, 3)) {
-      _mesa_printf(".%c", comps[GET_SWZ(src->Swizzle, 0)]);
-   }
-   else if (src->Swizzle != SWIZZLE_NOOP) {
-      _mesa_printf(".%c%c%c%c",
-             comps[GET_SWZ(src->Swizzle, 0)],
-             comps[GET_SWZ(src->Swizzle, 1)],
-             comps[GET_SWZ(src->Swizzle, 2)],
-             comps[GET_SWZ(src->Swizzle, 3)]);
-   }
-}
-
-
-static void
-PrintDstReg(const struct prog_dst_register *dst)
-{
-   if (dst->File == PROGRAM_OUTPUT) {
-      _mesa_printf("o[%s]", OutputRegisters[dst->Index]);
-   }
-   else if (dst->File == PROGRAM_INPUT) {
-      _mesa_printf("v[%s]", InputRegisters[dst->Index]);
-   }
-   else if (dst->File == PROGRAM_ENV_PARAM) {
-      _mesa_printf("c[%d]", dst->Index);
-   }
-   else {
-      ASSERT(dst->File == PROGRAM_TEMPORARY);
-      _mesa_printf("R%d", dst->Index);
-   }
-
-   if (dst->WriteMask != 0 && dst->WriteMask != WRITEMASK_XYZW) {
-      _mesa_printf(".");
-      if (dst->WriteMask & WRITEMASK_X)
-         _mesa_printf("x");
-      if (dst->WriteMask & WRITEMASK_Y)
-         _mesa_printf("y");
-      if (dst->WriteMask & WRITEMASK_Z)
-         _mesa_printf("z");
-      if (dst->WriteMask & WRITEMASK_W)
-         _mesa_printf("w");
-   }
-}
-
-
-/**
- * Print a single NVIDIA vertex program instruction.
- */
-void
-_mesa_print_nv_vertex_instruction(const struct prog_instruction *inst)
-{
-   GLuint i, n;
-
-   switch (inst->Opcode) {
-      case OPCODE_MOV:
-      case OPCODE_LIT:
-      case OPCODE_RCP:
-      case OPCODE_RSQ:
-      case OPCODE_EXP:
-      case OPCODE_LOG:
-      case OPCODE_RCC:
-      case OPCODE_ABS:
-      case OPCODE_MUL:
-      case OPCODE_ADD:
-      case OPCODE_DP3:
-      case OPCODE_DP4:
-      case OPCODE_DST:
-      case OPCODE_MIN:
-      case OPCODE_MAX:
-      case OPCODE_SLT:
-      case OPCODE_SGE:
-      case OPCODE_DPH:
-      case OPCODE_SUB:
-      case OPCODE_MAD:
-         _mesa_printf("%s ", _mesa_opcode_string(inst->Opcode));
-         PrintDstReg(&inst->DstReg);
-         _mesa_printf(", ");
-         n = _mesa_num_inst_src_regs(inst->Opcode);
-         for (i = 0; i < n; i++) {
-            PrintSrcReg(&inst->SrcReg[i]);
-            if (i + 1 < n)
-               _mesa_printf(", ");
-         }
-         _mesa_printf(";\n");
-         break;
-      case OPCODE_ARL:
-         _mesa_printf("ARL A0.x, ");
-         PrintSrcReg(&inst->SrcReg[0]);
-         _mesa_printf(";\n");
-         break;
-      case OPCODE_PRINT:
-         _mesa_printf("PRINT '%s'", inst->Data);
-         if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
-            _mesa_printf(", ");
-            PrintSrcReg(&inst->SrcReg[0]);
-            _mesa_printf(";\n");
-         }
-         else {
-            _mesa_printf("\n");
-         }
-         break;
-      case OPCODE_END:
-         _mesa_printf("END\n");
-         break;
-      default:
-         _mesa_printf("BAD INSTRUCTION\n");
-   }
-}
-
-
-/**
- * Print (unparse) the given vertex program.  Just for debugging.
- */
-void
-_mesa_print_nv_vertex_program(const struct gl_vertex_program *program)
-{
-   const struct prog_instruction *inst;
-
-   for (inst = program->Base.Instructions; ; inst++) {
-      _mesa_print_nv_vertex_instruction(inst);
-      if (inst->Opcode == OPCODE_END)
-         return;
    }
 }
 
