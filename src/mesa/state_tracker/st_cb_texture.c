@@ -823,7 +823,6 @@ st_CompressedTexImage2D(GLcontext *ctx, GLenum target, GLint level,
 /**
  * glGetTexImage() helper: decompress a compressed texture by rendering
  * a textured quad.  Store the results in the user's buffer.
- * XXX unfinished business: decompress sRGB texture
  */
 static void
 decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
