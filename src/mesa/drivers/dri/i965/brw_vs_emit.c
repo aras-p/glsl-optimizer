@@ -709,7 +709,7 @@ get_constant(struct brw_vs_compile *c,
 
    assert(argIndex < 3);
 
-   if (c->current_const[argIndex].index != src->Index) {
+   if (c->current_const[argIndex].index != src->Index || src->RelAddr) {
 
       c->current_const[argIndex].index = src->Index;
 
@@ -722,15 +722,18 @@ get_constant(struct brw_vs_compile *c,
       brw_dp_READ_4_vs(p,
                        c->current_const[argIndex].reg, /* writeback dest */
                        src->RelAddr,                   /* relative indexing? */
+                       c->regs[PROGRAM_ADDRESS][0],    /* address register */
                        16 * src->Index,                /* byte offset */
                        SURF_INDEX_VERT_CONST_BUFFER    /* binding table index */
                        );
    }
 
-   /* replicate lower four floats into upper four floats (to get XYZWXYZW) */
    const_reg = c->current_const[argIndex].reg;
-   const_reg = stride(const_reg, 0, 4, 0);
-   const_reg.subnr = 0;
+   if (!src->RelAddr) {
+      /* replicate lower four floats into upper half (to get XYZWXYZW) */
+      const_reg = stride(const_reg, 0, 4, 0);
+      const_reg.subnr = 0;
+   }
 
    return const_reg;
 }
@@ -759,52 +762,6 @@ static struct brw_reg get_reg( struct brw_vs_compile *c,
       return c->regs[file][index];
 
    case PROGRAM_UNDEFINED:			/* undef values */
-      return brw_null_reg();
-
-   case PROGRAM_LOCAL_PARAM: 
-   case PROGRAM_ENV_PARAM: 
-   case PROGRAM_WRITE_ONLY:
-   default:
-      assert(0);
-      return brw_null_reg();
-   }
-}
-
-
-/**
- * Get brw reg corresponding to the instruction's [argIndex] src reg.
- * TODO: relative addressing!
- */
-static struct brw_reg
-get_src_reg( struct brw_vs_compile *c,
-             const struct prog_instruction *inst,
-             GLuint argIndex )
-{
-   const GLuint file = inst->SrcReg[argIndex].File;
-   const GLint index = inst->SrcReg[argIndex].Index;
-
-   switch (file) {
-   case PROGRAM_TEMPORARY:
-   case PROGRAM_INPUT:
-   case PROGRAM_OUTPUT:
-      assert(c->regs[file][index].nr != 0);
-      return c->regs[file][index];
-   case PROGRAM_STATE_VAR:
-   case PROGRAM_CONSTANT:
-   case PROGRAM_UNIFORM:
-      if (c->use_const_buffer) {
-         return get_constant(c, inst, argIndex);
-      }
-      else {
-         assert(c->regs[PROGRAM_STATE_VAR][index].nr != 0);
-         return c->regs[PROGRAM_STATE_VAR][index];
-      }
-   case PROGRAM_ADDRESS:
-      assert(index == 0);
-      return c->regs[file][index];
-
-   case PROGRAM_UNDEFINED:
-      /* this is a normal case since we loop over all three src args */
       return brw_null_reg();
 
    case PROGRAM_LOCAL_PARAM: 
@@ -853,6 +810,62 @@ static struct brw_reg deref( struct brw_vs_compile *c,
 }
 
 
+/**
+ * Get brw reg corresponding to the instruction's [argIndex] src reg.
+ * TODO: relative addressing!
+ */
+static struct brw_reg
+get_src_reg( struct brw_vs_compile *c,
+             const struct prog_instruction *inst,
+             GLuint argIndex )
+{
+   const GLuint file = inst->SrcReg[argIndex].File;
+   const GLint index = inst->SrcReg[argIndex].Index;
+   const GLboolean relAddr = inst->SrcReg[argIndex].RelAddr;
+
+   switch (file) {
+   case PROGRAM_TEMPORARY:
+   case PROGRAM_INPUT:
+   case PROGRAM_OUTPUT:
+      if (relAddr) {
+         return deref(c, c->regs[file][0], index);
+      }
+      else {
+         assert(c->regs[file][index].nr != 0);
+         return c->regs[file][index];
+      }
+
+   case PROGRAM_STATE_VAR:
+   case PROGRAM_CONSTANT:
+   case PROGRAM_UNIFORM:
+      if (c->use_const_buffer) {
+         return get_constant(c, inst, argIndex);
+      }
+      else if (relAddr) {
+         return deref(c, c->regs[PROGRAM_STATE_VAR][0], index);
+      }
+      else {
+         assert(c->regs[PROGRAM_STATE_VAR][index].nr != 0);
+         return c->regs[PROGRAM_STATE_VAR][index];
+      }
+   case PROGRAM_ADDRESS:
+      assert(index == 0);
+      return c->regs[file][index];
+
+   case PROGRAM_UNDEFINED:
+      /* this is a normal case since we loop over all three src args */
+      return brw_null_reg();
+
+   case PROGRAM_LOCAL_PARAM: 
+   case PROGRAM_ENV_PARAM: 
+   case PROGRAM_WRITE_ONLY:
+   default:
+      assert(0);
+      return brw_null_reg();
+   }
+}
+
+
 static void emit_arl( struct brw_vs_compile *c,
 		      struct brw_reg dst,
 		      struct brw_reg arg0 )
@@ -864,8 +877,8 @@ static void emit_arl( struct brw_vs_compile *c,
    if (need_tmp) 
       tmp = get_tmp(c);
 
-   brw_RNDD(p, tmp, arg0);
-   brw_MUL(p, dst, tmp, brw_imm_d(16));
+   brw_RNDD(p, tmp, arg0);               /* tmp = round(arg0) */
+   brw_MUL(p, dst, tmp, brw_imm_d(16));  /* dst = tmp * 16 */
 
    if (need_tmp)
       release_tmp(c, tmp);
@@ -888,13 +901,7 @@ static struct brw_reg get_arg( struct brw_vs_compile *c,
    if (src->File == PROGRAM_UNDEFINED)
       return brw_null_reg();
 
-   if (src->RelAddr) {
-      /* XXX fix */
-      reg = deref(c, c->regs[PROGRAM_STATE_VAR][0], src->Index);
-   }
-   else {
-      reg = get_src_reg(c, inst, argIndex);
-   }
+   reg = get_src_reg(c, inst, argIndex);
 
    /* Convert 3-bit swizzle to 2-bit.  
     */
@@ -989,10 +996,7 @@ static void emit_swz( struct brw_vs_compile *c,
    if (src_mask) {
       struct brw_reg arg0;
 
-      if (src.RelAddr) 
-	 arg0 = deref(c, c->regs[PROGRAM_STATE_VAR][0], src.Index);
-      else
-	 arg0 = get_src_reg(c, inst, argIndex);
+      arg0 = get_src_reg(c, inst, argIndex);
 
       arg0 = brw_swizzle(arg0, 
 			 src_swz[0], src_swz[1], 
