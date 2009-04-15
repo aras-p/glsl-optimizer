@@ -55,6 +55,7 @@
 #include "pipe/p_inlines.h"
 #include "util/u_tile.h"
 #include "util/u_blit.h"
+#include "util/u_surface.h"
 
 
 #define DBG if (0) printf
@@ -817,6 +818,72 @@ st_CompressedTexImage2D(GLcontext *ctx, GLenum target, GLint level,
 }
 
 
+
+/**
+ * glGetTexImage() helper: decompress a compressed texture by rendering
+ * a textured quad.  Store the results in the user's buffer.
+ * XXX unfinished business: decompress sRGB texture
+ */
+static void
+decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
+                     GLenum format, GLenum type, GLvoid *pixels,
+                     struct gl_texture_object *texObj,
+                     struct gl_texture_image *texImage)
+{
+   struct pipe_screen *screen = ctx->st->pipe->screen;
+   struct st_texture_image *stImage = st_texture_image(texImage);
+   const GLuint width = texImage->Width;
+   const GLuint height = texImage->Height;
+   struct pipe_surface *dst_surface;
+   struct pipe_texture *dst_texture;
+   struct pipe_transfer *tex_xfer;
+   GLuint row;
+
+   /* create temp / dest surface */
+   if (!util_create_rgba_surface(screen, width, height,
+                                 &dst_texture, &dst_surface)) {
+      _mesa_problem(ctx, "util_create_rgba_surface() failed "
+                    "in decompress_with_blit()");
+      return;
+   }
+
+   /* blit/render/decompress */
+   util_blit_pixels_tex(ctx->st->blit,
+                        stImage->pt,      /* pipe_texture (src) */
+                        0, 0,             /* src x0, y0 */
+                        width, height,    /* src x1, y1 */
+                        dst_surface,      /* pipe_surface (dst) */
+                        0, 0,             /* dst x0, y0 */
+                        width, height,    /* dst x1, y1 */
+                        0.0,              /* z */
+                        PIPE_TEX_MIPFILTER_NEAREST);
+
+   /* map the dst_surface so we can read from it */
+   tex_xfer = screen->get_tex_transfer(screen, dst_texture, 0, 0, 0,
+                                       PIPE_TRANSFER_READ,
+                                       0, 0, width, height);
+
+   /* copy/pack data into user buffer */
+   /* XXX: to do: look for cases where we can just memcpy() */
+   for (row = 0; row < height; row++) {
+      const GLbitfield transferOps = 0x0; /* bypassed for glGetTexImage() */
+      GLfloat rgba[4 * MAX_WIDTH];
+      GLvoid *dest = _mesa_image_address2d(&ctx->Pack, pixels, width, height,
+                                           format, type, row, 0);
+
+      /* get float[4] rgba row from surface */
+      pipe_get_tile_rgba(tex_xfer, 0, row, width, 1, rgba);
+
+      _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
+                                 format, type, dest, &ctx->Pack, transferOps);
+   }
+
+   /* destroy the temp / dest surface */
+   util_destroy_rgba_surface(dst_texture, dst_surface);
+}
+
+
+
 /**
  * Need to map texture image into memory before copying image data,
  * then unmap it.
@@ -825,7 +892,7 @@ static void
 st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
                  GLenum format, GLenum type, GLvoid * pixels,
                  struct gl_texture_object *texObj,
-                 struct gl_texture_image *texImage, GLboolean compressed)
+                 struct gl_texture_image *texImage, GLboolean compressed_dst)
 {
    struct st_texture_image *stImage = st_texture_image(texImage);
    const GLuint dstImageStride =
@@ -833,6 +900,18 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
                                format, type);
    GLuint depth, i;
    GLubyte *dest;
+
+   if (stImage->pt &&
+       pf_is_compressed(stImage->pt->format) &&
+       !compressed_dst) {
+      /* Need to decompress the texture.
+       * We'll do this by rendering a textured quad.
+       * Note that we only expect RGBA formats (no Z/depth formats).
+       */
+      decompress_with_blit(ctx, target, level, format, type, pixels,
+                           texObj, texImage);
+      return;
+   }
 
    /* Map */
    if (stImage->pt) {
@@ -863,7 +942,7 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
    dest = (GLubyte *) pixels;
 
    for (i = 0; i < depth; i++) {
-      if (compressed) {
+      if (compressed_dst) {
 	 _mesa_get_compressed_teximage(ctx, target, level, dest,
 				       texObj, texImage);
       }
