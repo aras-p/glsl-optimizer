@@ -40,6 +40,9 @@ static void r300_vs_declare(struct r300_vs_asm* assembler,
                     /* XXX multiple? */
                     assembler->tab[decl->DeclarationRange.First] = 6;
                     break;
+                case TGSI_SEMANTIC_PSIZE:
+                    assembler->tab[decl->DeclarationRange.First] = 15;
+                    break;
                 default:
                     debug_printf("r300: vs: Bad semantic declaration %d\n",
                         decl->Semantic.SemanticName);

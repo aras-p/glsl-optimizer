@@ -86,7 +86,7 @@ static void r300_vs_tab_routes(struct r300_context* r300,
                     break;
                 case TGSI_SEMANTIC_PSIZE:
                     psize = TRUE;
-                    tab[i] = 1;
+                    tab[i] = 15;
                     break;
                 case TGSI_SEMANTIC_FOG:
                     fog = TRUE;
