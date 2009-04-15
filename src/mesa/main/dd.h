@@ -911,7 +911,7 @@ struct dd_function_table {
    void (*Uniform)(GLcontext *ctx, GLint location, GLsizei count,
                    const GLvoid *values, GLenum type);
    void (*UniformMatrix)(GLcontext *ctx, GLint cols, GLint rows,
-                         GLenum matrixType, GLint location, GLsizei count,
+                         GLint location, GLsizei count,
                          GLboolean transpose, const GLfloat *values);
    void (*UseProgram)(GLcontext *ctx, GLuint program);
    void (*ValidateProgram)(GLcontext *ctx, GLuint program);

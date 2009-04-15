@@ -1897,7 +1897,7 @@ set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
  */
 static void
 _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
-                     GLenum matrixType, GLint location, GLsizei count,
+                     GLint location, GLsizei count,
                      GLboolean transpose, const GLfloat *values)
 {
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
