@@ -170,6 +170,14 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       reg++;
    }
 
+   if (c->use_const_buffer) {
+      for (i = 0; i < 3; i++) {
+         c->current_const[i].index = -1;
+         c->current_const[i].reg = brw_vec8_grf(reg, 0);
+         reg++;
+      }
+   }
+
    for (i = 0; i < 128; i++) {
       if (c->output_regs[i].used_in_src) {
          c->output_regs[i].reg = brw_vec8_grf(reg, 0);
@@ -193,13 +201,6 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    c->prog_data.urb_entry_size = (c->nr_outputs + 2 + 3) / 4;
    c->prog_data.total_grf = reg;
-
-   if (c->use_const_buffer) {
-       for (i = 0; i < 3; i++) {
-          c->current_const[i].index = -1;
-          c->current_const[i].reg = get_tmp(c);
-       }
-   }
 
    if (INTEL_DEBUG & DEBUG_VS) {
       _mesa_printf("%s NumAddrRegs %d\n", __FUNCTION__, c->vp->program.Base.NumAddressRegs);
@@ -655,6 +656,8 @@ static void emit_lit_noalias( struct brw_vs_compile *c,
    }
 
    brw_ENDIF(p, if_insn);
+
+   release_tmp(c, tmp);
 }
 
 static void emit_lrp_noalias(struct brw_vs_compile *c,
@@ -703,6 +706,8 @@ get_constant(struct brw_vs_compile *c,
    const struct prog_src_register *src = &inst->SrcReg[argIndex];
    struct brw_compile *p = &c->func;
    struct brw_reg const_reg;
+
+   assert(argIndex < 3);
 
    if (c->current_const[argIndex].index != src->Index) {
 
@@ -843,6 +848,7 @@ static struct brw_reg deref( struct brw_vs_compile *c,
       brw_pop_insn_state(p);
    }
    
+   /* NOTE: tmp not released */
    return vec8(tmp);
 }
 
@@ -1178,6 +1184,11 @@ void brw_vs_emit(struct brw_vs_compile *c )
       struct brw_reg args[3], dst;
       GLuint i;
       
+#if 0
+      printf("%d: ", insn);
+      _mesa_print_instruction(inst);
+#endif
+
       /* Get argument regs.  SWZ is special and does this itself.
        */
       if (inst->Opcode != OPCODE_SWZ)
