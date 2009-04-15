@@ -925,6 +925,10 @@ static struct brw_reg get_dst( struct brw_vs_compile *c,
       assert(c->regs[dst.File][dst.Index].nr != 0);
       reg = c->regs[dst.File][dst.Index];
       break;
+   case PROGRAM_ADDRESS:
+      assert(dst.Index == 0);
+      reg = c->regs[dst.File][dst.Index];
+      break;
    case PROGRAM_UNDEFINED:
       /* we may hit this for OPCODE_END, OPCODE_KIL, etc */
       reg = brw_null_reg();
