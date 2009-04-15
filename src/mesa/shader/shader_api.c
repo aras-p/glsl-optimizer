@@ -51,11 +51,6 @@
 #include "glapi/dispatch.h"
 
 
-#ifndef GL_PROGRAM_BINARY_LENGTH_OES
-#define GL_PROGRAM_BINARY_LENGTH_OES 0x8741
-#endif
-
-
 /**
  * Allocate a new gl_shader_program object, initialize it.
  */
