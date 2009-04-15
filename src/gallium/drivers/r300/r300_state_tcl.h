@@ -32,6 +32,7 @@
 
 /* XXX get these to r300_reg */
 #define R300_PVS_DST_OPCODE(x)   ((x) << 0)
+#   define R300_VE_DOT_PRODUCT            1
 #   define R300_VE_MULTIPLY               2
 #   define R300_VE_ADD                    3
 #define R300_PVS_DST_MACRO_INST    (1 << 7)
