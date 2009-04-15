@@ -121,6 +121,21 @@ static void softpipe_destroy( struct pipe_context *pipe )
    FREE( softpipe );
 }
 
+static unsigned int
+softpipe_is_texture_referenced( struct pipe_context *pipe,
+				struct pipe_texture *texture,
+				unsigned face, unsigned level,
+				unsigned zslice)
+{
+   return PIPE_UNREFERENCED;
+}
+
+static unsigned int
+softpipe_is_buffer_referenced( struct pipe_context *pipe,
+			       struct pipe_buffer *buf)
+{
+   return PIPE_UNREFERENCED;
+}
 
 struct pipe_context *
 softpipe_create( struct pipe_screen *screen,
@@ -189,6 +204,9 @@ softpipe_create( struct pipe_screen *screen,
 
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.flush = softpipe_flush;
+
+   softpipe->pipe.is_texture_referenced = softpipe_is_texture_referenced;
+   softpipe->pipe.is_buffer_referenced = softpipe_is_buffer_referenced;
 
    softpipe_init_query_funcs( softpipe );
    softpipe_init_texture_funcs( softpipe );

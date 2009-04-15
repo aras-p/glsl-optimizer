@@ -312,6 +312,13 @@ enum pipe_transfer_usage {
 #define PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS 26
 
 
+/**
+ * Referenced query flags.
+ */
+
+#define PIPE_UNREFERENCED         0
+#define PIPE_REFERENCED_FOR_READ  (1 << 0)
+#define PIPE_REFERENCED_FOR_WRITE (1 << 1)
 
 #ifdef __cplusplus
 }

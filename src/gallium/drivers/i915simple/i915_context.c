@@ -136,6 +136,29 @@ static boolean i915_draw_arrays( struct pipe_context *pipe,
 }
 
 
+static unsigned int
+i915_is_texture_referenced( struct pipe_context *pipe,
+			    struct pipe_texture *texture,
+			    unsigned face, unsigned level)
+{
+   /**
+    * FIXME: Optimize.
+    */
+
+   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
+static unsigned int
+i915_is_buffer_referenced( struct pipe_context *pipe,
+			   struct pipe_buffer *buf)
+{
+   /**
+    * FIXME: Optimize.
+    */
+
+   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
 
 struct pipe_context *i915_create_context( struct pipe_screen *screen,
                                           struct pipe_winsys *pipe_winsys,
@@ -159,6 +182,9 @@ struct pipe_context *i915_create_context( struct pipe_screen *screen,
    i915->pipe.draw_arrays = i915_draw_arrays;
    i915->pipe.draw_elements = i915_draw_elements;
    i915->pipe.draw_range_elements = i915_draw_range_elements;
+
+   i915->pipe.is_texture_referenced = i915_is_texture_referenced;
+   i915->pipe.is_buffer_referenced = i915_is_buffer_referenced;
 
    /*
     * Create drawing context and plug our rendering stage into it.

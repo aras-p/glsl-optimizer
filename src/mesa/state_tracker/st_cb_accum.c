@@ -40,6 +40,7 @@
 #include "st_draw.h"
 #include "st_public.h"
 #include "st_format.h"
+#include "st_texture.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
@@ -118,6 +119,9 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    const GLint height = ctx->DrawBuffer->_Ymax - ypos;
    GLubyte *map;
 
+   st_teximage_flush_before_map(ctx->st, acc_strb->texture, 0, 0,
+				PIPE_TRANSFER_WRITE);
+
    acc_pt = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
                                      PIPE_TRANSFER_WRITE, xpos, ypos,
                                      width, height);
@@ -163,6 +167,9 @@ accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
    struct pipe_transfer *acc_pt;
    GLubyte *map;
 
+   st_teximage_flush_before_map(ctx->st, acc_strb->texture, 0, 0,
+				PIPE_TRANSFER_READ_WRITE);
+
    acc_pt = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
                                      PIPE_TRANSFER_READ_WRITE, xpos, ypos,
                                      width, height);
@@ -192,19 +199,26 @@ accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
 
 
 static void
-accum_accum(struct pipe_context *pipe, GLfloat value,
+accum_accum(struct st_context *st, GLfloat value,
             GLint xpos, GLint ypos, GLint width, GLint height,
             struct st_renderbuffer *acc_strb,
             struct st_renderbuffer *color_strb)
 {
+   struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct pipe_transfer *acc_trans, *color_trans;
    GLfloat *colorBuf, *accBuf;
    GLint i;
 
+   st_teximage_flush_before_map(st, acc_strb->texture, 0, 0,
+				PIPE_TRANSFER_READ);
+
    acc_trans = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
                                         PIPE_TRANSFER_READ, xpos, ypos,
                                         width, height);
+
+   st_teximage_flush_before_map(st, color_strb->texture, 0, 0,
+				PIPE_TRANSFER_READ);
 
    color_trans = screen->get_tex_transfer(screen, color_strb->texture, 0, 0, 0,
                                           PIPE_TRANSFER_READ, xpos, ypos,
@@ -235,19 +249,26 @@ accum_accum(struct pipe_context *pipe, GLfloat value,
 
 
 static void
-accum_load(struct pipe_context *pipe, GLfloat value,
+accum_load(struct st_context *st, GLfloat value,
            GLint xpos, GLint ypos, GLint width, GLint height,
            struct st_renderbuffer *acc_strb,
            struct st_renderbuffer *color_strb)
 {
+   struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct pipe_transfer *acc_trans, *color_trans;
    GLfloat *buf;
    GLint i;
 
+   st_teximage_flush_before_map(st, acc_strb->texture, 0, 0,
+				PIPE_TRANSFER_WRITE);
+
    acc_trans = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
                                         PIPE_TRANSFER_WRITE, xpos, ypos,
                                         width, height);
+
+   st_teximage_flush_before_map(st, color_strb->texture, 0, 0,
+				PIPE_TRANSFER_READ);
 
    color_trans = screen->get_tex_transfer(screen, color_strb->texture, 0, 0, 0,
                                         PIPE_TRANSFER_READ, xpos, ypos,
@@ -284,9 +305,15 @@ accum_return(GLcontext *ctx, GLfloat value,
 
    abuf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
 
+   st_teximage_flush_before_map(ctx->st, acc_strb->texture, 0, 0,
+				PIPE_TRANSFER_READ);
+
    acc_trans = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
                                         PIPE_TRANSFER_READ, xpos, ypos,
                                         width, height);
+
+   st_teximage_flush_before_map(ctx->st, color_strb->texture, 0, 0,
+				PIPE_TRANSFER_READ_WRITE);
 
    color_trans = screen->get_tex_transfer(screen, color_strb->texture, 0, 0, 0,
                                           PIPE_TRANSFER_READ_WRITE, xpos, ypos,
@@ -325,7 +352,6 @@ static void
 st_Accum(GLcontext *ctx, GLenum op, GLfloat value)
 {
    struct st_context *st = ctx->st;
-   struct pipe_context *pipe = st->pipe;
    struct st_renderbuffer *acc_strb
      = st_renderbuffer(ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
    struct st_renderbuffer *color_strb
@@ -352,11 +378,11 @@ st_Accum(GLcontext *ctx, GLenum op, GLfloat value)
       break;
    case GL_ACCUM:
       if (value != 0.0F) {
-         accum_accum(pipe, value, xpos, ypos, width, height, acc_strb, color_strb);
+         accum_accum(st, value, xpos, ypos, width, height, acc_strb, color_strb);
       }
       break;
    case GL_LOAD:
-      accum_load(pipe, value, xpos, ypos, width, height, acc_strb, color_strb);
+      accum_load(st, value, xpos, ypos, width, height, acc_strb, color_strb);
       break;
    case GL_RETURN:
       accum_return(ctx, value, xpos, ypos, width, height, acc_strb, color_strb);

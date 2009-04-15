@@ -1030,6 +1030,48 @@ trace_context_destroy(struct pipe_context *_pipe)
    FREE(tr_ctx);
 }
 
+static unsigned int
+trace_is_texture_referenced( struct pipe_context *_pipe,
+			    struct pipe_texture *texture,
+			    unsigned face, unsigned level)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   unsigned int referenced;
+
+   trace_dump_call_begin("pipe_context", "is_texture_referenced");
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, texture);
+   trace_dump_arg(uint, face);
+   trace_dump_arg(uint, level);
+
+   referenced = pipe->is_texture_referenced(pipe, texture, face, level);
+
+   trace_dump_ret(uint, referenced);
+   trace_dump_call_end();
+
+   return referenced;
+}
+
+static unsigned int
+trace_is_buffer_referenced( struct pipe_context *_pipe,
+			    struct pipe_buffer *buf)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   unsigned int referenced;
+
+   trace_dump_call_begin("pipe_context", "is_buffer_referenced");
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, buf);
+
+   referenced = pipe->is_buffer_referenced(pipe, buf);
+
+   trace_dump_ret(uint, referenced);
+   trace_dump_call_end();
+
+   return referenced;
+}
 
 struct pipe_context *
 trace_context_create(struct pipe_screen *_screen,
@@ -1096,6 +1138,8 @@ trace_context_create(struct pipe_screen *_screen,
    tr_ctx->base.surface_fill = trace_context_surface_fill;
    tr_ctx->base.clear = trace_context_clear;
    tr_ctx->base.flush = trace_context_flush;
+   tr_ctx->base.is_texture_referenced = trace_is_texture_referenced;
+   tr_ctx->base.is_buffer_referenced = trace_is_buffer_referenced;
 
    tr_ctx->pipe = pipe;
 

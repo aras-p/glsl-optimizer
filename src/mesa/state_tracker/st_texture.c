@@ -188,8 +188,10 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
 		     GLuint zoffset, enum pipe_transfer_usage usage,
                      GLuint x, GLuint y, GLuint w, GLuint h)
 {
-   struct pipe_screen *screen = st->pipe->screen;
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct pipe_texture *pt = stImage->pt;
+
    DBG("%s \n", __FUNCTION__);
 
    stImage->transfer = screen->get_tex_transfer(screen, pt, stImage->face,
@@ -265,6 +267,7 @@ st_texture_image_data(struct pipe_context *pipe,
    struct pipe_transfer *dst_transfer;
 
    DBG("%s\n", __FUNCTION__);
+
    for (i = 0; i < depth; i++) {
       dst_transfer = screen->get_tex_transfer(screen, dst, face, level, i,
                                               PIPE_TRANSFER_WRITE, 0, 0,
@@ -480,4 +483,21 @@ st_release_teximage(struct st_framebuffer *stfb, uint surfIndex,
    st->dirty.st |= ST_NEW_FRAMEBUFFER;
 
    return 1;
+}
+
+void
+st_teximage_flush_before_map(struct st_context *st,
+			     struct pipe_texture *pt,
+			     unsigned int face,
+			     unsigned int level,
+			     enum pipe_transfer_usage usage)
+{
+   struct pipe_context *pipe = st->pipe;
+   unsigned referenced =
+      pipe->is_texture_referenced(pipe, pt, face, level);
+
+   if (referenced && ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
+		      usage == PIPE_TRANSFER_WRITE ||
+		      usage == PIPE_TRANSFER_READ_WRITE))
+      st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
 }

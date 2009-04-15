@@ -42,13 +42,14 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "util/u_tile.h"
+
 #include "st_context.h"
 #include "st_cb_bitmap.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_fbo.h"
 #include "st_format.h"
 #include "st_public.h"
-
+#include "st_texture.h"
 
 /**
  * Special case for reading stencil buffer.
@@ -73,6 +74,10 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    }
 
    /* Create a read transfer from the renderbuffer's texture */
+
+   st_teximage_flush_before_map(ctx->st, strb->texture, 0, 0,
+				PIPE_TRANSFER_READ);
+
    pt = screen->get_tex_transfer(screen, strb->texture,  0, 0, 0,
                                  PIPE_TRANSFER_READ, x, y, width, height);
 
@@ -239,6 +244,9 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
       if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
          y = strb->texture->height[0] - y - height;
       }
+
+      st_teximage_flush_before_map(ctx->st, strb->texture, 0, 0,
+				   PIPE_TRANSFER_READ);
 
       trans = screen->get_tex_transfer(screen, strb->texture, 0, 0, 0,
                                        PIPE_TRANSFER_READ, x, y, width, height);

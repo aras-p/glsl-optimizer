@@ -631,14 +631,15 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    GLint skipPixels;
    ubyte *stmap;
 
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
-
    strb = st_renderbuffer(ctx->DrawBuffer->
                           Attachment[BUFFER_STENCIL].Renderbuffer);
 
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
       y = ctx->DrawBuffer->Height - y - height;
    }
+
+   st_teximage_flush_before_map(ctx->st, strb->texture, 0, 0,
+				PIPE_TRANSFER_WRITE);
 
    pt = screen->get_tex_transfer(screen, strb->texture, 0, 0, 0,
                                  PIPE_TRANSFER_WRITE, x, y,
@@ -824,6 +825,9 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    st_read_stencil_pixels(ctx, srcx, srcy, width, height,
                           GL_STENCIL_INDEX, GL_UNSIGNED_BYTE,
                           &ctx->DefaultPacking, buffer);
+
+   st_teximage_flush_before_map(ctx->st, rbDraw->texture, 0, 0,
+				PIPE_TRANSFER_WRITE);
 
    ptDraw = screen->get_tex_transfer(screen, rbDraw->texture, 0, 0, 0,
                                      PIPE_TRANSFER_WRITE, dstx, dsty,

@@ -700,6 +700,10 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
       /* Image is stored in hardware format in a buffer managed by the
        * kernel.  Need to explicitly map and unmap it.
        */
+
+      st_teximage_flush_before_map(ctx->st, stImage->pt, 0, level,
+				   PIPE_TRANSFER_READ);
+
       texImage->Data = st_texture_image_map(ctx->st, stImage, 0,
                                             PIPE_TRANSFER_READ, 0, 0,
                                             stImage->base.Width,
@@ -808,6 +812,8 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
     * from uploading the buffer under us.
     */
    if (stImage->pt) {
+      st_teximage_flush_before_map(ctx->st, stImage->pt, 0, level,
+				   PIPE_TRANSFER_WRITE);
       texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset, 
                                             PIPE_TRANSFER_WRITE,
                                             xoffset, yoffset,
@@ -932,12 +938,18 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
       srcY = strb->Base.Height - srcY - height;
    }
 
+   st_teximage_flush_before_map(ctx->st, strb->texture, 0, 0,
+				PIPE_TRANSFER_READ);
+
    src_trans = screen->get_tex_transfer( screen,
                                          strb->texture,
                                          0, 0, 0,
                                          PIPE_TRANSFER_READ,
                                          srcX, srcY,
                                          width, height);
+
+   st_teximage_flush_before_map(ctx->st, stImage->pt, 0, 0,
+				PIPE_TRANSFER_WRITE);
 
    texDest = st_texture_image_map(ctx->st, stImage, 0, PIPE_TRANSFER_WRITE,
                                   destX, destY, width, height);
@@ -1318,6 +1330,11 @@ copy_image_data_to_texture(struct st_context *st,
 
       /* More straightforward upload.  
        */
+
+      st_teximage_flush_before_map(st, stObj->pt, stImage->face, dstLevel,
+				   PIPE_TRANSFER_WRITE);
+
+
       st_texture_image_data(st->pipe,
                             stObj->pt,
                             stImage->face,
