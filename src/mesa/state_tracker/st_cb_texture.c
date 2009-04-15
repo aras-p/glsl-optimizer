@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "main/mfeatures.h"
+#include "main/bufferobj.h"
 #if FEATURE_convolve
 #include "main/convolve.h"
 #endif
@@ -837,7 +838,6 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
    struct pipe_surface *dst_surface;
    struct pipe_texture *dst_texture;
    struct pipe_transfer *tex_xfer;
-   GLuint row;
 
    /* create temp / dest surface */
    if (!util_create_rgba_surface(screen, width, height,
@@ -863,20 +863,40 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
                                        PIPE_TRANSFER_READ,
                                        0, 0, width, height);
 
+   pixels = _mesa_map_readpix_pbo(ctx, &ctx->Pack, pixels);
+
    /* copy/pack data into user buffer */
-   /* XXX: to do: look for cases where we can just memcpy() */
-   for (row = 0; row < height; row++) {
-      const GLbitfield transferOps = 0x0; /* bypassed for glGetTexImage() */
-      GLfloat rgba[4 * MAX_WIDTH];
-      GLvoid *dest = _mesa_image_address2d(&ctx->Pack, pixels, width, height,
-                                           format, type, row, 0);
-
-      /* get float[4] rgba row from surface */
-      pipe_get_tile_rgba(tex_xfer, 0, row, width, 1, rgba);
-
-      _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
-                                 format, type, dest, &ctx->Pack, transferOps);
+   if (st_equal_formats(stImage->pt->format, format, type)) {
+      /* memcpy */
+      const uint bytesPerRow = width * pf_get_size(stImage->pt->format);
+      ubyte *map = screen->transfer_map(screen, tex_xfer);
+      GLuint row;
+      for (row = 0; row < height; row++) {
+         GLvoid *dest = _mesa_image_address2d(&ctx->Pack, pixels, width,
+                                              height, format, type, row, 0);
+         memcpy(dest, map, bytesPerRow);
+         map += tex_xfer->stride;
+      }
+      screen->transfer_unmap(screen, tex_xfer);
    }
+   else {
+      /* format translation via floats */
+      GLuint row;
+      for (row = 0; row < height; row++) {
+         const GLbitfield transferOps = 0x0; /* bypassed for glGetTexImage() */
+         GLfloat rgba[4 * MAX_WIDTH];
+         GLvoid *dest = _mesa_image_address2d(&ctx->Pack, pixels, width,
+                                              height, format, type, row, 0);
+
+         /* get float[4] rgba row from surface */
+         pipe_get_tile_rgba(tex_xfer, 0, row, width, 1, rgba);
+
+         _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba, format,
+                                    type, dest, &ctx->Pack, transferOps);
+      }
+   }
+
+   _mesa_unmap_readpix_pbo(ctx, &ctx->Pack);
 
    /* destroy the temp / dest surface */
    util_destroy_rgba_surface(dst_texture, dst_surface);
