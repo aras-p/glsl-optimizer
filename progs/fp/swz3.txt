@@ -1,0 +1,5 @@
+!!ARBfp1.0
+TEMP R0, R1;
+MOV R0, -fragment.color;
+SWZ result.color, R0, -y, -x, z, 1;
+END
