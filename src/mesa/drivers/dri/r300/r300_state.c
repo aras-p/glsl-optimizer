@@ -1701,34 +1701,34 @@ static void r500SetupRSUnit(GLcontext * ctx)
 		++fp_reg;
 	}
 
-	if (InputsRead & FRAG_BIT_FOGC) {
-		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_FOGC, _TNL_ATTRIB_FOG)) {
-			r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= ((rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT) |
-				((rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT) |
-				((rs_tex_count + 2) << R500_RS_IP_TEX_PTR_R_SHIFT) |
-				((rs_tex_count + 3) << R500_RS_IP_TEX_PTR_Q_SHIFT);
-
-			r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R500_RS_INST_TEX_ID(tex_ip) | R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_reg);
-			InputsRead &= ~FRAG_BIT_FOGC;
-			rs_tex_count += 4;
-			++tex_ip;
-			++fp_reg;
-		} else {
-			WARN_ONCE("fragprog wants fogc, vp doesn't provide it\n");
-		}
-	}
-
 	if (InputsRead & FRAG_BIT_WPOS) {
 		r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= ((rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT) |
-				((rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT) |
-				((rs_tex_count + 2) << R500_RS_IP_TEX_PTR_R_SHIFT) |
-				((rs_tex_count + 3) << R500_RS_IP_TEX_PTR_Q_SHIFT);
+			((rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT) |
+			((rs_tex_count + 2) << R500_RS_IP_TEX_PTR_R_SHIFT) |
+			((rs_tex_count + 3) << R500_RS_IP_TEX_PTR_Q_SHIFT);
 
 		r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R500_RS_INST_TEX_ID(tex_ip) | R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_reg);
 		InputsRead &= ~FRAG_BIT_WPOS;
 		rs_tex_count += 4;
 		++tex_ip;
 		++fp_reg;
+	}
+
+	if (InputsRead & FRAG_BIT_FOGC) {
+		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_FOGC, _TNL_ATTRIB_FOG)) {
+			r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= (rs_tex_count << R500_RS_IP_TEX_PTR_S_SHIFT) |
+				(R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT) |
+				(R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT) |
+				(R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT);
+
+			r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R500_RS_INST_TEX_ID(tex_ip) | R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_reg);
+			InputsRead &= ~FRAG_BIT_FOGC;
+			rs_tex_count += 1;
+			++tex_ip;
+			++fp_reg;
+		} else {
+			WARN_ONCE("fragprog wants fogc, vp doesn't provide it\n");
+		}
 	}
 
 	/* Setup default color if no color or tex was set */
