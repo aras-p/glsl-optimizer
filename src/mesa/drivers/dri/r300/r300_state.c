@@ -2301,7 +2301,7 @@ static const GLfloat *get_fragmentprogram_constant(GLcontext *ctx,
 }
 
 
-static void r300SetupPixelShader(r300ContextPtr rmesa)
+static GLboolean r300SetupPixelShader(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;
 	struct r300_fragment_program *fp = (struct r300_fragment_program *)
@@ -2309,15 +2309,12 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 	struct r300_fragment_program_code *code;
 	int i, k;
 
-	if (!fp)		/* should only happenen once, just after context is created */
-		return;
-
 	r300TranslateFragmentShader(rmesa, fp);
-	if (!fp->translated) {
-		fprintf(stderr, "%s: No valid fragment shader, exiting\n",
-			__FUNCTION__);
-		return;
-	}
+
+	/* Program is not native, fallback to software */
+	if (fp->error)
+		return GL_FALSE;
+
 	code = &fp->code;
 
 	r300SetupTextures(ctx);
@@ -2369,6 +2366,8 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat24(constant[2]);
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat24(constant[3]);
 	}
+
+	return GL_TRUE;
 }
 
 #define bump_r500fp_count(ptr, new_count)   do{\
@@ -2385,7 +2384,7 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 	if(_nc>_p->r500fp.count)_p->r500fp.count=_nc;\
 } while(0)
 
-static void r500SetupPixelShader(r300ContextPtr rmesa)
+static GLboolean r500SetupPixelShader(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;
 	struct r500_fragment_program *fp = (struct r500_fragment_program *)
@@ -2393,18 +2392,15 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 	int i;
 	struct r500_fragment_program_code *code;
 
-	if (!fp)		/* should only happenen once, just after context is created */
-		return;
-
 	((drm_r300_cmd_header_t *) rmesa->hw.r500fp.cmd)->r500fp.count = 0;
 	((drm_r300_cmd_header_t *) rmesa->hw.r500fp_const.cmd)->r500fp.count = 0;
 
 	r500TranslateFragmentShader(rmesa, fp);
-	if (!fp->translated) {
-		fprintf(stderr, "%s: No valid fragment shader, exiting\n",
-			__FUNCTION__);
-		return;
-	}
+
+	/* Program is not native, fallback to software */
+	if (fp->error)
+		return GL_FALSE;
+
 	code = &fp->code;
 
 	r300SetupTextures(ctx);
@@ -2445,12 +2441,17 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 	}
 	bump_r500fp_const_count(rmesa->hw.r500fp_const.cmd, code->const_nr * 4);
 
+	return GL_TRUE;
 }
 
 void r300UpdateShaderStates(r300ContextPtr rmesa)
 {
 	GLcontext *ctx;
 	ctx = rmesa->radeon.glCtx;
+
+	/* should only happenen once, just after context is created */
+	if (!ctx->FragmentProgram._Current)
+		return;
 
 	r300SetEarlyZState(ctx);
 
@@ -2475,19 +2476,18 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 		rmesa->hw.fg_depth_src.cmd[1] = fgdepthsrc;
 	}
 
-	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
-		r500SetupPixelShader(rmesa);
-	else
-		r300SetupPixelShader(rmesa);
-
-	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
+		if (!r500SetupPixelShader(rmesa))
+			return;
 		r500SetupRSUnit(ctx);
-	else
+	} else {
+		if (!r300SetupPixelShader(rmesa))
+			return;
 		r300SetupRSUnit(ctx);
+	}
 
 	if ((rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
 		r300SetupVertexProgram(rmesa);
-
 }
 
 /**

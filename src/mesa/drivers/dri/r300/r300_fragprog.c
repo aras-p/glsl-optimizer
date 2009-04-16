@@ -175,7 +175,7 @@ static GLboolean transform_TEX(
 		inst.SrcReg[0].File = PROGRAM_TEMPORARY;
 		inst.SrcReg[0].Index = tmpreg;
 	}
-	
+
 	tgt = radeonAppendInstructions(t->Program, 1);
 	_mesa_copy_instructions(tgt, &inst, 1);
 
@@ -466,8 +466,8 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 
 		_mesa_reference_program(r300->radeon.glCtx, &compiler.program, NULL);
 
-		if (!fp->error)
-			fp->translated = GL_TRUE;
+		fp->translated = GL_TRUE;
+
 		if (fp->error || (RADEON_DEBUG & DEBUG_PIXEL))
 			r300FragmentProgramDump(fp, &fp->code);
 		r300UpdateStateParameters(r300->radeon.glCtx, _NEW_PROGRAM);

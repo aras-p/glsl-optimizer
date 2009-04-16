@@ -194,7 +194,7 @@ static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type)
 			  ((vertex_count + 0) << 16) |
 			  type |
 			  R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
-		
+
 		if (!rmesa->radeon.radeonScreen->kernel_mm) {
 			OUT_BATCH_PACKET3(R300_PACKET3_INDX_BUFFER, 2);
 			OUT_BATCH(R300_INDX_BUFFER_ONE_REG_WR | (0 << R300_INDX_BUFFER_SKIP_SHIFT) |
@@ -224,12 +224,12 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 	uint32_t voffset;
 	int sz = 1 + (nr >> 1) * 3 + (nr & 1) * 2;
 	int i;
-	
+
 	if (RADEON_DEBUG & DEBUG_VERTS)
 		fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __FUNCTION__, nr,
 			offset);
 
-    
+
 	if (!rmesa->radeon.radeonScreen->kernel_mm) {
 		BEGIN_BATCH(sz+2+(nr * 2));
 		OUT_BATCH_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, sz - 1);
@@ -240,7 +240,7 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 				  (rmesa->radeon.tcl.aos[i].stride << 8) |
 				  (rmesa->radeon.tcl.aos[i + 1].components << 16) |
 				  (rmesa->radeon.tcl.aos[i + 1].stride << 24));
-			
+
 			voffset =  rmesa->radeon.tcl.aos[i + 0].offset +
 				offset * 4 * rmesa->radeon.tcl.aos[i + 0].stride;
 			OUT_BATCH_RELOC(voffset,
@@ -256,7 +256,7 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 					RADEON_GEM_DOMAIN_GTT,
 					0, 0);
 		}
-		
+
 		if (nr & 1) {
 			OUT_BATCH((rmesa->radeon.tcl.aos[nr - 1].components << 0) |
 				  (rmesa->radeon.tcl.aos[nr - 1].stride << 8));
@@ -280,7 +280,7 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 				  (rmesa->radeon.tcl.aos[i].stride << 8) |
 				  (rmesa->radeon.tcl.aos[i + 1].components << 16) |
 				  (rmesa->radeon.tcl.aos[i + 1].stride << 24));
-			
+
 			voffset =  rmesa->radeon.tcl.aos[i + 0].offset +
 				offset * 4 * rmesa->radeon.tcl.aos[i + 0].stride;
 			OUT_BATCH(voffset);
@@ -288,7 +288,7 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 				offset * 4 * rmesa->radeon.tcl.aos[i + 1].stride;
 			OUT_BATCH(voffset);
 		}
-		
+
 		if (nr & 1) {
 			OUT_BATCH((rmesa->radeon.tcl.aos[nr - 1].components << 0) |
 			  (rmesa->radeon.tcl.aos[nr - 1].stride << 8));
@@ -427,7 +427,7 @@ static int r300Fallback(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	const unsigned back = ctx->Stencil._BackFace;
-	
+
 	FALLBACK_IF(r300->radeon.Fallback);
 	/* Do we need to use new-style shaders?
 	 * Also is there a better way to do this? */
@@ -435,19 +435,19 @@ static int r300Fallback(GLcontext * ctx)
 		struct r500_fragment_program *fp = (struct r500_fragment_program *)
 	    (char *)ctx->FragmentProgram._Current;
 		if (fp) {
-			if (!fp->translated) {
+			if (!fp->translated)
 				r500TranslateFragmentShader(r300, fp);
-				FALLBACK_IF(!fp->translated);
-			}
+
+			FALLBACK_IF(fp->error);
 		}
 	} else {
 		struct r300_fragment_program *fp = (struct r300_fragment_program *)
 	    (char *)ctx->FragmentProgram._Current;
 		if (fp) {
-			if (!fp->translated) {
+			if (!fp->translated)
 				r300TranslateFragmentShader(r300, fp);
-				FALLBACK_IF(!fp->translated);
-			}
+
+			FALLBACK_IF(fp->error);
 		}
 	}
 
@@ -492,7 +492,7 @@ static GLboolean r300RunNonTCLRender(GLcontext * ctx,
 
 	if (!r300ValidateBuffers(ctx))
 	    return GL_TRUE;
-	
+
 	return r300RunRender(ctx, stage);
 }
 
@@ -517,7 +517,7 @@ static GLboolean r300RunTCLRender(GLcontext * ctx,
 
 	if (!r300ValidateBuffers(ctx))
 	    return GL_TRUE;
-	
+
 	r300UpdateShaders(rmesa);
 
 	vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);

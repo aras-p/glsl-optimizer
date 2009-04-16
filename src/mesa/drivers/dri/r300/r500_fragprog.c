@@ -493,7 +493,10 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 			_mesa_print_program(compiler.program);
 		}
 
-		fp->translated = r500FragmentProgramEmit(&compiler);
+		if (!r500FragmentProgramEmit(&compiler))
+			fp->error = GL_TRUE;
+
+		fp->translated = GL_TRUE;
 
 		/* Subtle: Rescue any parameters that have been added during transformations */
 		_mesa_free_parameter_list(fp->mesa_program.Base.Parameters);
@@ -505,7 +508,7 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 		r300UpdateStateParameters(r300->radeon.glCtx, _NEW_PROGRAM);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
-			if (fp->translated) {
+			if (!fp->error) {
 				_mesa_printf("Machine-readable code:\n");
 				dump_program(&fp->code);
 			}
