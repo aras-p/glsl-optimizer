@@ -346,10 +346,10 @@ get_src_reg_const(struct brw_wm_compile *c,
       const_reg = brw_abs(const_reg);
 
 #if 0
-   printf("  form const[%d] for arg %d, comp %d, reg %d\n",
+   printf("  form const[%d].%d for arg %d, reg %d\n",
           c->current_const[srcRegIndex].index,
-          srcRegIndex,
           component,
+          srcRegIndex,
           const_reg.nr);
 #endif
 
@@ -407,7 +407,7 @@ static struct brw_reg get_src_reg_imm(struct brw_wm_compile *c,
        if (src->Abs)
           value = FABSF(value);
 #if 0
-       printf("  form imm reg %f\n", value);
+       printf("  form immed value %f for chan %d\n", value, channel);
 #endif
        return brw_imm_f(value);
     }
