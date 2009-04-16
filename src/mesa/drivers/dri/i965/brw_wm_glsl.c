@@ -527,7 +527,9 @@ static void emit_mov( struct brw_wm_compile *c,
 	if (mask & (1<<i)) {
 	    struct brw_reg src, dst;
 	    dst = get_dst_reg(c, inst, i);
-	    src = get_src_reg_imm(c, inst, 0, i);
+            /* XXX some moves from immediate value don't work reliably!!! */
+            /*src = get_src_reg_imm(c, inst, 0, i);*/
+            src = get_src_reg(c, inst, 0, i);
 	    brw_MOV(p, dst, src);
 	}
     }
