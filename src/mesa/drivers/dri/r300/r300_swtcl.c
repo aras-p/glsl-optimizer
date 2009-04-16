@@ -66,10 +66,7 @@ do { \
 static void r300SwtclVAPSetup(GLcontext *ctx, GLuint InputsRead, GLuint OutputsWritten, GLuint vap_out_fmt_1)
 {
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
-	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *VB = &tnl->vb;
 	struct vertex_attribute *attrs = rmesa->swtcl.vert_attrs;
-	int vte = 0;
 	int i, j, reg_count;
 	uint32_t *vir0 = &rmesa->hw.vir[0].cmd[1];
 	uint32_t *vir1 = &rmesa->hw.vir[1].cmd[1];
@@ -123,7 +120,6 @@ static void r300SwtclVAPSetup(GLcontext *ctx, GLuint InputsRead, GLuint OutputsW
 	R300_STATECHANGE(rmesa, vir[0]);
 	R300_STATECHANGE(rmesa, vir[1]);
 	R300_STATECHANGE(rmesa, vof);
-	R300_STATECHANGE(rmesa, vte);
 	R300_STATECHANGE(rmesa, vic);
 
 	if (rmesa->radeon.radeonScreen->kernel_mm) {
@@ -145,24 +141,6 @@ static void r300SwtclVAPSetup(GLcontext *ctx, GLuint InputsRead, GLuint OutputsW
 	  * for HW TCL path, but not for SW TCL.
 	  */
 	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = vap_out_fmt_1;
-
-	vte = rmesa->hw.vte.cmd[1];
-	vte &= ~(R300_VTX_XY_FMT | R300_VTX_Z_FMT | R300_VTX_W0_FMT);
-	/* Important:
-	 */
-	if ( VB->NdcPtr != NULL ) {
-		VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
-		vte |= R300_VTX_XY_FMT | R300_VTX_Z_FMT;
-	}
-	else {
-		VB->AttribPtr[VERT_ATTRIB_POS] = VB->ClipPtr;
-		vte |= R300_VTX_W0_FMT;
-	}
-
-	assert( VB->AttribPtr[VERT_ATTRIB_POS] != NULL );
-
-	rmesa->hw.vte.cmd[1] = vte;
-	rmesa->hw.vte.cmd[2] = rmesa->radeon.swtcl.vertex_size;
 }
 
 
@@ -179,6 +157,9 @@ static void r300SetVertexFormat( GLcontext *ctx )
 
 	rmesa->swtcl.coloroffset = rmesa->swtcl.specoffset = 0;
 	rmesa->radeon.swtcl.vertex_attr_count = 0;
+
+	/* We always want non Ndc coords format */
+	VB->AttribPtr[VERT_ATTRIB_POS] = VB->ClipPtr;
 
 	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_POS)) {
 		InputsRead |= 1 << VERT_ATTRIB_POS;
