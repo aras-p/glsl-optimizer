@@ -77,13 +77,9 @@ def get_vc_paths(env):
         raise SCons.Errors.InternalError, "Unsupported target machine"
     include_dir = 'include'
 
-    exe_path     = os.path.join(vc_root, bin_dir)
-    include_path = os.path.join(vc_root, include_dir)
-    lib_path     = os.path.join(vc_root, lib_dir)
-
-    env.PrependENVPath('INCLUDE', include_path)
-    env.PrependENVPath('LIB', lib_path)
-    env.PrependENVPath('PATH', exe_path)
+    env.PrependENVPath('PATH',    os.path.join(vc_root, bin_dir))
+    env.PrependENVPath('INCLUDE', os.path.join(vc_root, include_dir))
+    env.PrependENVPath('LIB',     os.path.join(vc_root, lib_dir))
 
 def get_sdk_root(env):
     if SCons.Util.can_read_reg:
@@ -108,18 +104,14 @@ def get_sdk_paths(env):
     if target_cpu in ('generic', 'x86'):
         lib_dir = 'Lib'
     elif target_cpu == 'x86_64':
-        lib_dir = 'Lib/x64'
+        lib_dir = r'Lib\x64'
     else:
         raise SCons.Errors.InternalError, "Unsupported target machine"
     include_dir = 'Include'
 
-    exe_path     = os.path.join(sdk_root, bin_dir)
-    include_path = os.path.join(sdk_root, include_dir)
-    lib_path     = os.path.join(sdk_root, lib_dir)
-
-    env.PrependENVPath('INCLUDE', include_path)
-    env.PrependENVPath('LIB', lib_path)
-    env.PrependENVPath('PATH', exe_path)
+    env.PrependENVPath('PATH',    os.path.join(sdk_root, bin_dir))
+    env.PrependENVPath('INCLUDE', os.path.join(sdk_root, include_dir))
+    env.PrependENVPath('LIB',     os.path.join(sdk_root, lib_dir))
 
 def generate(env):
     if not env.has_key('ENV'):

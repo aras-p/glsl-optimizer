@@ -118,12 +118,10 @@ def generate(env):
 
     if env.Detect('lib'):
         env['AR']          = 'lib'
-    elif env.Detect('link'):
+    else:
         # Recent WINDDK versions do not ship with lib.
         env['AR']          = 'link /lib'
         env['TEMPFILE']    = TempFileMunge
-    else:
-        raise SCons.Errors.InternalError, "lib and link not found"
     env['ARFLAGS']     = SCons.Util.CLVar('/nologo')
     env['ARCOM']       = "${TEMPFILE('$AR $ARFLAGS /OUT:$TARGET $SOURCES')}"
     env['LIBPREFIX']   = ''
