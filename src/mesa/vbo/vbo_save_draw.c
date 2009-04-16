@@ -46,20 +46,31 @@ static void _playback_copy_to_current( GLcontext *ctx,
 				       const struct vbo_save_vertex_list *node )
 {
    struct vbo_context *vbo = vbo_context(ctx);
-   GLfloat vertex[VBO_ATTRIB_MAX * 4], *data = vertex;
+   GLfloat vertex[VBO_ATTRIB_MAX * 4];
+   GLfloat *data;
    GLuint i, offset;
 
-   if (node->count)
-      offset = (node->buffer_offset + 
-		(node->count-1) * node->vertex_size * sizeof(GLfloat));
-   else
-      offset = node->buffer_offset;
+   if (node->current_size == 0)
+      return;
 
-   ctx->Driver.GetBufferSubData( ctx, 0, offset, 
-				 node->vertex_size * sizeof(GLfloat), 
-				 data, node->vertex_store->bufferobj );
+   if (node->current_data) {
+      data = node->current_data;
+   }
+   else {
+      data = vertex;
 
-   data += node->attrsz[0]; /* skip vertex position */
+      if (node->count)
+         offset = (node->buffer_offset + 
+                   (node->count-1) * node->vertex_size * sizeof(GLfloat));
+      else
+         offset = node->buffer_offset;
+
+      ctx->Driver.GetBufferSubData( ctx, 0, offset, 
+                                    node->vertex_size * sizeof(GLfloat), 
+                                    data, node->vertex_store->bufferobj );
+
+      data += node->attrsz[0]; /* skip vertex position */
+   }
 
    for (i = VBO_ATTRIB_POS+1 ; i < VBO_ATTRIB_MAX ; i++) {
       if (node->attrsz[i]) {

@@ -64,6 +64,13 @@ struct vbo_save_vertex_list {
    GLubyte attrsz[VBO_ATTRIB_MAX];
    GLuint vertex_size;
 
+   /* Copy of the final vertex from node->vertex_store->bufferobj.
+    * Keep this in regular (non-VBO) memory to avoid repeated
+    * map/unmap of the VBO when updating GL current data.
+    */
+   GLfloat *current_data;
+   GLuint current_size;
+
    GLuint buffer_offset;
    GLuint count;
    GLuint wrap_count;		/* number of copied vertices at start */
