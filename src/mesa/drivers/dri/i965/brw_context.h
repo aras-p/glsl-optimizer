@@ -187,7 +187,7 @@ struct brw_wm_prog_data {
    GLuint total_grf;
    GLuint total_scratch;
 
-   GLuint nr_params;
+   GLuint nr_params;       /**< number of float params/constants */
    GLboolean error;
 
    /* Pointer to tracked values (only valid once
@@ -226,6 +226,7 @@ struct brw_vs_prog_data {
    GLuint urb_read_length;
    GLuint total_grf;
    GLuint outputs_written;
+   GLuint nr_params;       /**< number of float params/constants */
 
    GLuint inputs_read;
 

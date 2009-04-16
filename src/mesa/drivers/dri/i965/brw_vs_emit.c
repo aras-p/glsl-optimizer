@@ -68,7 +68,6 @@ static void release_tmps( struct brw_vs_compile *c )
 static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
    GLuint i, reg = 0, mrf;
-   GLuint nr_params;
 
 #if 0
    if (c->vp->program.Base.Parameters->NumParameters >= 6)
@@ -100,15 +99,18 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    if (c->use_const_buffer) {
       /* get constants from a real constant buffer */
       c->prog_data.curb_read_length = 0;
+      c->prog_data.nr_params = 4; /* XXX 0 causes a bug elsewhere... */
    }
    else {
       /* use a section of the GRF for constants */
-      nr_params = c->vp->program.Base.Parameters->NumParameters;
+      GLuint nr_params = c->vp->program.Base.Parameters->NumParameters;
       for (i = 0; i < nr_params; i++) {
          c->regs[PROGRAM_STATE_VAR][i] = stride( brw_vec4_grf(reg+i/2, (i%2) * 4), 0, 4, 1);
       }
       reg += (nr_params + 1) / 2;
       c->prog_data.curb_read_length = reg - 1;
+
+      c->prog_data.nr_params = nr_params * 4;
    }
 
    /* Allocate input regs:  

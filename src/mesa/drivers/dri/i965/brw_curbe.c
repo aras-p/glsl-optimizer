@@ -45,17 +45,21 @@
 #include "brw_util.h"
 
 
-/* Partition the CURBE between the various users of constant values:
+/**
+ * Partition the CURBE between the various users of constant values:
+ * Note that vertex and fragment shaders can now fetch constants out
+ * of constant buffers.  We no longer allocatea block of the GRF for
+ * constants.  That greatly reduces the demand for space in the CURBE.
+ * Some of the comments within are dated...
  */
 static void calculate_curbe_offsets( struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
    /* CACHE_NEW_WM_PROG */
-   GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
+   const GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
    
    /* BRW_NEW_VERTEX_PROGRAM */
-   const struct brw_vertex_program *vp = brw_vertex_program_const(brw->vertex_program);
-   GLuint nr_vp_regs = (vp->program.Base.Parameters->NumParameters * 4 + 15) / 16;
+   const GLuint nr_vp_regs = (brw->vs.prog_data->nr_params + 15) / 16;
    GLuint nr_clip_regs = 0;
    GLuint total_regs;
 
@@ -248,7 +252,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
    /* vertex shader constants */
    if (brw->curbe.vs_size) {
       GLuint offset = brw->curbe.vs_start * 16;
-      GLuint nr = vp->program.Base.Parameters->NumParameters;
+      GLuint nr = brw->vs.prog_data->nr_params / 4;
 
       _mesa_load_state_parameters(ctx, vp->program.Base.Parameters); 
 
