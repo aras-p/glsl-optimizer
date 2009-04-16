@@ -928,6 +928,7 @@ void radeon_validate_reset_bos(radeonContextPtr radeon)
 	int i;
 
 	for (i = 0; i < radeon->state.validated_bo_count; i++) {
+		radeon_bo_unref(radeon->state.bos[i].bo);
 		radeon->state.bos[i].bo = NULL;
 		radeon->state.bos[i].read_domains = 0;
 		radeon->state.bos[i].write_domain = 0;
@@ -938,6 +939,7 @@ void radeon_validate_reset_bos(radeonContextPtr radeon)
 
 void radeon_validate_bo(radeonContextPtr radeon, struct radeon_bo *bo, uint32_t read_domains, uint32_t write_domain)
 {
+	radeon_bo_ref(bo);
 	radeon->state.bos[radeon->state.validated_bo_count].bo = bo;
 	radeon->state.bos[radeon->state.validated_bo_count].read_domains = read_domains;
 	radeon->state.bos[radeon->state.validated_bo_count].write_domain = write_domain;
