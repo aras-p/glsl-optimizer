@@ -100,7 +100,7 @@ static void PrintColorStrings( void )
 {
     GLubyte ubbuf[3];
     int i, xleft, xright;
-    char colorString[18];
+    char colorString[100];
 
     xleft = 5 + windW/4;
     xright = 5 + windW/2;
