@@ -59,7 +59,7 @@ __driUtilMessage(const char *f, ...)
     va_list args;
 
     if (getenv("LIBGL_DEBUG")) {
-        fprintf(stderr, "libGL error: \n");
+        fprintf(stderr, "libGL: ");
         va_start(args, f);
         vfprintf(stderr, f, args);
         va_end(args);
