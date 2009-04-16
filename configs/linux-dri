@@ -64,4 +64,4 @@ GALLIUM_WINSYS_DRM_DIRS = intel
 GALLIUM_STATE_TRACKERS_DIRS = egl
 
 DRI_DIRS = i810 i915 i965 mach64 mga r128 r200 r300 radeon s3v \
-	savage sis tdfx trident unichrome ffb
+	savage sis tdfx trident unichrome ffb swrast
