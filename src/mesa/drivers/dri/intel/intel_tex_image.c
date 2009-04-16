@@ -315,7 +315,7 @@ intelTexImage(GLcontext * ctx,
    GLint postConvWidth = width;
    GLint postConvHeight = height;
    GLint texelBytes, sizeInBytes;
-   GLuint dstRowStride, srcRowStride = texImage->RowStride;
+   GLuint dstRowStride = 0, srcRowStride = texImage->RowStride;
    GLboolean needs_map;
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
@@ -516,8 +516,9 @@ intelTexImage(GLcontext * ctx,
    }
 
    DBG("Upload image %dx%dx%d row_len %d "
-       "pitch %d\n",
-       width, height, depth, width * texelBytes, dstRowStride);
+       "pitch %d pixels %d compressed %d\n",
+       width, height, depth, width * texelBytes, dstRowStride,
+       pixels ? 1 : 0, compressed);
 
    /* Copy data.  Would like to know when it's ok for us to eg. use
     * the blitter to copy.  Or, use the hardware to do the format
@@ -530,7 +531,7 @@ intelTexImage(GLcontext * ctx,
 	       _mesa_copy_rect(texImage->Data, dst->cpp, dst->pitch,
 			       0, 0,
 			       intelImage->mt->level[level].width,
-			       intelImage->mt->level[level].height/4,
+			       (intelImage->mt->level[level].height+3)/4,
 			       pixels,
 			       srcRowStride,
 			       0, 0);
