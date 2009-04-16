@@ -83,7 +83,6 @@ i915InitDriverFunctions(struct dd_function_table *functions)
 {
    intelInitDriverFunctions(functions);
    i915InitStateFunctions(functions);
-   i915InitTextureFuncs(functions);
    i915InitFragProgFuncs(functions);
    functions->UpdateState = i915InvalidateState;
 }
