@@ -89,10 +89,6 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
 
    /* disabled blending/masking */
    memset(&ctx->blend, 0, sizeof(ctx->blend));
-   ctx->blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   ctx->blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   ctx->blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   ctx->blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
    ctx->blend.colormask = PIPE_MASK_RGBA;
 
    /* no-op depth/stencil/alpha */
