@@ -191,17 +191,6 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 	0,
 };
 
-static void r300RunPipeline(GLcontext * ctx)
-{
-    _mesa_lock_context_textures(ctx);
-
-    if (ctx->NewState)
-        _mesa_update_state_locked(ctx);
-    
-    _tnl_run_pipeline(ctx);
-    _mesa_unlock_context_textures(ctx);
-}
-
 static void r300_get_lock(radeonContextPtr rmesa)
 {
 	drm_radeon_sarea_t *sarea = rmesa->sarea;
@@ -211,7 +200,7 @@ static void r300_get_lock(radeonContextPtr rmesa)
 		if (!rmesa->radeonScreen->kernel_mm)
 			radeon_bo_legacy_texture_age(rmesa->radeonScreen->bom);
 	}
-}		  
+}
 
 static void r300_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)
 {
@@ -246,9 +235,9 @@ static void r300_vtbl_pre_emit_atoms(radeonContextPtr radeon)
 {
 	r300ContextPtr r300 = (r300ContextPtr)radeon;
 	BATCH_LOCALS(radeon);
-	
+
 	r300->vap_flush_needed = GL_TRUE;
-	
+
 	cp_wait(radeon, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
 	BEGIN_BATCH_NO_AUTOSTATE(2);
 	OUT_BATCH_REGVAL(R300_TX_INVALTAGS, R300_TX_FLUSH);
@@ -275,80 +264,23 @@ static void r300_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.fallback = r300_fallback;
 }
 
-
-/* Create the device specific rendering context.
- */
-GLboolean r300CreateContext(const __GLcontextModes * glVisual,
-			    __DRIcontextPrivate * driContextPriv,
-			    void *sharedContextPrivate)
+static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 {
-	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
-	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
-	struct dd_function_table functions;
-	r300ContextPtr r300;
-	GLcontext *ctx;
-	int tcl_mode;
-
-	assert(glVisual);
-	assert(driContextPriv);
-	assert(screen);
-
-	/* Allocate the R300 context */
-	r300 = (r300ContextPtr) CALLOC(sizeof(*r300));
-	if (!r300)
-		return GL_FALSE;
-
-	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
-		hw_tcl_on = future_hw_tcl_on = 0;
-
-	r300_init_vtbl(&r300->radeon);
-	/* Parse configuration files.
-	 * Do this here so that initialMaxAnisotropy is set before we create
-	 * the default textures.
-	 */
-	driParseConfigFiles(&r300->radeon.optionCache, &screen->optionCache,
-			    screen->driScreen->myNum, "r300");
-	r300->radeon.initialMaxAnisotropy = driQueryOptionf(&r300->radeon.optionCache,
-						     "def_max_anisotropy");
-
-	/* Init default driver functions then plug in our R300-specific functions
-	 * (the texture functions are especially important)
-	 */
-	_mesa_init_driver_functions(&functions);
-	r300InitIoctlFuncs(&functions);
-	r300InitStateFuncs(&functions);
-	r300InitTextureFuncs(&functions);
-	r300InitShaderFuncs(&functions);
-
-	if (!radeonInitContext(&r300->radeon, &functions,
-			       glVisual, driContextPriv,
-			       sharedContextPrivate)) {
-		FREE(r300);
-		return GL_FALSE;
-	}
-
-	/* Init r300 context data */
-	/* Set the maximum texture size small enough that we can guarentee that
-	 * all texture units can bind a maximal texture and have them both in
-	 * texturable memory at once.
-	 */
-
-	ctx = r300->radeon.glCtx;
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
 	ctx->Const.MaxTextureImageUnits =
 	    driQueryOptioni(&r300->radeon.optionCache, "texture_image_units");
 	ctx->Const.MaxTextureCoordUnits =
 	    driQueryOptioni(&r300->radeon.optionCache, "texture_coord_units");
-	ctx->Const.MaxTextureUnits =
-	    MIN2(ctx->Const.MaxTextureImageUnits,
+	ctx->Const.MaxTextureUnits = MIN2(ctx->Const.MaxTextureImageUnits,
 		 ctx->Const.MaxTextureCoordUnits);
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 	ctx->Const.MaxTextureLodBias = 16.0;
 
 	if (screen->chip_family >= CHIP_FAMILY_RV515)
-	    ctx->Const.MaxTextureLevels = 13;
+		ctx->Const.MaxTextureLevels = 13;
 	else
-	    ctx->Const.MaxTextureLevels = 12;
+		ctx->Const.MaxTextureLevels = 12;
 
 	ctx->Const.MinPointSize = 1.0;
 	ctx->Const.MinPointSizeAA = 1.0;
@@ -360,42 +292,11 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.MaxLineWidth = R300_LINESIZE_MAX;
 	ctx->Const.MaxLineWidthAA = R300_LINESIZE_MAX;
 
-	/* Needs further modifications */
-#if 0
-	ctx->Const.MaxArrayLockSize =
-	    ( /*512 */ RADEON_BUFFER_SIZE * 16 * 1024) / (4 * 4);
-#endif
-
 	ctx->Const.MaxDrawBuffers = 1;
-
-	/* Initialize the software rasterizer and helper modules.
-	 */
-	_swrast_CreateContext(ctx);
-	_vbo_CreateContext(ctx);
-	_tnl_CreateContext(ctx);
-	_swsetup_CreateContext(ctx);
-	_swsetup_Wakeup(ctx);
-	_ae_create_context(ctx);
-
-	/* Install the customized pipeline:
-	 */
-	_tnl_destroy_pipeline(ctx);
-	_tnl_install_pipeline(ctx, r300_pipeline);
-
-	/* Try and keep materials and vertices separate:
-	 */
-/* 	_tnl_isolate_materials(ctx, GL_TRUE); */
-
-	/* Configure swrast and TNL to match hardware characteristics:
-	 */
-	_swrast_allow_pixel_fog(ctx, GL_FALSE);
-	_swrast_allow_vertex_fog(ctx, GL_TRUE);
-	_tnl_allow_pixel_fog(ctx, GL_FALSE);
-	_tnl_allow_vertex_fog(ctx, GL_TRUE);
 
 	/* currently bogus data */
 	if (screen->chip_flags & RADEON_CHIPSET_TCL) {
-	        ctx->Const.VertexProgram.MaxInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
+		ctx->Const.VertexProgram.MaxInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
 		ctx->Const.VertexProgram.MaxNativeInstructions =
 		  VSF_MAX_FRAGMENT_LENGTH / 4;
 		ctx->Const.VertexProgram.MaxNativeAttribs = 16;	/* r420 */
@@ -415,39 +316,104 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	    PFS_MAX_ALU_INST + PFS_MAX_TEX_INST;
 	ctx->Const.FragmentProgram.MaxNativeTexIndirections =
 	    PFS_MAX_TEX_INDIRECT;
-	ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;	/* and these are?? */
+	ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;
+}
+
+/* Create the device specific rendering context.
+ */
+GLboolean r300CreateContext(const __GLcontextModes * glVisual,
+			    __DRIcontextPrivate * driContextPriv,
+			    void *sharedContextPrivate)
+{
+	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
+	struct dd_function_table functions;
+	r300ContextPtr r300;
+	GLcontext *ctx;
+	int tcl_mode;
+
+	assert(glVisual);
+	assert(driContextPriv);
+	assert(screen);
+
+	r300 = (r300ContextPtr) CALLOC(sizeof(*r300));
+	if (!r300)
+		return GL_FALSE;
+
+	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
+		hw_tcl_on = future_hw_tcl_on = 0;
+
+	driParseConfigFiles(&r300->radeon.optionCache, &screen->optionCache,
+			    screen->driScreen->myNum, "r300");
+
+	r300_init_vtbl(&r300->radeon);
+
+	_mesa_init_driver_functions(&functions);
+	r300InitIoctlFuncs(&functions);
+	r300InitStateFuncs(&functions);
+	r300InitTextureFuncs(&functions);
+	r300InitShaderFuncs(&functions);
+
+	if (!radeonInitContext(&r300->radeon, &functions,
+			       glVisual, driContextPriv,
+			       sharedContextPrivate)) {
+		FREE(r300);
+		return GL_FALSE;
+	}
+
+	ctx = r300->radeon.glCtx;
+	r300InitConstValues(ctx, screen);
 	ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
 	ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
-	driInitExtensions(ctx, card_extensions, GL_TRUE);
-	if (r300->radeon.radeonScreen->kernel_mm)
-	  driInitExtensions(ctx, mm_extensions, GL_FALSE);
+	/* Initialize the software rasterizer and helper modules.
+	 */
+	_swrast_CreateContext(ctx);
+	_vbo_CreateContext(ctx);
+	_tnl_CreateContext(ctx);
+	_swsetup_CreateContext(ctx);
+	_swsetup_Wakeup(ctx);
+	_ae_create_context(ctx);
 
-	if (driQueryOptionb
-	    (&r300->radeon.optionCache, "disable_stencil_two_side"))
-		_mesa_disable_extension(ctx, "GL_EXT_stencil_two_side");
+	/* Install the customized pipeline:
+	 */
+	_tnl_destroy_pipeline(ctx);
+	_tnl_install_pipeline(ctx, r300_pipeline);
+	TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
-	if (r300->radeon.glCtx->Mesa_DXTn
-	    && !driQueryOptionb(&r300->radeon.optionCache, "disable_s3tc")) {
-		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
-		_mesa_enable_extension(ctx, "GL_S3_s3tc");
-	} else
-	    if (driQueryOptionb(&r300->radeon.optionCache, "force_s3tc_enable"))
-	{
-		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
-	}
+	/* Configure swrast and TNL to match hardware characteristics:
+	 */
+	_swrast_allow_pixel_fog(ctx, GL_FALSE);
+	_swrast_allow_vertex_fog(ctx, GL_TRUE);
+	_tnl_allow_pixel_fog(ctx, GL_FALSE);
+	_tnl_allow_vertex_fog(ctx, GL_TRUE);
 
-	r300->disable_lowimpact_fallback =
-	    driQueryOptionb(&r300->radeon.optionCache,
-			    "disable_lowimpact_fallback");
 	radeon_fbo_init(&r300->radeon);
    	radeonInitSpanFuncs( ctx );
 	r300InitCmdBuf(r300);
 	r300InitState(r300);
 	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
-	        r300InitSwtcl(ctx);
+		r300InitSwtcl(ctx);
 
-	TNL_CONTEXT(ctx)->Driver.RunPipeline = r300RunPipeline;
+	driInitExtensions(ctx, card_extensions, GL_TRUE);
+	if (r300->radeon.radeonScreen->kernel_mm)
+	  driInitExtensions(ctx, mm_extensions, GL_FALSE);
+
+	r300->radeon.initialMaxAnisotropy = driQueryOptionf(&r300->radeon.optionCache,
+						     "def_max_anisotropy");
+
+	if (driQueryOptionb(&r300->radeon.optionCache, "disable_stencil_two_side"))
+		_mesa_disable_extension(ctx, "GL_EXT_stencil_two_side");
+
+	if (ctx->Mesa_DXTn && !driQueryOptionb(&r300->radeon.optionCache, "disable_s3tc")) {
+		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
+		_mesa_enable_extension(ctx, "GL_S3_s3tc");
+	} else if (driQueryOptionb(&r300->radeon.optionCache, "force_s3tc_enable")) {
+		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
+	}
+
+	r300->disable_lowimpact_fallback =
+		 driQueryOptionb(&r300->radeon.optionCache, "disable_lowimpact_fallback");
 
 	tcl_mode = driQueryOptioni(&r300->radeon.optionCache, "tcl_mode");
 	if (driQueryOptionb(&r300->radeon.optionCache, "no_rast")) {
