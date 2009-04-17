@@ -46,7 +46,7 @@ trace_buffer_unwrap(struct trace_context *tr_ctx,
    if(!buffer)
       return NULL;
 
-   tr_buf = trace_buffer(tr_scr, buffer);
+   tr_buf = trace_buffer(buffer);
 
    assert(tr_buf->buffer);
    assert(tr_buf->buffer->screen == tr_scr->screen);
@@ -142,9 +142,8 @@ trace_context_draw_elements(struct pipe_context *_pipe,
                           unsigned indexSize,
                           unsigned mode, unsigned start, unsigned count)
 {
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _indexBuffer);
+   struct trace_buffer *tr_buf = trace_buffer(_indexBuffer);
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_buffer *indexBuffer = tr_buf->buffer;
    boolean result;
@@ -180,9 +179,8 @@ trace_context_draw_range_elements(struct pipe_context *_pipe,
                                   unsigned start,
                                   unsigned count)
 {
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _indexBuffer);
+   struct trace_buffer *tr_buf = trace_buffer(_indexBuffer);
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_buffer *indexBuffer = tr_buf->buffer;
    boolean result;

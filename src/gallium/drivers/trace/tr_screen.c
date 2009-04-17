@@ -603,7 +603,7 @@ trace_screen_buffer_map(struct pipe_screen *_screen,
                         unsigned usage)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
-   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _buffer);
+   struct trace_buffer *tr_buf = trace_buffer(_buffer);
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_buffer *buffer = tr_buf->buffer;
    void *map;
@@ -628,7 +628,7 @@ trace_screen_buffer_map_range(struct pipe_screen *_screen,
                               unsigned usage)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
-   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _buffer);
+   struct trace_buffer *tr_buf = trace_buffer(_buffer);
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_buffer *buffer = tr_buf->buffer;
    void *map;
@@ -680,7 +680,7 @@ trace_screen_buffer_flush_mapped_range(struct pipe_screen *_screen,
                                        unsigned length)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
-   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _buffer);
+   struct trace_buffer *tr_buf = trace_buffer(_buffer);
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_buffer *buffer = tr_buf->buffer;
 
@@ -696,7 +696,7 @@ trace_screen_buffer_unmap(struct pipe_screen *_screen,
                           struct pipe_buffer *_buffer)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
-   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _buffer);
+   struct trace_buffer *tr_buf = trace_buffer(_buffer);
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_buffer *buffer = tr_buf->buffer;
 
@@ -712,7 +712,7 @@ static void
 trace_screen_buffer_destroy(struct pipe_buffer *_buffer)
 {
    struct trace_screen *tr_scr = trace_screen(_buffer->screen);
-   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _buffer);
+   struct trace_buffer *tr_buf = trace_buffer(_buffer);
    struct pipe_screen *screen = tr_scr->screen;
    struct pipe_buffer *buffer = tr_buf->buffer;
 

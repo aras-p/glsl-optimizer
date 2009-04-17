@@ -425,8 +425,7 @@ void trace_dump_ptr(const void *value)
 void trace_dump_buffer_ptr(struct pipe_buffer *_buffer)
 {
    if (_buffer) {
-      struct trace_screen *tr_scr = trace_screen(_buffer->screen);
-      struct trace_buffer *tr_buf = trace_buffer(tr_scr, _buffer);
+      struct trace_buffer *tr_buf = trace_buffer(_buffer);
       trace_dump_ptr(tr_buf->buffer);
    } else {
       trace_dump_null();

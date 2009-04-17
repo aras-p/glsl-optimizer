@@ -64,7 +64,8 @@ void
 trace_buffer_destroy(struct trace_screen *tr_scr,
                      struct pipe_buffer *buffer)
 {
-   struct trace_buffer *tr_buf = trace_buffer(tr_scr, buffer);
+   struct trace_buffer *tr_buf = trace_buffer(buffer);
+
    pipe_buffer_reference(&tr_buf->buffer, NULL);
    FREE(tr_buf);
 }

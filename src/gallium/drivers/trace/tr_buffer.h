@@ -47,13 +47,11 @@ struct trace_buffer
 
 
 static INLINE struct trace_buffer *
-trace_buffer(struct trace_screen *tr_scr,
-             struct pipe_buffer *buffer)
+trace_buffer(struct pipe_buffer *buffer)
 {
    if(!buffer)
       return NULL;
-   assert(tr_scr);
-   assert(buffer->screen == &tr_scr->base);
+   (void)trace_screen(buffer->screen);
    return (struct trace_buffer *)buffer;
 }
 
