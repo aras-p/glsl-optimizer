@@ -147,7 +147,7 @@ make_bitmap_fragment_program(GLcontext *ctx, GLuint samplerIndex)
       p->Instructions[ic].SrcReg[0].Swizzle = SWIZZLE_XXXX;
 
    p->Instructions[ic].SrcReg[0].Index = 0;
-   p->Instructions[ic].SrcReg[0].NegateBase = NEGATE_XYZW;
+   p->Instructions[ic].SrcReg[0].Negate = NEGATE_XYZW;
    ic++;
 
    /* END; */

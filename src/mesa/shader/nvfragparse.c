@@ -957,6 +957,7 @@ Parse_VectorSrc(struct parse_state *parseState,
    GLfloat sign = 1.0F;
    GLubyte token[100];
    GLint idx;
+   GLuint negateBase, negateAbs;
 
    /*
     * First, take care of +/- and absolute value stuff.
@@ -968,20 +969,22 @@ Parse_VectorSrc(struct parse_state *parseState,
 
    if (Parse_String(parseState, "|")) {
       srcReg->Abs = GL_TRUE;
-      srcReg->NegateAbs = (sign < 0.0F) ? GL_TRUE : GL_FALSE;
+      negateAbs = (sign < 0.0F) ? NEGATE_XYZW : NEGATE_NONE;
 
       if (Parse_String(parseState, "-"))
-         srcReg->NegateBase = NEGATE_XYZW;
+         negateBase = NEGATE_XYZW;
       else if (Parse_String(parseState, "+"))
-         srcReg->NegateBase = NEGATE_NONE;
+         negateBase = NEGATE_NONE;
       else
-         srcReg->NegateBase = NEGATE_NONE;
+         negateBase = NEGATE_NONE;
    }
    else {
       srcReg->Abs = GL_FALSE;
-      srcReg->NegateAbs = GL_FALSE;
-      srcReg->NegateBase = (sign < 0.0F) ? NEGATE_XYZW : NEGATE_NONE;
+      negateAbs = NEGATE_NONE;
+      negateBase = (sign < 0.0F) ? NEGATE_XYZW : NEGATE_NONE;
    }
+
+   srcReg->Negate = srcReg->Abs ? negateAbs : negateBase;
 
    /* This should be the real src vector/register name */
    if (!Peek_Token(parseState, token))
@@ -1083,6 +1086,7 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
    GLfloat sign = 1.0F;
    GLboolean needSuffix = GL_TRUE;
    GLint idx;
+   GLuint negateBase, negateAbs;
 
    /*
     * First, take care of +/- and absolute value stuff.
@@ -1094,20 +1098,22 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
 
    if (Parse_String(parseState, "|")) {
       srcReg->Abs = GL_TRUE;
-      srcReg->NegateAbs = (sign < 0.0F) ? GL_TRUE : GL_FALSE;
+      negateAbs = (sign < 0.0F) ? NEGATE_XYZW : NEGATE_NONE;
 
       if (Parse_String(parseState, "-"))
-         srcReg->NegateBase = NEGATE_XYZW;
+         negateBase = NEGATE_XYZW;
       else if (Parse_String(parseState, "+"))
-         srcReg->NegateBase = NEGATE_NONE;
+         negateBase = NEGATE_NONE;
       else
-         srcReg->NegateBase = NEGATE_NONE;
+         negateBase = NEGATE_NONE;
    }
    else {
       srcReg->Abs = GL_FALSE;
-      srcReg->NegateAbs = GL_FALSE;
-      srcReg->NegateBase = (sign < 0.0F) ? NEGATE_XYZW : NEGATE_NONE;
+      negateAbs = NEGATE_NONE;
+      negateBase = (sign < 0.0F) ? NEGATE_XYZW : NEGATE_NONE;
    }
+
+   srcReg->Negate = srcReg->Abs ? negateAbs : negateBase;
 
    if (!Peek_Token(parseState, token))
       RETURN_ERROR;
@@ -1247,9 +1253,8 @@ Parse_PrintInstruction(struct parse_state *parseState,
    }
 
    inst->SrcReg[0].Swizzle = SWIZZLE_NOOP;
-   inst->SrcReg[0].NegateBase = NEGATE_NONE;
    inst->SrcReg[0].Abs = GL_FALSE;
-   inst->SrcReg[0].NegateAbs = GL_FALSE;
+   inst->SrcReg[0].Negate = NEGATE_NONE;
 
    return GL_TRUE;
 }

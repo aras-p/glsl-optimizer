@@ -80,9 +80,8 @@ static struct prog_src_register src_reg(GLuint file, GLuint idx)
    reg.Index = idx;
    reg.Swizzle = SWIZZLE_NOOP;
    reg.RelAddr = 0;
-   reg.NegateBase = 0;
+   reg.Negate = NEGATE_NONE;
    reg.Abs = 0;
-   reg.NegateAbs = 0;
    return reg;
 }
 
@@ -569,7 +568,7 @@ static void precalc_dst( struct brw_wm_compile *c,
 		    src_undef(),
 		    src_undef());
       /* Avoid letting negation flag of src0 affect our 1 constant. */
-      swz->SrcReg[0].NegateBase &= ~NEGATE_X;
+      swz->SrcReg[0].Negate &= ~NEGATE_X;
    }
    if (dst.WriteMask & WRITEMASK_W) {
       /* dst.w = mov src1.w
@@ -604,7 +603,7 @@ static void precalc_lit( struct brw_wm_compile *c,
 		    src_undef(),
 		    src_undef());
       /* Avoid letting the negation flag of src0 affect our 1 constant. */
-      swz->SrcReg[0].NegateBase = 0;
+      swz->SrcReg[0].Negate = NEGATE_NONE;
    }
 
    if (dst.WriteMask & WRITEMASK_YZ) {
@@ -651,7 +650,7 @@ static void precalc_tex( struct brw_wm_compile *c,
                      src0,
                      src_undef(),
                      src_undef());
-       out->SrcReg[0].NegateBase = 0;
+       out->SrcReg[0].Negate = NEGATE_NONE;
        out->SrcReg[0].Abs = 1;
 
        /* tmp0 = MAX(coord.X, coord.Y) */
@@ -1050,14 +1049,14 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
       case OPCODE_ABS:
 	 out = emit_insn(c, inst);
 	 out->Opcode = OPCODE_MOV;
-	 out->SrcReg[0].NegateBase = 0;
+	 out->SrcReg[0].Negate = NEGATE_NONE;
 	 out->SrcReg[0].Abs = 1;
 	 break;
 
       case OPCODE_SUB: 
 	 out = emit_insn(c, inst);
 	 out->Opcode = OPCODE_ADD;
-	 out->SrcReg[1].NegateBase ^= 0xf;
+	 out->SrcReg[1].Negate ^= NEGATE_XYZW;
 	 break;
 
       case OPCODE_SCS: 

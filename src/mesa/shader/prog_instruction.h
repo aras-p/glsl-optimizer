@@ -261,37 +261,15 @@ struct prog_src_register
    GLuint Swizzle:12;
    GLuint RelAddr:1;
 
-   /**
-    * \name Source register "sign" control.
-    *
-    * The ARB and NV extensions allow varrying degrees of control over the
-    * sign of the source vector components.  These values allow enough control
-    * for all flavors of the extensions.
-    */
-   /*@{*/
-   /**
-    * Per-component negation for the SWZ instruction.  For non-SWZ
-    * instructions the only possible values are NEGATE_XYZW and NEGATE_NONE.
-    *
-    * \since
-    * ARB_vertex_program, ARB_fragment_program
-    */
-   GLuint NegateBase:4;
-
-   /**
-    * Take the component-wise absolute value.
-    *
-    * \since
-    * NV_fragment_program, NV_fragment_program_option, NV_vertex_program2,
-    * NV_vertex_program2_option.
-    */
+   /** Take the component-wise absolute value */
    GLuint Abs:1;
 
    /**
-    * Post-absolute value negation (all components).
+    * Post-Abs negation.
+    * This will either be NEGATE_NONE or NEGATE_XYZW, except for the SWZ
+    * instruction which allows per-component negation.
     */
-   GLuint NegateAbs:1;
-   /*@}*/
+   GLuint Negate:4;
 };
 
 

@@ -912,7 +912,7 @@ static struct brw_reg get_arg( struct brw_vs_compile *c,
 
    /* Note this is ok for non-swizzle instructions: 
     */
-   reg.negate = src->NegateBase ? 1 : 0;   
+   reg.negate = src->Negate ? 1 : 0;   
 
    return reg;
 }
@@ -962,7 +962,7 @@ static void emit_swz( struct brw_vs_compile *c,
    GLuint ones_mask = 0;
    GLuint src_mask = 0;
    GLubyte src_swz[4];
-   GLboolean need_tmp = (src.NegateBase &&
+   GLboolean need_tmp = (src.Negate &&
 			 dst.file != BRW_GENERAL_REGISTER_FILE);
    struct brw_reg tmp = dst;
    GLuint i;
@@ -1011,8 +1011,8 @@ static void emit_swz( struct brw_vs_compile *c,
    if (ones_mask) 
       brw_MOV(p, brw_writemask(tmp, ones_mask), brw_imm_f(1));
 
-   if (src.NegateBase)
-      brw_MOV(p, brw_writemask(tmp, src.NegateBase), negate(tmp));
+   if (src.Negate)
+      brw_MOV(p, brw_writemask(tmp, src.Negate), negate(tmp));
    
    if (need_tmp) {
       brw_MOV(p, dst, tmp);

@@ -92,7 +92,7 @@ static const struct swizzle_data* lookup_native_swizzle(GLuint swizzle)
 GLboolean r300FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 {
 	if (reg.Abs)
-		reg.NegateBase = 0;
+		reg.Negate = NEGATE_NONE;
 
 	if (opcode == OPCODE_KIL ||
 	    opcode == OPCODE_TEX ||
@@ -100,7 +100,8 @@ GLboolean r300FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 	    opcode == OPCODE_TXP) {
 		int j;
 
-		if (reg.Abs || reg.NegateBase != (15*reg.NegateAbs))
+		if (reg.Abs || (reg.Negate != NEGATE_XYZW &&
+                                reg.Negate != NEGATE_NONE))
 			return GL_FALSE;
 
 		for(j = 0; j < 4; ++j) {
@@ -121,7 +122,7 @@ GLboolean r300FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 		if (GET_SWZ(reg.Swizzle, j) != SWIZZLE_NIL)
 			relevant |= 1 << j;
 
-	if ((reg.NegateBase & relevant) && (reg.NegateBase & relevant) != relevant)
+	if ((reg.Negate & relevant) && (reg.Negate & relevant) != relevant)
 		return GL_FALSE;
 
 	if (!lookup_native_swizzle(reg.Swizzle))
@@ -137,7 +138,7 @@ GLboolean r300FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 void r300FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, struct prog_src_register src)
 {
 	if (src.Abs)
-		src.NegateBase = 0;
+		src.Negate = NEGATE_NONE;
 
 	while(dst.WriteMask) {
 		const struct swizzle_data *best_swizzle = 0;
@@ -170,11 +171,11 @@ void r300FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, 
 			}
 		}
 
-		if ((src.NegateBase & best_matchmask) != 0) {
-			best_matchmask &= src.NegateBase;
-			rgbnegate = !src.NegateAbs;
+		if ((src.Negate & best_matchmask) != 0) {
+			best_matchmask &= src.Negate;
+			rgbnegate = !src.Negate;
 		} else {
-			rgbnegate = src.NegateAbs;
+			rgbnegate = src.Negate;
 		}
 
 		struct prog_instruction *inst;
