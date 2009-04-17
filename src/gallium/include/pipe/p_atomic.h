@@ -33,7 +33,7 @@ extern "C" {
 #elif (defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86))
 #define PIPE_ATOMIC_ASM_GCC_X86
 #elif defined(PIPE_CC_GCC)
-#define PIPE_ATOMIC_GCC_INTRINISIC              
+#define PIPE_ATOMIC_GCC_INTRINSIC
 #else
 #define PIPE_ATOMIC_MUTEX                       
 #endif
@@ -86,7 +86,7 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 
 /* Implementation using GCC-provided synchronization intrinsics
  */
-#if defined(PIPE_ATOMIC_ASM_GCC_INTRINSIC)
+#if defined(PIPE_ATOMIC_GCC_INTRINSIC)
 
 #define PIPE_ATOMIC "GCC Sync Intrinsics"
 
