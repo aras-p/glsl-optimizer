@@ -388,6 +388,7 @@ xlib_eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
          /* API-dependent clean-up */
          switch (context->Base.ClientAPI) {
          case EGL_OPENGL_ES_API:
+         case EGL_OPENVG_API:
             /* fall-through */
          case EGL_OPENGL_API:
             st_destroy_context(context->Context);
