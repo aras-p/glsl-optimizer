@@ -1030,11 +1030,13 @@ trace_context_destroy(struct pipe_context *_pipe)
 
 static unsigned int
 trace_is_texture_referenced( struct pipe_context *_pipe,
-			    struct pipe_texture *texture,
+			    struct pipe_texture *_texture,
 			    unsigned face, unsigned level)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_texture *tr_tex = trace_texture(_texture);
    struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_texture *texture = tr_tex->texture;
    unsigned int referenced;
 
    trace_dump_call_begin("pipe_context", "is_texture_referenced");
@@ -1053,10 +1055,12 @@ trace_is_texture_referenced( struct pipe_context *_pipe,
 
 static unsigned int
 trace_is_buffer_referenced( struct pipe_context *_pipe,
-			    struct pipe_buffer *buf)
+			    struct pipe_buffer *_buf)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_buffer *tr_buf = trace_buffer(_buf);
    struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_buffer *buf = tr_buf->buffer;
    unsigned int referenced;
 
    trace_dump_call_begin("pipe_context", "is_buffer_referenced");
