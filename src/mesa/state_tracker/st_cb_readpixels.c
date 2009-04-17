@@ -50,6 +50,7 @@
 #include "st_format.h"
 #include "st_public.h"
 #include "st_texture.h"
+#include "st_inlines.h"
 
 /**
  * Special case for reading stencil buffer.
@@ -75,11 +76,10 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
    /* Create a read transfer from the renderbuffer's texture */
 
-   st_teximage_flush_before_map(ctx->st, strb->texture, 0, 0,
-				PIPE_TRANSFER_READ);
-
-   pt = screen->get_tex_transfer(screen, strb->texture,  0, 0, 0,
-                                 PIPE_TRANSFER_READ, x, y, width, height);
+   pt = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture,
+				       0, 0, 0,
+				       PIPE_TRANSFER_READ, x, y,
+				       width, height);
 
    /* map the stencil buffer */
    stmap = screen->transfer_map(screen, pt);
@@ -245,11 +245,10 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
          y = strb->texture->height[0] - y - height;
       }
 
-      st_teximage_flush_before_map(ctx->st, strb->texture, 0, 0,
-				   PIPE_TRANSFER_READ);
-
-      trans = screen->get_tex_transfer(screen, strb->texture, 0, 0, 0,
-                                       PIPE_TRANSFER_READ, x, y, width, height);
+      trans = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture,
+					     0, 0, 0,
+					     PIPE_TRANSFER_READ, x, y,
+					     width, height);
       if (!trans) {
          return GL_FALSE;
       }
@@ -358,9 +357,6 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    if (!dest)
       return;
 
-   /* make sure rendering has completed */
-   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-
    if (format == GL_STENCIL_INDEX ||
        format == GL_DEPTH_STENCIL) {
       st_read_stencil_pixels(ctx, x, y, width, height,
@@ -403,8 +399,10 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
 
    /* Create a read transfer from the renderbuffer's texture */
-   trans = screen->get_tex_transfer(screen, strb->texture,  0, 0, 0,
-                                    PIPE_TRANSFER_READ, x, y, width, height);
+   trans = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture,
+					  0, 0, 0,
+					  PIPE_TRANSFER_READ, x, y,
+					  width, height);
 
    /* determine bottom-to-top vs. top-to-bottom order */
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {

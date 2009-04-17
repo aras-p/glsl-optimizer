@@ -45,6 +45,7 @@
 #include "st_format.h"
 #include "st_program.h"
 #include "st_texture.h"
+#include "st_inlines.h"
 
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
@@ -147,8 +148,9 @@ load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
    uint *dest;
    uint i, j;
 
-   transfer = screen->get_tex_transfer(screen, pt, 0, 0, 0, PIPE_TRANSFER_WRITE,
-                                       0, 0, texSize, texSize);
+   transfer = st_cond_flush_get_tex_transfer(st_context(ctx),
+					     pt, 0, 0, 0, PIPE_TRANSFER_WRITE,
+					     0, 0, texSize, texSize);
    dest = (uint *) screen->transfer_map(screen, transfer);
 
    /* Pack four 1D maps into a 2D texture:

@@ -41,6 +41,7 @@
 #include "st_public.h"
 #include "st_format.h"
 #include "st_texture.h"
+#include "st_inlines.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
@@ -119,12 +120,10 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    const GLint height = ctx->DrawBuffer->_Ymax - ypos;
    GLubyte *map;
 
-   st_teximage_flush_before_map(ctx->st, acc_strb->texture, 0, 0,
-				PIPE_TRANSFER_WRITE);
-
-   acc_pt = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
-                                     PIPE_TRANSFER_WRITE, xpos, ypos,
-                                     width, height);
+   acc_pt = st_cond_flush_get_tex_transfer(st_context(ctx), acc_strb->texture,
+					   0, 0, 0,
+					   PIPE_TRANSFER_WRITE, xpos, ypos,
+					   width, height);
    map = screen->transfer_map(screen, acc_pt);
 
    /* note acc_strb->format might not equal acc_pt->format */
@@ -167,12 +166,11 @@ accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
    struct pipe_transfer *acc_pt;
    GLubyte *map;
 
-   st_teximage_flush_before_map(ctx->st, acc_strb->texture, 0, 0,
-				PIPE_TRANSFER_READ_WRITE);
-
-   acc_pt = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
-                                     PIPE_TRANSFER_READ_WRITE, xpos, ypos,
-                                     width, height);
+   acc_pt = st_cond_flush_get_tex_transfer(st_context(ctx), acc_strb->texture,
+					   0, 0, 0,
+					   PIPE_TRANSFER_READ_WRITE,
+					   xpos, ypos,
+					   width, height);
    map = screen->transfer_map(screen, acc_pt);
 
    /* note acc_strb->format might not equal acc_pt->format */
@@ -210,19 +208,14 @@ accum_accum(struct st_context *st, GLfloat value,
    GLfloat *colorBuf, *accBuf;
    GLint i;
 
-   st_teximage_flush_before_map(st, acc_strb->texture, 0, 0,
-				PIPE_TRANSFER_READ);
+   acc_trans = st_cond_flush_get_tex_transfer(st, acc_strb->texture, 0, 0, 0,
+					      PIPE_TRANSFER_READ, xpos, ypos,
+					      width, height);
 
-   acc_trans = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
-                                        PIPE_TRANSFER_READ, xpos, ypos,
-                                        width, height);
-
-   st_teximage_flush_before_map(st, color_strb->texture, 0, 0,
-				PIPE_TRANSFER_READ);
-
-   color_trans = screen->get_tex_transfer(screen, color_strb->texture, 0, 0, 0,
-                                          PIPE_TRANSFER_READ, xpos, ypos,
-                                          width, height);
+   color_trans = st_cond_flush_get_tex_transfer(st, color_strb->texture,
+						0, 0, 0,
+						PIPE_TRANSFER_READ, xpos, ypos,
+						width, height);
 
    colorBuf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
    accBuf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
@@ -235,9 +228,9 @@ accum_accum(struct st_context *st, GLfloat value,
    }
 
    screen->tex_transfer_destroy(acc_trans);
-   acc_trans = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
-                                        PIPE_TRANSFER_WRITE, xpos, ypos,
-                                        width, height);
+   acc_trans = st_no_flush_get_tex_transfer(st, acc_strb->texture, 0, 0, 0,
+					    PIPE_TRANSFER_WRITE, xpos, ypos,
+					    width, height);
 
    acc_put_tile_rgba(pipe, acc_trans, 0, 0, width, height, accBuf);
 
@@ -260,19 +253,14 @@ accum_load(struct st_context *st, GLfloat value,
    GLfloat *buf;
    GLint i;
 
-   st_teximage_flush_before_map(st, acc_strb->texture, 0, 0,
-				PIPE_TRANSFER_WRITE);
+   acc_trans = st_cond_flush_get_tex_transfer(st, acc_strb->texture, 0, 0, 0,
+					      PIPE_TRANSFER_WRITE, xpos, ypos,
+					      width, height);
 
-   acc_trans = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
-                                        PIPE_TRANSFER_WRITE, xpos, ypos,
-                                        width, height);
-
-   st_teximage_flush_before_map(st, color_strb->texture, 0, 0,
-				PIPE_TRANSFER_READ);
-
-   color_trans = screen->get_tex_transfer(screen, color_strb->texture, 0, 0, 0,
-                                        PIPE_TRANSFER_READ, xpos, ypos,
-                                        width, height);
+   color_trans = st_cond_flush_get_tex_transfer(st, color_strb->texture,
+						0, 0, 0,
+						PIPE_TRANSFER_READ, xpos, ypos,
+						width, height);
 
    buf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
 
@@ -305,19 +293,16 @@ accum_return(GLcontext *ctx, GLfloat value,
 
    abuf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
 
-   st_teximage_flush_before_map(ctx->st, acc_strb->texture, 0, 0,
-				PIPE_TRANSFER_READ);
+   acc_trans = st_cond_flush_get_tex_transfer(st_context(ctx),
+					      acc_strb->texture, 0, 0, 0,
+					      PIPE_TRANSFER_READ, xpos, ypos,
+					      width, height);
 
-   acc_trans = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
-                                        PIPE_TRANSFER_READ, xpos, ypos,
-                                        width, height);
-
-   st_teximage_flush_before_map(ctx->st, color_strb->texture, 0, 0,
-				PIPE_TRANSFER_READ_WRITE);
-
-   color_trans = screen->get_tex_transfer(screen, color_strb->texture, 0, 0, 0,
-                                          PIPE_TRANSFER_READ_WRITE, xpos, ypos,
-                                          width, height);
+   color_trans = st_cond_flush_get_tex_transfer(st_context(ctx),
+						color_strb->texture, 0, 0, 0,
+						PIPE_TRANSFER_READ_WRITE,
+						xpos, ypos,
+						width, height);
 
    acc_get_tile_rgba(pipe, acc_trans, 0, 0, width, height, abuf);
 

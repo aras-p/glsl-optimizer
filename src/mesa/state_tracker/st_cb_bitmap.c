@@ -47,6 +47,8 @@
 #include "st_cb_program.h"
 #include "st_mesa_to_tgsi.h"
 #include "st_texture.h"
+#include "st_inlines.h"
+
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
@@ -337,8 +339,9 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
       return NULL;
    }
 
-   transfer = screen->get_tex_transfer(screen, pt, 0, 0, 0, PIPE_TRANSFER_WRITE,
-                                       0, 0, width, height);
+   transfer = st_no_flush_get_tex_transfer(st_context(ctx), pt, 0, 0, 0,
+					   PIPE_TRANSFER_WRITE,
+					   0, 0, width, height);
 
    dest = screen->transfer_map(screen, transfer);
 
@@ -425,11 +428,11 @@ setup_bitmap_vertex_data(struct st_context *st,
    }
 
    /* put vertex data into vbuf */
-   pipe_buffer_write(pipe->screen, 
-                     st->bitmap.vbuf, 
-                     st->bitmap.vbuf_slot * sizeof st->bitmap.vertices,
-                     sizeof st->bitmap.vertices,
-                     st->bitmap.vertices);
+   st_no_flush_pipe_buffer_write(st,
+				 st->bitmap.vbuf,
+				 st->bitmap.vbuf_slot * sizeof st->bitmap.vertices,
+				 sizeof st->bitmap.vertices,
+				 st->bitmap.vertices);
 
    return st->bitmap.vbuf_slot++ * sizeof st->bitmap.vertices;
 }
@@ -584,10 +587,10 @@ reset_cache(struct st_context *st)
    /* Map the texture transfer.
     * Subsequent glBitmap calls will write into the texture image.
     */
-   cache->trans = screen->get_tex_transfer(screen, cache->texture, 0, 0, 0,
-                                           PIPE_TRANSFER_WRITE, 0, 0,
-                                           BITMAP_CACHE_WIDTH,
-                                           BITMAP_CACHE_HEIGHT);
+   cache->trans = st_no_flush_get_tex_transfer(st, cache->texture, 0, 0, 0,
+					       PIPE_TRANSFER_WRITE, 0, 0,
+					       BITMAP_CACHE_WIDTH,
+					       BITMAP_CACHE_HEIGHT);
    cache->buffer = screen->transfer_map(screen, cache->trans);
 
    /* init image to all 0xff */

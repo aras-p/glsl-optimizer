@@ -42,7 +42,7 @@
 #include "st_atom.h"
 #include "st_atom_constbuf.h"
 #include "st_program.h"
-
+#include "st_inlines.h"
 
 /**
  * Pass the given program parameters to the graphics pipe as a
@@ -86,9 +86,9 @@ void st_upload_constants( struct st_context *st,
 
       /* load Mesa constants into the constant buffer */
       if (cbuf->buffer)
-         pipe_buffer_write(pipe->screen, cbuf->buffer, 
-                           0, paramBytes, 
-                           params->ParameterValues);
+         st_no_flush_pipe_buffer_write(st, cbuf->buffer,
+				       0, paramBytes,
+				       params->ParameterValues);
 
       st->pipe->set_constant_buffer(st->pipe, id, 0, cbuf);
    }

@@ -30,6 +30,7 @@
 #include "st_public.h"
 #include "st_texture.h"
 #include "st_cb_fbo.h"
+#include "st_inlines.h"
 #include "main/enums.h"
 #include "main/teximage.h"
 #include "main/texstore.h"
@@ -194,9 +195,9 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
 
    DBG("%s \n", __FUNCTION__);
 
-   stImage->transfer = screen->get_tex_transfer(screen, pt, stImage->face,
-                                                stImage->level, zoffset, 
-                                                usage, x, y, w, h);
+   stImage->transfer = st_no_flush_get_tex_transfer(st, pt, stImage->face,
+						    stImage->level, zoffset,
+						    usage, x, y, w, h);
 
    if (stImage->transfer)
       return screen->transfer_map(screen, stImage->transfer);
@@ -253,13 +254,14 @@ st_surface_data(struct pipe_context *pipe,
 /* Upload data for a particular image.
  */
 void
-st_texture_image_data(struct pipe_context *pipe,
+st_texture_image_data(struct st_context *st,
                       struct pipe_texture *dst,
                       GLuint face,
                       GLuint level,
                       void *src,
                       GLuint src_row_stride, GLuint src_image_stride)
 {
+   struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    GLuint depth = dst->depth[level];
    GLuint i;
@@ -269,10 +271,10 @@ st_texture_image_data(struct pipe_context *pipe,
    DBG("%s\n", __FUNCTION__);
 
    for (i = 0; i < depth; i++) {
-      dst_transfer = screen->get_tex_transfer(screen, dst, face, level, i,
-                                              PIPE_TRANSFER_WRITE, 0, 0,
-                                              dst->width[level],
-                                              dst->height[level]);
+      dst_transfer = st_no_flush_get_tex_transfer(st, dst, face, level, i,
+						  PIPE_TRANSFER_WRITE, 0, 0,
+						  dst->width[level],
+						  dst->height[level]);
 
       st_surface_data(pipe, dst_transfer,
 		      0, 0,                             /* dstx, dsty */

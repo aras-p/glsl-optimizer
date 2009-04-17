@@ -156,7 +156,7 @@ st_texture_texel_offset(const struct pipe_texture * pt,
 /* Upload an image into a texture
  */
 extern void
-st_texture_image_data(struct pipe_context *pipe,
+st_texture_image_data(struct st_context *st,
                       struct pipe_texture *dst,
                       GLuint face, GLuint level, void *src,
                       GLuint src_row_pitch, GLuint src_image_pitch);

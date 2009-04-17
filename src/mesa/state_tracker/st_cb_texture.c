@@ -50,6 +50,7 @@
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_texture.h"
 #include "state_tracker/st_gen_mipmap.h"
+#include "state_tracker/st_inlines.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -465,10 +466,10 @@ compress_with_blit(GLcontext * ctx,
 
    /* Put user's tex data into the temporary texture
     */
-   tex_xfer = screen->get_tex_transfer(screen, src_tex,
-                                       face, level, 0,
-                                       PIPE_TRANSFER_WRITE,
-                                       0, 0, width, height); /* x, y, w, h */
+   tex_xfer = st_cond_flush_get_tex_transfer(st_context(ctx), src_tex,
+					     face, level, 0,
+					     PIPE_TRANSFER_WRITE,
+					     0, 0, width, height); /* x, y, w, h */
    map = screen->transfer_map(screen, tex_xfer);
 
    mesa_format->StoreImage(ctx, 2, GL_RGBA, mesa_format,
@@ -858,9 +859,10 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
                         PIPE_TEX_MIPFILTER_NEAREST);
 
    /* map the dst_surface so we can read from it */
-   tex_xfer = screen->get_tex_transfer(screen, dst_texture, 0, 0, 0,
-                                       PIPE_TRANSFER_READ,
-                                       0, 0, width, height);
+   tex_xfer = st_cond_flush_get_tex_transfer(st_context(ctx),
+					     dst_texture, 0, 0, 0,
+					     PIPE_TRANSFER_READ,
+					     0, 0, width, height);
 
    pixels = _mesa_map_readpix_pbo(ctx, &ctx->Pack, pixels);
 
@@ -1192,15 +1194,12 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
       srcY = strb->Base.Height - srcY - height;
    }
 
-   st_teximage_flush_before_map(ctx->st, strb->texture, 0, 0,
-				PIPE_TRANSFER_READ);
-
-   src_trans = screen->get_tex_transfer( screen,
-                                         strb->texture,
-                                         0, 0, 0,
-                                         PIPE_TRANSFER_READ,
-                                         srcX, srcY,
-                                         width, height);
+   src_trans = st_cond_flush_get_tex_transfer( st_context(ctx),
+					       strb->texture,
+					       0, 0, 0,
+					       PIPE_TRANSFER_READ,
+					       srcX, srcY,
+					       width, height);
 
    st_teximage_flush_before_map(ctx->st, stImage->pt, 0, 0,
 				PIPE_TRANSFER_WRITE);
@@ -1589,7 +1588,7 @@ copy_image_data_to_texture(struct st_context *st,
 				   PIPE_TRANSFER_WRITE);
 
 
-      st_texture_image_data(st->pipe,
+      st_texture_image_data(st,
                             stObj->pt,
                             stImage->face,
                             dstLevel,

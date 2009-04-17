@@ -47,6 +47,7 @@
 #include "st_program.h"
 #include "st_texture.h"
 #include "st_cb_texture.h"
+#include "st_inlines.h"
 
 
 /**
@@ -123,21 +124,17 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       const ubyte *srcData;
       ubyte *dstData;
 
-      st_teximage_flush_before_map(ctx->st, pt, face, srcLevel,
-				   PIPE_TRANSFER_READ);
+      srcTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
+						srcLevel, zslice,
+						PIPE_TRANSFER_READ, 0, 0,
+						pt->width[srcLevel],
+						pt->height[srcLevel]);
 
-      srcTrans = screen->get_tex_transfer(screen, pt, face, srcLevel, zslice,
-                                          PIPE_TRANSFER_READ, 0, 0,
-                                          pt->width[srcLevel],
-                                          pt->height[srcLevel]);
-
-      st_teximage_flush_before_map(ctx->st, pt, face, dstLevel,
-				   PIPE_TRANSFER_WRITE);
-
-      dstTrans = screen->get_tex_transfer(screen, pt, face, dstLevel, zslice,
-                                          PIPE_TRANSFER_WRITE, 0, 0,
-                                          pt->width[dstLevel],
-                                          pt->height[dstLevel]);
+      dstTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
+						dstLevel, zslice,
+						PIPE_TRANSFER_WRITE, 0, 0,
+						pt->width[dstLevel],
+						pt->height[dstLevel]);
 
       srcData = (ubyte *) screen->transfer_map(screen, srcTrans);
       dstData = (ubyte *) screen->transfer_map(screen, dstTrans);

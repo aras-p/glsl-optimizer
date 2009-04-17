@@ -30,9 +30,9 @@
 #include "main/mtypes.h"
 #include "main/bufferobj.h"
 
+#include "st_inlines.h"
 #include "st_context.h"
 #include "st_cb_bufferobjects.h"
-#include "st_public.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -98,16 +98,13 @@ st_bufferobj_subdata(GLcontext *ctx,
 		     GLsizeiptrARB size,
 		     const GLvoid * data, struct gl_buffer_object *obj)
 {
-   struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
    if (offset >= st_obj->size || size > (st_obj->size - offset))
       return;
 
-   if (pipe->is_buffer_referenced(pipe, st_obj->buffer))
-      st_flush(st_context(ctx), PIPE_FLUSH_RENDER_CACHE, NULL);
-
-   pipe_buffer_write(pipe->screen, st_obj->buffer, offset, size, data);
+   st_cond_flush_pipe_buffer_write(st_context(ctx), st_obj->buffer,
+				   offset, size, data);
 }
 
 
@@ -121,17 +118,13 @@ st_bufferobj_get_subdata(GLcontext *ctx,
                          GLsizeiptrARB size,
                          GLvoid * data, struct gl_buffer_object *obj)
 {
-   struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
    if (offset >= st_obj->size || size > (st_obj->size - offset))
       return;
 
-   if (pipe->is_buffer_referenced(pipe, st_obj->buffer) &
-       PIPE_REFERENCED_FOR_WRITE)
-      st_flush(st_context(ctx), PIPE_FLUSH_RENDER_CACHE, NULL);
-
-   pipe_buffer_read(pipe->screen, st_obj->buffer, offset, size, data);
+   st_cond_flush_pipe_buffer_read(st_context(ctx), st_obj->buffer,
+				  offset, size, data);
 }
 
 
@@ -179,7 +172,8 @@ st_bufferobj_data(GLcontext *ctx,
    st_obj->size = size;
 
    if (data)
-      pipe_buffer_write(pipe->screen, st_obj->buffer, 0, size, data);
+      st_no_flush_pipe_buffer_write(st_context(ctx), st_obj->buffer, 0,
+				    size, data);
 }
 
 
@@ -190,10 +184,8 @@ static void *
 st_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
                  struct gl_buffer_object *obj)
 {
-   struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
    GLuint flags;
-   unsigned referenced;
 
    switch (access) {
    case GL_WRITE_ONLY:
@@ -209,12 +201,9 @@ st_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
       break;      
    }
 
-   referenced = pipe->is_buffer_referenced(pipe, st_obj->buffer);
-   if (referenced && ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
-		      (flags & PIPE_BUFFER_USAGE_CPU_WRITE)))
-      st_flush(st_context(ctx), PIPE_FLUSH_RENDER_CACHE, NULL);
-
-   obj->Pointer = pipe_buffer_map(pipe->screen, st_obj->buffer, flags);
+   obj->Pointer = st_cond_flush_pipe_buffer_map(st_context(ctx),
+						st_obj->buffer,
+						flags);
    if(obj->Pointer) {
       obj->Offset = 0;
       obj->Length = obj->Size;
