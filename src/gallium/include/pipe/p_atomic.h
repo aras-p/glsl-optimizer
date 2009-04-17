@@ -225,7 +225,7 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 
 struct pipe_atomic
 {
-   long count;
+   volatile long count;
 };
 
 #define p_atomic_set(_v, _i) ((_v)->count = (_i))
@@ -234,7 +234,7 @@ struct pipe_atomic
 static INLINE boolean
 p_atomic_dec_zero(struct pipe_atomic *v)
 {
-   return InterlockedDecrement(&v->count) != 0;
+   return InterlockedDecrement(&v->count) == 0;
 }
 
 static INLINE void
@@ -270,7 +270,6 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
  * Add an assembly port instead. It may abort and
  * doesn't destroy used mutexes.
  */
-#warning "using mutex-based fallback for pipe_atomic"
 
 struct pipe_atomic {
    pipe_mutex mutex;
