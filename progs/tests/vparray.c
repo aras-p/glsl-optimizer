@@ -280,9 +280,9 @@ int main(int argc, char **argv)
    glutInitWindowPosition(0, 0);
    glutInitWindowSize(400, 400);
    if (glutCreateWindow("Isosurface") <= 0) {
-      glewInit();
       exit(0);
    }
+   glewInit();
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
    glutSpecialFunc(SpecialKey);
