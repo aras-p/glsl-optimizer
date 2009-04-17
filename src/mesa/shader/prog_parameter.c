@@ -327,15 +327,16 @@ _mesa_add_sampler(struct gl_program_parameter_list *paramList,
    else {
       GLuint i;
       const GLint size = 1; /* a sampler is basically a texture unit number */
-      GLfloat value;
+      GLfloat value[4];
       GLint numSamplers = 0;
       for (i = 0; i < paramList->NumParameters; i++) {
          if (paramList->Parameters[i].Type == PROGRAM_SAMPLER)
             numSamplers++;
       }
-      value = (GLfloat) numSamplers;
+      value[0] = (GLfloat) numSamplers;
+      value[1] = value[2] = value[3] = 0.0F;
       (void) _mesa_add_parameter(paramList, PROGRAM_SAMPLER, name,
-                                 size, datatype, &value, NULL, 0x0);
+                                 size, datatype, value, NULL, 0x0);
       return numSamplers;
    }
 }
