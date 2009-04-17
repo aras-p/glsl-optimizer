@@ -234,7 +234,7 @@ struct pipe_atomic
 static INLINE boolean
 p_atomic_dec_zero(struct pipe_atomic *v)
 {
-   return InterlockedDecrement(&v->count);
+   return InterlockedDecrement(&v->count) != 0;
 }
 
 static INLINE void
