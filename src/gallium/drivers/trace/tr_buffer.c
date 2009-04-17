@@ -27,9 +27,9 @@
 
 
 #include "util/u_memory.h"
+#include "util/u_simple_list.h"
 
 #include "tr_buffer.h"
-
 
 struct pipe_buffer *
 trace_buffer_create(struct trace_screen *tr_scr,
@@ -52,6 +52,8 @@ trace_buffer_create(struct trace_screen *tr_scr,
    tr_buf->base.screen = &tr_scr->base;
    tr_buf->buffer = buffer;
 
+   trace_screen_add_to_list(tr_scr, buffers, tr_buf);
+
    return &tr_buf->base;
 
 error:
@@ -65,6 +67,8 @@ trace_buffer_destroy(struct trace_screen *tr_scr,
                      struct pipe_buffer *buffer)
 {
    struct trace_buffer *tr_buf = trace_buffer(buffer);
+
+   trace_screen_remove_from_list(tr_scr, buffers, tr_buf);
 
    pipe_buffer_reference(&tr_buf->buffer, NULL);
    FREE(tr_buf);

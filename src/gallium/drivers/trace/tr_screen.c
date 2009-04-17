@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "util/u_memory.h"
+#include "util/u_simple_list.h"
 
 #include "tr_buffer.h"
 #include "tr_dump.h"
@@ -855,6 +856,12 @@ trace_screen_create(struct pipe_screen *screen)
 #else
    winsys = screen->winsys;
 #endif
+   pipe_mutex_init(tr_scr->list_mutex);
+   make_empty_list(&tr_scr->buffers);
+   make_empty_list(&tr_scr->contexts);
+   make_empty_list(&tr_scr->textures);
+   make_empty_list(&tr_scr->surfaces);
+   make_empty_list(&tr_scr->transfers);
 
    tr_scr->base.winsys = winsys;
    tr_scr->base.destroy = trace_screen_destroy;

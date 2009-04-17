@@ -44,6 +44,8 @@ struct trace_context
    struct pipe_context base;
 
    struct pipe_context *pipe;
+
+   struct tr_list list;
 };
 
 

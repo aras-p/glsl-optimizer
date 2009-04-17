@@ -41,6 +41,8 @@ struct trace_buffer
 
    struct pipe_buffer *buffer;
 
+   struct tr_list list;
+
    void *map;
    boolean range_flushed;
 };

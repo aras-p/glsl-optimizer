@@ -26,6 +26,8 @@
  **************************************************************************/
 
 #include "util/u_memory.h"
+#include "util/u_simple_list.h"
+
 #include "pipe/p_screen.h"
 
 #include "tr_dump.h"
@@ -1014,16 +1016,17 @@ trace_context_flush(struct pipe_context *_pipe,
 static INLINE void
 trace_context_destroy(struct pipe_context *_pipe)
 {
+   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin("pipe_context", "destroy");
-
    trace_dump_arg(ptr, pipe);
+   trace_dump_call_end();
+
+   trace_screen_remove_from_list(tr_scr, contexts, tr_ctx);
 
    pipe->destroy(pipe);
-
-   trace_dump_call_end();
 
    FREE(tr_ctx);
 }
@@ -1149,6 +1152,8 @@ trace_context_create(struct pipe_screen *_screen,
    trace_dump_arg(ptr, screen);
    trace_dump_ret(ptr, pipe);
    trace_dump_call_end();
+
+   trace_screen_add_to_list(tr_scr, contexts, tr_ctx);
 
    return &tr_ctx->base;
 

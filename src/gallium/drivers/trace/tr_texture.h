@@ -40,6 +40,8 @@ struct trace_texture
    struct pipe_texture base;
 
    struct pipe_texture *texture;
+
+   struct tr_list list;
 };
 
 
@@ -48,6 +50,8 @@ struct trace_surface
    struct pipe_surface base;
 
    struct pipe_surface *surface;
+
+   struct tr_list list;
 };
 
 
@@ -56,6 +60,8 @@ struct trace_transfer
    struct pipe_transfer base;
 
    struct pipe_transfer *transfer;
+
+   struct tr_list list;
 
    void *map;
 };
