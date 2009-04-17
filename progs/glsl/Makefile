@@ -10,6 +10,7 @@ LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) $(T
 LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
 
 PROGS = \
+	array \
 	bitmap \
 	brick \
 	bump \
@@ -78,6 +79,13 @@ shaderutil.h: $(TOP)/progs/util/shaderutil.h
 shaderutil.o: shaderutil.c shaderutil.h
 	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) shaderutil.c
 
+
+
+array.o: array.c extfuncs.h shaderutil.h
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) array.c
+
+array: array.o shaderutil.o
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) array.o shaderutil.o $(LIBS) -o $@
 
 
 bitmap.o: bitmap.c extfuncs.h shaderutil.h
