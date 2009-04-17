@@ -299,6 +299,7 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
  * Add an assembly port instead. It may abort and
  * doesn't destroy used mutexes.
  */
+#warning "using mutex-based fallback for pipe_atomic"
 
 struct pipe_atomic {
    pipe_mutex mutex;
