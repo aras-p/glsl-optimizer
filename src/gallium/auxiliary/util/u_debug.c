@@ -109,6 +109,7 @@ void _debug_vprintf(const char *format, va_list ap)
    }
    
    if(GetConsoleWindow() && !IsDebuggerPresent()) {
+      fflush(stdout);
       vfprintf(stderr, format, ap);
       fflush(stderr);
    }
@@ -145,6 +146,7 @@ void _debug_vprintf(const char *format, va_list ap)
    /* TODO */
 #else /* !PIPE_SUBSYSTEM_WINDOWS */
 #ifdef DEBUG
+   fflush(stdout);
    vfprintf(stderr, format, ap);
 #endif
 #endif
