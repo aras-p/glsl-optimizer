@@ -434,7 +434,7 @@ one_time_init( GLcontext *ctx )
       }
 
 #if defined(DEBUG) && defined(__DATE__) && defined(__TIME__)
-      _mesa_debug(ctx, "Mesa %s DEBUG build %s %s\n",
+      _mesa_debug(ctx, "Mesa %s DEBUG build %s %s",
                   MESA_VERSION_STRING, __DATE__, __TIME__);
 #endif
 
