@@ -1432,7 +1432,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	if (hw_tcl_on)
 		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
 	else
-		RENDERINPUTS_COPY(OutputsWritten.index_bitset, r300->state.render_inputs_bitset);
+		RENDERINPUTS_COPY(OutputsWritten.index_bitset, r300->render_inputs_bitset);
 
 	if (ctx->FragmentProgram._Current)
 		InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
@@ -1583,7 +1583,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	if (hw_tcl_on)
 		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
 	else
-		RENDERINPUTS_COPY(OutputsWritten.index_bitset, r300->state.render_inputs_bitset);
+		RENDERINPUTS_COPY(OutputsWritten.index_bitset, r300->render_inputs_bitset);
 
 	if (ctx->FragmentProgram._Current)
 		InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
@@ -1853,7 +1853,7 @@ static void r300VapCntl(r300ContextPtr rmesa, GLuint input_count,
 
 static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 {
-	struct r300_vertex_shader_state *prog = &(rmesa->state.vertex_shader);
+	struct r300_vertex_shader_state *prog = &(rmesa->vertex_shader);
 	GLuint o_reg = 0;
 	GLuint i_reg = 0;
 	int i;
@@ -1862,11 +1862,11 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 	int program_end = 0;
 
 	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++) {
-		if (rmesa->state.sw_tcl_inputs[i] != -1) {
+		if (rmesa->swtcl.sw_tcl_inputs[i] != -1) {
 			prog->program.body.i[program_end + 0] = PVS_OP_DST_OPERAND(VE_MULTIPLY, GL_FALSE, GL_FALSE, o_reg++, VSF_FLAG_ALL, PVS_DST_REG_OUT);
-			prog->program.body.i[program_end + 1] = PVS_SRC_OPERAND(rmesa->state.sw_tcl_inputs[i], PVS_SRC_SELECT_X, PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z, PVS_SRC_SELECT_W, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
-			prog->program.body.i[program_end + 2] = PVS_SRC_OPERAND(rmesa->state.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
-			prog->program.body.i[program_end + 3] = PVS_SRC_OPERAND(rmesa->state.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+			prog->program.body.i[program_end + 1] = PVS_SRC_OPERAND(rmesa->swtcl.sw_tcl_inputs[i], PVS_SRC_SELECT_X, PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z, PVS_SRC_SELECT_W, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+			prog->program.body.i[program_end + 2] = PVS_SRC_OPERAND(rmesa->swtcl.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+			prog->program.body.i[program_end + 3] = PVS_SRC_OPERAND(rmesa->swtcl.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 			program_end += 4;
 			i_reg++;
 		}
@@ -2522,8 +2522,6 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
  */
 void r300InitState(r300ContextPtr r300)
 {
-	memset(&(r300->state.texture), 0, sizeof(r300->state.texture));
-
 	r300ResetHwState(r300);
 }
 

@@ -61,21 +61,21 @@ static int radeon_compressed_num_bytes(GLuint mesaFormat)
 {
    int bytes = 0;
    switch(mesaFormat) {
-     
+
    case MESA_FORMAT_RGB_FXT1:
    case MESA_FORMAT_RGBA_FXT1:
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:
      bytes = 2;
      break;
-     
+
    case MESA_FORMAT_RGBA_DXT3:
    case MESA_FORMAT_RGBA_DXT5:
      bytes = 4;
    default:
      break;
    }
-   
+
    return bytes;
 }
 
@@ -97,18 +97,38 @@ static void compute_tex_image_offset(radeon_mipmap_tree *mt,
 		lvl->rowstride = (lvl->width * mt->bpp + 63) & ~63;
 		lvl->size = radeon_compressed_texture_size(mt->radeon->glCtx,
 							   lvl->width, lvl->height, lvl->depth, mt->compressed);
+		if (lvl->size <= 0) {
+			int *i = 0;
+			*i = 0;
+		}
+		assert(lvl->size > 0);
 	} else if (mt->target == GL_TEXTURE_RECTANGLE_NV) {
 		lvl->rowstride = (lvl->width * mt->bpp + 63) & ~63;
 		lvl->size = lvl->rowstride * lvl->height;
+		if (lvl->size <= 0) {
+			int *i = 0;
+			*i = 0;
+		}
+		assert(lvl->size > 0);
 	} else if (mt->tilebits & RADEON_TXO_MICRO_TILE) {
 		/* tile pattern is 16 bytes x2. mipmaps stay 32 byte aligned,
 		 * though the actual offset may be different (if texture is less than
 		 * 32 bytes width) to the untiled case */
 		lvl->rowstride = (lvl->width * mt->bpp * 2 + 31) & ~31;
 		lvl->size = lvl->rowstride * ((lvl->height + 1) / 2) * lvl->depth;
+		if (lvl->size <= 0) {
+			int *i = 0;
+			*i = 0;
+		}
+		assert(lvl->size > 0);
 	} else {
 		lvl->rowstride = (lvl->width * mt->bpp + 31) & ~31;
 		lvl->size = lvl->rowstride * lvl->height * lvl->depth;
+		if (lvl->size <= 0) {
+			int *i = 0;
+			*i = 0;
+		}
+		assert(lvl->size > 0);
 	}
 	assert(lvl->size > 0);
 
@@ -230,7 +250,7 @@ static void calculate_first_last_level(struct gl_texture_object *tObj,
 		tObj->Image[face][level];
 
 	assert(baseImage);
-	
+
 	/* These must be signed values.  MinLod and MaxLod can be negative numbers,
 	* and having firstLevel and lastLevel as signed prevents the need for
 	* extra sign checks.

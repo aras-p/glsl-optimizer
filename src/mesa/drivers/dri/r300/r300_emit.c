@@ -127,7 +127,6 @@ GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead)
 
 GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLuint i, vic_1 = 0;
 
 	if (InputsRead & (1 << VERT_ATTRIB_POS))
@@ -139,10 +138,8 @@ GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
 	if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
 		vic_1 |= R300_INPUT_CNTL_COLOR;
 
-	rmesa->state.texture.tc_count = 0;
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
 		if (InputsRead & (1 << (VERT_ATTRIB_TEX0 + i))) {
-			rmesa->state.texture.tc_count++;
 			vic_1 |= R300_INPUT_CNTL_TC0 << i;
 		}
 
@@ -222,7 +219,7 @@ int r300EmitArrays(GLcontext * ctx)
 		InputsRead = prog->key.InputsRead;
 		OutputsWritten = prog->key.OutputsWritten;
 	} else {
-		inputs = rmesa->state.sw_tcl_inputs;
+		inputs = rmesa->swtcl.sw_tcl_inputs;
 
 		DECLARE_RENDERINPUTS(render_inputs_bitset);
 		RENDERINPUTS_COPY(render_inputs_bitset, tnl->render_inputs_bitset);
@@ -275,7 +272,7 @@ int r300EmitArrays(GLcontext * ctx)
 			if (InputsRead & (1 << i))
 				inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
 
-		RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, render_inputs_bitset);
+		RENDERINPUTS_COPY(rmesa->render_inputs_bitset, render_inputs_bitset);
 	}
 
 	assert(InputsRead);
@@ -330,7 +327,7 @@ int r300EmitArrays(GLcontext * ctx)
 			r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
 					   nr);
 	}
-	
+
 	/* Setup INPUT_CNTL. */
 	R300_STATECHANGE(rmesa, vic);
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);

@@ -281,7 +281,7 @@ static void r300SetVertexFormat( GLcontext *ctx )
 
 	rmesa->radeon.swtcl.vertex_size /= 4;
 
-	RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, tnl->render_inputs_bitset);
+	RENDERINPUTS_COPY(rmesa->render_inputs_bitset, tnl->render_inputs_bitset);
 }
 
 

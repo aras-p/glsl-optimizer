@@ -37,23 +37,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R300_CONTEXT_H__
 #define __R300_CONTEXT_H__
 
-#include "tnl/t_vertex.h"
 #include "drm.h"
 #include "radeon_drm.h"
 #include "dri_util.h"
-#include "texmem.h"
 #include "radeon_common.h"
 
-#include "main/macros.h"
 #include "main/mtypes.h"
-#include "main/colormac.h"
 
 struct r300_context;
 typedef struct r300_context r300ContextRec;
 typedef struct r300_context *r300ContextPtr;
 
-
-#include "main/mm.h"
 
 /* From http://gcc. gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
    I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble
@@ -81,9 +75,6 @@ typedef struct r300_context *r300ContextPtr;
 #define R300_BLIT_WIDTH_BYTES 1024
 #define R300_MAX_TEXTURE_UNITS 8
 
-struct r300_texture_state {
-	int tc_count;		/* number of incoming texture coordinates from VAP */
-};
 
 
 #define R300_VPT_CMD_0		0
@@ -303,7 +294,7 @@ struct r300_texture_state {
 struct r300_hw_state {
 	struct radeon_state_atom vpt;	/* viewport (1D98) */
 	struct radeon_state_atom vap_cntl;
-        struct radeon_state_atom vap_index_offset; /* 0x208c r5xx only */
+	struct radeon_state_atom vap_index_offset; /* 0x208c r5xx only */
 	struct radeon_state_atom vof;	/* VAP output format register 0x2090 */
 	struct radeon_state_atom vte;	/* (20B0) */
 	struct radeon_state_atom vap_vf_max_vtx_indx;	/* Maximum Vertex Indx Clamp (2134) */
@@ -425,11 +416,7 @@ extern int hw_tcl_on;
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
-//#define CURRENT_VERTEX_SHADER(ctx) (ctx->VertexProgram._Current)
 #define CURRENT_VERTEX_SHADER(ctx) (R300_CONTEXT(ctx)->selected_vp)
-
-/* Should but doesnt work */
-//#define CURRENT_VERTEX_SHADER(ctx) (R300_CONTEXT(ctx)->curr_vp)
 
 /* r300_vertex_shader_state and r300_vertex_program should probably be merged together someday.
  * Keeping them them seperate for now should ensure fixed pipeline keeps functioning properly.
@@ -623,20 +610,6 @@ struct r500_fragment_program {
 
 #define R300_MAX_AOS_ARRAYS		16
 
-#define REG_COORDS	0
-#define REG_COLOR0	1
-#define REG_TEX0	2
-
-struct r300_state {
-	struct r300_texture_state texture;
-	int sw_tcl_inputs[VERT_ATTRIB_MAX];
-	struct r300_vertex_shader_state vertex_shader;
-
-
-	DECLARE_RENDERINPUTS(render_inputs_bitset);	/* actual render inputs that R300 was configured for.
-							   They are the same as tnl->render_inputs for fixed pipeline */
-
-};
 
 #define R300_FALLBACK_NONE 0
 #define R300_FALLBACK_TCL 1
@@ -664,6 +637,8 @@ struct r300_swtcl_info {
    } vert_attrs[VERT_ATTRIB_MAX];
 
    GLubyte vertex_attr_count;
+
+   int sw_tcl_inputs[VERT_ATTRIB_MAX];
 };
 
 
@@ -675,8 +650,7 @@ struct r300_context {
 
 	struct r300_hw_state hw;
 
-	struct r300_state state;
-	struct gl_vertex_program *curr_vp;
+	struct r300_vertex_shader_state vertex_shader;
 	struct r300_vertex_program *selected_vp;
 
 	/* Vertex buffers
@@ -688,6 +662,8 @@ struct r300_context {
 
 	struct r300_swtcl_info swtcl;
 	GLboolean vap_flush_needed;
+
+	DECLARE_RENDERINPUTS(render_inputs_bitset);
 };
 
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))
@@ -702,11 +678,6 @@ extern void r300InitShaderFuncs(struct dd_function_table *functions);
 extern int r300VertexProgUpdateParams(GLcontext * ctx,
 				      struct r300_vertex_program_cont *vp,
 				      float *dst);
-
-#define RADEON_D_CAPTURE 0
-#define RADEON_D_PLAYBACK 1
-#define RADEON_D_PLAYBACK_RAW 2
-#define RADEON_D_T 3
 
 #define r300PackFloat32 radeonPackFloat32
 #define r300PackFloat24 radeonPackFloat24
