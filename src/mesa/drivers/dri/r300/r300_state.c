@@ -65,7 +65,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drirenderbuffer.h"
 
 extern int future_hw_tcl_on;
-extern void _tnl_UpdateFixedFunctionProgram(GLcontext * ctx);
 
 static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 {
