@@ -93,6 +93,7 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
 		    GL_CURRENT_BIT |
 		    GL_DEPTH_BUFFER_BIT |
 		    GL_ENABLE_BIT |
+		    GL_POLYGON_BIT |
 		    GL_STENCIL_BUFFER_BIT |
 		    GL_TRANSFORM_BIT |
 		    GL_CURRENT_BIT);
@@ -114,6 +115,7 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
    _mesa_Disable(GL_CLIP_PLANE3);
    _mesa_Disable(GL_CLIP_PLANE4);
    _mesa_Disable(GL_CLIP_PLANE5);
+   _mesa_PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
    if (ctx->Extensions.ARB_fragment_program && ctx->FragmentProgram.Enabled) {
       saved_fp_enable = GL_TRUE;
       _mesa_Disable(GL_FRAGMENT_PROGRAM_ARB);
