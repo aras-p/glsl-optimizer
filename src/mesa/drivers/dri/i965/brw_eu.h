@@ -867,6 +867,7 @@ void brw_dp_READ_4( struct brw_compile *p,
 
 void brw_dp_READ_4_vs( struct brw_compile *p,
                        struct brw_reg dest,
+                       GLuint oword,
                        GLboolean relAddr,
                        struct brw_reg addrReg,
                        GLuint location,

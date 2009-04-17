@@ -708,10 +708,12 @@ get_constant(struct brw_vs_compile *c,
    const struct prog_src_register *src = &inst->SrcReg[argIndex];
    struct brw_compile *p = &c->func;
    struct brw_reg const_reg;
+   struct brw_reg const2_reg;
 
    assert(argIndex < 3);
 
    if (c->current_const[argIndex].index != src->Index || src->RelAddr) {
+      struct brw_reg addrReg = c->regs[PROGRAM_ADDRESS][0];
 
       c->current_const[argIndex].index = src->Index;
 
@@ -719,19 +721,46 @@ get_constant(struct brw_vs_compile *c,
       printf("  fetch const[%d] for arg %d into reg %d\n",
              src->Index, argIndex, c->current_const[argIndex].reg.nr);
 #endif
-
       /* need to fetch the constant now */
       brw_dp_READ_4_vs(p,
-                       c->current_const[argIndex].reg, /* writeback dest */
-                       src->RelAddr,                   /* relative indexing? */
-                       c->regs[PROGRAM_ADDRESS][0],    /* address register */
-                       16 * src->Index,                /* byte offset */
-                       SURF_INDEX_VERT_CONST_BUFFER    /* binding table index */
+                       c->current_const[argIndex].reg,/* writeback dest */
+                       0,                             /* oword */
+                       src->RelAddr,                  /* relative indexing? */
+                       addrReg,                       /* address register */
+                       16 * src->Index,               /* byte offset */
+                       SURF_INDEX_VERT_CONST_BUFFER   /* binding table index */
                        );
+
+      if (src->RelAddr) {
+         /* second read */
+         const2_reg = get_tmp(c);
+
+         /* use upper half of address reg for second read */
+         addrReg = stride(addrReg, 0, 4, 0);
+         addrReg.subnr = 16;
+
+         brw_dp_READ_4_vs(p,
+                          const2_reg,              /* writeback dest */
+                          1,                       /* oword */
+                          src->RelAddr,            /* relative indexing? */
+                          addrReg,                 /* address register */
+                          16 * src->Index,         /* byte offset */
+                          SURF_INDEX_VERT_CONST_BUFFER
+                          );
+      }
    }
 
    const_reg = c->current_const[argIndex].reg;
-   if (!src->RelAddr) {
+
+   if (src->RelAddr) {
+      /* merge the two Owords into the constant register */
+      /* const_reg[7..4] = const2_reg[7..4] */
+      brw_MOV(p,
+              suboffset(stride(const_reg, 0, 4, 1), 4),
+              suboffset(stride(const2_reg, 0, 4, 1), 4));
+      release_tmp(c, const2_reg);
+   }
+   else {
       /* replicate lower four floats into upper half (to get XYZWXYZW) */
       const_reg = stride(const_reg, 0, 4, 0);
       const_reg.subnr = 0;
