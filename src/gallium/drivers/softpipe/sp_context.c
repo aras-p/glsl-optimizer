@@ -124,8 +124,7 @@ static void softpipe_destroy( struct pipe_context *pipe )
 static unsigned int
 softpipe_is_texture_referenced( struct pipe_context *pipe,
 				struct pipe_texture *texture,
-				unsigned face, unsigned level,
-				unsigned zslice)
+				unsigned face, unsigned level)
 {
    return PIPE_UNREFERENCED;
 }
