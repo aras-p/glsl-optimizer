@@ -58,7 +58,6 @@ PROGS = \
 	tessdemo \
 	texcyl \
 	texenv \
-	texobj \
 	textures \
 	trispd \
 	tunnel \

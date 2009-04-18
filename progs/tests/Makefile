@@ -83,6 +83,7 @@ SOURCES = \
 	texdown \
 	texfilt.c \
 	texline.c \
+	texobj.c \
 	texobjshare.c \
 	texrect.c \
 	texwrap.c \
