@@ -43,7 +43,6 @@ SOURCES = \
 	floattex.c \
 	fbotest1.c \
 	fbotest2.c \
-	fbotexture.c \
 	fillrate.c \
 	fog.c \
 	fogcoord.c \

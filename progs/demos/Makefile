@@ -22,6 +22,7 @@ PROGS = \
 	drawpix \
 	engine \
 	fbo_firecube \
+	fbotexture \
 	fire \
 	fogcoord \
 	fplight \
