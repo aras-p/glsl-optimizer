@@ -1,3 +1,4 @@
+array
 bitmap
 brick
 bump
@@ -11,6 +12,7 @@ mandelbrot
 multinoise
 multitex
 noise
+noise2
 pointcoord
 points
 readtex.c
@@ -21,6 +23,7 @@ shaderutil.c
 shaderutil.h
 shadow_sampler
 skinning
+texaaline
 texdemo1
 toyball
 trirast
