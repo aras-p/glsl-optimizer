@@ -37,7 +37,6 @@ SOURCES = \
 	copypixrate.c \
 	crossbar.c \
 	cva.c \
-	dinoshade.c \
 	drawbuffers.c \
 	exactrast.c \
 	floattex.c \

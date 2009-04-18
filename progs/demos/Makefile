@@ -19,6 +19,7 @@ PROGS = \
 	clearspd \
 	copypix \
 	cubemap \
+	dinoshade \
 	drawpix \
 	engine \
 	fbo_firecube \
