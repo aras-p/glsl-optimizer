@@ -54,7 +54,6 @@ PROGS = \
 	terrain \
 	tessdemo \
 	texcyl \
-	texdown \
 	texenv \
 	texobj \
 	textures \
