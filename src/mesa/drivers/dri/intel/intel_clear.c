@@ -38,6 +38,7 @@
 #include "main/enable.h"
 #include "main/macros.h"
 #include "main/matrix.h"
+#include "main/polygon.h"
 #include "main/texstate.h"
 #include "main/shaders.h"
 #include "main/stencil.h"
