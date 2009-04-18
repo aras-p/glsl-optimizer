@@ -20,11 +20,7 @@
 #include <math.h>
 #include <GL/glew.h>
 #include <GL/glut.h>
-#if 0
-#include "texture.h"
-#else
-#include "../util/readtex.c"
-#endif
+#include "readtex.h"
 
 
 /* Some <math.h> files do not define M_PI... */
@@ -67,14 +63,15 @@ GLfloat zoomFactor = 1.0;
 /*****************************************************************/
 
 
-void ActiveTexture(int i)
+static void
+ActiveTexture(int i)
 {
    glActiveTextureARB(i);
 }
 
 
 /* matrix = identity */
-void
+static void
 matrixIdentity(GLfloat matrix[16])
 {
   matrix[0] = 1.0;
@@ -96,7 +93,7 @@ matrixIdentity(GLfloat matrix[16])
 }
 
 /* matrix2 = transpose(matrix1) */
-void
+static void
 matrixTranspose(GLfloat matrix2[16], GLfloat matrix1[16])
 {
   matrix2[0] = matrix1[0];
@@ -167,7 +164,7 @@ imgLoad(char *filenameIn, int borderIn, GLfloat borderColorIn[4],
 /*****************************************************************/
 
 /* Load the image file specified on the command line as the current texture */
-void
+static void
 loadImageTextures(void)
 {
   GLfloat borderColor[4] =
@@ -252,7 +249,7 @@ loadImageTextures(void)
 }
 
 /* Create a simple spotlight pattern and make it the current texture */
-void
+static void
 loadSpotlightTexture(void)
 {
   static int texWidth = 64, texHeight = 64;
@@ -302,7 +299,7 @@ loadSpotlightTexture(void)
 
 /*****************************************************************/
 
-void
+static void
 checkErrors(void)
 {
   GLenum error;
@@ -311,7 +308,7 @@ checkErrors(void)
   }
 }
 
-void
+static void
 drawCube(void)
 {
   glBegin(GL_QUADS);
@@ -360,7 +357,7 @@ drawCube(void)
   glEnd();
 }
 
-void
+static void
 drawDodecahedron(void)
 {
 #define A (0.5 * 1.61803)  /* (sqrt(5) + 1) / 2 */
@@ -446,7 +443,7 @@ drawDodecahedron(void)
   }
 }
 
-void
+static void
 drawSphere(void)
 {
   int numMajor = 24;
@@ -573,7 +570,7 @@ drawTextureProjection(void)
 
 /*****************************************************************/
 
-void
+static void
 initialize(void)
 {
   GLfloat light0Pos[4] =
@@ -670,7 +667,7 @@ initialize(void)
   }
 }
 
-void
+static void
 display(void)
 {
   int i;
@@ -755,10 +752,10 @@ display(void)
 /*****************************************************************/
 
 /* simple trackball-like motion control */
-float lastPos[3];
-int lastTime;
+static float lastPos[3];
+static int lastTime;
 
-void
+static void
 ptov(int x, int y, int width, int height, float v[3])
 {
   float d, a;
@@ -774,7 +771,7 @@ ptov(int x, int y, int width, int height, float v[3])
   v[2] *= a;
 }
 
-void
+static void
 startMotion(int x, int y, int but, int time)
 {
   if (but == GLUT_LEFT_BUTTON) {
@@ -789,13 +786,13 @@ startMotion(int x, int y, int but, int time)
   ptov(x, y, winWidth, winHeight, lastPos);
 }
 
-void
+static void
 animate(void)
 {
   glutPostRedisplay();
 }
 
-void
+static void
 vis(int visible)
 {
   if (visible == GLUT_VISIBLE) {
@@ -807,7 +804,7 @@ vis(int visible)
   }
 }
 
-void
+static void
 stopMotion(int but, int time)
 {
   if ((but == GLUT_LEFT_BUTTON && mode == MoveView) ||
@@ -829,7 +826,7 @@ stopMotion(int but, int time)
   }
 }
 
-void
+static void
 trackMotion(int x, int y)
 {
   float curPos[3], dx, dy, dz;
@@ -854,7 +851,7 @@ trackMotion(int x, int y)
 
 /*****************************************************************/
 
-void
+static void
 object(void)
 {
   static int object;
@@ -881,7 +878,7 @@ nop(void)
 {
 }
 
-void
+static void
 texture(void)
 {
   static int texture = 0;
@@ -912,7 +909,7 @@ texture(void)
   }
 }
 
-void
+static void
 help(void)
 {
   printf("'h'   - help\n");
@@ -927,7 +924,7 @@ help(void)
 }
 
 /* ARGSUSED1 */
-void
+static void
 key(unsigned char key, int x, int y)
 {
   switch (key) {
@@ -966,7 +963,7 @@ key(unsigned char key, int x, int y)
   glutPostRedisplay();
 }
 
-void
+static void
 mouse(int button, int state, int x, int y)
 {
   if (state == GLUT_DOWN)
@@ -976,7 +973,7 @@ mouse(int button, int state, int x, int y)
   glutPostRedisplay();
 }
 
-void
+static void
 reshape(int w, int h)
 {
   winWidth = w;
@@ -985,7 +982,7 @@ reshape(int w, int h)
 }
 
 
-void
+static void
 menu(int selection)
 {
   if (selection == 666) {
@@ -1005,6 +1002,7 @@ main(int argc, char **argv)
   assert(NumTextures <= MAX_TEX);
 
   glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
+  glutInitWindowSize(500,500);
   (void) glutCreateWindow("projtex");
   glewInit();
 

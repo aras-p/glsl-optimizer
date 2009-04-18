@@ -41,6 +41,7 @@ PROGS = \
 	multiarb \
 	paltex \
 	pointblast \
+	projtex \
 	rain \
 	ray \
 	readpix \

@@ -66,7 +66,6 @@ SOURCES = \
 	packedpixels.c \
 	pbo.c \
 	prog_parameter.c \
-	projtex.c \
 	quads.c \
 	random.c \
 	readrate.c \
