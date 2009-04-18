@@ -128,7 +128,7 @@ static void Init( void )
    glLoadProgramNV(GL_VERTEX_PROGRAM_NV, 1,
                    strlen(prog1),
                    (const GLubyte *) prog1);
-   assert(!glIsProgramNV(1));
+   assert(glIsProgramNV(1));
 
    glLoadProgramNV(GL_VERTEX_PROGRAM_NV, 2,
                    strlen(prog2),
