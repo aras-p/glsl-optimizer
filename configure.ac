@@ -424,12 +424,13 @@ GALLIUM_STATE_TRACKERS_DIRS=""
 case "$mesa_driver" in
 xlib)
     DRIVER_DIRS="x11"
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS xlib"
     ;;
 dri)
     SRC_DIRS="glx/x11 $SRC_DIRS"
     DRIVER_DIRS="dri"
     WINDOW_SYSTEM="dri"
-    GALLIUM_WINSYS_DIRS="drm $GALLIUM_WINSYS_DIRS"
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
@@ -1107,6 +1108,9 @@ no)
 yes)
     # look at what else is built
     case "$mesa_driver" in
+    xlib)
+        GALLIUM_STATE_TRACKERS_DIRS=glx
+        ;;
     dri)
         GALLIUM_STATE_TRACKERS_DIRS=egl
         ;;
