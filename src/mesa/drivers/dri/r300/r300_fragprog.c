@@ -247,13 +247,11 @@ static GLboolean transform_TEX(
 }
 
 
-static void update_params(r300ContextPtr r300, struct r300_fragment_program *fp)
+static void update_params(GLcontext *ctx, struct gl_fragment_program *fp)
 {
-	struct gl_fragment_program *mp = &fp->mesa_program;
-
 	/* Ask Mesa nicely to fill in ParameterValues for us */
-	if (mp->Base.Parameters)
-		_mesa_load_state_parameters(r300->radeon.glCtx, mp->Base.Parameters);
+	if (fp->Base.Parameters)
+		_mesa_load_state_parameters(ctx, fp->Base.Parameters);
 }
 
 
@@ -270,7 +268,7 @@ static void update_params(r300ContextPtr r300, struct r300_fragment_program *fp)
  */
 static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 {
-	GLuint InputsRead = compiler->fp->mesa_program.Base.InputsRead;
+	GLuint InputsRead = compiler->fp->Base.Base.InputsRead;
 
 	if (!(InputsRead & FRAG_BIT_WPOS))
 		return;
@@ -391,7 +389,7 @@ static void build_state(
 	_mesa_bzero(state, sizeof(*state));
 
 	for(unit = 0; unit < 16; ++unit) {
-		if (fp->mesa_program.Base.ShadowSamplers & (1 << unit)) {
+		if (fp->Base.Base.ShadowSamplers & (1 << unit)) {
 			struct gl_texture_object* tex = r300->radeon.glCtx->Texture.Unit[unit]._Current;
 
 			state->unit[unit].depth_texture_mode = build_dtm(tex->DepthMode);
@@ -419,7 +417,7 @@ void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 
 		compiler.r300 = r300;
 		compiler.fp = r300_fp;
-		compiler.code = &r300_fp->code;
+		compiler.code = &r300_fp->code.r300;
 		compiler.program = _mesa_clone_program(ctx, &fp->Base);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
@@ -467,11 +465,11 @@ void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 		r300_fp->translated = GL_TRUE;
 
 		if (r300_fp->error || (RADEON_DEBUG & DEBUG_PIXEL))
-			r300FragmentProgramDump(r300_fp, &r300_fp->code);
+			r300FragmentProgramDump(r300_fp, &r300_fp->code.r300);
 		r300UpdateStateParameters(ctx, _NEW_PROGRAM);
 	}
 
-	update_params(r300, r300_fp);
+	update_params(ctx, fp);
 }
 
 /* just some random things... */

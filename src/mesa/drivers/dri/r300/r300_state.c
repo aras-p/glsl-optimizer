@@ -449,18 +449,9 @@ static void r300SetPolygonOffsetState(GLcontext * ctx, GLboolean state)
 
 static GLboolean current_fragment_program_writes_depth(GLcontext* ctx)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	struct r300_fragment_program *fp = (struct r300_fragment_program *) ctx->FragmentProgram._Current;
 
-	if (r300->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515) {
-		struct r300_fragment_program *fp = (struct r300_fragment_program *)
-			(char *)ctx->FragmentProgram._Current;
-		return (fp && fp->WritesDepth);
-	} else {
-		struct r500_fragment_program* fp =
-			(struct r500_fragment_program*)(char*)
-			ctx->FragmentProgram._Current;
-		return (fp && fp->writes_depth);
-	}
+	return (fp && fp->writes_depth);
 }
 
 static void r300SetEarlyZState(GLcontext * ctx)
@@ -1072,7 +1063,7 @@ void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state)
 	if (!fp)
 		return;
 
-	paramList = fp->mesa_program.Base.Parameters;
+	paramList = fp->Base.Base.Parameters;
 
 	if (!paramList)
 		return;
@@ -1191,9 +1182,8 @@ static void r300SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int i;
-	struct r300_fragment_program *fp = (struct r300_fragment_program *)
-	    (char *)ctx->FragmentProgram._Current;
-	struct r300_fragment_program_code *code = &fp->code;
+	struct r300_fragment_program *fp = (struct r300_fragment_program *) ctx->FragmentProgram._Current;
+	struct r300_fragment_program_code *code = &fp->code.r300;
 
 	R300_STATECHANGE(r300, fpt);
 
@@ -1234,9 +1224,8 @@ static void r300SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 {
 	int i;
-	struct r500_fragment_program *fp = (struct r500_fragment_program *)
-	    (char *)ctx->FragmentProgram._Current;
-	struct r500_fragment_program_code *code = &fp->code;
+	struct r300_fragment_program *fp = (struct r300_fragment_program *) ctx->FragmentProgram._Current;
+	struct r500_fragment_program_code *code = &fp->code.r500;
 
 	/* find all the texture instructions and relocate the texture units */
 	for (i = 0; i < code->inst_end + 1; i++) {
@@ -1391,7 +1380,7 @@ static void r300SetupTextures(GLcontext * ctx)
 		return;
 
 	if (r300->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515) {
-		if (fp->mesa_program.UsesKill && last_hw_tmu < 0) {
+		if (fp->Base.UsesKill && last_hw_tmu < 0) {
 			// The KILL operation requires the first texture unit
 			// to be enabled.
 			r300->hw.txe.cmd[R300_TXE_ENABLE] |= 1;
@@ -2310,7 +2299,7 @@ static GLboolean r300SetupPixelShader(GLcontext *ctx)
 	if (fp->error)
 		return GL_FALSE;
 
-	code = &fp->code;
+	code = &fp->code.r300;
 
 	r300SetupTextures(ctx);
 
@@ -2355,7 +2344,7 @@ static GLboolean r300SetupPixelShader(GLcontext *ctx)
 	rmesa->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(rmesa->radeon.radeonScreen, R300_PFS_PARAM_0_X, code->const_nr * 4);
 	for (i = 0; i < code->const_nr; i++) {
 		const GLfloat *constant = get_fragmentprogram_constant(ctx,
-			&fp->mesa_program.Base, code->constant[i]);
+			&fp->Base.Base, code->constant[i]);
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat24(constant[0]);
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat24(constant[1]);
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat24(constant[2]);
@@ -2382,7 +2371,7 @@ static GLboolean r300SetupPixelShader(GLcontext *ctx)
 static GLboolean r500SetupPixelShader(GLcontext *ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r500_fragment_program *fp = (struct r500_fragment_program *) ctx->FragmentProgram._Current;
+	struct r300_fragment_program *fp = (struct r300_fragment_program *) ctx->FragmentProgram._Current;
 	int i;
 	struct r500_fragment_program_code *code;
 
@@ -2393,7 +2382,7 @@ static GLboolean r500SetupPixelShader(GLcontext *ctx)
 	if (fp->error)
 		return GL_FALSE;
 
-	code = &fp->code;
+	code = &fp->code.r500;
 
 	r300SetupTextures(ctx);
 
@@ -2425,7 +2414,7 @@ static GLboolean r500SetupPixelShader(GLcontext *ctx)
 	R300_STATECHANGE(rmesa, r500fp_const);
 	for (i = 0; i < code->const_nr; i++) {
 		const GLfloat *constant = get_fragmentprogram_constant(ctx,
-			&fp->mesa_program.Base, code->constant[i]);
+			&fp->Base.Base, code->constant[i]);
 		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat32(constant[0]);
 		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat32(constant[1]);
 		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat32(constant[2]);

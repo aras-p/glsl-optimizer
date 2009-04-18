@@ -189,13 +189,11 @@ static GLboolean transform_TEX(
 }
 
 
-static void update_params(r300ContextPtr r300, struct r500_fragment_program *fp)
+static void update_params(GLcontext *ctx, struct gl_fragment_program *fp)
 {
-	struct gl_fragment_program *mp = &fp->mesa_program;
-
 	/* Ask Mesa nicely to fill in ParameterValues for us */
-	if (mp->Base.Parameters)
-		_mesa_load_state_parameters(r300->radeon.glCtx, mp->Base.Parameters);
+	if (fp->Base.Parameters)
+		_mesa_load_state_parameters(ctx, fp->Base.Parameters);
 }
 
 
@@ -212,7 +210,7 @@ static void update_params(r300ContextPtr r300, struct r500_fragment_program *fp)
  */
 static void insert_WPOS_trailer(struct r500_fragment_program_compiler *compiler)
 {
-	GLuint InputsRead = compiler->fp->mesa_program.Base.InputsRead;
+	GLuint InputsRead = compiler->fp->Base.Base.InputsRead;
 
 	if (!(InputsRead & FRAG_BIT_WPOS))
 		return;
@@ -420,15 +418,15 @@ static GLuint build_func(GLuint comparefunc)
  */
 static void build_state(
 	r300ContextPtr r300,
-	struct r500_fragment_program *fp,
-	struct r500_fragment_program_external_state *state)
+	struct r300_fragment_program *fp,
+	struct r300_fragment_program_external_state *state)
 {
 	int unit;
 
 	_mesa_bzero(state, sizeof(*state));
 
 	for(unit = 0; unit < 16; ++unit) {
-		if (fp->mesa_program.Base.ShadowSamplers & (1 << unit)) {
+		if (fp->Base.Base.ShadowSamplers & (1 << unit)) {
 			struct gl_texture_object* tex = r300->radeon.glCtx->Texture.Unit[unit]._Current;
 
 			state->unit[unit].depth_texture_mode = build_dtm(tex->DepthMode);
@@ -442,22 +440,22 @@ static void dump_program(struct r500_fragment_program_code *code);
 void r500TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	struct r500_fragment_program *r500_fp = (struct r500_fragment_program *)fp;
-	struct r500_fragment_program_external_state state;
+	struct r300_fragment_program *r300_fp = (struct r300_fragment_program *)fp;
+	struct r300_fragment_program_external_state state;
 
-	build_state(r300, r500_fp, &state);
-	if (_mesa_memcmp(&r500_fp->state, &state, sizeof(state))) {
+	build_state(r300, r300_fp, &state);
+	if (_mesa_memcmp(&r300_fp->state, &state, sizeof(state))) {
 		/* TODO: cache compiled programs */
-		r500_fp->translated = GL_FALSE;
-		_mesa_memcpy(&r500_fp->state, &state, sizeof(state));
+		r300_fp->translated = GL_FALSE;
+		_mesa_memcpy(&r300_fp->state, &state, sizeof(state));
 	}
 
-	if (!r500_fp->translated) {
+	if (!r300_fp->translated) {
 		struct r500_fragment_program_compiler compiler;
 
 		compiler.r300 = r300;
-		compiler.fp = r500_fp;
-		compiler.code = &r500_fp->code;
+		compiler.fp = r300_fp;
+		compiler.code = &r300_fp->code.r500;
 		compiler.program = _mesa_clone_program(ctx, &fp->Base);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
@@ -494,9 +492,9 @@ void r500TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 		}
 
 		if (!r500FragmentProgramEmit(&compiler))
-			r500_fp->error = GL_TRUE;
+			r300_fp->error = GL_TRUE;
 
-		r500_fp->translated = GL_TRUE;
+		r300_fp->translated = GL_TRUE;
 
 		/* Subtle: Rescue any parameters that have been added during transformations */
 		_mesa_free_parameter_list(fp->Base.Parameters);
@@ -508,15 +506,15 @@ void r500TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 		r300UpdateStateParameters(ctx, _NEW_PROGRAM);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
-			if (!r500_fp->error) {
+			if (!r300_fp->error) {
 				_mesa_printf("Machine-readable code:\n");
-				dump_program(&r500_fp->code);
+				dump_program(&r300_fp->code.r500);
 			}
 		}
 
 	}
 
-	update_params(r300, r500_fp);
+	update_params(ctx, fp);
 
 }
 

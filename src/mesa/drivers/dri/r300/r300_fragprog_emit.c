@@ -201,7 +201,7 @@ static GLboolean emit_alu(void* data, struct radeon_pair_instruction* inst)
 	if (inst->Alpha.DepthWriteMask) {
 		code->alu.inst[ip].inst3 |= R300_ALU_DSTA_DEPTH;
 		code->node[code->cur_node].flags |= R300_W_OUT;
-		c->fp->WritesDepth = GL_TRUE;
+		c->fp->writes_depth = GL_TRUE;
 	}
 
 	return GL_TRUE;

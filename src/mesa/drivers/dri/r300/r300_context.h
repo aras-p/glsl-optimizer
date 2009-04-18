@@ -458,7 +458,7 @@ struct r300_vertex_program_cont {
 #define PFS_NUM_CONST_REGS	16
 
 struct r300_pfs_compile_state;
-
+struct r500_pfs_compile_state;
 
 /**
  * Stores state that influences the compilation of a fragment program.
@@ -528,47 +528,6 @@ struct r300_fragment_program_code {
 	int max_temp_idx;
 };
 
-/**
- * Store everything about a fragment program that is needed
- * to render with that program.
- */
-struct r300_fragment_program {
-	struct gl_fragment_program mesa_program;
-
-	GLboolean translated;
-	GLboolean error;
-
-	struct r300_fragment_program_external_state state;
-	struct r300_fragment_program_code code;
-
-	GLboolean WritesDepth;
-	GLuint optimization;
-};
-
-struct r500_pfs_compile_state;
-
-struct r500_fragment_program_external_state {
-	struct {
-		/**
-		 * If the sampler is used as a shadow sampler,
-		 * this field is:
-		 *  0 - GL_LUMINANCE
-		 *  1 - GL_INTENSITY
-		 *  2 - GL_ALPHA
-		 * depending on the depth texture mode.
-		 */
-		GLuint depth_texture_mode : 2;
-
-		/**
-		 * If the sampler is used as a shadow sampler,
-		 * this field is (texture_compare_func - GL_NEVER).
-		 * [e.g. if compare function is GL_LEQUAL, this field is 3]
-		 *
-		 * Otherwise, this field is 0.
-		 */
-		GLuint texture_compare_func : 3;
-	} unit[16];
-};
 
 struct r500_fragment_program_code {
 	struct {
@@ -593,18 +552,23 @@ struct r500_fragment_program_code {
 	int max_temp_idx;
 };
 
-struct r500_fragment_program {
-	struct gl_fragment_program mesa_program;
+/**
+* Store everything about a fragment program that is needed
+* to render with that program.
+*/
+struct r300_fragment_program {
+	struct gl_fragment_program Base;
 
-	GLcontext *ctx;
 	GLboolean translated;
 	GLboolean error;
 
-	struct r500_fragment_program_external_state state;
-	struct r500_fragment_program_code code;
+	struct r300_fragment_program_external_state state;
+	union {
+		struct r300_fragment_program_code r300;
+		struct r500_fragment_program_code r500;
+	} code;
 
 	GLboolean writes_depth;
-
 	GLuint optimization;
 };
 
