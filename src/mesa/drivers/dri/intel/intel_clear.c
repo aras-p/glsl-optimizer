@@ -148,6 +148,11 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
       }
    }
 
+#if FEATURE_ARB_vertex_buffer_object
+   _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+   _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+#endif
+
    intel_meta_set_passthrough_transform(intel);
 
    for (i = 0; i < 4; i++) {
