@@ -641,12 +641,21 @@ struct r300_swtcl_info {
    int sw_tcl_inputs[VERT_ATTRIB_MAX];
 };
 
+struct r300_vtable {
+	void (* SetupRSUnit)(GLcontext *ctx);
+	void (* SetupFragmentShaderTextures)(GLcontext *ctx, int *tmu_mappings);
+	void ( *TranslateFragmentShader)(GLcontext *ctx, struct gl_fragment_program *fp);
+	GLboolean (* SetupPixelShader)(GLcontext *ctx);
+};
+
 
 /**
  * \brief R300 context structure.
  */
 struct r300_context {
 	struct radeon_context radeon;	/* parent class, must be first */
+
+	struct r300_vtable vtbl;
 
 	struct r300_hw_state hw;
 

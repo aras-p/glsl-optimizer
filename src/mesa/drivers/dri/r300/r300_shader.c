@@ -83,19 +83,20 @@ r300IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
 	if (target == GL_FRAGMENT_PROGRAM_ARB) {
 		r300ContextPtr rmesa = R300_CONTEXT(ctx);
+		struct gl_fragment_program * fp = (struct gl_fragment_program *) prog;
 
 		if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
-			struct r500_fragment_program *r500_fp = (struct r500_fragment_program *)prog;
+			struct r500_fragment_program *r500_fp = (struct r500_fragment_program *)fp;
 
 			if (!r500_fp->translated)
-				r500TranslateFragmentShader(rmesa, r500_fp);
+				rmesa->vtbl.TranslateFragmentShader(ctx, fp);
 
 			return !r500_fp->error;
 		} else {
-			struct r300_fragment_program *r300_fp = (struct r300_fragment_program *)prog;
+			struct r300_fragment_program *r300_fp = (struct r300_fragment_program *)fp;
 
 			if (!r300_fp->translated)
-				r300TranslateFragmentShader(rmesa, r300_fp);
+				rmesa->vtbl.TranslateFragmentShader(ctx, fp);
 
 			return !r300_fp->error;
 		}

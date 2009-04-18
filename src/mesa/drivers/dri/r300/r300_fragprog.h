@@ -107,9 +107,7 @@
 
 struct r300_fragment_program;
 
-extern void r300TranslateFragmentShader(r300ContextPtr r300,
-					struct r300_fragment_program *fp);
-
+extern void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp);
 
 /**
  * Used internally by the r300 fragment program code to store compile-time

@@ -1399,9 +1399,8 @@ static void r300SetupTextures(GLcontext * ctx)
 			r300->hw.tex.filter.cmd[R300_TEX_CMD_0] =
 				cmdpacket0(r300->radeon.radeonScreen, R300_TX_FILTER0_0, 1);
 		}
-		r300SetupFragmentShaderTextures(ctx, tmu_mappings);
-	} else
-		r500SetupFragmentShaderTextures(ctx, tmu_mappings);
+	}
+	r300->vtbl.SetupFragmentShaderTextures(ctx, tmu_mappings);
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "TX_ENABLE: %08x  last_hw_tmu=%d\n",
@@ -2300,15 +2299,12 @@ static const GLfloat *get_fragmentprogram_constant(GLcontext *ctx,
 }
 
 
-static GLboolean r300SetupPixelShader(r300ContextPtr rmesa)
+static GLboolean r300SetupPixelShader(GLcontext *ctx)
 {
-	GLcontext *ctx = rmesa->radeon.glCtx;
-	struct r300_fragment_program *fp = (struct r300_fragment_program *)
-	    (char *)ctx->FragmentProgram._Current;
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	struct r300_fragment_program *fp = (struct r300_fragment_program *) ctx->FragmentProgram._Current;
 	struct r300_fragment_program_code *code;
 	int i, k;
-
-	r300TranslateFragmentShader(rmesa, fp);
 
 	/* Program is not native, fallback to software */
 	if (fp->error)
@@ -2383,18 +2379,15 @@ static GLboolean r300SetupPixelShader(r300ContextPtr rmesa)
 	if(_nc>_p->r500fp.count)_p->r500fp.count=_nc;\
 } while(0)
 
-static GLboolean r500SetupPixelShader(r300ContextPtr rmesa)
+static GLboolean r500SetupPixelShader(GLcontext *ctx)
 {
-	GLcontext *ctx = rmesa->radeon.glCtx;
-	struct r500_fragment_program *fp = (struct r500_fragment_program *)
-	    (char *)ctx->FragmentProgram._Current;
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	struct r500_fragment_program *fp = (struct r500_fragment_program *) ctx->FragmentProgram._Current;
 	int i;
 	struct r500_fragment_program_code *code;
 
 	((drm_r300_cmd_header_t *) rmesa->hw.r500fp.cmd)->r500fp.count = 0;
 	((drm_r300_cmd_header_t *) rmesa->hw.r500fp_const.cmd)->r500fp.count = 0;
-
-	r500TranslateFragmentShader(rmesa, fp);
 
 	/* Program is not native, fallback to software */
 	if (fp->error)
@@ -2475,15 +2468,12 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 		rmesa->hw.fg_depth_src.cmd[1] = fgdepthsrc;
 	}
 
-	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
-		if (!r500SetupPixelShader(rmesa))
-			return;
-		r500SetupRSUnit(ctx);
-	} else {
-		if (!r300SetupPixelShader(rmesa))
-			return;
-		r300SetupRSUnit(ctx);
-	}
+	rmesa->vtbl.TranslateFragmentShader(ctx, ctx->FragmentProgram._Current);
+
+	if (!rmesa->vtbl.SetupPixelShader(ctx))
+		return;
+
+	rmesa->vtbl.SetupRSUnit(ctx);
 
 	if ((rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
 		r300SetupVertexProgram(rmesa);
@@ -2594,4 +2584,19 @@ void r300InitStateFuncs(struct dd_function_table *functions)
 
 	functions->DrawBuffer		= radeonDrawBuffer;
 	functions->ReadBuffer		= radeonReadBuffer;
+}
+
+void r300InitShaderFunctions(r300ContextPtr r300)
+{
+	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
+		r300->vtbl.SetupRSUnit = r500SetupRSUnit;
+		r300->vtbl.SetupPixelShader = r500SetupPixelShader;
+		r300->vtbl.SetupFragmentShaderTextures = r500SetupFragmentShaderTextures;
+		r300->vtbl.TranslateFragmentShader = r500TranslateFragmentShader;
+	} else {
+		r300->vtbl.SetupRSUnit = r300SetupRSUnit;
+		r300->vtbl.SetupPixelShader = r300SetupPixelShader;
+		r300->vtbl.SetupFragmentShaderTextures = r300SetupFragmentShaderTextures;
+		r300->vtbl.TranslateFragmentShader = r300TranslateFragmentShader;
+	}
 }

@@ -47,8 +47,7 @@
 
 struct r500_fragment_program;
 
-extern void r500TranslateFragmentShader(r300ContextPtr r300,
-					struct r500_fragment_program *fp);
+extern void r500TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp);
 
 struct r500_fragment_program_compiler {
 	r300ContextPtr r300;

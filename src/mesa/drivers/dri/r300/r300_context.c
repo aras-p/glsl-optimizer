@@ -392,6 +392,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
    	radeonInitSpanFuncs( ctx );
 	r300InitCmdBuf(r300);
 	r300InitState(r300);
+	r300InitShaderFunctions(r300);
 	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
 		r300InitSwtcl(ctx);
 

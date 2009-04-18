@@ -401,25 +401,26 @@ static void build_state(
 }
 
 
-void r300TranslateFragmentShader(r300ContextPtr r300,
-				 struct r300_fragment_program *fp)
+void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 {
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	struct r300_fragment_program *r300_fp = (struct r300_fragment_program *)fp;
 	struct r300_fragment_program_external_state state;
 
-	build_state(r300, fp, &state);
-	if (_mesa_memcmp(&fp->state, &state, sizeof(state))) {
+	build_state(r300, r300_fp, &state);
+	if (_mesa_memcmp(&r300_fp->state, &state, sizeof(state))) {
 		/* TODO: cache compiled programs */
-		fp->translated = GL_FALSE;
-		_mesa_memcpy(&fp->state, &state, sizeof(state));
+		r300_fp->translated = GL_FALSE;
+		_mesa_memcpy(&r300_fp->state, &state, sizeof(state));
 	}
 
-	if (!fp->translated) {
+	if (!r300_fp->translated) {
 		struct r300_fragment_program_compiler compiler;
 
 		compiler.r300 = r300;
-		compiler.fp = fp;
-		compiler.code = &fp->code;
-		compiler.program = _mesa_clone_program(r300->radeon.glCtx, &fp->mesa_program.Base);
+		compiler.fp = r300_fp;
+		compiler.code = &r300_fp->code;
+		compiler.program = _mesa_clone_program(ctx, &fp->Base);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			_mesa_printf("Fragment Program: Initial program:\n");
@@ -433,10 +434,7 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 			{ &radeonTransformALU, 0 },
 			{ &radeonTransformTrigSimple, 0 }
 		};
-		radeonLocalTransform(
-			r300->radeon.glCtx,
-			compiler.program,
-			3, transformations);
+		radeonLocalTransform(ctx, compiler.program, 3, transformations);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			_mesa_printf("Fragment Program: After native rewrite:\n");
@@ -449,7 +447,7 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 			.BuildSwizzle = &r300FPBuildSwizzle,
 			.RewriteDepthOut = GL_TRUE
 		};
-		radeonNqssaDce(r300->radeon.glCtx, compiler.program, &nqssadce);
+		radeonNqssaDce(ctx, compiler.program, &nqssadce);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			_mesa_printf("Compiler: after NqSSA-DCE:\n");
@@ -457,23 +455,23 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 		}
 
 		if (!r300FragmentProgramEmit(&compiler))
-			fp->error = GL_TRUE;
+			r300_fp->error = GL_TRUE;
 
 		/* Subtle: Rescue any parameters that have been added during transformations */
-		_mesa_free_parameter_list(fp->mesa_program.Base.Parameters);
-		fp->mesa_program.Base.Parameters = compiler.program->Parameters;
+		_mesa_free_parameter_list(fp->Base.Parameters);
+		fp->Base.Parameters = compiler.program->Parameters;
 		compiler.program->Parameters = 0;
 
-		_mesa_reference_program(r300->radeon.glCtx, &compiler.program, NULL);
+		_mesa_reference_program(ctx, &compiler.program, NULL);
 
-		fp->translated = GL_TRUE;
+		r300_fp->translated = GL_TRUE;
 
-		if (fp->error || (RADEON_DEBUG & DEBUG_PIXEL))
-			r300FragmentProgramDump(fp, &fp->code);
-		r300UpdateStateParameters(r300->radeon.glCtx, _NEW_PROGRAM);
+		if (r300_fp->error || (RADEON_DEBUG & DEBUG_PIXEL))
+			r300FragmentProgramDump(r300_fp, &r300_fp->code);
+		r300UpdateStateParameters(ctx, _NEW_PROGRAM);
 	}
 
-	update_params(r300, fp);
+	update_params(r300, r300_fp);
 }
 
 /* just some random things... */
