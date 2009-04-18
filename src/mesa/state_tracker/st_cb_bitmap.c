@@ -573,8 +573,10 @@ reset_cache(struct st_context *st)
    cache->ymin = 1000000;
    cache->ymax = -1000000;
 
-   if (cache->trans)
+   if (cache->trans) {
       screen->tex_transfer_destroy(cache->trans);
+      cache->trans = NULL;
+   }
 
    assert(!cache->texture);
 
@@ -583,6 +585,18 @@ reset_cache(struct st_context *st)
                                       st->bitmap.tex_format, 0,
                                       BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
                                       1, PIPE_TEXTURE_USAGE_SAMPLER);
+
+}
+
+static void
+create_cache_trans(struct st_context *st)
+{
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   struct bitmap_cache *cache = st->bitmap.cache;
+
+   if (cache->trans)
+      return;
 
    /* Map the texture transfer.
     * Subsequent glBitmap calls will write into the texture image.
@@ -622,11 +636,13 @@ st_flush_bitmap_cache(struct st_context *st)
          /* The texture transfer has been mapped until now.
           * So unmap and release the texture transfer before drawing.
           */
-         screen->transfer_unmap(screen, cache->trans);
-         cache->buffer = NULL;
+         if (cache->trans) {
+            screen->transfer_unmap(screen, cache->trans);
+            cache->buffer = NULL;
 
-         screen->tex_transfer_destroy(cache->trans);
-         cache->trans = NULL;
+            screen->tex_transfer_destroy(cache->trans);
+            cache->trans = NULL;
+         }
 
          draw_bitmap_quad(st->ctx,
                           cache->xpos,
@@ -710,6 +726,9 @@ accum_bitmap(struct st_context *st,
       cache->xmax = x + width;
    if (y + height > cache->ymax)
       cache->ymax = y + height;
+
+   /* create the transfer if needed */
+   create_cache_trans(st);
 
    unpack_bitmap(st, px, py, width, height, unpack, bitmap,
                  cache->buffer, BITMAP_CACHE_WIDTH);
@@ -823,8 +842,7 @@ st_destroy_bitmap(struct st_context *st)
    struct pipe_screen *screen = pipe->screen;
    struct bitmap_cache *cache = st->bitmap.cache;
 
-   screen->transfer_unmap(screen, cache->trans);
-   screen->tex_transfer_destroy(cache->trans);
+
 
    if (st->bitmap.vs) {
       cso_delete_vertex_shader(st->cso_context, st->bitmap.vs);
@@ -836,7 +854,11 @@ st_destroy_bitmap(struct st_context *st)
       st->bitmap.vbuf = NULL;
    }
 
-   if (st->bitmap.cache) {
+   if (cache) {
+      if (cache->trans) {
+         screen->transfer_unmap(screen, cache->trans);
+         screen->tex_transfer_destroy(cache->trans);
+      }
       pipe_texture_reference(&st->bitmap.cache->texture, NULL);
       _mesa_free(st->bitmap.cache);
       st->bitmap.cache = NULL;
