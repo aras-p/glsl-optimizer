@@ -2584,11 +2584,13 @@ void r300InitShaderFunctions(r300ContextPtr r300)
 		r300->vtbl.SetupFragmentShaderTextures = r500SetupFragmentShaderTextures;
 		r300->vtbl.TranslateFragmentShader = r500TranslateFragmentShader;
 		r300->vtbl.FragmentProgramEmit = r500FragmentProgramEmit;
+		r300->vtbl.FragmentProgramDump = r500FragmentProgramDump;
 	} else {
 		r300->vtbl.SetupRSUnit = r300SetupRSUnit;
 		r300->vtbl.SetupPixelShader = r300SetupPixelShader;
 		r300->vtbl.SetupFragmentShaderTextures = r300SetupFragmentShaderTextures;
 		r300->vtbl.TranslateFragmentShader = r300TranslateFragmentShader;
 		r300->vtbl.FragmentProgramEmit = r300FragmentProgramEmit;
+		r300->vtbl.FragmentProgramDump = r300FragmentProgramDump;
 	}
 }

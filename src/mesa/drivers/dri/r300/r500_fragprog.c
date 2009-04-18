@@ -435,8 +435,6 @@ static void build_state(
 	}
 }
 
-static void dump_program(struct r500_fragment_program_code *code);
-
 void r500TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
@@ -494,24 +492,19 @@ void r500TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 		if (!r300->vtbl.FragmentProgramEmit(&compiler))
 			r300_fp->error = GL_TRUE;
 
-		r300_fp->translated = GL_TRUE;
-
 		/* Subtle: Rescue any parameters that have been added during transformations */
 		_mesa_free_parameter_list(fp->Base.Parameters);
 		fp->Base.Parameters = compiler.program->Parameters;
 		compiler.program->Parameters = 0;
 
-		_mesa_reference_program(ctx, &compiler.program, 0);
+		_mesa_reference_program(ctx, &compiler.program, NULL);
+
+		r300_fp->translated = GL_TRUE;
 
 		r300UpdateStateParameters(ctx, _NEW_PROGRAM);
 
-		if (RADEON_DEBUG & DEBUG_PIXEL) {
-			if (!r300_fp->error) {
-				_mesa_printf("Machine-readable code:\n");
-				dump_program(&r300_fp->code.r500);
-			}
-		}
-
+		if (r300_fp->error || (RADEON_DEBUG & DEBUG_PIXEL))
+			r300->vtbl.FragmentProgramDump(&r300_fp->code);
 	}
 
 	update_params(ctx, fp);
@@ -615,9 +608,9 @@ static char *to_texop(int val)
   return NULL;
 }
 
-static void dump_program(struct r500_fragment_program_code *code)
+void r500FragmentProgramDump(union rX00_fragment_program_code *c)
 {
-
+  struct r500_fragment_program_code *code = &c->r500;
   fprintf(stderr, "R500 Fragment Program:\n--------\n");
 
   int n;

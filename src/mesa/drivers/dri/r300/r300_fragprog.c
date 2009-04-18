@@ -464,19 +464,19 @@ void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 
 		r300_fp->translated = GL_TRUE;
 
-		if (r300_fp->error || (RADEON_DEBUG & DEBUG_PIXEL))
-			r300FragmentProgramDump(r300_fp, &r300_fp->code.r300);
 		r300UpdateStateParameters(ctx, _NEW_PROGRAM);
+
+		if (r300_fp->error || (RADEON_DEBUG & DEBUG_PIXEL))
+			r300->vtbl.FragmentProgramDump(&r300_fp->code);
 	}
 
 	update_params(ctx, fp);
 }
 
 /* just some random things... */
-void r300FragmentProgramDump(
-	struct r300_fragment_program *fp,
-	struct r300_fragment_program_code *code)
+void r300FragmentProgramDump(union rX00_fragment_program_code *c)
 {
+	struct r300_fragment_program_code *code = &c->r300;
 	int n, i, j;
 	static int pc = 0;
 

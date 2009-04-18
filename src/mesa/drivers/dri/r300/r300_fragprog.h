@@ -114,9 +114,6 @@ extern void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_progr
 
 extern GLboolean r300FragmentProgramEmit(struct r300_fragment_program_compiler *compiler);
 
-
-extern void r300FragmentProgramDump(
-	struct r300_fragment_program *fp,
-	struct r300_fragment_program_code *code);
+extern void r300FragmentProgramDump(union rX00_fragment_program_code *c);
 
 #endif
