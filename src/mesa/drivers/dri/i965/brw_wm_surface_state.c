@@ -546,8 +546,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 		       irb->texformat->MesaFormat);
       }
       key.tiling = region->tiling;
-      key.width = rb->Width;
-      key.height = rb->Height;
+      key.width = region->width;
+      key.height = region->height;
       key.pitch = region->pitch;
       key.cpp = region->cpp;
    } else {
