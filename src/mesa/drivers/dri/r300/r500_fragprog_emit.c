@@ -49,8 +49,8 @@
 
 
 #define PROG_CODE \
-	struct r500_fragment_program_compiler *c = (struct r500_fragment_program_compiler*)data; \
-	struct r500_fragment_program_code *code = c->code
+	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)data; \
+	struct r500_fragment_program_code *code = &c->code->r500
 
 #define error(fmt, args...) do {			\
 		fprintf(stderr, "%s::%s(): " fmt "\n",	\
@@ -299,9 +299,9 @@ static const struct radeon_pair_handler pair_handler = {
 	.MaxHwTemps = 128
 };
 
-GLboolean r500FragmentProgramEmit(struct r500_fragment_program_compiler *compiler)
+GLboolean r500FragmentProgramEmit(struct r300_fragment_program_compiler *compiler)
 {
-	struct r500_fragment_program_code *code = compiler->code;
+	struct r500_fragment_program_code *code = &compiler->code->r500;
 
 	_mesa_bzero(code, sizeof(*code));
 	code->max_temp_idx = 1;

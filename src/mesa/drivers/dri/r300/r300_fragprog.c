@@ -417,7 +417,7 @@ void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 
 		compiler.r300 = r300;
 		compiler.fp = r300_fp;
-		compiler.code = &r300_fp->code.r300;
+		compiler.code = &r300_fp->code;
 		compiler.program = _mesa_clone_program(ctx, &fp->Base);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {

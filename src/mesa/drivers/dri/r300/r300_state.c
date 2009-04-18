@@ -61,6 +61,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_emit.h"
 #include "r300_fragprog.h"
 #include "r300_tex.h"
+#include "r500_fragprog.h"
 
 #include "drirenderbuffer.h"
 

@@ -43,6 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_common.h"
 
 #include "main/mtypes.h"
+#include "shader/prog_instruction.h"
 
 struct r300_context;
 typedef struct r300_context r300ContextRec;
@@ -66,8 +67,6 @@ typedef struct r300_context *r300ContextPtr;
 	}
 
 #include "r300_vertprog.h"
-#include "r500_fragprog.h"
-
 
 
 /* The blit width for texture uploads
@@ -563,13 +562,20 @@ struct r300_fragment_program {
 	GLboolean error;
 
 	struct r300_fragment_program_external_state state;
-	union {
+	union rX00_fragment_program_code {
 		struct r300_fragment_program_code r300;
 		struct r500_fragment_program_code r500;
 	} code;
 
 	GLboolean writes_depth;
 	GLuint optimization;
+};
+
+struct r300_fragment_program_compiler {
+	r300ContextPtr r300;
+	struct r300_fragment_program *fp;
+	union rX00_fragment_program_code *code;
+	struct gl_program *program;
 };
 
 #define R300_MAX_AOS_ARRAYS		16

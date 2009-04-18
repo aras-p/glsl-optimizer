@@ -45,17 +45,8 @@
 #include "r300_state.h"
 #include "radeon_program.h"
 
-struct r500_fragment_program;
-
 extern void r500TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp);
 
-struct r500_fragment_program_compiler {
-	r300ContextPtr r300;
-	struct r300_fragment_program *fp;
-	struct r500_fragment_program_code *code;
-	struct gl_program *program;
-};
-
-extern GLboolean r500FragmentProgramEmit(struct r500_fragment_program_compiler *compiler);
+extern GLboolean r500FragmentProgramEmit(struct r300_fragment_program_compiler *compiler);
 
 #endif

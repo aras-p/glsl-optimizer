@@ -47,7 +47,7 @@
 
 #define PROG_CODE \
 	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)data; \
-	struct r300_fragment_program_code *code = c->code
+	struct r300_fragment_program_code *code = &c->code->r300
 
 #define error(fmt, args...) do {			\
 		fprintf(stderr, "%s::%s(): " fmt "\n",	\
@@ -213,7 +213,7 @@ static GLboolean emit_alu(void* data, struct radeon_pair_instruction* inst)
  */
 static GLboolean finish_node(struct r300_fragment_program_compiler *c)
 {
-	struct r300_fragment_program_code *code = c->code;
+	struct r300_fragment_program_code *code = &c->code->r300;
 	struct r300_fragment_program_node *node = &code->node[code->cur_node];
 
 	if (node->alu_end < 0) {
@@ -327,7 +327,7 @@ static const struct radeon_pair_handler pair_handler = {
  */
 GLboolean r300FragmentProgramEmit(struct r300_fragment_program_compiler *compiler)
 {
-	struct r300_fragment_program_code *code = compiler->code;
+	struct r300_fragment_program_code *code = &compiler->code->r300;
 
 	_mesa_bzero(code, sizeof(struct r300_fragment_program_code));
 	code->node[0].alu_end = -1;

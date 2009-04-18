@@ -34,6 +34,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 
+#include "r300_state.h"
 #include "r300_swtcl.h"
 #include "r300_emit.h"
 #include "r300_tex.h"

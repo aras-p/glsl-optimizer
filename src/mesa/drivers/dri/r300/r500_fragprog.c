@@ -62,8 +62,8 @@ static GLboolean transform_TEX(
 	struct radeon_transform_context *t,
 	struct prog_instruction* orig_inst, void* data)
 {
-	struct r500_fragment_program_compiler *compiler =
-		(struct r500_fragment_program_compiler*)data;
+	struct r300_fragment_program_compiler *compiler =
+		(struct r300_fragment_program_compiler*)data;
 	struct prog_instruction inst = *orig_inst;
 	struct prog_instruction* tgt;
 	GLboolean destredirect = GL_FALSE;
@@ -208,7 +208,7 @@ static void update_params(GLcontext *ctx, struct gl_fragment_program *fp)
  * \todo if/when r5xx supports the radeon_program architecture, this is a
  * likely candidate for code sharing.
  */
-static void insert_WPOS_trailer(struct r500_fragment_program_compiler *compiler)
+static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 {
 	GLuint InputsRead = compiler->fp->Base.Base.InputsRead;
 
@@ -451,11 +451,11 @@ void r500TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 	}
 
 	if (!r300_fp->translated) {
-		struct r500_fragment_program_compiler compiler;
+		struct r300_fragment_program_compiler compiler;
 
 		compiler.r300 = r300;
 		compiler.fp = r300_fp;
-		compiler.code = &r300_fp->code.r500;
+		compiler.code = &r300_fp->code;
 		compiler.program = _mesa_clone_program(ctx, &fp->Base);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {

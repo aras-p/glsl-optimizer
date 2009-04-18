@@ -105,20 +105,12 @@
 
 #endif
 
-struct r300_fragment_program;
-
 extern void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp);
 
 /**
  * Used internally by the r300 fragment program code to store compile-time
  * only data.
  */
-struct r300_fragment_program_compiler {
-	r300ContextPtr r300;
-	struct r300_fragment_program *fp;
-	struct r300_fragment_program_code *code;
-	struct gl_program *program;
-};
 
 extern GLboolean r300FragmentProgramEmit(struct r300_fragment_program_compiler *compiler);
 
