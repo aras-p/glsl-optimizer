@@ -491,7 +491,7 @@ void r500TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 			_mesa_print_program(compiler.program);
 		}
 
-		if (!r500FragmentProgramEmit(&compiler))
+		if (!r300->vtbl.FragmentProgramEmit(&compiler))
 			r300_fp->error = GL_TRUE;
 
 		r300_fp->translated = GL_TRUE;
