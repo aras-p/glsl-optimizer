@@ -33,7 +33,6 @@ PROGS = \
 	glinfo \
 	gloss \
 	gltestperf \
-	glutfx \
 	isosurf \
 	ipers \
 	lodbias \
