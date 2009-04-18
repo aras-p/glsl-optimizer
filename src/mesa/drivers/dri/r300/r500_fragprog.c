@@ -27,10 +27,6 @@
 
 #include "r500_fragprog.h"
 
-#include "radeon_nqssadce.h"
-#include "radeon_program_alu.h"
-#include "r300_fragprog.h"
-
 static void reset_srcreg(struct prog_src_register* reg)
 {
 	_mesa_bzero(reg, sizeof(*reg));

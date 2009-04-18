@@ -25,15 +25,12 @@
  *
  */
 
+#include "r300_fragprog.h"
+
 #include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
 
 #include "r300_context.h"
-#include "r300_fragprog.h"
 #include "r300_fragprog_swizzle.h"
-#include "r300_state.h"
-
-#include "radeon_nqssadce.h"
 
 static void reset_srcreg(struct prog_src_register* reg)
 {

@@ -33,9 +33,6 @@
 #ifndef __R300_FRAGPROG_H_
 #define __R300_FRAGPROG_H_
 
-#include "main/glheader.h"
-#include "main/macros.h"
-#include "main/enums.h"
 #include "shader/program.h"
 #include "shader/prog_instruction.h"
 

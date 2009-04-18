@@ -38,6 +38,11 @@
 
 #include "r300_fragprog_common.h"
 
+#include "shader/program.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
+
+#include "r300_state.h"
 #include "r300_fragprog.h"
 #include "r300_fragprog_swizzle.h"
 #include "r500_fragprog.h"
