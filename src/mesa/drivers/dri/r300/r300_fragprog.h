@@ -105,12 +105,9 @@
 
 #endif
 
-extern void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp);
+extern void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler);
 
-/**
- * Used internally by the r300 fragment program code to store compile-time
- * only data.
- */
+extern void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp);
 
 extern GLboolean r300FragmentProgramEmit(struct r300_fragment_program_compiler *compiler);
 

@@ -44,10 +44,15 @@
 #include "r300_context.h"
 #include "r300_state.h"
 #include "radeon_program.h"
+#include "radeon_nqssadce.h"
 
 extern void r500TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp);
 
 extern GLboolean r500FragmentProgramEmit(struct r300_fragment_program_compiler *compiler);
 
 extern void r500FragmentProgramDump(union rX00_fragment_program_code *c);
+
+extern GLboolean r500FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg);
+
+extern void r500FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, struct prog_src_register src);
 #endif

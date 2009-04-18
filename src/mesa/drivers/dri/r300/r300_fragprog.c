@@ -263,10 +263,8 @@ static void update_params(GLcontext *ctx, struct gl_fragment_program *fp)
  * All other code pieces that reference that input will be rewritten
  * to read from a newly allocated temporary.
  *
- * \todo if/when r5xx supports the radeon_program architecture, this is a
- * likely candidate for code sharing.
  */
-static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
+void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 {
 	GLuint InputsRead = compiler->fp->Base.Base.InputsRead;
 

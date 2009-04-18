@@ -29,6 +29,7 @@
 
 #include "radeon_nqssadce.h"
 #include "radeon_program_alu.h"
+#include "r300_fragprog.h"
 
 
 static void reset_srcreg(struct prog_src_register* reg)
@@ -197,110 +198,13 @@ static void update_params(GLcontext *ctx, struct gl_fragment_program *fp)
 }
 
 
-/**
- * Transform the program to support fragment.position.
- *
- * Introduce a small fragment at the start of the program that will be
- * the only code that directly reads the FRAG_ATTRIB_WPOS input.
- * All other code pieces that reference that input will be rewritten
- * to read from a newly allocated temporary.
- *
- * \todo if/when r5xx supports the radeon_program architecture, this is a
- * likely candidate for code sharing.
- */
-static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
-{
-	GLuint InputsRead = compiler->fp->Base.Base.InputsRead;
-
-	if (!(InputsRead & FRAG_BIT_WPOS))
-		return;
-
-	static gl_state_index tokens[STATE_LENGTH] = {
-		STATE_INTERNAL, STATE_R300_WINDOW_DIMENSION, 0, 0, 0
-	};
-	struct prog_instruction *fpi;
-	GLuint window_index;
-	int i = 0;
-	GLuint tempregi = _mesa_find_free_register(compiler->program, PROGRAM_TEMPORARY);
-
-	_mesa_insert_instructions(compiler->program, 0, 3);
-	fpi = compiler->program->Instructions;
-
-	/* perspective divide */
-	fpi[i].Opcode = OPCODE_RCP;
-
-	fpi[i].DstReg.File = PROGRAM_TEMPORARY;
-	fpi[i].DstReg.Index = tempregi;
-	fpi[i].DstReg.WriteMask = WRITEMASK_W;
-	fpi[i].DstReg.CondMask = COND_TR;
-
-	fpi[i].SrcReg[0].File = PROGRAM_INPUT;
-	fpi[i].SrcReg[0].Index = FRAG_ATTRIB_WPOS;
-	fpi[i].SrcReg[0].Swizzle = SWIZZLE_WWWW;
-	i++;
-
-	fpi[i].Opcode = OPCODE_MUL;
-
-	fpi[i].DstReg.File = PROGRAM_TEMPORARY;
-	fpi[i].DstReg.Index = tempregi;
-	fpi[i].DstReg.WriteMask = WRITEMASK_XYZ;
-	fpi[i].DstReg.CondMask = COND_TR;
-
-	fpi[i].SrcReg[0].File = PROGRAM_INPUT;
-	fpi[i].SrcReg[0].Index = FRAG_ATTRIB_WPOS;
-	fpi[i].SrcReg[0].Swizzle = SWIZZLE_XYZW;
-
-	fpi[i].SrcReg[1].File = PROGRAM_TEMPORARY;
-	fpi[i].SrcReg[1].Index = tempregi;
-	fpi[i].SrcReg[1].Swizzle = SWIZZLE_WWWW;
-	i++;
-
-	/* viewport transformation */
-	window_index = _mesa_add_state_reference(compiler->program->Parameters, tokens);
-
-	fpi[i].Opcode = OPCODE_MAD;
-
-	fpi[i].DstReg.File = PROGRAM_TEMPORARY;
-	fpi[i].DstReg.Index = tempregi;
-	fpi[i].DstReg.WriteMask = WRITEMASK_XYZ;
-	fpi[i].DstReg.CondMask = COND_TR;
-
-	fpi[i].SrcReg[0].File = PROGRAM_TEMPORARY;
-	fpi[i].SrcReg[0].Index = tempregi;
-	fpi[i].SrcReg[0].Swizzle =
-	    MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
-
-	fpi[i].SrcReg[1].File = PROGRAM_STATE_VAR;
-	fpi[i].SrcReg[1].Index = window_index;
-	fpi[i].SrcReg[1].Swizzle =
-	    MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
-
-	fpi[i].SrcReg[2].File = PROGRAM_STATE_VAR;
-	fpi[i].SrcReg[2].Index = window_index;
-	fpi[i].SrcReg[2].Swizzle =
-	    MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
-	i++;
-
-	for (; i < compiler->program->NumInstructions; ++i) {
-		int reg;
-		for (reg = 0; reg < 3; reg++) {
-			if (fpi[i].SrcReg[reg].File == PROGRAM_INPUT &&
-			    fpi[i].SrcReg[reg].Index == FRAG_ATTRIB_WPOS) {
-				fpi[i].SrcReg[reg].File = PROGRAM_TEMPORARY;
-				fpi[i].SrcReg[reg].Index = tempregi;
-			}
-		}
-	}
-}
-
-
 static void nqssadce_init(struct nqssadce_state* s)
 {
 	s->Outputs[FRAG_RESULT_COLOR].Sourced = WRITEMASK_XYZW;
 	s->Outputs[FRAG_RESULT_DEPTH].Sourced = WRITEMASK_W;
 }
 
-static GLboolean is_native_swizzle(GLuint opcode, struct prog_src_register reg)
+GLboolean r500FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 {
 	GLuint relevant;
 	int i;
@@ -366,8 +270,7 @@ static GLboolean is_native_swizzle(GLuint opcode, struct prog_src_register reg)
  * The only thing we *cannot* do in an ALU instruction is per-component
  * negation. Therefore, we split the MOV into two instructions when necessary.
  */
-static void nqssadce_build_swizzle(struct nqssadce_state *s,
-	struct prog_dst_register dst, struct prog_src_register src)
+void r500FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, struct prog_src_register src)
 {
 	struct prog_instruction *inst;
 	GLuint negatebase[2] = { 0, 0 };
@@ -478,8 +381,8 @@ void r500TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 
 		struct radeon_nqssadce_descr nqssadce = {
 			.Init = &nqssadce_init,
-			.IsNativeSwizzle = &is_native_swizzle,
-			.BuildSwizzle = &nqssadce_build_swizzle,
+			.IsNativeSwizzle = &r500FPIsNativeSwizzle,
+			.BuildSwizzle = &r500FPBuildSwizzle,
 			.RewriteDepthOut = GL_TRUE
 		};
 		radeonNqssaDce(ctx, compiler.program, &nqssadce);
