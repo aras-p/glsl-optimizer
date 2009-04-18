@@ -482,7 +482,7 @@ xlib_create_softpipe_context( struct pipe_screen *screen,
 {
    struct pipe_context *pipe;
    
-   pipe = softpipe_create(screen, screen->winsys, NULL);
+   pipe = softpipe_create(screen);
    if (pipe == NULL)
       goto fail;
 

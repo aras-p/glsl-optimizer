@@ -37,7 +37,5 @@ struct pipe_context *radeon_create_softpipe(struct pipe_winsys* winsys)
 
     pipe_screen = softpipe_create_screen(winsys);
 
-    return softpipe_create(pipe_screen,
-                           winsys,
-                           NULL);
+    return softpipe_create(pipe_screen);
 }

@@ -137,9 +137,7 @@ softpipe_is_buffer_referenced( struct pipe_context *pipe,
 }
 
 struct pipe_context *
-softpipe_create( struct pipe_screen *screen,
-                 struct pipe_winsys *pipe_winsys,
-                 void *unused )
+softpipe_create( struct pipe_screen *screen )
 {
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
    uint i;
@@ -154,7 +152,7 @@ softpipe_create( struct pipe_screen *screen,
 
    softpipe->dump_fs = debug_get_bool_option( "GALLIUM_DUMP_FS", FALSE );
 
-   softpipe->pipe.winsys = pipe_winsys;
+   softpipe->pipe.winsys = screen->winsys;
    softpipe->pipe.screen = screen;
    softpipe->pipe.destroy = softpipe_destroy;
 

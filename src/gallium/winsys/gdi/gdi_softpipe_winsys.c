@@ -263,7 +263,7 @@ gdi_softpipe_screen_create(void)
 static struct pipe_context *
 gdi_softpipe_context_create(struct pipe_screen *screen)
 {
-   return softpipe_create(screen, screen->winsys, NULL);
+   return softpipe_create(screen);
 }
 
 
