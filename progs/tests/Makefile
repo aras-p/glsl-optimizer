@@ -77,6 +77,7 @@ SOURCES = \
 	stencil_twoside.c \
 	stencilwrap.c \
 	stencil_wrap.c \
+	streaming_rect \
 	subtex \
 	subtexrate.c \
 	tex1d.c \

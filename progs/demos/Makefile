@@ -48,7 +48,6 @@ PROGS = \
 	renormal \
 	shadowtex \
 	singlebuffer \
-	streaming_rect \
 	spectex \
 	spriteblast \
 	stex3d \
