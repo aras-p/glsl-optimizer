@@ -72,7 +72,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_reg.h"
 #include "r300_tex.h"
 #include "r300_emit.h"
-#include "r300_fragprog.h"
+#include "r300_fragprog_common.h"
+
 extern int future_hw_tcl_on;
 
 /**
@@ -432,7 +433,7 @@ static int r300Fallback(GLcontext * ctx)
 
 	struct r300_fragment_program *fp = (struct r300_fragment_program *) ctx->FragmentProgram._Current;
 	if (fp && !fp->translated) {
-		r300->vtbl.TranslateFragmentShader(ctx, ctx->FragmentProgram._Current);
+		r300TranslateFragmentShader(ctx, ctx->FragmentProgram._Current);
 		FALLBACK_IF(fp->error);
 	}
 

@@ -105,12 +105,10 @@
 
 #endif
 
-extern void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler);
-
-extern void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp);
-
 extern GLboolean r300FragmentProgramEmit(struct r300_fragment_program_compiler *compiler);
 
 extern void r300FragmentProgramDump(union rX00_fragment_program_code *c);
+
+extern GLboolean r300_transform_TEX(struct radeon_transform_context *t, struct prog_instruction* orig_inst, void* data);
 
 #endif

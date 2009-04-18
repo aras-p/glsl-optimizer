@@ -31,7 +31,6 @@
 #include "radeon_program_alu.h"
 #include "r300_fragprog.h"
 
-
 static void reset_srcreg(struct prog_src_register* reg)
 {
 	_mesa_bzero(reg, sizeof(*reg));
@@ -59,7 +58,7 @@ static struct prog_src_register shadow_ambient(struct gl_program *program, int t
  *  - introduce a temporary register when write masks are needed
  *
  */
-static GLboolean transform_TEX(
+GLboolean r500_transform_TEX(
 	struct radeon_transform_context *t,
 	struct prog_instruction* orig_inst, void* data)
 {
@@ -189,21 +188,6 @@ static GLboolean transform_TEX(
 	return GL_TRUE;
 }
 
-
-static void update_params(GLcontext *ctx, struct gl_fragment_program *fp)
-{
-	/* Ask Mesa nicely to fill in ParameterValues for us */
-	if (fp->Base.Parameters)
-		_mesa_load_state_parameters(ctx, fp->Base.Parameters);
-}
-
-
-static void nqssadce_init(struct nqssadce_state* s)
-{
-	s->Outputs[FRAG_RESULT_COLOR].Sourced = WRITEMASK_XYZW;
-	s->Outputs[FRAG_RESULT_DEPTH].Sourced = WRITEMASK_W;
-}
-
 GLboolean r500FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 {
 	GLuint relevant;
@@ -299,120 +283,6 @@ void r500FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, 
 	}
 }
 
-static GLuint build_dtm(GLuint depthmode)
-{
-	switch(depthmode) {
-	default:
-	case GL_LUMINANCE: return 0;
-	case GL_INTENSITY: return 1;
-	case GL_ALPHA: return 2;
-	}
-}
-
-static GLuint build_func(GLuint comparefunc)
-{
-	return comparefunc - GL_NEVER;
-}
-
-
-/**
- * Collect all external state that is relevant for compiling the given
- * fragment program.
- */
-static void build_state(
-	r300ContextPtr r300,
-	struct r300_fragment_program *fp,
-	struct r300_fragment_program_external_state *state)
-{
-	int unit;
-
-	_mesa_bzero(state, sizeof(*state));
-
-	for(unit = 0; unit < 16; ++unit) {
-		if (fp->Base.Base.ShadowSamplers & (1 << unit)) {
-			struct gl_texture_object* tex = r300->radeon.glCtx->Texture.Unit[unit]._Current;
-
-			state->unit[unit].depth_texture_mode = build_dtm(tex->DepthMode);
-			state->unit[unit].texture_compare_func = build_func(tex->CompareFunc);
-		}
-	}
-}
-
-void r500TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
-{
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	struct r300_fragment_program *r300_fp = (struct r300_fragment_program *)fp;
-	struct r300_fragment_program_external_state state;
-
-	build_state(r300, r300_fp, &state);
-	if (_mesa_memcmp(&r300_fp->state, &state, sizeof(state))) {
-		/* TODO: cache compiled programs */
-		r300_fp->translated = GL_FALSE;
-		_mesa_memcpy(&r300_fp->state, &state, sizeof(state));
-	}
-
-	if (!r300_fp->translated) {
-		struct r300_fragment_program_compiler compiler;
-
-		compiler.r300 = r300;
-		compiler.fp = r300_fp;
-		compiler.code = &r300_fp->code;
-		compiler.program = _mesa_clone_program(ctx, &fp->Base);
-
-		if (RADEON_DEBUG & DEBUG_PIXEL) {
-			_mesa_printf("Compiler: Initial program:\n");
-			_mesa_print_program(compiler.program);
-		}
-
-		insert_WPOS_trailer(&compiler);
-
-		struct radeon_program_transformation transformations[] = {
-			{ &transform_TEX, &compiler },
-			{ &radeonTransformALU, 0 },
-			{ &radeonTransformDeriv, 0 },
-			{ &radeonTransformTrigScale, 0 }
-		};
-		radeonLocalTransform(ctx, compiler.program, 4, transformations);
-
-		if (RADEON_DEBUG & DEBUG_PIXEL) {
-			_mesa_printf("Compiler: after native rewrite:\n");
-			_mesa_print_program(compiler.program);
-		}
-
-		struct radeon_nqssadce_descr nqssadce = {
-			.Init = &nqssadce_init,
-			.IsNativeSwizzle = &r500FPIsNativeSwizzle,
-			.BuildSwizzle = &r500FPBuildSwizzle,
-			.RewriteDepthOut = GL_TRUE
-		};
-		radeonNqssaDce(ctx, compiler.program, &nqssadce);
-
-		if (RADEON_DEBUG & DEBUG_PIXEL) {
-			_mesa_printf("Compiler: after NqSSA-DCE:\n");
-			_mesa_print_program(compiler.program);
-		}
-
-		if (!r300->vtbl.FragmentProgramEmit(&compiler))
-			r300_fp->error = GL_TRUE;
-
-		/* Subtle: Rescue any parameters that have been added during transformations */
-		_mesa_free_parameter_list(fp->Base.Parameters);
-		fp->Base.Parameters = compiler.program->Parameters;
-		compiler.program->Parameters = 0;
-
-		_mesa_reference_program(ctx, &compiler.program, NULL);
-
-		r300_fp->translated = GL_TRUE;
-
-		r300UpdateStateParameters(ctx, _NEW_PROGRAM);
-
-		if (r300_fp->error || (RADEON_DEBUG & DEBUG_PIXEL))
-			r300->vtbl.FragmentProgramDump(&r300_fp->code);
-	}
-
-	update_params(ctx, fp);
-
-}
 
 static char *toswiz(int swiz_val) {
   switch(swiz_val) {

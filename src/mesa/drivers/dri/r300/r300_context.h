@@ -614,7 +614,6 @@ struct r300_swtcl_info {
 struct r300_vtable {
 	void (* SetupRSUnit)(GLcontext *ctx);
 	void (* SetupFragmentShaderTextures)(GLcontext *ctx, int *tmu_mappings);
-	void (* TranslateFragmentShader)(GLcontext *ctx, struct gl_fragment_program *fp);
 	GLboolean (* FragmentProgramEmit)(struct r300_fragment_program_compiler *compiler);
 	void (* FragmentProgramDump)(union rX00_fragment_program_code *code);
 	GLboolean (* SetupPixelShader)(GLcontext *ctx);

@@ -59,8 +59,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "r300_reg.h"
 #include "r300_emit.h"
-#include "r300_fragprog.h"
 #include "r300_tex.h"
+#include "r300_fragprog_common.h"
+#include "r300_fragprog.h"
 #include "r500_fragprog.h"
 
 #include "drirenderbuffer.h"
@@ -2458,7 +2459,7 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 		rmesa->hw.fg_depth_src.cmd[1] = fgdepthsrc;
 	}
 
-	rmesa->vtbl.TranslateFragmentShader(ctx, ctx->FragmentProgram._Current);
+	r300TranslateFragmentShader(ctx, ctx->FragmentProgram._Current);
 
 	if (!rmesa->vtbl.SetupPixelShader(ctx))
 		return;
@@ -2582,14 +2583,12 @@ void r300InitShaderFunctions(r300ContextPtr r300)
 		r300->vtbl.SetupRSUnit = r500SetupRSUnit;
 		r300->vtbl.SetupPixelShader = r500SetupPixelShader;
 		r300->vtbl.SetupFragmentShaderTextures = r500SetupFragmentShaderTextures;
-		r300->vtbl.TranslateFragmentShader = r500TranslateFragmentShader;
 		r300->vtbl.FragmentProgramEmit = r500FragmentProgramEmit;
 		r300->vtbl.FragmentProgramDump = r500FragmentProgramDump;
 	} else {
 		r300->vtbl.SetupRSUnit = r300SetupRSUnit;
 		r300->vtbl.SetupPixelShader = r300SetupPixelShader;
 		r300->vtbl.SetupFragmentShaderTextures = r300SetupFragmentShaderTextures;
-		r300->vtbl.TranslateFragmentShader = r300TranslateFragmentShader;
 		r300->vtbl.FragmentProgramEmit = r300FragmentProgramEmit;
 		r300->vtbl.FragmentProgramDump = r300FragmentProgramDump;
 	}
