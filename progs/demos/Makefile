@@ -32,7 +32,6 @@ PROGS = \
 	geartrain \
 	glinfo \
 	gloss \
-	glslnoise \
 	gltestperf \
 	glutfx \
 	isosurf \

@@ -23,6 +23,7 @@ PROGS = \
 	multinoise \
 	multitex \
 	noise \
+	noise2 \
 	points \
 	pointcoord \
 	samplers \
@@ -161,6 +162,13 @@ noise.o: noise.c extfuncs.h shaderutil.h
 
 noise: noise.o shaderutil.o
 	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) noise.o shaderutil.o $(LIBS) -o $@
+
+
+noise2.o: noise2.c extfuncs.h shaderutil.h
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) noise2.c
+
+noise2: noise2.o shaderutil.o
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) noise2.o shaderutil.o $(LIBS) -o $@
 
 
 points.o: points.c extfuncs.h shaderutil.h
