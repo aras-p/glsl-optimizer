@@ -1089,7 +1089,7 @@ trace_context_create(struct pipe_screen *_screen,
    if(!pipe)
       goto error1;
 
-   if(!trace_dump_enabled())
+   if(!trace_dump_trace_enabled())
       goto error1;
 
    tr_scr = trace_screen(_screen);

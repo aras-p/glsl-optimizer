@@ -42,11 +42,42 @@ struct pipe_texture;
 struct pipe_surface;
 struct pipe_transfer;
 
+/*
+ * Low level dumping controls.
+ *
+ * Opening the trace file and checking if that is opened.
+ */
 boolean trace_dump_trace_begin(void);
-boolean trace_dump_enabled(void);
+boolean trace_dump_trace_enabled(void);
 void trace_dump_trace_end(void);
+
+/*
+ * Lock and unlock the call mutex.
+ *
+ * It used by the none locked version of dumping control
+ * and begin/end call dump functions.
+ *
+ * Begin takes the lock while end unlocks it. Use the _locked
+ * version to avoid locking/unlocking it.
+ */
+void trace_dump_call_lock(void);
+void trace_dump_call_unlock(void);
+
+/*
+ * High level dumping control.
+ */
+void trace_dumping_start_locked(void);
+void trace_dumping_stop_locked(void);
+boolean trace_dumping_enabled_locked(void);
+void trace_dumping_start(void);
+void trace_dumping_stop(void);
+boolean trace_dumping_enabled(void);
+
+void trace_dump_call_begin_locked(const char *klass, const char *method);
+void trace_dump_call_end_locked(void);
 void trace_dump_call_begin(const char *klass, const char *method);
 void trace_dump_call_end(void);
+
 void trace_dump_arg_begin(const char *name);
 void trace_dump_arg_end(void);
 void trace_dump_ret_begin(void);

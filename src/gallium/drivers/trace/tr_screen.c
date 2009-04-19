@@ -843,6 +843,8 @@ trace_screen_create(struct pipe_screen *screen)
    if(!trace_dump_trace_begin())
       goto error1;
 
+   trace_dumping_start();
+
    trace_dump_call_begin("", "pipe_screen_create");
 
    tr_scr = CALLOC_STRUCT(trace_screen);
