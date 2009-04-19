@@ -659,6 +659,8 @@ extern int r300VertexProgUpdateParams(GLcontext * ctx,
 				      struct r300_vertex_program_cont *vp,
 				      float *dst);
 
+extern void r300InitShaderFunctions(r300ContextPtr r300);
+
 #define r300PackFloat32 radeonPackFloat32
 #define r300PackFloat24 radeonPackFloat24
 
