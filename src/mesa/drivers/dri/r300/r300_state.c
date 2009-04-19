@@ -524,8 +524,6 @@ static void r300SetAlphaState(GLcontext * ctx)
 	R300_STATECHANGE(r300, at);
 	r300->hw.at.cmd[R300_AT_ALPHA_TEST] = pp_misc;
 	r300->hw.at.cmd[R300_AT_UNKNOWN] = 0;
-
-	r300SetEarlyZState(ctx);
 }
 
 static void r300AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
@@ -573,8 +571,6 @@ static void r300SetDepthState(GLcontext * ctx)
 		r300->hw.zs.cmd[R300_ZS_CNTL_1] |=
 		    translate_func(ctx->Depth.Func) << R300_Z_FUNC_SHIFT;
 	}
-
-	r300SetEarlyZState(ctx);
 }
 
 static void r300SetStencilState(GLcontext * ctx, GLboolean state)
