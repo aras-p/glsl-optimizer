@@ -83,7 +83,7 @@ void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom)
 	BATCH_LOCALS(&r300->radeon);
 	drm_r300_cmd_header_t cmd;
 	uint32_t addr, ndw, i;
-	
+
 	if (!r300->radeon.radeonScreen->kernel_mm) {
 		uint32_t dwords;
 		dwords = (*atom->check) (ctx, atom);
@@ -92,7 +92,7 @@ void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom)
 		END_BATCH();
 		return;
 	}
-	
+
 	cmd.u = atom->cmd[0];
 	addr = (cmd.vpu.adrhi << 8) | cmd.vpu.adrlo;
 	ndw = cmd.vpu.count * 4;
@@ -175,7 +175,7 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 
 		for(i = 0; i < numtmus; ++i) {
 		    radeonTexObj *t = r300->hw.textures[i];
-		
+
 		    if (!t)
 			notexture = 1;
 		}
@@ -304,7 +304,7 @@ static void emit_zb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	if (rrb->bo->flags & RADEON_BO_FLAGS_MICRO_TILE){
 		zbpitch |= R300_DEPTHMICROTILE_TILED;
 	}
-	
+
 	BEGIN_BATCH_NO_AUTOSTATE(6);
 	OUT_BATCH_REGSEQ(R300_ZB_DEPTHOFFSET, 1);
 	OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
@@ -606,8 +606,8 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.zb.emit = emit_zb_offset;
 	ALLOC_STATE(zb_depthclearvalue, always, 2, 0);
 	r300->hw.zb_depthclearvalue.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R300_ZB_DEPTHCLEARVALUE, 1);
-	ALLOC_STATE(unk4F30, always, 3, 0);
-	r300->hw.unk4F30.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, 0x4F30, 2);
+	ALLOC_STATE(zb_zmask, always, 3, 0);
+	r300->hw.zb_zmask.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R300_ZB_ZMASK_OFFSET, 2);
 	ALLOC_STATE(zb_hiz_offset, always, 2, 0);
 	r300->hw.zb_hiz_offset.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R300_ZB_HIZ_OFFSET, 1);
 	ALLOC_STATE(zb_hiz_pitch, always, 2, 0);

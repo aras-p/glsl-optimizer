@@ -2432,6 +2432,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Z Buffer Clear Value */
 #define R300_ZB_DEPTHCLEARVALUE                  0x4f28
 
+#define R300_ZB_ZMASK_OFFSET                     0x4f30
+#define R300_ZB_ZMASK_PITCH                      0x4f34
+#define R300_ZB_ZMASK_WRINDEX                    0x4f38
+#define R300_ZB_ZMASK_DWORD                      0x4f3c
+#define R300_ZB_ZMASK_RDINDEX                    0x4f40
+
 /* Hierarchical Z Memory Offset */
 #define R300_ZB_HIZ_OFFSET                       0x4f44
 

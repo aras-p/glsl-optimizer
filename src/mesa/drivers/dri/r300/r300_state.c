@@ -2205,8 +2205,8 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.zstencil_format.cmd[4] = 0x00000000;
 	r300SetEarlyZState(ctx);
 
-	r300->hw.unk4F30.cmd[1] = 0;
-	r300->hw.unk4F30.cmd[2] = 0;
+	r300->hw.zb_zmask.cmd[1] = 0;
+	r300->hw.zb_zmask.cmd[2] = 0;
 
 	r300->hw.zb_hiz_offset.cmd[1] = 0;
 

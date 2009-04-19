@@ -351,7 +351,7 @@ struct r300_hw_state {
 	struct radeon_state_atom zstencil_format;
 	struct radeon_state_atom zb;	/* z buffer (4F20) */
 	struct radeon_state_atom zb_depthclearvalue;	/* (4F28) */
-	struct radeon_state_atom unk4F30;	/* (4F30) */
+	struct radeon_state_atom zb_zmask;	/* (4F30) */
 	struct radeon_state_atom zb_hiz_offset;	/* (4F44) */
 	struct radeon_state_atom zb_hiz_pitch;	/* (4F54) */
 
