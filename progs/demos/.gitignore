@@ -21,6 +21,7 @@ gears
 geartrain
 glinfo
 gloss
+glslnoise
 gltestperf
 glutfx
 ipers
@@ -45,12 +46,14 @@ singlebuffer
 spectex
 spriteblast
 stex3d
+streaming_rect
 teapot
 terrain
 tessdemo
 texcyl
 texdown
 texenv
+texobj
 textures
 trackball.c
 trackball.h
@@ -58,4 +61,5 @@ trispd
 tunnel
 tunnel2
 vao_demo
+Windows
 winpos
