@@ -49,8 +49,7 @@ typedef float (*float4_array)[4];
 static INLINE float4_array
 get_texel_array(SWcontext *swrast, GLuint unit)
 {
-   return (float4_array)
-      (swrast->TexelBuffer + unit * MAX_WIDTH * 4 * sizeof(GLfloat));
+   return (float4_array) (swrast->TexelBuffer + unit * MAX_WIDTH * 4);
 }
 
 
