@@ -72,7 +72,9 @@ static void Key(unsigned char key, int x, int y)
    case 'H':
       th -= 1.0;
       break;
-
+   case ' ':
+      tw = th = tx = ty = 0;
+      break;
    default:
       break;
    }
