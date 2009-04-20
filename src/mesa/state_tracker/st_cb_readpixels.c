@@ -357,6 +357,8 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    if (!dest)
       return;
 
+   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+
    if (format == GL_STENCIL_INDEX ||
        format == GL_DEPTH_STENCIL) {
       st_read_stencil_pixels(ctx, x, y, width, height,

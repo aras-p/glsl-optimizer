@@ -906,6 +906,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    GLfloat *color;
    enum pipe_format srcFormat, texFormat;
 
+   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+
    st_validate_state(st);
 
    if (type == GL_STENCIL) {
