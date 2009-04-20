@@ -146,6 +146,8 @@ combined_drawpix_fragment_program(GLcontext *ctx)
       st->pixel_xfer.xfer_prog_sn = st->pixel_xfer.program->serialNo;
       st->pixel_xfer.user_prog_sn = st->fp->serialNo;
       st->pixel_xfer.combined_prog_sn = stfp->serialNo;
+      /* can't reference new program directly, already have a reference on it */
+      st_reference_fragprog(st, &st->pixel_xfer.combined_prog, NULL);
       st->pixel_xfer.combined_prog = stfp;
    }
 
