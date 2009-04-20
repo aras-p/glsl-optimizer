@@ -31,8 +31,11 @@ GLenum doubleBuffer = 1;
 int win;
 static float tx = 0;
 static float ty = 0;
-static float tw = 250;
-static float th = 250;
+static float tw = 0;
+static float th = 0;
+
+static float win_width = 250;
+static float win_height = 250;
 
 static void Init(void)
 {
@@ -41,33 +44,49 @@ static void Init(void)
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
    fflush(stderr);
 
-   glClearColor(0.3, 0.1, 0.3, 0.0);
+   glClearColor(0, 0, 0, 0.0);
 }
 
 static void Reshape(int width, int height)
 {
-   tw = width;
-   th = height;
+   win_width = width;
+   win_height = height;
+   glutPostRedisplay();
 }
 
 
 static void Key(unsigned char key, int x, int y)
 {
    switch (key) {
-      case 27:
-         exit(0);
-      default:
-         glutPostRedisplay();
-         return;
+   case 27:
+      exit(0);
+   case 'w':
+      tw += 1.0;
+      break;
+   case 'W':
+      tw -= 1.0;
+      break;
+   case 'h':
+      th += 1.0;
+      break;
+   case 'H':
+      th -= 1.0;
+      break;
+
+   default:
+      break;
    }
+   glutPostRedisplay();
 }
 
 
 static void Draw(void)
 {
    int i;
+   float w = tw + win_width;
+   float h = th + win_height;
 
-   fprintf(stderr, "%f %f\n", tx, ty);
+   fprintf(stderr, "glViewport(%f %f %f %f)\n", tx, ty, w, h);
    fflush(stderr);
 
    glMatrixMode(GL_PROJECTION);
@@ -77,8 +96,22 @@ static void Draw(void)
 
    glClear(GL_COLOR_BUFFER_BIT); 
 
-   glViewport(0, 0, tw, th);
 
+   /***********************************************************************
+    * Should be clipped to be no larger than the triangles:
+    */
+   glViewport(tx, ty, w, h);
+   glBegin(GL_POLYGON);
+   glColor3f(.5,.5,1); 
+   glVertex3f(-2, -2, -30.0);
+   glVertex3f(-2, 2, -30.0);
+   glVertex3f(2, 2, -30.0);
+   glVertex3f(2, -2, -30.0);
+   glEnd();
+
+   /***********************************************************************
+    */
+   glViewport(0, 0, win_width, win_height);
    glBegin(GL_LINES);
    glColor3f(1,1,0); 
    glVertex3f(-1, 0, -30.0);
@@ -89,11 +122,9 @@ static void Draw(void)
    glEnd();
 
 
-   /* 
+   /***********************************************************************
     */
-   glViewport(tx, ty, tw, th);
-
-
+   glViewport(tx, ty, w, h);
    glBegin(GL_TRIANGLES);
    glColor3f(1,0,0); 
    glVertex3f(-1, -1, -30.0);
@@ -127,7 +158,7 @@ static void Draw(void)
    glEnd();
 
 
-   glViewport(0, 0, tw, th);
+   glViewport(0, 0, win_width, win_height);
 
    glBegin(GL_LINES);
    glColor3f(.5,.5,0); 
@@ -196,7 +227,7 @@ special(int k, int x, int y)
       tx += 1.0;
       break;
    default:
-      return;
+      break;
    }
    glutPostRedisplay();
 }
