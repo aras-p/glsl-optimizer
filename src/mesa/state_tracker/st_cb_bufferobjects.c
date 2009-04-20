@@ -169,10 +169,10 @@ st_bufferobj_data(GLcontext *ctx,
 
    st_obj->buffer = pipe_buffer_create( pipe->screen, 32, buffer_usage, size );
 
-   /* We don't seem to have any good way of passing failure to
-    * allocate up to Mesa??
-    */
-   assert(st_obj->buffer);
+   if (!st_obj->buffer) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBufferDataARB");
+      return;
+   }
 
    st_obj->size = size;
 
