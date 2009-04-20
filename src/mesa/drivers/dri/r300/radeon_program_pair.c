@@ -721,7 +721,6 @@ static GLboolean fill_instruction_into_pair(struct pair_state *s, struct radeon_
 		if (pairinst->NeedRGB && !pairinst->IsTranscendent) {
 			GLboolean srcrgb = GL_FALSE;
 			GLboolean srcalpha = GL_FALSE;
-			GLuint negatebase = 0;
 			int j;
 			for(j = 0; j < 3; ++j) {
 				GLuint swz = GET_SWZ(inst->SrcReg[i].Swizzle, j);
@@ -729,8 +728,6 @@ static GLboolean fill_instruction_into_pair(struct pair_state *s, struct radeon_
 					srcrgb = GL_TRUE;
 				else if (swz < 4)
 					srcalpha = GL_TRUE;
-				if (swz != SWIZZLE_NIL && GET_BIT(inst->SrcReg[i].Negate, j))
-					negatebase = 1;
 			}
 			source = alloc_pair_source(s, pair, inst->SrcReg[i], srcrgb, srcalpha);
 			if (source < 0)
@@ -738,12 +735,11 @@ static GLboolean fill_instruction_into_pair(struct pair_state *s, struct radeon_
 			pair->RGB.Arg[i].Source = source;
 			pair->RGB.Arg[i].Swizzle = inst->SrcReg[i].Swizzle & 0x1ff;
 			pair->RGB.Arg[i].Abs = inst->SrcReg[i].Abs;
-			pair->RGB.Arg[i].Negate = (negatebase & ~pair->RGB.Arg[i].Abs) ^ inst->SrcReg[i].Negate;
+			pair->RGB.Arg[i].Negate = !!(inst->SrcReg[i].Negate & (NEGATE_X | NEGATE_Y | NEGATE_Z));
 		}
 		if (pairinst->NeedAlpha) {
 			GLboolean srcrgb = GL_FALSE;
 			GLboolean srcalpha = GL_FALSE;
-			GLuint negatebase = GET_BIT(inst->SrcReg[i].Negate, pairinst->IsTranscendent ? 0 : 3);
 			GLuint swz = GET_SWZ(inst->SrcReg[i].Swizzle, pairinst->IsTranscendent ? 0 : 3);
 			if (swz < 3)
 				srcrgb = GL_TRUE;
@@ -755,7 +751,7 @@ static GLboolean fill_instruction_into_pair(struct pair_state *s, struct radeon_
 			pair->Alpha.Arg[i].Source = source;
 			pair->Alpha.Arg[i].Swizzle = swz;
 			pair->Alpha.Arg[i].Abs = inst->SrcReg[i].Abs;
-			pair->Alpha.Arg[i].Negate = (negatebase & ~pair->RGB.Arg[i].Abs) ^ inst->SrcReg[i].Negate;
+			pair->Alpha.Arg[i].Negate = !!(inst->SrcReg[i].Negate & NEGATE_W);
 		}
 	}
 

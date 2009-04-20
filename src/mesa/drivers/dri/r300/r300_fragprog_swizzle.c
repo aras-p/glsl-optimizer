@@ -122,7 +122,7 @@ GLboolean r300FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 		if (GET_SWZ(reg.Swizzle, j) != SWIZZLE_NIL)
 			relevant |= 1 << j;
 
-	if ((reg.Negate & relevant) && (reg.Negate & relevant) != relevant)
+	if ((reg.Negate & relevant) && ((reg.Negate & relevant) != relevant))
 		return GL_FALSE;
 
 	if (!lookup_native_swizzle(reg.Swizzle))
@@ -144,7 +144,6 @@ void r300FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, 
 		const struct swizzle_data *best_swizzle = 0;
 		GLuint best_matchcount = 0;
 		GLuint best_matchmask = 0;
-		GLboolean rgbnegate;
 		int i, comp;
 
 		for(i = 0; i < num_native_swizzles; ++i) {
@@ -158,6 +157,11 @@ void r300FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, 
 				if (swz == SWIZZLE_NIL)
 					continue;
 				if (swz == GET_SWZ(sd->hash, comp)) {
+					/* check if the negate bit of current component
+					 * is the same for already matched components */
+					if (matchmask && (!!(src.Negate & matchmask) != !!(src.Negate & (1 << comp))))
+						continue;
+
 					matchcount++;
 					matchmask |= 1 << comp;
 				}
@@ -171,13 +175,6 @@ void r300FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, 
 			}
 		}
 
-		if ((src.Negate & best_matchmask) != 0) {
-			best_matchmask &= src.Negate;
-			rgbnegate = !src.Negate;
-		} else {
-			rgbnegate = src.Negate;
-		}
-
 		struct prog_instruction *inst;
 
 		_mesa_insert_instructions(s->Program, s->IP, 1);
@@ -186,6 +183,7 @@ void r300FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, 
 		inst->DstReg = dst;
 		inst->DstReg.WriteMask &= (best_matchmask | WRITEMASK_W);
 		inst->SrcReg[0] = src;
+		inst->SrcReg[0].Negate = (best_matchmask & src.Negate) ? NEGATE_XYZW : NEGATE_NONE;
 		/* Note: We rely on NqSSA/DCE to set unused swizzle components to NIL */
 
 		dst.WriteMask &= ~inst->DstReg.WriteMask;

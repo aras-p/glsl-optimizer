@@ -81,19 +81,6 @@ static struct prog_instruction *emit3(struct gl_program* p,
 	return fpi;
 }
 
-static void set_swizzle(struct prog_src_register *SrcReg, int coordinate, int swz)
-{
-	SrcReg->Swizzle &= ~(7 << (3*coordinate));
-	SrcReg->Swizzle |= swz << (3*coordinate);
-}
-
-static void set_negate_base(struct prog_src_register *SrcReg, int coordinate, int negate)
-{
-	/* XXX note sure about this negation logic here */
-	SrcReg->Negate &= ~(1 << coordinate);
-	SrcReg->Negate |= (negate << coordinate);
-}
-
 static struct prog_dst_register dstreg(int file, int index)
 {
 	struct prog_dst_register dst;
@@ -197,17 +184,9 @@ static void transform_DPH(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
 	struct prog_src_register src0 = inst->SrcReg[0];
-	if (src0.Negate) {
-		if (src0.Abs) {
-			int tempreg = radeonFindFreeTemporary(t);
-			emit1(t->Program, OPCODE_MOV, 0, dstreg(PROGRAM_TEMPORARY, tempreg), src0);
-			src0 = srcreg(src0.File, src0.Index);
-		} else {
-			src0.Negate ^= NEGATE_XYZW;
-		}
-	}
-	set_swizzle(&src0, 3, SWIZZLE_ONE);
-	set_negate_base(&src0, 3, 0);
+	src0.Negate &= ~NEGATE_W;
+	src0.Swizzle &= ~(7 << (3 * 3));
+	src0.Swizzle |= SWIZZLE_ONE << (3 * 3);
 	emit2(t->Program, OPCODE_DP4, inst->SaturateMode, inst->DstReg, src0, inst->SrcReg[1]);
 }
 
