@@ -26,7 +26,6 @@ if env['platform'] in ['windows']:
         'shared/stw_device.c',
         'shared/stw_framebuffer.c',
         'shared/stw_pixelformat.c',
-        'shared/stw_quirks.c',
         'shared/stw_arbextensionsstring.c',
         'shared/stw_getprocaddress.c',
         'shared/stw_arbpixelformat.c',
