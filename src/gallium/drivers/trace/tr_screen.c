@@ -840,6 +840,8 @@ trace_screen_create(struct pipe_screen *screen)
    if(!screen)
       goto error1;
 
+   trace_dump_init();
+
    if(!trace_dump_trace_begin())
       goto error1;
 

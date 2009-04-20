@@ -62,6 +62,7 @@ static unsigned refcount = 0;
 static pipe_mutex call_mutex;
 static long unsigned call_no = 0;
 static boolean dumping = FALSE;
+static boolean initialized = FALSE;
 
 
 static INLINE void
@@ -227,9 +228,21 @@ trace_dump_trace_close(void)
    }
 }
 
+void trace_dump_init()
+{
+   if (initialized)
+      return;
+
+   pipe_mutex_init(call_mutex);
+   dumping = FALSE;
+   initialized = TRUE;
+}
+
 boolean trace_dump_trace_begin()
 {
    const char *filename;
+
+   assert(initialized);
 
    filename = debug_get_option("GALLIUM_TRACE", NULL);
    if(!filename)
@@ -240,8 +253,6 @@ boolean trace_dump_trace_begin()
       stream = util_stream_create(filename, 0);
       if(!stream)
          return FALSE;
-
-      pipe_mutex_init(call_mutex);
 
       trace_dump_writes("<?xml version='1.0' encoding='UTF-8'?>\n");
       trace_dump_writes("<?xml-stylesheet type='text/xsl' href='trace.xsl'?>\n");
