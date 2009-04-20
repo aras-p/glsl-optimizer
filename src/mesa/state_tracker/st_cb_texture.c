@@ -682,7 +682,8 @@ st_TexImage(GLcontext * ctx,
                                             PIPE_TRANSFER_WRITE, 0, 0,
                                             stImage->base.Width,
                                             stImage->base.Height);
-      dstRowStride = stImage->transfer->stride;
+      if(stImage->transfer)
+         dstRowStride = stImage->transfer->stride;
    }
    else {
       /* Allocate regular memory and store the image there temporarily.   */
