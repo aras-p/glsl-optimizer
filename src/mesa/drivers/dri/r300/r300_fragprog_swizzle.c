@@ -100,8 +100,7 @@ GLboolean r300FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 	    opcode == OPCODE_TXP) {
 		int j;
 
-		if (reg.Abs || (reg.Negate != NEGATE_XYZW &&
-                                reg.Negate != NEGATE_NONE))
+		if (reg.Abs || reg.Negate)
 			return GL_FALSE;
 
 		for(j = 0; j < 4; ++j) {
