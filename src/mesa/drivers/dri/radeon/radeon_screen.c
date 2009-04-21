@@ -61,8 +61,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_tex.h"
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
 #include "r600_context.h"
-#include "r600_fragprog.h"
-#include "r600_tex.h"
+#include "r700_fragprog.h"
+#include "r700_tex.h"
 #endif
 
 #include "utils.h"
@@ -405,13 +405,13 @@ static const __DRItexBufferExtension r300TexBufferExtension = {
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
 static const __DRItexOffsetExtension r600texOffsetExtension = {
     { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
-   r600SetTexOffset,
+   r700SetTexOffset,
 };
 
 static const __DRItexBufferExtension r600TexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-   r600SetTexBuffer,
-   r600SetTexBuffer2,
+   r700SetTexBuffer,
+   r700SetTexBuffer2,
 };
 #endif
 

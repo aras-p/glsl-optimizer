@@ -24,40 +24,24 @@
  *   Richard Li <RichardZ.Li@amd.com>, <richardradeon@gmail.com>
  */
 
-#ifndef _R700_FRAGPROG_H_
-#define _R700_FRAGPROG_H_
+#ifndef _R700_STATE_H
+#define _R700_STATE_H
+
+#include "main/mtypes.h"
 
 #include "r600_context.h"
-#include "r700_assembler.h"
 
-struct r700_fragment_program
-{
-	struct gl_fragment_program mesa_program;
+#include "r700_chip.h"
 
-    r700_AssemblerBase r700AsmCode;
-	R700_Shader        r700Shader;
+extern void r700UpdateStateParameters(GLcontext * ctx, GLuint new_state);
+extern void r700UpdateShaders (GLcontext * ctx);
 
-	GLboolean translated;
-    GLboolean loaded;
-	GLboolean error;
-/* to be enabled */
-#if 0
-    struct r600_dma_region shadercode;
-#endif
+extern void r700UpdateViewportOffset(GLcontext * ctx);
+extern void r700UpdateDrawBuffer (GLcontext * ctx);
 
-	GLboolean WritesDepth;
-	GLuint optimization;
-};
+extern void r700InitState (GLcontext * ctx);
+extern void r700InitStateFuncs (struct dd_function_table *functions);
 
-/* Internal */
-void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
-						  struct gl_fragment_program *mesa_fp);
-GLboolean Find_Instruction_Dependencies_fp(struct r700_fragment_program *fp,
-					                	   struct gl_fragment_program   *mesa_fp);
+extern void r700SetDefaultStates(context_t * context);
 
-/* Interface */
-extern GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
-							                 struct gl_fragment_program   *mesa_vp);
-extern GLboolean r700SetupFragmentProgram(GLcontext * ctx);
-
-#endif /*_R700_FRAGPROG_H_*/
+#endif	/* _R600_SCREEN_H */

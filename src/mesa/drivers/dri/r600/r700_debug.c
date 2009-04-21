@@ -22,42 +22,59 @@
 /*
  * Authors:
  *   Richard Li <RichardZ.Li@amd.com>, <richardradeon@gmail.com>
+ *   CooperYuan <cooper.yuan@amd.com>, <cooperyuan@gmail.com>
  */
 
-#ifndef _R700_FRAGPROG_H_
-#define _R700_FRAGPROG_H_
+#include <stdio.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include "main/glheader.h"
+
+#include "r700_debug.h"
 #include "r600_context.h"
-#include "r700_assembler.h"
 
-struct r700_fragment_program
+void NormalizeLogErrorCode(int nError)
 {
-	struct gl_fragment_program mesa_program;
+    //TODO
+}
 
-    r700_AssemblerBase r700AsmCode;
-	R700_Shader        r700Shader;
+void r700_error(int nLocalError, char* fmt, ...)
+{
+    va_list args;
 
-	GLboolean translated;
-    GLboolean loaded;
-	GLboolean error;
-/* to be enabled */
-#if 0
-    struct r600_dma_region shadercode;
-#endif
+    NormalizeLogErrorCode(nLocalError);
 
-	GLboolean WritesDepth;
-	GLuint optimization;
-};
+	va_start(args, fmt);
+    fprintf(stderr, fmt, args);
+    va_end(args);
+}
 
-/* Internal */
-void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
-						  struct gl_fragment_program *mesa_fp);
-GLboolean Find_Instruction_Dependencies_fp(struct r700_fragment_program *fp,
-					                	   struct gl_fragment_program   *mesa_fp);
+void DumpHwBinary(int type, void *addr, int size)
+{
+    int i;
+    unsigned int *pHw = (unsigned int *)addr;
+    switch (type)
+    {
+        case DUMP_PIXEL_SHADER:
+            DEBUGF("Pixel Shader\n");
+        break;
+        case DUMP_VERTEX_SHADER:
+            DEBUGF("Vertex Shader\n");
+        break;
+        case DUMP_FETCH_SHADER:
+            DEBUGF("Fetch Shader\n");
+        break;
+    }
 
-/* Interface */
-extern GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
-							                 struct gl_fragment_program   *mesa_vp);
-extern GLboolean r700SetupFragmentProgram(GLcontext * ctx);
+    for (i = 0; i < size; i++)
+    {
+        DEBUGP("0x%08x,\t", *pHw);
+        if (i%4 == 3)
+            DEBUGP("\n", *pHw);
+        pHw++;
 
-#endif /*_R700_FRAGPROG_H_*/
+    }
+}
+

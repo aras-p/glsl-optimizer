@@ -1,0 +1,138 @@
+/*
+ * Copyright (C) 2008-2009  Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDER(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/*
+ * Authors:
+ *   Richard Li <RichardZ.Li@amd.com>, <richardradeon@gmail.com>
+ */
+
+#include <string.h>
+
+#include "main/glheader.h"
+#include "main/imports.h"
+
+#include "shader/program.h"
+#include "tnl/tnl.h"
+
+#include "r600_context.h"
+
+#include "r700_chip.h"
+#include "r700_oglprog.h"
+
+#if 0 /* to be enabled */
+#include "r700_fragprog.h"
+#include "r700_vertprog.h"
+#endif /* to be enabled */
+
+static struct gl_program *r700NewProgram(GLcontext * ctx, 
+                                         GLenum target,
+					                     GLuint id)
+{
+	struct gl_program *pProgram = NULL;
+#if 0 /* to be enabled */
+    struct r700_vertex_program *vp;
+	struct r700_fragment_program *fp;
+
+    switch (target) 
+    {
+    case GL_VERTEX_STATE_PROGRAM_NV:
+    case GL_VERTEX_PROGRAM_ARB:	    
+        vp       = CALLOC_STRUCT(r700_vertex_program);
+	    pProgram = _mesa_init_vertex_program(ctx, 
+                                             &vp->mesa_program,
+					                         target, 
+                                             id);
+        vp->translated = GL_FALSE;
+        vp->loaded     = GL_FALSE;
+        vp->shadercode.buf = NULL;
+	    break;
+    case GL_FRAGMENT_PROGRAM_NV:
+    case GL_FRAGMENT_PROGRAM_ARB:
+		fp       = CALLOC_STRUCT(r700_fragment_program);
+		pProgram = _mesa_init_fragment_program(ctx, 
+                                               &fp->mesa_program,
+						                       target, 
+                                               id);
+        fp->translated = GL_FALSE;
+        fp->loaded     = GL_FALSE;
+        fp->shadercode.buf = NULL;
+	    break;
+    default:
+	    _mesa_problem(ctx, "Bad target in r700NewProgram");
+    }
+#endif /* to be enabled */
+	return pProgram;
+}
+
+static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
+{
+#if 0 /* to be enabled */
+    struct r700_vertex_program   * vp;
+    struct r700_fragment_program * fp;
+    context_t *context = R700_CONTEXT(ctx);
+
+    switch (prog->Target) 
+    {
+    case GL_VERTEX_STATE_PROGRAM_NV:
+    case GL_VERTEX_PROGRAM_ARB:	    
+        vp = (struct r700_vertex_program*)prog;
+        /* Release DMA region */
+        (context->chipobj.FreeDmaRegion)(context, &(vp->shadercode));
+        /* Clean up */
+        Clean_Up_Assembler(&(vp->r700AsmCode));
+        Clean_Up_Shader(&(vp->r700Shader));
+	    break;
+    case GL_FRAGMENT_PROGRAM_NV:
+    case GL_FRAGMENT_PROGRAM_ARB:
+		fp = (struct r700_fragment_program*)prog;
+        /* Release DMA region */
+        (context->chipobj.FreeDmaRegion)(context, &(fp->shadercode));
+        /* Clean up */
+        Clean_Up_Assembler(&(fp->r700AsmCode));
+        Clean_Up_Shader(&(fp->r700Shader));
+	    break;
+    default:
+	    _mesa_problem(ctx, "Bad target in r700NewProgram");
+    }
+
+	_mesa_delete_program(ctx, prog);
+#endif /* to be enabled */
+}
+
+static void
+r700ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
+{
+
+}
+
+static GLboolean r700IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
+{
+
+	return GL_TRUE;
+}
+
+void r700InitShaderFuncs(struct dd_function_table *functions)
+{
+	functions->NewProgram = r700NewProgram;
+	functions->DeleteProgram = r700DeleteProgram;
+	functions->ProgramStringNotify = r700ProgramStringNotify;
+	functions->IsProgramNative = r700IsProgramNative;
+}

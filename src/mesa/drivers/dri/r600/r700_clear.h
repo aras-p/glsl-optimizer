@@ -22,42 +22,12 @@
 /*
  * Authors:
  *   Richard Li <RichardZ.Li@amd.com>, <richardradeon@gmail.com>
+ *   CooperYuan <cooper.yuan@amd.com>, <cooperyuan@gmail.com>
  */
 
-#ifndef _R700_FRAGPROG_H_
-#define _R700_FRAGPROG_H_
+#ifndef __r700_CLEAR_H__
+#define __r700_CLEAR_H__
 
-#include "r600_context.h"
-#include "r700_assembler.h"
+extern void r700Clear(GLcontext * ctx, GLbitfield mask);
 
-struct r700_fragment_program
-{
-	struct gl_fragment_program mesa_program;
-
-    r700_AssemblerBase r700AsmCode;
-	R700_Shader        r700Shader;
-
-	GLboolean translated;
-    GLboolean loaded;
-	GLboolean error;
-/* to be enabled */
-#if 0
-    struct r600_dma_region shadercode;
-#endif
-
-	GLboolean WritesDepth;
-	GLuint optimization;
-};
-
-/* Internal */
-void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
-						  struct gl_fragment_program *mesa_fp);
-GLboolean Find_Instruction_Dependencies_fp(struct r700_fragment_program *fp,
-					                	   struct gl_fragment_program   *mesa_fp);
-
-/* Interface */
-extern GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
-							                 struct gl_fragment_program   *mesa_vp);
-extern GLboolean r700SetupFragmentProgram(GLcontext * ctx);
-
-#endif /*_R700_FRAGPROG_H_*/
+#endif /* __r700_CLEAR_H__ */

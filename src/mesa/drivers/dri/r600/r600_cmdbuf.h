@@ -40,11 +40,4 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extern void r600InitCmdBuf(r600ContextPtr r600);
 
-void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom);
-int check_vpu(GLcontext *ctx, struct radeon_state_atom *atom);
-
-void emit_r500fp(GLcontext *ctx, struct radeon_state_atom * atom);
-int check_r500fp(GLcontext *ctx, struct radeon_state_atom *atom);
-int check_r500fp_const(GLcontext *ctx, struct radeon_state_atom *atom);
-
 #endif				/* __R600_CMDBUF_H__ */

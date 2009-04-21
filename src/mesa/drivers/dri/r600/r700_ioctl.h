@@ -24,40 +24,12 @@
  *   Richard Li <RichardZ.Li@amd.com>, <richardradeon@gmail.com>
  */
 
-#ifndef _R700_FRAGPROG_H_
-#define _R700_FRAGPROG_H_
+#ifndef __R700_IOCTL_H__
+#define __R700_IOCTL_H__
 
 #include "r600_context.h"
-#include "r700_assembler.h"
+#include "radeon_drm.h"
 
-struct r700_fragment_program
-{
-	struct gl_fragment_program mesa_program;
+extern void r700InitIoctlFuncs(struct dd_function_table *functions);
 
-    r700_AssemblerBase r700AsmCode;
-	R700_Shader        r700Shader;
-
-	GLboolean translated;
-    GLboolean loaded;
-	GLboolean error;
-/* to be enabled */
-#if 0
-    struct r600_dma_region shadercode;
-#endif
-
-	GLboolean WritesDepth;
-	GLuint optimization;
-};
-
-/* Internal */
-void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
-						  struct gl_fragment_program *mesa_fp);
-GLboolean Find_Instruction_Dependencies_fp(struct r700_fragment_program *fp,
-					                	   struct gl_fragment_program   *mesa_fp);
-
-/* Interface */
-extern GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
-							                 struct gl_fragment_program   *mesa_vp);
-extern GLboolean r700SetupFragmentProgram(GLcontext * ctx);
-
-#endif /*_R700_FRAGPROG_H_*/
+#endif				/* __R700_IOCTL_H__ */

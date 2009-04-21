@@ -60,12 +60,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_context.h"
 #include "radeon_span.h"
 #include "r600_cmdbuf.h"
-#include "r600_state.h"
-#include "r600_ioctl.h"
-#include "r600_tex.h"
 #include "r600_emit.h"
 #include "r600_swtcl.h"
 #include "radeon_bocs_wrapper.h"
+
+#include "r700_chip.h"
+#include "r700_state.h"
+#include "r700_ioctl.h"
 
 
 #include "vblank.h"
@@ -216,44 +217,12 @@ static void r600_get_lock(radeonContextPtr rmesa)
 static void r600_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)
 {
     /* please flush pipe do all pending work */
-    radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
-                                  R600_SC_SCREENDOOR, 1));
-    radeon_cs_write_dword(cs, 0x0);
-    radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
-                                  R600_SC_SCREENDOOR, 1));
-    radeon_cs_write_dword(cs, 0x00FFFFFF);
-    radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
-                                  R600_SC_HYPERZ, 1));
-    radeon_cs_write_dword(cs, 0x0);
-    radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
-                                  R600_US_CONFIG, 1));
-    radeon_cs_write_dword(cs, 0x0);
-    radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
-                                  R600_ZB_CNTL, 1));
-    radeon_cs_write_dword(cs, 0x0);
-    radeon_cs_write_dword(cs, cmdwait(rmesa->radeonScreen, R300_WAIT_3D));
-    radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
-                                  R600_RB3D_DSTCACHE_CTLSTAT, 1));
-    radeon_cs_write_dword(cs, R600_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
-    radeon_cs_write_dword(cs, cmdpacket0(rmesa->radeonScreen,
-                                  R600_ZB_ZCACHE_CTLSTAT, 1));
-    radeon_cs_write_dword(cs, R600_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE);
-    radeon_cs_write_dword(cs, cmdwait(rmesa->radeonScreen,
-                               R300_WAIT_3D | R300_WAIT_3D_CLEAN));
+    /* to be enabled */
 }
 
 static void r600_vtbl_pre_emit_atoms(radeonContextPtr radeon)
 {
-	r600ContextPtr r600 = (r600ContextPtr)radeon;
-	BATCH_LOCALS(radeon);
-	
-	r600->vap_flush_needed = GL_TRUE;
-	
-	cp_wait(radeon, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
-	BEGIN_BATCH_NO_AUTOSTATE(2);
-	OUT_BATCH_REGVAL(R600_TX_INVALTAGS, R600_TX_FLUSH);
-	END_BATCH();
-	end_3d(radeon);
+	/* to be enabled */
 }
 
 static void r600_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
@@ -268,13 +237,68 @@ static void r600_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
 static void r600_init_vtbl(radeonContextPtr radeon)
 {
 	radeon->vtbl.get_lock = r600_get_lock;
-	radeon->vtbl.update_viewport_offset = r600UpdateViewportOffset;
+	radeon->vtbl.update_viewport_offset = r700UpdateViewportOffset;
 	radeon->vtbl.emit_cs_header = r600_vtbl_emit_cs_header;
 	radeon->vtbl.swtcl_flush = r600_swtcl_flush;
 	radeon->vtbl.pre_emit_atoms = r600_vtbl_pre_emit_atoms;
 	radeon->vtbl.fallback = r600_fallback;
 }
 
+/* to be enabled */
+static void r600EmitShader(GLcontext * ctx, 
+                   struct r600_dma_region *rvb,
+			       GLvoid * data, 
+                   int sizeinDWORD) 
+{
+}
+/* to be enabled */
+static void r600FreeDmaRegion(context_t *context, 
+                              struct r600_dma_region *region)
+{
+}
+/* to be enabled */
+static void r600EmitVec(GLcontext * ctx, 
+                 struct r600_dma_region *rvb,
+			     GLvoid * data, 
+                 int size, 
+                 int stride, 
+                 int count)
+{
+}
+/* to be enabled */
+static void r600ReleaseArrays(GLcontext * ctx)
+{
+}
+/* to be enabled */
+static GLboolean r600LoadMemSurf(context_t *context,
+                               GLuint     dst_offset, /* gpu addr */
+                               GLuint     dst_pitch_in_pixel,                               
+                               GLuint     src_width_in_pixel,
+                               GLuint     height,
+                               GLuint     byte_per_pixel,
+                               unsigned char* pSrc) /* source data */
+{
+    return GL_TRUE;
+}
+/* to be enabled */
+static GLboolean r600AllocMemSurf(context_t   *context,
+                           void       **ppmemBlock,
+                           void       **ppheap,
+                           GLuint      *prefered_heap, /* Now used RADEON_LOCAL_TEX_HEAP, return actual heap used. */
+                           GLuint       totalSize)
+{
+}
+/* to be enabled */
+static int  r600FlushCmdBuffer(context_t *context)
+{
+    int ret = 0;
+
+    return ret;
+}
+/* to be enabled */
+static void r600MemUse(context_t *context, int id)
+{
+}
 
 /* Create the device specific rendering context.
  */
@@ -315,10 +339,18 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	 * (the texture functions are especially important)
 	 */
 	_mesa_init_driver_functions(&functions);
-	r600InitIoctlFuncs(&functions);
-	r600InitStateFuncs(&functions);
-	r600InitTextureFuncs(&functions);
-	r600InitShaderFuncs(&functions);
+
+	r700InitChipObject(r600);  /* let the eag... */
+
+    (r600->chipobj.InitFuncs)(&functions);
+    r600->chipobj.EmitShader     = r600EmitShader;
+    r600->chipobj.FreeDmaRegion  = r600FreeDmaRegion;
+    r600->chipobj.EmitVec        = r600EmitVec;
+    r600->chipobj.ReleaseArrays  = r600ReleaseArrays;
+    r600->chipobj.LoadMemSurf    = r600LoadMemSurf;
+    r600->chipobj.AllocMemSurf   = r600AllocMemSurf;
+    r600->chipobj.FlushCmdBuffer = r600FlushCmdBuffer;
+    r600->chipobj.MemUse         = r600MemUse;
 
 	if (!radeonInitContext(&r600->radeon, &functions,
 			       glVisual, driContextPriv,
@@ -345,18 +377,20 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 	ctx->Const.MaxTextureLodBias = 16.0;
 
-	ctx->Const.MaxTextureLevels = 13;
-	ctx->Const.MaxTextureRectSize = 4096;
+	if (screen->chip_family >= CHIP_FAMILY_RV515) {
+	    ctx->Const.MaxTextureLevels = 13;
+	    ctx->Const.MaxTextureRectSize = 4096;
+	}
 
-	ctx->Const.MinPointSize = 1.0;
-	ctx->Const.MinPointSizeAA = 1.0;
-	ctx->Const.MaxPointSize = R600_POINTSIZE_MAX;
-	ctx->Const.MaxPointSizeAA = R600_POINTSIZE_MAX;
+	ctx->Const.MinPointSize   = 0x0001 / 8.0;
+	ctx->Const.MinPointSizeAA = 0x0001 / 8.0;
+	ctx->Const.MaxPointSize   = 0xffff / 8.0;
+	ctx->Const.MaxPointSizeAA = 0xffff / 8.0;
 
-	ctx->Const.MinLineWidth = 1.0;
-	ctx->Const.MinLineWidthAA = 1.0;
-	ctx->Const.MaxLineWidth = R600_LINESIZE_MAX;
-	ctx->Const.MaxLineWidthAA = R600_LINESIZE_MAX;
+	ctx->Const.MinLineWidth   = 0x0001 / 8.0;
+	ctx->Const.MinLineWidthAA = 0x0001 / 8.0;
+	ctx->Const.MaxLineWidth   = 0xffff / 8.0;
+	ctx->Const.MaxLineWidthAA = 0xffff / 8.0;
 
 	/* Needs further modifications */
 #if 0
@@ -378,7 +412,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	/* Install the customized pipeline:
 	 */
 	_tnl_destroy_pipeline(ctx);
-	_tnl_install_pipeline(ctx, r600_pipeline);
+	_tnl_install_pipeline(ctx, (const struct tnl_pipeline_stage **)(r600->chipobj.stages));
 
 	/* Try and keep materials and vertices separate:
 	 */
@@ -392,15 +426,17 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	_tnl_allow_vertex_fog(ctx, GL_TRUE);
 
 	/* currently bogus data */
-	ctx->Const.VertexProgram.MaxInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
-	ctx->Const.VertexProgram.MaxNativeInstructions =
-		VSF_MAX_FRAGMENT_LENGTH / 4;
-	ctx->Const.VertexProgram.MaxNativeAttribs = 16;	/* r420 */
-	ctx->Const.VertexProgram.MaxTemps = 32;
-	ctx->Const.VertexProgram.MaxNativeTemps =
-		/*VSF_MAX_FRAGMENT_TEMPS */ 32;
-	ctx->Const.VertexProgram.MaxNativeParameters = 256;	/* r420 */
-	ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
+	if (screen->chip_flags & RADEON_CHIPSET_TCL) {
+	        ctx->Const.VertexProgram.MaxInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
+		ctx->Const.VertexProgram.MaxNativeInstructions =
+		  VSF_MAX_FRAGMENT_LENGTH / 4;
+		ctx->Const.VertexProgram.MaxNativeAttribs = 16;	/* r420 */
+		ctx->Const.VertexProgram.MaxTemps = 32;
+		ctx->Const.VertexProgram.MaxNativeTemps =
+		  /*VSF_MAX_FRAGMENT_TEMPS */ 32;
+		ctx->Const.VertexProgram.MaxNativeParameters = 256;	/* r420 */
+		ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
+	}
 
 	ctx->Const.FragmentProgram.MaxNativeTemps = PFS_NUM_TEMP_REGS;
 	ctx->Const.FragmentProgram.MaxNativeAttribs = 11;	/* copy i915... */
@@ -438,10 +474,13 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 			    "disable_lowimpact_fallback");
 	radeon_fbo_init(&r600->radeon);
    	radeonInitSpanFuncs( ctx );
+
 	r600InitCmdBuf(r600);
+#if 0 /* to be enabled */
 	r600InitState(r600);
 	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
 	        r600InitSwtcl(ctx);
+#endif
 
 	TNL_CONTEXT(ctx)->Driver.RunPipeline = r600RunPipeline;
 

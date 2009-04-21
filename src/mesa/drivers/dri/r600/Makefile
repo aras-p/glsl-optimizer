@@ -37,23 +37,23 @@ RADEON_COMMON_SOURCES = \
 DRIVER_SOURCES = \
 		 radeon_screen.c \
 		 r600_context.c \
-		 r600_ioctl.c \
 		 r600_cmdbuf.c \
-		 r600_state.c \
-		 r600_render.c \
-		 r600_tex.c \
-		 r600_texstate.c \
 		 radeon_program.c \
 		 radeon_program_alu.c \
 		 radeon_program_pair.c \
 		 radeon_nqssadce.c \
-		 r600_vertprog.c \
-		 r600_fragprog.c \
-		 r600_fragprog_swizzle.c \
-		 r600_fragprog_emit.c \
-		 r600_shader.c \
-		 r600_emit.c \
-		 r600_swtcl.c \
+		 r600_emit.c       \
+		 r600_swtcl.c      \
+		 r700_assembler.c  \
+		 r700_fragprog.c \
+		 r700_vertprog.c \
+		 r700_shader.c \
+		 r700_ioctl.c \
+		 r700_oglprog.c \
+		 r700_chip.c     \
+		 r700_render.c   \
+		 r700_tex.c      \
+		 r700_debug.c    \
 		 $(RADEON_COMMON_SOURCES) \
 		 $(EGL_SOURCES)
 

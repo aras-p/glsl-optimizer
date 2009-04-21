@@ -36,7 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r600_swtcl.h"
 #include "r600_emit.h"
-#include "r600_tex.h"
 
 #define EMIT_ATTR( ATTR, STYLE )					\
 do {									\
@@ -65,104 +64,12 @@ do { \
 
 static void r600SwtclVAPSetup(GLcontext *ctx, GLuint InputsRead, GLuint OutputsWritten)
 {
-	r600ContextPtr rmesa = R600_CONTEXT( ctx );
-	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *VB = &tnl->vb;
-	struct vertex_attribute *attrs = rmesa->swtcl.vert_attrs;
-	int vte = 0;
-	int i, j, reg_count;
-	uint32_t *vir0 = &rmesa->hw.vir[0].cmd[1];
-	uint32_t *vir1 = &rmesa->hw.vir[1].cmd[1];
-
-	for (i = 0; i < R600_VIR_CMDSIZE-1; ++i)
-		vir0[i] = vir1[i] = 0;
-
-	for (i = 0, j = 0; i < rmesa->radeon.swtcl.vertex_attr_count; ++i) {
-		int tmp, data_format;
-		switch (attrs[i].format) {
-			case EMIT_1F:
-				data_format = R600_DATA_TYPE_FLOAT_1;
-				break;
-			case EMIT_2F:
-				data_format = R600_DATA_TYPE_FLOAT_2;
-				break;
-			case EMIT_3F:
-				data_format = R600_DATA_TYPE_FLOAT_3;
-				break;
-			case EMIT_4F:
-				data_format = R600_DATA_TYPE_FLOAT_4;
-				break;
-			case EMIT_4UB_4F_RGBA:
-			case EMIT_4UB_4F_ABGR:
-				data_format = R600_DATA_TYPE_BYTE | R600_NORMALIZE;
-				break;
-			default:
-				fprintf(stderr, "%s: Invalid data format type", __FUNCTION__);
-				_mesa_exit(-1);
-				break;
-		}
-
-		tmp = data_format | (attrs[i].dst_loc << R600_DST_VEC_LOC_SHIFT);
-		if (i % 2 == 0) {
-			vir0[j] = tmp << R600_DATA_TYPE_0_SHIFT;
-			vir1[j] = attrs[i].swizzle | (attrs[i].write_mask << R600_WRITE_ENA_SHIFT);
-		} else {
-			vir0[j] |= tmp << R600_DATA_TYPE_1_SHIFT;
-			vir1[j] |= (attrs[i].swizzle | (attrs[i].write_mask << R600_WRITE_ENA_SHIFT)) << R600_SWIZZLE1_SHIFT;
-			++j;
-		}
-	}
-
-	reg_count = (rmesa->radeon.swtcl.vertex_attr_count + 1) >> 1;
-	if (rmesa->radeon.swtcl.vertex_attr_count % 2 != 0) {
-		vir0[reg_count-1] |= R600_LAST_VEC << R600_DATA_TYPE_0_SHIFT;
-	} else {
-		vir0[reg_count-1] |= R600_LAST_VEC << R600_DATA_TYPE_1_SHIFT;
-	}
-
-	R600_STATECHANGE(rmesa, vir[0]);
-	R600_STATECHANGE(rmesa, vir[1]);
-	R600_STATECHANGE(rmesa, vof);
-	R600_STATECHANGE(rmesa, vte);
-	R600_STATECHANGE(rmesa, vic);
-
-	if (rmesa->radeon.radeonScreen->kernel_mm) {
-		rmesa->hw.vir[0].cmd[0] &= 0xC000FFFF;
-		rmesa->hw.vir[1].cmd[0] &= 0xC000FFFF;
-		rmesa->hw.vir[0].cmd[0] |= (reg_count & 0x3FFF) << 16;
-		rmesa->hw.vir[1].cmd[0] |= (reg_count & 0x3FFF) << 16;
-	} else {
-		((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count = reg_count;
-		((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count = reg_count;
-	}
-
-	rmesa->hw.vic.cmd[R600_VIC_CNTL_0] = r600VAPInputCntl0(ctx, InputsRead);
-	rmesa->hw.vic.cmd[R600_VIC_CNTL_1] = r600VAPInputCntl1(ctx, InputsRead);
-	rmesa->hw.vof.cmd[R600_VOF_CNTL_0] = r600VAPOutputCntl0(ctx, OutputsWritten);
-	rmesa->hw.vof.cmd[R600_VOF_CNTL_1] = r600VAPOutputCntl1(ctx, OutputsWritten);
-
-	vte = rmesa->hw.vte.cmd[1];
-	vte &= ~(R600_VTX_XY_FMT | R600_VTX_Z_FMT | R600_VTX_W0_FMT);
-	/* Important:
-	 */
-	if ( VB->NdcPtr != NULL ) {
-		VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
-		vte |= R600_VTX_XY_FMT | R600_VTX_Z_FMT;
-	}
-	else {
-		VB->AttribPtr[VERT_ATTRIB_POS] = VB->ClipPtr;
-		vte |= R600_VTX_W0_FMT;
-	}
-
-	assert( VB->AttribPtr[VERT_ATTRIB_POS] != NULL );
-
-	rmesa->hw.vte.cmd[1] = vte;
-	rmesa->hw.vte.cmd[2] = rmesa->radeon.swtcl.vertex_size;
 }
 
 
 static void r600SetVertexFormat( GLcontext *ctx )
 {
+#if 0 /* to be enabled */
 	r600ContextPtr rmesa = R600_CONTEXT( ctx );
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *VB = &tnl->vb;
@@ -318,6 +225,7 @@ static void r600SetVertexFormat( GLcontext *ctx )
 	rmesa->radeon.swtcl.vertex_size /= 4;
 
 	RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, tnl->render_inputs_bitset);
+#endif /* to be enabled */
 }
 
 
@@ -584,6 +492,7 @@ static void r600ChooseRenderState( GLcontext *ctx )
 
 static void r600RenderStart(GLcontext *ctx)
 {
+#if 0 /* to be enabled */
 	r600ContextPtr rmesa = R600_CONTEXT( ctx );
 
 	r600ChooseRenderState(ctx);
@@ -600,6 +509,7 @@ static void r600RenderStart(GLcontext *ctx)
 	if (rmesa->radeon.dma.flush != NULL) {
 		rmesa->radeon.dma.flush(ctx);
 	}
+#endif /* to be enabled */
 }
 
 static void r600RenderFinish(GLcontext *ctx)
@@ -608,12 +518,14 @@ static void r600RenderFinish(GLcontext *ctx)
 
 static void r600RasterPrimitive( GLcontext *ctx, GLuint hwprim )
 {
+#if 0 /* to be enabled */
 	r600ContextPtr rmesa = R600_CONTEXT(ctx);
 
 	if (rmesa->radeon.swtcl.hw_primitive != hwprim) {
 		R600_NEWPRIM( rmesa );
 		rmesa->radeon.swtcl.hw_primitive = hwprim;
 	}
+#endif /* to be enabled */
 }
 
 static void r600RenderPrimitive(GLcontext *ctx, GLenum prim)
@@ -673,6 +585,7 @@ void r600DestroySwtcl(GLcontext *ctx)
 
 static void r600EmitVertexAOS(r600ContextPtr rmesa, GLuint vertex_size, struct radeon_bo *bo, GLuint offset)
 {
+#if 0 /* to be enabled */
 	BATCH_LOCALS(&rmesa->radeon);
 
 	if (RADEON_DEBUG & DEBUG_VERTS)
@@ -685,10 +598,12 @@ static void r600EmitVertexAOS(r600ContextPtr rmesa, GLuint vertex_size, struct r
 	OUT_BATCH(vertex_size | (vertex_size << 8));
 	OUT_BATCH_RELOC(offset, bo, offset, RADEON_GEM_DOMAIN_GTT, 0, 0);
 	END_BATCH();
+#endif /* to be enabled */
 }
 
 static void r600EmitVbufPrim(r600ContextPtr rmesa, GLuint primitive, GLuint vertex_nr)
 {
+#if 0 /* to be enabled */
 	BATCH_LOCALS(&rmesa->radeon);
 	int type, num_verts;
 
@@ -699,10 +614,12 @@ static void r600EmitVbufPrim(r600ContextPtr rmesa, GLuint primitive, GLuint vert
 	OUT_BATCH_PACKET3(R600_PACKET3_3D_DRAW_VBUF_2, 0);
 	OUT_BATCH(R600_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (num_verts << 16) | type);
 	END_BATCH();
+#endif /* to be enabled */
 }
 
 void r600_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 {
+#if 0 /* to be enabled */
 	r600ContextPtr rmesa = R600_CONTEXT(ctx);
 
 	rcommonEnsureCmdBufSpace(&rmesa->radeon,
@@ -719,4 +636,5 @@ void r600_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 		   rmesa->radeon.swtcl.numverts);
 	r600EmitCacheFlush(rmesa);
 	COMMIT_BATCH();
+#endif /* to be enabled */
 }
