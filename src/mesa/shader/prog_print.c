@@ -873,6 +873,7 @@ _mesa_fprint_parameter_list(FILE *f,
       return;
 
    _mesa_fprintf(f, "param list %p\n", (void *) list);
+   _mesa_fprintf(f, "dirty state flags: 0x%x\n", list->StateFlags);
    for (i = 0; i < list->NumParameters; i++){
       struct gl_program_parameter *param = list->Parameters + i;
       const GLfloat *v = list->ParameterValues[i];
