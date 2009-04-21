@@ -173,6 +173,24 @@ intelGetString(GLcontext * ctx, GLenum name)
    }
 }
 
+static unsigned
+intel_bits_per_pixel(const struct intel_renderbuffer *rb)
+{
+   switch (rb->Base._ActualFormat) {
+   case GL_RGB5:
+   case GL_DEPTH_COMPONENT16:
+      return 16;
+   case GL_RGB8:
+   case GL_RGBA8:
+   case GL_DEPTH_COMPONENT24:
+   case GL_DEPTH24_STENCIL8_EXT:
+   case GL_STENCIL_INDEX8_EXT:
+      return 32;
+   default:
+      return 0;
+   }
+}
+
 void
 intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 {
@@ -192,22 +210,62 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 
    screen = intel->intelScreen->driScrnPriv;
 
-   i = 0;
-   if (intel_fb->color_rb[0])
-      attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
-   if (intel_fb->color_rb[1])
-      attachments[i++] = __DRI_BUFFER_BACK_LEFT;
-   if (intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH))
-      attachments[i++] = __DRI_BUFFER_DEPTH;
-   if (intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL))
-      attachments[i++] = __DRI_BUFFER_STENCIL;
+   if ((screen->dri2.loader->base.version > 2)
+       && (screen->dri2.loader->getBuffersWithFormat != NULL)) {
+      struct intel_renderbuffer *depth_rb;
+      struct intel_renderbuffer *stencil_rb;
 
-   buffers = (*screen->dri2.loader->getBuffers)(drawable,
-						&drawable->w,
-						&drawable->h,
-						attachments, i,
-						&count,
-						drawable->loaderPrivate);
+      i = 0;
+      if ((intel->is_front_buffer_rendering || !intel_fb->color_rb[1])
+	   && intel_fb->color_rb[0]) {
+	 attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
+	 attachments[i++] = intel_bits_per_pixel(intel_fb->color_rb[0]);
+      }
+
+      if (intel_fb->color_rb[1]) {
+	 attachments[i++] = __DRI_BUFFER_BACK_LEFT;
+	 attachments[i++] = intel_bits_per_pixel(intel_fb->color_rb[1]);
+      }
+
+      depth_rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
+      stencil_rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
+
+      if ((depth_rb != NULL) && (stencil_rb != NULL)) {
+	 attachments[i++] = __DRI_BUFFER_DEPTH_STENCIL;
+	 attachments[i++] = intel_bits_per_pixel(depth_rb);
+      } else if (depth_rb != NULL) {
+	 attachments[i++] = __DRI_BUFFER_DEPTH;
+	 attachments[i++] = intel_bits_per_pixel(depth_rb);
+      } else if (stencil_rb != NULL) {
+	 attachments[i++] = __DRI_BUFFER_STENCIL;
+	 attachments[i++] = intel_bits_per_pixel(stencil_rb);
+      }
+
+      buffers =
+	 (*screen->dri2.loader->getBuffersWithFormat)(drawable,
+						      &drawable->w,
+						      &drawable->h,
+						      attachments, i / 2,
+						      &count,
+						      drawable->loaderPrivate);
+   } else {
+      i = 0;
+      if (intel_fb->color_rb[0])
+	 attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
+      if (intel_fb->color_rb[1])
+	 attachments[i++] = __DRI_BUFFER_BACK_LEFT;
+      if (intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH))
+	 attachments[i++] = __DRI_BUFFER_DEPTH;
+      if (intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL))
+	 attachments[i++] = __DRI_BUFFER_STENCIL;
+
+      buffers = (*screen->dri2.loader->getBuffers)(drawable,
+						   &drawable->w,
+						   &drawable->h,
+						   attachments, i,
+						   &count,
+						   drawable->loaderPrivate);
+   }
 
    if (buffers == NULL)
       return;
@@ -248,6 +306,11 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        case __DRI_BUFFER_DEPTH:
 	   rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
 	   region_name = "dri2 depth buffer";
+	   break;
+
+       case __DRI_BUFFER_DEPTH_STENCIL:
+	   rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
+	   region_name = "dri2 depth / stencil buffer";
 	   break;
 
        case __DRI_BUFFER_STENCIL:
@@ -296,6 +359,16 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 
        intel_renderbuffer_set_region(rb, region);
        intel_region_release(&region);
+
+       if (buffers[i].attachment == __DRI_BUFFER_DEPTH_STENCIL) {
+	  struct intel_region *stencil_region;
+
+	  intel_region_reference(&stencil_region, region);
+
+	  rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
+	  intel_renderbuffer_set_region(rb, stencil_region);
+	  intel_region_release(&stencil_region);
+       }
    }
 
    driUpdateFramebufferSize(&intel->ctx, drawable);

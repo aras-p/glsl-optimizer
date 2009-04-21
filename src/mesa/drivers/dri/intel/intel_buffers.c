@@ -323,8 +323,18 @@ intelDrawBuffer(GLcontext * ctx, GLenum mode)
 {
    if ((ctx->DrawBuffer != NULL) && (ctx->DrawBuffer->Name == 0)) {
       struct intel_context *const intel = intel_context(ctx);
+      const GLboolean was_front_buffer_rendering =
+	intel->is_front_buffer_rendering;
 
       intel->is_front_buffer_rendering = (mode == GL_FRONT_LEFT);
+
+      /* If we weren't front-buffer rendering before but we are now, make sure
+       * that the front-buffer has actually been allocated.
+       */
+      if (!was_front_buffer_rendering && intel->is_front_buffer_rendering) {
+	 intel_update_renderbuffers(intel->driContext,
+				    intel->driContext->driDrawablePriv);
+      }
    }
 
    intel_draw_buffer(ctx, ctx->DrawBuffer);
