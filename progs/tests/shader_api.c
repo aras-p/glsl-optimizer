@@ -321,9 +321,17 @@ static void run_test(const char *name, void (*callback)(void))
 
 int main(int argc, char **argv)
 {
+   const char *version;
+
    glutInit(&argc, argv);
    glutCreateWindow("Mesa bug demo");
    glewInit();
+
+   version = (const char *) glGetString(GL_VERSION);
+   if (version[0] == '1') {
+      printf("Sorry, this test requires OpenGL 2.x GLSL support\n");
+      exit(0);
+   }
 
    RUN_TEST(test_uniform_size_type);
    RUN_TEST(test_attrib_size_type);
