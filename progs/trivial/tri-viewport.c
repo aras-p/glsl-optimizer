@@ -103,12 +103,38 @@ static void Draw(void)
     * Should be clipped to be no larger than the triangles:
     */
    glViewport(tx, ty, w, h);
+
    glBegin(GL_POLYGON);
-   glColor3f(.5,.5,1); 
+   glColor3f(1,1,0); 
+   glVertex3f(-100, -100, -30.0);
+   glVertex3f(-100, 100, -30.0);
+   glVertex3f(100, 100, -30.0);
+   glVertex3f(100, -100, -30.0);
+   glEnd();
+
+   glBegin(GL_POLYGON);
+   glColor3f(0,1,1); 
+   glVertex3f(-10, -10, -30.0);
+   glVertex3f(-10, 10, -30.0);
+   glVertex3f(10, 10, -30.0);
+   glVertex3f(10, -10, -30.0);
+   glEnd();
+
+   glBegin(GL_POLYGON);
+   glColor3f(1,0,0); 
    glVertex3f(-2, -2, -30.0);
    glVertex3f(-2, 2, -30.0);
    glVertex3f(2, 2, -30.0);
    glVertex3f(2, -2, -30.0);
+   glEnd();
+
+
+   glBegin(GL_POLYGON);
+   glColor3f(.5,.5,1); 
+   glVertex3f(-1, -1, -30.0);
+   glVertex3f(-1, 1, -30.0);
+   glVertex3f(1, 1, -30.0);
+   glVertex3f(1, -1, -30.0);
    glEnd();
 
    /***********************************************************************
