@@ -472,7 +472,9 @@ static void r300SetEarlyZState(GLcontext * ctx)
 
 	if (ctx->Color.AlphaEnabled && ctx->Color.AlphaFunc != GL_ALWAYS)
 		topZ = R300_ZTOP_DISABLE;
-	if (current_fragment_program_writes_depth(ctx))
+	else if (current_fragment_program_writes_depth(ctx))
+		topZ = R300_ZTOP_DISABLE;
+	else if (ctx->FragmentProgram._Current && ctx->FragmentProgram._Current->UsesKill)
 		topZ = R300_ZTOP_DISABLE;
 
 	if (topZ != r300->hw.zstencil_format.cmd[2]) {
