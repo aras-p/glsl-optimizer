@@ -62,12 +62,6 @@ void st_upload_constants( struct st_context *st,
    if (params && params->NumParameters) {
       const uint paramBytes = params->NumParameters * sizeof(GLfloat) * 4;
 
-      /* Update our own dependency flags.  This works because this
-       * function will also be called whenever the program changes.
-       */
-      st->constants.tracked_state[id].dirty.mesa =
-         (params->StateFlags | _NEW_PROGRAM);
-
       _mesa_load_state_parameters(st->ctx, params);
 
       /* We always need to get a new buffer, to keep the drivers simple and
@@ -111,7 +105,7 @@ static void update_vs_constants(struct st_context *st )
 const struct st_tracked_state st_update_vs_constants = {
    "st_update_vs_constants",				/* name */
    {							/* dirty */
-      0,  /* set dynamically above */			/* mesa */
+      _NEW_PROGRAM_CONSTANTS,
       ST_NEW_VERTEX_PROGRAM,				/* st */
    },
    update_vs_constants					/* update */
@@ -130,7 +124,7 @@ static void update_fs_constants(struct st_context *st )
 const struct st_tracked_state st_update_fs_constants = {
    "st_update_fs_constants",				/* name */
    {							/* dirty */
-      0,  /* set dynamically above */			/* mesa */
+      _NEW_PROGRAM_CONSTANTS,
       ST_NEW_FRAGMENT_PROGRAM,				/* st */
    },
    update_fs_constants					/* update */

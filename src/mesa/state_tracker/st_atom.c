@@ -37,11 +37,8 @@
 
        
 
-/* This is used to initialize st->atoms[].  We could use this list
- * directly except for a single atom, st_update_constants, which has a
- * .dirty value which changes according to the parameters of the
- * current fragment and vertex programs, and so cannot be a static
- * value.
+/**
+ * This is used to initialize st->atoms[].
  */
 static const struct st_tracked_state *atoms[] =
 {
@@ -67,25 +64,9 @@ static const struct st_tracked_state *atoms[] =
 
 void st_init_atoms( struct st_context *st )
 {
-   GLuint i;
-
    st->atoms = _mesa_malloc(sizeof(atoms));
    st->nr_atoms = sizeof(atoms)/sizeof(*atoms);
    memcpy(st->atoms, atoms, sizeof(atoms));
-
-   /* Patch in a pointer to the dynamic state atom:
-    */
-   for (i = 0; i < st->nr_atoms; i++) {
-      if (st->atoms[i] == &st_update_vs_constants) {
-	 st->atoms[i] = &st->constants.tracked_state[PIPE_SHADER_VERTEX];
-	 st->atoms[i][0] = st_update_vs_constants;
-      }
-
-      if (st->atoms[i] == &st_update_fs_constants) {
-	 st->atoms[i] = &st->constants.tracked_state[PIPE_SHADER_FRAGMENT];
-	 st->atoms[i][0] = st_update_fs_constants;
-      }
-   }
 }
 
 
