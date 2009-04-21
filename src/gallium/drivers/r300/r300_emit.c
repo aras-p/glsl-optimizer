@@ -340,7 +340,11 @@ void r300_emit_vertex_shader(struct r300_context* r300,
         return;
     }
 
-    BEGIN_CS(13 + (vs->instruction_count * 4) + (constants->count * 4));
+    if (constants->count) {
+        BEGIN_CS(16 + (vs->instruction_count * 4) + (constants->count * 4));
+    } else {
+        BEGIN_CS(13 + (vs->instruction_count * 4) + (constants->count * 4));
+    }
 
     OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_0, R300_PVS_FIRST_INST(0) |
             R300_PVS_LAST_INST(vs->instruction_count - 1));
