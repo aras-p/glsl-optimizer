@@ -417,7 +417,7 @@ WINDOW_SYSTEM=""
 GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_WINSYS_DIRS=""
 GALLIUM_WINSYS_DRM_DIRS=""
-GALLIUM_AUXILIARY_DIRS="draw translate cso_cache pipebuffer tgsi sct rtasm util"
+GALLIUM_AUXILIARY_DIRS="draw translate cso_cache pipebuffer tgsi sct rtasm util indices"
 GALLIUM_DRIVERS_DIRS="softpipe failover trace"
 GALLIUM_STATE_TRACKERS_DIRS=""
 
