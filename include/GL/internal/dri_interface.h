@@ -649,6 +649,7 @@ struct __DRIswrastExtensionRec {
 #define __DRI_BUFFER_ACCUM		6
 #define __DRI_BUFFER_FAKE_FRONT_LEFT	7
 #define __DRI_BUFFER_FAKE_FRONT_RIGHT	8
+#define __DRI_BUFFER_DEPTH_STENCIL	9  /**< Only available with DRI2 1.1 */
 
 struct __DRIbufferRec {
     unsigned int attachment;
@@ -659,7 +660,7 @@ struct __DRIbufferRec {
 };
 
 #define __DRI_DRI2_LOADER "DRI_DRI2Loader"
-#define __DRI_DRI2_LOADER_VERSION 2
+#define __DRI_DRI2_LOADER_VERSION 3
 struct __DRIdri2LoaderExtensionRec {
     __DRIextension base;
 
@@ -680,6 +681,31 @@ struct __DRIdri2LoaderExtensionRec {
      *                       into __DRIdri2ExtensionRec::createNewDrawable
      */
     void (*flushFrontBuffer)(__DRIdrawable *driDrawable, void *loaderPrivate);
+
+
+    /**
+     * Get list of buffers from the server
+     *
+     * Gets a list of buffer for the specified set of attachments.  Unlike
+     * \c ::getBuffers, this function takes a list of attachments paired with
+     * opaque \c unsigned \c int value describing the format of the buffer.
+     * It is the responsibility of the caller to know what the service that
+     * allocates the buffers will expect to receive for the format.
+     *
+     * \param driDrawable    Drawable whose buffers are being queried.
+     * \param width          Output where the width of the buffers is stored.
+     * \param height         Output where the height of the buffers is stored.
+     * \param attachments    List of pairs of attachment ID and opaque format
+     *                       requested for the drawable.
+     * \param count          Number of attachment / format pairs stored in
+     *                       \c attachments.
+     * \param loaderPrivate  Loader's private data that was previously passed
+     *                       into __DRIdri2ExtensionRec::createNewDrawable.
+     */
+    __DRIbuffer *(*getBuffersWithFormat)(__DRIdrawable *driDrawable,
+					 int *width, int *height,
+					 unsigned int *attachments, int count,
+					 int *out_count, void *loaderPrivate);
 };
 
 /**

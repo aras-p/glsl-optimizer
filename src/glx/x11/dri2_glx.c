@@ -47,6 +47,9 @@
 #include "dri2.h"
 #include "dri_common.h"
 
+#undef DRI2_MINOR
+#define DRI2_MINOR 1
+
 typedef struct __GLXDRIdisplayPrivateRec __GLXDRIdisplayPrivate;
 typedef struct __GLXDRIcontextPrivateRec __GLXDRIcontextPrivate;
 typedef struct __GLXDRIdrawablePrivateRec __GLXDRIdrawablePrivate;
@@ -289,30 +292,25 @@ static void dri2DestroyScreen(__GLXscreenConfigs *psc)
     psc->__driScreen = NULL;
 }
 
-static __DRIbuffer *
-dri2GetBuffers(__DRIdrawable *driDrawable,
-	       int *width, int *height,
-	       unsigned int *attachments, int count,
-	       int *out_count, void *loaderPrivate)
+/**
+ * Process list of buffer received from the server
+ *
+ * Processes the list of buffers received in a reply from the server to either
+ * \c DRI2GetBuffers or \c DRI2GetBuffersWithFormat.
+ */
+static void
+process_buffers(__GLXDRIdrawablePrivate *pdraw, DRI2Buffer *buffers,
+		unsigned count)
 {
-    __GLXDRIdrawablePrivate *pdraw = loaderPrivate;
-    DRI2Buffer *buffers;
     int i;
 
-    buffers = DRI2GetBuffers(pdraw->base.psc->dpy, pdraw->base.xDrawable,
-			     width, height, attachments, count, out_count);
-    if (buffers == NULL)
-       return NULL;
-
-    pdraw->width = *width;
-    pdraw->height = *height;
-    pdraw->bufferCount = *out_count;
+    pdraw->bufferCount = count;
     pdraw->have_fake_front = 0;
     pdraw->have_back = 0;
 
     /* This assumes the DRI2 buffer attachment tokens matches the
      * __DRIbuffer tokens. */
-    for (i = 0; i < *out_count; i++) {
+    for (i = 0; i < count; i++) {
 	pdraw->buffers[i].attachment = buffers[i].attachment;
 	pdraw->buffers[i].name = buffers[i].name;
 	pdraw->buffers[i].pitch = buffers[i].pitch;
@@ -324,6 +322,51 @@ dri2GetBuffers(__DRIdrawable *driDrawable,
 	    pdraw->have_back = 1;
     }
 
+}
+
+static __DRIbuffer *
+dri2GetBuffers(__DRIdrawable *driDrawable,
+	       int *width, int *height,
+	       unsigned int *attachments, int count,
+	       int *out_count, void *loaderPrivate)
+{
+    __GLXDRIdrawablePrivate *pdraw = loaderPrivate;
+    DRI2Buffer *buffers;
+
+    buffers = DRI2GetBuffers(pdraw->base.psc->dpy, pdraw->base.xDrawable,
+			     width, height, attachments, count, out_count);
+    if (buffers == NULL)
+       return NULL;
+
+    pdraw->width = *width;
+    pdraw->height = *height;
+    process_buffers(pdraw, buffers, *out_count);
+
+    Xfree(buffers);
+
+    return pdraw->buffers;
+}
+
+static __DRIbuffer *
+dri2GetBuffersWithFormat(__DRIdrawable *driDrawable,
+			 int *width, int *height,
+			 unsigned int *attachments, int count,
+			 int *out_count, void *loaderPrivate)
+{
+    __GLXDRIdrawablePrivate *pdraw = loaderPrivate;
+    DRI2Buffer *buffers;
+
+    buffers = DRI2GetBuffersWithFormat(pdraw->base.psc->dpy,
+				       pdraw->base.xDrawable,
+				       width, height, attachments,
+				       count, out_count);
+    if (buffers == NULL)
+       return NULL;
+
+    pdraw->width = *width;
+    pdraw->height = *height;
+    process_buffers(pdraw, buffers, *out_count);
+
     Xfree(buffers);
 
     return pdraw->buffers;
@@ -332,11 +375,25 @@ dri2GetBuffers(__DRIdrawable *driDrawable,
 static const __DRIdri2LoaderExtension dri2LoaderExtension = {
     { __DRI_DRI2_LOADER, __DRI_DRI2_LOADER_VERSION },
     dri2GetBuffers,
-    dri2FlushFrontBuffer
+    dri2FlushFrontBuffer,
+    dri2GetBuffersWithFormat,
+};
+
+static const __DRIdri2LoaderExtension dri2LoaderExtension_old = {
+    { __DRI_DRI2_LOADER, __DRI_DRI2_LOADER_VERSION },
+    dri2GetBuffers,
+    dri2FlushFrontBuffer,
+    NULL,
 };
 
 static const __DRIextension *loader_extensions[] = {
     &dri2LoaderExtension.base,
+    &systemTimeExtension.base,
+    NULL
+};
+
+static const __DRIextension *loader_extensions_old[] = {
+    &dri2LoaderExtension_old.base,
     &systemTimeExtension.base,
     NULL
 };
@@ -346,6 +403,8 @@ static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
 {
     const __DRIconfig **driver_configs;
     const __DRIextension **extensions;
+    const __GLXDRIdisplayPrivate *const pdp = (__GLXDRIdisplayPrivate *)
+      priv->dri2Display;
     __GLXDRIscreen *psp;
     char *driverName, *deviceName;
     drm_magic_t magic;
@@ -402,9 +461,16 @@ static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
 	return NULL;
     }
 
+    /* If the server does not support the protocol for
+     * DRI2GetBuffersWithFormat, don't supply that interface to the driver.
+     */
     psc->__driScreen = 
-	psc->dri2->createNewScreen(screen, psc->fd,
-				   loader_extensions, &driver_configs, psc);
+      psc->dri2->createNewScreen(screen, psc->fd,
+				 ((pdp->driMinor < 1)
+				  ? loader_extensions_old
+				  : loader_extensions),
+				 &driver_configs, psc);
+
     if (psc->__driScreen == NULL) {
 	ErrorMessageF("failed to create dri screen\n");
 	return NULL;
