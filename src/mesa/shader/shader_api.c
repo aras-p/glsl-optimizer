@@ -1789,7 +1789,7 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       return;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
 
    uniform = &shProg->Uniforms->Uniforms[location];
 
@@ -1929,7 +1929,7 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
       return;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
 
    uniform = &shProg->Uniforms->Uniforms[location];
 
