@@ -33,9 +33,16 @@ static float tx = 0;
 static float ty = 0;
 static float tw = 0;
 static float th = 0;
+static float z = -5;
+
 
 static float win_width = 250;
 static float win_height = 250;
+static enum {
+   ORTHO,
+   FRUSTUM,
+   MODE_MAX
+} mode = ORTHO;
 
 static void Init(void)
 {
@@ -72,8 +79,21 @@ static void Key(unsigned char key, int x, int y)
    case 'H':
       th -= 1.0;
       break;
+
+   case 'z':
+      z += 1.0;
+      break;
+   case 'Z':
+      z -= 1.0;
+      break;
+   case 'm':
+      mode++;
+      mode %= MODE_MAX;
+      break;
    case ' ':
       tw = th = tx = ty = 0;
+      z = -5;
+      mode = ORTHO;
       break;
    default:
       break;
@@ -89,12 +109,26 @@ static void Draw(void)
    float h = th + win_height;
 
    fprintf(stderr, "glViewport(%f %f %f %f)\n", tx, ty, w, h);
+   fprintf(stderr, "mode: %s\n", mode == FRUSTUM ? "FRUSTUM" : "ORTHO");
+   fprintf(stderr, "z: %f\n", z);
    fflush(stderr);
 
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   glOrtho(-1.0, 1.0, -1.0, 1.0, -0.5, 1000.0);
+
+   switch (mode) {
+   case FRUSTUM:
+      glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 25.0);
+      break;
+   case ORTHO:
+   default:
+      glOrtho(-1.0, 1.0, -1.0, 1.0, -0.5, 1000.0);
+      break;
+   }
+
    glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+
 
    glClear(GL_COLOR_BUFFER_BIT); 
 
@@ -106,35 +140,35 @@ static void Draw(void)
 
    glBegin(GL_POLYGON);
    glColor3f(1,1,0); 
-   glVertex3f(-100, -100, -30.0);
-   glVertex3f(-100, 100, -30.0);
-   glVertex3f(100, 100, -30.0);
-   glVertex3f(100, -100, -30.0);
+   glVertex3f(-100, -100, z);
+   glVertex3f(-100, 100, z);
+   glVertex3f(100, 100, z);
+   glVertex3f(100, -100, z);
    glEnd();
 
    glBegin(GL_POLYGON);
    glColor3f(0,1,1); 
-   glVertex3f(-10, -10, -30.0);
-   glVertex3f(-10, 10, -30.0);
-   glVertex3f(10, 10, -30.0);
-   glVertex3f(10, -10, -30.0);
+   glVertex3f(-10, -10, z);
+   glVertex3f(-10, 10, z);
+   glVertex3f(10, 10, z);
+   glVertex3f(10, -10, z);
    glEnd();
 
    glBegin(GL_POLYGON);
    glColor3f(1,0,0); 
-   glVertex3f(-2, -2, -30.0);
-   glVertex3f(-2, 2, -30.0);
-   glVertex3f(2, 2, -30.0);
-   glVertex3f(2, -2, -30.0);
+   glVertex3f(-2, -2, z);
+   glVertex3f(-2, 2, z);
+   glVertex3f(2, 2, z);
+   glVertex3f(2, -2, z);
    glEnd();
 
 
    glBegin(GL_POLYGON);
    glColor3f(.5,.5,1); 
-   glVertex3f(-1, -1, -30.0);
-   glVertex3f(-1, 1, -30.0);
-   glVertex3f(1, 1, -30.0);
-   glVertex3f(1, -1, -30.0);
+   glVertex3f(-1, -1, z);
+   glVertex3f(-1, 1, z);
+   glVertex3f(1, 1, z);
+   glVertex3f(1, -1, z);
    glEnd();
 
    /***********************************************************************
@@ -142,11 +176,11 @@ static void Draw(void)
    glViewport(0, 0, win_width, win_height);
    glBegin(GL_LINES);
    glColor3f(1,1,0); 
-   glVertex3f(-1, 0, -30.0);
-   glVertex3f(1, 0, -30.0);
+   glVertex3f(-1, 0, z);
+   glVertex3f(1, 0, z);
 
-   glVertex3f(0,  -1, -30.0);
-   glVertex3f(0,  1, -30.0);
+   glVertex3f(0,  -1, z);
+   glVertex3f(0,  1, z);
    glEnd();
 
 
@@ -155,33 +189,33 @@ static void Draw(void)
    glViewport(tx, ty, w, h);
    glBegin(GL_TRIANGLES);
    glColor3f(1,0,0); 
-   glVertex3f(-1, -1, -30.0);
-   glVertex3f(0, -1, -30.0);
-   glVertex3f(-.5,  -.5, -30.0);
+   glVertex3f(-1, -1, z);
+   glVertex3f(0, -1, z);
+   glVertex3f(-.5,  -.5, z);
 
    glColor3f(1,1,1);
-   glVertex3f(0, -1, -30.0);
-   glVertex3f(1, -1, -30.0);
-   glVertex3f(.5,  -.5, -30.0);
+   glVertex3f(0, -1, z);
+   glVertex3f(1, -1, z);
+   glVertex3f(.5,  -.5, z);
 
-   glVertex3f(-.5, -.5, -30.0);
-   glVertex3f(.5, -.5, -30.0);
-   glVertex3f(0,  0, -30.0);
+   glVertex3f(-.5, -.5, z);
+   glVertex3f(.5, -.5, z);
+   glVertex3f(0,  0, z);
 
 
    glColor3f(0,1,0); 
-   glVertex3f(1, 1, -30.0);
-   glVertex3f(0, 1, -30.0);
-   glVertex3f(.5,  .5, -30.0);
+   glVertex3f(1, 1, z);
+   glVertex3f(0, 1, z);
+   glVertex3f(.5,  .5, z);
 
    glColor3f(1,1,1);
-   glVertex3f(0, 1, -30.0);
-   glVertex3f(-1, 1, -30.0);
-   glVertex3f(-.5,  .5, -30.0);
+   glVertex3f(0, 1, z);
+   glVertex3f(-1, 1, z);
+   glVertex3f(-.5,  .5, z);
 
-   glVertex3f(.5, .5, -30.0);
-   glVertex3f(-.5, .5, -30.0);
-   glVertex3f( 0,  0, -30.0);
+   glVertex3f(.5, .5, z);
+   glVertex3f(-.5, .5, z);
+   glVertex3f( 0,  0, z);
 
    glEnd();
 
@@ -196,11 +230,11 @@ static void Draw(void)
       if (i == 0)
          continue;
 
-      glVertex3f(-1, f, -30.0);
-      glVertex3f(1, f, -30.0);
+      glVertex3f(-1, f, z);
+      glVertex3f(1, f, z);
 
-      glVertex3f(f, -1, -30.0);
-      glVertex3f(f, 1, -30.0);
+      glVertex3f(f, -1, z);
+      glVertex3f(f, 1, z);
    }
    glEnd();
 
