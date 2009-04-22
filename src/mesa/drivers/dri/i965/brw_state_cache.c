@@ -56,9 +56,9 @@
  * incorrect program is run for the other instance.
  */
 
+#include "main/imports.h"
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
-#include "main/imports.h"
 
 /* XXX: Fixme - have to include these to get the sizes of the prog_key
  * structs:
@@ -69,8 +69,10 @@
 #include "brw_sf.h"
 #include "brw_gs.h"
 
-static GLuint hash_key( const void *key, GLuint key_size,
-			dri_bo **reloc_bufs, GLuint nr_reloc_bufs)
+
+static GLuint
+hash_key(const void *key, GLuint key_size,
+         dri_bo **reloc_bufs, GLuint nr_reloc_bufs)
 {
    GLuint *ikey = (GLuint *)key;
    GLuint hash = 0, i;
@@ -95,6 +97,7 @@ static GLuint hash_key( const void *key, GLuint key_size,
    return hash;
 }
 
+
 /**
  * Marks a new buffer as being chosen for the given cache id.
  */
@@ -110,6 +113,7 @@ update_cache_last(struct brw_cache *cache, enum brw_cache_id cache_id,
    dri_bo_reference(cache->last_bo[cache_id]);
    cache->brw->state.dirty.cache |= 1 << cache_id;
 }
+
 
 static struct brw_cache_item *
 search_cache(struct brw_cache *cache, enum brw_cache_id cache_id,
@@ -143,7 +147,8 @@ search_cache(struct brw_cache *cache, enum brw_cache_id cache_id,
 }
 
 
-static void rehash( struct brw_cache *cache )
+static void
+rehash(struct brw_cache *cache)
 {
    struct brw_cache_item **items;
    struct brw_cache_item *c, *next;
@@ -164,15 +169,17 @@ static void rehash( struct brw_cache *cache )
    cache->size = size;
 }
 
+
 /**
  * Returns the buffer object matching cache_id and key, or NULL.
  */
-dri_bo *brw_search_cache( struct brw_cache *cache,
-			  enum brw_cache_id cache_id,
-			  const void *key,
-			  GLuint key_size,
-			  dri_bo **reloc_bufs, GLuint nr_reloc_bufs,
-			  void *aux_return )
+dri_bo *
+brw_search_cache(struct brw_cache *cache,
+                 enum brw_cache_id cache_id,
+                 const void *key,
+                 GLuint key_size,
+                 dri_bo **reloc_bufs, GLuint nr_reloc_bufs,
+                 void *aux_return)
 {
    struct brw_cache_item *item;
    GLuint hash = hash_key(key, key_size, reloc_bufs, nr_reloc_bufs);
@@ -191,6 +198,7 @@ dri_bo *brw_search_cache( struct brw_cache *cache,
    dri_bo_reference(item->bo);
    return item->bo;
 }
+
 
 dri_bo *
 brw_upload_cache( struct brw_cache *cache,
@@ -265,7 +273,9 @@ brw_upload_cache( struct brw_cache *cache,
    return bo;
 }
 
-/* This doesn't really work with aux data.  Use search/upload instead
+
+/**
+ * This doesn't really work with aux data.  Use search/upload instead
  */
 dri_bo *
 brw_cache_data_sz(struct brw_cache *cache,
@@ -296,6 +306,7 @@ brw_cache_data_sz(struct brw_cache *cache,
    return bo;
 }
 
+
 /**
  * Wrapper around brw_cache_data_sz using the cache_id's canonical key size.
  *
@@ -319,6 +330,7 @@ enum pool_type {
    DW_GENERAL_STATE
 };
 
+
 static void
 brw_init_cache_id(struct brw_cache *cache,
                   const char *name,
@@ -333,7 +345,7 @@ brw_init_cache_id(struct brw_cache *cache,
 
 
 static void
-brw_init_non_surface_cache( struct brw_context *brw )
+brw_init_non_surface_cache(struct brw_context *brw)
 {
    struct brw_cache *cache = &brw->cache;
 
@@ -433,6 +445,7 @@ brw_init_non_surface_cache( struct brw_context *brw )
 		     BRW_GS_PROG,
 		     sizeof(struct brw_gs_prog_key),
 		     sizeof(struct brw_gs_prog_data));
+
 #if 1
    brw_init_cache_id(cache,
 		     "SS_SURFACE",
@@ -448,8 +461,9 @@ brw_init_non_surface_cache( struct brw_context *brw )
 #endif
 }
 
+
 static void
-brw_init_surface_cache( struct brw_context *brw )
+brw_init_surface_cache(struct brw_context *brw)
 {
    struct brw_cache *cache = &brw->surface_cache;
 
@@ -473,14 +487,17 @@ brw_init_surface_cache( struct brw_context *brw )
 		     0);
 }
 
-void brw_init_caches( struct brw_context *brw )
+
+void
+brw_init_caches(struct brw_context *brw)
 {
    brw_init_non_surface_cache(brw);
    brw_init_surface_cache(brw);
 }
 
+
 static void
-brw_clear_cache( struct brw_context *brw, struct brw_cache *cache )
+brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
 {
    struct brw_cache_item *c, *next;
    GLuint i;
@@ -514,7 +531,9 @@ brw_clear_cache( struct brw_context *brw, struct brw_cache *cache )
    brw->state.dirty.cache |= ~0;
 }
 
-void brw_state_cache_check_size( struct brw_context *brw )
+
+void
+brw_state_cache_check_size(struct brw_context *brw)
 {
    /* un-tuned guess.  We've got around 20 state objects for a total of around
     * 32k, so 1000 of them is around 1.5MB.
@@ -542,7 +561,9 @@ brw_destroy_cache(struct brw_context *brw, struct brw_cache *cache)
    cache->size = 0;
 }
 
-void brw_destroy_caches( struct brw_context *brw )
+
+void
+brw_destroy_caches(struct brw_context *brw)
 {
    brw_destroy_cache(brw, &brw->cache);
    brw_destroy_cache(brw, &brw->surface_cache);
