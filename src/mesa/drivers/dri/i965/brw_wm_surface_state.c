@@ -456,17 +456,14 @@ brw_update_vs_constant_surface( GLcontext *ctx,
 
    assert(surf == 0);
 
-   /* free old const buffer if too small */
-   if (const_buffer && const_buffer->size < size) {
-      dri_bo_unreference(const_buffer);
-      const_buffer = NULL;
-   }
+   /* We always create a new VS constant buffer so that several can be
+    * in flight at a time.  Free the old one first...
+    */
+   dri_bo_unreference(const_buffer);
 
-   /* alloc new buffer if needed */
-   if (!const_buffer) {
-      const_buffer =
-         drm_intel_bo_alloc(intel->bufmgr, "vp_const_buffer", size, 64);
-   }
+   /* alloc new buffer */
+   const_buffer =
+      drm_intel_bo_alloc(intel->bufmgr, "vp_const_buffer", size, 64);
 
    memset(&key, 0, sizeof(key));
 
@@ -783,8 +780,7 @@ brw_vs_get_binding_table(struct brw_context *brw)
 
 
 /**
- * Vertex shader surfaces.  Just constant buffer for now.  Could add vertex 
- * shader textures in the future.
+ * Vertex shader surfaces (constant buffer).
  */
 static void prepare_vs_surfaces(struct brw_context *brw )
 {
@@ -820,8 +816,12 @@ prepare_surfaces(struct brw_context *brw)
 
 const struct brw_tracked_state brw_wm_surfaces = {
    .dirty = {
-      .mesa = _NEW_COLOR | _NEW_TEXTURE | _NEW_BUFFERS | _NEW_PROGRAM,
-      .brw = BRW_NEW_CONTEXT,
+      .mesa = (_NEW_COLOR |
+               _NEW_TEXTURE |
+               _NEW_BUFFERS |
+               _NEW_PROGRAM |
+               _NEW_PROGRAM_CONSTANTS),
+      .brw = (BRW_NEW_CONTEXT),
       .cache = 0
    },
    .prepare = prepare_surfaces,
