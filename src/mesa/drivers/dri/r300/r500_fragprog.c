@@ -501,7 +501,8 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 
 		_mesa_reference_program(r300->radeon.glCtx, &compiler.program, 0);
 
-		r300UpdateStateParameters(r300->radeon.glCtx, _NEW_PROGRAM);
+		r300UpdateStateParameters(r300->radeon.glCtx, _NEW_PROGRAM |
+                                          _NEW_PROGRAM_CONSTANTS);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			if (fp->translated) {

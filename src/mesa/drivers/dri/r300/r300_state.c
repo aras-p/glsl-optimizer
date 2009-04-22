@@ -1107,7 +1107,7 @@ void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state)
 	struct gl_program_parameter_list *paramList;
 	GLuint i;
 
-	if (!(new_state & (_NEW_BUFFERS | _NEW_PROGRAM)))
+	if (!(new_state & (_NEW_BUFFERS | _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS)))
 		return;
 
 	fp = (struct r300_fragment_program *)ctx->FragmentProgram._Current;
@@ -2355,11 +2355,12 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 			hw_tcl_on = future_hw_tcl_on = 0;
 			r300ResetHwState(rmesa);
 
-			r300UpdateStateParameters(ctx, _NEW_PROGRAM);
+			r300UpdateStateParameters(ctx, _NEW_PROGRAM |
+                                                  _NEW_PROGRAM_CONSTANTS);
 			return;
 		}
 	}
-	r300UpdateStateParameters(ctx, _NEW_PROGRAM);
+	r300UpdateStateParameters(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
 }
 
 static const GLfloat *get_fragmentprogram_constant(GLcontext *ctx,
