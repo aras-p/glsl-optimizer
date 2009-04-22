@@ -320,20 +320,20 @@ enum pool_type {
 };
 
 static void
-brw_init_cache_id( struct brw_context *brw,
-		const char *name,
-		enum brw_cache_id id,
-		GLuint key_size,
-		GLuint aux_size)
+brw_init_cache_id(struct brw_cache *cache,
+                  const char *name,
+                  enum brw_cache_id id,
+                  GLuint key_size,
+                  GLuint aux_size)
 {
-   struct brw_cache *cache = &brw->cache;
-
    cache->name[id] = strdup(name);
    cache->key_size[id] = key_size;
    cache->aux_size[id] = aux_size;
 }
 
-void brw_init_cache( struct brw_context *brw )
+
+static void
+brw_init_non_surface_cache( struct brw_context *brw )
 {
    struct brw_cache *cache = &brw->cache;
 
@@ -342,114 +342,145 @@ void brw_init_cache( struct brw_context *brw )
    cache->size = 7;
    cache->n_items = 0;
    cache->items = (struct brw_cache_item **)
-      _mesa_calloc(cache->size * 
-		   sizeof(struct brw_cache_item));
+      _mesa_calloc(cache->size * sizeof(struct brw_cache_item));
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "CC_VP",
 		     BRW_CC_VP,
 		     sizeof(struct brw_cc_viewport),
 		     0);
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "CC_UNIT",
 		     BRW_CC_UNIT,
 		     sizeof(struct brw_cc_unit_state),
 		     0);
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "WM_PROG",
 		     BRW_WM_PROG,
 		     sizeof(struct brw_wm_prog_key),
 		     sizeof(struct brw_wm_prog_data));
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "SAMPLER_DEFAULT_COLOR",
 		     BRW_SAMPLER_DEFAULT_COLOR,
 		     sizeof(struct brw_sampler_default_color),
 		     0);
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "SAMPLER",
 		     BRW_SAMPLER,
 		     0,		/* variable key/data size */
 		     0);
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "WM_UNIT",
 		     BRW_WM_UNIT,
 		     sizeof(struct brw_wm_unit_state),
 		     0);
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "SF_PROG",
 		     BRW_SF_PROG,
 		     sizeof(struct brw_sf_prog_key),
 		     sizeof(struct brw_sf_prog_data));
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "SF_VP",
 		     BRW_SF_VP,
 		     sizeof(struct brw_sf_viewport),
 		     0);
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "SF_UNIT",
 		     BRW_SF_UNIT,
 		     sizeof(struct brw_sf_unit_state),
 		     0);
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "VS_UNIT",
 		     BRW_VS_UNIT,
 		     sizeof(struct brw_vs_unit_state),
 		     0);
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "VS_PROG",
 		     BRW_VS_PROG,
 		     sizeof(struct brw_vs_prog_key),
 		     sizeof(struct brw_vs_prog_data));
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "CLIP_UNIT",
 		     BRW_CLIP_UNIT,
 		     sizeof(struct brw_clip_unit_state),
 		     0);
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "CLIP_PROG",
 		     BRW_CLIP_PROG,
 		     sizeof(struct brw_clip_prog_key),
 		     sizeof(struct brw_clip_prog_data));
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "GS_UNIT",
 		     BRW_GS_UNIT,
 		     sizeof(struct brw_gs_unit_state),
 		     0);
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
 		     "GS_PROG",
 		     BRW_GS_PROG,
 		     sizeof(struct brw_gs_prog_key),
 		     sizeof(struct brw_gs_prog_data));
-
-   brw_init_cache_id(brw,
+#if 1
+   brw_init_cache_id(cache,
 		     "SS_SURFACE",
 		     BRW_SS_SURFACE,
 		     sizeof(struct brw_surface_state),
 		     0);
 
-   brw_init_cache_id(brw,
+   brw_init_cache_id(cache,
+		     "SS_SURF_BIND",
+		     BRW_SS_SURF_BIND,
+		     0,
+		     0);
+#endif
+}
+
+static void
+brw_init_surface_cache( struct brw_context *brw )
+{
+   struct brw_cache *cache = &brw->surface_cache;
+
+   cache->brw = brw;
+
+   cache->size = 7;
+   cache->n_items = 0;
+   cache->items = (struct brw_cache_item **)
+      _mesa_calloc(cache->size * sizeof(struct brw_cache_item));
+
+   brw_init_cache_id(cache,
+		     "SS_SURFACE",
+		     BRW_SS_SURFACE,
+		     sizeof(struct brw_surface_state),
+		     0);
+
+   brw_init_cache_id(cache,
 		     "SS_SURF_BIND",
 		     BRW_SS_SURF_BIND,
 		     0,
 		     0);
 }
 
+void brw_init_caches( struct brw_context *brw )
+{
+   brw_init_non_surface_cache(brw);
+   brw_init_surface_cache(brw);
+}
+
 static void
-brw_clear_cache( struct brw_context *brw )
+brw_clear_cache( struct brw_context *brw, struct brw_cache *cache )
 {
    struct brw_cache_item *c, *next;
    GLuint i;
@@ -457,8 +488,8 @@ brw_clear_cache( struct brw_context *brw )
    if (INTEL_DEBUG & DEBUG_STATE)
       _mesa_printf("%s\n", __FUNCTION__);
 
-   for (i = 0; i < brw->cache.size; i++) {
-      for (c = brw->cache.items[i]; c; c = next) {
+   for (i = 0; i < cache->size; i++) {
+      for (c = cache->items[i]; c; c = next) {
 	 int j;
 
 	 next = c->next;
@@ -468,10 +499,10 @@ brw_clear_cache( struct brw_context *brw )
 	 free((void *)c->key);
 	 free(c);
       }
-      brw->cache.items[i] = NULL;
+      cache->items[i] = NULL;
    }
 
-   brw->cache.n_items = 0;
+   cache->n_items = 0;
 
    if (brw->curbe.last_buf) {
       _mesa_free(brw->curbe.last_buf);
@@ -489,19 +520,30 @@ void brw_state_cache_check_size( struct brw_context *brw )
     * 32k, so 1000 of them is around 1.5MB.
     */
    if (brw->cache.n_items > 1000)
-      brw_clear_cache(brw);
+      brw_clear_cache(brw, &brw->cache);
+
+   if (brw->surface_cache.n_items > 1000)
+      brw_clear_cache(brw, &brw->surface_cache);
 }
 
-void brw_destroy_cache( struct brw_context *brw )
+
+static void
+brw_destroy_cache(struct brw_context *brw, struct brw_cache *cache)
 {
    GLuint i;
 
-   brw_clear_cache(brw);
+   brw_clear_cache(brw, cache);
    for (i = 0; i < BRW_MAX_CACHE; i++) {
-      dri_bo_unreference(brw->cache.last_bo[i]);
-      free(brw->cache.name[i]);
+      dri_bo_unreference(cache->last_bo[i]);
+      free(cache->name[i]);
    }
-   free(brw->cache.items);
-   brw->cache.items = NULL;
-   brw->cache.size = 0;
+   free(cache->items);
+   cache->items = NULL;
+   cache->size = 0;
+}
+
+void brw_destroy_caches( struct brw_context *brw )
+{
+   brw_destroy_cache(brw, &brw->cache);
+   brw_destroy_cache(brw, &brw->surface_cache);
 }

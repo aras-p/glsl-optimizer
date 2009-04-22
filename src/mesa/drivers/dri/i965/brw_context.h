@@ -467,7 +467,8 @@ struct brw_context
       int validated_bo_count;
    } state;
 
-   struct brw_cache cache;
+   struct brw_cache cache;  /** non-surface items */
+   struct brw_cache surface_cache;  /* surface items */
    struct brw_cached_batch_item *cached_batch_items;
 
    struct {

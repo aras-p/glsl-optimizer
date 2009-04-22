@@ -100,13 +100,13 @@ const struct brw_tracked_state *atoms[] =
 
 void brw_init_state( struct brw_context *brw )
 {
-   brw_init_cache(brw);
+   brw_init_caches(brw);
 }
 
 
 void brw_destroy_state( struct brw_context *brw )
 {
-   brw_destroy_cache(brw);
+   brw_destroy_caches(brw);
    brw_destroy_batch_cache(brw);
 }
 
