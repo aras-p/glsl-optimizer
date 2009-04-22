@@ -1513,10 +1513,16 @@ generic_attrib_check(struct var_cache *vc_head)
    curr = vc_head;
    while (curr) {
       if (curr->type == vt_attrib) {
-         if (curr->attrib_is_generic)
-            genericAttrib[ curr->attrib_binding ] = GL_TRUE;
-         else
+         if (curr->attrib_is_generic) {
+            GLuint attr = (curr->attrib_binding == 0)
+               ? 0 : (curr->attrib_binding - VERT_ATTRIB_GENERIC0);
+            assert(attr < MAX_VERTEX_PROGRAM_ATTRIBS);
+            genericAttrib[attr] = GL_TRUE;
+         }
+         else {
+            assert(curr->attrib_binding < MAX_VERTEX_PROGRAM_ATTRIBS);
             explicitAttrib[ curr->attrib_binding ] = GL_TRUE;
+         }
       }
 
       curr = curr->next;
