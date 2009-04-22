@@ -819,7 +819,7 @@ update_image_transfer_state(GLcontext *ctx)
 
 
 /**
- * Update meas pixel transfer derived state.
+ * Update mesa pixel transfer derived state.
  */
 void _mesa_update_pixel( GLcontext *ctx, GLuint new_state )
 {
