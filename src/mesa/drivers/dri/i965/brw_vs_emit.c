@@ -69,13 +69,17 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
    GLuint i, reg = 0, mrf;
 
-#if 0
-   if (c->vp->program.Base.Parameters->NumParameters >= 6)
-      c->use_const_buffer = 1;
+   /* Determine whether to use a real constant buffer or use a block
+    * of GRF registers for constants.  The later is faster but only
+    * works if everything fits in the GRF.
+    * XXX this heuristic/check may need some fine tuning...
+    */
+   if (c->vp->program.Base.Parameters->NumParameters +
+       c->vp->program.Base.NumTemporaries + 20 > BRW_MAX_GRF)
+      c->use_const_buffer = GL_TRUE;
    else
-#endif
       c->use_const_buffer = GL_FALSE;
-   /*printf("use_const_buffer = %d\n", c->use_const_buffer);*/
+   printf("use_const_buffer = %d\n", c->use_const_buffer);
 
    /* r0 -- reserved as usual
     */
