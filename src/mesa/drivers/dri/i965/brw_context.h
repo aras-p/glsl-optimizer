@@ -243,6 +243,9 @@ struct brw_vs_ouput_sizes {
 };
 
 
+/** Number of general purpose registers (VS, WM, etc) */
+#define BRW_MAX_GRF 128
+
 /** Number of texture sampler units */
 #define BRW_MAX_TEX_UNIT 16
 
