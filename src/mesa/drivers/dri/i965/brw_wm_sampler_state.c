@@ -152,7 +152,7 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
       sampler->ss0.mag_filter = BRW_MAPFILTER_ANISOTROPIC;
 
       if (key->max_aniso > 2.0) {
-	 sampler->ss3.max_aniso = MAX2((key->max_aniso - 2) / 2,
+	 sampler->ss3.max_aniso = MIN2((key->max_aniso - 2) / 2,
 				       BRW_ANISORATIO_16);
       }
    }

@@ -145,6 +145,8 @@ i915CreateContext(const __GLcontextModes * mesaVis,
    ctx->Const.MaxTextureRectSize = (1 << 11);
    ctx->Const.MaxTextureUnits = I915_TEX_UNITS;
 
+   ctx->Const.MaxTextureMaxAnisotropy = 4.0;
+
    /* GL_ARB_fragment_program limits - don't think Mesa actually
     * validates programs against these, and in any case one ARB
     * instruction can translate to more than one HW instruction, so

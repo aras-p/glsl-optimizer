@@ -98,6 +98,8 @@ i830CreateContext(const __GLcontextModes * mesaVis,
    ctx->Const.MaxTextureRectSize = (1 << 11);
    ctx->Const.MaxTextureUnits = I830_TEX_UNITS;
 
+   ctx->Const.MaxTextureMaxAnisotropy = 2.0;
+
    ctx->Const.MaxDrawBuffers = 1;
 
    _tnl_init_vertices(ctx, ctx->Const.MaxArrayLockSize + 12,

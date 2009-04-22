@@ -528,8 +528,6 @@ intelInitContext(struct intel_context *intel,
       }
    }
 
-   ctx->Const.MaxTextureMaxAnisotropy = 2.0;
-
    /* This doesn't yet catch all non-conformant rendering, but it's a
     * start.
     */
