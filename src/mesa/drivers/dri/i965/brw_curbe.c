@@ -352,11 +352,7 @@ update_constant_buffer(struct brw_context *brw,
       dri_bo_unmap(const_buffer);
 
       if (0) {
-         int i;
-         for (i = 0; i < params->NumParameters; i++) {
-            float *p = params->ParameterValues[i];
-            printf("%d: %f %f %f %f\n", i, p[0], p[1], p[2], p[3]);
-         }
+         _mesa_print_parameter_list(params);
       }
    }
 }
@@ -369,7 +365,7 @@ update_vertex_constant_buffer(struct brw_context *brw)
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
    if (0) {
-      printf("update VS constants in buffer %p\n", vp->const_buffer);
+      printf("update VS constants in buffer %p  vp = %p\n", vp->const_buffer, vp);
       printf("program %u\n", vp->program.Base.Id);
    }
    update_constant_buffer(brw, vp->program.Base.Parameters, vp->const_buffer);
@@ -382,6 +378,10 @@ update_fragment_constant_buffer(struct brw_context *brw)
 {
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
+   if (0) {
+      printf("update WM constants in buffer %p\n", fp->const_buffer);
+      printf("program %u\n", fp->program.Base.Id);
+   }
    update_constant_buffer(brw, fp->program.Base.Parameters, fp->const_buffer);
 }
 
