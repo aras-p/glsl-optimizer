@@ -56,7 +56,7 @@ static void set_reg(struct brw_wm_compile *c, int file, int index,
  * Examine instruction's write mask to find index of first component
  * enabled for writing.
  */
-static int get_scalar_dst_index(struct prog_instruction *inst)
+static int get_scalar_dst_index(const struct prog_instruction *inst)
 {
     int i;
     for (i = 0; i < 4; i++)
@@ -254,14 +254,15 @@ static void prealloc_reg(struct brw_wm_compile *c)
      * XXX alloc these on demand!
      */
     if (c->use_const_buffer) {
-       c->current_const[0].reg = alloc_tmp(c);
-       c->current_const[1].reg = alloc_tmp(c);
-       c->current_const[2].reg = alloc_tmp(c);
+       for (i = 0; i < 3; i++) {
+          c->current_const[i].index = -1;
+          c->current_const[i].reg = alloc_tmp(c);
+       }
     }
-    /*
+#if 0
     printf("USE CONST BUFFER? %d\n", c->use_const_buffer);
     printf("AFTER PRE_ALLOC, reg_index = %d\n", c->reg_index);
-    */
+#endif
 }
 
 
@@ -283,14 +284,12 @@ static void fetch_constants(struct brw_wm_compile *c,
           src->File == PROGRAM_CONSTANT ||
           src->File == PROGRAM_UNIFORM) {
          if (c->current_const[i].index != src->Index) {
-
             c->current_const[i].index = src->Index;
-            /*c->current_const[i].reg = alloc_tmp(c);*/
 
-            /*
+#if 0
             printf("  fetch const[%d] for arg %d into reg %d\n",
                    src->Index, i, c->current_const[i].reg.nr);
-            */
+#endif
 
             /* need to fetch the constant now */
             brw_dp_READ_4(p,
@@ -298,28 +297,8 @@ static void fetch_constants(struct brw_wm_compile *c,
                           1,                        /* msg_reg */
                           src->RelAddr,             /* relative indexing? */
                           16 * src->Index,          /* byte offset */
-                          BRW_WM_MAX_SURF - 1       /* binding table index */
+                          SURF_INDEX_FRAG_CONST_BUFFER/* binding table index */
                           );
-
-#if 0
-            /* dependency stall */
-            {
-               int response_length = 1;
-               int mark = mark_tmps( c );
-               struct brw_reg src = c->current_const[i].reg;
-               struct brw_reg tmp = alloc_tmp(c);
-
-               /*  mov (8) r9.0<1>:f    r9.0<8;8,1>:f    { Align1 }
-                */
-               brw_push_insn_state(p);
-               brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-               brw_MOV(p, tmp, src);	      
-               brw_MOV(p, src, tmp);	      
-               brw_pop_insn_state(p);
-
-               release_tmps( c, mark );
-            }
-#endif
          }
       }
    }
@@ -361,18 +340,18 @@ get_src_reg_const(struct brw_wm_compile *c,
    const_reg = stride(const_reg, 0, 1, 0);
    const_reg.subnr = component * 4;
 
-   if (src->NegateBase)
+   if (src->Negate & (1 << component))
       const_reg = negate(const_reg);
    if (src->Abs)
       const_reg = brw_abs(const_reg);
 
-   /*
-   printf("  form const[%d] for arg %d, comp %d, reg %d\n",
+#if 0
+   printf("  form const[%d].%d for arg %d, reg %d\n",
           c->current_const[srcRegIndex].index,
-          srcRegIndex,
           component,
+          srcRegIndex,
           const_reg.nr);
-   */
+#endif
 
    return const_reg;
 }
@@ -398,7 +377,7 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
     else {
        /* other type of source register */
        return get_reg(c, src->File, src->Index, component, nr, 
-                      src->NegateBase, src->Abs);
+                      src->Negate, src->Abs);
     }
 }
 
@@ -423,11 +402,13 @@ static struct brw_reg get_src_reg_imm(struct brw_wm_compile *c,
        const GLfloat *param =
           c->fp->program.Base.Parameters->ParameterValues[src->Index];
        GLfloat value = param[component];
-       if (src->NegateBase)
+       if (src->Negate & (1 << channel))
           value = -value;
        if (src->Abs)
           value = FABSF(value);
-       /*printf("  form imm reg %f\n", value);*/
+#if 0
+       printf("  form immed value %f for chan %d\n", value, channel);
+#endif
        return brw_imm_f(value);
     }
     else {
@@ -501,7 +482,7 @@ static void invoke_subroutine( struct brw_wm_compile *c,
 }
 
 static void emit_abs( struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                      const struct prog_instruction *inst)
 {
     int i;
     struct brw_compile *p = &c->func;
@@ -518,7 +499,7 @@ static void emit_abs( struct brw_wm_compile *c,
 }
 
 static void emit_trunc( struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                        const struct prog_instruction *inst)
 {
     int i;
     struct brw_compile *p = &c->func;
@@ -536,7 +517,7 @@ static void emit_trunc( struct brw_wm_compile *c,
 }
 
 static void emit_mov( struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                      const struct prog_instruction *inst)
 {
     int i;
     struct brw_compile *p = &c->func;
@@ -546,7 +527,9 @@ static void emit_mov( struct brw_wm_compile *c,
 	if (mask & (1<<i)) {
 	    struct brw_reg src, dst;
 	    dst = get_dst_reg(c, inst, i);
-	    src = get_src_reg_imm(c, inst, 0, i);
+            /* XXX some moves from immediate value don't work reliably!!! */
+            /*src = get_src_reg_imm(c, inst, 0, i);*/
+            src = get_src_reg(c, inst, 0, i);
 	    brw_MOV(p, dst, src);
 	}
     }
@@ -554,7 +537,7 @@ static void emit_mov( struct brw_wm_compile *c,
 }
 
 static void emit_pixel_xy(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                          const struct prog_instruction *inst)
 {
     struct brw_reg r1 = brw_vec1_grf(1, 0);
     struct brw_reg r1_uw = retype(r1, BRW_REGISTER_TYPE_UW);
@@ -584,7 +567,7 @@ static void emit_pixel_xy(struct brw_wm_compile *c,
 }
 
 static void emit_delta_xy(struct brw_wm_compile *c,
-                          struct prog_instruction *inst)
+                          const struct prog_instruction *inst)
 {
     struct brw_reg r1 = brw_vec1_grf(1, 0);
     struct brw_reg dst0, dst1, src0, src1;
@@ -644,7 +627,7 @@ static void fire_fb_write( struct brw_wm_compile *c,
 }
 
 static void emit_fb_write(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                          const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     int nr = 2;
@@ -713,7 +696,7 @@ static void emit_fb_write(struct brw_wm_compile *c,
 }
 
 static void emit_pixel_w( struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                          const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     GLuint mask = inst->DstReg.WriteMask;
@@ -743,7 +726,7 @@ static void emit_pixel_w( struct brw_wm_compile *c,
 }
 
 static void emit_linterp(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                         const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     GLuint mask = inst->DstReg.WriteMask;
@@ -772,7 +755,7 @@ static void emit_linterp(struct brw_wm_compile *c,
 }
 
 static void emit_cinterp(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                         const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     GLuint mask = inst->DstReg.WriteMask;
@@ -798,7 +781,7 @@ static void emit_cinterp(struct brw_wm_compile *c,
 }
 
 static void emit_pinterp(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                         const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     GLuint mask = inst->DstReg.WriteMask;
@@ -832,7 +815,7 @@ static void emit_pinterp(struct brw_wm_compile *c,
 
 /* Sets the destination channels to 1.0 or 0.0 according to glFrontFacing. */
 static void emit_frontfacing(struct brw_wm_compile *c,
-			     struct prog_instruction *inst)
+			     const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     struct brw_reg r1_6ud = retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD);
@@ -861,7 +844,7 @@ static void emit_frontfacing(struct brw_wm_compile *c,
 }
 
 static void emit_xpd(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     int i;
     struct brw_compile *p = &c->func;
@@ -886,7 +869,7 @@ static void emit_xpd(struct brw_wm_compile *c,
 }
 
 static void emit_dp3(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_reg src0[3], src1[3], dst;
     int i;
@@ -905,7 +888,7 @@ static void emit_dp3(struct brw_wm_compile *c,
 }
 
 static void emit_dp4(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_reg src0[4], src1[4], dst;
     int i;
@@ -924,7 +907,7 @@ static void emit_dp4(struct brw_wm_compile *c,
 }
 
 static void emit_dph(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_reg src0[4], src1[4], dst;
     int i;
@@ -948,7 +931,7 @@ static void emit_dph(struct brw_wm_compile *c,
  * register's X, Y, Z and W channels (subject to writemasking of course).
  */
 static void emit_math1(struct brw_wm_compile *c,
-		struct prog_instruction *inst, GLuint func)
+                       const struct prog_instruction *inst, GLuint func)
 {
     struct brw_compile *p = &c->func;
     struct brw_reg src0, dst, tmp;
@@ -985,43 +968,43 @@ static void emit_math1(struct brw_wm_compile *c,
 }
 
 static void emit_rcp(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     emit_math1(c, inst, BRW_MATH_FUNCTION_INV);
 }
 
 static void emit_rsq(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     emit_math1(c, inst, BRW_MATH_FUNCTION_RSQ);
 }
 
 static void emit_sin(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     emit_math1(c, inst, BRW_MATH_FUNCTION_SIN);
 }
 
 static void emit_cos(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     emit_math1(c, inst, BRW_MATH_FUNCTION_COS);
 }
 
 static void emit_ex2(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     emit_math1(c, inst, BRW_MATH_FUNCTION_EXP);
 }
 
 static void emit_lg2(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     emit_math1(c, inst, BRW_MATH_FUNCTION_LOG);
 }
 
 static void emit_add(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     struct brw_reg src0, src1, dst;
@@ -1040,7 +1023,7 @@ static void emit_add(struct brw_wm_compile *c,
 }
 
 static void emit_arl(struct brw_wm_compile *c,
-                     struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     struct brw_reg src0, addr_reg;
@@ -1053,7 +1036,7 @@ static void emit_arl(struct brw_wm_compile *c,
 }
 
 static void emit_sub(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     struct brw_reg src0, src1, dst;
@@ -1072,7 +1055,7 @@ static void emit_sub(struct brw_wm_compile *c,
 }
 
 static void emit_mul(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     struct brw_reg src0, src1, dst;
@@ -1091,7 +1074,7 @@ static void emit_mul(struct brw_wm_compile *c,
 }
 
 static void emit_frc(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     struct brw_reg src0, dst;
@@ -1110,7 +1093,7 @@ static void emit_frc(struct brw_wm_compile *c,
 }
 
 static void emit_flr(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     struct brw_reg src0, dst;
@@ -1177,7 +1160,7 @@ static void emit_min_max(struct brw_wm_compile *c,
 }
 
 static void emit_pow(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     struct brw_reg dst, src0, src1;
@@ -1199,7 +1182,7 @@ static void emit_pow(struct brw_wm_compile *c,
 }
 
 static void emit_lrp(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     GLuint mask = inst->DstReg.WriteMask;
@@ -1252,7 +1235,7 @@ static void emit_kil(struct brw_wm_compile *c)
 }
 
 static void emit_mad(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     GLuint mask = inst->DstReg.WriteMask;
@@ -1275,7 +1258,7 @@ static void emit_mad(struct brw_wm_compile *c,
 }
 
 static void emit_sop(struct brw_wm_compile *c,
-		struct prog_instruction *inst, GLuint cond)
+                     const struct prog_instruction *inst, GLuint cond)
 {
     struct brw_compile *p = &c->func;
     GLuint mask = inst->DstReg.WriteMask;
@@ -1299,43 +1282,43 @@ static void emit_sop(struct brw_wm_compile *c,
 }
 
 static void emit_slt(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     emit_sop(c, inst, BRW_CONDITIONAL_L);
 }
 
 static void emit_sle(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     emit_sop(c, inst, BRW_CONDITIONAL_LE);
 }
 
 static void emit_sgt(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     emit_sop(c, inst, BRW_CONDITIONAL_G);
 }
 
 static void emit_sge(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     emit_sop(c, inst, BRW_CONDITIONAL_GE);
 }
 
 static void emit_seq(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     emit_sop(c, inst, BRW_CONDITIONAL_EQ);
 }
 
 static void emit_sne(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     emit_sop(c, inst, BRW_CONDITIONAL_NEQ);
 }
 
 static void emit_ddx(struct brw_wm_compile *c,
-                struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     GLuint mask = inst->DstReg.WriteMask;
@@ -1362,7 +1345,7 @@ static void emit_ddx(struct brw_wm_compile *c,
 }
 
 static void emit_ddy(struct brw_wm_compile *c,
-                struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     GLuint mask = inst->DstReg.WriteMask;
@@ -1505,7 +1488,7 @@ static void noise1_sub( struct brw_wm_compile *c ) {
 }
 
 static void emit_noise1( struct brw_wm_compile *c,
-			 struct prog_instruction *inst )
+			 const struct prog_instruction *inst )
 {
     struct brw_compile *p = &c->func;
     struct brw_reg src, param, dst;
@@ -1675,7 +1658,7 @@ static void noise2_sub( struct brw_wm_compile *c ) {
 }
 
 static void emit_noise2( struct brw_wm_compile *c,
-			 struct prog_instruction *inst )
+			 const struct prog_instruction *inst )
 {
     struct brw_compile *p = &c->func;
     struct brw_reg src0, src1, param0, param1, dst;
@@ -1978,7 +1961,7 @@ static void noise3_sub( struct brw_wm_compile *c ) {
 }
 
 static void emit_noise3( struct brw_wm_compile *c,
-			 struct prog_instruction *inst )
+			 const struct prog_instruction *inst )
 {
     struct brw_compile *p = &c->func;
     struct brw_reg src0, src1, src2, param0, param1, param2, dst;
@@ -2401,7 +2384,7 @@ static void noise4_sub( struct brw_wm_compile *c )
 }
 
 static void emit_noise4( struct brw_wm_compile *c,
-			 struct prog_instruction *inst )
+			 const struct prog_instruction *inst )
 {
     struct brw_compile *p = &c->func;
     struct brw_reg src0, src1, src2, src3, param0, param1, param2, param3, dst;
@@ -2443,7 +2426,7 @@ static void emit_noise4( struct brw_wm_compile *c,
 }
     
 static void emit_wpos_xy(struct brw_wm_compile *c,
-                struct prog_instruction *inst)
+                         const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     GLuint mask = inst->DstReg.WriteMask;
@@ -2479,7 +2462,7 @@ static void emit_wpos_xy(struct brw_wm_compile *c,
    BIAS on SIMD8 not working yet...
  */	
 static void emit_txb(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     struct brw_reg dst[4], src[4], payload_reg;
@@ -2517,7 +2500,7 @@ static void emit_txb(struct brw_wm_compile *c,
                retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW),  /* dest */
                1,                                           /* msg_reg_nr */
                retype(payload_reg, BRW_REGISTER_TYPE_UW),   /* src0 */
-               unit + MAX_DRAW_BUFFERS,                     /* surface */
+               SURF_INDEX_TEXTURE(unit),
                unit,                                        /* sampler */
                inst->DstReg.WriteMask,                      /* writemask */
                BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS,      /* msg_type */
@@ -2528,7 +2511,7 @@ static void emit_txb(struct brw_wm_compile *c,
 
 
 static void emit_tex(struct brw_wm_compile *c,
-		struct prog_instruction *inst)
+                     const struct prog_instruction *inst)
 {
     struct brw_compile *p = &c->func;
     struct brw_reg dst[4], src[4], payload_reg;
@@ -2581,7 +2564,7 @@ static void emit_tex(struct brw_wm_compile *c,
                retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW), /* dest */
                1,                                          /* msg_reg_nr */
                retype(payload_reg, BRW_REGISTER_TYPE_UW),  /* src0 */
-               unit + MAX_DRAW_BUFFERS,                    /* surface */
+               SURF_INDEX_TEXTURE(unit),
                unit,                                       /* sampler */
                inst->DstReg.WriteMask,                     /* writemask */
                BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE,           /* msg_type */
@@ -2618,21 +2601,21 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
     brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
 
     for (i = 0; i < c->nr_fp_insns; i++) {
-	struct prog_instruction *inst = &c->prog_instructions[i];
+        const struct prog_instruction *inst = &c->prog_instructions[i];
+
+#if 0
+        _mesa_printf("Inst %d: ", i);
+        _mesa_print_instruction(inst);
+#endif
+
+        /* fetch any constants that this instruction needs */
+        if (c->use_const_buffer)
+           fetch_constants(c, inst);
 
 	if (inst->CondUpdate)
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
 	else
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NONE);
-
-        /*
-        _mesa_printf("Inst %d: ", i);
-        _mesa_print_instruction(inst);
-        */
-
-        /* fetch any constants that this instruction needs */
-        if (c->use_const_buffer)
-           fetch_constants(c, inst);
 
 	switch (inst->Opcode) {
 	    case WM_PIXELXY:
@@ -2819,6 +2802,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 
 		break;
 	    case OPCODE_BGNLOOP:
+                /* XXX may need to invalidate the current_constant regs */
 		loop_inst[loop_insn++] = brw_DO(p, BRW_EXECUTE_8);
 		break;
 	    case OPCODE_BRK:

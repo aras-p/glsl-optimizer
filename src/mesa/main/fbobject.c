@@ -692,7 +692,7 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
       return;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+   FLUSH_CURRENT(ctx, _NEW_BUFFERS);
    /* The above doesn't fully flush the drivers in the way that a
     * glFlush does, but that is required here:
     */
@@ -1187,8 +1187,7 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
       return;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
-
+   FLUSH_CURRENT(ctx, _NEW_BUFFERS);
    if (ctx->Driver.Flush) {  
       ctx->Driver.Flush(ctx);
    }
@@ -1269,7 +1268,7 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+   FLUSH_CURRENT(ctx, _NEW_BUFFERS);
    /* The above doesn't fully flush the drivers in the way that a
     * glFlush does, but that is required here:
     */
@@ -1507,7 +1506,7 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
       }
    }
 
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+   FLUSH_CURRENT(ctx, _NEW_BUFFERS);
    /* The above doesn't fully flush the drivers in the way that a
     * glFlush does, but that is required here:
     */
@@ -1688,7 +1687,7 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
    }
 
 
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+   FLUSH_CURRENT(ctx, _NEW_BUFFERS);
    /* The above doesn't fully flush the drivers in the way that a
     * glFlush does, but that is required here:
     */
@@ -1769,7 +1768,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       }
    }
 
-   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+   FLUSH_CURRENT(ctx, _NEW_BUFFERS);
    /* The above doesn't fully flush the drivers in the way that a
     * glFlush does, but that is required here:
     */

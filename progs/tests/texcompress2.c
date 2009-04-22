@@ -51,7 +51,6 @@ TestSubTex(void)
    GLboolean all = 0*GL_TRUE;
    GLubyte *buffer;
    GLint size, fmt;
-   int i;
 
    glGetTexLevelParameteriv(Target, 0,
                             GL_TEXTURE_COMPRESSED_IMAGE_SIZE_ARB, &size);
@@ -77,6 +76,23 @@ TestSubTex(void)
                                    ImgWidth, ImgHeight / 2,
                                    fmt, size/2, buffer + size / 2);
    }
+
+   free(buffer);
+}
+
+
+static void
+TestGetTex(void)
+{
+   GLubyte *buffer;
+
+   buffer = (GLubyte *) malloc(3 * ImgWidth * ImgHeight);
+
+   glGetTexImage(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB,
+                 GL_UNSIGNED_BYTE,
+                 buffer);
 
    free(buffer);
 }
@@ -146,7 +162,10 @@ LoadCompressedImage(const char *file)
    glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, filter);
    glTexParameteri(Target, GL_TEXTURE_MAG_FILTER, filter);
 
-   TestSubTex();
+   if (0)
+      TestSubTex();
+   else
+      TestGetTex();
 
 }
 

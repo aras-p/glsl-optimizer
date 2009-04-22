@@ -32,7 +32,7 @@ import struct
 
 import gallium
 import model
-import parser
+import parse as parser
 
 
 try:

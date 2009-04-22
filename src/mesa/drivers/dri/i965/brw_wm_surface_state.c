@@ -38,7 +38,7 @@
 #include "intel_mipmap_tree.h"
 #include "intel_batchbuffer.h"
 #include "intel_tex.h"
-
+#include "intel_fbo.h"
 
 #include "brw_context.h"
 #include "brw_state.h"
@@ -176,7 +176,11 @@ static GLuint translate_tex_format( GLuint mesa_format, GLenum internal_format,
    }
 }
 
-struct brw_wm_surface_key {
+
+/**
+ * Use same key for WM and VS surfaces.
+ */
+struct brw_surface_key {
    GLenum target, depthmode;
    dri_bo *bo;
    GLint format, internal_format;
@@ -186,6 +190,7 @@ struct brw_wm_surface_key {
    uint32_t tiling;
    GLuint offset;
 };
+
 
 static void
 brw_set_surface_tiling(struct brw_surface_state *surf, uint32_t tiling)
@@ -208,7 +213,7 @@ brw_set_surface_tiling(struct brw_surface_state *surf, uint32_t tiling)
 
 static dri_bo *
 brw_create_texture_surface( struct brw_context *brw,
-			    struct brw_wm_surface_key *key )
+			    struct brw_surface_key *key )
 {
    struct brw_surface_state surf;
    dri_bo *bo;
@@ -287,8 +292,8 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage = tObj->Image[0][intelObj->firstLevel];
-   struct brw_wm_surface_key key;
-   const GLuint j = MAX_DRAW_BUFFERS + unit;
+   struct brw_surface_key key;
+   const GLuint surf = SURF_INDEX_TEXTURE(unit);
 
    memset(&key, 0, sizeof(key));
 
@@ -315,25 +320,25 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    key.cpp = intelObj->mt->cpp;
    key.tiling = intelObj->mt->region->tiling;
 
-   dri_bo_unreference(brw->wm.surf_bo[j]);
-   brw->wm.surf_bo[j] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
+   dri_bo_unreference(brw->wm.surf_bo[surf]);
+   brw->wm.surf_bo[surf] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
                                          &key, sizeof(key),
                                          &key.bo, key.bo ? 1 : 0,
                                          NULL);
-   if (brw->wm.surf_bo[j] == NULL) {
-      brw->wm.surf_bo[j] = brw_create_texture_surface(brw, &key);
+   if (brw->wm.surf_bo[surf] == NULL) {
+      brw->wm.surf_bo[surf] = brw_create_texture_surface(brw, &key);
    }
 }
 
 
 
 /**
- * Create the constant buffer surface.  Fragment shader constanst will be
+ * Create the constant buffer surface.  Vertex/fragment shader constants will be
  * read from this buffer with Data Port Read instructions/messages.
  */
 static dri_bo *
 brw_create_constant_surface( struct brw_context *brw,
-                             struct brw_wm_surface_key *key )
+                             struct brw_surface_key *key )
 {
    const GLint w = key->width - 1;
    struct brw_surface_state surf;
@@ -345,8 +350,6 @@ brw_create_constant_surface( struct brw_context *brw,
    surf.ss0.surface_type = BRW_SURFACE_BUFFER;
    surf.ss0.surface_format = BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
 
-   /* This is ok for all textures with channel width 8bit or less:
-    */
    assert(key->bo);
    if (key->bo)
       surf.ss1.base_addr = key->bo->offset; /* reloc */
@@ -356,8 +359,8 @@ brw_create_constant_surface( struct brw_context *brw,
    surf.ss2.width = w & 0x7f;            /* bits 6:0 of size or width */
    surf.ss2.height = (w >> 7) & 0x1fff;  /* bits 19:7 of size or width */
    surf.ss3.depth = (w >> 20) & 0x7f;    /* bits 26:20 of size or width */
-   surf.ss3.pitch = (key->pitch * key->cpp) - 1;
-   brw_set_surface_tiling(&surf, key->tiling);
+   surf.ss3.pitch = (key->pitch * key->cpp) - 1; /* ignored?? */
+   brw_set_surface_tiling(&surf, key->tiling); /* tiling now allowed */
  
    bo = brw_upload_cache(&brw->cache, BRW_SS_SURFACE,
 			 key, sizeof(*key),
@@ -379,26 +382,40 @@ brw_create_constant_surface( struct brw_context *brw,
 
 
 /**
- * Update the constant buffer surface.
+ * Update the surface state for a WM constant buffer.
+ * The constant buffer will be (re)allocated here if needed.
  */
-static void
-brw_update_constant_surface( GLcontext *ctx,
-                             const struct brw_fragment_program *fp )
+static dri_bo *
+brw_update_wm_constant_surface( GLcontext *ctx,
+                                GLuint surf,
+                                dri_bo *const_buffer,
+                                const struct gl_program_parameter_list *params)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct brw_wm_surface_key key;
-   const GLuint j = BRW_WM_MAX_SURF - 1;
-   const GLuint numParams = fp->program.Base.Parameters->NumParameters;
+   struct brw_surface_key key;
+   struct intel_context *intel = &brw->intel;
+   const int size = params->NumParameters * 4 * sizeof(GLfloat);
+
+   /* free old const buffer if too small */
+   if (const_buffer && const_buffer->size < size) {
+      dri_bo_unreference(const_buffer);
+      const_buffer = NULL;
+   }
+
+   /* alloc new buffer if needed */
+   if (!const_buffer) {
+      const_buffer =
+         drm_intel_bo_alloc(intel->bufmgr, "fp_const_buffer", size, 64);
+   }
 
    memset(&key, 0, sizeof(key));
 
    key.format = MESA_FORMAT_RGBA_FLOAT32;
    key.internal_format = GL_RGBA;
-   key.bo = fp->const_buffer;
-
+   key.bo = const_buffer;
    key.depthmode = GL_NONE;
-   key.pitch = numParams;
-   key.width = numParams;
+   key.pitch = params->NumParameters;
+   key.width = params->NumParameters;
    key.height = 1;
    key.depth = 1;
    key.cpp = 16;
@@ -409,14 +426,76 @@ brw_update_constant_surface( GLcontext *ctx,
           key.width, key.height, key.depth, key.cpp, key.pitch);
    */
 
-   dri_bo_unreference(brw->wm.surf_bo[j]);
-   brw->wm.surf_bo[j] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
-                                         &key, sizeof(key),
-                                         &key.bo, key.bo ? 1 : 0,
-                                         NULL);
-   if (brw->wm.surf_bo[j] == NULL) {
-      brw->wm.surf_bo[j] = brw_create_constant_surface(brw, &key);
+   dri_bo_unreference(brw->wm.surf_bo[surf]);
+   brw->wm.surf_bo[surf] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
+                                            &key, sizeof(key),
+                                            &key.bo, key.bo ? 1 : 0,
+                                            NULL);
+   if (brw->wm.surf_bo[surf] == NULL) {
+      brw->wm.surf_bo[surf] = brw_create_constant_surface(brw, &key);
    }
+
+   return const_buffer;
+}
+
+
+/**
+ * Update the surface state for a VS constant buffer.
+ * The constant buffer will be (re)allocated here if needed.
+ */
+static dri_bo *
+brw_update_vs_constant_surface( GLcontext *ctx,
+                                GLuint surf,
+                                dri_bo *const_buffer,
+                                const struct gl_program_parameter_list *params)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct brw_surface_key key;
+   struct intel_context *intel = &brw->intel;
+   const int size = params->NumParameters * 4 * sizeof(GLfloat);
+
+   assert(surf == 0);
+
+   /* free old const buffer if too small */
+   if (const_buffer && const_buffer->size < size) {
+      dri_bo_unreference(const_buffer);
+      const_buffer = NULL;
+   }
+
+   /* alloc new buffer if needed */
+   if (!const_buffer) {
+      const_buffer =
+         drm_intel_bo_alloc(intel->bufmgr, "vp_const_buffer", size, 64);
+   }
+
+   memset(&key, 0, sizeof(key));
+
+   key.format = MESA_FORMAT_RGBA_FLOAT32;
+   key.internal_format = GL_RGBA;
+   key.bo = const_buffer;
+   key.depthmode = GL_NONE;
+   key.pitch = params->NumParameters;
+   key.width = params->NumParameters;
+   key.height = 1;
+   key.depth = 1;
+   key.cpp = 16;
+
+   /*
+   printf("%s:\n", __FUNCTION__);
+   printf("  width %d  height %d  depth %d  cpp %d  pitch %d\n",
+          key.width, key.height, key.depth, key.cpp, key.pitch);
+   */
+
+   dri_bo_unreference(brw->vs.surf_bo[surf]);
+   brw->vs.surf_bo[surf] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
+                                            &key, sizeof(key),
+                                            &key.bo, key.bo ? 1 : 0,
+                                            NULL);
+   if (brw->vs.surf_bo[surf] == NULL) {
+      brw->vs.surf_bo[surf] = brw_create_constant_surface(brw, &key);
+   }
+
+   return const_buffer;
 }
 
 
@@ -426,15 +505,18 @@ brw_update_constant_surface( GLcontext *ctx,
  * usable for further buffers when doing ARB_draw_buffer support.
  */
 static void
-brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
-			  unsigned int unit, GLboolean cached)
+brw_update_renderbuffer_surface(struct brw_context *brw,
+				struct gl_renderbuffer *rb,
+				unsigned int unit, GLboolean cached)
 {
    GLcontext *ctx = &brw->intel.ctx;
    dri_bo *region_bo = NULL;
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   struct intel_region *region = irb ? irb->region : NULL;
    struct {
       unsigned int surface_type;
       unsigned int surface_format;
-      unsigned int width, height, cpp;
+      unsigned int width, height, pitch, cpp;
       GLubyte color_mask[4];
       GLboolean color_blend;
       uint32_t tiling;
@@ -446,13 +528,27 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
       region_bo = region->buffer;
 
       key.surface_type = BRW_SURFACE_2D;
-      if (region->cpp == 4)
+      switch (irb->texformat->MesaFormat) {
+      case MESA_FORMAT_ARGB8888:
 	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-      else
+	 break;
+      case MESA_FORMAT_RGB565:
 	 key.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
+	 break;
+      case MESA_FORMAT_ARGB1555:
+	 key.surface_format = BRW_SURFACEFORMAT_B5G5R5A1_UNORM;
+	 break;
+      case MESA_FORMAT_ARGB4444:
+	 key.surface_format = BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
+	 break;
+      default:
+	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n",
+		       irb->texformat->MesaFormat);
+      }
       key.tiling = region->tiling;
-      key.width = region->pitch; /* XXX: not really! */
+      key.width = region->width;
       key.height = region->height;
+      key.pitch = region->pitch;
       key.cpp = region->cpp;
    } else {
       key.surface_type = BRW_SURFACE_NULL;
@@ -488,7 +584,7 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
       surf.ss2.width = key.width - 1;
       surf.ss2.height = key.height - 1;
       brw_set_surface_tiling(&surf, key.tiling);
-      surf.ss3.pitch = (key.width * key.cpp) - 1;
+      surf.ss3.pitch = (key.pitch * key.cpp) - 1;
 
       /* _NEW_COLOR */
       surf.ss0.color_blend = key.color_blend;
@@ -499,7 +595,7 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
 
       /* Key size will never match key size for textures, so we're safe. */
       brw->wm.surf_bo[unit] = brw_upload_cache(&brw->cache, BRW_SS_SURFACE,
-					      &key, sizeof(key),
+                                               &key, sizeof(key),
 					       &region_bo, 1,
 					       &surf, sizeof(surf),
 					       NULL, NULL);
@@ -527,6 +623,8 @@ static dri_bo *
 brw_wm_get_binding_table(struct brw_context *brw)
 {
    dri_bo *bind_bo;
+
+   assert(brw->wm.nr_surfaces <= BRW_WM_MAX_SURF);
 
    bind_bo = brw_search_cache(&brw->cache, BRW_SS_SURF_BIND,
 			      NULL, 0,
@@ -574,69 +672,159 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    GLuint i;
    int old_nr_surfaces;
 
+   /* _NEW_BUFFERS */
    /* Update surfaces for drawing buffers */
-   if (brw->state.nr_color_regions > 1) {
-      for (i = 0; i < brw->state.nr_color_regions; i++) {
-         brw_update_region_surface(brw, brw->state.color_regions[i], i,
-				   GL_FALSE);
+   if (ctx->DrawBuffer->_NumColorDrawBuffers >= 1) {
+      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
+         brw_update_renderbuffer_surface(brw,
+					 ctx->DrawBuffer->_ColorDrawBuffers[i],
+					 i,
+					 GL_FALSE);
       }
    } else {
-      brw_update_region_surface(brw, brw->state.color_regions[0], 0, GL_TRUE);
+      brw_update_renderbuffer_surface(brw, NULL, 0, GL_TRUE);
    }
 
    old_nr_surfaces = brw->wm.nr_surfaces;
    brw->wm.nr_surfaces = MAX_DRAW_BUFFERS;
 
+   /* Update surface / buffer for fragment shader constant buffer */
+   {
+      const GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER;
+      struct brw_fragment_program *fp =
+         (struct brw_fragment_program *) brw->fragment_program;
+      fp->const_buffer =
+         brw_update_wm_constant_surface(ctx, surf, fp->const_buffer,
+                                     fp->program.Base.Parameters);
+
+      brw->wm.nr_surfaces = surf + 1;
+   }
+
    /* Update surfaces for textures */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
-      const GLuint j = MAX_DRAW_BUFFERS + i;
+      const GLuint surf = SURF_INDEX_TEXTURE(i);
 
       /* _NEW_TEXTURE, BRW_NEW_TEXDATA */
       if (texUnit->_ReallyEnabled) {
          if (texUnit->_Current == intel->frame_buffer_texobj) {
             /* render to texture */
-            dri_bo_unreference(brw->wm.surf_bo[j]);
-            brw->wm.surf_bo[j] = brw->wm.surf_bo[0];
-            dri_bo_reference(brw->wm.surf_bo[j]);
-            brw->wm.nr_surfaces = j + 1;
+            dri_bo_unreference(brw->wm.surf_bo[surf]);
+            brw->wm.surf_bo[surf] = brw->wm.surf_bo[0];
+            dri_bo_reference(brw->wm.surf_bo[surf]);
+            brw->wm.nr_surfaces = surf + 1;
          } else {
             /* regular texture */
             brw_update_texture_surface(ctx, i);
-            brw->wm.nr_surfaces = j + 1;
+            brw->wm.nr_surfaces = surf + 1;
          }
       } else {
-         dri_bo_unreference(brw->wm.surf_bo[j]);
-         brw->wm.surf_bo[j] = NULL;
+         dri_bo_unreference(brw->wm.surf_bo[surf]);
+         brw->wm.surf_bo[surf] = NULL;
       }
    }
-
-   /* Update surface for fragment shader constant buffer */
-   {
-      const GLuint j = BRW_WM_MAX_SURF - 1;
-      const struct brw_fragment_program *fp =
-         brw_fragment_program_const(brw->fragment_program);
-
-      brw_update_constant_surface(ctx, fp);
-      brw->wm.nr_surfaces = j + 1;
-   }
-
 
    dri_bo_unreference(brw->wm.bind_bo);
    brw->wm.bind_bo = brw_wm_get_binding_table(brw);
 
    if (brw->wm.nr_surfaces != old_nr_surfaces)
-      brw->state.dirty.brw |= BRW_NEW_NR_SURFACES;
+      brw->state.dirty.brw |= BRW_NEW_NR_WM_SURFACES;
+}
+
+
+/**
+ * Constructs the binding table for the VS surface state.
+ */
+static dri_bo *
+brw_vs_get_binding_table(struct brw_context *brw)
+{
+   dri_bo *bind_bo;
+
+   assert(brw->vs.nr_surfaces <= BRW_VS_MAX_SURF);
+
+   bind_bo = brw_search_cache(&brw->cache, BRW_SS_SURF_BIND,
+			      NULL, 0,
+			      brw->vs.surf_bo, brw->vs.nr_surfaces,
+			      NULL);
+
+   if (bind_bo == NULL) {
+      GLuint data_size = brw->vs.nr_surfaces * sizeof(GLuint);
+      uint32_t *data = malloc(data_size);
+      int i;
+
+      for (i = 0; i < brw->vs.nr_surfaces; i++)
+         if (brw->vs.surf_bo[i])
+            data[i] = brw->vs.surf_bo[i]->offset;
+         else
+            data[i] = 0;
+
+      bind_bo = brw_upload_cache( &brw->cache, BRW_SS_SURF_BIND,
+				  NULL, 0,
+				  brw->vs.surf_bo, brw->vs.nr_surfaces,
+				  data, data_size,
+				  NULL, NULL);
+
+      /* Emit binding table relocations to surface state */
+      for (i = 0; i < BRW_VS_MAX_SURF; i++) {
+	 if (brw->vs.surf_bo[i] != NULL) {
+	    dri_bo_emit_reloc(bind_bo,
+			      I915_GEM_DOMAIN_INSTRUCTION, 0,
+			      0,
+			      i * sizeof(GLuint),
+			      brw->vs.surf_bo[i]);
+	 }
+      }
+
+      free(data);
+   }
+
+   return bind_bo;
+}
+
+
+/**
+ * Vertex shader surfaces.  Just constant buffer for now.  Could add vertex 
+ * shader textures in the future.
+ */
+static void prepare_vs_surfaces(struct brw_context *brw )
+{
+   GLcontext *ctx = &brw->intel.ctx;
+
+   /* Update surface / buffer for vertex shader constant buffer */
+   {
+      const GLuint surf = SURF_INDEX_VERT_CONST_BUFFER;
+      struct brw_vertex_program *vp =
+         (struct brw_vertex_program *) brw->vertex_program;
+      vp->const_buffer =
+         brw_update_vs_constant_surface(ctx, surf, vp->const_buffer,
+                                        vp->program.Base.Parameters);
+
+      brw->vs.nr_surfaces = 1;
+   }
+
+   dri_bo_unreference(brw->vs.bind_bo);
+   brw->vs.bind_bo = brw_vs_get_binding_table(brw);
+
+   if (1)
+      brw->state.dirty.brw |= BRW_NEW_NR_VS_SURFACES;
+}
+
+
+static void
+prepare_surfaces(struct brw_context *brw)
+{
+   prepare_wm_surfaces(brw);
+   prepare_vs_surfaces(brw);
 }
 
 
 const struct brw_tracked_state brw_wm_surfaces = {
    .dirty = {
-      .mesa = _NEW_COLOR | _NEW_TEXTURE | _NEW_BUFFERS,
+      .mesa = _NEW_COLOR | _NEW_TEXTURE | _NEW_BUFFERS | _NEW_PROGRAM,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
-   .prepare = prepare_wm_surfaces,
+   .prepare = prepare_surfaces,
 };
 
 

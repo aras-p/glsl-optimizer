@@ -73,6 +73,28 @@ static void brw_clear(struct pipe_context *pipe, struct pipe_surface *ps,
    pipe->surface_fill(pipe, ps, x, y, w, h, clearValue);
 }
 
+static unsigned int
+brw_is_texture_referenced( struct pipe_context *pipe,
+			   struct pipe_texture *texture,
+			   unsigned face, unsigned level)
+{
+   /**
+    * FIXME: Optimize.
+    */
+
+   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
+static unsigned int
+brw_is_buffer_referenced( struct pipe_context *pipe,
+			  struct pipe_buffer *buf)
+{
+   /**
+    * FIXME: Optimize.
+    */
+
+   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
 
 struct pipe_context *brw_create(struct pipe_screen *screen,
                                 struct brw_winsys *brw_winsys,
@@ -93,6 +115,9 @@ struct pipe_context *brw_create(struct pipe_screen *screen,
 
    brw->pipe.destroy = brw_destroy;
    brw->pipe.clear = brw_clear;
+
+   brw->pipe.is_texture_referenced = brw_is_texture_referenced;
+   brw->pipe.is_buffer_referenced = brw_is_buffer_referenced;
 
    brw_init_surface_functions(brw);
    brw_init_texture_functions(brw);

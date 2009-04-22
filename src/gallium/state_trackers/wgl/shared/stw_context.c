@@ -59,8 +59,8 @@ stw_copy_context(
 
    pipe_mutex_lock( stw_dev->mutex );
    
-   src = stw_lookup_context( hglrcSrc );
-   dst = stw_lookup_context( hglrcDst );
+   src = stw_lookup_context_locked( hglrcSrc );
+   dst = stw_lookup_context_locked( hglrcDst );
 
    if (src && dst) { 
       /* FIXME */
@@ -80,7 +80,7 @@ stw_create_layer_context(
    int iLayerPlane )
 {
    uint pfi;
-   const struct pixelformat_info *pf = NULL;
+   const struct stw_pixelformat_info *pf = NULL;
    struct stw_context *ctx = NULL;
    GLvisual *visual = NULL;
    struct pipe_screen *screen = NULL;
@@ -97,7 +97,7 @@ stw_create_layer_context(
    if (pfi == 0)
       return 0;
 
-   pf = pixelformat_get_info( pfi - 1 );
+   pf = stw_pixelformat_get_info( pfi - 1 );
 
    ctx = CALLOC_STRUCT( stw_context );
    if (ctx == NULL)
@@ -109,21 +109,21 @@ stw_create_layer_context(
    /* Create visual based on flags
     */
    visual = _mesa_create_visual(
-      GL_TRUE,
-      (pf->flags & PF_FLAG_DOUBLEBUFFER) ? GL_TRUE : GL_FALSE,
-      GL_FALSE,
-      pf->color.redbits,
-      pf->color.greenbits,
-      pf->color.bluebits,
-      pf->alpha.alphabits,
-      0,
-      pf->depth.depthbits,
-      pf->depth.stencilbits,
-      0,
-      0,
-      0,
-      0,
-      (pf->flags & PF_FLAG_MULTISAMPLED) ? stw_query_samples() : 0 );
+      (pf->pfd.iPixelType == PFD_TYPE_RGBA) ? GL_TRUE : GL_FALSE,
+      (pf->pfd.dwFlags & PFD_DOUBLEBUFFER) ? GL_TRUE : GL_FALSE,
+      (pf->pfd.dwFlags & PFD_STEREO) ? GL_TRUE : GL_FALSE,
+      pf->pfd.cRedBits,
+      pf->pfd.cGreenBits,
+      pf->pfd.cBlueBits,
+      pf->pfd.cAlphaBits,
+      (pf->pfd.iPixelType == PFD_TYPE_COLORINDEX) ? pf->pfd.cColorBits : 0,
+      pf->pfd.cDepthBits,
+      pf->pfd.cStencilBits,
+      pf->pfd.cAccumRedBits,
+      pf->pfd.cAccumGreenBits,
+      pf->pfd.cAccumBlueBits,
+      pf->pfd.cAccumAlphaBits,
+      pf->numSamples );
    if (visual == NULL) 
       goto fail;
 
@@ -153,11 +153,10 @@ stw_create_layer_context(
       goto fail;
 
    ctx->st->ctx->DriverCtx = ctx;
+   ctx->pfi = pf;
 
    pipe_mutex_lock( stw_dev->mutex );
-   {
-      hglrc = handle_table_add(stw_dev->ctx_table, ctx);
-   }
+   hglrc = handle_table_add(stw_dev->ctx_table, ctx);
    pipe_mutex_unlock( stw_dev->mutex );
 
    /* Success?
@@ -187,8 +186,10 @@ stw_delete_context(
       return FALSE;
 
    pipe_mutex_lock( stw_dev->mutex );
+   ctx = stw_lookup_context_locked(hglrc);
+   handle_table_remove(stw_dev->ctx_table, hglrc);
+   pipe_mutex_unlock( stw_dev->mutex );
 
-   ctx = stw_lookup_context(hglrc);
    if (ctx) {
       GLcontext *glctx = ctx->st->ctx;
       GET_CURRENT_CONTEXT( glcurctx );
@@ -199,26 +200,19 @@ stw_delete_context(
       if (glcurctx == glctx)
          st_make_current( NULL, NULL, NULL );
 
-      fb = framebuffer_from_hdc( ctx->hdc );
+      fb = stw_framebuffer_from_hdc( ctx->hdc );
       if (fb)
-         framebuffer_destroy( fb );
+         stw_framebuffer_destroy( fb );
 
       if (WindowFromDC( ctx->hdc ) != NULL)
          ReleaseDC( WindowFromDC( ctx->hdc ), ctx->hdc );
 
-      pipe_mutex_lock(stw_dev->mutex);
-      {
-         st_destroy_context(ctx->st);
-         FREE(ctx);
-         handle_table_remove(stw_dev->ctx_table, hglrc);
-      }
-      pipe_mutex_unlock(stw_dev->mutex);
+      st_destroy_context(ctx->st);
+      FREE(ctx);
 
       ret = TRUE;
    }
 
-   pipe_mutex_unlock( stw_dev->mutex );
-   
    return ret;
 }
 
@@ -226,38 +220,40 @@ BOOL
 stw_release_context(
    UINT_PTR hglrc )
 {
-   BOOL ret = FALSE;
+   struct stw_context *ctx;
 
    if (!stw_dev)
-      return ret;
+      return FALSE;
 
    pipe_mutex_lock( stw_dev->mutex );
-   {
-      struct stw_context *ctx;
-
-      /* XXX: The expectation is that ctx is the same context which is
-       * current for this thread.  We should check that and return False
-       * if not the case.
-       */
-      ctx = stw_lookup_context( hglrc );
-      if (ctx == NULL) 
-         goto done;
-
-      if (stw_make_current( NULL, 0 ) == FALSE)
-         goto done;
-
-      ret = TRUE;
-   }
-done:
+   ctx = stw_lookup_context_locked( hglrc );
    pipe_mutex_unlock( stw_dev->mutex );
 
-   return ret;
+   if (!ctx)
+      return FALSE;
+   
+   /* The expectation is that ctx is the same context which is
+    * current for this thread.  We should check that and return False
+    * if not the case.
+    */
+   {
+      GLcontext *glctx = ctx->st->ctx;
+      GET_CURRENT_CONTEXT( glcurctx );
+
+      if (glcurctx != glctx)
+         return FALSE;
+   }
+
+   if (stw_make_current( NULL, 0 ) == FALSE)
+      return FALSE;
+
+   return TRUE;
 }
 
 /* Find the width and height of the window named by hdc.
  */
 static void
-get_window_size( HDC hdc, GLuint *width, GLuint *height )
+stw_get_window_size( HDC hdc, GLuint *width, GLuint *height )
 {
    if (WindowFromDC( hdc )) {
       RECT rect;
@@ -300,7 +296,7 @@ stw_make_current(
       return FALSE;
 
    pipe_mutex_lock( stw_dev->mutex ); 
-   ctx = stw_lookup_context( hglrc );
+   ctx = stw_lookup_context_locked( hglrc );
    pipe_mutex_unlock( stw_dev->mutex );
 
    stw_tls_get_data()->currentDC = hdc;
@@ -325,24 +321,27 @@ stw_make_current(
          return TRUE;
    }
 
-   fb = framebuffer_from_hdc( hdc );
+   fb = stw_framebuffer_from_hdc( hdc );
 
    if (hdc != NULL)
-      get_window_size( hdc, &width, &height );
+      stw_get_window_size( hdc, &width, &height );
 
-   /* Lazy creation of framebuffers.
+   /* Lazy creation of stw_framebuffers.
     */
    if (fb == NULL && ctx != NULL && hdc != NULL) {
       GLvisual *visual = &ctx->st->ctx->Visual;
 
-      fb = framebuffer_create( hdc, visual, width, height );
+      fb = stw_framebuffer_create( hdc, visual, ctx->pfi, width, height );
       if (fb == NULL)
          return FALSE;
    }
 
    if (ctx && fb) {
+      pipe_mutex_lock( fb->mutex );
       st_make_current( ctx->st, fb->stfb, fb->stfb );
-      framebuffer_resize( fb, width, height );
+      st_resize_framebuffer( fb->stfb, width, height );
+      pipe_mutex_unlock( fb->mutex );
+
       ctx->hdc = hdc;
       ctx->st->pipe->priv = hdc;
    }

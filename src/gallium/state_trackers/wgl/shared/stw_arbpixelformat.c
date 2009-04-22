@@ -25,75 +25,30 @@
  *
  **************************************************************************/
 
+/**
+ * @file
+ * 
+ * WGL_ARB_pixel_format extension implementation.
+ * 
+ * @sa http://www.opengl.org/registry/specs/ARB/wgl_pixel_format.txt
+ */
+
+
 #include <windows.h>
+
+#define WGL_WGLEXT_PROTOTYPES
+
+#include <GL/gl.h>
+#include <GL/wglext.h>
 
 #include "pipe/p_compiler.h"
 #include "util/u_memory.h"
 #include "stw_public.h"
 #include "stw_pixelformat.h"
-#include "stw_arbpixelformat.h"
-
-#define WGL_NUMBER_PIXEL_FORMATS_ARB            0x2000
-#define WGL_DRAW_TO_WINDOW_ARB                  0x2001
-#define WGL_DRAW_TO_BITMAP_ARB                  0x2002
-#define WGL_ACCELERATION_ARB                    0x2003
-#define WGL_NEED_PALETTE_ARB                    0x2004
-#define WGL_NEED_SYSTEM_PALETTE_ARB             0x2005
-#define WGL_SWAP_LAYER_BUFFERS_ARB              0x2006
-#define WGL_SWAP_METHOD_ARB                     0x2007
-#define WGL_NUMBER_OVERLAYS_ARB                 0x2008
-#define WGL_NUMBER_UNDERLAYS_ARB                0x2009
-#define WGL_TRANSPARENT_ARB                     0x200A
-#define WGL_TRANSPARENT_RED_VALUE_ARB           0x2037
-#define WGL_TRANSPARENT_GREEN_VALUE_ARB         0x2038
-#define WGL_TRANSPARENT_BLUE_VALUE_ARB          0x2039
-#define WGL_TRANSPARENT_ALPHA_VALUE_ARB         0x203A
-#define WGL_TRANSPARENT_INDEX_VALUE_ARB         0x203B
-#define WGL_SHARE_DEPTH_ARB                     0x200C
-#define WGL_SHARE_STENCIL_ARB                   0x200D
-#define WGL_SHARE_ACCUM_ARB                     0x200E
-#define WGL_SUPPORT_GDI_ARB                     0x200F
-#define WGL_SUPPORT_OPENGL_ARB                  0x2010
-#define WGL_DOUBLE_BUFFER_ARB                   0x2011
-#define WGL_STEREO_ARB                          0x2012
-#define WGL_PIXEL_TYPE_ARB                      0x2013
-#define WGL_COLOR_BITS_ARB                      0x2014
-#define WGL_RED_BITS_ARB                        0x2015
-#define WGL_RED_SHIFT_ARB                       0x2016
-#define WGL_GREEN_BITS_ARB                      0x2017
-#define WGL_GREEN_SHIFT_ARB                     0x2018
-#define WGL_BLUE_BITS_ARB                       0x2019
-#define WGL_BLUE_SHIFT_ARB                      0x201A
-#define WGL_ALPHA_BITS_ARB                      0x201B
-#define WGL_ALPHA_SHIFT_ARB                     0x201C
-#define WGL_ACCUM_BITS_ARB                      0x201D
-#define WGL_ACCUM_RED_BITS_ARB                  0x201E
-#define WGL_ACCUM_GREEN_BITS_ARB                0x201F
-#define WGL_ACCUM_BLUE_BITS_ARB                 0x2020
-#define WGL_ACCUM_ALPHA_BITS_ARB                0x2021
-#define WGL_DEPTH_BITS_ARB                      0x2022
-#define WGL_STENCIL_BITS_ARB                    0x2023
-#define WGL_AUX_BUFFERS_ARB                     0x2024
-
-#define WGL_NO_ACCELERATION_ARB                 0x2025
-#define WGL_GENERIC_ACCELERATION_ARB            0x2026
-#define WGL_FULL_ACCELERATION_ARB               0x2027
-
-#define WGL_SWAP_EXCHANGE_ARB                   0x2028
-#define WGL_SWAP_COPY_ARB                       0x2029
-#define WGL_SWAP_UNDEFINED_ARB                  0x202A
-
-#define WGL_TYPE_RGBA_ARB                       0x202B
-#define WGL_TYPE_COLORINDEX_ARB                 0x202C
-
-/* From arb_multisample:
- */
-#define WGL_SAMPLE_BUFFERS_ARB               0x2041
-#define WGL_SAMPLES_ARB                      0x2042
 
 
 static boolean
-query_attrib(
+stw_query_attrib(
    int iPixelFormat,
    int iLayerPlane,
    int attrib,
@@ -101,9 +56,9 @@ query_attrib(
 {
    uint count;
    uint index;
-   const struct pixelformat_info *pf;
+   const struct stw_pixelformat_info *pfi;
 
-   count = pixelformat_get_extended_count();
+   count = stw_pixelformat_get_extended_count();
 
    if (attrib == WGL_NUMBER_PIXEL_FORMATS_ARB) {
       *pvalue = (int) count;
@@ -114,30 +69,27 @@ query_attrib(
    if (index >= count)
       return FALSE;
 
-   pf = pixelformat_get_info( index );
+   pfi = stw_pixelformat_get_info( index );
 
    switch (attrib) {
    case WGL_DRAW_TO_WINDOW_ARB:
-      *pvalue = TRUE;
+      *pvalue = pfi->pfd.dwFlags & PFD_DRAW_TO_WINDOW ? TRUE : FALSE;
       return TRUE;
 
    case WGL_DRAW_TO_BITMAP_ARB:
-      *pvalue = FALSE;
+      *pvalue = pfi->pfd.dwFlags & PFD_DRAW_TO_BITMAP ? TRUE : FALSE;
       return TRUE;
 
    case WGL_NEED_PALETTE_ARB:
-      *pvalue = FALSE;
+      *pvalue = pfi->pfd.dwFlags & PFD_NEED_PALETTE ? TRUE : FALSE;
       return TRUE;
 
    case WGL_NEED_SYSTEM_PALETTE_ARB:
-      *pvalue = FALSE;
+      *pvalue = pfi->pfd.dwFlags & PFD_NEED_SYSTEM_PALETTE ? TRUE : FALSE;
       return TRUE;
 
    case WGL_SWAP_METHOD_ARB:
-      if (pf->flags & PF_FLAG_DOUBLEBUFFER)
-         *pvalue = WGL_SWAP_COPY_ARB;
-      else
-         *pvalue = WGL_SWAP_UNDEFINED_ARB;
+      *pvalue = pfi->pfd.dwFlags & PFD_SWAP_COPY ? WGL_SWAP_COPY_ARB : WGL_SWAP_UNDEFINED_ARB;
       return TRUE;
 
    case WGL_SWAP_LAYER_BUFFERS_ARB:
@@ -179,96 +131,108 @@ query_attrib(
       break;
 
    case WGL_SUPPORT_GDI_ARB:
-      *pvalue = FALSE;
+      *pvalue = pfi->pfd.dwFlags & PFD_SUPPORT_GDI ? TRUE : FALSE;
       break;
 
    case WGL_SUPPORT_OPENGL_ARB:
-      *pvalue = TRUE;
+      *pvalue = pfi->pfd.dwFlags & PFD_SUPPORT_OPENGL ? TRUE : FALSE;
       break;
 
    case WGL_DOUBLE_BUFFER_ARB:
-      if (pf->flags & PF_FLAG_DOUBLEBUFFER)
-         *pvalue = TRUE;
-      else
-         *pvalue = FALSE;
+      *pvalue = pfi->pfd.dwFlags & PFD_DOUBLEBUFFER ? TRUE : FALSE;
       break;
 
    case WGL_STEREO_ARB:
-      *pvalue = FALSE;
+      *pvalue = pfi->pfd.dwFlags & PFD_STEREO ? TRUE : FALSE;
       break;
 
    case WGL_PIXEL_TYPE_ARB:
-      *pvalue = WGL_TYPE_RGBA_ARB;
+      switch (pfi->pfd.iPixelType) {
+      case PFD_TYPE_RGBA:
+         *pvalue = WGL_TYPE_RGBA_ARB;
+         break;
+      case PFD_TYPE_COLORINDEX:
+         *pvalue = WGL_TYPE_COLORINDEX_ARB;
+         break;
+      default:
+         return FALSE;
+      }
       break;
 
    case WGL_COLOR_BITS_ARB:
-      *pvalue = (int) (pf->color.redbits + pf->color.greenbits + pf->color.bluebits);
+      *pvalue = pfi->pfd.cColorBits;
       break;
 
    case WGL_RED_BITS_ARB:
-      *pvalue = (int) pf->color.redbits;
+      *pvalue = pfi->pfd.cRedBits;
       break;
 
    case WGL_RED_SHIFT_ARB:
-      *pvalue = (int) pf->color.redshift;
+      *pvalue = pfi->pfd.cRedShift;
       break;
 
    case WGL_GREEN_BITS_ARB:
-      *pvalue = (int) pf->color.greenbits;
+      *pvalue = pfi->pfd.cGreenBits;
       break;
 
    case WGL_GREEN_SHIFT_ARB:
-      *pvalue = (int) pf->color.greenshift;
+      *pvalue = pfi->pfd.cGreenShift;
       break;
 
    case WGL_BLUE_BITS_ARB:
-      *pvalue = (int) pf->color.bluebits;
+      *pvalue = pfi->pfd.cBlueBits;
       break;
 
    case WGL_BLUE_SHIFT_ARB:
-      *pvalue = (int) pf->color.blueshift;
+      *pvalue = pfi->pfd.cBlueShift;
       break;
 
    case WGL_ALPHA_BITS_ARB:
-      *pvalue = (int) pf->alpha.alphabits;
+      *pvalue = pfi->pfd.cAlphaBits;
       break;
 
    case WGL_ALPHA_SHIFT_ARB:
-      *pvalue = (int) pf->alpha.alphashift;
+      *pvalue = pfi->pfd.cAlphaShift;
       break;
 
    case WGL_ACCUM_BITS_ARB:
+      *pvalue = pfi->pfd.cAccumBits;
+      break;
+
    case WGL_ACCUM_RED_BITS_ARB:
+      *pvalue = pfi->pfd.cAccumRedBits;
+      break;
+
    case WGL_ACCUM_GREEN_BITS_ARB:
+      *pvalue = pfi->pfd.cAccumGreenBits;
+      break;
+
    case WGL_ACCUM_BLUE_BITS_ARB:
+      *pvalue = pfi->pfd.cAccumBlueBits;
+      break;
+
    case WGL_ACCUM_ALPHA_BITS_ARB:
-      *pvalue = 0;
+      *pvalue = pfi->pfd.cAccumAlphaBits;
       break;
 
    case WGL_DEPTH_BITS_ARB:
-      *pvalue = (int) pf->depth.depthbits;
+      *pvalue = pfi->pfd.cDepthBits;
       break;
 
    case WGL_STENCIL_BITS_ARB:
-      *pvalue = (int) pf->depth.stencilbits;
+      *pvalue = pfi->pfd.cStencilBits;
       break;
 
    case WGL_AUX_BUFFERS_ARB:
-      *pvalue = 0;
+      *pvalue = pfi->pfd.cAuxBuffers;
       break;
 
    case WGL_SAMPLE_BUFFERS_ARB:
-      if (pf->flags & PF_FLAG_MULTISAMPLED)
-         *pvalue = stw_query_sample_buffers();
-      else
-         *pvalue = 0;
+      *pvalue = pfi->numSampleBuffers;
       break;
 
    case WGL_SAMPLES_ARB:
-      if (pf->flags & PF_FLAG_MULTISAMPLED)
-         *pvalue = stw_query_samples();
-      else
-         *pvalue = 0;
+      *pvalue = pfi->numSamples;
       break;
 
    default:
@@ -285,7 +249,7 @@ struct attrib_match_info
    BOOL exact;
 };
 
-static struct attrib_match_info attrib_match[] = {
+static const struct attrib_match_info attrib_match[] = {
 
    /* WGL_ARB_pixel_format */
    { WGL_DRAW_TO_WINDOW_ARB,      0, TRUE },
@@ -324,7 +288,7 @@ static struct attrib_match_info attrib_match[] = {
    { WGL_SAMPLES_ARB,             2, FALSE }
 };
 
-struct pixelformat_score
+struct stw_pixelformat_score
 {
    int points;
    uint index;
@@ -332,13 +296,13 @@ struct pixelformat_score
 
 static BOOL
 score_pixelformats(
-   struct pixelformat_score *scores,
+   struct stw_pixelformat_score *scores,
    uint count,
    int attribute,
    int expected_value )
 {
    uint i;
-   struct attrib_match_info *ami = NULL;
+   const struct attrib_match_info *ami = NULL;
    uint index;
 
    /* Find out if a given attribute should be considered for score calculation.
@@ -358,7 +322,7 @@ score_pixelformats(
    for (index = 0; index < count; index++) {
       int actual_value;
 
-      if (!query_attrib( index + 1, 0, attribute, &actual_value ))
+      if (!stw_query_attrib( index + 1, 0, attribute, &actual_value ))
          return FALSE;
 
       if (ami->exact) {
@@ -395,7 +359,7 @@ wglChoosePixelFormatARB(
    UINT *nNumFormats )
 {
    uint count;
-   struct pixelformat_score *scores;
+   struct stw_pixelformat_score *scores;
    uint i;
 
    *nNumFormats = 0;
@@ -405,8 +369,8 @@ wglChoosePixelFormatARB(
     * points for a mismatch when the match does not have to be exact.
     * Set a score to 0 if there is a mismatch for an exact match criteria.
     */
-   count = pixelformat_get_extended_count();
-   scores = (struct pixelformat_score *) MALLOC( count * sizeof( struct pixelformat_score ) );
+   count = stw_pixelformat_get_extended_count();
+   scores = (struct stw_pixelformat_score *) MALLOC( count * sizeof( struct stw_pixelformat_score ) );
    if (scores == NULL)
       return FALSE;
    for (i = 0; i < count; i++) {
@@ -446,7 +410,7 @@ wglChoosePixelFormatARB(
          swapped = FALSE;
          for (i = 1; i < n; i++) {
             if (scores[i - 1].points < scores[i].points) {
-               struct pixelformat_score score = scores[i - 1];
+               struct stw_pixelformat_score score = scores[i - 1];
 
                scores[i - 1] = scores[i];
                scores[i] = score;
@@ -489,7 +453,7 @@ wglGetPixelFormatAttribfvARB(
    for (i = 0; i < nAttributes; i++) {
       int value;
 
-      if (!query_attrib( iPixelFormat, iLayerPlane, piAttributes[i], &value ))
+      if (!stw_query_attrib( iPixelFormat, iLayerPlane, piAttributes[i], &value ))
          return FALSE;
       pfValues[i] = (FLOAT) value;
    }
@@ -511,7 +475,7 @@ wglGetPixelFormatAttribivARB(
    (void) hdc;
 
    for (i = 0; i < nAttributes; i++) {
-      if (!query_attrib( iPixelFormat, iLayerPlane, piAttributes[i], &piValues[i] ))
+      if (!stw_query_attrib( iPixelFormat, iLayerPlane, piAttributes[i], &piValues[i] ))
          return FALSE;
    }
 

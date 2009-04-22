@@ -22,6 +22,7 @@ static int TexWidth = 256, TexHeight = 256;
 static int WinWidth = 1044, WinHeight = 900;
 static GLfloat Bias = 0.0;
 static GLboolean ScaleQuads = GL_FALSE;
+static GLboolean Linear = GL_FALSE;
 static GLint Win = 0;
 
 
@@ -52,6 +53,15 @@ Display(void)
    glLoadIdentity();
    
    glColor3f(1,1,1);
+
+   if (Linear) {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   }
+   else {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   }
 
    y = WinHeight - 300;
    x = 4;
@@ -131,6 +141,9 @@ Key(unsigned char key, int x, int y)
          break;
       case 'B':
          Bias += 10;
+         break;
+      case 'l':
+         Linear = !Linear;
          break;
       case '0':
       case '1':
@@ -222,8 +235,6 @@ Init(void)
 
 
    /* mipmapping required for this extension */
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
    glGetFloatv(GL_MAX_TEXTURE_LOD_BIAS_EXT, &maxBias);

@@ -484,14 +484,14 @@ st_translate_fragment_program(struct st_context *st,
                /* handled above */
                assert(0);
                break;
-            case FRAG_RESULT_COLOR:
+            default:
+               assert(attr == FRAG_RESULT_COLOR ||
+                      (FRAG_RESULT_DATA0 <= attr && attr < FRAG_RESULT_MAX));
                fs_output_semantic_name[fs_num_outputs] = TGSI_SEMANTIC_COLOR;
                fs_output_semantic_index[fs_num_outputs] = numColors;
                outputMapping[attr] = fs_num_outputs;
                numColors++;
                break;
-            default:
-               assert(0);
             }
 
             output_flags[fs_num_outputs] = stfp->Base.Base.OutputFlags[attr];

@@ -62,7 +62,7 @@ __driUtilMessage(const char *f, ...)
     va_list args;
 
     if (getenv("LIBGL_DEBUG")) {
-        fprintf(stderr, "libGL error: \n");
+        fprintf(stderr, "libGL: ");
         va_start(args, f);
         vfprintf(stderr, f, args);
         va_end(args);
@@ -314,11 +314,11 @@ static void driSwapBuffers(__DRIdrawable *dPriv)
     __DRIscreen *psp = dPriv->driScreenPriv;
     drm_clip_rect_t *rects;
     int i;
-    
-    if (!dPriv->numClipRects)
-        return;
 
     psp->DriverAPI.SwapBuffers(dPriv);
+
+    if (!dPriv->numClipRects)
+        return;
 
     rects = _mesa_malloc(sizeof(*rects) * dPriv->numClipRects);
 

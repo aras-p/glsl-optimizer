@@ -89,10 +89,6 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
 
    /* disabled blending/masking */
    memset(&ctx->blend, 0, sizeof(ctx->blend));
-   ctx->blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   ctx->blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   ctx->blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   ctx->blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
    ctx->blend.colormask = PIPE_MASK_RGBA;
 
    /* no-op depth/stencil/alpha */
@@ -337,7 +333,6 @@ util_blit_pixels(struct blit_state *ctx,
    texTemp.width[0] = srcW;
    texTemp.height[0] = srcH;
    texTemp.depth[0] = 1;
-   texTemp.compressed = 0;
    pf_get_block(src->format, &texTemp.block);
 
    tex = screen->texture_create(screen, &texTemp);

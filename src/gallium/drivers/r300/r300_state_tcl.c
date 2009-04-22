@@ -40,6 +40,9 @@ static void r300_vs_declare(struct r300_vs_asm* assembler,
                     /* XXX multiple? */
                     assembler->tab[decl->DeclarationRange.First] = 6;
                     break;
+                case TGSI_SEMANTIC_PSIZE:
+                    assembler->tab[decl->DeclarationRange.First] = 15;
+                    break;
                 default:
                     debug_printf("r300: vs: Bad semantic declaration %d\n",
                         decl->Semantic.SemanticName);
@@ -117,6 +120,9 @@ static INLINE unsigned r300_vs_dst(struct r300_vs_asm* assembler,
 static uint32_t r300_vs_op(unsigned op)
 {
     switch (op) {
+        case TGSI_OPCODE_DP3:
+        case TGSI_OPCODE_DP4:
+            return R300_VE_DOT_PRODUCT;
         case TGSI_OPCODE_MUL:
             return R300_VE_MULTIPLY;
         case TGSI_OPCODE_ADD:
@@ -191,6 +197,36 @@ static void r300_vs_instruction(struct r300_vertex_shader* vs,
     switch (inst->Instruction.Opcode) {
         case TGSI_OPCODE_ADD:
         case TGSI_OPCODE_MUL:
+            r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode,
+                    2);
+            break;
+        case TGSI_OPCODE_DP3:
+            /* Set alpha swizzle to zero for src0 and src1 */
+            if (!inst->FullSrcRegisters[0].SrcRegister.Extended) {
+                inst->FullSrcRegisters[0].SrcRegister.Extended = TRUE;
+                inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtSwizzleX =
+                    inst->FullSrcRegisters[0].SrcRegister.SwizzleX;
+                inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtSwizzleY =
+                    inst->FullSrcRegisters[0].SrcRegister.SwizzleY;
+                inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtSwizzleZ =
+                    inst->FullSrcRegisters[0].SrcRegister.SwizzleZ;
+            }
+            inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtSwizzleW =
+                TGSI_EXTSWIZZLE_ZERO;
+            if (!inst->FullSrcRegisters[1].SrcRegister.Extended) {
+                inst->FullSrcRegisters[1].SrcRegister.Extended = TRUE;
+                inst->FullSrcRegisters[1].SrcRegisterExtSwz.ExtSwizzleX =
+                    inst->FullSrcRegisters[1].SrcRegister.SwizzleX;
+                inst->FullSrcRegisters[1].SrcRegisterExtSwz.ExtSwizzleY =
+                    inst->FullSrcRegisters[1].SrcRegister.SwizzleY;
+                inst->FullSrcRegisters[1].SrcRegisterExtSwz.ExtSwizzleZ =
+                    inst->FullSrcRegisters[1].SrcRegister.SwizzleZ;
+            }
+            inst->FullSrcRegisters[1].SrcRegisterExtSwz.ExtSwizzleW =
+                TGSI_EXTSWIZZLE_ZERO;
+            /* Fall through */
+        case TGSI_OPCODE_DP4:
             r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode,
                     2);

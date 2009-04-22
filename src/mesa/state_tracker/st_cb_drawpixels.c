@@ -53,6 +53,8 @@
 #include "st_format.h"
 #include "st_mesa_to_tgsi.h"
 #include "st_texture.h"
+#include "st_inlines.h"
+
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
@@ -144,6 +146,8 @@ combined_drawpix_fragment_program(GLcontext *ctx)
       st->pixel_xfer.xfer_prog_sn = st->pixel_xfer.program->serialNo;
       st->pixel_xfer.user_prog_sn = st->fp->serialNo;
       st->pixel_xfer.combined_prog_sn = stfp->serialNo;
+      /* can't reference new program directly, already have a reference on it */
+      st_reference_fragprog(st, &st->pixel_xfer.combined_prog, NULL);
       st->pixel_xfer.combined_prog = stfp;
    }
 
@@ -351,8 +355,7 @@ make_texture(struct st_context *st,
    if (!pixels)
       return NULL;
 
-   pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, 0, width, height,
-			  1, 0,
+   pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, 0, width, height, 1,
                           PIPE_TEXTURE_USAGE_SAMPLER);
    if (!pt) {
       _mesa_unmap_drawpix_pbo(ctx, unpack);
@@ -369,9 +372,9 @@ make_texture(struct st_context *st,
       /* we'll do pixel transfer in a fragment shader */
       ctx->_ImageTransferState = 0x0;
 
-      transfer = screen->get_tex_transfer(screen, pt, 0, 0, 0,
-                                          PIPE_TRANSFER_WRITE, 0, 0,
-                                          width, height);
+      transfer = st_no_flush_get_tex_transfer(st, pt, 0, 0, 0,
+					      PIPE_TRANSFER_WRITE, 0, 0,
+					      width, height);
 
       /* map texture transfer */
       dest = screen->transfer_map(screen, transfer);
@@ -491,7 +494,7 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       /* allocate/load buffer object with vertex data */
       buf = pipe_buffer_create(pipe->screen, 32, PIPE_BUFFER_USAGE_VERTEX,
                                sizeof(verts));
-      pipe_buffer_write(pipe->screen, buf, 0, sizeof(verts), verts);
+      st_no_flush_pipe_buffer_write(st, buf, 0, sizeof(verts), verts);
 
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_QUADS,
@@ -632,8 +635,6 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    GLint skipPixels;
    ubyte *stmap;
 
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
-
    strb = st_renderbuffer(ctx->DrawBuffer->
                           Attachment[BUFFER_STENCIL].Renderbuffer);
 
@@ -641,9 +642,9 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
       y = ctx->DrawBuffer->Height - y - height;
    }
 
-   pt = screen->get_tex_transfer(screen, strb->texture, 0, 0, 0,
-                                 PIPE_TRANSFER_WRITE, x, y,
-                                 width, height);
+   pt = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture, 0, 0, 0,
+				       PIPE_TRANSFER_WRITE, x, y,
+				       width, height);
 
    stmap = screen->transfer_map(screen, pt);
 
@@ -826,9 +827,10 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                           GL_STENCIL_INDEX, GL_UNSIGNED_BYTE,
                           &ctx->DefaultPacking, buffer);
 
-   ptDraw = screen->get_tex_transfer(screen, rbDraw->texture, 0, 0, 0,
-                                     PIPE_TRANSFER_WRITE, dstx, dsty,
-                                     width, height);
+   ptDraw = st_cond_flush_get_tex_transfer(st_context(ctx),
+					   rbDraw->texture, 0, 0, 0,
+					   PIPE_TRANSFER_WRITE, dstx, dsty,
+					   width, height);
 
    assert(ptDraw->block.width == 1);
    assert(ptDraw->block.height == 1);
@@ -904,7 +906,6 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    GLfloat *color;
    enum pipe_format srcFormat, texFormat;
 
-   /* make sure rendering has completed */
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    st_validate_state(st);
@@ -951,7 +952,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, texFormat, 0,
-                          width, height, 1, 0,
+                          width, height, 1,
                           PIPE_TEXTURE_USAGE_SAMPLER);
    if (!pt)
       return;
@@ -978,13 +979,13 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    else {
       /* CPU-based fallback/conversion */
       struct pipe_transfer *ptRead =
-         screen->get_tex_transfer(screen, rbRead->texture, 0, 0, 0,
-                                  PIPE_TRANSFER_READ, srcx, srcy, width,
-                                  height);
+         st_cond_flush_get_tex_transfer(st, rbRead->texture, 0, 0, 0,
+					PIPE_TRANSFER_READ, srcx, srcy, width,
+					height);
 
       struct pipe_transfer *ptTex =
-         screen->get_tex_transfer(screen, pt, 0, 0, 0, PIPE_TRANSFER_WRITE,
-                                  0, 0, width, height);
+         st_cond_flush_get_tex_transfer(st, pt, 0, 0, 0, PIPE_TRANSFER_WRITE,
+					0, 0, width, height);
 
       if (type == GL_COLOR) {
          /* alternate path using get/put_tile() */

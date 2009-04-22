@@ -257,6 +257,29 @@ nv10_set_edgeflags(struct pipe_context *pipe, const unsigned *bitfield)
 {
 }
 
+static unsigned int
+nv10_is_texture_referenced( struct pipe_context *pipe,
+			    struct pipe_texture *texture,
+			    unsigned face, unsigned level)
+{
+   /**
+    * FIXME: Optimize.
+    */
+
+   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
+static unsigned int
+nv10_is_buffer_referenced( struct pipe_context *pipe,
+			   struct pipe_buffer *buf)
+{
+   /**
+    * FIXME: Optimize.
+    */
+
+   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
 struct pipe_context *
 nv10_create(struct pipe_screen *pscreen, unsigned pctx_id)
 {
@@ -281,6 +304,9 @@ nv10_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv10->pipe.draw_elements = nv10_draw_elements;
 	nv10->pipe.clear = nv10_clear;
 	nv10->pipe.flush = nv10_flush;
+
+	nv10->pipe.is_texture_referenced = nv10_is_texture_referenced;
+	nv10->pipe.is_buffer_referenced = nv10_is_buffer_referenced;
 
 	nv10_init_surface_functions(nv10);
 	nv10_init_state_functions(nv10);

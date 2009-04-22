@@ -96,29 +96,22 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    pipe_surface_reference( &strb->surface, NULL );
    pipe_texture_reference( &strb->texture, NULL );
 
-
+   /* Setup new texture template.
+    */
    memset(&template, 0, sizeof(template));
-
+   template.target = PIPE_TEXTURE_2D;
    if (strb->format != PIPE_FORMAT_NONE) {
       template.format = strb->format;
    }
    else {
       template.format = st_choose_renderbuffer_format(pipe, internalFormat);
    }
-
-   strb->Base.Width  = width;
-   strb->Base.Height = height;
-   init_renderbuffer_bits(strb, template.format);
-
-   template.target = PIPE_TEXTURE_2D;
-   template.compressed = 0;
    pf_get_block(template.format, &template.block);
    template.width[0] = width;
    template.height[0] = height;
    template.depth[0] = 1;
    template.last_level = 0;
    template.nr_samples = rb->NumSamples;
-
    if (pf_is_depth_stencil(template.format)) {
       template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
    }
@@ -127,6 +120,10 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                             PIPE_TEXTURE_USAGE_RENDER_TARGET);
    }
 
+   /* init renderbuffer fields */
+   strb->Base.Width  = width;
+   strb->Base.Height = height;
+   init_renderbuffer_bits(strb, template.format);
 
    /* Probably need dedicated flags for surface usage too: 
     */

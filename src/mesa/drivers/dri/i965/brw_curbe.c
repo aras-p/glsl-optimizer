@@ -45,17 +45,21 @@
 #include "brw_util.h"
 
 
-/* Partition the CURBE between the various users of constant values:
+/**
+ * Partition the CURBE between the various users of constant values:
+ * Note that vertex and fragment shaders can now fetch constants out
+ * of constant buffers.  We no longer allocatea block of the GRF for
+ * constants.  That greatly reduces the demand for space in the CURBE.
+ * Some of the comments within are dated...
  */
 static void calculate_curbe_offsets( struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
    /* CACHE_NEW_WM_PROG */
-   GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
+   const GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
    
    /* BRW_NEW_VERTEX_PROGRAM */
-   const struct brw_vertex_program *vp = brw_vertex_program_const(brw->vertex_program);
-   GLuint nr_vp_regs = (vp->program.Base.Parameters->NumParameters * 4 + 15) / 16;
+   const GLuint nr_vp_regs = (brw->vs.prog_data->nr_params + 15) / 16;
    GLuint nr_clip_regs = 0;
    GLuint total_regs;
 
@@ -248,7 +252,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
    /* vertex shader constants */
    if (brw->curbe.vs_size) {
       GLuint offset = brw->curbe.vs_start * 16;
-      GLuint nr = vp->program.Base.Parameters->NumParameters;
+      GLuint nr = brw->vs.prog_data->nr_params / 4;
 
       _mesa_load_state_parameters(ctx, vp->program.Base.Parameters); 
 
@@ -333,28 +337,59 @@ static void prepare_constant_buffer(struct brw_context *brw)
 
 
 /**
- * Vertex/fragment shader constants are stored in a pseudo 1D texture.
- * This function updates the constants in that buffer.
+ * Copy Mesa program parameters into given constant buffer.
  */
 static void
-update_texture_constant_buffer(struct brw_context *brw)
+update_constant_buffer(struct brw_context *brw,
+                       const struct gl_program_parameter_list *params,
+                       dri_bo *const_buffer)
+{
+   const int size = params->NumParameters * 4 * sizeof(GLfloat);
+
+   /* copy Mesa program constants into the buffer */
+   if (const_buffer && size > 0) {
+      GLubyte *map;
+
+      assert(const_buffer);
+      assert(const_buffer->size >= size);
+
+      dri_bo_map(const_buffer, GL_TRUE);
+      map = const_buffer->virtual;
+      memcpy(map, params->ParameterValues, size);
+      dri_bo_unmap(const_buffer);
+
+      if (0) {
+         int i;
+         for (i = 0; i < params->NumParameters; i++) {
+            float *p = params->ParameterValues[i];
+            printf("%d: %f %f %f %f\n", i, p[0], p[1], p[2], p[3]);
+         }
+      }
+   }
+}
+
+
+/** Copy current vertex program's parameters into the constant buffer */
+static void
+update_vertex_constant_buffer(struct brw_context *brw)
+{
+   struct brw_vertex_program *vp =
+      (struct brw_vertex_program *) brw->vertex_program;
+   if (0) {
+      printf("update VS constants in buffer %p\n", vp->const_buffer);
+      printf("program %u\n", vp->program.Base.Id);
+   }
+   update_constant_buffer(brw, vp->program.Base.Parameters, vp->const_buffer);
+}
+
+
+/** Copy current fragment program's parameters into the constant buffer */
+static void
+update_fragment_constant_buffer(struct brw_context *brw)
 {
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
-   const struct gl_program_parameter_list *params = fp->program.Base.Parameters;
-   const int size = params->NumParameters * 4 * sizeof(GLfloat);
-
-   assert(fp->const_buffer);
-   assert(fp->const_buffer->size >= size);
-
-   /* copy constants into the buffer */
-   if (size > 0) {
-      GLubyte *map;
-      dri_bo_map(fp->const_buffer, GL_TRUE);
-      map = fp->const_buffer->virtual;
-      memcpy(map, params->ParameterValues, size);
-      dri_bo_unmap(fp->const_buffer);
-   }
+   update_constant_buffer(brw, fp->program.Base.Parameters, fp->const_buffer);
 }
 
 
@@ -363,7 +398,8 @@ static void emit_constant_buffer(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    GLuint sz = brw->curbe.total_size;
 
-   update_texture_constant_buffer(brw);
+   update_vertex_constant_buffer(brw);
+   update_fragment_constant_buffer(brw);
 
    BEGIN_BATCH(2, IGNORE_CLIPRECTS);
    if (sz == 0) {

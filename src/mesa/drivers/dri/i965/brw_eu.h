@@ -862,8 +862,16 @@ void brw_dp_READ_4( struct brw_compile *p,
                     struct brw_reg dest,
                     GLuint msg_reg_nr,
                     GLboolean relAddr,
-                    GLuint scratch_offset,
+                    GLuint location,
                     GLuint bind_table_index );
+
+void brw_dp_READ_4_vs( struct brw_compile *p,
+                       struct brw_reg dest,
+                       GLuint oword,
+                       GLboolean relAddr,
+                       struct brw_reg addrReg,
+                       GLuint location,
+                       GLuint bind_table_index );
 
 void brw_dp_WRITE_16( struct brw_compile *p,
 		      struct brw_reg src,

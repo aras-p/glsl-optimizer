@@ -116,11 +116,6 @@ struct st_context
    char vendor[100];
    char renderer[100];
 
-   /* State to be validated:
-    */
-   struct st_tracked_state **atoms;
-   GLuint nr_atoms;
-
    struct st_state_flags dirty;
 
    GLboolean missing_textures;

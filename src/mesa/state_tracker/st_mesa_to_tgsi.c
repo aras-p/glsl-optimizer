@@ -275,8 +275,8 @@ compile_instruction(
       /* swizzle (ext swizzle also depends on negation) */
       {
          GLuint swz[4];
-         GLboolean extended = (inst->SrcReg[i].NegateBase != NEGATE_NONE &&
-                               inst->SrcReg[i].NegateBase != NEGATE_XYZW);
+         GLboolean extended = (inst->SrcReg[i].Negate != NEGATE_NONE &&
+                               inst->SrcReg[i].Negate != NEGATE_XYZW);
          for( j = 0; j < 4; j++ ) {
             swz[j] = GET_SWZ( inst->SrcReg[i].Swizzle, j );
             if (swz[j] > SWIZZLE_W)
@@ -296,30 +296,26 @@ compile_instruction(
          }
       }
 
-      if( inst->SrcReg[i].NegateBase == NEGATE_XYZW ) {
+      if( inst->SrcReg[i].Negate == NEGATE_XYZW ) {
          fullsrc->SrcRegister.Negate = 1;
       }
-      else if( inst->SrcReg[i].NegateBase != NEGATE_NONE ) {
-         if( inst->SrcReg[i].NegateBase & NEGATE_X ) {
+      else if( inst->SrcReg[i].Negate != NEGATE_NONE ) {
+         if( inst->SrcReg[i].Negate & NEGATE_X ) {
             fullsrc->SrcRegisterExtSwz.NegateX = 1;
          }
-         if( inst->SrcReg[i].NegateBase & NEGATE_Y ) {
+         if( inst->SrcReg[i].Negate & NEGATE_Y ) {
             fullsrc->SrcRegisterExtSwz.NegateY = 1;
          }
-         if( inst->SrcReg[i].NegateBase & NEGATE_Z ) {
+         if( inst->SrcReg[i].Negate & NEGATE_Z ) {
             fullsrc->SrcRegisterExtSwz.NegateZ = 1;
          }
-         if( inst->SrcReg[i].NegateBase & NEGATE_W ) {
+         if( inst->SrcReg[i].Negate & NEGATE_W ) {
             fullsrc->SrcRegisterExtSwz.NegateW = 1;
          }
       }
 
       if( inst->SrcReg[i].Abs ) {
          fullsrc->SrcRegisterExtMod.Absolute = 1;
-      }
-
-      if( inst->SrcReg[i].NegateAbs ) {
-         fullsrc->SrcRegisterExtMod.Negate = 1;
       }
 
       if( inst->SrcReg[i].RelAddr ) {

@@ -202,6 +202,8 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 	       intel_batchbuffer_flush(intel->batch);
 	    intel->front_cliprects = GL_TRUE;
 	    colorRegions[0] = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
+
+	    intel->front_buffer_dirty = GL_TRUE;
 	 }
 	 else {
 	    if (!intel->constant_cliprect && intel->front_cliprects)
@@ -319,6 +321,12 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 static void
 intelDrawBuffer(GLcontext * ctx, GLenum mode)
 {
+   if ((ctx->DrawBuffer != NULL) && (ctx->DrawBuffer->Name == 0)) {
+      struct intel_context *const intel = intel_context(ctx);
+
+      intel->is_front_buffer_rendering = (mode == GL_FRONT_LEFT);
+   }
+
    intel_draw_buffer(ctx, ctx->DrawBuffer);
 }
 

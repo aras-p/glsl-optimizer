@@ -108,7 +108,6 @@ st_texture_create(struct st_context *st,
                   GLuint width0,
                   GLuint height0,
                   GLuint depth0,
-                  GLuint compress_byte,
                   GLuint tex_usage );
 
 
@@ -157,7 +156,7 @@ st_texture_texel_offset(const struct pipe_texture * pt,
 /* Upload an image into a texture
  */
 extern void
-st_texture_image_data(struct pipe_context *pipe,
+st_texture_image_data(struct st_context *st,
                       struct pipe_texture *dst,
                       GLuint face, GLuint level, void *src,
                       GLuint src_row_pitch, GLuint src_image_pitch);
@@ -171,5 +170,10 @@ st_texture_image_copy(struct pipe_context *pipe,
                       struct pipe_texture *src,
                       GLuint face);
 
-
+extern void
+st_teximage_flush_before_map(struct st_context *st,
+			     struct pipe_texture *pt,
+			     unsigned int face,
+			     unsigned int level,
+			     enum pipe_transfer_usage usage);
 #endif

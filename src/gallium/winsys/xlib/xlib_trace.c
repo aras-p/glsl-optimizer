@@ -37,6 +37,7 @@
 
 #include "trace/tr_screen.h"
 #include "trace/tr_context.h"
+#include "trace/tr_texture.h"
 
 #include "pipe/p_screen.h"
 
@@ -66,9 +67,11 @@ fail:
 }
 
 static struct pipe_context *
-xlib_create_trace_context( struct pipe_screen *screen,
+xlib_create_trace_context( struct pipe_screen *_screen,
                            void *priv )
 {
+   struct trace_screen *tr_scr = trace_screen( _screen );
+   struct pipe_screen *screen = tr_scr->screen;
    struct pipe_context *pipe, *trace_pipe;
    
    pipe = xlib_softpipe_driver.create_pipe_context( screen, priv );
@@ -77,7 +80,7 @@ xlib_create_trace_context( struct pipe_screen *screen,
 
    /* Wrap it:
     */
-   trace_pipe = trace_context_create(screen, pipe);
+   trace_pipe = trace_context_create(_screen, pipe);
    if (trace_pipe == NULL)
       goto fail;
 
@@ -86,15 +89,18 @@ xlib_create_trace_context( struct pipe_screen *screen,
    return trace_pipe;
 
 fail:
+   if (pipe)
+      pipe->destroy( pipe );
    return NULL;
 }
 
 static void
 xlib_trace_display_surface( struct xmesa_buffer *buffer,
-                            struct pipe_surface *surf )
+                            struct pipe_surface *_surf )
 {
-   /* ??
-    */
+   struct trace_surface *tr_surf = trace_surface( _surf );
+   struct pipe_surface *surf = tr_surf->surface;
+
    xlib_softpipe_driver.display_surface( buffer, surf );
 }
 

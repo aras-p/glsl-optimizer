@@ -30,6 +30,7 @@
 #include "main/mtypes.h"
 #include "main/bufferobj.h"
 
+#include "st_inlines.h"
 #include "st_context.h"
 #include "st_cb_bufferobjects.h"
 
@@ -97,13 +98,13 @@ st_bufferobj_subdata(GLcontext *ctx,
 		     GLsizeiptrARB size,
 		     const GLvoid * data, struct gl_buffer_object *obj)
 {
-   struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
    if (offset >= st_obj->size || size > (st_obj->size - offset))
       return;
 
-   pipe_buffer_write(pipe->screen, st_obj->buffer, offset, size, data);
+   st_cond_flush_pipe_buffer_write(st_context(ctx), st_obj->buffer,
+				   offset, size, data);
 }
 
 
@@ -117,13 +118,13 @@ st_bufferobj_get_subdata(GLcontext *ctx,
                          GLsizeiptrARB size,
                          GLvoid * data, struct gl_buffer_object *obj)
 {
-   struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
    if (offset >= st_obj->size || size > (st_obj->size - offset))
       return;
 
-   pipe_buffer_read(pipe->screen, st_obj->buffer, offset, size, data);
+   st_cond_flush_pipe_buffer_read(st_context(ctx), st_obj->buffer,
+				  offset, size, data);
 }
 
 
@@ -168,10 +169,16 @@ st_bufferobj_data(GLcontext *ctx,
 
    st_obj->buffer = pipe_buffer_create( pipe->screen, 32, buffer_usage, size );
 
+   if (!st_obj->buffer) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBufferDataARB");
+      return;
+   }
+
    st_obj->size = size;
 
    if (data)
-      st_bufferobj_subdata(ctx, target, 0, size, data, obj);
+      st_no_flush_pipe_buffer_write(st_context(ctx), st_obj->buffer, 0,
+				    size, data);
 }
 
 
@@ -182,7 +189,6 @@ static void *
 st_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
                  struct gl_buffer_object *obj)
 {
-   struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
    GLuint flags;
 
@@ -200,7 +206,9 @@ st_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
       break;      
    }
 
-   obj->Pointer = pipe_buffer_map(pipe->screen, st_obj->buffer, flags);
+   obj->Pointer = st_cond_flush_pipe_buffer_map(st_context(ctx),
+						st_obj->buffer,
+						flags);
    if(obj->Pointer) {
       obj->Offset = 0;
       obj->Length = obj->Size;

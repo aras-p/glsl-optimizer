@@ -315,8 +315,8 @@ intelTexImage(GLcontext * ctx,
    GLint postConvWidth = width;
    GLint postConvHeight = height;
    GLint texelBytes, sizeInBytes;
-   GLuint dstRowStride, srcRowStride = texImage->RowStride;
-
+   GLuint dstRowStride = 0, srcRowStride = texImage->RowStride;
+   GLboolean needs_map;
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
@@ -482,8 +482,15 @@ intelTexImage(GLcontext * ctx,
 
    LOCK_HARDWARE(intel);
 
+   /* Two cases where we need a mapping of the miptree: when the user supplied
+    * data is mapped as well (non-PBO, memcpy upload) or when we're going to do
+    * (software) mipmap generation.
+    */
+   needs_map = (pixels != NULL) || (level == texObj->BaseLevel &&
+				  texObj->GenerateMipmap);
+
    if (intelImage->mt) {
-      if (pixels)
+      if (needs_map)
          texImage->Data = intel_miptree_image_map(intel,
                                                   intelImage->mt,
                                                   intelImage->face,
@@ -509,8 +516,9 @@ intelTexImage(GLcontext * ctx,
    }
 
    DBG("Upload image %dx%dx%d row_len %d "
-       "pitch %d\n",
-       width, height, depth, width * texelBytes, dstRowStride);
+       "pitch %d pixels %d compressed %d\n",
+       width, height, depth, width * texelBytes, dstRowStride,
+       pixels ? 1 : 0, compressed);
 
    /* Copy data.  Would like to know when it's ok for us to eg. use
     * the blitter to copy.  Or, use the hardware to do the format
@@ -523,7 +531,7 @@ intelTexImage(GLcontext * ctx,
 	       _mesa_copy_rect(texImage->Data, dst->cpp, dst->pitch,
 			       0, 0,
 			       intelImage->mt->level[level].width,
-			       intelImage->mt->level[level].height/4,
+			       (intelImage->mt->level[level].height+3)/4,
 			       pixels,
 			       srcRowStride,
 			       0, 0);
@@ -549,7 +557,7 @@ intelTexImage(GLcontext * ctx,
    _mesa_unmap_teximage_pbo(ctx, unpack);
 
    if (intelImage->mt) {
-      if (pixels)
+      if (needs_map)
          intel_miptree_image_unmap(intel, intelImage->mt);
       texImage->Data = NULL;
    }

@@ -150,10 +150,11 @@ Redisplay(void)
 static void
 Reshape(int width, int height)
 {
+   float ar = (float) width / (float) height;
    glViewport(0, 0, width, height);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 25.0);
+   glFrustum(-ar, ar, -1.0, 1.0, 5.0, 25.0);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
    glTranslatef(0.0f, 0.0f, -15.0f);

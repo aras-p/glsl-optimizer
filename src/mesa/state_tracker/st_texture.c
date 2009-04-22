@@ -30,6 +30,7 @@
 #include "st_public.h"
 #include "st_texture.h"
 #include "st_cb_fbo.h"
+#include "st_inlines.h"
 #include "main/enums.h"
 #include "main/teximage.h"
 #include "main/texstore.h"
@@ -78,7 +79,6 @@ st_texture_create(struct st_context *st,
 		  GLuint width0,
 		  GLuint height0,
 		  GLuint depth0,
-		  GLuint compress_byte,
                   GLuint usage )
 {
    struct pipe_texture pt, *newtex;
@@ -101,7 +101,6 @@ st_texture_create(struct st_context *st,
    pt.width[0] = width0;
    pt.height[0] = height0;
    pt.depth[0] = depth0;
-   pt.compressed = compress_byte ? 1 : 0;
    pf_get_block(format, &pt.block);
    pt.tex_usage = usage;
 
@@ -128,8 +127,7 @@ st_texture_match_image(const struct pipe_texture *pt,
 
    /* Check if this image's format matches the established texture's format.
     */
-   if (st_mesa_format_to_pipe_format(image->TexFormat->MesaFormat) != pt->format ||
-       image->IsCompressed != pt->compressed)
+   if (st_mesa_format_to_pipe_format(image->TexFormat->MesaFormat) != pt->format)
       return GL_FALSE;
 
    /* Test if this image's size matches what's expected in the
@@ -191,13 +189,15 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
 		     GLuint zoffset, enum pipe_transfer_usage usage,
                      GLuint x, GLuint y, GLuint w, GLuint h)
 {
-   struct pipe_screen *screen = st->pipe->screen;
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct pipe_texture *pt = stImage->pt;
+
    DBG("%s \n", __FUNCTION__);
 
-   stImage->transfer = screen->get_tex_transfer(screen, pt, stImage->face,
-                                                stImage->level, zoffset, 
-                                                usage, x, y, w, h);
+   stImage->transfer = st_no_flush_get_tex_transfer(st, pt, stImage->face,
+						    stImage->level, zoffset,
+						    usage, x, y, w, h);
 
    if (stImage->transfer)
       return screen->transfer_map(screen, stImage->transfer);
@@ -254,13 +254,14 @@ st_surface_data(struct pipe_context *pipe,
 /* Upload data for a particular image.
  */
 void
-st_texture_image_data(struct pipe_context *pipe,
+st_texture_image_data(struct st_context *st,
                       struct pipe_texture *dst,
                       GLuint face,
                       GLuint level,
                       void *src,
                       GLuint src_row_stride, GLuint src_image_stride)
 {
+   struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    GLuint depth = dst->depth[level];
    GLuint i;
@@ -268,11 +269,12 @@ st_texture_image_data(struct pipe_context *pipe,
    struct pipe_transfer *dst_transfer;
 
    DBG("%s\n", __FUNCTION__);
+
    for (i = 0; i < depth; i++) {
-      dst_transfer = screen->get_tex_transfer(screen, dst, face, level, i,
-                                              PIPE_TRANSFER_WRITE, 0, 0,
-                                              dst->width[level],
-                                              dst->height[level]);
+      dst_transfer = st_no_flush_get_tex_transfer(st, dst, face, level, i,
+						  PIPE_TRANSFER_WRITE, 0, 0,
+						  dst->width[level],
+						  dst->height[level]);
 
       st_surface_data(pipe, dst_transfer,
 		      0, 0,                             /* dstx, dsty */
@@ -483,4 +485,21 @@ st_release_teximage(struct st_framebuffer *stfb, uint surfIndex,
    st->dirty.st |= ST_NEW_FRAMEBUFFER;
 
    return 1;
+}
+
+void
+st_teximage_flush_before_map(struct st_context *st,
+			     struct pipe_texture *pt,
+			     unsigned int face,
+			     unsigned int level,
+			     enum pipe_transfer_usage usage)
+{
+   struct pipe_context *pipe = st->pipe;
+   unsigned referenced =
+      pipe->is_texture_referenced(pipe, pt, face, level);
+
+   if (referenced && ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
+		      usage == PIPE_TRANSFER_WRITE ||
+		      usage == PIPE_TRANSFER_READ_WRITE))
+      st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
 }

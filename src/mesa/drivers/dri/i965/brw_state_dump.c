@@ -84,6 +84,19 @@ get_965_surfacetype(unsigned int surfacetype)
     }
 }
 
+static const char *
+get_965_surface_format(unsigned int surface_format)
+{
+    switch (surface_format) {
+    case 0x000: return "r32g32b32a32_float";
+    case 0x0c1: return "b8g8r8a8_unorm";
+    case 0x100: return "b5g6r5_unorm";
+    case 0x102: return "b5g5r5a1_unorm";
+    case 0x104: return "b4g4r4a4_unorm";
+    default: return "unknown";
+    }
+}
+
 static void dump_wm_surface_state(struct brw_context *brw)
 {
    int i;
@@ -95,7 +108,7 @@ static void dump_wm_surface_state(struct brw_context *brw)
       char name[20];
 
       if (surf_bo == NULL) {
-	 fprintf(stderr, "WM SS%d: NULL\n", i);
+	 fprintf(stderr, "  WM SS%d: NULL\n", i);
 	 continue;
       }
       dri_bo_map(surf_bo, GL_FALSE);
@@ -103,8 +116,9 @@ static void dump_wm_surface_state(struct brw_context *brw)
       surf = (struct brw_surface_state *)(surf_bo->virtual);
 
       sprintf(name, "WM SS%d", i);
-      state_out(name, surf, surfoff, 0, "%s\n",
-		get_965_surfacetype(surf->ss0.surface_type));
+      state_out(name, surf, surfoff, 0, "%s %s\n",
+		get_965_surfacetype(surf->ss0.surface_type),
+		get_965_surface_format(surf->ss0.surface_format));
       state_out(name, surf, surfoff, 1, "offset\n");
       state_out(name, surf, surfoff, 2, "%dx%d size, %d mips\n",
 		surf->ss2.width + 1, surf->ss2.height + 1, surf->ss2.mip_count);

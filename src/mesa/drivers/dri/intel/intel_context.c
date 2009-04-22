@@ -235,6 +235,11 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	   region_name = "dri2 front buffer";
 	   break;
 
+       case __DRI_BUFFER_FAKE_FRONT_LEFT:
+	   rb = intel_fb->color_rb[0];
+	   region_name = "dri2 fake front buffer";
+	   break;
+
        case __DRI_BUFFER_BACK_LEFT:
 	   rb = intel_fb->color_rb[1];
 	   region_name = "dri2 back buffer";
@@ -391,6 +396,27 @@ intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
 
    if (intel->batch->map != intel->batch->ptr)
       intel_batchbuffer_flush(intel->batch);
+
+   if ((ctx->DrawBuffer->Name == 0) && intel->front_buffer_dirty) {
+      __DRIscreen *const screen = intel->intelScreen->driScrnPriv;
+
+      if (screen->dri2.loader &&
+          (screen->dri2.loader->base.version >= 2)
+	  && (screen->dri2.loader->flushFrontBuffer != NULL)) {
+	 (*screen->dri2.loader->flushFrontBuffer)(intel->driDrawable,
+						  intel->driDrawable->loaderPrivate);
+
+	 /* Only clear the dirty bit if front-buffer rendering is no longer
+	  * enabled.  This is done so that the dirty bit can only be set in
+	  * glDrawBuffer.  Otherwise the dirty bit would have to be set at
+	  * each of N places that do rendering.  This has worse performances,
+	  * but it is much easier to get correct.
+	  */
+	 if (intel->is_front_buffer_rendering) {
+	    intel->front_buffer_dirty = GL_FALSE;
+	 }
+      }
+   }
 }
 
 void

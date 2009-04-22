@@ -25,8 +25,8 @@
  *
  **************************************************************************/
 
-#ifndef DRV_H
-#define DRV_H
+#ifndef STW_ICD_H
+#define STW_ICD_H
 
 
 #include <windows.h>
@@ -486,4 +486,4 @@ BOOL APIENTRY
 DrvValidateVersion(
    ULONG ulVersion );
 
-#endif /* DRV_H */
+#endif /* STW_ICD_H */

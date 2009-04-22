@@ -234,6 +234,8 @@ static void r300_render_draw(struct vbuf_render* render,
     struct pipe_screen* screen = r300->context.screen;
     struct pipe_buffer* index_buffer;
     void* index_map;
+    int i;
+    uint32_t index;
 
     CS_LOCALS(r300);
 
@@ -252,14 +254,24 @@ static void r300_render_draw(struct vbuf_render* render,
     pipe_buffer_unmap(screen, index_buffer);
 
     debug_printf("r300: Doing indexbuf render, count %d\n", count);
-
-    BEGIN_CS(6);
+/*
+    BEGIN_CS(8);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 0);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
            r300render->hwprim);
     OUT_CS_PKT3(R300_PACKET3_INDX_BUFFER, 2);
     OUT_CS(R300_INDX_BUFFER_ONE_REG_WR | (R300_VAP_PORT_IDX0 >> 2));
     OUT_CS_INDEX_RELOC(index_buffer, 0, count, RADEON_GEM_DOMAIN_GTT, 0, 0);
+    END_CS; */
+
+    BEGIN_CS(2 + count);
+    OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, count);
+    OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
+           r300render->hwprim | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
+    for (i = 0; i < count; i++) {
+        index = indices[i];
+        OUT_CS(index);
+    }
     END_CS;
 }
 

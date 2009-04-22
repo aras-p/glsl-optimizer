@@ -322,7 +322,7 @@ static struct brw_wm_ref *get_new_ref( struct brw_wm_compile *c,
       newref->value->lastuse = newref;
    }
 
-   if (src.NegateBase & (1<<i))
+   if (src.Negate & (1 << i))
       newref->hw_reg.negate ^= 1;
 
    if (src.Abs) {

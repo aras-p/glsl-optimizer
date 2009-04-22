@@ -51,15 +51,15 @@ struct stw_winsys
 };
 
 boolean
-st_init(const struct stw_winsys *stw_winsys);
+stw_init(const struct stw_winsys *stw_winsys);
 
 boolean
-st_init_thread(void);
+stw_init_thread(void);
 
 void
-st_cleanup_thread(void);
+stw_cleanup_thread(void);
 
 void
-st_cleanup(void);
+stw_cleanup(void);
 
 #endif /* STW_WINSYS_H */

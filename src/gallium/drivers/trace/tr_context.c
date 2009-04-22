@@ -26,6 +26,8 @@
  **************************************************************************/
 
 #include "util/u_memory.h"
+#include "util/u_simple_list.h"
+
 #include "pipe/p_screen.h"
 
 #include "tr_dump.h"
@@ -46,7 +48,7 @@ trace_buffer_unwrap(struct trace_context *tr_ctx,
    if(!buffer)
       return NULL;
 
-   tr_buf = trace_buffer(tr_scr, buffer);
+   tr_buf = trace_buffer(buffer);
 
    assert(tr_buf->buffer);
    assert(tr_buf->buffer->screen == tr_scr->screen);
@@ -142,9 +144,8 @@ trace_context_draw_elements(struct pipe_context *_pipe,
                           unsigned indexSize,
                           unsigned mode, unsigned start, unsigned count)
 {
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _indexBuffer);
+   struct trace_buffer *tr_buf = trace_buffer(_indexBuffer);
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_buffer *indexBuffer = tr_buf->buffer;
    boolean result;
@@ -180,9 +181,8 @@ trace_context_draw_range_elements(struct pipe_context *_pipe,
                                   unsigned start,
                                   unsigned count)
 {
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _indexBuffer);
+   struct trace_buffer *tr_buf = trace_buffer(_indexBuffer);
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_buffer *indexBuffer = tr_buf->buffer;
    boolean result;
@@ -1016,20 +1016,67 @@ trace_context_flush(struct pipe_context *_pipe,
 static INLINE void
 trace_context_destroy(struct pipe_context *_pipe)
 {
+   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin("pipe_context", "destroy");
-
    trace_dump_arg(ptr, pipe);
+   trace_dump_call_end();
+
+   trace_screen_remove_from_list(tr_scr, contexts, tr_ctx);
 
    pipe->destroy(pipe);
-
-   trace_dump_call_end();
 
    FREE(tr_ctx);
 }
 
+static unsigned int
+trace_is_texture_referenced( struct pipe_context *_pipe,
+			    struct pipe_texture *_texture,
+			    unsigned face, unsigned level)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_texture *tr_tex = trace_texture(_texture);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_texture *texture = tr_tex->texture;
+   unsigned int referenced;
+
+   trace_dump_call_begin("pipe_context", "is_texture_referenced");
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, texture);
+   trace_dump_arg(uint, face);
+   trace_dump_arg(uint, level);
+
+   referenced = pipe->is_texture_referenced(pipe, texture, face, level);
+
+   trace_dump_ret(uint, referenced);
+   trace_dump_call_end();
+
+   return referenced;
+}
+
+static unsigned int
+trace_is_buffer_referenced( struct pipe_context *_pipe,
+			    struct pipe_buffer *_buf)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_buffer *tr_buf = trace_buffer(_buf);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_buffer *buf = tr_buf->buffer;
+   unsigned int referenced;
+
+   trace_dump_call_begin("pipe_context", "is_buffer_referenced");
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, buf);
+
+   referenced = pipe->is_buffer_referenced(pipe, buf);
+
+   trace_dump_ret(uint, referenced);
+   trace_dump_call_end();
+
+   return referenced;
+}
 
 struct pipe_context *
 trace_context_create(struct pipe_screen *_screen,
@@ -1042,7 +1089,7 @@ trace_context_create(struct pipe_screen *_screen,
    if(!pipe)
       goto error1;
 
-   if(!trace_dump_enabled())
+   if(!trace_dump_trace_enabled())
       goto error1;
 
    tr_scr = trace_screen(_screen);
@@ -1096,6 +1143,8 @@ trace_context_create(struct pipe_screen *_screen,
    tr_ctx->base.surface_fill = trace_context_surface_fill;
    tr_ctx->base.clear = trace_context_clear;
    tr_ctx->base.flush = trace_context_flush;
+   tr_ctx->base.is_texture_referenced = trace_is_texture_referenced;
+   tr_ctx->base.is_buffer_referenced = trace_is_buffer_referenced;
 
    tr_ctx->pipe = pipe;
 
@@ -1103,6 +1152,8 @@ trace_context_create(struct pipe_screen *_screen,
    trace_dump_arg(ptr, screen);
    trace_dump_ret(ptr, pipe);
    trace_dump_call_end();
+
+   trace_screen_add_to_list(tr_scr, contexts, tr_ctx);
 
    return &tr_ctx->base;
 

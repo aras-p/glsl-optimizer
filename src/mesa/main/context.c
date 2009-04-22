@@ -187,7 +187,7 @@ GLfloat _mesa_ubyte_to_float_color_tab[256];
 void
 _mesa_notifySwapBuffers(__GLcontext *ctx)
 {
-   FLUSH_VERTICES( ctx, 0 );
+   FLUSH_CURRENT( ctx, 0 );
    if (ctx->Driver.Flush) {
       ctx->Driver.Flush(ctx);
    }
@@ -434,7 +434,7 @@ one_time_init( GLcontext *ctx )
       }
 
 #if defined(DEBUG) && defined(__DATE__) && defined(__TIME__)
-      _mesa_debug(ctx, "Mesa %s DEBUG build %s %s\n",
+      _mesa_debug(ctx, "Mesa %s DEBUG build %s %s",
                   MESA_VERSION_STRING, __DATE__, __TIME__);
 #endif
 
@@ -1514,6 +1514,7 @@ _mesa_Flush(void)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_CURRENT( ctx, 0 );
    if (ctx->Driver.Flush) {
       ctx->Driver.Flush(ctx);
    }

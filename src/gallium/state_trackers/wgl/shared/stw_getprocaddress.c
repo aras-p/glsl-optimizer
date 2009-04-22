@@ -27,28 +27,31 @@
 
 #include <windows.h>
 
+#define WGL_WGLEXT_PROTOTYPES
+
+#include <GL/gl.h>
+#include <GL/wglext.h>
+
 #include "glapi/glapi.h"
-#include "stw_arbextensionsstring.h"
-#include "stw_arbpixelformat.h"
 #include "stw_public.h"
 
-struct extension_entry
+struct stw_extension_entry
 {
    const char *name;
    PROC proc;
 };
 
-#define EXTENTRY(P) { #P, (PROC) P }
+#define STW_EXTENSION_ENTRY(P) { #P, (PROC) P }
 
-static struct extension_entry extension_entries[] = {
+static const struct stw_extension_entry stw_extension_entries[] = {
 
    /* WGL_ARB_extensions_string */
-   EXTENTRY( wglGetExtensionsStringARB ),
+   STW_EXTENSION_ENTRY( wglGetExtensionsStringARB ),
 
    /* WGL_ARB_pixel_format */
-   EXTENTRY( wglChoosePixelFormatARB ),
-   EXTENTRY( wglGetPixelFormatAttribfvARB ),
-   EXTENTRY( wglGetPixelFormatAttribivARB ),
+   STW_EXTENSION_ENTRY( wglChoosePixelFormatARB ),
+   STW_EXTENSION_ENTRY( wglGetPixelFormatAttribfvARB ),
+   STW_EXTENSION_ENTRY( wglGetPixelFormatAttribivARB ),
 
    { NULL, NULL }
 };
@@ -57,13 +60,13 @@ PROC
 stw_get_proc_address(
    LPCSTR lpszProc )
 {
-   struct extension_entry *entry;
+   const struct stw_extension_entry *entry;
 
-   PROC p = (PROC) _glapi_get_proc_address( (const char *) lpszProc );
+   PROC p = (PROC) _glapi_get_proc_address( lpszProc );
    if (p)
       return p;
 
-   for (entry = extension_entries; entry->name; entry++)
+   for (entry = stw_extension_entries; entry->name; entry++)
       if (strcmp( lpszProc, entry->name ) == 0)
          return entry->proc;
 

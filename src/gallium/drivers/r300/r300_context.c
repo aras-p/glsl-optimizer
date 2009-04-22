@@ -102,6 +102,29 @@ static void r300_destroy_context(struct pipe_context* context) {
     FREE(r300);
 }
 
+static unsigned int
+r300_is_texture_referenced( struct pipe_context *pipe,
+			    struct pipe_texture *texture,
+			    unsigned face, unsigned level)
+{
+   /**
+    * FIXME: Optimize.
+    */
+
+   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
+static unsigned int
+r300_is_buffer_referenced( struct pipe_context *pipe,
+			   struct pipe_buffer *buf)
+{
+   /**
+    * FIXME: Optimize.
+    */
+
+   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          struct r300_winsys* r300_winsys)
 {
@@ -123,6 +146,9 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.draw_arrays = r300_draw_arrays;
     r300->context.draw_elements = r300_draw_elements;
     r300->context.draw_range_elements = r300_draw_range_elements;
+
+    r300->context.is_texture_referenced = r300_is_texture_referenced;
+    r300->context.is_buffer_referenced = r300_is_buffer_referenced;
 
     r300->draw = draw_create();
     draw_set_rasterize_stage(r300->draw, r300_draw_stage(r300));

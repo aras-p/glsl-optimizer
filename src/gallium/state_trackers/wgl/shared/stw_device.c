@@ -41,6 +41,7 @@
 #include "shared/stw_pixelformat.h"
 #include "shared/stw_public.h"
 #include "shared/stw_tls.h"
+#include "shared/stw_framebuffer.h"
 
 #ifdef WIN32_THREADS
 extern _glthread_Mutex OneTimeLock;
@@ -75,7 +76,7 @@ st_flush_frontbuffer(struct pipe_screen *screen,
 
 
 boolean
-st_init(const struct stw_winsys *stw_winsys)
+stw_init(const struct stw_winsys *stw_winsys)
 {
    static struct stw_device stw_dev_storage;
    struct pipe_screen *screen;
@@ -119,7 +120,7 @@ st_init(const struct stw_winsys *stw_winsys)
       goto error1;
    }
 
-   pixelformat_init();
+   stw_pixelformat_init();
 
    return TRUE;
 
@@ -130,25 +131,28 @@ error1:
 
 
 boolean
-st_init_thread(void)
+stw_init_thread(void)
 {
-   if (!stw_tls_init_thread()) {
+   if (!stw_tls_init_thread())
       return FALSE;
-   }
+
+   if (!stw_framebuffer_init_thread())
+      return FALSE;
 
    return TRUE;
 }
 
 
 void
-st_cleanup_thread(void)
+stw_cleanup_thread(void)
 {
+   stw_framebuffer_cleanup_thread();
    stw_tls_cleanup_thread();
 }
 
 
 void
-st_cleanup(void)
+stw_cleanup(void)
 {
    unsigned i;
 
@@ -189,7 +193,7 @@ st_cleanup(void)
 
 
 struct stw_context *
-stw_lookup_context( UINT_PTR dhglrc )
+stw_lookup_context_locked( UINT_PTR dhglrc )
 {
    if (dhglrc == 0)
       return NULL;

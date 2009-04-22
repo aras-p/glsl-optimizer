@@ -45,6 +45,7 @@
 #include "st_program.h"
 #include "st_public.h"
 #include "st_mesa_to_tgsi.h"
+#include "st_inlines.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
@@ -166,10 +167,10 @@ draw_quad(GLcontext *ctx,
    }
 
    /* put vertex data into vbuf */
-   pipe_buffer_write(pipe->screen, st->clear.vbuf, 
-                     st->clear.vbuf_slot * sizeof(st->clear.vertices),
-                     sizeof(st->clear.vertices),
-                     st->clear.vertices);
+   st_no_flush_pipe_buffer_write(st, st->clear.vbuf,
+				 st->clear.vbuf_slot * sizeof(st->clear.vertices),
+				 sizeof(st->clear.vertices),
+				 st->clear.vertices);
 
    /* draw */
    util_draw_vertex_buffer(pipe, 

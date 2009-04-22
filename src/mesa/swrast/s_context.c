@@ -264,13 +264,7 @@ _swrast_update_fragment_program(GLcontext *ctx, GLbitfield newState)
 {
    const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
    if (fp) {
-#if 0
-      /* XXX Need a way to trigger the initial loading of parameters
-       * even when there's no recent state changes.
-       */
-      if (fp->Base.Parameters->StateFlags & newState)
-#endif
-         _mesa_load_state_parameters(ctx, fp->Base.Parameters);
+      _mesa_load_state_parameters(ctx, fp->Base.Parameters);
    }
 }
 
@@ -524,13 +518,6 @@ _swrast_invalidate_state( GLcontext *ctx, GLbitfield new_state )
       new_state = ~0;
    }
 
-   {
-      const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
-      if (fp && (fp->Base.Parameters->StateFlags & new_state)) {
-         _mesa_load_state_parameters(ctx, fp->Base.Parameters);
-      }
-   }
-
    if (new_state & swrast->InvalidateTriangleMask)
       swrast->Triangle = _swrast_validate_triangle;
 
@@ -647,17 +634,7 @@ _swrast_validate_derived( GLcontext *ctx )
       if (swrast->NewState & (_NEW_FOG | _NEW_PROGRAM))
          _swrast_update_fog_state( ctx );
 
-      if (swrast->NewState & (_NEW_MODELVIEW |
-                              _NEW_PROJECTION |
-                              _NEW_TEXTURE_MATRIX |
-                              _NEW_FOG |
-                              _NEW_LIGHT |
-                              _NEW_LINE |
-                              _NEW_TEXTURE |
-                              _NEW_TRANSFORM |
-                              _NEW_POINT |
-                              _NEW_VIEWPORT |
-                              _NEW_PROGRAM))
+      if (swrast->NewState & (_NEW_PROGRAM_CONSTANTS | _NEW_PROGRAM))
 	 _swrast_update_fragment_program( ctx, swrast->NewState );
 
       if (swrast->NewState & (_NEW_TEXTURE | _NEW_PROGRAM)) {

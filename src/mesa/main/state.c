@@ -44,6 +44,7 @@
 #include "pixel.h"
 #endif
 #include "shader/program.h"
+#include "shader/prog_parameter.h"
 #include "state.h"
 #include "stencil.h"
 #include "texenvprogram.h"
@@ -303,6 +304,36 @@ update_program(GLcontext *ctx)
 }
 
 
+/**
+ * Examine shader constants and return either _NEW_PROGRAM_CONSTANTS or 0.
+ */
+static GLbitfield
+update_program_constants(GLcontext *ctx)
+{
+   GLbitfield new_state = 0x0;
+
+   if (ctx->FragmentProgram._Current) {
+      const struct gl_program_parameter_list *params =
+         ctx->FragmentProgram._Current->Base.Parameters;
+      if (params && params->StateFlags & ctx->NewState) {
+         new_state |= _NEW_PROGRAM_CONSTANTS;
+      }
+   }
+
+   if (ctx->VertexProgram._Current) {
+      const struct gl_program_parameter_list *params =
+         ctx->VertexProgram._Current->Base.Parameters;
+      if (params && params->StateFlags & ctx->NewState) {
+         new_state |= _NEW_PROGRAM_CONSTANTS;
+      }
+   }
+
+   return new_state;
+}
+
+
+
+
 static void
 update_viewport_matrix(GLcontext *ctx)
 {
@@ -470,7 +501,8 @@ _mesa_update_state_locked( GLcontext *ctx )
 
    /* Determine which state flags effect vertex/fragment program state */
    if (ctx->FragmentProgram._MaintainTexEnvProgram) {
-      prog_flags |= (_NEW_TEXTURE | _NEW_FOG | _DD_NEW_SEPARATE_SPECULAR);
+      prog_flags |= (_NEW_TEXTURE | _NEW_FOG | _DD_NEW_SEPARATE_SPECULAR |
+		     _NEW_ARRAY);
    }
    if (ctx->VertexProgram._MaintainTnlProgram) {
       prog_flags |= (_NEW_ARRAY | _NEW_TEXTURE | _NEW_TEXTURE_MATRIX |
@@ -553,6 +585,10 @@ _mesa_update_state_locked( GLcontext *ctx )
       new_prog_state |= update_program( ctx );
    }
 
+
+ out:
+   new_prog_state |= update_program_constants(ctx);
+
    /*
     * Give the driver a chance to act upon the new_state flags.
     * The driver might plug in different span functions, for example.
@@ -562,7 +598,6 @@ _mesa_update_state_locked( GLcontext *ctx )
     * Set ctx->NewState to zero to avoid recursion if
     * Driver.UpdateState() has to call FLUSH_VERTICES().  (fixed?)
     */
- out:
    new_state = ctx->NewState | new_prog_state;
    ctx->NewState = 0;
    ctx->Driver.UpdateState(ctx, new_state);

@@ -82,6 +82,71 @@
       rgba[3] = 0xff;							\
    } while (0)
 
+#elif (SPANTMP_PIXEL_FMT == GL_BGRA)  && (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_SHORT_4_4_4_4_REV)
+
+/**
+ ** GL_BGRA, GL_UNSIGNED_SHORT_4_4_4_4_REV
+ **/
+
+#ifndef GET_VALUE
+#ifndef GET_PTR
+#define GET_PTR(_x, _y) (buf + (_x) * 2 + (_y) * pitch)
+#endif
+
+#define GET_VALUE(_x, _y) *(volatile GLushort *)(GET_PTR(_x, _y))
+#define PUT_VALUE(_x, _y, _v) *(volatile GLushort *)(GET_PTR(_x, _y)) = (_v)
+#endif /* GET_VALUE */
+
+#define INIT_MONO_PIXEL(p, color) \
+   p = PACK_COLOR_4444(color[3], color[0], color[1], color[2])
+
+#define WRITE_RGBA( _x, _y, r, g, b, a )				\
+   PUT_VALUE(_x, _y, PACK_COLOR_4444(a, r, g, b))			\
+
+#define WRITE_PIXEL( _x, _y, p ) PUT_VALUE(_x, _y, p)
+
+#define READ_RGBA( rgba, _x, _y )					\
+   do {									\
+      GLushort p = GET_VALUE(_x, _y);					\
+      rgba[0] = ((p >> 8) & 0xf) * 0x11;				\
+      rgba[1] = ((p >> 4) & 0xf) * 0x11;				\
+      rgba[2] = ((p >> 0) & 0xf) * 0x11;				\
+      rgba[3] = ((p >> 12) & 0xf) * 0x11;				\
+   } while (0)
+
+
+#elif (SPANTMP_PIXEL_FMT == GL_BGRA)  && (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_SHORT_1_5_5_5_REV)
+
+/**
+ ** GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV
+ **/
+
+#ifndef GET_VALUE
+#ifndef GET_PTR
+#define GET_PTR(_x, _y) (buf + (_x) * 2 + (_y) * pitch)
+#endif
+
+#define GET_VALUE(_x, _y) *(volatile GLushort *)(GET_PTR(_x, _y))
+#define PUT_VALUE(_x, _y, _v) *(volatile GLushort *)(GET_PTR(_x, _y)) = (_v)
+#endif /* GET_VALUE */
+
+#define INIT_MONO_PIXEL(p, color) \
+   p = PACK_COLOR_1555(color[3], color[0], color[1], color[2])
+
+#define WRITE_RGBA( _x, _y, r, g, b, a )				\
+   PUT_VALUE(_x, _y, PACK_COLOR_1555(a, r, g, b))			\
+
+#define WRITE_PIXEL( _x, _y, p ) PUT_VALUE(_x, _y, p)
+
+#define READ_RGBA( rgba, _x, _y )					\
+   do {									\
+      GLushort p = GET_VALUE(_x, _y);					\
+      rgba[0] = ((p >> 7) & 0xf8) * 255 / 0xf8;				\
+      rgba[1] = ((p >> 2) & 0xf8) * 255 / 0xf8;				\
+      rgba[2] = ((p << 3) & 0xf8) * 255 / 0xf8;				\
+      rgba[3] = ((p >> 15) & 0x1) * 0xff;				\
+   } while (0)
+
 #elif (SPANTMP_PIXEL_FMT == GL_BGRA) && (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)
 
 /**

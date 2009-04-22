@@ -952,7 +952,7 @@ void brw_dp_READ_16( struct brw_compile *p,
 
 /**
  * Read a float[4] vector from the data port Data Cache (const buffer).
- * Scratch offset should be a multiple of 16.
+ * Location (in buffer) should be a multiple of 16.
  * Used for fetching shader constants.
  * If relAddr is true, we'll do an indirect fetch using the address register.
  */
@@ -960,7 +960,7 @@ void brw_dp_READ_4( struct brw_compile *p,
                     struct brw_reg dest,
                     GLuint msg_reg_nr,
                     GLboolean relAddr,
-                    GLuint scratch_offset,
+                    GLuint location,
                     GLuint bind_table_index )
 {
    {
@@ -969,18 +969,20 @@ void brw_dp_READ_4( struct brw_compile *p,
       brw_set_mask_control(p, BRW_MASK_DISABLE);
 
       /* set message header global offset field (reg 0, element 2) */
+      /* Note that grf[0] will be copied to mrf[1] implicitly by the SEND instr */
       brw_MOV(p,
 	      retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_UD),
-	      brw_imm_d(scratch_offset));
+	      brw_imm_d(location));
       brw_pop_insn_state(p);
    }
 
    {
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
    
-      insn->header.predicate_control = 0; /* XXX */
+      insn->header.predicate_control = BRW_PREDICATE_NONE;
       insn->header.compression_control = BRW_COMPRESSION_NONE; 
       insn->header.destreg__conditonalmod = msg_reg_nr;
+      insn->header.mask_control = BRW_MASK_DISABLE;
   
       /* cast dest to a uword[8] vector */
       dest = retype(vec8(dest), BRW_REGISTER_TYPE_UW);
@@ -989,7 +991,7 @@ void brw_dp_READ_4( struct brw_compile *p,
       brw_set_src0(insn, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
 
       brw_set_dp_read_message(insn,
-			      bind_table_index, /* binding table index (255=stateless) */
+			      bind_table_index,
 			      0,  /* msg_control (0 means 1 Oword) */
 			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
 			      0, /* source cache = data cache */
@@ -998,6 +1000,78 @@ void brw_dp_READ_4( struct brw_compile *p,
 			      0); /* eot */
    }
 }
+
+
+/**
+ * Read float[4] constant(s) from VS constant buffer.
+ * For relative addressing, two float[4] constants will be read into 'dest'.
+ * Otherwise, one float[4] constant will be read into the lower half of 'dest'.
+ */
+void brw_dp_READ_4_vs(struct brw_compile *p,
+                      struct brw_reg dest,
+                      GLuint oword,
+                      GLboolean relAddr,
+                      struct brw_reg addrReg,
+                      GLuint location,
+                      GLuint bind_table_index)
+{
+   GLuint msg_reg_nr = 1;
+
+   assert(oword < 2);
+   /*
+   printf("vs const read msg, location %u, msg_reg_nr %d\n",
+          location, msg_reg_nr);
+   */
+
+   /* Setup MRF[1] with location/offset into const buffer */
+   {
+      struct brw_reg b;
+
+      brw_push_insn_state(p);
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+      brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+      /*brw_set_access_mode(p, BRW_ALIGN_16);*/
+
+      /* XXX I think we're setting all the dwords of MRF[1] to 'location'.
+       * when the docs say only dword[2] should be set.  Hmmm.  But it works.
+       */
+      b = brw_message_reg(msg_reg_nr);
+      b = retype(b, BRW_REGISTER_TYPE_UD);
+      /*b = get_element_ud(b, 2);*/
+      if (relAddr) {
+         brw_ADD(p, b, addrReg, brw_imm_ud(location));
+      }
+      else {
+         brw_MOV(p, b, brw_imm_ud(location));
+      }
+
+      brw_pop_insn_state(p);
+   }
+
+   {
+      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+   
+      insn->header.predicate_control = BRW_PREDICATE_NONE;
+      insn->header.compression_control = BRW_COMPRESSION_NONE; 
+      insn->header.destreg__conditonalmod = msg_reg_nr;
+      insn->header.mask_control = BRW_MASK_DISABLE;
+      /*insn->header.access_mode = BRW_ALIGN_16;*/
+  
+      brw_set_dest(insn, dest);
+      brw_set_src0(insn, brw_null_reg());
+
+      brw_set_dp_read_message(insn,
+			      bind_table_index,
+			      oword,  /* 0 = lower Oword, 1 = upper Oword */
+			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
+			      0, /* source cache = data cache */
+			      1, /* msg_length */
+			      1, /* response_length (1 Oword) */
+			      0); /* eot */
+   }
+}
+
 
 
 void brw_fb_WRITE(struct brw_compile *p,

@@ -389,7 +389,7 @@ linux*)
     ;;
 *freebsd* | dragonfly*)
     case "$host_cpu" in
-    i*86|x86_64) default_driver="dri";;
+    i*86|x86_64|powerpc*|sparc*) default_driver="dri";;
     esac
     ;;
 esac
@@ -417,19 +417,20 @@ WINDOW_SYSTEM=""
 GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_WINSYS_DIRS=""
 GALLIUM_WINSYS_DRM_DIRS=""
-GALLIUM_AUXILIARY_DIRS="draw translate cso_cache pipebuffer tgsi sct rtasm util"
+GALLIUM_AUXILIARY_DIRS="draw translate cso_cache pipebuffer tgsi sct rtasm util indices"
 GALLIUM_DRIVERS_DIRS="softpipe failover trace"
 GALLIUM_STATE_TRACKERS_DIRS=""
 
 case "$mesa_driver" in
 xlib)
     DRIVER_DIRS="x11"
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS xlib"
     ;;
 dri)
     SRC_DIRS="glx/x11 $SRC_DIRS"
     DRIVER_DIRS="dri"
     WINDOW_SYSTEM="dri"
-    GALLIUM_WINSYS_DIRS="drm $GALLIUM_WINSYS_DIRS"
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
@@ -1116,6 +1117,9 @@ no)
 yes)
     # look at what else is built
     case "$mesa_driver" in
+    xlib)
+        GALLIUM_STATE_TRACKERS_DIRS=glx
+        ;;
     dri)
         GALLIUM_STATE_TRACKERS_DIRS=egl
         ;;

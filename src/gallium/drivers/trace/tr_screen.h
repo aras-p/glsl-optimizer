@@ -30,12 +30,18 @@
 
 
 #include "pipe/p_screen.h"
+#include "pipe/p_thread.h"
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+
+struct tr_list {
+   struct tr_list *next;
+   struct tr_list *prev;
+};
 
 /**
  * It often happens that new data is written directly to the user buffers
@@ -50,6 +56,18 @@ struct trace_screen
    struct pipe_screen base;
 
    struct pipe_screen *screen;
+
+   pipe_mutex list_mutex;
+   int num_buffers;
+   int num_contexts;
+   int num_textures;
+   int num_surfaces;
+   int num_transfers;
+   struct tr_list buffers;
+   struct tr_list contexts;
+   struct tr_list textures;
+   struct tr_list surfaces;
+   struct tr_list transfers;
 };
 
 
@@ -65,6 +83,21 @@ void
 trace_screen_user_buffer_update(struct pipe_screen *screen,
                                 struct pipe_buffer *buffer);
 
+#define trace_screen_add_to_list(tr_scr, name, obj) \
+   do {                                             \
+      pipe_mutex_lock(tr_scr->list_mutex);          \
+      insert_at_head(&tr_scr->name, &obj->list);    \
+      tr_scr->num_##name++;                         \
+      pipe_mutex_unlock(tr_scr->list_mutex);        \
+   } while (0)
+
+#define trace_screen_remove_from_list(tr_scr, name, obj) \
+   do {                                                  \
+      pipe_mutex_lock(tr_scr->list_mutex);               \
+      remove_from_list(&obj->list);                      \
+      tr_scr->num_##name--;                              \
+      pipe_mutex_unlock(tr_scr->list_mutex);             \
+   } while (0)
 
 #ifdef __cplusplus
 }

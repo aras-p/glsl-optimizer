@@ -152,9 +152,9 @@ GLboolean r500_transform_TEX(
 		 *   r  < tex  <=>      -tex+r < 0
 		 *   r >= tex  <=> not (-tex+r < 0 */
 		if (comparefunc == GL_LESS || comparefunc == GL_GEQUAL)
-			tgt[1].SrcReg[2].NegateBase = tgt[0].SrcReg[2].NegateBase ^ NEGATE_XYZW;
+			tgt[1].SrcReg[2].Negate = tgt[0].SrcReg[2].Negate ^ NEGATE_XYZW;
 		else
-			tgt[1].SrcReg[0].NegateBase = tgt[0].SrcReg[0].NegateBase ^ NEGATE_XYZW;
+			tgt[1].SrcReg[0].Negate = tgt[0].SrcReg[0].Negate ^ NEGATE_XYZW;
 
 		tgt[2].Opcode = OPCODE_CMP;
 		tgt[2].DstReg = orig_inst->DstReg;
@@ -196,8 +196,8 @@ GLboolean r500FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 		if (reg.Abs)
 			return GL_FALSE;
 
-		if (reg.NegateAbs)
-			reg.NegateBase ^= 15;
+		if (reg.Negate)
+			reg.Negate ^= NEGATE_XYZW;
 
 		if (opcode == OPCODE_KIL) {
 			if (reg.Swizzle != SWIZZLE_NOOP)
@@ -206,7 +206,7 @@ GLboolean r500FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 			for(i = 0; i < 4; ++i) {
 				GLuint swz = GET_SWZ(reg.Swizzle, i);
 				if (swz == SWIZZLE_NIL) {
-					reg.NegateBase &= ~(1 << i);
+					reg.Negate &= ~(1 << i);
 					continue;
 				}
 				if (swz >= 4)
@@ -214,15 +214,14 @@ GLboolean r500FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 			}
 		}
 
-		if (reg.NegateBase)
+		if (reg.Negate)
 			return GL_FALSE;
 
 		return GL_TRUE;
 	} else if (opcode == OPCODE_DDX || opcode == OPCODE_DDY) {
 		/* DDX/MDH and DDY/MDV explicitly ignore incoming swizzles;
 		 * if it doesn't fit perfectly into a .xyzw case... */
-		if (reg.Swizzle == SWIZZLE_NOOP && !reg.Abs
-				&& !reg.NegateBase && !reg.NegateAbs)
+		if (reg.Swizzle == SWIZZLE_NOOP && !reg.Abs && !reg.Negate)
 			return GL_TRUE;
 
 		return GL_FALSE;
@@ -237,7 +236,7 @@ GLboolean r500FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 			if (swz != SWIZZLE_NIL && swz != SWIZZLE_ZERO)
 				relevant |= 1 << i;
 		}
-		if ((reg.NegateBase & relevant) && ((reg.NegateBase & relevant) != relevant))
+		if ((reg.Negate & relevant) && ((reg.Negate & relevant) != relevant))
 			return GL_FALSE;
 
 		return GL_TRUE;
@@ -260,7 +259,7 @@ void r500FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, 
 		GLuint swz = GET_SWZ(src.Swizzle, i);
 		if (swz == SWIZZLE_NIL)
 			continue;
-		negatebase[GET_BIT(src.NegateBase, i)] |= 1 << i;
+		negatebase[GET_BIT(src.Negate, i)] |= 1 << i;
 	}
 
 	_mesa_insert_instructions(s->Program, s->IP, (negatebase[0] ? 1 : 0) + (negatebase[1] ? 1 : 0));

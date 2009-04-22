@@ -25,59 +25,36 @@
  * 
  **************************************************************************/
 
-#ifndef PIXELFORMAT_H
-#define PIXELFORMAT_H
+#ifndef STW_PIXELFORMAT_H
+#define STW_PIXELFORMAT_H
 
 #include <windows.h>
+
 #include "pipe/p_compiler.h"
+#include "pipe/p_format.h"
 
-#define PF_FLAG_DOUBLEBUFFER  0x00000001
-#define PF_FLAG_MULTISAMPLED  0x00000002
-
-struct pixelformat_color_info
+struct stw_pixelformat_info
 {
-   uint redbits;
-   uint redshift;
-   uint greenbits;
-   uint greenshift;
-   uint bluebits;
-   uint blueshift;
-};
-
-struct pixelformat_alpha_info
-{
-   uint alphabits;
-   uint alphashift;
-};
-
-struct pixelformat_depth_info
-{
-   uint depthbits;
-   uint stencilbits;
-};
-
-struct pixelformat_info
-{
-   uint flags;
-   struct pixelformat_color_info color;
-   struct pixelformat_alpha_info alpha;
-   struct pixelformat_depth_info depth;
+   enum pipe_format color_format;
+   enum pipe_format depth_stencil_format;
+   
+   PIXELFORMATDESCRIPTOR pfd;
+   
+   unsigned numSampleBuffers;
+   unsigned numSamples;
 };
 
 void
-pixelformat_init( void );
+stw_pixelformat_init( void );
 
 uint
-pixelformat_get_count( void );
+stw_pixelformat_get_count( void );
 
 uint
-pixelformat_get_extended_count( void );
+stw_pixelformat_get_extended_count( void );
 
-const struct pixelformat_info *
-pixelformat_get_info( uint index );
-
-int stw_query_sample_buffers( void );
-int stw_query_samples( void );
+const struct stw_pixelformat_info *
+stw_pixelformat_get_info( uint index );
 
 
-#endif /* PIXELFORMAT_H */
+#endif /* STW_PIXELFORMAT_H */

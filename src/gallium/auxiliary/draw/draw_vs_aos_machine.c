@@ -74,7 +74,7 @@ void PIPE_CDECL aos_do_lit( struct aos_machine *machine,
       {
          result[0] = 1.0F;
          result[1] = in[0];
-         result[2] = 1.0;
+         result[2] = 0.0F;
          result[3] = 1.0F;
       }
       else
@@ -108,7 +108,7 @@ static void PIPE_CDECL do_lit_lut( struct aos_machine *machine,
       {
          result[0] = 1.0F;
          result[1] = in[0];
-         result[2] = 1.0;
+         result[2] = 0.0F;
          result[3] = 1.0F;
          return;
       }

@@ -37,19 +37,18 @@ SOURCES = \
 	copypixrate.c \
 	crossbar.c \
 	cva.c \
-	dinoshade.c \
 	drawbuffers.c \
 	exactrast.c \
 	floattex.c \
 	fbotest1.c \
 	fbotest2.c \
-	fbotexture.c \
 	fillrate.c \
 	fog.c \
 	fogcoord.c \
 	fptest1.c \
 	fptexture.c \
 	getprocaddress.c \
+	glutfx \
 	interleave.c \
 	invert.c \
 	jkrahntest.c \
@@ -66,7 +65,6 @@ SOURCES = \
 	packedpixels.c \
 	pbo.c \
 	prog_parameter.c \
-	projtex.c \
 	quads.c \
 	random.c \
 	readrate.c \
@@ -77,12 +75,15 @@ SOURCES = \
 	stencil_twoside.c \
 	stencilwrap.c \
 	stencil_wrap.c \
+	streaming_rect \
 	subtex \
 	subtexrate.c \
 	tex1d.c \
 	texcompress2.c \
+	texdown \
 	texfilt.c \
 	texline.c \
+	texobj.c \
 	texobjshare.c \
 	texrect.c \
 	texwrap.c \
@@ -201,10 +202,10 @@ fillrate.o: fillrate.c readtex.h
 
 
 floattex: floattex.o readtex.o shaderutil.o
-	$(CC) $(CFLAGS) $(LDFLAGS) floattex.o readtex.o shaderutil.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) floattex.o readtex.o shaderutil.o $(LIBS) -o $@
 
 floattex.o: floattex.c readtex.h shaderutil.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) floattex.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) floattex.c -o $@
 
 
 readtex.o: readtex.c
@@ -230,7 +231,7 @@ shaderutil.h: $(TOP)/progs/util/shaderutil.h
 	cp $< .
 
 shaderutil.o: shaderutil.c shaderutil.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) shaderutil.c
+	$(APP_CC) -c -I$(INCDIR) $(INCLUDES) $(CFLAGS) shaderutil.c
 
 
 

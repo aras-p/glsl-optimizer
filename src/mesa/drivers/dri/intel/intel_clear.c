@@ -38,6 +38,7 @@
 #include "main/enable.h"
 #include "main/macros.h"
 #include "main/matrix.h"
+#include "main/polygon.h"
 #include "main/texstate.h"
 #include "main/shaders.h"
 #include "main/stencil.h"
@@ -93,6 +94,7 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
 		    GL_CURRENT_BIT |
 		    GL_DEPTH_BUFFER_BIT |
 		    GL_ENABLE_BIT |
+		    GL_POLYGON_BIT |
 		    GL_STENCIL_BUFFER_BIT |
 		    GL_TRANSFORM_BIT |
 		    GL_CURRENT_BIT);
@@ -114,6 +116,7 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
    _mesa_Disable(GL_CLIP_PLANE3);
    _mesa_Disable(GL_CLIP_PLANE4);
    _mesa_Disable(GL_CLIP_PLANE5);
+   _mesa_PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
    if (ctx->Extensions.ARB_fragment_program && ctx->FragmentProgram.Enabled) {
       saved_fp_enable = GL_TRUE;
       _mesa_Disable(GL_FRAGMENT_PROGRAM_ARB);
@@ -145,6 +148,11 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
 	 }
       }
    }
+
+#if FEATURE_ARB_vertex_buffer_object
+   _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+   _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+#endif
 
    intel_meta_set_passthrough_transform(intel);
 

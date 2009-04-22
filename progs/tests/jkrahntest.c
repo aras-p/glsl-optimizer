@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 
     if (argc < 2) {
        fprintf(stderr, "This program tests GLX context switching.\n");
-       fprintf(stderr, "Usage: cxbug <n>\n");
+       fprintf(stderr, "Usage: jkrahntest <n>\n");
        fprintf(stderr, "Where n is:\n");
        fprintf(stderr, "\t1) Use two contexts and swap only when the context is current (typical case).\n");
        fprintf(stderr, "\t2) Use two contexts and swap at the same time.\n");

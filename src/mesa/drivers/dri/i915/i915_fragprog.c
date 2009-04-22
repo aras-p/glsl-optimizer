@@ -162,12 +162,12 @@ src_vector(struct i915_fragment_program *p,
                  GET_SWZ(source->Swizzle, 1),
                  GET_SWZ(source->Swizzle, 2), GET_SWZ(source->Swizzle, 3));
 
-   if (source->NegateBase)
+   if (source->Negate)
       src = negate(src,
-                   GET_BIT(source->NegateBase, 0),
-                   GET_BIT(source->NegateBase, 1),
-                   GET_BIT(source->NegateBase, 2),
-                   GET_BIT(source->NegateBase, 3));
+                   GET_BIT(source->Negate, 0),
+                   GET_BIT(source->Negate, 1),
+                   GET_BIT(source->Negate, 2),
+                   GET_BIT(source->Negate, 3));
 
    return src;
 }
@@ -323,7 +323,8 @@ upload_program(struct i915_fragment_program *p)
       p->ctx->FragmentProgram._Current;
    const struct prog_instruction *inst = program->Base.Instructions;
 
-/*    _mesa_debug_fp_inst(program->Base.NumInstructions, inst); */
+   if (INTEL_DEBUG & DEBUG_WM)
+      _mesa_print_program(&program->Base);
 
    /* Is this a parse-failed program?  Ensure a valid program is
     * loaded, as the flagging of an error isn't sufficient to stop
@@ -1049,9 +1050,6 @@ i915ProgramStringNotify(GLcontext * ctx,
          _mesa_append_fog_code(ctx, &p->FragProg);
          p->FragProg.FogOption = GL_NONE;
       }
-
-      if (INTEL_DEBUG & DEBUG_STATE)
-	 _mesa_print_program(prog);
    }
 
    _tnl_program_string(ctx, target, prog);

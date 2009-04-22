@@ -114,7 +114,7 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
       fetch->translate = translate_cache_find(fetch->cache, &key);
 
       {
-	 static struct vertex_header vh = { 0, 1, 0, 0xffff };
+         static struct vertex_header vh = { 0, 1, 0, UNDEFINED_VERTEX_ID, { .0f, .0f, .0f, .0f } };
 	 fetch->translate->set_buffer(fetch->translate,
 				      draw->pt.nr_vertex_buffers,
 				      &vh,

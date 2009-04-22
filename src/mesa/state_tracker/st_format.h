@@ -76,4 +76,8 @@ st_ChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
                        GLenum format, GLenum type);
 
 
+extern GLboolean
+st_equal_formats(enum pipe_format pFormat, GLenum format, GLenum type);
+
+
 #endif /* ST_CB_TEXIMAGE_H */
