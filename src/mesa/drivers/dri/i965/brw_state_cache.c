@@ -445,20 +445,6 @@ brw_init_non_surface_cache(struct brw_context *brw)
 		     BRW_GS_PROG,
 		     sizeof(struct brw_gs_prog_key),
 		     sizeof(struct brw_gs_prog_data));
-
-#if 1
-   brw_init_cache_id(cache,
-		     "SS_SURFACE",
-		     BRW_SS_SURFACE,
-		     sizeof(struct brw_surface_state),
-		     0);
-
-   brw_init_cache_id(cache,
-		     "SS_SURF_BIND",
-		     BRW_SS_SURF_BIND,
-		     0,
-		     0);
-#endif
 }
 
 
