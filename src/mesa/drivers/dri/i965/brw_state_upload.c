@@ -59,7 +59,6 @@ const struct brw_tracked_state *atoms[] =
    &brw_curbe_offsets,
    &brw_recalculate_urb_fence,
 
-
    &brw_cc_vp,
    &brw_cc_unit,
 
@@ -88,15 +87,8 @@ const struct brw_tracked_state *atoms[] =
 
    &brw_line_stipple,
    &brw_aa_line_parameters,
-   /* Ordering of the commands below is documented as fixed.  
-    */
-#if 0
-   &brw_pipelined_state_pointers,
-   &brw_urb_fence,
-   &brw_constant_buffer_state,
-#else
+
    &brw_psp_urb_cbs,
-#endif
 
    &brw_drawing_rect,
    &brw_indices,
