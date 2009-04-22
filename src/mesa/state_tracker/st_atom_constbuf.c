@@ -105,7 +105,7 @@ static void update_vs_constants(struct st_context *st )
 const struct st_tracked_state st_update_vs_constants = {
    "st_update_vs_constants",				/* name */
    {							/* dirty */
-      _NEW_PROGRAM_CONSTANTS,
+      (_NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS),          /* mesa */
       ST_NEW_VERTEX_PROGRAM,				/* st */
    },
    update_vs_constants					/* update */
