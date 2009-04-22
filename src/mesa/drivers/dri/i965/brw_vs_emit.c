@@ -79,7 +79,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       c->use_const_buffer = GL_TRUE;
    else
       c->use_const_buffer = GL_FALSE;
-   printf("use_const_buffer = %d\n", c->use_const_buffer);
+   /*printf("use_const_buffer = %d\n", c->use_const_buffer);*/
 
    /* r0 -- reserved as usual
     */
