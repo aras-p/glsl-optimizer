@@ -102,39 +102,18 @@ const struct brw_tracked_state *atoms[] =
    &brw_indices,
    &brw_vertices,
 
-   NULL,			/* brw_constant_buffer */
+   &brw_constant_buffer
 };
 
 
 void brw_init_state( struct brw_context *brw )
 {
-   GLuint i;
-
    brw_init_cache(brw);
-
-   brw->state.atoms = _mesa_malloc(sizeof(atoms));
-   brw->state.nr_atoms = sizeof(atoms)/sizeof(*atoms);
-   _mesa_memcpy(brw->state.atoms, atoms, sizeof(atoms));
-
-   /* Patch in a pointer to the dynamic state atom:
-    */
-   for (i = 0; i < brw->state.nr_atoms; i++)
-      if (brw->state.atoms[i] == NULL)
-	 brw->state.atoms[i] = &brw->curbe.tracked_state;
-
-   _mesa_memcpy(&brw->curbe.tracked_state, 
-		&brw_constant_buffer,
-		sizeof(brw_constant_buffer));
 }
 
 
 void brw_destroy_state( struct brw_context *brw )
 {
-   if (brw->state.atoms) {
-      _mesa_free(brw->state.atoms);
-      brw->state.atoms = NULL;
-   }
-
    brw_destroy_cache(brw);
    brw_destroy_batch_cache(brw);
 }
@@ -337,7 +316,7 @@ void brw_validate_state( struct brw_context *brw )
 
    /* do prepare stage for all atoms */
    for (i = 0; i < Elements(atoms); i++) {
-      const struct brw_tracked_state *atom = brw->state.atoms[i];
+      const struct brw_tracked_state *atom = atoms[i];
 
       if (brw->intel.Fallback)
          break;
@@ -368,8 +347,8 @@ void brw_upload_state(struct brw_context *brw)
       _mesa_memset(&examined, 0, sizeof(examined));
       prev = *state;
 
-      for (i = 0; i < brw->state.nr_atoms; i++) {	 
-	 const struct brw_tracked_state *atom = brw->state.atoms[i];
+      for (i = 0; i < Elements(atoms); i++) {	 
+	 const struct brw_tracked_state *atom = atoms[i];
 	 struct brw_state_flags generated;
 
 	 assert(atom->dirty.mesa ||
@@ -398,7 +377,7 @@ void brw_upload_state(struct brw_context *brw)
    }
    else {
       for (i = 0; i < Elements(atoms); i++) {	 
-	 const struct brw_tracked_state *atom = brw->state.atoms[i];
+	 const struct brw_tracked_state *atom = atoms[i];
 
 	 if (brw->intel.Fallback)
 	    break;

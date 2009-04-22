@@ -448,8 +448,6 @@ struct brw_context
 
    struct {
       struct brw_state_flags dirty;
-      struct brw_tracked_state **atoms;
-      GLuint nr_atoms;
 
       GLuint nr_color_regions;
       struct intel_region *color_regions[MAX_DRAW_BUFFERS];
@@ -552,11 +550,6 @@ struct brw_context
       GLuint vs_start;
       GLuint vs_size;
       GLuint total_size;
-
-      /* Dynamic tracker which changes to reflect the state referenced
-       * by active fp and vp program parameters:
-       */
-      struct brw_tracked_state tracked_state;
 
       dri_bo *curbe_bo;
       /** Offset within curbe_bo of space for current curbe entry */
