@@ -188,13 +188,6 @@ static void prepare_constant_buffer(struct brw_context *brw)
    GLfloat *buf;
    GLuint i;
 
-   /* Update our own dependency flags.  This works because this
-    * function will also be called whenever fp or vp changes.
-    */
-   brw->curbe.tracked_state.dirty.mesa = (_NEW_TRANSFORM|_NEW_PROJECTION);
-   brw->curbe.tracked_state.dirty.mesa |= vp->program.Base.Parameters->StateFlags;
-   brw->curbe.tracked_state.dirty.mesa |= fp->program.Base.Parameters->StateFlags;
-
    if (sz == 0) {
       if (brw->curbe.last_buf) {
 	 free(brw->curbe.last_buf);
@@ -422,7 +415,7 @@ static void emit_constant_buffer(struct brw_context *brw)
  */
 const struct brw_tracked_state brw_constant_buffer = {
    .dirty = {
-      .mesa = (_NEW_TRANSFORM|_NEW_PROJECTION),      /* plus fp and vp flags */
+      .mesa = _NEW_PROGRAM_CONSTANTS,
       .brw  = (BRW_NEW_FRAGMENT_PROGRAM |
 	       BRW_NEW_VERTEX_PROGRAM |
 	       BRW_NEW_URB_FENCE | /* Implicit - hardware requires this, not used above */
