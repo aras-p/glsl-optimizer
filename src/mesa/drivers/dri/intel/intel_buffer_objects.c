@@ -204,9 +204,8 @@ intel_bufferobj_map(GLcontext * ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
+   GLboolean read_only = (access == GL_READ_ONLY_ARB);
 
-   /* XXX: Translate access to flags arg below:
-    */
    assert(intel_obj);
 
    if (intel_obj->region)
@@ -217,7 +216,7 @@ intel_bufferobj_map(GLcontext * ctx,
       return NULL;
    }
 
-   dri_bo_map(intel_obj->buffer, GL_TRUE);
+   dri_bo_map(intel_obj->buffer, !read_only);
    obj->Pointer = intel_obj->buffer->virtual;
    return obj->Pointer;
 }
