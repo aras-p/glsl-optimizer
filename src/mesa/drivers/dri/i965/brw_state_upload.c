@@ -218,6 +218,7 @@ static struct dirty_bit_map mesa_bits[] = {
    DEFINE_BIT(_NEW_MULTISAMPLE),
    DEFINE_BIT(_NEW_TRACK_MATRIX),
    DEFINE_BIT(_NEW_PROGRAM),
+   DEFINE_BIT(_NEW_PROGRAM_CONSTANTS),
    {0, 0, 0}
 };
 
