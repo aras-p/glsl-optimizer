@@ -41,7 +41,7 @@
 #define DRI_INTERFACE_H
 
 /* For archs with no drm.h */
-#if !defined(__APPLE__) && !defined(__CYGWIN__)
+#if !defined(__APPLE__) && !defined(__CYGWIN__) && !defined(__GNU__)
 #include <drm.h>
 #else
 typedef unsigned int drm_context_t;

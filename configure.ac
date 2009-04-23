@@ -87,7 +87,7 @@ dnl Compiler macros
 DEFINES=""
 AC_SUBST([DEFINES])
 case "$host_os" in
-linux*|*-gnu*)
+linux*|*-gnu*|gnu*)
     DEFINES="$DEFINES -D_GNU_SOURCE -DPTHREADS"
     ;;
 solaris*)
@@ -742,6 +742,10 @@ if test "$mesa_driver" = dri; then
                 unichrome savage sis swrast"
         fi
         ;;
+    gnu*)
+        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
+        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING -DHAVE_ALIAS"
+	;;
     solaris*)
         DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
         DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
