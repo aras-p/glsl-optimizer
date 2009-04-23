@@ -214,8 +214,10 @@ void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 		compiler.program = _mesa_clone_program(ctx, &fp->Base);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
+			fflush(stdout);
 			_mesa_printf("Fragment Program: Initial program:\n");
 			_mesa_print_program(compiler.program);
+			fflush(stdout);
 		}
 
 		insert_WPOS_trailer(&compiler);
@@ -240,6 +242,7 @@ void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			_mesa_printf("Fragment Program: After native rewrite:\n");
 			_mesa_print_program(compiler.program);
+			fflush(stdout);
 		}
 
 		if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
@@ -263,6 +266,7 @@ void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			_mesa_printf("Compiler: after NqSSA-DCE:\n");
 			_mesa_print_program(compiler.program);
+			fflush(stdout);
 		}
 
 		if (!r300->vtbl.FragmentProgramEmit(&compiler))

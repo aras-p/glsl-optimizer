@@ -609,6 +609,7 @@ static void emit_all_tex(struct pair_state *s)
 		if (s->Debug) {
 			_mesa_printf("   ");
 			_mesa_print_instruction(inst);
+			fflush(stdout);
 		}
 		s->Error = s->Error || !s->Handler->EmitTex(s->UserData, inst);
 	}
