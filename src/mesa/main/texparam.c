@@ -69,7 +69,7 @@ validate_texture_wrap_mode(GLcontext * ctx, GLenum target, GLenum wrap)
       return GL_TRUE;
    }
 
-   _mesa_error( ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
+   _mesa_error( ctx, GL_INVALID_VALUE, "glTexParameter(param=0x%x)", wrap );
    return GL_FALSE;
 }
 
@@ -209,7 +209,8 @@ set_tex_parameteri(GLcontext *ctx,
          }
          /* fall-through */
       default:
-         _mesa_error( ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
+         _mesa_error( ctx, GL_INVALID_VALUE, "glTexParameter(param=0x%x)",
+                      params[0] );
       }
       return GL_FALSE;
 
@@ -223,7 +224,8 @@ set_tex_parameteri(GLcontext *ctx,
          texObj->MagFilter = params[0];
          return GL_TRUE;
       default:
-         _mesa_error( ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
+         _mesa_error( ctx, GL_INVALID_VALUE, "glTexParameter(param=0x%x)",
+                      params[0]);
       }
       return GL_FALSE;
 
@@ -262,7 +264,8 @@ set_tex_parameteri(GLcontext *ctx,
          return GL_FALSE;
       if (params[0] < 0 ||
           (texObj->Target == GL_TEXTURE_RECTANGLE_ARB && params[0] != 0)) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glTexParameter(param)");
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glTexParameter(param=%d)", params[0]);
          return GL_FALSE;
       }
       flush(ctx, texObj);
@@ -273,7 +276,8 @@ set_tex_parameteri(GLcontext *ctx,
       if (texObj->MaxLevel == params[0])
          return GL_FALSE;
       if (params[0] < 0 || texObj->Target == GL_TEXTURE_RECTANGLE_ARB) {
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glTexParameter(param)");
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glTexParameter(param=%d)", params[0]);
          return GL_FALSE;
       }
       flush(ctx, texObj);
@@ -340,7 +344,7 @@ set_tex_parameteri(GLcontext *ctx,
          }
       }
       else {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(param)");
+         _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname=0x%x)", pname);
       }
       return GL_FALSE;
 
