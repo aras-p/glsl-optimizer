@@ -520,6 +520,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       GLubyte color_mask[4];
       GLboolean color_blend;
       uint32_t tiling;
+      uint32_t draw_offset;
    } key;
 
    memset(&key, 0, sizeof(key));
@@ -550,6 +551,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       key.height = region->height;
       key.pitch = region->pitch;
       key.cpp = region->cpp;
+      key.draw_offset = region->draw_offset; /* cur 3d or cube face offset */
    } else {
       key.surface_type = BRW_SURFACE_NULL;
       key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
@@ -557,6 +559,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       key.width = 1;
       key.height = 1;
       key.cpp = 4;
+      key.draw_offset = 0;
    }
    memcpy(key.color_mask, ctx->Color.ColorMask,
 	  sizeof(key.color_mask));
@@ -578,8 +581,9 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 
       surf.ss0.surface_format = key.surface_format;
       surf.ss0.surface_type = key.surface_type;
+      surf.ss1.base_addr =  key.draw_offset;
       if (region_bo != NULL)
-	 surf.ss1.base_addr = region_bo->offset; /* reloc */
+	 surf.ss1.base_addr += region_bo->offset; /* reloc */
 
       surf.ss2.width = key.width - 1;
       surf.ss2.height = key.height - 1;
@@ -604,12 +608,12 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	  * them both.  We might be able to figure out from other state
 	  * a more restrictive relocation to emit.
 	  */
-	 dri_bo_emit_reloc(brw->wm.surf_bo[unit],
-			   I915_GEM_DOMAIN_RENDER,
-			   I915_GEM_DOMAIN_RENDER,
-			   0,
-			   offsetof(struct brw_surface_state, ss1),
-			   region_bo);
+	 drm_intel_bo_emit_reloc(brw->wm.surf_bo[unit],
+				 offsetof(struct brw_surface_state, ss1),
+				 region_bo,
+				 key.draw_offset,
+				 I915_GEM_DOMAIN_RENDER,
+				 I915_GEM_DOMAIN_RENDER);
       }
    }
 }
