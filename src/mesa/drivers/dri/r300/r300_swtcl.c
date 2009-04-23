@@ -211,15 +211,19 @@ static void r300SetVertexFormat( GLcontext *ctx )
 			if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) )) {
 				switch (VB->TexCoordPtr[i]->size) {
 					case 1:
+						format = EMIT_1F;
+						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ONE);
+						mask = MASK_X;
+						break;
 					case 2:
 						format = EMIT_2F;
-						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_ZERO, SWIZZLE_ZERO);
+						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_ZERO, SWIZZLE_ONE);
 						mask = MASK_X | MASK_Y;
 						size = 2;
 						break;
 					case 3:
 						format = EMIT_3F;
-						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
 						mask = MASK_X | MASK_Y | MASK_Z;
 						size = 3;
 						break;
