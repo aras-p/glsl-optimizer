@@ -147,7 +147,7 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
    key->line_smooth = ctx->Line.SmoothFlag;
 
    key->point_sprite = ctx->Point.PointSprite;
-   key->point_size = ctx->Point.Size;
+   key->point_size = CLAMP(ctx->Point.Size, ctx->Point.MinSize, ctx->Point.MaxSize);
    key->point_attenuated = ctx->Point._Attenuated;
 
    key->render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
