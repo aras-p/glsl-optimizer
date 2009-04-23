@@ -425,7 +425,6 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 
 	memset(&template, 0, sizeof(template));
 	template.target = PIPE_TEXTURE_2D;
-	template.compressed = 0;
 	exa_get_pipe_format(depth, &template.format, &bitsPerPixel);
 	pf_get_block(template.format, &template.block);
 	template.width[0] = width;

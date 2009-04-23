@@ -85,7 +85,6 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 
 	    memset(&template, 0, sizeof(template));
 	    template.target = PIPE_TEXTURE_2D;
-	    template.compressed = 0;
 	    template.format = PIPE_FORMAT_S8Z24_UNORM;
 	    pf_get_block(template.format, &template.block);
 	    template.width[0] = pDraw->width;
@@ -98,7 +97,6 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	    struct pipe_texture template;
 	    memset(&template, 0, sizeof(template));
 	    template.target = PIPE_TEXTURE_2D;
-	    template.compressed = 0;
 	    template.format = PIPE_FORMAT_A8R8G8B8_UNORM;
 	    pf_get_block(template.format, &template.block);
 	    template.width[0] = pDraw->width;
