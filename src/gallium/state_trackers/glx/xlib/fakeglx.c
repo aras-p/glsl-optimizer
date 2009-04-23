@@ -97,6 +97,9 @@ struct fake_glx_context {
 
 
 
+#define DEFAULT_DIRECT GL_TRUE
+
+
 /**********************************************************************/
 /***                       GLX Visual Code                          ***/
 /**********************************************************************/
@@ -1059,7 +1062,7 @@ Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
       return NULL;
    }
 
-   glxCtx->glxContext.isDirect = GL_FALSE;
+   glxCtx->glxContext.isDirect = DEFAULT_DIRECT;
    glxCtx->glxContext.currentDpy = dpy;
    glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
 
@@ -1296,9 +1299,9 @@ Fake_glXDestroyContext( Display *dpy, GLXContext ctx )
 static Bool
 Fake_glXIsDirect( Display *dpy, GLXContext ctx )
 {
-   (void) dpy;
+   struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
    (void) ctx;
-   return False;
+   return glxCtx->glxContext.isDirect;
 }
 
 
@@ -2055,7 +2058,7 @@ Fake_glXCreateNewContext( Display *dpy, GLXFBConfig config,
       return NULL;
    }
 
-   glxCtx->glxContext.isDirect = GL_FALSE;
+   glxCtx->glxContext.isDirect = DEFAULT_DIRECT;
    glxCtx->glxContext.currentDpy = dpy;
    glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
 
@@ -2277,7 +2280,7 @@ Fake_glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, int re
       return NULL;
    }
 
-   glxCtx->glxContext.isDirect = GL_FALSE;
+   glxCtx->glxContext.isDirect = DEFAULT_DIRECT;
    glxCtx->glxContext.currentDpy = dpy;
    glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
 
