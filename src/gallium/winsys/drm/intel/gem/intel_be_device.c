@@ -10,6 +10,7 @@
 #include "intel_be_fence.h"
 
 #include "i915simple/i915_winsys.h"
+#include "softpipe/sp_winsys.h"
 
 #include "intel_be_api.h"
 
@@ -302,7 +303,11 @@ intel_be_create_screen(int drmFD, int deviceID)
 
 	intel_be_init_device(dev, drmFD, deviceID);
 
-	screen = i915_create_screen(&dev->base, deviceID);
+	if (getenv("INTEL_SOFTPIPE")) {
+		screen = softpipe_create_screen(&dev->base);
+		drm_api_hooks.buffer_from_texture = softpipe_get_texture_buffer;
+	} else
+		screen = i915_create_screen(&dev->base, deviceID);
 
 	return screen;
 }

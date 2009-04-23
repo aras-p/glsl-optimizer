@@ -52,6 +52,12 @@ struct pipe_screen *
 softpipe_create_screen(struct pipe_winsys *);
 
 
+boolean
+softpipe_get_texture_buffer( struct pipe_texture *texture,
+                             struct pipe_buffer **buf,
+                             unsigned *stride );
+
+
 #ifdef __cplusplus
 }
 #endif
