@@ -28,6 +28,7 @@
  *
  */
 
+#include "xorg-server.h"
 #include "xf86.h"
 #include "xorg_tracker.h"
 
