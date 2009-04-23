@@ -851,20 +851,57 @@ void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei he
 	radeon_window_moved(radeon);
 	radeon_draw_buffer(ctx, radeon->glCtx->DrawBuffer);
 	ctx->Driver.Viewport = old_viewport;
-
-
 }
-static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state_atom *state )
+
+static void radeon_print_state_atom(radeonContextPtr radeon, struct radeon_state_atom *state)
 {
-	int i;
-	int dwords = (*state->check)(radeon->glCtx, state);
+	int i, j, reg;
+	int dwords = (*state->check) (radeon->glCtx, state);
+	drm_r300_cmd_header_t cmd;
 
-	fprintf(stderr, "emit %s %d/%d\n", state->name, state->cmd_size, dwords);
+	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
 
-	if (RADEON_DEBUG & DEBUG_VERBOSE) 
-		for (i = 0 ; i < dwords; i++) 
-			fprintf(stderr, "\t%s[%d]: %x\n", state->name, i, state->cmd[i]);
+	if (RADEON_DEBUG & DEBUG_VERBOSE) {
+		for (i = 0; i < dwords;) {
+			cmd = *((drm_r300_cmd_header_t *) &state->cmd[i]);
+			reg = (cmd.packet0.reghi << 8) | cmd.packet0.reglo;
+			fprintf(stderr, "      %s[%d]: cmdpacket0 (first reg=0x%04x, count=%d)\n",
+					state->name, i, reg, cmd.packet0.count);
+			++i;
+			for (j = 0; j < cmd.packet0.count && i < dwords; j++) {
+				fprintf(stderr, "      %s[%d]: 0x%04x = %08x\n",
+						state->name, i, reg, state->cmd[i]);
+				reg += 4;
+				++i;
+			}
+		}
+	}
+}
 
+static void radeon_print_state_atom_kmm(radeonContextPtr radeon, struct radeon_state_atom *state)
+{
+	int i, j, reg, count;
+	int dwords = (*state->check) (radeon->glCtx, state);
+	uint32_t packet0;
+
+	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
+
+	if (RADEON_DEBUG & DEBUG_VERBOSE) {
+		for (i = 0; i < dwords;) {
+			packet0 = state->cmd[i];
+			reg = (packet0 & 0x1FFF) << 2;
+			count = ((packet0 & 0x3FFF0000) >> 16) + 1;
+			fprintf(stderr, "      %s[%d]: cmdpacket0 (first reg=0x%04x, count=%d)\n",
+					state->name, i, reg, count);
+			++i;
+			for (j = 0; j < count && i < dwords; j++) {
+				fprintf(stderr, "      %s[%d]: 0x%04x = %08x\n",
+						state->name, i, reg, state->cmd[i]);
+				reg += 4;
+				++i;
+			}
+		}
+	}
 }
 
 static INLINE void radeonEmitAtoms(radeonContextPtr radeon, GLboolean dirty)
@@ -882,7 +919,10 @@ static INLINE void radeonEmitAtoms(radeonContextPtr radeon, GLboolean dirty)
 			dwords = (*atom->check) (radeon->glCtx, atom);
 			if (dwords) {
 				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-					radeon_print_state_atom(radeon, atom);
+					if (radeon->radeonScreen->kernel_mm)
+						radeon_print_state_atom_kmm(radeon, atom);
+					else
+						radeon_print_state_atom(radeon, atom);
 				}
 				if (atom->emit) {
 					(*atom->emit)(radeon->glCtx, atom);
