@@ -373,7 +373,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	_tnl_CreateContext(ctx);
 	_swsetup_CreateContext(ctx);
 	_swsetup_Wakeup(ctx);
-	_ae_create_context(ctx);
 
 	/* Install the customized pipeline:
 	 */

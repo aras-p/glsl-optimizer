@@ -2477,7 +2477,6 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 	_swsetup_InvalidateState(ctx, new_state);
 	_vbo_InvalidateState(ctx, new_state);
 	_tnl_InvalidateState(ctx, new_state);
-	_ae_invalidate_state(ctx, new_state);
 
 	if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
 		_mesa_update_framebuffer(ctx);
