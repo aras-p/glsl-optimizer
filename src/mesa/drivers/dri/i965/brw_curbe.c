@@ -353,10 +353,10 @@ update_constant_buffer(struct brw_context *brw,
       assert(const_buffer);
       assert(const_buffer->size >= size);
 
-      drm_intel_gem_bo_map_gtt(const_buffer);
+      dri_bo_map(const_buffer, GL_TRUE);
       map = const_buffer->virtual;
       memcpy(map, params->ParameterValues, size);
-      drm_intel_gem_bo_unmap_gtt(const_buffer);
+      dri_bo_unmap(const_buffer);
 
       if (0) {
          int i;
