@@ -132,7 +132,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage;
    GLuint *state = i915->state.Tex[unit], format, pitch;
-   GLint lodbias;
+   GLint lodbias, aniso = 0;
    GLubyte border[4];
 
    memset(state, 0, sizeof(state));
@@ -230,6 +230,10 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
       if (tObj->MaxAnisotropy > 1.0) {
          minFilt = FILTER_ANISOTROPIC;
          magFilt = FILTER_ANISOTROPIC;
+         if (tObj->MaxAnisotropy > 2.0)
+            aniso = SS2_MAX_ANISO_4;
+         else
+            aniso = SS2_MAX_ANISO_2;
       }
       else {
          switch (tObj->MagFilter) {
@@ -275,7 +279,8 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 
       state[I915_TEXREG_SS2] |= ((minFilt << SS2_MIN_FILTER_SHIFT) |
                                  (mipFilt << SS2_MIP_FILTER_SHIFT) |
-                                 (magFilt << SS2_MAG_FILTER_SHIFT));
+                                 (magFilt << SS2_MAG_FILTER_SHIFT) |
+                                 aniso);
    }
 
    {
