@@ -102,6 +102,22 @@ debug_printf(const char *format, ...)
 }
 
 
+/*
+ * ... isn't portable so we need to pass arguments in parentheses.
+ *
+ * usage:
+ *    debug_printf_once(("awnser: %i\n", 42));
+ */
+#define debug_printf_once(args) \
+   do { \
+      static boolean once = TRUE; \
+      if (once) { \
+         once = FALSE; \
+         debug_printf args; \
+      } \
+   } while (0)
+
+
 #ifdef DEBUG
 #define debug_vprintf(_format, _ap) _debug_vprintf(_format, _ap)
 #else
