@@ -172,6 +172,7 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 	&_tnl_fog_coordinate_stage,
 	&_tnl_texgen_stage,
 	&_tnl_texture_transform_stage,
+	&_tnl_point_attenuation_stage,
 	&_tnl_vertex_program_stage,
 
 	/* Try again to go to tcl?
