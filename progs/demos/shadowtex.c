@@ -788,6 +788,7 @@ Key(unsigned char key, int x, int y)
          exit(0);
          break;
    }
+   fflush(stdout);
    glutPostRedisplay();
 }
 
@@ -1014,6 +1015,7 @@ PrintHelp(void)
    printf("  <shift> + cursor keys = rotate light source\n");
    if (HaveEXTshadowFuncs)
       printf("  o = cycle through comparison modes\n");
+   fflush(stdout);
 }
 
 
