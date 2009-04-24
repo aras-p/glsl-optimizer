@@ -248,14 +248,14 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
             BEGIN_BATCH_NO_AUTOSTATE(3);
             OUT_BATCH_REGSEQ(R300_SC_SCISSORS_TL, 2);
             OUT_BATCH(0);
-            OUT_BATCH((rrb->width << R300_SCISSORS_X_SHIFT) |
-                    (rrb->height << R300_SCISSORS_Y_SHIFT));
+            OUT_BATCH(((rrb->width - 1) << R300_SCISSORS_X_SHIFT) |
+                    ((rrb->height - 1) << R300_SCISSORS_Y_SHIFT));
             END_BATCH();
             BEGIN_BATCH_NO_AUTOSTATE(16);
             for (i = 0; i < 4; i++) {
                 OUT_BATCH_REGSEQ(R300_SC_CLIPRECT_TL_0 + (i * 8), 2);
                 OUT_BATCH((0 << R300_CLIPRECT_X_SHIFT) | (0 << R300_CLIPRECT_Y_SHIFT));
-                OUT_BATCH((rrb->width << R300_CLIPRECT_X_SHIFT) | (rrb->height << R300_CLIPRECT_Y_SHIFT));
+                OUT_BATCH(((rrb->width - 1) << R300_CLIPRECT_X_SHIFT) | ((rrb->height - 1) << R300_CLIPRECT_Y_SHIFT));
             }
             OUT_BATCH_REGSEQ(R300_SC_CLIP_RULE, 1);
             OUT_BATCH(0xAAAA);
@@ -267,14 +267,15 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
             OUT_BATCH_REGSEQ(R300_SC_SCISSORS_TL, 2);
             OUT_BATCH((R300_SCISSORS_OFFSET << R300_SCISSORS_X_SHIFT) |
                     (R300_SCISSORS_OFFSET << R300_SCISSORS_Y_SHIFT));
-            OUT_BATCH(((rrb->width + R300_SCISSORS_OFFSET) << R300_SCISSORS_X_SHIFT) |
-                    ((rrb->height + R300_SCISSORS_OFFSET) << R300_SCISSORS_Y_SHIFT));
+            OUT_BATCH(((rrb->width + R300_SCISSORS_OFFSET - 1) << R300_SCISSORS_X_SHIFT) |
+                    ((rrb->height + R300_SCISSORS_OFFSET - 1) << R300_SCISSORS_Y_SHIFT));
             END_BATCH();
             BEGIN_BATCH_NO_AUTOSTATE(16);
             for (i = 0; i < 4; i++) {
                 OUT_BATCH_REGSEQ(R300_SC_CLIPRECT_TL_0 + (i * 8), 2);
-                OUT_BATCH((1088 << R300_CLIPRECT_X_SHIFT) | (1088 << R300_CLIPRECT_Y_SHIFT));
-                OUT_BATCH(((1088 + rrb->width) << R300_CLIPRECT_X_SHIFT) | ((1088 + rrb->height) << R300_CLIPRECT_Y_SHIFT));
+                OUT_BATCH((R300_SCISSORS_OFFSET << R300_CLIPRECT_X_SHIFT) | (R300_SCISSORS_OFFSET << R300_CLIPRECT_Y_SHIFT));
+                OUT_BATCH(((R300_SCISSORS_OFFSET + rrb->width - 1) << R300_CLIPRECT_X_SHIFT) |
+                          ((R300_SCISSORS_OFFSET + rrb->height - 1) << R300_CLIPRECT_Y_SHIFT));
             }
             OUT_BATCH_REGSEQ(R300_SC_CLIP_RULE, 1);
             OUT_BATCH(0xAAAA);
