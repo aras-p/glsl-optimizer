@@ -152,38 +152,38 @@ void r500_emit_fragment_shader(struct r300_context* r300,
     END_CS;
 }
 
-/* XXX add pitch, stride, clean up */
 void r300_emit_fb_state(struct r300_context* r300,
                         struct pipe_framebuffer_state* fb)
 {
-    int i;
     struct r300_texture* tex;
+    unsigned pixpitch;
+    int i;
     CS_LOCALS(r300);
 
-    BEGIN_CS((7 * fb->nr_cbufs) + (fb->zsbuf ? 7 : 0) + 4);
+    BEGIN_CS((8 * fb->nr_cbufs) + (fb->zsbuf ? 8 : 0) + 4);
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = (struct r300_texture*)fb->cbufs[i]->texture;
+        pixpitch = tex->stride / tex->tex.block.size;
+
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
         OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
-        OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i),
-            r300_translate_out_fmt(fb->cbufs[i]->format));
-        unsigned pixpitch = tex->stride / tex->tex.block.size;
         OUT_CS_REG(R300_RB3D_COLORPITCH0 + (4 * i), pixpitch |
             r300_translate_colorformat(tex->tex.format));
+
+        OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i),
+            r300_translate_out_fmt(fb->cbufs[i]->format));
     }
 
     if (fb->zsbuf) {
         tex = (struct r300_texture*)fb->zsbuf->texture;
+        pixpitch = (tex->stride / tex->tex.block.size);
+
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
         OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-        if (fb->zsbuf->format == PIPE_FORMAT_Z24S8_UNORM) {
-            OUT_CS_REG(R300_ZB_FORMAT,
-                R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL);
-        } else {
-            OUT_CS_REG(R300_ZB_FORMAT, 0x0);
-        }
-        unsigned pixpitch = tex->stride / tex->tex.block.size;
+
+        OUT_CS_REG(R300_ZB_FORMAT, r300_translate_zsformat(tex->tex.format));
+
         OUT_CS_REG(R300_ZB_DEPTHPITCH, pixpitch);
     }
 
