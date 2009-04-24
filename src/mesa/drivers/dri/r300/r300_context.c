@@ -364,7 +364,10 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 	ctx = r300->radeon.glCtx;
 	r300InitConstValues(ctx, screen);
-	ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
+
+	if (hw_tcl_on)
+		ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
+
 	ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
 	/* Initialize the software rasterizer and helper modules.
