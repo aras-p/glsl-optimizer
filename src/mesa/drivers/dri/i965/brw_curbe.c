@@ -344,19 +344,23 @@ update_constant_buffer(struct brw_context *brw,
                        const struct gl_program_parameter_list *params,
                        dri_bo *const_buffer)
 {
+   struct intel_context *intel = &brw->intel;
    const int size = params->NumParameters * 4 * sizeof(GLfloat);
 
    /* copy Mesa program constants into the buffer */
    if (const_buffer && size > 0) {
-      GLubyte *map;
 
       assert(const_buffer);
       assert(const_buffer->size >= size);
 
-      dri_bo_map(const_buffer, GL_TRUE);
-      map = const_buffer->virtual;
-      memcpy(map, params->ParameterValues, size);
-      dri_bo_unmap(const_buffer);
+      if (intel->intelScreen->kernel_exec_fencing) {
+         drm_intel_gem_bo_map_gtt(const_buffer);
+         memcpy(const_buffer->virtual, params->ParameterValues, size);
+         drm_intel_gem_bo_unmap_gtt(const_buffer);
+      }
+      else {
+         dri_bo_subdata(const_buffer, 0, size, params->ParameterValues);
+      }
 
       if (0) {
          int i;
