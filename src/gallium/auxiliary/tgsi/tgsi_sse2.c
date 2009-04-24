@@ -1466,12 +1466,41 @@ emit_cmp(
    }
 }
 
+
+/**
+ * Check if inst src/dest regs use indirect addressing into temporary
+ * register file.
+ */
+static boolean
+indirect_temp_reference(const struct tgsi_full_instruction *inst)
+{
+   uint i;
+   for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
+      const struct tgsi_full_src_register *reg = &inst->FullSrcRegisters[i];
+      if (reg->SrcRegister.File == TGSI_FILE_TEMPORARY &&
+          reg->SrcRegister.Indirect)
+         return TRUE;
+   }
+   for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
+      const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[i];
+      if (reg->DstRegister.File == TGSI_FILE_TEMPORARY &&
+          reg->DstRegister.Indirect)
+         return TRUE;
+   }
+   return FALSE;
+}
+
+
 static int
 emit_instruction(
    struct x86_function *func,
    struct tgsi_full_instruction *inst )
 {
    unsigned chan_index;
+
+   /* we can't handle indirect addressing into temp register file yet */
+   if (indirect_temp_reference(inst))
+      return FALSE;
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
