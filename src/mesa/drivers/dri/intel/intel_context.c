@@ -361,13 +361,20 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        intel_region_release(&region);
 
        if (buffers[i].attachment == __DRI_BUFFER_DEPTH_STENCIL) {
-	  struct intel_region *stencil_region = NULL;
-
-	  intel_region_reference(&stencil_region, region);
-
 	  rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
-	  intel_renderbuffer_set_region(rb, stencil_region);
-	  intel_region_release(&stencil_region);
+	  if (rb != NULL) {
+	     struct intel_region *stencil_region = NULL;
+
+	     if (rb->region) {
+		dri_bo_flink(rb->region->buffer, &name);
+		if (name == buffers[i].name)
+		   continue;
+	     }
+
+	     intel_region_reference(&stencil_region, region);
+	     intel_renderbuffer_set_region(rb, stencil_region);
+	     intel_region_release(&stencil_region);
+	  }
        }
    }
 
