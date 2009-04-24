@@ -361,7 +361,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        intel_region_release(&region);
 
        if (buffers[i].attachment == __DRI_BUFFER_DEPTH_STENCIL) {
-	  struct intel_region *stencil_region;
+	  struct intel_region *stencil_region = NULL;
 
 	  intel_region_reference(&stencil_region, region);
 
