@@ -160,7 +160,7 @@ void r300_emit_fb_state(struct r300_context* r300,
     struct r300_texture* tex;
     CS_LOCALS(r300);
 
-    BEGIN_CS((6 * fb->nr_cbufs) + (fb->zsbuf ? 6 : 0) + 4);
+    BEGIN_CS((7 * fb->nr_cbufs) + (fb->zsbuf ? 7 : 0) + 4);
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = (struct r300_texture*)fb->cbufs[i]->texture;
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
@@ -168,6 +168,9 @@ void r300_emit_fb_state(struct r300_context* r300,
 
         OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i),
             r300_translate_out_fmt(fb->cbufs[i]->format));
+        unsigned pixpitch = tex->stride / tex->tex.block.size;
+        OUT_CS_REG(R300_RB3D_COLORPITCH0 + (4 * i), pixpitch |
+            r300_translate_colorformat(tex->tex.format));
     }
 
     if (fb->zsbuf) {
@@ -180,6 +183,8 @@ void r300_emit_fb_state(struct r300_context* r300,
         } else {
             OUT_CS_REG(R300_ZB_FORMAT, 0x0);
         }
+        unsigned pixpitch = tex->stride / tex->tex.block.size;
+        OUT_CS_REG(R300_ZB_DEPTHPITCH, pixpitch);
     }
 
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
