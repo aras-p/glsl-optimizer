@@ -240,15 +240,18 @@ struct brw_wm_compile {
    GLuint max_wm_grf;
    GLuint last_scratch;
 
+   GLuint cur_inst;  /**< index of current instruction */
+
    /** Mapping from Mesa registers to hardware registers */
    struct {
       GLboolean inited;
       struct brw_reg reg;
    } wm_regs[PROGRAM_PAYLOAD+1][256][4];
 
+   GLboolean used_grf[BRW_WM_MAX_GRF];
+   GLuint first_free_grf;
    struct brw_reg stack;
    struct brw_reg emit_mask_reg;
-   GLuint reg_index;  /**< Index of next free GRF register */
    GLuint tmp_regs[BRW_WM_MAX_GRF];
    GLuint tmp_index;
    GLuint tmp_max;
