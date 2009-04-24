@@ -365,21 +365,22 @@ fenced_buffer_validate(struct pb_buffer *buf,
    if(fenced_buf->vl && fenced_buf->vl != vl)
       return PIPE_ERROR_RETRY;
    
+#if 0
    /* Do not validate if buffer is still mapped */
    if(fenced_buf->flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE) {
       /* TODO: wait for the thread that mapped the buffer to unmap it */
       return PIPE_ERROR_RETRY;
    }
+   /* Final sanity checking */
+   assert(!(fenced_buf->flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE));
+   assert(!fenced_buf->mapcount);
+#endif
 
    if(fenced_buf->vl == vl &&
       (fenced_buf->validation_flags & flags) == flags) {
       /* Nothing to do -- buffer already validated */
       return PIPE_OK;
    }
-
-   /* Final sanity checking */
-   assert(!(fenced_buf->flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE));
-   assert(!fenced_buf->mapcount);
    
    ret = pb_validate(fenced_buf->buffer, vl, flags);
    if (ret != PIPE_OK)
