@@ -204,34 +204,31 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		ADD_ATTR(VERT_ATTRIB_POINT_SIZE, EMIT_1F, SWTCL_OVM_POINT_SIZE, swiz, MASK_X);
 	}
 
+	/**
+	 *  Sending only one texcoord component may lead to lock up,
+	 *  so for all textures always output 4 texcoord components to RS.
+	 */
 	if (RENDERINPUTS_TEST_RANGE(tnl->render_inputs_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
-		int i, size;
-		GLuint swiz, mask, format;
+		int i;
+		GLuint swiz, format;
 		for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 			if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) )) {
 				switch (VB->TexCoordPtr[i]->size) {
 					case 1:
 						format = EMIT_1F;
 						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ONE);
-						mask = MASK_X;
 						break;
 					case 2:
 						format = EMIT_2F;
 						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_ZERO, SWIZZLE_ONE);
-						mask = MASK_X | MASK_Y;
-						size = 2;
 						break;
 					case 3:
 						format = EMIT_3F;
 						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
-						mask = MASK_X | MASK_Y | MASK_Z;
-						size = 3;
 						break;
 					case 4:
 						format = EMIT_4F;
 						swiz = SWIZZLE_XYZW;
-						mask = MASK_XYZW;
-						size = 4;
 						break;
 					default:
 						continue;
@@ -239,8 +236,8 @@ static void r300SetVertexFormat( GLcontext *ctx )
 				InputsRead |= 1 << (VERT_ATTRIB_TEX0 + i);
 				OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
 				EMIT_ATTR(_TNL_ATTRIB_TEX(i), format);
-				ADD_ATTR(VERT_ATTRIB_TEX0 + i, format, SWTCL_OVM_TEX(i), swiz, mask);
-				vap_out_fmt_1 |= size << (i * 3);
+				ADD_ATTR(VERT_ATTRIB_TEX0 + i, format, SWTCL_OVM_TEX(i), swiz, MASK_XYZW);
+				vap_out_fmt_1 |= 4 << (i * 3);
 				++first_free_tex;
 			}
 		}

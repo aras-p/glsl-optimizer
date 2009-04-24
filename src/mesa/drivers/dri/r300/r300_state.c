@@ -1482,6 +1482,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 		}
 	}
 
+	/* We always route 4 texcoord components */
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 		if (! ( InputsRead & FRAG_BIT_TEX(i) ) )
 		    continue;
@@ -1491,26 +1492,10 @@ static void r300SetupRSUnit(GLcontext * ctx)
 		    continue;
 		}
 
-		int swiz;
-
-		/* with TCL we always seem to route 4 components */
-		if (hw_tcl_on)
-			count = 4;
-		else
-			count = VB->AttribPtr[_TNL_ATTRIB_TEX(i)]->size;
-
-		switch(count) {
-		case 4: swiz = R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3); break;
-		case 3: swiz = R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(R300_RS_SEL_K1); break;
-		default:
-		case 1:
-		case 2: swiz = R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(R300_RS_SEL_K0) | R300_RS_SEL_Q(R300_RS_SEL_K1); break;
-		};
-
-		r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= swiz | R300_RS_TEX_PTR(rs_tex_count);
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3) | R300_RS_TEX_PTR(rs_tex_count);
 		r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R300_RS_INST_TEX_ID(tex_ip) | R300_RS_INST_TEX_CN_WRITE | R300_RS_INST_TEX_ADDR(fp_reg);
 		InputsRead &= ~(FRAG_BIT_TEX0 << i);
-		rs_tex_count += count;
+		rs_tex_count += 4;
 		++tex_ip;
 		++fp_reg;
 	}
@@ -1633,7 +1618,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 		}
 	}
 
-
+	/* We always route 4 texcoord components */
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 		if (! ( InputsRead & FRAG_BIT_TEX(i) ) )
 		    continue;
@@ -1643,45 +1628,14 @@ static void r500SetupRSUnit(GLcontext * ctx)
 		    continue;
 		}
 
-		int swiz = 0;
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= ((rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT) |
+			((rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT) |
+			((rs_tex_count + 2) << R500_RS_IP_TEX_PTR_R_SHIFT) |
+			((rs_tex_count + 3) << R500_RS_IP_TEX_PTR_Q_SHIFT);
 
-		/* with TCL we always seem to route 4 components */
-		if (hw_tcl_on)
-		  count = 4;
-		else
-		  count = VB->AttribPtr[_TNL_ATTRIB_TEX(i)]->size;
-
-		if (count == 4) {
-			swiz |= (rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT;
-			swiz |= (rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT;
-			swiz |= (rs_tex_count + 2) << R500_RS_IP_TEX_PTR_R_SHIFT;
-			swiz |= (rs_tex_count + 3) << R500_RS_IP_TEX_PTR_Q_SHIFT;
-		} else if (count == 3) {
-			swiz |= (rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT;
-			swiz |= (rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT;
-			swiz |= (rs_tex_count + 2) << R500_RS_IP_TEX_PTR_R_SHIFT;
-			swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
-		} else if (count == 2) {
-			swiz |= (rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT;
-			swiz |= (rs_tex_count + 1) << R500_RS_IP_TEX_PTR_T_SHIFT;
-			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT;
-			swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
-		} else if (count == 1) {
-			swiz |= (rs_tex_count + 0) << R500_RS_IP_TEX_PTR_S_SHIFT;
-			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT;
-			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT;
-			swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
-		} else {
-			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT;
-			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT;
-			swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT;
-			swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
-		}
-
-		r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= swiz;
 		r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R500_RS_INST_TEX_ID(tex_ip) | R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_reg);
 		InputsRead &= ~(FRAG_BIT_TEX0 << i);
-		rs_tex_count += count;
+		rs_tex_count += 4;
 		++tex_ip;
 		++fp_reg;
 	}
