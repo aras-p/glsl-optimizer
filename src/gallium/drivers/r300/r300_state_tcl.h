@@ -99,7 +99,13 @@ struct r300_vs_asm {
     unsigned imm_offset;
     /* Number of immediate constants. */
     unsigned imm_count;
-    /* Offsets into vertex output memory. */
+    /* Number of colors to write. */
+    unsigned out_colors;
+    /* Number of texcoords to write. */
+    unsigned out_texcoords;
+    /* Whether to emit point size. */
+    boolean point_size;
+    /* Tab of declared outputs to OVM outputs. */
     unsigned tab[16];
 };
 
@@ -115,7 +121,7 @@ static struct r300_vertex_shader r300_passthrough_vertex_shader = {
     .instructions[0].inst3 = 0x0,
     .instructions[1].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
         R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
-        R300_PVS_DST_OFFSET(2) | R300_PVS_DST_WE_XYZW,
+        R300_PVS_DST_OFFSET(1) | R300_PVS_DST_WE_XYZW,
     .instructions[1].inst1 = R300_PVS_SRC_REG_TYPE(R300_PVS_SRC_REG_INPUT) |
         R300_PVS_SRC_OFFSET(1) | R300_PVS_SRC_SWIZZLE_XYZW,
     .instructions[1].inst2 = R300_PVS_SRC_SWIZZLE_ZERO,
@@ -134,7 +140,7 @@ static struct r300_vertex_shader r300_texture_vertex_shader = {
     .instructions[0].inst3 = 0x0,
     .instructions[1].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
         R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
-        R300_PVS_DST_OFFSET(6) | R300_PVS_DST_WE_XYZW,
+        R300_PVS_DST_OFFSET(1) | R300_PVS_DST_WE_XYZW,
     .instructions[1].inst1 = R300_PVS_SRC_REG_TYPE(R300_PVS_SRC_REG_INPUT) |
         R300_PVS_SRC_OFFSET(1) | R300_PVS_SRC_SWIZZLE_XYZW,
     .instructions[1].inst2 = R300_PVS_SRC_SWIZZLE_ZERO,

@@ -34,14 +34,20 @@ static void r300_vs_declare(struct r300_vs_asm* assembler,
                     assembler->tab[decl->DeclarationRange.First] = 0;
                     break;
                 case TGSI_SEMANTIC_COLOR:
-                    assembler->tab[decl->DeclarationRange.First] = 2;
+                    assembler->tab[decl->DeclarationRange.First] =
+                        (assembler->point_size ? 1 : 0) +
+                        assembler->out_colors;
                     break;
+                case TGSI_SEMANTIC_FOG:
                 case TGSI_SEMANTIC_GENERIC:
                     /* XXX multiple? */
-                    assembler->tab[decl->DeclarationRange.First] = 6;
+                    assembler->tab[decl->DeclarationRange.First] =
+                        (assembler->point_size ? 1 : 0) +
+                        assembler->out_colors +
+                        assembler->out_texcoords;
                     break;
                 case TGSI_SEMANTIC_PSIZE:
-                    assembler->tab[decl->DeclarationRange.First] = 15;
+                    assembler->tab[decl->DeclarationRange.First] = 1;
                     break;
                 default:
                     debug_printf("r300: vs: Bad semantic declaration %d\n",
@@ -252,6 +258,28 @@ static void r300_vs_instruction(struct r300_vertex_shader* vs,
     }
 }
 
+static void r300_vs_init(struct r300_vertex_shader* vs,
+                         struct r300_vs_asm* assembler)
+{
+    struct tgsi_shader_info* info = &vs->info;
+    int i;
+
+    for (i = 0; i < info->num_outputs; i++) {
+        switch (info->output_semantic_name[i]) {
+            case TGSI_SEMANTIC_PSIZE:
+                assembler->point_size = TRUE;
+                break;
+            case TGSI_SEMANTIC_COLOR:
+                assembler->out_colors++;
+                break;
+            case TGSI_SEMANTIC_FOG:
+            case TGSI_SEMANTIC_GENERIC:
+                assembler->out_texcoords++;
+                break;
+        }
+    }
+}
+
 void r300_translate_vertex_shader(struct r300_context* r300,
                                   struct r300_vertex_shader* vs)
 {
@@ -264,6 +292,10 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     if (assembler == NULL) {
         return;
     }
+
+    /* Init assembler. */
+    r300_vs_init(vs, assembler);
+
     /* Setup starting offset for immediates. */
     assembler->imm_offset = consts->user_count;
 
