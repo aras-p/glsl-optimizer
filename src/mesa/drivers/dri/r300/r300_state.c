@@ -728,7 +728,12 @@ static void r300ColorMask(GLcontext * ctx,
 static void r300PointSize(GLcontext * ctx, GLfloat size)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-        /* same size limits for AA, non-AA points */
+
+	/* We need to clamp to user defined range here, because
+	 * the HW clamping happens only for per vertex point size. */
+	size = CLAMP(size, ctx->Point.MinSize, ctx->Point.MaxSize);
+
+	/* same size limits for AA, non-AA points */
 	size = CLAMP(size, ctx->Const.MinPointSize, ctx->Const.MaxPointSize);
 
 	R300_STATECHANGE(r300, ps);
