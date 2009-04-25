@@ -1186,7 +1186,7 @@ void rcommonInitCmdBuf(radeonContextPtr rmesa)
 		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM, rmesa->radeonScreen->texSize[0]);
 		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_GTT, rmesa->radeonScreen->gartTextures.size);
 	} else {
-		struct drm_radeon_gem_info mminfo;
+		struct drm_radeon_gem_info mminfo = { 0 };
 
 		if (!drmCommandWriteRead(rmesa->dri.fd, DRM_RADEON_GEM_INFO, &mminfo, sizeof(mminfo)))
 		{

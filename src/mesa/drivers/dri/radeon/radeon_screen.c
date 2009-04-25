@@ -249,8 +249,8 @@ static int
 radeonGetParam(__DRIscreenPrivate *sPriv, int param, void *value)
 {
   int ret;
-  drm_radeon_getparam_t gp;
-  struct drm_radeon_info info;
+  drm_radeon_getparam_t gp = { 0 };
+  struct drm_radeon_info info = { 0 };
 
   if (sPriv->drm_version.major >= 2) {
       info.value = (uint64_t)value;
@@ -869,7 +869,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
        __driUtilMessage("%s: drmMapBufs failed\n", __FUNCTION__ );
        return NULL;
      }
-     
+
      if ( dri_priv->gartTexHandle && dri_priv->gartTexMapSize ) {
        screen->gartTextures.handle = dri_priv->gartTexHandle;
        screen->gartTextures.size   = dri_priv->gartTexMapSize;
@@ -884,7 +884,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	 __driUtilMessage("%s: drmMap failed for GART texture area\n", __FUNCTION__);
 	 return NULL;
        }
-       
+
        screen->gart_texture_offset = dri_priv->gartTexOffset + screen->gart_base;
      }
    }
@@ -1064,7 +1064,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
    radeonScreenPtr screen;
    int i;
    int ret;
-   uint32_t device_id;
+   uint32_t device_id = 0;
    uint32_t temp = 0;
 
    /* Allocate the private area */
