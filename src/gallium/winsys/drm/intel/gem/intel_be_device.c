@@ -177,8 +177,6 @@ intel_be_handle_from_buffer(struct pipe_screen *screen,
                             struct pipe_buffer *buffer,
                             unsigned *handle)
 {
-	drm_intel_bo *bo;
-
 	if (!buffer)
 		return FALSE;
 
