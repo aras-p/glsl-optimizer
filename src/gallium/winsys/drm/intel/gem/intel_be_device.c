@@ -6,6 +6,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
 #include "util/u_memory.h"
+#include "util/u_debug.h"
 
 #include "intel_be_fence.h"
 
@@ -286,6 +287,8 @@ intel_be_init_device(struct intel_be_device *dev, int fd, unsigned id)
 
 	dev->pools.gem = drm_intel_bufmgr_gem_init(dev->fd, dev->max_batch_size);
 
+	dev->softpipe = debug_get_bool_option("INTEL_SOFTPIPE", FALSE);
+
 	return true;
 }
 
@@ -303,7 +306,7 @@ intel_be_create_screen(int drmFD, int deviceID)
 
 	intel_be_init_device(dev, drmFD, deviceID);
 
-	if (getenv("INTEL_SOFTPIPE")) {
+	if (dev->softpipe) {
 		screen = softpipe_create_screen(&dev->base);
 		drm_api_hooks.buffer_from_texture = softpipe_get_texture_buffer;
 	} else

@@ -108,7 +108,7 @@ intel_be_create_context(struct pipe_screen *screen)
 
 	intel_be_init_context(intel, device);
 
-	if (getenv("INTEL_SOFTPIPE"))
+	if (device->softpipe)
 		pipe = softpipe_create(screen);
 	else
 		pipe = i915_create_context(screen, &device->base, &intel->base);
