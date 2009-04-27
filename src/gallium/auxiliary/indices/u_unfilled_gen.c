@@ -71,13 +71,10 @@ static void generate_tris_ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=3) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1);
       (out+j)[0] = (ushort)(i);
       (out+j)[1] = (ushort)(i+1);
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)(i+1);
       (out+j+2)[1] = (ushort)(i+2);
-      debug_printf("  line %d %d\n", (int)i+2, (int)i);
       (out+j+4)[0] = (ushort)(i+2);
       (out+j+4)[1] = (ushort)(i);
    }
@@ -90,13 +87,10 @@ static void generate_tristrip_ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1/*+(i&1)*/);
       (out+j)[0] = (ushort)(i);
       (out+j)[1] = (ushort)(i+1/*+(i&1)*/);
-      debug_printf("  line %d %d\n", (int)i+1/*+(i&1)*/, (int)i+2/*-(i&1)*/);
       (out+j+2)[0] = (ushort)(i+1/*+(i&1)*/);
       (out+j+2)[1] = (ushort)(i+2/*-(i&1)*/);
-      debug_printf("  line %d %d\n", (int)i+2/*-(i&1)*/, (int)i);
       (out+j+4)[0] = (ushort)(i+2/*-(i&1)*/);
       (out+j+4)[1] = (ushort)(i);
    }
@@ -109,13 +103,10 @@ static void generate_trifan_ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (ushort)(0);
       (out+j)[1] = (ushort)(i+1);
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)(i+1);
       (out+j+2)[1] = (ushort)(i+2);
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (ushort)(i+2);
       (out+j+4)[1] = (ushort)(0);
    }
@@ -128,16 +119,12 @@ static void generate_quads_ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=4) { 
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j)[0] = (ushort)(i+0);
       (out+j)[1] = (ushort)(i+1);
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)(i+1);
       (out+j+2)[1] = (ushort)(i+2);
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+3);
       (out+j+4)[0] = (ushort)(i+2);
       (out+j+4)[1] = (ushort)(i+3);
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+0);
       (out+j+6)[0] = (ushort)(i+3);
       (out+j+6)[1] = (ushort)(i+0);
    }
@@ -150,16 +137,12 @@ static void generate_quadstrip_ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=2) { 
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+0);
       (out+j)[0] = (ushort)(i+2);
       (out+j)[1] = (ushort)(i+0);
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j+2)[0] = (ushort)(i+0);
       (out+j+2)[1] = (ushort)(i+1);
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+3);
       (out+j+4)[0] = (ushort)(i+1);
       (out+j+4)[1] = (ushort)(i+3);
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+2);
       (out+j+6)[0] = (ushort)(i+3);
       (out+j+6)[1] = (ushort)(i+2);
    }
@@ -172,13 +155,10 @@ static void generate_polygon_ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (ushort)(0);
       (out+j)[1] = (ushort)(i+1);
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)(i+1);
       (out+j+2)[1] = (ushort)(i+2);
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (ushort)(i+2);
       (out+j+4)[1] = (ushort)(0);
    }
@@ -191,13 +171,10 @@ static void generate_tris_uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=3) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1);
       (out+j)[0] = (uint)(i);
       (out+j)[1] = (uint)(i+1);
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)(i+1);
       (out+j+2)[1] = (uint)(i+2);
-      debug_printf("  line %d %d\n", (int)i+2, (int)i);
       (out+j+4)[0] = (uint)(i+2);
       (out+j+4)[1] = (uint)(i);
    }
@@ -210,13 +187,10 @@ static void generate_tristrip_uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1/*+(i&1)*/);
       (out+j)[0] = (uint)(i);
       (out+j)[1] = (uint)(i+1/*+(i&1)*/);
-      debug_printf("  line %d %d\n", (int)i+1/*+(i&1)*/, (int)i+2/*-(i&1)*/);
       (out+j+2)[0] = (uint)(i+1/*+(i&1)*/);
       (out+j+2)[1] = (uint)(i+2/*-(i&1)*/);
-      debug_printf("  line %d %d\n", (int)i+2/*-(i&1)*/, (int)i);
       (out+j+4)[0] = (uint)(i+2/*-(i&1)*/);
       (out+j+4)[1] = (uint)(i);
    }
@@ -229,13 +203,10 @@ static void generate_trifan_uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (uint)(0);
       (out+j)[1] = (uint)(i+1);
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)(i+1);
       (out+j+2)[1] = (uint)(i+2);
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (uint)(i+2);
       (out+j+4)[1] = (uint)(0);
    }
@@ -248,16 +219,12 @@ static void generate_quads_uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=4) { 
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j)[0] = (uint)(i+0);
       (out+j)[1] = (uint)(i+1);
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)(i+1);
       (out+j+2)[1] = (uint)(i+2);
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+3);
       (out+j+4)[0] = (uint)(i+2);
       (out+j+4)[1] = (uint)(i+3);
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+0);
       (out+j+6)[0] = (uint)(i+3);
       (out+j+6)[1] = (uint)(i+0);
    }
@@ -270,16 +237,12 @@ static void generate_quadstrip_uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=2) { 
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+0);
       (out+j)[0] = (uint)(i+2);
       (out+j)[1] = (uint)(i+0);
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j+2)[0] = (uint)(i+0);
       (out+j+2)[1] = (uint)(i+1);
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+3);
       (out+j+4)[0] = (uint)(i+1);
       (out+j+4)[1] = (uint)(i+3);
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+2);
       (out+j+6)[0] = (uint)(i+3);
       (out+j+6)[1] = (uint)(i+2);
    }
@@ -292,13 +255,10 @@ static void generate_polygon_uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (uint)(0);
       (out+j)[1] = (uint)(i+1);
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)(i+1);
       (out+j+2)[1] = (uint)(i+2);
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (uint)(i+2);
       (out+j+4)[1] = (uint)(0);
    }
@@ -313,13 +273,10 @@ static void translate_tris_ubyte2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=3) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1);
       (out+j)[0] = (ushort)in[i];
       (out+j)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)in[i+1];
       (out+j+2)[1] = (ushort)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)i);
       (out+j+4)[0] = (ushort)in[i+2];
       (out+j+4)[1] = (ushort)in[i];
    }
@@ -334,13 +291,10 @@ static void translate_tristrip_ubyte2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1/*+(i&1)*/);
       (out+j)[0] = (ushort)in[i];
       (out+j)[1] = (ushort)in[i+1/*+(i&1)*/];
-      debug_printf("  line %d %d\n", (int)i+1/*+(i&1)*/, (int)i+2/*-(i&1)*/);
       (out+j+2)[0] = (ushort)in[i+1/*+(i&1)*/];
       (out+j+2)[1] = (ushort)in[i+2/*-(i&1)*/];
-      debug_printf("  line %d %d\n", (int)i+2/*-(i&1)*/, (int)i);
       (out+j+4)[0] = (ushort)in[i+2/*-(i&1)*/];
       (out+j+4)[1] = (ushort)in[i];
    }
@@ -355,13 +309,10 @@ static void translate_trifan_ubyte2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (ushort)in[0];
       (out+j)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)in[i+1];
       (out+j+2)[1] = (ushort)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (ushort)in[i+2];
       (out+j+4)[1] = (ushort)in[0];
    }
@@ -376,16 +327,12 @@ static void translate_quads_ubyte2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=4) { 
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j)[0] = (ushort)in[i+0];
       (out+j)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)in[i+1];
       (out+j+2)[1] = (ushort)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+3);
       (out+j+4)[0] = (ushort)in[i+2];
       (out+j+4)[1] = (ushort)in[i+3];
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+0);
       (out+j+6)[0] = (ushort)in[i+3];
       (out+j+6)[1] = (ushort)in[i+0];
    }
@@ -400,16 +347,12 @@ static void translate_quadstrip_ubyte2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=2) { 
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+0);
       (out+j)[0] = (ushort)in[i+2];
       (out+j)[1] = (ushort)in[i+0];
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j+2)[0] = (ushort)in[i+0];
       (out+j+2)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+3);
       (out+j+4)[0] = (ushort)in[i+1];
       (out+j+4)[1] = (ushort)in[i+3];
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+2);
       (out+j+6)[0] = (ushort)in[i+3];
       (out+j+6)[1] = (ushort)in[i+2];
    }
@@ -424,13 +367,10 @@ static void translate_polygon_ubyte2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (ushort)in[0];
       (out+j)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)in[i+1];
       (out+j+2)[1] = (ushort)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (ushort)in[i+2];
       (out+j+4)[1] = (ushort)in[0];
    }
@@ -445,13 +385,10 @@ static void translate_tris_ubyte2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=3) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1);
       (out+j)[0] = (uint)in[i];
       (out+j)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)in[i+1];
       (out+j+2)[1] = (uint)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)i);
       (out+j+4)[0] = (uint)in[i+2];
       (out+j+4)[1] = (uint)in[i];
    }
@@ -466,13 +403,10 @@ static void translate_tristrip_ubyte2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1/*+(i&1)*/);
       (out+j)[0] = (uint)in[i];
       (out+j)[1] = (uint)in[i+1/*+(i&1)*/];
-      debug_printf("  line %d %d\n", (int)i+1/*+(i&1)*/, (int)i+2/*-(i&1)*/);
       (out+j+2)[0] = (uint)in[i+1/*+(i&1)*/];
       (out+j+2)[1] = (uint)in[i+2/*-(i&1)*/];
-      debug_printf("  line %d %d\n", (int)i+2/*-(i&1)*/, (int)i);
       (out+j+4)[0] = (uint)in[i+2/*-(i&1)*/];
       (out+j+4)[1] = (uint)in[i];
    }
@@ -487,13 +421,10 @@ static void translate_trifan_ubyte2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (uint)in[0];
       (out+j)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)in[i+1];
       (out+j+2)[1] = (uint)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (uint)in[i+2];
       (out+j+4)[1] = (uint)in[0];
    }
@@ -508,16 +439,12 @@ static void translate_quads_ubyte2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=4) { 
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j)[0] = (uint)in[i+0];
       (out+j)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)in[i+1];
       (out+j+2)[1] = (uint)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+3);
       (out+j+4)[0] = (uint)in[i+2];
       (out+j+4)[1] = (uint)in[i+3];
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+0);
       (out+j+6)[0] = (uint)in[i+3];
       (out+j+6)[1] = (uint)in[i+0];
    }
@@ -532,16 +459,12 @@ static void translate_quadstrip_ubyte2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=2) { 
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+0);
       (out+j)[0] = (uint)in[i+2];
       (out+j)[1] = (uint)in[i+0];
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j+2)[0] = (uint)in[i+0];
       (out+j+2)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+3);
       (out+j+4)[0] = (uint)in[i+1];
       (out+j+4)[1] = (uint)in[i+3];
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+2);
       (out+j+6)[0] = (uint)in[i+3];
       (out+j+6)[1] = (uint)in[i+2];
    }
@@ -556,13 +479,10 @@ static void translate_polygon_ubyte2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (uint)in[0];
       (out+j)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)in[i+1];
       (out+j+2)[1] = (uint)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (uint)in[i+2];
       (out+j+4)[1] = (uint)in[0];
    }
@@ -577,13 +497,10 @@ static void translate_tris_ushort2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=3) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1);
       (out+j)[0] = (ushort)in[i];
       (out+j)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)in[i+1];
       (out+j+2)[1] = (ushort)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)i);
       (out+j+4)[0] = (ushort)in[i+2];
       (out+j+4)[1] = (ushort)in[i];
    }
@@ -598,13 +515,10 @@ static void translate_tristrip_ushort2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1/*+(i&1)*/);
       (out+j)[0] = (ushort)in[i];
       (out+j)[1] = (ushort)in[i+1/*+(i&1)*/];
-      debug_printf("  line %d %d\n", (int)i+1/*+(i&1)*/, (int)i+2/*-(i&1)*/);
       (out+j+2)[0] = (ushort)in[i+1/*+(i&1)*/];
       (out+j+2)[1] = (ushort)in[i+2/*-(i&1)*/];
-      debug_printf("  line %d %d\n", (int)i+2/*-(i&1)*/, (int)i);
       (out+j+4)[0] = (ushort)in[i+2/*-(i&1)*/];
       (out+j+4)[1] = (ushort)in[i];
    }
@@ -619,13 +533,10 @@ static void translate_trifan_ushort2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (ushort)in[0];
       (out+j)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)in[i+1];
       (out+j+2)[1] = (ushort)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (ushort)in[i+2];
       (out+j+4)[1] = (ushort)in[0];
    }
@@ -640,16 +551,12 @@ static void translate_quads_ushort2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=4) { 
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j)[0] = (ushort)in[i+0];
       (out+j)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)in[i+1];
       (out+j+2)[1] = (ushort)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+3);
       (out+j+4)[0] = (ushort)in[i+2];
       (out+j+4)[1] = (ushort)in[i+3];
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+0);
       (out+j+6)[0] = (ushort)in[i+3];
       (out+j+6)[1] = (ushort)in[i+0];
    }
@@ -664,16 +571,12 @@ static void translate_quadstrip_ushort2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=2) { 
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+0);
       (out+j)[0] = (ushort)in[i+2];
       (out+j)[1] = (ushort)in[i+0];
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j+2)[0] = (ushort)in[i+0];
       (out+j+2)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+3);
       (out+j+4)[0] = (ushort)in[i+1];
       (out+j+4)[1] = (ushort)in[i+3];
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+2);
       (out+j+6)[0] = (ushort)in[i+3];
       (out+j+6)[1] = (ushort)in[i+2];
    }
@@ -688,13 +591,10 @@ static void translate_polygon_ushort2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (ushort)in[0];
       (out+j)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)in[i+1];
       (out+j+2)[1] = (ushort)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (ushort)in[i+2];
       (out+j+4)[1] = (ushort)in[0];
    }
@@ -709,13 +609,10 @@ static void translate_tris_ushort2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=3) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1);
       (out+j)[0] = (uint)in[i];
       (out+j)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)in[i+1];
       (out+j+2)[1] = (uint)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)i);
       (out+j+4)[0] = (uint)in[i+2];
       (out+j+4)[1] = (uint)in[i];
    }
@@ -730,13 +627,10 @@ static void translate_tristrip_ushort2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1/*+(i&1)*/);
       (out+j)[0] = (uint)in[i];
       (out+j)[1] = (uint)in[i+1/*+(i&1)*/];
-      debug_printf("  line %d %d\n", (int)i+1/*+(i&1)*/, (int)i+2/*-(i&1)*/);
       (out+j+2)[0] = (uint)in[i+1/*+(i&1)*/];
       (out+j+2)[1] = (uint)in[i+2/*-(i&1)*/];
-      debug_printf("  line %d %d\n", (int)i+2/*-(i&1)*/, (int)i);
       (out+j+4)[0] = (uint)in[i+2/*-(i&1)*/];
       (out+j+4)[1] = (uint)in[i];
    }
@@ -751,13 +645,10 @@ static void translate_trifan_ushort2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (uint)in[0];
       (out+j)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)in[i+1];
       (out+j+2)[1] = (uint)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (uint)in[i+2];
       (out+j+4)[1] = (uint)in[0];
    }
@@ -772,16 +663,12 @@ static void translate_quads_ushort2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=4) { 
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j)[0] = (uint)in[i+0];
       (out+j)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)in[i+1];
       (out+j+2)[1] = (uint)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+3);
       (out+j+4)[0] = (uint)in[i+2];
       (out+j+4)[1] = (uint)in[i+3];
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+0);
       (out+j+6)[0] = (uint)in[i+3];
       (out+j+6)[1] = (uint)in[i+0];
    }
@@ -796,16 +683,12 @@ static void translate_quadstrip_ushort2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=2) { 
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+0);
       (out+j)[0] = (uint)in[i+2];
       (out+j)[1] = (uint)in[i+0];
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j+2)[0] = (uint)in[i+0];
       (out+j+2)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+3);
       (out+j+4)[0] = (uint)in[i+1];
       (out+j+4)[1] = (uint)in[i+3];
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+2);
       (out+j+6)[0] = (uint)in[i+3];
       (out+j+6)[1] = (uint)in[i+2];
    }
@@ -820,13 +703,10 @@ static void translate_polygon_ushort2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (uint)in[0];
       (out+j)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)in[i+1];
       (out+j+2)[1] = (uint)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (uint)in[i+2];
       (out+j+4)[1] = (uint)in[0];
    }
@@ -841,13 +721,10 @@ static void translate_tris_uint2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=3) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1);
       (out+j)[0] = (ushort)in[i];
       (out+j)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)in[i+1];
       (out+j+2)[1] = (ushort)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)i);
       (out+j+4)[0] = (ushort)in[i+2];
       (out+j+4)[1] = (ushort)in[i];
    }
@@ -862,13 +739,10 @@ static void translate_tristrip_uint2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1/*+(i&1)*/);
       (out+j)[0] = (ushort)in[i];
       (out+j)[1] = (ushort)in[i+1/*+(i&1)*/];
-      debug_printf("  line %d %d\n", (int)i+1/*+(i&1)*/, (int)i+2/*-(i&1)*/);
       (out+j+2)[0] = (ushort)in[i+1/*+(i&1)*/];
       (out+j+2)[1] = (ushort)in[i+2/*-(i&1)*/];
-      debug_printf("  line %d %d\n", (int)i+2/*-(i&1)*/, (int)i);
       (out+j+4)[0] = (ushort)in[i+2/*-(i&1)*/];
       (out+j+4)[1] = (ushort)in[i];
    }
@@ -883,13 +757,10 @@ static void translate_trifan_uint2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (ushort)in[0];
       (out+j)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)in[i+1];
       (out+j+2)[1] = (ushort)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (ushort)in[i+2];
       (out+j+4)[1] = (ushort)in[0];
    }
@@ -904,16 +775,12 @@ static void translate_quads_uint2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=4) { 
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j)[0] = (ushort)in[i+0];
       (out+j)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)in[i+1];
       (out+j+2)[1] = (ushort)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+3);
       (out+j+4)[0] = (ushort)in[i+2];
       (out+j+4)[1] = (ushort)in[i+3];
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+0);
       (out+j+6)[0] = (ushort)in[i+3];
       (out+j+6)[1] = (ushort)in[i+0];
    }
@@ -928,16 +795,12 @@ static void translate_quadstrip_uint2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=2) { 
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+0);
       (out+j)[0] = (ushort)in[i+2];
       (out+j)[1] = (ushort)in[i+0];
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j+2)[0] = (ushort)in[i+0];
       (out+j+2)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+3);
       (out+j+4)[0] = (ushort)in[i+1];
       (out+j+4)[1] = (ushort)in[i+3];
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+2);
       (out+j+6)[0] = (ushort)in[i+3];
       (out+j+6)[1] = (ushort)in[i+2];
    }
@@ -952,13 +815,10 @@ static void translate_polygon_uint2ushort(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (ushort)in[0];
       (out+j)[1] = (ushort)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (ushort)in[i+1];
       (out+j+2)[1] = (ushort)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (ushort)in[i+2];
       (out+j+4)[1] = (ushort)in[0];
    }
@@ -973,13 +833,10 @@ static void translate_tris_uint2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i+=3) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1);
       (out+j)[0] = (uint)in[i];
       (out+j)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)in[i+1];
       (out+j+2)[1] = (uint)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)i);
       (out+j+4)[0] = (uint)in[i+2];
       (out+j+4)[1] = (uint)in[i];
    }
@@ -994,13 +851,10 @@ static void translate_tristrip_uint2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)i, (int)i+1/*+(i&1)*/);
       (out+j)[0] = (uint)in[i];
       (out+j)[1] = (uint)in[i+1/*+(i&1)*/];
-      debug_printf("  line %d %d\n", (int)i+1/*+(i&1)*/, (int)i+2/*-(i&1)*/);
       (out+j+2)[0] = (uint)in[i+1/*+(i&1)*/];
       (out+j+2)[1] = (uint)in[i+2/*-(i&1)*/];
-      debug_printf("  line %d %d\n", (int)i+2/*-(i&1)*/, (int)i);
       (out+j+4)[0] = (uint)in[i+2/*-(i&1)*/];
       (out+j+4)[1] = (uint)in[i];
    }
@@ -1015,13 +869,10 @@ static void translate_trifan_uint2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (uint)in[0];
       (out+j)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)in[i+1];
       (out+j+2)[1] = (uint)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (uint)in[i+2];
       (out+j+4)[1] = (uint)in[0];
    }
@@ -1036,16 +887,12 @@ static void translate_quads_uint2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=4) { 
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j)[0] = (uint)in[i+0];
       (out+j)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)in[i+1];
       (out+j+2)[1] = (uint)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+3);
       (out+j+4)[0] = (uint)in[i+2];
       (out+j+4)[1] = (uint)in[i+3];
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+0);
       (out+j+6)[0] = (uint)in[i+3];
       (out+j+6)[1] = (uint)in[i+0];
    }
@@ -1060,16 +907,12 @@ static void translate_quadstrip_uint2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=8, i+=2) { 
-      debug_printf("  line %d %d\n", (int)i+2, (int)i+0);
       (out+j)[0] = (uint)in[i+2];
       (out+j)[1] = (uint)in[i+0];
-      debug_printf("  line %d %d\n", (int)i+0, (int)i+1);
       (out+j+2)[0] = (uint)in[i+0];
       (out+j+2)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+3);
       (out+j+4)[0] = (uint)in[i+1];
       (out+j+4)[1] = (uint)in[i+3];
-      debug_printf("  line %d %d\n", (int)i+3, (int)i+2);
       (out+j+6)[0] = (uint)in[i+3];
       (out+j+6)[1] = (uint)in[i+2];
    }
@@ -1084,13 +927,10 @@ static void translate_polygon_uint2uint(
   unsigned i, j;
   (void)j;
   for (j = i = 0; j < nr; j+=6, i++) { 
-      debug_printf("  line %d %d\n", (int)0, (int)i+1);
       (out+j)[0] = (uint)in[0];
       (out+j)[1] = (uint)in[i+1];
-      debug_printf("  line %d %d\n", (int)i+1, (int)i+2);
       (out+j+2)[0] = (uint)in[i+1];
       (out+j+2)[1] = (uint)in[i+2];
-      debug_printf("  line %d %d\n", (int)i+2, (int)0);
       (out+j+4)[0] = (uint)in[i+2];
       (out+j+4)[1] = (uint)in[0];
    }
