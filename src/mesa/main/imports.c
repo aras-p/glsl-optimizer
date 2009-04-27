@@ -1137,7 +1137,7 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
          vsnprintf(s, MAXSTRING, fmtString, args);
          va_end(args);
 
-         snprintf(s2, MAXSTRING, "%s in %s", errstr, s);
+         _mesa_snprintf(s2, MAXSTRING, "%s in %s", errstr, s);
          output_if_debug("Mesa: User error", s2, GL_TRUE);
       }
    }
