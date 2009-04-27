@@ -418,7 +418,6 @@ compress_with_blit(GLcontext * ctx,
    const GLuint dstImageOffsets[1] = {0};
    struct st_texture_image *stImage = st_texture_image(texImage);
    struct pipe_screen *screen = ctx->st->pipe->screen;
-   const GLuint face = _mesa_tex_target_to_face(target);
    const struct gl_texture_format *mesa_format;
    struct pipe_texture templ;
    struct pipe_texture *src_tex;
@@ -467,7 +466,7 @@ compress_with_blit(GLcontext * ctx,
    /* Put user's tex data into the temporary texture
     */
    tex_xfer = st_cond_flush_get_tex_transfer(st_context(ctx), src_tex,
-					     face, level, 0,
+					     0, 0, 0, /* face, level are zero */
 					     PIPE_TRANSFER_WRITE,
 					     0, 0, width, height); /* x, y, w, h */
    map = screen->transfer_map(screen, tex_xfer);
