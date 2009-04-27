@@ -439,14 +439,9 @@ static int r300Fallback(GLcontext * ctx)
 
 	FALLBACK_IF(ctx->RenderMode != GL_RENDER);
 
-	/* If GL_EXT_stencil_two_side is disabled, this fallback check can
-	 * be removed.
-	 */
-	FALLBACK_IF(ctx->Stencil.Ref[0] != ctx->Stencil.Ref[back]
-		    || ctx->Stencil.ValueMask[0] !=
-		    ctx->Stencil.ValueMask[back]
-		    || ctx->Stencil.WriteMask[0] !=
-		    ctx->Stencil.WriteMask[back]);
+	FALLBACK_IF(ctx->Stencil.Enabled && (ctx->Stencil.Ref[0] != ctx->Stencil.Ref[back]
+		    || ctx->Stencil.ValueMask[0] != ctx->Stencil.ValueMask[back]
+		    || ctx->Stencil.WriteMask[0] != ctx->Stencil.WriteMask[back]));
 
 	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
 		FALLBACK_IF(ctx->Point.PointSprite);
