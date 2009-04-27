@@ -201,12 +201,20 @@ special(int k, int x, int y)
 }
 
 static void
+cleanup(void)
+{
+   glDeleteTextures(1, &t1id);
+   glDeleteTextures(1, &t2id);
+}
+
+static void
 key(unsigned char k, int x, int y)
 {
    switch (k) {
    case 27:
       glutDestroyWindow(channel[0]);
       glutDestroyWindow(channel[1]);
+      cleanup();
       exit(0);
       break;
 
@@ -602,6 +610,7 @@ main(int ac, char **av)
    calcposobs();
 
    glutMainLoop();
+   cleanup();
 
    return 0;
 }

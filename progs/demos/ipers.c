@@ -237,10 +237,27 @@ special(int k, int x, int y)
 }
 
 static void
+cleanup(void)
+{
+   int i;
+
+   glDeleteTextures(1, &t1id);
+   glDeleteTextures(1, &t2id);
+
+   glDeleteLists(skydlist, 1);
+   for (i = 0; i < MAX_LOD; i++) {
+      glDeleteLists(LODdlist[i], 1);
+      glDeleteLists(LODnumpoly[i], 1);
+   }
+}
+
+
+static void
 key(unsigned char k, int x, int y)
 {
    switch (k) {
    case 27:
+      cleanup();
       exit(0);
       break;
 
@@ -707,6 +724,7 @@ main(int ac, char **av)
    glutIdleFunc(draw);
 
    glutMainLoop();
+   cleanup();
 
    return 0;
 }
