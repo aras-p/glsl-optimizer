@@ -196,6 +196,29 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		rmesa->swtcl.specoffset = rmesa->swtcl.coloroffset + 1;
 	}
 
+	if (ctx->Light.Enabled && ctx->Light.Model.TwoSide) {
+		VB->AttribPtr[VERT_ATTRIB_GENERIC0] = VB->ColorPtr[1];
+		OutputsWritten |= 1 << VERT_RESULT_BFC0;
+#if MESA_LITTLE_ENDIAN
+		EMIT_ATTR( _TNL_ATTRIB_GENERIC0, EMIT_4UB_4F_RGBA );
+		ADD_ATTR(VERT_ATTRIB_GENERIC0, EMIT_4UB_4F_RGBA, SWTCL_OVM_COLOR2, SWIZZLE_XYZW, MASK_XYZW);
+#else
+		EMIT_ATTR( _TNL_ATTRIB_GENERIC0, EMIT_4UB_4F_ABGR );
+		ADD_ATTR(VERT_ATTRIB_GENERIC0, EMIT_4UB_4F_ABGR, SWTCL_OVM_COLOR2, SWIZZLE_XYZW, MASK_XYZW);
+#endif
+		if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR1 )) {
+			GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
+			OutputsWritten |= 1 << VERT_RESULT_BFC1;
+#if MESA_LITTLE_ENDIAN
+			EMIT_ATTR( _TNL_ATTRIB_GENERIC1, EMIT_4UB_4F_RGBA );
+			ADD_ATTR(VERT_ATTRIB_GENERIC1, EMIT_4UB_4F_RGBA, SWTCL_OVM_COLOR3, swiz, MASK_XYZW);
+#else
+			EMIT_ATTR( _TNL_ATTRIB_GENERIC1, EMIT_4UB_4F_ABGR );
+			ADD_ATTR(VERT_ATTRIB_GENERIC1, EMIT_4UB_4F_ABGR, SWTCL_OVM_COLOR3, swiz, MASK_XYZW);
+#endif
+		}
+	}
+
 	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_POINTSIZE )) {
 		GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO);
 		InputsRead |= 1 << VERT_ATTRIB_POINT_SIZE;
@@ -349,9 +372,8 @@ static void r300RenderPrimitive( GLcontext *ctx, GLenum prim );
  *              Build render functions from dd templates               *
  ***********************************************************************/
 
-#define R300_TWOSIDE_BIT	0x01
-#define R300_UNFILLED_BIT	0x02
-#define R300_MAX_TRIFUNC	0x04
+#define R300_UNFILLED_BIT	0x01
+#define R300_MAX_TRIFUNC	0x02
 
 static struct {
    tnl_points_func	        points;
@@ -362,9 +384,9 @@ static struct {
 
 #define DO_FALLBACK  0
 #define DO_UNFILLED (IND & R300_UNFILLED_BIT)
-#define DO_TWOSIDE  (IND & R300_TWOSIDE_BIT)
+#define DO_TWOSIDE   0
 #define DO_FLAT      0
-#define DO_OFFSET     0
+#define DO_OFFSET    0
 #define DO_TRI       1
 #define DO_QUAD      1
 #define DO_LINE      1
@@ -452,26 +474,15 @@ do { \
 #define TAG(x) x
 #include "tnl_dd/t_dd_tritmp.h"
 
-#define IND (R300_TWOSIDE_BIT)
-#define TAG(x) x##_twoside
-#include "tnl_dd/t_dd_tritmp.h"
-
 #define IND (R300_UNFILLED_BIT)
 #define TAG(x) x##_unfilled
 #include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (R300_TWOSIDE_BIT|R300_UNFILLED_BIT)
-#define TAG(x) x##_twoside_unfilled
-#include "tnl_dd/t_dd_tritmp.h"
-
 
 
 static void init_rast_tab( void )
 {
    init();
-   init_twoside();
    init_unfilled();
-   init_twoside_unfilled();
 }
 
 /**********************************************************************/
@@ -523,7 +534,6 @@ static void r300ChooseRenderState( GLcontext *ctx )
 	GLuint index = 0;
 	GLuint flags = ctx->_TriangleCaps;
 
-	if (flags & DD_TRI_LIGHT_TWOSIDE) index |= R300_TWOSIDE_BIT;
 	if (flags & DD_TRI_UNFILLED)      index |= R300_UNFILLED_BIT;
 
 	if (index != rmesa->radeon.swtcl.RenderIndex) {
