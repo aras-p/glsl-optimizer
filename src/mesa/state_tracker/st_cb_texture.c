@@ -51,6 +51,7 @@
 #include "state_tracker/st_texture.h"
 #include "state_tracker/st_gen_mipmap.h"
 #include "state_tracker/st_inlines.h"
+#include "state_tracker/st_atom.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -1317,6 +1318,10 @@ st_copy_texsubimage(GLcontext *ctx,
    /* any rendering in progress must complete before we grab the fb image */
    st_finish(ctx->st);
 
+   /* make sure finalize_textures has been called? 
+    */
+   if (0) st_validate_state(ctx->st);
+
    /* determine if copying depth or color data */
    if (texBaseFormat == GL_DEPTH_COMPONENT ||
        texBaseFormat == GL_DEPTH24_STENCIL8) {
@@ -1328,6 +1333,11 @@ st_copy_texsubimage(GLcontext *ctx,
    else {
       /* texBaseFormat == GL_RGB, GL_RGBA, GL_ALPHA, etc */
       strb = st_renderbuffer(fb->_ColorReadBuffer);
+   }
+
+   if (!strb || !strb->surface || !stImage->pt) {
+      debug_printf("%s: null strb or stImage\n", __FUNCTION__);
+      return;
    }
 
    assert(strb);
