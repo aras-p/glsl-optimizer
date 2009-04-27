@@ -76,9 +76,10 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    if (c->vp->program.Base.Parameters->NumParameters +
        c->vp->program.Base.NumTemporaries + 20 > BRW_MAX_GRF)
-      c->use_const_buffer = GL_TRUE;
+      c->vp->use_const_buffer = GL_TRUE;
    else
-      c->use_const_buffer = GL_FALSE;
+      c->vp->use_const_buffer = GL_FALSE;
+
    /*printf("use_const_buffer = %d\n", c->use_const_buffer);*/
 
    /* r0 -- reserved as usual
@@ -100,7 +101,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    /* Vertex program parameters from curbe:
     */
-   if (c->use_const_buffer) {
+   if (c->vp->use_const_buffer) {
       /* get constants from a real constant buffer */
       c->prog_data.curb_read_length = 0;
       c->prog_data.nr_params = 4; /* XXX 0 causes a bug elsewhere... */
@@ -176,7 +177,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       reg++;
    }
 
-   if (c->use_const_buffer) {
+   if (c->vp->use_const_buffer) {
       for (i = 0; i < 3; i++) {
          c->current_const[i].index = -1;
          c->current_const[i].reg = brw_vec8_grf(reg, 0);
@@ -873,7 +874,7 @@ get_src_reg( struct brw_vs_compile *c,
    case PROGRAM_STATE_VAR:
    case PROGRAM_CONSTANT:
    case PROGRAM_UNIFORM:
-      if (c->use_const_buffer) {
+      if (c->vp->use_const_buffer) {
          return get_constant(c, inst, argIndex);
       }
       else if (relAddr) {

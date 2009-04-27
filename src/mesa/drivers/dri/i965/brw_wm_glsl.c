@@ -311,12 +311,12 @@ static void prealloc_reg(struct brw_wm_compile *c)
         /* use a real constant buffer, or just use a section of the GRF? */
         /* XXX this heuristic may need adjustment... */
         if ((nr_params + nr_temps) * 4 + reg_index > 80)
-           c->use_const_buffer = GL_TRUE;
+           c->fp->use_const_buffer = GL_TRUE;
         else
-           c->use_const_buffer = GL_FALSE;
+           c->fp->use_const_buffer = GL_FALSE;
         /*printf("WM use_const_buffer = %d\n", c->use_const_buffer);*/
 
-        if (c->use_const_buffer) {
+        if (c->fp->use_const_buffer) {
            /* We'll use a real constant buffer and fetch constants from
             * it with a dataport read message.
             */
@@ -377,12 +377,16 @@ static void prealloc_reg(struct brw_wm_compile *c)
      * They'll be found in these registers.
      * XXX alloc these on demand!
      */
-    if (c->use_const_buffer) {
+    if (c->fp->use_const_buffer) {
        for (i = 0; i < 3; i++) {
           c->current_const[i].index = -1;
           c->current_const[i].reg = brw_vec8_grf(alloc_grf(c), 0);
        }
     }
+#if 0
+    printf("USE CONST BUFFER? %d\n", c->fp->use_const_buffer);
+    printf("AFTER PRE_ALLOC, reg_index = %d\n", c->reg_index);
+#endif
 }
 
 
@@ -488,7 +492,7 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
     const GLuint nr = 1;
     const GLuint component = GET_SWZ(src->Swizzle, channel);
 
-    if (c->use_const_buffer &&
+    if (c->fp->use_const_buffer &&
         (src->File == PROGRAM_STATE_VAR ||
          src->File == PROGRAM_CONSTANT ||
          src->File == PROGRAM_UNIFORM)) {
@@ -2730,7 +2734,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 #endif
 
         /* fetch any constants that this instruction needs */
-        if (c->use_const_buffer)
+        if (c->fp->use_const_buffer)
            fetch_constants(c, inst);
 
 	if (inst->CondUpdate)

@@ -368,7 +368,8 @@ update_vertex_constant_buffer(struct brw_context *brw)
       printf("update VS constants in buffer %p  vp = %p\n", vp->const_buffer, vp);
       printf("program %u\n", vp->program.Base.Id);
    }
-   update_constant_buffer(brw, vp->program.Base.Parameters, vp->const_buffer);
+   if (vp->use_const_buffer)
+      update_constant_buffer(brw, vp->program.Base.Parameters, vp->const_buffer);
 }
 
 
@@ -382,7 +383,8 @@ update_fragment_constant_buffer(struct brw_context *brw)
       printf("update WM constants in buffer %p\n", fp->const_buffer);
       printf("program %u\n", fp->program.Base.Id);
    }
-   update_constant_buffer(brw, fp->program.Base.Parameters, fp->const_buffer);
+   if (fp->use_const_buffer)
+      update_constant_buffer(brw, fp->program.Base.Parameters, fp->const_buffer);
 }
 
 

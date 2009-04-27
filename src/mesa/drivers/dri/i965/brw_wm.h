@@ -257,8 +257,6 @@ struct brw_wm_compile {
    GLuint tmp_max;
    GLuint subroutines[BRW_WM_MAX_SUBROUTINE];
 
-   /** using a real constant buffer? */
-   GLboolean use_const_buffer;
    /** we may need up to 3 constants per instruction (if use_const_buffer) */
    struct {
       GLint index;

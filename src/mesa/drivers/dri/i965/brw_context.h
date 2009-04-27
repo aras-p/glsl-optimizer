@@ -161,6 +161,7 @@ struct brw_vertex_program {
    struct gl_vertex_program program;
    GLuint id;
    dri_bo *const_buffer;    /** Program constant buffer/surface */
+   GLboolean use_const_buffer;
 };
 
 
@@ -171,6 +172,7 @@ struct brw_fragment_program {
    GLboolean isGLSL;  /**< really, any IF/LOOP/CONT/BREAK instructions */
 
    dri_bo *const_buffer;    /** Program constant buffer/surface */
+   GLboolean use_const_buffer;
 };
 
 
