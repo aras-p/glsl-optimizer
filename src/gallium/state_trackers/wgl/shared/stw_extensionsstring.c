@@ -1,5 +1,6 @@
 /**************************************************************************
  * 
+ * Copyright 2009 VMware, Inc.
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
@@ -33,14 +34,25 @@
 #include <GL/wglext.h>
 
 
+static const char *stw_extension_string = 
+   "WGL_ARB_extensions_string "
+   "WGL_ARB_multisample "
+   "WGL_ARB_pixel_format "
+   "WGL_EXT_extensions_string";
+
+
 WINGDIAPI const char * APIENTRY
 wglGetExtensionsStringARB(
    HDC hdc )
 {
    (void) hdc;
 
-   return
-      "WGL_ARB_extensions_string "
-      "WGL_ARB_multisample "
-      "WGL_ARB_pixel_format";
+   return stw_extension_string;
+}
+
+
+WINGDIAPI const char * APIENTRY
+wglGetExtensionsStringEXT( void )
+{
+   return stw_extension_string;
 }
