@@ -36,6 +36,7 @@
 #include "main/macros.h"
 #include "main/enums.h"
 #include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
 #include "shader/prog_statevars.h"
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
