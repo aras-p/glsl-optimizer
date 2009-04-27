@@ -66,7 +66,7 @@ static GLboolean emit_const(void* data, GLuint file, GLuint index, GLuint *hwind
 	}
 
 	if (*hwindex >= code->const_nr) {
-		if (*hwindex >= PFS_NUM_CONST_REGS) {
+		if (*hwindex >= R300_PFS_NUM_CONST_REGS) {
 			error("Out of hw constants!\n");
 			return GL_FALSE;
 		}
@@ -138,7 +138,7 @@ static GLboolean emit_alu(void* data, struct radeon_pair_instruction* inst)
 {
 	PROG_CODE;
 
-	if (code->alu.length >= PFS_MAX_ALU_INST) {
+	if (code->alu.length >= R300_PFS_MAX_ALU_INST) {
 		error("Too many ALU instructions");
 		return GL_FALSE;
 	}
@@ -275,7 +275,7 @@ static GLboolean emit_tex(void* data, struct prog_instruction* inst)
 {
 	PROG_CODE;
 
-	if (code->tex.length >= PFS_MAX_TEX_INST) {
+	if (code->tex.length >= R300_PFS_MAX_TEX_INST) {
 		error("Too many TEX instructions");
 		return GL_FALSE;
 	}
@@ -318,7 +318,7 @@ static const struct radeon_pair_handler pair_handler = {
 	.EmitPaired = &emit_alu,
 	.EmitTex = &emit_tex,
 	.BeginTexBlock = &begin_tex,
-	.MaxHwTemps = PFS_NUM_TEMP_REGS
+	.MaxHwTemps = R300_PFS_NUM_TEMP_REGS
 };
 
 /**

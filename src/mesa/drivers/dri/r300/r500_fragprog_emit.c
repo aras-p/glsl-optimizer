@@ -72,7 +72,7 @@ static GLboolean emit_const(void *data, GLuint file, GLuint idx, GLuint *hwindex
 	}
 
 	if (*hwindex >= code->const_nr) {
-		if (*hwindex >= PFS_NUM_CONST_REGS) {
+		if (*hwindex >= R500_PFS_NUM_CONST_REGS) {
 			error("Out of hw constants!\n");
 			return GL_FALSE;
 		}

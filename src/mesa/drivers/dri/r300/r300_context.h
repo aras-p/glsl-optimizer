@@ -450,11 +450,15 @@ struct r300_vertex_program_cont {
 	struct r300_vertex_program *progs;
 };
 
-#define PFS_MAX_ALU_INST	64
-#define PFS_MAX_TEX_INST	64
-#define PFS_MAX_TEX_INDIRECT 4
-#define PFS_NUM_TEMP_REGS	32
-#define PFS_NUM_CONST_REGS	16
+#define R300_PFS_MAX_ALU_INST	64
+#define R300_PFS_MAX_TEX_INST	32
+#define R300_PFS_MAX_TEX_INDIRECT 4
+#define R300_PFS_NUM_TEMP_REGS	32
+#define R300_PFS_NUM_CONST_REGS	32
+
+#define R500_PFS_MAX_INST 512
+#define R500_PFS_NUM_TEMP_REGS 128
+#define R500_PFS_NUM_CONST_REGS 256
 
 struct r300_pfs_compile_state;
 struct r500_pfs_compile_state;
@@ -500,7 +504,7 @@ struct r300_fragment_program_node {
 struct r300_fragment_program_code {
 	struct {
 		int length; /**< total # of texture instructions used */
-		GLuint inst[PFS_MAX_TEX_INST];
+		GLuint inst[R300_PFS_MAX_TEX_INST];
 	} tex;
 
 	struct {
@@ -510,7 +514,7 @@ struct r300_fragment_program_code {
 			GLuint inst1;
 			GLuint inst2;
 			GLuint inst3;
-		} inst[PFS_MAX_ALU_INST];
+		} inst[R300_PFS_MAX_ALU_INST];
 	} alu;
 
 	struct r300_fragment_program_node node[4];
@@ -521,7 +525,7 @@ struct r300_fragment_program_code {
 	 * Remember which program register a given hardware constant
 	 * belongs to.
 	 */
-	struct prog_src_register constant[PFS_NUM_CONST_REGS];
+	struct prog_src_register constant[R300_PFS_NUM_CONST_REGS];
 	int const_nr;
 
 	int max_temp_idx;
@@ -536,7 +540,7 @@ struct r500_fragment_program_code {
 		GLuint inst3;
 		GLuint inst4;
 		GLuint inst5;
-	} inst[512];
+	} inst[R500_PFS_MAX_INST];
 
 	int inst_offset;
 	int inst_end;
@@ -545,7 +549,7 @@ struct r500_fragment_program_code {
 	 * Remember which program register a given hardware constant
 	 * belongs to.
 	 */
-	struct prog_src_register constant[PFS_NUM_CONST_REGS];
+	struct prog_src_register constant[R500_PFS_NUM_CONST_REGS];
 	int const_nr;
 
 	int max_temp_idx;

@@ -308,16 +308,25 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 		ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
 	}
 
-	ctx->Const.FragmentProgram.MaxNativeTemps = PFS_NUM_TEMP_REGS;
-	ctx->Const.FragmentProgram.MaxNativeAttribs = 11;	/* copy i915... */
-	ctx->Const.FragmentProgram.MaxNativeParameters = PFS_NUM_CONST_REGS;
-	ctx->Const.FragmentProgram.MaxNativeAluInstructions = PFS_MAX_ALU_INST;
-	ctx->Const.FragmentProgram.MaxNativeTexInstructions = PFS_MAX_TEX_INST;
-	ctx->Const.FragmentProgram.MaxNativeInstructions =
-	    PFS_MAX_ALU_INST + PFS_MAX_TEX_INST;
-	ctx->Const.FragmentProgram.MaxNativeTexIndirections =
-	    PFS_MAX_TEX_INDIRECT;
-	ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;
+	if (screen->chip_family >= CHIP_FAMILY_RV515) {
+		ctx->Const.FragmentProgram.MaxNativeTemps = R500_PFS_NUM_TEMP_REGS;
+		ctx->Const.FragmentProgram.MaxNativeAttribs = 11;	/* copy i915... */
+		ctx->Const.FragmentProgram.MaxNativeParameters = R500_PFS_NUM_CONST_REGS;
+		ctx->Const.FragmentProgram.MaxNativeAluInstructions = R500_PFS_MAX_INST;
+		ctx->Const.FragmentProgram.MaxNativeTexInstructions = R500_PFS_MAX_INST;
+		ctx->Const.FragmentProgram.MaxNativeInstructions = R500_PFS_MAX_INST;
+		ctx->Const.FragmentProgram.MaxNativeTexIndirections = R500_PFS_MAX_INST;
+		ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;
+	} else {
+		ctx->Const.FragmentProgram.MaxNativeTemps = R300_PFS_NUM_TEMP_REGS;
+		ctx->Const.FragmentProgram.MaxNativeAttribs = 11;	/* copy i915... */
+		ctx->Const.FragmentProgram.MaxNativeParameters = R300_PFS_NUM_CONST_REGS;
+		ctx->Const.FragmentProgram.MaxNativeAluInstructions = R300_PFS_MAX_ALU_INST;
+		ctx->Const.FragmentProgram.MaxNativeTexInstructions = R300_PFS_MAX_TEX_INST;
+		ctx->Const.FragmentProgram.MaxNativeInstructions = R300_PFS_MAX_ALU_INST + R300_PFS_MAX_TEX_INST;
+		ctx->Const.FragmentProgram.MaxNativeTexIndirections = R300_PFS_MAX_TEX_INDIRECT;
+		ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;
+	}
 }
 
 /* Create the device specific rendering context.
