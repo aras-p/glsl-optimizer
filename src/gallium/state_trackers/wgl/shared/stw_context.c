@@ -101,7 +101,7 @@ stw_create_layer_context(
 
    ctx = CALLOC_STRUCT( stw_context );
    if (ctx == NULL)
-      return 0;
+      goto no_ctx;
 
    ctx->hdc = hdc;
    ctx->color_bits = GetDeviceCaps( ctx->hdc, BITSPIXEL );
@@ -125,7 +125,7 @@ stw_create_layer_context(
       pf->pfd.cAccumAlphaBits,
       pf->numSamples );
    if (visual == NULL) 
-      goto fail;
+      goto no_visual;
 
    screen = stw_dev->screen;
 
@@ -137,7 +137,7 @@ stw_create_layer_context(
 
    pipe = stw_dev->stw_winsys->create_context( screen );
    if (pipe == NULL) 
-      goto fail;
+      goto no_pipe;
 
 #ifdef DEBUG
    /* Wrap context */
@@ -150,28 +150,29 @@ stw_create_layer_context(
 
    ctx->st = st_create_context( pipe, visual, NULL );
    if (ctx->st == NULL) 
-      goto fail;
+      goto no_st_ctx;
 
    ctx->st->ctx->DriverCtx = ctx;
    ctx->pfi = pf;
 
    pipe_mutex_lock( stw_dev->mutex );
-   hglrc = handle_table_add(stw_dev->ctx_table, ctx);
+   ctx->hglrc = handle_table_add(stw_dev->ctx_table, ctx);
    pipe_mutex_unlock( stw_dev->mutex );
+   if (!ctx->hglrc)
+      goto no_hglrc;
 
-   /* Success?
-    */
-   if (hglrc != 0)
-      return hglrc;
+   return ctx->hglrc;
 
-fail:
-   if (visual)
-      _mesa_destroy_visual( visual );
-   
-   if (pipe)
-      pipe->destroy( pipe );
-      
+no_hglrc:
+   st_destroy_context(ctx->st);
+   goto no_pipe; /* st_context_destroy already destroys pipe */
+no_st_ctx:
+   pipe->destroy( pipe );
+no_pipe:
+   _mesa_destroy_visual( visual );
+no_visual:
    FREE( ctx );
+no_ctx:
    return 0;
 }
 
@@ -271,13 +272,35 @@ stw_get_window_size( HDC hdc, GLuint *width, GLuint *height )
 UINT_PTR
 stw_get_current_context( void )
 {
-   return stw_tls_get_data()->currentGLRC;
+   GET_CURRENT_CONTEXT( glcurctx );
+   struct stw_context *ctx;
+
+   if(!glcurctx)
+      return NULL;
+   
+   ctx = (struct stw_context *)glcurctx->DriverCtx;
+   assert(ctx);
+   if(!ctx)
+      return NULL;
+   
+   return ctx->hglrc;
 }
 
 HDC
 stw_get_current_dc( void )
 {
-    return stw_tls_get_data()->currentDC;
+   GET_CURRENT_CONTEXT( glcurctx );
+   struct stw_context *ctx;
+
+   if(!glcurctx)
+      return NULL;
+   
+   ctx = (struct stw_context *)glcurctx->DriverCtx;
+   assert(ctx);
+   if(!ctx)
+      return NULL;
+   
+   return ctx->hdc;
 }
 
 BOOL
@@ -298,9 +321,6 @@ stw_make_current(
    pipe_mutex_lock( stw_dev->mutex ); 
    ctx = stw_lookup_context_locked( hglrc );
    pipe_mutex_unlock( stw_dev->mutex );
-
-   stw_tls_get_data()->currentDC = hdc;
-   stw_tls_get_data()->currentGLRC = hglrc;
 
    if (glcurctx != NULL) {
       curctx = (struct stw_context *) glcurctx->DriverCtx;
