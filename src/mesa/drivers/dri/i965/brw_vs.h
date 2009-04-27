@@ -75,8 +75,6 @@ struct brw_vs_compile {
 
    struct brw_reg userplane[6];
 
-   /** using a real constant buffer? */
-   GLboolean use_const_buffer;
    /** we may need up to 3 constants per instruction (if use_const_buffer) */
    struct {
       GLint index;
