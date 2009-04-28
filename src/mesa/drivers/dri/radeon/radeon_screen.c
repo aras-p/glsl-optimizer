@@ -787,19 +787,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    {
       int ret;
 
-#ifdef RADEON_PARAM_KERNEL_MM
-     ret = radeonGetParam(sPriv, RADEON_PARAM_KERNEL_MM, &screen->kernel_mm);
-
-      if (ret && ret != -EINVAL) {
-         FREE( screen );
-         fprintf(stderr, "drm_radeon_getparam_t (RADEON_OFFSET): %d\n", ret);
-         return NULL;
-      }
-
-      if (ret == -EINVAL)
-          screen->kernel_mm = 0;
-#endif
-
       ret = radeonGetParam(sPriv, RADEON_PARAM_GART_BUFFER_OFFSET,
 			    &screen->gart_buffer_offset);
 
@@ -833,62 +820,59 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       screen->drmSupportsVertexProgram = (sPriv->drm_version.minor >= 25);
    }
 
-   if (!screen->kernel_mm) {
-     screen->mmio.handle = dri_priv->registerHandle;
-     screen->mmio.size   = dri_priv->registerSize;
+   screen->mmio.handle = dri_priv->registerHandle;
+   screen->mmio.size   = dri_priv->registerSize;
+   if ( drmMap( sPriv->fd,
+		screen->mmio.handle,
+		screen->mmio.size,
+		&screen->mmio.map ) ) {
+     FREE( screen );
+     __driUtilMessage("%s: drmMap failed\n", __FUNCTION__ );
+     return NULL;
+   }
+
+   RADEONMMIO = screen->mmio.map;
+
+   screen->status.handle = dri_priv->statusHandle;
+   screen->status.size   = dri_priv->statusSize;
+   if ( drmMap( sPriv->fd,
+		screen->status.handle,
+		screen->status.size,
+		&screen->status.map ) ) {
+     drmUnmap( screen->mmio.map, screen->mmio.size );
+     FREE( screen );
+     __driUtilMessage("%s: drmMap (2) failed\n", __FUNCTION__ );
+     return NULL;
+   }
+   screen->scratch = (__volatile__ uint32_t *)
+     ((GLubyte *)screen->status.map + RADEON_SCRATCH_REG_OFFSET);
+
+   screen->buffers = drmMapBufs( sPriv->fd );
+   if ( !screen->buffers ) {
+     drmUnmap( screen->status.map, screen->status.size );
+     drmUnmap( screen->mmio.map, screen->mmio.size );
+     FREE( screen );
+     __driUtilMessage("%s: drmMapBufs failed\n", __FUNCTION__ );
+     return NULL;
+   }
+
+   if ( dri_priv->gartTexHandle && dri_priv->gartTexMapSize ) {
+     screen->gartTextures.handle = dri_priv->gartTexHandle;
+     screen->gartTextures.size   = dri_priv->gartTexMapSize;
      if ( drmMap( sPriv->fd,
-		  screen->mmio.handle,
-		  screen->mmio.size,
-		  &screen->mmio.map ) ) {
-       FREE( screen );
-       __driUtilMessage("%s: drmMap failed\n", __FUNCTION__ );
-       return NULL;
-     }
-
-     RADEONMMIO = screen->mmio.map;
-
-     screen->status.handle = dri_priv->statusHandle;
-     screen->status.size   = dri_priv->statusSize;
-     if ( drmMap( sPriv->fd,
-		  screen->status.handle,
-		  screen->status.size,
-		  &screen->status.map ) ) {
-       drmUnmap( screen->mmio.map, screen->mmio.size );
-       FREE( screen );
-       __driUtilMessage("%s: drmMap (2) failed\n", __FUNCTION__ );
-       return NULL;
-     }
-     screen->scratch = (__volatile__ uint32_t *)
-       ((GLubyte *)screen->status.map + RADEON_SCRATCH_REG_OFFSET);
-
-     screen->buffers = drmMapBufs( sPriv->fd );
-     if ( !screen->buffers ) {
+		  screen->gartTextures.handle,
+		  screen->gartTextures.size,
+		  (drmAddressPtr)&screen->gartTextures.map ) ) {
+       drmUnmapBufs( screen->buffers );
        drmUnmap( screen->status.map, screen->status.size );
        drmUnmap( screen->mmio.map, screen->mmio.size );
        FREE( screen );
-       __driUtilMessage("%s: drmMapBufs failed\n", __FUNCTION__ );
+       __driUtilMessage("%s: drmMap failed for GART texture area\n", __FUNCTION__);
        return NULL;
-     }
+    }
 
-     if ( dri_priv->gartTexHandle && dri_priv->gartTexMapSize ) {
-       screen->gartTextures.handle = dri_priv->gartTexHandle;
-       screen->gartTextures.size   = dri_priv->gartTexMapSize;
-       if ( drmMap( sPriv->fd,
-		    screen->gartTextures.handle,
-		    screen->gartTextures.size,
-		    (drmAddressPtr)&screen->gartTextures.map ) ) {
-	 drmUnmapBufs( screen->buffers );
-	 drmUnmap( screen->status.map, screen->status.size );
-	 drmUnmap( screen->mmio.map, screen->mmio.size );
-	 FREE( screen );
-	 __driUtilMessage("%s: drmMap failed for GART texture area\n", __FUNCTION__);
-	 return NULL;
-       }
-
-       screen->gart_texture_offset = dri_priv->gartTexOffset + screen->gart_base;
-     }
+     screen->gart_texture_offset = dri_priv->gartTexOffset + screen->gart_base;
    }
-
 
    ret = radeon_set_screen_flags(screen, dri_priv->deviceID);
    if (ret == -1)
