@@ -31,7 +31,8 @@
 #include "radeon_drm.h"
 
 /* Create a pipe_screen. */
-struct pipe_screen* radeon_create_screen(int drmFB, int pciID)
+struct pipe_screen* radeon_create_screen(int drmFB,
+					 struct drm_create_screen_arg *arg )
 {
     struct radeon_winsys* winsys = radeon_pipe_winsys(drmFB);
 

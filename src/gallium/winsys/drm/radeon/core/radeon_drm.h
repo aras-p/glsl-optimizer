@@ -40,7 +40,8 @@
 #include "radeon_r300.h"
 #include "radeon_winsys_softpipe.h"
 
-struct pipe_screen* radeon_create_screen(int drmFB, int pciID);
+struct pipe_screen* radeon_create_screen(int drmFB,
+					 struct drm_create_screen_arg *arg);
 
 struct pipe_context* radeon_create_context(struct pipe_screen* screen);
 

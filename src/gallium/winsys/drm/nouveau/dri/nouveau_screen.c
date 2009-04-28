@@ -267,7 +267,7 @@ nouveau_screen_create(__DRIscreenPrivate *psp)
 
 	nouveau_device_open_existing(&nv_screen->device, 0, psp->fd, 0);
 
-	nv_screen->pscreen = drm_api_hooks.create_screen(psp->fd, 0);
+	nv_screen->pscreen = drm_api_hooks.create_screen(psp->fd, NULL);
 	if (!nv_screen->pscreen) {
 		FREE(nv_screen);
 		return NULL;

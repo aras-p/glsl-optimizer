@@ -54,9 +54,7 @@ struct dri_screen
    struct dri_context *dummyContext;
 
    /* drm */
-   int deviceID;
    int fd;
-   int minor;
 
    /* gallium */
    struct pipe_winsys *pipe_winsys;

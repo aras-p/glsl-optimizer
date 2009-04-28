@@ -8,7 +8,7 @@
 #include "nouveau_bo.h"
 
 static struct pipe_screen *
-nouveau_drm_create_screen(int fd, int pciid)
+nouveau_drm_create_screen(int fd, struct drm_create_screen_arg *arg)
 {
 	struct pipe_winsys *ws;
 	struct nouveau_winsys *nvws;

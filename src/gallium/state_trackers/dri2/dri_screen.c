@@ -67,37 +67,6 @@ static const __DRIextension *dri_screen_extensions[] = {
     NULL
 };
 
-
-static void
-dri_get_drm_minor(struct dri_screen *screen)
-{
-   /* TODO get the real minor */
-   screen->minor = 0;
-}
-
-
-static void
-dri_get_device_id(struct dri_screen *screen)
-{
-   char path[512];
-   FILE *file;
-
-   /*
-    * There must be a better way to get the deviceID.
-    * XXX this only works on Linux.
-    */
-   snprintf(path, sizeof(path), "/sys/class/drm/card%d/device/device", screen->minor);
-   file = fopen(path, "r");
-   if (!file) {
-      return;
-   }
-
-   fgets(path, sizeof(path), file);
-   sscanf(path, "%x", &screen->deviceID);
-   fclose(file);
-}
-
-
 static const __DRIconfig **
 dri_fill_in_modes(__DRIscreenPrivate *psp,
                   unsigned pixel_bits, unsigned depth_bits,
@@ -212,13 +181,11 @@ dri_init_screen2(__DRIscreenPrivate *sPriv)
 
    screen->sPriv = sPriv;
    screen->fd = sPriv->fd;
-   dri_get_drm_minor(screen);
-   dri_get_device_id(screen);
    sPriv->private = (void *) screen;
    sPriv->extensions = dri_screen_extensions;
 
 
-   screen->pipe_screen = drm_api_hooks.create_screen(screen->fd, screen->deviceID);
+   screen->pipe_screen = drm_api_hooks.create_screen(screen->fd, NULL);
    if (!screen->pipe_screen) {
       debug_printf("%s: failed to create pipe_screen\n", __FUNCTION__);
       goto fail;

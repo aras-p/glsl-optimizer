@@ -14,6 +14,7 @@
 #include "softpipe/sp_winsys.h"
 
 #include "intel_be_api.h"
+#include <stdio.h>
 
 /*
  * Buffer
@@ -290,11 +291,42 @@ intel_be_init_device(struct intel_be_device *dev, int fd, unsigned id)
 	return true;
 }
 
+static void
+intel_be_get_device_id(unsigned int *device_id)
+{
+   char path[512];
+   FILE *file;
+
+   /*
+    * FIXME: Fix this up to use a drm ioctl or whatever.
+    */
+
+   snprintf(path, sizeof(path), "/sys/class/drm/card0/device/device");
+   file = fopen(path, "r");
+   if (!file) {
+      return;
+   }
+
+   fgets(path, sizeof(path), file);
+   sscanf(path, "%x", device_id);
+   fclose(file);
+}
+
 struct pipe_screen *
-intel_be_create_screen(int drmFD, int deviceID)
+intel_be_create_screen(int drmFD, struct drm_create_screen_arg *arg)
 {
 	struct intel_be_device *dev;
 	struct pipe_screen *screen;
+	unsigned int deviceID;
+
+	if (arg != NULL) {
+		switch(arg->mode) {
+		case DRM_CREATE_NORMAL:
+			break;
+		default:
+			return NULL;
+		}
+	}
 
 	/* Allocate the private area */
 	dev = malloc(sizeof(*dev));
@@ -302,6 +334,7 @@ intel_be_create_screen(int drmFD, int deviceID)
 		return NULL;
 	memset(dev, 0, sizeof(*dev));
 
+	intel_be_get_device_id(&deviceID);
 	intel_be_init_device(dev, drmFD, deviceID);
 
 	if (dev->softpipe) {
