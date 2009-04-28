@@ -4,7 +4,7 @@ include $(TOP)/configs/current
 LIBNAME = nouveau_dri2.so
 
 PIPE_DRIVERS = \
-	$(TOP)/src/gallium/state_trackers/dri/libdri2drm.a \
+	$(TOP)/src/gallium/state_trackers/dri/libdridrm.a \
 	$(TOP)/src/gallium/winsys/drm/nouveau/drm/libnouveaudrm.a \
 	$(TOP)/src/gallium/drivers/nv04/libnv04.a \
 	$(TOP)/src/gallium/drivers/nv10/libnv10.a \
