@@ -56,8 +56,7 @@ static void do_ioctls(struct r300_winsys* winsys, int fd)
     int target;
     int retval;
 
-    /* XXX is this cast safe? */
-    gp.value = (int*)&target;
+    gp.value = &target;
 
     /* First, get the number of pixel pipes */
     gp.param = RADEON_PARAM_NUM_GB_PIPES;
