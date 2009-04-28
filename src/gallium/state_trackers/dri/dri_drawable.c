@@ -537,15 +537,14 @@ dri_swap_buffers(__DRIdrawablePrivate * dPriv)
    struct dri_drawable *draw = dri_drawable(dPriv);
    struct pipe_screen *screen = dri_screen(draw->sPriv)->pipe_screen;
    struct pipe_fence_handle *fence;
-
-   GET_CURRENT_CONTEXT(glCtx);
+   struct st_context *st = st_get_current();
 
    assert(__dri1_api_hooks != NULL);
 
-   if (!glCtx)
+   if (!st)
       return;			       /* For now */
 
-   ctx = (struct dri_context *)glCtx->st->pipe->priv;
+   ctx = (struct dri_context *)st->pipe->priv;
 
    st_get_framebuffer_surface(draw->stfb, ST_SURFACE_BACK_LEFT, &back_surf);
    if (back_surf) {
@@ -571,15 +570,14 @@ dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
    struct pipe_surface *back_surf;
    struct dri_drawable *draw = dri_drawable(dPriv);
    struct pipe_fence_handle *dummy_fence;
-
-   GET_CURRENT_CONTEXT(glCtx);
+   struct st_context *st = st_get_current();
 
    assert(__dri1_api_hooks != NULL);
 
-   if (!glCtx)
+   if (!st)
       return;
 
-   ctx = (struct dri_context *)glCtx->st->pipe->priv;
+   ctx = (struct dri_context *)st->pipe->priv;
 
    sub_bbox.x1 = x;
    sub_bbox.x2 = x + w;

@@ -126,9 +126,7 @@ dri_unbind_context(__DRIcontextPrivate * cPriv)
       struct dri_context *ctx = dri_context(cPriv);
 
       if (--ctx->bind_count == 0) {
-	 GET_CURRENT_CONTEXT(curGLCtx);
-
-	 if (curGLCtx && ctx->st == curGLCtx->st) {
+	 if (ctx->st && ctx->st == st_get_current()) {
 	    st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
 	    st_make_current(NULL, NULL, NULL);
 	 }
@@ -148,11 +146,10 @@ dri_make_current(__DRIcontextPrivate * cPriv,
       struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
       struct dri_drawable *draw = dri_drawable(driDrawPriv);
       struct dri_drawable *read = dri_drawable(driReadPriv);
+      struct st_context *old_st = st_get_current();
 
-      GET_CURRENT_CONTEXT(oldGLCtx);
-
-      if (oldGLCtx && oldGLCtx->st != ctx->st)
-	 st_flush(oldGLCtx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+      if (old_st && old_st != ctx->st)
+	 st_flush(old_st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
       ++ctx->bind_count;
 
