@@ -276,12 +276,12 @@ stw_get_current_context( void )
    struct stw_context *ctx;
 
    if(!glcurctx)
-      return NULL;
+      return 0;
    
    ctx = (struct stw_context *)glcurctx->DriverCtx;
    assert(ctx);
    if(!ctx)
-      return NULL;
+      return 0;
    
    return ctx->hglrc;
 }
