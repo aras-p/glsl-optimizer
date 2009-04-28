@@ -531,16 +531,17 @@ fenced_buffer_list_dump(struct fenced_buffer_list *fenced_list)
 
    pipe_mutex_lock(fenced_list->mutex);
 
-   debug_printf("%10s %7s %10s %s\n",
-                "buffer", "reference.count", "fence", "signalled");
+   debug_printf("%10s %7s %7s %10s %s\n",
+                "buffer", "size", "refcount", "fence", "signalled");
    
    curr = fenced_list->unfenced.next;
    next = curr->next;
    while(curr != &fenced_list->unfenced) {
       fenced_buf = LIST_ENTRY(struct fenced_buffer, curr, head);
       assert(!fenced_buf->fence);
-      debug_printf("%10p %7u\n",
+      debug_printf("%10p %7u %7u\n",
                    fenced_buf,
+                   fenced_buf->base.base.size,
                    fenced_buf->base.base.reference.count);
       curr = next; 
       next = curr->next;
@@ -552,8 +553,9 @@ fenced_buffer_list_dump(struct fenced_buffer_list *fenced_list)
       int signaled;
       fenced_buf = LIST_ENTRY(struct fenced_buffer, curr, head);
       signaled = ops->fence_signalled(ops, fenced_buf->fence, 0);
-      debug_printf("%10p %7u %10p %s\n",
+      debug_printf("%10p %7u %7u %10p %s\n",
                    fenced_buf,
+                   fenced_buf->base.base.size,
                    fenced_buf->base.base.reference.count,
                    fenced_buf->fence,
                    signaled == 0 ? "y" : "n");
