@@ -431,7 +431,6 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		radeon_miptree_unreference(rImage->mt);
 		rImage->mt = NULL;
 	}
-	fprintf(stderr,"settexbuf %dx%d@%d %d targ %x format %x\n", rb->width, rb->height, rb->cpp, rb->pitch, target, format);
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
 				   rb->width, rb->height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
