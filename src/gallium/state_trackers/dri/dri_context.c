@@ -158,9 +158,14 @@ dri_make_current(__DRIcontextPrivate * cPriv,
        */
       screen->dummyContext = ctx;
 
-      /* used in dri_flush_frontbuffer */
-      ctx->dPriv = driDrawPriv;
-      ctx->rPriv = driReadPriv;
+      if (ctx->dPriv != driDrawPriv) {
+	 ctx->dPriv = driDrawPriv;
+	 ctx->d_stamp = driDrawPriv->lastStamp - 1;
+      }
+      if (ctx->rPriv != driReadPriv) {
+	 ctx->rPriv = driReadPriv;
+	 ctx->r_stamp = driReadPriv->lastStamp - 1;
+      }
 
       st_make_current(ctx->st, draw->stfb, read->stfb);
 
