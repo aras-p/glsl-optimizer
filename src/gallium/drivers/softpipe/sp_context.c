@@ -126,14 +126,14 @@ softpipe_is_texture_referenced( struct pipe_context *pipe,
 				struct pipe_texture *texture,
 				unsigned face, unsigned level)
 {
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+   return PIPE_UNREFERENCED;
 }
 
 static unsigned int
 softpipe_is_buffer_referenced( struct pipe_context *pipe,
 			       struct pipe_buffer *buf)
 {
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+   return PIPE_UNREFERENCED;
 }
 
 struct pipe_context *
