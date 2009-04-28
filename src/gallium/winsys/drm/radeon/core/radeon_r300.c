@@ -53,32 +53,31 @@ static void radeon_r300_flush_cs(struct radeon_cs* cs)
 static void do_ioctls(struct r300_winsys* winsys, int fd)
 {
     drm_radeon_getparam_t gp;
-    uint32_t target;
+    int target;
     int retval;
 
     /* XXX is this cast safe? */
     gp.value = (int*)&target;
 
-    /* First, get PCI ID */
-    gp.param = RADEON_PARAM_DEVICE_ID;
-    retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
-    if (retval) {
-        fprintf(stderr, "%s: Failed to get PCI ID, error number %d",
-                __FUNCTION__, retval);
-        exit(1);
-    }
-    winsys->pci_id = target;
-
-    /* Then, get the number of pixel pipes */
+    /* First, get the number of pixel pipes */
     gp.param = RADEON_PARAM_NUM_GB_PIPES;
     retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
     if (retval) {
-        fprintf(stderr, "%s: Failed to get GB pipe count, error number %d",
+        fprintf(stderr, "%s: Failed to get GB pipe count, error number %d\n",
                 __FUNCTION__, retval);
         exit(1);
     }
     winsys->gb_pipes = target;
 
+    /* Then, get PCI ID */
+    gp.param = RADEON_PARAM_DEVICE_ID;
+    retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
+    if (retval) {
+        fprintf(stderr, "%s: Failed to get PCI ID, error number %d\n",
+                __FUNCTION__, retval);
+        exit(1);
+    }
+    winsys->pci_id = target;
 }
 
 struct r300_winsys*
