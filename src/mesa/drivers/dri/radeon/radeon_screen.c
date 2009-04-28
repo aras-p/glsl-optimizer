@@ -904,7 +904,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 
    ret = radeonGetParam(sPriv, RADEON_PARAM_FB_LOCATION, &temp);
    if (ret) {
-       if (screen->chip_family < CHIP_FAMILY_RS600 && !screen->kernel_mm)
+       if (screen->chip_family < CHIP_FAMILY_RS600)
 	   screen->fbLocation      = ( INREG( RADEON_MC_FB_LOCATION ) & 0xffff) << 16;
        else {
            FREE( screen );
@@ -1005,9 +1005,8 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
        screen->extensions[i++] = &driMediaStreamCounterExtension.base;
    }
 
-   if (!screen->kernel_mm) {
 #if !RADEON_COMMON
-   	screen->extensions[i++] = &radeonTexOffsetExtension.base;
+   screen->extensions[i++] = &radeonTexOffsetExtension.base;
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
@@ -1030,10 +1029,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    screen->sarea = (drm_radeon_sarea_t *) ((GLubyte *) sPriv->pSAREA +
 					       screen->sarea_priv_offset);
 
-   if (screen->kernel_mm)
-     screen->bom = radeon_bo_manager_gem_ctor(sPriv->fd);
-   else
-     screen->bom = radeon_bo_manager_legacy_ctor(screen);
+   screen->bom = radeon_bo_manager_legacy_ctor(screen);
    if (screen->bom == NULL) {
      free(screen);
      return NULL;
