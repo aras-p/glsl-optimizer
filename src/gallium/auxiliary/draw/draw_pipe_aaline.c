@@ -746,6 +746,7 @@ draw_aaline_stage(struct draw_context *draw)
       goto fail;
 
    aaline->stage.draw = draw;
+   aaline->stage.name = "aaline";
    aaline->stage.next = NULL;
    aaline->stage.point = draw_pipe_passthrough_point;
    aaline->stage.line = aaline_first_line;

@@ -279,6 +279,7 @@ struct draw_stage *draw_wide_point_stage( struct draw_context *draw )
       goto fail;
 
    wide->stage.draw = draw;
+   wide->stage.name = "wide-point";
    wide->stage.next = NULL;
    wide->stage.point = widepoint_first_point;
    wide->stage.line = draw_pipe_passthrough_line;

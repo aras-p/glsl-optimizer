@@ -261,6 +261,7 @@ struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
       goto fail;
 
    flatshade->stage.draw = draw;
+   flatshade->stage.name = "flatshade";
    flatshade->stage.next = NULL;
    flatshade->stage.point = draw_pipe_passthrough_point;
    flatshade->stage.line = flatshade_first_line;

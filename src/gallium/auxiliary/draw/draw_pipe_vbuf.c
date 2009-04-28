@@ -446,6 +446,7 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
       goto fail;
    
    vbuf->stage.draw = draw;
+   vbuf->stage.name = "vbuf";
    vbuf->stage.point = vbuf_first_point;
    vbuf->stage.line = vbuf_first_line;
    vbuf->stage.tri = vbuf_first_tri;
