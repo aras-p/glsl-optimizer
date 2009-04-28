@@ -55,51 +55,40 @@ struct dri_drawable
    unsigned int cur_fences;
 };
 
-
 static INLINE struct dri_drawable *
 dri_drawable(__DRIdrawablePrivate * driDrawPriv)
 {
-   return (struct dri_drawable *) driDrawPriv->driverPrivate;
+   return (struct dri_drawable *)driDrawPriv->driverPrivate;
 }
-
 
 /***********************************************************************
  * dri_drawable.c
  */
 boolean
-dri_create_buffer(__DRIscreenPrivate *sPriv,
-                  __DRIdrawablePrivate *dPriv,
-                  const __GLcontextModes *visual,
-                  boolean isPixmap);
+dri_create_buffer(__DRIscreenPrivate * sPriv,
+		  __DRIdrawablePrivate * dPriv,
+		  const __GLcontextModes * visual, boolean isPixmap);
 
 void
 dri_flush_frontbuffer(struct pipe_screen *screen,
-                      struct pipe_surface *surf,
-                      void *context_private);
+		      struct pipe_surface *surf, void *context_private);
+
+void dri_swap_buffers(__DRIdrawablePrivate * dPriv);
 
 void
-dri_swap_buffers(__DRIdrawablePrivate * dPriv);
+dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h);
 
-void
-dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv,
-                    int x, int y,
-                    int w, int h);
+void dri_get_buffers(__DRIdrawablePrivate * dPriv);
 
-void
-dri_get_buffers(__DRIdrawablePrivate * dPriv);
-
-void
-dri_destroy_buffer(__DRIdrawablePrivate *dPriv);
+void dri_destroy_buffer(__DRIdrawablePrivate * dPriv);
 
 void
 dri1_update_drawables(struct dri_context *ctx,
-		      struct dri_drawable *draw,
-		      struct dri_drawable *read);
+		      struct dri_drawable *draw, struct dri_drawable *read);
 
 void
 dri1_flush_frontbuffer(struct pipe_screen *screen,
-		       struct pipe_surface *surf,
-		       void *context_private);
+		       struct pipe_surface *surf, void *context_private);
 #endif
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

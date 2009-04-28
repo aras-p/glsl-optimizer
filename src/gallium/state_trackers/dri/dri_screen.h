@@ -64,14 +64,12 @@ struct dri_screen
    struct pipe_screen *pipe_screen;
 };
 
-
 /** cast wrapper */
 static INLINE struct dri_screen *
-dri_screen(__DRIscreenPrivate *sPriv)
+dri_screen(__DRIscreenPrivate * sPriv)
 {
-   return (struct dri_screen *) sPriv->private;
+   return (struct dri_screen *)sPriv->private;
 }
-
 
 /***********************************************************************
  * dri_screen.c

@@ -42,12 +42,9 @@
 
 #include "util/u_memory.h"
 
-
-
 GLboolean
-dri_create_context(const __GLcontextModes *visual,
-                   __DRIcontextPrivate *cPriv,
-                   void *sharedContextPrivate)
+dri_create_context(const __GLcontextModes * visual,
+		   __DRIcontextPrivate * cPriv, void *sharedContextPrivate)
 {
    __DRIscreenPrivate *sPriv = cPriv->driScreenPriv;
    struct dri_screen *screen = dri_screen(sPriv);
@@ -55,7 +52,7 @@ dri_create_context(const __GLcontextModes *visual,
    struct st_context *st_share = NULL;
 
    if (sharedContextPrivate) {
-      st_share = ((struct dri_context *) sharedContextPrivate)->st;
+      st_share = ((struct dri_context *)sharedContextPrivate)->st;
    }
 
    ctx = CALLOC_STRUCT(dri_context);
@@ -70,9 +67,7 @@ dri_create_context(const __GLcontextModes *visual,
    ctx->r_stamp = -1;
 
    driParseConfigFiles(&ctx->optionCache,
-                       &screen->optionCache,
-                       sPriv->myNum,
-                       "dri");
+		       &screen->optionCache, sPriv->myNum, "dri");
 
    ctx->pipe = drm_api_hooks.create_context(screen->pipe_screen);
 
@@ -90,7 +85,7 @@ dri_create_context(const __GLcontextModes *visual,
 
    return GL_TRUE;
 
-fail:
+ fail:
    if (ctx && ctx->st)
       st_destroy_context(ctx->st);
 
@@ -101,9 +96,8 @@ fail:
    return FALSE;
 }
 
-
 void
-dri_destroy_context(__DRIcontextPrivate *cPriv)
+dri_destroy_context(__DRIcontextPrivate * cPriv)
 {
    struct dri_context *ctx = dri_context(cPriv);
    struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
@@ -125,9 +119,8 @@ dri_destroy_context(__DRIcontextPrivate *cPriv)
    FREE(ctx);
 }
 
-
 GLboolean
-dri_unbind_context(__DRIcontextPrivate *cPriv)
+dri_unbind_context(__DRIcontextPrivate * cPriv)
 {
    if (cPriv) {
       struct dri_context *ctx = dri_context(cPriv);
@@ -146,15 +139,16 @@ dri_unbind_context(__DRIcontextPrivate *cPriv)
 }
 
 GLboolean
-dri_make_current(__DRIcontextPrivate *cPriv,
-                 __DRIdrawablePrivate *driDrawPriv,
-                 __DRIdrawablePrivate *driReadPriv)
+dri_make_current(__DRIcontextPrivate * cPriv,
+		 __DRIdrawablePrivate * driDrawPriv,
+		 __DRIdrawablePrivate * driReadPriv)
 {
    if (cPriv) {
       struct dri_context *ctx = dri_context(cPriv);
       struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
       struct dri_drawable *draw = dri_drawable(driDrawPriv);
       struct dri_drawable *read = dri_drawable(driReadPriv);
+
       GET_CURRENT_CONTEXT(oldGLCtx);
 
       if (oldGLCtx && oldGLCtx->st != ctx->st)
@@ -191,41 +185,39 @@ dri_make_current(__DRIcontextPrivate *cPriv,
 static void
 st_dri_lock(struct pipe_context *pipe)
 {
-   dri_lock((struct dri_context *) pipe->priv);
+   dri_lock((struct dri_context *)pipe->priv);
 }
 
 static void
 st_dri_unlock(struct pipe_context *pipe)
 {
-   dri_unlock((struct dri_context *) pipe->priv);
+   dri_unlock((struct dri_context *)pipe->priv);
 }
 
 static boolean
 st_dri_is_locked(struct pipe_context *pipe)
 {
-   return ((struct dri_context *) pipe->priv)->isLocked;
+   return ((struct dri_context *)pipe->priv)->isLocked;
 }
 
 static boolean
 st_dri_lost_lock(struct pipe_context *pipe)
 {
-   return ((struct dri_context *) pipe->priv)->wsLostLock;
+   return ((struct dri_context *)pipe->priv)->wsLostLock;
 }
 
 static void
 st_dri_clear_lost_lock(struct pipe_context *pipe)
 {
-   ((struct dri_context *) pipe->priv)->wsLostLock = FALSE;
+   ((struct dri_context *)pipe->priv)->wsLostLock = FALSE;
 }
 
-struct dri1_api_lock_funcs dri1_lf =
-{
+struct dri1_api_lock_funcs dri1_lf = {
    .lock = st_dri_lock,
    .unlock = st_dri_unlock,
    .is_locked = st_dri_is_locked,
    .is_lock_lost = st_dri_lost_lock,
    .clear_lost_lock = st_dri_clear_lost_lock
 };
-
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

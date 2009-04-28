@@ -44,23 +44,19 @@
 
 #include "util/u_memory.h"
 
-
 static void
-dri_copy_to_front(__DRIdrawablePrivate *dPriv,
-                  struct pipe_surface *from,
-                  int x, int y, unsigned w, unsigned h)
+dri_copy_to_front(__DRIdrawablePrivate * dPriv,
+		  struct pipe_surface *from,
+		  int x, int y, unsigned w, unsigned h)
 {
    /* TODO send a message to the Xserver to copy to the real front buffer */
 }
 
-
 static struct pipe_surface *
 dri_surface_from_handle(struct pipe_screen *screen,
-                        unsigned handle,
-                        enum pipe_format format,
-                        unsigned width,
-                        unsigned height,
-                        unsigned pitch)
+			unsigned handle,
+			enum pipe_format format,
+			unsigned width, unsigned height, unsigned pitch)
 {
    struct pipe_surface *surface = NULL;
    struct pipe_texture *texture = NULL;
@@ -81,10 +77,7 @@ dri_surface_from_handle(struct pipe_screen *screen,
    templat.height[0] = height;
    pf_get_block(templat.format, &templat.block);
 
-   texture = screen->texture_blanket(screen,
-                                     &templat,
-                                     &pitch,
-                                     buf);
+   texture = screen->texture_blanket(screen, &templat, &pitch, buf);
 
    /* we don't need the buffer from this point on */
    pipe_buffer_reference(&buf, NULL);
@@ -93,20 +86,19 @@ dri_surface_from_handle(struct pipe_screen *screen,
       return NULL;
 
    surface = screen->get_tex_surface(screen, texture, 0, 0, 0,
-                                     PIPE_BUFFER_USAGE_GPU_READ |
-                                     PIPE_BUFFER_USAGE_GPU_WRITE);
+				     PIPE_BUFFER_USAGE_GPU_READ |
+				     PIPE_BUFFER_USAGE_GPU_WRITE);
 
    /* we don't need the texture from this point on */
    pipe_texture_reference(&texture, NULL);
    return surface;
 }
 
-
 /**
  * This will be called a drawable is known to have been resized.
  */
 void
-dri_get_buffers(__DRIdrawablePrivate *dPriv)
+dri_get_buffers(__DRIdrawablePrivate * dPriv)
 {
    struct dri_drawable *drawable = dri_drawable(dPriv);
    struct pipe_surface *surface = NULL;
@@ -117,13 +109,14 @@ dri_get_buffers(__DRIdrawablePrivate *dPriv)
    boolean have_depth = FALSE;
    int i, count;
 
-   buffers = (*dri_screen->dri2.loader->getBuffers)(dri_drawable,
-                                                    &dri_drawable->w,
-                                                    &dri_drawable->h,
-                                                    drawable->attachments,
-                                                    drawable->num_attachments,
-                                                    &count,
-                                                    dri_drawable->loaderPrivate);
+   buffers = (*dri_screen->dri2.loader->getBuffers) (dri_drawable,
+						     &dri_drawable->w,
+						     &dri_drawable->h,
+						     drawable->attachments,
+						     drawable->
+						     num_attachments, &count,
+						     dri_drawable->
+						     loaderPrivate);
 
    if (buffers == NULL) {
       return;
@@ -150,45 +143,44 @@ dri_get_buffers(__DRIdrawablePrivate *dPriv)
       int index = 0;
 
       switch (buffers[i].attachment) {
-         case __DRI_BUFFER_FRONT_LEFT:
-            index = ST_SURFACE_FRONT_LEFT;
-            format = PIPE_FORMAT_A8R8G8B8_UNORM;
-            break;
-         case __DRI_BUFFER_FAKE_FRONT_LEFT:
-            index = ST_SURFACE_FRONT_LEFT;
-            format = PIPE_FORMAT_A8R8G8B8_UNORM;
-            break;
-         case __DRI_BUFFER_BACK_LEFT:
-            index = ST_SURFACE_BACK_LEFT;
-            format = PIPE_FORMAT_A8R8G8B8_UNORM;
-            break;
-         case __DRI_BUFFER_DEPTH:
-            index = ST_SURFACE_DEPTH;
-            format = PIPE_FORMAT_Z24S8_UNORM;
-            break;
-         case __DRI_BUFFER_STENCIL:
-            index = ST_SURFACE_DEPTH;
-            format = PIPE_FORMAT_Z24S8_UNORM;
-            break;
-         case __DRI_BUFFER_ACCUM:
-         default:
-            assert(0);
+      case __DRI_BUFFER_FRONT_LEFT:
+	 index = ST_SURFACE_FRONT_LEFT;
+	 format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	 break;
+      case __DRI_BUFFER_FAKE_FRONT_LEFT:
+	 index = ST_SURFACE_FRONT_LEFT;
+	 format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	 break;
+      case __DRI_BUFFER_BACK_LEFT:
+	 index = ST_SURFACE_BACK_LEFT;
+	 format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	 break;
+      case __DRI_BUFFER_DEPTH:
+	 index = ST_SURFACE_DEPTH;
+	 format = PIPE_FORMAT_Z24S8_UNORM;
+	 break;
+      case __DRI_BUFFER_STENCIL:
+	 index = ST_SURFACE_DEPTH;
+	 format = PIPE_FORMAT_Z24S8_UNORM;
+	 break;
+      case __DRI_BUFFER_ACCUM:
+      default:
+	 assert(0);
       }
       assert(buffers[i].cpp == 4);
 
       if (index == ST_SURFACE_DEPTH) {
-         if (have_depth)
-            continue;
-         else
-            have_depth = TRUE;
+	 if (have_depth)
+	    continue;
+	 else
+	    have_depth = TRUE;
       }
 
       surface = dri_surface_from_handle(screen,
-                                        buffers[i].name,
-                                        format,
-                                        dri_drawable->w,
-                                        dri_drawable->h,
-                                        buffers[i].pitch);
+					buffers[i].name,
+					format,
+					dri_drawable->w,
+					dri_drawable->h, buffers[i].pitch);
 
       st_set_framebuffer_surface(drawable->stfb, index, surface);
       pipe_surface_reference(&surface, NULL);
@@ -197,25 +189,22 @@ dri_get_buffers(__DRIdrawablePrivate *dPriv)
    st_resize_framebuffer(drawable->stfb, dri_drawable->w, dri_drawable->h);
 }
 
-
 void
 dri_flush_frontbuffer(struct pipe_screen *screen,
-                      struct pipe_surface *surf,
-                      void *context_private)
+		      struct pipe_surface *surf, void *context_private)
 {
    struct dri_context *ctx = (struct dri_context *)context_private;
+
    dri_copy_to_front(ctx->dPriv, surf, 0, 0, surf->width, surf->height);
 }
-
 
 /**
  * This is called when we need to set up GL rendering to a new X window.
  */
 boolean
-dri_create_buffer(__DRIscreenPrivate *sPriv,
-                  __DRIdrawablePrivate *dPriv,
-                  const __GLcontextModes *visual,
-                  boolean isPixmap)
+dri_create_buffer(__DRIscreenPrivate * sPriv,
+		  __DRIdrawablePrivate * dPriv,
+		  const __GLcontextModes * visual, boolean isPixmap)
 {
    enum pipe_format colorFormat, depthFormat, stencilFormat;
    struct dri_screen *screen = sPriv->private;
@@ -224,7 +213,7 @@ dri_create_buffer(__DRIscreenPrivate *sPriv,
    int i;
 
    if (isPixmap)
-      goto fail; /* not implemented */
+      goto fail;		       /* not implemented */
 
    drawable = CALLOC_STRUCT(dri_drawable);
    if (drawable == NULL)
@@ -241,39 +230,38 @@ dri_create_buffer(__DRIscreenPrivate *sPriv,
 
    if (visual->depthBits) {
       if (pscreen->is_format_supported(pscreen, PIPE_FORMAT_Z24S8_UNORM,
-                                       PIPE_TEXTURE_2D,
-                                       PIPE_TEXTURE_USAGE_RENDER_TARGET |
-                                       PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
-         depthFormat = PIPE_FORMAT_Z24S8_UNORM;
+				       PIPE_TEXTURE_2D,
+				       PIPE_TEXTURE_USAGE_RENDER_TARGET |
+				       PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
+	 depthFormat = PIPE_FORMAT_Z24S8_UNORM;
       else
-         depthFormat = PIPE_FORMAT_S8Z24_UNORM;
+	 depthFormat = PIPE_FORMAT_S8Z24_UNORM;
    } else
       depthFormat = PIPE_FORMAT_NONE;
 
    if (visual->stencilBits) {
       if (pscreen->is_format_supported(pscreen, PIPE_FORMAT_Z24S8_UNORM,
-                                       PIPE_TEXTURE_2D,
-                                       PIPE_TEXTURE_USAGE_RENDER_TARGET |
-                                       PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
-         stencilFormat = PIPE_FORMAT_Z24S8_UNORM;
+				       PIPE_TEXTURE_2D,
+				       PIPE_TEXTURE_USAGE_RENDER_TARGET |
+				       PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
+	 stencilFormat = PIPE_FORMAT_Z24S8_UNORM;
       else
-         stencilFormat = PIPE_FORMAT_S8Z24_UNORM;
+	 stencilFormat = PIPE_FORMAT_S8Z24_UNORM;
    } else
       stencilFormat = PIPE_FORMAT_NONE;
 
    drawable->stfb = st_create_framebuffer(visual,
-                                          colorFormat,
-                                          depthFormat,
-                                          stencilFormat,
-                                          dPriv->w,
-                                          dPriv->h,
-                                          (void*) drawable);
+					  colorFormat,
+					  depthFormat,
+					  stencilFormat,
+					  dPriv->w,
+					  dPriv->h, (void *)drawable);
    if (drawable->stfb == NULL)
       goto fail;
 
    drawable->sPriv = sPriv;
    drawable->dPriv = dPriv;
-   dPriv->driverPrivate = (void *) drawable;
+   dPriv->driverPrivate = (void *)drawable;
 
    /* setup dri2 buffers information */
    i = 0;
@@ -293,7 +281,7 @@ dri_create_buffer(__DRIscreenPrivate *sPriv,
    drawable->desired_fences = 2;
 
    return GL_TRUE;
-fail:
+ fail:
    FREE(drawable);
    return GL_FALSE;
 }
@@ -324,13 +312,14 @@ dri_swap_fences_push_back(struct dri_drawable *draw,
 
    if (draw->cur_fences < DRI_SWAP_FENCES_MAX) {
       draw->cur_fences++;
-      screen->fence_reference(screen, &draw->swap_fences[draw->head++], fence);
+      screen->fence_reference(screen, &draw->swap_fences[draw->head++],
+			      fence);
       draw->head &= DRI_SWAP_FENCES_MASK;
    }
 }
 
 void
-dri_destroy_buffer(__DRIdrawablePrivate *dPriv)
+dri_destroy_buffer(__DRIdrawablePrivate * dPriv)
 {
    struct dri_drawable *drawable = dri_drawable(dPriv);
    struct pipe_fence_handle *fence;
@@ -338,7 +327,7 @@ dri_destroy_buffer(__DRIdrawablePrivate *dPriv)
 
    st_unreference_framebuffer(drawable->stfb);
    drawable->desired_fences = 0;
-   while(drawable->cur_fences) {
+   while (drawable->cur_fences) {
       fence = dri_swap_fences_pop_front(drawable);
       screen->fence_reference(screen, &fence, NULL);
    }
@@ -348,15 +337,16 @@ dri_destroy_buffer(__DRIdrawablePrivate *dPriv)
 
 static void
 dri1_update_drawables_locked(struct dri_context *ctx,
-			     __DRIdrawablePrivate *driDrawPriv,
-			     __DRIdrawablePrivate *driReadPriv)
+			     __DRIdrawablePrivate * driDrawPriv,
+			     __DRIdrawablePrivate * driReadPriv)
 {
    if (ctx->stLostLock) {
       ctx->stLostLock = FALSE;
       if (driDrawPriv == driReadPriv)
 	 DRI_VALIDATE_DRAWABLE_INFO(ctx->sPriv, driDrawPriv);
       else
-	 DRI_VALIDATE_TWO_DRAWABLES_INFO(ctx->sPriv, driDrawPriv, driReadPriv);
+	 DRI_VALIDATE_TWO_DRAWABLES_INFO(ctx->sPriv, driDrawPriv,
+					 driReadPriv);
    }
 }
 
@@ -387,7 +377,7 @@ dri1_propagate_drawable_change(struct dri_context *ctx)
    if (rPriv && dPriv != rPriv && ctx->r_stamp != rPriv->lastStamp) {
 
       if (!flushed)
-	       st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+	 st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
       ctx->r_stamp = rPriv->lastStamp;
       st_resize_framebuffer(dri_drawable(rPriv)->stfb, rPriv->w, rPriv->h);
 
@@ -400,8 +390,7 @@ dri1_propagate_drawable_change(struct dri_context *ctx)
 
 void
 dri1_update_drawables(struct dri_context *ctx,
-		      struct dri_drawable *draw,
-		      struct dri_drawable *read)
+		      struct dri_drawable *draw, struct dri_drawable *read)
 {
    dri_lock(ctx);
    dri1_update_drawables_locked(ctx, draw->dPriv, read->dPriv);
@@ -420,20 +409,20 @@ dri1_intersect_src_bbox(struct drm_clip_rect *dst,
    int xy1;
    int xy2;
 
-   xy1 = ((int) src->x1 > (int) bbox->x1 + dst_x) ? src->x1 :
-      (int) bbox->x1 + dst_x;
-   xy2 = ((int) src->x2 < (int) bbox->x2 + dst_x) ? src->x2 :
-      (int) bbox->x2 + dst_x;
+   xy1 = ((int)src->x1 > (int)bbox->x1 + dst_x) ? src->x1 :
+      (int)bbox->x1 + dst_x;
+   xy2 = ((int)src->x2 < (int)bbox->x2 + dst_x) ? src->x2 :
+      (int)bbox->x2 + dst_x;
    if (xy1 >= xy2 || xy1 < 0)
       return FALSE;
 
    dst->x1 = xy1;
    dst->x2 = xy2;
 
-   xy1 = ((int) src->y1 > (int) bbox->y1 + dst_x) ? src->y1 :
-      (int) bbox->y1 + dst_x;
-   xy2 = ((int) src->y2 < (int) bbox->y2 + dst_x) ? src->y2 :
-      (int) bbox->y2 + dst_x;
+   xy1 = ((int)src->y1 > (int)bbox->y1 + dst_x) ? src->y1 :
+      (int)bbox->y1 + dst_x;
+   xy2 = ((int)src->y2 < (int)bbox->y2 + dst_x) ? src->y2 :
+      (int)bbox->y2 + dst_x;
    if (xy1 >= xy2 || xy1 < 0)
       return FALSE;
 
@@ -442,13 +431,11 @@ dri1_intersect_src_bbox(struct drm_clip_rect *dst,
    return TRUE;
 }
 
-
 static void
 dri1_swap_copy(struct dri_context *ctx,
 	       struct pipe_surface *dst,
 	       struct pipe_surface *src,
-	       __DRIdrawablePrivate *dPriv,
-	       const struct drm_clip_rect *bbox)
+	       __DRIdrawablePrivate * dPriv, const struct drm_clip_rect *bbox)
 {
    struct pipe_context *pipe = ctx->pipe;
    struct drm_clip_rect clip;
@@ -457,21 +444,20 @@ dri1_swap_copy(struct dri_context *ctx,
 
    cur = dPriv->pClipRects;
 
-   for (i=0; i<dPriv->numClipRects; ++i) {
+   for (i = 0; i < dPriv->numClipRects; ++i) {
       if (dri1_intersect_src_bbox(&clip, dPriv->x, dPriv->y, cur++, bbox))
 	 pipe->surface_copy(pipe, dst, clip.x1, clip.y1,
 			    src,
-			    (int) clip.x1 - dPriv->x,
-			    (int) clip.y1 - dPriv->y,
-			    clip.x2 - clip.x1,
-			    clip.y2 - clip.y1);
+			    (int)clip.x1 - dPriv->x,
+			    (int)clip.y1 - dPriv->y,
+			    clip.x2 - clip.x1, clip.y2 - clip.y1);
    }
 }
 
 static void
 dri1_copy_to_front(struct dri_context *ctx,
 		   struct pipe_surface *surf,
-		   __DRIdrawablePrivate *dPriv,
+		   __DRIdrawablePrivate * dPriv,
 		   const struct drm_clip_rect *sub_box,
 		   struct pipe_fence_handle **fence)
 {
@@ -503,15 +489,11 @@ dri1_copy_to_front(struct dri_context *ctx,
 				       surf,
 				       dPriv->pClipRects,
 				       dPriv->numClipRects,
-				       dPriv->x,
-				       dPriv->y,
-				       &bbox,
-				       fence);
+				       dPriv->x, dPriv->y, &bbox, fence);
 
    } else if (visible && __dri1_api_hooks->front_srf_locked) {
 
-      struct pipe_surface *front =
-	 __dri1_api_hooks->front_srf_locked(pipe);
+      struct pipe_surface *front = __dri1_api_hooks->front_srf_locked(pipe);
 
       if (front)
 	 dri1_swap_copy(ctx, front, surf, dPriv, &bbox);
@@ -534,8 +516,7 @@ dri1_copy_to_front(struct dri_context *ctx,
 
 void
 dri1_flush_frontbuffer(struct pipe_screen *screen,
-		       struct pipe_surface *surf,
-		       void *context_private)
+		       struct pipe_surface *surf, void *context_private)
 {
    struct dri_context *ctx = (struct dri_context *)context_private;
    struct pipe_fence_handle *dummy_fence;
@@ -555,14 +536,15 @@ dri_swap_buffers(__DRIdrawablePrivate * dPriv)
    struct dri_drawable *draw = dri_drawable(dPriv);
    struct pipe_screen *screen = dri_screen(draw->sPriv)->pipe_screen;
    struct pipe_fence_handle *fence;
+
    GET_CURRENT_CONTEXT(glCtx);
 
    assert(__dri1_api_hooks != NULL);
 
    if (!glCtx)
-      return; /* For now */
+      return;			       /* For now */
 
-   ctx = (struct dri_context *) glCtx->st->pipe->priv;
+   ctx = (struct dri_context *)glCtx->st->pipe->priv;
 
    st_get_framebuffer_surface(draw->stfb, ST_SURFACE_BACK_LEFT, &back_surf);
    if (back_surf) {
@@ -570,7 +552,7 @@ dri_swap_buffers(__DRIdrawablePrivate * dPriv)
       st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
       fence = dri_swap_fences_pop_front(draw);
       if (fence) {
-	 (void) screen->fence_finish(screen, fence, 0);
+	 (void)screen->fence_finish(screen, fence, 0);
 	 screen->fence_reference(screen, &fence, NULL);
       }
       dri1_copy_to_front(ctx, back_surf, dPriv, NULL, &fence);
@@ -587,6 +569,7 @@ dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
    struct pipe_surface *back_surf;
    struct dri_drawable *draw = dri_drawable(dPriv);
    struct pipe_fence_handle *dummy_fence;
+
    GET_CURRENT_CONTEXT(glCtx);
 
    assert(__dri1_api_hooks != NULL);
@@ -594,7 +577,7 @@ dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
    if (!glCtx)
       return;
 
-   ctx = (struct dri_context *) glCtx->st->pipe->priv;
+   ctx = (struct dri_context *)glCtx->st->pipe->priv;
 
    sub_bbox.x1 = x;
    sub_bbox.x2 = x + w;
