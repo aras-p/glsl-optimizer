@@ -95,6 +95,8 @@ void st_make_current(struct st_context *st,
                      struct st_framebuffer *draw,
                      struct st_framebuffer *read);
 
+struct st_context *st_get_current(void);
+
 void st_flush( struct st_context *st, uint pipeFlushFlags,
                struct pipe_fence_handle **fence );
 void st_finish( struct st_context *st );

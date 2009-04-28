@@ -279,6 +279,12 @@ void st_make_current(struct st_context *st,
    }
 }
 
+struct st_context *st_get_current(void)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   return (ctx == NULL) ? NULL : ctx->st;
+}
 
 void st_copy_context_state(struct st_context *dst,
                            struct st_context *src,
