@@ -351,10 +351,10 @@ dri1_update_drawables_locked(struct dri_context *ctx,
 }
 
 /**
- * This ensures all contexts which binds to a drawable picks up the
- * drawable change and signals new buffer state.
+ * This ensures all contexts which bind to a drawable pick up the
+ * drawable change and signal new buffer state.
  * Calling st_resize_framebuffer for each context may seem like overkill,
- * but no new buffers will actually be allocated if the dimensions doesn't
+ * but no new buffers will actually be allocated if the dimensions don't
  * change.
  */
 
@@ -419,10 +419,10 @@ dri1_intersect_src_bbox(struct drm_clip_rect *dst,
    dst->x1 = xy1;
    dst->x2 = xy2;
 
-   xy1 = ((int)src->y1 > (int)bbox->y1 + dst_x) ? src->y1 :
-      (int)bbox->y1 + dst_x;
-   xy2 = ((int)src->y2 < (int)bbox->y2 + dst_x) ? src->y2 :
-      (int)bbox->y2 + dst_x;
+   xy1 = ((int)src->y1 > (int)bbox->y1 + dst_y) ? src->y1 :
+      (int)bbox->y1 + dst_y;
+   xy2 = ((int)src->y2 < (int)bbox->y2 + dst_y) ? src->y2 :
+      (int)bbox->y2 + dst_y;
    if (xy1 >= xy2 || xy1 < 0)
       return FALSE;
 
@@ -522,6 +522,7 @@ dri1_flush_frontbuffer(struct pipe_screen *screen,
    struct pipe_fence_handle *dummy_fence;
 
    dri1_copy_to_front(ctx, surf, ctx->dPriv, NULL, &dummy_fence);
+   screen->fence_reference(screen, &dummy_fence, NULL);
 
    /**
     * FIXME: Do we need swap throttling here?
@@ -564,6 +565,7 @@ dri_swap_buffers(__DRIdrawablePrivate * dPriv)
 void
 dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
 {
+   struct pipe_screen *screen = dri_screen(dPriv->driScreenPriv)->pipe_screen;
    struct drm_clip_rect sub_bbox;
    struct dri_context *ctx;
    struct pipe_surface *back_surf;
@@ -588,6 +590,7 @@ dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
    if (back_surf) {
       st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
       dri1_copy_to_front(ctx, back_surf, dPriv, &sub_bbox, &dummy_fence);
+      screen->fence_reference(screen, &dummy_fence, NULL);
    }
 }
 

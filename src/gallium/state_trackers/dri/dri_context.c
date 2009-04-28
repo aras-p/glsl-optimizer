@@ -128,7 +128,7 @@ dri_unbind_context(__DRIcontextPrivate * cPriv)
       if (--ctx->bind_count == 0) {
 	 GET_CURRENT_CONTEXT(curGLCtx);
 
-	 if (ctx->st == curGLCtx->st) {
+	 if (curGLCtx && ctx->st == curGLCtx->st) {
 	    st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
 	    st_make_current(NULL, NULL, NULL);
 	 }
