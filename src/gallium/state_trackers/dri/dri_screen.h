@@ -37,6 +37,8 @@
 
 #include "pipe/p_compiler.h"
 
+#include "state_tracker/dri1_api.h"
+
 struct dri_screen
 {
    /* dri */
@@ -55,6 +57,7 @@ struct dri_screen
 
    /* drm */
    int fd;
+   drmLock *drmLock;
 
    /* gallium */
    struct pipe_winsys *pipe_winsys;
@@ -73,15 +76,8 @@ dri_screen(__DRIscreenPrivate *sPriv)
 /***********************************************************************
  * dri_screen.c
  */
-const __DRIconfig **
-dri_init_screen2(__DRIscreenPrivate *sPriv);
 
-void
-dri_destroy_screen(__DRIscreenPrivate * sPriv);
-
-int
-dri_get_swap_info(__DRIdrawablePrivate * dPriv,
-                  __DRIswapInfo * sInfo);
+extern struct dri1_api *__dri1_api_hooks;
 
 #endif
 

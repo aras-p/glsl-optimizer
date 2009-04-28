@@ -31,9 +31,11 @@
 #include "pipe/p_compiler.h"
 
 struct pipe_surface;
-struct pipe_fence;
+struct pipe_fence_handle;
 struct st_framebuffer;
 
+#define DRI_SWAP_FENCES_MAX  8
+#define DRI_SWAP_FENCES_MASK 7
 
 struct dri_drawable
 {
@@ -46,6 +48,11 @@ struct dri_drawable
 
    /* gallium */
    struct st_framebuffer *stfb;
+   struct pipe_fence_handle *swap_fences[DRI_SWAP_FENCES_MAX];
+   unsigned int head;
+   unsigned int tail;
+   unsigned int desired_fences;
+   unsigned int cur_fences;
 };
 
 
@@ -84,6 +91,15 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv);
 void
 dri_destroy_buffer(__DRIdrawablePrivate *dPriv);
 
+void
+dri1_update_drawables(struct dri_context *ctx,
+		      struct dri_drawable *draw,
+		      struct dri_drawable *read);
+
+void
+dri1_flush_frontbuffer(struct pipe_screen *screen,
+		       struct pipe_surface *surf,
+		       void *context_private);
 #endif
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

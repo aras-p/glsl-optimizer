@@ -42,21 +42,30 @@ struct pipe_fence;
 struct st_context;
 struct dri_drawable;
 
-
 struct dri_context
 {
    /* dri */
    __DRIscreenPrivate *sPriv;
    __DRIcontextPrivate *cPriv;
    __DRIdrawablePrivate *dPriv;
+   __DRIdrawablePrivate *rPriv;
 
    driOptionCache optionCache;
+
+   unsigned int d_stamp;
+   unsigned int r_stamp;
+
+   drmLock *lock;
+   boolean isLocked;
+   boolean stLostLock;
+   boolean wsLostLock;
+
+   unsigned int bind_count;
 
    /* gallium */
    struct st_context *st;
    struct pipe_context *pipe;
 };
-
 
 static INLINE struct dri_context *
 dri_context(__DRIcontextPrivate *driContextPriv)
@@ -64,10 +73,33 @@ dri_context(__DRIcontextPrivate *driContextPriv)
    return (struct dri_context *) driContextPriv->driverPrivate;
 }
 
+static INLINE void
+dri_lock(struct dri_context *ctx)
+{
+   drm_context_t hw_context = ctx->cPriv->hHWContext;
+   char ret = 0;
+
+   DRM_CAS(ctx->lock, hw_context, DRM_LOCK_HELD | hw_context, ret);
+   if (ret) {
+      drmGetLock(ctx->sPriv->fd, hw_context, 0);
+      ctx->stLostLock = TRUE;
+      ctx->wsLostLock = TRUE;
+   }
+   ctx->isLocked = TRUE;
+}
+
+static INLINE void
+dri_unlock(struct dri_context *ctx)
+{
+   ctx->isLocked = FALSE;
+   DRM_UNLOCK(ctx->sPriv->fd, ctx->lock, ctx->cPriv->hHWContext);
+}
 
 /***********************************************************************
  * dri_context.c
  */
+extern struct dri1_api_lock_funcs dri1_lf;
+
 void
 dri_destroy_context(__DRIcontextPrivate * driContextPriv);
 

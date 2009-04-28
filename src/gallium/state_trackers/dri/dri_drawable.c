@@ -37,6 +37,7 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_inlines.h"
 #include "state_tracker/drm_api.h"
+#include "state_tracker/dri1_api.h"
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_cb_fbo.h"
@@ -207,22 +208,6 @@ dri_flush_frontbuffer(struct pipe_screen *screen,
 }
 
 
-void
-dri_swap_buffers(__DRIdrawablePrivate * dPriv)
-{
-   /* not needed for dri2 */
-   assert(0);
-}
-
-
-void
-dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
-{
-   /* not needed for dri2 */
-   assert(0);
-}
-
-
 /**
  * This is called when we need to set up GL rendering to a new X window.
  */
@@ -305,21 +290,322 @@ dri_create_buffer(__DRIscreenPrivate *sPriv,
       drawable->attachments[i++] = __DRI_BUFFER_STENCIL;
    drawable->num_attachments = i;
 
+   drawable->desired_fences = 2;
+
    return GL_TRUE;
 fail:
    FREE(drawable);
    return GL_FALSE;
 }
 
+static struct pipe_fence_handle *
+dri_swap_fences_pop_front(struct dri_drawable *draw)
+{
+   struct pipe_screen *screen = dri_screen(draw->sPriv)->pipe_screen;
+   struct pipe_fence_handle *fence = NULL;
+
+   if (draw->cur_fences >= draw->desired_fences) {
+      screen->fence_reference(screen, &fence, draw->swap_fences[draw->tail]);
+      screen->fence_reference(screen, &draw->swap_fences[draw->tail++], NULL);
+      --draw->cur_fences;
+      draw->tail &= DRI_SWAP_FENCES_MASK;
+   }
+   return fence;
+}
+
+static void
+dri_swap_fences_push_back(struct dri_drawable *draw,
+			  struct pipe_fence_handle *fence)
+{
+   struct pipe_screen *screen = dri_screen(draw->sPriv)->pipe_screen;
+
+   if (!fence)
+      return;
+
+   if (draw->cur_fences < DRI_SWAP_FENCES_MAX) {
+      draw->cur_fences++;
+      screen->fence_reference(screen, &draw->swap_fences[draw->head++], fence);
+      draw->head &= DRI_SWAP_FENCES_MASK;
+   }
+}
 
 void
 dri_destroy_buffer(__DRIdrawablePrivate *dPriv)
 {
    struct dri_drawable *drawable = dri_drawable(dPriv);
+   struct pipe_fence_handle *fence;
+   struct pipe_screen *screen = dri_screen(drawable->sPriv)->pipe_screen;
 
    st_unreference_framebuffer(drawable->stfb);
+   drawable->desired_fences = 0;
+   while(drawable->cur_fences) {
+      fence = dri_swap_fences_pop_front(drawable);
+      screen->fence_reference(screen, &fence, NULL);
+   }
 
    FREE(drawable);
+}
+
+static void
+dri1_update_drawables_locked(struct dri_context *ctx,
+			     __DRIdrawablePrivate *driDrawPriv,
+			     __DRIdrawablePrivate *driReadPriv)
+{
+   if (ctx->stLostLock) {
+      ctx->stLostLock = FALSE;
+      if (driDrawPriv == driReadPriv)
+	 DRI_VALIDATE_DRAWABLE_INFO(ctx->sPriv, driDrawPriv);
+      else
+	 DRI_VALIDATE_TWO_DRAWABLES_INFO(ctx->sPriv, driDrawPriv, driReadPriv);
+   }
+}
+
+/**
+ * This ensures all contexts which binds to a drawable picks up the
+ * drawable change and signals new buffer state.
+ * Calling st_resize_framebuffer for each context may seem like overkill,
+ * but no new buffers will actually be allocated if the dimensions doesn't
+ * change.
+ */
+
+static void
+dri1_propagate_drawable_change(struct dri_context *ctx)
+{
+   __DRIdrawablePrivate *dPriv = ctx->dPriv;
+   __DRIdrawablePrivate *rPriv = ctx->rPriv;
+   boolean flushed = FALSE;
+
+   if (dPriv && ctx->d_stamp != dPriv->lastStamp) {
+
+      st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+      flushed = TRUE;
+      ctx->d_stamp = dPriv->lastStamp;
+      st_resize_framebuffer(dri_drawable(dPriv)->stfb, dPriv->w, dPriv->h);
+
+   }
+
+   if (rPriv && dPriv != rPriv && ctx->r_stamp != rPriv->lastStamp) {
+
+      if (!flushed)
+	       st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+      ctx->r_stamp = rPriv->lastStamp;
+      st_resize_framebuffer(dri_drawable(rPriv)->stfb, rPriv->w, rPriv->h);
+
+   } else if (rPriv && dPriv == rPriv) {
+
+      ctx->r_stamp = ctx->d_stamp;
+
+   }
+}
+
+void
+dri1_update_drawables(struct dri_context *ctx,
+		      struct dri_drawable *draw,
+		      struct dri_drawable *read)
+{
+   dri_lock(ctx);
+   dri1_update_drawables_locked(ctx, draw->dPriv, read->dPriv);
+   dri_unlock(ctx);
+
+   dri1_propagate_drawable_change(ctx);
+}
+
+static INLINE boolean
+dri1_intersect_src_bbox(struct drm_clip_rect *dst,
+			int dst_x,
+			int dst_y,
+			const struct drm_clip_rect *src,
+			const struct drm_clip_rect *bbox)
+{
+   int xy1;
+   int xy2;
+
+   xy1 = ((int) src->x1 > (int) bbox->x1 + dst_x) ? src->x1 :
+      (int) bbox->x1 + dst_x;
+   xy2 = ((int) src->x2 < (int) bbox->x2 + dst_x) ? src->x2 :
+      (int) bbox->x2 + dst_x;
+   if (xy1 >= xy2 || xy1 < 0)
+      return FALSE;
+
+   dst->x1 = xy1;
+   dst->x2 = xy2;
+
+   xy1 = ((int) src->y1 > (int) bbox->y1 + dst_x) ? src->y1 :
+      (int) bbox->y1 + dst_x;
+   xy2 = ((int) src->y2 < (int) bbox->y2 + dst_x) ? src->y2 :
+      (int) bbox->y2 + dst_x;
+   if (xy1 >= xy2 || xy1 < 0)
+      return FALSE;
+
+   dst->y1 = xy1;
+   dst->y2 = xy2;
+   return TRUE;
+}
+
+
+static void
+dri1_swap_copy(struct dri_context *ctx,
+	       struct pipe_surface *dst,
+	       struct pipe_surface *src,
+	       __DRIdrawablePrivate *dPriv,
+	       const struct drm_clip_rect *bbox)
+{
+   struct pipe_context *pipe = ctx->pipe;
+   struct drm_clip_rect clip;
+   struct drm_clip_rect *cur;
+   int i;
+
+   cur = dPriv->pClipRects;
+
+   for (i=0; i<dPriv->numClipRects; ++i) {
+      if (dri1_intersect_src_bbox(&clip, dPriv->x, dPriv->y, cur++, bbox))
+	 pipe->surface_copy(pipe, dst, clip.x1, clip.y1,
+			    src,
+			    (int) clip.x1 - dPriv->x,
+			    (int) clip.y1 - dPriv->y,
+			    clip.x2 - clip.x1,
+			    clip.y2 - clip.y1);
+   }
+}
+
+static void
+dri1_copy_to_front(struct dri_context *ctx,
+		   struct pipe_surface *surf,
+		   __DRIdrawablePrivate *dPriv,
+		   const struct drm_clip_rect *sub_box,
+		   struct pipe_fence_handle **fence)
+{
+   struct pipe_context *pipe = ctx->pipe;
+   boolean save_lost_lock;
+   uint cur_w;
+   uint cur_h;
+   struct drm_clip_rect bbox;
+   boolean visible = TRUE;
+
+   *fence = NULL;
+
+   dri_lock(ctx);
+   save_lost_lock = ctx->stLostLock;
+   dri1_update_drawables_locked(ctx, dPriv, dPriv);
+   st_get_framebuffer_dimensions(dri_drawable(dPriv)->stfb, &cur_w, &cur_h);
+
+   bbox.x1 = 0;
+   bbox.x2 = cur_w;
+   bbox.y1 = 0;
+   bbox.y2 = cur_h;
+
+   if (sub_box)
+      visible = dri1_intersect_src_bbox(&bbox, 0, 0, &bbox, sub_box);
+
+   if (visible && __dri1_api_hooks->present_locked) {
+
+      __dri1_api_hooks->present_locked(pipe,
+				       surf,
+				       dPriv->pClipRects,
+				       dPriv->numClipRects,
+				       dPriv->x,
+				       dPriv->y,
+				       &bbox,
+				       fence);
+
+   } else if (visible && __dri1_api_hooks->front_srf_locked) {
+
+      struct pipe_surface *front =
+	 __dri1_api_hooks->front_srf_locked(pipe);
+
+      if (front)
+	 dri1_swap_copy(ctx, front, surf, dPriv, &bbox);
+
+      st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, fence);
+   }
+
+   ctx->stLostLock = save_lost_lock;
+
+   /**
+    * FIXME: Revisit this: Update drawables on copy_sub_buffer ?
+    */
+
+   if (!sub_box)
+      dri1_update_drawables_locked(ctx, ctx->dPriv, ctx->rPriv);
+
+   dri_unlock(ctx);
+   dri1_propagate_drawable_change(ctx);
+}
+
+void
+dri1_flush_frontbuffer(struct pipe_screen *screen,
+		       struct pipe_surface *surf,
+		       void *context_private)
+{
+   struct dri_context *ctx = (struct dri_context *)context_private;
+   struct pipe_fence_handle *dummy_fence;
+
+   dri1_copy_to_front(ctx, surf, ctx->dPriv, NULL, &dummy_fence);
+
+   /**
+    * FIXME: Do we need swap throttling here?
+    */
+}
+
+void
+dri_swap_buffers(__DRIdrawablePrivate * dPriv)
+{
+   struct dri_context *ctx;
+   struct pipe_surface *back_surf;
+   struct dri_drawable *draw = dri_drawable(dPriv);
+   struct pipe_screen *screen = dri_screen(draw->sPriv)->pipe_screen;
+   struct pipe_fence_handle *fence;
+   GET_CURRENT_CONTEXT(glCtx);
+
+   assert(__dri1_api_hooks != NULL);
+
+   if (!glCtx)
+      return; /* For now */
+
+   ctx = (struct dri_context *) glCtx->st->pipe->priv;
+
+   st_get_framebuffer_surface(draw->stfb, ST_SURFACE_BACK_LEFT, &back_surf);
+   if (back_surf) {
+      st_notify_swapbuffers(draw->stfb);
+      st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+      fence = dri_swap_fences_pop_front(draw);
+      if (fence) {
+	 (void) screen->fence_finish(screen, fence, 0);
+	 screen->fence_reference(screen, &fence, NULL);
+      }
+      dri1_copy_to_front(ctx, back_surf, dPriv, NULL, &fence);
+      dri_swap_fences_push_back(draw, fence);
+      screen->fence_reference(screen, &fence, NULL);
+   }
+}
+
+void
+dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
+{
+   struct drm_clip_rect sub_bbox;
+   struct dri_context *ctx;
+   struct pipe_surface *back_surf;
+   struct dri_drawable *draw = dri_drawable(dPriv);
+   struct pipe_fence_handle *dummy_fence;
+   GET_CURRENT_CONTEXT(glCtx);
+
+   assert(__dri1_api_hooks != NULL);
+
+   if (!glCtx)
+      return;
+
+   ctx = (struct dri_context *) glCtx->st->pipe->priv;
+
+   sub_bbox.x1 = x;
+   sub_bbox.x2 = x + w;
+   sub_bbox.y1 = y;
+   sub_bbox.y2 = y + h;
+
+   st_get_framebuffer_surface(draw->stfb, ST_SURFACE_BACK_LEFT, &back_surf);
+   if (back_surf) {
+      st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+      dri1_copy_to_front(ctx, back_surf, dPriv, &sub_bbox, &dummy_fence);
+   }
 }
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */
