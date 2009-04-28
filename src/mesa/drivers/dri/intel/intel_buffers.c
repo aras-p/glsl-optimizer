@@ -326,7 +326,8 @@ intelDrawBuffer(GLcontext * ctx, GLenum mode)
       const GLboolean was_front_buffer_rendering =
 	intel->is_front_buffer_rendering;
 
-      intel->is_front_buffer_rendering = (mode == GL_FRONT_LEFT);
+      intel->is_front_buffer_rendering = (mode == GL_FRONT_LEFT)
+	|| (mode == GL_FRONT);
 
       /* If we weren't front-buffer rendering before but we are now, make sure
        * that the front-buffer has actually been allocated.
