@@ -561,11 +561,8 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       screen->chip_family = CHIP_FAMILY_RS300;
       break;
 
-      /* 9500 with 1 pipe verified by: Reid Linnemann <lreid@cs.okstate.edu> */
+
    case PCI_CHIP_R300_AD:
-      screen->chip_family = CHIP_FAMILY_RV350;
-      screen->chip_flags = RADEON_CHIPSET_TCL;
-      break;
    case PCI_CHIP_R300_AE:
    case PCI_CHIP_R300_AF:
    case PCI_CHIP_R300_AG:
@@ -893,6 +890,18 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
        } else {
 	   screen->num_gb_pipes = temp;
        }
+
+       /* pipe overrides */
+       switch (dri_priv->deviceID) {
+       case PCI_CHIP_R300_AD: /* 9500 with 1 quadpipe verified by: Reid Linnemann <lreid@cs.okstate.edu> */
+       case PCI_CHIP_RV410_5E4C: /* RV410 SE only have 1 quadpipe */
+       case PCI_CHIP_RV410_5E4F: /* RV410 SE only have 1 quadpipe */
+	   screen->num_gb_pipes = 1;
+	   break;
+       default:
+	   break;
+       }
+
    }
 
    if ( sPriv->drm_version.minor >= 10 ) {
