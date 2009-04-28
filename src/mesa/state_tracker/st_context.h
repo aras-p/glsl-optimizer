@@ -120,8 +120,6 @@ struct st_context
 
    GLboolean missing_textures;
 
-   GLfloat polygon_offset_scale; /* ?? */
-
    /** Mapping from VERT_RESULT_x to post-transformed vertex slot */
    const GLuint *vertex_result_to_slot;
 
