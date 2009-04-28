@@ -198,7 +198,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    struct intel_renderbuffer *rb;
    struct intel_region *region, *depth_region;
    struct intel_context *intel = context->driverPrivate;
-   __DRIbuffer *buffers;
+   __DRIbuffer *buffers = NULL;
    __DRIscreen *screen;
    int i, count;
    unsigned int attachments[10];
@@ -210,7 +210,8 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 
    screen = intel->intelScreen->driScrnPriv;
 
-   if ((screen->dri2.loader->base.version > 2)
+   if (screen->dri2.loader
+       && (screen->dri2.loader->base.version > 2)
        && (screen->dri2.loader->getBuffersWithFormat != NULL)) {
       struct intel_renderbuffer *depth_rb;
       struct intel_renderbuffer *stencil_rb;
@@ -248,7 +249,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 						      attachments, i / 2,
 						      &count,
 						      drawable->loaderPrivate);
-   } else {
+   } else if (screen->dri2.loader) {
       i = 0;
       if (intel_fb->color_rb[0])
 	 attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
