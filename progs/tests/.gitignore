@@ -49,6 +49,7 @@ mapbufrange
 mapvbo
 minmag
 mipgen
+mipmap_comp
 mipmap_limits
 mipmap_view
 multipal
