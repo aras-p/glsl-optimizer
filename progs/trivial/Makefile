@@ -30,6 +30,7 @@ SOURCES = \
 	fs-tri.c \
 	line-clip.c \
 	line-cull.c \
+	line-flat.c \
 	line-smooth.c \
 	line-stipple-wide.c \
 	line-userclip-clip.c \

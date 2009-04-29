@@ -26,6 +26,7 @@ progs = [
 	'fs-tri',
 	'line-clip',
 	'line-cull',
+	'line-flat',
 	'line-smooth',
 	'line-stipple-wide',
 	'line-userclip-clip',
