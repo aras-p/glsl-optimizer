@@ -22,7 +22,8 @@ pcedit = sed \
 	-e 's,@GLU_PC_REQ@,$(GLU_PC_REQ),' \
 	-e 's,@GLU_PC_REQ_PRIV@,$(GLU_PC_REQ_PRIV),' \
 	-e 's,@GLU_PC_LIB_PRIV@,$(GLU_PC_LIB_PRIV),' \
-	-e 's,@GLU_PC_CFLAGS@,$(GLU_PC_CFLAGS),'
+	-e 's,@GLU_PC_CFLAGS@,$(GLU_PC_CFLAGS),' \
+	-e 's,@GLU_LIB@,$(GLU_LIB),'
 glu.pc: glu.pc.in
 	$(pcedit) $< > $@
 

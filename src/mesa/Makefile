@@ -103,7 +103,8 @@ gl_pcedit = sed \
 	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),' \
 	-e 's,@GL_PC_REQ_PRIV@,$(GL_PC_REQ_PRIV),' \
 	-e 's,@GL_PC_LIB_PRIV@,$(GL_PC_LIB_PRIV),' \
-	-e 's,@GL_PC_CFLAGS@,$(GL_PC_CFLAGS),'
+	-e 's,@GL_PC_CFLAGS@,$(GL_PC_CFLAGS),' \
+	-e 's,@GL_LIB@,$(GL_LIB),'
 
 gl.pc: gl.pc.in
 	$(gl_pcedit) $< > $@
