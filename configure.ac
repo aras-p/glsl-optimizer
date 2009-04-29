@@ -5,12 +5,8 @@ AC_PREREQ([2.59])
 dnl Versioning - scrape the version from configs/default
 m4_define([mesa_version],
     [m4_esyscmd([${MAKE-make} -s -f bin/version.mk version | tr -d '\n'])])
-m4_ifval(mesa_version,[],[
-    m4_errprint([Error: Failed to get the Mesa version from the output of
-       running `make -f bin/version.mk version'
-])
-    m4_exit([1])
-])
+m4_ifval(mesa_version,,
+    [m4_fatal([Failed to get the Mesa version from `make -f bin/version.mk version`])])
 
 dnl Tell the user about autoconf.html in the --help output
 m4_divert_once([HELP_END], [
@@ -58,15 +54,11 @@ fi
 AC_SUBST([MKDEP_OPTIONS])
 
 dnl Make sure the pkg-config macros are defined
-m4_ifdef([PKG_PROG_PKG_CONFIG],[],[
-    m4_errprint([Error: Could not locate the pkg-config autoconf macros.
-       These are usually located in /usr/share/aclocal/pkg.m4. If your
-       macros are in a different location, try setting the environment
-       variable ACLOCAL="aclocal -I/other/macro/dir" before running
-       autoreconf.
-])
-    m4_exit([1])
-])
+m4_ifndef([PKG_PROG_PKG_CONFIG],
+    [m4_fatal([Could not locate the pkg-config autoconf macros.
+  These are usually located in /usr/share/aclocal/pkg.m4. If your macros
+  are in a different location, try setting the environment variable
+  ACLOCAL="aclocal -I/other/macro/dir" before running autoreconf.])])
 PKG_PROG_PKG_CONFIG()
 
 dnl LIB_DIR - library basename
