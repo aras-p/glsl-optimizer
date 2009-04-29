@@ -53,6 +53,7 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
+#include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi_exec.h"
@@ -169,6 +170,56 @@ print_temp(const struct tgsi_exec_machine *mach, uint index)
 #endif
 
 
+/**
+ * Check if there's a potential src/dst register data dependency when
+ * using SOA execution.
+ * Example:
+ *   MOV T, T.yxwz;
+ * This would expand into:
+ *   MOV t0, t1;
+ *   MOV t1, t0;
+ *   MOV t2, t3;
+ *   MOV t3, t2;
+ * The second instruction will have the wrong value for t0 if executed as-is.
+ */
+static boolean
+tgsi_check_soa_dependencies(const struct tgsi_full_instruction *inst)
+{
+   uint i, chan;
+
+   uint writemask = inst->FullDstRegisters[0].DstRegister.WriteMask;
+   if (writemask == TGSI_WRITEMASK_X ||
+       writemask == TGSI_WRITEMASK_Y ||
+       writemask == TGSI_WRITEMASK_Z ||
+       writemask == TGSI_WRITEMASK_W ||
+       writemask == TGSI_WRITEMASK_NONE) {
+      /* no chance of data dependency */
+      return FALSE;
+   }
+
+   /* loop over src regs */
+   for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
+      if ((inst->FullSrcRegisters[i].SrcRegister.File ==
+           inst->FullDstRegisters[0].DstRegister.File) &&
+          (inst->FullSrcRegisters[i].SrcRegister.Index ==
+           inst->FullDstRegisters[0].DstRegister.Index)) {
+         /* loop over dest channels */
+         uint channelsWritten = 0x0;
+         FOR_EACH_ENABLED_CHANNEL(*inst, chan) {
+            /* check if we're reading a channel that's been written */
+            uint swizzle = tgsi_util_get_full_src_register_extswizzle(&inst->FullSrcRegisters[i], chan);
+            if (swizzle <= TGSI_SWIZZLE_W &&
+                (channelsWritten & (1 << swizzle))) {
+               return TRUE;
+            }
+
+            channelsWritten |= (1 << chan);
+         }
+      }
+   }
+   return FALSE;
+}
+
 
 /**
  * Initialize machine state by expanding tokens to full instructions,
@@ -280,6 +331,17 @@ tgsi_exec_machine_bind_shader(
          memcpy(instructions + numInstructions,
                 &parse.FullToken.FullInstruction,
                 sizeof(instructions[0]));
+
+#if 0
+         if (tgsi_check_soa_dependencies(&parse.FullToken.FullInstruction)) {
+            debug_printf("SOA dependency in instruction:\n");
+            tgsi_dump_instruction(&parse.FullToken.FullInstruction,
+                                  numInstructions);
+         }
+#else
+         (void) tgsi_check_soa_dependencies;
+#endif
+
          numInstructions++;
          break;
 
