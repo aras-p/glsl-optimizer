@@ -428,6 +428,9 @@ _mesa_num_inst_dst_regs(gl_inst_opcode opcode);
 extern GLboolean
 _mesa_is_tex_instruction(gl_inst_opcode opcode);
 
+extern GLboolean
+_mesa_check_soa_dependencies(const struct prog_instruction *inst);
+
 extern const char *
 _mesa_opcode_string(gl_inst_opcode opcode);
 
