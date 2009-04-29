@@ -403,7 +403,7 @@ esac
 dnl
 dnl Driver specific build directories
 dnl
-SRC_DIRS="mesa egl glew"
+SRC_DIRS="mesa glew"
 GLU_DIRS="sgi"
 WINDOW_SYSTEM=""
 GALLIUM_DIRS="auxiliary drivers state_trackers"
@@ -857,14 +857,23 @@ AC_SUBST([OSMESA_PC_LIB_PRIV])
 dnl
 dnl EGL configuration
 dnl
-if test "$x11_pkgconfig" = yes; then
-    PKG_CHECK_MODULES([EGL],[x11])
-    EGL_LIB_DEPS="$EGL_LIBS"
-else
-    # should check these...
-    EGL_LIB_DEPS="$X_LIBS -lX11"
+AC_ARG_ENABLE([egl],
+    [AS_HELP_STRING([--disable-egl],
+        [disable EGL library @<:@default=enabled@:>@])],
+    [enable_egl="$enableval"],
+    [enable_egl=yes])
+if test "x$enable_egl" = xyes; then
+    SRC_DIRS="$SRC_DIRS egl"
+
+    if test "$x11_pkgconfig" = yes; then
+        PKG_CHECK_MODULES([EGL], [x11])
+        EGL_LIB_DEPS="$EGL_LIBS"
+    else
+        # should check these...
+        EGL_LIB_DEPS="$X_LIBS -lX11"
+    fi
+    EGL_LIB_DEPS="$EGL_LIB_DEPS $DLOPEN_LIBS"
 fi
-EGL_LIB_DEPS="$EGL_LIB_DEPS $DLOPEN_LIBS"
 AC_SUBST([EGL_LIB_DEPS])
 
 dnl
@@ -1108,7 +1117,7 @@ yes)
         GALLIUM_STATE_TRACKERS_DIRS=glx
         ;;
     dri)
-        GALLIUM_STATE_TRACKERS_DIRS=egl
+        test "x$enable_egl" = xyes && GALLIUM_STATE_TRACKERS_DIRS=egl
         ;;
     esac
     ;;
@@ -1118,6 +1127,10 @@ yes)
     for tracker in $state_trackers; do
         test -d "$srcdir/src/gallium/state_trackers/$tracker" || \
             AC_MSG_ERROR([state tracker '$tracker' doesn't exist])
+
+        if test "$tracker" = egl && test "x$enable_egl" != xyes; then
+            AC_MSG_ERROR([cannot build egl state tracker without EGL library])
+        fi
     done
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
     ;;
@@ -1233,6 +1246,7 @@ dnl Libraries
 echo ""
 echo "        Shared libs:     $enable_shared"
 echo "        Static libs:     $enable_static"
+echo "        EGL:             $enable_egl"
 echo "        GLU:             $enable_glu"
 echo "        GLw:             $enable_glw (Motif: $enable_motif)"
 echo "        glut:            $enable_glut"
