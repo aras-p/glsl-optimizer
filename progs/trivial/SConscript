@@ -135,6 +135,7 @@ progs = [
 	'tristrip-flat',
 	'tristrip',
 	'vbo-drawarrays',
+	'vbo-noninterleaved',
 	'vbo-drawelements',
 	'vbo-drawrange',
 	'vp-array',

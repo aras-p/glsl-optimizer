@@ -139,6 +139,7 @@ SOURCES = \
 	tristrip-flat.c \
 	tristrip.c \
 	vbo-drawarrays.c \
+	vbo-noninterleaved.c \
 	vbo-drawelements.c \
 	vbo-drawrange.c \
 	vp-array.c \
