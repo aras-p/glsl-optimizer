@@ -60,7 +60,7 @@ $(TOP)/$(LIB_DIR)/$(DRIVER_NAME): $(WINSYS_OBJECTS) $(LIBS)
 		-noprefix \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(WINSYS_OBJECTS) \
-		--whole-archive $(LIBS) --no-whole-archive
+		-Wl,--whole-archive $(LIBS) -Wl,--no-whole-archive
 
 
 depend: $(ALL_SOURCES)

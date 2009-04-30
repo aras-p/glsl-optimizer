@@ -176,6 +176,23 @@ if [ ${ARCH} = "auto" ] ; then
 fi
 
 
+if [ $STATIC = 1 ]; then
+    # filter out linker options inside object list
+    NEWOBJECTS=""
+    for OBJ in $OBJECTS ; do
+	case $OBJ in
+	    -Wl,*)
+		echo "mklib: warning: ignoring $OBJ for static library"
+		;;
+	    *)
+		NEWOBJECTS="$NEWOBJECTS $OBJ"
+		;;
+	esac
+    done
+    OBJECTS=$NEWOBJECTS
+fi
+
+
 #
 # Error checking
 #
