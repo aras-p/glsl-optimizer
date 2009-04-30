@@ -158,7 +158,7 @@ stw_pixelformat_add(
    
    pfi->pfd.iPixelType = PFD_TYPE_RGBA;
 
-   pfi->pfd.cColorBits = color->bits.red + color->bits.green + color->bits.blue;
+   pfi->pfd.cColorBits = color->bits.red + color->bits.green + color->bits.blue + color->bits.alpha;
    pfi->pfd.cRedBits = color->bits.red;
    pfi->pfd.cRedShift = color->shift.red;
    pfi->pfd.cGreenBits = color->bits.green;
