@@ -567,19 +567,20 @@ static GLboolean r300UpdateTexture(GLcontext * ctx, int unit)
 	/* Update state if this is a different texture object to last
 	 * time.
 	 */
-	if (rmesa->state.texture.unit[unit].texobj != t) {
+	if (rmesa->state.texture.unit[unit].texobj != tObj) {
 		if (rmesa->state.texture.unit[unit].texobj != NULL) {
+			r300TexObjPtr t_old = (r300TexObjPtr) rmesa->state.texture.unit[unit].texobj->DriverData;
+
 			/* The old texture is no longer bound to this texture unit.
 			 * Mark it as such.
 			 */
 
-			rmesa->state.texture.unit[unit].texobj->base.bound &=
-			    ~(1 << unit);
+			t_old->base.bound &= ~(1 << unit);
 		}
 
-		rmesa->state.texture.unit[unit].texobj = t;
+		_mesa_reference_texobj(&rmesa->state.texture.unit[unit].texobj, tObj);
 		t->base.bound |= (1 << unit);
-		driUpdateTextureLRU((driTextureObject *) t);	/* XXX: should be locked! */
+		driUpdateTextureLRU(&t->base);	/* XXX: should be locked! */
 	}
 
 	return !t->border_fallback;

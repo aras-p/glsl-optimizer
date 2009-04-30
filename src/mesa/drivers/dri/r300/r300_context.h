@@ -215,7 +215,7 @@ struct r300_tex_obj {
 };
 
 struct r300_texture_env_state {
-	r300TexObjPtr texobj;
+	struct gl_texture_object *texobj;
 	GLenum format;
 	GLenum envMode;
 };

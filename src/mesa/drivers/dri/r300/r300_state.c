@@ -1362,7 +1362,7 @@ static void r300SetupTextures(GLcontext * ctx)
 #endif
 			tmu_mappings[i] = hw_tmu;
 
-			t = r300->state.texture.unit[i].texobj;
+			t = (r300TexObjPtr) r300->state.texture.unit[i].texobj->DriverData;
 			/* XXX questionable fix for bug 9170: */
 			if (!t)
 				continue;
