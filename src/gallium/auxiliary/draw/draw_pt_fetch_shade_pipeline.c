@@ -77,8 +77,8 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    
 
    draw_pt_fetch_prepare( fpme->fetch, 
+                          vs->info.num_inputs,
 			  fpme->vertex_size );
-
    /* XXX: it's not really gl rasterization rules we care about here,
     * but gl vs dx9 clip spaces.
     */
