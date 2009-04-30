@@ -281,18 +281,21 @@ case $ARCH in
 	    # expand any .a objects into constituent .o files.
 	    NEWOBJECTS=""
 	    DELETIA=""
-	    for OBJ in ${OBJECTS} ; do
-		if [ `expr match $OBJ '.*\.a'` -gt 0 ] ; then
-		    # extract the .o files from this .a archive
-		    FILES=`ar t $OBJ`
-		    ar x $OBJ
-		    NEWOBJECTS="$NEWOBJECTS $FILES"
-		    # keep track of temporary .o files and delete them below
-		    DELETIA="$DELETIA $FILES"
-		else
-		    # ordinary .o file
-		    NEWOBJECTS="$NEWOBJECTS $OBJ"
-		fi
+	    for OBJ in $OBJECTS ; do
+		case $OBJ in
+		    *.a)
+			# extract the .o files from this .a archive
+			FILES=`ar t $OBJ`
+			ar x $OBJ
+			NEWOBJECTS="$NEWOBJECTS $FILES"
+			# keep track of temporary .o files and delete them below
+			DELETIA="$DELETIA $FILES"
+			;;
+		    *)
+			# ordinary .o file
+			NEWOBJECTS="$NEWOBJECTS $OBJ"
+			;;
+		esac
 	    done
 
             # make lib
