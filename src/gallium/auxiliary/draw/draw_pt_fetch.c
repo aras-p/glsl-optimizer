@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "util/u_memory.h"
+#include "util/u_math.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_vbuf.h"
@@ -56,9 +57,11 @@ struct pt_fetch {
  *
  */
 void draw_pt_fetch_prepare( struct pt_fetch *fetch,
+                            unsigned vs_input_count,
 			    unsigned vertex_size )
 {
    struct draw_context *draw = fetch->draw;
+   unsigned nr_inputs;
    unsigned i, nr = 0;
    unsigned dst_offset = 0;
    struct translate_key key;
@@ -89,8 +92,11 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
       dst_offset += 4 * sizeof(float);
    }
       
+   assert( draw->pt.nr_vertex_elements >= vs_input_count );
 
-   for (i = 0; i < draw->pt.nr_vertex_elements; i++) {
+   nr_inputs = MIN2( vs_input_count, draw->pt.nr_vertex_elements );
+
+   for (i = 0; i < nr_inputs; i++) {
       key.element[nr].input_format = draw->pt.vertex_element[i].src_format;
       key.element[nr].input_buffer = draw->pt.vertex_element[i].vertex_buffer_index;
       key.element[nr].input_offset = draw->pt.vertex_element[i].src_offset;
