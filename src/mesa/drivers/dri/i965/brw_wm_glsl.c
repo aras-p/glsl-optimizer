@@ -1,5 +1,7 @@
 #include "main/macros.h"
 #include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
+#include "shader/prog_optimize.h"
 #include "brw_context.h"
 #include "brw_eu.h"
 #include "brw_wm.h"
@@ -42,6 +44,76 @@ GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
 }
 
 
+
+static void
+reclaim_temps(struct brw_wm_compile *c);
+
+
+/** Mark GRF register as used. */
+static void
+prealloc_grf(struct brw_wm_compile *c, int r)
+{
+   c->used_grf[r] = GL_TRUE;
+}
+
+
+/** Mark given GRF register as not in use. */
+static void
+release_grf(struct brw_wm_compile *c, int r)
+{
+   /*assert(c->used_grf[r]);*/
+   c->used_grf[r] = GL_FALSE;
+   c->first_free_grf = MIN2(c->first_free_grf, r);
+}
+
+
+/** Return index of a free GRF, mark it as used. */
+static int
+alloc_grf(struct brw_wm_compile *c)
+{
+   GLuint r;
+   for (r = c->first_free_grf; r < BRW_WM_MAX_GRF; r++) {
+      if (!c->used_grf[r]) {
+         c->used_grf[r] = GL_TRUE;
+         c->first_free_grf = r + 1;  /* a guess */
+         return r;
+      }
+   }
+
+   /* no free temps, try to reclaim some */
+   reclaim_temps(c);
+   c->first_free_grf = 0;
+
+   /* try alloc again */
+   for (r = c->first_free_grf; r < BRW_WM_MAX_GRF; r++) {
+      if (!c->used_grf[r]) {
+         c->used_grf[r] = GL_TRUE;
+         c->first_free_grf = r + 1;  /* a guess */
+         return r;
+      }
+   }
+
+   for (r = 0; r < BRW_WM_MAX_GRF; r++) {
+      assert(c->used_grf[r]);
+   }
+   /*printf("Really out of temp regs!\n");*/
+   return 60;
+}
+
+
+/** Return number of GRF registers used */
+static int
+num_grf_used(const struct brw_wm_compile *c)
+{
+   int r;
+   for (r = BRW_WM_MAX_GRF - 1; r >= 0; r--)
+      if (c->used_grf[r])
+         return r + 1;
+   return 0;
+}
+
+
+
 /**
  * Record the mapping of a Mesa register to a hardware register.
  */
@@ -68,11 +140,18 @@ static int get_scalar_dst_index(const struct prog_instruction *inst)
 static struct brw_reg alloc_tmp(struct brw_wm_compile *c)
 {
     struct brw_reg reg;
-    if(c->tmp_index == c->tmp_max)
-	c->tmp_regs[ c->tmp_max++ ] = c->reg_index++;
-    
+
+    /* if we need to allocate another temp, grow the tmp_regs[] array */
+    if (c->tmp_index == c->tmp_max) {
+       c->tmp_regs[ c->tmp_max++ ] = alloc_grf(c);
+    }
+
+    /* form the GRF register */
     reg = brw_vec8_grf(c->tmp_regs[ c->tmp_index++ ], 0);
+    /*printf("alloc_temp %d\n", reg.nr);*/
+    assert(reg.nr < BRW_WM_MAX_GRF);
     return reg;
+
 }
 
 /**
@@ -130,35 +209,26 @@ get_reg(struct brw_wm_compile *c, int file, int index, int component,
 	    return brw_null_reg();
     }
 
+    assert(index < 256);
     /* see if we've already allocated a HW register for this Mesa register */
     if (c->wm_regs[file][index][component].inited) {
-	/* yes, re-use */
-	reg = c->wm_regs[file][index][component].reg;
+       /* yes, re-use */
+       reg = c->wm_regs[file][index][component].reg;
     }
     else {
 	/* no, allocate new register */
-	reg = brw_vec8_grf(c->reg_index, 0);
+       int grf = alloc_grf(c);
+       if (grf < 0) {
+          /* totally out of temps */
+          grf = 70; /* XXX !!!! */
+       }
+
+       reg = brw_vec8_grf(grf, 0);
+       /*printf("Alloc new grf %d for %d.%d\n", reg.nr, index, component);*/
+
+       set_reg(c, file, index, component, reg);
     }
 
-    /* if this is a new register allocation, record it in the table */
-    if (!c->wm_regs[file][index][component].inited) {
-	set_reg(c, file, index, component, reg);
-	c->reg_index++;
-    }
-
-    if (c->reg_index >= BRW_WM_MAX_GRF - 12) {
-	/* ran out of temporary registers! */
-#if 1
-        /* This is a big hack for now.
-         * Return bad register index, just don't hang the GPU.
-         */
-        _mesa_fprintf(stderr, "out of regs %d\n", c->reg_index);
-        c->reg_index = BRW_WM_MAX_GRF - 13;
-#else
-	return brw_null_reg();
-#endif
-    }
- 
     if (neg & (1 << component)) {
 	reg = negate(reg);
     }
@@ -166,6 +236,46 @@ get_reg(struct brw_wm_compile *c, int file, int index, int component,
 	reg = brw_abs(reg);
     return reg;
 }
+
+
+
+/**
+ * This is called if we run out of GRF registers.  Examine the live intervals
+ * of temp regs in the program and free those which won't be used again.
+ */
+static void
+reclaim_temps(struct brw_wm_compile *c)
+{
+   GLint intBegin[MAX_PROGRAM_TEMPS];
+   GLint intEnd[MAX_PROGRAM_TEMPS];
+   int index;
+
+   /*printf("Reclaim temps:\n");*/
+
+   _mesa_find_temp_intervals(c->prog_instructions, c->nr_fp_insns,
+                             intBegin, intEnd);
+
+   for (index = 0; index < MAX_PROGRAM_TEMPS; index++) {
+      if (intEnd[index] != -1 && intEnd[index] < c->cur_inst) {
+         /* program temp[i] can be freed */
+         int component;
+         /*printf("  temp[%d] is dead\n", index);*/
+         for (component = 0; component < 4; component++) {
+            if (c->wm_regs[PROGRAM_TEMPORARY][index][component].inited) {
+               int r = c->wm_regs[PROGRAM_TEMPORARY][index][component].reg.nr;
+               release_grf(c, r);
+               /*
+               printf("  Reclaim temp %d, reg %d at inst %d\n",
+                      index, r, c->cur_inst);
+               */
+               c->wm_regs[PROGRAM_TEMPORARY][index][component].inited = GL_FALSE;
+            }
+         }
+      }
+   }
+}
+
+
 
 
 /**
@@ -179,6 +289,10 @@ static void prealloc_reg(struct brw_wm_compile *c)
     struct brw_reg reg;
     int nr_interp_regs = 0;
     GLuint inputs = FRAG_BIT_WPOS | c->fp_interp_emitted | c->fp_deriv_emitted;
+    GLuint reg_index = 0;
+
+    memset(c->used_grf, GL_FALSE, sizeof(c->used_grf));
+    c->first_free_grf = 0;
 
     for (i = 0; i < 4; i++) {
         if (i < c->key.nr_depth_regs) 
@@ -187,14 +301,20 @@ static void prealloc_reg(struct brw_wm_compile *c)
             reg = brw_vec8_grf(0, 0);
 	set_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, i, reg);
     }
-    c->reg_index += 2 * c->key.nr_depth_regs;
+    reg_index += 2 * c->key.nr_depth_regs;
 
     /* constants */
     {
-        const int nr_params = c->fp->program.Base.Parameters->NumParameters;
+        const GLuint nr_params = c->fp->program.Base.Parameters->NumParameters;
+        const GLuint nr_temps = c->fp->program.Base.NumTemporaries;
 
         /* use a real constant buffer, or just use a section of the GRF? */
-        c->fp->use_const_buffer = GL_FALSE; /* (nr_params > 8);*/
+        /* XXX this heuristic may need adjustment... */
+        if ((nr_params + nr_temps) * 4 + reg_index > 80)
+           c->fp->use_const_buffer = GL_TRUE;
+        else
+           c->fp->use_const_buffer = GL_FALSE;
+        /*printf("WM use_const_buffer = %d\n", c->fp->use_const_buffer);*/
 
         if (c->fp->use_const_buffer) {
            /* We'll use a real constant buffer and fetch constants from
@@ -216,7 +336,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
            for (i = 0; i < nr_params; i++) {
               /* loop over XYZW channels */
               for (j = 0; j < 4; j++, index++) {
-                 reg = brw_vec1_grf(c->reg_index + index / 8, index % 8);
+                 reg = brw_vec1_grf(reg_index + index / 8, index % 8);
                  /* Save pointer to parameter/constant value.
                   * Constants will be copied in prepare_constant_buffer()
                   */
@@ -226,7 +346,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
            }
            /* number of constant regs used (each reg is float[8]) */
            c->nr_creg = 2 * ((4 * nr_params + 15) / 16);
-           c->reg_index += c->nr_creg;
+           reg_index += c->nr_creg;
         }
     }
 
@@ -234,20 +354,24 @@ static void prealloc_reg(struct brw_wm_compile *c)
     for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
 	if (inputs & (1<<i)) {
 	    nr_interp_regs++;
-	    reg = brw_vec8_grf(c->reg_index, 0);
+	    reg = brw_vec8_grf(reg_index, 0);
 	    for (j = 0; j < 4; j++)
 		set_reg(c, PROGRAM_PAYLOAD, i, j, reg);
-	    c->reg_index += 2;
+	    reg_index += 2;
 	}
     }
 
     c->prog_data.first_curbe_grf = c->key.nr_depth_regs * 2;
     c->prog_data.urb_read_length = nr_interp_regs * 2;
     c->prog_data.curb_read_length = c->nr_creg;
-    c->emit_mask_reg = brw_uw1_reg(BRW_GENERAL_REGISTER_FILE, c->reg_index, 0);
-    c->reg_index++;
-    c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, c->reg_index, 0);
-    c->reg_index += 2;
+    c->emit_mask_reg = brw_uw1_reg(BRW_GENERAL_REGISTER_FILE, reg_index, 0);
+    reg_index++;
+    c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, reg_index, 0);
+    reg_index += 2;
+
+    /* mark GRF regs [0..reg_index-1] as in-use */
+    for (i = 0; i < reg_index; i++)
+       prealloc_grf(c, i);
 
     /* An instruction may reference up to three constants.
      * They'll be found in these registers.
@@ -256,7 +380,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
     if (c->fp->use_const_buffer) {
        for (i = 0; i < 3; i++) {
           c->current_const[i].index = -1;
-          c->current_const[i].reg = alloc_tmp(c);
+          c->current_const[i].reg = brw_vec8_grf(alloc_grf(c), 0);
        }
     }
 #if 0
@@ -2595,13 +2719,14 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
     struct brw_compile *p = &c->func;
     struct brw_indirect stack_index = brw_indirect(0, 0);
 
-    c->reg_index = 0;
     prealloc_reg(c);
     brw_set_compression_control(p, BRW_COMPRESSION_NONE);
     brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
 
     for (i = 0; i < c->nr_fp_insns; i++) {
         const struct prog_instruction *inst = &c->prog_instructions[i];
+
+        c->cur_inst = i;
 
 #if 0
         _mesa_printf("Inst %d: ", i);
@@ -2833,17 +2958,13 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		_mesa_printf("unsupported IR in fragment shader %d\n",
 			inst->Opcode);
 	}
+
 	if (inst->CondUpdate)
 	    brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
 	else
 	    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
     }
     post_wm_emit(c);
-
-    if (c->reg_index >= BRW_WM_MAX_GRF) {
-        _mesa_problem(NULL, "Ran out of registers in brw_wm_emit_glsl()");
-        /* XXX we need to do some proper error recovery here */
-    }
 }
 
 
@@ -2867,6 +2988,6 @@ void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
         brw_wm_print_program(c, "brw_wm_glsl_emit done");
     }
 
-    c->prog_data.total_grf = c->reg_index;
+    c->prog_data.total_grf = num_grf_used(c);
     c->prog_data.total_scratch = 0;
 }

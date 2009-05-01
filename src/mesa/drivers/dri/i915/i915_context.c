@@ -73,7 +73,7 @@ i915InvalidateState(GLcontext * ctx, GLuint new_state)
          p->params_uptodate = 0;
    }
 
-   if (new_state & (_NEW_FOG | _NEW_HINT | _NEW_PROGRAM))
+   if (new_state & (_NEW_FOG | _NEW_HINT | _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS))
       i915_update_fog(ctx);
 }
 

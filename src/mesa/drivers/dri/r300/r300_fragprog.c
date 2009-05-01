@@ -470,7 +470,8 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 			fp->translated = GL_TRUE;
 		if (fp->error || (RADEON_DEBUG & DEBUG_PIXEL))
 			r300FragmentProgramDump(fp, &fp->code);
-		r300UpdateStateParameters(r300->radeon.glCtx, _NEW_PROGRAM);
+		r300UpdateStateParameters(r300->radeon.glCtx, _NEW_PROGRAM |
+                                          _NEW_PROGRAM_CONSTANTS);
 	}
 
 	update_params(r300, fp);

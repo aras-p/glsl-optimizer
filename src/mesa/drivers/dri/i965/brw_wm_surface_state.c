@@ -268,7 +268,7 @@ brw_create_texture_surface( struct brw_context *brw,
       surf.ss0.cube_neg_z = 1;
    }
 
-   bo = brw_upload_cache(&brw->cache, BRW_SS_SURFACE,
+   bo = brw_upload_cache(&brw->surface_cache, BRW_SS_SURFACE,
 			 key, sizeof(*key),
 			 &key->bo, key->bo ? 1 : 0,
 			 &surf, sizeof(surf),
@@ -321,10 +321,11 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    key.tiling = intelObj->mt->region->tiling;
 
    dri_bo_unreference(brw->wm.surf_bo[surf]);
-   brw->wm.surf_bo[surf] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
-                                         &key, sizeof(key),
-                                         &key.bo, key.bo ? 1 : 0,
-                                         NULL);
+   brw->wm.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
+                                            BRW_SS_SURFACE,
+                                            &key, sizeof(key),
+                                            &key.bo, key.bo ? 1 : 0,
+                                            NULL);
    if (brw->wm.surf_bo[surf] == NULL) {
       brw->wm.surf_bo[surf] = brw_create_texture_surface(brw, &key);
    }
@@ -362,7 +363,7 @@ brw_create_constant_surface( struct brw_context *brw,
    surf.ss3.pitch = (key->pitch * key->cpp) - 1; /* ignored?? */
    brw_set_surface_tiling(&surf, key->tiling); /* tiling now allowed */
  
-   bo = brw_upload_cache(&brw->cache, BRW_SS_SURFACE,
+   bo = brw_upload_cache(&brw->surface_cache, BRW_SS_SURFACE,
 			 key, sizeof(*key),
 			 &key->bo, key->bo ? 1 : 0,
 			 &surf, sizeof(surf),
@@ -427,7 +428,8 @@ brw_update_wm_constant_surface( GLcontext *ctx,
    */
 
    dri_bo_unreference(brw->wm.surf_bo[surf]);
-   brw->wm.surf_bo[surf] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
+   brw->wm.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
+                                            BRW_SS_SURFACE,
                                             &key, sizeof(key),
                                             &key.bo, key.bo ? 1 : 0,
                                             NULL);
@@ -456,17 +458,14 @@ brw_update_vs_constant_surface( GLcontext *ctx,
 
    assert(surf == 0);
 
-   /* free old const buffer if too small */
-   if (const_buffer && const_buffer->size < size) {
-      dri_bo_unreference(const_buffer);
-      const_buffer = NULL;
-   }
+   /* We always create a new VS constant buffer so that several can be
+    * in flight at a time.  Free the old one first...
+    */
+   dri_bo_unreference(const_buffer);
 
-   /* alloc new buffer if needed */
-   if (!const_buffer) {
-      const_buffer =
-         drm_intel_bo_alloc(intel->bufmgr, "vp_const_buffer", size, 64);
-   }
+   /* alloc new buffer */
+   const_buffer =
+      drm_intel_bo_alloc(intel->bufmgr, "vp_const_buffer", size, 64);
 
    memset(&key, 0, sizeof(key));
 
@@ -487,7 +486,8 @@ brw_update_vs_constant_surface( GLcontext *ctx,
    */
 
    dri_bo_unreference(brw->vs.surf_bo[surf]);
-   brw->vs.surf_bo[surf] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
+   brw->vs.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
+                                            BRW_SS_SURFACE,
                                             &key, sizeof(key),
                                             &key.bo, key.bo ? 1 : 0,
                                             NULL);
@@ -569,10 +569,11 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    dri_bo_unreference(brw->wm.surf_bo[unit]);
    brw->wm.surf_bo[unit] = NULL;
    if (cached) 
-       brw->wm.surf_bo[unit] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
-	       &key, sizeof(key),
-	       &region_bo, 1,
-	       NULL);
+       brw->wm.surf_bo[unit] = brw_search_cache(&brw->surface_cache,
+                                                BRW_SS_SURFACE,
+                                                &key, sizeof(key),
+                                                &region_bo, 1,
+                                                NULL);
 
    if (brw->wm.surf_bo[unit] == NULL) {
       struct brw_surface_state surf;
@@ -598,7 +599,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       surf.ss0.writedisable_alpha = !key.color_mask[3];
 
       /* Key size will never match key size for textures, so we're safe. */
-      brw->wm.surf_bo[unit] = brw_upload_cache(&brw->cache, BRW_SS_SURFACE,
+      brw->wm.surf_bo[unit] = brw_upload_cache(&brw->surface_cache,
+                                               BRW_SS_SURFACE,
                                                &key, sizeof(key),
 					       &region_bo, 1,
 					       &surf, sizeof(surf),
@@ -630,7 +632,7 @@ brw_wm_get_binding_table(struct brw_context *brw)
 
    assert(brw->wm.nr_surfaces <= BRW_WM_MAX_SURF);
 
-   bind_bo = brw_search_cache(&brw->cache, BRW_SS_SURF_BIND,
+   bind_bo = brw_search_cache(&brw->surface_cache, BRW_SS_SURF_BIND,
 			      NULL, 0,
 			      brw->wm.surf_bo, brw->wm.nr_surfaces,
 			      NULL);
@@ -646,7 +648,7 @@ brw_wm_get_binding_table(struct brw_context *brw)
          else
             data[i] = 0;
 
-      bind_bo = brw_upload_cache( &brw->cache, BRW_SS_SURF_BIND,
+      bind_bo = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
 				  NULL, 0,
 				  brw->wm.surf_bo, brw->wm.nr_surfaces,
 				  data, data_size,
@@ -746,7 +748,7 @@ brw_vs_get_binding_table(struct brw_context *brw)
 
    assert(brw->vs.nr_surfaces <= BRW_VS_MAX_SURF);
 
-   bind_bo = brw_search_cache(&brw->cache, BRW_SS_SURF_BIND,
+   bind_bo = brw_search_cache(&brw->surface_cache, BRW_SS_SURF_BIND,
 			      NULL, 0,
 			      brw->vs.surf_bo, brw->vs.nr_surfaces,
 			      NULL);
@@ -762,7 +764,7 @@ brw_vs_get_binding_table(struct brw_context *brw)
          else
             data[i] = 0;
 
-      bind_bo = brw_upload_cache( &brw->cache, BRW_SS_SURF_BIND,
+      bind_bo = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
 				  NULL, 0,
 				  brw->vs.surf_bo, brw->vs.nr_surfaces,
 				  data, data_size,
@@ -787,8 +789,7 @@ brw_vs_get_binding_table(struct brw_context *brw)
 
 
 /**
- * Vertex shader surfaces.  Just constant buffer for now.  Could add vertex 
- * shader textures in the future.
+ * Vertex shader surfaces (constant buffer).
  */
 static void prepare_vs_surfaces(struct brw_context *brw )
 {
@@ -824,8 +825,12 @@ prepare_surfaces(struct brw_context *brw)
 
 const struct brw_tracked_state brw_wm_surfaces = {
    .dirty = {
-      .mesa = _NEW_COLOR | _NEW_TEXTURE | _NEW_BUFFERS | _NEW_PROGRAM,
-      .brw = BRW_NEW_CONTEXT,
+      .mesa = (_NEW_COLOR |
+               _NEW_TEXTURE |
+               _NEW_BUFFERS |
+               _NEW_PROGRAM |
+               _NEW_PROGRAM_CONSTANTS),
+      .brw = (BRW_NEW_CONTEXT),
       .cache = 0
    },
    .prepare = prepare_surfaces,

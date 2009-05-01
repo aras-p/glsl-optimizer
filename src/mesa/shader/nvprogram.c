@@ -706,7 +706,7 @@ _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
    prog = _mesa_lookup_program(ctx, id);
    if (!prog || prog->Target != GL_FRAGMENT_PROGRAM_NV) {

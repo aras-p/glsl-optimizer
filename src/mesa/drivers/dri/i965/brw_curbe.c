@@ -36,6 +36,7 @@
 #include "main/macros.h"
 #include "main/enums.h"
 #include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
 #include "shader/prog_statevars.h"
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
@@ -187,13 +188,6 @@ static void prepare_constant_buffer(struct brw_context *brw)
    const GLuint bufsz = sz * 16 * sizeof(GLfloat);
    GLfloat *buf;
    GLuint i;
-
-   /* Update our own dependency flags.  This works because this
-    * function will also be called whenever fp or vp changes.
-    */
-   brw->curbe.tracked_state.dirty.mesa = (_NEW_TRANSFORM|_NEW_PROJECTION);
-   brw->curbe.tracked_state.dirty.mesa |= vp->program.Base.Parameters->StateFlags;
-   brw->curbe.tracked_state.dirty.mesa |= fp->program.Base.Parameters->StateFlags;
 
    if (sz == 0) {
       if (brw->curbe.last_buf) {
@@ -363,11 +357,7 @@ update_constant_buffer(struct brw_context *brw,
       }
 
       if (0) {
-         int i;
-         for (i = 0; i < params->NumParameters; i++) {
-            float *p = params->ParameterValues[i];
-            printf("%d: %f %f %f %f\n", i, p[0], p[1], p[2], p[3]);
-         }
+         _mesa_print_parameter_list(params);
       }
    }
 }
@@ -380,7 +370,7 @@ update_vertex_constant_buffer(struct brw_context *brw)
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
    if (0) {
-      printf("update VS constants in buffer %p\n", vp->const_buffer);
+      printf("update VS constants in buffer %p  vp = %p\n", vp->const_buffer, vp);
       printf("program %u\n", vp->program.Base.Id);
    }
    if (vp->use_const_buffer)
@@ -394,6 +384,10 @@ update_fragment_constant_buffer(struct brw_context *brw)
 {
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
+   if (0) {
+      printf("update WM constants in buffer %p\n", fp->const_buffer);
+      printf("program %u\n", fp->program.Base.Id);
+   }
    if (fp->use_const_buffer)
       update_constant_buffer(brw, fp->program.Base.Parameters, fp->const_buffer);
 }
@@ -428,7 +422,7 @@ static void emit_constant_buffer(struct brw_context *brw)
  */
 const struct brw_tracked_state brw_constant_buffer = {
    .dirty = {
-      .mesa = (_NEW_TRANSFORM|_NEW_PROJECTION),      /* plus fp and vp flags */
+      .mesa = _NEW_PROGRAM_CONSTANTS,
       .brw  = (BRW_NEW_FRAGMENT_PROGRAM |
 	       BRW_NEW_VERTEX_PROGRAM |
 	       BRW_NEW_URB_FENCE | /* Implicit - hardware requires this, not used above */
