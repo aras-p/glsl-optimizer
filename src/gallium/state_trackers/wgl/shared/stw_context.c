@@ -74,6 +74,30 @@ stw_copy_context(
    return ret;
 }
 
+BOOL
+stw_share_lists(
+   UINT_PTR hglrc1, 
+   UINT_PTR hglrc2 )
+{
+   struct stw_context *ctx1;
+   struct stw_context *ctx2;
+   BOOL ret = FALSE;
+
+   pipe_mutex_lock( stw_dev->mutex );
+   
+   ctx1 = stw_lookup_context_locked( hglrc1 );
+   ctx2 = stw_lookup_context_locked( hglrc2 );
+
+   if (ctx1 && ctx2 &&
+       ctx1->pfi == ctx2->pfi) { 
+      ret = _mesa_share_state(ctx2->st->ctx, ctx1->st->ctx);
+   }
+
+   pipe_mutex_unlock( stw_dev->mutex );
+   
+   return ret;
+}
+
 UINT_PTR
 stw_create_layer_context(
    HDC hdc,

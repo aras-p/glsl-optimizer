@@ -186,12 +186,7 @@ wglShareLists(
    HGLRC hglrc1,
    HGLRC hglrc2 )
 {
-   (void) hglrc1;
-   (void) hglrc2;
-
-   assert( 0 );
-
-   return FALSE;
+   return stw_share_lists( (UINT_PTR)hglrc1, (UINT_PTR)hglrc2);;
 }
 
 WINGDIAPI BOOL APIENTRY

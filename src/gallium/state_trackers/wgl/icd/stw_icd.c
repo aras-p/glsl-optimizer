@@ -562,7 +562,7 @@ DrvShareLists(
    if (DBG)
       debug_printf( "%s\n", __FUNCTION__ );
 
-   return FALSE;
+   return stw_share_lists(dhglrc1, dhglrc2);
 }
 
 BOOL APIENTRY
