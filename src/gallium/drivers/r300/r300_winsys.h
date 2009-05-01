@@ -35,8 +35,6 @@ extern "C" {
 #include "pipe/p_state.h"
 #include "pipe/internal/p_winsys_screen.h"
 
-struct radeon_cs;
-
 struct r300_winsys {
     /* Parent class */
     struct pipe_winsys base;
@@ -44,45 +42,45 @@ struct r300_winsys {
     /* Opaque Radeon-specific winsys object. */
     void* radeon_winsys;
 
+    /* CS object. This is very much like Intel's batchbuffer.
+     * Fill it full of dwords and relocs and then submit.
+     * Repeat as needed. */
+    struct radeon_cs* cs;
+
     /* PCI ID */
     uint32_t pci_id;
 
     /* GB pipe count */
     uint32_t gb_pipes;
 
-    /* CS object. This is very much like Intel's batchbuffer.
-     * Fill it full of dwords and relocs and then submit.
-     * Repeat as needed. */
-    struct radeon_cs* cs;
-
     /* Check to see if there's room for commands. */
-    boolean (*check_cs)(struct radeon_cs* cs, int size);
+    boolean (*check_cs)(struct r300_winsys* winsys, int size);
 
     /* Start a command emit. */
-    void (*begin_cs)(struct radeon_cs* cs,
-           int size,
-           const char* file,
-           const char* function,
-           int line);
+    void (*begin_cs)(struct r300_winsys* winsys,
+                     int size,
+                     const char* file,
+                     const char* function,
+                     int line);
 
     /* Write a dword to the command buffer. */
-    void (*write_cs_dword)(struct radeon_cs* cs, uint32_t dword);
+    void (*write_cs_dword)(struct r300_winsys* winsys, uint32_t dword);
 
     /* Write a relocated dword to the command buffer. */
-    void (*write_cs_reloc)(struct radeon_cs* cs,
-           struct pipe_buffer* bo,
-           uint32_t rd,
-           uint32_t wd,
-           uint32_t flags);
+    void (*write_cs_reloc)(struct r300_winsys* winsys,
+                           struct pipe_buffer* bo,
+                           uint32_t rd,
+                           uint32_t wd,
+                           uint32_t flags);
 
     /* Finish a command emit. */
-    void (*end_cs)(struct radeon_cs* cs,
-           const char* file,
-           const char* function,
-           int line);
+    void (*end_cs)(struct r300_winsys* winsys,
+                   const char* file,
+                   const char* function,
+                   int line);
 
     /* Flush the CS. */
-    void (*flush_cs)(struct radeon_cs* cs);
+    void (*flush_cs)(struct r300_winsys* winsys);
 };
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,

@@ -22,31 +22,56 @@
 
 #include "radeon_r300.h"
 
-static boolean radeon_r300_check_cs(struct radeon_cs* cs, int size)
+static boolean radeon_r300_check_cs(struct r300_winsys* winsys, int size)
 {
     /* XXX check size here, lazy ass! */
+    /* XXX also validate buffers */
     return TRUE;
 }
 
-static void radeon_r300_write_cs_reloc(struct radeon_cs* cs,
-                                    struct pipe_buffer* pbuffer,
-                                    uint32_t rd,
-                                    uint32_t wd,
-                                    uint32_t flags)
+static void radeon_r300_begin_cs(struct r300_winsys* winsys,
+                                 int size,
+                                 const char* file,
+                                 const char* function,
+                                 int line)
 {
-    radeon_cs_write_reloc(cs, ((struct radeon_pipe_buffer*)pbuffer)->bo, rd, wd, flags);
+    radeon_cs_begin(winsys->cs, size, file, function, line);
 }
 
-static void radeon_r300_flush_cs(struct radeon_cs* cs)
+static void radeon_r300_write_cs_dword(struct r300_winsys* winsys,
+                                       uint32_t dword)
+{
+    radeon_cs_write_dword(winsys->cs, dword);
+}
+
+static void radeon_r300_write_cs_reloc(struct r300_winsys* winsys,
+                                       struct pipe_buffer* pbuffer,
+                                       uint32_t rd,
+                                       uint32_t wd,
+                                       uint32_t flags)
+{
+    radeon_cs_write_reloc(winsys->cs,
+            ((struct radeon_pipe_buffer*)pbuffer)->bo, rd, wd, flags);
+}
+
+static void radeon_r300_end_cs(struct r300_winsys* winsys,
+                               const char* file,
+                               const char* function,
+                               int line)
+{
+    radeon_cs_end(winsys->cs, file, function, line);
+}
+
+static void radeon_r300_flush_cs(struct r300_winsys* winsys)
 {
     int retval = 0;
 
-    retval = radeon_cs_emit(cs);
+    retval = radeon_cs_emit(winsys->cs);
     if (retval) {
         debug_printf("radeon: Bad CS, dumping...\n");
-        radeon_cs_print(cs, stderr);
+        radeon_cs_print(winsys->cs, stderr);
     }
-    radeon_cs_erase(cs);
+    radeon_cs_erase(winsys->cs);
 }
 
 /* Helper function to do the ioctls needed for setup and init. */
@@ -96,10 +121,10 @@ radeon_create_r300_winsys(int fd, struct radeon_winsys* old_winsys)
     winsys->cs = radeon_cs_create(csm, 1024 * 64 / 4);
 
     winsys->check_cs = radeon_r300_check_cs;
-    winsys->begin_cs = radeon_cs_begin;
-    winsys->write_cs_dword = radeon_cs_write_dword;
+    winsys->begin_cs = radeon_r300_begin_cs;
+    winsys->write_cs_dword = radeon_r300_write_cs_dword;
     winsys->write_cs_reloc = radeon_r300_write_cs_reloc;
-    winsys->end_cs = radeon_cs_end;
+    winsys->end_cs = radeon_r300_end_cs;
     winsys->flush_cs = radeon_r300_flush_cs;
 
     memcpy(winsys, old_winsys, sizeof(struct radeon_winsys));
