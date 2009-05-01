@@ -331,6 +331,12 @@ st_swapbuffers(struct st_framebuffer *stfb,
             st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
          *front_left = strb->surface;
       }
+      /* mark back buffer contents as undefined */
+      {
+         struct st_renderbuffer *back =
+            st_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
+         back->defined = GL_FALSE;
+      }
    }
    else {
       /* no front buffer, display the back buffer */
@@ -353,6 +359,12 @@ st_swapbuffers(struct st_framebuffer *stfb,
          struct st_renderbuffer *strb =
             st_renderbuffer(fb->Attachment[BUFFER_FRONT_RIGHT].Renderbuffer);
          *front_right = strb->surface;
+      }
+      /* mark back buffer contents as undefined */
+      {
+         struct st_renderbuffer *back =
+            st_renderbuffer(fb->Attachment[BUFFER_BACK_RIGHT].Renderbuffer);
+         back->defined = GL_FALSE;
       }
    }
    else {

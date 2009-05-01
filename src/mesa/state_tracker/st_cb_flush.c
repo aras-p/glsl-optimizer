@@ -47,10 +47,19 @@
 #include "util/u_blit.h"
 
 
+/** Check if we have a front color buffer and if it's been drawn to. */
 static INLINE GLboolean
 is_front_buffer_dirty(struct st_context *st)
 {
-   return st->frontbuffer_status == FRONT_STATUS_DIRTY;
+   if (st->frontbuffer_status == FRONT_STATUS_DIRTY) {
+      return GL_TRUE;
+   }
+   else {
+      GLframebuffer *fb = st->ctx->DrawBuffer;
+      struct st_renderbuffer *strb
+         = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+      return strb && strb->defined;
+   }
 }
 
 

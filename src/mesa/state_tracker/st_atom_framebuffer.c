@@ -123,6 +123,7 @@ update_framebuffer_state( struct st_context *st )
             framebuffer->cbufs[framebuffer->nr_cbufs] = strb->surface;
             framebuffer->nr_cbufs++;
          }
+         strb->defined = GL_TRUE; /* we'll be drawing something */
       }
    }
 

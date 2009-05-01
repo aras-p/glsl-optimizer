@@ -125,6 +125,8 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    strb->Base.Height = height;
    init_renderbuffer_bits(strb, template.format);
 
+   strb->defined = GL_FALSE;  /* undefined contents now */
+
    /* Probably need dedicated flags for surface usage too: 
     */
    surface_usage = (PIPE_BUFFER_USAGE_GPU_READ |
