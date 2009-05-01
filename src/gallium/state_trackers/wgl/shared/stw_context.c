@@ -109,7 +109,6 @@ stw_create_layer_context(
    GLvisual *visual = NULL;
    struct pipe_screen *screen = NULL;
    struct pipe_context *pipe = NULL;
-   UINT_PTR hglrc = 0;
 
    if(!stw_dev)
       return 0;
