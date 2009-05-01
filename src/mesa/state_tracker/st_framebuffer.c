@@ -297,7 +297,10 @@ st_notify_swapbuffers(struct st_framebuffer *stfb)
  * Swap the front/back color buffers.  Exchange the front/back pointers
  * and update some derived state.
  * No need to call st_notify_swapbuffers() first.
- * This is effectively a no-op for single-buffered framebuffers.
+ *
+ * For a single-buffered framebuffer, no swap occurs, but we still return
+ * the pointer(s) to the front color buffer(s).
+ *
  * \param front_left  returns pointer to front-left renderbuffer after swap
  * \param front_right  returns pointer to front-right renderbuffer after swap
  */
@@ -316,6 +319,21 @@ st_swapbuffers(struct st_framebuffer *stfb,
 		PIPE_FLUSH_SWAPBUFFERS |
 		PIPE_FLUSH_FRAME,
                 NULL );
+   }
+
+   if (!fb->Visual.doubleBufferMode) {
+      /* single buffer mode - return pointers to front surfaces */
+      if (front_left) {
+         struct st_renderbuffer *strb =
+            st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+         *front_left = strb->surface;
+      }
+      if (front_right) {
+         struct st_renderbuffer *strb =
+            st_renderbuffer(fb->Attachment[BUFFER_FRONT_RIGHT].Renderbuffer);
+         *front_right = strb ? strb->surface : NULL;
+      }
+      return;
    }
 
    /* swap left buffers */
