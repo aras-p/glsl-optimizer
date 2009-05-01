@@ -1,3 +1,6 @@
+#include "eglcommon.h"
+
+
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
@@ -6,156 +9,22 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
-#include <VG/openvg.h>
+#include <VG/openvg.h>  /* using full OpenGL for now */
 #include <GLES/egl.h>
 
-static VGint width, height;
-static VGPath gear1;
-static VGPath gear2;
-static VGPath gear3;
 
-static VGPaint fill;
-const VGfloat color[4] = {0.5, 0.5, 0.5, 1.0};
+static init_func    init = 0;
+static draw_func    draw = 0;
+static reshape_func reshape = 0;
+static key_func     keyPress = 0;
+static VGint width = 300, height = 300;
 
-static VGfloat gear1_angle = 35;
-static VGfloat gear2_angle = 24;
-static VGfloat gear3_angle = 33.5;
 
-static  void moveTo(VGPath path, VGfloat x, VGfloat y)
+void set_window_size(int w, int h)
 {
-   static VGubyte moveTo = VG_MOVE_TO | VG_ABSOLUTE;
-   VGfloat pathData[2];
-   pathData[0] = x; pathData[1] = y;
-   vgAppendPathData(path, 1, &moveTo, pathData);
-}
-
-static  void lineTo(VGPath path, VGfloat x, VGfloat y)
-{
-   static VGubyte lineTo = VG_LINE_TO | VG_ABSOLUTE;
-   VGfloat pathData[2];
-   pathData[0] = x; pathData[1] = y;
-   vgAppendPathData(path, 1, &lineTo, pathData);
-}
-
-static  void closeSubpath(VGPath path)
-{
-   static VGubyte close = VG_CLOSE_PATH | VG_ABSOLUTE;
-   VGfloat pathData[2];
-   vgAppendPathData(path, 1, &close, pathData);
-}
-
-static  void cubicTo(VGPath path, VGfloat x1, VGfloat y1, VGfloat x2, VGfloat y2,
-                     VGfloat midx, VGfloat midy)
-{
-   static VGubyte cubic = VG_CUBIC_TO | VG_ABSOLUTE;
-   VGfloat pathData[6];
-   pathData[0] = x1;
-   pathData[1] = y1;
-   pathData[2] = x2;
-   pathData[3] = y2;
-   pathData[4] = midx;
-   pathData[5] = midy;
-   vgAppendPathData(path, 1, &cubic, pathData);
-}
-
-static VGPath gearsPath(double inner_radius, double outer_radius,
-                        int teeth, double tooth_depth)
-{
-   VGPath path = vgCreatePath(VG_PATH_FORMAT_STANDARD, VG_PATH_DATATYPE_F, 1.0f, 0.0f,
-                              0, 0, (unsigned int)VG_PATH_CAPABILITY_ALL);
-
-   int i;
-   double r0, r1, r2;
-   double angle, da;
-
-   r0 = inner_radius;
-   r1 = outer_radius - tooth_depth / 2.0;
-   r2 = outer_radius + tooth_depth / 2.0;
-
-   da = 2.0 * M_PI / (VGfloat) teeth / 4.0;
-
-   angle = 0.0;
-   moveTo(path, r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da));
-
-   for (i = 1; i <= teeth; i++) {
-      angle = i * 2.0 * M_PI / (VGfloat)teeth;
-
-      lineTo(path, r1 * cos(angle), r1 * sin(angle));
-      lineTo(path, r2 * cos(angle + da), r2 * sin(angle + da));
-      lineTo(path, r2 * cos(angle + 2 * da), r2 * sin(angle + 2 * da));
-
-      if (i < teeth)
-         lineTo(path, r1 * cos(angle + 3 * da),
-                r1 * sin(angle + 3 * da));
-   }
-
-   closeSubpath(path);
-
-   moveTo(path, r0 * cos(angle + 3 * da), r0 * sin(angle + 3 * da));
-
-   for (i = 1; i <= teeth; i++) {
-      angle = i * 2.0 * M_PI / (VGfloat) teeth;
-
-      lineTo(path, r0 * cos(angle), r0 * sin(angle));
-   }
-
-   closeSubpath(path);
-   return path;
-}
-
-static void
-draw(void)
-{
-   vgClear(0, 0, width, height);
-
-   vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
-
-   vgLoadIdentity();
-   vgLoadIdentity();
-   vgTranslate(170, 330);
-   vgRotate(gear1_angle);
-   vgDrawPath(gear1, VG_FILL_PATH);
-
-   vgLoadIdentity();
-   vgTranslate(369, 330);
-   vgRotate(gear2_angle);
-   vgDrawPath(gear2, VG_FILL_PATH);
-
-   vgLoadIdentity();
-   vgTranslate(170, 116);
-   vgRotate(gear3_angle);
-   vgDrawPath(gear3, VG_FILL_PATH);
-
-   gear1_angle += 1;
-   gear2_angle -= (20.0 / 12.0);
-   gear3_angle -= (20.0 / 14.0);
-}
-
-
-/* new window size or exposure */
-static void
-reshape(int w, int h)
-{
-   width  = w;
+   width = w;
    height = h;
 }
-
-
-static void
-init(void)
-{
-   float clear_color[4] = {1.0, 1.0, 1.0, 1.0};
-   vgSetfv(VG_CLEAR_COLOR, 4, clear_color);
-
-   gear1 = gearsPath(30.0, 120.0, 20, 20.0);
-   gear2 = gearsPath(15.0, 75.0, 12, 20.0);
-   gear3 = gearsPath(20.0, 90.0, 14, 20.0);
-
-   fill = vgCreatePaint();
-   vgSetParameterfv(fill, VG_PAINT_COLOR, 4, color);
-   vgSetPaint(fill, VG_FILL_PATH);
-}
-
 
 /*
  * Create an RGB, double-buffered X window.
@@ -257,28 +126,33 @@ make_x_window(Display *x_dpy, EGLDisplay egl_dpy,
    *ctxRet = ctx;
 }
 
-
 static void
 event_loop(Display *dpy, Window win,
            EGLDisplay egl_dpy, EGLSurface egl_surf)
 {
    while (1) {
+      int redraw = 0;
       XEvent event;
 
-      while (XPending(dpy) > 0) {
-         XNextEvent(dpy, &event);
+      XNextEvent(dpy, &event);
 
-         switch (event.type) {
-         case Expose:
-            break;
-         case ConfigureNotify:
+      switch (event.type) {
+      case Expose:
+         redraw = 1;
+         break;
+      case ConfigureNotify:
+         if (reshape) {
+            width = event.xconfigure.width;
+            height = event.xconfigure.height;
             reshape(event.xconfigure.width, event.xconfigure.height);
-            break;
-         case KeyPress:
-         {
-            char buffer[10];
-            int r, code;
-            code = XLookupKeysym(&event.xkey, 0);
+         }
+         break;
+      case KeyPress:
+      {
+         char buffer[10];
+         int r, code;
+         code = XLookupKeysym(&event.xkey, 0);
+         if (!keyPress || !keyPress(code)) {
             r = XLookupString(&event.xkey, buffer, sizeof(buffer),
                               NULL, NULL);
             if (buffer[0] == 27) {
@@ -286,17 +160,29 @@ event_loop(Display *dpy, Window win,
                return;
             }
          }
-         break;
-         default:
-            ; /*no-op*/
-         }
+      }
+      redraw = 1;
+      break;
+      default:
+         ; /*no-op*/
       }
 
-      draw();
-      eglSwapBuffers(egl_dpy, egl_surf);
+      if (redraw) {
+         draw();
+         eglSwapBuffers(egl_dpy, egl_surf);
+      }
    }
 }
 
+int window_width(void)
+{
+   return width;
+}
+
+int window_height(void)
+{
+   return height;
+}
 
 static void
 usage(void)
@@ -306,10 +192,13 @@ usage(void)
    printf("  -info                   display OpenGL renderer info\n");
 }
 
-int
-main(int argc, char *argv[])
+int run(int argc, char **argv,
+        init_func init_f,
+        reshape_func resh_f,
+        draw_func draw_f,
+        key_func key_f)
 {
-   const int winWidth = 500, winHeight = 500;
+   const int winWidth = width, winHeight = height;
    Display *x_dpy;
    Window win;
    EGLSurface egl_surf;
@@ -321,6 +210,11 @@ main(int argc, char *argv[])
    int i;
    const char *s;
 
+   init = init_f;
+   draw = draw_f;
+   reshape = resh_f;
+   keyPress = key_f;
+
    for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "-display") == 0) {
          dpyName = argv[i+1];
@@ -328,10 +222,6 @@ main(int argc, char *argv[])
       }
       else if (strcmp(argv[i], "-info") == 0) {
          printInfo = GL_TRUE;
-      }
-      else {
-         usage();
-         return -1;
       }
    }
 
@@ -357,7 +247,7 @@ main(int argc, char *argv[])
    printf("EGL_VERSION = %s\n", s);
 
    make_x_window(x_dpy, egl_dpy,
-                 "xegl_tri", 0, 0, winWidth, winHeight,
+                 "OpenVG Example", 0, 0, winWidth, winHeight,
                  &win, &egl_ctx, &egl_surf);
 
    XMapWindow(x_dpy, win);
@@ -372,16 +262,19 @@ main(int argc, char *argv[])
       printf("VG_VENDOR     = %s\n", (char *) vgGetString(VG_VENDOR));
    }
 
-   init();
+   if (init)
+      init();
 
    /* Set initial projection/viewing transformation.
     * We can't be sure we'll get a ConfigureNotify event when the window
     * first appears.
     */
-   reshape(winWidth, winHeight);
+   if (reshape)
+      reshape(winWidth, winHeight);
 
    event_loop(x_dpy, win, egl_dpy, egl_surf);
 
+   eglMakeCurrent(egl_dpy, 0, 0, 0);
    eglDestroyContext(egl_dpy, egl_ctx);
    eglDestroySurface(egl_dpy, egl_surf);
    eglTerminate(egl_dpy);
@@ -392,3 +285,4 @@ main(int argc, char *argv[])
 
    return 0;
 }
+
