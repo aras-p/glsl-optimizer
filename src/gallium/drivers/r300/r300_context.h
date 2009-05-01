@@ -314,11 +314,4 @@ struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_surface_functions(struct r300_context* r300);
 
-/* Fun with includes: r300_winsys also declares this prototype.
- * We'll just step out in that case... */
-#ifndef R300_WINSYS_H
-struct pipe_context* r300_create_context(struct pipe_screen* screen,
-                                         struct r300_winsys* r300_winsys);
-#endif
-
 #endif /* R300_CONTEXT_H */
