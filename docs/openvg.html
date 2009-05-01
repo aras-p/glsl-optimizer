@@ -14,7 +14,9 @@
 The current version of the OpenVG state tracker implements OpenVG 1.0.
 </p>
 <p>
-More informations about OpenVG can be found at <a href="http://www.khronos.org/openvg/">http://www.khronos.org/openvg/</a> .
+More informations about OpenVG can be found at
+<a href="http://www.khronos.org/openvg/" target="_parent">
+http://www.khronos.org/openvg/</a> .
 </p>
 <p>
 The OpenVG state tracker depends on the Gallium architecture and a working EGL implementation.
@@ -31,13 +33,31 @@ The OpenVG state tracker depends on the Gallium architecture and a working EGL i
 <h3>Sample build</h3>
 A sample build looks as follows:
 <pre>
-make linux-x86-64-debug
-cd src/gallium/state_trackers/vega
-make
-cd ../../../..
-export LD_LIBRARY_PATH=$PWD/lib64
-export EGL_DRIVER="egl_softpipe"
+  make linux-x86-64-debug
+  cd src/gallium/state_trackers/vega
+  make
+  cd ../../../..
+  export LD_LIBRARY_PATH=$PWD/lib64
+  export EGL_DRIVER="egl_softpipe"
 </pre>
+
+<h2>OpenVG Demos</h2>
+
+<p>
+To build the OpenVG demos:
+</p>
+<pre>
+  cd progs/openvg
+  make
+</pre>
+<p>
+To run a demo:
+</p>
+<pre>
+  cd openvg/demos
+  ./lion
+</pre>
+
 
 <h2>Notes</h2>
 <ul>
