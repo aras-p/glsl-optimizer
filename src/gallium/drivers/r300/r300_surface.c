@@ -34,6 +34,13 @@ static void r300_surface_setup(struct pipe_context* pipe,
     unsigned pixpitch = tex->stride / tex->tex.block.size;
     CS_LOCALS(r300);
 
+    /* Make sure our target BO is okay. */
+    r300->winsys->add_buffer(r300->winsys, tex->buffer,
+            0, RADEON_GEM_DOMAIN_VRAM);
+    if (r300->winsys->validate(r300->winsys)) {
+        r300->context.flush(&r300->context, 0, NULL);
+    }
+
     r300_emit_blend_state(r300, &blend_clear_state);
     r300_emit_blend_color_state(r300, &blend_color_clear_state);
     r300_emit_dsa_state(r300, &dsa_clear_state);

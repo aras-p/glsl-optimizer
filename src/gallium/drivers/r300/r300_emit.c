@@ -424,13 +424,21 @@ void r300_emit_dirty_state(struct r300_context* r300)
     int i;
     int dirty_tex = 0;
 
-    if (!(r300->dirty_state) && !(r300->dirty_hw)) {
+    if (!(r300->dirty_hw)) {
         return;
     }
 
     r300_update_derived_state(r300);
 
     /* XXX check size */
+    struct r300_texture* fb_tex =
+        (struct r300_texture*)r300->framebuffer_state.cbufs[0];
+    r300->winsys->add_buffer(r300->winsys, fb_tex->buffer,
+            0, RADEON_GEM_DOMAIN_VRAM);
+    if (r300->winsys->validate(r300->winsys)) {
+        /* XXX */
+        r300->context.flush(&r300->context, 0, NULL);
+    }
 
     if (r300->dirty_state & R300_NEW_BLEND) {
         r300_emit_blend_state(r300, r300->blend_state);

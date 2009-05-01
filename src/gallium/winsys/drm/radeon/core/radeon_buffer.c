@@ -68,8 +68,8 @@ static struct pipe_buffer *radeon_buffer_create(struct pipe_winsys *ws,
         domain |= RADEON_GEM_DOMAIN_GTT;
     }
 
-    radeon_buffer->bo = radeon_bo_open(radeon_ws->bom, 0, size, alignment,
-                                       domain, 0);
+    radeon_buffer->bo = radeon_bo_open(radeon_ws->priv->bom, 0, size,
+            alignment, domain, 0);
     if (radeon_buffer->bo == NULL) {
         FREE(radeon_buffer);
     }
@@ -169,8 +169,14 @@ struct radeon_winsys* radeon_pipe_winsys(int fd)
         return NULL;
     }
 
+    radeon_ws->priv = CALLOC_STRUCT(radeon_winsys_priv);
+    if (radeon_ws->priv == NULL) {
+        FREE(radeon_ws);
+        return NULL;
+    }
+
     bom = radeon_bo_manager_gem_ctor(fd);
-    radeon_ws->bom = bom;
+    radeon_ws->priv->bom = bom;
 
     radeon_ws->base.flush_frontbuffer = radeon_flush_frontbuffer;
 

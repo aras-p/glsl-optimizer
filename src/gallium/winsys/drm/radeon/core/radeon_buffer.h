@@ -41,6 +41,7 @@
 #include "util/u_memory.h"
 
 #include "radeon_bo.h"
+#include "radeon_cs.h"
 
 #include "radeon_drm.h"
 
@@ -49,13 +50,24 @@ struct radeon_pipe_buffer {
     struct radeon_bo    *bo;
 };
 
+#define RADEON_MAX_BOS 24
+
+struct radeon_winsys_priv {
+    /* Radeon BO manager. */
+    struct radeon_bo_manager* bom;
+
+    /* Radeon BO space checker. */
+    struct radeon_cs_space_check sc[RADEON_MAX_BOS];
+    /* Current BO count. */
+    unsigned bo_count;
+};
+
 struct radeon_winsys {
     /* Parent class. */
     struct pipe_winsys base;
 
-    /* Radeon BO manager.
-     * This corresponds to void* radeon_winsys in r300_winsys. */
-    struct radeon_bo_manager* bom;
+    /* This corresponds to void* radeon_winsys in r300_winsys. */
+    struct radeon_winsys_priv* priv;
 };
 
 struct radeon_winsys* radeon_pipe_winsys(int fb);
