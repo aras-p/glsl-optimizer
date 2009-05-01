@@ -64,6 +64,7 @@ stw_copy_context(
 
    if (src && dst) { 
       /* FIXME */
+      assert(0);
       (void) src;
       (void) dst;
       (void) mask;
