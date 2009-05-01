@@ -1028,7 +1028,7 @@ struct gl_stencil_attrib
 
 /**
  * An index for each type of texture object.  These correspond to the GL
- * target target enums, such as GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, etc.
+ * texture target enums, such as GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, etc.
  * Note: the order is from highest priority to lowest priority.
  */
 typedef enum
