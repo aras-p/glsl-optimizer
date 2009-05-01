@@ -455,6 +455,31 @@ st_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 
 
 /**
+ * Copy back color buffer to front color buffer.
+ */
+static void
+copy_back_to_front(struct st_context *st,
+                   struct gl_framebuffer *fb,
+                   gl_buffer_index frontIndex,
+                   gl_buffer_index backIndex)
+
+{
+   struct st_framebuffer *stfb = (struct st_framebuffer *) fb;
+   struct pipe_surface *surf_front, *surf_back;
+
+   (void) st_get_framebuffer_surface(stfb, frontIndex, &surf_front);
+   (void) st_get_framebuffer_surface(stfb, backIndex, &surf_back);
+
+   if (surf_front && surf_back) {
+      st->pipe->surface_copy(st->pipe,
+                             surf_front, 0, 0,  /* dest */
+                             surf_back, 0, 0,   /* src */
+                             fb->Width, fb->Height);
+   }
+}
+
+
+/**
  * Check if we're drawing into, or read from, a front color buffer.  If the
  * front buffer is missing, create it now.
  *
@@ -493,7 +518,7 @@ check_create_front_buffer(GLcontext *ctx, struct gl_framebuffer *fb,
          uint samples;
 
          if (0)
-            _mesa_debug(ctx, "Allocate new front buffer");
+            _mesa_debug(ctx, "Allocate new front buffer\n");
 
          /* get back renderbuffer info */
          back = st_renderbuffer(fb->Attachment[backIndex].Renderbuffer);
@@ -507,6 +532,11 @@ check_create_front_buffer(GLcontext *ctx, struct gl_framebuffer *fb,
          /* alloc texture/surface for new front buffer */
          front->AllocStorage(ctx, front, front->InternalFormat,
                              fb->Width, fb->Height);
+
+         /* initialize the front color buffer contents by copying
+          * the back buffer.
+          */
+         copy_back_to_front(ctx->st, fb, frontIndex, backIndex);
       }
    }
 }
