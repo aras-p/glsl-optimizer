@@ -1397,14 +1397,21 @@ _mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare)
 {
    if (ctx && ctxToShare && ctx->Shared && ctxToShare->Shared) {
       struct gl_shared_state *oldSharedState = ctx->Shared;
+      GLint RefCount;
 
       ctx->Shared = ctxToShare->Shared;
+      
+      _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
       ctx->Shared->RefCount++;
+      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
       update_default_objects(ctx);
 
-      oldSharedState->RefCount--;
-      if (oldSharedState->RefCount == 0) {
+      _glthread_LOCK_MUTEX(oldSharedState->Mutex);
+      RefCount = --oldSharedState->RefCount;
+      _glthread_UNLOCK_MUTEX(oldSharedState->Mutex);
+
+      if (RefCount == 0) {
          _mesa_free_shared_state(ctx, oldSharedState);
       }
 
