@@ -100,10 +100,7 @@ wglSwapLayerBuffers(
    HDC hdc,
    UINT fuPlanes )
 {
-   (void) hdc;
-   (void) fuPlanes;
-
-   return FALSE;
+   return stw_swap_layer_buffers( hdc, fuPlanes );
 }
 
 WINGDIAPI PROC APIENTRY

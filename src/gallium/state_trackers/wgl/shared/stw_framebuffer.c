@@ -237,6 +237,18 @@ stw_swap_buffers(
 }
 
 
+BOOL
+stw_swap_layer_buffers(
+   HDC hdc,
+   UINT fuPlanes )
+{
+   if(fuPlanes & WGL_SWAP_MAIN_PLANE)
+      return stw_swap_buffers(hdc);
+
+   return FALSE;
+}
+
+
 boolean
 stw_framebuffer_init_thread(void)
 {
