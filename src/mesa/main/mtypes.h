@@ -2050,6 +2050,9 @@ struct gl_shared_state
    /** Default texture objects (shared by all texture units) */
    struct gl_texture_object *DefaultTex[NUM_TEXTURE_TARGETS];
 
+   /** Fallback texture used when a bound texture is incomplete */
+   struct gl_texture_object *FallbackTex;
+
    /**
     * \name Thread safety and statechange notification for texture
     * objects. 

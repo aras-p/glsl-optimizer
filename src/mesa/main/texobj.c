@@ -662,6 +662,59 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    }
 }
 
+
+/**
+ * Return pointer to a default/fallback texture.
+ * The texture is a 2D 8x8 RGBA texture with all texels = (0,0,0,1).
+ * That's the value a sampler should get when sampling from an
+ * incomplete texture.
+ */
+struct gl_texture_object *
+_mesa_get_fallback_texture(GLcontext *ctx)
+{
+   if (!ctx->Shared->FallbackTex) {
+      /* create fallback texture now */
+      static GLubyte texels[8 * 8][4];
+      struct gl_texture_object *texObj;
+      struct gl_texture_image *texImage;
+      GLuint i;
+
+      for (i = 0; i < 8 * 8; i++) {
+         texels[i][0] =
+         texels[i][1] =
+         texels[i][2] = 0x0;
+         texels[i][3] = 0xff;
+      }
+
+      /* create texture object */
+      texObj = ctx->Driver.NewTextureObject(ctx, 0, GL_TEXTURE_2D);
+      assert(texObj->RefCount == 1);
+      texObj->MinFilter = GL_NEAREST;
+      texObj->MagFilter = GL_NEAREST;
+
+      /* create level[0] texture image */
+      texImage = _mesa_get_tex_image(ctx, texObj, GL_TEXTURE_2D, 0);
+
+      /* init the image fields */
+      _mesa_init_teximage_fields(ctx, GL_TEXTURE_2D, texImage,
+                                    8, 8, 1, 0, GL_RGBA); 
+
+      /* set image data */
+      ctx->Driver.TexImage2D(ctx, GL_TEXTURE_2D, 0, GL_RGBA,
+                             8, 8, 0,
+                             GL_RGBA, GL_UNSIGNED_BYTE, texels,
+                             &ctx->DefaultPacking, texObj, texImage);
+
+      _mesa_test_texobj_completeness(ctx, texObj);
+      assert(texObj->_Complete);
+
+      ctx->Shared->FallbackTex = texObj;
+   }
+   return ctx->Shared->FallbackTex;
+}
+
+
+
 /*@}*/
 
 
