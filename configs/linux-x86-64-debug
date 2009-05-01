@@ -4,4 +4,5 @@ include $(TOP)/configs/linux-x86-64
 
 CONFIG_NAME = linux-x86-64-debug
 
+OPT_FLAGS = -g
 DEFINES += -DDEBUG -DDEBUG_MATH
