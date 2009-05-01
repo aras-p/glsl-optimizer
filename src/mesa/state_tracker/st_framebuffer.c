@@ -293,6 +293,85 @@ st_notify_swapbuffers(struct st_framebuffer *stfb)
 }
 
 
+/**
+ * Swap the front/back color buffers.  Exchange the front/back pointers
+ * and update some derived state.
+ * No need to call st_notify_swapbuffers() first.
+ * This is effectively a no-op for single-buffered framebuffers.
+ * \param front_left  returns pointer to front-left renderbuffer after swap
+ * \param front_right  returns pointer to front-right renderbuffer after swap
+ */
+void
+st_swapbuffers(struct st_framebuffer *stfb,
+               struct pipe_surface **front_left,
+               struct pipe_surface **front_right)
+{
+   struct gl_framebuffer *fb = &stfb->Base;
+
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (ctx && ctx->DrawBuffer == &stfb->Base) {
+      st_flush( ctx->st, 
+		PIPE_FLUSH_RENDER_CACHE | 
+		PIPE_FLUSH_SWAPBUFFERS |
+		PIPE_FLUSH_FRAME,
+                NULL );
+   }
+
+   /* swap left buffers */
+   if (fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer &&
+       fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer) {
+      struct gl_renderbuffer *rbTemp;
+      rbTemp = fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+      fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer =
+         fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+      fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer = rbTemp;
+      if (front_left) {
+         struct st_renderbuffer *strb =
+            st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+         *front_left = strb->surface;
+      }
+   }
+   else {
+      /* no front buffer, display the back buffer */
+      if (front_left) {
+         struct st_renderbuffer *strb =
+            st_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
+         *front_left = strb->surface;
+      }
+   }
+
+   /* swap right buffers (for stereo) */
+   if (fb->Attachment[BUFFER_FRONT_RIGHT].Renderbuffer &&
+       fb->Attachment[BUFFER_BACK_RIGHT].Renderbuffer) {
+      struct gl_renderbuffer *rbTemp;
+      rbTemp = fb->Attachment[BUFFER_FRONT_RIGHT].Renderbuffer;
+      fb->Attachment[BUFFER_FRONT_RIGHT].Renderbuffer =
+         fb->Attachment[BUFFER_BACK_RIGHT].Renderbuffer;
+      fb->Attachment[BUFFER_BACK_RIGHT].Renderbuffer = rbTemp;
+      if (front_right) {
+         struct st_renderbuffer *strb =
+            st_renderbuffer(fb->Attachment[BUFFER_FRONT_RIGHT].Renderbuffer);
+         *front_right = strb->surface;
+      }
+   }
+   else {
+      /* no front right buffer, display back right buffer (if exists) */
+      if (front_right) {
+         struct st_renderbuffer *strb =
+            st_renderbuffer(fb->Attachment[BUFFER_BACK_RIGHT].Renderbuffer);
+         *front_right = strb ? strb->surface : NULL;
+      }
+   }
+
+   /* Update the _ColorDrawBuffers[] array and _ColorReadBuffer pointer */
+   _mesa_update_framebuffer(ctx);
+
+   /* Make sure we draw into the new back surface */
+   st_invalidate_state(ctx, _NEW_BUFFERS);
+}
+
+
 void *st_framebuffer_private( struct st_framebuffer *stfb )
 {
    return stfb->Private;
