@@ -60,7 +60,9 @@ static boolean radeon_r300_validate(struct r300_winsys* winsys)
     retval = radeon_cs_space_check(priv->cs, sc, priv->bo_count);
 
     if (retval == RADEON_CS_SPACE_OP_TO_BIG) {
-        /* XXX we need to failover here */
+        /* We might as well HCF, since this is not going to fit in the card,
+         * period. */
+	exit(1);
     } else if (retval == RADEON_CS_SPACE_FLUSH) {
         /* We must flush before more rendering can commence. */
         return TRUE;
