@@ -37,6 +37,8 @@ BOOL stw_copy_context( UINT_PTR hglrcSrc,
 UINT_PTR stw_create_layer_context( HDC hdc, 
                                    int iLayerPlane );
 
+BOOL stw_share_lists( UINT_PTR hglrc1, UINT_PTR hglrc2 );
+
 BOOL stw_delete_context( UINT_PTR hglrc );
 
 BOOL
