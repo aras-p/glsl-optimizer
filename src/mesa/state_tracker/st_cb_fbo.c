@@ -452,6 +452,104 @@ st_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 }
 
 
+/**
+ * Check if we're drawing into, or read from, a front color buffer.  If the
+ * front buffer is missing, create it now.
+ *
+ * The back color buffer must exist since we'll use its format/samples info
+ * for creating the front buffer.
+ *
+ * \param frontIndex  either BUFFER_FRONT_LEFT or BUFFER_FRONT_RIGHT
+ * \param backIndex  either BUFFER_BACK_LEFT or BUFFER_BACK_RIGHT
+ */
+static void
+check_create_front_buffer(GLcontext *ctx, struct gl_framebuffer *fb,
+                          gl_buffer_index frontIndex,
+                          gl_buffer_index backIndex)
+{
+   if (fb->Attachment[frontIndex].Renderbuffer == NULL) {
+      GLboolean create = GL_FALSE;
+
+      /* check if drawing to or reading from front buffer */
+      if (fb->_ColorReadBufferIndex == frontIndex) {
+         create = GL_TRUE;
+      }
+      else {
+         GLuint b;
+         for (b = 0; b < fb->_NumColorDrawBuffers; b++) {
+            if (fb->_ColorDrawBufferIndexes[b] == frontIndex) {
+               create = GL_TRUE;
+               break;
+            }
+         }
+      }
+
+      if (create) {
+         struct st_renderbuffer *back;
+         struct gl_renderbuffer *front;
+         enum pipe_format colorFormat;
+         uint samples;
+
+         if (0)
+            _mesa_debug(ctx, "Allocate new front buffer");
+
+         /* get back renderbuffer info */
+         back = st_renderbuffer(fb->Attachment[backIndex].Renderbuffer);
+         colorFormat = back->format;
+         samples = back->Base.NumSamples;
+
+         /* create front renderbuffer */
+         front = st_new_renderbuffer_fb(colorFormat, samples);
+         _mesa_add_renderbuffer(fb, frontIndex, front);
+
+         /* alloc texture/surface for new front buffer */
+         front->AllocStorage(ctx, front, front->InternalFormat,
+                             fb->Width, fb->Height);
+      }
+   }
+}
+
+
+/**
+ * If front left/right color buffers are missing, create them now.
+ */
+static void
+check_create_front_buffers(GLcontext *ctx, struct gl_framebuffer *fb)
+{
+   /* check if we need to create the front left buffer now */
+   check_create_front_buffer(ctx, fb, BUFFER_FRONT_LEFT, BUFFER_BACK_LEFT);
+
+   if (fb->Visual.stereoMode) {
+      check_create_front_buffer(ctx, fb, BUFFER_FRONT_RIGHT, BUFFER_BACK_RIGHT);
+   }
+
+   st_invalidate_state(ctx, _NEW_BUFFERS);
+}
+
+
+/**
+ * Called via glDrawBuffer.
+ */
+static void
+st_DrawBuffers(GLcontext *ctx, GLsizei count, const GLenum *buffers)
+{
+   (void) count;
+   (void) buffers;
+   check_create_front_buffers(ctx, ctx->DrawBuffer);
+}
+
+
+/**
+ * Called via glReadBuffer.
+ */
+static void
+st_ReadBuffer(GLcontext *ctx, GLenum buffer)
+{
+   (void) buffer;
+   check_create_front_buffers(ctx, ctx->ReadBuffer);
+}
+
+
 void st_init_fbo_functions(struct dd_function_table *functions)
 {
    functions->NewFramebuffer = st_new_framebuffer;
@@ -464,4 +562,7 @@ void st_init_fbo_functions(struct dd_function_table *functions)
    /* no longer needed by core Mesa, drivers handle resizes...
    functions->ResizeBuffers = st_resize_buffers;
    */
+
+   functions->DrawBuffers = st_DrawBuffers;
+   functions->ReadBuffer = st_ReadBuffer;
 }

@@ -58,19 +58,19 @@ st_create_framebuffer( const __GLcontextModes *visual,
 
       _mesa_initialize_framebuffer(&stfb->Base, visual);
 
-      {
-         /* fake frontbuffer */
-         /* XXX allocation should only happen in the unusual case
-            it's actually needed */
-         struct gl_renderbuffer *rb
-            = st_new_renderbuffer_fb(colorFormat, samples);
-         _mesa_add_renderbuffer(&stfb->Base, BUFFER_FRONT_LEFT, rb);
-      }
-
       if (visual->doubleBufferMode) {
          struct gl_renderbuffer *rb
             = st_new_renderbuffer_fb(colorFormat, samples);
          _mesa_add_renderbuffer(&stfb->Base, BUFFER_BACK_LEFT, rb);
+      }
+      else {
+         /* Only allocate front buffer right now if we're single buffered.
+          * If double-buffered, allocate front buffer on demand later.
+          * See check_create_front_buffers().
+          */
+         struct gl_renderbuffer *rb
+            = st_new_renderbuffer_fb(colorFormat, samples);
+         _mesa_add_renderbuffer(&stfb->Base, BUFFER_FRONT_LEFT, rb);
       }
 
       if (depthFormat == stencilFormat && depthFormat != PIPE_FORMAT_NONE) {
