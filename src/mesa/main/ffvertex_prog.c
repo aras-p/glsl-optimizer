@@ -319,7 +319,7 @@ static void make_state_key( GLcontext *ctx, struct state_key *key )
  * multiplications with DP4's or with MUL/MAD's?  SSE works better
  * with the latter, drivers may differ.
  */
-#define PREFER_DP4 0
+#define PREFER_DP4 1
 
 
 /* Use uregs to represent registers internally, translate to Mesa's
