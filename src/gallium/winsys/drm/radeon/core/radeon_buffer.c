@@ -175,8 +175,7 @@ struct radeon_winsys* radeon_pipe_winsys(int fd)
         return NULL;
     }
 
-    bom = radeon_bo_manager_gem_ctor(fd);
-    radeon_ws->priv->bom = bom;
+    radeon_ws->priv->bom = radeon_bo_manager_gem_ctor(fd);
 
     radeon_ws->base.flush_frontbuffer = radeon_flush_frontbuffer;
 

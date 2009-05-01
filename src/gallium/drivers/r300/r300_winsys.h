@@ -42,11 +42,6 @@ struct r300_winsys {
     /* Opaque Radeon-specific winsys object. */
     void* radeon_winsys;
 
-    /* CS object. This is very much like Intel's batchbuffer.
-     * Fill it full of dwords and relocs and then submit.
-     * Repeat as needed. */
-    struct radeon_cs* cs;
-
     /* PCI ID */
     uint32_t pci_id;
 

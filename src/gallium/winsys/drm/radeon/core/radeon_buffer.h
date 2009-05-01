@@ -60,6 +60,12 @@ struct radeon_winsys_priv {
     struct radeon_cs_space_check sc[RADEON_MAX_BOS];
     /* Current BO count. */
     unsigned bo_count;
+
+    /* Radeon CS manager. */
+    struct radeon_cs_manager* csm;
+
+    /* Current CS. */
+    struct radeon_cs* cs;
 };
 
 struct radeon_winsys {
