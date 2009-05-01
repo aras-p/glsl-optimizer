@@ -583,7 +583,7 @@ DrvSwapLayerBuffers(
    if (DBG)
       debug_printf( "%s\n", __FUNCTION__ );
 
-   return FALSE;
+   return stw_swap_layer_buffers( hdc, fuPlanes );
 }
 
 BOOL APIENTRY

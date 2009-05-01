@@ -50,6 +50,9 @@ BOOL stw_make_current( HDC hdc, UINT_PTR hglrc );
 
 BOOL stw_swap_buffers( HDC hdc );
 
+BOOL
+stw_swap_layer_buffers( HDC hdc, UINT fuPlanes );
+
 PROC stw_get_proc_address( LPCSTR lpszProc );
 
 int stw_pixelformat_describe( HDC hdc,
