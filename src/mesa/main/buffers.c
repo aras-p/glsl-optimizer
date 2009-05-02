@@ -443,7 +443,7 @@ _mesa_readbuffer(GLcontext *ctx, GLenum buffer, GLint bufferIndex)
    fb->ColorReadBuffer = buffer;
    fb->_ColorReadBufferIndex = bufferIndex;
 
-   ctx->NewState |= _NEW_PIXEL;
+   ctx->NewState |= _NEW_BUFFERS;
 }
 
 

@@ -157,7 +157,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    /* Do this here, not core Mesa, since this function is called from
     * many places within the driver.
     */
-   if (ctx->NewState & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
+   if (ctx->NewState & _NEW_BUFFERS) {
       /* this updates the DrawBuffer->_NumColorDrawBuffers fields, etc */
       _mesa_update_framebuffer(ctx);
       /* this updates the DrawBuffer's Width/Height if it's a FBO */

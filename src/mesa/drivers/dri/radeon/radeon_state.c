@@ -2255,7 +2255,7 @@ void radeonValidateState( GLcontext *ctx )
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    GLuint new_state = rmesa->NewGLState;
 
-   if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
+   if (new_state & _NEW_BUFFERS) {
      radeonUpdateDrawBuffer(ctx);
    }
 
