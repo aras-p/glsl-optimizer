@@ -412,6 +412,11 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	if (r300->radeon.radeonScreen->kernel_mm)
 	  driInitExtensions(ctx, mm_extensions, GL_FALSE);
 
+	if (screen->chip_family == CHIP_FAMILY_RS600 ||	screen->chip_family == CHIP_FAMILY_RS690 ||
+		screen->chip_family == CHIP_FAMILY_RS740) {
+		r300->radeon.texture_row_align = 64;
+	}
+
 	r300->radeon.initialMaxAnisotropy = driQueryOptionf(&r300->radeon.optionCache,
 						     "def_max_anisotropy");
 

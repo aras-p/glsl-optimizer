@@ -421,6 +421,7 @@ struct radeon_context {
     */
    int                   texture_depth;
    float                 initialMaxAnisotropy;
+   uint32_t              texture_row_align;
 
   struct radeon_dma dma;
   struct radeon_hw_state hw;

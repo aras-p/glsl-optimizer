@@ -86,10 +86,11 @@ static int radeon_compressed_num_bytes(GLuint mesaFormat)
  * \param curOffset points to the offset at which the image is to be stored
  * and is updated by this function according to the size of the image.
  */
-static void compute_tex_image_offset(radeon_mipmap_tree *mt,
+static void compute_tex_image_offset(radeonContextPtr rmesa, radeon_mipmap_tree *mt,
 	GLuint face, GLuint level, GLuint* curOffset)
 {
 	radeon_mipmap_level *lvl = &mt->levels[level];
+	uint32_t row_align = rmesa->texture_row_align - 1;
 
 	/* Find image size in bytes */
 	if (mt->compressed) {
@@ -107,7 +108,7 @@ static void compute_tex_image_offset(radeon_mipmap_tree *mt,
 		lvl->rowstride = (lvl->width * mt->bpp * 2 + 31) & ~31;
 		lvl->size = lvl->rowstride * ((lvl->height + 1) / 2) * lvl->depth;
 	} else {
-		lvl->rowstride = (lvl->width * mt->bpp + 31) & ~31;
+		lvl->rowstride = (lvl->width * mt->bpp + row_align) & ~row_align;
 		lvl->size = lvl->rowstride * lvl->height * lvl->depth;
 	}
 	assert(lvl->size > 0);
@@ -131,7 +132,7 @@ static GLuint minify(GLuint size, GLuint levels)
 	return size;
 }
 
-static void calculate_miptree_layout(radeon_mipmap_tree *mt)
+static void calculate_miptree_layout(radeonContextPtr rmesa, radeon_mipmap_tree *mt)
 {
 	GLuint curOffset;
 	GLuint numLevels;
@@ -149,7 +150,7 @@ static void calculate_miptree_layout(radeon_mipmap_tree *mt)
 		mt->levels[i].depth = minify(mt->depth0, i);
 
 		for(face = 0; face < mt->faces; face++)
-			compute_tex_image_offset(mt, face, i, &curOffset);
+			compute_tex_image_offset(rmesa, mt, face, i, &curOffset);
 	}
 
 	/* Note the required size in memory */
@@ -181,7 +182,7 @@ radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa, radeonTexObj *
 	mt->tilebits = tilebits;
 	mt->compressed = compressed;
 
-	calculate_miptree_layout(mt);
+	calculate_miptree_layout(rmesa, mt);
 
 	mt->bo = radeon_bo_open(rmesa->radeonScreen->bom,
                             0, mt->totalsize, 1024,
