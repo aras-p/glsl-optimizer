@@ -55,9 +55,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "radeon_reg.h"
 
-#define R300_VAP_PVS_UPLOAD_ADDRESS 0x2200
-#   define RADEON_ONE_REG_WR        (1 << 15)
-
 /** # of dwords reserved for additional instructions that may need to be written
  * during flushing.
  */
@@ -71,7 +68,6 @@ static unsigned packet0_count(r300ContextPtr r300, uint32_t *pkt)
         drm_r300_cmd_header_t *t = (drm_r300_cmd_header_t*)pkt;
         return t->packet0.count;
     }
-    return 0;
 }
 
 #define vpu_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
@@ -111,7 +107,7 @@ void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom)
 		} else {
 			BEGIN_BATCH_NO_AUTOSTATE(5 + ndw);
 		}
-		OUT_BATCH_REGVAL(R300_VAP_PVS_UPLOAD_ADDRESS, addr);
+		OUT_BATCH_REGVAL(R300_VAP_PVS_VECTOR_INDX_REG, addr);
 		OUT_BATCH(CP_PACKET0(R300_VAP_PVS_UPLOAD_DATA, ndw-1) | RADEON_ONE_REG_WR);
 		for (i = 0; i < ndw; i++) {
 			OUT_BATCH(atom->cmd[i+1]);

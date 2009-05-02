@@ -53,6 +53,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "shader/prog_statevars.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
+#include "tnl/t_vp_build.h"
 
 #include "r300_context.h"
 #include "r300_ioctl.h"
@@ -2465,24 +2466,6 @@ static void r300RenderMode(GLcontext * ctx, GLenum mode)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	(void)rmesa;
 	(void)mode;
-}
-
-void r300UpdateClipPlanes( GLcontext *ctx )
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	GLuint p;
-
-	for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
-		if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
-			GLint *ip = (GLint *)ctx->Transform._ClipUserPlane[p];
-
-			R300_STATECHANGE( rmesa, vpucp[p] );
-			rmesa->hw.vpucp[p].cmd[R300_VPUCP_X] = ip[0];
-			rmesa->hw.vpucp[p].cmd[R300_VPUCP_Y] = ip[1];
-			rmesa->hw.vpucp[p].cmd[R300_VPUCP_Z] = ip[2];
-			rmesa->hw.vpucp[p].cmd[R300_VPUCP_W] = ip[3];
-		}
-	}
 }
 
 /**

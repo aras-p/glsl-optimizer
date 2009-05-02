@@ -3178,6 +3178,9 @@ enum {
 #   define R300_W_SRC_RAS				(1 << 2)
 
 
+/* Packet0 field ordering to write all values to the same reg */
+#define RADEON_ONE_REG_WR        (1 << 15)
+
 /* Draw a primitive from vertex data in arrays loaded via 3D_LOAD_VBPNTR.
  * Two parameter dwords:
  * 0. VAP_VTX_FMT: The first parameter is not written to hardware
