@@ -345,6 +345,7 @@ st_render_texture(GLcontext *ctx,
                   struct gl_framebuffer *fb,
                   struct gl_renderbuffer_attachment *att)
 {
+   struct pipe_screen *screen = ctx->st->pipe->screen;
    struct st_renderbuffer *strb;
    struct gl_renderbuffer *rb;
    struct pipe_texture *pt = st_get_texobj_texture(att->Texture);
@@ -367,6 +368,8 @@ st_render_texture(GLcontext *ctx,
    rb->AllocStorage = NULL; /* should not get called */
    strb = st_renderbuffer(rb);
 
+   assert(strb->Base.RefCount > 0);
+
    /* get the texture for the texture object */
    stObj = st_texture_object(att->Texture);
 
@@ -386,7 +389,14 @@ st_render_texture(GLcontext *ctx,
 
    pipe_surface_reference(&strb->surface, NULL);
 
-   /* the new surface will be created during framebuffer validation */
+   /* new surface for rendering into the texture */
+   strb->surface = screen->get_tex_surface(screen,
+                                           strb->texture,
+                                           strb->rtt_face,
+                                           strb->rtt_level,
+                                           strb->rtt_slice,
+                                           PIPE_BUFFER_USAGE_GPU_READ |
+                                           PIPE_BUFFER_USAGE_GPU_WRITE);
 
    init_renderbuffer_bits(strb, pt->format);
 
