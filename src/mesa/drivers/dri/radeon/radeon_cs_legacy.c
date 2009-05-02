@@ -261,14 +261,6 @@ static int cs_set_age(struct radeon_cs *cs)
     return 0;
 }
 
-static void dump_cmdbuf(struct radeon_cs *cs)
-{
-  int i;
-  for (i = 0; i < cs->cdw; i++){
-    fprintf(stderr,"%x: %08x\n", i, cs->packets[i]);
-  }
-
-}
 static int cs_emit(struct radeon_cs *cs)
 {
     struct cs_manager_legacy *csm = (struct cs_manager_legacy*)cs->csm;

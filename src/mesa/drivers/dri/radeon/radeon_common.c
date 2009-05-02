@@ -62,6 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/bufferobj.h"
 #include "main/buffers.h"
 #include "main/depth.h"
+#include "main/polygon.h"
 #include "main/shaders.h"
 #include "main/texstate.h"
 #include "main/varray.h"

@@ -38,6 +38,7 @@
 #include "main/texstore.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
+#include "main/texgetimage.h"
 
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
