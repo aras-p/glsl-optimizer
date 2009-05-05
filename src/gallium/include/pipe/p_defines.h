@@ -132,6 +132,7 @@ enum pipe_texture_target {
 #define PIPE_TEX_FACE_NEG_Y 3
 #define PIPE_TEX_FACE_POS_Z 4
 #define PIPE_TEX_FACE_NEG_Z 5
+#define PIPE_TEX_FACE_MAX   6
 
 #define PIPE_TEX_WRAP_REPEAT                   0
 #define PIPE_TEX_WRAP_CLAMP                    1
@@ -157,14 +158,6 @@ enum pipe_texture_target {
 
 #define PIPE_TEX_COMPARE_NONE          0
 #define PIPE_TEX_COMPARE_R_TO_TEXTURE  1
-
-#define PIPE_TEX_FACE_POS_X   0
-#define PIPE_TEX_FACE_NEG_X   1
-#define PIPE_TEX_FACE_POS_Y   2
-#define PIPE_TEX_FACE_NEG_Y   3
-#define PIPE_TEX_FACE_POS_Z   4
-#define PIPE_TEX_FACE_NEG_Z   5
-#define PIPE_TEX_FACE_MAX     6
 
 #define PIPE_TEXTURE_USAGE_RENDER_TARGET   0x1
 #define PIPE_TEXTURE_USAGE_DISPLAY_TARGET  0x2 /* ie a backbuffer */
