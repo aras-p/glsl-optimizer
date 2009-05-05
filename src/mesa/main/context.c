@@ -1522,4 +1522,17 @@ _mesa_Flush(void)
 }
 
 
+/**
+ * Set mvp_with_dp4 flag.  If a driver has a preference for DP4 over
+ * MUL/MAD, or vice versa, call this function to register that.
+ * Otherwise we default to MUL/MAD.
+ */
+void
+_mesa_set_mvp_with_dp4( GLcontext *ctx,
+                        GLboolean flag )
+{
+   ctx->mvp_with_dp4 = flag;
+}
+
+
 /*@}*/

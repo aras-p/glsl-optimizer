@@ -151,6 +151,10 @@ extern struct _glapi_table *
 _mesa_get_dispatch(GLcontext *ctx);
 
 
+void
+_mesa_set_mvp_with_dp4( GLcontext *ctx,
+                        GLboolean flag );
+
 
 /** \name Miscellaneous */
 /*@{*/
