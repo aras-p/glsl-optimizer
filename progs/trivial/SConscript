@@ -143,6 +143,7 @@ progs = [
 	'vp-clip',
 	'vp-line-clip',
 	'vp-tri',
+	'vp-tri-invariant',
 	'vp-tri-swap',
 	'vp-tri-tex',
 	'vp-tri-imm',

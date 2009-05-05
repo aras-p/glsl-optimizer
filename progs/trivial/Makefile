@@ -147,6 +147,7 @@ SOURCES = \
 	vp-clip.c \
 	vp-line-clip.c \
 	vp-tri.c \
+	vp-tri-invariant.c \
 	vp-tri-swap.c \
 	vp-tri-tex.c \
 	vp-tri-imm.c \
