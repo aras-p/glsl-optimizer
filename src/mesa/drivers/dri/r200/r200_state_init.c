@@ -505,6 +505,8 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
      dwords += 6;
    if (rrb)
      dwords += 6;
+   if (atom->cmd_size == CTX_STATE_SIZE_NEWDRM)
+     dwords += 4;
 
    /* output the first 7 bytes of context */
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
