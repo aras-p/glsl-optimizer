@@ -31,7 +31,8 @@ nv04_miptree_layout(struct nv04_miptree *nv04mt)
 
 	for (l = 0; l <= pt->last_level; l++) {
 
-		nv04mt->level[l].image_offset = offset;
+		nv04mt->level[l].image_offset = 
+			CALLOC(nr_faces, sizeof(unsigned));
 		offset += nv04mt->level[l].pitch * pt->height[l];
 	}
 
