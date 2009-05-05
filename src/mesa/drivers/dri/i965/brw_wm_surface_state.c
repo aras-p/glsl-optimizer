@@ -396,6 +396,14 @@ brw_update_wm_constant_surface( GLcontext *ctx,
    struct brw_surface_key key;
    struct intel_context *intel = &brw->intel;
    const int size = params->NumParameters * 4 * sizeof(GLfloat);
+   struct brw_fragment_program *fp =
+      (struct brw_fragment_program *) brw->fragment_program;
+
+   if (!fp->use_const_buffer) {
+      dri_bo_unreference(const_buffer);
+      brw->wm.surf_bo[surf] = NULL;
+      return NULL;
+   }
 
    /* free old const buffer if too small */
    if (const_buffer && const_buffer->size < size) {
@@ -455,6 +463,8 @@ brw_update_vs_constant_surface( GLcontext *ctx,
    struct brw_surface_key key;
    struct intel_context *intel = &brw->intel;
    const int size = params->NumParameters * 4 * sizeof(GLfloat);
+   struct brw_vertex_program *vp =
+      (struct brw_vertex_program *) brw->vertex_program;
 
    assert(surf == 0);
 
@@ -462,6 +472,11 @@ brw_update_vs_constant_surface( GLcontext *ctx,
     * in flight at a time.  Free the old one first...
     */
    dri_bo_unreference(const_buffer);
+
+   if (!vp->use_const_buffer) {
+      brw->vs.surf_bo[surf] = NULL;
+      return NULL;
+   }
 
    /* alloc new buffer */
    const_buffer =
@@ -703,7 +718,8 @@ static void prepare_wm_surfaces(struct brw_context *brw )
          brw_update_wm_constant_surface(ctx, surf, fp->const_buffer,
                                      fp->program.Base.Parameters);
 
-      brw->wm.nr_surfaces = surf + 1;
+      if (fp->const_buffer != NULL)
+	 brw->wm.nr_surfaces = surf + 1;
    }
 
    /* Update surfaces for textures */
