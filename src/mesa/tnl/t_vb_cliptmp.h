@@ -127,7 +127,7 @@ TAG(clip_line)( GLcontext *ctx, GLuint v0, GLuint v1, GLubyte mask )
    GLuint p;
    const GLuint v0_orig = v0;
 
-   if (mask & 0x3f) {
+   if (mask & CLIP_FRUSTUM_BITS) {
       LINE_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
       LINE_CLIP( CLIP_LEFT_BIT,    1,  0,  0, 1 );
       LINE_CLIP( CLIP_TOP_BIT,     0, -1,  0, 1 );
@@ -199,7 +199,7 @@ TAG(clip_tri)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask )
 
    ASSIGN_3V(inlist, v2, v0, v1 ); /* pv rotated to slot zero */
 
-   if (mask & 0x3f) {
+   if (mask & CLIP_FRUSTUM_BITS) {
       POLY_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
       POLY_CLIP( CLIP_LEFT_BIT,    1,  0,  0, 1 );
       POLY_CLIP( CLIP_TOP_BIT,     0, -1,  0, 1 );
@@ -250,7 +250,7 @@ TAG(clip_quad)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
 
    ASSIGN_4V(inlist, v3, v0, v1, v2 ); /* pv rotated to slot zero */
 
-   if (mask & 0x3f) {
+   if (mask & CLIP_FRUSTUM_BITS) {
       POLY_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
       POLY_CLIP( CLIP_LEFT_BIT,    1,  0,  0, 1 );
       POLY_CLIP( CLIP_TOP_BIT,     0, -1,  0, 1 );
