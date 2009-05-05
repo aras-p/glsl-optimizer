@@ -1073,6 +1073,15 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
    screen->kernel_mm = 1;
    screen->chip_flags = 0;
 
+   /* if we have kms we can support all of these */
+   screen->drmSupportsCubeMapsR200 = 1;
+   screen->drmSupportsBlendColor = 1;
+   screen->drmSupportsTriPerf = 1;
+   screen->drmSupportsFragShader = 1;
+   screen->drmSupportsPointSprites = 1;
+   screen->drmSupportsCubeMapsR100 = 1;
+   screen->drmSupportsVertexProgram = 1;
+
    ret = radeonGetParam(sPriv, RADEON_PARAM_IRQ_NR, &screen->irq);
 
    ret = radeonGetParam(sPriv, RADEON_PARAM_DEVICE_ID, &device_id);
