@@ -595,7 +595,6 @@ static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
 		hastexture = 0;
    }
 
-   dwords += 2;
    if (hastexture)
      dwords += 2;
    else
