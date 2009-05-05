@@ -557,17 +557,12 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    if (t && t->mt && !t->image_override)
      dwords += 2;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   /* is this ok even with drm older than 1.18? */
    OUT_BATCH_TABLE(atom->cmd, 10);
 
    if (t && t->mt && !t->image_override) {
-     if ((ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT)) {
-   	lvl = &t->mt->levels[0];
-	OUT_BATCH_RELOC(lvl->faces[5].offset, t->mt->bo, lvl->faces[5].offset,
-			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-     } else {
-        OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
-		     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-     }
+     OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+		  RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
    } else if (!t) {
      /* workaround for old CS mechanism */
      OUT_BATCH(r200->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP]);
@@ -607,14 +602,8 @@ static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    if (hastexture) {
      OUT_BATCH(CP_PACKET0(R200_PP_TXOFFSET_0 + (24 * i), 0));
      if (t->mt && !t->image_override) {
-        if ((ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT)) {
-            lvl = &t->mt->levels[0];
-	    OUT_BATCH_RELOC(lvl->faces[5].offset, t->mt->bo, lvl->faces[5].offset,
-			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-        } else {
-           OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
-		     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-        }
+        OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+		  RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
       } else {
 	if (t->bo)
             OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
@@ -630,20 +619,19 @@ static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    r200ContextPtr r200 = R200_CONTEXT(ctx);
    BATCH_LOCALS(&r200->radeon);
    uint32_t dwords = atom->cmd_size;
-   int i = atom->idx;
+   int i = atom->idx, j;
    radeonTexObj *t = r200->state.texture.unit[i].texobj;
-   GLuint size;
+   radeon_mipmap_level *lvl;
 
    BEGIN_BATCH_NO_AUTOSTATE(dwords + (2 * 5));
    OUT_BATCH_TABLE(atom->cmd, 3);
 
    if (t && !t->image_override) {
-     size = t->mt->totalsize / 6;
-     OUT_BATCH_RELOC(0, t->mt->bo, size, RADEON_GEM_DOMAIN_VRAM, 0, 0);
-     OUT_BATCH_RELOC(0, t->mt->bo, size * 2, RADEON_GEM_DOMAIN_VRAM, 0, 0);
-     OUT_BATCH_RELOC(0, t->mt->bo, size * 3, RADEON_GEM_DOMAIN_VRAM, 0, 0);
-     OUT_BATCH_RELOC(0, t->mt->bo, size * 4, RADEON_GEM_DOMAIN_VRAM, 0, 0);
-     OUT_BATCH_RELOC(0, t->mt->bo, size * 5, RADEON_GEM_DOMAIN_VRAM, 0, 0);
+     lvl = &t->mt->levels[0];
+     for (j = 1; j <= 5; j++) {
+       OUT_BATCH_RELOC(lvl->faces[j].offset, t->mt->bo, lvl->faces[j].offset,
+			RADEON_GEM_DOMAIN_VRAM, 0, 0);
+     }
    }
    END_BATCH();
 }
