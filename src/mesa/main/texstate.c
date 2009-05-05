@@ -561,13 +561,19 @@ update_texture_state( GLcontext *ctx )
       }
 
       if (!texUnit->_ReallyEnabled) {
-         /* If we get here it means the shader (or fixed-function state)
-          * is expecting a texture object, but there isn't one (or it's
-          * incomplete).  Use the fallback texture.
-          */
-         struct gl_texture_object *texObj = _mesa_get_fallback_texture(ctx);
-         texUnit->_ReallyEnabled = 1 << TEXTURE_2D_INDEX;
-         _mesa_reference_texobj(&texUnit->_Current, texObj);
+         if (fprog) {
+            /* If we get here it means the shader is expecting a texture
+             * object, but there isn't one (or it's incomplete).  Use the
+             * fallback texture.
+             */
+            struct gl_texture_object *texObj = _mesa_get_fallback_texture(ctx);
+            texUnit->_ReallyEnabled = 1 << TEXTURE_2D_INDEX;
+            _mesa_reference_texobj(&texUnit->_Current, texObj);
+         }
+         else {
+            /* fixed-function: texture unit is really disabled */
+            continue;
+         }
       }
 
       /* if we get here, we know this texture unit is enabled */
