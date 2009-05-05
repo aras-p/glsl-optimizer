@@ -2980,6 +2980,12 @@ struct __GLcontextRec
    /** software compression/decompression supported or not */
    GLboolean Mesa_DXTn;
 
+   /** 
+    * Use dp4 (rather than mul/mad) instructions for position
+    * transformation?
+    */
+   GLboolean mvp_with_dp4;
+
    /** Core tnl module support */
    struct gl_tnl_module TnlModule;
 
