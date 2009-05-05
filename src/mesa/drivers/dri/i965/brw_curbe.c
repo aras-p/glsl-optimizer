@@ -363,20 +363,6 @@ update_constant_buffer(struct brw_context *brw,
 }
 
 
-/** Copy current vertex program's parameters into the constant buffer */
-static void
-update_vertex_constant_buffer(struct brw_context *brw)
-{
-   struct brw_vertex_program *vp =
-      (struct brw_vertex_program *) brw->vertex_program;
-   if (0) {
-      printf("update VS constants in buffer %p  vp = %p\n", vp->const_buffer, vp);
-      printf("program %u\n", vp->program.Base.Id);
-   }
-   if (vp->use_const_buffer)
-      update_constant_buffer(brw, vp->program.Base.Parameters, vp->const_buffer);
-}
-
 
 /** Copy current fragment program's parameters into the constant buffer */
 static void
@@ -398,7 +384,6 @@ static void emit_constant_buffer(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    GLuint sz = brw->curbe.total_size;
 
-   update_vertex_constant_buffer(brw);
    update_fragment_constant_buffer(brw);
 
    BEGIN_BATCH(2, IGNORE_CLIPRECTS);

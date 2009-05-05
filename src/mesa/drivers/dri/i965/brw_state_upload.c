@@ -62,7 +62,8 @@ const struct brw_tracked_state *atoms[] =
    &brw_cc_vp,
    &brw_cc_unit,
 
-   &brw_wm_surfaces,		/* must do before samplers */
+   &brw_vs_surfaces,		/* must do before unit */
+   &brw_wm_surfaces,		/* must do before samplers and unit */
    &brw_wm_samplers,
 
    &brw_wm_unit,
