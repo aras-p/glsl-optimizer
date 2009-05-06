@@ -69,17 +69,18 @@ update_separate_specular(GLcontext *ctx)
 static void
 update_arrays( GLcontext *ctx )
 {
+   const struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    GLuint i, min;
 
    /* find min of _MaxElement values for all enabled arrays */
 
    /* 0 */
    if (ctx->VertexProgram._Current
-       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POS].Enabled) {
-      min = ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POS]._MaxElement;
+       && arrayObj->VertexAttrib[VERT_ATTRIB_POS].Enabled) {
+      min = arrayObj->VertexAttrib[VERT_ATTRIB_POS]._MaxElement;
    }
-   else if (ctx->Array.ArrayObj->Vertex.Enabled) {
-      min = ctx->Array.ArrayObj->Vertex._MaxElement;
+   else if (arrayObj->Vertex.Enabled) {
+      min = arrayObj->Vertex._MaxElement;
    }
    else {
       /* can't draw anything without vertex positions! */
@@ -88,86 +89,86 @@ update_arrays( GLcontext *ctx )
 
    /* 1 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_WEIGHT].Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_WEIGHT]._MaxElement);
+       && arrayObj->VertexAttrib[VERT_ATTRIB_WEIGHT].Enabled) {
+      min = MIN2(min, arrayObj->VertexAttrib[VERT_ATTRIB_WEIGHT]._MaxElement);
    }
    /* no conventional vertex weight array */
 
    /* 2 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_NORMAL].Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_NORMAL]._MaxElement);
+       && arrayObj->VertexAttrib[VERT_ATTRIB_NORMAL].Enabled) {
+      min = MIN2(min, arrayObj->VertexAttrib[VERT_ATTRIB_NORMAL]._MaxElement);
    }
-   else if (ctx->Array.ArrayObj->Normal.Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->Normal._MaxElement);
+   else if (arrayObj->Normal.Enabled) {
+      min = MIN2(min, arrayObj->Normal._MaxElement);
    }
 
    /* 3 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR0].Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR0]._MaxElement);
+       && arrayObj->VertexAttrib[VERT_ATTRIB_COLOR0].Enabled) {
+      min = MIN2(min, arrayObj->VertexAttrib[VERT_ATTRIB_COLOR0]._MaxElement);
    }
-   else if (ctx->Array.ArrayObj->Color.Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->Color._MaxElement);
+   else if (arrayObj->Color.Enabled) {
+      min = MIN2(min, arrayObj->Color._MaxElement);
    }
 
    /* 4 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR1]._MaxElement);
+       && arrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled) {
+      min = MIN2(min, arrayObj->VertexAttrib[VERT_ATTRIB_COLOR1]._MaxElement);
    }
-   else if (ctx->Array.ArrayObj->SecondaryColor.Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->SecondaryColor._MaxElement);
+   else if (arrayObj->SecondaryColor.Enabled) {
+      min = MIN2(min, arrayObj->SecondaryColor._MaxElement);
    }
 
    /* 5 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_FOG].Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_FOG]._MaxElement);
+       && arrayObj->VertexAttrib[VERT_ATTRIB_FOG].Enabled) {
+      min = MIN2(min, arrayObj->VertexAttrib[VERT_ATTRIB_FOG]._MaxElement);
    }
-   else if (ctx->Array.ArrayObj->FogCoord.Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->FogCoord._MaxElement);
+   else if (arrayObj->FogCoord.Enabled) {
+      min = MIN2(min, arrayObj->FogCoord._MaxElement);
    }
 
    /* 6 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX]._MaxElement);
+       && arrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled) {
+      min = MIN2(min, arrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX]._MaxElement);
    }
-   else if (ctx->Array.ArrayObj->Index.Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->Index._MaxElement);
+   else if (arrayObj->Index.Enabled) {
+      min = MIN2(min, arrayObj->Index._MaxElement);
    }
 
 
    /* 7 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG]._MaxElement);
+       && arrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled) {
+      min = MIN2(min, arrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG]._MaxElement);
    }
 
    /* 8..15 */
    for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++) {
       if (ctx->VertexProgram._Enabled
-          && ctx->Array.ArrayObj->VertexAttrib[i].Enabled) {
-         min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[i]._MaxElement);
+          && arrayObj->VertexAttrib[i].Enabled) {
+         min = MIN2(min, arrayObj->VertexAttrib[i]._MaxElement);
       }
       else if (i - VERT_ATTRIB_TEX0 < ctx->Const.MaxTextureCoordUnits
-               && ctx->Array.ArrayObj->TexCoord[i - VERT_ATTRIB_TEX0].Enabled) {
-         min = MIN2(min, ctx->Array.ArrayObj->TexCoord[i - VERT_ATTRIB_TEX0]._MaxElement);
+               && arrayObj->TexCoord[i - VERT_ATTRIB_TEX0].Enabled) {
+         min = MIN2(min, arrayObj->TexCoord[i - VERT_ATTRIB_TEX0]._MaxElement);
       }
    }
 
    /* 16..31 */
    if (ctx->VertexProgram._Current) {
       for (i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++) {
-         if (ctx->Array.ArrayObj->VertexAttrib[i].Enabled) {
-            min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[i]._MaxElement);
+         if (arrayObj->VertexAttrib[i].Enabled) {
+            min = MIN2(min, arrayObj->VertexAttrib[i]._MaxElement);
          }
       }
    }
 
-   if (ctx->Array.ArrayObj->EdgeFlag.Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->EdgeFlag._MaxElement);
+   if (arrayObj->EdgeFlag.Enabled) {
+      min = MIN2(min, arrayObj->EdgeFlag._MaxElement);
    }
 
    /* _MaxElement is one past the last legal array element */
