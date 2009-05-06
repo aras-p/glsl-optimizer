@@ -389,7 +389,6 @@ _mesa_buffer_map( GLcontext *ctx, GLenum target, GLenum access,
    (void) ctx;
    (void) target;
    (void) access;
-   ASSERT(!bufObj->OnCard);
    /* Just return a direct pointer to the data */
    if (bufObj->Pointer) {
       /* already mapped! */
@@ -413,7 +412,6 @@ _mesa_buffer_unmap( GLcontext *ctx, GLenum target,
 {
    (void) ctx;
    (void) target;
-   ASSERT(!bufObj->OnCard);
    /* XXX we might assert here that bufObj->Pointer is non-null */
    bufObj->Pointer = NULL;
    return GL_TRUE;

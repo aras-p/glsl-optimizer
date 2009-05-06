@@ -1505,7 +1505,6 @@ struct gl_buffer_object
    GLsizeiptr Length;        /**< mapped length */
    GLsizeiptrARB Size;       /**< Size of storage in bytes */
    GLubyte *Data;            /**< Location of storage either in RAM or VRAM. */
-   GLboolean OnCard;         /**< Is buffer in VRAM? (hardware drivers) */
    GLboolean Written;        /**< Ever written to? (for debugging) */
 };
 
