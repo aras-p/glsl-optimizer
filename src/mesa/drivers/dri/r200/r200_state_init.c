@@ -618,17 +618,18 @@ static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 {
    r200ContextPtr r200 = R200_CONTEXT(ctx);
    BATCH_LOCALS(&r200->radeon);
-   uint32_t dwords = atom->cmd_size;
+   uint32_t dwords = 2;
    int i = atom->idx, j;
    radeonTexObj *t = r200->state.texture.unit[i].texobj;
    radeon_mipmap_level *lvl;
 
-   BEGIN_BATCH_NO_AUTOSTATE(dwords + (2 * 5));
-   OUT_BATCH_TABLE(atom->cmd, 3);
+   BEGIN_BATCH_NO_AUTOSTATE(dwords + (4 * 5));
+   OUT_BATCH_TABLE(atom->cmd, 2);
 
    if (t && !t->image_override) {
      lvl = &t->mt->levels[0];
      for (j = 1; j <= 5; j++) {
+       OUT_BATCH(CP_PACKET0(R200_PP_CUBIC_OFFSET_F1_0 + (24*i) + (4 * (j-1)), 0));
        OUT_BATCH_RELOC(lvl->faces[j].offset, t->mt->bo, lvl->faces[j].offset,
 			RADEON_GEM_DOMAIN_VRAM, 0, 0);
      }
