@@ -730,8 +730,7 @@ const struct brw_tracked_state brw_wm_surfaces = {
    .dirty = {
       .mesa = (_NEW_COLOR |
                _NEW_TEXTURE |
-               _NEW_BUFFERS |
-               _NEW_PROGRAM),
+               _NEW_BUFFERS),
       .brw = (BRW_NEW_CONTEXT |
 	      BRW_NEW_WM_SURFACES),
       .cache = 0
