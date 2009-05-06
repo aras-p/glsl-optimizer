@@ -102,6 +102,7 @@ _mesa_vector4f_alloc( GLvector4f *v, GLuint flags, GLuint count,
    v->stride = 4 * sizeof(GLfloat);
    v->size = 2;
    v->storage = ALIGN_MALLOC( count * 4 * sizeof(GLfloat), alignment );
+   v->storage_count = count;
    v->start = (GLfloat *) v->storage;
    v->data = (GLfloat (*)[4]) v->storage;
    v->count = 0;

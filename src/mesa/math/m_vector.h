@@ -67,6 +67,7 @@ typedef struct {
    GLuint size;		/**< 2-4 for vertices and 1-4 for texcoords */
    GLuint flags;	/**< which columns are dirty */
    void *storage;	/**< self-allocated storage */
+   GLuint storage_count; /**< storage size in elements */
 } GLvector4f;
 
 
