@@ -2619,6 +2619,7 @@ struct gl_matrix_stack
 #define _NEW_PROGRAM            0x8000000  /**< __GLcontextRec::VertexProgram */
 #define _NEW_CURRENT_ATTRIB     0x10000000  /**< __GLcontextRec::Current */
 #define _NEW_PROGRAM_CONSTANTS  0x20000000
+#define _NEW_BUFFER_OBJECT      0x40000000
 #define _NEW_ALL ~0
 /*@}*/
 

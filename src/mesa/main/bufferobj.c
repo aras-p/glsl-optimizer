@@ -958,6 +958,8 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
       bufObj->Pointer = NULL;
    }  
 
+   FLUSH_VERTICES(ctx, _NEW_BUFFER_OBJECT);
+
    ASSERT(ctx->Driver.BufferData);
 
    /* Give the buffer object to the driver!  <data> may be null! */
