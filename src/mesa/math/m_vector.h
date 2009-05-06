@@ -65,15 +65,15 @@ typedef struct {
    GLuint count;	/**< size of the vector (in elements) */
    GLuint stride;	/**< stride from one element to the next (in bytes) */
    GLuint size;		/**< 2-4 for vertices and 1-4 for texcoords */
-   GLuint flags;	/**< which columns are dirty */
+   GLbitfield flags;	/**< bitmask of VEC_x flags */
    void *storage;	/**< self-allocated storage */
    GLuint storage_count; /**< storage size in elements */
 } GLvector4f;
 
 
-extern void _mesa_vector4f_init( GLvector4f *v, GLuint flags,
+extern void _mesa_vector4f_init( GLvector4f *v, GLbitfield flags,
 			      GLfloat (*storage)[4] );
-extern void _mesa_vector4f_alloc( GLvector4f *v, GLuint flags,
+extern void _mesa_vector4f_alloc( GLvector4f *v, GLbitfield flags,
 			       GLuint count, GLuint alignment );
 extern void _mesa_vector4f_free( GLvector4f *v );
 extern void _mesa_vector4f_print( const GLvector4f *v, const GLubyte *, GLboolean );

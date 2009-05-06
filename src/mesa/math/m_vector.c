@@ -77,7 +77,7 @@ static const GLubyte size_bits[5] = {
  * \param storage  pointer to storage for the vector's data
  */
 void
-_mesa_vector4f_init( GLvector4f *v, GLuint flags, GLfloat (*storage)[4] )
+_mesa_vector4f_init( GLvector4f *v, GLbitfield flags, GLfloat (*storage)[4] )
 {
    v->stride = 4 * sizeof(GLfloat);
    v->size = 2;   /* may change: 2-4 for vertices and 1-4 for texcoords */
@@ -96,7 +96,7 @@ _mesa_vector4f_init( GLvector4f *v, GLuint flags, GLfloat (*storage)[4] )
  * \param alignment  desired memory alignment for the data (in bytes)
  */
 void
-_mesa_vector4f_alloc( GLvector4f *v, GLuint flags, GLuint count,
+_mesa_vector4f_alloc( GLvector4f *v, GLbitfield flags, GLuint count,
                       GLuint alignment )
 {
    v->stride = 4 * sizeof(GLfloat);
