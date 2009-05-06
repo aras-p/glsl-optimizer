@@ -962,6 +962,8 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
 
    ASSERT(ctx->Driver.BufferData);
 
+   bufObj->Written = GL_TRUE;
+
    /* Give the buffer object to the driver!  <data> may be null! */
    ctx->Driver.BufferData( ctx, target, size, data, usage, bufObj );
 }
@@ -981,6 +983,8 @@ _mesa_BufferSubDataARB(GLenum target, GLintptrARB offset,
       /* error already recorded */
       return;
    }
+
+   bufObj->Written = GL_TRUE;
 
    ASSERT(ctx->Driver.BufferSubData);
    ctx->Driver.BufferSubData( ctx, target, offset, size, data, bufObj );
@@ -1046,6 +1050,8 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
    }
 
    bufObj->Access = access;
+   if (access == GL_WRITE_ONLY_ARB || access == GL_READ_WRITE_ARB)
+      bufObj->Written = GL_TRUE;
 
    return bufObj->Pointer;
 }
