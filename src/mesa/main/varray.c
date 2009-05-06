@@ -63,6 +63,8 @@ update_array(GLcontext *ctx, struct gl_client_array *array,
    array->StrideB = stride ? stride : elementSize;
    array->Normalized = normalized;
    array->Ptr = (const GLubyte *) ptr;
+   array->_ElementSize = elementSize;
+
 #if FEATURE_ARB_vertex_buffer_object
    _mesa_reference_buffer_object(ctx, &array->BufferObj,
                                  ctx->Array.ArrayBufferObj);
