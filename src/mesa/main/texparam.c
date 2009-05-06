@@ -469,8 +469,10 @@ set_tex_parameterf(GLcontext *ctx,
          return GL_TRUE;
       }
       else {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glTexParameter(pname=GL_TEXTURE_MAX_ANISOTROPY_EXT)");
+         static GLuint count = 0;
+         if (count++ < 10)
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glTexParameter(pname=GL_TEXTURE_MAX_ANISOTROPY_EXT)");
       }
       return GL_FALSE;
 
