@@ -278,19 +278,30 @@ stw_release_context(
 /* Find the width and height of the window named by hdc.
  */
 static void
-stw_get_window_size( HDC hdc, GLuint *width, GLuint *height )
+stw_get_window_size( HDC hdc, GLuint *pwidth, GLuint *pheight )
 {
-   if (WindowFromDC( hdc )) {
-      RECT rect;
+   GLuint width, height;
+   HWND hwnd;
 
-      GetClientRect( WindowFromDC( hdc ), &rect );
-      *width = rect.right - rect.left;
-      *height = rect.bottom - rect.top;
+   hwnd = WindowFromDC( hdc );
+   if (hwnd) {
+      RECT rect;
+      GetClientRect( hwnd, &rect );
+      width = rect.right - rect.left;
+      height = rect.bottom - rect.top;
    }
    else {
-      *width = GetDeviceCaps( hdc, HORZRES );
-      *height = GetDeviceCaps( hdc, VERTRES );
+      width = GetDeviceCaps( hdc, HORZRES );
+      height = GetDeviceCaps( hdc, VERTRES );
    }
+
+   if(width < 1)
+      width = 1;
+   if(height < 1)
+      height = 1;
+
+   *pwidth = width; 
+   *pheight = height; 
 }
 
 UINT_PTR
