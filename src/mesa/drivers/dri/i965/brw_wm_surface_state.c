@@ -365,47 +365,70 @@ brw_create_constant_surface( struct brw_context *brw,
    return bo;
 }
 
+/* Creates a new WM constant buffer reflecting the current fragment program's
+ * constants, if needed by the fragment program.
+ *
+ * Otherwise, constants go through the CURBEs using the brw_constant_buffer
+ * state atom.
+ */
+static drm_intel_bo *
+brw_wm_update_constant_buffer(struct brw_context *brw)
+{
+   struct intel_context *intel = &brw->intel;
+   struct brw_fragment_program *fp =
+      (struct brw_fragment_program *) brw->fragment_program;
+   const struct gl_program_parameter_list *params = fp->program.Base.Parameters;
+   const int size = params->NumParameters * 4 * sizeof(GLfloat);
+   drm_intel_bo *const_buffer;
+
+   /* BRW_NEW_FRAGMENT_PROGRAM */
+   if (!fp->use_const_buffer)
+      return NULL;
+
+   const_buffer = drm_intel_bo_alloc(intel->bufmgr, "fp_const_buffer",
+				     size, 64);
+
+   /* _NEW_PROGRAM_CONSTANTS */
+   dri_bo_subdata(const_buffer, 0, size, params->ParameterValues);
+
+   return const_buffer;
+}
 
 /**
  * Update the surface state for a WM constant buffer.
  * The constant buffer will be (re)allocated here if needed.
  */
-static dri_bo *
+static void
 brw_update_wm_constant_surface( GLcontext *ctx,
-                                GLuint surf,
-                                dri_bo *const_buffer,
-                                const struct gl_program_parameter_list *params)
+                                GLuint surf)
 {
    struct brw_context *brw = brw_context(ctx);
    struct brw_surface_key key;
-   struct intel_context *intel = &brw->intel;
-   const int size = params->NumParameters * 4 * sizeof(GLfloat);
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
+   const struct gl_program_parameter_list *params =
+      fp->program.Base.Parameters;
 
-   if (!fp->use_const_buffer) {
-      dri_bo_unreference(const_buffer);
+   /* If we're in this state update atom, we need to update WM constants, so
+    * free the old buffer and create a new one for the new contents.
+    */
+   dri_bo_unreference(fp->const_buffer);
+   fp->const_buffer = brw_wm_update_constant_buffer(brw);
+
+   /* If there's no constant buffer, then no surface BO is needed to point at
+    * it.
+    */
+   if (fp->const_buffer == 0) {
+      drm_intel_bo_unreference(brw->wm.surf_bo[surf]);
       brw->wm.surf_bo[surf] = NULL;
-      return NULL;
-   }
-
-   /* free old const buffer if too small */
-   if (const_buffer && const_buffer->size < size) {
-      dri_bo_unreference(const_buffer);
-      const_buffer = NULL;
-   }
-
-   /* alloc new buffer if needed */
-   if (!const_buffer) {
-      const_buffer =
-         drm_intel_bo_alloc(intel->bufmgr, "fp_const_buffer", size, 64);
+      return;
    }
 
    memset(&key, 0, sizeof(key));
 
    key.format = MESA_FORMAT_RGBA_FLOAT32;
    key.internal_format = GL_RGBA;
-   key.bo = const_buffer;
+   key.bo = fp->const_buffer;
    key.depthmode = GL_NONE;
    key.pitch = params->NumParameters;
    key.width = params->NumParameters;
@@ -428,9 +451,50 @@ brw_update_wm_constant_surface( GLcontext *ctx,
    if (brw->wm.surf_bo[surf] == NULL) {
       brw->wm.surf_bo[surf] = brw_create_constant_surface(brw, &key);
    }
-
-   return const_buffer;
+   brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
 }
+
+/**
+ * Updates surface / buffer for fragment shader constant buffer, if
+ * one is required.
+ *
+ * This consumes the state updates for the constant buffer, and produces
+ * BRW_NEW_WM_SURFACES to get picked up by brw_prepare_wm_surfaces for
+ * inclusion in the binding table.
+ */
+static void prepare_wm_constant_surface(struct brw_context *brw )
+{
+   GLcontext *ctx = &brw->intel.ctx;
+   struct brw_fragment_program *fp =
+      (struct brw_fragment_program *) brw->fragment_program;
+   GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER;
+
+   drm_intel_bo_unreference(fp->const_buffer);
+   fp->const_buffer = brw_wm_update_constant_buffer(brw);
+
+   /* If there's no constant buffer, then no surface BO is needed to point at
+    * it.
+    */
+   if (fp->const_buffer == 0) {
+      if (brw->wm.surf_bo[surf] != NULL) {
+	 drm_intel_bo_unreference(brw->wm.surf_bo[surf]);
+	 brw->wm.surf_bo[surf] = NULL;
+	 brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
+      }
+      return;
+   }
+
+   brw_update_wm_constant_surface(ctx, surf);
+}
+
+const struct brw_tracked_state brw_wm_constant_surface = {
+   .dirty = {
+      .mesa = (_NEW_PROGRAM_CONSTANTS),
+      .brw = (BRW_NEW_FRAGMENT_PROGRAM),
+      .cache = 0
+   },
+   .prepare = prepare_wm_constant_surface,
+};
 
 
 /**
@@ -628,18 +692,8 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    old_nr_surfaces = brw->wm.nr_surfaces;
    brw->wm.nr_surfaces = MAX_DRAW_BUFFERS;
 
-   /* Update surface / buffer for fragment shader constant buffer */
-   {
-      const GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER;
-      struct brw_fragment_program *fp =
-         (struct brw_fragment_program *) brw->fragment_program;
-      fp->const_buffer =
-         brw_update_wm_constant_surface(ctx, surf, fp->const_buffer,
-                                     fp->program.Base.Parameters);
-
-      if (fp->const_buffer != NULL)
-	 brw->wm.nr_surfaces = surf + 1;
-   }
+   if (brw->wm.surf_bo[SURF_INDEX_FRAG_CONST_BUFFER] != NULL)
+       brw->wm.nr_surfaces = SURF_INDEX_FRAG_CONST_BUFFER + 1;
 
    /* Update surfaces for textures */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
@@ -677,9 +731,9 @@ const struct brw_tracked_state brw_wm_surfaces = {
       .mesa = (_NEW_COLOR |
                _NEW_TEXTURE |
                _NEW_BUFFERS |
-               _NEW_PROGRAM |
-               _NEW_PROGRAM_CONSTANTS),
-      .brw = (BRW_NEW_CONTEXT),
+               _NEW_PROGRAM),
+      .brw = (BRW_NEW_CONTEXT |
+	      BRW_NEW_WM_SURFACES),
       .cache = 0
    },
    .prepare = prepare_wm_surfaces,

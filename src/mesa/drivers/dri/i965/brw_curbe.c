@@ -329,62 +329,10 @@ static void prepare_constant_buffer(struct brw_context *brw)
     */
 }
 
-
-/**
- * Copy Mesa program parameters into given constant buffer.
- */
-static void
-update_constant_buffer(struct brw_context *brw,
-                       const struct gl_program_parameter_list *params,
-                       dri_bo *const_buffer)
-{
-   struct intel_context *intel = &brw->intel;
-   const int size = params->NumParameters * 4 * sizeof(GLfloat);
-
-   /* copy Mesa program constants into the buffer */
-   if (const_buffer && size > 0) {
-
-      assert(const_buffer);
-      assert(const_buffer->size >= size);
-
-      if (intel->intelScreen->kernel_exec_fencing) {
-         drm_intel_gem_bo_map_gtt(const_buffer);
-         memcpy(const_buffer->virtual, params->ParameterValues, size);
-         drm_intel_gem_bo_unmap_gtt(const_buffer);
-      }
-      else {
-         dri_bo_subdata(const_buffer, 0, size, params->ParameterValues);
-      }
-
-      if (0) {
-         _mesa_print_parameter_list(params);
-      }
-   }
-}
-
-
-
-/** Copy current fragment program's parameters into the constant buffer */
-static void
-update_fragment_constant_buffer(struct brw_context *brw)
-{
-   struct brw_fragment_program *fp =
-      (struct brw_fragment_program *) brw->fragment_program;
-   if (0) {
-      printf("update WM constants in buffer %p\n", fp->const_buffer);
-      printf("program %u\n", fp->program.Base.Id);
-   }
-   if (fp->use_const_buffer)
-      update_constant_buffer(brw, fp->program.Base.Parameters, fp->const_buffer);
-}
-
-
 static void emit_constant_buffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    GLuint sz = brw->curbe.total_size;
-
-   update_fragment_constant_buffer(brw);
 
    BEGIN_BATCH(2, IGNORE_CLIPRECTS);
    if (sz == 0) {

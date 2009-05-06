@@ -78,6 +78,7 @@ const struct brw_tracked_state brw_vs_unit;
 const struct brw_tracked_state brw_wm_input_sizes;
 const struct brw_tracked_state brw_wm_prog;
 const struct brw_tracked_state brw_wm_samplers;
+const struct brw_tracked_state brw_wm_constant_surface;
 const struct brw_tracked_state brw_wm_surfaces;
 const struct brw_tracked_state brw_wm_unit;
 

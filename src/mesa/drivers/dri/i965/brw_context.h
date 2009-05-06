@@ -131,6 +131,7 @@ struct brw_context;
 #define BRW_NEW_WM_INPUT_DIMENSIONS     0x100
 #define BRW_NEW_INPUT_VARYING           0x200
 #define BRW_NEW_PSP                     0x800
+#define BRW_NEW_WM_SURFACES		0x1000
 #define BRW_NEW_FENCE                   0x2000
 #define BRW_NEW_INDICES			0x4000
 #define BRW_NEW_VERTICES		0x8000
