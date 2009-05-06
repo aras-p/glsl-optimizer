@@ -132,7 +132,33 @@ static GLuint minify(GLuint size, GLuint levels)
 	return size;
 }
 
-static void calculate_miptree_layout(radeonContextPtr rmesa, radeon_mipmap_tree *mt)
+
+static void calculate_miptree_layout_r100(radeonContextPtr rmesa, radeon_mipmap_tree *mt)
+{
+	GLuint curOffset;
+	GLuint numLevels;
+	GLuint i;
+	GLuint face;
+
+	numLevels = mt->lastLevel - mt->firstLevel + 1;
+	assert(numLevels <= RADEON_MAX_TEXTURE_LEVELS);
+
+	curOffset = 0;
+	for(face = 0; face < mt->faces; face++) {
+
+		for(i = 0; i < numLevels; i++) {
+			mt->levels[i].width = minify(mt->width0, i);
+			mt->levels[i].height = minify(mt->height0, i);
+			mt->levels[i].depth = minify(mt->depth0, i);
+			compute_tex_image_offset(rmesa, mt, face, i, &curOffset);
+		}
+	}
+
+	/* Note the required size in memory */
+	mt->totalsize = (curOffset + RADEON_OFFSET_MASK) & ~RADEON_OFFSET_MASK;
+}
+
+static void calculate_miptree_layout_r300(radeonContextPtr rmesa, radeon_mipmap_tree *mt)
 {
 	GLuint curOffset;
 	GLuint numLevels;
@@ -156,7 +182,6 @@ static void calculate_miptree_layout(radeonContextPtr rmesa, radeon_mipmap_tree 
 	/* Note the required size in memory */
 	mt->totalsize = (curOffset + RADEON_OFFSET_MASK) & ~RADEON_OFFSET_MASK;
 }
-
 
 /**
  * Create a new mipmap tree, calculate its layout and allocate memory.
@@ -182,7 +207,10 @@ radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa, radeonTexObj *
 	mt->tilebits = tilebits;
 	mt->compressed = compressed;
 
-	calculate_miptree_layout(rmesa, mt);
+	if (rmesa->radeonScreen->chip_family >= CHIP_FAMILY_R300)
+		calculate_miptree_layout_r300(rmesa, mt);
+	else
+		calculate_miptree_layout_r100(rmesa, mt);
 
 	mt->bo = radeon_bo_open(rmesa->radeonScreen->bom,
                             0, mt->totalsize, 1024,
