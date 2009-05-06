@@ -31,6 +31,7 @@
 
 #include "main/glheader.h"
 #include "main/imports.h"
+#include "main/image.h"
 #include "main/macros.h"
 #include "main/enums.h"
 #include "main/mtypes.h"
@@ -101,24 +102,9 @@ struct copy_context {
 };
 
 
-static GLuint type_size( GLenum type )
-{
-   switch(type) {
-   case GL_BYTE: return sizeof(GLbyte);
-   case GL_UNSIGNED_BYTE: return sizeof(GLubyte);
-   case GL_SHORT: return sizeof(GLshort);
-   case GL_UNSIGNED_SHORT: return sizeof(GLushort);
-   case GL_INT: return sizeof(GLint);
-   case GL_UNSIGNED_INT: return sizeof(GLuint);
-   case GL_FLOAT: return sizeof(GLfloat);
-   case GL_DOUBLE: return sizeof(GLdouble);
-   default: return 0;
-   }
-}
-
 static GLuint attr_size( const struct gl_client_array *array )
 {
-   return array->Size * type_size(array->Type);
+   return array->Size * _mesa_sizeof_type(array->Type);
 }
 
 
