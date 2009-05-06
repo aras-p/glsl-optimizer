@@ -72,7 +72,7 @@ max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
    if (map) {
       ctx->Driver.UnmapBuffer(ctx,
                               GL_ELEMENT_ARRAY_BUFFER_ARB,
-                              ctx->Array.ElementArrayBufferObj);
+                              elementBuf);
    }
 
    return max;
