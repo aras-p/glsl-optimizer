@@ -505,7 +505,7 @@ const struct brw_tracked_state brw_wm_constant_surface = {
 static void
 brw_update_renderbuffer_surface(struct brw_context *brw,
 				struct gl_renderbuffer *rb,
-				unsigned int unit, GLboolean cached)
+				unsigned int unit)
 {
    GLcontext *ctx = &brw->intel.ctx;
    dri_bo *region_bo = NULL;
@@ -565,13 +565,11 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 		      ctx->Color.BlendEnabled);
 
    dri_bo_unreference(brw->wm.surf_bo[unit]);
-   brw->wm.surf_bo[unit] = NULL;
-   if (cached) 
-       brw->wm.surf_bo[unit] = brw_search_cache(&brw->surface_cache,
-                                                BRW_SS_SURFACE,
-                                                &key, sizeof(key),
-                                                &region_bo, 1,
-                                                NULL);
+   brw->wm.surf_bo[unit] = brw_search_cache(&brw->surface_cache,
+					    BRW_SS_SURFACE,
+					    &key, sizeof(key),
+					    &region_bo, 1,
+					    NULL);
 
    if (brw->wm.surf_bo[unit] == NULL) {
       struct brw_surface_state surf;
@@ -682,11 +680,10 @@ static void prepare_wm_surfaces(struct brw_context *brw )
       for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
          brw_update_renderbuffer_surface(brw,
 					 ctx->DrawBuffer->_ColorDrawBuffers[i],
-					 i,
-					 GL_FALSE);
+					 i);
       }
    } else {
-      brw_update_renderbuffer_surface(brw, NULL, 0, GL_TRUE);
+      brw_update_renderbuffer_surface(brw, NULL, 0);
    }
 
    old_nr_surfaces = brw->wm.nr_surfaces;
