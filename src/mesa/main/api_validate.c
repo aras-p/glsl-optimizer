@@ -166,13 +166,6 @@ _mesa_validate_DrawElements(GLcontext *ctx,
    /* Vertex buffer object tests */
    if (ctx->Array.ElementArrayBufferObj->Name) {
       /* use indices in the buffer object */
-
-      if (!ctx->Array.ElementArrayBufferObj->Size) {
-         _mesa_warning(ctx,
-                       "glDrawElements called with empty array elements buffer");
-         return GL_FALSE;
-      }
-
       /* make sure count doesn't go outside buffer bounds */
       if (index_bytes(type, count) > ctx->Array.ElementArrayBufferObj->Size) {
          _mesa_warning(ctx, "glDrawElements index out of buffer bounds");
@@ -244,7 +237,6 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
    /* Vertex buffer object tests */
    if (ctx->Array.ElementArrayBufferObj->Name) {
       /* use indices in the buffer object */
-
       /* make sure count doesn't go outside buffer bounds */
       if (index_bytes(type, count) > ctx->Array.ElementArrayBufferObj->Size) {
          _mesa_warning(ctx, "glDrawRangeElements index out of buffer bounds");
