@@ -44,10 +44,8 @@ max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
 
    if (elementBuf->Name) {
       /* elements are in a user-defined buffer object.  need to map it */
-      map = ctx->Driver.MapBuffer(ctx,
-                                  GL_ELEMENT_ARRAY_BUFFER_ARB,
-                                  GL_READ_ONLY,
-                                  elementBuf);
+      map = ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER,
+                                  GL_READ_ONLY, elementBuf);
       /* Actual address is the sum of pointers */
       indices = (const GLvoid *) ADD_POINTERS(map, (const GLubyte *) indices);
    }
@@ -70,14 +68,16 @@ max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
    }
 
    if (map) {
-      ctx->Driver.UnmapBuffer(ctx,
-                              GL_ELEMENT_ARRAY_BUFFER_ARB,
-                              elementBuf);
+      ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, elementBuf);
    }
 
    return max;
 }
 
+
+/**
+ * Check if OK to render by examining framebuffer status and vertex arrays.
+ */
 static GLboolean
 check_valid_to_render(GLcontext *ctx, char *function)
 {
@@ -105,6 +105,12 @@ check_valid_to_render(GLcontext *ctx, char *function)
    return GL_TRUE;
 }
 
+
+/**
+ * Error checking for glDrawElements().  Includes parameter checking
+ * and VBO bounds checking.
+ * \return GL_TRUE if OK to render, GL_FALSE if error found
+ */
 GLboolean
 _mesa_validate_DrawElements(GLcontext *ctx,
 			    GLenum mode, GLsizei count, GLenum type,
@@ -184,6 +190,12 @@ _mesa_validate_DrawElements(GLcontext *ctx,
    return GL_TRUE;
 }
 
+
+/**
+ * Error checking for glDrawRangeElements().  Includes parameter checking
+ * and VBO bounds checking.
+ * \return GL_TRUE if OK to render, GL_FALSE if error found
+ */
 GLboolean
 _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
 				 GLuint start, GLuint end,
@@ -265,6 +277,7 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
 /**
  * Called from the tnl module to error check the function parameters and
  * verify that we really can draw something.
+ * \return GL_TRUE if OK to render, GL_FALSE if error found
  */
 GLboolean
 _mesa_validate_DrawArrays(GLcontext *ctx,
