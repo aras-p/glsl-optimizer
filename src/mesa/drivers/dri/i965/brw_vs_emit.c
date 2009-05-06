@@ -714,10 +714,11 @@ get_constant(struct brw_vs_compile *c,
    struct brw_compile *p = &c->func;
    struct brw_reg const_reg;
    struct brw_reg const2_reg;
+   const GLboolean relAddr = src->RelAddr;
 
    assert(argIndex < 3);
 
-   if (c->current_const[argIndex].index != src->Index || src->RelAddr) {
+   if (c->current_const[argIndex].index != src->Index || relAddr) {
       struct brw_reg addrReg = c->regs[PROGRAM_ADDRESS][0];
 
       c->current_const[argIndex].index = src->Index;
@@ -730,13 +731,13 @@ get_constant(struct brw_vs_compile *c,
       brw_dp_READ_4_vs(p,
                        c->current_const[argIndex].reg,/* writeback dest */
                        0,                             /* oword */
-                       src->RelAddr,                  /* relative indexing? */
+                       relAddr,                       /* relative indexing? */
                        addrReg,                       /* address register */
                        16 * src->Index,               /* byte offset */
                        SURF_INDEX_VERT_CONST_BUFFER   /* binding table index */
                        );
 
-      if (src->RelAddr) {
+      if (relAddr) {
          /* second read */
          const2_reg = get_tmp(c);
 
@@ -747,7 +748,7 @@ get_constant(struct brw_vs_compile *c,
          brw_dp_READ_4_vs(p,
                           const2_reg,              /* writeback dest */
                           1,                       /* oword */
-                          src->RelAddr,            /* relative indexing? */
+                          relAddr,                 /* relative indexing? */
                           addrReg,                 /* address register */
                           16 * src->Index,         /* byte offset */
                           SURF_INDEX_VERT_CONST_BUFFER
@@ -757,7 +758,7 @@ get_constant(struct brw_vs_compile *c,
 
    const_reg = c->current_const[argIndex].reg;
 
-   if (src->RelAddr) {
+   if (relAddr) {
       /* merge the two Owords into the constant register */
       /* const_reg[7..4] = const2_reg[7..4] */
       brw_MOV(p,
