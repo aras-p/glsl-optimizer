@@ -30,6 +30,26 @@
 #include "state.h"
 
 
+
+/**
+ * \return  number of bytes in array [count] of type.
+ */
+static GLsizei
+index_bytes(GLenum type, GLsizei count)
+{
+   if (type == GL_UNSIGNED_INT) {
+      return count * sizeof(GLuint);
+   }
+   else if (type == GL_UNSIGNED_BYTE) {
+      return count * sizeof(GLubyte);
+   }
+   else {
+      ASSERT(type == GL_UNSIGNED_SHORT);
+      return count * sizeof(GLushort);
+   }
+}
+
+
 /**
  * Find the max index in the given element/index buffer
  */
@@ -146,7 +166,6 @@ _mesa_validate_DrawElements(GLcontext *ctx,
    /* Vertex buffer object tests */
    if (ctx->Array.ElementArrayBufferObj->Name) {
       /* use indices in the buffer object */
-      GLuint indexBytes;
 
       if (!ctx->Array.ElementArrayBufferObj->Size) {
          _mesa_warning(ctx,
@@ -154,19 +173,8 @@ _mesa_validate_DrawElements(GLcontext *ctx,
          return GL_FALSE;
       }
 
-      if (type == GL_UNSIGNED_INT) {
-         indexBytes = count * sizeof(GLuint);
-      }
-      else if (type == GL_UNSIGNED_BYTE) {
-         indexBytes = count * sizeof(GLubyte);
-      }
-      else {
-         ASSERT(type == GL_UNSIGNED_SHORT);
-         indexBytes = count * sizeof(GLushort);
-      }
-
       /* make sure count doesn't go outside buffer bounds */
-      if (indexBytes > (GLuint) ctx->Array.ElementArrayBufferObj->Size) {
+      if (index_bytes(type, count) > ctx->Array.ElementArrayBufferObj->Size) {
          _mesa_warning(ctx, "glDrawElements index out of buffer bounds");
          return GL_FALSE;
       }
@@ -236,21 +244,9 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
    /* Vertex buffer object tests */
    if (ctx->Array.ElementArrayBufferObj->Name) {
       /* use indices in the buffer object */
-      GLuint indexBytes;
-
-      if (type == GL_UNSIGNED_INT) {
-         indexBytes = count * sizeof(GLuint);
-      }
-      else if (type == GL_UNSIGNED_BYTE) {
-         indexBytes = count * sizeof(GLubyte);
-      }
-      else {
-         ASSERT(type == GL_UNSIGNED_SHORT);
-         indexBytes = count * sizeof(GLushort);
-      }
 
       /* make sure count doesn't go outside buffer bounds */
-      if (indexBytes > ctx->Array.ElementArrayBufferObj->Size) {
+      if (index_bytes(type, count) > ctx->Array.ElementArrayBufferObj->Size) {
          _mesa_warning(ctx, "glDrawRangeElements index out of buffer bounds");
          return GL_FALSE;
       }
