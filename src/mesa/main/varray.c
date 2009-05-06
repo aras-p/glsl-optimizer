@@ -73,8 +73,8 @@ update_array(GLcontext *ctx, struct gl_client_array *array,
     * Later in glDrawArrays we'll check if start + count > _MaxElement to
     * be sure we won't go out of bounds.
     */
-   if (ctx->Array.ArrayBufferObj->Name)
-      array->_MaxElement = ((GLsizeiptrARB) ctx->Array.ArrayBufferObj->Size
+   if (array->BufferObj->Name)
+      array->_MaxElement = ((GLsizeiptrARB) array->BufferObj->Size
                             - (GLsizeiptrARB) array->Ptr + array->StrideB
                             - elementSize) / array->StrideB;
    else
