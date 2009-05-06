@@ -348,7 +348,7 @@ stw_make_current(
    struct stw_framebuffer *fb;
    GLuint width = 0;
    GLuint height = 0;
-   struct stw_context *curctx;
+   struct stw_context *curctx = NULL;
 
    if (!stw_dev)
       return FALSE;
