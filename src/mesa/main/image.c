@@ -181,6 +181,8 @@ _mesa_sizeof_type( GLenum type )
 	 return sizeof(GLint);
       case GL_FLOAT:
 	 return sizeof(GLfloat);
+      case GL_DOUBLE:
+	 return sizeof(GLdouble);
       case GL_HALF_FLOAT_ARB:
 	 return sizeof(GLhalfARB);
       default:
