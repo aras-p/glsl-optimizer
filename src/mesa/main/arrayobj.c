@@ -243,8 +243,8 @@ _mesa_initialize_array_object( GLcontext *ctx,
 /**
  * Add the given array object to the array object pool.
  */
-void
-_mesa_save_array_object( GLcontext *ctx, struct gl_array_object *obj )
+static void
+save_array_object( GLcontext *ctx, struct gl_array_object *obj )
 {
    if (obj->Name > 0) {
       /* insert into hash table */
@@ -257,8 +257,8 @@ _mesa_save_array_object( GLcontext *ctx, struct gl_array_object *obj )
  * Remove the given array object from the array object pool.
  * Do not deallocate the array object though.
  */
-void
-_mesa_remove_array_object( GLcontext *ctx, struct gl_array_object *obj )
+static void
+remove_array_object( GLcontext *ctx, struct gl_array_object *obj )
 {
    if (obj->Name > 0) {
       /* remove from hash table */
@@ -312,7 +312,7 @@ _mesa_BindVertexArrayAPPLE( GLuint id )
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindVertexArrayAPPLE");
             return;
          }
-         _mesa_save_array_object(ctx, newObj);
+         save_array_object(ctx, newObj);
       }
    }
 
@@ -361,7 +361,7 @@ _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids)
 	 }
 
 	 /* The ID is immediately freed for re-use */
-	 _mesa_remove_array_object(ctx, obj);
+	 remove_array_object(ctx, obj);
 
          /* Unreference the array object. 
           * If refcount hits zero, the object will be deleted.
@@ -415,7 +415,7 @@ _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenVertexArraysAPPLE");
          return;
       }
-      _mesa_save_array_object(ctx, obj);
+      save_array_object(ctx, obj);
       arrays[i] = first + i;
    }
 

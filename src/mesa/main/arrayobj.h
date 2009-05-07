@@ -56,13 +56,6 @@ extern void
 _mesa_initialize_array_object( GLcontext *ctx,
                                struct gl_array_object *obj, GLuint name );
 
-extern void
-_mesa_save_array_object( GLcontext *ctx, struct gl_array_object *obj );
-
-extern void
-_mesa_remove_array_object( GLcontext *ctx, struct gl_array_object *obj );
-
-
 
 /*
  * API functions
