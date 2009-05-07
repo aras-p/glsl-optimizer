@@ -69,6 +69,32 @@ lookup_arrayobj(GLcontext *ctx, GLuint id)
 
 
 /**
+ * For all the vertex arrays in the array object, unbind any pointers
+ * to any buffer objects (VBOs).
+ * This is done just prior to array object destruction.
+ */
+static void
+unbind_array_object_vbos(GLcontext *ctx, struct gl_array_object *obj)
+{
+   GLuint i;
+
+   _mesa_reference_buffer_object(ctx, &obj->Vertex.BufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &obj->Normal.BufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &obj->Color.BufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &obj->SecondaryColor.BufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &obj->FogCoord.BufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &obj->Index.BufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &obj->EdgeFlag.BufferObj, NULL);
+
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
+      _mesa_reference_buffer_object(ctx, &obj->TexCoord[i].BufferObj, NULL);
+
+   for (i = 0; i < VERT_ATTRIB_MAX; i++)
+      _mesa_reference_buffer_object(ctx, &obj->VertexAttrib[i].BufferObj,NULL);
+}
+
+
+/**
  * Allocate and initialize a new vertex array object.
  * 
  * This function is intended to be called via
@@ -94,6 +120,7 @@ void
 _mesa_delete_array_object( GLcontext *ctx, struct gl_array_object *obj )
 {
    (void) ctx;
+   unbind_array_object_vbos(ctx, obj);
    _glthread_DESTROY_MUTEX(obj->Mutex);
    _mesa_free(obj);
 }
@@ -240,15 +267,6 @@ _mesa_remove_array_object( GLcontext *ctx, struct gl_array_object *obj )
 }
 
 
-static void
-unbind_buffer_object( GLcontext *ctx, struct gl_buffer_object *bufObj )
-{
-   if (bufObj != ctx->Shared->NullBufferObj) {
-      _mesa_reference_buffer_object(ctx, &bufObj, NULL);
-   }
-}
-
-
 /**********************************************************************/
 /* API Functions                                                      */
 /**********************************************************************/
@@ -275,7 +293,7 @@ _mesa_BindVertexArrayAPPLE( GLuint id )
       return;   /* rebinding the same array object- no change */
 
    /*
-    * Get pointer to new array object (newBufObj)
+    * Get pointer to new array object (newObj)
     */
    if (id == 0) {
       /* The spec says there is no array object named 0, but we use
@@ -334,7 +352,6 @@ _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids)
       if ( obj != NULL ) {
 	 ASSERT( obj->Name == ids[i] );
 
-
 	 /* If the array object is currently bound, the spec says "the binding
 	  * for that object reverts to zero and the default vertex array
 	  * becomes current."
@@ -343,28 +360,13 @@ _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids)
 	    CALL_BindVertexArrayAPPLE( ctx->Exec, (0) );
 	 }
 
-#if FEATURE_ARB_vertex_buffer_object
-	 /* Unbind any buffer objects that might be bound to arrays in
-	  * this array object.
-	  */
-	 unbind_buffer_object( ctx, obj->Vertex.BufferObj );
-	 unbind_buffer_object( ctx, obj->Normal.BufferObj );
-	 unbind_buffer_object( ctx, obj->Color.BufferObj );
-	 unbind_buffer_object( ctx, obj->SecondaryColor.BufferObj );
-	 unbind_buffer_object( ctx, obj->FogCoord.BufferObj );
-	 unbind_buffer_object( ctx, obj->Index.BufferObj );
-	 for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
-	    unbind_buffer_object( ctx, obj->TexCoord[i].BufferObj );
-	 }
-	 unbind_buffer_object( ctx, obj->EdgeFlag.BufferObj );
-	 for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-	    unbind_buffer_object( ctx, obj->VertexAttrib[i].BufferObj );
-	 }
-#endif
-
 	 /* The ID is immediately freed for re-use */
 	 _mesa_remove_array_object(ctx, obj);
-	 ctx->Driver.DeleteArrayObject(ctx, obj);
+
+         /* Unreference the array object. 
+          * If refcount hits zero, the object will be deleted.
+          */
+         _mesa_reference_array_object(ctx, &obj, NULL);
       }
    }
 
