@@ -194,7 +194,7 @@ _mesa_reference_buffer_object(GLcontext *ctx,
       return;
 
    if (*ptr) {
-      /* Unreference the old texture */
+      /* Unreference the old buffer */
       GLboolean deleteFlag = GL_FALSE;
       struct gl_buffer_object *oldObj = *ptr;
 
@@ -227,7 +227,7 @@ _mesa_reference_buffer_object(GLcontext *ctx,
    ASSERT(!*ptr);
 
    if (bufObj) {
-      /* reference new texture */
+      /* reference new buffer */
       /*_glthread_LOCK_MUTEX(tex->Mutex);*/
       if (bufObj->RefCount == 0) {
          /* this buffer's being deleted (look just above) */
