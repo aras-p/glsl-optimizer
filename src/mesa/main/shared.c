@@ -190,6 +190,10 @@ delete_bufferobj_cb(GLuint id, void *data, void *userData)
 {
    struct gl_buffer_object *bufObj = (struct gl_buffer_object *) data;
    GLcontext *ctx = (GLcontext *) userData;
+   if (bufObj->Pointer) {
+      ctx->Driver.UnmapBuffer(ctx, 0, bufObj);
+      bufObj->Pointer = NULL;
+   }
    ctx->Driver.DeleteBuffer(ctx, bufObj);
 }
 
