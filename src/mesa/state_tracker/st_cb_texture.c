@@ -1337,6 +1337,34 @@ st_copy_texsubimage(GLcontext *ctx,
       return;
    }
 
+   if (srcX < 0) {
+      width -= -srcX;
+      destX += -srcX;
+      srcX = 0;
+   }
+
+   if (srcY < 0) {
+      height -= -srcY;
+      destY += -srcY;
+      srcY = 0;
+   }
+
+   if (destX < 0) {
+      width -= -destX;
+      srcX += -destX;
+      destX = 0;
+   }
+
+   if (destY < 0) {
+      height -= -destY;
+      srcY += -destY;
+      destY = 0;
+   }
+
+   if (width < 0 || height < 0)
+      return;
+
+
    assert(strb);
    assert(strb->surface);
    assert(stImage->pt);
