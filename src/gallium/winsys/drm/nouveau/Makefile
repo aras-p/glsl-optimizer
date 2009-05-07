@@ -2,7 +2,7 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-SUBDIRS = drm dri
+SUBDIRS = drm $(GALLIUM_STATE_TRACKERS_DIRS)
 
 default install clean:
 	@for dir in $(SUBDIRS) ; do \
