@@ -33,6 +33,7 @@
 #include "mtypes.h"
 #include "hash.h"
 #include "arrayobj.h"
+#include "bufferobj.h"
 #include "shared.h"
 #include "shader/program.h"
 #include "shader/shader_api.h"
@@ -91,6 +92,13 @@ _mesa_alloc_shared_state(GLcontext *ctx)
 #if FEATURE_ARB_vertex_buffer_object || FEATURE_ARB_pixel_buffer_object
    shared->BufferObjects = _mesa_NewHashTable();
 #endif
+
+   /* Allocate the default buffer object and set refcount so high that
+    * it never gets deleted.
+    * XXX with recent/improved refcounting this may not longer be needed.
+    */
+   shared->NullBufferObj = _mesa_new_buffer_object(ctx, 0, 0);
+   shared->NullBufferObj->RefCount = 1000;
 
    shared->ArrayObjects = _mesa_NewHashTable();
 
@@ -339,6 +347,10 @@ _mesa_free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
    _mesa_DeleteHashTable(shared->FrameBuffers);
    _mesa_HashDeleteAll(shared->RenderBuffers, delete_renderbuffer_cb, ctx);
    _mesa_DeleteHashTable(shared->RenderBuffers);
+#endif
+
+#if FEATURE_ARB_vertex_buffer_object
+   _mesa_delete_buffer_object(ctx, shared->NullBufferObj);
 #endif
 
    /*

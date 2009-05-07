@@ -221,7 +221,7 @@ static void split_prims( struct split_context *split)
 
 	 ib.count = count;
 	 ib.type = GL_UNSIGNED_INT;
-	 ib.obj = split->ctx->Array.NullBufferObj;
+	 ib.obj = split->ctx->Shared->NullBufferObj;
 	 ib.ptr = elts;
 	    
 	 tmpprim = *prim;

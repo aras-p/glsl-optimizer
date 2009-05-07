@@ -60,7 +60,7 @@ _swrast_CopyColorTable( GLcontext *ctx,
 
    /* save PBO binding */
    bufferSave = ctx->Unpack.BufferObj;
-   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
+   ctx->Unpack.BufferObj = ctx->Shared->NullBufferObj;
 
    _mesa_ColorTable(target, internalformat, width, GL_RGBA, CHAN_TYPE, data);
 
@@ -94,7 +94,7 @@ _swrast_CopyColorSubTable( GLcontext *ctx,GLenum target, GLsizei start,
 
    /* save PBO binding */
    bufferSave = ctx->Unpack.BufferObj;
-   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
+   ctx->Unpack.BufferObj = ctx->Shared->NullBufferObj;
 
    _mesa_ColorSubTable(target, start, width, GL_RGBA, CHAN_TYPE, data);
 
@@ -126,7 +126,7 @@ _swrast_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
 
    /* save PBO binding */
    bufferSave = ctx->Unpack.BufferObj;
-   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
+   ctx->Unpack.BufferObj = ctx->Shared->NullBufferObj;
 
    /* store as convolution filter */
    _mesa_ConvolutionFilter1D(target, internalFormat, width,
@@ -178,12 +178,12 @@ _swrast_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
    ctx->Unpack.SkipImages = 0;
    ctx->Unpack.SwapBytes = GL_FALSE;
    ctx->Unpack.LsbFirst = GL_FALSE;
-   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
+   ctx->Unpack.BufferObj = ctx->Shared->NullBufferObj;
    ctx->NewState |= _NEW_PACKUNPACK;
 
    /* save PBO binding */
    bufferSave = ctx->Unpack.BufferObj;
-   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
+   ctx->Unpack.BufferObj = ctx->Shared->NullBufferObj;
 
    _mesa_ConvolutionFilter2D(target, internalFormat, width, height,
                              GL_RGBA, CHAN_TYPE, rgba);

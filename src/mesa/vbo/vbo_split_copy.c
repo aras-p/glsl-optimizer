@@ -459,7 +459,7 @@ replay_init( struct copy_context *copy )
       dst->Ptr = copy->dstbuf + offset;
       dst->Enabled = GL_TRUE;
       dst->Normalized = src->Normalized; 
-      dst->BufferObj = ctx->Array.NullBufferObj;
+      dst->BufferObj = ctx->Shared->NullBufferObj;
       dst->_MaxElement = copy->dstbuf_size; /* may be less! */
 
       offset += copy->varying[i].size;
@@ -479,7 +479,7 @@ replay_init( struct copy_context *copy )
     */
    copy->dstib.count = 0;	/* duplicates dstelt_nr */
    copy->dstib.type = GL_UNSIGNED_INT;
-   copy->dstib.obj = ctx->Array.NullBufferObj;
+   copy->dstib.obj = ctx->Shared->NullBufferObj;
    copy->dstib.ptr = copy->dstelt;
 }
 

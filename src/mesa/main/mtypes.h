@@ -1593,7 +1593,6 @@ struct gl_array_attrib
    GLbitfield NewState;		/**< mask of _NEW_ARRAY_* values */
 
 #if FEATURE_ARB_vertex_buffer_object
-   struct gl_buffer_object *NullBufferObj;
    struct gl_buffer_object *ArrayBufferObj;
    struct gl_buffer_object *ElementArrayBufferObj;
 #endif
@@ -2064,6 +2063,8 @@ struct gl_shared_state
    GLuint TextureStateStamp;	        /**< state notification for shared tex */
    /*@}*/
 
+   /** Default buffer object for vertex arrays that aren't in VBOs */
+   struct gl_buffer_object *NullBufferObj;
 
    /**
     * \name Vertex/fragment programs

@@ -671,7 +671,7 @@ void vbo_use_buffer_objects(GLcontext *ctx)
    GLsizei size = VBO_VERT_BUFFER_SIZE;
 
    /* Make sure this func is only used once */
-   assert(exec->vtx.bufferobj == ctx->Array.NullBufferObj);
+   assert(exec->vtx.bufferobj == ctx->Shared->NullBufferObj);
    if (exec->vtx.buffer_map) {
       _mesa_align_free(exec->vtx.buffer_map);
       exec->vtx.buffer_map = NULL;
@@ -697,7 +697,7 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
     */
    _mesa_reference_buffer_object(ctx,
                                  &exec->vtx.bufferobj,
-                                 ctx->Array.NullBufferObj);
+                                 ctx->Shared->NullBufferObj);
 
    ASSERT(!exec->vtx.buffer_map);
    exec->vtx.buffer_map = (GLfloat *)ALIGN_MALLOC(VBO_VERT_BUFFER_SIZE, 64);

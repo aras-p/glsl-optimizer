@@ -112,7 +112,8 @@ init_array(GLcontext *ctx,
    array->Normalized = GL_FALSE;
 #if FEATURE_ARB_vertex_buffer_object
    /* Vertex array buffers */
-   array->BufferObj = ctx->Array.NullBufferObj;
+   _mesa_reference_buffer_object(ctx, &array->BufferObj,
+                                 ctx->Shared->NullBufferObj);
 #endif
 }
 
@@ -180,7 +181,7 @@ _mesa_remove_array_object( GLcontext *ctx, struct gl_array_object *obj )
 static void
 unbind_buffer_object( GLcontext *ctx, struct gl_buffer_object *bufObj )
 {
-   if (bufObj != ctx->Array.NullBufferObj) {
+   if (bufObj != ctx->Shared->NullBufferObj) {
       _mesa_reference_buffer_object(ctx, &bufObj, NULL);
    }
 }

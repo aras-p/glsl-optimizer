@@ -424,16 +424,8 @@ _mesa_buffer_unmap( GLcontext *ctx, GLenum target,
 void
 _mesa_init_buffer_objects( GLcontext *ctx )
 {
-   /* Allocate the default buffer object and set refcount so high that
-    * it never gets deleted.
-    * XXX with recent/improved refcounting this may not longer be needed.
-    */
-   ctx->Array.NullBufferObj = _mesa_new_buffer_object(ctx, 0, 0);
-   if (ctx->Array.NullBufferObj)
-      ctx->Array.NullBufferObj->RefCount = 1000;
-
-   ctx->Array.ArrayBufferObj = ctx->Array.NullBufferObj;
-   ctx->Array.ElementArrayBufferObj = ctx->Array.NullBufferObj;
+   ctx->Array.ArrayBufferObj = ctx->Shared->NullBufferObj;
+   ctx->Array.ElementArrayBufferObj = ctx->Shared->NullBufferObj;
 }
 
 
@@ -477,7 +469,7 @@ bind_buffer_object(GLcontext *ctx, GLenum target, GLuint buffer)
       /* The spec says there's not a buffer object named 0, but we use
        * one internally because it simplifies things.
        */
-      newBufObj = ctx->Array.NullBufferObj;
+      newBufObj = ctx->Shared->NullBufferObj;
    }
    else {
       /* non-default buffer object */
@@ -744,7 +736,7 @@ unbind(GLcontext *ctx,
        struct gl_buffer_object *obj)
 {
    if (*ptr == obj) {
-      _mesa_reference_buffer_object(ctx, ptr, ctx->Array.NullBufferObj);
+      _mesa_reference_buffer_object(ctx, ptr, ctx->Shared->NullBufferObj);
    }
 }
 

@@ -1005,9 +1005,6 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_query_data(ctx);
 #endif
 
-#if FEATURE_ARB_vertex_buffer_object
-   _mesa_delete_buffer_object(ctx, ctx->Array.NullBufferObj);
-#endif
    _mesa_delete_array_object(ctx, ctx->Array.DefaultArrayObj);
 
    /* free dispatch tables */
