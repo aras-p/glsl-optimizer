@@ -407,23 +407,21 @@ static void fetch_constants(struct brw_wm_compile *c,
       if (src->File == PROGRAM_STATE_VAR ||
           src->File == PROGRAM_CONSTANT ||
           src->File == PROGRAM_UNIFORM) {
-         if (c->current_const[i].index != src->Index) {
-            c->current_const[i].index = src->Index;
+	 c->current_const[i].index = src->Index;
 
 #if 0
-            printf("  fetch const[%d] for arg %d into reg %d\n",
-                   src->Index, i, c->current_const[i].reg.nr);
+	 printf("  fetch const[%d] for arg %d into reg %d\n",
+		src->Index, i, c->current_const[i].reg.nr);
 #endif
 
-            /* need to fetch the constant now */
-            brw_dp_READ_4(p,
-                          c->current_const[i].reg,  /* writeback dest */
-                          1,                        /* msg_reg */
-                          src->RelAddr,             /* relative indexing? */
-                          16 * src->Index,          /* byte offset */
-                          SURF_INDEX_FRAG_CONST_BUFFER/* binding table index */
-                          );
-         }
+	 /* need to fetch the constant now */
+	 brw_dp_READ_4(p,
+		       c->current_const[i].reg,  /* writeback dest */
+		       1,                        /* msg_reg */
+		       src->RelAddr,             /* relative indexing? */
+		       16 * src->Index,          /* byte offset */
+		       SURF_INDEX_FRAG_CONST_BUFFER/* binding table index */
+		       );
       }
    }
 }
