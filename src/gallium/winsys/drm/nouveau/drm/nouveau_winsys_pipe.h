@@ -29,6 +29,8 @@ struct nouveau_pipe_winsys {
 
 	unsigned nr_pctx;
 	struct pipe_context **pctx;
+
+	struct pipe_surface *front;
 };
 
 static INLINE struct nouveau_pipe_winsys *

@@ -7,9 +7,68 @@
 #include "nouveau_channel.h"
 #include "nouveau_bo.h"
 
+static struct pipe_surface *
+dri_surface_from_handle(struct pipe_screen *screen,
+                        unsigned handle,
+                        enum pipe_format format,
+                        unsigned width,
+                        unsigned height,
+                        unsigned pitch)
+{
+   struct pipe_surface *surface = NULL;
+   struct pipe_texture *texture = NULL;
+   struct pipe_texture templat;
+   struct pipe_buffer *buf = NULL;
+
+   buf = drm_api_hooks.buffer_from_handle(screen, "front buffer", handle);
+   if (!buf)
+      return NULL;
+
+   memset(&templat, 0, sizeof(templat));
+   templat.tex_usage = PIPE_TEXTURE_USAGE_PRIMARY |
+                       NOUVEAU_TEXTURE_USAGE_LINEAR;
+   templat.target = PIPE_TEXTURE_2D;
+   templat.last_level = 0;
+   templat.depth[0] = 1;
+   templat.format = format;
+   templat.width[0] = width;
+   templat.height[0] = height;
+   pf_get_block(templat.format, &templat.block);
+
+   texture = screen->texture_blanket(screen,
+                                     &templat,
+                                     &pitch,
+                                     buf);
+
+   /* we don't need the buffer from this point on */
+   pipe_buffer_reference(&buf, NULL);
+
+   if (!texture)
+      return NULL;
+
+   surface = screen->get_tex_surface(screen, texture, 0, 0, 0,
+                                     PIPE_BUFFER_USAGE_GPU_READ |
+                                     PIPE_BUFFER_USAGE_GPU_WRITE);
+
+   /* we don't need the texture from this point on */
+   pipe_texture_reference(&texture, NULL);
+   return surface;
+}
+
+static struct pipe_surface *
+nouveau_dri1_front_surface(struct pipe_context *pipe)
+{
+	return nouveau_screen(pipe->screen)->front;
+}
+
+static struct dri1_api nouveau_dri1_api = {
+	nouveau_dri1_front_surface,
+};
+
 static struct pipe_screen *
 nouveau_drm_create_screen(int fd, struct drm_create_screen_arg *arg)
 {
+	struct dri1_create_screen_arg *dri1 = (void *)arg;
 	struct pipe_winsys *ws;
 	struct nouveau_winsys *nvws;
 	struct nouveau_device *dev = NULL;
@@ -65,6 +124,33 @@ nouveau_drm_create_screen(int fd, struct drm_create_screen_arg *arg)
 	if (!nouveau_pipe_winsys(ws)->pscreen) {
 		ws->destroy(ws);
 		return NULL;
+	}
+
+	if (arg->mode == DRM_CREATE_DRI1) {
+		struct nouveau_pipe_winsys *nvpws = nouveau_pipe_winsys(ws);
+		struct nouveau_dri *nvdri = dri1->ddx_info;
+		enum pipe_format format;
+
+		if (nvdri->bpp == 16)
+			format = PIPE_FORMAT_R5G6B5_UNORM;
+		else
+			format = PIPE_FORMAT_A8R8G8B8_UNORM;
+
+		nvpws->front = dri_surface_from_handle(nvpws->pscreen,
+						       nvdri->front_offset,
+						       format,
+						       nvdri->width,
+						       nvdri->height,
+						       nvdri->front_pitch *
+						       (nvdri->bpp / 8));
+		if (!nvpws->front) {
+			debug_printf("%s: error referencing front buffer\n",
+				     __func__);
+			ws->destroy(ws);
+			return NULL;
+		}
+
+		dri1->api = &nouveau_dri1_api;
 	}
 
 	return nouveau_pipe_winsys(ws)->pscreen;

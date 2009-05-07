@@ -1,7 +1,7 @@
 TOP = ../../../../../..
 include $(TOP)/configs/current
 
-LIBNAME = nouveau_dri2.so
+LIBNAME = nouveau_dri.so
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/state_trackers/dri/libdridrm.a \
