@@ -352,6 +352,13 @@ vbo_exec_DrawRangeElements(GLenum mode,
    if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count, type, indices ))
       return;
 
+   if (end >= ctx->Array._MaxElement) {
+      /* the max element is out of bounds of one or more enabled arrays */
+      _mesa_warning(ctx, "glDraw[Range]Elements() index=%u is "
+                    "out of bounds (max=%u)", end, ctx->Array._MaxElement);
+      return;
+   }
+
    FLUSH_CURRENT( ctx, 0 );
 
    if (ctx->NewState)
