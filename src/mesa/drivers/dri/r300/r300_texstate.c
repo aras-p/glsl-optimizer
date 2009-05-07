@@ -449,7 +449,10 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 	pitch_val = rb->pitch;
 	switch (rb->cpp) {
 	case 4:
-		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
+		if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT)
+			t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
+		else
+			t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
 		t->pp_txfilter |= tx_table[2].filter;
 		pitch_val /= 4;
 		break;
