@@ -184,6 +184,8 @@ _mesa_validate_DrawElements(GLcontext *ctx,
                                     ctx->Array.ElementArrayBufferObj);
       if (max >= ctx->Array._MaxElement) {
          /* the max element is out of bounds of one or more enabled arrays */
+         _mesa_warning(ctx, "glDrawElements() index=%u is "
+                       "out of bounds (max=%u)", max, ctx->Array._MaxElement);
          return GL_FALSE;
       }
    }
