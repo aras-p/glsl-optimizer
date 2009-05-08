@@ -61,8 +61,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_tex.h"
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
 #include "r600_context.h"
-#include "r700_fragprog.h"
-#include "r700_tex.h"
+//#include "r700_driconf.h" /* +r6/r7 */
+#include "r700_tex.h"     /* +r6/r7 */
 #endif
 
 #include "utils.h"
@@ -405,13 +405,13 @@ static const __DRItexBufferExtension r300TexBufferExtension = {
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
 static const __DRItexOffsetExtension r600texOffsetExtension = {
     { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
-   r700SetTexOffset,
+   r700SetTexOffset, /* +r6/r7 */
 };
 
 static const __DRItexBufferExtension r600TexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-   r700SetTexBuffer,
-   r700SetTexBuffer2,
+   r700SetTexBuffer,  /* +r6/r7 */
+   r700SetTexBuffer2, /* +r6/r7 */
 };
 #endif
 
@@ -941,7 +941,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 #if DO_DEBUG && RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 	RADEON_DEBUG = driParseDebugString(getenv("RADEON_DEBUG"), debug_control);
 #endif
-
    /* parse information in __driConfigOptions */
    driParseOptionInfo (&screen->optionCache,
 		       __driConfigOptions, __driNConfigOptions);

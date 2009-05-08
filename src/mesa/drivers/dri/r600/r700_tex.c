@@ -42,9 +42,7 @@
 #include "r600_context.h"
 #include "r700_chip.h"
 
-#if 0 /* to be enabled */
 #include "r700_state.h"
-#endif /* to be enabled */
 
 #include "r700_tex.h"
 
@@ -72,7 +70,6 @@ void r700SetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 {
 }
 
-#if 0 /* to be enabled */
 static GLboolean r700GetTexFormat(struct gl_texture_object *tObj, GLuint mesa_format)
 {
     r700TexObjPtr t = (r700TexObjPtr) tObj->DriverData;
@@ -548,7 +545,6 @@ static void compute_tex_image_offset(
 
     *curOffset += size;
 }
-#endif /* to be enabled */
  
 void r700DestroyTexObj(context_t context, r700TexObjPtr t) 
 {
@@ -563,9 +559,9 @@ void r700DestroyTexObj(context_t context, r700TexObjPtr t)
     //}
 }
  
-#if 0 /* to be enabled */
 static void r700SetTexImages(context_t *context, struct gl_texture_object *tObj)
 {
+#if 0 /* to be enabled */
     r700TexObjPtr t = (r700TexObjPtr) tObj->DriverData;
     const struct gl_texture_image *baseImage = tObj->Image[0][tObj->BaseLevel];
     GLint curOffset;
@@ -668,6 +664,7 @@ static void r700SetTexImages(context_t *context, struct gl_texture_object *tObj)
              TEX_WIDTH_shift, TEX_WIDTH_mask);
     SETfield(t->texture_state.SQ_TEX_RESOURCE1.u32All, tObj->Image[0][t->base.firstLevel]->Height - 1,
              TEX_HEIGHT_shift, TEX_HEIGHT_mask);
+#endif  /* to be enabled */
 }
 
 static void r700UploadSubImage(context_t    *context, 
@@ -677,6 +674,7 @@ static void r700UploadSubImage(context_t    *context,
                                GLint         y,                                
 			                   GLuint        face)
 {
+#if 0 /* to be enabled */
     struct gl_texture_image *texImage = NULL;
     GLuint offset;
     GLint imageWidth, imageHeight;
@@ -739,10 +737,12 @@ static void r700UploadSubImage(context_t    *context,
                          t->src_hight_in_pexel[face][hwlevel], /* height */
                          t->byte_per_texel, /* byte_per_pixel */
                          pSrc);  /* source data */
+#endif /* to be enabled */
 }
 
 int r700UploadTexImages(GLcontext * ctx, struct gl_texture_object *tObj, GLuint face)
 {
+#if 0 /* to be enabled */
     context_t *context = R700_CONTEXT(ctx);
     r700TexObjPtr t    = (r700TexObjPtr) tObj->DriverData; 
 
@@ -823,7 +823,7 @@ int r700UploadTexImages(GLcontext * ctx, struct gl_texture_object *tObj, GLuint 
         SETfield(t->texture_state.SQ_TEX_RESOURCE4.u32All, t->base.firstLevel, BASE_LEVEL_shift, BASE_LEVEL_mask);
         SETfield(t->texture_state.SQ_TEX_RESOURCE5.u32All, t->base.lastLevel, LAST_LEVEL_shift, LAST_LEVEL_mask);        
     }
-
+#endif /* to be enabled */
 	return 0;
 }
  
@@ -888,8 +888,6 @@ static const struct gl_texture_format *r700Choose8888TexFormat(GLenum srcFormat,
 
     return gtfRet;
 }
-
-#endif /* to be enabled */
 
 static r700TexObjPtr r700AllocTexObj(struct gl_texture_object *texObj)
 {
@@ -1525,6 +1523,16 @@ void r700UpdateTextureState(context_t * context)
         }
     }
 #endif /* to be enabled */
+}
+
+/**
+ * Ensure all enabled and complete textures are uploaded along with any buffers being used.
+ */
+GLboolean r700ValidateBuffers(GLcontext * ctx)
+{
+	/* TODO */
+
+	return radeon_revalidate_bos(ctx);
 }
 
 void r700InitTextureFuncs(struct dd_function_table *functions) 

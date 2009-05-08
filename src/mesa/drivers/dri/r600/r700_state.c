@@ -52,10 +52,9 @@
 #include "r700_chip.h"
 #include "r700_state.h"
 
-#if 0 /* to be enabled */
 #include "r700_fragprog.h"
 #include "r700_vertprog.h"
-#endif /* to be enabled */
+
 
 void r700SetDefaultStates(context_t *context) //--------------------
 {
@@ -68,13 +67,13 @@ void r700UpdateShaders (GLcontext * ctx)  //----------------------------------
 
     GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
     GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
-#if 0 /* to be enabled */
+
     struct r700_vertex_program *vp;
 	int i;
 
-    if (context->NewGLState) 
+    if (context->radeon.NewGLState) 
     {
-        context->NewGLState = 0;
+        context->radeon.NewGLState = 0;
 
         for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) 
         {
@@ -108,7 +107,6 @@ void r700UpdateShaders (GLcontext * ctx)  //----------------------------------
     }
 
     r700UpdateStateParameters(ctx, _NEW_PROGRAM);
-#endif /* to be enabled */
 }
 
 /*
@@ -116,6 +114,7 @@ void r700UpdateShaders (GLcontext * ctx)  //----------------------------------
  */
 void r700UpdateViewportOffset(GLcontext * ctx) //------------------
 {
+    return;
 }
 
 /**
@@ -152,7 +151,6 @@ static void r700FetchStateParameter(GLcontext * ctx,
 
 void r700UpdateStateParameters(GLcontext * ctx, GLuint new_state) //--------------------
 {
-#if 0 /* to be enabled */
 	struct r700_fragment_program *fp;
 	struct gl_program_parameter_list *paramList;
 	GLuint i;
@@ -183,7 +181,6 @@ void r700UpdateStateParameters(GLcontext * ctx, GLuint new_state) //------------
 						paramList->ParameterValues[i]);
 		}
 	}
-#endif /* to be enabled */
 }
 
 /**
@@ -191,7 +188,6 @@ void r700UpdateStateParameters(GLcontext * ctx, GLuint new_state) //------------
  */
 static void r700InvalidateState(GLcontext * ctx, GLuint new_state) //-------------------
 {
-#if 0 /* to be enabled */
     context_t *context = R700_CONTEXT(ctx);
 
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
@@ -204,12 +200,16 @@ static void r700InvalidateState(GLcontext * ctx, GLuint new_state) //-----------
 
 	if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) 
     {
+        _mesa_update_framebuffer(ctx);
+		/* this updates the DrawBuffer's Width/Height if it's a FBO */
+		_mesa_update_draw_buffer_bounds(ctx);
+
 		r700UpdateDrawBuffer(ctx);
 	}
 
 	r700UpdateStateParameters(ctx, new_state);
 
-    if(GL_TRUE == context->bEnablePerspective)
+    if(GL_TRUE == r700->bEnablePerspective)
     {
         /* Do scale XY and Z by 1/W0 for perspective correction on pos. For orthogonal case, set both to one. */
         CLEARbit(r700->PA_CL_VTE_CNTL.u32All, VTX_XY_FMT_bit);
@@ -232,8 +232,7 @@ static void r700InvalidateState(GLcontext * ctx, GLuint new_state) //-----------
         CLEARbit(r700->SPI_PS_IN_CONTROL_0.u32All, LINEAR_GRADIENT_ENA_bit);
     }
 
-	context->NewGLState |= new_state;
-#endif /* to be enabled */
+	context->radeon.NewGLState |= new_state;
 }
 
 static void r700SetDepthState(GLcontext * ctx)
@@ -492,17 +491,11 @@ static void r700Viewport(GLcontext * ctx,
 			             GLsizei width, 
                          GLsizei height) //--------------------
 {
-#if 0 /* to be enabled */
     context_t *context = R700_CONTEXT(ctx);
 
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
 
-    context->vport_x = x; 
-    context->vport_y = y;
-    context->vport_width = width;
-    context->vport_height= height;
-
-    __DRIdrawablePrivate *dPriv = context->currentDraw;
+    __DRIdrawablePrivate *dPriv = context->radeon.dri.drawable;
 
     GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
     GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
@@ -534,12 +527,12 @@ static void r700Viewport(GLcontext * ctx,
 	tz = v[MAT_TZ] * scale;
 
     /* TODO : Need DMA flush as well. */
-
+#if 0 /* to be enabled */
     if(context->cmdbuf.count_used > 0)
     {
 	    (context->chipobj.FlushCmdBuffer)(context);
     }
-
+#endif /* to be enabled */
     r700->PA_CL_VPORT_XSCALE.u32All  = *((unsigned int*)(&sx));
     r700->PA_CL_VPORT_XOFFSET.u32All = *((unsigned int*)(&tx));
 
@@ -548,7 +541,6 @@ static void r700Viewport(GLcontext * ctx,
 
     r700->PA_CL_VPORT_ZSCALE.u32All  = *((unsigned int*)(&sz));
     r700->PA_CL_VPORT_ZOFFSET.u32All = *((unsigned int*)(&tz));
-#endif /* to be enabled */
 }
 
 
@@ -600,60 +592,47 @@ static void r700Scissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h) 
 	}
 }
 
-
-/**
- * Calculate initial hardware state and register state functions.
- * Assumes that the command buffer and state atoms have been
- * initialized already.
- */
-void r700InitState(GLcontext * ctx) //-------------------
+void r700SetRenderTarget(context_t *context)
 {
-#if 0 /* to be enabled */
-    context_t *context = R700_CONTEXT(ctx);
-
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
- 
-    if(context->ctx->Visual.doubleBufferMode && context->sarea->pfCurrentPage == 0) 
-    {
-		context->target.rt = context->screen->backBuffer;
-	} 
-    else 
-    {
-		context->target.rt = context->screen->frontBuffer;
-	}
 
+    struct radeon_renderbuffer *rrb;
+    unsigned int nPitchInPixel;
+
+    /* screen/window/view */
     SETfield(r700->CB_TARGET_MASK.u32All, 0xF, TARGET0_ENABLE_shift, TARGET0_ENABLE_mask);
     SETfield(r700->CB_SHADER_MASK.u32All, 0xF, OUTPUT0_ENABLE_shift, OUTPUT0_ENABLE_mask);
 
     /* screen */
     r700->PA_SC_SCREEN_SCISSOR_TL.u32All = 0x0;
-    SETfield(r700->PA_SC_SCREEN_SCISSOR_BR.u32All, context->screen->width,  
+    
+    SETfield(r700->PA_SC_SCREEN_SCISSOR_BR.u32All, ((RADEONDRIPtr)(context->radeon.radeonScreen->driScreen->pDevPriv))->width,  
              PA_SC_SCREEN_SCISSOR_BR__BR_X_shift, PA_SC_SCREEN_SCISSOR_BR__BR_X_mask);
-    SETfield(r700->PA_SC_SCREEN_SCISSOR_BR.u32All, context->screen->height, 
+    SETfield(r700->PA_SC_SCREEN_SCISSOR_BR.u32All, ((RADEONDRIPtr)(context->radeon.radeonScreen->driScreen->pDevPriv))->height, 
              PA_SC_SCREEN_SCISSOR_BR__BR_Y_shift, PA_SC_SCREEN_SCISSOR_BR__BR_Y_mask);
 
     /* window */
     SETbit(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
-    SETfield(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, context->currentDraw->x, 
+    SETfield(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, context->radeon.dri.drawable->x, 
              PA_SC_WINDOW_SCISSOR_TL__TL_X_shift, PA_SC_WINDOW_SCISSOR_TL__TL_X_mask);
-    SETfield(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, context->currentDraw->y, 
+    SETfield(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, context->radeon.dri.drawable->y, 
              PA_SC_WINDOW_SCISSOR_TL__TL_Y_shift, PA_SC_WINDOW_SCISSOR_TL__TL_Y_mask);
 
-	SETfield(r700->PA_SC_WINDOW_SCISSOR_BR.u32All, context->currentDraw->x + context->currentDraw->w, 
+	SETfield(r700->PA_SC_WINDOW_SCISSOR_BR.u32All, context->radeon.dri.drawable->x + context->radeon.dri.drawable->w, 
              PA_SC_WINDOW_SCISSOR_BR__BR_X_shift, PA_SC_WINDOW_SCISSOR_BR__BR_X_mask);
-    SETfield(r700->PA_SC_WINDOW_SCISSOR_BR.u32All, context->currentDraw->y + context->currentDraw->h, 
+    SETfield(r700->PA_SC_WINDOW_SCISSOR_BR.u32All, context->radeon.dri.drawable->y + context->radeon.dri.drawable->h, 
              PA_SC_WINDOW_SCISSOR_BR__BR_Y_shift, PA_SC_WINDOW_SCISSOR_BR__BR_Y_mask);
 
     /* 4 clip rectangles */ /* TODO : set these clip rects according to context->currentDraw->numClipRects */
 	r700->PA_SC_CLIPRECT_RULE.u32All = 0x0000FFFF;
 
-    SETfield(r700->PA_SC_CLIPRECT_0_TL.u32All, context->currentDraw->x, 
+    SETfield(r700->PA_SC_CLIPRECT_0_TL.u32All, context->radeon.dri.drawable->x, 
              PA_SC_CLIPRECT_0_TL__TL_X_shift, PA_SC_CLIPRECT_0_TL__TL_X_mask);
-    SETfield(r700->PA_SC_CLIPRECT_0_TL.u32All, context->currentDraw->y, 
+    SETfield(r700->PA_SC_CLIPRECT_0_TL.u32All, context->radeon.dri.drawable->y, 
              PA_SC_CLIPRECT_0_TL__TL_Y_shift, PA_SC_CLIPRECT_0_TL__TL_Y_mask);
-	SETfield(r700->PA_SC_CLIPRECT_0_BR.u32All, context->currentDraw->x + context->currentDraw->w, 
+	SETfield(r700->PA_SC_CLIPRECT_0_BR.u32All, context->radeon.dri.drawable->x + context->radeon.dri.drawable->w, 
              PA_SC_CLIPRECT_0_BR__BR_X_shift, PA_SC_CLIPRECT_0_BR__BR_X_mask);
-    SETfield(r700->PA_SC_CLIPRECT_0_BR.u32All, context->currentDraw->y + context->currentDraw->h, 
+    SETfield(r700->PA_SC_CLIPRECT_0_BR.u32All, context->radeon.dri.drawable->y + context->radeon.dri.drawable->h, 
              PA_SC_CLIPRECT_0_BR__BR_Y_shift, PA_SC_CLIPRECT_0_BR__BR_Y_mask);
 
     r700->PA_SC_CLIPRECT_1_TL.u32All = r700->PA_SC_CLIPRECT_0_TL.u32All;
@@ -665,42 +644,138 @@ void r700InitState(GLcontext * ctx) //-------------------
 
     /* more....2d clip */
     SETbit(r700->PA_SC_GENERIC_SCISSOR_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
-    SETfield(r700->PA_SC_GENERIC_SCISSOR_TL.u32All, context->currentDraw->x, 
+    SETfield(r700->PA_SC_GENERIC_SCISSOR_TL.u32All, context->radeon.dri.drawable->x, 
              PA_SC_GENERIC_SCISSOR_TL__TL_X_shift, PA_SC_GENERIC_SCISSOR_TL__TL_X_mask);
-    SETfield(r700->PA_SC_GENERIC_SCISSOR_TL.u32All, context->currentDraw->y, 
+    SETfield(r700->PA_SC_GENERIC_SCISSOR_TL.u32All, context->radeon.dri.drawable->y, 
              PA_SC_GENERIC_SCISSOR_TL__TL_Y_shift, PA_SC_GENERIC_SCISSOR_TL__TL_Y_mask);
-    SETfield(r700->PA_SC_GENERIC_SCISSOR_BR.u32All, context->currentDraw->x + context->currentDraw->w, 
+    SETfield(r700->PA_SC_GENERIC_SCISSOR_BR.u32All, context->radeon.dri.drawable->x + context->radeon.dri.drawable->w, 
              PA_SC_GENERIC_SCISSOR_BR__BR_X_shift, PA_SC_GENERIC_SCISSOR_BR__BR_X_mask);
-    SETfield(r700->PA_SC_GENERIC_SCISSOR_BR.u32All, context->currentDraw->y + context->currentDraw->h, 
+    SETfield(r700->PA_SC_GENERIC_SCISSOR_BR.u32All, context->radeon.dri.drawable->y + context->radeon.dri.drawable->h, 
              PA_SC_GENERIC_SCISSOR_BR__BR_Y_shift, PA_SC_GENERIC_SCISSOR_BR__BR_Y_mask);
 
     SETbit(r700->PA_SC_VPORT_SCISSOR_0_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_0_TL.u32All, context->currentDraw->x, 
+    SETfield(r700->PA_SC_VPORT_SCISSOR_0_TL.u32All, context->radeon.dri.drawable->x, 
              PA_SC_VPORT_SCISSOR_0_TL__TL_X_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_X_mask);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_0_TL.u32All, context->currentDraw->y, 
+    SETfield(r700->PA_SC_VPORT_SCISSOR_0_TL.u32All, context->radeon.dri.drawable->y, 
              PA_SC_VPORT_SCISSOR_0_TL__TL_Y_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_Y_mask);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_0_BR.u32All, context->currentDraw->x + context->currentDraw->w, 
+    SETfield(r700->PA_SC_VPORT_SCISSOR_0_BR.u32All, context->radeon.dri.drawable->x + context->radeon.dri.drawable->w, 
              PA_SC_VPORT_SCISSOR_0_BR__BR_X_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_X_mask);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_0_BR.u32All, context->currentDraw->y + context->currentDraw->h, 
+    SETfield(r700->PA_SC_VPORT_SCISSOR_0_BR.u32All, context->radeon.dri.drawable->y + context->radeon.dri.drawable->h, 
              PA_SC_VPORT_SCISSOR_0_BR__BR_Y_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_Y_mask);
     
     SETbit(r700->PA_SC_VPORT_SCISSOR_1_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_1_TL.u32All, context->currentDraw->x, 
+    SETfield(r700->PA_SC_VPORT_SCISSOR_1_TL.u32All, context->radeon.dri.drawable->x, 
              PA_SC_VPORT_SCISSOR_0_TL__TL_X_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_X_mask);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_1_TL.u32All, context->currentDraw->y, 
+    SETfield(r700->PA_SC_VPORT_SCISSOR_1_TL.u32All, context->radeon.dri.drawable->y, 
              PA_SC_VPORT_SCISSOR_0_TL__TL_Y_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_Y_mask);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_1_BR.u32All, context->currentDraw->x + context->currentDraw->w, 
+    SETfield(r700->PA_SC_VPORT_SCISSOR_1_BR.u32All, context->radeon.dri.drawable->x + context->radeon.dri.drawable->w, 
              PA_SC_VPORT_SCISSOR_0_BR__BR_X_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_X_mask);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_1_BR.u32All, context->currentDraw->y + context->currentDraw->h, 
+    SETfield(r700->PA_SC_VPORT_SCISSOR_1_BR.u32All, context->radeon.dri.drawable->y + context->radeon.dri.drawable->h, 
              PA_SC_VPORT_SCISSOR_0_BR__BR_Y_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_Y_mask);
 
     /* setup viewport */
-    r700Viewport(ctx, 
+    r700Viewport(GL_CONTEXT(context), 
                  0,
                  0,
-			     context->currentDraw->w,
-                 context->currentDraw->h);
+			     context->radeon.dri.drawable->w,
+                 context->radeon.dri.drawable->h);
+
+    rrb = radeon_get_colorbuffer(&context->radeon);
+	if (!rrb || !rrb->bo) {
+		fprintf(stderr, "no rrb\n");
+		return;
+	}
+
+    /* color buffer */ 
+    r700->CB_COLOR0_BASE.u32All = context->radeon.state.color.draw_offset;
     
+    nPitchInPixel = rrb->pitch/rrb->cpp;
+    SETfield(r700->CB_COLOR0_SIZE.u32All, (nPitchInPixel/8)-1,
+             PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
+    SETfield(r700->CB_COLOR0_SIZE.u32All, ( (nPitchInPixel * rrb->base.Height)/64 )-1,
+             SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask);
+    r700->CB_COLOR0_BASE.u32All = 0;
+    SETfield(r700->CB_COLOR0_INFO.u32All, ENDIAN_NONE, ENDIAN_shift, ENDIAN_mask);
+    SETfield(r700->CB_COLOR0_INFO.u32All, ARRAY_LINEAR_GENERAL, 
+             CB_COLOR0_INFO__ARRAY_MODE_shift, CB_COLOR0_INFO__ARRAY_MODE_mask); 
+    if(4 == rrb->cpp)
+    {
+        SETfield(r700->CB_COLOR0_INFO.u32All, COLOR_8_8_8_8,
+                 CB_COLOR0_INFO__FORMAT_shift, CB_COLOR0_INFO__FORMAT_mask);
+        SETfield(r700->CB_COLOR0_INFO.u32All, SWAP_ALT, COMP_SWAP_shift, COMP_SWAP_mask);
+    }
+    else
+    {
+        SETfield(r700->CB_COLOR0_INFO.u32All, COLOR_5_6_5,
+                 CB_COLOR0_INFO__FORMAT_shift, CB_COLOR0_INFO__FORMAT_mask);
+        SETfield(r700->CB_COLOR0_INFO.u32All, SWAP_ALT_REV, 
+                 COMP_SWAP_shift, COMP_SWAP_mask);        
+    } 
+    SETbit(r700->CB_COLOR0_INFO.u32All, SOURCE_FORMAT_bit);
+    SETbit(r700->CB_COLOR0_INFO.u32All, BLEND_CLAMP_bit);
+    SETfield(r700->CB_COLOR0_INFO.u32All, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
+
+    /* depth buf */ 
+	r700->DB_DEPTH_SIZE.u32All = 0;
+    r700->DB_DEPTH_BASE.u32All = 0;
+    r700->DB_DEPTH_INFO.u32All = 0;
+
+    r700->DB_DEPTH_CONTROL.u32All   = 0;
+    r700->DB_DEPTH_CLEAR.u32All     = 0x3F800000;
+    r700->DB_DEPTH_VIEW.u32All      = 0;
+    r700->DB_RENDER_CONTROL.u32All  = 0;
+    r700->DB_RENDER_OVERRIDE.u32All = 0;
+    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIZ_ENABLE_shift, FORCE_HIZ_ENABLE_mask); 
+    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE0_shift, FORCE_HIS_ENABLE0_mask); 
+    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE1_shift, FORCE_HIS_ENABLE1_mask);
+
+    rrb = radeon_get_depthbuffer(&context->radeon);
+	if (!rrb)
+		return;
+
+    nPitchInPixel = rrb->pitch/rrb->cpp;
+
+    SETfield(r700->DB_DEPTH_SIZE.u32All, (nPitchInPixel/8)-1,
+             PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
+    SETfield(r700->DB_DEPTH_SIZE.u32All, ( (nPitchInPixel * rrb->base.Height)/64 )-1,
+             SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask); /* size in pixel / 64 - 1 */
+
+    if(4 == rrb->cpp) 
+    {
+        switch (GL_CONTEXT(context)->Visual.depthBits) 
+        {
+        case 16:           
+        case 24:
+            SETfield(r700->DB_DEPTH_INFO.u32All, DEPTH_8_24, 
+                     DB_DEPTH_INFO__FORMAT_shift, DB_DEPTH_INFO__FORMAT_mask);       
+            break;
+        default:
+            fprintf(stderr, "Error: Unsupported depth %d... exiting\n",
+                GL_CONTEXT(context)->Visual.depthBits);
+            _mesa_exit(-1);
+        }
+    }
+    else
+    {
+        SETfield(r700->DB_DEPTH_INFO.u32All, DEPTH_16, 
+                     DB_DEPTH_INFO__FORMAT_shift, DB_DEPTH_INFO__FORMAT_mask);          
+    } 
+    SETfield(r700->DB_DEPTH_INFO.u32All, ARRAY_2D_TILED_THIN1, 
+             DB_DEPTH_INFO__ARRAY_MODE_shift, DB_DEPTH_INFO__ARRAY_MODE_mask); 
+    /* r700->DB_PREFETCH_LIMIT.bits.DEPTH_HEIGHT_TILE_MAX = (context->currentDraw->h >> 3) - 1; */ /* z buffer sie may much bigger than what need, so use actual used h. */     
+}
+
+/**
+ * Calculate initial hardware state and register state functions.
+ * Assumes that the command buffer and state atoms have been
+ * initialized already.
+ */
+void r700InitState(GLcontext * ctx) //-------------------
+{
+    context_t *context = R700_CONTEXT(ctx);
+
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
+
     /* Turn off vgt reuse */
     r700->VGT_REUSE_OFF.u32All = 0;
     SETbit(r700->VGT_REUSE_OFF.u32All, REUSE_OFF_bit);
@@ -740,7 +815,7 @@ void r700InitState(GLcontext * ctx) //-------------------
              POLYMODE_BACK_PTYPE_shift, POLYMODE_BACK_PTYPE_mask); 
 
     /* Do scale XY and Z by 1/W0. */
-    context->bEnablePerspective = GL_TRUE;
+    r700->bEnablePerspective = GL_TRUE;
     CLEARbit(r700->PA_CL_VTE_CNTL.u32All, VTX_XY_FMT_bit);
     CLEARbit(r700->PA_CL_VTE_CNTL.u32All, VTX_Z_FMT_bit);
     SETbit(r700->PA_CL_VTE_CNTL.u32All, VTX_W0_FMT_bit);
@@ -811,35 +886,8 @@ void r700InitState(GLcontext * ctx) //-------------------
 
     /* depth buf */ 
 	r700->DB_DEPTH_SIZE.u32All = 0;
-	SETfield(r700->DB_DEPTH_SIZE.u32All, (context->screen->depthBuffer.pitch/8)-1,
-             PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
-    SETfield(r700->DB_DEPTH_SIZE.u32All, ( (context->screen->depthBuffer.size / context->screen->cpp)/64 )-1,
-             SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask); /* size in pixel / 64 - 1 */
-    r700->DB_DEPTH_BASE.u32All = context->screen->depthBuffer.gpu >> 8;
+    r700->DB_DEPTH_BASE.u32All = 0;
     r700->DB_DEPTH_INFO.u32All = 0;
-    if(4 == context->screen->cpp) /* TODO : in scrren create, gives z its own format alloc. */
-    {
-        switch (ctx->Visual.depthBits) 
-        {
-        case 16:           
-        case 24:
-            SETfield(r700->DB_DEPTH_INFO.u32All, DEPTH_8_24, 
-                     DB_DEPTH_INFO__FORMAT_shift, DB_DEPTH_INFO__FORMAT_mask);       
-            break;
-        default:
-            fprintf(stderr, "Error: Unsupported depth %d... exiting\n",
-                ctx->Visual.depthBits);
-            _mesa_exit(-1);
-        }
-    }
-    else
-    {
-        SETfield(r700->DB_DEPTH_INFO.u32All, DEPTH_16, 
-                     DB_DEPTH_INFO__FORMAT_shift, DB_DEPTH_INFO__FORMAT_mask);          
-    } 
-    SETfield(r700->DB_DEPTH_INFO.u32All, ARRAY_2D_TILED_THIN1, 
-             DB_DEPTH_INFO__ARRAY_MODE_shift, DB_DEPTH_INFO__ARRAY_MODE_mask); 
-    /* r700->DB_PREFETCH_LIMIT.bits.DEPTH_HEIGHT_TILE_MAX = (context->currentDraw->h >> 3) - 1; */ /* z buffer sie may much bigger than what need, so use actual used h. */
     r700->DB_DEPTH_CONTROL.u32All   = 0;
     r700->DB_DEPTH_CLEAR.u32All     = 0x3F800000;
     r700->DB_DEPTH_VIEW.u32All      = 0;
@@ -850,27 +898,9 @@ void r700InitState(GLcontext * ctx) //-------------------
     SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE1_shift, FORCE_HIS_ENABLE1_mask); 
     
     /* color buffer */ 
-    SETfield(r700->CB_COLOR0_SIZE.u32All, (context->screen->frontBuffer.pitch/8)-1,
-             PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
-    SETfield(r700->CB_COLOR0_SIZE.u32All, ( (context->screen->frontBuffer.size / context->screen->cpp)/64 )-1,
-             SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask);
-    r700->CB_COLOR0_BASE.u32All = context->screen->frontBuffer.gpu >> 8;
-    SETfield(r700->CB_COLOR0_INFO.u32All, ENDIAN_NONE, ENDIAN_shift, ENDIAN_mask);
-    SETfield(r700->CB_COLOR0_INFO.u32All, ARRAY_LINEAR_GENERAL, 
-             CB_COLOR0_INFO__ARRAY_MODE_shift, CB_COLOR0_INFO__ARRAY_MODE_mask); 
-    if(4 == context->screen->cpp)
-    {
-        SETfield(r700->CB_COLOR0_INFO.u32All, COLOR_8_8_8_8,
-                 CB_COLOR0_INFO__FORMAT_shift, CB_COLOR0_INFO__FORMAT_mask);
-        SETfield(r700->CB_COLOR0_INFO.u32All, SWAP_ALT, COMP_SWAP_shift, COMP_SWAP_mask);
-    }
-    else
-    {
-        SETfield(r700->CB_COLOR0_INFO.u32All, COLOR_5_6_5,
-                 CB_COLOR0_INFO__FORMAT_shift, CB_COLOR0_INFO__FORMAT_mask);
-        SETfield(r700->CB_COLOR0_INFO.u32All, SWAP_ALT_REV, 
-                 COMP_SWAP_shift, COMP_SWAP_mask);        
-    } 
+    r700->CB_COLOR0_SIZE.u32All = 0;
+    r700->CB_COLOR0_BASE.u32All = 0;
+    r700->CB_COLOR0_INFO.u32All = 0;
     SETbit(r700->CB_COLOR0_INFO.u32All, SOURCE_FORMAT_bit);
     SETbit(r700->CB_COLOR0_INFO.u32All, BLEND_CLAMP_bit);
     SETfield(r700->CB_COLOR0_INFO.u32All, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
@@ -879,8 +909,7 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->CB_COLOR0_FRAG.u32All   = 0;
     r700->CB_COLOR0_MASK.u32All   = 0;
 
-	r700->PA_SC_VPORT_ZMAX_0.u32All = 0x3F800000;
-#endif /* to be enabled */
+    r700->PA_SC_VPORT_ZMAX_0.u32All = 0x3F800000;
 }
 
 void r700InitStateFuncs(struct dd_function_table *functions) //-----------------

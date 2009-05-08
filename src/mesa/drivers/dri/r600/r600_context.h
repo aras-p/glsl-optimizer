@@ -140,26 +140,19 @@ struct r600_swtcl_info {
    GLubyte vertex_attr_count;
 };
 
-/* to be enabled */ /* DELETE FOLLOWING 2 SRTUCTS */
-struct r600_dma_buffer 
+enum 
 {
-    int         refcount;       /* the number of retained regions in buf */
-    drmBufPtr   buf;
-    int         id;
+    NO_SHIFT    = 0,
+    LEFT_SHIFT  = 1,
+    RIGHT_SHIFT = 2,
 };
-struct r600_dma_region 
-{
-    struct r600_dma_buffer  *buf;
-    char        *address;       /* == buf->address */
-    int         start;
-    int         end;
-    int         ptr;            /* offsets from start of buf */
 
-    int         aos_offset;     /* address in GART memory */
-    int         aos_stride;     /* distance between elements, in dwords */
-    int         aos_size;       /* number of components (1-4) */
-};
-/* ----------------------- */
+typedef struct offset_modifiers
+{
+    GLuint shift;
+    GLuint shiftbits;
+    GLuint mask;
+} offset_modifiers;
 
 typedef struct chip_object
 {
@@ -175,14 +168,16 @@ typedef struct chip_object
     GLuint    (*GetTexObjSize)(void);
 
     /* ------------  IN  ------------------- */
-    void      (*EmitShader)( GLcontext * ctx, 
-                             struct r600_dma_region *rvb,
+    GLboolean (*EmitShader)( GLcontext * ctx, 
+                             void ** shaderbo,
 			                 GLvoid * data, 
                              int sizeinDWORD);
+    GLboolean (*DeleteShader)(GLcontext * ctx, 
+                              void * shaderbo);
     void      (*FreeDmaRegion)( GLcontext * ctx, 
-                                struct r600_dma_region *region);
-    void      (*EmitVec)(GLcontext * ctx, 
-                         struct r600_dma_region *rvb,
+                                void * shaderbo);
+    GLboolean (*EmitVec)(GLcontext * ctx, 
+                         struct radeon_aos *aos,
 			             GLvoid * data, 
                          int size, 
                          int stride, 

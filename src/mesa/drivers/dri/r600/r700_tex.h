@@ -97,6 +97,8 @@ extern void r700SetTexOffset(__DRIcontext *pDRICtx,
 
 extern void r700DestroyTexObj(context_t rmesa, r700TexObjPtr t);
 
+extern GLboolean r700ValidateBuffers(GLcontext * ctx);
+
 extern void r700InitTextureFuncs(struct dd_function_table *functions);
 
 #endif /* __r700_TEX_H__ */

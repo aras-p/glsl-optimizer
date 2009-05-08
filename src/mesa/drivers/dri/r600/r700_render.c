@@ -45,107 +45,64 @@
 #include "tnl/t_pipeline.h"
 
 #include "r600_context.h"
+#include "r600_cmdbuf.h"
 
 #include "r700_chip.h"
+#include "r700_tex.h"
 
-/* to be enable
 #include "r700_vertprog.h"
 #include "r700_fragprog.h"
 #include "r700_state.h"
-#include "r700_tex.h"
-#include "r700_emit.h"
-*/
 
-#if 0 // to be enable
 void r700WaitForIdle(context_t *context)
 {
-    R700EP3 (context, IT_SET_CONFIG_REG, 1);
-    R700E32 (context, mmWAIT_UNTIL - ASIC_CONFIG_BASE_INDEX);
-    R700E32 (context, 1 << 15);
+    BATCH_LOCALS(&context->radeon);
+    BEGIN_BATCH_NO_AUTOSTATE(3);
+
+    OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
+    OUT_BATCH(mmWAIT_UNTIL - ASIC_CONFIG_BASE_INDEX);
+    OUT_BATCH(1 << 15);
+
+    END_BATCH();
+    COMMIT_BATCH();
 }
 
 void r700WaitForIdleClean(context_t *context)
 {
-    R700EP3 (context, IT_EVENT_WRITE, 0);
-    R700E32 (context, 0x16);
+    BATCH_LOCALS(&context->radeon);
+    BEGIN_BATCH_NO_AUTOSTATE(5);
 
-    R700EP3 (context, IT_SET_CONFIG_REG, 1);
-    R700E32 (context, mmWAIT_UNTIL - ASIC_CONFIG_BASE_INDEX);
-    R700E32 (context, 1 << 17); 
+    OUT_BATCH(CP_PACKET3(R600_IT_EVENT_WRITE, 0));
+    OUT_BATCH(0x16);
+
+    OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
+    OUT_BATCH(mmWAIT_UNTIL - ASIC_CONFIG_BASE_INDEX);
+    OUT_BATCH(1 << 17); 
+
+    END_BATCH();
+    COMMIT_BATCH();
 }
 
 static void r700Start3D(context_t *context)
 {
-    if (context->screen->chip.type <= CHIP_TYPE_RV670)
+    BATCH_LOCALS(&context->radeon);
+    if (context->radeon.radeonScreen->chip_family <= CHIP_FAMILY_RV670)
     {
-        R700EP3 (context, IT_START_3D_CMDBUF, 1);
-        R700E32 (context, 0);
+        BEGIN_BATCH_NO_AUTOSTATE(2);
+        OUT_BATCH(CP_PACKET3(R600_IT_START_3D_CMDBUF, 1));
+        OUT_BATCH(0);
+        END_BATCH();        
     }
 
-    R700EP3 (context, IT_CONTEXT_CONTROL, 1);
-    R700E32 (context, 0x80000000);
-    R700E32 (context, 0x80000000);
+    BEGIN_BATCH_NO_AUTOSTATE(3);
+    OUT_BATCH(CP_PACKET3(R600_IT_CONTEXT_CONTROL, 1));
+    OUT_BATCH(0x80000000);
+    OUT_BATCH(0x80000000);
+    END_BATCH();
+
+    COMMIT_BATCH();
+
     r700WaitForIdleClean(context);
-}
-
-
-static int r700SetupStreams(GLcontext * ctx)
-{
-    context_t         *context = R700_CONTEXT(ctx);
-
-    struct r700_vertex_program *vpc
-             = (struct r700_vertex_program *)ctx->VertexProgram._Current;
-
-    TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *vb = &tnl->vb;
-
-    unsigned int unBit;
-	unsigned int i;
-
-    R700_CMDBUF_CHECK_SPACE(6);
-    R700EP3 (context, IT_SET_CTL_CONST, 1);
-    R700E32 (context, mmSQ_VTX_BASE_VTX_LOC - ASIC_CTL_CONST_BASE_INDEX);
-    R700E32 (context, 0);
-
-    R700EP3 (context, IT_SET_CTL_CONST, 1);
-    R700E32 (context, mmSQ_VTX_START_INST_LOC - ASIC_CTL_CONST_BASE_INDEX);
-    R700E32 (context, 0);
-
-    context->aos_count = 0;
-	for(i=0; i<VERT_ATTRIB_MAX; i++)
-	{
-		unBit = 1 << i;
-		if(vpc->mesa_program.Base.InputsRead & unBit) 
-		{
-            (context->chipobj.EmitVec)(ctx, 
-                        &(context->aos[context->aos_count]),
-				        vb->AttribPtr[i]->data,
-				        vb->AttribPtr[i]->size,
-				        vb->AttribPtr[i]->stride, 
-                        vb->Count);
-
-            context->aos[context->aos_count].aos_size = vb->AttribPtr[i]->size;
-
-            /* currently aos are packed */
-            r700SetupVTXConstans(ctx, 
-                                 i,
-                                 (unsigned int)context->aos[context->aos_count].aos_offset,
-                                 (unsigned int)vb->AttribPtr[i]->size,
-                                 (unsigned int)(vb->AttribPtr[i]->size * 4),
-                                 (unsigned int)vb->Count);
-            /* TODO : enable this after MemUse fixed *=
-            (context->chipobj.MemUse)(context, context->aos[context->aos_count].buf->id);
-            */
-
-            context->aos_count++;
-		}
-	}
-    for(i=context->aos_count; i<VERT_ATTRIB_MAX; i++)
-    {
-        context->aos[i].buf = NULL;
-    }
-
-    return R600_FALLBACK_NONE;
 }
 
 static GLboolean r700SetupShaders(GLcontext * ctx)
@@ -177,7 +134,7 @@ GLboolean r700SendTextureState(context_t *context)
     unsigned int i;
 
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
-
+#if 0 /* to be enabled */
     for(i=0; i<R700_TEXTURE_NUMBERUNITS; i++)
     {
         if(r700->texture_states.textures[i] != 0)
@@ -204,12 +161,15 @@ GLboolean r700SendTextureState(context_t *context)
             R700E32 (context, r700->texture_states.samplers[i]->SQ_TEX_SAMPLER2.u32All);
         }
     }
-
+#endif
     return GL_TRUE;
 }
 
 GLboolean r700SyncSurf(context_t *context)
 {
+#if 0 //to be enabled
+    BATCH_LOCALS(&context->radeon);
+
     /* TODO : too heavy? */
     unsigned int CP_COHER_CNTL   = 0;
 
@@ -221,21 +181,18 @@ GLboolean r700SyncSurf(context_t *context)
 	                |SMX_ACTION_ENA_bit;
 
 
-    R700_CMDBUF_CHECK_SPACE(5);
-    R700EP3(context, IT_SURFACE_SYNC, 3);
-    R700E32(context, CP_COHER_CNTL);
-    R700E32(context, 0xFFFFFFFF);
-    R700E32(context, 0x00000000);
-    R700E32(context, 10);
+    BEGIN_BATCH_NO_AUTOSTATE(5);
+    
+    OUT_BATCH(CP_PACKET3((IT_SURFACE_SYNC << 8), 3)));
+    OUT_BATCH(CP_COHER_CNTL);
+    OUT_BATCH(0xFFFFFFFF);
+    OUT_BATCH(0x00000000);
+    OUT_BATCH(10);
 
+    END_BATCH();
+    COMMIT_BATCH();
+#endif
     return GL_TRUE;
-}
-
-static void r700SetRenderTarget(context_t *context)
-{
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
-
-    r700->CB_COLOR0_BASE.u32All = context->target.rt.gpu >> 8;
 }
 
 unsigned int r700PrimitiveType(int prim)
@@ -279,21 +236,21 @@ unsigned int r700PrimitiveType(int prim)
     }
 }
 
-#endif // to be enable
-
 static GLboolean r700RunRender(GLcontext * ctx,
 			                   struct tnl_pipeline_stage *stage)
 {
-#if 0 // to be enable
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
+
+    BATCH_LOCALS(&context->radeon);
+
     unsigned int i, j;
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *vb = &tnl->vb;
 
     struct r700_fragment_program *fp = (struct r700_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
-    if (context->screen->chip.type <= CHIP_TYPE_RV670)
+    if (context->radeon.radeonScreen->chip_family <= CHIP_FAMILY_RV670)
     {
         fp->r700AsmCode.bR6xx = 1;
     }
@@ -329,7 +286,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     r700->SQ_PGM_START_ES.u32All     = r700->SQ_PGM_START_PS.u32All;
     r700->SQ_PGM_START_GS.u32All     = r700->SQ_PGM_START_PS.u32All;
 
-    r700SendContextStates(context);
+    r700SendContextStates(context, NULL, NULL);
 
     /* richard test code */
     for (i = 0; i < vb->PrimitiveCount; i++) 
@@ -351,51 +308,55 @@ static GLboolean r700RunRender(GLcontext * ctx,
                      + numIndices + 3 /* DRAW_INDEX_IMMD */
                      + 2; /* test stamp */
                      
-        R700_CMDBUF_CHECK_SPACE(numEntires);  
+        BEGIN_BATCH_NO_AUTOSTATE(numEntires);  
 
         VGT_INDEX_TYPE |= DI_INDEX_SIZE_32_BIT << INDEX_TYPE_shift;
 
-        R700EP3(context, IT_INDEX_TYPE, 0);
-        R700E32(context, VGT_INDEX_TYPE);
+        OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
+        OUT_BATCH(VGT_INDEX_TYPE);
 
         VGT_NUM_INDICES = numIndices;
 
         VGT_PRIMITIVE_TYPE |= r700PrimitiveType(prim) << VGT_PRIMITIVE_TYPE__PRIM_TYPE_shift;
-        R700EP3(context, IT_SET_CONFIG_REG, 1);
-        R700E32(context, mmVGT_PRIMITIVE_TYPE - ASIC_CONFIG_BASE_INDEX);
-        R700E32(context, VGT_PRIMITIVE_TYPE);
+        OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
+        OUT_BATCH(mmVGT_PRIMITIVE_TYPE - ASIC_CONFIG_BASE_INDEX);
+        OUT_BATCH(VGT_PRIMITIVE_TYPE);
 
         VGT_DRAW_INITIATOR |= DI_SRC_SEL_IMMEDIATE << SOURCE_SELECT_shift;
         VGT_DRAW_INITIATOR |= DI_MAJOR_MODE_0 << MAJOR_MODE_shift;
 
-        R700EP3(context, IT_DRAW_INDEX_IMMD, (numIndices + 1));
-        R700E32(context, VGT_NUM_INDICES);
-        R700E32(context, VGT_DRAW_INITIATOR);
+        OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (numIndices + 1)));
+        OUT_BATCH(VGT_NUM_INDICES);
+        OUT_BATCH(VGT_DRAW_INITIATOR);
 
         for (j=0; j<numIndices; j++)
         {
-            R700E32(context, j);
+            OUT_BATCH(j);
         }
-
-        /* test stamp, write a number to mmSCRATCH4 */
-        R700EP3(context, IT_SET_CONFIG_REG, 1);
-        R700E32(context, 0x2144 - 0x2000);
-        R700E32(context, 0x12341234);
+        END_BATCH();
+        COMMIT_BATCH();
     }
 
     /* Flush render op cached for last several quads. */
-    R700_CMDBUF_CHECK_SPACE(2);
-    R700EP3 (context, IT_EVENT_WRITE, 0);
-    R700E32 (context, CACHE_FLUSH_AND_INV_EVENT);
+    BEGIN_BATCH_NO_AUTOSTATE(2);
+    OUT_BATCH(CP_PACKET3(R600_IT_EVENT_WRITE, 0));
+    OUT_BATCH(CACHE_FLUSH_AND_INV_EVENT);
+    END_BATCH();
+    COMMIT_BATCH();
 
     (context->chipobj.FlushCmdBuffer)(context);
 
-    /* free aos => TODO : cache mgr */
-    for (i = 0; i < context->aos_count; i++) 
-    {
-        (context->chipobj.FreeDmaRegion)(context, &(context->aos[i]));
-    }
-#endif // to be enable
+    (context->chipobj.ReleaseArrays)(ctx);
+
+    //richard test
+    /* test stamp, write a number to mmSCRATCH4 */
+    BEGIN_BATCH_NO_AUTOSTATE(3);
+    R600_OUT_BATCH_REGVAL((0x2144 << 2), 0x56785678);
+    END_BATCH();
+    COMMIT_BATCH();
+
+    rcommonFlushCmdBuf( &context->radeon, __FUNCTION__ );
+
     return GL_FALSE;
 }
 
@@ -412,11 +373,19 @@ static GLboolean r700RunTCLRender(GLcontext * ctx,  /*----------------------*/
 {
 	GLboolean bRet = GL_FALSE;
 
-#if 0 // to be enable
+    /* TODO : sw fallback */
+
+    /**
+    * Ensure all enabled and complete textures are uploaded along with any buffers being used.
+    */
+    if(!r700ValidateBuffers(ctx))
+    {
+        return GL_TRUE;
+    }
+
     context_t *context = R700_CONTEXT(ctx);
 
     r700UpdateShaders(ctx);
-#endif // to be enable
 
     bRet = r700RunRender(ctx, stage);
 

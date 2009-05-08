@@ -216,22 +216,28 @@ static int cs_process_relocs(struct radeon_cs *cs)
 
     csm = (struct cs_manager_legacy*)cs->csm;
     relocs = (struct cs_reloc_legacy *)cs->relocs;
- restart:
-    for (i = 0; i < cs->crelocs; i++) {
-        for (j = 0; j < relocs[i].cindices; j++) {
+restart:
+    for (i = 0; i < cs->crelocs; i++) 
+    {
+        for (j = 0; j < relocs[i].cindices; j++) 
+        {
             uint32_t soffset, eoffset;
 
             r = radeon_bo_legacy_validate(relocs[i].base.bo,
                                            &soffset, &eoffset);
-	    if (r == -EAGAIN)
-	      goto restart;
-            if (r) {
+	        if (r == -EAGAIN)
+            {
+	             goto restart;
+            }
+            if (r) 
+            {
                 fprintf(stderr, "validated %p [0x%08X, 0x%08X]\n",
                         relocs[i].base.bo, soffset, eoffset);
                 return r;
             }
             cs->packets[relocs[i].indices[j]] += soffset;
-            if (cs->packets[relocs[i].indices[j]] >= eoffset) {
+            if (cs->packets[relocs[i].indices[j]] >= eoffset) 
+            {
 	      /*                radeon_bo_debug(relocs[i].base.bo, 12); */
                 fprintf(stderr, "validated %p [0x%08X, 0x%08X]\n",
                         relocs[i].base.bo, soffset, eoffset);
@@ -280,7 +286,8 @@ static int cs_emit(struct radeon_cs *cs)
     csm->ctx->vtbl.emit_cs_header(cs, csm->ctx);
 
     /* append buffer age */
-    if (IS_R300_CLASS(csm->ctx->radeonScreen)) {
+    if ( IS_R300_CLASS(csm->ctx->radeonScreen) )
+    { 
       age.scratch.cmd_type = R300_CMD_SCRATCH;
       /* Scratch register 2 corresponds to what radeonGetAge polls */
       csm->pending_age = 0;
@@ -315,7 +322,8 @@ static int cs_emit(struct radeon_cs *cs)
     if (r) {
         return r;
     }
-    if (!IS_R300_CLASS(csm->ctx->radeonScreen)) {
+    if ((!IS_R300_CLASS(csm->ctx->radeonScreen)) &&
+        (!IS_R600_CLASS(csm->ctx->radeonScreen))) { /* +r6/r7 : No irq for r6/r7 yet. */
 	drm_radeon_irq_emit_t emit_cmd;
 	emit_cmd.irq_seq = &csm->pending_age;
 	r = drmCommandWrite(cs->csm->fd, DRM_RADEON_IRQ_EMIT, &emit_cmd, sizeof(emit_cmd));
@@ -387,59 +395,71 @@ static int cs_check_space(struct radeon_cs *cs, struct radeon_cs_space_check *bo
         return 0;
 
     /* prepare */
-    for (i = 0; i < num_bo; i++) {
-      bo = bos[i].bo;
+    for (i = 0; i < num_bo; i++) 
+    {
+         bo = bos[i].bo;
 
-      bos[i].new_accounted = 0;
-      read_domains = bos[i].read_domains;
-      write_domain = bos[i].write_domain;
-		
-      /* pinned bos don't count */
-      if (radeon_legacy_bo_is_static(bo))
-	  continue;
+         bos[i].new_accounted = 0;
+         read_domains = bos[i].read_domains;
+         write_domain = bos[i].write_domain;
+		   
+         /* pinned bos don't count */
+         if (radeon_legacy_bo_is_static(bo))
+	     continue;
  
-      /* already accounted this bo */
-      if (write_domain && (write_domain == bo->space_accounted))
-	  continue;
+         /* already accounted this bo */
+         if (write_domain && (write_domain == bo->space_accounted))
+	     continue;
 
-      if (read_domains && ((read_domains << 16) == bo->space_accounted))
-	  continue;
+         if (read_domains && ((read_domains << 16) == bo->space_accounted))
+	     continue;
       
-      if (bo->space_accounted == 0) {
-	  if (write_domain == RADEON_GEM_DOMAIN_VRAM)
-	      this_op_vram_write += bo->size;
-	  else if (write_domain == RADEON_GEM_DOMAIN_GTT)
-	      this_op_gart_write += bo->size;
-	  else
-	      this_op_read += bo->size;
-	  bos[i].new_accounted = (read_domains << 16) | write_domain;
-      } else {
-	  uint16_t old_read, old_write;
-	  
-	  old_read = bo->space_accounted >> 16;
-	  old_write = bo->space_accounted & 0xffff;
+         if (bo->space_accounted == 0) 
+         {
+	         if (write_domain == RADEON_GEM_DOMAIN_VRAM)
+	             this_op_vram_write += bo->size;
+	         else if (write_domain == RADEON_GEM_DOMAIN_GTT)
+	             this_op_gart_write += bo->size;
+	         else
+	             this_op_read += bo->size;
+	         bos[i].new_accounted = (read_domains << 16) | write_domain;
+         } 
+         else 
+         {
+	        uint16_t old_read, old_write;
+	     
+	        old_read = bo->space_accounted >> 16;
+	        old_write = bo->space_accounted & 0xffff;
 
-	  if (write_domain && (old_read & write_domain)) {
-	      bos[i].new_accounted = write_domain;
-	      /* moving from read to a write domain */
-	      if (write_domain == RADEON_GEM_DOMAIN_VRAM) {
-		  this_op_read -= bo->size;
-		  this_op_vram_write += bo->size;
-	      } else if (write_domain == RADEON_GEM_DOMAIN_VRAM) {
-		  this_op_read -= bo->size;
-		  this_op_gart_write += bo->size;
-	      }
-	  } else if (read_domains & old_write) {
-	      bos[i].new_accounted = bo->space_accounted & 0xffff;
-	  } else {
-	      /* rewrite the domains */
-	      if (write_domain != old_write)
-		  fprintf(stderr,"WRITE DOMAIN RELOC FAILURE 0x%x %d %d\n", bo->handle, write_domain, old_write);
-	      if (read_domains != old_read)
-		  fprintf(stderr,"READ DOMAIN RELOC FAILURE 0x%x %d %d\n", bo->handle, read_domains, old_read);
-	      return RADEON_CS_SPACE_FLUSH;
-	  }
-      }
+	        if (write_domain && (old_read & write_domain)) 
+            {
+	            bos[i].new_accounted = write_domain;
+	            /* moving from read to a write domain */
+	            if (write_domain == RADEON_GEM_DOMAIN_VRAM) 
+                {
+		            this_op_read -= bo->size;
+		            this_op_vram_write += bo->size;
+	            } 
+                else if (write_domain == RADEON_GEM_DOMAIN_VRAM) 
+                {
+		            this_op_read -= bo->size;
+		            this_op_gart_write += bo->size;
+	            }
+	        } 
+            else if (read_domains & old_write) 
+            {
+	            bos[i].new_accounted = bo->space_accounted & 0xffff;
+	        } 
+            else 
+            {
+	            /* rewrite the domains */
+	            if (write_domain != old_write)
+		            fprintf(stderr,"WRITE DOMAIN RELOC FAILURE 0x%x %d %d\n", bo->handle, write_domain, old_write);
+	            if (read_domains != old_read)
+		            fprintf(stderr,"READ DOMAIN RELOC FAILURE 0x%x %d %d\n", bo->handle, read_domains, old_read);
+	            return RADEON_CS_SPACE_FLUSH;
+	        }
+         }
 	}
 	
 	if (this_op_read < 0)

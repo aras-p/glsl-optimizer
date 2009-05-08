@@ -36,18 +36,16 @@
 
 #include "r700_chip.h"
 #include "r700_oglprog.h"
-
-#if 0 /* to be enabled */
 #include "r700_fragprog.h"
 #include "r700_vertprog.h"
-#endif /* to be enabled */
+
 
 static struct gl_program *r700NewProgram(GLcontext * ctx, 
                                          GLenum target,
 					                     GLuint id)
 {
 	struct gl_program *pProgram = NULL;
-#if 0 /* to be enabled */
+
     struct r700_vertex_program *vp;
 	struct r700_fragment_program *fp;
 
@@ -62,7 +60,9 @@ static struct gl_program *r700NewProgram(GLcontext * ctx,
                                              id);
         vp->translated = GL_FALSE;
         vp->loaded     = GL_FALSE;
-        vp->shadercode.buf = NULL;
+ 
+        vp->shaderbo   = NULL;
+
 	    break;
     case GL_FRAGMENT_PROGRAM_NV:
     case GL_FRAGMENT_PROGRAM_ARB:
@@ -73,18 +73,19 @@ static struct gl_program *r700NewProgram(GLcontext * ctx,
                                                id);
         fp->translated = GL_FALSE;
         fp->loaded     = GL_FALSE;
-        fp->shadercode.buf = NULL;
+
+        fp->shaderbo   = NULL;
+
 	    break;
     default:
 	    _mesa_problem(ctx, "Bad target in r700NewProgram");
     }
-#endif /* to be enabled */
+
 	return pProgram;
 }
 
 static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 {
-#if 0 /* to be enabled */
     struct r700_vertex_program   * vp;
     struct r700_fragment_program * fp;
     context_t *context = R700_CONTEXT(ctx);
@@ -95,7 +96,9 @@ static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
     case GL_VERTEX_PROGRAM_ARB:	    
         vp = (struct r700_vertex_program*)prog;
         /* Release DMA region */
-        (context->chipobj.FreeDmaRegion)(context, &(vp->shadercode));
+
+        (context->chipobj.DeleteShader)(ctx, vp->shaderbo);
+
         /* Clean up */
         Clean_Up_Assembler(&(vp->r700AsmCode));
         Clean_Up_Shader(&(vp->r700Shader));
@@ -104,7 +107,9 @@ static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
     case GL_FRAGMENT_PROGRAM_ARB:
 		fp = (struct r700_fragment_program*)prog;
         /* Release DMA region */
-        (context->chipobj.FreeDmaRegion)(context, &(fp->shadercode));
+
+        (context->chipobj.DeleteShader)(ctx, fp->shaderbo);
+
         /* Clean up */
         Clean_Up_Assembler(&(fp->r700AsmCode));
         Clean_Up_Shader(&(fp->r700Shader));
@@ -114,7 +119,6 @@ static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
     }
 
 	_mesa_delete_program(ctx, prog);
-#endif /* to be enabled */
 }
 
 static void

@@ -39,14 +39,11 @@
 #include "shader/prog_statevars.h"
 
 #include "r600_context.h"
+#include "r600_cmdbuf.h"
 
 #include "r700_chip.h"
 #include "r700_debug.h"
 #include "r700_vertprog.h"
-
-#if 0 /* to be enabled */
-#include "r700_emit.h"
-#endif
 
 unsigned int Map_Vertex_Output(r700_AssemblerBase       *pAsm, 
 					           struct gl_vertex_program *mesa_vp,
@@ -297,11 +294,10 @@ GLboolean r700TranslateVertexShader(struct r700_vertex_program *vp,
 
 void r700SelectVertexShader(GLcontext *ctx)
 {
-#if 0 /* to be enabled */
     context_t *context = R700_CONTEXT(ctx);
     struct r700_vertex_program *vpc
              = (struct r700_vertex_program *)ctx->VertexProgram._Current;
-    if (context->screen->chip.type <= CHIP_TYPE_RV670)
+    if (context->radeon.radeonScreen->chip_family <= CHIP_FAMILY_RV670)
     {
         vpc->r700AsmCode.bR6xx = 1;
     }
@@ -327,55 +323,21 @@ void r700SelectVertexShader(GLcontext *ctx)
         r700TranslateVertexShader(vpc,
 		    					  &(vpc->mesa_program) );
     }
-#endif /* to be enabled */
 }
 
-void r700SetupVTXConstans(GLcontext  * ctx, 
-                          unsigned int nStreamID,
-                          unsigned int aos_offset,
-                          unsigned int size,      /* number of elements in vector */
-                          unsigned int stride,
-                          unsigned int count)     /* number of vectors in stream */
+void * r700GetActiveVpShaderBo(GLcontext * ctx)
 {
-    context_t *context = R700_CONTEXT(ctx);
-    uint32_t *dest;
+    struct r700_vertex_program *vp
+             = (struct r700_vertex_program *)ctx->VertexProgram._Current;
 
-    unsigned int uSQ_VTX_CONSTANT_WORD0_0;
-    unsigned int uSQ_VTX_CONSTANT_WORD1_0;
-    unsigned int uSQ_VTX_CONSTANT_WORD2_0 = 0;
-    unsigned int uSQ_VTX_CONSTANT_WORD3_0 = 0;
-    unsigned int uSQ_VTX_CONSTANT_WORD6_0 = 0;
-
-    uSQ_VTX_CONSTANT_WORD0_0 = aos_offset;
-	uSQ_VTX_CONSTANT_WORD1_0 = count * stride - 1;
-
-	uSQ_VTX_CONSTANT_WORD2_0 |= 0 << BASE_ADDRESS_HI_shift /* TODO */
-                             |stride << SQ_VTX_CONSTANT_WORD2_0__STRIDE_shift	
-	                         |GetSurfaceFormat(GL_FLOAT, size, NULL) << SQ_VTX_CONSTANT_WORD2_0__DATA_FORMAT_shift /* TODO : trace back api for initial data type, not only GL_FLOAT */
-	                         |SQ_NUM_FORMAT_SCALED << SQ_VTX_CONSTANT_WORD2_0__NUM_FORMAT_ALL_shift
-	                         |SQ_VTX_CONSTANT_WORD2_0__FORMAT_COMP_ALL_bit;
-	
-	uSQ_VTX_CONSTANT_WORD3_0 |= 1 << MEM_REQUEST_SIZE_shift;
-	
-	uSQ_VTX_CONSTANT_WORD6_0 |= SQ_TEX_VTX_VALID_BUFFER << SQ_TEX_RESOURCE_WORD6_0__TYPE_shift;
-#if 0 /* to be enabled */
-    R700_CMDBUF_CHECK_SPACE(9);
-    R700EP3 (context, IT_SET_RESOURCE, 7);
-    R700E32 (context, (nStreamID + SQ_FETCH_RESOURCE_VS_OFFSET) * FETCH_RESOURCE_STRIDE);
-    
-	R700E32 (context, uSQ_VTX_CONSTANT_WORD0_0);
-	R700E32 (context, uSQ_VTX_CONSTANT_WORD1_0);
-	R700E32 (context, uSQ_VTX_CONSTANT_WORD2_0);
-	R700E32 (context, uSQ_VTX_CONSTANT_WORD3_0);
-	R700E32 (context, 0);
-	R700E32 (context, 0);
-	R700E32 (context, uSQ_VTX_CONSTANT_WORD6_0);
-#endif /* to be enabled */
+    return vp->shaderbo;
 }
 
 GLboolean r700SetupVertexProgram(GLcontext * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
+
+    BATCH_LOCALS(&context->radeon);
 
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
 
@@ -396,7 +358,7 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
 
         /* Load vp to gpu */
         (context->chipobj.EmitShader)(ctx, 
-                       &(vp->shadercode), 
+                       &(vp->shaderbo), 
                        (GLvoid *)(vp->r700Shader.pProgram),
                        vp->r700Shader.uShaderBinaryDWORDSize); 
 
@@ -410,7 +372,7 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
     (context->chipobj.MemUse)(context, vp->shadercode.buf->id);
     */
 
-    r700->SQ_PGM_START_VS.u32All            = (vp->shadercode.aos_offset >> 8) & 0x00FFFFFF;
+    r700->SQ_PGM_START_VS.u32All = 0; /* set from buffer object. */ 
     
     SETfield(r700->SQ_PGM_RESOURCES_VS.u32All, vp->r700Shader.nRegs + 1,
              NUM_GPRS_shift, NUM_GPRS_mask);
@@ -438,24 +400,26 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
     if(NULL != paramList)
     {
         _mesa_load_state_parameters(ctx, paramList);
-#if 0 /* to be enabled */
+
         unNumParamData = paramList->NumParameters * 4;
 
-        R700_CMDBUF_CHECK_SPACE(unNumParamData + 2);
-        R700EP3 (context, IT_SET_ALU_CONST, unNumParamData);
+        BEGIN_BATCH_NO_AUTOSTATE(unNumParamData + 2); 
+        
+        OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, unNumParamData));
         /* assembler map const from very beginning. */
-        R700E32 (context, SQ_ALU_CONSTANT_VS_OFFSET * 4);
+        OUT_BATCH(SQ_ALU_CONSTANT_VS_OFFSET * 4);
 
         unNumParamData = paramList->NumParameters;
 
         for(ui=0; ui<unNumParamData; ui++)
         {
-            R700E32 (context, *((unsigned int*)&(paramList->ParameterValues[ui][0])));
-            R700E32 (context, *((unsigned int*)&(paramList->ParameterValues[ui][1])));
-            R700E32 (context, *((unsigned int*)&(paramList->ParameterValues[ui][2])));
-            R700E32 (context, *((unsigned int*)&(paramList->ParameterValues[ui][3])));
+            OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][0])));
+            OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][1])));
+            OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][2])));
+            OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][3])));
         }
-#endif /* to be enabled */
+        END_BATCH();
+        COMMIT_BATCH();
     }
 
     return GL_TRUE;

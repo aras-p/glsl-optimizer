@@ -48,9 +48,12 @@ DRIVER_SOURCES = \
 		 r700_fragprog.c \
 		 r700_vertprog.c \
 		 r700_shader.c \
+		 r700_shaderinst.c \
 		 r700_ioctl.c \
 		 r700_oglprog.c \
 		 r700_chip.c     \
+		 r700_state.c    \
+		 r700_clear.c    \
 		 r700_render.c   \
 		 r700_tex.c      \
 		 r700_debug.c    \

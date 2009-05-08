@@ -35,23 +35,12 @@
 #include "r600_context.h"
 #include "r700_chip.h"
 
-#if 0 /* to be enabled */
 #include "r700_shaderinst.h"
-#include "r700_emit.h"
-#endif /* to be enabled */
+#include "r600_emit.h"
 
 extern void r700InitState (GLcontext * ctx);
 
-#if 0 /* to be enabled */
-extern void r700SetupVTXConstans(GLcontext  * ctx, 
-                          unsigned int nStreamID,
-                          unsigned int aos_offset,
-                          unsigned int size,      /* number of elements in vector */
-                          unsigned int stride,
-                          unsigned int count);
-extern GLboolean r700SendContextStates(context_t *context);
 extern GLboolean r700SyncSurf(context_t *context);
-#endif /* to be enabled */
 
 static GLboolean r700ClearFast(context_t *context, GLbitfield mask)
 {
@@ -63,17 +52,15 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
 {
     GLcontext *ctx = GL_CONTEXT(context);
 
-#if 0 /* to be enabled */
+    BATCH_LOCALS(&context->radeon);
+
     R700_CHIP_CONTEXT  r700Saved;
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
-    struct r600_dma_region  aos_vs;
-    struct r600_dma_region  aos_fs;
-    struct r600_dma_region  aos_vb;
-    aos_vs.buf = NULL;
-    aos_fs.buf = NULL;
-    aos_vb.buf = NULL;
 
-
+    void * pbo_vs;
+    void * pbo_fs;
+    struct radeon_aos aos_vb;
+    
     unsigned int ui;
     GLfloat  fTemp;
     GLfloat  fVb[] = { 1.0f,  1.0f, 1.0f, 1.0f,
@@ -93,7 +80,7 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
                            0x10000000, 0x340C90,   0x10000400, 0x20340C90,
                            0x10000800, 0x40340C90, 0x90000C00, 0x60200C90};
 
-    if (context->screen->chip.type <= CHIP_TYPE_RV670)
+    if (context->radeon.radeonScreen->chip_family <= CHIP_FAMILY_RV670)
     {
         uVs[9]  = 0x541910;
         uVs[11] = 0x20541910;
@@ -116,7 +103,7 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
 
     r700InitState(ctx);
 
-    r700->CB_COLOR0_BASE.u32All = context->target.rt.gpu >> 8;
+    r700SetRenderTarget(context);
 
     /* Turn off perspective divid. */
     SETbit(r700->PA_CL_VTE_CNTL.u32All, VTX_XY_FMT_bit);
@@ -152,15 +139,19 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
     }
 
     /* Setup vb */
-    R700_CMDBUF_CHECK_SPACE(6);
-    R700EP3 (context, IT_SET_CTL_CONST, 1);
-    R700E32 (context, mmSQ_VTX_BASE_VTX_LOC - ASIC_CTL_CONST_BASE_INDEX);
-    R700E32 (context, 0);
-    R700EP3 (context, IT_SET_CTL_CONST, 1);
-    R700E32 (context, mmSQ_VTX_START_INST_LOC - ASIC_CTL_CONST_BASE_INDEX);
-    R700E32 (context, 0);
+    BEGIN_BATCH_NO_AUTOSTATE(6);
+    OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
+	OUT_BATCH(mmSQ_VTX_BASE_VTX_LOC - ASIC_CTL_CONST_BASE_INDEX);
+    OUT_BATCH(0);
+
+    OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
+    OUT_BATCH(mmSQ_VTX_START_INST_LOC - ASIC_CTL_CONST_BASE_INDEX);
+    OUT_BATCH(0);
+    END_BATCH();
+    COMMIT_BATCH();
+
     (context->chipobj.EmitVec)(ctx, &aos_vb, (GLvoid *)fVb, 4, 16, 6);
-    r700SetupVTXConstans(ctx, VERT_ATTRIB_POS, (unsigned int)aos_vb.aos_offset, 4, 16, 6);
+    r700SetupVTXConstans(ctx, VERT_ATTRIB_POS, &aos_vb, 4, 16, 6);
 
     /* Setup shaders, copied from dump */
     r700->SQ_PGM_RESOURCES_PS.u32All = 0;
@@ -168,23 +159,26 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
 	SETbit(r700->SQ_PGM_RESOURCES_PS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
     SETbit(r700->SQ_PGM_RESOURCES_VS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
         /* vs */
-    (context->chipobj.EmitShader)(ctx, &aos_vs, (GLvoid *)(&uVs[0]), 28);
-    r700->SQ_PGM_START_VS.u32All     = (aos_vs.aos_offset >> 8) & 0x00FFFFFF;
+    (context->chipobj.EmitShader)(ctx, &pbo_vs, (GLvoid *)(&uVs[0]), 28);
+    r700->SQ_PGM_START_VS.u32All     = 0;
     r700->SQ_PGM_RESOURCES_VS.u32All = 0x00800004;
+
             /* vs const */ /* TODO : Set color here */
-    R700_CMDBUF_CHECK_SPACE(4 + 2);
-    R700EP3 (context, IT_SET_ALU_CONST, 4);
-    R700E32 (context, SQ_ALU_CONSTANT_VS_OFFSET * 4); 
-    R700E32 (context, *((unsigned int*)&(ctx->Color.ClearColor[0])));
-    R700E32 (context, *((unsigned int*)&(ctx->Color.ClearColor[1])));
-    R700E32 (context, *((unsigned int*)&(ctx->Color.ClearColor[2])));
-    R700E32 (context, *((unsigned int*)&(ctx->Color.ClearColor[3])));
+    BEGIN_BATCH_NO_AUTOSTATE(4 + 2);
+    OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, 4));
+    OUT_BATCH(SQ_ALU_CONSTANT_VS_OFFSET * 4); 
+    OUT_BATCH(*((unsigned int*)&(ctx->Color.ClearColor[0])));
+    OUT_BATCH(*((unsigned int*)&(ctx->Color.ClearColor[1])));
+    OUT_BATCH(*((unsigned int*)&(ctx->Color.ClearColor[2])));
+    OUT_BATCH(*((unsigned int*)&(ctx->Color.ClearColor[3])));
+    END_BATCH();
+    COMMIT_BATCH();
 
     r700->SPI_VS_OUT_CONFIG.u32All   = 0x00000000;
 	r700->SPI_PS_IN_CONTROL_0.u32All = 0x20000001;
         /* ps */
-    (context->chipobj.EmitShader)(ctx, &aos_fs, (GLvoid *)(&uFs[0]), 12); 
-    r700->SQ_PGM_START_PS.u32All     = (aos_fs.aos_offset >> 8) & 0x00FFFFFF;
+    (context->chipobj.EmitShader)(ctx, &pbo_fs, (GLvoid *)(&uFs[0]), 12); 
+    r700->SQ_PGM_START_PS.u32All     = 0;
     r700->SQ_PGM_RESOURCES_PS.u32All = 0x00800002;
     r700->SQ_PGM_EXPORTS_PS.u32All   = 0x00000002;        
     r700->DB_SHADER_CONTROL.u32All   = 0x00000200; 
@@ -192,12 +186,12 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
     r700->CB_SHADER_CONTROL.u32All = 0x00000001;
 
     /* set a valid base address to make the command checker happy */
-    r700->SQ_PGM_START_FS.u32All     = (aos_fs.aos_offset >> 8) & 0x00FFFFFF;
-    r700->SQ_PGM_START_ES.u32All     = (aos_fs.aos_offset >> 8) & 0x00FFFFFF;
-    r700->SQ_PGM_START_GS.u32All     = (aos_fs.aos_offset >> 8) & 0x00FFFFFF;
+    r700->SQ_PGM_START_FS.u32All     = 0;
+    r700->SQ_PGM_START_ES.u32All     = 0;
+    r700->SQ_PGM_START_GS.u32All     = 0;
 
     /* Now, send the states */
-    r700SendContextStates(context);
+    r700SendContextStates(context, pbo_vs, pbo_fs);
 
     /* Draw */
     GLuint numEntires, j;
@@ -211,43 +205,46 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
                  + 3               /* VGT_PRIMITIVE_TYPE */
                  + numIndices + 3; /* DRAW_INDEX_IMMD */                 
                  
-    R700_CMDBUF_CHECK_SPACE(numEntires);  
+    BEGIN_BATCH_NO_AUTOSTATE(numEntires);  
 
     SETfield(VGT_INDEX_TYPE, DI_INDEX_SIZE_32_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
 
-    R700EP3(context, IT_INDEX_TYPE, 0);
-    R700E32(context, VGT_INDEX_TYPE);
+    OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
+    OUT_BATCH(VGT_INDEX_TYPE);
 
     VGT_NUM_INDICES = numIndices;
 
     SETfield(VGT_PRIMITIVE_TYPE, DI_PT_TRILIST, VGT_PRIMITIVE_TYPE__PRIM_TYPE_shift, VGT_PRIMITIVE_TYPE__PRIM_TYPE_mask);
-    R700EP3(context, IT_SET_CONFIG_REG, 1);
-    R700E32(context, mmVGT_PRIMITIVE_TYPE - ASIC_CONFIG_BASE_INDEX);
-    R700E32(context, VGT_PRIMITIVE_TYPE);
+
+    OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
+    OUT_BATCH(mmVGT_PRIMITIVE_TYPE - ASIC_CONFIG_BASE_INDEX);
+    OUT_BATCH(VGT_PRIMITIVE_TYPE);
 
     SETfield(VGT_DRAW_INITIATOR, DI_SRC_SEL_IMMEDIATE, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
     SETfield(VGT_DRAW_INITIATOR, DI_MAJOR_MODE_0, MAJOR_MODE_shift, MAJOR_MODE_mask);
 
-    R700EP3(context, IT_DRAW_INDEX_IMMD, (numIndices + 1));
-    R700E32(context, VGT_NUM_INDICES);
-    R700E32(context, VGT_DRAW_INITIATOR);
+    OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (numIndices + 1)));
+    OUT_BATCH(VGT_NUM_INDICES);
+    OUT_BATCH(VGT_DRAW_INITIATOR);
 
     for (j=0; j<numIndices; j++)
     {
-        R700E32(context, j);
+        OUT_BATCH(j);
     }
+    END_BATCH();
+    COMMIT_BATCH();
 
     (context->chipobj.FlushCmdBuffer)(context);
 
     /* TODO : keep these in context, don't load and release every time. */
-    (context->chipobj.FreeDmaRegion)(context, &aos_vs);
-    (context->chipobj.FreeDmaRegion)(context, &aos_fs);
-    (context->chipobj.FreeDmaRegion)(context, &aos_vb);
+    (context->chipobj.DeleteShader)(context, &pbo_vs);
+
+    (context->chipobj.DeleteShader)(context, &pbo_fs);
+
+    (context->chipobj.FreeDmaRegion)(context, aos_vb.bo);
 
     /* Restore chip object. */
     memcpy(r700, &r700Saved, sizeof(R700_CHIP_CONTEXT));
-
-#endif /* to be enabled */
 
     return GL_TRUE;
 }

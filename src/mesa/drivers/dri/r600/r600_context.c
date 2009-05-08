@@ -156,42 +156,6 @@ const struct dri_extension gl_20_extension[] = {
 };
 
 
-extern struct tnl_pipeline_stage _r600_render_stage;
-extern const struct tnl_pipeline_stage _r600_tcl_stage;
-
-static const struct tnl_pipeline_stage *r600_pipeline[] = {
-
-	/* Try and go straight to t&l
-	 */
-	&_r600_tcl_stage,
-
-	/* Catch any t&l fallbacks
-	 */
-	&_tnl_vertex_transform_stage,
-	&_tnl_normal_transform_stage,
-	&_tnl_lighting_stage,
-	&_tnl_fog_coordinate_stage,
-	&_tnl_texgen_stage,
-	&_tnl_texture_transform_stage,
-	&_tnl_vertex_program_stage,
-
-	/* Try again to go to tcl?
-	 *     - no good for asymmetric-twoside (do with multipass)
-	 *     - no good for asymmetric-unfilled (do with multipass)
-	 *     - good for material
-	 *     - good for texgen
-	 *     - need to manipulate a bit of state
-	 *
-	 * - worth it/not worth it?
-	 */
-
-	/* Else do them here.
-	 */
-	&_r600_render_stage,
-	&_tnl_render_stage,	/* FALLBACK  */
-	0,
-};
-
 static void r600RunPipeline(GLcontext * ctx)
 {
     _mesa_lock_context_textures(ctx);
@@ -245,31 +209,6 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 }
 
 /* to be enabled */
-static void r600EmitShader(GLcontext * ctx, 
-                   struct r600_dma_region *rvb,
-			       GLvoid * data, 
-                   int sizeinDWORD) 
-{
-}
-/* to be enabled */
-static void r600FreeDmaRegion(context_t *context, 
-                              struct r600_dma_region *region)
-{
-}
-/* to be enabled */
-static void r600EmitVec(GLcontext * ctx, 
-                 struct r600_dma_region *rvb,
-			     GLvoid * data, 
-                 int size, 
-                 int stride, 
-                 int count)
-{
-}
-/* to be enabled */
-static void r600ReleaseArrays(GLcontext * ctx)
-{
-}
-/* to be enabled */
 static GLboolean r600LoadMemSurf(context_t *context,
                                GLuint     dst_offset, /* gpu addr */
                                GLuint     dst_pitch_in_pixel,                               
@@ -287,6 +226,7 @@ static GLboolean r600AllocMemSurf(context_t   *context,
                            GLuint      *prefered_heap, /* Now used RADEON_LOCAL_TEX_HEAP, return actual heap used. */
                            GLuint       totalSize)
 {
+    return GL_TRUE;
 }
 /* to be enabled */
 static int  r600FlushCmdBuffer(context_t *context)
@@ -332,6 +272,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	 */
 	driParseConfigFiles(&r600->radeon.optionCache, &screen->optionCache,
 			    screen->driScreen->myNum, "r600");
+
 	r600->radeon.initialMaxAnisotropy = driQueryOptionf(&r600->radeon.optionCache,
 						     "def_max_anisotropy");
 
@@ -344,9 +285,10 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 
     (r600->chipobj.InitFuncs)(&functions);
     r600->chipobj.EmitShader     = r600EmitShader;
+    r600->chipobj.DeleteShader   = r600DeleteShader;
     r600->chipobj.FreeDmaRegion  = r600FreeDmaRegion;
     r600->chipobj.EmitVec        = r600EmitVec;
-    r600->chipobj.ReleaseArrays  = r600ReleaseArrays;
+    r600->chipobj.ReleaseArrays  = r600ReleaseVec;
     r600->chipobj.LoadMemSurf    = r600LoadMemSurf;
     r600->chipobj.AllocMemSurf   = r600AllocMemSurf;
     r600->chipobj.FlushCmdBuffer = r600FlushCmdBuffer;
@@ -476,8 +418,9 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
    	radeonInitSpanFuncs( ctx );
 
 	r600InitCmdBuf(r600);
+
+    (r600->chipobj.InitState)(r600->radeon.glCtx);
 #if 0 /* to be enabled */
-	r600InitState(r600);
 	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
 	        r600InitSwtcl(ctx);
 #endif

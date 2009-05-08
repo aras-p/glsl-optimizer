@@ -36,14 +36,10 @@
 #include "shader/prog_statevars.h"
 
 #include "r600_context.h"
+#include "r600_cmdbuf.h"
 
 #include "r700_chip.h"
 #include "r700_fragprog.h"
-
-/* to be enabled */
-#if 0
-#include "r700_emit.h"
-#endif
 
 #include "r700_debug.h"
 
@@ -250,9 +246,18 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 	return GL_TRUE;
 }
 
+void * r700GetActiveFpShaderBo(GLcontext * ctx)
+{
+    struct r700_fragment_program *fp = (struct r700_fragment_program *)
+	                                   (ctx->FragmentProgram._Current);
+
+    return fp->shaderbo;
+}
+
 GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);   
+    BATCH_LOCALS(&context->radeon);
     
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
 
@@ -271,14 +276,13 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 	    {
 		    Assemble( &(fp->r700Shader) );
 	    }
-/* to be enabled */
-#if 0
+
         /* Load fp to gpu */
         (context->chipobj.EmitShader)(ctx, 
-                       &(fp->shadercode), 
+                       &(fp->shaderbo), 
                        (GLvoid *)(fp->r700Shader.pProgram),
                        fp->r700Shader.uShaderBinaryDWORDSize);    			                
-#endif
+
         fp->loaded = GL_TRUE;
     }
 
@@ -288,10 +292,8 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     /* TODO : enable this after MemUse fixed *=
     (context->chipobj.MemUse)(context, fp->shadercode.buf->id);
     */
-/* to be enabled */
-#if 0
-    r700->SQ_PGM_START_PS.u32All     = (fp->shadercode.aos_offset >> 8) & 0x00FFFFFF;
-#endif
+
+    r700->SQ_PGM_START_PS.u32All = 0; /* set from buffer obj */
 
     unNumOfReg = fp->r700Shader.nRegs + 1;
 
@@ -337,25 +339,27 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     if(NULL != paramList)
     {
         _mesa_load_state_parameters(ctx, paramList);
-/* to be enabled */
-#if 0
-        unNumParamData = paramList->NumParameters * 4;
-        R700_CMDBUF_CHECK_SPACE(2 + unNumParamData);
 
-        R700EP3(context, IT_SET_ALU_CONST, unNumParamData);
+        unNumParamData = paramList->NumParameters * 4;
+
+        BEGIN_BATCH_NO_AUTOSTATE(2 + unNumParamData);
+        
+        OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, unNumParamData));
+
         /* assembler map const from very beginning. */
-        R700E32(context, SQ_ALU_CONSTANT_PS_OFFSET * 4);
+        OUT_BATCH(SQ_ALU_CONSTANT_PS_OFFSET * 4);
 
         unNumParamData = paramList->NumParameters;
 
         for(ui=0; ui<unNumParamData; ui++)
         {
-            R700E32(context, *((unsigned int*)&(paramList->ParameterValues[ui][0])));
-            R700E32(context, *((unsigned int*)&(paramList->ParameterValues[ui][1])));
-            R700E32(context, *((unsigned int*)&(paramList->ParameterValues[ui][2])));
-            R700E32(context, *((unsigned int*)&(paramList->ParameterValues[ui][3])));
+            OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][0])));
+            OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][1])));
+            OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][2])));
+            OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][3])));
         }
-#endif
+        END_BATCH();
+        COMMIT_BATCH();
     }
 
     return GL_TRUE;

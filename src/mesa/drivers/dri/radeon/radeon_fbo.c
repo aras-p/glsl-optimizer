@@ -165,7 +165,7 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       return GL_FALSE;
    }
 
-  radeonFlush(ctx);
+  ctx->Driver.Flush(ctx); /* +r6/r7 */
 
   if (rrb->bo)
     radeon_bo_unref(rrb->bo);
@@ -371,7 +371,7 @@ radeon_framebuffer_renderbuffer(GLcontext * ctx,
                                GLenum attachment, struct gl_renderbuffer *rb)
 {
 
-   radeonFlush(ctx);
+   ctx->Driver.Flush(ctx); /* +r6/r7 */
 
    _mesa_framebuffer_renderbuffer(ctx, fb, attachment, rb);
    radeon_draw_buffer(ctx, fb);

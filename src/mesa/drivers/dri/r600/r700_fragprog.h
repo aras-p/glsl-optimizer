@@ -40,10 +40,8 @@ struct r700_fragment_program
 	GLboolean translated;
     GLboolean loaded;
 	GLboolean error;
-/* to be enabled */
-#if 0
-    struct r600_dma_region shadercode;
-#endif
+
+    void * shaderbo;
 
 	GLboolean WritesDepth;
 	GLuint optimization;
@@ -59,5 +57,7 @@ GLboolean Find_Instruction_Dependencies_fp(struct r700_fragment_program *fp,
 extern GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 							                 struct gl_fragment_program   *mesa_vp);
 extern GLboolean r700SetupFragmentProgram(GLcontext * ctx);
+
+extern void *    r700GetActiveFpShaderBo(GLcontext * ctx);
 
 #endif /*_R700_FRAGPROG_H_*/

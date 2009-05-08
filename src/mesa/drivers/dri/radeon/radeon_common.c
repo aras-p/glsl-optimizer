@@ -914,7 +914,7 @@ again:
 	if (ret == RADEON_CS_SPACE_OP_TO_BIG)
 		return GL_FALSE;
 	if (ret == RADEON_CS_SPACE_FLUSH) {
-		radeonFlush(ctx);
+		ctx->Driver.Flush(ctx); /* +r6/r7 */
 		if (flushed)
 			return GL_FALSE;
 		flushed = 1;
@@ -1014,7 +1014,7 @@ void radeonFinish(GLcontext * ctx)
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	int i;
 
-	radeonFlush(ctx);
+	ctx->Driver.Flush(ctx); /* +r6/r7 */
 
 	if (radeon->radeonScreen->kernel_mm) {
 		for (i = 0; i < fb->_NumColorDrawBuffers; i++) {

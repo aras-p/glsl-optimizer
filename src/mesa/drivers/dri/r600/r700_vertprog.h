@@ -55,7 +55,8 @@ struct r700_vertex_program
 	
 	/* ... */
 
-    struct r600_dma_region shadercode;
+    void * shaderbo;
+
 	ArrayDesc              aos_desc[VERT_ATTRIB_MAX];
 };
 
@@ -82,11 +83,6 @@ extern void r700SelectVertexShader(GLcontext *ctx);
 
 extern GLboolean r700SetupVertexProgram(GLcontext * ctx);
 
-extern void      r700SetupVTXConstans(GLcontext  * ctx, 
-                                      unsigned int nStreamID,
-                                      unsigned int aos_offset,
-                                      unsigned int size,      /* number of elements in vector */
-                                      unsigned int stride,
-                                      unsigned int Count);    /* number of vectors in stream */
+extern void *    r700GetActiveVpShaderBo(GLcontext * ctx);
 
 #endif /* _R700_VERTPROG_H_ */
