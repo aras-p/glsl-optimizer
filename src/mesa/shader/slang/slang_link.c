@@ -97,7 +97,8 @@ bits_agree(GLbitfield flags1, GLbitfield flags2, GLbitfield bit)
  * which inputs are centroid-sampled, invariant, etc.
  */
 static GLboolean
-link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
+link_varying_vars(GLcontext *ctx,
+                  struct gl_shader_program *shProg, struct gl_program *prog)
 {
    GLuint *map, i, firstVarying, newFile;
    GLbitfield *inOutFlags;
@@ -156,8 +157,12 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
                                var->Flags);
       }
 
+      if (shProg->Varying->NumParameters > ctx->Const.MaxVarying) {
+         link_error(shProg, "Too many varying variables");
+         return GL_FALSE;
+      }
+
       /* Map varying[i] to varying[j].
-       * Plus, set prog->Input/OutputFlags[] as described above.
        * Note: the loop here takes care of arrays or large (sz>4) vars.
        */
       {
@@ -729,11 +734,11 @@ _slang_link(GLcontext *ctx,
 
    /* link varying vars */
    if (shProg->VertexProgram) {
-      if (!link_varying_vars(shProg, &shProg->VertexProgram->Base))
+      if (!link_varying_vars(ctx, shProg, &shProg->VertexProgram->Base))
          return;
    }
    if (shProg->FragmentProgram) {
-      if (!link_varying_vars(shProg, &shProg->FragmentProgram->Base))
+      if (!link_varying_vars(ctx, shProg, &shProg->FragmentProgram->Base))
          return;
    }
 
