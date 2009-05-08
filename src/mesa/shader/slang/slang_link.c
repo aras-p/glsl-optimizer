@@ -712,6 +712,8 @@ _slang_link(GLcontext *ctx,
       struct gl_vertex_program *linked_vprog =
          vertex_program(_mesa_clone_program(ctx, &vertProg->Base));
       shProg->VertexProgram = linked_vprog; /* refcount OK */
+      /* vertex program ID not significant; just set Id for debugging purposes */
+      shProg->VertexProgram->Base.Id = shProg->Name;
       ASSERT(shProg->VertexProgram->Base.RefCount == 1);
    }
 
@@ -720,6 +722,8 @@ _slang_link(GLcontext *ctx,
       struct gl_fragment_program *linked_fprog = 
          fragment_program(_mesa_clone_program(ctx, &fragProg->Base));
       shProg->FragmentProgram = linked_fprog; /* refcount OK */
+      /* vertex program ID not significant; just set Id for debugging purposes */
+      shProg->FragmentProgram->Base.Id = shProg->Name;
       ASSERT(shProg->FragmentProgram->Base.RefCount == 1);
    }
 
