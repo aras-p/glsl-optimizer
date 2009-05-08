@@ -402,7 +402,6 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/osdemos/Makefile		\
 	$(DIRECTORY)/progs/osdemos/*.c			\
 	$(DIRECTORY)/progs/xdemos/Makefile*		\
-	$(DIRECTORY)/progs/xdemos/descrip.mms		\
 	$(DIRECTORY)/progs/xdemos/*.[chf]		\
 	$(DIRECTORY)/progs/redbook/Makefile*		\
 	$(DIRECTORY)/progs/redbook/README		\
@@ -418,9 +417,6 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/windml/*.c			\
 	$(DIRECTORY)/progs/windml/*.bmp			\
 	$(DIRECTORY)/progs/ggi/*.c			\
-	$(DIRECTORY)/windows/VC6/progs/demos/*.dsp	\
-	$(DIRECTORY)/windows/VC6/progs/progs.dsw	\
-	$(DIRECTORY)/windows/VC7/progs/demos/*.vcproj	\
 	$(DIRECTORY)/windows/VC7/progs/progs.sln
 
 GLUT_FILES = \
@@ -430,14 +426,11 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/glx/depend		\
 	$(DIRECTORY)/src/glut/glx/glut.pc.in		\
 	$(DIRECTORY)/src/glut/glx/*def			\
-	$(DIRECTORY)/src/glut/glx/descrip.mms		\
-	$(DIRECTORY)/src/glut/glx/mms_depend		\
 	$(DIRECTORY)/src/glut/glx/*.[ch]		\
 	$(DIRECTORY)/src/glut/beos/*.[ch]		\
 	$(DIRECTORY)/src/glut/beos/*.cpp		\
 	$(DIRECTORY)/src/glut/beos/Makefile		\
 	$(DIRECTORY)/src/glut/dos/*.[ch]		\
-	$(DIRECTORY)/src/glut/dos/Makefile.DJ		\
 	$(DIRECTORY)/src/glut/dos/PC_HW/*.[chS]		\
 	$(DIRECTORY)/src/glut/ggi/*.[ch]		\
 	$(DIRECTORY)/src/glut/ggi/Makefile		\
