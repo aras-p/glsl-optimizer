@@ -1509,6 +1509,10 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
                          shProg->Shaders[i]->Name,
                          shProg->Shaders[i]->Type);
          }
+         if (shProg->VertexProgram)
+            printf(" vert prog %u\n", shProg->VertexProgram->Base.Id);
+         if (shProg->FragmentProgram)
+            printf(" frag prog %u\n", shProg->FragmentProgram->Base.Id);
       }
    }
    else {
