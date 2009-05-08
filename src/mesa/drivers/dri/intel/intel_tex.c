@@ -158,60 +158,6 @@ timed_memcpy(void *dest, const void *src, size_t n)
 }
 #endif /* DO_DEBUG */
 
-/**
- * Generate new mipmap data from BASE+1 to BASE+p (the minimally-sized mipmap
- * level).
- *
- * The texture object's miptree must be mapped.
- *
- * It would be really nice if this was just called by Mesa whenever mipmaps
- * needed to be regenerated, rather than us having to remember to do so in
- * each texture image modification path.
- *
- * This function should also include an accelerated path.
- */
-void
-intel_generate_mipmap(GLcontext *ctx, GLenum target,
-                      struct gl_texture_object *texObj)
-{
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-   GLuint nr_faces = (intelObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
-   int face, i;
-
-   _mesa_generate_mipmap(ctx, target, texObj);
-
-   /* Update the level information in our private data in the new images, since
-    * it didn't get set as part of a normal TexImage path.
-    */
-   for (face = 0; face < nr_faces; face++) {
-      for (i = texObj->BaseLevel + 1; i < texObj->MaxLevel; i++) {
-         struct intel_texture_image *intelImage;
-
-	 intelImage = intel_texture_image(texObj->Image[face][i]);
-	 if (intelImage == NULL)
-	    break;
-
-	 intelImage->level = i;
-	 intelImage->face = face;
-	 /* Unreference the miptree to signal that the new Data is a bare
-	  * pointer from mesa.
-	  */
-	 intel_miptree_release(intel, &intelImage->mt);
-      }
-   }
-}
-
-static void intelGenerateMipmap(GLcontext *ctx, GLenum target, struct gl_texture_object *texObj)
-{
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-
-   intel_tex_map_level_images(intel, intelObj, texObj->BaseLevel);
-   intel_generate_mipmap(ctx, target, texObj);
-   intel_tex_unmap_level_images(intel, intelObj, texObj->BaseLevel);
-}
-
 void
 intelInitTextureFuncs(struct dd_function_table *functions)
 {
@@ -227,7 +173,7 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->CopyTexSubImage1D = intelCopyTexSubImage1D;
    functions->CopyTexSubImage2D = intelCopyTexSubImage2D;
    functions->GetTexImage = intelGetTexImage;
-   functions->GenerateMipmap = intelGenerateMipmap;
+   functions->GenerateMipmap = intel_generate_mipmap;
 
    /* compressed texture functions */
    functions->CompressedTexImage2D = intelCompressedTexImage2D;

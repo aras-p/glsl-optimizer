@@ -437,6 +437,7 @@ intel_free_pixel_state(struct intel_context *intel)
 
    _mesa_reference_vertprog(ctx, &intel->meta.passthrough_vp, NULL);
    _mesa_reference_fragprog(ctx, &intel->meta.bitmap_fp, NULL);
+   _mesa_reference_fragprog(ctx, &intel->meta.tex2d_fp, NULL);
    _mesa_reference_buffer_object(ctx, &intel->meta.texcoord_vbo, NULL);
 }
 

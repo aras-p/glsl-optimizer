@@ -168,6 +168,8 @@ struct intel_context
       struct gl_vertex_program *saved_vp;
       GLboolean saved_vp_enable;
 
+      struct gl_fragment_program *tex2d_fp;
+
       GLboolean saved_texcoord_enable;
       struct gl_buffer_object *saved_array_vbo, *saved_texcoord_vbo;
       GLenum saved_texcoord_type;

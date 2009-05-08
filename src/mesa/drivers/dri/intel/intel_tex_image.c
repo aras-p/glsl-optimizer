@@ -316,7 +316,6 @@ intelTexImage(GLcontext * ctx,
    GLint postConvHeight = height;
    GLint texelBytes, sizeInBytes;
    GLuint dstRowStride = 0, srcRowStride = texImage->RowStride;
-   GLboolean needs_map;
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
@@ -482,15 +481,8 @@ intelTexImage(GLcontext * ctx,
 
    LOCK_HARDWARE(intel);
 
-   /* Two cases where we need a mapping of the miptree: when the user supplied
-    * data is mapped as well (non-PBO, memcpy upload) or when we're going to do
-    * (software) mipmap generation.
-    */
-   needs_map = (pixels != NULL) || (level == texObj->BaseLevel &&
-				  texObj->GenerateMipmap);
-
    if (intelImage->mt) {
-      if (needs_map)
+      if (pixels != NULL)
          texImage->Data = intel_miptree_image_map(intel,
                                                   intelImage->mt,
                                                   intelImage->face,
@@ -547,22 +539,22 @@ intelTexImage(GLcontext * ctx,
 						   format, type, pixels, unpack)) {
 	   _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
        }
-
-       /* GL_SGIS_generate_mipmap */
-       if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-	  intel_generate_mipmap(ctx, target, texObj);
-       }
    }
 
    _mesa_unmap_teximage_pbo(ctx, unpack);
 
    if (intelImage->mt) {
-      if (needs_map)
+      if (pixels != NULL)
          intel_miptree_image_unmap(intel, intelImage->mt);
       texImage->Data = NULL;
    }
 
    UNLOCK_HARDWARE(intel);
+
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      intel_generate_mipmap(ctx, target, texObj);
+   }
 }
 
 void

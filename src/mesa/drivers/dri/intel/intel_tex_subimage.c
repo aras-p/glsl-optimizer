@@ -101,11 +101,6 @@ intelTexSubimage(GLcontext * ctx,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
    }
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      intel_generate_mipmap(ctx, target, texObj);
-   }
-
    _mesa_unmap_teximage_pbo(ctx, packing);
 
    if (intelImage->mt) {
@@ -114,6 +109,11 @@ intelTexSubimage(GLcontext * ctx,
    }
 
    UNLOCK_HARDWARE(intel);
+
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      intel_generate_mipmap(ctx, target, texObj);
+   }
 }
 
 
