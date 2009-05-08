@@ -180,27 +180,10 @@ static void prepare_render(struct r300_render* render, unsigned count)
 
     CS_LOCALS(r300);
 
-    /* Make sure that all possible state is emitted. */
-    r300_emit_dirty_state(r300);
+    r300->vbo = render->vbo;
+    r300->vbo_offset = render->vbo_offset;
 
-    debug_printf("r300: Preparing vertex buffer %p for render, "
-            "vertex size %d, vertex count %d\n", render->vbo,
-            r300->vertex_info.vinfo.size, count);
-    /* Set the pointer to our vertex buffer. The emitted values are this:
-     * PACKET3 [3D_LOAD_VBPNTR]
-     * COUNT   [1]
-     * FORMAT  [size | stride << 8]
-     * OFFSET  [0]
-     * VBPNTR  [relocated BO]
-     */
-    BEGIN_CS(7);
-    OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, 3);
-    OUT_CS(1);
-    OUT_CS(r300->vertex_info.vinfo.size |
-            (r300->vertex_info.vinfo.size << 8));
-    OUT_CS(render->vbo_offset);
-    OUT_CS_RELOC(render->vbo, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
-    END_CS;
+    r300_emit_dirty_state(r300);
 }
 
 static void r300_render_draw_arrays(struct vbuf_render* render,

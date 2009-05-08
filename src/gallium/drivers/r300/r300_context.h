@@ -264,6 +264,11 @@ struct r300_context {
     /* Draw module. Used mostly for SW TCL. */
     struct draw_context* draw;
 
+    /* Vertex buffer for rendering. */
+    struct pipe_buffer* vbo;
+    /* Offset into the VBO. */
+    size_t vbo_offset;
+
     /* Various CSO state objects. */
     /* Blend state. */
     struct r300_blend_state* blend_state;
@@ -289,7 +294,7 @@ struct r300_context {
     /* Texture states. */
     struct r300_texture* textures[8];
     int texture_count;
-    /* Vertex buffers. */
+    /* Vertex buffers for Gallium. */
     struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
     int vertex_buffer_count;
     /* Vertex information. */

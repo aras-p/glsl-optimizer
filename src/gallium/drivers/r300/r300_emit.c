@@ -296,6 +296,30 @@ void r300_emit_texture(struct r300_context* r300,
     END_CS;
 }
 
+void r300_emit_vertex_buffer(struct r300_context* r300)
+{
+    CS_LOCALS(r300);
+
+    debug_printf("r300: Preparing vertex buffer %p for render, "
+            "vertex size %d\n", r300->vbo,
+            r300->vertex_info.vinfo.size);
+    /* Set the pointer to our vertex buffer. The emitted values are this:
+     * PACKET3 [3D_LOAD_VBPNTR]
+     * COUNT   [1]
+     * FORMAT  [size | stride << 8]
+     * OFFSET  [offset into BO]
+     * VBPNTR  [relocated BO]
+     */
+    BEGIN_CS(7);
+    OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, 3);
+    OUT_CS(1);
+    OUT_CS(r300->vertex_info.vinfo.size |
+            (r300->vertex_info.vinfo.size << 8));
+    OUT_CS(r300->vbo_offset);
+    OUT_CS_RELOC(r300->vbo, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
+    END_CS;
+}
+
 void r300_emit_vertex_format_state(struct r300_context* r300)
 {
     int i;
@@ -421,20 +445,41 @@ void r300_flush_textures(struct r300_context* r300)
 void r300_emit_dirty_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    struct r300_texture* tex;
     int i;
     int dirty_tex = 0;
 
-    if (!(r300->dirty_hw)) {
+    if (!(r300->dirty_state)) {
         return;
     }
 
     r300_update_derived_state(r300);
 
     /* XXX check size */
-    struct r300_texture* fb_tex =
-        (struct r300_texture*)r300->framebuffer_state.cbufs[0];
-    r300->winsys->add_buffer(r300->winsys, fb_tex->buffer,
-            0, RADEON_GEM_DOMAIN_VRAM);
+    /* Color buffers... */
+    for (i = 0; i < r300->framebuffer_state.nr_cbufs; i++) {
+        tex = (struct r300_texture*)r300->framebuffer_state.cbufs[i];
+        //assert(tex && tex->buffer && "cbuf is marked, but NULL!");
+        if (!tex->buffer) return;
+        r300->winsys->add_buffer(r300->winsys, tex->buffer,
+                0, RADEON_GEM_DOMAIN_VRAM);
+    }
+    /* ...depth buffer... */
+    if (r300->framebuffer_state.zsbuf) {
+        tex = (struct r300_texture*)r300->framebuffer_state.zsbuf;
+        //assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
+        if (!tex->buffer) return;
+        r300->winsys->add_buffer(r300->winsys, tex->buffer,
+                0, RADEON_GEM_DOMAIN_VRAM);
+    }
+    /* ...and vertex buffer. */
+    if (r300->vbo) {
+        r300->winsys->add_buffer(r300->winsys, r300->vbo,
+                RADEON_GEM_DOMAIN_GTT, 0);
+    } else {
+        debug_printf("No VBO while emitting dirty state!\n");
+    }
+
     if (r300->winsys->validate(r300->winsys)) {
         /* XXX */
         r300->context.flush(&r300->context, 0, NULL);
@@ -519,4 +564,9 @@ void r300_emit_dirty_state(struct r300_context* r300)
         r300_emit_vertex_format_state(r300);
         r300->dirty_state &= ~R300_NEW_VERTEX_FORMAT;
     }
+
+    /* Finally, emit the VBO. */
+    r300_emit_vertex_buffer(r300);
+
+    r300->dirty_hw++;
 }
