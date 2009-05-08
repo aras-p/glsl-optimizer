@@ -1225,7 +1225,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
    for (insn = 0; insn < nr_insns; insn++) {
 
-      struct prog_instruction *inst = &c->vp->program.Base.Instructions[insn];
+      const struct prog_instruction *inst = &c->vp->program.Base.Instructions[insn];
       struct brw_reg args[3], dst;
       GLuint i;
       
@@ -1238,7 +1238,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
        */
       if (inst->Opcode != OPCODE_SWZ)
 	  for (i = 0; i < 3; i++) {
-	      struct prog_src_register *src = &inst->SrcReg[i];
+	      const struct prog_src_register *src = &inst->SrcReg[i];
 	      index = src->Index;
 	      file = src->File;	
 	      if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src)
