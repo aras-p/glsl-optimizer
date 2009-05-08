@@ -774,12 +774,63 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       intel->prim.vb_bo = NULL;
 
       if (release_texture_heaps) {
-         /* This share group is about to go away, free our private
-          * texture object data.
+         /* Nothing is currently done here to free texture heaps;
+          * but we're not using the texture heap utilities, so I
+          * rather think we shouldn't.  I've taken a look, and can't
+          * find any private texture data hanging around anywhere, but
+          * I'm not yet certain there isn't any at all...
           */
-         if (INTEL_DEBUG & DEBUG_TEXTURE)
+         /* if (INTEL_DEBUG & DEBUG_TEXTURE)
             fprintf(stderr, "do something to free texture heaps\n");
+          */
       }
+
+      /* XXX In intelMakeCurrent() below, the context's static regions are 
+       * referenced inside the frame buffer; it's listed as a hack,
+       * with a comment of "XXX FBO temporary fix-ups!", but
+       * as long as it's there, we should release the regions here.
+       * The do/while loop around the block is used to allow the
+       * "continue" statements inside the block to exit the block,
+       * to avoid many layers of "if" constructs.
+       */
+      do {
+         __DRIdrawablePrivate * driDrawPriv = intel->driDrawable;
+         struct intel_framebuffer *intel_fb;
+         struct intel_renderbuffer *irbDepth, *irbStencil;
+         if (!driDrawPriv) {
+            /* We're already detached from the drawable; exit this block. */
+            continue;
+         }
+         intel_fb = (struct intel_framebuffer *) driDrawPriv->driverPrivate;
+         if (!intel_fb) {
+            /* The frame buffer is already gone; exit this block. */
+            continue;
+         }
+         irbDepth = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
+         irbStencil = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
+
+         /* If the regions of the frame buffer still match the regions
+          * of the context, release them.  If they've changed somehow,
+          * leave them alone.
+          */
+         if (intel_fb->color_rb[0] && intel_fb->color_rb[0]->region == intel->front_region) {
+	    intel_renderbuffer_set_region(intel_fb->color_rb[0], NULL);
+         }
+         if (intel_fb->color_rb[1] && intel_fb->color_rb[1]->region == intel->back_region) {
+	    intel_renderbuffer_set_region(intel_fb->color_rb[1], NULL);
+         }
+
+         if (irbDepth && irbDepth->region == intel->depth_region) {
+	    intel_renderbuffer_set_region(irbDepth, NULL);
+         }
+         /* Usually, the stencil buffer is the same as the depth buffer;
+          * but they're handled separately in MakeCurrent, so we'll
+          * handle them separately here.
+          */
+         if (irbStencil && irbStencil->region == intel->depth_region) {
+	    intel_renderbuffer_set_region(irbStencil, NULL);
+         }
+      } while (0);
 
       intel_region_release(&intel->front_region);
       intel_region_release(&intel->back_region);
@@ -789,6 +840,8 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 
       /* free the Mesa context */
       _mesa_free_context_data(&intel->ctx);
+
+      
    }
 }
 
@@ -817,7 +870,10 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
           if (driDrawPriv != driReadPriv)
               intel_update_renderbuffers(driContextPriv, driReadPriv);
       } else {
-          /* XXX FBO temporary fix-ups! */
+          /* XXX FBO temporary fix-ups!  These are released in 
+           * intelDextroyContext(), above.  Changes here should be
+           * reflected there.
+           */
           /* if the renderbuffers don't have regions, init them from the context */
          struct intel_renderbuffer *irbDepth
             = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
