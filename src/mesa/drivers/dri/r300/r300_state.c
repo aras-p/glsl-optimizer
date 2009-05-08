@@ -923,12 +923,6 @@ static void r300StencilOpSeparate(GLcontext * ctx, GLenum face,
  * Window position and viewport transformation
  */
 
-/*
- * To correctly position primitives:
- */
-#define SUBPIXEL_X 0.125
-#define SUBPIXEL_Y 0.125
-
 static void r300UpdateWindow(GLcontext * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -949,9 +943,9 @@ static void r300UpdateWindow(GLcontext * ctx)
 	}
 
 	GLfloat sx = v[MAT_SX];
-	GLfloat tx = v[MAT_TX] + xoffset + SUBPIXEL_X;
+	GLfloat tx = v[MAT_TX] + xoffset;
 	GLfloat sy = v[MAT_SY] * y_scale;
-	GLfloat ty = (v[MAT_TY] * y_scale) + y_bias + SUBPIXEL_Y;
+	GLfloat ty = (v[MAT_TY] * y_scale) + y_bias;
 	GLfloat sz = v[MAT_SZ] * depthScale;
 	GLfloat tz = v[MAT_TZ] * depthScale;
 
@@ -990,8 +984,8 @@ void r300UpdateViewportOffset(GLcontext * ctx)
 	GLfloat yoffset = (GLfloat) dPriv->y + dPriv->h;
 	const GLfloat *v = ctx->Viewport._WindowMap.m;
 
-	GLfloat tx = v[MAT_TX] + xoffset + SUBPIXEL_X;
-	GLfloat ty = (-v[MAT_TY]) + yoffset + SUBPIXEL_Y;
+	GLfloat tx = v[MAT_TX] + xoffset;
+	GLfloat ty = (-v[MAT_TY]) + yoffset;
 
 	if (rmesa->hw.vpt.cmd[R300_VPT_XOFFSET] != r300PackFloat32(tx) ||
 	    rmesa->hw.vpt.cmd[R300_VPT_YOFFSET] != r300PackFloat32(ty)) {
