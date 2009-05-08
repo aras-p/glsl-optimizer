@@ -62,6 +62,7 @@ static boolean radeon_r300_validate(struct r300_winsys* winsys)
     if (retval == RADEON_CS_SPACE_OP_TO_BIG) {
         /* We might as well HCF, since this is not going to fit in the card,
          * period. */
+        /* XXX just drop it on the floor instead */
 	exit(1);
     } else if (retval == RADEON_CS_SPACE_FLUSH) {
         /* We must flush before more rendering can commence. */
@@ -128,14 +129,19 @@ static void radeon_r300_flush_cs(struct r300_winsys* winsys)
 {
     struct radeon_winsys_priv* priv =
         (struct radeon_winsys_priv*)winsys->radeon_winsys;
-    int retval = 0;
+    struct radeon_cs_space_check* sc = priv->sc;
+    int retval = 1;
 
+    /* Emit the CS. */
     retval = radeon_cs_emit(priv->cs);
     if (retval) {
         debug_printf("radeon: Bad CS, dumping...\n");
         radeon_cs_print(priv->cs, stderr);
     }
     radeon_cs_erase(priv->cs);
+
+    /* Clean out BOs. */
+    memset(sc, 0, sizeof(struct radeon_cs_space_check) * RADEON_MAX_BOS);
 }
 
 /* Helper function to do the ioctls needed for setup and init. */

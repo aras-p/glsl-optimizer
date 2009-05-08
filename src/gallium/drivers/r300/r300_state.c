@@ -562,14 +562,17 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
         r300->viewport_state->vte_control = R300_VTX_W0_FMT;
 
         if (state->scale[0] != 1.0f) {
+            assert(state->scale[0] != 0.0f);
             r300->viewport_state->xscale = state->scale[0];
             r300->viewport_state->vte_control |= R300_VPORT_X_SCALE_ENA;
         }
         if (state->scale[1] != 1.0f) {
+            assert(state->scale[1] != 0.0f);
             r300->viewport_state->yscale = state->scale[1];
             r300->viewport_state->vte_control |= R300_VPORT_Y_SCALE_ENA;
         }
         if (state->scale[2] != 1.0f) {
+            assert(state->scale[2] != 0.0f);
             r300->viewport_state->zscale = state->scale[2];
             r300->viewport_state->vte_control |= R300_VPORT_Z_SCALE_ENA;
         }

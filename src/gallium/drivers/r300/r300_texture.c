@@ -187,6 +187,7 @@ static struct pipe_texture*
             tex->stride);
 
     pipe_buffer_reference(&tex->buffer, buffer);
+    debug_printf("%p is the buffer\n", tex->buffer);
 
     return (struct pipe_texture*)tex;
 }
