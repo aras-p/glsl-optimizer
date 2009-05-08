@@ -521,6 +521,9 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
 void
 brw_state_cache_check_size(struct brw_context *brw)
 {
+   if (INTEL_DEBUG & DEBUG_STATE)
+      _mesa_printf("%s (n_items=%d)\n", __FUNCTION__, brw->cache.n_items);
+
    /* un-tuned guess.  We've got around 20 state objects for a total of around
     * 32k, so 1000 of them is around 1.5MB.
     */
@@ -536,6 +539,9 @@ static void
 brw_destroy_cache(struct brw_context *brw, struct brw_cache *cache)
 {
    GLuint i;
+
+   if (INTEL_DEBUG & DEBUG_STATE)
+      _mesa_printf("%s\n", __FUNCTION__);
 
    brw_clear_cache(brw, cache);
    for (i = 0; i < BRW_MAX_CACHE; i++) {

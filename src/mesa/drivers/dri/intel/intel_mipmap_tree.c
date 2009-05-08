@@ -62,9 +62,10 @@ intel_miptree_create_internal(struct intel_context *intel,
    GLboolean ok;
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
 
-   DBG("%s target %s format %s level %d..%d\n", __FUNCTION__,
+   DBG("%s target %s format %s level %d..%d <-- %p\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
-       _mesa_lookup_enum_by_nr(internal_format), first_level, last_level);
+       _mesa_lookup_enum_by_nr(internal_format), 
+       first_level, last_level, mt);
 
    mt->target = target_to_target(target);
    mt->internal_format = internal_format;
@@ -89,6 +90,7 @@ intel_miptree_create_internal(struct intel_context *intel,
 
    if (!ok) {
       free(mt);
+      DBG("%s not okay - returning NULL\n", __FUNCTION__);
       return NULL;
    }
 
