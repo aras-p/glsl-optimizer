@@ -1081,8 +1081,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
    screen->drmSupportsPointSprites = 1;
    screen->drmSupportsCubeMapsR100 = 1;
    screen->drmSupportsVertexProgram = 1;
-
-   ret = radeonGetParam(sPriv, RADEON_PARAM_IRQ_NR, &screen->irq);
+   screen->irq = 1;
 
    ret = radeonGetParam(sPriv, RADEON_PARAM_DEVICE_ID, &device_id);
    if (ret) {
