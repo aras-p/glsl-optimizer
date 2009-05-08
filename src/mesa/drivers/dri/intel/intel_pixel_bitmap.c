@@ -360,7 +360,6 @@ intel_texture_bitmap(GLcontext * ctx,
       "END\n";
    GLuint texname;
    GLfloat vertices[4][4];
-   GLfloat texcoords[4][2];
    GLint old_active_texture;
    GLubyte *unpacked_bitmap;
    GLubyte *a8_bitmap;
@@ -485,22 +484,12 @@ intel_texture_bitmap(GLcontext * ctx,
    vertices[3][2] = dst_z;
    vertices[3][3] = 1.0;
 
-   texcoords[0][0] = 0.0;
-   texcoords[0][1] = 0.0;
-   texcoords[1][0] = 1.0;
-   texcoords[1][1] = 0.0;
-   texcoords[2][0] = 1.0;
-   texcoords[2][1] = 1.0;
-   texcoords[3][0] = 0.0;
-   texcoords[3][1] = 1.0;
-
    _mesa_VertexPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &vertices);
-   _mesa_ClientActiveTextureARB(GL_TEXTURE0);
-   _mesa_TexCoordPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &texcoords);
    _mesa_Enable(GL_VERTEX_ARRAY);
-   _mesa_Enable(GL_TEXTURE_COORD_ARRAY);
+   intel_meta_set_default_texrect(intel);
    CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
 
+   intel_meta_restore_texcoords(intel);
    intel_meta_restore_transform(intel);
    intel_meta_restore_fragment_program(intel);
    intel_meta_restore_vertex_program(intel);
