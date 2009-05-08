@@ -242,6 +242,8 @@ struct brw_wm_compile {
 
    GLuint cur_inst;  /**< index of current instruction */
 
+   GLboolean out_of_regs;  /**< ran out of GRF registers? */
+
    /** Mapping from Mesa registers to hardware registers */
    struct {
       GLboolean inited;

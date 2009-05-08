@@ -96,8 +96,15 @@ alloc_grf(struct brw_wm_compile *c)
    for (r = 0; r < BRW_WM_MAX_GRF; r++) {
       assert(c->used_grf[r]);
    }
-   /*printf("Really out of temp regs!\n");*/
-   return 60;
+
+   /* really, no free GRF regs found */
+   if (!c->out_of_regs) {
+      /* print warning once per compilation */
+      _mesa_warning(NULL, "i965: ran out of registers for fragment program");
+      c->out_of_regs = GL_TRUE;
+   }
+
+   return -1;
 }
 
 
@@ -143,7 +150,12 @@ static struct brw_reg alloc_tmp(struct brw_wm_compile *c)
 
     /* if we need to allocate another temp, grow the tmp_regs[] array */
     if (c->tmp_index == c->tmp_max) {
-       c->tmp_regs[ c->tmp_max++ ] = alloc_grf(c);
+       int r = alloc_grf(c);
+       if (r < 0) {
+          /*printf("Out of temps in %s\n", __FUNCTION__);*/
+          r = 50; /* XXX random register! */
+       }
+       c->tmp_regs[ c->tmp_max++ ] = r;
     }
 
     /* form the GRF register */
@@ -210,6 +222,8 @@ get_reg(struct brw_wm_compile *c, int file, int index, int component,
     }
 
     assert(index < 256);
+    assert(component < 4);
+
     /* see if we've already allocated a HW register for this Mesa register */
     if (c->wm_regs[file][index][component].inited) {
        /* yes, re-use */
@@ -218,9 +232,10 @@ get_reg(struct brw_wm_compile *c, int file, int index, int component,
     else {
 	/* no, allocate new register */
        int grf = alloc_grf(c);
+       /*printf("alloc grf %d for reg %d:%d.%d\n", grf, file, index, component);*/
        if (grf < 0) {
           /* totally out of temps */
-          grf = 70; /* XXX !!!! */
+          grf = 51; /* XXX random register! */
        }
 
        reg = brw_vec8_grf(grf, 0);
@@ -373,6 +388,10 @@ static void prealloc_reg(struct brw_wm_compile *c)
     for (i = 0; i < reg_index; i++)
        prealloc_grf(c, i);
 
+    /* Don't use GRF 126, 127.  Using them seems to lead to GPU lock-ups */
+    prealloc_grf(c, 126);
+    prealloc_grf(c, 127);
+
     /* An instruction may reference up to three constants.
      * They'll be found in these registers.
      * XXX alloc these on demand!
@@ -385,7 +404,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
     }
 #if 0
     printf("USE CONST BUFFER? %d\n", c->fp->use_const_buffer);
-    printf("AFTER PRE_ALLOC, reg_index = %d\n", c->reg_index);
+    printf("AFTER PRE_ALLOC, reg_index = %d\n", reg_index);
 #endif
 }
 
@@ -2716,6 +2735,8 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
     int i, if_insn = 0, loop_insn = 0;
     struct brw_compile *p = &c->func;
     struct brw_indirect stack_index = brw_indirect(0, 0);
+
+    c->out_of_regs = GL_FALSE;
 
     prealloc_reg(c);
     brw_set_compression_control(p, BRW_COMPRESSION_NONE);
