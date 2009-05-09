@@ -612,11 +612,10 @@ static void radeon_teximage(
 				_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
 		}
 
-	}
-
-	/* SGIS_generate_mipmap */
-	if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-		radeon_generate_mipmap(ctx, texObj->Target, texObj);
+		/* SGIS_generate_mipmap */
+		if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+			radeon_generate_mipmap(ctx, texObj->Target, texObj);
+		}
 	}
 
 	_mesa_unmap_teximage_pbo(ctx, packing);
@@ -741,12 +740,12 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, int level,
 				_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
 		}
 
+		/* GL_SGIS_generate_mipmap */
+		if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+			radeon_generate_mipmap(ctx, texObj->Target, texObj);
+		}
 	}
 
-	/* GL_SGIS_generate_mipmap */
-	if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-		radeon_generate_mipmap(ctx, texObj->Target, texObj);
-	}
 	radeon_teximage_unmap(image);
 
 	_mesa_unmap_teximage_pbo(ctx, packing);
