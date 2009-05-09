@@ -71,17 +71,32 @@ static INLINE unsigned r300_vs_src_type(struct r300_vs_asm* assembler,
 {
     switch (src->File) {
         case TGSI_FILE_NULL:
+        case TGSI_FILE_INPUT:
             /* Probably a zero or one swizzle */
             return R300_PVS_SRC_REG_INPUT;
-            break;
-        case TGSI_FILE_INPUT:
-            return R300_PVS_SRC_REG_INPUT;
-            break;
         case TGSI_FILE_TEMPORARY:
             return R300_PVS_SRC_REG_TEMPORARY;
-            break;
         case TGSI_FILE_CONSTANT:
+        case TGSI_FILE_IMMEDIATE:
             return R300_PVS_SRC_REG_CONSTANT;
+        default:
+            debug_printf("r300: vs: Unimplemented src type %d\n", src->File);
+            break;
+    }
+    return 0;
+}
+
+static INLINE unsigned r300_vs_src(struct r300_vs_asm* assembler,
+                                   struct tgsi_src_register* src)
+{
+    switch (src->File) {
+        case TGSI_FILE_NULL:
+        case TGSI_FILE_INPUT:
+        case TGSI_FILE_TEMPORARY:
+        case TGSI_FILE_CONSTANT:
+            return src->Index;
+        case TGSI_FILE_IMMEDIATE:
+            return src->Index + assembler->imm_offset;
         default:
             debug_printf("r300: vs: Unimplemented src type %d\n", src->File);
             break;
@@ -95,10 +110,8 @@ static INLINE unsigned r300_vs_dst_type(struct r300_vs_asm* assembler,
     switch (dst->File) {
         case TGSI_FILE_TEMPORARY:
             return R300_PVS_DST_REG_TEMPORARY;
-            break;
         case TGSI_FILE_OUTPUT:
             return R300_PVS_DST_REG_OUT;
-            break;
         default:
             debug_printf("r300: vs: Unimplemented dst type %d\n", dst->File);
             break;
@@ -112,10 +125,8 @@ static INLINE unsigned r300_vs_dst(struct r300_vs_asm* assembler,
     switch (dst->File) {
         case TGSI_FILE_TEMPORARY:
             return dst->Index;
-            break;
         case TGSI_FILE_OUTPUT:
             return assembler->tab[dst->Index];
-            break;
         default:
             debug_printf("r300: vs: Unimplemented dst %d\n", dst->File);
             break;
@@ -199,21 +210,24 @@ static void r300_vs_emit_inst(struct r300_vertex_shader* vs,
             vs->instructions[i].inst3 =
                 R300_PVS_SRC_REG_TYPE(r300_vs_src_type(assembler,
                             &src[2].SrcRegister)) |
-                R300_PVS_SRC_OFFSET(src[2].SrcRegister.Index) |
+                R300_PVS_SRC_OFFSET(r300_vs_src(assembler,
+                            &src[2].SrcRegister)) |
                 R300_PVS_SRC_SWIZZLE(r300_vs_swiz(&src[2]));
             /* Fall through */
         case 2:
             vs->instructions[i].inst2 =
                 R300_PVS_SRC_REG_TYPE(r300_vs_src_type(assembler,
                             &src[1].SrcRegister)) |
-                R300_PVS_SRC_OFFSET(src[1].SrcRegister.Index) |
+                R300_PVS_SRC_OFFSET(r300_vs_src(assembler,
+                            &src[1].SrcRegister)) |
                 R300_PVS_SRC_SWIZZLE(r300_vs_swiz(&src[1]));
             /* Fall through */
         case 1:
             vs->instructions[i].inst1 =
                 R300_PVS_SRC_REG_TYPE(r300_vs_src_type(assembler,
                             &src[0].SrcRegister)) |
-                R300_PVS_SRC_OFFSET(src[0].SrcRegister.Index) |
+                R300_PVS_SRC_OFFSET(r300_vs_src(assembler,
+                            &src[0].SrcRegister)) |
                 /* XXX the icky, it burns */
                 R300_PVS_SRC_SWIZZLE(is_scalar ? r300_vs_scalar_swiz(&src[0])
                         : r300_vs_swiz(&src[0]));
