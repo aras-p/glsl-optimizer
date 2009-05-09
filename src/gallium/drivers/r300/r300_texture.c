@@ -86,8 +86,6 @@ static struct pipe_texture*
     r300_texture_create(struct pipe_screen* screen,
                         const struct pipe_texture* template)
 {
-    /* XXX struct r300_screen* r300screen = r300_screen(screen); */
-
     struct r300_texture* tex = CALLOC_STRUCT(r300_texture);
 
     if (!tex) {
@@ -187,7 +185,6 @@ static struct pipe_texture*
             tex->stride);
 
     pipe_buffer_reference(&tex->buffer, buffer);
-    debug_printf("%p is the buffer\n", tex->buffer);
 
     return (struct pipe_texture*)tex;
 }

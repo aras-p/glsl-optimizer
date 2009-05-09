@@ -458,7 +458,7 @@ void r300_emit_dirty_state(struct r300_context* r300)
     /* XXX check size */
     /* Color buffers... */
     for (i = 0; i < r300->framebuffer_state.nr_cbufs; i++) {
-        tex = (struct r300_texture*)r300->framebuffer_state.cbufs[i];
+        tex = (struct r300_texture*)r300->framebuffer_state.cbufs[i]->texture;
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
         if (!tex->buffer) return;
         r300->winsys->add_buffer(r300->winsys, tex->buffer,
@@ -466,7 +466,7 @@ void r300_emit_dirty_state(struct r300_context* r300)
     }
     /* ...depth buffer... */
     if (r300->framebuffer_state.zsbuf) {
-        tex = (struct r300_texture*)r300->framebuffer_state.zsbuf;
+        tex = (struct r300_texture*)r300->framebuffer_state.zsbuf->texture;
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
         if (!tex->buffer) return;
         r300->winsys->add_buffer(r300->winsys, tex->buffer,
