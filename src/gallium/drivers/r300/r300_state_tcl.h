@@ -35,6 +35,7 @@
 #   define R300_VE_DOT_PRODUCT            1
 #   define R300_VE_MULTIPLY               2
 #   define R300_VE_ADD                    3
+#   define R300_VE_MAXIMUM                7
 #define R300_PVS_DST_MATH_INST     (1 << 6)
 #   define R300_ME_RECIP_DX               6
 #define R300_PVS_DST_MACRO_INST    (1 << 7)
