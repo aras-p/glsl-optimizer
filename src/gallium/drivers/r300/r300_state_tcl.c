@@ -137,6 +137,8 @@ static uint32_t r300_vs_op(unsigned op)
             return R300_VE_ADD;
         case TGSI_OPCODE_MAX:
             return R300_VE_MAXIMUM;
+        case TGSI_OPCODE_SLT:
+            return R300_VE_SET_LESS_THAN;
         case TGSI_OPCODE_RSQ:
             return R300_PVS_DST_MATH_INST | R300_ME_RECIP_DX;
         case TGSI_OPCODE_MAD:
@@ -232,6 +234,8 @@ static void r300_vs_instruction(struct r300_vertex_shader* vs,
             break;
         case TGSI_OPCODE_ADD:
         case TGSI_OPCODE_MUL:
+        case TGSI_OPCODE_MAX:
+        case TGSI_OPCODE_SLT:
             r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode,
                     2, FALSE);
@@ -269,11 +273,6 @@ static void r300_vs_instruction(struct r300_vertex_shader* vs,
         case TGSI_OPCODE_MOV:
         case TGSI_OPCODE_SWZ:
             inst->FullSrcRegisters[1] = r300_constant_zero;
-            r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
-                    &inst->FullDstRegisters[0], inst->Instruction.Opcode,
-                    2, FALSE);
-            break;
-        case TGSI_OPCODE_MAX:
             r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode,
                     2, FALSE);
