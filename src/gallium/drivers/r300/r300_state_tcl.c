@@ -169,7 +169,7 @@ static void r300_vs_emit_inst(struct r300_vertex_shader* vs,
     vs->instructions[i].inst0 = R300_PVS_DST_OPCODE(r300_vs_op(op)) |
         R300_PVS_DST_REG_TYPE(r300_vs_dst_type(assembler, &dst->DstRegister)) |
         R300_PVS_DST_OFFSET(r300_vs_dst(assembler, &dst->DstRegister)) |
-        R300_PVS_DST_WE_XYZW;
+        R300_PVS_DST_WE(dst->DstRegister.WriteMask);
     switch (count) {
         case 3:
             vs->instructions[i].inst3 =
