@@ -135,6 +135,8 @@ static uint32_t r300_vs_op(unsigned op)
         case TGSI_OPCODE_MOV:
         case TGSI_OPCODE_SWZ:
             return R300_VE_ADD;
+        case TGSI_OPCODE_RSQ:
+            return R300_PVS_DST_MATH_INST | R300_ME_RECIP_DX;
         case TGSI_OPCODE_MAD:
             return R300_PVS_DST_MACRO_INST | R300_PVS_MACRO_OP_2CLK_MADD;
         default:
@@ -158,12 +160,30 @@ static uint32_t r300_vs_swiz(struct tgsi_full_src_register* reg)
     }
 }
 
+/* XXX icky icky icky icky */
+static uint32_t r300_vs_scalar_swiz(struct tgsi_full_src_register* reg)
+{
+    if (reg->SrcRegister.Extended) {
+        return reg->SrcRegisterExtSwz.ExtSwizzleX |
+            (reg->SrcRegisterExtSwz.ExtSwizzleX << 3) |
+            (reg->SrcRegisterExtSwz.ExtSwizzleX << 6) |
+            (reg->SrcRegisterExtSwz.ExtSwizzleX << 9);
+    } else {
+        return reg->SrcRegister.SwizzleX |
+            (reg->SrcRegister.SwizzleX << 3) |
+            (reg->SrcRegister.SwizzleX << 6) |
+            (reg->SrcRegister.SwizzleX << 9);
+    }
+}
+
+/* XXX scalar stupidity */
 static void r300_vs_emit_inst(struct r300_vertex_shader* vs,
                               struct r300_vs_asm* assembler,
                               struct tgsi_full_src_register* src,
                               struct tgsi_full_dst_register* dst,
                               unsigned op,
-                              unsigned count)
+                              unsigned count,
+                              boolean is_scalar)
 {
     int i = vs->instruction_count;
     vs->instructions[i].inst0 = R300_PVS_DST_OPCODE(r300_vs_op(op)) |
@@ -190,7 +210,9 @@ static void r300_vs_emit_inst(struct r300_vertex_shader* vs,
                 R300_PVS_SRC_REG_TYPE(r300_vs_src_type(assembler,
                             &src[0].SrcRegister)) |
                 R300_PVS_SRC_OFFSET(src[0].SrcRegister.Index) |
-                R300_PVS_SRC_SWIZZLE(r300_vs_swiz(&src[0]));
+                /* XXX the icky, it burns */
+                R300_PVS_SRC_SWIZZLE(is_scalar ? r300_vs_scalar_swiz(&src[0])
+                        : r300_vs_swiz(&src[0]));
             break;
     }
     vs->instruction_count++;
@@ -201,11 +223,16 @@ static void r300_vs_instruction(struct r300_vertex_shader* vs,
                                 struct tgsi_full_instruction* inst)
 {
     switch (inst->Instruction.Opcode) {
+        case TGSI_OPCODE_RSQ:
+            r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode,
+                    1, TRUE);
+            break;
         case TGSI_OPCODE_ADD:
         case TGSI_OPCODE_MUL:
             r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode,
-                    2);
+                    2, FALSE);
             break;
         case TGSI_OPCODE_DP3:
             /* Set alpha swizzle to zero for src0 and src1 */
@@ -235,19 +262,19 @@ static void r300_vs_instruction(struct r300_vertex_shader* vs,
         case TGSI_OPCODE_DP4:
             r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode,
-                    2);
+                    2, FALSE);
             break;
         case TGSI_OPCODE_MOV:
         case TGSI_OPCODE_SWZ:
             inst->FullSrcRegisters[1] = r300_constant_zero;
             r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode,
-                    2);
+                    2, FALSE);
             break;
         case TGSI_OPCODE_MAD:
             r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode,
-                    3);
+                    3, FALSE);
             break;
         case TGSI_OPCODE_END:
             break;
