@@ -327,6 +327,7 @@ GALLIUM_FILES = \
 	$(DIRECTORY)/src/gallium/*/*/*/SConscript			\
 	$(DIRECTORY)/src/gallium/*/*/*/*.[ch]				\
 	$(DIRECTORY)/src/gallium/*/*/*/*.py				\
+	$(DIRECTORY)/src/gallium/*/*/*/*/Makefile			\
 	$(DIRECTORY)/src/gallium/*/*/*/*/*.[ch]				\
 
 
