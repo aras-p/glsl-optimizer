@@ -35,21 +35,19 @@ static void radeon_r300_add_buffer(struct r300_winsys* winsys,
 
     /* Check to see if this BO is already in line for validation;
      * find a slot for it otherwise. */
-    for (i = 0; i < RADEON_MAX_BOS; i++) {
+    assert(priv->bo_count <= RADEON_MAX_BOS);
+    for (i = 0; i < priv->bo_count; i++) {
         if (sc[i].bo == bo) {
             sc[i].read_domains |= rd;
             sc[i].write_domain |= wd;
             return;
-        } else if (sc[i].bo == NULL) {
-            sc[i].bo = bo;
-            sc[i].read_domains = rd;
-            sc[i].write_domain = wd;
-            priv->bo_count = i + 1;
-            return;
         }
     }
 
-    assert(FALSE && "Oh God too many BOs!");
+    sc[priv->bo_count].bo = bo;
+    sc[priv->bo_count].read_domains = rd;
+    sc[priv->bo_count].write_domain = wd;
+    priv->bo_count++;
 }
 
 static boolean radeon_r300_validate(struct r300_winsys* winsys)
@@ -148,6 +146,7 @@ static void radeon_r300_flush_cs(struct r300_winsys* winsys)
 
     /* Clean out BOs. */
     memset(sc, 0, sizeof(struct radeon_cs_space_check) * RADEON_MAX_BOS);
+    priv->bo_count = 0;
 }
 
 /* Helper function to do the ioctls needed for setup and init. */
