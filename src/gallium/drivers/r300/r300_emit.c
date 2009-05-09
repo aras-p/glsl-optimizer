@@ -459,7 +459,7 @@ void r300_emit_dirty_state(struct r300_context* r300)
     /* Color buffers... */
     for (i = 0; i < r300->framebuffer_state.nr_cbufs; i++) {
         tex = (struct r300_texture*)r300->framebuffer_state.cbufs[i];
-        //assert(tex && tex->buffer && "cbuf is marked, but NULL!");
+        assert(tex && tex->buffer && "cbuf is marked, but NULL!");
         if (!tex->buffer) return;
         r300->winsys->add_buffer(r300->winsys, tex->buffer,
                 0, RADEON_GEM_DOMAIN_VRAM);
@@ -467,7 +467,7 @@ void r300_emit_dirty_state(struct r300_context* r300)
     /* ...depth buffer... */
     if (r300->framebuffer_state.zsbuf) {
         tex = (struct r300_texture*)r300->framebuffer_state.zsbuf;
-        //assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
+        assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
         if (!tex->buffer) return;
         r300->winsys->add_buffer(r300->winsys, tex->buffer,
                 0, RADEON_GEM_DOMAIN_VRAM);

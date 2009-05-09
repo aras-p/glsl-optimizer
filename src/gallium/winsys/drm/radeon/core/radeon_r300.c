@@ -37,6 +37,8 @@ static void radeon_r300_add_buffer(struct r300_winsys* winsys,
      * find a slot for it otherwise. */
     for (i = 0; i < RADEON_MAX_BOS; i++) {
         if (sc[i].bo == bo) {
+            sc[i].read_domains |= rd;
+            sc[i].write_domain |= wd;
             return;
         } else if (sc[i].bo == NULL) {
             sc[i].bo = bo;
@@ -52,11 +54,15 @@ static void radeon_r300_add_buffer(struct r300_winsys* winsys,
 
 static boolean radeon_r300_validate(struct r300_winsys* winsys)
 {
-    int retval;
+    int retval, i;
     struct radeon_winsys_priv* priv =
         (struct radeon_winsys_priv*)winsys->radeon_winsys;
     struct radeon_cs_space_check* sc = priv->sc;
 
+    debug_printf("Validation count: %d\n", priv->bo_count);
+    for (i = 0; i < priv->bo_count; i++) {
+        debug_printf("BO %d: %p rd: %d wd: %d\n", i, sc[i].bo, sc[i].read_domains, sc[i].write_domain);
+    }
     retval = radeon_cs_space_check(priv->cs, sc, priv->bo_count);
 
     if (retval == RADEON_CS_SPACE_OP_TO_BIG) {
