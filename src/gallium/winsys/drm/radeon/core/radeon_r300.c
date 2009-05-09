@@ -147,9 +147,9 @@ static void radeon_r300_flush_cs(struct r300_winsys* winsys)
 /* Helper function to do the ioctls needed for setup and init. */
 static void do_ioctls(struct r300_winsys* winsys, int fd)
 {
-    struct drm_radeon_gem_info info;
-    drm_radeon_getparam_t gp;
-    int target;
+    struct drm_radeon_gem_info info = {0};
+    drm_radeon_getparam_t gp = {0};
+    int target = 0;
     int retval;
 
     gp.value = &target;
