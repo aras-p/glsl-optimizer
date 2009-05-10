@@ -394,7 +394,7 @@ intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     if (!driContext->driScreenPriv->dri2.enabled)
 	return;
 
-    if (!intel->internal_viewport_call) {
+    if (!intel->internal_viewport_call && ctx->DrawBuffer->Name == 0) {
        intel_update_renderbuffers(driContext, driContext->driDrawablePriv);
        if (driContext->driDrawablePriv != driContext->driReadablePriv)
 	  intel_update_renderbuffers(driContext, driContext->driReadablePriv);
