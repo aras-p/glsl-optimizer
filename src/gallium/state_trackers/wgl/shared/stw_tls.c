@@ -44,6 +44,20 @@ stw_tls_init(void)
    return TRUE;
 }
 
+static INLINE struct stw_tls_data *
+stw_tls_data_create()
+{
+   struct stw_tls_data *data;
+
+   data = CALLOC_STRUCT(stw_tls_data);
+   if (!data)
+      return NULL;
+
+   data->currentPixelFormat = 0;
+   
+   return data;
+}
+
 boolean
 stw_tls_init_thread(void)
 {
@@ -53,14 +67,9 @@ stw_tls_init_thread(void)
       return FALSE;
    }
 
-   data = MALLOC(sizeof(*data));
-   if (!data) {
+   data = stw_tls_data_create();
+   if(!data)
       return FALSE;
-   }
-
-   data->currentPixelFormat = 0;
-   data->currentDC = NULL;
-   data->currentGLRC = 0;
 
    TlsSetValue(tlsIndex, data);
 
@@ -93,9 +102,23 @@ stw_tls_cleanup(void)
 struct stw_tls_data *
 stw_tls_get_data(void)
 {
+   struct stw_tls_data *data;
+   
    if (tlsIndex == TLS_OUT_OF_INDEXES) {
       return NULL;
    }
+   
+   data = (struct stw_tls_data *) TlsGetValue(tlsIndex);
+   if(!data) {
+      /* DllMain is called with DLL_THREAD_ATTACH only by threads created after 
+       * the DLL is loaded by the process */
+      
+      data = stw_tls_data_create();
+      if(!data)
+         return NULL;
 
-   return (struct stw_tls_data *) TlsGetValue(tlsIndex);
+      TlsSetValue(tlsIndex, data);
+   }
+
+   return data;
 }

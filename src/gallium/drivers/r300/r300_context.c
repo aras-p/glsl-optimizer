@@ -34,10 +34,6 @@ static boolean r300_draw_range_elements(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     int i;
 
-    if (r300->dirty_state) {
-        r300_emit_dirty_state(r300);
-    }
-
     for (i = 0; i < r300->vertex_buffer_count; i++) {
         void* buf = pipe_buffer_map(pipe->screen,
                                     r300->vertex_buffers[i].buffer,

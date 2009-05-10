@@ -38,20 +38,17 @@ static Bool radeon_xorg_pci_probe(DriverPtr driver,
 				 intptr_t match_data);
 
 static const struct pci_id_match radeon_xorg_device_match[] = {
-    {0x1002, 0x5E4D, 0xffff, 0xffff, 0, 0, 0},
-    {0x1002, 0x7249, 0xffff, 0xffff, 0, 0, 0},
+    {0x1002, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY, 0, 0, 0},
     {0, 0, 0},
 };
 
 static SymTabRec radeon_xorg_chipsets[] = {
-    {0x5E4D, "Radeon RV410 PCIE (X700)"},
-    {0x7249, "Radeon R580 PCIE (X1900 XT)"},
+    {PCI_MATCH_ANY, "ATI/AMD Radeon Graphics Chipset"},
     {-1, NULL}
 };
 
 static PciChipsets radeon_xorg_pci_devices[] = {
-    {0x5E4D, 0x5E4D, RES_SHARED_VGA},
-    {0x7249, 0x7249, RES_SHARED_VGA},
+    {PCI_MATCH_ANY, PCI_MATCH_ANY, RES_SHARED_VGA},
     {-1, -1, RES_UNDEFINED}
 };
 

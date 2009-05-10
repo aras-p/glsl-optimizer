@@ -3,6 +3,7 @@
  * Version:  6.5
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -262,7 +263,7 @@ static void
 write_texture_image(struct gl_texture_object *texObj)
 {
    const struct gl_texture_image *img = texObj->Image[0][0];
-   if (img) {
+   if (img && img->Data) {
       char s[100];
 
       /* make filename */
@@ -338,5 +339,5 @@ _mesa_dump_textures(GLboolean dumpImages)
 {
    GET_CURRENT_CONTEXT(ctx);
    DumpImages = dumpImages;
-   _mesa_HashDeleteAll(ctx->Shared->TexObjects, dump_texture_cb, ctx);
+   _mesa_HashWalk(ctx->Shared->TexObjects, dump_texture_cb, ctx);
 }

@@ -32,9 +32,8 @@
 #include "dri_screen.h"
 
 #include "dri_drawable.h"
-
-
 #include "state_tracker/drm_api.h"
+#include "state_tracker/dri1_api.h"
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
 #include "pipe/p_context.h"
@@ -43,11 +42,9 @@
 
 #include "util/u_memory.h"
 
-
 GLboolean
-dri_create_context(const __GLcontextModes *visual,
-                   __DRIcontextPrivate *cPriv,
-                   void *sharedContextPrivate)
+dri_create_context(const __GLcontextModes * visual,
+		   __DRIcontextPrivate * cPriv, void *sharedContextPrivate)
 {
    __DRIscreenPrivate *sPriv = cPriv->driScreenPriv;
    struct dri_screen *screen = dri_screen(sPriv);
@@ -55,7 +52,7 @@ dri_create_context(const __GLcontextModes *visual,
    struct st_context *st_share = NULL;
 
    if (sharedContextPrivate) {
-      st_share = ((struct dri_context *) sharedContextPrivate)->st;
+      st_share = ((struct dri_context *)sharedContextPrivate)->st;
    }
 
    ctx = CALLOC_STRUCT(dri_context);
@@ -65,11 +62,12 @@ dri_create_context(const __GLcontextModes *visual,
    cPriv->driverPrivate = ctx;
    ctx->cPriv = cPriv;
    ctx->sPriv = sPriv;
+   ctx->lock = screen->drmLock;
+   ctx->d_stamp = -1;
+   ctx->r_stamp = -1;
 
    driParseConfigFiles(&ctx->optionCache,
-                       &screen->optionCache,
-                       sPriv->myNum,
-                       "dri");
+		       &screen->optionCache, sPriv->myNum, "dri");
 
    ctx->pipe = drm_api_hooks.create_context(screen->pipe_screen);
 
@@ -87,7 +85,7 @@ dri_create_context(const __GLcontextModes *visual,
 
    return GL_TRUE;
 
-fail:
+ fail:
    if (ctx && ctx->st)
       st_destroy_context(ctx->st);
 
@@ -98,9 +96,8 @@ fail:
    return FALSE;
 }
 
-
 void
-dri_destroy_context(__DRIcontextPrivate *cPriv)
+dri_destroy_context(__DRIcontextPrivate * cPriv)
 {
    struct dri_context *ctx = dri_context(cPriv);
    struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
@@ -122,49 +119,107 @@ dri_destroy_context(__DRIcontextPrivate *cPriv)
    FREE(ctx);
 }
 
-
 GLboolean
-dri_unbind_context(__DRIcontextPrivate *cPriv)
+dri_unbind_context(__DRIcontextPrivate * cPriv)
 {
-   struct dri_context *ctx = dri_context(cPriv);
-   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-   /* XXX make_current(NULL)? */
+   if (cPriv) {
+      struct dri_context *ctx = dri_context(cPriv);
+
+      if (--ctx->bind_count == 0) {
+	 if (ctx->st && ctx->st == st_get_current()) {
+	    st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+	    st_make_current(NULL, NULL, NULL);
+	 }
+      }
+   }
+
    return GL_TRUE;
 }
 
-
 GLboolean
-dri_make_current(__DRIcontextPrivate *cPriv,
-                 __DRIdrawablePrivate *driDrawPriv,
-                 __DRIdrawablePrivate *driReadPriv)
+dri_make_current(__DRIcontextPrivate * cPriv,
+		 __DRIdrawablePrivate * driDrawPriv,
+		 __DRIdrawablePrivate * driReadPriv)
 {
    if (cPriv) {
       struct dri_context *ctx = dri_context(cPriv);
       struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
       struct dri_drawable *draw = dri_drawable(driDrawPriv);
       struct dri_drawable *read = dri_drawable(driReadPriv);
+      struct st_context *old_st = st_get_current();
+
+      if (old_st && old_st != ctx->st)
+	 st_flush(old_st, PIPE_FLUSH_RENDER_CACHE, NULL);
+
+      ++ctx->bind_count;
 
       /* This is for situations in which we need a rendering context but
        * there may not be any currently bound.
        */
       screen->dummyContext = ctx;
 
-      st_make_current(ctx->st,
-                      draw->stfb,
-                      read->stfb);
+      if (ctx->dPriv != driDrawPriv) {
+	 ctx->dPriv = driDrawPriv;
+	 ctx->d_stamp = driDrawPriv->lastStamp - 1;
+      }
+      if (ctx->rPriv != driReadPriv) {
+	 ctx->rPriv = driReadPriv;
+	 ctx->r_stamp = driReadPriv->lastStamp - 1;
+      }
 
-      /* used in dri_flush_frontbuffer */
-      ctx->dPriv = driDrawPriv;
+      st_make_current(ctx->st, draw->stfb, read->stfb);
 
-      if (driDrawPriv)
-         dri_get_buffers(driDrawPriv);
-      if (driDrawPriv != driReadPriv && driReadPriv)
-         dri_get_buffers(driReadPriv);
+      if (__dri1_api_hooks) {
+	 dri1_update_drawables(ctx, draw, read);
+      } else {
+	 if (driDrawPriv)
+	    dri_get_buffers(driDrawPriv);
+	 if (driDrawPriv != driReadPriv && driReadPriv)
+	    dri_get_buffers(driReadPriv);
+      }
    } else {
       st_make_current(NULL, NULL, NULL);
    }
 
    return GL_TRUE;
 }
+
+static void
+st_dri_lock(struct pipe_context *pipe)
+{
+   dri_lock((struct dri_context *)pipe->priv);
+}
+
+static void
+st_dri_unlock(struct pipe_context *pipe)
+{
+   dri_unlock((struct dri_context *)pipe->priv);
+}
+
+static boolean
+st_dri_is_locked(struct pipe_context *pipe)
+{
+   return ((struct dri_context *)pipe->priv)->isLocked;
+}
+
+static boolean
+st_dri_lost_lock(struct pipe_context *pipe)
+{
+   return ((struct dri_context *)pipe->priv)->wsLostLock;
+}
+
+static void
+st_dri_clear_lost_lock(struct pipe_context *pipe)
+{
+   ((struct dri_context *)pipe->priv)->wsLostLock = FALSE;
+}
+
+struct dri1_api_lock_funcs dri1_lf = {
+   .lock = st_dri_lock,
+   .unlock = st_dri_unlock,
+   .is_locked = st_dri_is_locked,
+   .is_lock_lost = st_dri_lost_lock,
+   .clear_lost_lock = st_dri_clear_lost_lock
+};
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

@@ -586,6 +586,7 @@ draw_pstip_stage(struct draw_context *draw)
    draw_alloc_temp_verts( &pstip->stage, 8 );
 
    pstip->stage.draw = draw;
+   pstip->stage.name = "pstip";
    pstip->stage.next = NULL;
    pstip->stage.point = draw_pipe_passthrough_point;
    pstip->stage.line = draw_pipe_passthrough_line;

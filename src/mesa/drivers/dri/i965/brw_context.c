@@ -118,6 +118,8 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.MaxCubeTextureLevels = 12;
    ctx->Const.MaxTextureRectSize = (1<<12);
    
+   ctx->Const.MaxTextureMaxAnisotropy = 16.0;
+
    /* if conformance mode is set, swrast can handle any size AA point */
    ctx->Const.MaxPointSizeAA = 255.0;
 

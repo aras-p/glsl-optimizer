@@ -317,6 +317,8 @@ def generate(env):
     if gcc:
         if debug:
             cflags += ['-O0', '-g3']
+        elif env['toolchain'] == 'crossmingw':
+            cflags += ['-O0', '-g3'] # mingw 4.2.1 optimizer is broken
         else:
             cflags += ['-O3', '-g3']
         if env['profile']:

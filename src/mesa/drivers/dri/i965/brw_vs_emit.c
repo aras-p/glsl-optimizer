@@ -69,13 +69,18 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
    GLuint i, reg = 0, mrf;
 
-#if 0
-   if (c->vp->program.Base.Parameters->NumParameters >= 6)
-      c->use_const_buffer = 1;
+   /* Determine whether to use a real constant buffer or use a block
+    * of GRF registers for constants.  The later is faster but only
+    * works if everything fits in the GRF.
+    * XXX this heuristic/check may need some fine tuning...
+    */
+   if (c->vp->program.Base.Parameters->NumParameters +
+       c->vp->program.Base.NumTemporaries + 20 > BRW_MAX_GRF)
+      c->vp->use_const_buffer = GL_TRUE;
    else
-#endif
-      c->use_const_buffer = GL_FALSE;
-   /*printf("use_const_buffer = %d\n", c->use_const_buffer);*/
+      c->vp->use_const_buffer = GL_FALSE;
+
+   /*printf("use_const_buffer = %d\n", c->vp->use_const_buffer);*/
 
    /* r0 -- reserved as usual
     */
@@ -96,7 +101,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    /* Vertex program parameters from curbe:
     */
-   if (c->use_const_buffer) {
+   if (c->vp->use_const_buffer) {
       /* get constants from a real constant buffer */
       c->prog_data.curb_read_length = 0;
       c->prog_data.nr_params = 4; /* XXX 0 causes a bug elsewhere... */
@@ -172,7 +177,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       reg++;
    }
 
-   if (c->use_const_buffer) {
+   if (c->vp->use_const_buffer) {
       for (i = 0; i < 3; i++) {
          c->current_const[i].index = -1;
          c->current_const[i].reg = brw_vec8_grf(reg, 0);
@@ -709,10 +714,11 @@ get_constant(struct brw_vs_compile *c,
    struct brw_compile *p = &c->func;
    struct brw_reg const_reg;
    struct brw_reg const2_reg;
+   const GLboolean relAddr = src->RelAddr;
 
    assert(argIndex < 3);
 
-   if (c->current_const[argIndex].index != src->Index || src->RelAddr) {
+   if (c->current_const[argIndex].index != src->Index || relAddr) {
       struct brw_reg addrReg = c->regs[PROGRAM_ADDRESS][0];
 
       c->current_const[argIndex].index = src->Index;
@@ -725,13 +731,13 @@ get_constant(struct brw_vs_compile *c,
       brw_dp_READ_4_vs(p,
                        c->current_const[argIndex].reg,/* writeback dest */
                        0,                             /* oword */
-                       src->RelAddr,                  /* relative indexing? */
+                       relAddr,                       /* relative indexing? */
                        addrReg,                       /* address register */
                        16 * src->Index,               /* byte offset */
                        SURF_INDEX_VERT_CONST_BUFFER   /* binding table index */
                        );
 
-      if (src->RelAddr) {
+      if (relAddr) {
          /* second read */
          const2_reg = get_tmp(c);
 
@@ -742,7 +748,7 @@ get_constant(struct brw_vs_compile *c,
          brw_dp_READ_4_vs(p,
                           const2_reg,              /* writeback dest */
                           1,                       /* oword */
-                          src->RelAddr,            /* relative indexing? */
+                          relAddr,                 /* relative indexing? */
                           addrReg,                 /* address register */
                           16 * src->Index,         /* byte offset */
                           SURF_INDEX_VERT_CONST_BUFFER
@@ -752,7 +758,7 @@ get_constant(struct brw_vs_compile *c,
 
    const_reg = c->current_const[argIndex].reg;
 
-   if (src->RelAddr) {
+   if (relAddr) {
       /* merge the two Owords into the constant register */
       /* const_reg[7..4] = const2_reg[7..4] */
       brw_MOV(p,
@@ -869,7 +875,7 @@ get_src_reg( struct brw_vs_compile *c,
    case PROGRAM_STATE_VAR:
    case PROGRAM_CONSTANT:
    case PROGRAM_UNIFORM:
-      if (c->use_const_buffer) {
+      if (c->vp->use_const_buffer) {
          return get_constant(c, inst, argIndex);
       }
       else if (relAddr) {
@@ -1219,7 +1225,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
    for (insn = 0; insn < nr_insns; insn++) {
 
-      struct prog_instruction *inst = &c->vp->program.Base.Instructions[insn];
+      const struct prog_instruction *inst = &c->vp->program.Base.Instructions[insn];
       struct brw_reg args[3], dst;
       GLuint i;
       
@@ -1232,7 +1238,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
        */
       if (inst->Opcode != OPCODE_SWZ)
 	  for (i = 0; i < 3; i++) {
-	      struct prog_src_register *src = &inst->SrcReg[i];
+	      const struct prog_src_register *src = &inst->SrcReg[i];
 	      index = src->Index;
 	      file = src->File;	
 	      if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src)

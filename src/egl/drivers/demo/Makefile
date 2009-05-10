@@ -26,8 +26,6 @@ $(TOP)/$(LIB_DIR)/demodriver.so: $(OBJECTS)
 		$(OBJECTS)
 
 install:
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
-	$(INSTALL) $(TOP)/$(LIB_DIR)/demodriver.so $(DESTDIR)$(INSTALL_LIB_DIR)
 
 clean:
 	-rm -f *.o

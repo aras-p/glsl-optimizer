@@ -52,12 +52,66 @@
 
 #define FILE_DEBUG_FLAG DEBUG_REGION
 
+/* This should be set to the maximum backtrace size desired.
+ * Set it to 0 to disable backtrace debugging.
+ */
+#define DEBUG_BACKTRACE_SIZE 0
+
+#if DEBUG_BACKTRACE_SIZE == 0
+/* Use the standard debug output */
+#define _DBG(...) DBG(__VA_ARGS__)
+#else
+/* Use backtracing debug output */
+#define _DBG(...) {debug_backtrace(); DBG(__VA_ARGS__);}
+
+/* Backtracing debug support */
+#include <execinfo.h>
+
+static void
+debug_backtrace(void)
+{
+   void *trace[DEBUG_BACKTRACE_SIZE];
+   char **strings = NULL;
+   int traceSize;
+   register int i;
+
+   traceSize = backtrace(trace, DEBUG_BACKTRACE_SIZE);
+   strings = backtrace_symbols(trace, traceSize);
+   if (strings == NULL) {
+      DBG("no backtrace:");
+      return;
+   }
+
+   /* Spit out all the strings with a colon separator.  Ignore
+    * the first, since we don't really care about the call
+    * to debug_backtrace() itself.  Skip until the final "/" in
+    * the trace to avoid really long lines.
+    */
+   for (i = 1; i < traceSize; i++) {
+      char *p = strings[i], *slash = strings[i];
+      while (*p) {
+         if (*p++ == '/') {
+            slash = p;
+         }
+      }
+
+      DBG("%s:", slash);
+   }
+
+   /* Free up the memory, and we're done */
+   free(strings);
+}
+
+#endif
+
+
+
 /* XXX: Thread safety?
  */
 GLubyte *
 intel_region_map(struct intel_context *intel, struct intel_region *region)
 {
-   DBG("%s\n", __FUNCTION__);
+   _DBG("%s %p\n", __FUNCTION__, region);
    if (!region->map_refcount++) {
       if (region->pbo)
          intel_region_cow(intel, region);
@@ -72,7 +126,7 @@ intel_region_map(struct intel_context *intel, struct intel_region *region)
 void
 intel_region_unmap(struct intel_context *intel, struct intel_region *region)
 {
-   DBG("%s\n", __FUNCTION__);
+   _DBG("%s %p\n", __FUNCTION__, region);
    if (!--region->map_refcount) {
       dri_bo_unmap(region->buffer);
       region->map = NULL;
@@ -87,10 +141,10 @@ intel_region_alloc_internal(struct intel_context *intel,
 {
    struct intel_region *region;
 
-   DBG("%s\n", __FUNCTION__);
-
-   if (buffer == NULL)
+   if (buffer == NULL) {
+      _DBG("%s <-- NULL\n", __FUNCTION__);
       return NULL;
+   }
 
    region = calloc(sizeof(*region), 1);
    region->cpp = cpp;
@@ -104,6 +158,7 @@ intel_region_alloc_internal(struct intel_context *intel,
    region->tiling = I915_TILING_NONE;
    region->bit_6_swizzle = I915_BIT_6_SWIZZLE_NONE;
 
+   _DBG("%s <-- %p\n", __FUNCTION__, region);
    return region;
 }
 
@@ -158,7 +213,7 @@ void
 intel_region_reference(struct intel_region **dst, struct intel_region *src)
 {
    if (src)
-      DBG("%s %p %d\n", __FUNCTION__, src, src->refcount);
+      _DBG("%s %p %d\n", __FUNCTION__, src, src->refcount);
 
    assert(*dst == NULL);
    if (src) {
@@ -172,10 +227,12 @@ intel_region_release(struct intel_region **region_handle)
 {
    struct intel_region *region = *region_handle;
 
-   if (region == NULL)
+   if (region == NULL) {
+      _DBG("%s NULL\n", __FUNCTION__);
       return;
+   }
 
-   DBG("%s %p %d\n", __FUNCTION__, region, region->refcount - 1);
+   _DBG("%s %p %d\n", __FUNCTION__, region, region->refcount - 1);
 
    ASSERT(region->refcount > 0);
    region->refcount--;
@@ -251,7 +308,7 @@ intel_region_data(struct intel_context *intel,
 {
    GLboolean locked = GL_FALSE;
 
-   DBG("%s\n", __FUNCTION__);
+   _DBG("%s\n", __FUNCTION__);
 
    if (intel == NULL)
       return;
@@ -293,7 +350,7 @@ intel_region_copy(struct intel_context *intel,
                   GLuint src_offset,
                   GLuint srcx, GLuint srcy, GLuint width, GLuint height)
 {
-   DBG("%s\n", __FUNCTION__);
+   _DBG("%s\n", __FUNCTION__);
 
    if (intel == NULL)
       return;
@@ -326,7 +383,7 @@ intel_region_fill(struct intel_context *intel,
                   GLuint dstx, GLuint dsty,
                   GLuint width, GLuint height, GLuint color)
 {
-   DBG("%s\n", __FUNCTION__);
+   _DBG("%s\n", __FUNCTION__);
 
    if (intel == NULL)
       return;   
@@ -355,6 +412,8 @@ intel_region_attach_pbo(struct intel_context *intel,
 {
    if (region->pbo == pbo)
       return;
+
+   _DBG("%s %p %p\n", __FUNCTION__, region, pbo);
 
    /* If there is already a pbo attached, break the cow tie now.
     * Don't call intel_region_release_pbo() as that would
@@ -385,6 +444,7 @@ void
 intel_region_release_pbo(struct intel_context *intel,
                          struct intel_region *region)
 {
+   _DBG("%s %p\n", __FUNCTION__, region);
    assert(region->buffer == region->pbo->buffer);
    region->pbo->region = NULL;
    region->pbo = NULL;
@@ -412,7 +472,7 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
 
    assert(region->cpp * region->pitch * region->height == pbo->Base.Size);
 
-   DBG("%s (%d bytes)\n", __FUNCTION__, pbo->Base.Size);
+   _DBG("%s %p (%d bytes)\n", __FUNCTION__, region, pbo->Base.Size);
 
    /* Now blit from the texture buffer to the new buffer: 
     */
@@ -459,6 +519,10 @@ intel_recreate_static(struct intel_context *intel,
    if (region == NULL) {
       region = calloc(sizeof(*region), 1);
       region->refcount = 1;
+      _DBG("%s creating new region %p\n", __FUNCTION__, region);
+   }
+   else {
+      _DBG("%s %p\n", __FUNCTION__, region);
    }
 
    if (intel->ctx.Visual.rgbBits == 24)

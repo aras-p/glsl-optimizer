@@ -39,6 +39,16 @@
 #include "xf86drm.h"
 #include "dri2.h"
 
+/* Allow the build to work with an older versions of dri2proto.h and
+ * dri2tokens.h.
+ */
+#if DRI2_MINOR < 1
+#undef DRI2_MINOR
+#define DRI2_MINOR 1
+#define X_DRI2GetBuffersWithFormat 7
+#endif
+
+
 static char dri2ExtensionName[] = DRI2_NAME;
 static XExtensionInfo *dri2Info;
 static XEXT_GENERATE_CLOSE_DISPLAY (DRI2CloseDisplay, dri2Info)
@@ -275,6 +285,66 @@ DRI2Buffer *DRI2GetBuffers(Display *dpy, XID drawable,
 
     return buffers;
 }
+
+
+DRI2Buffer *DRI2GetBuffersWithFormat(Display *dpy, XID drawable,
+				     int *width, int *height,
+				     unsigned int *attachments, int count,
+				     int *outCount)
+{
+    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
+    xDRI2GetBuffersReply rep;
+    xDRI2GetBuffersReq *req;
+    DRI2Buffer *buffers;
+    xDRI2Buffer repBuffer;
+    CARD32 *p;
+    int i;
+
+    XextCheckExtension (dpy, info, dri2ExtensionName, False);
+
+    LockDisplay(dpy);
+    GetReqExtra(DRI2GetBuffers, count * (4 * 2), req);
+    req->reqType = info->codes->major_opcode;
+    req->dri2ReqType = X_DRI2GetBuffersWithFormat;
+    req->drawable = drawable;
+    req->count = count;
+    p = (CARD32 *) &req[1];
+    for (i = 0; i < (count * 2); i++)
+	p[i] = attachments[i];
+
+    if (!_XReply(dpy, (xReply *)&rep, 0, xFalse)) {
+	UnlockDisplay(dpy);
+	SyncHandle();
+	return NULL;
+    }
+
+    *width = rep.width;
+    *height = rep.height;
+    *outCount = rep.count;
+
+    buffers = Xmalloc(rep.count * sizeof buffers[0]);
+    if (buffers == NULL) {
+	_XEatData(dpy, rep.count * sizeof repBuffer);
+	UnlockDisplay(dpy);
+	SyncHandle();
+	return NULL;
+    }
+
+    for (i = 0; i < rep.count; i++) {
+	_XReadPad(dpy, (char *) &repBuffer, sizeof repBuffer);
+	buffers[i].attachment = repBuffer.attachment;
+	buffers[i].name = repBuffer.name;
+	buffers[i].pitch = repBuffer.pitch;
+	buffers[i].cpp = repBuffer.cpp;
+	buffers[i].flags = repBuffer.flags;
+    }
+
+    UnlockDisplay(dpy);
+    SyncHandle();
+
+    return buffers;
+}
+
 
 void DRI2CopyRegion(Display *dpy, XID drawable, XserverRegion region,
 		    CARD32 dest, CARD32 src)

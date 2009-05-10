@@ -262,7 +262,15 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
 
    
    draw->pipeline.first = next;
-   return next;
+
+   if (0) {
+      debug_printf("draw pipeline:\n");
+      for (next = draw->pipeline.first; next ; next = next->next ) 
+         debug_printf("   %s\n", next->name);
+      debug_printf("\n");
+   }
+   
+   return draw->pipeline.first;
 }
 
 static void validate_tri( struct draw_stage *stage, 
@@ -318,6 +326,7 @@ struct draw_stage *draw_validate_stage( struct draw_context *draw )
       return NULL;
 
    stage->draw = draw;
+   stage->name = "validate";
    stage->next = NULL;
    stage->point = validate_point;
    stage->line = validate_line;

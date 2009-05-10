@@ -53,6 +53,9 @@ static const struct stw_extension_entry stw_extension_entries[] = {
    STW_EXTENSION_ENTRY( wglGetPixelFormatAttribfvARB ),
    STW_EXTENSION_ENTRY( wglGetPixelFormatAttribivARB ),
 
+   /* WGL_EXT_extensions_string */
+   STW_EXTENSION_ENTRY( wglGetExtensionsStringEXT ),
+
    { NULL, NULL }
 };
 

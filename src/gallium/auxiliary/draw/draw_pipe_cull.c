@@ -129,6 +129,7 @@ struct draw_stage *draw_cull_stage( struct draw_context *draw )
       goto fail;
 
    cull->stage.draw = draw;
+   cull->stage.name = "cull";
    cull->stage.next = NULL;
    cull->stage.point = draw_pipe_passthrough_point;
    cull->stage.line = draw_pipe_passthrough_line;

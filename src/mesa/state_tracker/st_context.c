@@ -177,6 +177,12 @@ struct st_context *st_create_context(struct pipe_context *pipe,
 
    ctx = _mesa_create_context(visual, shareCtx, &funcs, NULL);
 
+   /* XXX: need a capability bit in gallium to query if the pipe
+    * driver prefers DP4 or MUL/MAD for vertex transformation.
+    */
+   if (debug_get_bool_option("MESA_MVP_DP4", FALSE))
+      _mesa_set_mvp_with_dp4( ctx, GL_TRUE );
+
    return st_create_context_priv(ctx, pipe);
 }
 
@@ -279,6 +285,12 @@ void st_make_current(struct st_context *st,
    }
 }
 
+struct st_context *st_get_current(void)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   return (ctx == NULL) ? NULL : ctx->st;
+}
 
 void st_copy_context_state(struct st_context *dst,
                            struct st_context *src,

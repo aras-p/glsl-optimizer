@@ -238,6 +238,7 @@ struct draw_stage *draw_stipple_stage( struct draw_context *draw )
    draw_alloc_temp_verts( &stipple->stage, 2 );
 
    stipple->stage.draw = draw;
+   stipple->stage.name = "stipple";
    stipple->stage.next = NULL;
    stipple->stage.point = stipple_reset_point;
    stipple->stage.line = stipple_first_line;

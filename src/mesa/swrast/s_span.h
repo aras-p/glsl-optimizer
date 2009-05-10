@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  7.5
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -106,6 +107,9 @@ typedef struct sw_span
    /** Number of fragments in the span */
    GLuint end;
 
+   /** for clipping left edge of spans */
+   GLuint leftClip;
+
    /** This flag indicates that mask[] array is effectively filled with ones */
    GLboolean writeAll;
 
@@ -165,6 +169,7 @@ do {						\
    (S).arrayMask = 0x0;				\
    (S).arrayAttribs = 0x0;			\
    (S).end = 0;					\
+   (S).leftClip = 0;				\
    (S).facing = 0;				\
    (S).array = SWRAST_CONTEXT(ctx)->SpanArrays;	\
 } while (0)

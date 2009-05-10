@@ -217,4 +217,9 @@ void util_time_sleep(unsigned usecs)
    } while(start <= curr && curr < end || 
 	   end < start && (curr < end || start <= curr));
 }
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
+void util_time_sleep(unsigned usecs)
+{
+   Sleep((usecs + 999)/ 1000);
+}
 #endif

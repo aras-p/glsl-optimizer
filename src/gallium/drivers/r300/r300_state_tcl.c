@@ -34,14 +34,20 @@ static void r300_vs_declare(struct r300_vs_asm* assembler,
                     assembler->tab[decl->DeclarationRange.First] = 0;
                     break;
                 case TGSI_SEMANTIC_COLOR:
-                    assembler->tab[decl->DeclarationRange.First] = 2;
+                    assembler->tab[decl->DeclarationRange.First] =
+                        (assembler->point_size ? 1 : 0) +
+                        assembler->out_colors;
                     break;
+                case TGSI_SEMANTIC_FOG:
                 case TGSI_SEMANTIC_GENERIC:
                     /* XXX multiple? */
-                    assembler->tab[decl->DeclarationRange.First] = 6;
+                    assembler->tab[decl->DeclarationRange.First] =
+                        (assembler->point_size ? 1 : 0) +
+                        assembler->out_colors +
+                        assembler->out_texcoords;
                     break;
                 case TGSI_SEMANTIC_PSIZE:
-                    assembler->tab[decl->DeclarationRange.First] = 15;
+                    assembler->tab[decl->DeclarationRange.First] = 1;
                     break;
                 default:
                     debug_printf("r300: vs: Bad semantic declaration %d\n",
@@ -65,17 +71,32 @@ static INLINE unsigned r300_vs_src_type(struct r300_vs_asm* assembler,
 {
     switch (src->File) {
         case TGSI_FILE_NULL:
+        case TGSI_FILE_INPUT:
             /* Probably a zero or one swizzle */
             return R300_PVS_SRC_REG_INPUT;
-            break;
-        case TGSI_FILE_INPUT:
-            return R300_PVS_SRC_REG_INPUT;
-            break;
         case TGSI_FILE_TEMPORARY:
             return R300_PVS_SRC_REG_TEMPORARY;
-            break;
         case TGSI_FILE_CONSTANT:
+        case TGSI_FILE_IMMEDIATE:
             return R300_PVS_SRC_REG_CONSTANT;
+        default:
+            debug_printf("r300: vs: Unimplemented src type %d\n", src->File);
+            break;
+    }
+    return 0;
+}
+
+static INLINE unsigned r300_vs_src(struct r300_vs_asm* assembler,
+                                   struct tgsi_src_register* src)
+{
+    switch (src->File) {
+        case TGSI_FILE_NULL:
+        case TGSI_FILE_INPUT:
+        case TGSI_FILE_TEMPORARY:
+        case TGSI_FILE_CONSTANT:
+            return src->Index;
+        case TGSI_FILE_IMMEDIATE:
+            return src->Index + assembler->imm_offset;
         default:
             debug_printf("r300: vs: Unimplemented src type %d\n", src->File);
             break;
@@ -89,10 +110,8 @@ static INLINE unsigned r300_vs_dst_type(struct r300_vs_asm* assembler,
     switch (dst->File) {
         case TGSI_FILE_TEMPORARY:
             return R300_PVS_DST_REG_TEMPORARY;
-            break;
         case TGSI_FILE_OUTPUT:
             return R300_PVS_DST_REG_OUT;
-            break;
         default:
             debug_printf("r300: vs: Unimplemented dst type %d\n", dst->File);
             break;
@@ -106,10 +125,8 @@ static INLINE unsigned r300_vs_dst(struct r300_vs_asm* assembler,
     switch (dst->File) {
         case TGSI_FILE_TEMPORARY:
             return dst->Index;
-            break;
         case TGSI_FILE_OUTPUT:
             return assembler->tab[dst->Index];
-            break;
         default:
             debug_printf("r300: vs: Unimplemented dst %d\n", dst->File);
             break;
@@ -129,6 +146,12 @@ static uint32_t r300_vs_op(unsigned op)
         case TGSI_OPCODE_MOV:
         case TGSI_OPCODE_SWZ:
             return R300_VE_ADD;
+        case TGSI_OPCODE_MAX:
+            return R300_VE_MAXIMUM;
+        case TGSI_OPCODE_SLT:
+            return R300_VE_SET_LESS_THAN;
+        case TGSI_OPCODE_RSQ:
+            return R300_PVS_DST_MATH_INST | R300_ME_RECIP_DX;
         case TGSI_OPCODE_MAD:
             return R300_PVS_DST_MACRO_INST | R300_PVS_MACRO_OP_2CLK_MADD;
         default:
@@ -152,39 +175,62 @@ static uint32_t r300_vs_swiz(struct tgsi_full_src_register* reg)
     }
 }
 
+/* XXX icky icky icky icky */
+static uint32_t r300_vs_scalar_swiz(struct tgsi_full_src_register* reg)
+{
+    if (reg->SrcRegister.Extended) {
+        return reg->SrcRegisterExtSwz.ExtSwizzleX |
+            (reg->SrcRegisterExtSwz.ExtSwizzleX << 3) |
+            (reg->SrcRegisterExtSwz.ExtSwizzleX << 6) |
+            (reg->SrcRegisterExtSwz.ExtSwizzleX << 9);
+    } else {
+        return reg->SrcRegister.SwizzleX |
+            (reg->SrcRegister.SwizzleX << 3) |
+            (reg->SrcRegister.SwizzleX << 6) |
+            (reg->SrcRegister.SwizzleX << 9);
+    }
+}
+
+/* XXX scalar stupidity */
 static void r300_vs_emit_inst(struct r300_vertex_shader* vs,
                               struct r300_vs_asm* assembler,
                               struct tgsi_full_src_register* src,
                               struct tgsi_full_dst_register* dst,
                               unsigned op,
-                              unsigned count)
+                              unsigned count,
+                              boolean is_scalar)
 {
     int i = vs->instruction_count;
     vs->instructions[i].inst0 = R300_PVS_DST_OPCODE(r300_vs_op(op)) |
         R300_PVS_DST_REG_TYPE(r300_vs_dst_type(assembler, &dst->DstRegister)) |
         R300_PVS_DST_OFFSET(r300_vs_dst(assembler, &dst->DstRegister)) |
-        R300_PVS_DST_WE_XYZW;
+        R300_PVS_DST_WE(dst->DstRegister.WriteMask);
     switch (count) {
         case 3:
             vs->instructions[i].inst3 =
                 R300_PVS_SRC_REG_TYPE(r300_vs_src_type(assembler,
                             &src[2].SrcRegister)) |
-                R300_PVS_SRC_OFFSET(src[2].SrcRegister.Index) |
+                R300_PVS_SRC_OFFSET(r300_vs_src(assembler,
+                            &src[2].SrcRegister)) |
                 R300_PVS_SRC_SWIZZLE(r300_vs_swiz(&src[2]));
             /* Fall through */
         case 2:
             vs->instructions[i].inst2 =
                 R300_PVS_SRC_REG_TYPE(r300_vs_src_type(assembler,
                             &src[1].SrcRegister)) |
-                R300_PVS_SRC_OFFSET(src[1].SrcRegister.Index) |
+                R300_PVS_SRC_OFFSET(r300_vs_src(assembler,
+                            &src[1].SrcRegister)) |
                 R300_PVS_SRC_SWIZZLE(r300_vs_swiz(&src[1]));
             /* Fall through */
         case 1:
             vs->instructions[i].inst1 =
                 R300_PVS_SRC_REG_TYPE(r300_vs_src_type(assembler,
                             &src[0].SrcRegister)) |
-                R300_PVS_SRC_OFFSET(src[0].SrcRegister.Index) |
-                R300_PVS_SRC_SWIZZLE(r300_vs_swiz(&src[0]));
+                R300_PVS_SRC_OFFSET(r300_vs_src(assembler,
+                            &src[0].SrcRegister)) |
+                /* XXX the icky, it burns */
+                R300_PVS_SRC_SWIZZLE(is_scalar ? r300_vs_scalar_swiz(&src[0])
+                        : r300_vs_swiz(&src[0]));
             break;
     }
     vs->instruction_count++;
@@ -195,11 +241,18 @@ static void r300_vs_instruction(struct r300_vertex_shader* vs,
                                 struct tgsi_full_instruction* inst)
 {
     switch (inst->Instruction.Opcode) {
-        case TGSI_OPCODE_ADD:
-        case TGSI_OPCODE_MUL:
+        case TGSI_OPCODE_RSQ:
             r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode,
-                    2);
+                    1, TRUE);
+            break;
+        case TGSI_OPCODE_ADD:
+        case TGSI_OPCODE_MUL:
+        case TGSI_OPCODE_MAX:
+        case TGSI_OPCODE_SLT:
+            r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], inst->Instruction.Opcode,
+                    2, FALSE);
             break;
         case TGSI_OPCODE_DP3:
             /* Set alpha swizzle to zero for src0 and src1 */
@@ -229,19 +282,19 @@ static void r300_vs_instruction(struct r300_vertex_shader* vs,
         case TGSI_OPCODE_DP4:
             r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode,
-                    2);
+                    2, FALSE);
             break;
         case TGSI_OPCODE_MOV:
         case TGSI_OPCODE_SWZ:
             inst->FullSrcRegisters[1] = r300_constant_zero;
             r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode,
-                    2);
+                    2, FALSE);
             break;
         case TGSI_OPCODE_MAD:
             r300_vs_emit_inst(vs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode,
-                    3);
+                    3, FALSE);
             break;
         case TGSI_OPCODE_END:
             break;
@@ -249,6 +302,28 @@ static void r300_vs_instruction(struct r300_vertex_shader* vs,
             debug_printf("r300: vs: Bad opcode %d\n",
                     inst->Instruction.Opcode);
             break;
+    }
+}
+
+static void r300_vs_init(struct r300_vertex_shader* vs,
+                         struct r300_vs_asm* assembler)
+{
+    struct tgsi_shader_info* info = &vs->info;
+    int i;
+
+    for (i = 0; i < info->num_outputs; i++) {
+        switch (info->output_semantic_name[i]) {
+            case TGSI_SEMANTIC_PSIZE:
+                assembler->point_size = TRUE;
+                break;
+            case TGSI_SEMANTIC_COLOR:
+                assembler->out_colors++;
+                break;
+            case TGSI_SEMANTIC_FOG:
+            case TGSI_SEMANTIC_GENERIC:
+                assembler->out_texcoords++;
+                break;
+        }
     }
 }
 
@@ -264,6 +339,10 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     if (assembler == NULL) {
         return;
     }
+
+    /* Init assembler. */
+    r300_vs_init(vs, assembler);
+
     /* Setup starting offset for immediates. */
     assembler->imm_offset = consts->user_count;
 

@@ -614,7 +614,7 @@ static __GLXDRIscreen *driCreateScreen(__GLXscreenConfigs *psc, int screen,
     char *driverName;
     int i;
 
-    psp = Xmalloc(sizeof *psp);
+    psp = Xcalloc(1, sizeof *psp);
     if (psp == NULL)
 	return NULL;
 

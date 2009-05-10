@@ -146,7 +146,7 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 	dev->drmFD = fd;
 	drm_get_device_id(dev);
 
-	dev->screen = drm_api_hooks.create_screen(dev->drmFD, dev->deviceID);
+	dev->screen = drm_api_hooks.create_screen(dev->drmFD, NULL);
 	if (!dev->screen)
 		goto err_screen;
 	dev->winsys = dev->screen->winsys;

@@ -24,65 +24,58 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+/*
+ * Author: Keith Whitwell <keithw@vmware.com>
+ * Author: Jakob Bornecrantz <wallbraker@gmail.com>
+ */
 
-#ifndef DRI_DRAWABLE_H
-#define DRI_DRAWABLE_H
+#ifndef DRI_SCREEN_H
+#define DRI_SCREEN_H
+
+#include "dri_util.h"
+#include "xmlconfig.h"
 
 #include "pipe/p_compiler.h"
 
-struct pipe_surface;
-struct pipe_fence;
-struct st_framebuffer;
+#include "state_tracker/dri1_api.h"
 
-
-struct dri_drawable
+struct dri_screen
 {
    /* dri */
-   __DRIdrawablePrivate *dPriv;
    __DRIscreenPrivate *sPriv;
 
-   unsigned attachments[8];
-   unsigned num_attachments;
+   /**
+    * Configuration cache with default values for all contexts
+    */
+   driOptionCache optionCache;
+
+   /**
+    * Temporary(?) context to use for SwapBuffers or other situations in
+    * which we need a rendering context, but none is currently bound.
+    */
+   struct dri_context *dummyContext;
+
+   /* drm */
+   int fd;
+   drmLock *drmLock;
 
    /* gallium */
-   struct st_framebuffer *stfb;
+   struct pipe_winsys *pipe_winsys;
+   struct pipe_screen *pipe_screen;
 };
 
-
-static INLINE struct dri_drawable *
-dri_drawable(__DRIdrawablePrivate * driDrawPriv)
+/** cast wrapper */
+static INLINE struct dri_screen *
+dri_screen(__DRIscreenPrivate * sPriv)
 {
-   return (struct dri_drawable *) driDrawPriv->driverPrivate;
+   return (struct dri_screen *)sPriv->private;
 }
 
-
 /***********************************************************************
- * dri_drawable.c
+ * dri_screen.c
  */
-boolean
-dri_create_buffer(__DRIscreenPrivate *sPriv,
-                  __DRIdrawablePrivate *dPriv,
-                  const __GLcontextModes *visual,
-                  boolean isPixmap);
 
-void
-dri_flush_frontbuffer(struct pipe_screen *screen,
-                      struct pipe_surface *surf,
-                      void *context_private);
-
-void
-dri_swap_buffers(__DRIdrawablePrivate * dPriv);
-
-void
-dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv,
-                    int x, int y,
-                    int w, int h);
-
-void
-dri_get_buffers(__DRIdrawablePrivate * dPriv);
-
-void
-dri_destroy_buffer(__DRIdrawablePrivate *dPriv);
+extern struct dri1_api *__dri1_api_hooks;
 
 #endif
 

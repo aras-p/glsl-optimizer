@@ -912,8 +912,9 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
    /*
     * GL_DITHER, GL_READ/DRAW_BUFFER, buffer binding state, etc. effect
     * renderbuffer span/clear funcs.
+    * Check _NEW_COLOR to detect dither enable/disable.
     */
-   if (new_state & (_NEW_COLOR | _NEW_PIXEL | _NEW_BUFFERS)) {
+   if (new_state & (_NEW_COLOR | _NEW_BUFFERS)) {
       XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
       struct xmesa_renderbuffer *front_xrb, *back_xrb;
 

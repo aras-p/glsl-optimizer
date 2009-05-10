@@ -5,12 +5,8 @@ AC_PREREQ([2.59])
 dnl Versioning - scrape the version from configs/default
 m4_define([mesa_version],
     [m4_esyscmd([${MAKE-make} -s -f bin/version.mk version | tr -d '\n'])])
-m4_ifval(mesa_version,[],[
-    m4_errprint([Error: Failed to get the Mesa version from the output of
-       running `make -f bin/version.mk version'
-])
-    m4_exit([1])
-])
+m4_ifval(mesa_version,,
+    [m4_fatal([Failed to get the Mesa version from `make -f bin/version.mk version`])])
 
 dnl Tell the user about autoconf.html in the --help output
 m4_divert_once([HELP_END], [
@@ -58,15 +54,11 @@ fi
 AC_SUBST([MKDEP_OPTIONS])
 
 dnl Make sure the pkg-config macros are defined
-m4_ifdef([PKG_PROG_PKG_CONFIG],[],[
-    m4_errprint([Error: Could not locate the pkg-config autoconf macros.
-       These are usually located in /usr/share/aclocal/pkg.m4. If your
-       macros are in a different location, try setting the environment
-       variable ACLOCAL="aclocal -I/other/macro/dir" before running
-       autoreconf.
-])
-    m4_exit([1])
-])
+m4_ifndef([PKG_PROG_PKG_CONFIG],
+    [m4_fatal([Could not locate the pkg-config autoconf macros.
+  These are usually located in /usr/share/aclocal/pkg.m4. If your macros
+  are in a different location, try setting the environment variable
+  ACLOCAL="aclocal -I/other/macro/dir" before running autoreconf.])])
 PKG_PROG_PKG_CONFIG()
 
 dnl LIB_DIR - library basename
@@ -87,7 +79,7 @@ dnl Compiler macros
 DEFINES=""
 AC_SUBST([DEFINES])
 case "$host_os" in
-linux*|*-gnu*)
+linux*|*-gnu*|gnu*)
     DEFINES="$DEFINES -D_GNU_SOURCE -DPTHREADS"
     ;;
 solaris*)
@@ -411,7 +403,7 @@ esac
 dnl
 dnl Driver specific build directories
 dnl
-SRC_DIRS="mesa egl glew"
+SRC_DIRS="mesa glew"
 GLU_DIRS="sgi"
 WINDOW_SYSTEM=""
 GALLIUM_DIRS="auxiliary drivers state_trackers"
@@ -751,6 +743,10 @@ if test "$mesa_driver" = dri; then
                 unichrome savage sis swrast"
         fi
         ;;
+    gnu*)
+        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
+        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING -DHAVE_ALIAS"
+	;;
     solaris*)
         DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
         DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
@@ -870,14 +866,23 @@ AC_SUBST([OSMESA_PC_LIB_PRIV])
 dnl
 dnl EGL configuration
 dnl
-if test "$x11_pkgconfig" = yes; then
-    PKG_CHECK_MODULES([EGL],[x11])
-    EGL_LIB_DEPS="$EGL_LIBS"
-else
-    # should check these...
-    EGL_LIB_DEPS="$X_LIBS -lX11"
+AC_ARG_ENABLE([egl],
+    [AS_HELP_STRING([--disable-egl],
+        [disable EGL library @<:@default=enabled@:>@])],
+    [enable_egl="$enableval"],
+    [enable_egl=yes])
+if test "x$enable_egl" = xyes; then
+    SRC_DIRS="$SRC_DIRS egl"
+
+    if test "$x11_pkgconfig" = yes; then
+        PKG_CHECK_MODULES([EGL], [x11])
+        EGL_LIB_DEPS="$EGL_LIBS"
+    else
+        # should check these...
+        EGL_LIB_DEPS="$X_LIBS -lX11"
+    fi
+    EGL_LIB_DEPS="$EGL_LIB_DEPS $DLOPEN_LIBS"
 fi
-EGL_LIB_DEPS="$EGL_LIB_DEPS $DLOPEN_LIBS"
 AC_SUBST([EGL_LIB_DEPS])
 
 dnl
@@ -1121,7 +1126,7 @@ yes)
         GALLIUM_STATE_TRACKERS_DIRS=glx
         ;;
     dri)
-        GALLIUM_STATE_TRACKERS_DIRS=egl
+        test "x$enable_egl" = xyes && GALLIUM_STATE_TRACKERS_DIRS=egl
         ;;
     esac
     ;;
@@ -1131,6 +1136,10 @@ yes)
     for tracker in $state_trackers; do
         test -d "$srcdir/src/gallium/state_trackers/$tracker" || \
             AC_MSG_ERROR([state tracker '$tracker' doesn't exist])
+
+        if test "$tracker" = egl && test "x$enable_egl" != xyes; then
+            AC_MSG_ERROR([cannot build egl state tracker without EGL library])
+        fi
     done
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
     ;;
@@ -1246,6 +1255,7 @@ dnl Libraries
 echo ""
 echo "        Shared libs:     $enable_shared"
 echo "        Static libs:     $enable_static"
+echo "        EGL:             $enable_egl"
 echo "        GLU:             $enable_glu"
 echo "        GLw:             $enable_glw (Motif: $enable_motif)"
 echo "        glut:            $enable_glut"

@@ -14,6 +14,7 @@ DRIVER_SOURCES = \
 	intel_decode.c \
 	intel_extensions.c \
 	intel_fbo.c \
+	intel_generatemipmap.c \
 	intel_mipmap_tree.c \
 	intel_regions.c \
 	intel_screen.c \
@@ -69,6 +70,7 @@ DRIVER_SOURCES = \
 	brw_vs_constval.c \
 	brw_vs_emit.c \
 	brw_vs_state.c \
+	brw_vs_surface_state.c \
 	brw_vtbl.c \
 	brw_wm.c \
 	brw_wm_debug.c \

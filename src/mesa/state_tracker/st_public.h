@@ -95,11 +95,17 @@ void st_make_current(struct st_context *st,
                      struct st_framebuffer *draw,
                      struct st_framebuffer *read);
 
+struct st_context *st_get_current(void);
+
 void st_flush( struct st_context *st, uint pipeFlushFlags,
                struct pipe_fence_handle **fence );
 void st_finish( struct st_context *st );
 
 void st_notify_swapbuffers(struct st_framebuffer *stfb);
+
+void st_swapbuffers(struct st_framebuffer *stfb,
+                    struct pipe_surface **front_left,
+                    struct pipe_surface **front_right);
 
 int st_set_teximage(struct pipe_texture *pt, int target);
 

@@ -38,9 +38,6 @@
 
 #define DBG 0
 
-static GLCLTPROCTABLE cpt;
-static boolean cpt_initialized = FALSE;
-
 
 BOOL APIENTRY
 DrvCopyContext(
@@ -165,351 +162,352 @@ DrvSetCallbackProcs(
 }
 
 
-static void init_proc_table( GLCLTPROCTABLE *cpt )
-{ 
-   GLDISPATCHTABLE *disp = &cpt->glDispatchTable;
+/**
+ * Although WGL allows different dispatch entrypoints per context 
+ */
+static const GLCLTPROCTABLE cpt =
+{
+   OPENGL_VERSION_110_ENTRIES,
+   {
+      &glNewList,
+      &glEndList,
+      &glCallList,
+      &glCallLists,
+      &glDeleteLists,
+      &glGenLists,
+      &glListBase,
+      &glBegin,
+      &glBitmap,
+      &glColor3b,
+      &glColor3bv,
+      &glColor3d,
+      &glColor3dv,
+      &glColor3f,
+      &glColor3fv,
+      &glColor3i,
+      &glColor3iv,
+      &glColor3s,
+      &glColor3sv,
+      &glColor3ub,
+      &glColor3ubv,
+      &glColor3ui,
+      &glColor3uiv,
+      &glColor3us,
+      &glColor3usv,
+      &glColor4b,
+      &glColor4bv,
+      &glColor4d,
+      &glColor4dv,
+      &glColor4f,
+      &glColor4fv,
+      &glColor4i,
+      &glColor4iv,
+      &glColor4s,
+      &glColor4sv,
+      &glColor4ub,
+      &glColor4ubv,
+      &glColor4ui,
+      &glColor4uiv,
+      &glColor4us,
+      &glColor4usv,
+      &glEdgeFlag,
+      &glEdgeFlagv,
+      &glEnd,
+      &glIndexd,
+      &glIndexdv,
+      &glIndexf,
+      &glIndexfv,
+      &glIndexi,
+      &glIndexiv,
+      &glIndexs,
+      &glIndexsv,
+      &glNormal3b,
+      &glNormal3bv,
+      &glNormal3d,
+      &glNormal3dv,
+      &glNormal3f,
+      &glNormal3fv,
+      &glNormal3i,
+      &glNormal3iv,
+      &glNormal3s,
+      &glNormal3sv,
+      &glRasterPos2d,
+      &glRasterPos2dv,
+      &glRasterPos2f,
+      &glRasterPos2fv,
+      &glRasterPos2i,
+      &glRasterPos2iv,
+      &glRasterPos2s,
+      &glRasterPos2sv,
+      &glRasterPos3d,
+      &glRasterPos3dv,
+      &glRasterPos3f,
+      &glRasterPos3fv,
+      &glRasterPos3i,
+      &glRasterPos3iv,
+      &glRasterPos3s,
+      &glRasterPos3sv,
+      &glRasterPos4d,
+      &glRasterPos4dv,
+      &glRasterPos4f,
+      &glRasterPos4fv,
+      &glRasterPos4i,
+      &glRasterPos4iv,
+      &glRasterPos4s,
+      &glRasterPos4sv,
+      &glRectd,
+      &glRectdv,
+      &glRectf,
+      &glRectfv,
+      &glRecti,
+      &glRectiv,
+      &glRects,
+      &glRectsv,
+      &glTexCoord1d,
+      &glTexCoord1dv,
+      &glTexCoord1f,
+      &glTexCoord1fv,
+      &glTexCoord1i,
+      &glTexCoord1iv,
+      &glTexCoord1s,
+      &glTexCoord1sv,
+      &glTexCoord2d,
+      &glTexCoord2dv,
+      &glTexCoord2f,
+      &glTexCoord2fv,
+      &glTexCoord2i,
+      &glTexCoord2iv,
+      &glTexCoord2s,
+      &glTexCoord2sv,
+      &glTexCoord3d,
+      &glTexCoord3dv,
+      &glTexCoord3f,
+      &glTexCoord3fv,
+      &glTexCoord3i,
+      &glTexCoord3iv,
+      &glTexCoord3s,
+      &glTexCoord3sv,
+      &glTexCoord4d,
+      &glTexCoord4dv,
+      &glTexCoord4f,
+      &glTexCoord4fv,
+      &glTexCoord4i,
+      &glTexCoord4iv,
+      &glTexCoord4s,
+      &glTexCoord4sv,
+      &glVertex2d,
+      &glVertex2dv,
+      &glVertex2f,
+      &glVertex2fv,
+      &glVertex2i,
+      &glVertex2iv,
+      &glVertex2s,
+      &glVertex2sv,
+      &glVertex3d,
+      &glVertex3dv,
+      &glVertex3f,
+      &glVertex3fv,
+      &glVertex3i,
+      &glVertex3iv,
+      &glVertex3s,
+      &glVertex3sv,
+      &glVertex4d,
+      &glVertex4dv,
+      &glVertex4f,
+      &glVertex4fv,
+      &glVertex4i,
+      &glVertex4iv,
+      &glVertex4s,
+      &glVertex4sv,
+      &glClipPlane,
+      &glColorMaterial,
+      &glCullFace,
+      &glFogf,
+      &glFogfv,
+      &glFogi,
+      &glFogiv,
+      &glFrontFace,
+      &glHint,
+      &glLightf,
+      &glLightfv,
+      &glLighti,
+      &glLightiv,
+      &glLightModelf,
+      &glLightModelfv,
+      &glLightModeli,
+      &glLightModeliv,
+      &glLineStipple,
+      &glLineWidth,
+      &glMaterialf,
+      &glMaterialfv,
+      &glMateriali,
+      &glMaterialiv,
+      &glPointSize,
+      &glPolygonMode,
+      &glPolygonStipple,
+      &glScissor,
+      &glShadeModel,
+      &glTexParameterf,
+      &glTexParameterfv,
+      &glTexParameteri,
+      &glTexParameteriv,
+      &glTexImage1D,
+      &glTexImage2D,
+      &glTexEnvf,
+      &glTexEnvfv,
+      &glTexEnvi,
+      &glTexEnviv,
+      &glTexGend,
+      &glTexGendv,
+      &glTexGenf,
+      &glTexGenfv,
+      &glTexGeni,
+      &glTexGeniv,
+      &glFeedbackBuffer,
+      &glSelectBuffer,
+      &glRenderMode,
+      &glInitNames,
+      &glLoadName,
+      &glPassThrough,
+      &glPopName,
+      &glPushName,
+      &glDrawBuffer,
+      &glClear,
+      &glClearAccum,
+      &glClearIndex,
+      &glClearColor,
+      &glClearStencil,
+      &glClearDepth,
+      &glStencilMask,
+      &glColorMask,
+      &glDepthMask,
+      &glIndexMask,
+      &glAccum,
+      &glDisable,
+      &glEnable,
+      &glFinish,
+      &glFlush,
+      &glPopAttrib,
+      &glPushAttrib,
+      &glMap1d,
+      &glMap1f,
+      &glMap2d,
+      &glMap2f,
+      &glMapGrid1d,
+      &glMapGrid1f,
+      &glMapGrid2d,
+      &glMapGrid2f,
+      &glEvalCoord1d,
+      &glEvalCoord1dv,
+      &glEvalCoord1f,
+      &glEvalCoord1fv,
+      &glEvalCoord2d,
+      &glEvalCoord2dv,
+      &glEvalCoord2f,
+      &glEvalCoord2fv,
+      &glEvalMesh1,
+      &glEvalPoint1,
+      &glEvalMesh2,
+      &glEvalPoint2,
+      &glAlphaFunc,
+      &glBlendFunc,
+      &glLogicOp,
+      &glStencilFunc,
+      &glStencilOp,
+      &glDepthFunc,
+      &glPixelZoom,
+      &glPixelTransferf,
+      &glPixelTransferi,
+      &glPixelStoref,
+      &glPixelStorei,
+      &glPixelMapfv,
+      &glPixelMapuiv,
+      &glPixelMapusv,
+      &glReadBuffer,
+      &glCopyPixels,
+      &glReadPixels,
+      &glDrawPixels,
+      &glGetBooleanv,
+      &glGetClipPlane,
+      &glGetDoublev,
+      &glGetError,
+      &glGetFloatv,
+      &glGetIntegerv,
+      &glGetLightfv,
+      &glGetLightiv,
+      &glGetMapdv,
+      &glGetMapfv,
+      &glGetMapiv,
+      &glGetMaterialfv,
+      &glGetMaterialiv,
+      &glGetPixelMapfv,
+      &glGetPixelMapuiv,
+      &glGetPixelMapusv,
+      &glGetPolygonStipple,
+      &glGetString,
+      &glGetTexEnvfv,
+      &glGetTexEnviv,
+      &glGetTexGendv,
+      &glGetTexGenfv,
+      &glGetTexGeniv,
+      &glGetTexImage,
+      &glGetTexParameterfv,
+      &glGetTexParameteriv,
+      &glGetTexLevelParameterfv,
+      &glGetTexLevelParameteriv,
+      &glIsEnabled,
+      &glIsList,
+      &glDepthRange,
+      &glFrustum,
+      &glLoadIdentity,
+      &glLoadMatrixf,
+      &glLoadMatrixd,
+      &glMatrixMode,
+      &glMultMatrixf,
+      &glMultMatrixd,
+      &glOrtho,
+      &glPopMatrix,
+      &glPushMatrix,
+      &glRotated,
+      &glRotatef,
+      &glScaled,
+      &glScalef,
+      &glTranslated,
+      &glTranslatef,
+      &glViewport,
+      &glArrayElement,
+      &glBindTexture,
+      &glColorPointer,
+      &glDisableClientState,
+      &glDrawArrays,
+      &glDrawElements,
+      &glEdgeFlagPointer,
+      &glEnableClientState,
+      &glIndexPointer,
+      &glIndexub,
+      &glIndexubv,
+      &glInterleavedArrays,
+      &glNormalPointer,
+      &glPolygonOffset,
+      &glTexCoordPointer,
+      &glVertexPointer,
+      &glAreTexturesResident,
+      &glCopyTexImage1D,
+      &glCopyTexImage2D,
+      &glCopyTexSubImage1D,
+      &glCopyTexSubImage2D,
+      &glDeleteTextures,
+      &glGenTextures,
+      &glGetPointerv,
+      &glIsTexture,
+      &glPrioritizeTextures,
+      &glTexSubImage1D,
+      &glTexSubImage2D,
+      &glPopClientAttrib,
+      &glPushClientAttrib
+   }
+};
 
-   memset( cpt, 0, sizeof *cpt );
-   cpt->cEntries = OPENGL_VERSION_110_ENTRIES;
-
-#define GPA_GL( NAME ) disp->NAME = gl##NAME
-   GPA_GL( NewList );
-   GPA_GL( EndList );
-   GPA_GL( CallList );
-   GPA_GL( CallLists );
-   GPA_GL( DeleteLists );
-   GPA_GL( GenLists );
-   GPA_GL( ListBase );
-   GPA_GL( Begin );
-   GPA_GL( Bitmap );
-   GPA_GL( Color3b );
-   GPA_GL( Color3bv );
-   GPA_GL( Color3d );
-   GPA_GL( Color3dv );
-   GPA_GL( Color3f );
-   GPA_GL( Color3fv );
-   GPA_GL( Color3i );
-   GPA_GL( Color3iv );
-   GPA_GL( Color3s );
-   GPA_GL( Color3sv );
-   GPA_GL( Color3ub );
-   GPA_GL( Color3ubv );
-   GPA_GL( Color3ui );
-   GPA_GL( Color3uiv );
-   GPA_GL( Color3us );
-   GPA_GL( Color3usv );
-   GPA_GL( Color4b );
-   GPA_GL( Color4bv );
-   GPA_GL( Color4d );
-   GPA_GL( Color4dv );
-   GPA_GL( Color4f );
-   GPA_GL( Color4fv );
-   GPA_GL( Color4i );
-   GPA_GL( Color4iv );
-   GPA_GL( Color4s );
-   GPA_GL( Color4sv );
-   GPA_GL( Color4ub );
-   GPA_GL( Color4ubv );
-   GPA_GL( Color4ui );
-   GPA_GL( Color4uiv );
-   GPA_GL( Color4us );
-   GPA_GL( Color4usv );
-   GPA_GL( EdgeFlag );
-   GPA_GL( EdgeFlagv );
-   GPA_GL( End );
-   GPA_GL( Indexd );
-   GPA_GL( Indexdv );
-   GPA_GL( Indexf );
-   GPA_GL( Indexfv );
-   GPA_GL( Indexi );
-   GPA_GL( Indexiv );
-   GPA_GL( Indexs );
-   GPA_GL( Indexsv );
-   GPA_GL( Normal3b );
-   GPA_GL( Normal3bv );
-   GPA_GL( Normal3d );
-   GPA_GL( Normal3dv );
-   GPA_GL( Normal3f );
-   GPA_GL( Normal3fv );
-   GPA_GL( Normal3i );
-   GPA_GL( Normal3iv );
-   GPA_GL( Normal3s );
-   GPA_GL( Normal3sv );
-   GPA_GL( RasterPos2d );
-   GPA_GL( RasterPos2dv );
-   GPA_GL( RasterPos2f );
-   GPA_GL( RasterPos2fv );
-   GPA_GL( RasterPos2i );
-   GPA_GL( RasterPos2iv );
-   GPA_GL( RasterPos2s );
-   GPA_GL( RasterPos2sv );
-   GPA_GL( RasterPos3d );
-   GPA_GL( RasterPos3dv );
-   GPA_GL( RasterPos3f );
-   GPA_GL( RasterPos3fv );
-   GPA_GL( RasterPos3i );
-   GPA_GL( RasterPos3iv );
-   GPA_GL( RasterPos3s );
-   GPA_GL( RasterPos3sv );
-   GPA_GL( RasterPos4d );
-   GPA_GL( RasterPos4dv );
-   GPA_GL( RasterPos4f );
-   GPA_GL( RasterPos4fv );
-   GPA_GL( RasterPos4i );
-   GPA_GL( RasterPos4iv );
-   GPA_GL( RasterPos4s );
-   GPA_GL( RasterPos4sv );
-   GPA_GL( Rectd );
-   GPA_GL( Rectdv );
-   GPA_GL( Rectf );
-   GPA_GL( Rectfv );
-   GPA_GL( Recti );
-   GPA_GL( Rectiv );
-   GPA_GL( Rects );
-   GPA_GL( Rectsv );
-   GPA_GL( TexCoord1d );
-   GPA_GL( TexCoord1dv );
-   GPA_GL( TexCoord1f );
-   GPA_GL( TexCoord1fv );
-   GPA_GL( TexCoord1i );
-   GPA_GL( TexCoord1iv );
-   GPA_GL( TexCoord1s );
-   GPA_GL( TexCoord1sv );
-   GPA_GL( TexCoord2d );
-   GPA_GL( TexCoord2dv );
-   GPA_GL( TexCoord2f );
-   GPA_GL( TexCoord2fv );
-   GPA_GL( TexCoord2i );
-   GPA_GL( TexCoord2iv );
-   GPA_GL( TexCoord2s );
-   GPA_GL( TexCoord2sv );
-   GPA_GL( TexCoord3d );
-   GPA_GL( TexCoord3dv );
-   GPA_GL( TexCoord3f );
-   GPA_GL( TexCoord3fv );
-   GPA_GL( TexCoord3i );
-   GPA_GL( TexCoord3iv );
-   GPA_GL( TexCoord3s );
-   GPA_GL( TexCoord3sv );
-   GPA_GL( TexCoord4d );
-   GPA_GL( TexCoord4dv );
-   GPA_GL( TexCoord4f );
-   GPA_GL( TexCoord4fv );
-   GPA_GL( TexCoord4i );
-   GPA_GL( TexCoord4iv );
-   GPA_GL( TexCoord4s );
-   GPA_GL( TexCoord4sv );
-   GPA_GL( Vertex2d );
-   GPA_GL( Vertex2dv );
-   GPA_GL( Vertex2f );
-   GPA_GL( Vertex2fv );
-   GPA_GL( Vertex2i );
-   GPA_GL( Vertex2iv );
-   GPA_GL( Vertex2s );
-   GPA_GL( Vertex2sv );
-   GPA_GL( Vertex3d );
-   GPA_GL( Vertex3dv );
-   GPA_GL( Vertex3f );
-   GPA_GL( Vertex3fv );
-   GPA_GL( Vertex3i );
-   GPA_GL( Vertex3iv );
-   GPA_GL( Vertex3s );
-   GPA_GL( Vertex3sv );
-   GPA_GL( Vertex4d );
-   GPA_GL( Vertex4dv );
-   GPA_GL( Vertex4f );
-   GPA_GL( Vertex4fv );
-   GPA_GL( Vertex4i );
-   GPA_GL( Vertex4iv );
-   GPA_GL( Vertex4s );
-   GPA_GL( Vertex4sv );
-   GPA_GL( ClipPlane );
-   GPA_GL( ColorMaterial );
-   GPA_GL( CullFace );
-   GPA_GL( Fogf );
-   GPA_GL( Fogfv );
-   GPA_GL( Fogi );
-   GPA_GL( Fogiv );
-   GPA_GL( FrontFace );
-   GPA_GL( Hint );
-   GPA_GL( Lightf );
-   GPA_GL( Lightfv );
-   GPA_GL( Lighti );
-   GPA_GL( Lightiv );
-   GPA_GL( LightModelf );
-   GPA_GL( LightModelfv );
-   GPA_GL( LightModeli );
-   GPA_GL( LightModeliv );
-   GPA_GL( LineStipple );
-   GPA_GL( LineWidth );
-   GPA_GL( Materialf );
-   GPA_GL( Materialfv );
-   GPA_GL( Materiali );
-   GPA_GL( Materialiv );
-   GPA_GL( PointSize );
-   GPA_GL( PolygonMode );
-   GPA_GL( PolygonStipple );
-   GPA_GL( Scissor );
-   GPA_GL( ShadeModel );
-   GPA_GL( TexParameterf );
-   GPA_GL( TexParameterfv );
-   GPA_GL( TexParameteri );
-   GPA_GL( TexParameteriv );
-   GPA_GL( TexImage1D );
-   GPA_GL( TexImage2D );
-   GPA_GL( TexEnvf );
-   GPA_GL( TexEnvfv );
-   GPA_GL( TexEnvi );
-   GPA_GL( TexEnviv );
-   GPA_GL( TexGend );
-   GPA_GL( TexGendv );
-   GPA_GL( TexGenf );
-   GPA_GL( TexGenfv );
-   GPA_GL( TexGeni );
-   GPA_GL( TexGeniv );
-   GPA_GL( FeedbackBuffer );
-   GPA_GL( SelectBuffer );
-   GPA_GL( RenderMode );
-   GPA_GL( InitNames );
-   GPA_GL( LoadName );
-   GPA_GL( PassThrough );
-   GPA_GL( PopName );
-   GPA_GL( PushName );
-   GPA_GL( DrawBuffer );
-   GPA_GL( Clear );
-   GPA_GL( ClearAccum );
-   GPA_GL( ClearIndex );
-   GPA_GL( ClearColor );
-   GPA_GL( ClearStencil );
-   GPA_GL( ClearDepth );
-   GPA_GL( StencilMask );
-   GPA_GL( ColorMask );
-   GPA_GL( DepthMask );
-   GPA_GL( IndexMask );
-   GPA_GL( Accum );
-   GPA_GL( Disable );
-   GPA_GL( Enable );
-   GPA_GL( Finish );
-   GPA_GL( Flush );
-   GPA_GL( PopAttrib );
-   GPA_GL( PushAttrib );
-   GPA_GL( Map1d );
-   GPA_GL( Map1f );
-   GPA_GL( Map2d );
-   GPA_GL( Map2f );
-   GPA_GL( MapGrid1d );
-   GPA_GL( MapGrid1f );
-   GPA_GL( MapGrid2d );
-   GPA_GL( MapGrid2f );
-   GPA_GL( EvalCoord1d );
-   GPA_GL( EvalCoord1dv );
-   GPA_GL( EvalCoord1f );
-   GPA_GL( EvalCoord1fv );
-   GPA_GL( EvalCoord2d );
-   GPA_GL( EvalCoord2dv );
-   GPA_GL( EvalCoord2f );
-   GPA_GL( EvalCoord2fv );
-   GPA_GL( EvalMesh1 );
-   GPA_GL( EvalPoint1 );
-   GPA_GL( EvalMesh2 );
-   GPA_GL( EvalPoint2 );
-   GPA_GL( AlphaFunc );
-   GPA_GL( BlendFunc );
-   GPA_GL( LogicOp );
-   GPA_GL( StencilFunc );
-   GPA_GL( StencilOp );
-   GPA_GL( DepthFunc );
-   GPA_GL( PixelZoom );
-   GPA_GL( PixelTransferf );
-   GPA_GL( PixelTransferi );
-   GPA_GL( PixelStoref );
-   GPA_GL( PixelStorei );
-   GPA_GL( PixelMapfv );
-   GPA_GL( PixelMapuiv );
-   GPA_GL( PixelMapusv );
-   GPA_GL( ReadBuffer );
-   GPA_GL( CopyPixels );
-   GPA_GL( ReadPixels );
-   GPA_GL( DrawPixels );
-   GPA_GL( GetBooleanv );
-   GPA_GL( GetClipPlane );
-   GPA_GL( GetDoublev );
-   GPA_GL( GetError );
-   GPA_GL( GetFloatv );
-   GPA_GL( GetIntegerv );
-   GPA_GL( GetLightfv );
-   GPA_GL( GetLightiv );
-   GPA_GL( GetMapdv );
-   GPA_GL( GetMapfv );
-   GPA_GL( GetMapiv );
-   GPA_GL( GetMaterialfv );
-   GPA_GL( GetMaterialiv );
-   GPA_GL( GetPixelMapfv );
-   GPA_GL( GetPixelMapuiv );
-   GPA_GL( GetPixelMapusv );
-   GPA_GL( GetPolygonStipple );
-   GPA_GL( GetString );
-   GPA_GL( GetTexEnvfv );
-   GPA_GL( GetTexEnviv );
-   GPA_GL( GetTexGendv );
-   GPA_GL( GetTexGenfv );
-   GPA_GL( GetTexGeniv );
-   GPA_GL( GetTexImage );
-   GPA_GL( GetTexParameterfv );
-   GPA_GL( GetTexParameteriv );
-   GPA_GL( GetTexLevelParameterfv );
-   GPA_GL( GetTexLevelParameteriv );
-   GPA_GL( IsEnabled );
-   GPA_GL( IsList );
-   GPA_GL( DepthRange );
-   GPA_GL( Frustum );
-   GPA_GL( LoadIdentity );
-   GPA_GL( LoadMatrixf );
-   GPA_GL( LoadMatrixd );
-   GPA_GL( MatrixMode );
-   GPA_GL( MultMatrixf );
-   GPA_GL( MultMatrixd );
-   GPA_GL( Ortho );
-   GPA_GL( PopMatrix );
-   GPA_GL( PushMatrix );
-   GPA_GL( Rotated );
-   GPA_GL( Rotatef );
-   GPA_GL( Scaled );
-   GPA_GL( Scalef );
-   GPA_GL( Translated );
-   GPA_GL( Translatef );
-   GPA_GL( Viewport );
-   GPA_GL( ArrayElement );
-   GPA_GL( BindTexture );
-   GPA_GL( ColorPointer );
-   GPA_GL( DisableClientState );
-   GPA_GL( DrawArrays );
-   GPA_GL( DrawElements );
-   GPA_GL( EdgeFlagPointer );
-   GPA_GL( EnableClientState );
-   GPA_GL( IndexPointer );
-   GPA_GL( Indexub );
-   GPA_GL( Indexubv );
-   GPA_GL( InterleavedArrays );
-   GPA_GL( NormalPointer );
-   GPA_GL( PolygonOffset );
-   GPA_GL( TexCoordPointer );
-   GPA_GL( VertexPointer );
-   GPA_GL( AreTexturesResident );
-   GPA_GL( CopyTexImage1D );
-   GPA_GL( CopyTexImage2D );
-   GPA_GL( CopyTexSubImage1D );
-   GPA_GL( CopyTexSubImage2D );
-   GPA_GL( DeleteTextures );
-   GPA_GL( GenTextures );
-   GPA_GL( GetPointerv );
-   GPA_GL( IsTexture );
-   GPA_GL( PrioritizeTextures );
-   GPA_GL( TexSubImage1D );
-   GPA_GL( TexSubImage2D );
-   GPA_GL( PopClientAttrib );
-   GPA_GL( PushClientAttrib );
-}
 
 PGLCLTPROCTABLE APIENTRY
 DrvSetContext(
@@ -521,17 +519,10 @@ DrvSetContext(
       debug_printf( "%s( 0x%p, %u, 0x%p )\n", 
                     __FUNCTION__, hdc, dhglrc, pfnSetProcTable );
 
-   /* Although WGL allows different dispatch entrypoints per 
-    */
-   if (!cpt_initialized) {
-      init_proc_table( &cpt );
-      cpt_initialized = TRUE;
-   }
-
    if (!stw_make_current( hdc, dhglrc ))
       return NULL;
       
-   return &cpt;
+   return (GLCLTPROCTABLE *)&cpt;
 }
 
 int APIENTRY
@@ -571,7 +562,7 @@ DrvShareLists(
    if (DBG)
       debug_printf( "%s\n", __FUNCTION__ );
 
-   return FALSE;
+   return stw_share_lists(dhglrc1, dhglrc2);
 }
 
 BOOL APIENTRY
@@ -592,7 +583,7 @@ DrvSwapLayerBuffers(
    if (DBG)
       debug_printf( "%s\n", __FUNCTION__ );
 
-   return FALSE;
+   return stw_swap_layer_buffers( hdc, fuPlanes );
 }
 
 BOOL APIENTRY

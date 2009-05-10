@@ -37,20 +37,17 @@ static Bool intel_xorg_pci_probe(DriverPtr driver,
 				 intptr_t match_data);
 
 static const struct pci_id_match intel_xorg_device_match[] = {
-    {0x8086, 0x2592, 0xffff, 0xffff, 0, 0, 0},
-    {0x8086, 0x27A2, 0xffff, 0xffff, 0, 0, 0},
+    {0x8086, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY, 0, 0, 0},
     {0, 0, 0},
 };
 
 static SymTabRec intel_xorg_chipsets[] = {
-    {0x2592, "Intel Graphics Device"},
-    {0x27A2, "Intel Graphics Device"},
+    {PCI_MATCH_ANY, "Intel Graphics Device"},
     {-1, NULL}
 };
 
 static PciChipsets intel_xorg_pci_devices[] = {
-    {0x2592, 0x2592, RES_SHARED_VGA},
-    {0x27A2, 0x27A2, RES_SHARED_VGA},
+    {PCI_MATCH_ANY, PCI_MATCH_ANY, RES_SHARED_VGA},
     {-1, -1, RES_UNDEFINED}
 };
 

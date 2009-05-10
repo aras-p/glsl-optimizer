@@ -1,6 +1,7 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2009 VMware, Inc.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,49 +26,33 @@
  * 
  **************************************************************************/
 
-#include <pipe/p_thread.h>
-#include "nouveau_context.h"
-#include "nouveau_screen.h"
-#include "nouveau_drmif.h"
+#include <windows.h>
 
-pipe_static_mutex(lockMutex);
+#define WGL_WGLEXT_PROTOTYPES
 
-/* Lock the hardware and validate our state.
- */
-void
-LOCK_HARDWARE(struct nouveau_context *nv)
+#include <GL/gl.h>
+#include <GL/wglext.h>
+
+
+static const char *stw_extension_string = 
+   "WGL_ARB_extensions_string "
+   "WGL_ARB_multisample "
+   "WGL_ARB_pixel_format "
+   "WGL_EXT_extensions_string";
+
+
+WINGDIAPI const char * APIENTRY
+wglGetExtensionsStringARB(
+   HDC hdc )
 {
-	struct nouveau_screen *nv_screen = nv->dri_screen->private;
-	struct nouveau_device *dev = nv_screen->device;
-	struct nouveau_device_priv *nvdev = nouveau_device(dev);
-	char __ret=0;
+   (void) hdc;
 
-	assert(!nv->locked);
-	pipe_mutex_lock(lockMutex);
-
-	DRM_CAS(nvdev->lock, nvdev->ctx,
-		(DRM_LOCK_HELD | nvdev->ctx), __ret);
-
-	if (__ret) {
-		drmGetLock(nvdev->fd, nvdev->ctx, 0);
-		nouveau_contended_lock(nv);
-	}
-	nv->locked = 1;
+   return stw_extension_string;
 }
 
-/* Unlock the hardware using the global current context 
- */
-void
-UNLOCK_HARDWARE(struct nouveau_context *nv)
+
+WINGDIAPI const char * APIENTRY
+wglGetExtensionsStringEXT( void )
 {
-	struct nouveau_screen *nv_screen = nv->dri_screen->private;
-	struct nouveau_device *dev = nv_screen->device;
-	struct nouveau_device_priv *nvdev = nouveau_device(dev);
-
-	assert(nv->locked);
-	nv->locked = 0;
-
-	DRM_UNLOCK(nvdev->fd, nvdev->lock, nvdev->ctx);
-
-	pipe_mutex_unlock(lockMutex);
-} 
+   return stw_extension_string;
+}

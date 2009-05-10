@@ -382,7 +382,7 @@ static GLfloat floorShadow[4][4];
 static void
 redraw(void)
 {
-  int start, end;
+  int start = 0, end = 0;
 
   if (reportSpeed) {
     start = glutGet(GLUT_ELAPSED_TIME);
@@ -624,6 +624,7 @@ redraw(void)
     glFinish();
     end = glutGet(GLUT_ELAPSED_TIME);
     printf("Speed %.3g frames/sec (%d ms)\n", 1000.0/(end-start), end-start);
+    fflush(stdout);
   }
 
   glutSwapBuffers();
@@ -878,6 +879,7 @@ main(int argc, char **argv)
       polygonOffsetVersion = MISSING;
       printf("\ndinoshine: Missing polygon offset.\n");
       printf("           Expect shadow depth aliasing artifacts.\n\n");
+      fflush(stdout);
     }
   }
 

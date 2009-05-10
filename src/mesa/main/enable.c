@@ -222,14 +222,16 @@ get_texcoord_unit(GLcontext *ctx)
 
 /**
  * Helper function to enable or disable a texture target.
+ * \param bit  one of the TEXTURE_x_BIT values
+ * \return GL_TRUE if state is changing or GL_FALSE if no change
  */
 static GLboolean
-enable_texture(GLcontext *ctx, GLboolean state, GLbitfield bit)
+enable_texture(GLcontext *ctx, GLboolean state, GLbitfield texBit)
 {
    const GLuint curr = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
-   const GLuint newenabled = (!state)
-       ? (texUnit->Enabled & ~bit) :  (texUnit->Enabled | bit);
+   const GLbitfield newenabled = state
+      ? (texUnit->Enabled | texBit) : (texUnit->Enabled & ~texBit);
 
    if (!ctx->DrawBuffer->Visual.rgbMode || texUnit->Enabled == newenabled)
        return GL_FALSE;

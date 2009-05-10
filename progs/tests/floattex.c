@@ -1,6 +1,5 @@
 /*
  * Test floating point textures.
- * No actual rendering, yet.
  */
 
 
@@ -103,7 +102,6 @@ Key(unsigned char key, int x, int y)
 }
 
 
-
 static void
 InitTexture(void)
 {
@@ -141,6 +139,8 @@ InitTexture(void)
                 GL_RGB, GL_FLOAT, ftex);
 
 
+   CheckError(__LINE__);
+
    /* sanity checks */
    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_TYPE_ARB, &t);
    assert(t == GL_FLOAT);
@@ -152,32 +152,26 @@ InitTexture(void)
    assert(t == GL_FLOAT);
 
    free(image);
-   free(ftex);
-      
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 
-#if 0
-   /* read back the texture and make sure values are correct */
-   glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, tex2);
-   CheckError(__LINE__);
-   for (i = 0; i < 16; i++) {
-      for (j = 0; j < 16; j++) {
-         if (tex[i][j][0] != tex2[i][j][0] ||
-             tex[i][j][1] != tex2[i][j][1] ||
-             tex[i][j][2] != tex2[i][j][2] ||
-             tex[i][j][3] != tex2[i][j][3]) {
-            printf("tex[%d][%d] %g %g %g %g != tex2[%d][%d] %g %g %g %g\n",
-                   i, j,
-                   tex[i][j][0], tex[i][j][1], tex[i][j][2], tex[i][j][3],
-                   i, j,
-                   tex2[i][j][0], tex2[i][j][1], tex2[i][j][2], tex2[i][j][3]);
+   if (1) {
+      /* read back the texture and make sure values are correct */
+      GLfloat *tex2 = (GLfloat *)
+         malloc(imgWidth * imgHeight * 4 * sizeof(GLfloat));
+      glGetTexImage(GL_TEXTURE_2D, 0, imgFormat, GL_FLOAT, tex2);
+      CheckError(__LINE__);
+      for (i = 0; i < imgWidth * imgHeight * 4; i++) {
+         if (ftex[i] != tex2[i]) {
+            printf("tex[%d] %g != tex2[%d] %g\n",
+                   i, ftex[i], i, tex2[i]);
          }
       }
    }
-#endif
+
+   free(ftex);
 }
 
 
@@ -193,7 +187,9 @@ CreateProgram(void)
 
    assert(program);
 
-   // InitUniforms(program, Uniforms);
+   glUseProgram_func(program);
+
+   InitUniforms(program, Uniforms);
 
    return program;
 }
@@ -211,8 +207,9 @@ Init(void)
       exit(1);
    }
 
-   if (!glutExtensionSupported("GL_MESAX_texture_float")) {
-      printf("Sorry, this test requires GL_MESAX_texture_float\n");
+   if (!glutExtensionSupported("GL_MESAX_texture_float") &&
+       !glutExtensionSupported("GL_ARB_texture_float")) {
+      printf("Sorry, this test requires GL_MESAX/ARB_texture_float\n");
       exit(1);
    }
 

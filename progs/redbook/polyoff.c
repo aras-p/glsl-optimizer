@@ -153,6 +153,7 @@ static void Benchmark( float xdiff, float ydiff )
    double seconds, fps;
 
    printf("Benchmarking...\n");
+   fflush(stdout);
 
    draws = 0;
    startTime = glutGet(GLUT_ELAPSED_TIME);
@@ -169,6 +170,7 @@ static void Benchmark( float xdiff, float ydiff )
    seconds = (double) (endTime - startTime) / 1000.0;
    fps = draws / seconds;
    printf("Result:  fps: %g\n", fps);
+   fflush(stdout);
 }
 
 
@@ -263,6 +265,7 @@ void keyboard (unsigned char key, int x, int y)
       default:
          break;
    }
+   fflush(stdout);
 }
 
 static void

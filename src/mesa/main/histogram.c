@@ -975,6 +975,8 @@ _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean s
       }
    }
 
+   FLUSH_VERTICES(ctx, _NEW_PIXEL);
+
    /* reset histograms */
    for (i = 0; i < HISTOGRAM_TABLE_SIZE; i++) {
       ctx->Histogram.Count[i][0] = 0;
@@ -1002,8 +1004,6 @@ _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean s
       ctx->Histogram.AlphaSize     = 8 * sizeof(GLuint);
       ctx->Histogram.LuminanceSize = 8 * sizeof(GLuint);
    }
-
-   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -1058,8 +1058,6 @@ _mesa_ResetHistogram(GLenum target)
       ctx->Histogram.Count[i][2] = 0;
       ctx->Histogram.Count[i][3] = 0;
    }
-
-   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -1083,7 +1081,6 @@ _mesa_ResetMinmax(GLenum target)
    ctx->MinMax.Min[GCOMP] = 1000;    ctx->MinMax.Max[GCOMP] = -1000;
    ctx->MinMax.Min[BCOMP] = 1000;    ctx->MinMax.Max[BCOMP] = -1000;
    ctx->MinMax.Min[ACOMP] = 1000;    ctx->MinMax.Max[ACOMP] = -1000;
-   ctx->NewState |= _NEW_PIXEL;
 }
 
 

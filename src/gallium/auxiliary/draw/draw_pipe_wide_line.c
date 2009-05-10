@@ -168,6 +168,7 @@ struct draw_stage *draw_wide_line_stage( struct draw_context *draw )
    draw_alloc_temp_verts( &wide->stage, 4 );
 
    wide->stage.draw = draw;
+   wide->stage.name = "wide-line";
    wide->stage.next = NULL;
    wide->stage.point = draw_pipe_passthrough_point;
    wide->stage.line = wideline_line;

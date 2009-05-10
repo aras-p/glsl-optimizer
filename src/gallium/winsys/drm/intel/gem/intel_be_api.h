@@ -8,7 +8,8 @@
 
 #include "intel_be_device.h"
 
-struct pipe_screen *intel_be_create_screen(int drmFD, int pciID);
+struct pipe_screen *intel_be_create_screen(int drmFD,
+					   struct drm_create_screen_arg *arg);
 struct pipe_context *intel_be_create_context(struct pipe_screen *screen);
 
 #endif

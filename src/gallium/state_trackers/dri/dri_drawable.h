@@ -24,67 +24,71 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
-/*
- * Author: Keith Whitwell <keithw@vmware.com>
- * Author: Jakob Bornecrantz <wallbraker@gmail.com>
- */
 
-#ifndef DRI_SCREEN_H
-#define DRI_SCREEN_H
-
-#include "dri_util.h"
-#include "xmlconfig.h"
+#ifndef DRI_DRAWABLE_H
+#define DRI_DRAWABLE_H
 
 #include "pipe/p_compiler.h"
 
-struct dri_screen
+struct pipe_surface;
+struct pipe_fence_handle;
+struct st_framebuffer;
+
+#define DRI_SWAP_FENCES_MAX  8
+#define DRI_SWAP_FENCES_MASK 7
+
+struct dri_drawable
 {
    /* dri */
+   __DRIdrawablePrivate *dPriv;
    __DRIscreenPrivate *sPriv;
 
-   /**
-    * Configuration cache with default values for all contexts
-    */
-   driOptionCache optionCache;
-
-   /**
-    * Temporary(?) context to use for SwapBuffers or other situations in
-    * which we need a rendering context, but none is currently bound.
-    */
-   struct dri_context *dummyContext;
-
-   /* drm */
-   int deviceID;
-   int fd;
-   int minor;
+   unsigned attachments[8];
+   unsigned num_attachments;
 
    /* gallium */
-   struct pipe_winsys *pipe_winsys;
-   struct pipe_screen *pipe_screen;
+   struct st_framebuffer *stfb;
+   struct pipe_fence_handle *swap_fences[DRI_SWAP_FENCES_MAX];
+   unsigned int head;
+   unsigned int tail;
+   unsigned int desired_fences;
+   unsigned int cur_fences;
 };
 
-
-/** cast wrapper */
-static INLINE struct dri_screen *
-dri_screen(__DRIscreenPrivate *sPriv)
+static INLINE struct dri_drawable *
+dri_drawable(__DRIdrawablePrivate * driDrawPriv)
 {
-   return (struct dri_screen *) sPriv->private;
+   return (struct dri_drawable *)driDrawPriv->driverPrivate;
 }
 
-
 /***********************************************************************
- * dri_screen.c
+ * dri_drawable.c
  */
-const __DRIconfig **
-dri_init_screen2(__DRIscreenPrivate *sPriv);
+boolean
+dri_create_buffer(__DRIscreenPrivate * sPriv,
+		  __DRIdrawablePrivate * dPriv,
+		  const __GLcontextModes * visual, boolean isPixmap);
 
 void
-dri_destroy_screen(__DRIscreenPrivate * sPriv);
+dri_flush_frontbuffer(struct pipe_screen *screen,
+		      struct pipe_surface *surf, void *context_private);
 
-int
-dri_get_swap_info(__DRIdrawablePrivate * dPriv,
-                  __DRIswapInfo * sInfo);
+void dri_swap_buffers(__DRIdrawablePrivate * dPriv);
 
+void
+dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h);
+
+void dri_get_buffers(__DRIdrawablePrivate * dPriv);
+
+void dri_destroy_buffer(__DRIdrawablePrivate * dPriv);
+
+void
+dri1_update_drawables(struct dri_context *ctx,
+		      struct dri_drawable *draw, struct dri_drawable *read);
+
+void
+dri1_flush_frontbuffer(struct pipe_screen *screen,
+		       struct pipe_surface *surf, void *context_private);
 #endif
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

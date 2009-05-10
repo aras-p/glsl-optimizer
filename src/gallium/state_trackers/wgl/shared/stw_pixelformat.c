@@ -119,6 +119,7 @@ stw_pixelformat_add(
    struct stw_device *stw_dev,
    const struct stw_pf_color_info *color,
    const struct stw_pf_depth_info *depth,
+   unsigned accum,
    boolean doublebuffer,
    unsigned samples )
 {
@@ -158,7 +159,7 @@ stw_pixelformat_add(
    
    pfi->pfd.iPixelType = PFD_TYPE_RGBA;
 
-   pfi->pfd.cColorBits = color->bits.red + color->bits.green + color->bits.blue;
+   pfi->pfd.cColorBits = color->bits.red + color->bits.green + color->bits.blue + color->bits.alpha;
    pfi->pfd.cRedBits = color->bits.red;
    pfi->pfd.cRedShift = color->shift.red;
    pfi->pfd.cGreenBits = color->bits.green;
@@ -167,11 +168,11 @@ stw_pixelformat_add(
    pfi->pfd.cBlueShift = color->shift.blue;
    pfi->pfd.cAlphaBits = color->bits.alpha;
    pfi->pfd.cAlphaShift = color->shift.alpha;
-   pfi->pfd.cAccumBits = 0;
-   pfi->pfd.cAccumRedBits = 0;
-   pfi->pfd.cAccumGreenBits = 0;
-   pfi->pfd.cAccumBlueBits = 0;
-   pfi->pfd.cAccumAlphaBits = 0;
+   pfi->pfd.cAccumBits = 4*accum;
+   pfi->pfd.cAccumRedBits = accum;
+   pfi->pfd.cAccumGreenBits = accum;
+   pfi->pfd.cAccumBlueBits = accum;
+   pfi->pfd.cAccumAlphaBits = accum;
    pfi->pfd.cDepthBits = depth->bits.depth;
    pfi->pfd.cStencilBits = depth->bits.stencil;
    pfi->pfd.cAuxBuffers = 0;
@@ -228,7 +229,8 @@ stw_pixelformat_init( void )
                                                PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
                   continue;
 
-               stw_pixelformat_add( stw_dev, color, depth, doublebuffer, samples );
+               stw_pixelformat_add( stw_dev, color, depth,  0, doublebuffer, samples );
+               stw_pixelformat_add( stw_dev, color, depth, 16, doublebuffer, samples );
             }
          }
       }

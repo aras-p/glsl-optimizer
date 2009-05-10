@@ -910,6 +910,34 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    st_validate_state(st);
 
+   if (srcx < 0) {
+      width -= -srcx;
+      dstx += -srcx;
+      srcx = 0;
+   }
+
+   if (srcy < 0) {
+      height -= -srcy;
+      dsty += -srcy;
+      srcy = 0;
+   }
+
+   if (dstx < 0) {
+      width -= -dstx;
+      srcx += -dstx;
+      dstx = 0;
+   }
+
+   if (dsty < 0) {
+      height -= -dsty;
+      srcy += -dsty;
+      dsty = 0;
+   }
+
+   if (width < 0 || height < 0)
+      return;
+
+
    if (type == GL_STENCIL) {
       /* can't use texturing to do stencil */
       copy_stencil_pixels(ctx, srcx, srcy, width, height, dstx, dsty);
@@ -951,15 +979,24 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
    }
 
+   if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
+      srcy = ctx->DrawBuffer->Height - srcy - height;
+
+      if (srcy < 0) {
+         height -= -srcy;
+         srcy = 0;
+      }
+      
+      if (height < 0)
+         return;
+   }
+
    pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, texFormat, 0,
                           width, height, 1,
                           PIPE_TEXTURE_USAGE_SAMPLER);
    if (!pt)
       return;
 
-   if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
-      srcy = ctx->DrawBuffer->Height - srcy - height;
-   }
 
    if (srcFormat == texFormat) {
       /* copy source framebuffer surface into mipmap/texture */

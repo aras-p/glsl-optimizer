@@ -107,7 +107,8 @@ pcedit = sed \
 	-e 's,@VERSION@,$(GLUT_MAJOR).$(GLUT_MINOR).$(GLUT_TINY),' \
 	-e 's,@GLUT_PC_REQ_PRIV@,$(GLUT_PC_REQ_PRIV),' \
 	-e 's,@GLUT_PC_LIB_PRIV@,$(GLUT_PC_LIB_PRIV),' \
-	-e 's,@GLUT_PC_CFLAGS@,$(GLUT_PC_CFLAGS),'
+	-e 's,@GLUT_PC_CFLAGS@,$(GLUT_PC_CFLAGS),' \
+	-e 's,@GLUT_LIB@,$(GLUT_LIB),'
 glut.pc: glut.pc.in
 	$(pcedit) $< > $@
 

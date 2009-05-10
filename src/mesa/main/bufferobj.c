@@ -194,7 +194,7 @@ _mesa_reference_buffer_object(GLcontext *ctx,
       return;
 
    if (*ptr) {
-      /* Unreference the old texture */
+      /* Unreference the old buffer */
       GLboolean deleteFlag = GL_FALSE;
       struct gl_buffer_object *oldObj = *ptr;
 
@@ -227,7 +227,7 @@ _mesa_reference_buffer_object(GLcontext *ctx,
    ASSERT(!*ptr);
 
    if (bufObj) {
-      /* reference new texture */
+      /* reference new buffer */
       /*_glthread_LOCK_MUTEX(tex->Mutex);*/
       if (bufObj->RefCount == 0) {
          /* this buffer's being deleted (look just above) */
@@ -389,7 +389,6 @@ _mesa_buffer_map( GLcontext *ctx, GLenum target, GLenum access,
    (void) ctx;
    (void) target;
    (void) access;
-   ASSERT(!bufObj->OnCard);
    /* Just return a direct pointer to the data */
    if (bufObj->Pointer) {
       /* already mapped! */
@@ -413,7 +412,6 @@ _mesa_buffer_unmap( GLcontext *ctx, GLenum target,
 {
    (void) ctx;
    (void) target;
-   ASSERT(!bufObj->OnCard);
    /* XXX we might assert here that bufObj->Pointer is non-null */
    bufObj->Pointer = NULL;
    return GL_TRUE;
@@ -426,16 +424,8 @@ _mesa_buffer_unmap( GLcontext *ctx, GLenum target,
 void
 _mesa_init_buffer_objects( GLcontext *ctx )
 {
-   /* Allocate the default buffer object and set refcount so high that
-    * it never gets deleted.
-    * XXX with recent/improved refcounting this may not longer be needed.
-    */
-   ctx->Array.NullBufferObj = _mesa_new_buffer_object(ctx, 0, 0);
-   if (ctx->Array.NullBufferObj)
-      ctx->Array.NullBufferObj->RefCount = 1000;
-
-   ctx->Array.ArrayBufferObj = ctx->Array.NullBufferObj;
-   ctx->Array.ElementArrayBufferObj = ctx->Array.NullBufferObj;
+   ctx->Array.ArrayBufferObj = ctx->Shared->NullBufferObj;
+   ctx->Array.ElementArrayBufferObj = ctx->Shared->NullBufferObj;
 }
 
 
@@ -479,7 +469,7 @@ bind_buffer_object(GLcontext *ctx, GLenum target, GLuint buffer)
       /* The spec says there's not a buffer object named 0, but we use
        * one internally because it simplifies things.
        */
-      newBufObj = ctx->Array.NullBufferObj;
+      newBufObj = ctx->Shared->NullBufferObj;
    }
    else {
       /* non-default buffer object */
@@ -746,7 +736,7 @@ unbind(GLcontext *ctx,
        struct gl_buffer_object *obj)
 {
    if (*ptr == obj) {
-      _mesa_reference_buffer_object(ctx, ptr, ctx->Array.NullBufferObj);
+      _mesa_reference_buffer_object(ctx, ptr, ctx->Shared->NullBufferObj);
    }
 }
 
@@ -958,7 +948,11 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
       bufObj->Pointer = NULL;
    }  
 
+   FLUSH_VERTICES(ctx, _NEW_BUFFER_OBJECT);
+
    ASSERT(ctx->Driver.BufferData);
+
+   bufObj->Written = GL_TRUE;
 
    /* Give the buffer object to the driver!  <data> may be null! */
    ctx->Driver.BufferData( ctx, target, size, data, usage, bufObj );
@@ -979,6 +973,8 @@ _mesa_BufferSubDataARB(GLenum target, GLintptrARB offset,
       /* error already recorded */
       return;
    }
+
+   bufObj->Written = GL_TRUE;
 
    ASSERT(ctx->Driver.BufferSubData);
    ctx->Driver.BufferSubData( ctx, target, offset, size, data, bufObj );
@@ -1044,6 +1040,8 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
    }
 
    bufObj->Access = access;
+   if (access == GL_WRITE_ONLY_ARB || access == GL_READ_WRITE_ARB)
+      bufObj->Written = GL_TRUE;
 
    return bufObj->Pointer;
 }

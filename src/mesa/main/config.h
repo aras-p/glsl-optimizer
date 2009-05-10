@@ -187,7 +187,7 @@
 #define MAX_PROGRAM_TEMPS 256
 #define MAX_PROGRAM_ADDRESS_REGS 2
 #define MAX_UNIFORMS 1024  /**< number of vec4 uniforms */
-#define MAX_VARYING 8      /**< number of float[4] vectors */
+#define MAX_VARYING 16     /**< number of float[4] vectors */
 #define MAX_SAMPLERS MAX_TEXTURE_IMAGE_UNITS
 #define MAX_PROGRAM_INPUTS 32
 #define MAX_PROGRAM_OUTPUTS 32

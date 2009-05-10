@@ -169,6 +169,14 @@ st_translate_vertex_program(struct st_context *st,
          case VERT_ATTRIB_GENERIC5:
          case VERT_ATTRIB_GENERIC6:
          case VERT_ATTRIB_GENERIC7:
+         case VERT_ATTRIB_GENERIC8:
+         case VERT_ATTRIB_GENERIC9:
+         case VERT_ATTRIB_GENERIC10:
+         case VERT_ATTRIB_GENERIC11:
+         case VERT_ATTRIB_GENERIC12:
+         case VERT_ATTRIB_GENERIC13:
+         case VERT_ATTRIB_GENERIC14:
+         case VERT_ATTRIB_GENERIC15:
             assert(attr < VERT_ATTRIB_MAX);
             vs_input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
             vs_input_semantic_index[slot] = num_generic++;

@@ -70,7 +70,6 @@ intel_texture_drawpixels(GLcontext * ctx,
    struct intel_context *intel = intel_context(ctx);
    GLuint texname;
    GLfloat vertices[4][4];
-   GLfloat texcoords[4][2];
    GLfloat z;
    GLint old_active_texture;
    GLenum internalFormat;
@@ -169,22 +168,13 @@ intel_texture_drawpixels(GLcontext * ctx,
    vertices[3][2] = z;
    vertices[3][3] = 1.0;
 
-   texcoords[0][0] = 0.0;
-   texcoords[0][1] = 0.0;
-   texcoords[1][0] = 1.0;
-   texcoords[1][1] = 0.0;
-   texcoords[2][0] = 1.0;
-   texcoords[2][1] = 1.0;
-   texcoords[3][0] = 0.0;
-   texcoords[3][1] = 1.0;
-
    _mesa_VertexPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &vertices);
-   _mesa_ClientActiveTextureARB(GL_TEXTURE0);
-   _mesa_TexCoordPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &texcoords);
    _mesa_Enable(GL_VERTEX_ARRAY);
-   _mesa_Enable(GL_TEXTURE_COORD_ARRAY);
+   intel_meta_set_default_texrect(intel);
+
    CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
 
+   intel_meta_restore_texcoords(intel);
    intel_meta_restore_transform(intel);
 
    _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + old_active_texture);
@@ -208,7 +198,6 @@ intel_stencil_drawpixels(GLcontext * ctx,
    struct intel_context *intel = intel_context(ctx);
    GLuint texname, rb_name, fb_name, old_fb_name;
    GLfloat vertices[4][2];
-   GLfloat texcoords[4][2];
    struct intel_renderbuffer *irb;
    struct intel_renderbuffer *depth_irb;
    struct gl_renderbuffer *rb;
@@ -343,7 +332,6 @@ intel_stencil_drawpixels(GLcontext * ctx,
    _mesa_free(stencil_pixels);
 
    intel_meta_set_passthrough_transform(intel);
-
    vertices[0][0] = x;
    vertices[0][1] = y;
    vertices[1][0] = x + width * ctx->Pixel.ZoomX;
@@ -353,22 +341,13 @@ intel_stencil_drawpixels(GLcontext * ctx,
    vertices[3][0] = x;
    vertices[3][1] = y + height * ctx->Pixel.ZoomY;
 
-   texcoords[0][0] = 0.0;
-   texcoords[0][1] = 0.0;
-   texcoords[1][0] = 1.0;
-   texcoords[1][1] = 0.0;
-   texcoords[2][0] = 1.0;
-   texcoords[2][1] = 1.0;
-   texcoords[3][0] = 0.0;
-   texcoords[3][1] = 1.0;
-
    _mesa_VertexPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &vertices);
-   _mesa_ClientActiveTextureARB(GL_TEXTURE0);
-   _mesa_TexCoordPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &texcoords);
    _mesa_Enable(GL_VERTEX_ARRAY);
-   _mesa_Enable(GL_TEXTURE_COORD_ARRAY);
+   intel_meta_set_default_texrect(intel);
+
    CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
 
+   intel_meta_restore_texcoords(intel);
    intel_meta_restore_transform(intel);
 
    _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + old_active_texture);

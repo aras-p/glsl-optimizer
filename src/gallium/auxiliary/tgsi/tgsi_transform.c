@@ -198,3 +198,30 @@ tgsi_transform_shader(const struct tgsi_token *tokens_in,
 
    return ctx->ti;
 }
+
+
+#include "tgsi_text.h"
+
+extern int tgsi_transform_foo( struct tgsi_token *tokens_out,
+                               uint max_tokens_out );
+
+/* This function exists only so that tgsi_text_translate() doesn't get
+ * magic-ed out of the libtgsi.a archive by the build system.  Don't
+ * remove unless you know this has been fixed - check on mingw/scons
+ * builds as well.
+ */
+int
+tgsi_transform_foo( struct tgsi_token *tokens_out,
+                    uint max_tokens_out )
+{
+   const char *text = 
+      "FRAG1.1\n"
+      "DCL IN[0], COLOR, CONSTANT\n"
+      "DCL OUT[0], COLOR\n"
+      "  0: MOV OUT[0], IN[0]\n"
+      "  1: END";
+        
+   return tgsi_text_translate( text,
+                               tokens_out,
+                               max_tokens_out );
+}

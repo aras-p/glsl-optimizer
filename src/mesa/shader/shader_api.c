@@ -1487,7 +1487,7 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
       return;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
 
    if (program) {
       shProg = _mesa_lookup_shader_program_err(ctx, program, "glUseProgram");
@@ -1509,6 +1509,10 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
                          shProg->Shaders[i]->Name,
                          shProg->Shaders[i]->Type);
          }
+         if (shProg->VertexProgram)
+            printf(" vert prog %u\n", shProg->VertexProgram->Base.Id);
+         if (shProg->FragmentProgram)
+            printf(" frag prog %u\n", shProg->FragmentProgram->Base.Id);
       }
    }
    else {
@@ -1789,7 +1793,7 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       return;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
    uniform = &shProg->Uniforms->Uniforms[location];
 
@@ -1929,7 +1933,7 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
       return;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
    uniform = &shProg->Uniforms->Uniforms[location];
 

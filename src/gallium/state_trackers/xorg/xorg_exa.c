@@ -28,6 +28,7 @@
  *
  */
 
+#include "xorg-server.h"
 #include "xf86.h"
 #include "xorg_tracker.h"
 
@@ -35,6 +36,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
+
+#include "util/u_rect.h"
 
 struct exa_entity
 {
@@ -425,7 +428,6 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 
 	memset(&template, 0, sizeof(template));
 	template.target = PIPE_TEXTURE_2D;
-	template.compressed = 0;
 	exa_get_pipe_format(depth, &template.format, &bitsPerPixel);
 	pf_get_block(template.format, &template.block);
 	template.width[0] = width;
@@ -434,6 +436,18 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 	template.last_level = 0;
 	template.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
 	priv->tex = exa->scrn->texture_create(exa->scrn, &template);
+    }
+
+    if (pPixData) {
+	struct pipe_transfer *transfer =
+	    exa->scrn->get_tex_transfer(exa->scrn, priv->tex, 0, 0, 0,
+					PIPE_TRANSFER_WRITE,
+					0, 0, width, height);
+        pipe_copy_rect(exa->scrn->transfer_map(exa->scrn, transfer),
+                       &priv->tex->block, transfer->stride, 0, 0,
+                       width, height, pPixData, pPixmap->devKind, 0, 0);
+        exa->scrn->transfer_unmap(exa->scrn, transfer);
+        exa->scrn->tex_transfer_destroy(transfer);
     }
 
     return TRUE;

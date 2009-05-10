@@ -102,6 +102,22 @@ debug_printf(const char *format, ...)
 }
 
 
+/*
+ * ... isn't portable so we need to pass arguments in parentheses.
+ *
+ * usage:
+ *    debug_printf_once(("awnser: %i\n", 42));
+ */
+#define debug_printf_once(args) \
+   do { \
+      static boolean once = TRUE; \
+      if (once) { \
+         once = FALSE; \
+         debug_printf args; \
+      } \
+   } while (0)
+
+
 #ifdef DEBUG
 #define debug_vprintf(_format, _ap) _debug_vprintf(_format, _ap)
 #else
@@ -347,10 +363,15 @@ void debug_dump_surface_bmp(const char *filename,
                             struct pipe_surface *surface);
 void debug_dump_transfer_bmp(const char *filename,
                              struct pipe_transfer *transfer);
+void debug_dump_float_rgba_bmp(const char *filename,
+                               unsigned width, unsigned height,
+                               float *rgba, unsigned stride);
 #else
 #define debug_dump_image(prefix, format, cpp, width, height, stride, data) ((void)0)
 #define debug_dump_surface(prefix, surface) ((void)0)
 #define debug_dump_surface_bmp(filename, surface) ((void)0)
+#define debug_dump_transfer_bmp(filename, transfer) ((void)0)
+#define debug_dump_rgba_float_bmp(filename, width, height, rgba, stride) ((void)0)
 #endif
 
 

@@ -464,7 +464,9 @@ static void r300SetEarlyZState(GLcontext * ctx)
 
 	if (ctx->Color.AlphaEnabled && ctx->Color.AlphaFunc != GL_ALWAYS)
 		topZ = R300_ZTOP_DISABLE;
-	if (current_fragment_program_writes_depth(ctx))
+	else if (current_fragment_program_writes_depth(ctx))
+		topZ = R300_ZTOP_DISABLE;
+	else if (ctx->FragmentProgram._Current && ctx->FragmentProgram._Current->UsesKill)
 		topZ = R300_ZTOP_DISABLE;
 
 	if (topZ != r300->hw.zstencil_format.cmd[2]) {
@@ -1060,7 +1062,7 @@ void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state)
 	struct gl_program_parameter_list *paramList;
 	GLuint i;
 
-	if (!(new_state & (_NEW_BUFFERS | _NEW_PROGRAM)))
+	if (!(new_state & (_NEW_BUFFERS | _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS)))
 		return;
 
 	fp = (struct r300_fragment_program *)ctx->FragmentProgram._Current;
@@ -2218,11 +2220,12 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 			hw_tcl_on = future_hw_tcl_on = 0;
 			r300ResetHwState(rmesa);
 
-			r300UpdateStateParameters(ctx, _NEW_PROGRAM);
+			r300UpdateStateParameters(ctx, _NEW_PROGRAM |
+                                                  _NEW_PROGRAM_CONSTANTS);
 			return;
 		}
 	}
-	r300UpdateStateParameters(ctx, _NEW_PROGRAM);
+	r300UpdateStateParameters(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
 }
 
 static const GLfloat *get_fragmentprogram_constant(GLcontext *ctx,

@@ -146,6 +146,13 @@ static void do_wm_prog( struct brw_context *brw,
    if (c == NULL) {
       brw->wm.compile_data = calloc(1, sizeof(*brw->wm.compile_data));
       c = brw->wm.compile_data;
+      if (c == NULL) {
+         /* Ouch - big out of memory problem.  Can't continue
+          * without triggering a segfault, no way to signal,
+          * so just return.
+          */
+         return;
+      }
    } else {
       memset(c, 0, sizeof(*brw->wm.compile_data));
    }

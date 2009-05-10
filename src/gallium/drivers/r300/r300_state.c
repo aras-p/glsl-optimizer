@@ -421,6 +421,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     struct r300_context* r300 = r300_context(pipe);
     struct r300_rs_state* rs = (struct r300_rs_state*)state;
 
+    draw_flush(r300->draw);
     draw_set_rasterizer_state(r300->draw, &rs->rs);
 
     r300->rs_state = rs;
@@ -528,7 +529,6 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
                                    const struct pipe_scissor_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
-    draw_flush(r300->draw);
 
     if (r300_screen(r300->context.screen)->caps->is_r500) {
         r300->scissor_state->scissor_top_left =
@@ -555,19 +555,24 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
+    draw_flush(r300->draw);
+
     if (r300_screen(r300->context.screen)->caps->has_tcl) {
         /* Do the transform in HW. */
         r300->viewport_state->vte_control = R300_VTX_W0_FMT;
 
         if (state->scale[0] != 1.0f) {
+            assert(state->scale[0] != 0.0f);
             r300->viewport_state->xscale = state->scale[0];
             r300->viewport_state->vte_control |= R300_VPORT_X_SCALE_ENA;
         }
         if (state->scale[1] != 1.0f) {
+            assert(state->scale[1] != 0.0f);
             r300->viewport_state->yscale = state->scale[1];
             r300->viewport_state->vte_control |= R300_VPORT_Y_SCALE_ENA;
         }
         if (state->scale[2] != 1.0f) {
+            assert(state->scale[2] != 0.0f);
             r300->viewport_state->zscale = state->scale[2];
             r300->viewport_state->vte_control |= R300_VPORT_Z_SCALE_ENA;
         }
@@ -641,6 +646,8 @@ static void* r300_create_vs_state(struct pipe_context* pipe,
 static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
 {
     struct r300_context* r300 = r300_context(pipe);
+
+    draw_flush(r300->draw);
 
     if (r300_screen(pipe->screen)->caps->has_tcl) {
         struct r300_vertex_shader* vs = (struct r300_vertex_shader*)shader;

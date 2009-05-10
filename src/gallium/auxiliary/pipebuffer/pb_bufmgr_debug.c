@@ -40,12 +40,17 @@
 #include "util/u_memory.h"
 #include "util/u_double_list.h"
 #include "util/u_time.h"
+#include "util/u_debug_stack.h"
 
 #include "pb_buffer.h"
 #include "pb_bufmgr.h"
 
 
 #ifdef DEBUG
+
+
+#define PB_DEBUG_CREATE_BACKTRACE 8
+#define PB_DEBUG_MAP_BACKTRACE 8
 
 
 /**
@@ -69,6 +74,14 @@ struct pb_debug_buffer
    
    size_t underflow_size;
    size_t overflow_size;
+
+   struct debug_stack_frame create_backtrace[PB_DEBUG_CREATE_BACKTRACE];
+
+   pipe_mutex mutex;
+   unsigned map_count;
+   struct debug_stack_frame map_backtrace[PB_DEBUG_MAP_BACKTRACE];
+   
+   struct list_head head;
 };
 
 
@@ -80,6 +93,9 @@ struct pb_debug_manager
 
    size_t underflow_size;
    size_t overflow_size;
+   
+   pipe_mutex mutex;
+   struct list_head list;
 };
 
 
@@ -189,6 +205,9 @@ pb_debug_buffer_check(struct pb_debug_buffer *buf)
                       max_ofs == buf->overflow_size - 1 ? "+" : "");
       }
       
+      if(underflow || overflow)
+         debug_backtrace_dump(buf->create_backtrace, PB_DEBUG_CREATE_BACKTRACE);
+
       debug_assert(!underflow && !overflow);
 
       /* re-fill if not aborted */
@@ -207,11 +226,18 @@ static void
 pb_debug_buffer_destroy(struct pb_buffer *_buf)
 {
    struct pb_debug_buffer *buf = pb_debug_buffer(_buf);
+   struct pb_debug_manager *mgr = buf->mgr;
    
    assert(!pipe_is_referenced(&buf->base.base.reference));
    
    pb_debug_buffer_check(buf);
 
+   pipe_mutex_lock(mgr->mutex);
+   LIST_DEL(&buf->head);
+   pipe_mutex_unlock(mgr->mutex);
+
+   pipe_mutex_destroy(buf->mutex);
+   
    pb_reference(&buf->buffer, NULL);
    FREE(buf);
 }
@@ -230,6 +256,13 @@ pb_debug_buffer_map(struct pb_buffer *_buf,
    if(!map)
       return NULL;
    
+   if(map) {
+      pipe_mutex_lock(buf->mutex);
+      ++buf->map_count;
+      debug_backtrace_capture(buf->map_backtrace, 1, PB_DEBUG_MAP_BACKTRACE);
+      pipe_mutex_unlock(buf->mutex);
+   }
+   
    return (uint8_t *)map + buf->underflow_size;
 }
 
@@ -238,6 +271,13 @@ static void
 pb_debug_buffer_unmap(struct pb_buffer *_buf)
 {
    struct pb_debug_buffer *buf = pb_debug_buffer(_buf);   
+   
+   pipe_mutex_lock(buf->mutex);
+   assert(buf->map_count);
+   if(buf->map_count)
+      --buf->map_count;
+   pipe_mutex_unlock(buf->mutex);
+   
    pb_unmap(buf->buffer);
    
    pb_debug_buffer_check(buf);
@@ -262,6 +302,14 @@ pb_debug_buffer_validate(struct pb_buffer *_buf,
 {
    struct pb_debug_buffer *buf = pb_debug_buffer(_buf);
    
+   pipe_mutex_lock(buf->mutex);
+   if(buf->map_count) {
+      debug_printf("%s: attempting to validate a mapped buffer\n", __FUNCTION__);
+      debug_printf("last map backtrace is\n");
+      debug_backtrace_dump(buf->map_backtrace, PB_DEBUG_MAP_BACKTRACE);
+   }
+   pipe_mutex_unlock(buf->mutex);
+
    pb_debug_buffer_check(buf);
 
    return pb_validate(buf->buffer, vl, flags);
@@ -288,6 +336,31 @@ pb_debug_buffer_vtbl = {
 };
 
 
+static void
+pb_debug_manager_dump(struct pb_debug_manager *mgr)
+{
+   struct list_head *curr, *next;
+   struct pb_debug_buffer *buf;
+
+   pipe_mutex_lock(mgr->mutex);
+      
+   curr = mgr->list.next;
+   next = curr->next;
+   while(curr != &mgr->list) {
+      buf = LIST_ENTRY(struct pb_debug_buffer, curr, head);
+
+      debug_printf("buffer = %p\n", buf);
+      debug_printf("    .size = %p\n", buf->base.base.size);
+      debug_backtrace_dump(buf->create_backtrace, PB_DEBUG_CREATE_BACKTRACE);
+      
+      curr = next; 
+      next = curr->next;
+   }
+
+   pipe_mutex_unlock(mgr->mutex);
+}
+
+
 static struct pb_buffer *
 pb_debug_manager_create_buffer(struct pb_manager *_mgr, 
                                size_t size,
@@ -312,6 +385,13 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
                                               &real_desc);
    if(!buf->buffer) {
       FREE(buf);
+#if 0
+      pipe_mutex_lock(mgr->mutex);
+      debug_printf("%s: failed to create buffer\n", __FUNCTION__);
+      if(!LIST_IS_EMPTY(&mgr->list))
+         pb_debug_manager_dump(mgr);
+      pipe_mutex_unlock(mgr->mutex);
+#endif
       return NULL;
    }
    
@@ -331,8 +411,16 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
    buf->underflow_size = mgr->underflow_size;
    buf->overflow_size = buf->buffer->base.size - buf->underflow_size - size;
    
+   debug_backtrace_capture(buf->create_backtrace, 1, PB_DEBUG_CREATE_BACKTRACE);
+
    pb_debug_buffer_fill(buf);
    
+   pipe_mutex_init(buf->mutex);
+   
+   pipe_mutex_lock(mgr->mutex);
+   LIST_ADDTAIL(&buf->head, &mgr->list);
+   pipe_mutex_unlock(mgr->mutex);
+
    return &buf->base;
 }
 
@@ -351,6 +439,15 @@ static void
 pb_debug_manager_destroy(struct pb_manager *_mgr)
 {
    struct pb_debug_manager *mgr = pb_debug_manager(_mgr);
+   
+   pipe_mutex_lock(mgr->mutex);
+   if(!LIST_IS_EMPTY(&mgr->list)) {
+      debug_printf("%s: unfreed buffers\n", __FUNCTION__);
+      pb_debug_manager_dump(mgr);
+   }
+   pipe_mutex_unlock(mgr->mutex);
+   
+   pipe_mutex_destroy(mgr->mutex);
    mgr->provider->destroy(mgr->provider);
    FREE(mgr);
 }
@@ -375,7 +472,10 @@ pb_debug_manager_create(struct pb_manager *provider,
    mgr->provider = provider;
    mgr->underflow_size = underflow_size;
    mgr->overflow_size = overflow_size;
-      
+    
+   pipe_mutex_init(mgr->mutex);
+   LIST_INITHEAD(&mgr->list);
+
    return &mgr->base;
 }
 

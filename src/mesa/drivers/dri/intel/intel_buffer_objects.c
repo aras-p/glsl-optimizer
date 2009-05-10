@@ -35,6 +35,9 @@
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
 
+static GLboolean
+intel_bufferobj_unmap(GLcontext * ctx,
+                      GLenum target, struct gl_buffer_object *obj);
 
 /** Allocates a new dri_bo to store the data for the buffer object. */
 static void
@@ -100,7 +103,13 @@ intel_bufferobj_free(GLcontext * ctx, struct gl_buffer_object *obj)
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
-   assert(!obj->Pointer); /* Mesa should have unmapped it */
+
+   /* Buffer objects are automatically unmapped when deleting according
+    * to the spec, but Mesa doesn't do UnmapBuffer for us at context destroy
+    * (though it does if you call glDeleteBuffers)
+    */
+   if (obj->Pointer)
+      intel_bufferobj_unmap(ctx, 0, obj);
 
    if (intel_obj->region) {
       intel_bufferobj_release_region(intel, intel_obj);
@@ -204,9 +213,8 @@ intel_bufferobj_map(GLcontext * ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
+   GLboolean read_only = (access == GL_READ_ONLY_ARB);
 
-   /* XXX: Translate access to flags arg below:
-    */
    assert(intel_obj);
 
    if (intel_obj->region)
@@ -217,7 +225,7 @@ intel_bufferobj_map(GLcontext * ctx,
       return NULL;
    }
 
-   dri_bo_map(intel_obj->buffer, GL_TRUE);
+   dri_bo_map(intel_obj->buffer, !read_only);
    obj->Pointer = intel_obj->buffer->virtual;
    return obj->Pointer;
 }

@@ -74,7 +74,7 @@ $(TOP)/$(LIB_DIR)/gallium/$(GL_LIB_NAME): $(XLIB_WINSYS_OBJECTS) $(LIBS) Makefil
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR)/gallium \
 		$(MKLIB_OPTIONS) $(XLIB_WINSYS_OBJECTS) \
-		--start-group $(LIBS) --end-group $(GL_LIB_DEPS)
+		-Wl,--start-group $(LIBS) -Wl,--end-group $(GL_LIB_DEPS)
 
 
 depend: $(XLIB_WINSYS_SOURCES)

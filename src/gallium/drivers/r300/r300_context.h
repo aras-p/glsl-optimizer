@@ -264,6 +264,11 @@ struct r300_context {
     /* Draw module. Used mostly for SW TCL. */
     struct draw_context* draw;
 
+    /* Vertex buffer for rendering. */
+    struct pipe_buffer* vbo;
+    /* Offset into the VBO. */
+    size_t vbo_offset;
+
     /* Various CSO state objects. */
     /* Blend state. */
     struct r300_blend_state* blend_state;
@@ -289,7 +294,7 @@ struct r300_context {
     /* Texture states. */
     struct r300_texture* textures[8];
     int texture_count;
-    /* Vertex buffers. */
+    /* Vertex buffers for Gallium. */
     struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
     int vertex_buffer_count;
     /* Vertex information. */
@@ -313,12 +318,5 @@ static struct r300_context* r300_context(struct pipe_context* context) {
 struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_surface_functions(struct r300_context* r300);
-
-/* Fun with includes: r300_winsys also declares this prototype.
- * We'll just step out in that case... */
-#ifndef R300_WINSYS_H
-struct pipe_context* r300_create_context(struct pipe_screen* screen,
-                                         struct r300_winsys* r300_winsys);
-#endif
 
 #endif /* R300_CONTEXT_H */

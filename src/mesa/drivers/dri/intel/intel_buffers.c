@@ -157,7 +157,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    /* Do this here, not core Mesa, since this function is called from
     * many places within the driver.
     */
-   if (ctx->NewState & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
+   if (ctx->NewState & _NEW_BUFFERS) {
       /* this updates the DrawBuffer->_NumColorDrawBuffers fields, etc */
       _mesa_update_framebuffer(ctx);
       /* this updates the DrawBuffer's Width/Height if it's a FBO */
@@ -323,8 +323,19 @@ intelDrawBuffer(GLcontext * ctx, GLenum mode)
 {
    if ((ctx->DrawBuffer != NULL) && (ctx->DrawBuffer->Name == 0)) {
       struct intel_context *const intel = intel_context(ctx);
+      const GLboolean was_front_buffer_rendering =
+	intel->is_front_buffer_rendering;
 
-      intel->is_front_buffer_rendering = (mode == GL_FRONT_LEFT);
+      intel->is_front_buffer_rendering = (mode == GL_FRONT_LEFT)
+	|| (mode == GL_FRONT);
+
+      /* If we weren't front-buffer rendering before but we are now, make sure
+       * that the front-buffer has actually been allocated.
+       */
+      if (!was_front_buffer_rendering && intel->is_front_buffer_rendering) {
+	 intel_update_renderbuffers(intel->driContext,
+				    intel->driContext->driDrawablePriv);
+      }
    }
 
    intel_draw_buffer(ctx, ctx->DrawBuffer);

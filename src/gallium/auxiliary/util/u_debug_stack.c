@@ -62,6 +62,8 @@ debug_backtrace_capture(struct debug_stack_frame *backtrace,
    
 #ifdef PIPE_ARCH_X86
    while(nr_frames) {
+      const void **next_frame_pointer;
+
       if(!frame_pointer)
          break;
       
@@ -72,7 +74,14 @@ debug_backtrace_capture(struct debug_stack_frame *backtrace,
          --nr_frames;
       }
       
-      frame_pointer = (const void **)frame_pointer[0];
+      next_frame_pointer = (const void **)frame_pointer[0];
+      
+      /* Limit the stack walk to avoid referencing undefined memory */
+      if((uintptr_t)next_frame_pointer <= (uintptr_t)frame_pointer ||
+         (uintptr_t)next_frame_pointer > (uintptr_t)frame_pointer + 64*1024)
+         break;
+      
+      frame_pointer = next_frame_pointer;
    }
 #endif
    

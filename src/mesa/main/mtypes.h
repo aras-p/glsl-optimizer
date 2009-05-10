@@ -1028,7 +1028,7 @@ struct gl_stencil_attrib
 
 /**
  * An index for each type of texture object.  These correspond to the GL
- * target target enums, such as GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, etc.
+ * texture target enums, such as GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, etc.
  * Note: the order is from highest priority to lowest priority.
  */
 typedef enum
@@ -1505,7 +1505,7 @@ struct gl_buffer_object
    GLsizeiptr Length;        /**< mapped length */
    GLsizeiptrARB Size;       /**< Size of storage in bytes */
    GLubyte *Data;            /**< Location of storage either in RAM or VRAM. */
-   GLboolean OnCard;         /**< Is buffer in VRAM? (hardware drivers) */
+   GLboolean Written;        /**< Ever written to? (for debugging) */
 };
 
 
@@ -1541,10 +1541,10 @@ struct gl_client_array
    const GLubyte *Ptr;          /**< Points to array data */
    GLboolean Enabled;		/**< Enabled flag is a boolean */
    GLboolean Normalized;        /**< GL_ARB_vertex_program */
+   GLuint _ElementSize;         /**< size of each element in bytes */
 
-   /**< GL_ARB_vertex_buffer_object */
-   struct gl_buffer_object *BufferObj;
-   GLuint _MaxElement;
+   struct gl_buffer_object *BufferObj;/**< GL_ARB_vertex_buffer_object */
+   GLuint _MaxElement;          /**< max element index into array buffer */
 };
 
 
@@ -1556,6 +1556,9 @@ struct gl_array_object
 {
    /** Name of the array object as received from glGenVertexArrayAPPLE. */
    GLuint Name;
+
+   GLint RefCount;
+   _glthread_Mutex Mutex;
 
    /** Conventional vertex arrays */
    /*@{*/
@@ -1583,7 +1586,10 @@ struct gl_array_object
  */
 struct gl_array_attrib
 {
+   /** Currently bound array object. See _mesa_BindVertexArrayAPPLE() */
    struct gl_array_object *ArrayObj;
+
+   /** The default vertex array object */
    struct gl_array_object *DefaultArrayObj;
 
    GLint ActiveTexture;		/**< Client Active Texture */
@@ -1593,7 +1599,6 @@ struct gl_array_attrib
    GLbitfield NewState;		/**< mask of _NEW_ARRAY_* values */
 
 #if FEATURE_ARB_vertex_buffer_object
-   struct gl_buffer_object *NullBufferObj;
    struct gl_buffer_object *ArrayBufferObj;
    struct gl_buffer_object *ElementArrayBufferObj;
 #endif
@@ -2050,6 +2055,9 @@ struct gl_shared_state
    /** Default texture objects (shared by all texture units) */
    struct gl_texture_object *DefaultTex[NUM_TEXTURE_TARGETS];
 
+   /** Fallback texture used when a bound texture is incomplete */
+   struct gl_texture_object *FallbackTex;
+
    /**
     * \name Thread safety and statechange notification for texture
     * objects. 
@@ -2061,6 +2069,8 @@ struct gl_shared_state
    GLuint TextureStateStamp;	        /**< state notification for shared tex */
    /*@}*/
 
+   /** Default buffer object for vertex arrays that aren't in VBOs */
+   struct gl_buffer_object *NullBufferObj;
 
    /**
     * \name Vertex/fragment programs
@@ -2616,6 +2626,7 @@ struct gl_matrix_stack
 #define _NEW_PROGRAM            0x8000000  /**< __GLcontextRec::VertexProgram */
 #define _NEW_CURRENT_ATTRIB     0x10000000  /**< __GLcontextRec::Current */
 #define _NEW_PROGRAM_CONSTANTS  0x20000000
+#define _NEW_BUFFER_OBJECT      0x40000000
 #define _NEW_ALL ~0
 /*@}*/
 
@@ -2976,6 +2987,12 @@ struct __GLcontextRec
 
    /** software compression/decompression supported or not */
    GLboolean Mesa_DXTn;
+
+   /** 
+    * Use dp4 (rather than mul/mad) instructions for position
+    * transformation?
+    */
+   GLboolean mvp_with_dp4;
 
    /** Core tnl module support */
    struct gl_tnl_module TnlModule;

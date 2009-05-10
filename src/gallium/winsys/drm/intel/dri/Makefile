@@ -4,8 +4,9 @@ include $(TOP)/configs/current
 LIBNAME = i915_dri.so
 
 PIPE_DRIVERS = \
-	$(TOP)/src/gallium/state_trackers/dri2/libdri2drm.a \
+	$(TOP)/src/gallium/state_trackers/dri/libdridrm.a \
 	$(TOP)/src/gallium/winsys/drm/intel/gem/libinteldrm.a \
+	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(TOP)/src/gallium/drivers/i915simple/libi915simple.a
 
 
@@ -19,4 +20,6 @@ include ../../Makefile.template
 
 DRI_LIB_DEPS += -ldrm_intel
 
-symlinks:
+symlinks: $(TOP)/$(LIB_DIR)/gallium
+	@rm -f $(TOP)/lib/gallium/i965_dri.so
+	ln -s i915_dri.so $(TOP)/lib/gallium/i965_dri.so

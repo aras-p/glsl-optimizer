@@ -757,6 +757,7 @@ draw_aapoint_stage(struct draw_context *draw)
       goto fail;
 
    aapoint->stage.draw = draw;
+   aapoint->stage.name = "aapoint";
    aapoint->stage.next = NULL;
    aapoint->stage.point = aapoint_first_point;
    aapoint->stage.line = draw_pipe_passthrough_line;

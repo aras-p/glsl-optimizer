@@ -41,18 +41,20 @@
  * Internal functions
  */
 
-struct gl_array_object * _mesa_new_array_object( GLcontext *ctx,
-    GLuint name );
+extern struct gl_array_object *
+_mesa_new_array_object( GLcontext *ctx, GLuint name );
 
-void _mesa_delete_array_object( GLcontext *ctx, struct gl_array_object *obj );
+extern void
+_mesa_delete_array_object( GLcontext *ctx, struct gl_array_object *obj );
 
-void _mesa_initialize_array_object( GLcontext *ctx,
-    struct gl_array_object *obj, GLuint name );
+extern void
+_mesa_reference_array_object(GLcontext *ctx,
+                             struct gl_array_object **ptr,
+                             struct gl_array_object *arrayObj);
 
-void _mesa_save_array_object( GLcontext *ctx, struct gl_array_object *obj );
-
-void _mesa_remove_array_object( GLcontext *ctx, struct gl_array_object *obj );
-
+extern void
+_mesa_initialize_array_object( GLcontext *ctx,
+                               struct gl_array_object *obj, GLuint name );
 
 
 /*

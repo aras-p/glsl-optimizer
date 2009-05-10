@@ -561,8 +561,19 @@ update_texture_state( GLcontext *ctx )
       }
 
       if (!texUnit->_ReallyEnabled) {
-         _mesa_reference_texobj(&texUnit->_Current, NULL);
-         continue;
+         if (fprog) {
+            /* If we get here it means the shader is expecting a texture
+             * object, but there isn't one (or it's incomplete).  Use the
+             * fallback texture.
+             */
+            struct gl_texture_object *texObj = _mesa_get_fallback_texture(ctx);
+            texUnit->_ReallyEnabled = 1 << TEXTURE_2D_INDEX;
+            _mesa_reference_texobj(&texUnit->_Current, texObj);
+         }
+         else {
+            /* fixed-function: texture unit is really disabled */
+            continue;
+         }
       }
 
       /* if we get here, we know this texture unit is enabled */
@@ -780,6 +791,9 @@ _mesa_free_texture_data(GLcontext *ctx)
 
    /* unreference current textures */
    for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++) {
+      /* The _Current texture could account for another reference */
+      _mesa_reference_texobj(&ctx->Texture.Unit[u]._Current, NULL);
+
       for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++) {
          _mesa_reference_texobj(&ctx->Texture.Unit[u].CurrentTex[tgt], NULL);
       }

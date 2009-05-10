@@ -496,6 +496,7 @@ struct draw_stage *draw_clip_stage( struct draw_context *draw )
       goto fail;
 
    clipper->stage.draw = draw;
+   clipper->stage.name = "clipper";
    clipper->stage.point = clip_point;
    clipper->stage.line = clip_first_line;
    clipper->stage.tri = clip_first_tri;

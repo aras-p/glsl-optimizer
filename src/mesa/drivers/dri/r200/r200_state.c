@@ -2327,7 +2327,7 @@ GLboolean r200ValidateState( GLcontext *ctx )
       R200_STATECHANGE(rmesa, ctx);
    }
 
-   if (new_state & (_NEW_TEXTURE | _NEW_PROGRAM)) {
+   if (new_state & (_NEW_TEXTURE | _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS)) {
       r200UpdateTextureState( ctx );
       new_state |= rmesa->radeon.NewGLState; /* may add TEXTURE_MATRIX */
       r200UpdateLocalViewer( ctx );
@@ -2370,6 +2370,7 @@ GLboolean r200ValidateState( GLcontext *ctx )
    }
 
    if (new_state & (_NEW_PROGRAM|
+                    _NEW_PROGRAM_CONSTANTS |
    /* need to test for pretty much anything due to possible parameter bindings */
 	_NEW_MODELVIEW|_NEW_PROJECTION|_NEW_TRANSFORM|
 	_NEW_LIGHT|_NEW_TEXTURE|_NEW_TEXTURE_MATRIX|

@@ -17,6 +17,7 @@
 #define IMAGE_FILE "../images/girl.rgb"
 
 static int ImgWidth, ImgHeight;
+static int WinWidth, WinHeight;
 static GLenum ImgFormat;
 static GLubyte *Image = NULL;
 
@@ -27,6 +28,7 @@ static int CPosX, CPosY;  /* copypixels */
 static GLboolean DrawFront = GL_FALSE;
 static GLboolean ScaleAndBias = GL_FALSE;
 static GLboolean Benchmark = GL_FALSE;
+static GLboolean Triangle = GL_FALSE;
 static GLubyte *TempImage = NULL;
 
 #define COMBO 1
@@ -150,11 +152,60 @@ Display( void )
    /* draw original image */
    glRasterPos2i(APosX, 5);
    PrintString("Original");
-   glRasterPos2i(APosX, APosY);
-   glEnable(GL_DITHER);
-   SetupPixelTransfer(GL_FALSE);
-   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-   glDrawPixels(ImgWidth, ImgHeight, ImgFormat, GL_UNSIGNED_BYTE, Image);
+   if (!Triangle) {
+      glRasterPos2i(APosX, APosY);
+      glEnable(GL_DITHER);
+      SetupPixelTransfer(GL_FALSE);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+      glDrawPixels(ImgWidth, ImgHeight, ImgFormat, GL_UNSIGNED_BYTE, Image);
+   }
+   else {
+      float z = 0;
+
+      glViewport(APosX, APosY, ImgWidth, ImgHeight);
+      glMatrixMode( GL_PROJECTION );
+      glLoadIdentity();
+      glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+      glDisable(GL_CULL_FACE);
+
+      /* Red should never be seen
+       */
+      glBegin(GL_POLYGON);
+      glColor3f(1,0,0); 
+      glVertex3f(-2, -2, z);
+      glVertex3f(-2, 2, z);
+      glVertex3f(2, 2, z);
+      glVertex3f(2, -2, z);
+      glEnd();
+
+      /* Blue background
+       */
+      glBegin(GL_POLYGON);
+      glColor3f(.5,.5,1); 
+      glVertex3f(-1, -1, z);
+      glVertex3f(-1, 1, z);
+      glVertex3f(1, 1, z);
+      glVertex3f(1, -1, z);
+      glEnd();
+
+      /* Triangle
+       */
+      glBegin(GL_TRIANGLES);
+      glColor3f(.8,0,0); 
+      glVertex3f(-0.9, -0.9, z);
+      glColor3f(0,.9,0); 
+      glVertex3f( 0.9, -0.9, z);
+      glColor3f(0,0,.7); 
+      glVertex3f( 0.0,  0.9, z);
+      glEnd();
+      
+      glColor3f(1,1,1);
+
+      glViewport( 0, 0, WinWidth, WinHeight );
+      glMatrixMode( GL_PROJECTION );
+      glLoadIdentity();
+      glOrtho( 0.0, WinWidth, 0.0, WinHeight, -1.0, 1.0 );
+   }
 
    /* might try alignment=4 here for testing */
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -218,6 +269,9 @@ Display( void )
 static void
 Reshape( int width, int height )
 {
+   WinWidth = width;
+   WinHeight = height;
+
    glViewport( 0, 0, width, height );
    glMatrixMode( GL_PROJECTION );
    glLoadIdentity();
@@ -235,6 +289,9 @@ Key( unsigned char key, int x, int y )
    switch (key) {
       case 'b':
          Benchmark = GL_TRUE;
+         break;
+      case 't':
+         Triangle = !Triangle;
          break;
       case 's':
          ScaleAndBias = !ScaleAndBias;

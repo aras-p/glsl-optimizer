@@ -161,11 +161,21 @@ struct intel_context
    struct {
       struct gl_fragment_program *bitmap_fp;
       struct gl_vertex_program *passthrough_vp;
+      struct gl_buffer_object *texcoord_vbo;
 
       struct gl_fragment_program *saved_fp;
       GLboolean saved_fp_enable;
       struct gl_vertex_program *saved_vp;
       GLboolean saved_vp_enable;
+
+      struct gl_fragment_program *tex2d_fp;
+
+      GLboolean saved_texcoord_enable;
+      struct gl_buffer_object *saved_array_vbo, *saved_texcoord_vbo;
+      GLenum saved_texcoord_type;
+      GLsizei saved_texcoord_size, saved_texcoord_stride;
+      const void *saved_texcoord_ptr;
+      int saved_active_texture;
 
       GLint saved_vp_x, saved_vp_y;
       GLsizei saved_vp_width, saved_vp_height;

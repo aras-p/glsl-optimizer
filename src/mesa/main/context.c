@@ -434,7 +434,7 @@ one_time_init( GLcontext *ctx )
       }
 
 #if defined(DEBUG) && defined(__DATE__) && defined(__TIME__)
-      _mesa_debug(ctx, "Mesa %s DEBUG build %s %s",
+      _mesa_debug(ctx, "Mesa %s DEBUG build %s %s\n",
                   MESA_VERSION_STRING, __DATE__, __TIME__);
 #endif
 
@@ -602,6 +602,10 @@ _mesa_init_constants(GLcontext *ctx)
    ASSERT(MAX_NV_VERTEX_PROGRAM_TEMPS <= MAX_PROGRAM_TEMPS);
    ASSERT(MAX_NV_VERTEX_PROGRAM_INPUTS <= VERT_ATTRIB_MAX);
    ASSERT(MAX_NV_VERTEX_PROGRAM_OUTPUTS <= VERT_RESULT_MAX);
+
+   /* check that we don't exceed various 32-bit bitfields */
+   ASSERT(VERT_RESULT_MAX <= 32);
+   ASSERT(FRAG_ATTRIB_MAX <= 32);
 }
 
 
@@ -1005,9 +1009,6 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_query_data(ctx);
 #endif
 
-#if FEATURE_ARB_vertex_buffer_object
-   _mesa_delete_buffer_object(ctx, ctx->Array.NullBufferObj);
-#endif
    _mesa_delete_array_object(ctx, ctx->Array.DefaultArrayObj);
 
    /* free dispatch tables */
@@ -1397,14 +1398,21 @@ _mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare)
 {
    if (ctx && ctxToShare && ctx->Shared && ctxToShare->Shared) {
       struct gl_shared_state *oldSharedState = ctx->Shared;
+      GLint RefCount;
 
       ctx->Shared = ctxToShare->Shared;
+      
+      _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
       ctx->Shared->RefCount++;
+      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
       update_default_objects(ctx);
 
-      oldSharedState->RefCount--;
-      if (oldSharedState->RefCount == 0) {
+      _glthread_LOCK_MUTEX(oldSharedState->Mutex);
+      RefCount = --oldSharedState->RefCount;
+      _glthread_UNLOCK_MUTEX(oldSharedState->Mutex);
+
+      if (RefCount == 0) {
          _mesa_free_shared_state(ctx, oldSharedState);
       }
 
@@ -1497,6 +1505,7 @@ _mesa_Finish(void)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_CURRENT( ctx, 0 );
    if (ctx->Driver.Finish) {
       ctx->Driver.Finish(ctx);
    }
@@ -1518,6 +1527,19 @@ _mesa_Flush(void)
    if (ctx->Driver.Flush) {
       ctx->Driver.Flush(ctx);
    }
+}
+
+
+/**
+ * Set mvp_with_dp4 flag.  If a driver has a preference for DP4 over
+ * MUL/MAD, or vice versa, call this function to register that.
+ * Otherwise we default to MUL/MAD.
+ */
+void
+_mesa_set_mvp_with_dp4( GLcontext *ctx,
+                        GLboolean flag )
+{
+   ctx->mvp_with_dp4 = flag;
 }
 
 

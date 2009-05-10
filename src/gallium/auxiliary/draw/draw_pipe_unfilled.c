@@ -184,6 +184,7 @@ struct draw_stage *draw_unfilled_stage( struct draw_context *draw )
       goto fail;
 
    unfilled->stage.draw = draw;
+   unfilled->stage.name = "unfilled";
    unfilled->stage.next = NULL;
    unfilled->stage.tmp = NULL;
    unfilled->stage.point = draw_pipe_passthrough_point;

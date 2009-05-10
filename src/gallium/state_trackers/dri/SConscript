@@ -1,0 +1,23 @@
+#######################################################################
+# SConscript for dri state_tracker
+
+Import('*')
+
+if env['dri']:
+
+    env = env.Clone()
+
+    env.Append(CPPPATH = [
+        '#/src/mesa',
+	'#/src/mesa/drivers/dri/common',
+    ])
+
+    st_dri = env.ConvenienceLibrary(
+	target = 'st_dri',
+	source = [ 'dri_context.c',
+		'dri_drawable.c',
+		'dri_extensions.c',
+		'dri_screen.c',
+		]
+    )
+    Export('st_dri')

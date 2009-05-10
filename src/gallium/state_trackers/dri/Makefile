@@ -1,7 +1,7 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-LIBNAME = dri2drm
+LIBNAME = dridrm
 
 LIBRARY_INCLUDES = \
 	-I$(TOP)/include \

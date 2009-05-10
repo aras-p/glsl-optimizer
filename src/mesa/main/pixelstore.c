@@ -245,7 +245,8 @@ _mesa_init_pixelstore( GLcontext *ctx )
    ctx->Pack.ClientStorage = GL_FALSE;
    ctx->Pack.Invert = GL_FALSE;
 #if FEATURE_EXT_pixel_buffer_object
-   ctx->Pack.BufferObj = ctx->Array.NullBufferObj;
+   _mesa_reference_buffer_object(ctx, &ctx->Pack.BufferObj,
+                                 ctx->Shared->NullBufferObj);
 #endif
    ctx->Unpack.Alignment = 4;
    ctx->Unpack.RowLength = 0;
@@ -258,7 +259,8 @@ _mesa_init_pixelstore( GLcontext *ctx )
    ctx->Unpack.ClientStorage = GL_FALSE;
    ctx->Unpack.Invert = GL_FALSE;
 #if FEATURE_EXT_pixel_buffer_object
-   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
+   _mesa_reference_buffer_object(ctx, &ctx->Unpack.BufferObj,
+                                 ctx->Shared->NullBufferObj);
 #endif
 
    /*
@@ -278,6 +280,7 @@ _mesa_init_pixelstore( GLcontext *ctx )
    ctx->DefaultPacking.ClientStorage = GL_FALSE;
    ctx->DefaultPacking.Invert = GL_FALSE;
 #if FEATURE_EXT_pixel_buffer_object
-   ctx->DefaultPacking.BufferObj = ctx->Array.NullBufferObj;
+   _mesa_reference_buffer_object(ctx, &ctx->DefaultPacking.BufferObj,
+                                 ctx->Shared->NullBufferObj);
 #endif
 }
