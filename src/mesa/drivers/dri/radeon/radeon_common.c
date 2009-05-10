@@ -678,6 +678,7 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 		if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
 			rrbColor = radeon_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
 			radeon->front_cliprects = GL_TRUE;
+			radeon->front_buffer_dirty = GL_TRUE;
 		} else {
 			rrbColor = radeon_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
 			radeon->front_cliprects = GL_FALSE;
@@ -793,6 +794,24 @@ void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
 	if (RADEON_DEBUG & DEBUG_DRI)
 		fprintf(stderr, "%s %s\n", __FUNCTION__,
 			_mesa_lookup_enum_by_nr( mode ));
+
+	if (ctx->DrawBuffer->Name == 0) {
+		radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+
+		const GLboolean was_front_buffer_rendering =
+			radeon->is_front_buffer_rendering;
+
+		radeon->is_front_buffer_rendering = (mode == GL_FRONT_LEFT) ||
+                                            (mode == GL_FRONT);
+
+      /* If we weren't front-buffer rendering before but we are now, make sure
+       * that the front-buffer has actually been allocated.
+       */
+		if (!was_front_buffer_rendering && radeon->is_front_buffer_rendering) {
+			radeon_update_renderbuffers(radeon->dri.context,
+				radeon->dri.context->driDrawablePriv);
+      }
+	}
 	
 	radeon_draw_buffer(ctx, ctx->DrawBuffer);
 }
@@ -1046,6 +1065,26 @@ void radeonFlush(GLcontext *ctx)
    
 	if (radeon->cmdbuf.cs->cdw)
 		rcommonFlushCmdBuf(radeon, __FUNCTION__);
+
+	if ((ctx->DrawBuffer->Name == 0) && radeon->front_buffer_dirty) {
+		__DRIscreen *const screen = radeon->radeonScreen->driScreen;
+
+		if (screen->dri2.loader && (screen->dri2.loader->base.version >= 2)
+			&& (screen->dri2.loader->flushFrontBuffer != NULL)) {
+			(*screen->dri2.loader->flushFrontBuffer)(radeon->dri.drawable,
+						  radeon->dri.drawable->loaderPrivate);
+
+			/* Only clear the dirty bit if front-buffer rendering is no longer
+			 * enabled.  This is done so that the dirty bit can only be set in
+			 * glDrawBuffer.  Otherwise the dirty bit would have to be set at
+			 * each of N places that do rendering.  This has worse performances,
+			 * but it is much easier to get correct.
+			 */
+			if (radeon->is_front_buffer_rendering) {
+				radeon->front_buffer_dirty = GL_FALSE;
+			}
+		}
+	}
 }
 
 /* Make sure all commands have been sent to the hardware and have
