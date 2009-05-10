@@ -46,6 +46,7 @@ struct intel_buffer_object
    struct intel_region *region; /* Is there a zero-copy texture
                                    associated with this (pixel)
                                    buffer object? */
+   GLboolean mapped_gtt;
 };
 
 

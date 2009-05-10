@@ -214,6 +214,7 @@ intel_bufferobj_map(GLcontext * ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
    GLboolean read_only = (access == GL_READ_ONLY_ARB);
+   GLboolean write_only = (access == GL_WRITE_ONLY_ARB);
 
    assert(intel_obj);
 
@@ -225,7 +226,14 @@ intel_bufferobj_map(GLcontext * ctx,
       return NULL;
    }
 
-   dri_bo_map(intel_obj->buffer, !read_only);
+   if (write_only && intel->intelScreen->kernel_exec_fencing) {
+      drm_intel_gem_bo_map_gtt(intel_obj->buffer);
+      intel_obj->mapped_gtt = GL_TRUE;
+   } else {
+      drm_intel_bo_map(intel_obj->buffer, !read_only);
+      intel_obj->mapped_gtt = GL_FALSE;
+   }
+
    obj->Pointer = intel_obj->buffer->virtual;
    return obj->Pointer;
 }
@@ -243,7 +251,11 @@ intel_bufferobj_unmap(GLcontext * ctx,
    assert(intel_obj);
    if (intel_obj->buffer != NULL) {
       assert(obj->Pointer);
-      dri_bo_unmap(intel_obj->buffer);
+      if (intel_obj->mapped_gtt) {
+	 drm_intel_gem_bo_unmap_gtt(intel_obj->buffer);
+      } else {
+	 drm_intel_bo_unmap(intel_obj->buffer);
+      }
       obj->Pointer = NULL;
    }
    return GL_TRUE;
