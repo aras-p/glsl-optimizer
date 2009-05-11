@@ -152,44 +152,62 @@ static void radeon_r300_flush_cs(struct r300_winsys* winsys)
 /* Helper function to do the ioctls needed for setup and init. */
 static void do_ioctls(struct r300_winsys* winsys, int fd)
 {
-    struct drm_radeon_gem_info info = {0};
+    struct drm_radeon_gem_info gem_info = {0};
     drm_radeon_getparam_t gp = {0};
+    struct drm_radeon_info info = {0};
     int target = 0;
     int retval;
 
+    info.value = &target;
     gp.value = &target;
 
     /* First, get the number of pixel pipes */
-    gp.param = RADEON_PARAM_NUM_GB_PIPES;
-    retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
+    info.request = RADEON_INFO_NUM_GB_PIPES;
+    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
-        fprintf(stderr, "%s: Failed to get GB pipe count, error number %d\n",
+        fprintf(stderr, "%s: New ioctl for GB pipe count failed "
+                "(error number %d), trying classic ioctl...\n",
                 __FUNCTION__, retval);
-        exit(1);
+        gp.param = RADEON_PARAM_NUM_GB_PIPES;
+        retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp,
+                sizeof(gp));
+        if (retval) {
+            fprintf(stderr, "%s: Failed to get GB pipe count, "
+                    "error number %d\n", __FUNCTION__, retval);
+            exit(1);
+        }
     }
     winsys->gb_pipes = target;
 
     /* Then, get PCI ID */
-    gp.param = RADEON_PARAM_DEVICE_ID;
-    retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
+    info.request = RADEON_INFO_DEVICE_ID;
+    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
-        fprintf(stderr, "%s: Failed to get PCI ID, error number %d\n",
+        fprintf(stderr, "%s: New ioctl for PCI ID failed "
+                "(error number %d), trying classic ioctl...\n",
                 __FUNCTION__, retval);
-        exit(1);
+        gp.param = RADEON_PARAM_DEVICE_ID;
+        retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp,
+                sizeof(gp));
+        if (retval) {
+            fprintf(stderr, "%s: Failed to get PCI ID, "
+                    "error number %d\n", __FUNCTION__, retval);
+            exit(1);
+        }
     }
     winsys->pci_id = target;
 
     /* Finally, retrieve MM info */
     retval = drmCommandWriteRead(fd, DRM_RADEON_GEM_INFO,
-            &info, sizeof(info));
+            &gem_info, sizeof(gem_info));
     if (retval) {
         fprintf(stderr, "%s: Failed to get MM info, error number %d\n",
                 __FUNCTION__, retval);
         exit(1);
     }
-    winsys->gart_size = info.gart_size;
+    winsys->gart_size = gem_info.gart_size;
     /* XXX */
-    winsys->vram_size = info.vram_visible;
+    winsys->vram_size = gem_info.vram_visible;
 }
 
 struct r300_winsys*
