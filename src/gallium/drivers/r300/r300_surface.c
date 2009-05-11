@@ -225,6 +225,8 @@ static void r300_surface_copy(struct pipe_context* pipe,
                 srcx, srcy, w, h);
     }
 
+    r300_surface_setup(r300, desttex, x, y, w, h);
+
     r300_emit_sampler(r300, &r300_sampler_copy_state, 0);
     r300_emit_texture(r300, srctex, 0);
     r300_flush_textures(r300);
