@@ -343,7 +343,10 @@ _mesa_opcode_string(gl_inst_opcode opcode)
 {
    if (opcode < MAX_OPCODE)
       return InstInfo[opcode].Name;
-   else
-      return "OP?";
+   else {
+      static char s[20];
+      _mesa_snprintf(s, sizeof(s), "OP%u", opcode);
+      return s;
+   }
 }
 
