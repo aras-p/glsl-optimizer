@@ -23,19 +23,17 @@
 
 #include "r300_surface.h"
 
-static void r300_surface_setup(struct pipe_context* pipe,
-                               struct pipe_surface* dest,
+static void r300_surface_setup(struct r300_context* r300,
+                               struct r300_texture* dest,
                                unsigned x, unsigned y,
                                unsigned w, unsigned h)
 {
-    struct r300_context* r300 = r300_context(pipe);
-    struct r300_capabilities* caps = r300_screen(pipe->screen)->caps;
-    struct r300_texture* tex = (struct r300_texture*)dest->texture;
-    unsigned pixpitch = tex->stride / tex->tex.block.size;
+    struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
+    unsigned pixpitch = dest->stride / dest->tex.block.size;
     CS_LOCALS(r300);
 
     /* Make sure our target BO is okay. */
-    r300->winsys->add_buffer(r300->winsys, tex->buffer,
+    r300->winsys->add_buffer(r300->winsys, dest->buffer,
             0, RADEON_GEM_DOMAIN_VRAM);
     if (r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
@@ -71,9 +69,9 @@ static void r300_surface_setup(struct pipe_context* pipe,
 
     /* Setup colorbuffer. */
     OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0, 1);
-    OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+    OUT_CS_RELOC(dest->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
     OUT_CS_REG(R300_RB3D_COLORPITCH0, pixpitch |
-        r300_translate_colorformat(tex->tex.format));
+        r300_translate_colorformat(dest->tex.format));
     OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0xf);
 
     END_CS;
@@ -110,7 +108,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         return;
     }
 
-    r300_surface_setup(r300, dest, x, y, w, h);
+    r300_surface_setup(r300, tex, x, y, w, h);
 
     /* Vertex shader setup */
     if (caps->has_tcl) {
