@@ -98,8 +98,6 @@ update_framebuffer_state( struct st_context *st )
    struct st_renderbuffer *strb;
    GLuint i;
 
-   memset(framebuffer, 0, sizeof(*framebuffer));
-
    framebuffer->width = fb->Width;
    framebuffer->height = fb->Height;
 
@@ -120,12 +118,19 @@ update_framebuffer_state( struct st_context *st )
          }
 
          if (strb->surface) {
-            framebuffer->cbufs[framebuffer->nr_cbufs] = strb->surface;
+            pipe_surface_reference(&framebuffer->cbufs[framebuffer->nr_cbufs],
+                                   strb->surface);
             framebuffer->nr_cbufs++;
          }
       }
    }
+   for (i = framebuffer->nr_cbufs; i < PIPE_MAX_COLOR_BUFS; i++) {
+      pipe_surface_reference(&framebuffer->cbufs[i], NULL);
+   }
 
+   /*
+    * Depth/Stencil renderbuffer/surface.
+    */
    strb = st_renderbuffer(fb->Attachment[BUFFER_DEPTH].Renderbuffer);
    if (strb) {
       strb = st_renderbuffer(strb->Base.Wrapped);
@@ -133,15 +138,14 @@ update_framebuffer_state( struct st_context *st )
          /* rendering to a GL texture, may have to update surface */
          update_renderbuffer_surface(st, strb);
       }
-
-      framebuffer->zsbuf = strb->surface;
+      pipe_surface_reference(&framebuffer->zsbuf, strb->surface);
    }
    else {
       strb = st_renderbuffer(fb->Attachment[BUFFER_STENCIL].Renderbuffer);
       if (strb) {
          strb = st_renderbuffer(strb->Base.Wrapped);
          assert(strb->surface);
-         framebuffer->zsbuf = strb->surface;
+         pipe_surface_reference(&framebuffer->zsbuf, strb->surface);
       }
    }
 
