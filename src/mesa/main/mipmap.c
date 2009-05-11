@@ -1478,9 +1478,12 @@ next_mipmap_level_size(GLenum target, GLint border,
 
 
 /**
- * For GL_SGIX_generate_mipmap:
- * Generate a complete set of mipmaps from texObj's base-level image.
+ * Automatic mipmap generation.
+ * This is the fallback/default function for ctx->Driver.GenerateMipmap().
+ * Generate a complete set of mipmaps from texObj's BaseLevel image.
  * Stop at texObj's MaxLevel or when we get to the 1x1 texture.
+ * For cube maps, target will be one of
+ * GL_TEXTURE_CUBE_MAP_POSITIVE/NEGATIVE_X/Y/Z; never GL_TEXTURE_CUBE_MAP.
  */
 void
 _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
