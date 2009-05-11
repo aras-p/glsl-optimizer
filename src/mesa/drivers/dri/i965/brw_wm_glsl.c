@@ -509,6 +509,14 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
     const GLuint nr = 1;
     const GLuint component = GET_SWZ(src->Swizzle, channel);
 
+    /* Extended swizzle terms */
+    if (component == SWIZZLE_ZERO) {
+       return brw_imm_f(0.0F);
+    }
+    else if (component == SWIZZLE_ONE) {
+       return brw_imm_f(1.0F);
+    }
+
     if (c->fp->use_const_buffer &&
         (src->File == PROGRAM_STATE_VAR ||
          src->File == PROGRAM_CONSTANT ||
