@@ -428,7 +428,7 @@ void
 radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 {
 	unsigned int attachments[10];
-	__DRIbuffer *buffers;
+	__DRIbuffer *buffers = NULL;
 	__DRIscreen *screen;
 	struct radeon_renderbuffer *rb;
 	int i, count;
@@ -444,7 +444,8 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	screen = context->driScreenPriv;
 	radeon = (radeonContextPtr) context->driverPrivate;
 
-	if ((screen->dri2.loader->base.version > 2)
+	if (screen->dri2.loader
+	   && (screen->dri2.loader->base.version > 2)
 	   && (screen->dri2.loader->getBuffersWithFormat != NULL)) {
 		struct radeon_renderbuffer *depth_rb;
 		struct radeon_renderbuffer *stencil_rb;
@@ -481,7 +482,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 								attachments, i / 2,
 								&count,
 								drawable->loaderPrivate);
-	} else {
+	} else if (screen->dri2.loader) {
 		i = 0;
 		if (draw->color_rb[0])
 			attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
