@@ -116,6 +116,10 @@ const struct {
  { C, 0, 1, 1, 1 } 
 };
 
+/**
+ * \param line_aa  AA_NEVER, AA_ALWAYS or AA_SOMETIMES
+ * \param lookup  bitmask of IZ_* flags
+ */
 void brw_wm_lookup_iz( GLuint line_aa,
 		       GLuint lookup,
 		       struct brw_wm_prog_key *key )
