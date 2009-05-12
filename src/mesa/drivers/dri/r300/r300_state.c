@@ -2221,7 +2221,7 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 			r300ResetHwState(rmesa);
 
 			r300UpdateStateParameters(ctx, _NEW_PROGRAM |
-                                                  _NEW_PROGRAM_CONSTANTS);
+                                      _NEW_PROGRAM_CONSTANTS);
 			return;
 		}
 	}
@@ -2441,7 +2441,7 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 	_vbo_InvalidateState(ctx, new_state);
 	_tnl_InvalidateState(ctx, new_state);
 
-	if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
+	if (new_state & _NEW_BUFFERS) {
 		_mesa_update_framebuffer(ctx);
 		/* this updates the DrawBuffer's Width/Height if it's a FBO */
 		_mesa_update_draw_buffer_bounds(ctx);

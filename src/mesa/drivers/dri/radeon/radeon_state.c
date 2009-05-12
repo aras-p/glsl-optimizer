@@ -2094,7 +2094,7 @@ GLboolean radeonValidateState( GLcontext *ctx )
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLuint new_state = rmesa->radeon.NewGLState;
 
-   if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
+   if (new_state & _NEW_BUFFERS) {
      _mesa_update_framebuffer(ctx);
      /* this updates the DrawBuffer's Width/Height if it's a FBO */
      _mesa_update_draw_buffer_bounds(ctx);
