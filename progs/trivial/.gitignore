@@ -19,6 +19,7 @@ fs-tri
 line
 line-clip
 line-cull
+line-flat
 line-smooth
 line-stipple-wide
 line-userclip
@@ -130,6 +131,7 @@ tristrip-flat
 vbo-drawarrays
 vbo-drawelements
 vbo-drawrange
+vbo-noninterleaved
 vp-array
 vp-array-int
 vp-clip
@@ -139,6 +141,7 @@ vp-tri-cb
 vp-tri-cb-pos
 vp-tri-cb-tex
 vp-tri-imm
+vp-tri-invariant
 vp-tri-swap
 vp-tri-tex
 vp-unfilled
