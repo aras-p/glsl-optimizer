@@ -814,27 +814,26 @@ static void emit_fb_write(struct brw_wm_compile *c,
     }
 
     if (c->key.dest_depth_reg) {
-        GLuint comp = c->key.dest_depth_reg / 2;
-        GLuint off = c->key.dest_depth_reg % 2;
+        const GLuint comp = c->key.dest_depth_reg / 2;
+        const GLuint off = c->key.dest_depth_reg % 2;
 
-        assert(comp == 1);
-        assert(off == 0);
-#if 0
-        /* XXX do we need this code?   comp always 1, off always 0, it seems */
         if (off != 0) {
+            /* XXX this code needs review/testing */
+            struct brw_reg arg1_0 = get_src_reg(c, inst, 1, comp);
+            struct brw_reg arg1_1 = get_src_reg(c, inst, 1, comp+1);
+
             brw_push_insn_state(p);
             brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 
-            brw_MOV(p, brw_message_reg(nr), offset(arg1[comp],1));
+            brw_MOV(p, brw_message_reg(nr), offset(arg1_0, 1));
             /* 2nd half? */
-            brw_MOV(p, brw_message_reg(nr+1), arg1[comp+1]);
+            brw_MOV(p, brw_message_reg(nr+1), arg1_1);
             brw_pop_insn_state(p);
         }
         else
-#endif
         {
-           struct brw_reg src =  get_src_reg(c, inst, 1, 1);
-           brw_MOV(p, brw_message_reg(nr), src);
+            struct brw_reg src =  get_src_reg(c, inst, 1, 1);
+            brw_MOV(p, brw_message_reg(nr), src);
         }
         nr += 2;
    }
