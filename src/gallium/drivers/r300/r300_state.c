@@ -318,7 +318,7 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
 /* Delete fragment shader state. */
 static void r300_delete_fs_state(struct pipe_context* pipe, void* shader)
 {
-    struct r3xx_fragment_shader* fs = (struct r3xx_fragment_shader*)shader
+    struct r3xx_fragment_shader* fs = (struct r3xx_fragment_shader*)shader;
     FREE(fs->state.tokens);
     FREE(shader);
 }
