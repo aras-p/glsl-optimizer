@@ -281,7 +281,7 @@ void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 
 		r300_fp->translated = GL_TRUE;
 
-		r300UpdateStateParameters(ctx, _NEW_PROGRAM);
+		r300UpdateStateParameters(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
 
 		if (r300_fp->error || (RADEON_DEBUG & DEBUG_PIXEL))
 			r300->vtbl.FragmentProgramDump(&r300_fp->code);
