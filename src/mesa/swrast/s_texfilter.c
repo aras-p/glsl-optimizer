@@ -1329,7 +1329,7 @@ static void
 opt_sample_rgb_2d(GLcontext *ctx,
                   const struct gl_texture_object *tObj,
                   GLuint n, const GLfloat texcoords[][4],
-                  const GLfloat lambda[], GLchan rgba[][4])
+                  const GLfloat lambda[], GLfloat rgba[][4])
 {
    const struct gl_texture_image *img = tObj->Image[0][tObj->BaseLevel];
    const GLfloat width = (GLfloat) img->Width;
@@ -1351,9 +1351,9 @@ opt_sample_rgb_2d(GLcontext *ctx,
       GLint j = IFLOOR(texcoords[k][1] * height) & rowMask;
       GLint pos = (j << shift) | i;
       GLchan *texel = ((GLchan *) img->Data) + 3*pos;
-      rgba[k][RCOMP] = texel[0];
-      rgba[k][GCOMP] = texel[1];
-      rgba[k][BCOMP] = texel[2];
+      rgba[k][RCOMP] = CHAN_TO_FLOAT(texel[0]);
+      rgba[k][GCOMP] = CHAN_TO_FLOAT(texel[1]);
+      rgba[k][BCOMP] = CHAN_TO_FLOAT(texel[2]);
    }
 }
 
@@ -1370,7 +1370,7 @@ static void
 opt_sample_rgba_2d(GLcontext *ctx,
                    const struct gl_texture_object *tObj,
                    GLuint n, const GLfloat texcoords[][4],
-                   const GLfloat lambda[], GLchan rgba[][4])
+                   const GLfloat lambda[], GLfloat rgba[][4])
 {
    const struct gl_texture_image *img = tObj->Image[0][tObj->BaseLevel];
    const GLfloat width = (GLfloat) img->Width;
@@ -1392,7 +1392,10 @@ opt_sample_rgba_2d(GLcontext *ctx,
       const GLint row = IFLOOR(texcoords[i][1] * height) & rowMask;
       const GLint pos = (row << shift) | col;
       const GLchan *texel = ((GLchan *) img->Data) + (pos << 2);    /* pos*4 */
-      COPY_4V(rgba[i], texel);
+      rgba[i][RCOMP] = CHAN_TO_FLOAT(texel[0]);
+      rgba[i][GCOMP] = CHAN_TO_FLOAT(texel[1]);
+      rgba[i][BCOMP] = CHAN_TO_FLOAT(texel[2]);
+      rgba[i][ACOMP] = CHAN_TO_FLOAT(texel[3]);
    }
 }
 
@@ -1425,7 +1428,6 @@ sample_lambda_2d(GLcontext *ctx,
       case GL_NEAREST:
          if (repeatNoBorderPOT) {
             switch (tImg->TexFormat->MesaFormat) {
-#if 0
             case MESA_FORMAT_RGB:
                opt_sample_rgb_2d(ctx, tObj, m, texcoords + minStart,
                                  NULL, rgba + minStart);
@@ -1434,7 +1436,6 @@ sample_lambda_2d(GLcontext *ctx,
 	       opt_sample_rgba_2d(ctx, tObj, m, texcoords + minStart,
                                   NULL, rgba + minStart);
                break;
-#endif
             default:
                sample_nearest_2d(ctx, tObj, m, texcoords + minStart,
                                  NULL, rgba + minStart );
@@ -1484,7 +1485,6 @@ sample_lambda_2d(GLcontext *ctx,
       case GL_NEAREST:
          if (repeatNoBorderPOT) {
             switch (tImg->TexFormat->MesaFormat) {
-#if 0
             case MESA_FORMAT_RGB:
                opt_sample_rgb_2d(ctx, tObj, m, texcoords + magStart,
                                  NULL, rgba + magStart);
@@ -1493,7 +1493,6 @@ sample_lambda_2d(GLcontext *ctx,
 	       opt_sample_rgba_2d(ctx, tObj, m, texcoords + magStart,
                                   NULL, rgba + magStart);
                break;
-#endif
             default:
                sample_nearest_2d(ctx, tObj, m, texcoords + magStart,
                                  NULL, rgba + magStart );
@@ -3180,7 +3179,6 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
          }
          else {
             /* check for a few optimized cases */
-#if 0
             const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
             ASSERT(t->MinFilter == GL_NEAREST);
             if (t->WrapS == GL_REPEAT &&
@@ -3197,10 +3195,6 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
                      img->TexFormat->MesaFormat == MESA_FORMAT_RGBA) {
                return &opt_sample_rgba_2d;
             }
-#else
-            if (0)
-               ;
-#endif
             else {
                return &sample_nearest_2d;
             }
