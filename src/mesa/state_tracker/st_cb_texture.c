@@ -673,7 +673,7 @@ st_TexImage(GLcontext * ctx,
                                    PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
       if (compress_with_blit(ctx, target, level, 0, 0, 0, width, height, depth,
                              format, type, pixels, unpack, texImage)) {
-         return;
+         goto done;
       }
    }
 
@@ -750,6 +750,7 @@ st_TexImage(GLcontext * ctx,
 
    _mesa_unmap_teximage_pbo(ctx, unpack);
 
+done:
    if (stImage->pt && texImage->Data) {
       st_texture_image_unmap(ctx->st, stImage);
       texImage->Data = NULL;
@@ -1061,7 +1062,7 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
                              xoffset, yoffset, zoffset,
                              width, height, depth,
                              format, type, pixels, packing, texImage)) {
-         return;
+         goto done;
       }
    }
 
@@ -1110,15 +1111,16 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
       }
    }
 
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      ctx->Driver.GenerateMipmap(ctx, target, texObj);
-   }
-
    _mesa_unmap_teximage_pbo(ctx, packing);
 
+done:
    if (stImage->pt) {
       st_texture_image_unmap(ctx->st, stImage);
       texImage->Data = NULL;
+   }
+
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
 }
 
