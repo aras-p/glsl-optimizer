@@ -269,7 +269,7 @@ void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 			fflush(stdout);
 		}
 
-		if (!r300->vtbl.FragmentProgramEmit(&compiler))
+		if (!r300->vtbl.BuildFragmentProgramHwCode(&compiler))
 			r300_fp->error = GL_TRUE;
 
 		/* Subtle: Rescue any parameters that have been added during transformations */

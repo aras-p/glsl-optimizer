@@ -102,7 +102,7 @@
 
 #endif
 
-extern GLboolean r300FragmentProgramEmit(struct r300_fragment_program_compiler *compiler);
+extern GLboolean r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler);
 
 extern void r300FragmentProgramDump(union rX00_fragment_program_code *c);
 

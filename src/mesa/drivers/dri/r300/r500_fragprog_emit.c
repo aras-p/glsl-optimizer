@@ -299,7 +299,7 @@ static const struct radeon_pair_handler pair_handler = {
 	.MaxHwTemps = 128
 };
 
-GLboolean r500FragmentProgramEmit(struct r300_fragment_program_compiler *compiler)
+GLboolean r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler)
 {
 	struct r500_fragment_program_code *code = &compiler->code->r500;
 

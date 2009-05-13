@@ -325,7 +325,7 @@ static const struct radeon_pair_handler pair_handler = {
  * Final compilation step: Turn the intermediate radeon_program into
  * machine-readable instructions.
  */
-GLboolean r300FragmentProgramEmit(struct r300_fragment_program_compiler *compiler)
+GLboolean r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler)
 {
 	struct r300_fragment_program_code *code = &compiler->code->r300;
 
