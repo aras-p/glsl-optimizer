@@ -57,13 +57,19 @@ static struct { GLenum func; const char *str; } funcs[] =
 
 static int curFunc = 0;
 static double clearVal = 1.0;
-
+static float minZ = 0.0;
+static float maxZ = 1.0;
 
 static void usage(void)
 {
-   printf("t - toggle rendering order of triangles\n");
-   printf("c - toggle Z clear value between 0, 1\n");
-   printf("f - cycle through depth test functions\n");
+   printf("t   - toggle rendering order of triangles\n");
+   printf("c   - toggle Z clear value between 0, 1\n");
+   printf("f   - cycle through depth test functions\n");
+   printf("n/N - decrease/increase depthrange minZ\n");
+   printf("x/X - decrease/increase depthrange maxZ\n");
+   printf("spc - reset\n");
+   printf("z   - set to reverse-direction (ztrick) mode\n");
+   fflush(stdout);
 }
 
 
@@ -97,9 +103,11 @@ static void drawRightTriangle(void)
 
 void display(void)
 {
-   printf("GL_CLEAR_DEPTH = %f  GL_DEPTH_FUNC = %s\n",
-          clearVal, funcs[curFunc].str);
+   printf("GL_CLEAR_DEPTH = %.2f,  GL_DEPTH_FUNC = %s,  DepthRange(%.1f, %.1f)\n",
+          clearVal, funcs[curFunc].str, minZ, maxZ);
+   fflush(stdout);
    glClearDepth(clearVal);
+   glDepthRange(minZ, maxZ);
    glDepthFunc(funcs[curFunc].func);
 
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -131,27 +139,49 @@ void reshape(int w, int h)
 void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
+      case 'n':
+         minZ -= .1;
+         break;
+      case 'N':
+         minZ += .1;
+         break;
+      case 'x':
+         maxZ -= .1;
+         break;
+      case 'X':
+         maxZ += .1;
+         break;
       case 'c':
       case 'C':
          clearVal = 1.0 - clearVal;
-         glutPostRedisplay();	
          break;
       case 'f':
       case 'F':
          curFunc = (curFunc + 1) % NUM_FUNCS;
-         glutPostRedisplay();	
          break;
       case 't':
       case 'T':
          leftFirst = !leftFirst;
-         glutPostRedisplay();	
+         break;
+      case ' ':
+         curFunc = 0;
+         clearVal = 1.0;
+         minZ = 0.0;
+         maxZ = 1.0;
+         break;
+      case 'z':
+         curFunc = 2;
+         clearVal = 0.0;
+         minZ = 1.0;
+         maxZ = 0.0;
          break;
       case 27:  /*  Escape key  */
          exit(0);
          break;
       default:
-         break;
+         return;
    }
+   glutPostRedisplay();	
 }
 
 /*  Main Loop
