@@ -460,6 +460,7 @@ static void r300SetEarlyZState(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	GLuint topZ = R300_ZTOP_ENABLE;
+	GLuint w_fmt, fgdepthsrc;
 
 	if (ctx->Color.AlphaEnabled && ctx->Color.AlphaFunc != GL_ALWAYS)
 		topZ = R300_ZTOP_DISABLE;
@@ -475,6 +476,26 @@ static void r300SetEarlyZState(GLcontext * ctx)
 		 */
 		R300_STATECHANGE(r300, zstencil_format);
 		r300->hw.zstencil_format.cmd[2] = topZ;
+	}
+
+	/* w_fmt value is set to get best performance
+	* see p.130 R5xx 3D acceleration guide v1.3 */
+	if (current_fragment_program_writes_depth(ctx)) {
+		fgdepthsrc = R300_FG_DEPTH_SRC_SHADER;
+		w_fmt = R300_W_FMT_W24 | R300_W_SRC_US;
+	} else {
+		fgdepthsrc = R300_FG_DEPTH_SRC_SCAN;
+		w_fmt = R300_W_FMT_W0 | R300_W_SRC_US;
+	}
+
+	if (w_fmt != r300->hw.us_out_fmt.cmd[5]) {
+		R300_STATECHANGE(r300, us_out_fmt);
+		r300->hw.us_out_fmt.cmd[5] = w_fmt;
+	}
+
+	if (fgdepthsrc != r300->hw.fg_depth_src.cmd[1]) {
+		R300_STATECHANGE(r300, fg_depth_src);
+		r300->hw.fg_depth_src.cmd[1] = fgdepthsrc;
 	}
 }
 
@@ -2404,27 +2425,6 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 		return;
 
 	r300SetEarlyZState(ctx);
-
-	/* w_fmt value is set to get best performance
-	 * see p.130 R5xx 3D acceleration guide v1.3 */
-	GLuint w_fmt, fgdepthsrc;
-	if (current_fragment_program_writes_depth(ctx)) {
-		fgdepthsrc = R300_FG_DEPTH_SRC_SHADER;
-		w_fmt = R300_W_FMT_W24 | R300_W_SRC_US;
-	} else {
-		fgdepthsrc = R300_FG_DEPTH_SRC_SCAN;
-		w_fmt = R300_W_FMT_W0 | R300_W_SRC_US;
-	}
-
-	if (w_fmt != rmesa->hw.us_out_fmt.cmd[5]) {
-		R300_STATECHANGE(rmesa, us_out_fmt);
-		rmesa->hw.us_out_fmt.cmd[5] = w_fmt;
-	}
-
-	if (fgdepthsrc != rmesa->hw.fg_depth_src.cmd[1]) {
-		R300_STATECHANGE(rmesa, fg_depth_src);
-		rmesa->hw.fg_depth_src.cmd[1] = fgdepthsrc;
-	}
 
 	r300SetupTextures(ctx);
 
