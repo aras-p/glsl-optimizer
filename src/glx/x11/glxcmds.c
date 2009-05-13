@@ -1319,28 +1319,29 @@ PUBLIC XVisualInfo *glXChooseVisual(Display *dpy, int screen, int *attribList)
     ** Eliminate visuals that don't meet minimum requirements
     ** Compute a score for those that do
     ** Remember which visual, if any, got the highest score
+    ** If no visual is acceptable, return None
+    ** Otherwise, create an XVisualInfo list with just the selected X visual
+    ** and return this.
     */
     for ( modes = psc->visuals ; modes != NULL ; modes = modes->next ) {
 	if ( fbconfigs_compatible( & test_config, modes )
 	     && ((best_config == NULL)
 		 || (fbconfig_compare( (const __GLcontextModes * const * const)&modes, &best_config ) < 0)) ) {
-	    best_config = modes;
+	    XVisualInfo visualTemplate;
+	    XVisualInfo *newList;
+	    int  i;
+
+	    visualTemplate.screen = screen;
+	    visualTemplate.visualid = modes->visualID;
+	    newList = XGetVisualInfo( dpy, VisualScreenMask|VisualIDMask,
+				      &visualTemplate, &i );
+
+	    if (newList) {
+		Xfree(visualList);
+		visualList = newList;
+		best_config = modes;
+	    }
 	}
-    }
-
-    /*
-    ** If no visual is acceptable, return None
-    ** Otherwise, create an XVisualInfo list with just the selected X visual
-    ** and return this.
-    */
-    if (best_config != NULL) {
-	XVisualInfo visualTemplate;
-	int  i;
-
-	visualTemplate.screen = screen;
-	visualTemplate.visualid = best_config->visualID;
-	visualList = XGetVisualInfo( dpy, VisualScreenMask|VisualIDMask,
-				     &visualTemplate, &i );
     }
 
     return visualList;

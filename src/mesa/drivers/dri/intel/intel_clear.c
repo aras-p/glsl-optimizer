@@ -30,6 +30,7 @@
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/mtypes.h"
+#include "main/arrayobj.h"
 #include "main/attrib.h"
 #include "main/blend.h"
 #include "main/bufferobj.h"
@@ -66,6 +67,45 @@
 			      BUFFER_BIT_COLOR6 |			\
 			      BUFFER_BIT_COLOR7)
 
+
+/**
+ * Per-context one-time init of things for intl_clear_tris().
+ * Basically set up a private array object for vertex/color arrays.
+ */
+static void
+init_clear(GLcontext *ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct gl_array_object *arraySave = NULL;
+   const GLuint arrayBuffer = ctx->Array.ArrayBufferObj->Name;
+   const GLuint elementBuffer = ctx->Array.ElementArrayBufferObj->Name;
+
+   /* create new array object */
+   intel->clear.arrayObj = _mesa_new_array_object(ctx, ~0);
+
+   /* save current array object, bind new one */
+   _mesa_reference_array_object(ctx, &arraySave, ctx->Array.ArrayObj);
+   _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, intel->clear.arrayObj);
+
+   /* one-time setup of vertex arrays (pos, color) */
+   _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+   _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+   _mesa_ColorPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), intel->clear.color);
+   _mesa_VertexPointer(3, GL_FLOAT, 3 * sizeof(GLfloat), intel->clear.vertices);
+   _mesa_Enable(GL_COLOR_ARRAY);
+   _mesa_Enable(GL_VERTEX_ARRAY);
+
+   /* restore original array object */
+   _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, arraySave);
+   _mesa_reference_array_object(ctx, &arraySave, NULL);
+
+   /* restore original buffer objects */
+   _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, arrayBuffer);
+   _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, elementBuffer);
+}
+
+
+
 /**
  * Perform glClear where mask contains only color, depth, and/or stencil.
  *
@@ -78,14 +118,16 @@ void
 intel_clear_tris(GLcontext *ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
-   GLfloat vertices[4][3];
-   GLfloat color[4][4];
    GLfloat dst_z;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    int i;
    GLboolean saved_fp_enable = GL_FALSE, saved_vp_enable = GL_FALSE;
    GLuint saved_shader_program = 0;
    unsigned int saved_active_texture;
+   struct gl_array_object *arraySave = NULL;
+
+   if (!intel->clear.arrayObj)
+      init_clear(ctx);
 
    assert((mask & ~(TRI_CLEAR_COLOR_BITS | BUFFER_BIT_DEPTH |
 		    BUFFER_BIT_STENCIL)) == 0);
@@ -98,7 +140,6 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
 		    GL_STENCIL_BUFFER_BIT |
 		    GL_TRANSFORM_BIT |
 		    GL_CURRENT_BIT);
-   _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
    saved_active_texture = ctx->Texture.CurrentUnit;
 
    /* Disable existing GL state we don't want to apply to a clear. */
@@ -149,18 +190,14 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
       }
    }
 
-#if FEATURE_ARB_vertex_buffer_object
-   _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-   _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-#endif
+   /* save current array object, bind our private one */
+   _mesa_reference_array_object(ctx, &arraySave, ctx->Array.ArrayObj);
+   _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, intel->clear.arrayObj);
 
    intel_meta_set_passthrough_transform(intel);
 
    for (i = 0; i < 4; i++) {
-      color[i][0] = ctx->Color.ClearColor[0];
-      color[i][1] = ctx->Color.ClearColor[1];
-      color[i][2] = ctx->Color.ClearColor[2];
-      color[i][3] = ctx->Color.ClearColor[3];
+      COPY_4FV(intel->clear.color[i], ctx->Color.ClearColor);
    }
 
    /* convert clear Z from [0,1] to NDC coord in [-1,1] */
@@ -169,23 +206,18 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
    /* Prepare the vertices, which are the same regardless of which buffer we're
     * drawing to.
     */
-   vertices[0][0] = fb->_Xmin;
-   vertices[0][1] = fb->_Ymin;
-   vertices[0][2] = dst_z;
-   vertices[1][0] = fb->_Xmax;
-   vertices[1][1] = fb->_Ymin;
-   vertices[1][2] = dst_z;
-   vertices[2][0] = fb->_Xmax;
-   vertices[2][1] = fb->_Ymax;
-   vertices[2][2] = dst_z;
-   vertices[3][0] = fb->_Xmin;
-   vertices[3][1] = fb->_Ymax;
-   vertices[3][2] = dst_z;
-
-   _mesa_ColorPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &color);
-   _mesa_VertexPointer(3, GL_FLOAT, 3 * sizeof(GLfloat), &vertices);
-   _mesa_Enable(GL_COLOR_ARRAY);
-   _mesa_Enable(GL_VERTEX_ARRAY);
+   intel->clear.vertices[0][0] = fb->_Xmin;
+   intel->clear.vertices[0][1] = fb->_Ymin;
+   intel->clear.vertices[0][2] = dst_z;
+   intel->clear.vertices[1][0] = fb->_Xmax;
+   intel->clear.vertices[1][1] = fb->_Ymin;
+   intel->clear.vertices[1][2] = dst_z;
+   intel->clear.vertices[2][0] = fb->_Xmax;
+   intel->clear.vertices[2][1] = fb->_Ymax;
+   intel->clear.vertices[2][2] = dst_z;
+   intel->clear.vertices[3][0] = fb->_Xmin;
+   intel->clear.vertices[3][1] = fb->_Ymax;
+   intel->clear.vertices[3][2] = dst_z;
 
    while (mask != 0) {
       GLuint this_mask = 0;
@@ -246,8 +278,11 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
    if (saved_shader_program)
       _mesa_UseProgramObjectARB(saved_shader_program);
 
-   _mesa_PopClientAttrib();
    _mesa_PopAttrib();
+
+   /* restore current array object */
+   _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, arraySave);
+   _mesa_reference_array_object(ctx, &arraySave, NULL);
 }
 
 static const char *buffer_names[] = {

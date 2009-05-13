@@ -225,6 +225,14 @@ struct intel_context
    GLuint ClearColor565;
    GLuint ClearColor8888;
 
+   /* info for intel_clear_tris() */
+   struct
+   {
+      struct gl_array_object *arrayObj;
+      GLfloat vertices[4][3];
+      GLfloat color[4][4];
+   } clear;
+
    /* Offsets of fields within the current vertex:
     */
    GLuint coloroffset;

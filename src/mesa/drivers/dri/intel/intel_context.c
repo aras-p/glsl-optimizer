@@ -28,6 +28,7 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
+#include "main/arrayobj.h"
 #include "main/extensions.h"
 #include "main/framebuffer.h"
 #include "main/imports.h"
@@ -754,6 +755,8 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       GLboolean release_texture_heaps;
 
       INTEL_FIREVERTICES(intel);
+
+      _mesa_delete_array_object(&intel->ctx, intel->clear.arrayObj);
 
       intel->vtbl.destroy(intel);
 
