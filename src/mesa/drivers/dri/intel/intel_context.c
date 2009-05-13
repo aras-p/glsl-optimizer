@@ -756,7 +756,8 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 
       INTEL_FIREVERTICES(intel);
 
-      _mesa_delete_array_object(&intel->ctx, intel->clear.arrayObj);
+      if (intel->clear.arrayObj)
+         _mesa_delete_array_object(&intel->ctx, intel->clear.arrayObj);
 
       intel->vtbl.destroy(intel);
 
