@@ -44,6 +44,10 @@
 #define R300_FALLBACK_INVALID_BUFFERS   (1 << 31)
 #define R300_RASTER_FALLBACK_MASK        0xffff0000
 
+extern const struct tnl_pipeline_stage _r300_render_stage;
+
+extern const struct tnl_pipeline_stage _r300_tcl_stage;
+
 extern void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode);
 
 #endif

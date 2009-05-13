@@ -64,6 +64,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_ioctl.h"
 #include "r300_tex.h"
 #include "r300_emit.h"
+#include "r300_render.h"
 #include "r300_swtcl.h"
 #include "radeon_bocs_wrapper.h"
 
@@ -149,10 +150,6 @@ const struct dri_extension mm_extensions[] = {
 const struct dri_extension gl_20_extension[] = {
   {"GL_VERSION_2_0",			GL_VERSION_2_0_functions },
 };
-
-
-extern struct tnl_pipeline_stage _r300_render_stage;
-extern const struct tnl_pipeline_stage _r300_tcl_stage;
 
 static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
