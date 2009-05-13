@@ -1395,9 +1395,6 @@ static void r300SetupTextures(GLcontext * ctx)
 	r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] =
 	    cmdpacket0(r300->radeon.radeonScreen, R300_TX_BORDER_COLOR_0, last_hw_tmu + 1);
 
-	if (!fp)		/* should only happenen once, just after context is created */
-		return;
-
 	if (r300->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515) {
 		if (fp->Base.UsesKill && last_hw_tmu < 0) {
 			// The KILL operation requires the first texture unit
@@ -1442,12 +1439,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	else
 		RENDERINPUTS_COPY(OutputsWritten.index_bitset, r300->render_inputs_bitset);
 
-	if (ctx->FragmentProgram._Current)
-		InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
-	else {
-		fprintf(stderr, "No ctx->FragmentProgram._Current!!\n");
-		return;		/* This should only ever happen once.. */
-	}
+	InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
 
 	R300_STATECHANGE(r300, ri);
 	R300_STATECHANGE(r300, rc);
@@ -1579,12 +1571,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	else
 		RENDERINPUTS_COPY(OutputsWritten.index_bitset, r300->render_inputs_bitset);
 
-	if (ctx->FragmentProgram._Current)
-		InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
-	else {
-		fprintf(stderr, "No ctx->FragmentProgram._Current!!\n");
-		return;		/* This should only ever happen once.. */
-	}
+	InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
 
 	R300_STATECHANGE(r300, ri);
 	R300_STATECHANGE(r300, rc);
@@ -2226,9 +2213,14 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 	ctx = rmesa->radeon.glCtx;
 	fp = (struct r300_fragment_program *) ctx->FragmentProgram._Current;
 
-	if (rmesa->radeon.NewGLState && rmesa->options.hw_tcl_enabled) {
-		rmesa->radeon.NewGLState = 0;
+	/* should only happenen once, just after context is created */
+	/* TODO: shouldn't we fallback to sw here? */
+	if (!fp) {
+		_mesa_fprintf(stderr, "No ctx->FragmentProgram._Current!!\n");
+		return;
+	}
 
+	if (rmesa->radeon.NewGLState && rmesa->options.hw_tcl_enabled) {
 		for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
 			rmesa->temp_attrib[i] =
 			    TNL_CONTEXT(ctx)->vb.AttribPtr[i];
@@ -2248,14 +2240,13 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 		r300SwitchFallback(ctx, R300_FALLBACK_VERTEX_PROGRAM, !vp->native);
 	}
 
-	if (fp) {
-		if (!fp->translated)
-			r300TranslateFragmentShader(ctx, ctx->FragmentProgram._Current);
+	if (!fp->translated || rmesa->radeon.NewGLState)
+		r300TranslateFragmentShader(ctx, ctx->FragmentProgram._Current);
 
-		r300SwitchFallback(ctx, R300_FALLBACK_FRAGMENT_PROGRAM, fp->error);
-	}
+	r300SwitchFallback(ctx, R300_FALLBACK_FRAGMENT_PROGRAM, fp->error);
 
 	r300UpdateStateParameters(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
+	rmesa->radeon.NewGLState = 0;
 }
 
 static const GLfloat *get_fragmentprogram_constant(GLcontext *ctx,
@@ -2434,11 +2425,6 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 		R300_STATECHANGE(rmesa, fg_depth_src);
 		rmesa->hw.fg_depth_src.cmd[1] = fgdepthsrc;
 	}
-
-	r300TranslateFragmentShader(ctx, ctx->FragmentProgram._Current);
-
-	if (r300_fp->error)
-		return;
 
 	r300SetupTextures(ctx);
 
