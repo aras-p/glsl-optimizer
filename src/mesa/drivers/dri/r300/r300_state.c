@@ -1917,14 +1917,6 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 			state ? "GL_TRUE" : "GL_FALSE");
 
 	switch (cap) {
-	case GL_TEXTURE_1D:
-	case GL_TEXTURE_2D:
-	case GL_TEXTURE_3D:
-		/* empty */
-		break;
-	case GL_FOG:
-		/* empty */
-		break;
 	case GL_ALPHA_TEST:
 		r300SetAlphaState(ctx);
 		break;
