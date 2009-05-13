@@ -1050,7 +1050,7 @@ void
 _mesa_init_varray(GLcontext *ctx)
 {
    ctx->Array.DefaultArrayObj = _mesa_new_array_object(ctx, 0);
-   ctx->Array.ArrayObj = ctx->Array.DefaultArrayObj;
-
+   _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj,
+                                ctx->Array.DefaultArrayObj);
    ctx->Array.ActiveTexture = 0;   /* GL_ARB_multitexture */
 }

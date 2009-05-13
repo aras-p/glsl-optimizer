@@ -1557,6 +1557,9 @@ struct gl_array_object
    /** Name of the array object as received from glGenVertexArrayAPPLE. */
    GLuint Name;
 
+   GLint RefCount;
+   _glthread_Mutex Mutex;
+
    /** Conventional vertex arrays */
    /*@{*/
    struct gl_client_array Vertex;

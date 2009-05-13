@@ -94,8 +94,67 @@ void
 _mesa_delete_array_object( GLcontext *ctx, struct gl_array_object *obj )
 {
    (void) ctx;
+   _glthread_DESTROY_MUTEX(obj->Mutex);
    _mesa_free(obj);
 }
+
+
+/**
+ * Set ptr to arrayObj w/ reference counting.
+ */
+void
+_mesa_reference_array_object(GLcontext *ctx,
+                             struct gl_array_object **ptr,
+                             struct gl_array_object *arrayObj)
+{
+   if (*ptr == arrayObj)
+      return;
+
+   if (*ptr) {
+      /* Unreference the old array object */
+      GLboolean deleteFlag = GL_FALSE;
+      struct gl_array_object *oldObj = *ptr;
+
+      _glthread_LOCK_MUTEX(oldObj->Mutex);
+      ASSERT(oldObj->RefCount > 0);
+      oldObj->RefCount--;
+#if 0
+      printf("ArrayObj %p %d DECR to %d\n",
+             (void *) oldObj, oldObj->Name, oldObj->RefCount);
+#endif
+      deleteFlag = (oldObj->RefCount == 0);
+      _glthread_UNLOCK_MUTEX(oldObj->Mutex);
+
+      if (deleteFlag) {
+	 ASSERT(ctx->Driver.DeleteArrayObject);
+         ctx->Driver.DeleteArrayObject(ctx, oldObj);
+      }
+
+      *ptr = NULL;
+   }
+   ASSERT(!*ptr);
+
+   if (arrayObj) {
+      /* reference new array object */
+      _glthread_LOCK_MUTEX(arrayObj->Mutex);
+      if (arrayObj->RefCount == 0) {
+         /* this array's being deleted (look just above) */
+         /* Not sure this can every really happen.  Warn if it does. */
+         _mesa_problem(NULL, "referencing deleted array object");
+         *ptr = NULL;
+      }
+      else {
+         arrayObj->RefCount++;
+#if 0
+         printf("ArrayObj %p %d INCR to %d\n",
+                (void *) arrayObj, arrayObj->Name, arrayObj->RefCount);
+#endif
+         *ptr = arrayObj;
+      }
+      _glthread_UNLOCK_MUTEX(arrayObj->Mutex);
+   }
+}
+
 
 
 static void
@@ -128,6 +187,9 @@ _mesa_initialize_array_object( GLcontext *ctx,
    GLuint i;
 
    obj->Name = name;
+
+   _glthread_INIT_MUTEX(obj->Mutex);
+   obj->RefCount = 1;
 
    /* Init the individual arrays */
    init_array(ctx, &obj->Vertex, 4, GL_FLOAT);
@@ -226,7 +288,6 @@ _mesa_BindVertexArrayAPPLE( GLuint id )
       if (!newObj) {
          /* If this is a new array object id, allocate an array object now.
 	  */
-
 	 newObj = (*ctx->Driver.NewArrayObject)(ctx, id);
          if (!newObj) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindVertexArrayAPPLE");
@@ -236,11 +297,9 @@ _mesa_BindVertexArrayAPPLE( GLuint id )
       }
    }
 
-
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_ALL;
-   ctx->Array.ArrayObj = newObj;
-
+   _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, newObj);
 
    /* Pass BindVertexArray call to device driver */
    if (ctx->Driver.BindArrayObject && newObj)
