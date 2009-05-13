@@ -390,8 +390,7 @@ static GLboolean r300RunRender(GLcontext * ctx,
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
 	r300UpdateShaders(rmesa);
-	if (r300EmitArrays(ctx))
-		return GL_TRUE;
+	r300EmitArrays(ctx);
 
 	r300UpdateShaderStates(rmesa);
 

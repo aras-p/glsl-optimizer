@@ -216,7 +216,7 @@ void static INLINE cp_wait(radeonContextPtr radeon, unsigned char flags)
 	}
 }
 
-extern int r300EmitArrays(GLcontext * ctx);
+extern void r300EmitArrays(GLcontext * ctx);
 
 extern int r300PrimitiveType(r300ContextPtr rmesa, int prim);
 extern int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim);

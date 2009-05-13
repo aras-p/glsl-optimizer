@@ -196,9 +196,8 @@ GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
 
 /* Emit vertex data to GART memory
  * Route inputs to the vertex processor
- * This function should never return R300_FALLBACK_TCL when using software tcl.
  */
-int r300EmitArrays(GLcontext * ctx)
+void r300EmitArrays(GLcontext * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -284,9 +283,7 @@ int r300EmitArrays(GLcontext * ctx)
 		}
 	}
 
-	if (nr > R300_MAX_AOS_ARRAYS) {
-		return R300_FALLBACK_TCL;
-	}
+	assert(nr <= R300_MAX_AOS_ARRAYS);
 
 	for (i = 0; i < nr; i++) {
 		int ci;
@@ -341,8 +338,6 @@ int r300EmitArrays(GLcontext * ctx)
 	    r300VAPOutputCntl1(ctx, OutputsWritten);
 
 	rmesa->radeon.tcl.aos_count = nr;
-
-	return R300_FALLBACK_NONE;
 }
 
 void r300EmitCacheFlush(r300ContextPtr rmesa)
