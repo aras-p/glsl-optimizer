@@ -168,6 +168,8 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
 
+   ctx->Extensions.APPLE_vertex_array_object = GL_TRUE;
+
    ctx->Extensions.NV_blend_square = GL_TRUE;
    ctx->Extensions.NV_texgen_reflection = GL_TRUE;
 
