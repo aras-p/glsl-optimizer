@@ -850,7 +850,10 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 	pitch_val = rb->pitch;
 	switch (rb->cpp) {
 	case 4:
-		t->pp_txformat = tx_table_le[MESA_FORMAT_ARGB8888].format;
+		if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT)
+			t->pp_txformat = tx_table_le[MESA_FORMAT_RGB888].format;
+		else
+			t->pp_txformat = tx_table_le[MESA_FORMAT_ARGB8888].format;
 		t->pp_txfilter |= tx_table_le[MESA_FORMAT_ARGB8888].filter;
 		break;
 	case 3:
