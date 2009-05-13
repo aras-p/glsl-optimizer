@@ -67,8 +67,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "drirenderbuffer.h"
 
-extern int future_hw_tcl_on;
-
 static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -367,7 +365,7 @@ static void r300ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq )
 	GLint *ip;
 
 	/* no VAP UCP on non-TCL chipsets */
-	if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+	if (!rmesa->options.hw_tcl_enabled)
 			return;
 
 	p = (GLint) plane - (GLint) GL_CLIP_PLANE0;
@@ -386,7 +384,7 @@ static void r300SetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state)
 	GLuint p;
 
 	/* no VAP UCP on non-TCL chipsets */
-	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+	if (!r300->options.hw_tcl_enabled)
 		return;
 
 	p = cap - GL_CLIP_PLANE0;
@@ -1416,8 +1414,9 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	int fp_reg, high_rr;
 	int col_ip, tex_ip;
 	int rs_tex_count = 0;
-	int i, count, col_fmt;
+	int i, count, col_fmt, hw_tcl_on;
 
+	hw_tcl_on = r300->options.hw_tcl_enabled;
 	if (hw_tcl_on)
 		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
 	else
@@ -1552,8 +1551,9 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	int fp_reg, high_rr;
 	int col_ip, tex_ip;
 	int rs_tex_count = 0;
-	int i, count, col_fmt;
+	int i, count, col_fmt, hw_tcl_on;
 
+	hw_tcl_on = r300->options.hw_tcl_enabled;
 	if (hw_tcl_on)
 		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
 	else
@@ -1764,7 +1764,7 @@ static void r300VapCntl(r300ContextPtr rmesa, GLuint input_count,
     pvs_num_cntrls = MIN2(6, vtx_mem_size/temp_count);
 
     R300_STATECHANGE(rmesa, vap_cntl);
-    if (rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
+    if (rmesa->options.hw_tcl_enabled) {
 	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] =
 	    (pvs_num_slots << R300_PVS_NUM_SLOTS_SHIFT) |
 	    (pvs_num_cntrls << R300_PVS_NUM_CNTLRS_SHIFT) |
@@ -1894,7 +1894,7 @@ static void r300SetupVertexProgram(r300ContextPtr rmesa)
 	   0x400 area might have something to do with pixel shaders as it appears right after pfs programming.
 	   0x406 is set to { 0.0, 0.0, 1.0, 0.0 } most of the time but should change with smooth points and in other rare cases. */
 	//setup_vertex_shader_fragment(rmesa, 0x406, &unk4);
-	if (hw_tcl_on && ((struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx))->translated) {
+	if (rmesa->options.hw_tcl_enabled && ((struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx))->translated) {
 		r300SetupRealVertexProgram(rmesa);
 	} else {
 		/* FIXME: This needs to be replaced by vertex shader generation code. */
@@ -1972,10 +1972,9 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 static void r300ResetHwState(r300ContextPtr r300)
 {
 	GLcontext *ctx = r300->radeon.glCtx;
-	int has_tcl = 1;
+	int has_tcl;
 
-	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
-		has_tcl = 0;
+	has_tcl = r300->options.hw_tcl_enabled;
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
@@ -2193,7 +2192,7 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 
 	ctx = rmesa->radeon.glCtx;
 
-	if (rmesa->radeon.NewGLState && hw_tcl_on) {
+	if (rmesa->radeon.NewGLState && rmesa->options.hw_tcl_enabled) {
 		rmesa->radeon.NewGLState = 0;
 
 		for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
@@ -2217,7 +2216,7 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 		   r300TranslateVertexShader(vp); */
 		if (vp->translated == GL_FALSE) {
 			fprintf(stderr, "Failing back to sw-tcl\n");
-			hw_tcl_on = future_hw_tcl_on = 0;
+			rmesa->options.hw_tcl_enabled = 0;
 			r300ResetHwState(rmesa);
 
 			r300UpdateStateParameters(ctx, _NEW_PROGRAM |
@@ -2425,7 +2424,7 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 
 	rmesa->vtbl.SetupRSUnit(ctx);
 
-	if ((rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+	if (rmesa->options.hw_tcl_enabled)
 		r300SetupVertexProgram(rmesa);
 }
 

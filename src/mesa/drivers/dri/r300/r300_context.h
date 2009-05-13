@@ -412,8 +412,6 @@ struct r300_vertex_shader_state {
 	struct r300_vertex_shader_fragment program;
 };
 
-extern int hw_tcl_on;
-
 #define COLOR_IS_RGBA
 #define TAG(x) r300##x
 #include "tnl_dd/t_dd_vertex.h"
@@ -648,6 +646,14 @@ struct r300_context {
 
 	GLboolean disable_lowimpact_fallback;
 
+	struct r300_options {
+		uint32_t conformance_mode:1;
+		uint32_t hw_tcl_enabled:1;
+		uint32_t s3tc_force_enabled:1;
+		uint32_t s3tc_force_disabled:1;
+		uint32_t stencil_two_side_disabled:1;
+	} options;
+	
 	struct r300_swtcl_info swtcl;
 	GLboolean vap_flush_needed;
 

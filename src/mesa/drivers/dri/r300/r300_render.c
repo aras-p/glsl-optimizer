@@ -74,8 +74,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_emit.h"
 #include "r300_fragprog_common.h"
 
-extern int future_hw_tcl_on;
-
 /**
  * \brief Convert a OpenGL primitive type into a R300 primitive type.
  */
@@ -468,8 +466,8 @@ static GLboolean r300RunNonTCLRender(GLcontext * ctx,
 	if (r300Fallback(ctx) >= R300_FALLBACK_RAST)
 		return GL_TRUE;
 
-	if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
- 	        return GL_TRUE;
+	if (rmesa->options.hw_tcl_enabled == GL_FALSE)
+		return GL_TRUE;
 
 	if (!r300ValidateBuffers(ctx))
 	    return GL_TRUE;
@@ -483,16 +481,14 @@ static GLboolean r300RunTCLRender(GLcontext * ctx,
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct r300_vertex_program *vp;
 
-	hw_tcl_on = future_hw_tcl_on;
-
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	if (hw_tcl_on == GL_FALSE)
+	if (rmesa->options.hw_tcl_enabled == GL_FALSE)
 		return GL_TRUE;
 
 	if (r300Fallback(ctx) >= R300_FALLBACK_TCL) {
-		hw_tcl_on = GL_FALSE;
+		rmesa->options.hw_tcl_enabled = GL_FALSE;
 		return GL_TRUE;
 	}
 
@@ -503,7 +499,7 @@ static GLboolean r300RunTCLRender(GLcontext * ctx,
 
 	vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 	if (vp->native == GL_FALSE) {
-		hw_tcl_on = GL_FALSE;
+		rmesa->options.hw_tcl_enabled = GL_FALSE;
 		return GL_TRUE;
 	}
 

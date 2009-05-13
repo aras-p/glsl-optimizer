@@ -214,7 +214,7 @@ int r300EmitArrays(GLcontext * ctx)
 	struct r300_vertex_program *prog =
 	    (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 
-	if (hw_tcl_on) {
+	if (rmesa->options.hw_tcl_enabled) {
 		inputs = prog->inputs;
 		InputsRead = prog->key.InputsRead;
 		OutputsWritten = prog->key.OutputsWritten;

@@ -72,10 +72,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
-/* hw_tcl_on derives from future_hw_tcl_on when its safe to change it. */
-int future_hw_tcl_on = 1;
-int hw_tcl_on = 1;
-
 #define need_GL_VERSION_2_0
 #define need_GL_ARB_point_parameters
 #define need_GL_ARB_vertex_program
@@ -296,7 +292,7 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	ctx->Const.MaxDrawBuffers = 1;
 
 	/* currently bogus data */
-	if (screen->chip_flags & RADEON_CHIPSET_TCL) {
+	if (r300->options.hw_tcl_enabled) {
 		ctx->Const.VertexProgram.MaxInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
 		ctx->Const.VertexProgram.MaxNativeInstructions =
 		  VSF_MAX_FRAGMENT_LENGTH / 4;
@@ -329,6 +325,47 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	}
 }
 
+static void r300ParseOptions(r300ContextPtr r300, radeonScreenPtr screen)
+{
+	struct r300_options options = { 0 };
+
+	driParseConfigFiles(&r300->radeon.optionCache, &screen->optionCache,
+			    screen->driScreen->myNum, "r300");
+
+	r300->disable_lowimpact_fallback = driQueryOptionb(&r300->radeon.optionCache, "disable_lowimpact_fallback");
+	r300->radeon.initialMaxAnisotropy = driQueryOptionf(&r300->radeon.optionCache, "def_max_anisotropy");
+
+	options.stencil_two_side_disabled = driQueryOptionb(&r300->radeon.optionCache, "disable_stencil_two_side");
+	options.s3tc_force_enabled = driQueryOptionb(&r300->radeon.optionCache, "force_s3tc_enable");
+	options.s3tc_force_disabled = driQueryOptionb(&r300->radeon.optionCache, "disable_s3tc");
+
+	if (!(screen->chip_flags & RADEON_CHIPSET_TCL) || driQueryOptioni(&r300->radeon.optionCache, "tcl_mode") == DRI_CONF_TCL_SW)
+		options.hw_tcl_enabled = 0;
+	else
+		options.hw_tcl_enabled = 1;
+
+	r300->options = options;
+}
+
+static void r300InitGLExtensions(GLcontext *ctx)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+
+	driInitExtensions(ctx, card_extensions, GL_TRUE);
+	if (r300->radeon.radeonScreen->kernel_mm)
+		driInitExtensions(ctx, mm_extensions, GL_FALSE);
+
+	if (r300->options.stencil_two_side_disabled)
+		_mesa_disable_extension(ctx, "GL_EXT_stencil_two_side");
+
+	if (ctx->Mesa_DXTn && !r300->options.s3tc_force_enabled) {
+		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
+		_mesa_enable_extension(ctx, "GL_S3_s3tc");
+	} else if (r300->options.s3tc_force_disabled) {
+		_mesa_disable_extension(ctx, "GL_EXT_texture_compression_s3tc");
+	}
+}
+
 /* Create the device specific rendering context.
  */
 GLboolean r300CreateContext(const __GLcontextModes * glVisual,
@@ -340,7 +377,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	struct dd_function_table functions;
 	r300ContextPtr r300;
 	GLcontext *ctx;
-	int tcl_mode;
 
 	assert(glVisual);
 	assert(driContextPriv);
@@ -350,11 +386,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	if (!r300)
 		return GL_FALSE;
 
-	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
-		hw_tcl_on = future_hw_tcl_on = 0;
-
-	driParseConfigFiles(&r300->radeon.optionCache, &screen->optionCache,
-			    screen->driScreen->myNum, "r300");
+	r300ParseOptions(r300, screen);
 
 	r300_init_vtbl(&r300->radeon);
 
@@ -372,12 +404,13 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	}
 
 	ctx = r300->radeon.glCtx;
-	r300InitConstValues(ctx, screen);
 
-	if (hw_tcl_on)
+	if (r300->options.hw_tcl_enabled)
 		ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
 
 	ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
+
+	r300InitConstValues(ctx, screen);
 
 	/* Initialize the software rasterizer and helper modules.
 	 */
@@ -400,56 +433,21 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	_tnl_allow_pixel_fog(ctx, GL_FALSE);
 	_tnl_allow_vertex_fog(ctx, GL_TRUE);
 
+	if (!r300->options.hw_tcl_enabled)
+		r300InitSwtcl(ctx);
+
 	radeon_fbo_init(&r300->radeon);
-   	radeonInitSpanFuncs( ctx );
+	radeonInitSpanFuncs( ctx );
 	r300InitCmdBuf(r300);
 	r300InitState(r300);
 	r300InitShaderFunctions(r300);
-	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
-		r300InitSwtcl(ctx);
-
-	driInitExtensions(ctx, card_extensions, GL_TRUE);
-	if (r300->radeon.radeonScreen->kernel_mm)
-	  driInitExtensions(ctx, mm_extensions, GL_FALSE);
 
 	if (screen->chip_family == CHIP_FAMILY_RS600 ||	screen->chip_family == CHIP_FAMILY_RS690 ||
 		screen->chip_family == CHIP_FAMILY_RS740) {
 		r300->radeon.texture_row_align = 64;
 	}
 
-	r300->radeon.initialMaxAnisotropy = driQueryOptionf(&r300->radeon.optionCache,
-						     "def_max_anisotropy");
-
-	if (driQueryOptionb(&r300->radeon.optionCache, "disable_stencil_two_side"))
-		_mesa_disable_extension(ctx, "GL_EXT_stencil_two_side");
-
-	if (ctx->Mesa_DXTn && !driQueryOptionb(&r300->radeon.optionCache, "disable_s3tc")) {
-		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
-		_mesa_enable_extension(ctx, "GL_S3_s3tc");
-	} else if (driQueryOptionb(&r300->radeon.optionCache, "force_s3tc_enable")) {
-		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
-	}
-
-	r300->disable_lowimpact_fallback =
-		 driQueryOptionb(&r300->radeon.optionCache, "disable_lowimpact_fallback");
-
-	tcl_mode = driQueryOptioni(&r300->radeon.optionCache, "tcl_mode");
-	if (driQueryOptionb(&r300->radeon.optionCache, "no_rast")) {
-		fprintf(stderr, "disabling 3D acceleration\n");
-#if R200_MERGED
-		FALLBACK(&r300->radeon, RADEON_FALLBACK_DISABLE, 1);
-#endif
-	}
-	if (tcl_mode == DRI_CONF_TCL_SW ||
-	    !(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
-		if (r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
-			r300->radeon.radeonScreen->chip_flags &=
-			    ~RADEON_CHIPSET_TCL;
-			fprintf(stderr, "Disabling HW TCL support\n");
-		}
-		TCL_FALLBACK(r300->radeon.glCtx,
-			     RADEON_TCL_FALLBACK_TCL_DISABLE, 1);
-	}
+	r300InitGLExtensions(ctx);
 
 	return GL_TRUE;
 }

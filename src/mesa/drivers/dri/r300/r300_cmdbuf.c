@@ -420,12 +420,11 @@ int check_r500fp_const(GLcontext *ctx, struct radeon_state_atom *atom)
 void r300InitCmdBuf(r300ContextPtr r300)
 {
 	int mtu;
-	int has_tcl = 1;
+	int has_tcl;
 	int is_r500 = 0;
 	int i;
 
-	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
-		has_tcl = 0;
+	has_tcl = r300->options.hw_tcl_enabled;
 
 	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
 		is_r500 = 1;

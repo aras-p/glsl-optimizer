@@ -215,12 +215,11 @@ static void r300EmitClearState(GLcontext * ctx)
 	BATCH_LOCALS(&r300->radeon);
 	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
 	int i;
-	int has_tcl = 1;
+	int has_tcl;
 	int is_r500 = 0;
 	GLuint vap_cntl;
 
-	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
-		has_tcl = 0;
+	has_tcl = r300->options.hw_tcl_enabled;
 
 	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
 		is_r500 = 1;
