@@ -460,7 +460,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
     for (i = 0; i < r300->framebuffer_state.nr_cbufs; i++) {
         tex = (struct r300_texture*)r300->framebuffer_state.cbufs[i]->texture;
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
-        if (!tex->buffer) return;
         r300->winsys->add_buffer(r300->winsys, tex->buffer,
                 0, RADEON_GEM_DOMAIN_VRAM);
     }
@@ -468,9 +467,15 @@ void r300_emit_dirty_state(struct r300_context* r300)
     if (r300->framebuffer_state.zsbuf) {
         tex = (struct r300_texture*)r300->framebuffer_state.zsbuf->texture;
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
-        if (!tex->buffer) return;
         r300->winsys->add_buffer(r300->winsys, tex->buffer,
                 0, RADEON_GEM_DOMAIN_VRAM);
+    }
+    /* ...textures... */
+    for (i = 0; i < r300->texture_count; i++) {
+        tex = r300->textures[i];
+        assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
+        r300->winsys->add_buffer(r300->winsys, tex->buffer,
+                RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
     }
     /* ...and vertex buffer. */
     if (r300->vbo) {
