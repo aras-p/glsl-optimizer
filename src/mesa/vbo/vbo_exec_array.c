@@ -115,7 +115,7 @@ static void bind_array_obj( GLcontext *ctx )
    }
    exec->array.legacy_array[VERT_ATTRIB_EDGEFLAG] = &arrayObj->EdgeFlag;
 
-   for (i = 0; i < 8; i++)
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
       exec->array.legacy_array[VERT_ATTRIB_TEX0 + i] = &arrayObj->TexCoord[i];
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
