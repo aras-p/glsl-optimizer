@@ -206,7 +206,7 @@ update_arrays( GLcontext *ctx )
    }
 
    /* _MaxElement is one past the last legal array element */
-   ctx->Array._MaxElement = min;
+   arrayObj->_MaxElement = min;
 }
 
 

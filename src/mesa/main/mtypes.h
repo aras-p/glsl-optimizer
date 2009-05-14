@@ -1578,6 +1578,12 @@ struct gl_array_object
 
    /** Mask of _NEW_ARRAY_* values indicating which arrays are enabled */
    GLbitfield _Enabled;
+
+   /**
+    * Min of all enabled arrays' _MaxElement.  When arrays reside inside VBOs
+    * we can determine the max legal (in bounds) glDrawElements array index.
+    */
+   GLuint _MaxElement;
 };
 
 
@@ -1602,7 +1608,6 @@ struct gl_array_attrib
    struct gl_buffer_object *ArrayBufferObj;
    struct gl_buffer_object *ElementArrayBufferObj;
 #endif
-   GLuint _MaxElement;          /* Min of all enabled array's maxes */
 };
 
 
