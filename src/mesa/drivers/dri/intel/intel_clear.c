@@ -255,7 +255,8 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
       /* Control writing of the stencil clear value to stencil. */
       if (this_mask & BUFFER_BIT_STENCIL) {
 	 _mesa_Enable(GL_STENCIL_TEST);
-	 _mesa_StencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+	 _mesa_StencilOpSeparate(GL_FRONT_AND_BACK,
+				 GL_REPLACE, GL_REPLACE, GL_REPLACE);
 	 _mesa_StencilFuncSeparate(GL_FRONT_AND_BACK, GL_ALWAYS,
 				   ctx->Stencil.Clear,
 				   ctx->Stencil.WriteMask[0]);
