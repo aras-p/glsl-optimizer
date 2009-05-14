@@ -1317,6 +1317,9 @@ st_copy_texsubimage(GLcontext *ctx,
    GLboolean use_fallback = GL_TRUE;
    GLboolean matching_base_formats;
 
+   /* any rendering in progress must flushed before we grab the fb image */
+   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+
    /* make sure finalize_textures has been called? 
     */
    if (0) st_validate_state(ctx->st);
