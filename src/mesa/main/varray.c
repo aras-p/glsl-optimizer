@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.2
+ * Version:  7.6
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1029,6 +1030,50 @@ _mesa_MultiModeDrawElementsIBM( const GLenum * mode, const GLsizei * count,
 	 CALL_DrawElements(ctx->Exec, ( m, count[i], type, indices[i] ));
       }
    }
+}
+
+
+/**
+ * Print vertex array's fields.
+ */
+static void
+print_array(const char *name, GLint index, const struct gl_client_array *array)
+{
+   if (index >= 0)
+      _mesa_printf("  %s[%d]: ", name, index);
+   else
+      _mesa_printf("  %s: ", name);
+   _mesa_printf("Ptr=%p, Type=0x%x, Size=%d, ElemSize=%u, Stride=%d, Buffer=%u(Size %u), MaxElem=%u\n",
+                array->Ptr, array->Type, array->Size,
+                array->_ElementSize, array->StrideB,
+                array->BufferObj->Name, array->BufferObj->Size,
+                array->_MaxElement);
+}
+
+
+/**
+ * Print current vertex object/array info.  For debug.
+ */
+void
+_mesa_print_arrays(GLcontext *ctx)
+{
+   const struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
+   GLuint i;
+
+   _mesa_printf("Array Object %u\n", arrayObj->Name);
+   if (arrayObj->Vertex.Enabled)
+      print_array("Vertex", -1, &arrayObj->Vertex);
+   if (arrayObj->Normal.Enabled)
+      print_array("Normal", -1, &arrayObj->Normal);
+   if (arrayObj->Color.Enabled)
+      print_array("Color", -1, &arrayObj->Color);
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
+      if (arrayObj->TexCoord[i].Enabled)
+         print_array("TexCoord", i, &arrayObj->TexCoord[i]);
+   for (i = 0; i < VERT_ATTRIB_MAX; i++)
+      if (arrayObj->VertexAttrib[i].Enabled)
+         print_array("Attrib", i, &arrayObj->VertexAttrib[i]);
+   _mesa_printf("  _MaxElement = %u\n", arrayObj->_MaxElement);
 }
 
 
