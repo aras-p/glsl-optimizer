@@ -302,7 +302,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
 {
     int i, j;
     struct brw_reg reg;
-    int nr_interp_regs = 0;
+    int urb_read_length = 0;
     GLuint inputs = FRAG_BIT_WPOS | c->fp_interp_emitted | c->fp_deriv_emitted;
     GLuint reg_index = 0;
 
@@ -366,18 +366,29 @@ static void prealloc_reg(struct brw_wm_compile *c)
     }
 
     /* fragment shader inputs */
-    for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
-	if (inputs & (1<<i)) {
-	    nr_interp_regs++;
-	    reg = brw_vec8_grf(reg_index, 0);
-	    for (j = 0; j < 4; j++)
-		set_reg(c, PROGRAM_PAYLOAD, i, j, reg);
-	    reg_index += 2;
-	}
+    for (i = 0; i < VERT_RESULT_MAX; i++) {
+       int fp_input;
+
+       if (i >= VERT_RESULT_VAR0)
+	  fp_input = i - VERT_RESULT_VAR0 + FRAG_ATTRIB_VAR0;
+       else if (i <= VERT_RESULT_TEX7)
+	  fp_input = i;
+       else
+	  fp_input = -1;
+
+       if (fp_input >= 0 && inputs & (1 << fp_input)) {
+	  urb_read_length = reg_index;
+	  reg = brw_vec8_grf(reg_index, 0);
+	  for (j = 0; j < 4; j++)
+	     set_reg(c, PROGRAM_PAYLOAD, fp_input, j, reg);
+       }
+       if (c->key.vp_outputs_written & (1 << i)) {
+	  reg_index += 2;
+       }
     }
 
     c->prog_data.first_curbe_grf = c->key.nr_depth_regs * 2;
-    c->prog_data.urb_read_length = nr_interp_regs * 2;
+    c->prog_data.urb_read_length = urb_read_length;
     c->prog_data.curb_read_length = c->nr_creg;
     c->emit_mask_reg = brw_uw1_reg(BRW_GENERAL_REGISTER_FILE, reg_index, 0);
     reg_index++;
