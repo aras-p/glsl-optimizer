@@ -490,7 +490,7 @@ bind_buffer_object(GLcontext *ctx, GLenum target, GLuint buffer)
    _mesa_reference_buffer_object(ctx, bindTarget, newBufObj);
 
    /* Pass BindBuffer call to device driver */
-   if (ctx->Driver.BindBuffer && newBufObj)
+   if (ctx->Driver.BindBuffer)
       ctx->Driver.BindBuffer( ctx, target, newBufObj );
 }
 
@@ -937,7 +937,7 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
       return;
    }
    if (bufObj->Name == 0) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glBufferDataARB" );
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glBufferDataARB(buffer 0)" );
       return;
    }
    
@@ -1025,7 +1025,7 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
       return NULL;
    }
    if (bufObj->Name == 0) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glMapBufferARB" );
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glMapBufferARB(buffer 0)" );
       return NULL;
    }
    if (bufObj->Pointer) {
