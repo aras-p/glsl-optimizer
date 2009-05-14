@@ -349,7 +349,4 @@ void r300_parse_chipset(struct r300_capabilities* caps)
                 caps->pci_id);
             break;
     }
-
-    /* XXX SW TCL is broken so no forcing it off right now
-    caps->has_tcl = FALSE; */
 }
