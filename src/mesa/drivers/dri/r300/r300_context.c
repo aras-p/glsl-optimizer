@@ -332,7 +332,6 @@ static void r300ParseOptions(r300ContextPtr r300, radeonScreenPtr screen)
 	driParseConfigFiles(&r300->radeon.optionCache, &screen->optionCache,
 			    screen->driScreen->myNum, "r300");
 
-	r300->disable_lowimpact_fallback = driQueryOptionb(&r300->radeon.optionCache, "disable_lowimpact_fallback");
 	r300->radeon.initialMaxAnisotropy = driQueryOptionf(&r300->radeon.optionCache, "def_max_anisotropy");
 
 	options.stencil_two_side_disabled = driQueryOptionb(&r300->radeon.optionCache, "disable_stencil_two_side");
@@ -343,6 +342,8 @@ static void r300ParseOptions(r300ContextPtr r300, radeonScreenPtr screen)
 		options.hw_tcl_enabled = 0;
 	else
 		options.hw_tcl_enabled = 1;
+
+	options.conformance_mode = !driQueryOptionb(&r300->radeon.optionCache, "disable_lowimpact_fallback");
 
 	r300->options = options;
 }
@@ -405,6 +406,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 	ctx = r300->radeon.glCtx;
 
+	r300->fallback = 0;
 	if (r300->options.hw_tcl_enabled)
 		ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
 

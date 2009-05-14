@@ -64,6 +64,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_fragprog_common.h"
 #include "r300_fragprog.h"
 #include "r500_fragprog.h"
+#include "r300_render.h"
 
 #include "drirenderbuffer.h"
 
@@ -574,10 +575,26 @@ static void r300SetDepthState(GLcontext * ctx)
 	}
 }
 
+static void r300CatchStencilFallback(GLcontext *ctx)
+{
+	const unsigned back = ctx->Stencil._BackFace;
+
+	if (ctx->Stencil._Enabled && (ctx->Stencil.Ref[0] != ctx->Stencil.Ref[back]
+		|| ctx->Stencil.ValueMask[0] != ctx->Stencil.ValueMask[back]
+		|| ctx->Stencil.WriteMask[0] != ctx->Stencil.WriteMask[back])) {
+		r300SwitchFallback(ctx, R300_FALLBACK_STENCIL_TWOSIDE, GL_TRUE);
+	} else {
+		r300SwitchFallback(ctx, R300_FALLBACK_STENCIL_TWOSIDE, GL_FALSE);
+	}
+}
+
 static void r300SetStencilState(GLcontext * ctx, GLboolean state)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	GLboolean hw_stencil = GL_FALSE;
+
+	r300CatchStencilFallback(ctx);
+
 	if (ctx->DrawBuffer) {
 		struct radeon_renderbuffer *rrbStencil
 			= radeon_get_renderbuffer(ctx->DrawBuffer, BUFFER_STENCIL);
@@ -593,10 +610,6 @@ static void r300SetStencilState(GLcontext * ctx, GLboolean state)
 			r300->hw.zs.cmd[R300_ZS_CNTL_0] &=
 			    ~R300_STENCIL_ENABLE;
 		}
-	} else {
-#if R200_MERGED
-		FALLBACK(&r300->radeon, RADEON_FALLBACK_STENCIL, state);
-#endif
 	}
 }
 
@@ -846,11 +859,14 @@ static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
 				    GLenum func, GLint ref, GLuint mask)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	GLuint refmask =
-	    ((ctx->Stencil.Ref[0] & 0xff) << R300_STENCILREF_SHIFT)
-	     | ((ctx->Stencil.ValueMask[0] & 0xff) << R300_STENCILMASK_SHIFT);
-	const unsigned back = ctx->Stencil._BackFace;
+	GLuint refmask;
 	GLuint flag;
+	const unsigned back = ctx->Stencil._BackFace;
+
+	r300CatchStencilFallback(ctx);
+
+	refmask = ((ctx->Stencil.Ref[0] & 0xff) << R300_STENCILREF_SHIFT)
+	     | ((ctx->Stencil.ValueMask[0] & 0xff) << R300_STENCILMASK_SHIFT);
 
 	R300_STATECHANGE(rmesa, zs);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_STENCIL_FRONT_BACK;
@@ -878,6 +894,8 @@ static void r300StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
+	r300CatchStencilFallback(ctx);
+
 	R300_STATECHANGE(rmesa, zs);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] &=
 	    ~(R300_STENCILREF_MASK <<
@@ -893,6 +911,8 @@ static void r300StencilOpSeparate(GLcontext * ctx, GLenum face,
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	const unsigned back = ctx->Stencil._BackFace;
+
+	r300CatchStencilFallback(ctx);
 
 	R300_STATECHANGE(rmesa, zs);
 	/* It is easier to mask what's left.. */
@@ -1934,14 +1954,31 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 	case GL_CLIP_PLANE5:
 		r300SetClipPlaneState(ctx, cap, state);
 		break;
+	case GL_CULL_FACE:
+		r300UpdateCulling(ctx);
+		break;
 	case GL_DEPTH_TEST:
 		r300SetDepthState(ctx);
 		break;
-	case GL_STENCIL_TEST:
-		r300SetStencilState(ctx, state);
+	case GL_LINE_SMOOTH:
+		if (rmesa->options.conformance_mode)
+			r300SwitchFallback(ctx, R300_FALLBACK_LINE_SMOOTH, ctx->Line.SmoothFlag);
 		break;
-	case GL_CULL_FACE:
-		r300UpdateCulling(ctx);
+	case GL_LINE_STIPPLE:
+		if (rmesa->options.conformance_mode)
+			r300SwitchFallback(ctx, R300_FALLBACK_LINE_STIPPLE, ctx->Line.StippleFlag);
+		break;
+	case GL_POINT_SMOOTH:
+		if (rmesa->options.conformance_mode)
+			r300SwitchFallback(ctx, R300_FALLBACK_POINT_SMOOTH, ctx->Point.SmoothFlag);
+		break;
+	case GL_POLYGON_SMOOTH:
+		if (rmesa->options.conformance_mode)
+			r300SwitchFallback(ctx, R300_FALLBACK_POLYGON_SMOOTH, ctx->Polygon.SmoothFlag);
+		break;
+	case GL_POLYGON_STIPPLE:
+		if (rmesa->options.conformance_mode)
+			r300SwitchFallback(ctx, R300_FALLBACK_POLYGON_STIPPLE, ctx->Polygon.StippleFlag);
 		break;
 	case GL_POLYGON_OFFSET_POINT:
 	case GL_POLYGON_OFFSET_LINE:
@@ -1952,6 +1989,9 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 		radeon_firevertices(&rmesa->radeon);
 		rmesa->radeon.state.scissor.enabled = state;
 		radeonUpdateScissor( ctx );
+		break;
+	case GL_STENCIL_TEST:
+		r300SetStencilState(ctx, state);
 		break;
 	default:
 		break;
@@ -2180,9 +2220,11 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 {
 	GLcontext *ctx;
 	struct r300_vertex_program *vp;
+	struct r300_fragment_program *fp;
 	int i;
 
 	ctx = rmesa->radeon.glCtx;
+	fp = (struct r300_fragment_program *) ctx->FragmentProgram._Current;
 
 	if (rmesa->radeon.NewGLState && rmesa->options.hw_tcl_enabled) {
 		rmesa->radeon.NewGLState = 0;
@@ -2202,20 +2244,17 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 		}
 
 		r300SelectVertexShader(rmesa);
-		vp = (struct r300_vertex_program *)
-		    CURRENT_VERTEX_SHADER(ctx);
-		/*if (vp->translated == GL_FALSE)
-		   r300TranslateVertexShader(vp); */
-		if (vp->translated == GL_FALSE) {
-			fprintf(stderr, "Failing back to sw-tcl\n");
-			rmesa->options.hw_tcl_enabled = 0;
-			r300ResetHwState(rmesa);
-
-			r300UpdateStateParameters(ctx, _NEW_PROGRAM |
-                                      _NEW_PROGRAM_CONSTANTS);
-			return;
-		}
+		vp = (struct r300_vertex_program *) CURRENT_VERTEX_SHADER(ctx);
+		r300SwitchFallback(ctx, R300_FALLBACK_VERTEX_PROGRAM, !vp->native);
 	}
+
+	if (fp) {
+		if (!fp->translated)
+			r300TranslateFragmentShader(ctx, ctx->FragmentProgram._Current);
+
+		r300SwitchFallback(ctx, R300_FALLBACK_FRAGMENT_PROGRAM, fp->error);
+	}
+
 	r300UpdateStateParameters(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
 }
 
@@ -2457,9 +2496,7 @@ void r300InitState(r300ContextPtr r300)
 
 static void r300RenderMode(GLcontext * ctx, GLenum mode)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	(void)rmesa;
-	(void)mode;
+	r300SwitchFallback(ctx, R300_FALLBACK_RENDER_MODE, ctx->RenderMode != GL_RENDER);
 }
 
 /**

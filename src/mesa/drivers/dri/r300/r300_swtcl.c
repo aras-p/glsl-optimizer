@@ -324,7 +324,6 @@ static GLuint reduced_prim[] = {
 };
 
 static void r300RasterPrimitive( GLcontext *ctx, GLuint prim );
-static void r300RenderPrimitive( GLcontext *ctx, GLenum prim );
 
 /***********************************************************************
  *                    Emit primitives as inline vertices               *
@@ -558,7 +557,7 @@ static void r300ChooseRenderState( GLcontext *ctx )
 }
 
 
-static void r300RenderStart(GLcontext *ctx)
+void r300RenderStart(GLcontext *ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
 
@@ -578,7 +577,7 @@ static void r300RenderStart(GLcontext *ctx)
 	}
 }
 
-static void r300RenderFinish(GLcontext *ctx)
+void r300RenderFinish(GLcontext *ctx)
 {
 }
 
@@ -592,7 +591,7 @@ static void r300RasterPrimitive( GLcontext *ctx, GLuint hwprim )
 	}
 }
 
-static void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
+void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 {
 
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -604,7 +603,7 @@ static void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 	r300RasterPrimitive( ctx, reduced_prim[prim] );
 }
 
-static void r300ResetLineStipple(GLcontext *ctx)
+void r300ResetLineStipple(GLcontext *ctx)
 {
 }
 
@@ -640,7 +639,6 @@ void r300InitSwtcl(GLcontext *ctx)
 	_tnl_invalidate_vertices( ctx, ~0 );
 
 	_tnl_need_projected_coords( ctx, GL_FALSE );
-	r300ChooseRenderState(ctx);
 }
 
 void r300DestroySwtcl(GLcontext *ctx)

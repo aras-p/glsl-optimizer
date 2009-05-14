@@ -587,10 +587,6 @@ struct r300_fragment_program_compiler {
 #define R300_MAX_AOS_ARRAYS		16
 
 
-#define R300_FALLBACK_NONE 0
-#define R300_FALLBACK_TCL 1
-#define R300_FALLBACK_RAST 2
-
 /* r300_swtcl.c
  */
 struct r300_swtcl_info {
@@ -644,8 +640,6 @@ struct r300_context {
 	GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
 	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
 
-	GLboolean disable_lowimpact_fallback;
-
 	struct r300_options {
 		uint32_t conformance_mode:1;
 		uint32_t hw_tcl_enabled:1;
@@ -656,6 +650,8 @@ struct r300_context {
 	
 	struct r300_swtcl_info swtcl;
 	GLboolean vap_flush_needed;
+
+	uint32_t fallback;
 
 	DECLARE_RENDERINPUTS(render_inputs_bitset);
 };

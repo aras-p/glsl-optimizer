@@ -50,6 +50,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * no bugs...
  */
 
+#include "r300_render.h"
+
 #include "main/glheader.h"
 #include "main/state.h"
 #include "main/imports.h"
@@ -73,6 +75,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_tex.h"
 #include "r300_emit.h"
 #include "r300_fragprog_common.h"
+#include "r300_swtcl.h"
 
 /**
  * \brief Convert a OpenGL primitive type into a R300 primitive type.
@@ -378,7 +381,7 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 	COMMIT_BATCH();
 }
 
-static GLboolean r300RunRender(GLcontext * ctx,
+static void r300RunRender(GLcontext * ctx,
 			       struct tnl_pipeline_stage *stage)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -407,51 +410,77 @@ static GLboolean r300RunRender(GLcontext * ctx,
 	r300EmitCacheFlush(rmesa);
 
 	radeonReleaseArrays(ctx, ~0);
-
-	return GL_FALSE;
 }
 
-#define FALLBACK_IF(expr)						\
-	do {								\
-		if (expr) {						\
-			if (1 || RADEON_DEBUG & DEBUG_FALLBACKS)	\
-				WARN_ONCE("Software fallback:%s\n",	\
-					  #expr);			\
-			return R300_FALLBACK_RAST;			\
-		}							\
-	} while(0)
 
-static int r300Fallback(GLcontext * ctx)
+static const char *getFallbackString(uint32_t bit)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	const unsigned back = ctx->Stencil._BackFace;
-
-	FALLBACK_IF(r300->radeon.Fallback);
-
-	struct r300_fragment_program *fp = (struct r300_fragment_program *) ctx->FragmentProgram._Current;
-	if (fp && !fp->translated) {
-		r300TranslateFragmentShader(ctx, ctx->FragmentProgram._Current);
-		FALLBACK_IF(fp->error);
+	switch (bit) {
+		case R300_FALLBACK_VERTEX_PROGRAM :
+			return "vertex program";
+		case R300_FALLBACK_LINE_SMOOTH:
+			return "smooth lines";
+		case R300_FALLBACK_POINT_SMOOTH:
+			return "smooth points";
+		case R300_FALLBACK_POLYGON_SMOOTH:
+			return "smooth polygons";
+		case R300_FALLBACK_LINE_STIPPLE:
+			return "line stipple";
+		case R300_FALLBACK_POLYGON_STIPPLE:
+			return "polygon stipple";
+		case R300_FALLBACK_STENCIL_TWOSIDE:
+			return "two-sided stencil";
+		case R300_FALLBACK_RENDER_MODE:
+			return "render mode != GL_RENDER";
+		case R300_FALLBACK_FRAGMENT_PROGRAM:
+			return "fragment program";
+		case R300_FALLBACK_INVALID_BUFFERS:
+			return "invalid buffers";
+		default:
+			return "unknown";
 	}
+}
 
-	FALLBACK_IF(ctx->RenderMode != GL_RENDER);
-
-	FALLBACK_IF(ctx->Stencil.Enabled && (ctx->Stencil.Ref[0] != ctx->Stencil.Ref[back]
-		    || ctx->Stencil.ValueMask[0] != ctx->Stencil.ValueMask[back]
-		    || ctx->Stencil.WriteMask[0] != ctx->Stencil.WriteMask[back]));
-
-	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
-		FALLBACK_IF(ctx->Point.PointSprite);
-
-	if (!r300->disable_lowimpact_fallback) {
-		FALLBACK_IF(ctx->Polygon.StippleFlag);
-		FALLBACK_IF(ctx->Multisample._Enabled);
-		FALLBACK_IF(ctx->Line.StippleFlag);
-		FALLBACK_IF(ctx->Line.SmoothFlag);
-		FALLBACK_IF(ctx->Point.SmoothFlag);
+void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode)
+{
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	uint32_t old_fallback = rmesa->fallback;
+	static uint32_t fallback_warn = 0;
+	
+	if (mode) {
+		if ((fallback_warn & bit) == 0) {
+			_mesa_fprintf(stderr, "WARNING! Falling back to software for %s\n", getFallbackString(bit));
+			fallback_warn |= bit;
+		}
+		rmesa->fallback |= bit;
+		/* update only if we change from no raster fallbacks to some raster fallbacks */
+		if (((old_fallback & R300_RASTER_FALLBACK_MASK) == 0) &&
+			((bit & R300_RASTER_FALLBACK_MASK) > 0)) {
+			
+			radeon_firevertices(&rmesa->radeon);
+			rmesa->radeon.swtcl.RenderIndex = ~0;
+			_swsetup_Wakeup( ctx );
+		}
+	} else {
+		rmesa->fallback &= ~bit;
+		/* update only if we have disabled all raster fallbacks */
+		if ((old_fallback & R300_RASTER_FALLBACK_MASK) == bit) {
+			_swrast_flush( ctx );
+			
+			tnl->Driver.Render.Start = r300RenderStart;
+			tnl->Driver.Render.Finish = r300RenderFinish;
+			tnl->Driver.Render.PrimitiveNotify = r300RenderPrimitive;
+			tnl->Driver.Render.ResetLineStipple = r300ResetLineStipple;
+			tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
+			tnl->Driver.Render.CopyPV = _tnl_copy_pv;
+			tnl->Driver.Render.Interp = _tnl_interp;
+			
+			_tnl_invalidate_vertex_state( ctx, ~0 );
+			_tnl_invalidate_vertices( ctx, ~0 );
+		}
 	}
-
-	return R300_FALLBACK_NONE;
+	
 }
 
 static GLboolean r300RunNonTCLRender(GLcontext * ctx,
@@ -462,23 +491,21 @@ static GLboolean r300RunNonTCLRender(GLcontext * ctx,
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	if (r300Fallback(ctx) >= R300_FALLBACK_RAST)
+	if (rmesa->fallback & R300_RASTER_FALLBACK_MASK)
 		return GL_TRUE;
 
 	if (rmesa->options.hw_tcl_enabled == GL_FALSE)
 		return GL_TRUE;
 
-	if (!r300ValidateBuffers(ctx))
-	    return GL_TRUE;
+	r300RunRender(ctx, stage);
 
-	return r300RunRender(ctx, stage);
+	return GL_FALSE;
 }
 
 static GLboolean r300RunTCLRender(GLcontext * ctx,
 				  struct tnl_pipeline_stage *stage)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r300_vertex_program *vp;
 
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
@@ -486,23 +513,17 @@ static GLboolean r300RunTCLRender(GLcontext * ctx,
 	if (rmesa->options.hw_tcl_enabled == GL_FALSE)
 		return GL_TRUE;
 
-	if (r300Fallback(ctx) >= R300_FALLBACK_TCL) {
-		rmesa->options.hw_tcl_enabled = GL_FALSE;
-		return GL_TRUE;
-	}
-
-	if (!r300ValidateBuffers(ctx))
-	    return GL_TRUE;
-
+	/* Call it here so we can fallback early */
 	r300UpdateShaders(rmesa);
 
-	vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
-	if (vp->native == GL_FALSE) {
-		rmesa->options.hw_tcl_enabled = GL_FALSE;
-		return GL_TRUE;
-	}
+	r300SwitchFallback(ctx, R300_FALLBACK_INVALID_BUFFERS, !r300ValidateBuffers(ctx));
 
-	return r300RunRender(ctx, stage);
+	if (rmesa->fallback)
+		return GL_TRUE;
+
+	r300RunRender(ctx, stage);
+
+	return GL_FALSE;
 }
 
 const struct tnl_pipeline_stage _r300_render_stage = {
