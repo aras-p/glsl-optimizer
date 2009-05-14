@@ -65,6 +65,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_fragprog.h"
 #include "r500_fragprog.h"
 #include "r300_render.h"
+#include "r300_vertprog.h"
 
 #include "drirenderbuffer.h"
 
@@ -1455,8 +1456,9 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	int i, count, col_fmt, hw_tcl_on;
 
 	hw_tcl_on = r300->options.hw_tcl_enabled;
+
 	if (hw_tcl_on)
-		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
+		OutputsWritten.vp_outputs = r300->selected_vp->key.OutputsWritten;
 	else
 		RENDERINPUTS_COPY(OutputsWritten.index_bitset, r300->render_inputs_bitset);
 
@@ -1587,8 +1589,9 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	int i, count, col_fmt, hw_tcl_on;
 
 	hw_tcl_on = r300->options.hw_tcl_enabled;
+
 	if (hw_tcl_on)
-		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
+		OutputsWritten.vp_outputs = r300->selected_vp->key.OutputsWritten;
 	else
 		RENDERINPUTS_COPY(OutputsWritten.index_bitset, r300->render_inputs_bitset);
 
@@ -1717,58 +1720,9 @@ static void r500SetupRSUnit(GLcontext * ctx)
 		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);
 }
 
-
-
-
-#define bump_vpu_count(ptr, new_count)   do{\
-	drm_r300_cmd_header_t* _p=((drm_r300_cmd_header_t*)(ptr));\
-	int _nc=(new_count)/4; \
-	assert(_nc < 256); \
-	if(_nc>_p->vpu.count)_p->vpu.count=_nc;\
-	}while(0)
-
-static INLINE void r300SetupVertexProgramFragment(r300ContextPtr r300, int dest, struct r300_vertex_shader_fragment *vsf)
-{
-	int i;
-
-	if (vsf->length == 0)
-		return;
-
-	if (vsf->length & 0x3) {
-		fprintf(stderr, "VERTEX_SHADER_FRAGMENT must have length divisible by 4\n");
-		_mesa_exit(-1);
-	}
-
-	switch ((dest >> 8) & 0xf) {
-	case 0:
-		R300_STATECHANGE(r300, vpi);
-		for (i = 0; i < vsf->length; i++)
-			r300->hw.vpi.cmd[R300_VPI_INSTR_0 + i + 4 * (dest & 0xff)] = (vsf->body.d[i]);
-		bump_vpu_count(r300->hw.vpi.cmd, vsf->length + 4 * (dest & 0xff));
-		break;
-
-	case 2:
-		R300_STATECHANGE(r300, vpp);
-		for (i = 0; i < vsf->length; i++)
-			r300->hw.vpp.cmd[R300_VPP_PARAM_0 + i + 4 * (dest & 0xff)] = (vsf->body.d[i]);
-		bump_vpu_count(r300->hw.vpp.cmd, vsf->length + 4 * (dest & 0xff));
-		break;
-	case 4:
-		R300_STATECHANGE(r300, vps);
-		for (i = 0; i < vsf->length; i++)
-			r300->hw.vps.cmd[1 + i + 4 * (dest & 0xff)] = (vsf->body.d[i]);
-		bump_vpu_count(r300->hw.vps.cmd, vsf->length + 4 * (dest & 0xff));
-		break;
-	default:
-		fprintf(stderr, "%s:%s don't know how to handle dest %04x\n", __FILE__, __FUNCTION__, dest);
-		_mesa_exit(-1);
-	}
-}
-
 #define MIN3(a, b, c)	((a) < (b) ? MIN2(a, c) : MIN2(b, c))
 
-
-static void r300VapCntl(r300ContextPtr rmesa, GLuint input_count,
+void r300VapCntl(r300ContextPtr rmesa, GLuint input_count,
 			GLuint output_count, GLuint temp_count)
 {
     int vtx_mem_size;
@@ -1819,115 +1773,6 @@ static void r300VapCntl(r300ContextPtr rmesa, GLuint input_count,
 	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (8 << R300_PVS_NUM_FPUS_SHIFT);
     else
 	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (4 << R300_PVS_NUM_FPUS_SHIFT);
-
-}
-
-static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
-{
-	struct r300_vertex_shader_state *prog = &(rmesa->vertex_shader);
-	GLuint o_reg = 0;
-	GLuint i_reg = 0;
-	int i;
-	int inst_count = 0;
-	int param_count = 0;
-	int program_end = 0;
-
-	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++) {
-		if (rmesa->swtcl.sw_tcl_inputs[i] != -1) {
-			prog->program.body.i[program_end + 0] = PVS_OP_DST_OPERAND(VE_MULTIPLY, GL_FALSE, GL_FALSE, o_reg++, VSF_FLAG_ALL, PVS_DST_REG_OUT);
-			prog->program.body.i[program_end + 1] = PVS_SRC_OPERAND(rmesa->swtcl.sw_tcl_inputs[i], PVS_SRC_SELECT_X, PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z, PVS_SRC_SELECT_W, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
-			prog->program.body.i[program_end + 2] = PVS_SRC_OPERAND(rmesa->swtcl.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
-			prog->program.body.i[program_end + 3] = PVS_SRC_OPERAND(rmesa->swtcl.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
-			program_end += 4;
-			i_reg++;
-		}
-	}
-
-	prog->program.length = program_end;
-
-	r300SetupVertexProgramFragment(rmesa, R300_PVS_CODE_START,
-				       &(prog->program));
-	inst_count = (prog->program.length / 4) - 1;
-
-	r300VapCntl(rmesa, i_reg, o_reg, 0);
-
-	R300_STATECHANGE(rmesa, pvs);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
-	    (0 << R300_PVS_FIRST_INST_SHIFT) |
-	    (inst_count << R300_PVS_XYZW_VALID_INST_SHIFT) |
-	    (inst_count << R300_PVS_LAST_INST_SHIFT);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] =
-	    (0 << R300_PVS_CONST_BASE_OFFSET_SHIFT) |
-	    (param_count << R300_PVS_MAX_CONST_ADDR_SHIFT);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
-	    (inst_count << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
-}
-
-static int bit_count (int x)
-{
-    x = ((x & 0xaaaaaaaaU) >> 1) + (x & 0x55555555U);
-    x = ((x & 0xccccccccU) >> 2) + (x & 0x33333333U);
-    x = (x >> 16) + (x & 0xffff);
-    x = ((x & 0xf0f0) >> 4) + (x & 0x0f0f);
-    return (x >> 8) + (x & 0x00ff);
-}
-
-static void r300SetupRealVertexProgram(r300ContextPtr rmesa)
-{
-	GLcontext *ctx = rmesa->radeon.glCtx;
-	struct r300_vertex_program *prog = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
-	int inst_count = 0;
-	int param_count = 0;
-
-	/* FIXME: r300SetupVertexProgramFragment */
-	R300_STATECHANGE(rmesa, vpp);
-	param_count =
-	    r300VertexProgUpdateParams(ctx,
-				       (struct r300_vertex_program_cont *)
-				       ctx->VertexProgram._Current,
-				       (float *)&rmesa->hw.vpp.
-				       cmd[R300_VPP_PARAM_0]);
-	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
-	param_count /= 4;
-
-	r300SetupVertexProgramFragment(rmesa, R300_PVS_CODE_START, &(prog->program));
-	inst_count = (prog->program.length / 4) - 1;
-
-	r300VapCntl(rmesa, bit_count(prog->key.InputsRead),
-		    bit_count(prog->key.OutputsWritten), prog->num_temporaries);
-
-	R300_STATECHANGE(rmesa, pvs);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
-	  (0 << R300_PVS_FIRST_INST_SHIFT) |
-	  (inst_count << R300_PVS_XYZW_VALID_INST_SHIFT) |
-	  (inst_count << R300_PVS_LAST_INST_SHIFT);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] =
-	  (0 << R300_PVS_CONST_BASE_OFFSET_SHIFT) |
-	  (param_count << R300_PVS_MAX_CONST_ADDR_SHIFT);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
-	  (inst_count << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
-}
-
-
-static void r300SetupVertexProgram(r300ContextPtr rmesa)
-{
-	GLcontext *ctx = rmesa->radeon.glCtx;
-
-	/* Reset state, in case we don't use something */
-	((drm_r300_cmd_header_t *) rmesa->hw.vpp.cmd)->vpu.count = 0;
-	((drm_r300_cmd_header_t *) rmesa->hw.vpi.cmd)->vpu.count = 0;
-	((drm_r300_cmd_header_t *) rmesa->hw.vps.cmd)->vpu.count = 0;
-
-	/* Not sure why this doesnt work...
-	   0x400 area might have something to do with pixel shaders as it appears right after pfs programming.
-	   0x406 is set to { 0.0, 0.0, 1.0, 0.0 } most of the time but should change with smooth points and in other rare cases. */
-	//setup_vertex_shader_fragment(rmesa, 0x406, &unk4);
-	if (rmesa->options.hw_tcl_enabled && ((struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx))->translated) {
-		r300SetupRealVertexProgram(rmesa);
-	} else {
-		/* FIXME: This needs to be replaced by vertex shader generation code. */
-		r300SetupDefaultVertexProgram(rmesa);
-	}
 
 }
 
@@ -2227,7 +2072,6 @@ static void r300ResetHwState(r300ContextPtr r300)
 void r300UpdateShaders(r300ContextPtr rmesa)
 {
 	GLcontext *ctx;
-	struct r300_vertex_program *vp;
 	struct r300_fragment_program *fp;
 	int i;
 
@@ -2257,8 +2101,7 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 		}
 
 		r300SelectVertexShader(rmesa);
-		vp = (struct r300_vertex_program *) CURRENT_VERTEX_SHADER(ctx);
-		r300SwitchFallback(ctx, R300_FALLBACK_VERTEX_PROGRAM, !vp->native);
+		r300SwitchFallback(ctx, R300_FALLBACK_VERTEX_PROGRAM, rmesa->selected_vp->error);
 	}
 
 	if (!fp->translated || rmesa->radeon.NewGLState)
@@ -2432,8 +2275,12 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 
 	rmesa->vtbl.SetupRSUnit(ctx);
 
-	if (rmesa->options.hw_tcl_enabled)
-		r300SetupVertexProgram(rmesa);
+	if (rmesa->options.hw_tcl_enabled) {
+		if (rmesa->fallback & R300_FALLBACK_VERTEX_PROGRAM)
+			r300SetupSwtclVertexProgram(rmesa);
+		else
+			r300SetupVertexProgram(rmesa);
+	}
 }
 
 /**

@@ -399,56 +399,40 @@ struct r300_hw_state {
 #define STATE_R300_WINDOW_DIMENSION (STATE_INTERNAL_DRIVER+0)
 #define STATE_R300_TEXRECT_FACTOR (STATE_INTERNAL_DRIVER+1)
 
-struct r300_vertex_shader_fragment {
-	int length;
-	union {
-		GLuint d[VSF_MAX_FRAGMENT_LENGTH];
-		float f[VSF_MAX_FRAGMENT_LENGTH];
-		GLuint i[VSF_MAX_FRAGMENT_LENGTH];
-	} body;
-};
-
-struct r300_vertex_shader_state {
-	struct r300_vertex_shader_fragment program;
-};
-
 #define COLOR_IS_RGBA
 #define TAG(x) r300##x
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
-#define CURRENT_VERTEX_SHADER(ctx) (R300_CONTEXT(ctx)->selected_vp)
-
-/* r300_vertex_shader_state and r300_vertex_program should probably be merged together someday.
- * Keeping them them seperate for now should ensure fixed pipeline keeps functioning properly.
- */
-
-struct r300_vertex_program_key {
-	GLuint InputsRead;
-	GLuint OutputsWritten;
-	GLuint OutputsAdded;
-};
-
 struct r300_vertex_program {
 	struct r300_vertex_program *next;
-	struct r300_vertex_program_key key;
-	int translated;
 
-	struct r300_vertex_shader_fragment program;
+	struct r300_vertex_program_key {
+		GLuint InputsRead;
+		GLuint OutputsWritten;
+		GLuint OutputsAdded;
+	} key;
+	
+	struct r300_vertex_shader_hw_code {
+		int length;
+		union {
+			GLuint d[VSF_MAX_FRAGMENT_LENGTH];
+			float f[VSF_MAX_FRAGMENT_LENGTH];
+		} body;
+	} hw_code;
+
+	GLboolean translated;
+	GLboolean error;
 
 	int pos_end;
 	int num_temporaries;	/* Number of temp vars used by program */
 	int wpos_idx;
 	int inputs[VERT_ATTRIB_MAX];
 	int outputs[VERT_RESULT_MAX];
-	int native;
-	int ref_count;
-	int use_ref_count;
 };
 
 struct r300_vertex_program_cont {
 	struct gl_vertex_program mesa_program;	/* Must be first */
-	struct r300_vertex_shader_fragment params;
 	struct r300_vertex_program *progs;
 };
 
@@ -632,7 +616,6 @@ struct r300_context {
 
 	struct r300_hw_state hw;
 
-	struct r300_vertex_shader_state vertex_shader;
 	struct r300_vertex_program *selected_vp;
 
 	/* Vertex buffers

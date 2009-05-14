@@ -210,8 +210,7 @@ void r300EmitArrays(GLcontext * ctx)
 	int vir_inputs[VERT_ATTRIB_MAX];
 	GLint tab[VERT_ATTRIB_MAX];
 	int swizzle[VERT_ATTRIB_MAX][4];
-	struct r300_vertex_program *prog =
-	    (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
+	struct r300_vertex_program *prog = rmesa->selected_vp;
 
 	if (rmesa->options.hw_tcl_enabled) {
 		inputs = prog->inputs;

@@ -57,5 +57,6 @@ void r300UpdateShaders (r300ContextPtr rmesa);
 void r300UpdateShaderStates (r300ContextPtr rmesa);
 void r300InitState (r300ContextPtr r300);
 void r300InitStateFuncs (struct dd_function_table *functions);
+void r300VapCntl(r300ContextPtr rmesa, GLuint input_count, GLuint output_count, GLuint temp_count);
 
 #endif				/* __R300_STATE_H__ */

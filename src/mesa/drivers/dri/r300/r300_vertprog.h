@@ -32,4 +32,7 @@
 
 #endif
 
+void r300SetupVertexProgram(r300ContextPtr rmesa);
+void r300SetupSwtclVertexProgram(r300ContextPtr rmesa);
+
 #endif

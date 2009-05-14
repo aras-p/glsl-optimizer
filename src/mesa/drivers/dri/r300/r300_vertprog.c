@@ -38,6 +38,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 
 #include "r300_context.h"
+#include "r300_state.h"
 
 /* TODO: Get rid of t_src_class call */
 #define CMP_SRCS(a, b) ((a.RelAddr != b.RelAddr) || (a.Index != b.Index && \
@@ -64,7 +65,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 		int u_temp_used = (VSF_MAX_FRAGMENT_TEMPS - 1) - u_temp_i; \
 		if((vp->num_temporaries + u_temp_used) > VSF_MAX_FRAGMENT_TEMPS) { \
 			WARN_ONCE("Ran out of temps, num temps %d, us %d\n", vp->num_temporaries, u_temp_used); \
-			vp->native = GL_FALSE; \
+			vp->error = GL_TRUE; \
 		} \
 		u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1; \
 	} while (0)
@@ -1007,14 +1008,13 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 	struct prog_src_register src[3];
 
 	vp->pos_end = 0;	/* Not supported yet */
-	vp->program.length = 0;
-	/*vp->num_temporaries=mesa_vp->Base.NumTemporaries; */
+	vp->hw_code.length = 0;
 	vp->translated = GL_TRUE;
-	vp->native = GL_TRUE;
+	vp->error = GL_FALSE;
 
 	t_inputs_outputs(vp);
 
-	for (inst = vp->program.body.i; vpi->Opcode != OPCODE_END;
+	for (inst = vp->hw_code.body.d; vpi->Opcode != OPCODE_END;
 	     vpi++, inst += 4) {
 
 		FREE_TEMPS();
@@ -1176,7 +1176,7 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 						      &u_temp_i);
 			break;
 		default:
-			assert(0);
+			vp->error = GL_TRUE;
 			break;
 		}
 	}
@@ -1198,16 +1198,10 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 		}
 	}
 
-	vp->program.length = (inst - vp->program.body.i);
-	if (vp->program.length >= VSF_MAX_FRAGMENT_LENGTH) {
-		vp->program.length = 0;
-		vp->native = GL_FALSE;
+	vp->hw_code.length = (inst - vp->hw_code.body.d);
+	if (vp->hw_code.length >= VSF_MAX_FRAGMENT_LENGTH) {
+		vp->error = GL_TRUE;
 	}
-#if 0
-	fprintf(stderr, "hw program:\n");
-	for (i = 0; i < vp->program.length; i++)
-		fprintf(stderr, "%08x\n", vp->program.body.d[i]);
-#endif
 }
 
 /* DP4 version seems to trigger some hw peculiarity */
@@ -1465,4 +1459,125 @@ void r300SelectVertexShader(r300ContextPtr r300)
 	vp->next = vpc->progs;
 	vpc->progs = vp;
 	r300->selected_vp = vp;
+}
+
+#define bump_vpu_count(ptr, new_count)   do { \
+		drm_r300_cmd_header_t* _p=((drm_r300_cmd_header_t*)(ptr)); \
+		int _nc=(new_count)/4; \
+		assert(_nc < 256); \
+		if(_nc>_p->vpu.count)_p->vpu.count=_nc; \
+	} while(0)
+
+static void r300EmitVertexProgram(r300ContextPtr r300, int dest, struct r300_vertex_shader_hw_code *code)
+{
+	int i;
+
+	assert((code->length > 0) && (code->length % 4 == 0));
+
+	switch ((dest >> 8) & 0xf) {
+		case 0:
+			R300_STATECHANGE(r300, vpi);
+			for (i = 0; i < code->length; i++)
+				r300->hw.vpi.cmd[R300_VPI_INSTR_0 + i + 4 * (dest & 0xff)] = (code->body.d[i]);
+			bump_vpu_count(r300->hw.vpi.cmd, code->length + 4 * (dest & 0xff));
+			break;
+		case 2:
+			R300_STATECHANGE(r300, vpp);
+			for (i = 0; i < code->length; i++)
+				r300->hw.vpp.cmd[R300_VPP_PARAM_0 + i + 4 * (dest & 0xff)] = (code->body.d[i]);
+			bump_vpu_count(r300->hw.vpp.cmd, code->length + 4 * (dest & 0xff));
+			break;
+		case 4:
+			R300_STATECHANGE(r300, vps);
+			for (i = 0; i < code->length; i++)
+				r300->hw.vps.cmd[1 + i + 4 * (dest & 0xff)] = (code->body.d[i]);
+			bump_vpu_count(r300->hw.vps.cmd, code->length + 4 * (dest & 0xff));
+			break;
+		default:
+			fprintf(stderr, "%s:%s don't know how to handle dest %04x\n", __FILE__, __FUNCTION__, dest);
+			_mesa_exit(-1);
+	}
+}
+
+void r300SetupSwtclVertexProgram(r300ContextPtr rmesa)
+{
+	struct r300_vertex_shader_hw_code *hw_code;
+	GLuint o_reg = 0;
+	GLuint i_reg = 0;
+	int i;
+	int inst_count = 0;
+	int param_count = 0;
+	int program_end = 0;
+
+	/* Reset state, in case we don't use something */
+	((drm_r300_cmd_header_t *) rmesa->hw.vpp.cmd)->vpu.count = 0;
+	((drm_r300_cmd_header_t *) rmesa->hw.vpi.cmd)->vpu.count = 0;
+	((drm_r300_cmd_header_t *) rmesa->hw.vps.cmd)->vpu.count = 0;
+
+	hw_code = _mesa_malloc(sizeof(struct r300_vertex_shader_hw_code));
+
+	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++) {
+		if (rmesa->swtcl.sw_tcl_inputs[i] != -1) {
+			hw_code->body.d[program_end + 0] = PVS_OP_DST_OPERAND(VE_MULTIPLY, GL_FALSE, GL_FALSE, o_reg++, VSF_FLAG_ALL, PVS_DST_REG_OUT);
+			hw_code->body.d[program_end + 1] = PVS_SRC_OPERAND(rmesa->swtcl.sw_tcl_inputs[i], PVS_SRC_SELECT_X,
+					PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z, PVS_SRC_SELECT_W, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+			hw_code->body.d[program_end + 2] = PVS_SRC_OPERAND(rmesa->swtcl.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1,
+					PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+			hw_code->body.d[program_end + 3] = PVS_SRC_OPERAND(rmesa->swtcl.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1,
+					PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+			program_end += 4;
+			i_reg++;
+		}
+	}
+
+	hw_code->length = program_end;
+
+	r300EmitVertexProgram(rmesa, R300_PVS_CODE_START, hw_code);
+	inst_count = (hw_code->length / 4) - 1;
+
+	r300VapCntl(rmesa, i_reg, o_reg, 0);
+
+	R300_STATECHANGE(rmesa, pvs);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] = (0 << R300_PVS_FIRST_INST_SHIFT) | (inst_count << R300_PVS_XYZW_VALID_INST_SHIFT) |
+		(inst_count << R300_PVS_LAST_INST_SHIFT);
+
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] = (0 << R300_PVS_CONST_BASE_OFFSET_SHIFT) | (param_count << R300_PVS_MAX_CONST_ADDR_SHIFT);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] = (inst_count << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
+
+	_mesa_free(hw_code);
+}
+
+void r300SetupVertexProgram(r300ContextPtr rmesa)
+{
+	GLcontext *ctx = rmesa->radeon.glCtx;
+	struct r300_vertex_program *prog = rmesa->selected_vp;
+	int inst_count = 0;
+	int param_count = 0;
+	
+	/* Reset state, in case we don't use something */
+	((drm_r300_cmd_header_t *) rmesa->hw.vpp.cmd)->vpu.count = 0;
+	((drm_r300_cmd_header_t *) rmesa->hw.vpi.cmd)->vpu.count = 0;
+	((drm_r300_cmd_header_t *) rmesa->hw.vps.cmd)->vpu.count = 0;
+	
+	R300_STATECHANGE(rmesa, vpp);
+	param_count = r300VertexProgUpdateParams(ctx,
+								(struct r300_vertex_program_cont *)
+								ctx->VertexProgram._Current,
+								(float *)&rmesa->hw.vpp.
+								cmd[R300_VPP_PARAM_0]);
+	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
+	param_count /= 4;
+
+	r300EmitVertexProgram(rmesa, R300_PVS_CODE_START, &(prog->hw_code));
+	inst_count = (prog->hw_code.length / 4) - 1;
+
+	r300VapCntl(rmesa, _mesa_bitcount(prog->key.InputsRead),
+				 _mesa_bitcount(prog->key.OutputsWritten), prog->num_temporaries);
+
+	R300_STATECHANGE(rmesa, pvs);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] = (0 << R300_PVS_FIRST_INST_SHIFT) | (inst_count << R300_PVS_XYZW_VALID_INST_SHIFT) |
+				(inst_count << R300_PVS_LAST_INST_SHIFT);
+
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] = (0 << R300_PVS_CONST_BASE_OFFSET_SHIFT) | (param_count << R300_PVS_MAX_CONST_ADDR_SHIFT);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] = (inst_count << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
 }
