@@ -1544,7 +1544,7 @@ struct gl_client_array
    GLuint _ElementSize;         /**< size of each element in bytes */
 
    struct gl_buffer_object *BufferObj;/**< GL_ARB_vertex_buffer_object */
-   GLuint _MaxElement;          /**< max element index into array buffer */
+   GLuint _MaxElement;          /**< max element index into array buffer + 1 */
 };
 
 
