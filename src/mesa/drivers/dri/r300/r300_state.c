@@ -829,18 +829,19 @@ static void r300ShadeModel(GLcontext * ctx, GLenum mode)
 
 	R300_STATECHANGE(rmesa, shade);
 	rmesa->hw.shade.cmd[1] = 0x00000002;
+	R300_STATECHANGE(rmesa, shade2);
 	switch (mode) {
 	case GL_FLAT:
-		rmesa->hw.shade.cmd[2] = R300_RE_SHADE_MODEL_FLAT;
+		rmesa->hw.shade2.cmd[1] = R300_RE_SHADE_MODEL_FLAT;
 		break;
 	case GL_SMOOTH:
-		rmesa->hw.shade.cmd[2] = R300_RE_SHADE_MODEL_SMOOTH;
+		rmesa->hw.shade2.cmd[1] = R300_RE_SHADE_MODEL_SMOOTH;
 		break;
 	default:
 		return;
 	}
-	rmesa->hw.shade.cmd[3] = 0x00000000;
-	rmesa->hw.shade.cmd[4] = 0x00000000;
+	rmesa->hw.shade2.cmd[2] = 0x00000000;
+	rmesa->hw.shade2.cmd[3] = 0x00000000;
 }
 
 static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
@@ -2079,8 +2080,8 @@ static void r300ResetHwState(r300ContextPtr r300)
 	}
 
 	/* XXX: Enable anti-aliasing? */
-	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = GB_AA_CONFIG_AA_DISABLE;
-	r300->hw.gb_misc.cmd[R300_GB_MISC_SELECT] = 0;
+	r300->hw.gb_misc2.cmd[R300_GB_MISC2_AA_CONFIG] = GB_AA_CONFIG_AA_DISABLE;
+	r300->hw.gb_misc2.cmd[R300_GB_MISC2_SELECT] = 0;
 
 	r300->hw.ga_point_s0.cmd[1] = r300PackFloat32(0.0);
 	r300->hw.ga_point_s0.cmd[2] = r300PackFloat32(0.0);
@@ -2151,8 +2152,13 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.rb3d_aaresolve_ctl.cmd[1] = 0;
 
-	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[1] = 0x00000000;
-	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[2] = 0xffffffff;
+	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
+	    r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[1] = 0x00000000;
+    	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[2] = 0xffffffff;
+    } else {
+	    r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[1] = (2 << 30);
+    	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[2] = (2 << 30);
+    }
 
 	r300->hw.zb_depthclearvalue.cmd[1] = 0;
 

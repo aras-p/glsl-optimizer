@@ -116,9 +116,11 @@ typedef struct r300_context *r300ContextPtr;
 #define R300_GB_MISC_MSPOS_0		1
 #define R300_GB_MISC_MSPOS_1		2
 #define R300_GB_MISC_TILE_CONFIG	3
-#define R300_GB_MISC_SELECT		4
-#define R300_GB_MISC_AA_CONFIG		5
-#define R300_GB_MISC_CMDSIZE		6
+#define R300_GB_MISC_CMDSIZE		4
+#define R300_GB_MISC2_CMD_0		    0
+#define R300_GB_MISC2_SELECT		1
+#define R300_GB_MISC2_AA_CONFIG		2
+#define R300_GB_MISC2_CMDSIZE		3
 
 #define R300_TXE_CMD_0		0
 #define R300_TXE_ENABLE		1
@@ -307,6 +309,7 @@ struct r300_hw_state {
 	struct radeon_state_atom pvs;	/* pvs_cntl (22D0) */
 	struct radeon_state_atom gb_enable;	/* (4008) */
 	struct radeon_state_atom gb_misc;	/* Multisampling position shifts ? (4010) */
+	struct radeon_state_atom gb_misc2;	/* Multisampling position shifts ? (4010) */
 	struct radeon_state_atom ga_point_s0;	/* S Texture Coordinate of Vertex 0 for Point texture stuffing (LLC) (4200) */
 	struct radeon_state_atom ga_triangle_stipple;	/* (4214) */
 	struct radeon_state_atom ps;	/* pointsize (421C) */
@@ -314,6 +317,7 @@ struct r300_hw_state {
 	struct radeon_state_atom lcntl;	/* line control */
 	struct radeon_state_atom ga_line_stipple;	/* (4260) */
 	struct radeon_state_atom shade;
+	struct radeon_state_atom shade2;
 	struct radeon_state_atom polygon_mode;
 	struct radeon_state_atom fogp;	/* fog parameters (4294) */
 	struct radeon_state_atom ga_soft_reset;	/* (429C) */
