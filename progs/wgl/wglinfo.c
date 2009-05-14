@@ -348,7 +348,6 @@ print_screen_info(HDC _hdc, GLboolean limits)
    HWND win;
    HGLRC ctx;
    int visinfo;
-   int width = 100, height = 100;
    HDC hdc;
    PIXELFORMATDESCRIPTOR pfd;
 
@@ -367,15 +366,15 @@ print_screen_info(HDC _hdc, GLboolean limits)
                         WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                         CW_USEDEFAULT,
                         CW_USEDEFAULT,
-                        width,
-                        height,
+                        CW_USEDEFAULT,
+                        CW_USEDEFAULT,
                         NULL,
                         NULL,
                         wc.hInstance,
                         NULL);
    if (!win) {
       fprintf(stderr, "Couldn't create window");
-      exit(1);
+      return;
    }
 
    hdc = GetDC(win);
@@ -476,7 +475,7 @@ print_visual_attribs_verbose(int iPixelFormat, LPPIXELFORMATDESCRIPTOR ppfd)
           ppfd->dwFlags & PFD_DRAW_TO_WINDOW ? 1 : 0);
    printf("    bufferSize=%d level=%d renderType=%s doubleBuffer=%d stereo=%d\n",
           0 /* ppfd->bufferSize */, 0 /* ppfd->level */,
-	  visual_render_type_name(ppfd->dwFlags),
+	  visual_render_type_name(ppfd->iPixelType),
           ppfd->dwFlags & PFD_DOUBLEBUFFER ? 1 : 0, 
           ppfd->dwFlags & PFD_STEREO ? 1 : 0);
    printf("    rgba: cRedBits=%d cGreenBits=%d cBlueBits=%d cAlphaBits=%d\n",
