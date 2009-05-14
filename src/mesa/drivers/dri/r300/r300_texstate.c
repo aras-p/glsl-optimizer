@@ -557,12 +557,15 @@ static GLboolean r300UpdateTexture(GLcontext * ctx, int unit)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-	struct gl_texture_object *tObj = texUnit->_Current;
-	r300TexObjPtr t = (r300TexObjPtr) tObj->DriverData;
+	struct gl_texture_object *tObj = texUnit->_ReallyEnabled ?
+		texUnit->_Current : NULL;
+	r300TexObjPtr t = tObj ? (r300TexObjPtr) tObj->DriverData : NULL;
 
 	/* Fallback if there's a texture border */
-	if (tObj->Image[0][tObj->BaseLevel]->Border > 0)
-		return GL_FALSE;
+	if (tObj && tObj->Image[0][tObj->BaseLevel]->Border > 0) {
+		tObj = NULL;
+		t = NULL;
+	}
 
 	/* Update state if this is a different texture object to last
 	 * time.
@@ -579,11 +582,14 @@ static GLboolean r300UpdateTexture(GLcontext * ctx, int unit)
 		}
 
 		_mesa_reference_texobj(&rmesa->state.texture.unit[unit].texobj, tObj);
-		t->base.bound |= (1 << unit);
-		driUpdateTextureLRU(&t->base);	/* XXX: should be locked! */
+
+		if (t) {
+			t->base.bound |= (1 << unit);
+			driUpdateTextureLRU(&t->base);	/* XXX: should be locked! */
+		}
 	}
 
-	return !t->border_fallback;
+	return !t || !t->border_fallback;
 }
 
 void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
@@ -651,7 +657,7 @@ static GLboolean r300UpdateTextureUnit(GLcontext * ctx, int unit)
 	} else if (texUnit->_ReallyEnabled) {
 		return GL_FALSE;
 	} else {
-		return GL_TRUE;
+		return r300UpdateTexture(ctx, unit);
 	}
 }
 

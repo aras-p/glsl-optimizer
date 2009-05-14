@@ -43,6 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/matrix.h"
 #include "main/extensions.h"
 #include "main/state.h"
+#include "main/texobj.h"
 #include "main/bufferobj.h"
 
 #include "swrast/swrast.h"
@@ -500,6 +501,7 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 	r300ContextPtr r300 = (r300ContextPtr) driContextPriv->driverPrivate;
 	radeonContextPtr radeon = (radeonContextPtr) r300;
 	radeonContextPtr current = ctx ? RADEON_CONTEXT(ctx) : NULL;
+	int i;
 
 	if (RADEON_DEBUG & DEBUG_DRI) {
 		fprintf(stderr, "Destroying context !\n");
@@ -551,6 +553,11 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 			}
 
 			assert(is_empty_list(&r300->swapped));
+		}
+
+                /* Drop texture object references from current hardware state */
+		for (i = 0; i < 8; i++) {
+			_mesa_reference_texobj(&r300->state.texture.unit[i].texobj, NULL);
 		}
 
 		radeonCleanupContext(&r300->radeon);
