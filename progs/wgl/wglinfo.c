@@ -364,7 +364,7 @@ print_screen_info(HDC _hdc, GLboolean limits)
    win = CreateWindowEx(0,
                         wc.lpszClassName,
                         "wglinfo",
-                        WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+                        WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                         CW_USEDEFAULT,
                         CW_USEDEFAULT,
                         width,
