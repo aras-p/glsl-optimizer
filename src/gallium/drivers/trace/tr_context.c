@@ -32,10 +32,10 @@
 
 #include "tr_dump.h"
 #include "tr_dump_state.h"
+#include "tr_state.h"
 #include "tr_buffer.h"
 #include "tr_screen.h"
 #include "tr_texture.h"
-#include "tr_context.h"
 
 
 static INLINE struct pipe_buffer *
@@ -573,23 +573,30 @@ trace_context_create_fs_state(struct pipe_context *_pipe,
 
    trace_dump_call_end();
 
+   result = trace_shader_create(tr_ctx, state, result);
+
    return result;
 }
 
 
 static INLINE void
 trace_context_bind_fs_state(struct pipe_context *_pipe,
-                            void *state)
+                            void *_state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_shader *tr_shdr = trace_shader(_state);
    struct pipe_context *pipe = tr_ctx->pipe;
+   void *state = tr_shdr ? tr_shdr->state : NULL;
 
    trace_dump_call_begin("pipe_context", "bind_fs_state");
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, state);
 
-   pipe->bind_fs_state(pipe, state);;
+   if (tr_shdr && tr_shdr->replaced)
+      state = tr_shdr->replaced;
+
+   pipe->bind_fs_state(pipe, state);
 
    trace_dump_call_end();
 }
@@ -597,19 +604,23 @@ trace_context_bind_fs_state(struct pipe_context *_pipe,
 
 static INLINE void
 trace_context_delete_fs_state(struct pipe_context *_pipe,
-                              void *state)
+                              void *_state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_shader *tr_shdr = trace_shader(_state);
    struct pipe_context *pipe = tr_ctx->pipe;
+   void *state = tr_shdr->state;
 
    trace_dump_call_begin("pipe_context", "delete_fs_state");
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, state);
 
-   pipe->delete_fs_state(pipe, state);;
+   pipe->delete_fs_state(pipe, state);
 
    trace_dump_call_end();
+
+   trace_shader_destroy(tr_ctx, tr_shdr);
 }
 
 
@@ -626,11 +637,13 @@ trace_context_create_vs_state(struct pipe_context *_pipe,
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(shader_state, state);
 
-   result = pipe->create_vs_state(pipe, state);;
+   result = pipe->create_vs_state(pipe, state);
 
    trace_dump_ret(ptr, result);
 
    trace_dump_call_end();
+
+   result = trace_shader_create(tr_ctx, state, result);
 
    return result;
 }
@@ -638,15 +651,20 @@ trace_context_create_vs_state(struct pipe_context *_pipe,
 
 static INLINE void
 trace_context_bind_vs_state(struct pipe_context *_pipe,
-                            void *state)
+                            void *_state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_shader *tr_shdr = trace_shader(_state);
    struct pipe_context *pipe = tr_ctx->pipe;
+   void *state = tr_shdr ? tr_shdr->state : NULL;
 
    trace_dump_call_begin("pipe_context", "bind_vs_state");
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, state);
+
+   if (tr_shdr && tr_shdr->replaced)
+      state = tr_shdr->replaced;
 
    pipe->bind_vs_state(pipe, state);;
 
@@ -656,10 +674,12 @@ trace_context_bind_vs_state(struct pipe_context *_pipe,
 
 static INLINE void
 trace_context_delete_vs_state(struct pipe_context *_pipe,
-                              void *state)
+                              void *_state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_shader *tr_shdr = trace_shader(_state);
    struct pipe_context *pipe = tr_ctx->pipe;
+   void *state = tr_shdr->state;
 
    trace_dump_call_begin("pipe_context", "delete_vs_state");
 
@@ -669,6 +689,8 @@ trace_context_delete_vs_state(struct pipe_context *_pipe,
    pipe->delete_vs_state(pipe, state);;
 
    trace_dump_call_end();
+
+   trace_shader_destroy(tr_ctx, tr_shdr);
 }
 
 
@@ -1098,6 +1120,9 @@ trace_context_create(struct pipe_screen *_screen,
    tr_ctx = CALLOC_STRUCT(trace_context);
    if(!tr_ctx)
       goto error1;
+
+   pipe_mutex_init(tr_ctx->list_mutex);
+   make_empty_list(&tr_ctx->shaders);
 
    tr_ctx->base.winsys = _screen->winsys;
    tr_ctx->base.screen = _screen;
