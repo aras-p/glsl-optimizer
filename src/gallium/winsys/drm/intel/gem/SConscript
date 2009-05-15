@@ -1,0 +1,17 @@
+Import('*')
+
+env = drienv.Clone()
+
+inteldrm_sources = [
+    'intel_be_api.c',
+    'intel_be_batchbuffer.c',
+    'intel_be_context.c',
+    'intel_be_device.c',
+]
+
+inteldrm = env.ConvenienceLibrary(
+    target ='inteldrm',
+    source = inteldrm_sources,
+)
+
+Export('inteldrm')
