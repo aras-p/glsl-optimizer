@@ -368,6 +368,11 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
             att->Complete = GL_FALSE;
             return;
          }
+         if (texImage->TexFormat->TexelBytes == 0) {
+            att_incomplete("compressed internalformat");
+            att->Complete = GL_FALSE;
+            return;
+         }
       }
       else if (format == GL_DEPTH) {
          if (texImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
