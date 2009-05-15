@@ -31,7 +31,7 @@
 #include "pipe/p_screen.h"
 
 #include "tr_dump.h"
-#include "tr_state.h"
+#include "tr_dump_state.h"
 #include "tr_buffer.h"
 #include "tr_screen.h"
 #include "tr_texture.h"

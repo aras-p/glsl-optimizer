@@ -31,7 +31,7 @@
 #include "tgsi/tgsi_dump.h"
 
 #include "tr_dump.h"
-#include "tr_state.h"
+#include "tr_dump_state.h"
 
 
 void trace_dump_format(enum pipe_format format)

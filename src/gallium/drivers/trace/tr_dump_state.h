@@ -25,8 +25,8 @@
  *
  **************************************************************************/
 
-#ifndef TR_STATE_H
-#define TR_STATE_H
+#ifndef TR_DUMP_STATE_H_
+#define TR_DUMP_STATE_H_
 
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"

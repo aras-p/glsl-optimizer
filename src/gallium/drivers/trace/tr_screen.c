@@ -30,7 +30,7 @@
 
 #include "tr_buffer.h"
 #include "tr_dump.h"
-#include "tr_state.h"
+#include "tr_dump_state.h"
 #include "tr_texture.h"
 #include "tr_screen.h"
 
