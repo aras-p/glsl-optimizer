@@ -216,6 +216,11 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 	radeonContextPtr radeon = (radeonContextPtr) driContextPriv->driverPrivate;
 	radeonContextPtr current = ctx ? RADEON_CONTEXT(ctx) : NULL;
 
+    /* +r6/r7 */
+    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
+    /* --------- */
+
 	if (radeon == current) {
 		radeon_firevertices(radeon);
 		_mesa_make_current(NULL, NULL, NULL);
@@ -223,6 +228,13 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 	
 	assert(radeon);
 	if (radeon) {
+
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600) /* +r6/r7 */
+	    if (IS_R600_CLASS(screen))
+        {
+		    r600DestroyContext(driContextPriv);
+        }
+#endif
 
 		if (radeon->dma.current) {
 			rcommonFlushCmdBuf( radeon, __FUNCTION__ );

@@ -167,38 +167,38 @@ static inline void r600_cs_write_dword(struct radeon_cs *cs, uint32_t dword)
 #define R600_OUT_BATCH_REGS(reg, num)					\
 do {								\
 	if ((reg) >= R600_SET_CONFIG_REG_OFFSET && (reg) < R600_SET_CONFIG_REG_END) { \
-		OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, (num)));	\
-		OUT_BATCH(((reg) - R600_SET_CONFIG_REG_OFFSET) >> 2);	\
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, (num)));	\
+		R600_OUT_BATCH(((reg) - R600_SET_CONFIG_REG_OFFSET) >> 2);	\
 	} else if ((reg) >= R600_SET_CONTEXT_REG_OFFSET && (reg) < R600_SET_CONTEXT_REG_END) { \
-		OUT_BATCH(CP_PACKET3(R600_IT_SET_CONTEXT_REG, (num)));	\
-		OUT_BATCH(((reg) - R600_SET_CONTEXT_REG_OFFSET) >> 2);	\
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONTEXT_REG, (num)));	\
+		R600_OUT_BATCH(((reg) - R600_SET_CONTEXT_REG_OFFSET) >> 2);	\
 	} else if ((reg) >= R600_SET_ALU_CONST_OFFSET && (reg) < R600_SET_ALU_CONST_END) { \
-		OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, (num)));	\
-		OUT_BATCH(((reg) - R600_SET_ALU_CONST_OFFSET) >> 2);	\
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, (num)));	\
+		R600_OUT_BATCH(((reg) - R600_SET_ALU_CONST_OFFSET) >> 2);	\
 	} else if ((reg) >= R600_SET_RESOURCE_OFFSET && (reg) < R600_SET_RESOURCE_END) { \
-		OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, (num)));	\
-		OUT_BATCH(((reg) - R600_SET_RESOURCE_OFFSET) >> 2);	\
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, (num)));	\
+		R600_OUT_BATCH(((reg) - R600_SET_RESOURCE_OFFSET) >> 2);	\
 	} else if ((reg) >= R600_SET_SAMPLER_OFFSET && (reg) < R600_SET_SAMPLER_END) { \
-		OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, (num)));	\
-		OUT_BATCH(((reg) - R600_SET_SAMPLER_OFFSET) >> 2);	\
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, (num)));	\
+		R600_OUT_BATCH(((reg) - R600_SET_SAMPLER_OFFSET) >> 2);	\
 	} else if ((reg) >= R600_SET_CTL_CONST_OFFSET && (reg) < R600_SET_CTL_CONST_END) { \
-		OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, (num)));	\
-		OUT_BATCH(((reg) - R600_SET_CTL_CONST_OFFSET) >> 2);	\
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, (num)));	\
+		R600_OUT_BATCH(((reg) - R600_SET_CTL_CONST_OFFSET) >> 2);	\
 	} else if ((reg) >= R600_SET_LOOP_CONST_OFFSET && (reg) < R600_SET_LOOP_CONST_END) { \
-		OUT_BATCH(CP_PACKET3(R600_IT_SET_LOOP_CONST, (num)));	\
-		OUT_BATCH(((reg) - R600_SET_LOOP_CONST_OFFSET) >> 2);	\
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_LOOP_CONST, (num)));	\
+		R600_OUT_BATCH(((reg) - R600_SET_LOOP_CONST_OFFSET) >> 2);	\
 	} else if ((reg) >= R600_SET_BOOL_CONST_OFFSET && (reg) < R600_SET_BOOL_CONST_END) { \
-		OUT_BATCH(CP_PACKET3(R600_IT_SET_BOOL_CONST, (num)));	\
-		OUT_BATCH(((reg) - R600_SET_BOOL_CONST_OFFSET) >> 2);	\
+		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_BOOL_CONST, (num)));	\
+		R600_OUT_BATCH(((reg) - R600_SET_BOOL_CONST_OFFSET) >> 2);	\
 	} else {							\
-		OUT_BATCH(CP_PACKET0((reg), (num))); \
+		R600_OUT_BATCH(CP_PACKET0((reg), (num))); \
 	}								\
 } while (0)
 
 /** Single register write to command buffer; requires 3 dwords for most things. */
 #define R600_OUT_BATCH_REGVAL(reg, val)		\
 	R600_OUT_BATCH_REGS((reg), 1);		\
-	OUT_BATCH((val))
+	R600_OUT_BATCH((val))
 
 /** Continuous register range write to command buffer; requires 1 dword,
  * expects count dwords afterwards for register contents. */

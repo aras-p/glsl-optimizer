@@ -59,9 +59,9 @@ void r700WaitForIdle(context_t *context)
     BATCH_LOCALS(&context->radeon);
     BEGIN_BATCH_NO_AUTOSTATE(3);
 
-    OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
-    OUT_BATCH(mmWAIT_UNTIL - ASIC_CONFIG_BASE_INDEX);
-    OUT_BATCH(1 << 15);
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
+    R600_OUT_BATCH(mmWAIT_UNTIL - ASIC_CONFIG_BASE_INDEX);
+    R600_OUT_BATCH(1 << 15);
 
     END_BATCH();
     COMMIT_BATCH();
@@ -72,12 +72,12 @@ void r700WaitForIdleClean(context_t *context)
     BATCH_LOCALS(&context->radeon);
     BEGIN_BATCH_NO_AUTOSTATE(5);
 
-    OUT_BATCH(CP_PACKET3(R600_IT_EVENT_WRITE, 0));
-    OUT_BATCH(0x16);
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_EVENT_WRITE, 0));
+    R600_OUT_BATCH(0x16);
 
-    OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
-    OUT_BATCH(mmWAIT_UNTIL - ASIC_CONFIG_BASE_INDEX);
-    OUT_BATCH(1 << 17); 
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
+    R600_OUT_BATCH(mmWAIT_UNTIL - ASIC_CONFIG_BASE_INDEX);
+    R600_OUT_BATCH(1 << 17); 
 
     END_BATCH();
     COMMIT_BATCH();
@@ -89,15 +89,15 @@ static void r700Start3D(context_t *context)
     if (context->radeon.radeonScreen->chip_family <= CHIP_FAMILY_RV670)
     {
         BEGIN_BATCH_NO_AUTOSTATE(2);
-        OUT_BATCH(CP_PACKET3(R600_IT_START_3D_CMDBUF, 1));
-        OUT_BATCH(0);
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_START_3D_CMDBUF, 1));
+        R600_OUT_BATCH(0);
         END_BATCH();        
     }
 
     BEGIN_BATCH_NO_AUTOSTATE(3);
-    OUT_BATCH(CP_PACKET3(R600_IT_CONTEXT_CONTROL, 1));
-    OUT_BATCH(0x80000000);
-    OUT_BATCH(0x80000000);
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_CONTEXT_CONTROL, 1));
+    R600_OUT_BATCH(0x80000000);
+    R600_OUT_BATCH(0x80000000);
     END_BATCH();
 
     COMMIT_BATCH();
@@ -183,11 +183,11 @@ GLboolean r700SyncSurf(context_t *context)
 
     BEGIN_BATCH_NO_AUTOSTATE(5);
     
-    OUT_BATCH(CP_PACKET3((IT_SURFACE_SYNC << 8), 3)));
-    OUT_BATCH(CP_COHER_CNTL);
-    OUT_BATCH(0xFFFFFFFF);
-    OUT_BATCH(0x00000000);
-    OUT_BATCH(10);
+    R600_OUT_BATCH(CP_PACKET3((IT_SURFACE_SYNC << 8), 3)));
+    R600_OUT_BATCH(CP_COHER_CNTL);
+    R600_OUT_BATCH(0xFFFFFFFF);
+    R600_OUT_BATCH(0x00000000);
+    R600_OUT_BATCH(10);
 
     END_BATCH();
     COMMIT_BATCH();
@@ -241,7 +241,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
 {
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
-
+#if 1
     BATCH_LOCALS(&context->radeon);
 
     unsigned int i, j;
@@ -286,7 +286,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     r700->SQ_PGM_START_ES.u32All     = r700->SQ_PGM_START_PS.u32All;
     r700->SQ_PGM_START_GS.u32All     = r700->SQ_PGM_START_PS.u32All;
 
-    r700SendContextStates(context, NULL, NULL);
+    r700SendContextStates(context, GL_FALSE);
 
     /* richard test code */
     for (i = 0; i < vb->PrimitiveCount; i++) 
@@ -305,33 +305,32 @@ static GLboolean r700RunRender(GLcontext * ctx,
         
         numEntires = 2 /* VGT_INDEX_TYPE */
                      + 3 /* VGT_PRIMITIVE_TYPE */
-                     + numIndices + 3 /* DRAW_INDEX_IMMD */
-                     + 2; /* test stamp */
+                     + numIndices + 3; /* DRAW_INDEX_IMMD */                  
                      
         BEGIN_BATCH_NO_AUTOSTATE(numEntires);  
 
         VGT_INDEX_TYPE |= DI_INDEX_SIZE_32_BIT << INDEX_TYPE_shift;
 
-        OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
-        OUT_BATCH(VGT_INDEX_TYPE);
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
+        R600_OUT_BATCH(VGT_INDEX_TYPE);
 
         VGT_NUM_INDICES = numIndices;
 
         VGT_PRIMITIVE_TYPE |= r700PrimitiveType(prim) << VGT_PRIMITIVE_TYPE__PRIM_TYPE_shift;
-        OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
-        OUT_BATCH(mmVGT_PRIMITIVE_TYPE - ASIC_CONFIG_BASE_INDEX);
-        OUT_BATCH(VGT_PRIMITIVE_TYPE);
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
+        R600_OUT_BATCH(mmVGT_PRIMITIVE_TYPE - ASIC_CONFIG_BASE_INDEX);
+        R600_OUT_BATCH(VGT_PRIMITIVE_TYPE);
 
         VGT_DRAW_INITIATOR |= DI_SRC_SEL_IMMEDIATE << SOURCE_SELECT_shift;
         VGT_DRAW_INITIATOR |= DI_MAJOR_MODE_0 << MAJOR_MODE_shift;
 
-        OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (numIndices + 1)));
-        OUT_BATCH(VGT_NUM_INDICES);
-        OUT_BATCH(VGT_DRAW_INITIATOR);
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (numIndices + 1)));
+        R600_OUT_BATCH(VGT_NUM_INDICES);
+        R600_OUT_BATCH(VGT_DRAW_INITIATOR);
 
         for (j=0; j<numIndices; j++)
         {
-            OUT_BATCH(j);
+            R600_OUT_BATCH(j);
         }
         END_BATCH();
         COMMIT_BATCH();
@@ -339,8 +338,8 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     /* Flush render op cached for last several quads. */
     BEGIN_BATCH_NO_AUTOSTATE(2);
-    OUT_BATCH(CP_PACKET3(R600_IT_EVENT_WRITE, 0));
-    OUT_BATCH(CACHE_FLUSH_AND_INV_EVENT);
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_EVENT_WRITE, 0));
+    R600_OUT_BATCH(CACHE_FLUSH_AND_INV_EVENT);
     END_BATCH();
     COMMIT_BATCH();
 
@@ -354,7 +353,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     R600_OUT_BATCH_REGVAL((0x2144 << 2), 0x56785678);
     END_BATCH();
     COMMIT_BATCH();
-
+#endif //0
     rcommonFlushCmdBuf( &context->radeon, __FUNCTION__ );
 
     return GL_FALSE;

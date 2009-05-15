@@ -1086,16 +1086,38 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    screen->AGPMode = dri_priv->AGPMode;
 
    ret = radeonGetParam(sPriv, RADEON_PARAM_FB_LOCATION, &temp);
-   if (ret) {
-       if (screen->chip_family < CHIP_FAMILY_RS600 && !screen->kernel_mm)
-	   screen->fbLocation      = ( INREG( RADEON_MC_FB_LOCATION ) & 0xffff) << 16;
-       else {
-           FREE( screen );
-           fprintf(stderr, "Unable to get fb location need newer drm\n");
-           return NULL;
+   
+   /* +r6/r7 */
+   if(screen->chip_family >= CHIP_FAMILY_R600)
+   {
+       if (ret) 
+       {
+            FREE( screen );
+            fprintf(stderr, "Unable to get fb location need newer drm\n");
+            return NULL;
        }
-   } else {
-       screen->fbLocation = (temp & 0xffff) << 16;
+       else
+       {
+            screen->fbLocation = (temp & 0xffff) << 24;
+       }
+   }
+   else
+   {
+        if (ret) 
+        {
+            if (screen->chip_family < CHIP_FAMILY_RS600 && !screen->kernel_mm)
+	            screen->fbLocation      = ( INREG( RADEON_MC_FB_LOCATION ) & 0xffff) << 16;
+            else 
+            {
+                FREE( screen );
+                fprintf(stderr, "Unable to get fb location need newer drm\n");
+                return NULL;
+            }
+        } 
+        else 
+        {
+            screen->fbLocation = (temp & 0xffff) << 16;
+        }
    }
 
    if (IS_R300_CLASS(screen)) {

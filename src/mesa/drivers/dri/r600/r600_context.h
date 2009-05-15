@@ -159,7 +159,7 @@ typedef struct chip_object
     void      *pvChipObj;
 
     /* ------------  OUT ------------------- */
-    GLboolean (*DestroyChipObj)(void* pvChipObj);
+    GLboolean (*DestroyChipObj)(GLcontext * ctx);
 
     void      (*InitFuncs)(struct dd_function_table *functions);
 
@@ -171,7 +171,8 @@ typedef struct chip_object
     GLboolean (*EmitShader)( GLcontext * ctx, 
                              void ** shaderbo,
 			                 GLvoid * data, 
-                             int sizeinDWORD);
+                             int sizeinDWORD,
+                             char * szShaderUsage);
     GLboolean (*DeleteShader)(GLcontext * ctx, 
                               void * shaderbo);
     void      (*FreeDmaRegion)( GLcontext * ctx, 

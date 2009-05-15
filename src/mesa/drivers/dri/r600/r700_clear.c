@@ -140,17 +140,18 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
 
     /* Setup vb */
     BEGIN_BATCH_NO_AUTOSTATE(6);
-    OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
-	OUT_BATCH(mmSQ_VTX_BASE_VTX_LOC - ASIC_CTL_CONST_BASE_INDEX);
-    OUT_BATCH(0);
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
+	R600_OUT_BATCH(mmSQ_VTX_BASE_VTX_LOC - ASIC_CTL_CONST_BASE_INDEX);
+    R600_OUT_BATCH(0);
 
-    OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
-    OUT_BATCH(mmSQ_VTX_START_INST_LOC - ASIC_CTL_CONST_BASE_INDEX);
-    OUT_BATCH(0);
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
+    R600_OUT_BATCH(mmSQ_VTX_START_INST_LOC - ASIC_CTL_CONST_BASE_INDEX);
+    R600_OUT_BATCH(0);
     END_BATCH();
     COMMIT_BATCH();
 
     (context->chipobj.EmitVec)(ctx, &aos_vb, (GLvoid *)fVb, 4, 16, 6);
+
     r700SetupVTXConstans(ctx, VERT_ATTRIB_POS, &aos_vb, 4, 16, 6);
 
     /* Setup shaders, copied from dump */
@@ -159,25 +160,33 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
 	SETbit(r700->SQ_PGM_RESOURCES_PS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
     SETbit(r700->SQ_PGM_RESOURCES_VS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
         /* vs */
-    (context->chipobj.EmitShader)(ctx, &pbo_vs, (GLvoid *)(&uVs[0]), 28);
+    if(0 == r700->pbo_vs_clear)
+    {
+        (context->chipobj.EmitShader)(ctx, &(r700->pbo_vs_clear), (GLvoid *)(&uVs[0]), 28, "Clr VS");
+    }
+
     r700->SQ_PGM_START_VS.u32All     = 0;
     r700->SQ_PGM_RESOURCES_VS.u32All = 0x00800004;
 
             /* vs const */ /* TODO : Set color here */
     BEGIN_BATCH_NO_AUTOSTATE(4 + 2);
-    OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, 4));
-    OUT_BATCH(SQ_ALU_CONSTANT_VS_OFFSET * 4); 
-    OUT_BATCH(*((unsigned int*)&(ctx->Color.ClearColor[0])));
-    OUT_BATCH(*((unsigned int*)&(ctx->Color.ClearColor[1])));
-    OUT_BATCH(*((unsigned int*)&(ctx->Color.ClearColor[2])));
-    OUT_BATCH(*((unsigned int*)&(ctx->Color.ClearColor[3])));
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, 4));
+    R600_OUT_BATCH(SQ_ALU_CONSTANT_VS_OFFSET * 4); 
+    R600_OUT_BATCH(*((unsigned int*)&(ctx->Color.ClearColor[0])));
+    R600_OUT_BATCH(*((unsigned int*)&(ctx->Color.ClearColor[1])));
+    R600_OUT_BATCH(*((unsigned int*)&(ctx->Color.ClearColor[2])));
+    R600_OUT_BATCH(*((unsigned int*)&(ctx->Color.ClearColor[3])));
     END_BATCH();
     COMMIT_BATCH();
 
     r700->SPI_VS_OUT_CONFIG.u32All   = 0x00000000;
 	r700->SPI_PS_IN_CONTROL_0.u32All = 0x20000001;
         /* ps */
-    (context->chipobj.EmitShader)(ctx, &pbo_fs, (GLvoid *)(&uFs[0]), 12); 
+    if(0 == r700->pbo_fs_clear)
+    {
+        (context->chipobj.EmitShader)(ctx, &(r700->pbo_fs_clear), (GLvoid *)(&uFs[0]), 12, "Clr PS"); 
+    }
+
     r700->SQ_PGM_START_PS.u32All     = 0;
     r700->SQ_PGM_RESOURCES_PS.u32All = 0x00800002;
     r700->SQ_PGM_EXPORTS_PS.u32All   = 0x00000002;        
@@ -191,7 +200,7 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
     r700->SQ_PGM_START_GS.u32All     = 0;
 
     /* Now, send the states */
-    r700SendContextStates(context, pbo_vs, pbo_fs);
+    r700SendContextStates(context, GL_TRUE);
 
     /* Draw */
     GLuint numEntires, j;
@@ -209,37 +218,32 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
 
     SETfield(VGT_INDEX_TYPE, DI_INDEX_SIZE_32_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
 
-    OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
-    OUT_BATCH(VGT_INDEX_TYPE);
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_INDEX_TYPE, 0));
+    R600_OUT_BATCH(VGT_INDEX_TYPE);
 
     VGT_NUM_INDICES = numIndices;
 
     SETfield(VGT_PRIMITIVE_TYPE, DI_PT_TRILIST, VGT_PRIMITIVE_TYPE__PRIM_TYPE_shift, VGT_PRIMITIVE_TYPE__PRIM_TYPE_mask);
 
-    OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
-    OUT_BATCH(mmVGT_PRIMITIVE_TYPE - ASIC_CONFIG_BASE_INDEX);
-    OUT_BATCH(VGT_PRIMITIVE_TYPE);
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
+    R600_OUT_BATCH(mmVGT_PRIMITIVE_TYPE - ASIC_CONFIG_BASE_INDEX);
+    R600_OUT_BATCH(VGT_PRIMITIVE_TYPE);
 
     SETfield(VGT_DRAW_INITIATOR, DI_SRC_SEL_IMMEDIATE, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
     SETfield(VGT_DRAW_INITIATOR, DI_MAJOR_MODE_0, MAJOR_MODE_shift, MAJOR_MODE_mask);
 
-    OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (numIndices + 1)));
-    OUT_BATCH(VGT_NUM_INDICES);
-    OUT_BATCH(VGT_DRAW_INITIATOR);
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_DRAW_INDEX_IMMD, (numIndices + 1)));
+    R600_OUT_BATCH(VGT_NUM_INDICES);
+    R600_OUT_BATCH(VGT_DRAW_INITIATOR);
 
     for (j=0; j<numIndices; j++)
     {
-        OUT_BATCH(j);
+        R600_OUT_BATCH(j);
     }
     END_BATCH();
     COMMIT_BATCH();
 
     (context->chipobj.FlushCmdBuffer)(context);
-
-    /* TODO : keep these in context, don't load and release every time. */
-    (context->chipobj.DeleteShader)(context, &pbo_vs);
-
-    (context->chipobj.DeleteShader)(context, &pbo_fs);
 
     (context->chipobj.FreeDmaRegion)(context, aos_vb.bo);
 

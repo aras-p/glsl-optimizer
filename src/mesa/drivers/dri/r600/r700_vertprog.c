@@ -360,7 +360,8 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
         (context->chipobj.EmitShader)(ctx, 
                        &(vp->shaderbo), 
                        (GLvoid *)(vp->r700Shader.pProgram),
-                       vp->r700Shader.uShaderBinaryDWORDSize); 
+                       vp->r700Shader.uShaderBinaryDWORDSize,
+                       "VS"); 
 
         vp->loaded = GL_TRUE;
     }
@@ -405,18 +406,18 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
 
         BEGIN_BATCH_NO_AUTOSTATE(unNumParamData + 2); 
         
-        OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, unNumParamData));
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_ALU_CONST, unNumParamData));
         /* assembler map const from very beginning. */
-        OUT_BATCH(SQ_ALU_CONSTANT_VS_OFFSET * 4);
+        R600_OUT_BATCH(SQ_ALU_CONSTANT_VS_OFFSET * 4);
 
         unNumParamData = paramList->NumParameters;
 
         for(ui=0; ui<unNumParamData; ui++)
         {
-            OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][0])));
-            OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][1])));
-            OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][2])));
-            OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][3])));
+            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][0])));
+            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][1])));
+            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][2])));
+            R600_OUT_BATCH(*((unsigned int*)&(paramList->ParameterValues[ui][3])));
         }
         END_BATCH();
         COMMIT_BATCH();

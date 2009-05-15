@@ -447,6 +447,8 @@ typedef struct _R700_CHIP_CONTEXT
 
     R700_TEXTURE_STATES texture_states;
 
+    void *    pbo_vs_clear;
+    void *    pbo_fs_clear;
     GLboolean bEnablePerspective;
 	
 } R700_CHIP_CONTEXT;
@@ -454,7 +456,7 @@ typedef struct _R700_CHIP_CONTEXT
 #define R700_CONTEXT_STATES(context) ((R700_CHIP_CONTEXT *)(context->chipobj.pvChipObj))
 
 extern GLboolean r700InitChipObject(context_t *context);
-extern GLboolean r700SendContextStates(context_t *context, void * pbo_vs, void * pbo_fs);
+extern GLboolean r700SendContextStates(context_t *context, GLboolean bUseStockShader);
 extern int       r700SetupStreams(GLcontext * ctx);
 extern void      r700SetupVTXConstans(GLcontext  * ctx, 
                                       unsigned int nStreamID,

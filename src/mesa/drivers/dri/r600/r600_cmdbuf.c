@@ -188,6 +188,7 @@ int r600_cs_write_reloc(struct radeon_cs *cs,
     cs->crelocs++;
 
     radeon_bo_ref(bo);
+
     return 0;
 }
 
@@ -245,6 +246,8 @@ static int r600_cs_end(struct radeon_cs *cs,
     {
         fprintf(stderr, "CS section size missmatch start at (%s,%s,%d) %d vs %d\n",
                 cs->section_file, cs->section_func, cs->section_line, cs->section_ndw, cs->section_cdw);
+        fprintf(stderr, "cs->section_ndw = %d, cs->cdw = %d, cs->section_cdw = %d \n",
+                cs->section_ndw, cs->cdw, cs->section_cdw);
         fprintf(stderr, "CS section end at (%s,%s,%d)\n",
                 file, func, line);
         return -EPIPE;
@@ -356,7 +359,7 @@ static int r600_cs_emit(struct radeon_cs *cs)
     /* drm_r300_cmd_header_t age; */
     uint32_t length_dw_reloc_chunk;
     uint64_t ull;
-    uint64_t * chunk_ptrs[2];
+    uint64_t chunk_ptrs[2];
     uint32_t reloc_chunk[128]; 
     int r;
     int retry = 0;
@@ -370,23 +373,23 @@ static int r600_cs_emit(struct radeon_cs *cs)
     if (r) {
         return 0;
     }
-
+      
     /* raw ib chunk */
     cs_chunk[0].chunk_id   = RADEON_CHUNK_ID_IB;
     cs_chunk[0].length_dw  = cs->cdw;
-    cs_chunk[0].chunk_data = (uint64_t)(cs->packets);
+    cs_chunk[0].chunk_data = (unsigned long)(cs->packets);
 
     /* reloc chaunk */
     cs_chunk[1].chunk_id   = RADEON_CHUNK_ID_RELOCS;
     cs_chunk[1].length_dw  = length_dw_reloc_chunk;
-    cs_chunk[1].chunk_data = (uint64_t)&(reloc_chunk[0]);
+    cs_chunk[1].chunk_data = (unsigned long)&(reloc_chunk[0]);
 
-    chunk_ptrs[0] = (uint64_t * )&(cs_chunk[0]);
-    chunk_ptrs[1] = (uint64_t * )&(cs_chunk[1]);
+    chunk_ptrs[0] = (uint64_t)(unsigned long)&(cs_chunk[0]);
+    chunk_ptrs[1] = (uint64_t)(unsigned long)&(cs_chunk[1]);
 
     cs_cmd.num_chunks = 2;
-    cs_cmd.cs_id      = 0;
-    cs_cmd.chunks     = (uint64_t)&(chunk_ptrs[0]);
+    /* cs_cmd.cs_id      = 0; */
+    cs_cmd.chunks     = (uint64_t)(unsigned long)chunk_ptrs;
 
     /* dump_cmdbuf(cs); */
 

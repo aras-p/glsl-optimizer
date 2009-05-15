@@ -44,7 +44,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern GLboolean r600EmitShader(GLcontext * ctx, 
                                 void ** shaderbo,
 			                    GLvoid * data, 
-                                int sizeinDWORD); 
+                                int sizeinDWORD,
+                                char * szShaderUsage); 
 
 extern GLboolean r600DeleteShader(GLcontext * ctx, 
                                  void * shaderbo);

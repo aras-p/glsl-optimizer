@@ -594,8 +594,8 @@ static void r600EmitVertexAOS(r600ContextPtr rmesa, GLuint vertex_size, struct r
 
 	BEGIN_BATCH(7);
 	OUT_BATCH_PACKET3(R600_PACKET3_3D_LOAD_VBPNTR, 2);
-	OUT_BATCH(1);
-	OUT_BATCH(vertex_size | (vertex_size << 8));
+	R600_OUT_BATCH(1);
+	R600_OUT_BATCH(vertex_size | (vertex_size << 8));
 	OUT_BATCH_RELOC(offset, bo, offset, RADEON_GEM_DOMAIN_GTT, 0, 0);
 	END_BATCH();
 #endif /* to be enabled */
@@ -612,7 +612,7 @@ static void r600EmitVbufPrim(r600ContextPtr rmesa, GLuint primitive, GLuint vert
 
 	BEGIN_BATCH(3);
 	OUT_BATCH_PACKET3(R600_PACKET3_3D_DRAW_VBUF_2, 0);
-	OUT_BATCH(R600_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (num_verts << 16) | type);
+	R600_OUT_BATCH(R600_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (num_verts << 16) | type);
 	END_BATCH();
 #endif /* to be enabled */
 }

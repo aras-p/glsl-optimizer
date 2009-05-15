@@ -448,3 +448,15 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	return GL_TRUE;
 }
 
+/* Clean our own things only, radeonDestroyContext will do every thing else. */
+void
+r600DestroyContext (__DRIcontextPrivate * driContextPriv)
+{
+    GET_CURRENT_CONTEXT (ctx);
+    context_t *context = R700_CONTEXT(ctx);
+
+    (context->chipobj.DestroyChipObj)(context->chipobj.pvChipObj);
+}
+
+
+

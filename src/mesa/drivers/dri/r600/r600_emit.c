@@ -175,7 +175,8 @@ void r600EmitCacheFlush(r600ContextPtr rmesa)
 GLboolean r600EmitShader(GLcontext * ctx, 
                          void ** shaderbo,
 			             GLvoid * data, 
-                         int sizeinDWORD) 
+                         int sizeinDWORD,
+                         char * szShaderUsage) 
 {
     radeonContextPtr radeonctx = RADEON_CONTEXT(ctx);
 
@@ -183,12 +184,22 @@ GLboolean r600EmitShader(GLcontext * ctx,
     uint32_t *out;
 
 shader_again_alloc:	
+#ifdef RADEON_DEBUG_BO
 	pbo = radeon_bo_open(radeonctx->radeonScreen->bom,
 					     0, 
                          sizeinDWORD * 4, 
                          256, 
                          RADEON_GEM_DOMAIN_GTT,
+					     0,
+                         szShaderUsage);
+#else
+    pbo = radeon_bo_open(radeonctx->radeonScreen->bom,
+					     0, 
+                         sizeinDWORD * 4, 
+                         256, 
+                         RADEON_GEM_DOMAIN_GTT,
 					     0);
+#endif /* RADEON_DEBUG_BO */
 
 	if (!pbo) 
     {
@@ -210,6 +221,8 @@ shader_again_alloc:
     out = (uint32_t*)(pbo->ptr);
 
     memcpy(out, data, sizeinDWORD * 4);
+
+    radeon_bo_unmap(pbo); 
 
     *shaderbo = (void*)pbo;
 

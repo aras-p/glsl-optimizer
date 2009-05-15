@@ -692,7 +692,7 @@ void r700SetRenderTarget(context_t *context)
     nPitchInPixel = rrb->pitch/rrb->cpp;
     SETfield(r700->CB_COLOR0_SIZE.u32All, (nPitchInPixel/8)-1,
              PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
-    SETfield(r700->CB_COLOR0_SIZE.u32All, ( (nPitchInPixel * rrb->base.Height)/64 )-1,
+    SETfield(r700->CB_COLOR0_SIZE.u32All, ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
              SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask);
     r700->CB_COLOR0_BASE.u32All = 0;
     SETfield(r700->CB_COLOR0_INFO.u32All, ENDIAN_NONE, ENDIAN_shift, ENDIAN_mask);
@@ -737,7 +737,7 @@ void r700SetRenderTarget(context_t *context)
 
     SETfield(r700->DB_DEPTH_SIZE.u32All, (nPitchInPixel/8)-1,
              PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
-    SETfield(r700->DB_DEPTH_SIZE.u32All, ( (nPitchInPixel * rrb->base.Height)/64 )-1,
+    SETfield(r700->DB_DEPTH_SIZE.u32All, ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
              SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask); /* size in pixel / 64 - 1 */
 
     if(4 == rrb->cpp) 
@@ -909,7 +909,7 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->CB_COLOR0_FRAG.u32All   = 0;
     r700->CB_COLOR0_MASK.u32All   = 0;
 
-    r700->PA_SC_VPORT_ZMAX_0.u32All = 0x3F800000;
+	r700->PA_SC_VPORT_ZMAX_0.u32All = 0x3F800000;
 }
 
 void r700InitStateFuncs(struct dd_function_table *functions) //-----------------
