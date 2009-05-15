@@ -454,7 +454,10 @@ i945_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree * mt)
 {
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
-      i945_miptree_layout_cube(intel, mt);
+      if (mt->compressed)
+	 i945_miptree_layout_cube(intel, mt);
+      else
+	 i915_miptree_layout_cube(intel, mt);
       break;
    case GL_TEXTURE_3D:
       i945_miptree_layout_3d(intel, mt);
