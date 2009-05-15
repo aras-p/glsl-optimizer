@@ -121,6 +121,9 @@ trace_context_draw_arrays(struct pipe_context *_pipe,
    struct pipe_context *pipe = tr_ctx->pipe;
    boolean result;
 
+   if (tr_ctx->curr.fs->disabled || tr_ctx->curr.vs->disabled)
+      return 0;
+
    trace_dump_call_begin("pipe_context", "draw_arrays");
 
    trace_dump_arg(ptr, pipe);
@@ -149,6 +152,9 @@ trace_context_draw_elements(struct pipe_context *_pipe,
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_buffer *indexBuffer = tr_buf->buffer;
    boolean result;
+
+   if (tr_ctx->curr.fs->disabled || tr_ctx->curr.vs->disabled)
+      return 0;
 
    trace_screen_user_buffer_update(_pipe->screen, indexBuffer);
 
@@ -186,6 +192,9 @@ trace_context_draw_range_elements(struct pipe_context *_pipe,
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_buffer *indexBuffer = tr_buf->buffer;
    boolean result;
+
+   if (tr_ctx->curr.fs->disabled || tr_ctx->curr.vs->disabled)
+      return 0;
 
    trace_screen_user_buffer_update(_pipe->screen, indexBuffer);
 
@@ -593,6 +602,8 @@ trace_context_bind_fs_state(struct pipe_context *_pipe,
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, state);
 
+   tr_ctx->curr.fs = tr_shdr;
+
    if (tr_shdr && tr_shdr->replaced)
       state = tr_shdr->replaced;
 
@@ -662,6 +673,8 @@ trace_context_bind_vs_state(struct pipe_context *_pipe,
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, state);
+
+   tr_ctx->curr.vs = tr_shdr;
 
    if (tr_shdr && tr_shdr->replaced)
       state = tr_shdr->replaced;

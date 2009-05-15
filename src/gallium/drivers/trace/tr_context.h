@@ -46,6 +46,12 @@ struct trace_context
 
    struct pipe_context *pipe;
 
+   /* current state */
+   struct {
+      struct trace_shader *fs;
+      struct trace_shader *vs;
+   } curr;
+
    /* for list on screen */
    struct tr_list list;
 
