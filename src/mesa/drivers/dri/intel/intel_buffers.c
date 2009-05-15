@@ -276,7 +276,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       ctx->Driver.Enable(ctx, GL_DEPTH_TEST,
                          (ctx->Depth.Test && fb->Visual.depthBits > 0));
       ctx->Driver.Enable(ctx, GL_STENCIL_TEST,
-                         (ctx->Stencil._Enabled && fb->Visual.stencilBits > 0));
+                         (ctx->Stencil.Enabled && fb->Visual.stencilBits > 0));
    }
    else {
       /* Mesa's Stencil._Enabled field is updated when
