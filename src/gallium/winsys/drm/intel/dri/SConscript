@@ -5,6 +5,7 @@ env = drienv.Clone()
 drivers = [
     softpipe,
     i915simple,
+    trace,
     inteldrm
 ]
 
