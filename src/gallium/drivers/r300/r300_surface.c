@@ -264,6 +264,7 @@ static void r300_surface_copy(struct pipe_context* pipe,
         r300_emit_rs_block_state(r300, &r300_rs_block_copy_state);
     }
 
+    BEGIN_CS(28);
     /* VAP stream control, mapping from input memory to PVS/RS memory */
     if (caps->has_tcl) {
         OUT_CS_REG(R300_VAP_PROG_STREAM_CNTL_0,
@@ -312,6 +313,8 @@ static void r300_surface_copy(struct pipe_context* pipe,
     OUT_CS_32F((float)(srcy  / dest->height));
 
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT, 0xA);
+
+    END_CS;
 
     r300->dirty_hw++;
 }

@@ -562,7 +562,7 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
 
     if (r300_screen(r300->context.screen)->caps->has_tcl) {
         /* Do the transform in HW. */
-        r300->viewport_state->vte_control = R300_VTX_W0_FMT;
+        r300->viewport_state->vte_control = R300_VTX_XY_FMT | R300_VTX_Z_FMT;
 
         if (state->scale[0] != 1.0f) {
             assert(state->scale[0] != 0.0f);
