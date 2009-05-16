@@ -232,9 +232,16 @@ static boolean r300_is_format_supported(struct pipe_screen* pscreen,
         case PIPE_TEXTURE_2D:
             return check_tex_2d_format(format,
                 r300_screen(pscreen)->caps->is_r500);
+        case PIPE_TEXTURE_1D:
+        case PIPE_TEXTURE_3D:
+        case PIPE_TEXTURE_CUBE:
+            debug_printf("r300: Implementation error: Unsupported format "
+                    "target: %d\n", target);
+            break;
         default:
-            debug_printf("r300: Warning: Got unknown format target: %d\n",
-                format);
+            debug_printf("r300: Fatal: This is not a format target: %d\n",
+                target);
+            assert(0);
             break;
     }
 
