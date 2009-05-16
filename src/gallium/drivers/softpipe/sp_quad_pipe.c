@@ -80,7 +80,7 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
          sp_push_quad_first( sp, sp->quad[i].blend, i );
       }
 
-      if (sp->depth_stencil->depth.occlusion_count) {
+      if (sp->active_query_count) {
          sp_push_quad_first( sp, sp->quad[i].occlusion, i );
       }
 

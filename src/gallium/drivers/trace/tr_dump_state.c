@@ -271,7 +271,6 @@ void trace_dump_depth_stencil_alpha_state(const struct pipe_depth_stencil_alpha_
    trace_dump_member(bool, &state->depth, enabled);
    trace_dump_member(bool, &state->depth, writemask);
    trace_dump_member(uint, &state->depth, func);
-   trace_dump_member(bool, &state->depth, occlusion_count);
    trace_dump_struct_end();
    trace_dump_member_end();
 
