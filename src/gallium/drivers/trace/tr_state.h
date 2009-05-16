@@ -29,9 +29,17 @@
 
 struct tgsi_token;
 
+enum trace_shader_type {
+   TRACE_SHADER_FRAGMENT = 0,
+   TRACE_SHADER_VERTEX   = 1,
+   TRACE_SHADER_GEOMETRY = 2,
+};
+
 struct trace_shader
 {
    struct tr_list list;
+
+   enum trace_shader_type type;
 
    void *state;
    void *replaced;
@@ -51,7 +59,8 @@ trace_shader(void *state)
 
 struct trace_shader * trace_shader_create(struct trace_context *tr_ctx,
                                           const struct pipe_shader_state *state,
-                                          void *result);
+                                          void *result,
+                                          enum trace_shader_type type);
 
 void trace_shader_destroy(struct trace_context *tr_ctx,
                           struct trace_shader *tr_shdr);

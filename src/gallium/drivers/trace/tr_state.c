@@ -27,13 +27,18 @@
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 
+#include "tgsi/tgsi_parse.h"
+
 struct trace_shader * trace_shader_create(struct trace_context *tr_ctx,
                                           const struct pipe_shader_state *state,
-                                          void *result)
+                                          void *result,
+                                          enum trace_shader_type type)
 {
    struct trace_shader *tr_shdr = CALLOC_STRUCT(trace_shader);
 
    tr_shdr->state = result;
+   tr_shdr->type = type;
+   tr_shdr->tokens = tgsi_dup_tokens(state->tokens);
 
    /* works on context as well */
    trace_screen_add_to_list(tr_ctx, shaders, tr_shdr);
@@ -46,5 +51,16 @@ void trace_shader_destroy(struct trace_context *tr_ctx,
 {
    trace_screen_remove_from_list(tr_ctx, shaders, tr_shdr);
 
+   if (tr_shdr->replaced) {
+      if (tr_shdr->type == TRACE_SHADER_FRAGMENT)
+         tr_ctx->pipe->delete_fs_state(tr_ctx->pipe, tr_shdr->replaced);
+      else if (tr_shdr->type == TRACE_SHADER_VERTEX)
+         tr_ctx->pipe->delete_vs_state(tr_ctx->pipe, tr_shdr->replaced);
+      else
+         assert(0);
+   }
+
+   FREE(tr_shdr->replaced_tokens);
+   FREE(tr_shdr->tokens);
    FREE(tr_shdr);
 }

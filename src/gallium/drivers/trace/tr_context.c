@@ -582,7 +582,7 @@ trace_context_create_fs_state(struct pipe_context *_pipe,
 
    trace_dump_call_end();
 
-   result = trace_shader_create(tr_ctx, state, result);
+   result = trace_shader_create(tr_ctx, state, result, TRACE_SHADER_FRAGMENT);
 
    return result;
 }
@@ -654,7 +654,7 @@ trace_context_create_vs_state(struct pipe_context *_pipe,
 
    trace_dump_call_end();
 
-   result = trace_shader_create(tr_ctx, state, result);
+   result = trace_shader_create(tr_ctx, state, result, TRACE_SHADER_VERTEX);
 
    return result;
 }
