@@ -38,7 +38,6 @@
 
 static GLboolean dbg = GL_FALSE;
 
-
 /**
  * In 'prog' remove instruction[i] if removeFlags[i] == TRUE.
  * \return number of instructions removed
@@ -353,6 +352,87 @@ find_next_temp_use(const struct gl_program *prog, GLuint start, GLuint index)
    return END;
 }
 
+
+/**
+ * Try to remove use of extraneous MOV instructions, to free them up for dead
+ * code removal.
+ */
+static void
+_mesa_remove_extra_move_use(struct gl_program *prog)
+{
+   GLuint i;
+
+   if (dbg) {
+      _mesa_printf("Optimize: Begin remove extra move use\n");
+      _mesa_print_program(prog);
+   }
+
+   /*
+    * Look for sequences such as this:
+    *    MOV tmpX, arg0;
+    *    FOO tmpY, tmpX, arg1;
+    * and convert into:
+    *    MOV tmpX, arg0;
+    *    FOO tmpY, arg0, arg1;
+    */
+
+   for (i = 0; i < prog->NumInstructions - 1; i++) {
+      const struct prog_instruction *mov = prog->Instructions + i;
+      struct prog_instruction *inst2 = prog->Instructions + i + 1;
+      int arg;
+
+      if (mov->Opcode != OPCODE_MOV ||
+	  mov->DstReg.File != PROGRAM_TEMPORARY ||
+	  mov->DstReg.RelAddr ||
+	  mov->DstReg.CondMask != COND_TR ||
+	  mov->SaturateMode != SATURATE_OFF)
+	 continue;
+
+      for (arg = 0; arg < _mesa_num_inst_src_regs(inst2->Opcode); arg++) {
+	 int comp;
+
+	 if (inst2->SrcReg[arg].File != mov->DstReg.File ||
+	     inst2->SrcReg[arg].Index != mov->DstReg.Index ||
+	     inst2->SrcReg[arg].RelAddr ||
+	     inst2->SrcReg[arg].Abs)
+	    continue;
+
+	 /* Check that all the sources for this arg of inst2 come from inst1
+	  * or constants.
+	  */
+	 for (comp = 0; comp < 4; comp++) {
+	    int src_swz = GET_SWZ(inst2->SrcReg[arg].Swizzle, comp);
+
+	    /* If the MOV didn't write that channel, can't use it. */
+	    if (src_swz <= SWIZZLE_W &&
+		(mov->DstReg.WriteMask & (1 << src_swz)) == 0)
+	       break;
+	 }
+	 if (comp != 4)
+	    continue;
+
+	 /* Adjust the swizzles of inst2 to point at MOV's source */
+	 for (comp = 0; comp < 4; comp++) {
+	    int inst2_swz = GET_SWZ(inst2->SrcReg[arg].Swizzle, comp);
+
+	    if (inst2_swz <= SWIZZLE_W) {
+	       GLuint s = GET_SWZ(mov->SrcReg[0].Swizzle, inst2_swz);
+	       inst2->SrcReg[arg].Swizzle &= ~(7 << (3 * comp));
+	       inst2->SrcReg[arg].Swizzle |= s << (3 * comp);
+	       inst2->SrcReg[arg].Negate ^= (((mov->SrcReg[0].Negate >>
+					       inst2_swz) & 0x1) << comp);
+	    }
+	 }
+	 inst2->SrcReg[arg].File = mov->SrcReg[0].File;
+	 inst2->SrcReg[arg].Index = mov->SrcReg[0].Index;
+      }
+   }
+
+   if (dbg) {
+      _mesa_printf("Optimize: End remove extra move use.\n");
+      /*_mesa_print_program(prog);*/
+   }
+}
 
 /**
  * Try to remove extraneous MOV instructions from the given program.
@@ -851,6 +931,8 @@ _mesa_reallocate_registers(struct gl_program *prog)
 void
 _mesa_optimize_program(GLcontext *ctx, struct gl_program *program)
 {
+   _mesa_remove_extra_move_use(program);
+
    if (1)
       _mesa_remove_dead_code(program);
 
