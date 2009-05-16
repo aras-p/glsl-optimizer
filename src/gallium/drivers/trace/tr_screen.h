@@ -71,6 +71,13 @@ struct trace_screen
 };
 
 
+/*
+ * tr_screen.c
+ */
+
+boolean
+trace_enabled(void);
+
 struct trace_screen *
 trace_screen(struct pipe_screen *screen);
 

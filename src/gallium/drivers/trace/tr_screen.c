@@ -37,6 +37,8 @@
 #include "pipe/p_inlines.h"
 
 
+static boolean trace = FALSE;
+
 static const char *
 trace_screen_get_name(struct pipe_screen *_screen)
 {
@@ -820,16 +822,20 @@ trace_screen_destroy(struct pipe_screen *_screen)
    struct pipe_screen *screen = tr_scr->screen;
 
    trace_dump_call_begin("pipe_screen", "destroy");
-
    trace_dump_arg(ptr, screen);
+   trace_dump_call_end();
+   trace_dump_trace_end();
 
    screen->destroy(screen);
 
-   trace_dump_call_end();
-
-   trace_dump_trace_end();
-
    FREE(tr_scr);
+}
+
+
+boolean
+trace_enabled(void)
+{
+   return trace;
 }
 
 
@@ -844,10 +850,13 @@ trace_screen_create(struct pipe_screen *screen)
 
    trace_dump_init();
 
-   if(!trace_dump_trace_begin())
-      goto error1;
+   if(trace_dump_trace_begin()) {
+      trace_dumping_start();
+      trace = TRUE;
+   }
 
-   trace_dumping_start();
+   if (!trace)
+      goto error1;
 
    trace_dump_call_begin("", "pipe_screen_create");
 
