@@ -208,7 +208,7 @@ try_pbo_upload(struct intel_context *intel,
    if (!pbo ||
        intel->ctx._ImageTransferState ||
        unpack->SkipPixels || unpack->SkipRows) {
-      _mesa_printf("%s: failure 1\n", __FUNCTION__);
+      DBG("%s: failure 1\n", __FUNCTION__);
       return GL_FALSE;
    }
 
@@ -264,7 +264,7 @@ try_pbo_zcopy(struct intel_context *intel,
    if (!pbo ||
        intel->ctx._ImageTransferState ||
        unpack->SkipPixels || unpack->SkipRows) {
-      _mesa_printf("%s: failure 1\n", __FUNCTION__);
+      DBG("%s: failure 1\n", __FUNCTION__);
       return GL_FALSE;
    }
 
@@ -283,7 +283,7 @@ try_pbo_zcopy(struct intel_context *intel,
    dst_stride = intelImage->mt->pitch;
 
    if (src_stride != dst_stride || dst_offset != 0 || src_offset != 0) {
-      _mesa_printf("%s: failure 2\n", __FUNCTION__);
+      DBG("%s: failure 2\n", __FUNCTION__);
       return GL_FALSE;
    }
 
