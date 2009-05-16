@@ -87,7 +87,6 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
             } else {
                 return 0;
             }
-            return 0;
         case PIPE_CAP_GLSL:
             /* IN THEORY */
             return 0;
@@ -95,15 +94,15 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
             /* IN THEORY */
             return 0;
         case PIPE_CAP_ANISOTROPIC_FILTER:
-            /* IN THEORY */
-            return 0;
+            return 1;
         case PIPE_CAP_POINT_SPRITE:
             /* IN THEORY */
             return 0;
         case PIPE_CAP_MAX_RENDER_TARGETS:
             return 4;
         case PIPE_CAP_OCCLUSION_QUERY:
-            return 1;
+            /* IN THEORY */
+            return 0;
         case PIPE_CAP_TEXTURE_SHADOW_MAP:
             /* IN THEORY */
             return 0;
