@@ -212,10 +212,12 @@ static struct pipe_texture *
 trace_screen_texture_blanket(struct pipe_screen *_screen,
                              const struct pipe_texture *templat,
                              const unsigned *ppitch,
-                             struct pipe_buffer *buffer)
+                             struct pipe_buffer *_buffer)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
+   struct trace_buffer *tr_buf = trace_buffer(_buffer);
    struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_buffer *buffer = tr_buf->buffer;
    unsigned pitch = *ppitch;
    struct pipe_texture *result;
 
