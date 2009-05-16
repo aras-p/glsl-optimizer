@@ -8,6 +8,7 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/state_trackers/egl/libegldrm.a \
 	$(GALLIUMDIR)/winsys/drm/radeon/core/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
+	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
 
 DRIVER_SOURCES =
