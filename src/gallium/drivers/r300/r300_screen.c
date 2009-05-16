@@ -151,17 +151,20 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
 
 static float r300_get_paramf(struct pipe_screen* pscreen, int param)
 {
+    struct r300_screen* r300screen = r300_screen(pscreen);
+
     switch (param) {
         case PIPE_CAP_MAX_LINE_WIDTH:
         case PIPE_CAP_MAX_LINE_WIDTH_AA:
-            /* XXX this is the biggest thing that will fit in that register.
-            * Perhaps the actual rendering limits are less? */
-            return 10922.0f;
         case PIPE_CAP_MAX_POINT_WIDTH:
         case PIPE_CAP_MAX_POINT_WIDTH_AA:
-            /* XXX this is the biggest thing that will fit in that register.
-             * Perhaps the actual rendering limits are less? */
-            return 10922.0f;
+            /* The maximum dimensions of the colorbuffer are our practical
+             * rendering limits. 2048 pixels should be enough for anybody. */
+            if (r300screen->caps->is_r500) {
+                return 4096.0f;
+            } else {
+                return 2048.0f;
+            }
         case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
             return 16.0f;
         case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
