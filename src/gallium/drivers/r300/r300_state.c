@@ -62,8 +62,6 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
     }
 
     /* PIPE_LOGICOP_* don't need to be translated, fortunately. */
-    /* XXX are logicops still allowed if blending's disabled?
-     * Does Gallium take care of it for us? */
     if (state->logicop_enable) {
         blend->rop = R300_RB3D_ROPCNTL_ROP_ENABLE |
                 (state->logicop_func) << R300_RB3D_ROPCNTL_ROP_SHIFT;
@@ -121,7 +119,7 @@ static void r300_set_clip_state(struct pipe_context* pipe,
                                 const struct pipe_clip_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
-    /* XXX Draw */
+    /* XXX add HW TCL clipping setup */
     draw_flush(r300->draw);
     draw_set_clip_state(r300->draw, state);
 }
@@ -257,6 +255,7 @@ static void r300_set_edgeflags(struct pipe_context* pipe,
                                const unsigned* bitfield)
 {
     /* XXX you know it's bad when i915 has this blank too */
+    /* XXX and even worse, I have no idea WTF the bitfield is */
 }
 
 static void
@@ -326,7 +325,7 @@ static void r300_delete_fs_state(struct pipe_context* pipe, void* shader)
 static void r300_set_polygon_stipple(struct pipe_context* pipe,
                                      const struct pipe_poly_stipple* state)
 {
-    /* XXX */
+    /* XXX no idea how to set this up, but not terribly important */
 }
 
 /* Create a new rasterizer state based on the CSO rasterizer state.

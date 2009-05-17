@@ -111,14 +111,6 @@ void r300_translate_fragment_shader(struct r300_context* r300,
                            struct r3xx_fragment_shader* fs);
 
 static struct r300_fragment_shader r300_passthrough_fragment_shader = {
-    /* XXX This is the emission code. TODO: decode
-    OUT_CS_REG(R300_US_CONFIG, 0);
-    OUT_CS_REG(R300_US_CODE_OFFSET, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_0, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_1, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_2, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_3, 0x400000);
-*/
     .alu_instruction_count = 1,
     .tex_instruction_count = 0,
     .indirections = 0,
@@ -165,14 +157,6 @@ static struct r500_fragment_shader r500_passthrough_fragment_shader = {
 };
 
 static struct r300_fragment_shader r300_texture_fragment_shader = {
-    /* XXX This is the emission code. TODO: decode
-    OUT_CS_REG(R300_US_CONFIG, 0);
-    OUT_CS_REG(R300_US_CODE_OFFSET, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_0, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_1, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_2, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_3, 0x400000);
-*/
     .alu_instruction_count = 1,
     .tex_instruction_count = 0,
     .indirections = 0,
