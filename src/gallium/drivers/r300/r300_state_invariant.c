@@ -40,8 +40,8 @@ void r300_emit_invariant_state(struct r300_context* r300)
     /* Various GB enables */
     OUT_CS_REG(R300_GB_ENABLE, 0x0);
     /* Subpixel multisampling for AA */
-    OUT_CS_REG(R300_GB_MSPOS0, 0x66666666);
-    OUT_CS_REG(R300_GB_MSPOS1, 0x66666666);
+    OUT_CS_REG(R300_GB_MSPOS0, 0x6666666);
+    OUT_CS_REG(R300_GB_MSPOS1, 0x6666666);
     /* GB tile config and pipe setup */
     OUT_CS_REG(R300_GB_TILE_CONFIG, R300_GB_TILE_DISABLE |
         r300_translate_gb_pipes(caps->num_frag_pipes));
