@@ -634,6 +634,7 @@ static void* r300_create_vs_state(struct pipe_context* pipe,
         struct r300_vertex_shader* vs = CALLOC_STRUCT(r300_vertex_shader);
         /* Copy state directly into shader. */
         vs->state = *shader;
+        vs->state.tokens = tgsi_dup_tokens(shader->tokens);
 
         tgsi_scan_shader(shader->tokens, &vs->info);
 
@@ -679,6 +680,7 @@ static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
         struct r300_vertex_shader* vs = (struct r300_vertex_shader*)shader;
 
         draw_delete_vertex_shader(r300->draw, vs->draw);
+        FREE(vs->state.tokens);
         FREE(shader);
     } else {
         draw_delete_vertex_shader(r300->draw,

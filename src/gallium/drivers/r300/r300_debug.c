@@ -152,10 +152,12 @@ void r500_fs_dump(struct r500_fragment_shader* fs)
 
 static void r300_vs_op_dump(uint32_t op)
 {
-    if (op & 0x81) {
-        debug_printf("PVS_MACRO_OP_2CLK_M2X_ADD\n");
-    } else if (op & 0x80) {
-        debug_printf("   PVS_MACRO_OP_2CLK_MADD\n");
+    if (op & 0x80) {
+        if (op & 0x1) {
+            debug_printf("PVS_MACRO_OP_2CLK_M2X_ADD\n");
+        } else {
+            debug_printf("   PVS_MACRO_OP_2CLK_MADD\n");
+        }
     } else if (op & 0x40) {
         debug_printf("%s\n", r300_vs_me_ops[op & 0x1f]);
     } else {
