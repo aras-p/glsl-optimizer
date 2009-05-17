@@ -179,6 +179,9 @@ static void r300_surface_fill(struct pipe_context* pipe,
         ((h * 6)  & R300_POINTSIZE_Y_MASK) |
         ((w * 6) << R300_POINTSIZE_X_SHIFT));
 
+    /* Vertex size. */
+    OUT_CS_REG(R300_VAP_VTX_SIZE, 0x8);
+
     /* Packet3 with our point vertex */
     OUT_CS_PKT3(R200_3D_DRAW_IMMD_2, 8);
     OUT_CS(R300_PRIM_TYPE_POINT | R300_PRIM_WALK_RING |
@@ -194,11 +197,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_32F(b);
     OUT_CS_32F(a);
 
-    /* XXX figure out why this is 0xA and not 0x2 */
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT, 0xA);
-    /* XXX OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
-        R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
-        R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE); */
 
     END_CS;
 
@@ -286,6 +285,9 @@ static void r300_surface_copy(struct pipe_context* pipe,
             R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT);
     /* Two components of texture 0 */
     OUT_CS_REG(R300_VAP_OUTPUT_VTX_FMT_1, 0x2);
+
+    /* Vertex size. */
+    OUT_CS_REG(R300_VAP_VTX_SIZE, 0x8);
 
     /* Packet3 with our texcoords */
     OUT_CS_PKT3(R200_3D_DRAW_IMMD_2, 16);

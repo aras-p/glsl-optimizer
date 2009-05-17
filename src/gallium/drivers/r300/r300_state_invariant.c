@@ -34,7 +34,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
-    BEGIN_CS(30 + (caps->has_tcl ? 2: 0));
+    BEGIN_CS(28 + (caps->has_tcl ? 2: 0));
 
     /*** Graphics Backend (GB) ***/
     /* Various GB enables */
@@ -49,20 +49,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_REG(R300_GB_SELECT, R300_GB_FOG_SELECT_1_1_W);
     /* AA enable */
     OUT_CS_REG(R300_GB_AA_CONFIG, 0x0);
-
-    /*** Geometry Assembly (GA) ***/
-    /* GA errata fixes. */
-    if (caps->is_r500) {
-        OUT_CS_REG(R300_GA_ENHANCE,
-                R300_GA_ENHANCE_DEADLOCK_CNTL_PREVENT_TCL |
-                R300_GA_ENHANCE_FASTSYNC_CNTL_ENABLE |
-                R500_GA_ENHANCE_REG_READWRITE_ENABLE |
-                R500_GA_ENHANCE_REG_NOSTALL_ENABLE);
-    } else {
-        OUT_CS_REG(R300_GA_ENHANCE,
-                R300_GA_ENHANCE_DEADLOCK_CNTL_PREVENT_TCL |
-                R300_GA_ENHANCE_FASTSYNC_CNTL_ENABLE);
-    }
 
     /*** Fog (FG) ***/
     OUT_CS_REG(R300_FG_FOG_BLEND, 0x0);
@@ -86,7 +72,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(79 + (caps->has_tcl ? 7 : 0));
+    BEGIN_CS(77 + (caps->has_tcl ? 7 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -113,11 +99,14 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_32F(0.0);
     OUT_CS_REG_SEQ(R300_GA_POINT_S1, 1);
     OUT_CS_32F(1.0);
+    /* XXX line tex stuffing */
+    OUT_CS_REG_SEQ(R300_GA_LINE_S0, 1);
+    OUT_CS_32F(0.0);
+    OUT_CS_REG_SEQ(R300_GA_LINE_S1, 1);
+    OUT_CS_32F(1.0);
     OUT_CS_REG(R300_GA_TRIANGLE_STIPPLE, 0x5 |
         (0x5 << R300_GA_TRIANGLE_STIPPLE_Y_SHIFT_SHIFT));
     /* XXX this big chunk should be refactored into rs_state */
-    OUT_CS_REG(R300_GA_LINE_S0, 0x00000000);
-    OUT_CS_REG(R300_GA_LINE_S1, 0x3F800000);
     OUT_CS_REG(R300_GA_SOLID_RG, 0x00000000);
     OUT_CS_REG(R300_GA_SOLID_BA, 0x00000000);
     OUT_CS_REG(R300_GA_POLY_MODE, 0x00000000);
@@ -144,8 +133,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
     OUT_CS_REG(R300_VAP_VTX_STATE_CNTL, 0x1);
     OUT_CS_REG(R300_VAP_VSM_VTX_ASSM, 0x405);
     OUT_CS_REG(R300_SE_VTE_CNTL, 0x0000043F);
-    /* Vertex size. */
-    OUT_CS_REG(R300_VAP_VTX_SIZE, 0x8);
 
     /* XXX */
     OUT_CS_REG(R300_SC_CLIP_RULE, 0xaaaa);
