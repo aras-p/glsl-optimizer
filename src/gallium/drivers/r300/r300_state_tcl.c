@@ -325,6 +325,8 @@ static void r300_vs_init(struct r300_vertex_shader* vs,
                 break;
         }
     }
+
+    vs->instruction_count = 0;
 }
 
 void r300_translate_vertex_shader(struct r300_context* r300,
@@ -334,8 +336,6 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     int i;
     struct r300_constant_buffer* consts =
         &r300->shader_constants[PIPE_SHADER_VERTEX];
-    boolean end = FALSE;
-    int spurious = 0;
 
     struct r300_vs_asm* assembler = CALLOC_STRUCT(r300_vs_asm);
     if (assembler == NULL) {
@@ -375,16 +375,8 @@ void r300_translate_vertex_shader(struct r300_context* r300,
                 assembler->imm_count++;
                 break;
             case TGSI_TOKEN_TYPE_INSTRUCTION:
-                if (parser.FullToken.FullInstruction.Instruction.Opcode ==
-                        TGSI_OPCODE_END) {
-                    end = TRUE;
-                }
-                if (end) {
-                    spurious++;
-                } else {
-                    r300_vs_instruction(vs, assembler,
-                            &parser.FullToken.FullInstruction);
-                }
+                r300_vs_instruction(vs, assembler,
+                        &parser.FullToken.FullInstruction);
                 break;
         }
     }
@@ -400,9 +392,6 @@ void r300_translate_vertex_shader(struct r300_context* r300,
 
     debug_printf("r300: vs: tab: %d %d %d %d\n", assembler->tab[0],
             assembler->tab[1], assembler->tab[2], assembler->tab[3]);
-
-    debug_printf("r300: vs: %d spurious instructions following END\n",
-            spurious - 1);
 
     tgsi_dump(vs->state.tokens);
     /* XXX finish r300 vertex shader dumper */
