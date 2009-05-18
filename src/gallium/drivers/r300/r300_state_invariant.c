@@ -40,7 +40,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     /* Various GB enables */
     OUT_CS_REG(R300_GB_ENABLE, 0x0);
     /* Subpixel multisampling for AA */
-    OUT_CS_REG(R300_GB_MSPOS0, 0x6666666);
+    OUT_CS_REG(R300_GB_MSPOS0, 0x66666666);
     OUT_CS_REG(R300_GB_MSPOS1, 0x6666666);
     /* Source of fog depth */
     OUT_CS_REG(R300_GB_SELECT, R300_GB_FOG_SELECT_1_1_W);
