@@ -2036,13 +2036,8 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.rb3d_aaresolve_ctl.cmd[1] = 0;
 
-	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
-	    r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[1] = 0x00000000;
-    	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[2] = 0xffffffff;
-    } else {
-	    r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[1] = (2 << 30);
-    	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[2] = (2 << 30);
-    }
+    r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[1] = 0x00000000;
+    r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[2] = 0xffffffff;
 
 	r300->hw.zb_depthclearvalue.cmd[1] = 0;
 

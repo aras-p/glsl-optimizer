@@ -312,13 +312,25 @@ static void emit_gb_misc(GLcontext *ctx, struct radeon_state_atom * atom)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	BATCH_LOCALS(&r300->radeon);
-
     if (!r300->radeon.radeonScreen->driScreen->dri2.enabled) {
         BEGIN_BATCH_NO_AUTOSTATE(4);
         OUT_BATCH(atom->cmd[0]);
         OUT_BATCH(atom->cmd[1]);
         OUT_BATCH(atom->cmd[2]);
         OUT_BATCH(atom->cmd[3]);
+        END_BATCH();
+    }
+}
+
+static void emit_threshold_misc(GLcontext *ctx, struct radeon_state_atom * atom)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	BATCH_LOCALS(&r300->radeon);
+    if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
+        BEGIN_BATCH_NO_AUTOSTATE(3);
+        OUT_BATCH(atom->cmd[0]);
+        OUT_BATCH(atom->cmd[1]);
+        OUT_BATCH(atom->cmd[2]);
         END_BATCH();
     }
 }
@@ -620,15 +632,9 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.rb3d_dither_ctl.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R300_RB3D_DITHER_CTL, 9);
 	ALLOC_STATE(rb3d_aaresolve_ctl, always, 2, 0);
 	r300->hw.rb3d_aaresolve_ctl.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R300_RB3D_AARESOLVE_CTL, 1);
-	if (is_r500) {
-	    ALLOC_STATE(rb3d_discard_src_pixel_lte_threshold, always, 3, 0);
-    	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 2);
-    } else {
-	    ALLOC_STATE(rb3d_discard_src_pixel_lte_threshold, always, 3, 0);
-    	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[0] = (2 << 30);
-    	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[1] = (2 << 30);
-    	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[2] = (2 << 30);
-    }
+    ALLOC_STATE(rb3d_discard_src_pixel_lte_threshold, always, 3, 0);
+    r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 2);
+	r300->hw.rb3d_discard_src_pixel_lte_threshold.emit = emit_threshold_misc;
 	ALLOC_STATE(zs, always, R300_ZS_CMDSIZE, 0);
 	r300->hw.zs.cmd[R300_ZS_CMD_0] =
 	    cmdpacket0(r300->radeon.radeonScreen, R300_ZB_CNTL, 3);
