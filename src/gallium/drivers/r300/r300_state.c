@@ -559,43 +559,35 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    //draw_flush(r300->draw);
+    /* Do the transform in HW. */
+    r300->viewport_state->vte_control = R300_VTX_W0_FMT;
 
-    if (TRUE || r300_screen(r300->context.screen)->caps->has_tcl) {
-        /* Do the transform in HW. */
-        r300->viewport_state->vte_control = R300_VTX_W0_FMT;
-
-        if (state->scale[0] != 1.0f) {
-            assert(state->scale[0] != 0.0f);
-            r300->viewport_state->xscale = state->scale[0];
-            r300->viewport_state->vte_control |= R300_VPORT_X_SCALE_ENA;
-        }
-        if (state->scale[1] != 1.0f) {
-            assert(state->scale[1] != 0.0f);
-            r300->viewport_state->yscale = state->scale[1];
-            r300->viewport_state->vte_control |= R300_VPORT_Y_SCALE_ENA;
-        }
-        if (state->scale[2] != 1.0f) {
-            assert(state->scale[2] != 0.0f);
-            r300->viewport_state->zscale = state->scale[2];
-            r300->viewport_state->vte_control |= R300_VPORT_Z_SCALE_ENA;
-        }
-        if (state->translate[0] != 0.0f) {
-            r300->viewport_state->xoffset = state->translate[0];
-            r300->viewport_state->vte_control |= R300_VPORT_X_OFFSET_ENA;
-        }
-        if (state->translate[1] != 0.0f) {
-            r300->viewport_state->yoffset = state->translate[1];
-            r300->viewport_state->vte_control |= R300_VPORT_Y_OFFSET_ENA;
-        }
-        if (state->translate[2] != 0.0f) {
-            r300->viewport_state->zoffset = state->translate[2];
-            r300->viewport_state->vte_control |= R300_VPORT_Z_OFFSET_ENA;
-        }
-    } else {
-        r300->viewport_state->vte_control = 0;
-        /* Have Draw do the actual transform. */
-        draw_set_viewport_state(r300->draw, state);
+    if (state->scale[0] != 1.0f) {
+        assert(state->scale[0] != 0.0f);
+        r300->viewport_state->xscale = state->scale[0];
+        r300->viewport_state->vte_control |= R300_VPORT_X_SCALE_ENA;
+    }
+    if (state->scale[1] != 1.0f) {
+        assert(state->scale[1] != 0.0f);
+        r300->viewport_state->yscale = state->scale[1];
+        r300->viewport_state->vte_control |= R300_VPORT_Y_SCALE_ENA;
+    }
+    if (state->scale[2] != 1.0f) {
+        assert(state->scale[2] != 0.0f);
+        r300->viewport_state->zscale = state->scale[2];
+        r300->viewport_state->vte_control |= R300_VPORT_Z_SCALE_ENA;
+    }
+    if (state->translate[0] != 0.0f) {
+        r300->viewport_state->xoffset = state->translate[0];
+        r300->viewport_state->vte_control |= R300_VPORT_X_OFFSET_ENA;
+    }
+    if (state->translate[1] != 0.0f) {
+        r300->viewport_state->yoffset = state->translate[1];
+        r300->viewport_state->vte_control |= R300_VPORT_Y_OFFSET_ENA;
+    }
+    if (state->translate[2] != 0.0f) {
+        r300->viewport_state->zoffset = state->translate[2];
+        r300->viewport_state->vte_control |= R300_VPORT_Z_OFFSET_ENA;
     }
 
     r300->dirty_state |= R300_NEW_VIEWPORT;
