@@ -147,7 +147,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         r300_emit_rs_block_state(r300, &r300_rs_block_clear_state);
     }
 
-    BEGIN_CS(24);
+    BEGIN_CS(26);
 
     /* VAP stream control, mapping from input memory to PVS/RS memory */
     if (caps->has_tcl) {
