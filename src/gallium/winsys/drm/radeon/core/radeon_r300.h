@@ -32,9 +32,6 @@
 #include "radeon_buffer.h"
 
 /* protect us from bonghits */
-#ifndef RADEON_INFO_NUM_GB_PIPES
-#define RADEON_INFO_NUM_GB_PIPES 0
-#endif
 #ifndef RADEON_INFO_DEVICE_ID
 #define RADEON_INFO_DEVICE_ID 0
 #endif
