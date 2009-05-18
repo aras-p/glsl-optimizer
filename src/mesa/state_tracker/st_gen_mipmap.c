@@ -123,6 +123,7 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       struct pipe_transfer *srcTrans, *dstTrans;
       const ubyte *srcData;
       ubyte *dstData;
+      int srcStride, dstStride;
 
       srcTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
 						srcLevel, zslice,
@@ -139,14 +140,17 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       srcData = (ubyte *) screen->transfer_map(screen, srcTrans);
       dstData = (ubyte *) screen->transfer_map(screen, dstTrans);
 
+      srcStride = srcTrans->stride / srcTrans->block.size;
+      dstStride = dstTrans->stride / dstTrans->block.size;
+
       _mesa_generate_mipmap_level(target, datatype, comps,
                    0 /*border*/,
                    pt->width[srcLevel], pt->height[srcLevel], pt->depth[srcLevel],
                    srcData,
-                   srcTrans->stride, /* stride in bytes */
+                   srcStride, /* stride in texels */
                    pt->width[dstLevel], pt->height[dstLevel], pt->depth[dstLevel],
                    dstData,
-                   dstTrans->stride); /* stride in bytes */
+                   dstStride); /* stride in texels */
 
       screen->transfer_unmap(screen, srcTrans);
       screen->transfer_unmap(screen, dstTrans);
