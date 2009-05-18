@@ -231,6 +231,14 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    if (border)
       goto fail;
 
+   /* Setup or redefine the texture object, mipmap tree and texture
+    * image.  Don't populate yet.
+    */
+   ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
+                          width, height, border,
+                          GL_RGBA, CHAN_TYPE, NULL,
+                          &ctx->DefaultPacking, texObj, texImage);
+
    srcx = x;
    srcy = y;
    dstx = 0;
@@ -240,15 +248,6 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 				   &srcx, &srcy,
 				   &width, &height))
       return;
-
-   /* Setup or redefine the texture object, mipmap tree and texture
-    * image.  Don't populate yet.  
-    */
-   ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
-                          width, height, border,
-                          GL_RGBA, CHAN_TYPE, NULL,
-                          &ctx->DefaultPacking, texObj, texImage);
-
 
    if (!do_copy_texsubimage(intel_context(ctx), target,
                             intel_texture_image(texImage),
