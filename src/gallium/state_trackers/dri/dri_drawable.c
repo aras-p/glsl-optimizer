@@ -138,6 +138,18 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
    dri_drawable->pBackClipRects[0].x2 = dri_drawable->w;
    dri_drawable->pBackClipRects[0].y2 = dri_drawable->h;
 
+   if (drawable->old_num == count &&
+       drawable->old_w == dri_drawable->w &&
+       drawable->old_h == dri_drawable->h &&
+       memcmp(drawable->old, buffers, sizeof(__DRIbuffer) * count) == 0) {
+       return;
+   } else {
+      drawable->old_num = count;
+      drawable->old_w = dri_drawable->w;
+      drawable->old_h = dri_drawable->h;
+      memcpy(drawable->old, buffers, sizeof(__DRIbuffer) * count);
+   }
+
    for (i = 0; i < count; i++) {
       enum pipe_format format = 0;
       int index = 0;

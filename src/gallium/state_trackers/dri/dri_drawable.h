@@ -46,6 +46,11 @@ struct dri_drawable
    unsigned attachments[8];
    unsigned num_attachments;
 
+   __DRIbuffer old[8];
+   unsigned old_num;
+   unsigned old_w;
+   unsigned old_h;
+
    /* gallium */
    struct st_framebuffer *stfb;
    struct pipe_fence_handle *swap_fences[DRI_SWAP_FENCES_MAX];
