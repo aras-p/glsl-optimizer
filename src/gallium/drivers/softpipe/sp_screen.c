@@ -127,6 +127,11 @@ softpipe_is_format_supported( struct pipe_screen *screen,
                               unsigned tex_usage, 
                               unsigned geom_flags )
 {
+   assert(target == PIPE_TEXTURE_1D ||
+          target == PIPE_TEXTURE_2D ||
+          target == PIPE_TEXTURE_3D ||
+          target == PIPE_TEXTURE_CUBE);
+
    switch(format) {
    case PIPE_FORMAT_DXT1_RGB:
    case PIPE_FORMAT_DXT1_RGBA:

@@ -46,7 +46,7 @@ tbd
 
 <h2>New features</h2>
 <ul>
-<li>Gallium - this is the new architecture for OS-independent and
+<li>Gallium3D - this is the new architecture for OS-independent and
     API-independent 3D drivers.
     Gallium3D is intended for GPUs that fully support  vertex/fragment shaders.
     The Gallium3D drivers currently included are:
@@ -54,8 +54,10 @@ tbd
     <li>softpipe - a software/reference driver
     <li>i915 - Intel 915/945 driver
     <li><a href="cell.html">Cell</a> - IBM/Sony/Toshiba Cell processor driver
-    <li>nouveau - preliminary driver for NVIDIA GPUs (still under development)
-    <li>r300 - preliminary driver for R300 (still under development)
+    <li>nouveau (for NVIDIA GPUs) and R300 for (AMD/ATI R300).
+        <b>PLEASE NOTE: these drivers are incomplete and still under development.
+        It's probably NOT worthwhile to report any bugs unless you have patches.
+        </b>
     </ul>
 <li>GL_ARB_framebuffer_object extension (software drivers, i965 driver)
 <li>Reworked two-sided stencil support.

@@ -127,6 +127,7 @@ linux-icc \
 linux-icc-static \
 linux-llvm \
 linux-osmesa \
+linux-osmesa-static \
 linux-osmesa16 \
 linux-osmesa16-static \
 linux-osmesa32 \
