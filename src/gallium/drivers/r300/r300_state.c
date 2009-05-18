@@ -343,6 +343,8 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     /* Copy rasterizer state for Draw. */
     rs->rs = *state;
 
+    rs->enable_vte = !state->bypass_vs_clip_and_viewport;
+
     /* If bypassing TCL, or if no TCL engine is present, turn off the HW TCL.
      * Else, enable HW TCL and force Draw's TCL off. */
     if (state->bypass_vs_clip_and_viewport ||
@@ -557,11 +559,11 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    draw_flush(r300->draw);
+    //draw_flush(r300->draw);
 
-    if (r300_screen(r300->context.screen)->caps->has_tcl) {
+    if (TRUE || r300_screen(r300->context.screen)->caps->has_tcl) {
         /* Do the transform in HW. */
-        r300->viewport_state->vte_control = R300_VTX_XY_FMT | R300_VTX_Z_FMT;
+        r300->viewport_state->vte_control = R300_VTX_W0_FMT;
 
         if (state->scale[0] != 1.0f) {
             assert(state->scale[0] != 0.0f);

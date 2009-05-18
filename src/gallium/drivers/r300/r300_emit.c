@@ -429,7 +429,11 @@ void r300_emit_viewport_state(struct r300_context* r300,
     OUT_CS_32F(viewport->zscale);
     OUT_CS_32F(viewport->zoffset);
 
-    OUT_CS_REG(R300_VAP_VTE_CNTL, viewport->vte_control);
+    if (r300->rs_state->enable_vte) {
+        OUT_CS_REG(R300_VAP_VTE_CNTL, viewport->vte_control);
+    } else {
+        OUT_CS_REG(R300_VAP_VTE_CNTL, 0);
+    }
     END_CS;
 }
 
