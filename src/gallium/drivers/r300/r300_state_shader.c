@@ -215,6 +215,10 @@ static INLINE uint32_t r500_rgba_op(unsigned op)
         case TGSI_OPCODE_RSQ:
         case TGSI_OPCODE_SIN:
             return R500_ALU_RGBA_OP_SOP;
+        case TGSI_OPCODE_DDX:
+            return R500_ALU_RGBA_OP_MDH;
+        case TGSI_OPCODE_DDY:
+            return R500_ALU_RGBA_OP_MDV;
         case TGSI_OPCODE_FRC:
             return R500_ALU_RGBA_OP_FRC;
         case TGSI_OPCODE_DP3:
@@ -254,6 +258,10 @@ static INLINE uint32_t r500_alpha_op(unsigned op)
             return R500_ALPHA_OP_FRC;
         case TGSI_OPCODE_SIN:
             return R500_ALPHA_OP_SIN;
+        case TGSI_OPCODE_DDX:
+            return R500_ALPHA_OP_MDH;
+        case TGSI_OPCODE_DDY:
+            return R500_ALPHA_OP_MDV;
         case TGSI_OPCODE_DP3:
         case TGSI_OPCODE_DP4:
         case TGSI_OPCODE_DPH:
@@ -480,6 +488,8 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
             inst->FullSrcRegisters[0].SrcRegister.SwizzleW =
                 inst->FullSrcRegisters[0].SrcRegister.SwizzleX;
             /* Fall through */
+        case TGSI_OPCODE_DDX:
+        case TGSI_OPCODE_DDY:
         case TGSI_OPCODE_FRC:
             r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode, 1);
