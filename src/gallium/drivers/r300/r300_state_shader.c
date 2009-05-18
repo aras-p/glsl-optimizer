@@ -208,10 +208,12 @@ static INLINE uint32_t r300_alpha_op(unsigned op)
 static INLINE uint32_t r500_rgba_op(unsigned op)
 {
     switch (op) {
+        case TGSI_OPCODE_COS:
         case TGSI_OPCODE_EX2:
         case TGSI_OPCODE_LG2:
         case TGSI_OPCODE_RCP:
         case TGSI_OPCODE_RSQ:
+        case TGSI_OPCODE_SIN:
             return R500_ALU_RGBA_OP_SOP;
         case TGSI_OPCODE_FRC:
             return R500_ALU_RGBA_OP_FRC;
@@ -238,6 +240,8 @@ static INLINE uint32_t r500_rgba_op(unsigned op)
 static INLINE uint32_t r500_alpha_op(unsigned op)
 {
     switch (op) {
+        case TGSI_OPCODE_COS:
+            return R500_ALPHA_OP_COS;
         case TGSI_OPCODE_EX2:
             return R500_ALPHA_OP_EX2;
         case TGSI_OPCODE_LG2:
@@ -248,6 +252,8 @@ static INLINE uint32_t r500_alpha_op(unsigned op)
             return R500_ALPHA_OP_RSQ;
         case TGSI_OPCODE_FRC:
             return R500_ALPHA_OP_FRC;
+        case TGSI_OPCODE_SIN:
+            return R500_ALPHA_OP_SIN;
         case TGSI_OPCODE_DP3:
         case TGSI_OPCODE_DP4:
         case TGSI_OPCODE_DPH:
@@ -460,6 +466,9 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
      * AMD/ATI names for opcodes, please, as it facilitates using the
      * documentation. */
     switch (inst->Instruction.Opcode) {
+        /* XXX trig needs extra prep */
+        case TGSI_OPCODE_COS:
+        case TGSI_OPCODE_SIN:
         /* The simple scalar ops. */
         case TGSI_OPCODE_EX2:
         case TGSI_OPCODE_LG2:
