@@ -1370,6 +1370,9 @@ make_2d_stack_mipmap(GLenum datatype, GLuint comps, GLint border,
 
 /**
  * Down-sample a texture image to produce the next lower mipmap level.
+ * \param comps  components per texel (1, 2, 3 or 4)
+ * \param srcRowStride  stride between source rows, in texels
+ * \param dstRowStride  stride between destination rows, in texels
  */
 void
 _mesa_generate_mipmap_level(GLenum target,
