@@ -87,7 +87,7 @@ st_render_mipmap(struct st_context *st,
    assert(target != GL_TEXTURE_3D); /* not done yet */
 
    /* check if we can render in the texture's format */
-   if (!screen->is_format_supported(screen, pt->format, target,
+   if (!screen->is_format_supported(screen, pt->format, pt->target,
                                     PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
       return FALSE;
    }
