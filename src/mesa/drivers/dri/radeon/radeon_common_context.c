@@ -227,7 +227,8 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 	}
 	
 	assert(radeon);
-	if (radeon) {
+	if (radeon) 
+    {
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600) /* +r6/r7 */
 	    if (IS_R600_CLASS(screen))
@@ -306,48 +307,88 @@ radeon_make_kernel_renderbuffer_current(radeonContextPtr radeon,
 
 	if ((rb = (void *)draw->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer)) {
 		if (!rb->bo) {
+#ifdef RADEON_DEBUG_BO
+            rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+						radeon->radeonScreen->frontOffset,
+						0,
+						0,
+						RADEON_GEM_DOMAIN_VRAM,
+						0,
+                        "Front Buf");
+#else
 			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
 						radeon->radeonScreen->frontOffset,
 						0,
 						0,
 						RADEON_GEM_DOMAIN_VRAM,
 						0);
+#endif /* RADEON_DEBUG_BO */
 		}
 		rb->cpp = radeon->radeonScreen->cpp;
 		rb->pitch = radeon->radeonScreen->frontPitch * rb->cpp;
 	}
 	if ((rb = (void *)draw->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer)) {
 		if (!rb->bo) {
+#ifdef RADEON_DEBUG_BO
 			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
 						radeon->radeonScreen->backOffset,
 						0,
 						0,
 						RADEON_GEM_DOMAIN_VRAM,
+						0,
+                        "Back Buf");
+#else
+            rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+						radeon->radeonScreen->backOffset,
+						0,
+						0,
+						RADEON_GEM_DOMAIN_VRAM,
 						0);
+#endif /* RADEON_DEBUG_BO */
 		}
 		rb->cpp = radeon->radeonScreen->cpp;
 		rb->pitch = radeon->radeonScreen->backPitch * rb->cpp;
 	}
 	if ((rb = (void *)draw->base.Attachment[BUFFER_DEPTH].Renderbuffer)) {
 		if (!rb->bo) {
+#ifdef RADEON_DEBUG_BO
+            rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+						radeon->radeonScreen->depthOffset,
+						0,
+						0,
+						RADEON_GEM_DOMAIN_VRAM,
+						0,
+                        "Z Buf");
+#else
 			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
 						radeon->radeonScreen->depthOffset,
 						0,
 						0,
 						RADEON_GEM_DOMAIN_VRAM,
 						0);
+#endif /* RADEON_DEBUG_BO */
 		}
 		rb->cpp = radeon->radeonScreen->cpp;
 		rb->pitch = radeon->radeonScreen->depthPitch * rb->cpp;
 	}
 	if ((rb = (void *)draw->base.Attachment[BUFFER_STENCIL].Renderbuffer)) {
 		if (!rb->bo) {
+#ifdef RADEON_DEBUG_BO
+            rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+						radeon->radeonScreen->depthOffset,
+						0,
+						0,
+						RADEON_GEM_DOMAIN_VRAM,
+						0,
+                        "Stencil Buf");
+#else
 			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
 						radeon->radeonScreen->depthOffset,
 						0,
 						0,
 						RADEON_GEM_DOMAIN_VRAM,
 						0);
+#endif /* RADEON_DEBUG_BO */
 		}
 		rb->cpp = radeon->radeonScreen->cpp;
 		rb->pitch = radeon->radeonScreen->depthPitch * rb->cpp;
@@ -370,6 +411,16 @@ radeon_make_renderbuffer_current(radeonContextPtr radeon,
 
 	if ((rb = (void *)draw->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer)) {
 		if (!rb->bo) {
+#ifdef RADEON_DEBUG_BO
+            rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+						radeon->radeonScreen->frontOffset +
+						radeon->radeonScreen->fbLocation,
+						size,
+						4096,
+						RADEON_GEM_DOMAIN_VRAM,
+						0,
+                        "Front Buf");
+#else
 			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
 						radeon->radeonScreen->frontOffset +
 						radeon->radeonScreen->fbLocation,
@@ -377,12 +428,23 @@ radeon_make_renderbuffer_current(radeonContextPtr radeon,
 						4096,
 						RADEON_GEM_DOMAIN_VRAM,
 						0);
+#endif /* RADEON_DEBUG_BO */
 		}
 		rb->cpp = radeon->radeonScreen->cpp;
 		rb->pitch = radeon->radeonScreen->frontPitch * rb->cpp;
 	}
 	if ((rb = (void *)draw->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer)) {
 		if (!rb->bo) {
+#ifdef RADEON_DEBUG_BO
+            rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+						radeon->radeonScreen->backOffset +
+						radeon->radeonScreen->fbLocation,
+						size,
+						4096,
+						RADEON_GEM_DOMAIN_VRAM,
+						0,
+                        "Back Buf");
+#else
 			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
 						radeon->radeonScreen->backOffset +
 						radeon->radeonScreen->fbLocation,
@@ -390,32 +452,55 @@ radeon_make_renderbuffer_current(radeonContextPtr radeon,
 						4096,
 						RADEON_GEM_DOMAIN_VRAM,
 						0);
+#endif /* RADEON_DEBUG_BO */
 		}
 		rb->cpp = radeon->radeonScreen->cpp;
 		rb->pitch = radeon->radeonScreen->backPitch * rb->cpp;
 	}
 	if ((rb = (void *)draw->base.Attachment[BUFFER_DEPTH].Renderbuffer)) {
 		if (!rb->bo) {
+#ifdef RADEON_DEBUG_BO
 			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
 						radeon->radeonScreen->depthOffset +
 						radeon->radeonScreen->fbLocation,
 						size,
 						4096,
 						RADEON_GEM_DOMAIN_VRAM,
+						0,
+                        "Z Buf");
+#else
+            rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+						radeon->radeonScreen->depthOffset +
+						radeon->radeonScreen->fbLocation,
+						size,
+						4096,
+						RADEON_GEM_DOMAIN_VRAM,
 						0);
+#endif /* RADEON_DEBUG_BO */
 		}
 		rb->cpp = radeon->radeonScreen->cpp;
 		rb->pitch = radeon->radeonScreen->depthPitch * rb->cpp;
 	}
 	if ((rb = (void *)draw->base.Attachment[BUFFER_STENCIL].Renderbuffer)) {
 		if (!rb->bo) {
+#ifdef RADEON_DEBUG_BO
 			rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
 						radeon->radeonScreen->depthOffset +
 						radeon->radeonScreen->fbLocation,
 						size,
 						4096,
 						RADEON_GEM_DOMAIN_VRAM,
+						0,
+                        "Stencil Buf");
+#else
+            rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+						radeon->radeonScreen->depthOffset +
+						radeon->radeonScreen->fbLocation,
+						size,
+						4096,
+						RADEON_GEM_DOMAIN_VRAM,
 						0);
+#endif /* RADEON_DEBUG_BO */
 		}
 		rb->cpp = radeon->radeonScreen->cpp;
 		rb->pitch = radeon->radeonScreen->depthPitch * rb->cpp;
@@ -529,12 +614,22 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 			bo = depth_bo;
 			radeon_bo_ref(bo);
 		} else {
+#ifdef RADEON_DEBUG_BO
+            bo = radeon_bo_open(radeon->radeonScreen->bom,
+						buffers[i].name,
+						0,
+						0,
+						RADEON_GEM_DOMAIN_VRAM,
+						buffers[i].flags,
+                        regname);
+#else
 			bo = radeon_bo_open(radeon->radeonScreen->bom,
 						buffers[i].name,
 						0,
 						0,
 						RADEON_GEM_DOMAIN_VRAM,
 						buffers[i].flags);
+#endif /* RADEON_DEBUG_BO */
 			if (bo == NULL) {
 
 				fprintf(stderr, "failed to attach %s %d\n",
@@ -591,7 +686,6 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 		radeon_make_renderbuffer_current(radeon, drfb);
 	}
 
-
 	if (RADEON_DEBUG & DEBUG_DRI)
 	     fprintf(stderr, "%s ctx %p dfb %p rfb %p\n", __FUNCTION__, radeon->glCtx, drfb, readfb);
 
@@ -636,6 +730,7 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
 	if (RADEON_DEBUG & DEBUG_DRI)
 		fprintf(stderr, "End %s\n", __FUNCTION__);
+
 	return GL_TRUE;
 }
 

@@ -929,6 +929,7 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 			if (t->mt == image->mt) {
 				if (RADEON_DEBUG & DEBUG_TEXTURE)
 					fprintf(stderr, "OK\n");
+
 				continue;
 			}
 

@@ -61,7 +61,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_tex.h"
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
 #include "r600_context.h"
-//#include "r700_driconf.h" /* +r6/r7 */
+#include "r700_driconf.h" /* +r6/r7 */
 #include "r700_tex.h"     /* +r6/r7 */
 #endif
 
@@ -1086,7 +1086,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    screen->AGPMode = dri_priv->AGPMode;
 
    ret = radeonGetParam(sPriv, RADEON_PARAM_FB_LOCATION, &temp);
-   
+
    /* +r6/r7 */
    if(screen->chip_family >= CHIP_FAMILY_R600)
    {

@@ -183,10 +183,18 @@ radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa, radeonTexObj *
 
 	calculate_miptree_layout(mt);
 
+#ifdef RADEON_DEBUG_BO
+    mt->bo = radeon_bo_open(rmesa->radeonScreen->bom,
+                            0, mt->totalsize, 1024,
+                            RADEON_GEM_DOMAIN_VRAM,
+                            0,
+                            "MIPMAP TREE");
+#else
 	mt->bo = radeon_bo_open(rmesa->radeonScreen->bom,
                             0, mt->totalsize, 1024,
                             RADEON_GEM_DOMAIN_VRAM,
                             0);
+#endif /* RADEON_DEBUG_BO */
 
 	return mt;
 }

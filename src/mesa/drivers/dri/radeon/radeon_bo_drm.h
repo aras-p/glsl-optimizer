@@ -34,6 +34,10 @@
 #include <stdint.h>
 //#include "radeon_track.h"
 
+#ifndef RADEON_DEBUG_BO
+#define RADEON_DEBUG_BO 1
+#endif
+
 /* bo object */
 #define RADEON_BO_FLAGS_MACRO_TILE  1
 #define RADEON_BO_FLAGS_MICRO_TILE  2
@@ -57,12 +61,22 @@ struct radeon_bo {
 
 /* bo functions */
 struct radeon_bo_funcs {
+#ifdef RADEON_DEBUG_BO
+    struct radeon_bo *(*bo_open)(struct radeon_bo_manager *bom,
+                                 uint32_t handle,
+                                 uint32_t size,
+                                 uint32_t alignment,
+                                 uint32_t domains,
+                                 uint32_t flags,
+                                 char * szBufUsage);
+#else
     struct radeon_bo *(*bo_open)(struct radeon_bo_manager *bom,
                                  uint32_t handle,
                                  uint32_t size,
                                  uint32_t alignment,
                                  uint32_t domains,
                                  uint32_t flags);
+#endif /* RADEON_DEBUG_BO */
     void (*bo_ref)(struct radeon_bo *bo);
     struct radeon_bo *(*bo_unref)(struct radeon_bo *bo);
     int (*bo_map)(struct radeon_bo *bo, int write);
@@ -95,13 +109,21 @@ static inline struct radeon_bo *_radeon_bo_open(struct radeon_bo_manager *bom,
                                                 uint32_t alignment,
                                                 uint32_t domains,
                                                 uint32_t flags,
+#ifdef RADEON_DEBUG_BO
+                                                char * szBufUsage,
+#endif /* RADEON_DEBUG_BO */
                                                 const char *file,
                                                 const char *func,
                                                 int line)
 {
     struct radeon_bo *bo;
 
+#ifdef RADEON_DEBUG_BO
+    bo = bom->funcs->bo_open(bom, handle, size, alignment, domains, flags, szBufUsage);
+#else
     bo = bom->funcs->bo_open(bom, handle, size, alignment, domains, flags);
+#endif /* RADEON_DEBUG_BO */
+
 #ifdef RADEON_BO_TRACK
     if (bo) {
         bo->track = radeon_tracker_add_track(&bom->tracker, bo->handle);
@@ -163,9 +185,13 @@ static inline int _radeon_bo_wait(struct radeon_bo *bo,
 {
     return bo->bom->funcs->bo_wait(bo);
 }
-
+#ifdef RADEON_DEBUG_BO
+#define radeon_bo_open(bom, h, s, a, d, f, u)\
+    _radeon_bo_open(bom, h, s, a, d, f, u, __FILE__, __FUNCTION__, __LINE__)
+#else
 #define radeon_bo_open(bom, h, s, a, d, f)\
     _radeon_bo_open(bom, h, s, a, d, f, __FILE__, __FUNCTION__, __LINE__)
+#endif /* RADEON_DEBUG_BO */
 #define radeon_bo_ref(bo)\
     _radeon_bo_ref(bo, __FILE__, __FUNCTION__, __LINE__)
 #define radeon_bo_unref(bo)\

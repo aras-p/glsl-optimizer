@@ -560,4 +560,8 @@ extern int RADEON_DEBUG;
 #define RADEON_DEBUG		0
 #endif
 
+#ifndef RADEON_DEBUG_BO
+#define RADEON_DEBUG_BO 1
+#endif
+
 #endif

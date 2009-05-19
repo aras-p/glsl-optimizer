@@ -68,6 +68,9 @@ struct bo_legacy {
     void                *ptr;
     struct bo_legacy    *next, *prev;
     struct bo_legacy    *pnext, *pprev;
+#ifdef RADEON_DEBUG_BO
+    char                szBufUsage[16];
+#endif /* RADEON_DEBUG_BO */
 };
 
 struct bo_manager_legacy {
@@ -278,7 +281,12 @@ static struct bo_legacy *bo_allocate(struct bo_manager_legacy *boml,
                                      uint32_t size,
                                      uint32_t alignment,
                                      uint32_t domains,
+#ifdef RADEON_DEBUG_BO
+                                     uint32_t flags,
+                                     char * szBufUsage)
+#else
                                      uint32_t flags)
+#endif /* RADEON_DEBUG_BO */
 {
     struct bo_legacy *bo_legacy;
     static int pgsize;
@@ -310,6 +318,11 @@ static struct bo_legacy *bo_allocate(struct bo_manager_legacy *boml,
     if (bo_legacy->next) {
         bo_legacy->next->prev = bo_legacy;
     }
+
+#ifdef RADEON_DEBUG_BO
+    sprintf(bo_legacy->szBufUsage, "%s", szBufUsage); 
+#endif /* RADEON_DEBUG_BO */
+
     return bo_legacy;
 }
 
@@ -408,7 +421,12 @@ static struct radeon_bo *bo_open(struct radeon_bo_manager *bom,
                                  uint32_t size,
                                  uint32_t alignment,
                                  uint32_t domains,
+#ifdef RADEON_DEBUG_BO
+                                 uint32_t flags,
+                                 char *   szBufUsage)
+#else
                                  uint32_t flags)
+#endif /* RADEON_DEBUG_BO */
 {
     struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bom;
     struct bo_legacy *bo_legacy;
@@ -425,29 +443,37 @@ static struct radeon_bo *bo_open(struct radeon_bo_manager *bom,
         }
         return NULL;
     }
-
+#ifdef RADEON_DEBUG_BO
+    bo_legacy = bo_allocate(boml, size, alignment, domains, flags, szBufUsage);
+#else
     bo_legacy = bo_allocate(boml, size, alignment, domains, flags);
+#endif /* RADEON_DEBUG_BO */
     bo_legacy->static_bo = 0;
     r = legacy_new_handle(boml, &bo_legacy->base.handle);
     if (r) {
         bo_free(bo_legacy);
         return NULL;
     }
-    if (bo_legacy->base.domains & RADEON_GEM_DOMAIN_GTT) {
-    retry:
+    if (bo_legacy->base.domains & RADEON_GEM_DOMAIN_GTT) 
+    {
+retry:
         legacy_track_pending(boml, 0);
         /* dma buffers */
 
         r = bo_dma_alloc(&(bo_legacy->base));
-        if (r) {
-	  if (legacy_wait_any_pending(boml) == -1) {
-            bo_free(bo_legacy);
-	    return NULL;
-	  }
-	  goto retry;
-	  return NULL;
+        if (r) 
+        {
+	         if (legacy_wait_any_pending(boml) == -1) 
+             {
+                  bo_free(bo_legacy);
+	              return NULL;
+             }
+	         goto retry;
+	         return NULL;
         }
-    } else {
+    } 
+    else 
+    {
         bo_legacy->ptr = malloc(bo_legacy->base.size);
         if (bo_legacy->ptr == NULL) {
             bo_free(bo_legacy);
@@ -455,6 +481,7 @@ static struct radeon_bo *bo_open(struct radeon_bo_manager *bom,
         }
     }
     radeon_bo_ref(&(bo_legacy->base));
+
     return (struct radeon_bo*)bo_legacy;
 }
 
@@ -483,7 +510,7 @@ static int bo_map(struct radeon_bo *bo, int write)
 {
     struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bo->bom;
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
-    
+
     legacy_wait_pending(bo);
     bo_legacy->validated = 0;
     bo_legacy->dirty = 1;
@@ -509,6 +536,7 @@ static int bo_map(struct radeon_bo *bo, int write)
         volatile int *buf = (int*)boml->screen->driScreen->pFB;
         p = *buf;
     }
+
     return 0;
 }
 
@@ -516,10 +544,13 @@ static int bo_unmap(struct radeon_bo *bo)
 {
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
 
-    if (--bo_legacy->map_count > 0) {
+    if (--bo_legacy->map_count > 0) 
+    {
         return 0;
     }
+    
     bo->ptr = NULL;
+
     return 0;
 }
 
@@ -632,13 +663,20 @@ int radeon_bo_legacy_validate(struct radeon_bo *bo,
     int retries = 0;
 
     if (bo_legacy->map_count) {
+#ifdef RADEON_DEBUG_BO
+        fprintf(stderr, "bo(%p, %d, %s) is mapped (%d) can't valide it.\n",
+                bo, bo->size, bo_legacy->szBufUsage, bo_legacy->map_count);
+#else
         fprintf(stderr, "bo(%p, %d) is mapped (%d) can't valide it.\n",
                 bo, bo->size, bo_legacy->map_count);
+#endif /* RADEON_DEBUG_BO */
+
         return -EINVAL;
     }
     if (bo_legacy->static_bo || bo_legacy->validated) {
         *soffset = bo_legacy->offset;
         *eoffset = bo_legacy->offset + bo->size;
+
         return 0;
     }
     if (!(bo->domains & RADEON_GEM_DOMAIN_GTT)) {
@@ -659,6 +697,7 @@ int radeon_bo_legacy_validate(struct radeon_bo *bo,
     *soffset = bo_legacy->offset;
     *eoffset = bo_legacy->offset + bo->size;
     bo_legacy->validated = 1;
+
     return 0;
 }
 
@@ -703,11 +742,21 @@ void radeon_bo_manager_legacy_dtor(struct radeon_bo_manager *bom)
 }
 
 static struct bo_legacy *radeon_legacy_bo_alloc_static(struct bo_manager_legacy *bom,
-						       int size, uint32_t offset)
+						       int size, 
+#ifdef RADEON_DEBUG_BO
+                               uint32_t offset,
+                               char * szBufUsage)
+#else
+                               uint32_t offset)
+#endif /* RADEON_DEBUG_BO */
 {
     struct bo_legacy *bo;
 
+#ifdef RADEON_DEBUG_BO
+    bo = bo_allocate(bom, size, 0, RADEON_GEM_DOMAIN_VRAM, 0, szBufUsage);
+#else
     bo = bo_allocate(bom, size, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+#endif /* RADEON_DEBUG_BO */
     if (bo == NULL)
 	return NULL;
     bo->static_bo = 1;
@@ -768,7 +817,11 @@ struct radeon_bo_manager *radeon_bo_manager_legacy_ctor(struct radeon_screen *sc
     size = 4096*4096*4; 
 
     /* allocate front */
+#ifdef RADEON_DEBUG_BO
+    bo = radeon_legacy_bo_alloc_static(bom, size, bom->screen->frontOffset, "FRONT BUF");
+#else
     bo = radeon_legacy_bo_alloc_static(bom, size, bom->screen->frontOffset);
+#endif /* RADEON_DEBUG_BO */
     if (!bo) {
         radeon_bo_manager_legacy_dtor((struct radeon_bo_manager*)bom);
         return NULL;
@@ -778,7 +831,11 @@ struct radeon_bo_manager *radeon_bo_manager_legacy_ctor(struct radeon_screen *sc
     }
 
     /* allocate back */
+#ifdef RADEON_DEBUG_BO
+    bo = radeon_legacy_bo_alloc_static(bom, size, bom->screen->backOffset, "BACK BUF");
+#else
     bo = radeon_legacy_bo_alloc_static(bom, size, bom->screen->backOffset);
+#endif /* RADEON_DEBUG_BO */
     if (!bo) {
         radeon_bo_manager_legacy_dtor((struct radeon_bo_manager*)bom);
         return NULL;
@@ -788,7 +845,11 @@ struct radeon_bo_manager *radeon_bo_manager_legacy_ctor(struct radeon_screen *sc
     }
 
     /* allocate depth */
+#ifdef RADEON_DEBUG_BO
+    bo = radeon_legacy_bo_alloc_static(bom, size, bom->screen->depthOffset, "Z BUF");
+#else
     bo = radeon_legacy_bo_alloc_static(bom, size, bom->screen->depthOffset);
+#endif /* RADEON_DEBUG_BO */
     if (!bo) {
         radeon_bo_manager_legacy_dtor((struct radeon_bo_manager*)bom);
         return NULL;
