@@ -281,7 +281,8 @@ valid_texture_object(const struct gl_texture_object *tex)
       _mesa_problem(NULL, "invalid reference to a deleted texture object");
       return GL_FALSE;
    default:
-      _mesa_problem(NULL, "invalid texture object Target value");
+      _mesa_problem(NULL, "invalid texture object Target 0x%x, Id = %u",
+                    tex->Target, tex->Name);
       return GL_FALSE;
    }
 }
