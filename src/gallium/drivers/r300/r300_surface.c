@@ -268,14 +268,10 @@ validate:
     r300_surface_setup(r300, desttex, destx, desty, w, h);
 
     /* Setup the texture. */
-    r300_emit_sampler(r300, &r300_sampler_copy_state, 0);
-    r300_emit_texture(r300, srctex, 0);
+    r300_emit_texture(r300, &r300_sampler_copy_state, srctex, 0);
 
     /* Flush and enable. */
-    BEGIN_CS(4);
-    OUT_CS_REG(R300_TX_INVALTAGS, 0);
-    OUT_CS_REG(R300_TX_ENABLE, 0x1);
-    END_CS;
+    r300_flush_textures(r300);
 
     /* Vertex shader setup */
     if (caps->has_tcl) {
