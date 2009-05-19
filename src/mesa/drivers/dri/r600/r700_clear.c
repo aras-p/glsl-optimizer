@@ -262,7 +262,7 @@ void r700Clear(GLcontext * ctx, GLbitfield mask)
         return;
     }
 
-    r700ClearWithDraw(context, mask);
+    //r700ClearWithDraw(context, mask);
 }
 
 

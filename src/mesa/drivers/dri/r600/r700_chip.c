@@ -680,7 +680,7 @@ GLboolean r700SendContextStates(context_t *context, GLboolean bUseStockShader)
         R600_OUT_BATCH_REGSEQ(((pInit->unOffset + ASIC_CONTEXT_BASE_INDEX)<<2), toSend);
         for(ui=0; ui<toSend; ui++)
         {
-            if( GL_FALSE == setRelocReg(context, (pInit->unOffset+ui), bUseStockShader) )
+            if( GL_FALSE == setRelocReg(context, pInit->unOffset, bUseStockShader) )
             {
                 /* for not reloc reg. */
                 R600_OUT_BATCH(*(pInit->puiValue));
