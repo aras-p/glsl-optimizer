@@ -84,7 +84,7 @@ intel_generate_mipmap_level(GLcontext *ctx, GLuint tex_name,
    /* Choose to render to the color attachment. */
    _mesa_DrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 
-   status = glCheckFramebufferStatusEXT (GL_FRAMEBUFFER_EXT);
+   status = _mesa_CheckFramebufferStatusEXT (GL_FRAMEBUFFER_EXT);
    if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
       return GL_FALSE;
 
