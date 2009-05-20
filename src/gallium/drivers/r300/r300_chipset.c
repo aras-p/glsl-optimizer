@@ -149,6 +149,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
             caps->num_vert_fpus = 6;
             break;
 
+        case 0x4B48:
         case 0x4B49:
         case 0x4B4A:
         case 0x4B4B:
