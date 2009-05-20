@@ -3040,6 +3040,7 @@ enum {
 #   define R500_INST_RGB_WMASK_R			(1 << 11)
 #   define R500_INST_RGB_WMASK_G			(1 << 12)
 #   define R500_INST_RGB_WMASK_B			(1 << 13)
+#   define R500_INST_RGB_WMASK_RGB			(7 << 11)
 #   define R500_INST_ALPHA_WMASK			(1 << 14)
 #   define R500_INST_RGB_OMASK_R			(1 << 15)
 #   define R500_INST_RGB_OMASK_G			(1 << 16)
