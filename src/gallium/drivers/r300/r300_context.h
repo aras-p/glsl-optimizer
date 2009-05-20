@@ -141,11 +141,11 @@ struct r300_viewport_state {
 struct r300_constant_buffer {
     /* Buffer of constants */
     /* XXX first number should be raised */
-    float constants[8][4];
+    float constants[32][4];
     /* Number of user-defined constants */
-    int user_count;
+    unsigned user_count;
     /* Total number of constants */
-    int count;
+    unsigned count;
 };
 
 struct r3xx_fragment_shader {
