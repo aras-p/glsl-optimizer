@@ -295,12 +295,16 @@ VP_CHECK( tcl_vpp_size, ctx->VertexProgram.Current->Base.NumNativeParameters > 9
     h.i = hdr;								\
     _start = h.veclinear.addr_lo | (h.veclinear.addr_hi << 8);		\
     _sz = h.veclinear.count * 4;					\
+    if (r200->radeon.radeonScreen->kernel_mm && _sz) { \
+    BEGIN_BATCH_NO_AUTOSTATE(dwords); \
     OUT_BATCH(CP_PACKET0(RADEON_SE_TCL_STATE_FLUSH, 0));		\
     OUT_BATCH(0);							\
     OUT_BATCH(CP_PACKET0(R200_SE_TCL_VECTOR_INDX_REG, 0));		\
     OUT_BATCH(_start | (1 << RADEON_VEC_INDX_OCTWORD_STRIDE_SHIFT));	\
     OUT_BATCH(CP_PACKET0_ONE(R200_SE_TCL_VECTOR_DATA_REG, _sz - 1));	\
     OUT_BATCH_TABLE((data), _sz);					\
+    END_BATCH(); \
+    } \
   } while(0)
 
 #define OUT_SCL(hdr, data) do {					\
@@ -367,9 +371,7 @@ static void veclinear_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    uint32_t dwords = atom->cmd_size;
 
    dwords += 4;
-   BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_VECLINEAR(atom->cmd[0], atom->cmd+1);
-   END_BATCH();
 }
 
 static void scl_emit(GLcontext *ctx, struct radeon_state_atom *atom)

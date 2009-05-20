@@ -137,6 +137,7 @@ static void r200FireEB(r200ContextPtr rmesa, int vertex_count, int type)
 		BEGIN_BATCH(8+2);
 		OUT_BATCH_PACKET3(R200_CP_CMD_3D_DRAW_INDX_2, 0);
 		OUT_BATCH(R200_VF_PRIM_WALK_IND |
+			  R200_VF_COLOR_ORDER_RGBA | 
 			  ((vertex_count + 0) << 16) |
 			  type);
 		
@@ -243,7 +244,7 @@ void r200EmitVertexAOS( r200ContextPtr rmesa,
 	      __FUNCTION__, vertex_size, offset);
 
 
-   BEGIN_BATCH(5);
+   BEGIN_BATCH(7);
    OUT_BATCH_PACKET3(R200_CP_CMD_3D_LOAD_VBPNTR, 2);
    OUT_BATCH(1);
    OUT_BATCH(vertex_size | (vertex_size << 8));
