@@ -148,12 +148,12 @@ static void r200FireEB(r200ContextPtr rmesa, int vertex_count, int type)
 					rmesa->radeon.tcl.elt_dma_bo,
 					rmesa->radeon.tcl.elt_dma_offset,
 					RADEON_GEM_DOMAIN_GTT, 0, 0);
-			OUT_BATCH(vertex_count/2);
+			OUT_BATCH((vertex_count + 1)/2);
 		} else {
 			OUT_BATCH_PACKET3(R200_CP_CMD_INDX_BUFFER, 2);
 			OUT_BATCH((0x80 << 24) | (0 << 16) | 0x810);
 			OUT_BATCH(rmesa->radeon.tcl.elt_dma_offset);
-			OUT_BATCH(vertex_count/2);
+			OUT_BATCH((vertex_count + 1)/2);
 			radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
 					      rmesa->radeon.tcl.elt_dma_bo,
 					      RADEON_GEM_DOMAIN_GTT, 0, 0);
@@ -172,8 +172,6 @@ void r200FlushElts(GLcontext *ctx)
 
    assert( rmesa->radeon.dma.flush == r200FlushElts );
    rmesa->radeon.dma.flush = NULL;
-
-   elt_used = (elt_used + 2) & ~2;
 
    nr = elt_used / 2;
 

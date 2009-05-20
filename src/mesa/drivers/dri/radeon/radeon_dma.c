@@ -319,6 +319,9 @@ void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
    radeonContextPtr radeon = RADEON_CONTEXT( ctx );
    int i;
 
+   if (radeon->dma.flush) {
+       radeon->dma.flush(radeon->glCtx);
+   }
    if (radeon->tcl.elt_dma_bo) {
 	   radeon_bo_unref(radeon->tcl.elt_dma_bo);
 	   radeon->tcl.elt_dma_bo = NULL;
