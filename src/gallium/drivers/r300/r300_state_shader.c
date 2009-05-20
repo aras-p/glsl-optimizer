@@ -652,6 +652,7 @@ void r300_translate_fragment_shader(struct r300_context* r300,
             assembler->tex_count + assembler->color_count);
 
     consts->count = consts->user_count + assembler->imm_count;
+    fs->uses_imms = assembler->imm_count;
     debug_printf("r300: fs: %d total constants, "
             "%d from user and %d from immediates\n", consts->count,
             consts->user_count, assembler->imm_count);

@@ -158,6 +158,10 @@ struct r3xx_fragment_shader {
 
     /* Pixel stack size */
     int stack_size;
+
+    /* Are there immediates in this shader?
+     * If not, we can heavily optimize recompilation. */
+    boolean uses_imms;
 };
 
 struct r300_fragment_shader {
@@ -247,6 +251,10 @@ struct r300_vertex_shader {
 
     /* Has this shader been translated yet? */
     boolean translated;
+
+    /* Are there immediates in this shader?
+     * If not, we can heavily optimize recompilation. */
+    boolean uses_imms;
 
     /* Number of used instructions */
     int instruction_count;

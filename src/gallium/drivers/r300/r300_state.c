@@ -151,10 +151,12 @@ static void
 
     /* If the number of constants have changed, invalidate the shader. */
     if (r300->shader_constants[shader].user_count != i) {
-        if (shader == PIPE_SHADER_FRAGMENT && r300->fs) {
+        if (shader == PIPE_SHADER_FRAGMENT && r300->fs &&
+                r300->fs->uses_imms) {
             r300->fs->translated = FALSE;
             r300_translate_fragment_shader(r300, r300->fs);
-        } else if (shader == PIPE_SHADER_VERTEX && r300->vs) {
+        } else if (shader == PIPE_SHADER_VERTEX && r300->vs &&
+                r300->vs->uses_imms) {
             r300->vs->translated = FALSE;
             r300_translate_vertex_shader(r300, r300->vs);
         }

@@ -386,6 +386,7 @@ void r300_translate_vertex_shader(struct r300_context* r300,
             assembler->tex_count + assembler->color_count);
 
     consts->count = consts->user_count + assembler->imm_count;
+    vs->uses_imms = assembler->imm_count;
     debug_printf("r300: vs: %d total constants, "
             "%d from user and %d from immediates\n", consts->count,
             consts->user_count, assembler->imm_count);
