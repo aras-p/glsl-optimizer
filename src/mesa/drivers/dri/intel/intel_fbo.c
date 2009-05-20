@@ -679,6 +679,11 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
       if (rb == NULL)
 	 continue;
 
+      if (irb == NULL) {
+	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	 continue;
+      }
+
       switch (irb->texformat->MesaFormat) {
       case MESA_FORMAT_ARGB8888:
       case MESA_FORMAT_RGB565:
