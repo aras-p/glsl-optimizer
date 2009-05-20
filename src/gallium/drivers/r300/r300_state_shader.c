@@ -306,9 +306,12 @@ static INLINE void r300_emit_maths(struct r300_fragment_shader* fs,
 }
 
 /* Setup an ALU operation. */
-static INLINE void r500_emit_alu(struct r500_fragment_shader* fs,
-                                 struct r300_fs_asm* assembler,
-                                 struct tgsi_full_dst_register* dst)
+static INLINE void r500_emit_maths(struct r500_fragment_shader* fs,
+                                   struct r300_fs_asm* assembler,
+                                   struct tgsi_full_src_register* src,
+                                   struct tgsi_full_dst_register* dst,
+                                   unsigned op,
+                                   unsigned count)
 {
     int i = fs->instruction_count;
 
@@ -331,18 +334,6 @@ static INLINE void r500_emit_alu(struct r500_fragment_shader* fs,
         R500_ALPHA_ADDRD(r300_fs_dst(assembler, &dst->DstRegister));
     fs->instructions[i].inst5 =
         R500_ALU_RGBA_ADDRD(r300_fs_dst(assembler, &dst->DstRegister));
-}
-
-static INLINE void r500_emit_maths(struct r500_fragment_shader* fs,
-                                   struct r300_fs_asm* assembler,
-                                   struct tgsi_full_src_register* src,
-                                   struct tgsi_full_dst_register* dst,
-                                   unsigned op,
-                                   unsigned count)
-{
-    int i = fs->instruction_count;
-
-    r500_emit_alu(fs, assembler, dst);
 
     switch (count) {
         case 3:
