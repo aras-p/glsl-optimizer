@@ -354,6 +354,10 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 
    i = driQueryOptioni( &rmesa->radeon.optionCache, "allow_large_textures");
 
+   /* FIXME: When no memory manager is available we should set this 
+    * to some reasonable value based on texture memory pool size */
+   ctx->Const.MaxTextureLevels = 12;
+
    ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 
    /* No wide AA points.
