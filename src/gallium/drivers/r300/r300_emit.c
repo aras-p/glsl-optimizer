@@ -452,8 +452,8 @@ void r300_emit_dirty_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     struct r300_texture* tex;
-    int i;
-    int dirty_tex = 0;
+    int i, dirty_tex = 0;
+    boolean invalid = FALSE;
 
     if (!(r300->dirty_state)) {
         return;
@@ -462,6 +462,7 @@ void r300_emit_dirty_state(struct r300_context* r300)
     r300_update_derived_state(r300);
 
     /* XXX check size */
+validate:
     /* Color buffers... */
     for (i = 0; i < r300->framebuffer_state.nr_cbufs; i++) {
         tex = (struct r300_texture*)r300->framebuffer_state.cbufs[i]->texture;
@@ -490,10 +491,14 @@ void r300_emit_dirty_state(struct r300_context* r300)
     } else {
         debug_printf("No VBO while emitting dirty state!\n");
     }
-
     if (r300->winsys->validate(r300->winsys)) {
-        /* XXX */
         r300->context.flush(&r300->context, 0, NULL);
+        if (invalid) {
+            /* Well, hell. */
+            exit(1);
+        }
+        invalid = TRUE;
+        goto validate;
     }
 
     if (r300->dirty_state & R300_NEW_BLEND) {

@@ -32,13 +32,6 @@ static void r300_surface_setup(struct r300_context* r300,
     unsigned pixpitch = dest->stride / dest->tex.block.size;
     CS_LOCALS(r300);
 
-    /* Make sure our target BO is okay. */
-    r300->winsys->add_buffer(r300->winsys, dest->buffer,
-            0, RADEON_GEM_DOMAIN_VRAM);
-    if (r300->winsys->validate(r300->winsys)) {
-        r300->context.flush(&r300->context, 0, NULL);
-    }
-
     r300_emit_blend_state(r300, &blend_clear_state);
     r300_emit_blend_color_state(r300, &blend_color_clear_state);
     r300_emit_dsa_state(r300, &dsa_clear_state);
@@ -106,6 +99,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     struct r300_capabilities* caps = r300_screen(pipe->screen)->caps;
     struct r300_texture* tex = (struct r300_texture*)dest->texture;
     unsigned pixpitch = tex->stride / tex->tex.block.size;
+    boolean invalid = FALSE;
     CS_LOCALS(r300);
 
     a = (float)((color >> 24) & 0xff) / 255.0f;
@@ -118,9 +112,23 @@ static void r300_surface_fill(struct pipe_context* pipe,
 
     /* Fallback? */
     if (FALSE) {
+fallback:
         debug_printf("r300: Falling back on surface clear...");
         util_surface_fill(pipe, dest, x, y, w, h, color);
         return;
+    }
+
+    /* Make sure our target BO is okay. */
+validate:
+    r300->winsys->add_buffer(r300->winsys, tex->buffer,
+            0, RADEON_GEM_DOMAIN_VRAM);
+    if (r300->winsys->validate(r300->winsys)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        if (invalid) {
+            goto fallback;
+        }
+        invalid = TRUE;
+        goto validate;
     }
 
     r300_surface_setup(r300, tex, x, y, w, h);
@@ -216,6 +224,7 @@ static void r300_surface_copy(struct pipe_context* pipe,
     struct r300_texture* srctex = (struct r300_texture*)src->texture;
     struct r300_texture* desttex = (struct r300_texture*)dest->texture;
     unsigned pixpitch = srctex->stride / srctex->tex.block.size;
+    boolean invalid = FALSE;
     CS_LOCALS(r300);
 
     debug_printf("r300: Copying surface %p at (%d,%d) to %p at (%d, %d),"
@@ -225,21 +234,38 @@ static void r300_surface_copy(struct pipe_context* pipe,
     if ((srctex == desttex) &&
             ((destx < srcx + w) || (srcx < destx + w)) &&
             ((desty < srcy + h) || (srcy < desty + h))) {
+fallback:
         debug_printf("r300: Falling back on surface_copy\n");
         util_surface_copy(pipe, FALSE, dest, destx, desty, src,
                 srcx, srcy, w, h);
     }
 
-    /* Add our source texture to the BO list before emitting anything.
-     * r300_surface_setup will flush if needed for us. */
+    /* Add our target BOs to the list. */
+validate:
     r300->winsys->add_buffer(r300->winsys, srctex->buffer,
             RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
+    r300->winsys->add_buffer(r300->winsys, desttex->buffer,
+            0, RADEON_GEM_DOMAIN_VRAM);
+    if (r300->winsys->validate(r300->winsys)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        if (invalid) {
+            goto fallback;
+        }
+        invalid = TRUE;
+        goto validate;
+    }
 
     r300_surface_setup(r300, desttex, destx, desty, w, h);
 
+    /* Setup the texture. */
     r300_emit_sampler(r300, &r300_sampler_copy_state, 0);
     r300_emit_texture(r300, srctex, 0);
-    r300_flush_textures(r300);
+
+    /* Flush and enable. */
+    BEGIN_CS(4);
+    OUT_CS_REG(R300_TX_INVALTAGS, 0);
+    OUT_CS_REG(R300_TX_ENABLE, 0x1);
+    END_CS;
 
     /* Vertex shader setup */
     if (caps->has_tcl) {
@@ -263,7 +289,7 @@ static void r300_surface_copy(struct pipe_context* pipe,
         r300_emit_rs_block_state(r300, &r300_rs_block_copy_state);
     }
 
-    BEGIN_CS(28);
+    BEGIN_CS(30);
     /* VAP stream control, mapping from input memory to PVS/RS memory */
     if (caps->has_tcl) {
         OUT_CS_REG(R300_VAP_PROG_STREAM_CNTL_0,
@@ -287,7 +313,7 @@ static void r300_surface_copy(struct pipe_context* pipe,
     OUT_CS_REG(R300_VAP_OUTPUT_VTX_FMT_1, 0x2);
 
     /* Vertex size. */
-    OUT_CS_REG(R300_VAP_VTX_SIZE, 0x8);
+    OUT_CS_REG(R300_VAP_VTX_SIZE, 0x4);
 
     /* Packet3 with our texcoords */
     OUT_CS_PKT3(R200_3D_DRAW_IMMD_2, 16);
