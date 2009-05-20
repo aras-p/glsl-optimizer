@@ -63,6 +63,11 @@ struct r300_rs_state {
     /* Draw-specific rasterizer state */
     struct pipe_rasterizer_state rs;
 
+    /* Whether or not to enable the VTE. This is referenced at the very
+     * last moment during emission of VTE state, to decide whether or not
+     * the VTE should be used for transformation. */
+    boolean enable_vte;
+
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
     uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
     uint32_t point_minmax;          /* R300_GA_POINT_MINMAX: 0x4230 */
@@ -253,6 +258,11 @@ struct r300_vertex_shader {
         uint32_t inst2;
         uint32_t inst3;
     } instructions[128]; /*< XXX magic number */
+};
+
+static struct pipe_viewport_state r300_viewport_identity = {
+    .scale = {1.0, 1.0, 1.0, 1.0},
+    .translate = {0.0, 0.0, 0.0, 0.0},
 };
 
 struct r300_context {

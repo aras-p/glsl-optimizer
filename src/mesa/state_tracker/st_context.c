@@ -233,12 +233,19 @@ void st_destroy_context( struct st_context *st )
    struct pipe_context *pipe = st->pipe;
    struct cso_context *cso = st->cso_context;
    GLcontext *ctx = st->ctx;
+   GLuint i;
 
    /* need to unbind and destroy CSO objects before anything else */
    cso_release_all(st->cso_context);
 
    st_reference_fragprog(st, &st->fp, NULL);
    st_reference_vertprog(st, &st->vp, NULL);
+
+   /* release framebuffer surfaces */
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+      pipe_surface_reference(&st->state.framebuffer.cbufs[i], NULL);
+   }
+   pipe_surface_reference(&st->state.framebuffer.zsbuf, NULL);
 
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
 

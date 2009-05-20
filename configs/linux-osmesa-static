@@ -1,0 +1,37 @@
+# Configuration for building static libOSMesa.a on Linux, no Xlib driver
+# This doesn't really have any Linux dependencies, so it should be usable
+# on other (gcc-based) systems.
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = linux-osmesa
+
+# Compiler and flags
+CC = gcc -m32
+CXX = g++ -m32
+CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DPTHREADS
+CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE
+
+MKLIB_OPTIONS = -static
+
+# Library names (actual file names)
+GL_LIB_NAME = libGL.a
+GLU_LIB_NAME = libGLU.a
+GLUT_LIB_NAME = libglut.a
+GLW_LIB_NAME = libGLw.a
+OSMESA_LIB_NAME = libOSMesa.a
+
+# Directories
+SRC_DIRS = mesa glu
+DRIVER_DIRS = osmesa
+PROGRAM_DIRS = osdemos
+
+
+# Dependencies
+GL_LIB_DEPS =
+OSMESA_LIB_DEPS =
+GLU_LIB_DEPS =
+GLUT_LIB_DEPS =
+GLW_LIB_DEPS =
+APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) \
+               $(EXTRA_LIB_PATH) -lX11 -lXmu -lXt -lXi -lpthread -lstdc++ -lm

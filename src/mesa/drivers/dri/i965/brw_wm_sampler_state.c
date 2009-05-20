@@ -178,6 +178,16 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
       sampler->ss1.s_wrap_mode = BRW_TEXCOORDMODE_CUBE;
       sampler->ss1.t_wrap_mode = BRW_TEXCOORDMODE_CUBE;
    }
+   else if (key->tex_target == GL_TEXTURE_1D) {
+      /* There's a bug in 1D texture sampling - it actually pays
+       * attention to the wrap_t value, though it should not.
+       * Override the wrap_t value here to GL_REPEAT to keep
+       * any nonexistent border pixels from floating in.
+       */
+      sampler->ss1.r_wrap_mode = translate_wrap_mode(key->wrap_r);
+      sampler->ss1.s_wrap_mode = translate_wrap_mode(key->wrap_s);
+      sampler->ss1.t_wrap_mode = BRW_TEXCOORDMODE_WRAP;
+   }
    else {
       sampler->ss1.r_wrap_mode = translate_wrap_mode(key->wrap_r);
       sampler->ss1.s_wrap_mode = translate_wrap_mode(key->wrap_s);

@@ -55,6 +55,17 @@ static GLint step_offsets[6][2] = {
    [FACE_NEG_Z] = {-1, 1},
 };
 
+
+static GLint bottom_offsets[6] = {
+   [FACE_POS_X] = 16 + 0 * 8,
+   [FACE_POS_Y] = 16 + 1 * 8,
+   [FACE_POS_Z] = 16 + 2 * 8,
+   [FACE_NEG_X] = 16 + 3 * 8,
+   [FACE_NEG_Y] = 16 + 4 * 8,
+   [FACE_NEG_Z] = 16 + 5 * 8,
+};
+
+
 /**
  * Cube texture map layout for i830M-GM915.
  *
@@ -297,7 +308,7 @@ i915_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree * mt)
  * +---+   +---+   +---+   +---+   +---+   +---+
  *
  * The bottom row continues with the remaining 2x2 then the 1x1 mip contents
- * in order, with each of them aligned to a 4x4 block boundary.  Thus, for
+ * in order, with each of them aligned to a 8x8 block boundary.  Thus, for
  * 32x32 cube maps and smaller, the bottom row layout is going to dictate the
  * pitch of the tree.  For a tree with 4x4 images, the pitch is at least
  * 14 * 8 = 112 texels, for 2x2 it is at least 12 * 8 texels, and for 1x1
@@ -375,10 +386,11 @@ i945_miptree_layout_cube(struct intel_context *intel,
 	       x = (face - 4) * 8;
 	       break;
 	    }
+	    break;
 
 	 case 2:
 	    y = mt->total_height - 4;
-	    x = 16 + face * 8;
+	    x = bottom_offsets[face];
 	    break;
 
 	 case 1:
@@ -454,7 +466,10 @@ i945_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree * mt)
 {
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
-      i945_miptree_layout_cube(intel, mt);
+      if (mt->compressed)
+	 i945_miptree_layout_cube(intel, mt);
+      else
+	 i915_miptree_layout_cube(intel, mt);
       break;
    case GL_TEXTURE_3D:
       i945_miptree_layout_3d(intel, mt);

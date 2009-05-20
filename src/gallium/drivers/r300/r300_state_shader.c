@@ -59,6 +59,12 @@ static void r300_fs_declare(struct r300_fs_asm* assembler,
             }
             break;
         case TGSI_FILE_OUTPUT:
+            /* Depth write. Mark the position of the output so we can
+             * identify it later. */
+            if (decl->Semantic.SemanticName == TGSI_SEMANTIC_POSITION) {
+                assembler->depth_output = decl->DeclarationRange.First;
+            }
+            break;
         case TGSI_FILE_CONSTANT:
             break;
         case TGSI_FILE_TEMPORARY:
@@ -118,6 +124,14 @@ static INLINE unsigned r300_fs_dst(struct r300_fs_asm* assembler,
             break;
     }
     return 0;
+}
+
+static INLINE boolean r300_fs_is_depr(struct r300_fs_asm* assembler,
+                                      struct tgsi_dst_register* dst)
+{
+    return (assembler->writes_depth &&
+            (dst->File == TGSI_FILE_OUTPUT) &&
+            (dst->Index == assembler->depth_output));
 }
 
 static INLINE unsigned r500_fix_swiz(unsigned s)
@@ -194,11 +208,17 @@ static INLINE uint32_t r300_alpha_op(unsigned op)
 static INLINE uint32_t r500_rgba_op(unsigned op)
 {
     switch (op) {
+        case TGSI_OPCODE_COS:
         case TGSI_OPCODE_EX2:
         case TGSI_OPCODE_LG2:
         case TGSI_OPCODE_RCP:
         case TGSI_OPCODE_RSQ:
+        case TGSI_OPCODE_SIN:
             return R500_ALU_RGBA_OP_SOP;
+        case TGSI_OPCODE_DDX:
+            return R500_ALU_RGBA_OP_MDH;
+        case TGSI_OPCODE_DDY:
+            return R500_ALU_RGBA_OP_MDV;
         case TGSI_OPCODE_FRC:
             return R500_ALU_RGBA_OP_FRC;
         case TGSI_OPCODE_DP3:
@@ -224,6 +244,8 @@ static INLINE uint32_t r500_rgba_op(unsigned op)
 static INLINE uint32_t r500_alpha_op(unsigned op)
 {
     switch (op) {
+        case TGSI_OPCODE_COS:
+            return R500_ALPHA_OP_COS;
         case TGSI_OPCODE_EX2:
             return R500_ALPHA_OP_EX2;
         case TGSI_OPCODE_LG2:
@@ -234,6 +256,12 @@ static INLINE uint32_t r500_alpha_op(unsigned op)
             return R500_ALPHA_OP_RSQ;
         case TGSI_OPCODE_FRC:
             return R500_ALPHA_OP_FRC;
+        case TGSI_OPCODE_SIN:
+            return R500_ALPHA_OP_SIN;
+        case TGSI_OPCODE_DDX:
+            return R500_ALPHA_OP_MDH;
+        case TGSI_OPCODE_DDY:
+            return R500_ALPHA_OP_MDV;
         case TGSI_OPCODE_DP3:
         case TGSI_OPCODE_DP4:
         case TGSI_OPCODE_DPH:
@@ -302,16 +330,21 @@ static INLINE void r500_emit_alu(struct r500_fragment_shader* fs,
     int i = fs->instruction_count;
 
     if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
-        fs->instructions[i].inst0 = R500_INST_TYPE_OUT |
-        R500_ALU_OMASK(dst->DstRegister.WriteMask);
+        fs->instructions[i].inst0 = R500_INST_TYPE_OUT;
+        if (r300_fs_is_depr(assembler, dst)) {
+            fs->instructions[i].inst4 = R500_W_OMASK;
+        } else {
+            fs->instructions[i].inst0 |=
+                R500_ALU_OMASK(dst->DstRegister.WriteMask);
+        }
     } else {
         fs->instructions[i].inst0 = R500_INST_TYPE_ALU |
-        R500_ALU_WMASK(dst->DstRegister.WriteMask);
+            R500_ALU_WMASK(dst->DstRegister.WriteMask);
     }
 
     fs->instructions[i].inst0 |= R500_INST_TEX_SEM_WAIT;
 
-    fs->instructions[i].inst4 =
+    fs->instructions[i].inst4 |=
         R500_ALPHA_ADDRD(r300_fs_dst(assembler, &dst->DstRegister));
     fs->instructions[i].inst5 =
         R500_ALU_RGBA_ADDRD(r300_fs_dst(assembler, &dst->DstRegister));
@@ -441,6 +474,9 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
      * AMD/ATI names for opcodes, please, as it facilitates using the
      * documentation. */
     switch (inst->Instruction.Opcode) {
+        /* XXX trig needs extra prep */
+        case TGSI_OPCODE_COS:
+        case TGSI_OPCODE_SIN:
         /* The simple scalar ops. */
         case TGSI_OPCODE_EX2:
         case TGSI_OPCODE_LG2:
@@ -452,6 +488,8 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
             inst->FullSrcRegisters[0].SrcRegister.SwizzleW =
                 inst->FullSrcRegisters[0].SrcRegister.SwizzleX;
             /* Fall through */
+        case TGSI_OPCODE_DDX:
+        case TGSI_OPCODE_DDY:
         case TGSI_OPCODE_FRC:
             r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode, 1);
@@ -581,6 +619,8 @@ void r300_translate_fragment_shader(struct r300_context* r300,
     }
     /* Setup starting offset for immediates. */
     assembler->imm_offset = consts->user_count;
+    /* Enable depth writes, if needed. */
+    assembler->writes_depth = fs->info.writes_z;
 
     /* Make sure we start at the beginning of the shader. */
     if (is_r500) {

@@ -36,9 +36,11 @@
 #define need_GL_ARB_multisample
 #define need_GL_ARB_occlusion_query
 #define need_GL_ARB_point_parameters
+#define need_GL_ARB_shader_objects
 #define need_GL_ARB_texture_compression
 #define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
+#define need_GL_ARB_vertex_shader
 #define need_GL_ARB_window_pos
 #define need_GL_EXT_blend_color
 #define need_GL_EXT_blend_equation_separate
@@ -50,16 +52,23 @@
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_secondary_color
 #define need_GL_NV_vertex_program
+#define need_GL_VERSION_2_0
+#define need_GL_VERSION_2_1
 #include "extension_helper.h"
 
 /**
  * Extension strings exported by the driver.
  */
 const struct dri_extension card_extensions[] = {
+   {"GL_ARB_fragment_shader", NULL},
    {"GL_ARB_multisample", GL_ARB_multisample_functions},
    {"GL_ARB_multitexture", NULL},
    {"GL_ARB_occlusion_query", GL_ARB_occlusion_query_functions},
+   {"GL_ARB_pixel_buffer_object", NULL},
    {"GL_ARB_point_parameters", GL_ARB_point_parameters_functions},
+   {"GL_ARB_shading_language_100", GL_VERSION_2_0_functions },
+   {"GL_ARB_shading_language_120", GL_VERSION_2_1_functions },
+   {"GL_ARB_shader_objects", GL_ARB_shader_objects_functions},
    {"GL_ARB_texture_border_clamp", NULL},
    {"GL_ARB_texture_compression", GL_ARB_texture_compression_functions},
    {"GL_ARB_texture_cube_map", NULL},
@@ -69,7 +78,7 @@ const struct dri_extension card_extensions[] = {
    {"GL_ARB_texture_mirrored_repeat", NULL},
    {"GL_ARB_texture_rectangle", NULL},
    {"GL_ARB_vertex_buffer_object", GL_ARB_vertex_buffer_object_functions},
-   {"GL_ARB_pixel_buffer_object", NULL},
+   {"GL_ARB_vertex_shader", GL_ARB_vertex_shader_functions},
    {"GL_ARB_vertex_program", GL_ARB_vertex_program_functions},
    {"GL_ARB_window_pos", GL_ARB_window_pos_functions},
    {"GL_EXT_blend_color", GL_EXT_blend_color_functions},

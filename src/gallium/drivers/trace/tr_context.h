@@ -33,6 +33,7 @@
 #include "util/u_debug.h"
 #include "pipe/p_context.h"
 
+#include "tr_screen.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,7 +46,19 @@ struct trace_context
 
    struct pipe_context *pipe;
 
+   /* current state */
+   struct {
+      struct trace_shader *fs;
+      struct trace_shader *vs;
+   } curr;
+
+   /* for list on screen */
    struct tr_list list;
+
+   /* list of state objects */
+   pipe_mutex list_mutex;
+   unsigned num_shaders;
+   struct tr_list shaders;
 };
 
 

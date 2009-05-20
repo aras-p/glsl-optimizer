@@ -92,6 +92,7 @@ struct softpipe_context {
     * queries.
     */
    uint64_t occlusion_count;
+   unsigned active_query_count;
 
    /** Mapped vertex buffers */
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];

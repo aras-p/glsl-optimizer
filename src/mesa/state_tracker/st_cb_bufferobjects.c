@@ -28,6 +28,7 @@
 
 #include "main/imports.h"
 #include "main/mtypes.h"
+#include "main/arrayobj.h"
 #include "main/bufferobj.h"
 
 #include "st_inlines.h"
@@ -307,4 +308,8 @@ st_init_bufferobject_functions(struct dd_function_table *functions)
    functions->MapBufferRange = st_bufferobj_map_range;
    functions->FlushMappedBufferRange = st_bufferobj_flush_mapped_range;
    functions->UnmapBuffer = st_bufferobj_unmap;
+
+   /* For GL_APPLE_vertex_array_object */
+   functions->NewArrayObject = _mesa_new_array_object;
+   functions->DeleteArrayObject = _mesa_delete_array_object;
 }

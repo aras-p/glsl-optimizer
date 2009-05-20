@@ -34,7 +34,6 @@ void r300_parse_chipset(struct r300_capabilities* caps)
     caps->is_r500 = FALSE;
     caps->num_vert_fpus = 4;
 
-
     /* Note: These are not ordered by PCI ID. I leave that task to GCC,
      * which will perform the ordering while collating jump tables. Instead,
      * I've tried to group them according to capabilities and age. */
@@ -349,7 +348,4 @@ void r300_parse_chipset(struct r300_capabilities* caps)
                 caps->pci_id);
             break;
     }
-
-    /* XXX SW TCL is broken so no forcing it off right now
-    caps->has_tcl = FALSE; */
 }

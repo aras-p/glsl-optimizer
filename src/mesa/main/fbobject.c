@@ -368,12 +368,18 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
             att->Complete = GL_FALSE;
             return;
          }
+         if (texImage->TexFormat->TexelBytes == 0) {
+            att_incomplete("compressed internalformat");
+            att->Complete = GL_FALSE;
+            return;
+         }
       }
       else if (format == GL_DEPTH) {
          if (texImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
             /* OK */
          }
          else if (ctx->Extensions.EXT_packed_depth_stencil &&
+                  ctx->Extensions.ARB_depth_texture &&
                   texImage->TexFormat->BaseFormat == GL_DEPTH_STENCIL_EXT) {
             /* OK */
          }
@@ -384,10 +390,19 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
          }
       }
       else {
-         /* no such thing as stencil textures */
-         att_incomplete("illegal stencil texture");
-         att->Complete = GL_FALSE;
-         return;
+         ASSERT(format == GL_STENCIL);
+         ASSERT(att->Renderbuffer->StencilBits);
+         if (ctx->Extensions.EXT_packed_depth_stencil &&
+             ctx->Extensions.ARB_depth_texture &&
+             att->Renderbuffer->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+            /* OK */
+         }
+         else {
+            /* no such thing as stencil-only textures */
+            att_incomplete("illegal stencil texture");
+            att->Complete = GL_FALSE;
+            return;
+         }
       }
    }
    else if (att->Type == GL_RENDERBUFFER_EXT) {

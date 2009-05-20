@@ -57,6 +57,7 @@ _mesa_initialize_array_object( GLcontext *ctx,
                                struct gl_array_object *obj, GLuint name );
 
 
+
 /*
  * API functions
  */

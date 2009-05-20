@@ -2,7 +2,13 @@
 #include "intel_be_api.h"
 #include "i915simple/i915_winsys.h"
 
+#ifdef DEBUG
+#include "trace/trace_drm.h"
+
+struct drm_api hooks =
+#else
 struct drm_api drm_api_hooks =
+#endif
 {
 	/* intel_be_context.c */
 	.create_context = intel_be_create_context,

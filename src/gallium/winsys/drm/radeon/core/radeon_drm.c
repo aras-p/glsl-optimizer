@@ -30,6 +30,10 @@
 
 #include "radeon_drm.h"
 
+#ifdef DEBUG
+#include "trace/trace_drm.h"
+#endif
+
 /* Create a pipe_screen. */
 struct pipe_screen* radeon_create_screen(int drmFB,
 					 struct drm_create_screen_arg *arg)
@@ -112,7 +116,11 @@ boolean radeon_global_handle_from_buffer(struct pipe_screen* screen,
     return TRUE;
 }
 
+#ifdef DEBUG
+struct drm_api hooks = {
+#else
 struct drm_api drm_api_hooks = {
+#endif
     .create_screen = radeon_create_screen,
     .create_context = radeon_create_context,
     /* XXX fix this */

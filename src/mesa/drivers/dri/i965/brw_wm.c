@@ -319,6 +319,9 @@ static void brw_wm_populate_key( struct brw_context *brw,
       key->drawable_height = brw->intel.driDrawable->h;
    }
 
+   /* CACHE_NEW_VS_PROG */
+   key->vp_outputs_written = brw->vs.prog_data->outputs_written & DO_SETUP_BITS;
+
    /* The unique fragment program ID */
    key->program_string_id = fp->id;
 }
@@ -357,7 +360,7 @@ const struct brw_tracked_state brw_wm_prog = {
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
 		BRW_NEW_WM_INPUT_DIMENSIONS |
 		BRW_NEW_REDUCED_PRIMITIVE),
-      .cache = 0
+      .cache = CACHE_NEW_VS_PROG,
    },
    .prepare = brw_prepare_wm_prog
 };

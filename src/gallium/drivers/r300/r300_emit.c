@@ -163,6 +163,7 @@ void r300_emit_fb_state(struct r300_context* r300,
     BEGIN_CS((8 * fb->nr_cbufs) + (fb->zsbuf ? 8 : 0) + 4);
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = (struct r300_texture*)fb->cbufs[i]->texture;
+        assert(tex && tex->buffer && "cbuf is marked, but NULL!");
         pixpitch = tex->stride / tex->tex.block.size;
 
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
@@ -177,7 +178,8 @@ void r300_emit_fb_state(struct r300_context* r300,
 
     if (fb->zsbuf) {
         tex = (struct r300_texture*)fb->zsbuf->texture;
-        pixpitch = (tex->stride / tex->tex.block.size);
+        assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
+        pixpitch = tex->stride / tex->tex.block.size;
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
         OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
@@ -234,7 +236,7 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     }
     for (i = 0; i < 8; i++) {
         OUT_CS(rs->ip[i]);
-        debug_printf("ip %d: 0x%08x\n", i, rs->ip[i]);
+        /* debug_printf("ip %d: 0x%08x\n", i, rs->ip[i]); */
     }
 
     OUT_CS_REG_SEQ(R300_RS_COUNT, 2);
@@ -248,11 +250,11 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     }
     for (i = 0; i < 8; i++) {
         OUT_CS(rs->inst[i]);
-        debug_printf("inst %d: 0x%08x\n", i, rs->inst[i]);
+        /* debug_printf("inst %d: 0x%08x\n", i, rs->inst[i]); */
     }
 
-    debug_printf("count: 0x%08x inst_count: 0x%08x\n", rs->count,
-            rs->inst_count);
+    /* debug_printf("count: 0x%08x inst_count: 0x%08x\n", rs->count,
+     *        rs->inst_count); */
 
     END_CS;
 }
@@ -334,22 +336,22 @@ void r300_emit_vertex_format_state(struct r300_context* r300)
     OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
     OUT_CS(r300->vertex_info.vinfo.hwfmt[2]);
     OUT_CS(r300->vertex_info.vinfo.hwfmt[3]);
-    for (i = 0; i < 4; i++) {
-        debug_printf("hwfmt%d: 0x%08x\n", i,
-                r300->vertex_info.vinfo.hwfmt[i]);
-    }
+    /* for (i = 0; i < 4; i++) {
+     *    debug_printf("hwfmt%d: 0x%08x\n", i,
+     *            r300->vertex_info.vinfo.hwfmt[i]);
+     * } */
 
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_0, 8);
     for (i = 0; i < 8; i++) {
         OUT_CS(r300->vertex_info.vap_prog_stream_cntl[i]);
-        debug_printf("prog_stream_cntl%d: 0x%08x\n", i,
-                r300->vertex_info.vap_prog_stream_cntl[i]);
+        /* debug_printf("prog_stream_cntl%d: 0x%08x\n", i,
+         *        r300->vertex_info.vap_prog_stream_cntl[i]); */
     }
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_EXT_0, 8);
     for (i = 0; i < 8; i++) {
         OUT_CS(r300->vertex_info.vap_prog_stream_cntl_ext[i]);
-        debug_printf("prog_stream_cntl_ext%d: 0x%08x\n", i,
-                r300->vertex_info.vap_prog_stream_cntl_ext[i]);
+        /* debug_printf("prog_stream_cntl_ext%d: 0x%08x\n", i,
+         *        r300->vertex_info.vap_prog_stream_cntl_ext[i]); */
     }
     END_CS;
 }
@@ -427,7 +429,11 @@ void r300_emit_viewport_state(struct r300_context* r300,
     OUT_CS_32F(viewport->zscale);
     OUT_CS_32F(viewport->zoffset);
 
-    OUT_CS_REG(R300_VAP_VTE_CNTL, viewport->vte_control);
+    if (r300->rs_state->enable_vte) {
+        OUT_CS_REG(R300_VAP_VTE_CNTL, viewport->vte_control);
+    } else {
+        OUT_CS_REG(R300_VAP_VTE_CNTL, 0);
+    }
     END_CS;
 }
 
@@ -460,7 +466,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
     for (i = 0; i < r300->framebuffer_state.nr_cbufs; i++) {
         tex = (struct r300_texture*)r300->framebuffer_state.cbufs[i]->texture;
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
-        if (!tex->buffer) return;
         r300->winsys->add_buffer(r300->winsys, tex->buffer,
                 0, RADEON_GEM_DOMAIN_VRAM);
     }
@@ -468,9 +473,15 @@ void r300_emit_dirty_state(struct r300_context* r300)
     if (r300->framebuffer_state.zsbuf) {
         tex = (struct r300_texture*)r300->framebuffer_state.zsbuf->texture;
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
-        if (!tex->buffer) return;
         r300->winsys->add_buffer(r300->winsys, tex->buffer,
                 0, RADEON_GEM_DOMAIN_VRAM);
+    }
+    /* ...textures... */
+    for (i = 0; i < r300->texture_count; i++) {
+        tex = r300->textures[i];
+        assert(tex && tex->buffer && "texture is marked, but NULL!");
+        r300->winsys->add_buffer(r300->winsys, tex->buffer,
+                RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
     }
     /* ...and vertex buffer. */
     if (r300->vbo) {

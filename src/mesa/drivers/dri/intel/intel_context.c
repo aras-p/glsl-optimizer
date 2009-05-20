@@ -28,6 +28,7 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
+#include "main/arrayobj.h"
 #include "main/extensions.h"
 #include "main/framebuffer.h"
 #include "main/imports.h"
@@ -393,7 +394,7 @@ intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     if (!driContext->driScreenPriv->dri2.enabled)
 	return;
 
-    if (!intel->internal_viewport_call) {
+    if (!intel->internal_viewport_call && ctx->DrawBuffer->Name == 0) {
        intel_update_renderbuffers(driContext, driContext->driDrawablePriv);
        if (driContext->driDrawablePriv != driContext->driReadablePriv)
 	  intel_update_renderbuffers(driContext, driContext->driReadablePriv);
@@ -754,6 +755,9 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       GLboolean release_texture_heaps;
 
       INTEL_FIREVERTICES(intel);
+
+      if (intel->clear.arrayObj)
+         _mesa_delete_array_object(&intel->ctx, intel->clear.arrayObj);
 
       intel->vtbl.destroy(intel);
 
