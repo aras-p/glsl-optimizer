@@ -31,6 +31,7 @@ static void r300_fs_declare(struct r300_fs_asm* assembler,
                 case TGSI_SEMANTIC_COLOR:
                     assembler->color_count++;
                     break;
+                case TGSI_SEMANTIC_FOG:
                 case TGSI_SEMANTIC_GENERIC:
                     assembler->tex_count++;
                     break;
