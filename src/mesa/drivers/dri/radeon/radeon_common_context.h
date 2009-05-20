@@ -121,13 +121,13 @@ struct radeon_framebuffer
 struct radeon_colorbuffer_state {
 	GLuint clear;
 	int roundEnable;
-	struct radeon_renderbuffer *rrb;
+	struct gl_renderbuffer *rb;
 	uint32_t draw_offset; /* offset into color renderbuffer - FBOs */
 };
 
 struct radeon_depthbuffer_state {
 	GLuint clear;
-	struct radeon_renderbuffer *rrb;
+	struct gl_renderbuffer *rb;
 };
 
 struct radeon_scissor_state {

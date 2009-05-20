@@ -39,6 +39,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drirenderbuffer.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
+#include "main/renderbuffer.h"
 #include "main/state.h"
 #include "main/simple_list.h"
 #include "swrast/swrast.h"
@@ -651,10 +652,10 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 		radeon_update_renderbuffers(driContextPriv, driDrawPriv);
 		if (driDrawPriv != driReadPriv)
 			radeon_update_renderbuffers(driContextPriv, driReadPriv);
-		radeon->state.color.rrb =
-			radeon_get_renderbuffer(&drfb->base, BUFFER_BACK_LEFT);
-		radeon->state.depth.rrb =
-			radeon_get_renderbuffer(&drfb->base, BUFFER_DEPTH);
+		_mesa_reference_renderbuffer(&radeon->state.color.rb,
+			&(radeon_get_renderbuffer(&drfb->base, BUFFER_BACK_LEFT)->base));
+		_mesa_reference_renderbuffer(&radeon->state.depth.rb,
+			&(radeon_get_renderbuffer(&drfb->base, BUFFER_DEPTH)->base));
 	} else {
 		radeon_make_renderbuffer_current(radeon, drfb);
 	}

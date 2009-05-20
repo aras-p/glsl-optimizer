@@ -752,8 +752,8 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 		ctx->NewState |= (_NEW_DEPTH | _NEW_STENCIL);
 	}
 	
-	radeon->state.depth.rrb = rrbDepth;
-	radeon->state.color.rrb = rrbColor;
+	_mesa_reference_renderbuffer(&radeon->state.depth.rb, &rrbDepth->base);
+	_mesa_reference_renderbuffer(&radeon->state.color.rb, &rrbColor->base);
 	radeon->state.color.draw_offset = offset;
 
 #if 0

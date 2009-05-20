@@ -77,7 +77,7 @@ static inline struct radeon_renderbuffer *radeon_get_renderbuffer(struct gl_fram
 static inline struct radeon_renderbuffer *radeon_get_depthbuffer(radeonContextPtr rmesa)
 {
 	struct radeon_renderbuffer *rrb;
-	rrb = rmesa->state.depth.rrb;
+	rrb = radeon_renderbuffer(rmesa->state.depth.rb);
 	if (!rrb)
 		return NULL;
 
@@ -88,7 +88,7 @@ static inline struct radeon_renderbuffer *radeon_get_colorbuffer(radeonContextPt
 {
 	struct radeon_renderbuffer *rrb;
 
-	rrb = rmesa->state.color.rrb;
+	rrb = radeon_renderbuffer(rmesa->state.color.rb);
 	if (!rrb)
 		return NULL;
 	return rrb;
