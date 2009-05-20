@@ -69,6 +69,16 @@ static boolean radeon_r300_validate(struct r300_winsys* winsys)
         return TRUE;
     }
 
+    /* XXX should probably be its own function */
+    for (i = 0; i < priv->bo_count; i++) {
+        if (sc[i].read_domains && sc[i].write_domain) {
+            /* Cute, cute. We need to flush first. */
+            debug_printf("radeon: BO %p can't be read and written; "
+                    "requesting flush.\n", sc[i].bo);
+            return TRUE;
+        }
+    }
+
     /* Things are fine, we can proceed as normal. */
     return FALSE;
 }
@@ -109,9 +119,15 @@ static void radeon_r300_write_cs_reloc(struct r300_winsys* winsys,
 {
     struct radeon_winsys_priv* priv =
         (struct radeon_winsys_priv*)winsys->radeon_winsys;
+    int retval = 0;
 
-    radeon_cs_write_reloc(priv->cs,
+    retval = radeon_cs_write_reloc(priv->cs,
             ((struct radeon_pipe_buffer*)pbuffer)->bo, rd, wd, flags);
+
+    if (retval) {
+        debug_printf("radeon: Relocation of %p (%d, %d, %d) failed!\n",
+                pbuffer, rd, wd, flags);
+    }
 }
 
 static void radeon_r300_end_cs(struct r300_winsys* winsys,

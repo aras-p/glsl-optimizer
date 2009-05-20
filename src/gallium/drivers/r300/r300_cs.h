@@ -93,8 +93,9 @@
 } while (0)
 
 #define OUT_CS_RELOC(bo, offset, rd, wd, flags) do { \
-    debug_printf("r300: writing relocation for buffer %p, offset %d\n", \
-        bo, offset); \
+    debug_printf("r300: writing relocation for buffer %p, offset %d, " \
+            "domains (%d, %d, %d)\n", \
+        bo, offset, rd, wd, flags); \
     assert(bo); \
     OUT_CS(offset); \
     cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
