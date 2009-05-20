@@ -66,7 +66,9 @@ static void upload_sf_vp(struct brw_context *brw)
    sfv.viewport.m31 = v[MAT_TY] * y_scale + y_bias;
    sfv.viewport.m32 = v[MAT_TZ] * depth_scale;
 
-   /* _NEW_SCISSOR */
+   /* _NEW_SCISSOR | _NEW_BUFFERS | _NEW_VIEWPORT
+    * for DrawBuffer->_[XY]{min,max}
+    */
 
    /* The scissor only needs to handle the intersection of drawable and
     * scissor rect.  Clipping to the boundaries of static shared buffers
@@ -97,7 +99,8 @@ static void upload_sf_vp(struct brw_context *brw)
 const struct brw_tracked_state brw_sf_vp = {
    .dirty = {
       .mesa  = (_NEW_VIEWPORT | 
-		_NEW_SCISSOR),
+		_NEW_SCISSOR |
+		_NEW_BUFFERS),
       .brw   = 0,
       .cache = 0
    },
