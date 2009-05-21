@@ -92,13 +92,13 @@ static INLINE struct vbo_context *vbo_context(GLcontext *ctx)
    return (struct vbo_context *)(ctx->swtnl_im);
 }
 
-enum {
-   VP_NONE = 1,
-   VP_NV,
-   VP_ARB
-};
 
-static INLINE GLuint get_program_mode( GLcontext *ctx )
+/**
+ * Return VP_x token to indicate whether we're running fixed-function
+ * vertex transformation, an NV vertex program or ARB vertex program/shader.
+ */
+static INLINE enum vp_mode
+get_program_mode( GLcontext *ctx )
 {
    if (!ctx->VertexProgram._Current)
       return VP_NONE;
