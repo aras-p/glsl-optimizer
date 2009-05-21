@@ -1060,6 +1060,8 @@ _mesa_print_arrays(GLcontext *ctx)
    const struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    GLuint i;
 
+   _mesa_update_array_object_max_element(ctx, arrayObj);
+
    _mesa_printf("Array Object %u\n", arrayObj->Name);
    if (arrayObj->Vertex.Enabled)
       print_array("Vertex", -1, &arrayObj->Vertex);
