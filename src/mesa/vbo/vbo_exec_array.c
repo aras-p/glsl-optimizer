@@ -36,7 +36,8 @@
 
 #include "vbo_context.h"
 
-/* Compute min and max elements for drawelements calls.
+/**
+ * Compute min and max elements for glDraw[Range]Elements() calls.
  */
 static void get_minmax_index( GLuint count, GLuint type, 
 			      const GLvoid *indices,
@@ -89,7 +90,8 @@ static void get_minmax_index( GLuint count, GLuint type,
 }
 
 
-/* Just translate the arrayobj into a sane layout.
+/**
+ * Just translate the arrayobj into a sane layout.
  */
 static void bind_array_obj( GLcontext *ctx )
 {
@@ -127,6 +129,7 @@ static void bind_array_obj( GLcontext *ctx )
    exec->array.array_obj = arrayObj->Name;
 }
 
+
 static void recalculate_input_bindings( GLcontext *ctx )
 {
    struct vbo_context *vbo = vbo_context(ctx);
@@ -140,9 +143,10 @@ static void recalculate_input_bindings( GLcontext *ctx )
 
    switch (exec->array.program_mode) {
    case VP_NONE:
-      /* When no vertex program is active, we put the material values
-       * into the generic slots.  This is the only situation where
-       * material values are available as per-vertex attributes.
+      /* When no vertex program is active (or the vertex program is generated
+       * from fixed-function state).  We put the material values into the
+       * generic slots.  This is the only situation where material values
+       * are available as per-vertex attributes.
        */
       for (i = 0; i <= VERT_ATTRIB_TEX7; i++) {
 	 if (exec->array.legacy_array[i]->Enabled)
@@ -165,8 +169,8 @@ static void recalculate_input_bindings( GLcontext *ctx )
 	 inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->generic_currval[i];
          const_inputs |= 1 << (VERT_ATTRIB_GENERIC0 + i);
       }
-
       break;
+
    case VP_NV:
       /* NV_vertex_program - attribute arrays alias and override
        * conventional, legacy arrays.  No materials, and the generic
@@ -190,11 +194,11 @@ static void recalculate_input_bindings( GLcontext *ctx )
 	 inputs[i] = &vbo->generic_currval[i - VERT_ATTRIB_GENERIC0];
          const_inputs |= 1 << i;
       }
-
       break;
+
    case VP_ARB:
-      /* ARB_vertex_program - Only the attribute zero (position) array
-       * aliases and overrides the legacy position array.  
+      /* GL_ARB_vertex_program or GLSL vertex shader - Only the generic[0]
+       * attribute array aliases and overrides the legacy position array.  
        *
        * Otherwise, legacy attributes available in the legacy slots,
        * generic attributes in the generic slots and materials are not
@@ -208,7 +212,6 @@ static void recalculate_input_bindings( GLcontext *ctx )
 	 inputs[0] = &vbo->legacy_currval[0];
          const_inputs |= 1 << 0;
       }
-
 
       for (i = 1; i <= VERT_ATTRIB_TEX7; i++) {
 	 if (exec->array.legacy_array[i]->Enabled)
@@ -233,6 +236,7 @@ static void recalculate_input_bindings( GLcontext *ctx )
 
    _mesa_set_varying_vp_inputs( ctx, ~const_inputs );
 }
+
 
 static void bind_arrays( GLcontext *ctx )
 {
@@ -281,7 +285,10 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
 
    bind_arrays( ctx );
 
-   /* Again...
+   /* Again... because we may have changed the bitmask of per-vertex varying
+    * attributes.  If we regenerate the fixed-function vertex program now
+    * we may be able to prune down the number of vertex attributes which we
+    * need in the shader.
     */
    if (ctx->NewState)
       _mesa_update_state( ctx );
@@ -295,7 +302,8 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
    prim[0].count = count;
    prim[0].indexed = 0;
 
-   vbo->draw_prims( ctx, exec->array.inputs, prim, 1, NULL, start, start + count - 1 );
+   vbo->draw_prims( ctx, exec->array.inputs, prim, 1, NULL,
+                    start, start + count - 1 );
 
 #if 0
    {
@@ -340,7 +348,6 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
 }
 
 
-
 static void GLAPIENTRY
 vbo_exec_DrawRangeElements(GLenum mode,
 			   GLuint start, GLuint end,
@@ -357,9 +364,11 @@ vbo_exec_DrawRangeElements(GLenum mode,
 
    if (end >= ctx->Array.ArrayObj->_MaxElement) {
       /* the max element is out of bounds of one or more enabled arrays */
-      _mesa_warning(ctx, "glDraw[Range]Elements() index=%u is "
-                    "out of bounds (max=%u)", end,
-                    ctx->Array.ArrayObj->_MaxElement);
+      _mesa_warning(ctx, "glDraw[Range]Elements(start %u, end %u, count %d, "
+                    "type 0x%x) index=%u is out of bounds (max=%u)",
+                    start, end, count, type, end,
+      if (0)
+         _mesa_print_arrays(ctx);
       return;
    }
 
@@ -426,6 +435,7 @@ vbo_exec_DrawRangeElements(GLenum mode,
    vbo->draw_prims( ctx, exec->array.inputs, prim, 1, &ib, start, end );
 }
 
+
 static void GLAPIENTRY
 vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices)
 {
@@ -464,9 +474,6 @@ vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *ind
 /***********************************************************************
  * Initialization
  */
-
-
-
 
 void vbo_exec_array_init( struct vbo_exec_context *exec )
 {
