@@ -302,6 +302,7 @@ _mesa_GetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params)
 void GLAPIENTRY
 _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
 {
+   const struct gl_client_array *array;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -310,21 +311,23 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
       return;
    }
 
+   array = &ctx->Array.ArrayObj->VertexAttrib[index];
+
    switch (pname) {
       case GL_VERTEX_ATTRIB_ARRAY_ENABLED_ARB:
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Enabled;
+         params[0] = (GLfloat) array->Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_SIZE_ARB:
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Size;
+         params[0] = (GLfloat) array->Size;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_STRIDE_ARB:
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Stride;
+         params[0] = (GLfloat) array->Stride;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_TYPE_ARB:
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Type;
+         params[0] = (GLfloat) array->Type;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_NORMALIZED_ARB:
-         params[0] = ctx->Array.ArrayObj->VertexAttrib[index].Normalized;
+         params[0] = array->Normalized;
          break;
       case GL_CURRENT_VERTEX_ATTRIB_ARB:
          if (index == 0) {
@@ -336,7 +339,7 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
          COPY_4V(params, ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index]);
          break;
       case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB:
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].BufferObj->Name;
+         params[0] = (GLfloat) array->BufferObj->Name;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribfvARB(pname)");
