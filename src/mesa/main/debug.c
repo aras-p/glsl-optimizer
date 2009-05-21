@@ -341,3 +341,104 @@ _mesa_dump_textures(GLboolean dumpImages)
    DumpImages = dumpImages;
    _mesa_HashWalk(ctx->Shared->TexObjects, dump_texture_cb, ctx);
 }
+
+
+void
+_mesa_dump_color_buffer(const char *filename)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   const GLuint w = ctx->DrawBuffer->Width;
+   const GLuint h = ctx->DrawBuffer->Height;
+   GLubyte *buf;
+
+   buf = (GLubyte *) _mesa_malloc(w * h * 4);
+
+   glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
+   glPixelStorei(GL_PACK_ALIGNMENT, 1);
+   glPixelStorei(GL_PACK_INVERT_MESA, GL_TRUE);
+
+   glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+
+   _mesa_printf("ReadBuffer %p 0x%x  DrawBuffer %p 0x%x\n",
+                ctx->ReadBuffer->_ColorReadBuffer,
+                ctx->ReadBuffer->ColorReadBuffer,
+                ctx->DrawBuffer->_ColorDrawBuffers[0],
+                ctx->DrawBuffer->ColorDrawBuffer[0]);
+   _mesa_printf("Writing %d x %d color buffer to %s\n", w, h, filename);
+   write_ppm(filename, buf, w, h, 4, 0, 1, 2);
+
+   glPopClientAttrib();
+
+   _mesa_free(buf);
+}
+
+
+void
+_mesa_dump_depth_buffer(const char *filename)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   const GLuint w = ctx->DrawBuffer->Width;
+   const GLuint h = ctx->DrawBuffer->Height;
+   GLuint *buf;
+   GLubyte *buf2;
+   GLuint i;
+
+   buf = (GLuint *) _mesa_malloc(w * h * 4);  /* 4 bpp */
+   buf2 = (GLubyte *) _mesa_malloc(w * h * 3); /* 3 bpp */
+
+   glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
+   glPixelStorei(GL_PACK_ALIGNMENT, 1);
+   glPixelStorei(GL_PACK_INVERT_MESA, GL_TRUE);
+
+   glReadPixels(0, 0, w, h, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, buf);
+
+   /* spread 24 bits of Z across R, G, B */
+   for (i = 0; i < w * h; i++) {
+      buf2[i*3+0] = (buf[i] >> 24) & 0xff;
+      buf2[i*3+1] = (buf[i] >> 16) & 0xff;
+      buf2[i*3+2] = (buf[i] >>  8) & 0xff;
+   }
+
+   _mesa_printf("Writing %d x %d depth buffer to %s\n", w, h, filename);
+   write_ppm(filename, buf2, w, h, 3, 0, 1, 2);
+
+   glPopClientAttrib();
+
+   _mesa_free(buf);
+   _mesa_free(buf2);
+}
+
+
+void
+_mesa_dump_stencil_buffer(const char *filename)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   const GLuint w = ctx->DrawBuffer->Width;
+   const GLuint h = ctx->DrawBuffer->Height;
+   GLubyte *buf;
+   GLubyte *buf2;
+   GLuint i;
+
+   buf = (GLubyte *) _mesa_malloc(w * h);  /* 1 bpp */
+   buf2 = (GLubyte *) _mesa_malloc(w * h * 3); /* 3 bpp */
+
+   glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
+   glPixelStorei(GL_PACK_ALIGNMENT, 1);
+   glPixelStorei(GL_PACK_INVERT_MESA, GL_TRUE);
+
+   glReadPixels(0, 0, w, h, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, buf);
+
+   for (i = 0; i < w * h; i++) {
+      buf2[i*3+0] = buf[i];
+      buf2[i*3+1] = (buf[i] & 127) * 2;
+      buf2[i*3+2] = (buf[i] - 128) * 2;
+   }
+
+   _mesa_printf("Writing %d x %d stencil buffer to %s\n", w, h, filename);
+   write_ppm(filename, buf2, w, h, 3, 0, 1, 2);
+
+   glPopClientAttrib();
+
+   _mesa_free(buf);
+   _mesa_free(buf2);
+}

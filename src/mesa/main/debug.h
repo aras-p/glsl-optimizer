@@ -60,4 +60,13 @@ extern void _mesa_init_debug( GLcontext *ctx );
 extern void
 _mesa_dump_textures(GLboolean dumpImages);
 
+extern void
+_mesa_dump_color_buffer(const char *filename);
+
+extern void
+_mesa_dump_depth_buffer(const char *filename);
+
+extern void
+_mesa_dump_stencil_buffer(const char *filename);
+
 #endif
