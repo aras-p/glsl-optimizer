@@ -89,9 +89,9 @@ static void r700Start3D(context_t *context)
     if (context->radeon.radeonScreen->chip_family <= CHIP_FAMILY_RV670)
     {
         BEGIN_BATCH_NO_AUTOSTATE(2);
-        R600_OUT_BATCH(CP_PACKET3(R600_IT_START_3D_CMDBUF, 1));
+        R600_OUT_BATCH(CP_PACKET3(R600_IT_START_3D_CMDBUF, 0));
         R600_OUT_BATCH(0);
-        END_BATCH();        
+        END_BATCH();
     }
 
     BEGIN_BATCH_NO_AUTOSTATE(3);
