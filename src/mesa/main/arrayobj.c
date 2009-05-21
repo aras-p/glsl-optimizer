@@ -332,7 +332,9 @@ _mesa_update_array_object_max_element(GLcontext *ctx,
    min = update_min(min, &arrayObj->FogCoord);
    min = update_min(min, &arrayObj->Index);
    min = update_min(min, &arrayObj->EdgeFlag);
+#if FEATURE_point_size_array
    min = update_min(min, &arrayObj->PointSize);
+#endif
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++)
       min = update_min(min, &arrayObj->TexCoord[i]);
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
