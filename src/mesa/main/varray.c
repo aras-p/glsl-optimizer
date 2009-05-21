@@ -1068,7 +1068,7 @@ print_array(const char *name, GLint index, const struct gl_client_array *array)
 void
 _mesa_print_arrays(GLcontext *ctx)
 {
-   const struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
+   struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    GLuint i;
 
    _mesa_update_array_object_max_element(ctx, arrayObj);
