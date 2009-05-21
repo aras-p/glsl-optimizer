@@ -4041,7 +4041,7 @@ GLboolean Process_Vertex_Exports(r700_AssemblerBase *pR700AsmCode,
                                        SQ_EXPORT_PARAM, 
                                        0, 
                                        1, 
-                                       0,
+                                       pR700AsmCode->starting_export_register_number,
                                        GL_FALSE) )
         {
             return GL_FALSE;
