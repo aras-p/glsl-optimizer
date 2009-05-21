@@ -566,6 +566,32 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
             r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], TGSI_OPCODE_MAD, 3);
             break;
+        case TGSI_OPCODE_POW:
+            /* POW DST A, B -> LG2 TMP A; MUL TMP TMP, B; EX2 DST TMP */
+            inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtSwizzleW =
+                inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtSwizzleX;
+            inst->FullSrcRegisters[0].SrcRegister.SwizzleW =
+                inst->FullSrcRegisters[0].SrcRegister.SwizzleX;
+            inst->FullDstRegisters[1] = inst->FullDstRegisters[0];
+            inst->FullDstRegisters[0].DstRegister.Index =
+                assembler->temp_count;
+            inst->FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+            r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], TGSI_OPCODE_LG2, 1);
+            inst->FullSrcRegisters[0].SrcRegister.Index =
+                assembler->temp_count;
+            inst->FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+            inst->FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+            inst->FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
+            inst->FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Z;
+            inst->FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_W;
+            inst->FullSrcRegisters[2] = r500_constant_zero;
+            r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], TGSI_OPCODE_MUL, 3);
+            inst->FullDstRegisters[0] = inst->FullDstRegisters[1];
+            r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], TGSI_OPCODE_EX2, 1);
+            break;
 
         /* The texture instruction set. */
         case TGSI_OPCODE_KIL:
@@ -595,7 +621,7 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
 static void r300_fs_finalize(struct r3xx_fragment_shader* fs,
                              struct r300_fs_asm* assembler)
 {
-    fs->stack_size = assembler->temp_count + assembler->temp_offset;
+    fs->stack_size = assembler->temp_count + assembler->temp_offset + 1;
 }
 
 static void r500_fs_finalize(struct r500_fragment_shader* fs,
