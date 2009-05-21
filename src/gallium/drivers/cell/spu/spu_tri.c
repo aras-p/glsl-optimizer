@@ -440,9 +440,7 @@ print_vertex(const struct vertex_header *v)
  * \return  FALSE if tri is totally outside tile, TRUE otherwise
  */
 static boolean
-setup_sort_vertices(const struct vertex_header *v0,
-                    const struct vertex_header *v1,
-                    const struct vertex_header *v2)
+setup_sort_vertices(const qword vs)
 {
    float area, sign;
 
@@ -459,23 +457,23 @@ setup_sort_vertices(const struct vertex_header *v0,
    {
       /* A table of shuffle patterns for putting vertex_header pointers into
          correct order.  Quite magical. */
-      const vec_uchar16 sort_order_patterns[] = {
-         SHUFFLE4(A,B,C,C),
-         SHUFFLE4(C,A,B,C),
-         SHUFFLE4(A,C,B,C),
-         SHUFFLE4(B,C,A,C),
-         SHUFFLE4(B,A,C,C),
-         SHUFFLE4(C,B,A,C) };
-
-      /* The vertex_header pointers, packed for easy shuffling later */
-      const vec_uint4 vs = {(unsigned)v0, (unsigned)v1, (unsigned)v2};
+      const qword sort_order_patterns[] = {
+         SHUFB4(A,B,C,C),
+         SHUFB4(C,A,B,C),
+         SHUFB4(A,C,B,C),
+         SHUFB4(B,C,A,C),
+         SHUFB4(B,A,C,C),
+         SHUFB4(C,B,A,C) };
 
       /* Collate y values into two vectors for comparison.
          Using only one shuffle constant! ;) */
-      const vec_float4 y_02_ = spu_shuffle(v0->data[0], v2->data[0], SHUFFLE4(0,B,b,C));
-      const vec_float4 y_10_ = spu_shuffle(v1->data[0], v0->data[0], SHUFFLE4(0,B,b,C));
-      const vec_float4 y_012 = spu_shuffle(y_02_, v1->data[0], SHUFFLE4(0,B,b,C));
-      const vec_float4 y_120 = spu_shuffle(y_10_, v2->data[0], SHUFFLE4(0,B,b,C));
+      const vector float f0 = ((const struct vertex_header*)si_to_ptr(vs))->data[0];
+      const vector float f1 = ((const struct vertex_header*)si_to_ptr(si_rotqbyi(vs, 4)))->data[0];
+      const vector float f2 = ((const struct vertex_header*)si_to_ptr(si_rotqbyi(vs, 8)))->data[0];
+      const vec_float4 y_02_ = spu_shuffle(f0, f2, SHUFFLE4(0,B,b,C));
+      const vec_float4 y_10_ = spu_shuffle(f1, f0, SHUFFLE4(0,B,b,C));
+      const vec_float4 y_012 = spu_shuffle(y_02_, f1, SHUFFLE4(0,B,b,C));
+      const vec_float4 y_120 = spu_shuffle(y_10_, f2, SHUFFLE4(0,B,b,C));
 
       /* Perform comparison: {y0,y1,y2} > {y1,y2,y0} */
       const vec_uint4 compare = spu_cmpgt(y_012, y_120);
@@ -485,7 +483,7 @@ setup_sort_vertices(const struct vertex_header *v0,
       const unsigned int index = spu_extract(gather, 0) - 1;
 
       /* Load the appropriate pattern and construct the desired vector. */
-      setup.vertex_headers = (qword)spu_shuffle(vs, vs, sort_order_patterns[index]);
+      setup.vertex_headers = si_shufb(vs, vs, sort_order_patterns[index]);
 
       /* Using the result of the comparison, set sign.
          Very magical. */
@@ -761,7 +759,7 @@ subtriangle(struct edge *eleft, struct edge *eright, unsigned lines)
  * The tile data should have already been fetched.
  */
 boolean
-tri_draw(const float *v0, const float *v1, const float *v2,
+tri_draw(const qword vs,
          uint tx, uint ty)
 {
    setup.tx = tx;
@@ -773,9 +771,7 @@ tri_draw(const float *v0, const float *v1, const float *v2,
    setup.cliprect_maxx = (tx + 1) * TILE_SIZE;
    setup.cliprect_maxy = (ty + 1) * TILE_SIZE;
 
-   if (!setup_sort_vertices((struct vertex_header *) v0,
-                            (struct vertex_header *) v1,
-                            (struct vertex_header *) v2)) {
+   if(!setup_sort_vertices(vs)) {
       return FALSE; /* totally clipped */
    }
 
