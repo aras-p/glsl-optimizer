@@ -81,6 +81,7 @@ unbind_array_object_vbos(GLcontext *ctx, struct gl_array_object *obj)
    GLuint i;
 
    _mesa_reference_buffer_object(ctx, &obj->Vertex.BufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &obj->Weight.BufferObj, NULL);
    _mesa_reference_buffer_object(ctx, &obj->Normal.BufferObj, NULL);
    _mesa_reference_buffer_object(ctx, &obj->Color.BufferObj, NULL);
    _mesa_reference_buffer_object(ctx, &obj->SecondaryColor.BufferObj, NULL);
@@ -223,6 +224,7 @@ _mesa_initialize_array_object( GLcontext *ctx,
 
    /* Init the individual arrays */
    init_array(ctx, &obj->Vertex, 4, GL_FLOAT);
+   init_array(ctx, &obj->Weight, 1, GL_FLOAT);
    init_array(ctx, &obj->Normal, 3, GL_FLOAT);
    init_array(ctx, &obj->Color, 4, GL_FLOAT);
    init_array(ctx, &obj->SecondaryColor, 4, GL_FLOAT);
@@ -326,6 +328,7 @@ _mesa_update_array_object_max_element(GLcontext *ctx,
    GLuint i, min = ~0;
 
    min = update_min(min, &arrayObj->Vertex);
+   min = update_min(min, &arrayObj->Weight);
    min = update_min(min, &arrayObj->Normal);
    min = update_min(min, &arrayObj->Color);
    min = update_min(min, &arrayObj->SecondaryColor);
