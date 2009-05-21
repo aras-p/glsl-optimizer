@@ -532,7 +532,7 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) {
+   if (index >= MAX_NV_VERTEX_PROGRAM_INPUTS) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerNV(index)");
       return;
    }
