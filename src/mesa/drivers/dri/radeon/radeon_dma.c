@@ -164,7 +164,7 @@ void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 {
 
-	size = MAX2(size, MAX_DMA_BUF_SZ * 16);
+	size = MAX2(size, MAX_DMA_BUF_SZ);
 
 	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
 		fprintf(stderr, "%s\n", __FUNCTION__);
@@ -202,7 +202,7 @@ again_alloc:
 
 	if (radeon_revalidate_bos(rmesa->glCtx) == GL_FALSE)
 	  fprintf(stderr,"failure to revalidate BOs - badness\n");
-	  
+
 	radeon_bo_map(rmesa->dma.current, 1);
 }
 
