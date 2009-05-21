@@ -1,9 +1,10 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.2
+ * Version:  7.6
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  * (C) Copyright IBM Corporation 2006
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,6 +47,7 @@
 #include "bufferobj.h"
 #endif
 #include "arrayobj.h"
+#include "macros.h"
 #include "glapi/dispatch.h"
 
 
@@ -264,6 +266,80 @@ remove_array_object( GLcontext *ctx, struct gl_array_object *obj )
       /* remove from hash table */
       _mesa_HashRemove(ctx->Shared->ArrayObjects, obj->Name);
    }
+}
+
+
+
+/**
+ * Compute the index of the last array element that can be safely accessed
+ * in a vertex array.  We can really only do this when the array lives in
+ * a VBO.
+ * The array->_MaxElement field will be updated.
+ * Later in glDrawArrays/Elements/etc we can do some bounds checking.
+ */
+static void
+compute_max_element(struct gl_client_array *array)
+{
+   if (array->BufferObj->Name) {
+      /* Compute the max element we can access in the VBO without going
+       * out of bounds.
+       */
+      array->_MaxElement = ((GLsizeiptrARB) array->BufferObj->Size
+                            - (GLsizeiptrARB) array->Ptr + array->StrideB
+                            - array->_ElementSize) / array->StrideB;
+      if (0)
+         _mesa_printf("%s Object %u  Size %u  MaxElement %u\n",
+                      __FUNCTION__,
+                      array->BufferObj->Name,
+                      (GLuint) array->BufferObj->Size,
+                      array->_MaxElement);
+   }
+   else {
+      /* user-space array, no idea how big it is */
+      array->_MaxElement = 2 * 1000 * 1000 * 1000; /* just a big number */
+   }
+}
+
+
+/**
+ * Helper for update_arrays().
+ * \return  min(current min, array->_MaxElement).
+ */
+static GLuint
+update_min(GLuint min, struct gl_client_array *array)
+{
+   compute_max_element(array);
+   if (array->Enabled)
+      return MIN2(min, array->_MaxElement);
+   else
+      return min;
+}
+
+
+/**
+ * Examine vertex arrays to update the gl_array_object::_MaxElement field.
+ */
+void
+_mesa_update_array_object_max_element(GLcontext *ctx,
+                                      struct gl_array_object *arrayObj)
+{
+   GLuint i, min = ~0;
+
+   min = update_min(min, &arrayObj->Vertex);
+   min = update_min(min, &arrayObj->Normal);
+   min = update_min(min, &arrayObj->Color);
+   min = update_min(min, &arrayObj->SecondaryColor);
+   min = update_min(min, &arrayObj->FogCoord);
+   min = update_min(min, &arrayObj->Index);
+   min = update_min(min, &arrayObj->EdgeFlag);
+   min = update_min(min, &arrayObj->PointSize);
+   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++)
+      min = update_min(min, &arrayObj->TexCoord[i]);
+   for (i = 0; i < VERT_ATTRIB_MAX; i++)
+      min = update_min(min, &arrayObj->VertexAttrib[i]);
+
+   /* _MaxElement is one past the last legal array element */
+   arrayObj->_MaxElement = min;
 }
 
 
