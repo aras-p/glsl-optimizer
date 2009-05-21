@@ -299,6 +299,10 @@ _mesa_GetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params)
 }
 
 
+/**
+ * Return info for a generic vertex attribute array (no alias with
+ * legacy vertex attributes (pos, normal, color, etc)).
+ */
 void GLAPIENTRY
 _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
 {
