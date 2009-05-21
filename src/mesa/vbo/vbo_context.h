@@ -102,6 +102,8 @@ static INLINE GLuint get_program_mode( GLcontext *ctx )
 {
    if (!ctx->VertexProgram._Current)
       return VP_NONE;
+   else if (ctx->VertexProgram._Current == ctx->VertexProgram._TnlProgram)
+      return VP_NONE;
    else if (ctx->VertexProgram._Current->IsNVProgram)
       return VP_NV;
    else
