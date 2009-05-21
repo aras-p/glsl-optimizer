@@ -37,15 +37,14 @@
 
 
 /**
- * Update the fields of a vertex array object.
- * We need to do a few special things for arrays that live in
- * vertex buffer objects.
+ * Set the fields of a vertex array.
  *
  * \param array  the array to update
  * \param dirtyBit  which bit to set in ctx->Array.NewState for this array
  * \param elementSize  size of each array element, in bytes
  * \param size  components per element (1, 2, 3 or 4)
  * \param type  datatype of each component (GL_FLOAT, GL_INT, etc)
+ * \param format  either GL_RGBA or GL_BGRA
  * \param stride  stride between elements, in elements
  * \param normalized  are integer types converted to floats in [-1, 1]?
  * \param ptr  the address (or offset inside VBO) of the array data
