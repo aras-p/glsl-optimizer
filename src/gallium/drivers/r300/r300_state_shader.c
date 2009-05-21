@@ -355,8 +355,8 @@ static INLINE void r500_emit_maths(struct r500_fragment_shader* fs,
                 R500_ALU_RGB_SEL_B_SRC1 |
                 R500_SWIZ_RGB_B(r500_rgb_swiz(&src[1]));
             fs->instructions[i].inst4 |=
-                R500_SWIZ_ALPHA_B(r500_alpha_swiz(&src[1])) |
-                R500_ALPHA_SEL_B_SRC1;
+                R500_ALPHA_SEL_B_SRC1 |
+                R500_SWIZ_ALPHA_B(r500_alpha_swiz(&src[1]));
         case 1:
         case 0:
         default:
@@ -368,8 +368,8 @@ static INLINE void r500_emit_maths(struct r500_fragment_shader* fs,
                 R500_ALU_RGB_SEL_A_SRC0 |
                 R500_SWIZ_RGB_A(r500_rgb_swiz(&src[0]));
             fs->instructions[i].inst4 |=
-                R500_SWIZ_ALPHA_A(r500_alpha_swiz(&src[0])) |
-                R500_ALPHA_SEL_A_SRC0;
+                R500_ALPHA_SEL_A_SRC0 |
+                R500_SWIZ_ALPHA_A(r500_alpha_swiz(&src[0]));
             break;
     }
 
@@ -537,6 +537,34 @@ static void r500_fs_instruction(struct r500_fragment_shader* fs,
             inst->FullSrcRegisters[2] = r500_constant_zero;
             r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode, 3);
+            break;
+
+        /* The compound and hybrid insts. */
+        case TGSI_OPCODE_LRP:
+            /* LRP DST A, B, C -> MAD TMP -A, C, C; MAD DST A, B, TMP */
+            inst->FullSrcRegisters[3] = inst->FullSrcRegisters[1];
+            inst->FullSrcRegisters[1] = inst->FullSrcRegisters[2];
+            inst->FullSrcRegisters[0].SrcRegister.Negate =
+                !(inst->FullSrcRegisters[0].SrcRegister.Negate);
+            inst->FullDstRegisters[1] = inst->FullDstRegisters[0];
+            inst->FullDstRegisters[0].DstRegister.Index =
+                assembler->temp_count;
+            inst->FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+            r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], TGSI_OPCODE_MAD, 3);
+            inst->FullSrcRegisters[2].SrcRegister.Index =
+                assembler->temp_count;
+            inst->FullSrcRegisters[2].SrcRegister.File = TGSI_FILE_TEMPORARY;
+            inst->FullSrcRegisters[2].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+            inst->FullSrcRegisters[2].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
+            inst->FullSrcRegisters[2].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Z;
+            inst->FullSrcRegisters[2].SrcRegister.SwizzleW = TGSI_SWIZZLE_W;
+            inst->FullSrcRegisters[1] = inst->FullSrcRegisters[3];
+            inst->FullSrcRegisters[0].SrcRegister.Negate =
+                !(inst->FullSrcRegisters[0].SrcRegister.Negate);
+            inst->FullDstRegisters[0] = inst->FullDstRegisters[1];
+            r500_emit_maths(fs, assembler, inst->FullSrcRegisters,
+                    &inst->FullDstRegisters[0], TGSI_OPCODE_MAD, 3);
             break;
 
         /* The texture instruction set. */
