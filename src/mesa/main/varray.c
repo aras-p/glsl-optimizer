@@ -518,6 +518,12 @@ _mesa_PointSizePointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 
 
 #if FEATURE_NV_vertex_program
+/**
+ * Set a vertex attribute array.
+ * Note that these arrays DO alias the conventional GL vertex arrays
+ * (position, normal, color, fog, texcoord, etc).
+ * The generic attribute slots at #16 and above are not touched.
+ */
 void GLAPIENTRY
 _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
                             GLsizei stride, const GLvoid *ptr)
@@ -578,6 +584,11 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
 
 
 #if FEATURE_ARB_vertex_program
+/**
+ * Set a generic vertex attribute array.
+ * Note that these arrays DO NOT alias the conventional GL vertex arrays
+ * (position, normal, color, fog, texcoord, etc).
+ */
 void GLAPIENTRY
 _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
                              GLboolean normalized,
