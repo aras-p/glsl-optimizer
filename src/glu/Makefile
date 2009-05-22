@@ -30,7 +30,7 @@ glu.pc: glu.pc.in
 install: glu.pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-	$(INSTALL) $(TOP)/$(LIB_DIR)/$(GLU_LIB_GLOB) $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GLU_LIB_GLOB) $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 glu.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 clean:

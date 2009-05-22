@@ -29,6 +29,11 @@ AC_CHECK_PROGS([MAKE], [gmake make])
 AC_PATH_PROG([MKDEP], [makedepend])
 AC_PATH_PROG([SED], [sed])
 
+dnl Our fallback install-sh is a symlink to minstall. Use the existing
+dnl configuration in that case.
+AC_PROG_INSTALL
+test "x$INSTALL" = "x$ac_install_sh" && INSTALL='$(MINSTALL)'
+
 dnl We need a POSIX shell for parts of the build. Assume we have one
 dnl in most cases.
 case "$host_os" in

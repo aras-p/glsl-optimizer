@@ -129,14 +129,14 @@ install-headers:
 install-libgl: default gl.pc install-headers
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-	$(INSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_GLOB) \
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 install-osmesa: default osmesa.pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-	$(INSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_GLOB) \
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 osmesa.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 

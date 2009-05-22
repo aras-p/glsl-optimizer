@@ -72,7 +72,7 @@ install:
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/GL
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 $(TOP)/include/GL/glut.h $(DESTDIR)$(INSTALL_INC_DIR)/GL
-	$(INSTALL) $(TOP)/$(LIB_DIR)/libglut* $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/libglut* $(DESTDIR)$(INSTALL_LIB_DIR)
 
 # Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.

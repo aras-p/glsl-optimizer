@@ -36,7 +36,10 @@ MKLIB_OPTIONS =
 MKDEP = makedepend
 MKDEP_OPTIONS = -fdepend
 MAKE = make
-INSTALL = $(SHELL) $(TOP)/bin/minstall
+
+# Use MINSTALL for installing libraries, INSTALL for everything else
+MINSTALL = $(SHELL) $(TOP)/bin/minstall
+INSTALL = $(MINSTALL)
 
 # Tools for regenerating glapi (generally only needed by the developers)
 PYTHON2 = python
