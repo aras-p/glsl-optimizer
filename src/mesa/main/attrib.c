@@ -1342,9 +1342,9 @@ adjust_buffer_object_ref_counts(struct gl_array_object *arrayObj, GLint step)
    arrayObj->FogCoord.BufferObj->RefCount += step;
    arrayObj->Index.BufferObj->RefCount += step;
    arrayObj->EdgeFlag.BufferObj->RefCount += step;
-   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
+   for (i = 0; i < Elements(arrayObj->TexCoord); i++)
       arrayObj->TexCoord[i].BufferObj->RefCount += step;
-   for (i = 0; i < VERT_ATTRIB_MAX; i++)
+   for (i = 0; i < Elements(arrayObj->VertexAttrib); i++)
       arrayObj->VertexAttrib[i].BufferObj->RefCount += step;
 }
 
