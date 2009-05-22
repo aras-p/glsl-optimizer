@@ -168,7 +168,6 @@
 /** For GL_ARB_vertex_program */
 /*@{*/
 #define MAX_VERTEX_PROGRAM_ADDRESS_REGS 1
-#define MAX_VERTEX_PROGRAM_ATTRIBS     16
 /*@}*/
 
 /** For GL_ARB_fragment_program */

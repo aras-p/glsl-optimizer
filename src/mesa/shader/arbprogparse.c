@@ -953,7 +953,7 @@ parse_generic_attrib_num(GLcontext *ctx, const GLubyte ** inst,
 {
    GLint i = parse_integer(inst, Program);
 
-   if ((i < 0) || (i >= MAX_VERTEX_PROGRAM_ATTRIBS))
+   if ((i < 0) || (i >= MAX_VERTEX_GENERIC_ATTRIBS))
    {
       program_error(ctx, Program->Position,
                     "Invalid generic vertex attribute index");
@@ -1510,10 +1510,10 @@ generic_attrib_check(struct var_cache *vc_head)
 {
    int a;
    struct var_cache *curr;
-   GLboolean explicitAttrib[MAX_VERTEX_PROGRAM_ATTRIBS],
-      genericAttrib[MAX_VERTEX_PROGRAM_ATTRIBS];
+   GLboolean explicitAttrib[MAX_VERTEX_GENERIC_ATTRIBS],
+      genericAttrib[MAX_VERTEX_GENERIC_ATTRIBS];
 
-   for (a=0; a<MAX_VERTEX_PROGRAM_ATTRIBS; a++) {
+   for (a=0; a<MAX_VERTEX_GENERIC_ATTRIBS; a++) {
       explicitAttrib[a] = GL_FALSE;
       genericAttrib[a] = GL_FALSE;
    }
@@ -1524,11 +1524,11 @@ generic_attrib_check(struct var_cache *vc_head)
          if (curr->attrib_is_generic) {
             GLuint attr = (curr->attrib_binding == 0)
                ? 0 : (curr->attrib_binding - VERT_ATTRIB_GENERIC0);
-            assert(attr < MAX_VERTEX_PROGRAM_ATTRIBS);
+            assert(attr < MAX_VERTEX_GENERIC_ATTRIBS);
             genericAttrib[attr] = GL_TRUE;
          }
          else {
-            assert(curr->attrib_binding < MAX_VERTEX_PROGRAM_ATTRIBS);
+            assert(curr->attrib_binding < MAX_VERTEX_GENERIC_ATTRIBS);
             explicitAttrib[ curr->attrib_binding ] = GL_TRUE;
          }
       }
@@ -1536,7 +1536,7 @@ generic_attrib_check(struct var_cache *vc_head)
       curr = curr->next;
    }
 
-   for (a=0; a<MAX_VERTEX_PROGRAM_ATTRIBS; a++) {
+   for (a=0; a<MAX_VERTEX_GENERIC_ATTRIBS; a++) {
       if ((explicitAttrib[a]) && (genericAttrib[a]))
          return 1;
    }

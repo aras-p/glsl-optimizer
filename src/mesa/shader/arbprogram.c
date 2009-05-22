@@ -310,7 +310,7 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) {
+   if (index >= MAX_VERTEX_GENERIC_ATTRIBS) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexAttribfvARB(index)");
       return;
    }
