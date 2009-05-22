@@ -120,7 +120,7 @@ static void bind_array_obj( GLcontext *ctx )
    for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
       exec->array.legacy_array[VERT_ATTRIB_TEX0 + i] = &arrayObj->TexCoord[i];
 
-   for (i = 0; i < MAX_VERTEX_ATTRIBS; i++) {
+   for (i = 0; i < MAX_VERTEX_GENERIC_ATTRIBS; i++) {
       assert(i < Elements(arrayObj->VertexAttrib));
       assert(i < Elements(exec->array.generic_array));
       exec->array.generic_array[i] = &arrayObj->VertexAttrib[i];
@@ -222,7 +222,7 @@ static void recalculate_input_bindings( GLcontext *ctx )
          }
       }
 
-      for (i = 0; i < MAX_VERTEX_ATTRIBS; i++) {
+      for (i = 0; i < MAX_VERTEX_GENERIC_ATTRIBS; i++) {
 	 if (exec->array.generic_array[i]->Enabled)
 	    inputs[VERT_ATTRIB_GENERIC0 + i] = exec->array.generic_array[i];
 	 else {
