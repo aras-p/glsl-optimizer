@@ -650,6 +650,13 @@ intelInitContext(struct intel_context *intel,
    _mesa_init_point(ctx);
 
    ctx->Const.MaxColorAttachments = 4;  /* XXX FBO: review this */
+   if (IS_965(intelScreen->deviceID)) {
+      if (MAX_WIDTH > 8192)
+	 ctx->Const.MaxRenderbufferSize = 8192;
+   } else {
+      if (MAX_WIDTH > 2048)
+	 ctx->Const.MaxRenderbufferSize = 2048;
+   }
 
    /* Initialize the software rasterizer and helper modules. */
    _swrast_CreateContext(ctx);
