@@ -319,7 +319,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
                           const struct gl_program *origProg,
                           struct gl_program *linkedProg)
 {
-   GLint attribMap[MAX_VERTEX_ATTRIBS];
+   GLint attribMap[MAX_VERTEX_GENERIC_ATTRIBS];
    GLuint i, j;
    GLbitfield usedAttributes; /* generics only, not legacy attributes */
 
@@ -355,7 +355,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
    }
 
    /* initialize the generic attribute map entries to -1 */
-   for (i = 0; i < MAX_VERTEX_ATTRIBS; i++) {
+   for (i = 0; i < MAX_VERTEX_GENERIC_ATTRIBS; i++) {
       attribMap[i] = -1;
    }
 
@@ -396,11 +396,11 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
                    * Start at 1 since generic attribute 0 always aliases
                    * glVertex/position.
                    */
-                  for (attr = 0; attr < MAX_VERTEX_ATTRIBS; attr++) {
+                  for (attr = 0; attr < MAX_VERTEX_GENERIC_ATTRIBS; attr++) {
                      if (((1 << attr) & usedAttributes) == 0)
                         break;
                   }
-                  if (attr == MAX_VERTEX_ATTRIBS) {
+                  if (attr == MAX_VERTEX_GENERIC_ATTRIBS) {
                      link_error(shProg, "Too many vertex attributes");
                      return GL_FALSE;
                   }

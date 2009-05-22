@@ -265,7 +265,7 @@ static void GLAPIENTRY TAG(VertexAttrib1fARB)( GLuint index, GLfloat x )
    GET_CURRENT_CONTEXT( ctx );
    if (index == 0) 
       ATTR1F(0, x);
-   else if (index < MAX_VERTEX_ATTRIBS)
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR1F(VBO_ATTRIB_GENERIC0 + index, x);
    else
       ERROR();
@@ -277,7 +277,7 @@ static void GLAPIENTRY TAG(VertexAttrib1fvARB)( GLuint index,
    GET_CURRENT_CONTEXT( ctx );
    if (index == 0) 
       ATTR1FV(0, v);
-   else if (index < MAX_VERTEX_ATTRIBS)
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR1FV(VBO_ATTRIB_GENERIC0 + index, v);
    else
       ERROR();
@@ -289,7 +289,7 @@ static void GLAPIENTRY TAG(VertexAttrib2fARB)( GLuint index, GLfloat x,
    GET_CURRENT_CONTEXT( ctx );
    if (index == 0) 
       ATTR2F(0, x, y);
-   else if (index < MAX_VERTEX_ATTRIBS)
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR2F(VBO_ATTRIB_GENERIC0 + index, x, y);
    else
       ERROR();
@@ -301,7 +301,7 @@ static void GLAPIENTRY TAG(VertexAttrib2fvARB)( GLuint index,
    GET_CURRENT_CONTEXT( ctx );
    if (index == 0) 
       ATTR2FV(0, v);
-   else if (index < MAX_VERTEX_ATTRIBS)
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR2FV(VBO_ATTRIB_GENERIC0 + index, v);
    else
       ERROR();
@@ -313,7 +313,7 @@ static void GLAPIENTRY TAG(VertexAttrib3fARB)( GLuint index, GLfloat x,
    GET_CURRENT_CONTEXT( ctx );
    if (index == 0) 
       ATTR3F(0, x, y, z);
-   else if (index < MAX_VERTEX_ATTRIBS)
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR3F(VBO_ATTRIB_GENERIC0 + index, x, y, z);
    else
       ERROR();
@@ -325,7 +325,7 @@ static void GLAPIENTRY TAG(VertexAttrib3fvARB)( GLuint index,
    GET_CURRENT_CONTEXT( ctx );
    if (index == 0) 
       ATTR3FV(0, v);
-   else if (index < MAX_VERTEX_ATTRIBS)
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR3FV(VBO_ATTRIB_GENERIC0 + index, v);
    else
       ERROR();
@@ -338,7 +338,7 @@ static void GLAPIENTRY TAG(VertexAttrib4fARB)( GLuint index, GLfloat x,
    GET_CURRENT_CONTEXT( ctx );
    if (index == 0) 
       ATTR4F(0, x, y, z, w);
-   else if (index < MAX_VERTEX_ATTRIBS)
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR4F(VBO_ATTRIB_GENERIC0 + index, x, y, z, w);
    else
       ERROR();
@@ -350,7 +350,7 @@ static void GLAPIENTRY TAG(VertexAttrib4fvARB)( GLuint index,
    GET_CURRENT_CONTEXT( ctx );
    if (index == 0) 
       ATTR4FV(0, v);
-   else if (index < MAX_VERTEX_ATTRIBS)
+   else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR4FV(VBO_ATTRIB_GENERIC0 + index, v);
    else
       ERROR();

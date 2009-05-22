@@ -477,7 +477,7 @@ static void GLAPIENTRY _mesa_noop_VertexAttrib4fvNV( GLuint index, const GLfloat
 static void GLAPIENTRY _mesa_noop_VertexAttrib1fARB( GLuint index, GLfloat x )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < MAX_VERTEX_ATTRIBS) {
+   if (index < MAX_VERTEX_GENERIC_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], x, 0, 0, 1);
    }
    else
@@ -487,7 +487,7 @@ static void GLAPIENTRY _mesa_noop_VertexAttrib1fARB( GLuint index, GLfloat x )
 static void GLAPIENTRY _mesa_noop_VertexAttrib1fvARB( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < MAX_VERTEX_ATTRIBS) {
+   if (index < MAX_VERTEX_GENERIC_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], v[0], 0, 0, 1);
    }
    else
@@ -497,7 +497,7 @@ static void GLAPIENTRY _mesa_noop_VertexAttrib1fvARB( GLuint index, const GLfloa
 static void GLAPIENTRY _mesa_noop_VertexAttrib2fARB( GLuint index, GLfloat x, GLfloat y )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < MAX_VERTEX_ATTRIBS) {
+   if (index < MAX_VERTEX_GENERIC_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], x, y, 0, 1);
    }
    else
@@ -507,7 +507,7 @@ static void GLAPIENTRY _mesa_noop_VertexAttrib2fARB( GLuint index, GLfloat x, GL
 static void GLAPIENTRY _mesa_noop_VertexAttrib2fvARB( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < MAX_VERTEX_ATTRIBS) {
+   if (index < MAX_VERTEX_GENERIC_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], v[0], v[1], 0, 1);
    }
    else
@@ -518,7 +518,7 @@ static void GLAPIENTRY _mesa_noop_VertexAttrib3fARB( GLuint index, GLfloat x,
                                   GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < MAX_VERTEX_ATTRIBS) {
+   if (index < MAX_VERTEX_GENERIC_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], x, y, z, 1);
    }
    else
@@ -528,7 +528,7 @@ static void GLAPIENTRY _mesa_noop_VertexAttrib3fARB( GLuint index, GLfloat x,
 static void GLAPIENTRY _mesa_noop_VertexAttrib3fvARB( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < MAX_VERTEX_ATTRIBS) {
+   if (index < MAX_VERTEX_GENERIC_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], v[0], v[1], v[2], 1);
    }
    else
@@ -539,7 +539,7 @@ static void GLAPIENTRY _mesa_noop_VertexAttrib4fARB( GLuint index, GLfloat x,
                                   GLfloat y, GLfloat z, GLfloat w )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < MAX_VERTEX_ATTRIBS) {
+   if (index < MAX_VERTEX_GENERIC_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], x, y, z, w);
    }
    else
@@ -549,7 +549,7 @@ static void GLAPIENTRY _mesa_noop_VertexAttrib4fARB( GLuint index, GLfloat x,
 static void GLAPIENTRY _mesa_noop_VertexAttrib4fvARB( GLuint index, const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
-   if (index < MAX_VERTEX_ATTRIBS) {
+   if (index < MAX_VERTEX_GENERIC_ATTRIBS) {
       ASSIGN_4V(ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index], v[0], v[1], v[2], v[3]);
    }
    else
