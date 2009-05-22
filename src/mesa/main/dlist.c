@@ -5506,7 +5506,7 @@ index_error(void)
 static void GLAPIENTRY
 save_VertexAttrib1fNV(GLuint index, GLfloat x)
 {
-   if (index < MAX_VERTEX_PROGRAM_ATTRIBS)
+   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
       save_Attr1fNV(index, x);
    else
       index_error();
@@ -5515,7 +5515,7 @@ save_VertexAttrib1fNV(GLuint index, GLfloat x)
 static void GLAPIENTRY
 save_VertexAttrib1fvNV(GLuint index, const GLfloat * v)
 {
-   if (index < MAX_VERTEX_PROGRAM_ATTRIBS)
+   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
       save_Attr1fNV(index, v[0]);
    else
       index_error();
@@ -5524,7 +5524,7 @@ save_VertexAttrib1fvNV(GLuint index, const GLfloat * v)
 static void GLAPIENTRY
 save_VertexAttrib2fNV(GLuint index, GLfloat x, GLfloat y)
 {
-   if (index < MAX_VERTEX_PROGRAM_ATTRIBS)
+   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
       save_Attr2fNV(index, x, y);
    else
       index_error();
@@ -5533,7 +5533,7 @@ save_VertexAttrib2fNV(GLuint index, GLfloat x, GLfloat y)
 static void GLAPIENTRY
 save_VertexAttrib2fvNV(GLuint index, const GLfloat * v)
 {
-   if (index < MAX_VERTEX_PROGRAM_ATTRIBS)
+   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
       save_Attr2fNV(index, v[0], v[1]);
    else
       index_error();
@@ -5542,7 +5542,7 @@ save_VertexAttrib2fvNV(GLuint index, const GLfloat * v)
 static void GLAPIENTRY
 save_VertexAttrib3fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z)
 {
-   if (index < MAX_VERTEX_PROGRAM_ATTRIBS)
+   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
       save_Attr3fNV(index, x, y, z);
    else
       index_error();
@@ -5551,7 +5551,7 @@ save_VertexAttrib3fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z)
 static void GLAPIENTRY
 save_VertexAttrib3fvNV(GLuint index, const GLfloat * v)
 {
-   if (index < MAX_VERTEX_PROGRAM_ATTRIBS)
+   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
       save_Attr3fNV(index, v[0], v[1], v[2]);
    else
       index_error();
@@ -5561,7 +5561,7 @@ static void GLAPIENTRY
 save_VertexAttrib4fNV(GLuint index, GLfloat x, GLfloat y,
                       GLfloat z, GLfloat w)
 {
-   if (index < MAX_VERTEX_PROGRAM_ATTRIBS)
+   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
       save_Attr4fNV(index, x, y, z, w);
    else
       index_error();
@@ -5570,7 +5570,7 @@ save_VertexAttrib4fNV(GLuint index, GLfloat x, GLfloat y,
 static void GLAPIENTRY
 save_VertexAttrib4fvNV(GLuint index, const GLfloat * v)
 {
-   if (index < MAX_VERTEX_PROGRAM_ATTRIBS)
+   if (index < MAX_NV_VERTEX_PROGRAM_INPUTS)
       save_Attr4fNV(index, v[0], v[1], v[2], v[3]);
    else
       index_error();
