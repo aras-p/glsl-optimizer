@@ -1005,6 +1005,7 @@ StateVars = [
 	( "GL_MAX_SAMPLES", GLint, ["ctx->Const.MaxSamples"], "",
 	  ["ARB_framebuffer_object"] ),
 
+	# GL_APPLE_vertex_array_object
 	( "GL_VERTEX_ARRAY_BINDING_APPLE", GLint, ["ctx->Array.ArrayObj->Name"], "",
 	  ["APPLE_vertex_array_object"] ),
 ]
