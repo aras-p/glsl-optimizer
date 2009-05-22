@@ -6806,10 +6806,10 @@ _mesa_NewList(GLuint name, GLenum mode)
 
    /* Reset acumulated list state:
     */
-   for (i = 0; i < VERT_ATTRIB_MAX; i++)
+   for (i = 0; i < Elements(ctx->ListState.ActiveAttribSize); i++)
       ctx->ListState.ActiveAttribSize[i] = 0;
 
-   for (i = 0; i < MAT_ATTRIB_MAX; i++)
+   for (i = 0; i < Elements(ctx->ListState.ActiveMaterialSize); i++)
       ctx->ListState.ActiveMaterialSize[i] = 0;
 
    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;

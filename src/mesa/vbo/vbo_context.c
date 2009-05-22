@@ -214,7 +214,7 @@ GLboolean _vbo_CreateContext( GLcontext *ctx )
       for (i = 0; i < 4; i++)
 	 vbo->map_vp_none[28+i] = i;	
       
-      for (i = 0; i < VERT_ATTRIB_MAX; i++)
+      for (i = 0; i < Elements(vbo->map_vp_arb); i++)
 	 vbo->map_vp_arb[i] = i;
    }
 

@@ -1079,10 +1079,10 @@ _mesa_print_arrays(GLcontext *ctx)
       print_array("Normal", -1, &arrayObj->Normal);
    if (arrayObj->Color.Enabled)
       print_array("Color", -1, &arrayObj->Color);
-   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
+   for (i = 0; i < Elements(arrayObj->TexCoord); i++)
       if (arrayObj->TexCoord[i].Enabled)
          print_array("TexCoord", i, &arrayObj->TexCoord[i]);
-   for (i = 0; i < VERT_ATTRIB_MAX; i++)
+   for (i = 0; i < Elements(arrayObj->VertexAttrib); i++)
       if (arrayObj->VertexAttrib[i].Enabled)
          print_array("Attrib", i, &arrayObj->VertexAttrib[i]);
    _mesa_printf("  _MaxElement = %u\n", arrayObj->_MaxElement);
