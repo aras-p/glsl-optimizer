@@ -196,7 +196,7 @@ update_arrays( GLcontext *ctx )
    if (ctx->VertexProgram._Current) {
       for (i = 0; i < Elements(arrayObj->VertexAttrib); i++) {
          if (arrayObj->VertexAttrib[i].Enabled) {
-            min = MIN2(min, arrayObj->VertexAttrib[i]._MaxElement);
+            min = update_min(min, &arrayObj->VertexAttrib[i]);
          }
       }
    }
