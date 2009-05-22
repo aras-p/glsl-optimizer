@@ -271,9 +271,24 @@ CreateProgram(const char *vertProgFile, const char *fragProgFile,
 
    InitUniforms(program, uniforms);
 
+   VertCoord_attr = glGetAttribLocation_func(program, "VertCoord");
+   if (VertCoord_attr > 0) {
+      /* We want the VertCoord attrib to have position zero so that
+       * the call to glVertexAttrib(0, xyz) triggers vertex processing.
+       * Otherwise, if TexCoord0 or TexCoord1 gets position 0 we'd have
+       * to set that attribute last (which is a PITA to manage).
+       */
+      glBindAttribLocation_func(program, 0, "VertCoord");
+      /* re-link */
+      glLinkProgram_func(program);
+      /* VertCoord_attr should be zero now */
+      VertCoord_attr = glGetAttribLocation_func(program, "VertCoord");
+      assert(VertCoord_attr == 0);
+   }
+
    TexCoord0_attr = glGetAttribLocation_func(program, "TexCoord0");
    TexCoord1_attr = glGetAttribLocation_func(program, "TexCoord1");
-   VertCoord_attr = glGetAttribLocation_func(program, "VertCoord");
+
    printf("TexCoord0_attr = %d\n", TexCoord0_attr);
    printf("TexCoord1_attr = %d\n", TexCoord1_attr);
    printf("VertCoord_attr = %d\n", VertCoord_attr);
