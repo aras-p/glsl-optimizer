@@ -779,6 +779,7 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
    for (i = 0; i < n; i++) {
       struct gl_buffer_object *bufObj = _mesa_lookup_bufferobj(ctx, ids[i]);
       if (bufObj) {
+         struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
          GLuint j;
 
          ASSERT(bufObj->Name == ids[i]);
@@ -791,18 +792,19 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
          }
 
          /* unbind any vertex pointers bound to this buffer */
-         unbind(ctx, &ctx->Array.ArrayObj->Vertex.BufferObj, bufObj);
-         unbind(ctx, &ctx->Array.ArrayObj->Normal.BufferObj, bufObj);
-         unbind(ctx, &ctx->Array.ArrayObj->Color.BufferObj, bufObj);
-         unbind(ctx, &ctx->Array.ArrayObj->SecondaryColor.BufferObj, bufObj);
-         unbind(ctx, &ctx->Array.ArrayObj->FogCoord.BufferObj, bufObj);
-         unbind(ctx, &ctx->Array.ArrayObj->Index.BufferObj, bufObj);
-         unbind(ctx, &ctx->Array.ArrayObj->EdgeFlag.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->Vertex.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->Weight.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->Normal.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->Color.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->SecondaryColor.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->FogCoord.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->Index.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->EdgeFlag.BufferObj, bufObj);
          for (j = 0; j < MAX_TEXTURE_COORD_UNITS; j++) {
-            unbind(ctx, &ctx->Array.ArrayObj->TexCoord[j].BufferObj, bufObj);
+            unbind(ctx, &arrayObj->TexCoord[j].BufferObj, bufObj);
          }
          for (j = 0; j < VERT_ATTRIB_MAX; j++) {
-            unbind(ctx, &ctx->Array.ArrayObj->VertexAttrib[j].BufferObj, bufObj);
+            unbind(ctx, &arrayObj->VertexAttrib[j].BufferObj, bufObj);
          }
 
          if (ctx->Array.ArrayBufferObj == bufObj) {
