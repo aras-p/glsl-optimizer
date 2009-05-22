@@ -800,10 +800,10 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
          unbind(ctx, &arrayObj->FogCoord.BufferObj, bufObj);
          unbind(ctx, &arrayObj->Index.BufferObj, bufObj);
          unbind(ctx, &arrayObj->EdgeFlag.BufferObj, bufObj);
-         for (j = 0; j < MAX_TEXTURE_COORD_UNITS; j++) {
+         for (j = 0; j < Elements(arrayObj->TexCoord); j++) {
             unbind(ctx, &arrayObj->TexCoord[j].BufferObj, bufObj);
          }
-         for (j = 0; j < VERT_ATTRIB_MAX; j++) {
+         for (j = 0; j < Elements(arrayObj->VertexAttrib); j++) {
             unbind(ctx, &arrayObj->VertexAttrib[j].BufferObj, bufObj);
          }
 
