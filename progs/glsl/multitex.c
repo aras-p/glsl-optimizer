@@ -51,6 +51,8 @@ static GLfloat Xrot = 0.0, Yrot = .0, Zrot = 0.0;
 static GLfloat EyeDist = 10;
 static GLboolean Anim = GL_TRUE;
 static GLboolean UseArrays = GL_TRUE;
+static GLboolean UseVBO = GL_TRUE;
+static GLuint VBO = 0;
 
 static GLint VertCoord_attr = -1, TexCoord0_attr = -1, TexCoord1_attr = -1;
 
@@ -76,28 +78,81 @@ static const GLfloat VertCoords[4][2] = {
 };
 
 
+
+static void
+SetupVertexBuffer(void)
+{
+   glGenBuffersARB_func(1, &VBO);
+   glBindBufferARB_func(GL_ARRAY_BUFFER_ARB, VBO);
+
+   glBufferDataARB_func(GL_ARRAY_BUFFER_ARB,
+                        sizeof(VertCoords) +
+                        sizeof(Tex0Coords) +
+                        sizeof(Tex1Coords),
+                        NULL,
+                        GL_STATIC_DRAW_ARB);
+
+   /* non-interleaved vertex arrays */
+
+   glBufferSubDataARB_func(GL_ARRAY_BUFFER_ARB,
+                           0,                   /* offset */
+                           sizeof(VertCoords),  /* size */
+                           VertCoords);         /* data */
+
+   glBufferSubDataARB_func(GL_ARRAY_BUFFER_ARB,
+                           sizeof(VertCoords),  /* offset */
+                           sizeof(Tex0Coords),  /* size */
+                           Tex0Coords);         /* data */
+
+   glBufferSubDataARB_func(GL_ARRAY_BUFFER_ARB,
+                           sizeof(VertCoords) +
+                           sizeof(Tex0Coords),  /* offset */
+                           sizeof(Tex1Coords),  /* size */
+                           Tex1Coords);         /* data */
+
+   glBindBufferARB_func(GL_ARRAY_BUFFER_ARB, 0);
+}
+
+
 static void
 DrawPolygonArray(void)
 {
+   void *vertPtr, *tex0Ptr, *tex1Ptr;
+
+   if (UseVBO) {
+      glBindBufferARB_func(GL_ARRAY_BUFFER_ARB, VBO);
+      vertPtr = (void *) 0;
+      tex0Ptr = (void *) sizeof(VertCoords);
+      tex1Ptr = (void *) (sizeof(VertCoords) + sizeof(Tex0Coords));
+   }
+   else {
+      glBindBufferARB_func(GL_ARRAY_BUFFER_ARB, 0);
+      vertPtr = VertCoords;
+      tex0Ptr = Tex0Coords;
+      tex1Ptr = Tex1Coords;
+   }
+
    if (VertCoord_attr >= 0) {
       glVertexAttribPointer_func(VertCoord_attr, 2, GL_FLOAT, GL_FALSE,
-                                 0, VertCoords);
+                                 0, vertPtr);
       glEnableVertexAttribArray_func(VertCoord_attr);
    }
    else {
-      glVertexPointer(2, GL_FLOAT, 0, VertCoords);
+      glVertexPointer(2, GL_FLOAT, 0, vertPtr);
       glEnable(GL_VERTEX_ARRAY);
    }
 
    glVertexAttribPointer_func(TexCoord0_attr, 2, GL_FLOAT, GL_FALSE,
-                              0, Tex0Coords);
+                              0, tex0Ptr);
    glEnableVertexAttribArray_func(TexCoord0_attr);
 
    glVertexAttribPointer_func(TexCoord1_attr, 2, GL_FLOAT, GL_FALSE,
-                              0, Tex1Coords);
+                              0, tex1Ptr);
    glEnableVertexAttribArray_func(TexCoord1_attr);
 
    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+      glBindBufferARB_func(GL_ARRAY_BUFFER_ARB, 0);
 }
 
 
@@ -162,6 +217,10 @@ key(unsigned char k, int x, int y)
    case 'a':
       UseArrays = !UseArrays;
       printf("Arrays: %d\n", UseArrays);
+      break;
+   case 'v':
+      UseVBO = !UseVBO;
+      printf("Use VBO: %d\n", UseVBO);
       break;
    case ' ':
       Anim = !Anim;
@@ -271,9 +330,24 @@ CreateProgram(const char *vertProgFile, const char *fragProgFile,
 
    InitUniforms(program, uniforms);
 
+   VertCoord_attr = glGetAttribLocation_func(program, "VertCoord");
+   if (VertCoord_attr > 0) {
+      /* We want the VertCoord attrib to have position zero so that
+       * the call to glVertexAttrib(0, xyz) triggers vertex processing.
+       * Otherwise, if TexCoord0 or TexCoord1 gets position 0 we'd have
+       * to set that attribute last (which is a PITA to manage).
+       */
+      glBindAttribLocation_func(program, 0, "VertCoord");
+      /* re-link */
+      glLinkProgram_func(program);
+      /* VertCoord_attr should be zero now */
+      VertCoord_attr = glGetAttribLocation_func(program, "VertCoord");
+      assert(VertCoord_attr == 0);
+   }
+
    TexCoord0_attr = glGetAttribLocation_func(program, "TexCoord0");
    TexCoord1_attr = glGetAttribLocation_func(program, "TexCoord1");
-   VertCoord_attr = glGetAttribLocation_func(program, "VertCoord");
+
    printf("TexCoord0_attr = %d\n", TexCoord0_attr);
    printf("TexCoord1_attr = %d\n", TexCoord1_attr);
    printf("VertCoord_attr = %d\n", VertCoord_attr);
@@ -299,11 +373,18 @@ InitGL(void)
       /*exit(1);*/
    }
    printf("GL_RENDERER = %s\n",(const char *) glGetString(GL_RENDERER));
-
+   printf("Usage:\n");
+   printf("  a     - toggle arrays vs. immediate mode rendering\n");
+   printf("  v     - toggle VBO usage for array rendering\n");
+   printf("  z/Z   - change viewing distance\n");
+   printf("  SPACE - toggle animation\n");
+   printf("  Esc   - exit\n");
    GetExtensionFuncs();
 
    InitTextures();
    InitPrograms();
+
+   SetupVertexBuffer();
 
    glEnable(GL_DEPTH_TEST);
 
