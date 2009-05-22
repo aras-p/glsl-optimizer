@@ -89,10 +89,10 @@ unbind_array_object_vbos(GLcontext *ctx, struct gl_array_object *obj)
    _mesa_reference_buffer_object(ctx, &obj->Index.BufferObj, NULL);
    _mesa_reference_buffer_object(ctx, &obj->EdgeFlag.BufferObj, NULL);
 
-   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
+   for (i = 0; i < Elements(obj->TexCoord); i++)
       _mesa_reference_buffer_object(ctx, &obj->TexCoord[i].BufferObj, NULL);
 
-   for (i = 0; i < VERT_ATTRIB_MAX; i++)
+   for (i = 0; i < Elements(obj->VertexAttrib); i++)
       _mesa_reference_buffer_object(ctx, &obj->VertexAttrib[i].BufferObj,NULL);
 }
 
@@ -230,11 +230,11 @@ _mesa_initialize_array_object( GLcontext *ctx,
    init_array(ctx, &obj->SecondaryColor, 4, GL_FLOAT);
    init_array(ctx, &obj->FogCoord, 1, GL_FLOAT);
    init_array(ctx, &obj->Index, 1, GL_FLOAT);
-   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
+   for (i = 0; i < Elements(obj->TexCoord); i++) {
       init_array(ctx, &obj->TexCoord[i], 4, GL_FLOAT);
    }
    init_array(ctx, &obj->EdgeFlag, 1, GL_BOOL);
-   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+   for (i = 0; i < Elements(obj->VertexAttrib); i++) {
       init_array(ctx, &obj->VertexAttrib[i], 4, GL_FLOAT);
    }
 
@@ -340,7 +340,7 @@ _mesa_update_array_object_max_element(GLcontext *ctx,
 #endif
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++)
       min = update_min(min, &arrayObj->TexCoord[i]);
-   for (i = 0; i < VERT_ATTRIB_MAX; i++)
+   for (i = 0; i < Elements(arrayObj->VertexAttrib); i++)
       min = update_min(min, &arrayObj->VertexAttrib[i]);
 
    /* _MaxElement is one past the last legal array element */
