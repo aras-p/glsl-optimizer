@@ -117,11 +117,10 @@ static void bind_array_obj( GLcontext *ctx )
    }
    exec->array.legacy_array[VERT_ATTRIB_EDGEFLAG] = &arrayObj->EdgeFlag;
 
-   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
+   for (i = 0; i < Elements(arrayObj->TexCoord); i++)
       exec->array.legacy_array[VERT_ATTRIB_TEX0 + i] = &arrayObj->TexCoord[i];
 
-   for (i = 0; i < MAX_VERTEX_GENERIC_ATTRIBS; i++) {
-      assert(i < Elements(arrayObj->VertexAttrib));
+   for (i = 0; i < Elements(arrayObj->VertexAttrib); i++) {
       assert(i < Elements(exec->array.generic_array));
       exec->array.generic_array[i] = &arrayObj->VertexAttrib[i];
    }
