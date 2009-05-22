@@ -1153,7 +1153,7 @@ static void _ae_update_state( GLcontext *ctx )
    }
 
    /* generic vertex attribute arrays */   
-   for (i = 1; i < VERT_ATTRIB_MAX; i++) {  /* skip zero! */
+   for (i = 1; i < Elements(arrayObj->VertexAttrib); i++) {  /* skip zero! */
       struct gl_client_array *attribArray = &arrayObj->VertexAttrib[i];
       if (attribArray->Enabled) {
          at->array = attribArray;
