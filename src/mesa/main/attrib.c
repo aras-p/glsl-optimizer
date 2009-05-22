@@ -1330,20 +1330,22 @@ _mesa_PopAttrib(void)
  * counts when pushing/popping the GL_CLIENT_VERTEX_ARRAY_BIT attribute group.
  */
 static void
-adjust_buffer_object_ref_counts(struct gl_array_attrib *array, GLint step)
+adjust_buffer_object_ref_counts(struct gl_array_object *arrayObj, GLint step)
 {
    GLuint i;
-   array->ArrayObj->Vertex.BufferObj->RefCount += step;
-   array->ArrayObj->Normal.BufferObj->RefCount += step;
-   array->ArrayObj->Color.BufferObj->RefCount += step;
-   array->ArrayObj->SecondaryColor.BufferObj->RefCount += step;
-   array->ArrayObj->FogCoord.BufferObj->RefCount += step;
-   array->ArrayObj->Index.BufferObj->RefCount += step;
-   array->ArrayObj->EdgeFlag.BufferObj->RefCount += step;
+
+   arrayObj->Vertex.BufferObj->RefCount += step;
+   arrayObj->Weight.BufferObj->RefCount += step;
+   arrayObj->Normal.BufferObj->RefCount += step;
+   arrayObj->Color.BufferObj->RefCount += step;
+   arrayObj->SecondaryColor.BufferObj->RefCount += step;
+   arrayObj->FogCoord.BufferObj->RefCount += step;
+   arrayObj->Index.BufferObj->RefCount += step;
+   arrayObj->EdgeFlag.BufferObj->RefCount += step;
    for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
-      array->ArrayObj->TexCoord[i].BufferObj->RefCount += step;
+      arrayObj->TexCoord[i].BufferObj->RefCount += step;
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
-      array->ArrayObj->VertexAttrib[i].BufferObj->RefCount += step;
+      arrayObj->VertexAttrib[i].BufferObj->RefCount += step;
 }
 
 
@@ -1434,7 +1436,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
       newnode->next = head;
       head = newnode;
       /* bump reference counts on buffer objects */
-      adjust_buffer_object_ref_counts(&ctx->Array, 1);
+      adjust_buffer_object_ref_counts(ctx->Array.ArrayObj, 1);
    }
 
    ctx->ClientAttribStack[ctx->ClientAttribStackDepth] = head;
@@ -1484,7 +1486,7 @@ _mesa_PopClientAttrib(void)
 	    struct gl_array_attrib * data =
 	      (struct gl_array_attrib *) node->data;
 
-            adjust_buffer_object_ref_counts(&ctx->Array, -1);
+            adjust_buffer_object_ref_counts(ctx->Array.ArrayObj, -1);
 	 
             ctx->Array.ActiveTexture = data->ActiveTexture;
 	    if (data->LockCount != 0)
