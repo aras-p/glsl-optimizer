@@ -194,7 +194,7 @@ new_draw_rastpos_stage(GLcontext *ctx, struct draw_context *draw)
    rs->stage.destroy = rastpos_destroy;
    rs->ctx = ctx;
 
-   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+   for (i = 0; i < Elements(rs->array); i++) {
       rs->array[i].Size = 4;
       rs->array[i].Type = GL_FLOAT;
       rs->array[i].Stride = 0;
