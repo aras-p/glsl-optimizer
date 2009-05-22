@@ -455,7 +455,7 @@ _mesa_init_current(GLcontext *ctx)
    GLuint i;
 
    /* Init all to (0,0,0,1) */
-   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+   for (i = 0; i < Elements(ctx->Current.Attrib); i++) {
       ASSIGN_4V( ctx->Current.Attrib[i], 0.0, 0.0, 0.0, 1.0 );
    }
 
