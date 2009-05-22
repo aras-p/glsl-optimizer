@@ -254,6 +254,8 @@ _mesa_EnableVertexAttribArrayARB(GLuint index)
       return;
    }
 
+   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
+
    FLUSH_VERTICES(ctx, _NEW_ARRAY);
    ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_TRUE;
    ctx->Array.ArrayObj->_Enabled |= _NEW_ARRAY_ATTRIB(index);
@@ -272,6 +274,8 @@ _mesa_DisableVertexAttribArrayARB(GLuint index)
                   "glEnableVertexAttribArrayARB(index)");
       return;
    }
+
+   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
 
    FLUSH_VERTICES(ctx, _NEW_ARRAY);
    ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_FALSE;
@@ -314,6 +318,8 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexAttribfvARB(index)");
       return;
    }
+
+   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
 
    array = &ctx->Array.ArrayObj->VertexAttrib[index];
 
@@ -386,6 +392,8 @@ _mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer)
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribPointerARB(pname)");
       return;
    }
+
+   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
 
    *pointer = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[index].Ptr;
 }
