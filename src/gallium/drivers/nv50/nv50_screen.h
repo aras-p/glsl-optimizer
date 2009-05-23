@@ -15,8 +15,11 @@ struct nv50_screen {
 	struct nouveau_grobj *m2mf;
 	struct nouveau_notifier *sync;
 
-	struct pipe_buffer *constbuf;
-	struct nouveau_resource *vp_data_heap;
+	struct pipe_buffer *constbuf_misc[1];
+	struct pipe_buffer *constbuf_parm[2];
+
+	struct nouveau_resource *immd_heap[1];
+	struct nouveau_resource *parm_heap[2];
 
 	struct pipe_buffer *tic;
 	struct pipe_buffer *tsc;

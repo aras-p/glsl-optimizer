@@ -290,20 +290,62 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_method(so, screen->tesla, 0x16b8, 1);
 	so_data  (so, 8);
 
-	/* Shared constant buffer */
-	screen->constbuf = screen->pipe.buffer_create(&screen->pipe, 0, 0, 128 * 4 * 4);
-	if (nvws->res_init(&screen->vp_data_heap, 0, 128)) {
-		NOUVEAU_ERR("Error initialising constant buffer\n");
+	/* constant buffers for immediates and VP/FP parameters */
+	screen->constbuf_misc[0] =
+		screen->pipe.buffer_create(&screen->pipe, 0, 0, 128 * 4 * 4);
+
+	screen->constbuf_parm[0] =
+		screen->pipe.buffer_create(&screen->pipe, 0, 0, 128 * 4 * 4);
+
+	screen->constbuf_parm[1] =
+		screen->pipe.buffer_create(&screen->pipe, 0, 0, 128 * 4 * 4);
+
+	if (nvws->res_init(&screen->immd_heap[0], 0, 128) ||
+		nvws->res_init(&screen->parm_heap[0], 0, 128) ||
+		nvws->res_init(&screen->parm_heap[1], 0, 128))
+	{
+		NOUVEAU_ERR("Error initialising constant buffers.\n");
 		nv50_screen_destroy(&screen->pipe);
 		return NULL;
 	}
 
+	/*
+	// map constant buffers:
+	//  B = buffer ID (maybe more than 1 byte)
+	//  N = CB index used in shader instruction
+	//  P = program type (0 = VP, 2 = GP, 3 = FP)
+	so_method(so, screen->tesla, 0x1694, 1);
+	so_data  (so, 0x000BBNP1);
+	*/
+
 	so_method(so, screen->tesla, 0x1280, 3);
-	so_reloc (so, screen->constbuf, 0, NOUVEAU_BO_VRAM |
+	so_reloc (so, screen->constbuf_misc[0], 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
-	so_reloc (so, screen->constbuf, 0, NOUVEAU_BO_VRAM |
+	so_reloc (so, screen->constbuf_misc[0], 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
-	so_data  (so, (NV50_CB_PMISC << 16) | 0x00001000);
+	so_data  (so, (NV50_CB_PMISC << 16) | 0x00000800);
+	so_method(so, screen->tesla, 0x1694, 1);
+	so_data  (so, 0x00000001 | (NV50_CB_PMISC << 12));
+	so_method(so, screen->tesla, 0x1694, 1);
+	so_data  (so, 0x00000031 | (NV50_CB_PMISC << 12));
+
+	so_method(so, screen->tesla, 0x1280, 3);
+	so_reloc (so, screen->constbuf_parm[0], 0, NOUVEAU_BO_VRAM |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, screen->constbuf_parm[0], 0, NOUVEAU_BO_VRAM |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
+	so_data  (so, (NV50_CB_PVP << 16) | 0x00000800);
+	so_method(so, screen->tesla, 0x1694, 1);
+	so_data  (so, 0x00000101 | (NV50_CB_PVP << 12));
+
+	so_method(so, screen->tesla, 0x1280, 3);
+	so_reloc (so, screen->constbuf_parm[1], 0, NOUVEAU_BO_VRAM |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, screen->constbuf_parm[1], 0, NOUVEAU_BO_VRAM |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
+	so_data  (so, (NV50_CB_PFP << 16) | 0x00000800);
+	so_method(so, screen->tesla, 0x1694, 1);
+	so_data  (so, 0x00000131 | (NV50_CB_PFP << 12));
 
 	/* Texture sampler/image unit setup - we abuse the constant buffer
 	 * upload mechanism for the moment to upload data to the tex config

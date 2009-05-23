@@ -409,8 +409,7 @@ set_dst(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_program_exec *e)
 static INLINE void
 set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 {
-	assert(imm->hw >= pc->param_nr * 4);
-	unsigned val = fui(pc->immd_buf[imm->hw - pc->param_nr * 4]);
+	unsigned val = fui(pc->immd_buf[imm->hw]);
 
 	set_long(pc, e);
 	/*XXX: can't be predicated - bits overlap.. catch cases where both
@@ -462,22 +461,12 @@ set_data(struct nv50_pc *pc, struct nv50_reg *src, unsigned m, unsigned s,
 	 struct nv50_program_exec *e)
 {
 	set_long(pc, e);
-#if 1
-	e->inst[1] |= (1 << 22);
-#else
-	if (src->type == P_IMMD) {
-		e->inst[1] |= (NV50_CB_PMISC << 22);
-	} else {
-		if (pc->p->type == PIPE_SHADER_VERTEX)
-			e->inst[1] |= (NV50_CB_PVP << 22);
-		else
-			e->inst[1] |= (NV50_CB_PFP << 22);
-	}
-#endif
 
 	e->param.index = src->hw;
 	e->param.shift = s;
 	e->param.mask = m << (s % 32);
+
+	e->inst[1] |= (((src->type == P_IMMD) ? 0 : 1) << 22);
 }
 
 static void
@@ -1952,7 +1941,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	}
 
 	if (pc->immd_nr) {
-		int rid = pc->param_nr * 4;
+		int rid = 0;
 
 		pc->immd = CALLOC(pc->immd_nr * 4, sizeof(struct nv50_reg));
 		if (!pc->immd)
@@ -2101,7 +2090,7 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 
 static void
 nv50_program_upload_data(struct nv50_context *nv50, float *map,
-			 unsigned start, unsigned count)
+			unsigned start, unsigned count, unsigned cbuf)
 {
 	struct nouveau_channel *chan = nv50->screen->nvws->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
@@ -2110,7 +2099,7 @@ nv50_program_upload_data(struct nv50_context *nv50, float *map,
 		unsigned nr = count > 2047 ? 2047 : count;
 
 		BEGIN_RING(chan, tesla, 0x00000f00, 1);
-		OUT_RING  (chan, (NV50_CB_PMISC << 0) | (start << 8));
+		OUT_RING  (chan, (cbuf << 0) | (start << 8));
 		BEGIN_RING(chan, tesla, 0x40000f04, nr);
 		OUT_RINGp (chan, map, nr);
 
@@ -2125,34 +2114,49 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 {
 	struct nouveau_winsys *nvws = nv50->screen->nvws;
 	struct pipe_winsys *ws = nv50->pipe.winsys;
-	unsigned nr = p->param_nr + p->immd_nr;
 
-	if (!p->data && nr) {
-		struct nouveau_resource *heap = nv50->screen->vp_data_heap;
+	if (!p->data[0] && p->immd_nr) {
+		struct nouveau_resource *heap = nv50->screen->immd_heap[0];
 
-		if (nvws->res_alloc(heap, nr, p, &p->data)) {
-			while (heap->next && heap->size < nr) {
+		if (nvws->res_alloc(heap, p->immd_nr, p, &p->data[0])) {
+			while (heap->next && heap->size < p->immd_nr) {
 				struct nv50_program *evict = heap->next->priv;
-				nvws->res_free(&evict->data);
+				nvws->res_free(&evict->data[0]);
 			}
 
-			if (nvws->res_alloc(heap, nr, p, &p->data))
+			if (nvws->res_alloc(heap, p->immd_nr, p, &p->data[0]))
+				assert(0);
+		}
+
+		/* immediates only need to be uploaded again when freed */
+		nv50_program_upload_data(nv50, p->immd, p->data[0]->start,
+					 p->immd_nr, NV50_CB_PMISC);
+	}
+
+	if (!p->data[1] && p->param_nr) {
+		struct nouveau_resource *heap =
+			nv50->screen->parm_heap[p->type];
+
+		if (nvws->res_alloc(heap, p->param_nr, p, &p->data[1])) {
+			while (heap->next && heap->size < p->param_nr) {
+				struct nv50_program *evict = heap->next->priv;
+				nvws->res_free(&evict->data[1]);
+			}
+
+			if (nvws->res_alloc(heap, p->param_nr, p, &p->data[1]))
 				assert(0);
 		}
 	}
 
 	if (p->param_nr) {
+		unsigned cbuf = NV50_CB_PVP;
 		float *map = ws->buffer_map(ws, nv50->constbuf[p->type],
 					    PIPE_BUFFER_USAGE_CPU_READ);
-		nv50_program_upload_data(nv50, map, p->data->start,
-					 p->param_nr);
+		if (p->type == PIPE_SHADER_FRAGMENT)
+			cbuf = NV50_CB_PFP;
+		nv50_program_upload_data(nv50, map, p->data[1]->start,
+					 p->param_nr, cbuf);
 		ws->buffer_unmap(ws, nv50->constbuf[p->type]);
-	}
-
-	if (p->immd_nr) {
-		nv50_program_upload_data(nv50, p->immd,
-					 p->data->start + p->param_nr,
-					 p->immd_nr);
 	}
 }
 
@@ -2173,20 +2177,27 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 		upload = TRUE;
 	}
 
-	if (p->data && p->data->start != p->data_start) {
+	if ((p->data[0] && p->data[0]->start != p->data_start[0]) ||
+		(p->data[1] && p->data[1]->start != p->data_start[1])) {
 		for (e = p->exec_head; e; e = e->next) {
-			unsigned ei, ci;
+			unsigned ei, ci, bs;
 
 			if (e->param.index < 0)
 				continue;
+			bs = (e->inst[1] >> 22) & 0x07;
+			assert(bs < 2);
 			ei = e->param.shift >> 5;
-			ci = e->param.index + p->data->start;
+			ci = e->param.index + p->data[bs]->start;
 
 			e->inst[ei] &= ~e->param.mask;
 			e->inst[ei] |= (ci << e->param.shift);
 		}
 
-		p->data_start = p->data->start;
+		if (p->data[0])
+			p->data_start[0] = p->data[0]->start;
+		if (p->data[1])
+			p->data_start[1] = p->data[1]->start;
+
 		upload = TRUE;
 	}
 
@@ -2341,7 +2352,8 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 	if (p->buffer)
 		pipe_buffer_reference(&p->buffer, NULL);
 
-	nv50->screen->nvws->res_free(&p->data);
+	nv50->screen->nvws->res_free(&p->data[0]);
+	nv50->screen->nvws->res_free(&p->data[1]);
 
 	p->translated = 0;
 }
