@@ -120,6 +120,8 @@ struct nv50_pc {
 	/* current instruction and total number of insns */
 	unsigned insn_cur;
 	unsigned insn_nr;
+
+	boolean allow32;
 };
 
 static void
@@ -491,14 +493,13 @@ emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 		e->inst[0] |= (src->hw << 9);
 	}
 
-	/* We really should support "half" instructions here at some point,
-	 * but I don't feel confident enough about them yet.
-	 */
-	set_long(pc, e);
 	if (is_long(e) && !is_immd(e)) {
 		e->inst[1] |= 0x04000000; /* 32-bit */
-		e->inst[1] |= 0x0003c000; /* "subsubop" 0xf == mov */
-	}
+		e->inst[1] |= 0x0000c000; /* "subsubop" 0x3 */
+		if (!(e->inst[1] & 0x20000000))
+			e->inst[1] |= 0x00030000; /* "subsubop" 0xf */
+	} else
+		e->inst[0] |= 0x00008000;
 
 	emit(pc, e);
 }
@@ -614,7 +615,6 @@ emit_mul(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	struct nv50_program_exec *e = exec(pc);
 
 	e->inst[0] |= 0xc0000000;
-	set_long(pc, e);
 
 	check_swap_src_0_1(pc, &src0, &src1);
 	set_dst(pc, dst, e);
@@ -1988,6 +1988,11 @@ nv50_program_tx(struct nv50_program *p)
 	tgsi_parse_init(&parse, pc->p->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&parse)) {
 		const union tgsi_full_token *tok = &parse.FullToken;
+
+		/* don't allow half insn/immd on first and last instruction */
+		pc->allow32 = TRUE;
+		if (pc->insn_cur == 0 || pc->insn_cur + 2 == pc->insn_nr)
+			pc->allow32 = FALSE;
 
 		tgsi_parse_token(&parse);
 
