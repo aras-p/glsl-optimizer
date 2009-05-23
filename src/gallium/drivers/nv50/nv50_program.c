@@ -783,6 +783,48 @@ emit_precossin(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	emit(pc, e);
 }
 
+#define CVTOP_RN	0x01
+#define CVTOP_FLOOR	0x03
+#define CVTOP_CEIL	0x05
+#define CVTOP_TRUNC	0x07
+#define CVTOP_SAT	0x08
+#define CVTOP_ABS	0x10
+
+#define CVT_F32_F32 0xc4
+#define CVT_F32_S32 0x44
+#define CVT_F32_U32 0x64
+#define CVT_S32_F32 0x8c
+#define CVT_S32_S32 0x0c
+#define CVT_F32_F32_ROP 0xcc
+
+static void
+emit_cvt(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src,
+	 int wp, unsigned cop, unsigned fmt)
+{
+	struct nv50_program_exec *e;
+
+	e = exec(pc);
+	set_long(pc, e);
+
+	e->inst[0] |= 0xa0000000;
+	e->inst[1] |= 0x00004000;
+	e->inst[1] |= (cop << 16);
+	e->inst[1] |= (fmt << 24);
+	set_src_0(pc, src, e);
+
+	if (wp >= 0)
+		set_pred_wr(pc, 1, wp, e);
+
+	if (dst)
+		set_dst(pc, dst, e);
+	else {
+		e->inst[0] |= 0x000001fc;
+		e->inst[1] |= 0x00000008;
+	}
+
+	emit(pc, e);
+}
+
 static void
 emit_set(struct nv50_pc *pc, unsigned c_op, struct nv50_reg *dst,
 	 struct nv50_reg *src0, struct nv50_reg *src1)
@@ -826,22 +868,10 @@ emit_set(struct nv50_pc *pc, unsigned c_op, struct nv50_reg *dst,
 		free_temp(pc, dst);
 }
 
-static void
+static INLINE void
 emit_flr(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] = 0xa0000000; /* cvt */
-	set_long(pc, e);
-	e->inst[1] |= (6 << 29); /* cvt */
-	e->inst[1] |= 0x08000000; /* integer mode */
-	e->inst[1] |= 0x04000000; /* 32 bit */
-	e->inst[1] |= ((0x1 << 3)) << 14; /* .rn */
-	e->inst[1] |= (1 << 14); /* src .f32 */
-	set_dst(pc, dst, e);
-	set_src_0(pc, src, e);
-
-	emit(pc, e);
+	emit_cvt(pc, dst, src, -1, CVTOP_FLOOR, CVT_F32_F32_ROP);
 }
 
 static void
@@ -858,21 +888,10 @@ emit_pow(struct nv50_pc *pc, struct nv50_reg *dst,
 	free_temp(pc, temp);
 }
 
-static void
+static INLINE void
 emit_abs(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] = 0xa0000000; /* cvt */
-	set_long(pc, e);
-	e->inst[1] |= (6 << 29); /* cvt */
-	e->inst[1] |= 0x04000000; /* 32 bit */
-	e->inst[1] |= (1 << 14); /* src .f32 */
-	e->inst[1] |= ((1 << 6) << 14); /* .abs */
-	set_dst(pc, dst, e);
-	set_src_0(pc, src, e);
-
-	emit(pc, e);
+	emit_cvt(pc, dst, src, -1, CVTOP_ABS, CVT_F32_F32);
 }
 
 static void
@@ -1562,21 +1581,10 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 
 	if (sat) {
 		for (c = 0; c < 4; c++) {
-			struct nv50_program_exec *e;
-
 			if (!(mask & (1 << c)))
 				continue;
-			e = exec(pc);
-
-			e->inst[0] = 0xa0000000; /* cvt */
-			set_long(pc, e);
-			e->inst[1] |= (6 << 29); /* cvt */
-			e->inst[1] |= 0x04000000; /* 32 bit */
-			e->inst[1] |= (1 << 14); /* src .f32 */
-			e->inst[1] |= ((1 << 5) << 14); /* .sat */
-			set_dst(pc, rdst[c], e);
-			set_src_0(pc, dst[c], e);
-			emit(pc, e);
+			emit_cvt(pc, rdst[c], dst[c], -1, CVTOP_SAT,
+				 CVT_F32_F32);
 		}
 	} else if (assimilate) {
 		for (c = 0; c < 4; c++)
