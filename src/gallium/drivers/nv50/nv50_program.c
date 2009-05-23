@@ -956,7 +956,7 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src)
 	case TGSI_UTIL_SIGN_SET:
 		temp = temp_temp(pc);
 		emit_abs(pc, temp, r);
-		emit_neg(pc, temp, r);
+		emit_neg(pc, temp, temp);
 		r = temp;
 		break;
 	default:
