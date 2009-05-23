@@ -39,6 +39,11 @@ struct nv50_program {
 		struct {
 			unsigned attr[2];
 		} vp;
+		struct {
+			unsigned regs[4];
+			unsigned map[5];
+			unsigned high_map;
+		} fp;
 	} cfg;
 };
 

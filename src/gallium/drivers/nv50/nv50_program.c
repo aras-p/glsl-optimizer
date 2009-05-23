@@ -86,6 +86,7 @@ struct nv50_reg {
 	int hw;
 	int neg;
 
+	int rhw; /* result hw for FP outputs, or interpolant index */
 	int acc; /* instruction where this reg is last read (first insn == 1) */
 };
 
@@ -112,6 +113,9 @@ struct nv50_pc {
 	unsigned temp_temp_nr;
 
 	unsigned interp_mode[32];
+	/* perspective interpolation registers */
+	struct nv50_reg *iv_p;
+	struct nv50_reg *iv_c;
 
 	/* current instruction and total number of insns */
 	unsigned insn_cur;
@@ -374,20 +378,29 @@ set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 #define INTERP_PERSPECTIVE	2
 #define INTERP_CENTROID		4
 
+/* interpolant index has been stored in dst->rhw */
 static void
-emit_interp(struct nv50_pc *pc, struct nv50_reg *dst,
-	    struct nv50_reg *src, struct nv50_reg *iv)
+emit_interp(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *iv,
+		unsigned mode)
 {
+	assert(dst->rhw != -1);
 	struct nv50_program_exec *e = exec(pc);
 
 	e->inst[0] |= 0x80000000;
 	set_dst(pc, dst, e);
-	alloc_reg(pc, src);
-	e->inst[0] |= (src->hw << 16);
-	if (iv) {
-		e->inst[0] |= (1 << 25);
-		alloc_reg(pc, iv);
-		e->inst[0] |= (iv->hw << 9);
+	e->inst[0] |= (dst->rhw << 16);
+
+	if (mode & INTERP_FLAT) {
+		e->inst[0] |= (1 << 8);
+	} else {
+		if (mode & INTERP_PERSPECTIVE) {
+			e->inst[0] |= (1 << 25);
+			alloc_reg(pc, iv);
+			e->inst[0] |= (iv->hw << 9);
+		}
+
+		if (mode & INTERP_CENTROID)
+			e->inst[0] |= (1 << 24);
 	}
 
 	emit(pc, e);
@@ -1443,6 +1456,40 @@ prep_inspect_insn(struct nv50_pc *pc, const union tgsi_full_token *tok,
 	}
 }
 
+static unsigned
+load_fp_attrib(struct nv50_pc *pc, int i, unsigned *acc, int *mid,
+	       int *aid, int *p_oid)
+{
+	struct nv50_reg *iv;
+	int oid, c, n;
+	unsigned mask = 0;
+
+	iv = (pc->interp_mode[i] & INTERP_CENTROID) ? pc->iv_c : pc->iv_p;
+
+	for (c = 0, n = i * 4; c < 4; c++, n++) {
+		oid = (*p_oid)++;
+		pc->attr[n].type = P_TEMP;
+		pc->attr[n].index = i;
+
+		if (pc->attr[n].acc == acc[n])
+			continue;
+		mask |= (1 << c);
+
+		pc->attr[n].acc = acc[n];
+		pc->attr[n].rhw = pc->attr[n].hw = -1;
+		alloc_reg(pc, &pc->attr[n]);
+
+		pc->attr[n].rhw = (*aid)++;
+		emit_interp(pc, &pc->attr[n], iv, pc->interp_mode[i]);
+
+		pc->p->cfg.fp.map[(*mid) / 4] |= oid << (8 * ((*mid) % 4));
+		(*mid)++;
+		pc->p->cfg.fp.regs[1] += 0x00010001;
+	}
+
+	return mask;
+}
+
 static boolean
 nv50_program_tx_prep(struct nv50_pc *pc)
 {
@@ -1461,6 +1508,11 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	r_usage[1] = NULL;
 
 	depr = fcol = bcol = fcrd = 0xffff;
+
+	if (pc->p->type == PIPE_SHADER_FRAGMENT) {
+		pc->p->cfg.fp.regs[0] = 0x01000404;
+		pc->p->cfg.fp.regs[1] = 0x00000400;
+	}
 
 	tgsi_parse_init(&p, pc->p->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&p)) {
@@ -1503,6 +1555,8 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 				switch (d->Semantic.SemanticName) {
 				case TGSI_SEMANTIC_POSITION:
 					depr = first;
+					pc->p->cfg.fp.regs[2] |= 0x00000100;
+					pc->p->cfg.fp.regs[3] |= 0x00000011;
 					break;
 				default:
 					break;
@@ -1589,6 +1643,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			for (c = 0; c < 4; c++) {
 				pc->temp[i*4+c].type = P_TEMP;
 				pc->temp[i*4+c].hw = -1;
+				pc->temp[i*4+c].rhw = -1;
 				pc->temp[i*4+c].index = i;
 				pc->temp[i*4+c].acc = r_usage[0][i*4+c];
 			}
@@ -1596,51 +1651,87 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	}
 
 	if (pc->attr_nr) {
-		struct nv50_reg *iv = NULL;
-		int aid = 0;
+		int oid = 4, mid = 4, aid = 0;
+		/* oid = VP output id
+		 * aid = FP attribute/interpolant id
+		 * mid = VP output mapping field ID
+		 */
 
 		pc->attr = CALLOC(pc->attr_nr * 4, sizeof(struct nv50_reg));
 		if (!pc->attr)
 			goto out_err;
 
 		if (pc->p->type == PIPE_SHADER_FRAGMENT) {
-			iv = alloc_temp(pc, NULL);
-			emit_interp(pc, iv, iv, NULL);
-			emit_flop(pc, 0, iv, iv);
-			aid++;
-		}
+			/* position should be loaded first */
+			if (fcrd != 0xffff) {
+				unsigned mask;
+				mid = 0;
+				mask = load_fp_attrib(pc, fcrd, r_usage[1],
+						      &mid, &aid, &oid);
+				oid = 0;
+				pc->p->cfg.fp.regs[1] |= (mask << 24);
+				pc->p->cfg.fp.map[0] = 0x04040404 * fcrd;
+			}
+			pc->p->cfg.fp.map[0] += 0x03020100;
 
-		for (i = 0; i < pc->attr_nr; i++) {
-			struct nv50_reg *a = &pc->attr[i*4];
+			/* should do MAD fcrd.xy, fcrd, SOME_CONST, fcrd */
 
-			for (c = 0; c < 4; c++) {
-				if (pc->p->type == PIPE_SHADER_FRAGMENT) {
-					struct nv50_reg *at =
-						alloc_temp(pc, NULL);
-					pc->attr[i*4+c].type = at->type;
-					pc->attr[i*4+c].hw = at->hw;
-					pc->attr[i*4+c].index = at->index;
-					pc->attr[i*4+c].acc = r_usage[1][i*4+c];
+			if (perspect_loads) {
+				pc->iv_p = alloc_temp(pc, NULL);
+
+				if (!(pc->p->cfg.fp.regs[1] & 0x08000000)) {
+					pc->p->cfg.fp.regs[1] |= 0x08000000;
+					pc->iv_p->rhw = aid++;
+					emit_interp(pc, pc->iv_p, NULL,
+						    INTERP_LINEAR);
+					emit_flop(pc, 0, pc->iv_p, pc->iv_p);
 				} else {
-					pc->p->cfg.vp.attr[aid/32] |=
-						(1 << (aid % 32));
-					pc->attr[i*4+c].type = P_ATTR;
-					pc->attr[i*4+c].hw = aid++;
-					pc->attr[i*4+c].index = i;
+					pc->iv_p->rhw = aid - 1;
+					emit_flop(pc, 0, pc->iv_p,
+						  &pc->attr[fcrd * 4 + 3]);
 				}
 			}
 
-			if (pc->p->type != PIPE_SHADER_FRAGMENT)
-				continue;
+			if (centroid_loads) {
+				pc->iv_c = alloc_temp(pc, NULL);
+				pc->iv_c->rhw = pc->iv_p ? aid - 1 : aid++;
+				emit_interp(pc, pc->iv_c, NULL,
+					    INTERP_CENTROID);
+				emit_flop(pc, 0, pc->iv_c, pc->iv_c);
+				pc->p->cfg.fp.regs[1] |= 0x08000000;
+			}
 
-			emit_interp(pc, &a[0], &a[0], iv);
-			emit_interp(pc, &a[1], &a[1], iv);
-			emit_interp(pc, &a[2], &a[2], iv);
-			emit_interp(pc, &a[3], &a[3], iv);
+			for (c = 0; c < 4; c++) {
+				/* I don't know what these values do, but
+				 * let's set them like the blob does:
+				 */
+				if (fcol != 0xffff && r_usage[1][fcol * 4 + c])
+					pc->p->cfg.fp.regs[0] += 0x00010000;
+				if (bcol != 0xffff && r_usage[1][bcol * 4 + c])
+					pc->p->cfg.fp.regs[0] += 0x00010000;
+			}
+
+			for (i = 0; i < pc->attr_nr; i++)
+				load_fp_attrib(pc, i, r_usage[1],
+					       &mid, &aid, &oid);
+
+			if (pc->iv_p)
+				free_temp(pc, pc->iv_p);
+			if (pc->iv_c)
+				free_temp(pc, pc->iv_c);
+
+			pc->p->cfg.fp.high_map = (mid / 4);
+			pc->p->cfg.fp.high_map += ((mid % 4) ? 1 : 0);
+		} else {
+			/* vertex program */
+			for (i = 0; i < pc->attr_nr * 4; i++) {
+				pc->p->cfg.vp.attr[aid / 32] |=
+					(1 << (aid % 32));
+				pc->attr[i].type = P_ATTR;
+				pc->attr[i].hw = aid++;
+				pc->attr[i].index = i / 4;
+			}
 		}
-
-		if (iv)
-			free_temp(pc, iv);
 	}
 
 	if (pc->result_nr) {
@@ -1983,6 +2074,7 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_program *p = nv50->fragprog;
 	struct nouveau_stateobj *so;
+	unsigned i;
 
 	if (!p->translated) {
 		nv50_program_validate(nv50, p);
@@ -2000,17 +2092,22 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	so_reloc (so, p->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
 		  NOUVEAU_BO_LOW, 0, 0);
 	so_method(so, tesla, 0x1904, 4);
-	so_data  (so, 0x00040404); /* p: 0x01000404 */
+	so_data  (so, p->cfg.fp.regs[0]); /* 0x01000404 / 0x00040404 */
 	so_data  (so, 0x00000004);
 	so_data  (so, 0x00000000);
 	so_data  (so, 0x00000000);
-	so_method(so, tesla, 0x16bc, 3); /*XXX: fixme */
-	so_data  (so, 0x03020100);
-	so_data  (so, 0x07060504);
-	so_data  (so, 0x0b0a0908);
+	so_method(so, tesla, 0x16bc, p->cfg.fp.high_map);
+	for (i = 0; i < p->cfg.fp.high_map; i++)
+		so_data(so, p->cfg.fp.map[i]);
 	so_method(so, tesla, 0x1988, 2);
-	so_data  (so, 0x08080408); //0x08040404); /* p: 0x0f000401 */
+	so_data  (so, p->cfg.fp.regs[1]); /* 0x08040404 / 0x0f000401 */
 	so_data  (so, p->cfg.high_temp);
+	so_method(so, tesla, 0x1298, 1);
+	so_data  (so, p->cfg.high_result);
+	so_method(so, tesla, 0x19a8, 1);
+	so_data  (so, p->cfg.fp.regs[2]);
+	so_method(so, tesla, 0x196c, 1);
+	so_data  (so, p->cfg.fp.regs[3]);
 	so_method(so, tesla, 0x1414, 1);
 	so_data  (so, 0); /* program start offset */
 	so_ref(so, &nv50->state.fragprog);
