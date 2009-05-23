@@ -1981,8 +1981,6 @@ out_err:
 static void
 free_nv50_pc(struct nv50_pc *pc)
 {
-	unsigned i;
-
 	if (pc->immd)
 		FREE(pc->immd);
 	if (pc->param)
@@ -1993,12 +1991,6 @@ free_nv50_pc(struct nv50_pc *pc)
 		FREE(pc->attr);
 	if (pc->temp)
 		FREE(pc->temp);
-
-	for (i = 0; i < NV50_SU_MAX_TEMP; i++) {
-		/* deallocate fragment program attributes */
-		if (pc->r_temp[i] && pc->r_temp[i]->index == -1)
-			FREE(pc->r_temp[i]);
-	}
 
 	FREE(pc);
 }
