@@ -214,6 +214,22 @@ assimilate_temp(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	FREE(src);
 }
 
+/* release the hardware resource held by r */
+static void
+release_hw(struct nv50_pc *pc, struct nv50_reg *r)
+{
+	assert(r->type == P_TEMP);
+	if (r->hw == -1)
+		return;
+
+	assert(pc->r_temp[r->hw] == r);
+	pc->r_temp[r->hw] = NULL;
+
+	r->acc = 0;
+	if (r->index == -1)
+		FREE(r);
+}
+
 static void
 free_temp(struct nv50_pc *pc, struct nv50_reg *r)
 {
@@ -1496,6 +1512,9 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 				continue;
 			if (src[i][c]->index == -1 && src[i][c]->type == P_IMMD)
 				FREE(src[i][c]);
+			else
+			if (src[i][c]->acc == pc->insn_cur)
+				release_hw(pc, src[i][c]);
 		}
 	}
 
