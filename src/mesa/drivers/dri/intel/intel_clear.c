@@ -134,7 +134,6 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
 		    BUFFER_BIT_STENCIL)) == 0);
 
    _mesa_PushAttrib(GL_COLOR_BUFFER_BIT |
-		    GL_CURRENT_BIT |
 		    GL_DEPTH_BUFFER_BIT |
 		    GL_ENABLE_BIT |
 		    GL_POLYGON_BIT |
