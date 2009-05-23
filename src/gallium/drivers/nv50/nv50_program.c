@@ -393,7 +393,8 @@ set_dst(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_program_exec *e)
 static INLINE void
 set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 {
-	unsigned val = fui(pc->immd_buf[imm->hw]); /* XXX */
+	assert(imm->hw >= pc->param_nr * 4);
+	unsigned val = fui(pc->immd_buf[imm->hw - pc->param_nr * 4]);
 
 	set_long(pc, e);
 	/*XXX: can't be predicated - bits overlap.. catch cases where both
@@ -472,12 +473,11 @@ emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 
 	set_dst(pc, dst, e);
 
-	if (0 && dst->type != P_RESULT && src->type == P_IMMD) {
+	if (pc->allow32 && dst->type != P_RESULT && src->type == P_IMMD) {
 		set_immd(pc, src, e);
 		/*XXX: 32-bit, but steals part of "half" reg space - need to
 		 *     catch and handle this case if/when we do half-regs
 		 */
-		e->inst[0] |= 0x00008000;
 	} else
 	if (src->type == P_IMMD || src->type == P_CONST) {
 		set_long(pc, e);
@@ -616,10 +616,16 @@ emit_mul(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 
 	e->inst[0] |= 0xc0000000;
 
+	if (!pc->allow32)
+		set_long(pc, e);
+
 	check_swap_src_0_1(pc, &src0, &src1);
 	set_dst(pc, dst, e);
 	set_src_0(pc, src0, e);
-	set_src_1(pc, src1, e);
+	if (src1->type == P_IMMD && !is_long(e))
+		set_immd(pc, src1, e);
+	else
+		set_src_1(pc, src1, e);
 
 	emit(pc, e);
 }
@@ -632,11 +638,17 @@ emit_add(struct nv50_pc *pc, struct nv50_reg *dst,
 
 	e->inst[0] |= 0xb0000000;
 
+	if (!pc->allow32)
+		set_long(pc, e);
+
 	check_swap_src_0_1(pc, &src0, &src1);
 	set_dst(pc, dst, e);
 	set_src_0(pc, src0, e);
-	if (is_long(e))
+	if (is_long(e) || src1->type == P_CONST || src1->type == P_ATTR)
 		set_src_2(pc, src1, e);
+	else
+	if (src1->type == P_IMMD)
+		set_immd(pc, src1, e);
 	else
 		set_src_1(pc, src1, e);
 
@@ -867,6 +879,9 @@ emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	struct nv50_reg *neg128 = alloc_immd(pc, -127.999999);
 	struct nv50_reg *pos128 = alloc_immd(pc,  127.999999);
 	struct nv50_reg *tmp[4];
+	boolean allow32 = pc->allow32;
+
+	pc->allow32 = FALSE;
 
 	if (mask & (3 << 1)) {
 		tmp[0] = alloc_temp(pc, NULL);
@@ -893,6 +908,8 @@ emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	else
 	if (mask & (1 << 2))
 		free_temp(pc, tmp[0]);
+
+	pc->allow32 = allow32;
 
 	/* do this last, in case src[i,j] == dst[0,3] */
 	if (mask & (1 << 0))
