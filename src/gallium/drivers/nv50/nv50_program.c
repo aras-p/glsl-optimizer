@@ -250,7 +250,13 @@ alloc_immd(struct nv50_pc *pc, float f)
 	struct nv50_reg *r = CALLOC_STRUCT(nv50_reg);
 	unsigned hw;
 
-	hw = ctor_immd(pc, f, 0, 0, 0) * 4;
+	for (hw = 0; hw < pc->immd_nr * 4; hw++)
+		if (pc->immd_buf[hw] == f)
+			break;
+
+	if (hw == pc->immd_nr * 4)
+		hw = ctor_immd(pc, f, -f, 0.5 * f, 0) * 4;
+
 	r->type = P_IMMD;
 	r->hw = hw;
 	r->index = -1;
