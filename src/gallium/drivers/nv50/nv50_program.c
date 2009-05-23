@@ -945,6 +945,54 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 	emit(pc, e);
 }
 
+static void
+convert_to_long(struct nv50_pc *pc, struct nv50_program_exec *e)
+{
+	unsigned q = 0, m = ~0;
+
+	assert(!is_long(e));
+
+	switch (e->inst[0] >> 28) {
+	case 0x1:
+		/* MOV */
+		q = 0x0403c000;
+		m = 0xffff7fff;
+		break;
+	case 0x8:
+		/* INTERP */
+		m = ~0x02000000;
+		if (e->inst[0] & 0x02000000)
+			q = 0x00020000;
+		break;
+	case 0x9:
+		/* RCP */
+		break;
+	case 0xB:
+		/* ADD */
+		m = ~(127 << 16);
+		q = ((e->inst[0] & (~m)) >> 2);
+		break;
+	case 0xC:
+		/* MUL */
+		m = ~0x00008000;
+		q = ((e->inst[0] & (~m)) << 12);
+		break;
+	case 0xE:
+		/* MAD (if src2 == dst) */
+		q = ((e->inst[0] & 0x1fc) << 12);
+		break;
+	default:
+		assert(0);
+		break;
+	}
+
+	set_long(pc, e);
+	pc->p->exec_size++;
+
+	e->inst[0] &= m;
+	e->inst[1] |= q;
+}
+
 static struct nv50_reg *
 tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 {
@@ -1969,6 +2017,30 @@ nv50_program_tx(struct nv50_program *p)
 			if (pc->p->cfg.high_result < (pc->result[k].rhw + 1))
 				pc->p->cfg.high_result = pc->result[k].rhw + 1;
 		}
+	}
+
+	/* look for single half instructions and make them long */
+	struct nv50_program_exec *e, *e_prev;
+
+	for (k = 0, e = pc->p->exec_head, e_prev = NULL; e; e = e->next) {
+		if (!is_long(e))
+			k++;
+
+		if (!e->next || is_long(e->next)) {
+			if (k & 1)
+				convert_to_long(pc, e);
+			k = 0;
+		}
+
+		if (e->next)
+			e_prev = e;
+	}
+
+	if (!is_long(pc->p->exec_tail)) {
+		/* this may occur if moving FP results */
+		assert(e_prev && !is_long(e_prev));
+		convert_to_long(pc, e_prev);
+		convert_to_long(pc, pc->p->exec_tail);
 	}
 
 	assert(is_long(pc->p->exec_tail) && !is_immd(pc->p->exec_head));
