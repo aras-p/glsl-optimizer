@@ -196,6 +196,22 @@ alloc_temp(struct nv50_pc *pc, struct nv50_reg *dst)
 	return NULL;
 }
 
+/* Assign the hw of the discarded temporary register src
+ * to the tgsi register dst and free src.
+ */
+static void
+assimilate_temp(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
+{
+	assert(src->index == -1 && src->hw != -1);
+
+	if (dst->hw != -1)
+		pc->r_temp[dst->hw] = NULL;
+	pc->r_temp[src->hw] = dst;
+	dst->hw = src->hw;
+
+	FREE(src);
+}
+
 static void
 free_temp(struct nv50_pc *pc, struct nv50_reg *r)
 {
@@ -852,17 +868,8 @@ emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	struct nv50_reg *pos128 = alloc_immd(pc,  127.999999);
 	struct nv50_reg *tmp[4];
 
-	if (mask & (1 << 0))
-		emit_mov(pc, dst[0], one);
-
-	if (mask & (1 << 3))
-		emit_mov(pc, dst[3], one);
-
 	if (mask & (3 << 1)) {
-		if (mask & (1 << 1))
-			tmp[0] = dst[1];
-		else
-			tmp[0] = temp_temp(pc);
+		tmp[0] = alloc_temp(pc, NULL);
 		emit_minmax(pc, 4, tmp[0], src[0], zero);
 	}
 
@@ -880,6 +887,19 @@ emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 		emit_mov(pc, dst[2], zero);
 		set_pred(pc, 3, 0, pc->p->exec_tail);
 	}
+
+	if (mask & (1 << 1))
+		assimilate_temp(pc, dst[1], tmp[0]);
+	else
+	if (mask & (1 << 2))
+		free_temp(pc, tmp[0]);
+
+	/* do this last, in case src[i,j] == dst[0,3] */
+	if (mask & (1 << 0))
+		emit_mov(pc, dst[0], one);
+
+	if (mask & (1 << 3))
+		emit_mov(pc, dst[3], one);
 
 	FREE(pos128);
 	FREE(neg128);
@@ -1016,12 +1036,40 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src)
 	return r;
 }
 
+/* returns TRUE if instruction can overwrite sources before they're read */
+static boolean
+direct2dest_op(const struct tgsi_full_instruction *insn)
+{
+	if (insn->Instruction.Saturate)
+		return FALSE;
+
+	switch (insn->Instruction.Opcode) {
+	case TGSI_OPCODE_COS:
+	case TGSI_OPCODE_DP3:
+	case TGSI_OPCODE_DP4:
+	case TGSI_OPCODE_DPH:
+	case TGSI_OPCODE_KIL:
+	case TGSI_OPCODE_LIT:
+	case TGSI_OPCODE_POW:
+	case TGSI_OPCODE_RCP:
+	case TGSI_OPCODE_RSQ:
+	case TGSI_OPCODE_SCS:
+	case TGSI_OPCODE_SIN:
+	case TGSI_OPCODE_TEX:
+	case TGSI_OPCODE_TXP:
+		return FALSE;
+	default:
+		return TRUE;
+	}
+}
+
 static boolean
 nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 {
 	const struct tgsi_full_instruction *inst = &tok->FullInstruction;
 	struct nv50_reg *rdst[4], *dst[4], *src[3][4], *temp;
 	unsigned mask, sat, unit;
+	boolean assimilate = FALSE;
 	int i, c;
 
 	mask = inst->FullDstRegisters[0].DstRegister.WriteMask;
@@ -1052,6 +1100,25 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		for (c = 0; c < 4; c++) {
 			rdst[c] = dst[c];
 			dst[c] = temp_temp(pc);
+		}
+	} else
+	if (direct2dest_op(inst)) {
+		for (c = 0; c < 4; c++) {
+			if (!dst[c] || dst[c]->type != P_TEMP)
+				continue;
+
+			for (i = c + 1; i < 4; i++) {
+				if (dst[c] == src[0][i] ||
+				    dst[c] == src[1][i] ||
+				    dst[c] == src[2][i])
+					break;
+			}
+			if (i == 4)
+				continue;
+
+			assimilate = TRUE;
+			rdst[c] = dst[c];
+			dst[c] = alloc_temp(pc, NULL);
 		}
 	}
 
@@ -1227,14 +1294,14 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		}
 		break;
 	case TGSI_OPCODE_RCP:
-		for (c = 0; c < 4; c++) {
+		for (c = 3; c >= 0; c--) {
 			if (!(mask & (1 << c)))
 				continue;
 			emit_flop(pc, 0, dst[c], src[0][0]);
 		}
 		break;
 	case TGSI_OPCODE_RSQ:
-		for (c = 0; c < 4; c++) {
+		for (c = 3; c >= 0; c--) {
 			if (!(mask & (1 << c)))
 				continue;
 			emit_flop(pc, 2, dst[c], src[0][0]);
@@ -1351,6 +1418,10 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 			set_src_0(pc, dst[c], e);
 			emit(pc, e);
 		}
+	} else if (assimilate) {
+		for (c = 0; c < 4; c++)
+			if (rdst[c])
+				assimilate_temp(pc, rdst[c], dst[c]);
 	}
 
 	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
