@@ -125,7 +125,7 @@ struct nv50_pc {
 static void
 alloc_reg(struct nv50_pc *pc, struct nv50_reg *reg)
 {
-	int i;
+	int i = 0;
 
 	if (reg->type == P_RESULT) {
 		if (pc->p->cfg.high_result < (reg->hw + 1))
@@ -143,7 +143,22 @@ alloc_reg(struct nv50_pc *pc, struct nv50_reg *reg)
 		return;
 	}
 
-	for (i = 0; i < NV50_SU_MAX_TEMP; i++) {
+	if (reg->rhw != -1) {
+		/* try to allocate temporary with index rhw first */
+		if (!(pc->r_temp[reg->rhw])) {
+			pc->r_temp[reg->rhw] = reg;
+			reg->hw = reg->rhw;
+			if (pc->p->cfg.high_temp < (reg->rhw + 1))
+				pc->p->cfg.high_temp = reg->rhw + 1;
+			return;
+		}
+		/* make sure we don't get things like $r0 needs to go
+		 * in $r1 and $r1 in $r0
+		 */
+		i = pc->result_nr * 4;
+	}
+
+	for (; i < NV50_SU_MAX_TEMP; i++) {
 		if (!(pc->r_temp[i])) {
 			pc->r_temp[i] = reg;
 			reg->hw = i;
@@ -171,6 +186,7 @@ alloc_temp(struct nv50_pc *pc, struct nv50_reg *dst)
 			r->type = P_TEMP;
 			r->index = -1;
 			r->hw = i;
+			r->rhw = -1;
 			pc->r_temp[i] = r;
 			return r;
 		}
@@ -1746,11 +1762,19 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 				if (pc->p->type == PIPE_SHADER_FRAGMENT) {
 					pc->result[i*4+c].type = P_TEMP;
 					pc->result[i*4+c].hw = -1;
+					pc->result[i*4+c].rhw = (i == depr) ?
+						-1 : rid++;
 				} else {
 					pc->result[i*4+c].type = P_RESULT;
 					pc->result[i*4+c].hw = rid++;
 				}
 				pc->result[i*4+c].index = i;
+			}
+
+			if (pc->p->type == PIPE_SHADER_FRAGMENT &&
+			    depr != 0xffff) {
+				pc->result[depr * 4 + 2].rhw =
+					(pc->result_nr - 1) * 4;
 			}
 		}
 	}
@@ -1828,6 +1852,7 @@ nv50_program_tx(struct nv50_program *p)
 {
 	struct tgsi_parse_context parse;
 	struct nv50_pc *pc;
+	unsigned k;
 	boolean ret;
 
 	pc = CALLOC_STRUCT(nv50_pc);
@@ -1862,8 +1887,16 @@ nv50_program_tx(struct nv50_program *p)
 		struct nv50_reg out;
 
 		out.type = P_TEMP;
-		for (out.hw = 0; out.hw < pc->result_nr * 4; out.hw++)
-			emit_mov(pc, &out, &pc->result[out.hw]);
+		for (k = 0; k < pc->result_nr * 4; k++) {
+			if (pc->result[k].rhw == -1)
+				continue;
+			if (pc->result[k].hw != pc->result[k].rhw) {
+				out.hw = pc->result[k].rhw;
+				emit_mov(pc, &out, &pc->result[k]);
+			}
+			if (pc->p->cfg.high_result < (pc->result[k].rhw + 1))
+				pc->p->cfg.high_result = pc->result[k].rhw + 1;
+		}
 	}
 
 	assert(is_long(pc->p->exec_tail) && !is_immd(pc->p->exec_head));
