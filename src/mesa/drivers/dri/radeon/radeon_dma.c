@@ -203,6 +203,12 @@ again_alloc:
 	if (radeon_revalidate_bos(rmesa->glCtx) == GL_FALSE)
 	  fprintf(stderr,"failure to revalidate BOs - badness\n");
 
+	if (!rmesa->dma.current) {
+        /* Cmd buff have been flushed in radeon_revalidate_bos */
+		rmesa->dma.nr_released_bufs = 0;
+		goto again_alloc;
+	}
+
 	radeon_bo_map(rmesa->dma.current, 1);
 }
 
