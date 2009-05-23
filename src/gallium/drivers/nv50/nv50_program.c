@@ -1227,6 +1227,7 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		emit_kil(pc, src[0][1]);
 		emit_kil(pc, src[0][2]);
 		emit_kil(pc, src[0][3]);
+		pc->p->cfg.fp.regs[2] |= 0x00100000;
 		break;
 	case TGSI_OPCODE_LIT:
 		emit_lit(pc, &dst[0], mask, &src[0][0]);
