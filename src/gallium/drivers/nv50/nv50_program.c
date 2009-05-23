@@ -968,6 +968,113 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 }
 
 static void
+emit_tex(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
+	 struct nv50_reg **src, unsigned unit, unsigned type, boolean proj)
+{
+	struct nv50_reg *temp, *t[4];
+	struct nv50_program_exec *e;
+
+	unsigned c, mode, dim;
+
+	switch (type) {
+	case TGSI_TEXTURE_1D:
+		dim = 1;
+		break;
+	case TGSI_TEXTURE_UNKNOWN:
+	case TGSI_TEXTURE_2D:
+	case TGSI_TEXTURE_SHADOW1D: /* XXX: x, z */
+	case TGSI_TEXTURE_RECT:
+		dim = 2;
+		break;
+	case TGSI_TEXTURE_3D:
+	case TGSI_TEXTURE_CUBE:
+	case TGSI_TEXTURE_SHADOW2D:
+	case TGSI_TEXTURE_SHADOWRECT: /* XXX */
+		dim = 3;
+		break;
+	default:
+		assert(0);
+		break;
+	}
+
+	alloc_temp4(pc, t, 0);
+
+	if (proj) {
+		if (src[0]->type == P_TEMP && src[0]->rhw != -1) {
+			mode = pc->interp_mode[src[0]->index];
+
+			t[3]->rhw = src[3]->rhw;
+			emit_interp(pc, t[3], NULL, (mode & INTERP_CENTROID));
+			emit_flop(pc, 0, t[3], t[3]);
+
+			for (c = 0; c < dim; c++) {
+				t[c]->rhw = src[c]->rhw;
+				emit_interp(pc, t[c], t[3],
+					    (mode | INTERP_PERSPECTIVE));
+			}
+		} else {
+			emit_flop(pc, 0, t[3], src[3]);
+			for (c = 0; c < dim; c++)
+				emit_mul(pc, t[c], src[c], t[3]);
+
+			/* XXX: for some reason the blob sometimes uses MAD:
+			 * emit_mad(pc, t[c], src[0][c], t[3], t[3])
+			 * pc->p->exec_tail->inst[1] |= 0x080fc000;
+			 */
+		}
+	} else {
+		if (type == TGSI_TEXTURE_CUBE) {
+			temp = temp_temp(pc);
+			emit_minmax(pc, 4, temp, src[0], src[1]);
+			emit_minmax(pc, 4, temp, temp, src[2]);
+			emit_flop(pc, 0, temp, temp);
+			for (c = 0; c < 3; c++)
+				emit_mul(pc, t[c], src[c], temp);
+		} else {
+			for (c = 0; c < dim; c++)
+				emit_mov(pc, t[c], src[c]);
+		}
+	}
+
+	e = exec(pc);
+	set_long(pc, e);
+	e->inst[0] |= 0xf0000000;
+	e->inst[1] |= 0x00000004;
+	set_dst(pc, t[0], e);
+	e->inst[0] |= (unit << 9);
+
+	if (dim == 2)
+		e->inst[0] |= 0x00400000;
+	else
+	if (dim == 3)
+		e->inst[0] |= 0x00800000;
+
+	e->inst[0] |= (mask & 0x3) << 25;
+	e->inst[1] |= (mask & 0xc) << 12;
+
+	emit(pc, e);
+
+#if 1
+	if (mask & 1) emit_mov(pc, dst[0], t[0]);
+	if (mask & 2) emit_mov(pc, dst[1], t[1]);
+	if (mask & 4) emit_mov(pc, dst[2], t[2]);
+	if (mask & 8) emit_mov(pc, dst[3], t[3]);
+
+	free_temp4(pc, t);
+#else
+	/* XXX: if p.e. MUL is used directly after TEX, it would still use
+	 * the texture coordinates, not the fetched values: latency ? */
+
+	for (c = 0; c < 4; c++) {
+		if (mask & (1 << c))
+			assimilate_temp(pc, dst[c], t[c]);
+		else
+			free_temp(pc, t[c]);
+	}
+#endif
+}
+
+static void
 convert_to_long(struct nv50_pc *pc, struct nv50_program_exec *e)
 {
 	unsigned q = 0, m = ~0;
@@ -1422,30 +1529,12 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		}
 		break;
 	case TGSI_OPCODE_TEX:
+		emit_tex(pc, dst, mask, src[0], unit,
+			 inst->InstructionExtTexture.Texture, FALSE);
+		break;
 	case TGSI_OPCODE_TXP:
-	{
-		struct nv50_reg *t[4];
-		struct nv50_program_exec *e;
-
-		alloc_temp4(pc, t, 0);
-		emit_mov(pc, t[0], src[0][0]);
-		emit_mov(pc, t[1], src[0][1]);
-
-		e = exec(pc);
-		e->inst[0] = 0xf6400000;
-		e->inst[0] |= (unit << 9);
-		set_long(pc, e);
-		e->inst[1] |= 0x0000c004;
-		set_dst(pc, t[0], e);
-		emit(pc, e);
-
-		if (mask & (1 << 0)) emit_mov(pc, dst[0], t[0]);
-		if (mask & (1 << 1)) emit_mov(pc, dst[1], t[1]);
-		if (mask & (1 << 2)) emit_mov(pc, dst[2], t[2]);
-		if (mask & (1 << 3)) emit_mov(pc, dst[3], t[3]);
-
-		free_temp4(pc, t);
-	}
+		emit_tex(pc, dst, mask, src[0], unit,
+			 inst->InstructionExtTexture.Texture, TRUE);
 		break;
 	case TGSI_OPCODE_XPD:
 		temp = temp_temp(pc);
