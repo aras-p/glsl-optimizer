@@ -438,6 +438,14 @@ emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	emit(pc, e);
 }
 
+static INLINE void
+emit_mov_immdval(struct nv50_pc *pc, struct nv50_reg *dst, float f)
+{
+	struct nv50_reg *imm = alloc_immd(pc, f);
+	emit_mov(pc, dst, imm);
+	FREE(imm);
+}
+
 static boolean
 check_swap_src_0_1(struct nv50_pc *pc,
 		   struct nv50_reg **s0, struct nv50_reg **s1)
@@ -1190,6 +1198,10 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 			emit_flop(pc, 5, dst[0], temp);
 		if (mask & (1 << 1))
 			emit_flop(pc, 4, dst[1], temp);
+		if (mask & (1 << 2))
+			emit_mov_immdval(pc, dst[2], 0.0);
+		if (mask & (1 << 3))
+			emit_mov_immdval(pc, dst[3], 1.0);
 		break;
 	case TGSI_OPCODE_SGE:
 		for (c = 0; c < 4; c++) {
@@ -1262,6 +1274,8 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 			emit_mul(pc, temp, src[0][1], src[1][0]);
 			emit_msb(pc, dst[2], src[0][0], src[1][1], temp);
 		}
+		if (mask & (1 << 3))
+			emit_mov_immdval(pc, dst[3], 1.0);
 		break;
 	case TGSI_OPCODE_END:
 		break;
