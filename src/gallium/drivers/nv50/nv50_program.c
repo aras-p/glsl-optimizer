@@ -111,6 +111,8 @@ struct nv50_pc {
 	struct nv50_reg *temp_temp[16];
 	unsigned temp_temp_nr;
 
+	unsigned interp_mode[32];
+
 	/* current instruction and total number of insns */
 	unsigned insn_cur;
 	unsigned insn_nr;
@@ -365,6 +367,12 @@ set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 	e->inst[0] |= (val & 0x3f) << 16;
 	e->inst[1] |= (val >> 6) << 2;
 }
+
+
+#define INTERP_LINEAR		0
+#define INTERP_FLAT			1
+#define INTERP_PERSPECTIVE	2
+#define INTERP_CENTROID		4
 
 static void
 emit_interp(struct nv50_pc *pc, struct nv50_reg *dst,
@@ -1441,11 +1449,18 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	struct tgsi_parse_context p;
 	boolean ret = FALSE;
 	unsigned i, c;
+	unsigned fcol, bcol, fcrd, depr;
+
+	/* count (centroid) perspective interpolations */
+	unsigned centroid_loads = 0;
+	unsigned perspect_loads = 0;
 
 	/* track register access for temps and attrs */
 	unsigned *r_usage[2];
 	r_usage[0] = NULL;
 	r_usage[1] = NULL;
+
+	depr = fcol = bcol = fcrd = 0xffff;
 
 	tgsi_parse_init(&p, pc->p->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&p)) {
@@ -1467,9 +1482,10 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		case TGSI_TOKEN_TYPE_DECLARATION:
 		{
 			const struct tgsi_full_declaration *d;
-			unsigned last;
+			unsigned last, first, mode;
 
 			d = &p.FullToken.FullDeclaration;
+			first = d->DeclarationRange.First;
 			last = d->DeclarationRange.Last;
 
 			switch (d->Declaration.File) {
@@ -1480,10 +1496,67 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			case TGSI_FILE_OUTPUT:
 				if (pc->result_nr < (last + 1))
 					pc->result_nr = last + 1;
+
+				if (!d->Declaration.Semantic)
+					break;
+
+				switch (d->Semantic.SemanticName) {
+				case TGSI_SEMANTIC_POSITION:
+					depr = first;
+					break;
+				default:
+					break;
+				}
+
 				break;
 			case TGSI_FILE_INPUT:
+			{
 				if (pc->attr_nr < (last + 1))
 					pc->attr_nr = last + 1;
+
+				if (pc->p->type != PIPE_SHADER_FRAGMENT)
+					break;
+
+				switch (d->Declaration.Interpolate) {
+				case TGSI_INTERPOLATE_CONSTANT:
+					mode = INTERP_FLAT;
+					break;
+				case TGSI_INTERPOLATE_PERSPECTIVE:
+					mode = INTERP_PERSPECTIVE;
+					break;
+				default:
+					mode = INTERP_LINEAR;
+					break;
+				}
+
+				if (d->Declaration.Semantic) {
+					switch (d->Semantic.SemanticName) {
+					case TGSI_SEMANTIC_POSITION:
+						fcrd = first;
+						break;
+					case TGSI_SEMANTIC_COLOR:
+						fcol = first;
+						mode = INTERP_PERSPECTIVE;
+						break;
+					case TGSI_SEMANTIC_BCOLOR:
+						bcol = first;
+						mode = INTERP_PERSPECTIVE;
+						break;
+					}
+				}
+
+				if (d->Declaration.Centroid) {
+					mode |= INTERP_CENTROID;
+					if (mode & INTERP_PERSPECTIVE)
+						centroid_loads++;
+				} else
+				if (mode & INTERP_PERSPECTIVE)
+					perspect_loads++;
+
+				assert(last < 32);
+				for (i = first; i <= last; i++)
+					pc->interp_mode[i] = mode;
+			}
 				break;
 			case TGSI_FILE_CONSTANT:
 				if (pc->param_nr < (last + 1))
