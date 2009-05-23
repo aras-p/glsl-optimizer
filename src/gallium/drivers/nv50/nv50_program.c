@@ -1117,15 +1117,12 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		}
 		break;
 	case TGSI_OPCODE_LRP:
+		temp = temp_temp(pc);
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			/*XXX: we can do better than this */
-			temp = alloc_temp(pc, NULL);
-			emit_neg(pc, temp, src[0][c]);
-			emit_mad(pc, temp, temp, src[2][c], src[2][c]);
-			emit_mad(pc, dst[c], src[0][c], src[1][c], temp);
-			free_temp(pc, temp);
+			emit_sub(pc, temp, src[1][c], src[2][c]);
+			emit_mad(pc, dst[c], temp, src[0][c], src[2][c]);
 		}
 		break;
 	case TGSI_OPCODE_MAD:
