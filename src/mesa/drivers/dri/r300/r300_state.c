@@ -967,7 +967,7 @@ static void r300StencilOpSeparate(GLcontext * ctx, GLenum face,
 static void r300UpdateWindow(GLcontext * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	__DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
+	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
 	GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
 	GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
 	const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -1020,7 +1020,7 @@ static void r300DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
 void r300UpdateViewportOffset(GLcontext * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	__DRIdrawablePrivate *dPriv = ((radeonContextPtr) rmesa)->dri.drawable;
+	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
 	GLfloat xoffset = (GLfloat) dPriv->x;
 	GLfloat yoffset = (GLfloat) dPriv->y + dPriv->h;
 	const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -1052,12 +1052,14 @@ r300FetchStateParameter(GLcontext * ctx,
 	switch (state[0]) {
 	case STATE_INTERNAL:
 		switch (state[1]) {
-		case STATE_R300_WINDOW_DIMENSION:
-			value[0] = r300->radeon.dri.drawable->w * 0.5f;	/* width*0.5 */
-			value[1] = r300->radeon.dri.drawable->h * 0.5f;	/* height*0.5 */
-			value[2] = 0.5F;	/* for moving range [-1 1] -> [0 1] */
-			value[3] = 1.0F;	/* not used */
-			break;
+		case STATE_R300_WINDOW_DIMENSION: {
+				__DRIdrawablePrivate * drawable = radeon_get_drawable(&r300->radeon);
+				value[0] = drawable->w * 0.5f;	/* width*0.5 */
+				value[1] = drawable->h * 0.5f;	/* height*0.5 */
+				value[2] = 0.5F;	/* for moving range [-1 1] -> [0 1] */
+				value[3] = 1.0F;	/* not used */
+				break;
+			}
 
 		case STATE_R300_TEXRECT_FACTOR:{
 				struct gl_texture_object *t =

@@ -117,7 +117,7 @@ struct radeon_framebuffer
 
 };
 
- 
+
 struct radeon_colorbuffer_state {
 	GLuint clear;
 	int roundEnable;
@@ -346,16 +346,6 @@ struct radeon_dri_mirror {
 	__DRIcontextPrivate *context;	/* DRI context */
 	__DRIscreenPrivate *screen;	/* DRI screen */
 
-   /**
-    * DRI drawable bound to this context for drawing.
-    */
-	__DRIdrawablePrivate *drawable;
-
-   /**
-    * DRI drawable bound to this context for reading.
-    */
-	__DRIdrawablePrivate *readable;
-
 	drm_context_t hwContext;
 	drm_hw_lock_t *hwLock;
 	int fd;
@@ -416,7 +406,7 @@ struct radeon_cmdbuf {
 struct radeon_context {
    GLcontext *glCtx;
    radeonScreenPtr radeonScreen;	/* Screen private DRI data */
-  
+
    /* Texture object bookkeeping
     */
    int                   texture_depth;
@@ -458,7 +448,7 @@ struct radeon_context {
    driOptionCache optionCache;
 
    struct radeon_cmdbuf cmdbuf;
-	
+
   drm_clip_rect_t fboRect;
   GLboolean constant_cliprect; /* use for FBO or DRI2 rendering */
   GLboolean front_cliprects;
@@ -506,6 +496,17 @@ struct radeon_context {
 };
 
 #define RADEON_CONTEXT(glctx) ((radeonContextPtr)(ctx->DriverCtx))
+
+static inline __DRIdrawablePrivate* radeon_get_drawable(radeonContextPtr radeon)
+{
+	return radeon->dri.context->driDrawablePriv;
+}
+
+static inline __DRIdrawablePrivate* radeon_get_readable(radeonContextPtr radeon)
+{
+	return radeon->dri.context->driReadablePriv;
+}
+
 
 /**
  * This function takes a float and packs it into a uint32_t

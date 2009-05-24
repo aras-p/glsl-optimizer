@@ -31,7 +31,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Authors:
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
- 
+
 #include <sched.h>
 #include <errno.h>
 
@@ -66,7 +66,7 @@ static void r200UserClear(GLcontext *ctx, GLuint mask)
 static void r200KernelClear(GLcontext *ctx, GLuint flags)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
+   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLint cx, cy, cw, ch, ret;
    GLuint i;
 
@@ -94,7 +94,7 @@ static void r200KernelClear(GLcontext *ctx, GLuint flags)
       if ( rmesa->radeon.sarea->last_clear - clear <= 25 ) {
 	 break;
       }
-      
+
       if (rmesa->radeon.do_usleeps) {
 	 UNLOCK_HARDWARE( &rmesa->radeon );
 	 DO_USLEEP( 1 );
@@ -190,7 +190,7 @@ static void r200KernelClear(GLcontext *ctx, GLuint flags)
 static void r200Clear( GLcontext *ctx, GLbitfield mask )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
+   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLuint flags = 0;
    GLuint color_mask = 0;
    GLuint orig_mask = mask;
@@ -202,7 +202,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
    {
       LOCK_HARDWARE( &rmesa->radeon );
       UNLOCK_HARDWARE( &rmesa->radeon );
-      if ( dPriv->numClipRects == 0 ) 
+      if ( dPriv->numClipRects == 0 )
 	 return;
    }
 
@@ -236,7 +236,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
       _swrast_Clear( ctx, mask );
    }
 
-   if ( !flags ) 
+   if ( !flags )
       return;
 
    if (rmesa->using_hyperz) {
@@ -267,7 +267,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
  * device fd.
  */
 void *r200AllocateMemoryMESA(__DRIscreen *screen, GLsizei size,
-			     GLfloat readfreq, GLfloat writefreq, 
+			     GLfloat readfreq, GLfloat writefreq,
 			     GLfloat priority)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -277,7 +277,7 @@ void *r200AllocateMemoryMESA(__DRIscreen *screen, GLsizei size,
    int ret;
 
    if (R200_DEBUG & DEBUG_IOCTL)
-      fprintf(stderr, "%s sz %d %f/%f/%f\n", __FUNCTION__, size, readfreq, 
+      fprintf(stderr, "%s sz %d %f/%f/%f\n", __FUNCTION__, size, readfreq,
 	      writefreq, priority);
 
    if (!ctx || !(rmesa = R200_CONTEXT(ctx)) || !rmesa->radeon.radeonScreen->gartTextures.map)
@@ -294,12 +294,12 @@ void *r200AllocateMemoryMESA(__DRIscreen *screen, GLsizei size,
    ret = drmCommandWriteRead( rmesa->radeon.radeonScreen->driScreen->fd,
 			      DRM_RADEON_ALLOC,
 			      &alloc, sizeof(alloc));
-   
+
    if (ret) {
       fprintf(stderr, "%s: DRM_RADEON_ALLOC ret %d\n", __FUNCTION__, ret);
       return NULL;
    }
-   
+
    {
       char *region_start = (char *)rmesa->radeon.radeonScreen->gartTextures.map;
       return (void *)(region_start + region_offset);
@@ -326,7 +326,7 @@ void r200FreeMemoryMESA(__DRIscreen *screen, GLvoid *pointer)
 
    region_offset = (char *)pointer - (char *)rmesa->radeon.radeonScreen->gartTextures.map;
 
-   if (region_offset < 0 || 
+   if (region_offset < 0 ||
        region_offset > rmesa->radeon.radeonScreen->gartTextures.size) {
       fprintf(stderr, "offset %d outside range 0..%d\n", region_offset,
 	      rmesa->radeon.radeonScreen->gartTextures.size);
@@ -335,12 +335,12 @@ void r200FreeMemoryMESA(__DRIscreen *screen, GLvoid *pointer)
 
    memfree.region = RADEON_MEM_REGION_GART;
    memfree.region_offset = region_offset;
-   
+
    ret = drmCommandWrite( rmesa->radeon.radeonScreen->driScreen->fd,
 			  DRM_RADEON_FREE,
 			  &memfree, sizeof(memfree));
-   
-   if (ret) 
+
+   if (ret)
       fprintf(stderr, "%s: DRM_RADEON_FREE ret %d\n", __FUNCTION__, ret);
 }
 
@@ -374,7 +374,7 @@ GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
 
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "r200IsGartMemory( %p ) : %d\n", pointer, valid );
-   
+
    return valid;
 }
 

@@ -79,7 +79,7 @@ static void r200AlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
 
    switch ( func ) {
    case GL_NEVER:
-      pp_misc |= R200_ALPHA_TEST_FAIL; 
+      pp_misc |= R200_ALPHA_TEST_FAIL;
       break;
    case GL_LESS:
       pp_misc |= R200_ALPHA_TEST_LESS;
@@ -479,7 +479,7 @@ static void r200Fogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
 	 }
       }
       break;
-   case GL_FOG_COLOR: 
+   case GL_FOG_COLOR:
       R200_STATECHANGE( rmesa, ctx );
       UNCLAMPED_FLOAT_TO_RGB_CHAN( col, ctx->Fog.Color );
       i = radeonPackColor( 4, col[0], col[1], col[2], 0 );
@@ -507,7 +507,7 @@ static void r200Fogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
 
       if (out_0 != rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0]) {
 	 R200_STATECHANGE( rmesa, vtx );
-	 rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] = out_0;	 
+	 rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] = out_0;
       }
 
       break;
@@ -696,7 +696,7 @@ static void r200LineStipple( GLcontext *ctx, GLint factor, GLushort pattern )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
    R200_STATECHANGE( rmesa, lin );
-   rmesa->hw.lin.cmd[LIN_RE_LINE_PATTERN] = 
+   rmesa->hw.lin.cmd[LIN_RE_LINE_PATTERN] =
       ((((GLuint)factor & 0xff) << 16) | ((GLuint)pattern));
 }
 
@@ -720,10 +720,10 @@ static void r200ColorMask( GLcontext *ctx,
    if (!(r && g && b && a))
       flag |= R200_PLANE_MASK_ENABLE;
 
-   if ( rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] != flag ) { 
-      R200_STATECHANGE( rmesa, ctx ); 
-      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = flag; 
-   } 
+   if ( rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] != flag ) {
+      R200_STATECHANGE( rmesa, ctx );
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = flag;
+   }
 
    if ( rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK] != mask ) {
       R200_STATECHANGE( rmesa, msk );
@@ -774,7 +774,7 @@ static void r200PolygonStipple( GLcontext *ctx, const GLubyte *mask )
    /* FIXME: Use window x,y offsets into stipple RAM.
     */
    stipple.mask = rmesa->state.stipple.mask;
-   drmCommandWrite( rmesa->radeon.dri.fd, DRM_RADEON_STIPPLE, 
+   drmCommandWrite( rmesa->radeon.dri.fd, DRM_RADEON_STIPPLE,
                     &stipple, sizeof(stipple) );
    UNLOCK_HARDWARE( &rmesa->radeon );
 }
@@ -785,7 +785,7 @@ static void r200PolygonMode( GLcontext *ctx, GLenum face, GLenum mode )
    GLboolean flag = (ctx->_TriangleCaps & DD_TRI_UNFILLED) != 0;
 
    /* Can't generally do unfilled via tcl, but some good special
-    * cases work. 
+    * cases work.
     */
    TCL_FALLBACK( ctx, R200_TCL_FALLBACK_UNFILLED, flag);
    if (rmesa->radeon.TclFallback) {
@@ -827,34 +827,34 @@ static void r200UpdateSpecular( GLcontext *ctx )
 
    if (ctx->Light.Enabled &&
        ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR) {
-      rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] |= 
+      rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] |=
 	 ((R200_VTX_FP_RGBA << R200_VTX_COLOR_0_SHIFT) |
-	  (R200_VTX_FP_RGBA << R200_VTX_COLOR_1_SHIFT));	
+	  (R200_VTX_FP_RGBA << R200_VTX_COLOR_1_SHIFT));
       rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL] |= R200_OUTPUT_COLOR_0;
       rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL] |= R200_OUTPUT_COLOR_1;
       rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] |= R200_LIGHTING_ENABLE;
       p |=  R200_SPECULAR_ENABLE;
-      rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] &= 
+      rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] &=
 	 ~R200_DIFFUSE_SPECULAR_COMBINE;
    }
    else if (ctx->Light.Enabled) {
-      rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] |= 
-	 ((R200_VTX_FP_RGBA << R200_VTX_COLOR_0_SHIFT));	
+      rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] |=
+	 ((R200_VTX_FP_RGBA << R200_VTX_COLOR_0_SHIFT));
       rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL] |= R200_OUTPUT_COLOR_0;
       rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] |= R200_LIGHTING_ENABLE;
    } else if (ctx->Fog.ColorSumEnabled ) {
-      rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] |= 
+      rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] |=
 	 ((R200_VTX_FP_RGBA << R200_VTX_COLOR_0_SHIFT) |
-	  (R200_VTX_FP_RGBA << R200_VTX_COLOR_1_SHIFT));	
+	  (R200_VTX_FP_RGBA << R200_VTX_COLOR_1_SHIFT));
       p |=  R200_SPECULAR_ENABLE;
    } else {
-      rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] |= 
-	 ((R200_VTX_FP_RGBA << R200_VTX_COLOR_0_SHIFT));	
+      rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] |=
+	 ((R200_VTX_FP_RGBA << R200_VTX_COLOR_0_SHIFT));
    }
 
    if (ctx->Fog.Enabled) {
-      rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] |= 
-	 ((R200_VTX_FP_RGBA << R200_VTX_COLOR_1_SHIFT));	
+      rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_0] |=
+	 ((R200_VTX_FP_RGBA << R200_VTX_COLOR_1_SHIFT));
       rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL] |= R200_OUTPUT_COLOR_1;
    }
 
@@ -865,7 +865,7 @@ static void r200UpdateSpecular( GLcontext *ctx )
 
    /* Update vertex/render formats
     */
-   if (rmesa->radeon.TclFallback) { 
+   if (rmesa->radeon.TclFallback) {
       r200ChooseRenderState( ctx );
       r200ChooseVertexState( ctx );
    }
@@ -877,7 +877,7 @@ static void r200UpdateSpecular( GLcontext *ctx )
  */
 
 
-/* Update on colormaterial, material emmissive/ambient, 
+/* Update on colormaterial, material emmissive/ambient,
  * lightmodel.globalambient
  */
 static void update_global_ambient( GLcontext *ctx )
@@ -891,23 +891,23 @@ static void update_global_ambient( GLcontext *ctx )
     */
    if ((rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_1] &
        ((3 << R200_FRONT_EMISSIVE_SOURCE_SHIFT) |
-	(3 << R200_FRONT_AMBIENT_SOURCE_SHIFT))) == 0) 
+	(3 << R200_FRONT_AMBIENT_SOURCE_SHIFT))) == 0)
    {
-      COPY_3V( &fcmd[GLT_RED], 
+      COPY_3V( &fcmd[GLT_RED],
 	       ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_EMISSION]);
       ACC_SCALE_3V( &fcmd[GLT_RED],
 		   ctx->Light.Model.Ambient,
 		   ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_AMBIENT]);
-   } 
+   }
    else
    {
       COPY_3V( &fcmd[GLT_RED], ctx->Light.Model.Ambient );
    }
-   
+
    R200_DB_STATECHANGE(rmesa, &rmesa->hw.glt);
 }
 
-/* Update on change to 
+/* Update on change to
  *    - light[p].colors
  *    - light[p].enabled
  */
@@ -921,10 +921,10 @@ static void update_light_colors( GLcontext *ctx, GLuint p )
       r200ContextPtr rmesa = R200_CONTEXT(ctx);
       float *fcmd = (float *)R200_DB_STATE( lit[p] );
 
-      COPY_4V( &fcmd[LIT_AMBIENT_RED], l->Ambient );	 
+      COPY_4V( &fcmd[LIT_AMBIENT_RED], l->Ambient );
       COPY_4V( &fcmd[LIT_DIFFUSE_RED], l->Diffuse );
       COPY_4V( &fcmd[LIT_SPECULAR_RED], l->Specular );
-      
+
       R200_DB_STATECHANGE( rmesa, &rmesa->hw.lit[p] );
    }
 }
@@ -944,7 +944,7 @@ static void r200ColorMaterial( GLcontext *ctx, GLenum face, GLenum mode )
 
    if (ctx->Light.ColorMaterialEnabled) {
       GLuint mask = ctx->Light.ColorMaterialBitmask;
-   
+
       if (mask & MAT_BIT_FRONT_EMISSION) {
 	 light_model_ctl1 |= (R200_LM1_SOURCE_VERTEX_COLOR_0 <<
 			     R200_FRONT_EMISSIVE_SOURCE_SHIFT);
@@ -960,7 +960,7 @@ static void r200ColorMaterial( GLcontext *ctx, GLenum face, GLenum mode )
       else
          light_model_ctl1 |= (R200_LM1_SOURCE_MATERIAL_0 <<
 			     R200_FRONT_AMBIENT_SOURCE_SHIFT);
-	 
+
       if (mask & MAT_BIT_FRONT_DIFFUSE) {
 	 light_model_ctl1 |= (R200_LM1_SOURCE_VERTEX_COLOR_0 <<
 			     R200_FRONT_DIFFUSE_SOURCE_SHIFT);
@@ -968,7 +968,7 @@ static void r200ColorMaterial( GLcontext *ctx, GLenum face, GLenum mode )
       else
          light_model_ctl1 |= (R200_LM1_SOURCE_MATERIAL_0 <<
 			     R200_FRONT_DIFFUSE_SOURCE_SHIFT);
-   
+
       if (mask & MAT_BIT_FRONT_SPECULAR) {
 	 light_model_ctl1 |= (R200_LM1_SOURCE_VERTEX_COLOR_0 <<
 			     R200_FRONT_SPECULAR_SOURCE_SHIFT);
@@ -977,7 +977,7 @@ static void r200ColorMaterial( GLcontext *ctx, GLenum face, GLenum mode )
          light_model_ctl1 |= (R200_LM1_SOURCE_MATERIAL_0 <<
 			     R200_FRONT_SPECULAR_SOURCE_SHIFT);
       }
-   
+
       if (mask & MAT_BIT_BACK_EMISSION) {
 	 light_model_ctl1 |= (R200_LM1_SOURCE_VERTEX_COLOR_0 <<
 			     R200_BACK_EMISSIVE_SOURCE_SHIFT);
@@ -1027,8 +1027,8 @@ static void r200ColorMaterial( GLcontext *ctx, GLenum face, GLenum mode )
       R200_STATECHANGE( rmesa, tcl );
       rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_1] = light_model_ctl1;
    }
-   
-   
+
+
 }
 
 void r200UpdateMaterial( GLcontext *ctx )
@@ -1038,7 +1038,7 @@ void r200UpdateMaterial( GLcontext *ctx )
    GLfloat *fcmd = (GLfloat *)R200_DB_STATE( mtl[0] );
    GLfloat *fcmd2 = (GLfloat *)R200_DB_STATE( mtl[1] );
    GLuint mask = ~0;
-   
+
    /* Might be possible and faster to update everything unconditionally? */
    if (ctx->Light.ColorMaterialEnabled)
       mask &= ~ctx->Light.ColorMaterialBitmask;
@@ -1124,7 +1124,7 @@ void r200UpdateMaterial( GLcontext *ctx )
  *
  * which are calculated in light.c and are correct for the current
  * lighting space (model or eye), hence dependencies on _NEW_MODELVIEW
- * and _MESA_NEW_NEED_EYE_COORDS.  
+ * and _MESA_NEW_NEED_EYE_COORDS.
  */
 static void update_light( GLcontext *ctx )
 {
@@ -1141,8 +1141,8 @@ static void update_light( GLcontext *ctx )
 	 tmp &= ~R200_LIGHT_IN_MODELSPACE;
       else
 	 tmp |= R200_LIGHT_IN_MODELSPACE;
-      
-      if (tmp != rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0]) 
+
+      if (tmp != rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0])
       {
 	 R200_STATECHANGE( rmesa, tcl );
 	 rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] = tmp;
@@ -1166,10 +1166,10 @@ static void update_light( GLcontext *ctx )
 	 if (ctx->Light.Light[p].Enabled) {
 	    struct gl_light *l = &ctx->Light.Light[p];
 	    GLfloat *fcmd = (GLfloat *)R200_DB_STATE( lit[p] );
-	    
+
 	    if (l->EyePosition[3] == 0.0) {
-	       COPY_3FV( &fcmd[LIT_POSITION_X], l->_VP_inf_norm ); 
-	       COPY_3FV( &fcmd[LIT_DIRECTION_X], l->_h_inf_norm ); 
+	       COPY_3FV( &fcmd[LIT_POSITION_X], l->_VP_inf_norm );
+	       COPY_3FV( &fcmd[LIT_DIRECTION_X], l->_h_inf_norm );
 	       fcmd[LIT_POSITION_W] = 0;
 	       fcmd[LIT_DIRECTION_W] = 0;
 	    } else {
@@ -1193,21 +1193,21 @@ static void r200Lightfv( GLcontext *ctx, GLenum light,
    GLint p = light - GL_LIGHT0;
    struct gl_light *l = &ctx->Light.Light[p];
    GLfloat *fcmd = (GLfloat *)rmesa->hw.lit[p].cmd;
-   
+
 
    switch (pname) {
-   case GL_AMBIENT:		
+   case GL_AMBIENT:
    case GL_DIFFUSE:
    case GL_SPECULAR:
       update_light_colors( ctx, p );
       break;
 
-   case GL_SPOT_DIRECTION: 
-      /* picked up in update_light */	
+   case GL_SPOT_DIRECTION:
+      /* picked up in update_light */
       break;
 
    case GL_POSITION: {
-      /* positions picked up in update_light, but can do flag here */	
+      /* positions picked up in update_light, but can do flag here */
       GLuint flag = (p&1)? R200_LIGHT_1_IS_LOCAL : R200_LIGHT_0_IS_LOCAL;
       GLuint idx = TCL_PER_LIGHT_CTL_0 + p/2;
 
@@ -1323,7 +1323,7 @@ static void r200LightModelfv( GLcontext *ctx, GLenum pname,
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
    switch (pname) {
-      case GL_LIGHT_MODEL_AMBIENT: 
+      case GL_LIGHT_MODEL_AMBIENT:
 	 update_global_ambient( ctx );
 	 break;
 
@@ -1582,7 +1582,7 @@ static void r200ClearStencil( GLcontext *ctx, GLint s )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
-   rmesa->radeon.state.stencil.clear = 
+   rmesa->radeon.state.stencil.clear =
       ((GLuint) (ctx->Stencil.Clear & 0xff) |
        (0xff << R200_STENCIL_MASK_SHIFT) |
        ((ctx->Stencil.WriteMask[0] & 0xff) << R200_STENCIL_WRITEMASK_SHIFT));
@@ -1607,7 +1607,7 @@ static void r200ClearStencil( GLcontext *ctx, GLint s )
 void r200UpdateWindow( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
+   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
    GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -1663,7 +1663,7 @@ static void r200DepthRange( GLcontext *ctx, GLclampd nearval,
 void r200UpdateViewportOffset( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
+   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLfloat xoffset = (GLfloat)dPriv->x;
    GLfloat yoffset = (GLfloat)dPriv->y + dPriv->h;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -1693,8 +1693,8 @@ void r200UpdateViewportOffset( GLcontext *ctx )
                 R200_STIPPLE_Y_OFFSET_MASK);
 
          /* add magic offsets, then invert */
-         stx = 31 - ((rmesa->radeon.dri.drawable->x - 1) & R200_STIPPLE_COORD_MASK);
-         sty = 31 - ((rmesa->radeon.dri.drawable->y + rmesa->radeon.dri.drawable->h - 1)
+         stx = 31 - ((dPriv->x - 1) & R200_STIPPLE_COORD_MASK);
+         sty = 31 - ((dPriv->y + dPriv->h - 1)
                      & R200_STIPPLE_COORD_MASK);
 
          m |= ((stx << R200_STIPPLE_X_OFFSET_SHIFT) |
@@ -1808,7 +1808,7 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
    case GL_CLIP_PLANE2:
    case GL_CLIP_PLANE3:
    case GL_CLIP_PLANE4:
-   case GL_CLIP_PLANE5: 
+   case GL_CLIP_PLANE5:
       p = cap-GL_CLIP_PLANE0;
       R200_STATECHANGE( rmesa, tcl );
       if (state) {
@@ -1860,7 +1860,7 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] &= ~R200_TCL_FOG_MASK;
       }
       r200UpdateSpecular( ctx ); /* for PK_SPEC */
-      if (rmesa->radeon.TclFallback) 
+      if (rmesa->radeon.TclFallback)
 	 r200ChooseVertexState( ctx );
       _mesa_allow_light_in_model( ctx, !state );
       break;
@@ -1875,13 +1875,13 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
    case GL_LIGHT7:
       R200_STATECHANGE(rmesa, tcl);
       p = cap - GL_LIGHT0;
-      if (p&1) 
+      if (p&1)
 	 flag = (R200_LIGHT_1_ENABLE |
-		 R200_LIGHT_1_ENABLE_AMBIENT | 
+		 R200_LIGHT_1_ENABLE_AMBIENT |
 		 R200_LIGHT_1_ENABLE_SPECULAR);
       else
 	 flag = (R200_LIGHT_0_ENABLE |
-		 R200_LIGHT_0_ENABLE_AMBIENT | 
+		 R200_LIGHT_0_ENABLE_AMBIENT |
 		 R200_LIGHT_0_ENABLE_SPECULAR);
 
       if (state)
@@ -1889,7 +1889,7 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
       else
 	 rmesa->hw.tcl.cmd[p/2 + TCL_PER_LIGHT_CTL_0] &= ~flag;
 
-      /* 
+      /*
        */
       update_light_colors( ctx, p );
       break;
@@ -2043,7 +2043,7 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
    case GL_TEXTURE_GEN_T:
       /* Picked up in r200UpdateTextureState.
        */
-      rmesa->recheck_texgen[ctx->Texture.CurrentUnit] = GL_TRUE; 
+      rmesa->recheck_texgen[ctx->Texture.CurrentUnit] = GL_TRUE;
       break;
 
    case GL_COLOR_SUM_EXT:
@@ -2160,7 +2160,7 @@ void r200LightingSpaceChange( GLcontext *ctx )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLboolean tmp;
 
-   if (R200_DEBUG & DEBUG_STATE) 
+   if (R200_DEBUG & DEBUG_STATE)
       fprintf(stderr, "%s %d BEFORE %x\n", __FUNCTION__, ctx->_NeedEyeCoords,
 	      rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0]);
 
@@ -2176,7 +2176,7 @@ void r200LightingSpaceChange( GLcontext *ctx )
       rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] &= ~R200_RESCALE_NORMALS;
    }
 
-   if (R200_DEBUG & DEBUG_STATE) 
+   if (R200_DEBUG & DEBUG_STATE)
       fprintf(stderr, "%s %d AFTER %x\n", __FUNCTION__, ctx->_NeedEyeCoords,
 	      rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0]);
 }
@@ -2219,7 +2219,7 @@ static void update_texturematrix( GLcontext *ctx )
    GLuint compsel = rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL];
    int unit;
 
-   if (R200_DEBUG & DEBUG_STATE) 
+   if (R200_DEBUG & DEBUG_STATE)
       fprintf(stderr, "%s before COMPSEL: %x\n", __FUNCTION__,
 	      rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_COMPSEL]);
 
@@ -2227,7 +2227,7 @@ static void update_texturematrix( GLcontext *ctx )
    rmesa->TexMatCompSel = 0;
 
    for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
-      if (!ctx->Texture.Unit[unit]._ReallyEnabled) 
+      if (!ctx->Texture.Unit[unit]._ReallyEnabled)
 	 continue;
 
       if (ctx->TextureMatrixStack[unit].Top->type != MATRIX_IDENTITY) {
@@ -2237,21 +2237,21 @@ static void update_texturematrix( GLcontext *ctx )
 	 rmesa->TexMatCompSel |= R200_OUTPUT_TEX_0 << unit;
 
 	 if (rmesa->TexGenEnabled & (R200_TEXMAT_0_ENABLE << unit)) {
-	    /* Need to preconcatenate any active texgen 
+	    /* Need to preconcatenate any active texgen
 	     * obj/eyeplane matrices:
 	     */
 	    _math_matrix_mul_matrix( &rmesa->tmpmat,
-				     ctx->TextureMatrixStack[unit].Top, 
+				     ctx->TextureMatrixStack[unit].Top,
 				     &rmesa->TexGenMatrix[unit] );
 	    upload_matrix( rmesa, rmesa->tmpmat.m, R200_MTX_TEX0+unit );
-	 } 
+	 }
 	 else {
-	    upload_matrix( rmesa, ctx->TextureMatrixStack[unit].Top->m, 
+	    upload_matrix( rmesa, ctx->TextureMatrixStack[unit].Top->m,
 			   R200_MTX_TEX0+unit );
 	 }
       }
       else if (rmesa->TexGenEnabled & (R200_TEXMAT_0_ENABLE << unit)) {
-	 upload_matrix( rmesa, rmesa->TexGenMatrix[unit].m, 
+	 upload_matrix( rmesa, rmesa->TexGenMatrix[unit].m,
 			R200_MTX_TEX0+unit );
       }
    }
@@ -2277,7 +2277,7 @@ static GLboolean r200ValidateBuffers(GLcontext *ctx)
    int i;
 
    radeon_validate_reset_bos(&rmesa->radeon);
-   
+
    rrb = radeon_get_colorbuffer(&rmesa->radeon);
    /* color buffer */
    if (rrb && rrb->bo) {
@@ -2295,7 +2295,7 @@ static GLboolean r200ValidateBuffers(GLcontext *ctx)
 
    for (i = 0; i < ctx->Const.MaxTextureImageUnits; ++i) {
       radeonTexObj *t;
-      
+
       if (!ctx->Texture.Unit[i]._ReallyEnabled)
 	 continue;
 
@@ -2323,7 +2323,7 @@ GLboolean r200ValidateState( GLcontext *ctx )
       _mesa_update_framebuffer(ctx);
       /* this updates the DrawBuffer's Width/Height if it's a FBO */
       _mesa_update_draw_buffer_bounds(ctx);
-      
+
       R200_STATECHANGE(rmesa, ctx);
    }
 
@@ -2341,7 +2341,7 @@ GLboolean r200ValidateState( GLcontext *ctx )
 
    /* Need an event driven matrix update?
     */
-   if (new_state & (_NEW_MODELVIEW|_NEW_PROJECTION)) 
+   if (new_state & (_NEW_MODELVIEW|_NEW_PROJECTION))
       upload_matrix( rmesa, ctx->_ModelProjectMatrix.m, R200_MTX_MVP );
 
    /* Need these for lighting (shouldn't upload otherwise)
@@ -2365,7 +2365,7 @@ GLboolean r200ValidateState( GLcontext *ctx )
    /* emit all active clip planes if projection matrix changes.
     */
    if (new_state & (_NEW_PROJECTION)) {
-      if (ctx->Transform.ClipPlanesEnabled) 
+      if (ctx->Transform.ClipPlanesEnabled)
 	 r200UpdateClipPlanes( ctx );
    }
 
@@ -2437,7 +2437,7 @@ static void r200WrapRunPipeline( GLcontext *ctx )
    }
 
    /* Run the pipeline.
-    */ 
+    */
    _tnl_run_pipeline( ctx );
 
    if (has_material) {

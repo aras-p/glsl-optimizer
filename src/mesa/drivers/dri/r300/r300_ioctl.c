@@ -79,7 +79,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 {
 	BATCH_LOCALS(&r300->radeon);
 	GLcontext *ctx = r300->radeon.glCtx;
-	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
+	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&r300->radeon);
 	GLuint cbpitch = 0;
 	r300ContextPtr rmesa = r300;
 
@@ -200,7 +200,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[2]);
 		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[3]);
 	}
-	
+
 	r300EmitCacheFlush(rmesa);
 	cp_wait(&r300->radeon, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
 
@@ -213,7 +213,7 @@ static void r300EmitClearState(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	BATCH_LOCALS(&r300->radeon);
-	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
+	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&r300->radeon);
 	int i;
 	int has_tcl;
 	int is_r500 = 0;
@@ -447,7 +447,7 @@ static void r300EmitClearState(GLcontext * ctx)
 			R500_ALU_RGBA_G_SWIZ_0 |
 			R500_ALU_RGBA_B_SWIZ_0 |
 			R500_ALU_RGBA_A_SWIZ_0;
-		
+
 		r500fp.cmd[7] = 0;
 		emit_r500fp(ctx, &r500fp);
 	}
@@ -541,9 +541,9 @@ static void r300EmitClearState(GLcontext * ctx)
 }
 
 static void r300KernelClear(GLcontext *ctx, GLuint flags)
-{	  	
+{
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
+	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&r300->radeon);
 	struct radeon_framebuffer *rfb = dPriv->driverPrivate;
 	struct radeon_renderbuffer *rrb;
 	struct radeon_renderbuffer *rrbd;
@@ -565,7 +565,7 @@ static void r300KernelClear(GLcontext *ctx, GLuint flags)
 		r300ClearBuffer(r300, CLEARBUFFER_COLOR, rrb, NULL);
 		bits = 0;
 	}
-		
+
 	if (flags & BUFFER_BIT_FRONT_LEFT) {
 		rrb = radeon_get_renderbuffer(&rfb->base, BUFFER_FRONT_LEFT);
 		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, rrb, rrbd);
@@ -590,7 +590,7 @@ static void r300KernelClear(GLcontext *ctx, GLuint flags)
 static void r300Clear(GLcontext * ctx, GLbitfield mask)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
+	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&r300->radeon);
 	const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask);
 	GLbitfield swrast_mask = 0, tri_mask = 0;
 	int i;

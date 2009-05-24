@@ -153,7 +153,7 @@ void radeon_get_cliprects(radeonContextPtr radeon,
 			  unsigned int *num_cliprects,
 			  int *x_off, int *y_off)
 {
-	__DRIdrawablePrivate *dPriv = radeon->dri.drawable;
+	__DRIdrawablePrivate *dPriv = radeon_get_drawable(radeon);
 	struct radeon_framebuffer *rfb = dPriv->driverPrivate;
 
 	if (radeon->constant_cliprect) {
@@ -185,15 +185,15 @@ void radeon_get_cliprects(radeonContextPtr radeon,
  */
 void radeonSetCliprects(radeonContextPtr radeon)
 {
-	__DRIdrawablePrivate *const drawable = radeon->dri.drawable;
-	__DRIdrawablePrivate *const readable = radeon->dri.readable;
+	__DRIdrawablePrivate *const drawable = radeon_get_drawable(radeon);
+	__DRIdrawablePrivate *const readable = radeon_get_readable(radeon);
 	struct radeon_framebuffer *const draw_rfb = drawable->driverPrivate;
 	struct radeon_framebuffer *const read_rfb = readable->driverPrivate;
 	int x_off, y_off;
 
 	radeon_get_cliprects(radeon, &radeon->pClipRects,
 			     &radeon->numClipRects, &x_off, &y_off);
-	
+
 	if ((draw_rfb->base.Width != drawable->w) ||
 	    (draw_rfb->base.Height != drawable->h)) {
 		_mesa_resize_framebuffer(radeon->glCtx, &draw_rfb->base,
@@ -221,9 +221,9 @@ void radeonUpdateScissor( GLcontext *ctx )
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 
-	if ( rmesa->dri.drawable ) {
-		__DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
-      
+	if ( radeon_get_drawable(rmesa) ) {
+		__DRIdrawablePrivate *dPriv = radeon_get_drawable(rmesa);
+
 		int x = ctx->Scissor.X;
 		int y = dPriv->h - ctx->Scissor.Y - ctx->Scissor.Height;
 		int w = ctx->Scissor.X + ctx->Scissor.Width - 1;
@@ -425,11 +425,11 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 	radeonContextPtr rmesa;
 	struct radeon_framebuffer *rfb;
 	GLint nbox, i, ret;
-   
+
 	assert(dPriv);
 	assert(dPriv->driContextPriv);
 	assert(dPriv->driContextPriv->driverPrivate);
-   
+
 	rmesa = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
 
 	LOCK_HARDWARE(rmesa);
@@ -506,7 +506,7 @@ static int radeonScheduleSwap(__DRIdrawablePrivate *dPriv, GLboolean *missed_tar
 
 	UNLOCK_HARDWARE(rmesa);
 	driWaitForVBlank(dPriv, missed_target);
-	
+
 	return 0;
 }
 
@@ -540,7 +540,7 @@ static GLboolean radeonPageFlip( __DRIdrawablePrivate *dPriv )
 	radeon->sarea->nbox = 1;
 
 	ret = drmCommandNone( radeon->dri.fd, DRM_RADEON_FLIP );
-	
+
 	UNLOCK_HARDWARE(radeon);
 
 	if ( ret ) {
@@ -638,7 +638,7 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 	struct radeon_renderbuffer *rrbDepth = NULL, *rrbStencil = NULL,
 		*rrbColor = NULL;
 	uint32_t offset = 0;
-       
+
 
 	if (!fb) {
 		/* this can happen during the initial context initialization */
@@ -650,7 +650,7 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 		radeon->vtbl.fallback(ctx, RADEON_FALLBACK_DRAW_BUFFER, GL_TRUE);
 		return;
 	}
-		
+
 	/* Do this here, note core Mesa, since this function is called from
 	 * many places within the driver.
 	 */
@@ -737,7 +737,7 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 		ctx->Driver.FrontFace(ctx, ctx->Polygon.FrontFace);
 	else
 		ctx->NewState |= _NEW_POLYGON;
-	
+
 	/*
 	 * Update depth test state
 	 */
@@ -751,7 +751,7 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 	} else {
 		ctx->NewState |= (_NEW_DEPTH | _NEW_STENCIL);
 	}
-	
+
 	_mesa_reference_renderbuffer(&radeon->state.depth.rb, &rrbDepth->base);
 	_mesa_reference_renderbuffer(&radeon->state.color.rb, &rrbColor->base);
 	radeon->state.color.draw_offset = offset;
@@ -762,7 +762,7 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 		ctx->Driver.Viewport(ctx, ctx->Viewport.X, ctx->Viewport.Y,
 				     ctx->Viewport.Width, ctx->Viewport.Height);
 	} else {
-	
+
 	}
 #endif
 	ctx->NewState |= _NEW_VIEWPORT;
@@ -814,7 +814,7 @@ void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
 				radeon->dri.context->driDrawablePriv);
       }
 	}
-	
+
 	radeon_draw_buffer(ctx, ctx->DrawBuffer);
 }
 
@@ -836,7 +836,7 @@ void radeonReadBuffer( GLcontext *ctx, GLenum mode )
  */
 void radeonUpdatePageFlipping(radeonContextPtr radeon)
 {
-	struct radeon_framebuffer *rfb = radeon->dri.drawable->driverPrivate;
+	struct radeon_framebuffer *rfb = radeon_get_drawable(radeon)->driverPrivate;
 
 	rfb->pf_active = radeon->sarea->pfState;
 	rfb->pf_current_page = radeon->sarea->pfCurrentPage;
@@ -869,7 +869,6 @@ void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei he
 
 	old_viewport = ctx->Driver.Viewport;
 	ctx->Driver.Viewport = NULL;
-	radeon->dri.drawable = driContext->driDrawablePriv;
 	radeon_window_moved(radeon);
 	radeon_draw_buffer(ctx, radeon->glCtx->DrawBuffer);
 	ctx->Driver.Viewport = old_viewport;
@@ -962,7 +961,7 @@ static INLINE void radeonEmitAtoms(radeonContextPtr radeon, GLboolean dirty)
 			}
 		}
 	}
-   
+
 	COMMIT_BATCH();
 }
 
@@ -1032,7 +1031,7 @@ void radeonEmitState(radeonContextPtr radeon)
 	if (!radeon->cmdbuf.cs->cdw) {
 		if (RADEON_DEBUG & DEBUG_STATE)
 			fprintf(stderr, "Begin reemit state\n");
-		
+
 		radeonEmitAtoms(radeon, GL_FALSE);
 	}
 
@@ -1064,7 +1063,7 @@ void radeonFlush(GLcontext *ctx)
 		radeon->dma.flush( ctx );
 
 	radeonEmitState(radeon);
-   
+
 	if (radeon->cmdbuf.cs->cdw)
 		rcommonFlushCmdBuf(radeon, __FUNCTION__);
 
@@ -1073,8 +1072,8 @@ void radeonFlush(GLcontext *ctx)
 
 		if (screen->dri2.loader && (screen->dri2.loader->base.version >= 2)
 			&& (screen->dri2.loader->flushFrontBuffer != NULL)) {
-			(*screen->dri2.loader->flushFrontBuffer)(radeon->dri.drawable,
-						  radeon->dri.drawable->loaderPrivate);
+			__DRIdrawablePrivate * drawable = radeon_get_drawable(radeon);
+			(*screen->dri2.loader->flushFrontBuffer)(drawable, drawable->loaderPrivate);
 
 			/* Only clear the dirty bit if front-buffer rendering is no longer
 			 * enabled.  This is done so that the dirty bit can only be set in
@@ -1161,7 +1160,7 @@ int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller)
 	int ret;
 
 	radeonReleaseDmaRegion(rmesa);
-	
+
 	LOCK_HARDWARE(rmesa);
 	ret = rcommonFlushCmdBufLocked(rmesa, caller);
 	UNLOCK_HARDWARE(rmesa);
@@ -1223,7 +1222,7 @@ void rcommonInitCmdBuf(radeonContextPtr rmesa)
 	rmesa->cmdbuf.cs = radeon_cs_create(rmesa->cmdbuf.csm, size);
 	assert(rmesa->cmdbuf.cs != NULL);
 	rmesa->cmdbuf.size = size;
-	
+
 	if (!rmesa->radeonScreen->kernel_mm) {
 		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM, rmesa->radeonScreen->texSize[0]);
 		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_GTT, rmesa->radeonScreen->gartTextures.size);
@@ -1334,7 +1333,7 @@ void radeon_clear_tris(GLcontext *ctx, GLbitfield mask)
    unsigned int saved_active_texture;
 
    assert((mask & ~(TRI_CLEAR_COLOR_BITS | BUFFER_BIT_DEPTH |
-		    BUFFER_BIT_STENCIL)) == 0);   
+		    BUFFER_BIT_STENCIL)) == 0);
 
    _mesa_PushAttrib(GL_COLOR_BUFFER_BIT |
 		    GL_CURRENT_BIT |
@@ -1346,7 +1345,7 @@ void radeon_clear_tris(GLcontext *ctx, GLbitfield mask)
 		    GL_CURRENT_BIT);
    _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
    saved_active_texture = ctx->Texture.CurrentUnit;
-  
+
   /* Disable existing GL state we don't want to apply to a clear. */
    _mesa_Disable(GL_ALPHA_TEST);
    _mesa_Disable(GL_BLEND);
@@ -1375,10 +1374,10 @@ void radeon_clear_tris(GLcontext *ctx, GLbitfield mask)
       saved_shader_program = ctx->Shader.CurrentProgram->Name;
       _mesa_UseProgramObjectARB(0);
    }
-   
+
    if (ctx->Texture._EnabledUnits != 0) {
       int i;
-      
+
       for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 	 _mesa_ActiveTextureARB(GL_TEXTURE0 + i);
 	 _mesa_Disable(GL_TEXTURE_1D);
@@ -1394,14 +1393,14 @@ void radeon_clear_tris(GLcontext *ctx, GLbitfield mask)
 	 }
       }
    }
-  
+
 #if FEATURE_ARB_vertex_buffer_object
    _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
    _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 #endif
 
    radeon_meta_set_passthrough_transform(rmesa);
-   
+
    for (i = 0; i < 4; i++) {
       color[i][0] = ctx->Color.ClearColor[0];
       color[i][1] = ctx->Color.ClearColor[1];

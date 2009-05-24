@@ -1374,6 +1374,7 @@ static GLboolean radeonCreateContext(const __GLcontextModes * glVisual,
 #endif
 
 #if !RADEON_COMMON
+	(void)screen;
 	return r100CreateContext(glVisual, driContextPriv, sharedContextPriv);
 #endif
 	return GL_FALSE;
