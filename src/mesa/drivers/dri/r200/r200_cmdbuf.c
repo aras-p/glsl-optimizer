@@ -105,6 +105,35 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
    insert_at_tail( &rmesa->radeon.hw.atomlist, &rmesa->hw.vpi[1] );
 }
 
+void r200EmitScissor(r200ContextPtr rmesa)
+{
+    BATCH_LOCALS(&rmesa->radeon);
+    if (!rmesa->radeon.radeonScreen->kernel_mm) {
+       return;
+    }
+    if (rmesa->radeon.state.scissor.enabled) {
+        BEGIN_BATCH(8);
+        OUT_BATCH(CP_PACKET0(R200_RE_CNTL, 0));
+        OUT_BATCH(R200_SCISSOR_ENABLE | rmesa->hw.set.cmd[SET_RE_CNTL]);
+        OUT_BATCH(CP_PACKET0(R200_RE_AUX_SCISSOR_CNTL, 0));
+        OUT_BATCH(R200_SCISSOR_ENABLE_0);
+        OUT_BATCH(CP_PACKET0(R200_RE_SCISSOR_TL_0, 0));
+        OUT_BATCH((rmesa->radeon.state.scissor.rect.y1 << 16) |
+                  rmesa->radeon.state.scissor.rect.x1);
+        OUT_BATCH(CP_PACKET0(R200_RE_SCISSOR_BR_0, 0));
+        OUT_BATCH(((rmesa->radeon.state.scissor.rect.y2 - 1) << 16) |
+                  (rmesa->radeon.state.scissor.rect.x2 - 1));
+        END_BATCH();
+    } else {
+        BEGIN_BATCH(4);
+        OUT_BATCH(CP_PACKET0(R200_RE_CNTL, 0));
+        OUT_BATCH(rmesa->hw.set.cmd[SET_RE_CNTL] & ~R200_SCISSOR_ENABLE);
+        OUT_BATCH(CP_PACKET0(R200_RE_AUX_SCISSOR_CNTL, 0));
+        OUT_BATCH(0);
+        END_BATCH();
+    }
+}
+
 /* Fire a section of the retained (indexed_verts) buffer as a regular
  * primtive.  
  */
@@ -121,6 +150,7 @@ void r200EmitVbufPrim( r200ContextPtr rmesa,
    if (R200_DEBUG & (DEBUG_IOCTL|DEBUG_PRIMS))
       fprintf(stderr, "%s cmd_used/4: %d prim %x nr %d\n", __FUNCTION__,
 	      rmesa->store.cmd_used/4, primitive, vertex_nr);
+   r200EmitScissor(rmesa);
  
    BEGIN_BATCH(3);
    OUT_BATCH_PACKET3_CLIP(R200_CP_CMD_3D_DRAW_VBUF_2, 0);
@@ -134,6 +164,7 @@ static void r200FireEB(r200ContextPtr rmesa, int vertex_count, int type)
 	BATCH_LOCALS(&rmesa->radeon);
 
 	if (vertex_count > 0) {
+        r200EmitScissor(rmesa);
 		BEGIN_BATCH(8+2);
 		OUT_BATCH_PACKET3_CLIP(R200_CP_CMD_3D_DRAW_INDX_2, 0);
 		OUT_BATCH(R200_VF_PRIM_WALK_IND |
