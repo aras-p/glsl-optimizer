@@ -598,7 +598,7 @@ static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
      dwords -= 2;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
 
-   OUT_BATCH(CP_PACKET0(R200_PP_TXFILTER_0 + (24 * i), 7));
+   OUT_BATCH(CP_PACKET0(R200_PP_TXFILTER_0 + (32 * i), 7));
    OUT_BATCH_TABLE((atom->cmd + 1), 8);
 
    if (hastexture) {
