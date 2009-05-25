@@ -769,9 +769,7 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 
 	/* Set state we know depends on drawable parameters:
 	 */
-	if (ctx->Driver.Scissor)
-		ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
-				    ctx->Scissor.Width, ctx->Scissor.Height);
+	radeonUpdateScissor(ctx);
 	radeon->NewGLState |= _NEW_SCISSOR;
 
 	if (ctx->Driver.DepthRange)
