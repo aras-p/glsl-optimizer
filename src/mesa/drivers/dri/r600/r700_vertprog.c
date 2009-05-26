@@ -297,7 +297,7 @@ void r700SelectVertexShader(GLcontext *ctx)
     context_t *context = R700_CONTEXT(ctx);
     struct r700_vertex_program *vpc
              = (struct r700_vertex_program *)ctx->VertexProgram._Current;
-    if (context->radeon.radeonScreen->chip_family <= CHIP_FAMILY_RV670)
+    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
     {
         vpc->r700AsmCode.bR6xx = 1;
     }
