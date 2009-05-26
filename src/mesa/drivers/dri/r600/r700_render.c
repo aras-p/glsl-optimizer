@@ -61,7 +61,7 @@ void r700WaitForIdle(context_t *context)
 
     R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
     R600_OUT_BATCH(mmWAIT_UNTIL - ASIC_CONFIG_BASE_INDEX);
-    R600_OUT_BATCH(1 << 15);
+    R600_OUT_BATCH(WAIT_3D_IDLE_bit);
 
     END_BATCH();
     COMMIT_BATCH();
@@ -73,11 +73,11 @@ void r700WaitForIdleClean(context_t *context)
     BEGIN_BATCH_NO_AUTOSTATE(5);
 
     R600_OUT_BATCH(CP_PACKET3(R600_IT_EVENT_WRITE, 0));
-    R600_OUT_BATCH(0x16);
+    R600_OUT_BATCH(CACHE_FLUSH_AND_INV_EVENT);
 
     R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
     R600_OUT_BATCH(mmWAIT_UNTIL - ASIC_CONFIG_BASE_INDEX);
-    R600_OUT_BATCH(1 << 17); 
+    R600_OUT_BATCH(WAIT_3D_IDLE_bit | WAIT_3D_IDLECLEAN_bit);
 
     END_BATCH();
     COMMIT_BATCH();
@@ -167,23 +167,21 @@ GLboolean r700SendTextureState(context_t *context)
 
 GLboolean r700SyncSurf(context_t *context)
 {
-#if 0 //to be enabled
     BATCH_LOCALS(&context->radeon);
 
     /* TODO : too heavy? */
     unsigned int CP_COHER_CNTL   = 0;
 
-    CP_COHER_CNTL |= TC_ACTION_ENA_bit
-	                |VC_ACTION_ENA_bit
-	                |CB_ACTION_ENA_bit
-	                |DB_ACTION_ENA_bit
-	                |SH_ACTION_ENA_bit
-	                |SMX_ACTION_ENA_bit;
+    CP_COHER_CNTL |= (TC_ACTION_ENA_bit
+		      | VC_ACTION_ENA_bit
+		      | CB_ACTION_ENA_bit
+		      | DB_ACTION_ENA_bit
+		      | SH_ACTION_ENA_bit
+		      | SMX_ACTION_ENA_bit);
 
 
     BEGIN_BATCH_NO_AUTOSTATE(5);
-    
-    R600_OUT_BATCH(CP_PACKET3((IT_SURFACE_SYNC << 8), 3)));
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_SURFACE_SYNC, 3));
     R600_OUT_BATCH(CP_COHER_CNTL);
     R600_OUT_BATCH(0xFFFFFFFF);
     R600_OUT_BATCH(0x00000000);
@@ -191,7 +189,7 @@ GLboolean r700SyncSurf(context_t *context)
 
     END_BATCH();
     COMMIT_BATCH();
-#endif
+
     return GL_TRUE;
 }
 
@@ -268,6 +266,9 @@ static GLboolean r700RunRender(GLcontext * ctx,
         return GL_TRUE;
     }
 
+    /* flush TX */
+    //r700SyncSurf(context); /*  */
+
     r700UpdateTextureState(context);
     r700SendTextureState(context);
 
@@ -279,12 +280,19 @@ static GLboolean r700RunRender(GLcontext * ctx,
         }
     }
 
+    /* flush SQ */
+    //r700SyncSurf(context); /*  */
+    //r700SyncSurf(context); /*  */
+
     r700SetupShaders(ctx);
 
     /* set a valid base address to make the command checker happy */
     r700->SQ_PGM_START_FS.u32All     = r700->SQ_PGM_START_PS.u32All;
     r700->SQ_PGM_START_ES.u32All     = r700->SQ_PGM_START_PS.u32All;
     r700->SQ_PGM_START_GS.u32All     = r700->SQ_PGM_START_PS.u32All;
+
+    /* flush vtx */
+    //r700SyncSurf(context); /*  */
 
     r700SendContextStates(context, GL_FALSE);
 
@@ -337,11 +345,10 @@ static GLboolean r700RunRender(GLcontext * ctx,
     }
 
     /* Flush render op cached for last several quads. */
-    BEGIN_BATCH_NO_AUTOSTATE(2);
-    R600_OUT_BATCH(CP_PACKET3(R600_IT_EVENT_WRITE, 0));
-    R600_OUT_BATCH(CACHE_FLUSH_AND_INV_EVENT);
-    END_BATCH();
-    COMMIT_BATCH();
+    r700WaitForIdleClean(context);
+
+    /* flush dst */
+    //r700SyncSurf(context); /*  */
 
     (context->chipobj.FlushCmdBuffer)(context);
 
@@ -353,6 +360,8 @@ static GLboolean r700RunRender(GLcontext * ctx,
     R600_OUT_BATCH_REGVAL((0x2144 << 2), 0x56785678);
     END_BATCH();
     COMMIT_BATCH();
+
+
 #endif //0
     rcommonFlushCmdBuf( &context->radeon, __FUNCTION__ );
 
