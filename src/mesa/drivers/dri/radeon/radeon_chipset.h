@@ -327,6 +327,7 @@
 #define PCI_CHIP_RV635_9599             0x9599
 #define PCI_CHIP_RV635_959B             0x959B
 
+#define PCI_CHIP_RS780_9610             0x9610
 #define PCI_CHIP_RS780_9611             0x9611
 #define PCI_CHIP_RS780_9612             0x9612
 #define PCI_CHIP_RS780_9613             0x9613

@@ -844,6 +844,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
       screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
 
+   case PCI_CHIP_RS780_9610:
    case PCI_CHIP_RS780_9611:
    case PCI_CHIP_RS780_9612:
    case PCI_CHIP_RS780_9613:
