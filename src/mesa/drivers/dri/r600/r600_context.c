@@ -453,9 +453,10 @@ void
 r600DestroyContext (__DRIcontextPrivate * driContextPriv)
 {
     GET_CURRENT_CONTEXT (ctx);
-    context_t *context = R700_CONTEXT(ctx);
+    context_t *context = ctx ? R700_CONTEXT(ctx) : NULL;
 
-    (context->chipobj.DestroyChipObj)(context->chipobj.pvChipObj);
+    if (context)
+	    (context->chipobj.DestroyChipObj)(context->chipobj.pvChipObj);
 }
 
 

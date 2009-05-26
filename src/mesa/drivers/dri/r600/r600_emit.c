@@ -234,8 +234,10 @@ GLboolean r600DeleteShader(GLcontext * ctx,
 {
     struct radeon_bo * pbo = (struct radeon_bo *)shaderbo;
 
-    radeon_bo_unmap(pbo);
-    radeon_bo_unref(pbo); /* when bo->cref <= 0, bo will be bo_free */
+    if (pbo) {
+	    radeon_bo_unmap(pbo);
+	    radeon_bo_unref(pbo); /* when bo->cref <= 0, bo will be bo_free */
+    }
 
     return GL_TRUE;
 }
