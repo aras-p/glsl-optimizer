@@ -5,8 +5,10 @@
 #include "radeon_dma.h"
 #include "radeon_texture.h"
 
+#ifndef HAVE_LIBDRM_RADEON
 #ifndef RADEON_DEBUG_BO
 #define RADEON_DEBUG_BO 1
+#endif
 #endif
 
 #define TRI_CLEAR_COLOR_BITS (BUFFER_BIT_BACK_LEFT |			\
