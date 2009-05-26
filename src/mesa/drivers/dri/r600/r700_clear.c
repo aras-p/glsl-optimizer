@@ -80,7 +80,7 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
                            0x10000000, 0x340C90,   0x10000400, 0x20340C90,
                            0x10000800, 0x40340C90, 0x90000C00, 0x60200C90};
 
-    if (context->radeon.radeonScreen->chip_family <= CHIP_FAMILY_RV670)
+    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
     {
         uVs[9]  = 0x541910;
         uVs[11] = 0x20541910;

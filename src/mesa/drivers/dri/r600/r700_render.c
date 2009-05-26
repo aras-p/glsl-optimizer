@@ -86,7 +86,7 @@ void r700WaitForIdleClean(context_t *context)
 static void r700Start3D(context_t *context)
 {
     BATCH_LOCALS(&context->radeon);
-    if (context->radeon.radeonScreen->chip_family <= CHIP_FAMILY_RV670)
+    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
     {
         BEGIN_BATCH_NO_AUTOSTATE(2);
         R600_OUT_BATCH(CP_PACKET3(R600_IT_START_3D_CMDBUF, 0));
