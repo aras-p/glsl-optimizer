@@ -206,8 +206,6 @@ void radeonFlushElts( GLcontext *ctx )
    assert( rmesa->radeon.dma.flush == radeonFlushElts );
    rmesa->radeon.dma.flush = NULL;
 
-   radeonEmitScissor(rmesa);
-
    nr = rmesa->tcl.elt_used;
 
 #if RADEON_OLD_PACKETS
@@ -260,6 +258,7 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
    assert((primitive & RADEON_CP_VC_CNTL_PRIM_WALK_IND));
 
    radeonEmitState(&rmesa->radeon);
+   radeonEmitScissor(rmesa);
 
    rmesa->tcl.elt_cmd_start = rmesa->radeon.cmdbuf.cs->cdw;
 
@@ -280,7 +279,6 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
 	     RADEON_CP_VC_CNTL_PRIM_WALK_IND |
 	     RADEON_CP_VC_CNTL_COLOR_ORDER_RGBA |
 	     RADEON_CP_VC_CNTL_VTX_FMT_RADEON_MODE);
-
 #else
    BEGIN_BATCH_NO_AUTOSTATE(ELTS_BUFSZ(align_min_nr)/4);
    OUT_BATCH_PACKET3_CLIP(RADEON_CP_PACKET3_DRAW_INDX, 0);
