@@ -215,21 +215,8 @@ static void vp_dump_inputs(struct r300_vertex_program *vp, char *caller)
 static unsigned long t_src_index(struct r300_vertex_program *vp,
 				 struct prog_src_register *src)
 {
-	int i;
-	int max_reg = -1;
-
 	if (src->File == PROGRAM_INPUT) {
-		if (vp->inputs[src->Index] != -1)
-			return vp->inputs[src->Index];
-
-		for (i = 0; i < VERT_ATTRIB_MAX; i++)
-			if (vp->inputs[i] > max_reg)
-				max_reg = vp->inputs[i];
-
-		vp->inputs[src->Index] = max_reg + 1;
-
-		//vp_dump_inputs(vp, __FUNCTION__);
-
+		assert(vp->inputs[src->Index] != -1);
 		return vp->inputs[src->Index];
 	} else {
 		if (src->Index < 0) {
@@ -944,11 +931,17 @@ static GLuint *r300TranslateOpcodeXPD(struct r300_vertex_program *vp,
 static void t_inputs_outputs(struct r300_vertex_program *vp)
 {
 	int i;
-	int cur_reg = 0;
+	int cur_reg;
 
-	for (i = 0; i < VERT_ATTRIB_MAX; i++)
-		vp->inputs[i] = -1;
+	cur_reg = -1;
+	for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+		if (vp->key.InputsRead & (1 << i))
+			vp->inputs[i] = ++cur_reg;
+		else
+			vp->inputs[i] = -1;
+	}
 
+	cur_reg = 0;
 	for (i = 0; i < VERT_RESULT_MAX; i++)
 		vp->outputs[i] = -1;
 
