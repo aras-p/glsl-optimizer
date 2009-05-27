@@ -409,7 +409,8 @@ set_dst(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_program_exec *e)
 static INLINE void
 set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 {
-	unsigned val = fui(pc->immd_buf[imm->hw]);
+	float f = pc->immd_buf[imm->hw];
+	unsigned val = fui(imm->neg ? -f : f);
 
 	set_long(pc, e);
 	/*XXX: can't be predicated - bits overlap.. catch cases where both
@@ -627,10 +628,19 @@ emit_mul(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	check_swap_src_0_1(pc, &src0, &src1);
 	set_dst(pc, dst, e);
 	set_src_0(pc, src0, e);
-	if (src1->type == P_IMMD && !is_long(e))
+	if (src1->type == P_IMMD && !is_long(e)) {
+		if (src0->neg)
+			e->inst[0] |= 0x00008000;
 		set_immd(pc, src1, e);
-	else
+	} else {
 		set_src_1(pc, src1, e);
+		if (src0->neg ^ src1->neg) {
+			if (is_long(e))
+				e->inst[1] |= 0x08000000;
+			else
+				e->inst[0] |= 0x00008000;
+		}
+	}
 
 	emit(pc, e);
 }
@@ -643,13 +653,16 @@ emit_add(struct nv50_pc *pc, struct nv50_reg *dst,
 
 	e->inst[0] |= 0xb0000000;
 
-	if (!pc->allow32)
-		set_long(pc, e);
-
 	check_swap_src_0_1(pc, &src0, &src1);
+
+	if (!pc->allow32 || src0->neg || src1->neg) {
+		set_long(pc, e);
+		e->inst[1] |= (src0->neg << 26) | (src1->neg << 27);
+	}
+
 	set_dst(pc, dst, e);
 	set_src_0(pc, src0, e);
-	if (is_long(e) || src1->type == P_CONST || src1->type == P_ATTR)
+	if (src1->type == P_CONST || src1->type == P_ATTR || is_long(e))
 		set_src_2(pc, src1, e);
 	else
 	if (src1->type == P_IMMD)
@@ -678,25 +691,13 @@ emit_minmax(struct nv50_pc *pc, unsigned sub, struct nv50_reg *dst,
 	emit(pc, e);
 }
 
-static void
+static INLINE void
 emit_sub(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] |= 0xb0000000;
-
-	set_long(pc, e);
-	if (check_swap_src_0_1(pc, &src0, &src1))
-		e->inst[1] |= 0x04000000;
-	else
-		e->inst[1] |= 0x08000000;
-
-	set_dst(pc, dst, e);
-	set_src_0(pc, src0, e);
-	set_src_2(pc, src1, e);
-
-	emit(pc, e);
+	src1->neg ^= 1;
+	emit_add(pc, dst, src0, src1);
+	src1->neg ^= 1;
 }
 
 static void
@@ -713,26 +714,21 @@ emit_mad(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	set_src_1(pc, src1, e);
 	set_src_2(pc, src2, e);
 
+	if (src0->neg ^ src1->neg)
+		e->inst[1] |= 0x04000000;
+	if (src2->neg)
+		e->inst[1] |= 0x08000000;
+
 	emit(pc, e);
 }
 
-static void
+static INLINE void
 emit_msb(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1, struct nv50_reg *src2)
 {
-	struct nv50_program_exec *e = exec(pc);
-
-	e->inst[0] |= 0xe0000000;
-	set_long(pc, e);
-	e->inst[1] |= 0x08000000; /* src0 * src1 - src2 */
-
-	check_swap_src_0_1(pc, &src0, &src1);
-	set_dst(pc, dst, e);
-	set_src_0(pc, src0, e);
-	set_src_1(pc, src1, e);
-	set_src_2(pc, src2, e);
-
-	emit(pc, e);
+	src2->neg ^= 1;
+	emit_mad(pc, dst, src0, src1, src2);
+	src2->neg ^= 1;
 }
 
 static void
@@ -976,6 +972,8 @@ emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
 	e->inst[1] = 0xc4014788;
 	set_src_0(pc, src, e);
 	set_pred_wr(pc, 1, r_pred, e);
+	if (src->neg)
+		e->inst[1] |= 0x20000000;
 	emit(pc, e);
 
 	/* This is probably KILP */
@@ -1141,6 +1139,25 @@ convert_to_long(struct nv50_pc *pc, struct nv50_program_exec *e)
 	e->inst[1] |= q;
 }
 
+static boolean
+negate_supported(const struct tgsi_full_instruction *insn, int i)
+{
+	switch (insn->Instruction.Opcode) {
+	case TGSI_OPCODE_DP3:
+	case TGSI_OPCODE_DP4:
+	case TGSI_OPCODE_MUL:
+	case TGSI_OPCODE_KIL:
+	case TGSI_OPCODE_ADD:
+	case TGSI_OPCODE_SUB:
+	case TGSI_OPCODE_MAD:
+		return TRUE;
+	case TGSI_OPCODE_POW:
+		return (i == 1) ? TRUE : FALSE;
+	default:
+		return FALSE;
+	}
+}
+
 static struct nv50_reg *
 tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 {
@@ -1159,7 +1176,8 @@ tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 }
 
 static struct nv50_reg *
-tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src)
+tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src,
+	 boolean neg)
 {
 	struct nv50_reg *r = NULL;
 	struct nv50_reg *temp;
@@ -1214,14 +1232,21 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src)
 		r = temp;
 		break;
 	case TGSI_UTIL_SIGN_TOGGLE:
-		temp = temp_temp(pc);
-		emit_neg(pc, temp, r);
-		r = temp;
+		if (neg)
+			r->neg = 1;
+		else {
+			temp = temp_temp(pc);
+			emit_neg(pc, temp, r);
+			r = temp;
+		}
 		break;
 	case TGSI_UTIL_SIGN_SET:
 		temp = temp_temp(pc);
 		emit_abs(pc, temp, r);
-		emit_neg(pc, temp, temp);
+		if (neg)
+			temp->neg = 1;
+		else
+			emit_neg(pc, temp, temp);
 		r = temp;
 		break;
 	default:
@@ -1289,7 +1314,8 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 			unit = fs->SrcRegister.Index;
 
 		for (c = 0; c < 4; c++)
-			src[i][c] = tgsi_src(pc, c, fs);
+			src[i][c] = tgsi_src(pc, c, fs,
+					     negate_supported(inst, i));
 	}
 
 	if (sat) {
