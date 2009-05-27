@@ -113,6 +113,31 @@ void radeonSetUpAtomList( r100ContextPtr rmesa )
    insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.glt);
 }
 
+void radeonEmitScissor(r100ContextPtr rmesa)
+{
+    BATCH_LOCALS(&rmesa->radeon);
+    if (!rmesa->radeon.radeonScreen->kernel_mm) {
+       return;
+    }
+    if (rmesa->radeon.state.scissor.enabled) {
+        BEGIN_BATCH(6);
+        OUT_BATCH(CP_PACKET0(RADEON_PP_CNTL, 0));
+        OUT_BATCH(rmesa->hw.ctx.cmd[CTX_PP_CNTL] | RADEON_SCISSOR_ENABLE);
+        OUT_BATCH(CP_PACKET0(RADEON_RE_TOP_LEFT, 0));
+        OUT_BATCH((rmesa->radeon.state.scissor.rect.y1 << 16) |
+                  rmesa->radeon.state.scissor.rect.x1);
+        OUT_BATCH(CP_PACKET0(RADEON_RE_WIDTH_HEIGHT, 0));
+        OUT_BATCH(((rmesa->radeon.state.scissor.rect.y2 - 1) << 16) |
+                  (rmesa->radeon.state.scissor.rect.x2 - 1));
+        END_BATCH();
+    } else {
+        BEGIN_BATCH(2);
+        OUT_BATCH(CP_PACKET0(RADEON_PP_CNTL, 0));
+        OUT_BATCH(rmesa->hw.ctx.cmd[CTX_PP_CNTL] & ~RADEON_SCISSOR_ENABLE);
+        END_BATCH();
+    }
+}
+
 /* Fire a section of the retained (indexed_verts) buffer as a regular
  * primtive.
  */
@@ -126,6 +151,7 @@ extern void radeonEmitVbufPrim( r100ContextPtr rmesa,
    assert(!(primitive & RADEON_CP_VC_CNTL_PRIM_WALK_IND));
 
    radeonEmitState(&rmesa->radeon);
+   radeonEmitScissor(rmesa);
 
 #if RADEON_OLD_PACKETS
    BEGIN_BATCH(8);
@@ -179,6 +205,8 @@ void radeonFlushElts( GLcontext *ctx )
 
    assert( rmesa->radeon.dma.flush == radeonFlushElts );
    rmesa->radeon.dma.flush = NULL;
+
+   radeonEmitScissor(rmesa);
 
    nr = rmesa->tcl.elt_used;
 
