@@ -39,6 +39,7 @@
 #include "intel_screen.h"
 #include "intel_batchbuffer.h"
 #include "intel_fbo.h"
+#include "intel_buffers.h"
 
 #include "i830_context.h"
 #include "i830_reg.h"
@@ -444,6 +445,24 @@ i830DepthMask(GLcontext * ctx, GLboolean flag)
       i830->state.Ctx[I830_CTXREG_ENABLES_2] |= ENABLE_DEPTH_WRITE;
    else
       i830->state.Ctx[I830_CTXREG_ENABLES_2] |= DISABLE_DEPTH_WRITE;
+}
+
+/** Called from ctx->Driver.Viewport() */
+static void
+i830Viewport(GLcontext * ctx,
+              GLint x, GLint y, GLsizei width, GLsizei height)
+{
+   intelCalcViewport(ctx);
+
+   intel_viewport(ctx, x, y, width, height);
+}
+
+
+/** Called from ctx->Driver.DepthRange() */
+static void
+i830DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
+{
+   intelCalcViewport(ctx);
 }
 
 /* =============================================================
@@ -1064,6 +1083,8 @@ i830InitStateFuncs(struct dd_function_table *functions)
    functions->StencilFuncSeparate = i830StencilFuncSeparate;
    functions->StencilMaskSeparate = i830StencilMaskSeparate;
    functions->StencilOpSeparate = i830StencilOpSeparate;
+   functions->DepthRange = i830DepthRange;
+   functions->Viewport = i830Viewport;
 }
 
 void
