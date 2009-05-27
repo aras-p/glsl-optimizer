@@ -559,4 +559,10 @@ intel_context(GLcontext * ctx)
    return (struct intel_context *) ctx;
 }
 
+static INLINE GLboolean
+is_power_of_two(uint32_t value)
+{
+   return (value & (value - 1)) == 0;
+}
+
 #endif
