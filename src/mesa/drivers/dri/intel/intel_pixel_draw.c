@@ -119,6 +119,14 @@ intel_texture_drawpixels(GLcontext * ctx,
       return GL_FALSE;
    }
 
+   if (!ctx->Extensions.ARB_texture_non_power_of_two &&
+       (!is_power_of_two(width) || !is_power_of_two(height))) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr,
+		 "glDrawPixels() fallback: NPOT texture\n");
+      return GL_FALSE;
+   }
+
    _mesa_PushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT |
 		    GL_CURRENT_BIT);
    _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
@@ -259,6 +267,14 @@ intel_stencil_drawpixels(GLcontext * ctx,
 	 fprintf(stderr, "glDrawPixels(STENCIL_INDEX) fallback: "
 		 "bitmap too large (%dx%d)\n",
 		 width, height);
+      return GL_FALSE;
+   }
+
+   if (!ctx->Extensions.ARB_texture_non_power_of_two &&
+       (!is_power_of_two(width) || !is_power_of_two(height))) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr,
+		 "glDrawPixels(GL_STENCIL_INDEX) fallback: NPOT texture\n");
       return GL_FALSE;
    }
 
