@@ -1448,14 +1448,12 @@ union r300_outputs_written {
 static void r300SetupRSUnit(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-        TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *VB = &tnl->vb;
 	union r300_outputs_written OutputsWritten;
 	GLuint InputsRead;
 	int fp_reg, high_rr;
 	int col_ip, tex_ip;
 	int rs_tex_count = 0;
-	int i, count, col_fmt, hw_tcl_on;
+	int i, col_fmt, hw_tcl_on;
 
 	hw_tcl_on = r300->options.hw_tcl_enabled;
 
@@ -1483,15 +1481,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 
 	if (InputsRead & FRAG_BIT_COL0) {
 		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL0, _TNL_ATTRIB_COLOR0)) {
-			count = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size;
-			if (count == 4)
-			    col_fmt = R300_RS_COL_FMT_RGBA;
-			else if (count == 3)
-			    col_fmt = R300_RS_COL_FMT_RGB1;
-			else
-			    col_fmt = R300_RS_COL_FMT_0001;
-
-			r300->hw.ri.cmd[R300_RI_INTERP_0 + col_ip] = R300_RS_COL_PTR(col_ip) | R300_RS_COL_FMT(col_fmt);
+			r300->hw.ri.cmd[R300_RI_INTERP_0 + col_ip] = R300_RS_COL_PTR(col_ip) | R300_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
 			r300->hw.rr.cmd[R300_RR_INST_0 + col_ip] = R300_RS_INST_COL_ID(col_ip) | R300_RS_INST_COL_CN_WRITE | R300_RS_INST_COL_ADDR(fp_reg);
 			InputsRead &= ~FRAG_BIT_COL0;
 			++col_ip;
@@ -1503,15 +1493,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 
 	if (InputsRead & FRAG_BIT_COL1) {
 		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL1, _TNL_ATTRIB_COLOR1)) {
-			count = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->size;
-			if (count == 4)
-			    col_fmt = R300_RS_COL_FMT_RGBA;
-			else if (count == 3)
-			    col_fmt = R300_RS_COL_FMT_RGB1;
-			else
-			    col_fmt = R300_RS_COL_FMT_0001;
-
-			r300->hw.ri.cmd[R300_RI_INTERP_0 + col_ip] = R300_RS_COL_PTR(col_ip) | R300_RS_COL_FMT(col_fmt);
+			r300->hw.ri.cmd[R300_RI_INTERP_0 + col_ip] = R300_RS_COL_PTR(col_ip) | R300_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
 			r300->hw.rr.cmd[R300_RR_INST_0 + col_ip] = R300_RS_INST_COL_ID(col_ip) | R300_RS_INST_COL_CN_WRITE | R300_RS_INST_COL_ADDR(fp_reg);
 			InputsRead &= ~FRAG_BIT_COL1;
 			++col_ip;
@@ -1581,14 +1563,12 @@ static void r300SetupRSUnit(GLcontext * ctx)
 static void r500SetupRSUnit(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-        TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *VB = &tnl->vb;
 	union r300_outputs_written OutputsWritten;
 	GLuint InputsRead;
 	int fp_reg, high_rr;
 	int col_ip, tex_ip;
 	int rs_tex_count = 0;
-	int i, count, col_fmt, hw_tcl_on;
+	int i, col_fmt, hw_tcl_on;
 
 	hw_tcl_on = r300->options.hw_tcl_enabled;
 
@@ -1616,15 +1596,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 
 	if (InputsRead & FRAG_BIT_COL0) {
 		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL0, _TNL_ATTRIB_COLOR0)) {
-			count = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size;
-			if (count == 4)
-			    col_fmt = R300_RS_COL_FMT_RGBA;
-			else if (count == 3)
-			    col_fmt = R300_RS_COL_FMT_RGB1;
-			else
-			    col_fmt = R300_RS_COL_FMT_0001;
-
-			r300->hw.ri.cmd[R300_RI_INTERP_0 + col_ip] = R500_RS_COL_PTR(col_ip) | R500_RS_COL_FMT(col_fmt);
+			r300->hw.ri.cmd[R300_RI_INTERP_0 + col_ip] = R500_RS_COL_PTR(col_ip) | R500_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
 			r300->hw.rr.cmd[R300_RR_INST_0 + col_ip] = R500_RS_INST_COL_ID(col_ip) | R500_RS_INST_COL_CN_WRITE | R500_RS_INST_COL_ADDR(fp_reg);
 			InputsRead &= ~FRAG_BIT_COL0;
 			++col_ip;
@@ -1636,15 +1608,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 
 	if (InputsRead & FRAG_BIT_COL1) {
 		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL1, _TNL_ATTRIB_COLOR1)) {
-			count = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->size;
-			if (count == 4)
-			    col_fmt = R300_RS_COL_FMT_RGBA;
-			else if (count == 3)
-			    col_fmt = R300_RS_COL_FMT_RGB1;
-			else
-			    col_fmt = R300_RS_COL_FMT_0001;
-
-			r300->hw.ri.cmd[R300_RI_INTERP_0 + col_ip] = R500_RS_COL_PTR(col_ip) | R500_RS_COL_FMT(col_fmt);
+			r300->hw.ri.cmd[R300_RI_INTERP_0 + col_ip] = R500_RS_COL_PTR(col_ip) | R500_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
 			r300->hw.rr.cmd[R300_RR_INST_0 + col_ip] = R500_RS_INST_COL_ID(col_ip) | R500_RS_INST_COL_CN_WRITE | R500_RS_INST_COL_ADDR(fp_reg);
 			InputsRead &= ~FRAG_BIT_COL1;
 			++col_ip;
