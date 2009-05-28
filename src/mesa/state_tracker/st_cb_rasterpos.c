@@ -197,6 +197,7 @@ new_draw_rastpos_stage(GLcontext *ctx, struct draw_context *draw)
    for (i = 0; i < Elements(rs->array); i++) {
       rs->array[i].Size = 4;
       rs->array[i].Type = GL_FLOAT;
+      rs->array[i].Format = GL_RGBA;
       rs->array[i].Stride = 0;
       rs->array[i].StrideB = 0;
       rs->array[i].Ptr = (GLubyte *) ctx->Current.Attrib[i];
