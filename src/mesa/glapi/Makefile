@@ -48,7 +48,8 @@ SERVER_OUTPUTS = \
 API_XML = gl_API.xml \
 	EXT_framebuffer_object.xml \
 	ARB_framebuffer_object.xml \
-	APPLE_vertex_array_object.xml
+	APPLE_vertex_array_object.xml \
+	EXT_provoking_vertex.xml
 
 COMMON = gl_XML.py glX_XML.py license.py $(API_XML) typeexpr.py
 COMMON_GLX = $(COMMON) glX_API.xml glX_XML.py glX_proto_common.py
