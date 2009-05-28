@@ -642,6 +642,9 @@ void r700SetRenderTarget(context_t *context)
     r700->PA_SC_CLIPRECT_3_TL.u32All = r700->PA_SC_CLIPRECT_0_TL.u32All;
 	r700->PA_SC_CLIPRECT_3_BR.u32All = r700->PA_SC_CLIPRECT_0_BR.u32All;
 
+	/* edgerule for triangles, points, recs, lines */
+	r700->PA_SC_EDGERULE.u32All = 0x555AA96A;
+
     /* more....2d clip */
     SETbit(r700->PA_SC_GENERIC_SCISSOR_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
     SETfield(r700->PA_SC_GENERIC_SCISSOR_TL.u32All, context->radeon.dri.drawable->x, 
