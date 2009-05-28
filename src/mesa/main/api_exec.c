@@ -641,6 +641,8 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    /* ???. GL_EXT_depth_bounds_test */
    SET_DepthBoundsEXT(exec, _mesa_DepthBoundsEXT);
 
+   SET_ProvokingVertexEXT(exec, _mesa_ProvokingVertexEXT);
+
    /* ARB 1. GL_ARB_multitexture */
 #if _HAVE_FULL_GL
    SET_ActiveTextureARB(exec, _mesa_ActiveTextureARB);
