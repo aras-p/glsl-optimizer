@@ -57,7 +57,7 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
 	struct nouveau_bo *bo;
  	int format, mthd = dst ? NV50_2D_DST_FORMAT : NV50_2D_SRC_FORMAT;
  	int flags = NOUVEAU_BO_VRAM | (dst ? NOUVEAU_BO_WR : NOUVEAU_BO_RD);
- 
+
 	bo = screen->nvws->get_bo(nv50_miptree(ps->texture)->buffer);
 	if (!bo)
 		return 1;

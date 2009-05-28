@@ -7,7 +7,7 @@
 struct nv50_transfer {
 	struct pipe_transfer base;
 	struct pipe_buffer *buffer;
-	struct nv50_miptree_level *level;
+	unsigned level_offset;
 	int level_pitch;
 	int level_width;
 	int level_height;
@@ -17,8 +17,9 @@ struct nv50_transfer {
 
 static void
 nv50_transfer_rect_m2mf(struct pipe_screen *pscreen, struct pipe_buffer *src,
-			int src_pitch, int sx, int sy, int sw, int sh,
-			struct pipe_buffer *dst, int dst_pitch, int dx, int dy,
+			unsigned src_offset, int src_pitch, int sx, int sy,
+			int sw, int sh, struct pipe_buffer *dst,
+			unsigned dst_offset, int dst_pitch, int dx, int dy,
 			int dw, int dh, int cpp, int width, int height,
 			unsigned src_reloc, unsigned dst_reloc)
 {
@@ -28,7 +29,6 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen, struct pipe_buffer *src,
 	struct nouveau_grobj *m2mf = screen->m2mf;
 	struct nouveau_bo *src_bo = nvws->get_bo(src);
 	struct nouveau_bo *dst_bo = nvws->get_bo(dst);
-	unsigned src_offset = 0, dst_offset = 0;
 
 	src_reloc |= NOUVEAU_BO_RD;
 	dst_reloc |= NOUVEAU_BO_WR;
@@ -40,7 +40,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen, struct pipe_buffer *src,
 		OUT_RING  (chan, 1);
 		BEGIN_RING(chan, m2mf, 0x0314, 1);
 		OUT_RING  (chan, src_pitch);
-		src_offset = (sy * src_pitch) + (sx * cpp);
+		src_offset += (sy * src_pitch) + (sx * cpp);
 	} else {
 		BEGIN_RING(chan, m2mf, 0x0200, 6);
 		OUT_RING  (chan, 0);
@@ -56,7 +56,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen, struct pipe_buffer *src,
 		OUT_RING  (chan, 1);
 		BEGIN_RING(chan, m2mf, 0x0318, 1);
 		OUT_RING  (chan, dst_pitch);
-		dst_offset = (dy * dst_pitch) + (dx * cpp);
+		dst_offset += (dy * dst_pitch) + (dx * cpp);
 	} else {
 		BEGIN_RING(chan, m2mf, 0x021c, 6);
 		OUT_RING  (chan, 0);
@@ -133,10 +133,10 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	tx->base.stride = (w * pt->block.size);
 	tx->base.usage = usage;
 
-	tx->level = lvl;
 	tx->level_pitch = lvl->pitch;
 	tx->level_width = mt->base.width[level];
 	tx->level_height = mt->base.height[level];
+	tx->level_offset = lvl->image_offset[image];
 	tx->level_x = x;
 	tx->level_y = y;
 	tx->buffer =
@@ -144,9 +144,10 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 				   w * tx->base.block.size * h);
 
 	if (usage != PIPE_TRANSFER_WRITE) {
-		nv50_transfer_rect_m2mf(pscreen, mt->buffer, tx->level_pitch,
-					x, y, tx->level_width, tx->level_height,
-					tx->buffer, tx->base.stride, 0, 0,
+		nv50_transfer_rect_m2mf(pscreen, mt->buffer, tx->level_offset,
+					tx->level_pitch, x, y, tx->level_width,
+					tx->level_height, tx->buffer, 0,
+					tx->base.stride, 0, 0,
 					tx->base.width, tx->base.height,
 					tx->base.block.size, w, h,
 					NOUVEAU_BO_VRAM | NOUVEAU_BO_GART,
@@ -164,14 +165,15 @@ nv50_transfer_del(struct pipe_transfer *ptx)
 
 	if (ptx->usage != PIPE_TRANSFER_READ) {
 		struct pipe_screen *pscreen = ptx->texture->screen;
-		nv50_transfer_rect_m2mf(pscreen, tx->buffer, tx->base.stride,
+		nv50_transfer_rect_m2mf(pscreen, tx->buffer, 0, tx->base.stride,
 					0, 0, tx->base.width, tx->base.height,
-					mt->buffer, tx->level_pitch,
-					tx->level_x, tx->level_y,
-					tx->level_width, tx->level_height,
-					tx->base.block.size, tx->base.width,
-					tx->base.height, NOUVEAU_BO_GART,
-					NOUVEAU_BO_VRAM | NOUVEAU_BO_GART);
+					mt->buffer, tx->level_offset,
+					tx->level_pitch, tx->level_x,
+					tx->level_y, tx->level_width,
+					tx->level_height, tx->base.block.size,
+					tx->base.width, tx->base.height,
+					NOUVEAU_BO_GART, NOUVEAU_BO_VRAM |
+					NOUVEAU_BO_GART);
 	}
 
 	pipe_buffer_reference(&tx->buffer, NULL);

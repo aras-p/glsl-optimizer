@@ -122,10 +122,10 @@ nv50_tex_construct(struct nouveau_stateobj *so, struct nv50_miptree *mt)
 	so_data (so, 0xd0005000);
 	so_data (so, 0x00300000);
 	so_data (so, mt->base.width[0]);
-	so_data (so, (mt->base.depth[0] << 16) | mt->base.height[0]);
+	so_data (so, (mt->base.last_level << 28) |
+		     (mt->base.depth[0] << 16) | mt->base.height[0]);
 	so_data (so, 0x03000000);
-	so_reloc(so, mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_HIGH |
-		     NOUVEAU_BO_RD, 0, 0);
+	so_data (so, mt->base.last_level << 4);
 
 	return 0;
 }
