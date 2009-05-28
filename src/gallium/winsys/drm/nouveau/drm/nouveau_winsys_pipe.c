@@ -74,6 +74,7 @@ nouveau_pipe_bo_create(struct pipe_winsys *ws, unsigned alignment,
 	nvbuf->base.size = size;
 
 	flags = nouveau_flags_from_usage(ws, usage);
+	flags |= NOUVEAU_BO_MAP;
 	if (nouveau_bo_new(dev, flags, alignment, size, &nvbuf->bo)) {
 		FREE(nvbuf);
 		return NULL;
