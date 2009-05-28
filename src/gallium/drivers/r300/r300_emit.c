@@ -467,27 +467,39 @@ validate:
     for (i = 0; i < r300->framebuffer_state.nr_cbufs; i++) {
         tex = (struct r300_texture*)r300->framebuffer_state.cbufs[i]->texture;
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
-        r300->winsys->add_buffer(r300->winsys, tex->buffer,
-                0, RADEON_GEM_DOMAIN_VRAM);
+        if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
+                    0, RADEON_GEM_DOMAIN_VRAM)) {
+            r300->context.flush(&r300->context, 0, NULL);
+            goto validate;
+        }
     }
     /* ...depth buffer... */
     if (r300->framebuffer_state.zsbuf) {
         tex = (struct r300_texture*)r300->framebuffer_state.zsbuf->texture;
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
-        r300->winsys->add_buffer(r300->winsys, tex->buffer,
-                0, RADEON_GEM_DOMAIN_VRAM);
+        if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
+                    0, RADEON_GEM_DOMAIN_VRAM)) {
+            r300->context.flush(&r300->context, 0, NULL);
+            goto validate;
+        }
     }
     /* ...textures... */
     for (i = 0; i < r300->texture_count; i++) {
         tex = r300->textures[i];
         assert(tex && tex->buffer && "texture is marked, but NULL!");
-        r300->winsys->add_buffer(r300->winsys, tex->buffer,
-                RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
+        if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
+                    RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0)) {
+            r300->context.flush(&r300->context, 0, NULL);
+            goto validate;
+        }
     }
     /* ...and vertex buffer. */
     if (r300->vbo) {
-        r300->winsys->add_buffer(r300->winsys, r300->vbo,
-                RADEON_GEM_DOMAIN_GTT, 0);
+        if (!r300->winsys->add_buffer(r300->winsys, r300->vbo,
+                    RADEON_GEM_DOMAIN_GTT, 0)) {
+            r300->context.flush(&r300->context, 0, NULL);
+            goto validate;
+        }
     } else {
         debug_printf("No VBO while emitting dirty state!\n");
     }

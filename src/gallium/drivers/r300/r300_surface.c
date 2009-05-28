@@ -120,8 +120,11 @@ fallback:
 
     /* Make sure our target BO is okay. */
 validate:
-    r300->winsys->add_buffer(r300->winsys, tex->buffer,
-            0, RADEON_GEM_DOMAIN_VRAM);
+    if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
+                0, RADEON_GEM_DOMAIN_VRAM)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        goto validate;
+    }
     if (r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
@@ -242,10 +245,16 @@ fallback:
 
     /* Add our target BOs to the list. */
 validate:
-    r300->winsys->add_buffer(r300->winsys, srctex->buffer,
-            RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
-    r300->winsys->add_buffer(r300->winsys, desttex->buffer,
-            0, RADEON_GEM_DOMAIN_VRAM);
+    if (!r300->winsys->add_buffer(r300->winsys, srctex->buffer,
+                RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        goto validate;
+    }
+    if (!r300->winsys->add_buffer(r300->winsys, desttex->buffer,
+                0, RADEON_GEM_DOMAIN_VRAM)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        goto validate;
+    }
     if (r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {

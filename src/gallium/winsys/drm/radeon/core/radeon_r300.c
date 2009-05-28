@@ -22,10 +22,10 @@
 
 #include "radeon_r300.h"
 
-static void radeon_r300_add_buffer(struct r300_winsys* winsys,
-                                   struct pipe_buffer* pbuffer,
-                                   uint32_t rd,
-                                   uint32_t wd)
+static boolean radeon_r300_add_buffer(struct r300_winsys* winsys,
+                                      struct pipe_buffer* pbuffer,
+                                      uint32_t rd,
+                                      uint32_t wd)
 {
     int i;
     struct radeon_winsys_priv* priv =
@@ -35,7 +35,6 @@ static void radeon_r300_add_buffer(struct r300_winsys* winsys,
 
     /* Check to see if this BO is already in line for validation;
      * find a slot for it otherwise. */
-    assert(priv->bo_count <= RADEON_MAX_BOS);
     for (i = 0; i < priv->bo_count; i++) {
         if (sc[i].bo == bo) {
             sc[i].read_domains |= rd;
@@ -44,10 +43,17 @@ static void radeon_r300_add_buffer(struct r300_winsys* winsys,
         }
     }
 
+    if (priv->bo_count >= RADEON_MAX_BOS) {
+        /* Dohoho. Not falling for that one again. Request a flush. */
+        return FALSE;
+    }
+
     sc[priv->bo_count].bo = bo;
     sc[priv->bo_count].read_domains = rd;
     sc[priv->bo_count].write_domain = wd;
     priv->bo_count++;
+
+    return TRUE;
 }
 
 static boolean radeon_r300_validate(struct r300_winsys* winsys)
