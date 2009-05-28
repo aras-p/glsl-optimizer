@@ -96,6 +96,8 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
         uFs[11] = 0x60201910;
     }
 
+    r700Start3D(context);
+
     r700SyncSurf(context);
 
     /* Save current chip object. */
@@ -243,6 +245,8 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
     END_BATCH();
     COMMIT_BATCH();
 
+    r700WaitForIdleClean(context);
+
     (context->chipobj.FlushCmdBuffer)(context);
 
     (context->chipobj.FreeDmaRegion)(context, aos_vb.bo);
@@ -262,7 +266,7 @@ void r700Clear(GLcontext * ctx, GLbitfield mask)
         return;
     }
 
-    //r700ClearWithDraw(context, mask);
+    r700ClearWithDraw(context, mask);
 }
 
 
