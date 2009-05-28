@@ -23,7 +23,6 @@ GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
 	const struct prog_instruction *inst = &fp->Base.Instructions[i];
 	switch (inst->Opcode) {
 	    case OPCODE_IF:
-	    case OPCODE_TRUNC:
 	    case OPCODE_ENDIF:
 	    case OPCODE_CAL:
 	    case OPCODE_BRK:
