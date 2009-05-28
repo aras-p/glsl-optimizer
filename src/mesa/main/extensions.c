@@ -106,6 +106,7 @@ static const struct {
    { OFF, "GL_EXT_pixel_buffer_object",        F(EXT_pixel_buffer_object) },
    { OFF, "GL_EXT_point_parameters",           F(EXT_point_parameters) },
    { ON,  "GL_EXT_polygon_offset",             F(EXT_polygon_offset) },
+   { OFF, "GL_EXT_provoking_vertex",           F(EXT_provoking_vertex) },
    { ON,  "GL_EXT_rescale_normal",             F(EXT_rescale_normal) },
    { OFF, "GL_EXT_secondary_color",            F(EXT_secondary_color) },
    { ON,  "GL_EXT_separate_specular_color",    F(EXT_separate_specular_color) },

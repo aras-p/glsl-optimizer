@@ -770,6 +770,7 @@ struct gl_light_attrib
 
    GLboolean Enabled;			/**< Lighting enabled flag */
    GLenum ShadeModel;			/**< GL_FLAT or GL_SMOOTH */
+   GLenum ProvokingVertex;              /**< GL_EXT_provoking_vertex */
    GLenum ColorMaterialFace;		/**< GL_FRONT, BACK or FRONT_AND_BACK */
    GLenum ColorMaterialMode;		/**< GL_AMBIENT, GL_DIFFUSE, etc */
    GLbitfield ColorMaterialBitmask;	/**< bitmask formed from Face and Mode */
@@ -2421,6 +2422,9 @@ struct gl_constants
    GLuint MaxVarying;  /**< Number of float[4] varying parameters */
 
    GLbitfield SupportedBumpUnits; /**> units supporting GL_ATI_envmap_bumpmap as targets */
+
+   /**< GL_EXT_provoking_vertex */
+   GLboolean QuadsFollowProvokingVertexConvention;
 };
 
 
@@ -2489,6 +2493,7 @@ struct gl_extensions
    GLboolean EXT_pixel_buffer_object;
    GLboolean EXT_point_parameters;
    GLboolean EXT_polygon_offset;
+   GLboolean EXT_provoking_vertex;
    GLboolean EXT_rescale_normal;
    GLboolean EXT_shadow_funcs;
    GLboolean EXT_secondary_color;
