@@ -102,6 +102,9 @@ static void update_raster_state( struct st_context *st )
    if (ctx->Light.ShadeModel == GL_FLAT)
       raster->flatshade = 1;
 
+   if (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION_EXT)
+      raster->flatshade_first = 1;
+
    /* _NEW_LIGHT | _NEW_PROGRAM
     *
     * Back-face colors can come from traditional lighting (when
