@@ -41,6 +41,8 @@
 extern void r700InitState (GLcontext * ctx);
 
 extern GLboolean r700SyncSurf(context_t *context);
+extern void r700Start3D(context_t *context);
+extern void r700WaitForIdleClean(context_t *context);
 
 static GLboolean r700ClearFast(context_t *context, GLbitfield mask)
 {

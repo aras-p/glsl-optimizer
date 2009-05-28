@@ -83,7 +83,7 @@ void r700WaitForIdleClean(context_t *context)
     COMMIT_BATCH();
 }
 
-static void r700Start3D(context_t *context)
+void r700Start3D(context_t *context)
 {
     BATCH_LOCALS(&context->radeon);
     if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
