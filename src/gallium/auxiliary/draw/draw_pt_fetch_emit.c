@@ -130,6 +130,10 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
       unsigned output_format;
 
       switch (vinfo->attrib[i].emit) {
+      case EMIT_4UB:
+	 output_format = PIPE_FORMAT_R8G8B8A8_UNORM;
+	 emit_sz = 4 * sizeof(unsigned char);
+         break;
       case EMIT_4F:
 	 output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
 	 emit_sz = 4 * sizeof(float);
@@ -153,6 +157,8 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
 	 output_format = PIPE_FORMAT_R32_FLOAT;
 	 emit_sz = 1 * sizeof(float);
          break;
+      case EMIT_OMIT:
+         continue;
       default:
          assert(0);
 	 output_format = PIPE_FORMAT_NONE;
