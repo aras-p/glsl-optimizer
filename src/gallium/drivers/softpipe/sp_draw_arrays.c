@@ -129,6 +129,7 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
    struct draw_context *draw = sp->draw;
    unsigned i;
 
+   sp->api_prim = mode;
    sp->reduced_api_prim = reduced_prim[mode];
 
    if (sp->dirty)

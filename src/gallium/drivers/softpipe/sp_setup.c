@@ -512,7 +512,10 @@ static boolean setup_sort_vertices( struct setup_context *setup,
                                     const float (*v1)[4],
                                     const float (*v2)[4] )
 {
-   setup->vprovoke = v2;
+   if (setup->softpipe->api_prim == PIPE_PRIM_POLYGON)
+      setup->vprovoke = v0;
+   else
+      setup->vprovoke = v2;
 
    /* determine bottom to top order of vertices */
    {
