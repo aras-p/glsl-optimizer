@@ -683,6 +683,7 @@ void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 			   rmesa->radeon.hw.max_state_size + (12*sizeof(int)),
 			   __FUNCTION__);
 	radeonEmitState(&rmesa->radeon);
+    r300_emit_scissor(ctx);
 	r300EmitVertexAOS(rmesa,
 			rmesa->radeon.swtcl.vertex_size,
 			rmesa->radeon.dma.current,

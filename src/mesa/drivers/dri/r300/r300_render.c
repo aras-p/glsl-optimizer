@@ -189,6 +189,7 @@ static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type)
 {
 	BATCH_LOCALS(&rmesa->radeon);
 
+    r300_emit_scissor(rmesa->radeon.glCtx);
 	if (vertex_count > 0) {
 		BEGIN_BATCH(10);
 		OUT_BATCH_PACKET3(R300_PACKET3_3D_DRAW_INDX_2, 0);
@@ -329,6 +330,7 @@ static void r300FireAOS(r300ContextPtr rmesa, int vertex_count, int type)
 {
 	BATCH_LOCALS(&rmesa->radeon);
 
+    r300_emit_scissor(rmesa->radeon.glCtx);
 	BEGIN_BATCH(3);
 	OUT_BATCH_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
 	OUT_BATCH(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (vertex_count << 16) | type);

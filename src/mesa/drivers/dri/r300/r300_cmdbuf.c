@@ -209,6 +209,45 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 	}
 }
 
+void r300_emit_scissor(GLcontext *ctx)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	BATCH_LOCALS(&r300->radeon);
+    unsigned x1, y1, x2, y2;
+	struct radeon_renderbuffer *rrb;
+
+    if (!r300->radeon.radeonScreen->driScreen->dri2.enabled) {
+        return;
+    }
+	rrb = radeon_get_colorbuffer(&r300->radeon);
+	if (!rrb || !rrb->bo) {
+		fprintf(stderr, "no rrb\n");
+		return;
+	}
+    if (r300->radeon.state.scissor.enabled) {
+        x1 = r300->radeon.state.scissor.rect.x1;
+        y1 = r300->radeon.state.scissor.rect.y1;
+        x2 = r300->radeon.state.scissor.rect.x2 - 1;
+        y2 = r300->radeon.state.scissor.rect.y2 - 1;
+    } else {
+        x1 = 0;
+        y1 = 0;
+        x2 = rrb->width - 1;
+        y2 = rrb->height - 1;
+    }
+    if (r300->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515) {
+        x1 += R300_SCISSORS_OFFSET;
+        y1 += R300_SCISSORS_OFFSET;
+        x2 += R300_SCISSORS_OFFSET;
+        y2 += R300_SCISSORS_OFFSET;
+    }
+    BEGIN_BATCH_NO_AUTOSTATE(3);
+    OUT_BATCH_REGSEQ(R300_SC_SCISSORS_TL, 2);
+    OUT_BATCH((x1 << R300_SCISSORS_X_SHIFT)|(y1 << R300_SCISSORS_Y_SHIFT));
+    OUT_BATCH((x2 << R300_SCISSORS_X_SHIFT)|(y2 << R300_SCISSORS_Y_SHIFT));
+    END_BATCH();
+}
+
 static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
