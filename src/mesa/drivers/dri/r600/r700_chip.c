@@ -381,12 +381,12 @@ GLboolean r700InitChipObject(context_t *context)
     return GL_TRUE;
 }
 
-void r700SetupVTXConstans(GLcontext  * ctx, 
-                          unsigned int nStreamID,
-                          void *       pAos,
-                          unsigned int size,      /* number of elements in vector */
-                          unsigned int stride,
-                          unsigned int count)     /* number of vectors in stream */
+void r700SetupVTXConstants(GLcontext  * ctx, 
+			   unsigned int nStreamID,
+			   void *       pAos,
+			   unsigned int size,      /* number of elements in vector */
+			   unsigned int stride,
+			   unsigned int count)     /* number of vectors in stream */
 {
     context_t *context = R700_CONTEXT(ctx);
     uint32_t *dest;
@@ -475,7 +475,7 @@ int r700SetupStreams(GLcontext * ctx)
 					    vb->Count);
 
             /* currently aos are packed */
-            r700SetupVTXConstans(ctx, 
+            r700SetupVTXConstants(ctx, 
                                  i,
                                  (void*)(&context->radeon.tcl.aos[i]),
                                  (unsigned int)vb->AttribPtr[i]->size,
