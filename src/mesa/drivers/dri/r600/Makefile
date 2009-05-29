@@ -43,7 +43,6 @@ DRIVER_SOURCES = \
 		 radeon_program_pair.c \
 		 radeon_nqssadce.c \
 		 r600_emit.c       \
-		 r600_swtcl.c      \
 		 r700_assembler.c  \
 		 r700_fragprog.c \
 		 r700_vertprog.c \

@@ -61,7 +61,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_span.h"
 #include "r600_cmdbuf.h"
 #include "r600_emit.h"
-#include "r600_swtcl.h"
 #include "radeon_bocs_wrapper.h"
 
 #include "r700_chip.h"
@@ -203,7 +202,7 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.get_lock = r600_get_lock;
 	radeon->vtbl.update_viewport_offset = r700UpdateViewportOffset;
 	radeon->vtbl.emit_cs_header = r600_vtbl_emit_cs_header;
-	radeon->vtbl.swtcl_flush = r600_swtcl_flush;
+	radeon->vtbl.swtcl_flush = NULL;
 	radeon->vtbl.pre_emit_atoms = r600_vtbl_pre_emit_atoms;
 	radeon->vtbl.fallback = r600_fallback;
 }
@@ -228,13 +227,7 @@ static GLboolean r600AllocMemSurf(context_t   *context,
 {
     return GL_TRUE;
 }
-/* to be enabled */
-static int  r600FlushCmdBuffer(context_t *context)
-{
-    int ret = 0;
 
-    return ret;
-}
 /* to be enabled */
 static void r600MemUse(context_t *context, int id)
 {
@@ -416,10 +409,6 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	r600InitCmdBuf(r600);
 
     (r600->chipobj.InitState)(r600->radeon.glCtx);
-#if 0 /* to be enabled */
-	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
-	        r600InitSwtcl(ctx);
-#endif
 
 	TNL_CONTEXT(ctx)->Driver.RunPipeline = r600RunPipeline;
 

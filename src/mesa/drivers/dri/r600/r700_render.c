@@ -354,11 +354,12 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     //richard test
     /* test stamp, write a number to mmSCRATCH4 */
+#if 0
     BEGIN_BATCH_NO_AUTOSTATE(3);
     R600_OUT_BATCH_REGVAL((0x2144 << 2), 0x56785678);
     END_BATCH();
     COMMIT_BATCH();
-
+#endif
 
 #endif //0
     rcommonFlushCmdBuf( &context->radeon, __FUNCTION__ );
