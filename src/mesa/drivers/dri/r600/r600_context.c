@@ -207,32 +207,6 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.fallback = r600_fallback;
 }
 
-/* to be enabled */
-static GLboolean r600LoadMemSurf(context_t *context,
-                               GLuint     dst_offset, /* gpu addr */
-                               GLuint     dst_pitch_in_pixel,                               
-                               GLuint     src_width_in_pixel,
-                               GLuint     height,
-                               GLuint     byte_per_pixel,
-                               unsigned char* pSrc) /* source data */
-{
-    return GL_TRUE;
-}
-/* to be enabled */
-static GLboolean r600AllocMemSurf(context_t   *context,
-                           void       **ppmemBlock,
-                           void       **ppheap,
-                           GLuint      *prefered_heap, /* Now used RADEON_LOCAL_TEX_HEAP, return actual heap used. */
-                           GLuint       totalSize)
-{
-    return GL_TRUE;
-}
-
-/* to be enabled */
-static void r600MemUse(context_t *context, int id)
-{
-}
-
 /* Create the device specific rendering context.
  */
 GLboolean r600CreateContext(const __GLcontextModes * glVisual,
@@ -279,9 +253,6 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
     (r600->chipobj.InitFuncs)(&functions);
     r600->chipobj.EmitShader     = r600EmitShader;
     r600->chipobj.DeleteShader   = r600DeleteShader;
-    r600->chipobj.LoadMemSurf    = r600LoadMemSurf;
-    r600->chipobj.AllocMemSurf   = r600AllocMemSurf;
-    r600->chipobj.MemUse         = r600MemUse;
 
 	if (!radeonInitContext(&r600->radeon, &functions,
 			       glVisual, driContextPriv,

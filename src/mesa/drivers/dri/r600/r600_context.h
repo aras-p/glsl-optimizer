@@ -175,20 +175,6 @@ typedef struct chip_object
                              char * szShaderUsage);
     GLboolean (*DeleteShader)(GLcontext * ctx, 
                               void * shaderbo);
-    void      (*MemUse)(context_t *context, int id);
-    GLboolean (*LoadMemSurf)(context_t *context,
-                               GLuint     dst_offset, /* gpu addr */
-                               GLuint     dst_pitch_in_pixel,                               
-                               GLuint     src_width_in_pixel,
-                               GLuint     height,
-                               GLuint     byte_per_pixel,
-                               unsigned char* pSrc); /* source data */    
-    GLboolean (*AllocMemSurf)(context_t   *context,
-                           void  **ppmemBlock,
-                           void  **ppheap,
-                           GLuint      *prefered_heap, 
-                           GLuint       totalSize);
-    
     struct tnl_pipeline_stage **stages;
 } chip_object;
 
