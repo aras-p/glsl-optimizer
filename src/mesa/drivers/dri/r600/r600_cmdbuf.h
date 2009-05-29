@@ -205,6 +205,6 @@ do {								\
 #define R600_OUT_BATCH_REGSEQ(reg, count)	\
 	R600_OUT_BATCH_REGS((reg), (count))
 
-extern void r600InitCmdBuf(r600ContextPtr r600);
+extern void r600InitCmdBuf(context_t *r600);
 
 #endif				/* __R600_CMDBUF_H__ */

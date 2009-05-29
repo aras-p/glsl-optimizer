@@ -47,7 +47,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r600_context.h"
 #include "r600_emit.h"
 
-void r600EmitCacheFlush(r600ContextPtr rmesa)
+void r600EmitCacheFlush(context_t *rmesa)
 {
 	BATCH_LOCALS(&rmesa->radeon);
 /*

@@ -190,11 +190,11 @@ static void r600_vtbl_pre_emit_atoms(radeonContextPtr radeon)
 
 static void r600_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
 {
-	r600ContextPtr r600 = R600_CONTEXT(ctx);
+	context_t *context = R700_CONTEXT(ctx);
 	if (mode)
-		r600->radeon.Fallback |= bit;
+		context->radeon.Fallback |= bit;
 	else
-		r600->radeon.Fallback &= ~bit;
+		context->radeon.Fallback &= ~bit;
 }
 
 static void r600_init_vtbl(radeonContextPtr radeon)
@@ -216,7 +216,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
 	struct dd_function_table functions;
-	r600ContextPtr r600;
+	context_t *r600;
 	GLcontext *ctx;
 	int tcl_mode;
 
@@ -225,7 +225,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	assert(screen);
 
 	/* Allocate the R600 context */
-	r600 = (r600ContextPtr) CALLOC(sizeof(*r600));
+	r600 = (context_t*) CALLOC(sizeof(*r600));
 	if (!r600)
 		return GL_FALSE;
 
@@ -328,17 +328,15 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	_tnl_allow_vertex_fog(ctx, GL_TRUE);
 
 	/* currently bogus data */
-	if (screen->chip_flags & RADEON_CHIPSET_TCL) {
-	        ctx->Const.VertexProgram.MaxInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
-		ctx->Const.VertexProgram.MaxNativeInstructions =
-		  VSF_MAX_FRAGMENT_LENGTH / 4;
-		ctx->Const.VertexProgram.MaxNativeAttribs = 16;	/* r420 */
-		ctx->Const.VertexProgram.MaxTemps = 32;
-		ctx->Const.VertexProgram.MaxNativeTemps =
-		  /*VSF_MAX_FRAGMENT_TEMPS */ 32;
-		ctx->Const.VertexProgram.MaxNativeParameters = 256;	/* r420 */
-		ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
-	}
+	ctx->Const.VertexProgram.MaxInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
+	ctx->Const.VertexProgram.MaxNativeInstructions =
+		VSF_MAX_FRAGMENT_LENGTH / 4;
+	ctx->Const.VertexProgram.MaxNativeAttribs = 16;	/* r420 */
+	ctx->Const.VertexProgram.MaxTemps = 32;
+	ctx->Const.VertexProgram.MaxNativeTemps =
+		/*VSF_MAX_FRAGMENT_TEMPS */ 32;
+	ctx->Const.VertexProgram.MaxNativeParameters = 256;	/* r420 */
+	ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
 
 	ctx->Const.FragmentProgram.MaxNativeTemps = PFS_NUM_TEMP_REGS;
 	ctx->Const.FragmentProgram.MaxNativeAttribs = 11;	/* copy i915... */

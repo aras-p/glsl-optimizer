@@ -593,7 +593,7 @@ struct radeon_cs_manager * r600_radeon_cs_manager_legacy_ctor(struct radeon_cont
     return (struct radeon_cs_manager*)csm;
 }
 
-void r600InitCmdBuf(r600ContextPtr r600) /* from rcommonInitCmdBuf */
+void r600InitCmdBuf(context_t *r600) /* from rcommonInitCmdBuf */
 {
     radeonContextPtr rmesa = &r600->radeon;
 	

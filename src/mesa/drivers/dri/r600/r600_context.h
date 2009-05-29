@@ -49,9 +49,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/colormac.h"
 
 struct r600_context;
-typedef struct r600_context r600ContextRec;
-typedef struct r600_context *r600ContextPtr;
-
 typedef struct r600_context context_t;
 
 #include "main/mm.h"
@@ -116,30 +113,6 @@ extern int hw_tcl_on;
 #define R600_FALLBACK_TCL 1
 #define R600_FALLBACK_RAST 2
 
-/* r600_swtcl.c
- */
-struct r600_swtcl_info {
-  /*
-    * Offset of the 4UB color data within a hardware (swtcl) vertex.
-    */
-   GLuint coloroffset;
-
-   /**
-    * Offset of the 3UB specular color data within a hardware (swtcl) vertex.
-    */
-   GLuint specoffset;
-
-   struct vertex_attribute{
-       GLuint attr;
-       GLubyte format;
-       GLubyte dst_loc;
-       GLuint swizzle;
-       GLubyte write_mask;
-   } vert_attrs[VERT_ATTRIB_MAX];
-
-   GLubyte vertex_attr_count;
-};
-
 enum 
 {
     NO_SHIFT    = 0,
@@ -194,11 +167,9 @@ struct r600_context {
 
 	GLboolean disable_lowimpact_fallback;
 
-	struct r600_swtcl_info swtcl;
 	GLboolean vap_flush_needed;
 };
 
-#define R600_CONTEXT(ctx)		((r600ContextPtr)(ctx->DriverCtx))
 #define R700_CONTEXT(ctx)		((context_t *)(ctx->DriverCtx))
 #define GL_CONTEXT(context)     ((GLcontext *)(context->radeon.glCtx))
 
