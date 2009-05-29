@@ -50,16 +50,4 @@ extern GLboolean r600EmitShader(GLcontext * ctx,
 extern GLboolean r600DeleteShader(GLcontext * ctx, 
                                  void * shaderbo);
 
-extern GLboolean r600EmitVec(GLcontext * ctx, 
-                             struct radeon_aos *aos,
-			                 GLvoid * data, 
-                             int size, 
-                             int stride, 
-                             int count);
-
-extern void      r600ReleaseVec(GLcontext * ctx);
-
-extern void r600FreeDmaRegion(context_t *context, 
-                              void * shaderbo);
-
 #endif

@@ -350,9 +350,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     /* flush dst */
     //r700SyncSurf(context); /*  */
 
-    (context->chipobj.FlushCmdBuffer)(context);
-
-    (context->chipobj.ReleaseArrays)(ctx);
+    radeonReleaseArrays(ctx, 0);
 
     //richard test
     /* test stamp, write a number to mmSCRATCH4 */

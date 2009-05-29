@@ -467,12 +467,12 @@ int r700SetupStreams(GLcontext * ctx)
 		unBit = 1 << i;
 		if(vpc->mesa_program.Base.InputsRead & unBit) 
 		{            
-            (context->chipobj.EmitVec)(ctx, 
-                                       &context->radeon.tcl.aos[i],
-				                       vb->AttribPtr[i]->data,
-				                       vb->AttribPtr[i]->size,
-				                       vb->AttribPtr[i]->stride, 
-                                       vb->Count);
+			rcommon_emit_vector(ctx, 
+					    &context->radeon.tcl.aos[i],
+					    vb->AttribPtr[i]->data,
+					    vb->AttribPtr[i]->size,
+					    vb->AttribPtr[i]->stride, 
+					    vb->Count);
 
             /* currently aos are packed */
             r700SetupVTXConstans(ctx, 

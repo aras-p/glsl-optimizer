@@ -286,12 +286,8 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
     (r600->chipobj.InitFuncs)(&functions);
     r600->chipobj.EmitShader     = r600EmitShader;
     r600->chipobj.DeleteShader   = r600DeleteShader;
-    r600->chipobj.FreeDmaRegion  = r600FreeDmaRegion;
-    r600->chipobj.EmitVec        = r600EmitVec;
-    r600->chipobj.ReleaseArrays  = r600ReleaseVec;
     r600->chipobj.LoadMemSurf    = r600LoadMemSurf;
     r600->chipobj.AllocMemSurf   = r600AllocMemSurf;
-    r600->chipobj.FlushCmdBuffer = r600FlushCmdBuffer;
     r600->chipobj.MemUse         = r600MemUse;
 
 	if (!radeonInitContext(&r600->radeon, &functions,

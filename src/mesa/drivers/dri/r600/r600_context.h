@@ -175,17 +175,7 @@ typedef struct chip_object
                              char * szShaderUsage);
     GLboolean (*DeleteShader)(GLcontext * ctx, 
                               void * shaderbo);
-    void      (*FreeDmaRegion)( GLcontext * ctx, 
-                                void * shaderbo);
-    GLboolean (*EmitVec)(GLcontext * ctx, 
-                         struct radeon_aos *aos,
-			             GLvoid * data, 
-                         int size, 
-                         int stride, 
-                         int count);
     void      (*MemUse)(context_t *context, int id);
-    void      (*ReleaseArrays)(GLcontext * ctx);
-    int       (*FlushCmdBuffer)(GLcontext * ctx);
     GLboolean (*LoadMemSurf)(context_t *context,
                                GLuint     dst_offset, /* gpu addr */
                                GLuint     dst_pitch_in_pixel,                               

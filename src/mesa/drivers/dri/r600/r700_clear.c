@@ -154,7 +154,7 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
     END_BATCH();
     COMMIT_BATCH();
 
-    (context->chipobj.EmitVec)(ctx, &aos_vb, (GLvoid *)fVb, 4, 16, 6);
+    rcommon_emit_vector(ctx, &aos_vb, (GLvoid *)fVb, 4, 16, 6);
 
     r700SetupVTXConstans(ctx, VERT_ATTRIB_POS, &aos_vb, 4, 16, 6);
 
@@ -249,10 +249,6 @@ static GLboolean r700ClearWithDraw(context_t *context, GLbitfield mask)
 
     r700WaitForIdleClean(context);
 
-    (context->chipobj.FlushCmdBuffer)(context);
-
-    (context->chipobj.FreeDmaRegion)(context, aos_vb.bo);
-
     /* Restore chip object. */
     memcpy(r700, &r700Saved, sizeof(R700_CHIP_CONTEXT));
 
@@ -268,7 +264,7 @@ void r700Clear(GLcontext * ctx, GLbitfield mask)
         return;
     }
 
-    r700ClearWithDraw(context, mask);
+    //r700ClearWithDraw(context, mask);
 }
 
 
