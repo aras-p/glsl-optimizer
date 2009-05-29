@@ -60,8 +60,8 @@ static void r700Flush(GLcontext *ctx)
 	if (radeon->dma.flush)
 		radeon->dma.flush( ctx );
 
-	r700SendContextStates(context, GL_FALSE);
-   
+	r700SendContextStates(context);
+
 	if (radeon->cmdbuf.cs->cdw)
 		rcommonFlushCmdBuf(radeon, __FUNCTION__);
 }

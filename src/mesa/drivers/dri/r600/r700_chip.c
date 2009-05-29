@@ -53,16 +53,6 @@ static GLboolean r700DestroyChipObj(GLcontext * ctx)
 
     r700 = (R700_CHIP_CONTEXT *)(context->chipobj.pvChipObj);
 
-    if(0 != r700->pbo_vs_clear)
-    {
-        r600DeleteShader(context, r700->pbo_vs_clear);    
-    }
-
-    if(0 != r700->pbo_fs_clear)
-    {
-        r600DeleteShader(context, r700->pbo_fs_clear);
-    }
-
     FREE(r700->pStateList);
 
     FREE(r700);
@@ -512,8 +502,7 @@ inline GLboolean needRelocReg(context_t *context, unsigned int reg)
     return GL_FALSE;
 }
 
-inline GLboolean setRelocReg(context_t *context, unsigned int reg,
-                             GLboolean bUseStockShader)
+inline GLboolean setRelocReg(context_t *context, unsigned int reg)
 {
     BATCH_LOCALS(&context->radeon);
     R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
@@ -573,63 +562,35 @@ inline GLboolean setRelocReg(context_t *context, unsigned int reg,
                 return GL_TRUE;
             }
             break;
-        case mmSQ_PGM_START_VS:   
-            {                
-                if(GL_TRUE == bUseStockShader)
-                {
-                    if(NULL != r700->pbo_vs_clear)
-                    {
-                        pbo = (struct radeon_bo *)(r700->pbo_vs_clear);
-                    }
-                    else
-                    {
-                        return GL_FALSE;
-                    }
-                }
-                else
-                {
-                    pbo = (struct radeon_bo *)r700GetActiveVpShaderBo(GL_CONTEXT(context));
-                }
+        case mmSQ_PGM_START_VS:
+            {
+                pbo = (struct radeon_bo *)r700GetActiveVpShaderBo(GL_CONTEXT(context));
 
                 offset_mod.shift     = NO_SHIFT;
                 offset_mod.shiftbits = 0;
-                offset_mod.mask      = 0xFFFFFFFF;           
+                offset_mod.mask      = 0xFFFFFFFF;
 
-                R600_OUT_BATCH_RELOC(r700->SQ_PGM_START_VS.u32All, 
-                                     pbo, 
+                R600_OUT_BATCH_RELOC(r700->SQ_PGM_START_VS.u32All,
+                                     pbo,
                                      r700->SQ_PGM_START_VS.u32All,
 					                 RADEON_GEM_DOMAIN_GTT, 0, 0, &offset_mod);
                 return GL_TRUE;
             }
             break;
-        case mmSQ_PGM_START_FS:            
-        case mmSQ_PGM_START_ES:            
-        case mmSQ_PGM_START_GS:            
-        case mmSQ_PGM_START_PS:	
+        case mmSQ_PGM_START_FS:
+        case mmSQ_PGM_START_ES:
+        case mmSQ_PGM_START_GS:
+        case mmSQ_PGM_START_PS:
             {
-                if(GL_TRUE == bUseStockShader)
-                {
-                    if(NULL != r700->pbo_fs_clear)
-                    {
-                        pbo = (struct radeon_bo *)(r700->pbo_fs_clear);
-                    }
-                    else
-                    {
-                        return GL_FALSE;
-                    }
-                }
-                else
-                {
-                    pbo = (struct radeon_bo *)r700GetActiveFpShaderBo(GL_CONTEXT(context));
-                }
+                pbo = (struct radeon_bo *)r700GetActiveFpShaderBo(GL_CONTEXT(context));
 
                 offset_mod.shift     = NO_SHIFT;
                 offset_mod.shiftbits = 0;
                 offset_mod.mask      = 0xFFFFFFFF;
 
                 voffset = 0;
-                R600_OUT_BATCH_RELOC(r700->SQ_PGM_START_PS.u32All, 
-                                     pbo, 
+                R600_OUT_BATCH_RELOC(r700->SQ_PGM_START_PS.u32All,
+                                     pbo,
                                      r700->SQ_PGM_START_PS.u32All,
 					                 RADEON_GEM_DOMAIN_GTT, 0, 0, &offset_mod);
                 return GL_TRUE;
@@ -640,7 +601,7 @@ inline GLboolean setRelocReg(context_t *context, unsigned int reg,
     return GL_FALSE;
 }
 
-GLboolean r700SendContextStates(context_t *context, GLboolean bUseStockShader)
+GLboolean r700SendContextStates(context_t *context)
 {
     BATCH_LOCALS(&context->radeon);
 
@@ -676,11 +637,11 @@ GLboolean r700SendContextStates(context_t *context, GLboolean bUseStockShader)
 
         pState = pState->pNext;
 
-        BEGIN_BATCH_NO_AUTOSTATE(toSend + 2);        
+        BEGIN_BATCH_NO_AUTOSTATE(toSend + 2);
         R600_OUT_BATCH_REGSEQ(((pInit->unOffset + ASIC_CONTEXT_BASE_INDEX)<<2), toSend);
         for(ui=0; ui<toSend; ui++)
         {
-            if( GL_FALSE == setRelocReg(context, pInit->unOffset, bUseStockShader) )
+            if( GL_FALSE == setRelocReg(context, pInit->unOffset) )
             {
                 /* for not reloc reg. */
                 R600_OUT_BATCH(*(pInit->puiValue));

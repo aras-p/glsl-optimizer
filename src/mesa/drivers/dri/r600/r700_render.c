@@ -294,7 +294,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     /* flush vtx */
     //r700SyncSurf(context); /*  */
 
-    r700SendContextStates(context, GL_FALSE);
+    r700SendContextStates(context);
 
     /* richard test code */
     for (i = 0; i < vb->PrimitiveCount; i++) 
