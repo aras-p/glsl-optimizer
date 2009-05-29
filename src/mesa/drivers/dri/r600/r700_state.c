@@ -482,9 +482,6 @@ static void r700StencilOpSeparate(GLcontext * ctx, GLenum face,
 {
 }
 
-#define SUBPIXEL_X 0.125
-#define SUBPIXEL_Y 0.125
-
 static void r700Viewport(GLcontext * ctx, 
                          GLint x, 
                          GLint y,
@@ -520,9 +517,9 @@ static void r700Viewport(GLcontext * ctx,
     }
 
     sx = v[MAT_SX];
-	tx = v[MAT_TX] + xoffset + SUBPIXEL_X;
+	tx = v[MAT_TX] + xoffset;
 	sy = -v[MAT_SY];
-	ty = (-v[MAT_TY]) + yoffset + SUBPIXEL_Y;
+	ty = (-v[MAT_TY]) + yoffset;
 	sz = v[MAT_SZ] * scale;
 	tz = v[MAT_TZ] * scale;
 
