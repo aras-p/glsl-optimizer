@@ -46,10 +46,6 @@
 
 #include "r700_tex.h"
 
-GLuint r700GetTexObjSize(void)  
-{
-    return sizeof(r700TexObj);
-}
 
 /* to be enable */
 void r700SetTexBuffer(__DRIcontext *pDRICtx, GLint target,

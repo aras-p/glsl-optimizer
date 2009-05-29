@@ -134,12 +134,6 @@ typedef struct chip_object
     /* ------------  OUT ------------------- */
     GLboolean (*DestroyChipObj)(GLcontext * ctx);
 
-    void      (*InitFuncs)(struct dd_function_table *functions);
-
-    void      (*InitState)(GLcontext * ctx);
-
-    GLuint    (*GetTexObjSize)(void);
-
 } chip_object;
 
 /**

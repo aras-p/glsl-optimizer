@@ -58,14 +58,6 @@ static GLboolean r700DestroyChipObj(GLcontext * ctx)
     return GL_TRUE;
 }
 
-static void r700InitFuncs(struct dd_function_table *functions)
-{
-    r700InitStateFuncs(functions);
-    r700InitTextureFuncs(functions);
-    r700InitShaderFuncs(functions);
-    r700InitIoctlFuncs(functions);
-}
-
 #define LINK_STATES(reg)                                            \
 do                                                                  \
 {                                                                   \
@@ -84,12 +76,6 @@ GLboolean r700InitChipObject(context_t *context)
     context->chipobj.pvChipObj = (void*)r700;
 
     context->chipobj.DestroyChipObj = r700DestroyChipObj;
-
-    context->chipobj.GetTexObjSize  = r700GetTexObjSize;
-
-    context->chipobj.InitFuncs = r700InitFuncs;
-
-    context->chipobj.InitState = r700InitState;
 
     /* init state list */
     r700->pStateList = (ContextState*) MALLOC (sizeof(ContextState)*sizeof(R700_CHIP_CONTEXT)/sizeof(unsigned int));

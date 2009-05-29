@@ -251,7 +251,10 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 
 	r700InitChipObject(r600);  /* let the eag... */
 
-    (r600->chipobj.InitFuncs)(&functions);
+	r700InitStateFuncs(&functions);
+	r700InitTextureFuncs(&functions);
+	r700InitShaderFuncs(&functions);
+	r700InitIoctlFuncs(&functions);
 
 	if (!radeonInitContext(&r600->radeon, &functions,
 			       glVisual, driContextPriv,
@@ -374,7 +377,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 
 	r600InitCmdBuf(r600);
 
-	(r600->chipobj.InitState)(r600->radeon.glCtx);
+	r700InitState(r600->radeon.glCtx);
 
 	TNL_CONTEXT(ctx)->Driver.RunPipeline = r600RunPipeline;
 
