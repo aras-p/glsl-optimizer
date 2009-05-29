@@ -55,12 +55,12 @@ static GLboolean r700DestroyChipObj(GLcontext * ctx)
 
     if(0 != r700->pbo_vs_clear)
     {
-        (context->chipobj.DeleteShader)(context, r700->pbo_vs_clear);    
+        r600DeleteShader(context, r700->pbo_vs_clear);    
     }
 
     if(0 != r700->pbo_fs_clear)
     {
-        (context->chipobj.DeleteShader)(context, r700->pbo_fs_clear);
+        r600DeleteShader(context, r700->pbo_fs_clear);
     }
 
     FREE(r700->pStateList);

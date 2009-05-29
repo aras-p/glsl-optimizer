@@ -140,14 +140,6 @@ typedef struct chip_object
 
     GLuint    (*GetTexObjSize)(void);
 
-    /* ------------  IN  ------------------- */
-    GLboolean (*EmitShader)( GLcontext * ctx, 
-                             void ** shaderbo,
-			                 GLvoid * data, 
-                             int sizeinDWORD,
-                             char * szShaderUsage);
-    GLboolean (*DeleteShader)(GLcontext * ctx, 
-                              void * shaderbo);
     struct tnl_pipeline_stage **stages;
 } chip_object;
 

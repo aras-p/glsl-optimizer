@@ -97,7 +97,7 @@ static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
         vp = (struct r700_vertex_program*)prog;
         /* Release DMA region */
 
-        (context->chipobj.DeleteShader)(ctx, vp->shaderbo);
+        r600DeleteShader(ctx, vp->shaderbo);
 
         /* Clean up */
         Clean_Up_Assembler(&(vp->r700AsmCode));
@@ -108,7 +108,7 @@ static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 		fp = (struct r700_fragment_program*)prog;
         /* Release DMA region */
 
-        (context->chipobj.DeleteShader)(ctx, fp->shaderbo);
+        r600DeleteShader(ctx, fp->shaderbo);
 
         /* Clean up */
         Clean_Up_Assembler(&(fp->r700AsmCode));

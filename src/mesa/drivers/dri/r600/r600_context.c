@@ -251,8 +251,6 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	r700InitChipObject(r600);  /* let the eag... */
 
     (r600->chipobj.InitFuncs)(&functions);
-    r600->chipobj.EmitShader     = r600EmitShader;
-    r600->chipobj.DeleteShader   = r600DeleteShader;
 
 	if (!radeonInitContext(&r600->radeon, &functions,
 			       glVisual, driContextPriv,

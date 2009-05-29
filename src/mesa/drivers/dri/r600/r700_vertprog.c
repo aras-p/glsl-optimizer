@@ -357,7 +357,7 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
 	    }
 
         /* Load vp to gpu */
-        (context->chipobj.EmitShader)(ctx, 
+        r600EmitShader(ctx, 
                        &(vp->shaderbo), 
                        (GLvoid *)(vp->r700Shader.pProgram),
                        vp->r700Shader.uShaderBinaryDWORDSize,

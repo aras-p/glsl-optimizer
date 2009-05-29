@@ -278,7 +278,7 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 	    }
 
         /* Load fp to gpu */
-        (context->chipobj.EmitShader)(ctx, 
+        r600EmitShader(ctx, 
                        &(fp->shaderbo), 
                        (GLvoid *)(fp->r700Shader.pProgram),
                        fp->r700Shader.uShaderBinaryDWORDSize,
