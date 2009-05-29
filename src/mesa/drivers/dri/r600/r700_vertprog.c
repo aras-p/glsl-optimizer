@@ -41,7 +41,6 @@
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
 
-#include "r700_chip.h"
 #include "r700_debug.h"
 #include "r700_vertprog.h"
 
@@ -339,7 +338,7 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
 
     BATCH_LOCALS(&context->radeon);
 
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
     struct r700_vertex_program *vp
              = (struct r700_vertex_program *)ctx->VertexProgram._Current;

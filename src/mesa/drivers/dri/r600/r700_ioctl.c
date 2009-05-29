@@ -37,7 +37,6 @@
 #include "radeon_lock.h"
 #include "r600_context.h"
 
-#include "r700_chip.h"
 #include "r700_ioctl.h"
 #include "r700_clear.h"
 

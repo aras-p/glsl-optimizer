@@ -47,7 +47,6 @@
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
 
-#include "r700_chip.h"
 #include "r700_tex.h"
 
 #include "r700_vertprog.h"
@@ -109,7 +108,7 @@ static GLboolean r700SetupShaders(GLcontext * ctx)
 {
     context_t *context = R700_CONTEXT(ctx);
 
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
     GLuint exportCount;
 
@@ -133,7 +132,7 @@ GLboolean r700SendTextureState(context_t *context)
 {
     unsigned int i;
 
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 #if 0 /* to be enabled */
     for(i=0; i<R700_TEXTURE_NUMBERUNITS; i++)
     {
@@ -238,7 +237,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
 			                   struct tnl_pipeline_stage *stage)
 {
     context_t *context = R700_CONTEXT(ctx);
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 #if 1
     BATCH_LOCALS(&context->radeon);
 

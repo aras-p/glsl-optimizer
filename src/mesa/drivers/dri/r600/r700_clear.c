@@ -33,7 +33,6 @@
 #include "main/enums.h"
 
 #include "r600_context.h"
-#include "r700_chip.h"
 
 #include "r700_shaderinst.h"
 #include "r600_emit.h"

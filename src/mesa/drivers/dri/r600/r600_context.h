@@ -48,6 +48,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/mtypes.h"
 #include "main/colormac.h"
 
+#include "r700_chip.h"
+
 struct r600_context;
 typedef struct r600_context context_t;
 
@@ -127,32 +129,20 @@ typedef struct offset_modifiers
     GLuint mask;
 } offset_modifiers;
 
-typedef struct chip_object
-{
-    void      *pvChipObj;
-
-    /* ------------  OUT ------------------- */
-    GLboolean (*DestroyChipObj)(GLcontext * ctx);
-
-} chip_object;
-
 /**
  * \brief R600 context structure.
  */
 struct r600_context {
 	struct radeon_context radeon;	/* parent class, must be first */
 
-    /* ------ */
-    chip_object chipobj;
+	/* ------ */
+	R700_CHIP_CONTEXT hw;
 
 	/* Vertex buffers
 	 */
 	GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
 	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
 
-	GLboolean disable_lowimpact_fallback;
-
-	GLboolean vap_flush_needed;
 };
 
 #define R700_CONTEXT(ctx)		((context_t *)(ctx->DriverCtx))
@@ -162,6 +152,18 @@ extern void r600DestroyContext(__DRIcontextPrivate * driContextPriv);
 extern GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 				   __DRIcontextPrivate * driContextPriv,
 				   void *sharedContextPrivate);
+
+#define R700_CONTEXT_STATES(context) ((R700_CHIP_CONTEXT *)(&context->hw))
+
+extern GLboolean r700InitChipObject(context_t *context);
+extern GLboolean r700SendContextStates(context_t *context);
+extern int       r700SetupStreams(GLcontext * ctx);
+extern void      r700SetupVTXConstants(GLcontext  * ctx, 
+				       unsigned int nStreamID,
+				       void *       pAos,
+				       unsigned int size,      /* number of elements in vector */
+				       unsigned int stride,
+				       unsigned int Count);    /* number of vectors in stream */
 
 #define RADEON_D_CAPTURE 0
 #define RADEON_D_PLAYBACK 1

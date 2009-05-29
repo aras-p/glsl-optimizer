@@ -38,7 +38,6 @@
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
 
-#include "r700_chip.h"
 #include "r700_fragprog.h"
 
 #include "r700_debug.h"
@@ -259,7 +258,7 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     context_t *context = R700_CONTEXT(ctx);   
     BATCH_LOCALS(&context->radeon);
     
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
     struct r700_fragment_program *fp = (struct r700_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);

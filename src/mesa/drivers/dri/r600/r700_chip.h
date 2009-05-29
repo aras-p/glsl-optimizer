@@ -451,17 +451,5 @@ typedef struct _R700_CHIP_CONTEXT
 	
 } R700_CHIP_CONTEXT;
 
-#define R700_CONTEXT_STATES(context) ((R700_CHIP_CONTEXT *)(context->chipobj.pvChipObj))
-
-extern GLboolean r700InitChipObject(context_t *context);
-extern GLboolean r700SendContextStates(context_t *context);
-extern int       r700SetupStreams(GLcontext * ctx);
-extern void      r700SetupVTXConstants(GLcontext  * ctx, 
-				       unsigned int nStreamID,
-				       void *       pAos,
-				       unsigned int size,      /* number of elements in vector */
-				       unsigned int stride,
-				       unsigned int Count);    /* number of vectors in stream */
-
 #endif /* _R700_CHIP_H_ */
 

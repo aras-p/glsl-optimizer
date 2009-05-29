@@ -49,7 +49,6 @@
 
 #include "r600_context.h"
 
-#include "r700_chip.h"
 #include "r700_state.h"
 
 #include "r700_fragprog.h"
@@ -190,7 +189,7 @@ static void r700InvalidateState(GLcontext * ctx, GLuint new_state) //-----------
 {
     context_t *context = R700_CONTEXT(ctx);
 
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
     _swrast_InvalidateState(ctx, new_state);
 	_swsetup_InvalidateState(ctx, new_state);
@@ -239,7 +238,7 @@ static void r700SetDepthState(GLcontext * ctx)
 {
 	context_t *context = R700_CONTEXT(ctx);
 
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
     if (ctx->Depth.Test)
     {
@@ -322,7 +321,7 @@ static void r700BlendFuncSeparate(GLcontext * ctx,
 
 static void r700UpdateCulling(GLcontext * ctx)
 {
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(R700_CONTEXT(ctx)->chipobj.pvChipObj);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&R700_CONTEXT(ctx)->hw);
 
     CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, FACE_bit);
     CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, CULL_FRONT_bit);
@@ -490,7 +489,7 @@ static void r700Viewport(GLcontext * ctx,
 {
     context_t *context = R700_CONTEXT(ctx);
 
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
     __DRIdrawablePrivate *dPriv = context->radeon.dri.drawable;
 
@@ -524,12 +523,7 @@ static void r700Viewport(GLcontext * ctx,
 	tz = v[MAT_TZ] * scale;
 
     /* TODO : Need DMA flush as well. */
-#if 0 /* to be enabled */
-    if(context->cmdbuf.count_used > 0)
-    {
-	    (context->chipobj.FlushCmdBuffer)(context);
-    }
-#endif /* to be enabled */
+
     r700->PA_CL_VPORT_XSCALE.u32All  = *((unsigned int*)(&sx));
     r700->PA_CL_VPORT_XOFFSET.u32All = *((unsigned int*)(&tx));
 
@@ -591,7 +585,7 @@ static void r700Scissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h) 
 
 void r700SetRenderTarget(context_t *context)
 {
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
     struct radeon_renderbuffer *rrb;
     unsigned int nPitchInPixel;
@@ -774,7 +768,7 @@ void r700InitState(GLcontext * ctx) //-------------------
 {
     context_t *context = R700_CONTEXT(ctx);
 
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(context->chipobj.pvChipObj);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
     /* Turn off vgt reuse */
     r700->VGT_REUSE_OFF.u32All = 0;

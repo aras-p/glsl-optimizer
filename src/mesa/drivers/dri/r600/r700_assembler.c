@@ -34,7 +34,6 @@
 #include "main/imports.h"
 
 #include "r600_context.h"
-#include "r700_chip.h"
 #include "r700_debug.h"
 
 #include "r700_assembler.h"

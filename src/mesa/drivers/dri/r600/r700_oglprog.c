@@ -34,7 +34,6 @@
 
 #include "r600_context.h"
 
-#include "r700_chip.h"
 #include "r700_oglprog.h"
 #include "r700_fragprog.h"
 #include "r700_vertprog.h"

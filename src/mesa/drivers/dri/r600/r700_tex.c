@@ -40,7 +40,6 @@
 #include "radeon_common.h"
 
 #include "r600_context.h"
-#include "r700_chip.h"
 
 #include "r700_state.h"
 

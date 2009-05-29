@@ -31,32 +31,12 @@
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
 
-#include "r700_chip.h"
 #include "r700_state.h"
 #include "r700_tex.h"
 #include "r700_oglprog.h"
 #include "r700_fragprog.h"
 #include "r700_vertprog.h"
 #include "r700_ioctl.h"
-
-static GLboolean r700DestroyChipObj(GLcontext * ctx)
-{
-    context_t * context = R700_CONTEXT(ctx);
-    R700_CHIP_CONTEXT *r700;
-
-    if(NULL == context->chipobj.pvChipObj)
-    {
-        return GL_TRUE;
-    }
-
-    r700 = (R700_CHIP_CONTEXT *)(context->chipobj.pvChipObj);
-
-    FREE(r700->pStateList);
-
-    FREE(r700);
-
-    return GL_TRUE;
-}
 
 #define LINK_STATES(reg)                                            \
 do                                                                  \
@@ -71,11 +51,7 @@ GLboolean r700InitChipObject(context_t *context)
 {
     ContextState * pStateListWork;
 
-    R700_CHIP_CONTEXT *r700 = CALLOC( sizeof(R700_CHIP_CONTEXT) );
-
-    context->chipobj.pvChipObj = (void*)r700;
-
-    context->chipobj.DestroyChipObj = r700DestroyChipObj;
+    R700_CHIP_CONTEXT *r700 = &context->hw;
 
     /* init state list */
     r700->pStateList = (ContextState*) MALLOC (sizeof(ContextState)*sizeof(R700_CHIP_CONTEXT)/sizeof(unsigned int));

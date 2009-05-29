@@ -63,7 +63,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r600_emit.h"
 #include "radeon_bocs_wrapper.h"
 
-#include "r700_chip.h"
 #include "r700_state.h"
 #include "r700_ioctl.h"
 
@@ -369,9 +368,6 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 	}
 
-	r600->disable_lowimpact_fallback =
-	    driQueryOptionb(&r600->radeon.optionCache,
-			    "disable_lowimpact_fallback");
 	radeon_fbo_init(&r600->radeon);
    	radeonInitSpanFuncs( ctx );
 
@@ -410,7 +406,7 @@ r600DestroyContext (__DRIcontextPrivate * driContextPriv)
     context_t *context = ctx ? R700_CONTEXT(ctx) : NULL;
 
     if (context)
-	    (context->chipobj.DestroyChipObj)(context->chipobj.pvChipObj);
+	    FREE(context->hw.pStateList);
 }
 
 
