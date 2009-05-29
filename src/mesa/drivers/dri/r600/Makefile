@@ -38,10 +38,6 @@ DRIVER_SOURCES = \
 		 radeon_screen.c \
 		 r600_context.c \
 		 r600_cmdbuf.c \
-		 radeon_program.c \
-		 radeon_program_alu.c \
-		 radeon_program_pair.c \
-		 radeon_nqssadce.c \
 		 r600_emit.c       \
 		 r700_assembler.c  \
 		 r700_fragprog.c \
