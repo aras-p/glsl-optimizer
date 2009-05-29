@@ -195,7 +195,7 @@ GLboolean r700SyncSurf(context_t *context)
 
 unsigned int r700PrimitiveType(int prim)
 {
-    switch (prim & PRIM_MODE_MASK) 
+    switch (prim & PRIM_MODE_MASK)
     {
     case GL_POINTS:
         return DI_PT_POINTLIST;

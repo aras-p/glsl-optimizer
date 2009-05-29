@@ -39,8 +39,6 @@
 #include "r700_vertprog.h"
 #include "r700_ioctl.h"
 
-extern const struct tnl_pipeline_stage *r700_pipeline[];
-
 static GLboolean r700DestroyChipObj(GLcontext * ctx)
 {
     context_t * context = R700_CONTEXT(ctx);
@@ -88,8 +86,6 @@ GLboolean r700InitChipObject(context_t *context)
     context->chipobj.DestroyChipObj = r700DestroyChipObj;
 
     context->chipobj.GetTexObjSize  = r700GetTexObjSize;
-
-    context->chipobj.stages = r700_pipeline;
 
     context->chipobj.InitFuncs = r700InitFuncs;
 

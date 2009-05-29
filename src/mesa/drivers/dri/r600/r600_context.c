@@ -92,6 +92,7 @@ int hw_tcl_on = 1;
 
 #include "extension_helper.h"
 
+extern const struct tnl_pipeline_stage *r700_pipeline[];
 
 const struct dri_extension card_extensions[] = {
   /* *INDENT-OFF* */
@@ -310,7 +311,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	/* Install the customized pipeline:
 	 */
 	_tnl_destroy_pipeline(ctx);
-	_tnl_install_pipeline(ctx, (const struct tnl_pipeline_stage **)(r600->chipobj.stages));
+	_tnl_install_pipeline(ctx, r700_pipeline);
 
 	/* Try and keep materials and vertices separate:
 	 */

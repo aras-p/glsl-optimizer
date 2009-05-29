@@ -140,7 +140,6 @@ typedef struct chip_object
 
     GLuint    (*GetTexObjSize)(void);
 
-    struct tnl_pipeline_stage **stages;
 } chip_object;
 
 /**
