@@ -1492,54 +1492,6 @@ static void r300EmitVertexProgram(r300ContextPtr r300, int dest, struct r300_ver
 	}
 }
 
-void r300SetupSwtclVertexProgram(r300ContextPtr rmesa)
-{
-	struct r300_vertex_shader_hw_code *hw_code;
-	GLuint o_reg = 0;
-	GLuint i_reg = 0;
-	int i;
-	int inst_count = 0;
-	int param_count = 0;
-	int program_end = 0;
-
-	/* Reset state, in case we don't use something */
-	((drm_r300_cmd_header_t *) rmesa->hw.vpp.cmd)->vpu.count = 0;
-	((drm_r300_cmd_header_t *) rmesa->hw.vpi.cmd)->vpu.count = 0;
-	((drm_r300_cmd_header_t *) rmesa->hw.vps.cmd)->vpu.count = 0;
-
-	hw_code = _mesa_malloc(sizeof(struct r300_vertex_shader_hw_code));
-
-	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++) {
-		if (rmesa->swtcl.sw_tcl_inputs[i] != -1) {
-			hw_code->body.d[program_end + 0] = PVS_OP_DST_OPERAND(VE_MULTIPLY, GL_FALSE, GL_FALSE, o_reg++, VSF_FLAG_ALL, PVS_DST_REG_OUT);
-			hw_code->body.d[program_end + 1] = PVS_SRC_OPERAND(rmesa->swtcl.sw_tcl_inputs[i], PVS_SRC_SELECT_X,
-					PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z, PVS_SRC_SELECT_W, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
-			hw_code->body.d[program_end + 2] = PVS_SRC_OPERAND(rmesa->swtcl.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1,
-					PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
-			hw_code->body.d[program_end + 3] = PVS_SRC_OPERAND(rmesa->swtcl.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1,
-					PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
-			program_end += 4;
-			i_reg++;
-		}
-	}
-
-	hw_code->length = program_end;
-
-	r300EmitVertexProgram(rmesa, R300_PVS_CODE_START, hw_code);
-	inst_count = (hw_code->length / 4) - 1;
-
-	r300VapCntl(rmesa, i_reg, o_reg, 0);
-
-	R300_STATECHANGE(rmesa, pvs);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] = (0 << R300_PVS_FIRST_INST_SHIFT) | (inst_count << R300_PVS_XYZW_VALID_INST_SHIFT) |
-		(inst_count << R300_PVS_LAST_INST_SHIFT);
-
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] = (0 << R300_PVS_CONST_BASE_OFFSET_SHIFT) | (param_count << R300_PVS_MAX_CONST_ADDR_SHIFT);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] = (inst_count << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
-
-	_mesa_free(hw_code);
-}
-
 void r300SetupVertexProgram(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;

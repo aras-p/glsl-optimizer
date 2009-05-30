@@ -2295,10 +2295,7 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 	rmesa->vtbl.SetupRSUnit(ctx);
 
 	if (rmesa->options.hw_tcl_enabled) {
-		if (rmesa->fallback & R300_FALLBACK_VERTEX_PROGRAM)
-			r300SetupSwtclVertexProgram(rmesa);
-		else
-			r300SetupVertexProgram(rmesa);
+		r300SetupVertexProgram(rmesa);
 	}
 }
 

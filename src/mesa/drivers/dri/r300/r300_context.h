@@ -583,8 +583,6 @@ struct r300_swtcl_info {
     * Offset of the 3UB specular color data within a hardware (swtcl) vertex.
     */
    GLuint specoffset;
-
-   int sw_tcl_inputs[VERT_ATTRIB_MAX];
 };
 
 struct r300_vtable {
