@@ -337,6 +337,11 @@ void r300EmitArrays(GLcontext * ctx)
 	    r300VAPOutputCntl1(ctx, OutputsWritten);
 
 	rmesa->radeon.tcl.aos_count = nr;
+
+	/* Fill index buffer info */
+	rmesa->ind_buf.ptr = vb->Elts;
+	rmesa->ind_buf.is_32bit = GL_TRUE;
+	rmesa->ind_buf.free_needed = GL_FALSE;
 }
 
 void r300EmitCacheFlush(r300ContextPtr rmesa)

@@ -41,6 +41,7 @@
 #define R300_FALLBACK_STENCIL_TWOSIDE   (1 << 21)
 #define R300_FALLBACK_RENDER_MODE       (1 << 22)
 #define R300_FALLBACK_FRAGMENT_PROGRAM  (1 << 23)
+#define R300_FALLBACK_AOS_LIMIT         (1 << 30)
 #define R300_FALLBACK_INVALID_BUFFERS   (1 << 31)
 #define R300_RASTER_FALLBACK_MASK        0xffff0000
 
@@ -52,8 +53,8 @@
 
 extern const struct tnl_pipeline_stage _r300_render_stage;
 
-extern const struct tnl_pipeline_stage _r300_tcl_stage;
-
 extern void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode);
+
+extern void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim);
 
 #endif

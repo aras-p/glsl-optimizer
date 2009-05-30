@@ -153,10 +153,6 @@ const struct dri_extension gl_20_extension[] = {
 
 static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
-	/* Try and go straight to t&l
-	 */
-	&_r300_tcl_stage,
-
 	/* Catch any t&l fallbacks
 	 */
 	&_tnl_vertex_transform_stage,
@@ -436,8 +432,11 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	_tnl_allow_pixel_fog(ctx, GL_FALSE);
 	_tnl_allow_vertex_fog(ctx, GL_TRUE);
 
-	if (!r300->options.hw_tcl_enabled)
+	if (r300->options.hw_tcl_enabled) {
+		r300InitDraw(ctx);
+	} else {
 		r300InitSwtcl(ctx);
+	}
 
 	radeon_fbo_init(&r300->radeon);
 	radeonInitSpanFuncs( ctx );

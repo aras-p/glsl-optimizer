@@ -617,6 +617,13 @@ struct r300_vertex_buffer {
 	GLubyte num_attribs;
 };
 
+struct r300_index_buffer {
+	GLvoid *ptr;
+	GLboolean is_32bit;
+	GLboolean free_needed;
+	GLuint count;
+};
+
 /**
  * \brief R300 context structure.
  */
@@ -644,6 +651,7 @@ struct r300_context {
 	
 	struct r300_swtcl_info swtcl;
 	struct r300_vertex_buffer vbuf;
+	struct r300_index_buffer ind_buf;
 	GLboolean vap_flush_needed;
 
 	uint32_t fallback;
@@ -665,6 +673,8 @@ extern int r300VertexProgUpdateParams(GLcontext * ctx,
 				      float *dst);
 
 extern void r300InitShaderFunctions(r300ContextPtr r300);
+
+extern void r300InitDraw(GLcontext *ctx);
 
 #define r300PackFloat32 radeonPackFloat32
 #define r300PackFloat24 radeonPackFloat24
