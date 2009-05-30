@@ -44,6 +44,12 @@
 #define R300_FALLBACK_INVALID_BUFFERS   (1 << 31)
 #define R300_RASTER_FALLBACK_MASK        0xffff0000
 
+#define MASK_XYZW (R300_WRITE_ENA_X | R300_WRITE_ENA_Y | R300_WRITE_ENA_Z | R300_WRITE_ENA_W)
+#define MASK_X R300_WRITE_ENA_X
+#define MASK_Y R300_WRITE_ENA_Y
+#define MASK_Z R300_WRITE_ENA_Z
+#define MASK_W R300_WRITE_ENA_W
+
 extern const struct tnl_pipeline_stage _r300_render_stage;
 
 extern const struct tnl_pipeline_stage _r300_tcl_stage;

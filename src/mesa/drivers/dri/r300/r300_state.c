@@ -2216,6 +2216,64 @@ static void r500SetupPixelShader(GLcontext *ctx)
 	bump_r500fp_const_count(rmesa->hw.r500fp_const.cmd, code->const_nr * 4);
 }
 
+void r300SetupVAP(GLcontext *ctx, GLuint InputsRead, GLuint OutputsWritten)
+{
+	r300ContextPtr rmesa = R300_CONTEXT( ctx );
+	struct vertex_attribute *attrs = rmesa->vbuf.attribs;
+	int i, j, reg_count;
+	uint32_t *vir0 = &rmesa->hw.vir[0].cmd[1];
+	uint32_t *vir1 = &rmesa->hw.vir[1].cmd[1];
+
+	for (i = 0; i < R300_VIR_CMDSIZE-1; ++i)
+		vir0[i] = vir1[i] = 0;
+
+	for (i = 0, j = 0; i < rmesa->vbuf.num_attribs; ++i) {
+		int tmp;
+
+		tmp = attrs[i].data_type | (attrs[i].dst_loc << R300_DST_VEC_LOC_SHIFT);
+		if (attrs[i]._signed)
+			tmp |= R300_SIGNED;
+		if (attrs[i].normalize)
+			tmp |= R300_NORMALIZE;
+
+		if (i % 2 == 0) {
+			vir0[j] = tmp << R300_DATA_TYPE_0_SHIFT;
+			vir1[j] = attrs[i].swizzle | (attrs[i].write_mask << R300_WRITE_ENA_SHIFT);
+		} else {
+			vir0[j] |= tmp << R300_DATA_TYPE_1_SHIFT;
+			vir1[j] |= (attrs[i].swizzle | (attrs[i].write_mask << R300_WRITE_ENA_SHIFT)) << R300_SWIZZLE1_SHIFT;
+			++j;
+		}
+	}
+
+	reg_count = (rmesa->vbuf.num_attribs + 1) >> 1;
+	if (rmesa->vbuf.num_attribs % 2 != 0) {
+		vir0[reg_count-1] |= R300_LAST_VEC << R300_DATA_TYPE_0_SHIFT;
+	} else {
+		vir0[reg_count-1] |= R300_LAST_VEC << R300_DATA_TYPE_1_SHIFT;
+	}
+
+	R300_STATECHANGE(rmesa, vir[0]);
+	R300_STATECHANGE(rmesa, vir[1]);
+	R300_STATECHANGE(rmesa, vof);
+	R300_STATECHANGE(rmesa, vic);
+
+	if (rmesa->radeon.radeonScreen->kernel_mm) {
+		rmesa->hw.vir[0].cmd[0] &= 0xC000FFFF;
+		rmesa->hw.vir[1].cmd[0] &= 0xC000FFFF;
+		rmesa->hw.vir[0].cmd[0] |= (reg_count & 0x3FFF) << 16;
+		rmesa->hw.vir[1].cmd[0] |= (reg_count & 0x3FFF) << 16;
+	} else {
+		((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count = reg_count;
+		((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count = reg_count;
+	}
+
+	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
+	rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
+	rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
+	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = r300VAPOutputCntl1(ctx, OutputsWritten);
+}
+
 void r300UpdateShaderStates(r300ContextPtr rmesa)
 {
 	GLcontext *ctx;

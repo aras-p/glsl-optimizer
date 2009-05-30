@@ -39,12 +39,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 #include "r300_context.h"
 
-#define MASK_XYZW (R300_WRITE_ENA_X | R300_WRITE_ENA_Y | R300_WRITE_ENA_Z | R300_WRITE_ENA_W)
-#define MASK_X R300_WRITE_ENA_X
-#define MASK_Y R300_WRITE_ENA_Y
-#define MASK_Z R300_WRITE_ENA_Z
-#define MASK_W R300_WRITE_ENA_W
-
 /*
  * Here are definitions of OVM locations of vertex attributes for non TCL hw
  */

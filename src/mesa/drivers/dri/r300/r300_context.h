@@ -584,16 +584,6 @@ struct r300_swtcl_info {
     */
    GLuint specoffset;
 
-   struct vertex_attribute{
-       GLuint attr;
-       GLubyte format;
-       GLubyte dst_loc;
-       GLuint swizzle;
-       GLubyte write_mask;
-   } vert_attrs[VERT_ATTRIB_MAX];
-
-   GLubyte vertex_attr_count;
-
    int sw_tcl_inputs[VERT_ATTRIB_MAX];
 };
 
@@ -605,6 +595,27 @@ struct r300_vtable {
 	void (* SetupPixelShader)(GLcontext *ctx);
 };
 
+struct r300_vertex_buffer {
+	struct vertex_attribute {
+		/* generic */
+		GLubyte element;
+		GLvoid *data;
+		GLboolean free_needed;
+		GLuint stride;
+		GLuint dwords;
+		GLubyte size; /* number of components */
+
+		/* hw specific */
+		uint32_t data_type:4;
+		uint32_t dst_loc:5;
+		uint32_t _signed:1;
+		uint32_t normalize:1;
+		uint32_t swizzle:12;
+		uint32_t write_mask:4;
+	} attribs[VERT_ATTRIB_MAX];
+
+	GLubyte num_attribs;
+};
 
 /**
  * \brief R300 context structure.
@@ -632,6 +643,7 @@ struct r300_context {
 	} options;
 	
 	struct r300_swtcl_info swtcl;
+	struct r300_vertex_buffer vbuf;
 	GLboolean vap_flush_needed;
 
 	uint32_t fallback;
