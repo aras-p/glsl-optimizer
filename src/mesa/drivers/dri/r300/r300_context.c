@@ -124,6 +124,7 @@ const struct dri_extension card_extensions[] = {
   {"GL_EXT_texture_lod_bias",		NULL},
   {"GL_EXT_texture_mirror_clamp",	NULL},
   {"GL_EXT_texture_rectangle",		NULL},
+  {"GL_EXT_vertex_array_bgra",		NULL},
   {"GL_ATI_separate_stencil",		GL_ATI_separate_stencil_functions},
   {"GL_ATI_texture_env_combine3",	NULL},
   {"GL_ATI_texture_mirror_once",	NULL},
