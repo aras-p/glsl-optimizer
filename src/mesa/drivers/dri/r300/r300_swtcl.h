@@ -50,6 +50,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define SWTCL_OVM_TEX(n) ((n) + 6)
 #define SWTCL_OVM_POINT_SIZE 15
 
+extern void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *InputsRead,  GLuint *OutputsWritten);
 
 extern void r300InitSwtcl( GLcontext *ctx );
 extern void r300DestroySwtcl( GLcontext *ctx );

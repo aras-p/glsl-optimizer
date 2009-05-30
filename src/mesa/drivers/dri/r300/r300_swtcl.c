@@ -67,7 +67,7 @@ do { \
 	++num_attrs; \
 } while (0)
 
-static void r300SetVertexFormat( GLcontext *ctx )
+void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_OutputsWritten)
 {
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -219,8 +219,19 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		ADD_ATTR(VERT_ATTRIB_FOG, R300_DATA_TYPE_FLOAT_1, SWTCL_OVM_TEX(first_free_tex), swiz, MASK_XYZW, 0);
 	}
 
-	R300_NEWPRIM(rmesa);
 	rmesa->vbuf.num_attribs = num_attrs;
+	*_InputsRead = InputsRead;
+	*_OutputsWritten = OutputsWritten;
+
+	RENDERINPUTS_COPY(rmesa->render_inputs_bitset, tnl->render_inputs_bitset);
+}
+
+static void r300PrepareVertices(GLcontext *ctx)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	GLuint InputsRead, OutputsWritten;
+
+	r300ChooseSwtclVertexFormat(ctx, &InputsRead, &OutputsWritten);
 	r300SetupVAP(ctx, InputsRead, OutputsWritten);
 
 	rmesa->radeon.swtcl.vertex_size =
@@ -230,8 +241,6 @@ static void r300SetVertexFormat( GLcontext *ctx )
 				    NULL, 0 );
 
 	rmesa->radeon.swtcl.vertex_size /= 4;
-
-	RENDERINPUTS_COPY(rmesa->render_inputs_bitset, tnl->render_inputs_bitset);
 }
 
 
@@ -487,7 +496,7 @@ void r300RenderStart(GLcontext *ctx)
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
 
 	r300ChooseRenderState(ctx);
-	r300SetVertexFormat(ctx);
+	r300PrepareVertices(ctx);
 
 	r300ValidateBuffers(ctx);
 
