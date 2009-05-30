@@ -466,6 +466,16 @@ void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode)
 			fallback_warn |= bit;
 		}
 		rmesa->fallback |= bit;
+
+		/* update only if we change from no tcl fallbacks to some tcl fallbacks */
+		if (rmesa->options.hw_tcl_enabled) {
+			if (((old_fallback & R300_TCL_FALLBACK_MASK) == 0) &&
+				((bit & R300_TCL_FALLBACK_MASK) > 0)) {
+				R300_STATECHANGE(rmesa, vap_cntl_status);
+				rmesa->hw.vap_cntl_status.cmd[1] |= R300_VAP_TCL_BYPASS;
+			}
+		}
+
 		/* update only if we change from no raster fallbacks to some raster fallbacks */
 		if (((old_fallback & R300_RASTER_FALLBACK_MASK) == 0) &&
 			((bit & R300_RASTER_FALLBACK_MASK) > 0)) {
@@ -476,6 +486,15 @@ void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode)
 		}
 	} else {
 		rmesa->fallback &= ~bit;
+
+		/* update only if we have disabled all tcl fallbacks */
+		if (rmesa->options.hw_tcl_enabled) {
+			if ((old_fallback & R300_RASTER_FALLBACK_MASK) == bit) {
+				R300_STATECHANGE(rmesa, vap_cntl_status);
+				rmesa->hw.vap_cntl_status.cmd[1] &= ~R300_VAP_TCL_BYPASS;
+			}
+		}
+
 		/* update only if we have disabled all raster fallbacks */
 		if ((old_fallback & R300_RASTER_FALLBACK_MASK) == bit) {
 			_swrast_flush( ctx );

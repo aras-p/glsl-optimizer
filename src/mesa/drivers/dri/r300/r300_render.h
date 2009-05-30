@@ -51,6 +51,15 @@
 #define MASK_Z R300_WRITE_ENA_Z
 #define MASK_W R300_WRITE_ENA_W
 
+#if SWIZZLE_X != R300_INPUT_ROUTE_SELECT_X || \
+    SWIZZLE_Y != R300_INPUT_ROUTE_SELECT_Y || \
+    SWIZZLE_Z != R300_INPUT_ROUTE_SELECT_Z || \
+    SWIZZLE_W != R300_INPUT_ROUTE_SELECT_W || \
+    SWIZZLE_ZERO != R300_INPUT_ROUTE_SELECT_ZERO || \
+    SWIZZLE_ONE != R300_INPUT_ROUTE_SELECT_ONE
+#error Cannot change these!
+#endif
+
 extern const struct tnl_pipeline_stage _r300_render_stage;
 
 extern void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode);
