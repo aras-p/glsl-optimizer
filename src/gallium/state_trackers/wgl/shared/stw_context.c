@@ -128,7 +128,6 @@ stw_create_layer_context(
       goto no_ctx;
 
    ctx->hdc = hdc;
-   ctx->color_bits = GetDeviceCaps( ctx->hdc, BITSPIXEL );
 
    /* Create visual based on flags
     */
