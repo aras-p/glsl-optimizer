@@ -173,6 +173,8 @@ stw_cleanup(void)
    }
    pipe_mutex_unlock( stw_dev->mutex );
 
+   stw_framebuffer_cleanup();
+   
    pipe_mutex_destroy( stw_dev->mutex );
    
    stw_dev->screen->destroy(stw_dev->screen);

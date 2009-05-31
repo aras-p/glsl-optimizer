@@ -25,12 +25,14 @@
  * 
  **************************************************************************/
 
+#include "main/mtypes.h"
+#include "main/context.h"
+
 #include "pipe/p_format.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
 #include "util/u_debug.h"
-#include "util/u_memory.h"
 
 #include "stw_device.h"
 #include "stw_pixelformat.h"
@@ -261,6 +263,31 @@ stw_pixelformat_get_info( uint index )
 }
 
 
+void
+stw_pixelformat_visual(GLvisual *visual, 
+                       const struct stw_pixelformat_info *pfi )
+{
+   memset(visual, 0, sizeof *visual);
+   _mesa_initialize_visual(
+      visual,
+      (pfi->pfd.iPixelType == PFD_TYPE_RGBA) ? GL_TRUE : GL_FALSE,
+      (pfi->pfd.dwFlags & PFD_DOUBLEBUFFER) ? GL_TRUE : GL_FALSE,
+      (pfi->pfd.dwFlags & PFD_STEREO) ? GL_TRUE : GL_FALSE,
+      pfi->pfd.cRedBits,
+      pfi->pfd.cGreenBits,
+      pfi->pfd.cBlueBits,
+      pfi->pfd.cAlphaBits,
+      (pfi->pfd.iPixelType == PFD_TYPE_COLORINDEX) ? pfi->pfd.cColorBits : 0,
+      pfi->pfd.cDepthBits,
+      pfi->pfd.cStencilBits,
+      pfi->pfd.cAccumRedBits,
+      pfi->pfd.cAccumGreenBits,
+      pfi->pfd.cAccumBlueBits,
+      pfi->pfd.cAccumAlphaBits,
+      pfi->numSamples );
+}
+
+
 int
 stw_pixelformat_describe(
    HDC hdc,
@@ -340,40 +367,4 @@ int stw_pixelformat_choose( HDC hdc,
       return 0;
 
    return bestindex + 1;
-}
-
-
-int
-stw_pixelformat_get(
-   HDC hdc )
-{
-   return stw_tls_get_data()->currentPixelFormat;
-}
-
-
-BOOL
-stw_pixelformat_set(
-   HDC hdc,
-   int iPixelFormat )
-{
-   uint count;
-   uint index;
-
-   (void) hdc;
-
-   index = (uint) iPixelFormat - 1;
-   count = stw_pixelformat_get_extended_count();
-   if (index >= count)
-      return FALSE;
-
-   stw_tls_get_data()->currentPixelFormat = iPixelFormat;
-
-   /* Some applications mistakenly use the undocumented wglSetPixelFormat 
-    * function instead of SetPixelFormat, so we call SetPixelFormat here to 
-    * avoid opengl32.dll's wglCreateContext to fail */
-   if (GetPixelFormat(hdc) == 0) {
-        SetPixelFormat(hdc, iPixelFormat, NULL);
-   }
-   
-   return TRUE;
 }

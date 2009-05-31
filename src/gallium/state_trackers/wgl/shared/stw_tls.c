@@ -53,8 +53,6 @@ stw_tls_data_create()
    if (!data)
       return NULL;
 
-   data->currentPixelFormat = 0;
-   
    return data;
 }
 

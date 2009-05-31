@@ -30,6 +30,8 @@
 
 #include <windows.h>
 
+#include "main/mtypes.h"
+
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 
@@ -56,5 +58,8 @@ stw_pixelformat_get_extended_count( void );
 const struct stw_pixelformat_info *
 stw_pixelformat_get_info( uint index );
 
+void
+stw_pixelformat_visual(GLvisual *visual, 
+                       const struct stw_pixelformat_info *pfi );
 
 #endif /* STW_PIXELFORMAT_H */

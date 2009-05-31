@@ -90,7 +90,7 @@ stw_share_lists(
    ctx2 = stw_lookup_context_locked( hglrc2 );
 
    if (ctx1 && ctx2 &&
-       ctx1->pfi == ctx2->pfi) { 
+       ctx1->iPixelFormat == ctx2->iPixelFormat) { 
       ret = _mesa_share_state(ctx2->st->ctx, ctx1->st->ctx);
    }
 
@@ -104,51 +104,32 @@ stw_create_layer_context(
    HDC hdc,
    int iLayerPlane )
 {
-   uint pfi;
-   const struct stw_pixelformat_info *pf = NULL;
+   int iPixelFormat;
+   const struct stw_pixelformat_info *pfi;
+   GLvisual visual;
    struct stw_context *ctx = NULL;
-   GLvisual *visual = NULL;
    struct pipe_screen *screen = NULL;
    struct pipe_context *pipe = NULL;
-
+   
    if(!stw_dev)
       return 0;
    
    if (iLayerPlane != 0)
       return 0;
 
-   pfi = stw_pixelformat_get( hdc );
-   if (pfi == 0)
+   iPixelFormat = GetPixelFormat(hdc);
+   if(!iPixelFormat)
       return 0;
-
-   pf = stw_pixelformat_get_info( pfi - 1 );
-
+   
+   pfi = stw_pixelformat_get_info( iPixelFormat - 1 );
+   stw_pixelformat_visual(&visual, pfi);
+   
    ctx = CALLOC_STRUCT( stw_context );
    if (ctx == NULL)
       goto no_ctx;
 
    ctx->hdc = hdc;
-
-   /* Create visual based on flags
-    */
-   visual = _mesa_create_visual(
-      (pf->pfd.iPixelType == PFD_TYPE_RGBA) ? GL_TRUE : GL_FALSE,
-      (pf->pfd.dwFlags & PFD_DOUBLEBUFFER) ? GL_TRUE : GL_FALSE,
-      (pf->pfd.dwFlags & PFD_STEREO) ? GL_TRUE : GL_FALSE,
-      pf->pfd.cRedBits,
-      pf->pfd.cGreenBits,
-      pf->pfd.cBlueBits,
-      pf->pfd.cAlphaBits,
-      (pf->pfd.iPixelType == PFD_TYPE_COLORINDEX) ? pf->pfd.cColorBits : 0,
-      pf->pfd.cDepthBits,
-      pf->pfd.cStencilBits,
-      pf->pfd.cAccumRedBits,
-      pf->pfd.cAccumGreenBits,
-      pf->pfd.cAccumBlueBits,
-      pf->pfd.cAccumAlphaBits,
-      pf->numSamples );
-   if (visual == NULL) 
-      goto no_visual;
+   ctx->iPixelFormat = iPixelFormat;
 
    screen = stw_dev->screen;
 
@@ -168,15 +149,15 @@ stw_create_layer_context(
       pipe = trace_context_create(stw_dev->screen, pipe);
 #endif
 
+   /* pass to stw_flush_frontbuffer as context_private */
    assert(!pipe->priv);
    pipe->priv = hdc;
 
-   ctx->st = st_create_context( pipe, visual, NULL );
+   ctx->st = st_create_context( pipe, &visual, NULL );
    if (ctx->st == NULL) 
       goto no_st_ctx;
 
    ctx->st->ctx->DriverCtx = ctx;
-   ctx->pfi = pf;
 
    pipe_mutex_lock( stw_dev->mutex );
    ctx->hglrc = handle_table_add(stw_dev->ctx_table, ctx);
@@ -192,9 +173,7 @@ no_hglrc:
 no_st_ctx:
    pipe->destroy( pipe );
 no_pipe:
-   _mesa_destroy_visual( visual );
-no_visual:
-   FREE( ctx );
+   FREE(ctx);
 no_ctx:
    return 0;
 }
@@ -217,19 +196,10 @@ stw_delete_context(
    if (ctx) {
       GLcontext *glctx = ctx->st->ctx;
       GET_CURRENT_CONTEXT( glcurctx );
-      struct stw_framebuffer *fb;
 
-      /* Unbind current if deleting current context.
-       */
+      /* Unbind current if deleting current context. */
       if (glcurctx == glctx)
          st_make_current( NULL, NULL, NULL );
-
-      fb = stw_framebuffer_from_hdc( ctx->hdc );
-      if (fb)
-         stw_framebuffer_destroy( fb );
-
-      if (WindowFromDC( ctx->hdc ) != NULL)
-         ReleaseDC( WindowFromDC( ctx->hdc ), ctx->hdc );
 
       st_destroy_context(ctx->st);
       FREE(ctx);
@@ -274,34 +244,6 @@ stw_release_context(
    return TRUE;
 }
 
-/* Find the width and height of the window named by hdc.
- */
-static void
-stw_get_window_size( HDC hdc, GLuint *pwidth, GLuint *pheight )
-{
-   GLuint width, height;
-   HWND hwnd;
-
-   hwnd = WindowFromDC( hdc );
-   if (hwnd) {
-      RECT rect;
-      GetClientRect( hwnd, &rect );
-      width = rect.right - rect.left;
-      height = rect.bottom - rect.top;
-   }
-   else {
-      width = GetDeviceCaps( hdc, HORZRES );
-      height = GetDeviceCaps( hdc, VERTRES );
-   }
-
-   if(width < 1)
-      width = 1;
-   if(height < 1)
-      height = 1;
-
-   *pwidth = width; 
-   *pheight = height; 
-}
 
 UINT_PTR
 stw_get_current_context( void )
@@ -345,64 +287,68 @@ stw_make_current(
    struct stw_context *ctx;
    GET_CURRENT_CONTEXT( glcurctx );
    struct stw_framebuffer *fb;
-   GLuint width = 0;
-   GLuint height = 0;
-   struct stw_context *curctx = NULL;
 
    if (!stw_dev)
-      return FALSE;
-
-   pipe_mutex_lock( stw_dev->mutex ); 
-   ctx = stw_lookup_context_locked( hglrc );
-   pipe_mutex_unlock( stw_dev->mutex );
+      goto fail;
 
    if (glcurctx != NULL) {
+      struct stw_context *curctx;
       curctx = (struct stw_context *) glcurctx->DriverCtx;
 
-      if (curctx != ctx)
+      if (curctx->hglrc != hglrc)
 	 st_flush(glcurctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-   }
-
-   if (hdc == NULL || hglrc == 0) {
-      st_make_current( NULL, NULL, NULL );
-      return TRUE;
-   }
-
-   /* Return if already current.
-    */
-   if (glcurctx != NULL) {
-      if (curctx != NULL && curctx == ctx && ctx->hdc == hdc)
+      
+      /* Return if already current. */
+      if (curctx->hglrc == hglrc && curctx->hdc == hdc)
          return TRUE;
    }
 
-   fb = stw_framebuffer_from_hdc( hdc );
-
-   if (hdc != NULL)
-      stw_get_window_size( hdc, &width, &height );
-
-   /* Lazy creation of stw_framebuffers.
-    */
-   if (fb == NULL && ctx != NULL && hdc != NULL) {
-      GLvisual *visual = &ctx->st->ctx->Visual;
-
-      fb = stw_framebuffer_create( hdc, visual, ctx->pfi, width, height );
-      if (fb == NULL)
-         return FALSE;
+   if (hdc == NULL || hglrc == 0) {
+      return st_make_current( NULL, NULL, NULL );
    }
 
-   if (ctx && fb) {
-      pipe_mutex_lock( fb->mutex );
-      st_make_current( ctx->st, fb->stfb, fb->stfb );
-      st_resize_framebuffer( fb->stfb, width, height );
-      pipe_mutex_unlock( fb->mutex );
+   pipe_mutex_lock( stw_dev->mutex ); 
 
-      ctx->hdc = hdc;
-      ctx->st->pipe->priv = hdc;
-   }
-   else {
-      /* Detach */
-      st_make_current( NULL, NULL, NULL );
-   }
+   ctx = stw_lookup_context_locked( hglrc );
+   if(!ctx)
+      goto fail;
 
+   fb = stw_framebuffer_from_hdc_locked( hdc );
+   if(!fb) { 
+      /* Applications should call SetPixelFormat before creating a context,
+       * but not all do, and the opengl32 runtime seems to use a default pixel
+       * format in some cases, so we must create a framebuffer for those here
+       */
+      int iPixelFormat = GetPixelFormat(hdc);
+      if(iPixelFormat)
+         fb = stw_framebuffer_create_locked( hdc, iPixelFormat );
+      if(!fb) 
+         goto fail;
+   }
+   
+   pipe_mutex_unlock( stw_dev->mutex );
+
+   if(fb->iPixelFormat != ctx->iPixelFormat)
+      goto fail;
+
+   /* Lazy allocation of the frame buffer */
+   if(!stw_framebuffer_allocate(fb))
+      goto fail;
+
+   /* Bind the new framebuffer */
+   ctx->hdc = hdc;
+   
+   /* pass to stw_flush_frontbuffer as context_private */
+   ctx->st->pipe->priv = hdc;
+   
+   if(!st_make_current( ctx->st, fb->stfb, fb->stfb ))
+      goto fail;
+
+   stw_framebuffer_resize(fb);
+   
    return TRUE;
+
+fail:
+   st_make_current( NULL, NULL, NULL );
+   return FALSE;
 }
