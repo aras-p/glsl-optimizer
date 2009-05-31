@@ -102,15 +102,21 @@ stw_framebuffer_create_locked(
    HDC hdc,
    int iPixelFormat )
 {
+   HWND hWnd;
    struct stw_framebuffer *fb;
    const struct stw_pixelformat_info *pfi;
 
+   /* We only support drawing to a window. */
+   hWnd = WindowFromDC( hdc );
+   if(!hWnd)
+      return NULL;
+   
    fb = CALLOC_STRUCT( stw_framebuffer );
    if (fb == NULL)
       return NULL;
 
    fb->hDC = hdc;
-   fb->hWnd = WindowFromDC( hdc );
+   fb->hWnd = hWnd;
    fb->iPixelFormat = iPixelFormat;
 
    fb->pfi = pfi = stw_pixelformat_get_info( iPixelFormat - 1 );
