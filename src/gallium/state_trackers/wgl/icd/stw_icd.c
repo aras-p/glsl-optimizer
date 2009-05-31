@@ -54,7 +54,15 @@ DrvCreateLayerContext(
    HDC hdc,
    INT iLayerPlane )
 {
-   return stw_create_layer_context( hdc, iLayerPlane );
+   DHGLRC r;
+   
+   r = stw_create_layer_context( hdc, iLayerPlane );
+   
+   if (DBG)
+      debug_printf( "%s( %p, %i ) = %u\n",
+                    __FUNCTION__, hdc, iLayerPlane, r );
+   
+   return r;
 }
 
 DHGLRC APIENTRY
@@ -68,7 +76,15 @@ BOOL APIENTRY
 DrvDeleteContext(
    DHGLRC dhglrc )
 {
-   return stw_delete_context( dhglrc );
+   BOOL r;
+   
+   r = stw_delete_context( dhglrc );
+   
+   if (DBG)
+      debug_printf( "%s( %u ) = %u\n",
+                    __FUNCTION__, dhglrc, r );
+   
+   return r;
 }
 
 BOOL APIENTRY
@@ -126,7 +142,7 @@ DrvGetProcAddress(
    r = stw_get_proc_address( lpszProc );
 
    if (DBG)
-      debug_printf( "%s( \", __FUNCTION__%s\" ) = %p\n", lpszProc, r );
+      debug_printf( "%s( \"%s\" ) = %p\n", __FUNCTION__, lpszProc, r );
 
    return r;
 }
@@ -515,14 +531,16 @@ DrvSetContext(
    DHGLRC dhglrc,
    PFN_SETPROCTABLE pfnSetProcTable )
 {
-   if (DBG)
-      debug_printf( "%s( 0x%p, %u, 0x%p )\n", 
-                    __FUNCTION__, hdc, dhglrc, pfnSetProcTable );
-
+   PGLCLTPROCTABLE r = (PGLCLTPROCTABLE)&cpt;
+   
    if (!stw_make_current( hdc, dhglrc ))
-      return NULL;
+      r = NULL;
       
-   return (GLCLTPROCTABLE *)&cpt;
+   if (DBG)
+      debug_printf( "%s( 0x%p, %u, 0x%p ) = %p\n", 
+                    __FUNCTION__, hdc, dhglrc, pfnSetProcTable, r );
+
+   return r;
 }
 
 int APIENTRY
