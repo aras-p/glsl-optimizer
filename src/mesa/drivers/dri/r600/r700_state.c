@@ -216,8 +216,8 @@ static void r700InvalidateState(GLcontext * ctx, GLuint new_state) //-----------
 
         SETbit(r700->PA_CL_VTE_CNTL.u32All, VTX_W0_FMT_bit);
 
-        CLEARbit(r700->SPI_PS_IN_CONTROL_0.u32All, PERSP_GRADIENT_ENA_bit);
-        SETbit(r700->SPI_PS_IN_CONTROL_0.u32All, LINEAR_GRADIENT_ENA_bit);
+        SETbit(r700->SPI_PS_IN_CONTROL_0.u32All, PERSP_GRADIENT_ENA_bit);
+        CLEARbit(r700->SPI_PS_IN_CONTROL_0.u32All, LINEAR_GRADIENT_ENA_bit);
     }
     else
     {
@@ -227,8 +227,8 @@ static void r700InvalidateState(GLcontext * ctx, GLuint new_state) //-----------
 
         SETbit(r700->PA_CL_VTE_CNTL.u32All, VTX_W0_FMT_bit);
 
-        SETbit(r700->SPI_PS_IN_CONTROL_0.u32All, PERSP_GRADIENT_ENA_bit);
-        CLEARbit(r700->SPI_PS_IN_CONTROL_0.u32All, LINEAR_GRADIENT_ENA_bit);
+        CLEARbit(r700->SPI_PS_IN_CONTROL_0.u32All, PERSP_GRADIENT_ENA_bit);
+        SETbit(r700->SPI_PS_IN_CONTROL_0.u32All, LINEAR_GRADIENT_ENA_bit);
     }
 
 	context->radeon.NewGLState |= new_state;
