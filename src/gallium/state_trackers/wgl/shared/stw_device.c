@@ -57,7 +57,7 @@ struct stw_device *stw_dev = NULL;
  * stw_winsys::flush_front_buffer.
  */
 static void 
-st_flush_frontbuffer(struct pipe_screen *screen,
+stw_flush_frontbuffer(struct pipe_screen *screen,
                      struct pipe_surface *surface,
                      void *context_private )
 {
@@ -111,7 +111,7 @@ stw_init(const struct stw_winsys *stw_winsys)
    stw_dev->screen = screen;
 #endif
    
-   stw_dev->screen->flush_frontbuffer = st_flush_frontbuffer;
+   stw_dev->screen->flush_frontbuffer = &stw_flush_frontbuffer;
    
    pipe_mutex_init( stw_dev->mutex );
 
