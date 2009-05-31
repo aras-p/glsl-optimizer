@@ -17,7 +17,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL THE AUTHOR(S) AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -67,16 +67,16 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 
 	if (mesa_ind_buf->type == GL_UNSIGNED_BYTE) {
 		GLubyte *in = (GLubyte *)src_ptr;
-		GLuint *out = _mesa_malloc(sizeof(GLuint) * mesa_ind_buf->count);
+		GLushort *out = _mesa_malloc(sizeof(GLushort) * mesa_ind_buf->count);
 		int i;
 
 		for (i = 0; i < mesa_ind_buf->count; ++i) {
-			out[i] = (GLuint) in[i];
+			out[i] = (GLushort) in[i];
 		}
 
 		ind_buf->ptr = out;
 		ind_buf->free_needed = GL_TRUE;
-		ind_buf->is_32bit = GL_TRUE;
+		ind_buf->is_32bit = GL_FALSE;
 	} else if (mesa_ind_buf->type == GL_UNSIGNED_SHORT) {
 		ind_buf->ptr = src_ptr;
 		ind_buf->free_needed = GL_FALSE;
@@ -157,7 +157,7 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 	} else
 		src_ptr = input->Ptr;
 
-	if (input->Type == GL_DOUBLE || ((getTypeSize(input->Type) * input->Size) % 4 > 0)) {
+	if (input->Type == GL_DOUBLE || input->Type == GL_UNSIGNED_INT || input->Type == GL_INT || input->StrideB < 4){
 		if (RADEON_DEBUG & DEBUG_FALLBACKS) {
 			fprintf(stderr, "%s: Converting vertex attributes, attribute data format %x,", __FUNCTION__, input->Type);
 			fprintf(stderr, "stride %d, components %d\n", input->StrideB, input->Size);
@@ -189,6 +189,9 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 			case GL_BYTE:
 				CONVERT(GLbyte, BYTE_TO_FLOAT);
 				break;
+			default:
+				assert(0);
+				break;
 		}
 
 		type = GL_FLOAT;
@@ -201,7 +204,7 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 		r300_attr.free_needed = GL_FALSE;
 		r300_attr.data = (GLvoid *)src_ptr;
 		r300_attr.stride = input->StrideB;
-		r300_attr.dwords = getTypeSize(type) * input->Size / 4;
+		r300_attr.dwords = (getTypeSize(type) * input->Size  + 3)/ 4;
 	}
 
 	r300_attr.size = input->Size;
@@ -222,15 +225,18 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 		case GL_SHORT:
 			r300_attr._signed = 1;
 			r300_attr.normalize = input->Normalized;
-			if (input->Size == 2)
-				r300_attr.data_type = R300_DATA_TYPE_SHORT_2;
-			else if (input->Size == 4)
-				r300_attr.data_type = R300_DATA_TYPE_SHORT_4;
-			else
-				assert(0);
+			switch (input->Size) {
+				case 1:
+				case 2:
+					r300_attr.data_type = R300_DATA_TYPE_SHORT_2;
+					break;
+				case 3:
+				case 4:
+					r300_attr.data_type = R300_DATA_TYPE_SHORT_4;
+					break;
+			}
 			break;
 		case GL_BYTE:
-			assert(input->Size == 4);
 			r300_attr._signed = 1;
 			r300_attr.normalize = input->Normalized;
 			r300_attr.data_type = R300_DATA_TYPE_BYTE;
@@ -238,15 +244,18 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 		case GL_UNSIGNED_SHORT:
 			r300_attr._signed = 0;
 			r300_attr.normalize = input->Normalized;
-			if (input->Size == 2)
-				r300_attr.data_type = R300_DATA_TYPE_SHORT_2;
-			else if (input->Size == 4)
-				r300_attr.data_type = R300_DATA_TYPE_SHORT_4;
-			else
-				assert(0);
+			switch (input->Size) {
+				case 1:
+				case 2:
+					r300_attr.data_type = R300_DATA_TYPE_SHORT_2;
+					break;
+				case 3:
+				case 4:
+					r300_attr.data_type = R300_DATA_TYPE_SHORT_4;
+					break;
+			}
 			break;
 		case GL_UNSIGNED_BYTE:
-			assert(input->Size == 4);
 			r300_attr._signed = 0;
 			r300_attr.normalize = input->Normalized;
 			if (input->Format == GL_BGRA)
