@@ -378,7 +378,6 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
       break;
 
    case PIPE_PRIM_TRIANGLE_FAN:
-   case PIPE_PRIM_POLYGON:
       for (i = 2; i < nr; i += 1) {
          setup_tri( setup_ctx,
                     get_vert(vertex_buffer, 0, stride),
@@ -386,6 +385,7 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
                     get_vert(vertex_buffer, i-0, stride));
       }
       break;
+
    case PIPE_PRIM_QUADS:
       for (i = 3; i < nr; i += 4) {
          setup_tri( setup_ctx,
@@ -412,6 +412,20 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
                     get_vert(vertex_buffer, i-0, stride));
       }
       break;
+
+   case PIPE_PRIM_POLYGON:
+      /* Almost same as tri fan but the _first_ vertex specifies the flat
+       * shading color.  Note that the first polygon vertex is passed as
+       * the last triangle vertex here.
+       */
+      for (i = 2; i < nr; i += 1) {
+         setup_tri( setup_ctx,
+                    get_vert(vertex_buffer, i-0, stride),
+                    get_vert(vertex_buffer, i-1, stride),
+                    get_vert(vertex_buffer, 0, stride));
+      }
+      break;
+
    default:
       assert(0);
    }
