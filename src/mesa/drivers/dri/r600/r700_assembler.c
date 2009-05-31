@@ -2883,15 +2883,15 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    /* dst.w = log(src.y) */
+    /* dst.z = log(src.y) */
     pAsm->D.dst.opcode   = SQ_OP2_INST_LOG_CLAMPED;
     pAsm->D.dst.math     = 1;
     pAsm->D.dst.rtype    = dstType;
     pAsm->D.dst.reg      = dstReg;
     pAsm->D.dst.writex   = 0;
     pAsm->D.dst.writey   = 0;
-    pAsm->D.dst.writez   = 0;
-    pAsm->D.dst.writew   = 1;
+    pAsm->D.dst.writez   = 1;
+    pAsm->D.dst.writew   = 0;
     pAsm->S[0].src.rtype = srcType;
     pAsm->S[0].src.reg   = srcReg;
     setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
@@ -2905,15 +2905,15 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    /* tmp.x = amd MUL_LIT(src.w, dst.w, src.x ) */
+    /* dst.w = MUL_LIT(src.w, dst.z, src.x ) */
     pAsm->D.dst.opcode   = SQ_OP3_INST_MUL_LIT;
     pAsm->D.dst.op3      = 1;
-    pAsm->D.dst.rtype    = DST_REG_TEMPORARY;
-    pAsm->D.dst.reg      = tmp;
-    pAsm->D.dst.writex   = 1;
+    pAsm->D.dst.rtype    = dstType;
+    pAsm->D.dst.reg      = dstReg;
+    pAsm->D.dst.writex   = 0;
     pAsm->D.dst.writey   = 0;
     pAsm->D.dst.writez   = 0;
-    pAsm->D.dst.writew   = 0;
+    pAsm->D.dst.writew   = 1;
 
     pAsm->S[0].src.rtype = srcType;
     pAsm->S[0].src.reg   = srcReg;
@@ -2928,10 +2928,10 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
     pAsm->S[1].src.reg   = dstReg;
     setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
     noneg_PVSSRC(&(pAsm->S[1].src));
-    pAsm->S[1].src.swizzlex = SQ_SEL_W;
-    pAsm->S[1].src.swizzley = SQ_SEL_W;
-    pAsm->S[1].src.swizzlez = SQ_SEL_W;
-    pAsm->S[1].src.swizzlew = SQ_SEL_W;
+    pAsm->S[1].src.swizzlex = SQ_SEL_Z;
+    pAsm->S[1].src.swizzley = SQ_SEL_Z;
+    pAsm->S[1].src.swizzlez = SQ_SEL_Z;
+    pAsm->S[1].src.swizzlew = SQ_SEL_Z;
 
     pAsm->S[2].src.rtype = srcType;
     pAsm->S[2].src.reg   = srcReg;
@@ -2947,7 +2947,7 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    /* dst.z = exp(tmp.x) */
+    /* dst.z = exp(dst.z) */
     pAsm->D.dst.opcode   = SQ_OP2_INST_EXP_IEEE;
     pAsm->D.dst.math     = 1;
     pAsm->D.dst.rtype    = dstType;
@@ -2957,14 +2957,14 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
     pAsm->D.dst.writez   = 1;
     pAsm->D.dst.writew   = 0;
 
-    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
-    pAsm->S[0].src.reg   = tmp;
+    pAsm->S[0].src.rtype = dstType;
+    pAsm->S[0].src.reg   = dstReg;
     setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
     noneg_PVSSRC(&(pAsm->S[0].src));
-    pAsm->S[0].src.swizzlex = SQ_SEL_X;
-    pAsm->S[0].src.swizzley = SQ_SEL_X;
-    pAsm->S[0].src.swizzlez = SQ_SEL_X;
-    pAsm->S[0].src.swizzlew = SQ_SEL_X;
+    pAsm->S[0].src.swizzlex = SQ_SEL_Z;
+    pAsm->S[0].src.swizzley = SQ_SEL_Z;
+    pAsm->S[0].src.swizzlez = SQ_SEL_Z;
+    pAsm->S[0].src.swizzlew = SQ_SEL_Z;
 
     if( GL_FALSE == next_ins(pAsm) )
     {
