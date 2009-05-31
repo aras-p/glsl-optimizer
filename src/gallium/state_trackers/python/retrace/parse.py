@@ -371,7 +371,7 @@ class Main:
                     stream = GzipFile(arg, 'rt')
                 elif arg.endswith('.bz2'):
                     from bz2 import BZ2File
-                    stream = BZ2File(arg, 'rt')
+                    stream = BZ2File(arg, 'rU')
                 else:
                     stream = open(arg, 'rt')
                 self.process_arg(stream, options)
