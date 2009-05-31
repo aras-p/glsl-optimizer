@@ -59,6 +59,7 @@ typedef struct radeon_screen {
    int chip_flags;
    int cpp;
    int card_type;
+   int device_id; /* PCI ID */
    int AGPMode;
    unsigned int irq;			/* IRQ number (0 means none) */
 

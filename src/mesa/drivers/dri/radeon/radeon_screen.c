@@ -400,6 +400,7 @@ static const __DRItexBufferExtension r300TexBufferExtension = {
 
 static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
 {
+   screen->device_id = device_id;
    screen->chip_flags = 0;
    switch ( device_id ) {
    case PCI_CHIP_RADEON_LY:

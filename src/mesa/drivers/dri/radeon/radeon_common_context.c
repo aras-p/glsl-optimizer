@@ -52,6 +52,40 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 int RADEON_DEBUG = (0);
 #endif
 
+
+static const char* get_chip_family_name(int chip_family)
+{
+	switch(chip_family) {
+	case CHIP_FAMILY_R100: return "R100";
+	case CHIP_FAMILY_RV100: return "RV100";
+	case CHIP_FAMILY_RS100: return "RS100";
+	case CHIP_FAMILY_RV200: return "RV200";
+	case CHIP_FAMILY_RS200: return "RS200";
+	case CHIP_FAMILY_R200: return "R200";
+	case CHIP_FAMILY_RV250: return "RV250";
+	case CHIP_FAMILY_RS300: return "RS300";
+	case CHIP_FAMILY_RV280: return "RV280";
+	case CHIP_FAMILY_R300: return "R300";
+	case CHIP_FAMILY_R350: return "R350";
+	case CHIP_FAMILY_RV350: return "RV350";
+	case CHIP_FAMILY_RV380: return "RV380";
+	case CHIP_FAMILY_R420: return "R420";
+	case CHIP_FAMILY_RV410: return "RV410";
+	case CHIP_FAMILY_RS400: return "RS400";
+	case CHIP_FAMILY_RS600: return "RS600";
+	case CHIP_FAMILY_RS690: return "RS690";
+	case CHIP_FAMILY_RS740: return "RS740";
+	case CHIP_FAMILY_RV515: return "RV515";
+	case CHIP_FAMILY_R520: return "R520";
+	case CHIP_FAMILY_RV530: return "RV530";
+	case CHIP_FAMILY_R580: return "R580";
+	case CHIP_FAMILY_RV560: return "RV560";
+	case CHIP_FAMILY_RV570: return "RV570";
+	default: return "unknown";
+	}
+}
+
+
 /* Return various strings for glGetString().
  */
 static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
@@ -71,16 +105,22 @@ static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
 		unsigned offset;
 		GLuint agp_mode = (radeon->radeonScreen->card_type==RADEON_CARD_PCI) ? 0 :
 			radeon->radeonScreen->AGPMode;
-		const char* chipname;
+		const char* chipclass;
+		char hardwarename[32];
 
 		if (IS_R300_CLASS(radeon->radeonScreen))
-			chipname = "R300";
+			chipclass = "R300";
 		else if (IS_R200_CLASS(radeon->radeonScreen))
-			chipname = "R200";
+			chipclass = "R200";
 		else
-			chipname = "R100";
+			chipclass = "R100";
 
-		offset = driGetRendererString(buffer, chipname, DRIVER_DATE,
+		sprintf(hardwarename, "%s (%s %04X)",
+		        chipclass,
+		        get_chip_family_name(radeon->radeonScreen->chip_family),
+		        radeon->radeonScreen->device_id);
+
+		offset = driGetRendererString(buffer, hardwarename, DRIVER_DATE,
 					      agp_mode);
 
 		if (IS_R300_CLASS(radeon->radeonScreen)) {
