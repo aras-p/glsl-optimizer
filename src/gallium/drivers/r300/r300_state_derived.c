@@ -163,6 +163,13 @@ static void r300_vs_tab_routes(struct r300_context* r300,
         vinfo->hwfmt[3] |= (4 << (3 * i));
     }
 
+    /* Handle the case where the vertex shader will be generating some of
+     * the attribs based on its inputs. */
+    if (r300screen->caps->has_tcl &&
+            info->num_inputs < info->num_outputs) {
+        vinfo->num_attribs = info->num_inputs;
+    }
+
     draw_compute_vertex_size(vinfo);
 }
 
