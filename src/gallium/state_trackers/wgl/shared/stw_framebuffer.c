@@ -213,22 +213,17 @@ stw_framebuffer_resize(
 
 
 static INLINE void
-stw_framebuffer_destroy(
+stw_framebuffer_destroy_locked(
    struct stw_framebuffer *fb )
 {
    struct stw_framebuffer **link;
 
-   pipe_mutex_lock( stw_dev->mutex );
-
    link = &stw_dev->fb_head;
-   while (link && *link != fb)
+   while (*link != fb)
       link = &(*link)->next;
    assert(*link);
-   if (link)
-      *link = fb->next;
+   *link = fb->next;
    fb->next = NULL;
-
-   pipe_mutex_unlock( stw_dev->mutex );
 
    st_unreference_framebuffer(fb->stfb);
    
@@ -249,7 +244,7 @@ stw_framebuffer_cleanup( void )
    fb = stw_dev->fb_head;
    while (fb) {
       next = fb->next;
-      stw_framebuffer_destroy(fb);
+      stw_framebuffer_destroy_locked(fb);
       fb = next;
    }
    stw_dev->fb_head = NULL;
