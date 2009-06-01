@@ -1525,17 +1525,6 @@ static void build_atten_pointsize( struct tnl_program *p )
 
 
 /**
- * Emit constant point size.
- */
-static void build_constant_pointsize( struct tnl_program *p )
-{
-   struct ureg state_size = register_param1(p, STATE_POINT_SIZE);
-   struct ureg out = register_output(p, VERT_RESULT_PSIZ);
-   emit_op1(p, OPCODE_MOV, out, WRITEMASK_X, state_size);
-}
-
-
-/**
  * Pass-though per-vertex point size, from user's point size array.
  */
 static void build_array_pointsize( struct tnl_program *p )
@@ -1576,12 +1565,6 @@ static void build_tnl_program( struct tnl_program *p )
       build_atten_pointsize(p);
    else if (p->state->point_array)
       build_array_pointsize(p);
-#if 0
-   else
-      build_constant_pointsize(p);
-#else
-   (void) build_constant_pointsize;
-#endif
 
    /* Finish up:
     */
