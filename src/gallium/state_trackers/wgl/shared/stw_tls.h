@@ -32,7 +32,6 @@
 
 struct stw_tls_data
 {
-   uint currentPixelFormat;
    HHOOK hCallWndProcHook;
 };
 

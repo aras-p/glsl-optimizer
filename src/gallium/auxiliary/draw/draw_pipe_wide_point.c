@@ -253,6 +253,7 @@ static void widepoint_flush( struct draw_stage *stage, unsigned flags )
 {
    stage->point = widepoint_first_point;
    stage->next->flush( stage->next, flags );
+   stage->draw->extra_vp_outputs.slot = 0;
 }
 
 

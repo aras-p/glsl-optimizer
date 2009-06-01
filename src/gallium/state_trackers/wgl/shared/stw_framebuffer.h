@@ -44,6 +44,10 @@ struct stw_framebuffer
    HDC hDC;
    HWND hWnd;
 
+   int iPixelFormat;
+   const struct stw_pixelformat_info *pfi;
+   GLvisual visual;
+
    pipe_mutex mutex;
    struct st_framebuffer *stfb;
    
@@ -52,16 +56,24 @@ struct stw_framebuffer
 };
 
 struct stw_framebuffer *
-stw_framebuffer_create(
+stw_framebuffer_create_locked(
    HDC hdc,
-   GLvisual *visual,
-   const struct stw_pixelformat_info *pfi,
-   GLuint width,
-   GLuint height );
+   int iPixelFormat );
+
+BOOL
+stw_framebuffer_allocate(
+   struct stw_framebuffer *fb );
 
 void
-stw_framebuffer_destroy(
-   struct stw_framebuffer *fb );
+stw_framebuffer_resize(
+   struct stw_framebuffer *fb);
+
+void
+stw_framebuffer_cleanup(void);
+
+struct stw_framebuffer *
+stw_framebuffer_from_hdc_locked(
+   HDC hdc );
 
 struct stw_framebuffer *
 stw_framebuffer_from_hdc(
