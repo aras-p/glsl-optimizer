@@ -487,8 +487,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 		struct radeon_renderbuffer *stencil_rb;
 
 		i = 0;
-		if ((radeon->is_front_buffer_rendering || !draw->color_rb[1])
-			&& draw->color_rb[0]) {
+		if (draw->color_rb[0]) {
 			attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
 			attachments[i++] = radeon_bits_per_pixel(draw->color_rb[0]);
 		}
