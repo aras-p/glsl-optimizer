@@ -57,6 +57,9 @@ struct trace_screen
 
    struct pipe_screen *screen;
 
+   /* remote debugger */
+   struct trace_rbug *rbug;
+
    pipe_mutex list_mutex;
    int num_buffers;
    int num_contexts;
@@ -72,8 +75,23 @@ struct trace_screen
 
 
 /*
+ * tr_rbug.c
+ */
+
+
+struct trace_rbug;
+
+struct trace_rbug *
+trace_rbug_start(struct trace_screen *tr_scr);
+
+void
+trace_rbug_stop(struct trace_rbug *tr_rbug);
+
+
+/*
  * tr_screen.c
  */
+
 
 boolean
 trace_enabled(void);
@@ -81,10 +99,8 @@ trace_enabled(void);
 struct trace_screen *
 trace_screen(struct pipe_screen *screen);
 
-
 struct pipe_screen *
 trace_screen_create(struct pipe_screen *screen);
-
 
 void
 trace_screen_user_buffer_update(struct pipe_screen *screen,
@@ -105,6 +121,7 @@ trace_screen_user_buffer_update(struct pipe_screen *screen,
       tr_scr->num_##name--;                              \
       pipe_mutex_unlock(tr_scr->list_mutex);             \
    } while (0)
+
 
 #ifdef __cplusplus
 }
