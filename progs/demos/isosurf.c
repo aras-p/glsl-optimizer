@@ -514,12 +514,27 @@ static void draw_surface( unsigned int with_state )
       break;
 
    case (GLVERTEX|STRIPS):
-      glBegin( GL_TRIANGLE_STRIP );
-      for (i=0;i<numverts;i++) {
-         glNormal3fv( &data[i][3] );
-         glVertex3fv( &data[i][0] );
+      if (with_state & MATERIALS) {
+         glBegin( GL_TRIANGLE_STRIP );
+         for (i=0;i<numverts;i++) {
+            if (i % 600 == 0 && i != 0) {
+               unsigned j = i / 600;
+               glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, col[j]);
+               glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, col[j]);
+            }
+            glNormal3fv( &data[i][3] );
+            glVertex3fv( &data[i][0] );
+         }
+         glEnd();
       }
-      glEnd();
+      else {
+         glBegin( GL_TRIANGLE_STRIP );
+         for (i=0;i<numverts;i++) {
+            glNormal3fv( &data[i][3] );
+            glVertex3fv( &data[i][0] );
+         }
+         glEnd();
+      }
       break;
 
    default:
