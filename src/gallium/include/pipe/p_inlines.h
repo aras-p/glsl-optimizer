@@ -155,6 +155,19 @@ pipe_buffer_read(struct pipe_screen *screen,
    }
 }
 
+static INLINE void *
+pipe_transfer_map( struct pipe_transfer *transf )
+{
+   struct pipe_screen *screen = transf->texture->screen;
+   return screen->transfer_map(screen, transf);
+}
+
+static INLINE void
+pipe_transfer_unmap( struct pipe_transfer *transf )
+{
+   struct pipe_screen *screen = transf->texture->screen;
+   screen->transfer_unmap(screen, transf);
+}
 
 #ifdef __cplusplus
 }
