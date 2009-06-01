@@ -48,11 +48,9 @@
 
 struct state_key {
    unsigned light_color_material_mask:12;
-   unsigned light_material_mask:12;
    unsigned light_global_enabled:1;
    unsigned light_local_viewer:1;
    unsigned light_twoside:1;
-   unsigned light_color_material:1;
    unsigned material_shininess_is_zero:1;
    unsigned need_eye_coords:1;
    unsigned normalize:1;
@@ -125,27 +123,6 @@ static GLuint translate_texgen( GLboolean enabled, GLenum mode )
 }
 
 
-/**
- * Returns bitmask of flags indicating which materials are set per-vertex
- * in the current VB.
- * XXX get these from the VBO...
- */
-static GLbitfield
-tnl_get_per_vertex_materials(GLcontext *ctx)
-{
-   GLbitfield mask = 0x0;
-#if 0
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   GLuint i;
-
-   for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) 
-      if (VB->AttribPtr[i] && VB->AttribPtr[i]->stride) 
-         mask |= 1 << (i - _TNL_FIRST_MAT);
-#endif
-   return mask;
-}
-
 
 /**
  * Should fog be computed per-vertex?
@@ -168,10 +145,11 @@ static GLboolean check_active_shininess( GLcontext *ctx,
 {
    GLuint bit = 1 << (MAT_ATTRIB_FRONT_SHININESS + side);
 
-   if (key->light_color_material_mask & bit)
+   if ((key->varying_vp_inputs & VERT_BIT_COLOR0) &&
+       (key->light_color_material_mask & bit))
       return GL_TRUE;
 
-   if (key->light_material_mask & bit)
+   if (key->varying_vp_inputs & (bit << 16))
       return GL_TRUE;
 
    if (ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_SHININESS + side][0] != 0.0F)
@@ -216,11 +194,8 @@ static void make_state_key( GLcontext *ctx, struct state_key *key )
 	 key->light_twoside = 1;
 
       if (ctx->Light.ColorMaterialEnabled) {
-	 key->light_color_material = 1;
 	 key->light_color_material_mask = ctx->Light.ColorMaterialBitmask;
       }
-
-      key->light_material_mask = tnl_get_per_vertex_materials(ctx);
 
       for (i = 0; i < MAX_LIGHTS; i++) {
 	 struct gl_light *light = &ctx->Light.Light[i];
@@ -481,9 +456,9 @@ static struct ureg register_param5(struct tnl_program *p,
  */
 static struct ureg register_input( struct tnl_program *p, GLuint input )
 {
-   /* Material attribs are passed here as inputs >= 32
-    */
-   if (input >= 32 || (p->state->varying_vp_inputs & (1<<input))) {
+   assert(input < 32);
+
+   if (p->state->varying_vp_inputs & (1<<input)) {
       p->program->Base.InputsRead |= (1<<input);
       return make_ureg(PROGRAM_INPUT, input);
    }
@@ -903,17 +878,14 @@ static void set_material_flags( struct tnl_program *p )
    p->color_materials = 0;
    p->materials = 0;
 
-   if (p->state->light_color_material) {
-      p->materials = 
+   if (p->state->varying_vp_inputs & VERT_BIT_COLOR0) {
+      p->materials =
 	 p->color_materials = p->state->light_color_material_mask;
    }
 
-   p->materials |= p->state->light_material_mask;
+   p->materials |= (p->state->varying_vp_inputs >> 16);
 }
 
-
-/* XXX temporary!!! */
-#define _TNL_ATTRIB_MAT_FRONT_AMBIENT 32
 
 static struct ureg get_material( struct tnl_program *p, GLuint side, 
 				 GLuint property )
@@ -922,8 +894,12 @@ static struct ureg get_material( struct tnl_program *p, GLuint side,
 
    if (p->color_materials & (1<<attrib))
       return register_input(p, VERT_ATTRIB_COLOR0);
-   else if (p->materials & (1<<attrib)) 
-      return register_input( p, attrib + _TNL_ATTRIB_MAT_FRONT_AMBIENT );
+   else if (p->materials & (1<<attrib)) {
+      /* Put material values in the GENERIC slots -- they are not used
+       * for anything in fixed function mode.
+       */
+      return register_input( p, attrib + VERT_ATTRIB_GENERIC0 );
+   }
    else
       return register_param3( p, STATE_MATERIAL, side, property );
 }
