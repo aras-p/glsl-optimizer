@@ -80,25 +80,26 @@ clean:
 	-rm -f *.o *~
 	-rm -f extfuncs.h
 	-rm -f shaderutil.*
+	-rm -f readtex.*
 
 
 
 ##### Extra dependencies
 
-extfuncs.h:
-	cp $(TOP)/progs/util/extfuncs.h .
+extfuncs.h: $(TOP)/progs/util/extfuncs.h
+	cp $< .
 
-readtex.c:
-	cp $(TOP)/progs/util/readtex.c .
+readtex.c: $(TOP)/progs/util/readtex.c
+	cp $< .
 
-readtex.h:
-	cp $(TOP)/progs/util/readtex.h .
+readtex.h: $(TOP)/progs/util/readtex.h
+	cp $< .
 
-shaderutil.c:
-	cp $(TOP)/progs/util/shaderutil.c .
+shaderutil.c: $(TOP)/progs/util/shaderutil.c
+	cp $< .
 
-shaderutil.h:
-	cp $(TOP)/progs/util/shaderutil.h .
+shaderutil.h: $(TOP)/progs/util/shaderutil.h
+	cp $< .
 
 
 
