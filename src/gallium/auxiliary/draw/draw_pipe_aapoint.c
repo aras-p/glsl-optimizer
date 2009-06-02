@@ -829,8 +829,13 @@ aapoint_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct aapoint_stage *aapoint = aapoint_stage_from_pipe(pipe);
    struct aapoint_fragment_shader *aafs = (struct aapoint_fragment_shader *) fs;
+
    /* pass-through */
    aapoint->driver_delete_fs_state(aapoint->pipe, aafs->driver_fs);
+
+   if (aafs->aapoint_fs)
+      aapoint->driver_delete_fs_state(aapoint->pipe, aafs->aapoint_fs);
+
    FREE(aafs);
 }
 

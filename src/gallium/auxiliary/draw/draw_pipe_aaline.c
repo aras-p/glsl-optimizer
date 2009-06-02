@@ -819,6 +819,10 @@ aaline_delete_fs_state(struct pipe_context *pipe, void *fs)
    struct aaline_fragment_shader *aafs = (struct aaline_fragment_shader *) fs;
    /* pass-through */
    aaline->driver_delete_fs_state(aaline->pipe, aafs->driver_fs);
+
+   if (aafs->aaline_fs)
+      aaline->driver_delete_fs_state(aaline->pipe, aafs->aaline_fs);
+
    FREE(aafs);
 }
 

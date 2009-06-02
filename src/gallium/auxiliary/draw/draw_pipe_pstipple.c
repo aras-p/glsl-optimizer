@@ -650,6 +650,10 @@ pstip_delete_fs_state(struct pipe_context *pipe, void *fs)
    struct pstip_fragment_shader *aafs = (struct pstip_fragment_shader *) fs;
    /* pass-through */
    pstip->driver_delete_fs_state(pstip->pipe, aafs->driver_fs);
+
+   if (aafs->pstip_fs)
+      pstip->driver_delete_fs_state(pstip->pipe, aafs->pstip_fs);
+
    FREE(aafs);
 }
 
