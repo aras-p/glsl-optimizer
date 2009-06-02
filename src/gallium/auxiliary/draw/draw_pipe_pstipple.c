@@ -358,6 +358,7 @@ generate_pstip_fs(struct pstip_stage *pstip)
 
    pstip->fs->pstip_fs = pstip->driver_create_fs_state(pstip->pipe, &pstip_fs);
 
+   FREE((void *)pstip_fs.tokens);
    return TRUE;
 }
 
