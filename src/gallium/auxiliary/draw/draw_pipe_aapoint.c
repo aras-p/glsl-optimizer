@@ -523,11 +523,15 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
    aapoint->fs->aapoint_fs
       = aapoint->driver_create_fs_state(aapoint->pipe, &aapoint_fs);
    if (aapoint->fs->aapoint_fs == NULL)
-      return FALSE;
+      goto fail;
 
    aapoint->fs->generic_attrib = transform.maxGeneric + 1;
-
+   FREE((void *)aapoint_fs.tokens);
    return TRUE;
+
+fail:
+   FREE((void *)aapoint_fs.tokens);
+   return FALSE;
 }
 
 
