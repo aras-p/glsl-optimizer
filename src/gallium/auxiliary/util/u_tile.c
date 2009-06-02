@@ -1126,7 +1126,7 @@ pipe_get_tile_z(struct pipe_transfer *pt,
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 24-bit Z to 32-bit Z */
-               pDest[j] = (ptrc[j] << 8) | (ptrc[j] & 0xff);
+               pDest[j] = (ptrc[j] << 8) | ((ptrc[j] >> 16) & 0xff);
             }
             pDest += dstStride;
             ptrc += pt->stride/4;
