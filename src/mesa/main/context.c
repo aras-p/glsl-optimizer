@@ -1007,6 +1007,16 @@ _mesa_free_context_data( GLcontext *ctx )
 
    _mesa_delete_array_object(ctx, ctx->Array.DefaultArrayObj);
 
+#if FEATURE_ARB_pixel_buffer_object
+   _mesa_reference_buffer_object(ctx, &ctx->Pack.BufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &ctx->Unpack.BufferObj, NULL);
+#endif
+
+#if FEATURE_ARB_vertex_buffer_object
+   _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &ctx->Array.ElementArrayBufferObj, NULL);
+#endif
+
 #if FEATURE_ARB_vertex_buffer_object
    _mesa_delete_buffer_object(ctx, ctx->Array.NullBufferObj);
 #endif
