@@ -383,7 +383,7 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
                  STACK_SIZE_shift, STACK_SIZE_mask);
     }
 
-    SETfield(r700->SPI_VS_OUT_CONFIG.u32All, vp->r700Shader.nParamExports - 1,
+    SETfield(r700->SPI_VS_OUT_CONFIG.u32All, vp->r700Shader.nParamExports ? (vp->r700Shader.nParamExports - 1) : 0,
              VS_EXPORT_COUNT_shift, VS_EXPORT_COUNT_mask);
 	SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, vp->r700Shader.nParamExports,
              NUM_INTERP_shift, NUM_INTERP_mask);
