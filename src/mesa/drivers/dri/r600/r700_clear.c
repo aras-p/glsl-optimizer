@@ -63,6 +63,9 @@ void r700Clear(GLcontext * ctx, GLbitfield mask)
     int i;
     struct gl_framebuffer *fb = ctx->DrawBuffer;
 
+    /* XXX FIXME */
+    return;
+
     if( GL_TRUE == r700ClearFast(context, mask) )
     {
         return;
