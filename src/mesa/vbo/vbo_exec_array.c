@@ -37,13 +37,13 @@
 
 #include "vbo_context.h"
 
+
 /**
  * Compute min and max elements for glDraw[Range]Elements() calls.
  */
-static void get_minmax_index( GLuint count, GLuint type, 
-			      const GLvoid *indices,
-			      GLuint *min_index,
-			      GLuint *max_index)
+static void
+get_minmax_index(GLuint count, GLuint type, const GLvoid *indices,
+                 GLuint *min_index, GLuint *max_index)
 {
    GLuint i;
 
@@ -282,7 +282,8 @@ print_draw_arrays(GLcontext *ctx, struct vbo_exec_context *exec,
 /**
  * Just translate the arrayobj into a sane layout.
  */
-static void bind_array_obj( GLcontext *ctx )
+static void
+bind_array_obj(GLcontext *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
@@ -318,7 +319,8 @@ static void bind_array_obj( GLcontext *ctx )
 }
 
 
-static void recalculate_input_bindings( GLcontext *ctx )
+static void
+recalculate_input_bindings(GLcontext *ctx)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
@@ -426,7 +428,8 @@ static void recalculate_input_bindings( GLcontext *ctx )
 }
 
 
-static void bind_arrays( GLcontext *ctx )
+static void
+bind_arrays(GLcontext *ctx)
 {
 #if 0
    if (ctx->Array.ArrayObj.Name != exec->array.array_obj) {
@@ -477,7 +480,6 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
    (void) check_draw_arrays_data;
 #endif
 
-
    bind_arrays( ctx );
 
    /* Again... because we may have changed the bitmask of per-vertex varying
@@ -519,7 +521,8 @@ vbo_exec_DrawRangeElements(GLenum mode,
    struct _mesa_index_buffer ib;
    struct _mesa_prim prim[1];
 
-   if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count, type, indices ))
+   if (!_mesa_validate_DrawRangeElements( ctx, mode, start, end, count,
+                                          type, indices ))
       return;
 
    if (end >= ctx->Array.ArrayObj->_MaxElement) {
@@ -604,7 +607,8 @@ vbo_exec_DrawRangeElements(GLenum mode,
 
 
 static void GLAPIENTRY
-vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices)
+vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type,
+                      const GLvoid *indices)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint min_index = 0;
@@ -620,11 +624,12 @@ vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *ind
 
    if (ctx->Array.ElementArrayBufferObj->Name) {
       const GLvoid *map = ctx->Driver.MapBuffer(ctx,
-						 GL_ELEMENT_ARRAY_BUFFER_ARB,
-						 GL_READ_ONLY,
-						 ctx->Array.ElementArrayBufferObj);
+                                                GL_ELEMENT_ARRAY_BUFFER_ARB,
+                                                GL_READ_ONLY,
+                                                ctx->Array.ElementArrayBufferObj);
 
-      get_minmax_index(count, type, ADD_POINTERS(map, indices), &min_index, &max_index);
+      get_minmax_index(count, type, ADD_POINTERS(map, indices),
+                       &min_index, &max_index);
 
       ctx->Driver.UnmapBuffer(ctx,
 			      GL_ELEMENT_ARRAY_BUFFER_ARB,
@@ -642,7 +647,8 @@ vbo_exec_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *ind
  * Initialization
  */
 
-void vbo_exec_array_init( struct vbo_exec_context *exec )
+void
+vbo_exec_array_init( struct vbo_exec_context *exec )
 {
 #if 1
    exec->vtxfmt.DrawArrays = vbo_exec_DrawArrays;
@@ -656,7 +662,8 @@ void vbo_exec_array_init( struct vbo_exec_context *exec )
 }
 
 
-void vbo_exec_array_destroy( struct vbo_exec_context *exec )
+void
+vbo_exec_array_destroy( struct vbo_exec_context *exec )
 {
    /* nothing to do */
 }
