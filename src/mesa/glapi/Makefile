@@ -47,6 +47,7 @@ SERVER_OUTPUTS = \
 
 API_XML = gl_API.xml \
 	EXT_framebuffer_object.xml \
+	ARB_copy_buffer.xml \
 	ARB_framebuffer_object.xml \
 	APPLE_vertex_array_object.xml
 
