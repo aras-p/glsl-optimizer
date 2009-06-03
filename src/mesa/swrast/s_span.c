@@ -1297,7 +1297,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
           span->primitive == GL_LINE ||
 	  span->primitive == GL_POLYGON ||
           span->primitive == GL_BITMAP);
-   ASSERT(span->end <= MAX_WIDTH);
 
    /* Fragment write masks */
    if (span->arrayMask & SPAN_MASK) {
@@ -1310,11 +1309,11 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    }
 
    /* Clip to window/scissor box */
-   if ((swrast->_RasterMask & CLIP_BIT) || (span->primitive != GL_POLYGON)) {
-      if (!clip_span(ctx, span)) {
-	 return;
-      }
+   if (!clip_span(ctx, span)) {
+      return;
    }
+
+   ASSERT(span->end <= MAX_WIDTH);
 
 #ifdef DEBUG
    /* Make sure all fragments are within window bounds */
@@ -1356,15 +1355,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
-
-      if ((span->arrayMask & SPAN_XY) == 0) {
-         if (span->x < fb->_Xmin || span->x + span->end > fb->_Xmax ||
-             span->y < fb->_Ymin || span->y >= fb->_Ymax) {
-            printf("Bad span clipping at %d, %d\n", span->x, span->y);
-            return;
-         }
-      }
-
       if (ctx->Stencil._Enabled) {
          /* Combined Z/stencil tests */
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
