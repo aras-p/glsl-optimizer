@@ -199,6 +199,23 @@ TAG(clip_tri)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask )
 
    ASSIGN_3V(inlist, v2, v0, v1 ); /* pv rotated to slot zero */
 
+   if (0) {
+      /* print pre-clip vertex coords */
+      GLuint i, j;
+      _mesa_printf("pre clip:\n");
+      for (i = 0; i < n; i++) {
+         j = inlist[i];
+         _mesa_printf("  %u: %u: %f, %f, %f, %f\n",
+                      i, j,
+                      coord[j][0], coord[j][1], coord[j][2], coord[j][3]);
+         assert(!IS_INF_OR_NAN(coord[j][0]));
+         assert(!IS_INF_OR_NAN(coord[j][1]));
+         assert(!IS_INF_OR_NAN(coord[j][2]));
+         assert(!IS_INF_OR_NAN(coord[j][3]));
+      }
+   }
+
+
    if (mask & CLIP_FRUSTUM_BITS) {
       POLY_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
       POLY_CLIP( CLIP_LEFT_BIT,    1,  0,  0, 1 );
@@ -228,16 +245,9 @@ TAG(clip_tri)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask )
    }
 
    if (0) {
-      /* print pre/post-clip vertex coords */
+      /* print post-clip vertex coords */
       GLuint i, j;
-      _mesa_printf("pre clip\n");
-      for (i = 0; i < 3; i++) {
-         j = outlist[i];
-         _mesa_printf("  %u: %u: %f, %f, %f, %f\n",
-                      i, j,
-                      coord[j][0], coord[j][1], coord[j][2], coord[j][3]);
-      }
-      _mesa_printf("post clip\n");
+      _mesa_printf("post clip:\n");
       for (i = 0; i < n; i++) {
          j = inlist[i];
          _mesa_printf("  %u: %u: %f, %f, %f, %f\n",
