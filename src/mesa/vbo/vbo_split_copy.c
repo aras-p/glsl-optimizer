@@ -133,6 +133,41 @@ check_flush( struct copy_context *copy )
 }
 
 
+/**
+ * Dump the parameters/info for a vbo->draw() call.
+ */
+static void
+dump_draw_info(GLcontext *ctx,
+               const struct gl_client_array **arrays,
+               const struct _mesa_prim *prims,
+               GLuint nr_prims,
+               const struct _mesa_index_buffer *ib,
+               GLuint min_index,
+               GLuint max_index)
+{
+   GLuint i, j;
+
+   _mesa_printf("VBO Draw:\n");
+   for (i = 0; i < nr_prims; i++) {
+      _mesa_printf("Prim %u of %u\n", i, nr_prims);
+      _mesa_printf("  Prim mode 0x%x\n", prims[i].mode);
+      _mesa_printf("  IB: %p\n", (void*) ib);
+      for (j = 0; j < VERT_ATTRIB_MAX; j++) {
+         _mesa_printf("    array %d at %p:\n", j, (void*) arrays[j]);
+         _mesa_printf("      enabled %d, ptr %p, size %d, type 0x%x, stride %d\n",
+                      arrays[j]->Enabled, arrays[j]->Ptr,
+                      arrays[j]->Size, arrays[j]->Type, arrays[j]->StrideB);
+         if (0) {
+            GLint k = prims[i].start + prims[i].count - 1;
+            GLfloat *last = (GLfloat *) (arrays[j]->Ptr + arrays[j]->Stride * k);
+            _mesa_printf("        last: %f %f %f\n",
+                         last[0], last[1], last[2]);
+         }
+      }
+   }
+}
+
+
 static void
 flush( struct copy_context *copy )
 {
@@ -141,6 +176,18 @@ flush( struct copy_context *copy )
    /* Set some counters: 
     */
    copy->dstib.count = copy->dstelt_nr;
+
+#if 0
+   dump_draw_info(copy->ctx,
+                  copy->dstarray_ptr,
+                  copy->dstprim,
+                  copy->dstprim_nr,
+                  &copy->dstib,
+                  0,
+                  copy->dstbuf_nr);
+#else
+   (void) dump_draw_info;
+#endif
 
    copy->draw( copy->ctx,
 	       copy->dstarray_ptr,
@@ -206,6 +253,17 @@ elt(struct copy_context *copy, GLuint elt_idx)
 
 	 memcpy(csr, srcptr, copy->varying[i].size);
 	 csr += copy->varying[i].size;
+
+#ifdef NAN_CHECK
+         if (srcarray->Type == GL_FLOAT) {
+            GLuint k;
+            GLfloat *f = (GLfloat *) srcptr;
+            for (k = 0; k < srcarray->Size; k++) {
+               assert(!IS_INF_OR_NAN(f[k]));
+               assert(f[k] <= 1.0e20 && f[k] >= -1.0e20);
+            }
+         }
+#endif
 
 	 if (0) 
 	 {
