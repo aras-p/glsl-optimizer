@@ -138,6 +138,7 @@ void st_init_extensions(struct st_context *st)
    /*
     * Extensions that are supported by all Gallium drivers:
     */
+   ctx->Extensions.ARB_copy_buffer = GL_TRUE;
    ctx->Extensions.ARB_multisample = GL_TRUE;
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
    ctx->Extensions.ARB_texture_border_clamp = GL_TRUE; /* XXX temp */

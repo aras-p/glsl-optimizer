@@ -296,6 +296,43 @@ st_bufferobj_unmap(GLcontext *ctx, GLenum target, struct gl_buffer_object *obj)
 }
 
 
+/**
+ * Called via glCopyBufferSubData().
+ */
+static void
+st_copy_buffer_subdata(GLcontext *ctx,
+                       struct gl_buffer_object *src,
+                       struct gl_buffer_object *dst,
+                       GLintptr readOffset, GLintptr writeOffset,
+                       GLsizeiptr size)
+{
+   struct pipe_context *pipe = st_context(ctx)->pipe;
+   struct st_buffer_object *srcObj = st_buffer_object(src);
+   struct st_buffer_object *dstObj = st_buffer_object(dst);
+   ubyte *srcPtr, *dstPtr;
+
+   /* buffer should not already be mapped */
+   assert(!src->Pointer);
+   assert(!dst->Pointer);
+
+   srcPtr = (ubyte *) pipe_buffer_map_range(pipe->screen,
+                                            srcObj->buffer,
+                                            readOffset, size,
+                                            PIPE_BUFFER_USAGE_CPU_READ);
+
+   dstPtr = (ubyte *) pipe_buffer_map_range(pipe->screen,
+                                            dstObj->buffer,
+                                            writeOffset, size,
+                                            PIPE_BUFFER_USAGE_CPU_WRITE);
+
+   if (srcPtr && dstPtr)
+      _mesa_memcpy(dstPtr + writeOffset, srcPtr + readOffset, size);
+
+   pipe_buffer_unmap(pipe->screen, srcObj->buffer);
+   pipe_buffer_unmap(pipe->screen, dstObj->buffer);
+}
+
+
 void
 st_init_bufferobject_functions(struct dd_function_table *functions)
 {
@@ -308,6 +345,7 @@ st_init_bufferobject_functions(struct dd_function_table *functions)
    functions->MapBufferRange = st_bufferobj_map_range;
    functions->FlushMappedBufferRange = st_bufferobj_flush_mapped_range;
    functions->UnmapBuffer = st_bufferobj_unmap;
+   functions->CopyBufferSubData = st_copy_buffer_subdata;
 
    /* For GL_APPLE_vertex_array_object */
    functions->NewArrayObject = _mesa_new_array_object;
