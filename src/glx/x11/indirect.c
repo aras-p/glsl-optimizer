@@ -5198,15 +5198,12 @@ glDeleteTexturesEXT(GLsizei n, const GLuint * textures)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_DeleteTextures(GET_DISPATCH(), (n, textures));
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    } else {
-=======
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
@@ -5272,18 +5269,12 @@ glGenTexturesEXT(GLsizei n, GLuint * textures)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    if (gc->driContext) {
-        CALL_GenTextures(GET_DISPATCH(), (n, textures));
-    } else {
-=======
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GenTextures(GET_DISPATCH(), (n, textures));
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 4;
@@ -5343,18 +5334,12 @@ glIsTextureEXT(GLuint texture)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    if (gc->driContext) {
-        return CALL_IsTexture(GET_DISPATCH(), (texture));
-    } else {
-=======
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         return CALL_IsTexture(GET_DISPATCH(), (texture));
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         GLboolean retval = (GLboolean) 0;
@@ -5665,18 +5650,12 @@ glGetColorTableEXT(GLenum target, GLenum format, GLenum type, GLvoid * table)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    if (gc->driContext) {
-        CALL_GetColorTable(GET_DISPATCH(), (target, format, type, table));
-    } else {
-=======
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetColorTable(GET_DISPATCH(), (target, format, type, table));
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         const __GLXattribute *const state = gc->client_state_private;
         Display *const dpy = gc->currentDpy;
@@ -5747,12 +5726,6 @@ glGetColorTableParameterfvEXT(GLenum target, GLenum pname, GLfloat * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    if (gc->driContext) {
-        CALL_GetColorTableParameterfv(GET_DISPATCH(),
-                                      (target, pname, params));
-    } else {
-=======
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetColorTableParameterfv(GET_DISPATCH(),
@@ -5760,7 +5733,6 @@ glGetColorTableParameterfvEXT(GLenum target, GLenum pname, GLfloat * params)
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -5827,12 +5799,6 @@ glGetColorTableParameterivEXT(GLenum target, GLenum pname, GLint * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    if (gc->driContext) {
-        CALL_GetColorTableParameteriv(GET_DISPATCH(),
-                                      (target, pname, params));
-    } else {
-=======
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetColorTableParameteriv(GET_DISPATCH(),
@@ -5840,7 +5806,6 @@ glGetColorTableParameterivEXT(GLenum target, GLenum pname, GLint * params)
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -6160,12 +6125,6 @@ gl_dispatch_stub_356(GLenum target, GLenum format, GLenum type,
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    if (gc->driContext) {
-        CALL_GetConvolutionFilter(GET_DISPATCH(),
-                                  (target, format, type, image));
-    } else {
-=======
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetConvolutionFilter(GET_DISPATCH(),
@@ -6173,7 +6132,6 @@ gl_dispatch_stub_356(GLenum target, GLenum format, GLenum type,
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         const __GLXattribute *const state = gc->client_state_private;
         Display *const dpy = gc->currentDpy;
@@ -6245,12 +6203,6 @@ gl_dispatch_stub_357(GLenum target, GLenum pname, GLfloat * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    if (gc->driContext) {
-        CALL_GetConvolutionParameterfv(GET_DISPATCH(),
-                                       (target, pname, params));
-    } else {
-=======
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetConvolutionParameterfv(GET_DISPATCH(),
@@ -6258,7 +6210,6 @@ gl_dispatch_stub_357(GLenum target, GLenum pname, GLfloat * params)
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -6325,12 +6276,6 @@ gl_dispatch_stub_358(GLenum target, GLenum pname, GLint * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    if (gc->driContext) {
-        CALL_GetConvolutionParameteriv(GET_DISPATCH(),
-                                       (target, pname, params));
-    } else {
-=======
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetConvolutionParameteriv(GET_DISPATCH(),
@@ -6338,7 +6283,6 @@ gl_dispatch_stub_358(GLenum target, GLenum pname, GLint * params)
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -6412,12 +6356,6 @@ gl_dispatch_stub_361(GLenum target, GLboolean reset, GLenum format,
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    if (gc->driContext) {
-        CALL_GetHistogram(GET_DISPATCH(),
-                          (target, reset, format, type, values));
-    } else {
-=======
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetHistogram(GET_DISPATCH(),
@@ -6425,7 +6363,6 @@ gl_dispatch_stub_361(GLenum target, GLboolean reset, GLenum format,
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         const __GLXattribute *const state = gc->client_state_private;
         Display *const dpy = gc->currentDpy;
@@ -6496,18 +6433,12 @@ gl_dispatch_stub_362(GLenum target, GLenum pname, GLfloat * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    if (gc->driContext) {
-        CALL_GetHistogramParameterfv(GET_DISPATCH(), (target, pname, params));
-    } else {
-=======
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetHistogramParameterfv(GET_DISPATCH(), (target, pname, params));
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -6573,18 +6504,12 @@ gl_dispatch_stub_363(GLenum target, GLenum pname, GLint * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    if (gc->driContext) {
-        CALL_GetHistogramParameteriv(GET_DISPATCH(), (target, pname, params));
-    } else {
-=======
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetHistogramParameteriv(GET_DISPATCH(), (target, pname, params));
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -6654,18 +6579,12 @@ gl_dispatch_stub_364(GLenum target, GLboolean reset, GLenum format,
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    if (gc->driContext) {
-        CALL_GetMinmax(GET_DISPATCH(), (target, reset, format, type, values));
-    } else {
-=======
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetMinmax(GET_DISPATCH(), (target, reset, format, type, values));
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         const __GLXattribute *const state = gc->client_state_private;
         Display *const dpy = gc->currentDpy;
@@ -6734,18 +6653,12 @@ gl_dispatch_stub_365(GLenum target, GLenum pname, GLfloat * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    if (gc->driContext) {
-        CALL_GetMinmaxParameterfv(GET_DISPATCH(), (target, pname, params));
-    } else {
-=======
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetMinmaxParameterfv(GET_DISPATCH(), (target, pname, params));
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -6808,18 +6721,12 @@ gl_dispatch_stub_366(GLenum target, GLenum pname, GLint * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-<<<<<<< HEAD:src/glx/x11/indirect.c
-    if (gc->driContext) {
-        CALL_GetMinmaxParameteriv(GET_DISPATCH(), (target, pname, params));
-    } else {
-=======
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetMinmaxParameteriv(GET_DISPATCH(), (target, pname, params));
     } else
 #endif
     {
->>>>>>> ee2bc53... Fix compiling indirect.c when GLX_DIRECT_RENDERING is not defined:src/glx/x11/indirect.c
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
