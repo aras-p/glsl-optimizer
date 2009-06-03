@@ -1014,6 +1014,11 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
 
    bufObj->Written = GL_TRUE;
 
+#ifdef VBO_DEBUG
+   _mesa_printf("glBufferDataARB(%u, sz %ld, from %p, usage 0x%x)\n",
+                bufObj->Name, size, data, usage);
+#endif
+
    /* Give the buffer object to the driver!  <data> may be null! */
    ctx->Driver.BufferData( ctx, target, size, data, usage, bufObj );
 }
@@ -1103,6 +1108,17 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
    if (access == GL_WRITE_ONLY_ARB || access == GL_READ_WRITE_ARB)
       bufObj->Written = GL_TRUE;
 
+#ifdef VBO_DEBUG
+   _mesa_printf("glMapBufferARB(%u, sz %ld, access 0x%x)\n",
+                bufObj->Name, bufObj->Size, access);
+   if (access == GL_WRITE_ONLY_ARB) {
+      GLuint i;
+      GLubyte *b = (GLubyte *) bufObj->Pointer;
+      for (i = 0; i < bufObj->Size; i++)
+         b[i] = i & 0xff;
+   }
+#endif
+
    return bufObj->Pointer;
 }
 
@@ -1128,6 +1144,26 @@ _mesa_UnmapBufferARB(GLenum target)
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUnmapBufferARB");
       return GL_FALSE;
    }
+
+#ifdef VBO_DEBUG
+   if (bufObj->Access == GL_WRITE_ONLY_ARB) {
+      GLuint i, unchanged = 0;
+      GLubyte *b = (GLubyte *) bufObj->Pointer;
+      GLint pos = -1;
+      /* check which bytes changed */
+      for (i = 0; i < bufObj->Size - 1; i++) {
+         if (b[i] == (i & 0xff) && b[i+1] == ((i+1) & 0xff)) {
+            unchanged++;
+            if (pos == -1)
+               pos = i;
+         }
+      }
+      if (unchanged) {
+         _mesa_printf("glUnmapBufferARB(%u): %u of %ld unchanged, starting at %d\n",
+                      bufObj->Name, unchanged, bufObj->Size, pos);
+      }
+   }
+#endif
 
    status = ctx->Driver.UnmapBuffer( ctx, target, bufObj );
    bufObj->Access = DEFAULT_ACCESS;
