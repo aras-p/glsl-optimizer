@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.6
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,6 +46,16 @@
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 
+
+#ifdef NAN_CHECK
+/** Check for NaNs and very large values */
+static INLINE void
+check_float(float x)
+{
+   assert(!IS_INF_OR_NAN(x));
+   assert(1.0e-15 <= x && x <= 1.0e15);
+}
+#endif
 
 
 /*!
@@ -351,6 +362,12 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 	    const GLuint size = VB->AttribPtr[attr]->size;
 	    const GLuint stride = VB->AttribPtr[attr]->stride;
 	    const GLfloat *data = (GLfloat *) (ptr + stride * i);
+#ifdef NAN_CHECK
+            check_float(data[0]);
+            check_float(data[1]);
+            check_float(data[2]);
+            check_float(data[3]);
+#endif
 	    COPY_CLEAN_4V(machine.VertAttribs[attr], size, data);
 	 }
       }
@@ -361,6 +378,12 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       /* copy the output registers into the VB->attribs arrays */
       for (j = 0; j < numOutputs; j++) {
          const GLuint attr = outputs[j];
+#ifdef NAN_CHECK
+         check_float(machine.Outputs[attr][0]);
+         check_float(machine.Outputs[attr][1]);
+         check_float(machine.Outputs[attr][2]);
+         check_float(machine.Outputs[attr][3]);
+#endif
          COPY_4V(store->results[attr].data[i], machine.Outputs[attr]);
       }
 #if 0
