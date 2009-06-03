@@ -2431,6 +2431,7 @@ struct gl_constants
 struct gl_extensions
 {
    GLboolean dummy;  /* don't remove this! */
+   GLboolean ARB_copy_buffer;
    GLboolean ARB_depth_texture;
    GLboolean ARB_draw_buffers;
    GLboolean ARB_fragment_program;
@@ -2956,6 +2957,9 @@ struct __GLcontextRec
    struct gl_shader_state Shader; /**< GLSL shader object state */
 
    struct gl_query_state Query;  /**< occlusion, timer queries */
+
+   struct gl_buffer_object *CopyReadBuffer; /**< GL_ARB_copy_buffer */
+   struct gl_buffer_object *CopyWriteBuffer; /**< GL_ARB_copy_buffer */
    /*@}*/
 
 #if FEATURE_EXT_framebuffer_object
