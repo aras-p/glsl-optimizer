@@ -148,7 +148,7 @@ static void TAG(render_line_loop)( GLcontext *ctx,
          if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT)
             RENDER_LINE( ELT(count-1), ELT(start) );
          else
-            RENDER_LINE( ELT(count), ELT(start-1) ); /* XXX check this one */
+            RENDER_LINE( ELT(start), ELT(count-1) );
       }
    }
 
