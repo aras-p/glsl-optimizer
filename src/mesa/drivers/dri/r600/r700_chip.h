@@ -341,6 +341,7 @@ typedef struct _R700_CHIP_CONTEXT
     union UINT_FLOAT       	SPI_THREAD_GROUPING       ;  /* 0xA1B2 */
 	union UINT_FLOAT       	SPI_PS_IN_CONTROL_0       ;  /* 0xA1B3 */
 	union UINT_FLOAT       	SPI_PS_IN_CONTROL_1       ;  /* 0xA1B4 */
+	union UINT_FLOAT       	SPI_INTERP_CONTROL_0      ;  /* 0xA1B5 */
 
 	union UINT_FLOAT               	SPI_INPUT_Z               ;  /* 0xA1B6 */
     union UINT_FLOAT              	SPI_FOG_CNTL              ;  /* 0xA1B7 */

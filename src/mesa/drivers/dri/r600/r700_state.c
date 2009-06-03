@@ -463,6 +463,20 @@ static void r700FrontFace(GLcontext * ctx, GLenum mode) //------------------
 
 static void r700ShadeModel(GLcontext * ctx, GLenum mode) //--------------------
 {
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+	/* also need to set/clear FLAT_SHADE bit per param in SPI_PS_INPUT_CNTL_[0-31] */
+	switch (mode) {
+	case GL_FLAT:
+		SETbit(r700->SPI_INTERP_CONTROL_0.u32All, FLAT_SHADE_ENA_bit);
+		break;
+	case GL_SMOOTH:
+		CLEARbit(r700->SPI_INTERP_CONTROL_0.u32All, FLAT_SHADE_ENA_bit);
+		break;
+	default:
+		return;
+	}
 }
 
 static void r700PointParameter(GLcontext * ctx, GLenum pname, const GLfloat * param) //---------------
