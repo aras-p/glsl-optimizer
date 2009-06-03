@@ -1,6 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2009 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -87,6 +88,148 @@ static void get_minmax_index( GLuint count, GLuint type,
       assert(0);
       break;
    }
+}
+
+
+/**
+ * Check that element 'j' of the array has reasonable data.
+ * Map VBO if needed.
+ */
+static void
+check_array_data(GLcontext *ctx, struct gl_client_array *array,
+                 GLuint attrib, GLuint j)
+{
+   if (array->Enabled) {
+      const void *data = array->Ptr;
+      if (array->BufferObj->Name) {
+         if (!array->BufferObj->Pointer) {
+            /* need to map now */
+            array->BufferObj->Pointer = ctx->Driver.MapBuffer(ctx,
+                                                              GL_ARRAY_BUFFER_ARB,
+                                                              GL_READ_ONLY,
+                                                              array->BufferObj);
+         }
+         data = ADD_POINTERS(data, array->BufferObj->Pointer);
+      }
+      switch (array->Type) {
+      case GL_FLOAT:
+         {
+            GLfloat *f = (GLfloat *) ((GLubyte *) data + array->StrideB * j);
+            GLuint k;
+            for (k = 0; k < array->Size; k++) {
+               if (IS_INF_OR_NAN(f[k]) ||
+                   f[k] >= 1.0e20 || f[k] <= -1.0e10) {
+                  _mesa_printf("Bad array data:\n");
+                  _mesa_printf("  Element[%u].%u = %f\n", j, k, f[k]);
+                  _mesa_printf("  Array %u at %p\n", attrib, (void* ) array);
+                  _mesa_printf("  Type 0x%x, Size %d, Stride %d\n",
+                               array->Type, array->Size, array->Stride);
+                  _mesa_printf("  Address/offset %p in Buffer Object %u\n",
+                               array->Ptr, array->BufferObj->Name);
+                  f[k] = 1.0; /* XXX replace the bad value! */
+               }
+               //assert(!IS_INF_OR_NAN(f[k]));
+            }
+         }
+         break;
+      default:
+         ;
+      }
+   }
+}
+
+
+/**
+ * Unmap the buffer object referenced by given array, if mapped.
+ */
+static void
+unmap_array_buffer(GLcontext *ctx, struct gl_client_array *array)
+{
+   if (array->Enabled &&
+       array->BufferObj->Name &&
+       array->BufferObj->Pointer) {
+      ctx->Driver.UnmapBuffer(ctx,
+                              GL_ARRAY_BUFFER_ARB,
+                              array->BufferObj);
+   }
+}
+
+
+/**
+ * Examine the array's data for NaNs, etc.
+ */
+static void
+check_draw_elements_data(GLcontext *ctx, GLsizei count, GLenum elemType,
+                         const void *elements)
+{
+   struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
+   const void *elemMap;
+   GLint i, k;
+
+   if (ctx->Array.ElementArrayBufferObj->Name) {
+      elemMap = ctx->Driver.MapBuffer(ctx,
+                                      GL_ELEMENT_ARRAY_BUFFER_ARB,
+                                      GL_READ_ONLY,
+                                      ctx->Array.ElementArrayBufferObj);
+      elements = ADD_POINTERS(elements, elemMap);
+   }
+
+   for (i = 0; i < count; i++) {
+      GLuint j;
+
+      /* j = element[i] */
+      switch (elemType) {
+      case GL_UNSIGNED_BYTE:
+         j = ((const GLubyte *) elements)[i];
+         break;
+      case GL_UNSIGNED_SHORT:
+         j = ((const GLushort *) elements)[i];
+         break;
+      case GL_UNSIGNED_INT:
+         j = ((const GLuint *) elements)[i];
+         break;
+      default:
+         assert(0);
+      }
+
+      /* check element j of each enabled array */
+      check_array_data(ctx, &arrayObj->Vertex, VERT_ATTRIB_POS, j);
+      check_array_data(ctx, &arrayObj->Normal, VERT_ATTRIB_NORMAL, j);
+      check_array_data(ctx, &arrayObj->Color, VERT_ATTRIB_COLOR0, j);
+      check_array_data(ctx, &arrayObj->SecondaryColor, VERT_ATTRIB_COLOR1, j);
+      for (k = 0; k < Elements(arrayObj->TexCoord); k++) {
+         check_array_data(ctx, &arrayObj->TexCoord[k], VERT_ATTRIB_TEX0 + k, j);
+      }
+      for (k = 0; k < Elements(arrayObj->VertexAttrib); k++) {
+         check_array_data(ctx, &arrayObj->VertexAttrib[k], VERT_ATTRIB_GENERIC0 + k, j);
+      }
+   }
+
+   if (ctx->Array.ElementArrayBufferObj->Name) {
+      ctx->Driver.UnmapBuffer(ctx,
+			      GL_ELEMENT_ARRAY_BUFFER_ARB,
+			      ctx->Array.ElementArrayBufferObj);
+   }
+
+   unmap_array_buffer(ctx, &arrayObj->Vertex);
+   unmap_array_buffer(ctx, &arrayObj->Normal);
+   unmap_array_buffer(ctx, &arrayObj->Color);
+   for (k = 0; k < Elements(arrayObj->TexCoord); k++) {
+      unmap_array_buffer(ctx, &arrayObj->TexCoord[k]);
+   }
+   for (k = 0; k < Elements(arrayObj->VertexAttrib); k++) {
+      unmap_array_buffer(ctx, &arrayObj->VertexAttrib[k]);
+   }
+}
+
+
+/**
+ * Check array data, looking for NaNs, etc.
+ */
+static void
+check_draw_arrays_data(GLcontext *ctx, GLint start, GLsizei count)
+{
+   /* TO DO */
 }
 
 
@@ -282,6 +425,13 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
       return;
    }
 
+#if 0
+   check_draw_arrays_data(ctx, start, count);
+#else
+   (void) check_draw_arrays_data;
+#endif
+
+
    bind_arrays( ctx );
 
    /* Again... because we may have changed the bitmask of per-vertex varying
@@ -371,6 +521,12 @@ vbo_exec_DrawRangeElements(GLenum mode,
          _mesa_print_arrays(ctx);
       return;
    }
+
+#if 0
+   check_draw_elements_data(ctx, count, type, indices);
+#else
+   (void) check_draw_elements_data;
+#endif
 
    FLUSH_CURRENT( ctx, 0 );
 
