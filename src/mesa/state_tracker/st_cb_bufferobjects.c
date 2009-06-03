@@ -26,6 +26,11 @@
  **************************************************************************/
 
 
+/**
+ * Functions for pixel buffer objects and vertex/element buffer objects.
+ */
+
+
 #include "main/imports.h"
 #include "main/mtypes.h"
 #include "main/arrayobj.h"
@@ -38,14 +43,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-
-
-
-/* Pixel buffers and Vertex/index buffers are handled through these
- * mesa callbacks.  Framebuffer/Renderbuffer objects are
- * created/managed elsewhere.
- */
-
 
 
 /**
@@ -191,7 +188,7 @@ st_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
                  struct gl_buffer_object *obj)
 {
    struct st_buffer_object *st_obj = st_buffer_object(obj);
-   GLuint flags;
+   uint flags;
 
    switch (access) {
    case GL_WRITE_ONLY:
@@ -210,13 +207,12 @@ st_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
    obj->Pointer = st_cond_flush_pipe_buffer_map(st_context(ctx),
 						st_obj->buffer,
 						flags);
-   if(obj->Pointer) {
+   if (obj->Pointer) {
       obj->Offset = 0;
       obj->Length = obj->Size;
    }
    return obj->Pointer;
 }
-
 
 
 /**
@@ -229,7 +225,7 @@ st_bufferobj_map_range(GLcontext *ctx, GLenum target,
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
-   GLuint flags = 0;
+   uint flags = 0x0;
    char *map;
 
    if (access & GL_MAP_WRITE_BIT)
@@ -249,8 +245,9 @@ st_bufferobj_map_range(GLcontext *ctx, GLenum target,
    assert(offset < obj->Size);
    assert(offset + length <= obj->Size);
 
-   map = obj->Pointer = pipe_buffer_map_range(pipe->screen, st_obj->buffer, offset, length, flags);
-   if(obj->Pointer) {
+   map = obj->Pointer = pipe_buffer_map_range(pipe->screen, st_obj->buffer,
+                                              offset, length, flags);
+   if (obj->Pointer) {
       obj->Offset = 0;
       obj->Length = obj->Size;
       map += offset;
