@@ -1,9 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.5
+ * Version:  7.6
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
- * Copyright (C) 1999-2009  VMware, Inc.  All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -72,6 +72,16 @@ get_buffer(GLcontext *ctx, GLenum target)
          break;
       case GL_PIXEL_UNPACK_BUFFER_EXT:
          bufObj = ctx->Unpack.BufferObj;
+         break;
+      case GL_COPY_READ_BUFFER:
+         if (ctx->Extensions.ARB_copy_buffer) {
+            bufObj = ctx->CopyReadBuffer;
+         }
+         break;
+      case GL_COPY_WRITE_BUFFER:
+         if (ctx->Extensions.ARB_copy_buffer) {
+            bufObj = ctx->CopyWriteBuffer;
+         }
          break;
       default:
          /* error must be recorded by caller */
@@ -419,6 +429,37 @@ _mesa_buffer_unmap( GLcontext *ctx, GLenum target,
 
 
 /**
+ * Default fallback for \c dd_function_table::CopyBufferSubData().
+ * Called via glCopyBuffserSubData().
+ */
+void
+_mesa_copy_buffer_subdata(GLcontext *ctx,
+                          struct gl_buffer_object *src,
+                          struct gl_buffer_object *dst,
+                          GLintptr readOffset, GLintptr writeOffset,
+                          GLsizeiptr size)
+{
+   GLubyte *srcPtr, *dstPtr;
+
+   /* buffer should not already be mapped */
+   assert(!src->Pointer);
+   assert(!dst->Pointer);
+
+   srcPtr = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_COPY_READ_BUFFER,
+                                              GL_READ_ONLY, src);
+   dstPtr = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_COPY_WRITE_BUFFER,
+                                              GL_WRITE_ONLY, dst);
+
+   if (srcPtr && dstPtr)
+      _mesa_memcpy(dstPtr + writeOffset, srcPtr + readOffset, size);
+
+   ctx->Driver.UnmapBuffer(ctx, GL_COPY_READ_BUFFER, src);
+   ctx->Driver.UnmapBuffer(ctx, GL_COPY_WRITE_BUFFER, dst);
+}
+
+
+
+/**
  * Initialize the state associated with buffer objects
  */
 void
@@ -426,6 +467,9 @@ _mesa_init_buffer_objects( GLcontext *ctx )
 {
    ctx->Array.ArrayBufferObj = ctx->Shared->NullBufferObj;
    ctx->Array.ElementArrayBufferObj = ctx->Shared->NullBufferObj;
+
+   ctx->CopyReadBuffer = ctx->Shared->NullBufferObj;
+   ctx->CopyWriteBuffer = ctx->Shared->NullBufferObj;
 }
 
 
@@ -452,8 +496,22 @@ bind_buffer_object(GLcontext *ctx, GLenum target, GLuint buffer)
    case GL_PIXEL_UNPACK_BUFFER_EXT:
       bindTarget = &ctx->Unpack.BufferObj;
       break;
+   case GL_COPY_READ_BUFFER:
+      if (ctx->Extensions.ARB_copy_buffer) {
+         bindTarget = &ctx->CopyReadBuffer;
+      }
+      break;
+   case GL_COPY_WRITE_BUFFER:
+      if (ctx->Extensions.ARB_copy_buffer) {
+         bindTarget = &ctx->CopyWriteBuffer;
+      }
+      break;
    default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glBindBufferARB(target)");
+      ; /* no-op / we'll hit the follow error test next */
+   }
+
+   if (!bindTarget) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBindBufferARB(target 0x%x)");
       return;
    }
 
@@ -1140,3 +1198,84 @@ _mesa_GetBufferPointervARB(GLenum target, GLenum pname, GLvoid **params)
 
    *params = bufObj->Pointer;
 }
+
+
+void GLAPIENTRY
+_mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
+                        GLintptr readOffset, GLintptr writeOffset,
+                        GLsizeiptr size)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_buffer_object *src, *dst;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   src = get_buffer(ctx, readTarget);
+   if (!src || src->Name == 0) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glCopyBuffserSubData(readTarget = 0x%x)", readTarget);
+      return;
+   }
+
+   dst = get_buffer(ctx, writeTarget);
+   if (!dst || dst->Name == 0) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glCopyBuffserSubData(writeTarget = 0x%x)", writeTarget);
+      return;
+   }
+
+   if (src->Pointer) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCopyBuffserSubData(readBuffer is mapped)");
+      return;
+   }
+
+   if (dst->Pointer) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCopyBuffserSubData(writeBuffer is mapped)");
+      return;
+   }
+
+   if (readOffset < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glCopyBuffserSubData(readOffset = %d)", readOffset);
+      return;
+   }
+
+   if (writeOffset < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glCopyBuffserSubData(writeOffset = %d)", writeOffset);
+      return;
+   }
+
+   if (readOffset + size > src->Size) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glCopyBuffserSubData(readOffset + size = %d)",
+                  readOffset, size);
+      return;
+   }
+
+   if (writeOffset + size > src->Size) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glCopyBuffserSubData(writeOffset + size = %d)",
+                  writeOffset, size);
+      return;
+   }
+
+   if (src == dst) {
+      if (readOffset + size <= writeOffset) {
+         /* OK */
+      }
+      else if (writeOffset + size <= readOffset) {
+         /* OK */
+      }
+      else {
+         /* overlapping src/dst is illegal */
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glCopyBuffserSubData(overlapping src/dst)");
+         return;
+      }
+   }
+
+   ctx->Driver.CopyBufferSubData(ctx, src, dst, readOffset, writeOffset, size);
+}
+
