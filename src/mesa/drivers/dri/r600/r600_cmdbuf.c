@@ -350,6 +350,17 @@ static int r600_cs_set_age(struct radeon_cs *cs) /* -------------- */
     return 0;
 }
 
+static void dump_cmdbuf(struct radeon_cs *cs)
+{
+	int i;
+	fprintf(stderr,"--start--\n");
+	for (i = 0; i < cs->cdw; i++){
+		fprintf(stderr,"0x%08x\n", cs->packets[i]);
+	}
+	fprintf(stderr,"--end--\n");
+
+}
+
 static int r600_cs_emit(struct radeon_cs *cs)
 {
     struct r600_cs_manager_legacy *csm = (struct r600_cs_manager_legacy*)cs->csm;
@@ -391,7 +402,7 @@ static int r600_cs_emit(struct radeon_cs *cs)
     /* cs_cmd.cs_id      = 0; */
     cs_cmd.chunks     = (uint64_t)(unsigned long)chunk_ptrs;
 
-    /* dump_cmdbuf(cs); */
+    dump_cmdbuf(cs);
 
     do 
     {
