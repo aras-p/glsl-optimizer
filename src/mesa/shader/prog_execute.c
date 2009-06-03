@@ -225,6 +225,13 @@ fetch_vector4(const struct prog_src_register *source,
       result[2] = -result[2];
       result[3] = -result[3];
    }
+
+#ifdef NAN_CHECK
+   assert(!IS_INF_OR_NAN(result[0]));
+   assert(!IS_INF_OR_NAN(result[0]));
+   assert(!IS_INF_OR_NAN(result[0]));
+   assert(!IS_INF_OR_NAN(result[0]));
+#endif
 }
 
 
@@ -478,6 +485,13 @@ store_vector4(const struct prog_instruction *inst,
             writeMask &= ~WRITEMASK_W;
       }
    }
+
+#ifdef NAN_CHECK
+   assert(!IS_INF_OR_NAN(value[0]));
+   assert(!IS_INF_OR_NAN(value[0]));
+   assert(!IS_INF_OR_NAN(value[0]));
+   assert(!IS_INF_OR_NAN(value[0]));
+#endif
 
    if (writeMask & WRITEMASK_X)
       dst[0] = value[0];
