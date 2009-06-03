@@ -113,6 +113,9 @@ void r700UpdateShaders (GLcontext * ctx)  //----------------------------------
  */
 void r700UpdateViewportOffset(GLcontext * ctx) //------------------
 {
+
+	//radeonUpdateScissor(ctx);
+
     return;
 }
 
@@ -481,62 +484,61 @@ static void r700StencilOpSeparate(GLcontext * ctx, GLenum face,
 {
 }
 
-static void r700Viewport(GLcontext * ctx, 
-                         GLint x, 
-                         GLint y,
-			             GLsizei width, 
-                         GLsizei height) //--------------------
+static void r700UpdateWindow(GLcontext * ctx) //--------------------
 {
-    context_t *context = R700_CONTEXT(ctx);
 
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	__DRIdrawablePrivate *dPriv = context->radeon.dri.drawable;
+	GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
+	GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
+	const GLfloat *v = ctx->Viewport._WindowMap.m;
+	const GLfloat depthScale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
+	const GLboolean render_to_fbo = (ctx->DrawBuffer->Name != 0);
+	GLfloat y_scale, y_bias;
 
-    __DRIdrawablePrivate *dPriv = context->radeon.dri.drawable;
+	if (render_to_fbo) {
+		y_scale = 1.0;
+		y_bias = 0;
+	} else {
+		y_scale = -1.0;
+		y_bias = yoffset;
+	}
 
-    GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
-    GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
+	GLfloat sx = v[MAT_SX];
+	GLfloat tx = v[MAT_TX] + xoffset;
+	GLfloat sy = v[MAT_SY] * y_scale;
+	GLfloat ty = (v[MAT_TY] * y_scale) + y_bias;
+	GLfloat sz = v[MAT_SZ] * depthScale;
+	GLfloat tz = v[MAT_TZ] * depthScale;
 
-    const GLfloat *v = ctx->Viewport._WindowMap.m;
+	/* TODO : Need DMA flush as well. */
 
-    GLfloat sx, tx, sy, ty, sz, tz;
-    GLfloat scale;
+	r700->PA_CL_VPORT_XSCALE.u32All  = *((unsigned int*)(&sx));
+	r700->PA_CL_VPORT_XOFFSET.u32All = *((unsigned int*)(&tx));
 
-    switch (ctx->Visual.depthBits) 
-    {
-    case 16:
-        scale = 1.0 / (GLfloat) 0xffff;        
-        break;
-    case 24:
-        scale = 1.0 / (GLfloat) 0xffffff;        
-        break;
-    default:
-        fprintf(stderr, "Error: Unsupported depth %d... exiting\n",
-            ctx->Visual.depthBits);
-        _mesa_exit(-1);
-    }
+	r700->PA_CL_VPORT_YSCALE.u32All  = *((unsigned int*)(&sy));
+	r700->PA_CL_VPORT_YOFFSET.u32All = *((unsigned int*)(&ty));
 
-    sx = v[MAT_SX];
-	tx = v[MAT_TX] + xoffset;
-	sy = -v[MAT_SY];
-	ty = (-v[MAT_TY]) + yoffset;
-	sz = v[MAT_SZ] * scale;
-	tz = v[MAT_TZ] * scale;
-
-    /* TODO : Need DMA flush as well. */
-
-    r700->PA_CL_VPORT_XSCALE.u32All  = *((unsigned int*)(&sx));
-    r700->PA_CL_VPORT_XOFFSET.u32All = *((unsigned int*)(&tx));
-
-    r700->PA_CL_VPORT_YSCALE.u32All  = *((unsigned int*)(&sy));
-    r700->PA_CL_VPORT_YOFFSET.u32All = *((unsigned int*)(&ty));
-
-    r700->PA_CL_VPORT_ZSCALE.u32All  = *((unsigned int*)(&sz));
-    r700->PA_CL_VPORT_ZOFFSET.u32All = *((unsigned int*)(&tz));
+	r700->PA_CL_VPORT_ZSCALE.u32All  = *((unsigned int*)(&sz));
+	r700->PA_CL_VPORT_ZOFFSET.u32All = *((unsigned int*)(&tz));
 }
 
 
+static void r700Viewport(GLcontext * ctx,
+                         GLint x,
+                         GLint y,
+			 GLsizei width,
+                         GLsizei height) //--------------------
+{
+	r700UpdateWindow(ctx);
+
+	radeon_viewport(ctx, x, y, width, height);
+}
+
 static void r700DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval) //-------------
 {
+	r700UpdateWindow(ctx);
 }
 
 static void r700PointSize(GLcontext * ctx, GLfloat size) //-------------------
@@ -564,23 +566,91 @@ static void r700ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq ) //-
 {
 }
 
-static void r700Scissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h) //---------------
+void r700SetScissor(context_t *context) //---------------
 {
-    if (ctx->Scissor.Enabled) 
-    {
-		/* We don't pipeline cliprect changes */
-		/* r700Flush(ctx); */
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	unsigned x1, y1, x2, y2;
+	struct radeon_renderbuffer *rrb;
 
-        //__DRIdrawablePrivate *dPriv = radeon->dri.drawable;
-		//int x1 = dPriv->x + ctx->Scissor.X;
-		//int y1 = dPriv->y + dPriv->h - (ctx->Scissor.Y + ctx->Scissor.Height);
-
-		//radeon->state.scissor.rect.x1 = x1;
-		//radeon->state.scissor.rect.y1 = y1;
-		//radeon->state.scissor.rect.x2 = x1 + ctx->Scissor.Width;
-		//radeon->state.scissor.rect.y2 = y1 + ctx->Scissor.Height;
-		/* radeonRecalcScissorRects(radeon); */
+	rrb = radeon_get_colorbuffer(&context->radeon);
+	if (!rrb || !rrb->bo) {
+		fprintf(stderr, "no rrb\n");
+		return;
 	}
+	if (context->radeon.state.scissor.enabled) {
+		x1 = context->radeon.state.scissor.rect.x1;
+		y1 = context->radeon.state.scissor.rect.y1;
+		x2 = context->radeon.state.scissor.rect.x2 - 1;
+		y2 = context->radeon.state.scissor.rect.y2 - 1;
+	} else {
+		x1 = 0;
+		y1 = 0;
+		x2 = rrb->width - 1;
+		y2 = rrb->height - 1;
+	}
+
+	/* 4 clip rectangles */ /* TODO : set these clip rects according to context->currentDraw->numClipRects */
+	r700->PA_SC_CLIPRECT_RULE.u32All = 0x0000FFFF;
+
+	/* window */
+	SETbit(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
+	SETfield(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, x1,
+		 PA_SC_WINDOW_SCISSOR_TL__TL_X_shift, PA_SC_WINDOW_SCISSOR_TL__TL_X_mask);
+	SETfield(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, y1,
+		 PA_SC_WINDOW_SCISSOR_TL__TL_Y_shift, PA_SC_WINDOW_SCISSOR_TL__TL_Y_mask);
+
+	SETfield(r700->PA_SC_WINDOW_SCISSOR_BR.u32All, x2,
+		 PA_SC_WINDOW_SCISSOR_BR__BR_X_shift, PA_SC_WINDOW_SCISSOR_BR__BR_X_mask);
+	SETfield(r700->PA_SC_WINDOW_SCISSOR_BR.u32All, y2,
+		 PA_SC_WINDOW_SCISSOR_BR__BR_Y_shift, PA_SC_WINDOW_SCISSOR_BR__BR_Y_mask);
+
+
+	SETfield(r700->PA_SC_CLIPRECT_0_TL.u32All, x1,
+		 PA_SC_CLIPRECT_0_TL__TL_X_shift, PA_SC_CLIPRECT_0_TL__TL_X_mask);
+	SETfield(r700->PA_SC_CLIPRECT_0_TL.u32All, y1,
+		 PA_SC_CLIPRECT_0_TL__TL_Y_shift, PA_SC_CLIPRECT_0_TL__TL_Y_mask);
+	SETfield(r700->PA_SC_CLIPRECT_0_BR.u32All, x2,
+		 PA_SC_CLIPRECT_0_BR__BR_X_shift, PA_SC_CLIPRECT_0_BR__BR_X_mask);
+	SETfield(r700->PA_SC_CLIPRECT_0_BR.u32All, y2,
+		 PA_SC_CLIPRECT_0_BR__BR_Y_shift, PA_SC_CLIPRECT_0_BR__BR_Y_mask);
+
+	r700->PA_SC_CLIPRECT_1_TL.u32All = r700->PA_SC_CLIPRECT_0_TL.u32All;
+	r700->PA_SC_CLIPRECT_1_BR.u32All = r700->PA_SC_CLIPRECT_0_BR.u32All;
+	r700->PA_SC_CLIPRECT_2_TL.u32All = r700->PA_SC_CLIPRECT_0_TL.u32All;
+	r700->PA_SC_CLIPRECT_2_BR.u32All = r700->PA_SC_CLIPRECT_0_BR.u32All;
+	r700->PA_SC_CLIPRECT_3_TL.u32All = r700->PA_SC_CLIPRECT_0_TL.u32All;
+	r700->PA_SC_CLIPRECT_3_BR.u32All = r700->PA_SC_CLIPRECT_0_BR.u32All;
+
+	/* more....2d clip */
+	SETbit(r700->PA_SC_GENERIC_SCISSOR_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
+	SETfield(r700->PA_SC_GENERIC_SCISSOR_TL.u32All, x1,
+		 PA_SC_GENERIC_SCISSOR_TL__TL_X_shift, PA_SC_GENERIC_SCISSOR_TL__TL_X_mask);
+	SETfield(r700->PA_SC_GENERIC_SCISSOR_TL.u32All, y1,
+		 PA_SC_GENERIC_SCISSOR_TL__TL_Y_shift, PA_SC_GENERIC_SCISSOR_TL__TL_Y_mask);
+	SETfield(r700->PA_SC_GENERIC_SCISSOR_BR.u32All, x2,
+		 PA_SC_GENERIC_SCISSOR_BR__BR_X_shift, PA_SC_GENERIC_SCISSOR_BR__BR_X_mask);
+	SETfield(r700->PA_SC_GENERIC_SCISSOR_BR.u32All, y2,
+		 PA_SC_GENERIC_SCISSOR_BR__BR_Y_shift, PA_SC_GENERIC_SCISSOR_BR__BR_Y_mask);
+
+	SETbit(r700->PA_SC_VPORT_SCISSOR_0_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
+	SETfield(r700->PA_SC_VPORT_SCISSOR_0_TL.u32All, x1,
+		 PA_SC_VPORT_SCISSOR_0_TL__TL_X_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_X_mask);
+	SETfield(r700->PA_SC_VPORT_SCISSOR_0_TL.u32All, y1,
+		 PA_SC_VPORT_SCISSOR_0_TL__TL_Y_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_Y_mask);
+	SETfield(r700->PA_SC_VPORT_SCISSOR_0_BR.u32All, x2,
+		 PA_SC_VPORT_SCISSOR_0_BR__BR_X_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_X_mask);
+	SETfield(r700->PA_SC_VPORT_SCISSOR_0_BR.u32All, y2,
+		 PA_SC_VPORT_SCISSOR_0_BR__BR_Y_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_Y_mask);
+
+	SETbit(r700->PA_SC_VPORT_SCISSOR_1_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
+	SETfield(r700->PA_SC_VPORT_SCISSOR_1_TL.u32All, x1,
+		 PA_SC_VPORT_SCISSOR_0_TL__TL_X_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_X_mask);
+	SETfield(r700->PA_SC_VPORT_SCISSOR_1_TL.u32All, y1,
+		 PA_SC_VPORT_SCISSOR_0_TL__TL_Y_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_Y_mask);
+	SETfield(r700->PA_SC_VPORT_SCISSOR_1_BR.u32All, x2,
+		 PA_SC_VPORT_SCISSOR_0_BR__BR_X_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_X_mask);
+	SETfield(r700->PA_SC_VPORT_SCISSOR_1_BR.u32All, y2,
+		 PA_SC_VPORT_SCISSOR_0_BR__BR_Y_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_Y_mask);
 }
 
 void r700SetRenderTarget(context_t *context)
@@ -594,95 +664,15 @@ void r700SetRenderTarget(context_t *context)
     SETfield(r700->CB_TARGET_MASK.u32All, 0xF, TARGET0_ENABLE_shift, TARGET0_ENABLE_mask);
     SETfield(r700->CB_SHADER_MASK.u32All, 0xF, OUTPUT0_ENABLE_shift, OUTPUT0_ENABLE_mask);
 
-    /* screen */
-    r700->PA_SC_SCREEN_SCISSOR_TL.u32All = 0x0;
-    
-    SETfield(r700->PA_SC_SCREEN_SCISSOR_BR.u32All, ((RADEONDRIPtr)(context->radeon.radeonScreen->driScreen->pDevPriv))->width,  
-             PA_SC_SCREEN_SCISSOR_BR__BR_X_shift, PA_SC_SCREEN_SCISSOR_BR__BR_X_mask);
-    SETfield(r700->PA_SC_SCREEN_SCISSOR_BR.u32All, ((RADEONDRIPtr)(context->radeon.radeonScreen->driScreen->pDevPriv))->height, 
-             PA_SC_SCREEN_SCISSOR_BR__BR_Y_shift, PA_SC_SCREEN_SCISSOR_BR__BR_Y_mask);
-
-    /* window */
-    SETbit(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
-    SETfield(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, context->radeon.dri.drawable->x, 
-             PA_SC_WINDOW_SCISSOR_TL__TL_X_shift, PA_SC_WINDOW_SCISSOR_TL__TL_X_mask);
-    SETfield(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, context->radeon.dri.drawable->y, 
-             PA_SC_WINDOW_SCISSOR_TL__TL_Y_shift, PA_SC_WINDOW_SCISSOR_TL__TL_Y_mask);
-
-	SETfield(r700->PA_SC_WINDOW_SCISSOR_BR.u32All, context->radeon.dri.drawable->x + context->radeon.dri.drawable->w, 
-             PA_SC_WINDOW_SCISSOR_BR__BR_X_shift, PA_SC_WINDOW_SCISSOR_BR__BR_X_mask);
-    SETfield(r700->PA_SC_WINDOW_SCISSOR_BR.u32All, context->radeon.dri.drawable->y + context->radeon.dri.drawable->h, 
-             PA_SC_WINDOW_SCISSOR_BR__BR_Y_shift, PA_SC_WINDOW_SCISSOR_BR__BR_Y_mask);
-
-    /* 4 clip rectangles */ /* TODO : set these clip rects according to context->currentDraw->numClipRects */
-	r700->PA_SC_CLIPRECT_RULE.u32All = 0x0000FFFF;
-
-    SETfield(r700->PA_SC_CLIPRECT_0_TL.u32All, context->radeon.dri.drawable->x, 
-             PA_SC_CLIPRECT_0_TL__TL_X_shift, PA_SC_CLIPRECT_0_TL__TL_X_mask);
-    SETfield(r700->PA_SC_CLIPRECT_0_TL.u32All, context->radeon.dri.drawable->y, 
-             PA_SC_CLIPRECT_0_TL__TL_Y_shift, PA_SC_CLIPRECT_0_TL__TL_Y_mask);
-	SETfield(r700->PA_SC_CLIPRECT_0_BR.u32All, context->radeon.dri.drawable->x + context->radeon.dri.drawable->w, 
-             PA_SC_CLIPRECT_0_BR__BR_X_shift, PA_SC_CLIPRECT_0_BR__BR_X_mask);
-    SETfield(r700->PA_SC_CLIPRECT_0_BR.u32All, context->radeon.dri.drawable->y + context->radeon.dri.drawable->h, 
-             PA_SC_CLIPRECT_0_BR__BR_Y_shift, PA_SC_CLIPRECT_0_BR__BR_Y_mask);
-
-    r700->PA_SC_CLIPRECT_1_TL.u32All = r700->PA_SC_CLIPRECT_0_TL.u32All;
-	r700->PA_SC_CLIPRECT_1_BR.u32All = r700->PA_SC_CLIPRECT_0_BR.u32All;
-    r700->PA_SC_CLIPRECT_2_TL.u32All = r700->PA_SC_CLIPRECT_0_TL.u32All;
-	r700->PA_SC_CLIPRECT_2_BR.u32All = r700->PA_SC_CLIPRECT_0_BR.u32All;
-    r700->PA_SC_CLIPRECT_3_TL.u32All = r700->PA_SC_CLIPRECT_0_TL.u32All;
-	r700->PA_SC_CLIPRECT_3_BR.u32All = r700->PA_SC_CLIPRECT_0_BR.u32All;
-
-	/* edgerule for triangles, points, recs, lines */
-	r700->PA_SC_EDGERULE.u32All = 0x555AA96A;
-
-    /* more....2d clip */
-    SETbit(r700->PA_SC_GENERIC_SCISSOR_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
-    SETfield(r700->PA_SC_GENERIC_SCISSOR_TL.u32All, context->radeon.dri.drawable->x, 
-             PA_SC_GENERIC_SCISSOR_TL__TL_X_shift, PA_SC_GENERIC_SCISSOR_TL__TL_X_mask);
-    SETfield(r700->PA_SC_GENERIC_SCISSOR_TL.u32All, context->radeon.dri.drawable->y, 
-             PA_SC_GENERIC_SCISSOR_TL__TL_Y_shift, PA_SC_GENERIC_SCISSOR_TL__TL_Y_mask);
-    SETfield(r700->PA_SC_GENERIC_SCISSOR_BR.u32All, context->radeon.dri.drawable->x + context->radeon.dri.drawable->w, 
-             PA_SC_GENERIC_SCISSOR_BR__BR_X_shift, PA_SC_GENERIC_SCISSOR_BR__BR_X_mask);
-    SETfield(r700->PA_SC_GENERIC_SCISSOR_BR.u32All, context->radeon.dri.drawable->y + context->radeon.dri.drawable->h, 
-             PA_SC_GENERIC_SCISSOR_BR__BR_Y_shift, PA_SC_GENERIC_SCISSOR_BR__BR_Y_mask);
-
-    SETbit(r700->PA_SC_VPORT_SCISSOR_0_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_0_TL.u32All, context->radeon.dri.drawable->x, 
-             PA_SC_VPORT_SCISSOR_0_TL__TL_X_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_X_mask);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_0_TL.u32All, context->radeon.dri.drawable->y, 
-             PA_SC_VPORT_SCISSOR_0_TL__TL_Y_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_Y_mask);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_0_BR.u32All, context->radeon.dri.drawable->x + context->radeon.dri.drawable->w, 
-             PA_SC_VPORT_SCISSOR_0_BR__BR_X_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_X_mask);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_0_BR.u32All, context->radeon.dri.drawable->y + context->radeon.dri.drawable->h, 
-             PA_SC_VPORT_SCISSOR_0_BR__BR_Y_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_Y_mask);
-    
-    SETbit(r700->PA_SC_VPORT_SCISSOR_1_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_1_TL.u32All, context->radeon.dri.drawable->x, 
-             PA_SC_VPORT_SCISSOR_0_TL__TL_X_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_X_mask);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_1_TL.u32All, context->radeon.dri.drawable->y, 
-             PA_SC_VPORT_SCISSOR_0_TL__TL_Y_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_Y_mask);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_1_BR.u32All, context->radeon.dri.drawable->x + context->radeon.dri.drawable->w, 
-             PA_SC_VPORT_SCISSOR_0_BR__BR_X_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_X_mask);
-    SETfield(r700->PA_SC_VPORT_SCISSOR_1_BR.u32All, context->radeon.dri.drawable->y + context->radeon.dri.drawable->h, 
-             PA_SC_VPORT_SCISSOR_0_BR__BR_Y_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_Y_mask);
-
-    /* setup viewport */
-    r700Viewport(GL_CONTEXT(context), 
-                 0,
-                 0,
-			     context->radeon.dri.drawable->w,
-                 context->radeon.dri.drawable->h);
-
     rrb = radeon_get_colorbuffer(&context->radeon);
 	if (!rrb || !rrb->bo) {
 		fprintf(stderr, "no rrb\n");
 		return;
 	}
 
-    /* color buffer */ 
+    /* color buffer */
     r700->CB_COLOR0_BASE.u32All = context->radeon.state.color.draw_offset;
-    
+
     nPitchInPixel = rrb->pitch/rrb->cpp;
     SETfield(r700->CB_COLOR0_SIZE.u32All, (nPitchInPixel/8)-1,
              PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
@@ -690,8 +680,8 @@ void r700SetRenderTarget(context_t *context)
              SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask);
     r700->CB_COLOR0_BASE.u32All = 0;
     SETfield(r700->CB_COLOR0_INFO.u32All, ENDIAN_NONE, ENDIAN_shift, ENDIAN_mask);
-    SETfield(r700->CB_COLOR0_INFO.u32All, ARRAY_LINEAR_GENERAL, 
-             CB_COLOR0_INFO__ARRAY_MODE_shift, CB_COLOR0_INFO__ARRAY_MODE_mask); 
+    SETfield(r700->CB_COLOR0_INFO.u32All, ARRAY_LINEAR_GENERAL,
+             CB_COLOR0_INFO__ARRAY_MODE_shift, CB_COLOR0_INFO__ARRAY_MODE_mask);
     if(4 == rrb->cpp)
     {
         SETfield(r700->CB_COLOR0_INFO.u32All, COLOR_8_8_8_8,
@@ -702,14 +692,23 @@ void r700SetRenderTarget(context_t *context)
     {
         SETfield(r700->CB_COLOR0_INFO.u32All, COLOR_5_6_5,
                  CB_COLOR0_INFO__FORMAT_shift, CB_COLOR0_INFO__FORMAT_mask);
-        SETfield(r700->CB_COLOR0_INFO.u32All, SWAP_ALT_REV, 
-                 COMP_SWAP_shift, COMP_SWAP_mask);        
-    } 
+        SETfield(r700->CB_COLOR0_INFO.u32All, SWAP_ALT_REV,
+                 COMP_SWAP_shift, COMP_SWAP_mask);
+    }
     SETbit(r700->CB_COLOR0_INFO.u32All, SOURCE_FORMAT_bit);
     SETbit(r700->CB_COLOR0_INFO.u32All, BLEND_CLAMP_bit);
     SETfield(r700->CB_COLOR0_INFO.u32All, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
 
-    /* depth buf */ 
+}
+
+void r700SetDepthTarget(context_t *context)
+{
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+    struct radeon_renderbuffer *rrb;
+    unsigned int nPitchInPixel;
+
+    /* depth buf */
 	r700->DB_DEPTH_SIZE.u32All = 0;
     r700->DB_DEPTH_BASE.u32All = 0;
     r700->DB_DEPTH_INFO.u32All = 0;
@@ -719,8 +718,8 @@ void r700SetRenderTarget(context_t *context)
     r700->DB_DEPTH_VIEW.u32All      = 0;
     r700->DB_RENDER_CONTROL.u32All  = 0;
     r700->DB_RENDER_OVERRIDE.u32All = 0;
-    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIZ_ENABLE_shift, FORCE_HIZ_ENABLE_mask); 
-    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE0_shift, FORCE_HIS_ENABLE0_mask); 
+    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIZ_ENABLE_shift, FORCE_HIZ_ENABLE_mask);
+    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE0_shift, FORCE_HIS_ENABLE0_mask);
     SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE1_shift, FORCE_HIS_ENABLE1_mask);
 
     rrb = radeon_get_depthbuffer(&context->radeon);
@@ -734,14 +733,14 @@ void r700SetRenderTarget(context_t *context)
     SETfield(r700->DB_DEPTH_SIZE.u32All, ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
              SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask); /* size in pixel / 64 - 1 */
 
-    if(4 == rrb->cpp) 
+    if(4 == rrb->cpp)
     {
-        switch (GL_CONTEXT(context)->Visual.depthBits) 
+        switch (GL_CONTEXT(context)->Visual.depthBits)
         {
-        case 16:           
+        case 16:
         case 24:
-            SETfield(r700->DB_DEPTH_INFO.u32All, DEPTH_8_24, 
-                     DB_DEPTH_INFO__FORMAT_shift, DB_DEPTH_INFO__FORMAT_mask);       
+            SETfield(r700->DB_DEPTH_INFO.u32All, DEPTH_8_24,
+                     DB_DEPTH_INFO__FORMAT_shift, DB_DEPTH_INFO__FORMAT_mask);
             break;
         default:
             fprintf(stderr, "Error: Unsupported depth %d... exiting\n",
@@ -751,12 +750,12 @@ void r700SetRenderTarget(context_t *context)
     }
     else
     {
-        SETfield(r700->DB_DEPTH_INFO.u32All, DEPTH_16, 
-                     DB_DEPTH_INFO__FORMAT_shift, DB_DEPTH_INFO__FORMAT_mask);          
-    } 
-    SETfield(r700->DB_DEPTH_INFO.u32All, ARRAY_2D_TILED_THIN1, 
-             DB_DEPTH_INFO__ARRAY_MODE_shift, DB_DEPTH_INFO__ARRAY_MODE_mask); 
-    /* r700->DB_PREFETCH_LIMIT.bits.DEPTH_HEIGHT_TILE_MAX = (context->currentDraw->h >> 3) - 1; */ /* z buffer sie may much bigger than what need, so use actual used h. */     
+        SETfield(r700->DB_DEPTH_INFO.u32All, DEPTH_16,
+                     DB_DEPTH_INFO__FORMAT_shift, DB_DEPTH_INFO__FORMAT_mask);
+    }
+    SETfield(r700->DB_DEPTH_INFO.u32All, ARRAY_2D_TILED_THIN1,
+             DB_DEPTH_INFO__ARRAY_MODE_shift, DB_DEPTH_INFO__ARRAY_MODE_mask);
+    /* r700->DB_PREFETCH_LIMIT.bits.DEPTH_HEIGHT_TILE_MAX = (context->currentDraw->h >> 3) - 1; */ /* z buffer sie may much bigger than what need, so use actual used h. */
 }
 
 /**
@@ -808,6 +807,16 @@ void r700InitState(GLcontext * ctx) //-------------------
     SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DRAW_TRIANGLES, 
              POLYMODE_BACK_PTYPE_shift, POLYMODE_BACK_PTYPE_mask); 
 
+    /* screen */
+    r700->PA_SC_SCREEN_SCISSOR_TL.u32All = 0x0;
+
+    SETfield(r700->PA_SC_SCREEN_SCISSOR_BR.u32All,
+	     ((RADEONDRIPtr)(context->radeon.radeonScreen->driScreen->pDevPriv))->width,
+	     PA_SC_SCREEN_SCISSOR_BR__BR_X_shift, PA_SC_SCREEN_SCISSOR_BR__BR_X_mask);
+    SETfield(r700->PA_SC_SCREEN_SCISSOR_BR.u32All,
+	     ((RADEONDRIPtr)(context->radeon.radeonScreen->driScreen->pDevPriv))->height,
+	     PA_SC_SCREEN_SCISSOR_BR__BR_Y_shift, PA_SC_SCREEN_SCISSOR_BR__BR_Y_mask);
+
     /* Do scale XY and Z by 1/W0. */
     r700->bEnablePerspective = GL_TRUE;
     CLEARbit(r700->PA_CL_VTE_CNTL.u32All, VTX_XY_FMT_bit);
@@ -831,7 +840,7 @@ void r700InitState(GLcontext * ctx) //-------------------
     SETfield(r700->PA_SU_POINT_MINMAX.u32All, 0x8000, MAX_SIZE_shift, MAX_SIZE_mask);
 
     /* Set up line control */
-	SETfield(r700->PA_SU_LINE_CNTL.u32All, 0x8, 
+    SETfield(r700->PA_SU_LINE_CNTL.u32All, 0x8, 
              PA_SU_LINE_CNTL__WIDTH_shift, PA_SU_LINE_CNTL__WIDTH_mask);
 	
     r700->PA_SC_LINE_CNTL.u32All = 0;
@@ -879,7 +888,7 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->SX_MISC.u32All = 0;
 
     /* depth buf */ 
-	r700->DB_DEPTH_SIZE.u32All = 0;
+    r700->DB_DEPTH_SIZE.u32All = 0;
     r700->DB_DEPTH_BASE.u32All = 0;
     r700->DB_DEPTH_INFO.u32All = 0;
     r700->DB_DEPTH_CONTROL.u32All   = 0;
@@ -943,6 +952,10 @@ void r700InitStateFuncs(struct dd_function_table *functions) //-----------------
 
 	functions->ClipPlane = r700ClipPlane;
 
-    functions->Scissor = r700Scissor;
+	functions->Scissor = radeonScissor;
+
+	functions->DrawBuffer		= radeonDrawBuffer;
+	functions->ReadBuffer		= radeonReadBuffer;
+
 }
 

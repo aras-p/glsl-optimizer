@@ -258,7 +258,9 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     r700UpdateShaders(ctx);
 
+    r700SetScissor(context);
     r700SetRenderTarget(context);
+    r700SetDepthTarget(context);
 
     if(r700SetupStreams(ctx))
     {
