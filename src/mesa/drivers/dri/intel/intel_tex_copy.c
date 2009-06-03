@@ -118,8 +118,12 @@ do_copy_texsubimage(struct intel_context *intel,
       dstx += x - orig_x;
       dsty += y - orig_y;
 
-      /* image_offset may be non-page-aligned, but that's illegal for tiling. */
-      assert(intelImage->mt->region->tiling == I915_TILING_NONE);
+      /* Can't blit to tiled buffers with non-tile-aligned offset. */
+      if (intelImage->mt->region->tiling != I915_TILING_NONE &&
+	  (image_offset & 4095) != 0) {
+	 UNLOCK_HARDWARE(intel);
+	 return GL_FALSE;
+      }
 
       if (ctx->ReadBuffer->Name == 0) {
 	 /* reading from a window, adjust x, y */

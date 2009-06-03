@@ -724,6 +724,8 @@ intelInitContext(struct intel_context *intel,
    else if (driQueryOptionb(&intel->optionCache, "force_s3tc_enable")) {
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
    }
+   intel->use_texture_tiling = driQueryOptionb(&intel->optionCache,
+					       "texture_tiling");
 
    intel->prim.primitive = ~0;
 

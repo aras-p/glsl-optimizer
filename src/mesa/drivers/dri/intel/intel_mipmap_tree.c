@@ -57,7 +57,8 @@ intel_miptree_create_internal(struct intel_context *intel,
 			      GLuint last_level,
 			      GLuint width0,
 			      GLuint height0,
-			      GLuint depth0, GLuint cpp, GLuint compress_byte)
+			      GLuint depth0, GLuint cpp, GLuint compress_byte,
+			      uint32_t tiling)
 {
    GLboolean ok;
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
@@ -81,11 +82,11 @@ intel_miptree_create_internal(struct intel_context *intel,
 
 #ifdef I915
    if (IS_945(intel->intelScreen->deviceID))
-      ok = i945_miptree_layout(intel, mt);
+      ok = i945_miptree_layout(intel, mt, tiling);
    else
-      ok = i915_miptree_layout(intel, mt);
+      ok = i915_miptree_layout(intel, mt, tiling);
 #else
-   ok = brw_miptree_layout(intel, mt);
+   ok = brw_miptree_layout(intel, mt, tiling);
 #endif
 
    if (!ok) {
@@ -109,10 +110,18 @@ intel_miptree_create(struct intel_context *intel,
 		     GLboolean expect_accelerated_upload)
 {
    struct intel_mipmap_tree *mt;
+   uint32_t tiling;
+
+   if (intel->use_texture_tiling && compress_byte == 0 &&
+       intel->intelScreen->kernel_exec_fencing)
+      tiling = I915_TILING_X;
+   else
+      tiling = I915_TILING_NONE;
 
    mt = intel_miptree_create_internal(intel, target, internal_format,
 				      first_level, last_level, width0,
-				      height0, depth0, cpp, compress_byte);
+				      height0, depth0, cpp, compress_byte,
+				      tiling);
    /*
     * pitch == 0 || height == 0  indicates the null texture
     */
@@ -120,6 +129,7 @@ intel_miptree_create(struct intel_context *intel,
       return NULL;
 
    mt->region = intel_region_alloc(intel,
+				   tiling,
 				   mt->cpp,
 				   mt->pitch,
 				   mt->total_height,
@@ -149,7 +159,8 @@ intel_miptree_create_for_region(struct intel_context *intel,
    mt = intel_miptree_create_internal(intel, target, internal_format,
 				      first_level, last_level,
 				      region->width, region->height, 1,
-				      region->cpp, compress_byte);
+				      region->cpp, compress_byte,
+				      I915_TILING_NONE);
    if (!mt)
       return mt;
 #if 0
@@ -187,6 +198,7 @@ intel_miptree_create_for_region(struct intel_context *intel,
 
 int intel_miptree_pitch_align (struct intel_context *intel,
 			       struct intel_mipmap_tree *mt,
+			       uint32_t tiling,
 			       int pitch)
 {
 #ifdef I915
@@ -206,6 +218,11 @@ int intel_miptree_pitch_align (struct intel_context *intel,
       } else {
 	 pitch_align = 4;
       }
+
+      if (tiling == I915_TILING_X)
+	 pitch_align = 512;
+      else if (tiling == I915_TILING_Y)
+	 pitch_align = 128;
 
       pitch = ALIGN(pitch * mt->cpp, pitch_align);
 

@@ -40,7 +40,8 @@
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
 GLboolean brw_miptree_layout(struct intel_context *intel,
-			     struct intel_mipmap_tree *mt)
+			     struct intel_mipmap_tree *mt,
+			     uint32_t tiling)
 {
    /* XXX: these vary depending on image format: */
    /* GLint align_w = 4; */
@@ -64,8 +65,8 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
           mt->pitch = ALIGN(width, align_w);
           pack_y_pitch = (height + 3) / 4;
       } else {
-          mt->pitch = intel_miptree_pitch_align (intel, mt, mt->width0);
-          pack_y_pitch = ALIGN(mt->height0, align_h);
+	 mt->pitch = intel_miptree_pitch_align (intel, mt, tiling, mt->width0);
+	 pack_y_pitch = ALIGN(mt->height0, align_h);
       }
 
       pack_x_pitch = mt->pitch;
@@ -122,7 +123,7 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
    }
 
    default:
-      i945_miptree_layout_2d(intel, mt);
+      i945_miptree_layout_2d(intel, mt, tiling);
       break;
    }
    DBG("%s: %dx%dx%d - sz 0x%x\n", __FUNCTION__,

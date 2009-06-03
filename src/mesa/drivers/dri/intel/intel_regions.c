@@ -116,7 +116,10 @@ intel_region_map(struct intel_context *intel, struct intel_region *region)
       if (region->pbo)
          intel_region_cow(intel, region);
 
-      dri_bo_map(region->buffer, GL_TRUE);
+      if (intel->intelScreen->kernel_exec_fencing)
+	 drm_intel_gem_bo_map_gtt(region->buffer);
+      else
+	 dri_bo_map(region->buffer, GL_TRUE);
       region->map = region->buffer->virtual;
    }
 
@@ -128,7 +131,10 @@ intel_region_unmap(struct intel_context *intel, struct intel_region *region)
 {
    _DBG("%s %p\n", __FUNCTION__, region);
    if (!--region->map_refcount) {
-      dri_bo_unmap(region->buffer);
+      if (intel->intelScreen->kernel_exec_fencing)
+	 drm_intel_gem_bo_map_gtt(region->buffer);
+      else
+	 dri_bo_unmap(region->buffer);
       region->map = NULL;
    }
 }
@@ -164,10 +170,12 @@ intel_region_alloc_internal(struct intel_context *intel,
 
 struct intel_region *
 intel_region_alloc(struct intel_context *intel,
+		   uint32_t tiling,
                    GLuint cpp, GLuint width, GLuint height, GLuint pitch,
 		   GLboolean expect_accelerated_upload)
 {
    dri_bo *buffer;
+   struct intel_region *region;
 
    if (expect_accelerated_upload) {
       buffer = drm_intel_bo_alloc_for_render(intel->bufmgr, "region",
@@ -177,7 +185,16 @@ intel_region_alloc(struct intel_context *intel,
 				  pitch * cpp * height, 64);
    }
 
-   return intel_region_alloc_internal(intel, cpp, width, height, pitch, buffer);
+   region = intel_region_alloc_internal(intel, cpp, width, height,
+					pitch, buffer);
+
+   if (tiling != I915_TILING_NONE) {
+      assert(((pitch * cpp) & 511) == 0);
+      drm_intel_bo_set_tiling(buffer, &tiling, pitch * cpp);
+      drm_intel_bo_get_tiling(buffer, &region->tiling, &region->bit_6_swizzle);
+   }
+
+   return region;
 }
 
 struct intel_region *

@@ -305,6 +305,8 @@ struct intel_context
     */
    GLboolean is_front_buffer_rendering;
 
+   GLboolean use_texture_tiling;
+
    drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
 
    int perf_boxes;
