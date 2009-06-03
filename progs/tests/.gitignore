@@ -62,6 +62,8 @@ readrate
 readtex.c
 readtex.h
 rubberband
+scissor
+scissor-viewport
 seccolor
 shader_api
 shaderutil.c

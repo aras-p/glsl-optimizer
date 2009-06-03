@@ -95,6 +95,8 @@ progs = [
     'random',
     'readrate',
     'rubberband',
+    'scissor',
+    'scissor-viewport',
     'seccolor',
     'shader_api',
     'stencil_twoside',
