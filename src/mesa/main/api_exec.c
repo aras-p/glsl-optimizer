@@ -894,5 +894,8 @@ _mesa_init_exec_table(struct _glapi_table *exec)
     */
    SET_RenderbufferStorageMultisample(exec, _mesa_RenderbufferStorageMultisample);
 #endif
+
+   /* GL_ARB_copy_buffer */
+   SET_CopyBufferSubData(exec, _mesa_CopyBufferSubData);
 }
 

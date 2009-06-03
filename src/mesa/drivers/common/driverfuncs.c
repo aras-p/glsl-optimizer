@@ -237,6 +237,9 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->DeleteArrayObject = _mesa_delete_array_object;
    driver->BindArrayObject = NULL;
 
+   /* GL_ARB_copy_buffer */
+   driver->CopyBufferSubData = _mesa_copy_buffer_subdata;
+
    /* T&L stuff */
    driver->NeedValidate = GL_FALSE;
    driver->ValidateTnlModule = NULL;
