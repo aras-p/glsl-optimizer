@@ -369,41 +369,57 @@ static void r700UpdateCulling(GLcontext * ctx)
 
 static void r700Enable(GLcontext * ctx, GLenum cap, GLboolean state) //------------------
 {
-    switch (cap) 
-    {
-        case GL_TEXTURE_1D:
-        case GL_TEXTURE_2D:
-        case GL_TEXTURE_3D:		
-            break;
-        case GL_FOG:		
-            break;
-        case GL_ALPHA_TEST:		
-            break;
-        case GL_COLOR_LOGIC_OP:		
-        case GL_BLEND:		
-            break;
-        case GL_CLIP_PLANE0:
-        case GL_CLIP_PLANE1:
-        case GL_CLIP_PLANE2:
-        case GL_CLIP_PLANE3:
-        case GL_CLIP_PLANE4:
-        case GL_CLIP_PLANE5:		
-            break;
-        case GL_DEPTH_TEST:
-            r700SetDepthState(ctx);
-            break;
-        case GL_STENCIL_TEST:		
-            break;
-        case GL_CULL_FACE:
-           r700UpdateCulling(ctx);		
-           break;
-        case GL_POLYGON_OFFSET_POINT:
-        case GL_POLYGON_OFFSET_LINE:
-        case GL_POLYGON_OFFSET_FILL:		
-            break;
-        default:		
-            break;
-    }
+	context_t *context = R700_CONTEXT(ctx);
+
+	switch (cap) {
+	case GL_TEXTURE_1D:
+	case GL_TEXTURE_2D:
+	case GL_TEXTURE_3D:
+		/* empty */
+		break;
+	case GL_FOG:
+		/* empty */
+		break;
+	case GL_ALPHA_TEST:
+		//r700SetAlphaState(ctx);
+		break;
+	case GL_COLOR_LOGIC_OP:
+		//r700SetLogicOpState(ctx);
+		/* fall-through, because logic op overrides blending */
+	case GL_BLEND:
+		//r700SetBlendState(ctx);
+		break;
+	case GL_CLIP_PLANE0:
+	case GL_CLIP_PLANE1:
+	case GL_CLIP_PLANE2:
+	case GL_CLIP_PLANE3:
+	case GL_CLIP_PLANE4:
+	case GL_CLIP_PLANE5:
+		//r700SetClipPlaneState(ctx, cap, state);
+		break;
+	case GL_DEPTH_TEST:
+		r700SetDepthState(ctx);
+		break;
+	case GL_STENCIL_TEST:
+		//r700SetStencilState(ctx, state);
+		break;
+	case GL_CULL_FACE:
+		r700UpdateCulling(ctx);
+		break;
+	case GL_POLYGON_OFFSET_POINT:
+	case GL_POLYGON_OFFSET_LINE:
+	case GL_POLYGON_OFFSET_FILL:
+		//r700SetPolygonOffsetState(ctx, state);
+		break;
+	case GL_SCISSOR_TEST:
+		radeon_firevertices(&context->radeon);
+		context->radeon.state.scissor.enabled = state;
+		radeonUpdateScissor(ctx);
+		break;
+	default:
+		break;
+	}
+
 }
 
 /**
@@ -412,6 +428,14 @@ static void r700Enable(GLcontext * ctx, GLenum cap, GLboolean state) //---------
 static void r700ColorMask(GLcontext * ctx,
 			  GLboolean r, GLboolean g, GLboolean b, GLboolean a) //------------------
 {
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&R700_CONTEXT(ctx)->hw);
+	unsigned int mask = ((r ? 1 : 0) |
+			     (g ? 2 : 0) |
+			     (b ? 4 : 0) |
+			     (a ? 8 : 0));
+
+	if (mask != r700->CB_SHADER_MASK.u32All)
+		SETfield(r700->CB_SHADER_MASK.u32All, mask, OUTPUT0_ENABLE_shift, OUTPUT0_ENABLE_mask);
 }
 
 /**
@@ -676,7 +700,6 @@ void r700SetRenderTarget(context_t *context)
 
     /* screen/window/view */
     SETfield(r700->CB_TARGET_MASK.u32All, 0xF, TARGET0_ENABLE_shift, TARGET0_ENABLE_mask);
-    SETfield(r700->CB_SHADER_MASK.u32All, 0xF, OUTPUT0_ENABLE_shift, OUTPUT0_ENABLE_mask);
 
     rrb = radeon_get_colorbuffer(&context->radeon);
 	if (!rrb || !rrb->bo) {
@@ -811,15 +834,15 @@ void r700InitState(GLcontext * ctx) //-------------------
     CLEARbit(r700->CB_COLOR_CONTROL.u32All, PER_MRT_BLEND_bit);
     CLEARfield(r700->CB_BLEND0_CONTROL.u32All, COLOR_SRCBLEND_mask); /* no dst blend */
     CLEARfield(r700->CB_BLEND0_CONTROL.u32All, ALPHA_SRCBLEND_mask); /* no dst blend */
-  
+
     r700->DB_SHADER_CONTROL.u32All = 0;
     SETbit(r700->DB_SHADER_CONTROL.u32All, DUAL_EXPORT_ENABLE_bit);
 
-    /* Set up the culling control register */ 
-    SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DRAW_TRIANGLES, 
-             POLYMODE_FRONT_PTYPE_shift, POLYMODE_FRONT_PTYPE_mask); 
-    SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DRAW_TRIANGLES, 
-             POLYMODE_BACK_PTYPE_shift, POLYMODE_BACK_PTYPE_mask); 
+    /* Set up the culling control register */
+    SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DRAW_TRIANGLES,
+             POLYMODE_FRONT_PTYPE_shift, POLYMODE_FRONT_PTYPE_mask);
+    SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DRAW_TRIANGLES,
+             POLYMODE_BACK_PTYPE_shift, POLYMODE_BACK_PTYPE_mask);
 
     /* screen */
     r700->PA_SC_SCREEN_SCISSOR_TL.u32All = 0x0;
@@ -846,7 +869,7 @@ void r700InitState(GLcontext * ctx) //-------------------
     SETbit(r700->PA_CL_VTE_CNTL.u32All, VPORT_Z_OFFSET_ENA_bit);
 
     /* Set up point sizes and min/max values */
-    SETfield(r700->PA_SU_POINT_SIZE.u32All, 0x8, 
+    SETfield(r700->PA_SU_POINT_SIZE.u32All, 0x8,
              PA_SU_POINT_SIZE__HEIGHT_shift, PA_SU_POINT_SIZE__HEIGHT_mask);
     SETfield(r700->PA_SU_POINT_SIZE.u32All, 0x8,
              PA_SU_POINT_SIZE__WIDTH_shift, PA_SU_POINT_SIZE__WIDTH_mask);
@@ -854,33 +877,33 @@ void r700InitState(GLcontext * ctx) //-------------------
     SETfield(r700->PA_SU_POINT_MINMAX.u32All, 0x8000, MAX_SIZE_shift, MAX_SIZE_mask);
 
     /* Set up line control */
-    SETfield(r700->PA_SU_LINE_CNTL.u32All, 0x8, 
+    SETfield(r700->PA_SU_LINE_CNTL.u32All, 0x8,
              PA_SU_LINE_CNTL__WIDTH_shift, PA_SU_LINE_CNTL__WIDTH_mask);
-	
+
     r700->PA_SC_LINE_CNTL.u32All = 0;
-    CLEARbit(r700->PA_SC_LINE_CNTL.u32All, EXPAND_LINE_WIDTH_bit); 
-    SETbit(r700->PA_SC_LINE_CNTL.u32All, LAST_PIXEL_bit); 
+    CLEARbit(r700->PA_SC_LINE_CNTL.u32All, EXPAND_LINE_WIDTH_bit);
+    SETbit(r700->PA_SC_LINE_CNTL.u32All, LAST_PIXEL_bit);
 
     /* Set up vertex control */
     r700->PA_SU_VTX_CNTL.u32All = 0;
-    CLEARfield(r700->PA_SU_VTX_CNTL.u32All, QUANT_MODE_mask); 
-    SETbit(r700->PA_SU_VTX_CNTL.u32All, PIX_CENTER_bit); 
-    SETfield(r700->PA_SU_VTX_CNTL.u32All, X_ROUND_TO_EVEN, 
-             PA_SU_VTX_CNTL__ROUND_MODE_shift, PA_SU_VTX_CNTL__ROUND_MODE_mask); 
+    CLEARfield(r700->PA_SU_VTX_CNTL.u32All, QUANT_MODE_mask);
+    SETbit(r700->PA_SU_VTX_CNTL.u32All, PIX_CENTER_bit);
+    SETfield(r700->PA_SU_VTX_CNTL.u32All, X_ROUND_TO_EVEN,
+             PA_SU_VTX_CNTL__ROUND_MODE_shift, PA_SU_VTX_CNTL__ROUND_MODE_mask);
 
-    /* to 1.0 = no guard band */ 
+    /* to 1.0 = no guard band */
     r700->PA_CL_GB_VERT_CLIP_ADJ.u32All  = 0x3F800000;  /* 1.0 */
-    r700->PA_CL_GB_VERT_DISC_ADJ.u32All  = 0x3F800000;  
-    r700->PA_CL_GB_HORZ_CLIP_ADJ.u32All  = 0x3F800000;  
-    r700->PA_CL_GB_HORZ_DISC_ADJ.u32All  = 0x3F800000;  
+    r700->PA_CL_GB_VERT_DISC_ADJ.u32All  = 0x3F800000;
+    r700->PA_CL_GB_HORZ_CLIP_ADJ.u32All  = 0x3F800000;
+    r700->PA_CL_GB_HORZ_DISC_ADJ.u32All  = 0x3F800000;
 
     /* Disble color compares */
-    SETfield(r700->CB_CLRCMP_CONTROL.u32All, CLRCMP_DRAW_ALWAYS, 
-             CLRCMP_FCN_SRC_shift, CLRCMP_FCN_SRC_mask); 
-    SETfield(r700->CB_CLRCMP_CONTROL.u32All, CLRCMP_DRAW_ALWAYS, 
-             CLRCMP_FCN_DST_shift, CLRCMP_FCN_DST_mask); 
-    SETfield(r700->CB_CLRCMP_CONTROL.u32All, CLRCMP_SEL_SRC, 
-             CLRCMP_FCN_SEL_shift, CLRCMP_FCN_SEL_mask); 
+    SETfield(r700->CB_CLRCMP_CONTROL.u32All, CLRCMP_DRAW_ALWAYS,
+             CLRCMP_FCN_SRC_shift, CLRCMP_FCN_SRC_mask);
+    SETfield(r700->CB_CLRCMP_CONTROL.u32All, CLRCMP_DRAW_ALWAYS,
+             CLRCMP_FCN_DST_shift, CLRCMP_FCN_DST_mask);
+    SETfield(r700->CB_CLRCMP_CONTROL.u32All, CLRCMP_SEL_SRC,
+             CLRCMP_FCN_SEL_shift, CLRCMP_FCN_SEL_mask);
 
     /* Zero out source */
     r700->CB_CLRCMP_SRC.u32All = 0x00000000;
@@ -890,6 +913,9 @@ void r700InitState(GLcontext * ctx) //-------------------
 
     /* Set up color compare mask */
     r700->CB_CLRCMP_MSK.u32All = 0xFFFFFFFF;
+
+    /* default color mask */
+    SETfield(r700->CB_SHADER_MASK.u32All, 0xF, OUTPUT0_ENABLE_shift, OUTPUT0_ENABLE_mask);
 
     /* Enable all samples for multi-sample anti-aliasing */
     r700->PA_SC_AA_MASK.u32All = 0xFFFFFFFF;
@@ -901,7 +927,7 @@ void r700InitState(GLcontext * ctx) //-------------------
 
     r700->SX_MISC.u32All = 0;
 
-    /* depth buf */ 
+    /* depth buf */
     r700->DB_DEPTH_SIZE.u32All = 0;
     r700->DB_DEPTH_BASE.u32All = 0;
     r700->DB_DEPTH_INFO.u32All = 0;
@@ -910,11 +936,11 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->DB_DEPTH_VIEW.u32All      = 0;
     r700->DB_RENDER_CONTROL.u32All  = 0;
     r700->DB_RENDER_OVERRIDE.u32All = 0;
-    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIZ_ENABLE_shift, FORCE_HIZ_ENABLE_mask); 
-    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE0_shift, FORCE_HIS_ENABLE0_mask); 
-    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE1_shift, FORCE_HIS_ENABLE1_mask); 
-    
-    /* color buffer */ 
+    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIZ_ENABLE_shift, FORCE_HIZ_ENABLE_mask);
+    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE0_shift, FORCE_HIS_ENABLE0_mask);
+    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE1_shift, FORCE_HIS_ENABLE1_mask);
+
+    /* color buffer */
     r700->CB_COLOR0_SIZE.u32All = 0;
     r700->CB_COLOR0_BASE.u32All = 0;
     r700->CB_COLOR0_INFO.u32All = 0;
@@ -926,7 +952,7 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->CB_COLOR0_FRAG.u32All   = 0;
     r700->CB_COLOR0_MASK.u32All   = 0;
 
-	r700->PA_SC_VPORT_ZMAX_0.u32All = 0x3F800000;
+    r700->PA_SC_VPORT_ZMAX_0.u32All = 0x3F800000;
 }
 
 void r700InitStateFuncs(struct dd_function_table *functions) //-----------------
