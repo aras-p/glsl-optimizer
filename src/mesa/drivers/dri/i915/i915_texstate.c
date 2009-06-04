@@ -185,8 +185,13 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 
    state[I915_TEXREG_MS3] =
       (((firstImage->Height - 1) << MS3_HEIGHT_SHIFT) |
-       ((firstImage->Width - 1) << MS3_WIDTH_SHIFT) | format |
-       MS3_USE_FENCE_REGS);
+       ((firstImage->Width - 1) << MS3_WIDTH_SHIFT) | format);
+
+   if (intelObj->mt->region->tiling != I915_TILING_NONE) {
+      state[I915_TEXREG_MS3] |= MS3_TILED_SURFACE;
+      if (intelObj->mt->region->tiling == I915_TILING_Y)
+	 state[I915_TEXREG_MS3] |= MS3_TILE_WALK;
+   }
 
    state[I915_TEXREG_MS4] =
      ((((pitch / 4) - 1) << MS4_PITCH_SHIFT) | MS4_CUBE_FACE_ENA_MASK |

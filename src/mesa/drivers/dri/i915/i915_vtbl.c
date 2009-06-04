@@ -529,6 +529,23 @@ i915_destroy_context(struct intel_context *intel)
    _tnl_free_vertices(&intel->ctx);
 }
 
+void
+i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
+			     uint32_t buffer_id)
+{
+   state[0] = _3DSTATE_BUF_INFO_CMD;
+   state[1] = buffer_id;
+
+   if (region != NULL) {
+      state[1] |= BUF_3D_PITCH(region->pitch * region->cpp);
+
+      if (region->tiling != I915_TILING_NONE) {
+	 state[1] |= BUF_3D_TILED_SURFACE;
+	 if (region->tiling == I915_TILING_Y)
+	    state[1] |= BUF_3D_TILE_WALK_Y;
+      }
+   }
+}
 
 /**
  * Set the drawing regions for the color and depth/stencil buffers.
@@ -562,21 +579,11 @@ i915_state_draw_region(struct intel_context *intel,
    /*
     * Set stride/cpp values
     */
-   if (color_region) {
-      state->Buffer[I915_DESTREG_CBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
-      state->Buffer[I915_DESTREG_CBUFADDR1] =
-         (BUF_3D_ID_COLOR_BACK |
-          BUF_3D_PITCH(color_region->pitch * color_region->cpp) |
-          BUF_3D_USE_FENCE);
-   }
+   i915_set_buf_info_for_region(&state->Buffer[I915_DESTREG_CBUFADDR0],
+				color_region, BUF_3D_ID_COLOR_BACK);
 
-   if (depth_region) {
-      state->Buffer[I915_DESTREG_DBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
-      state->Buffer[I915_DESTREG_DBUFADDR1] =
-         (BUF_3D_ID_DEPTH |
-          BUF_3D_PITCH(depth_region->pitch * depth_region->cpp) |
-          BUF_3D_USE_FENCE);
-   }
+   i915_set_buf_info_for_region(&state->Buffer[I915_DESTREG_DBUFADDR0],
+				depth_region, BUF_3D_ID_DEPTH);
 
    /*
     * Compute/set I915_DESTREG_DV1 value

@@ -559,6 +559,9 @@ void intel_viewport(GLcontext * ctx, GLint x, GLint y,
 void intel_update_renderbuffers(__DRIcontext *context,
 				__DRIdrawable *drawable);
 
+void i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
+				  uint32_t buffer_id);
+
 /*======================================================================
  * Inline conversion functions.  
  * These are better-typed than the macros used previously:

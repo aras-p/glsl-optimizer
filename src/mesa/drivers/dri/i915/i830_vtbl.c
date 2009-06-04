@@ -552,7 +552,7 @@ i830_emit_state(struct intel_context *intel)
          if (state->tex_buffer[i]) {
             OUT_RELOC(state->tex_buffer[i],
 		      I915_GEM_DOMAIN_SAMPLER, 0,
-                      state->tex_offset[i] | TM0S0_USE_FENCE);
+                      state->tex_offset[i]);
          }
 	 else if (state == &i830->meta) {
 	    assert(i == 0);
@@ -634,21 +634,11 @@ i830_state_draw_region(struct intel_context *intel,
    /*
     * Set stride/cpp values
     */
-   if (color_region) {
-      state->Buffer[I830_DESTREG_CBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
-      state->Buffer[I830_DESTREG_CBUFADDR1] =
-         (BUF_3D_ID_COLOR_BACK |
-          BUF_3D_PITCH(color_region->pitch * color_region->cpp) |
-          BUF_3D_USE_FENCE);
-   }
+   i915_set_buf_info_for_region(&state->Buffer[I830_DESTREG_CBUFADDR0],
+				color_region, BUF_3D_ID_COLOR_BACK);
 
-   if (depth_region) {
-      state->Buffer[I830_DESTREG_DBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
-      state->Buffer[I830_DESTREG_DBUFADDR1] =
-         (BUF_3D_ID_DEPTH |
-          BUF_3D_PITCH(depth_region->pitch * depth_region->cpp) |
-          BUF_3D_USE_FENCE);
-   }
+   i915_set_buf_info_for_region(&state->Buffer[I830_DESTREG_DBUFADDR0],
+				depth_region, BUF_3D_ID_DEPTH);
 
    /*
     * Compute/set I830_DESTREG_DV1 value

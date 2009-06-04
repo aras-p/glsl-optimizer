@@ -174,13 +174,15 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    state[I830_TEXREG_TM0LI] = (_3DSTATE_LOAD_STATE_IMMEDIATE_2 |
                                (LOAD_TEXTURE_MAP0 << unit) | 4);
 
-/*    state[I830_TEXREG_TM0S0] = (TM0S0_USE_FENCE | */
-/* 			       t->intel.TextureOffset); */
-
-
    state[I830_TEXREG_TM0S1] =
       (((firstImage->Height - 1) << TM0S1_HEIGHT_SHIFT) |
        ((firstImage->Width - 1) << TM0S1_WIDTH_SHIFT) | format);
+
+   if (intelObj->mt->region->tiling != I915_TILING_NONE) {
+      state[I830_TEXREG_TM0S1] |= TM0S1_TILED_SURFACE;
+      if (intelObj->mt->region->tiling == I915_TILING_Y)
+	 state[I830_TEXREG_TM0S1] |= TM0S1_TILE_WALK;
+   }
 
    state[I830_TEXREG_TM0S2] =
       ((((pitch / 4) - 1) << TM0S2_PITCH_SHIFT) | TM0S2_CUBE_FACE_ENA_MASK);
