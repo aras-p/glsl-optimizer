@@ -358,7 +358,7 @@ nv20_vbuf_render_release_vertices( struct vbuf_render *render )
 {
 	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
 	struct nv20_context *nv20 = nv20_render->nv20;
-	struct pipe_screen *pscreen = &nv20->screen->pipe;
+	struct pipe_screen *pscreen = &nv20->screen->base.base;
 
 	if (nv20_render->pbuffer) {
 		pipe_buffer_reference(&nv20_render->pbuffer, NULL);
