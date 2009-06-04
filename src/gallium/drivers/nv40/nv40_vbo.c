@@ -70,7 +70,7 @@ static boolean
 nv40_vbo_set_idxbuf(struct nv40_context *nv40, struct pipe_buffer *ib,
 		    unsigned ib_size)
 {
-	struct pipe_screen *pscreen = &nv40->screen->pipe;
+	struct pipe_screen *pscreen = &nv40->screen->base.base;
 	unsigned type;
 
 	if (!ib) {

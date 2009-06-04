@@ -1,5 +1,4 @@
 #include "pipe/p_screen.h"
-#include "util/u_simple_screen.h"
 
 #include "nv40_context.h"
 #include "nv40_screen.h"
@@ -7,23 +6,6 @@
 #define NV4X_GRCLASS4097_CHIPSETS 0x00000baf
 #define NV4X_GRCLASS4497_CHIPSETS 0x00005450
 #define NV6X_GRCLASS4497_CHIPSETS 0x00000088
-
-static const char *
-nv40_screen_get_name(struct pipe_screen *pscreen)
-{
-	struct nv40_screen *screen = nv40_screen(pscreen);
-	struct nouveau_device *dev = screen->nvws->channel->device;
-	static char buffer[128];
-
-	snprintf(buffer, sizeof(buffer), "NV%02X", dev->chipset);
-	return buffer;
-}
-
-static const char *
-nv40_screen_get_vendor(struct pipe_screen *pscreen)
-{
-	return "nouveau";
-}
 
 static int
 nv40_screen_get_param(struct pipe_screen *pscreen, int param)
@@ -157,6 +139,8 @@ nv40_screen_destroy(struct pipe_screen *pscreen)
 	nvws->notifier_free(&screen->sync);
 	nvws->grobj_free(&screen->curie);
 
+	nouveau_screen_fini(&screen->base);
+
 	FREE(pscreen);
 }
 
@@ -164,36 +148,49 @@ struct pipe_screen *
 nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 {
 	struct nv40_screen *screen = CALLOC_STRUCT(nv40_screen);
+	struct nouveau_device *dev = nvws->channel->device;
+	struct pipe_screen *pscreen;
 	struct nouveau_stateobj *so;
 	unsigned curie_class = 0;
-	unsigned chipset = nvws->channel->device->chipset;
 	int ret;
 
 	if (!screen)
 		return NULL;
+	pscreen = &screen->base.base;
+
 	screen->nvws = nvws;
+
+	pscreen->winsys = ws;
+	pscreen->destroy = nv40_screen_destroy;
+	pscreen->get_param = nv40_screen_get_param;
+	pscreen->get_paramf = nv40_screen_get_paramf;
+	pscreen->is_format_supported = nv40_screen_surface_format_supported;
+
+	nv40_screen_init_miptree_functions(pscreen);
+	nv40_screen_init_transfer_functions(pscreen);
+	nouveau_screen_init(&screen->base, dev);
 
 	/* 2D engine setup */
 	screen->eng2d = nv04_surface_2d_init(nvws);
 	screen->eng2d->buf = nv40_surface_buffer;
 
 	/* 3D object */
-	switch (chipset & 0xf0) {
+	switch (dev->chipset & 0xf0) {
 	case 0x40:
-		if (NV4X_GRCLASS4097_CHIPSETS & (1 << (chipset & 0x0f)))
+		if (NV4X_GRCLASS4097_CHIPSETS & (1 << (dev->chipset & 0x0f)))
 			curie_class = NV40TCL;
 		else
-		if (NV4X_GRCLASS4497_CHIPSETS & (1 << (chipset & 0x0f)))
+		if (NV4X_GRCLASS4497_CHIPSETS & (1 << (dev->chipset & 0x0f)))
 			curie_class = NV44TCL;
 		break;
 	case 0x60:
-		if (NV6X_GRCLASS4497_CHIPSETS & (1 << (chipset & 0x0f)))
+		if (NV6X_GRCLASS4497_CHIPSETS & (1 << (dev->chipset & 0x0f)))
 			curie_class = NV44TCL;
 		break;
 	}
 
 	if (!curie_class) {
-		NOUVEAU_ERR("Unknown nv4x chipset: nv%02x\n", chipset);
+		NOUVEAU_ERR("Unknown nv4x chipset: nv%02x\n", dev->chipset);
 		return NULL;
 	}
 
@@ -207,7 +204,7 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	ret = nvws->notifier_alloc(nvws, 1, &screen->sync);
 	if (ret) {
 		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
-		nv40_screen_destroy(&screen->pipe);
+		nv40_screen_destroy(pscreen);
 		return NULL;
 	}
 
@@ -215,21 +212,21 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	ret = nvws->notifier_alloc(nvws, 32, &screen->query);
 	if (ret) {
 		NOUVEAU_ERR("Error initialising query objects: %d\n", ret);
-		nv40_screen_destroy(&screen->pipe);
+		nv40_screen_destroy(pscreen);
 		return NULL;
 	}
 
 	ret = nvws->res_init(&screen->query_heap, 0, 32);
 	if (ret) {
 		NOUVEAU_ERR("Error initialising query object heap: %d\n", ret);
-		nv40_screen_destroy(&screen->pipe);
+		nv40_screen_destroy(pscreen);
 		return NULL;
 	}
 
 	/* Vtxprog resources */
 	if (nvws->res_init(&screen->vp_exec_heap, 0, 512) ||
 	    nvws->res_init(&screen->vp_data_heap, 0, 256)) {
-		nv40_screen_destroy(&screen->pipe);
+		nv40_screen_destroy(pscreen);
 		return NULL;
 	}
 
@@ -285,20 +282,6 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_ref(NULL, &so);
 	nouveau_pushbuf_flush(nvws->channel, 0);
 
-	screen->pipe.winsys = ws;
-	screen->pipe.destroy = nv40_screen_destroy;
-
-	screen->pipe.get_name = nv40_screen_get_name;
-	screen->pipe.get_vendor = nv40_screen_get_vendor;
-	screen->pipe.get_param = nv40_screen_get_param;
-	screen->pipe.get_paramf = nv40_screen_get_paramf;
-
-	screen->pipe.is_format_supported = nv40_screen_surface_format_supported;
-
-	nv40_screen_init_miptree_functions(&screen->pipe);
-	nv40_screen_init_transfer_functions(&screen->pipe);
-	u_simple_screen_init(&screen->pipe);
-
-	return &screen->pipe;
+	return pscreen;
 }
 

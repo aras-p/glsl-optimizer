@@ -21,8 +21,6 @@
 
 #include "nv40_state.h"
 
-#define nouveau_bo(pb) nv40->screen->nvws->get_bo(pb)
-
 #define NOUVEAU_ERR(fmt, args...) \
 	fprintf(stderr, "%s:%d -  "fmt, __func__, __LINE__, ##args);
 #define NOUVEAU_MSG(fmt, args...) \
