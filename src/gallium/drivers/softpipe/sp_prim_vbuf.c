@@ -236,7 +236,6 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
       }
       break;
 
-
    case PIPE_PRIM_TRIANGLES:
       for (i = 2; i < nr; i += 3) {
          setup_tri( setup_ctx,
@@ -256,7 +255,6 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
       break;
 
    case PIPE_PRIM_TRIANGLE_FAN:
-   case PIPE_PRIM_POLYGON:
       for (i = 2; i < nr; i += 1) {
          setup_tri( setup_ctx,
                     get_vert(vertex_buffer, indices[0], stride),
@@ -264,6 +262,7 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
                     get_vert(vertex_buffer, indices[i-0], stride));
       }
       break;
+
    case PIPE_PRIM_QUADS:
       for (i = 3; i < nr; i += 4) {
          setup_tri( setup_ctx,
@@ -277,6 +276,7 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
                     get_vert(vertex_buffer, indices[i-0], stride));
       }
       break;
+
    case PIPE_PRIM_QUAD_STRIP:
       for (i = 3; i < nr; i += 2) {
          setup_tri( setup_ctx,
@@ -290,6 +290,16 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
                     get_vert(vertex_buffer, indices[i-0], stride));
       }
       break;
+
+   case PIPE_PRIM_POLYGON:
+      for (i = 2; i < nr; i += 1) {
+         setup_tri( setup_ctx,
+                    get_vert(vertex_buffer, indices[0-1], stride),
+                    get_vert(vertex_buffer, indices[i-0], stride),
+                    get_vert(vertex_buffer, indices[0], stride));
+      }
+      break;
+
    default:
       assert(0);
    }
