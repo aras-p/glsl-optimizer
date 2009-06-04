@@ -67,19 +67,43 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 
 	if (mesa_ind_buf->type == GL_UNSIGNED_BYTE) {
 		GLubyte *in = (GLubyte *)src_ptr;
-		GLushort *out = _mesa_malloc(sizeof(GLushort) * mesa_ind_buf->count);
+		GLuint *out = _mesa_malloc(sizeof(GLushort) * ((mesa_ind_buf->count + 1) & ~1));
 		int i;
 
-		for (i = 0; i < mesa_ind_buf->count; ++i) {
-			out[i] = (GLushort) in[i];
+		ind_buf->ptr = out;
+
+		for (i = 0; i + 1 < mesa_ind_buf->count; i += 2) {
+			*out++ = in[i] | in[i + 1] << 16;
 		}
 
-		ind_buf->ptr = out;
+		if (i < mesa_ind_buf->count) {
+			*out++ = in[i];
+		}
+
 		ind_buf->free_needed = GL_TRUE;
 		ind_buf->is_32bit = GL_FALSE;
 	} else if (mesa_ind_buf->type == GL_UNSIGNED_SHORT) {
+#if MESA_BIG_ENDIAN
+		GLushort *in = (GLushort *)src_ptr;
+		GLuint *out = _mesa_malloc(sizeof(GLushort) *
+					   ((mesa_ind_buf->count + 1) & ~1));
+		int i;
+
+		ind_buf->ptr = out;
+
+		for (i = 0; i + 1 < mesa_ind_buf->count; i += 2) {
+			*out++ = in[i] | in[i + 1] << 16;
+		}
+
+		if (i < mesa_ind_buf->count) {
+			*out++ = in[i];
+		}
+
+		ind_buf->free_needed = GL_TRUE;
+#else
 		ind_buf->ptr = src_ptr;
 		ind_buf->free_needed = GL_FALSE;
+#endif
 		ind_buf->is_32bit = GL_FALSE;
 	} else {
 		ind_buf->ptr = src_ptr;
@@ -160,7 +184,11 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 
 	stride = (input->StrideB == 0) ? getTypeSize(input->Type) * input->Size : input->StrideB;
 
-	if (input->Type == GL_DOUBLE || input->Type == GL_UNSIGNED_INT || input->Type == GL_INT || stride < 4){
+	if (input->Type == GL_DOUBLE || input->Type == GL_UNSIGNED_INT || input->Type == GL_INT ||
+#if MESA_BIG_ENDIAN
+	    getTypeSize(input->Type) != 4 ||
+#endif
+	    stride < 4) {
 		if (RADEON_DEBUG & DEBUG_FALLBACKS) {
 			fprintf(stderr, "%s: Converting vertex attributes, attribute data format %x,", __FUNCTION__, input->Type);
 			fprintf(stderr, "stride %d, components %d\n", stride, input->Size);

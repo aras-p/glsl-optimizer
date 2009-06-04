@@ -176,15 +176,15 @@ static void r300EmitElts(GLcontext * ctx, unsigned long n_elts)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	void *out;
-	GLbyte el_size;
+	GLuint size;
 
-	el_size = rmesa->ind_buf.is_32bit ? 4 : 2;
+	size = ((rmesa->ind_buf.is_32bit ? 4 : 2) * n_elts + 3) & ~3;
 
 	radeonAllocDmaRegion(&rmesa->radeon, &rmesa->radeon.tcl.elt_dma_bo,
-			     &rmesa->radeon.tcl.elt_dma_offset, n_elts * el_size, 4);
+			     &rmesa->radeon.tcl.elt_dma_offset, size, 4);
 	radeon_bo_map(rmesa->radeon.tcl.elt_dma_bo, 1);
 	out = rmesa->radeon.tcl.elt_dma_bo->ptr + rmesa->radeon.tcl.elt_dma_offset;
-	memcpy(out, rmesa->ind_buf.ptr, n_elts * el_size);
+	memcpy(out, rmesa->ind_buf.ptr, size);
 	radeon_bo_unmap(rmesa->radeon.tcl.elt_dma_bo);
 }
 
