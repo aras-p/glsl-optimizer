@@ -59,14 +59,20 @@ struct rbug_header * rbug_demarshal(struct rbug_proto_header *header)
 		return (struct rbug_header *)rbug_demarshal_context_list(header);
 	case RBUG_OP_CONTEXT_INFO:
 		return (struct rbug_header *)rbug_demarshal_context_info(header);
-	case RBUG_OP_CONTEXT_BLOCK_DRAW:
-		return (struct rbug_header *)rbug_demarshal_context_block_draw(header);
-	case RBUG_OP_CONTEXT_UNBLOCK_DRAW:
-		return (struct rbug_header *)rbug_demarshal_context_unblock_draw(header);
+	case RBUG_OP_CONTEXT_DRAW_BLOCK:
+		return (struct rbug_header *)rbug_demarshal_context_draw_block(header);
+	case RBUG_OP_CONTEXT_DRAW_STEP:
+		return (struct rbug_header *)rbug_demarshal_context_draw_step(header);
+	case RBUG_OP_CONTEXT_DRAW_UNBLOCK:
+		return (struct rbug_header *)rbug_demarshal_context_draw_unblock(header);
+	case RBUG_OP_CONTEXT_FLUSH:
+		return (struct rbug_header *)rbug_demarshal_context_flush(header);
 	case RBUG_OP_CONTEXT_LIST_REPLY:
 		return (struct rbug_header *)rbug_demarshal_context_list_reply(header);
 	case RBUG_OP_CONTEXT_INFO_REPLY:
 		return (struct rbug_header *)rbug_demarshal_context_info_reply(header);
+	case RBUG_OP_CONTEXT_DRAW_BLOCKED:
+		return (struct rbug_header *)rbug_demarshal_context_draw_blocked(header);
 	case RBUG_OP_SHADER_LIST:
 		return (struct rbug_header *)rbug_demarshal_shader_list(header);
 	case RBUG_OP_SHADER_INFO:

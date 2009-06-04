@@ -110,8 +110,9 @@ int rbug_send_context_info(struct rbug_connection *__con,
 	return __ret;
 }
 
-int rbug_send_context_block_draw(struct rbug_connection *__con,
+int rbug_send_context_draw_block(struct rbug_connection *__con,
                                  rbug_context_t context,
+                                 rbug_block_t block,
                                  uint32_t *__serial)
 {
 	uint32_t __len = 0;
@@ -121,6 +122,7 @@ int rbug_send_context_block_draw(struct rbug_connection *__con,
 
 	LEN(8); /* header */
 	LEN(8); /* context */
+	LEN(4); /* block */
 
 	/* align */
 	PAD(__len, 8);
@@ -129,9 +131,10 @@ int rbug_send_context_block_draw(struct rbug_connection *__con,
 	if (!__data)
 		return -ENOMEM;
 
-	WRITE(4, int32_t, ((int32_t)RBUG_OP_CONTEXT_BLOCK_DRAW));
+	WRITE(4, int32_t, ((int32_t)RBUG_OP_CONTEXT_DRAW_BLOCK));
 	WRITE(4, uint32_t, ((uint32_t)(__len / 4)));
 	WRITE(8, rbug_context_t, context); /* context */
+	WRITE(4, rbug_block_t, block); /* block */
 
 	/* final pad */
 	PAD(__pos, 8);
@@ -139,7 +142,7 @@ int rbug_send_context_block_draw(struct rbug_connection *__con,
 	if (__pos != __len) {
 		__ret = -EINVAL;
 	} else {
-		rbug_connection_send_start(__con, RBUG_OP_CONTEXT_BLOCK_DRAW, __len);
+		rbug_connection_send_start(__con, RBUG_OP_CONTEXT_DRAW_BLOCK, __len);
 		rbug_connection_write(__con, __data, __len);
 		__ret = rbug_connection_send_finish(__con, __serial);
 	}
@@ -148,8 +151,50 @@ int rbug_send_context_block_draw(struct rbug_connection *__con,
 	return __ret;
 }
 
-int rbug_send_context_unblock_draw(struct rbug_connection *__con,
+int rbug_send_context_draw_step(struct rbug_connection *__con,
+                                rbug_context_t context,
+                                rbug_block_t step,
+                                uint32_t *__serial)
+{
+	uint32_t __len = 0;
+	uint32_t __pos = 0;
+	uint8_t *__data = NULL;
+	int __ret = 0;
+
+	LEN(8); /* header */
+	LEN(8); /* context */
+	LEN(4); /* step */
+
+	/* align */
+	PAD(__len, 8);
+
+	__data = (uint8_t*)MALLOC(__len);
+	if (!__data)
+		return -ENOMEM;
+
+	WRITE(4, int32_t, ((int32_t)RBUG_OP_CONTEXT_DRAW_STEP));
+	WRITE(4, uint32_t, ((uint32_t)(__len / 4)));
+	WRITE(8, rbug_context_t, context); /* context */
+	WRITE(4, rbug_block_t, step); /* step */
+
+	/* final pad */
+	PAD(__pos, 8);
+
+	if (__pos != __len) {
+		__ret = -EINVAL;
+	} else {
+		rbug_connection_send_start(__con, RBUG_OP_CONTEXT_DRAW_STEP, __len);
+		rbug_connection_write(__con, __data, __len);
+		__ret = rbug_connection_send_finish(__con, __serial);
+	}
+
+	FREE(__data);
+	return __ret;
+}
+
+int rbug_send_context_draw_unblock(struct rbug_connection *__con,
                                    rbug_context_t context,
+                                   rbug_block_t unblock,
                                    uint32_t *__serial)
 {
 	uint32_t __len = 0;
@@ -159,6 +204,7 @@ int rbug_send_context_unblock_draw(struct rbug_connection *__con,
 
 	LEN(8); /* header */
 	LEN(8); /* context */
+	LEN(4); /* unblock */
 
 	/* align */
 	PAD(__len, 8);
@@ -167,9 +213,10 @@ int rbug_send_context_unblock_draw(struct rbug_connection *__con,
 	if (!__data)
 		return -ENOMEM;
 
-	WRITE(4, int32_t, ((int32_t)RBUG_OP_CONTEXT_UNBLOCK_DRAW));
+	WRITE(4, int32_t, ((int32_t)RBUG_OP_CONTEXT_DRAW_UNBLOCK));
 	WRITE(4, uint32_t, ((uint32_t)(__len / 4)));
 	WRITE(8, rbug_context_t, context); /* context */
+	WRITE(4, rbug_block_t, unblock); /* unblock */
 
 	/* final pad */
 	PAD(__pos, 8);
@@ -177,7 +224,48 @@ int rbug_send_context_unblock_draw(struct rbug_connection *__con,
 	if (__pos != __len) {
 		__ret = -EINVAL;
 	} else {
-		rbug_connection_send_start(__con, RBUG_OP_CONTEXT_UNBLOCK_DRAW, __len);
+		rbug_connection_send_start(__con, RBUG_OP_CONTEXT_DRAW_UNBLOCK, __len);
+		rbug_connection_write(__con, __data, __len);
+		__ret = rbug_connection_send_finish(__con, __serial);
+	}
+
+	FREE(__data);
+	return __ret;
+}
+
+int rbug_send_context_flush(struct rbug_connection *__con,
+                            rbug_context_t context,
+                            int32_t flags,
+                            uint32_t *__serial)
+{
+	uint32_t __len = 0;
+	uint32_t __pos = 0;
+	uint8_t *__data = NULL;
+	int __ret = 0;
+
+	LEN(8); /* header */
+	LEN(8); /* context */
+	LEN(4); /* flags */
+
+	/* align */
+	PAD(__len, 8);
+
+	__data = (uint8_t*)MALLOC(__len);
+	if (!__data)
+		return -ENOMEM;
+
+	WRITE(4, int32_t, ((int32_t)RBUG_OP_CONTEXT_FLUSH));
+	WRITE(4, uint32_t, ((uint32_t)(__len / 4)));
+	WRITE(8, rbug_context_t, context); /* context */
+	WRITE(4, int32_t, flags); /* flags */
+
+	/* final pad */
+	PAD(__pos, 8);
+
+	if (__pos != __len) {
+		__ret = -EINVAL;
+	} else {
+		rbug_connection_send_start(__con, RBUG_OP_CONTEXT_FLUSH, __len);
 		rbug_connection_write(__con, __data, __len);
 		__ret = rbug_connection_send_finish(__con, __serial);
 	}
@@ -230,10 +318,13 @@ int rbug_send_context_list_reply(struct rbug_connection *__con,
 
 int rbug_send_context_info_reply(struct rbug_connection *__con,
                                  uint32_t serial,
+                                 rbug_shader_t vertex,
+                                 rbug_shader_t fragment,
                                  rbug_texture_t *cbufs,
                                  uint32_t cbufs_len,
-                                 rbug_texture_t zdbuf,
-                                 uint8_t blocked,
+                                 rbug_texture_t zsbuf,
+                                 rbug_block_t blocker,
+                                 rbug_block_t blocked,
                                  uint32_t *__serial)
 {
 	uint32_t __len = 0;
@@ -243,9 +334,12 @@ int rbug_send_context_info_reply(struct rbug_connection *__con,
 
 	LEN(8); /* header */
 	LEN(4); /* serial */
+	LEN(8); /* vertex */
+	LEN(8); /* fragment */
 	LEN_ARRAY(8, cbufs); /* cbufs */
-	LEN(8); /* zdbuf */
-	LEN(1); /* blocked */
+	LEN(8); /* zsbuf */
+	LEN(4); /* blocker */
+	LEN(4); /* blocked */
 
 	/* align */
 	PAD(__len, 8);
@@ -257,9 +351,12 @@ int rbug_send_context_info_reply(struct rbug_connection *__con,
 	WRITE(4, int32_t, ((int32_t)RBUG_OP_CONTEXT_INFO_REPLY));
 	WRITE(4, uint32_t, ((uint32_t)(__len / 4)));
 	WRITE(4, uint32_t, serial); /* serial */
+	WRITE(8, rbug_shader_t, vertex); /* vertex */
+	WRITE(8, rbug_shader_t, fragment); /* fragment */
 	WRITE_ARRAY(8, rbug_texture_t, cbufs); /* cbufs */
-	WRITE(8, rbug_texture_t, zdbuf); /* zdbuf */
-	WRITE(1, uint8_t, blocked); /* blocked */
+	WRITE(8, rbug_texture_t, zsbuf); /* zsbuf */
+	WRITE(4, rbug_block_t, blocker); /* blocker */
+	WRITE(4, rbug_block_t, blocked); /* blocked */
 
 	/* final pad */
 	PAD(__pos, 8);
@@ -268,6 +365,47 @@ int rbug_send_context_info_reply(struct rbug_connection *__con,
 		__ret = -EINVAL;
 	} else {
 		rbug_connection_send_start(__con, RBUG_OP_CONTEXT_INFO_REPLY, __len);
+		rbug_connection_write(__con, __data, __len);
+		__ret = rbug_connection_send_finish(__con, __serial);
+	}
+
+	FREE(__data);
+	return __ret;
+}
+
+int rbug_send_context_draw_blocked(struct rbug_connection *__con,
+                                   rbug_context_t context,
+                                   rbug_block_t block,
+                                   uint32_t *__serial)
+{
+	uint32_t __len = 0;
+	uint32_t __pos = 0;
+	uint8_t *__data = NULL;
+	int __ret = 0;
+
+	LEN(8); /* header */
+	LEN(8); /* context */
+	LEN(4); /* block */
+
+	/* align */
+	PAD(__len, 8);
+
+	__data = (uint8_t*)MALLOC(__len);
+	if (!__data)
+		return -ENOMEM;
+
+	WRITE(4, int32_t, ((int32_t)RBUG_OP_CONTEXT_DRAW_BLOCKED));
+	WRITE(4, uint32_t, ((uint32_t)(__len / 4)));
+	WRITE(8, rbug_context_t, context); /* context */
+	WRITE(4, rbug_block_t, block); /* block */
+
+	/* final pad */
+	PAD(__pos, 8);
+
+	if (__pos != __len) {
+		__ret = -EINVAL;
+	} else {
+		rbug_connection_send_start(__con, RBUG_OP_CONTEXT_DRAW_BLOCKED, __len);
 		rbug_connection_write(__con, __data, __len);
 		__ret = rbug_connection_send_finish(__con, __serial);
 	}
@@ -329,16 +467,16 @@ struct rbug_proto_context_info * rbug_demarshal_context_info(struct rbug_proto_h
 	return ret;
 }
 
-struct rbug_proto_context_block_draw * rbug_demarshal_context_block_draw(struct rbug_proto_header *header)
+struct rbug_proto_context_draw_block * rbug_demarshal_context_draw_block(struct rbug_proto_header *header)
 {
 	uint32_t len = 0;
 	uint32_t pos = 0;
 	uint8_t *data =  NULL;
-	struct rbug_proto_context_block_draw *ret;
+	struct rbug_proto_context_draw_block *ret;
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_BLOCK_DRAW)
+	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_DRAW_BLOCK)
 		return NULL;
 
 	pos = 0;
@@ -352,20 +490,21 @@ struct rbug_proto_context_block_draw * rbug_demarshal_context_block_draw(struct 
 	ret->header.opcode = header->opcode;
 
 	READ(8, rbug_context_t, context); /* context */
+	READ(4, rbug_block_t, block); /* block */
 
 	return ret;
 }
 
-struct rbug_proto_context_unblock_draw * rbug_demarshal_context_unblock_draw(struct rbug_proto_header *header)
+struct rbug_proto_context_draw_step * rbug_demarshal_context_draw_step(struct rbug_proto_header *header)
 {
 	uint32_t len = 0;
 	uint32_t pos = 0;
 	uint8_t *data =  NULL;
-	struct rbug_proto_context_unblock_draw *ret;
+	struct rbug_proto_context_draw_step *ret;
 
 	if (!header)
 		return NULL;
-	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_UNBLOCK_DRAW)
+	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_DRAW_STEP)
 		return NULL;
 
 	pos = 0;
@@ -379,6 +518,63 @@ struct rbug_proto_context_unblock_draw * rbug_demarshal_context_unblock_draw(str
 	ret->header.opcode = header->opcode;
 
 	READ(8, rbug_context_t, context); /* context */
+	READ(4, rbug_block_t, step); /* step */
+
+	return ret;
+}
+
+struct rbug_proto_context_draw_unblock * rbug_demarshal_context_draw_unblock(struct rbug_proto_header *header)
+{
+	uint32_t len = 0;
+	uint32_t pos = 0;
+	uint8_t *data =  NULL;
+	struct rbug_proto_context_draw_unblock *ret;
+
+	if (!header)
+		return NULL;
+	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_DRAW_UNBLOCK)
+		return NULL;
+
+	pos = 0;
+	len = header->length * 4;
+	data = (uint8_t*)&header[1];
+	ret = MALLOC(sizeof(*ret));
+	if (!ret)
+		return NULL;
+
+	ret->header.__message = header;
+	ret->header.opcode = header->opcode;
+
+	READ(8, rbug_context_t, context); /* context */
+	READ(4, rbug_block_t, unblock); /* unblock */
+
+	return ret;
+}
+
+struct rbug_proto_context_flush * rbug_demarshal_context_flush(struct rbug_proto_header *header)
+{
+	uint32_t len = 0;
+	uint32_t pos = 0;
+	uint8_t *data =  NULL;
+	struct rbug_proto_context_flush *ret;
+
+	if (!header)
+		return NULL;
+	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_FLUSH)
+		return NULL;
+
+	pos = 0;
+	len = header->length * 4;
+	data = (uint8_t*)&header[1];
+	ret = MALLOC(sizeof(*ret));
+	if (!ret)
+		return NULL;
+
+	ret->header.__message = header;
+	ret->header.opcode = header->opcode;
+
+	READ(8, rbug_context_t, context); /* context */
+	READ(4, int32_t, flags); /* flags */
 
 	return ret;
 }
@@ -434,9 +630,40 @@ struct rbug_proto_context_info_reply * rbug_demarshal_context_info_reply(struct 
 	ret->header.opcode = header->opcode;
 
 	READ(4, uint32_t, serial); /* serial */
+	READ(8, rbug_shader_t, vertex); /* vertex */
+	READ(8, rbug_shader_t, fragment); /* fragment */
 	READ_ARRAY(8, rbug_texture_t, cbufs); /* cbufs */
-	READ(8, rbug_texture_t, zdbuf); /* zdbuf */
-	READ(1, uint8_t, blocked); /* blocked */
+	READ(8, rbug_texture_t, zsbuf); /* zsbuf */
+	READ(4, rbug_block_t, blocker); /* blocker */
+	READ(4, rbug_block_t, blocked); /* blocked */
+
+	return ret;
+}
+
+struct rbug_proto_context_draw_blocked * rbug_demarshal_context_draw_blocked(struct rbug_proto_header *header)
+{
+	uint32_t len = 0;
+	uint32_t pos = 0;
+	uint8_t *data =  NULL;
+	struct rbug_proto_context_draw_blocked *ret;
+
+	if (!header)
+		return NULL;
+	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_DRAW_BLOCKED)
+		return NULL;
+
+	pos = 0;
+	len = header->length * 4;
+	data = (uint8_t*)&header[1];
+	ret = MALLOC(sizeof(*ret));
+	if (!ret)
+		return NULL;
+
+	ret->header.__message = header;
+	ret->header.opcode = header->opcode;
+
+	READ(8, rbug_context_t, context); /* context */
+	READ(4, rbug_block_t, block); /* block */
 
 	return ret;
 }

@@ -39,9 +39,7 @@
 #define _RBUG_PROTO_SHADER_H_
 
 #include "rbug/rbug_proto.h"
-#include "rbug/rbug_context.h"
-
-typedef uint64_t rbug_shader_t;
+#include "rbug/rbug_core.h"
 
 struct rbug_proto_shader_list
 {

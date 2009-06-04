@@ -39,8 +39,7 @@
 #define _RBUG_PROTO_TEXTURE_H_
 
 #include "rbug/rbug_proto.h"
-
-typedef uint64_t rbug_texture_t;
+#include "rbug/rbug_core.h"
 
 struct rbug_proto_texture_list
 {

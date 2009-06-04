@@ -40,6 +40,10 @@
 
 #include "rbug/rbug_proto.h"
 
+typedef uint64_t rbug_shader_t;
+typedef uint64_t rbug_context_t;
+typedef uint64_t rbug_texture_t;
+
 struct rbug_proto_noop
 {
 	struct rbug_header header;
