@@ -49,7 +49,7 @@
 #include "cso_cache/cso_context.h"
 
 
-#define ST_MAX_SHADER_TOKENS 4096
+#define ST_MAX_SHADER_TOKENS (8 * 1024)
 
 
 #define TGSI_DEBUG 0
