@@ -23,8 +23,6 @@
 #define NOUVEAU_MSG(fmt, args...) \
 	fprintf(stderr, "nouveau: "fmt, ##args);
 
-#define nouveau_bo(pb) nv50->screen->nvws->get_bo(pb)
-
 /* Constant buffer assignment */
 #define NV50_CB_PMISC		0
 #define NV50_CB_PVP		1

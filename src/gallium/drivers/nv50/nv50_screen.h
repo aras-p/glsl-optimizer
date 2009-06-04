@@ -1,10 +1,10 @@
 #ifndef __NV50_SCREEN_H__
 #define __NV50_SCREEN_H__
 
-#include "pipe/p_screen.h"
+#include "nouveau/nouveau_screen.h"
 
 struct nv50_screen {
-	struct pipe_screen pipe;
+	struct nouveau_screen base;
 
 	struct nouveau_winsys *nvws;
 

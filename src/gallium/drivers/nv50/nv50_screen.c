@@ -22,8 +22,6 @@
 
 #include "pipe/p_screen.h"
 
-#include "util/u_simple_screen.h"
-
 #include "nv50_context.h"
 #include "nv50_screen.h"
 
@@ -66,23 +64,6 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 	}
 
 	return FALSE;
-}
-
-static const char *
-nv50_screen_get_name(struct pipe_screen *pscreen)
-{
-	struct nv50_screen *screen = nv50_screen(pscreen);
-	struct nouveau_device *dev = screen->nvws->channel->device;
-	static char buffer[128];
-
-	snprintf(buffer, sizeof(buffer), "NV%02X", dev->chipset);
-	return buffer;
-}
-
-static const char *
-nv50_screen_get_vendor(struct pipe_screen *pscreen)
-{
-	return "nouveau";
 }
 
 static int
@@ -153,7 +134,10 @@ nv50_screen_get_paramf(struct pipe_screen *pscreen, int param)
 static void
 nv50_screen_destroy(struct pipe_screen *pscreen)
 {
-	FREE(pscreen);
+	struct nv50_screen *screen = nv50_screen(pscreen);
+
+	nouveau_screen_fini(&screen->base);
+	FREE(screen);
 }
 
 struct pipe_screen *
@@ -161,6 +145,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 {
 	struct nv50_screen *screen = CALLOC_STRUCT(nv50_screen);
 	struct nouveau_device *dev = nvws->channel->device;
+	struct pipe_screen *pscreen;
 	struct nouveau_stateobj *so;
 	unsigned chipset = dev->chipset;
 	unsigned tesla_class = 0;
@@ -168,13 +153,31 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 
 	if (!screen)
 		return NULL;
+	pscreen = &screen->base.base;
+
+	ret = nouveau_screen_init(&screen->base, nvws->channel->device);
+	if (ret) {
+		nv50_screen_destroy(pscreen);
+		return NULL;
+	}
+
+        /* Setup the pipe */
 	screen->nvws = nvws;
+
+	pscreen->winsys = ws;
+	pscreen->destroy = nv50_screen_destroy;
+	pscreen->get_param = nv50_screen_get_param;
+	pscreen->get_paramf = nv50_screen_get_paramf;
+	pscreen->is_format_supported = nv50_screen_is_format_supported;
+
+	nv50_screen_init_miptree_functions(pscreen);
+	nv50_transfer_init_screen_functions(pscreen);
 
 	/* DMA engine object */
 	ret = nvws->grobj_alloc(nvws, 0x5039, &screen->m2mf);
 	if (ret) {
 		NOUVEAU_ERR("Error creating M2MF object: %d\n", ret);
-		nv50_screen_destroy(&screen->pipe);
+		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
 
@@ -182,7 +185,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	ret = nvws->grobj_alloc(nvws, NV50_2D, &screen->eng2d);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 2D object: %d\n", ret);
-		nv50_screen_destroy(&screen->pipe);
+		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
 
@@ -200,20 +203,20 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		break;
 	default:
 		NOUVEAU_ERR("Not a known NV50 chipset: NV%02x\n", chipset);
-		nv50_screen_destroy(&screen->pipe);
+		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
 
 	if (tesla_class == 0) {
 		NOUVEAU_ERR("Unknown G8x chipset: NV%02x\n", chipset);
-		nv50_screen_destroy(&screen->pipe);
+		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
 
 	ret = nvws->grobj_alloc(nvws, tesla_class, &screen->tesla);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
-		nv50_screen_destroy(&screen->pipe);
+		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
 
@@ -221,25 +224,9 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	ret = nvws->notifier_alloc(nvws, 1, &screen->sync);
 	if (ret) {
 		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
-		nv50_screen_destroy(&screen->pipe);
+		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
-
-        /* Setup the pipe */
-	screen->pipe.winsys = ws;
-
-	screen->pipe.destroy = nv50_screen_destroy;
-
-	screen->pipe.get_name = nv50_screen_get_name;
-	screen->pipe.get_vendor = nv50_screen_get_vendor;
-	screen->pipe.get_param = nv50_screen_get_param;
-	screen->pipe.get_paramf = nv50_screen_get_paramf;
-
-	screen->pipe.is_format_supported = nv50_screen_is_format_supported;
-
-	nv50_screen_init_miptree_functions(&screen->pipe);
-	nv50_transfer_init_screen_functions(&screen->pipe);
-	u_simple_screen_init(&screen->pipe);
 
 	/* Static M2MF init */
 	so = so_new(32, 0);
@@ -295,7 +282,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 128*4*4,
 			     &screen->constbuf_misc[0]);
 	if (ret) {
-		nv50_screen_destroy(&screen->pipe);
+		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
 
@@ -303,7 +290,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 128*4*4,
 				     &screen->constbuf_parm[i]);
 		if (ret) {
-			nv50_screen_destroy(&screen->pipe);
+			nv50_screen_destroy(pscreen);
 			return NULL;
 		}
 	}
@@ -313,7 +300,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		nvws->res_init(&screen->parm_heap[1], 0, 128))
 	{
 		NOUVEAU_ERR("Error initialising constant buffers.\n");
-		nv50_screen_destroy(&screen->pipe);
+		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
 
@@ -362,7 +349,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	 */
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 32*8*4, &screen->tic);
 	if (ret) {
-		nv50_screen_destroy(&screen->pipe);
+		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
 
@@ -381,7 +368,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 32*8*4, &screen->tsc);
 	if (ret) {
-		nv50_screen_destroy(&screen->pipe);
+		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
 
@@ -420,6 +407,6 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_ref (NULL, &so);
 	nouveau_pushbuf_flush(nvws->channel, 0);
 
-	return &screen->pipe;
+	return pscreen;
 }
 
