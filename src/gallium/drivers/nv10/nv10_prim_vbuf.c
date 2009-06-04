@@ -203,7 +203,7 @@ nv10_vbuf_render_release_vertices( struct vbuf_render *render )
 {
 	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
 	struct nv10_context *nv10 = nv10_render->nv10;
-	struct pipe_screen *pscreen = &nv10->screen->pipe;
+	struct pipe_screen *pscreen = &nv10->screen->base.base;
 
 	assert(nv10_render->buffer);
 	pipe_buffer_reference(&nv10_render->buffer, NULL);
