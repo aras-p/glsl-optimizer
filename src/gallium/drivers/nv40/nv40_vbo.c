@@ -519,17 +519,20 @@ nv40_vbo_validate(struct nv40_context *nv40)
 			return FALSE;
 		}
 
-		so_reloc(vtxbuf, vb->buffer, vb->buffer_offset + ve->src_offset,
-			 vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
-			 0, NV40TCL_VTXBUF_ADDRESS_DMA1);
+		so_reloc(vtxbuf, nouveau_bo(vb->buffer),
+				 vb->buffer_offset + ve->src_offset,
+				 vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
+				 0, NV40TCL_VTXBUF_ADDRESS_DMA1);
 		so_data (vtxfmt, ((vb->stride << NV40TCL_VTXFMT_STRIDE_SHIFT) |
 				  (ncomp << NV40TCL_VTXFMT_SIZE_SHIFT) | type));
 	}
 
 	if (ib) {
+		struct nouveau_bo *bo = nouveau_bo(ib);
+
 		so_method(vtxbuf, curie, NV40TCL_IDXBUF_ADDRESS, 2);
-		so_reloc (vtxbuf, ib, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
-		so_reloc (vtxbuf, ib, ib_format, vb_flags | NOUVEAU_BO_OR,
+		so_reloc (vtxbuf, bo, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
+		so_reloc (vtxbuf, bo, ib_format, vb_flags | NOUVEAU_BO_OR,
 			  0, NV40TCL_IDXBUF_FORMAT_DMA1);
 	}
 

@@ -27,7 +27,7 @@ struct nv50_program {
 	struct nouveau_resource *data[2];
 	unsigned data_start[2];
 
-	struct pipe_buffer *buffer;
+	struct nouveau_bo *bo;
 
 	float *immd;
 	unsigned immd_nr;

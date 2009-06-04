@@ -160,10 +160,11 @@ struct pipe_screen *
 nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 {
 	struct nv50_screen *screen = CALLOC_STRUCT(nv50_screen);
+	struct nouveau_device *dev = nvws->channel->device;
 	struct nouveau_stateobj *so;
-	unsigned tesla_class = 0, ret;
-	unsigned chipset = nvws->channel->device->chipset;
-	int i;
+	unsigned chipset = dev->chipset;
+	unsigned tesla_class = 0;
+	int ret, i;
 
 	if (!screen)
 		return NULL;
@@ -291,14 +292,21 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_data  (so, 8);
 
 	/* constant buffers for immediates and VP/FP parameters */
-	screen->constbuf_misc[0] =
-		screen->pipe.buffer_create(&screen->pipe, 0, 0, 128 * 4 * 4);
+	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 128*4*4,
+			     &screen->constbuf_misc[0]);
+	if (ret) {
+		nv50_screen_destroy(&screen->pipe);
+		return NULL;
+	}
 
-	screen->constbuf_parm[0] =
-		screen->pipe.buffer_create(&screen->pipe, 0, 0, 128 * 4 * 4);
-
-	screen->constbuf_parm[1] =
-		screen->pipe.buffer_create(&screen->pipe, 0, 0, 128 * 4 * 4);
+	for (i = 0; i < 2; i++) {
+		ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 128*4*4,
+				     &screen->constbuf_parm[i]);
+		if (ret) {
+			nv50_screen_destroy(&screen->pipe);
+			return NULL;
+		}
+	}
 
 	if (nvws->res_init(&screen->immd_heap[0], 0, 128) ||
 		nvws->res_init(&screen->parm_heap[0], 0, 128) ||
@@ -352,7 +360,12 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	 * blocks.  At some point we *may* want to go the NVIDIA way of doing
 	 * things?
 	 */
-	screen->tic = screen->pipe.buffer_create(&screen->pipe, 0, 0, 32 * 8 * 4);
+	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 32*8*4, &screen->tic);
+	if (ret) {
+		nv50_screen_destroy(&screen->pipe);
+		return NULL;
+	}
+
 	so_method(so, screen->tesla, 0x1280, 3);
 	so_reloc (so, screen->tic, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
@@ -366,7 +379,12 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
 	so_data  (so, 0x00000800);
 
-	screen->tsc = screen->pipe.buffer_create(&screen->pipe, 0, 0, 32 * 8 * 4);
+	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, 32*8*4, &screen->tsc);
+	if (ret) {
+		nv50_screen_destroy(&screen->pipe);
+		return NULL;
+	}
+
 	so_method(so, screen->tesla, 0x1280, 3);
 	so_reloc (so, screen->tsc, 0, NOUVEAU_BO_VRAM |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);

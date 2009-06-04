@@ -2288,15 +2288,15 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 {
 	struct nouveau_channel *chan = nv50->screen->nvws->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct pipe_screen *screen = nv50->pipe.screen;
 	struct nv50_program_exec *e;
 	struct nouveau_stateobj *so;
 	const unsigned flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_WR;
 	unsigned start, count, *up, *ptr;
 	boolean upload = FALSE;
 
-	if (!p->buffer) {
-		p->buffer = screen->buffer_create(screen, 0x100, 0, p->exec_size * 4);
+	if (!p->bo) {
+		nouveau_bo_new(chan->device, NOUVEAU_BO_VRAM, 0x100,
+			       p->exec_size * 4, &p->bo);
 		upload = TRUE;
 	}
 
@@ -2345,8 +2345,8 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 
 	so = so_new(4,2);
 	so_method(so, nv50->screen->tesla, 0x1280, 3);
-	so_reloc (so, p->buffer, 0, flags | NOUVEAU_BO_HIGH, 0, 0);
-	so_reloc (so, p->buffer, 0, flags | NOUVEAU_BO_LOW, 0, 0);
+	so_reloc (so, p->bo, 0, flags | NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, p->bo, 0, flags | NOUVEAU_BO_LOW, 0, 0);
 	so_data  (so, (NV50_CB_PUPLOAD << 16) | 0x0800); //(p->exec_size * 4));
 
 	start = 0; count = p->exec_size;
@@ -2394,10 +2394,10 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 
 	so = so_new(13, 2);
 	so_method(so, tesla, NV50TCL_VP_ADDRESS_HIGH, 2);
-	so_reloc (so, p->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
-		  NOUVEAU_BO_HIGH, 0, 0);
-	so_reloc (so, p->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
-		  NOUVEAU_BO_LOW, 0, 0);
+	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
+		      NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
+		      NOUVEAU_BO_LOW, 0, 0);
 	so_method(so, tesla, 0x1650, 2);
 	so_data  (so, p->cfg.vp.attr[0]);
 	so_data  (so, p->cfg.vp.attr[1]);
@@ -2431,10 +2431,10 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 
 	so = so_new(64, 2);
 	so_method(so, tesla, NV50TCL_FP_ADDRESS_HIGH, 2);
-	so_reloc (so, p->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
-		  NOUVEAU_BO_HIGH, 0, 0);
-	so_reloc (so, p->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
-		  NOUVEAU_BO_LOW, 0, 0);
+	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
+		      NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, p->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
+		      NOUVEAU_BO_LOW, 0, 0);
 	so_method(so, tesla, 0x1904, 4);
 	so_data  (so, p->cfg.fp.regs[0]); /* 0x01000404 / 0x00040404 */
 	so_data  (so, 0x00000004);
@@ -2461,8 +2461,6 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 void
 nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 {
-	struct pipe_screen *pscreen = nv50->pipe.screen;
-
 	while (p->exec_head) {
 		struct nv50_program_exec *e = p->exec_head;
 
@@ -2472,8 +2470,7 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 	p->exec_tail = NULL;
 	p->exec_size = 0;
 
-	if (p->buffer)
-		pipe_buffer_reference(&p->buffer, NULL);
+	nouveau_bo_ref(NULL, &p->bo);
 
 	nv50->screen->nvws->res_free(&p->data[0]);
 	nv50->screen->nvws->res_free(&p->data[1]);

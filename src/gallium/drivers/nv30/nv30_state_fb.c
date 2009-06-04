@@ -80,36 +80,36 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 
 		nv30mt = (struct nv30_miptree *)rt[0]->base.texture;
 		so_method(so, nv30->screen->rankine, NV34TCL_DMA_COLOR0, 1);
-		so_reloc (so, nv30mt->buffer, 0, rt_flags | NOUVEAU_BO_OR,
-			  nv30->nvws->channel->vram->handle,
-			  nv30->nvws->channel->gart->handle);
+		so_reloc (so, nouveau_bo(nv30mt->buffer), 0, rt_flags | NOUVEAU_BO_OR,
+			      nv30->nvws->channel->vram->handle,
+			      nv30->nvws->channel->gart->handle);
 		so_method(so, nv30->screen->rankine, NV34TCL_COLOR0_PITCH, 2);
 		so_data  (so, pitch);
-		so_reloc (so, nv30mt->buffer, rt[0]->base.offset, rt_flags |
-			  NOUVEAU_BO_LOW, 0, 0);
+		so_reloc (so, nouveau_bo(nv30mt->buffer), rt[0]->base.offset,
+			      rt_flags | NOUVEAU_BO_LOW, 0, 0);
 	}
 
 	if (rt_enable & NV34TCL_RT_ENABLE_COLOR1) {
 		nv30mt = (struct nv30_miptree *)rt[1]->base.texture;
 		so_method(so, nv30->screen->rankine, NV34TCL_DMA_COLOR1, 1);
-		so_reloc (so, nv30mt->buffer, 0, rt_flags | NOUVEAU_BO_OR,
-			  nv30->nvws->channel->vram->handle,
-			  nv30->nvws->channel->gart->handle);
+		so_reloc (so, nouveau_bo(nv30mt->buffer), 0, rt_flags | NOUVEAU_BO_OR,
+			      nv30->nvws->channel->vram->handle,
+			      nv30->nvws->channel->gart->handle);
 		so_method(so, nv30->screen->rankine, NV34TCL_COLOR1_OFFSET, 2);
-		so_reloc (so, nv30mt->buffer, rt[1]->base.offset, rt_flags |
-			  NOUVEAU_BO_LOW, 0, 0);
+		so_reloc (so, nouveau_bo(nv30mt->buffer), rt[1]->base.offset,
+			      rt_flags | NOUVEAU_BO_LOW, 0, 0);
 		so_data  (so, rt[1]->pitch);
 	}
 
 	if (zeta_format) {
 		nv30mt = (struct nv30_miptree *)zeta->base.texture;
 		so_method(so, nv30->screen->rankine, NV34TCL_DMA_ZETA, 1);
-		so_reloc (so, nv30mt->buffer, 0, rt_flags | NOUVEAU_BO_OR,
-			  nv30->nvws->channel->vram->handle,
-			  nv30->nvws->channel->gart->handle);
+		so_reloc (so, nouveau_bo(nv30mt->buffer), 0, rt_flags | NOUVEAU_BO_OR,
+			      nv30->nvws->channel->vram->handle,
+			      nv30->nvws->channel->gart->handle);
 		so_method(so, nv30->screen->rankine, NV34TCL_ZETA_OFFSET, 1);
-		so_reloc (so, nv30mt->buffer, zeta->base.offset, rt_flags |
-			  NOUVEAU_BO_LOW, 0, 0);
+		so_reloc (so, nouveau_bo(nv30mt->buffer), zeta->base.offset,
+			      rt_flags | NOUVEAU_BO_LOW, 0, 0);
 		/* TODO: allocate LMA depth buffer */
 	}
 

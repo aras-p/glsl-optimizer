@@ -61,6 +61,7 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 	struct nv30_sampler_state *ps = nv30->tex_sampler[unit];
 	struct nv30_miptree *nv30mt = nv30->tex_miptree[unit];
 	struct pipe_texture *pt = &nv30mt->base;
+	struct nouveau_bo *bo = nouveau_bo(nv30mt->buffer);
 	struct nv30_texture_format *tf;
 	struct nouveau_stateobj *so;
 	uint32_t txf, txs , txp;
@@ -106,9 +107,9 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 
 	so = so_new(16, 2);
 	so_method(so, nv30->screen->rankine, NV34TCL_TX_OFFSET(unit), 8);
-	so_reloc (so, nv30mt->buffer, 0, tex_flags | NOUVEAU_BO_LOW, 0, 0);
-	so_reloc (so, nv30mt->buffer, txf, tex_flags | NOUVEAU_BO_OR,
-		  NV34TCL_TX_FORMAT_DMA0, NV34TCL_TX_FORMAT_DMA1);
+	so_reloc (so, bo, 0, tex_flags | NOUVEAU_BO_LOW, 0, 0);
+	so_reloc (so, bo, txf, tex_flags | NOUVEAU_BO_OR,
+		      NV34TCL_TX_FORMAT_DMA0, NV34TCL_TX_FORMAT_DMA1);
 	so_data  (so, ps->wrap);
 	so_data  (so, NV34TCL_TX_ENABLE_ENABLE | ps->en);
 	so_data  (so, txs);

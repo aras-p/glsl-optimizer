@@ -212,6 +212,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 		struct pipe_vertex_element *ve = &nv50->vtxelt[i];
 		struct pipe_vertex_buffer *vb =
 			&nv50->vtxbuf[ve->vertex_buffer_index];
+		struct nouveau_bo *bo = nouveau_bo(vb->buffer);
 
 		switch (ve->src_format) {
 		case PIPE_FORMAT_R32G32B32A32_FLOAT:
@@ -240,10 +241,10 @@ nv50_vbo_validate(struct nv50_context *nv50)
 
 		so_method(vtxbuf, tesla, 0x900 + (i * 16), 3);
 		so_data  (vtxbuf, 0x20000000 | vb->stride);
-		so_reloc (vtxbuf, vb->buffer, vb->buffer_offset +
+		so_reloc (vtxbuf, bo, vb->buffer_offset +
 			  ve->src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
 			  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
-		so_reloc (vtxbuf, vb->buffer, vb->buffer_offset +
+		so_reloc (vtxbuf, bo, vb->buffer_offset +
 			  ve->src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
 			  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
 	}

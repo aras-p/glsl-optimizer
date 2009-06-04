@@ -4,7 +4,7 @@
 #include "util/u_debug.h"
 
 struct nouveau_stateobj_reloc {
-	struct pipe_buffer *bo;
+	struct nouveau_bo *bo;
 
 	unsigned offset;
 	unsigned packet;
@@ -51,7 +51,7 @@ so_ref(struct nouveau_stateobj *ref, struct nouveau_stateobj **pso)
         if (pipe_reference((struct pipe_reference**)pso, &ref->reference)) {
 		free(so->push);
 		for (i = 0; i < so->cur_reloc; i++)
-			pipe_buffer_reference(&so->reloc[i].bo, NULL);
+			nouveau_bo_ref(NULL, &so->reloc[i].bo);
 		free(so->reloc);
 		free(so);
 	}
@@ -81,13 +81,13 @@ so_method(struct nouveau_stateobj *so, struct nouveau_grobj *gr,
 }
 
 static INLINE void
-so_reloc(struct nouveau_stateobj *so, struct pipe_buffer *bo,
+so_reloc(struct nouveau_stateobj *so, struct nouveau_bo *bo,
 	 unsigned data, unsigned flags, unsigned vor, unsigned tor)
 {
 	struct nouveau_stateobj_reloc *r = &so->reloc[so->cur_reloc++];
 	
 	r->bo = NULL;
-	pipe_buffer_reference(&r->bo, bo);
+	nouveau_bo_ref(bo, &r->bo);
 	r->offset = so->cur - so->push;
 	r->packet = so->cur_packet;
 	r->data = data;
@@ -122,8 +122,8 @@ so_emit(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
 		nouveau_pushbuf_emit_reloc(nvws->channel, pb->cur + r->offset,
-					   nvws->get_bo(r->bo), r->data,
-					   r->flags, r->vor, r->tor);
+					   r->bo, r->data, r->flags, r->vor,
+					   r->tor);
 	}
 	pb->cur += nr;
 }
@@ -145,15 +145,14 @@ so_emit_reloc_markers(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
 	for (i = 0; i < so->cur_reloc; i++) {
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
-		nouveau_pushbuf_emit_reloc(nvws->channel, pb->cur++,
-					   nvws->get_bo(r->bo), r->packet,
+		nouveau_pushbuf_emit_reloc(nvws->channel, pb->cur++, r->bo,
+					   r->packet,
 					   (r->flags & (NOUVEAU_BO_VRAM |
 							NOUVEAU_BO_GART |
 							NOUVEAU_BO_RDWR)) |
 					   NOUVEAU_BO_DUMMY, 0, 0);
-		nouveau_pushbuf_emit_reloc(nvws->channel, pb->cur++,
-					   nvws->get_bo(r->bo), r->data,
-					   r->flags | NOUVEAU_BO_DUMMY,
+		nouveau_pushbuf_emit_reloc(nvws->channel, pb->cur++, r->bo,
+					   r->data, r->flags | NOUVEAU_BO_DUMMY,
 					   r->vor, r->tor);
 	}
 }

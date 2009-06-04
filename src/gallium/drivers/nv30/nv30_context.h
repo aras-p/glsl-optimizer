@@ -19,6 +19,8 @@
 #include "nouveau/nouveau_push.h"
 #include "nouveau/nouveau_stateobj.h"
 
+#define nouveau_bo(pb) nv30->screen->nvws->get_bo(pb)
+
 #include "nv30_state.h"
 
 #define NOUVEAU_ERR(fmt, args...) \

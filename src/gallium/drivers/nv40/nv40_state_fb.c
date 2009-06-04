@@ -2,11 +2,13 @@
 #include "nouveau/nouveau_util.h"
 
 static struct pipe_buffer *
-nv40_surface_buffer(struct pipe_surface *surface)
+nv40_do_surface_buffer(struct pipe_surface *surface)
 {
 	struct nv40_miptree *mt = (struct nv40_miptree *)surface->texture;
 	return mt->buffer;
 }
+
+#define nv40_surface_buffer(ps) nouveau_bo(nv40_do_surface_buffer(ps))
 
 static boolean
 nv40_state_framebuffer_validate(struct nv40_context *nv40)

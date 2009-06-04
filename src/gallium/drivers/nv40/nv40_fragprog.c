@@ -938,9 +938,10 @@ nv40_fragprog_validate(struct nv40_context *nv40)
 
 	so = so_new(4, 1);
 	so_method(so, nv40->screen->curie, NV40TCL_FP_ADDRESS, 1);
-	so_reloc (so, fp->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
-		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
-		  NV40TCL_FP_ADDRESS_DMA0, NV40TCL_FP_ADDRESS_DMA1);
+	so_reloc (so, nouveau_bo(fp->buffer), 0, NOUVEAU_BO_VRAM |
+		      NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |
+		      NOUVEAU_BO_OR, NV40TCL_FP_ADDRESS_DMA0,
+		      NV40TCL_FP_ADDRESS_DMA1);
 	so_method(so, nv40->screen->curie, NV40TCL_FP_CONTROL, 1);
 	so_data  (so, fp->fp_control);
 	so_ref(so, &fp->so);
