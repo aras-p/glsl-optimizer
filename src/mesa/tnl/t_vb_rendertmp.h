@@ -174,7 +174,7 @@ static void TAG(render_triangles)( GLcontext *ctx,
          if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT)
             RENDER_TRI( ELT(j-2), ELT(j-1), ELT(j) );
          else
-            RENDER_TRI( ELT(j), ELT(j-2), ELT(j-1) );
+            RENDER_TRI( ELT(j-1), ELT(j), ELT(j-2) );
       }
    } else {
       for (j=start+2; j<count; j+=3) {
