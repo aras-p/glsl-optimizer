@@ -1739,6 +1739,7 @@ GLAPI void GLAPIENTRY glSeparableFilter2D( GLenum target,
 GLAPI void GLAPIENTRY glGetSeparableFilter( GLenum target, GLenum format,
 	GLenum type, GLvoid *row, GLvoid *column, GLvoid *span );
 
+#if 0
 typedef void (APIENTRYP PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 typedef void (APIENTRYP PFNGLBLENDEQUATIONPROC) (GLenum mode);
 typedef void (APIENTRYP PFNGLCOLORTABLEPROC) (GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table);
@@ -1773,7 +1774,7 @@ typedef void (APIENTRYP PFNGLHISTOGRAMPROC) (GLenum target, GLsizei width, GLenu
 typedef void (APIENTRYP PFNGLMINMAXPROC) (GLenum target, GLenum internalformat, GLboolean sink);
 typedef void (APIENTRYP PFNGLRESETHISTOGRAMPROC) (GLenum target);
 typedef void (APIENTRYP PFNGLRESETMINMAXPROC) (GLenum target);
-
+#endif
 
 
 /*
@@ -1978,6 +1979,7 @@ GLAPI void GLAPIENTRY glMultTransposeMatrixf( const GLfloat m[16] );
 
 GLAPI void GLAPIENTRY glSampleCoverage( GLclampf value, GLboolean invert );
 
+#if 0
 typedef void (APIENTRYP PFNGLACTIVETEXTUREPROC) (GLenum texture);
 typedef void (APIENTRYP PFNGLCLIENTACTIVETEXTUREPROC) (GLenum texture);
 typedef void (APIENTRYP PFNGLMULTITEXCOORD1DPROC) (GLenum target, GLdouble s);
@@ -2024,7 +2026,7 @@ typedef void (APIENTRYP PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC) (GLenum target, GLint 
 typedef void (APIENTRYP PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data);
 typedef void (APIENTRYP PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC) (GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid *data);
 typedef void (APIENTRYP PFNGLGETCOMPRESSEDTEXIMAGEPROC) (GLenum target, GLint level, void *img);
-
+#endif
 
 /*
  * GL_ARB_multitexture (ARB extension 1 and OpenGL 1.2.1)
