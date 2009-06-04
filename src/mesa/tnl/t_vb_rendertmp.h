@@ -226,7 +226,7 @@ static void TAG(render_tri_strip)( GLcontext *ctx,
          if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT)
             RENDER_TRI( ELT(j-2+parity), ELT(j-1-parity), ELT(j) );
          else
-            RENDER_TRI( ELT(j), ELT(j-2+parity), ELT(j-1-parity) );
+            RENDER_TRI( ELT(j-1+parity), ELT(j-parity), ELT(j-2) );
       }
    }
    POSTFIX;
