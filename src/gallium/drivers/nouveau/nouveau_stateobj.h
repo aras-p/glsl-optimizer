@@ -114,15 +114,16 @@ so_emit(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
 
 	nr = so->cur - so->push;
 	if (pb->remaining < nr)
-		nvws->push_flush(nvws, nr, NULL);
+		nouveau_pushbuf_flush(nvws->channel, nr);
 	pb->remaining -= nr;
 
 	memcpy(pb->cur, so->push, nr * 4);
 	for (i = 0; i < so->cur_reloc; i++) {
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
-		nvws->push_reloc(nvws, pb->cur + r->offset, r->bo,
-				 r->data, r->flags, r->vor, r->tor);
+		nouveau_pushbuf_emit_reloc(nvws->channel, pb->cur + r->offset,
+					   nvws->get_bo(r->bo), r->data,
+					   r->flags, r->vor, r->tor);
 	}
 	pb->cur += nr;
 }
@@ -138,19 +139,22 @@ so_emit_reloc_markers(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
 
 	i = so->cur_reloc << 1;
 	if (nvws->channel->pushbuf->remaining < i)
-		nvws->push_flush(nvws, i, NULL);
+		nouveau_pushbuf_flush(nvws->channel, i);
 	nvws->channel->pushbuf->remaining -= i;
 
 	for (i = 0; i < so->cur_reloc; i++) {
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
-		nvws->push_reloc(nvws, pb->cur++, r->bo, r->packet,
-				 (r->flags & (NOUVEAU_BO_VRAM |
-					      NOUVEAU_BO_GART |
-					      NOUVEAU_BO_RDWR)) |
-				 NOUVEAU_BO_DUMMY, 0, 0);
-		nvws->push_reloc(nvws, pb->cur++, r->bo, r->data,
-				 r->flags | NOUVEAU_BO_DUMMY, r->vor, r->tor);
+		nouveau_pushbuf_emit_reloc(nvws->channel, pb->cur++,
+					   nvws->get_bo(r->bo), r->packet,
+					   (r->flags & (NOUVEAU_BO_VRAM |
+							NOUVEAU_BO_GART |
+							NOUVEAU_BO_RDWR)) |
+					   NOUVEAU_BO_DUMMY, 0, 0);
+		nouveau_pushbuf_emit_reloc(nvws->channel, pb->cur++,
+					   nvws->get_bo(r->bo), r->data,
+					   r->flags | NOUVEAU_BO_DUMMY,
+					   r->vor, r->tor);
 	}
 }
 

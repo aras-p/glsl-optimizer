@@ -303,7 +303,7 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 
 	so_emit(nvws, so);
 	so_ref(NULL, &so);
-	nvws->push_flush(nvws, 0, NULL);
+	nouveau_pushbuf_flush(nvws->channel, 0);
 
 	screen->pipe.winsys = ws;
 	screen->pipe.destroy = nv30_screen_destroy;
