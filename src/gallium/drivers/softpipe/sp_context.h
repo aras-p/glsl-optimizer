@@ -107,7 +107,6 @@ struct softpipe_context {
    /** Which vertex shader output slot contains point size */
    int psize_slot;
 
-   unsigned api_prim;  /**< current prim type being drawn: PIPE_PRIM_x */
    unsigned reduced_api_prim;  /**< PIPE_PRIM_POINTS, _LINES or _TRIANGLES */
 
    /** Derived from scissor and surface bounds: */
