@@ -4,6 +4,7 @@
 struct nouveau_screen {
 	struct pipe_screen base;
 	struct nouveau_device *device;
+	struct nouveau_channel *channel;
 };
 
 static inline struct nouveau_screen *

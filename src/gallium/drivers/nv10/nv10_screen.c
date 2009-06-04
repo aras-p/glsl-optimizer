@@ -102,10 +102,9 @@ static void
 nv10_screen_destroy(struct pipe_screen *pscreen)
 {
 	struct nv10_screen *screen = nv10_screen(pscreen);
-	struct nouveau_winsys *nvws = screen->nvws;
 
-	nvws->notifier_free(&screen->sync);
-	nvws->grobj_free(&screen->celsius);
+	nouveau_notifier_free(&screen->sync);
+	nouveau_grobj_free(&screen->celsius);
 
 	FREE(pscreen);
 }
@@ -123,6 +122,7 @@ nv10_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 {
 	struct nv10_screen *screen = CALLOC_STRUCT(nv10_screen);
 	struct nouveau_device *dev = nvws->channel->device;
+	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	unsigned celsius_class;
 	int ret;
@@ -130,6 +130,13 @@ nv10_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	if (!screen)
 		return NULL;
 	pscreen = &screen->base.base;
+
+	ret = nouveau_screen_init(&screen->base, dev);
+	if (ret) {
+		nv10_screen_destroy(pscreen);
+		return NULL;
+	}
+	screen->base.channel = chan = nvws->channel;
 
 	screen->nvws = nvws;
 
@@ -141,11 +148,6 @@ nv10_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 
 	nv10_screen_init_miptree_functions(pscreen);
 	nv10_screen_init_transfer_functions(pscreen);
-	nouveau_screen_init(&screen->base, dev);
-
-	/* 2D engine setup */
-	screen->eng2d = nv04_surface_2d_init(nvws);
-	screen->eng2d->buf = nv10_surface_buffer;
 
 	/* 3D object */
 	if (dev->chipset >= 0x20)
@@ -162,14 +164,20 @@ nv10_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		return NULL;
 	}
 
-	ret = nvws->grobj_alloc(nvws, celsius_class, &screen->celsius);
+	ret = nouveau_grobj_alloc(chan, 0xbeef0001, celsius_class,
+				  &screen->celsius);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;
 	}
+	BIND_RING(chan, screen->celsius, 7);
+
+	/* 2D engine setup */
+	screen->eng2d = nv04_surface_2d_init(nvws);
+	screen->eng2d->buf = nv10_surface_buffer;
 
 	/* Notifier for sync purposes */
-	ret = nvws->notifier_alloc(nvws, 1, &screen->sync);
+	ret = nouveau_notifier_alloc(chan, 0xbeef0301, 1, &screen->sync);
 	if (ret) {
 		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
 		nv10_screen_destroy(pscreen);

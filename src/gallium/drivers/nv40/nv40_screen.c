@@ -130,14 +130,13 @@ static void
 nv40_screen_destroy(struct pipe_screen *pscreen)
 {
 	struct nv40_screen *screen = nv40_screen(pscreen);
-	struct nouveau_winsys *nvws = screen->nvws;
 
-	nvws->res_free(&screen->vp_exec_heap);
-	nvws->res_free(&screen->vp_data_heap);
-	nvws->res_free(&screen->query_heap);
-	nvws->notifier_free(&screen->query);
-	nvws->notifier_free(&screen->sync);
-	nvws->grobj_free(&screen->curie);
+	nouveau_resource_free(&screen->vp_exec_heap);
+	nouveau_resource_free(&screen->vp_data_heap);
+	nouveau_resource_free(&screen->query_heap);
+	nouveau_notifier_free(&screen->query);
+	nouveau_notifier_free(&screen->sync);
+	nouveau_grobj_free(&screen->curie);
 
 	nouveau_screen_fini(&screen->base);
 
@@ -149,6 +148,7 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 {
 	struct nv40_screen *screen = CALLOC_STRUCT(nv40_screen);
 	struct nouveau_device *dev = nvws->channel->device;
+	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	struct nouveau_stateobj *so;
 	unsigned curie_class = 0;
@@ -157,6 +157,13 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	if (!screen)
 		return NULL;
 	pscreen = &screen->base.base;
+
+	ret = nouveau_screen_init(&screen->base, dev);
+	if (ret) {
+		nv40_screen_destroy(pscreen);
+		return NULL;
+	}
+	screen->base.channel = chan = nvws->channel;
 
 	screen->nvws = nvws;
 
@@ -168,11 +175,6 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 
 	nv40_screen_init_miptree_functions(pscreen);
 	nv40_screen_init_transfer_functions(pscreen);
-	nouveau_screen_init(&screen->base, dev);
-
-	/* 2D engine setup */
-	screen->eng2d = nv04_surface_2d_init(nvws);
-	screen->eng2d->buf = nv40_surface_buffer;
 
 	/* 3D object */
 	switch (dev->chipset & 0xf0) {
@@ -194,14 +196,19 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		return NULL;
 	}
 
-	ret = nvws->grobj_alloc(nvws, curie_class, &screen->curie);
+	ret = nouveau_grobj_alloc(chan, 0xbeef3097, curie_class, &screen->curie);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;
 	}
+	BIND_RING(chan, screen->curie, 7);
+
+	/* 2D engine setup */
+	screen->eng2d = nv04_surface_2d_init(nvws);
+	screen->eng2d->buf = nv40_surface_buffer;
 
 	/* Notifier for sync purposes */
-	ret = nvws->notifier_alloc(nvws, 1, &screen->sync);
+	ret = nouveau_notifier_alloc(chan, 0xbeef0301, 1, &screen->sync);
 	if (ret) {
 		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
 		nv40_screen_destroy(pscreen);
@@ -209,14 +216,14 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	}
 
 	/* Query objects */
-	ret = nvws->notifier_alloc(nvws, 32, &screen->query);
+	ret = nouveau_notifier_alloc(chan, 0xbeef0302, 32, &screen->query);
 	if (ret) {
 		NOUVEAU_ERR("Error initialising query objects: %d\n", ret);
 		nv40_screen_destroy(pscreen);
 		return NULL;
 	}
 
-	ret = nvws->res_init(&screen->query_heap, 0, 32);
+	nouveau_resource_init(&screen->query_heap, 0, 32);
 	if (ret) {
 		NOUVEAU_ERR("Error initialising query object heap: %d\n", ret);
 		nv40_screen_destroy(pscreen);
@@ -224,8 +231,8 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	}
 
 	/* Vtxprog resources */
-	if (nvws->res_init(&screen->vp_exec_heap, 0, 512) ||
-	    nvws->res_init(&screen->vp_data_heap, 0, 256)) {
+	if (nouveau_resource_init(&screen->vp_exec_heap, 0, 512) ||
+	    nouveau_resource_init(&screen->vp_data_heap, 0, 256)) {
 		nv40_screen_destroy(pscreen);
 		return NULL;
 	}

@@ -4,6 +4,7 @@
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_util.h"
+#include "nouveau/nouveau_screen.h"
 #include "nv04_surface_2d.h"
 
 static INLINE int

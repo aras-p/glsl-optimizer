@@ -124,14 +124,13 @@ static void
 nv30_screen_destroy(struct pipe_screen *pscreen)
 {
 	struct nv30_screen *screen = nv30_screen(pscreen);
-	struct nouveau_winsys *nvws = screen->nvws;
 
-	nvws->res_free(&screen->vp_exec_heap);
-	nvws->res_free(&screen->vp_data_heap);
-	nvws->res_free(&screen->query_heap);
-	nvws->notifier_free(&screen->query);
-	nvws->notifier_free(&screen->sync);
-	nvws->grobj_free(&screen->rankine);
+	nouveau_resource_free(&screen->vp_exec_heap);
+	nouveau_resource_free(&screen->vp_data_heap);
+	nouveau_resource_free(&screen->query_heap);
+	nouveau_notifier_free(&screen->query);
+	nouveau_notifier_free(&screen->sync);
+	nouveau_grobj_free(&screen->rankine);
 
 	FREE(pscreen);
 }
@@ -141,6 +140,7 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 {
 	struct nv30_screen *screen = CALLOC_STRUCT(nv30_screen);
 	struct nouveau_device *dev = nvws->channel->device;
+	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	struct nouveau_stateobj *so;
 	unsigned rankine_class = 0;
@@ -149,6 +149,13 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	if (!screen)
 		return NULL;
 	pscreen = &screen->base.base;
+
+	ret = nouveau_screen_init(&screen->base, dev);
+	if (ret) {
+		nv30_screen_destroy(pscreen);
+		return NULL;
+	}
+	screen->base.channel = chan = nvws->channel;
 
 	screen->nvws = nvws;
 
@@ -160,11 +167,6 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 
 	nv30_screen_init_miptree_functions(pscreen);
 	nv30_screen_init_transfer_functions(pscreen);
-	nouveau_screen_init(&screen->base, dev);
-
-	/* 2D engine setup */
-	screen->eng2d = nv04_surface_2d_init(nvws);
-	screen->eng2d->buf = nv30_surface_buffer;
 
 	/* 3D object */
 	switch (dev->chipset & 0xf0) {
@@ -187,14 +189,20 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		return NULL;
 	}
 
-	ret = nvws->grobj_alloc(nvws, rankine_class, &screen->rankine);
+	ret = nouveau_grobj_alloc(chan, 0xbeef3097, rankine_class,
+				  &screen->rankine);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;
 	}
+	BIND_RING(chan, screen->rankine, 7);
+
+	/* 2D engine setup */
+	screen->eng2d = nv04_surface_2d_init(nvws);
+	screen->eng2d->buf = nv30_surface_buffer;
 
 	/* Notifier for sync purposes */
-	ret = nvws->notifier_alloc(nvws, 1, &screen->sync);
+	ret = nouveau_notifier_alloc(chan, 0xbeef0301, 1, &screen->sync);
 	if (ret) {
 		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
 		nv30_screen_destroy(pscreen);
@@ -202,14 +210,14 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	}
 
 	/* Query objects */
-	ret = nvws->notifier_alloc(nvws, 32, &screen->query);
+	ret = nouveau_notifier_alloc(chan, 0xbeef0302, 32, &screen->query);
 	if (ret) {
 		NOUVEAU_ERR("Error initialising query objects: %d\n", ret);
 		nv30_screen_destroy(pscreen);
 		return NULL;
 	}
 
-	ret = nvws->res_init(&screen->query_heap, 0, 32);
+	ret = nouveau_resource_init(&screen->query_heap, 0, 32);
 	if (ret) {
 		NOUVEAU_ERR("Error initialising query object heap: %d\n", ret);
 		nv30_screen_destroy(pscreen);
@@ -217,8 +225,8 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	}
 
 	/* Vtxprog resources */
-	if (nvws->res_init(&screen->vp_exec_heap, 0, 256) ||
-	    nvws->res_init(&screen->vp_data_heap, 0, 256)) {
+	if (nouveau_resource_init(&screen->vp_exec_heap, 0, 256) ||
+	    nouveau_resource_init(&screen->vp_data_heap, 0, 256)) {
 		nv30_screen_destroy(pscreen);
 		return NULL;
 	}
@@ -228,23 +236,23 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_method(so, screen->rankine, NV34TCL_DMA_NOTIFY, 1);
 	so_data  (so, screen->sync->handle);
 	so_method(so, screen->rankine, NV34TCL_DMA_TEXTURE0, 2);
-	so_data  (so, nvws->channel->vram->handle);
-	so_data  (so, nvws->channel->gart->handle);
+	so_data  (so, chan->vram->handle);
+	so_data  (so, chan->gart->handle);
 	so_method(so, screen->rankine, NV34TCL_DMA_COLOR1, 1);
-	so_data  (so, nvws->channel->vram->handle);
+	so_data  (so, chan->vram->handle);
 	so_method(so, screen->rankine, NV34TCL_DMA_COLOR0, 2);
-	so_data  (so, nvws->channel->vram->handle);
-	so_data  (so, nvws->channel->vram->handle);
+	so_data  (so, chan->vram->handle);
+	so_data  (so, chan->vram->handle);
 	so_method(so, screen->rankine, NV34TCL_DMA_VTXBUF0, 2);
-	so_data  (so, nvws->channel->vram->handle);
-	so_data  (so, nvws->channel->gart->handle);
+	so_data  (so, chan->vram->handle);
+	so_data  (so, chan->gart->handle);
 /*	so_method(so, screen->rankine, NV34TCL_DMA_FENCE, 2);
 	so_data  (so, 0);
 	so_data  (so, screen->query->handle);*/
 	so_method(so, screen->rankine, NV34TCL_DMA_IN_MEMORY7, 1);
-	so_data  (so, nvws->channel->vram->handle);
+	so_data  (so, chan->vram->handle);
 	so_method(so, screen->rankine, NV34TCL_DMA_IN_MEMORY8, 1);
-	so_data  (so, nvws->channel->vram->handle);
+	so_data  (so, chan->vram->handle);
 
 	for (i=1; i<8; i++) {
 		so_method(so, screen->rankine, NV34TCL_VIEWPORT_CLIP_HORIZ(i), 1);
@@ -301,7 +309,7 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 
 	so_emit(nvws, so);
 	so_ref(NULL, &so);
-	nouveau_pushbuf_flush(nvws->channel, 0);
+	nouveau_pushbuf_flush(chan, 0);
 
 	return pscreen;
 }

@@ -27,33 +27,6 @@ struct nouveau_winsys {
 	struct pipe_winsys *ws;
 
 	struct nouveau_channel *channel;
-
-	int  (*res_init)(struct nouveau_resource **heap, unsigned start,
-			 unsigned size);
-	int  (*res_alloc)(struct nouveau_resource *heap, int size, void *priv,
-			  struct nouveau_resource **);
-	void (*res_free)(struct nouveau_resource **);
-
-	int       (*grobj_alloc)(struct nouveau_winsys *, int grclass,
-				 struct nouveau_grobj **);
-	void      (*grobj_free)(struct nouveau_grobj **);
-
-	int       (*notifier_alloc)(struct nouveau_winsys *, int count,
-				    struct nouveau_notifier **);
-	void      (*notifier_free)(struct nouveau_notifier **);
-	void      (*notifier_reset)(struct nouveau_notifier *, int id);
-	uint32_t  (*notifier_status)(struct nouveau_notifier *, int id);
-	uint32_t  (*notifier_retval)(struct nouveau_notifier *, int id);
-	int       (*notifier_wait)(struct nouveau_notifier *, int id,
-				   int status, double timeout);
-
-	int (*surface_copy)(struct nouveau_winsys *, struct pipe_surface *,
-			    unsigned, unsigned, struct pipe_surface *,
-			    unsigned, unsigned, unsigned, unsigned);
-	int (*surface_fill)(struct nouveau_winsys *, struct pipe_surface *,
-			    unsigned, unsigned, unsigned, unsigned, unsigned);
-
-	struct nouveau_bo *(*get_bo)(struct pipe_buffer *);
 };
 
 extern struct pipe_screen *

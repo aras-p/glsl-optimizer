@@ -2241,13 +2241,14 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 	if (!p->data[0] && p->immd_nr) {
 		struct nouveau_resource *heap = nv50->screen->immd_heap[0];
 
-		if (nvws->res_alloc(heap, p->immd_nr, p, &p->data[0])) {
+		if (nouveau_resource_alloc(heap, p->immd_nr, p, &p->data[0])) {
 			while (heap->next && heap->size < p->immd_nr) {
 				struct nv50_program *evict = heap->next->priv;
-				nvws->res_free(&evict->data[0]);
+				nouveau_resource_free(&evict->data[0]);
 			}
 
-			if (nvws->res_alloc(heap, p->immd_nr, p, &p->data[0]))
+			if (nouveau_resource_alloc(heap, p->immd_nr, p,
+						   &p->data[0]))
 				assert(0);
 		}
 
@@ -2260,13 +2261,14 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 		struct nouveau_resource *heap =
 			nv50->screen->parm_heap[p->type];
 
-		if (nvws->res_alloc(heap, p->param_nr, p, &p->data[1])) {
+		if (nouveau_resource_alloc(heap, p->param_nr, p, &p->data[1])) {
 			while (heap->next && heap->size < p->param_nr) {
 				struct nv50_program *evict = heap->next->priv;
-				nvws->res_free(&evict->data[1]);
+				nouveau_resource_free(&evict->data[1]);
 			}
 
-			if (nvws->res_alloc(heap, p->param_nr, p, &p->data[1]))
+			if (nouveau_resource_alloc(heap, p->param_nr, p,
+						   &p->data[1]))
 				assert(0);
 		}
 	}
@@ -2472,8 +2474,8 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 
 	nouveau_bo_ref(NULL, &p->bo);
 
-	nv50->screen->nvws->res_free(&p->data[0]);
-	nv50->screen->nvws->res_free(&p->data[1]);
+	nouveau_resource_free(&p->data[0]);
+	nouveau_resource_free(&p->data[1]);
 
 	p->translated = 0;
 }

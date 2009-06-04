@@ -105,10 +105,9 @@ static void
 nv04_screen_destroy(struct pipe_screen *pscreen)
 {
 	struct nv04_screen *screen = nv04_screen(pscreen);
-	struct nouveau_winsys *nvws = screen->nvws;
 
-	nvws->notifier_free(&screen->sync);
-	nvws->grobj_free(&screen->fahrenheit);
+	nouveau_notifier_free(&screen->sync);
+	nouveau_grobj_free(&screen->fahrenheit);
 	nv04_surface_2d_takedown(&screen->eng2d);
 
 	FREE(pscreen);
@@ -127,6 +126,7 @@ nv04_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 {
 	struct nv04_screen *screen = CALLOC_STRUCT(nv04_screen);
 	struct nouveau_device *dev = nvws->channel->device;
+	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	unsigned fahrenheit_class = 0, sub3d_class = 0;
 	int ret;
@@ -134,6 +134,13 @@ nv04_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	if (!screen)
 		return NULL;
 	pscreen = &screen->base.base;
+
+	ret = nouveau_screen_init(&screen->base, dev);
+	if (ret) {
+		nv04_screen_destroy(pscreen);
+		return NULL;
+	}
+	screen->base.channel = chan = nvws->channel;
 
 	screen->nvws = nvws;
 
@@ -145,7 +152,6 @@ nv04_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 
 	nv04_screen_init_miptree_functions(pscreen);
 	nv04_screen_init_transfer_functions(pscreen);
-	nouveau_screen_init(&screen->base, dev);
 
 	if (dev->chipset >= 0x20) {
 		fahrenheit_class = 0;
@@ -163,26 +169,30 @@ nv04_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		return NULL;
 	}
 
-	/* 2D engine setup */
-	screen->eng2d = nv04_surface_2d_init(nvws);
-	screen->eng2d->buf = nv04_surface_buffer;
-
 	/* 3D object */
-	ret = nvws->grobj_alloc(nvws, fahrenheit_class, &screen->fahrenheit);
+	ret = nouveau_grobj_alloc(chan, 0xbeef0001, fahrenheit_class,
+				  &screen->fahrenheit);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return NULL;
 	}
+	BIND_RING(chan, screen->fahrenheit, 7);
 
 	/* 3D surface object */
-	ret = nvws->grobj_alloc(nvws, sub3d_class, &screen->context_surfaces_3d);
+	ret = nouveau_grobj_alloc(chan, 0xbeef0002, sub3d_class,
+				  &screen->context_surfaces_3d);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 3D surface object: %d\n", ret);
 		return NULL;
 	}
+	BIND_RING(chan, screen->context_surfaces_3d, 6);
+
+	/* 2D engine setup */
+	screen->eng2d = nv04_surface_2d_init(nvws);
+	screen->eng2d->buf = nv04_surface_buffer;
 
 	/* Notifier for sync purposes */
-	ret = nvws->notifier_alloc(nvws, 1, &screen->sync);
+	ret = nouveau_notifier_alloc(chan, 0xbeef0301, 1, &screen->sync);
 	if (ret) {
 		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
 		nv04_screen_destroy(pscreen);

@@ -136,6 +136,10 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
 {
 	struct nv50_screen *screen = nv50_screen(pscreen);
 
+	nouveau_notifier_free(&screen->sync);
+	nouveau_grobj_free(&screen->tesla);
+	nouveau_grobj_free(&screen->eng2d);
+	nouveau_grobj_free(&screen->m2mf);
 	nouveau_screen_fini(&screen->base);
 	FREE(screen);
 }
@@ -145,6 +149,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 {
 	struct nv50_screen *screen = CALLOC_STRUCT(nv50_screen);
 	struct nouveau_device *dev = nvws->channel->device;
+	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	struct nouveau_stateobj *so;
 	unsigned chipset = dev->chipset;
@@ -160,6 +165,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
+	screen->base.channel = chan = nvws->channel;
 
         /* Setup the pipe */
 	screen->nvws = nvws;
@@ -174,20 +180,22 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	nv50_transfer_init_screen_functions(pscreen);
 
 	/* DMA engine object */
-	ret = nvws->grobj_alloc(nvws, 0x5039, &screen->m2mf);
+	ret = nouveau_grobj_alloc(chan, 0xbeef5039, 0x5039, &screen->m2mf);
 	if (ret) {
 		NOUVEAU_ERR("Error creating M2MF object: %d\n", ret);
 		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
+	BIND_RING(chan, screen->m2mf, 1);
 
 	/* 2D object */
-	ret = nvws->grobj_alloc(nvws, NV50_2D, &screen->eng2d);
+	ret = nouveau_grobj_alloc(chan, 0xbeef502d, 0x502d, &screen->eng2d);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 2D object: %d\n", ret);
 		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
+	BIND_RING(chan, screen->eng2d, 2);
 
 	/* 3D object */
 	switch (chipset & 0xf0) {
@@ -213,15 +221,16 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		return NULL;
 	}
 
-	ret = nvws->grobj_alloc(nvws, tesla_class, &screen->tesla);
+	ret = nouveau_grobj_alloc(chan, 0xbeef5097, tesla_class, &screen->tesla);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
+	BIND_RING(chan, screen->tesla, 3);
 
 	/* Sync notifier */
-	ret = nvws->notifier_alloc(nvws, 1, &screen->sync);
+	ret = nouveau_notifier_alloc(chan, 0xbeef0301, 1, &screen->sync);
 	if (ret) {
 		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
 		nv50_screen_destroy(pscreen);
@@ -232,8 +241,8 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so = so_new(32, 0);
 	so_method(so, screen->m2mf, 0x0180, 3);
 	so_data  (so, screen->sync->handle);
-	so_data  (so, screen->nvws->channel->vram->handle);
-	so_data  (so, screen->nvws->channel->vram->handle);
+	so_data  (so, chan->vram->handle);
+	so_data  (so, chan->vram->handle);
 	so_emit(nvws, so);
 	so_ref (NULL, &so);
 
@@ -241,9 +250,9 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so = so_new(64, 0);
 	so_method(so, screen->eng2d, NV50_2D_DMA_NOTIFY, 4);
 	so_data  (so, screen->sync->handle);
-	so_data  (so, screen->nvws->channel->vram->handle);
-	so_data  (so, screen->nvws->channel->vram->handle);
-	so_data  (so, screen->nvws->channel->vram->handle);
+	so_data  (so, chan->vram->handle);
+	so_data  (so, chan->vram->handle);
+	so_data  (so, chan->vram->handle);
 	so_method(so, screen->eng2d, NV50_2D_OPERATION, 1);
 	so_data  (so, NV50_2D_OPERATION_SRCCOPY);
 	so_method(so, screen->eng2d, 0x0290, 1);
@@ -263,11 +272,11 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_method(so, screen->tesla, NV50TCL_DMA_UNK0(0),
 				     NV50TCL_DMA_UNK0__SIZE);
 	for (i = 0; i < NV50TCL_DMA_UNK0__SIZE; i++)
-		so_data(so, nvws->channel->vram->handle);
+		so_data(so, chan->vram->handle);
 	so_method(so, screen->tesla, NV50TCL_DMA_UNK1(0),
 				     NV50TCL_DMA_UNK1__SIZE);
 	for (i = 0; i < NV50TCL_DMA_UNK1__SIZE; i++)
-		so_data(so, nvws->channel->vram->handle);
+		so_data(so, chan->vram->handle);
 	so_method(so, screen->tesla, 0x121c, 1);
 	so_data  (so, 1);
 
@@ -295,9 +304,9 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		}
 	}
 
-	if (nvws->res_init(&screen->immd_heap[0], 0, 128) ||
-		nvws->res_init(&screen->parm_heap[0], 0, 128) ||
-		nvws->res_init(&screen->parm_heap[1], 0, 128))
+	if (nouveau_resource_init(&screen->immd_heap[0], 0, 128) ||
+		nouveau_resource_init(&screen->parm_heap[0], 0, 128) ||
+		nouveau_resource_init(&screen->parm_heap[1], 0, 128))
 	{
 		NOUVEAU_ERR("Error initialising constant buffers.\n");
 		nv50_screen_destroy(pscreen);
@@ -405,7 +414,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_emit(nvws, so);
 	so_ref (so, &screen->static_init);
 	so_ref (NULL, &so);
-	nouveau_pushbuf_flush(nvws->channel, 0);
+	nouveau_pushbuf_flush(chan, 0);
 
 	return pscreen;
 }

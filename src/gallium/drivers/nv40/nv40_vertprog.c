@@ -855,7 +855,6 @@ out_err:
 static boolean
 nv40_vertprog_validate(struct nv40_context *nv40)
 { 
-	struct nouveau_winsys *nvws = nv40->nvws;
 	struct pipe_winsys *ws = nv40->pipe.winsys;
 	struct nouveau_grobj *curie = nv40->screen->curie;
 	struct nv40_vertex_program *vp;
@@ -895,15 +894,15 @@ check_gpu_resources:
 		struct nouveau_stateobj *so;
 		uint vplen = vp->nr_insns;
 
-		if (nvws->res_alloc(heap, vplen, vp, &vp->exec)) {
+		if (nouveau_resource_alloc(heap, vplen, vp, &vp->exec)) {
 			while (heap->next && heap->size < vplen) {
 				struct nv40_vertex_program *evict;
 				
 				evict = heap->next->priv;
-				nvws->res_free(&evict->exec);
+				nouveau_resource_free(&evict->exec);
 			}
 
-			if (nvws->res_alloc(heap, vplen, vp, &vp->exec))
+			if (nouveau_resource_alloc(heap, vplen, vp, &vp->exec))
 				assert(0);
 		}
 
@@ -925,15 +924,15 @@ check_gpu_resources:
 	if (vp->nr_consts && !vp->data) {
 		struct nouveau_resource *heap = nv40->screen->vp_data_heap;
 
-		if (nvws->res_alloc(heap, vp->nr_consts, vp, &vp->data)) {
+		if (nouveau_resource_alloc(heap, vp->nr_consts, vp, &vp->data)) {
 			while (heap->next && heap->size < vp->nr_consts) {
 				struct nv40_vertex_program *evict;
 				
 				evict = heap->next->priv;
-				nvws->res_free(&evict->data);
+				nouveau_resource_free(&evict->data);
 			}
 
-			if (nvws->res_alloc(heap, vp->nr_consts, vp, &vp->data))
+			if (nouveau_resource_alloc(heap, vp->nr_consts, vp, &vp->data))
 				assert(0);
 		}
 
@@ -1035,8 +1034,6 @@ check_gpu_resources:
 void
 nv40_vertprog_destroy(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 {
-	struct nouveau_winsys *nvws = nv40->screen->nvws;
-
 	vp->translated = FALSE;
 
 	if (vp->nr_insns) {
@@ -1051,9 +1048,9 @@ nv40_vertprog_destroy(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 		vp->nr_consts = 0;
 	}
 
-	nvws->res_free(&vp->exec);
+	nouveau_resource_free(&vp->exec);
 	vp->exec_start = 0;
-	nvws->res_free(&vp->data);
+	nouveau_resource_free(&vp->data);
 	vp->data_start = 0;
 	vp->data_start_min = 0;
 

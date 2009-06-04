@@ -1,5 +1,4 @@
 #include "pipe/p_screen.h"
-#include "util/u_simple_screen.h"
 
 #include "nv20_context.h"
 #include "nv20_screen.h"
@@ -103,10 +102,9 @@ static void
 nv20_screen_destroy(struct pipe_screen *pscreen)
 {
 	struct nv20_screen *screen = nv20_screen(pscreen);
-	struct nouveau_winsys *nvws = screen->nvws;
 
-	nvws->notifier_free(&screen->sync);
-	nvws->grobj_free(&screen->kelvin);
+	nouveau_notifier_free(&screen->sync);
+	nouveau_grobj_free(&screen->kelvin);
 
 	FREE(pscreen);
 }
@@ -124,6 +122,7 @@ nv20_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 {
 	struct nv20_screen *screen = CALLOC_STRUCT(nv20_screen);
 	struct nouveau_device *dev = nvws->channel->device;
+	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	unsigned kelvin_class = 0;
 	int ret;
@@ -131,6 +130,13 @@ nv20_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	if (!screen)
 		return NULL;
 	pscreen = &screen->base.base;
+
+	ret = nouveau_screen_init(&screen->base, dev);
+	if (ret) {
+		nv20_screen_destroy(pscreen);
+		return NULL;
+	}
+	screen->base.channel = chan = nvws->channel;
 
 	screen->nvws = nvws;
 
@@ -142,11 +148,6 @@ nv20_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 
 	nv20_screen_init_miptree_functions(pscreen);
 	nv20_screen_init_transfer_functions(pscreen);
-	nouveau_screen_init(&screen->base, dev);
-
-	/* 2D engine setup */
-	screen->eng2d = nv04_surface_2d_init(nvws);
-	screen->eng2d->buf = nv20_surface_buffer;
 
 	/* 3D object */
 	if (dev->chipset >= 0x25)
@@ -159,14 +160,20 @@ nv20_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		return NULL;
 	}
 
-	ret = nvws->grobj_alloc(nvws, kelvin_class, &screen->kelvin);
+	ret = nouveau_grobj_alloc(chan, 0xbeef0097, kelvin_class,
+				  &screen->kelvin);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;
 	}
+	BIND_RING(chan, screen->kelvin, 7);
+
+	/* 2D engine setup */
+	screen->eng2d = nv04_surface_2d_init(nvws);
+	screen->eng2d->buf = nv20_surface_buffer;
 
 	/* Notifier for sync purposes */
-	ret = nvws->notifier_alloc(nvws, 1, &screen->sync);
+	ret = nouveau_notifier_alloc(chan, 0xbeef0301, 1, &screen->sync);
 	if (ret) {
 		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
 		nv20_screen_destroy(pscreen);
