@@ -19,11 +19,12 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main
 
+# Standalone osmesa needs to be linked with core Mesa APIs
+ifeq ($(DRIVER_DIRS), osmesa)
 CORE_MESA = $(TOP)/src/mesa/libmesa.a $(TOP)/src/mesa/libglapi.a
-
-
-.PHONY: osmesa8
-.PHONY: osmesa16
+else
+CORE_MESA =
+endif
 
 
 .c.o:
@@ -31,31 +32,12 @@ CORE_MESA = $(TOP)/src/mesa/libmesa.a $(TOP)/src/mesa/libglapi.a
 
 
 default: $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
-	@ if [ "${DRIVER_DIRS}" = "osmesa" ] ; then \
-		$(MAKE) osmesa16 ; \
-	else \
-		$(MAKE) osmesa8 ; \
-	fi
 
 
-
-
-# The normal libOSMesa is used in conjuction with libGL
-osmesa8: $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
-
-$(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OBJECTS)
-	$(MKLIB) -o $(OSMESA_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
-		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
-		-id $(INSTALL_LIB_DIR)/lib$(OSMESA_LIB).$(MESA_MAJOR).dylib \
-		$(OSMESA_LIB_DEPS) $(OBJECTS)
-
-
-
-
-# The libOSMesa16/libOSMesa32 libraries do not use libGL but rather are built
-# with all the other Mesa sources (compiled with -DCHAN_BITS=16/32
-osmesa16: $(OBJECTS) $(CORE_MESA)
+# libOSMesa can be used in conjuction with libGL or with all other Mesa
+# sources. We can also build libOSMesa16/libOSMesa32 by setting
+# -DCHAN_BITS=16/32.
+$(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OBJECTS) $(CORE_MESA)
 	$(MKLIB) -o $(OSMESA_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
