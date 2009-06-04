@@ -45,6 +45,41 @@
 #include "stw_tls.h"
 
 
+struct stw_framebuffer *
+stw_framebuffer_from_hwnd_locked(
+   HWND hwnd )
+{
+   struct stw_framebuffer *fb;
+
+   for (fb = stw_dev->fb_head; fb != NULL; fb = fb->next)
+      if (fb->hWnd == hwnd)
+         break;
+
+   return fb;
+}
+
+
+static INLINE void
+stw_framebuffer_destroy_locked(
+   struct stw_framebuffer *fb )
+{
+   struct stw_framebuffer **link;
+
+   link = &stw_dev->fb_head;
+   while (*link != fb)
+      link = &(*link)->next;
+   assert(*link);
+   *link = fb->next;
+   fb->next = NULL;
+
+   st_unreference_framebuffer(fb->stfb);
+   
+   pipe_mutex_destroy( fb->mutex );
+   
+   FREE( fb );
+}
+
+
 /**
  * @sa http://msdn.microsoft.com/en-us/library/ms644975(VS.85).aspx
  * @sa http://msdn.microsoft.com/en-us/library/ms644960(VS.85).aspx
@@ -69,9 +104,7 @@ stw_call_window_proc(
       struct stw_framebuffer *fb;
 
       pipe_mutex_lock( stw_dev->mutex );
-      for (fb = stw_dev->fb_head; fb != NULL; fb = fb->next)
-         if (fb->hWnd == pParams->hwnd)
-            break;
+      fb = stw_framebuffer_from_hwnd_locked( pParams->hwnd );
       pipe_mutex_unlock( stw_dev->mutex );
       
       if(fb) {
@@ -88,6 +121,18 @@ stw_call_window_proc(
          st_resize_framebuffer( fb->stfb, width, height );
          pipe_mutex_unlock( fb->mutex );
       }
+   }
+
+   if (pParams->message == WM_DESTROY) {
+      struct stw_framebuffer *fb;
+
+      pipe_mutex_lock( stw_dev->mutex );
+      
+      fb = stw_framebuffer_from_hwnd_locked( pParams->hwnd );
+      if(fb)
+         stw_framebuffer_destroy_locked(fb);
+      
+      pipe_mutex_unlock( stw_dev->mutex );
    }
 
    return CallNextHookEx(tls_data->hCallWndProcHook, nCode, wParam, lParam);
@@ -210,27 +255,6 @@ stw_framebuffer_resize(
    stw_framebuffer_get_size(fb, &width, &height);
    st_resize_framebuffer(fb->stfb, width, height);
 }                      
-
-
-static INLINE void
-stw_framebuffer_destroy_locked(
-   struct stw_framebuffer *fb )
-{
-   struct stw_framebuffer **link;
-
-   link = &stw_dev->fb_head;
-   while (*link != fb)
-      link = &(*link)->next;
-   assert(*link);
-   *link = fb->next;
-   fb->next = NULL;
-
-   st_unreference_framebuffer(fb->stfb);
-   
-   pipe_mutex_destroy( fb->mutex );
-   
-   FREE( fb );
-}
 
 
 void

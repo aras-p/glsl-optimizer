@@ -34,7 +34,7 @@
 extern "C" {
 #endif
 
-#define MAX_LABELS 1024
+#define MAX_LABELS (4 * 1024)  /**< basically, max instructions */
 
 #define NUM_CHANNELS 4  /* R,G,B,A */
 #define QUAD_SIZE    4  /* 4 pixel/quad */
