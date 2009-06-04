@@ -50,7 +50,15 @@ struct trace_context
    struct {
       struct trace_shader *fs;
       struct trace_shader *vs;
+
+      unsigned nr_cbufs;
+      struct trace_texture *cbufs[PIPE_MAX_COLOR_BUFS];
+      struct trace_texture *zsbuf;
    } curr;
+
+   pipe_mutex draw_mutex;
+   int draw_blocker;
+   int draw_blocked;
 
    /* for list on screen */
    struct tr_list list;
@@ -74,6 +82,9 @@ trace_context(struct pipe_context *pipe)
 struct pipe_context *
 trace_context_create(struct pipe_screen *screen,
                      struct pipe_context *pipe);
+
+void
+trace_rbug_notify_draw_blocked(struct trace_context *tr_ctx);
 
 
 #ifdef __cplusplus

@@ -113,6 +113,28 @@ trace_context_set_edgeflags(struct pipe_context *_pipe,
 }
 
 
+static INLINE void
+trace_context_draw_block(struct trace_context *tr_ctx, int flag)
+{
+   pipe_mutex_lock(tr_ctx->draw_mutex);
+
+   if (tr_ctx->draw_blocker & flag) {
+      tr_ctx->draw_blocked |= flag;
+
+      trace_rbug_notify_draw_blocked(tr_ctx);
+   }
+
+   /* wait for rbug to clear the blocked flag */
+   while (tr_ctx->draw_blocked & flag) {
+      tr_ctx->draw_blocked |= flag;
+      pipe_mutex_unlock(tr_ctx->draw_mutex);
+      /* TODO sleep or use conditional */
+      pipe_mutex_lock(tr_ctx->draw_mutex);
+   }
+
+   pipe_mutex_unlock(tr_ctx->draw_mutex);
+}
+
 static INLINE boolean
 trace_context_draw_arrays(struct pipe_context *_pipe,
                           unsigned mode, unsigned start, unsigned count)
@@ -123,6 +145,8 @@ trace_context_draw_arrays(struct pipe_context *_pipe,
 
    if (tr_ctx->curr.fs->disabled || tr_ctx->curr.vs->disabled)
       return 0;
+
+   trace_context_draw_block(tr_ctx, 1);
 
    trace_dump_call_begin("pipe_context", "draw_arrays");
 
@@ -136,6 +160,8 @@ trace_context_draw_arrays(struct pipe_context *_pipe,
    trace_dump_ret(bool, result);
 
    trace_dump_call_end();
+
+   trace_context_draw_block(tr_ctx, 2);
 
    return result;
 }
@@ -156,6 +182,8 @@ trace_context_draw_elements(struct pipe_context *_pipe,
    if (tr_ctx->curr.fs->disabled || tr_ctx->curr.vs->disabled)
       return 0;
 
+   trace_context_draw_block(tr_ctx, 1);
+
    trace_screen_user_buffer_update(_pipe->screen, indexBuffer);
 
    trace_dump_call_begin("pipe_context", "draw_elements");
@@ -172,6 +200,8 @@ trace_context_draw_elements(struct pipe_context *_pipe,
    trace_dump_ret(bool, result);
 
    trace_dump_call_end();
+
+   trace_context_draw_block(tr_ctx, 2);
 
    return result;
 }
@@ -196,6 +226,8 @@ trace_context_draw_range_elements(struct pipe_context *_pipe,
    if (tr_ctx->curr.fs->disabled || tr_ctx->curr.vs->disabled)
       return 0;
 
+   trace_context_draw_block(tr_ctx, 1);
+
    trace_screen_user_buffer_update(_pipe->screen, indexBuffer);
 
    trace_dump_call_begin("pipe_context", "draw_range_elements");
@@ -217,6 +249,8 @@ trace_context_draw_range_elements(struct pipe_context *_pipe,
    trace_dump_ret(bool, result);
 
    trace_dump_call_end();
+
+   trace_context_draw_block(tr_ctx, 2);
 
    return result;
 }
@@ -782,6 +816,19 @@ trace_context_set_framebuffer_state(struct pipe_context *_pipe,
    struct pipe_framebuffer_state unwrapped_state;
    unsigned i;
 
+   {
+      tr_ctx->curr.nr_cbufs = state->nr_cbufs;
+      for (i = 0; i < state->nr_cbufs; i++)
+         if (state->cbufs[i])
+            tr_ctx->curr.cbufs[i] = trace_texture(state->cbufs[i]->texture);
+         else
+            tr_ctx->curr.cbufs[i] = NULL;
+      if (state->zsbuf)
+         tr_ctx->curr.zsbuf = trace_texture(state->zsbuf->texture);
+      else
+         tr_ctx->curr.zsbuf = NULL;
+   }
+
    /* Unwrap the input state */
    memcpy(&unwrapped_state, state, sizeof(unwrapped_state));
    for(i = 0; i < state->nr_cbufs; ++i)
@@ -1113,6 +1160,12 @@ trace_is_buffer_referenced( struct pipe_context *_pipe,
    return referenced;
 }
 
+static const struct debug_named_value rbug_blocker_flags[] = {
+   {"before", 1},
+   {"after", 2},
+   {NULL, 0},
+};
+
 struct pipe_context *
 trace_context_create(struct pipe_screen *_screen,
                      struct pipe_context *pipe)
@@ -1134,6 +1187,10 @@ trace_context_create(struct pipe_screen *_screen,
    if(!tr_ctx)
       goto error1;
 
+   tr_ctx->draw_blocker = debug_get_flags_option("RBUG_BLOCK",
+                                                 rbug_blocker_flags,
+                                                 0);
+   pipe_mutex_init(tr_ctx->draw_mutex);
    pipe_mutex_init(tr_ctx->list_mutex);
    make_empty_list(&tr_ctx->shaders);
 

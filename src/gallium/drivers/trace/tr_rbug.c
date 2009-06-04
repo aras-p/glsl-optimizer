@@ -289,6 +289,147 @@ trace_rbug_context_list(struct trace_rbug *tr_rbug, struct rbug_header *header, 
 }
 
 static int
+trace_rbug_context_info(struct trace_rbug *tr_rbug, struct rbug_header *header, uint32_t serial)
+{
+   struct rbug_proto_context_info *info = (struct rbug_proto_context_info *)header;
+
+   struct trace_screen *tr_scr = tr_rbug->tr_scr;
+   struct trace_context *tr_ctx = NULL;
+   rbug_texture_t cbufs[PIPE_MAX_COLOR_BUFS];
+   int i;
+
+   pipe_mutex_lock(tr_scr->list_mutex);
+   tr_ctx = trace_rbug_get_context_locked(tr_scr, info->context);
+
+   if (!tr_ctx) {
+      pipe_mutex_unlock(tr_scr->list_mutex);
+      return -ESRCH;
+   }
+
+   /* protect the pipe context */
+   pipe_mutex_lock(tr_ctx->draw_mutex);
+   trace_dump_call_lock();
+
+   for (i = 0; i < tr_ctx->curr.nr_cbufs; i++)
+      cbufs[i] = VOID2U64(tr_ctx->curr.cbufs[i]);
+
+   rbug_send_context_info_reply(tr_rbug->con, serial,
+                                VOID2U64(tr_ctx->curr.vs), VOID2U64(tr_ctx->curr.fs),
+                                cbufs, tr_ctx->curr.nr_cbufs, VOID2U64(tr_ctx->curr.zsbuf),
+                                tr_ctx->draw_blocker, tr_ctx->draw_blocked, NULL);
+
+   trace_dump_call_unlock();
+   pipe_mutex_unlock(tr_ctx->draw_mutex);
+
+   pipe_mutex_unlock(tr_scr->list_mutex);
+
+   return 0;
+}
+
+static int
+trace_rbug_context_draw_block(struct trace_rbug *tr_rbug, struct rbug_header *header, uint32_t serial)
+{
+   struct rbug_proto_context_draw_block *block = (struct rbug_proto_context_draw_block *)header;
+
+   struct trace_screen *tr_scr = tr_rbug->tr_scr;
+   struct trace_context *tr_ctx = NULL;
+
+   pipe_mutex_lock(tr_scr->list_mutex);
+   tr_ctx = trace_rbug_get_context_locked(tr_scr, block->context);
+
+   if (!tr_ctx) {
+      pipe_mutex_unlock(tr_scr->list_mutex);
+      return -ESRCH;
+   }
+
+   pipe_mutex_lock(tr_ctx->draw_mutex);
+   tr_ctx->draw_blocker |= block->block;
+   pipe_mutex_unlock(tr_ctx->draw_mutex);
+
+   pipe_mutex_unlock(tr_scr->list_mutex);
+
+   return 0;
+}
+
+static int
+trace_rbug_context_draw_step(struct trace_rbug *tr_rbug, struct rbug_header *header, uint32_t serial)
+{
+   struct rbug_proto_context_draw_step *step = (struct rbug_proto_context_draw_step *)header;
+
+   struct trace_screen *tr_scr = tr_rbug->tr_scr;
+   struct trace_context *tr_ctx = NULL;
+
+   pipe_mutex_lock(tr_scr->list_mutex);
+   tr_ctx = trace_rbug_get_context_locked(tr_scr, step->context);
+
+   if (!tr_ctx) {
+      pipe_mutex_unlock(tr_scr->list_mutex);
+      return -ESRCH;
+   }
+
+   pipe_mutex_lock(tr_ctx->draw_mutex);
+   tr_ctx->draw_blocked &= ~step->step;
+   pipe_mutex_unlock(tr_ctx->draw_mutex);
+
+   pipe_mutex_unlock(tr_scr->list_mutex);
+
+   return 0;
+}
+
+static int
+trace_rbug_context_draw_unblock(struct trace_rbug *tr_rbug, struct rbug_header *header, uint32_t serial)
+{
+   struct rbug_proto_context_draw_unblock *unblock = (struct rbug_proto_context_draw_unblock *)header;
+
+   struct trace_screen *tr_scr = tr_rbug->tr_scr;
+   struct trace_context *tr_ctx = NULL;
+
+   pipe_mutex_lock(tr_scr->list_mutex);
+   tr_ctx = trace_rbug_get_context_locked(tr_scr, unblock->context);
+
+   if (!tr_ctx) {
+      pipe_mutex_unlock(tr_scr->list_mutex);
+      return -ESRCH;
+   }
+
+   pipe_mutex_lock(tr_ctx->draw_mutex);
+   tr_ctx->draw_blocked &= ~unblock->unblock;
+   tr_ctx->draw_blocker &= ~unblock->unblock;
+   pipe_mutex_unlock(tr_ctx->draw_mutex);
+
+   pipe_mutex_unlock(tr_scr->list_mutex);
+
+   return 0;
+}
+
+static int
+trace_rbug_context_flush(struct trace_rbug *tr_rbug, struct rbug_header *header, uint32_t serial)
+{
+   struct rbug_proto_context_flush *flush = (struct rbug_proto_context_flush *)header;
+
+   struct trace_screen *tr_scr = tr_rbug->tr_scr;
+   struct trace_context *tr_ctx = NULL;
+
+   pipe_mutex_lock(tr_scr->list_mutex);
+   tr_ctx = trace_rbug_get_context_locked(tr_scr, flush->context);
+
+   if (!tr_ctx) {
+      pipe_mutex_unlock(tr_scr->list_mutex);
+      return -ESRCH;
+   }
+
+   /* protect the pipe context */
+   trace_dump_call_lock();
+
+   tr_ctx->pipe->flush(tr_ctx->pipe, flush->flags, NULL);
+
+   trace_dump_call_unlock();
+   pipe_mutex_unlock(tr_scr->list_mutex);
+
+   return 0;
+}
+
+static int
 trace_rbug_shader_list(struct trace_rbug *tr_rbug, struct rbug_header *header, uint32_t serial)
 {
    struct rbug_proto_shader_list *list = (struct rbug_proto_shader_list *)header;
@@ -512,6 +653,21 @@ trace_rbug_header(struct trace_rbug *tr_rbug, struct rbug_header *header, uint32
       case RBUG_OP_CONTEXT_LIST:
          ret = trace_rbug_context_list(tr_rbug, header, serial);
          break;
+      case RBUG_OP_CONTEXT_INFO:
+         ret = trace_rbug_context_info(tr_rbug, header, serial);
+         break;
+      case RBUG_OP_CONTEXT_DRAW_BLOCK:
+         ret = trace_rbug_context_draw_block(tr_rbug, header, serial);
+         break;
+      case RBUG_OP_CONTEXT_DRAW_STEP:
+         ret = trace_rbug_context_draw_step(tr_rbug, header, serial);
+         break;
+      case RBUG_OP_CONTEXT_DRAW_UNBLOCK:
+         ret = trace_rbug_context_draw_unblock(tr_rbug, header, serial);
+         break;
+      case RBUG_OP_CONTEXT_FLUSH:
+         ret = trace_rbug_context_flush(tr_rbug, header, serial);
+         break;
       case RBUG_OP_SHADER_LIST:
          ret = trace_rbug_shader_list(tr_rbug, header, serial);
          break;
@@ -610,7 +766,7 @@ PIPE_THREAD_ROUTINE(trace_rbug_thread, void_tr_rbug)
 struct trace_rbug *
 trace_rbug_start(struct trace_screen *tr_scr)
 {
-   struct trace_rbug *tr_rbug = MALLOC_STRUCT(trace_rbug);
+   struct trace_rbug *tr_rbug = CALLOC_STRUCT(trace_rbug);
    if (!tr_rbug)
       return NULL;
 
@@ -633,4 +789,15 @@ trace_rbug_stop(struct trace_rbug *tr_rbug)
    FREE(tr_rbug);
 
    return;
+}
+
+void
+trace_rbug_notify_draw_blocked(struct trace_context *tr_ctx)
+{
+   struct trace_screen *tr_scr = trace_screen(tr_ctx->base.screen);
+   struct trace_rbug *tr_rbug = tr_scr->rbug;
+
+   if (tr_rbug && tr_rbug->con)
+      rbug_send_context_draw_blocked(tr_rbug->con,
+                                     VOID2U64(tr_ctx), tr_ctx->draw_blocked, NULL);
 }
