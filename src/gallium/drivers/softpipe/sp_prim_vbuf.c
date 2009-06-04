@@ -420,8 +420,8 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
        */
       for (i = 2; i < nr; i += 1) {
          setup_tri( setup_ctx,
-                    get_vert(vertex_buffer, i-0, stride),
                     get_vert(vertex_buffer, i-1, stride),
+                    get_vert(vertex_buffer, i-0, stride),
                     get_vert(vertex_buffer, 0, stride));
       }
       break;
