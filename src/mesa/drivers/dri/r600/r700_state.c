@@ -552,14 +552,14 @@ static void r700UpdateWindow(GLcontext * ctx) //--------------------
 
 	/* TODO : Need DMA flush as well. */
 
-	r700->PA_CL_VPORT_XSCALE.u32All  = *((unsigned int*)(&sx));
-	r700->PA_CL_VPORT_XOFFSET.u32All = *((unsigned int*)(&tx));
+	r700->PA_CL_VPORT_XSCALE.f32All  = sx;
+	r700->PA_CL_VPORT_XOFFSET.f32All = tx;
 
-	r700->PA_CL_VPORT_YSCALE.u32All  = *((unsigned int*)(&sy));
-	r700->PA_CL_VPORT_YOFFSET.u32All = *((unsigned int*)(&ty));
+	r700->PA_CL_VPORT_YSCALE.f32All  = sy;
+	r700->PA_CL_VPORT_YOFFSET.f32All = ty;
 
-	r700->PA_CL_VPORT_ZSCALE.u32All  = *((unsigned int*)(&sz));
-	r700->PA_CL_VPORT_ZOFFSET.u32All = *((unsigned int*)(&tz));
+	r700->PA_CL_VPORT_ZSCALE.f32All  = sz;
+	r700->PA_CL_VPORT_ZOFFSET.f32All = tz;
 }
 
 
