@@ -426,10 +426,7 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT             	CB_CLRCMP_MSK             ;  /* 0xA30F */
 	
 	union UINT_FLOAT             	PA_SC_AA_MASK             ;  /* 0xA312 */
-	
-	union UINT_FLOAT   VGT_VERTEX_REUSE_BLOCK_CNTL;  /* 0xA316 */
-	union UINT_FLOAT      	VGT_OUT_DEALLOC_CNTL      ;  /* 0xA317 */
-	
+
 	union UINT_FLOAT         	DB_RENDER_CONTROL         ;  /* 0xA343 */
 	union UINT_FLOAT        	DB_RENDER_OVERRIDE        ;  /* 0xA344 */
 

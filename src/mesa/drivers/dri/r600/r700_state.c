@@ -922,9 +922,6 @@ void r700InitState(GLcontext * ctx) //-------------------
     /* Turn off AA */
     r700->PA_SC_AA_CONFIG.u32All = 0;
 
-    SETfield(r700->VGT_OUT_DEALLOC_CNTL.u32All, 16, DEALLOC_DIST_shift, DEALLOC_DIST_mask);
-    SETfield(r700->VGT_VERTEX_REUSE_BLOCK_CNTL.u32All, 14, VTX_REUSE_DEPTH_shift, VTX_REUSE_DEPTH_mask);
-
     r700->SX_MISC.u32All = 0;
 
     /* depth buf */
