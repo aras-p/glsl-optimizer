@@ -578,7 +578,27 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 
       surf.ss0.surface_format = key.surface_format;
       surf.ss0.surface_type = key.surface_type;
-      surf.ss1.base_addr =  key.draw_offset;
+      if (key.tiling == I915_TILING_NONE) {
+	 surf.ss1.base_addr = key.draw_offset;
+      } else {
+	 uint32_t tile_offset = key.draw_offset % 4096;
+
+	 surf.ss1.base_addr = key.draw_offset - tile_offset;
+
+	 assert(BRW_IS_G4X(brw) || tile_offset == 0);
+	 if (BRW_IS_G4X(brw)) {
+	    if (key.tiling == I915_TILING_X) {
+	       /* Note that the low bits of these fields are missing, so
+		* there's the possibility of getting in trouble.
+		*/
+	       surf.ss5.x_offset = (tile_offset % 512) / key.cpp / 4;
+	       surf.ss5.y_offset = tile_offset / 512 / 2;
+	    } else {
+	       surf.ss5.x_offset = (tile_offset % 128) / key.cpp / 4;
+	       surf.ss5.y_offset = tile_offset / 128 / 2;
+	    }
+	 }
+      }
       if (region_bo != NULL)
 	 surf.ss1.base_addr += region_bo->offset; /* reloc */
 
@@ -609,7 +629,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	 drm_intel_bo_emit_reloc(brw->wm.surf_bo[unit],
 				 offsetof(struct brw_surface_state, ss1),
 				 region_bo,
-				 key.draw_offset,
+				 surf.ss1.base_addr,
 				 I915_GEM_DOMAIN_RENDER,
 				 I915_GEM_DOMAIN_RENDER);
       }

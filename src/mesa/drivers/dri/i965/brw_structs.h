@@ -1075,7 +1075,7 @@ struct brw_surface_state
       GLuint y_offset:4;
       GLuint pad0:1;
       GLuint x_offset:7;
-   } ss5;   /* NEW in Integrated Graphics Device */
+   } ss5;   /* New in G4X */
 
 };
 
