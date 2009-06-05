@@ -32,7 +32,8 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	unsigned i, w, h, gw = 0;
 
 	for (i = 0; i < fb->nr_cbufs; i++) {
-		struct nouveau_bo *bo = nouveau_bo(nv50_surface_buffer(fb->cbufs[i]));
+		struct pipe_texture *pt = fb->cbufs[i]->texture;
+		struct nouveau_bo *bo = nv50_miptree(pt)->bo;
 
 		if (!gw) {
 			w = fb->cbufs[i]->width;
@@ -73,7 +74,8 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	}
 
 	if (fb->zsbuf) {
-		struct nouveau_bo *bo = nouveau_bo(nv50_surface_buffer(fb->zsbuf));
+		struct pipe_texture *pt = fb->zsbuf->texture;
+		struct nouveau_bo *bo = nv50_miptree(pt)->bo;
 
 		if (!gw) {
 			w = fb->zsbuf->width;

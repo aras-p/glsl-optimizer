@@ -70,7 +70,8 @@ struct nv50_miptree_level {
 
 struct nv50_miptree {
 	struct pipe_texture base;
-	struct pipe_buffer *buffer;
+
+	struct nouveau_bo *bo;
 
 	struct nv50_miptree_level level[PIPE_MAX_TEXTURE_LEVELS];
 	int image_nr;
@@ -91,13 +92,6 @@ static INLINE struct nv50_surface *
 nv50_surface(struct pipe_surface *pt)
 {
 	return (struct nv50_surface *)pt;
-}
-
-static INLINE struct pipe_buffer *
-nv50_surface_buffer(struct pipe_surface *surface)
-{
-	struct nv50_miptree *mt = (struct nv50_miptree *)surface->texture;
-	return mt->buffer;
 }
 
 struct nv50_state {

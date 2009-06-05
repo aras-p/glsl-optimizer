@@ -54,7 +54,7 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
 	struct nv50_miptree *mt = nv50_miptree(ps->texture);
 	struct nouveau_channel *chan = screen->eng2d->channel;
 	struct nouveau_grobj *eng2d = screen->eng2d;
-	struct nouveau_bo *bo = nouveau_bo(nv50_miptree(ps->texture)->buffer);
+	struct nouveau_bo *bo = nv50_miptree(ps->texture)->bo;
  	int format, mthd = dst ? NV50_2D_DST_FORMAT : NV50_2D_SRC_FORMAT;
  	int flags = NOUVEAU_BO_VRAM | (dst ? NOUVEAU_BO_WR : NOUVEAU_BO_RD);
 
