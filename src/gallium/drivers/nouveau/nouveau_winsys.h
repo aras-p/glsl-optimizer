@@ -23,44 +23,38 @@
 #define NOUVEAU_BUFFER_USAGE_ZETA     (1 << 17)
 #define NOUVEAU_BUFFER_USAGE_TRANSFER (1 << 18)
 
-struct nouveau_winsys {
-	struct pipe_winsys *ws;
-
-	struct nouveau_channel *channel;
-};
-
 extern struct pipe_screen *
-nv04_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *);
+nv04_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
 
 extern struct pipe_context *
 nv04_create(struct pipe_screen *, unsigned pctx_id);
 
 extern struct pipe_screen *
-nv10_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *);
+nv10_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
 
 extern struct pipe_context *
 nv10_create(struct pipe_screen *, unsigned pctx_id);
 
 extern struct pipe_screen *
-nv20_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *);
+nv20_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
 
 extern struct pipe_context *
 nv20_create(struct pipe_screen *, unsigned pctx_id);
 
 extern struct pipe_screen *
-nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *);
+nv30_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
 
 extern struct pipe_context *
 nv30_create(struct pipe_screen *, unsigned pctx_id);
 
 extern struct pipe_screen *
-nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *);
+nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
 
 extern struct pipe_context *
 nv40_create(struct pipe_screen *, unsigned pctx_id);
 
 extern struct pipe_screen *
-nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *);
+nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *);
 
 extern struct pipe_context *
 nv50_create(struct pipe_screen *, unsigned pctx_id);

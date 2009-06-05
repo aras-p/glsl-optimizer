@@ -2215,7 +2215,7 @@ static void
 nv50_program_upload_data(struct nv50_context *nv50, float *map,
 			unsigned start, unsigned count, unsigned cbuf)
 {
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->base.channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 
 	while (count) {
@@ -2235,7 +2235,6 @@ nv50_program_upload_data(struct nv50_context *nv50, float *map,
 static void
 nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 {
-	struct nouveau_winsys *nvws = nv50->screen->nvws;
 	struct pipe_winsys *ws = nv50->pipe.winsys;
 
 	if (!p->data[0] && p->immd_nr) {
@@ -2288,7 +2287,7 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 static void
 nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 {
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->base.channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_program_exec *e;
 	struct nouveau_stateobj *so;
@@ -2353,14 +2352,14 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 
 	start = 0; count = p->exec_size;
 	while (count) {
-		struct nouveau_winsys *nvws = nv50->screen->nvws;
+		struct nouveau_channel *chan = nv50->screen->base.channel;
 		unsigned nr;
 
-		so_emit(nvws, so);
+		so_emit(chan, so);
 
 		nr = MIN2(count, 2047);
-		nr = MIN2(nvws->channel->pushbuf->remaining, nr);
-		if (nvws->channel->pushbuf->remaining < (nr + 3)) {
+		nr = MIN2(chan->pushbuf->remaining, nr);
+		if (chan->pushbuf->remaining < (nr + 3)) {
 			FIRE_RING(chan);
 			continue;
 		}

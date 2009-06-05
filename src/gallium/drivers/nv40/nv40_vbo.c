@@ -168,7 +168,7 @@ nv40_draw_arrays(struct pipe_context *pipe,
 		 unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nouveau_channel *chan = nv40->nvws->channel;
+	struct nouveau_channel *chan = nv40->screen->base.channel;
 	unsigned restart;
 
 	nv40_vbo_set_idxbuf(nv40, NULL, 0);
@@ -227,7 +227,7 @@ static INLINE void
 nv40_draw_elements_u08(struct nv40_context *nv40, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv40->nvws->channel;
+	struct nouveau_channel *chan = nv40->screen->base.channel;
 
 	while (count) {
 		uint8_t *elts = (uint8_t *)ib + start;
@@ -276,7 +276,7 @@ static INLINE void
 nv40_draw_elements_u16(struct nv40_context *nv40, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv40->nvws->channel;
+	struct nouveau_channel *chan = nv40->screen->base.channel;
 
 	while (count) {
 		uint16_t *elts = (uint16_t *)ib + start;
@@ -325,7 +325,7 @@ static INLINE void
 nv40_draw_elements_u32(struct nv40_context *nv40, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv40->nvws->channel;
+	struct nouveau_channel *chan = nv40->screen->base.channel;
 
 	while (count) {
 		uint32_t *elts = (uint32_t *)ib + start;
@@ -400,7 +400,7 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 		       unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nouveau_channel *chan = nv40->nvws->channel;
+	struct nouveau_channel *chan = nv40->screen->base.channel;
 	unsigned restart;
 
 	while (count) {

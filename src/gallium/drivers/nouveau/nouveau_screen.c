@@ -212,7 +212,12 @@ int
 nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 {
 	struct pipe_screen *pscreen = &screen->base;
+	int ret;
 
+	ret = nouveau_channel_alloc(dev, 0xbeef0201, 0xbeef0202,
+				    &screen->channel);
+	if (ret)
+		return ret;
 	screen->device = dev;
 
 	pscreen->get_name = nouveau_screen_get_name;

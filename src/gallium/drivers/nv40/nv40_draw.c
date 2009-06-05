@@ -81,7 +81,7 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 {
 	struct nv40_render_stage *rs = nv40_render_stage(stage);
 	struct nv40_context *nv40 = rs->nv40;
-	struct nouveau_pushbuf *pb = nv40->nvws->channel->pushbuf;
+	struct nouveau_pushbuf *pb = nv40->screen->base.channel->pushbuf;
 	unsigned i;
 
 	/* Ensure there's room for 4xfloat32 + potentially 3 begin/end */

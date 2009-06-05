@@ -144,10 +144,9 @@ nv40_screen_destroy(struct pipe_screen *pscreen)
 }
 
 struct pipe_screen *
-nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
+nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 {
 	struct nv40_screen *screen = CALLOC_STRUCT(nv40_screen);
-	struct nouveau_device *dev = nvws->channel->device;
 	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	struct nouveau_stateobj *so;
@@ -163,9 +162,7 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		nv40_screen_destroy(pscreen);
 		return NULL;
 	}
-	screen->base.channel = chan = nvws->channel;
-
-	screen->nvws = nvws;
+	chan = screen->base.channel;
 
 	pscreen->winsys = ws;
 	pscreen->destroy = nv40_screen_destroy;
@@ -204,7 +201,7 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	BIND_RING(chan, screen->curie, 7);
 
 	/* 2D engine setup */
-	screen->eng2d = nv04_surface_2d_init(nvws);
+	screen->eng2d = nv04_surface_2d_init(&screen->base);
 	screen->eng2d->buf = nv40_surface_buffer;
 
 	/* Notifier for sync purposes */
@@ -242,25 +239,25 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_method(so, screen->curie, NV40TCL_DMA_NOTIFY, 1);
 	so_data  (so, screen->sync->handle);
 	so_method(so, screen->curie, NV40TCL_DMA_TEXTURE0, 2);
-	so_data  (so, nvws->channel->vram->handle);
-	so_data  (so, nvws->channel->gart->handle);
+	so_data  (so, chan->vram->handle);
+	so_data  (so, chan->gart->handle);
 	so_method(so, screen->curie, NV40TCL_DMA_COLOR1, 1);
-	so_data  (so, nvws->channel->vram->handle);
+	so_data  (so, chan->vram->handle);
 	so_method(so, screen->curie, NV40TCL_DMA_COLOR0, 2);
-	so_data  (so, nvws->channel->vram->handle);
-	so_data  (so, nvws->channel->vram->handle);
+	so_data  (so, chan->vram->handle);
+	so_data  (so, chan->vram->handle);
 	so_method(so, screen->curie, NV40TCL_DMA_VTXBUF0, 2);
-	so_data  (so, nvws->channel->vram->handle);
-	so_data  (so, nvws->channel->gart->handle);
+	so_data  (so, chan->vram->handle);
+	so_data  (so, chan->gart->handle);
 	so_method(so, screen->curie, NV40TCL_DMA_FENCE, 2);
 	so_data  (so, 0);
 	so_data  (so, screen->query->handle);
 	so_method(so, screen->curie, NV40TCL_DMA_UNK01AC, 2);
-	so_data  (so, nvws->channel->vram->handle);
-	so_data  (so, nvws->channel->vram->handle);
+	so_data  (so, chan->vram->handle);
+	so_data  (so, chan->vram->handle);
 	so_method(so, screen->curie, NV40TCL_DMA_COLOR2, 2);
-	so_data  (so, nvws->channel->vram->handle);
-	so_data  (so, nvws->channel->vram->handle);
+	so_data  (so, chan->vram->handle);
+	so_data  (so, chan->vram->handle);
 
 	so_method(so, screen->curie, 0x1ea4, 3);
 	so_data  (so, 0x00000010);
@@ -285,9 +282,9 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_method(so, screen->curie, 0x1e94, 1);
 	so_data  (so, 0x00000001);
 
-	so_emit(nvws, so);
+	so_emit(chan, so);
 	so_ref(NULL, &so);
-	nouveau_pushbuf_flush(nvws->channel, 0);
+	nouveau_pushbuf_flush(chan, 0);
 
 	return pscreen;
 }

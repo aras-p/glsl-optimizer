@@ -71,7 +71,7 @@ static void
 nv50_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->base.channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_query *q = nv50_query(pq);
 
@@ -87,7 +87,7 @@ static void
 nv50_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->base.channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_query *q = nv50_query(pq);
 	struct nouveau_bo *bo = nouveau_bo(q->buffer);

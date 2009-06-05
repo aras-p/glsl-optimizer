@@ -97,7 +97,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 			  struct pipe_surface *src, int sx, int sy,
 			  int w, int h)
 {
-	struct nouveau_channel *chan = ctx->nvws->channel;
+	struct nouveau_channel *chan = ctx->swzsurf->channel;
 	struct nouveau_grobj *swzsurf = ctx->swzsurf;
 	struct nouveau_grobj *sifm = ctx->sifm;
 	struct nouveau_bo *src_bo = nouveau_bo(ctx->buf(src));
@@ -168,7 +168,7 @@ nv04_surface_copy_m2mf(struct nv04_surface_2d *ctx,
 		       struct pipe_surface *dst, int dx, int dy,
 		       struct pipe_surface *src, int sx, int sy, int w, int h)
 {
-	struct nouveau_channel *chan = ctx->nvws->channel;
+	struct nouveau_channel *chan = ctx->m2mf->channel;
 	struct nouveau_grobj *m2mf = ctx->m2mf;
 	struct nouveau_bo *src_bo = nouveau_bo(ctx->buf(src));
 	struct nouveau_bo *dst_bo = nouveau_bo(ctx->buf(dst));
@@ -214,7 +214,7 @@ nv04_surface_copy_blit(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 		       int dx, int dy, struct pipe_surface *src, int sx, int sy,
 		       int w, int h)
 {
-	struct nouveau_channel *chan = ctx->nvws->channel;
+	struct nouveau_channel *chan = ctx->surf2d->channel;
 	struct nouveau_grobj *surf2d = ctx->surf2d;
 	struct nouveau_grobj *blit = ctx->blit;
 	struct nouveau_bo *src_bo = nouveau_bo(ctx->buf(src));
@@ -280,7 +280,7 @@ static void
 nv04_surface_fill(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 		  int dx, int dy, int w, int h, unsigned value)
 {
-	struct nouveau_channel *chan = ctx->nvws->channel;
+	struct nouveau_channel *chan = ctx->surf2d->channel;
 	struct nouveau_grobj *surf2d = ctx->surf2d;
 	struct nouveau_grobj *rect = ctx->rect;
 	struct nouveau_bo *dst_bo = nouveau_bo(ctx->buf(dst));
@@ -335,10 +335,10 @@ nv04_surface_2d_takedown(struct nv04_surface_2d **pctx)
 }
 
 struct nv04_surface_2d *
-nv04_surface_2d_init(struct nouveau_winsys *nvws)
+nv04_surface_2d_init(struct nouveau_screen *screen)
 {
 	struct nv04_surface_2d *ctx = CALLOC_STRUCT(nv04_surface_2d);
-	struct nouveau_channel *chan = nvws->channel;
+	struct nouveau_channel *chan = screen->channel;
 	unsigned handle = 0x88000000, class;
 	int ret;
 
@@ -461,7 +461,6 @@ nv04_surface_2d_init(struct nouveau_winsys *nvws)
 		return NULL;
 	}
 
-	ctx->nvws = nvws;
 	ctx->copy = nv04_surface_copy;
 	ctx->fill = nv04_surface_fill;
 	return ctx;

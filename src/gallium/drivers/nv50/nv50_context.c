@@ -33,7 +33,7 @@ nv50_flush(struct pipe_context *pipe, unsigned flags,
 {
 	struct nv50_context *nv50 = (struct nv50_context *)pipe;
 	
-	FIRE_RING(nv50->screen->nvws->channel);
+	FIRE_RING(nv50->screen->base.channel);
 }
 
 static void

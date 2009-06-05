@@ -53,7 +53,7 @@ nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 		 unsigned count)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 
 	nv50_state_validate(nv50);
@@ -83,7 +83,7 @@ static INLINE void
 nv50_draw_elements_inline_u08(struct nv50_context *nv50, uint8_t *map,
 			      unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 
 	map += start;
@@ -112,7 +112,7 @@ static INLINE void
 nv50_draw_elements_inline_u16(struct nv50_context *nv50, uint16_t *map,
 			      unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 
 	map += start;
@@ -141,7 +141,7 @@ static INLINE void
 nv50_draw_elements_inline_u32(struct nv50_context *nv50, uint8_t *map,
 			      unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 
 	map += start;
@@ -163,7 +163,7 @@ nv50_draw_elements(struct pipe_context *pipe,
 		   unsigned mode, unsigned start, unsigned count)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct pipe_winsys *ws = pipe->winsys;
 	void *map = ws->buffer_map(ws, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);

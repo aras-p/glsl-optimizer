@@ -145,10 +145,9 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
 }
 
 struct pipe_screen *
-nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
+nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 {
 	struct nv50_screen *screen = CALLOC_STRUCT(nv50_screen);
-	struct nouveau_device *dev = nvws->channel->device;
 	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	struct nouveau_stateobj *so;
@@ -160,15 +159,12 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		return NULL;
 	pscreen = &screen->base.base;
 
-	ret = nouveau_screen_init(&screen->base, nvws->channel->device);
+	ret = nouveau_screen_init(&screen->base, dev);
 	if (ret) {
 		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
-	screen->base.channel = chan = nvws->channel;
-
-        /* Setup the pipe */
-	screen->nvws = nvws;
+	chan = screen->base.channel;
 
 	pscreen->winsys = ws;
 	pscreen->destroy = nv50_screen_destroy;
@@ -243,7 +239,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_data  (so, screen->sync->handle);
 	so_data  (so, chan->vram->handle);
 	so_data  (so, chan->vram->handle);
-	so_emit(nvws, so);
+	so_emit(chan, so);
 	so_ref (NULL, &so);
 
 	/* Static 2D init */
@@ -259,7 +255,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_data  (so, 0);
 	so_method(so, screen->eng2d, 0x0888, 1);
 	so_data  (so, 1);
-	so_emit(nvws, so);
+	so_emit(chan, so);
 	so_ref(NULL, &so);
 
 	/* Static tesla init */
@@ -411,7 +407,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_method(so, screen->tesla, 0x1458, 1);
 	so_data  (so, 1);
 
-	so_emit(nvws, so);
+	so_emit(chan, so);
 	so_ref (so, &screen->static_init);
 	so_ref (NULL, &so);
 	nouveau_pushbuf_flush(chan, 0);

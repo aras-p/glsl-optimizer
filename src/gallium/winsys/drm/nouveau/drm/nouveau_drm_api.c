@@ -70,10 +70,9 @@ nouveau_drm_create_screen(int fd, struct drm_create_screen_arg *arg)
 {
 	struct dri1_create_screen_arg *dri1 = (void *)arg;
 	struct pipe_winsys *ws;
-	struct nouveau_winsys *nvws;
 	struct nouveau_device *dev = NULL;
 	struct pipe_screen *(*init)(struct pipe_winsys *,
-				    struct nouveau_winsys *);
+				    struct nouveau_device *);
 	int ret;
 
 	ret = nouveau_device_open_existing(&dev, 0, fd, 0);
@@ -114,13 +113,7 @@ nouveau_drm_create_screen(int fd, struct drm_create_screen_arg *arg)
 		return NULL;
 	}
 
-	nvws = nouveau_winsys_new(ws);
-	if (!nvws) {
-		ws->destroy(ws);
-		return NULL;
-	}
-
-	nouveau_pipe_winsys(ws)->pscreen = init(ws, nvws);
+	nouveau_pipe_winsys(ws)->pscreen = init(ws, dev);
 	if (!nouveau_pipe_winsys(ws)->pscreen) {
 		ws->destroy(ws);
 		return NULL;

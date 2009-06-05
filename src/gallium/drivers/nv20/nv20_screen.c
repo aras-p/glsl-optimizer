@@ -118,10 +118,9 @@ nv20_surface_buffer(struct pipe_surface *surf)
 }
 
 struct pipe_screen *
-nv20_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
+nv20_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 {
 	struct nv20_screen *screen = CALLOC_STRUCT(nv20_screen);
-	struct nouveau_device *dev = nvws->channel->device;
 	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	unsigned kelvin_class = 0;
@@ -136,9 +135,7 @@ nv20_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		nv20_screen_destroy(pscreen);
 		return NULL;
 	}
-	screen->base.channel = chan = nvws->channel;
-
-	screen->nvws = nvws;
+	chan = screen->base.channel;
 
 	pscreen->winsys = ws;
 	pscreen->destroy = nv20_screen_destroy;
@@ -169,7 +166,7 @@ nv20_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	BIND_RING(chan, screen->kelvin, 7);
 
 	/* 2D engine setup */
-	screen->eng2d = nv04_surface_2d_init(nvws);
+	screen->eng2d = nv04_surface_2d_init(&screen->base);
 	screen->eng2d->buf = nv20_surface_buffer;
 
 	/* Notifier for sync purposes */

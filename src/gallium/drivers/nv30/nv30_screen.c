@@ -136,10 +136,9 @@ nv30_screen_destroy(struct pipe_screen *pscreen)
 }
 
 struct pipe_screen *
-nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
+nv30_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 {
 	struct nv30_screen *screen = CALLOC_STRUCT(nv30_screen);
-	struct nouveau_device *dev = nvws->channel->device;
 	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
 	struct nouveau_stateobj *so;
@@ -155,9 +154,7 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		nv30_screen_destroy(pscreen);
 		return NULL;
 	}
-	screen->base.channel = chan = nvws->channel;
-
-	screen->nvws = nvws;
+	chan = screen->base.channel;
 
 	pscreen->winsys = ws;
 	pscreen->destroy = nv30_screen_destroy;
@@ -198,7 +195,7 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	BIND_RING(chan, screen->rankine, 7);
 
 	/* 2D engine setup */
-	screen->eng2d = nv04_surface_2d_init(nvws);
+	screen->eng2d = nv04_surface_2d_init(&screen->base);
 	screen->eng2d->buf = nv30_surface_buffer;
 
 	/* Notifier for sync purposes */
@@ -307,7 +304,7 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_method(so, screen->rankine, 0x1e94, 1);
 	so_data  (so, 0x13);
 
-	so_emit(nvws, so);
+	so_emit(chan, so);
 	so_ref(NULL, &so);
 	nouveau_pushbuf_flush(chan, 0);
 

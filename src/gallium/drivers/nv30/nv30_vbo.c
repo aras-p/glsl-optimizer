@@ -168,7 +168,7 @@ nv30_draw_arrays(struct pipe_context *pipe,
 		 unsigned mode, unsigned start, unsigned count)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct nouveau_channel *chan = nv30->nvws->channel;
+	struct nouveau_channel *chan = nv30->screen->base.channel;
 	unsigned restart = 0;
 
 	nv30_vbo_set_idxbuf(nv30, NULL, 0);
@@ -228,7 +228,7 @@ static INLINE void
 nv30_draw_elements_u08(struct nv30_context *nv30, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv30->nvws->channel;
+	struct nouveau_channel *chan = nv30->screen->base.channel;
 
 	while (count) {
 		uint8_t *elts = (uint8_t *)ib + start;
@@ -277,7 +277,7 @@ static INLINE void
 nv30_draw_elements_u16(struct nv30_context *nv30, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv30->nvws->channel;
+	struct nouveau_channel *chan = nv30->screen->base.channel;
 
 	while (count) {
 		uint16_t *elts = (uint16_t *)ib + start;
@@ -326,7 +326,7 @@ static INLINE void
 nv30_draw_elements_u32(struct nv30_context *nv30, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv30->nvws->channel;
+	struct nouveau_channel *chan = nv30->screen->base.channel;
 
 	while (count) {
 		uint32_t *elts = (uint32_t *)ib + start;
@@ -401,7 +401,7 @@ nv30_draw_elements_vbo(struct pipe_context *pipe,
 		       unsigned mode, unsigned start, unsigned count)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct nouveau_channel *chan = nv30->nvws->channel;
+	struct nouveau_channel *chan = nv30->screen->base.channel;
 	unsigned restart = 0;
 
 	while (count) {

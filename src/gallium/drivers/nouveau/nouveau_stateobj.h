@@ -107,21 +107,21 @@ so_dump(struct nouveau_stateobj *so)
 }
 
 static INLINE void
-so_emit(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
+so_emit(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 {
-	struct nouveau_pushbuf *pb = nvws->channel->pushbuf;
+	struct nouveau_pushbuf *pb = chan->pushbuf;
 	unsigned nr, i;
 
 	nr = so->cur - so->push;
 	if (pb->remaining < nr)
-		nouveau_pushbuf_flush(nvws->channel, nr);
+		nouveau_pushbuf_flush(chan, nr);
 	pb->remaining -= nr;
 
 	memcpy(pb->cur, so->push, nr * 4);
 	for (i = 0; i < so->cur_reloc; i++) {
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
-		nouveau_pushbuf_emit_reloc(nvws->channel, pb->cur + r->offset,
+		nouveau_pushbuf_emit_reloc(chan, pb->cur + r->offset,
 					   r->bo, r->data, r->flags, r->vor,
 					   r->tor);
 	}
@@ -129,30 +129,29 @@ so_emit(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
 }
 
 static INLINE void
-so_emit_reloc_markers(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
+so_emit_reloc_markers(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 {
-	struct nouveau_pushbuf *pb = nvws->channel->pushbuf;
+	struct nouveau_pushbuf *pb = chan->pushbuf;
 	unsigned i;
 
 	if (!so)
 		return;
 
 	i = so->cur_reloc << 1;
-	if (nvws->channel->pushbuf->remaining < i)
-		nouveau_pushbuf_flush(nvws->channel, i);
-	nvws->channel->pushbuf->remaining -= i;
+	if (pb->remaining < i)
+		nouveau_pushbuf_flush(chan, i);
+	pb->remaining -= i;
 
 	for (i = 0; i < so->cur_reloc; i++) {
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
-		nouveau_pushbuf_emit_reloc(nvws->channel, pb->cur++, r->bo,
-					   r->packet,
+		nouveau_pushbuf_emit_reloc(chan, pb->cur++, r->bo, r->packet,
 					   (r->flags & (NOUVEAU_BO_VRAM |
 							NOUVEAU_BO_GART |
 							NOUVEAU_BO_RDWR)) |
 					   NOUVEAU_BO_DUMMY, 0, 0);
-		nouveau_pushbuf_emit_reloc(nvws->channel, pb->cur++, r->bo,
-					   r->data, r->flags | NOUVEAU_BO_DUMMY,
+		nouveau_pushbuf_emit_reloc(chan, pb->cur++, r->bo, r->data,
+					   r->flags | NOUVEAU_BO_DUMMY,
 					   r->vor, r->tor);
 	}
 }

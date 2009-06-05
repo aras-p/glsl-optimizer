@@ -24,8 +24,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen, struct pipe_buffer *src,
 			unsigned src_reloc, unsigned dst_reloc)
 {
 	struct nv50_screen *screen = nv50_screen(pscreen);
-	struct nouveau_winsys *nvws = screen->nvws;
-	struct nouveau_channel *chan = nvws->channel;
+	struct nouveau_channel *chan = screen->m2mf->channel;
 	struct nouveau_grobj *m2mf = screen->m2mf;
 	struct nouveau_bo *src_bo = nouveau_bo(src);
 	struct nouveau_bo *dst_bo = nouveau_bo(dst);

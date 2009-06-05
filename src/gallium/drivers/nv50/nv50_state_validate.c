@@ -131,7 +131,7 @@ static void
 nv50_state_emit(struct nv50_context *nv50)
 {
 	struct nv50_screen *screen = nv50->screen;
-	struct nouveau_winsys *nvws = screen->nvws;
+	struct nouveau_channel *chan = screen->base.channel;
 
 	if (nv50->pctx_id != screen->cur_pctx) {
 		nv50->state.dirty |= 0xffffffff;
@@ -139,40 +139,40 @@ nv50_state_emit(struct nv50_context *nv50)
 	}
 
 	if (nv50->state.dirty & NV50_NEW_FRAMEBUFFER)
-		so_emit(nvws, nv50->state.fb);
+		so_emit(chan, nv50->state.fb);
 	if (nv50->state.dirty & NV50_NEW_BLEND)
-		so_emit(nvws, nv50->state.blend);
+		so_emit(chan, nv50->state.blend);
 	if (nv50->state.dirty & NV50_NEW_ZSA)
-		so_emit(nvws, nv50->state.zsa);
+		so_emit(chan, nv50->state.zsa);
 	if (nv50->state.dirty & NV50_NEW_VERTPROG)
-		so_emit(nvws, nv50->state.vertprog);
+		so_emit(chan, nv50->state.vertprog);
 	if (nv50->state.dirty & NV50_NEW_FRAGPROG)
-		so_emit(nvws, nv50->state.fragprog);
+		so_emit(chan, nv50->state.fragprog);
 	if (nv50->state.dirty & NV50_NEW_RASTERIZER)
-		so_emit(nvws, nv50->state.rast);
+		so_emit(chan, nv50->state.rast);
 	if (nv50->state.dirty & NV50_NEW_BLEND_COLOUR)
-		so_emit(nvws, nv50->state.blend_colour);
+		so_emit(chan, nv50->state.blend_colour);
 	if (nv50->state.dirty & NV50_NEW_STIPPLE)
-		so_emit(nvws, nv50->state.stipple);
+		so_emit(chan, nv50->state.stipple);
 	if (nv50->state.dirty & NV50_NEW_SCISSOR)
-		so_emit(nvws, nv50->state.scissor);
+		so_emit(chan, nv50->state.scissor);
 	if (nv50->state.dirty & NV50_NEW_VIEWPORT)
-		so_emit(nvws, nv50->state.viewport);
+		so_emit(chan, nv50->state.viewport);
 	if (nv50->state.dirty & NV50_NEW_SAMPLER)
-		so_emit(nvws, nv50->state.tsc_upload);
+		so_emit(chan, nv50->state.tsc_upload);
 	if (nv50->state.dirty & NV50_NEW_TEXTURE)
-		so_emit(nvws, nv50->state.tic_upload);
+		so_emit(chan, nv50->state.tic_upload);
 	if (nv50->state.dirty & NV50_NEW_ARRAYS) {
-		so_emit(nvws, nv50->state.vtxfmt);
-		so_emit(nvws, nv50->state.vtxbuf);
+		so_emit(chan, nv50->state.vtxfmt);
+		so_emit(chan, nv50->state.vtxbuf);
 	}
 	nv50->state.dirty = 0;
 
-	so_emit_reloc_markers(nvws, nv50->state.fb);
-	so_emit_reloc_markers(nvws, nv50->state.vertprog);
-	so_emit_reloc_markers(nvws, nv50->state.fragprog);
-	so_emit_reloc_markers(nvws, nv50->state.vtxbuf);
-	so_emit_reloc_markers(nvws, nv50->screen->static_init);
+	so_emit_reloc_markers(chan, nv50->state.fb);
+	so_emit_reloc_markers(chan, nv50->state.vertprog);
+	so_emit_reloc_markers(chan, nv50->state.fragprog);
+	so_emit_reloc_markers(chan, nv50->state.vtxbuf);
+	so_emit_reloc_markers(chan, nv50->screen->static_init);
 }
 
 boolean

@@ -31,7 +31,7 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
 	   const float *rgba, double depth, unsigned stencil)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->base.channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct pipe_framebuffer_state *fb = &nv50->framebuffer;
 	unsigned mode = 0, i;
