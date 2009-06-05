@@ -66,7 +66,7 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 			so_data(so, 0xe6);
 			break;
 		}
-		so_data(so, 0x00000000);
+		so_data(so, bo->tile_mode << 4);
 		so_data(so, 0x00000000);
 
 		so_method(so, tesla, 0x1224, 1);
@@ -104,7 +104,7 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 			so_data(so, 0x16);
 			break;
 		}
-		so_data(so, 0x00000000);
+		so_data(so, bo->tile_mode << 4);
 		so_data(so, 0x00000000);
 
 		so_method(so, tesla, 0x1538, 1);

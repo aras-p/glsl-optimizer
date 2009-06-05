@@ -34,7 +34,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 	struct pipe_texture *pt = &mt->base;
 	unsigned width = tmp->width[0], height = tmp->height[0];
 	unsigned depth = tmp->depth[0];
-	uint32_t tile_mode = 0, tile_flags = 0;
+	uint32_t tile_mode, tile_flags, tile_h;
 	int ret, i, l;
 
 	mt->base = *tmp;
@@ -50,6 +50,13 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 		tile_flags = 0x7000;
 		break;
 	}
+
+	if      (pt->height[0] > 32) tile_mode = 4;
+	else if (pt->height[0] > 16) tile_mode = 3;
+	else if (pt->height[0] >  8) tile_mode = 2;
+	else if (pt->height[0] >  4) tile_mode = 1;
+	else                         tile_mode = 0;
+	tile_h = 1 << (tile_mode + 2);
 
 	switch (pt->target) {
 	case PIPE_TEXTURE_3D:
@@ -87,7 +94,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 
 			size  = align(pt->width[l], 8) * pt->block.size;
 			size  = align(size, 64);
-			size *= align(pt->height[l], 8) * pt->block.size;
+			size *= align(pt->height[l], tile_h) * pt->block.size;
 
 			lvl->image_offset[i] = mt->total_size;
 
