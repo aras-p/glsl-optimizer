@@ -152,6 +152,8 @@ void r500_fs_dump(struct r500_fragment_shader* fs)
 
 static void r300_vs_op_dump(uint32_t op)
 {
+    debug_printf(" dst: %d%s op: ",
+            (op >> 13) & 0x7f, r300_vs_dst_debug[(op >> 8) & 0x7]);
     if (op & 0x80) {
         if (op & 0x1) {
             debug_printf("PVS_MACRO_OP_2CLK_M2X_ADD\n");
@@ -167,7 +169,8 @@ static void r300_vs_op_dump(uint32_t op)
 
 void r300_vs_src_dump(uint32_t src)
 {
-    debug_printf(" %s%s/%s%s/%s%s/%s%s\n",
+    debug_printf(" reg: %d%s swiz: %s%s/%s%s/%s%s/%s%s\n",
+            (src >> 5) & 0x7f, r300_vs_src_debug[src & 0x3],
             src & (1 << 25) ? "-" : " ",
             r300_vs_swiz_debug[(src >> 13) & 0x7],
             src & (1 << 26) ? "-" : " ",

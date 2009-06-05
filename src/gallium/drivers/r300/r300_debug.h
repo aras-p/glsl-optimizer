@@ -174,6 +174,24 @@ static char* r300_vs_me_ops[] = {
 };
 
 /* XXX refactor to avoid clashing symbols */
+static char* r300_vs_src_debug[] = {
+    "t",
+    "i",
+    "c",
+    "a",
+};
+
+static char* r300_vs_dst_debug[] = {
+    "t",
+    "a0",
+    "o",
+    "ox",
+    "a",
+    "i",
+    "u",
+    "u",
+};
+
 static char* r300_vs_swiz_debug[] = {
     "X",
     "Y",
