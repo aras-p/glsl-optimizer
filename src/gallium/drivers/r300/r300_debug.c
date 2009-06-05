@@ -167,10 +167,14 @@ static void r300_vs_op_dump(uint32_t op)
 
 void r300_vs_src_dump(uint32_t src)
 {
-    debug_printf(" %s/%s/%s/%s\n",
+    debug_printf(" %s%s/%s%s/%s%s/%s%s\n",
+            src & (1 << 25) ? "-" : " ",
             r300_vs_swiz_debug[(src >> 13) & 0x7],
+            src & (1 << 26) ? "-" : " ",
             r300_vs_swiz_debug[(src >> 16) & 0x7],
+            src & (1 << 27) ? "-" : " ",
             r300_vs_swiz_debug[(src >> 19) & 0x7],
+            src & (1 << 28) ? "-" : " ",
             r300_vs_swiz_debug[(src >> 22) & 0x7]);
 }
 
