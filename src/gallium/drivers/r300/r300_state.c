@@ -119,9 +119,10 @@ static void r300_set_clip_state(struct pipe_context* pipe,
                                 const struct pipe_clip_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
-    /* XXX add HW TCL clipping setup */
-    draw_flush(r300->draw);
-    draw_set_clip_state(r300->draw, state);
+
+    r300->clip_state = *state;
+
+    r300->dirty_state |= R300_NEW_CLIP;
 }
 
 static void

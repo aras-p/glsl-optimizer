@@ -56,6 +56,27 @@ void r300_emit_blend_color_state(struct r300_context* r300,
     }
 }
 
+void r300_emit_clip_state(struct r300_context* r300,
+                          struct pipe_clip_state* clip)
+{
+    int i;
+    struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    CS_LOCALS(r300);
+
+    BEGIN_CS(3 + (6 * 4));
+    OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
+            (r300screen->caps->is_r500 ?
+             R500_PVS_UCP_START : R300_PVS_UCP_START));
+    OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, 6 * 4);
+    for (i = 0; i < 6; i++) {
+        OUT_CS_32F(clip->ucp[i][0]);
+        OUT_CS_32F(clip->ucp[i][1]);
+        OUT_CS_32F(clip->ucp[i][2]);
+        OUT_CS_32F(clip->ucp[i][3]);
+    }
+    END_CS;
+}
+
 void r300_emit_dsa_state(struct r300_context* r300,
                            struct r300_dsa_state* dsa)
 {
@@ -525,6 +546,11 @@ validate:
     if (r300->dirty_state & R300_NEW_BLEND_COLOR) {
         r300_emit_blend_color_state(r300, r300->blend_color_state);
         r300->dirty_state &= ~R300_NEW_BLEND_COLOR;
+    }
+
+    if (r300->dirty_state & R300_NEW_CLIP) {
+        r300_emit_clip_state(r300, &r300->clip_state);
+        r300->dirty_state &= ~R300_NEW_CLIP;
     }
 
     if (r300->dirty_state & R300_NEW_DSA) {

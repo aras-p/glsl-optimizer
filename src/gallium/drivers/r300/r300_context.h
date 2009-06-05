@@ -117,23 +117,24 @@ struct r300_viewport_state {
     uint32_t vte_control; /* R300_VAP_VTE_CNTL:      0x20b0 */
 };
 
-#define R300_NEW_BLEND           0x0000001
-#define R300_NEW_BLEND_COLOR     0x0000002
-#define R300_NEW_CONSTANTS       0x0000004
-#define R300_NEW_DSA             0x0000008
-#define R300_NEW_FRAMEBUFFERS    0x0000010
-#define R300_NEW_FRAGMENT_SHADER 0x0000020
-#define R300_NEW_RASTERIZER      0x0000040
-#define R300_NEW_RS_BLOCK        0x0000080
-#define R300_NEW_SAMPLER         0x0000100
-#define R300_ANY_NEW_SAMPLERS    0x000ff00
-#define R300_NEW_SCISSOR         0x0010000
-#define R300_NEW_TEXTURE         0x0020000
-#define R300_ANY_NEW_TEXTURES    0x1fe0000
-#define R300_NEW_VERTEX_FORMAT   0x2000000
-#define R300_NEW_VERTEX_SHADER   0x4000000
-#define R300_NEW_VIEWPORT        0x8000000
-#define R300_NEW_KITCHEN_SINK    0xfffffff
+#define R300_NEW_BLEND           0x00000001
+#define R300_NEW_BLEND_COLOR     0x00000002
+#define R300_NEW_CLIP            0x00000004
+#define R300_NEW_CONSTANTS       0x00000008
+#define R300_NEW_DSA             0x00000010
+#define R300_NEW_FRAMEBUFFERS    0x00000020
+#define R300_NEW_FRAGMENT_SHADER 0x00000040
+#define R300_NEW_RASTERIZER      0x00000080
+#define R300_NEW_RS_BLOCK        0x00000100
+#define R300_NEW_SAMPLER         0x00000200
+#define R300_ANY_NEW_SAMPLERS    0x0001fe00
+#define R300_NEW_SCISSOR         0x00020000
+#define R300_NEW_TEXTURE         0x00040000
+#define R300_ANY_NEW_TEXTURES    0x03fc0000
+#define R300_NEW_VERTEX_FORMAT   0x04000000
+#define R300_NEW_VERTEX_SHADER   0x08000000
+#define R300_NEW_VIEWPORT        0x10000000
+#define R300_NEW_KITCHEN_SINK    0x1fffffff
 
 /* The next several objects are not pure Radeon state; they inherit from
  * various Gallium classes. */
@@ -292,6 +293,8 @@ struct r300_context {
     struct r300_blend_state* blend_state;
     /* Blend color state. */
     struct r300_blend_color_state* blend_color_state;
+    /* User clip planes. */
+    struct pipe_clip_state clip_state;
     /* Shader constants. */
     struct r300_constant_buffer shader_constants[PIPE_SHADER_TYPES];
     /* Depth, stencil, and alpha state. */
