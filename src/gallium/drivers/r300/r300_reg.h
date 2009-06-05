@@ -511,11 +511,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_PVS_XYZW_VALID_INST_SHIFT    10
 #       define R300_PVS_LAST_INST_SHIFT          20
 #       define R300_PVS_FIRST_INST(x)            ((x) << 0)
+#       define R300_PVS_XYZW_VALID_INST(x)       ((x) << 10)
 #       define R300_PVS_LAST_INST(x)             ((x) << 20)
 /* Addresses are relative the the vertex program parameters area. */
 #define R300_VAP_PVS_CONST_CNTL             0x22D4
 #       define R300_PVS_CONST_BASE_OFFSET_SHIFT  0
 #       define R300_PVS_MAX_CONST_ADDR_SHIFT     16
+#       define R300_PVS_MAX_CONST_ADDR(x)        ((x) << 16)
 #define R300_VAP_PVS_CODE_CNTL_1	    0x22D8
 #       define R300_PVS_LAST_VTX_SRC_INST_SHIFT  0
 #define R300_VAP_PVS_FLOW_CNTL_OPC          0x22DC

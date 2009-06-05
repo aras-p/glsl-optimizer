@@ -372,17 +372,22 @@ void r300_emit_vertex_shader(struct r300_context* r300,
     }
 
     if (constants->count) {
-        BEGIN_CS(16 + (vs->instruction_count * 4) + (constants->count * 4));
+        BEGIN_CS(14 + (vs->instruction_count * 4) + (constants->count * 4));
     } else {
-        BEGIN_CS(13 + (vs->instruction_count * 4));
+        BEGIN_CS(11 + (vs->instruction_count * 4));
     }
 
-    OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_0, R300_PVS_FIRST_INST(0) |
+    /* R300_VAP_PVS_CODE_CNTL_0
+     * R300_VAP_PVS_CONST_CNTL
+     * R300_VAP_PVS_CODE_CNTL_1
+     * See the r5xx docs for instructions on how to use these.
+     * XXX these could be optimized to select better values... */
+    OUT_CS_REG_SEQ(R300_VAP_PVS_CODE_CNTL_0, 3);
+    OUT_CS(R300_PVS_FIRST_INST(0) |
+            R300_PVS_XYZW_VALID_INST(vs->instruction_count - 1) |
             R300_PVS_LAST_INST(vs->instruction_count - 1));
-    OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_1, vs->instruction_count - 1);
-
-    /* XXX */
-    OUT_CS_REG(R300_VAP_PVS_CONST_CNTL, 0x0);
+    OUT_CS(R300_PVS_MAX_CONST_ADDR(constants->count - 1));
+    OUT_CS(vs->instruction_count - 1);
 
     OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG, 0);
     OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, vs->instruction_count * 4);
@@ -412,7 +417,6 @@ void r300_emit_vertex_shader(struct r300_context* r300,
             R300_PVS_VF_MAX_VTX_NUM(12));
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
     END_CS;
-
 }
 
 void r300_emit_viewport_state(struct r300_context* r300,
