@@ -955,26 +955,36 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 		vp->outputs[VERT_RESULT_PSIZ] = cur_reg++;
 	}
 
+	/* If we're writing back facing colors we need to send
+	 * four colors to make front/back face colors selection work.
+	 * If the vertex program doesn't write all 4 colors, lets
+	 * pretend it does by skipping output index reg so the colors
+	 * get written into appropriate output vectors.
+	 */
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_COL0)) {
 		vp->outputs[VERT_RESULT_COL0] = cur_reg++;
+	} else if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC0) ||
+		vp->key.OutputsWritten & (1 << VERT_RESULT_BFC1)) {
+		cur_reg++;
 	}
 
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_COL1)) {
-		vp->outputs[VERT_RESULT_COL1] =
-		    vp->outputs[VERT_RESULT_COL0] + 1;
-		cur_reg = vp->outputs[VERT_RESULT_COL1] + 1;
+		vp->outputs[VERT_RESULT_COL1] = cur_reg++;
+	} else if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC0) ||
+		vp->key.OutputsWritten & (1 << VERT_RESULT_BFC1)) {
+		cur_reg++;
 	}
 
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC0)) {
-		vp->outputs[VERT_RESULT_BFC0] =
-		    vp->outputs[VERT_RESULT_COL0] + 2;
-		cur_reg = vp->outputs[VERT_RESULT_BFC0] + 2;
+		vp->outputs[VERT_RESULT_BFC0] = cur_reg++;
+	} else if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC1)) {
+		cur_reg++;
 	}
 
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC1)) {
-		vp->outputs[VERT_RESULT_BFC1] =
-		    vp->outputs[VERT_RESULT_COL0] + 3;
-		cur_reg = vp->outputs[VERT_RESULT_BFC1] + 1;
+		vp->outputs[VERT_RESULT_BFC1] = cur_reg++;
+	} else if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC0)) {
+		cur_reg++;
 	}
 
 	for (i = VERT_RESULT_TEX0; i <= VERT_RESULT_TEX7; i++) {
