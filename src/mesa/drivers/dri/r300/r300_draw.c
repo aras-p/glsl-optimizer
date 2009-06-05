@@ -123,7 +123,7 @@ static int getTypeSize(GLenum type)
 				*dst_ptr++ = MACRO(*in);		\
 				in++;				\
 			}					\
-			src_ptr += input->StrideB;			\
+			src_ptr += stride;			\
 		}						\
 	} else {					\
 		for (i = 0; i < count; i++) {		\
@@ -132,7 +132,7 @@ static int getTypeSize(GLenum type)
 				*dst_ptr++ = (GLfloat)(*in);		\
 				in++;				\
 			}					\
-			src_ptr += input->StrideB;			\
+			src_ptr += stride;			\
 		}						\
 	}						\
 } while (0)
@@ -144,6 +144,7 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 	struct vertex_attribute r300_attr;
 	const void *src_ptr;
 	GLenum type;
+	GLuint stride;
 
 	if (input->BufferObj->Name) {
 		if (!input->BufferObj->Pointer) {
@@ -157,10 +158,12 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 	} else
 		src_ptr = input->Ptr;
 
-	if (input->Type == GL_DOUBLE || input->Type == GL_UNSIGNED_INT || input->Type == GL_INT || input->StrideB < 4){
+	stride = (input->StrideB == 0) ? getTypeSize(input->Type) * input->Size : input->StrideB;
+
+	if (input->Type == GL_DOUBLE || input->Type == GL_UNSIGNED_INT || input->Type == GL_INT || stride < 4){
 		if (RADEON_DEBUG & DEBUG_FALLBACKS) {
 			fprintf(stderr, "%s: Converting vertex attributes, attribute data format %x,", __FUNCTION__, input->Type);
-			fprintf(stderr, "stride %d, components %d\n", input->StrideB, input->Size);
+			fprintf(stderr, "stride %d, components %d\n", stride, input->Size);
 		}
 
 		GLfloat *dst_ptr, *tmp;
@@ -203,7 +206,7 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 		type = input->Type;
 		r300_attr.free_needed = GL_FALSE;
 		r300_attr.data = (GLvoid *)src_ptr;
-		r300_attr.stride = input->StrideB;
+		r300_attr.stride = stride;
 		r300_attr.dwords = (getTypeSize(type) * input->Size  + 3)/ 4;
 	}
 
