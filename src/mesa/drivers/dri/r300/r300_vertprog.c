@@ -1185,23 +1185,6 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 		}
 	}
 
-	/* Some outputs may be artificially added, to match the inputs
-	   of the fragment program. Blank the outputs here. */
-	for (i = 0; i < VERT_RESULT_MAX; i++) {
-		if (vp->key.OutputsAdded & (1 << i)) {
-			inst[0] = PVS_OP_DST_OPERAND(VE_ADD,
-						     GL_FALSE,
-						     GL_FALSE,
-						     vp->outputs[i],
-						     VSF_FLAG_ALL,
-						     PVS_DST_REG_OUT);
-			inst[1] = __CONST(0, SWIZZLE_ZERO);
-			inst[2] = __CONST(0, SWIZZLE_ZERO);
-			inst[3] = __CONST(0, SWIZZLE_ZERO);
-			inst += 4;
-		}
-	}
-
 	vp->hw_code.length = (inst - vp->hw_code.body.d);
 	if (vp->hw_code.length >= VSF_MAX_FRAGMENT_LENGTH) {
 		vp->error = GL_TRUE;
@@ -1388,6 +1371,43 @@ static struct r300_vertex_program *build_program(struct r300_vertex_program_key
 		fprintf(stderr, "Vertex program after native rewrite:\n");
 		_mesa_print_program(&mesa_vp->Base);
 		fflush(stdout);
+	}
+
+	/* Some outputs may be artificially added, to match the inputs of the fragment program.
+	 * Issue 16 of vertex program spec says that all vertex attributes that are unwritten by
+	 * vertex program are undefined, so just use MOV [vertex_result], CONST[0]
+	 */
+	{
+		int i, count = 0;
+		for (i = 0; i < VERT_RESULT_MAX; ++i) {
+			if (vp->key.OutputsAdded & (1 << i)) {
+				++count;
+			}
+		}
+
+		if (count > 0) {
+			struct prog_instruction *inst;
+
+			_mesa_insert_instructions(&mesa_vp->Base, mesa_vp->Base.NumInstructions - 1, count);
+			inst = &mesa_vp->Base.Instructions[mesa_vp->Base.NumInstructions - 1 - count];
+
+			for (i = 0; i < VERT_RESULT_MAX; ++i) {
+				if (vp->key.OutputsAdded & (1 << i)) {
+					inst->Opcode = OPCODE_MOV;
+
+					inst->DstReg.File = PROGRAM_OUTPUT;
+					inst->DstReg.Index = i;
+					inst->DstReg.WriteMask = WRITEMASK_XYZW;
+					inst->DstReg.CondMask = COND_TR;
+
+					inst->SrcReg[0].File = PROGRAM_CONSTANT;
+					inst->SrcReg[0].Index = 0;
+					inst->SrcReg[0].Swizzle = SWIZZLE_XYZW;
+
+					++inst;
+				}
+			}
+		}
 	}
 
 	assert(mesa_vp->Base.NumInstructions);
