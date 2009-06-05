@@ -140,6 +140,8 @@ GLboolean r300_transform_TEX(
 			inst.DstReg.Index = tempreg;
 			inst.DstReg.WriteMask = WRITEMASK_XYZW;
 			destredirect = GL_TRUE;
+		} else if (inst.SaturateMode) {
+			destredirect = GL_TRUE;
 		}
 	}
 
@@ -219,6 +221,7 @@ GLboolean r300_transform_TEX(
 
 		tgt->Opcode = OPCODE_MOV;
 		tgt->DstReg = orig_inst->DstReg;
+		tgt->SaturateMode = inst.SaturateMode;
 		tgt->SrcReg[0].File = PROGRAM_TEMPORARY;
 		tgt->SrcReg[0].Index = inst.DstReg.Index;
 	}
