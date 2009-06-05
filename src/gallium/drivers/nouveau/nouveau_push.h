@@ -54,7 +54,7 @@ DO_FIRE_RING(struct nouveau_channel *chan, struct pipe_fence_handle **fence)
 	NOUVEAU_PUSH_CONTEXT(pc);                                              \
 	struct nouveau_channel *chan = pc->base.channel;                       \
 	nouveau_pushbuf_emit_reloc(chan, chan->pushbuf->cur++, nouveau_bo(bo), \
-				   (data), (flags), (vor), (tor));             \
+				   (data), 0, (flags), (vor), (tor));          \
 } while(0)
 
 /* Raw data + flags depending on FB/TT buffer */

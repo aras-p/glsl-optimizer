@@ -8,6 +8,8 @@
 #include "nouveau_winsys.h"
 #include "nouveau_screen.h"
 
+//#define ENABLE_BUFRANGE
+
 static const char *
 nouveau_screen_get_name(struct pipe_screen *pscreen)
 {
@@ -109,16 +111,13 @@ nouveau_screen_map_flags(unsigned pipe)
 		flags |= NOUVEAU_BO_RD;
 	if (pipe & PIPE_BUFFER_USAGE_CPU_WRITE)
 		flags |= NOUVEAU_BO_WR;
-#ifdef NOUVEAU_BO_NOWAIT
 	if (pipe & PIPE_BUFFER_USAGE_DISCARD)
 		flags |= NOUVEAU_BO_INVAL;
-
 	if (pipe & PIPE_BUFFER_USAGE_DONTBLOCK)
 		flags |= NOUVEAU_BO_NOWAIT;
 	else
 	if (pipe & 0 /*PIPE_BUFFER_USAGE_UNSYNCHRONIZED*/)
 		flags |= NOUVEAU_BO_NOSYNC;
-#endif
 
 	return flags;
 }
@@ -139,7 +138,7 @@ nouveau_screen_bo_map(struct pipe_screen *pscreen, struct pipe_buffer *pb,
 	return bo->map;
 }
 
-#ifdef NOUVEAU_BO_NOWAIT
+#ifdef ENABLE_BUFRANGE
 static void *
 nouveau_screen_bo_map_range(struct pipe_screen *pscreen, struct pipe_buffer *pb,
 			    unsigned offset, unsigned length, unsigned usage)
@@ -226,7 +225,7 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 	pscreen->buffer_create = nouveau_screen_bo_new;
 	pscreen->user_buffer_create = nouveau_screen_bo_user;
 	pscreen->buffer_map = nouveau_screen_bo_map;
-#ifdef NOUVEAU_BO_NOWAIT
+#ifdef ENABLE_BUFRANGE
 	pscreen->buffer_map_range = nouveau_screen_bo_map_range;
 	pscreen->buffer_flush_mapped_range = nouveau_screen_bo_map_flush;
 #endif

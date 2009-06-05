@@ -122,8 +122,8 @@ so_emit(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
 		nouveau_pushbuf_emit_reloc(chan, pb->cur + r->offset,
-					   r->bo, r->data, r->flags, r->vor,
-					   r->tor);
+					   r->bo, r->data, 0, r->flags,
+					   r->vor, r->tor);
 	}
 	pb->cur += nr;
 }
@@ -145,12 +145,12 @@ so_emit_reloc_markers(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 	for (i = 0; i < so->cur_reloc; i++) {
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
-		nouveau_pushbuf_emit_reloc(chan, pb->cur++, r->bo, r->packet,
+		nouveau_pushbuf_emit_reloc(chan, pb->cur++, r->bo, r->packet, 0,
 					   (r->flags & (NOUVEAU_BO_VRAM |
 							NOUVEAU_BO_GART |
 							NOUVEAU_BO_RDWR)) |
 					   NOUVEAU_BO_DUMMY, 0, 0);
-		nouveau_pushbuf_emit_reloc(chan, pb->cur++, r->bo, r->data,
+		nouveau_pushbuf_emit_reloc(chan, pb->cur++, r->bo, r->data, 0,
 					   r->flags | NOUVEAU_BO_DUMMY,
 					   r->vor, r->tor);
 	}

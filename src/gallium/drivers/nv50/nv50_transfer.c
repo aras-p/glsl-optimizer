@@ -34,7 +34,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen, struct pipe_buffer *src,
 
 	WAIT_RING (chan, 14);
 
-	if (!src_bo->tiled) {
+	if (!src_bo->tile_flags) {
 		BEGIN_RING(chan, m2mf, 0x0200, 1);
 		OUT_RING  (chan, 1);
 		BEGIN_RING(chan, m2mf, 0x0314, 1);
@@ -43,14 +43,14 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen, struct pipe_buffer *src,
 	} else {
 		BEGIN_RING(chan, m2mf, 0x0200, 6);
 		OUT_RING  (chan, 0);
-		OUT_RING  (chan, 0);
+		OUT_RING  (chan, src_bo->tile_mode << 4);
 		OUT_RING  (chan, sw * cpp);
 		OUT_RING  (chan, sh);
 		OUT_RING  (chan, 1);
 		OUT_RING  (chan, 0);
 	}
 
-	if (!dst_bo->tiled) {
+	if (!dst_bo->tile_flags) {
 		BEGIN_RING(chan, m2mf, 0x021c, 1);
 		OUT_RING  (chan, 1);
 		BEGIN_RING(chan, m2mf, 0x0318, 1);
@@ -59,7 +59,7 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen, struct pipe_buffer *src,
 	} else {
 		BEGIN_RING(chan, m2mf, 0x021c, 6);
 		OUT_RING  (chan, 0);
-		OUT_RING  (chan, 0);
+		OUT_RING  (chan, dst_bo->tile_mode << 4);
 		OUT_RING  (chan, dw * cpp);
 		OUT_RING  (chan, dh);
 		OUT_RING  (chan, 1);
@@ -76,13 +76,13 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen, struct pipe_buffer *src,
 		BEGIN_RING(chan, m2mf, 0x030c, 2);
 		OUT_RELOCl(chan, src_bo, src_offset, src_reloc);
 		OUT_RELOCl(chan, dst_bo, dst_offset, dst_reloc);
-		if (src_bo->tiled) {
+		if (src_bo->tile_flags) {
 			BEGIN_RING(chan, m2mf, 0x0218, 1);
 			OUT_RING  (chan, (dy << 16) | sx);
 		} else {
 			src_offset += (line_count * src_pitch);
 		}
-		if (dst_bo->tiled) {
+		if (dst_bo->tile_flags) {
 			BEGIN_RING(chan, m2mf, 0x0234, 1);
 			OUT_RING  (chan, (sy << 16) | dx);
 		} else {
