@@ -1456,7 +1456,12 @@ void r300SelectVertexShader(r300ContextPtr r300)
 		wpos_idx = i;
 	}
 
-	add_outputs(&wanted_key, VERT_RESULT_HPOS);
+	if (vpc->mesa_program.IsPositionInvariant) {
+		wanted_key.InputsRead |= (1 << VERT_ATTRIB_POS);
+		wanted_key.OutputsWritten |= (1 << VERT_RESULT_HPOS);
+	} else {
+		add_outputs(&wanted_key, VERT_RESULT_HPOS);
+	}
 
 	if (InputsRead & FRAG_BIT_COL0) {
 		add_outputs(&wanted_key, VERT_RESULT_COL0);
@@ -1466,15 +1471,14 @@ void r300SelectVertexShader(r300ContextPtr r300)
 		add_outputs(&wanted_key, VERT_RESULT_COL1);
 	}
 
+	if (InputsRead & FRAG_BIT_FOGC) {
+		add_outputs(&wanted_key, VERT_RESULT_FOGC);
+	}
+
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
 			add_outputs(&wanted_key, VERT_RESULT_TEX0 + i);
 		}
-	}
-
-	if (vpc->mesa_program.IsPositionInvariant) {
-		/* we wan't position don't we ? */
-		wanted_key.InputsRead |= (1 << VERT_ATTRIB_POS);
 	}
 
 	for (vp = vpc->progs; vp; vp = vp->next)
