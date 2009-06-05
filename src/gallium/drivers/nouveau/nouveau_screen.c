@@ -8,8 +8,6 @@
 #include "nouveau_winsys.h"
 #include "nouveau_screen.h"
 
-//#define ENABLE_BUFRANGE
-
 static const char *
 nouveau_screen_get_name(struct pipe_screen *pscreen)
 {
@@ -138,7 +136,6 @@ nouveau_screen_bo_map(struct pipe_screen *pscreen, struct pipe_buffer *pb,
 	return bo->map;
 }
 
-#ifdef ENABLE_BUFRANGE
 static void *
 nouveau_screen_bo_map_range(struct pipe_screen *pscreen, struct pipe_buffer *pb,
 			    unsigned offset, unsigned length, unsigned usage)
@@ -153,7 +150,7 @@ nouveau_screen_bo_map_range(struct pipe_screen *pscreen, struct pipe_buffer *pb,
 		return NULL;
 	}
 
-	return bo->map;
+	return (char *)bo->map - offset; /* why gallium? why? */
 }
 
 static void
@@ -164,7 +161,6 @@ nouveau_screen_bo_map_flush(struct pipe_screen *pscreen, struct pipe_buffer *pb,
 
 	nouveau_bo_map_flush(bo, offset, length);
 }
-#endif
 
 static void
 nouveau_screen_bo_unmap(struct pipe_screen *pscreen, struct pipe_buffer *pb)
@@ -225,10 +221,8 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 	pscreen->buffer_create = nouveau_screen_bo_new;
 	pscreen->user_buffer_create = nouveau_screen_bo_user;
 	pscreen->buffer_map = nouveau_screen_bo_map;
-#ifdef ENABLE_BUFRANGE
 	pscreen->buffer_map_range = nouveau_screen_bo_map_range;
 	pscreen->buffer_flush_mapped_range = nouveau_screen_bo_map_flush;
-#endif
 	pscreen->buffer_unmap = nouveau_screen_bo_unmap;
 	pscreen->buffer_destroy = nouveau_screen_bo_del;
 
