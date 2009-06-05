@@ -56,6 +56,7 @@ struct trace_context
       struct trace_texture *zsbuf;
    } curr;
 
+   pipe_condvar draw_cond;
    pipe_mutex draw_mutex;
    int draw_blocker;
    int draw_blocked;

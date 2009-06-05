@@ -127,9 +127,13 @@ trace_context_draw_block(struct trace_context *tr_ctx, int flag)
    /* wait for rbug to clear the blocked flag */
    while (tr_ctx->draw_blocked & flag) {
       tr_ctx->draw_blocked |= flag;
+#ifdef PIPE_THREAD_HAVE_CONDVAR
+      pipe_condvar_wait(tr_ctx->draw_cond, tr_ctx->draw_mutex);
+#else
       pipe_mutex_unlock(tr_ctx->draw_mutex);
       /* TODO sleep or use conditional */
       pipe_mutex_lock(tr_ctx->draw_mutex);
+#endif
    }
 
    pipe_mutex_unlock(tr_ctx->draw_mutex);
@@ -1191,6 +1195,7 @@ trace_context_create(struct pipe_screen *_screen,
                                                  rbug_blocker_flags,
                                                  0);
    pipe_mutex_init(tr_ctx->draw_mutex);
+   pipe_condvar_init(tr_ctx->draw_cond);
    pipe_mutex_init(tr_ctx->list_mutex);
    make_empty_list(&tr_ctx->shaders);
 

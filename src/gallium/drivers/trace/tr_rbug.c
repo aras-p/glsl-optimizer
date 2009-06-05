@@ -371,6 +371,10 @@ trace_rbug_context_draw_step(struct trace_rbug *tr_rbug, struct rbug_header *hea
    tr_ctx->draw_blocked &= ~step->step;
    pipe_mutex_unlock(tr_ctx->draw_mutex);
 
+#ifdef PIPE_THREAD_HAVE_CONDVAR
+   pipe_condvar_broadcast(tr_ctx->draw_cond);
+#endif
+
    pipe_mutex_unlock(tr_scr->list_mutex);
 
    return 0;
@@ -396,6 +400,10 @@ trace_rbug_context_draw_unblock(struct trace_rbug *tr_rbug, struct rbug_header *
    tr_ctx->draw_blocked &= ~unblock->unblock;
    tr_ctx->draw_blocker &= ~unblock->unblock;
    pipe_mutex_unlock(tr_ctx->draw_mutex);
+
+#ifdef PIPE_THREAD_HAVE_CONDVAR
+   pipe_condvar_broadcast(tr_ctx->draw_cond);
+#endif
 
    pipe_mutex_unlock(tr_scr->list_mutex);
 
