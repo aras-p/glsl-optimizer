@@ -826,12 +826,12 @@ case "$mesa_driver" in
 osmesa)
     # only link libraries with osmesa if shared
     if test "$enable_static" = no; then
-        OSMESA_LIB_DEPS="-lm -lpthread $SELINUX_LIBS"
+        OSMESA_LIB_DEPS="-lm -lpthread $SELINUX_LIBS $DLOPEN_LIBS"
     else
         OSMESA_LIB_DEPS=""
     fi
     OSMESA_MESA_DEPS=""
-    OSMESA_PC_LIB_PRIV="-lm -lpthread $SELINUX_LIBS"
+    OSMESA_PC_LIB_PRIV="-lm -lpthread $SELINUX_LIBS $DLOPEN_LIBS"
     ;;
 *)
     # Link OSMesa to libGL otherwise
@@ -845,9 +845,6 @@ osmesa)
     OSMESA_PC_REQ="gl"
     ;;
 esac
-if test "$enable_static" = no; then
-    OSMESA_LIB_DEPS="$OSMESA_LIB_DEPS"
-fi
 OSMESA_PC_LIB_PRIV="$OSMESA_PC_LIB_PRIV"
 AC_SUBST([OSMESA_LIB_DEPS])
 AC_SUBST([OSMESA_MESA_DEPS])
