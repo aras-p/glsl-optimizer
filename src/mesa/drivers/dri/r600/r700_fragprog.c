@@ -293,7 +293,7 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     (context->chipobj.MemUse)(context, fp->shadercode.buf->id);
     */
 
-    r700->SQ_PGM_START_PS.u32All = 0; /* set from buffer obj */
+    r700->ps.SQ_PGM_START_PS.u32All = 0; /* set from buffer obj */
 
     unNumOfReg = fp->r700Shader.nRegs + 1;
 
@@ -301,17 +301,17 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 
     ui = ui ? unNumOfReg : ui;
 
-    SETfield(r700->SQ_PGM_RESOURCES_PS.u32All, ui, NUM_GPRS_shift, NUM_GPRS_mask); 
+    SETfield(r700->ps.SQ_PGM_RESOURCES_PS.u32All, ui, NUM_GPRS_shift, NUM_GPRS_mask); 
     
-    CLEARbit(r700->SQ_PGM_RESOURCES_PS.u32All, UNCACHED_FIRST_INST_bit);
+    CLEARbit(r700->ps.SQ_PGM_RESOURCES_PS.u32All, UNCACHED_FIRST_INST_bit);
 
     if(fp->r700Shader.uStackSize) /* we don't use branch for now, it should be zero. */
 	{
-        SETfield(r700->SQ_PGM_RESOURCES_PS.u32All, fp->r700Shader.uStackSize,
+        SETfield(r700->ps.SQ_PGM_RESOURCES_PS.u32All, fp->r700Shader.uStackSize,
                  STACK_SIZE_shift, STACK_SIZE_mask);
     }
 
-    SETfield(r700->SQ_PGM_EXPORTS_PS.u32All, fp->r700Shader.exportMode,
+    SETfield(r700->ps.SQ_PGM_EXPORTS_PS.u32All, fp->r700Shader.exportMode,
              EXPORT_MODE_shift, EXPORT_MODE_mask);
 
     if(fp->r700Shader.killIsUsed)

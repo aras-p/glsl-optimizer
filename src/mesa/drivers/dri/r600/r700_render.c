@@ -112,17 +112,17 @@ static GLboolean r700SetupShaders(GLcontext * ctx)
 
     GLuint exportCount;
 
-	r700->SQ_PGM_RESOURCES_PS.u32All = 0;
-	r700->SQ_PGM_RESOURCES_VS.u32All = 0;
+    r700->ps.SQ_PGM_RESOURCES_PS.u32All = 0;
+    r700->vs.SQ_PGM_RESOURCES_VS.u32All = 0;
 
-	SETbit(r700->SQ_PGM_RESOURCES_PS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
-    SETbit(r700->SQ_PGM_RESOURCES_VS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
+    SETbit(r700->ps.SQ_PGM_RESOURCES_PS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
+    SETbit(r700->vs.SQ_PGM_RESOURCES_VS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
 
     r700SetupVertexProgram(ctx);
 
     r700SetupFragmentProgram(ctx);
 
-	exportCount = (r700->SQ_PGM_EXPORTS_PS.u32All & EXPORT_MODE_mask) / (1 << EXPORT_MODE_shift);
+    exportCount = (r700->ps.SQ_PGM_EXPORTS_PS.u32All & EXPORT_MODE_mask) / (1 << EXPORT_MODE_shift);
     r700->CB_SHADER_CONTROL.u32All = (1 << exportCount) - 1;
 
     return GL_TRUE;
@@ -259,7 +259,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     r700UpdateShaders(ctx);
 
     r700SetScissor(context);
-    r700SetRenderTarget(context);
+    r700SetRenderTarget(context, 0);
     r700SetDepthTarget(context);
 
     if(r700SetupStreams(ctx))
@@ -287,15 +287,16 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     r700SetupShaders(ctx);
 
-    /* set a valid base address to make the command checker happy */
-    r700->SQ_PGM_START_FS.u32All     = r700->SQ_PGM_START_PS.u32All;
-    r700->SQ_PGM_START_ES.u32All     = r700->SQ_PGM_START_PS.u32All;
-    r700->SQ_PGM_START_GS.u32All     = r700->SQ_PGM_START_PS.u32All;
+    r700SendPSState(context);
+    r700SendVSState(context);
 
     /* flush vtx */
     //r700SyncSurf(context); /*  */
 
     r700SendContextStates(context);
+    r700SendViewportState(context);
+    r700SendRenderTargetState(context, 0);
+
 
     /* richard test code */
     for (i = 0; i < vb->PrimitiveCount; i++) 

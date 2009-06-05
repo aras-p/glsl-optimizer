@@ -372,14 +372,14 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
     (context->chipobj.MemUse)(context, vp->shadercode.buf->id);
     */
 
-    r700->SQ_PGM_START_VS.u32All = 0; /* set from buffer object. */ 
+    r700->vs.SQ_PGM_START_VS.u32All = 0; /* set from buffer object. */ 
     
-    SETfield(r700->SQ_PGM_RESOURCES_VS.u32All, vp->r700Shader.nRegs + 1,
+    SETfield(r700->vs.SQ_PGM_RESOURCES_VS.u32All, vp->r700Shader.nRegs + 1,
              NUM_GPRS_shift, NUM_GPRS_mask);
 
     if(vp->r700Shader.uStackSize) /* we don't use branch for now, it should be zero. */
 	{
-        SETfield(r700->SQ_PGM_RESOURCES_VS.u32All, vp->r700Shader.uStackSize,
+        SETfield(r700->vs.SQ_PGM_RESOURCES_VS.u32All, vp->r700Shader.uStackSize,
                  STACK_SIZE_shift, STACK_SIZE_mask);
     }
 

@@ -522,7 +522,7 @@ static void r700StencilOpSeparate(GLcontext * ctx, GLenum face,
 {
 }
 
-static void r700UpdateWindow(GLcontext * ctx) //--------------------
+static void r700UpdateWindow(GLcontext * ctx, int id) //--------------------
 {
 
 	context_t *context = R700_CONTEXT(ctx);
@@ -552,14 +552,16 @@ static void r700UpdateWindow(GLcontext * ctx) //--------------------
 
 	/* TODO : Need DMA flush as well. */
 
-	r700->PA_CL_VPORT_XSCALE.f32All  = sx;
-	r700->PA_CL_VPORT_XOFFSET.f32All = tx;
+	r700->viewport[id].PA_CL_VPORT_XSCALE.f32All  = sx;
+	r700->viewport[id].PA_CL_VPORT_XOFFSET.f32All = tx;
 
-	r700->PA_CL_VPORT_YSCALE.f32All  = sy;
-	r700->PA_CL_VPORT_YOFFSET.f32All = ty;
+	r700->viewport[id].PA_CL_VPORT_YSCALE.f32All  = sy;
+	r700->viewport[id].PA_CL_VPORT_YOFFSET.f32All = ty;
 
-	r700->PA_CL_VPORT_ZSCALE.f32All  = sz;
-	r700->PA_CL_VPORT_ZOFFSET.f32All = tz;
+	r700->viewport[id].PA_CL_VPORT_ZSCALE.f32All  = sz;
+	r700->viewport[id].PA_CL_VPORT_ZOFFSET.f32All = tz;
+
+	r700->viewport[id].enabled = GL_TRUE;
 }
 
 
@@ -569,14 +571,14 @@ static void r700Viewport(GLcontext * ctx,
 			 GLsizei width,
                          GLsizei height) //--------------------
 {
-	r700UpdateWindow(ctx);
+	r700UpdateWindow(ctx, 0);
 
 	radeon_viewport(ctx, x, y, width, height);
 }
 
 static void r700DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval) //-------------
 {
-	r700UpdateWindow(ctx);
+	r700UpdateWindow(ctx, 0);
 }
 
 static void r700PointSize(GLcontext * ctx, GLfloat size) //-------------------
@@ -608,6 +610,7 @@ void r700SetScissor(context_t *context) //---------------
 {
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 	unsigned x1, y1, x2, y2;
+	int id = 0;
 	struct radeon_renderbuffer *rrb;
 
 	rrb = radeon_get_colorbuffer(&context->radeon);
@@ -670,28 +673,22 @@ void r700SetScissor(context_t *context) //---------------
 	SETfield(r700->PA_SC_GENERIC_SCISSOR_BR.u32All, y2,
 		 PA_SC_GENERIC_SCISSOR_BR__BR_Y_shift, PA_SC_GENERIC_SCISSOR_BR__BR_Y_mask);
 
-	SETbit(r700->PA_SC_VPORT_SCISSOR_0_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
-	SETfield(r700->PA_SC_VPORT_SCISSOR_0_TL.u32All, x1,
+	SETbit(r700->viewport[id].PA_SC_VPORT_SCISSOR_0_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
+	SETfield(r700->viewport[id].PA_SC_VPORT_SCISSOR_0_TL.u32All, x1,
 		 PA_SC_VPORT_SCISSOR_0_TL__TL_X_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_X_mask);
-	SETfield(r700->PA_SC_VPORT_SCISSOR_0_TL.u32All, y1,
+	SETfield(r700->viewport[id].PA_SC_VPORT_SCISSOR_0_TL.u32All, y1,
 		 PA_SC_VPORT_SCISSOR_0_TL__TL_Y_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_Y_mask);
-	SETfield(r700->PA_SC_VPORT_SCISSOR_0_BR.u32All, x2,
+	SETfield(r700->viewport[id].PA_SC_VPORT_SCISSOR_0_BR.u32All, x2,
 		 PA_SC_VPORT_SCISSOR_0_BR__BR_X_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_X_mask);
-	SETfield(r700->PA_SC_VPORT_SCISSOR_0_BR.u32All, y2,
+	SETfield(r700->viewport[id].PA_SC_VPORT_SCISSOR_0_BR.u32All, y2,
 		 PA_SC_VPORT_SCISSOR_0_BR__BR_Y_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_Y_mask);
 
-	SETbit(r700->PA_SC_VPORT_SCISSOR_1_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
-	SETfield(r700->PA_SC_VPORT_SCISSOR_1_TL.u32All, x1,
-		 PA_SC_VPORT_SCISSOR_0_TL__TL_X_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_X_mask);
-	SETfield(r700->PA_SC_VPORT_SCISSOR_1_TL.u32All, y1,
-		 PA_SC_VPORT_SCISSOR_0_TL__TL_Y_shift, PA_SC_VPORT_SCISSOR_0_TL__TL_Y_mask);
-	SETfield(r700->PA_SC_VPORT_SCISSOR_1_BR.u32All, x2,
-		 PA_SC_VPORT_SCISSOR_0_BR__BR_X_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_X_mask);
-	SETfield(r700->PA_SC_VPORT_SCISSOR_1_BR.u32All, y2,
-		 PA_SC_VPORT_SCISSOR_0_BR__BR_Y_shift, PA_SC_VPORT_SCISSOR_0_BR__BR_Y_mask);
+	r700->viewport[id].PA_SC_VPORT_ZMIN_0.u32All = 0;
+	r700->viewport[id].PA_SC_VPORT_ZMAX_0.u32All = 0x3F800000;
+	r700->viewport[id].enabled = GL_TRUE;
 }
 
-void r700SetRenderTarget(context_t *context)
+void r700SetRenderTarget(context_t *context, int id)
 {
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
@@ -699,7 +696,7 @@ void r700SetRenderTarget(context_t *context)
     unsigned int nPitchInPixel;
 
     /* screen/window/view */
-    SETfield(r700->CB_TARGET_MASK.u32All, 0xF, TARGET0_ENABLE_shift, TARGET0_ENABLE_mask);
+    SETfield(r700->CB_TARGET_MASK.u32All, 0xF, (4 * id), TARGET0_ENABLE_mask);
 
     rrb = radeon_get_colorbuffer(&context->radeon);
 	if (!rrb || !rrb->bo) {
@@ -708,34 +705,38 @@ void r700SetRenderTarget(context_t *context)
 	}
 
     /* color buffer */
-    r700->CB_COLOR0_BASE.u32All = context->radeon.state.color.draw_offset;
+    r700->render_target[id].CB_COLOR0_BASE.u32All = context->radeon.state.color.draw_offset;
 
     nPitchInPixel = rrb->pitch/rrb->cpp;
-    SETfield(r700->CB_COLOR0_SIZE.u32All, (nPitchInPixel/8)-1,
+    SETfield(r700->render_target[id].CB_COLOR0_SIZE.u32All, (nPitchInPixel/8)-1,
              PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
-    SETfield(r700->CB_COLOR0_SIZE.u32All, ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
+    SETfield(r700->render_target[id].CB_COLOR0_SIZE.u32All, ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
              SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask);
-    r700->CB_COLOR0_BASE.u32All = 0;
-    SETfield(r700->CB_COLOR0_INFO.u32All, ENDIAN_NONE, ENDIAN_shift, ENDIAN_mask);
-    SETfield(r700->CB_COLOR0_INFO.u32All, ARRAY_LINEAR_GENERAL,
+    r700->render_target[id].CB_COLOR0_BASE.u32All = 0;
+    SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, ENDIAN_NONE, ENDIAN_shift, ENDIAN_mask);
+    SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, ARRAY_LINEAR_GENERAL,
              CB_COLOR0_INFO__ARRAY_MODE_shift, CB_COLOR0_INFO__ARRAY_MODE_mask);
     if(4 == rrb->cpp)
     {
-        SETfield(r700->CB_COLOR0_INFO.u32All, COLOR_8_8_8_8,
+        SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, COLOR_8_8_8_8,
                  CB_COLOR0_INFO__FORMAT_shift, CB_COLOR0_INFO__FORMAT_mask);
-        SETfield(r700->CB_COLOR0_INFO.u32All, SWAP_ALT, COMP_SWAP_shift, COMP_SWAP_mask);
+        SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, SWAP_ALT, COMP_SWAP_shift, COMP_SWAP_mask);
     }
     else
     {
-        SETfield(r700->CB_COLOR0_INFO.u32All, COLOR_5_6_5,
+        SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, COLOR_5_6_5,
                  CB_COLOR0_INFO__FORMAT_shift, CB_COLOR0_INFO__FORMAT_mask);
-        SETfield(r700->CB_COLOR0_INFO.u32All, SWAP_ALT_REV,
+        SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, SWAP_ALT_REV,
                  COMP_SWAP_shift, COMP_SWAP_mask);
     }
-    SETbit(r700->CB_COLOR0_INFO.u32All, SOURCE_FORMAT_bit);
-    SETbit(r700->CB_COLOR0_INFO.u32All, BLEND_CLAMP_bit);
-    SETfield(r700->CB_COLOR0_INFO.u32All, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
+    SETbit(r700->render_target[id].CB_COLOR0_INFO.u32All, SOURCE_FORMAT_bit);
+    SETbit(r700->render_target[id].CB_COLOR0_INFO.u32All, BLEND_CLAMP_bit);
+    SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
 
+    CLEARfield(r700->render_target[id].CB_BLEND0_CONTROL.u32All, COLOR_SRCBLEND_mask); /* no dst blend */
+    CLEARfield(r700->render_target[id].CB_BLEND0_CONTROL.u32All, ALPHA_SRCBLEND_mask); /* no dst blend */
+
+    r700->render_target[id].enabled = GL_TRUE;
 }
 
 void r700SetDepthTarget(context_t *context)
@@ -746,7 +747,7 @@ void r700SetDepthTarget(context_t *context)
     unsigned int nPitchInPixel;
 
     /* depth buf */
-	r700->DB_DEPTH_SIZE.u32All = 0;
+    r700->DB_DEPTH_SIZE.u32All = 0;
     r700->DB_DEPTH_BASE.u32All = 0;
     r700->DB_DEPTH_INFO.u32All = 0;
 
@@ -819,21 +820,19 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->VGT_DMA_NUM_INSTANCES.u32All = 1;
 
     /* not alpha blend */
-    CLEARfield(r700->SX_ALPHA_TEST_CONTROL.u32All, ALPHA_FUNC_mask); 
+    CLEARfield(r700->SX_ALPHA_TEST_CONTROL.u32All, ALPHA_FUNC_mask);
     CLEARbit(r700->SX_ALPHA_TEST_CONTROL.u32All, ALPHA_TEST_ENABLE_bit);
 
     /* defualt shader connections. */
     r700->SPI_VS_OUT_ID_0.u32All  = 0x03020100;
     r700->SPI_VS_OUT_ID_1.u32All  = 0x07060504;
 
-    r700->SPI_PS_INPUT_CNTL_0.u32All  = 0x00000800;
-    r700->SPI_PS_INPUT_CNTL_1.u32All  = 0x00000801;
-    r700->SPI_PS_INPUT_CNTL_2.u32All  = 0x00000802;
+    r700->SPI_PS_INPUT_CNTL[0].u32All  = 0x00000800;
+    r700->SPI_PS_INPUT_CNTL[1].u32All  = 0x00000801;
+    r700->SPI_PS_INPUT_CNTL[2].u32All  = 0x00000802;
 
     SETfield(r700->CB_COLOR_CONTROL.u32All, 0xCC, ROP3_shift, ROP3_mask);
     CLEARbit(r700->CB_COLOR_CONTROL.u32All, PER_MRT_BLEND_bit);
-    CLEARfield(r700->CB_BLEND0_CONTROL.u32All, COLOR_SRCBLEND_mask); /* no dst blend */
-    CLEARfield(r700->CB_BLEND0_CONTROL.u32All, ALPHA_SRCBLEND_mask); /* no dst blend */
 
     r700->DB_SHADER_CONTROL.u32All = 0;
     SETbit(r700->DB_SHADER_CONTROL.u32All, DUAL_EXPORT_ENABLE_bit);
@@ -897,7 +896,7 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->PA_CL_GB_HORZ_CLIP_ADJ.u32All  = 0x3F800000;
     r700->PA_CL_GB_HORZ_DISC_ADJ.u32All  = 0x3F800000;
 
-    /* Disble color compares */
+    /* Disable color compares */
     SETfield(r700->CB_CLRCMP_CONTROL.u32All, CLRCMP_DRAW_ALWAYS,
              CLRCMP_FCN_SRC_shift, CLRCMP_FCN_SRC_mask);
     SETfield(r700->CB_CLRCMP_CONTROL.u32All, CLRCMP_DRAW_ALWAYS,
@@ -924,32 +923,6 @@ void r700InitState(GLcontext * ctx) //-------------------
 
     r700->SX_MISC.u32All = 0;
 
-    /* depth buf */
-    r700->DB_DEPTH_SIZE.u32All = 0;
-    r700->DB_DEPTH_BASE.u32All = 0;
-    r700->DB_DEPTH_INFO.u32All = 0;
-    r700->DB_DEPTH_CONTROL.u32All   = 0;
-    r700->DB_DEPTH_CLEAR.u32All     = 0x3F800000;
-    r700->DB_DEPTH_VIEW.u32All      = 0;
-    r700->DB_RENDER_CONTROL.u32All  = 0;
-    r700->DB_RENDER_OVERRIDE.u32All = 0;
-    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIZ_ENABLE_shift, FORCE_HIZ_ENABLE_mask);
-    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE0_shift, FORCE_HIS_ENABLE0_mask);
-    SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE1_shift, FORCE_HIS_ENABLE1_mask);
-
-    /* color buffer */
-    r700->CB_COLOR0_SIZE.u32All = 0;
-    r700->CB_COLOR0_BASE.u32All = 0;
-    r700->CB_COLOR0_INFO.u32All = 0;
-    SETbit(r700->CB_COLOR0_INFO.u32All, SOURCE_FORMAT_bit);
-    SETbit(r700->CB_COLOR0_INFO.u32All, BLEND_CLAMP_bit);
-    SETfield(r700->CB_COLOR0_INFO.u32All, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
-    r700->CB_COLOR0_VIEW.u32All   = 0;
-    r700->CB_COLOR0_TILE.u32All   = 0;
-    r700->CB_COLOR0_FRAG.u32All   = 0;
-    r700->CB_COLOR0_MASK.u32All   = 0;
-
-    r700->PA_SC_VPORT_ZMAX_0.u32All = 0x3F800000;
 }
 
 void r700InitStateFuncs(struct dd_function_table *functions) //-----------------
