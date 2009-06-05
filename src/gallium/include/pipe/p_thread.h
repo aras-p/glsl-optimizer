@@ -43,6 +43,8 @@
 #include <pthread.h> /* POSIX threads headers */
 #include <stdio.h> /* for perror() */
 
+#define PIPE_THREAD_HAVE_CONDVAR
+
 typedef pthread_t pipe_thread;
 
 #define PIPE_THREAD_ROUTINE( name, param ) \
