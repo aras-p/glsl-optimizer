@@ -173,6 +173,18 @@ static char* r300_vs_me_ops[] = {
     "               (reserved)",
 };
 
+/* XXX refactor to avoid clashing symbols */
+static char* r300_vs_swiz_debug[] = {
+    "X",
+    "Y",
+    "Z",
+    "W",
+    "0",
+    "1",
+    "U",
+    "U",
+};
+
 void r500_fs_dump(struct r500_fragment_shader* fs);
 
 void r300_vs_dump(struct r300_vertex_shader* vs);

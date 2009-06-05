@@ -165,14 +165,27 @@ static void r300_vs_op_dump(uint32_t op)
     }
 }
 
+void r300_vs_src_dump(uint32_t src)
+{
+    debug_printf(" %s/%s/%s/%s\n",
+            r300_vs_swiz_debug[(src >> 13) & 0x7],
+            r300_vs_swiz_debug[(src >> 16) & 0x7],
+            r300_vs_swiz_debug[(src >> 19) & 0x7],
+            r300_vs_swiz_debug[(src >> 22) & 0x7]);
+}
+
 void r300_vs_dump(struct r300_vertex_shader* vs)
 {
     int i;
 
     for (i = 0; i < vs->instruction_count; i++) {
+        debug_printf("%d: op: 0x%08x", i, vs->instructions[i].inst0);
         r300_vs_op_dump(vs->instructions[i].inst0);
-        debug_printf("inst1: 0x%x\n", vs->instructions[i].inst1);
-        debug_printf("inst2: 0x%x\n", vs->instructions[i].inst2);
-        debug_printf("inst3: 0x%x\n", vs->instructions[i].inst3);
+        debug_printf(" src0: 0x%08x", vs->instructions[i].inst1);
+        r300_vs_src_dump(vs->instructions[i].inst1);
+        debug_printf(" src1: 0x%08x", vs->instructions[i].inst2);
+        r300_vs_src_dump(vs->instructions[i].inst2);
+        debug_printf(" src2: 0x%08x", vs->instructions[i].inst3);
+        r300_vs_src_dump(vs->instructions[i].inst3);
     }
 }
