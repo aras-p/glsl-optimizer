@@ -164,13 +164,13 @@ static uint32_t r300_vs_op(unsigned op)
 static uint32_t r300_vs_swiz(struct tgsi_full_src_register* reg)
 {
     if (reg->SrcRegister.Extended) {
-        return (reg->SrcRegister.Negate ? R300_PVS_NEGATE_XYZW : 0) |
+        return (reg->SrcRegister.Negate ? (0xf << 12) : 0) |
             reg->SrcRegisterExtSwz.ExtSwizzleX |
             (reg->SrcRegisterExtSwz.ExtSwizzleY << 3) |
             (reg->SrcRegisterExtSwz.ExtSwizzleZ << 6) |
             (reg->SrcRegisterExtSwz.ExtSwizzleW << 9);
     } else {
-        return (reg->SrcRegister.Negate ? R300_PVS_NEGATE_XYZW : 0) |
+        return (reg->SrcRegister.Negate ? (0xf << 12) : 0) |
             reg->SrcRegister.SwizzleX |
             (reg->SrcRegister.SwizzleY << 3) |
             (reg->SrcRegister.SwizzleZ << 6) |
@@ -182,13 +182,13 @@ static uint32_t r300_vs_swiz(struct tgsi_full_src_register* reg)
 static uint32_t r300_vs_scalar_swiz(struct tgsi_full_src_register* reg)
 {
     if (reg->SrcRegister.Extended) {
-        return (reg->SrcRegister.Negate ? R300_PVS_NEGATE_XYZW : 0) |
+        return (reg->SrcRegister.Negate ? (0xf << 12) : 0) |
             reg->SrcRegisterExtSwz.ExtSwizzleX |
             (reg->SrcRegisterExtSwz.ExtSwizzleX << 3) |
             (reg->SrcRegisterExtSwz.ExtSwizzleX << 6) |
             (reg->SrcRegisterExtSwz.ExtSwizzleX << 9);
     } else {
-        return (reg->SrcRegister.Negate ? R300_PVS_NEGATE_XYZW : 0) |
+        return (reg->SrcRegister.Negate ? (0xf << 12) : 0) |
             reg->SrcRegister.SwizzleX |
             (reg->SrcRegister.SwizzleX << 3) |
             (reg->SrcRegister.SwizzleX << 6) |
