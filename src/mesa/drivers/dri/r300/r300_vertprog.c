@@ -34,6 +34,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "shader/program.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
 #include "shader/prog_statevars.h"
 #include "tnl/tnl.h"
 
@@ -1383,6 +1384,12 @@ static struct r300_vertex_program *build_program(struct r300_vertex_program_key
 		pos_as_texcoord(vp, &mesa_vp->Base);
 	}
 
+	if (RADEON_DEBUG & DEBUG_VERTS) {
+		fprintf(stderr, "Vertex program after native rewrite:\n");
+		_mesa_print_program(&mesa_vp->Base);
+		fflush(stdout);
+	}
+
 	assert(mesa_vp->Base.NumInstructions);
 	vp->num_temporaries = mesa_vp->Base.NumTemporaries;
 	r300TranslateVertexShader(vp, mesa_vp->Base.Instructions);
@@ -1456,7 +1463,12 @@ void r300SelectVertexShader(r300ContextPtr r300)
 			r300->selected_vp = vp;
 			return;
 		}
-	//_mesa_print_program(&vpc->mesa_program.Base);
+
+	if (RADEON_DEBUG & DEBUG_VERTS) {
+		fprintf(stderr, "Initial vertex program:\n");
+		_mesa_print_program(&vpc->mesa_program.Base);
+		fflush(stdout);
+	}
 
 	vp = build_program(&wanted_key, &vpc->mesa_program, wpos_idx);
 	vp->next = vpc->progs;
@@ -1518,8 +1530,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	param_count = r300VertexProgUpdateParams(ctx,
 								(struct r300_vertex_program_cont *)
 								ctx->VertexProgram._Current,
-								(float *)&rmesa->hw.vpp.
-								cmd[R300_VPP_PARAM_0]);
+								(float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
 	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
 	param_count /= 4;
 
