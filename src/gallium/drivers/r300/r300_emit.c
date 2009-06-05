@@ -63,7 +63,7 @@ void r300_emit_clip_state(struct r300_context* r300,
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
 
-    BEGIN_CS(3 + (6 * 4));
+    BEGIN_CS(5 + (6 * 4));
     OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
             (r300screen->caps->is_r500 ?
              R500_PVS_UCP_START : R300_PVS_UCP_START));
@@ -74,6 +74,9 @@ void r300_emit_clip_state(struct r300_context* r300,
         OUT_CS_32F(clip->ucp[i][2]);
         OUT_CS_32F(clip->ucp[i][3]);
     }
+
+    OUT_CS_REG(R300_VAP_CLIP_CNTL, ((1 << clip->nr) - 1) |
+            R300_PS_UCP_MODE_CLIP_AS_TRIFAN);
     END_CS;
 }
 

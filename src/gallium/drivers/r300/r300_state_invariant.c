@@ -69,7 +69,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(77 + (caps->has_tcl ? 7 : 0));
+    BEGIN_CS(75 + (caps->has_tcl ? 7 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -80,8 +80,6 @@ void r300_emit_invariant_state(struct r300_context* r300)
     /* XXX endian */
     if (caps->has_tcl) {
         OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VC_NO_SWAP);
-        OUT_CS_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE |
-            R300_PS_UCP_MODE_CLIP_AS_TRIFAN);
         OUT_CS_REG_SEQ(R300_VAP_GB_VERT_CLIP_ADJ, 4);
         OUT_CS_32F(1.0);
         OUT_CS_32F(1.0);
