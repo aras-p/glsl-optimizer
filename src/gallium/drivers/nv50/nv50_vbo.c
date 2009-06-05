@@ -22,6 +22,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "pipe/p_inlines.h"
 
 #include "nv50_context.h"
 
@@ -165,8 +166,10 @@ nv50_draw_elements(struct pipe_context *pipe,
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct pipe_winsys *ws = pipe->winsys;
-	void *map = ws->buffer_map(ws, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
+	struct pipe_screen *pscreen = pipe->screen;
+	void *map;
+	
+	map = pipe_buffer_map(pscreen, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
 
 	nv50_state_validate(nv50);
 
@@ -193,6 +196,7 @@ nv50_draw_elements(struct pipe_context *pipe,
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 	OUT_RING  (chan, 0);
 
+	pipe_buffer_unmap(pscreen, indexBuffer);
 	pipe->flush(pipe, 0, NULL);
 	return TRUE;
 }

@@ -1,5 +1,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "pipe/p_inlines.h"
 
 #include "nv30_context.h"
 #include "nv30_state.h"
@@ -108,7 +109,7 @@ nv30_vbo_static_attrib(struct nv30_context *nv30, struct nouveau_stateobj *so,
 		       int attrib, struct pipe_vertex_element *ve,
 		       struct pipe_vertex_buffer *vb)
 {
-	struct pipe_winsys *ws = nv30->pipe.winsys;
+	struct pipe_screen *pscreen = nv30->pipe.screen;
 	struct nouveau_grobj *rankine = nv30->screen->rankine;
 	unsigned type, ncomp;
 	void *map;
@@ -116,7 +117,7 @@ nv30_vbo_static_attrib(struct nv30_context *nv30, struct nouveau_stateobj *so,
 	if (nv30_vbo_format_to_hw(ve->src_format, &type, &ncomp))
 		return FALSE;
 
-	map  = ws->buffer_map(ws, vb->buffer, PIPE_BUFFER_USAGE_CPU_READ);
+	map  = pipe_buffer_map(pscreen, vb->buffer, PIPE_BUFFER_USAGE_CPU_READ);
 	map += vb->buffer_offset + ve->src_offset;
 
 	switch (type) {
@@ -148,18 +149,17 @@ nv30_vbo_static_attrib(struct nv30_context *nv30, struct nouveau_stateobj *so,
 			so_data  (so, fui(v[0]));
 			break;
 		default:
-			ws->buffer_unmap(ws, vb->buffer);
+			pipe_buffer_unmap(pscreen, vb->buffer);
 			return FALSE;
 		}
 	}
 		break;
 	default:
-		ws->buffer_unmap(ws, vb->buffer);
+		pipe_buffer_unmap(pscreen, vb->buffer);
 		return FALSE;
 	}
 
-	ws->buffer_unmap(ws, vb->buffer);
-
+	pipe_buffer_unmap(pscreen, vb->buffer);
 	return TRUE;
 }
 
@@ -368,10 +368,10 @@ nv30_draw_elements_inline(struct pipe_context *pipe,
 			  unsigned mode, unsigned start, unsigned count)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct pipe_winsys *ws = pipe->winsys;
+	struct pipe_screen *pscreen = pipe->screen;
 	void *map;
 
-	map = ws->buffer_map(ws, ib, PIPE_BUFFER_USAGE_CPU_READ);
+	map = pipe_buffer_map(pscreen, ib, PIPE_BUFFER_USAGE_CPU_READ);
 	if (!ib) {
 		NOUVEAU_ERR("failed mapping ib\n");
 		return FALSE;
@@ -392,7 +392,7 @@ nv30_draw_elements_inline(struct pipe_context *pipe,
 		break;
 	}
 
-	ws->buffer_unmap(ws, ib);
+	pipe_buffer_unmap(pscreen, ib);
 	return TRUE;
 }
 

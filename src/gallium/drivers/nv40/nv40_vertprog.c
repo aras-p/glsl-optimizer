@@ -1,6 +1,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
+#include "pipe/p_inlines.h"
 
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
@@ -855,7 +856,7 @@ out_err:
 static boolean
 nv40_vertprog_validate(struct nv40_context *nv40)
 { 
-	struct pipe_winsys *ws = nv40->pipe.winsys;
+	struct pipe_screen *pscreen = nv40->pipe.screen;
 	struct nouveau_grobj *curie = nv40->screen->curie;
 	struct nv40_vertex_program *vp;
 	struct pipe_buffer *constbuf;
@@ -980,8 +981,8 @@ check_gpu_resources:
 		float *map = NULL;
 
 		if (constbuf) {
-			map = ws->buffer_map(ws, constbuf,
-					     PIPE_BUFFER_USAGE_CPU_READ);
+			map = pipe_buffer_map(pscreen, constbuf,
+					      PIPE_BUFFER_USAGE_CPU_READ);
 		}
 
 		for (i = 0; i < vp->nr_consts; i++) {
@@ -1002,7 +1003,7 @@ check_gpu_resources:
 		}
 
 		if (constbuf)
-			ws->buffer_unmap(ws, constbuf);
+			pscreen->buffer_unmap(pscreen, constbuf);
 	}
 
 	/* Upload vtxprog */

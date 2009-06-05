@@ -1,5 +1,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "pipe/p_inlines.h"
 
 #include "nv40_context.h"
 #include "nv40_state.h"
@@ -108,7 +109,7 @@ nv40_vbo_static_attrib(struct nv40_context *nv40, struct nouveau_stateobj *so,
 		       int attrib, struct pipe_vertex_element *ve,
 		       struct pipe_vertex_buffer *vb)
 {
-	struct pipe_winsys *ws = nv40->pipe.winsys;
+	struct pipe_screen *pscreen = nv40->pipe.screen;
 	struct nouveau_grobj *curie = nv40->screen->curie;
 	unsigned type, ncomp;
 	void *map;
@@ -116,7 +117,7 @@ nv40_vbo_static_attrib(struct nv40_context *nv40, struct nouveau_stateobj *so,
 	if (nv40_vbo_format_to_hw(ve->src_format, &type, &ncomp))
 		return FALSE;
 
-	map  = ws->buffer_map(ws, vb->buffer, PIPE_BUFFER_USAGE_CPU_READ);
+	map  = pipe_buffer_map(pscreen, vb->buffer, PIPE_BUFFER_USAGE_CPU_READ);
 	map += vb->buffer_offset + ve->src_offset;
 
 	switch (type) {
@@ -148,17 +149,17 @@ nv40_vbo_static_attrib(struct nv40_context *nv40, struct nouveau_stateobj *so,
 			so_data  (so, fui(v[0]));
 			break;
 		default:
-			ws->buffer_unmap(ws, vb->buffer);
+			pipe_buffer_unmap(pscreen, vb->buffer);
 			return FALSE;
 		}
 	}
 		break;
 	default:
-		ws->buffer_unmap(ws, vb->buffer);
+		pipe_buffer_unmap(pscreen, vb->buffer);
 		return FALSE;
 	}
 
-	ws->buffer_unmap(ws, vb->buffer);
+	pipe_buffer_unmap(pscreen, vb->buffer);
 
 	return TRUE;
 }
@@ -367,10 +368,10 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 			  unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct pipe_winsys *ws = pipe->winsys;
+	struct pipe_screen *pscreen = pipe->screen;
 	void *map;
 
-	map = ws->buffer_map(ws, ib, PIPE_BUFFER_USAGE_CPU_READ);
+	map = pipe_buffer_map(pscreen, ib, PIPE_BUFFER_USAGE_CPU_READ);
 	if (!ib) {
 		NOUVEAU_ERR("failed mapping ib\n");
 		return FALSE;
@@ -391,7 +392,7 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 		break;
 	}
 
-	ws->buffer_unmap(ws, ib);
+	pipe_buffer_unmap(pscreen, ib);
 	return TRUE;
 }
 

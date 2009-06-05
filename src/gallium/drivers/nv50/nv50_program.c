@@ -2235,7 +2235,7 @@ nv50_program_upload_data(struct nv50_context *nv50, float *map,
 static void
 nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 {
-	struct pipe_winsys *ws = nv50->pipe.winsys;
+	struct pipe_screen *pscreen = nv50->pipe.screen;
 
 	if (!p->data[0] && p->immd_nr) {
 		struct nouveau_resource *heap = nv50->screen->immd_heap[0];
@@ -2274,13 +2274,13 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 
 	if (p->param_nr) {
 		unsigned cbuf = NV50_CB_PVP;
-		float *map = ws->buffer_map(ws, nv50->constbuf[p->type],
-					    PIPE_BUFFER_USAGE_CPU_READ);
+		float *map = pipe_buffer_map(pscreen, nv50->constbuf[p->type],
+					     PIPE_BUFFER_USAGE_CPU_READ);
 		if (p->type == PIPE_SHADER_FRAGMENT)
 			cbuf = NV50_CB_PFP;
 		nv50_program_upload_data(nv50, map, p->data[1]->start,
 					 p->param_nr, cbuf);
-		ws->buffer_unmap(ws, nv50->constbuf[p->type]);
+		pipe_buffer_unmap(pscreen, nv50->constbuf[p->type]);
 	}
 }
 

@@ -105,7 +105,7 @@ static boolean
 nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 		  boolean wait, uint64_t *result)
 {
-	struct pipe_winsys *ws = pipe->winsys;
+	struct pipe_screen *pscreen = pipe->screen;
 	struct nv50_query *q = nv50_query(pq);
 
 	/*XXX: Want to be able to return FALSE here instead of blocking
@@ -113,11 +113,11 @@ nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 	 */
 
 	if (!q->ready) {
-		uint32_t *map = ws->buffer_map(ws, q->buffer,
-					       PIPE_BUFFER_USAGE_CPU_READ);
+		uint32_t *map = pipe_buffer_map(pscreen, q->buffer,
+						PIPE_BUFFER_USAGE_CPU_READ);
 		q->result = map[1];
 		q->ready = TRUE;
-		ws->buffer_unmap(ws, q->buffer);
+		pipe_buffer_unmap(pscreen, q->buffer);
 	}
 
 	*result = q->result;
