@@ -4,8 +4,8 @@
 #include "util/u_debug.h"
 
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
+#  include <winsock2.h>
 #  include <windows.h>
-#  include <winsock.h>
 #elif defined(PIPE_OS_LINUX)
 #  include <sys/socket.h>
 #  include <netinet/in.h>
