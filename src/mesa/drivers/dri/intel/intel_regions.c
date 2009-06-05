@@ -132,7 +132,7 @@ intel_region_unmap(struct intel_context *intel, struct intel_region *region)
    _DBG("%s %p\n", __FUNCTION__, region);
    if (!--region->map_refcount) {
       if (intel->intelScreen->kernel_exec_fencing)
-	 drm_intel_gem_bo_map_gtt(region->buffer);
+	 drm_intel_gem_bo_unmap_gtt(region->buffer);
       else
 	 dri_bo_unmap(region->buffer);
       region->map = NULL;
