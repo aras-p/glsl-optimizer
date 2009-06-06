@@ -88,11 +88,6 @@ void i945_miptree_layout_2d( struct intel_context *intel,
 
        if (mip1_width > mt->pitch) {
            mt->pitch = mip1_width;
-
-	   if (tiling == I915_TILING_X)
-	      mt->pitch = ALIGN(mt->pitch * mt->cpp, 512) / mt->cpp;
-	   if (tiling == I915_TILING_Y)
-	      mt->pitch = ALIGN(mt->pitch * mt->cpp, 128) / mt->cpp;
        }
    }
 
