@@ -345,7 +345,9 @@ driBindExtensions(__GLXscreenConfigs *psc, int dri2)
 #endif
 
 #ifdef __DRI_SWAP_CONTROL
-	if (strcmp(extensions[i]->name, __DRI_SWAP_CONTROL) == 0) {
+	/* No DRI2 support for swap_control at the moment, since SwapBuffers
+	 * is done by the X server */
+	if (strcmp(extensions[i]->name, __DRI_SWAP_CONTROL) == 0 && !dri2) {
 	    psc->swapControl = (__DRIswapControlExtension *) extensions[i];
 	    __glXEnableDirectExtension(psc, "GLX_SGI_swap_control");
 	    __glXEnableDirectExtension(psc, "GLX_MESA_swap_control");
