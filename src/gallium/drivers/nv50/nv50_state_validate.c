@@ -295,12 +295,12 @@ viewport_uptodate:
 		so_data  (so, NV50_CB_TSC);
 		so_method(so, tesla, 0x40000f04, nv50->sampler_nr * 8);
 		for (i = 0; i < nv50->sampler_nr; i++)
-			so_datap (so, nv50->sampler[i], 8);
+			so_datap (so, nv50->sampler[i]->tsc, 8);
 		so_ref(so, &nv50->state.tsc_upload);
 		so_ref(NULL, &so);
 	}
 
-	if (nv50->dirty & NV50_NEW_TEXTURE)
+	if (nv50->dirty & (NV50_NEW_TEXTURE | NV50_NEW_SAMPLER))
 		nv50_tex_validate(nv50);
 
 	if (nv50->dirty & NV50_NEW_ARRAYS)

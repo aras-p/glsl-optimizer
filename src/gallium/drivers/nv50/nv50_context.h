@@ -63,6 +63,11 @@ struct nv50_rasterizer_stateobj {
 	struct nouveau_stateobj *so;
 };
 
+struct nv50_sampler_stateobj {
+	bool normalized;
+	unsigned tsc[8];
+};
+
 struct nv50_miptree_level {
 	int *image_offset;
 	unsigned pitch;
@@ -141,7 +146,7 @@ struct nv50_context {
 	unsigned vtxbuf_nr;
 	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
 	unsigned vtxelt_nr;
-	unsigned *sampler[PIPE_MAX_SAMPLERS];
+	struct nv50_sampler_stateobj *sampler[PIPE_MAX_SAMPLERS];
 	unsigned sampler_nr;
 	struct nv50_miptree *miptree[PIPE_MAX_SAMPLERS];
 	unsigned miptree_nr;
