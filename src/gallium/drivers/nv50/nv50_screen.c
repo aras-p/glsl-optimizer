@@ -404,8 +404,6 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
 	so_method(so, screen->tesla, 0x1234, 1);
 	so_data  (so, 1);
-	so_method(so, screen->tesla, 0x1458, 1);
-	so_data  (so, 1);
 
 	so_emit(chan, so);
 	so_ref (so, &screen->static_init);

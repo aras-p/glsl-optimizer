@@ -114,6 +114,7 @@ struct nv50_state {
 	unsigned viewport_bypass;
 	struct nouveau_stateobj *tsc_upload;
 	struct nouveau_stateobj *tic_upload;
+	unsigned miptree_nr;
 	struct nouveau_stateobj *vertprog;
 	struct nouveau_stateobj *fragprog;
 	struct nouveau_stateobj *vtxfmt;

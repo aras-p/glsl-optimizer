@@ -139,23 +139,35 @@ nv50_tex_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nouveau_stateobj *so;
-	int unit;
+	int unit, push;
 
-	so = so_new(nv50->miptree_nr * 8 + 3, nv50->miptree_nr * 2);
+	push  = nv50->miptree_nr * 9 + 2;
+	push += MAX2(nv50->miptree_nr, nv50->state.miptree_nr) * 2;
+
+	so = so_new(push, nv50->miptree_nr * 2);
 	so_method(so, tesla, 0x0f00, 1);
 	so_data  (so, NV50_CB_TIC);
-	so_method(so, tesla, 0x40000f04, nv50->miptree_nr * 8);
 	for (unit = 0; unit < nv50->miptree_nr; unit++) {
 		struct nv50_miptree *mt = nv50->miptree[unit];
 
+		so_method(so, tesla, 0x40000f04, 8);
 		if (nv50_tex_construct(nv50, so, mt, unit)) {
 			NOUVEAU_ERR("failed tex validate\n");
 			so_ref(NULL, &so);
 			return;
 		}
+
+		so_method(so, tesla, 0x1458, 1);
+		so_data  (so, (unit << 9) | (unit << 1) | 1);
+	}
+
+	for (; unit < nv50->state.miptree_nr; unit++) {
+		so_method(so, tesla, 0x1458, 1);
+		so_data  (so, (unit << 1) | 0);
 	}
 
 	so_ref(so, &nv50->state.tic_upload);
 	so_ref(NULL, &so);
+	nv50->state.miptree_nr = nv50->miptree_nr;
 }
 
