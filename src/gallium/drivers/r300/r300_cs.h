@@ -34,6 +34,7 @@
 
 #define MAX_CS_SIZE 64 * 1024 / 4
 
+#define VERY_VERBOSE_CS 0
 #define VERY_VERBOSE_REGISTERS 0
 
 /* XXX stolen from radeon_drm.h */
@@ -56,8 +57,10 @@
 
 #define BEGIN_CS(size) do { \
     CHECK_CS(size); \
-    debug_printf("r300: BEGIN_CS, count %d, in %s (%s:%d)\n", \
-        size, __FUNCTION__, __FILE__, __LINE__); \
+    if (VERY_VERBOSE_CS) { \
+        debug_printf("r300: BEGIN_CS, count %d, in %s (%s:%d)\n", \
+                size, __FUNCTION__, __FILE__, __LINE__); \
+    } \
     cs_winsys->begin_cs(cs_winsys, (size), \
             __FILE__, __FUNCTION__, __LINE__); \
     cs_count = size; \
@@ -93,8 +96,9 @@
 } while (0)
 
 #define OUT_CS_RELOC(bo, offset, rd, wd, flags) do { \
-    debug_printf("r300: writing relocation for buffer %p, offset %d\n", \
-        bo, offset); \
+    debug_printf("r300: writing relocation for buffer %p, offset %d, " \
+            "domains (%d, %d, %d)\n", \
+        bo, offset, rd, wd, flags); \
     assert(bo); \
     OUT_CS(offset); \
     cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
@@ -102,16 +106,20 @@
 } while (0)
 
 #define END_CS do { \
-    debug_printf("r300: END_CS in %s (%s:%d)\n", __FUNCTION__, __FILE__, \
-        __LINE__); \
+    if (VERY_VERBOSE_CS) { \
+        debug_printf("r300: END_CS in %s (%s:%d)\n", __FUNCTION__, \
+                __FILE__, __LINE__); \
+    } \
     if (cs_count != 0) \
         debug_printf("r300: Warning: cs_count off by %d\n", cs_count); \
     cs_winsys->end_cs(cs_winsys, __FILE__, __FUNCTION__, __LINE__); \
 } while (0)
 
 #define FLUSH_CS do { \
-    debug_printf("r300: FLUSH_CS in %s (%s:%d)\n\n", __FUNCTION__, __FILE__, \
-        __LINE__); \
+    if (VERY_VERBOSE_CS) { \
+        debug_printf("r300: FLUSH_CS in %s (%s:%d)\n\n", __FUNCTION__, \
+                __FILE__, __LINE__); \
+    } \
     cs_winsys->flush_cs(cs_winsys); \
 } while (0)
 

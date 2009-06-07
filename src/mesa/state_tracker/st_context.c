@@ -263,9 +263,10 @@ void st_destroy_context( struct st_context *st )
 }
 
 
-void st_make_current(struct st_context *st,
-                     struct st_framebuffer *draw,
-                     struct st_framebuffer *read)
+GLboolean
+st_make_current(struct st_context *st,
+                struct st_framebuffer *draw,
+                struct st_framebuffer *read)
 {
    /* Call this periodically to detect when the user has begun using
     * GL rendering from multiple threads.
@@ -274,7 +275,8 @@ void st_make_current(struct st_context *st,
 
    if (st) {
       GLboolean firstTime = st->ctx->FirstTimeCurrent;
-      _mesa_make_current(st->ctx, &draw->Base, &read->Base);
+      if(!_mesa_make_current(st->ctx, &draw->Base, &read->Base))
+         return GL_FALSE;
       /* Need to initialize viewport here since draw->Base->Width/Height
        * will still be zero at this point.
        * This could be improved, but would require rather extensive work
@@ -286,9 +288,10 @@ void st_make_current(struct st_context *st,
          _mesa_set_scissor(st->ctx, 0, 0, w, h);
 
       }
+      return GL_TRUE;
    }
    else {
-      _mesa_make_current(NULL, NULL, NULL);
+      return _mesa_make_current(NULL, NULL, NULL);
    }
 }
 

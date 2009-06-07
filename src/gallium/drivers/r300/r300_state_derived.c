@@ -64,6 +64,7 @@ static void r300_vs_tab_routes(struct r300_context* r300,
                     break;
                 case TGSI_SEMANTIC_FOG:
                     fog = TRUE;
+                    /* Fall through */
                 case TGSI_SEMANTIC_GENERIC:
                     texs++;
                     break;
@@ -103,6 +104,9 @@ static void r300_vs_tab_routes(struct r300_context* r300,
         }
     }
 
+    /* XXX magic */
+    assert(texs <= 8);
+
     /* Do the actual vertex_info setup.
      *
      * vertex_info has four uints of hardware-specific data in it.
@@ -140,12 +144,9 @@ static void r300_vs_tab_routes(struct r300_context* r300,
         vinfo->hwfmt[2] |= (R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << i);
     }
 
-    for (i = 0; i < texs; i++) {
-        draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
-            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_GENERIC, i));
-        vinfo->hwfmt[1] |= (R300_INPUT_CNTL_TC0 << i);
-        vinfo->hwfmt[3] |= (4 << (3 * i));
-    }
+    /* Init i right here, increment it if fog is enabled.
+     * This gets around a double-increment problem. */
+    i = 0;
 
     if (fog) {
         i++;
@@ -153,6 +154,20 @@ static void r300_vs_tab_routes(struct r300_context* r300,
             draw_find_vs_output(r300->draw, TGSI_SEMANTIC_FOG, 0));
         vinfo->hwfmt[1] |= (R300_INPUT_CNTL_TC0 << i);
         vinfo->hwfmt[3] |= (4 << (3 * i));
+    }
+
+    for (i; i < texs; i++) {
+        draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE,
+            draw_find_vs_output(r300->draw, TGSI_SEMANTIC_GENERIC, i));
+        vinfo->hwfmt[1] |= (R300_INPUT_CNTL_TC0 << i);
+        vinfo->hwfmt[3] |= (4 << (3 * i));
+    }
+
+    /* Handle the case where the vertex shader will be generating some of
+     * the attribs based on its inputs. */
+    if (r300screen->caps->has_tcl &&
+            info->num_inputs < info->num_outputs) {
+        vinfo->num_attribs = info->num_inputs;
     }
 
     draw_compute_vertex_size(vinfo);

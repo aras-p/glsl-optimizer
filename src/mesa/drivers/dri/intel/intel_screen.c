@@ -49,6 +49,10 @@
 #include "i915_drm.h"
 #include "i830_dri.h"
 
+#define DRI_CONF_TEXTURE_TILING(def) \
+	DRI_CONF_OPT_BEGIN(texture_tiling, bool, def)		\
+		DRI_CONF_DESC(en, "Enable texture tiling")	\
+	DRI_CONF_OPT_END					\
 
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN
@@ -64,6 +68,13 @@ PUBLIC const char __driConfigOptions[] =
 	    DRI_CONF_ENUM(1, "Enable reuse of all sizes of buffer objects")
 	 DRI_CONF_DESC_END
       DRI_CONF_OPT_END
+
+#ifdef I915
+     DRI_CONF_TEXTURE_TILING(false)
+#else
+     DRI_CONF_TEXTURE_TILING(true)
+#endif
+
    DRI_CONF_SECTION_END
    DRI_CONF_SECTION_QUALITY
       DRI_CONF_FORCE_S3TC_ENABLE(false)
@@ -76,7 +87,7 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_END
 DRI_CONF_END;
 
-const GLuint __driNConfigOptions = 8;
+const GLuint __driNConfigOptions = 9;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;

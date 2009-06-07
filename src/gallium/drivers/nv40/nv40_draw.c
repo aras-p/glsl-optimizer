@@ -1,4 +1,5 @@
 #include "pipe/p_shader_tokens.h"
+#include "pipe/p_inlines.h"
 
 #include "util/u_pack_color.h"
 
@@ -81,7 +82,7 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 {
 	struct nv40_render_stage *rs = nv40_render_stage(stage);
 	struct nv40_context *nv40 = rs->nv40;
-	struct nouveau_pushbuf *pb = nv40->nvws->channel->pushbuf;
+	struct nouveau_pushbuf *pb = nv40->screen->base.channel->pushbuf;
 	unsigned i;
 
 	/* Ensure there's room for 4xfloat32 + potentially 3 begin/end */
@@ -231,7 +232,7 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 			 unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct pipe_winsys *ws = pipe->winsys;
+	struct pipe_screen *pscreen = pipe->screen;
 	unsigned i;
 	void *map;
 
@@ -241,13 +242,14 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 	nv40_state_emit(nv40);
 
 	for (i = 0; i < nv40->vtxbuf_nr; i++) {
-		map = ws->buffer_map(ws, nv40->vtxbuf[i].buffer,
+		map = pipe_buffer_map(pscreen, nv40->vtxbuf[i].buffer,
                                       PIPE_BUFFER_USAGE_CPU_READ);
 		draw_set_mapped_vertex_buffer(nv40->draw, i, map);
 	}
 
 	if (idxbuf) {
-		map = ws->buffer_map(ws, idxbuf, PIPE_BUFFER_USAGE_CPU_READ);
+		map = pipe_buffer_map(pscreen, idxbuf,
+				      PIPE_BUFFER_USAGE_CPU_READ);
 		draw_set_mapped_element_buffer(nv40->draw, idxbuf_size, map);
 	} else {
 		draw_set_mapped_element_buffer(nv40->draw, 0, NULL);
@@ -256,21 +258,22 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 	if (nv40->constbuf[PIPE_SHADER_VERTEX]) {
 		const unsigned nr = nv40->constbuf_nr[PIPE_SHADER_VERTEX];
 
-		map = ws->buffer_map(ws, nv40->constbuf[PIPE_SHADER_VERTEX],
-				     PIPE_BUFFER_USAGE_CPU_READ);
+		map = pipe_buffer_map(pscreen,
+				      nv40->constbuf[PIPE_SHADER_VERTEX],
+				      PIPE_BUFFER_USAGE_CPU_READ);
 		draw_set_mapped_constant_buffer(nv40->draw, map, nr);
 	}
 
 	draw_arrays(nv40->draw, mode, start, count);
 
 	for (i = 0; i < nv40->vtxbuf_nr; i++)
-		ws->buffer_unmap(ws, nv40->vtxbuf[i].buffer);
+		pipe_buffer_unmap(pscreen, nv40->vtxbuf[i].buffer);
 
 	if (idxbuf)
-		ws->buffer_unmap(ws, idxbuf);
+		pipe_buffer_unmap(pscreen, idxbuf);
 
 	if (nv40->constbuf[PIPE_SHADER_VERTEX])
-		ws->buffer_unmap(ws, nv40->constbuf[PIPE_SHADER_VERTEX]);
+		pipe_buffer_unmap(pscreen, nv40->constbuf[PIPE_SHADER_VERTEX]);
 
 	draw_flush(nv40->draw);
 	pipe->flush(pipe, 0, NULL);

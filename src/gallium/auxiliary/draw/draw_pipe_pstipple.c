@@ -358,6 +358,7 @@ generate_pstip_fs(struct pstip_stage *pstip)
 
    pstip->fs->pstip_fs = pstip->driver_create_fs_state(pstip->pipe, &pstip_fs);
 
+   FREE((void *)pstip_fs.tokens);
    return TRUE;
 }
 
@@ -649,6 +650,10 @@ pstip_delete_fs_state(struct pipe_context *pipe, void *fs)
    struct pstip_fragment_shader *aafs = (struct pstip_fragment_shader *) fs;
    /* pass-through */
    pstip->driver_delete_fs_state(pstip->pipe, aafs->driver_fs);
+
+   if (aafs->pstip_fs)
+      pstip->driver_delete_fs_state(pstip->pipe, aafs->pstip_fs);
+
    FREE(aafs);
 }
 

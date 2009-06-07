@@ -86,6 +86,15 @@ static PFNGLISVERTEXARRAYAPPLEPROC glIsVertexArrayAPPLE_func = NULL;
 /* GL_EXT_stencil_two_side */
 static PFNGLACTIVESTENCILFACEEXTPROC glActiveStencilFaceEXT_func = NULL;
 
+/* GL_ARB_buffer_object */
+static PFNGLGENBUFFERSARBPROC glGenBuffersARB_func = NULL;
+static PFNGLDELETEBUFFERSARBPROC glDeleteBuffersARB_func = NULL;
+static PFNGLBINDBUFFERARBPROC glBindBufferARB_func = NULL;
+static PFNGLBUFFERDATAARBPROC glBufferDataARB_func = NULL;
+static PFNGLBUFFERSUBDATAARBPROC glBufferSubDataARB_func = NULL;
+static PFNGLMAPBUFFERARBPROC glMapBufferARB_func = NULL;
+static PFNGLUNMAPBUFFERARBPROC glUnmapBufferARB_func = NULL;
+
 
 static void
 GetExtensionFuncs(void)
@@ -173,5 +182,15 @@ GetExtensionFuncs(void)
 
    /* GL_EXT_stencil_two_side */
    glActiveStencilFaceEXT_func = (PFNGLACTIVESTENCILFACEEXTPROC) glutGetProcAddress("glActiveStencilFaceEXT");
+
+   /* GL_ARB_vertex_buffer_object */
+   glGenBuffersARB_func = (PFNGLGENBUFFERSARBPROC) glutGetProcAddress("glGenBuffersARB");
+   glDeleteBuffersARB_func = (PFNGLDELETEBUFFERSARBPROC) glutGetProcAddress("glDeleteBuffersARB");
+   glBindBufferARB_func = (PFNGLBINDBUFFERARBPROC) glutGetProcAddress("glBindBufferARB");
+   glBufferDataARB_func = (PFNGLBUFFERDATAARBPROC) glutGetProcAddress("glBufferDataARB");
+   glBufferSubDataARB_func = (PFNGLBUFFERSUBDATAARBPROC) glutGetProcAddress("glBufferSubDataARB");
+   glMapBufferARB_func = (PFNGLMAPBUFFERARBPROC) glutGetProcAddress("glMapBufferARB");
+   glUnmapBufferARB_func = (PFNGLUNMAPBUFFERARBPROC) glutGetProcAddress("glUnmapBufferARB");
+
 }
 

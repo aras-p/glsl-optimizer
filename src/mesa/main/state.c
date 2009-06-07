@@ -194,7 +194,7 @@ update_arrays( GLcontext *ctx )
 
    /* 16..31 */
    if (ctx->VertexProgram._Current) {
-      for (i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++) {
+      for (i = 0; i < Elements(arrayObj->VertexAttrib); i++) {
          if (arrayObj->VertexAttrib[i].Enabled) {
             min = update_min(min, &arrayObj->VertexAttrib[i]);
          }
@@ -206,7 +206,7 @@ update_arrays( GLcontext *ctx )
    }
 
    /* _MaxElement is one past the last legal array element */
-   ctx->Array._MaxElement = min;
+   arrayObj->_MaxElement = min;
 }
 
 

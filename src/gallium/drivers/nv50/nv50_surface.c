@@ -52,21 +52,17 @@ static int
 nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
 {
 	struct nv50_miptree *mt = nv50_miptree(ps->texture);
-	struct nouveau_channel *chan = screen->nvws->channel;
+	struct nouveau_channel *chan = screen->eng2d->channel;
 	struct nouveau_grobj *eng2d = screen->eng2d;
-	struct nouveau_bo *bo;
+	struct nouveau_bo *bo = nv50_miptree(ps->texture)->bo;
  	int format, mthd = dst ? NV50_2D_DST_FORMAT : NV50_2D_SRC_FORMAT;
  	int flags = NOUVEAU_BO_VRAM | (dst ? NOUVEAU_BO_WR : NOUVEAU_BO_RD);
- 
-	bo = screen->nvws->get_bo(nv50_miptree(ps->texture)->buffer);
-	if (!bo)
-		return 1;
 
  	format = nv50_format(ps->format);
  	if (format < 0)
  		return 1;
   
- 	if (!bo->tiled) {
+ 	if (!bo->tile_flags) {
  		BEGIN_RING(chan, eng2d, mthd, 2);
  		OUT_RING  (chan, format);
  		OUT_RING  (chan, 1);
@@ -80,7 +76,7 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
  		BEGIN_RING(chan, eng2d, mthd, 5);
  		OUT_RING  (chan, format);
  		OUT_RING  (chan, 0);
- 		OUT_RING  (chan, 0);
+ 		OUT_RING  (chan, bo->tile_mode << 4);
  		OUT_RING  (chan, 1);
  		OUT_RING  (chan, 0);
  		BEGIN_RING(chan, eng2d, mthd + 0x18, 4);
@@ -108,7 +104,7 @@ nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
 		     int dx, int dy, struct pipe_surface *src, int sx, int sy,
 		     int w, int h)
 {
-	struct nouveau_channel *chan = screen->nvws->channel;
+	struct nouveau_channel *chan = screen->eng2d->channel;
 	struct nouveau_grobj *eng2d = screen->eng2d;
 	int ret;
 
@@ -165,7 +161,7 @@ nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 {
 	struct nv50_context *nv50 = (struct nv50_context *)pipe;
 	struct nv50_screen *screen = nv50->screen;
-	struct nouveau_channel *chan = screen->nvws->channel;
+	struct nouveau_channel *chan = screen->eng2d->channel;
 	struct nouveau_grobj *eng2d = screen->eng2d;
 	int format, ret;
 

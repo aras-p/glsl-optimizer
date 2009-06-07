@@ -455,7 +455,7 @@ _mesa_init_current(GLcontext *ctx)
    GLuint i;
 
    /* Init all to (0,0,0,1) */
-   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+   for (i = 0; i < Elements(ctx->Current.Attrib); i++) {
       ASSIGN_4V( ctx->Current.Attrib[i], 0.0, 0.0, 0.0, 1.0 );
    }
 
@@ -1011,6 +1011,16 @@ _mesa_free_context_data( GLcontext *ctx )
 
    _mesa_delete_array_object(ctx, ctx->Array.DefaultArrayObj);
 
+#if FEATURE_ARB_pixel_buffer_object
+   _mesa_reference_buffer_object(ctx, &ctx->Pack.BufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &ctx->Unpack.BufferObj, NULL);
+#endif
+
+#if FEATURE_ARB_vertex_buffer_object
+   _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &ctx->Array.ElementArrayBufferObj, NULL);
+#endif
+
    /* free dispatch tables */
    _mesa_free(ctx->Exec);
    _mesa_free(ctx->Save);
@@ -1259,7 +1269,7 @@ initialize_framebuffer_size(GLcontext *ctx, GLframebuffer *fb)
  * \param drawBuffer  the drawing framebuffer
  * \param readBuffer  the reading framebuffer
  */
-void
+GLboolean
 _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
                     GLframebuffer *readBuffer )
 {
@@ -1272,14 +1282,14 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
       if (!check_compatible(newCtx, drawBuffer)) {
          _mesa_warning(newCtx,
               "MakeCurrent: incompatible visuals for context and drawbuffer");
-         return;
+         return GL_FALSE;
       }
    }
    if (newCtx && readBuffer && newCtx->WinSysReadBuffer != readBuffer) {
       if (!check_compatible(newCtx, readBuffer)) {
          _mesa_warning(newCtx,
               "MakeCurrent: incompatible visuals for context and readbuffer");
-         return;
+         return GL_FALSE;
       }
    }
 
@@ -1384,6 +1394,8 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
 	 newCtx->FirstTimeCurrent = GL_FALSE;
       }
    }
+   
+   return GL_TRUE;
 }
 
 

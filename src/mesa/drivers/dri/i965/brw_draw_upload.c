@@ -343,7 +343,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = intel_context(ctx);
-   GLuint tmp = brw->vs.prog_data->inputs_read; 
+   GLbitfield vs_inputs = brw->vs.prog_data->inputs_read; 
    GLuint i;
    const unsigned char *ptr = NULL;
    GLuint interleave = 0;
@@ -362,11 +362,11 @@ static void brw_prepare_vertices(struct brw_context *brw)
       _mesa_printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
 
    /* Accumulate the list of enabled arrays. */
-   while (tmp) {
-      GLuint i = _mesa_ffsll(tmp)-1;
+   while (vs_inputs) {
+      GLuint i = _mesa_ffsll(vs_inputs) - 1;
       struct brw_vertex_element *input = &brw->vb.inputs[i];
 
-      tmp &= ~(1<<i);
+      vs_inputs &= ~(1 << i);
       enabled[nr_enabled++] = input;
    }
 
@@ -477,17 +477,17 @@ static void brw_emit_vertices(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = intel_context(ctx);
-   GLuint tmp = brw->vs.prog_data->inputs_read;
+   GLbitfield vs_inputs = brw->vs.prog_data->inputs_read;
    struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
    GLuint i;
    GLuint nr_enabled = 0;
 
   /* Accumulate the list of enabled arrays. */
-   while (tmp) {
-      i = _mesa_ffsll(tmp)-1;
+   while (vs_inputs) {
+      i = _mesa_ffsll(vs_inputs) - 1;
       struct brw_vertex_element *input = &brw->vb.inputs[i];
 
-      tmp &= ~(1<<i);
+      vs_inputs &= ~(1 << i);
       enabled[nr_enabled++] = input;
    }
 

@@ -29,11 +29,10 @@ nv30_query_create(struct pipe_context *pipe, unsigned query_type)
 static void
 nv30_query_destroy(struct pipe_context *pipe, struct pipe_query *pq)
 {
-	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nv30_query *q = nv30_query(pq);
 
 	if (q->object)
-		nv30->nvws->res_free(&q->object);
+		nouveau_resource_free(&q->object);
 	FREE(q);
 }
 
@@ -54,9 +53,9 @@ nv30_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 		pipe->get_query_result(pipe, pq, 1, &tmp);
 	}
 
-	if (nv30->nvws->res_alloc(nv30->screen->query_heap, 1, NULL, &q->object))
+	if (nouveau_resource_alloc(nv30->screen->query_heap, 1, NULL, &q->object))
 		assert(0);
-	nv30->nvws->notifier_reset(nv30->screen->query, q->object->start);
+	nouveau_notifier_reset(nv30->screen->query, q->object->start);
 
 	BEGIN_RING(rankine, NV34TCL_QUERY_RESET, 1);
 	OUT_RING  (1);
@@ -84,27 +83,27 @@ nv30_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nv30_query *q = nv30_query(pq);
-	struct nouveau_winsys *nvws = nv30->nvws;
 
 	assert(q->object && q->type == PIPE_QUERY_OCCLUSION_COUNTER);
 
 	if (!q->ready) {
 		unsigned status;
 
-		status = nvws->notifier_status(nv30->screen->query,
-					       q->object->start);
+		status = nouveau_notifier_status(nv30->screen->query,
+						 q->object->start);
 		if (status != NV_NOTIFY_STATE_STATUS_COMPLETED) {
 			if (wait == FALSE)
 				return FALSE;
-			nvws->notifier_wait(nv30->screen->query, q->object->start,
-					    NV_NOTIFY_STATE_STATUS_COMPLETED,
-					    0);
+
+			nouveau_notifier_wait_status(nv30->screen->query,
+					q->object->start,
+					NV_NOTIFY_STATE_STATUS_COMPLETED, 0);
 		}
 
-		q->result = nvws->notifier_retval(nv30->screen->query,
-						  q->object->start);
+		q->result = nouveau_notifier_return_val(nv30->screen->query,
+							q->object->start);
 		q->ready = TRUE;
-		nvws->res_free(&q->object);
+		nouveau_resource_free(&q->object);
 	}
 
 	*result = q->result;

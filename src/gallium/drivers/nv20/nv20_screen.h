@@ -1,11 +1,11 @@
 #ifndef __NV20_SCREEN_H__
 #define __NV20_SCREEN_H__
 
-#include "pipe/p_screen.h"
+#include "nouveau/nouveau_screen.h"
 #include "nv04/nv04_surface_2d.h"
 
 struct nv20_screen {
-	struct pipe_screen pipe;
+	struct nouveau_screen base;
 
 	struct nouveau_winsys *nvws;
 

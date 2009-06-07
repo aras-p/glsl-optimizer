@@ -44,6 +44,7 @@ static const struct {
    const char *name;
    int flag_offset;
 } default_extensions[] = {
+   { OFF, "GL_ARB_copy_buffer",                F(ARB_copy_buffer) },
    { OFF, "GL_ARB_depth_texture",              F(ARB_depth_texture) },
    { ON,  "GL_ARB_draw_buffers",               F(ARB_draw_buffers) },
    { OFF, "GL_ARB_fragment_program",           F(ARB_fragment_program) },
@@ -183,6 +184,7 @@ static const struct {
 void
 _mesa_enable_sw_extensions(GLcontext *ctx)
 {
+   ctx->Extensions.ARB_copy_buffer = GL_TRUE;
    ctx->Extensions.ARB_depth_texture = GL_TRUE;
    /*ctx->Extensions.ARB_draw_buffers = GL_TRUE;*/
 #if FEATURE_ARB_fragment_program

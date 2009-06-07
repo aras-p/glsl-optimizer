@@ -144,6 +144,7 @@ static uint32_t r300_vs_op(unsigned op)
             return R300_VE_MULTIPLY;
         case TGSI_OPCODE_ADD:
         case TGSI_OPCODE_MOV:
+        case TGSI_OPCODE_SUB:
         case TGSI_OPCODE_SWZ:
             return R300_VE_ADD;
         case TGSI_OPCODE_MAX:
@@ -163,12 +164,14 @@ static uint32_t r300_vs_op(unsigned op)
 static uint32_t r300_vs_swiz(struct tgsi_full_src_register* reg)
 {
     if (reg->SrcRegister.Extended) {
-        return reg->SrcRegisterExtSwz.ExtSwizzleX |
+        return (reg->SrcRegister.Negate ? (0xf << 12) : 0) |
+            reg->SrcRegisterExtSwz.ExtSwizzleX |
             (reg->SrcRegisterExtSwz.ExtSwizzleY << 3) |
             (reg->SrcRegisterExtSwz.ExtSwizzleZ << 6) |
             (reg->SrcRegisterExtSwz.ExtSwizzleW << 9);
     } else {
-        return reg->SrcRegister.SwizzleX |
+        return (reg->SrcRegister.Negate ? (0xf << 12) : 0) |
+            reg->SrcRegister.SwizzleX |
             (reg->SrcRegister.SwizzleY << 3) |
             (reg->SrcRegister.SwizzleZ << 6) |
             (reg->SrcRegister.SwizzleW << 9);
@@ -179,12 +182,14 @@ static uint32_t r300_vs_swiz(struct tgsi_full_src_register* reg)
 static uint32_t r300_vs_scalar_swiz(struct tgsi_full_src_register* reg)
 {
     if (reg->SrcRegister.Extended) {
-        return reg->SrcRegisterExtSwz.ExtSwizzleX |
+        return (reg->SrcRegister.Negate ? (0xf << 12) : 0) |
+            reg->SrcRegisterExtSwz.ExtSwizzleX |
             (reg->SrcRegisterExtSwz.ExtSwizzleX << 3) |
             (reg->SrcRegisterExtSwz.ExtSwizzleX << 6) |
             (reg->SrcRegisterExtSwz.ExtSwizzleX << 9);
     } else {
-        return reg->SrcRegister.SwizzleX |
+        return (reg->SrcRegister.Negate ? (0xf << 12) : 0) |
+            reg->SrcRegister.SwizzleX |
             (reg->SrcRegister.SwizzleX << 3) |
             (reg->SrcRegister.SwizzleX << 6) |
             (reg->SrcRegister.SwizzleX << 9);
@@ -246,6 +251,10 @@ static void r300_vs_instruction(struct r300_vertex_shader* vs,
                     &inst->FullDstRegisters[0], inst->Instruction.Opcode,
                     1, TRUE);
             break;
+        case TGSI_OPCODE_SUB:
+            inst->FullSrcRegisters[1].SrcRegister.Negate =
+                !inst->FullSrcRegisters[1].SrcRegister.Negate;
+            /* Fall through */
         case TGSI_OPCODE_ADD:
         case TGSI_OPCODE_MUL:
         case TGSI_OPCODE_MAX:
@@ -386,6 +395,7 @@ void r300_translate_vertex_shader(struct r300_context* r300,
             assembler->tex_count + assembler->color_count);
 
     consts->count = consts->user_count + assembler->imm_count;
+    vs->uses_imms = assembler->imm_count;
     debug_printf("r300: vs: %d total constants, "
             "%d from user and %d from immediates\n", consts->count,
             consts->user_count, assembler->imm_count);

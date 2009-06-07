@@ -504,6 +504,8 @@ static void print_vertex(const struct setup_context *setup,
 #endif
 
 /**
+ * Sort the vertices from top to bottom order, setting up the triangle
+ * edge fields (ebot, emaj, etop).
  * \return FALSE if coords are inf/nan (cull the tri), TRUE otherwise
  */
 static boolean setup_sort_vertices( struct setup_context *setup,

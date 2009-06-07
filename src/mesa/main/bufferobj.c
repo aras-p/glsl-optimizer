@@ -1,9 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.5
+ * Version:  7.6
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
- * Copyright (C) 1999-2009  VMware, Inc.  All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -72,6 +72,16 @@ get_buffer(GLcontext *ctx, GLenum target)
          break;
       case GL_PIXEL_UNPACK_BUFFER_EXT:
          bufObj = ctx->Unpack.BufferObj;
+         break;
+      case GL_COPY_READ_BUFFER:
+         if (ctx->Extensions.ARB_copy_buffer) {
+            bufObj = ctx->CopyReadBuffer;
+         }
+         break;
+      case GL_COPY_WRITE_BUFFER:
+         if (ctx->Extensions.ARB_copy_buffer) {
+            bufObj = ctx->CopyWriteBuffer;
+         }
          break;
       default:
          /* error must be recorded by caller */
@@ -419,6 +429,37 @@ _mesa_buffer_unmap( GLcontext *ctx, GLenum target,
 
 
 /**
+ * Default fallback for \c dd_function_table::CopyBufferSubData().
+ * Called via glCopyBuffserSubData().
+ */
+void
+_mesa_copy_buffer_subdata(GLcontext *ctx,
+                          struct gl_buffer_object *src,
+                          struct gl_buffer_object *dst,
+                          GLintptr readOffset, GLintptr writeOffset,
+                          GLsizeiptr size)
+{
+   GLubyte *srcPtr, *dstPtr;
+
+   /* buffer should not already be mapped */
+   assert(!src->Pointer);
+   assert(!dst->Pointer);
+
+   srcPtr = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_COPY_READ_BUFFER,
+                                              GL_READ_ONLY, src);
+   dstPtr = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_COPY_WRITE_BUFFER,
+                                              GL_WRITE_ONLY, dst);
+
+   if (srcPtr && dstPtr)
+      _mesa_memcpy(dstPtr + writeOffset, srcPtr + readOffset, size);
+
+   ctx->Driver.UnmapBuffer(ctx, GL_COPY_READ_BUFFER, src);
+   ctx->Driver.UnmapBuffer(ctx, GL_COPY_WRITE_BUFFER, dst);
+}
+
+
+
+/**
  * Initialize the state associated with buffer objects
  */
 void
@@ -426,6 +467,9 @@ _mesa_init_buffer_objects( GLcontext *ctx )
 {
    ctx->Array.ArrayBufferObj = ctx->Shared->NullBufferObj;
    ctx->Array.ElementArrayBufferObj = ctx->Shared->NullBufferObj;
+
+   ctx->CopyReadBuffer = ctx->Shared->NullBufferObj;
+   ctx->CopyWriteBuffer = ctx->Shared->NullBufferObj;
 }
 
 
@@ -452,8 +496,22 @@ bind_buffer_object(GLcontext *ctx, GLenum target, GLuint buffer)
    case GL_PIXEL_UNPACK_BUFFER_EXT:
       bindTarget = &ctx->Unpack.BufferObj;
       break;
+   case GL_COPY_READ_BUFFER:
+      if (ctx->Extensions.ARB_copy_buffer) {
+         bindTarget = &ctx->CopyReadBuffer;
+      }
+      break;
+   case GL_COPY_WRITE_BUFFER:
+      if (ctx->Extensions.ARB_copy_buffer) {
+         bindTarget = &ctx->CopyWriteBuffer;
+      }
+      break;
    default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glBindBufferARB(target)");
+      ; /* no-op / we'll hit the follow error test next */
+   }
+
+   if (!bindTarget) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBindBufferARB(target 0x%x)");
       return;
    }
 
@@ -490,7 +548,7 @@ bind_buffer_object(GLcontext *ctx, GLenum target, GLuint buffer)
    _mesa_reference_buffer_object(ctx, bindTarget, newBufObj);
 
    /* Pass BindBuffer call to device driver */
-   if (ctx->Driver.BindBuffer && newBufObj)
+   if (ctx->Driver.BindBuffer)
       ctx->Driver.BindBuffer( ctx, target, newBufObj );
 }
 
@@ -779,6 +837,7 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
    for (i = 0; i < n; i++) {
       struct gl_buffer_object *bufObj = _mesa_lookup_bufferobj(ctx, ids[i]);
       if (bufObj) {
+         struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
          GLuint j;
 
          ASSERT(bufObj->Name == ids[i]);
@@ -791,18 +850,19 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
          }
 
          /* unbind any vertex pointers bound to this buffer */
-         unbind(ctx, &ctx->Array.ArrayObj->Vertex.BufferObj, bufObj);
-         unbind(ctx, &ctx->Array.ArrayObj->Normal.BufferObj, bufObj);
-         unbind(ctx, &ctx->Array.ArrayObj->Color.BufferObj, bufObj);
-         unbind(ctx, &ctx->Array.ArrayObj->SecondaryColor.BufferObj, bufObj);
-         unbind(ctx, &ctx->Array.ArrayObj->FogCoord.BufferObj, bufObj);
-         unbind(ctx, &ctx->Array.ArrayObj->Index.BufferObj, bufObj);
-         unbind(ctx, &ctx->Array.ArrayObj->EdgeFlag.BufferObj, bufObj);
-         for (j = 0; j < MAX_TEXTURE_COORD_UNITS; j++) {
-            unbind(ctx, &ctx->Array.ArrayObj->TexCoord[j].BufferObj, bufObj);
+         unbind(ctx, &arrayObj->Vertex.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->Weight.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->Normal.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->Color.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->SecondaryColor.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->FogCoord.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->Index.BufferObj, bufObj);
+         unbind(ctx, &arrayObj->EdgeFlag.BufferObj, bufObj);
+         for (j = 0; j < Elements(arrayObj->TexCoord); j++) {
+            unbind(ctx, &arrayObj->TexCoord[j].BufferObj, bufObj);
          }
-         for (j = 0; j < VERT_ATTRIB_MAX; j++) {
-            unbind(ctx, &ctx->Array.ArrayObj->VertexAttrib[j].BufferObj, bufObj);
+         for (j = 0; j < Elements(arrayObj->VertexAttrib); j++) {
+            unbind(ctx, &arrayObj->VertexAttrib[j].BufferObj, bufObj);
          }
 
          if (ctx->Array.ArrayBufferObj == bufObj) {
@@ -937,7 +997,7 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
       return;
    }
    if (bufObj->Name == 0) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glBufferDataARB" );
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glBufferDataARB(buffer 0)" );
       return;
    }
    
@@ -953,6 +1013,11 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
    ASSERT(ctx->Driver.BufferData);
 
    bufObj->Written = GL_TRUE;
+
+#ifdef VBO_DEBUG
+   _mesa_printf("glBufferDataARB(%u, sz %ld, from %p, usage 0x%x)\n",
+                bufObj->Name, size, data, usage);
+#endif
 
    /* Give the buffer object to the driver!  <data> may be null! */
    ctx->Driver.BufferData( ctx, target, size, data, usage, bufObj );
@@ -1025,7 +1090,7 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
       return NULL;
    }
    if (bufObj->Name == 0) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glMapBufferARB" );
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glMapBufferARB(buffer 0)" );
       return NULL;
    }
    if (bufObj->Pointer) {
@@ -1042,6 +1107,17 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
    bufObj->Access = access;
    if (access == GL_WRITE_ONLY_ARB || access == GL_READ_WRITE_ARB)
       bufObj->Written = GL_TRUE;
+
+#ifdef VBO_DEBUG
+   _mesa_printf("glMapBufferARB(%u, sz %ld, access 0x%x)\n",
+                bufObj->Name, bufObj->Size, access);
+   if (access == GL_WRITE_ONLY_ARB) {
+      GLuint i;
+      GLubyte *b = (GLubyte *) bufObj->Pointer;
+      for (i = 0; i < bufObj->Size; i++)
+         b[i] = i & 0xff;
+   }
+#endif
 
    return bufObj->Pointer;
 }
@@ -1068,6 +1144,26 @@ _mesa_UnmapBufferARB(GLenum target)
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUnmapBufferARB");
       return GL_FALSE;
    }
+
+#ifdef VBO_DEBUG
+   if (bufObj->Access == GL_WRITE_ONLY_ARB) {
+      GLuint i, unchanged = 0;
+      GLubyte *b = (GLubyte *) bufObj->Pointer;
+      GLint pos = -1;
+      /* check which bytes changed */
+      for (i = 0; i < bufObj->Size - 1; i++) {
+         if (b[i] == (i & 0xff) && b[i+1] == ((i+1) & 0xff)) {
+            unchanged++;
+            if (pos == -1)
+               pos = i;
+         }
+      }
+      if (unchanged) {
+         _mesa_printf("glUnmapBufferARB(%u): %u of %ld unchanged, starting at %d\n",
+                      bufObj->Name, unchanged, bufObj->Size, pos);
+      }
+   }
+#endif
 
    status = ctx->Driver.UnmapBuffer( ctx, target, bufObj );
    bufObj->Access = DEFAULT_ACCESS;
@@ -1138,3 +1234,84 @@ _mesa_GetBufferPointervARB(GLenum target, GLenum pname, GLvoid **params)
 
    *params = bufObj->Pointer;
 }
+
+
+void GLAPIENTRY
+_mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
+                        GLintptr readOffset, GLintptr writeOffset,
+                        GLsizeiptr size)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_buffer_object *src, *dst;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   src = get_buffer(ctx, readTarget);
+   if (!src || src->Name == 0) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glCopyBuffserSubData(readTarget = 0x%x)", readTarget);
+      return;
+   }
+
+   dst = get_buffer(ctx, writeTarget);
+   if (!dst || dst->Name == 0) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glCopyBuffserSubData(writeTarget = 0x%x)", writeTarget);
+      return;
+   }
+
+   if (src->Pointer) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCopyBuffserSubData(readBuffer is mapped)");
+      return;
+   }
+
+   if (dst->Pointer) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCopyBuffserSubData(writeBuffer is mapped)");
+      return;
+   }
+
+   if (readOffset < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glCopyBuffserSubData(readOffset = %d)", readOffset);
+      return;
+   }
+
+   if (writeOffset < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glCopyBuffserSubData(writeOffset = %d)", writeOffset);
+      return;
+   }
+
+   if (readOffset + size > src->Size) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glCopyBuffserSubData(readOffset + size = %d)",
+                  readOffset, size);
+      return;
+   }
+
+   if (writeOffset + size > dst->Size) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glCopyBuffserSubData(writeOffset + size = %d)",
+                  writeOffset, size);
+      return;
+   }
+
+   if (src == dst) {
+      if (readOffset + size <= writeOffset) {
+         /* OK */
+      }
+      else if (writeOffset + size <= readOffset) {
+         /* OK */
+      }
+      else {
+         /* overlapping src/dst is illegal */
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glCopyBuffserSubData(overlapping src/dst)");
+         return;
+      }
+   }
+
+   ctx->Driver.CopyBufferSubData(ctx, src, dst, readOffset, writeOffset, size);
+}
+

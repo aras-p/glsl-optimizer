@@ -76,6 +76,13 @@
     ((R300_PVS_SRC_SELECT_FORCE_1 | (R300_PVS_SRC_SELECT_FORCE_1 << 3) | \
      (R300_PVS_SRC_SELECT_FORCE_1 << 6) | \
       (R300_PVS_SRC_SELECT_FORCE_1 << 9)) << 13)
+#define R300_PVS_MODIFIER_X        (1 << 25)
+#define R300_PVS_MODIFIER_Y        (1 << 26)
+#define R300_PVS_MODIFIER_Z        (1 << 27)
+#define R300_PVS_MODIFIER_W        (1 << 28)
+#define R300_PVS_NEGATE_XYZW \
+    (R300_PVS_MODIFIER_X | R300_PVS_MODIFIER_Y | \
+     R300_PVS_MODIFIER_Z | R300_PVS_MODIFIER_W)
 
 static const struct tgsi_full_src_register r300_constant_zero = {
     .SrcRegister.Extended = TRUE,

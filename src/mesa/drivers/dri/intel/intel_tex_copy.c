@@ -118,8 +118,12 @@ do_copy_texsubimage(struct intel_context *intel,
       dstx += x - orig_x;
       dsty += y - orig_y;
 
-      /* image_offset may be non-page-aligned, but that's illegal for tiling. */
-      assert(intelImage->mt->region->tiling == I915_TILING_NONE);
+      /* Can't blit to tiled buffers with non-tile-aligned offset. */
+      if (intelImage->mt->region->tiling != I915_TILING_NONE &&
+	  (image_offset & 4095) != 0) {
+	 UNLOCK_HARDWARE(intel);
+	 return GL_FALSE;
+      }
 
       if (ctx->ReadBuffer->Name == 0) {
 	 /* reading from a window, adjust x, y */
@@ -231,6 +235,14 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    if (border)
       goto fail;
 
+   /* Setup or redefine the texture object, mipmap tree and texture
+    * image.  Don't populate yet.
+    */
+   ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
+                          width, height, border,
+                          GL_RGBA, CHAN_TYPE, NULL,
+                          &ctx->DefaultPacking, texObj, texImage);
+
    srcx = x;
    srcy = y;
    dstx = 0;
@@ -240,15 +252,6 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 				   &srcx, &srcy,
 				   &width, &height))
       return;
-
-   /* Setup or redefine the texture object, mipmap tree and texture
-    * image.  Don't populate yet.  
-    */
-   ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
-                          width, height, border,
-                          GL_RGBA, CHAN_TYPE, NULL,
-                          &ctx->DefaultPacking, texObj, texImage);
-
 
    if (!do_copy_texsubimage(intel_context(ctx), target,
                             intel_texture_image(texImage),

@@ -1,0 +1,14 @@
+Import('*')
+
+rbug = env.ConvenienceLibrary(
+	target = 'rbug',
+	source = [
+		'rbug_core.c',
+		'rbug_shader.c',
+		'rbug_context.c',
+		'rbug_texture.c',
+		'rbug_demarshal.c',
+		'rbug_connection.c',
+	])
+
+auxiliaries.insert(0, rbug)

@@ -159,12 +159,21 @@ static GLuint fixed_types[4] = {
  * Return a PIPE_FORMAT_x for the given GL datatype and size.
  */
 GLuint
-st_pipe_vertex_format(GLenum type, GLuint size, GLboolean normalized)
+st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
+                      GLboolean normalized)
 {
    assert((type >= GL_BYTE && type <= GL_DOUBLE) ||
           type == GL_FIXED);
    assert(size >= 1);
    assert(size <= 4);
+   assert(format == GL_RGBA || format == GL_BGRA);
+
+   if (format == GL_BGRA) {
+      /* this is an odd-ball case */
+      assert(type == GL_UNSIGNED_BYTE);
+      assert(normalized);
+      return PIPE_FORMAT_B8G8R8A8_UNORM;
+   }
 
    if (normalized) {
       switch (type) {
@@ -392,6 +401,7 @@ setup_interleaved_attribs(GLcontext *ctx,
       velements[attr].src_format =
          st_pipe_vertex_format(arrays[mesaAttr]->Type,
                                arrays[mesaAttr]->Size,
+                               arrays[mesaAttr]->Format,
                                arrays[mesaAttr]->Normalized);
       assert(velements[attr].src_format);
    }
@@ -479,6 +489,7 @@ setup_non_interleaved_attribs(GLcontext *ctx,
       velements[attr].src_format
          = st_pipe_vertex_format(arrays[mesaAttr]->Type,
                                  arrays[mesaAttr]->Size,
+                                 arrays[mesaAttr]->Format,
                                  arrays[mesaAttr]->Normalized);
       assert(velements[attr].src_format);
    }

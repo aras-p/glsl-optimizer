@@ -101,7 +101,7 @@ static struct r300_rs_block r300_rs_block_copy_state = {
         R500_RS_SEL_Q(R300_RS_SEL_K1),
     .inst[0] = R300_RS_INST_COL_CN_WRITE,
     .count = R300_IT_COUNT(2) | R300_IC_COUNT(0) | R300_HIRES_EN,
-    .inst_count = R300_RS_TX_OFFSET(6),
+    .inst_count = R300_RS_TX_OFFSET(0),
 };
 
 static struct r300_rs_block r500_rs_block_copy_state = {
@@ -111,7 +111,7 @@ static struct r300_rs_block r500_rs_block_copy_state = {
         R500_RS_SEL_Q(R500_RS_IP_PTR_K1),
     .inst[0] = R500_RS_INST_TEX_CN_WRITE,
     .count = R300_IT_COUNT(2) | R300_IC_COUNT(0) | R300_HIRES_EN,
-    .inst_count = R300_RS_TX_OFFSET(6),
+    .inst_count = R300_RS_TX_OFFSET(0),
 };
 
 static struct r300_sampler_state r300_sampler_copy_state = {

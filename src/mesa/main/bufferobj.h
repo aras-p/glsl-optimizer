@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.2
+ * Version:  7.6
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -82,6 +83,13 @@ extern GLboolean
 _mesa_buffer_unmap( GLcontext *ctx, GLenum target,
                     struct gl_buffer_object * bufObj );
 
+extern void
+_mesa_copy_buffer_subdata(GLcontext *ctx,
+                          struct gl_buffer_object *src,
+                          struct gl_buffer_object *dst,
+                          GLintptr readOffset, GLintptr writeOffset,
+                          GLsizeiptr size);
+
 extern GLboolean
 _mesa_validate_pbo_access(GLuint dimensions,
                           const struct gl_pixelstore_attrib *pack,
@@ -153,5 +161,10 @@ _mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params);
 
 extern void GLAPIENTRY
 _mesa_GetBufferPointervARB(GLenum target, GLenum pname, GLvoid **params);
+
+extern void GLAPIENTRY
+_mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
+                        GLintptr readOffset, GLintptr writeOffset,
+                        GLsizeiptr size);
 
 #endif

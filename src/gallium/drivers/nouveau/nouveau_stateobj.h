@@ -4,7 +4,7 @@
 #include "util/u_debug.h"
 
 struct nouveau_stateobj_reloc {
-	struct pipe_buffer *bo;
+	struct nouveau_bo *bo;
 
 	unsigned offset;
 	unsigned packet;
@@ -51,7 +51,7 @@ so_ref(struct nouveau_stateobj *ref, struct nouveau_stateobj **pso)
         if (pipe_reference((struct pipe_reference**)pso, &ref->reference)) {
 		free(so->push);
 		for (i = 0; i < so->cur_reloc; i++)
-			pipe_buffer_reference(&so->reloc[i].bo, NULL);
+			nouveau_bo_ref(NULL, &so->reloc[i].bo);
 		free(so->reloc);
 		free(so);
 	}
@@ -81,13 +81,13 @@ so_method(struct nouveau_stateobj *so, struct nouveau_grobj *gr,
 }
 
 static INLINE void
-so_reloc(struct nouveau_stateobj *so, struct pipe_buffer *bo,
+so_reloc(struct nouveau_stateobj *so, struct nouveau_bo *bo,
 	 unsigned data, unsigned flags, unsigned vor, unsigned tor)
 {
 	struct nouveau_stateobj_reloc *r = &so->reloc[so->cur_reloc++];
 	
 	r->bo = NULL;
-	pipe_buffer_reference(&r->bo, bo);
+	nouveau_bo_ref(bo, &r->bo);
 	r->offset = so->cur - so->push;
 	r->packet = so->cur_packet;
 	r->data = data;
@@ -107,50 +107,52 @@ so_dump(struct nouveau_stateobj *so)
 }
 
 static INLINE void
-so_emit(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
+so_emit(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 {
-	struct nouveau_pushbuf *pb = nvws->channel->pushbuf;
+	struct nouveau_pushbuf *pb = chan->pushbuf;
 	unsigned nr, i;
 
 	nr = so->cur - so->push;
 	if (pb->remaining < nr)
-		nvws->push_flush(nvws, nr, NULL);
+		nouveau_pushbuf_flush(chan, nr);
 	pb->remaining -= nr;
 
 	memcpy(pb->cur, so->push, nr * 4);
 	for (i = 0; i < so->cur_reloc; i++) {
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
-		nvws->push_reloc(nvws, pb->cur + r->offset, r->bo,
-				 r->data, r->flags, r->vor, r->tor);
+		nouveau_pushbuf_emit_reloc(chan, pb->cur + r->offset,
+					   r->bo, r->data, 0, r->flags,
+					   r->vor, r->tor);
 	}
 	pb->cur += nr;
 }
 
 static INLINE void
-so_emit_reloc_markers(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
+so_emit_reloc_markers(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 {
-	struct nouveau_pushbuf *pb = nvws->channel->pushbuf;
+	struct nouveau_pushbuf *pb = chan->pushbuf;
 	unsigned i;
 
 	if (!so)
 		return;
 
 	i = so->cur_reloc << 1;
-	if (nvws->channel->pushbuf->remaining < i)
-		nvws->push_flush(nvws, i, NULL);
-	nvws->channel->pushbuf->remaining -= i;
+	if (pb->remaining < i)
+		nouveau_pushbuf_flush(chan, i);
+	pb->remaining -= i;
 
 	for (i = 0; i < so->cur_reloc; i++) {
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
-		nvws->push_reloc(nvws, pb->cur++, r->bo, r->packet,
-				 (r->flags & (NOUVEAU_BO_VRAM |
-					      NOUVEAU_BO_GART |
-					      NOUVEAU_BO_RDWR)) |
-				 NOUVEAU_BO_DUMMY, 0, 0);
-		nvws->push_reloc(nvws, pb->cur++, r->bo, r->data,
-				 r->flags | NOUVEAU_BO_DUMMY, r->vor, r->tor);
+		nouveau_pushbuf_emit_reloc(chan, pb->cur++, r->bo, r->packet, 0,
+					   (r->flags & (NOUVEAU_BO_VRAM |
+							NOUVEAU_BO_GART |
+							NOUVEAU_BO_RDWR)) |
+					   NOUVEAU_BO_DUMMY, 0, 0);
+		nouveau_pushbuf_emit_reloc(chan, pb->cur++, r->bo, r->data, 0,
+					   r->flags | NOUVEAU_BO_DUMMY,
+					   r->vor, r->tor);
 	}
 }
 

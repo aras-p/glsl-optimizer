@@ -650,6 +650,13 @@ intelInitContext(struct intel_context *intel,
    _mesa_init_point(ctx);
 
    ctx->Const.MaxColorAttachments = 4;  /* XXX FBO: review this */
+   if (IS_965(intelScreen->deviceID)) {
+      if (MAX_WIDTH > 8192)
+	 ctx->Const.MaxRenderbufferSize = 8192;
+   } else {
+      if (MAX_WIDTH > 2048)
+	 ctx->Const.MaxRenderbufferSize = 2048;
+   }
 
    /* Initialize the software rasterizer and helper modules. */
    _swrast_CreateContext(ctx);
@@ -717,6 +724,8 @@ intelInitContext(struct intel_context *intel,
    else if (driQueryOptionb(&intel->optionCache, "force_s3tc_enable")) {
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
    }
+   intel->use_texture_tiling = driQueryOptionb(&intel->optionCache,
+					       "texture_tiling");
 
    intel->prim.primitive = ~0;
 

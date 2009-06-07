@@ -178,6 +178,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
       velements[attr].src_format = 
          st_pipe_vertex_format(arrays[mesaAttr]->Type,
                                arrays[mesaAttr]->Size,
+                               arrays[mesaAttr]->Format,
                                arrays[mesaAttr]->Normalized);
       assert(velements[attr].src_format);
 

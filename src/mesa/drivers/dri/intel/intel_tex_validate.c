@@ -241,7 +241,7 @@ intel_tex_map_level_images(struct intel_context *intel,
       struct intel_texture_image *intelImage =
 	 intel_texture_image(intelObj->base.Image[face][level]);
 
-      if (intelImage->mt) {
+      if (intelImage && intelImage->mt) {
 	 intelImage->base.Data =
 	    intel_miptree_image_map(intel,
 				    intelImage->mt,
@@ -268,7 +268,7 @@ intel_tex_unmap_level_images(struct intel_context *intel,
       struct intel_texture_image *intelImage =
 	 intel_texture_image(intelObj->base.Image[face][level]);
 
-      if (intelImage->mt) {
+      if (intelImage && intelImage->mt) {
 	 intel_miptree_image_unmap(intel, intelImage->mt);
 	 intelImage->base.Data = NULL;
       }

@@ -2,6 +2,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
+#include "pipe/p_inlines.h"
 
 #include "tgsi/tgsi_parse.h"
 
@@ -453,7 +454,7 @@ nv20_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 			 const struct pipe_constant_buffer *buf )
 {
 	struct nv20_context *nv20 = nv20_context(pipe);
-	struct pipe_winsys *ws = pipe->winsys;
+	struct pipe_screen *pscreen = pipe->screen;
 
 	assert(shader < PIPE_SHADER_TYPES);
 	assert(index == 0);
@@ -461,12 +462,12 @@ nv20_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 	if (buf) {
 		void *mapped;
 		if (buf->buffer && buf->buffer->size &&
-                    (mapped = ws->buffer_map(ws, buf->buffer, PIPE_BUFFER_USAGE_CPU_READ)))
+                    (mapped = pipe_buffer_map(pscreen, buf->buffer, PIPE_BUFFER_USAGE_CPU_READ)))
 		{
 			memcpy(nv20->constbuf[shader], mapped, buf->buffer->size);
 			nv20->constbuf_nr[shader] =
 				buf->buffer->size / (4 * sizeof(float));
-			ws->buffer_unmap(ws, buf->buffer);
+			pipe_buffer_unmap(pscreen, buf->buffer);
 		}
 	}
 }

@@ -225,6 +225,13 @@ fetch_vector4(const struct prog_src_register *source,
       result[2] = -result[2];
       result[3] = -result[3];
    }
+
+#ifdef NAN_CHECK
+   assert(!IS_INF_OR_NAN(result[0]));
+   assert(!IS_INF_OR_NAN(result[0]));
+   assert(!IS_INF_OR_NAN(result[0]));
+   assert(!IS_INF_OR_NAN(result[0]));
+#endif
 }
 
 
@@ -478,6 +485,13 @@ store_vector4(const struct prog_instruction *inst,
             writeMask &= ~WRITEMASK_W;
       }
    }
+
+#ifdef NAN_CHECK
+   assert(!IS_INF_OR_NAN(value[0]));
+   assert(!IS_INF_OR_NAN(value[0]));
+   assert(!IS_INF_OR_NAN(value[0]));
+   assert(!IS_INF_OR_NAN(value[0]));
+#endif
 
    if (writeMask & WRITEMASK_X)
       dst[0] = value[0];
@@ -832,10 +846,14 @@ _mesa_execute_program(GLcontext * ctx,
          break;
       case OPCODE_EX2:         /* Exponential base 2 */
          {
-            GLfloat a[4], result[4];
+            GLfloat a[4], result[4], val;
             fetch_vector1(&inst->SrcReg[0], machine, a);
-            result[0] = result[1] = result[2] = result[3] =
-               (GLfloat) _mesa_pow(2.0, a[0]);
+            val = (GLfloat) _mesa_pow(2.0, a[0]);
+            /*
+            if (IS_INF_OR_NAN(val))
+               val = 1.0e10;
+            */
+            result[0] = result[1] = result[2] = result[3] = val;
             store_vector4(inst, machine, result);
          }
          break;
@@ -911,12 +929,17 @@ _mesa_execute_program(GLcontext * ctx,
          break;
       case OPCODE_LG2:         /* log base 2 */
          {
-            GLfloat a[4], result[4];
+            GLfloat a[4], result[4], val;
             fetch_vector1(&inst->SrcReg[0], machine, a);
 	    /* The fast LOG2 macro doesn't meet the precision requirements.
 	     */
-            result[0] = result[1] = result[2] = result[3] =
-		(log(a[0]) * 1.442695F);
+            if (a[0] == 0.0F) {
+               val = 0.0F;
+            }
+            else {
+               val = log(a[0]) * 1.442695F;
+            }
+            result[0] = result[1] = result[2] = result[3] = val;
             store_vector4(inst, machine, result);
          }
          break;

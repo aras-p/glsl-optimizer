@@ -119,6 +119,7 @@ client_state(GLcontext *ctx, GLenum cap, GLboolean state)
          CHECK_EXTENSION(NV_vertex_program, cap);
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
+            ASSERT(n < Elements(ctx->Array.ArrayObj->VertexAttrib));
             var = &ctx->Array.ArrayObj->VertexAttrib[n].Enabled;
             flag = _NEW_ARRAY_ATTRIB(n);
          }
@@ -1316,6 +1317,7 @@ _mesa_IsEnabled( GLenum cap )
          CHECK_EXTENSION(NV_vertex_program);
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
+            ASSERT(n < Elements(ctx->Array.ArrayObj->VertexAttrib));
             return (ctx->Array.ArrayObj->VertexAttrib[n].Enabled != 0);
          }
       case GL_MAP1_VERTEX_ATTRIB0_4_NV:

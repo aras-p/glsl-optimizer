@@ -1008,6 +1008,16 @@ output_if_debug(const char *prefixString, const char *outputString,
       fprintf(stderr, "%s: %s", prefixString, outputString);
       if (newline)
          fprintf(stderr, "\n");
+
+#if defined(_WIN32) && !defined(_WIN32_WCE)
+      /* stderr from windows applications without console is not usually 
+       * visible, so communicate with the debugger instead */ 
+      {
+         char buf[4096];
+         _mesa_snprintf(buf, sizeof(buf), "%s: %s%s", prefixString, outputString, newline ? "\n" : "");
+         OutputDebugStringA(buf);
+      }
+#endif
    }
 }
 

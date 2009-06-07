@@ -60,8 +60,6 @@ struct aaline_fragment_shader
    struct pipe_shader_state state;
    void *driver_fs;
    void *aaline_fs;
-   void *aapoint_fs; /* not yet */
-   void *sprite_fs; /* not yet */
    uint sampler_unit;
    int generic_attrib;  /**< texcoord/generic used for texture */
 };
@@ -373,10 +371,15 @@ generate_aaline_fs(struct aaline_stage *aaline)
    aaline->fs->aaline_fs
       = aaline->driver_create_fs_state(aaline->pipe, &aaline_fs);
    if (aaline->fs->aaline_fs == NULL)
-      return FALSE;
+      goto fail;
 
    aaline->fs->generic_attrib = transform.maxGeneric + 1;
+   FREE((void *)aaline_fs.tokens);
    return TRUE;
+
+fail:
+   FREE((void *)aaline_fs.tokens);
+   return FALSE;
 }
 
 
@@ -816,6 +819,10 @@ aaline_delete_fs_state(struct pipe_context *pipe, void *fs)
    struct aaline_fragment_shader *aafs = (struct aaline_fragment_shader *) fs;
    /* pass-through */
    aaline->driver_delete_fs_state(aaline->pipe, aafs->driver_fs);
+
+   if (aafs->aaline_fs)
+      aaline->driver_delete_fs_state(aaline->pipe, aafs->aaline_fs);
+
    FREE(aafs);
 }
 

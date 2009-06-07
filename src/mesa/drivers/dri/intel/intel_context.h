@@ -305,6 +305,8 @@ struct intel_context
     */
    GLboolean is_front_buffer_rendering;
 
+   GLboolean use_texture_tiling;
+
    drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
 
    int perf_boxes;
@@ -559,6 +561,9 @@ void intel_viewport(GLcontext * ctx, GLint x, GLint y,
 void intel_update_renderbuffers(__DRIcontext *context,
 				__DRIdrawable *drawable);
 
+void i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
+				  uint32_t buffer_id);
+
 /*======================================================================
  * Inline conversion functions.  
  * These are better-typed than the macros used previously:
@@ -567,6 +572,12 @@ static INLINE struct intel_context *
 intel_context(GLcontext * ctx)
 {
    return (struct intel_context *) ctx;
+}
+
+static INLINE GLboolean
+is_power_of_two(uint32_t value)
+{
+   return (value & (value - 1)) == 0;
 }
 
 #endif

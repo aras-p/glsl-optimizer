@@ -66,8 +66,11 @@ if [ $# -ge 2 ] ; then
 
 		elif [ -f "$FILE" ] ; then
 			#echo "$FILE" is a regular file
-			$RM "$DEST/`basename $FILE`"
-			cp "$FILE" "$DEST"
+			# Only copy if the files differ
+			if ! cmp -s $FILE $DEST/`basename $FILE`; then
+				$RM "$DEST/`basename $FILE`"
+				cp "$FILE" "$DEST"
+			fi
 			if [ $MODE ] ; then
 				FILE=`basename "$FILE"`
 				chmod $MODE "$DEST/$FILE"

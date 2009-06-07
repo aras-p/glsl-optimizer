@@ -1,5 +1,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "pipe/p_inlines.h"
 
 #include "nv30_context.h"
 #include "nv30_state.h"
@@ -70,7 +71,7 @@ static boolean
 nv30_vbo_set_idxbuf(struct nv30_context *nv30, struct pipe_buffer *ib,
 		    unsigned ib_size)
 {
-	struct pipe_screen *pscreen = &nv30->screen->pipe;
+	struct pipe_screen *pscreen = &nv30->screen->base.base;
 	unsigned type;
 
 	if (!ib) {
@@ -108,7 +109,7 @@ nv30_vbo_static_attrib(struct nv30_context *nv30, struct nouveau_stateobj *so,
 		       int attrib, struct pipe_vertex_element *ve,
 		       struct pipe_vertex_buffer *vb)
 {
-	struct pipe_winsys *ws = nv30->pipe.winsys;
+	struct pipe_screen *pscreen = nv30->pipe.screen;
 	struct nouveau_grobj *rankine = nv30->screen->rankine;
 	unsigned type, ncomp;
 	void *map;
@@ -116,7 +117,7 @@ nv30_vbo_static_attrib(struct nv30_context *nv30, struct nouveau_stateobj *so,
 	if (nv30_vbo_format_to_hw(ve->src_format, &type, &ncomp))
 		return FALSE;
 
-	map  = ws->buffer_map(ws, vb->buffer, PIPE_BUFFER_USAGE_CPU_READ);
+	map  = pipe_buffer_map(pscreen, vb->buffer, PIPE_BUFFER_USAGE_CPU_READ);
 	map += vb->buffer_offset + ve->src_offset;
 
 	switch (type) {
@@ -148,18 +149,17 @@ nv30_vbo_static_attrib(struct nv30_context *nv30, struct nouveau_stateobj *so,
 			so_data  (so, fui(v[0]));
 			break;
 		default:
-			ws->buffer_unmap(ws, vb->buffer);
+			pipe_buffer_unmap(pscreen, vb->buffer);
 			return FALSE;
 		}
 	}
 		break;
 	default:
-		ws->buffer_unmap(ws, vb->buffer);
+		pipe_buffer_unmap(pscreen, vb->buffer);
 		return FALSE;
 	}
 
-	ws->buffer_unmap(ws, vb->buffer);
-
+	pipe_buffer_unmap(pscreen, vb->buffer);
 	return TRUE;
 }
 
@@ -168,7 +168,7 @@ nv30_draw_arrays(struct pipe_context *pipe,
 		 unsigned mode, unsigned start, unsigned count)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct nouveau_channel *chan = nv30->nvws->channel;
+	struct nouveau_channel *chan = nv30->screen->base.channel;
 	unsigned restart = 0;
 
 	nv30_vbo_set_idxbuf(nv30, NULL, 0);
@@ -228,7 +228,7 @@ static INLINE void
 nv30_draw_elements_u08(struct nv30_context *nv30, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv30->nvws->channel;
+	struct nouveau_channel *chan = nv30->screen->base.channel;
 
 	while (count) {
 		uint8_t *elts = (uint8_t *)ib + start;
@@ -277,7 +277,7 @@ static INLINE void
 nv30_draw_elements_u16(struct nv30_context *nv30, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv30->nvws->channel;
+	struct nouveau_channel *chan = nv30->screen->base.channel;
 
 	while (count) {
 		uint16_t *elts = (uint16_t *)ib + start;
@@ -326,7 +326,7 @@ static INLINE void
 nv30_draw_elements_u32(struct nv30_context *nv30, void *ib,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv30->nvws->channel;
+	struct nouveau_channel *chan = nv30->screen->base.channel;
 
 	while (count) {
 		uint32_t *elts = (uint32_t *)ib + start;
@@ -368,10 +368,10 @@ nv30_draw_elements_inline(struct pipe_context *pipe,
 			  unsigned mode, unsigned start, unsigned count)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct pipe_winsys *ws = pipe->winsys;
+	struct pipe_screen *pscreen = pipe->screen;
 	void *map;
 
-	map = ws->buffer_map(ws, ib, PIPE_BUFFER_USAGE_CPU_READ);
+	map = pipe_buffer_map(pscreen, ib, PIPE_BUFFER_USAGE_CPU_READ);
 	if (!ib) {
 		NOUVEAU_ERR("failed mapping ib\n");
 		return FALSE;
@@ -392,7 +392,7 @@ nv30_draw_elements_inline(struct pipe_context *pipe,
 		break;
 	}
 
-	ws->buffer_unmap(ws, ib);
+	pipe_buffer_unmap(pscreen, ib);
 	return TRUE;
 }
 
@@ -401,7 +401,7 @@ nv30_draw_elements_vbo(struct pipe_context *pipe,
 		       unsigned mode, unsigned start, unsigned count)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct nouveau_channel *chan = nv30->nvws->channel;
+	struct nouveau_channel *chan = nv30->screen->base.channel;
 	unsigned restart = 0;
 
 	while (count) {
@@ -521,18 +521,20 @@ nv30_vbo_validate(struct nv30_context *nv30)
 			return FALSE;
 		}
 
-		so_reloc(vtxbuf, vb->buffer, vb->buffer_offset + ve->src_offset,
-			 vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
-			 0, NV34TCL_VTXBUF_ADDRESS_DMA1);
+		so_reloc(vtxbuf, nouveau_bo(vb->buffer), vb->buffer_offset +
+				 ve->src_offset, vb_flags | NOUVEAU_BO_LOW |
+				 NOUVEAU_BO_OR, 0, NV34TCL_VTXBUF_ADDRESS_DMA1);
 		so_data (vtxfmt, ((vb->stride << NV34TCL_VTXFMT_STRIDE_SHIFT) |
 				  (ncomp << NV34TCL_VTXFMT_SIZE_SHIFT) | type));
 	}
 
 	if (ib) {
+		struct nouveau_bo *bo = nouveau_bo(ib);
+
 		so_method(vtxbuf, rankine, NV34TCL_IDXBUF_ADDRESS, 2);
-		so_reloc (vtxbuf, ib, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
-		so_reloc (vtxbuf, ib, ib_format, vb_flags | NOUVEAU_BO_OR,
-			  0, NV34TCL_IDXBUF_FORMAT_DMA1);
+		so_reloc (vtxbuf, bo, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
+		so_reloc (vtxbuf, bo, ib_format, vb_flags | NOUVEAU_BO_OR,
+				  0, NV34TCL_IDXBUF_FORMAT_DMA1);
 	}
 
 	so_method(vtxbuf, rankine, 0x1710, 1);

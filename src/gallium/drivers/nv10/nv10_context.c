@@ -30,18 +30,18 @@ nv10_destroy(struct pipe_context *pipe)
 static void nv10_init_hwctx(struct nv10_context *nv10)
 {
 	struct nv10_screen *screen = nv10->screen;
-	struct nouveau_winsys *nvws = screen->nvws;
+	struct nouveau_channel *chan = screen->base.channel;
 	int i;
 	float projectionmatrix[16];
 
 	BEGIN_RING(celsius, NV10TCL_DMA_NOTIFY, 1);
 	OUT_RING  (screen->sync->handle);
 	BEGIN_RING(celsius, NV10TCL_DMA_IN_MEMORY0, 2);
-	OUT_RING  (nvws->channel->vram->handle);
-	OUT_RING  (nvws->channel->gart->handle);
+	OUT_RING  (chan->vram->handle);
+	OUT_RING  (chan->gart->handle);
 	BEGIN_RING(celsius, NV10TCL_DMA_IN_MEMORY2, 2);
-	OUT_RING  (nvws->channel->vram->handle);
-	OUT_RING  (nvws->channel->vram->handle);
+	OUT_RING  (chan->vram->handle);
+	OUT_RING  (chan->vram->handle);
 
 	BEGIN_RING(celsius, NV10TCL_NOP, 1);
 	OUT_RING  (0);

@@ -353,6 +353,19 @@ static void emit_mad( struct brw_compile *p,
    }
 }
 
+static void emit_trunc( struct brw_compile *p,
+		      const struct brw_reg *dst,
+		      GLuint mask,
+		      const struct brw_reg *arg0)
+{
+   GLuint i;
+
+   for (i = 0; i < 4; i++) {
+      if (mask & (1<<i)) {
+	 brw_RNDZ(p, dst[i], arg0[i]);
+      }
+   }
+}
 
 static void emit_lrp( struct brw_compile *p, 
 		      const struct brw_reg *dst,
@@ -1222,6 +1235,10 @@ void brw_wm_emit( struct brw_wm_compile *c )
 
       case OPCODE_DPH:
 	 emit_dph(p, dst, dst_flags, args[0], args[1]);
+	 break;
+
+      case OPCODE_TRUNC:
+	 emit_trunc(p, dst, dst_flags, args[0]);
 	 break;
 
       case OPCODE_LRP:

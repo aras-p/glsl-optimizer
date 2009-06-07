@@ -181,7 +181,7 @@ static struct r500_fragment_shader r500_texture_fragment_shader = {
     .instruction_count = 2,
     .instructions[0].inst0 = R500_INST_TYPE_TEX |
         R500_INST_TEX_SEM_WAIT |
-        R500_INST_RGB_OMASK_RGB | R500_INST_ALPHA_OMASK |
+        R500_INST_RGB_WMASK_RGB | R500_INST_ALPHA_WMASK |
         R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP,
     .instructions[0].inst1 = R500_TEX_ID(0) | R500_TEX_INST_LD |
         R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED,

@@ -68,8 +68,8 @@ struct vbo_context {
    struct gl_client_array *generic_currval;
    struct gl_client_array *mat_currval;
 
-   GLuint map_vp_none[32];
-   GLuint map_vp_arb[32];
+   GLuint map_vp_none[VERT_ATTRIB_MAX];
+   GLuint map_vp_arb[VERT_ATTRIB_MAX];
 
    GLfloat *current[VBO_ATTRIB_MAX]; /* points into ctx->Current, ctx->Light.Material */
    GLfloat CurrentFloatEdgeFlag;
@@ -92,15 +92,17 @@ static INLINE struct vbo_context *vbo_context(GLcontext *ctx)
    return (struct vbo_context *)(ctx->swtnl_im);
 }
 
-enum {
-   VP_NONE = 1,
-   VP_NV,
-   VP_ARB
-};
 
-static INLINE GLuint get_program_mode( GLcontext *ctx )
+/**
+ * Return VP_x token to indicate whether we're running fixed-function
+ * vertex transformation, an NV vertex program or ARB vertex program/shader.
+ */
+static INLINE enum vp_mode
+get_program_mode( GLcontext *ctx )
 {
    if (!ctx->VertexProgram._Current)
+      return VP_NONE;
+   else if (ctx->VertexProgram._Current == ctx->VertexProgram._TnlProgram)
       return VP_NONE;
    else if (ctx->VertexProgram._Current->IsNVProgram)
       return VP_NV;

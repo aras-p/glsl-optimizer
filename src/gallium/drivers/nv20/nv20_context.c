@@ -30,7 +30,7 @@ nv20_destroy(struct pipe_context *pipe)
 static void nv20_init_hwctx(struct nv20_context *nv20)
 {
 	struct nv20_screen *screen = nv20->screen;
-	struct nouveau_winsys *nvws = screen->nvws;
+	struct nouveau_channel *chan = screen->base.channel;
 	int i;
 	float projectionmatrix[16];
 	const boolean is_nv25tcl = (nv20->screen->kelvin->grclass == NV25TCL);
@@ -38,11 +38,11 @@ static void nv20_init_hwctx(struct nv20_context *nv20)
 	BEGIN_RING(kelvin, NV20TCL_DMA_NOTIFY, 1);
 	OUT_RING  (screen->sync->handle);
 	BEGIN_RING(kelvin, NV20TCL_DMA_TEXTURE0, 2);
-	OUT_RING  (nvws->channel->vram->handle);
-	OUT_RING  (nvws->channel->gart->handle); /* TEXTURE1 */
+	OUT_RING  (chan->vram->handle);
+	OUT_RING  (chan->gart->handle); /* TEXTURE1 */
 	BEGIN_RING(kelvin, NV20TCL_DMA_COLOR, 2);
-	OUT_RING  (nvws->channel->vram->handle);
-	OUT_RING  (nvws->channel->vram->handle); /* ZETA */
+	OUT_RING  (chan->vram->handle);
+	OUT_RING  (chan->vram->handle); /* ZETA */
 
 	BEGIN_RING(kelvin, NV20TCL_DMA_QUERY, 1);
 	OUT_RING  (0); /* renouveau: beef0351, unique */
@@ -99,9 +99,9 @@ static void nv20_init_hwctx(struct nv20_context *nv20)
 		OUT_RING  (3);
 
 		BEGIN_RING(kelvin, NV25TCL_DMA_IN_MEMORY9, 1);
-		OUT_RING  (nvws->channel->vram->handle);
+		OUT_RING  (chan->vram->handle);
 		BEGIN_RING(kelvin, NV25TCL_DMA_IN_MEMORY8, 1);
-		OUT_RING  (nvws->channel->vram->handle);
+		OUT_RING  (chan->vram->handle);
 	}
 	BEGIN_RING(kelvin, NV20TCL_DMA_FENCE, 1);
 	OUT_RING  (0);	/* renouveau: beef1e10 */

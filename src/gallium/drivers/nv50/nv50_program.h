@@ -24,10 +24,10 @@ struct nv50_program {
 	struct nv50_program_exec *exec_head;
 	struct nv50_program_exec *exec_tail;
 	unsigned exec_size;
-	struct nouveau_resource *data;
-	unsigned data_start;
+	struct nouveau_resource *data[2];
+	unsigned data_start[2];
 
-	struct pipe_buffer *buffer;
+	struct nouveau_bo *bo;
 
 	float *immd;
 	unsigned immd_nr;
@@ -39,6 +39,11 @@ struct nv50_program {
 		struct {
 			unsigned attr[2];
 		} vp;
+		struct {
+			unsigned regs[4];
+			unsigned map[5];
+			unsigned high_map;
+		} fp;
 	} cfg;
 };
 

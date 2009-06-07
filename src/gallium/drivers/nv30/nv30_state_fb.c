@@ -5,6 +5,8 @@ static boolean
 nv30_state_framebuffer_validate(struct nv30_context *nv30)
 {
 	struct pipe_framebuffer_state *fb = &nv30->framebuffer;
+	struct nouveau_channel *chan = nv30->screen->base.channel;
+	struct nouveau_grobj *rankine = nv30->screen->rankine;
 	struct nv04_surface *rt[2], *zeta = NULL;
 	uint32_t rt_enable, rt_format;
 	int i, colour_format = 0, zeta_format = 0;
@@ -79,56 +81,53 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 		}
 
 		nv30mt = (struct nv30_miptree *)rt[0]->base.texture;
-		so_method(so, nv30->screen->rankine, NV34TCL_DMA_COLOR0, 1);
-		so_reloc (so, nv30mt->buffer, 0, rt_flags | NOUVEAU_BO_OR,
-			  nv30->nvws->channel->vram->handle,
-			  nv30->nvws->channel->gart->handle);
-		so_method(so, nv30->screen->rankine, NV34TCL_COLOR0_PITCH, 2);
+		so_method(so, rankine, NV34TCL_DMA_COLOR0, 1);
+		so_reloc (so, nouveau_bo(nv30mt->buffer), 0, rt_flags | NOUVEAU_BO_OR,
+			      chan->vram->handle, chan->gart->handle);
+		so_method(so, rankine, NV34TCL_COLOR0_PITCH, 2);
 		so_data  (so, pitch);
-		so_reloc (so, nv30mt->buffer, rt[0]->base.offset, rt_flags |
-			  NOUVEAU_BO_LOW, 0, 0);
+		so_reloc (so, nouveau_bo(nv30mt->buffer), rt[0]->base.offset,
+			      rt_flags | NOUVEAU_BO_LOW, 0, 0);
 	}
 
 	if (rt_enable & NV34TCL_RT_ENABLE_COLOR1) {
 		nv30mt = (struct nv30_miptree *)rt[1]->base.texture;
-		so_method(so, nv30->screen->rankine, NV34TCL_DMA_COLOR1, 1);
-		so_reloc (so, nv30mt->buffer, 0, rt_flags | NOUVEAU_BO_OR,
-			  nv30->nvws->channel->vram->handle,
-			  nv30->nvws->channel->gart->handle);
-		so_method(so, nv30->screen->rankine, NV34TCL_COLOR1_OFFSET, 2);
-		so_reloc (so, nv30mt->buffer, rt[1]->base.offset, rt_flags |
-			  NOUVEAU_BO_LOW, 0, 0);
+		so_method(so, rankine, NV34TCL_DMA_COLOR1, 1);
+		so_reloc (so, nouveau_bo(nv30mt->buffer), 0, rt_flags | NOUVEAU_BO_OR,
+			      chan->vram->handle, chan->gart->handle);
+		so_method(so, rankine, NV34TCL_COLOR1_OFFSET, 2);
+		so_reloc (so, nouveau_bo(nv30mt->buffer), rt[1]->base.offset,
+			      rt_flags | NOUVEAU_BO_LOW, 0, 0);
 		so_data  (so, rt[1]->pitch);
 	}
 
 	if (zeta_format) {
 		nv30mt = (struct nv30_miptree *)zeta->base.texture;
-		so_method(so, nv30->screen->rankine, NV34TCL_DMA_ZETA, 1);
-		so_reloc (so, nv30mt->buffer, 0, rt_flags | NOUVEAU_BO_OR,
-			  nv30->nvws->channel->vram->handle,
-			  nv30->nvws->channel->gart->handle);
-		so_method(so, nv30->screen->rankine, NV34TCL_ZETA_OFFSET, 1);
-		so_reloc (so, nv30mt->buffer, zeta->base.offset, rt_flags |
-			  NOUVEAU_BO_LOW, 0, 0);
+		so_method(so, rankine, NV34TCL_DMA_ZETA, 1);
+		so_reloc (so, nouveau_bo(nv30mt->buffer), 0, rt_flags | NOUVEAU_BO_OR,
+			      chan->vram->handle, chan->gart->handle);
+		so_method(so, rankine, NV34TCL_ZETA_OFFSET, 1);
+		so_reloc (so, nouveau_bo(nv30mt->buffer), zeta->base.offset,
+			      rt_flags | NOUVEAU_BO_LOW, 0, 0);
 		/* TODO: allocate LMA depth buffer */
 	}
 
-	so_method(so, nv30->screen->rankine, NV34TCL_RT_ENABLE, 1);
+	so_method(so, rankine, NV34TCL_RT_ENABLE, 1);
 	so_data  (so, rt_enable);
-	so_method(so, nv30->screen->rankine, NV34TCL_RT_HORIZ, 3);
+	so_method(so, rankine, NV34TCL_RT_HORIZ, 3);
 	so_data  (so, (w << 16) | 0);
 	so_data  (so, (h << 16) | 0);
 	so_data  (so, rt_format);
-	so_method(so, nv30->screen->rankine, NV34TCL_VIEWPORT_HORIZ, 2);
+	so_method(so, rankine, NV34TCL_VIEWPORT_HORIZ, 2);
 	so_data  (so, (w << 16) | 0);
 	so_data  (so, (h << 16) | 0);
-	so_method(so, nv30->screen->rankine, NV34TCL_VIEWPORT_CLIP_HORIZ(0), 2);
+	so_method(so, rankine, NV34TCL_VIEWPORT_CLIP_HORIZ(0), 2);
 	so_data  (so, ((w - 1) << 16) | 0);
 	so_data  (so, ((h - 1) << 16) | 0);
-	so_method(so, nv30->screen->rankine, 0x1d88, 1);
+	so_method(so, rankine, 0x1d88, 1);
 	so_data  (so, (1 << 12) | h);
 	/* Wonder why this is needed, context should all be set to zero on init */
-	so_method(so, nv30->screen->rankine, NV34TCL_VIEWPORT_TX_ORIGIN, 1);
+	so_method(so, rankine, NV34TCL_VIEWPORT_TX_ORIGIN, 1);
 	so_data  (so, 0);
 
 	so_ref(so, &nv30->state.hw[NV30_STATE_FB]);

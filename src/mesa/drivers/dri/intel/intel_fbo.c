@@ -217,7 +217,8 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       DBG("Allocating %d x %d Intel RBO (pitch %d)\n", width,
 	  height, pitch);
 
-      irb->region = intel_region_alloc(intel, cpp, width, height, pitch,
+      irb->region = intel_region_alloc(intel, I915_TILING_NONE,
+				       cpp, width, height, pitch,
 				       GL_TRUE);
       if (!irb->region)
          return GL_FALSE;       /* out of memory? */
@@ -574,9 +575,10 @@ intel_render_texture(GLcontext * ctx,
 
    ASSERT(newImage);
 
-   if (newImage->Border != 0) {
-      /* Fallback on drawing to a texture with a border, which won't have a
-       * miptree.
+   intel_image = intel_texture_image(newImage);
+   if (!intel_image->mt) {
+      /* Fallback on drawing to a texture that doesn't have a miptree
+       * (has a border, width/height 0, etc.)
        */
       _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
       _mesa_render_texture(ctx, fb, att);
@@ -607,7 +609,6 @@ intel_render_texture(GLcontext * ctx,
        irb->Base.RefCount);
 
    /* point the renderbufer's region to the texture image region */
-   intel_image = intel_texture_image(newImage);
    if (irb->region != intel_image->mt->region) {
       if (irb->region)
 	 intel_region_release(&irb->region);
@@ -678,6 +679,11 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 
       if (rb == NULL)
 	 continue;
+
+      if (irb == NULL) {
+	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	 continue;
+      }
 
       switch (irb->texformat->MesaFormat) {
       case MESA_FORMAT_ARGB8888:

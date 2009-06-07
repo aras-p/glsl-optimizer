@@ -3,7 +3,8 @@
 
 = About =
 
-This directory contains a Gallium3D pipe driver which traces all incoming calls.
+This directory contains a Gallium3D debugger pipe driver.
+It can traces all incoming calls and/or provide remote debugging functionality.
 
 
 = Build Instructions =
@@ -23,7 +24,9 @@ ensure the right libGL.so is being picked by doing
 
  ldd progs/trivial/tri 
 
-and then try running
+== Traceing ==
+
+For traceing then do
 
  export XMESA_TRACE=y
  GALLIUM_TRACE=tri.trace progs/trivial/tri
@@ -32,6 +35,16 @@ which should create a tri.trace file, which is an XML file. You can view copying
 trace.xsl to the same directory, and opening with a XSLT capable browser such as 
 Firefox or Internet Explorer.
 
+== Remote debugging ==
+
+For remote debugging
+
+ export XMESA_TRACE=y
+ GALLIUM_RBUG=true progs/trivial/tri
+
+which should open gallium remote debugging session. While the program is running
+you can launch the small remote debugging application from progs/rbug. More
+information is in that directory.
 
 = Integrating =
 
@@ -62,3 +75,4 @@ trace_screen with real_screen when creating them.
 
 --
 Jose Fonseca <jrfonseca@tungstengraphics.com>
+Jakob Bornecrantz <jakob@vmware.com>

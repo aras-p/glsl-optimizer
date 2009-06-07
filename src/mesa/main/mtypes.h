@@ -1544,7 +1544,7 @@ struct gl_client_array
    GLuint _ElementSize;         /**< size of each element in bytes */
 
    struct gl_buffer_object *BufferObj;/**< GL_ARB_vertex_buffer_object */
-   GLuint _MaxElement;          /**< max element index into array buffer */
+   GLuint _MaxElement;          /**< max element index into array buffer + 1 */
 };
 
 
@@ -1563,6 +1563,7 @@ struct gl_array_object
    /** Conventional vertex arrays */
    /*@{*/
    struct gl_client_array Vertex;
+   struct gl_client_array Weight;
    struct gl_client_array Normal;
    struct gl_client_array Color;
    struct gl_client_array SecondaryColor;
@@ -1573,11 +1574,22 @@ struct gl_array_object
    struct gl_client_array PointSize;
    /*@}*/
 
-   /** Generic arrays for vertex programs/shaders */
-   struct gl_client_array VertexAttrib[VERT_ATTRIB_MAX];
+   /**
+    * Generic arrays for vertex programs/shaders.
+    * For NV vertex programs, these attributes alias and take priority
+    * over the conventional attribs above.  For ARB vertex programs and
+    * GLSL vertex shaders, these attributes are separate.
+    */
+   struct gl_client_array VertexAttrib[MAX_VERTEX_GENERIC_ATTRIBS];
 
    /** Mask of _NEW_ARRAY_* values indicating which arrays are enabled */
    GLbitfield _Enabled;
+
+   /**
+    * Min of all enabled arrays' _MaxElement.  When arrays reside inside VBOs
+    * we can determine the max legal (in bounds) glDrawElements array index.
+    */
+   GLuint _MaxElement;
 };
 
 
@@ -1602,7 +1614,6 @@ struct gl_array_attrib
    struct gl_buffer_object *ArrayBufferObj;
    struct gl_buffer_object *ElementArrayBufferObj;
 #endif
-   GLuint _MaxElement;          /* Min of all enabled array's maxes */
 };
 
 
@@ -2420,6 +2431,7 @@ struct gl_constants
 struct gl_extensions
 {
    GLboolean dummy;  /* don't remove this! */
+   GLboolean ARB_copy_buffer;
    GLboolean ARB_depth_texture;
    GLboolean ARB_draw_buffers;
    GLboolean ARB_fragment_program;
@@ -2945,6 +2957,9 @@ struct __GLcontextRec
    struct gl_shader_state Shader; /**< GLSL shader object state */
 
    struct gl_query_state Query;  /**< occlusion, timer queries */
+
+   struct gl_buffer_object *CopyReadBuffer; /**< GL_ARB_copy_buffer */
+   struct gl_buffer_object *CopyWriteBuffer; /**< GL_ARB_copy_buffer */
    /*@}*/
 
 #if FEATURE_EXT_framebuffer_object

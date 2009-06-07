@@ -45,6 +45,41 @@
 #include "stw_tls.h"
 
 
+struct stw_framebuffer *
+stw_framebuffer_from_hwnd_locked(
+   HWND hwnd )
+{
+   struct stw_framebuffer *fb;
+
+   for (fb = stw_dev->fb_head; fb != NULL; fb = fb->next)
+      if (fb->hWnd == hwnd)
+         break;
+
+   return fb;
+}
+
+
+static INLINE void
+stw_framebuffer_destroy_locked(
+   struct stw_framebuffer *fb )
+{
+   struct stw_framebuffer **link;
+
+   link = &stw_dev->fb_head;
+   while (*link != fb)
+      link = &(*link)->next;
+   assert(*link);
+   *link = fb->next;
+   fb->next = NULL;
+
+   st_unreference_framebuffer(fb->stfb);
+   
+   pipe_mutex_destroy( fb->mutex );
+   
+   FREE( fb );
+}
+
+
 /**
  * @sa http://msdn.microsoft.com/en-us/library/ms644975(VS.85).aspx
  * @sa http://msdn.microsoft.com/en-us/library/ms644960(VS.85).aspx
@@ -69,9 +104,7 @@ stw_call_window_proc(
       struct stw_framebuffer *fb;
 
       pipe_mutex_lock( stw_dev->mutex );
-      for (fb = stw_dev->fb_head; fb != NULL; fb = fb->next)
-         if (fb->hWnd == pParams->hwnd)
-            break;
+      fb = stw_framebuffer_from_hwnd_locked( pParams->hwnd );
       pipe_mutex_unlock( stw_dev->mutex );
       
       if(fb) {
@@ -90,91 +123,176 @@ stw_call_window_proc(
       }
    }
 
+   if (pParams->message == WM_DESTROY) {
+      struct stw_framebuffer *fb;
+
+      pipe_mutex_lock( stw_dev->mutex );
+      
+      fb = stw_framebuffer_from_hwnd_locked( pParams->hwnd );
+      if(fb)
+         stw_framebuffer_destroy_locked(fb);
+      
+      pipe_mutex_unlock( stw_dev->mutex );
+   }
+
    return CallNextHookEx(tls_data->hCallWndProcHook, nCode, wParam, lParam);
 }
 
 
-/* Create a new framebuffer object which will correspond to the given HDC.
+/**
+ * Create a new framebuffer object which will correspond to the given HDC.
  */
 struct stw_framebuffer *
-stw_framebuffer_create(
+stw_framebuffer_create_locked(
    HDC hdc,
-   GLvisual *visual,
-   const struct stw_pixelformat_info *pfi,
-   GLuint width,
-   GLuint height )
+   int iPixelFormat )
 {
-   enum pipe_format colorFormat, depthFormat, stencilFormat;
+   HWND hWnd;
    struct stw_framebuffer *fb;
+   const struct stw_pixelformat_info *pfi;
 
-   colorFormat = pfi->color_format;
+   /* We only support drawing to a window. */
+   hWnd = WindowFromDC( hdc );
+   if(!hWnd)
+      return NULL;
    
-   assert(pf_layout( pfi->depth_stencil_format ) == PIPE_FORMAT_LAYOUT_RGBAZS );
-
-   if(pf_get_component_bits( pfi->depth_stencil_format, PIPE_FORMAT_COMP_Z ))
-      depthFormat = pfi->depth_stencil_format;
-   else
-      depthFormat = PIPE_FORMAT_NONE;
-
-   if(pf_get_component_bits( pfi->depth_stencil_format, PIPE_FORMAT_COMP_S ))
-      stencilFormat = pfi->depth_stencil_format;
-   else
-      stencilFormat = PIPE_FORMAT_NONE;
-
    fb = CALLOC_STRUCT( stw_framebuffer );
    if (fb == NULL)
       return NULL;
 
    fb->hDC = hdc;
-   fb->hWnd = WindowFromDC( hdc );
+   fb->hWnd = hWnd;
+   fb->iPixelFormat = iPixelFormat;
 
+   fb->pfi = pfi = stw_pixelformat_get_info( iPixelFormat - 1 );
+
+   stw_pixelformat_visual(&fb->visual, pfi);
+   
    pipe_mutex_init( fb->mutex );
 
-   fb->stfb = st_create_framebuffer(
-      visual,
-      colorFormat,
-      depthFormat,
-      stencilFormat,
-      width,
-      height,
-      (void *) fb );
-   if(!fb->stfb) {
-      FREE(fb);
-      return NULL;
-   }
-
-   pipe_mutex_lock( stw_dev->mutex );
    fb->next = stw_dev->fb_head;
    stw_dev->fb_head = fb;
-   pipe_mutex_unlock( stw_dev->mutex );
 
    return fb;
 }
 
-void
-stw_framebuffer_destroy(
-   struct stw_framebuffer *fb )
+
+static void
+stw_framebuffer_get_size( struct stw_framebuffer *fb, GLuint *pwidth, GLuint *pheight )
 {
-   struct stw_framebuffer **link;
+   GLuint width, height;
+
+   if (fb->hWnd) {
+      RECT rect;
+      GetClientRect( fb->hWnd, &rect );
+      width = rect.right - rect.left;
+      height = rect.bottom - rect.top;
+   }
+   else {
+      width = GetDeviceCaps( fb->hDC, HORZRES );
+      height = GetDeviceCaps( fb->hDC, VERTRES );
+   }
+
+   if(width < 1)
+      width = 1;
+   if(height < 1)
+      height = 1;
+
+   *pwidth = width; 
+   *pheight = height; 
+}
+
+
+BOOL
+stw_framebuffer_allocate(
+   struct stw_framebuffer *fb)
+{
+   pipe_mutex_lock( fb->mutex );
+
+   if(!fb->stfb) {
+      const struct stw_pixelformat_info *pfi = fb->pfi;
+      enum pipe_format colorFormat, depthFormat, stencilFormat;
+      GLuint width, height; 
+
+      colorFormat = pfi->color_format;
+      
+      assert(pf_layout( pfi->depth_stencil_format ) == PIPE_FORMAT_LAYOUT_RGBAZS );
+   
+      if(pf_get_component_bits( pfi->depth_stencil_format, PIPE_FORMAT_COMP_Z ))
+         depthFormat = pfi->depth_stencil_format;
+      else
+         depthFormat = PIPE_FORMAT_NONE;
+   
+      if(pf_get_component_bits( pfi->depth_stencil_format, PIPE_FORMAT_COMP_S ))
+         stencilFormat = pfi->depth_stencil_format;
+      else
+         stencilFormat = PIPE_FORMAT_NONE;
+   
+      stw_framebuffer_get_size(fb, &width, &height);
+      
+      fb->stfb = st_create_framebuffer(
+         &fb->visual,
+         colorFormat,
+         depthFormat,
+         stencilFormat,
+         width,
+         height,
+         (void *) fb );
+   }
+   
+   pipe_mutex_unlock( fb->mutex );
+
+   return fb->stfb ? TRUE : FALSE;
+}
+
+
+void
+stw_framebuffer_resize(
+   struct stw_framebuffer *fb)
+{
+   GLuint width, height; 
+   assert(fb->stfb);
+   stw_framebuffer_get_size(fb, &width, &height);
+   st_resize_framebuffer(fb->stfb, width, height);
+}                      
+
+
+void
+stw_framebuffer_cleanup( void )
+{
+   struct stw_framebuffer *fb;
+   struct stw_framebuffer *next;
 
    pipe_mutex_lock( stw_dev->mutex );
 
-   link = &stw_dev->fb_head;
-   while (link && *link != fb)
-      link = &(*link)->next;
-   assert(*link);
-   if (link)
-      *link = fb->next;
-   fb->next = NULL;
-
+   fb = stw_dev->fb_head;
+   while (fb) {
+      next = fb->next;
+      stw_framebuffer_destroy_locked(fb);
+      fb = next;
+   }
+   stw_dev->fb_head = NULL;
+   
    pipe_mutex_unlock( stw_dev->mutex );
-
-   st_unreference_framebuffer(fb->stfb);
-   
-   pipe_mutex_destroy( fb->mutex );
-   
-   FREE( fb );
 }
+
+
+/**
+ * Given an hdc, return the corresponding stw_framebuffer.
+ */
+struct stw_framebuffer *
+stw_framebuffer_from_hdc_locked(
+   HDC hdc )
+{
+   struct stw_framebuffer *fb;
+
+   for (fb = stw_dev->fb_head; fb != NULL; fb = fb->next)
+      if (fb->hDC == hdc)
+         break;
+
+   return fb;
+}
+
 
 /**
  * Given an hdc, return the corresponding stw_framebuffer.
@@ -186,12 +304,66 @@ stw_framebuffer_from_hdc(
    struct stw_framebuffer *fb;
 
    pipe_mutex_lock( stw_dev->mutex );
-   for (fb = stw_dev->fb_head; fb != NULL; fb = fb->next)
-      if (fb->hDC == hdc)
-         break;
+   fb = stw_framebuffer_from_hdc_locked(hdc);
    pipe_mutex_unlock( stw_dev->mutex );
 
    return fb;
+}
+
+
+BOOL
+stw_pixelformat_set(
+   HDC hdc,
+   int iPixelFormat )
+{
+   uint count;
+   uint index;
+   struct stw_framebuffer *fb;
+
+   index = (uint) iPixelFormat - 1;
+   count = stw_pixelformat_get_extended_count();
+   if (index >= count)
+      return FALSE;
+
+   pipe_mutex_lock( stw_dev->mutex );
+   
+   fb = stw_framebuffer_from_hdc_locked(hdc);
+   if(fb) {
+      /* SetPixelFormat must be called only once */
+      pipe_mutex_unlock( stw_dev->mutex );
+      return FALSE;
+   }
+
+   fb = stw_framebuffer_create_locked(hdc, iPixelFormat);
+   if(!fb) {
+      pipe_mutex_unlock( stw_dev->mutex );
+      return FALSE;
+   }
+      
+   pipe_mutex_unlock( stw_dev->mutex );
+
+   /* Some applications mistakenly use the undocumented wglSetPixelFormat 
+    * function instead of SetPixelFormat, so we call SetPixelFormat here to 
+    * avoid opengl32.dll's wglCreateContext to fail */
+   if (GetPixelFormat(hdc) == 0) {
+        SetPixelFormat(hdc, iPixelFormat, NULL);
+   }
+   
+   return TRUE;
+}
+
+
+int
+stw_pixelformat_get(
+   HDC hdc )
+{
+   struct stw_framebuffer *fb;
+
+   fb = stw_framebuffer_from_hdc(hdc);
+   if(!fb)
+      return 0;
+   
+   return fb->iPixelFormat;
 }
 
 

@@ -1763,6 +1763,13 @@ static const char DeleteFencesNV_names[] =
     "";
 #endif
 
+#if defined(need_GL_SGIX_polynomial_ffd)
+static const char DeformationMap3dSGIX_names[] = 
+    "iddiiddiiddiip\0" /* Parameter signature */
+    "glDeformationMap3dSGIX\0"
+    "";
+#endif
+
 #if defined(need_GL_VERSION_2_0)
 static const char IsShader_names[] = 
     "i\0" /* Parameter signature */
@@ -4396,6 +4403,13 @@ static const char WindowPos3ivMESA_names[] =
     "";
 #endif
 
+#if defined(need_GL_ARB_copy_buffer)
+static const char CopyBufferSubData_names[] = 
+    "iiiii\0" /* Parameter signature */
+    "glCopyBufferSubData\0"
+    "";
+#endif
+
 #if defined(need_GL_VERSION_1_5) || defined(need_GL_ARB_vertex_buffer_object)
 static const char IsBufferARB_names[] = 
     "i\0" /* Parameter signature */
@@ -4557,13 +4571,6 @@ static const char Minmax_names[] =
     "iii\0" /* Parameter signature */
     "glMinmax\0"
     "glMinmaxEXT\0"
-    "";
-#endif
-
-#if defined(need_GL_SGIX_polynomial_ffd)
-static const char DeformationMap3dSGIX_names[] = 
-    "iddiiddiiddiip\0" /* Parameter signature */
-    "glDeformationMap3dSGIX\0"
     "";
 #endif
 
@@ -4935,6 +4942,13 @@ static const struct dri_extension_function GL_APPLE_vertex_array_object_function
     { GenVertexArraysAPPLE_names, GenVertexArraysAPPLE_remap_index, -1 },
     { BindVertexArrayAPPLE_names, BindVertexArrayAPPLE_remap_index, -1 },
     { IsVertexArrayAPPLE_names, IsVertexArrayAPPLE_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_ARB_copy_buffer)
+static const struct dri_extension_function GL_ARB_copy_buffer_functions[] = {
+    { CopyBufferSubData_names, CopyBufferSubData_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
@@ -6055,9 +6069,9 @@ static const struct dri_extension_function GL_SGIX_pixel_texture_functions[] = {
 #if defined(need_GL_SGIX_polynomial_ffd)
 static const struct dri_extension_function GL_SGIX_polynomial_ffd_functions[] = {
     { LoadIdentityDeformationMapSGIX_names, LoadIdentityDeformationMapSGIX_remap_index, -1 },
+    { DeformationMap3dSGIX_names, DeformationMap3dSGIX_remap_index, -1 },
     { DeformSGIX_names, DeformSGIX_remap_index, -1 },
     { DeformationMap3fSGIX_names, DeformationMap3fSGIX_remap_index, -1 },
-    { DeformationMap3dSGIX_names, DeformationMap3dSGIX_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif

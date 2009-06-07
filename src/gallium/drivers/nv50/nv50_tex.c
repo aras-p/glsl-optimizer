@@ -26,7 +26,8 @@
 #include "nouveau/nouveau_stateobj.h"
 
 static int
-nv50_tex_construct(struct nouveau_stateobj *so, struct nv50_miptree *mt)
+nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
+		   struct nv50_miptree *mt, int unit)
 {
 	switch (mt->base.format) {
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -117,15 +118,18 @@ nv50_tex_construct(struct nouveau_stateobj *so, struct nv50_miptree *mt)
 		return 1;
 	}
 
-	so_reloc(so, mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
+	so_reloc(so, mt->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
 		     NOUVEAU_BO_RD, 0, 0);
-	so_data (so, 0xd0005000);
+	if (nv50->sampler[unit]->normalized)
+		so_data (so, 0xd0005000 | mt->bo->tile_mode << 22);
+	else
+		so_data (so, 0x5001d000 | mt->bo->tile_mode << 22);
 	so_data (so, 0x00300000);
 	so_data (so, mt->base.width[0]);
-	so_data (so, (mt->base.depth[0] << 16) | mt->base.height[0]);
+	so_data (so, (mt->base.last_level << 28) |
+		     (mt->base.depth[0] << 16) | mt->base.height[0]);
 	so_data (so, 0x03000000);
-	so_reloc(so, mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_HIGH |
-		     NOUVEAU_BO_RD, 0, 0);
+	so_data (so, mt->base.last_level << 4);
 
 	return 0;
 }
@@ -135,23 +139,35 @@ nv50_tex_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nouveau_stateobj *so;
-	int unit;
+	int unit, push;
 
-	so = so_new(nv50->miptree_nr * 8 + 3, nv50->miptree_nr * 2);
+	push  = nv50->miptree_nr * 9 + 2;
+	push += MAX2(nv50->miptree_nr, nv50->state.miptree_nr) * 2;
+
+	so = so_new(push, nv50->miptree_nr * 2);
 	so_method(so, tesla, 0x0f00, 1);
 	so_data  (so, NV50_CB_TIC);
-	so_method(so, tesla, 0x40000f04, nv50->miptree_nr * 8);
 	for (unit = 0; unit < nv50->miptree_nr; unit++) {
 		struct nv50_miptree *mt = nv50->miptree[unit];
 
-		if (nv50_tex_construct(so, mt)) {
+		so_method(so, tesla, 0x40000f04, 8);
+		if (nv50_tex_construct(nv50, so, mt, unit)) {
 			NOUVEAU_ERR("failed tex validate\n");
 			so_ref(NULL, &so);
 			return;
 		}
+
+		so_method(so, tesla, 0x1458, 1);
+		so_data  (so, (unit << 9) | (unit << 1) | 1);
+	}
+
+	for (; unit < nv50->state.miptree_nr; unit++) {
+		so_method(so, tesla, 0x1458, 1);
+		so_data  (so, (unit << 1) | 0);
 	}
 
 	so_ref(so, &nv50->state.tic_upload);
 	so_ref(NULL, &so);
+	nv50->state.miptree_nr = nv50->miptree_nr;
 }
 

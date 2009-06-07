@@ -138,6 +138,7 @@ void st_init_extensions(struct st_context *st)
    /*
     * Extensions that are supported by all Gallium drivers:
     */
+   ctx->Extensions.ARB_copy_buffer = GL_TRUE;
    ctx->Extensions.ARB_multisample = GL_TRUE;
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
    ctx->Extensions.ARB_texture_border_clamp = GL_TRUE; /* XXX temp */
@@ -167,6 +168,7 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_texture_env_combine = GL_TRUE;
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
+   ctx->Extensions.EXT_vertex_array_bgra = GL_TRUE;
 
    ctx->Extensions.APPLE_vertex_array_object = GL_TRUE;
 

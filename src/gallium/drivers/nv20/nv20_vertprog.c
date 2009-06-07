@@ -1,6 +1,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
+#include "pipe/p_inlines.h"
 
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
@@ -645,8 +646,8 @@ out_err:
 static boolean
 nv20_vertprog_validate(struct nv20_context *nv20)
 { 
+	struct pipe_screen *pscreen = nv20->pipe.screen;
 	struct nouveau_winsys *nvws = nv20->nvws;
-	struct pipe_winsys *ws = nv20->pipe.winsys;
 	struct nouveau_grobj *rankine = nv20->screen->rankine;
 	struct nv20_vertex_program *vp;
 	struct pipe_buffer *constbuf;
@@ -749,8 +750,8 @@ nv20_vertprog_validate(struct nv20_context *nv20)
 		float *map = NULL;
 
 		if (constbuf) {
-			map = ws->buffer_map(ws, constbuf,
-					     PIPE_BUFFER_USAGE_CPU_READ);
+			map = pipe_buffer_map(pscreen, constbuf,
+					      PIPE_BUFFER_USAGE_CPU_READ);
 		}
 
 		for (i = 0; i < vp->nr_consts; i++) {
@@ -770,9 +771,8 @@ nv20_vertprog_validate(struct nv20_context *nv20)
 			OUT_RINGp ((uint32_t *)vpd->value, 4);
 		}
 
-		if (constbuf) {
-			ws->buffer_unmap(ws, constbuf);
-		}
+		if (constbuf)
+			pipe_buffer_unmap(pscreen, constbuf);
 	}
 
 	/* Upload vtxprog */

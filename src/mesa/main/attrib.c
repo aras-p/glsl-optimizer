@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.3
+ * Version:  7.6
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  * Copyright (C) 2009  VMware, Inc.   All Rights Reserved.
@@ -541,6 +541,7 @@ end:
 static void
 pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
 {
+   const GLuint curTexUnitSave = ctx->Texture.CurrentUnit;
    GLuint i;
 
 #define TEST_AND_UPDATE(VALUE, NEWVALUE, ENUM)		\
@@ -685,59 +686,51 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
 
    /* texture unit enables */
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-      if (ctx->Texture.Unit[i].Enabled != enable->Texture[i]) {
-         ctx->Texture.Unit[i].Enabled = enable->Texture[i];
-         if (ctx->Driver.Enable) {
-            if (ctx->Driver.ActiveTexture) {
-               (*ctx->Driver.ActiveTexture)(ctx, i);
-            }
-            (*ctx->Driver.Enable)( ctx, GL_TEXTURE_1D,
-                             (GLboolean) (enable->Texture[i] & TEXTURE_1D_BIT) );
-            (*ctx->Driver.Enable)( ctx, GL_TEXTURE_2D,
-                             (GLboolean) (enable->Texture[i] & TEXTURE_2D_BIT) );
-            (*ctx->Driver.Enable)( ctx, GL_TEXTURE_3D,
-                             (GLboolean) (enable->Texture[i] & TEXTURE_3D_BIT) );
-            if (ctx->Extensions.ARB_texture_cube_map)
-               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_CUBE_MAP_ARB,
-                          (GLboolean) (enable->Texture[i] & TEXTURE_CUBE_BIT) );
-            if (ctx->Extensions.NV_texture_rectangle)
-               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_RECTANGLE_NV,
-                          (GLboolean) (enable->Texture[i] & TEXTURE_RECT_BIT) );
+      const GLbitfield enabled = enable->Texture[i];
+      const GLbitfield genEnabled = enable->TexGen[i];
+
+      if (ctx->Texture.Unit[i].Enabled != enabled) {
+         _mesa_ActiveTextureARB(GL_TEXTURE0 + i);
+
+         _mesa_set_enable(ctx, GL_TEXTURE_1D,
+                          (enabled & TEXTURE_1D_BIT) ? GL_TRUE : GL_FALSE);
+         _mesa_set_enable(ctx, GL_TEXTURE_2D,
+                          (enabled & TEXTURE_2D_BIT) ? GL_TRUE : GL_FALSE);
+         _mesa_set_enable(ctx, GL_TEXTURE_3D,
+                          (enabled & TEXTURE_3D_BIT) ? GL_TRUE : GL_FALSE);
+         if (ctx->Extensions.NV_texture_rectangle) {
+            _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE_ARB,
+                             (enabled & TEXTURE_RECT_BIT) ? GL_TRUE : GL_FALSE);
+         }
+         if (ctx->Extensions.ARB_texture_cube_map) {
+            _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP,
+                             (enabled & TEXTURE_CUBE_BIT) ? GL_TRUE : GL_FALSE);
+         }
+         if (ctx->Extensions.MESA_texture_array) {
+            _mesa_set_enable(ctx, GL_TEXTURE_1D_ARRAY_EXT,
+                           (enabled & TEXTURE_1D_ARRAY_BIT) ? GL_TRUE : GL_FALSE);
+            _mesa_set_enable(ctx, GL_TEXTURE_2D_ARRAY_EXT,
+                           (enabled & TEXTURE_2D_ARRAY_BIT) ? GL_TRUE : GL_FALSE);
          }
       }
 
-      if (ctx->Texture.Unit[i].TexGenEnabled != enable->TexGen[i]) {
-         ctx->Texture.Unit[i].TexGenEnabled = enable->TexGen[i];
-         if (ctx->Driver.Enable) {
-            if (ctx->Driver.ActiveTexture) {
-               (*ctx->Driver.ActiveTexture)(ctx, i);
-            }
-            if (enable->TexGen[i] & S_BIT)
-               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_S, GL_TRUE);
-            else
-               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_S, GL_FALSE);
-            if (enable->TexGen[i] & T_BIT)
-               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_T, GL_TRUE);
-            else
-               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_T, GL_FALSE);
-            if (enable->TexGen[i] & R_BIT)
-               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_R, GL_TRUE);
-            else
-               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_R, GL_FALSE);
-            if (enable->TexGen[i] & Q_BIT)
-               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_Q, GL_TRUE);
-            else
-               (*ctx->Driver.Enable)( ctx, GL_TEXTURE_GEN_Q, GL_FALSE);
-         }
+      if (ctx->Texture.Unit[i].TexGenEnabled != genEnabled) {
+         _mesa_ActiveTextureARB(GL_TEXTURE0 + i);
+         _mesa_set_enable(ctx, GL_TEXTURE_GEN_S,
+                          (genEnabled & S_BIT) ? GL_TRUE : GL_FALSE);
+         _mesa_set_enable(ctx, GL_TEXTURE_GEN_T,
+                          (genEnabled & T_BIT) ? GL_TRUE : GL_FALSE);
+         _mesa_set_enable(ctx, GL_TEXTURE_GEN_R,
+                          (genEnabled & R_BIT) ? GL_TRUE : GL_FALSE);
+         _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q,
+                          (genEnabled & Q_BIT) ? GL_TRUE : GL_FALSE);
       }
 
       /* GL_SGI_texture_color_table */
       ctx->Texture.Unit[i].ColorTableEnabled = enable->TextureColorTable[i];
    }
 
-   if (ctx->Driver.ActiveTexture) {
-      (*ctx->Driver.ActiveTexture)(ctx, ctx->Texture.CurrentUnit);
-   }
+   _mesa_ActiveTextureARB(GL_TEXTURE0 + curTexUnitSave);
 }
 
 
@@ -770,6 +763,13 @@ pop_texture_group(GLcontext *ctx, struct texture_state *texstate)
          _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE_NV,
                      (unit->Enabled & TEXTURE_RECT_BIT) ? GL_TRUE : GL_FALSE);
       }
+      if (ctx->Extensions.MESA_texture_array) {
+         _mesa_set_enable(ctx, GL_TEXTURE_1D_ARRAY_EXT,
+                 (unit->Enabled & TEXTURE_1D_ARRAY_BIT) ? GL_TRUE : GL_FALSE);
+         _mesa_set_enable(ctx, GL_TEXTURE_2D_ARRAY_EXT,
+                 (unit->Enabled & TEXTURE_2D_ARRAY_BIT) ? GL_TRUE : GL_FALSE);
+      }
+
       if (ctx->Extensions.SGI_texture_color_table) {
          _mesa_set_enable(ctx, GL_TEXTURE_COLOR_TABLE_SGI,
                           unit->ColorTableEnabled);
@@ -1330,20 +1330,22 @@ _mesa_PopAttrib(void)
  * counts when pushing/popping the GL_CLIENT_VERTEX_ARRAY_BIT attribute group.
  */
 static void
-adjust_buffer_object_ref_counts(struct gl_array_attrib *array, GLint step)
+adjust_buffer_object_ref_counts(struct gl_array_object *arrayObj, GLint step)
 {
    GLuint i;
-   array->ArrayObj->Vertex.BufferObj->RefCount += step;
-   array->ArrayObj->Normal.BufferObj->RefCount += step;
-   array->ArrayObj->Color.BufferObj->RefCount += step;
-   array->ArrayObj->SecondaryColor.BufferObj->RefCount += step;
-   array->ArrayObj->FogCoord.BufferObj->RefCount += step;
-   array->ArrayObj->Index.BufferObj->RefCount += step;
-   array->ArrayObj->EdgeFlag.BufferObj->RefCount += step;
-   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
-      array->ArrayObj->TexCoord[i].BufferObj->RefCount += step;
-   for (i = 0; i < VERT_ATTRIB_MAX; i++)
-      array->ArrayObj->VertexAttrib[i].BufferObj->RefCount += step;
+
+   arrayObj->Vertex.BufferObj->RefCount += step;
+   arrayObj->Weight.BufferObj->RefCount += step;
+   arrayObj->Normal.BufferObj->RefCount += step;
+   arrayObj->Color.BufferObj->RefCount += step;
+   arrayObj->SecondaryColor.BufferObj->RefCount += step;
+   arrayObj->FogCoord.BufferObj->RefCount += step;
+   arrayObj->Index.BufferObj->RefCount += step;
+   arrayObj->EdgeFlag.BufferObj->RefCount += step;
+   for (i = 0; i < Elements(arrayObj->TexCoord); i++)
+      arrayObj->TexCoord[i].BufferObj->RefCount += step;
+   for (i = 0; i < Elements(arrayObj->VertexAttrib); i++)
+      arrayObj->VertexAttrib[i].BufferObj->RefCount += step;
 }
 
 
@@ -1434,7 +1436,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
       newnode->next = head;
       head = newnode;
       /* bump reference counts on buffer objects */
-      adjust_buffer_object_ref_counts(&ctx->Array, 1);
+      adjust_buffer_object_ref_counts(ctx->Array.ArrayObj, 1);
    }
 
    ctx->ClientAttribStack[ctx->ClientAttribStackDepth] = head;
@@ -1484,7 +1486,7 @@ _mesa_PopClientAttrib(void)
 	    struct gl_array_attrib * data =
 	      (struct gl_array_attrib *) node->data;
 
-            adjust_buffer_object_ref_counts(&ctx->Array, -1);
+            adjust_buffer_object_ref_counts(ctx->Array.ArrayObj, -1);
 	 
             ctx->Array.ActiveTexture = data->ActiveTexture;
 	    if (data->LockCount != 0)

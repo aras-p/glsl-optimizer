@@ -168,7 +168,6 @@
 /** For GL_ARB_vertex_program */
 /*@{*/
 #define MAX_VERTEX_PROGRAM_ADDRESS_REGS 1
-#define MAX_VERTEX_PROGRAM_ATTRIBS     16
 /*@}*/
 
 /** For GL_ARB_fragment_program */
@@ -215,7 +214,7 @@
 
 /** For GL_ARB_vertex_shader */
 /*@{*/
-#define MAX_VERTEX_ATTRIBS 16
+#define MAX_VERTEX_GENERIC_ATTRIBS 16
 #define MAX_VERTEX_TEXTURE_IMAGE_UNITS MAX_TEXTURE_IMAGE_UNITS
 #define MAX_COMBINED_TEXTURE_IMAGE_UNITS MAX_TEXTURE_IMAGE_UNITS
 /*@}*/

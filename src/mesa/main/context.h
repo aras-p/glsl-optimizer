@@ -130,7 +130,7 @@ extern void
 _mesa_copy_context(const GLcontext *src, GLcontext *dst, GLuint mask);
 
 
-extern void
+extern GLboolean
 _mesa_make_current( GLcontext *ctx, GLframebuffer *drawBuffer,
                     GLframebuffer *readBuffer );
 

@@ -40,7 +40,6 @@
 
 #include "util/u_debug.h"
 #include "pipe/p_inlines.h"
-#include "pipe/internal/p_winsys_screen.h"
 
 #include "nv10_context.h"
 #include "nv10_state.h"
@@ -124,11 +123,10 @@ nv10_vbuf_render_map_vertices( struct vbuf_render *render )
 {
 	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
 	struct nv10_context *nv10 = nv10_render->nv10;
-	struct pipe_winsys *winsys = nv10->pipe.winsys;
+	struct pipe_screen *pscreen = nv10->pipe.screen;
 
-	return winsys->buffer_map(winsys, 
-			nv10_render->buffer, 
-			PIPE_BUFFER_USAGE_CPU_WRITE);
+	return pipe_buffer_map(pscreen, nv10_render->buffer,
+			       PIPE_BUFFER_USAGE_CPU_WRITE);
 }
 
 static void
@@ -138,10 +136,10 @@ nv10_vbuf_render_unmap_vertices( struct vbuf_render *render,
 {
 	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
 	struct nv10_context *nv10 = nv10_render->nv10;
-	struct pipe_winsys *winsys = nv10->pipe.winsys;
+	struct pipe_screen *pscreen = nv10->pipe.screen;
 
 	assert(!nv10_render->buffer);
-	winsys->buffer_unmap(winsys, nv10_render->buffer);
+	pipe_buffer_unmap(pscreen, nv10_render->buffer);
 }
 
 static boolean
@@ -202,8 +200,6 @@ static void
 nv10_vbuf_render_release_vertices( struct vbuf_render *render )
 {
 	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
-	struct nv10_context *nv10 = nv10_render->nv10;
-	struct pipe_screen *pscreen = &nv10->screen->pipe;
 
 	assert(nv10_render->buffer);
 	pipe_buffer_reference(&nv10_render->buffer, NULL);

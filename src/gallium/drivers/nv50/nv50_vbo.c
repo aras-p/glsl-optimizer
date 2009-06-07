@@ -22,6 +22,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "pipe/p_inlines.h"
 
 #include "nv50_context.h"
 
@@ -53,7 +54,7 @@ nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 		 unsigned count)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 
 	nv50_state_validate(nv50);
@@ -83,7 +84,7 @@ static INLINE void
 nv50_draw_elements_inline_u08(struct nv50_context *nv50, uint8_t *map,
 			      unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 
 	map += start;
@@ -112,7 +113,7 @@ static INLINE void
 nv50_draw_elements_inline_u16(struct nv50_context *nv50, uint16_t *map,
 			      unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 
 	map += start;
@@ -141,7 +142,7 @@ static INLINE void
 nv50_draw_elements_inline_u32(struct nv50_context *nv50, uint8_t *map,
 			      unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 
 	map += start;
@@ -163,10 +164,12 @@ nv50_draw_elements(struct pipe_context *pipe,
 		   unsigned mode, unsigned start, unsigned count)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
-	struct nouveau_channel *chan = nv50->screen->nvws->channel;
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct pipe_winsys *ws = pipe->winsys;
-	void *map = ws->buffer_map(ws, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
+	struct pipe_screen *pscreen = pipe->screen;
+	void *map;
+	
+	map = pipe_buffer_map(pscreen, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
 
 	nv50_state_validate(nv50);
 
@@ -193,6 +196,7 @@ nv50_draw_elements(struct pipe_context *pipe,
 	BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 	OUT_RING  (chan, 0);
 
+	pipe_buffer_unmap(pscreen, indexBuffer);
 	pipe->flush(pipe, 0, NULL);
 	return TRUE;
 }
@@ -212,6 +216,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 		struct pipe_vertex_element *ve = &nv50->vtxelt[i];
 		struct pipe_vertex_buffer *vb =
 			&nv50->vtxbuf[ve->vertex_buffer_index];
+		struct nouveau_bo *bo = nouveau_bo(vb->buffer);
 
 		switch (ve->src_format) {
 		case PIPE_FORMAT_R32G32B32A32_FLOAT:
@@ -240,10 +245,10 @@ nv50_vbo_validate(struct nv50_context *nv50)
 
 		so_method(vtxbuf, tesla, 0x900 + (i * 16), 3);
 		so_data  (vtxbuf, 0x20000000 | vb->stride);
-		so_reloc (vtxbuf, vb->buffer, vb->buffer_offset +
+		so_reloc (vtxbuf, bo, vb->buffer_offset +
 			  ve->src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
 			  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
-		so_reloc (vtxbuf, vb->buffer, vb->buffer_offset +
+		so_reloc (vtxbuf, bo, vb->buffer_offset +
 			  ve->src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
 			  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
 	}

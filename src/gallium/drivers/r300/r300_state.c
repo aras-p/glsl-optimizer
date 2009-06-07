@@ -119,9 +119,10 @@ static void r300_set_clip_state(struct pipe_context* pipe,
                                 const struct pipe_clip_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
-    /* XXX add HW TCL clipping setup */
-    draw_flush(r300->draw);
-    draw_set_clip_state(r300->draw, state);
+
+    r300->clip_state = *state;
+
+    r300->dirty_state |= R300_NEW_CLIP;
 }
 
 static void
@@ -151,10 +152,12 @@ static void
 
     /* If the number of constants have changed, invalidate the shader. */
     if (r300->shader_constants[shader].user_count != i) {
-        if (shader == PIPE_SHADER_FRAGMENT && r300->fs) {
+        if (shader == PIPE_SHADER_FRAGMENT && r300->fs &&
+                r300->fs->uses_imms) {
             r300->fs->translated = FALSE;
             r300_translate_fragment_shader(r300, r300->fs);
-        } else if (shader == PIPE_SHADER_VERTEX && r300->vs) {
+        } else if (shader == PIPE_SHADER_VERTEX && r300->vs &&
+                r300->vs->uses_imms) {
             r300->vs->translated = FALSE;
             r300_translate_vertex_shader(r300, r300->vs);
         }

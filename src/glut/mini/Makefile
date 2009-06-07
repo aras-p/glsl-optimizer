@@ -91,7 +91,7 @@ install: glut.pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 	$(INSTALL) -m 644 $(TOP)/include/GL/glut.h $(DESTDIR)$(INSTALL_INC_DIR)/GL
-	$(INSTALL) $(TOP)/$(LIB_DIR)/libglut* $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/libglut* $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 glut.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 
