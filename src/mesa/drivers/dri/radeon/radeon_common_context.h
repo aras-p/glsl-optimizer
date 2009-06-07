@@ -378,7 +378,7 @@ typedef void (*radeon_line_func) (radeonContextPtr,
 
 typedef void (*radeon_point_func) (radeonContextPtr, radeonVertex *);
 
-#define RADEON_MAX_BOS 24
+#define RADEON_MAX_BOS 32
 struct radeon_state {
 	struct radeon_colorbuffer_state color;
 	struct radeon_depthbuffer_state depth;
