@@ -219,6 +219,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 		ADD_ATTR(VERT_ATTRIB_FOG, R300_DATA_TYPE_FLOAT_1, SWTCL_OVM_TEX(first_free_tex), swiz, MASK_XYZW, 0);
 	}
 
+	R300_NEWPRIM(rmesa);
 	rmesa->vbuf.num_attribs = num_attrs;
 	*_InputsRead = InputsRead;
 	*_OutputsWritten = OutputsWritten;
