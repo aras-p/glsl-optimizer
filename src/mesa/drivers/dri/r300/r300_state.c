@@ -1536,7 +1536,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 			r300->hw.ri.cmd[R300_RI_INTERP_0 + tex_ip] |= R300_RS_SEL_Q(R300_RS_SEL_K1) | R300_RS_TEX_PTR(rs_tex_count);
 			r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R300_RS_INST_TEX_ID(tex_ip) | R300_RS_INST_TEX_CN_WRITE | R300_RS_INST_TEX_ADDR(fp_reg);
 			InputsRead &= ~FRAG_BIT_FOGC;
-			rs_tex_count += 1;
+			rs_tex_count += 4;
 			++tex_ip;
 			++fp_reg;
 		} else {
@@ -1662,7 +1662,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 
 			r300->hw.rr.cmd[R300_RR_INST_0 + tex_ip] |= R500_RS_INST_TEX_ID(tex_ip) | R500_RS_INST_TEX_CN_WRITE | R500_RS_INST_TEX_ADDR(fp_reg);
 			InputsRead &= ~FRAG_BIT_FOGC;
-			rs_tex_count += 1;
+			rs_tex_count += 4;
 			++tex_ip;
 			++fp_reg;
 		} else {
@@ -2270,8 +2270,8 @@ void r300SetupVAP(GLcontext *ctx, GLuint InputsRead, GLuint OutputsWritten)
 
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
-	rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
-	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = r300VAPOutputCntl1(ctx, OutputsWritten);
+	rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten, ctx->FragmentProgram._Current->Base.InputsRead);
+	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = r300VAPOutputCntl1(ctx, OutputsWritten, ctx->FragmentProgram._Current->Base.InputsRead);
 }
 
 void r300UpdateShaderStates(r300ContextPtr rmesa)

@@ -81,49 +81,52 @@ GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
 	return vic_1;
 }
 
-GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
+GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint vp_writes, GLuint fp_reads)
 {
 	GLuint ret = 0;
 
-	if (OutputsWritten & (1 << VERT_RESULT_HPOS))
+	if (vp_writes & (1 << VERT_RESULT_HPOS))
 		ret |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
 
-	if (OutputsWritten & (1 << VERT_RESULT_COL0))
+	if (vp_writes & (1 << VERT_RESULT_COL0) && fp_reads & FRAG_BIT_COL0)
 		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT;
 
-	if (OutputsWritten & (1 << VERT_RESULT_COL1))
+	if (vp_writes & (1 << VERT_RESULT_COL1) && fp_reads & FRAG_BIT_COL1)
 		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
 
-	if (OutputsWritten & (1 << VERT_RESULT_BFC0)
-	    || OutputsWritten & (1 << VERT_RESULT_BFC1))
-		ret |=
-		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT |
-		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT |
-		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;
+	/* Two sided lighting works only if all 4 colors are written */
+	if (vp_writes & (1 << VERT_RESULT_BFC0) || vp_writes & (1 << VERT_RESULT_BFC1))
+		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT | R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT |
+			   R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT | R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;
 
-	if (OutputsWritten & (1 << VERT_RESULT_PSIZ))
+	if (vp_writes & (1 << VERT_RESULT_PSIZ))
 		ret |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
 
 	return ret;
 }
 
-GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
+GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint vp_writes, GLuint fp_reads)
 {
 	GLuint i, ret = 0, first_free_texcoord = 0;
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-		if (OutputsWritten & (1 << (VERT_RESULT_TEX0 + i))) {
+		if (vp_writes & (1 << (VERT_RESULT_TEX0 + i)) && fp_reads & FRAG_BIT_TEX(i)) {
 			ret |= (4 << (3 * i));
 			++first_free_texcoord;
 		}
 	}
 
-	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) {
+	if (fp_reads & FRAG_BIT_WPOS) {
+		ret |= (4 << (3 * first_free_texcoord));
+		++first_free_texcoord;
+	}
+
+	if (vp_writes & (1 << VERT_RESULT_FOGC) && fp_reads & FRAG_BIT_FOGC) {
 		if (first_free_texcoord > 8) {
 			fprintf(stderr, "\tout of free texcoords to write fog coord\n");
 			_mesa_exit(-1);
 		}
-		ret |= 1 << (3 * first_free_texcoord);
+		ret |= 4 << (3 * first_free_texcoord);
 	}
 
 	return ret;

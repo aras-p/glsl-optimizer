@@ -225,7 +225,7 @@ extern void r300EmitCacheFlush(r300ContextPtr rmesa);
 
 extern GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead);
 extern GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead);
-extern GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten);
-extern GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten);
+extern GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint vp_writes, GLuint fp_reads);
+extern GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint vp_writes, GLuint fp_reads);
 
 #endif
