@@ -1014,7 +1014,10 @@ parse_teximage_num (GLcontext * ctx, const GLubyte ** inst,
    GLint i = parse_integer (inst, Program);
 
    if ((i < 0) || (i >= (int)ctx->Const.MaxTextureImageUnits)) {
-      program_error(ctx, Program->Position, "Invalid texture image index");
+      char s[100];
+      _mesa_snprintf(s, sizeof(s), "Invalid texture image index %d (%u is max)",
+                     i, ctx->Const.MaxTextureImageUnits);
+      program_error(ctx, Program->Position, s);
       return 1;
    }
 
