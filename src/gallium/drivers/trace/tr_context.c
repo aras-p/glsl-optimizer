@@ -131,7 +131,9 @@ trace_context_draw_block(struct trace_context *tr_ctx, int flag)
       pipe_condvar_wait(tr_ctx->draw_cond, tr_ctx->draw_mutex);
 #else
       pipe_mutex_unlock(tr_ctx->draw_mutex);
-      /* TODO sleep or use conditional */
+#ifdef PIPE_SUBSYSTEM_WINDOWS_USER
+      Sleep(1);
+#endif
       pipe_mutex_lock(tr_ctx->draw_mutex);
 #endif
    }
