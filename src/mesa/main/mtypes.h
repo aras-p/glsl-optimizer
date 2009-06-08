@@ -1498,14 +1498,17 @@ struct gl_buffer_object
 {
    GLint RefCount;
    GLuint Name;
-   GLenum Usage;
-   GLenum Access;
-   GLvoid *Pointer;          /**< Only valid while buffer is mapped */
-   GLintptr Offset;          /**< mapped offset */
-   GLsizeiptr Length;        /**< mapped length */
-   GLsizeiptrARB Size;       /**< Size of storage in bytes */
-   GLubyte *Data;            /**< Location of storage either in RAM or VRAM. */
-   GLboolean Written;        /**< Ever written to? (for debugging) */
+   GLenum Usage;        /**< GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, etc. */
+   GLsizeiptrARB Size;  /**< Size of buffer storage in bytes */
+   GLubyte *Data;       /**< Location of storage either in RAM or VRAM. */
+   /** Fields describing a mapped buffer */
+   /*@{*/
+   GLenum Access;       /**< GL_READ_ONLY_ARB, GL_WRITE_ONLY_ARB, etc. */
+   GLvoid *Pointer;     /**< User-space address of mapping */
+   GLintptr Offset;     /**< Mapped offset */
+   GLsizeiptr Length;   /**< Mapped length */
+   /*@}*/
+   GLboolean Written;   /**< Ever written to? (for debugging) */
 };
 
 
