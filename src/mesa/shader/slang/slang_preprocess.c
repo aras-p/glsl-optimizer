@@ -1319,6 +1319,11 @@ _slang_preprocess_directives(slang_string *output,
    success = preprocess_source (output, input, pid, eid, elog, extensions, pragmas);
    grammar_destroy (eid);
    grammar_destroy (pid);
+   if (0) {
+      _mesa_printf("Post-processed shader:\n");
+      _mesa_printf("%s", output->data);
+      _mesa_printf("----------------------\n");
+   }
    return success;
 }
 
