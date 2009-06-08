@@ -529,6 +529,7 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
 {
    GLboolean normalized = GL_FALSE;
    GLsizei elementSize;
+   GLenum format;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -550,6 +551,21 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
    if (type == GL_UNSIGNED_BYTE && size != 4) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerNV(size!=4)");
       return;
+   }
+
+   if (size == GL_BGRA) {
+      if (type != GL_UNSIGNED_BYTE) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glVertexAttribPointerNV(GL_BGRA/type)");
+         return;
+      }
+
+      format = GL_BGRA;
+      size = 4;
+      normalized = GL_TRUE;
+   }
+   else {
+      format = GL_RGBA;
    }
 
    /* check for valid 'type' and compute StrideB right away */
@@ -574,7 +590,7 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
 
    update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
                 _NEW_ARRAY_ATTRIB(index),
-                elementSize, size, type, GL_RGBA, stride, normalized, ptr);
+                elementSize, size, type, format, stride, normalized, ptr);
 
    if (ctx->Driver.VertexAttribPointer)
       ctx->Driver.VertexAttribPointer( ctx, index, size, type, stride, ptr );
@@ -621,9 +637,14 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
                      "glVertexAttribPointerARB(GL_BGRA/type)");
          return;
       }
+      if (normalized != GL_TRUE) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glVertexAttribPointerARB(GL_BGRA/normalized)");
+         return;
+      }
+
       format = GL_BGRA;
       size = 4;
-      normalized = GL_TRUE;
    }
    else {
       format = GL_RGBA;
@@ -668,7 +689,7 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
 
    update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
                 _NEW_ARRAY_ATTRIB(index),
-                elementSize, size, type, GL_RGBA, stride, normalized, ptr);
+                elementSize, size, type, format, stride, normalized, ptr);
 
    if (ctx->Driver.VertexAttribPointer)
       ctx->Driver.VertexAttribPointer(ctx, index, size, type, stride, ptr);
