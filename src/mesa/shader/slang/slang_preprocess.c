@@ -1035,11 +1035,11 @@ preprocess_source (slang_string *output, const char *source,
 
                /* Parse optional macro parameters. */
                while (prod[i++] != PARAM_END) {
-                  if (state.cond.top->effective) {
-                     pp_symbol *param;
+                  pp_symbol *param;
 
-                     id = (const char *) (&prod[i]);
-                     idlen = _mesa_strlen (id);
+                  id = (const char *) (&prod[i]);
+                  idlen = _mesa_strlen (id);
+                  if (state.cond.top->effective) {
                      pp_annotate (output, "%s, ", id);
                      param = pp_symbols_push (&symbol->parameters);
                      if (param == NULL)
