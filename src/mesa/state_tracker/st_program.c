@@ -290,9 +290,6 @@ st_translate_vertex_program(struct st_context *st,
       }
    }
 
-   assert(vs_output_semantic_name[0] == TGSI_SEMANTIC_POSITION);
-
-
    if (outputMapping) {
       /* find max output slot referenced to compute vs_num_outputs */
       GLuint maxSlot = 0;
