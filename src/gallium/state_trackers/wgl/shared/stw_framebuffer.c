@@ -118,7 +118,8 @@ stw_call_window_proc(
           * be called from any thread.
           */
          pipe_mutex_lock( fb->mutex );
-         st_resize_framebuffer( fb->stfb, width, height );
+         if (fb->stfb)
+            st_resize_framebuffer( fb->stfb, width, height );
          pipe_mutex_unlock( fb->mutex );
       }
    }
