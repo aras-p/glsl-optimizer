@@ -2773,10 +2773,10 @@ static const char Uniform4fARB_names[] =
     "";
 #endif
 
-#if defined(need_GL_IBM_multimode_draw_arrays)
-static const char MultiModeDrawArraysIBM_names[] = 
-    "pppii\0" /* Parameter signature */
-    "glMultiModeDrawArraysIBM\0"
+#if defined(need_GL_ARB_map_buffer_range)
+static const char FlushMappedBufferRange_names[] = 
+    "iii\0" /* Parameter signature */
+    "glFlushMappedBufferRange\0"
     "";
 #endif
 
@@ -3904,6 +3904,13 @@ static const char VertexAttribs4dvNV_names[] =
     "";
 #endif
 
+#if defined(need_GL_IBM_multimode_draw_arrays)
+static const char MultiModeDrawArraysIBM_names[] = 
+    "pppii\0" /* Parameter signature */
+    "glMultiModeDrawArraysIBM\0"
+    "";
+#endif
+
 #if defined(need_GL_VERSION_2_0) || defined(need_GL_ARB_vertex_program)
 static const char VertexAttrib4dARB_names[] = 
     "idddd\0" /* Parameter signature */
@@ -4052,6 +4059,13 @@ static const char BlendFuncSeparateEXT_names[] =
 static const char IsVertexArrayAPPLE_names[] = 
     "i\0" /* Parameter signature */
     "glIsVertexArrayAPPLE\0"
+    "";
+#endif
+
+#if defined(need_GL_ARB_map_buffer_range)
+static const char MapBufferRange_names[] = 
+    "iiii\0" /* Parameter signature */
+    "glMapBufferRange\0"
     "";
 #endif
 
@@ -4982,6 +4996,14 @@ static const struct dri_extension_function GL_ARB_framebuffer_object_functions[]
     { DeleteRenderbuffersEXT_names, DeleteRenderbuffersEXT_remap_index, -1 },
     { GetRenderbufferParameterivEXT_names, GetRenderbufferParameterivEXT_remap_index, -1 },
     { IsRenderbufferEXT_names, IsRenderbufferEXT_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_ARB_map_buffer_range)
+static const struct dri_extension_function GL_ARB_map_buffer_range_functions[] = {
+    { FlushMappedBufferRange_names, FlushMappedBufferRange_remap_index, -1 },
+    { MapBufferRange_names, MapBufferRange_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
