@@ -236,7 +236,7 @@ intel_get_param(__DRIscreenPrivate *psp, int param, int *value)
 
    ret = drmCommandWriteRead(psp->fd, DRM_I915_GETPARAM, &gp, sizeof(gp));
    if (ret) {
-      _mesa_warning(NULL, "drm_i915_getparam: %d\n", ret);
+      _mesa_warning(NULL, "drm_i915_getparam: %d", ret);
       return GL_FALSE;
    }
 
