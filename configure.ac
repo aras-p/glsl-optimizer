@@ -222,6 +222,8 @@ else
     case "$host_os" in
     darwin* )
         LIB_EXTENSION='dylib' ;;
+    cygwin* )
+        LIB_EXTENSION='dll' ;;
     * )
         LIB_EXTENSION='so' ;;
     esac
@@ -1072,6 +1074,9 @@ if test "x$APP_LIB_DEPS" = x; then
     case "$host_os" in
     solaris*)
         APP_LIB_DEPS="-lX11 -lsocket -lnsl -lm"
+        ;;
+    cygwin*)
+        APP_LIB_DEPS="-lX11"
         ;;
     *)
         APP_LIB_DEPS="-lm"
