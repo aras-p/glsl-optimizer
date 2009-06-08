@@ -180,7 +180,7 @@
 /*@{*/
 #define MAX_PROGRAM_INSTRUCTIONS  (16 * 1024)
 #define MAX_PROGRAM_LOCAL_PARAMS 256 /**< per-program constants (power of two) */
-#define MAX_PROGRAM_ENV_PARAMS 128
+#define MAX_PROGRAM_ENV_PARAMS 256   /**< per-context constants (power of two) */
 #define MAX_PROGRAM_MATRICES 8
 #define MAX_PROGRAM_MATRIX_STACK_DEPTH 4
 #define MAX_PROGRAM_CALL_DEPTH 8
@@ -197,7 +197,7 @@
 /*@{*/
 #define MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS 128
 #define MAX_NV_VERTEX_PROGRAM_TEMPS         12
-#define MAX_NV_VERTEX_PROGRAM_PARAMS        MAX_PROGRAM_ENV_PARAMS
+#define MAX_NV_VERTEX_PROGRAM_PARAMS        96
 #define MAX_NV_VERTEX_PROGRAM_INPUTS        16
 #define MAX_NV_VERTEX_PROGRAM_OUTPUTS       15
 /*@}*/
