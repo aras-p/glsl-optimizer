@@ -24,6 +24,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+
+#include <cstdio>
 #include "instructionssoa.h"
 
 #include "storagesoa.h"
