@@ -106,7 +106,7 @@ softpipe_get_paramf(struct pipe_screen *screen, int param)
    case PIPE_CAP_MAX_POINT_WIDTH_AA:
       return 255.0; /* arbitrary */
    case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-      return 0.0;
+      return 16.0; /* not actually signficant at this time */
    case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
       return 16.0; /* arbitrary */
    default:
