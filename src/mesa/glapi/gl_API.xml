@@ -7950,6 +7950,8 @@
 
 <xi:include href="ARB_copy_buffer.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<xi:include href="ARB_map_buffer_range.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 
 <!-- Non-ARB extensions sorted by extension number. -->
 
