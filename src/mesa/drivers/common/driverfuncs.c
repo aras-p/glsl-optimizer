@@ -213,6 +213,11 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->UnmapBuffer = _mesa_buffer_unmap;
 #endif
 
+#if FEATURE_ARB_map_buffer_range
+   driver->MapBufferRange = _mesa_buffer_map_range;
+   driver->FlushMappedBufferRange = _mesa_buffer_flush_mapped_range;
+#endif
+
 #if FEATURE_EXT_framebuffer_object
    driver->NewFramebuffer = _mesa_new_framebuffer;
    driver->NewRenderbuffer = _mesa_new_soft_renderbuffer;
