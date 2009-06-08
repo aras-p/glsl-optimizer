@@ -282,7 +282,7 @@ write_texture_image(struct gl_texture_object *texObj)
       case MESA_FORMAT_RGB565:
          {
             GLubyte *buf2 = (GLubyte *) _mesa_malloc(img->Width * img->Height * 3);
-            GLint i;
+            GLuint i;
             for (i = 0; i < img->Width * img->Height; i++) {
                GLint r, g, b;
                GLushort s = ((GLushort *) img->Data)[i];
