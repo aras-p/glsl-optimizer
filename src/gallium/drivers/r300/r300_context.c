@@ -149,8 +149,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->draw = draw_create();
     /* Enable our renderer. */
     draw_set_rasterize_stage(r300->draw, r300_draw_stage(r300));
-    /* Tell Draw that we can always do non-UCP clipping. */
-    draw_set_driver_clipping(r300->draw, TRUE);
+    /* Disable Draw's clipping if TCL is present. */
+    draw_set_driver_clipping(r300->draw, r300_screen(screen)->caps->has_tcl);
     /* Force Draw to never do viewport transform, since (again) we can do
      * transform in hardware, always. */
     draw_set_viewport_state(r300->draw, &r300_viewport_identity);
