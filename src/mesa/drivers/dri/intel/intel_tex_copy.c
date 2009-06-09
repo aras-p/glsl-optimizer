@@ -169,9 +169,6 @@ do_copy_texsubimage(struct intel_context *intel,
 }
 
 
-
-
-
 void
 intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
                     GLenum internalFormat,
@@ -217,6 +214,7 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
    _swrast_copy_teximage1d(ctx, target, level, internalFormat, x, y,
                            width, border);
 }
+
 
 void
 intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
@@ -291,7 +289,6 @@ intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
 }
 
 
-
 void
 intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
                        GLint xoffset, GLint yoffset,
@@ -304,7 +301,6 @@ intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    struct gl_texture_image *texImage =
       _mesa_select_tex_image(ctx, texObj, target, level);
    GLenum internalFormat = texImage->InternalFormat;
-
 
    /* Need to check texture is compatible with source format. 
     */

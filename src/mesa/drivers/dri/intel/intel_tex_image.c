@@ -248,7 +248,6 @@ try_pbo_upload(struct intel_context *intel,
 }
 
 
-
 static GLboolean
 try_pbo_zcopy(struct intel_context *intel,
               struct intel_texture_image *intelImage,
@@ -291,10 +290,6 @@ try_pbo_zcopy(struct intel_context *intel,
 
    return GL_TRUE;
 }
-
-
-
-
 
 
 static void
@@ -463,8 +458,6 @@ intelTexImage(GLcontext * ctx,
       DBG("pbo upload failed\n");
    }
 
-
-
    /* intelCopyTexImage calls this function with pixels == NULL, with
     * the expectation that the mipmap tree will be set up but nothing
     * more will be done.  This is where those calls return:
@@ -557,6 +550,7 @@ intelTexImage(GLcontext * ctx,
    }
 }
 
+
 void
 intelTexImage3D(GLcontext * ctx,
                 GLenum target, GLint level,
@@ -589,6 +583,7 @@ intelTexImage2D(GLcontext * ctx,
                  format, type, pixels, unpack, texObj, texImage, 0, 0);
 }
 
+
 void
 intelTexImage1D(GLcontext * ctx,
                 GLenum target, GLint level,
@@ -604,6 +599,7 @@ intelTexImage1D(GLcontext * ctx,
                  format, type, pixels, unpack, texObj, texImage, 0, 0);
 }
 
+
 void intelCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
 				GLint internalFormat,
 				GLint width, GLint height, GLint border,
@@ -615,6 +611,7 @@ void intelCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
 		 internalFormat, width, height, 1, border,
 		 0, 0, data, &ctx->Unpack, texObj, texImage, imageSize, 1);
 }
+
 
 /**
  * Need to map texture image into memory before copying image data,
@@ -680,8 +677,6 @@ intelGetTexImage(GLcontext * ctx, GLenum target, GLint level,
 {
    intel_get_tex_image(ctx, target, level, format, type, pixels,
 		       texObj, texImage, 0);
-
-
 }
 
 void
