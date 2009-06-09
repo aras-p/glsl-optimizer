@@ -302,7 +302,8 @@ intelTexImage(GLcontext * ctx,
               GLenum format, GLenum type, const void *pixels,
               const struct gl_pixelstore_attrib *unpack,
               struct gl_texture_object *texObj,
-              struct gl_texture_image *texImage, GLsizei imageSize, int compressed)
+              struct gl_texture_image *texImage, GLsizei imageSize,
+              GLboolean compressed)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_object *intelObj = intel_texture_object(texObj);
@@ -564,7 +565,7 @@ intelTexImage3D(GLcontext * ctx,
 {
    intelTexImage(ctx, 3, target, level,
                  internalFormat, width, height, depth, border,
-                 format, type, pixels, unpack, texObj, texImage, 0, 0);
+                 format, type, pixels, unpack, texObj, texImage, 0, GL_FALSE);
 }
 
 
@@ -580,7 +581,7 @@ intelTexImage2D(GLcontext * ctx,
 {
    intelTexImage(ctx, 2, target, level,
                  internalFormat, width, height, 1, border,
-                 format, type, pixels, unpack, texObj, texImage, 0, 0);
+                 format, type, pixels, unpack, texObj, texImage, 0, GL_FALSE);
 }
 
 
@@ -596,7 +597,7 @@ intelTexImage1D(GLcontext * ctx,
 {
    intelTexImage(ctx, 1, target, level,
                  internalFormat, width, 1, 1, border,
-                 format, type, pixels, unpack, texObj, texImage, 0, 0);
+                 format, type, pixels, unpack, texObj, texImage, 0, GL_FALSE);
 }
 
 
@@ -610,7 +611,7 @@ intelCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
 {
    intelTexImage(ctx, 2, target, level,
 		 internalFormat, width, height, 1, border,
-		 0, 0, data, &ctx->Unpack, texObj, texImage, imageSize, 1);
+		 0, 0, data, &ctx->Unpack, texObj, texImage, imageSize, GL_TRUE);
 }
 
 
@@ -622,7 +623,7 @@ static void
 intel_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
 		    GLenum format, GLenum type, GLvoid * pixels,
 		    struct gl_texture_object *texObj,
-		    struct gl_texture_image *texImage, int compressed)
+		    struct gl_texture_image *texImage, GLboolean compressed)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
@@ -678,7 +679,7 @@ intelGetTexImage(GLcontext * ctx, GLenum target, GLint level,
                  struct gl_texture_image *texImage)
 {
    intel_get_tex_image(ctx, target, level, format, type, pixels,
-		       texObj, texImage, 0);
+		       texObj, texImage, GL_FALSE);
 }
 
 
@@ -689,7 +690,7 @@ intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
 			   struct gl_texture_image *texImage)
 {
    intel_get_tex_image(ctx, target, level, 0, 0, pixels,
-		       texObj, texImage, 1);
+		       texObj, texImage, GL_TRUE);
 }
 
 
