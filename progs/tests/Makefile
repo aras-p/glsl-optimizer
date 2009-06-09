@@ -48,7 +48,8 @@ SOURCES = \
 	fptest1.c \
 	fptexture.c \
 	getprocaddress.c \
-	glutfx \
+	getteximage.c \
+	glutfx.c \
 	interleave.c \
 	invert.c \
 	jkrahntest.c \
