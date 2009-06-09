@@ -830,7 +830,7 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt, radeon_texture_imag
 		 * In fact, that memcpy() could be done by the hardware in many
 		 * cases, provided that we have a proper memory manager.
 		 */
-		radeon_mipmap_level *srclvl = &image->mt->levels[image->mtlevel];
+		radeon_mipmap_level *srclvl = &image->mt->levels[image->mtlevel-image->mt->firstLevel];
 
 		assert(srclvl->size == dstlvl->size);
 		assert(srclvl->rowstride == dstlvl->rowstride);
