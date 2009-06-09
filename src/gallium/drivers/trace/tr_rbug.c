@@ -296,6 +296,7 @@ trace_rbug_context_info(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    struct trace_screen *tr_scr = tr_rbug->tr_scr;
    struct trace_context *tr_ctx = NULL;
    rbug_texture_t cbufs[PIPE_MAX_COLOR_BUFS];
+   rbug_texture_t texs[PIPE_MAX_SAMPLERS];
    int i;
 
    pipe_mutex_lock(tr_scr->list_mutex);
@@ -313,9 +314,14 @@ trace_rbug_context_info(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    for (i = 0; i < tr_ctx->curr.nr_cbufs; i++)
       cbufs[i] = VOID2U64(tr_ctx->curr.cbufs[i]);
 
+   for (i = 0; i < tr_ctx->curr.num_texs; i++)
+      texs[i] = VOID2U64(tr_ctx->curr.tex[i]);
+
    rbug_send_context_info_reply(tr_rbug->con, serial,
                                 VOID2U64(tr_ctx->curr.vs), VOID2U64(tr_ctx->curr.fs),
-                                cbufs, tr_ctx->curr.nr_cbufs, VOID2U64(tr_ctx->curr.zsbuf),
+                                texs, tr_ctx->curr.num_texs,
+                                cbufs, tr_ctx->curr.nr_cbufs,
+                                VOID2U64(tr_ctx->curr.zsbuf),
                                 tr_ctx->draw_blocker, tr_ctx->draw_blocked, NULL);
 
    trace_dump_call_unlock();

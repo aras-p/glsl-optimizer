@@ -915,12 +915,17 @@ trace_context_set_sampler_textures(struct pipe_context *_pipe,
                                    struct pipe_texture **textures)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_texture *tr_tex;
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_texture *unwrapped_textures[PIPE_MAX_SAMPLERS];
    unsigned i;
 
-   for(i = 0; i < num_textures; ++i)
-      unwrapped_textures[i] = trace_texture_unwrap(tr_ctx, textures[i]);
+   tr_ctx->curr.num_texs = num_textures;
+   for(i = 0; i < num_textures; ++i) {
+      tr_tex = trace_texture(textures[i]);
+      tr_ctx->curr.tex[i] = tr_tex;
+      unwrapped_textures[i] = tr_tex ? tr_tex->texture : NULL;
+   }
    textures = unwrapped_textures;
 
    trace_dump_call_begin("pipe_context", "set_sampler_textures");

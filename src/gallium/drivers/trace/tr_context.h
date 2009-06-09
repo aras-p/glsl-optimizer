@@ -51,6 +51,9 @@ struct trace_context
       struct trace_shader *fs;
       struct trace_shader *vs;
 
+      struct trace_texture *tex[PIPE_MAX_SAMPLERS];
+      unsigned num_texs;
+
       unsigned nr_cbufs;
       struct trace_texture *cbufs[PIPE_MAX_COLOR_BUFS];
       struct trace_texture *zsbuf;
