@@ -250,7 +250,7 @@ st_bufferobj_map_range(GLcontext *ctx, GLenum target,
 
    map = obj->Pointer = pipe_buffer_map_range(pipe->screen, st_obj->buffer, offset, length, flags);
    if(obj->Pointer) {
-      obj->Offset = 0;
+      obj->Offset = offset;
       obj->Length = length;
       map += offset;
    }
