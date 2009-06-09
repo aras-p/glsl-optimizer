@@ -162,23 +162,7 @@ void
 intelInitTextureFuncs(struct dd_function_table *functions)
 {
    functions->ChooseTextureFormat = intelChooseTextureFormat;
-   functions->TexImage1D = intelTexImage1D;
-   functions->TexImage2D = intelTexImage2D;
-   functions->TexImage3D = intelTexImage3D;
-   functions->TexSubImage1D = intelTexSubImage1D;
-   functions->TexSubImage2D = intelTexSubImage2D;
-   functions->TexSubImage3D = intelTexSubImage3D;
-   functions->CopyTexImage1D = intelCopyTexImage1D;
-   functions->CopyTexImage2D = intelCopyTexImage2D;
-   functions->CopyTexSubImage1D = intelCopyTexSubImage1D;
-   functions->CopyTexSubImage2D = intelCopyTexSubImage2D;
-   functions->GetTexImage = intelGetTexImage;
    functions->GenerateMipmap = intel_generate_mipmap;
-
-   /* compressed texture functions */
-   functions->CompressedTexImage2D = intelCompressedTexImage2D;
-   functions->CompressedTexSubImage2D = intelCompressedTexSubImage2D;
-   functions->GetCompressedTexImage = intelGetCompressedTexImage;
 
    functions->NewTextureObject = intelNewTextureObject;
    functions->NewTextureImage = intelNewTextureImage;

@@ -551,7 +551,7 @@ intelTexImage(GLcontext * ctx,
 }
 
 
-void
+static void
 intelTexImage3D(GLcontext * ctx,
                 GLenum target, GLint level,
                 GLint internalFormat,
@@ -568,7 +568,7 @@ intelTexImage3D(GLcontext * ctx,
 }
 
 
-void
+static void
 intelTexImage2D(GLcontext * ctx,
                 GLenum target, GLint level,
                 GLint internalFormat,
@@ -584,7 +584,7 @@ intelTexImage2D(GLcontext * ctx,
 }
 
 
-void
+static void
 intelTexImage1D(GLcontext * ctx,
                 GLenum target, GLint level,
                 GLint internalFormat,
@@ -600,12 +600,13 @@ intelTexImage1D(GLcontext * ctx,
 }
 
 
-void intelCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
-				GLint internalFormat,
-				GLint width, GLint height, GLint border,
-				GLsizei imageSize, const GLvoid *data,
-				struct gl_texture_object *texObj,
-				struct gl_texture_image *texImage )
+static void
+intelCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
+                           GLint internalFormat,
+                           GLint width, GLint height, GLint border,
+                           GLsizei imageSize, const GLvoid *data,
+                           struct gl_texture_object *texObj,
+                           struct gl_texture_image *texImage )
 {
    intelTexImage(ctx, 2, target, level,
 		 internalFormat, width, height, 1, border,
@@ -669,7 +670,8 @@ intel_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
    }
 }
 
-void
+
+static void
 intelGetTexImage(GLcontext * ctx, GLenum target, GLint level,
                  GLenum format, GLenum type, GLvoid * pixels,
                  struct gl_texture_object *texObj,
@@ -679,7 +681,8 @@ intelGetTexImage(GLcontext * ctx, GLenum target, GLint level,
 		       texObj, texImage, 0);
 }
 
-void
+
+static void
 intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
 			   GLvoid *pixels,
 			   struct gl_texture_object *texObj,
@@ -688,6 +691,7 @@ intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
    intel_get_tex_image(ctx, target, level, 0, 0, pixels,
 		       texObj, texImage, 1);
 }
+
 
 void
 intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
@@ -796,4 +800,17 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
     * implementation's behavior at the time.
     */
    intelSetTexBuffer2(pDRICtx, target, GLX_TEXTURE_FORMAT_RGBA_EXT, dPriv);
+}
+
+
+void
+intelInitTextureImageFuncs(struct dd_function_table *functions)
+{
+   functions->TexImage1D = intelTexImage1D;
+   functions->TexImage2D = intelTexImage2D;
+   functions->TexImage3D = intelTexImage3D;
+   functions->GetTexImage = intelGetTexImage;
+
+   functions->CompressedTexImage2D = intelCompressedTexImage2D;
+   functions->GetCompressedTexImage = intelGetCompressedTexImage;
 }

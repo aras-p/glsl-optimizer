@@ -169,7 +169,7 @@ do_copy_texsubimage(struct intel_context *intel,
 }
 
 
-void
+static void
 intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
                     GLenum internalFormat,
                     GLint x, GLint y, GLsizei width, GLint border)
@@ -216,7 +216,7 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
 }
 
 
-void
+static void
 intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
                     GLenum internalFormat,
                     GLint x, GLint y, GLsizei width, GLsizei height,
@@ -264,7 +264,7 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 }
 
 
-void
+static void
 intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
                        GLint xoffset, GLint x, GLint y, GLsizei width)
 {
@@ -289,7 +289,7 @@ intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
 }
 
 
-void
+static void
 intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
                        GLint xoffset, GLint yoffset,
                        GLint x, GLint y, GLsizei width, GLsizei height)
@@ -315,4 +315,14 @@ intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
       _swrast_copy_texsubimage2d(ctx, target, level,
                                  xoffset, yoffset, x, y, width, height);
    }
+}
+
+
+void
+intelInitTextureCopyImageFuncs(struct dd_function_table *functions)
+{
+   functions->CopyTexImage1D = intelCopyTexImage1D;
+   functions->CopyTexImage2D = intelCopyTexImage2D;
+   functions->CopyTexSubImage1D = intelCopyTexSubImage1D;
+   functions->CopyTexSubImage2D = intelCopyTexSubImage2D;
 }

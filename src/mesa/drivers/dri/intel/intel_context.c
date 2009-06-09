@@ -550,6 +550,9 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    functions->CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 
    intelInitTextureFuncs(functions);
+   intelInitTextureImageFuncs(functions);
+   intelInitTextureSubImageFuncs(functions);
+   intelInitTextureCopyImageFuncs(functions);
    intelInitStateFuncs(functions);
    intelInitClearFuncs(functions);
    intelInitBufferFuncs(functions);
