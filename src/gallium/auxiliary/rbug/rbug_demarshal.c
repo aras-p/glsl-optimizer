@@ -67,10 +67,16 @@ struct rbug_header * rbug_demarshal(struct rbug_proto_header *header)
 		return (struct rbug_header *)rbug_demarshal_context_draw_unblock(header);
 	case RBUG_OP_CONTEXT_FLUSH:
 		return (struct rbug_header *)rbug_demarshal_context_flush(header);
+	case RBUG_OP_CONTEXT_RULE_ADD:
+		return (struct rbug_header *)rbug_demarshal_context_rule_add(header);
+	case RBUG_OP_CONTEXT_RULE_DELETE:
+		return (struct rbug_header *)rbug_demarshal_context_rule_delete(header);
 	case RBUG_OP_CONTEXT_LIST_REPLY:
 		return (struct rbug_header *)rbug_demarshal_context_list_reply(header);
 	case RBUG_OP_CONTEXT_INFO_REPLY:
 		return (struct rbug_header *)rbug_demarshal_context_info_reply(header);
+	case RBUG_OP_CONTEXT_RULE_ADD_REPLY:
+		return (struct rbug_header *)rbug_demarshal_context_rule_add_reply(header);
 	case RBUG_OP_CONTEXT_DRAW_BLOCKED:
 		return (struct rbug_header *)rbug_demarshal_context_draw_blocked(header);
 	case RBUG_OP_SHADER_LIST:

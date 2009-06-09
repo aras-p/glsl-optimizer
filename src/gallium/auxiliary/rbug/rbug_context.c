@@ -274,6 +274,100 @@ int rbug_send_context_flush(struct rbug_connection *__con,
 	return __ret;
 }
 
+int rbug_send_context_rule_add(struct rbug_connection *__con,
+                               rbug_context_t context,
+                               rbug_shader_t vertex,
+                               rbug_shader_t fragment,
+                               rbug_texture_t texture,
+                               rbug_texture_t surface,
+                               rbug_block_t block,
+                               uint32_t *__serial)
+{
+	uint32_t __len = 0;
+	uint32_t __pos = 0;
+	uint8_t *__data = NULL;
+	int __ret = 0;
+
+	LEN(8); /* header */
+	LEN(8); /* context */
+	LEN(8); /* vertex */
+	LEN(8); /* fragment */
+	LEN(8); /* texture */
+	LEN(8); /* surface */
+	LEN(4); /* block */
+
+	/* align */
+	PAD(__len, 8);
+
+	__data = (uint8_t*)MALLOC(__len);
+	if (!__data)
+		return -ENOMEM;
+
+	WRITE(4, int32_t, ((int32_t)RBUG_OP_CONTEXT_RULE_ADD));
+	WRITE(4, uint32_t, ((uint32_t)(__len / 4)));
+	WRITE(8, rbug_context_t, context); /* context */
+	WRITE(8, rbug_shader_t, vertex); /* vertex */
+	WRITE(8, rbug_shader_t, fragment); /* fragment */
+	WRITE(8, rbug_texture_t, texture); /* texture */
+	WRITE(8, rbug_texture_t, surface); /* surface */
+	WRITE(4, rbug_block_t, block); /* block */
+
+	/* final pad */
+	PAD(__pos, 8);
+
+	if (__pos != __len) {
+		__ret = -EINVAL;
+	} else {
+		rbug_connection_send_start(__con, RBUG_OP_CONTEXT_RULE_ADD, __len);
+		rbug_connection_write(__con, __data, __len);
+		__ret = rbug_connection_send_finish(__con, __serial);
+	}
+
+	FREE(__data);
+	return __ret;
+}
+
+int rbug_send_context_rule_delete(struct rbug_connection *__con,
+                                  rbug_context_t context,
+                                  rbug_block_rule_t rule,
+                                  uint32_t *__serial)
+{
+	uint32_t __len = 0;
+	uint32_t __pos = 0;
+	uint8_t *__data = NULL;
+	int __ret = 0;
+
+	LEN(8); /* header */
+	LEN(8); /* context */
+	LEN(8); /* rule */
+
+	/* align */
+	PAD(__len, 8);
+
+	__data = (uint8_t*)MALLOC(__len);
+	if (!__data)
+		return -ENOMEM;
+
+	WRITE(4, int32_t, ((int32_t)RBUG_OP_CONTEXT_RULE_DELETE));
+	WRITE(4, uint32_t, ((uint32_t)(__len / 4)));
+	WRITE(8, rbug_context_t, context); /* context */
+	WRITE(8, rbug_block_rule_t, rule); /* rule */
+
+	/* final pad */
+	PAD(__pos, 8);
+
+	if (__pos != __len) {
+		__ret = -EINVAL;
+	} else {
+		rbug_connection_send_start(__con, RBUG_OP_CONTEXT_RULE_DELETE, __len);
+		rbug_connection_write(__con, __data, __len);
+		__ret = rbug_connection_send_finish(__con, __serial);
+	}
+
+	FREE(__data);
+	return __ret;
+}
+
 int rbug_send_context_list_reply(struct rbug_connection *__con,
                                  uint32_t serial,
                                  rbug_context_t *contexts,
@@ -320,6 +414,8 @@ int rbug_send_context_info_reply(struct rbug_connection *__con,
                                  uint32_t serial,
                                  rbug_shader_t vertex,
                                  rbug_shader_t fragment,
+                                 rbug_texture_t *texs,
+                                 uint32_t texs_len,
                                  rbug_texture_t *cbufs,
                                  uint32_t cbufs_len,
                                  rbug_texture_t zsbuf,
@@ -336,6 +432,7 @@ int rbug_send_context_info_reply(struct rbug_connection *__con,
 	LEN(4); /* serial */
 	LEN(8); /* vertex */
 	LEN(8); /* fragment */
+	LEN_ARRAY(8, texs); /* texs */
 	LEN_ARRAY(8, cbufs); /* cbufs */
 	LEN(8); /* zsbuf */
 	LEN(4); /* blocker */
@@ -353,6 +450,7 @@ int rbug_send_context_info_reply(struct rbug_connection *__con,
 	WRITE(4, uint32_t, serial); /* serial */
 	WRITE(8, rbug_shader_t, vertex); /* vertex */
 	WRITE(8, rbug_shader_t, fragment); /* fragment */
+	WRITE_ARRAY(8, rbug_texture_t, texs); /* texs */
 	WRITE_ARRAY(8, rbug_texture_t, cbufs); /* cbufs */
 	WRITE(8, rbug_texture_t, zsbuf); /* zsbuf */
 	WRITE(4, rbug_block_t, blocker); /* blocker */
@@ -365,6 +463,47 @@ int rbug_send_context_info_reply(struct rbug_connection *__con,
 		__ret = -EINVAL;
 	} else {
 		rbug_connection_send_start(__con, RBUG_OP_CONTEXT_INFO_REPLY, __len);
+		rbug_connection_write(__con, __data, __len);
+		__ret = rbug_connection_send_finish(__con, __serial);
+	}
+
+	FREE(__data);
+	return __ret;
+}
+
+int rbug_send_context_rule_add_reply(struct rbug_connection *__con,
+                                     uint32_t serial,
+                                     rbug_block_rule_t rule,
+                                     uint32_t *__serial)
+{
+	uint32_t __len = 0;
+	uint32_t __pos = 0;
+	uint8_t *__data = NULL;
+	int __ret = 0;
+
+	LEN(8); /* header */
+	LEN(4); /* serial */
+	LEN(8); /* rule */
+
+	/* align */
+	PAD(__len, 8);
+
+	__data = (uint8_t*)MALLOC(__len);
+	if (!__data)
+		return -ENOMEM;
+
+	WRITE(4, int32_t, ((int32_t)RBUG_OP_CONTEXT_RULE_ADD_REPLY));
+	WRITE(4, uint32_t, ((uint32_t)(__len / 4)));
+	WRITE(4, uint32_t, serial); /* serial */
+	WRITE(8, rbug_block_rule_t, rule); /* rule */
+
+	/* final pad */
+	PAD(__pos, 8);
+
+	if (__pos != __len) {
+		__ret = -EINVAL;
+	} else {
+		rbug_connection_send_start(__con, RBUG_OP_CONTEXT_RULE_ADD_REPLY, __len);
 		rbug_connection_write(__con, __data, __len);
 		__ret = rbug_connection_send_finish(__con, __serial);
 	}
@@ -579,6 +718,66 @@ struct rbug_proto_context_flush * rbug_demarshal_context_flush(struct rbug_proto
 	return ret;
 }
 
+struct rbug_proto_context_rule_add * rbug_demarshal_context_rule_add(struct rbug_proto_header *header)
+{
+	uint32_t len = 0;
+	uint32_t pos = 0;
+	uint8_t *data =  NULL;
+	struct rbug_proto_context_rule_add *ret;
+
+	if (!header)
+		return NULL;
+	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_RULE_ADD)
+		return NULL;
+
+	pos = 0;
+	len = header->length * 4;
+	data = (uint8_t*)&header[1];
+	ret = MALLOC(sizeof(*ret));
+	if (!ret)
+		return NULL;
+
+	ret->header.__message = header;
+	ret->header.opcode = header->opcode;
+
+	READ(8, rbug_context_t, context); /* context */
+	READ(8, rbug_shader_t, vertex); /* vertex */
+	READ(8, rbug_shader_t, fragment); /* fragment */
+	READ(8, rbug_texture_t, texture); /* texture */
+	READ(8, rbug_texture_t, surface); /* surface */
+	READ(4, rbug_block_t, block); /* block */
+
+	return ret;
+}
+
+struct rbug_proto_context_rule_delete * rbug_demarshal_context_rule_delete(struct rbug_proto_header *header)
+{
+	uint32_t len = 0;
+	uint32_t pos = 0;
+	uint8_t *data =  NULL;
+	struct rbug_proto_context_rule_delete *ret;
+
+	if (!header)
+		return NULL;
+	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_RULE_DELETE)
+		return NULL;
+
+	pos = 0;
+	len = header->length * 4;
+	data = (uint8_t*)&header[1];
+	ret = MALLOC(sizeof(*ret));
+	if (!ret)
+		return NULL;
+
+	ret->header.__message = header;
+	ret->header.opcode = header->opcode;
+
+	READ(8, rbug_context_t, context); /* context */
+	READ(8, rbug_block_rule_t, rule); /* rule */
+
+	return ret;
+}
+
 struct rbug_proto_context_list_reply * rbug_demarshal_context_list_reply(struct rbug_proto_header *header)
 {
 	uint32_t len = 0;
@@ -632,10 +831,39 @@ struct rbug_proto_context_info_reply * rbug_demarshal_context_info_reply(struct 
 	READ(4, uint32_t, serial); /* serial */
 	READ(8, rbug_shader_t, vertex); /* vertex */
 	READ(8, rbug_shader_t, fragment); /* fragment */
+	READ_ARRAY(8, rbug_texture_t, texs); /* texs */
 	READ_ARRAY(8, rbug_texture_t, cbufs); /* cbufs */
 	READ(8, rbug_texture_t, zsbuf); /* zsbuf */
 	READ(4, rbug_block_t, blocker); /* blocker */
 	READ(4, rbug_block_t, blocked); /* blocked */
+
+	return ret;
+}
+
+struct rbug_proto_context_rule_add_reply * rbug_demarshal_context_rule_add_reply(struct rbug_proto_header *header)
+{
+	uint32_t len = 0;
+	uint32_t pos = 0;
+	uint8_t *data =  NULL;
+	struct rbug_proto_context_rule_add_reply *ret;
+
+	if (!header)
+		return NULL;
+	if (header->opcode != (int16_t)RBUG_OP_CONTEXT_RULE_ADD_REPLY)
+		return NULL;
+
+	pos = 0;
+	len = header->length * 4;
+	data = (uint8_t*)&header[1];
+	ret = MALLOC(sizeof(*ret));
+	if (!ret)
+		return NULL;
+
+	ret->header.__message = header;
+	ret->header.opcode = header->opcode;
+
+	READ(4, uint32_t, serial); /* serial */
+	READ(8, rbug_block_rule_t, rule); /* rule */
 
 	return ret;
 }
