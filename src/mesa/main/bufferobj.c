@@ -39,6 +39,11 @@
 #include "bufferobj.h"
 
 
+/* Debug flags */
+/*#define VBO_DEBUG*/
+/*#define BOUNDS_CHECK*/
+
+
 #ifdef FEATURE_OES_mapbuffer
 #define DEFAULT_ACCESS GL_WRITE_ONLY;
 #else
@@ -1019,6 +1024,9 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
                 bufObj->Name, size, data, usage);
 #endif
 
+#ifdef BOUNDS_CHECK
+   size += 100;
+#endif
    /* Give the buffer object to the driver!  <data> may be null! */
    ctx->Driver.BufferData( ctx, target, size, data, usage, bufObj );
 }
@@ -1119,6 +1127,17 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
    }
 #endif
 
+#ifdef BOUNDS_CHECK
+   {
+      GLubyte *buf = (GLubyte *) bufObj->Pointer;
+      GLuint i;
+      /* buffer is 100 bytes larger than requested, fill with magic value */
+      for (i = 0; i < 100; i++) {
+         buf[bufObj->Size - i - 1] = 123;
+      }
+   }
+#endif
+
    return bufObj->Pointer;
 }
 
@@ -1144,6 +1163,22 @@ _mesa_UnmapBufferARB(GLenum target)
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUnmapBufferARB");
       return GL_FALSE;
    }
+
+#ifdef BOUNDS_CHECK
+   if (bufObj->Access != GL_READ_ONLY_ARB) {
+      GLubyte *buf = (GLubyte *) bufObj->Pointer;
+      GLuint i;
+      /* check that last 100 bytes are still = magic value */
+      for (i = 0; i < 100; i++) {
+         GLuint pos = bufObj->Size - i - 1;
+         if (buf[pos] != 123) {
+            _mesa_warning(ctx, "Out of bounds buffer object write detected"
+                          " at position %d (value = %u)\n",
+                          pos, buf[pos]);
+         }
+      }
+   }
+#endif
 
 #ifdef VBO_DEBUG
    if (bufObj->Access == GL_WRITE_ONLY_ARB) {
