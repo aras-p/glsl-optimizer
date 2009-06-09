@@ -632,6 +632,11 @@ validate:
         r300->dirty_state &= ~R300_NEW_VERTEX_FORMAT;
     }
 
+    if (r300->dirty_state & R300_NEW_VERTEX_SHADER) {
+        r300_emit_vertex_shader(r300, r300->vs);
+        r300->dirty_state &= ~R300_NEW_VERTEX_SHADER;
+    }
+
     /* Finally, emit the VBO. */
     r300_emit_vertex_buffer(r300);
 
