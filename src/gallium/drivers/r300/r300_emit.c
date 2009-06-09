@@ -63,6 +63,10 @@ void r300_emit_clip_state(struct r300_context* r300,
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
     CS_LOCALS(r300);
 
+    if (!r300screen->caps->has_tcl) {
+        return;
+    }
+
     BEGIN_CS(5 + (6 * 4));
     OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
             (r300screen->caps->is_r500 ?
