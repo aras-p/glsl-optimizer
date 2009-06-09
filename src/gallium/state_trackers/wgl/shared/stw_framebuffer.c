@@ -380,6 +380,9 @@ stw_swap_buffers(
    if (fb == NULL)
       return FALSE;
 
+   if (!(fb->pfi->pfd.dwFlags & PFD_DOUBLEBUFFER))
+      return TRUE;
+
    pipe_mutex_lock( fb->mutex );
 
    /* If we're swapping the buffer associated with the current context
