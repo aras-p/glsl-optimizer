@@ -256,6 +256,8 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     r700SyncSurf(context); /* TODO : make it light. */
 
+    r700SendSQConfig(context);
+
     r700UpdateShaders(ctx);
 
     r700SetScissor(context);

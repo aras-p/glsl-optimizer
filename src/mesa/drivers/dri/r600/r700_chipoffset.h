@@ -51,6 +51,12 @@
 #define mmCP_COHER_BASE                                 0x217E
 #define mmCP_COHER_STATUS                               0x217F
 
+#define mmTA_CNTL_AUX                                   0x2542
+#define mmVC_ENHANCE                                    0x25C5
+#define mmSQ_DYN_GPR_CNTL_PS_FLUSH_REQ                  0x2363
+#define mmDB_DEBUG                                      0x260C
+#define mmDB_WATERMARKS                                 0x260E
+
 #define mmPA_CL_VPORT_XSCALE                            0xA10F
 #define mmPA_CL_VPORT_XOFFSET                           0xA110
 #define mmPA_CL_VPORT_YSCALE                            0xA111
@@ -568,7 +574,6 @@
 #define mmSPI_FOG_FUNC_BIAS                             0xA1B9
 
 #define mmSX_MISC                                       0xA0D4
-
 #define mmSX_ALPHA_TEST_CONTROL                         0xA104
 #define mmSX_ALPHA_REF                                  0xA10E
 
@@ -592,6 +597,10 @@
 #define mmDB_DEPTH_CONTROL                              0xA200
 #define mmDB_ALPHA_TO_MASK                              0xA351
 
+#define mmCB_CLEAR_RED_R6XX                             0xA048
+#define mmCB_CLEAR_GREEN_R6XX                           0xA049
+#define mmCB_CLEAR_BLUE_R6XX                            0xA04A
+#define mmCB_CLEAR_ALPHA_R6XX                           0xA04B
 #define mmCB_BLEND_RED                                  0xA105
 #define mmCB_BLEND_GREEN                                0xA106
 #define mmCB_BLEND_BLUE                                 0xA107

@@ -247,6 +247,16 @@ typedef struct _FS_STATE_STRUCT
 	union UINT_FLOAT       	        SQ_PGM_CF_OFFSET_FS       ;  /* 0xA237 */
 } FS_STATE_STRUCT;
 
+typedef struct _SQ_CONFIG_STRUCT
+{
+	union UINT_FLOAT     	        SQ_CONFIG                 ;  /* 0x2300 */
+	union UINT_FLOAT     	        SQ_GPR_RESOURCE_MGMT_1    ;  /* 0x2301 */
+	union UINT_FLOAT     	        SQ_GPR_RESOURCE_MGMT_2    ;  /* 0x2302 */
+	union UINT_FLOAT     	        SQ_THREAD_RESOURCE_MGMT   ;  /* 0x2303 */
+	union UINT_FLOAT     	        SQ_STACK_RESOURCE_MGMT_1  ;  /* 0x2304 */
+	union UINT_FLOAT     	        SQ_STACK_RESOURCE_MGMT_2  ;  /* 0x2305 */
+} SQ_CONFIG_STRUCT;
+
 typedef struct ContextState
 {
     unsigned int * puiValue;
@@ -256,6 +266,13 @@ typedef struct ContextState
 
 typedef struct _R700_CHIP_CONTEXT
 {
+	// misc
+	union UINT_FLOAT             	TA_CNTL_AUX               ;  /* 0x2542 */
+	union UINT_FLOAT             	VC_ENHANCE                ;  /* 0x25C5 */
+	union UINT_FLOAT             	SQ_DYN_GPR_CNTL_PS_FLUSH_REQ;  /* 0x2363 */
+	union UINT_FLOAT             	DB_DEBUG                  ;  /* 0x260C */
+	union UINT_FLOAT             	DB_WATERMARKS             ;  /* 0x260E */
+
 	// DB
 	union UINT_FLOAT             	DB_DEPTH_SIZE             ;  /* 0xA000 */
 	union UINT_FLOAT             	DB_DEPTH_VIEW             ;  /* 0xA001 */
@@ -325,18 +342,26 @@ typedef struct _R700_CHIP_CONTEXT
 	UCP_STATE_STRUCT                ucp[R700_MAX_UCP];
 
 	// CB
+	union UINT_FLOAT              	CB_CLEAR_RED_R6XX         ;  /* 0xA048 */
+	union UINT_FLOAT            	CB_CLEAR_GREEN_R6XX       ;  /* 0xA049 */
+	union UINT_FLOAT             	CB_CLEAR_BLUE_R6XX        ;  /* 0xA04A */
+	union UINT_FLOAT            	CB_CLEAR_ALPHA_R6XX       ;  /* 0xA04B */
 	union UINT_FLOAT            	CB_TARGET_MASK            ;  /* 0xA08E */
 	union UINT_FLOAT            	CB_SHADER_MASK            ;  /* 0xA08F */
 	union UINT_FLOAT              	CB_BLEND_RED              ;  /* 0xA105 */
 	union UINT_FLOAT            	CB_BLEND_GREEN            ;  /* 0xA106 */
 	union UINT_FLOAT             	CB_BLEND_BLUE             ;  /* 0xA107 */
 	union UINT_FLOAT            	CB_BLEND_ALPHA            ;  /* 0xA108 */
+	union UINT_FLOAT              	CB_FOG_RED_R6XX           ;  /* 0xA109 */
+	union UINT_FLOAT            	CB_FOG_GREEN_R6XX         ;  /* 0xA10A */
+	union UINT_FLOAT             	CB_FOG_BLUE_R6XX          ;  /* 0xA10B */
 	union UINT_FLOAT         	CB_SHADER_CONTROL         ;  /* 0xA1E8 */
 	union UINT_FLOAT          	CB_COLOR_CONTROL          ;  /* 0xA202 */
 	union UINT_FLOAT         	CB_CLRCMP_CONTROL         ;  /* 0xA30C */
 	union UINT_FLOAT             	CB_CLRCMP_SRC             ;  /* 0xA30D */
 	union UINT_FLOAT             	CB_CLRCMP_DST             ;  /* 0xA30E */
 	union UINT_FLOAT             	CB_CLRCMP_MSK             ;  /* 0xA30F */
+	union UINT_FLOAT             	CB_BLEND_CONTROL          ;  /* 0xABD0 */
 	RENDER_TARGET_STATE_STRUCT      render_target[R700_MAX_RENDER_TARGETS];
 
 	// SX
@@ -349,6 +374,17 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT           	VGT_INDX_OFFSET           ;  /* 0xA102 */
 	union UINT_FLOAT                VGT_MULTI_PRIM_IB_RESET_INDX;  /* 0xA103 */
 	union UINT_FLOAT      	        VGT_OUTPUT_PATH_CNTL      ;  /* 0xA284 */
+	union UINT_FLOAT      	        VGT_HOS_CNTL              ;  /* 0xA285 */
+	union UINT_FLOAT      	        VGT_HOS_MAX_TESS_LEVEL    ;  /* 0xA286 */
+	union UINT_FLOAT      	        VGT_HOS_MIN_TESS_LEVEL    ;  /* 0xA287 */
+	union UINT_FLOAT      	        VGT_HOS_REUSE_DEPTH       ;  /* 0xA288 */
+	union UINT_FLOAT      	        VGT_GROUP_PRIM_TYPE       ;  /* 0xA289 */
+	union UINT_FLOAT      	        VGT_GROUP_FIRST_DECR      ;  /* 0xA28A */
+	union UINT_FLOAT      	        VGT_GROUP_DECR            ;  /* 0xA28B */
+	union UINT_FLOAT      	        VGT_GROUP_VECT_0_CNTL     ;  /* 0xA28C */
+	union UINT_FLOAT      	        VGT_GROUP_VECT_1_CNTL     ;  /* 0xA28D */
+	union UINT_FLOAT      	        VGT_GROUP_VECT_0_FMT_CNTL ;  /* 0xA28E */
+	union UINT_FLOAT      	        VGT_GROUP_VECT_1_FMT_CNTL ;  /* 0xA28F */
 	union UINT_FLOAT               	VGT_GS_MODE               ;  /* 0xA290 */
 	union UINT_FLOAT        	VGT_PRIMITIVEID_EN        ;  /* 0xA2A1 */
 	union UINT_FLOAT     	        VGT_DMA_NUM_INSTANCES     ;  /* 0xA2A2 */
@@ -357,6 +393,8 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT  	        VGT_INSTANCE_STEP_RATE_1  ;  /* 0xA2A9 */
 	union UINT_FLOAT            	VGT_STRMOUT_EN            ;  /* 0xA2AC */
 	union UINT_FLOAT             	VGT_REUSE_OFF             ;  /* 0xA2AD */
+	union UINT_FLOAT             	VGT_VTX_CNT_EN            ;  /* 0xA2AE */
+	union UINT_FLOAT            	VGT_STRMOUT_BUFFER_EN     ;  /* 0xA2C8 */
 
 	// SPI
 	union UINT_FLOAT           	SPI_VS_OUT_ID_0           ;  /* 0xA185 */
@@ -376,6 +414,8 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT       	        SPI_INTERP_CONTROL_0      ;  /* 0xA1B5 */
  	union UINT_FLOAT               	SPI_INPUT_Z               ;  /* 0xA1B6 */
 	union UINT_FLOAT              	SPI_FOG_CNTL              ;  /* 0xA1B7 */
+	union UINT_FLOAT              	SPI_FOG_FUNC_SCALE        ;  /* 0xA1B8 */
+	union UINT_FLOAT              	SPI_FOG_FUNC_BIAS         ;  /* 0xA1B9 */
 	union UINT_FLOAT                SQ_VTX_SEMANTIC[R700_MAX_SHADER_EXPORTS];
 	union UINT_FLOAT                SPI_PS_INPUT_CNTL[R700_MAX_SHADER_EXPORTS];
 
@@ -385,6 +425,9 @@ typedef struct _R700_CHIP_CONTEXT
 	GS_STATE_STRUCT                 gs;
 	ES_STATE_STRUCT                 es;
 	PS_STATE_STRUCT                 fs;
+
+	// SQ CONFIG
+	SQ_CONFIG_STRUCT                sq_config;
 
 	// SQ
 	union UINT_FLOAT     	        SQ_ESGS_RING_ITEMSIZE     ;  /* 0xA22A */

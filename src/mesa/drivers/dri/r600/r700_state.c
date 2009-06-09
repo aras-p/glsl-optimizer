@@ -630,9 +630,6 @@ void r700SetScissor(context_t *context) //---------------
 		y2 = rrb->height - 1;
 	}
 
-	/* 4 clip rectangles */ /* TODO : set these clip rects according to context->currentDraw->numClipRects */
-	r700->PA_SC_CLIPRECT_RULE.u32All = 0x0000FFFF;
-
 	/* window */
 	SETbit(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, WINDOW_OFFSET_DISABLE_bit);
 	SETfield(r700->PA_SC_WINDOW_SCISSOR_TL.u32All, x1,
@@ -756,9 +753,17 @@ void r700SetDepthTarget(context_t *context)
     r700->DB_DEPTH_VIEW.u32All      = 0;
     r700->DB_RENDER_CONTROL.u32All  = 0;
     r700->DB_RENDER_OVERRIDE.u32All = 0;
+    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
+	    SETbit(r700->DB_RENDER_OVERRIDE.u32All, FORCE_SHADER_Z_ORDER_bit);
     SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIZ_ENABLE_shift, FORCE_HIZ_ENABLE_mask);
     SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE0_shift, FORCE_HIS_ENABLE0_mask);
     SETfield(r700->DB_RENDER_OVERRIDE.u32All, FORCE_DISABLE, FORCE_HIS_ENABLE1_shift, FORCE_HIS_ENABLE1_mask);
+
+    r700->DB_ALPHA_TO_MASK.u32All = 0;
+    SETfield(r700->DB_ALPHA_TO_MASK.u32All, 2, ALPHA_TO_MASK_OFFSET0_shift, ALPHA_TO_MASK_OFFSET0_mask);
+    SETfield(r700->DB_ALPHA_TO_MASK.u32All, 2, ALPHA_TO_MASK_OFFSET1_shift, ALPHA_TO_MASK_OFFSET1_mask);
+    SETfield(r700->DB_ALPHA_TO_MASK.u32All, 2, ALPHA_TO_MASK_OFFSET2_shift, ALPHA_TO_MASK_OFFSET2_mask);
+    SETfield(r700->DB_ALPHA_TO_MASK.u32All, 2, ALPHA_TO_MASK_OFFSET3_shift, ALPHA_TO_MASK_OFFSET3_mask);
 
     rrb = radeon_get_depthbuffer(&context->radeon);
 	if (!rrb)
@@ -796,6 +801,195 @@ void r700SetDepthTarget(context_t *context)
     /* r700->DB_PREFETCH_LIMIT.bits.DEPTH_HEIGHT_TILE_MAX = (context->currentDraw->h >> 3) - 1; */ /* z buffer sie may much bigger than what need, so use actual used h. */
 }
 
+static void r700InitSQConfig(GLcontext * ctx)
+{
+    context_t *context = R700_CONTEXT(ctx);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+    int ps_prio;
+    int vs_prio;
+    int gs_prio;
+    int es_prio;
+    int num_ps_gprs;
+    int num_vs_gprs;
+    int num_gs_gprs;
+    int num_es_gprs;
+    int num_temp_gprs;
+    int num_ps_threads;
+    int num_vs_threads;
+    int num_gs_threads;
+    int num_es_threads;
+    int num_ps_stack_entries;
+    int num_vs_stack_entries;
+    int num_gs_stack_entries;
+    int num_es_stack_entries;
+
+    // SQ
+    ps_prio = 0;
+    vs_prio = 1;
+    gs_prio = 2;
+    es_prio = 3;
+    switch (context->radeon.radeonScreen->chip_family) {
+    case CHIP_FAMILY_R600:
+	    num_ps_gprs = 192;
+	    num_vs_gprs = 56;
+	    num_temp_gprs = 4;
+	    num_gs_gprs = 0;
+	    num_es_gprs = 0;
+	    num_ps_threads = 136;
+	    num_vs_threads = 48;
+	    num_gs_threads = 4;
+	    num_es_threads = 4;
+	    num_ps_stack_entries = 128;
+	    num_vs_stack_entries = 128;
+	    num_gs_stack_entries = 0;
+	    num_es_stack_entries = 0;
+	    break;
+    case CHIP_FAMILY_RV630:
+    case CHIP_FAMILY_RV635:
+	    num_ps_gprs = 84;
+	    num_vs_gprs = 36;
+	    num_temp_gprs = 4;
+	    num_gs_gprs = 0;
+	    num_es_gprs = 0;
+	    num_ps_threads = 144;
+	    num_vs_threads = 40;
+	    num_gs_threads = 4;
+	    num_es_threads = 4;
+	    num_ps_stack_entries = 40;
+	    num_vs_stack_entries = 40;
+	    num_gs_stack_entries = 32;
+	    num_es_stack_entries = 16;
+	    break;
+    case CHIP_FAMILY_RV610:
+    case CHIP_FAMILY_RV620:
+    case CHIP_FAMILY_RS780:
+    default:
+	    num_ps_gprs = 84;
+	    num_vs_gprs = 36;
+	    num_temp_gprs = 4;
+	    num_gs_gprs = 0;
+	    num_es_gprs = 0;
+	    num_ps_threads = 136;
+	    num_vs_threads = 48;
+	    num_gs_threads = 4;
+	    num_es_threads = 4;
+	    num_ps_stack_entries = 40;
+	    num_vs_stack_entries = 40;
+	    num_gs_stack_entries = 32;
+	    num_es_stack_entries = 16;
+	    break;
+    case CHIP_FAMILY_RV670:
+	    num_ps_gprs = 144;
+	    num_vs_gprs = 40;
+	    num_temp_gprs = 4;
+	    num_gs_gprs = 0;
+	    num_es_gprs = 0;
+	    num_ps_threads = 136;
+	    num_vs_threads = 48;
+	    num_gs_threads = 4;
+	    num_es_threads = 4;
+	    num_ps_stack_entries = 40;
+	    num_vs_stack_entries = 40;
+	    num_gs_stack_entries = 32;
+	    num_es_stack_entries = 16;
+	    break;
+    case CHIP_FAMILY_RV770:
+	    num_ps_gprs = 192;
+	    num_vs_gprs = 56;
+	    num_temp_gprs = 4;
+	    num_gs_gprs = 0;
+	    num_es_gprs = 0;
+	    num_ps_threads = 188;
+	    num_vs_threads = 60;
+	    num_gs_threads = 0;
+	    num_es_threads = 0;
+	    num_ps_stack_entries = 256;
+	    num_vs_stack_entries = 256;
+	    num_gs_stack_entries = 0;
+	    num_es_stack_entries = 0;
+	    break;
+    case CHIP_FAMILY_RV730:
+	    //case CHIP_FAMILY_RV740:
+	    num_ps_gprs = 84;
+	    num_vs_gprs = 36;
+	    num_temp_gprs = 4;
+	    num_gs_gprs = 0;
+	    num_es_gprs = 0;
+	    num_ps_threads = 188;
+	    num_vs_threads = 60;
+	    num_gs_threads = 0;
+	    num_es_threads = 0;
+	    num_ps_stack_entries = 128;
+	    num_vs_stack_entries = 128;
+	    num_gs_stack_entries = 0;
+	    num_es_stack_entries = 0;
+	    break;
+    case CHIP_FAMILY_RV710:
+	    num_ps_gprs = 192;
+	    num_vs_gprs = 56;
+	    num_temp_gprs = 4;
+	    num_gs_gprs = 0;
+	    num_es_gprs = 0;
+	    num_ps_threads = 144;
+	    num_vs_threads = 48;
+	    num_gs_threads = 0;
+	    num_es_threads = 0;
+	    num_ps_stack_entries = 128;
+	    num_vs_stack_entries = 128;
+	    num_gs_stack_entries = 0;
+	    num_es_stack_entries = 0;
+	    break;
+    }
+
+    r700->sq_config.SQ_CONFIG.u32All = 0;
+    if ((context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV610) ||
+        (context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV620) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RS780) ||
+        (context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV710))
+	    CLEARbit(r700->sq_config.SQ_CONFIG.u32All, VC_ENABLE_bit);
+    else
+	    SETbit(r700->sq_config.SQ_CONFIG.u32All, VC_ENABLE_bit);
+    SETbit(r700->sq_config.SQ_CONFIG.u32All, DX9_CONSTS_bit);
+    SETbit(r700->sq_config.SQ_CONFIG.u32All, ALU_INST_PREFER_VECTOR_bit);
+    SETfield(r700->sq_config.SQ_CONFIG.u32All, ps_prio, PS_PRIO_shift, PS_PRIO_mask);
+    SETfield(r700->sq_config.SQ_CONFIG.u32All, ps_prio, VS_PRIO_shift, VS_PRIO_mask);
+    SETfield(r700->sq_config.SQ_CONFIG.u32All, ps_prio, GS_PRIO_shift, GS_PRIO_mask);
+    SETfield(r700->sq_config.SQ_CONFIG.u32All, ps_prio, ES_PRIO_shift, ES_PRIO_mask);
+
+    r700->sq_config.SQ_GPR_RESOURCE_MGMT_1.u32All = 0;
+    SETfield(r700->sq_config.SQ_GPR_RESOURCE_MGMT_1.u32All, num_ps_gprs, NUM_PS_GPRS_shift, NUM_PS_GPRS_mask);
+    SETfield(r700->sq_config.SQ_GPR_RESOURCE_MGMT_1.u32All, num_vs_gprs, NUM_VS_GPRS_shift, NUM_VS_GPRS_mask);
+    SETfield(r700->sq_config.SQ_GPR_RESOURCE_MGMT_1.u32All, num_temp_gprs,
+	     NUM_CLAUSE_TEMP_GPRS_shift, NUM_CLAUSE_TEMP_GPRS_mask);
+
+    r700->sq_config.SQ_GPR_RESOURCE_MGMT_2.u32All = 0;
+    SETfield(r700->sq_config.SQ_GPR_RESOURCE_MGMT_2.u32All, num_gs_gprs, NUM_GS_GPRS_shift, NUM_GS_GPRS_mask);
+    SETfield(r700->sq_config.SQ_GPR_RESOURCE_MGMT_2.u32All, num_es_gprs, NUM_ES_GPRS_shift, NUM_ES_GPRS_mask);
+
+    r700->sq_config.SQ_THREAD_RESOURCE_MGMT.u32All = 0;
+    SETfield(r700->sq_config.SQ_THREAD_RESOURCE_MGMT.u32All, num_ps_threads,
+	     NUM_PS_THREADS_shift, NUM_PS_THREADS_mask);
+    SETfield(r700->sq_config.SQ_THREAD_RESOURCE_MGMT.u32All, num_vs_threads,
+	     NUM_VS_THREADS_shift, NUM_VS_THREADS_mask);
+    SETfield(r700->sq_config.SQ_THREAD_RESOURCE_MGMT.u32All, num_gs_threads,
+	     NUM_GS_THREADS_shift, NUM_GS_THREADS_mask);
+    SETfield(r700->sq_config.SQ_THREAD_RESOURCE_MGMT.u32All, num_es_threads,
+	     NUM_ES_THREADS_shift, NUM_ES_THREADS_mask);
+
+    r700->sq_config.SQ_STACK_RESOURCE_MGMT_1.u32All = 0;
+    SETfield(r700->sq_config.SQ_STACK_RESOURCE_MGMT_1.u32All, num_ps_stack_entries,
+	     NUM_PS_STACK_ENTRIES_shift, NUM_PS_STACK_ENTRIES_mask);
+    SETfield(r700->sq_config.SQ_STACK_RESOURCE_MGMT_1.u32All, num_vs_stack_entries,
+	     NUM_VS_STACK_ENTRIES_shift, NUM_VS_STACK_ENTRIES_mask);
+
+    r700->sq_config.SQ_STACK_RESOURCE_MGMT_2.u32All = 0;
+    SETfield(r700->sq_config.SQ_STACK_RESOURCE_MGMT_2.u32All, num_gs_stack_entries,
+	     NUM_GS_STACK_ENTRIES_shift, NUM_GS_STACK_ENTRIES_mask);
+    SETfield(r700->sq_config.SQ_STACK_RESOURCE_MGMT_2.u32All, num_es_stack_entries,
+	     NUM_ES_STACK_ENTRIES_shift, NUM_ES_STACK_ENTRIES_mask);
+
+}
+
 /**
  * Calculate initial hardware state and register state functions.
  * Assumes that the command buffer and state atoms have been
@@ -806,6 +1000,25 @@ void r700InitState(GLcontext * ctx) //-------------------
     context_t *context = R700_CONTEXT(ctx);
 
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+    r700->TA_CNTL_AUX.u32All = 0;
+    SETfield(r700->TA_CNTL_AUX.u32All, 28, TD_FIFO_CREDIT_shift, TD_FIFO_CREDIT_mask);
+    r700->VC_ENHANCE.u32All = 0;
+    r700->DB_WATERMARKS.u32All = 0;
+    SETfield(r700->DB_WATERMARKS.u32All, 4, DEPTH_FREE_shift, DEPTH_FREE_mask);
+    SETfield(r700->DB_WATERMARKS.u32All, 16, DEPTH_FLUSH_shift, DEPTH_FLUSH_mask);
+    SETfield(r700->DB_WATERMARKS.u32All, 0, FORCE_SUMMARIZE_shift, FORCE_SUMMARIZE_mask);
+    SETfield(r700->DB_WATERMARKS.u32All, 4, DEPTH_PENDING_FREE_shift, DEPTH_PENDING_FREE_mask);
+    r700->SQ_DYN_GPR_CNTL_PS_FLUSH_REQ.u32All = 0;
+    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770) {
+	    SETfield(r700->TA_CNTL_AUX.u32All, 3, GRADIENT_CREDIT_shift, GRADIENT_CREDIT_mask);
+	    r700->DB_DEBUG.u32All = 0x82000000;
+	    SETfield(r700->DB_WATERMARKS.u32All, 16, DEPTH_CACHELINE_FREE_shift, DEPTH_CACHELINE_FREE_mask);
+    } else {
+	    SETfield(r700->TA_CNTL_AUX.u32All, 2, GRADIENT_CREDIT_shift, GRADIENT_CREDIT_mask);
+	    SETfield(r700->DB_WATERMARKS.u32All, 4, DEPTH_CACHELINE_FREE_shift, DEPTH_CACHELINE_FREE_mask);
+	    SETbit(r700->SQ_DYN_GPR_CNTL_PS_FLUSH_REQ.u32All, VS_PC_LIMIT_ENABLE_bit);
+    }
 
     /* Turn off vgt reuse */
     r700->VGT_REUSE_OFF.u32All = 0;
@@ -823,13 +1036,17 @@ void r700InitState(GLcontext * ctx) //-------------------
     CLEARfield(r700->SX_ALPHA_TEST_CONTROL.u32All, ALPHA_FUNC_mask);
     CLEARbit(r700->SX_ALPHA_TEST_CONTROL.u32All, ALPHA_TEST_ENABLE_bit);
 
-    /* defualt shader connections. */
+    /* default shader connections. */
     r700->SPI_VS_OUT_ID_0.u32All  = 0x03020100;
     r700->SPI_VS_OUT_ID_1.u32All  = 0x07060504;
 
     r700->SPI_PS_INPUT_CNTL[0].u32All  = 0x00000800;
     r700->SPI_PS_INPUT_CNTL[1].u32All  = 0x00000801;
     r700->SPI_PS_INPUT_CNTL[2].u32All  = 0x00000802;
+
+    r700->SPI_THREAD_GROUPING.u32All = 0;
+    if (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV770)
+	    SETfield(r700->SPI_THREAD_GROUPING.u32All, 1, PS_GROUPING_shift, PS_GROUPING_mask);
 
     SETfield(r700->CB_COLOR_CONTROL.u32All, 0xCC, ROP3_shift, ROP3_mask);
     CLEARbit(r700->CB_COLOR_CONTROL.u32All, PER_MRT_BLEND_bit);
@@ -852,6 +1069,25 @@ void r700InitState(GLcontext * ctx) //-------------------
     SETfield(r700->PA_SC_SCREEN_SCISSOR_BR.u32All,
 	     ((RADEONDRIPtr)(context->radeon.radeonScreen->driScreen->pDevPriv))->height,
 	     PA_SC_SCREEN_SCISSOR_BR__BR_Y_shift, PA_SC_SCREEN_SCISSOR_BR__BR_Y_mask);
+
+    /* 4 clip rectangles */ /* TODO : set these clip rects according to context->currentDraw->numClipRects */
+    r700->PA_SC_CLIPRECT_RULE.u32All = 0;
+    SETfield(r700->PA_SC_CLIPRECT_RULE.u32All, CLIP_RULE_mask, CLIP_RULE_shift, CLIP_RULE_mask);
+
+    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
+	    r700->PA_SC_EDGERULE.u32All = 0;
+    else
+	    r700->PA_SC_EDGERULE.u32All = 0xAAAAAAAA;
+
+    if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770) {
+	    r700->PA_SC_MODE_CNTL.u32All = 0;
+	    SETbit(r700->PA_SC_MODE_CNTL.u32All, WALK_ORDER_ENABLE_bit);
+	    SETbit(r700->PA_SC_MODE_CNTL.u32All, FORCE_EOV_CNTDWN_ENABLE_bit);
+    } else {
+	    r700->PA_SC_MODE_CNTL.u32All = 0x00500000;
+	    SETbit(r700->PA_SC_MODE_CNTL.u32All, FORCE_EOV_REZ_ENABLE_bit);
+	    SETbit(r700->PA_SC_MODE_CNTL.u32All, FORCE_EOV_CNTDWN_ENABLE_bit);
+    }
 
     /* Do scale XY and Z by 1/W0. */
     r700->bEnablePerspective = GL_TRUE;
@@ -878,6 +1114,10 @@ void r700InitState(GLcontext * ctx) //-------------------
     /* Set up line control */
     SETfield(r700->PA_SU_LINE_CNTL.u32All, 0x8,
              PA_SU_LINE_CNTL__WIDTH_shift, PA_SU_LINE_CNTL__WIDTH_mask);
+    SETfield(r700->PA_SU_LINE_CNTL.u32All, 0x2,
+             PA_SU_VTX_CNTL__ROUND_MODE_shift, PA_SU_VTX_CNTL__ROUND_MODE_mask);
+    SETfield(r700->PA_SU_LINE_CNTL.u32All, 0x5,
+             QUANT_MODE_shift, QUANT_MODE_mask);
 
     r700->PA_SC_LINE_CNTL.u32All = 0;
     CLEARbit(r700->PA_SC_LINE_CNTL.u32All, EXPAND_LINE_WIDTH_bit);
@@ -895,6 +1135,22 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->PA_CL_GB_VERT_DISC_ADJ.u32All  = 0x3F800000;
     r700->PA_CL_GB_HORZ_CLIP_ADJ.u32All  = 0x3F800000;
     r700->PA_CL_GB_HORZ_DISC_ADJ.u32All  = 0x3F800000;
+
+    /* CB */
+    r700->CB_CLEAR_RED_R6XX.f32All = 1.0; //r6xx only
+    r700->CB_CLEAR_GREEN_R6XX.f32All = 0.0; //r6xx only
+    r700->CB_CLEAR_BLUE_R6XX.f32All = 1.0; //r6xx only
+    r700->CB_CLEAR_ALPHA_R6XX.f32All = 1.0; //r6xx only
+    r700->CB_FOG_RED_R6XX.u32All = 0; //r6xx only
+    r700->CB_FOG_GREEN_R6XX.u32All = 0; //r6xx only
+    r700->CB_FOG_BLUE_R6XX.u32All = 0; //r6xx only
+
+    r700->CB_BLEND_RED.u32All = 0;
+    r700->CB_BLEND_GREEN.u32All = 0;
+    r700->CB_BLEND_BLUE.u32All = 0;
+    r700->CB_BLEND_ALPHA.u32All = 0;
+
+    r700->CB_BLEND_CONTROL.u32All = 0;
 
     /* Disable color compares */
     SETfield(r700->CB_CLRCMP_CONTROL.u32All, CLRCMP_DRAW_ALWAYS,
@@ -923,6 +1179,7 @@ void r700InitState(GLcontext * ctx) //-------------------
 
     r700->SX_MISC.u32All = 0;
 
+    r700InitSQConfig(ctx);
 }
 
 void r700InitStateFuncs(struct dd_function_table *functions) //-----------------
