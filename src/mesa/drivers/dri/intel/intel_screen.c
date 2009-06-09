@@ -75,6 +75,10 @@ PUBLIC const char __driConfigOptions[] =
      DRI_CONF_TEXTURE_TILING(true)
 #endif
 
+      DRI_CONF_OPT_BEGIN(early_z, bool, false)
+	 DRI_CONF_DESC(en, "Enable early Z in classic mode (unstable, 945-only).")
+      DRI_CONF_OPT_END
+
    DRI_CONF_SECTION_END
    DRI_CONF_SECTION_QUALITY
       DRI_CONF_FORCE_S3TC_ENABLE(false)
@@ -87,7 +91,7 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_END
 DRI_CONF_END;
 
-const GLuint __driNConfigOptions = 9;
+const GLuint __driNConfigOptions = 10;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;

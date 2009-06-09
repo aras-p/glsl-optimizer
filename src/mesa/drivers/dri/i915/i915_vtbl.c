@@ -42,6 +42,7 @@
 #include "intel_regions.h"
 #include "intel_tris.h"
 #include "intel_fbo.h"
+#include "intel_chipset.h"
 
 #include "i915_reg.h"
 #include "i915_context.h"
@@ -610,6 +611,14 @@ i915_state_draw_region(struct intel_context *intel,
 		       irb->texformat->MesaFormat);
       }
    }
+
+   /* This isn't quite safe, thus being hidden behind an option.  When changing
+    * the value of this bit, the pipeline needs to be MI_FLUSHed.  And it
+    * can only be set when a depth buffer is already defined.
+    */
+   if (IS_945(intel->intelScreen->deviceID) && intel->use_early_z &&
+       depth_region->tiling != I915_TILING_NONE)
+      value |= CLASSIC_EARLY_DEPTH;
 
    if (depth_region && depth_region->cpp == 4) {
       value |= DEPTH_FRMT_24_FIXED_8_OTHER;

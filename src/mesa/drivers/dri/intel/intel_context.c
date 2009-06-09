@@ -729,6 +729,7 @@ intelInitContext(struct intel_context *intel,
    }
    intel->use_texture_tiling = driQueryOptionb(&intel->optionCache,
 					       "texture_tiling");
+   intel->use_early_z = driQueryOptionb(&intel->optionCache, "early_z");
 
    intel->prim.primitive = ~0;
 
