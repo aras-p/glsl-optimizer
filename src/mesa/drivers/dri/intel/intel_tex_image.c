@@ -637,6 +637,12 @@ intel_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
 
+   /* If we're reading from a texture that has been rendered to, need to
+    * make sure rendering is complete.
+    * We could probably predicate this on texObj->_RenderToTexture
+    */
+   intelFlush(ctx);
+
    /* Map */
    if (intelImage->mt) {
       /* Image is stored in hardware format in a buffer managed by the
