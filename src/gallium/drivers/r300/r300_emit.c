@@ -597,10 +597,10 @@ validate:
         for (i = 0; i < r300->sampler_count; i++) {
             if (r300->dirty_state & (R300_NEW_SAMPLER << i)) {
                 r300_emit_sampler(r300, r300->sampler_states[i], i);
-                r300->dirty_state &= ~(R300_NEW_SAMPLER << i);
                 dirty_tex++;
             }
         }
+        r300->dirty_state &= ~R300_ANY_NEW_SAMPLERS;
     }
 
     if (r300->dirty_state & R300_NEW_SCISSOR) {
@@ -612,10 +612,10 @@ validate:
         for (i = 0; i < r300->texture_count; i++) {
             if (r300->dirty_state & (R300_NEW_TEXTURE << i)) {
                 r300_emit_texture(r300, r300->textures[i], i);
-                r300->dirty_state &= ~(R300_NEW_TEXTURE << i);
                 dirty_tex++;
             }
         }
+        r300->dirty_state &= ~R300_ANY_NEW_TEXTURES;
     }
 
     if (r300->dirty_state & R300_NEW_VIEWPORT) {
@@ -636,6 +636,8 @@ validate:
         r300_emit_vertex_shader(r300, r300->vs);
         r300->dirty_state &= ~R300_NEW_VERTEX_SHADER;
     }
+
+    assert(r300->dirty_state == 0);
 
     /* Finally, emit the VBO. */
     r300_emit_vertex_buffer(r300);
