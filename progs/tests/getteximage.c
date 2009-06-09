@@ -154,7 +154,9 @@ Draw(void)
 
    TestGetTexImage();
 
-   TestGetTexImageRTT();
+   if (glutExtensionSupported("GL_EXT_framebuffer_object") ||
+       glutExtensionSupported("GL_ARB_framebuffer_object"))
+      TestGetTexImageRTT();
 
    glutDestroyWindow(Win);
    exit(0);
