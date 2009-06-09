@@ -510,6 +510,63 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
 }
 
 
+/**
+ * Map GL_ELEMENT_ARRAY_BUFFER and print contents.
+ */
+static void
+dump_element_buffer(GLcontext *ctx, GLenum type)
+{
+   const GLvoid *map = ctx->Driver.MapBuffer(ctx,
+                                             GL_ELEMENT_ARRAY_BUFFER_ARB,
+                                             GL_READ_ONLY,
+                                             ctx->Array.ElementArrayBufferObj);
+   switch (type) {
+   case GL_UNSIGNED_BYTE:
+      {
+         const GLubyte *us = (const GLubyte *) map;
+         GLuint i;
+         for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size; i++) {
+            _mesa_printf("%02x ", us[i]);
+            if (i % 32 == 31)
+               _mesa_printf("\n");
+         }
+         _mesa_printf("\n");
+      }
+      break;
+   case GL_UNSIGNED_SHORT:
+      {
+         const GLushort *us = (const GLushort *) map;
+         GLuint i;
+         for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size / 2; i++) {
+            _mesa_printf("%04x ", us[i]);
+            if (i % 16 == 15)
+               _mesa_printf("\n");
+         }
+         _mesa_printf("\n");
+      }
+      break;
+   case GL_UNSIGNED_INT:
+      {
+         const GLuint *us = (const GLuint *) map;
+         GLuint i;
+         for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size / 4; i++) {
+            _mesa_printf("%08x ", us[i]);
+            if (i % 8 == 7)
+               _mesa_printf("\n");
+         }
+         _mesa_printf("\n");
+      }
+      break;
+   default:
+      ;
+   }
+
+   ctx->Driver.UnmapBuffer(ctx,
+                           GL_ELEMENT_ARRAY_BUFFER_ARB,
+                           ctx->Array.ElementArrayBufferObj);
+}
+
+
 static void GLAPIENTRY
 vbo_exec_DrawRangeElements(GLenum mode,
 			   GLuint start, GLuint end,
@@ -528,12 +585,26 @@ vbo_exec_DrawRangeElements(GLenum mode,
    if (end >= ctx->Array.ArrayObj->_MaxElement) {
       /* the max element is out of bounds of one or more enabled arrays */
       _mesa_warning(ctx, "glDraw[Range]Elements(start %u, end %u, count %d, "
-                    "type 0x%x) index=%u is out of bounds (max=%u)",
-                    start, end, count, type, end,
-                    ctx->Array.ArrayObj->_MaxElement - 1);
+                    "type 0x%x, indices=%p)\n"
+                    "\tindex=%u is out of bounds (max=%u)  "
+                    "Element Buffer %u (size %d)",
+                    start, end, count, type, indices, end,
+                    ctx->Array.ArrayObj->_MaxElement - 1,
+                    ctx->Array.ElementArrayBufferObj->Name,
+                    ctx->Array.ElementArrayBufferObj->Size);
+
+      if (0)
+         dump_element_buffer(ctx, type);
+
       if (0)
          _mesa_print_arrays(ctx);
       return;
+   }
+   else if (0) {
+      _mesa_printf("glDraw[Range]Elements"
+                   "(start %u, end %u, type 0x%x, count %d) ElemBuf %u\n",
+                   start, end, type, count,
+                   ctx->Array.ElementArrayBufferObj->Name);
    }
 
 #if 0
