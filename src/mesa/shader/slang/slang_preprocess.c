@@ -1012,6 +1012,8 @@ preprocess_source (slang_string *output, const char *source,
          case TOKEN_DEFINE:
             {
                pp_symbol *symbol = NULL;
+               slang_string replacement;
+               expand_state es;
 
                /* Parse macro name. */
                id = (const char *) (&prod[i]);
@@ -1054,9 +1056,20 @@ preprocess_source (slang_string *output, const char *source,
                idlen = _mesa_strlen (id);
                if (state.cond.top->effective) {
                   pp_annotate (output, ") %s", id);
-                  slang_string_pushs (&symbol->replacement, id, idlen);
                }
+               slang_string_init(&replacement);
+               slang_string_pushs(&replacement, id, idlen);
                i += idlen + 1;
+
+               /* Expand macro replacement. */
+               es.output = &symbol->replacement;
+               es.input = slang_string_cstr(&replacement);
+               es.state = &state;
+               if (!expand(&es, &state.symbols)) {
+                  slang_string_free(&replacement);
+                  goto error;
+               }
+               slang_string_free(&replacement);
             }
             break;
 
