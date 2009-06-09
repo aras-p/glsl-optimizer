@@ -374,7 +374,12 @@ trace_rbug_context_draw_step(struct trace_rbug *tr_rbug, struct rbug_header *hea
    }
 
    pipe_mutex_lock(tr_ctx->draw_mutex);
-   tr_ctx->draw_blocked &= ~step->step;
+   if (tr_ctx->draw_blocked & RBUG_BLOCK_RULE) {
+      if (step->step & RBUG_BLOCK_RULE)
+         tr_ctx->draw_blocked &= ~RBUG_BLOCK_MASK;
+   } else {
+      tr_ctx->draw_blocked &= ~step->step;
+   }
    pipe_mutex_unlock(tr_ctx->draw_mutex);
 
 #ifdef PIPE_THREAD_HAVE_CONDVAR
@@ -403,8 +408,47 @@ trace_rbug_context_draw_unblock(struct trace_rbug *tr_rbug, struct rbug_header *
    }
 
    pipe_mutex_lock(tr_ctx->draw_mutex);
-   tr_ctx->draw_blocked &= ~unblock->unblock;
+   if (tr_ctx->draw_blocked & RBUG_BLOCK_RULE) {
+      if (unblock->unblock & RBUG_BLOCK_RULE)
+         tr_ctx->draw_blocked &= ~RBUG_BLOCK_MASK;
+   } else {
+      tr_ctx->draw_blocked &= ~unblock->unblock;
+   }
    tr_ctx->draw_blocker &= ~unblock->unblock;
+   pipe_mutex_unlock(tr_ctx->draw_mutex);
+
+#ifdef PIPE_THREAD_HAVE_CONDVAR
+   pipe_condvar_broadcast(tr_ctx->draw_cond);
+#endif
+
+   pipe_mutex_unlock(tr_scr->list_mutex);
+
+   return 0;
+}
+
+static int
+trace_rbug_context_draw_rule(struct trace_rbug *tr_rbug, struct rbug_header *header, uint32_t serial)
+{
+   struct rbug_proto_context_draw_rule *rule = (struct rbug_proto_context_draw_rule *)header;
+
+   struct trace_screen *tr_scr = tr_rbug->tr_scr;
+   struct trace_context *tr_ctx = NULL;
+
+   pipe_mutex_lock(tr_scr->list_mutex);
+   tr_ctx = trace_rbug_get_context_locked(tr_scr, rule->context);
+
+   if (!tr_ctx) {
+      pipe_mutex_unlock(tr_scr->list_mutex);
+      return -ESRCH;
+   }
+
+   pipe_mutex_lock(tr_ctx->draw_mutex);
+   tr_ctx->draw_rule.vs = U642VOID(rule->vertex);
+   tr_ctx->draw_rule.fs = U642VOID(rule->fragment);
+   tr_ctx->draw_rule.tex = U642VOID(rule->texture);
+   tr_ctx->draw_rule.surf = U642VOID(rule->surface);
+   tr_ctx->draw_rule.blocker = rule->block;
+   tr_ctx->draw_blocker |= RBUG_BLOCK_RULE;
    pipe_mutex_unlock(tr_ctx->draw_mutex);
 
 #ifdef PIPE_THREAD_HAVE_CONDVAR
@@ -678,6 +722,9 @@ trace_rbug_header(struct trace_rbug *tr_rbug, struct rbug_header *header, uint32
          break;
       case RBUG_OP_CONTEXT_DRAW_UNBLOCK:
          ret = trace_rbug_context_draw_unblock(tr_rbug, header, serial);
+         break;
+      case RBUG_OP_CONTEXT_DRAW_RULE:
+         ret = trace_rbug_context_draw_rule(tr_rbug, header, serial);
          break;
       case RBUG_OP_CONTEXT_FLUSH:
          ret = trace_rbug_context_flush(tr_rbug, header, serial);

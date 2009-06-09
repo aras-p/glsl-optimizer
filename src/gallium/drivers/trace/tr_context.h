@@ -59,6 +59,16 @@ struct trace_context
       struct trace_texture *zsbuf;
    } curr;
 
+   struct {
+      struct trace_shader *fs;
+      struct trace_shader *vs;
+
+      struct trace_texture *tex;
+      struct trace_texture *surf;
+
+      int blocker;
+   } draw_rule;
+   unsigned draw_num_rules;
    pipe_condvar draw_cond;
    pipe_mutex draw_mutex;
    int draw_blocker;

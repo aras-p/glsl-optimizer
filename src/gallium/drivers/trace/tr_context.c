@@ -116,13 +116,44 @@ trace_context_set_edgeflags(struct pipe_context *_pipe,
 static INLINE void
 trace_context_draw_block(struct trace_context *tr_ctx, int flag)
 {
+   int k;
+
    pipe_mutex_lock(tr_ctx->draw_mutex);
 
    if (tr_ctx->draw_blocker & flag) {
       tr_ctx->draw_blocked |= flag;
+   } else if ((tr_ctx->draw_rule.blocker & flag) &&
+              (tr_ctx->draw_blocker & 4)) {
+      boolean block = FALSE;
+      debug_printf("%s (%lu %lu) (%lu %lu) (%lu %u) (%lu %u)\n", __func__,
+					tr_ctx->draw_rule.fs, tr_ctx->curr.fs,
+					tr_ctx->draw_rule.vs, tr_ctx->curr.vs,
+					tr_ctx->draw_rule.surf, 0,
+					tr_ctx->draw_rule.tex, 0);
+      if (tr_ctx->draw_rule.fs &&
+          tr_ctx->draw_rule.fs == tr_ctx->curr.fs)
+         block = TRUE;
+      if (tr_ctx->draw_rule.vs &&
+          tr_ctx->draw_rule.vs == tr_ctx->curr.vs)
+         block = TRUE;
+      if (tr_ctx->draw_rule.surf &&
+          tr_ctx->draw_rule.surf == tr_ctx->curr.zsbuf)
+            block = TRUE;
+      if (tr_ctx->draw_rule.surf)
+         for (k = 0; k < tr_ctx->curr.nr_cbufs; k++)
+            if (tr_ctx->draw_rule.surf == tr_ctx->curr.cbufs[k])
+               block = TRUE;
+      if (tr_ctx->draw_rule.tex)
+         for (k = 0; k < tr_ctx->curr.num_texs; k++)
+            if (tr_ctx->draw_rule.tex == tr_ctx->curr.tex[k])
+               block = TRUE;
 
-      trace_rbug_notify_draw_blocked(tr_ctx);
+      if (block)
+         tr_ctx->draw_blocked |= (flag | 4);
    }
+
+   if (tr_ctx->draw_blocked)
+      trace_rbug_notify_draw_blocked(tr_ctx);
 
    /* wait for rbug to clear the blocked flag */
    while (tr_ctx->draw_blocked & flag) {
