@@ -273,9 +273,8 @@ enum pipe_transfer_usage {
 
 
 /**
- * Implementation capabilities/limits
- * Passed to pipe->get_param()
- * XXX this will need some fine tuning...
+ * Implementation capabilities/limits which are queried through
+ * pipe_screen::get_param() and pipe_screen::get_paramf().
  */
 #define PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS 1
 #define PIPE_CAP_NPOT_TEXTURES           2
