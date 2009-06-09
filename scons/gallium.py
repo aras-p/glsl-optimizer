@@ -362,23 +362,8 @@ def generate(env):
               '/GL-', # disable whole program optimization
             ]
         else:
-            if env['machine'] == 'x86_64':
-                cflags += [
-                    # Same as /O2, but without global optimizations or auto-inlining
-                    # http://msdn.microsoft.com/en-us/library/8f8h5cxt.aspx
-                    '/Ob1', # enable inline expansion, disable auto-inlining
-                    '/Oi', # enable intrinsic functions
-                    '/Ot', # favors fast code
-                    '/Oy', # omit frame pointer
-                    '/Gs', # enable stack probes
-                    '/GF', # eliminate duplicate strings
-                    '/Gy', # enable function-level linking
-                ]
-            else:
-                cflags += [
-                    '/O2', # optimize for speed
-                ]
             cflags += [
+                '/O2', # optimize for speed
                 #'/fp:fast', # fast floating point 
             ]
         if env['profile']:

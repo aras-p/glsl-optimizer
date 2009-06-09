@@ -71,6 +71,8 @@ SOURCES = \
 	random.c \
 	readrate.c \
 	rubberband.c \
+	scissor.c \
+	scissor-viewport.c \
 	seccolor.c \
 	shader_api.c \
 	sharedtex.c \

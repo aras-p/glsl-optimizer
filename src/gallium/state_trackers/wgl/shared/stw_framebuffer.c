@@ -118,7 +118,8 @@ stw_call_window_proc(
           * be called from any thread.
           */
          pipe_mutex_lock( fb->mutex );
-         st_resize_framebuffer( fb->stfb, width, height );
+         if (fb->stfb)
+            st_resize_framebuffer( fb->stfb, width, height );
          pipe_mutex_unlock( fb->mutex );
       }
    }
@@ -378,6 +379,9 @@ stw_swap_buffers(
    fb = stw_framebuffer_from_hdc( hdc );
    if (fb == NULL)
       return FALSE;
+
+   if (!(fb->pfi->pfd.dwFlags & PFD_DOUBLEBUFFER))
+      return TRUE;
 
    pipe_mutex_lock( fb->mutex );
 

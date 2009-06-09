@@ -727,19 +727,32 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
 
 void vbo_exec_vtx_destroy( struct vbo_exec_context *exec )
 {
-   if (exec->vtx.bufferobj->Name) {
-      /* using a real VBO for vertex data */
-      GLcontext *ctx = exec->ctx;
-      _mesa_reference_buffer_object(ctx, &exec->vtx.bufferobj, NULL);
-   }
-   else {
-      /* just using malloc'd space for vertex data */
-      if (exec->vtx.buffer_map) {
+   /* using a real VBO for vertex data */
+   GLcontext *ctx = exec->ctx;
+   unsigned i;
+
+   /* True VBOs should already be unmapped
+    */
+   if (exec->vtx.buffer_map) {
+      assert (exec->vtx.bufferobj->Name == 0);
+      if (exec->vtx.bufferobj->Name == 0) {
          ALIGN_FREE(exec->vtx.buffer_map);
          exec->vtx.buffer_map = NULL;
          exec->vtx.buffer_ptr = NULL;
       }
    }
+
+   /* Drop any outstanding reference to the vertex buffer
+    */
+   for (i = 0; i < Elements(exec->vtx.arrays); i++) {
+      _mesa_reference_buffer_object(ctx,
+                                    &exec->vtx.arrays[i].BufferObj,
+                                    NULL);
+   }
+
+   /* Free the vertex buffer:
+    */
+   _mesa_reference_buffer_object(ctx, &exec->vtx.bufferobj, NULL);
 }
 
 void vbo_exec_BeginVertices( GLcontext *ctx )

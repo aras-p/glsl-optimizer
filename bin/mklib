@@ -885,6 +885,17 @@ case $ARCH in
 
      CYGWIN*)
 	# GCC-based environment
+	if [ $NOPREFIX = 1 ] ; then
+	    # No "lib" or ".so" part
+	    echo "mklib: Making CYGWIN shared library: " ${LIBNAME}
+	    OPTS="-shared -Wl,--enable-auto-image-base"
+            if [ "${ALTOPTS}" ] ; then
+                OPTS=${ALTOPTS}
+            fi
+	    rm -f ${LIBNAME}
+	    ${LINK} ${OPTS} ${LDFLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	    FINAL_LIBS=${LIBNAME}
+        else
 	CYGNAME="cyg${LIBNAME}"     # prefix with "cyg"
 	LIBNAME="lib${LIBNAME}"     # prefix with "lib"
 
@@ -901,11 +912,11 @@ case $ARCH in
             # finish up
             FINAL_LIBS=${LIBNAME}.a
         else
-	    OPTS="-shared -Wl,-export-all -Wl,--out-implib=${LIBNAME}-${MAJOR}.dll.a"
+	    OPTS="-shared -Wl,--enable-auto-image-base -Wl,-export-all -Wl,--out-implib=${LIBNAME}-${MAJOR}.dll.a"
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
             fi
-            echo "mklib: Making" $ARCH "shared library: " ${LIBNAME}-${MAJOR}.dll
+            echo "mklib: Making" $ARCH "shared library: " ${CYGNAME}-${MAJOR}.dll
 
             if [ $CPLUSPLUS = 1 ] ; then
                 LINK="g++"
@@ -914,7 +925,8 @@ case $ARCH in
             fi
 
             # rm any old libs
-            rm -f ${LIBNAME}-${MAJOR}.dll
+            rm -f ${CYGNAME}-${MAJOR}.dll
+            rm -f ${LIBNAME}-${MAJOR}.dll.a
             rm -f ${LIBNAME}.dll.a
             rm -f ${LIBNAME}.a
 
@@ -926,6 +938,7 @@ case $ARCH in
             FINAL_LIBS="${LIBNAME}-${MAJOR}.dll.a ${LIBNAME}.dll.a"
 	    # special case for installing in bin
             FINAL_BINS="${CYGNAME}-${MAJOR}.dll"
+        fi
         fi
 	;;
 

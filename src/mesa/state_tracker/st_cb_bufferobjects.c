@@ -245,11 +245,10 @@ st_bufferobj_map_range(GLcontext *ctx, GLenum target,
    assert(offset < obj->Size);
    assert(offset + length <= obj->Size);
 
-   map = obj->Pointer = pipe_buffer_map_range(pipe->screen, st_obj->buffer,
-                                              offset, length, flags);
-   if (obj->Pointer) {
-      obj->Offset = 0;
-      obj->Length = obj->Size;
+   map = obj->Pointer = pipe_buffer_map_range(pipe->screen, st_obj->buffer, offset, length, flags);
+   if(obj->Pointer) {
+      obj->Offset = offset;
+      obj->Length = length;
       map += offset;
    }
    
@@ -268,7 +267,6 @@ st_bufferobj_flush_mapped_range(GLcontext *ctx, GLenum target,
    /* Subrange is relative to mapped range */
    assert(offset >= 0);
    assert(length >= 0);
-   assert(offset < obj->Length);
    assert(offset + length <= obj->Length);
    
    pipe_buffer_flush_mapped_range(pipe->screen, st_obj->buffer, 
