@@ -289,6 +289,7 @@ _swrast_update_specular_vertex_add(GLcontext *ctx)
 
 
 #define _SWRAST_NEW_DERIVED (_SWRAST_NEW_RASTERMASK |	\
+                             _NEW_PROGRAM_CONSTANTS |   \
 			     _NEW_TEXTURE |		\
 			     _NEW_HINT |		\
 			     _NEW_POLYGON )
