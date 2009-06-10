@@ -999,6 +999,10 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       screen->drmSupportsVertexProgram = (sPriv->drm_version.minor >= 25);
    }
 
+   ret = radeon_set_screen_flags(screen, dri_priv->deviceID);
+   if (ret == -1)
+     return NULL;
+
    if (!screen->kernel_mm) {
      screen->mmio.handle = dri_priv->registerHandle;
      screen->mmio.size   = dri_priv->registerSize;
@@ -1059,10 +1063,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
      }
    }
 
-
-   ret = radeon_set_screen_flags(screen, dri_priv->deviceID);
-   if (ret == -1)
-     return NULL;
 
    if ((screen->chip_family == CHIP_FAMILY_R350 || screen->chip_family == CHIP_FAMILY_R300) &&
        sPriv->ddx_version.minor < 2) {
