@@ -111,7 +111,7 @@ GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint vp_writes, GLuint fp_reads)
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 		if (vp_writes & (1 << (VERT_RESULT_TEX0 + i)) && fp_reads & FRAG_BIT_TEX(i)) {
-			ret |= (4 << (3 * i));
+			ret |= (4 << (3 * first_free_texcoord));
 			++first_free_texcoord;
 		}
 	}
@@ -122,11 +122,12 @@ GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint vp_writes, GLuint fp_reads)
 	}
 
 	if (vp_writes & (1 << VERT_RESULT_FOGC) && fp_reads & FRAG_BIT_FOGC) {
-		if (first_free_texcoord > 8) {
-			fprintf(stderr, "\tout of free texcoords to write fog coord\n");
-			_mesa_exit(-1);
-		}
 		ret |= 4 << (3 * first_free_texcoord);
+	}
+
+	if (first_free_texcoord > 8) {
+		fprintf(stderr, "\tout of free texcoords\n");
+		_mesa_exit(-1);
 	}
 
 	return ret;
