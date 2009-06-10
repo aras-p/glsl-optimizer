@@ -88,91 +88,90 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
-   struct pipe_texture template;
-   unsigned surface_usage;
+   enum pipe_format format;
 
-   /* Free the old surface and texture
-    */
-   pipe_surface_reference( &strb->surface, NULL );
-   pipe_texture_reference( &strb->texture, NULL );
-
-   /* Setup new texture template.
-    */
-   memset(&template, 0, sizeof(template));
-   template.target = PIPE_TEXTURE_2D;
-   if (strb->format != PIPE_FORMAT_NONE) {
-      template.format = strb->format;
-   }
-   else {
-      template.format = st_choose_renderbuffer_format(pipe, internalFormat);
-   }
-   pf_get_block(template.format, &template.block);
-   template.width[0] = width;
-   template.height[0] = height;
-   template.depth[0] = 1;
-   template.last_level = 0;
-   template.nr_samples = rb->NumSamples;
-   if (pf_is_depth_stencil(template.format)) {
-      template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
-   }
-   else {
-      template.tex_usage = (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                            PIPE_TEXTURE_USAGE_RENDER_TARGET);
-   }
-
+   if (strb->format != PIPE_FORMAT_NONE)
+      format = strb->format;
+   else
+      format = st_choose_renderbuffer_format(pipe, internalFormat);
+      
    /* init renderbuffer fields */
    strb->Base.Width  = width;
    strb->Base.Height = height;
-   init_renderbuffer_bits(strb, template.format);
+   init_renderbuffer_bits(strb, format);
 
-   /* Probably need dedicated flags for surface usage too: 
-    */
-   surface_usage = (PIPE_BUFFER_USAGE_GPU_READ |
-                    PIPE_BUFFER_USAGE_GPU_WRITE);
-#if 0
-                    PIPE_BUFFER_USAGE_CPU_READ |
-                    PIPE_BUFFER_USAGE_CPU_WRITE);
-#endif
+   if(strb->software) {
+      struct pipe_format_block block;
+      size_t size;
+      
+      _mesa_free(strb->data);
 
-   strb->texture = pipe->screen->texture_create( pipe->screen,
-                                                 &template );
-
-   /* Special path for accum buffers.  
-    *
-    * Try a different surface format.  Since accum buffers are s/w
-    * only for now, the surface pixel format doesn't really matter,
-    * only that the buffer is large enough.
-    */
-   if (!strb->texture && template.format == DEFAULT_ACCUM_PIPE_FORMAT) 
-   {
-      /* Actually, just setting this usage value should be sufficient
-       * to tell the driver to go ahead and allocate the buffer, even
-       * if HW doesn't support the format.
+      assert(strb->format != PIPE_FORMAT_NONE);
+      pf_get_block(strb->format, &block);
+      
+      strb->stride = pf_get_stride(&block, width);
+      size = pf_get_2d_size(&block, strb->stride, height);
+      
+      strb->data = _mesa_malloc(size);
+      
+      return strb->data != NULL;
+   }
+   else {
+      struct pipe_texture template;
+      unsigned surface_usage;
+    
+      /* Free the old surface and texture
        */
-      template.tex_usage = 0;
-      surface_usage = (PIPE_BUFFER_USAGE_CPU_READ |
+      pipe_surface_reference( &strb->surface, NULL );
+      pipe_texture_reference( &strb->texture, NULL );
+
+      /* Setup new texture template.
+       */
+      memset(&template, 0, sizeof(template));
+      template.target = PIPE_TEXTURE_2D;
+      template.format = format;
+      pf_get_block(format, &template.block);
+      template.width[0] = width;
+      template.height[0] = height;
+      template.depth[0] = 1;
+      template.last_level = 0;
+      template.nr_samples = rb->NumSamples;
+      if (pf_is_depth_stencil(format)) {
+         template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+      }
+      else {
+         template.tex_usage = (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                               PIPE_TEXTURE_USAGE_RENDER_TARGET);
+      }
+
+      /* Probably need dedicated flags for surface usage too: 
+       */
+      surface_usage = (PIPE_BUFFER_USAGE_GPU_READ |
+                       PIPE_BUFFER_USAGE_GPU_WRITE);
+#if 0
+                       PIPE_BUFFER_USAGE_CPU_READ |
                        PIPE_BUFFER_USAGE_CPU_WRITE);
+#endif
 
       strb->texture = pipe->screen->texture_create( pipe->screen,
                                                     &template );
 
+      if (!strb->texture) 
+         return FALSE;
+
+      strb->surface = pipe->screen->get_tex_surface( pipe->screen,
+                                                     strb->texture,
+                                                     0, 0, 0,
+                                                     surface_usage );
+
+      assert(strb->surface->texture);
+      assert(strb->surface->format);
+      assert(strb->surface->width == width);
+      assert(strb->surface->height == height);
+
+
+      return strb->surface != NULL;
    }
-
-   if (!strb->texture) 
-      return FALSE;
-
-   strb->surface = pipe->screen->get_tex_surface( pipe->screen,
-                                                  strb->texture,
-                                                  0, 0, 0,
-                                                  surface_usage );
-
-   assert(strb->surface->texture);
-   assert(strb->surface->format);
-   assert(strb->surface->width == width);
-   assert(strb->surface->height == height);
-
-
-   return strb->surface != NULL;
 }
 
 
@@ -186,6 +185,7 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
    ASSERT(strb);
    pipe_surface_reference(&strb->surface, NULL);
    pipe_texture_reference(&strb->texture, NULL);
+   _mesa_free(strb->data);
    _mesa_free(strb);
 }
 
@@ -242,7 +242,7 @@ st_new_renderbuffer(GLcontext *ctx, GLuint name)
  * renderbuffer).  The window system code determines the format.
  */
 struct gl_renderbuffer *
-st_new_renderbuffer_fb(enum pipe_format format, int samples)
+st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
 {
    struct st_renderbuffer *strb;
 
@@ -256,7 +256,8 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples)
    strb->Base.ClassID = 0x4242; /* just a unique value */
    strb->Base.NumSamples = samples;
    strb->format = format;
-
+   strb->software = sw;
+   
    switch (format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
    case PIPE_FORMAT_B8G8R8A8_UNORM:
@@ -287,7 +288,7 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples)
       strb->Base.InternalFormat = GL_STENCIL_INDEX8_EXT;
       strb->Base._BaseFormat = GL_STENCIL_INDEX;
       break;
-   case DEFAULT_ACCUM_PIPE_FORMAT: /*PIPE_FORMAT_R16G16B16A16_SNORM*/
+   case PIPE_FORMAT_R16G16B16A16_SNORM:
       strb->Base.InternalFormat = GL_RGBA16;
       strb->Base._BaseFormat = GL_RGBA;
       break;
