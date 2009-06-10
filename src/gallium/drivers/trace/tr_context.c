@@ -125,7 +125,7 @@ trace_context_draw_block(struct trace_context *tr_ctx, int flag)
    } else if ((tr_ctx->draw_rule.blocker & flag) &&
               (tr_ctx->draw_blocker & 4)) {
       boolean block = FALSE;
-      debug_printf("%s (%lu %lu) (%lu %lu) (%lu %u) (%lu %u)\n", __func__,
+      debug_printf("%s (%lu %lu) (%lu %lu) (%lu %u) (%lu %u)\n", __FUNCTION__,
 					tr_ctx->draw_rule.fs, tr_ctx->curr.fs,
 					tr_ctx->draw_rule.vs, tr_ctx->curr.vs,
 					tr_ctx->draw_rule.surf, 0,
