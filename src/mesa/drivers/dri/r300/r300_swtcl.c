@@ -186,7 +186,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 				InputsRead |= 1 << (VERT_ATTRIB_TEX0 + i);
 				OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
 				EMIT_ATTR(_TNL_ATTRIB_TEX(i), format);
-				ADD_ATTR(VERT_ATTRIB_TEX0 + i, hw_format, SWTCL_OVM_TEX(i), swiz, MASK_XYZW, 0);
+				ADD_ATTR(VERT_ATTRIB_TEX0 + i, hw_format, SWTCL_OVM_TEX(first_free_tex), swiz, MASK_XYZW, 0);
 				++first_free_tex;
 			}
 		}
