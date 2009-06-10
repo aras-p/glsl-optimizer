@@ -1556,6 +1556,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	r300->hw.rc.cmd[2] |= high_rr - 1;
 
 	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R300_RS_INST_0, high_rr);
+	r300->hw.ri.cmd[R300_RI_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R300_RS_IP_0, high_rr);
 
 	if (InputsRead)
 		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);
@@ -1683,6 +1684,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	r300->hw.rc.cmd[2] = 0xC0 | (high_rr - 1);
 
 	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R500_RS_INST_0, high_rr);
+	r300->hw.ri.cmd[R300_RI_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R500_RS_IP_0, high_rr);
 
 	if (InputsRead)
 		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);
