@@ -1300,14 +1300,15 @@ error:
 }
 
 
-/*
+/**
  * Remove the continuation characters from the input string.
  * This is the very first step in preprocessing and is effective
  * even inside comment blocks.
  * If there is a whitespace between a backslash and a newline,
  * this is not considered as a line continuation.
+ * \return GL_TRUE for success, GL_FALSE otherwise.
  */
-GLboolean
+static GLboolean
 _slang_preprocess_backslashes(slang_string *output,
                               const char *input)
 {
@@ -1334,7 +1335,7 @@ _slang_preprocess_backslashes(slang_string *output,
          slang_string_pushc(output, *input++);
       }
    }
-   return TRUE;
+   return GL_TRUE;
 }
 
 
