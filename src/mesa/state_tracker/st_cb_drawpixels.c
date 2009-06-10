@@ -718,7 +718,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                   uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
                   GLint k;
                   for (k = 0; k < spanWidth; k++) {
-                     dest[k] = zValues[k] | (sValues[k] << 24);
+                     dest[k] = (zValues[k] << 8) | (sValues[k] & 0xff);
                   }
                }
                else {
