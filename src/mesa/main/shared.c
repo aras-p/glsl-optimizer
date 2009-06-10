@@ -98,7 +98,7 @@ _mesa_alloc_shared_state(GLcontext *ctx)
     * XXX with recent/improved refcounting this may not longer be needed.
     */
    shared->NullBufferObj = _mesa_new_buffer_object(ctx, 0, 0);
-   shared->NullBufferObj->RefCount = 1000;
+   shared->NullBufferObj->RefCount = 1000 * 1000 * 1000;
 
    shared->ArrayObjects = _mesa_NewHashTable();
 
