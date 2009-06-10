@@ -445,11 +445,16 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             }
          }
          else {
-            /* untested, but simple: */
+            /* XXX: unreachable code -- should be before st_read_stencil_pixels */
             assert(format == GL_DEPTH_STENCIL_EXT);
             for (i = 0; i < height; i++) {
+               GLuint *zshort = (GLuint *)dst;
                pipe_get_tile_raw(trans, 0, y, width, 1, dst, 0);
                y += yStep;
+               /* Reverse into 24/8 */
+               for (j = 0; j < width; j++) {
+                  zshort[j] = (zshort[j] << 8) | (zshort[j] >> 24);
+               }
                dst += dstStride;
             }
          }
@@ -472,7 +477,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             }
          }
          else {
-            /* untested, but simple: */
+            /* XXX: unreachable code -- should be before st_read_stencil_pixels */
             assert(format == GL_DEPTH_STENCIL_EXT);
             for (i = 0; i < height; i++) {
                pipe_get_tile_raw(trans, 0, y, width, 1, dst, 0);
