@@ -65,6 +65,7 @@ SOURCES = \
 	no_s3tc.c \
 	packedpixels.c \
 	pbo.c \
+	prim.c \
 	prog_parameter.c \
 	quads.c \
 	random.c \
