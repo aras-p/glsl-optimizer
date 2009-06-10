@@ -470,11 +470,15 @@ _mesa_copy_buffer_subdata(GLcontext *ctx,
 void
 _mesa_init_buffer_objects( GLcontext *ctx )
 {
-   ctx->Array.ArrayBufferObj = ctx->Shared->NullBufferObj;
-   ctx->Array.ElementArrayBufferObj = ctx->Shared->NullBufferObj;
+   _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj,
+                                 ctx->Shared->NullBufferObj);
+   _mesa_reference_buffer_object(ctx, &ctx->Array.ElementArrayBufferObj,
+                                 ctx->Shared->NullBufferObj);
 
-   ctx->CopyReadBuffer = ctx->Shared->NullBufferObj;
-   ctx->CopyWriteBuffer = ctx->Shared->NullBufferObj;
+   _mesa_reference_buffer_object(ctx, &ctx->CopyReadBuffer,
+                                 ctx->Shared->NullBufferObj);
+   _mesa_reference_buffer_object(ctx, &ctx->CopyWriteBuffer,
+                                 ctx->Shared->NullBufferObj);
 }
 
 
