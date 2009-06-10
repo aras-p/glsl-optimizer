@@ -112,7 +112,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
       case PIPE_FORMAT_S8Z24_UNORM:
          if (format == GL_DEPTH_STENCIL) {
             const uint *src = (uint *) (stmap + srcY * pt->stride);
-            const GLfloat scale = 1.0 / (0xffffff);
+            const GLfloat scale = 1.0f / (0xffffff);
             GLint k;
             for (k = 0; k < width; k++) {
                sValues[k] = src[k] >> 24;
@@ -130,7 +130,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
       case PIPE_FORMAT_Z24S8_UNORM:
          if (format == GL_DEPTH_STENCIL) {
             const uint *src = (uint *) (stmap + srcY * pt->stride);
-            const GLfloat scale = 1.0 / (0xffffff);
+            const GLfloat scale = 1.0f / (0xffffff);
             GLint k;
             for (k = 0; k < width; k++) {
                sValues[k] = src[k] & 0xff;
