@@ -196,22 +196,20 @@ GLboolean r500FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
 		if (reg.Abs)
 			return GL_FALSE;
 
+		if (opcode == OPCODE_KIL && (reg.Swizzle != SWIZZLE_NOOP || reg.Negate != NEGATE_NONE))
+			return GL_FALSE;
+
 		if (reg.Negate)
 			reg.Negate ^= NEGATE_XYZW;
 
-		if (opcode == OPCODE_KIL) {
-			if (reg.Swizzle != SWIZZLE_NOOP)
-				return GL_FALSE;
-		} else {
-			for(i = 0; i < 4; ++i) {
-				GLuint swz = GET_SWZ(reg.Swizzle, i);
-				if (swz == SWIZZLE_NIL) {
-					reg.Negate &= ~(1 << i);
-					continue;
-				}
-				if (swz >= 4)
-					return GL_FALSE;
+		for(i = 0; i < 4; ++i) {
+			GLuint swz = GET_SWZ(reg.Swizzle, i);
+			if (swz == SWIZZLE_NIL) {
+				reg.Negate &= ~(1 << i);
+				continue;
 			}
+			if (swz >= 4)
+				return GL_FALSE;
 		}
 
 		if (reg.Negate)
@@ -273,6 +271,7 @@ void r500FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, 
 		inst->DstReg = dst;
 		inst->DstReg.WriteMask = negatebase[i];
 		inst->SrcReg[0] = src;
+		inst->SrcReg[0].Negate = (i == 0) ? NEGATE_NONE : NEGATE_XYZW;
 		inst++;
 		s->IP++;
 	}
