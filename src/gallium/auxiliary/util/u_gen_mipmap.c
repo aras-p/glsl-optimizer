@@ -1385,7 +1385,7 @@ set_vertex_data(struct gen_mipmap_state *ctx,
           * Not +/-1 to avoid cube face selection ambiguity near the edges,
           * though that can still sometimes happen with this scale factor...
           */
-         const float scale = 0.9999;
+         const float scale = 0.9999f;
          const float sc = (2.0f * st[i][0] - 1.0f) * scale;
          const float tc = (2.0f * st[i][1] - 1.0f) * scale;
 
