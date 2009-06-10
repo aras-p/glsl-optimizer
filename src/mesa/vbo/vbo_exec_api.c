@@ -51,6 +51,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 
+/** ID/name for immediate-mode VBO */
+#define IMM_BUFFER_NAME 0xaabbccdd
+
+
 static void reset_attrfv( struct vbo_exec_context *exec );
 
 
@@ -665,7 +669,7 @@ void vbo_use_buffer_objects(GLcontext *ctx)
    /* Any buffer name but 0 can be used here since this bufferobj won't
     * go into the bufferobj hashtable.
     */
-   GLuint bufName = 0xaabbccdd;
+   GLuint bufName = IMM_BUFFER_NAME;
    GLenum target = GL_ARRAY_BUFFER_ARB;
    GLenum usage = GL_STREAM_DRAW_ARB;
    GLsizei size = VBO_VERT_BUFFER_SIZE;
@@ -734,7 +738,8 @@ void vbo_exec_vtx_destroy( struct vbo_exec_context *exec )
    /* True VBOs should already be unmapped
     */
    if (exec->vtx.buffer_map) {
-      assert (exec->vtx.bufferobj->Name == 0);
+      ASSERT(exec->vtx.bufferobj->Name == 0 ||
+             exec->vtx.bufferobj->Name == IMM_BUFFER_NAME);
       if (exec->vtx.bufferobj->Name == 0) {
          ALIGN_FREE(exec->vtx.buffer_map);
          exec->vtx.buffer_map = NULL;
