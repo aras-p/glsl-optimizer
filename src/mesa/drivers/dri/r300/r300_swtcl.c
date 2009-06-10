@@ -76,6 +76,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 	GLuint InputsRead = 0;
 	GLuint OutputsWritten = 0;
 	int num_attrs = 0;
+	GLuint fp_reads = ctx->FragmentProgram._Current->Base.InputsRead;
 	struct vertex_attribute *attrs = rmesa->vbuf.attribs;
 
 	rmesa->swtcl.coloroffset = rmesa->swtcl.specoffset = 0;
@@ -84,15 +85,14 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 	/* We always want non Ndc coords format */
 	VB->AttribPtr[VERT_ATTRIB_POS] = VB->ClipPtr;
 
-	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_POS)) {
-		InputsRead |= 1 << VERT_ATTRIB_POS;
-		OutputsWritten |= 1 << VERT_RESULT_HPOS;
-		EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F );
-		ADD_ATTR(VERT_ATTRIB_POS, R300_DATA_TYPE_FLOAT_4, SWTCL_OVM_POS, SWIZZLE_XYZW, MASK_XYZW, 0);
-		rmesa->swtcl.coloroffset = 4;
-	}
+	/* Always write position vector */
+	InputsRead |= 1 << VERT_ATTRIB_POS;
+	OutputsWritten |= 1 << VERT_RESULT_HPOS;
+	EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F );
+	ADD_ATTR(VERT_ATTRIB_POS, R300_DATA_TYPE_FLOAT_4, SWTCL_OVM_POS, SWIZZLE_XYZW, MASK_XYZW, 0);
+	rmesa->swtcl.coloroffset = 4;
 
-	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR0)) {
+	if (fp_reads & FRAG_BIT_COL0) {
 		InputsRead |= 1 << VERT_ATTRIB_COLOR0;
 		OutputsWritten |= 1 << VERT_RESULT_COL0;
 #if MESA_LITTLE_ENDIAN
@@ -104,7 +104,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 #endif
 	}
 
-	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR1 )) {
+	if (fp_reads & FRAG_BIT_COL1) {
 		GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
 		InputsRead |= 1 << VERT_ATTRIB_COLOR1;
 		OutputsWritten |= 1 << VERT_RESULT_COL1;
@@ -128,7 +128,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 		EMIT_ATTR( _TNL_ATTRIB_GENERIC0, EMIT_4UB_4F_ABGR );
 		ADD_ATTR(VERT_ATTRIB_GENERIC0, R300_DATA_TYPE_BYTE, SWTCL_OVM_COLOR2, SWIZZLE_XYZW, MASK_XYZW, 1);
 #endif
-		if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR1 )) {
+		if (fp_reads & FRAG_BIT_COL1) {
 			VB->AttribPtr[VERT_ATTRIB_GENERIC1] = VB->SecondaryColorPtr[1];
 			GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
 			OutputsWritten |= 1 << VERT_RESULT_BFC1;
@@ -154,11 +154,11 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 	 *  Sending only one texcoord component may lead to lock up,
 	 *  so for all textures always output 4 texcoord components to RS.
 	 */
-	if (RENDERINPUTS_TEST_RANGE(tnl->render_inputs_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
+	{
 		int i;
 		GLuint swiz, format, hw_format;
 		for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-			if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) )) {
+			if (fp_reads & FRAG_BIT_TEX(i)) {
 				switch (VB->TexCoordPtr[i]->size) {
 					case 1:
 						format = EMIT_1F;
@@ -193,7 +193,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 	}
 
 	/* RS can't put fragment position on the pixel stack, so stuff it in texcoord if needed */
-	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_POS) && (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_WPOS)) {
+	if (fp_reads & FRAG_BIT_WPOS) {
 		if (first_free_tex >= ctx->Const.MaxTextureUnits) {
 			fprintf(stderr, "\tout of free texcoords to write w pos\n");
 			_mesa_exit(-1);
@@ -206,7 +206,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 		++first_free_tex;
 	}
 
-	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_FOG)) {
+	if (fp_reads & FRAG_BIT_FOGC) {
 		if (first_free_tex >= ctx->Const.MaxTextureUnits) {
 			fprintf(stderr, "\tout of free texcoords to write fog coordinate\n");
 			_mesa_exit(-1);
