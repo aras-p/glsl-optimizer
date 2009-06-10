@@ -351,6 +351,7 @@ static void r300FireAOS(r300ContextPtr rmesa, int vertex_count, int type)
 void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	BATCH_LOCALS(&rmesa->radeon);
 	int type, num_verts;
 
 	type = r300PrimitiveType(rmesa, prim);
@@ -384,6 +385,12 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 		 */
 		r300EmitElts(ctx, num_verts);
 		r300EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, start);
+		if (rmesa->radeon.radeonScreen->kernel_mm) {
+			BEGIN_BATCH_NO_AUTOSTATE(2);
+			OUT_BATCH_REGSEQ(R300_VAP_VF_MAX_VTX_INDX, 1);
+			OUT_BATCH(num_verts);
+			END_BATCH();
+		}
 		r300FireEB(rmesa, num_verts, type);
 	} else {
 		r300EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, start);
