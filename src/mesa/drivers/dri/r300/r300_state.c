@@ -1546,7 +1546,8 @@ static void r300SetupRSUnit(GLcontext * ctx)
 
 	/* Setup default color if no color or tex was set */
 	if (rs_tex_count == 0 && col_ip == 0) {
-		r300->hw.rr.cmd[R300_RR_INST_0] = R300_RS_INST_COL_ID(0) | R300_RS_INST_COL_CN_WRITE | R300_RS_INST_COL_ADDR(0) | R300_RS_COL_FMT(R300_RS_COL_FMT_0001);
+		r300->hw.rr.cmd[R300_RR_INST_0] = R300_RS_INST_COL_ID(0) | R300_RS_INST_COL_ADDR(0);
+		r300->hw.ri.cmd[R300_RI_INTERP_0] = R300_RS_COL_PTR(0) | R300_RS_COL_FMT(R300_RS_COL_FMT_0001);
 		++col_ip;
 	}
 
@@ -1672,13 +1673,14 @@ static void r500SetupRSUnit(GLcontext * ctx)
 
 	/* Setup default color if no color or tex was set */
 	if (rs_tex_count == 0 && col_ip == 0) {
-		r300->hw.rr.cmd[R300_RR_INST_0] |= R500_RS_INST_COL_ID(0) | R500_RS_INST_COL_CN_WRITE | R500_RS_INST_COL_ADDR(0) | R500_RS_COL_FMT(R300_RS_COL_FMT_0001);
+		r300->hw.rr.cmd[R300_RR_INST_0] = R500_RS_INST_COL_ID(0) | R500_RS_INST_COL_ADDR(0);
+		r300->hw.ri.cmd[R300_RI_INTERP_0] = R500_RS_COL_PTR(0) | R500_RS_COL_FMT(R300_RS_COL_FMT_0001);
 		++col_ip;
 	}
 
 	high_rr = (col_ip > tex_ip) ? col_ip : tex_ip;
-	r300->hw.rc.cmd[1] |= (rs_tex_count << R300_IT_COUNT_SHIFT)  | (col_ip << R300_IC_COUNT_SHIFT) | R300_HIRES_EN;
-	r300->hw.rc.cmd[2] |= 0xC0 | (high_rr - 1);
+	r300->hw.rc.cmd[1] = (rs_tex_count << R300_IT_COUNT_SHIFT) | (col_ip << R300_IC_COUNT_SHIFT) | R300_HIRES_EN;
+	r300->hw.rc.cmd[2] = 0xC0 | (high_rr - 1);
 
 	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R500_RS_INST_0, high_rr);
 
