@@ -243,7 +243,6 @@ dri_create_buffer(__DRIscreenPrivate * sPriv,
    if (visual->depthBits) {
       if (pscreen->is_format_supported(pscreen, PIPE_FORMAT_Z24S8_UNORM,
 				       PIPE_TEXTURE_2D,
-				       PIPE_TEXTURE_USAGE_RENDER_TARGET |
 				       PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
 	 depthFormat = PIPE_FORMAT_Z24S8_UNORM;
       else
@@ -254,7 +253,6 @@ dri_create_buffer(__DRIscreenPrivate * sPriv,
    if (visual->stencilBits) {
       if (pscreen->is_format_supported(pscreen, PIPE_FORMAT_Z24S8_UNORM,
 				       PIPE_TEXTURE_2D,
-				       PIPE_TEXTURE_USAGE_RENDER_TARGET |
 				       PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
 	 stencilFormat = PIPE_FORMAT_Z24S8_UNORM;
       else
