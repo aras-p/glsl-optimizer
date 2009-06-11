@@ -630,6 +630,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct st_renderbuffer *strb;
+   enum pipe_transfer_usage usage;
    struct pipe_transfer *pt;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
    GLint skipPixels;
@@ -642,8 +643,14 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
       y = ctx->DrawBuffer->Height - y - height;
    }
 
+   if(format != GL_DEPTH_STENCIL && 
+      pf_get_component_bits( strb->format, PIPE_FORMAT_COMP_Z ) != 0)
+      usage = PIPE_TRANSFER_READ_WRITE;
+   else
+      usage = PIPE_TRANSFER_WRITE;
+   
    pt = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture, 0, 0, 0,
-				       PIPE_TRANSFER_WRITE, x, y,
+				       usage, x, y,
 				       width, height);
 
    stmap = screen->transfer_map(screen, pt);
@@ -694,6 +701,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
             case PIPE_FORMAT_S8_UNORM:
                {
                   ubyte *dest = stmap + spanY * pt->stride + spanX;
+                  assert(usage == PIPE_TRANSFER_WRITE);
                   memcpy(dest, sValues, spanWidth);
                }
                break;
@@ -701,6 +709,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                if (format == GL_DEPTH_STENCIL) {
                   uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
                   GLint k;
+                  assert(usage == PIPE_TRANSFER_WRITE);
                   for (k = 0; k < spanWidth; k++) {
                      dest[k] = zValues[k] | (sValues[k] << 24);
                   }
@@ -708,6 +717,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                else {
                   uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
                   GLint k;
+                  assert(usage == PIPE_TRANSFER_READ_WRITE);
                   for (k = 0; k < spanWidth; k++) {
                      dest[k] = (dest[k] & 0xffffff) | (sValues[k] << 24);
                   }
@@ -717,13 +727,15 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                if (format == GL_DEPTH_STENCIL) {
                   uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
                   GLint k;
+                  assert(usage == PIPE_TRANSFER_WRITE);
                   for (k = 0; k < spanWidth; k++) {
-                     dest[k] = zValues[k] | (sValues[k] << 24);
+                     dest[k] = (zValues[k] << 8) | (sValues[k] & 0xff);
                   }
                }
                else {
                   uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
                   GLint k;
+                  assert(usage == PIPE_TRANSFER_READ_WRITE);
                   for (k = 0; k < spanWidth; k++) {
                      dest[k] = (dest[k] & 0xffffff00) | (sValues[k] & 0xff);
                   }
@@ -811,6 +823,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 {
    struct st_renderbuffer *rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
    struct pipe_screen *screen = ctx->st->pipe->screen;
+   enum pipe_transfer_usage usage;
    struct pipe_transfer *ptDraw;
    ubyte *drawMap;
    ubyte *buffer;
@@ -827,9 +840,14 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                           GL_STENCIL_INDEX, GL_UNSIGNED_BYTE,
                           &ctx->DefaultPacking, buffer);
 
+   if(pf_get_component_bits( rbDraw->format, PIPE_FORMAT_COMP_Z ) != 0)
+      usage = PIPE_TRANSFER_READ_WRITE;
+   else
+      usage = PIPE_TRANSFER_WRITE;
+   
    ptDraw = st_cond_flush_get_tex_transfer(st_context(ctx),
 					   rbDraw->texture, 0, 0, 0,
-					   PIPE_TRANSFER_WRITE, dstx, dsty,
+					   usage, dstx, dsty,
 					   width, height);
 
    assert(ptDraw->block.width == 1);
@@ -859,6 +877,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          {
             uint *dst4 = (uint *) dst;
             int j;
+            assert(usage == PIPE_TRANSFER_READ_WRITE);
             for (j = 0; j < width; j++) {
                *dst4 = (*dst4 & 0xffffff) | (src[j] << 24);
                dst4++;
@@ -869,6 +888,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          {
             uint *dst4 = (uint *) dst;
             int j;
+            assert(usage == PIPE_TRANSFER_READ_WRITE);
             for (j = 0; j < width; j++) {
                *dst4 = (*dst4 & 0xffffff00) | (src[j] & 0xff);
                dst4++;
@@ -876,6 +896,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          }
          break;
       case PIPE_FORMAT_S8_UNORM:
+         assert(usage == PIPE_TRANSFER_WRITE);
          memcpy(dst, src, width);
          break;
       default:

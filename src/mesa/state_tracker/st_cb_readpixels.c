@@ -112,7 +112,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
       case PIPE_FORMAT_S8Z24_UNORM:
          if (format == GL_DEPTH_STENCIL) {
             const uint *src = (uint *) (stmap + srcY * pt->stride);
-            const GLfloat scale = 1.0 / (0xffffff);
+            const GLfloat scale = 1.0f / (0xffffff);
             GLint k;
             for (k = 0; k < width; k++) {
                sValues[k] = src[k] >> 24;
@@ -130,7 +130,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
       case PIPE_FORMAT_Z24S8_UNORM:
          if (format == GL_DEPTH_STENCIL) {
             const uint *src = (uint *) (stmap + srcY * pt->stride);
-            const GLfloat scale = 1.0 / (0xffffff);
+            const GLfloat scale = 1.0f / (0xffffff);
             GLint k;
             for (k = 0; k < width; k++) {
                sValues[k] = src[k] & 0xff;
@@ -445,11 +445,16 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             }
          }
          else {
-            /* untested, but simple: */
+            /* XXX: unreachable code -- should be before st_read_stencil_pixels */
             assert(format == GL_DEPTH_STENCIL_EXT);
             for (i = 0; i < height; i++) {
+               GLuint *zshort = (GLuint *)dst;
                pipe_get_tile_raw(trans, 0, y, width, 1, dst, 0);
                y += yStep;
+               /* Reverse into 24/8 */
+               for (j = 0; j < width; j++) {
+                  zshort[j] = (zshort[j] << 8) | (zshort[j] >> 24);
+               }
                dst += dstStride;
             }
          }
@@ -472,7 +477,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             }
          }
          else {
-            /* untested, but simple: */
+            /* XXX: unreachable code -- should be before st_read_stencil_pixels */
             assert(format == GL_DEPTH_STENCIL_EXT);
             for (i = 0; i < height; i++) {
                pipe_get_tile_raw(trans, 0, y, width, 1, dst, 0);

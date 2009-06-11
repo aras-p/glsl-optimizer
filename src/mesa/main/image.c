@@ -2874,7 +2874,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
             }
             else {
                for (i = 0; i < n; i++)
-                  indexes[i] = s[i] & 0xfff;  /* lower 8 bits */
+                  indexes[i] = s[i] & 0xff;  /* lower 8 bits */
             }
          }
          break;
