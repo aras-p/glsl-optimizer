@@ -64,11 +64,11 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat);
 
 
 extern enum pipe_format
-st_choose_format(struct pipe_context *pipe, GLint internalFormat,
+st_choose_format(struct pipe_context *pipe, GLenum internalFormat,
                  enum pipe_texture_target target, unsigned tex_usage);
 
 extern enum pipe_format
-st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat);
+st_choose_renderbuffer_format(struct pipe_context *pipe, GLenum internalFormat);
 
 
 extern const struct gl_texture_format *

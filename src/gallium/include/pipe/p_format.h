@@ -549,11 +549,21 @@ pf_get_2d_size(const struct pipe_format_block *block, size_t stride, unsigned he
 }
 
 static INLINE boolean 
-pf_is_depth_stencil( enum pipe_format format )
+pf_is_depth_or_stencil( enum pipe_format format )
 {
    return (pf_get_component_bits( format, PIPE_FORMAT_COMP_Z ) +
            pf_get_component_bits( format, PIPE_FORMAT_COMP_S )) != 0;
 }
+
+static INLINE boolean 
+pf_is_depth_and_stencil( enum pipe_format format )
+{
+   return (pf_get_component_bits( format, PIPE_FORMAT_COMP_Z ) != 0 &&
+           pf_get_component_bits( format, PIPE_FORMAT_COMP_S ) != 0);
+}
+
+/** DEPRECATED: For backwards compatibility */
+#define pf_is_depth_stencil pf_is_depth_or_stencil
 
 static INLINE boolean 
 pf_is_compressed( enum pipe_format format )
