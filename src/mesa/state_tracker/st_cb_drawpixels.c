@@ -769,7 +769,6 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    struct st_vertex_program *stvp;
    struct st_context *st = ctx->st;
    struct pipe_surface *ps;
-   GLuint bufferFormat;
    const GLfloat *color;
 
    if (format == GL_STENCIL_INDEX ||
@@ -796,8 +795,6 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       stvp = st_make_passthrough_vertex_shader(ctx->st, GL_FALSE);
       color = NULL;
    }
-
-   bufferFormat = ps->format;
 
    /* draw with textured quad */
    {
