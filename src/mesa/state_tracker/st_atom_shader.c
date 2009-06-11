@@ -237,8 +237,8 @@ find_translated_vp(struct st_context *st,
       }
       if (emitBFC1) {
          xvp->output_to_slot[VERT_RESULT_BFC1] = numVpOuts++;
-         xvp->output_to_semantic_name[VERT_RESULT_BFC0] = TGSI_SEMANTIC_COLOR;
-         xvp->output_to_semantic_index[VERT_RESULT_BFC0] = 1;
+         xvp->output_to_semantic_name[VERT_RESULT_BFC1] = TGSI_SEMANTIC_COLOR;
+         xvp->output_to_semantic_index[VERT_RESULT_BFC1] = 1;
       }
 
       /* Unneeded vertex program outputs will go to this slot.
