@@ -54,6 +54,7 @@ DRIVER_SOURCES = \
 		 r300_shader.c \
 		 r300_emit.c \
 		 r300_swtcl.c \
+		 r300_queryobj.c \
 		 $(RADEON_COMMON_SOURCES) \
 		 $(EGL_SOURCES) \
 		 $(CS_SOURCES)

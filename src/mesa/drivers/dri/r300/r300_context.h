@@ -505,6 +505,16 @@ struct r300_index_buffer {
 	GLuint count;
 };
 
+struct r300_query_object {
+	struct gl_query_object Base;
+	struct radeon_bo *bo;
+	int curr_offset;
+	GLboolean emitted_begin;
+
+	/* Double linked list of not flushed query objects */
+	struct r300_query_object *prev, *next;
+};
+
 /**
  * \brief R300 context structure.
  */
@@ -539,6 +549,13 @@ struct r300_context {
 	uint32_t fallback;
 
 	DECLARE_RENDERINPUTS(render_inputs_bitset);
+
+	struct {
+		struct r300_query_object *current;
+		struct r300_query_object not_flushed_head;
+	} query;
+
+	int num_z_pipes;
 };
 
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))
