@@ -2,9 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include <GL/glut.h>
-#include "GL/gl.h"
 
 
 
@@ -21,7 +20,7 @@ static void Init( void )
       ;
    GLuint modulateProg;
 
-   if (!glutExtensionSupported("GL_ARB_fragment_program")) {
+   if (!GLEW_ARB_fragment_program) {
       printf("Error: GL_ARB_fragment_program not supported!\n");
       exit(1);
    }
@@ -105,6 +104,8 @@ int main(int argc, char **argv)
     if (glutCreateWindow("First Tri") == GL_FALSE) {
 	exit(1);
     }
+
+    glewInit();
 
     Init();
 
