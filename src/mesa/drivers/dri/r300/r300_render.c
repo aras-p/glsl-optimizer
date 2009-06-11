@@ -364,7 +364,7 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 	 * This is supposed to ensure that we can get all rendering
 	 * commands into a single command buffer.
 	 */
-	rcommonEnsureCmdBufSpace(&rmesa->radeon, 64, __FUNCTION__);
+	rcommonEnsureCmdBufSpace(&rmesa->radeon, 128, __FUNCTION__);
 
 	if (rmesa->ind_buf.ptr) {
 		if (num_verts > 65535) {
@@ -388,7 +388,7 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 		if (rmesa->radeon.radeonScreen->kernel_mm) {
 			BEGIN_BATCH_NO_AUTOSTATE(2);
 			OUT_BATCH_REGSEQ(R300_VAP_VF_MAX_VTX_INDX, 1);
-			OUT_BATCH(num_verts);
+			OUT_BATCH(rmesa->radeon.tcl.aos[0].count);
 			END_BATCH();
 		}
 		r300FireEB(rmesa, num_verts, type);
