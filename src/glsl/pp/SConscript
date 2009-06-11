@@ -1,0 +1,21 @@
+Import('*')
+
+if env['platform'] not in ['windows']:
+    Return()
+
+env = env.Clone()
+
+glsl = env.StaticLibrary(
+    target = 'glsl',
+    source = [
+        'sl_pp_purify.c',
+    ],
+)
+
+env = env.Clone()
+
+if env['platform'] == 'windows':
+    env.PrependUnique(LIBS = [
+        'user32', 
+    ])
+env.Prepend(LIBS = [glsl])
