@@ -43,19 +43,27 @@ except ImportError:
         return struct.unpack(fmt, buf[offset:offset + size])
 
 
-def make_image(surface):
+def make_image(surface, x=None, y=None, w=None, h=None):
+    if x is None:
+        x = 0
+    if y is None:
+        y = 0
+    if w is None:
+        w = surface.width - x
+    if h is None:
+        h = surface.height - y
     data = surface.get_tile_rgba8(0, 0, surface.width, surface.height)
 
     import Image
     outimage = Image.fromstring('RGBA', (surface.width, surface.height), data, "raw", 'RGBA', 0, 1)
     return outimage
 
-def save_image(filename, surface):
-    outimage = make_image(surface)
+def save_image(filename, surface, x=None, y=None, w=None, h=None):
+    outimage = make_image(surface, x, y, w, h)
     outimage.save(filename, "PNG")
 
-def show_image(surface, title):
-    outimage = make_image(surface)
+def show_image(surface, title, x=None, y=None, w=None, h=None):
+    outimage = make_image(surface, x, y, w, h)
     
     import Tkinter as tk
     from PIL import Image, ImageTk
@@ -305,7 +313,11 @@ class Screen(Object):
     def get_tex_transfer(self, texture, face, level, zslice, usage, x, y, w, h):
         if texture is None:
             return None
-        return Transfer(texture.get_surface(face, level, zslice), x, y, w, h)
+        transfer = Transfer(texture.get_surface(face, level, zslice), x, y, w, h)
+        if transfer and usage != gallium.PIPE_TRANSFER_WRITE:
+            if self.interpreter.options.all:
+                self.interpreter.present(transfer.surface, 'transf_read', x, y, w, h)
+        return transfer
     
     def tex_transfer_destroy(self, transfer):
         self.interpreter.unregister_object(transfer)
@@ -314,6 +326,8 @@ class Screen(Object):
         if transfer is None:
             return
         transfer.surface.put_tile_raw(transfer.x, transfer.y, transfer.w, transfer.h, data, stride)
+        if self.interpreter.options.all:
+            self.interpreter.present(transfer.surface, 'transf_write', transfer.x, transfer.y, transfer.w, transfer.h)
 
     def user_buffer_create(self, data, size):
         # We don't really care to distinguish between user and regular buffers
@@ -610,6 +624,9 @@ class Context(Object):
     
         if self.cbufs and self.cbufs[0]:
             self.interpreter.present(self.cbufs[0], "cbuf")
+        if self.zsbuf:
+            if self.interpreter.options.all:
+                self.interpreter.present(self.zsbuf, "zsbuf")
     
 
 class Interpreter(parser.TraceDumper):
@@ -679,16 +696,16 @@ class Interpreter(parser.TraceDumper):
     def verbosity(self, level):
         return self.options.verbosity >= level
 
-    def present(self, surface, description):
+    def present(self, surface, description, x=None, y=None, w=None, h=None):
         if self.call_no < self.options.start:
             return
 
         if self.options.images:
-            filename = '%s_%04u.png' % (description, self.call_no)
-            save_image(filename, surface)
+            filename = '%04u_%s.png' % (self.call_no, description)
+            save_image(filename, surface, x, y, w, h)
         else:
             title = '%u. %s' % (self.call_no, description)
-            show_image(surface, title)
+            show_image(surface, title, x, y, w, h)
     
 
 class Main(parser.Main):
@@ -698,6 +715,7 @@ class Main(parser.Main):
         optparser.add_option("-q", "--quiet", action="store_const", const=0, dest="verbosity", help="no messages")
         optparser.add_option("-v", "--verbose", action="count", dest="verbosity", default=1, help="increase verbosity level")
         optparser.add_option("-i", "--images", action="store_true", dest="images", default=False, help="save images instead of showing them")
+        optparser.add_option("-a", "--all", action="store_true", dest="all", default=False, help="show depth, stencil, and transfers")
         optparser.add_option("-s", "--step", action="store_true", dest="step", default=False, help="step trhough every draw")
         optparser.add_option("-f", "--from", action="store", type="int", dest="start", default=0, help="from call no")
         optparser.add_option("-t", "--to", action="store", type="int", dest="stop", default=0, help="until call no")
