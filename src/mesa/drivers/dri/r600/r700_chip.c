@@ -301,7 +301,7 @@ int r700SetupStreams(GLcontext * ctx)
     END_BATCH();
     COMMIT_BATCH();
 
-    //context->aos_count = 0;
+    context->radeon.tcl.aos_count = 0;
 	for(i=0; i<VERT_ATTRIB_MAX; i++)
 	{
 		unBit = 1 << i;
@@ -314,13 +314,15 @@ int r700SetupStreams(GLcontext * ctx)
 					    vb->AttribPtr[i]->stride,
 					    vb->Count);
 
-            /* currently aos are packed */
-            r700SetupVTXConstants(ctx,
-                                 i,
-                                 (void*)(&context->radeon.tcl.aos[i]),
-                                 (unsigned int)vb->AttribPtr[i]->size,
-                                 (unsigned int)(vb->AttribPtr[i]->size * 4),
-                                 (unsigned int)vb->Count);
+			/* currently aos are packed */
+			r700SetupVTXConstants(ctx,
+					      i,
+					      (void*)(&context->radeon.tcl.aos[i]),
+					      (unsigned int)vb->AttribPtr[i]->size,
+					      (unsigned int)(vb->AttribPtr[i]->size * 4),
+					      (unsigned int)vb->Count);
+
+			context->radeon.tcl.aos_count++;
 		}
 	}
 
