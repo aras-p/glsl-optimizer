@@ -643,7 +643,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
       y = ctx->DrawBuffer->Height - y - height;
    }
 
-   if(format == GL_DEPTH_STENCIL && 
+   if(format != GL_DEPTH_STENCIL && 
       pf_get_component_bits( strb->format, PIPE_FORMAT_COMP_Z ) != 0)
       usage = PIPE_TRANSFER_READ_WRITE;
    else
