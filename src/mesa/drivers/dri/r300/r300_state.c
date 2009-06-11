@@ -462,7 +462,7 @@ static GLboolean current_fragment_program_writes_depth(GLcontext* ctx)
 static void r300SetEarlyZState(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	GLuint topZ = R300_ZTOP_ENABLE;
+	GLuint topZ = R300_ZTOP_DISABLE;
 	GLuint w_fmt, fgdepthsrc;
 
 	if (ctx->Color.AlphaEnabled && ctx->Color.AlphaFunc != GL_ALWAYS)
