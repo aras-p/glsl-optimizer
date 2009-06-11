@@ -45,7 +45,7 @@
 #include "stw_tls.h"
 
 
-struct stw_framebuffer *
+static INLINE struct stw_framebuffer *
 stw_framebuffer_from_hwnd_locked(
    HWND hwnd )
 {
