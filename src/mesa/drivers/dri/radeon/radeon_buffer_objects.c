@@ -181,7 +181,7 @@ radeonMapBuffer(GLcontext * ctx,
     struct radeon_buffer_object *radeon_obj = get_radeon_buffer_object(obj);
 
     if (access == GL_WRITE_ONLY_ARB) {
-        radeonFlush(ctx);
+        ctx->Driver.Flush(ctx);
     }
 
     if (radeon_obj->bo == NULL) {
