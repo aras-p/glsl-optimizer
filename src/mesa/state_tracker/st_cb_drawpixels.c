@@ -840,7 +840,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                           GL_STENCIL_INDEX, GL_UNSIGNED_BYTE,
                           &ctx->DefaultPacking, buffer);
 
-   if(pf_get_component_bits( ptDraw->format, PIPE_FORMAT_COMP_Z ) != 0)
+   if(pf_get_component_bits( rbDraw->format, PIPE_FORMAT_COMP_Z ) != 0)
       usage = PIPE_TRANSFER_READ_WRITE;
    else
       usage = PIPE_TRANSFER_WRITE;
