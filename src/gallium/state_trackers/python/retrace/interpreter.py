@@ -577,6 +577,14 @@ class Context(Object):
         self.real.draw_range_elements(indexBuffer, indexSize, minIndex, maxIndex, mode, start, count)
         self._set_dirty()
         
+    def is_texture_referenced(self, texture, face, level):
+        #return self.real.is_texture_referenced(format, texture, face, level)
+        pass
+    
+    def is_buffer_referenced(self, buf):
+        #return self.real.is_buffer_referenced(format, buf)
+        pass
+    
     def _set_dirty(self):
         if self.interpreter.options.step:
             self._present()
