@@ -1,0 +1,18 @@
+Import('*')
+
+if env['platform'] not in ['windows']:
+    Return()
+
+env = env.Clone()
+
+if env['platform'] == 'windows':
+    env.PrependUnique(LIBS = [
+        'user32',
+    ])
+
+env.Prepend(LIBS = [glsl])
+
+env.Program(
+    target = 'purify',
+    source = ['purify.c'],
+)

@@ -11,11 +11,4 @@ glsl = env.StaticLibrary(
         'sl_pp_purify.c',
     ],
 )
-
-env = env.Clone()
-
-if env['platform'] == 'windows':
-    env.PrependUnique(LIBS = [
-        'user32', 
-    ])
-env.Prepend(LIBS = [glsl])
+Export('glsl')
