@@ -42,17 +42,18 @@ import SCons.Scanner
 def quietCommandLines(env):
     # Quiet command lines
     # See also http://www.scons.org/wiki/HidingCommandLinesInOutput
-    env['ASCOMSTR'] = "Assembling $SOURCE ..."
-    env['CCCOMSTR'] = "Compiling $SOURCE ..."
-    env['SHCCCOMSTR'] = "Compiling $SOURCE ..."
-    env['CXXCOMSTR'] = "Compiling $SOURCE ..."
-    env['SHCXXCOMSTR'] = "Compiling $SOURCE ..."
-    env['ARCOMSTR'] = "Archiving $TARGET ..."
-    env['RANLIBCOMSTR'] = "Indexing $TARGET ..."
-    env['LINKCOMSTR'] = "Linking $TARGET ..."
-    env['SHLINKCOMSTR'] = "Linking $TARGET ..."
-    env['LDMODULECOMSTR'] = "Linking $TARGET ..."
-    env['SWIGCOMSTR'] = "Generating $TARGET ..."
+    env['ASCOMSTR'] = "  Assembling $SOURCE ..."
+    env['ASPPCOMSTR'] = "  Assembling $SOURCE ..."
+    env['CCCOMSTR'] = "  Compiling $SOURCE ..."
+    env['SHCCCOMSTR'] = "  Compiling $SOURCE ..."
+    env['CXXCOMSTR'] = "  Compiling $SOURCE ..."
+    env['SHCXXCOMSTR'] = "  Compiling $SOURCE ..."
+    env['ARCOMSTR'] = "  Archiving $TARGET ..."
+    env['RANLIBCOMSTR'] = "  Indexing $TARGET ..."
+    env['LINKCOMSTR'] = "  Linking $TARGET ..."
+    env['SHLINKCOMSTR'] = "  Linking $TARGET ..."
+    env['LDMODULECOMSTR'] = "  Linking $TARGET ..."
+    env['SWIGCOMSTR'] = "  Generating $TARGET ..."
 
 
 def createConvenienceLibBuilder(env):
