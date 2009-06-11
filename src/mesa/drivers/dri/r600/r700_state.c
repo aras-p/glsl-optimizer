@@ -909,7 +909,7 @@ static void r700InitSQConfig(GLcontext * ctx)
 	    num_es_stack_entries = 0;
 	    break;
     case CHIP_FAMILY_RV730:
-	    //case CHIP_FAMILY_RV740:
+    case CHIP_FAMILY_RV740:
 	    num_ps_gprs = 84;
 	    num_vs_gprs = 36;
 	    num_temp_gprs = 4;

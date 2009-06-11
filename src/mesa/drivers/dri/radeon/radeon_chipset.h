@@ -375,6 +375,12 @@
 #define PCI_CHIP_RV710_9553             0x9553
 #define PCI_CHIP_RV710_9555             0x9555
 
+#define PCI_CHIP_RV740_94A0             0x94A0
+#define PCI_CHIP_RV740_94A1             0x94A1
+#define PCI_CHIP_RV740_94B1             0x94B1
+#define PCI_CHIP_RV740_94B3             0x94B3
+#define PCI_CHIP_RV740_94B5             0x94B5
+
 enum {
    CHIP_FAMILY_R100,
    CHIP_FAMILY_RV100,
@@ -411,6 +417,7 @@ enum {
    CHIP_FAMILY_RV770,
    CHIP_FAMILY_RV730,
    CHIP_FAMILY_RV710,
+   CHIP_FAMILY_RV740,
    CHIP_FAMILY_LAST
 };
 

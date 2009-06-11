@@ -904,6 +904,15 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
       screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
 
+   case PCI_CHIP_RV740_94A0:
+   case PCI_CHIP_RV740_94A1:
+   case PCI_CHIP_RV740_94B1:
+   case PCI_CHIP_RV740_94B3:
+   case PCI_CHIP_RV740_94B5:
+      screen->chip_family = CHIP_FAMILY_RV740;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
+      break;
+
    default:
       fprintf(stderr, "unknown chip id 0x%x, can't guess.\n",
 	      device_id);
