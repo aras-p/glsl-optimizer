@@ -303,6 +303,26 @@ st_translate_vertex_program(struct st_context *st,
       outputMapping = defaultOutputMapping;
    }
 
+#if 0 /* debug */
+   {
+      GLuint i;
+      printf("outputMapping? %d\n", outputMapping ? 1 : 0);
+      if (outputMapping) {
+         printf("attr -> slot\n");
+         for (i = 0; i < 16;  i++) {
+            printf(" %2d       %3d\n", i, outputMapping[i]);
+         }
+      }
+      printf("slot    sem_name  sem_index\n");
+      for (i = 0; i < vs_num_outputs; i++) {
+         printf(" %2d         %d         %d\n",
+                i,
+                vs_output_semantic_name[i],
+                vs_output_semantic_index[i]);
+      }
+   }
+#endif
+
    /* free old shader state, if any */
    if (stvp->state.tokens) {
       _mesa_free((void *) stvp->state.tokens);
