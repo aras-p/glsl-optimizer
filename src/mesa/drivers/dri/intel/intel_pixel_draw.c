@@ -96,7 +96,7 @@ intel_texture_drawpixels(GLcontext * ctx,
    /* We don't have a way to generate fragments with stencil values which
     * will set the resulting stencil value.
     */
-   if (format == GL_STENCIL_INDEX)
+   if (format == GL_STENCIL_INDEX || format == GL_DEPTH_STENCIL)
       return GL_FALSE;
 
    /* Check that we can load in a texture this big. */
