@@ -1,3 +1,4 @@
+bin_to_bmp
 simple_client
 simple_server
 shdr_info
@@ -7,3 +8,4 @@ ctx_info
 tex_dump
 tex_info
 *.bmp
+*.bin

@@ -15,6 +15,7 @@ LINKS = \
 	$(PROG_LINKS)
 
 SOURCES = \
+	bin_to_bmp.c \
 	simple_client.c \
 	simple_server.c \
 	shdr_info.c \
