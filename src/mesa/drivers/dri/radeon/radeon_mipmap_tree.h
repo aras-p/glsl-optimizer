@@ -47,6 +47,8 @@ struct _radeon_mipmap_level {
 	radeon_mipmap_image faces[6];
 };
 
+/* store the max possible in the miptree */
+#define RADEON_MIPTREE_MAX_TEXTURE_LEVELS 13
 
 /**
  * A mipmap tree contains texture images in the layout that the hardware
@@ -77,7 +79,7 @@ struct _radeon_mipmap_tree {
 	GLuint tilebits; /** RADEON_TXO_xxx_TILE */
 	GLuint compressed; /** MESA_FORMAT_xxx indicating a compressed format, or 0 if uncompressed */
 
-	radeon_mipmap_level levels[RADEON_MAX_TEXTURE_LEVELS];
+	radeon_mipmap_level levels[RADEON_MIPTREE_MAX_TEXTURE_LEVELS];
 };
 
 radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa, radeonTexObj *t,
