@@ -231,6 +231,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->BeginQuery = _mesa_begin_query;
    driver->EndQuery = _mesa_end_query;
    driver->WaitQuery = _mesa_wait_query;
+   driver->CheckQuery = _mesa_check_query;
 
    /* APPLE_vertex_array_object */
    driver->NewArrayObject = _mesa_new_array_object;

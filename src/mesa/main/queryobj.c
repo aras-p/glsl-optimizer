@@ -83,9 +83,23 @@ void
 _mesa_wait_query(GLcontext *ctx, struct gl_query_object *q)
 {
    /* For software drivers, _mesa_end_query() should have completed the query.
-    * For real hardware, implement a proper WaitQuery() driver function.
+    * For real hardware, implement a proper WaitQuery() driver function,
+    * which may require issuing a flush.
     */
    assert(q->Ready);
+}
+
+
+/**
+ * Check if a query results are ready.  Software driver fallback.
+ * Called via ctx->Driver.CheckQuery().
+ */
+void
+_mesa_check_query(GLcontext *ctx, struct gl_query_object *q)
+{
+   /* No-op for sw rendering.
+    * HW drivers may need to flush at this time.
+    */
 }
 
 

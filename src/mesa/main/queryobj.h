@@ -48,6 +48,9 @@ _mesa_end_query(GLcontext *ctx, struct gl_query_object *q);
 extern void
 _mesa_wait_query(GLcontext *ctx, struct gl_query_object *q);
 
+extern void
+_mesa_check_query(GLcontext *ctx, struct gl_query_object *q);
+
 
 extern void GLAPIENTRY
 _mesa_GenQueriesARB(GLsizei n, GLuint *ids);

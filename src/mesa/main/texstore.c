@@ -2689,12 +2689,45 @@ GLboolean
 _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
 {
    const GLfloat depthScale = (GLfloat) 0xffffff;
+   const GLint srcRowStride
+      = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType)
+      / sizeof(GLuint);
+   GLint img, row;
 
    ASSERT(dstFormat == &_mesa_texformat_z24_s8);
-   ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT);
-   ASSERT(srcType == GL_UNSIGNED_INT_24_8_EXT);
+   ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT || srcFormat == GL_DEPTH_COMPONENT);
+   ASSERT(srcFormat != GL_DEPTH_STENCIL_EXT || srcType == GL_UNSIGNED_INT_24_8_EXT);
 
-   if (ctx->Pixel.DepthScale == 1.0f &&
+   /* In case we only upload depth we need to preserve the stencil */
+   if (srcFormat == GL_DEPTH_COMPONENT) {
+      for (img = 0; img < srcDepth; img++) {
+         GLuint *dstRow = (GLuint *) dstAddr
+            + dstImageOffsets[dstZoffset + img]
+            + dstYoffset * dstRowStride / sizeof(GLuint)
+            + dstXoffset;
+         const GLuint *src
+            = (const GLuint *) _mesa_image_address(dims, srcPacking, srcAddr,
+                  srcWidth, srcHeight,
+                  srcFormat, srcType,
+                  img, 0, 0);
+         for (row = 0; row < srcHeight; row++) {
+            GLuint depth[MAX_WIDTH];
+            GLint i;
+            _mesa_unpack_depth_span(ctx, srcWidth,
+                                    GL_UNSIGNED_INT, /* dst type */
+                                    depth, /* dst addr */
+                                    depthScale,
+                                    srcType, src, srcPacking);
+
+            for (i = 0; i < srcWidth; i++)
+               dstRow[i] = depth[i] << 8 | (dstRow[i] & 0x000000FF);
+
+            src += srcRowStride;
+            dstRow += dstRowStride / sizeof(GLuint);
+         }
+      }
+   }
+   else if (ctx->Pixel.DepthScale == 1.0f &&
        ctx->Pixel.DepthBias == 0.0f &&
        !srcPacking->SwapBytes) {
       /* simple path */
