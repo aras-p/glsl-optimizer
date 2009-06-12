@@ -47,6 +47,7 @@
 #include "st_program.h"
 #include "st_texture.h"
 #include "st_cb_texture.h"
+#include "st_inlines.h"
 
 
 /**
@@ -86,7 +87,7 @@ st_render_mipmap(struct st_context *st,
    assert(target != GL_TEXTURE_3D); /* not done yet */
 
    /* check if we can render in the texture's format */
-   if (!screen->is_format_supported(screen, pt->format, target,
+   if (!screen->is_format_supported(screen, pt->format, pt->target,
                                     PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
       return FALSE;
    }
@@ -122,27 +123,34 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       struct pipe_transfer *srcTrans, *dstTrans;
       const ubyte *srcData;
       ubyte *dstData;
+      int srcStride, dstStride;
 
-      srcTrans = screen->get_tex_transfer(screen, pt, face, srcLevel, zslice,
-                                          PIPE_TRANSFER_READ, 0, 0,
-                                          pt->width[srcLevel],
-                                          pt->height[srcLevel]);
-      dstTrans = screen->get_tex_transfer(screen, pt, face, dstLevel, zslice,
-                                          PIPE_TRANSFER_WRITE, 0, 0,
-                                          pt->width[dstLevel],
-                                          pt->height[dstLevel]);
+      srcTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
+						srcLevel, zslice,
+						PIPE_TRANSFER_READ, 0, 0,
+						pt->width[srcLevel],
+						pt->height[srcLevel]);
+
+      dstTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
+						dstLevel, zslice,
+						PIPE_TRANSFER_WRITE, 0, 0,
+						pt->width[dstLevel],
+						pt->height[dstLevel]);
 
       srcData = (ubyte *) screen->transfer_map(screen, srcTrans);
       dstData = (ubyte *) screen->transfer_map(screen, dstTrans);
+
+      srcStride = srcTrans->stride / srcTrans->block.size;
+      dstStride = dstTrans->stride / dstTrans->block.size;
 
       _mesa_generate_mipmap_level(target, datatype, comps,
                    0 /*border*/,
                    pt->width[srcLevel], pt->height[srcLevel], pt->depth[srcLevel],
                    srcData,
-                   srcTrans->stride, /* stride in bytes */
+                   srcStride, /* stride in texels */
                    pt->width[dstLevel], pt->height[dstLevel], pt->depth[dstLevel],
                    dstData,
-                   dstTrans->stride); /* stride in bytes */
+                   dstStride); /* stride in texels */
 
       screen->transfer_unmap(screen, srcTrans);
       screen->transfer_unmap(screen, dstTrans);

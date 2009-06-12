@@ -24,11 +24,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  **************************************************************************/
- /*
-  * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
-  *   Brian Paul
-  */
+
+/*
+ * Authors:
+ *   Keith Whitwell <keith@tungstengraphics.com>
+ *   Brian Paul
+ */
 
 #include "main/imports.h"
 #include "shader/prog_parameter.h"
@@ -42,31 +43,27 @@
 #include "st_atom.h"
 #include "st_atom_constbuf.h"
 #include "st_program.h"
+#include "st_inlines.h"
 
 
 /**
  * Pass the given program parameters to the graphics pipe as a
  * constant buffer.
- * \param id  either PIPE_SHADER_VERTEX or PIPE_SHADER_FRAGMENT
+ * \param shader_type  either PIPE_SHADER_VERTEX or PIPE_SHADER_FRAGMENT
  */
 void st_upload_constants( struct st_context *st,
                           struct gl_program_parameter_list *params,
-                          unsigned id)
+                          unsigned shader_type)
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_constant_buffer *cbuf = &st->state.constants[id];
+   struct pipe_constant_buffer *cbuf = &st->state.constants[shader_type];
 
-   assert(id == PIPE_SHADER_VERTEX || id == PIPE_SHADER_FRAGMENT);
+   assert(shader_type == PIPE_SHADER_VERTEX ||
+          shader_type == PIPE_SHADER_FRAGMENT);
 
    /* update constants */
    if (params && params->NumParameters) {
       const uint paramBytes = params->NumParameters * sizeof(GLfloat) * 4;
-
-      /* Update our own dependency flags.  This works because this
-       * function will also be called whenever the program changes.
-       */
-      st->constants.tracked_state[id].dirty.mesa =
-         (params->StateFlags | _NEW_PROGRAM);
 
       _mesa_load_state_parameters(st->ctx, params);
 
@@ -74,31 +71,33 @@ void st_upload_constants( struct st_context *st,
        * avoid gratuitous rendering synchronization.
        */
       pipe_buffer_reference(&cbuf->buffer, NULL );
-      cbuf->buffer = pipe_buffer_create(pipe->screen, 16, PIPE_BUFFER_USAGE_CONSTANT,
+      cbuf->buffer = pipe_buffer_create(pipe->screen, 16,
+                                        PIPE_BUFFER_USAGE_CONSTANT,
 					paramBytes );
 
-      if (0)
-      {
-	 printf("%s(shader=%d, numParams=%d, stateFlags=0x%x)\n", 
-                __FUNCTION__, id, params->NumParameters, params->StateFlags);
+      if (0) {
+	 debug_printf("%s(shader=%d, numParams=%d, stateFlags=0x%x)\n", 
+                      __FUNCTION__, shader_type, params->NumParameters,
+                      params->StateFlags);
          _mesa_print_parameter_list(params);
       }
 
       /* load Mesa constants into the constant buffer */
       if (cbuf->buffer)
-         pipe_buffer_write(pipe->screen, cbuf->buffer, 
-                           0, paramBytes, 
-                           params->ParameterValues);
+         st_no_flush_pipe_buffer_write(st, cbuf->buffer,
+				       0, paramBytes,
+				       params->ParameterValues);
 
-      st->pipe->set_constant_buffer(st->pipe, id, 0, cbuf);
+      st->pipe->set_constant_buffer(st->pipe, shader_type, 0, cbuf);
    }
    else {
-      st->constants.tracked_state[id].dirty.mesa = 0;
-      //  st->pipe->set_constant_buffer(st->pipe, id, 0, NULL);
+      st->constants.tracked_state[shader_type].dirty.mesa = 0x0;
    }
 }
 
-/* Vertex shader:
+
+/**
+ * Vertex shader:
  */
 static void update_vs_constants(struct st_context *st )
 {
@@ -108,16 +107,20 @@ static void update_vs_constants(struct st_context *st )
    st_upload_constants( st, params, PIPE_SHADER_VERTEX );
 }
 
+
 const struct st_tracked_state st_update_vs_constants = {
    "st_update_vs_constants",				/* name */
    {							/* dirty */
-      0,  /* set dynamically above */			/* mesa */
+      (_NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS),          /* mesa */
       ST_NEW_VERTEX_PROGRAM,				/* st */
    },
    update_vs_constants					/* update */
 };
 
-/* Fragment shader:
+
+
+/**
+ * Fragment shader:
  */
 static void update_fs_constants(struct st_context *st )
 {
@@ -127,10 +130,11 @@ static void update_fs_constants(struct st_context *st )
    st_upload_constants( st, params, PIPE_SHADER_FRAGMENT );
 }
 
+
 const struct st_tracked_state st_update_fs_constants = {
    "st_update_fs_constants",				/* name */
    {							/* dirty */
-      0,  /* set dynamically above */			/* mesa */
+      (_NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS),          /* mesa */
       ST_NEW_FRAGMENT_PROGRAM,				/* st */
    },
    update_fs_constants					/* update */

@@ -57,6 +57,7 @@
 #define R500_TEX_WMASK(x) ((x) << 11)
 #define R500_ALU_WMASK(x) ((x) << 11)
 #define R500_ALU_OMASK(x) ((x) << 15)
+#define R500_W_OMASK (1 << 31)
 
 /* TGSI constants. TGSI is like XML: If it can't solve your problems, you're
  * not using enough of it. */
@@ -99,20 +100,17 @@ struct r300_fs_asm {
     unsigned imm_offset;
     /* Number of immediate constants. */
     unsigned imm_count;
+    /* Are depth writes enabled? */
+    boolean writes_depth;
+    /* Depth write offset. This is the TGSI output that corresponds to
+     * depth writes. */
+    unsigned depth_output;
 };
 
 void r300_translate_fragment_shader(struct r300_context* r300,
                            struct r3xx_fragment_shader* fs);
 
 static struct r300_fragment_shader r300_passthrough_fragment_shader = {
-    /* XXX This is the emission code. TODO: decode
-    OUT_CS_REG(R300_US_CONFIG, 0);
-    OUT_CS_REG(R300_US_CODE_OFFSET, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_0, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_1, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_2, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_3, 0x400000);
-*/
     .alu_instruction_count = 1,
     .tex_instruction_count = 0,
     .indirections = 0,
@@ -159,14 +157,6 @@ static struct r500_fragment_shader r500_passthrough_fragment_shader = {
 };
 
 static struct r300_fragment_shader r300_texture_fragment_shader = {
-    /* XXX This is the emission code. TODO: decode
-    OUT_CS_REG(R300_US_CONFIG, 0);
-    OUT_CS_REG(R300_US_CODE_OFFSET, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_0, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_1, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_2, 0x0);
-    OUT_CS_REG(R300_US_CODE_ADDR_3, 0x400000);
-*/
     .alu_instruction_count = 1,
     .tex_instruction_count = 0,
     .indirections = 0,
@@ -191,7 +181,7 @@ static struct r500_fragment_shader r500_texture_fragment_shader = {
     .instruction_count = 2,
     .instructions[0].inst0 = R500_INST_TYPE_TEX |
         R500_INST_TEX_SEM_WAIT |
-        R500_INST_RGB_OMASK_RGB | R500_INST_ALPHA_OMASK |
+        R500_INST_RGB_WMASK_RGB | R500_INST_ALPHA_WMASK |
         R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP,
     .instructions[0].inst1 = R500_TEX_ID(0) | R500_TEX_INST_LD |
         R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED,

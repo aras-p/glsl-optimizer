@@ -58,8 +58,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 {
-	__DRIdrawablePrivate *const drawable = rmesa->dri.drawable;
-	__DRIdrawablePrivate *const readable = rmesa->dri.readable;
+	__DRIdrawablePrivate *const drawable = radeon_get_drawable(rmesa);
+	__DRIdrawablePrivate *const readable = radeon_get_readable(rmesa);
 	__DRIscreenPrivate *sPriv = rmesa->dri.screen;
 
 	assert(drawable != NULL);
@@ -95,8 +95,8 @@ void radeon_lock_hardware(radeonContextPtr radeon)
 	struct radeon_framebuffer *rfb = NULL;
 	struct radeon_renderbuffer *rrb = NULL;
 
-	if (radeon->dri.drawable) {
-		rfb = radeon->dri.drawable->driverPrivate;
+	if (radeon_get_drawable(radeon)) {
+		rfb = radeon_get_drawable(radeon)->driverPrivate;
 
 		if (rfb)
 			rrb = radeon_get_renderbuffer(&rfb->base,

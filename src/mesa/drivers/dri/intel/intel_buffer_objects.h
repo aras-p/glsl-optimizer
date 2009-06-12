@@ -42,10 +42,13 @@ struct intel_buffer_object
 {
    struct gl_buffer_object Base;
    dri_bo *buffer;     /* the low-level buffer manager's buffer handle */
+   /** System memory buffer data, if not using a BO to store the data. */
+   void *sys_buffer;
 
    struct intel_region *region; /* Is there a zero-copy texture
                                    associated with this (pixel)
                                    buffer object? */
+   GLboolean mapped_gtt;
 };
 
 

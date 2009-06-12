@@ -48,6 +48,7 @@
 #include "radeon_drm.h"
 #include "radeon_common.h"
 #include "radeon_bocs_wrapper.h"
+#include "radeon_macros.h"
 
 /* no seriously texmem.c is this screwed up */
 struct bo_legacy_texture_object {
@@ -167,6 +168,7 @@ static int legacy_free_handle(struct bo_manager_legacy *bom, uint32_t handle)
 static void legacy_get_current_age(struct bo_manager_legacy *boml)
 {
     drm_radeon_getparam_t gp;
+    unsigned char *RADEONMMIO = NULL;
     int r;
 
     if (IS_R300_CLASS(boml->screen)) {
@@ -178,8 +180,11 @@ static void legacy_get_current_age(struct bo_manager_legacy *boml)
        	 fprintf(stderr, "%s: drmRadeonGetParam: %d\n", __FUNCTION__, r);
          exit(1);
        }
-    } else
-	boml->current_age = boml->screen->scratch[3];
+    } else {
+        RADEONMMIO = boml->screen->mmio.map;
+        boml->current_age = boml->screen->scratch[3];
+        boml->current_age = INREG(RADEON_GUI_SCRATCH_REG3);
+    }
 }
 
 static int legacy_is_pending(struct radeon_bo *bo)

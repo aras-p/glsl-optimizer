@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.5
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -188,10 +189,10 @@ interpolate_active_attribs(GLcontext *ctx, SWspan *span, GLbitfield attrMask)
          const GLfloat dv1dx = span->attrStepX[attr][1];
          const GLfloat dv2dx = span->attrStepX[attr][2];
          const GLfloat dv3dx = span->attrStepX[attr][3];
-         GLfloat v0 = span->attrStart[attr][0];
-         GLfloat v1 = span->attrStart[attr][1];
-         GLfloat v2 = span->attrStart[attr][2];
-         GLfloat v3 = span->attrStart[attr][3];
+         GLfloat v0 = span->attrStart[attr][0] + span->leftClip * dv0dx;
+         GLfloat v1 = span->attrStart[attr][1] + span->leftClip * dv1dx;
+         GLfloat v2 = span->attrStart[attr][2] + span->leftClip * dv2dx;
+         GLfloat v3 = span->attrStart[attr][3] + span->leftClip * dv3dx;
          GLuint k;
          for (k = 0; k < span->end; k++) {
             const GLfloat invW = 1.0f / w;
@@ -521,10 +522,10 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
          const GLfloat drdx = span->attrStepX[attr][2];
          const GLfloat dqdx = span->attrStepX[attr][3];
          const GLfloat dqdy = span->attrStepY[attr][3];
-         GLfloat s = span->attrStart[attr][0];
-         GLfloat t = span->attrStart[attr][1];
-         GLfloat r = span->attrStart[attr][2];
-         GLfloat q = span->attrStart[attr][3];
+         GLfloat s = span->attrStart[attr][0] + span->leftClip * dsdx;
+         GLfloat t = span->attrStart[attr][1] + span->leftClip * dtdx;
+         GLfloat r = span->attrStart[attr][2] + span->leftClip * drdx;
+         GLfloat q = span->attrStart[attr][3] + span->leftClip * dqdx;
 
          if (obj) {
             const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
@@ -546,7 +547,7 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
                 || ctx->ATIFragmentShader._Enabled) {
                /* do perspective correction but don't divide s, t, r by q */
                const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
-               GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
+               GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3] + span->leftClip * dwdx;
                for (i = 0; i < span->end; i++) {
                   const GLfloat invW = 1.0F / w;
                   texcoord[i][0] = s * invW;
@@ -587,7 +588,7 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
                 ctx->ATIFragmentShader._Enabled) {
                /* do perspective correction but don't divide s, t, r by q */
                const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
-               GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
+               GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3] + span->leftClip * dwdx;
                for (i = 0; i < span->end; i++) {
                   const GLfloat invW = 1.0F / w;
                   texcoord[i][0] = s * invW;
@@ -660,8 +661,8 @@ interpolate_wpos(GLcontext *ctx, SWspan *span)
       }
    }
 
-   w = span->attrStart[FRAG_ATTRIB_WPOS][3];
    dw = span->attrStepX[FRAG_ATTRIB_WPOS][3];
+   w = span->attrStart[FRAG_ATTRIB_WPOS][3] + span->leftClip * dw;
    for (i = 0; i < span->end; i++) {
       wpos[i][2] = (GLfloat) span->array->z[i] * zScale;
       wpos[i][3] = w;
@@ -726,6 +727,8 @@ clip_span( GLcontext *ctx, SWspan *span )
    const GLint ymin = ctx->DrawBuffer->_Ymin;
    const GLint ymax = ctx->DrawBuffer->_Ymax;
 
+   span->leftClip = 0;
+
    if (span->arrayMask & SPAN_XY) {
       /* arrays of x/y pixel coords */
       const GLint *x = span->array->x;
@@ -753,7 +756,7 @@ clip_span( GLcontext *ctx, SWspan *span )
       /* horizontal span of pixels */
       const GLint x = span->x;
       const GLint y = span->y;
-      const GLint n = span->end;
+      GLint n = span->end;
 
       /* Trivial rejection tests */
       if (y < ymin || y >= ymax || x + n <= xmin || x >= xmax) {
@@ -761,18 +764,44 @@ clip_span( GLcontext *ctx, SWspan *span )
          return GL_FALSE;  /* all pixels clipped */
       }
 
-      /* Clip to the left */
-      if (x < xmin) {
-         ASSERT(x + n > xmin);
-         span->writeAll = GL_FALSE;
-         _mesa_bzero(span->array->mask, (xmin - x) * sizeof(GLubyte));
-      }
-
       /* Clip to right */
       if (x + n > xmax) {
          ASSERT(x < xmax);
-         span->end = xmax - x;
+         n = span->end = xmax - x;
       }
+
+      /* Clip to the left */
+      if (x < xmin) {
+         const GLint leftClip = xmin - x;
+         GLuint i;
+
+         ASSERT(leftClip > 0);
+         ASSERT(x + n > xmin);
+
+         /* Clip 'leftClip' pixels from the left side.
+          * The span->leftClip field will be applied when we interpolate
+          * fragment attributes.
+          * For arrays of values, shift them left.
+          */
+         for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
+            if (span->arrayAttribs & (1 << i)) {
+               /* shift array elements left by 'leftClip' */
+               _mesa_memcpy(span->array->attribs[i],
+                            span->array->attribs[i] + leftClip,
+                            (n - leftClip) * 4 * sizeof(GLfloat));
+            }
+         }
+
+         span->leftClip = leftClip;
+         span->x = xmin;
+         span->end -= leftClip;
+         span->writeAll = GL_FALSE;
+      }
+
+      ASSERT(span->x >= xmin);
+      ASSERT(span->x + span->end <= xmax);
+      ASSERT(span->y >= ymin);
+      ASSERT(span->y < ymax);
 
       return GL_TRUE;  /* some pixels visible */
    }
@@ -816,6 +845,12 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
       if (!clip_span(ctx, span)) {
          return;
       }
+   }
+
+   if (!(span->arrayMask & SPAN_MASK)) {
+      /* post-clip sanity check */
+      assert(span->x >= 0);
+      assert(span->y >= 0);
    }
 
    /* Depth bounds test */
@@ -1262,7 +1297,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
           span->primitive == GL_LINE ||
 	  span->primitive == GL_POLYGON ||
           span->primitive == GL_BITMAP);
-   ASSERT(span->end <= MAX_WIDTH);
 
    /* Fragment write masks */
    if (span->arrayMask & SPAN_MASK) {
@@ -1275,15 +1309,16 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    }
 
    /* Clip to window/scissor box */
-   if ((swrast->_RasterMask & CLIP_BIT) || (span->primitive != GL_POLYGON)) {
-      if (!clip_span(ctx, span)) {
-	 return;
-      }
+   if (!clip_span(ctx, span)) {
+      return;
    }
+
+   ASSERT(span->end <= MAX_WIDTH);
 
 #ifdef DEBUG
    /* Make sure all fragments are within window bounds */
    if (span->arrayMask & SPAN_XY) {
+      /* array of pixel locations */
       GLuint i;
       for (i = 0; i < span->end; i++) {
          if (span->array->mask[i]) {
@@ -1320,7 +1355,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
-
       if (ctx->Stencil._Enabled) {
          /* Combined Z/stencil tests */
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {

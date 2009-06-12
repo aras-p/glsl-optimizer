@@ -11,7 +11,6 @@ DRIVER_SOURCES = \
 	i830_metaops.c \
 	i830_state.c \
 	i830_texblend.c \
-	i830_tex.c \
 	i830_texstate.c \
 	i830_vtbl.c \
 	intel_render.c \
@@ -20,6 +19,7 @@ DRIVER_SOURCES = \
 	intel_batchbuffer.c \
 	intel_clear.c \
 	intel_extensions.c \
+	intel_generatemipmap.c \
 	intel_mipmap_tree.c \
 	intel_tex_layout.c \
 	intel_tex_image.c \
@@ -36,7 +36,6 @@ DRIVER_SOURCES = \
 	intel_buffers.c \
 	intel_blit.c \
 	intel_swapbuffers.c \
-	i915_tex.c \
 	i915_tex_layout.c \
 	i915_texstate.c \
 	i915_context.c \

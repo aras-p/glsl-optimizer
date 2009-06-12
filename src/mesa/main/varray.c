@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.2
+ * Version:  7.6
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,15 +37,14 @@
 
 
 /**
- * Update the fields of a vertex array object.
- * We need to do a few special things for arrays that live in
- * vertex buffer objects.
+ * Set the fields of a vertex array.
  *
  * \param array  the array to update
  * \param dirtyBit  which bit to set in ctx->Array.NewState for this array
  * \param elementSize  size of each array element, in bytes
  * \param size  components per element (1, 2, 3 or 4)
  * \param type  datatype of each component (GL_FLOAT, GL_INT, etc)
+ * \param format  either GL_RGBA or GL_BGRA
  * \param stride  stride between elements, in elements
  * \param normalized  are integer types converted to floats in [-1, 1]?
  * \param ptr  the address (or offset inside VBO) of the array data
@@ -63,21 +63,10 @@ update_array(GLcontext *ctx, struct gl_client_array *array,
    array->StrideB = stride ? stride : elementSize;
    array->Normalized = normalized;
    array->Ptr = (const GLubyte *) ptr;
-#if FEATURE_ARB_vertex_buffer_object
+   array->_ElementSize = elementSize;
+
    _mesa_reference_buffer_object(ctx, &array->BufferObj,
                                  ctx->Array.ArrayBufferObj);
-
-   /* Compute the index of the last array element that's inside the buffer.
-    * Later in glDrawArrays we'll check if start + count > _MaxElement to
-    * be sure we won't go out of bounds.
-    */
-   if (ctx->Array.ArrayBufferObj->Name)
-      array->_MaxElement = ((GLsizeiptrARB) ctx->Array.ArrayBufferObj->Size
-                            - (GLsizeiptrARB) array->Ptr + array->StrideB
-                            - elementSize) / array->StrideB;
-   else
-#endif
-      array->_MaxElement = 2 * 1000 * 1000 * 1000; /* just a big number */
 
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= dirtyBit;
@@ -528,16 +517,23 @@ _mesa_PointSizePointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 
 
 #if FEATURE_NV_vertex_program
+/**
+ * Set a vertex attribute array.
+ * Note that these arrays DO alias the conventional GL vertex arrays
+ * (position, normal, color, fog, texcoord, etc).
+ * The generic attribute slots at #16 and above are not touched.
+ */
 void GLAPIENTRY
 _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
                             GLsizei stride, const GLvoid *ptr)
 {
    GLboolean normalized = GL_FALSE;
    GLsizei elementSize;
+   GLenum format;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) {
+   if (index >= MAX_NV_VERTEX_PROGRAM_INPUTS) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerNV(index)");
       return;
    }
@@ -555,6 +551,21 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
    if (type == GL_UNSIGNED_BYTE && size != 4) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerNV(size!=4)");
       return;
+   }
+
+   if (size == GL_BGRA) {
+      if (type != GL_UNSIGNED_BYTE) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glVertexAttribPointerNV(GL_BGRA/type)");
+         return;
+      }
+
+      format = GL_BGRA;
+      size = 4;
+      normalized = GL_TRUE;
+   }
+   else {
+      format = GL_RGBA;
    }
 
    /* check for valid 'type' and compute StrideB right away */
@@ -579,7 +590,7 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
 
    update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
                 _NEW_ARRAY_ATTRIB(index),
-                elementSize, size, type, GL_RGBA, stride, normalized, ptr);
+                elementSize, size, type, format, stride, normalized, ptr);
 
    if (ctx->Driver.VertexAttribPointer)
       ctx->Driver.VertexAttribPointer( ctx, index, size, type, stride, ptr );
@@ -588,6 +599,11 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
 
 
 #if FEATURE_ARB_vertex_program
+/**
+ * Set a generic vertex attribute array.
+ * Note that these arrays DO NOT alias the conventional GL vertex arrays
+ * (position, normal, color, fog, texcoord, etc).
+ */
 void GLAPIENTRY
 _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
                              GLboolean normalized,
@@ -621,9 +637,14 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
                      "glVertexAttribPointerARB(GL_BGRA/type)");
          return;
       }
+      if (normalized != GL_TRUE) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glVertexAttribPointerARB(GL_BGRA/normalized)");
+         return;
+      }
+
       format = GL_BGRA;
       size = 4;
-      normalized = GL_TRUE;
    }
    else {
       format = GL_RGBA;
@@ -668,7 +689,7 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
 
    update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
                 _NEW_ARRAY_ATTRIB(index),
-                elementSize, size, type, GL_RGBA, stride, normalized, ptr);
+                elementSize, size, type, format, stride, normalized, ptr);
 
    if (ctx->Driver.VertexAttribPointer)
       ctx->Driver.VertexAttribPointer(ctx, index, size, type, stride, ptr);
@@ -1044,13 +1065,59 @@ _mesa_MultiModeDrawElementsIBM( const GLenum * mode, const GLsizei * count,
 
 
 /**
+ * Print vertex array's fields.
+ */
+static void
+print_array(const char *name, GLint index, const struct gl_client_array *array)
+{
+   if (index >= 0)
+      _mesa_printf("  %s[%d]: ", name, index);
+   else
+      _mesa_printf("  %s: ", name);
+   _mesa_printf("Ptr=%p, Type=0x%x, Size=%d, ElemSize=%u, Stride=%d, Buffer=%u(Size %u), MaxElem=%u\n",
+                array->Ptr, array->Type, array->Size,
+                array->_ElementSize, array->StrideB,
+                array->BufferObj->Name, array->BufferObj->Size,
+                array->_MaxElement);
+}
+
+
+/**
+ * Print current vertex object/array info.  For debug.
+ */
+void
+_mesa_print_arrays(GLcontext *ctx)
+{
+   struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
+   GLuint i;
+
+   _mesa_update_array_object_max_element(ctx, arrayObj);
+
+   _mesa_printf("Array Object %u\n", arrayObj->Name);
+   if (arrayObj->Vertex.Enabled)
+      print_array("Vertex", -1, &arrayObj->Vertex);
+   if (arrayObj->Normal.Enabled)
+      print_array("Normal", -1, &arrayObj->Normal);
+   if (arrayObj->Color.Enabled)
+      print_array("Color", -1, &arrayObj->Color);
+   for (i = 0; i < Elements(arrayObj->TexCoord); i++)
+      if (arrayObj->TexCoord[i].Enabled)
+         print_array("TexCoord", i, &arrayObj->TexCoord[i]);
+   for (i = 0; i < Elements(arrayObj->VertexAttrib); i++)
+      if (arrayObj->VertexAttrib[i].Enabled)
+         print_array("Attrib", i, &arrayObj->VertexAttrib[i]);
+   _mesa_printf("  _MaxElement = %u\n", arrayObj->_MaxElement);
+}
+
+
+/**
  * Initialize vertex array state for given context.
  */
 void 
 _mesa_init_varray(GLcontext *ctx)
 {
    ctx->Array.DefaultArrayObj = _mesa_new_array_object(ctx, 0);
-   ctx->Array.ArrayObj = ctx->Array.DefaultArrayObj;
-
+   _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj,
+                                ctx->Array.DefaultArrayObj);
    ctx->Array.ActiveTexture = 0;   /* GL_ARB_multitexture */
 }

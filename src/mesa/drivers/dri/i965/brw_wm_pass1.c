@@ -159,6 +159,7 @@ void brw_wm_pass1( struct brw_wm_compile *c )
       case OPCODE_FRC:
       case OPCODE_MOV:
       case OPCODE_SWZ:
+      case OPCODE_TRUNC:
 	 read0 = writemask;
 	 break;
 

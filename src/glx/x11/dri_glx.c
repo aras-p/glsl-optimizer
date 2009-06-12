@@ -40,6 +40,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "glxclient.h"
 #include "glcontextmodes.h"
 #include "xf86dri.h"
+#include "dri2.h"
 #include "sarea.h"
 #include <dlfcn.h>
 #include <sys/types.h>
@@ -75,32 +76,45 @@ struct __GLXDRIcontextPrivateRec {
  */
 static Bool driGetDriverName(Display *dpy, int scrNum, char **driverName)
 {
-   int directCapable;
-   Bool b;
-   int driverMajor, driverMinor, driverPatch;
+    int directCapable;
+    Bool b;
+    int event, error;
+    int driverMajor, driverMinor, driverPatch;
 
-   *driverName = NULL;
+    *driverName = NULL;
 
-   if (!XF86DRIQueryDirectRenderingCapable(dpy, scrNum, &directCapable)) {
-      ErrorMessageF("XF86DRIQueryDirectRenderingCapable failed\n");
-      return False;
-   }
-   if (!directCapable) {
-      ErrorMessageF("XF86DRIQueryDirectRenderingCapable returned false\n");
-      return False;
-   }
+    if (XF86DRIQueryExtension(dpy, &event, &error)) { /* DRI1 */
+	if (!XF86DRIQueryDirectRenderingCapable(dpy, scrNum, &directCapable)) {
+	    ErrorMessageF("XF86DRIQueryDirectRenderingCapable failed\n");
+	    return False;
+	}
+	if (!directCapable) {
+	    ErrorMessageF("XF86DRIQueryDirectRenderingCapable returned false\n");
+	    return False;
+	}
 
-   b = XF86DRIGetClientDriverName(dpy, scrNum, &driverMajor, &driverMinor,
-                                  &driverPatch, driverName);
-   if (!b) {
-      ErrorMessageF("Cannot determine driver name for screen %d\n", scrNum);
-      return False;
-   }
+	b = XF86DRIGetClientDriverName(dpy, scrNum, &driverMajor, &driverMinor,
+		&driverPatch, driverName);
+	if (!b) {
+	    ErrorMessageF("Cannot determine driver name for screen %d\n", scrNum);
+	    return False;
+	}
 
-   InfoMessageF("XF86DRIGetClientDriverName: %d.%d.%d %s (screen %d)\n",
-	     driverMajor, driverMinor, driverPatch, *driverName, scrNum);
+	InfoMessageF("XF86DRIGetClientDriverName: %d.%d.%d %s (screen %d)\n",
+		driverMajor, driverMinor, driverPatch, *driverName, scrNum);
 
-   return True;
+	return True;
+    } else if (DRI2QueryExtension(dpy, &event, &error)) { /* DRI2 */
+	char *dev;
+	Bool ret = DRI2Connect(dpy, RootWindow(dpy, scrNum), driverName, &dev);
+
+	if (ret)
+	    Xfree(dev);
+
+	return ret;
+    }
+
+    return False;
 }
 
 /*
@@ -600,7 +614,7 @@ static __GLXDRIscreen *driCreateScreen(__GLXscreenConfigs *psc, int screen,
     char *driverName;
     int i;
 
-    psp = Xmalloc(sizeof *psp);
+    psp = Xcalloc(1, sizeof *psp);
     if (psp == NULL)
 	return NULL;
 

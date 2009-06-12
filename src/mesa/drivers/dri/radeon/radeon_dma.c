@@ -164,7 +164,7 @@ void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 {
 
-	size = MAX2(size, MAX_DMA_BUF_SZ * 16);
+	size = MAX2(size, MAX_DMA_BUF_SZ);
 
 	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
 		fprintf(stderr, "%s\n", __FUNCTION__);
@@ -208,7 +208,13 @@ again_alloc:
 
 	if (radeon_revalidate_bos(rmesa->glCtx) == GL_FALSE)
 	  fprintf(stderr,"failure to revalidate BOs - badness\n");
-	  
+
+	if (!rmesa->dma.current) {
+        /* Cmd buff have been flushed in radeon_revalidate_bos */
+		rmesa->dma.nr_released_bufs = 0;
+		goto again_alloc;
+	}
+
 	radeon_bo_map(rmesa->dma.current, 1);
 }
 
@@ -325,6 +331,9 @@ void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
    radeonContextPtr radeon = RADEON_CONTEXT( ctx );
    int i;
 
+   if (radeon->dma.flush) {
+       radeon->dma.flush(radeon->glCtx);
+   }
    if (radeon->tcl.elt_dma_bo) {
 	   radeon_bo_unref(radeon->tcl.elt_dma_bo);
 	   radeon->tcl.elt_dma_bo = NULL;

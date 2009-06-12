@@ -170,7 +170,7 @@ _mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
          return;
       }
       /* restore */
-      ctx->DefaultPacking.BufferObj = ctx->Array.NullBufferObj;
+      ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
       buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                                               GL_READ_ONLY_ARB,
                                               ctx->Unpack.BufferObj);
@@ -229,7 +229,7 @@ _mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values )
          return;
       }
       /* restore */
-      ctx->DefaultPacking.BufferObj = ctx->Array.NullBufferObj;
+      ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
       buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                                               GL_READ_ONLY_ARB,
                                               ctx->Unpack.BufferObj);
@@ -303,7 +303,7 @@ _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
          return;
       }
       /* restore */
-      ctx->DefaultPacking.BufferObj = ctx->Array.NullBufferObj;
+      ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
       buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                                               GL_READ_ONLY_ARB,
                                               ctx->Unpack.BufferObj);
@@ -371,7 +371,7 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
          return;
       }
       /* restore */
-      ctx->DefaultPacking.BufferObj = ctx->Array.NullBufferObj;
+      ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
       buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
                                               GL_WRITE_ONLY_ARB,
                                               ctx->Pack.BufferObj);
@@ -432,7 +432,7 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
          return;
       }
       /* restore */
-      ctx->DefaultPacking.BufferObj = ctx->Array.NullBufferObj;
+      ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
       buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
                                               GL_WRITE_ONLY_ARB,
                                               ctx->Pack.BufferObj);
@@ -494,7 +494,7 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
          return;
       }
       /* restore */
-      ctx->DefaultPacking.BufferObj = ctx->Array.NullBufferObj;
+      ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
       buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
                                               GL_WRITE_ONLY_ARB,
                                               ctx->Pack.BufferObj);
@@ -819,7 +819,7 @@ update_image_transfer_state(GLcontext *ctx)
 
 
 /**
- * Update meas pixel transfer derived state.
+ * Update mesa pixel transfer derived state.
  */
 void _mesa_update_pixel( GLcontext *ctx, GLuint new_state )
 {

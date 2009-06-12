@@ -8,7 +8,6 @@ C_SOURCES = \
 	i915_clear.c \
 	i915_flush.c \
 	i915_context.c \
-	i915_context.c \
 	i915_debug.c \
 	i915_debug_fp.c \
 	i915_state.c \

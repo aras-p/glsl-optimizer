@@ -64,6 +64,30 @@ nv04_init_hwctx(struct nv04_context *nv04)
 	return TRUE;
 }
 
+static unsigned int
+nv04_is_texture_referenced( struct pipe_context *pipe,
+			    struct pipe_texture *texture,
+			    unsigned face, unsigned level)
+{
+   /**
+    * FIXME: Optimize.
+    */
+
+   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
+static unsigned int
+nv04_is_buffer_referenced( struct pipe_context *pipe,
+			   struct pipe_buffer *buf)
+{
+   /**
+    * FIXME: Optimize.
+    */
+
+   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
+
 struct pipe_context *
 nv04_create(struct pipe_screen *pscreen, unsigned pctx_id)
 {
@@ -88,6 +112,9 @@ nv04_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv04->pipe.draw_elements = nv04_draw_elements;
 	nv04->pipe.clear = nv04_clear;
 	nv04->pipe.flush = nv04_flush;
+
+	nv04->pipe.is_texture_referenced = nv04_is_texture_referenced;
+	nv04->pipe.is_buffer_referenced = nv04_is_buffer_referenced;
 
 	nv04_init_surface_functions(nv04);
 	nv04_init_state_functions(nv04);

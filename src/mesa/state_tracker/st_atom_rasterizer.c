@@ -180,22 +180,7 @@ static void update_raster_state( struct st_context *st )
 
    if (ctx->Polygon.StippleFlag)
       raster->poly_stipple_enable = 1;
-
-
-   /* _NEW_BUFFERS, _NEW_POLYGON
-    */
-   if (raster->fill_cw != PIPE_POLYGON_MODE_FILL ||
-       raster->fill_ccw != PIPE_POLYGON_MODE_FILL)
-   {
-      GLfloat mrd = (ctx->DrawBuffer ? 
-		     ctx->DrawBuffer->_MRD : 
-		     1.0f);
-
-      raster->offset_units = ctx->Polygon.OffsetFactor * mrd;
-      raster->offset_scale = (ctx->Polygon.OffsetUnits * mrd *
-			    st->polygon_offset_scale);
-   }
-      
+     
    /* _NEW_POINT
     */
    raster->point_size = ctx->Point.Size;
@@ -207,7 +192,8 @@ static void update_raster_state( struct st_context *st )
    raster->point_sprite = ctx->Point.PointSprite;
    for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
       if (ctx->Point.CoordReplace[i]) {
-         if (ctx->Point.SpriteOrigin == GL_UPPER_LEFT)
+         if ((ctx->Point.SpriteOrigin == GL_UPPER_LEFT) ^
+             (st_fb_orientation(ctx->DrawBuffer) == Y_0_BOTTOM))
             raster->sprite_coord_mode[i] = PIPE_SPRITE_COORD_UPPER_LEFT;
          else 
             raster->sprite_coord_mode[i] = PIPE_SPRITE_COORD_LOWER_LEFT;

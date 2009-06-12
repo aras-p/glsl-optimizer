@@ -27,6 +27,7 @@
 
 #include "util/u_hash_table.h"
 #include "util/u_memory.h"
+#include "util/u_simple_list.h"
 
 #include "tr_screen.h"
 #include "tr_texture.h"
@@ -53,6 +54,8 @@ trace_texture_create(struct trace_screen *tr_scr,
    tr_tex->base.screen = &tr_scr->base;
    tr_tex->texture = texture;
 
+   trace_screen_add_to_list(tr_scr, textures, tr_tex);
+
    return &tr_tex->base;
 
 error:
@@ -64,6 +67,10 @@ error:
 void
 trace_texture_destroy(struct trace_texture *tr_tex)
 {
+   struct trace_screen *tr_scr = trace_screen(tr_tex->base.screen);
+
+   trace_screen_remove_from_list(tr_scr, textures, tr_tex);
+
    pipe_texture_reference(&tr_tex->texture, NULL);
    FREE(tr_tex);
 }
@@ -73,6 +80,7 @@ struct pipe_surface *
 trace_surface_create(struct trace_texture *tr_tex,
                      struct pipe_surface *surface)
 {
+   struct trace_screen *tr_scr = trace_screen(tr_tex->base.screen);
    struct trace_surface *tr_surf;
 
    if(!surface)
@@ -91,6 +99,8 @@ trace_surface_create(struct trace_texture *tr_tex,
    pipe_texture_reference(&tr_surf->base.texture, &tr_tex->base);
    tr_surf->surface = surface;
 
+   trace_screen_add_to_list(tr_scr, surfaces, tr_surf);
+
    return &tr_surf->base;
 
 error:
@@ -102,6 +112,10 @@ error:
 void
 trace_surface_destroy(struct trace_surface *tr_surf)
 {
+   struct trace_screen *tr_scr = trace_screen(tr_surf->base.texture->screen);
+
+   trace_screen_remove_from_list(tr_scr, surfaces, tr_surf);
+
    pipe_texture_reference(&tr_surf->base.texture, NULL);
    pipe_surface_reference(&tr_surf->surface, NULL);
    FREE(tr_surf);
@@ -112,6 +126,7 @@ struct pipe_transfer *
 trace_transfer_create(struct trace_texture *tr_tex,
                      struct pipe_transfer *transfer)
 {
+   struct trace_screen *tr_scr = trace_screen(tr_tex->base.screen);
    struct trace_transfer *tr_trans;
 
    if(!transfer)
@@ -130,6 +145,8 @@ trace_transfer_create(struct trace_texture *tr_tex,
    tr_trans->transfer = transfer;
    assert(tr_trans->base.texture == &tr_tex->base);
 
+   trace_screen_add_to_list(tr_scr, transfers, tr_trans);
+
    return &tr_trans->base;
 
 error:
@@ -141,7 +158,11 @@ error:
 void
 trace_transfer_destroy(struct trace_transfer *tr_trans)
 {
+   struct trace_screen *tr_scr = trace_screen(tr_trans->base.texture->screen);
    struct pipe_screen *screen = tr_trans->transfer->texture->screen;
+
+   trace_screen_remove_from_list(tr_scr, transfers, tr_trans);
+
    pipe_texture_reference(&tr_trans->base.texture, NULL);
    screen->tex_transfer_destroy(tr_trans->transfer);
    FREE(tr_trans);

@@ -75,6 +75,11 @@ struct brw_vs_compile {
 
    struct brw_reg userplane[6];
 
+   /** we may need up to 3 constants per instruction (if use_const_buffer) */
+   struct {
+      GLint index;
+      struct brw_reg reg;
+   } current_const[3];
 };
 
 void brw_vs_emit( struct brw_vs_compile *c );

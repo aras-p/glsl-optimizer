@@ -57,7 +57,7 @@ static void r700UserClear(GLcontext *ctx, GLuint mask)
 void r700Clear(GLcontext * ctx, GLbitfield mask)
 {
     context_t *context = R700_CONTEXT(ctx);
-    __DRIdrawablePrivate *dPriv = context->radeon.dri.drawable;
+    __DRIdrawablePrivate *dPriv = radeon_get_drawable(&context->radeon);
     const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask);
     GLbitfield swrast_mask = 0, tri_mask = 0;
     int i;

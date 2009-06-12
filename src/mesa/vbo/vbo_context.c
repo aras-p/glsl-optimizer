@@ -28,6 +28,7 @@
 #include "main/imports.h"
 #include "main/mtypes.h"
 #include "main/api_arrayelt.h"
+#include "main/bufferobj.h"
 #include "math/m_eval.h"
 #include "vbo.h"
 #include "vbo_context.h"
@@ -81,7 +82,8 @@ static void init_legacy_currval(GLcontext *ctx)
       cl->Type = GL_FLOAT;
       cl->Format = GL_RGBA;
       cl->Ptr = (const void *)ctx->Current.Attrib[i];
-      cl->BufferObj = ctx->Array.NullBufferObj;
+      _mesa_reference_buffer_object(ctx, &cl->BufferObj,
+                                    ctx->Shared->NullBufferObj);
    }
 }
 
@@ -106,7 +108,8 @@ static void init_generic_currval(GLcontext *ctx)
       cl->Stride = 0;
       cl->StrideB = 0;
       cl->Enabled = 1;
-      cl->BufferObj = ctx->Array.NullBufferObj;
+      _mesa_reference_buffer_object(ctx, &cl->BufferObj,
+                                    ctx->Shared->NullBufferObj);
    }
 }
 
@@ -150,7 +153,7 @@ static void init_mat_currval(GLcontext *ctx)
       cl->Stride = 0;
       cl->StrideB = 0;
       cl->Enabled = 1;
-      cl->BufferObj = ctx->Array.NullBufferObj;
+      cl->BufferObj = ctx->Shared->NullBufferObj;
    }
 }
 
@@ -211,7 +214,7 @@ GLboolean _vbo_CreateContext( GLcontext *ctx )
       for (i = 0; i < 4; i++)
 	 vbo->map_vp_none[28+i] = i;	
       
-      for (i = 0; i < VERT_ATTRIB_MAX; i++)
+      for (i = 0; i < Elements(vbo->map_vp_arb); i++)
 	 vbo->map_vp_arb[i] = i;
    }
 

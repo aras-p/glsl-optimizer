@@ -22,7 +22,5 @@ GLUT_LIB_DEPS =
 GLW_LIB_DEPS = 
 
 # Need to specify all libraries we may need
-APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -Wl,--start-group \
-	-l$(GL_LIB) $(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a -Wl,--end-group -lm \
-	-L/usr/X11R6/lib/ -lX11 -lXext -lXmu -lXi -lpthread
-
+APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) \
+	-l$(GL_LIB) -lm -L/usr/X11R6/lib/ -lX11 -lXext -lXmu -lXi -lpthread

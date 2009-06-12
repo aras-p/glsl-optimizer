@@ -1,0 +1,16 @@
+Import('*')
+
+env = drienv.Clone()
+
+drivers = [
+    softpipe,
+    i915simple,
+    trace,
+    inteldrm
+]
+
+env.SharedLibrary(
+    target ='i915_dri.so',
+    source = COMMON_GALLIUM_SOURCES,
+    LIBS = drivers + mesa + auxiliaries + env['LIBS'],
+)

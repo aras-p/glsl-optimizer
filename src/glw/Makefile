@@ -33,7 +33,8 @@ pcedit = sed \
 	-e 's,@VERSION@,$(MAJOR).$(MINOR).$(TINY),' \
 	-e 's,@GLW_PC_REQ_PRIV@,$(GLW_PC_REQ_PRIV),' \
 	-e 's,@GLW_PC_LIB_PRIV@,$(GLW_PC_LIB_PRIV),' \
-	-e 's,@GLW_PC_CFLAGS@,$(GLW_PC_CFLAGS),'
+	-e 's,@GLW_PC_CFLAGS@,$(GLW_PC_CFLAGS),' \
+	-e 's,@GLW_LIB@,$(GLW_LIB),'
 glw.pc: glw.pc.in
 	$(pcedit) $< > $@
 
@@ -42,7 +43,7 @@ install: glw.pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 	$(INSTALL) -m 644 *.h $(DESTDIR)$(INSTALL_INC_DIR)/GL
-	$(INSTALL) $(TOP)/$(LIB_DIR)/$(GLW_LIB_GLOB) $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GLW_LIB_GLOB) $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 glw.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 clean:

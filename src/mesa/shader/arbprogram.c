@@ -74,8 +74,6 @@ _mesa_BindProgram(GLenum target, GLuint id)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
    /* Error-check target and get curProg */
    if ((target == GL_VERTEX_PROGRAM_ARB) && /* == GL_VERTEX_PROGRAM_NV */
         (ctx->Extensions.NV_vertex_program ||
@@ -131,6 +129,9 @@ _mesa_BindProgram(GLenum target, GLuint id)
       /* binding same program - no change */
       return;
    }
+
+   /* signal new program (and its new constants) */
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
 
    /* bind newProg */
    if (target == GL_VERTEX_PROGRAM_ARB) { /* == GL_VERTEX_PROGRAM_NV */
@@ -253,6 +254,8 @@ _mesa_EnableVertexAttribArrayARB(GLuint index)
       return;
    }
 
+   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
+
    FLUSH_VERTICES(ctx, _NEW_ARRAY);
    ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_TRUE;
    ctx->Array.ArrayObj->_Enabled |= _NEW_ARRAY_ATTRIB(index);
@@ -271,6 +274,8 @@ _mesa_DisableVertexAttribArrayARB(GLuint index)
                   "glEnableVertexAttribArrayARB(index)");
       return;
    }
+
+   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
 
    FLUSH_VERTICES(ctx, _NEW_ARRAY);
    ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_FALSE;
@@ -298,32 +303,41 @@ _mesa_GetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params)
 }
 
 
+/**
+ * Return info for a generic vertex attribute array (no alias with
+ * legacy vertex attributes (pos, normal, color, etc)).
+ */
 void GLAPIENTRY
 _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
 {
+   const struct gl_client_array *array;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) {
+   if (index >= MAX_VERTEX_GENERIC_ATTRIBS) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexAttribfvARB(index)");
       return;
    }
 
+   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
+
+   array = &ctx->Array.ArrayObj->VertexAttrib[index];
+
    switch (pname) {
       case GL_VERTEX_ATTRIB_ARRAY_ENABLED_ARB:
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Enabled;
+         params[0] = (GLfloat) array->Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_SIZE_ARB:
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Size;
+         params[0] = (GLfloat) array->Size;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_STRIDE_ARB:
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Stride;
+         params[0] = (GLfloat) array->Stride;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_TYPE_ARB:
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Type;
+         params[0] = (GLfloat) array->Type;
          break;
       case GL_VERTEX_ATTRIB_ARRAY_NORMALIZED_ARB:
-         params[0] = ctx->Array.ArrayObj->VertexAttrib[index].Normalized;
+         params[0] = array->Normalized;
          break;
       case GL_CURRENT_VERTEX_ATTRIB_ARB:
          if (index == 0) {
@@ -335,7 +349,7 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
          COPY_4V(params, ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index]);
          break;
       case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB:
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].BufferObj->Name;
+         params[0] = (GLfloat) array->BufferObj->Name;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribfvARB(pname)");
@@ -378,6 +392,8 @@ _mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer)
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribPointerARB(pname)");
       return;
    }
+
+   ASSERT(index < Elements(ctx->Array.ArrayObj->VertexAttrib));
 
    *pointer = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[index].Ptr;
 }
@@ -489,7 +505,7 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
    if (target == GL_FRAGMENT_PROGRAM_ARB
        && ctx->Extensions.ARB_fragment_program) {
@@ -537,7 +553,7 @@ _mesa_ProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
    GLfloat * dest;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
    if (count <= 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameters4fv(count)");
@@ -595,8 +611,6 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target == GL_FRAGMENT_PROGRAM_ARB
@@ -633,7 +647,7 @@ _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
    struct gl_program *prog;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
    if ((target == GL_FRAGMENT_PROGRAM_NV
         && ctx->Extensions.NV_fragment_program) ||
@@ -687,7 +701,7 @@ _mesa_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
    GLint i;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
    if (count <= 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameters4fv(count)");

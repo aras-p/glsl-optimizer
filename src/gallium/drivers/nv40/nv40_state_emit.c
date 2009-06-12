@@ -54,6 +54,7 @@ nv40_state_do_validate(struct nv40_context *nv40,
 void
 nv40_state_emit(struct nv40_context *nv40)
 {
+	struct nouveau_channel *chan = nv40->screen->base.channel;
 	struct nv40_state *state = &nv40->state;
 	struct nv40_screen *screen = nv40->screen;
 	unsigned i, samplers;
@@ -73,7 +74,7 @@ nv40_state_emit(struct nv40_context *nv40)
 			continue;
 		so_ref (state->hw[i], &nv40->screen->state[i]);
 		if (state->hw[i])
-			so_emit(nv40->nvws, nv40->screen->state[i]);
+			so_emit(chan, nv40->screen->state[i]);
 		states &= ~(1ULL << i);
 	}
 
@@ -87,17 +88,17 @@ nv40_state_emit(struct nv40_context *nv40)
 
 	state->dirty = 0;
 
-	so_emit_reloc_markers(nv40->nvws, state->hw[NV40_STATE_FB]);
+	so_emit_reloc_markers(chan, state->hw[NV40_STATE_FB]);
 	for (i = 0, samplers = state->fp_samplers; i < 16 && samplers; i++) {
 		if (!(samplers & (1 << i)))
 			continue;
-		so_emit_reloc_markers(nv40->nvws,
+		so_emit_reloc_markers(chan,
 				      state->hw[NV40_STATE_FRAGTEX0+i]);
 		samplers &= ~(1ULL << i);
 	}
-	so_emit_reloc_markers(nv40->nvws, state->hw[NV40_STATE_FRAGPROG]);
+	so_emit_reloc_markers(chan, state->hw[NV40_STATE_FRAGPROG]);
 	if (state->hw[NV40_STATE_VTXBUF] && nv40->render_mode == HW)
-		so_emit_reloc_markers(nv40->nvws, state->hw[NV40_STATE_VTXBUF]);
+		so_emit_reloc_markers(chan, state->hw[NV40_STATE_VTXBUF]);
 }
 
 boolean

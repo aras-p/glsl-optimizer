@@ -1,18 +1,9 @@
-/**
- * \file varray.h
- * Vertex arrays.
- *
- * \if subset
- * (No-op)
- *
- * \endif
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  7.6
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -169,6 +160,8 @@ _mesa_DrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count,
                         GLenum type, const GLvoid *indices);
 
 
+extern void
+_mesa_print_arrays(GLcontext *ctx);
 
 extern void
 _mesa_init_varray( GLcontext * ctx );

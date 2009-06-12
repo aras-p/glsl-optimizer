@@ -32,4 +32,6 @@
 
 #endif
 
+void r300SetupVertexProgram(r300ContextPtr rmesa);
+
 #endif

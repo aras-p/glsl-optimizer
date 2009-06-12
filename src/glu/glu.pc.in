@@ -8,6 +8,6 @@ Description: Mesa OpenGL Utility library
 Requires: @GLU_PC_REQ@
 Requires.private: @GLU_PC_REQ_PRIV@
 Version: @VERSION@
-Libs: -L${libdir} -lGLU
+Libs: -L${libdir} -l@GLU_LIB@
 Libs.private: @GLU_PC_LIB_PRIV@
 Cflags: -I${includedir} @GLU_PC_CFLAGS@

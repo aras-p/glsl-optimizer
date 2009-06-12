@@ -127,7 +127,7 @@ TAG(clip_line)( GLcontext *ctx, GLuint v0, GLuint v1, GLubyte mask )
    GLuint p;
    const GLuint v0_orig = v0;
 
-   if (mask & 0x3f) {
+   if (mask & CLIP_FRUSTUM_BITS) {
       LINE_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
       LINE_CLIP( CLIP_LEFT_BIT,    1,  0,  0, 1 );
       LINE_CLIP( CLIP_TOP_BIT,     0, -1,  0, 1 );
@@ -199,7 +199,24 @@ TAG(clip_tri)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask )
 
    ASSIGN_3V(inlist, v2, v0, v1 ); /* pv rotated to slot zero */
 
-   if (mask & 0x3f) {
+   if (0) {
+      /* print pre-clip vertex coords */
+      GLuint i, j;
+      _mesa_printf("pre clip:\n");
+      for (i = 0; i < n; i++) {
+         j = inlist[i];
+         _mesa_printf("  %u: %u: %f, %f, %f, %f\n",
+                      i, j,
+                      coord[j][0], coord[j][1], coord[j][2], coord[j][3]);
+         assert(!IS_INF_OR_NAN(coord[j][0]));
+         assert(!IS_INF_OR_NAN(coord[j][1]));
+         assert(!IS_INF_OR_NAN(coord[j][2]));
+         assert(!IS_INF_OR_NAN(coord[j][3]));
+      }
+   }
+
+
+   if (mask & CLIP_FRUSTUM_BITS) {
       POLY_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
       POLY_CLIP( CLIP_LEFT_BIT,    1,  0,  0, 1 );
       POLY_CLIP( CLIP_TOP_BIT,     0, -1,  0, 1 );
@@ -227,6 +244,18 @@ TAG(clip_tri)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask )
       }
    }
 
+   if (0) {
+      /* print post-clip vertex coords */
+      GLuint i, j;
+      _mesa_printf("post clip:\n");
+      for (i = 0; i < n; i++) {
+         j = inlist[i];
+         _mesa_printf("  %u: %u: %f, %f, %f, %f\n",
+                      i, j,
+                      coord[j][0], coord[j][1], coord[j][2], coord[j][3]);
+      }
+   }
+
    tnl->Driver.Render.ClippedPolygon( ctx, inlist, n );
 }
 
@@ -250,7 +279,7 @@ TAG(clip_quad)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
 
    ASSIGN_4V(inlist, v3, v0, v1, v2 ); /* pv rotated to slot zero */
 
-   if (mask & 0x3f) {
+   if (mask & CLIP_FRUSTUM_BITS) {
       POLY_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
       POLY_CLIP( CLIP_LEFT_BIT,    1,  0,  0, 1 );
       POLY_CLIP( CLIP_TOP_BIT,     0, -1,  0, 1 );

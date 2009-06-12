@@ -5,10 +5,12 @@ bounce
 clearspd
 copypix
 cubemap
+dinoshade
 drawpix
 engine
 extfuncs.h
 fbo_firecube
+fbotexture
 fire
 fogcoord
 fplight
@@ -27,11 +29,9 @@ isosurf
 lodbias
 morph3d
 multiarb
-occlude
-osdemo
 paltex
-pixeltex
 pointblast
+projtex
 rain
 ray
 readpix
@@ -61,4 +61,5 @@ trispd
 tunnel
 tunnel2
 vao_demo
+Windows
 winpos

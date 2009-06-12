@@ -23,15 +23,13 @@
 
 #include "r300_surface.h"
 
-static void r300_surface_setup(struct pipe_context* pipe,
-                               struct pipe_surface* dest,
+static void r300_surface_setup(struct r300_context* r300,
+                               struct r300_texture* dest,
                                unsigned x, unsigned y,
                                unsigned w, unsigned h)
 {
-    struct r300_context* r300 = r300_context(pipe);
-    struct r300_capabilities* caps = r300_screen(pipe->screen)->caps;
-    struct r300_texture* tex = (struct r300_texture*)dest->texture;
-    unsigned pixpitch = tex->stride / tex->tex.block.size;
+    struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
+    unsigned pixpitch = dest->stride / dest->tex.block.size;
     CS_LOCALS(r300);
 
     r300_emit_blend_state(r300, &blend_clear_state);
@@ -39,7 +37,22 @@ static void r300_surface_setup(struct pipe_context* pipe,
     r300_emit_dsa_state(r300, &dsa_clear_state);
     r300_emit_rs_state(r300, &rs_clear_state);
 
-    BEGIN_CS(15);
+    BEGIN_CS(24);
+
+    /* Viewport setup */
+    OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
+    OUT_CS_32F((float)w);
+    OUT_CS_32F((float)x);
+    OUT_CS_32F((float)h);
+    OUT_CS_32F((float)y);
+    OUT_CS_32F(1.0);
+    OUT_CS_32F(0.0);
+
+    OUT_CS_REG(R300_VAP_VTE_CNTL, R300_VPORT_X_SCALE_ENA |
+            R300_VPORT_X_OFFSET_ENA |
+            R300_VPORT_Y_SCALE_ENA |
+            R300_VPORT_Y_OFFSET_ENA |
+            R300_VTX_XY_FMT | R300_VTX_Z_FMT);
 
     /* Pixel scissors. */
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
@@ -64,9 +77,9 @@ static void r300_surface_setup(struct pipe_context* pipe,
 
     /* Setup colorbuffer. */
     OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0, 1);
-    OUT_CS_RELOC(tex->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+    OUT_CS_RELOC(dest->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
     OUT_CS_REG(R300_RB3D_COLORPITCH0, pixpitch |
-        r300_translate_colorformat(tex->tex.format));
+        r300_translate_colorformat(dest->tex.format));
     OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0xf);
 
     END_CS;
@@ -86,6 +99,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     struct r300_capabilities* caps = r300_screen(pipe->screen)->caps;
     struct r300_texture* tex = (struct r300_texture*)dest->texture;
     unsigned pixpitch = tex->stride / tex->tex.block.size;
+    boolean invalid = FALSE;
     CS_LOCALS(r300);
 
     a = (float)((color >> 24) & 0xff) / 255.0f;
@@ -98,12 +112,29 @@ static void r300_surface_fill(struct pipe_context* pipe,
 
     /* Fallback? */
     if (FALSE) {
+fallback:
         debug_printf("r300: Falling back on surface clear...");
         util_surface_fill(pipe, dest, x, y, w, h, color);
         return;
     }
 
-    r300_surface_setup(r300, dest, x, y, w, h);
+    /* Make sure our target BO is okay. */
+validate:
+    if (!r300->winsys->add_buffer(r300->winsys, tex->buffer,
+                0, RADEON_GEM_DOMAIN_VRAM)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        goto validate;
+    }
+    if (r300->winsys->validate(r300->winsys)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        if (invalid) {
+            goto fallback;
+        }
+        invalid = TRUE;
+        goto validate;
+    }
+
+    r300_surface_setup(r300, tex, x, y, w, h);
 
     /* Vertex shader setup */
     if (caps->has_tcl) {
@@ -127,7 +158,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         r300_emit_rs_block_state(r300, &r300_rs_block_clear_state);
     }
 
-    BEGIN_CS(31);
+    BEGIN_CS(26);
 
     /* VAP stream control, mapping from input memory to PVS/RS memory */
     if (caps->has_tcl) {
@@ -154,27 +185,21 @@ static void r300_surface_fill(struct pipe_context* pipe,
     /* Disable textures */
     OUT_CS_REG(R300_TX_ENABLE, 0x0);
 
-    /* Viewport setup */
-    OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
-    OUT_CS_32F(1.0);
-    OUT_CS_32F((float)x);
-    OUT_CS_32F(1.0);
-    OUT_CS_32F((float)y);
-    OUT_CS_32F(1.0);
-    OUT_CS_32F(0.0);
-
     /* The size of the point we're about to draw, in sixths of pixels */
     OUT_CS_REG(R300_GA_POINT_SIZE,
-        ((h * 6) & R300_POINTSIZE_Y_MASK) |
+        ((h * 6)  & R300_POINTSIZE_Y_MASK) |
         ((w * 6) << R300_POINTSIZE_X_SHIFT));
+
+    /* Vertex size. */
+    OUT_CS_REG(R300_VAP_VTX_SIZE, 0x8);
 
     /* Packet3 with our point vertex */
     OUT_CS_PKT3(R200_3D_DRAW_IMMD_2, 8);
     OUT_CS(R300_PRIM_TYPE_POINT | R300_PRIM_WALK_RING |
             (1 << R300_PRIM_NUM_VERTICES_SHIFT));
     /* Position */
-    OUT_CS_32F(w / 2.0);
-    OUT_CS_32F(h / 2.0);
+    OUT_CS_32F(0.5);
+    OUT_CS_32F(0.5);
     OUT_CS_32F(1.0);
     OUT_CS_32F(1.0);
     /* Color */
@@ -183,11 +208,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_32F(b);
     OUT_CS_32F(a);
 
-    /* XXX figure out why this is 0xA and not 0x2 */
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT, 0xA);
-    /* XXX OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
-        R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
-        R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE); */
 
     END_CS;
 
@@ -206,6 +227,7 @@ static void r300_surface_copy(struct pipe_context* pipe,
     struct r300_texture* srctex = (struct r300_texture*)src->texture;
     struct r300_texture* desttex = (struct r300_texture*)dest->texture;
     unsigned pixpitch = srctex->stride / srctex->tex.block.size;
+    boolean invalid = FALSE;
     CS_LOCALS(r300);
 
     debug_printf("r300: Copying surface %p at (%d,%d) to %p at (%d, %d),"
@@ -215,18 +237,48 @@ static void r300_surface_copy(struct pipe_context* pipe,
     if ((srctex == desttex) &&
             ((destx < srcx + w) || (srcx < destx + w)) &&
             ((desty < srcy + h) || (srcy < desty + h))) {
+fallback:
         debug_printf("r300: Falling back on surface_copy\n");
         util_surface_copy(pipe, FALSE, dest, destx, desty, src,
                 srcx, srcy, w, h);
     }
 
+    /* Add our target BOs to the list. */
+validate:
+    if (!r300->winsys->add_buffer(r300->winsys, srctex->buffer,
+                RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        goto validate;
+    }
+    if (!r300->winsys->add_buffer(r300->winsys, desttex->buffer,
+                0, RADEON_GEM_DOMAIN_VRAM)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        goto validate;
+    }
+    if (r300->winsys->validate(r300->winsys)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        if (invalid) {
+            goto fallback;
+        }
+        invalid = TRUE;
+        goto validate;
+    }
+
+    r300_surface_setup(r300, desttex, destx, desty, w, h);
+
+    /* Setup the texture. */
     r300_emit_sampler(r300, &r300_sampler_copy_state, 0);
     r300_emit_texture(r300, srctex, 0);
-    r300_flush_textures(r300);
+
+    /* Flush and enable. */
+    BEGIN_CS(4);
+    OUT_CS_REG(R300_TX_INVALTAGS, 0);
+    OUT_CS_REG(R300_TX_ENABLE, 0x1);
+    END_CS;
 
     /* Vertex shader setup */
     if (caps->has_tcl) {
-        r300_emit_vertex_shader(r300, &r300_texture_vertex_shader);
+        r300_emit_vertex_shader(r300, &r300_passthrough_vertex_shader);
     } else {
         BEGIN_CS(4);
         OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VAP_TCL_BYPASS);
@@ -246,6 +298,7 @@ static void r300_surface_copy(struct pipe_context* pipe,
         r300_emit_rs_block_state(r300, &r300_rs_block_copy_state);
     }
 
+    BEGIN_CS(30);
     /* VAP stream control, mapping from input memory to PVS/RS memory */
     if (caps->has_tcl) {
         OUT_CS_REG(R300_VAP_PROG_STREAM_CNTL_0,
@@ -268,32 +321,37 @@ static void r300_surface_copy(struct pipe_context* pipe,
     /* Two components of texture 0 */
     OUT_CS_REG(R300_VAP_OUTPUT_VTX_FMT_1, 0x2);
 
+    /* Vertex size. */
+    OUT_CS_REG(R300_VAP_VTX_SIZE, 0x4);
+
     /* Packet3 with our texcoords */
-    OUT_CS_PKT3(R200_3D_DRAW_IMMD_2, 8);
+    OUT_CS_PKT3(R200_3D_DRAW_IMMD_2, 16);
     OUT_CS(R300_PRIM_TYPE_QUADS | R300_PRIM_WALK_RING |
             (4 << R300_PRIM_NUM_VERTICES_SHIFT));
     /* (x    , y    ) */
-    OUT_CS_32F((float)destx);
-    OUT_CS_32F((float)desty);
-    OUT_CS_32F((float)srcx);
-    OUT_CS_32F((float)srcy);
+    OUT_CS_32F((float)(destx / dest->width));
+    OUT_CS_32F((float)(desty / dest->height));
+    OUT_CS_32F((float)(srcx  / dest->width));
+    OUT_CS_32F((float)(srcy  / dest->height));
     /* (x    , y + h) */
-    OUT_CS_32F((float)destx);
-    OUT_CS_32F((float)(desty + h));
-    OUT_CS_32F((float)srcx);
-    OUT_CS_32F((float)(srcy + h));
+    OUT_CS_32F((float)(destx / dest->width));
+    OUT_CS_32F((float)((desty + h) / dest->height));
+    OUT_CS_32F((float)(srcx  / dest->width));
+    OUT_CS_32F((float)((srcy  + h) / dest->height));
     /* (x + w, y + h) */
-    OUT_CS_32F((float)(destx + w));
-    OUT_CS_32F((float)(desty + h));
-    OUT_CS_32F((float)(srcx + w));
-    OUT_CS_32F((float)(srcy + h));
+    OUT_CS_32F((float)((destx + w) / dest->width));
+    OUT_CS_32F((float)((desty + h) / dest->height));
+    OUT_CS_32F((float)((srcx  + w) / dest->width));
+    OUT_CS_32F((float)((srcy  + h) / dest->height));
     /* (x + w, y    ) */
-    OUT_CS_32F((float)(destx + w));
-    OUT_CS_32F((float)desty);
-    OUT_CS_32F((float)(srcx + w));
-    OUT_CS_32F((float)srcy);
+    OUT_CS_32F((float)((destx + w) / dest->width));
+    OUT_CS_32F((float)(desty / dest->height));
+    OUT_CS_32F((float)((srcx  + w) / dest->width));
+    OUT_CS_32F((float)(srcy  / dest->height));
 
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT, 0xA);
+
+    END_CS;
 
     r300->dirty_hw++;
 }

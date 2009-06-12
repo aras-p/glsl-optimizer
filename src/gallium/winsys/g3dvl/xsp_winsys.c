@@ -261,7 +261,7 @@ struct pipe_context* create_pipe_context(Display *display, int screen)
 	}
 
 	sp_screen = softpipe_create_screen((struct pipe_winsys*)xsp_winsys);
-	sp_pipe = softpipe_create(sp_screen, (struct pipe_winsys*)xsp_winsys, NULL);
+	sp_pipe = softpipe_create(sp_screen);
 
 	xsp_context = calloc(1, sizeof(struct xsp_context));
 	xsp_context->display = display;

@@ -189,6 +189,19 @@
 
 #define S7_DEPTH_OFFSET_CONST_MASK     ~0
 
+/* p143 */
+#define _3DSTATE_BUF_INFO_CMD	(CMD_3D | (0x1d<<24) | (0x8e<<16) | 1)
+/* Dword 1 */
+#define BUF_3D_ID_COLOR_BACK	(0x3<<24)
+#define BUF_3D_ID_DEPTH 	(0x7<<24)
+#define BUF_3D_USE_FENCE	(1<<23)
+#define BUF_3D_TILED_SURFACE	(1<<22)
+#define BUF_3D_TILE_WALK_X	0
+#define BUF_3D_TILE_WALK_Y	(1<<21)
+#define BUF_3D_PITCH(x)         (((x)/4)<<2)
+/* Dword 2 */
+#define BUF_3D_ADDR(x)		((x) & ~0x3)
+
 /* Primitive dispatch on 830-945 */
 #define _3DPRIMITIVE			(CMD_3D | (0x1f << 24))
 #define PRIM_INDIRECT            (1<<23)

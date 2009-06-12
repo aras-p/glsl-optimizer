@@ -37,6 +37,8 @@ BOOL stw_copy_context( UINT_PTR hglrcSrc,
 UINT_PTR stw_create_layer_context( HDC hdc, 
                                    int iLayerPlane );
 
+BOOL stw_share_lists( UINT_PTR hglrc1, UINT_PTR hglrc2 );
+
 BOOL stw_delete_context( UINT_PTR hglrc );
 
 BOOL
@@ -49,6 +51,9 @@ HDC stw_get_current_dc( void );
 BOOL stw_make_current( HDC hdc, UINT_PTR hglrc );
 
 BOOL stw_swap_buffers( HDC hdc );
+
+BOOL
+stw_swap_layer_buffers( HDC hdc, UINT fuPlanes );
 
 PROC stw_get_proc_address( LPCSTR lpszProc );
 

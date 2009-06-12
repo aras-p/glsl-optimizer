@@ -117,17 +117,17 @@ struct radeon_framebuffer
 
 };
 
- 
+
 struct radeon_colorbuffer_state {
 	GLuint clear;
 	int roundEnable;
-	struct radeon_renderbuffer *rrb;
+	struct gl_renderbuffer *rb;
 	uint32_t draw_offset; /* offset into color renderbuffer - FBOs */
 };
 
 struct radeon_depthbuffer_state {
 	GLuint clear;
-	struct radeon_renderbuffer *rrb;
+	struct gl_renderbuffer *rb;
 };
 
 struct radeon_scissor_state {
@@ -346,16 +346,6 @@ struct radeon_dri_mirror {
 	__DRIcontextPrivate *context;	/* DRI context */
 	__DRIscreenPrivate *screen;	/* DRI screen */
 
-   /**
-    * DRI drawable bound to this context for drawing.
-    */
-	__DRIdrawablePrivate *drawable;
-
-   /**
-    * DRI drawable bound to this context for reading.
-    */
-	__DRIdrawablePrivate *readable;
-
 	drm_context_t hwContext;
 	drm_hw_lock_t *hwLock;
 	int fd;
@@ -388,7 +378,7 @@ typedef void (*radeon_line_func) (radeonContextPtr,
 
 typedef void (*radeon_point_func) (radeonContextPtr, radeonVertex *);
 
-#define RADEON_MAX_BOS 24
+#define RADEON_MAX_BOS 32
 struct radeon_state {
 	struct radeon_colorbuffer_state color;
 	struct radeon_depthbuffer_state depth;
@@ -416,11 +406,12 @@ struct radeon_cmdbuf {
 struct radeon_context {
    GLcontext *glCtx;
    radeonScreenPtr radeonScreen;	/* Screen private DRI data */
-  
+
    /* Texture object bookkeeping
     */
    int                   texture_depth;
    float                 initialMaxAnisotropy;
+   uint32_t              texture_row_align;
 
   struct radeon_dma dma;
   struct radeon_hw_state hw;
@@ -457,10 +448,26 @@ struct radeon_context {
    driOptionCache optionCache;
 
    struct radeon_cmdbuf cmdbuf;
-	
+
   drm_clip_rect_t fboRect;
   GLboolean constant_cliprect; /* use for FBO or DRI2 rendering */
   GLboolean front_cliprects;
+
+   /**
+    * Set if rendering has occured to the drawable's front buffer.
+    *
+    * This is used in the DRI2 case to detect that glFlush should also copy
+    * the contents of the fake front buffer to the real front buffer.
+    */
+   GLboolean front_buffer_dirty;
+
+   /**
+    * Track whether front-buffer rendering is currently enabled
+    *
+    * A separate flag is used to track this in order to support MRT more
+    * easily.
+    */
+   GLboolean is_front_buffer_rendering;
 
   struct {
       struct gl_fragment_program *bitmap_fp;
@@ -489,6 +496,17 @@ struct radeon_context {
 };
 
 #define RADEON_CONTEXT(glctx) ((radeonContextPtr)(ctx->DriverCtx))
+
+static inline __DRIdrawablePrivate* radeon_get_drawable(radeonContextPtr radeon)
+{
+	return radeon->dri.context->driDrawablePriv;
+}
+
+static inline __DRIdrawablePrivate* radeon_get_readable(radeonContextPtr radeon)
+{
+	return radeon->dri.context->driReadablePriv;
+}
+
 
 /**
  * This function takes a float and packs it into a uint32_t

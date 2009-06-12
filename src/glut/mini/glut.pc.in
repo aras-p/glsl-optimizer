@@ -8,6 +8,6 @@ Description: Mesa OpenGL Utility Toolkit library
 Requires: gl glu
 Requires.private: @GLUT_PC_REQ_PRIV@
 Version: @VERSION@
-Libs: -L${libdir} -lglut
+Libs: -L${libdir} -l@GLUT_LIB@
 Libs.private: @GLUT_PC_LIB_PRIV@
 Cflags: -I${includedir} @GLUT_PC_CFLAGS@

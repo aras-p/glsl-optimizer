@@ -295,12 +295,16 @@ VP_CHECK( tcl_vpp_size, ctx->VertexProgram.Current->Base.NumNativeParameters > 9
     h.i = hdr;								\
     _start = h.veclinear.addr_lo | (h.veclinear.addr_hi << 8);		\
     _sz = h.veclinear.count * 4;					\
+    if (r200->radeon.radeonScreen->kernel_mm && _sz) { \
+    BEGIN_BATCH_NO_AUTOSTATE(dwords); \
     OUT_BATCH(CP_PACKET0(RADEON_SE_TCL_STATE_FLUSH, 0));		\
     OUT_BATCH(0);							\
     OUT_BATCH(CP_PACKET0(R200_SE_TCL_VECTOR_INDX_REG, 0));		\
     OUT_BATCH(_start | (1 << RADEON_VEC_INDX_OCTWORD_STRIDE_SHIFT));	\
     OUT_BATCH(CP_PACKET0_ONE(R200_SE_TCL_VECTOR_DATA_REG, _sz - 1));	\
     OUT_BATCH_TABLE((data), _sz);					\
+    END_BATCH(); \
+    } \
   } while(0)
 
 #define OUT_SCL(hdr, data) do {					\
@@ -367,9 +371,7 @@ static void veclinear_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    uint32_t dwords = atom->cmd_size;
 
    dwords += 4;
-   BEGIN_BATCH_NO_AUTOSTATE(dwords);
    OUT_VECLINEAR(atom->cmd[0], atom->cmd+1);
-   END_BATCH();
 }
 
 static void scl_emit(GLcontext *ctx, struct radeon_state_atom *atom)
@@ -505,6 +507,8 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
      dwords += 6;
    if (rrb)
      dwords += 6;
+   if (atom->cmd_size == CTX_STATE_SIZE_NEWDRM)
+     dwords += 4;
 
    /* output the first 7 bytes of context */
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
@@ -555,17 +559,12 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    if (t && t->mt && !t->image_override)
      dwords += 2;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   /* is this ok even with drm older than 1.18? */
    OUT_BATCH_TABLE(atom->cmd, 10);
 
    if (t && t->mt && !t->image_override) {
-     if ((ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT)) {
-   	lvl = &t->mt->levels[0];
-	OUT_BATCH_RELOC(lvl->faces[5].offset, t->mt->bo, lvl->faces[5].offset,
-			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-     } else {
-        OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
-		     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-     }
+     OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+		  RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
    } else if (!t) {
      /* workaround for old CS mechanism */
      OUT_BATCH(r200->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP]);
@@ -593,27 +592,20 @@ static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
 		hastexture = 0;
    }
 
-   dwords += 2;
    if (hastexture)
      dwords += 2;
    else
      dwords -= 2;
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
 
-   OUT_BATCH(CP_PACKET0(R200_PP_TXFILTER_0 + (24 * i), 7));
+   OUT_BATCH(CP_PACKET0(R200_PP_TXFILTER_0 + (32 * i), 7));
    OUT_BATCH_TABLE((atom->cmd + 1), 8);
 
    if (hastexture) {
      OUT_BATCH(CP_PACKET0(R200_PP_TXOFFSET_0 + (24 * i), 0));
      if (t->mt && !t->image_override) {
-        if ((ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT)) {
-            lvl = &t->mt->levels[0];
-	    OUT_BATCH_RELOC(lvl->faces[5].offset, t->mt->bo, lvl->faces[5].offset,
-			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-        } else {
-           OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
-		     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
-        }
+        OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+		  RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
       } else {
 	if (t->bo)
             OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
@@ -628,21 +620,21 @@ static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 {
    r200ContextPtr r200 = R200_CONTEXT(ctx);
    BATCH_LOCALS(&r200->radeon);
-   uint32_t dwords = atom->cmd_size;
-   int i = atom->idx;
+   uint32_t dwords = 2;
+   int i = atom->idx, j;
    radeonTexObj *t = r200->state.texture.unit[i].texobj;
-   GLuint size;
+   radeon_mipmap_level *lvl;
 
-   BEGIN_BATCH_NO_AUTOSTATE(dwords + (2 * 5));
-   OUT_BATCH_TABLE(atom->cmd, 3);
+   BEGIN_BATCH_NO_AUTOSTATE(dwords + (4 * 5));
+   OUT_BATCH_TABLE(atom->cmd, 2);
 
    if (t && !t->image_override) {
-     size = t->mt->totalsize / 6;
-     OUT_BATCH_RELOC(0, t->mt->bo, size, RADEON_GEM_DOMAIN_VRAM, 0, 0);
-     OUT_BATCH_RELOC(0, t->mt->bo, size * 2, RADEON_GEM_DOMAIN_VRAM, 0, 0);
-     OUT_BATCH_RELOC(0, t->mt->bo, size * 3, RADEON_GEM_DOMAIN_VRAM, 0, 0);
-     OUT_BATCH_RELOC(0, t->mt->bo, size * 4, RADEON_GEM_DOMAIN_VRAM, 0, 0);
-     OUT_BATCH_RELOC(0, t->mt->bo, size * 5, RADEON_GEM_DOMAIN_VRAM, 0, 0);
+     lvl = &t->mt->levels[0];
+     for (j = 1; j <= 5; j++) {
+       OUT_BATCH(CP_PACKET0(R200_PP_CUBIC_OFFSET_F1_0 + (24*i) + (4 * (j-1)), 0));
+       OUT_BATCH_RELOC(lvl->faces[j].offset, t->mt->bo, lvl->faces[j].offset,
+			RADEON_GEM_DOMAIN_VRAM, 0, 0);
+     }
    }
    END_BATCH();
 }

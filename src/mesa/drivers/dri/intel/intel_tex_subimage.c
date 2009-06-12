@@ -101,11 +101,6 @@ intelTexSubimage(GLcontext * ctx,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
    }
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      intel_generate_mipmap(ctx, target, texObj);
-   }
-
    _mesa_unmap_teximage_pbo(ctx, packing);
 
    if (intelImage->mt) {
@@ -114,13 +109,15 @@ intelTexSubimage(GLcontext * ctx,
    }
 
    UNLOCK_HARDWARE(intel);
+
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      intel_generate_mipmap(ctx, target, texObj);
+   }
 }
 
 
-
-
-
-void
+static void
 intelTexSubImage3D(GLcontext * ctx,
                    GLenum target,
                    GLint level,
@@ -132,18 +129,15 @@ intelTexSubImage3D(GLcontext * ctx,
                    struct gl_texture_object *texObj,
                    struct gl_texture_image *texImage)
 {
-
    intelTexSubimage(ctx, 3,
                     target, level,
                     xoffset, yoffset, zoffset,
                     width, height, depth,
                     format, type, pixels, packing, texObj, texImage);
-
 }
 
 
-
-void
+static void
 intelTexSubImage2D(GLcontext * ctx,
                    GLenum target,
                    GLint level,
@@ -155,17 +149,15 @@ intelTexSubImage2D(GLcontext * ctx,
                    struct gl_texture_object *texObj,
                    struct gl_texture_image *texImage)
 {
-
    intelTexSubimage(ctx, 2,
                     target, level,
                     xoffset, yoffset, 0,
                     width, height, 1,
                     format, type, pixels, packing, texObj, texImage);
-
 }
 
 
-void
+static void
 intelTexSubImage1D(GLcontext * ctx,
                    GLenum target,
                    GLint level,
@@ -182,10 +174,9 @@ intelTexSubImage1D(GLcontext * ctx,
                     xoffset, 0, 0,
                     width, 1, 1,
                     format, type, pixels, packing, texObj, texImage);
-
 }
 
-void
+static void
 intelCompressedTexSubImage2D(GLcontext * ctx,
 			     GLenum target,
 			     GLint level,
@@ -198,4 +189,15 @@ intelCompressedTexSubImage2D(GLcontext * ctx,
 {
    fprintf(stderr, "stubbed CompressedTexSubImage2D: %dx%d@%dx%d\n",
 	   width, height, xoffset, yoffset);
+}
+
+
+
+void
+intelInitTextureSubImageFuncs(struct dd_function_table *functions)
+{
+   functions->TexSubImage1D = intelTexSubImage1D;
+   functions->TexSubImage2D = intelTexSubImage2D;
+   functions->TexSubImage3D = intelTexSubImage3D;
+   functions->CompressedTexSubImage2D = intelCompressedTexSubImage2D;
 }

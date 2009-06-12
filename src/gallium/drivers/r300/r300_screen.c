@@ -87,23 +87,25 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
             } else {
                 return 0;
             }
-            return 0;
         case PIPE_CAP_GLSL:
-            /* IN THEORY */
-            return 0;
+            if (r300screen->caps->is_r500) {
+                return 1;
+            } else {
+                return 0;
+            }
         case PIPE_CAP_S3TC:
             /* IN THEORY */
             return 0;
         case PIPE_CAP_ANISOTROPIC_FILTER:
-            /* IN THEORY */
-            return 0;
+            return 1;
         case PIPE_CAP_POINT_SPRITE:
             /* IN THEORY */
             return 0;
         case PIPE_CAP_MAX_RENDER_TARGETS:
             return 4;
         case PIPE_CAP_OCCLUSION_QUERY:
-            return 1;
+            /* IN THEORY */
+            return 0;
         case PIPE_CAP_TEXTURE_SHADOW_MAP:
             /* IN THEORY */
             return 0;
@@ -152,17 +154,20 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
 
 static float r300_get_paramf(struct pipe_screen* pscreen, int param)
 {
+    struct r300_screen* r300screen = r300_screen(pscreen);
+
     switch (param) {
         case PIPE_CAP_MAX_LINE_WIDTH:
         case PIPE_CAP_MAX_LINE_WIDTH_AA:
-            /* XXX this is the biggest thing that will fit in that register.
-            * Perhaps the actual rendering limits are less? */
-            return 10922.0f;
         case PIPE_CAP_MAX_POINT_WIDTH:
         case PIPE_CAP_MAX_POINT_WIDTH_AA:
-            /* XXX this is the biggest thing that will fit in that register.
-             * Perhaps the actual rendering limits are less? */
-            return 10922.0f;
+            /* The maximum dimensions of the colorbuffer are our practical
+             * rendering limits. 2048 pixels should be enough for anybody. */
+            if (r300screen->caps->is_r500) {
+                return 4096.0f;
+            } else {
+                return 2048.0f;
+            }
         case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
             return 16.0f;
         case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
@@ -230,9 +235,16 @@ static boolean r300_is_format_supported(struct pipe_screen* pscreen,
         case PIPE_TEXTURE_2D:
             return check_tex_2d_format(format,
                 r300_screen(pscreen)->caps->is_r500);
+        case PIPE_TEXTURE_1D:
+        case PIPE_TEXTURE_3D:
+        case PIPE_TEXTURE_CUBE:
+            debug_printf("r300: Implementation error: Unsupported format "
+                    "target: %d\n", target);
+            break;
         default:
-            debug_printf("r300: Warning: Got unknown format target: %d\n",
-                format);
+            debug_printf("r300: Fatal: This is not a format target: %d\n",
+                target);
+            assert(0);
             break;
     }
 
@@ -337,7 +349,6 @@ struct pipe_screen* r300_create_screen(struct r300_winsys* r300_winsys)
         return NULL;
 
     caps->pci_id = r300_winsys->pci_id;
-    caps->num_frag_pipes = r300_winsys->gb_pipes;
 
     r300_parse_chipset(caps);
 

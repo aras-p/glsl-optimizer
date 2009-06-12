@@ -29,6 +29,20 @@
 
 GLenum doubleBuffer = 1;
 int win;
+static float tx = 0;
+static float ty = 0;
+static float tw = 0;
+static float th = 0;
+static float z = -5;
+
+
+static float win_width = 250;
+static float win_height = 250;
+static enum {
+   ORTHO,
+   FRUSTUM,
+   MODE_MAX
+} mode = ORTHO;
 
 static void Init(void)
 {
@@ -37,43 +51,194 @@ static void Init(void)
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
    fflush(stderr);
 
-   glClearColor(0.3, 0.1, 0.3, 0.0);
+   glClearColor(0, 0, 0, 0.0);
 }
 
 static void Reshape(int width, int height)
 {
-   glViewport(width / -2.0, height / -2.0, width, height);
-
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   glOrtho(-1.0, 1.0, -1.0, 1.0, -0.5, 1000.0);
-   glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
+   win_width = width;
+   win_height = height;
+   glutPostRedisplay();
 }
+
 
 static void Key(unsigned char key, int x, int y)
 {
    switch (key) {
-      case 27:
-         exit(0);
-      default:
-         glutPostRedisplay();
-         return;
+   case 27:
+      exit(0);
+   case 'w':
+      tw += 1.0;
+      break;
+   case 'W':
+      tw -= 1.0;
+      break;
+   case 'h':
+      th += 1.0;
+      break;
+   case 'H':
+      th -= 1.0;
+      break;
+
+   case 'z':
+      z += 1.0;
+      break;
+   case 'Z':
+      z -= 1.0;
+      break;
+   case 'm':
+      mode++;
+      mode %= MODE_MAX;
+      break;
+   case ' ':
+      tw = th = tx = ty = 0;
+      z = -5;
+      mode = ORTHO;
+      break;
+   default:
+      break;
    }
+   glutPostRedisplay();
 }
+
 
 static void Draw(void)
 {
+   int i;
+   float w = tw + win_width;
+   float h = th + win_height;
+
+   fprintf(stderr, "glViewport(%f %f %f %f)\n", tx, ty, w, h);
+   fprintf(stderr, "mode: %s\n", mode == FRUSTUM ? "FRUSTUM" : "ORTHO");
+   fprintf(stderr, "z: %f\n", z);
+   fflush(stderr);
+
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+
+   switch (mode) {
+   case FRUSTUM:
+      glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 25.0);
+      break;
+   case ORTHO:
+   default:
+      glOrtho(-1.0, 1.0, -1.0, 1.0, -0.5, 1000.0);
+      break;
+   }
+
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+
+
    glClear(GL_COLOR_BUFFER_BIT); 
 
-   glBegin(GL_TRIANGLES);
-   glColor3f(.8,0,0); 
-   glVertex3f(-0.9,  0.9, -30.0);
-   glColor3f(0,.9,0); 
-   glVertex3f( 0.9,  0.9, -30.0);
-   glColor3f(0,0,.7); 
-   glVertex3f( 0.0, -0.9, -30.0);
+
+   /***********************************************************************
+    * Should be clipped to be no larger than the triangles:
+    */
+   glViewport(tx, ty, w, h);
+
+   glBegin(GL_POLYGON);
+   glColor3f(1,1,0); 
+   glVertex3f(-100, -100, z);
+   glVertex3f(-100, 100, z);
+   glVertex3f(100, 100, z);
+   glVertex3f(100, -100, z);
    glEnd();
+
+   glBegin(GL_POLYGON);
+   glColor3f(0,1,1); 
+   glVertex3f(-10, -10, z);
+   glVertex3f(-10, 10, z);
+   glVertex3f(10, 10, z);
+   glVertex3f(10, -10, z);
+   glEnd();
+
+   glBegin(GL_POLYGON);
+   glColor3f(1,0,0); 
+   glVertex3f(-2, -2, z);
+   glVertex3f(-2, 2, z);
+   glVertex3f(2, 2, z);
+   glVertex3f(2, -2, z);
+   glEnd();
+
+
+   glBegin(GL_POLYGON);
+   glColor3f(.5,.5,1); 
+   glVertex3f(-1, -1, z);
+   glVertex3f(-1, 1, z);
+   glVertex3f(1, 1, z);
+   glVertex3f(1, -1, z);
+   glEnd();
+
+   /***********************************************************************
+    */
+   glViewport(0, 0, win_width, win_height);
+   glBegin(GL_LINES);
+   glColor3f(1,1,0); 
+   glVertex3f(-1, 0, z);
+   glVertex3f(1, 0, z);
+
+   glVertex3f(0,  -1, z);
+   glVertex3f(0,  1, z);
+   glEnd();
+
+
+   /***********************************************************************
+    */
+   glViewport(tx, ty, w, h);
+   glBegin(GL_TRIANGLES);
+   glColor3f(1,0,0); 
+   glVertex3f(-1, -1, z);
+   glVertex3f(0, -1, z);
+   glVertex3f(-.5,  -.5, z);
+
+   glColor3f(1,1,1);
+   glVertex3f(0, -1, z);
+   glVertex3f(1, -1, z);
+   glVertex3f(.5,  -.5, z);
+
+   glVertex3f(-.5, -.5, z);
+   glVertex3f(.5, -.5, z);
+   glVertex3f(0,  0, z);
+
+
+   glColor3f(0,1,0); 
+   glVertex3f(1, 1, z);
+   glVertex3f(0, 1, z);
+   glVertex3f(.5,  .5, z);
+
+   glColor3f(1,1,1);
+   glVertex3f(0, 1, z);
+   glVertex3f(-1, 1, z);
+   glVertex3f(-.5,  .5, z);
+
+   glVertex3f(.5, .5, z);
+   glVertex3f(-.5, .5, z);
+   glVertex3f( 0,  0, z);
+
+   glEnd();
+
+
+   glViewport(0, 0, win_width, win_height);
+
+   glBegin(GL_LINES);
+   glColor3f(.5,.5,0); 
+   for (i = -10; i < 10; i++) {
+      float f = i / 10.0;
+
+      if (i == 0)
+         continue;
+
+      glVertex3f(-1, f, z);
+      glVertex3f(1, f, z);
+
+      glVertex3f(f, -1, z);
+      glVertex3f(f, 1, z);
+   }
+   glEnd();
+
+
 
    glFlush();
 
@@ -85,6 +250,13 @@ static void Draw(void)
 static GLenum Args(int argc, char **argv)
 {
    GLint i;
+
+   if (getenv("VPX"))
+      tx = atof(getenv("VPX"));
+
+   if (getenv("VPY"))
+      ty = atof(getenv("VPY"));
+
 
    for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "-sb") == 0) {
@@ -98,6 +270,30 @@ static GLenum Args(int argc, char **argv)
    }
    return GL_TRUE;
 }
+
+
+static void
+special(int k, int x, int y)
+{
+   switch (k) {
+   case GLUT_KEY_UP:
+      ty += 1.0;
+      break;
+   case GLUT_KEY_DOWN:
+      ty -= 1.0;
+      break;
+   case GLUT_KEY_LEFT:
+      tx -= 1.0;
+      break;
+   case GLUT_KEY_RIGHT:
+      tx += 1.0;
+      break;
+   default:
+      break;
+   }
+   glutPostRedisplay();
+}
+
 
 int main(int argc, char **argv)
 {
@@ -123,7 +319,8 @@ int main(int argc, char **argv)
    Init();
 
    glutReshapeFunc(Reshape);
-   glutKeyboardFunc(Key);
+   glutKeyboardFunc(Key); 
+   glutSpecialFunc(special);
    glutDisplayFunc(Draw);
    glutMainLoop();
    return 0;

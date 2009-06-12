@@ -48,6 +48,8 @@
 #define DV_PF_555  (1<<8)
 #define DV_PF_565  (2<<8)
 #define DV_PF_8888 (3<<8)
+#define DV_PF_4444 (8<<8)
+#define DV_PF_1555 (9<<8)
 
 struct intel_region;
 struct intel_context;
@@ -159,11 +161,21 @@ struct intel_context
    struct {
       struct gl_fragment_program *bitmap_fp;
       struct gl_vertex_program *passthrough_vp;
+      struct gl_buffer_object *texcoord_vbo;
 
       struct gl_fragment_program *saved_fp;
       GLboolean saved_fp_enable;
       struct gl_vertex_program *saved_vp;
       GLboolean saved_vp_enable;
+
+      struct gl_fragment_program *tex2d_fp;
+
+      GLboolean saved_texcoord_enable;
+      struct gl_buffer_object *saved_array_vbo, *saved_texcoord_vbo;
+      GLenum saved_texcoord_type;
+      GLsizei saved_texcoord_size, saved_texcoord_stride;
+      const void *saved_texcoord_ptr;
+      int saved_active_texture;
 
       GLint saved_vp_x, saved_vp_y;
       GLsizei saved_vp_width, saved_vp_height;
@@ -212,6 +224,14 @@ struct intel_context
 
    GLuint ClearColor565;
    GLuint ClearColor8888;
+
+   /* info for intel_clear_tris() */
+   struct
+   {
+      struct gl_array_object *arrayObj;
+      GLfloat vertices[4][3];
+      GLfloat color[4][4];
+   } clear;
 
    /* Offsets of fields within the current vertex:
     */
@@ -262,11 +282,32 @@ struct intel_context
     * flush time while the lock is held.
     */
    GLboolean constant_cliprect;
+
    /**
     * In !constant_cliprect mode, set to true if the front cliprects should be
     * used instead of back.
     */
    GLboolean front_cliprects;
+
+   /**
+    * Set if rendering has occured to the drawable's front buffer.
+    *
+    * This is used in the DRI2 case to detect that glFlush should also copy
+    * the contents of the fake front buffer to the real front buffer.
+    */
+   GLboolean front_buffer_dirty;
+
+   /**
+    * Track whether front-buffer rendering is currently enabled
+    *
+    * A separate flag is used to track this in order to support MRT more
+    * easily.
+    */
+   GLboolean is_front_buffer_rendering;
+
+   GLboolean use_texture_tiling;
+   GLboolean use_early_z;
+
    drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
 
    int perf_boxes;
@@ -319,6 +360,7 @@ extern char *__progname;
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
+#define IS_POWER_OF_TWO(val) (((val) & (val - 1)) == 0)
 
 #define INTEL_FIREVERTICES(intel)		\
 do {						\
@@ -520,6 +562,9 @@ void intel_viewport(GLcontext * ctx, GLint x, GLint y,
 void intel_update_renderbuffers(__DRIcontext *context,
 				__DRIdrawable *drawable);
 
+void i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
+				  uint32_t buffer_id);
+
 /*======================================================================
  * Inline conversion functions.  
  * These are better-typed than the macros used previously:
@@ -528,6 +573,12 @@ static INLINE struct intel_context *
 intel_context(GLcontext * ctx)
 {
    return (struct intel_context *) ctx;
+}
+
+static INLINE GLboolean
+is_power_of_two(uint32_t value)
+{
+   return (value & (value - 1)) == 0;
 }
 
 #endif

@@ -205,7 +205,7 @@ texstore_rgb_dxt1(TEXSTORE_PARAMS)
                               dst, dstRowStride);
    }
    else {
-      _mesa_warning(ctx, "external dxt library not available");
+      _mesa_warning(ctx, "external dxt library not available: texstore_rgb_dxt1");
    }
 
    if (tempImage)
@@ -267,7 +267,7 @@ texstore_rgba_dxt1(TEXSTORE_PARAMS)
                               dst, dstRowStride);
    }
    else {
-      _mesa_warning(ctx, "external dxt library not available");
+      _mesa_warning(ctx, "external dxt library not available: texstore_rgba_dxt1");
    }
 
    if (tempImage)
@@ -328,7 +328,7 @@ texstore_rgba_dxt3(TEXSTORE_PARAMS)
                               dst, dstRowStride);
    }
    else {
-      _mesa_warning(ctx, "external dxt library not available");
+      _mesa_warning(ctx, "external dxt library not available: texstore_rgba_dxt3");
    }
 
    if (tempImage)
@@ -389,7 +389,7 @@ texstore_rgba_dxt5(TEXSTORE_PARAMS)
                               dst, dstRowStride);
    }
    else {
-      _mesa_warning(ctx, "external dxt library not available");
+      _mesa_warning(ctx, "external dxt library not available: texstore_rgba_dxt5");
    }
 
    if (tempImage)
@@ -410,7 +410,7 @@ fetch_texel_2d_rgb_dxt1( const struct gl_texture_image *texImage,
                          (GLubyte *)(texImage)->Data, i, j, texel);
    }
    else
-      _mesa_debug(NULL, "attempted to decode s3tc texture without library available\n");
+      _mesa_debug(NULL, "attempted to decode s3tc texture without library available: fetch_texel_2d_rgb_dxt1");
 }
 
 
@@ -438,7 +438,7 @@ fetch_texel_2d_rgba_dxt1( const struct gl_texture_image *texImage,
                           (GLubyte *)(texImage)->Data, i, j, texel);
    }
    else
-      _mesa_debug(NULL, "attempted to decode s3tc texture without library available\n");
+      _mesa_debug(NULL, "attempted to decode s3tc texture without library available: fetch_texel_2d_rgba_dxt1\n");
 }
 
 
@@ -467,7 +467,7 @@ fetch_texel_2d_rgba_dxt3( const struct gl_texture_image *texImage,
                           i, j, texel);
    }
    else
-      _mesa_debug(NULL, "attempted to decode s3tc texture without library available\n");
+      _mesa_debug(NULL, "attempted to decode s3tc texture without library available: fetch_texel_2d_rgba_dxt3\n");
 }
 
 
@@ -495,7 +495,7 @@ fetch_texel_2d_rgba_dxt5( const struct gl_texture_image *texImage,
                           i, j, texel);
    }
    else
-      _mesa_debug(NULL, "attempted to decode s3tc texture without library available\n");
+      _mesa_debug(NULL, "attempted to decode s3tc texture without library available: fetch_texel_2d_rgba_dxt5\n");
 }
 
 

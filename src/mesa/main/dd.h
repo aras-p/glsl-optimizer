@@ -798,6 +798,12 @@ struct dd_function_table {
    void * (*MapBuffer)( GLcontext *ctx, GLenum target, GLenum access,
 			struct gl_buffer_object *obj );
 
+   void (*CopyBufferSubData)( GLcontext *ctx,
+                              struct gl_buffer_object *src,
+                              struct gl_buffer_object *dst,
+                              GLintptr readOffset, GLintptr writeOffset,
+                              GLsizeiptr size );
+
    /* May return NULL if MESA_MAP_NOWAIT_BIT is set in access:
     */
    void * (*MapBufferRange)( GLcontext *ctx, GLenum target,
@@ -911,7 +917,7 @@ struct dd_function_table {
    void (*Uniform)(GLcontext *ctx, GLint location, GLsizei count,
                    const GLvoid *values, GLenum type);
    void (*UniformMatrix)(GLcontext *ctx, GLint cols, GLint rows,
-                         GLenum matrixType, GLint location, GLsizei count,
+                         GLint location, GLsizei count,
                          GLboolean transpose, const GLfloat *values);
    void (*UseProgram)(GLcontext *ctx, GLuint program);
    void (*ValidateProgram)(GLcontext *ctx, GLuint program);

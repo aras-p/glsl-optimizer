@@ -56,7 +56,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 /***********************************************************************
- *                         Initialization 
+ *                         Initialization
  ***********************************************************************/
 
 #define EMIT_ATTR( ATTR, STYLE, F0 )					\
@@ -118,7 +118,7 @@ static void r200SetVertexFormat( GLcontext *ctx )
    }
 
    rmesa->swtcl.coloroffset = offset;
-#if MESA_LITTLE_ENDIAN 
+#if MESA_LITTLE_ENDIAN
    EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA, (R200_VTX_PK_RGBA << R200_VTX_COLOR_0_SHIFT) );
 #else
    EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_ABGR, (R200_VTX_PK_RGBA << R200_VTX_COLOR_0_SHIFT) );
@@ -129,7 +129,7 @@ static void r200SetVertexFormat( GLcontext *ctx )
    if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 ) ||
        RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
 
-#if MESA_LITTLE_ENDIAN 
+#if MESA_LITTLE_ENDIAN
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
 	 rmesa->swtcl.specoffset = offset;
 	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB, (R200_VTX_PK_RGBA << R200_VTX_COLOR_1_SHIFT) );
@@ -192,7 +192,7 @@ static void r200SetVertexFormat( GLcontext *ctx )
 
       rmesa->radeon.swtcl.vertex_size =
 	  _tnl_install_attrs( ctx,
-			      rmesa->radeon.swtcl.vertex_attrs, 
+			      rmesa->radeon.swtcl.vertex_attrs,
 			      rmesa->radeon.swtcl.vertex_attr_count,
 			      NULL, 0 );
       rmesa->radeon.swtcl.vertex_size /= 4;
@@ -278,7 +278,7 @@ void r200_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 		      rmesa->radeon.dma.current,
 		      current_offset);
 
-		      
+
    r200EmitVbufPrim( rmesa,
 		     rmesa->radeon.swtcl.hw_primitive,
 		     rmesa->radeon.swtcl.numverts);
@@ -338,7 +338,7 @@ static void r200ResetLineStipple( GLcontext *ctx );
    r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
    const char *r200verts = (char *)rmesa->radeon.swtcl.verts;
 #define VERT(x) (radeonVertex *)(r200verts + ((x) * vertsize * sizeof(int)))
-#define VERTEX radeonVertex 
+#define VERTEX radeonVertex
 #define DO_DEBUG_VERTS (1 && (R200_DEBUG & DEBUG_VERTS))
 
 #undef TAG
@@ -539,7 +539,7 @@ void r200ChooseRenderState( GLcontext *ctx )
    GLuint index = 0;
    GLuint flags = ctx->_TriangleCaps;
 
-   if (!rmesa->radeon.TclFallback || rmesa->radeon.Fallback) 
+   if (!rmesa->radeon.TclFallback || rmesa->radeon.Fallback)
       return;
 
    if (flags & DD_TRI_LIGHT_TWOSIDE) index |= R200_TWOSIDE_BIT;
@@ -597,7 +597,7 @@ static void r200RenderPrimitive( GLcontext *ctx, GLenum prim )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    rmesa->radeon.swtcl.render_primitive = prim;
-   if (prim < GL_TRIANGLES || !(ctx->_TriangleCaps & DD_TRI_UNFILLED)) 
+   if (prim < GL_TRIANGLES || !(ctx->_TriangleCaps & DD_TRI_UNFILLED))
       r200RasterPrimitive( ctx, reduced_hw_prim(ctx, prim) );
 }
 
@@ -695,7 +695,7 @@ void r200Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 
 /**
  * Cope with depth operations by drawing individual pixels as points.
- * 
+ *
  * \todo
  * The way the vertex state is set in this routine is hokey.  It seems to
  * work, but it's very hackish.  This whole routine is pretty hackish.  If
@@ -710,14 +710,14 @@ r200PointsBitmap( GLcontext *ctx, GLint px, GLint py,
 		  const GLubyte *bitmap )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   const GLfloat *rc = ctx->Current.RasterColor; 
+   const GLfloat *rc = ctx->Current.RasterColor;
    GLint row, col;
    radeonVertex vert;
    GLuint orig_vte;
    GLuint h;
 
 
-   /* Turn off tcl.  
+   /* Turn off tcl.
     */
    TCL_FALLBACK( ctx, R200_TCL_FALLBACK_BITMAP, 1 );
 
@@ -768,7 +768,7 @@ r200PointsBitmap( GLcontext *ctx, GLint px, GLint py,
 					   R200_VPORT_Z_SCALE_ENA |
 					   R200_VPORT_X_OFFSET_ENA |
 					   R200_VPORT_Y_OFFSET_ENA |
-					   R200_VPORT_Z_OFFSET_ENA); 
+					   R200_VPORT_Z_OFFSET_ENA);
 
    /* Turn off other stuff:  Stipple?, texture?, blending?, etc.
     */
@@ -813,14 +813,14 @@ r200PointsBitmap( GLcontext *ctx, GLint px, GLint py,
     */
    LOCK_HARDWARE( &rmesa->radeon );
    UNLOCK_HARDWARE( &rmesa->radeon );
-   h = rmesa->radeon.dri.drawable->h + rmesa->radeon.dri.drawable->y;
-   px += rmesa->radeon.dri.drawable->x;
+   h = radeon_get_drawable(&rmesa->radeon)->h + radeon_get_drawable(&rmesa->radeon)->y;
+   px += radeon_get_drawable(&rmesa->radeon)->x;
 
    /* Clipping handled by existing mechansims in r200_ioctl.c?
     */
    for (row=0; row<height; row++) {
-      const GLubyte *src = (const GLubyte *) 
-	 _mesa_image_address2d(unpack, bitmap, width, height, 
+      const GLubyte *src = (const GLubyte *)
+	 _mesa_image_address2d(unpack, bitmap, width, height,
                                GL_COLOR_INDEX, GL_BITMAP, row, 0 );
 
       if (unpack->LsbFirst) {
@@ -899,9 +899,9 @@ void r200InitSwtcl( GLcontext *ctx )
    tnl->Driver.Render.Interp = _tnl_interp;
 
    /* FIXME: what are these numbers? */
-   _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
+   _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12,
 		       36 * sizeof(GLfloat) );
-   
+
    rmesa->radeon.swtcl.verts = (GLubyte *)tnl->clipspace.vertex_buf;
    rmesa->radeon.swtcl.RenderIndex = ~0;
    rmesa->radeon.swtcl.render_primitive = GL_TRIANGLES;

@@ -136,9 +136,11 @@ static void *
 nv50_sampler_state_create(struct pipe_context *pipe,
 			  const struct pipe_sampler_state *cso)
 {
-	unsigned *tsc = CALLOC(8, sizeof(unsigned));
+	struct nv50_sampler_stateobj *sso = CALLOC(1, sizeof(*sso));
+	unsigned *tsc = sso->tsc;
+	float limit;
 
-	tsc[0] = (0x00024000 |
+	tsc[0] = (0x00026000 |
 		  (wrap_mode(cso->wrap_s) << 0) |
 		  (wrap_mode(cso->wrap_t) << 3) |
 		  (wrap_mode(cso->wrap_r) << 6));
@@ -202,7 +204,14 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 		tsc[0] |= (nvgl_comparison_op(cso->compare_func) & 0x7);
 	}
 
-	return (void *)tsc;
+	limit = CLAMP(cso->lod_bias, -16.0, 15.0);
+	tsc[1] |= ((int)(limit * 256.0) & 0x1fff) << 11;
+
+	tsc[2] |= ((int)CLAMP(cso->max_lod, 0.0, 15.0) << 20) |
+		  ((int)CLAMP(cso->min_lod, 0.0, 15.0) << 8);
+
+	sso->normalized = cso->normalized_coords;
+	return (void *)sso;
 }
 
 static void

@@ -35,35 +35,27 @@
 #define SP_WINSYS_H
 
 
-#include "pipe/p_compiler.h" /* for boolean */
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
-enum pipe_format;
-
-struct softpipe_winsys {
-   /** test if the given format is supported for front/back color bufs */
-   boolean (*is_format_supported)( struct softpipe_winsys *sws,
-                                   enum pipe_format format );
-
-};
 
 struct pipe_screen;
 struct pipe_winsys;
 struct pipe_context;
 
 
-struct pipe_context *softpipe_create( struct pipe_screen *,
-                                      struct pipe_winsys *,
-				      void *unused );
+struct pipe_context *softpipe_create( struct pipe_screen * );
 
 
 struct pipe_screen *
 softpipe_create_screen(struct pipe_winsys *);
+
+
+boolean
+softpipe_get_texture_buffer( struct pipe_texture *texture,
+                             struct pipe_buffer **buf,
+                             unsigned *stride );
 
 
 #ifdef __cplusplus

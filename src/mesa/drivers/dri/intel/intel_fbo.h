@@ -61,6 +61,8 @@ struct intel_renderbuffer
    struct gl_renderbuffer Base;
    struct intel_region *region;
 
+   const struct gl_texture_format *texformat;
+
    GLuint vbl_pending;   /**< vblank sequence number of pending flip */
 
    uint8_t *span_cache;

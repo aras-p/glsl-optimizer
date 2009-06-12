@@ -37,6 +37,7 @@ RADEON_COMMON_SOURCES = \
 DRIVER_SOURCES = \
 		 radeon_screen.c \
 		 r300_context.c \
+		 r300_draw.c \
 		 r300_ioctl.c \
 		 r300_cmdbuf.c \
 		 r300_state.c \
@@ -48,6 +49,7 @@ DRIVER_SOURCES = \
 		 radeon_program_pair.c \
 		 radeon_nqssadce.c \
 		 r300_vertprog.c \
+		 r300_fragprog_common.c \
 		 r300_fragprog.c \
 		 r300_fragprog_swizzle.c \
 		 r300_fragprog_emit.c \

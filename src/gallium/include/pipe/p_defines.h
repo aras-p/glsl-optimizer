@@ -132,6 +132,7 @@ enum pipe_texture_target {
 #define PIPE_TEX_FACE_NEG_Y 3
 #define PIPE_TEX_FACE_POS_Z 4
 #define PIPE_TEX_FACE_NEG_Z 5
+#define PIPE_TEX_FACE_MAX   6
 
 #define PIPE_TEX_WRAP_REPEAT                   0
 #define PIPE_TEX_WRAP_CLAMP                    1
@@ -157,14 +158,6 @@ enum pipe_texture_target {
 
 #define PIPE_TEX_COMPARE_NONE          0
 #define PIPE_TEX_COMPARE_R_TO_TEXTURE  1
-
-#define PIPE_TEX_FACE_POS_X   0
-#define PIPE_TEX_FACE_NEG_X   1
-#define PIPE_TEX_FACE_POS_Y   2
-#define PIPE_TEX_FACE_NEG_Y   3
-#define PIPE_TEX_FACE_POS_Z   4
-#define PIPE_TEX_FACE_NEG_Z   5
-#define PIPE_TEX_FACE_MAX     6
 
 #define PIPE_TEXTURE_USAGE_RENDER_TARGET   0x1
 #define PIPE_TEXTURE_USAGE_DISPLAY_TARGET  0x2 /* ie a backbuffer */
@@ -200,7 +193,7 @@ enum pipe_texture_target {
 enum pipe_transfer_usage {
    PIPE_TRANSFER_READ,
    PIPE_TRANSFER_WRITE,
-   PIPE_TRANSFER_READ_WRITE //< Read/modify/write
+   PIPE_TRANSFER_READ_WRITE  /**< Read/modify/write */
 };
 
 
@@ -280,9 +273,8 @@ enum pipe_transfer_usage {
 
 
 /**
- * Implementation capabilities/limits
- * Passed to pipe->get_param()
- * XXX this will need some fine tuning...
+ * Implementation capabilities/limits which are queried through
+ * pipe_screen::get_param() and pipe_screen::get_paramf().
  */
 #define PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS 1
 #define PIPE_CAP_NPOT_TEXTURES           2
@@ -312,6 +304,13 @@ enum pipe_transfer_usage {
 #define PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS 26
 
 
+/**
+ * Referenced query flags.
+ */
+
+#define PIPE_UNREFERENCED         0
+#define PIPE_REFERENCED_FOR_READ  (1 << 0)
+#define PIPE_REFERENCED_FOR_WRITE (1 << 1)
 
 #ifdef __cplusplus
 }

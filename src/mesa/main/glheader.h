@@ -74,6 +74,11 @@
 #endif
 
 
+#ifndef GL_PROGRAM_BINARY_LENGTH_OES
+#define GL_PROGRAM_BINARY_LENGTH_OES 0x8741
+#endif
+
+
 /**
  * Special, internal token
  */

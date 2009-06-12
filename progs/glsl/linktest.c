@@ -242,7 +242,7 @@ int
 main(int argc, char *argv[])
 {
    glutInit(&argc, argv);
-   glutInitWindowPosition( 0, 0);
+   glutInitWindowSize(300, 300);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    Win = glutCreateWindow(argv[0]);
    glutReshapeFunc(Reshape);

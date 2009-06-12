@@ -117,6 +117,7 @@ static const struct tx_table {
 	_ASSIGN(INTENSITY_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, X, FL_I16)),
 	_ASSIGN(Z16, R300_EASY_TX_FORMAT(X, X, X, X, X16)),
 	_ASSIGN(Z24_S8, R300_EASY_TX_FORMAT(X, X, X, X, X24_Y8)),
+	_ASSIGN(S8_Z24, R300_EASY_TX_FORMAT(Y, Y, Y, Y, X24_Y8)),
 	_ASSIGN(Z32, R300_EASY_TX_FORMAT(X, X, X, X, X32)),
 	/* *INDENT-ON* */
 };
@@ -431,7 +432,6 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		radeon_miptree_unreference(rImage->mt);
 		rImage->mt = NULL;
 	}
-	fprintf(stderr,"settexbuf %dx%d@%d %d targ %x format %x\n", rb->width, rb->height, rb->cpp, rb->pitch, target, format);
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
 				   rb->width, rb->height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
@@ -449,7 +449,10 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 	pitch_val = rb->pitch;
 	switch (rb->cpp) {
 	case 4:
-		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
+		if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT)
+			t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
+		else
+			t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
 		t->pp_txfilter |= tx_table[2].filter;
 		pitch_val /= 4;
 		break;

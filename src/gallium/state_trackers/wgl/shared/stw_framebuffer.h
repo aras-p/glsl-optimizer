@@ -28,39 +28,61 @@
 #ifndef STW_FRAMEBUFFER_H
 #define STW_FRAMEBUFFER_H
 
+#include <windows.h>
+
 #include "main/mtypes.h"
 
-/* Windows framebuffer, derived from gl_framebuffer.
+#include "pipe/p_thread.h"
+
+struct stw_pixelformat_info;
+
+/**
+ * Windows framebuffer, derived from gl_framebuffer.
  */
 struct stw_framebuffer
 {
-   struct st_framebuffer *stfb;
    HDC hDC;
-   BYTE cColorBits;
    HWND hWnd;
-   WNDPROC WndProc;
+
+   int iPixelFormat;
+   const struct stw_pixelformat_info *pfi;
+   GLvisual visual;
+
+   pipe_mutex mutex;
+   struct st_framebuffer *stfb;
+   
+   /** This is protected by stw_device::mutex, not the mutex above */
    struct stw_framebuffer *next;
 };
 
 struct stw_framebuffer *
-framebuffer_create(
+stw_framebuffer_create_locked(
    HDC hdc,
-   GLvisual *visual,
-   GLuint width,
-   GLuint height );
+   int iPixelFormat );
 
-void
-framebuffer_destroy(
+BOOL
+stw_framebuffer_allocate(
    struct stw_framebuffer *fb );
 
 void
-framebuffer_resize(
-   struct stw_framebuffer *fb,
-   GLuint width,
-   GLuint height );
+stw_framebuffer_resize(
+   struct stw_framebuffer *fb);
+
+void
+stw_framebuffer_cleanup(void);
 
 struct stw_framebuffer *
-framebuffer_from_hdc(
+stw_framebuffer_from_hdc_locked(
    HDC hdc );
+
+struct stw_framebuffer *
+stw_framebuffer_from_hdc(
+   HDC hdc );
+
+boolean
+stw_framebuffer_init_thread(void);
+
+void
+stw_framebuffer_cleanup_thread(void);
 
 #endif /* STW_FRAMEBUFFER_H */

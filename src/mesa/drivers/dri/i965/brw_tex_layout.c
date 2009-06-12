@@ -28,7 +28,6 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-        
 
 /* Code to layout images in a mipmap tree for i965.
  */
@@ -40,14 +39,15 @@
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
-GLboolean brw_miptree_layout( struct intel_context *intel, struct intel_mipmap_tree *mt )
+GLboolean brw_miptree_layout(struct intel_context *intel,
+			     struct intel_mipmap_tree *mt,
+			     uint32_t tiling)
 {
-   /* XXX: these vary depending on image format: 
-    */
-/*    GLint align_w = 4; */
+   /* XXX: these vary depending on image format: */
+   /* GLint align_w = 4; */
 
    switch (mt->target) {
-   case GL_TEXTURE_CUBE_MAP: 
+   case GL_TEXTURE_CUBE_MAP:
    case GL_TEXTURE_3D: {
       GLuint width  = mt->width0;
       GLuint height = mt->height0;
@@ -59,25 +59,25 @@ GLboolean brw_miptree_layout( struct intel_context *intel, struct intel_mipmap_t
       GLuint align_w = 4;
 
       mt->total_height = 0;
-      
+
       if (mt->compressed) {
           align_w = intel_compressed_alignment(mt->internal_format);
           mt->pitch = ALIGN(width, align_w);
           pack_y_pitch = (height + 3) / 4;
       } else {
-          mt->pitch = intel_miptree_pitch_align (intel, mt, mt->width0);
-          pack_y_pitch = ALIGN(mt->height0, align_h);
+	 mt->pitch = intel_miptree_pitch_align (intel, mt, tiling, mt->width0);
+	 pack_y_pitch = ALIGN(mt->height0, align_h);
       }
 
       pack_x_pitch = mt->pitch;
       pack_x_nr = 1;
 
-      for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
+      for (level = mt->first_level ; level <= mt->last_level ; level++) {
 	 GLuint nr_images = mt->target == GL_TEXTURE_3D ? depth : 6;
 	 GLint x = 0;
 	 GLint y = 0;
 	 GLint q, j;
-	    
+
 	 intel_miptree_set_level_info(mt, level, nr_images,
 				      0, mt->total_height,
 				      width, height, depth);
@@ -89,7 +89,7 @@ GLboolean brw_miptree_layout( struct intel_context *intel, struct intel_mipmap_t
 	    }
 
 	    x = 0;
-	    y += pack_y_pitch;	    
+	    y += pack_y_pitch;
 	 }
 
 
@@ -98,40 +98,40 @@ GLboolean brw_miptree_layout( struct intel_context *intel, struct intel_mipmap_t
 	 height = minify(height);
 	 depth  = minify(depth);
 
-    if (mt->compressed) {
-        pack_y_pitch = (height + 3) / 4;
-        
-        if (pack_x_pitch > ALIGN(width, align_w)) {
-            pack_x_pitch = ALIGN(width, align_w);
-            pack_x_nr <<= 1;
-        }
-    } else {
-        if (pack_x_pitch > 4) {
-            pack_x_pitch >>= 1;
-            pack_x_nr <<= 1;
-            assert(pack_x_pitch * pack_x_nr <= mt->pitch);
-        }
+	 if (mt->compressed) {
+	    pack_y_pitch = (height + 3) / 4;
 
-        if (pack_y_pitch > 2) {
-            pack_y_pitch >>= 1;
-            pack_y_pitch = ALIGN(pack_y_pitch, align_h);
-        }
-    }
+	    if (pack_x_pitch > ALIGN(width, align_w)) {
+	       pack_x_pitch = ALIGN(width, align_w);
+	       pack_x_nr <<= 1;
+	    }
+	 } else {
+	    if (pack_x_pitch > 4) {
+	       pack_x_pitch >>= 1;
+	       pack_x_nr <<= 1;
+	       assert(pack_x_pitch * pack_x_nr <= mt->pitch);
+	    }
+
+	    if (pack_y_pitch > 2) {
+	       pack_y_pitch >>= 1;
+	       pack_y_pitch = ALIGN(pack_y_pitch, align_h);
+	    }
+	 }
 
       }
       break;
    }
 
    default:
-      i945_miptree_layout_2d(intel, mt);
+      i945_miptree_layout_2d(intel, mt, tiling);
       break;
    }
-   DBG("%s: %dx%dx%d - sz 0x%x\n", __FUNCTION__, 
-		mt->pitch, 
+   DBG("%s: %dx%dx%d - sz 0x%x\n", __FUNCTION__,
+		mt->pitch,
 		mt->total_height,
 		mt->cpp,
 		mt->pitch * mt->total_height * mt->cpp );
-		
+
    return GL_TRUE;
 }
 

@@ -260,6 +260,8 @@ static void Key( unsigned char key, int x, int y )
    (void) y;
    switch (key) {
       case 27:
+         (*delete_vertex_arrays)( 1, & cube_array_obj );
+         (*delete_vertex_arrays)( 1, & oct_array_obj );
          glutDestroyWindow(Win);
          exit(0);
          break;

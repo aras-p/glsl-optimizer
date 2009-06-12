@@ -160,11 +160,21 @@ _mesa_MatrixMode( GLenum mode )
       ctx->CurrentStack = &ctx->ProjectionMatrixStack;
       break;
    case GL_TEXTURE:
+      /* This error check is disabled because if we're called from
+       * glPopAttrib() when the active texture unit is >= MaxTextureCoordUnits
+       * we'll generate an unexpected error.
+       * From the GL_ARB_vertex_shader spec it sounds like we should instead
+       * do error checking in other places when we actually try to access
+       * texture matrices beyond MaxTextureCoordUnits.
+       */
+#if 0
       if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureCoordUnits) {
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glMatrixMode(invalid unit %d)",
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glMatrixMode(invalid tex unit %d)",
                      ctx->Texture.CurrentUnit);
          return;
       }
+#endif
+      ASSERT(ctx->Texture.CurrentUnit < Elements(ctx->TextureMatrixStack));
       ctx->CurrentStack = &ctx->TextureMatrixStack[ctx->Texture.CurrentUnit];
       break;
    case GL_COLOR:

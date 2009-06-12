@@ -18,11 +18,27 @@
 
 #define TEXTURE_FILE "../images/arch.rgb"
 
-static int TexWidth = 256, TexHeight = 256;
+#define LEVELS 8
+#define SIZE (1<<LEVELS)
+static int TexWidth = SIZE, TexHeight = SIZE;
 static int WinWidth = 1044, WinHeight = 900;
 static GLfloat Bias = 0.0;
 static GLboolean ScaleQuads = GL_FALSE;
+static GLboolean Linear = GL_FALSE;
 static GLint Win = 0;
+static GLint RenderTextureLevel = 0;
+static GLuint TexObj;
+
+
+
+static void
+CheckError(int line)
+{
+   GLenum err = glGetError();
+   if (err) {
+      printf("GL Error 0x%x at line %d\n", (int) err, line);
+   }
+}
 
 
 
@@ -36,12 +52,186 @@ PrintString(const char *s)
 }
 
 
+
+
+static void
+MipGenTexture( void )
+{
+   /* test auto mipmap generation */
+   GLint width, height, i;
+   GLenum format;
+   GLubyte *image = LoadRGBImage(TEXTURE_FILE, &width, &height, &format);
+   if (!image) {
+      printf("Error: could not load texture image %s\n", TEXTURE_FILE);
+      exit(1);
+   }
+   /* resize to TexWidth x TexHeight */
+   if (width != TexWidth || height != TexHeight) {
+      GLubyte *newImage = malloc(TexWidth * TexHeight * 4);
+      
+      fprintf(stderr, "rescale %d %d to %d %d\n", width, height,
+              TexWidth, TexHeight);
+      fflush(stderr);
+
+      gluScaleImage(format, width, height, GL_UNSIGNED_BYTE, image,
+                    TexWidth, TexHeight, GL_UNSIGNED_BYTE, newImage);
+      free(image);
+      image = newImage;
+   }
+   printf("Using GL_SGIS_generate_mipmap\n");
+   glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+   glTexImage2D(GL_TEXTURE_2D, 0, format, TexWidth, TexHeight, 0,
+                format, GL_UNSIGNED_BYTE, image);
+   free(image);
+
+   /* make sure mipmap was really generated correctly */
+   width = TexWidth;
+   height = TexHeight;
+   for (i = 0; i < 9; i++) {
+      GLint w, h;
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, i, GL_TEXTURE_WIDTH, &w);
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, i, GL_TEXTURE_HEIGHT, &h);
+      printf("Level %d size: %d x %d\n", i, w, h);
+      assert(w == width);
+      assert(h == height);
+      width /= 2;
+      height /= 2;
+   }
+
+
+   glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
+}
+
+
+
+static void
+ResetTextureLevel( int i )
+{
+   GLubyte tex2d[SIZE*SIZE][4];
+      
+   {
+      GLint Width = TexWidth / (1 << i);
+      GLint Height = TexHeight / (1 << i);
+      GLint s, t;
+         
+      for (s = 0; s < Width; s++) {
+         for (t = 0; t < Height; t++) {
+            tex2d[t*Width+s][0] = ((s / 16) % 2) ? 0 : 255;
+            tex2d[t*Width+s][1] = ((t / 16) % 2) ? 0 : 255;
+            tex2d[t*Width+s][2] = 128;
+            tex2d[t*Width+s][3] = 255;
+         }
+      }
+         
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+         
+      glTexImage2D(GL_TEXTURE_2D, i, GL_RGB, Width, Height, 0,
+                   GL_RGBA, GL_UNSIGNED_BYTE, tex2d);
+   }
+}
+
+
+static void
+ResetTexture( void )
+{
+#if 0
+   /* This doesn't work so well as the arch texture is 512x512.
+    */
+   LoadRGBMipmaps(TEXTURE_FILE, GL_RGB);
+#else
+   {
+      int i;
+      
+      for (i = 0; i <= LEVELS; i++)
+      {
+         ResetTextureLevel(i);
+      }
+   }
+#endif
+}
+
+
+
+
+
+
+
+static void
+RenderTexture( void )
+{
+   GLenum status;
+   GLuint MyFB;
+
+   fprintf(stderr, "RenderTextureLevel %d\n", RenderTextureLevel);
+   fflush(stderr);
+
+   /* gen framebuffer id, delete it, do some assertions, just for testing */
+   glGenFramebuffersEXT(1, &MyFB);
+   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, MyFB);
+   assert(glIsFramebufferEXT(MyFB));
+
+   CheckError(__LINE__);
+
+   /* Render color to texture */
+   glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, 
+                             GL_COLOR_ATTACHMENT0_EXT,
+                             GL_TEXTURE_2D, TexObj, 
+                             RenderTextureLevel);
+
+
+
+   CheckError(__LINE__);
+
+
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   glOrtho(-1.0, 1.0, -1.0, 1.0, 5.0, 25.0);
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+   glTranslatef(0.0, 0.0, -15.0);
+
+   status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+   if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      printf("Framebuffer incomplete!!!\n");
+   }
+
+   glViewport(0, 0,
+              TexWidth / (1 << RenderTextureLevel),
+              TexHeight / (1 << RenderTextureLevel));
+
+   glClearColor(0.5, 0.5, 1.0, 0.0);
+   glClear(GL_COLOR_BUFFER_BIT);
+      
+   CheckError(__LINE__);
+
+   glBegin(GL_POLYGON);
+   glColor3f(1, 0, 0);
+   glVertex2f(-1, -1);
+   glColor3f(0, 1, 0);
+   glVertex2f(1, -1);
+   glColor3f(0, 0, 1);
+   glVertex2f(0, 1);
+   glEnd();
+
+
+   /* Bind normal framebuffer */
+   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+   CheckError(__LINE__);
+
+   glDeleteFramebuffersEXT(1, &MyFB);
+   CheckError(__LINE__);
+
+   glClearColor(0, 0, 0, 0);
+}
+
 static void
 Display(void)
 {
    int x, y, bias;
    char str[100];
    int texWidth = TexWidth, texHeight = TexHeight;
+
+   glViewport(0, 0, WinHeight, WinHeight);
 
    glClear(GL_COLOR_BUFFER_BIT);
 
@@ -52,6 +242,15 @@ Display(void)
    glLoadIdentity();
    
    glColor3f(1,1,1);
+
+   if (Linear) {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   }
+   else {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   }
 
    y = WinHeight - 300;
    x = 4;
@@ -116,7 +315,6 @@ Reshape(int width, int height)
 {
    WinWidth = width;
    WinHeight = height;
-   glViewport(0, 0, width, height);
 }
 
 
@@ -131,6 +329,24 @@ Key(unsigned char key, int x, int y)
          break;
       case 'B':
          Bias += 10;
+         break;
+      case 'l':
+         Linear = !Linear;
+         break;
+      case 'v':
+         RenderTextureLevel++;
+         break;
+      case 'V':
+         RenderTextureLevel--;
+         break;
+      case 'r':
+         RenderTexture();
+         break;
+      case 'X':
+         ResetTexture();
+         break;
+      case 'x':
+         ResetTextureLevel(RenderTextureLevel);
          break;
       case '0':
       case '1':
@@ -147,6 +363,14 @@ Key(unsigned char key, int x, int y)
       case 's':
          ScaleQuads = !ScaleQuads;
          break;
+      case ' ':
+         MipGenTexture();
+         Bias = 0;
+         Linear = 0;
+         RenderTextureLevel = 0;
+         ScaleQuads = 0;
+         break;
+         
       case 27:
          glutDestroyWindow(Win);
          exit(0);
@@ -173,57 +397,15 @@ Init(void)
 
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-   if (1) {
-      /* test auto mipmap generation */
-      GLint width, height, i;
-      GLenum format;
-      GLubyte *image = LoadRGBImage(TEXTURE_FILE, &width, &height, &format);
-      if (!image) {
-         printf("Error: could not load texture image %s\n", TEXTURE_FILE);
-         exit(1);
-      }
-      /* resize to TexWidth x TexHeight */
-      if (width != TexWidth || height != TexHeight) {
-         GLubyte *newImage = malloc(TexWidth * TexHeight * 4);
-         gluScaleImage(format, width, height, GL_UNSIGNED_BYTE, image,
-                       TexWidth, TexHeight, GL_UNSIGNED_BYTE, newImage);
-         free(image);
-         image = newImage;
-      }
-      printf("Using GL_SGIS_generate_mipmap\n");
-      glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
-      glTexImage2D(GL_TEXTURE_2D, 0, format, TexWidth, TexHeight, 0,
-                   format, GL_UNSIGNED_BYTE, image);
-      free(image);
+   glGenTextures(1, &TexObj);
+   glBindTexture(GL_TEXTURE_2D, TexObj);
 
-      /* make sure mipmap was really generated correctly */
-      width = TexWidth;
-      height = TexHeight;
-      for (i = 0; i < 9; i++) {
-         GLint w, h;
-         glGetTexLevelParameteriv(GL_TEXTURE_2D, i, GL_TEXTURE_WIDTH, &w);
-         glGetTexLevelParameteriv(GL_TEXTURE_2D, i, GL_TEXTURE_HEIGHT, &h);
-         printf("Level %d size: %d x %d\n", i, w, h);
-         assert(w == width);
-         assert(h == height);
-         width /= 2;
-         height /= 2;
-      }
-   }
-   else {
-      if (LoadRGBMipmaps(TEXTURE_FILE, GL_RGB)) {
-         printf("Using gluBuildMipmaps()\n");
-      }
-      else {
-         printf("Error: could not load texture image %s\n", TEXTURE_FILE);
-         exit(1);
-      }
-   }
-
+   if (1) 
+      MipGenTexture();
+   else
+      ResetTexture();
 
    /* mipmapping required for this extension */
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
    glGetFloatv(GL_MAX_TEXTURE_LOD_BIAS_EXT, &maxBias);

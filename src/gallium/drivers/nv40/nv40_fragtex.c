@@ -62,6 +62,7 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 {
 	struct nv40_sampler_state *ps = nv40->tex_sampler[unit];
 	struct nv40_miptree *nv40mt = nv40->tex_miptree[unit];
+	struct nouveau_bo *bo = nouveau_bo(nv40mt->buffer);
 	struct pipe_texture *pt = &nv40mt->base;
 	struct nv40_texture_format *tf;
 	struct nouveau_stateobj *so;
@@ -108,9 +109,9 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 
 	so = so_new(16, 2);
 	so_method(so, nv40->screen->curie, NV40TCL_TEX_OFFSET(unit), 8);
-	so_reloc (so, nv40mt->buffer, 0, tex_flags | NOUVEAU_BO_LOW, 0, 0);
-	so_reloc (so, nv40mt->buffer, txf, tex_flags | NOUVEAU_BO_OR,
-		  NV40TCL_TEX_FORMAT_DMA0, NV40TCL_TEX_FORMAT_DMA1);
+	so_reloc (so, bo, 0, tex_flags | NOUVEAU_BO_LOW, 0, 0);
+	so_reloc (so, bo, txf, tex_flags | NOUVEAU_BO_OR,
+		      NV40TCL_TEX_FORMAT_DMA0, NV40TCL_TEX_FORMAT_DMA1);
 	so_data  (so, ps->wrap);
 	so_data  (so, NV40TCL_TEX_ENABLE_ENABLE | ps->en);
 	so_data  (so, txs);

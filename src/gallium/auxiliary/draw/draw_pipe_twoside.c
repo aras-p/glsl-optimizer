@@ -181,6 +181,7 @@ struct draw_stage *draw_twoside_stage( struct draw_context *draw )
       goto fail;
 
    twoside->stage.draw = draw;
+   twoside->stage.name = "twoside";
    twoside->stage.next = NULL;
    twoside->stage.point = draw_pipe_passthrough_point;
    twoside->stage.line = draw_pipe_passthrough_line;

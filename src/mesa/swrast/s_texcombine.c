@@ -49,8 +49,7 @@ typedef float (*float4_array)[4];
 static INLINE float4_array
 get_texel_array(SWcontext *swrast, GLuint unit)
 {
-   return (float4_array)
-      (swrast->TexelBuffer + unit * MAX_WIDTH * 4 * sizeof(GLfloat));
+   return (float4_array) (swrast->TexelBuffer + unit * MAX_WIDTH * 4);
 }
 
 
@@ -408,17 +407,10 @@ texture_combine( GLcontext *ctx, GLuint unit, GLuint n,
          /* this produces a fixed rgba color, and the coord calc is done elsewhere */
          for (i = 0; i < n; i++) {
             /* rgba result is 0,0,0,1 */
-#if CHAN_TYPE == GL_FLOAT
             rgba[i][RCOMP] = 0.0;
             rgba[i][GCOMP] = 0.0;
             rgba[i][BCOMP] = 0.0;
             rgba[i][ACOMP] = 1.0;
-#else
-            rgba[i][RCOMP] = 0;
-            rgba[i][GCOMP] = 0;
-            rgba[i][BCOMP] = 0;
-            rgba[i][ACOMP] = CHAN_MAX;
-#endif
 	 }
          return; /* no alpha processing */
       default:

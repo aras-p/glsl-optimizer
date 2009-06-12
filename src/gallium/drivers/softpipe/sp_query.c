@@ -34,6 +34,7 @@
 #include "util/u_memory.h"
 #include "sp_context.h"
 #include "sp_query.h"
+#include "sp_state.h"
 
 struct softpipe_query {
    uint64_t start;
@@ -69,6 +70,8 @@ softpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
    struct softpipe_query *sq = softpipe_query(q);
    
    sq->start = softpipe->occlusion_count;
+   softpipe->active_query_count++;
+   softpipe->dirty |= SP_NEW_QUERY;
 }
 
 
@@ -78,7 +81,9 @@ softpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
    struct softpipe_context *softpipe = softpipe_context( pipe );
    struct softpipe_query *sq = softpipe_query(q);
 
+   softpipe->active_query_count--;
    sq->end = softpipe->occlusion_count;
+   softpipe->dirty |= SP_NEW_QUERY;
 }
 
 

@@ -11,7 +11,20 @@ env.Prepend(CPPPATH = [
 
 env.Prepend(LIBS = ['$GLUT_LIB'])
 
-env.Program(
-        target = 'fp-tri',
-        source = ['fp-tri.c'],
+progs = [
+    'fp-tri',
+    'tri-depth',
+    'tri-depth2',
+    'tri-depthwrite',
+    'tri-depthwrite2',
+    'tri-inv',
+    'tri-param',
+    'tri-tex',
+    'point-position',
+]
+
+for prog in progs:
+    env.Program(
+        target = prog,
+        source = [prog + '.c'],
     )

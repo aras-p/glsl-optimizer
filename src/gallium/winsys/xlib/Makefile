@@ -74,7 +74,7 @@ $(TOP)/$(LIB_DIR)/gallium/$(GL_LIB_NAME): $(XLIB_WINSYS_OBJECTS) $(LIBS) Makefil
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR)/gallium \
 		$(MKLIB_OPTIONS) $(XLIB_WINSYS_OBJECTS) \
-		--start-group $(LIBS) --end-group $(GL_LIB_DEPS)
+		-Wl,--start-group $(LIBS) -Wl,--end-group $(GL_LIB_DEPS)
 
 
 depend: $(XLIB_WINSYS_SOURCES)
@@ -90,7 +90,7 @@ install: default
 	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
 	$(INSTALL) -m 644 $(TOP)/include/GL/*.h $(INSTALL_DIR)/include/GL
 	@if [ -e $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) ]; then \
-		$(INSTALL) $(TOP)/$(LIB_DIR)/libGL* $(INSTALL_DIR)/$(LIB_DIR); \
+		$(MINSTALL) $(TOP)/$(LIB_DIR)/libGL* $(INSTALL_DIR)/$(LIB_DIR); \
 	fi
 
 

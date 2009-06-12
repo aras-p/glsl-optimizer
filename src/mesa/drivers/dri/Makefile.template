@@ -72,10 +72,11 @@ $(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
 
 
 depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
-	rm -f depend
-	touch depend
-	$(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) $(C_SOURCES) \
-		$(ASM_SOURCES)
+	@ echo "running $(MKDEP)"
+	@ rm -f depend
+	@ touch depend
+	@ $(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) $(C_SOURCES) \
+		$(ASM_SOURCES) > /dev/null 2>/dev/null
 
 
 # Emacs tags
@@ -91,7 +92,7 @@ clean:
 
 install: $(LIBNAME)
 	$(INSTALL) -d $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
-	$(INSTALL) -m 755 $(LIBNAME) $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
+	$(MINSTALL) -m 755 $(LIBNAME) $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
 
 
 -include depend

@@ -40,14 +40,12 @@
 #include "st_draw.h"
 #include "st_public.h"
 #include "st_format.h"
+#include "st_texture.h"
+#include "st_inlines.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "util/u_tile.h"
-
-
-#define UNCLAMPED_FLOAT_TO_SHORT(us, f)  \
-   us = ( (short) ( CLAMP((f), -1.0, 1.0) * 32767.0F) )
 
 
 /**
@@ -57,73 +55,20 @@
  */
 
 
-/**
- * Wrapper for pipe_get_tile_rgba().  Do format/cpp override to make the
- * tile util function think the surface is 16bit/channel, even if it's not.
- * See also: st_renderbuffer_alloc_storage()
- */
-static void
-acc_get_tile_rgba(struct pipe_context *pipe, struct pipe_transfer *acc_pt,
-                  uint x, uint y, uint w, uint h, float *p)
-{
-   const enum pipe_format f = acc_pt->format;
-   const struct pipe_format_block b = acc_pt->block;
-
-   acc_pt->format = DEFAULT_ACCUM_PIPE_FORMAT;
-   acc_pt->block.size = 8;
-   acc_pt->block.width = 1;
-   acc_pt->block.height = 1;
-
-   pipe_get_tile_rgba(acc_pt, x, y, w, h, p);
-
-   acc_pt->format = f;
-   acc_pt->block = b;
-}
-
-
-/**
- * Wrapper for pipe_put_tile_rgba().  Do format/cpp override to make the
- * tile util function think the surface is 16bit/channel, even if it's not.
- * See also: st_renderbuffer_alloc_storage()
- */
-static void
-acc_put_tile_rgba(struct pipe_context *pipe, struct pipe_transfer *acc_pt,
-                  uint x, uint y, uint w, uint h, const float *p)
-{
-   enum pipe_format f = acc_pt->format;
-   const struct pipe_format_block b = acc_pt->block;
-
-   acc_pt->format = DEFAULT_ACCUM_PIPE_FORMAT;
-   acc_pt->block.size = 8;
-   acc_pt->block.width = 1;
-   acc_pt->block.height = 1;
-
-   pipe_put_tile_rgba(acc_pt, x, y, w, h, p);
-
-   acc_pt->format = f;
-   acc_pt->block = b;
-}
-
-
-
 void
 st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    struct st_renderbuffer *acc_strb = st_renderbuffer(rb);
-   struct pipe_transfer *acc_pt;
-   struct pipe_screen *screen = ctx->st->pipe->screen;
    const GLint xpos = ctx->DrawBuffer->_Xmin;
    const GLint ypos = ctx->DrawBuffer->_Ymin;
    const GLint width = ctx->DrawBuffer->_Xmax - xpos;
    const GLint height = ctx->DrawBuffer->_Ymax - ypos;
-   GLubyte *map;
+   size_t stride = acc_strb->stride;
+   GLubyte *data = acc_strb->data;
 
-   acc_pt = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
-                                     PIPE_TRANSFER_WRITE, xpos, ypos,
-                                     width, height);
-   map = screen->transfer_map(screen, acc_pt);
-
-   /* note acc_strb->format might not equal acc_pt->format */
+   if(!data)
+      return;
+   
    switch (acc_strb->format) {
    case PIPE_FORMAT_R16G16B16A16_SNORM:
       {
@@ -133,7 +78,7 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
          GLshort a = FLOAT_TO_SHORT(ctx->Accum.ClearColor[3]);
          int i, j;
          for (i = 0; i < height; i++) {
-            GLshort *dst = (GLshort *) (map + i * acc_pt->stride + xpos * 8);
+            GLshort *dst = (GLshort *) (data + (ypos + i) * stride + xpos * 8);
             for (j = 0; j < width; j++) {
                dst[0] = r;
                dst[1] = g;
@@ -147,9 +92,6 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    default:
       _mesa_problem(ctx, "unexpected format in st_clear_accum_buffer()");
    }
-
-   screen->transfer_unmap(screen, acc_pt);
-   screen->tex_transfer_destroy(acc_pt);
 }
 
 
@@ -159,25 +101,60 @@ accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
           GLint xpos, GLint ypos, GLint width, GLint height,
           struct st_renderbuffer *acc_strb)
 {
-   struct pipe_screen *screen = ctx->st->pipe->screen;
-   struct pipe_transfer *acc_pt;
-   GLubyte *map;
+   size_t stride = acc_strb->stride;
+   GLubyte *data = acc_strb->data;
 
-   acc_pt = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
-                                     PIPE_TRANSFER_READ_WRITE, xpos, ypos,
-                                     width, height);
-   map = screen->transfer_map(screen, acc_pt);
-
-   /* note acc_strb->format might not equal acc_pt->format */
    switch (acc_strb->format) {
    case PIPE_FORMAT_R16G16B16A16_SNORM:
       {
          int i, j;
          for (i = 0; i < height; i++) {
-            GLshort *acc = (GLshort *) (map + (ypos + i) * acc_pt->stride + xpos * 8);
+            GLshort *acc = (GLshort *) (data + (ypos + i) * stride + xpos * 8);
             for (j = 0; j < width * 4; j++) {
-               float val = SHORT_TO_FLOAT(acc[j]) * scale + bias;
-               acc[j] = FLOAT_TO_SHORT(val);
+               float val = SHORT_TO_FLOAT(*acc) * scale + bias;
+               *acc++ = FLOAT_TO_SHORT(val);
+            }
+         }
+      }
+      break;
+   default:
+      _mesa_problem(NULL, "unexpected format in st_clear_accum_buffer()");
+   }
+}
+
+
+static void
+accum_accum(struct st_context *st, GLfloat value,
+            GLint xpos, GLint ypos, GLint width, GLint height,
+            struct st_renderbuffer *acc_strb,
+            struct st_renderbuffer *color_strb)
+{
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   struct pipe_transfer *color_trans;
+   size_t stride = acc_strb->stride;
+   GLubyte *data = acc_strb->data;
+   GLfloat *buf;
+
+   color_trans = st_cond_flush_get_tex_transfer(st, color_strb->texture,
+						0, 0, 0,
+						PIPE_TRANSFER_READ, xpos, ypos,
+						width, height);
+
+   buf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+
+   pipe_get_tile_rgba(color_trans, 0, 0, width, height, buf);
+
+   switch (acc_strb->format) {
+   case PIPE_FORMAT_R16G16B16A16_SNORM:
+      {
+         const GLfloat *color = buf;
+         int i, j;
+         for (i = 0; i < height; i++) {
+            GLshort *acc = (GLshort *) (data + (ypos + i) * stride + xpos * 8);
+            for (j = 0; j < width * 4; j++) {
+               float val = *color++ * value;
+               *acc++ += FLOAT_TO_SHORT(val);
             }
          }
       }
@@ -186,85 +163,52 @@ accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
       _mesa_problem(NULL, "unexpected format in st_clear_accum_buffer()");
    }
 
-   screen->transfer_unmap(screen, acc_pt);
-   screen->tex_transfer_destroy(acc_pt);
-}
-
-
-static void
-accum_accum(struct pipe_context *pipe, GLfloat value,
-            GLint xpos, GLint ypos, GLint width, GLint height,
-            struct st_renderbuffer *acc_strb,
-            struct st_renderbuffer *color_strb)
-{
-   struct pipe_screen *screen = pipe->screen;
-   struct pipe_transfer *acc_trans, *color_trans;
-   GLfloat *colorBuf, *accBuf;
-   GLint i;
-
-   acc_trans = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
-                                        PIPE_TRANSFER_READ, xpos, ypos,
-                                        width, height);
-
-   color_trans = screen->get_tex_transfer(screen, color_strb->texture, 0, 0, 0,
-                                          PIPE_TRANSFER_READ, xpos, ypos,
-                                          width, height);
-
-   colorBuf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
-   accBuf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
-
-   pipe_get_tile_rgba(color_trans, 0, 0, width, height, colorBuf);
-   acc_get_tile_rgba(pipe, acc_trans, 0, 0, width, height, accBuf);
-
-   for (i = 0; i < 4 * width * height; i++) {
-      accBuf[i] = accBuf[i] + colorBuf[i] * value;
-   }
-
-   screen->tex_transfer_destroy(acc_trans);
-   acc_trans = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
-                                        PIPE_TRANSFER_WRITE, xpos, ypos,
-                                        width, height);
-
-   acc_put_tile_rgba(pipe, acc_trans, 0, 0, width, height, accBuf);
-
-   _mesa_free(colorBuf);
-   _mesa_free(accBuf);
-   screen->tex_transfer_destroy(acc_trans);
+   _mesa_free(buf);
    screen->tex_transfer_destroy(color_trans);
 }
 
 
 static void
-accum_load(struct pipe_context *pipe, GLfloat value,
+accum_load(struct st_context *st, GLfloat value,
            GLint xpos, GLint ypos, GLint width, GLint height,
            struct st_renderbuffer *acc_strb,
            struct st_renderbuffer *color_strb)
 {
+   struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_transfer *acc_trans, *color_trans;
+   struct pipe_transfer *color_trans;
+   size_t stride = acc_strb->stride;
+   GLubyte *data = acc_strb->data;
    GLfloat *buf;
-   GLint i;
 
-   acc_trans = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
-                                        PIPE_TRANSFER_WRITE, xpos, ypos,
-                                        width, height);
-
-   color_trans = screen->get_tex_transfer(screen, color_strb->texture, 0, 0, 0,
-                                        PIPE_TRANSFER_READ, xpos, ypos,
-                                        width, height);
+   color_trans = st_cond_flush_get_tex_transfer(st, color_strb->texture,
+						0, 0, 0,
+						PIPE_TRANSFER_READ, xpos, ypos,
+						width, height);
 
    buf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
 
    pipe_get_tile_rgba(color_trans, 0, 0, width, height, buf);
 
-   for (i = 0; i < 4 * width * height; i++) {
-      buf[i] = buf[i] * value;
+   switch (acc_strb->format) {
+   case PIPE_FORMAT_R16G16B16A16_SNORM:
+      {
+         const GLfloat *color = buf;
+         int i, j;
+         for (i = 0; i < height; i++) {
+            GLshort *acc = (GLshort *) (data + (ypos + i) * stride + xpos * 8);
+            for (j = 0; j < width * 4; j++) {
+               float val = *color++ * value;
+               *acc++ = FLOAT_TO_SHORT(val);
+            }
+         }
+      }
+      break;
+   default:
+      _mesa_problem(NULL, "unexpected format in st_clear_accum_buffer()");
    }
 
-   acc_put_tile_rgba(pipe, acc_trans, 0, 0, width, height, buf);
-
    _mesa_free(buf);
-   screen->tex_transfer_destroy(acc_trans);
    screen->tex_transfer_destroy(color_trans);
 }
 
@@ -278,45 +222,58 @@ accum_return(GLcontext *ctx, GLfloat value,
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_screen *screen = pipe->screen;
    const GLubyte *colormask = ctx->Color.ColorMask;
-   struct pipe_transfer *acc_trans, *color_trans;
-   GLfloat *abuf, *cbuf = NULL;
-   GLint i, ch;
+   enum pipe_transfer_usage usage;
+   struct pipe_transfer *color_trans;
+   size_t stride = acc_strb->stride;
+   const GLubyte *data = acc_strb->data;
+   GLfloat *buf;
 
-   abuf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+   buf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
 
-   acc_trans = screen->get_tex_transfer(screen, acc_strb->texture, 0, 0, 0,
-                                        PIPE_TRANSFER_READ, xpos, ypos,
-                                        width, height);
+   if (!colormask[0] || !colormask[1] || !colormask[2] || !colormask[3])
+      usage = PIPE_TRANSFER_READ_WRITE;
+   else
+      usage = PIPE_TRANSFER_WRITE;
+   
+   color_trans = st_cond_flush_get_tex_transfer(st_context(ctx),
+						color_strb->texture, 0, 0, 0,
+						usage,
+						xpos, ypos,
+						width, height);
 
-   color_trans = screen->get_tex_transfer(screen, color_strb->texture, 0, 0, 0,
-                                          PIPE_TRANSFER_READ_WRITE, xpos, ypos,
-                                          width, height);
+   if (usage != PIPE_TRANSFER_WRITE)
+      pipe_get_tile_rgba(color_trans, 0, 0, width, height, buf);
 
-   acc_get_tile_rgba(pipe, acc_trans, 0, 0, width, height, abuf);
-
-   if (!colormask[0] || !colormask[1] || !colormask[2] || !colormask[3]) {
-      cbuf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
-      pipe_get_tile_rgba(color_trans, 0, 0, width, height, cbuf);
-   }
-
-   for (i = 0; i < width * height; i++) {
-      for (ch = 0; ch < 4; ch++) {
-         if (colormask[ch]) {
-            GLfloat val = abuf[i * 4 + ch] * value;
-            abuf[i * 4 + ch] = CLAMP(val, 0.0f, 1.0f);
-         }
-         else {
-            abuf[i * 4 + ch] = cbuf[i * 4 + ch];
+   switch (acc_strb->format) {
+   case PIPE_FORMAT_R16G16B16A16_SNORM:
+      {
+         GLfloat *color = buf;
+         int i, j, ch;
+         for (i = 0; i < height; i++) {
+            const GLshort *acc = (const GLshort *) (data + (ypos + i) * stride + xpos * 8);
+            for (j = 0; j < width; j++) {
+               for (ch = 0; ch < 4; ch++) {
+                  if (colormask[ch]) {
+                     GLfloat val = SHORT_TO_FLOAT(*acc * value);
+                     *color = CLAMP(val, 0.0f, 1.0f);
+                  }
+                  else {
+                     /* No change */
+                  }
+                  ++acc;
+                  ++color;
+               }
+            }
          }
       }
+      break;
+   default:
+      _mesa_problem(NULL, "unexpected format in st_clear_accum_buffer()");
    }
 
-   pipe_put_tile_rgba(color_trans, 0, 0, width, height, abuf);
+   pipe_put_tile_rgba(color_trans, 0, 0, width, height, buf);
 
-   _mesa_free(abuf);
-   if (cbuf)
-      _mesa_free(cbuf);
-   screen->tex_transfer_destroy(acc_trans);
+   _mesa_free(buf);
    screen->tex_transfer_destroy(color_trans);
 }
 
@@ -325,7 +282,6 @@ static void
 st_Accum(GLcontext *ctx, GLenum op, GLfloat value)
 {
    struct st_context *st = ctx->st;
-   struct pipe_context *pipe = st->pipe;
    struct st_renderbuffer *acc_strb
      = st_renderbuffer(ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
    struct st_renderbuffer *color_strb
@@ -336,6 +292,9 @@ st_Accum(GLcontext *ctx, GLenum op, GLfloat value)
    const GLint width = ctx->DrawBuffer->_Xmax - xpos;
    const GLint height = ctx->DrawBuffer->_Ymax - ypos;
 
+   if(!acc_strb->data)
+      return;
+   
    /* make sure color bufs aren't cached */
    st_flush( st, PIPE_FLUSH_RENDER_CACHE, NULL );
 
@@ -352,11 +311,11 @@ st_Accum(GLcontext *ctx, GLenum op, GLfloat value)
       break;
    case GL_ACCUM:
       if (value != 0.0F) {
-         accum_accum(pipe, value, xpos, ypos, width, height, acc_strb, color_strb);
+         accum_accum(st, value, xpos, ypos, width, height, acc_strb, color_strb);
       }
       break;
    case GL_LOAD:
-      accum_load(pipe, value, xpos, ypos, width, height, acc_strb, color_strb);
+      accum_load(st, value, xpos, ypos, width, height, acc_strb, color_strb);
       break;
    case GL_RETURN:
       accum_return(ctx, value, xpos, ypos, width, height, acc_strb, color_strb);

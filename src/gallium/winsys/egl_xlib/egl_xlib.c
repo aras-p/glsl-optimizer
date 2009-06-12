@@ -359,7 +359,7 @@ xlib_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
       /* fall-through */
    case EGL_OPENGL_API:
       /* create a softpipe context */
-      ctx->pipe = softpipe_create(xdrv->screen, xdrv->winsys, NULL);
+      ctx->pipe = softpipe_create(xdrv->screen);
       /* Now do xlib / state tracker inits here */
       _eglConfigToContextModesRec(conf, &visual);
       ctx->Context = st_create_context(ctx->pipe, &visual, share_ctx);
@@ -388,6 +388,7 @@ xlib_eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
          /* API-dependent clean-up */
          switch (context->Base.ClientAPI) {
          case EGL_OPENGL_ES_API:
+         case EGL_OPENVG_API:
             /* fall-through */
          case EGL_OPENGL_API:
             st_destroy_context(context->Context);
@@ -587,7 +588,9 @@ find_supported_apis(void)
    EGLint mask = 0;
    void *handle;
 
-   handle = dlopen(NULL, 0);
+   handle = dlopen(NULL, RTLD_LAZY | RTLD_LOCAL);
+   if(!handle)
+      return mask;
 
    if (dlsym(handle, "st_api_OpenGL_ES1"))
       mask |= EGL_OPENGL_ES_BIT;

@@ -31,42 +31,11 @@
 
 #include "radeon_winsys_softpipe.h"
 
-struct radeon_softpipe_winsys {
-    struct softpipe_winsys  sp_winsys;
-    struct radeon_context      *radeon_context;
-};
-
-/**
- * Return list of surface formats supported by this driver.
- */
-static boolean radeon_is_format_supported(struct softpipe_winsys *sws,
-                                          uint format)
-{
-    switch (format) {
-        case PIPE_FORMAT_A8R8G8B8_UNORM:
-        case PIPE_FORMAT_R5G6B5_UNORM:
-        case PIPE_FORMAT_Z24S8_UNORM:
-            return TRUE;
-        default:
-            break;
-    }
-    return FALSE;
-}
-
 struct pipe_context *radeon_create_softpipe(struct pipe_winsys* winsys)
 {
-    struct softpipe_winsys *sp_winsys;
     struct pipe_screen *pipe_screen;
 
     pipe_screen = softpipe_create_screen(winsys);
 
-    sp_winsys = CALLOC_STRUCT(softpipe_winsys);
-    if (sp_winsys == NULL) {
-        return NULL;
-    }
-
-    sp_winsys->is_format_supported = radeon_is_format_supported;
-    return softpipe_create(pipe_screen,
-                           winsys,
-                           sp_winsys);
+    return softpipe_create(pipe_screen);
 }

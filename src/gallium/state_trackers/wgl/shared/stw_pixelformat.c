@@ -25,113 +25,266 @@
  * 
  **************************************************************************/
 
+#include "main/mtypes.h"
+#include "main/context.h"
+
+#include "pipe/p_format.h"
+#include "pipe/p_defines.h"
+#include "pipe/p_screen.h"
+
 #include "util/u_debug.h"
+
+#include "stw_device.h"
 #include "stw_pixelformat.h"
 #include "stw_public.h"
 #include "stw_tls.h"
 
-#define MAX_PIXELFORMATS   16
 
-static struct pixelformat_info pixelformats[MAX_PIXELFORMATS];
-static uint pixelformat_count = 0;
-static uint pixelformat_extended_count = 0;
+struct stw_pf_color_info
+{
+   enum pipe_format format;
+   struct {
+      unsigned char red;
+      unsigned char green;
+      unsigned char blue;
+      unsigned char alpha;
+   } bits;
+   struct {
+      unsigned char red;
+      unsigned char green;
+      unsigned char blue;
+      unsigned char alpha;
+   } shift;
+};
+
+struct stw_pf_depth_info
+{
+   enum pipe_format format;
+   struct {
+      unsigned char depth;
+      unsigned char stencil;
+   } bits;
+};
+
+
+/* NOTE: order matters, since in otherwise equal circumstances the first
+ * format listed will get chosen */
+
+static const struct stw_pf_color_info
+stw_pf_color[] = {
+   /* no-alpha */
+   { PIPE_FORMAT_X8R8G8B8_UNORM,    { 8,  8,  8,  0}, {16,  8,  0,  0} },
+   { PIPE_FORMAT_B8G8R8X8_UNORM,    { 8,  8,  8,  0}, { 8, 16, 24,  0} },
+   { PIPE_FORMAT_R5G6B5_UNORM,      { 5,  6,  5,  0}, {11,  5,  0,  0} },
+   /* alpha */
+   { PIPE_FORMAT_A8R8G8B8_UNORM,    { 8,  8,  8,  8}, {16,  8,  0, 24} },
+   { PIPE_FORMAT_B8G8R8A8_UNORM,    { 8,  8,  8,  8}, { 8, 16, 24,  0} },
+#if 0
+   { PIPE_FORMAT_A2B10G10R10_UNORM, {10, 10, 10,  2}, { 0, 10, 20, 30} },
+#endif
+   { PIPE_FORMAT_A1R5G5B5_UNORM,    { 5,  5,  5,  1}, {10,  5,  0, 15} },
+   { PIPE_FORMAT_A4R4G4B4_UNORM,    { 4,  4,  4,  4}, {16,  4,  0, 12} }
+};
+
+
+static const struct stw_pf_depth_info 
+stw_pf_depth_stencil[] = {
+   /* pure depth */
+   { PIPE_FORMAT_Z32_UNORM,   {32, 0} },
+   { PIPE_FORMAT_Z24X8_UNORM, {24, 0} },
+   { PIPE_FORMAT_X8Z24_UNORM, {24, 0} },
+   { PIPE_FORMAT_Z16_UNORM,   {16, 0} },
+   /* pure stencil */
+   { PIPE_FORMAT_S8_UNORM,    { 0, 8} },
+   /* combined depth-stencil */
+   { PIPE_FORMAT_S8Z24_UNORM, {24, 8} },
+   { PIPE_FORMAT_Z24S8_UNORM, {24, 8} }
+};
+
+
+static const boolean 
+stw_pf_doublebuffer[] = {
+   FALSE,
+   TRUE,
+};
+
+
+const unsigned 
+stw_pf_multisample[] = {
+   0,
+   4
+};
 
 
 static void
-add_standard_pixelformats(
-   struct pixelformat_info **ppf,
-   uint flags )
+stw_pixelformat_add(
+   struct stw_device *stw_dev,
+   const struct stw_pf_color_info *color,
+   const struct stw_pf_depth_info *depth,
+   unsigned accum,
+   boolean doublebuffer,
+   unsigned samples )
 {
-   struct pixelformat_info *pf = *ppf;
-   struct pixelformat_color_info color24 = { 8, 0, 8, 8, 8, 16 };
-   struct pixelformat_alpha_info alpha8 = { 8, 24 };
-   struct pixelformat_alpha_info noalpha = { 0, 0 };
-   struct pixelformat_depth_info depth24s8 = { 24, 8 };
-   struct pixelformat_depth_info depth16 = { 16, 0 };
+   boolean extended = FALSE;
+   struct stw_pixelformat_info *pfi;
+   
+   assert(stw_dev->pixelformat_extended_count < STW_MAX_PIXELFORMATS);
+   if(stw_dev->pixelformat_extended_count >= STW_MAX_PIXELFORMATS)
+      return;
 
-   pf->flags = PF_FLAG_DOUBLEBUFFER | flags;
-   pf->color = color24;
-   pf->alpha = alpha8;
-   pf->depth = depth16;
-   pf++;
+   assert(pf_layout( color->format ) == PIPE_FORMAT_LAYOUT_RGBAZS );
+   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_R ) == color->bits.red );
+   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_G ) == color->bits.green );
+   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_B ) == color->bits.blue );
+   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_A ) == color->bits.alpha );
+   assert(pf_layout( depth->format ) == PIPE_FORMAT_LAYOUT_RGBAZS );
+   assert(pf_get_component_bits( depth->format, PIPE_FORMAT_COMP_Z ) == depth->bits.depth );
+   assert(pf_get_component_bits( depth->format, PIPE_FORMAT_COMP_S ) == depth->bits.stencil );
+   
+   pfi = &stw_dev->pixelformats[stw_dev->pixelformat_extended_count];
+   
+   memset(pfi, 0, sizeof *pfi);
+   
+   pfi->color_format = color->format;
+   pfi->depth_stencil_format = depth->format;
+   
+   pfi->pfd.nSize = sizeof pfi->pfd;
+   pfi->pfd.nVersion = 1;
 
-   pf->flags = PF_FLAG_DOUBLEBUFFER | flags;
-   pf->color = color24;
-   pf->alpha = alpha8;
-   pf->depth = depth24s8;
-   pf++;
+   pfi->pfd.dwFlags = PFD_SUPPORT_OPENGL;
+   
+   /* TODO: also support non-native pixel formats */
+   pfi->pfd.dwFlags |= PFD_DRAW_TO_WINDOW ;
+   
+   if (doublebuffer)
+      pfi->pfd.dwFlags |= PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
+   
+   pfi->pfd.iPixelType = PFD_TYPE_RGBA;
 
-   pf->flags = PF_FLAG_DOUBLEBUFFER | flags;
-   pf->color = color24;
-   pf->alpha = noalpha;
-   pf->depth = depth16;
-   pf++;
+   pfi->pfd.cColorBits = color->bits.red + color->bits.green + color->bits.blue + color->bits.alpha;
+   pfi->pfd.cRedBits = color->bits.red;
+   pfi->pfd.cRedShift = color->shift.red;
+   pfi->pfd.cGreenBits = color->bits.green;
+   pfi->pfd.cGreenShift = color->shift.green;
+   pfi->pfd.cBlueBits = color->bits.blue;
+   pfi->pfd.cBlueShift = color->shift.blue;
+   pfi->pfd.cAlphaBits = color->bits.alpha;
+   pfi->pfd.cAlphaShift = color->shift.alpha;
+   pfi->pfd.cAccumBits = 4*accum;
+   pfi->pfd.cAccumRedBits = accum;
+   pfi->pfd.cAccumGreenBits = accum;
+   pfi->pfd.cAccumBlueBits = accum;
+   pfi->pfd.cAccumAlphaBits = accum;
+   pfi->pfd.cDepthBits = depth->bits.depth;
+   pfi->pfd.cStencilBits = depth->bits.stencil;
+   pfi->pfd.cAuxBuffers = 0;
+   pfi->pfd.iLayerType = 0;
+   pfi->pfd.bReserved = 0;
+   pfi->pfd.dwLayerMask = 0;
+   pfi->pfd.dwVisibleMask = 0;
+   pfi->pfd.dwDamageMask = 0;
 
-   pf->flags = PF_FLAG_DOUBLEBUFFER | flags;
-   pf->color = color24;
-   pf->alpha = noalpha;
-   pf->depth = depth24s8;
-   pf++;
-
-   pf->flags = flags;
-   pf->color = color24;
-   pf->alpha = alpha8;
-   pf->depth = depth16;
-   pf++;
-
-   pf->flags = flags;
-   pf->color = color24;
-   pf->alpha = alpha8;
-   pf->depth = depth24s8;
-   pf++;
-
-   pf->flags = flags;
-   pf->color = color24;
-   pf->alpha = noalpha;
-   pf->depth = depth16;
-   pf++;
-
-   pf->flags = flags;
-   pf->color = color24;
-   pf->alpha = noalpha;
-   pf->depth = depth24s8;
-   pf++;
-
-   *ppf = pf;
+   if(samples) {
+      pfi->numSampleBuffers = 1;
+      pfi->numSamples = samples;
+      extended = TRUE;
+   }
+   
+   ++stw_dev->pixelformat_extended_count;
+   
+   if(!extended) {
+      ++stw_dev->pixelformat_count;
+      assert(stw_dev->pixelformat_count == stw_dev->pixelformat_extended_count);
+   }
 }
 
 void
-pixelformat_init( void )
+stw_pixelformat_init( void )
 {
-   struct pixelformat_info *pf = pixelformats;
+   struct pipe_screen *screen = stw_dev->screen;
+   unsigned i, j, k, l;
+   
+   assert( !stw_dev->pixelformat_count );
+   assert( !stw_dev->pixelformat_extended_count );
 
-   add_standard_pixelformats( &pf, 0 );
-   pixelformat_count = pf - pixelformats;
+   for(i = 0; i < Elements(stw_pf_multisample); ++i) {
+      unsigned samples = stw_pf_multisample[i];
+      
+      /* FIXME: re-enabled MSAA when we can query it */
+      if(samples)
+         continue;
 
-   add_standard_pixelformats( &pf, PF_FLAG_MULTISAMPLED );
-   pixelformat_extended_count = pf - pixelformats;
+      for(j = 0; j < Elements(stw_pf_color); ++j) {
+         const struct stw_pf_color_info *color = &stw_pf_color[j];
+         
+         if(!screen->is_format_supported(screen, color->format, PIPE_TEXTURE_2D, 
+                                         PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
+            continue;
+         
+         for(k = 0; k < Elements(stw_pf_doublebuffer); ++k) {
+            unsigned doublebuffer = stw_pf_doublebuffer[k];
+            
+            for(l = 0; l < Elements(stw_pf_depth_stencil); ++l) {
+               const struct stw_pf_depth_info *depth = &stw_pf_depth_stencil[l];
+               
+               if(!screen->is_format_supported(screen, depth->format, PIPE_TEXTURE_2D, 
+                                               PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
+                  continue;
 
-   assert( pixelformat_extended_count <= MAX_PIXELFORMATS );
+               stw_pixelformat_add( stw_dev, color, depth,  0, doublebuffer, samples );
+               stw_pixelformat_add( stw_dev, color, depth, 16, doublebuffer, samples );
+            }
+         }
+      }
+   }
+   
+   assert( stw_dev->pixelformat_count <= stw_dev->pixelformat_extended_count );
+   assert( stw_dev->pixelformat_extended_count <= STW_MAX_PIXELFORMATS );
 }
 
 uint
-pixelformat_get_count( void )
+stw_pixelformat_get_count( void )
 {
-   return pixelformat_count;
+   return stw_dev->pixelformat_count;
 }
 
 uint
-pixelformat_get_extended_count( void )
+stw_pixelformat_get_extended_count( void )
 {
-   return pixelformat_extended_count;
+   return stw_dev->pixelformat_extended_count;
 }
 
-const struct pixelformat_info *
-pixelformat_get_info( uint index )
+const struct stw_pixelformat_info *
+stw_pixelformat_get_info( uint index )
 {
-   assert( index < pixelformat_extended_count );
+   assert( index < stw_dev->pixelformat_extended_count );
 
-   return &pixelformats[index];
+   return &stw_dev->pixelformats[index];
+}
+
+
+void
+stw_pixelformat_visual(GLvisual *visual, 
+                       const struct stw_pixelformat_info *pfi )
+{
+   memset(visual, 0, sizeof *visual);
+   _mesa_initialize_visual(
+      visual,
+      (pfi->pfd.iPixelType == PFD_TYPE_RGBA) ? GL_TRUE : GL_FALSE,
+      (pfi->pfd.dwFlags & PFD_DOUBLEBUFFER) ? GL_TRUE : GL_FALSE,
+      (pfi->pfd.dwFlags & PFD_STEREO) ? GL_TRUE : GL_FALSE,
+      pfi->pfd.cRedBits,
+      pfi->pfd.cGreenBits,
+      pfi->pfd.cBlueBits,
+      pfi->pfd.cAlphaBits,
+      (pfi->pfd.iPixelType == PFD_TYPE_COLORINDEX) ? pfi->pfd.cColorBits : 0,
+      pfi->pfd.cDepthBits,
+      pfi->pfd.cStencilBits,
+      pfi->pfd.cAccumRedBits,
+      pfi->pfd.cAccumGreenBits,
+      pfi->pfd.cAccumBlueBits,
+      pfi->pfd.cAccumAlphaBits,
+      pfi->numSamples );
 }
 
 
@@ -144,11 +297,11 @@ stw_pixelformat_describe(
 {
    uint count;
    uint index;
-   const struct pixelformat_info *pf;
+   const struct stw_pixelformat_info *pfi;
 
    (void) hdc;
 
-   count = pixelformat_get_extended_count();
+   count = stw_pixelformat_get_extended_count();
    index = (uint) iPixelFormat - 1;
 
    if (ppfd == NULL)
@@ -156,36 +309,9 @@ stw_pixelformat_describe(
    if (index >= count || nBytes != sizeof( PIXELFORMATDESCRIPTOR ))
       return 0;
 
-   pf = pixelformat_get_info( index );
-
-   ppfd->nSize = sizeof( PIXELFORMATDESCRIPTOR );
-   ppfd->nVersion = 1;
-   ppfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
-   if (pf->flags & PF_FLAG_DOUBLEBUFFER)
-      ppfd->dwFlags |= PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
-   ppfd->iPixelType = PFD_TYPE_RGBA;
-   ppfd->cColorBits = pf->color.redbits + pf->color.greenbits + pf->color.bluebits;
-   ppfd->cRedBits = pf->color.redbits;
-   ppfd->cRedShift = pf->color.redshift;
-   ppfd->cGreenBits = pf->color.greenbits;
-   ppfd->cGreenShift = pf->color.greenshift;
-   ppfd->cBlueBits = pf->color.bluebits;
-   ppfd->cBlueShift = pf->color.blueshift;
-   ppfd->cAlphaBits = pf->alpha.alphabits;
-   ppfd->cAlphaShift = pf->alpha.alphashift;
-   ppfd->cAccumBits = 0;
-   ppfd->cAccumRedBits = 0;
-   ppfd->cAccumGreenBits = 0;
-   ppfd->cAccumBlueBits = 0;
-   ppfd->cAccumAlphaBits = 0;
-   ppfd->cDepthBits = pf->depth.depthbits;
-   ppfd->cStencilBits = pf->depth.stencilbits;
-   ppfd->cAuxBuffers = 0;
-   ppfd->iLayerType = 0;
-   ppfd->bReserved = 0;
-   ppfd->dwLayerMask = 0;
-   ppfd->dwVisibleMask = 0;
-   ppfd->dwDamageMask = 0;
+   pfi = stw_pixelformat_get_info( index );
+   
+   memcpy(ppfd, &pfi->pfd, sizeof( PIXELFORMATDESCRIPTOR ));
 
    return count;
 }
@@ -203,29 +329,30 @@ int stw_pixelformat_choose( HDC hdc,
 
    (void) hdc;
 
-   count = pixelformat_get_count();
+   count = stw_pixelformat_get_count();
    bestindex = count;
-   bestdelta = 0xffffffff;
+   bestdelta = ~0U;
 
    for (index = 0; index < count; index++) {
       uint delta = 0;
-      const struct pixelformat_info *pf = pixelformat_get_info( index );
+      const struct stw_pixelformat_info *pfi = stw_pixelformat_get_info( index );
 
       if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE) &&
           !!(ppfd->dwFlags & PFD_DOUBLEBUFFER) !=
-          !!(pf->flags & PF_FLAG_DOUBLEBUFFER))
+          !!(pfi->pfd.dwFlags & PFD_DOUBLEBUFFER))
          continue;
 
-      if (ppfd->cColorBits != pf->color.redbits + pf->color.greenbits + pf->color.bluebits)
+      /* FIXME: Take in account individual channel bits */
+      if (ppfd->cColorBits != pfi->pfd.cColorBits)
          delta += 8;
 
-      if (ppfd->cDepthBits != pf->depth.depthbits)
+      if (ppfd->cDepthBits != pfi->pfd.cDepthBits)
          delta += 4;
 
-      if (ppfd->cStencilBits != pf->depth.stencilbits)
+      if (ppfd->cStencilBits != pfi->pfd.cStencilBits)
          delta += 2;
 
-      if (ppfd->cAlphaBits != pf->alpha.alphabits)
+      if (ppfd->cAlphaBits != pfi->pfd.cAlphaBits)
          delta++;
 
       if (delta < bestdelta) {
@@ -241,57 +368,3 @@ int stw_pixelformat_choose( HDC hdc,
 
    return bestindex + 1;
 }
-
-
-int
-stw_pixelformat_get(
-   HDC hdc )
-{
-   return stw_tls_get_data()->currentPixelFormat;
-}
-
-
-BOOL
-stw_pixelformat_set(
-   HDC hdc,
-   int iPixelFormat )
-{
-   uint count;
-   uint index;
-
-   (void) hdc;
-
-   index = (uint) iPixelFormat - 1;
-   count = pixelformat_get_extended_count();
-   if (index >= count)
-      return FALSE;
-
-   stw_tls_get_data()->currentPixelFormat = iPixelFormat;
-
-   /* Some applications mistakenly use the undocumented wglSetPixelFormat 
-    * function instead of SetPixelFormat, so we call SetPixelFormat here to 
-    * avoid opengl32.dll's wglCreateContext to fail */
-   if (GetPixelFormat(hdc) == 0) {
-        SetPixelFormat(hdc, iPixelFormat, NULL);
-   }
-   
-   return TRUE;
-}
-
-
-
-/* XXX: this needs to be turned into queries on pipe_screen or
- * stw_winsys.
- */
-int
-stw_query_sample_buffers( void )
-{
-   return 1;
-}
-
-int
-stw_query_samples( void )
-{
-   return 4;
-}
-

@@ -99,7 +99,6 @@ def vert( intype, outtype, v0 ):
         return '(' + outtype + ')in[' + v0 + ']'
 
 def line( intype, outtype, ptr, v0, v1 ):
-    print '      debug_printf("  line %d %d\\n", (int)' + v0 + ', (int)' + v1 + ');'
     print '      (' + ptr + ')[0] = ' + vert( intype, outtype, v0 ) + ';'
     print '      (' + ptr + ')[1] = ' + vert( intype, outtype, v1 ) + ';'
 

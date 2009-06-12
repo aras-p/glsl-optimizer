@@ -13,7 +13,7 @@
 <p>
 Mesa 7.5 is a new development release.
 People who are concerned with stability and reliability should stick
-with the 7.4.x branch or wait for Mesa 7.6.
+with the 7.4.x branch or wait for Mesa 7.5.1.
 </p>
 <p>
 The main new feature of Mesa 7.5 is the
@@ -27,7 +27,14 @@ Some drivers don't support all the features required in OpenGL 2.1.
 </p>
 <p>
 See the <a href="install.html">Compiling/Installing page</a> for prerequisites
-for DRI ardware acceleration.
+for DRI hardware acceleration.
+</p>
+<p>
+Note that the Mesa project is no longer using odd/even version numbers
+to indicate development/stable releases.
+The so-called development releases have been fairly stable.
+If you're especially concerned with stability you should probably look for
+"point" releases such as 7.5.1 which will be a bug-fix release.
 </p>
 
 
@@ -39,7 +46,7 @@ tbd
 
 <h2>New features</h2>
 <ul>
-<li>Gallium - this is the new architecture for OS-independent and
+<li>Gallium3D - this is the new architecture for OS-independent and
     API-independent 3D drivers.
     Gallium3D is intended for GPUs that fully support  vertex/fragment shaders.
     The Gallium3D drivers currently included are:
@@ -47,8 +54,10 @@ tbd
     <li>softpipe - a software/reference driver
     <li>i915 - Intel 915/945 driver
     <li><a href="cell.html">Cell</a> - IBM/Sony/Toshiba Cell processor driver
-    <li>nouveau - preliminary driver for NVIDIA GPUs (still under development)
-    <li>r300 - preliminary driver for R300 (still under development)
+    <li>nouveau (for NVIDIA GPUs) and R300 for (AMD/ATI R300).
+        <b>PLEASE NOTE: these drivers are incomplete and still under development.
+        It's probably NOT worthwhile to report any bugs unless you have patches.
+        </b>
     </ul>
 <li>GL_ARB_framebuffer_object extension (software drivers, i965 driver)
 <li>Reworked two-sided stencil support.
@@ -58,12 +67,14 @@ including GL_ATI_separate_stencil, GL_EXT_stencil_two_side and OpenGL 2.0
 <li>GL_NV_texture_env_combine4 extension (software drivers, i965/i915 drivers)
 <li>GL_EXT_texture_swizzle extension (software drivers, i965 driver)
 <li>Updated SPARC assembly optimizations (David S. Miller)
+<li>Initial support for separate compilation units in GLSL compiler.
 </ul>
 
 
 <h2>Bug fixes</h2>
 <ul>
 <li>Lots of i965 driver bug fixes
+<li>Fixed some GLSL preprocessor bugs
 </ul>
 
 
@@ -71,6 +82,7 @@ including GL_ATI_separate_stencil, GL_EXT_stencil_two_side and OpenGL 2.0
 <ul>
 <li>Remove support for GL_SGIX_shadow, GL_SGIX_shadow_ambient and
 GL_SGIX_depth_texture extensions.  Superseded by the ARB versions.
+<li>Omitted some old Mesa demos from the release tarballs, added some others.
 </ul>
 
 </body>

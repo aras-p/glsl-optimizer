@@ -1,20 +1,83 @@
+#include "pipe/p_context.h"
+#include "pipe/p_state.h"
 #include "util/u_memory.h"
 
 #include "nouveau_drm_api.h"
-#include "nouveau_winsys_pipe.h"
 
 #include "nouveau_drmif.h"
 #include "nouveau_channel.h"
 #include "nouveau_bo.h"
 
-static struct pipe_screen *
-nouveau_drm_create_screen(int fd, int pciid)
+#include "nouveau/nouveau_winsys.h"
+#include "nouveau/nouveau_screen.h"
+
+static struct pipe_surface *
+dri_surface_from_handle(struct pipe_screen *screen,
+                        unsigned handle,
+                        enum pipe_format format,
+                        unsigned width,
+                        unsigned height,
+                        unsigned pitch)
 {
-	struct pipe_winsys *ws;
+   struct pipe_surface *surface = NULL;
+   struct pipe_texture *texture = NULL;
+   struct pipe_texture templat;
+   struct pipe_buffer *buf = NULL;
+
+   buf = drm_api_hooks.buffer_from_handle(screen, "front buffer", handle);
+   if (!buf)
+      return NULL;
+
+   memset(&templat, 0, sizeof(templat));
+   templat.tex_usage = PIPE_TEXTURE_USAGE_PRIMARY |
+                       NOUVEAU_TEXTURE_USAGE_LINEAR;
+   templat.target = PIPE_TEXTURE_2D;
+   templat.last_level = 0;
+   templat.depth[0] = 1;
+   templat.format = format;
+   templat.width[0] = width;
+   templat.height[0] = height;
+   pf_get_block(templat.format, &templat.block);
+
+   texture = screen->texture_blanket(screen,
+                                     &templat,
+                                     &pitch,
+                                     buf);
+
+   /* we don't need the buffer from this point on */
+   pipe_buffer_reference(&buf, NULL);
+
+   if (!texture)
+      return NULL;
+
+   surface = screen->get_tex_surface(screen, texture, 0, 0, 0,
+                                     PIPE_BUFFER_USAGE_GPU_READ |
+                                     PIPE_BUFFER_USAGE_GPU_WRITE);
+
+   /* we don't need the texture from this point on */
+   pipe_texture_reference(&texture, NULL);
+   return surface;
+}
+
+static struct pipe_surface *
+nouveau_dri1_front_surface(struct pipe_context *pipe)
+{
+	return nouveau_winsys_screen(pipe->screen)->front;
+}
+
+static struct dri1_api nouveau_dri1_api = {
+	nouveau_dri1_front_surface,
+};
+
+static struct pipe_screen *
+nouveau_drm_create_screen(int fd, struct drm_create_screen_arg *arg)
+{
+	struct dri1_create_screen_arg *dri1 = (void *)arg;
 	struct nouveau_winsys *nvws;
+	struct pipe_winsys *ws;
 	struct nouveau_device *dev = NULL;
 	struct pipe_screen *(*init)(struct pipe_winsys *,
-				    struct nouveau_winsys *);
+				    struct nouveau_device *);
 	int ret;
 
 	ret = nouveau_device_open_existing(&dev, 0, fd, 0);
@@ -49,33 +112,54 @@ nouveau_drm_create_screen(int fd, int pciid)
 		return NULL;
 	}
 
-	ws = nouveau_pipe_winsys_new(dev);
-	if (!ws) {
+	nvws = CALLOC_STRUCT(nouveau_winsys);
+	if (!nvws) {
 		nouveau_device_close(&dev);
 		return NULL;
 	}
+	ws = &nvws->base;
 
-	nvws = nouveau_winsys_new(ws);
-	if (!nvws) {
+	nvws->pscreen = init(ws, dev);
+	if (!nvws->pscreen) {
 		ws->destroy(ws);
 		return NULL;
 	}
 
-	nouveau_pipe_winsys(ws)->pscreen = init(ws, nvws);
-	if (!nouveau_pipe_winsys(ws)->pscreen) {
-		ws->destroy(ws);
-		return NULL;
+	if (arg->mode == DRM_CREATE_DRI1) {
+		struct nouveau_dri *nvdri = dri1->ddx_info;
+		enum pipe_format format;
+
+		if (nvdri->bpp == 16)
+			format = PIPE_FORMAT_R5G6B5_UNORM;
+		else
+			format = PIPE_FORMAT_A8R8G8B8_UNORM;
+
+		nvws->front = dri_surface_from_handle(nvws->pscreen,
+						       nvdri->front_offset,
+						       format,
+						       nvdri->width,
+						       nvdri->height,
+						       nvdri->front_pitch *
+						       (nvdri->bpp / 8));
+		if (!nvws->front) {
+			debug_printf("%s: error referencing front buffer\n",
+				     __func__);
+			ws->destroy(ws);
+			return NULL;
+		}
+
+		dri1->api = &nouveau_dri1_api;
 	}
 
-	return nouveau_pipe_winsys(ws)->pscreen;
+	return nvws->pscreen;
 }
 
 static struct pipe_context *
 nouveau_drm_create_context(struct pipe_screen *pscreen)
 {
-	struct nouveau_pipe_winsys *nvpws = nouveau_screen(pscreen);
+	struct nouveau_winsys *nvws = nouveau_winsys_screen(pscreen);
 	struct pipe_context *(*init)(struct pipe_screen *, unsigned);
-	unsigned chipset = nvpws->channel->device->chipset;
+	unsigned chipset = nouveau_screen(pscreen)->device->chipset;
 	int i;
 
 	switch (chipset & 0xf0) {
@@ -106,19 +190,19 @@ nouveau_drm_create_context(struct pipe_screen *pscreen)
 	}
 
 	/* Find a free slot for a pipe context, allocate a new one if needed */
-	for (i = 0; i < nvpws->nr_pctx; i++) {
-		if (nvpws->pctx[i] == NULL)
+	for (i = 0; i < nvws->nr_pctx; i++) {
+		if (nvws->pctx[i] == NULL)
 			break;
 	}
 
-	if (i == nvpws->nr_pctx) {
-		nvpws->nr_pctx++;
-		nvpws->pctx = realloc(nvpws->pctx,
-				      sizeof(*nvpws->pctx) * nvpws->nr_pctx);
+	if (i == nvws->nr_pctx) {
+		nvws->nr_pctx++;
+		nvws->pctx = realloc(nvws->pctx,
+				      sizeof(*nvws->pctx) * nvws->nr_pctx);
 	}
 
-	nvpws->pctx[i] = init(pscreen, i);
-	return nvpws->pctx[i];
+	nvws->pctx[i] = init(pscreen, i);
+	return nvws->pctx[i];
 }
 
 static boolean
@@ -132,42 +216,41 @@ static struct pipe_buffer *
 nouveau_drm_pb_from_handle(struct pipe_screen *pscreen, const char *name,
 			   unsigned handle)
 {
-	struct nouveau_pipe_winsys *nvpws = nouveau_screen(pscreen);
-	struct nouveau_device *dev = nvpws->channel->device;
-	struct nouveau_pipe_buffer *nvpb;
+	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
+	struct pipe_buffer *pb;
 	int ret;
 
-	nvpb = CALLOC_STRUCT(nouveau_pipe_buffer);
-	if (!nvpb)
+	pb = CALLOC(1, sizeof(struct pipe_buffer) + sizeof(struct nouveau_bo*));
+	if (!pb)
 		return NULL;
 
-	ret = nouveau_bo_handle_ref(dev, handle, &nvpb->bo);
+	ret = nouveau_bo_handle_ref(dev, handle, (struct nouveau_bo**)(pb+1));
 	if (ret) {
 		debug_printf("%s: ref name 0x%08x failed with %d\n",
 			     __func__, handle, ret);
-		FREE(nvpb);
+		FREE(pb);
 		return NULL;
 	}
 
-	pipe_reference_init(&nvpb->base.reference, 1);
-	nvpb->base.screen = pscreen;
-	nvpb->base.alignment = 0;
-	nvpb->base.usage = PIPE_BUFFER_USAGE_GPU_READ_WRITE |
-			   PIPE_BUFFER_USAGE_CPU_READ_WRITE;
-	nvpb->base.size = nvpb->bo->size;
-	return &nvpb->base;
+	pipe_reference_init(&pb->reference, 1);
+	pb->screen = pscreen;
+	pb->alignment = 0;
+	pb->usage = PIPE_BUFFER_USAGE_GPU_READ_WRITE |
+		    PIPE_BUFFER_USAGE_CPU_READ_WRITE;
+	pb->size = nouveau_bo(pb)->size;
+	return pb;
 }
 
 static boolean
 nouveau_drm_handle_from_pb(struct pipe_screen *pscreen, struct pipe_buffer *pb,
 			   unsigned *handle)
 {
-	struct nouveau_pipe_buffer *nvpb = nouveau_pipe_buffer(pb);
+	struct nouveau_bo *bo = nouveau_bo(pb);
 
-	if (!nvpb)
+	if (!bo)
 		return FALSE;
 
-	*handle = nvpb->bo->handle;
+	*handle = bo->handle;
 	return TRUE;
 }
 
@@ -175,12 +258,12 @@ static boolean
 nouveau_drm_name_from_pb(struct pipe_screen *pscreen, struct pipe_buffer *pb,
 			 unsigned *handle)
 {
-	struct nouveau_pipe_buffer *nvpb = nouveau_pipe_buffer(pb);
+	struct nouveau_bo *bo = nouveau_bo(pb);
 
-	if (!nvpb)
+	if (!bo)
 		return FALSE;
 
-	return nouveau_bo_handle_get(nvpb->bo, handle) == 0;
+	return nouveau_bo_handle_get(bo, handle) == 0;
 }
 
 struct drm_api drm_api_hooks = {

@@ -1057,10 +1057,10 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
     pAsm->S[fld].src.swizzlez = (pILInst->SrcReg[src].Swizzle >> 6) & 0x7;
     pAsm->S[fld].src.swizzlew = (pILInst->SrcReg[src].Swizzle >> 9) & 0x7;
 
-    pAsm->S[fld].src.negx = pILInst->SrcReg[src].NegateBase & 0x1;
-    pAsm->S[fld].src.negy = (pILInst->SrcReg[src].NegateBase >> 1) & 0x1;
-    pAsm->S[fld].src.negz = (pILInst->SrcReg[src].NegateBase >> 2) & 0x1;
-    pAsm->S[fld].src.negw = (pILInst->SrcReg[src].NegateBase >> 3) & 0x1;
+    pAsm->S[fld].src.negx = pILInst->SrcReg[src].Negate & 0x1;
+    pAsm->S[fld].src.negy = (pILInst->SrcReg[src].Negate >> 1) & 0x1;
+    pAsm->S[fld].src.negz = (pILInst->SrcReg[src].Negate >> 2) & 0x1;
+    pAsm->S[fld].src.negw = (pILInst->SrcReg[src].Negate >> 3) & 0x1;
      
     return GL_TRUE;
 }
@@ -1197,10 +1197,10 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
     pAsm->S[0].src.swizzlez = (pILInst->SrcReg[0].Swizzle >> 6) & 0x7;
     pAsm->S[0].src.swizzlew = (pILInst->SrcReg[0].Swizzle >> 9) & 0x7;
 
-    pAsm->S[0].src.negx = pILInst->SrcReg[0].NegateBase & 0x1;
-    pAsm->S[0].src.negy = (pILInst->SrcReg[0].NegateBase >> 1) & 0x1;
-    pAsm->S[0].src.negz = (pILInst->SrcReg[0].NegateBase >> 2) & 0x1;
-    pAsm->S[0].src.negw = (pILInst->SrcReg[0].NegateBase >> 3) & 0x1;
+    pAsm->S[0].src.negx = pILInst->SrcReg[0].Negate & 0x1;
+    pAsm->S[0].src.negy = (pILInst->SrcReg[0].Negate >> 1) & 0x1;
+    pAsm->S[0].src.negz = (pILInst->SrcReg[0].Negate >> 2) & 0x1;
+    pAsm->S[0].src.negw = (pILInst->SrcReg[0].Negate >> 3) & 0x1;
      
     return GL_TRUE;
 }

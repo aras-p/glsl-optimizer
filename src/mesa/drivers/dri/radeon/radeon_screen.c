@@ -253,8 +253,8 @@ static int
 radeonGetParam(__DRIscreenPrivate *sPriv, int param, void *value)
 {
   int ret;
-  drm_radeon_getparam_t gp;
-  struct drm_radeon_info info;
+  drm_radeon_getparam_t gp = { 0 };
+  struct drm_radeon_info info = { 0 };
 
   if (sPriv->drm_version.major >= 2) {
       info.value = (uint64_t)value;
@@ -417,6 +417,7 @@ static const __DRItexBufferExtension r600TexBufferExtension = {
 
 static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
 {
+   screen->device_id = device_id;
    screen->chip_flags = 0;
    switch ( device_id ) {
    case PCI_CHIP_RADEON_LY:
@@ -493,11 +494,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
       screen->chip_family = CHIP_FAMILY_RS300;
       break;
 
-      /* 9500 with 1 pipe verified by: Reid Linnemann <lreid@cs.okstate.edu> */
    case PCI_CHIP_R300_AD:
-      screen->chip_family = CHIP_FAMILY_RV350;
-      screen->chip_flags = RADEON_CHIPSET_TCL;
-      break;
    case PCI_CHIP_R300_AE:
    case PCI_CHIP_R300_AF:
    case PCI_CHIP_R300_AG:
@@ -962,19 +959,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    {
       int ret;
 
-#ifdef RADEON_PARAM_KERNEL_MM
-     ret = radeonGetParam(sPriv, RADEON_PARAM_KERNEL_MM, &screen->kernel_mm);
-
-      if (ret && ret != -EINVAL) {
-         FREE( screen );
-         fprintf(stderr, "drm_radeon_getparam_t (RADEON_OFFSET): %d\n", ret);
-         return NULL;
-      }
-
-      if (ret == -EINVAL)
-          screen->kernel_mm = 0;
-#endif
-
       ret = radeonGetParam(sPriv, RADEON_PARAM_GART_BUFFER_OFFSET,
 			    &screen->gart_buffer_offset);
 
@@ -1012,66 +996,63 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    if (ret == -1)
      return NULL;
 
-   if (!screen->kernel_mm) {
-     screen->mmio.handle = dri_priv->registerHandle;
-     screen->mmio.size   = dri_priv->registerSize;
+   screen->mmio.handle = dri_priv->registerHandle;
+   screen->mmio.size   = dri_priv->registerSize;
+   if ( drmMap( sPriv->fd,
+		screen->mmio.handle,
+		screen->mmio.size,
+		&screen->mmio.map ) ) {
+     FREE( screen );
+     __driUtilMessage("%s: drmMap failed\n", __FUNCTION__ );
+     return NULL;
+   }
+
+   RADEONMMIO = screen->mmio.map;
+
+   screen->status.handle = dri_priv->statusHandle;
+   screen->status.size   = dri_priv->statusSize;
+   if ( drmMap( sPriv->fd,
+		screen->status.handle,
+		screen->status.size,
+		&screen->status.map ) ) {
+     drmUnmap( screen->mmio.map, screen->mmio.size );
+     FREE( screen );
+     __driUtilMessage("%s: drmMap (2) failed\n", __FUNCTION__ );
+     return NULL;
+   }
+   if (screen->chip_family < CHIP_FAMILY_R600)
+	   screen->scratch = (__volatile__ uint32_t *)
+		   ((GLubyte *)screen->status.map + RADEON_SCRATCH_REG_OFFSET);
+   else
+	   screen->scratch = (__volatile__ uint32_t *)
+		   ((GLubyte *)screen->status.map + RADEON_SCRATCH_REG_OFFSET);
+
+   screen->buffers = drmMapBufs( sPriv->fd );
+   if ( !screen->buffers ) {
+     drmUnmap( screen->status.map, screen->status.size );
+     drmUnmap( screen->mmio.map, screen->mmio.size );
+     FREE( screen );
+     __driUtilMessage("%s: drmMapBufs failed\n", __FUNCTION__ );
+     return NULL;
+   }
+
+   if ( dri_priv->gartTexHandle && dri_priv->gartTexMapSize ) {
+     screen->gartTextures.handle = dri_priv->gartTexHandle;
+     screen->gartTextures.size   = dri_priv->gartTexMapSize;
      if ( drmMap( sPriv->fd,
-		  screen->mmio.handle,
-		  screen->mmio.size,
-		  &screen->mmio.map ) ) {
-       FREE( screen );
-       __driUtilMessage("%s: drmMap failed\n", __FUNCTION__ );
-       return NULL;
-     }
-
-     RADEONMMIO = screen->mmio.map;
-
-     screen->status.handle = dri_priv->statusHandle;
-     screen->status.size   = dri_priv->statusSize;
-     if ( drmMap( sPriv->fd,
-		  screen->status.handle,
-		  screen->status.size,
-		  &screen->status.map ) ) {
-       drmUnmap( screen->mmio.map, screen->mmio.size );
-       FREE( screen );
-       __driUtilMessage("%s: drmMap (2) failed\n", __FUNCTION__ );
-       return NULL;
-     }
-     if (screen->chip_family < CHIP_FAMILY_R600)
-	     screen->scratch = (__volatile__ uint32_t *)
-		     ((GLubyte *)screen->status.map + RADEON_SCRATCH_REG_OFFSET);
-     else
-	     screen->scratch = (__volatile__ uint32_t *)
-		     ((GLubyte *)screen->status.map + R600_SCRATCH_REG_OFFSET);
-
-     screen->buffers = drmMapBufs( sPriv->fd );
-     if ( !screen->buffers ) {
+		  screen->gartTextures.handle,
+		  screen->gartTextures.size,
+		  (drmAddressPtr)&screen->gartTextures.map ) ) {
+       drmUnmapBufs( screen->buffers );
        drmUnmap( screen->status.map, screen->status.size );
        drmUnmap( screen->mmio.map, screen->mmio.size );
        FREE( screen );
-       __driUtilMessage("%s: drmMapBufs failed\n", __FUNCTION__ );
+       __driUtilMessage("%s: drmMap failed for GART texture area\n", __FUNCTION__);
        return NULL;
-     }
-     
-     if ( dri_priv->gartTexHandle && dri_priv->gartTexMapSize ) {
-       screen->gartTextures.handle = dri_priv->gartTexHandle;
-       screen->gartTextures.size   = dri_priv->gartTexMapSize;
-       if ( drmMap( sPriv->fd,
-		    screen->gartTextures.handle,
-		    screen->gartTextures.size,
-		    (drmAddressPtr)&screen->gartTextures.map ) ) {
-	 drmUnmapBufs( screen->buffers );
-	 drmUnmap( screen->status.map, screen->status.size );
-	 drmUnmap( screen->mmio.map, screen->mmio.size );
-	 FREE( screen );
-	 __driUtilMessage("%s: drmMap failed for GART texture area\n", __FUNCTION__);
-	 return NULL;
-       }
-       
-       screen->gart_texture_offset = dri_priv->gartTexOffset + screen->gart_base;
-     }
-   }
+    }
 
+     screen->gart_texture_offset = dri_priv->gartTexOffset + screen->gart_base;
+   }
 
    if ((screen->chip_family == CHIP_FAMILY_R350 || screen->chip_family == CHIP_FAMILY_R300) &&
        sPriv->ddx_version.minor < 2) {
@@ -1161,6 +1142,17 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
        } else {
 	   screen->num_gb_pipes = temp;
        }
+
+       /* pipe overrides */
+       switch (dri_priv->deviceID) {
+       case PCI_CHIP_R300_AD: /* 9500 with 1 quadpipe verified by: Reid Linnemann <lreid@cs.okstate.edu> */
+       case PCI_CHIP_RV410_5E4C: /* RV410 SE only have 1 quadpipe */
+       case PCI_CHIP_RV410_5E4F: /* RV410 SE only have 1 quadpipe */
+	   screen->num_gb_pipes = 1;
+	   break;
+       default:
+	   break;
+       }
    }
 
    if ( sPriv->drm_version.minor >= 10 ) {
@@ -1224,26 +1216,24 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
        screen->extensions[i++] = &driMediaStreamCounterExtension.base;
    }
 
-   if (!screen->kernel_mm) {
 #if !RADEON_COMMON
-   	screen->extensions[i++] = &radeonTexOffsetExtension.base;
+   screen->extensions[i++] = &radeonTexOffsetExtension.base;
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
-        if (IS_R200_CLASS(screen))
-            screen->extensions[i++] = &r200AllocateExtension.base;
+   if (IS_R200_CLASS(screen))
+      screen->extensions[i++] = &r200AllocateExtension.base;
 
-        screen->extensions[i++] = &r200texOffsetExtension.base;
+   screen->extensions[i++] = &r200texOffsetExtension.base;
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
-        screen->extensions[i++] = &r300texOffsetExtension.base;
+   screen->extensions[i++] = &r300texOffsetExtension.base;
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
-        screen->extensions[i++] = &r600texOffsetExtension.base;
+   screen->extensions[i++] = &r600texOffsetExtension.base;
 #endif
-   }
 
    screen->extensions[i++] = NULL;
    sPriv->extensions = screen->extensions;
@@ -1253,10 +1243,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    screen->sarea = (drm_radeon_sarea_t *) ((GLubyte *) sPriv->pSAREA +
 					       screen->sarea_priv_offset);
 
-   if (screen->kernel_mm)
-     screen->bom = radeon_bo_manager_gem_ctor(sPriv->fd);
-   else
-     screen->bom = radeon_bo_manager_legacy_ctor(screen);
+   screen->bom = radeon_bo_manager_legacy_ctor(screen);
    if (screen->bom == NULL) {
      free(screen);
      return NULL;
@@ -1271,7 +1258,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
    radeonScreenPtr screen;
    int i;
    int ret;
-   uint32_t device_id;
+   uint32_t device_id = 0;
    uint32_t temp = 0;
 
    /* Allocate the private area */
@@ -1294,7 +1281,15 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
    screen->kernel_mm = 1;
    screen->chip_flags = 0;
 
-   ret = radeonGetParam(sPriv, RADEON_PARAM_IRQ_NR, &screen->irq);
+   /* if we have kms we can support all of these */
+   screen->drmSupportsCubeMapsR200 = 1;
+   screen->drmSupportsBlendColor = 1;
+   screen->drmSupportsTriPerf = 1;
+   screen->drmSupportsFragShader = 1;
+   screen->drmSupportsPointSprites = 1;
+   screen->drmSupportsCubeMapsR100 = 1;
+   screen->drmSupportsVertexProgram = 1;
+   screen->irq = 1;
 
    ret = radeonGetParam(sPriv, RADEON_PARAM_DEVICE_ID, &device_id);
    if (ret) {
@@ -1346,6 +1341,18 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
        } else {
 	   screen->num_gb_pipes = temp;
        }
+
+       /* pipe overrides */
+       switch (device_id) {
+       case PCI_CHIP_R300_AD: /* 9500 with 1 quadpipe verified by: Reid Linnemann <lreid@cs.okstate.edu> */
+       case PCI_CHIP_RV410_5E4C: /* RV410 SE only have 1 quadpipe */
+       case PCI_CHIP_RV410_5E4F: /* RV410 SE only have 1 quadpipe */
+	   screen->num_gb_pipes = 1;
+	   break;
+       default:
+	   break;
+       }
+
    }
 
    i = 0;
@@ -1586,6 +1593,7 @@ static GLboolean radeonCreateContext(const __GLcontextModes * glVisual,
 #endif
 
 #if !RADEON_COMMON
+	(void)screen;
 	return r100CreateContext(glVisual, driContextPriv, sharedContextPriv);
 #endif
 	return GL_FALSE;

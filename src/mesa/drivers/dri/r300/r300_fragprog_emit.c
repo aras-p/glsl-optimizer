@@ -47,7 +47,7 @@
 
 #define PROG_CODE \
 	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)data; \
-	struct r300_fragment_program_code *code = c->code
+	struct r300_fragment_program_code *code = &c->code->r300
 
 #define error(fmt, args...) do {			\
 		fprintf(stderr, "%s::%s(): " fmt "\n",	\
@@ -66,7 +66,7 @@ static GLboolean emit_const(void* data, GLuint file, GLuint index, GLuint *hwind
 	}
 
 	if (*hwindex >= code->const_nr) {
-		if (*hwindex >= PFS_NUM_CONST_REGS) {
+		if (*hwindex >= R300_PFS_NUM_CONST_REGS) {
 			error("Out of hw constants!\n");
 			return GL_FALSE;
 		}
@@ -138,7 +138,7 @@ static GLboolean emit_alu(void* data, struct radeon_pair_instruction* inst)
 {
 	PROG_CODE;
 
-	if (code->alu.length >= PFS_MAX_ALU_INST) {
+	if (code->alu.length >= R300_PFS_MAX_ALU_INST) {
 		error("Too many ALU instructions");
 		return GL_FALSE;
 	}
@@ -201,7 +201,7 @@ static GLboolean emit_alu(void* data, struct radeon_pair_instruction* inst)
 	if (inst->Alpha.DepthWriteMask) {
 		code->alu.inst[ip].inst3 |= R300_ALU_DSTA_DEPTH;
 		code->node[code->cur_node].flags |= R300_W_OUT;
-		c->fp->WritesDepth = GL_TRUE;
+		c->fp->writes_depth = GL_TRUE;
 	}
 
 	return GL_TRUE;
@@ -213,7 +213,7 @@ static GLboolean emit_alu(void* data, struct radeon_pair_instruction* inst)
  */
 static GLboolean finish_node(struct r300_fragment_program_compiler *c)
 {
-	struct r300_fragment_program_code *code = c->code;
+	struct r300_fragment_program_code *code = &c->code->r300;
 	struct r300_fragment_program_node *node = &code->node[code->cur_node];
 
 	if (node->alu_end < 0) {
@@ -275,7 +275,7 @@ static GLboolean emit_tex(void* data, struct prog_instruction* inst)
 {
 	PROG_CODE;
 
-	if (code->tex.length >= PFS_MAX_TEX_INST) {
+	if (code->tex.length >= R300_PFS_MAX_TEX_INST) {
 		error("Too many TEX instructions");
 		return GL_FALSE;
 	}
@@ -318,16 +318,16 @@ static const struct radeon_pair_handler pair_handler = {
 	.EmitPaired = &emit_alu,
 	.EmitTex = &emit_tex,
 	.BeginTexBlock = &begin_tex,
-	.MaxHwTemps = PFS_NUM_TEMP_REGS
+	.MaxHwTemps = R300_PFS_NUM_TEMP_REGS
 };
 
 /**
  * Final compilation step: Turn the intermediate radeon_program into
  * machine-readable instructions.
  */
-GLboolean r300FragmentProgramEmit(struct r300_fragment_program_compiler *compiler)
+GLboolean r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler)
 {
-	struct r300_fragment_program_code *code = compiler->code;
+	struct r300_fragment_program_code *code = &compiler->code->r300;
 
 	_mesa_bzero(code, sizeof(struct r300_fragment_program_code));
 	code->node[0].alu_end = -1;

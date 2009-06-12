@@ -103,7 +103,8 @@ gl_pcedit = sed \
 	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),' \
 	-e 's,@GL_PC_REQ_PRIV@,$(GL_PC_REQ_PRIV),' \
 	-e 's,@GL_PC_LIB_PRIV@,$(GL_PC_LIB_PRIV),' \
-	-e 's,@GL_PC_CFLAGS@,$(GL_PC_CFLAGS),'
+	-e 's,@GL_PC_CFLAGS@,$(GL_PC_CFLAGS),' \
+	-e 's,@GL_LIB@,$(GL_LIB),'
 
 gl.pc: gl.pc.in
 	$(gl_pcedit) $< > $@
@@ -128,14 +129,14 @@ install-headers:
 install-libgl: default gl.pc install-headers
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-	$(INSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_GLOB) \
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 install-osmesa: default osmesa.pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-	$(INSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_GLOB) \
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 osmesa.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 

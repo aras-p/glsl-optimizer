@@ -30,8 +30,13 @@
 
 #include "radeon_drm.h"
 
+#ifdef DEBUG
+#include "trace/trace_drm.h"
+#endif
+
 /* Create a pipe_screen. */
-struct pipe_screen* radeon_create_screen(int drmFB, int pciID)
+struct pipe_screen* radeon_create_screen(int drmFB,
+					 struct drm_create_screen_arg *arg)
 {
     struct radeon_winsys* winsys = radeon_pipe_winsys(drmFB);
 
@@ -68,7 +73,7 @@ struct pipe_buffer* radeon_buffer_from_handle(struct pipe_screen* screen,
                                               unsigned handle)
 {
     struct radeon_bo_manager* bom =
-        ((struct radeon_winsys*)screen->winsys)->bom;
+        ((struct radeon_winsys*)screen->winsys)->priv->bom;
     struct radeon_pipe_buffer* radeon_buffer;
     struct radeon_bo* bo = NULL;
 
@@ -111,7 +116,11 @@ boolean radeon_global_handle_from_buffer(struct pipe_screen* screen,
     return TRUE;
 }
 
+#ifdef DEBUG
+struct drm_api hooks = {
+#else
 struct drm_api drm_api_hooks = {
+#endif
     .create_screen = radeon_create_screen,
     .create_context = radeon_create_context,
     /* XXX fix this */

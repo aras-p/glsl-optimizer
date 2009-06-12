@@ -166,6 +166,7 @@ struct draw_stage *draw_offset_stage( struct draw_context *draw )
    draw_alloc_temp_verts( &offset->stage, 3 );
 
    offset->stage.draw = draw;
+   offset->stage.name = "offset";
    offset->stage.next = NULL;
    offset->stage.point = draw_pipe_passthrough_point;
    offset->stage.line = draw_pipe_passthrough_line;

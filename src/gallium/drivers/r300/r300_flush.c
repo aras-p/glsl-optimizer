@@ -29,6 +29,8 @@ static void r300_flush(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     CS_LOCALS(r300);
 
+    draw_flush(r300->draw);
+
     if (r300->dirty_hw) {
         FLUSH_CS;
         r300_emit_invariant_state(r300);

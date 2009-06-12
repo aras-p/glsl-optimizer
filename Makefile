@@ -37,6 +37,9 @@ realclean: clean
 	  -name depend -o -name depend.bak ')' -exec rm -f '{}' ';'
 
 
+distclean: realclean
+
+
 install:
 	@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \
@@ -45,7 +48,7 @@ install:
 	done
 
 
-.PHONY: default doxygen clean realclean install linux-directfb-install
+.PHONY: default doxygen clean realclean distclean install linux-directfb-install
 
 # If there's no current configuration file
 $(TOP)/configs/current:
@@ -124,6 +127,7 @@ linux-icc \
 linux-icc-static \
 linux-llvm \
 linux-osmesa \
+linux-osmesa-static \
 linux-osmesa16 \
 linux-osmesa16-static \
 linux-osmesa32 \
@@ -178,7 +182,7 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-VERSION=7.5-devel
+VERSION=7.6-devel
 DIRECTORY = Mesa-$(VERSION)
 LIB_NAME = MesaLib-$(VERSION)
 DEMO_NAME = MesaDemos-$(VERSION)
@@ -324,6 +328,7 @@ GALLIUM_FILES = \
 	$(DIRECTORY)/src/gallium/*/*/*/SConscript			\
 	$(DIRECTORY)/src/gallium/*/*/*/*.[ch]				\
 	$(DIRECTORY)/src/gallium/*/*/*/*.py				\
+	$(DIRECTORY)/src/gallium/*/*/*/*/Makefile			\
 	$(DIRECTORY)/src/gallium/*/*/*/*/*.[ch]				\
 
 
@@ -399,7 +404,6 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/osdemos/Makefile		\
 	$(DIRECTORY)/progs/osdemos/*.c			\
 	$(DIRECTORY)/progs/xdemos/Makefile*		\
-	$(DIRECTORY)/progs/xdemos/descrip.mms		\
 	$(DIRECTORY)/progs/xdemos/*.[chf]		\
 	$(DIRECTORY)/progs/redbook/Makefile*		\
 	$(DIRECTORY)/progs/redbook/README		\
@@ -415,9 +419,6 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/windml/*.c			\
 	$(DIRECTORY)/progs/windml/*.bmp			\
 	$(DIRECTORY)/progs/ggi/*.c			\
-	$(DIRECTORY)/windows/VC6/progs/demos/*.dsp	\
-	$(DIRECTORY)/windows/VC6/progs/progs.dsw	\
-	$(DIRECTORY)/windows/VC7/progs/demos/*.vcproj	\
 	$(DIRECTORY)/windows/VC7/progs/progs.sln
 
 GLUT_FILES = \
@@ -427,14 +428,11 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/glx/depend		\
 	$(DIRECTORY)/src/glut/glx/glut.pc.in		\
 	$(DIRECTORY)/src/glut/glx/*def			\
-	$(DIRECTORY)/src/glut/glx/descrip.mms		\
-	$(DIRECTORY)/src/glut/glx/mms_depend		\
 	$(DIRECTORY)/src/glut/glx/*.[ch]		\
 	$(DIRECTORY)/src/glut/beos/*.[ch]		\
 	$(DIRECTORY)/src/glut/beos/*.cpp		\
 	$(DIRECTORY)/src/glut/beos/Makefile		\
 	$(DIRECTORY)/src/glut/dos/*.[ch]		\
-	$(DIRECTORY)/src/glut/dos/Makefile.DJ		\
 	$(DIRECTORY)/src/glut/dos/PC_HW/*.[chS]		\
 	$(DIRECTORY)/src/glut/ggi/*.[ch]		\
 	$(DIRECTORY)/src/glut/ggi/Makefile		\

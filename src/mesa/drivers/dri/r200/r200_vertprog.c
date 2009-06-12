@@ -290,7 +290,7 @@ static unsigned long t_src(struct r200_vertex_program *vp, struct prog_src_regis
 			t_swizzle(GET_SWZ(src->Swizzle, 2)),
 			t_swizzle(GET_SWZ(src->Swizzle, 3)),
 			t_src_class(src->File),
-			src->NegateBase) | (src->RelAddr << 4);
+			src->Negate) | (src->RelAddr << 4);
 }
 
 static unsigned long t_src_scalar(struct r200_vertex_program *vp, struct prog_src_register *src)
@@ -302,7 +302,7 @@ static unsigned long t_src_scalar(struct r200_vertex_program *vp, struct prog_sr
 			t_swizzle(GET_SWZ(src->Swizzle, 0)),
 			t_swizzle(GET_SWZ(src->Swizzle, 0)),
 			t_src_class(src->File),
-			src->NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src->RelAddr << 4);
+			src->Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src->RelAddr << 4);
 }
 
 static unsigned long t_opcode(enum prog_opcode opcode)
@@ -700,7 +700,7 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
 		   t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
 		   SWIZZLE_ZERO,
 		   t_src_class(src[0].File),
-		   src[0].NegateBase) | (src[0].RelAddr << 4);
+		   src[0].Negate) | (src[0].RelAddr << 4);
 	    o_inst->src1 = UNUSED_SRC_0;
 	    o_inst->src2 = UNUSED_SRC_0;
 	 }
@@ -712,12 +712,12 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
 		   t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
 		   SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO,
 		   t_src_class(src[0].File),
-		   src[0].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[0].RelAddr << 4);
+		   src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 	    o_inst->src1 = MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
 		   SWIZZLE_ZERO, SWIZZLE_ZERO,
 		   t_swizzle(GET_SWZ(src[1].Swizzle, 0)), SWIZZLE_ZERO,
 		   t_src_class(src[1].File),
-		   src[1].NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[1].RelAddr << 4);
+		   src[1].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[1].RelAddr << 4);
 	    o_inst->src2 = UNUSED_SRC_1;
 	    o_inst++;
 
@@ -766,11 +766,11 @@ if ((o_inst - vp->instr) == 31) {
 o_inst->src1 = MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
 			SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X,
 			t_src_class(src[1].File),
-			src[1].NegateBase) | (src[1].RelAddr << 4);
+			src[1].Negate) | (src[1].RelAddr << 4);
 o_inst->src2 = MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
 			SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y,
 			t_src_class(src[1].File),
-			src[1].NegateBase) | (src[1].RelAddr << 4);
+			src[1].Negate) | (src[1].RelAddr << 4);
 }
 else {
 	 o_inst->src1 = t_src(vp, &src[1]);
@@ -792,7 +792,7 @@ else {
 		t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
 		SWIZZLE_ZERO,
 		t_src_class(src[0].File),
-		src[0].NegateBase) | (src[0].RelAddr << 4);
+		src[0].Negate) | (src[0].RelAddr << 4);
 
 	 o_inst->src1 = MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
 		t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
@@ -800,7 +800,7 @@ else {
 		t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
 		SWIZZLE_ZERO,
 		t_src_class(src[1].File),
-		src[1].NegateBase) | (src[1].RelAddr << 4);
+		src[1].Negate) | (src[1].RelAddr << 4);
 
 	 o_inst->src2 = UNUSED_SRC_1;
 	 goto next;
@@ -815,7 +815,7 @@ else {
 		t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
 		VSF_IN_COMPONENT_ONE,
 		t_src_class(src[0].File),
-		src[0].NegateBase) | (src[0].RelAddr << 4);
+		src[0].Negate) | (src[0].RelAddr << 4);
 	 o_inst->src1 = t_src(vp, &src[1]);
 	 o_inst->src2 = UNUSED_SRC_1;
 	 goto next;
@@ -831,7 +831,7 @@ else {
 		t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
 		t_swizzle(GET_SWZ(src[1].Swizzle, 3)),
 		t_src_class(src[1].File),
-		(!src[1].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[1].RelAddr << 4);
+		(!src[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[1].RelAddr << 4);
 	 o_inst->src2 = UNUSED_SRC_1;
 	 goto next;
 
@@ -846,7 +846,7 @@ else {
 		t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
 		t_swizzle(GET_SWZ(src[0].Swizzle, 3)),
 		t_src_class(src[0].File),
-		(!src[0].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[0].RelAddr << 4);
+		(!src[0].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 	 o_inst->src2 = UNUSED_SRC_1;
 	 goto next;
 
@@ -874,7 +874,7 @@ else {
 		VSF_IN_COMPONENT_W,
 		VSF_IN_CLASS_TMP,
 		/* Not 100% sure about this */
-		(!src[0].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
+		(!src[0].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
 
 	 o_inst->src2 = UNUSED_SRC_0;
 	 u_temp_i--;
@@ -899,7 +899,7 @@ else {
 		t_swizzle(GET_SWZ(src[0].Swizzle, 0)), // x
 		t_swizzle(GET_SWZ(src[0].Swizzle, 3)), // w
 		t_src_class(src[0].File),
-		src[0].NegateBase) | (src[0].RelAddr << 4);
+		src[0].Negate) | (src[0].RelAddr << 4);
 
 	 o_inst->src1 = MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
 		t_swizzle(GET_SWZ(src[1].Swizzle, 2)), // z
@@ -907,7 +907,7 @@ else {
 		t_swizzle(GET_SWZ(src[1].Swizzle, 1)), // y
 		t_swizzle(GET_SWZ(src[1].Swizzle, 3)), // w
 		t_src_class(src[1].File),
-		src[1].NegateBase) | (src[1].RelAddr << 4);
+		src[1].Negate) | (src[1].RelAddr << 4);
 
 	 o_inst->src2 = UNUSED_SRC_1;
 	 o_inst++;
@@ -922,7 +922,7 @@ else {
 		t_swizzle(GET_SWZ(src[1].Swizzle, 0)), // x
 		t_swizzle(GET_SWZ(src[1].Swizzle, 3)), // w
 		t_src_class(src[1].File),
-		(!src[1].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[1].RelAddr << 4);
+		(!src[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[1].RelAddr << 4);
 
 	 o_inst->src1 = MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
 		t_swizzle(GET_SWZ(src[0].Swizzle, 2)), // z
@@ -930,7 +930,7 @@ else {
 		t_swizzle(GET_SWZ(src[0].Swizzle, 1)), // y
 		t_swizzle(GET_SWZ(src[0].Swizzle, 3)), // w
 		t_src_class(src[0].File),
-		src[0].NegateBase) | (src[0].RelAddr << 4);
+		src[0].Negate) | (src[0].RelAddr << 4);
 
 	 o_inst->src2 = MAKE_VSF_SOURCE(u_temp_i+1,
 		VSF_IN_COMPONENT_X,

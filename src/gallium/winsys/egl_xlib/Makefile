@@ -60,7 +60,7 @@ $(TOP)/$(LIB_DIR)/$(DRIVER_NAME): $(WINSYS_OBJECTS) $(LIBS)
 		-noprefix \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(WINSYS_OBJECTS) \
-		--whole-archive $(LIBS) --no-whole-archive
+		-Wl,--whole-archive $(LIBS) -Wl,--no-whole-archive
 
 
 depend: $(ALL_SOURCES)
@@ -74,7 +74,7 @@ depend: $(ALL_SOURCES)
 install: default
 	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
 	@if [ -e $(TOP)/$(LIB_DIR) ]; then \
-		$(INSTALL) $(TOP)/$(LIB_DIR)/$(DRIVER_NAME) $(INSTALL_DIR)/$(LIB_DIR); \
+		$(MINSTALL) $(TOP)/$(LIB_DIR)/$(DRIVER_NAME) $(INSTALL_DIR)/$(LIB_DIR); \
 	fi
 
 

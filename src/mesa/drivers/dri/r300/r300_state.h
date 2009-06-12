@@ -50,16 +50,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 		r300->radeon.hw.is_dirty = GL_TRUE;		\
 	} while(0)
 
-// r300_state.c
-extern int future_hw_tcl_on;
-void _tnl_UpdateFixedFunctionProgram (GLcontext * ctx);
 void r300UpdateViewportOffset (GLcontext * ctx);
 void r300UpdateDrawBuffer (GLcontext * ctx);
 void r300UpdateStateParameters (GLcontext * ctx, GLuint new_state);
 void r300UpdateShaders (r300ContextPtr rmesa);
 void r300UpdateShaderStates (r300ContextPtr rmesa);
 void r300InitState (r300ContextPtr r300);
-void r300UpdateClipPlanes (GLcontext * ctx);
 void r300InitStateFuncs (struct dd_function_table *functions);
+void r300VapCntl(r300ContextPtr rmesa, GLuint input_count, GLuint output_count, GLuint temp_count);
+void r300SetupVAP(GLcontext *ctx, GLuint InputsRead, GLuint OutputsWritten);
 
 #endif				/* __R300_STATE_H__ */

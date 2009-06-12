@@ -45,6 +45,7 @@ struct blit_state;
 struct bitmap_cache;
 
 
+/** XXX we'd like to get rid of these */
 #define FRONT_STATUS_UNDEFINED    0
 #define FRONT_STATUS_DIRTY        1
 #define FRONT_STATUS_COPY_OF_BACK 2
@@ -111,21 +112,14 @@ struct st_context
       struct gl_fragment_program *fragment_program;
    } cb;
 
-   GLuint frontbuffer_status;  /**< one of FRONT_STATUS_ */
+   GLuint frontbuffer_status;  /**< one of FRONT_STATUS_ (XXX to be removed) */
 
    char vendor[100];
    char renderer[100];
 
-   /* State to be validated:
-    */
-   struct st_tracked_state **atoms;
-   GLuint nr_atoms;
-
    struct st_state_flags dirty;
 
    GLboolean missing_textures;
-
-   GLfloat polygon_offset_scale; /* ?? */
 
    /** Mapping from VERT_RESULT_x to post-transformed vertex slot */
    const GLuint *vertex_result_to_slot;

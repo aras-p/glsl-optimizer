@@ -22,86 +22,224 @@
 
 #include "radeon_r300.h"
 
-static boolean radeon_r300_check_cs(struct radeon_cs* cs, int size)
+static boolean radeon_r300_add_buffer(struct r300_winsys* winsys,
+                                      struct pipe_buffer* pbuffer,
+                                      uint32_t rd,
+                                      uint32_t wd)
 {
-    /* XXX check size here, lazy ass! */
+    int i;
+    struct radeon_winsys_priv* priv =
+        (struct radeon_winsys_priv*)winsys->radeon_winsys;
+    struct radeon_cs_space_check* sc = priv->sc;
+    struct radeon_bo* bo = ((struct radeon_pipe_buffer*)pbuffer)->bo;
+
+    /* Check to see if this BO is already in line for validation;
+     * find a slot for it otherwise. */
+    for (i = 0; i < priv->bo_count; i++) {
+        if (sc[i].bo == bo) {
+            sc[i].read_domains |= rd;
+            sc[i].write_domain |= wd;
+            return;
+        }
+    }
+
+    if (priv->bo_count >= RADEON_MAX_BOS) {
+        /* Dohoho. Not falling for that one again. Request a flush. */
+        return FALSE;
+    }
+
+    sc[priv->bo_count].bo = bo;
+    sc[priv->bo_count].read_domains = rd;
+    sc[priv->bo_count].write_domain = wd;
+    priv->bo_count++;
+
     return TRUE;
 }
 
-static void radeon_r300_write_cs_reloc(struct radeon_cs* cs,
-                                    struct pipe_buffer* pbuffer,
-                                    uint32_t rd,
-                                    uint32_t wd,
-                                    uint32_t flags)
+static boolean radeon_r300_validate(struct r300_winsys* winsys)
 {
-    radeon_cs_write_reloc(cs, ((struct radeon_pipe_buffer*)pbuffer)->bo, rd, wd, flags);
+    int retval, i;
+    struct radeon_winsys_priv* priv =
+        (struct radeon_winsys_priv*)winsys->radeon_winsys;
+    struct radeon_cs_space_check* sc = priv->sc;
+
+    retval = radeon_cs_space_check(priv->cs, sc, priv->bo_count);
+
+    if (retval == RADEON_CS_SPACE_OP_TO_BIG) {
+        /* We might as well HCF, since this is not going to fit in the card,
+         * period. */
+        /* XXX just drop it on the floor instead */
+	exit(1);
+    } else if (retval == RADEON_CS_SPACE_FLUSH) {
+        /* We must flush before more rendering can commence. */
+        return TRUE;
+    }
+
+    /* XXX should probably be its own function */
+    for (i = 0; i < priv->bo_count; i++) {
+        if (sc[i].read_domains && sc[i].write_domain) {
+            /* Cute, cute. We need to flush first. */
+            debug_printf("radeon: BO %p can't be read and written; "
+                    "requesting flush.\n", sc[i].bo);
+            return TRUE;
+        }
+    }
+
+    /* Things are fine, we can proceed as normal. */
+    return FALSE;
 }
 
-static void radeon_r300_flush_cs(struct radeon_cs* cs)
+static boolean radeon_r300_check_cs(struct r300_winsys* winsys, int size)
 {
+    /* XXX check size here, lazy ass! */
+    /* XXX also validate buffers */
+    return TRUE;
+}
+
+static void radeon_r300_begin_cs(struct r300_winsys* winsys,
+                                 int size,
+                                 const char* file,
+                                 const char* function,
+                                 int line)
+{
+    struct radeon_winsys_priv* priv =
+        (struct radeon_winsys_priv*)winsys->radeon_winsys;
+
+    radeon_cs_begin(priv->cs, size, file, function, line);
+}
+
+static void radeon_r300_write_cs_dword(struct r300_winsys* winsys,
+                                       uint32_t dword)
+{
+    struct radeon_winsys_priv* priv =
+        (struct radeon_winsys_priv*)winsys->radeon_winsys;
+
+    radeon_cs_write_dword(priv->cs, dword);
+}
+
+static void radeon_r300_write_cs_reloc(struct r300_winsys* winsys,
+                                       struct pipe_buffer* pbuffer,
+                                       uint32_t rd,
+                                       uint32_t wd,
+                                       uint32_t flags)
+{
+    struct radeon_winsys_priv* priv =
+        (struct radeon_winsys_priv*)winsys->radeon_winsys;
     int retval = 0;
 
-    retval = radeon_cs_emit(cs);
+    retval = radeon_cs_write_reloc(priv->cs,
+            ((struct radeon_pipe_buffer*)pbuffer)->bo, rd, wd, flags);
+
+    if (retval) {
+        debug_printf("radeon: Relocation of %p (%d, %d, %d) failed!\n",
+                pbuffer, rd, wd, flags);
+    }
+}
+
+static void radeon_r300_end_cs(struct r300_winsys* winsys,
+                               const char* file,
+                               const char* function,
+                               int line)
+{
+    struct radeon_winsys_priv* priv =
+        (struct radeon_winsys_priv*)winsys->radeon_winsys;
+
+    radeon_cs_end(priv->cs, file, function, line);
+}
+
+static void radeon_r300_flush_cs(struct r300_winsys* winsys)
+{
+    struct radeon_winsys_priv* priv =
+        (struct radeon_winsys_priv*)winsys->radeon_winsys;
+    struct radeon_cs_space_check* sc = priv->sc;
+    int retval = 1;
+
+    /* Emit the CS. */
+    retval = radeon_cs_emit(priv->cs);
     if (retval) {
         debug_printf("radeon: Bad CS, dumping...\n");
-        radeon_cs_print(cs, stderr);
+        radeon_cs_print(priv->cs, stderr);
     }
-    radeon_cs_erase(cs);
+    radeon_cs_erase(priv->cs);
+
+    /* Clean out BOs. */
+    memset(sc, 0, sizeof(struct radeon_cs_space_check) * RADEON_MAX_BOS);
+    priv->bo_count = 0;
 }
 
 /* Helper function to do the ioctls needed for setup and init. */
 static void do_ioctls(struct r300_winsys* winsys, int fd)
 {
-    drm_radeon_getparam_t gp;
-    uint32_t target;
+    struct drm_radeon_gem_info gem_info = {0};
+    drm_radeon_getparam_t gp = {0};
+    struct drm_radeon_info info = {0};
+    int target = 0;
     int retval;
 
-    /* XXX is this cast safe? */
-    gp.value = (int*)&target;
+    info.value = &target;
+    gp.value = &target;
 
     /* First, get PCI ID */
-    gp.param = RADEON_PARAM_DEVICE_ID;
-    retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
+    info.request = RADEON_INFO_DEVICE_ID;
+    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
-        fprintf(stderr, "%s: Failed to get PCI ID, error number %d",
+        fprintf(stderr, "%s: New ioctl for PCI ID failed "
+                "(error number %d), trying classic ioctl...\n",
                 __FUNCTION__, retval);
-        exit(1);
+        gp.param = RADEON_PARAM_DEVICE_ID;
+        retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp,
+                sizeof(gp));
+        if (retval) {
+            fprintf(stderr, "%s: Failed to get PCI ID, "
+                    "error number %d\n", __FUNCTION__, retval);
+            exit(1);
+        }
     }
     winsys->pci_id = target;
 
-    /* Then, get the number of pixel pipes */
-    gp.param = RADEON_PARAM_NUM_GB_PIPES;
-    retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
+    /* Then, retrieve MM info */
+    retval = drmCommandWriteRead(fd, DRM_RADEON_GEM_INFO,
+            &gem_info, sizeof(gem_info));
     if (retval) {
-        fprintf(stderr, "%s: Failed to get GB pipe count, error number %d",
+        fprintf(stderr, "%s: Failed to get MM info, error number %d\n",
                 __FUNCTION__, retval);
         exit(1);
     }
-    winsys->gb_pipes = target;
-
+    winsys->gart_size = gem_info.gart_size;
+    /* XXX */
+    winsys->vram_size = gem_info.vram_visible;
 }
 
 struct r300_winsys*
 radeon_create_r300_winsys(int fd, struct radeon_winsys* old_winsys)
 {
     struct r300_winsys* winsys = CALLOC_STRUCT(r300_winsys);
-    struct radeon_cs_manager* csm;
+    struct radeon_winsys_priv* priv;
 
     if (winsys == NULL) {
         return NULL;
     }
 
+    priv = old_winsys->priv;
+
     do_ioctls(winsys, fd);
 
-    csm = radeon_cs_manager_gem_ctor(fd);
+    priv->csm = radeon_cs_manager_gem_ctor(fd);
 
-    winsys->cs = radeon_cs_create(csm, 1024 * 64 / 4);
+    priv->cs = radeon_cs_create(priv->csm, 1024 * 64 / 4);
+    radeon_cs_set_limit(priv->cs,
+            RADEON_GEM_DOMAIN_GTT, winsys->gart_size);
+    radeon_cs_set_limit(priv->cs,
+            RADEON_GEM_DOMAIN_VRAM, winsys->vram_size);
+
+    winsys->add_buffer = radeon_r300_add_buffer;
+    winsys->validate = radeon_r300_validate;
 
     winsys->check_cs = radeon_r300_check_cs;
-    winsys->begin_cs = radeon_cs_begin;
-    winsys->write_cs_dword = radeon_cs_write_dword;
+    winsys->begin_cs = radeon_r300_begin_cs;
+    winsys->write_cs_dword = radeon_r300_write_cs_dword;
     winsys->write_cs_reloc = radeon_r300_write_cs_reloc;
-    winsys->end_cs = radeon_cs_end;
+    winsys->end_cs = radeon_r300_end_cs;
     winsys->flush_cs = radeon_r300_flush_cs;
 
     memcpy(winsys, old_winsys, sizeof(struct radeon_winsys));

@@ -33,9 +33,6 @@
 #ifndef __R300_FRAGPROG_H_
 #define __R300_FRAGPROG_H_
 
-#include "main/glheader.h"
-#include "main/macros.h"
-#include "main/enums.h"
 #include "shader/program.h"
 #include "shader/prog_instruction.h"
 
@@ -105,28 +102,10 @@
 
 #endif
 
-struct r300_fragment_program;
+extern GLboolean r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler);
 
-extern void r300TranslateFragmentShader(r300ContextPtr r300,
-					struct r300_fragment_program *fp);
+extern void r300FragmentProgramDump(union rX00_fragment_program_code *c);
 
-
-/**
- * Used internally by the r300 fragment program code to store compile-time
- * only data.
- */
-struct r300_fragment_program_compiler {
-	r300ContextPtr r300;
-	struct r300_fragment_program *fp;
-	struct r300_fragment_program_code *code;
-	struct gl_program *program;
-};
-
-extern GLboolean r300FragmentProgramEmit(struct r300_fragment_program_compiler *compiler);
-
-
-extern void r300FragmentProgramDump(
-	struct r300_fragment_program *fp,
-	struct r300_fragment_program_code *code);
+extern GLboolean r300_transform_TEX(struct radeon_transform_context *t, struct prog_instruction* orig_inst, void* data);
 
 #endif

@@ -21,3 +21,5 @@ for prog in progs:
         target = prog,
         source = prog + '/' + prog + '.c',
     )
+
+env.Program('wglinfo', ['wglinfo.c'])

@@ -29,25 +29,34 @@
 static struct pipe_texture *
 nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 {
+	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 	struct nv50_miptree *mt = CALLOC_STRUCT(nv50_miptree);
 	struct pipe_texture *pt = &mt->base;
-	unsigned usage, width = tmp->width[0], height = tmp->height[0];
+	unsigned width = tmp->width[0], height = tmp->height[0];
 	unsigned depth = tmp->depth[0];
-	int i, l;
+	uint32_t tile_mode, tile_flags, tile_h;
+	int ret, i, l;
 
 	mt->base = *tmp;
 	pipe_reference_init(&mt->base.reference, 1);
 	mt->base.screen = pscreen;
 
-	usage = PIPE_BUFFER_USAGE_PIXEL;
 	switch (pt->format) {
 	case PIPE_FORMAT_Z24S8_UNORM:
 	case PIPE_FORMAT_Z16_UNORM:
-		usage |= NOUVEAU_BUFFER_USAGE_ZETA;
+		tile_flags = 0x2800;
 		break;
 	default:
+		tile_flags = 0x7000;
 		break;
 	}
+
+	if      (pt->height[0] > 32) tile_mode = 4;
+	else if (pt->height[0] > 16) tile_mode = 3;
+	else if (pt->height[0] >  8) tile_mode = 2;
+	else if (pt->height[0] >  4) tile_mode = 1;
+	else                         tile_mode = 0;
+	tile_h = 1 << (tile_mode + 2);
 
 	switch (pt->target) {
 	case PIPE_TEXTURE_3D:
@@ -85,7 +94,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 
 			size  = align(pt->width[l], 8) * pt->block.size;
 			size  = align(size, 64);
-			size *= align(pt->height[l], 8) * pt->block.size;
+			size *= align(pt->height[l], tile_h) * pt->block.size;
 
 			lvl->image_offset[i] = mt->total_size;
 
@@ -93,12 +102,13 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 		}
 	}
 
-	mt->buffer = pscreen->buffer_create(pscreen, 256, usage, mt->total_size);
-	if (!mt->buffer) {
+	ret = nouveau_bo_new_tile(dev, NOUVEAU_BO_VRAM, 256, mt->total_size,
+				  tile_mode, tile_flags, &mt->bo);
+	if (ret) {
 		FREE(mt);
 		return NULL;
 	}
-
+			     
 	return &mt->base;
 }
 
@@ -106,6 +116,7 @@ static struct pipe_texture *
 nv50_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 		     const unsigned *stride, struct pipe_buffer *pb)
 {
+	struct nouveau_bo *bo = nouveau_bo(pb);
 	struct nv50_miptree *mt;
 
 	/* Only supports 2D, non-mipmapped textures for the moment */
@@ -124,7 +135,7 @@ nv50_miptree_blanket(struct pipe_screen *pscreen, const struct pipe_texture *pt,
 	mt->level[0].pitch = *stride;
 	mt->level[0].image_offset = CALLOC(1, sizeof(unsigned));
 
-	pipe_buffer_reference(&mt->buffer, pb);
+	nouveau_bo_ref(bo, &mt->bo);
 	return &mt->base;
 }
 
@@ -133,7 +144,7 @@ nv50_miptree_destroy(struct pipe_texture *pt)
 {
 	struct nv50_miptree *mt = nv50_miptree(pt);
 
-        pipe_buffer_reference(&mt->buffer, NULL);
+	nouveau_bo_ref(NULL, &mt->bo);
         FREE(mt);
 }
 

@@ -22,6 +22,7 @@ SConscript([
 	'auxiliary/draw/SConscript',
 	'auxiliary/pipebuffer/SConscript',
 	'auxiliary/indices/SConscript',
+	'auxiliary/rbug/SConscript',
 ])
 
 for driver in env['drivers']:
@@ -29,6 +30,7 @@ for driver in env['drivers']:
 
 SConscript('state_trackers/python/SConscript')
 SConscript('state_trackers/glx/xlib/SConscript')
+SConscript('state_trackers/dri/SConscript')
 
 if platform == 'windows':
 	SConscript('state_trackers/wgl/SConscript')

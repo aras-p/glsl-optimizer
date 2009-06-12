@@ -1466,6 +1466,31 @@ emit_cmp(
    }
 }
 
+
+/**
+ * Check if inst src/dest regs use indirect addressing into temporary
+ * register file.
+ */
+static boolean
+indirect_temp_reference(const struct tgsi_full_instruction *inst)
+{
+   uint i;
+   for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
+      const struct tgsi_full_src_register *reg = &inst->FullSrcRegisters[i];
+      if (reg->SrcRegister.File == TGSI_FILE_TEMPORARY &&
+          reg->SrcRegister.Indirect)
+         return TRUE;
+   }
+   for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
+      const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[i];
+      if (reg->DstRegister.File == TGSI_FILE_TEMPORARY &&
+          reg->DstRegister.Indirect)
+         return TRUE;
+   }
+   return FALSE;
+}
+
+
 static int
 emit_instruction(
    struct x86_function *func,
@@ -1473,10 +1498,15 @@ emit_instruction(
 {
    unsigned chan_index;
 
+   /* we can't handle indirect addressing into temp register file yet */
+   if (indirect_temp_reference(inst))
+      return FALSE;
+
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
+         emit_flr(func, 0, 0);
          emit_f2it( func, 0 );
          STORE( func, *inst, 0, 0, chan_index );
       }
@@ -1553,7 +1583,7 @@ emit_instruction(
                func,
                make_xmm( 2 ),
                make_xmm( 0 ),
-               cc_LessThanEqual );
+               cc_LessThan );
             sse_andps(
                func,
                make_xmm( 2 ),
@@ -2177,32 +2207,83 @@ emit_instruction(
       /* 3 or 4-component normalization */
       {
          uint dims = (inst->Instruction.Opcode == TGSI_OPCODE_NRM) ? 3 : 4;
-         /* note: cannot use xmm regs 2/3 here (see emit_rsqrt() above) */
-         FETCH( func, *inst, 4, 0, CHAN_X );    /* xmm4 = src[0].x */
-         FETCH( func, *inst, 5, 0, CHAN_Y );    /* xmm5 = src[0].y */
-         FETCH( func, *inst, 6, 0, CHAN_Z );    /* xmm6 = src[0].z */
-         if (dims == 4) {
-            FETCH( func, *inst, 7, 0, CHAN_W ); /* xmm7 = src[0].w */
-         }
-         emit_MOV( func, 0, 4 );                /* xmm0 = xmm3 */
-         emit_mul( func, 0, 4 );                /* xmm0 *= xmm3 */
-         emit_MOV( func, 1, 5 );                /* xmm1 = xmm4 */
-         emit_mul( func, 1, 5 );                /* xmm1 *= xmm4 */
-         emit_add( func, 0, 1 );                /* xmm0 += xmm1 */
-         emit_MOV( func, 1, 6 );                /* xmm1 = xmm5 */
-         emit_mul( func, 1, 6 );                /* xmm1 *= xmm5 */
-         emit_add( func, 0, 1 );                /* xmm0 += xmm1 */
-         if (dims == 4) {
-            emit_MOV( func, 1, 7 );             /* xmm1 = xmm7 */
-            emit_mul( func, 1, 7 );             /* xmm1 *= xmm7 */
-            emit_add( func, 0, 0 );             /* xmm0 += xmm1 */
-         }
-         emit_rsqrt( func, 1, 0 );              /* xmm1 = 1/sqrt(xmm0) */
-         FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
-            if (chan_index < dims) {
-               emit_mul( func, 4+chan_index, 1); /* xmm[4+ch] *= xmm1 */
-               STORE( func, *inst, 4+chan_index, 0, chan_index );
+
+         if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X) ||
+             IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y) ||
+             IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z) ||
+             (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_W) && dims == 4)) {
+
+            /* NOTE: Cannot use xmm regs 2/3 here (see emit_rsqrt() above). */
+
+            /* xmm4 = src.x */
+            /* xmm0 = src.x * src.x */
+            FETCH(func, *inst, 0, 0, CHAN_X);
+            if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X)) {
+               emit_MOV(func, 4, 0);
             }
+            emit_mul(func, 0, 0);
+
+            /* xmm5 = src.y */
+            /* xmm0 = xmm0 + src.y * src.y */
+            FETCH(func, *inst, 1, 0, CHAN_Y);
+            if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+               emit_MOV(func, 5, 1);
+            }
+            emit_mul(func, 1, 1);
+            emit_add(func, 0, 1);
+
+            /* xmm6 = src.z */
+            /* xmm0 = xmm0 + src.z * src.z */
+            FETCH(func, *inst, 1, 0, CHAN_Z);
+            if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+               emit_MOV(func, 6, 1);
+            }
+            emit_mul(func, 1, 1);
+            emit_add(func, 0, 1);
+
+            if (dims == 4) {
+               /* xmm7 = src.w */
+               /* xmm0 = xmm0 + src.w * src.w */
+               FETCH(func, *inst, 1, 0, CHAN_W);
+               if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_W)) {
+                  emit_MOV(func, 7, 1);
+               }
+               emit_mul(func, 1, 1);
+               emit_add(func, 0, 1);
+            }
+
+            /* xmm1 = 1 / sqrt(xmm0) */
+            emit_rsqrt(func, 1, 0);
+
+            /* dst.x = xmm1 * src.x */
+            if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X)) {
+               emit_mul(func, 4, 1);
+               STORE(func, *inst, 4, 0, CHAN_X);
+            }
+
+            /* dst.y = xmm1 * src.y */
+            if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+               emit_mul(func, 5, 1);
+               STORE(func, *inst, 5, 0, CHAN_Y);
+            }
+
+            /* dst.z = xmm1 * src.z */
+            if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+               emit_mul(func, 6, 1);
+               STORE(func, *inst, 6, 0, CHAN_Z);
+            }
+
+            /* dst.w = xmm1 * src.w */
+            if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X) && dims == 4) {
+               emit_mul(func, 7, 1);
+               STORE(func, *inst, 7, 0, CHAN_W);
+            }
+         }
+
+         /* dst0.w = 1.0 */
+         if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_W) && dims == 3) {
+            emit_tempf(func, 0, TEMP_ONE_I, TEMP_ONE_C);
+            STORE(func, *inst, 0, 0, CHAN_W);
          }
       }
       break;

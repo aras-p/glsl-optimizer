@@ -97,7 +97,7 @@ struct brw_glsl_call;
 
 
 #define BRW_EU_MAX_INSN_STACK 5
-#define BRW_EU_MAX_INSN 4000
+#define BRW_EU_MAX_INSN 10000
 
 struct brw_compile {
    struct brw_instruction store[BRW_EU_MAX_INSN];
@@ -862,8 +862,16 @@ void brw_dp_READ_4( struct brw_compile *p,
                     struct brw_reg dest,
                     GLuint msg_reg_nr,
                     GLboolean relAddr,
-                    GLuint scratch_offset,
+                    GLuint location,
                     GLuint bind_table_index );
+
+void brw_dp_READ_4_vs( struct brw_compile *p,
+                       struct brw_reg dest,
+                       GLuint oword,
+                       GLboolean relAddr,
+                       struct brw_reg addrReg,
+                       GLuint location,
+                       GLuint bind_table_index );
 
 void brw_dp_WRITE_16( struct brw_compile *p,
 		      struct brw_reg src,

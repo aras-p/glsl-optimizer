@@ -65,8 +65,8 @@ check_color( const GLcontext *ctx, GLenum type, GLenum format,
       return GL_FALSE;
    }
 
-   if ( type == GL_UNSIGNED_INT_8_8_8_8_REV && 
-	cpp == 4 && 
+   if ( type == GL_UNSIGNED_INT_8_8_8_8_REV &&
+	cpp == 4 &&
 	format == GL_BGRA ) {
       if (R200_DEBUG & DEBUG_PIXEL)
 	 fprintf(stderr, "%s: passed 2\n", __FUNCTION__);
@@ -83,7 +83,7 @@ static GLboolean
 check_color_per_fragment_ops( const GLcontext *ctx )
 {
    int result;
-   result = (!(     ctx->Color.AlphaEnabled || 
+   result = (!(     ctx->Color.AlphaEnabled ||
 		    ctx->Depth.Test ||
 		    ctx->Fog.Enabled ||
 		    ctx->Scissor.Enabled ||
@@ -96,7 +96,7 @@ check_color_per_fragment_ops( const GLcontext *ctx )
 		    ctx->Texture._EnabledUnits
            ) &&
 	   ctx->Current.RasterPosValid);
-   
+
    return result;
 }
 
@@ -163,7 +163,7 @@ r200TryReadPixels( GLcontext *ctx,
 
    /* Only accelerate reading to GART buffers.
     */
-   if ( !r200IsGartMemory(rmesa, pixels, 
+   if ( !r200IsGartMemory(rmesa, pixels,
 			 pitch * height * rmesa->radeon.radeonScreen->cpp ) ) {
       if (R200_DEBUG & DEBUG_PIXEL)
 	 fprintf(stderr, "%s: dest not GART\n", __FUNCTION__);
@@ -224,7 +224,7 @@ r200TryReadPixels( GLcontext *ctx,
       drm_clip_rect_t *box = dPriv->pClipRects;
       int i;
 
-      r200EmitWait( rmesa, RADEON_WAIT_3D ); 
+      r200EmitWait( rmesa, RADEON_WAIT_3D );
 
       y = dPriv->h - y - height;
       x += dPriv->x;
@@ -241,7 +241,7 @@ r200TryReadPixels( GLcontext *ctx,
 	 GLint by = box[i].y1;
 	 GLint bw = box[i].x2 - bx;
 	 GLint bh = box[i].y2 - by;
-	 
+
 	 if (bx < x) bw -= x - bx, bx = x;
 	 if (by < y) bh -= y - by, by = y;
 	 if (bx + bw > x + width) bw = x + width - bx;
@@ -277,9 +277,9 @@ r200ReadPixels( GLcontext *ctx,
    if (R200_DEBUG & DEBUG_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   if (!r200TryReadPixels( ctx, x, y, width, height, format, type, pack, 
+   if (!r200TryReadPixels( ctx, x, y, width, height, format, type, pack,
 			   pixels))
-      _swrast_ReadPixels( ctx, x, y, width, height, format, type, pack, 
+      _swrast_ReadPixels( ctx, x, y, width, height, format, type, pack,
 			  pixels);
 }
 
@@ -293,7 +293,7 @@ static void do_draw_pix( GLcontext *ctx,
 			 GLuint planemask)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
+   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
    drm_clip_rect_t *box = dPriv->pClipRects;
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorDrawBuffers[0];
    driRenderbuffer *drb = (driRenderbuffer *) rb;
@@ -325,7 +325,7 @@ static void do_draw_pix( GLcontext *ctx,
       rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
 
    y -= height;			/* cope with pixel zoom */
-   
+
    if (!clip_pixelrect(ctx, ctx->DrawBuffer,
 		       &x, &y, &width, &height,
 		       &size)) {
@@ -409,7 +409,7 @@ r200TryDrawPixels( GLcontext *ctx,
       if (planemask != ~0)
 	 return GL_FALSE;	/* fix me -- should be possible */
 
-      /* Can't do conversions on GART reads/draws. 
+      /* Can't do conversions on GART reads/draws.
        */
       if ( !r200IsGartMemory( rmesa, pixels, size ) ) {
 	 if (R200_DEBUG & DEBUG_PIXEL)
@@ -484,9 +484,9 @@ r200Bitmap( GLcontext *ctx, GLint px, GLint py,
 void r200InitPixelFuncs( GLcontext *ctx )
 {
    if (!getenv("R200_NO_BLITS")) {
-      ctx->Driver.ReadPixels = r200ReadPixels;  
-      ctx->Driver.DrawPixels = r200DrawPixels; 
-      if (getenv("R200_HW_BITMAP")) 
+      ctx->Driver.ReadPixels = r200ReadPixels;
+      ctx->Driver.DrawPixels = r200DrawPixels;
+      if (getenv("R200_HW_BITMAP"))
 	 ctx->Driver.Bitmap = r200Bitmap;
    }
 }

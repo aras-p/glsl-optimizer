@@ -36,6 +36,7 @@
 #include "main/macros.h"
 #include "main/enums.h"
 #include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
 #include "shader/prog_statevars.h"
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
@@ -45,17 +46,21 @@
 #include "brw_util.h"
 
 
-/* Partition the CURBE between the various users of constant values:
+/**
+ * Partition the CURBE between the various users of constant values:
+ * Note that vertex and fragment shaders can now fetch constants out
+ * of constant buffers.  We no longer allocatea block of the GRF for
+ * constants.  That greatly reduces the demand for space in the CURBE.
+ * Some of the comments within are dated...
  */
 static void calculate_curbe_offsets( struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
    /* CACHE_NEW_WM_PROG */
-   GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
+   const GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
    
    /* BRW_NEW_VERTEX_PROGRAM */
-   const struct brw_vertex_program *vp = brw_vertex_program_const(brw->vertex_program);
-   GLuint nr_vp_regs = (vp->program.Base.Parameters->NumParameters * 4 + 15) / 16;
+   const GLuint nr_vp_regs = (brw->vs.prog_data->nr_params + 15) / 16;
    GLuint nr_clip_regs = 0;
    GLuint total_regs;
 
@@ -184,13 +189,6 @@ static void prepare_constant_buffer(struct brw_context *brw)
    GLfloat *buf;
    GLuint i;
 
-   /* Update our own dependency flags.  This works because this
-    * function will also be called whenever fp or vp changes.
-    */
-   brw->curbe.tracked_state.dirty.mesa = (_NEW_TRANSFORM|_NEW_PROJECTION);
-   brw->curbe.tracked_state.dirty.mesa |= vp->program.Base.Parameters->StateFlags;
-   brw->curbe.tracked_state.dirty.mesa |= fp->program.Base.Parameters->StateFlags;
-
    if (sz == 0) {
       if (brw->curbe.last_buf) {
 	 free(brw->curbe.last_buf);
@@ -248,7 +246,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
    /* vertex shader constants */
    if (brw->curbe.vs_size) {
       GLuint offset = brw->curbe.vs_start * 16;
-      GLuint nr = vp->program.Base.Parameters->NumParameters;
+      GLuint nr = brw->vs.prog_data->nr_params / 4;
 
       _mesa_load_state_parameters(ctx, vp->program.Base.Parameters); 
 
@@ -331,39 +329,10 @@ static void prepare_constant_buffer(struct brw_context *brw)
     */
 }
 
-
-/**
- * Vertex/fragment shader constants are stored in a pseudo 1D texture.
- * This function updates the constants in that buffer.
- */
-static void
-update_texture_constant_buffer(struct brw_context *brw)
-{
-   struct brw_fragment_program *fp =
-      (struct brw_fragment_program *) brw->fragment_program;
-   const struct gl_program_parameter_list *params = fp->program.Base.Parameters;
-   const int size = params->NumParameters * 4 * sizeof(GLfloat);
-
-   assert(fp->const_buffer);
-   assert(fp->const_buffer->size >= size);
-
-   /* copy constants into the buffer */
-   if (size > 0) {
-      GLubyte *map;
-      dri_bo_map(fp->const_buffer, GL_TRUE);
-      map = fp->const_buffer->virtual;
-      memcpy(map, params->ParameterValues, size);
-      dri_bo_unmap(fp->const_buffer);
-   }
-}
-
-
 static void emit_constant_buffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    GLuint sz = brw->curbe.total_size;
-
-   update_texture_constant_buffer(brw);
 
    BEGIN_BATCH(2, IGNORE_CLIPRECTS);
    if (sz == 0) {
@@ -386,7 +355,7 @@ static void emit_constant_buffer(struct brw_context *brw)
  */
 const struct brw_tracked_state brw_constant_buffer = {
    .dirty = {
-      .mesa = (_NEW_TRANSFORM|_NEW_PROJECTION),      /* plus fp and vp flags */
+      .mesa = _NEW_PROGRAM_CONSTANTS,
       .brw  = (BRW_NEW_FRAGMENT_PROGRAM |
 	       BRW_NEW_VERTEX_PROGRAM |
 	       BRW_NEW_URB_FENCE | /* Implicit - hardware requires this, not used above */

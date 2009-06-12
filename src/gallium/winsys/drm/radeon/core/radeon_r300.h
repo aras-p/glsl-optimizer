@@ -31,5 +31,18 @@
 
 #include "radeon_buffer.h"
 
+/* protect us from bonghits */
+#ifndef RADEON_INFO_DEVICE_ID
+#define RADEON_INFO_DEVICE_ID 0
+#endif
+#ifndef DRM_RADEON_INFO
+#define DRM_RADEON_INFO 0x1
+struct drm_radeon_info {
+	uint32_t		request;
+	uint32_t		pad;
+	uint64_t		value;
+};
+#endif
+
 struct r300_winsys*
 radeon_create_r300_winsys(int fd, struct radeon_winsys* old_winsys);

@@ -75,6 +75,7 @@ struct brw_wm_prog_key {
    GLuint program_string_id:32;
    GLuint origin_x, origin_y;
    GLuint drawable_height;
+   GLuint vp_outputs_written;
 };
 
 
@@ -240,22 +241,25 @@ struct brw_wm_compile {
    GLuint max_wm_grf;
    GLuint last_scratch;
 
+   GLuint cur_inst;  /**< index of current instruction */
+
+   GLboolean out_of_regs;  /**< ran out of GRF registers? */
+
    /** Mapping from Mesa registers to hardware registers */
    struct {
       GLboolean inited;
       struct brw_reg reg;
    } wm_regs[PROGRAM_PAYLOAD+1][256][4];
 
+   GLboolean used_grf[BRW_WM_MAX_GRF];
+   GLuint first_free_grf;
    struct brw_reg stack;
    struct brw_reg emit_mask_reg;
-   GLuint reg_index;  /**< Index of next free GRF register */
    GLuint tmp_regs[BRW_WM_MAX_GRF];
    GLuint tmp_index;
    GLuint tmp_max;
    GLuint subroutines[BRW_WM_MAX_SUBROUTINE];
 
-   /** using a real constant buffer? */
-   GLboolean use_const_buffer;
    /** we may need up to 3 constants per instruction (if use_const_buffer) */
    struct {
       GLint index;

@@ -86,10 +86,11 @@ static int radeon_compressed_num_bytes(GLuint mesaFormat)
  * \param curOffset points to the offset at which the image is to be stored
  * and is updated by this function according to the size of the image.
  */
-static void compute_tex_image_offset(radeon_mipmap_tree *mt,
+static void compute_tex_image_offset(radeonContextPtr rmesa, radeon_mipmap_tree *mt,
 	GLuint face, GLuint level, GLuint* curOffset)
 {
 	radeon_mipmap_level *lvl = &mt->levels[level];
+	uint32_t row_align = rmesa->texture_row_align - 1;
 
 	/* Find image size in bytes */
 	if (mt->compressed) {
@@ -107,7 +108,7 @@ static void compute_tex_image_offset(radeon_mipmap_tree *mt,
 		lvl->rowstride = (lvl->width * mt->bpp * 2 + 31) & ~31;
 		lvl->size = lvl->rowstride * ((lvl->height + 1) / 2) * lvl->depth;
 	} else {
-		lvl->rowstride = (lvl->width * mt->bpp + 31) & ~31;
+		lvl->rowstride = (lvl->width * mt->bpp + row_align) & ~row_align;
 		lvl->size = lvl->rowstride * lvl->height * lvl->depth;
 	}
 	assert(lvl->size > 0);
@@ -131,14 +132,40 @@ static GLuint minify(GLuint size, GLuint levels)
 	return size;
 }
 
-static void calculate_miptree_layout(radeon_mipmap_tree *mt)
+
+static void calculate_miptree_layout_r100(radeonContextPtr rmesa, radeon_mipmap_tree *mt)
+{
+	GLuint curOffset;
+	GLuint numLevels;
+	GLuint i;
+	GLuint face;
+
+	numLevels = mt->lastLevel - mt->firstLevel + 1;
+	assert(numLevels <= rmesa->glCtx->Const.MaxTextureLevels);
+
+	curOffset = 0;
+	for(face = 0; face < mt->faces; face++) {
+
+		for(i = 0; i < numLevels; i++) {
+			mt->levels[i].width = minify(mt->width0, i);
+			mt->levels[i].height = minify(mt->height0, i);
+			mt->levels[i].depth = minify(mt->depth0, i);
+			compute_tex_image_offset(rmesa, mt, face, i, &curOffset);
+		}
+	}
+
+	/* Note the required size in memory */
+	mt->totalsize = (curOffset + RADEON_OFFSET_MASK) & ~RADEON_OFFSET_MASK;
+}
+
+static void calculate_miptree_layout_r300(radeonContextPtr rmesa, radeon_mipmap_tree *mt)
 {
 	GLuint curOffset;
 	GLuint numLevels;
 	GLuint i;
 
 	numLevels = mt->lastLevel - mt->firstLevel + 1;
-	assert(numLevels <= RADEON_MAX_TEXTURE_LEVELS);
+	assert(numLevels <= rmesa->glCtx->Const.MaxTextureLevels);
 
 	curOffset = 0;
 	for(i = 0; i < numLevels; i++) {
@@ -149,13 +176,12 @@ static void calculate_miptree_layout(radeon_mipmap_tree *mt)
 		mt->levels[i].depth = minify(mt->depth0, i);
 
 		for(face = 0; face < mt->faces; face++)
-			compute_tex_image_offset(mt, face, i, &curOffset);
+			compute_tex_image_offset(rmesa, mt, face, i, &curOffset);
 	}
 
 	/* Note the required size in memory */
 	mt->totalsize = (curOffset + RADEON_OFFSET_MASK) & ~RADEON_OFFSET_MASK;
 }
-
 
 /**
  * Create a new mipmap tree, calculate its layout and allocate memory.
@@ -181,7 +207,10 @@ radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa, radeonTexObj *
 	mt->tilebits = tilebits;
 	mt->compressed = compressed;
 
-	calculate_miptree_layout(mt);
+	if (rmesa->radeonScreen->chip_family >= CHIP_FAMILY_R300)
+		calculate_miptree_layout_r300(rmesa, mt);
+	else
+		calculate_miptree_layout_r100(rmesa, mt);
 
 #ifdef RADEON_DEBUG_BO
     mt->bo = radeon_bo_open(rmesa->radeonScreen->bom,

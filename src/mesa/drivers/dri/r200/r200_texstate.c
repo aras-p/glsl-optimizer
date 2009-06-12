@@ -833,7 +833,6 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		radeon_miptree_unreference(rImage->mt);
 		rImage->mt = NULL;
 	}
-	fprintf(stderr,"settexbuf %d %dx%d@%d\n", rb->pitch, rb->width, rb->height, rb->cpp);
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
 				   rb->width, rb->height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
@@ -851,7 +850,10 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 	pitch_val = rb->pitch;
 	switch (rb->cpp) {
 	case 4:
-		t->pp_txformat = tx_table_le[MESA_FORMAT_ARGB8888].format;
+		if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT)
+			t->pp_txformat = tx_table_le[MESA_FORMAT_RGB888].format;
+		else
+			t->pp_txformat = tx_table_le[MESA_FORMAT_ARGB8888].format;
 		t->pp_txfilter |= tx_table_le[MESA_FORMAT_ARGB8888].filter;
 		break;
 	case 3:
@@ -1422,8 +1424,8 @@ void set_re_cntl_d3d( GLcontext *ctx, int unit, GLboolean use_d3d )
  */
 static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
 {
-   const struct gl_texture_image *firstImage =
-      t->base.Image[0][t->mt->firstLevel];
+   int firstlevel = t->mt ? t->mt->firstLevel : 0;
+   const struct gl_texture_image *firstImage = t->base.Image[0][firstlevel];
    GLint log2Width, log2Height, log2Depth, texelBytes;
    
    if ( t->bo ) {

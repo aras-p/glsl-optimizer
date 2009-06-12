@@ -45,8 +45,8 @@
  * into a vertex program.
  * May be used to implement the position_invariant option.
  */
-void
-_mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog)
+static void
+_mesa_insert_mvp_dp4_code(GLcontext *ctx, struct gl_vertex_program *vprog)
 {
    struct prog_instruction *newInst;
    const GLuint origLen = vprog->Base.NumInstructions;
@@ -111,6 +111,121 @@ _mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog)
    vprog->Base.InputsRead |= VERT_BIT_POS;
    vprog->Base.OutputsWritten |= (1 << VERT_RESULT_HPOS);
 }
+
+
+static void
+_mesa_insert_mvp_mad_code(GLcontext *ctx, struct gl_vertex_program *vprog)
+{
+   struct prog_instruction *newInst;
+   const GLuint origLen = vprog->Base.NumInstructions;
+   const GLuint newLen = origLen + 4;
+   GLuint hposTemp;
+   GLuint i;
+
+   /*
+    * Setup state references for the modelview/projection matrix.
+    * XXX we should check if these state vars are already declared.
+    */
+   static const gl_state_index mvpState[4][STATE_LENGTH] = {
+      { STATE_MVP_MATRIX, 0, 0, 0, STATE_MATRIX_TRANSPOSE },
+      { STATE_MVP_MATRIX, 0, 1, 1, STATE_MATRIX_TRANSPOSE },
+      { STATE_MVP_MATRIX, 0, 2, 2, STATE_MATRIX_TRANSPOSE },
+      { STATE_MVP_MATRIX, 0, 3, 3, STATE_MATRIX_TRANSPOSE },
+   };
+   GLint mvpRef[4];
+
+   for (i = 0; i < 4; i++) {
+      mvpRef[i] = _mesa_add_state_reference(vprog->Base.Parameters,
+                                            mvpState[i]);
+   }
+
+   /* Alloc storage for new instructions */
+   newInst = _mesa_alloc_instructions(newLen);
+   if (!newInst) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY,
+                  "glProgramString(inserting position_invariant code)");
+      return;
+   }
+
+   /* TEMP hposTemp; */
+   hposTemp = vprog->Base.NumTemporaries++;
+
+   /*
+    * Generated instructions:
+    *    emit_op2(p, OPCODE_MUL, tmp, 0, swizzle1(src,X), mat[0]);
+    *    emit_op3(p, OPCODE_MAD, tmp, 0, swizzle1(src,Y), mat[1], tmp);
+    *    emit_op3(p, OPCODE_MAD, tmp, 0, swizzle1(src,Z), mat[2], tmp);
+    *    emit_op3(p, OPCODE_MAD, dest, 0, swizzle1(src,W), mat[3], tmp);
+    */
+   _mesa_init_instructions(newInst, 4);
+
+   newInst[0].Opcode = OPCODE_MUL;
+   newInst[0].DstReg.File = PROGRAM_TEMPORARY;
+   newInst[0].DstReg.Index = hposTemp;
+   newInst[0].DstReg.WriteMask = WRITEMASK_XYZW;
+   newInst[0].SrcReg[0].File = PROGRAM_INPUT;
+   newInst[0].SrcReg[0].Index = VERT_ATTRIB_POS;
+   newInst[0].SrcReg[0].Swizzle = SWIZZLE_XXXX;
+   newInst[0].SrcReg[1].File = PROGRAM_STATE_VAR;
+   newInst[0].SrcReg[1].Index = mvpRef[0];
+   newInst[0].SrcReg[1].Swizzle = SWIZZLE_NOOP;
+
+   for (i = 1; i <= 2; i++) {
+      newInst[i].Opcode = OPCODE_MAD;
+      newInst[i].DstReg.File = PROGRAM_TEMPORARY;
+      newInst[i].DstReg.Index = hposTemp;
+      newInst[i].DstReg.WriteMask = WRITEMASK_XYZW;
+      newInst[i].SrcReg[0].File = PROGRAM_INPUT;
+      newInst[i].SrcReg[0].Index = VERT_ATTRIB_POS;
+      newInst[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(i,i,i,i);
+      newInst[i].SrcReg[1].File = PROGRAM_STATE_VAR;
+      newInst[i].SrcReg[1].Index = mvpRef[i];
+      newInst[i].SrcReg[1].Swizzle = SWIZZLE_NOOP;
+      newInst[i].SrcReg[2].File = PROGRAM_TEMPORARY;
+      newInst[i].SrcReg[2].Index = hposTemp;
+      newInst[1].SrcReg[2].Swizzle = SWIZZLE_NOOP;
+   }
+
+   newInst[3].Opcode = OPCODE_MAD;
+   newInst[3].DstReg.File = PROGRAM_OUTPUT;
+   newInst[3].DstReg.Index = VERT_RESULT_HPOS;
+   newInst[3].DstReg.WriteMask = WRITEMASK_XYZW;
+   newInst[3].SrcReg[0].File = PROGRAM_INPUT;
+   newInst[3].SrcReg[0].Index = VERT_ATTRIB_POS;
+   newInst[3].SrcReg[0].Swizzle = SWIZZLE_WWWW;
+   newInst[3].SrcReg[1].File = PROGRAM_STATE_VAR;
+   newInst[3].SrcReg[1].Index = mvpRef[3];
+   newInst[3].SrcReg[1].Swizzle = SWIZZLE_NOOP;
+   newInst[3].SrcReg[2].File = PROGRAM_TEMPORARY;
+   newInst[3].SrcReg[2].Index = hposTemp;
+   newInst[3].SrcReg[2].Swizzle = SWIZZLE_NOOP;
+
+
+   /* Append original instructions after new instructions */
+   _mesa_copy_instructions (newInst + 4, vprog->Base.Instructions, origLen);
+
+   /* free old instructions */
+   _mesa_free_instructions(vprog->Base.Instructions, origLen);
+
+   /* install new instructions */
+   vprog->Base.Instructions = newInst;
+   vprog->Base.NumInstructions = newLen;
+   vprog->Base.InputsRead |= VERT_BIT_POS;
+   vprog->Base.OutputsWritten |= (1 << VERT_RESULT_HPOS);
+}
+
+
+void
+_mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog)
+{
+   if (ctx->mvp_with_dp4) 
+      _mesa_insert_mvp_dp4_code( ctx, vprog );
+   else
+      _mesa_insert_mvp_mad_code( ctx, vprog );
+}
+      
+
+
 
 
 
@@ -241,7 +356,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
       inst->DstReg.WriteMask = WRITEMASK_X;
       inst->SrcReg[0].File = PROGRAM_TEMPORARY;
       inst->SrcReg[0].Index = fogFactorTemp;
-      inst->SrcReg[0].NegateBase = NEGATE_XYZW;
+      inst->SrcReg[0].Negate = NEGATE_XYZW;
       inst->SrcReg[0].Swizzle = SWIZZLE_XXXX;
       inst->SaturateMode = SATURATE_ZERO_ONE;
       inst++;

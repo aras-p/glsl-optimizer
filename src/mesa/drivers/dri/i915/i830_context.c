@@ -47,7 +47,6 @@ i830InitDriverFunctions(struct dd_function_table *functions)
 {
    intelInitDriverFunctions(functions);
    i830InitStateFuncs(functions);
-   i830InitTextureFuncs(functions);
 }
 
 extern const struct tnl_pipeline_stage *intel_pipeline[];
@@ -98,6 +97,8 @@ i830CreateContext(const __GLcontextModes * mesaVis,
    ctx->Const.MaxCubeTextureLevels = 11;
    ctx->Const.MaxTextureRectSize = (1 << 11);
    ctx->Const.MaxTextureUnits = I830_TEX_UNITS;
+
+   ctx->Const.MaxTextureMaxAnisotropy = 2.0;
 
    ctx->Const.MaxDrawBuffers = 1;
 

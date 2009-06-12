@@ -1,6 +1,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
+#include "pipe/p_inlines.h"
 
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
@@ -798,12 +799,12 @@ static void
 nv30_fragprog_upload(struct nv30_context *nv30,
 		     struct nv30_fragment_program *fp)
 {
-	struct pipe_winsys *ws = nv30->pipe.winsys;
+	struct pipe_screen *pscreen = nv30->pipe.screen;
 	const uint32_t le = 1;
 	uint32_t *map;
 	int i;
 
-	map = ws->buffer_map(ws, fp->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
+	map = pipe_buffer_map(pscreen, fp->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
 
 #if 0
 	for (i = 0; i < fp->insn_len; i++) {
@@ -825,7 +826,7 @@ nv30_fragprog_upload(struct nv30_context *nv30,
 		}
 	}
 
-	ws->buffer_unmap(ws, fp->buffer);
+	pipe_buffer_unmap(pscreen, fp->buffer);
 }
 
 static boolean
@@ -834,8 +835,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
 	struct nv30_fragment_program *fp = nv30->fragprog;
 	struct pipe_buffer *constbuf =
 		nv30->constbuf[PIPE_SHADER_FRAGMENT];
-	struct pipe_screen *screen = nv30->pipe.screen;
-	struct pipe_winsys *ws = nv30->pipe.winsys;
+	struct pipe_screen *pscreen = nv30->pipe.screen;
 	struct nouveau_stateobj *so;
 	boolean new_consts = FALSE;
 	int i;
@@ -850,14 +850,15 @@ nv30_fragprog_validate(struct nv30_context *nv30)
 		return FALSE;
 	}
 
-	fp->buffer = screen->buffer_create(screen, 0x100, 0, fp->insn_len * 4);
+	fp->buffer = pscreen->buffer_create(pscreen, 0x100, 0, fp->insn_len * 4);
 	nv30_fragprog_upload(nv30, fp);
 
 	so = so_new(8, 1);
 	so_method(so, nv30->screen->rankine, NV34TCL_FP_ACTIVE_PROGRAM, 1);
-	so_reloc (so, fp->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
-		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
-		  NV34TCL_FP_ACTIVE_PROGRAM_DMA0, NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
+	so_reloc (so, nouveau_bo(fp->buffer), 0, NOUVEAU_BO_VRAM |
+		      NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |
+		      NOUVEAU_BO_OR, NV34TCL_FP_ACTIVE_PROGRAM_DMA0,
+		      NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
 	so_method(so, nv30->screen->rankine, NV34TCL_FP_CONTROL, 1);
 	so_data  (so, fp->fp_control);
 	so_method(so, nv30->screen->rankine, NV34TCL_FP_REG_CONTROL, 1);
@@ -871,7 +872,8 @@ update_constants:
 	if (fp->nr_consts) {
 		float *map;
 		
-		map = ws->buffer_map(ws, constbuf, PIPE_BUFFER_USAGE_CPU_READ);
+		map = pipe_buffer_map(pscreen, constbuf,
+				      PIPE_BUFFER_USAGE_CPU_READ);
 		for (i = 0; i < fp->nr_consts; i++) {
 			struct nv30_fragment_program_data *fpd = &fp->consts[i];
 			uint32_t *p = &fp->insn[fpd->offset];
@@ -882,7 +884,7 @@ update_constants:
 			memcpy(p, cb, 4 * sizeof(float));
 			new_consts = TRUE;
 		}
-		ws->buffer_unmap(ws, constbuf);
+		pipe_buffer_unmap(pscreen, constbuf);
 
 		if (new_consts)
 			nv30_fragprog_upload(nv30, fp);

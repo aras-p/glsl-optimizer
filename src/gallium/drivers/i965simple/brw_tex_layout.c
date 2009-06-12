@@ -240,7 +240,7 @@ static boolean brw_miptree_layout(struct brw_texture *tex)
          nblocksx = pf_get_nblocksx(&pt->block, width);
          nblocksy = pf_get_nblocksy(&pt->block, height);
 
-         if (pt->compressed) {
+         if (pf_is_compressed(pt->format)) {
             pack_y_pitch = (height + 3) / 4;
 
             if (pack_x_pitch > align(width, align_w)) {

@@ -82,11 +82,11 @@ softpipe_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 1;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return 12; /* max 2Kx2K */
+      return 13; /* max 4Kx4K */
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
       return 8;  /* max 128x128x128 */
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 12; /* max 2Kx2K */
+      return 13; /* max 4Kx4K */
    default:
       return 0;
    }
@@ -106,7 +106,7 @@ softpipe_get_paramf(struct pipe_screen *screen, int param)
    case PIPE_CAP_MAX_POINT_WIDTH_AA:
       return 255.0; /* arbitrary */
    case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-      return 0.0;
+      return 16.0; /* not actually signficant at this time */
    case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
       return 16.0; /* arbitrary */
    default:
@@ -127,6 +127,11 @@ softpipe_is_format_supported( struct pipe_screen *screen,
                               unsigned tex_usage, 
                               unsigned geom_flags )
 {
+   assert(target == PIPE_TEXTURE_1D ||
+          target == PIPE_TEXTURE_2D ||
+          target == PIPE_TEXTURE_3D ||
+          target == PIPE_TEXTURE_CUBE);
+
    switch(format) {
    case PIPE_FORMAT_DXT1_RGB:
    case PIPE_FORMAT_DXT1_RGBA:

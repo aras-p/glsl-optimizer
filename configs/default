@@ -9,7 +9,7 @@ CONFIG_NAME = default
 
 # Version info
 MESA_MAJOR=7
-MESA_MINOR=3
+MESA_MINOR=6
 MESA_TINY=0
 MESA_VERSION = $(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY)
 
@@ -36,7 +36,10 @@ MKLIB_OPTIONS =
 MKDEP = makedepend
 MKDEP_OPTIONS = -fdepend
 MAKE = make
-INSTALL = $(SHELL) $(TOP)/bin/minstall
+
+# Use MINSTALL for installing libraries, INSTALL for everything else
+MINSTALL = $(SHELL) $(TOP)/bin/minstall
+INSTALL = $(MINSTALL)
 
 # Tools for regenerating glapi (generally only needed by the developers)
 PYTHON2 = python
@@ -90,7 +93,7 @@ EGL_DRIVERS_DIRS = demo
 
 # Gallium directories and 
 GALLIUM_DIRS = auxiliary drivers state_trackers
-GALLIUM_AUXILIARY_DIRS = draw translate cso_cache pipebuffer tgsi sct rtasm util indices
+GALLIUM_AUXILIARY_DIRS = rbug draw translate cso_cache pipebuffer tgsi sct rtasm util indices
 GALLIUM_AUXILIARIES = $(foreach DIR,$(GALLIUM_AUXILIARY_DIRS),$(TOP)/src/gallium/auxiliary/$(DIR)/lib$(DIR).a)
 GALLIUM_DRIVERS_DIRS = softpipe i915simple failover trace
 GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVERS_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)

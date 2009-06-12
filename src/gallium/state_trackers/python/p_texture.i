@@ -426,7 +426,7 @@ struct st_surface
       if(!*STRING)
          return;
       
-      pipe_buffer_read(screen, $self, 0, $self->size, STRING);
+      pipe_buffer_read(screen, $self, 0, $self->size, *STRING);
    }
    
    %cstring_input_binary(const char *STRING, unsigned LENGTH);

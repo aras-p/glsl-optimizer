@@ -63,6 +63,16 @@ DRI2GetBuffers(Display *dpy, XID drawable,
 	       unsigned int *attachments, int count,
 	       int *outCount);
 
+/**
+ * \note
+ * This function is only supported with DRI2 version 1.1 or later.
+ */
+extern DRI2Buffer *
+DRI2GetBuffersWithFormat(Display *dpy, XID drawable,
+			 int *width, int *height,
+			 unsigned int *attachments, int count,
+			 int *outCount);
+
 extern void
 DRI2CopyRegion(Display *dpy, XID drawable, XserverRegion region,
 	       CARD32 dest, CARD32 src);

@@ -1,6 +1,7 @@
 #include "draw/draw_context.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "pipe/p_inlines.h"
 
 #include "nv10_context.h"
 #include "nv10_state.h"
@@ -15,6 +16,7 @@ boolean nv10_draw_elements( struct pipe_context *pipe,
 {
 	struct nv10_context *nv10 = nv10_context( pipe );
 	struct draw_context *draw = nv10->draw;
+	struct pipe_screen *pscreen = pipe->screen;
 	unsigned i;
 
 	nv10_emit_hw_state(nv10);
@@ -24,9 +26,8 @@ boolean nv10_draw_elements( struct pipe_context *pipe,
 	 */
 	for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
 		if (nv10->vtxbuf[i].buffer) {
-			void *buf
-				= pipe->winsys->buffer_map(pipe->winsys,
-						nv10->vtxbuf[i].buffer,
+			void *buf =
+				pipe_buffer_map(pscreen, nv10->vtxbuf[i].buffer,
 						PIPE_BUFFER_USAGE_CPU_READ);
 			draw_set_mapped_vertex_buffer(draw, i, buf);
 		}
@@ -34,8 +35,8 @@ boolean nv10_draw_elements( struct pipe_context *pipe,
 	/* Map index buffer, if present */
 	if (indexBuffer) {
 		void *mapped_indexes
-			= pipe->winsys->buffer_map(pipe->winsys, indexBuffer,
-					PIPE_BUFFER_USAGE_CPU_READ);
+			= pipe_buffer_map(pscreen, indexBuffer,
+					  PIPE_BUFFER_USAGE_CPU_READ);
 		draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
 	}
 	else {
@@ -55,12 +56,12 @@ boolean nv10_draw_elements( struct pipe_context *pipe,
 	 */
 	for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
 		if (nv10->vtxbuf[i].buffer) {
-			pipe->winsys->buffer_unmap(pipe->winsys, nv10->vtxbuf[i].buffer);
+			pipe_buffer_unmap(pscreen, nv10->vtxbuf[i].buffer);
 			draw_set_mapped_vertex_buffer(draw, i, NULL);
 		}
 	}
 	if (indexBuffer) {
-		pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
+		pipe_buffer_unmap(pscreen, indexBuffer);
 		draw_set_mapped_element_buffer(draw, 0, NULL);
 	}
 

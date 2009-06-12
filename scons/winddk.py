@@ -44,87 +44,90 @@ import msvc_sa
 import mslib_sa
 import mslink_sa
 
-def get_winddk_root(env):
-    try:
-        return os.environ['BASEDIR']
-    except KeyError:
-        pass
+versions = [
+    '6001.18002',
+    '3790.1830',
+]
 
-    version = "3790.1830"
-    
-    if SCons.Util.can_read_reg:
-        key = r'SOFTWARE\Microsoft\WINDDK\%s\LFNDirectory' % version
-        try:
-            path, t = SCons.Util.RegGetValue(SCons.Util.HKEY_LOCAL_MACHINE, key)
-        except SCons.Util.RegError:
-            pass
-        else:
-            return path
+def cpu_bin(target_cpu):
+    if target_cpu == 'i386':
+        return 'x86'
+    else:
+        return target_cpu
 
+def get_winddk_root(env, version):
     default_path = os.path.join(r'C:\WINDDK', version)
     if os.path.exists(default_path):
         return default_path
-    
     return None 
 
-def get_winddk_paths(env):
-    """Return a 3-tuple of (INCLUDE, LIB, PATH) as the values
-    of those three environment variables that should be set
-    in order to execute the MSVC tools properly."""
+def get_winddk_paths(env, version, root):
+    version_major, version_minor = map(int, version.split('.'))
     
-    WINDDKdir = None
-    exe_paths = []
-    lib_paths = []
-    include_paths = []
+    if version_major >= 6000:
+        target_os = 'wlh'
+    else:
+        target_os = 'wxp'
 
-    WINDDKdir = get_winddk_root(env)
-    if WINDDKdir is None:
-        raise SCons.Errors.InternalError, "WINDDK not found"
+    if env['machine'] in ('generic', 'x86'):
+        target_cpu = 'i386'
+    elif env['machine'] == 'x86_64':
+        target_cpu = 'amd64'
+    else:
+        raise SCons.Errors.InternalError, "Unsupported target machine"
 
-    exe_paths.append( os.path.join(WINDDKdir, 'bin') )
-    exe_paths.append( os.path.join(WINDDKdir, 'bin', 'x86') )
-    include_paths.append( os.path.join(WINDDKdir, 'inc', 'wxp') )
-    lib_paths.append( os.path.join(WINDDKdir, 'lib') )
+    if version_major >= 6000:
+        # TODO: take in consideration the host cpu
+        bin_dir = os.path.join(root, 'bin', 'x86', cpu_bin(target_cpu))
+    else:
+        if target_cpu == 'i386':
+            bin_dir = os.path.join(root, 'bin', 'x86')
+        else:
+            # TODO: take in consideration the host cpu
+            bin_dir = os.path.join(root, 'bin', 'win64', 'x86', cpu_bin(target_cpu))
 
-    target_os = 'wxp'
-    target_cpu = 'i386'
+    env.PrependENVPath('PATH', [bin_dir])
     
-    env['SDK_INC_PATH'] = os.path.join(WINDDKdir, 'inc', target_os) 
-    env['CRT_INC_PATH'] = os.path.join(WINDDKdir, 'inc', 'crt') 
-    env['DDK_INC_PATH'] = os.path.join(WINDDKdir, 'inc', 'ddk', target_os) 
-    env['WDM_INC_PATH'] = os.path.join(WINDDKdir, 'inc', 'ddk', 'wdm', target_os) 
+    crt_inc_dir = os.path.join(root, 'inc', 'crt')
+    if version_major >= 6000:
+        sdk_inc_dir = os.path.join(root, 'inc', 'api')
+        ddk_inc_dir = os.path.join(root, 'inc', 'ddk')
+        wdm_inc_dir = os.path.join(root, 'inc', 'ddk')
+    else:
+        ddk_inc_dir = os.path.join(root, 'inc', 'ddk', target_os)
+        sdk_inc_dir = os.path.join(root, 'inc', target_os)
+        wdm_inc_dir = os.path.join(root, 'inc', 'ddk', 'wdm', target_os)
 
-    env['SDK_LIB_PATH'] = os.path.join(WINDDKdir, 'lib', target_os, target_cpu) 
-    env['CRT_LIB_PATH'] = os.path.join(WINDDKdir, 'lib', 'crt', target_cpu) 
-    env['DDK_LIB_PATH'] = os.path.join(WINDDKdir, 'lib', target_os, target_cpu)
-    env['WDM_LIB_PATH'] = os.path.join(WINDDKdir, 'lib', target_os, target_cpu)
-                                     
-    include_path = string.join( include_paths, os.pathsep )
-    lib_path = string.join(lib_paths, os.pathsep )
-    exe_path = string.join(exe_paths, os.pathsep )
-    return (include_path, lib_path, exe_path)
+    env.PrependENVPath('INCLUDE', [
+        wdm_inc_dir,
+        ddk_inc_dir,
+        crt_inc_dir,
+        sdk_inc_dir,
+    ])
+
+    env.PrependENVPath('LIB', [
+        os.path.join(root, 'lib', 'crt', target_cpu),
+        os.path.join(root, 'lib', target_os, target_cpu),
+    ])
 
 def generate(env):
+    if not env.has_key('ENV'):
+        env['ENV'] = {}
+
+    for version in versions:
+        root = get_winddk_root(env, version)
+        if root is not None:
+            get_winddk_paths(env, version, root)
+            break
 
     msvc_sa.generate(env)
     mslib_sa.generate(env)
     mslink_sa.generate(env)
 
-    if not env.has_key('ENV'):
-        env['ENV'] = {}
-    
-    try:
-        include_path, lib_path, exe_path = get_winddk_paths(env)
-
-        # since other tools can set these, we just make sure that the
-        # relevant stuff from WINDDK is in there somewhere.
-        env.PrependENVPath('INCLUDE', include_path)
-        env.PrependENVPath('LIB', lib_path)
-        env.PrependENVPath('PATH', exe_path)
-    except (SCons.Util.RegError, SCons.Errors.InternalError):
-        pass
-
 def exists(env):
-    return get_winddk_root(env) is not None
+    for version in versions:
+        if get_winddk_root(env, version) is not None:
+            return True
+    return False
 
 # vim:set ts=4 sw=4 et:

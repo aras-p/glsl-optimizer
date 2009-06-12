@@ -1,25 +1,7 @@
 #include "pipe/p_screen.h"
-#include "util/u_simple_screen.h"
 
 #include "nv10_context.h"
 #include "nv10_screen.h"
-
-static const char *
-nv10_screen_get_name(struct pipe_screen *screen)
-{
-	struct nv10_screen *nv10screen = nv10_screen(screen);
-	struct nouveau_device *dev = nv10screen->nvws->channel->device;
-	static char buffer[128];
-
-	snprintf(buffer, sizeof(buffer), "NV%02X", dev->chipset);
-	return buffer;
-}
-
-static const char *
-nv10_screen_get_vendor(struct pipe_screen *screen)
-{
-	return "nouveau";
-}
 
 static int
 nv10_screen_get_param(struct pipe_screen *screen, int param)
@@ -120,10 +102,9 @@ static void
 nv10_screen_destroy(struct pipe_screen *pscreen)
 {
 	struct nv10_screen *screen = nv10_screen(pscreen);
-	struct nouveau_winsys *nvws = screen->nvws;
 
-	nvws->notifier_free(&screen->sync);
-	nvws->grobj_free(&screen->celsius);
+	nouveau_notifier_free(&screen->sync);
+	nouveau_grobj_free(&screen->celsius);
 
 	FREE(pscreen);
 }
@@ -137,64 +118,69 @@ nv10_surface_buffer(struct pipe_surface *surf)
 }
 
 struct pipe_screen *
-nv10_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
+nv10_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 {
 	struct nv10_screen *screen = CALLOC_STRUCT(nv10_screen);
+	struct nouveau_channel *chan;
+	struct pipe_screen *pscreen;
 	unsigned celsius_class;
-	unsigned chipset = nvws->channel->device->chipset;
 	int ret;
 
 	if (!screen)
 		return NULL;
-	screen->nvws = nvws;
+	pscreen = &screen->base.base;
 
-	/* 2D engine setup */
-	screen->eng2d = nv04_surface_2d_init(nvws);
-	screen->eng2d->buf = nv10_surface_buffer;
+	ret = nouveau_screen_init(&screen->base, dev);
+	if (ret) {
+		nv10_screen_destroy(pscreen);
+		return NULL;
+	}
+	chan = screen->base.channel;
+
+	pscreen->winsys = ws;
+	pscreen->destroy = nv10_screen_destroy;
+	pscreen->get_param = nv10_screen_get_param;
+	pscreen->get_paramf = nv10_screen_get_paramf;
+	pscreen->is_format_supported = nv10_screen_is_format_supported;
+
+	nv10_screen_init_miptree_functions(pscreen);
+	nv10_screen_init_transfer_functions(pscreen);
 
 	/* 3D object */
-	if (chipset>=0x20)
-		celsius_class=NV11TCL;
-	else if (chipset>=0x17)
-		celsius_class=NV17TCL;
-	else if (chipset>=0x11)
-		celsius_class=NV11TCL;
+	if (dev->chipset >= 0x20)
+		celsius_class = NV11TCL;
+	else if (dev->chipset >= 0x17)
+		celsius_class = NV17TCL;
+	else if (dev->chipset >= 0x11)
+		celsius_class = NV11TCL;
 	else
-		celsius_class=NV10TCL;
+		celsius_class = NV10TCL;
 
 	if (!celsius_class) {
-		NOUVEAU_ERR("Unknown nv1x chipset: nv%02x\n", chipset);
+		NOUVEAU_ERR("Unknown nv1x chipset: nv%02x\n", dev->chipset);
 		return NULL;
 	}
 
-	ret = nvws->grobj_alloc(nvws, celsius_class, &screen->celsius);
+	ret = nouveau_grobj_alloc(chan, 0xbeef0001, celsius_class,
+				  &screen->celsius);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;
 	}
+	BIND_RING(chan, screen->celsius, 7);
+
+	/* 2D engine setup */
+	screen->eng2d = nv04_surface_2d_init(&screen->base);
+	screen->eng2d->buf = nv10_surface_buffer;
 
 	/* Notifier for sync purposes */
-	ret = nvws->notifier_alloc(nvws, 1, &screen->sync);
+	ret = nouveau_notifier_alloc(chan, 0xbeef0301, 1, &screen->sync);
 	if (ret) {
 		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
-		nv10_screen_destroy(&screen->pipe);
+		nv10_screen_destroy(pscreen);
 		return NULL;
 	}
 
-	screen->pipe.winsys = ws;
-	screen->pipe.destroy = nv10_screen_destroy;
-
-	screen->pipe.get_name = nv10_screen_get_name;
-	screen->pipe.get_vendor = nv10_screen_get_vendor;
-	screen->pipe.get_param = nv10_screen_get_param;
-	screen->pipe.get_paramf = nv10_screen_get_paramf;
-
-	screen->pipe.is_format_supported = nv10_screen_is_format_supported;
-
-	nv10_screen_init_miptree_functions(&screen->pipe);
-	nv10_screen_init_transfer_functions(&screen->pipe);
-	u_simple_screen_init(&screen->pipe);
-
-	return &screen->pipe;
+	return pscreen;
 }
 

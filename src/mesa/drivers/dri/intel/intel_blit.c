@@ -32,6 +32,8 @@
 #include "main/mtypes.h"
 #include "main/context.h"
 #include "main/enums.h"
+#include "main/texformat.h"
+#include "main/colormac.h"
 
 #include "intel_blit.h"
 #include "intel_buffers.h"
@@ -484,10 +486,9 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
             const GLbitfield bufBit = 1 << buf;
             if ((clearMask & bufBit) && !(bufBit & skipBuffers)) {
                /* OK, clear this renderbuffer */
-               struct intel_region *irb_region =
-		  intel_get_rb_region(fb, buf);
+	       struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, buf);
                dri_bo *write_buffer =
-                  intel_region_buffer(intel, irb_region,
+                  intel_region_buffer(intel, irb->region,
                                       all ? INTEL_WRITE_FULL :
                                       INTEL_WRITE_PART);
 
@@ -495,15 +496,13 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                GLint pitch, cpp;
                GLuint BR13, CMD;
 
-               ASSERT(irb_region);
-
-               pitch = irb_region->pitch;
-               cpp = irb_region->cpp;
+               pitch = irb->region->pitch;
+               cpp = irb->region->cpp;
 
                DBG("%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
                    __FUNCTION__,
-                   irb_region->buffer, (pitch * cpp),
-                   irb_region->draw_offset,
+                   irb->region->buffer, (pitch * cpp),
+                   irb->region->draw_offset,
                    b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1);
 
 	       BR13 = 0xf0 << 16;
@@ -529,7 +528,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                }
 
 #ifndef I915
-	       if (irb_region->tiling != I915_TILING_NONE) {
+	       if (irb->region->tiling != I915_TILING_NONE) {
 		  CMD |= XY_DST_TILED;
 		  pitch /= 4;
 	       }
@@ -540,9 +539,36 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                   clearVal = clear_depth;
                }
                else {
-                  clearVal = (cpp == 4)
-                     ? intel->ClearColor8888 : intel->ClearColor565;
-               }
+		  uint8_t clear[4];
+		  GLclampf *color = ctx->Color.ClearColor;
+
+		  CLAMPED_FLOAT_TO_UBYTE(clear[0], color[0]);
+		  CLAMPED_FLOAT_TO_UBYTE(clear[1], color[1]);
+		  CLAMPED_FLOAT_TO_UBYTE(clear[2], color[2]);
+		  CLAMPED_FLOAT_TO_UBYTE(clear[3], color[3]);
+
+		  switch (irb->texformat->MesaFormat) {
+		  case MESA_FORMAT_ARGB8888:
+		     clearVal = intel->ClearColor8888;
+		     break;
+		  case MESA_FORMAT_RGB565:
+		     clearVal = intel->ClearColor565;
+		     break;
+		  case MESA_FORMAT_ARGB4444:
+		     clearVal = PACK_COLOR_4444(clear[3], clear[0],
+						clear[1], clear[2]);
+		     break;
+		  case MESA_FORMAT_ARGB1555:
+		     clearVal = PACK_COLOR_1555(clear[3], clear[0],
+						clear[1], clear[2]);
+		     break;
+		  default:
+		     _mesa_problem(ctx, "Unexpected renderbuffer format: %d\n",
+				   irb->texformat->MesaFormat);
+		     clearVal = 0;
+		  }
+	       }
+
                /*
                   _mesa_debug(ctx, "hardware blit clear buf %d rb id %d\n",
                   buf, irb->Base.Name);
@@ -558,7 +584,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                OUT_BATCH((b.y2 << 16) | b.x2);
                OUT_RELOC(write_buffer,
 			 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                         irb_region->draw_offset);
+                         irb->region->draw_offset);
                OUT_BATCH(clearVal);
                ADVANCE_BATCH();
                clearMask &= ~bufBit;    /* turn off bit, for faster loop exit */

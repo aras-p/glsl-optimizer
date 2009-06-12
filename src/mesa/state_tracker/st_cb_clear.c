@@ -45,6 +45,7 @@
 #include "st_program.h"
 #include "st_public.h"
 #include "st_mesa_to_tgsi.h"
+#include "st_inlines.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
@@ -102,20 +103,6 @@ st_destroy_clear(struct st_context *st)
 }
 
 
-static GLboolean
-is_depth_stencil_format(enum pipe_format pipeFormat)
-{
-   switch (pipeFormat) {
-   case PIPE_FORMAT_S8Z24_UNORM:
-   case PIPE_FORMAT_Z24S8_UNORM:
-      return GL_TRUE;
-   default:
-      return GL_FALSE;
-   }
-}
-
-
-
 /**
  * Draw a screen-aligned quadrilateral.
  * Coords are window coords with y=0=bottom.  These will be passed
@@ -166,10 +153,10 @@ draw_quad(GLcontext *ctx,
    }
 
    /* put vertex data into vbuf */
-   pipe_buffer_write(pipe->screen, st->clear.vbuf, 
-                     st->clear.vbuf_slot * sizeof(st->clear.vertices),
-                     sizeof(st->clear.vertices),
-                     st->clear.vertices);
+   st_no_flush_pipe_buffer_write(st, st->clear.vbuf,
+				 st->clear.vbuf_slot * sizeof(st->clear.vertices),
+				 sizeof(st->clear.vertices),
+				 st->clear.vertices);
 
    /* draw */
    util_draw_vertex_buffer(pipe, 
@@ -330,7 +317,7 @@ static INLINE GLboolean
 check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    const struct st_renderbuffer *strb = st_renderbuffer(rb);
-   const GLboolean isDS = is_depth_stencil_format(strb->surface->format);
+   const GLboolean isDS = pf_is_depth_and_stencil(strb->surface->format);
 
    if (ctx->Scissor.Enabled)
       return TRUE;
@@ -350,7 +337,7 @@ static INLINE GLboolean
 check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    const struct st_renderbuffer *strb = st_renderbuffer(rb);
-   const GLboolean isDS = is_depth_stencil_format(strb->surface->format);
+   const GLboolean isDS = pf_is_depth_and_stencil(strb->surface->format);
    const GLuint stencilMax = (1 << rb->StencilBits) - 1;
    const GLboolean maskStencil
       = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;

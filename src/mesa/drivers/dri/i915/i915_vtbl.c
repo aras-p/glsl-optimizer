@@ -32,6 +32,7 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/colormac.h"
+#include "main/texformat.h"
 
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"
@@ -40,6 +41,8 @@
 #include "intel_tex.h"
 #include "intel_regions.h"
 #include "intel_tris.h"
+#include "intel_fbo.h"
+#include "intel_chipset.h"
 
 #include "i915_reg.h"
 #include "i915_context.h"
@@ -527,6 +530,23 @@ i915_destroy_context(struct intel_context *intel)
    _tnl_free_vertices(&intel->ctx);
 }
 
+void
+i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
+			     uint32_t buffer_id)
+{
+   state[0] = _3DSTATE_BUF_INFO_CMD;
+   state[1] = buffer_id;
+
+   if (region != NULL) {
+      state[1] |= BUF_3D_PITCH(region->pitch * region->cpp);
+
+      if (region->tiling != I915_TILING_NONE) {
+	 state[1] |= BUF_3D_TILED_SURFACE;
+	 if (region->tiling == I915_TILING_Y)
+	    state[1] |= BUF_3D_TILE_WALK_Y;
+      }
+   }
+}
 
 /**
  * Set the drawing regions for the color and depth/stencil buffers.
@@ -542,6 +562,8 @@ i915_state_draw_region(struct intel_context *intel,
 {
    struct i915_context *i915 = i915_context(&intel->ctx);
    GLcontext *ctx = &intel->ctx;
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    GLuint value;
 
    ASSERT(state == &i915->state || state == &i915->meta);
@@ -558,21 +580,11 @@ i915_state_draw_region(struct intel_context *intel,
    /*
     * Set stride/cpp values
     */
-   if (color_region) {
-      state->Buffer[I915_DESTREG_CBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
-      state->Buffer[I915_DESTREG_CBUFADDR1] =
-         (BUF_3D_ID_COLOR_BACK |
-          BUF_3D_PITCH(color_region->pitch * color_region->cpp) |
-          BUF_3D_USE_FENCE);
-   }
+   i915_set_buf_info_for_region(&state->Buffer[I915_DESTREG_CBUFADDR0],
+				color_region, BUF_3D_ID_COLOR_BACK);
 
-   if (depth_region) {
-      state->Buffer[I915_DESTREG_DBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
-      state->Buffer[I915_DESTREG_DBUFADDR1] =
-         (BUF_3D_ID_DEPTH |
-          BUF_3D_PITCH(depth_region->pitch * depth_region->cpp) |
-          BUF_3D_USE_FENCE);
-   }
+   i915_set_buf_info_for_region(&state->Buffer[I915_DESTREG_DBUFADDR0],
+				depth_region, BUF_3D_ID_DEPTH);
 
    /*
     * Compute/set I915_DESTREG_DV1 value
@@ -580,12 +592,34 @@ i915_state_draw_region(struct intel_context *intel,
    value = (DSTORG_HORT_BIAS(0x8) |     /* .5 */
             DSTORG_VERT_BIAS(0x8) |     /* .5 */
             LOD_PRECLAMP_OGL | TEX_DEFAULT_COLOR_OGL);
-   if (color_region && color_region->cpp == 4) {
-      value |= DV_PF_8888;
+   if (irb != NULL) {
+      switch (irb->texformat->MesaFormat) {
+      case MESA_FORMAT_ARGB8888:
+	 value |= DV_PF_8888;
+	 break;
+      case MESA_FORMAT_RGB565:
+	 value |= DV_PF_565 | DITHER_FULL_ALWAYS;
+	 break;
+      case MESA_FORMAT_ARGB1555:
+	 value |= DV_PF_1555 | DITHER_FULL_ALWAYS;
+	 break;
+      case MESA_FORMAT_ARGB4444:
+	 value |= DV_PF_4444 | DITHER_FULL_ALWAYS;
+	 break;
+      default:
+	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n",
+		       irb->texformat->MesaFormat);
+      }
    }
-   else {
-      value |= (DITHER_FULL_ALWAYS | DV_PF_565);
-   }
+
+   /* This isn't quite safe, thus being hidden behind an option.  When changing
+    * the value of this bit, the pipeline needs to be MI_FLUSHed.  And it
+    * can only be set when a depth buffer is already defined.
+    */
+   if (IS_945(intel->intelScreen->deviceID) && intel->use_early_z &&
+       depth_region->tiling != I915_TILING_NONE)
+      value |= CLASSIC_EARLY_DEPTH;
+
    if (depth_region && depth_region->cpp == 4) {
       value |= DEPTH_FRMT_24_FIXED_8_OTHER;
    }

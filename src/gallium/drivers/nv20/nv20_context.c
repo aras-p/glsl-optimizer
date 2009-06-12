@@ -30,7 +30,7 @@ nv20_destroy(struct pipe_context *pipe)
 static void nv20_init_hwctx(struct nv20_context *nv20)
 {
 	struct nv20_screen *screen = nv20->screen;
-	struct nouveau_winsys *nvws = screen->nvws;
+	struct nouveau_channel *chan = screen->base.channel;
 	int i;
 	float projectionmatrix[16];
 	const boolean is_nv25tcl = (nv20->screen->kelvin->grclass == NV25TCL);
@@ -38,11 +38,11 @@ static void nv20_init_hwctx(struct nv20_context *nv20)
 	BEGIN_RING(kelvin, NV20TCL_DMA_NOTIFY, 1);
 	OUT_RING  (screen->sync->handle);
 	BEGIN_RING(kelvin, NV20TCL_DMA_TEXTURE0, 2);
-	OUT_RING  (nvws->channel->vram->handle);
-	OUT_RING  (nvws->channel->gart->handle); /* TEXTURE1 */
+	OUT_RING  (chan->vram->handle);
+	OUT_RING  (chan->gart->handle); /* TEXTURE1 */
 	BEGIN_RING(kelvin, NV20TCL_DMA_COLOR, 2);
-	OUT_RING  (nvws->channel->vram->handle);
-	OUT_RING  (nvws->channel->vram->handle); /* ZETA */
+	OUT_RING  (chan->vram->handle);
+	OUT_RING  (chan->vram->handle); /* ZETA */
 
 	BEGIN_RING(kelvin, NV20TCL_DMA_QUERY, 1);
 	OUT_RING  (0); /* renouveau: beef0351, unique */
@@ -99,9 +99,9 @@ static void nv20_init_hwctx(struct nv20_context *nv20)
 		OUT_RING  (3);
 
 		BEGIN_RING(kelvin, NV25TCL_DMA_IN_MEMORY9, 1);
-		OUT_RING  (nvws->channel->vram->handle);
+		OUT_RING  (chan->vram->handle);
 		BEGIN_RING(kelvin, NV25TCL_DMA_IN_MEMORY8, 1);
-		OUT_RING  (nvws->channel->vram->handle);
+		OUT_RING  (chan->vram->handle);
 	}
 	BEGIN_RING(kelvin, NV20TCL_DMA_FENCE, 1);
 	OUT_RING  (0);	/* renouveau: beef1e10 */
@@ -380,6 +380,30 @@ nv20_set_edgeflags(struct pipe_context *pipe, const unsigned *bitfield)
 {
 }
 
+
+static unsigned int
+nv20_is_texture_referenced( struct pipe_context *pipe,
+			    struct pipe_texture *texture,
+			    unsigned face, unsigned level)
+{
+   /**
+    * FIXME: Optimize.
+    */
+
+   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
+static unsigned int
+nv20_is_buffer_referenced( struct pipe_context *pipe,
+			   struct pipe_buffer *buf)
+{
+   /**
+    * FIXME: Optimize.
+    */
+
+   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
 struct pipe_context *
 nv20_create(struct pipe_screen *pscreen, unsigned pctx_id)
 {
@@ -404,6 +428,9 @@ nv20_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv20->pipe.draw_elements = nv20_draw_elements;
 	nv20->pipe.clear = nv20_clear;
 	nv20->pipe.flush = nv20_flush;
+
+	nv20->pipe.is_texture_referenced = nv20_is_texture_referenced;
+	nv20->pipe.is_buffer_referenced = nv20_is_buffer_referenced;
 
 	nv20_init_surface_functions(nv20);
 	nv20_init_state_functions(nv20);

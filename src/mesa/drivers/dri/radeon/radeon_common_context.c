@@ -39,6 +39,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drirenderbuffer.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
+#include "main/renderbuffer.h"
 #include "main/state.h"
 #include "main/simple_list.h"
 #include "swrast/swrast.h"
@@ -50,6 +51,40 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef RADEON_DEBUG
 int RADEON_DEBUG = (0);
 #endif
+
+
+static const char* get_chip_family_name(int chip_family)
+{
+	switch(chip_family) {
+	case CHIP_FAMILY_R100: return "R100";
+	case CHIP_FAMILY_RV100: return "RV100";
+	case CHIP_FAMILY_RS100: return "RS100";
+	case CHIP_FAMILY_RV200: return "RV200";
+	case CHIP_FAMILY_RS200: return "RS200";
+	case CHIP_FAMILY_R200: return "R200";
+	case CHIP_FAMILY_RV250: return "RV250";
+	case CHIP_FAMILY_RS300: return "RS300";
+	case CHIP_FAMILY_RV280: return "RV280";
+	case CHIP_FAMILY_R300: return "R300";
+	case CHIP_FAMILY_R350: return "R350";
+	case CHIP_FAMILY_RV350: return "RV350";
+	case CHIP_FAMILY_RV380: return "RV380";
+	case CHIP_FAMILY_R420: return "R420";
+	case CHIP_FAMILY_RV410: return "RV410";
+	case CHIP_FAMILY_RS400: return "RS400";
+	case CHIP_FAMILY_RS600: return "RS600";
+	case CHIP_FAMILY_RS690: return "RS690";
+	case CHIP_FAMILY_RS740: return "RS740";
+	case CHIP_FAMILY_RV515: return "RV515";
+	case CHIP_FAMILY_R520: return "R520";
+	case CHIP_FAMILY_RV530: return "RV530";
+	case CHIP_FAMILY_R580: return "R580";
+	case CHIP_FAMILY_RV560: return "RV560";
+	case CHIP_FAMILY_RV570: return "RV570";
+	default: return "unknown";
+	}
+}
+
 
 /* Return various strings for glGetString().
  */
@@ -72,18 +107,24 @@ static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
 		unsigned offset;
 		GLuint agp_mode = (radeon->radeonScreen->card_type==RADEON_CARD_PCI) ? 0 :
 			radeon->radeonScreen->AGPMode;
-		const char* chipname;
+		const char* chipclass;
+		char hardwarename[32];
 
 		if (IS_R600_CLASS(radeon->radeonScreen))
-			chipname = "R600";
+			chipclass = "R600";
 		else if (IS_R300_CLASS(radeon->radeonScreen))
-			chipname = "R300";
+			chipclass = "R300";
 		else if (IS_R200_CLASS(radeon->radeonScreen))
-			chipname = "R200";
+			chipclass = "R200";
 		else
-			chipname = "R100";
+			chipclass = "R100";
 
-		offset = driGetRendererString(buffer, chipname, DRIVER_DATE,
+		sprintf(hardwarename, "%s (%s %04X)",
+		        chipclass,
+		        get_chip_family_name(radeon->radeonScreen->chip_family),
+		        radeon->radeonScreen->device_id);
+
+		offset = driGetRendererString(buffer, hardwarename, DRIVER_DATE,
 					      agp_mode);
 
 		if (IS_R600_CLASS(radeon->radeonScreen)) {
@@ -152,8 +193,6 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	/* DRI fields */
 	radeon->dri.context = driContextPriv;
 	radeon->dri.screen = sPriv;
-	radeon->dri.drawable = NULL;
-	radeon->dri.readable = NULL;
 	radeon->dri.hwContext = driContextPriv->hHWContext;
 	radeon->dri.hwLock = &sPriv->pSAREA->lock;
 	radeon->dri.fd = sPriv->fd;
@@ -176,12 +215,14 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 			"IRQ's not enabled, falling back to %s: %d %d\n",
 			radeon->do_usleeps ? "usleeps" : "busy waits",
 			fthrottle_mode, radeon->radeonScreen->irq);
-	
+
         radeon->texture_depth = driQueryOptioni (&radeon->optionCache,
 					        "texture_depth");
         if (radeon->texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
                 radeon->texture_depth = ( glVisual->rgbBits > 16 ) ?
 	        DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
+
+	radeon->texture_row_align = 32;
 
 	return GL_TRUE;
 }
@@ -225,7 +266,7 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 		radeon_firevertices(radeon);
 		_mesa_make_current(NULL, NULL, NULL);
 	}
-	
+
 	assert(radeon);
 	if (radeon) 
     {
@@ -249,14 +290,11 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 		_tnl_DestroyContext( radeon->glCtx );
 		_vbo_DestroyContext( radeon->glCtx );
 		_swrast_DestroyContext( radeon->glCtx );
-	
-		radeonDestroyBuffer(radeon->dri.drawable);
-		radeonDestroyBuffer(radeon->dri.readable);
 
 		/* free atom list */
 		/* free the Mesa context */
 		_mesa_destroy_context(radeon->glCtx);
-		
+
 		/* _mesa_destroy_context() might result in calls to functions that
 		 * depend on the DriverCtx, so don't set it to NULL before.
 		 *
@@ -264,7 +302,7 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 		 */
 		/* free the option cache */
 		driDestroyOptionCache(&radeon->optionCache);
-		
+
 		rcommonDestroyCmdBuf(radeon);
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600) /* +r6/r7 */
@@ -405,12 +443,12 @@ radeon_make_renderbuffer_current(radeonContextPtr radeon,
 	int size = 4096*4096*4;
 	/* if radeon->fake */
 	struct radeon_renderbuffer *rb;
-	
+
 	if (radeon->radeonScreen->kernel_mm) {
 		radeon_make_kernel_renderbuffer_current(radeon, draw);
 		return;
 	}
-			
+
 
 	if ((rb = (void *)draw->base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer)) {
 		if (!rb->bo) {
@@ -510,12 +548,29 @@ radeon_make_renderbuffer_current(radeonContextPtr radeon,
 	}
 }
 
+static unsigned
+radeon_bits_per_pixel(const struct radeon_renderbuffer *rb)
+{
+   switch (rb->base._ActualFormat) {
+   case GL_RGB5:
+   case GL_DEPTH_COMPONENT16:
+      return 16;
+   case GL_RGB8:
+   case GL_RGBA8:
+   case GL_DEPTH_COMPONENT24:
+   case GL_DEPTH24_STENCIL8_EXT:
+   case GL_STENCIL_INDEX8_EXT:
+      return 32;
+   default:
+      return 0;
+   }
+}
 
 void
 radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 {
 	unsigned int attachments[10];
-	__DRIbuffer *buffers;
+	__DRIbuffer *buffers = NULL;
 	__DRIscreen *screen;
 	struct radeon_renderbuffer *rb;
 	int i, count;
@@ -526,26 +581,68 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 
 	if (RADEON_DEBUG & DEBUG_DRI)
 	    fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);
-	
+
 	draw = drawable->driverPrivate;
 	screen = context->driScreenPriv;
 	radeon = (radeonContextPtr) context->driverPrivate;
-	i = 0;
-	if (draw->color_rb[0])
-		attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
-	if (draw->color_rb[1])
-		attachments[i++] = __DRI_BUFFER_BACK_LEFT;
-	if (radeon_get_renderbuffer(&draw->base, BUFFER_DEPTH))
-		attachments[i++] = __DRI_BUFFER_DEPTH;
-	if (radeon_get_renderbuffer(&draw->base, BUFFER_STENCIL))
-		attachments[i++] = __DRI_BUFFER_STENCIL;
-	
-	buffers = (*screen->dri2.loader->getBuffers)(drawable,
-						     &drawable->w,
-						     &drawable->h,
-						     attachments, i,
-						     &count,
-						     drawable->loaderPrivate);
+
+	if (screen->dri2.loader
+	   && (screen->dri2.loader->base.version > 2)
+	   && (screen->dri2.loader->getBuffersWithFormat != NULL)) {
+		struct radeon_renderbuffer *depth_rb;
+		struct radeon_renderbuffer *stencil_rb;
+
+		i = 0;
+		if ((radeon->is_front_buffer_rendering || !draw->color_rb[1])
+			&& draw->color_rb[0]) {
+			attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
+			attachments[i++] = radeon_bits_per_pixel(draw->color_rb[0]);
+		}
+
+		if (draw->color_rb[1]) {
+			attachments[i++] = __DRI_BUFFER_BACK_LEFT;
+			attachments[i++] = radeon_bits_per_pixel(draw->color_rb[1]);
+		}
+
+		depth_rb = radeon_get_renderbuffer(&draw->base, BUFFER_DEPTH);
+		stencil_rb = radeon_get_renderbuffer(&draw->base, BUFFER_STENCIL);
+
+		if ((depth_rb != NULL) && (stencil_rb != NULL)) {
+			attachments[i++] = __DRI_BUFFER_DEPTH_STENCIL;
+			attachments[i++] = radeon_bits_per_pixel(depth_rb);
+		} else if (depth_rb != NULL) {
+			attachments[i++] = __DRI_BUFFER_DEPTH;
+			attachments[i++] = radeon_bits_per_pixel(depth_rb);
+		} else if (stencil_rb != NULL) {
+			attachments[i++] = __DRI_BUFFER_STENCIL;
+			attachments[i++] = radeon_bits_per_pixel(stencil_rb);
+		}
+
+		buffers = (*screen->dri2.loader->getBuffersWithFormat)(drawable,
+								&drawable->w,
+								&drawable->h,
+								attachments, i / 2,
+								&count,
+								drawable->loaderPrivate);
+	} else if (screen->dri2.loader) {
+		i = 0;
+		if (draw->color_rb[0])
+			attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
+		if (draw->color_rb[1])
+			attachments[i++] = __DRI_BUFFER_BACK_LEFT;
+		if (radeon_get_renderbuffer(&draw->base, BUFFER_DEPTH))
+			attachments[i++] = __DRI_BUFFER_DEPTH;
+		if (radeon_get_renderbuffer(&draw->base, BUFFER_STENCIL))
+			attachments[i++] = __DRI_BUFFER_STENCIL;
+
+		buffers = (*screen->dri2.loader->getBuffers)(drawable,
+								 &drawable->w,
+								 &drawable->h,
+								 attachments, i,
+								 &count,
+								 drawable->loaderPrivate);
+	}
+
 	if (buffers == NULL)
 		return;
 
@@ -570,6 +667,10 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 			rb = draw->color_rb[0];
 			regname = "dri2 front buffer";
 			break;
+		case __DRI_BUFFER_FAKE_FRONT_LEFT:
+			rb = draw->color_rb[0];
+			regname = "dri2 fake front buffer";
+			break;
 		case __DRI_BUFFER_BACK_LEFT:
 			rb = draw->color_rb[1];
 			regname = "dri2 back buffer";
@@ -577,6 +678,10 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 		case __DRI_BUFFER_DEPTH:
 			rb = radeon_get_renderbuffer(&draw->base, BUFFER_DEPTH);
 			regname = "dri2 depth buffer";
+			break;
+		case __DRI_BUFFER_DEPTH_STENCIL:
+			rb = radeon_get_renderbuffer(&draw->base, BUFFER_DEPTH);
+			regname = "dri2 depth / stencil buffer";
 			break;
 		case __DRI_BUFFER_STENCIL:
 			rb = radeon_get_renderbuffer(&draw->base, BUFFER_STENCIL);
@@ -637,7 +742,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 
 				fprintf(stderr, "failed to attach %s %d\n",
 					regname, buffers[i].name);
-				
+
 			}
 		}
 
@@ -649,7 +754,24 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 
 		radeon_renderbuffer_set_bo(rb, bo);
 		radeon_bo_unref(bo);
-		    
+
+		if (buffers[i].attachment == __DRI_BUFFER_DEPTH_STENCIL) {
+			rb = radeon_get_renderbuffer(&draw->base, BUFFER_STENCIL);
+			if (rb != NULL) {
+				struct radeon_bo *stencil_bo = NULL;
+
+				if (rb->bo) {
+					uint32_t name = radeon_gem_name_bo(rb->bo);
+					if (name == buffers[i].name)
+						continue;
+				}
+
+				stencil_bo = bo;
+				radeon_bo_ref(stencil_bo);
+				radeon_renderbuffer_set_bo(rb, stencil_bo);
+				radeon_bo_unref(stencil_bo);
+			}
+		}
 	}
 
 	driUpdateFramebufferSize(radeon->glCtx, drawable);
@@ -677,23 +799,20 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	drfb = driDrawPriv->driverPrivate;
 	readfb = driReadPriv->driverPrivate;
 
-	if (driContextPriv->driScreenPriv->dri2.enabled) {    
+	if (driContextPriv->driScreenPriv->dri2.enabled) {
 		radeon_update_renderbuffers(driContextPriv, driDrawPriv);
 		if (driDrawPriv != driReadPriv)
 			radeon_update_renderbuffers(driContextPriv, driReadPriv);
-		radeon->state.color.rrb =
-			radeon_get_renderbuffer(&drfb->base, BUFFER_BACK_LEFT);
-		radeon->state.depth.rrb =
-			radeon_get_renderbuffer(&drfb->base, BUFFER_DEPTH);
+		_mesa_reference_renderbuffer(&radeon->state.color.rb,
+			&(radeon_get_renderbuffer(&drfb->base, BUFFER_BACK_LEFT)->base));
+		_mesa_reference_renderbuffer(&radeon->state.depth.rb,
+			&(radeon_get_renderbuffer(&drfb->base, BUFFER_DEPTH)->base));
 	} else {
 		radeon_make_renderbuffer_current(radeon, drfb);
 	}
 
 	if (RADEON_DEBUG & DEBUG_DRI)
 	     fprintf(stderr, "%s ctx %p dfb %p rfb %p\n", __FUNCTION__, radeon->glCtx, drfb, readfb);
-
-	if (radeon->dri.readable != driReadPriv)
-		radeon->dri.readable = driReadPriv;
 
 	driUpdateFramebufferSize(radeon->glCtx, driDrawPriv);
 	if (driReadPriv != driDrawPriv)
@@ -704,29 +823,25 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	_mesa_update_state(radeon->glCtx);
 
 	if (radeon->glCtx->DrawBuffer == &drfb->base) {
+		if (driDrawPriv->swap_interval == (unsigned)-1) {
+			int i;
+			driDrawPriv->vblFlags =
+				(radeon->radeonScreen->irq != 0)
+				? driGetDefaultVBlankFlags(&radeon->
+							   optionCache)
+				: VBLANK_FLAG_NO_IRQ;
 
-		if (radeon->dri.drawable != driDrawPriv) {
-			if (driDrawPriv->swap_interval == (unsigned)-1) {
-				int i;
-				driDrawPriv->vblFlags =
-					(radeon->radeonScreen->irq != 0)
-					? driGetDefaultVBlankFlags(&radeon->
-								   optionCache)
-					: VBLANK_FLAG_NO_IRQ;
-				    
-				driDrawableInitVBlank(driDrawPriv);
-				drfb->vbl_waited = driDrawPriv->vblSeq;
+			driDrawableInitVBlank(driDrawPriv);
+			drfb->vbl_waited = driDrawPriv->vblSeq;
 
-				for (i = 0; i < 2; i++) {
-					if (drfb->color_rb[i])
-						drfb->color_rb[i]->vbl_pending = driDrawPriv->vblSeq;
-				}
-				    
+			for (i = 0; i < 2; i++) {
+				if (drfb->color_rb[i])
+					drfb->color_rb[i]->vbl_pending = driDrawPriv->vblSeq;
 			}
-			radeon->dri.drawable = driDrawPriv;
-			
-			radeon_window_moved(radeon);
+
 		}
+
+		radeon_window_moved(radeon);
 		radeon_draw_buffer(radeon->glCtx, &drfb->base);
 	}
 

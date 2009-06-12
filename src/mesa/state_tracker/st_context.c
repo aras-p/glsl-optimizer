@@ -177,6 +177,12 @@ struct st_context *st_create_context(struct pipe_context *pipe,
 
    ctx = _mesa_create_context(visual, shareCtx, &funcs, NULL);
 
+   /* XXX: need a capability bit in gallium to query if the pipe
+    * driver prefers DP4 or MUL/MAD for vertex transformation.
+    */
+   if (debug_get_bool_option("MESA_MVP_DP4", FALSE))
+      _mesa_set_mvp_with_dp4( ctx, GL_TRUE );
+
    return st_create_context_priv(ctx, pipe);
 }
 
@@ -227,12 +233,19 @@ void st_destroy_context( struct st_context *st )
    struct pipe_context *pipe = st->pipe;
    struct cso_context *cso = st->cso_context;
    GLcontext *ctx = st->ctx;
+   GLuint i;
 
    /* need to unbind and destroy CSO objects before anything else */
    cso_release_all(st->cso_context);
 
    st_reference_fragprog(st, &st->fp, NULL);
    st_reference_vertprog(st, &st->vp, NULL);
+
+   /* release framebuffer surfaces */
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+      pipe_surface_reference(&st->state.framebuffer.cbufs[i], NULL);
+   }
+   pipe_surface_reference(&st->state.framebuffer.zsbuf, NULL);
 
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
 
@@ -250,9 +263,10 @@ void st_destroy_context( struct st_context *st )
 }
 
 
-void st_make_current(struct st_context *st,
-                     struct st_framebuffer *draw,
-                     struct st_framebuffer *read)
+GLboolean
+st_make_current(struct st_context *st,
+                struct st_framebuffer *draw,
+                struct st_framebuffer *read)
 {
    /* Call this periodically to detect when the user has begun using
     * GL rendering from multiple threads.
@@ -261,7 +275,8 @@ void st_make_current(struct st_context *st,
 
    if (st) {
       GLboolean firstTime = st->ctx->FirstTimeCurrent;
-      _mesa_make_current(st->ctx, &draw->Base, &read->Base);
+      if(!_mesa_make_current(st->ctx, &draw->Base, &read->Base))
+         return GL_FALSE;
       /* Need to initialize viewport here since draw->Base->Width/Height
        * will still be zero at this point.
        * This could be improved, but would require rather extensive work
@@ -273,12 +288,19 @@ void st_make_current(struct st_context *st,
          _mesa_set_scissor(st->ctx, 0, 0, w, h);
 
       }
+      return GL_TRUE;
    }
    else {
-      _mesa_make_current(NULL, NULL, NULL);
+      return _mesa_make_current(NULL, NULL, NULL);
    }
 }
 
+struct st_context *st_get_current(void)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   return (ctx == NULL) ? NULL : ctx->st;
+}
 
 void st_copy_context_state(struct st_context *dst,
                            struct st_context *src,

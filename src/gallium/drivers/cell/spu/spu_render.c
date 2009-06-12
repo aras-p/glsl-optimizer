@@ -32,6 +32,7 @@
 
 #include "spu_main.h"
 #include "spu_render.h"
+#include "spu_shuffle.h"
 #include "spu_tri.h"
 #include "spu_tile.h"
 #include "cell/common.h"
@@ -267,15 +268,75 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
 
       uint drawn = 0;
 
-      /* loop over tris */
-      for (j = 0; j < render->num_indexes; j += 3) {
-         const float *v0, *v1, *v2;
+      const qword vertex_sizes = (qword)spu_splats(vertex_size);
+      const qword verticess = (qword)spu_splats((uint)vertices);
 
-         v0 = (const float *) (vertices + indexes[j+0] * vertex_size);
-         v1 = (const float *) (vertices + indexes[j+1] * vertex_size);
-         v2 = (const float *) (vertices + indexes[j+2] * vertex_size);
+      ASSERT_ALIGN16(&indexes[0]);
 
-         drawn += tri_draw(v0, v1, v2, tx, ty);
+      const uint num_indexes = render->num_indexes;
+
+      /* loop over tris
+	   * &indexes[0] will be 16 byte aligned.  This loop is heavily unrolled
+	   * avoiding variable rotates when extracting vertex indices.
+	   */
+      for (j = 0; j < num_indexes; j += 24) {
+         /* Load three vectors, containing 24 ushort indices */
+         const qword* lower_qword = (qword*)&indexes[j];
+         const qword indices0 = lower_qword[0];
+         const qword indices1 = lower_qword[1];
+         const qword indices2 = lower_qword[2];
+
+         /* stores three indices for each tri n in slots 0, 1 and 2 of vsn */
+		 /* Straightforward rotates for these */
+         qword vs0 = indices0;
+         qword vs1 = si_shlqbyi(indices0, 6);
+         qword vs3 = si_shlqbyi(indices1, 2);
+         qword vs4 = si_shlqbyi(indices1, 8);
+         qword vs6 = si_shlqbyi(indices2, 4);
+         qword vs7 = si_shlqbyi(indices2, 10);
+
+         /* For tri 2 and 5, the three indices are split across two machine
+		  * words - rotate and combine */
+         const qword tmp2a = si_shlqbyi(indices0, 12);
+         const qword tmp2b = si_rotqmbyi(indices1, 12|16);
+         qword vs2 = si_selb(tmp2a, tmp2b, si_fsmh(si_from_uint(0x20)));
+
+         const qword tmp5a = si_shlqbyi(indices1, 14);
+         const qword tmp5b = si_rotqmbyi(indices2, 14|16);
+         qword vs5 = si_selb(tmp5a, tmp5b, si_fsmh(si_from_uint(0x60)));
+
+         /* unpack indices from halfword slots to word slots */
+         vs0 = si_shufb(vs0, vs0, SHUFB8(0,A,0,B,0,C,0,0));
+         vs1 = si_shufb(vs1, vs1, SHUFB8(0,A,0,B,0,C,0,0));
+         vs2 = si_shufb(vs2, vs2, SHUFB8(0,A,0,B,0,C,0,0));
+         vs3 = si_shufb(vs3, vs3, SHUFB8(0,A,0,B,0,C,0,0));
+         vs4 = si_shufb(vs4, vs4, SHUFB8(0,A,0,B,0,C,0,0));
+         vs5 = si_shufb(vs5, vs5, SHUFB8(0,A,0,B,0,C,0,0));
+         vs6 = si_shufb(vs6, vs6, SHUFB8(0,A,0,B,0,C,0,0));
+         vs7 = si_shufb(vs7, vs7, SHUFB8(0,A,0,B,0,C,0,0));
+
+         /* Calculate address of vertex in vertices[] */
+         vs0 = si_mpya(vs0, vertex_sizes, verticess);
+         vs1 = si_mpya(vs1, vertex_sizes, verticess);
+         vs2 = si_mpya(vs2, vertex_sizes, verticess);
+         vs3 = si_mpya(vs3, vertex_sizes, verticess);
+         vs4 = si_mpya(vs4, vertex_sizes, verticess);
+         vs5 = si_mpya(vs5, vertex_sizes, verticess);
+         vs6 = si_mpya(vs6, vertex_sizes, verticess);
+         vs7 = si_mpya(vs7, vertex_sizes, verticess);
+
+         /* Select the appropriate call based on the number of vertices 
+		  * remaining */
+         switch(num_indexes - j) {
+            default: drawn += tri_draw(vs7, tx, ty);
+            case 21: drawn += tri_draw(vs6, tx, ty);
+            case 18: drawn += tri_draw(vs5, tx, ty);
+            case 15: drawn += tri_draw(vs4, tx, ty);
+            case 12: drawn += tri_draw(vs3, tx, ty);
+            case 9:  drawn += tri_draw(vs2, tx, ty);
+            case 6:  drawn += tri_draw(vs1, tx, ty);
+            case 3:  drawn += tri_draw(vs0, tx, ty);
+         }
       }
 
       //printf("SPU %u: drew %u of %u\n", spu.init.id, drawn, render->num_indexes/3);

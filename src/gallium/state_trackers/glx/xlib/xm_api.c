@@ -1100,26 +1100,19 @@ XMesaContext XMesaGetCurrentContext( void )
 
 
 
-
-
-
-/*
- * Copy the back buffer to the front buffer.  If there's no back buffer
- * this is a no-op.
+/**
+ * Swap front and back color buffers and have winsys display front buffer.
+ * If there's no front color buffer no swap actually occurs.
  */
 PUBLIC
 void XMesaSwapBuffers( XMesaBuffer b )
 {
-   struct pipe_surface *surf;
+   struct pipe_surface *frontLeftSurf;
 
-   /* If we're swapping the buffer associated with the current context
-    * we have to flush any pending rendering commands first.
-    */
-   st_notify_swapbuffers(b->stfb);
+   st_swapbuffers(b->stfb, &frontLeftSurf, NULL);
 
-   st_get_framebuffer_surface(b->stfb, ST_SURFACE_BACK_LEFT, &surf);
-   if (surf) {
-      driver.display_surface(b, surf);
+   if (frontLeftSurf) {
+      driver.display_surface(b, frontLeftSurf);
    }
 
    xmesa_check_and_update_buffer_size(NULL, b);

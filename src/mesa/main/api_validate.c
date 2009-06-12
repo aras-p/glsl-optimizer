@@ -30,6 +30,26 @@
 #include "state.h"
 
 
+
+/**
+ * \return  number of bytes in array [count] of type.
+ */
+static GLsizei
+index_bytes(GLenum type, GLsizei count)
+{
+   if (type == GL_UNSIGNED_INT) {
+      return count * sizeof(GLuint);
+   }
+   else if (type == GL_UNSIGNED_BYTE) {
+      return count * sizeof(GLubyte);
+   }
+   else {
+      ASSERT(type == GL_UNSIGNED_SHORT);
+      return count * sizeof(GLushort);
+   }
+}
+
+
 /**
  * Find the max index in the given element/index buffer
  */
@@ -44,10 +64,8 @@ max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
 
    if (elementBuf->Name) {
       /* elements are in a user-defined buffer object.  need to map it */
-      map = ctx->Driver.MapBuffer(ctx,
-                                  GL_ELEMENT_ARRAY_BUFFER_ARB,
-                                  GL_READ_ONLY,
-                                  elementBuf);
+      map = ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER,
+                                  GL_READ_ONLY, elementBuf);
       /* Actual address is the sum of pointers */
       indices = (const GLvoid *) ADD_POINTERS(map, (const GLubyte *) indices);
    }
@@ -70,14 +88,16 @@ max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
    }
 
    if (map) {
-      ctx->Driver.UnmapBuffer(ctx,
-                              GL_ELEMENT_ARRAY_BUFFER_ARB,
-                              ctx->Array.ElementArrayBufferObj);
+      ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, elementBuf);
    }
 
    return max;
 }
 
+
+/**
+ * Check if OK to render by examining framebuffer status and vertex arrays.
+ */
 static GLboolean
 check_valid_to_render(GLcontext *ctx, char *function)
 {
@@ -105,6 +125,12 @@ check_valid_to_render(GLcontext *ctx, char *function)
    return GL_TRUE;
 }
 
+
+/**
+ * Error checking for glDrawElements().  Includes parameter checking
+ * and VBO bounds checking.
+ * \return GL_TRUE if OK to render, GL_FALSE if error found
+ */
 GLboolean
 _mesa_validate_DrawElements(GLcontext *ctx,
 			    GLenum mode, GLsizei count, GLenum type,
@@ -140,27 +166,8 @@ _mesa_validate_DrawElements(GLcontext *ctx,
    /* Vertex buffer object tests */
    if (ctx->Array.ElementArrayBufferObj->Name) {
       /* use indices in the buffer object */
-      GLuint indexBytes;
-
-      if (!ctx->Array.ElementArrayBufferObj->Size) {
-         _mesa_warning(ctx,
-                       "glDrawElements called with empty array elements buffer");
-         return GL_FALSE;
-      }
-
-      if (type == GL_UNSIGNED_INT) {
-         indexBytes = count * sizeof(GLuint);
-      }
-      else if (type == GL_UNSIGNED_BYTE) {
-         indexBytes = count * sizeof(GLubyte);
-      }
-      else {
-         ASSERT(type == GL_UNSIGNED_SHORT);
-         indexBytes = count * sizeof(GLushort);
-      }
-
       /* make sure count doesn't go outside buffer bounds */
-      if (indexBytes > (GLuint) ctx->Array.ElementArrayBufferObj->Size) {
+      if (index_bytes(type, count) > ctx->Array.ElementArrayBufferObj->Size) {
          _mesa_warning(ctx, "glDrawElements index out of buffer bounds");
          return GL_FALSE;
       }
@@ -175,8 +182,10 @@ _mesa_validate_DrawElements(GLcontext *ctx,
       /* find max array index */
       GLuint max = max_buffer_index(ctx, count, type, indices,
                                     ctx->Array.ElementArrayBufferObj);
-      if (max >= ctx->Array._MaxElement) {
+      if (max >= ctx->Array.ArrayObj->_MaxElement) {
          /* the max element is out of bounds of one or more enabled arrays */
+         _mesa_warning(ctx, "glDrawElements() index=%u is "
+                       "out of bounds (max=%u)", max, ctx->Array.ArrayObj->_MaxElement);
          return GL_FALSE;
       }
    }
@@ -184,6 +193,12 @@ _mesa_validate_DrawElements(GLcontext *ctx,
    return GL_TRUE;
 }
 
+
+/**
+ * Error checking for glDrawRangeElements().  Includes parameter checking
+ * and VBO bounds checking.
+ * \return GL_TRUE if OK to render, GL_FALSE if error found
+ */
 GLboolean
 _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
 				 GLuint start, GLuint end,
@@ -224,21 +239,8 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
    /* Vertex buffer object tests */
    if (ctx->Array.ElementArrayBufferObj->Name) {
       /* use indices in the buffer object */
-      GLuint indexBytes;
-
-      if (type == GL_UNSIGNED_INT) {
-         indexBytes = count * sizeof(GLuint);
-      }
-      else if (type == GL_UNSIGNED_BYTE) {
-         indexBytes = count * sizeof(GLubyte);
-      }
-      else {
-         ASSERT(type == GL_UNSIGNED_SHORT);
-         indexBytes = count * sizeof(GLushort);
-      }
-
       /* make sure count doesn't go outside buffer bounds */
-      if (indexBytes > ctx->Array.ElementArrayBufferObj->Size) {
+      if (index_bytes(type, count) > ctx->Array.ElementArrayBufferObj->Size) {
          _mesa_warning(ctx, "glDrawRangeElements index out of buffer bounds");
          return GL_FALSE;
       }
@@ -252,7 +254,7 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
    if (ctx->Const.CheckArrayBounds) {
       GLuint max = max_buffer_index(ctx, count, type, indices,
                                     ctx->Array.ElementArrayBufferObj);
-      if (max >= ctx->Array._MaxElement) {
+      if (max >= ctx->Array.ArrayObj->_MaxElement) {
          /* the max element is out of bounds of one or more enabled arrays */
          return GL_FALSE;
       }
@@ -265,6 +267,7 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
 /**
  * Called from the tnl module to error check the function parameters and
  * verify that we really can draw something.
+ * \return GL_TRUE if OK to render, GL_FALSE if error found
  */
 GLboolean
 _mesa_validate_DrawArrays(GLcontext *ctx,
@@ -290,7 +293,7 @@ _mesa_validate_DrawArrays(GLcontext *ctx,
       return GL_FALSE;
 
    if (ctx->Const.CheckArrayBounds) {
-      if (start + count > (GLint) ctx->Array._MaxElement)
+      if (start + count > (GLint) ctx->Array.ArrayObj->_MaxElement)
          return GL_FALSE;
    }
 

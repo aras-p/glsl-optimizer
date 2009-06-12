@@ -359,7 +359,7 @@ driCreateScreen(__GLXscreenConfigs * psc, int screen,
    const char *driverName = "swrast";
    int i;
 
-   psp = Xmalloc(sizeof *psp);
+   psp = Xcalloc(1, sizeof *psp);
    if (psp == NULL)
       return NULL;
 
@@ -405,6 +405,8 @@ driCreateScreen(__GLXscreenConfigs * psc, int screen,
    psp->createContext = driCreateContext;
    psp->createDrawable = driCreateDrawable;
    psp->swapBuffers = driSwapBuffers;
+   psp->waitX = NULL;
+   psp->waitGL = NULL;
 
    return psp;
 

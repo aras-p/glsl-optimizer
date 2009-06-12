@@ -107,7 +107,8 @@ pcedit = sed \
 	-e 's,@VERSION@,$(GLUT_MAJOR).$(GLUT_MINOR).$(GLUT_TINY),' \
 	-e 's,@GLUT_PC_REQ_PRIV@,$(GLUT_PC_REQ_PRIV),' \
 	-e 's,@GLUT_PC_LIB_PRIV@,$(GLUT_PC_LIB_PRIV),' \
-	-e 's,@GLUT_PC_CFLAGS@,$(GLUT_PC_CFLAGS),'
+	-e 's,@GLUT_PC_CFLAGS@,$(GLUT_PC_CFLAGS),' \
+	-e 's,@GLUT_LIB@,$(GLUT_LIB),'
 glut.pc: glut.pc.in
 	$(pcedit) $< > $@
 
@@ -116,7 +117,7 @@ install: glut.pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 	$(INSTALL) -m 644 $(TOP)/include/GL/glut.h $(DESTDIR)$(INSTALL_INC_DIR)/GL
-	$(INSTALL) $(TOP)/$(LIB_DIR)/$(GLUT_LIB_GLOB) $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GLUT_LIB_GLOB) $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 glut.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 

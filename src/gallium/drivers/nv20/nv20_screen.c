@@ -1,25 +1,7 @@
 #include "pipe/p_screen.h"
-#include "util/u_simple_screen.h"
 
 #include "nv20_context.h"
 #include "nv20_screen.h"
-
-static const char *
-nv20_screen_get_name(struct pipe_screen *screen)
-{
-	struct nv20_screen *nv20screen = nv20_screen(screen);
-	struct nouveau_device *dev = nv20screen->nvws->channel->device;
-	static char buffer[128];
-
-	snprintf(buffer, sizeof(buffer), "NV%02X", dev->chipset);
-	return buffer;
-}
-
-static const char *
-nv20_screen_get_vendor(struct pipe_screen *screen)
-{
-	return "nouveau";
-}
 
 static int
 nv20_screen_get_param(struct pipe_screen *screen, int param)
@@ -120,10 +102,9 @@ static void
 nv20_screen_destroy(struct pipe_screen *pscreen)
 {
 	struct nv20_screen *screen = nv20_screen(pscreen);
-	struct nouveau_winsys *nvws = screen->nvws;
 
-	nvws->notifier_free(&screen->sync);
-	nvws->grobj_free(&screen->kelvin);
+	nouveau_notifier_free(&screen->sync);
+	nouveau_grobj_free(&screen->kelvin);
 
 	FREE(pscreen);
 }
@@ -137,60 +118,65 @@ nv20_surface_buffer(struct pipe_surface *surf)
 }
 
 struct pipe_screen *
-nv20_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
+nv20_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 {
 	struct nv20_screen *screen = CALLOC_STRUCT(nv20_screen);
+	struct nouveau_channel *chan;
+	struct pipe_screen *pscreen;
 	unsigned kelvin_class = 0;
-	unsigned chipset = nvws->channel->device->chipset;
 	int ret;
 
 	if (!screen)
 		return NULL;
-	screen->nvws = nvws;
+	pscreen = &screen->base.base;
 
-	/* 2D engine setup */
-	screen->eng2d = nv04_surface_2d_init(nvws);
-	screen->eng2d->buf = nv20_surface_buffer;
+	ret = nouveau_screen_init(&screen->base, dev);
+	if (ret) {
+		nv20_screen_destroy(pscreen);
+		return NULL;
+	}
+	chan = screen->base.channel;
+
+	pscreen->winsys = ws;
+	pscreen->destroy = nv20_screen_destroy;
+	pscreen->get_param = nv20_screen_get_param;
+	pscreen->get_paramf = nv20_screen_get_paramf;
+	pscreen->is_format_supported = nv20_screen_is_format_supported;
+
+	nv20_screen_init_miptree_functions(pscreen);
+	nv20_screen_init_transfer_functions(pscreen);
 
 	/* 3D object */
-	if (chipset >= 0x25)
+	if (dev->chipset >= 0x25)
 		kelvin_class = NV25TCL;
-	else if (chipset >= 0x20)
+	else if (dev->chipset >= 0x20)
 		kelvin_class = NV20TCL;
 
-	if (!kelvin_class || chipset >= 0x30) {
-		NOUVEAU_ERR("Unknown nv2x chipset: nv%02x\n", chipset);
+	if (!kelvin_class || dev->chipset >= 0x30) {
+		NOUVEAU_ERR("Unknown nv2x chipset: nv%02x\n", dev->chipset);
 		return NULL;
 	}
 
-	ret = nvws->grobj_alloc(nvws, kelvin_class, &screen->kelvin);
+	ret = nouveau_grobj_alloc(chan, 0xbeef0097, kelvin_class,
+				  &screen->kelvin);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;
 	}
+	BIND_RING(chan, screen->kelvin, 7);
+
+	/* 2D engine setup */
+	screen->eng2d = nv04_surface_2d_init(&screen->base);
+	screen->eng2d->buf = nv20_surface_buffer;
 
 	/* Notifier for sync purposes */
-	ret = nvws->notifier_alloc(nvws, 1, &screen->sync);
+	ret = nouveau_notifier_alloc(chan, 0xbeef0301, 1, &screen->sync);
 	if (ret) {
 		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
-		nv20_screen_destroy(&screen->pipe);
+		nv20_screen_destroy(pscreen);
 		return NULL;
 	}
 
-	screen->pipe.winsys = ws;
-	screen->pipe.destroy = nv20_screen_destroy;
-
-	screen->pipe.get_name = nv20_screen_get_name;
-	screen->pipe.get_vendor = nv20_screen_get_vendor;
-	screen->pipe.get_param = nv20_screen_get_param;
-	screen->pipe.get_paramf = nv20_screen_get_paramf;
-
-	screen->pipe.is_format_supported = nv20_screen_is_format_supported;
-
-	nv20_screen_init_miptree_functions(&screen->pipe);
-	nv20_screen_init_transfer_functions(&screen->pipe);
-	u_simple_screen_init(&screen->pipe);
-
-	return &screen->pipe;
+	return pscreen;
 }
 

@@ -30,10 +30,6 @@
 #define ST_CB_FBO_H
 
 
-#define DEFAULT_ACCUM_PIPE_FORMAT PIPE_FORMAT_R16G16B16A16_SNORM
-
-
-
 /**
  * Derived renderbuffer class.  Just need to add a pointer to the
  * pipe surface.
@@ -44,7 +40,15 @@ struct st_renderbuffer
    struct pipe_texture *texture;
    struct pipe_surface *surface; /* temporary view into texture */
    enum pipe_format format;  /** preferred format, or PIPE_FORMAT_NONE */
+   GLboolean defined;        /**< defined contents? */
 
+   /**
+    * Used only when hardware accumulation buffers are not supported.
+    */
+   boolean software;
+   size_t stride;
+   void *data;
+   
    struct st_texture_object *rtt;  /**< GL render to texture's texture */
    int rtt_level, rtt_face, rtt_slice;
 
@@ -62,7 +66,7 @@ st_renderbuffer(struct gl_renderbuffer *rb)
 
 
 extern struct gl_renderbuffer *
-st_new_renderbuffer_fb(enum pipe_format format, int samples);
+st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw);
 
 extern void
 st_init_fbo_functions(struct dd_function_table *functions);

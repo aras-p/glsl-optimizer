@@ -2432,6 +2432,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Z Buffer Clear Value */
 #define R300_ZB_DEPTHCLEARVALUE                  0x4f28
 
+#define R300_ZB_ZMASK_OFFSET                     0x4f30
+#define R300_ZB_ZMASK_PITCH                      0x4f34
+#define R300_ZB_ZMASK_WRINDEX                    0x4f38
+#define R300_ZB_ZMASK_DWORD                      0x4f3c
+#define R300_ZB_ZMASK_RDINDEX                    0x4f40
+
 /* Hierarchical Z Memory Offset */
 #define R300_ZB_HIZ_OFFSET                       0x4f44
 
@@ -3171,6 +3177,9 @@ enum {
 #   define R300_W_SRC_US				(0 << 2)
 #   define R300_W_SRC_RAS				(1 << 2)
 
+
+/* Packet0 field ordering to write all values to the same reg */
+#define RADEON_ONE_REG_WR        (1 << 15)
 
 /* Draw a primitive from vertex data in arrays loaded via 3D_LOAD_VBPNTR.
  * Two parameter dwords:

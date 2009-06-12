@@ -29,12 +29,19 @@
 #define STW_DEVICE_H_
 
 
+#include <windows.h>
+
 #include "pipe/p_compiler.h"
 #include "pipe/p_thread.h"
 #include "util/u_handle_table.h"
+#include "stw_pixelformat.h"
+
+
+#define STW_MAX_PIXELFORMATS   256
 
 
 struct pipe_screen;
+struct stw_framebuffer;
 
 struct stw_device
 {
@@ -45,10 +52,16 @@ struct stw_device
 #ifdef DEBUG
    boolean trace_running;
 #endif
-   
+
+   struct stw_pixelformat_info pixelformats[STW_MAX_PIXELFORMATS];
+   unsigned pixelformat_count;
+   unsigned pixelformat_extended_count;
+
    pipe_mutex mutex;
 
    struct handle_table *ctx_table;
+   
+   struct stw_framebuffer *fb_head;
    
 #ifdef DEBUG
    unsigned long memdbg_no;
@@ -56,7 +69,7 @@ struct stw_device
 };
 
 struct stw_context *
-stw_lookup_context( UINT_PTR hglrc );
+stw_lookup_context_locked( UINT_PTR hglrc );
 
 extern struct stw_device *stw_dev;
 

@@ -57,6 +57,7 @@ struct draw_stage
    struct draw_context *draw;   /**< parent context */
 
    struct draw_stage *next;     /**< next stage in pipeline */
+   const char *name;            /**< for debugging  */
 
    struct vertex_header **tmp;  /**< temp vert storage, such as for clipping */
    unsigned nr_tmps;

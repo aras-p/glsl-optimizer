@@ -58,25 +58,25 @@ st_create_framebuffer( const __GLcontextModes *visual,
 
       _mesa_initialize_framebuffer(&stfb->Base, visual);
 
-      {
-         /* fake frontbuffer */
-         /* XXX allocation should only happen in the unusual case
-            it's actually needed */
-         struct gl_renderbuffer *rb
-            = st_new_renderbuffer_fb(colorFormat, samples);
-         _mesa_add_renderbuffer(&stfb->Base, BUFFER_FRONT_LEFT, rb);
-      }
-
       if (visual->doubleBufferMode) {
          struct gl_renderbuffer *rb
-            = st_new_renderbuffer_fb(colorFormat, samples);
+            = st_new_renderbuffer_fb(colorFormat, samples, FALSE);
          _mesa_add_renderbuffer(&stfb->Base, BUFFER_BACK_LEFT, rb);
+      }
+      else {
+         /* Only allocate front buffer right now if we're single buffered.
+          * If double-buffered, allocate front buffer on demand later.
+          * See check_create_front_buffers().
+          */
+         struct gl_renderbuffer *rb
+            = st_new_renderbuffer_fb(colorFormat, samples, FALSE);
+         _mesa_add_renderbuffer(&stfb->Base, BUFFER_FRONT_LEFT, rb);
       }
 
       if (depthFormat == stencilFormat && depthFormat != PIPE_FORMAT_NONE) {
          /* combined depth/stencil buffer */
          struct gl_renderbuffer *depthStencilRb
-            = st_new_renderbuffer_fb(depthFormat, samples);
+            = st_new_renderbuffer_fb(depthFormat, samples, FALSE);
          /* note: bind RB to two attachment points */
          _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthStencilRb);
          _mesa_add_renderbuffer(&stfb->Base, BUFFER_STENCIL, depthStencilRb);
@@ -87,34 +87,35 @@ st_create_framebuffer( const __GLcontextModes *visual,
          if (visual->depthBits == 32) {
             /* 32-bit depth buffer */
             struct gl_renderbuffer *depthRb
-               = st_new_renderbuffer_fb(depthFormat, samples);
+               = st_new_renderbuffer_fb(depthFormat, samples, FALSE);
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthRb);
          }
          else if (visual->depthBits == 24) {
             /* 24-bit depth buffer, ignore stencil bits */
             struct gl_renderbuffer *depthRb
-               = st_new_renderbuffer_fb(depthFormat, samples);
+               = st_new_renderbuffer_fb(depthFormat, samples, FALSE);
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthRb);
          }
          else if (visual->depthBits > 0) {
             /* 16-bit depth buffer */
             struct gl_renderbuffer *depthRb
-               = st_new_renderbuffer_fb(depthFormat, samples);
+               = st_new_renderbuffer_fb(depthFormat, samples, FALSE);
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthRb);
          }
 
          if (visual->stencilBits > 0) {
             /* 8-bit stencil */
             struct gl_renderbuffer *stencilRb
-               = st_new_renderbuffer_fb(stencilFormat, samples);
+               = st_new_renderbuffer_fb(stencilFormat, samples, FALSE);
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_STENCIL, stencilRb);
          }
       }
 
       if (visual->accumRedBits > 0) {
          /* 16-bit/channel accum */
+         /* TODO: query the pipe screen for accumulation buffer format support */
          struct gl_renderbuffer *accumRb
-            = st_new_renderbuffer_fb(DEFAULT_ACCUM_PIPE_FORMAT, 0); /* XXX accum isn't multisampled right? */
+            = st_new_renderbuffer_fb(PIPE_FORMAT_R16G16B16A16_SNORM, 0, TRUE);
          _mesa_add_renderbuffer(&stfb->Base, BUFFER_ACCUM, accumRb);
       }
 
@@ -290,6 +291,115 @@ st_notify_swapbuffers(struct st_framebuffer *stfb)
                 NULL );
       ctx->st->frontbuffer_status = FRONT_STATUS_COPY_OF_BACK;
    }
+}
+
+
+/**
+ * Swap the front/back color buffers.  Exchange the front/back pointers
+ * and update some derived state.
+ * No need to call st_notify_swapbuffers() first.
+ *
+ * For a single-buffered framebuffer, no swap occurs, but we still return
+ * the pointer(s) to the front color buffer(s).
+ *
+ * \param front_left  returns pointer to front-left renderbuffer after swap
+ * \param front_right  returns pointer to front-right renderbuffer after swap
+ */
+void
+st_swapbuffers(struct st_framebuffer *stfb,
+               struct pipe_surface **front_left,
+               struct pipe_surface **front_right)
+{
+   struct gl_framebuffer *fb = &stfb->Base;
+
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (ctx && ctx->DrawBuffer == &stfb->Base) {
+      st_flush( ctx->st, 
+		PIPE_FLUSH_RENDER_CACHE | 
+		PIPE_FLUSH_SWAPBUFFERS |
+		PIPE_FLUSH_FRAME,
+                NULL );
+   }
+
+   if (!fb->Visual.doubleBufferMode) {
+      /* single buffer mode - return pointers to front surfaces */
+      if (front_left) {
+         struct st_renderbuffer *strb =
+            st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+         *front_left = strb->surface;
+      }
+      if (front_right) {
+         struct st_renderbuffer *strb =
+            st_renderbuffer(fb->Attachment[BUFFER_FRONT_RIGHT].Renderbuffer);
+         *front_right = strb ? strb->surface : NULL;
+      }
+      return;
+   }
+
+   /* swap left buffers */
+   if (fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer &&
+       fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer) {
+      struct gl_renderbuffer *rbTemp;
+      rbTemp = fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+      fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer =
+         fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+      fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer = rbTemp;
+      if (front_left) {
+         struct st_renderbuffer *strb =
+            st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+         *front_left = strb->surface;
+      }
+      /* mark back buffer contents as undefined */
+      {
+         struct st_renderbuffer *back =
+            st_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
+         back->defined = GL_FALSE;
+      }
+   }
+   else {
+      /* no front buffer, display the back buffer */
+      if (front_left) {
+         struct st_renderbuffer *strb =
+            st_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
+         *front_left = strb->surface;
+      }
+   }
+
+   /* swap right buffers (for stereo) */
+   if (fb->Attachment[BUFFER_FRONT_RIGHT].Renderbuffer &&
+       fb->Attachment[BUFFER_BACK_RIGHT].Renderbuffer) {
+      struct gl_renderbuffer *rbTemp;
+      rbTemp = fb->Attachment[BUFFER_FRONT_RIGHT].Renderbuffer;
+      fb->Attachment[BUFFER_FRONT_RIGHT].Renderbuffer =
+         fb->Attachment[BUFFER_BACK_RIGHT].Renderbuffer;
+      fb->Attachment[BUFFER_BACK_RIGHT].Renderbuffer = rbTemp;
+      if (front_right) {
+         struct st_renderbuffer *strb =
+            st_renderbuffer(fb->Attachment[BUFFER_FRONT_RIGHT].Renderbuffer);
+         *front_right = strb->surface;
+      }
+      /* mark back buffer contents as undefined */
+      {
+         struct st_renderbuffer *back =
+            st_renderbuffer(fb->Attachment[BUFFER_BACK_RIGHT].Renderbuffer);
+         back->defined = GL_FALSE;
+      }
+   }
+   else {
+      /* no front right buffer, display back right buffer (if exists) */
+      if (front_right) {
+         struct st_renderbuffer *strb =
+            st_renderbuffer(fb->Attachment[BUFFER_BACK_RIGHT].Renderbuffer);
+         *front_right = strb ? strb->surface : NULL;
+      }
+   }
+
+   /* Update the _ColorDrawBuffers[] array and _ColorReadBuffer pointer */
+   _mesa_update_framebuffer(ctx);
+
+   /* Make sure we draw into the new back surface */
+   st_invalidate_state(ctx, _NEW_BUFFERS);
 }
 
 

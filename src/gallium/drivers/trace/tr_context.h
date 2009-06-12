@@ -33,6 +33,7 @@
 #include "util/u_debug.h"
 #include "pipe/p_context.h"
 
+#include "tr_screen.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +45,42 @@ struct trace_context
    struct pipe_context base;
 
    struct pipe_context *pipe;
+
+   /* current state */
+   struct {
+      struct trace_shader *fs;
+      struct trace_shader *vs;
+
+      struct trace_texture *tex[PIPE_MAX_SAMPLERS];
+      unsigned num_texs;
+
+      unsigned nr_cbufs;
+      struct trace_texture *cbufs[PIPE_MAX_COLOR_BUFS];
+      struct trace_texture *zsbuf;
+   } curr;
+
+   struct {
+      struct trace_shader *fs;
+      struct trace_shader *vs;
+
+      struct trace_texture *tex;
+      struct trace_texture *surf;
+
+      int blocker;
+   } draw_rule;
+   unsigned draw_num_rules;
+   pipe_condvar draw_cond;
+   pipe_mutex draw_mutex;
+   int draw_blocker;
+   int draw_blocked;
+
+   /* for list on screen */
+   struct tr_list list;
+
+   /* list of state objects */
+   pipe_mutex list_mutex;
+   unsigned num_shaders;
+   struct tr_list shaders;
 };
 
 
@@ -59,6 +96,9 @@ trace_context(struct pipe_context *pipe)
 struct pipe_context *
 trace_context_create(struct pipe_screen *screen,
                      struct pipe_context *pipe);
+
+void
+trace_rbug_notify_draw_blocked(struct trace_context *tr_ctx);
 
 
 #ifdef __cplusplus

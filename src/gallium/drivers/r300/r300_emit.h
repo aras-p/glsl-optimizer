@@ -36,6 +36,9 @@ void r300_emit_blend_state(struct r300_context* r300,
 void r300_emit_blend_color_state(struct r300_context* r300,
                                  struct r300_blend_color_state* bc);
 
+void r300_emit_clip_state(struct r300_context* r300,
+                          struct pipe_clip_state* clip);
+
 void r300_emit_dsa_state(struct r300_context* r300,
                          struct r300_dsa_state* dsa);
 
@@ -61,6 +64,8 @@ void r300_emit_scissor_state(struct r300_context* r300,
 
 void r300_emit_texture(struct r300_context* r300,
                        struct r300_texture* tex, unsigned offset);
+
+void r300_emit_vertex_buffer(struct r300_context* r300);
 
 void r300_emit_vertex_format_state(struct r300_context* r300);
 

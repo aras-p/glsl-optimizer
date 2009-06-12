@@ -476,7 +476,7 @@ ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     }
 
     if (!ms->screen) {
-	ms->screen = drm_api_hooks.create_screen(ms->fd, ms->PciInfo->device_id);
+	ms->screen = drm_api_hooks.create_screen(ms->fd, NULL);
 
 	if (!ms->screen) {
 	    FatalError("Could not init pipe_screen\n");

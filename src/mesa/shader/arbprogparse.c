@@ -563,6 +563,7 @@ struct var_cache
                                  * we take up with our state tokens or constants. Note that
                                  * this is _not_ the same as the number of param registers
                                  * we eventually use */
+   GLuint swizzle;              /**< swizzle to access this variable */
    struct var_cache *next;
 };
 
@@ -581,6 +582,7 @@ var_cache_create (struct var_cache **va)
       (**va).param_binding_begin = ~0;
       (**va).param_binding_length = ~0;
       (**va).alias_binding = NULL;
+      (**va).swizzle = SWIZZLE_XYZW;
       (**va).next = NULL;
    }
 }
@@ -872,14 +874,15 @@ parse_signed_float (const GLubyte ** inst, struct arb_program *Program)
  * This picks out a constant value from the parsed array. The constant vector is r
  * returned in the *values array, which should be of length 4.
  *
- * \param values - The 4 component vector with the constant value in it
+ * \param values - return the vector constant values.
+ * \param size - returns the number elements in valuesOut [1..4]
  */
 static GLvoid
-parse_constant (const GLubyte ** inst, GLfloat *values, struct arb_program *Program,
-                GLboolean use)
+parse_constant(const GLubyte ** inst, GLfloat *values, GLint *size,
+               struct arb_program *Program,
+               GLboolean use)
 {
    GLuint components, i;
-
 
    switch (*(*inst)++) {
       case CONSTANT_SCALAR:
@@ -893,7 +896,7 @@ parse_constant (const GLubyte ** inst, GLfloat *values, struct arb_program *Prog
                values[1] =
                values[2] = values[3] = parse_signed_float (inst, Program);
          }
-
+         *size = 1;
          break;
       case CONSTANT_VECTOR:
          values[0] = values[1] = values[2] = 0;
@@ -902,7 +905,12 @@ parse_constant (const GLubyte ** inst, GLfloat *values, struct arb_program *Prog
          for (i = 0; i < components; i++) {
             values[i] = parse_signed_float (inst, Program);
          }
+         *size = 4;
          break;
+      default:
+         _mesa_problem(NULL, "unexpected case in parse_constant()");
+         values[0] = 0.0F;
+         *size = 0;
    }
 }
 
@@ -945,7 +953,7 @@ parse_generic_attrib_num(GLcontext *ctx, const GLubyte ** inst,
 {
    GLint i = parse_integer(inst, Program);
 
-   if ((i < 0) || (i >= MAX_VERTEX_PROGRAM_ATTRIBS))
+   if ((i < 0) || (i >= MAX_VERTEX_GENERIC_ATTRIBS))
    {
       program_error(ctx, Program->Position,
                     "Invalid generic vertex attribute index");
@@ -1014,7 +1022,10 @@ parse_teximage_num (GLcontext * ctx, const GLubyte ** inst,
    GLint i = parse_integer (inst, Program);
 
    if ((i < 0) || (i >= (int)ctx->Const.MaxTextureImageUnits)) {
-      program_error(ctx, Program->Position, "Invalid texture image index");
+      char s[100];
+      _mesa_snprintf(s, sizeof(s), "Invalid texture image index %d (%u is max)",
+                     i, ctx->Const.MaxTextureImageUnits);
+      program_error(ctx, Program->Position, s);
       return 1;
    }
 
@@ -1502,10 +1513,10 @@ generic_attrib_check(struct var_cache *vc_head)
 {
    int a;
    struct var_cache *curr;
-   GLboolean explicitAttrib[MAX_VERTEX_PROGRAM_ATTRIBS],
-      genericAttrib[MAX_VERTEX_PROGRAM_ATTRIBS];
+   GLboolean explicitAttrib[MAX_VERTEX_GENERIC_ATTRIBS],
+      genericAttrib[MAX_VERTEX_GENERIC_ATTRIBS];
 
-   for (a=0; a<MAX_VERTEX_PROGRAM_ATTRIBS; a++) {
+   for (a=0; a<MAX_VERTEX_GENERIC_ATTRIBS; a++) {
       explicitAttrib[a] = GL_FALSE;
       genericAttrib[a] = GL_FALSE;
    }
@@ -1513,16 +1524,22 @@ generic_attrib_check(struct var_cache *vc_head)
    curr = vc_head;
    while (curr) {
       if (curr->type == vt_attrib) {
-         if (curr->attrib_is_generic)
-            genericAttrib[ curr->attrib_binding ] = GL_TRUE;
-         else
+         if (curr->attrib_is_generic) {
+            GLuint attr = (curr->attrib_binding == 0)
+               ? 0 : (curr->attrib_binding - VERT_ATTRIB_GENERIC0);
+            assert(attr < MAX_VERTEX_GENERIC_ATTRIBS);
+            genericAttrib[attr] = GL_TRUE;
+         }
+         else {
+            assert(curr->attrib_binding < MAX_VERTEX_GENERIC_ATTRIBS);
             explicitAttrib[ curr->attrib_binding ] = GL_TRUE;
+         }
       }
 
       curr = curr->next;
    }
 
-   for (a=0; a<MAX_VERTEX_PROGRAM_ATTRIBS; a++) {
+   for (a=0; a<MAX_VERTEX_GENERIC_ATTRIBS; a++) {
       if ((explicitAttrib[a]) && (genericAttrib[a]))
          return 1;
    }
@@ -1810,7 +1827,6 @@ parse_param_elements (GLcontext * ctx, const GLubyte ** inst,
    GLint idx;
    GLuint err = 0;
    gl_state_index state_tokens[STATE_LENGTH] = {0, 0, 0, 0, 0};
-   GLfloat const_values[4];
 
    GLubyte token = *(*inst)++;
 
@@ -1902,18 +1918,31 @@ parse_param_elements (GLcontext * ctx, const GLubyte ** inst,
 
       case PARAM_CONSTANT:
          /* parsing something like {1.0, 2.0, 3.0, 4.0} */
-         parse_constant (inst, const_values, Program, use);
-         idx = _mesa_add_named_constant(Program->Base.Parameters,
-                                        (char *) param_var->name,
-                                        const_values, 4);
-         if (param_var->param_binding_begin == ~0U)
-            param_var->param_binding_begin = idx;
-         param_var->param_binding_type = PROGRAM_STATE_VAR;
-         /* Note: when we reference this parameter in an instruction later,
-          * we'll check if it's really a constant/immediate and set the
-          * instruction register type appropriately.
-          */
-         param_var->param_binding_length++;
+         {
+            GLfloat const_values[4];
+            GLint size;
+            parse_constant(inst, const_values, &size, Program, use);
+            if (param_var->name[0] == ' ') {
+               /* this is an unnamed constant */
+               idx = _mesa_add_unnamed_constant(Program->Base.Parameters,
+                                                const_values, size,
+                                                &param_var->swizzle);
+            }
+            else {
+               /* named parameter/constant */
+               idx = _mesa_add_named_constant(Program->Base.Parameters,
+                                              (char *) param_var->name,
+                                              const_values, size);
+            }
+            if (param_var->param_binding_begin == ~0U)
+               param_var->param_binding_begin = idx;
+            param_var->param_binding_type = PROGRAM_STATE_VAR;
+            /* Note: when we reference this parameter in an instruction later,
+             * we'll check if it's really a constant/immediate and set the
+             * instruction register type appropriately.
+             */
+            param_var->param_binding_length++;
+         }
          break;
 
       default:
@@ -2422,6 +2451,9 @@ parse_swizzle_mask(const GLubyte ** inst, GLubyte *swizzle, GLint len)
             return;
       }
    }
+
+   if (len == 1)
+      swizzle[1] = swizzle[2] = swizzle[3] = swizzle[0];
 }
 
 
@@ -2476,7 +2508,7 @@ static GLuint
 parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
                struct var_cache **vc_head,
                struct arb_program *Program,
-               gl_register_file * File, GLint * Index,
+               gl_register_file * File, GLint * Index, GLuint *swizzle,
                GLboolean *IsRelOffset )
 {
    struct var_cache *src;
@@ -2484,6 +2516,8 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
    GLint offset;
 
    *IsRelOffset = 0;
+
+   *swizzle = SWIZZLE_XYZW; /* default */
 
    /* And the binding for the src */
    switch (*(*inst)++) {
@@ -2540,6 +2574,7 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
                      }
 
                      *Index = src->param_binding_begin + offset;
+                     *swizzle = src->swizzle;
                      break;
 
                   case ARRAY_INDEX_RELATIVE:
@@ -2562,6 +2597,7 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
                         /* And store it properly */
                         *Index = src->param_binding_begin + rel_off;
                         *IsRelOffset = 1;
+                        *swizzle = src->swizzle;
                      }
                      break;
                }
@@ -2573,6 +2609,7 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
 
                *File = (gl_register_file) src->param_binding_type;
                *Index = src->param_binding_begin;
+               *swizzle = src->swizzle;
                break;
          }
          break;
@@ -2641,6 +2678,21 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
 }
 
 
+static GLuint
+swizzle_swizzle(GLuint baseSwizzle, const GLubyte swizzle[4])
+{
+   GLuint i, swz, s[4];
+   for (i = 0; i < 4; i++) {
+      GLuint c = swizzle[i];
+      if (c <= SWIZZLE_W)
+         s[i] = GET_SWZ(baseSwizzle, c);
+      else
+         s[i] = c;
+   }
+   swz = MAKE_SWIZZLE4(s[0], s[1], s[2], s[3]);
+   return swz;
+}
+
 /**
  * Parse vertex/fragment program vector source register.
  */
@@ -2655,12 +2707,14 @@ parse_vector_src_reg(GLcontext *ctx, const GLubyte **inst,
    GLubyte negateMask;
    GLubyte swizzle[4];
    GLboolean isRelOffset;
+   GLuint baseSwizzle;
 
    /* Grab the sign */
    negateMask = (parse_sign (inst) == -1) ? NEGATE_XYZW : NEGATE_NONE;
 
    /* And the src reg */
-   if (parse_src_reg(ctx, inst, vc_head, program, &file, &index, &isRelOffset))
+   if (parse_src_reg(ctx, inst, vc_head, program, &file, &index, &baseSwizzle,
+                     &isRelOffset))
       return 1;
 
    /* finally, the swizzle */
@@ -2668,8 +2722,8 @@ parse_vector_src_reg(GLcontext *ctx, const GLubyte **inst,
 
    reg->File = file;
    reg->Index = index;
-   reg->Swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1], swizzle[2], swizzle[3]);
-   reg->NegateBase = negateMask;
+   reg->Swizzle = swizzle_swizzle(baseSwizzle, swizzle);
+   reg->Negate = negateMask;
    reg->RelAddr = isRelOffset;
    return 0;
 }
@@ -2689,12 +2743,14 @@ parse_scalar_src_reg(GLcontext *ctx, const GLubyte **inst,
    GLubyte negateMask;
    GLubyte swizzle[4];
    GLboolean isRelOffset;
+   GLuint baseSwizzle;
 
    /* Grab the sign */
    negateMask = (parse_sign (inst) == -1) ? NEGATE_XYZW : NEGATE_NONE;
 
    /* And the src reg */
-   if (parse_src_reg(ctx, inst, vc_head, program, &file, &index, &isRelOffset))
+   if (parse_src_reg(ctx, inst, vc_head, program, &file, &index, &baseSwizzle,
+                     &isRelOffset))
       return 1;
 
    /* finally, the swizzle */
@@ -2702,8 +2758,8 @@ parse_scalar_src_reg(GLcontext *ctx, const GLubyte **inst,
 
    reg->File = file;
    reg->Index = index;
-   reg->Swizzle = (swizzle[0] << 0);
-   reg->NegateBase = negateMask;
+   reg->Swizzle = swizzle_swizzle(baseSwizzle, swizzle);
+   reg->Negate = negateMask;
    reg->RelAddr = isRelOffset;
    return 0;
 }
@@ -3013,13 +3069,15 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
 	    GLubyte negateMask;
             gl_register_file file;
 	    GLint index;
+            GLuint baseSwizzle;
 
-	    if (parse_src_reg(ctx, inst, vc_head, Program, &file, &index, &rel))
+	    if (parse_src_reg(ctx, inst, vc_head, Program, &file, &index,
+                              &baseSwizzle, &rel))
 	       return 1;
 	    parse_extended_swizzle_mask(inst, swizzle, &negateMask);
 	    fp->SrcReg[0].File = file;
 	    fp->SrcReg[0].Index = index;
-	    fp->SrcReg[0].NegateBase = negateMask;
+	    fp->SrcReg[0].Negate = negateMask;
 	    fp->SrcReg[0].Swizzle = MAKE_SWIZZLE4(swizzle[0],
                                                   swizzle[1],
                                                   swizzle[2],
@@ -3354,16 +3412,18 @@ parse_vp_instruction (GLcontext * ctx, const GLubyte ** inst,
 	    GLboolean relAddr;
             gl_register_file file;
 	    GLint index;
+            GLuint baseSwizzle;
 
 	    if (parse_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
 	       return 1;
 
-	    if (parse_src_reg(ctx, inst, vc_head, Program, &file, &index, &relAddr))
+	    if (parse_src_reg(ctx, inst, vc_head, Program, &file, &index,
+                              &baseSwizzle, &relAddr))
 	       return 1;
 	    parse_extended_swizzle_mask (inst, swizzle, &negateMask);
 	    vp->SrcReg[0].File = file;
 	    vp->SrcReg[0].Index = index;
-	    vp->SrcReg[0].NegateBase = negateMask;
+	    vp->SrcReg[0].Negate = negateMask;
 	    vp->SrcReg[0].Swizzle = MAKE_SWIZZLE4(swizzle[0],
                                                   swizzle[1],
                                                   swizzle[2],

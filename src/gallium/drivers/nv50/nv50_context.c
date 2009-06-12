@@ -33,7 +33,7 @@ nv50_flush(struct pipe_context *pipe, unsigned flags,
 {
 	struct nv50_context *nv50 = (struct nv50_context *)pipe;
 	
-	FIRE_RING(nv50->screen->nvws->channel);
+	FIRE_RING(nv50->screen->base.channel);
 }
 
 static void
@@ -49,6 +49,29 @@ nv50_destroy(struct pipe_context *pipe)
 static void
 nv50_set_edgeflags(struct pipe_context *pipe, const unsigned *bitfield)
 {
+}
+
+static unsigned int
+nv50_is_texture_referenced( struct pipe_context *pipe,
+			    struct pipe_texture *texture,
+			    unsigned face, unsigned level)
+{
+   /**
+    * FIXME: Optimize.
+    */
+
+   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
+static unsigned int
+nv50_is_buffer_referenced( struct pipe_context *pipe,
+			   struct pipe_buffer *buf)
+{
+   /**
+    * FIXME: Optimize.
+    */
+
+   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 }
 
 struct pipe_context *
@@ -75,6 +98,9 @@ nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv50->pipe.clear = nv50_clear;
 
 	nv50->pipe.flush = nv50_flush;
+
+	nv50->pipe.is_texture_referenced = nv50_is_texture_referenced;
+	nv50->pipe.is_buffer_referenced = nv50_is_buffer_referenced;
 
 	nv50_init_surface_functions(nv50);
 	nv50_init_state_functions(nv50);

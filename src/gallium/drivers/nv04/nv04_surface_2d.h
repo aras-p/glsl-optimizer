@@ -7,7 +7,6 @@ struct nv04_surface {
 };
 
 struct nv04_surface_2d {
-	struct nouveau_winsys *nvws;
 	struct nouveau_notifier *ntfy;
 	struct nouveau_grobj *surf2d;
 	struct nouveau_grobj *swzsurf;
@@ -26,7 +25,7 @@ struct nv04_surface_2d {
 };
 
 struct nv04_surface_2d *
-nv04_surface_2d_init(struct nouveau_winsys *nvws);
+nv04_surface_2d_init(struct nouveau_screen *screen);
 
 void
 nv04_surface_2d_takedown(struct nv04_surface_2d **);

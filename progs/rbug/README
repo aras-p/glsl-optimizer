@@ -1,0 +1,39 @@
+                        REMOTE DEBUGGING CLI APPLICATIONS
+
+
+= About =
+
+This directory contains a Gallium3D remote debugging cli applications.
+
+
+= Build Instructions =
+
+To build, build a normal gallium build and from this directory do the following.
+
+ make
+
+= Usage =
+
+Make sure that you driver has trace integration, see
+src/gallium/driver/trace/README for more information about that. Then from on
+the computer that you want to debug do:
+
+ export GALLIUM_RBUG=true
+
+ <launch app>
+
+From the debugging computer launch apps form this directory. Currently ip
+addresses are hardcoded and you need to edit the application, but that will
+change in the future.
+
+= Testing =
+
+The two apps simple_client and simple_server. Are unit testing of the
+connection and (de)marsheler. Just run the server first and then the client:
+
+ ./simple_server &
+ ./simple_client
+
+
+--
+Jakob Bornecrantz <jakob@vmware.com>

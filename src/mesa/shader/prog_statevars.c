@@ -816,7 +816,10 @@ append_token(char *dst, gl_state_index k)
       break;
    /* BEGIN internal state vars */
    case STATE_INTERNAL:
-      append(dst, "(internal)");
+      append(dst, ".internal.");
+      break;
+   case STATE_CURRENT_ATTRIB:
+      append(dst, "current");
       break;
    case STATE_NORMAL_SCALE:
       append(dst, "normalScale");
@@ -986,7 +989,9 @@ _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
       break;
    case STATE_INTERNAL:
       append_token(str, state[1]);
-      break;
+      if (state[1] == STATE_CURRENT_ATTRIB)
+         append_index(str, state[2]);
+       break;
    default:
       _mesa_problem(NULL, "Invalid state in _mesa_program_state_string");
       break;

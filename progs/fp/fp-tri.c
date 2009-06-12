@@ -89,7 +89,7 @@ static void Init( void )
    }
    fprintf(stderr, "%.*s\n", sz, buf);
 
-   if (!glutExtensionSupported("GL_ARB_fragment_program")) {
+   if (!GLEW_ARB_fragment_program) {
       printf("Error: GL_ARB_fragment_program not supported!\n");
       exit(1);
    }

@@ -133,7 +133,15 @@ struct setup_stage {
 
    uint tx, ty;  /**< position of current tile (x, y) */
 
-   int cliprect_minx, cliprect_maxx, cliprect_miny, cliprect_maxy;
+   union {
+      struct {
+         int cliprect_minx;
+         int cliprect_miny;
+         int cliprect_maxx;
+         int cliprect_maxy;
+      };
+      qword cliprect;
+   };
 
    struct interp_coef coef[PIPE_MAX_SHADER_INPUTS];
 
@@ -432,6 +440,41 @@ print_vertex(const struct vertex_header *v)
 }
 #endif
 
+/* Returns the minimum of each slot of two vec_float4s as qwords.
+ * i.e. return[n] = min(q0[n],q1[n]);
+ */
+static qword
+minfq(qword q0, qword q1)
+{
+   const qword q0q1m = si_fcgt(q0, q1);
+   return si_selb(q0, q1, q0q1m);
+}
+
+/* Returns the minimum of each slot of three vec_float4s as qwords.
+ * i.e. return[n] = min(q0[n],q1[n],q2[n]);
+ */
+static qword
+min3fq(qword q0, qword q1, qword q2)
+{
+   return minfq(minfq(q0, q1), q2);
+}
+
+/* Returns the maximum of each slot of two vec_float4s as qwords.
+ * i.e. return[n] = min(q0[n],q1[n],q2[n]);
+ */
+static qword
+maxfq(qword q0, qword q1) {
+   const qword q0q1m = si_fcgt(q0, q1);
+   return si_selb(q1, q0, q0q1m);
+}
+
+/* Returns the maximum of each slot of three vec_float4s as qwords.
+ * i.e. return[n] = min(q0[n],q1[n],q2[n]);
+ */
+static qword
+max3fq(qword q0, qword q1, qword q2) {
+   return maxfq(maxfq(q0, q1), q2);
+}
 
 /**
  * Sort vertices from top to bottom.
@@ -440,9 +483,7 @@ print_vertex(const struct vertex_header *v)
  * \return  FALSE if tri is totally outside tile, TRUE otherwise
  */
 static boolean
-setup_sort_vertices(const struct vertex_header *v0,
-                    const struct vertex_header *v1,
-                    const struct vertex_header *v2)
+setup_sort_vertices(const qword vs)
 {
    float area, sign;
 
@@ -455,56 +496,56 @@ setup_sort_vertices(const struct vertex_header *v0,
    }
 #endif
 
-   /* determine bottom to top order of vertices */
    {
+      /* Load the float values for various processing... */
+      const qword f0 = (qword)(((const struct vertex_header*)si_to_ptr(vs))->data[0]);
+      const qword f1 = (qword)(((const struct vertex_header*)si_to_ptr(si_rotqbyi(vs, 4)))->data[0]);
+      const qword f2 = (qword)(((const struct vertex_header*)si_to_ptr(si_rotqbyi(vs, 8)))->data[0]);
+
+      /* Check if triangle is completely outside the tile bounds
+       * Find the min and max x and y positions of the three poits */
+      const qword minf = min3fq(f0, f1, f2);
+      const qword maxf = max3fq(f0, f1, f2);
+
+      /* Compare min and max against cliprect vals */
+      const qword maxsmins = si_shufb(maxf, minf, SHUFB4(A,B,a,b));
+      const qword outside = si_fcgt(maxsmins, si_csflt(setup.cliprect, 0));
+
+      /* Use a little magic to work out of the tri is visible or not */
+      if(si_to_uint(si_xori(si_gb(outside), 0xc))) return FALSE;
+
+      /* determine bottom to top order of vertices */
       /* A table of shuffle patterns for putting vertex_header pointers into
          correct order.  Quite magical. */
-      const vec_uchar16 sort_order_patterns[] = {
-         SHUFFLE4(A,B,C,C),
-         SHUFFLE4(C,A,B,C),
-         SHUFFLE4(A,C,B,C),
-         SHUFFLE4(B,C,A,C),
-         SHUFFLE4(B,A,C,C),
-         SHUFFLE4(C,B,A,C) };
-
-      /* The vertex_header pointers, packed for easy shuffling later */
-      const vec_uint4 vs = {(unsigned)v0, (unsigned)v1, (unsigned)v2};
+      const qword sort_order_patterns[] = {
+         SHUFB4(A,B,C,C),
+         SHUFB4(C,A,B,C),
+         SHUFB4(A,C,B,C),
+         SHUFB4(B,C,A,C),
+         SHUFB4(B,A,C,C),
+         SHUFB4(C,B,A,C) };
 
       /* Collate y values into two vectors for comparison.
          Using only one shuffle constant! ;) */
-      const vec_float4 y_02_ = spu_shuffle(v0->data[0], v2->data[0], SHUFFLE4(0,B,b,C));
-      const vec_float4 y_10_ = spu_shuffle(v1->data[0], v0->data[0], SHUFFLE4(0,B,b,C));
-      const vec_float4 y_012 = spu_shuffle(y_02_, v1->data[0], SHUFFLE4(0,B,b,C));
-      const vec_float4 y_120 = spu_shuffle(y_10_, v2->data[0], SHUFFLE4(0,B,b,C));
+      const qword y_02_ = si_shufb(f0, f2, SHUFB4(0,B,b,C));
+      const qword y_10_ = si_shufb(f1, f0, SHUFB4(0,B,b,C));
+      const qword y_012 = si_shufb(y_02_, f1, SHUFB4(0,B,b,C));
+      const qword y_120 = si_shufb(y_10_, f2, SHUFB4(0,B,b,C));
 
       /* Perform comparison: {y0,y1,y2} > {y1,y2,y0} */
-      const vec_uint4 compare = spu_cmpgt(y_012, y_120);
+      const qword compare = si_fcgt(y_012, y_120);
       /* Compress the result of the comparison into 4 bits */
-      const vec_uint4 gather = spu_gather(compare);
+      const qword gather = si_gb(compare);
       /* Subtract one to attain the index into the LUT.  Magical. */
-      const unsigned int index = spu_extract(gather, 0) - 1;
+      const unsigned int index = si_to_uint(gather) - 1;
 
       /* Load the appropriate pattern and construct the desired vector. */
-      setup.vertex_headers = (qword)spu_shuffle(vs, vs, sort_order_patterns[index]);
+      setup.vertex_headers = si_shufb(vs, vs, sort_order_patterns[index]);
 
       /* Using the result of the comparison, set sign.
          Very magical. */
-      sign = ((si_to_uint(si_cntb((qword)gather)) == 2) ? 1.0f : -1.0f);
+      sign = ((si_to_uint(si_cntb(gather)) == 2) ? 1.0f : -1.0f);
    }
-
-   /* Check if triangle is completely outside the tile bounds */
-   if (spu_extract(setup.vmin->data[0], 1) > setup.cliprect_maxy)
-      return FALSE;
-   if (spu_extract(setup.vmax->data[0], 1) < setup.cliprect_miny)
-      return FALSE;
-   if (spu_extract(setup.vmin->data[0], 0) < setup.cliprect_minx &&
-       spu_extract(setup.vmid->data[0], 0) < setup.cliprect_minx &&
-       spu_extract(setup.vmax->data[0], 0) < setup.cliprect_minx)
-      return FALSE;
-   if (spu_extract(setup.vmin->data[0], 0) > setup.cliprect_maxx &&
-       spu_extract(setup.vmid->data[0], 0) > setup.cliprect_maxx &&
-       spu_extract(setup.vmax->data[0], 0) > setup.cliprect_maxx)
-      return FALSE;
 
    setup.ebot.ds = spu_sub(setup.vmid->data[0], setup.vmin->data[0]);
    setup.emaj.ds = spu_sub(setup.vmax->data[0], setup.vmin->data[0]);
@@ -761,21 +802,19 @@ subtriangle(struct edge *eleft, struct edge *eright, unsigned lines)
  * The tile data should have already been fetched.
  */
 boolean
-tri_draw(const float *v0, const float *v1, const float *v2,
+tri_draw(const qword vs,
          uint tx, uint ty)
 {
    setup.tx = tx;
    setup.ty = ty;
 
    /* set clipping bounds to tile bounds */
-   setup.cliprect_minx = tx * TILE_SIZE;
-   setup.cliprect_miny = ty * TILE_SIZE;
-   setup.cliprect_maxx = (tx + 1) * TILE_SIZE;
-   setup.cliprect_maxy = (ty + 1) * TILE_SIZE;
+   const qword clipbase = (qword)((vec_uint4){tx, ty});
+   const qword clipmin = si_mpyui(clipbase, TILE_SIZE);
+   const qword clipmax = si_ai(clipmin, TILE_SIZE);
+   setup.cliprect = si_shufb(clipmin, clipmax, SHUFB4(A,B,a,b));
 
-   if (!setup_sort_vertices((struct vertex_header *) v0,
-                            (struct vertex_header *) v1,
-                            (struct vertex_header *) v2)) {
+   if(!setup_sort_vertices(vs)) {
       return FALSE; /* totally clipped */
    }
 

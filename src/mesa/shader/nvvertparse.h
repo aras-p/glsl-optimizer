@@ -35,11 +35,6 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum target,
                               const GLubyte *str, GLsizei len,
                               struct gl_vertex_program *program);
 
-extern void
-_mesa_print_nv_vertex_instruction(const struct prog_instruction *inst);
-
-extern void
-_mesa_print_nv_vertex_program(const struct gl_vertex_program *program);
 
 extern const char *
 _mesa_nv_vertex_input_register_name(GLuint i);

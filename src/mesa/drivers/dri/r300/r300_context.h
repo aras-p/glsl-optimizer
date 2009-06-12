@@ -37,23 +37,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R300_CONTEXT_H__
 #define __R300_CONTEXT_H__
 
-#include "tnl/t_vertex.h"
 #include "drm.h"
 #include "radeon_drm.h"
 #include "dri_util.h"
-#include "texmem.h"
 #include "radeon_common.h"
 
-#include "main/macros.h"
 #include "main/mtypes.h"
-#include "main/colormac.h"
+#include "shader/prog_instruction.h"
 
 struct r300_context;
 typedef struct r300_context r300ContextRec;
 typedef struct r300_context *r300ContextPtr;
 
-
-#include "main/mm.h"
 
 /* From http://gcc. gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
    I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble
@@ -72,8 +67,6 @@ typedef struct r300_context *r300ContextPtr;
 	}
 
 #include "r300_vertprog.h"
-#include "r500_fragprog.h"
-
 
 
 /* The blit width for texture uploads
@@ -81,9 +74,6 @@ typedef struct r300_context *r300ContextPtr;
 #define R300_BLIT_WIDTH_BYTES 1024
 #define R300_MAX_TEXTURE_UNITS 8
 
-struct r300_texture_state {
-	int tc_count;		/* number of incoming texture coordinates from VAP */
-};
 
 
 #define R300_VPT_CMD_0		0
@@ -126,9 +116,11 @@ struct r300_texture_state {
 #define R300_GB_MISC_MSPOS_0		1
 #define R300_GB_MISC_MSPOS_1		2
 #define R300_GB_MISC_TILE_CONFIG	3
-#define R300_GB_MISC_SELECT		4
-#define R300_GB_MISC_AA_CONFIG		5
-#define R300_GB_MISC_CMDSIZE		6
+#define R300_GB_MISC_CMDSIZE		4
+#define R300_GB_MISC2_CMD_0		    0
+#define R300_GB_MISC2_SELECT		1
+#define R300_GB_MISC2_AA_CONFIG		2
+#define R300_GB_MISC2_CMDSIZE		3
 
 #define R300_TXE_CMD_0		0
 #define R300_TXE_ENABLE		1
@@ -303,7 +295,7 @@ struct r300_texture_state {
 struct r300_hw_state {
 	struct radeon_state_atom vpt;	/* viewport (1D98) */
 	struct radeon_state_atom vap_cntl;
-        struct radeon_state_atom vap_index_offset; /* 0x208c r5xx only */
+	struct radeon_state_atom vap_index_offset; /* 0x208c r5xx only */
 	struct radeon_state_atom vof;	/* VAP output format register 0x2090 */
 	struct radeon_state_atom vte;	/* (20B0) */
 	struct radeon_state_atom vap_vf_max_vtx_indx;	/* Maximum Vertex Indx Clamp (2134) */
@@ -317,6 +309,7 @@ struct r300_hw_state {
 	struct radeon_state_atom pvs;	/* pvs_cntl (22D0) */
 	struct radeon_state_atom gb_enable;	/* (4008) */
 	struct radeon_state_atom gb_misc;	/* Multisampling position shifts ? (4010) */
+	struct radeon_state_atom gb_misc2;	/* Multisampling position shifts ? (4010) */
 	struct radeon_state_atom ga_point_s0;	/* S Texture Coordinate of Vertex 0 for Point texture stuffing (LLC) (4200) */
 	struct radeon_state_atom ga_triangle_stipple;	/* (4214) */
 	struct radeon_state_atom ps;	/* pointsize (421C) */
@@ -324,6 +317,7 @@ struct r300_hw_state {
 	struct radeon_state_atom lcntl;	/* line control */
 	struct radeon_state_atom ga_line_stipple;	/* (4260) */
 	struct radeon_state_atom shade;
+	struct radeon_state_atom shade2;
 	struct radeon_state_atom polygon_mode;
 	struct radeon_state_atom fogp;	/* fog parameters (4294) */
 	struct radeon_state_atom ga_soft_reset;	/* (429C) */
@@ -361,7 +355,7 @@ struct r300_hw_state {
 	struct radeon_state_atom zstencil_format;
 	struct radeon_state_atom zb;	/* z buffer (4F20) */
 	struct radeon_state_atom zb_depthclearvalue;	/* (4F28) */
-	struct radeon_state_atom unk4F30;	/* (4F30) */
+	struct radeon_state_atom zb_zmask;	/* (4F30) */
 	struct radeon_state_atom zb_hiz_offset;	/* (4F44) */
 	struct radeon_state_atom zb_hiz_pitch;	/* (4F54) */
 
@@ -405,73 +399,55 @@ struct r300_hw_state {
 #define STATE_R300_WINDOW_DIMENSION (STATE_INTERNAL_DRIVER+0)
 #define STATE_R300_TEXRECT_FACTOR (STATE_INTERNAL_DRIVER+1)
 
-struct r300_vertex_shader_fragment {
-	int length;
-	union {
-		GLuint d[VSF_MAX_FRAGMENT_LENGTH];
-		float f[VSF_MAX_FRAGMENT_LENGTH];
-		GLuint i[VSF_MAX_FRAGMENT_LENGTH];
-	} body;
-};
-
-struct r300_vertex_shader_state {
-	struct r300_vertex_shader_fragment program;
-};
-
-extern int hw_tcl_on;
-
 #define COLOR_IS_RGBA
 #define TAG(x) r300##x
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
-//#define CURRENT_VERTEX_SHADER(ctx) (ctx->VertexProgram._Current)
-#define CURRENT_VERTEX_SHADER(ctx) (R300_CONTEXT(ctx)->selected_vp)
-
-/* Should but doesnt work */
-//#define CURRENT_VERTEX_SHADER(ctx) (R300_CONTEXT(ctx)->curr_vp)
-
-/* r300_vertex_shader_state and r300_vertex_program should probably be merged together someday.
- * Keeping them them seperate for now should ensure fixed pipeline keeps functioning properly.
- */
-
-struct r300_vertex_program_key {
-	GLuint InputsRead;
-	GLuint OutputsWritten;
-	GLuint OutputsAdded;
-};
-
 struct r300_vertex_program {
 	struct r300_vertex_program *next;
-	struct r300_vertex_program_key key;
-	int translated;
 
-	struct r300_vertex_shader_fragment program;
+	struct r300_vertex_program_key {
+		GLuint InputsRead;
+		GLuint OutputsWritten;
+		GLuint OutputsAdded;
+	} key;
+	
+	struct r300_vertex_shader_hw_code {
+		int length;
+		union {
+			GLuint d[VSF_MAX_FRAGMENT_LENGTH];
+			float f[VSF_MAX_FRAGMENT_LENGTH];
+		} body;
+	} hw_code;
+
+	GLboolean translated;
+	GLboolean error;
 
 	int pos_end;
 	int num_temporaries;	/* Number of temp vars used by program */
 	int wpos_idx;
 	int inputs[VERT_ATTRIB_MAX];
 	int outputs[VERT_RESULT_MAX];
-	int native;
-	int ref_count;
-	int use_ref_count;
 };
 
 struct r300_vertex_program_cont {
 	struct gl_vertex_program mesa_program;	/* Must be first */
-	struct r300_vertex_shader_fragment params;
 	struct r300_vertex_program *progs;
 };
 
-#define PFS_MAX_ALU_INST	64
-#define PFS_MAX_TEX_INST	64
-#define PFS_MAX_TEX_INDIRECT 4
-#define PFS_NUM_TEMP_REGS	32
-#define PFS_NUM_CONST_REGS	16
+#define R300_PFS_MAX_ALU_INST	64
+#define R300_PFS_MAX_TEX_INST	32
+#define R300_PFS_MAX_TEX_INDIRECT 4
+#define R300_PFS_NUM_TEMP_REGS	32
+#define R300_PFS_NUM_CONST_REGS	32
+
+#define R500_PFS_MAX_INST 512
+#define R500_PFS_NUM_TEMP_REGS 128
+#define R500_PFS_NUM_CONST_REGS 256
 
 struct r300_pfs_compile_state;
-
+struct r500_pfs_compile_state;
 
 /**
  * Stores state that influences the compilation of a fragment program.
@@ -514,7 +490,7 @@ struct r300_fragment_program_node {
 struct r300_fragment_program_code {
 	struct {
 		int length; /**< total # of texture instructions used */
-		GLuint inst[PFS_MAX_TEX_INST];
+		GLuint inst[R300_PFS_MAX_TEX_INST];
 	} tex;
 
 	struct {
@@ -524,7 +500,7 @@ struct r300_fragment_program_code {
 			GLuint inst1;
 			GLuint inst2;
 			GLuint inst3;
-		} inst[PFS_MAX_ALU_INST];
+		} inst[R300_PFS_MAX_ALU_INST];
 	} alu;
 
 	struct r300_fragment_program_node node[4];
@@ -535,53 +511,12 @@ struct r300_fragment_program_code {
 	 * Remember which program register a given hardware constant
 	 * belongs to.
 	 */
-	struct prog_src_register constant[PFS_NUM_CONST_REGS];
+	struct prog_src_register constant[R300_PFS_NUM_CONST_REGS];
 	int const_nr;
 
 	int max_temp_idx;
 };
 
-/**
- * Store everything about a fragment program that is needed
- * to render with that program.
- */
-struct r300_fragment_program {
-	struct gl_fragment_program mesa_program;
-
-	GLboolean translated;
-	GLboolean error;
-
-	struct r300_fragment_program_external_state state;
-	struct r300_fragment_program_code code;
-
-	GLboolean WritesDepth;
-	GLuint optimization;
-};
-
-struct r500_pfs_compile_state;
-
-struct r500_fragment_program_external_state {
-	struct {
-		/**
-		 * If the sampler is used as a shadow sampler,
-		 * this field is:
-		 *  0 - GL_LUMINANCE
-		 *  1 - GL_INTENSITY
-		 *  2 - GL_ALPHA
-		 * depending on the depth texture mode.
-		 */
-		GLuint depth_texture_mode : 2;
-
-		/**
-		 * If the sampler is used as a shadow sampler,
-		 * this field is (texture_compare_func - GL_NEVER).
-		 * [e.g. if compare function is GL_LEQUAL, this field is 3]
-		 *
-		 * Otherwise, this field is 0.
-		 */
-		GLuint texture_compare_func : 3;
-	} unit[16];
-};
 
 struct r500_fragment_program_code {
 	struct {
@@ -591,7 +526,7 @@ struct r500_fragment_program_code {
 		GLuint inst3;
 		GLuint inst4;
 		GLuint inst5;
-	} inst[512];
+	} inst[R500_PFS_MAX_INST];
 
 	int inst_offset;
 	int inst_end;
@@ -600,47 +535,41 @@ struct r500_fragment_program_code {
 	 * Remember which program register a given hardware constant
 	 * belongs to.
 	 */
-	struct prog_src_register constant[PFS_NUM_CONST_REGS];
+	struct prog_src_register constant[R500_PFS_NUM_CONST_REGS];
 	int const_nr;
 
 	int max_temp_idx;
 };
 
-struct r500_fragment_program {
-	struct gl_fragment_program mesa_program;
+/**
+* Store everything about a fragment program that is needed
+* to render with that program.
+*/
+struct r300_fragment_program {
+	struct gl_fragment_program Base;
 
-	GLcontext *ctx;
 	GLboolean translated;
 	GLboolean error;
 
-	struct r500_fragment_program_external_state state;
-	struct r500_fragment_program_code code;
+	struct r300_fragment_program_external_state state;
+	union rX00_fragment_program_code {
+		struct r300_fragment_program_code r300;
+		struct r500_fragment_program_code r500;
+	} code;
 
 	GLboolean writes_depth;
-
 	GLuint optimization;
+};
+
+struct r300_fragment_program_compiler {
+	r300ContextPtr r300;
+	struct r300_fragment_program *fp;
+	union rX00_fragment_program_code *code;
+	struct gl_program *program;
 };
 
 #define R300_MAX_AOS_ARRAYS		16
 
-#define REG_COORDS	0
-#define REG_COLOR0	1
-#define REG_TEX0	2
-
-struct r300_state {
-	struct r300_texture_state texture;
-	int sw_tcl_inputs[VERT_ATTRIB_MAX];
-	struct r300_vertex_shader_state vertex_shader;
-
-
-	DECLARE_RENDERINPUTS(render_inputs_bitset);	/* actual render inputs that R300 was configured for.
-							   They are the same as tnl->render_inputs for fixed pipeline */
-
-};
-
-#define R300_FALLBACK_NONE 0
-#define R300_FALLBACK_TCL 1
-#define R300_FALLBACK_RAST 2
 
 /* r300_swtcl.c
  */
@@ -654,18 +583,44 @@ struct r300_swtcl_info {
     * Offset of the 3UB specular color data within a hardware (swtcl) vertex.
     */
    GLuint specoffset;
-
-   struct vertex_attribute{
-       GLuint attr;
-       GLubyte format;
-       GLubyte dst_loc;
-       GLuint swizzle;
-       GLubyte write_mask;
-   } vert_attrs[VERT_ATTRIB_MAX];
-
-   GLubyte vertex_attr_count;
 };
 
+struct r300_vtable {
+	void (* SetupRSUnit)(GLcontext *ctx);
+	void (* SetupFragmentShaderTextures)(GLcontext *ctx, int *tmu_mappings);
+	GLboolean (* BuildFragmentProgramHwCode)(struct r300_fragment_program_compiler *compiler);
+	void (* FragmentProgramDump)(union rX00_fragment_program_code *code);
+	void (* SetupPixelShader)(GLcontext *ctx);
+};
+
+struct r300_vertex_buffer {
+	struct vertex_attribute {
+		/* generic */
+		GLubyte element;
+		GLvoid *data;
+		GLboolean free_needed;
+		GLuint stride;
+		GLuint dwords;
+		GLubyte size; /* number of components */
+
+		/* hw specific */
+		uint32_t data_type:4;
+		uint32_t dst_loc:5;
+		uint32_t _signed:1;
+		uint32_t normalize:1;
+		uint32_t swizzle:12;
+		uint32_t write_mask:4;
+	} attribs[VERT_ATTRIB_MAX];
+
+	GLubyte num_attribs;
+};
+
+struct r300_index_buffer {
+	GLvoid *ptr;
+	GLboolean is_32bit;
+	GLboolean free_needed;
+	GLuint count;
+};
 
 /**
  * \brief R300 context structure.
@@ -673,10 +628,10 @@ struct r300_swtcl_info {
 struct r300_context {
 	struct radeon_context radeon;	/* parent class, must be first */
 
+	struct r300_vtable vtbl;
+
 	struct r300_hw_state hw;
 
-	struct r300_state state;
-	struct gl_vertex_program *curr_vp;
 	struct r300_vertex_program *selected_vp;
 
 	/* Vertex buffers
@@ -684,10 +639,22 @@ struct r300_context {
 	GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
 	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
 
-	GLboolean disable_lowimpact_fallback;
-
+	struct r300_options {
+		uint32_t conformance_mode:1;
+		uint32_t hw_tcl_enabled:1;
+		uint32_t s3tc_force_enabled:1;
+		uint32_t s3tc_force_disabled:1;
+		uint32_t stencil_two_side_disabled:1;
+	} options;
+	
 	struct r300_swtcl_info swtcl;
+	struct r300_vertex_buffer vbuf;
+	struct r300_index_buffer ind_buf;
 	GLboolean vap_flush_needed;
+
+	uint32_t fallback;
+
+	DECLARE_RENDERINPUTS(render_inputs_bitset);
 };
 
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))
@@ -703,10 +670,9 @@ extern int r300VertexProgUpdateParams(GLcontext * ctx,
 				      struct r300_vertex_program_cont *vp,
 				      float *dst);
 
-#define RADEON_D_CAPTURE 0
-#define RADEON_D_PLAYBACK 1
-#define RADEON_D_PLAYBACK_RAW 2
-#define RADEON_D_T 3
+extern void r300InitShaderFunctions(r300ContextPtr r300);
+
+extern void r300InitDraw(GLcontext *ctx);
 
 #define r300PackFloat32 radeonPackFloat32
 #define r300PackFloat24 radeonPackFloat24

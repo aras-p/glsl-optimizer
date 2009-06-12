@@ -523,11 +523,15 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
    aapoint->fs->aapoint_fs
       = aapoint->driver_create_fs_state(aapoint->pipe, &aapoint_fs);
    if (aapoint->fs->aapoint_fs == NULL)
-      return FALSE;
+      goto fail;
 
    aapoint->fs->generic_attrib = transform.maxGeneric + 1;
-
+   FREE((void *)aapoint_fs.tokens);
    return TRUE;
+
+fail:
+   FREE((void *)aapoint_fs.tokens);
+   return FALSE;
 }
 
 
@@ -757,6 +761,7 @@ draw_aapoint_stage(struct draw_context *draw)
       goto fail;
 
    aapoint->stage.draw = draw;
+   aapoint->stage.name = "aapoint";
    aapoint->stage.next = NULL;
    aapoint->stage.point = aapoint_first_point;
    aapoint->stage.line = draw_pipe_passthrough_line;
@@ -824,8 +829,13 @@ aapoint_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct aapoint_stage *aapoint = aapoint_stage_from_pipe(pipe);
    struct aapoint_fragment_shader *aafs = (struct aapoint_fragment_shader *) fs;
+
    /* pass-through */
    aapoint->driver_delete_fs_state(aapoint->pipe, aafs->driver_fs);
+
+   if (aafs->aapoint_fs)
+      aapoint->driver_delete_fs_state(aapoint->pipe, aafs->aapoint_fs);
+
    FREE(aafs);
 }
 

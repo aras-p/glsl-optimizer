@@ -93,20 +93,6 @@
 
 /* 3DSTATE_BIN_CONTROL p141 */
 
-/* p143 */
-#define _3DSTATE_BUF_INFO_CMD	(CMD_3D | (0x1d<<24) | (0x8e<<16) | 1)
-/* Dword 1 */
-#define BUF_3D_ID_COLOR_BACK	(0x3<<24)
-#define BUF_3D_ID_DEPTH 	(0x7<<24)
-#define BUF_3D_USE_FENCE	(1<<23)
-#define BUF_3D_TILED_SURFACE	(1<<22)
-#define BUF_3D_TILE_WALK_X	0
-#define BUF_3D_TILE_WALK_Y	(1<<21)
-#define BUF_3D_PITCH(x)         (((x)/4)<<2)
-/* Dword 2 */
-#define BUF_3D_ADDR(x)		((x) & ~0x3)
-
-
 /* 3DSTATE_CHROMA_KEY */
 
 /* 3DSTATE_CLEAR_PARAMETERS, p150 */
@@ -155,6 +141,7 @@
 /* p161 */
 #define _3DSTATE_DST_BUF_VARS_CMD	(CMD_3D | (0x1d<<24) | (0x85<<16))
 /* Dword 1 */
+#define CLASSIC_EARLY_DEPTH		(1<<31)
 #define TEX_DEFAULT_COLOR_OGL           (0<<30)
 #define TEX_DEFAULT_COLOR_D3D           (1<<30)
 #define ZR_EARLY_DEPTH                  (1<<29)

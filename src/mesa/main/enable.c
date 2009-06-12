@@ -119,6 +119,7 @@ client_state(GLcontext *ctx, GLenum cap, GLboolean state)
          CHECK_EXTENSION(NV_vertex_program, cap);
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
+            ASSERT(n < Elements(ctx->Array.ArrayObj->VertexAttrib));
             var = &ctx->Array.ArrayObj->VertexAttrib[n].Enabled;
             flag = _NEW_ARRAY_ATTRIB(n);
          }
@@ -222,14 +223,16 @@ get_texcoord_unit(GLcontext *ctx)
 
 /**
  * Helper function to enable or disable a texture target.
+ * \param bit  one of the TEXTURE_x_BIT values
+ * \return GL_TRUE if state is changing or GL_FALSE if no change
  */
 static GLboolean
-enable_texture(GLcontext *ctx, GLboolean state, GLbitfield bit)
+enable_texture(GLcontext *ctx, GLboolean state, GLbitfield texBit)
 {
    const GLuint curr = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
-   const GLuint newenabled = (!state)
-       ? (texUnit->Enabled & ~bit) :  (texUnit->Enabled | bit);
+   const GLbitfield newenabled = state
+      ? (texUnit->Enabled | texBit) : (texUnit->Enabled & ~texBit);
 
    if (!ctx->DrawBuffer->Visual.rgbMode || texUnit->Enabled == newenabled)
        return GL_FALSE;
@@ -1314,6 +1317,7 @@ _mesa_IsEnabled( GLenum cap )
          CHECK_EXTENSION(NV_vertex_program);
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
+            ASSERT(n < Elements(ctx->Array.ArrayObj->VertexAttrib));
             return (ctx->Array.ArrayObj->VertexAttrib[n].Enabled != 0);
          }
       case GL_MAP1_VERTEX_ATTRIB0_4_NV:

@@ -16,6 +16,8 @@ struct intel_be_device
 {
 	struct pipe_winsys base;
 
+	boolean softpipe;
+
 	int fd; /**< Drm file discriptor */
 
 	unsigned id;

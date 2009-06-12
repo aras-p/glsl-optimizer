@@ -114,6 +114,12 @@ vs_exec_run_linear( struct draw_vertex_shader *shader,
 #endif
 
          for (slot = 0; slot < shader->info.num_inputs; slot++) {
+#if 0
+            assert(!util_is_inf_or_nan(input[slot][0]));
+            assert(!util_is_inf_or_nan(input[slot][1]));
+            assert(!util_is_inf_or_nan(input[slot][2]));
+            assert(!util_is_inf_or_nan(input[slot][3]));
+#endif
             machine->Inputs[slot].xyzw[0].f[j] = input[slot][0];
             machine->Inputs[slot].xyzw[1].f[j] = input[slot][1];
             machine->Inputs[slot].xyzw[2].f[j] = input[slot][2];

@@ -1126,7 +1126,22 @@ pipe_get_tile_z(struct pipe_transfer *pt,
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 24-bit Z to 32-bit Z */
-               pDest[j] = (ptrc[j] << 8) | (ptrc[j] & 0xff);
+               pDest[j] = (ptrc[j] << 8) | ((ptrc[j] >> 16) & 0xff);
+            }
+            pDest += dstStride;
+            ptrc += pt->stride/4;
+         }
+      }
+      break;
+   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24X8_UNORM:
+      {
+         const uint *ptrc
+            = (const uint *)(map + y * pt->stride + x*4);
+         for (i = 0; i < h; i++) {
+            for (j = 0; j < w; j++) {
+               /* convert 24-bit Z to 32-bit Z */
+               pDest[j] = (ptrc[j] & 0xffffff00) | ((ptrc[j] >> 24) & 0xff);
             }
             pDest += dstStride;
             ptrc += pt->stride/4;

@@ -46,16 +46,16 @@ else:
 
 def AddOptions(opts):
 	try:
-		from SCons.Options.BoolOption import BoolOption
-	except ImportError:
 		from SCons.Variables.BoolVariable import BoolVariable as BoolOption
-	try:
-		from SCons.Options.EnumOption import EnumOption
 	except ImportError:
+		from SCons.Options.BoolOption import BoolOption
+	try:
 		from SCons.Variables.EnumVariable import EnumVariable as EnumOption
+	except ImportError:
+		from SCons.Options.EnumOption import EnumOption
 	opts.Add(BoolOption('debug', 'debug build', 'no'))
 	opts.Add(BoolOption('profile', 'profile build', 'no'))
-	#opts.Add(BoolOption('quiet', 'quiet command lines', 'no'))
+	opts.Add(BoolOption('quiet', 'quiet command lines', 'yes'))
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
 											 allowed_values=('generic', 'ppc', 'x86', 'x86_64')))
 	opts.Add(EnumOption('platform', 'target platform', default_platform,

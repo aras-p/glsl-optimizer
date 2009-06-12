@@ -10,13 +10,30 @@ struct pipe_buffer;
 struct pipe_context;
 struct pipe_texture;
 
+enum drm_create_screen_mode {
+	DRM_CREATE_NORMAL = 0,
+	DRM_CREATE_DRI1,
+	DRM_CREATE_DRIVER = 1024,
+	DRM_CREATE_MAX
+};
+
+/**
+ * Modes other than DRM_CREATE_NORMAL derive from this struct.
+ */
+/*@{*/
+struct drm_create_screen_arg {
+	enum drm_create_screen_mode mode;
+};
+/*@}*/
+
 struct drm_api
 {
 	/**
 	 * Special buffer functions
 	 */
 	/*@{*/
-	struct pipe_screen*  (*create_screen)(int drmFB, int pciID);
+	struct pipe_screen*  (*create_screen)(int drm_fd,
+					      struct drm_create_screen_arg *arg);
 	struct pipe_context* (*create_context)(struct pipe_screen *screen);
 	/*@}*/
 

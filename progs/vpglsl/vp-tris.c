@@ -10,6 +10,10 @@
 
 static const char *filename = NULL;
 static GLuint nr_steps = 4;
+static GLuint prim = GL_TRIANGLES;
+static GLfloat psz = 1.0;
+static GLboolean pointsmooth = 0;
+static GLboolean program_point_size = 0;
 
 static GLuint fragShader;
 static GLuint vertShader;
@@ -229,6 +233,14 @@ static void subdiv( union vert *v0,
    }
 }
 
+static void enable( GLenum value, GLboolean flag )
+{
+   if (flag)
+      glEnable(value);
+   else
+      glDisable(value);
+}
+
 /** Assignment */
 #define ASSIGN_3V( V, V0, V1, V2 )  \
 do {                                \
@@ -241,10 +253,13 @@ static void Display( void )
 {
    glClearColor(0.3, 0.3, 0.3, 1);
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+   glPointSize(psz);
 
    glUseProgram(program);
+   enable( GL_POINT_SMOOTH, pointsmooth );
+   enable( GL_VERTEX_PROGRAM_POINT_SIZE_ARB, program_point_size );
 
-   glBegin(GL_TRIANGLES);
+   glBegin(prim);
 
 
    {
@@ -291,10 +306,41 @@ static void Key( unsigned char key, int x, int y )
    (void) x;
    (void) y;
    switch (key) {
-      case 27:
-         CleanUp();
-         exit(0);
-         break;
+   case 'p':
+      prim = GL_POINTS;
+      break;
+   case 't':
+      prim = GL_TRIANGLES;
+      break;
+   case 's':
+      psz += .5;
+      break;
+   case 'S':
+      if (psz > .5)
+         psz -= .5;
+      break;
+   case 'm':
+      pointsmooth = !pointsmooth;
+      break;
+   case 'z':
+      program_point_size = !program_point_size;
+      break;
+   case '+':
+      nr_steps++;
+      break; 
+   case '-':
+      if (nr_steps) 
+         nr_steps--;
+      break;
+   case ' ':
+      psz = 1.0;
+      prim = GL_TRIANGLES;
+      nr_steps = 4;
+      break;
+   case 27:
+      CleanUp();
+      exit(0);
+      break;
    }
    glutPostRedisplay();
 }
@@ -305,7 +351,7 @@ int main( int argc, char *argv[] )
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( 250, 250 );
    glutInitDisplayMode( GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH );
-   glutCreateWindow(argv[0]);
+   glutCreateWindow(argv[argc-1]);
    glewInit();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );

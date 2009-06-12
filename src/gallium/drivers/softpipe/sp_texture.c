@@ -42,6 +42,7 @@
 #include "sp_texture.h"
 #include "sp_tile_cache.h"
 #include "sp_screen.h"
+#include "sp_winsys.h"
 
 
 /* Simple, maximally packed layout.
@@ -398,4 +399,23 @@ softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
    screen->tex_transfer_destroy = softpipe_tex_transfer_destroy;
    screen->transfer_map = softpipe_transfer_map;
    screen->transfer_unmap = softpipe_transfer_unmap;
+}
+
+
+boolean
+softpipe_get_texture_buffer( struct pipe_texture *texture,
+                             struct pipe_buffer **buf,
+                             unsigned *stride )
+{
+   struct softpipe_texture *tex = (struct softpipe_texture *)texture;
+
+   if (!tex)
+      return FALSE;
+
+   pipe_buffer_reference(buf, tex->buffer);
+
+   if (stride)
+      *stride = tex->stride[0];
+
+   return TRUE;
 }

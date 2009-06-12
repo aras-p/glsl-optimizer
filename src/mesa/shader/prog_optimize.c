@@ -547,15 +547,13 @@ update_interval(GLint intBegin[], GLint intEnd[], GLuint index, GLuint ic)
 
 
 /**
- * Find the live intervals for each temporary register in the program.
- * For register R, the interval [A,B] indicates that R is referenced
- * from instruction A through instruction B.
- * Special consideration is needed for loops and subroutines.
- * \return GL_TRUE if success, GL_FALSE if we cannot proceed for some reason
+ * Find first/last instruction that references each temporary register.
  */
-static GLboolean
-find_live_intervals(struct gl_program *prog,
-                    struct interval_list *liveIntervals)
+GLboolean
+_mesa_find_temp_intervals(const struct prog_instruction *instructions,
+                          GLuint numInstructions,
+                          GLint intBegin[MAX_PROGRAM_TEMPS],
+                          GLint intEnd[MAX_PROGRAM_TEMPS])
 {
    struct loop_info
    {
@@ -563,26 +561,15 @@ find_live_intervals(struct gl_program *prog,
    };
    struct loop_info loopStack[MAX_LOOP_NESTING];
    GLuint loopStackDepth = 0;
-   GLint intBegin[MAX_PROGRAM_TEMPS], intEnd[MAX_PROGRAM_TEMPS];
    GLuint i;
-
-   /*
-    * Note: we'll return GL_FALSE below if we find relative indexing
-    * into the TEMP register file.  We can't handle that yet.
-    * We also give up on subroutines for now.
-    */
-
-   if (dbg) {
-      _mesa_printf("Optimize: Begin find intervals\n");
-   }
 
    for (i = 0; i < MAX_PROGRAM_TEMPS; i++){
       intBegin[i] = intEnd[i] = -1;
    }
 
    /* Scan instructions looking for temporary registers */
-   for (i = 0; i < prog->NumInstructions; i++) {
-      const struct prog_instruction *inst = prog->Instructions + i;
+   for (i = 0; i < numInstructions; i++) {
+      const struct prog_instruction *inst = instructions + i;
       if (inst->Opcode == OPCODE_BGNLOOP) {
          loopStack[loopStackDepth].Start = i;
          loopStack[loopStackDepth].End = inst->BranchTarget;
@@ -595,7 +582,7 @@ find_live_intervals(struct gl_program *prog,
          return GL_FALSE;
       }
       else {
-         const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
+         const GLuint numSrc = 3;/*_mesa_num_inst_src_regs(inst->Opcode);*/
          GLuint j;
          for (j = 0; j < numSrc; j++) {
             if (inst->SrcReg[j].File == PROGRAM_TEMPORARY) {
@@ -623,6 +610,39 @@ find_live_intervals(struct gl_program *prog,
          }
       }
    }
+
+   return GL_TRUE;
+}
+
+
+/**
+ * Find the live intervals for each temporary register in the program.
+ * For register R, the interval [A,B] indicates that R is referenced
+ * from instruction A through instruction B.
+ * Special consideration is needed for loops and subroutines.
+ * \return GL_TRUE if success, GL_FALSE if we cannot proceed for some reason
+ */
+static GLboolean
+find_live_intervals(struct gl_program *prog,
+                    struct interval_list *liveIntervals)
+{
+   GLint intBegin[MAX_PROGRAM_TEMPS], intEnd[MAX_PROGRAM_TEMPS];
+   GLuint i;
+
+   /*
+    * Note: we'll return GL_FALSE below if we find relative indexing
+    * into the TEMP register file.  We can't handle that yet.
+    * We also give up on subroutines for now.
+    */
+
+   if (dbg) {
+      _mesa_printf("Optimize: Begin find intervals\n");
+   }
+
+   /* build intermediate arrays */
+   if (!_mesa_find_temp_intervals(prog->Instructions, prog->NumInstructions,
+                                  intBegin, intEnd))
+      return GL_FALSE;
 
    /* Build live intervals list from intermediate arrays */
    liveIntervals->Num = 0;
@@ -660,7 +680,8 @@ find_live_intervals(struct gl_program *prog,
 }
 
 
-static GLuint
+/** Scan the array of used register flags to find free entry */
+static GLint
 alloc_register(GLboolean usedRegs[MAX_PROGRAM_TEMPS])
 {
    GLuint k;
@@ -670,7 +691,7 @@ alloc_register(GLboolean usedRegs[MAX_PROGRAM_TEMPS])
          return k;
       }
    }
-   return MAX_PROGRAM_TEMPS;
+   return -1;
 }
 
 
@@ -689,7 +710,7 @@ _mesa_reallocate_registers(struct gl_program *prog)
    GLint registerMap[MAX_PROGRAM_TEMPS];
    GLboolean usedRegs[MAX_PROGRAM_TEMPS];
    GLuint i;
-   GLuint maxTemp = 0;
+   GLint maxTemp = -1;
 
    if (dbg) {
       _mesa_printf("Optimize: Begin live-interval register reallocation\n");
@@ -754,15 +775,15 @@ _mesa_reallocate_registers(struct gl_program *prog)
 
          /* find a free register for this live interval */
          {
-            const GLuint k = alloc_register(usedRegs);
-            if (k == MAX_PROGRAM_TEMPS) {
+            const GLint k = alloc_register(usedRegs);
+            if (k < 0) {
                /* out of registers, give up */
                return;
             }
             registerMap[live->Reg] = k;
             maxTemp = MAX2(maxTemp, k);
             if (dbg)
-               _mesa_printf("  remap register %d -> %d\n", live->Reg, k);
+               _mesa_printf("  remap register %u -> %d\n", live->Reg, k);
          }
 
          /* Insert this live interval into the active list which is sorted
@@ -789,8 +810,6 @@ _mesa_reallocate_registers(struct gl_program *prog)
       _mesa_print_program(prog);
    }
 }
-
-
 
 
 /**

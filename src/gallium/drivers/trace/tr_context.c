@@ -26,14 +26,16 @@
  **************************************************************************/
 
 #include "util/u_memory.h"
+#include "util/u_simple_list.h"
+
 #include "pipe/p_screen.h"
 
 #include "tr_dump.h"
+#include "tr_dump_state.h"
 #include "tr_state.h"
 #include "tr_buffer.h"
 #include "tr_screen.h"
 #include "tr_texture.h"
-#include "tr_context.h"
 
 
 static INLINE struct pipe_buffer *
@@ -46,7 +48,7 @@ trace_buffer_unwrap(struct trace_context *tr_ctx,
    if(!buffer)
       return NULL;
 
-   tr_buf = trace_buffer(tr_scr, buffer);
+   tr_buf = trace_buffer(buffer);
 
    assert(tr_buf->buffer);
    assert(tr_buf->buffer->screen == tr_scr->screen);
@@ -111,6 +113,65 @@ trace_context_set_edgeflags(struct pipe_context *_pipe,
 }
 
 
+static INLINE void
+trace_context_draw_block(struct trace_context *tr_ctx, int flag)
+{
+   int k;
+
+   pipe_mutex_lock(tr_ctx->draw_mutex);
+
+   if (tr_ctx->draw_blocker & flag) {
+      tr_ctx->draw_blocked |= flag;
+   } else if ((tr_ctx->draw_rule.blocker & flag) &&
+              (tr_ctx->draw_blocker & 4)) {
+      boolean block = FALSE;
+      debug_printf("%s (%lu %lu) (%lu %lu) (%lu %u) (%lu %u)\n", __FUNCTION__,
+					tr_ctx->draw_rule.fs, tr_ctx->curr.fs,
+					tr_ctx->draw_rule.vs, tr_ctx->curr.vs,
+					tr_ctx->draw_rule.surf, 0,
+					tr_ctx->draw_rule.tex, 0);
+      if (tr_ctx->draw_rule.fs &&
+          tr_ctx->draw_rule.fs == tr_ctx->curr.fs)
+         block = TRUE;
+      if (tr_ctx->draw_rule.vs &&
+          tr_ctx->draw_rule.vs == tr_ctx->curr.vs)
+         block = TRUE;
+      if (tr_ctx->draw_rule.surf &&
+          tr_ctx->draw_rule.surf == tr_ctx->curr.zsbuf)
+            block = TRUE;
+      if (tr_ctx->draw_rule.surf)
+         for (k = 0; k < tr_ctx->curr.nr_cbufs; k++)
+            if (tr_ctx->draw_rule.surf == tr_ctx->curr.cbufs[k])
+               block = TRUE;
+      if (tr_ctx->draw_rule.tex)
+         for (k = 0; k < tr_ctx->curr.num_texs; k++)
+            if (tr_ctx->draw_rule.tex == tr_ctx->curr.tex[k])
+               block = TRUE;
+
+      if (block)
+         tr_ctx->draw_blocked |= (flag | 4);
+   }
+
+   if (tr_ctx->draw_blocked)
+      trace_rbug_notify_draw_blocked(tr_ctx);
+
+   /* wait for rbug to clear the blocked flag */
+   while (tr_ctx->draw_blocked & flag) {
+      tr_ctx->draw_blocked |= flag;
+#ifdef PIPE_THREAD_HAVE_CONDVAR
+      pipe_condvar_wait(tr_ctx->draw_cond, tr_ctx->draw_mutex);
+#else
+      pipe_mutex_unlock(tr_ctx->draw_mutex);
+#ifdef PIPE_SUBSYSTEM_WINDOWS_USER
+      Sleep(1);
+#endif
+      pipe_mutex_lock(tr_ctx->draw_mutex);
+#endif
+   }
+
+   pipe_mutex_unlock(tr_ctx->draw_mutex);
+}
+
 static INLINE boolean
 trace_context_draw_arrays(struct pipe_context *_pipe,
                           unsigned mode, unsigned start, unsigned count)
@@ -118,6 +179,11 @@ trace_context_draw_arrays(struct pipe_context *_pipe,
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
    boolean result;
+
+   if (tr_ctx->curr.fs->disabled || tr_ctx->curr.vs->disabled)
+      return 0;
+
+   trace_context_draw_block(tr_ctx, 1);
 
    trace_dump_call_begin("pipe_context", "draw_arrays");
 
@@ -132,6 +198,8 @@ trace_context_draw_arrays(struct pipe_context *_pipe,
 
    trace_dump_call_end();
 
+   trace_context_draw_block(tr_ctx, 2);
+
    return result;
 }
 
@@ -142,12 +210,16 @@ trace_context_draw_elements(struct pipe_context *_pipe,
                           unsigned indexSize,
                           unsigned mode, unsigned start, unsigned count)
 {
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _indexBuffer);
+   struct trace_buffer *tr_buf = trace_buffer(_indexBuffer);
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_buffer *indexBuffer = tr_buf->buffer;
    boolean result;
+
+   if (tr_ctx->curr.fs->disabled || tr_ctx->curr.vs->disabled)
+      return 0;
+
+   trace_context_draw_block(tr_ctx, 1);
 
    trace_screen_user_buffer_update(_pipe->screen, indexBuffer);
 
@@ -166,6 +238,8 @@ trace_context_draw_elements(struct pipe_context *_pipe,
 
    trace_dump_call_end();
 
+   trace_context_draw_block(tr_ctx, 2);
+
    return result;
 }
 
@@ -180,12 +254,16 @@ trace_context_draw_range_elements(struct pipe_context *_pipe,
                                   unsigned start,
                                   unsigned count)
 {
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_buffer *tr_buf = trace_buffer(tr_scr, _indexBuffer);
+   struct trace_buffer *tr_buf = trace_buffer(_indexBuffer);
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_buffer *indexBuffer = tr_buf->buffer;
    boolean result;
+
+   if (tr_ctx->curr.fs->disabled || tr_ctx->curr.vs->disabled)
+      return 0;
+
+   trace_context_draw_block(tr_ctx, 1);
 
    trace_screen_user_buffer_update(_pipe->screen, indexBuffer);
 
@@ -208,6 +286,8 @@ trace_context_draw_range_elements(struct pipe_context *_pipe,
    trace_dump_ret(bool, result);
 
    trace_dump_call_end();
+
+   trace_context_draw_block(tr_ctx, 2);
 
    return result;
 }
@@ -573,23 +653,32 @@ trace_context_create_fs_state(struct pipe_context *_pipe,
 
    trace_dump_call_end();
 
+   result = trace_shader_create(tr_ctx, state, result, TRACE_SHADER_FRAGMENT);
+
    return result;
 }
 
 
 static INLINE void
 trace_context_bind_fs_state(struct pipe_context *_pipe,
-                            void *state)
+                            void *_state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_shader *tr_shdr = trace_shader(_state);
    struct pipe_context *pipe = tr_ctx->pipe;
+   void *state = tr_shdr ? tr_shdr->state : NULL;
 
    trace_dump_call_begin("pipe_context", "bind_fs_state");
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, state);
 
-   pipe->bind_fs_state(pipe, state);;
+   tr_ctx->curr.fs = tr_shdr;
+
+   if (tr_shdr && tr_shdr->replaced)
+      state = tr_shdr->replaced;
+
+   pipe->bind_fs_state(pipe, state);
 
    trace_dump_call_end();
 }
@@ -597,19 +686,23 @@ trace_context_bind_fs_state(struct pipe_context *_pipe,
 
 static INLINE void
 trace_context_delete_fs_state(struct pipe_context *_pipe,
-                              void *state)
+                              void *_state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_shader *tr_shdr = trace_shader(_state);
    struct pipe_context *pipe = tr_ctx->pipe;
+   void *state = tr_shdr->state;
 
    trace_dump_call_begin("pipe_context", "delete_fs_state");
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, state);
 
-   pipe->delete_fs_state(pipe, state);;
+   pipe->delete_fs_state(pipe, state);
 
    trace_dump_call_end();
+
+   trace_shader_destroy(tr_ctx, tr_shdr);
 }
 
 
@@ -626,11 +719,13 @@ trace_context_create_vs_state(struct pipe_context *_pipe,
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(shader_state, state);
 
-   result = pipe->create_vs_state(pipe, state);;
+   result = pipe->create_vs_state(pipe, state);
 
    trace_dump_ret(ptr, result);
 
    trace_dump_call_end();
+
+   result = trace_shader_create(tr_ctx, state, result, TRACE_SHADER_VERTEX);
 
    return result;
 }
@@ -638,15 +733,22 @@ trace_context_create_vs_state(struct pipe_context *_pipe,
 
 static INLINE void
 trace_context_bind_vs_state(struct pipe_context *_pipe,
-                            void *state)
+                            void *_state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_shader *tr_shdr = trace_shader(_state);
    struct pipe_context *pipe = tr_ctx->pipe;
+   void *state = tr_shdr ? tr_shdr->state : NULL;
 
    trace_dump_call_begin("pipe_context", "bind_vs_state");
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, state);
+
+   tr_ctx->curr.vs = tr_shdr;
+
+   if (tr_shdr && tr_shdr->replaced)
+      state = tr_shdr->replaced;
 
    pipe->bind_vs_state(pipe, state);;
 
@@ -656,10 +758,12 @@ trace_context_bind_vs_state(struct pipe_context *_pipe,
 
 static INLINE void
 trace_context_delete_vs_state(struct pipe_context *_pipe,
-                              void *state)
+                              void *_state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_shader *tr_shdr = trace_shader(_state);
    struct pipe_context *pipe = tr_ctx->pipe;
+   void *state = tr_shdr->state;
 
    trace_dump_call_begin("pipe_context", "delete_vs_state");
 
@@ -669,6 +773,8 @@ trace_context_delete_vs_state(struct pipe_context *_pipe,
    pipe->delete_vs_state(pipe, state);;
 
    trace_dump_call_end();
+
+   trace_shader_destroy(tr_ctx, tr_shdr);
 }
 
 
@@ -746,6 +852,19 @@ trace_context_set_framebuffer_state(struct pipe_context *_pipe,
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_framebuffer_state unwrapped_state;
    unsigned i;
+
+   {
+      tr_ctx->curr.nr_cbufs = state->nr_cbufs;
+      for (i = 0; i < state->nr_cbufs; i++)
+         if (state->cbufs[i])
+            tr_ctx->curr.cbufs[i] = trace_texture(state->cbufs[i]->texture);
+         else
+            tr_ctx->curr.cbufs[i] = NULL;
+      if (state->zsbuf)
+         tr_ctx->curr.zsbuf = trace_texture(state->zsbuf->texture);
+      else
+         tr_ctx->curr.zsbuf = NULL;
+   }
 
    /* Unwrap the input state */
    memcpy(&unwrapped_state, state, sizeof(unwrapped_state));
@@ -827,12 +946,17 @@ trace_context_set_sampler_textures(struct pipe_context *_pipe,
                                    struct pipe_texture **textures)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_texture *tr_tex;
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_texture *unwrapped_textures[PIPE_MAX_SAMPLERS];
    unsigned i;
 
-   for(i = 0; i < num_textures; ++i)
-      unwrapped_textures[i] = trace_texture_unwrap(tr_ctx, textures[i]);
+   tr_ctx->curr.num_texs = num_textures;
+   for(i = 0; i < num_textures; ++i) {
+      tr_tex = trace_texture(textures[i]);
+      tr_ctx->curr.tex[i] = tr_tex;
+      unwrapped_textures[i] = tr_tex ? tr_tex->texture : NULL;
+   }
    textures = unwrapped_textures;
 
    trace_dump_call_begin("pipe_context", "set_sampler_textures");
@@ -1016,20 +1140,73 @@ trace_context_flush(struct pipe_context *_pipe,
 static INLINE void
 trace_context_destroy(struct pipe_context *_pipe)
 {
+   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin("pipe_context", "destroy");
-
    trace_dump_arg(ptr, pipe);
+   trace_dump_call_end();
+
+   trace_screen_remove_from_list(tr_scr, contexts, tr_ctx);
 
    pipe->destroy(pipe);
-
-   trace_dump_call_end();
 
    FREE(tr_ctx);
 }
 
+static unsigned int
+trace_is_texture_referenced( struct pipe_context *_pipe,
+			    struct pipe_texture *_texture,
+			    unsigned face, unsigned level)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_texture *tr_tex = trace_texture(_texture);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_texture *texture = tr_tex->texture;
+   unsigned int referenced;
+
+   trace_dump_call_begin("pipe_context", "is_texture_referenced");
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, texture);
+   trace_dump_arg(uint, face);
+   trace_dump_arg(uint, level);
+
+   referenced = pipe->is_texture_referenced(pipe, texture, face, level);
+
+   trace_dump_ret(uint, referenced);
+   trace_dump_call_end();
+
+   return referenced;
+}
+
+static unsigned int
+trace_is_buffer_referenced( struct pipe_context *_pipe,
+			    struct pipe_buffer *_buf)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_buffer *tr_buf = trace_buffer(_buf);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_buffer *buf = tr_buf->buffer;
+   unsigned int referenced;
+
+   trace_dump_call_begin("pipe_context", "is_buffer_referenced");
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, buf);
+
+   referenced = pipe->is_buffer_referenced(pipe, buf);
+
+   trace_dump_ret(uint, referenced);
+   trace_dump_call_end();
+
+   return referenced;
+}
+
+static const struct debug_named_value rbug_blocker_flags[] = {
+   {"before", 1},
+   {"after", 2},
+   {NULL, 0},
+};
 
 struct pipe_context *
 trace_context_create(struct pipe_screen *_screen,
@@ -1042,7 +1219,7 @@ trace_context_create(struct pipe_screen *_screen,
    if(!pipe)
       goto error1;
 
-   if(!trace_dump_enabled())
+   if(!trace_enabled())
       goto error1;
 
    tr_scr = trace_screen(_screen);
@@ -1051,6 +1228,14 @@ trace_context_create(struct pipe_screen *_screen,
    tr_ctx = CALLOC_STRUCT(trace_context);
    if(!tr_ctx)
       goto error1;
+
+   tr_ctx->draw_blocker = debug_get_flags_option("RBUG_BLOCK",
+                                                 rbug_blocker_flags,
+                                                 0);
+   pipe_mutex_init(tr_ctx->draw_mutex);
+   pipe_condvar_init(tr_ctx->draw_cond);
+   pipe_mutex_init(tr_ctx->list_mutex);
+   make_empty_list(&tr_ctx->shaders);
 
    tr_ctx->base.winsys = _screen->winsys;
    tr_ctx->base.screen = _screen;
@@ -1096,6 +1281,8 @@ trace_context_create(struct pipe_screen *_screen,
    tr_ctx->base.surface_fill = trace_context_surface_fill;
    tr_ctx->base.clear = trace_context_clear;
    tr_ctx->base.flush = trace_context_flush;
+   tr_ctx->base.is_texture_referenced = trace_is_texture_referenced;
+   tr_ctx->base.is_buffer_referenced = trace_is_buffer_referenced;
 
    tr_ctx->pipe = pipe;
 
@@ -1103,6 +1290,8 @@ trace_context_create(struct pipe_screen *_screen,
    trace_dump_arg(ptr, screen);
    trace_dump_ret(ptr, pipe);
    trace_dump_call_end();
+
+   trace_screen_add_to_list(tr_scr, contexts, tr_ctx);
 
    return &tr_ctx->base;
 

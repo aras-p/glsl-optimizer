@@ -26,11 +26,12 @@
  * 
  **************************************************************************/
 
-#include "nv40_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_inlines.h"
+
 #include "util/u_tile.h"
+
+#include "nv40_context.h"
 
 static void
 nv40_surface_copy(struct pipe_context *pipe,

@@ -315,12 +315,6 @@ static void make_state_key( GLcontext *ctx, struct state_key *key )
  */
 #define DISASSEM 0
 
-/* Should be tunable by the driver - do we want to do matrix
- * multiplications with DP4's or with MUL/MAD's?  SSE works better
- * with the latter, drivers may differ.
- */
-#define PREFER_DP4 0
-
 
 /* Use uregs to represent registers internally, translate to Mesa's
  * expected formats on emit.  
@@ -348,6 +342,7 @@ struct tnl_program {
    const struct state_key *state;
    struct gl_vertex_program *program;
    GLint max_inst;  /** number of instructions allocated for program */
+   GLboolean mvp_with_dp4;
    
    GLuint temp_in_use;
    GLuint temp_reserved;
@@ -570,9 +565,8 @@ static void emit_arg( struct prog_src_register *src,
    src->File = reg.file;
    src->Index = reg.idx;
    src->Swizzle = reg.swz;
-   src->NegateBase = reg.negate ? NEGATE_XYZW : 0;
+   src->Negate = reg.negate ? NEGATE_XYZW : NEGATE_NONE;
    src->Abs = 0;
-   src->NegateAbs = 0;
    src->RelAddr = 0;
    /* Check that bitfield sizes aren't exceeded */
    ASSERT(src->Index == reg.idx);
@@ -776,7 +770,7 @@ static struct ureg get_eye_position( struct tnl_program *p )
 
       p->eye_position = reserve_temp(p);
 
-      if (PREFER_DP4) {
+      if (p->mvp_with_dp4) {
 	 register_matrix_param5( p, STATE_MODELVIEW_MATRIX, 0, 0, 3,
                                  0, modelview );
 
@@ -882,7 +876,7 @@ static void build_hpos( struct tnl_program *p )
    struct ureg hpos = register_output( p, VERT_RESULT_HPOS );
    struct ureg mvp[4];
 
-   if (PREFER_DP4) {
+   if (p->mvp_with_dp4) {
       register_matrix_param5( p, STATE_MVP_MATRIX, 0, 0, 3, 
 			      0, mvp );
       emit_matrix_transform_vec4( p, hpos, mvp, pos );
@@ -1575,7 +1569,7 @@ static void build_texture_transform( struct tnl_program *p )
 	    struct ureg in = (!is_undef(out_texgen) ? 
 			      out_texgen : 
 			      register_input(p, VERT_ATTRIB_TEX0+i));
-	    if (PREFER_DP4) {
+	    if (p->mvp_with_dp4) {
 	       register_matrix_param5( p, STATE_TEXTURE_MATRIX, i, 0, 3,
 				       0, texmat );
 	       emit_matrix_transform_vec4( p, out, texmat, in );
@@ -1709,6 +1703,7 @@ static void build_tnl_program( struct tnl_program *p )
 static void
 create_new_program( const struct state_key *key,
                     struct gl_vertex_program *program,
+                    GLboolean mvp_with_dp4,
                     GLuint max_temps)
 {
    struct tnl_program p;
@@ -1722,6 +1717,7 @@ create_new_program( const struct state_key *key,
    p.transformed_normal = undef;
    p.identity = undef;
    p.temp_in_use = 0;
+   p.mvp_with_dp4 = mvp_with_dp4;
    
    if (max_temps >= sizeof(int) * 8)
       p.temp_reserved = 0;
@@ -1777,6 +1773,7 @@ _mesa_get_fixed_func_vertex_program(GLcontext *ctx)
          return NULL;
 
       create_new_program( &key, prog,
+                          ctx->mvp_with_dp4,
                           ctx->Const.VertexProgram.MaxTemps );
 
 #if 0

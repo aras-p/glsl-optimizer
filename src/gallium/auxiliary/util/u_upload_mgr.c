@@ -70,7 +70,7 @@ struct u_upload_mgr *u_upload_create( struct pipe_screen *screen,
 }
 
 
-static INLINE void
+static INLINE enum pipe_error
 my_buffer_write(struct pipe_screen *screen,
                 struct pipe_buffer *buf,
                 unsigned offset, unsigned size, unsigned dirty_size,
@@ -84,12 +84,14 @@ my_buffer_write(struct pipe_screen *screen,
    assert(size);
 
    map = pipe_buffer_map_range(screen, buf, offset, size, PIPE_BUFFER_USAGE_CPU_WRITE);
-   assert(map);
-   if(map) {
-      memcpy(map + offset, data, size);
-      pipe_buffer_flush_mapped_range(screen, buf, offset, dirty_size);
-      pipe_buffer_unmap(screen, buf);
-   }
+   if (map == NULL) 
+      return PIPE_ERROR_OUT_OF_MEMORY;
+
+   memcpy(map + offset, data, size);
+   pipe_buffer_flush_mapped_range(screen, buf, offset, dirty_size);
+   pipe_buffer_unmap(screen, buf);
+
+   return PIPE_OK;
 }
 
 /* Release old buffer.
@@ -162,12 +164,14 @@ enum pipe_error u_upload_data( struct u_upload_mgr *upload,
 
    /* Copy the data, using map_range if available:
     */
-   my_buffer_write( upload->screen, 
-                    upload->buffer,
-                    upload->offset,
-                    size, 
-                    alloc_size,
-                    data );
+   ret = my_buffer_write( upload->screen, 
+                          upload->buffer,
+                          upload->offset,
+                          size, 
+                          alloc_size,
+                          data );
+   if (ret)
+      return ret;
 
    /* Emit the return values:
     */

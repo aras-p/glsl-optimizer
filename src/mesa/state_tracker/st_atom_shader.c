@@ -175,11 +175,12 @@ find_translated_vp(struct st_context *st,
 
    /* See if we need to translate vertex program to TGSI form */
    if (xvp->serialNo != stvp->serialNo) {
-      GLuint outAttr, dummySlot;
+      GLuint outAttr;
       const GLbitfield outputsWritten = stvp->Base.Base.OutputsWritten;
       GLuint numVpOuts = 0;
       GLboolean emitPntSize = GL_FALSE, emitBFC0 = GL_FALSE, emitBFC1 = GL_FALSE;
-      GLint maxGeneric;
+      GLbitfield usedGenerics = 0x0;
+      GLbitfield usedOutputSlots = 0x0;
 
       /* Compute mapping of vertex program outputs to slots, which depends
        * on the fragment program's input->slot mapping.
@@ -192,10 +193,12 @@ find_translated_vp(struct st_context *st,
 
          if (outAttr == VERT_RESULT_HPOS) {
             /* always put xformed position into slot zero */
-            xvp->output_to_slot[VERT_RESULT_HPOS] = 0;
+            GLuint slot = 0;
+            xvp->output_to_slot[VERT_RESULT_HPOS] = slot;
             xvp->output_to_semantic_name[outAttr] = TGSI_SEMANTIC_POSITION;
             xvp->output_to_semantic_index[outAttr] = 0;
             numVpOuts++;
+            usedOutputSlots |= (1 << slot);
          }
          else if (outputsWritten & (1 << outAttr)) {
             /* see if the frag prog wants this vert output */
@@ -209,6 +212,12 @@ find_translated_vp(struct st_context *st,
                   xvp->output_to_semantic_name[outAttr] = stfp->input_semantic_name[fpInSlot];
                   xvp->output_to_semantic_index[outAttr] = stfp->input_semantic_index[fpInSlot];
                   numVpOuts++;
+                  usedOutputSlots |= (1 << vpOutSlot);
+               }
+               else {
+#if 0 /*debug*/
+                  printf("VP output %d not used by FP\n", outAttr);
+#endif
                }
             }
             else if (outAttr == VERT_RESULT_PSIZ)
@@ -226,45 +235,49 @@ find_translated_vp(struct st_context *st,
 
       /* must do these last */
       if (emitPntSize) {
-         xvp->output_to_slot[VERT_RESULT_PSIZ] = numVpOuts++;
+         GLuint slot = numVpOuts++;
+         xvp->output_to_slot[VERT_RESULT_PSIZ] = slot;
          xvp->output_to_semantic_name[VERT_RESULT_PSIZ] = TGSI_SEMANTIC_PSIZE;
          xvp->output_to_semantic_index[VERT_RESULT_PSIZ] = 0;
+         usedOutputSlots |= (1 << slot);
       }
       if (emitBFC0) {
-         xvp->output_to_slot[VERT_RESULT_BFC0] = numVpOuts++;
+         GLuint slot = numVpOuts++;
+         xvp->output_to_slot[VERT_RESULT_BFC0] = slot;
          xvp->output_to_semantic_name[VERT_RESULT_BFC0] = TGSI_SEMANTIC_COLOR;
          xvp->output_to_semantic_index[VERT_RESULT_BFC0] = 0;
+         usedOutputSlots |= (1 << slot);
       }
       if (emitBFC1) {
-         xvp->output_to_slot[VERT_RESULT_BFC1] = numVpOuts++;
-         xvp->output_to_semantic_name[VERT_RESULT_BFC0] = TGSI_SEMANTIC_COLOR;
-         xvp->output_to_semantic_index[VERT_RESULT_BFC0] = 1;
+         GLuint slot = numVpOuts++;
+         xvp->output_to_slot[VERT_RESULT_BFC1] = slot;
+         xvp->output_to_semantic_name[VERT_RESULT_BFC1] = TGSI_SEMANTIC_COLOR;
+         xvp->output_to_semantic_index[VERT_RESULT_BFC1] = 1;
+         usedOutputSlots |= (1 << slot);
       }
 
-      /* Unneeded vertex program outputs will go to this slot.
-       * We could use this info to do dead code elimination in the
-       * vertex program.
-       */
-      dummySlot = numVpOuts;
-
-      /* find max GENERIC slot index */
-      maxGeneric = -1;
+      /* build usedGenerics mask */
+      usedGenerics = 0x0;
       for (outAttr = 0; outAttr < VERT_RESULT_MAX; outAttr++) {
          if (xvp->output_to_semantic_name[outAttr] == TGSI_SEMANTIC_GENERIC) {
-            maxGeneric = MAX2(maxGeneric,
-                              xvp->output_to_semantic_index[outAttr]);
+            usedGenerics |= (1 << xvp->output_to_semantic_index[outAttr]);
          }
       }
 
-      /* Map vert program outputs that aren't used to the dummy slot
-       * (and an unused generic attribute slot).
+      /* For each vertex program output that doesn't match up to a fragment
+       * program input, map the vertex program output to a free slot and
+       * free generic attribute.
        */
       for (outAttr = 0; outAttr < VERT_RESULT_MAX; outAttr++) {
          if (outputsWritten & (1 << outAttr)) {
             if (xvp->output_to_slot[outAttr] == UNUSED) {
-               xvp->output_to_slot[outAttr] = dummySlot;
+               GLint freeGeneric = _mesa_ffs(~usedGenerics) - 1;
+               GLint freeSlot = _mesa_ffs(~usedOutputSlots) - 1;
+               usedGenerics |= (1 << freeGeneric);
+               usedOutputSlots |= (1 << freeSlot);
+               xvp->output_to_slot[outAttr] = freeSlot;
                xvp->output_to_semantic_name[outAttr] = TGSI_SEMANTIC_GENERIC;
-               xvp->output_to_semantic_index[outAttr] = maxGeneric + 1;
+               xvp->output_to_semantic_index[outAttr] = freeGeneric;
             }
          }
 

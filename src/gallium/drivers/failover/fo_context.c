@@ -105,7 +105,28 @@ static boolean failover_draw_arrays( struct pipe_context *pipe,
    return failover_draw_elements(pipe, NULL, 0, prim, start, count);
 }
 
+static unsigned int
+failover_is_texture_referenced( struct pipe_context *_pipe,
+				struct pipe_texture *texture,
+				unsigned face, unsigned level)
+{
+   struct failover_context *failover = failover_context( _pipe );
+   struct pipe_context *pipe = (failover->mode == FO_HW) ?
+      failover->hw : failover->sw;
 
+   return pipe->is_texture_referenced(pipe, texture, face, level);
+}
+
+static unsigned int
+failover_is_buffer_referenced( struct pipe_context *_pipe,
+			       struct pipe_buffer *buf)
+{
+   struct failover_context *failover = failover_context( _pipe );
+   struct pipe_context *pipe = (failover->mode == FO_HW) ?
+      failover->hw : failover->sw;
+
+   return pipe->is_buffer_referenced(pipe, buf);
+}
 
 struct pipe_context *failover_create( struct pipe_context *hw,
 				      struct pipe_context *sw )
@@ -151,6 +172,8 @@ struct pipe_context *failover_create( struct pipe_context *hw,
 #endif
 
    failover->pipe.flush = hw->flush;
+   failover->pipe.is_texture_referenced = failover_is_texture_referenced;
+   failover->pipe.is_buffer_referenced = failover_is_buffer_referenced;
 
    failover->dirty = 0;
 

@@ -37,11 +37,8 @@
 
        
 
-/* This is used to initialize st->atoms[].  We could use this list
- * directly except for a single atom, st_update_constants, which has a
- * .dirty value which changes according to the parameters of the
- * current fragment and vertex programs, and so cannot be a static
- * value.
+/**
+ * This is used to initialize st->atoms[].
  */
 static const struct st_tracked_state *atoms[] =
 {
@@ -67,34 +64,13 @@ static const struct st_tracked_state *atoms[] =
 
 void st_init_atoms( struct st_context *st )
 {
-   GLuint i;
-
-   st->atoms = _mesa_malloc(sizeof(atoms));
-   st->nr_atoms = sizeof(atoms)/sizeof(*atoms);
-   memcpy(st->atoms, atoms, sizeof(atoms));
-
-   /* Patch in a pointer to the dynamic state atom:
-    */
-   for (i = 0; i < st->nr_atoms; i++) {
-      if (st->atoms[i] == &st_update_vs_constants) {
-	 st->atoms[i] = &st->constants.tracked_state[PIPE_SHADER_VERTEX];
-	 st->atoms[i][0] = st_update_vs_constants;
-      }
-
-      if (st->atoms[i] == &st_update_fs_constants) {
-	 st->atoms[i] = &st->constants.tracked_state[PIPE_SHADER_FRAGMENT];
-	 st->atoms[i][0] = st_update_fs_constants;
-      }
-   }
+   /* no-op */
 }
 
 
 void st_destroy_atoms( struct st_context *st )
 {
-   if (st->atoms) {
-      _mesa_free(st->atoms);
-      st->atoms = NULL;
-   }
+   /* no-op */
 }
 
 
@@ -172,8 +148,8 @@ void st_validate_state( struct st_context *st )
       memset(&examined, 0, sizeof(examined));
       prev = *state;
 
-      for (i = 0; i < st->nr_atoms; i++) {	 
-	 const struct st_tracked_state *atom = st->atoms[i];
+      for (i = 0; i < Elements(atoms); i++) {	 
+	 const struct st_tracked_state *atom = atoms[i];
 	 struct st_state_flags generated;
 	 
 //	 _mesa_printf("atom %s %x/%x\n", atom->name, atom->dirty.mesa, atom->dirty.st);
@@ -185,7 +161,7 @@ void st_validate_state( struct st_context *st )
 	 }
 
 	 if (check_state(state, &atom->dirty)) {
-	    st->atoms[i]->update( st );
+	    atoms[i]->update( st );
 //	    _mesa_printf("after: %x\n", atom->dirty.mesa);
 	 }
 
@@ -203,11 +179,9 @@ void st_validate_state( struct st_context *st )
 
    }
    else {
-      const GLuint nr = st->nr_atoms;
-
-      for (i = 0; i < nr; i++) {	 
-	 if (check_state(state, &st->atoms[i]->dirty))
-	    st->atoms[i]->update( st );
+      for (i = 0; i < Elements(atoms); i++) {	 
+	 if (check_state(state, &atoms[i]->dirty))
+	    atoms[i]->update( st );
       }
    }
 

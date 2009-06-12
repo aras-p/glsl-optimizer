@@ -448,16 +448,28 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    // }
 
    END_BATCH();
+   BEGIN_BATCH_NO_AUTOSTATE(4);
+   OUT_BATCH(CP_PACKET0(RADEON_RE_TOP_LEFT, 0));
+   OUT_BATCH(0);
+   OUT_BATCH(CP_PACKET0(RADEON_RE_WIDTH_HEIGHT, 0));
+   if (rrb) {
+       OUT_BATCH(((rrb->width - 1) << RADEON_RE_WIDTH_SHIFT) |
+                 ((rrb->height - 1) << RADEON_RE_HEIGHT_SHIFT));
+   } else {
+       OUT_BATCH(0);
+   }
+   END_BATCH();
 }
 
 static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
    BATCH_LOCALS(&r100->radeon);
-   uint32_t dwords = atom->cmd_size;
+   uint32_t dwords = 2;
    int i = atom->idx, j;
    radeonTexObj *t = r100->state.texture.unit[i].texobj;
    radeon_mipmap_level *lvl;
+   uint32_t base_reg;
 
    if (!(ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT))
 	return;
@@ -468,10 +480,17 @@ static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    if (!t->mt)
 	return;
 
-   BEGIN_BATCH_NO_AUTOSTATE(dwords + 10);
-   OUT_BATCH_TABLE(atom->cmd, 3);
+   switch(i) {
+	case 1: base_reg = RADEON_PP_CUBIC_OFFSET_T1_0; break;
+	case 2: base_reg = RADEON_PP_CUBIC_OFFSET_T2_0; break;
+	default:
+	case 0: base_reg = RADEON_PP_CUBIC_OFFSET_T0_0; break;
+   };
+   BEGIN_BATCH_NO_AUTOSTATE(dwords + (5 * 4));
+   OUT_BATCH_TABLE(atom->cmd, 2);
    lvl = &t->mt->levels[0];
    for (j = 0; j < 5; j++) {
+	OUT_BATCH(CP_PACKET0(base_reg + (4 * (j-1)), 0));
 	OUT_BATCH_RELOC(lvl->faces[j].offset, t->mt->bo, lvl->faces[j].offset,
 			RADEON_GEM_DOMAIN_VRAM, 0, 0);
    }

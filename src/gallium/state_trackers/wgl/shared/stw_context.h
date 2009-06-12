@@ -35,8 +35,9 @@ struct st_context;
 struct stw_context
 {
    struct st_context *st;
+   UINT_PTR hglrc;
+   int iPixelFormat;
    HDC hdc;
-   DWORD color_bits;
 };
 
 #endif /* STW_CONTEXT_H */

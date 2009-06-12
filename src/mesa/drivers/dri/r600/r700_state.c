@@ -527,7 +527,7 @@ static void r700UpdateWindow(GLcontext * ctx, int id) //--------------------
 
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-	__DRIdrawablePrivate *dPriv = context->radeon.dri.drawable;
+	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&context->radeon);
 	GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
 	GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
 	const GLfloat *v = ctx->Viewport._WindowMap.m;

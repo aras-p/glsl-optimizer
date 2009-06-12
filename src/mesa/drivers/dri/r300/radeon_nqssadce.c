@@ -61,12 +61,12 @@ static struct prog_src_register lmul_swizzle(GLuint swizzle, struct prog_src_reg
 	struct prog_src_register tmp = srcreg;
 	int i;
 	tmp.Swizzle = 0;
-	tmp.NegateBase = 0;
+	tmp.Negate = NEGATE_NONE;
 	for(i = 0; i < 4; ++i) {
 		GLuint swz = GET_SWZ(swizzle, i);
 		if (swz < 4) {
 			tmp.Swizzle |= GET_SWZ(srcreg.Swizzle, swz) << (i*3);
-			tmp.NegateBase |= GET_BIT(srcreg.NegateBase, swz) << i;
+			tmp.Negate |= GET_BIT(srcreg.Negate, swz) << i;
 		} else {
 			tmp.Swizzle |= swz << (i*3);
 		}
@@ -103,9 +103,8 @@ static struct prog_instruction* track_used_srcreg(struct nqssadce_state* s,
 		inst->SrcReg[src].File = PROGRAM_TEMPORARY;
 		inst->SrcReg[src].Index = dstreg.Index;
 		inst->SrcReg[src].Swizzle = 0;
-		inst->SrcReg[src].NegateBase = 0;
+		inst->SrcReg[src].Negate = NEGATE_NONE;
 		inst->SrcReg[src].Abs = 0;
-		inst->SrcReg[src].NegateAbs = 0;
 		for(i = 0; i < 4; ++i) {
 			if (GET_BIT(sourced, i))
 				inst->SrcReg[src].Swizzle |= i << (3*i);

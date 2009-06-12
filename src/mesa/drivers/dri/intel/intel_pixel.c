@@ -27,9 +27,12 @@
 
 #include "main/enums.h"
 #include "main/state.h"
+#include "main/bufferobj.h"
 #include "main/context.h"
 #include "main/enable.h"
 #include "main/matrix.h"
+#include "main/texstate.h"
+#include "main/varray.h"
 #include "main/viewport.h"
 #include "swrast/swrast.h"
 #include "shader/arbprogram.h"
@@ -334,6 +337,85 @@ intel_meta_restore_fragment_program(struct intel_context *intel)
       _mesa_Disable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
+static const float default_texcoords[4][2] = { { 0.0, 0.0 },
+					       { 1.0, 0.0 },
+					       { 1.0, 1.0 },
+					       { 0.0, 1.0 } };
+
+void
+intel_meta_set_default_texrect(struct intel_context *intel)
+{
+   GLcontext *ctx = &intel->ctx;
+   struct gl_client_array *old_texcoord_array;
+
+   intel->meta.saved_active_texture = ctx->Texture.CurrentUnit;
+   if (intel->meta.saved_array_vbo == NULL) {
+      _mesa_reference_buffer_object(ctx, &intel->meta.saved_array_vbo,
+				    ctx->Array.ArrayBufferObj);
+   }
+
+   old_texcoord_array = &ctx->Array.ArrayObj->TexCoord[0];
+   intel->meta.saved_texcoord_type = old_texcoord_array->Type;
+   intel->meta.saved_texcoord_size = old_texcoord_array->Size;
+   intel->meta.saved_texcoord_stride = old_texcoord_array->Stride;
+   intel->meta.saved_texcoord_enable = old_texcoord_array->Enabled;
+   intel->meta.saved_texcoord_ptr = old_texcoord_array->Ptr;
+   _mesa_reference_buffer_object(ctx, &intel->meta.saved_texcoord_vbo,
+				 old_texcoord_array->BufferObj);
+
+   _mesa_ClientActiveTextureARB(GL_TEXTURE0);
+
+   if (intel->meta.texcoord_vbo == NULL) {
+      GLuint vbo_name;
+
+      _mesa_GenBuffersARB(1, &vbo_name);
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, vbo_name);
+      _mesa_BufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(default_texcoords),
+			  default_texcoords, GL_STATIC_DRAW_ARB);
+      _mesa_reference_buffer_object(ctx, &intel->meta.texcoord_vbo,
+				    ctx->Array.ArrayBufferObj);
+   } else {
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB,
+			  intel->meta.texcoord_vbo->Name);
+   }
+   _mesa_TexCoordPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), NULL);
+
+   _mesa_Enable(GL_TEXTURE_COORD_ARRAY);
+}
+
+void
+intel_meta_restore_texcoords(struct intel_context *intel)
+{
+   GLcontext *ctx = &intel->ctx;
+
+   /* Restore the old TexCoordPointer */
+   if (intel->meta.saved_texcoord_vbo) {
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB,
+			  intel->meta.saved_texcoord_vbo->Name);
+      _mesa_reference_buffer_object(ctx, &intel->meta.saved_texcoord_vbo, NULL);
+   } else {
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+   }
+
+   _mesa_TexCoordPointer(intel->meta.saved_texcoord_size,
+			 intel->meta.saved_texcoord_type,
+			 intel->meta.saved_texcoord_stride,
+			 intel->meta.saved_texcoord_ptr);
+   if (!intel->meta.saved_texcoord_enable)
+      _mesa_Disable(GL_TEXTURE_COORD_ARRAY);
+
+   _mesa_ClientActiveTextureARB(GL_TEXTURE0 +
+				intel->meta.saved_active_texture);
+
+   if (intel->meta.saved_array_vbo) {
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB,
+			  intel->meta.saved_array_vbo->Name);
+      _mesa_reference_buffer_object(ctx, &intel->meta.saved_array_vbo, NULL);
+   } else {
+      _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+   }
+}
+
 void
 intelInitPixelFuncs(struct dd_function_table *functions)
 {
@@ -355,5 +437,7 @@ intel_free_pixel_state(struct intel_context *intel)
 
    _mesa_reference_vertprog(ctx, &intel->meta.passthrough_vp, NULL);
    _mesa_reference_fragprog(ctx, &intel->meta.bitmap_fp, NULL);
+   _mesa_reference_fragprog(ctx, &intel->meta.tex2d_fp, NULL);
+   _mesa_reference_buffer_object(ctx, &intel->meta.texcoord_vbo, NULL);
 }
 

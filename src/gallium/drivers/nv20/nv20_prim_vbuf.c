@@ -152,12 +152,11 @@ static void *
 nv20_vbuf_render_map_vertices( struct vbuf_render *render )
 {
 	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
-	struct pipe_winsys *winsys = nv20_render->nv20->pipe.winsys;
+	struct pipe_screen *pscreen = nv20_render->nv20->pipe.screen;
 
 	if (nv20_render->pbuffer) {
-		return winsys->buffer_map(winsys,
-				nv20_render->pbuffer,
-				PIPE_BUFFER_USAGE_CPU_WRITE);
+		return pipe_buffer_map(pscreen, nv20_render->pbuffer,
+				       PIPE_BUFFER_USAGE_CPU_WRITE);
 	} else if (nv20_render->mbuffer) {
 		return nv20_render->mbuffer;
 	} else
@@ -173,10 +172,10 @@ nv20_vbuf_render_unmap_vertices( struct vbuf_render *render,
 		ushort max_index )
 {
 	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
-	struct pipe_winsys *winsys = nv20_render->nv20->pipe.winsys;
+	struct pipe_screen *pscreen = nv20_render->nv20->pipe.screen;
 
 	if (nv20_render->pbuffer)
-		winsys->buffer_unmap(winsys, nv20_render->pbuffer);
+		pipe_buffer_unmap(pscreen, nv20_render->pbuffer);
 }
 
 static boolean
@@ -358,7 +357,6 @@ nv20_vbuf_render_release_vertices( struct vbuf_render *render )
 {
 	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
 	struct nv20_context *nv20 = nv20_render->nv20;
-	struct pipe_screen *pscreen = &nv20->screen->pipe;
 
 	if (nv20_render->pbuffer) {
 		pipe_buffer_reference(&nv20_render->pbuffer, NULL);

@@ -157,7 +157,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    /* Do this here, not core Mesa, since this function is called from
     * many places within the driver.
     */
-   if (ctx->NewState & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
+   if (ctx->NewState & _NEW_BUFFERS) {
       /* this updates the DrawBuffer->_NumColorDrawBuffers fields, etc */
       _mesa_update_framebuffer(ctx);
       /* this updates the DrawBuffer's Width/Height if it's a FBO */
@@ -202,6 +202,8 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 	       intel_batchbuffer_flush(intel->batch);
 	    intel->front_cliprects = GL_TRUE;
 	    colorRegions[0] = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
+
+	    intel->front_buffer_dirty = GL_TRUE;
 	 }
 	 else {
 	    if (!intel->constant_cliprect && intel->front_cliprects)
@@ -274,7 +276,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       ctx->Driver.Enable(ctx, GL_DEPTH_TEST,
                          (ctx->Depth.Test && fb->Visual.depthBits > 0));
       ctx->Driver.Enable(ctx, GL_STENCIL_TEST,
-                         (ctx->Stencil._Enabled && fb->Visual.stencilBits > 0));
+                         (ctx->Stencil.Enabled && fb->Visual.stencilBits > 0));
    }
    else {
       /* Mesa's Stencil._Enabled field is updated when
@@ -319,6 +321,23 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 static void
 intelDrawBuffer(GLcontext * ctx, GLenum mode)
 {
+   if ((ctx->DrawBuffer != NULL) && (ctx->DrawBuffer->Name == 0)) {
+      struct intel_context *const intel = intel_context(ctx);
+      const GLboolean was_front_buffer_rendering =
+	intel->is_front_buffer_rendering;
+
+      intel->is_front_buffer_rendering = (mode == GL_FRONT_LEFT)
+	|| (mode == GL_FRONT);
+
+      /* If we weren't front-buffer rendering before but we are now, make sure
+       * that the front-buffer has actually been allocated.
+       */
+      if (!was_front_buffer_rendering && intel->is_front_buffer_rendering) {
+	 intel_update_renderbuffers(intel->driContext,
+				    intel->driContext->driDrawablePriv);
+      }
+   }
+
    intel_draw_buffer(ctx, ctx->DrawBuffer);
 }
 

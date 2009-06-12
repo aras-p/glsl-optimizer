@@ -18,58 +18,29 @@ extern "C" {
 
 
 /* Favor OS-provided implementations.
+ *
+ * Where no OS-provided implementation is available, fall back to
+ * locally coded assembly, compiler intrinsic or ultimately a
+ * mutex-based implementation.
  */
-#define PIPE_ATOMIC_OS_UNLOCKED                 \
-   (defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) ||  \
-    defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT))
-
-#define PIPE_ATOMIC_OS_MS_INTERLOCK             \
-   (!defined(PIPE_CC_GCC) &&                    \
-    !PIPE_ATOMIC_OS_UNLOCKED &&                 \
-    defined(PIPE_SUBSYSTEM_WINDOWS_USER))
-
-#define PIPE_ATOMIC_OS_PROVIDED                 \
-   (PIPE_ATOMIC_OS_UNLOCKED ||                  \
-    PIPE_ATOMIC_OS_MS_INTERLOCK)
-
-/* Where no OS-provided implementation is available, fall back to
- * either locally coded assembly or ultimately a mutex-based
- * implementation:
- */
-#define PIPE_ATOMIC_ASM_GCC_X86                 \
-   (!PIPE_ATOMIC_OS_PROVIDED &&                 \
-    defined(PIPE_CC_GCC) &&                     \
-    defined(PIPE_ARCH_X86))
-
-/* KW: this was originally used when x86 asm wasn't available.
- * Maintain that logic here.
- */
-#define PIPE_ATOMIC_GCC_INTRINISIC              \
-   (!PIPE_ATOMIC_OS_PROVIDED &&                 \
-    !PIPE_ATOMIC_ASM_GCC_X86 &&                 \
-    defined(PIPE_CC_GCC))
-
-#define PIPE_ATOMIC_ASM_MSVC_X86                \
-   (!PIPE_ATOMIC_OS_PROVIDED &&                 \
-    defined(PIPE_CC_MSVC) &&                    \
-    defined(PIPE_ARCH_X86))
-
-#define PIPE_ATOMIC_ASM                         \
-   (PIPE_ATOMIC_ASM_GCC_X86 ||                  \
-    PIPE_ATOMIC_ASM_GCC_INTRINSIC ||            \
-    PIPE_ATOMIC_ASM_MSVC_X86)
-
-
-/* Where no OS-provided or locally-coded assembly implemenation is
- * available, use pipe_mutex:
- */
-#define PIPE_ATOMIC_MUTEX                       \
-   (!PIPE_ATOMIC_OS_PROVIDED &&                         \
-    !PIPE_ATOMIC_ASM)
+#if (defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || \
+     defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT))
+#define PIPE_ATOMIC_OS_UNLOCKED 
+#elif (defined(PIPE_CC_MSVC) && defined(PIPE_SUBSYSTEM_WINDOWS_USER))
+#define PIPE_ATOMIC_OS_MS_INTERLOCK
+#elif (defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86))
+#define PIPE_ATOMIC_ASM_MSVC_X86                
+#elif (defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86))
+#define PIPE_ATOMIC_ASM_GCC_X86
+#elif defined(PIPE_CC_GCC)
+#define PIPE_ATOMIC_GCC_INTRINSIC
+#else
+#define PIPE_ATOMIC_MUTEX                       
+#endif
 
 
 
-#if (PIPE_ATOMIC_ASM_GCC_X86)
+#if defined(PIPE_ATOMIC_ASM_GCC_X86)
 
 #define PIPE_ATOMIC "GCC x86 assembly"
 
@@ -115,7 +86,7 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 
 /* Implementation using GCC-provided synchronization intrinsics
  */
-#if (PIPE_ATOMIC_ASM_GCC_INTRINSIC)
+#if defined(PIPE_ATOMIC_GCC_INTRINSIC)
 
 #define PIPE_ATOMIC "GCC Sync Intrinsics"
 
@@ -157,7 +128,7 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 /* Unlocked version for single threaded environments, such as some
  * windows kernel modules.
  */
-#if (PIPE_ATOMIC_OS_UNLOCKED) 
+#if defined(PIPE_ATOMIC_OS_UNLOCKED) 
 
 #define PIPE_ATOMIC "Unlocked"
 
@@ -178,7 +149,7 @@ struct pipe_atomic
 
 /* Locally coded assembly for MSVC on x86:
  */
-#if (PIPE_ATOMIC_ASM_MSVC_X86)
+#if defined(PIPE_ATOMIC_ASM_MSVC_X86)
 
 #define PIPE_ATOMIC "MSVC x86 assembly"
 
@@ -246,7 +217,7 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 #endif
 
 
-#if (PIPE_ATOMIC_OS_MS_INTERLOCK)
+#if defined(PIPE_ATOMIC_OS_MS_INTERLOCK)
 
 #define PIPE_ATOMIC "MS userspace interlocks"
 
@@ -254,7 +225,7 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 
 struct pipe_atomic
 {
-   long count;
+   volatile long count;
 };
 
 #define p_atomic_set(_v, _i) ((_v)->count = (_i))
@@ -263,7 +234,7 @@ struct pipe_atomic
 static INLINE boolean
 p_atomic_dec_zero(struct pipe_atomic *v)
 {
-   return InterlockedDecrement(&v->count);
+   return InterlockedDecrement(&v->count) == 0;
 }
 
 static INLINE void
@@ -288,7 +259,7 @@ p_atomic_cmpxchg(struct pipe_atomic *v, int32_t old, int32_t _new)
 
 
 
-#if (PIPE_ATOMIC_MUTEX)
+#if defined(PIPE_ATOMIC_MUTEX)
 
 #define PIPE_ATOMIC "mutex-based fallback"
 

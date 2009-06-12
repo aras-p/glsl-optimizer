@@ -109,6 +109,7 @@ void _debug_vprintf(const char *format, va_list ap)
    }
    
    if(GetConsoleWindow() && !IsDebuggerPresent()) {
+      fflush(stdout);
       vfprintf(stderr, format, ap);
       fflush(stderr);
    }
@@ -145,6 +146,7 @@ void _debug_vprintf(const char *format, va_list ap)
    /* TODO */
 #else /* !PIPE_SUBSYSTEM_WINDOWS */
 #ifdef DEBUG
+   fflush(stdout);
    vfprintf(stderr, format, ap);
 #endif
 #endif
@@ -719,6 +721,7 @@ void
 debug_dump_surface_bmp(const char *filename,
                        struct pipe_surface *surface)
 {
+#ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
    struct pipe_transfer *transfer;
    struct pipe_texture *texture = surface->texture;
    struct pipe_screen *screen = texture->screen;
@@ -731,6 +734,7 @@ debug_dump_surface_bmp(const char *filename,
    debug_dump_transfer_bmp(filename, transfer);
 
    screen->tex_transfer_destroy(transfer);
+#endif
 }
 
 void
@@ -738,11 +742,7 @@ debug_dump_transfer_bmp(const char *filename,
                         struct pipe_transfer *transfer)
 {
 #ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
-   struct util_stream *stream;
-   struct bmp_file_header bmfh;
-   struct bmp_info_header bmih;
    float *rgba;
-   unsigned x, y;
 
    if (!transfer)
       goto error1;
@@ -751,19 +751,47 @@ debug_dump_transfer_bmp(const char *filename,
    if(!rgba)
       goto error1;
 
+   pipe_get_tile_rgba(transfer, 0, 0,
+                      transfer->width, transfer->height,
+                      rgba);
+
+   debug_dump_float_rgba_bmp(filename,
+                             transfer->width, transfer->height,
+                             rgba, transfer->width);
+
+   FREE(rgba);
+error1:
+   ;
+#endif
+}
+
+void
+debug_dump_float_rgba_bmp(const char *filename,
+                          unsigned width, unsigned height,
+                          float *rgba, unsigned stride)
+{
+#ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
+   struct util_stream *stream;
+   struct bmp_file_header bmfh;
+   struct bmp_info_header bmih;
+   unsigned x, y;
+
+   if(!rgba)
+      goto error1;
+
    bmfh.bfType = 0x4d42;
-   bmfh.bfSize = 14 + 40 + transfer->height*transfer->width*4;
+   bmfh.bfSize = 14 + 40 + height*width*4;
    bmfh.bfReserved1 = 0;
    bmfh.bfReserved2 = 0;
    bmfh.bfOffBits = 14 + 40;
 
    bmih.biSize = 40;
-   bmih.biWidth = transfer->width;
-   bmih.biHeight = transfer->height;
+   bmih.biWidth = width;
+   bmih.biHeight = height;
    bmih.biPlanes = 1;
    bmih.biBitCount = 32;
    bmih.biCompression = 0;
-   bmih.biSizeImage = transfer->height*transfer->width*4;
+   bmih.biSizeImage = height*width*4;
    bmih.biXPelsPerMeter = 0;
    bmih.biYPelsPerMeter = 0;
    bmih.biClrUsed = 0;
@@ -771,19 +799,15 @@ debug_dump_transfer_bmp(const char *filename,
 
    stream = util_stream_create(filename, bmfh.bfSize);
    if(!stream)
-      goto error2;
+      goto error1;
 
    util_stream_write(stream, &bmfh, 14);
    util_stream_write(stream, &bmih, 40);
 
-   pipe_get_tile_rgba(transfer, 0, 0,
-                      transfer->width, transfer->height,
-                      rgba);
-
-   y = transfer->height;
+   y = height;
    while(y--) {
-      float *ptr = rgba + (transfer->width * y * 4);
-      for(x = 0; x < transfer->width; ++x)
+      float *ptr = rgba + (stride * y * 4);
+      for(x = 0; x < width; ++x)
       {
          struct bmp_rgb_quad pixel;
          pixel.rgbRed   = float_to_ubyte(ptr[x*4 + 0]);
@@ -795,8 +819,6 @@ debug_dump_transfer_bmp(const char *filename,
    }
 
    util_stream_close(stream);
-error2:
-   FREE(rgba);
 error1:
    ;
 #endif

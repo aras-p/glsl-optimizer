@@ -187,6 +187,7 @@ struct pt_emit *draw_pt_emit_create( struct draw_context *draw );
 
 struct pt_fetch;
 void draw_pt_fetch_prepare( struct pt_fetch *fetch,
+                            unsigned vertex_input_count,
 			    unsigned vertex_size );
 
 void draw_pt_fetch_run( struct pt_fetch *fetch,

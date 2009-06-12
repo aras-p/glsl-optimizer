@@ -45,11 +45,7 @@ struct r300_render {
 
     /* VBO */
     struct pipe_buffer* vbo;
-    size_t vbo_size;
-    size_t vbo_offset;
-    void* vbo_map;
     size_t vbo_alloc_size;
-    size_t vbo_max_used;
 };
 
 static INLINE struct r300_render*
@@ -78,24 +74,21 @@ static boolean r300_render_allocate_vertices(struct vbuf_render* render,
     struct pipe_screen* screen = r300->context.screen;
     size_t size = (size_t)vertex_size * (size_t)count;
 
-    if (r300render->vbo) {
+    if (r300render->vbo && (size > r300render->vbo_alloc_size)) {
         pipe_buffer_reference(&r300render->vbo, NULL);
     }
+    
+    if (!r300render->vbo) {
+        r300render->vbo = pipe_buffer_create(screen,
+                                             64,
+                                             PIPE_BUFFER_USAGE_VERTEX,
+                                             size);
+    }
 
-    r300render->vbo_size = MAX2(size, r300render->vbo_alloc_size);
-    r300render->vbo_offset = 0;
-    r300render->vbo = pipe_buffer_create(screen,
-                                         64,
-                                         PIPE_BUFFER_USAGE_VERTEX,
-                                         r300render->vbo_size);
-
+    r300render->vbo_alloc_size = MAX2(size, r300render->vbo_alloc_size);
     r300render->vertex_size = vertex_size;
 
-    if (r300render->vbo) {
-        return TRUE;
-    } else {
-        return FALSE;
-    }
+    return (r300render->vbo) ? TRUE : FALSE;
 }
 
 static void* r300_render_map_vertices(struct vbuf_render* render)
@@ -103,10 +96,8 @@ static void* r300_render_map_vertices(struct vbuf_render* render)
     struct r300_render* r300render = r300_render(render);
     struct pipe_screen* screen = r300render->r300->context.screen;
 
-    r300render->vbo_map = pipe_buffer_map(screen, r300render->vbo,
-                                          PIPE_BUFFER_USAGE_CPU_WRITE);
-
-    return (unsigned char*)r300render->vbo_map + r300render->vbo_offset;
+    return (unsigned char*)pipe_buffer_map(screen, r300render->vbo,
+                                           PIPE_BUFFER_USAGE_CPU_WRITE);
 }
 
 static void r300_render_unmap_vertices(struct vbuf_render* render,
@@ -115,9 +106,6 @@ static void r300_render_unmap_vertices(struct vbuf_render* render,
 {
     struct r300_render* r300render = r300_render(render);
     struct pipe_screen* screen = r300render->r300->context.screen;
-
-    r300render->vbo_max_used = MAX2(r300render->vbo_max_used,
-             r300render->vertex_size * (max + 1));
 
     pipe_buffer_unmap(screen, r300render->vbo);
 }
@@ -180,27 +168,9 @@ static void prepare_render(struct r300_render* render, unsigned count)
 
     CS_LOCALS(r300);
 
-    /* Make sure that all possible state is emitted. */
-    r300_emit_dirty_state(r300);
+    r300->vbo = render->vbo;
 
-    debug_printf("r300: Preparing vertex buffer %p for render, "
-            "vertex size %d, vertex count %d\n", render->vbo,
-            r300->vertex_info.vinfo.size, count);
-    /* Set the pointer to our vertex buffer. The emitted values are this:
-     * PACKET3 [3D_LOAD_VBPNTR]
-     * COUNT   [1]
-     * FORMAT  [size | stride << 8]
-     * OFFSET  [0]
-     * VBPNTR  [relocated BO]
-     */
-    BEGIN_CS(7);
-    OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, 3);
-    OUT_CS(1);
-    OUT_CS(r300->vertex_info.vinfo.size |
-            (r300->vertex_info.vinfo.size << 8));
-    OUT_CS(render->vbo_offset);
-    OUT_CS_RELOC(render->vbo, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
-    END_CS;
+    r300_emit_dirty_state(r300);
 }
 
 static void r300_render_draw_arrays(struct vbuf_render* render,
@@ -211,8 +181,6 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
     struct r300_context* r300 = r300render->r300;
 
     CS_LOCALS(r300);
-
-    r300render->vbo_offset = start;
 
     prepare_render(r300render, count);
 
@@ -234,6 +202,8 @@ static void r300_render_draw(struct vbuf_render* render,
     struct pipe_screen* screen = r300->context.screen;
     struct pipe_buffer* index_buffer;
     void* index_map;
+    int i;
+    uint32_t index;
 
     CS_LOCALS(r300);
 
@@ -246,6 +216,7 @@ static void r300_render_draw(struct vbuf_render* render,
         return;
     }
 
+/*
     index_map = pipe_buffer_map(screen, index_buffer,
                                 PIPE_BUFFER_USAGE_CPU_WRITE);
     memcpy(index_map, indices, count);
@@ -253,13 +224,25 @@ static void r300_render_draw(struct vbuf_render* render,
 
     debug_printf("r300: Doing indexbuf render, count %d\n", count);
 
-    BEGIN_CS(6);
+    BEGIN_CS(8);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 0);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
            r300render->hwprim);
     OUT_CS_PKT3(R300_PACKET3_INDX_BUFFER, 2);
     OUT_CS(R300_INDX_BUFFER_ONE_REG_WR | (R300_VAP_PORT_IDX0 >> 2));
     OUT_CS_INDEX_RELOC(index_buffer, 0, count, RADEON_GEM_DOMAIN_GTT, 0, 0);
+    END_CS; */
+
+    BEGIN_CS(2 + (count+1)/2);
+    OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (count+1)/2);
+    OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
+           r300render->hwprim);
+    for (i = 0; i < count-1; i += 2) {
+        OUT_CS(indices[i+1] << 16 | indices[i]);
+    }
+    if (count % 2) {
+        OUT_CS(indices[count-1]);
+    }
     END_CS;
 }
 

@@ -385,6 +385,10 @@ draw( Display *dpy, Window win )
    } else
       do_draw();
 
+   glDeleteLists(gear1, 1);
+   glDeleteLists(gear2, 1);
+   glDeleteLists(gear3, 1);
+
    glXSwapBuffers(dpy, win);
    glXDestroyContext(dpy, ctx);
 }

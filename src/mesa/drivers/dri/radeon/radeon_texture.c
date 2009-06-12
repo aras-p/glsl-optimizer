@@ -38,6 +38,7 @@
 #include "main/texstore.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
+#include "main/texgetimage.h"
 
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
@@ -611,11 +612,10 @@ static void radeon_teximage(
 				_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
 		}
 
-	}
-
-	/* SGIS_generate_mipmap */
-	if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-		radeon_generate_mipmap(ctx, texObj->Target, texObj);
+		/* SGIS_generate_mipmap */
+		if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+			radeon_generate_mipmap(ctx, texObj->Target, texObj);
+		}
 	}
 
 	_mesa_unmap_teximage_pbo(ctx, packing);
@@ -740,12 +740,12 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, int level,
 				_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
 		}
 
+		/* GL_SGIS_generate_mipmap */
+		if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+			radeon_generate_mipmap(ctx, texObj->Target, texObj);
+		}
 	}
 
-	/* GL_SGIS_generate_mipmap */
-	if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-		radeon_generate_mipmap(ctx, texObj->Target, texObj);
-	}
 	radeon_teximage_unmap(image);
 
 	_mesa_unmap_teximage_pbo(ctx, packing);
@@ -830,7 +830,7 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt, radeon_texture_imag
 		 * In fact, that memcpy() could be done by the hardware in many
 		 * cases, provided that we have a proper memory manager.
 		 */
-		radeon_mipmap_level *srclvl = &image->mt->levels[image->mtlevel];
+		radeon_mipmap_level *srclvl = &image->mt->levels[image->mtlevel-image->mt->firstLevel];
 
 		assert(srclvl->size == dstlvl->size);
 		assert(srclvl->rowstride == dstlvl->rowstride);

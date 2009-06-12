@@ -358,6 +358,7 @@ generate_pstip_fs(struct pstip_stage *pstip)
 
    pstip->fs->pstip_fs = pstip->driver_create_fs_state(pstip->pipe, &pstip_fs);
 
+   FREE((void *)pstip_fs.tokens);
    return TRUE;
 }
 
@@ -586,6 +587,7 @@ draw_pstip_stage(struct draw_context *draw)
    draw_alloc_temp_verts( &pstip->stage, 8 );
 
    pstip->stage.draw = draw;
+   pstip->stage.name = "pstip";
    pstip->stage.next = NULL;
    pstip->stage.point = draw_pipe_passthrough_point;
    pstip->stage.line = draw_pipe_passthrough_line;
@@ -648,6 +650,10 @@ pstip_delete_fs_state(struct pipe_context *pipe, void *fs)
    struct pstip_fragment_shader *aafs = (struct pstip_fragment_shader *) fs;
    /* pass-through */
    pstip->driver_delete_fs_state(pstip->pipe, aafs->driver_fs);
+
+   if (aafs->pstip_fs)
+      pstip->driver_delete_fs_state(pstip->pipe, aafs->pstip_fs);
+
    FREE(aafs);
 }
 

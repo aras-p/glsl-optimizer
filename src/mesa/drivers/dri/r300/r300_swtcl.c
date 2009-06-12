@@ -34,9 +34,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 
+#include "r300_state.h"
 #include "r300_swtcl.h"
 #include "r300_emit.h"
 #include "r300_tex.h"
+#include "r300_render.h"
 
 #define EMIT_ATTR( ATTR, STYLE )					\
 do {									\
@@ -53,165 +55,91 @@ do {									\
    rmesa->radeon.swtcl.vertex_attr_count++;					\
 } while (0)
 
-#define ADD_ATTR(_attr, _format, _dst_loc, _swizzle, _write_mask) \
+#define ADD_ATTR(_attr, _format, _dst_loc, _swizzle, _write_mask, _normalize) \
 do { \
-	attrs[num_attrs].attr = (_attr); \
-	attrs[num_attrs].format = (_format); \
+	attrs[num_attrs].element = (_attr); \
+	attrs[num_attrs].data_type = (_format); \
 	attrs[num_attrs].dst_loc = (_dst_loc); \
 	attrs[num_attrs].swizzle = (_swizzle); \
 	attrs[num_attrs].write_mask = (_write_mask); \
+	attrs[num_attrs]._signed = 0; \
+	attrs[num_attrs].normalize = (_normalize); \
 	++num_attrs; \
 } while (0)
 
-static void r300SwtclVAPSetup(GLcontext *ctx, GLuint InputsRead, GLuint OutputsWritten, GLuint vap_out_fmt_1)
+void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_OutputsWritten)
 {
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *VB = &tnl->vb;
-	struct vertex_attribute *attrs = rmesa->swtcl.vert_attrs;
-	int vte = 0;
-	int i, j, reg_count;
-	uint32_t *vir0 = &rmesa->hw.vir[0].cmd[1];
-	uint32_t *vir1 = &rmesa->hw.vir[1].cmd[1];
-
-	for (i = 0; i < R300_VIR_CMDSIZE-1; ++i)
-		vir0[i] = vir1[i] = 0;
-
-	for (i = 0, j = 0; i < rmesa->radeon.swtcl.vertex_attr_count; ++i) {
-		int tmp, data_format;
-		switch (attrs[i].format) {
-			case EMIT_1F:
-				data_format = R300_DATA_TYPE_FLOAT_1;
-				break;
-			case EMIT_2F:
-				data_format = R300_DATA_TYPE_FLOAT_2;
-				break;
-			case EMIT_3F:
-				data_format = R300_DATA_TYPE_FLOAT_3;
-				break;
-			case EMIT_4F:
-				data_format = R300_DATA_TYPE_FLOAT_4;
-				break;
-			case EMIT_4UB_4F_RGBA:
-			case EMIT_4UB_4F_ABGR:
-				data_format = R300_DATA_TYPE_BYTE | R300_NORMALIZE;
-				break;
-			default:
-				fprintf(stderr, "%s: Invalid data format type", __FUNCTION__);
-				_mesa_exit(-1);
-				break;
-		}
-
-		tmp = data_format | (attrs[i].dst_loc << R300_DST_VEC_LOC_SHIFT);
-		if (i % 2 == 0) {
-			vir0[j] = tmp << R300_DATA_TYPE_0_SHIFT;
-			vir1[j] = attrs[i].swizzle | (attrs[i].write_mask << R300_WRITE_ENA_SHIFT);
-		} else {
-			vir0[j] |= tmp << R300_DATA_TYPE_1_SHIFT;
-			vir1[j] |= (attrs[i].swizzle | (attrs[i].write_mask << R300_WRITE_ENA_SHIFT)) << R300_SWIZZLE1_SHIFT;
-			++j;
-		}
-	}
-
-	reg_count = (rmesa->radeon.swtcl.vertex_attr_count + 1) >> 1;
-	if (rmesa->radeon.swtcl.vertex_attr_count % 2 != 0) {
-		vir0[reg_count-1] |= R300_LAST_VEC << R300_DATA_TYPE_0_SHIFT;
-	} else {
-		vir0[reg_count-1] |= R300_LAST_VEC << R300_DATA_TYPE_1_SHIFT;
-	}
-
-	R300_STATECHANGE(rmesa, vir[0]);
-	R300_STATECHANGE(rmesa, vir[1]);
-	R300_STATECHANGE(rmesa, vof);
-	R300_STATECHANGE(rmesa, vte);
-	R300_STATECHANGE(rmesa, vic);
-
-	if (rmesa->radeon.radeonScreen->kernel_mm) {
-		rmesa->hw.vir[0].cmd[0] &= 0xC000FFFF;
-		rmesa->hw.vir[1].cmd[0] &= 0xC000FFFF;
-		rmesa->hw.vir[0].cmd[0] |= (reg_count & 0x3FFF) << 16;
-		rmesa->hw.vir[1].cmd[0] |= (reg_count & 0x3FFF) << 16;
-	} else {
-		((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count = reg_count;
-		((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count = reg_count;
-	}
-
-	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
-	rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
-	rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
-	/**
-	  * Can't use r300VAPOutputCntl1 function because it assumes
-	  * that all texture coords have 4 components and that's the case
-	  * for HW TCL path, but not for SW TCL.
-	  */
-	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = vap_out_fmt_1;
-
-	vte = rmesa->hw.vte.cmd[1];
-	vte &= ~(R300_VTX_XY_FMT | R300_VTX_Z_FMT | R300_VTX_W0_FMT);
-	/* Important:
-	 */
-	if ( VB->NdcPtr != NULL ) {
-		VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
-		vte |= R300_VTX_XY_FMT | R300_VTX_Z_FMT;
-	}
-	else {
-		VB->AttribPtr[VERT_ATTRIB_POS] = VB->ClipPtr;
-		vte |= R300_VTX_W0_FMT;
-	}
-
-	assert( VB->AttribPtr[VERT_ATTRIB_POS] != NULL );
-
-	rmesa->hw.vte.cmd[1] = vte;
-	rmesa->hw.vte.cmd[2] = rmesa->radeon.swtcl.vertex_size;
-}
-
-
-static void r300SetVertexFormat( GLcontext *ctx )
-{
-	r300ContextPtr rmesa = R300_CONTEXT( ctx );
-	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *VB = &tnl->vb;
-	int first_free_tex = 0, vap_out_fmt_1 = 0;
+	int first_free_tex = 0;
 	GLuint InputsRead = 0;
 	GLuint OutputsWritten = 0;
 	int num_attrs = 0;
-	struct vertex_attribute *attrs = rmesa->swtcl.vert_attrs;
+	GLuint fp_reads = ctx->FragmentProgram._Current->Base.InputsRead;
+	struct vertex_attribute *attrs = rmesa->vbuf.attribs;
 
 	rmesa->swtcl.coloroffset = rmesa->swtcl.specoffset = 0;
 	rmesa->radeon.swtcl.vertex_attr_count = 0;
 
-	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_POS)) {
-		InputsRead |= 1 << VERT_ATTRIB_POS;
-		OutputsWritten |= 1 << VERT_RESULT_HPOS;
-		EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F );
-		ADD_ATTR(VERT_ATTRIB_POS, EMIT_4F, SWTCL_OVM_POS, SWIZZLE_XYZW, MASK_XYZW);
-		rmesa->swtcl.coloroffset = 4;
-	}
+	/* We always want non Ndc coords format */
+	VB->AttribPtr[VERT_ATTRIB_POS] = VB->ClipPtr;
 
-	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR0)) {
+	/* Always write position vector */
+	InputsRead |= 1 << VERT_ATTRIB_POS;
+	OutputsWritten |= 1 << VERT_RESULT_HPOS;
+	EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F );
+	ADD_ATTR(VERT_ATTRIB_POS, R300_DATA_TYPE_FLOAT_4, SWTCL_OVM_POS, SWIZZLE_XYZW, MASK_XYZW, 0);
+	rmesa->swtcl.coloroffset = 4;
+
+	if (fp_reads & FRAG_BIT_COL0) {
 		InputsRead |= 1 << VERT_ATTRIB_COLOR0;
 		OutputsWritten |= 1 << VERT_RESULT_COL0;
 #if MESA_LITTLE_ENDIAN
 		EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA );
-		ADD_ATTR(VERT_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA, SWTCL_OVM_COLOR0, SWIZZLE_XYZW, MASK_XYZW);
+		ADD_ATTR(VERT_ATTRIB_COLOR0, R300_DATA_TYPE_BYTE, SWTCL_OVM_COLOR0, SWIZZLE_XYZW, MASK_XYZW, 1);
 #else
 		EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_ABGR );
-		ADD_ATTR(VERT_ATTRIB_COLOR0, EMIT_4UB_4F_ABGR, SWTCL_OVM_COLOR0, SWIZZLE_XYZW, MASK_XYZW);
+		ADD_ATTR(VERT_ATTRIB_COLOR0, R300_DATA_TYPE_BYTE, SWTCL_OVM_COLOR0, SWIZZLE_XYZW, MASK_XYZW, 1);
 #endif
 	}
 
-	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR1 )) {
+	if (fp_reads & FRAG_BIT_COL1) {
 		GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
 		InputsRead |= 1 << VERT_ATTRIB_COLOR1;
 		OutputsWritten |= 1 << VERT_RESULT_COL1;
 #if MESA_LITTLE_ENDIAN
 		EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_4UB_4F_RGBA );
-		ADD_ATTR(VERT_ATTRIB_COLOR1, EMIT_4UB_4F_RGBA, SWTCL_OVM_COLOR1, swiz, MASK_XYZW);
+		ADD_ATTR(VERT_ATTRIB_COLOR1, R300_DATA_TYPE_BYTE, SWTCL_OVM_COLOR1, swiz, MASK_XYZW, 1);
 #else
 		EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_4UB_4F_ABGR );
-		ADD_ATTR(VERT_ATTRIB_COLOR1, EMIT_4UB_4F_ABGR, SWTCL_OVM_COLOR1, swiz, MASK_XYZW);
+		ADD_ATTR(VERT_ATTRIB_COLOR1, R300_DATA_TYPE_BYTE, SWTCL_OVM_COLOR1, swiz, MASK_XYZW, 1);
 #endif
 		rmesa->swtcl.specoffset = rmesa->swtcl.coloroffset + 1;
+	}
+
+	if (ctx->Light.Enabled && ctx->Light.Model.TwoSide) {
+		VB->AttribPtr[VERT_ATTRIB_GENERIC0] = VB->ColorPtr[1];
+		OutputsWritten |= 1 << VERT_RESULT_BFC0;
+#if MESA_LITTLE_ENDIAN
+		EMIT_ATTR( _TNL_ATTRIB_GENERIC0, EMIT_4UB_4F_RGBA );
+		ADD_ATTR(VERT_ATTRIB_GENERIC0, R300_DATA_TYPE_BYTE, SWTCL_OVM_COLOR2, SWIZZLE_XYZW, MASK_XYZW, 1);
+#else
+		EMIT_ATTR( _TNL_ATTRIB_GENERIC0, EMIT_4UB_4F_ABGR );
+		ADD_ATTR(VERT_ATTRIB_GENERIC0, R300_DATA_TYPE_BYTE, SWTCL_OVM_COLOR2, SWIZZLE_XYZW, MASK_XYZW, 1);
+#endif
+		if (fp_reads & FRAG_BIT_COL1) {
+			VB->AttribPtr[VERT_ATTRIB_GENERIC1] = VB->SecondaryColorPtr[1];
+			GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
+			OutputsWritten |= 1 << VERT_RESULT_BFC1;
+#if MESA_LITTLE_ENDIAN
+			EMIT_ATTR( _TNL_ATTRIB_GENERIC1, EMIT_4UB_4F_RGBA );
+			ADD_ATTR(VERT_ATTRIB_GENERIC1, R300_DATA_TYPE_BYTE, SWTCL_OVM_COLOR3, swiz, MASK_XYZW, 1);
+#else
+			EMIT_ATTR( _TNL_ATTRIB_GENERIC1, EMIT_4UB_4F_ABGR );
+			ADD_ATTR(VERT_ATTRIB_GENERIC1, R300_DATA_TYPE_BYTE, SWTCL_OVM_COLOR3, swiz, MASK_XYZW, 1);
+#endif
+		}
 	}
 
 	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_POINTSIZE )) {
@@ -219,33 +147,38 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		InputsRead |= 1 << VERT_ATTRIB_POINT_SIZE;
 		OutputsWritten |= 1 << VERT_RESULT_PSIZ;
 		EMIT_ATTR( _TNL_ATTRIB_POINTSIZE, EMIT_1F );
-		ADD_ATTR(VERT_ATTRIB_POINT_SIZE, EMIT_1F, SWTCL_OVM_POINT_SIZE, swiz, MASK_X);
+		ADD_ATTR(VERT_ATTRIB_POINT_SIZE, R300_DATA_TYPE_FLOAT_1, SWTCL_OVM_POINT_SIZE, swiz, MASK_X, 0);
 	}
 
-	if (RENDERINPUTS_TEST_RANGE(tnl->render_inputs_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
-		int i, size;
-		GLuint swiz, mask, format;
+	/**
+	 *  Sending only one texcoord component may lead to lock up,
+	 *  so for all textures always output 4 texcoord components to RS.
+	 */
+	{
+		int i;
+		GLuint swiz, format, hw_format;
 		for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-			if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) )) {
+			if (fp_reads & FRAG_BIT_TEX(i)) {
 				switch (VB->TexCoordPtr[i]->size) {
 					case 1:
+						format = EMIT_1F;
+						hw_format = R300_DATA_TYPE_FLOAT_1;
+						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ONE);
+						break;
 					case 2:
 						format = EMIT_2F;
-						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_ZERO, SWIZZLE_ZERO);
-						mask = MASK_X | MASK_Y;
-						size = 2;
+						hw_format = R300_DATA_TYPE_FLOAT_2;
+						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_ZERO, SWIZZLE_ONE);
 						break;
 					case 3:
 						format = EMIT_3F;
-						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
-						mask = MASK_X | MASK_Y | MASK_Z;
-						size = 3;
+						hw_format = R300_DATA_TYPE_FLOAT_3;
+						swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
 						break;
 					case 4:
 						format = EMIT_4F;
+						hw_format = R300_DATA_TYPE_FLOAT_4;
 						swiz = SWIZZLE_XYZW;
-						mask = MASK_XYZW;
-						size = 4;
 						break;
 					default:
 						continue;
@@ -253,15 +186,14 @@ static void r300SetVertexFormat( GLcontext *ctx )
 				InputsRead |= 1 << (VERT_ATTRIB_TEX0 + i);
 				OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
 				EMIT_ATTR(_TNL_ATTRIB_TEX(i), format);
-				ADD_ATTR(VERT_ATTRIB_TEX0 + i, format, SWTCL_OVM_TEX(i), swiz, mask);
-				vap_out_fmt_1 |= size << (i * 3);
+				ADD_ATTR(VERT_ATTRIB_TEX0 + i, hw_format, SWTCL_OVM_TEX(first_free_tex), swiz, MASK_XYZW, 0);
 				++first_free_tex;
 			}
 		}
 	}
 
 	/* RS can't put fragment position on the pixel stack, so stuff it in texcoord if needed */
-	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_POS) && (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_WPOS)) {
+	if (fp_reads & FRAG_BIT_WPOS) {
 		if (first_free_tex >= ctx->Const.MaxTextureUnits) {
 			fprintf(stderr, "\tout of free texcoords to write w pos\n");
 			_mesa_exit(-1);
@@ -270,12 +202,11 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		InputsRead |= 1 << (VERT_ATTRIB_TEX0 + first_free_tex);
 		OutputsWritten |= 1 << (VERT_RESULT_TEX0 + first_free_tex);
 		EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F );
-		ADD_ATTR(VERT_ATTRIB_POS, EMIT_4F, SWTCL_OVM_TEX(first_free_tex), SWIZZLE_XYZW, MASK_XYZW);
-		vap_out_fmt_1 |= 4 << (first_free_tex * 3);
+		ADD_ATTR(VERT_ATTRIB_POS, R300_DATA_TYPE_FLOAT_4, SWTCL_OVM_TEX(first_free_tex), SWIZZLE_XYZW, MASK_XYZW, 0);
 		++first_free_tex;
 	}
 
-	if (RENDERINPUTS_TEST(tnl->render_inputs_bitset, _TNL_ATTRIB_FOG)) {
+	if (fp_reads & FRAG_BIT_FOGC) {
 		if (first_free_tex >= ctx->Const.MaxTextureUnits) {
 			fprintf(stderr, "\tout of free texcoords to write fog coordinate\n");
 			_mesa_exit(-1);
@@ -285,12 +216,24 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		OutputsWritten |= 1 << VERT_RESULT_FOGC;
 		GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO);
 		EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1F );
-		ADD_ATTR(VERT_ATTRIB_FOG, EMIT_1F, SWTCL_OVM_TEX(first_free_tex), swiz, MASK_X);
-		vap_out_fmt_1 |=  1 << (first_free_tex * 3);
+		ADD_ATTR(VERT_ATTRIB_FOG, R300_DATA_TYPE_FLOAT_1, SWTCL_OVM_TEX(first_free_tex), swiz, MASK_XYZW, 0);
 	}
 
 	R300_NEWPRIM(rmesa);
-	r300SwtclVAPSetup(ctx, InputsRead, OutputsWritten, vap_out_fmt_1);
+	rmesa->vbuf.num_attribs = num_attrs;
+	*_InputsRead = InputsRead;
+	*_OutputsWritten = OutputsWritten;
+
+	RENDERINPUTS_COPY(rmesa->render_inputs_bitset, tnl->render_inputs_bitset);
+}
+
+static void r300PrepareVertices(GLcontext *ctx)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	GLuint InputsRead, OutputsWritten;
+
+	r300ChooseSwtclVertexFormat(ctx, &InputsRead, &OutputsWritten);
+	r300SetupVAP(ctx, InputsRead, OutputsWritten);
 
 	rmesa->radeon.swtcl.vertex_size =
 		_tnl_install_attrs( ctx,
@@ -299,8 +242,6 @@ static void r300SetVertexFormat( GLcontext *ctx )
 				    NULL, 0 );
 
 	rmesa->radeon.swtcl.vertex_size /= 4;
-
-	RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, tnl->render_inputs_bitset);
 }
 
 
@@ -318,7 +259,6 @@ static GLuint reduced_prim[] = {
 };
 
 static void r300RasterPrimitive( GLcontext *ctx, GLuint prim );
-static void r300RenderPrimitive( GLcontext *ctx, GLenum prim );
 
 /***********************************************************************
  *                    Emit primitives as inline vertices               *
@@ -366,9 +306,8 @@ static void r300RenderPrimitive( GLcontext *ctx, GLenum prim );
  *              Build render functions from dd templates               *
  ***********************************************************************/
 
-#define R300_TWOSIDE_BIT	0x01
-#define R300_UNFILLED_BIT	0x02
-#define R300_MAX_TRIFUNC	0x04
+#define R300_UNFILLED_BIT	0x01
+#define R300_MAX_TRIFUNC	0x02
 
 static struct {
    tnl_points_func	        points;
@@ -379,9 +318,9 @@ static struct {
 
 #define DO_FALLBACK  0
 #define DO_UNFILLED (IND & R300_UNFILLED_BIT)
-#define DO_TWOSIDE  (IND & R300_TWOSIDE_BIT)
+#define DO_TWOSIDE   0
 #define DO_FLAT      0
-#define DO_OFFSET     0
+#define DO_OFFSET    0
 #define DO_TRI       1
 #define DO_QUAD      1
 #define DO_LINE      1
@@ -469,26 +408,15 @@ do { \
 #define TAG(x) x
 #include "tnl_dd/t_dd_tritmp.h"
 
-#define IND (R300_TWOSIDE_BIT)
-#define TAG(x) x##_twoside
-#include "tnl_dd/t_dd_tritmp.h"
-
 #define IND (R300_UNFILLED_BIT)
 #define TAG(x) x##_unfilled
 #include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (R300_TWOSIDE_BIT|R300_UNFILLED_BIT)
-#define TAG(x) x##_twoside_unfilled
-#include "tnl_dd/t_dd_tritmp.h"
-
 
 
 static void init_rast_tab( void )
 {
    init();
-   init_twoside();
    init_unfilled();
-   init_twoside_unfilled();
 }
 
 /**********************************************************************/
@@ -540,7 +468,6 @@ static void r300ChooseRenderState( GLcontext *ctx )
 	GLuint index = 0;
 	GLuint flags = ctx->_TriangleCaps;
 
-	if (flags & DD_TRI_LIGHT_TWOSIDE) index |= R300_TWOSIDE_BIT;
 	if (flags & DD_TRI_UNFILLED)      index |= R300_UNFILLED_BIT;
 
 	if (index != rmesa->radeon.swtcl.RenderIndex) {
@@ -565,12 +492,12 @@ static void r300ChooseRenderState( GLcontext *ctx )
 }
 
 
-static void r300RenderStart(GLcontext *ctx)
+void r300RenderStart(GLcontext *ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
 
 	r300ChooseRenderState(ctx);
-	r300SetVertexFormat(ctx);
+	r300PrepareVertices(ctx);
 
 	r300ValidateBuffers(ctx);
 
@@ -585,7 +512,7 @@ static void r300RenderStart(GLcontext *ctx)
 	}
 }
 
-static void r300RenderFinish(GLcontext *ctx)
+void r300RenderFinish(GLcontext *ctx)
 {
 }
 
@@ -599,7 +526,7 @@ static void r300RasterPrimitive( GLcontext *ctx, GLuint hwprim )
 	}
 }
 
-static void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
+void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 {
 
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -611,7 +538,7 @@ static void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 	r300RasterPrimitive( ctx, reduced_prim[prim] );
 }
 
-static void r300ResetLineStipple(GLcontext *ctx)
+void r300ResetLineStipple(GLcontext *ctx)
 {
 }
 
@@ -647,7 +574,6 @@ void r300InitSwtcl(GLcontext *ctx)
 	_tnl_invalidate_vertices( ctx, ~0 );
 
 	_tnl_need_projected_coords( ctx, GL_FALSE );
-	r300ChooseRenderState(ctx);
 }
 
 void r300DestroySwtcl(GLcontext *ctx)
@@ -692,6 +618,7 @@ void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset)
 			   rmesa->radeon.hw.max_state_size + (12*sizeof(int)),
 			   __FUNCTION__);
 	radeonEmitState(&rmesa->radeon);
+    r300_emit_scissor(ctx);
 	r300EmitVertexAOS(rmesa,
 			rmesa->radeon.swtcl.vertex_size,
 			rmesa->radeon.dma.current,

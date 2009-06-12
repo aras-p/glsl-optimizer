@@ -73,7 +73,8 @@ struct intel_region
  * copied by calling intel_reference_region().
  */
 struct intel_region *intel_region_alloc(struct intel_context *intel,
-                                        GLuint cpp, GLuint width,
+                                        uint32_t tiling,
+					GLuint cpp, GLuint width,
                                         GLuint height, GLuint pitch,
 					GLboolean expect_accelerated_upload);
 

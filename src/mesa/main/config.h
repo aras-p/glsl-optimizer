@@ -168,7 +168,6 @@
 /** For GL_ARB_vertex_program */
 /*@{*/
 #define MAX_VERTEX_PROGRAM_ADDRESS_REGS 1
-#define MAX_VERTEX_PROGRAM_ATTRIBS     16
 /*@}*/
 
 /** For GL_ARB_fragment_program */
@@ -180,14 +179,14 @@
 /*@{*/
 #define MAX_PROGRAM_INSTRUCTIONS  (16 * 1024)
 #define MAX_PROGRAM_LOCAL_PARAMS 256 /**< per-program constants (power of two) */
-#define MAX_PROGRAM_ENV_PARAMS 128
+#define MAX_PROGRAM_ENV_PARAMS 256   /**< per-context constants (power of two) */
 #define MAX_PROGRAM_MATRICES 8
 #define MAX_PROGRAM_MATRIX_STACK_DEPTH 4
 #define MAX_PROGRAM_CALL_DEPTH 8
 #define MAX_PROGRAM_TEMPS 256
 #define MAX_PROGRAM_ADDRESS_REGS 2
 #define MAX_UNIFORMS 1024  /**< number of vec4 uniforms */
-#define MAX_VARYING 8      /**< number of float[4] vectors */
+#define MAX_VARYING 16     /**< number of float[4] vectors */
 #define MAX_SAMPLERS MAX_TEXTURE_IMAGE_UNITS
 #define MAX_PROGRAM_INPUTS 32
 #define MAX_PROGRAM_OUTPUTS 32
@@ -197,7 +196,7 @@
 /*@{*/
 #define MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS 128
 #define MAX_NV_VERTEX_PROGRAM_TEMPS         12
-#define MAX_NV_VERTEX_PROGRAM_PARAMS        MAX_PROGRAM_ENV_PARAMS
+#define MAX_NV_VERTEX_PROGRAM_PARAMS        96
 #define MAX_NV_VERTEX_PROGRAM_INPUTS        16
 #define MAX_NV_VERTEX_PROGRAM_OUTPUTS       15
 /*@}*/
@@ -215,7 +214,7 @@
 
 /** For GL_ARB_vertex_shader */
 /*@{*/
-#define MAX_VERTEX_ATTRIBS 16
+#define MAX_VERTEX_GENERIC_ATTRIBS 16
 #define MAX_VERTEX_TEXTURE_IMAGE_UNITS MAX_TEXTURE_IMAGE_UNITS
 #define MAX_COMBINED_TEXTURE_IMAGE_UNITS MAX_TEXTURE_IMAGE_UNITS
 /*@}*/

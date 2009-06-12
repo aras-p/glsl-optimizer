@@ -32,8 +32,13 @@
 
 /* XXX get these to r300_reg */
 #define R300_PVS_DST_OPCODE(x)   ((x) << 0)
+#   define R300_VE_DOT_PRODUCT            1
 #   define R300_VE_MULTIPLY               2
 #   define R300_VE_ADD                    3
+#   define R300_VE_MAXIMUM                7
+#   define R300_VE_SET_LESS_THAN          10
+#define R300_PVS_DST_MATH_INST     (1 << 6)
+#   define R300_ME_RECIP_DX               6
 #define R300_PVS_DST_MACRO_INST    (1 << 7)
 #   define R300_PVS_MACRO_OP_2CLK_MADD    0
 #define R300_PVS_DST_REG_TYPE(x) ((x) << 8)
@@ -71,6 +76,13 @@
     ((R300_PVS_SRC_SELECT_FORCE_1 | (R300_PVS_SRC_SELECT_FORCE_1 << 3) | \
      (R300_PVS_SRC_SELECT_FORCE_1 << 6) | \
       (R300_PVS_SRC_SELECT_FORCE_1 << 9)) << 13)
+#define R300_PVS_MODIFIER_X        (1 << 25)
+#define R300_PVS_MODIFIER_Y        (1 << 26)
+#define R300_PVS_MODIFIER_Z        (1 << 27)
+#define R300_PVS_MODIFIER_W        (1 << 28)
+#define R300_PVS_NEGATE_XYZW \
+    (R300_PVS_MODIFIER_X | R300_PVS_MODIFIER_Y | \
+     R300_PVS_MODIFIER_Z | R300_PVS_MODIFIER_W)
 
 static const struct tgsi_full_src_register r300_constant_zero = {
     .SrcRegister.Extended = TRUE,
@@ -98,7 +110,13 @@ struct r300_vs_asm {
     unsigned imm_offset;
     /* Number of immediate constants. */
     unsigned imm_count;
-    /* Offsets into vertex output memory. */
+    /* Number of colors to write. */
+    unsigned out_colors;
+    /* Number of texcoords to write. */
+    unsigned out_texcoords;
+    /* Whether to emit point size. */
+    boolean point_size;
+    /* Tab of declared outputs to OVM outputs. */
     unsigned tab[16];
 };
 
@@ -114,7 +132,7 @@ static struct r300_vertex_shader r300_passthrough_vertex_shader = {
     .instructions[0].inst3 = 0x0,
     .instructions[1].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
         R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
-        R300_PVS_DST_OFFSET(2) | R300_PVS_DST_WE_XYZW,
+        R300_PVS_DST_OFFSET(1) | R300_PVS_DST_WE_XYZW,
     .instructions[1].inst1 = R300_PVS_SRC_REG_TYPE(R300_PVS_SRC_REG_INPUT) |
         R300_PVS_SRC_OFFSET(1) | R300_PVS_SRC_SWIZZLE_XYZW,
     .instructions[1].inst2 = R300_PVS_SRC_SWIZZLE_ZERO,
@@ -133,7 +151,7 @@ static struct r300_vertex_shader r300_texture_vertex_shader = {
     .instructions[0].inst3 = 0x0,
     .instructions[1].inst0 = R300_PVS_DST_OPCODE(R300_VE_ADD) |
         R300_PVS_DST_REG_TYPE(R300_PVS_DST_REG_OUT) |
-        R300_PVS_DST_OFFSET(6) | R300_PVS_DST_WE_XYZW,
+        R300_PVS_DST_OFFSET(1) | R300_PVS_DST_WE_XYZW,
     .instructions[1].inst1 = R300_PVS_SRC_REG_TYPE(R300_PVS_SRC_REG_INPUT) |
         R300_PVS_SRC_OFFSET(1) | R300_PVS_SRC_SWIZZLE_XYZW,
     .instructions[1].inst2 = R300_PVS_SRC_SWIZZLE_ZERO,

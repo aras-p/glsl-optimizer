@@ -1278,10 +1278,6 @@ util_create_gen_mipmap(struct pipe_context *pipe,
 
    /* disabled blending/masking */
    memset(&ctx->blend, 0, sizeof(ctx->blend));
-   ctx->blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   ctx->blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   ctx->blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   ctx->blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
    ctx->blend.colormask = PIPE_MASK_RGBA;
 
    /* no-op depth/stencil/alpha */
@@ -1320,7 +1316,6 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    for (i = 0; i < 4; i++) {
       ctx->vertices[i][0][2] = 0.0f; /* z */
       ctx->vertices[i][0][3] = 1.0f; /* w */
-      ctx->vertices[i][1][2] = 0.0f; /* r */
       ctx->vertices[i][1][3] = 1.0f; /* q */
    }
 
@@ -1354,29 +1349,104 @@ get_next_slot(struct gen_mipmap_state *ctx)
 
 
 static unsigned
-set_vertex_data(struct gen_mipmap_state *ctx, float width, float height)
+set_vertex_data(struct gen_mipmap_state *ctx,
+                enum pipe_texture_target tex_target,
+                uint face, float width, float height)
 {
    unsigned offset;
 
+   /* vert[0].position */
    ctx->vertices[0][0][0] = 0.0f; /*x*/
    ctx->vertices[0][0][1] = 0.0f; /*y*/
-   ctx->vertices[0][1][0] = 0.0f; /*s*/
-   ctx->vertices[0][1][1] = 0.0f; /*t*/
 
+   /* vert[1].position */
    ctx->vertices[1][0][0] = width;
    ctx->vertices[1][0][1] = 0.0f;
-   ctx->vertices[1][1][0] = 1.0f;
-   ctx->vertices[1][1][1] = 0.0f;
 
+   /* vert[2].position */
    ctx->vertices[2][0][0] = width;
    ctx->vertices[2][0][1] = height;
-   ctx->vertices[2][1][0] = 1.0f;
-   ctx->vertices[2][1][1] = 1.0f;
 
+   /* vert[3].position */
    ctx->vertices[3][0][0] = 0.0f;
    ctx->vertices[3][0][1] = height;
-   ctx->vertices[3][1][0] = 0.0f;
-   ctx->vertices[3][1][1] = 1.0f;
+
+   /* Setup vertex texcoords.  This is a little tricky for cube maps. */
+   if (tex_target == PIPE_TEXTURE_CUBE) {
+      static const float st[4][2] = {
+         {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
+      };
+      float rx, ry, rz;
+      uint i;
+
+      /* loop over quad verts */
+      for (i = 0; i < 4; i++) {
+         /* Compute sc = +/-scale and tc = +/-scale.
+          * Not +/-1 to avoid cube face selection ambiguity near the edges,
+          * though that can still sometimes happen with this scale factor...
+          */
+         const float scale = 0.9999f;
+         const float sc = (2.0f * st[i][0] - 1.0f) * scale;
+         const float tc = (2.0f * st[i][1] - 1.0f) * scale;
+
+         switch (face) {
+         case PIPE_TEX_FACE_POS_X:
+            rx = 1.0f;
+            ry = -tc;
+            rz = -sc;
+            break;
+         case PIPE_TEX_FACE_NEG_X:
+            rx = -1.0f;
+            ry = -tc;
+            rz = sc;
+            break;
+         case PIPE_TEX_FACE_POS_Y:
+            rx = sc;
+            ry = 1.0f;
+            rz = tc;
+            break;
+         case PIPE_TEX_FACE_NEG_Y:
+            rx = sc;
+            ry = -1.0f;
+            rz = -tc;
+            break;
+         case PIPE_TEX_FACE_POS_Z:
+            rx = sc;
+            ry = -tc;
+            rz = 1.0f;
+            break;
+         case PIPE_TEX_FACE_NEG_Z:
+            rx = -sc;
+            ry = -tc;
+            rz = -1.0f;
+            break;
+         default:
+            assert(0);
+         }
+
+         ctx->vertices[i][1][0] = rx; /*s*/
+         ctx->vertices[i][1][1] = ry; /*t*/
+         ctx->vertices[i][1][2] = rz; /*r*/
+      }
+   }
+   else {
+      /* 1D/2D */
+      ctx->vertices[0][1][0] = 0.0f; /*s*/
+      ctx->vertices[0][1][1] = 0.0f; /*t*/
+      ctx->vertices[0][1][2] = 0.0f; /*r*/
+
+      ctx->vertices[1][1][0] = 1.0f;
+      ctx->vertices[1][1][1] = 0.0f;
+      ctx->vertices[1][1][2] = 0.0f;
+
+      ctx->vertices[2][1][0] = 1.0f;
+      ctx->vertices[2][1][1] = 1.0f;
+      ctx->vertices[2][1][2] = 0.0f;
+
+      ctx->vertices[3][1][0] = 0.0f;
+      ctx->vertices[3][1][1] = 1.0f;
+      ctx->vertices[3][1][2] = 0.0f;
+   }
 
    offset = get_next_slot( ctx );
 
@@ -1507,6 +1577,8 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
       /* quad coords in window coords (bypassing vs, clip and viewport) */
       offset = set_vertex_data(ctx,
+                               pt->target,
+                               face,
                                (float) pt->width[dstLevel],
                                (float) pt->height[dstLevel]);
 

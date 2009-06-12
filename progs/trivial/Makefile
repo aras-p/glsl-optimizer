@@ -30,6 +30,7 @@ SOURCES = \
 	fs-tri.c \
 	line-clip.c \
 	line-cull.c \
+	line-flat.c \
 	line-smooth.c \
 	line-stipple-wide.c \
 	line-userclip-clip.c \
@@ -138,6 +139,7 @@ SOURCES = \
 	tristrip-flat.c \
 	tristrip.c \
 	vbo-drawarrays.c \
+	vbo-noninterleaved.c \
 	vbo-drawelements.c \
 	vbo-drawrange.c \
 	vp-array.c \
@@ -145,6 +147,7 @@ SOURCES = \
 	vp-clip.c \
 	vp-line-clip.c \
 	vp-tri.c \
+	vp-tri-invariant.c \
 	vp-tri-swap.c \
 	vp-tri-tex.c \
 	vp-tri-imm.c \

@@ -178,6 +178,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
       velements[attr].src_format = 
          st_pipe_vertex_format(arrays[mesaAttr]->Type,
                                arrays[mesaAttr]->Size,
+                               arrays[mesaAttr]->Format,
                                arrays[mesaAttr]->Normalized);
       assert(velements[attr].src_format);
 
@@ -196,12 +197,9 @@ st_feedback_draw_vbo(GLcontext *ctx,
    draw_set_vertex_elements(draw, vp->num_inputs, velements);
 
    if (ib) {
-      unsigned indexSize;
       struct gl_buffer_object *bufobj = ib->obj;
-      struct st_buffer_object *stobj = st_buffer_object(bufobj);
+      unsigned indexSize;
       void *map;
-
-      index_buffer_handle = stobj->buffer;
 
       switch (ib->type) {
       case GL_UNSIGNED_INT:
@@ -215,9 +213,19 @@ st_feedback_draw_vbo(GLcontext *ctx,
 	 return;
       }
 
-      map = pipe_buffer_map(pipe->screen, index_buffer_handle,
-                            PIPE_BUFFER_USAGE_CPU_READ);
-      draw_set_mapped_element_buffer(draw, indexSize, map);
+      if (bufobj && bufobj->Name) {
+         struct st_buffer_object *stobj = st_buffer_object(bufobj);
+
+         index_buffer_handle = stobj->buffer;
+
+         map = pipe_buffer_map(pipe->screen, index_buffer_handle,
+                               PIPE_BUFFER_USAGE_CPU_READ);
+
+         draw_set_mapped_element_buffer(draw, indexSize, map);
+      }
+      else {
+         draw_set_mapped_element_buffer(draw, indexSize, (void *) ib->ptr);
+      }
    }
    else {
       /* no index/element buffer */
@@ -252,7 +260,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
          draw_set_mapped_vertex_buffer(draw, i, NULL);
       }
    }
-   if (ib) {
+   if (index_buffer_handle) {
       pipe_buffer_unmap(pipe->screen, index_buffer_handle);
       draw_set_mapped_element_buffer(draw, 0, NULL);
    }

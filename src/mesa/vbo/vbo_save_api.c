@@ -289,6 +289,31 @@ static void _save_compile_vertex_list( GLcontext *ctx )
    node->vertex_store->refcount++;
    node->prim_store->refcount++;
 
+
+   node->current_size = node->vertex_size - node->attrsz[0];
+   node->current_data = NULL;
+
+   if (node->current_size) {
+      /* If the malloc fails, we just pull the data out of the VBO
+       * later instead.
+       */
+      node->current_data = MALLOC( node->current_size * sizeof(GLfloat) );
+      if (node->current_data) {
+         const char *buffer = (const char *)save->vertex_store->buffer;
+         unsigned attr_offset = node->attrsz[0] * sizeof(GLfloat);
+         unsigned vertex_offset = 0;
+
+         if (node->count)
+            vertex_offset = (node->count-1) * node->vertex_size * sizeof(GLfloat);
+
+         memcpy( node->current_data,
+                 buffer + node->buffer_offset + vertex_offset + attr_offset,
+                 node->current_size * sizeof(GLfloat) );
+      }
+   }
+
+
+
    assert(node->attrsz[VBO_ATTRIB_POS] != 0 ||
 	  node->count == 0);
 

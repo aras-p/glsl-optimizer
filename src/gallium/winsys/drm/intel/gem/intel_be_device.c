@@ -6,12 +6,15 @@
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
 #include "util/u_memory.h"
+#include "util/u_debug.h"
 
 #include "intel_be_fence.h"
 
 #include "i915simple/i915_winsys.h"
+#include "softpipe/sp_winsys.h"
 
 #include "intel_be_api.h"
+#include <stdio.h>
 
 /*
  * Buffer
@@ -175,8 +178,6 @@ intel_be_handle_from_buffer(struct pipe_screen *screen,
                             struct pipe_buffer *buffer,
                             unsigned *handle)
 {
-	drm_intel_bo *bo;
-
 	if (!buffer)
 		return FALSE;
 
@@ -285,14 +286,47 @@ intel_be_init_device(struct intel_be_device *dev, int fd, unsigned id)
 
 	dev->pools.gem = drm_intel_bufmgr_gem_init(dev->fd, dev->max_batch_size);
 
+	dev->softpipe = debug_get_bool_option("INTEL_SOFTPIPE", FALSE);
+
 	return true;
 }
 
+static void
+intel_be_get_device_id(unsigned int *device_id)
+{
+   char path[512];
+   FILE *file;
+
+   /*
+    * FIXME: Fix this up to use a drm ioctl or whatever.
+    */
+
+   snprintf(path, sizeof(path), "/sys/class/drm/card0/device/device");
+   file = fopen(path, "r");
+   if (!file) {
+      return;
+   }
+
+   fgets(path, sizeof(path), file);
+   sscanf(path, "%x", device_id);
+   fclose(file);
+}
+
 struct pipe_screen *
-intel_be_create_screen(int drmFD, int deviceID)
+intel_be_create_screen(int drmFD, struct drm_create_screen_arg *arg)
 {
 	struct intel_be_device *dev;
 	struct pipe_screen *screen;
+	unsigned int deviceID;
+
+	if (arg != NULL) {
+		switch(arg->mode) {
+		case DRM_CREATE_NORMAL:
+			break;
+		default:
+			return NULL;
+		}
+	}
 
 	/* Allocate the private area */
 	dev = malloc(sizeof(*dev));
@@ -300,9 +334,14 @@ intel_be_create_screen(int drmFD, int deviceID)
 		return NULL;
 	memset(dev, 0, sizeof(*dev));
 
+	intel_be_get_device_id(&deviceID);
 	intel_be_init_device(dev, drmFD, deviceID);
 
-	screen = i915_create_screen(&dev->base, deviceID);
+	if (dev->softpipe) {
+		screen = softpipe_create_screen(&dev->base);
+		drm_api_hooks.buffer_from_texture = softpipe_get_texture_buffer;
+	} else
+		screen = i915_create_screen(&dev->base, deviceID);
 
 	return screen;
 }

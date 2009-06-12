@@ -51,11 +51,6 @@
 #include "glapi/dispatch.h"
 
 
-#ifndef GL_PROGRAM_BINARY_LENGTH_OES
-#define GL_PROGRAM_BINARY_LENGTH_OES 0x8741
-#endif
-
-
 /**
  * Allocate a new gl_shader_program object, initialize it.
  */
@@ -1492,7 +1487,7 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
       return;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
 
    if (program) {
       shProg = _mesa_lookup_shader_program_err(ctx, program, "glUseProgram");
@@ -1514,6 +1509,10 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
                          shProg->Shaders[i]->Name,
                          shProg->Shaders[i]->Type);
          }
+         if (shProg->VertexProgram)
+            printf(" vert prog %u\n", shProg->VertexProgram->Base.Id);
+         if (shProg->FragmentProgram)
+            printf(" frag prog %u\n", shProg->FragmentProgram->Base.Id);
       }
    }
    else {
@@ -1794,7 +1793,7 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       return;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
    uniform = &shProg->Uniforms->Uniforms[location];
 
@@ -1902,7 +1901,7 @@ set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
  */
 static void
 _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
-                     GLenum matrixType, GLint location, GLsizei count,
+                     GLint location, GLsizei count,
                      GLboolean transpose, const GLfloat *values)
 {
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
@@ -1934,7 +1933,7 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
       return;
    }
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
    uniform = &shProg->Uniforms->Uniforms[location];
 

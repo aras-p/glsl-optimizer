@@ -51,6 +51,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 
+/** ID/name for immediate-mode VBO */
+#define IMM_BUFFER_NAME 0xaabbccdd
+
+
 static void reset_attrfv( struct vbo_exec_context *exec );
 
 
@@ -665,13 +669,13 @@ void vbo_use_buffer_objects(GLcontext *ctx)
    /* Any buffer name but 0 can be used here since this bufferobj won't
     * go into the bufferobj hashtable.
     */
-   GLuint bufName = 0xaabbccdd;
+   GLuint bufName = IMM_BUFFER_NAME;
    GLenum target = GL_ARRAY_BUFFER_ARB;
    GLenum usage = GL_STREAM_DRAW_ARB;
    GLsizei size = VBO_VERT_BUFFER_SIZE;
 
    /* Make sure this func is only used once */
-   assert(exec->vtx.bufferobj == ctx->Array.NullBufferObj);
+   assert(exec->vtx.bufferobj == ctx->Shared->NullBufferObj);
    if (exec->vtx.buffer_map) {
       _mesa_align_free(exec->vtx.buffer_map);
       exec->vtx.buffer_map = NULL;
@@ -697,7 +701,7 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
     */
    _mesa_reference_buffer_object(ctx,
                                  &exec->vtx.bufferobj,
-                                 ctx->Array.NullBufferObj);
+                                 ctx->Shared->NullBufferObj);
 
    ASSERT(!exec->vtx.buffer_map);
    exec->vtx.buffer_map = (GLfloat *)ALIGN_MALLOC(VBO_VERT_BUFFER_SIZE, 64);
@@ -727,19 +731,33 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
 
 void vbo_exec_vtx_destroy( struct vbo_exec_context *exec )
 {
-   if (exec->vtx.bufferobj->Name) {
-      /* using a real VBO for vertex data */
-      GLcontext *ctx = exec->ctx;
-      _mesa_reference_buffer_object(ctx, &exec->vtx.bufferobj, NULL);
-   }
-   else {
-      /* just using malloc'd space for vertex data */
-      if (exec->vtx.buffer_map) {
+   /* using a real VBO for vertex data */
+   GLcontext *ctx = exec->ctx;
+   unsigned i;
+
+   /* True VBOs should already be unmapped
+    */
+   if (exec->vtx.buffer_map) {
+      ASSERT(exec->vtx.bufferobj->Name == 0 ||
+             exec->vtx.bufferobj->Name == IMM_BUFFER_NAME);
+      if (exec->vtx.bufferobj->Name == 0) {
          ALIGN_FREE(exec->vtx.buffer_map);
          exec->vtx.buffer_map = NULL;
          exec->vtx.buffer_ptr = NULL;
       }
    }
+
+   /* Drop any outstanding reference to the vertex buffer
+    */
+   for (i = 0; i < Elements(exec->vtx.arrays); i++) {
+      _mesa_reference_buffer_object(ctx,
+                                    &exec->vtx.arrays[i].BufferObj,
+                                    NULL);
+   }
+
+   /* Free the vertex buffer:
+    */
+   _mesa_reference_buffer_object(ctx, &exec->vtx.bufferobj, NULL);
 }
 
 void vbo_exec_BeginVertices( GLcontext *ctx )

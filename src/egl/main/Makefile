@@ -64,9 +64,9 @@ $(TOP)/$(LIB_DIR)/libEGL.so: $(OBJECTS)
 		-install $(TOP)/$(LIB_DIR) \
 		$(EGL_LIB_DEPS) $(OBJECTS)
 
-install:
+install: default
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
-	$(INSTALL) $(TOP)/$(LIB_DIR)/libEGL.so* $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/libEGL.so* $(DESTDIR)$(INSTALL_LIB_DIR)
 
 clean:
 	-rm -f *.o *.so*
