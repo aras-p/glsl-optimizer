@@ -477,6 +477,26 @@ const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,
 	case GL_DEPTH_STENCIL_EXT:
 	case GL_DEPTH24_STENCIL8_EXT:
 		return &_mesa_texformat_s8_z24;
+
+	/* EXT_texture_sRGB */
+	case GL_SRGB:
+	case GL_SRGB8:
+	case GL_SRGB_ALPHA:
+	case GL_SRGB8_ALPHA8:
+	case GL_COMPRESSED_SRGB:
+	case GL_COMPRESSED_SRGB_ALPHA:
+		return &_mesa_texformat_srgba8;
+
+	case GL_SLUMINANCE:
+	case GL_SLUMINANCE8:
+	case GL_COMPRESSED_SLUMINANCE:
+		return &_mesa_texformat_sl8;
+
+	case GL_SLUMINANCE_ALPHA:
+	case GL_SLUMINANCE8_ALPHA8:
+	case GL_COMPRESSED_SLUMINANCE_ALPHA:
+		return &_mesa_texformat_sla8;
+
 	default:
 		_mesa_problem(ctx,
 			      "unexpected internalFormat 0x%x in %s",

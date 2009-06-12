@@ -1467,6 +1467,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_FORMAT_3D		   (1 << 25)
 #	define R300_TX_FORMAT_CUBIC_MAP		   (2 << 25)
 
+#	define R300_TX_FORMAT_GAMMA			(1 << 21)
+
 	/* gap */
 	/* Floating point formats */
 	/* Note - hardware supports both 16 and 32 bit floating point */
