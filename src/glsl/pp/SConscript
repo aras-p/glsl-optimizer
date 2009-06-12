@@ -9,6 +9,7 @@ glsl = env.StaticLibrary(
     target = 'glsl',
     source = [
         'sl_pp_purify.c',
+        'sl_pp_token.c',
     ],
 )
 Export('glsl')
