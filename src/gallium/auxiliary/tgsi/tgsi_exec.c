@@ -2020,8 +2020,7 @@ exec_instruction(
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
-   case TGSI_OPCODE_FLOOR:
-   /* TGSI_OPCODE_FLR */
+   case TGSI_OPCODE_FLR:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          micro_flr( &r[0], &r[0] );
@@ -2290,8 +2289,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_LERP:
-   /* TGSI_OPCODE_LRP */
+   case TGSI_OPCODE_LRP:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH(&r[0], 0, chan_index);
          FETCH(&r[1], 1, chan_index);
@@ -2325,8 +2323,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_DOT2ADD:
-   /* TGSI_OPCODE_DP2A */
+   case TGSI_OPCODE_DP2A:
       FETCH( &r[0], 0, CHAN_X );
       FETCH( &r[1], 1, CHAN_X );
       micro_mul( &r[0], &r[0], &r[1] );
@@ -2354,8 +2351,7 @@ exec_instruction(
       assert (0);
       break;
 
-   case TGSI_OPCODE_FRAC:
-   /* TGSI_OPCODE_FRC */
+   case TGSI_OPCODE_FRC:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          micro_frc( &r[0], &r[0] );
@@ -2383,8 +2379,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_EXPBASE2:
-   /* TGSI_OPCODE_EX2 */
+   case TGSI_OPCODE_EX2:
       FETCH(&r[0], 0, CHAN_X);
 
 #if FAST_MATH
@@ -2398,8 +2393,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_LOGBASE2:
-   /* TGSI_OPCODE_LG2 */
+   case TGSI_OPCODE_LG2:
       FETCH( &r[0], 0, CHAN_X );
       micro_lg2( &r[0], &r[0] );
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -2407,8 +2401,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_POWER:
-   /* TGSI_OPCODE_POW */
+   case TGSI_OPCODE_POW:
       FETCH(&r[0], 0, CHAN_X);
       FETCH(&r[1], 1, CHAN_X);
 
@@ -2419,8 +2412,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_CROSSPRODUCT:
-   /* TGSI_OPCODE_XPD */
+   case TGSI_OPCODE_XPD:
       FETCH(&r[0], 0, CHAN_Y);
       FETCH(&r[1], 1, CHAN_Z);
 

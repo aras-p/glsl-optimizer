@@ -182,31 +182,31 @@ union tgsi_immediate_data
  * GL_ATI_fragment_shader
  */
 #define TGSI_OPCODE_SUB                 17
-#define TGSI_OPCODE_DOT3                TGSI_OPCODE_DP3
-#define TGSI_OPCODE_DOT4                TGSI_OPCODE_DP4
-#define TGSI_OPCODE_LERP                18
+/*#define TGSI_OPCODE_DOT3                TGSI_OPCODE_DP3*/
+/*#define TGSI_OPCODE_DOT4                TGSI_OPCODE_DP4*/
+#define TGSI_OPCODE_LRP                 18
 #define TGSI_OPCODE_CND                 19
 #define TGSI_OPCODE_CND0                20
-#define TGSI_OPCODE_DOT2ADD             21
+#define TGSI_OPCODE_DP2A                21
 
 /*
  * GL_EXT_vertex_shader
  */
 #define TGSI_OPCODE_INDEX               22   /* considered for removal */
 #define TGSI_OPCODE_NEGATE              23   /* considered for removal */
-#define TGSI_OPCODE_MADD                TGSI_OPCODE_MAD
-#define TGSI_OPCODE_FRAC                24
-#define TGSI_OPCODE_SETGE               TGSI_OPCODE_SGE
-#define TGSI_OPCODE_SETLT               TGSI_OPCODE_SLT
+/*#define TGSI_OPCODE_MADD                TGSI_OPCODE_MAD*/
+#define TGSI_OPCODE_FRC                 24
+/*#define TGSI_OPCODE_SETGE               TGSI_OPCODE_SGE*/
+/*#define TGSI_OPCODE_SETLT               TGSI_OPCODE_SLT*/
 #define TGSI_OPCODE_CLAMP               25
-#define TGSI_OPCODE_FLOOR               26
+#define TGSI_OPCODE_FLR                 26
 #define TGSI_OPCODE_ROUND               27
-#define TGSI_OPCODE_EXPBASE2            28
-#define TGSI_OPCODE_LOGBASE2            29
-#define TGSI_OPCODE_POWER               30
-#define TGSI_OPCODE_RECIP               TGSI_OPCODE_RCP
-#define TGSI_OPCODE_RECIPSQRT           TGSI_OPCODE_RSQ
-#define TGSI_OPCODE_CROSSPRODUCT        31
+#define TGSI_OPCODE_EX2                 28
+#define TGSI_OPCODE_LG2                 29
+#define TGSI_OPCODE_POW                 30
+/*#define TGSI_OPCODE_RECIP               TGSI_OPCODE_RCP*/
+/*#define TGSI_OPCODE_RECIPSQRT           TGSI_OPCODE_RSQ*/
+#define TGSI_OPCODE_XPD                 31
 #define TGSI_OPCODE_MULTIPLYMATRIX      32   /* considered for removal */
 
 /*
@@ -222,17 +222,17 @@ union tgsi_immediate_data
 #define TGSI_OPCODE_COS                 36
 #define TGSI_OPCODE_DDX                 37
 #define TGSI_OPCODE_DDY                 38
-#define TGSI_OPCODE_EX2                 TGSI_OPCODE_EXPBASE2
-#define TGSI_OPCODE_FLR                 TGSI_OPCODE_FLOOR
-#define TGSI_OPCODE_FRC                 TGSI_OPCODE_FRAC
+/*#define TGSI_OPCODE_EX2                 TGSI_OPCODE_EXPBASE2*/
+/*#define TGSI_OPCODE_FLR                 TGSI_OPCODE_FLOOR*/
+/*#define TGSI_OPCODE_FRC                 TGSI_OPCODE_FRAC*/
 #define TGSI_OPCODE_KILP                39  /* predicated kill */
-#define TGSI_OPCODE_LG2                 TGSI_OPCODE_LOGBASE2
-#define TGSI_OPCODE_LRP                 TGSI_OPCODE_LERP
+/*#define TGSI_OPCODE_LG2                 TGSI_OPCODE_LOGBASE2*/
+/*#define TGSI_OPCODE_LRP                 TGSI_OPCODE_LERP*/
 #define TGSI_OPCODE_PK2H                40
 #define TGSI_OPCODE_PK2US               41
 #define TGSI_OPCODE_PK4B                42
 #define TGSI_OPCODE_PK4UB               43
-#define TGSI_OPCODE_POW                 TGSI_OPCODE_POWER
+/*#define TGSI_OPCODE_POW                 TGSI_OPCODE_POWER*/
 #define TGSI_OPCODE_RFL                 44
 #define TGSI_OPCODE_SEQ                 45
 #define TGSI_OPCODE_SFL                 46
@@ -264,7 +264,7 @@ union tgsi_immediate_data
  * GL_ARB_vertex_program
  */
 #define TGSI_OPCODE_SWZ                 118
-#define TGSI_OPCODE_XPD                 TGSI_OPCODE_CROSSPRODUCT
+/*#define TGSI_OPCODE_XPD                 TGSI_OPCODE_CROSSPRODUCT*/
 
 /*
  * GL_ARB_fragment_program
@@ -285,7 +285,7 @@ union tgsi_immediate_data
 #define TGSI_OPCODE_NRM                 69
 #define TGSI_OPCODE_DIV                 70
 #define TGSI_OPCODE_DP2                 71
-#define TGSI_OPCODE_DP2A                TGSI_OPCODE_DOT2ADD
+/*#define TGSI_OPCODE_DP2A                TGSI_OPCODE_DOT2ADD*/
 #define TGSI_OPCODE_TXL                 72
 #define TGSI_OPCODE_BRK                 73
 #define TGSI_OPCODE_IF                  74
@@ -348,7 +348,7 @@ union tgsi_immediate_data
 #define TGSI_OPCODE_BGNSUB              100
 #define TGSI_OPCODE_ENDLOOP2            101
 #define TGSI_OPCODE_ENDSUB              102
-#define TGSI_OPCODE_INT                 TGSI_OPCODE_TRUNC
+/*#define TGSI_OPCODE_INT                 TGSI_OPCODE_TRUNC*/
 #define TGSI_OPCODE_NOISE1              103
 #define TGSI_OPCODE_NOISE2              104
 #define TGSI_OPCODE_NOISE3              105
@@ -358,7 +358,7 @@ union tgsi_immediate_data
 /*
  * ps_1_1
  */
-#define TGSI_OPCODE_TEXKILL             TGSI_OPCODE_KIL
+/*#define TGSI_OPCODE_TEXKILL             TGSI_OPCODE_KIL*/
 
 /*
  * ps_1_2
@@ -373,45 +373,45 @@ union tgsi_immediate_data
 /*
  * ps_1_4
  */
-#define TGSI_OPCODE_TEXLD               TGSI_OPCODE_TEX
+/*#define TGSI_OPCODE_TEXLD               TGSI_OPCODE_TEX*/
 
 /*
  * ps_2_0
  */
-#define TGSI_OPCODE_M4X4                TGSI_OPCODE_MULTIPLYMATRIX
+/*#define TGSI_OPCODE_M4X4                TGSI_OPCODE_MULTIPLYMATRIX*/
 #define TGSI_OPCODE_M4X3                108
 #define TGSI_OPCODE_M3X4                109
 #define TGSI_OPCODE_M3X3                110
 #define TGSI_OPCODE_M3X2                111
-#define TGSI_OPCODE_CRS                 TGSI_OPCODE_XPD
+/*#define TGSI_OPCODE_CRS                 TGSI_OPCODE_XPD*/
 #define TGSI_OPCODE_NRM4                112
-#define TGSI_OPCODE_SINCOS              TGSI_OPCODE_SCS
-#define TGSI_OPCODE_TEXLDB              TGSI_OPCODE_TXB
-#define TGSI_OPCODE_DP2ADD              TGSI_OPCODE_DP2A
+/*#define TGSI_OPCODE_SINCOS              TGSI_OPCODE_SCS*/
+/*#define TGSI_OPCODE_TEXLDB              TGSI_OPCODE_TXB*/
+/*#define TGSI_OPCODE_DP2ADD              TGSI_OPCODE_DP2A*/
 
 /*
  * ps_2_x
  */
-#define TGSI_OPCODE_CALL                TGSI_OPCODE_CAL
+/*#define TGSI_OPCODE_CALL                TGSI_OPCODE_CAL*/
 #define TGSI_OPCODE_CALLNZ              113
 #define TGSI_OPCODE_IFC                 114
-#define TGSI_OPCODE_BREAK               TGSI_OPCODE_BRK
+/*#define TGSI_OPCODE_BREAK               TGSI_OPCODE_BRK*/
 #define TGSI_OPCODE_BREAKC              115
-#define TGSI_OPCODE_DSX                 TGSI_OPCODE_DDX
-#define TGSI_OPCODE_DSY                 TGSI_OPCODE_DDY
-#define TGSI_OPCODE_TEXLDD              TGSI_OPCODE_TXD
+/*#define TGSI_OPCODE_DSX                 TGSI_OPCODE_DDX*/
+/*#define TGSI_OPCODE_DSY                 TGSI_OPCODE_DDY*/
+/*#define TGSI_OPCODE_TEXLDD              TGSI_OPCODE_TXD*/
 
 /*
  * vs_1_1
  */
-#define TGSI_OPCODE_EXPP                TGSI_OPCODE_EXP
-#define TGSI_OPCODE_LOGP                TGSI_OPCODE_LG2
+/*#define TGSI_OPCODE_EXPP                TGSI_OPCODE_EXP*/
+/*#define TGSI_OPCODE_LOGP                TGSI_OPCODE_LG2*/
 
 /*
  * vs_2_0
  */
-#define TGSI_OPCODE_SGN                 TGSI_OPCODE_SSG
-#define TGSI_OPCODE_MOVA                TGSI_OPCODE_ARR
+/*#define TGSI_OPCODE_SGN                 TGSI_OPCODE_SSG*/
+/*#define TGSI_OPCODE_MOVA                TGSI_OPCODE_ARR*/
 /* EXPP - use TGSI_OPCODE_EX2 */
 
 /*

@@ -789,16 +789,6 @@ match_inst_mnemonic(const char **pcur,
    if (str_match_no_case(pcur, info->mnemonic)) {
       return TRUE;
    }
-   if (info->alt_mnemonic1) {
-      if (str_match_no_case(pcur, info->alt_mnemonic1)) {
-         return TRUE;
-      }
-      if (info->alt_mnemonic2) {
-         if (str_match_no_case(pcur, info->alt_mnemonic2)) {
-            return TRUE;
-         }
-      }
-   }
    return FALSE;
 }
 
