@@ -265,10 +265,7 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	    driQueryOptioni(&r300->radeon.optionCache, "texture_coord_units");
 	ctx->Const.MaxTextureUnits = MIN2(ctx->Const.MaxTextureImageUnits,
 		 ctx->Const.MaxTextureCoordUnits);
-    /* FIXME: When no memory manager is available we should set this 
-     * to some reasonable value based on texture memory pool size */
-    /* FIXME: r5xx limit is 4096 */
-    ctx->Const.MaxTextureLevels = 12;
+
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 	ctx->Const.MaxTextureLodBias = 16.0;
 
