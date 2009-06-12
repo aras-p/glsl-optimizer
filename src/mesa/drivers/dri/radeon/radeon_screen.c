@@ -35,6 +35,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * \author  Gareth Hughes <gareth@valinux.com>
  */
 
+#include <errno.h>
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/mtypes.h"
@@ -45,31 +46,38 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_chipset.h"
 #include "radeon_macros.h"
 #include "radeon_screen.h"
+#include "radeon_common.h"
+#include "radeon_span.h"
 #if !RADEON_COMMON
 #include "radeon_context.h"
-#include "radeon_span.h"
 #include "radeon_tex.h"
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
 #include "r200_context.h"
 #include "r200_ioctl.h"
-#include "r200_span.h"
 #include "r200_tex.h"
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 #include "r300_context.h"
 #include "r300_fragprog.h"
 #include "r300_tex.h"
-#include "radeon_span.h"
 #endif
 
 #include "utils.h"
 #include "vblank.h"
 #include "drirenderbuffer.h"
 
+#include "radeon_bocs_wrapper.h"
+
 #include "GL/internal/dri_interface.h"
 
 /* Radeon configuration
  */
 #include "xmlpool.h"
+
+#define DRI_CONF_COMMAND_BUFFER_SIZE(def,min,max) \
+DRI_CONF_OPT_BEGIN_V(command_buffer_size,int,def, # min ":" # max ) \
+        DRI_CONF_DESC(en,"Size of command buffer (in KB)") \
+        DRI_CONF_DESC(de,"Grösse des Befehlspuffers (in KB)") \
+DRI_CONF_OPT_END
 
 #if !RADEON_COMMON	/* R100 */
 PUBLIC const char __driConfigOptions[] =
@@ -80,6 +88,7 @@ DRI_CONF_BEGIN
         DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
         DRI_CONF_MAX_TEXTURE_UNITS(3,2,3)
         DRI_CONF_HYPERZ(false)
+        DRI_CONF_COMMAND_BUFFER_SIZE(8, 8, 32)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_QUALITY
         DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
@@ -95,7 +104,7 @@ DRI_CONF_BEGIN
         DRI_CONF_NO_RAST(false)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 14;
+static const GLuint __driNConfigOptions = 15;
 
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
 
@@ -107,6 +116,7 @@ DRI_CONF_BEGIN
         DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
         DRI_CONF_MAX_TEXTURE_UNITS(6,2,6)
         DRI_CONF_HYPERZ(false)
+        DRI_CONF_COMMAND_BUFFER_SIZE(8, 8, 32)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_QUALITY
         DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
@@ -126,7 +136,7 @@ DRI_CONF_BEGIN
         DRI_CONF_NV_VERTEX_PROGRAM(false)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 16;
+static const GLuint __driNConfigOptions = 17;
 
 extern const struct dri_extension blend_extensions[];
 extern const struct dri_extension ARB_vp_extension[];
@@ -149,11 +159,7 @@ DRI_CONF_OPT_BEGIN_V(texture_coord_units,int,def, # min ":" # max ) \
         DRI_CONF_DESC(de,"Anzahl der Texturkoordinateneinheiten") \
 DRI_CONF_OPT_END
 
-#define DRI_CONF_COMMAND_BUFFER_SIZE(def,min,max) \
-DRI_CONF_OPT_BEGIN_V(command_buffer_size,int,def, # min ":" # max ) \
-        DRI_CONF_DESC(en,"Size of command buffer (in KB)") \
-        DRI_CONF_DESC(de,"Grösse des Befehlspuffers (in KB)") \
-DRI_CONF_OPT_END
+
 
 #define DRI_CONF_DISABLE_S3TC(def) \
 DRI_CONF_OPT_BEGIN(disable_s3tc,bool,def) \
@@ -209,7 +215,6 @@ static const GLuint __driNConfigOptions = 17;
 extern const struct dri_extension gl_20_extension[];
 
 #ifndef RADEON_DEBUG
-int RADEON_DEBUG = 0;
 
 static const struct dri_debug_control debug_control[] = {
 	{"fall", DEBUG_FALLBACKS},
@@ -236,19 +241,36 @@ static const struct dri_debug_control debug_control[] = {
 #endif /* RADEON_COMMON && defined(RADEON_COMMON_FOR_R300) */
 
 extern const struct dri_extension card_extensions[];
+extern const struct dri_extension mm_extensions[];
 
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
 static int
-radeonGetParam(int fd, int param, void *value)
+radeonGetParam(__DRIscreenPrivate *sPriv, int param, void *value)
 {
   int ret;
-  drm_radeon_getparam_t gp;
+  drm_radeon_getparam_t gp = { 0 };
+  struct drm_radeon_info info = { 0 };
 
-  gp.param = param;
-  gp.value = value;
+  if (sPriv->drm_version.major >= 2) {
+      info.value = (uint64_t)value;
+      switch (param) {
+      case RADEON_PARAM_DEVICE_ID:
+          info.request = RADEON_INFO_DEVICE_ID;
+          break;
+      case RADEON_PARAM_NUM_GB_PIPES:
+          info.request = RADEON_INFO_NUM_GB_PIPES;
+          break;
+      default:
+          return -EINVAL;
+      }
+      ret = drmCommandWriteRead(sPriv->fd, DRM_RADEON_INFO, &info, sizeof(info));
+  } else {
+      gp.param = param;
+      gp.value = value;
 
-  ret = drmCommandWriteRead( fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
+      ret = drmCommandWriteRead(sPriv->fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
+  }
   return ret;
 }
 
@@ -335,6 +357,12 @@ static const __DRItexOffsetExtension radeonTexOffsetExtension = {
     { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
     radeonSetTexOffset,
 };
+
+static const __DRItexBufferExtension radeonTexBufferExtension = {
+    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
+   radeonSetTexBuffer,
+   radeonSetTexBuffer2,
+};
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
@@ -349,6 +377,12 @@ static const __DRItexOffsetExtension r200texOffsetExtension = {
     { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
    r200SetTexOffset,
 };
+
+static const __DRItexBufferExtension r200TexBufferExtension = {
+    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
+   r200SetTexBuffer,
+   r200SetTexBuffer2,
+};
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
@@ -356,137 +390,19 @@ static const __DRItexOffsetExtension r300texOffsetExtension = {
     { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
    r300SetTexOffset,
 };
+
+static const __DRItexBufferExtension r300TexBufferExtension = {
+    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
+   r300SetTexBuffer,
+   r300SetTexBuffer2,
+};
 #endif
 
-/* Create the device specific screen private data struct.
- */
-static radeonScreenPtr
-radeonCreateScreen( __DRIscreenPrivate *sPriv )
+static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
 {
-   radeonScreenPtr screen;
-   RADEONDRIPtr dri_priv = (RADEONDRIPtr)sPriv->pDevPriv;
-   unsigned char *RADEONMMIO;
-   int i;
-   int ret;
-   uint32_t temp = 0;
-
-   if (sPriv->devPrivSize != sizeof(RADEONDRIRec)) {
-      fprintf(stderr,"\nERROR!  sizeof(RADEONDRIRec) does not match passed size from device driver\n");
-      return GL_FALSE;
-   }
-
-   /* Allocate the private area */
-   screen = (radeonScreenPtr) CALLOC( sizeof(*screen) );
-   if ( !screen ) {
-      __driUtilMessage("%s: Could not allocate memory for screen structure",
-		       __FUNCTION__);
-      return NULL;
-   }
-
-#if DO_DEBUG && RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
-	RADEON_DEBUG = driParseDebugString(getenv("RADEON_DEBUG"), debug_control);
-#endif
-
-   /* parse information in __driConfigOptions */
-   driParseOptionInfo (&screen->optionCache,
-		       __driConfigOptions, __driNConfigOptions);
-
-   /* This is first since which regions we map depends on whether or
-    * not we are using a PCI card.
-    */
-   screen->card_type = (dri_priv->IsPCI ? RADEON_CARD_PCI : RADEON_CARD_AGP);
-   {
-      int ret;
-      ret = radeonGetParam( sPriv->fd, RADEON_PARAM_GART_BUFFER_OFFSET,
-			    &screen->gart_buffer_offset);
-
-      if (ret) {
-	 FREE( screen );
-	 fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_GART_BUFFER_OFFSET): %d\n", ret);
-	 return NULL;
-      }
-
-      ret = radeonGetParam( sPriv->fd, RADEON_PARAM_GART_BASE,
-			    &screen->gart_base);
-      if (ret) {
-	 FREE( screen );
-	 fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_GART_BASE): %d\n", ret);
-	 return NULL;
-      }
-
-      ret = radeonGetParam( sPriv->fd, RADEON_PARAM_IRQ_NR,
-			    &screen->irq);
-      if (ret) {
-	 FREE( screen );
-	 fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_IRQ_NR): %d\n", ret);
-	 return NULL;
-      }
-      screen->drmSupportsCubeMapsR200 = (sPriv->drm_version.minor >= 7);
-      screen->drmSupportsBlendColor = (sPriv->drm_version.minor >= 11);
-      screen->drmSupportsTriPerf = (sPriv->drm_version.minor >= 16);
-      screen->drmSupportsFragShader = (sPriv->drm_version.minor >= 18);
-      screen->drmSupportsPointSprites = (sPriv->drm_version.minor >= 13);
-      screen->drmSupportsCubeMapsR100 = (sPriv->drm_version.minor >= 15);
-      screen->drmSupportsVertexProgram = (sPriv->drm_version.minor >= 25);
-   }
-
-   screen->mmio.handle = dri_priv->registerHandle;
-   screen->mmio.size   = dri_priv->registerSize;
-   if ( drmMap( sPriv->fd,
-		screen->mmio.handle,
-		screen->mmio.size,
-		&screen->mmio.map ) ) {
-      FREE( screen );
-      __driUtilMessage("%s: drmMap failed\n", __FUNCTION__ );
-      return NULL;
-   }
-
-   RADEONMMIO = screen->mmio.map;
-
-   screen->status.handle = dri_priv->statusHandle;
-   screen->status.size   = dri_priv->statusSize;
-   if ( drmMap( sPriv->fd,
-		screen->status.handle,
-		screen->status.size,
-		&screen->status.map ) ) {
-      drmUnmap( screen->mmio.map, screen->mmio.size );
-      FREE( screen );
-      __driUtilMessage("%s: drmMap (2) failed\n", __FUNCTION__ );
-      return NULL;
-   }
-   screen->scratch = (__volatile__ uint32_t *)
-      ((GLubyte *)screen->status.map + RADEON_SCRATCH_REG_OFFSET);
-
-   screen->buffers = drmMapBufs( sPriv->fd );
-   if ( !screen->buffers ) {
-      drmUnmap( screen->status.map, screen->status.size );
-      drmUnmap( screen->mmio.map, screen->mmio.size );
-      FREE( screen );
-      __driUtilMessage("%s: drmMapBufs failed\n", __FUNCTION__ );
-      return NULL;
-   }
-
-   if ( dri_priv->gartTexHandle && dri_priv->gartTexMapSize ) {
-      screen->gartTextures.handle = dri_priv->gartTexHandle;
-      screen->gartTextures.size   = dri_priv->gartTexMapSize;
-      if ( drmMap( sPriv->fd,
-		   screen->gartTextures.handle,
-		   screen->gartTextures.size,
-		   (drmAddressPtr)&screen->gartTextures.map ) ) {
-	 drmUnmapBufs( screen->buffers );
-	 drmUnmap( screen->status.map, screen->status.size );
-	 drmUnmap( screen->mmio.map, screen->mmio.size );
-	 FREE( screen );
-	 __driUtilMessage("%s: drmMap failed for GART texture area\n", __FUNCTION__);
-	 return NULL;
-      }
-
-      screen->gart_texture_offset = dri_priv->gartTexOffset + screen->gart_base;
-   }
-
+   screen->device_id = device_id;
    screen->chip_flags = 0;
-   /* XXX: add more chipsets */
-   switch ( dri_priv->deviceID ) {
+   switch ( device_id ) {
    case PCI_CHIP_RADEON_LY:
    case PCI_CHIP_RADEON_LZ:
    case PCI_CHIP_RADEON_QY:
@@ -560,7 +476,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RS350_7835:
       screen->chip_family = CHIP_FAMILY_RS300;
       break;
-
 
    case PCI_CHIP_R300_AD:
    case PCI_CHIP_R300_AE:
@@ -821,9 +736,145 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 
    default:
       fprintf(stderr, "unknown chip id 0x%x, can't guess.\n",
-	      dri_priv->deviceID);
+	      device_id);
+      return -1;
+   }
+
+   return 0;
+}
+
+
+/* Create the device specific screen private data struct.
+ */
+static radeonScreenPtr
+radeonCreateScreen( __DRIscreenPrivate *sPriv )
+{
+   radeonScreenPtr screen;
+   RADEONDRIPtr dri_priv = (RADEONDRIPtr)sPriv->pDevPriv;
+   unsigned char *RADEONMMIO = NULL;
+   int i;
+   int ret;
+   uint32_t temp = 0;
+
+   if (sPriv->devPrivSize != sizeof(RADEONDRIRec)) {
+      fprintf(stderr,"\nERROR!  sizeof(RADEONDRIRec) does not match passed size from device driver\n");
+      return GL_FALSE;
+   }
+
+   /* Allocate the private area */
+   screen = (radeonScreenPtr) CALLOC( sizeof(*screen) );
+   if ( !screen ) {
+      __driUtilMessage("%s: Could not allocate memory for screen structure",
+		       __FUNCTION__);
       return NULL;
    }
+
+#if DO_DEBUG && RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+	RADEON_DEBUG = driParseDebugString(getenv("RADEON_DEBUG"), debug_control);
+#endif
+
+   /* parse information in __driConfigOptions */
+   driParseOptionInfo (&screen->optionCache,
+		       __driConfigOptions, __driNConfigOptions);
+
+   /* This is first since which regions we map depends on whether or
+    * not we are using a PCI card.
+    */
+   screen->card_type = (dri_priv->IsPCI ? RADEON_CARD_PCI : RADEON_CARD_AGP);
+   {
+      int ret;
+
+      ret = radeonGetParam(sPriv, RADEON_PARAM_GART_BUFFER_OFFSET,
+			    &screen->gart_buffer_offset);
+
+      if (ret) {
+	 FREE( screen );
+	 fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_GART_BUFFER_OFFSET): %d\n", ret);
+	 return NULL;
+      }
+
+      ret = radeonGetParam(sPriv, RADEON_PARAM_GART_BASE,
+			    &screen->gart_base);
+      if (ret) {
+	 FREE( screen );
+	 fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_GART_BASE): %d\n", ret);
+	 return NULL;
+      }
+
+      ret = radeonGetParam(sPriv, RADEON_PARAM_IRQ_NR,
+			    &screen->irq);
+      if (ret) {
+	 FREE( screen );
+	 fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_IRQ_NR): %d\n", ret);
+	 return NULL;
+      }
+      screen->drmSupportsCubeMapsR200 = (sPriv->drm_version.minor >= 7);
+      screen->drmSupportsBlendColor = (sPriv->drm_version.minor >= 11);
+      screen->drmSupportsTriPerf = (sPriv->drm_version.minor >= 16);
+      screen->drmSupportsFragShader = (sPriv->drm_version.minor >= 18);
+      screen->drmSupportsPointSprites = (sPriv->drm_version.minor >= 13);
+      screen->drmSupportsCubeMapsR100 = (sPriv->drm_version.minor >= 15);
+      screen->drmSupportsVertexProgram = (sPriv->drm_version.minor >= 25);
+   }
+
+   screen->mmio.handle = dri_priv->registerHandle;
+   screen->mmio.size   = dri_priv->registerSize;
+   if ( drmMap( sPriv->fd,
+		screen->mmio.handle,
+		screen->mmio.size,
+		&screen->mmio.map ) ) {
+     FREE( screen );
+     __driUtilMessage("%s: drmMap failed\n", __FUNCTION__ );
+     return NULL;
+   }
+
+   RADEONMMIO = screen->mmio.map;
+
+   screen->status.handle = dri_priv->statusHandle;
+   screen->status.size   = dri_priv->statusSize;
+   if ( drmMap( sPriv->fd,
+		screen->status.handle,
+		screen->status.size,
+		&screen->status.map ) ) {
+     drmUnmap( screen->mmio.map, screen->mmio.size );
+     FREE( screen );
+     __driUtilMessage("%s: drmMap (2) failed\n", __FUNCTION__ );
+     return NULL;
+   }
+   screen->scratch = (__volatile__ uint32_t *)
+     ((GLubyte *)screen->status.map + RADEON_SCRATCH_REG_OFFSET);
+
+   screen->buffers = drmMapBufs( sPriv->fd );
+   if ( !screen->buffers ) {
+     drmUnmap( screen->status.map, screen->status.size );
+     drmUnmap( screen->mmio.map, screen->mmio.size );
+     FREE( screen );
+     __driUtilMessage("%s: drmMapBufs failed\n", __FUNCTION__ );
+     return NULL;
+   }
+
+   if ( dri_priv->gartTexHandle && dri_priv->gartTexMapSize ) {
+     screen->gartTextures.handle = dri_priv->gartTexHandle;
+     screen->gartTextures.size   = dri_priv->gartTexMapSize;
+     if ( drmMap( sPriv->fd,
+		  screen->gartTextures.handle,
+		  screen->gartTextures.size,
+		  (drmAddressPtr)&screen->gartTextures.map ) ) {
+       drmUnmapBufs( screen->buffers );
+       drmUnmap( screen->status.map, screen->status.size );
+       drmUnmap( screen->mmio.map, screen->mmio.size );
+       FREE( screen );
+       __driUtilMessage("%s: drmMap failed for GART texture area\n", __FUNCTION__);
+       return NULL;
+    }
+
+     screen->gart_texture_offset = dri_priv->gartTexOffset + screen->gart_base;
+   }
+
+   ret = radeon_set_screen_flags(screen, dri_priv->deviceID);
+   if (ret == -1)
+     return NULL;
+
    if ((screen->chip_family == CHIP_FAMILY_R350 || screen->chip_family == CHIP_FAMILY_R300) &&
        sPriv->ddx_version.minor < 2) {
       fprintf(stderr, "xf86-video-ati-6.6.2 or newer needed for Radeon 9500/9700/9800 cards.\n");
@@ -848,8 +899,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    screen->cpp = dri_priv->bpp / 8;
    screen->AGPMode = dri_priv->AGPMode;
 
-   ret = radeonGetParam( sPriv->fd, RADEON_PARAM_FB_LOCATION,
-                         &temp);
+   ret = radeonGetParam(sPriv, RADEON_PARAM_FB_LOCATION, &temp);
    if (ret) {
        if (screen->chip_family < CHIP_FAMILY_RS600)
 	   screen->fbLocation      = ( INREG( RADEON_MC_FB_LOCATION ) & 0xffff) << 16;
@@ -863,8 +913,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    }
 
    if (screen->chip_family >= CHIP_FAMILY_R300) {
-       ret = radeonGetParam( sPriv->fd, RADEON_PARAM_NUM_GB_PIPES,
-			     &temp);
+       ret = radeonGetParam(sPriv, RADEON_PARAM_NUM_GB_PIPES, &temp);
        if (ret) {
 	   fprintf(stderr, "Unable to get num_pipes, need newer drm\n");
 	   switch (screen->chip_family) {
@@ -901,7 +950,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
        default:
 	   break;
        }
-
    }
 
    if ( sPriv->drm_version.minor >= 10 ) {
@@ -971,7 +1019,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
    if (IS_R200_CLASS(screen))
-       screen->extensions[i++] = &r200AllocateExtension.base;
+      screen->extensions[i++] = &r200AllocateExtension.base;
 
    screen->extensions[i++] = &r200texOffsetExtension.base;
 #endif
@@ -985,6 +1033,153 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 
    screen->driScreen = sPriv;
    screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
+   screen->sarea = (drm_radeon_sarea_t *) ((GLubyte *) sPriv->pSAREA +
+					       screen->sarea_priv_offset);
+
+   screen->bom = radeon_bo_manager_legacy_ctor(screen);
+   if (screen->bom == NULL) {
+     free(screen);
+     return NULL;
+   }
+
+   return screen;
+}
+
+static radeonScreenPtr
+radeonCreateScreen2(__DRIscreenPrivate *sPriv)
+{
+   radeonScreenPtr screen;
+   int i;
+   int ret;
+   uint32_t device_id = 0;
+   uint32_t temp = 0;
+
+   /* Allocate the private area */
+   screen = (radeonScreenPtr) CALLOC( sizeof(*screen) );
+   if ( !screen ) {
+      __driUtilMessage("%s: Could not allocate memory for screen structure",
+		       __FUNCTION__);
+      fprintf(stderr, "leaving here\n");
+      return NULL;
+   }
+
+#if DO_DEBUG && RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+	RADEON_DEBUG = driParseDebugString(getenv("RADEON_DEBUG"), debug_control);
+#endif
+
+   /* parse information in __driConfigOptions */
+   driParseOptionInfo (&screen->optionCache,
+		       __driConfigOptions, __driNConfigOptions);
+
+   screen->kernel_mm = 1;
+   screen->chip_flags = 0;
+
+   /* if we have kms we can support all of these */
+   screen->drmSupportsCubeMapsR200 = 1;
+   screen->drmSupportsBlendColor = 1;
+   screen->drmSupportsTriPerf = 1;
+   screen->drmSupportsFragShader = 1;
+   screen->drmSupportsPointSprites = 1;
+   screen->drmSupportsCubeMapsR100 = 1;
+   screen->drmSupportsVertexProgram = 1;
+   screen->irq = 1;
+
+   ret = radeonGetParam(sPriv, RADEON_PARAM_DEVICE_ID, &device_id);
+   if (ret) {
+     FREE( screen );
+     fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_DEVICE_ID): %d\n", ret);
+     return NULL;
+   }
+
+   ret = radeon_set_screen_flags(screen, device_id);
+   if (ret == -1)
+     return NULL;
+
+   if (screen->chip_family >= CHIP_FAMILY_R300) {
+       ret = radeonGetParam(sPriv, RADEON_PARAM_NUM_GB_PIPES, &temp);
+       if (ret) {
+	   fprintf(stderr, "Unable to get num_pipes, need newer drm\n");
+	   switch (screen->chip_family) {
+	   case CHIP_FAMILY_R300:
+	   case CHIP_FAMILY_R350:
+	       screen->num_gb_pipes = 2;
+	       break;
+	   case CHIP_FAMILY_R420:
+	   case CHIP_FAMILY_R520:
+	   case CHIP_FAMILY_R580:
+	   case CHIP_FAMILY_RV560:
+	   case CHIP_FAMILY_RV570:
+	       screen->num_gb_pipes = 4;
+	       break;
+	   case CHIP_FAMILY_RV350:
+	   case CHIP_FAMILY_RV515:
+	   case CHIP_FAMILY_RV530:
+	   case CHIP_FAMILY_RV410:
+	   default:
+	       screen->num_gb_pipes = 1;
+	       break;
+	   }
+       } else {
+	   screen->num_gb_pipes = temp;
+       }
+
+       /* pipe overrides */
+       switch (device_id) {
+       case PCI_CHIP_R300_AD: /* 9500 with 1 quadpipe verified by: Reid Linnemann <lreid@cs.okstate.edu> */
+       case PCI_CHIP_RV410_5E4C: /* RV410 SE only have 1 quadpipe */
+       case PCI_CHIP_RV410_5E4F: /* RV410 SE only have 1 quadpipe */
+	   screen->num_gb_pipes = 1;
+	   break;
+       default:
+	   break;
+       }
+
+   }
+
+   if (screen->chip_family <= CHIP_FAMILY_RS200)
+      screen->chip_flags |= RADEON_CLASS_R100;
+   else if (screen->chip_family <= CHIP_FAMILY_RV280)
+      screen->chip_flags |= RADEON_CLASS_R200;
+   else
+      screen->chip_flags |= RADEON_CLASS_R300;
+
+   if (getenv("R300_NO_TCL"))
+     screen->chip_flags &= ~RADEON_CHIPSET_TCL;
+
+   i = 0;
+   screen->extensions[i++] = &driCopySubBufferExtension.base;
+   screen->extensions[i++] = &driFrameTrackingExtension.base;
+   screen->extensions[i++] = &driReadDrawableExtension;
+
+   if ( screen->irq != 0 ) {
+       screen->extensions[i++] = &driSwapControlExtension.base;
+       screen->extensions[i++] = &driMediaStreamCounterExtension.base;
+   }
+
+#if !RADEON_COMMON
+   screen->extensions[i++] = &radeonTexBufferExtension.base;
+#endif
+
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+   if (IS_R200_CLASS(screen))
+       screen->extensions[i++] = &r200AllocateExtension.base;
+
+   screen->extensions[i++] = &r200TexBufferExtension.base;
+#endif
+
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+   screen->extensions[i++] = &r300TexBufferExtension.base;
+#endif
+
+   screen->extensions[i++] = NULL;
+   sPriv->extensions = screen->extensions;
+
+   screen->driScreen = sPriv;
+   screen->bom = radeon_bo_manager_gem_ctor(sPriv->fd);
+   if (screen->bom == NULL) {
+       free(screen);
+       return NULL;
+   }
    return screen;
 }
 
@@ -993,23 +1188,32 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 static void
 radeonDestroyScreen( __DRIscreenPrivate *sPriv )
 {
-   radeonScreenPtr screen = (radeonScreenPtr)sPriv->private;
+    radeonScreenPtr screen = (radeonScreenPtr)sPriv->private;
 
-   if (!screen)
-      return;
+    if (!screen)
+        return;
 
-   if ( screen->gartTextures.map ) {
-      drmUnmap( screen->gartTextures.map, screen->gartTextures.size );
-   }
-   drmUnmapBufs( screen->buffers );
-   drmUnmap( screen->status.map, screen->status.size );
-   drmUnmap( screen->mmio.map, screen->mmio.size );
+    if (screen->kernel_mm) {
+#ifdef RADEON_BO_TRACK
+        radeon_tracker_print(&screen->bom->tracker, stderr);
+#endif
+        radeon_bo_manager_gem_dtor(screen->bom);
+    } else {
+        radeon_bo_manager_legacy_dtor(screen->bom);
 
-   /* free all option information */
-   driDestroyOptionInfo (&screen->optionCache);
+        if ( screen->gartTextures.map ) {
+            drmUnmap( screen->gartTextures.map, screen->gartTextures.size );
+        }
+        drmUnmapBufs( screen->buffers );
+        drmUnmap( screen->status.map, screen->status.size );
+        drmUnmap( screen->mmio.map, screen->mmio.size );
+    }
 
-   FREE( screen );
-   sPriv->private = NULL;
+    /* free all option information */
+    driDestroyOptionInfo (&screen->optionCache);
+
+    FREE( screen );
+    sPriv->private = NULL;
 }
 
 
@@ -1018,14 +1222,19 @@ radeonDestroyScreen( __DRIscreenPrivate *sPriv )
 static GLboolean
 radeonInitDriver( __DRIscreenPrivate *sPriv )
 {
-   sPriv->private = (void *) radeonCreateScreen( sPriv );
-   if ( !sPriv->private ) {
-      radeonDestroyScreen( sPriv );
-      return GL_FALSE;
-   }
+    if (sPriv->dri2.enabled) {
+        sPriv->private = (void *) radeonCreateScreen2( sPriv );
+    } else {
+        sPriv->private = (void *) radeonCreateScreen( sPriv );
+    }
+    if ( !sPriv->private ) {
+        radeonDestroyScreen( sPriv );
+        return GL_FALSE;
+    }
 
-   return GL_TRUE;
+    return GL_TRUE;
 }
+
 
 
 /**
@@ -1040,101 +1249,111 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                     const __GLcontextModes *mesaVis,
                     GLboolean isPixmap )
 {
-   radeonScreenPtr screen = (radeonScreenPtr) driScrnPriv->private;
+    radeonScreenPtr screen = (radeonScreenPtr) driScrnPriv->private;
 
-   if (isPixmap) {
+    const GLboolean swDepth = GL_FALSE;
+    const GLboolean swAlpha = GL_FALSE;
+    const GLboolean swAccum = mesaVis->accumRedBits > 0;
+    const GLboolean swStencil = mesaVis->stencilBits > 0 &&
+	mesaVis->depthBits != 24;
+    GLenum rgbFormat;
+    struct radeon_framebuffer *rfb;
+
+    if (isPixmap)
       return GL_FALSE; /* not implemented */
-   }
-   else {
-      const GLboolean swDepth = GL_FALSE;
-      const GLboolean swAlpha = GL_FALSE;
-      const GLboolean swAccum = mesaVis->accumRedBits > 0;
-      const GLboolean swStencil = mesaVis->stencilBits > 0 &&
-         mesaVis->depthBits != 24;
-      struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
 
-      /* front color renderbuffer */
-      {
-         driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA,
-                                 driScrnPriv->pFB + screen->frontOffset,
-                                 screen->cpp,
-                                 screen->frontOffset, screen->frontPitch,
-                                 driDrawPriv);
-         radeonSetSpanFunctions(frontRb, mesaVis);
-         _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
+    rfb = CALLOC_STRUCT(radeon_framebuffer);
+    if (!rfb)
+      return GL_FALSE;
+
+    _mesa_initialize_framebuffer(&rfb->base, mesaVis);
+
+    if (mesaVis->redBits == 5)
+        rgbFormat = GL_RGB5;
+    else if (mesaVis->alphaBits == 0)
+        rgbFormat = GL_RGB8;
+    else
+        rgbFormat = GL_RGBA8;
+
+    /* front color renderbuffer */
+    rfb->color_rb[0] = radeon_create_renderbuffer(rgbFormat, driDrawPriv);
+    _mesa_add_renderbuffer(&rfb->base, BUFFER_FRONT_LEFT, &rfb->color_rb[0]->base);
+    rfb->color_rb[0]->has_surface = 1;
+
+    /* back color renderbuffer */
+    if (mesaVis->doubleBufferMode) {
+      rfb->color_rb[1] = radeon_create_renderbuffer(rgbFormat, driDrawPriv);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_BACK_LEFT, &rfb->color_rb[1]->base);
+	rfb->color_rb[1]->has_surface = 1;
+    }
+
+    if (mesaVis->depthBits == 24) {
+      if (mesaVis->stencilBits == 8) {
+	struct radeon_renderbuffer *depthStencilRb = radeon_create_renderbuffer(GL_DEPTH24_STENCIL8_EXT, driDrawPriv);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depthStencilRb->base);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_STENCIL, &depthStencilRb->base);
+	depthStencilRb->has_surface = screen->depthHasSurface;
+      } else {
+	/* depth renderbuffer */
+	struct radeon_renderbuffer *depth = radeon_create_renderbuffer(GL_DEPTH_COMPONENT24, driDrawPriv);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depth->base);
+	depth->has_surface = screen->depthHasSurface;
       }
+    } else if (mesaVis->depthBits == 16) {
+      /* just 16-bit depth buffer, no hw stencil */
+	struct radeon_renderbuffer *depth = radeon_create_renderbuffer(GL_DEPTH_COMPONENT16, driDrawPriv);
+	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depth->base);
+	depth->has_surface = screen->depthHasSurface;
+    }
 
-      /* back color renderbuffer */
-      if (mesaVis->doubleBufferMode) {
-         driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA,
-                                 driScrnPriv->pFB + screen->backOffset,
-                                 screen->cpp,
-                                 screen->backOffset, screen->backPitch,
-                                 driDrawPriv);
-         radeonSetSpanFunctions(backRb, mesaVis);
-         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
-      }
+    _mesa_add_soft_renderbuffers(&rfb->base,
+	    GL_FALSE, /* color */
+	    swDepth,
+	    swStencil,
+	    swAccum,
+	    swAlpha,
+	    GL_FALSE /* aux */);
+    driDrawPriv->driverPrivate = (void *) rfb;
 
-      /* depth renderbuffer */
-      if (mesaVis->depthBits == 16) {
-         driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
-                                 driScrnPriv->pFB + screen->depthOffset,
-                                 screen->cpp,
-                                 screen->depthOffset, screen->depthPitch,
-                                 driDrawPriv);
-         radeonSetSpanFunctions(depthRb, mesaVis);
-         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
-	 depthRb->depthHasSurface = screen->depthHasSurface;
-      }
-      else if (mesaVis->depthBits == 24) {
-         driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24,
-                                 driScrnPriv->pFB + screen->depthOffset,
-                                 screen->cpp,
-                                 screen->depthOffset, screen->depthPitch,
-                                 driDrawPriv);
-         radeonSetSpanFunctions(depthRb, mesaVis);
-         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
-	 depthRb->depthHasSurface = screen->depthHasSurface;
-      }
-
-      /* stencil renderbuffer */
-      if (mesaVis->stencilBits > 0 && !swStencil) {
-         driRenderbuffer *stencilRb
-            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT,
-                                 driScrnPriv->pFB + screen->depthOffset,
-                                 screen->cpp,
-                                 screen->depthOffset, screen->depthPitch,
-                                 driDrawPriv);
-         radeonSetSpanFunctions(stencilRb, mesaVis);
-         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
-	 stencilRb->depthHasSurface = screen->depthHasSurface;
-      }
-
-      _mesa_add_soft_renderbuffers(fb,
-                                   GL_FALSE, /* color */
-                                   swDepth,
-                                   swStencil,
-                                   swAccum,
-                                   swAlpha,
-                                   GL_FALSE /* aux */);
-      driDrawPriv->driverPrivate = (void *) fb;
-
-      return (driDrawPriv->driverPrivate != NULL);
-   }
+    return (driDrawPriv->driverPrivate != NULL);
 }
 
 
-static void
+static void radeon_cleanup_renderbuffers(struct radeon_framebuffer *rfb)
+{
+	struct radeon_renderbuffer *rb;
+
+	rb = rfb->color_rb[0];
+	if (rb && rb->bo) {
+		radeon_bo_unref(rb->bo);
+		rb->bo = NULL;
+	}
+	rb = rfb->color_rb[1];
+	if (rb && rb->bo) {
+		radeon_bo_unref(rb->bo);
+		rb->bo = NULL;
+	}
+	rb = radeon_get_renderbuffer(&rfb->base, BUFFER_DEPTH);
+	if (rb && rb->bo) {
+		radeon_bo_unref(rb->bo);
+		rb->bo = NULL;
+	}
+}
+
+void
 radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
+    struct radeon_framebuffer *rfb;
+    if (!driDrawPriv)
+	return;
+
+    rfb = (void*)driDrawPriv->driverPrivate;
+    if (!rfb)
+	return;
+    radeon_cleanup_renderbuffers(rfb);
+    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 /**
  * Choose the appropriate CreateContext function based on the chipset.
  * Eventually, all drivers will go through this process.
@@ -1145,25 +1364,22 @@ static GLboolean radeonCreateContext(const __GLcontextModes * glVisual,
 {
 	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
-
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 	if (IS_R300_CLASS(screen))
 		return r300CreateContext(glVisual, driContextPriv, sharedContextPriv);
-        return GL_FALSE;
-}
-
-/**
- * Choose the appropriate DestroyContext function based on the chipset.
- */
-static void radeonDestroyContext(__DRIcontextPrivate * driContextPriv)
-{
-	radeonContextPtr radeon = (radeonContextPtr) driContextPriv->driverPrivate;
-
-	if (IS_R300_CLASS(radeon->radeonScreen))
-		return r300DestroyContext(driContextPriv);
-}
-
-
 #endif
+
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+	if (IS_R200_CLASS(screen))
+		return r200CreateContext(glVisual, driContextPriv, sharedContextPriv);
+#endif
+
+#if !RADEON_COMMON
+	(void)screen;
+	return r100CreateContext(glVisual, driContextPriv, sharedContextPriv);
+#endif
+	return GL_FALSE;
+}
 
 
 /**
@@ -1225,13 +1441,103 @@ radeonInitScreen(__DRIscreenPrivate *psp)
    if (!radeonInitDriver(psp))
        return NULL;
 
+   /* for now fill in all modes */
    return radeonFillInModes( psp,
 			     dri_priv->bpp,
 			     (dri_priv->bpp == 16) ? 16 : 24,
-			     (dri_priv->bpp == 16) ? 0  : 8,
-			     (dri_priv->backOffset != dri_priv->depthOffset) );
+			     (dri_priv->bpp == 16) ? 0  : 8, 1);
 }
+#define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
 
+/**
+ * This is the driver specific part of the createNewScreen entry point.
+ * Called when using DRI2.
+ *
+ * \return the __GLcontextModes supported by this driver
+ */
+static const
+__DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
+{
+   GLenum fb_format[3];
+   GLenum fb_type[3];
+   /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
+    * support pageflipping at all.
+    */
+   static const GLenum back_buffer_modes[] = {
+     GLX_NONE, GLX_SWAP_UNDEFINED_OML, /*, GLX_SWAP_COPY_OML*/
+   };
+   uint8_t depth_bits[4], stencil_bits[4], msaa_samples_array[1];
+   int color;
+   __DRIconfig **configs = NULL;
+
+   /* Calling driInitExtensions here, with a NULL context pointer,
+    * does not actually enable the extensions.  It just makes sure
+    * that all the dispatch offsets for all the extensions that
+    * *might* be enables are known.  This is needed because the
+    * dispatch offsets need to be known when _mesa_context_create
+    * is called, but we can't enable the extensions until we have a
+    * context pointer.
+    *
+    * Hello chicken.  Hello egg.  How are you two today?
+    */
+   driInitExtensions( NULL, card_extensions, GL_FALSE );
+   driInitExtensions( NULL, mm_extensions, GL_FALSE );
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+   driInitExtensions( NULL, blend_extensions, GL_FALSE );
+   driInitSingleExtension( NULL, ARB_vp_extension );
+   driInitSingleExtension( NULL, NV_vp_extension );
+   driInitSingleExtension( NULL, ATI_fs_extension );
+   driInitExtensions( NULL, point_extensions, GL_FALSE );
+#endif
+
+   if (!radeonInitDriver(psp)) {
+       return NULL;
+    }
+   depth_bits[0] = 0;
+   stencil_bits[0] = 0;
+   depth_bits[1] = 16;
+   stencil_bits[1] = 0;
+   depth_bits[2] = 24;
+   stencil_bits[2] = 0;
+   depth_bits[3] = 24;
+   stencil_bits[3] = 8;
+
+   msaa_samples_array[0] = 0;
+
+   fb_format[0] = GL_RGB;
+   fb_type[0] = GL_UNSIGNED_SHORT_5_6_5;
+
+   fb_format[1] = GL_BGR;
+   fb_type[1] = GL_UNSIGNED_INT_8_8_8_8_REV;
+
+   fb_format[2] = GL_BGRA;
+   fb_type[2] = GL_UNSIGNED_INT_8_8_8_8_REV;
+
+   for (color = 0; color < ARRAY_SIZE(fb_format); color++) {
+      __DRIconfig **new_configs;
+
+      new_configs = driCreateConfigs(fb_format[color], fb_type[color],
+				     depth_bits,
+				     stencil_bits,
+				     ARRAY_SIZE(depth_bits),
+				     back_buffer_modes,
+				     ARRAY_SIZE(back_buffer_modes),
+				     msaa_samples_array,
+				     ARRAY_SIZE(msaa_samples_array));
+      if (configs == NULL)
+	 configs = new_configs;
+      else
+	 configs = driConcatConfigs(configs, new_configs);
+   }
+
+   if (configs == NULL) {
+      fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
+              __LINE__);
+      return NULL;
+   }
+
+   return (const __DRIconfig **)configs;
+}
 
 /**
  * Get information about previous buffer swaps.
@@ -1239,31 +1545,26 @@ radeonInitScreen(__DRIscreenPrivate *psp)
 static int
 getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
 {
-#if !RADEON_COMMON || (RADEON_COMMON && defined(RADEON_COMMON_FOR_R300))
-   radeonContextPtr  rmesa;
-#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
-   r200ContextPtr  rmesa;
-#endif
+    struct radeon_framebuffer *rfb;
 
-   if ( (dPriv == NULL) || (dPriv->driContextPriv == NULL)
-	|| (dPriv->driContextPriv->driverPrivate == NULL)
-	|| (sInfo == NULL) ) {
-      return -1;
+    if ( (dPriv == NULL) || (dPriv->driContextPriv == NULL)
+	 || (dPriv->driContextPriv->driverPrivate == NULL)
+	 || (sInfo == NULL) ) {
+	return -1;
    }
 
-   rmesa = dPriv->driContextPriv->driverPrivate;
-   sInfo->swap_count = rmesa->swap_count;
-   sInfo->swap_ust = rmesa->swap_ust;
-   sInfo->swap_missed_count = rmesa->swap_missed_count;
+    rfb = dPriv->driverPrivate;
+    sInfo->swap_count = rfb->swap_count;
+    sInfo->swap_ust = rfb->swap_ust;
+    sInfo->swap_missed_count = rfb->swap_missed_count;
 
    sInfo->swap_missed_usage = (sInfo->swap_missed_count != 0)
-       ? driCalculateSwapUsage( dPriv, 0, rmesa->swap_missed_ust )
+       ? driCalculateSwapUsage( dPriv, 0, rfb->swap_missed_ust )
        : 0.0;
 
    return 0;
 }
 
-#if !RADEON_COMMON || (RADEON_COMMON && defined(RADEON_COMMON_FOR_R300))
 const struct __DriverAPIRec driDriverAPI = {
    .InitScreen      = radeonInitScreen,
    .DestroyScreen   = radeonDestroyScreen,
@@ -1280,23 +1581,7 @@ const struct __DriverAPIRec driDriverAPI = {
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL,
    .CopySubBuffer   = radeonCopySubBuffer,
+    /* DRI2 */
+   .InitScreen2     = radeonInitScreen2,
 };
-#else
-const struct __DriverAPIRec driDriverAPI = {
-   .InitScreen      = radeonInitScreen,
-   .DestroyScreen   = radeonDestroyScreen,
-   .CreateContext   = r200CreateContext,
-   .DestroyContext  = r200DestroyContext,
-   .CreateBuffer    = radeonCreateBuffer,
-   .DestroyBuffer   = radeonDestroyBuffer,
-   .SwapBuffers     = r200SwapBuffers,
-   .MakeCurrent     = r200MakeCurrent,
-   .UnbindContext   = r200UnbindContext,
-   .GetSwapInfo     = getSwapInfo,
-   .GetDrawableMSC  = driDrawableGetMSC32,
-   .WaitForMSC      = driWaitForMSC32,
-   .WaitForSBC      = NULL,
-   .SwapBuffersMSC  = NULL,
-   .CopySubBuffer   = r200CopySubBuffer,
-};
-#endif
+

@@ -46,8 +46,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "swrast/swrast.h"
 
+#include "radeon_common.h"
+#include "radeon_lock.h"
 #include "r300_context.h"
-#include "radeon_ioctl.h"
 #include "r300_ioctl.h"
 #include "r300_cmdbuf.h"
 #include "r300_state.h"
@@ -55,71 +56,90 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_reg.h"
 #include "r300_emit.h"
 #include "r300_fragprog.h"
+#include "r300_context.h"
 
 #include "vblank.h"
+
+#define R200_3D_DRAW_IMMD_2      0xC0003500
 
 #define CLEARBUFFER_COLOR	0x1
 #define CLEARBUFFER_DEPTH	0x2
 #define CLEARBUFFER_STENCIL	0x4
 
-static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
+static void r300EmitClearState(GLcontext * ctx);
+
+static void r300UserClear(GLcontext *ctx, GLuint mask)
 {
+	radeon_clear_tris(ctx, mask);
+}
+
+static void r300ClearBuffer(r300ContextPtr r300, int flags,
+			    struct radeon_renderbuffer *rrb,
+			    struct radeon_renderbuffer *rrbd)
+{
+	BATCH_LOCALS(&r300->radeon);
 	GLcontext *ctx = r300->radeon.glCtx;
-	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
-	GLuint cboffset, cbpitch;
-	drm_r300_cmd_header_t *cmd2;
-	int cmd_reserved = 0;
-	int cmd_written = 0;
-	drm_radeon_cmd_header_t *cmd = NULL;
+	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&r300->radeon);
+	GLuint cbpitch = 0;
 	r300ContextPtr rmesa = r300;
 
 	if (RADEON_DEBUG & DEBUG_IOCTL)
-		fprintf(stderr, "%s: %s buffer (%i,%i %ix%i)\n",
-			__FUNCTION__, buffer ? "back" : "front",
-			dPriv->x, dPriv->y, dPriv->w, dPriv->h);
+		fprintf(stderr, "%s: buffer %p (%i,%i %ix%i)\n",
+			__FUNCTION__, rrb, dPriv->x, dPriv->y,
+			dPriv->w, dPriv->h);
 
-	if (buffer) {
-		cboffset = r300->radeon.radeonScreen->backOffset;
-		cbpitch = r300->radeon.radeonScreen->backPitch;
-	} else {
-		cboffset = r300->radeon.radeonScreen->frontOffset;
-		cbpitch = r300->radeon.radeonScreen->frontPitch;
+	if (rrb) {
+		cbpitch = (rrb->pitch / rrb->cpp);
+		if (rrb->cpp == 4)
+			cbpitch |= R300_COLOR_FORMAT_ARGB8888;
+		else
+			cbpitch |= R300_COLOR_FORMAT_RGB565;
+
+		if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE){
+			cbpitch |= R300_COLOR_TILE_ENABLE;
+        }
 	}
 
-	cboffset += r300->radeon.radeonScreen->fbLocation;
-
-	cp_wait(r300, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
-	end_3d(rmesa);
-
-	R300_STATECHANGE(r300, cb);
-	reg_start(R300_RB3D_COLOROFFSET0, 0);
-	e32(cboffset);
-
-	if (r300->radeon.radeonScreen->cpp == 4)
-		cbpitch |= R300_COLOR_FORMAT_ARGB8888;
-	else
-		cbpitch |= R300_COLOR_FORMAT_RGB565;
-
-	if (r300->radeon.sarea->tiling_enabled)
-		cbpitch |= R300_COLOR_TILE_ENABLE;
-
-	reg_start(R300_RB3D_COLORPITCH0, 0);
-	e32(cbpitch);
-
-	R300_STATECHANGE(r300, cmk);
-	reg_start(RB3D_COLOR_CHANNEL_MASK, 0);
+	/* TODO in bufmgr */
+	cp_wait(&r300->radeon, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
+	end_3d(&rmesa->radeon);
 
 	if (flags & CLEARBUFFER_COLOR) {
-		e32((ctx->Color.ColorMask[BCOMP] ? RB3D_COLOR_CHANNEL_MASK_BLUE_MASK0 : 0) |
-		    (ctx->Color.ColorMask[GCOMP] ? RB3D_COLOR_CHANNEL_MASK_GREEN_MASK0 : 0) |
-		    (ctx->Color.ColorMask[RCOMP] ? RB3D_COLOR_CHANNEL_MASK_RED_MASK0 : 0) |
-		    (ctx->Color.ColorMask[ACOMP] ? RB3D_COLOR_CHANNEL_MASK_ALPHA_MASK0 : 0));
+		assert(rrb != 0);
+		BEGIN_BATCH_NO_AUTOSTATE(6);
+		OUT_BATCH_REGSEQ(R300_RB3D_COLOROFFSET0, 1);
+		OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+		OUT_BATCH_REGVAL(R300_RB3D_COLORPITCH0, cbpitch);
+		END_BATCH();
+	}
+#if 1
+	if (flags & (CLEARBUFFER_DEPTH | CLEARBUFFER_STENCIL)) {
+		assert(rrbd != 0);
+		cbpitch = (rrbd->pitch / rrbd->cpp);
+		if (rrbd->bo->flags & RADEON_BO_FLAGS_MACRO_TILE){
+			cbpitch |= R300_DEPTHMACROTILE_ENABLE;
+        }
+		if (rrbd->bo->flags & RADEON_BO_FLAGS_MICRO_TILE){
+            cbpitch |= R300_DEPTHMICROTILE_TILED;
+        }
+		BEGIN_BATCH_NO_AUTOSTATE(6);
+		OUT_BATCH_REGSEQ(R300_ZB_DEPTHOFFSET, 1);
+		OUT_BATCH_RELOC(0, rrbd->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+		OUT_BATCH_REGVAL(R300_ZB_DEPTHPITCH, cbpitch);
+		END_BATCH();
+	}
+#endif
+	BEGIN_BATCH_NO_AUTOSTATE(6);
+	OUT_BATCH_REGSEQ(RB3D_COLOR_CHANNEL_MASK, 1);
+	if (flags & CLEARBUFFER_COLOR) {
+		OUT_BATCH((ctx->Color.ColorMask[BCOMP] ? RB3D_COLOR_CHANNEL_MASK_BLUE_MASK0 : 0) |
+			  (ctx->Color.ColorMask[GCOMP] ? RB3D_COLOR_CHANNEL_MASK_GREEN_MASK0 : 0) |
+			  (ctx->Color.ColorMask[RCOMP] ? RB3D_COLOR_CHANNEL_MASK_RED_MASK0 : 0) |
+			  (ctx->Color.ColorMask[ACOMP] ? RB3D_COLOR_CHANNEL_MASK_ALPHA_MASK0 : 0));
 	} else {
-		e32(0x0);
+		OUT_BATCH(0);
 	}
 
-	R300_STATECHANGE(r300, zs);
-	reg_start(R300_ZB_CNTL, 2);
 
 	{
 		uint32_t t1, t2;
@@ -146,73 +166,92 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 			     R300_S_FRONT_ZFAIL_OP_SHIFT);
 		}
 
-		e32(t1);
-		e32(t2);
-		e32(((ctx->Stencil.WriteMask[0] & R300_STENCILREF_MASK) << R300_STENCILWRITEMASK_SHIFT) |
-		    (ctx->Stencil.Clear & R300_STENCILREF_MASK));
+		OUT_BATCH_REGSEQ(R300_ZB_CNTL, 3);
+		OUT_BATCH(t1);
+		OUT_BATCH(t2);
+		OUT_BATCH(((ctx->Stencil.WriteMask[0] & R300_STENCILREF_MASK) <<
+                   R300_STENCILWRITEMASK_SHIFT) |
+			  (ctx->Stencil.Clear & R300_STENCILREF_MASK));
+		END_BATCH();
 	}
 
-	cmd2 = (drm_r300_cmd_header_t *) r300AllocCmdBuf(r300, 9, __FUNCTION__);
-	cmd2[0].packet3.cmd_type = R300_CMD_PACKET3;
-	cmd2[0].packet3.packet = R300_CMD_PACKET3_CLEAR;
-	cmd2[1].u = r300PackFloat32(dPriv->w / 2.0);
-	cmd2[2].u = r300PackFloat32(dPriv->h / 2.0);
-	cmd2[3].u = r300PackFloat32(ctx->Depth.Clear);
-	cmd2[4].u = r300PackFloat32(1.0);
-	cmd2[5].u = r300PackFloat32(ctx->Color.ClearColor[0]);
-	cmd2[6].u = r300PackFloat32(ctx->Color.ClearColor[1]);
-	cmd2[7].u = r300PackFloat32(ctx->Color.ClearColor[2]);
-	cmd2[8].u = r300PackFloat32(ctx->Color.ClearColor[3]);
+	if (!rmesa->radeon.radeonScreen->kernel_mm) {
+		BEGIN_BATCH_NO_AUTOSTATE(9);
+		OUT_BATCH(cmdpacket3(r300->radeon.radeonScreen, R300_CMD_PACKET3_CLEAR));
+		OUT_BATCH_FLOAT32(dPriv->w / 2.0);
+		OUT_BATCH_FLOAT32(dPriv->h / 2.0);
+		OUT_BATCH_FLOAT32(ctx->Depth.Clear);
+		OUT_BATCH_FLOAT32(1.0);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[0]);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[1]);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[2]);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[3]);
+		END_BATCH();
+	} else {
+		OUT_BATCH(CP_PACKET3(R200_3D_DRAW_IMMD_2, 8));
+		OUT_BATCH(R300_PRIM_TYPE_POINT | R300_PRIM_WALK_RING |
+			  (1 << R300_PRIM_NUM_VERTICES_SHIFT));
+		OUT_BATCH_FLOAT32(dPriv->w / 2.0);
+		OUT_BATCH_FLOAT32(dPriv->h / 2.0);
+		OUT_BATCH_FLOAT32(ctx->Depth.Clear);
+		OUT_BATCH_FLOAT32(1.0);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[0]);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[1]);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[2]);
+		OUT_BATCH_FLOAT32(ctx->Color.ClearColor[3]);
+	}
 
 	r300EmitCacheFlush(rmesa);
-	cp_wait(rmesa, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
+	cp_wait(&r300->radeon, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
+
+	R300_STATECHANGE(r300, cb);
+	R300_STATECHANGE(r300, cmk);
+	R300_STATECHANGE(r300, zs);
 }
 
 static void r300EmitClearState(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	r300ContextPtr rmesa = r300;
-	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
+	BATCH_LOCALS(&r300->radeon);
+	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&r300->radeon);
 	int i;
-	int cmd_reserved = 0;
-	int cmd_written = 0;
-	drm_radeon_cmd_header_t *cmd = NULL;
-	int has_tcl = 1;
+	int has_tcl;
 	int is_r500 = 0;
 	GLuint vap_cntl;
 
-	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
-		has_tcl = 0;
+	has_tcl = r300->options.hw_tcl_enabled;
 
-        if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
-                is_r500 = 1;
+	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+		is_r500 = 1;
 
-
-	/* FIXME: the values written to R300_VAP_INPUT_ROUTE_0_0 and
-	 * R300_VAP_INPUT_ROUTE_0_1 are in fact known, however, the values are
-	 * quite complex; see the functions in r300_emit.c.
+	/* State atom dirty tracking is a little subtle here.
 	 *
-	 * I believe it would be a good idea to extend the functions in
-	 * r300_emit.c so that they can be used to setup the default values for
-	 * these registers, as well as the actual values used for rendering.
+	 * On the one hand, we need to make sure base state is emitted
+	 * here if we start with an empty batch buffer, otherwise clear
+	 * works incorrectly with multiple processes. Therefore, the first
+	 * BEGIN_BATCH cannot be a BEGIN_BATCH_NO_AUTOSTATE.
+	 *
+	 * On the other hand, implicit state emission clears the state atom
+	 * dirty bits, so we have to call R300_STATECHANGE later than the
+	 * first BEGIN_BATCH.
+	 *
+	 * The final trickiness is that, because we change state, we need
+	 * to ensure that any stored swtcl primitives are flushed properly
+	 * before we start changing state. See the R300_NEWPRIM in r300Clear
+	 * for this.
 	 */
-	R300_STATECHANGE(r300, vir[0]);
-	reg_start(R300_VAP_PROG_STREAM_CNTL_0, 0);
+	BEGIN_BATCH(31);
+	OUT_BATCH_REGSEQ(R300_VAP_PROG_STREAM_CNTL_0, 1);
 	if (!has_tcl)
-	    e32(((((0 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_0_SHIFT) |
+		OUT_BATCH(((((0 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_0_SHIFT) |
 		 ((R300_LAST_VEC | (2 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_1_SHIFT)));
 	else
-	    e32(((((0 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_0_SHIFT) |
+		OUT_BATCH(((((0 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_0_SHIFT) |
 		 ((R300_LAST_VEC | (1 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_1_SHIFT)));
 
-	/* disable fog */
-	R300_STATECHANGE(r300, fogs);
-	reg_start(R300_FG_FOG_BLEND, 0);
-	e32(0x0);
-
-	R300_STATECHANGE(r300, vir[1]);
-	reg_start(R300_VAP_PROG_STREAM_CNTL_EXT_0, 0);
-	e32(((((R300_SWIZZLE_SELECT_X << R300_SWIZZLE_SELECT_X_SHIFT) |
+	OUT_BATCH_REGVAL(R300_FG_FOG_BLEND, 0);
+	OUT_BATCH_REGVAL(R300_VAP_PROG_STREAM_CNTL_EXT_0,
+	   ((((R300_SWIZZLE_SELECT_X << R300_SWIZZLE_SELECT_X_SHIFT) |
 	       (R300_SWIZZLE_SELECT_Y << R300_SWIZZLE_SELECT_Y_SHIFT) |
 	       (R300_SWIZZLE_SELECT_Z << R300_SWIZZLE_SELECT_Z_SHIFT) |
 	       (R300_SWIZZLE_SELECT_W << R300_SWIZZLE_SELECT_W_SHIFT) |
@@ -226,239 +265,323 @@ static void r300EmitClearState(GLcontext * ctx)
 	      << R300_SWIZZLE1_SHIFT)));
 
 	/* R300_VAP_INPUT_CNTL_0, R300_VAP_INPUT_CNTL_1 */
-	R300_STATECHANGE(r300, vic);
-	reg_start(R300_VAP_VTX_STATE_CNTL, 1);
-	e32((R300_SEL_USER_COLOR_0 << R300_COLOR_0_ASSEMBLY_SHIFT));
-	e32(R300_INPUT_CNTL_POS | R300_INPUT_CNTL_COLOR | R300_INPUT_CNTL_TC0);
+	OUT_BATCH_REGSEQ(R300_VAP_VTX_STATE_CNTL, 2);
+	OUT_BATCH((R300_SEL_USER_COLOR_0 << R300_COLOR_0_ASSEMBLY_SHIFT));
+	OUT_BATCH(R300_INPUT_CNTL_POS | R300_INPUT_CNTL_COLOR | R300_INPUT_CNTL_TC0);
 
-	R300_STATECHANGE(r300, vte);
 	/* comes from fglrx startup of clear */
-	reg_start(R300_SE_VTE_CNTL, 1);
-	e32(R300_VTX_W0_FMT | R300_VPORT_X_SCALE_ENA |
-	    R300_VPORT_X_OFFSET_ENA | R300_VPORT_Y_SCALE_ENA |
-	    R300_VPORT_Y_OFFSET_ENA | R300_VPORT_Z_SCALE_ENA |
-	    R300_VPORT_Z_OFFSET_ENA);
-	e32(0x8);
+	OUT_BATCH_REGSEQ(R300_SE_VTE_CNTL, 2);
+	OUT_BATCH(R300_VTX_W0_FMT | R300_VPORT_X_SCALE_ENA |
+		  R300_VPORT_X_OFFSET_ENA | R300_VPORT_Y_SCALE_ENA |
+		  R300_VPORT_Y_OFFSET_ENA | R300_VPORT_Z_SCALE_ENA |
+		  R300_VPORT_Z_OFFSET_ENA);
+	OUT_BATCH(0x8);
 
-	reg_start(R300_VAP_PSC_SGN_NORM_CNTL, 0);
-	e32(0xaaaaaaaa);
+	OUT_BATCH_REGVAL(R300_VAP_PSC_SGN_NORM_CNTL, 0xaaaaaaaa);
 
+	OUT_BATCH_REGSEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
+	OUT_BATCH(R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT |
+		  R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT);
+	OUT_BATCH(0); /* no textures */
+
+	OUT_BATCH_REGVAL(R300_TX_ENABLE, 0);
+
+	OUT_BATCH_REGSEQ(R300_SE_VPORT_XSCALE, 6);
+	OUT_BATCH_FLOAT32(1.0);
+	OUT_BATCH_FLOAT32(dPriv->x);
+	OUT_BATCH_FLOAT32(1.0);
+	OUT_BATCH_FLOAT32(dPriv->y);
+	OUT_BATCH_FLOAT32(1.0);
+	OUT_BATCH_FLOAT32(0.0);
+
+	OUT_BATCH_REGVAL(R300_FG_ALPHA_FUNC, 0);
+
+	OUT_BATCH_REGSEQ(R300_RB3D_CBLEND, 2);
+	OUT_BATCH(0x0);
+	OUT_BATCH(0x0);
+	END_BATCH();
+
+	R300_STATECHANGE(r300, vir[0]);
+	R300_STATECHANGE(r300, fogs);
+	R300_STATECHANGE(r300, vir[1]);
+	R300_STATECHANGE(r300, vic);
+	R300_STATECHANGE(r300, vte);
 	R300_STATECHANGE(r300, vof);
-	reg_start(R300_VAP_OUTPUT_VTX_FMT_0, 1);
-	e32(R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT |
-	    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT);
-	e32(0x0);		/* no textures */
-
 	R300_STATECHANGE(r300, txe);
-	reg_start(R300_TX_ENABLE, 0);
-	e32(0x0);
-
 	R300_STATECHANGE(r300, vpt);
-	reg_start(R300_SE_VPORT_XSCALE, 5);
-	efloat(1.0);
-	efloat(dPriv->x);
-	efloat(1.0);
-	efloat(dPriv->y);
-	efloat(1.0);
-	efloat(0.0);
-
 	R300_STATECHANGE(r300, at);
-	reg_start(R300_FG_ALPHA_FUNC, 0);
-	e32(0x0);
-
 	R300_STATECHANGE(r300, bld);
-	reg_start(R300_RB3D_CBLEND, 1);
-	e32(0x0);
-	e32(0x0);
+	R300_STATECHANGE(r300, ps);
 
 	if (has_tcl) {
-	    R300_STATECHANGE(r300, vap_clip_cntl);
-	    reg_start(R300_VAP_CLIP_CNTL, 0);
-	    e32(R300_PS_UCP_MODE_CLIP_AS_TRIFAN | R300_CLIP_DISABLE);
+		R300_STATECHANGE(r300, vap_clip_cntl);
+
+		BEGIN_BATCH_NO_AUTOSTATE(2);
+		OUT_BATCH_REGVAL(R300_VAP_CLIP_CNTL, R300_PS_UCP_MODE_CLIP_AS_TRIFAN | R300_CLIP_DISABLE);
+		END_BATCH();
         }
 
-	R300_STATECHANGE(r300, ps);
-	reg_start(R300_GA_POINT_SIZE, 0);
-	e32(((dPriv->w * 6) << R300_POINTSIZE_X_SHIFT) |
-	    ((dPriv->h * 6) << R300_POINTSIZE_Y_SHIFT));
+	BEGIN_BATCH_NO_AUTOSTATE(2);
+	OUT_BATCH_REGVAL(R300_GA_POINT_SIZE,
+		((dPriv->w * 6) << R300_POINTSIZE_X_SHIFT) |
+		((dPriv->h * 6) << R300_POINTSIZE_Y_SHIFT));
+	END_BATCH();
 
 	if (!is_r500) {
 		R300_STATECHANGE(r300, ri);
-		reg_start(R300_RS_IP_0, 7);
-		for (i = 0; i < 8; ++i) {
-			e32(R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3));
-		}
-
 		R300_STATECHANGE(r300, rc);
-		/* The second constant is needed to get glxgears display anything .. */
-		reg_start(R300_RS_COUNT, 1);
-		e32((1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
-		e32(0x0);
-
 		R300_STATECHANGE(r300, rr);
-		reg_start(R300_RS_INST_0, 0);
-		e32(R300_RS_INST_COL_CN_WRITE);
+
+		BEGIN_BATCH(14);
+		OUT_BATCH_REGSEQ(R300_RS_IP_0, 8);
+		for (i = 0; i < 8; ++i)
+			OUT_BATCH(R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3));
+
+		OUT_BATCH_REGSEQ(R300_RS_COUNT, 2);
+		OUT_BATCH((1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
+		OUT_BATCH(0x0);
+
+		OUT_BATCH_REGVAL(R300_RS_INST_0, R300_RS_INST_COL_CN_WRITE);
+		END_BATCH();
 	} else {
 		R300_STATECHANGE(r300, ri);
-		reg_start(R500_RS_IP_0, 7);
+		R300_STATECHANGE(r300, rc);
+		R300_STATECHANGE(r300, rr);
+
+		BEGIN_BATCH(14);
+		OUT_BATCH_REGSEQ(R500_RS_IP_0, 8);
 		for (i = 0; i < 8; ++i) {
-			e32((R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT) |
-			    (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT) |
-			    (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT) |
-			    (R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT));
+			OUT_BATCH((R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT) |
+				  (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT) |
+				  (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT) |
+				  (R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT));
 		}
 
-		R300_STATECHANGE(r300, rc);
-		/* The second constant is needed to get glxgears display anything .. */
-		reg_start(R300_RS_COUNT, 1);
-		e32((1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
-		e32(0x0);
+		OUT_BATCH_REGSEQ(R300_RS_COUNT, 2);
+		OUT_BATCH((1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
+		OUT_BATCH(0x0);
 
-		R300_STATECHANGE(r300, rr);
-		reg_start(R500_RS_INST_0, 0);
-		e32(R500_RS_INST_COL_CN_WRITE);
-
+		OUT_BATCH_REGVAL(R500_RS_INST_0, R500_RS_INST_COL_CN_WRITE);
+		END_BATCH();
 	}
 
 	if (!is_r500) {
 		R300_STATECHANGE(r300, fp);
-		reg_start(R300_US_CONFIG, 2);
-		e32(0x0);
-		e32(0x0);
-		e32(0x0);
-		reg_start(R300_US_CODE_ADDR_0, 3);
-		e32(0x0);
-		e32(0x0);
-		e32(0x0);
-		e32(R300_RGBA_OUT);
-
 		R300_STATECHANGE(r300, fpi[0]);
 		R300_STATECHANGE(r300, fpi[1]);
 		R300_STATECHANGE(r300, fpi[2]);
 		R300_STATECHANGE(r300, fpi[3]);
 
-		reg_start(R300_US_ALU_RGB_INST_0, 0);
-		e32(FP_INSTRC(MAD, FP_ARGC(SRC0C_XYZ), FP_ARGC(ONE), FP_ARGC(ZERO)));
+		BEGIN_BATCH(17);
+		OUT_BATCH_REGSEQ(R300_US_CONFIG, 3);
+		OUT_BATCH(0x0);
+		OUT_BATCH(0x0);
+		OUT_BATCH(0x0);
+		OUT_BATCH_REGSEQ(R300_US_CODE_ADDR_0, 4);
+		OUT_BATCH(0x0);
+		OUT_BATCH(0x0);
+		OUT_BATCH(0x0);
+		OUT_BATCH(R300_RGBA_OUT);
 
-		reg_start(R300_US_ALU_RGB_ADDR_0, 0);
-		e32(FP_SELC(0, NO, XYZ, FP_TMP(0), 0, 0));
-
-		reg_start(R300_US_ALU_ALPHA_INST_0, 0);
-		e32(FP_INSTRA(MAD, FP_ARGA(SRC0A), FP_ARGA(ONE), FP_ARGA(ZERO)));
-
-		reg_start(R300_US_ALU_ALPHA_ADDR_0, 0);
-		e32(FP_SELA(0, NO, W, FP_TMP(0), 0, 0));
+		OUT_BATCH_REGVAL(R300_US_ALU_RGB_INST_0,
+			FP_INSTRC(MAD, FP_ARGC(SRC0C_XYZ), FP_ARGC(ONE), FP_ARGC(ZERO)));
+		OUT_BATCH_REGVAL(R300_US_ALU_RGB_ADDR_0,
+			FP_SELC(0, NO, XYZ, FP_TMP(0), 0, 0));
+		OUT_BATCH_REGVAL(R300_US_ALU_ALPHA_INST_0,
+			FP_INSTRA(MAD, FP_ARGA(SRC0A), FP_ARGA(ONE), FP_ARGA(ZERO)));
+		OUT_BATCH_REGVAL(R300_US_ALU_ALPHA_ADDR_0,
+			FP_SELA(0, NO, W, FP_TMP(0), 0, 0));
+		END_BATCH();
 	} else {
- 		R300_STATECHANGE(r300, fp);
- 		reg_start(R500_US_CONFIG, 1);
- 		e32(R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
- 		e32(0x0);
- 		reg_start(R500_US_CODE_ADDR, 2);
- 		e32(R500_US_CODE_START_ADDR(0) | R500_US_CODE_END_ADDR(1));
- 		e32(R500_US_CODE_RANGE_ADDR(0) | R500_US_CODE_RANGE_SIZE(1));
- 		e32(R500_US_CODE_OFFSET_ADDR(0));
+		struct radeon_state_atom r500fp;
+		uint32_t _cmd[10];
 
+		R300_STATECHANGE(r300, fp);
 		R300_STATECHANGE(r300, r500fp);
-		r500fp_start_fragment(0, 6);
 
-		e32(R500_INST_TYPE_OUT |
-		    R500_INST_TEX_SEM_WAIT |
-		    R500_INST_LAST |
-		    R500_INST_RGB_OMASK_R |
-		    R500_INST_RGB_OMASK_G |
-		    R500_INST_RGB_OMASK_B |
-		    R500_INST_ALPHA_OMASK |
-		    R500_INST_RGB_CLAMP |
-		    R500_INST_ALPHA_CLAMP);
+		BEGIN_BATCH(7);
+		OUT_BATCH_REGSEQ(R500_US_CONFIG, 2);
+		OUT_BATCH(R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
+		OUT_BATCH(0x0);
+		OUT_BATCH_REGSEQ(R500_US_CODE_ADDR, 3);
+		OUT_BATCH(R500_US_CODE_START_ADDR(0) | R500_US_CODE_END_ADDR(1));
+		OUT_BATCH(R500_US_CODE_RANGE_ADDR(0) | R500_US_CODE_RANGE_SIZE(1));
+		OUT_BATCH(R500_US_CODE_OFFSET_ADDR(0));
+		END_BATCH();
 
-		e32(R500_RGB_ADDR0(0) |
-		    R500_RGB_ADDR1(0) |
-		    R500_RGB_ADDR1_CONST |
-		    R500_RGB_ADDR2(0) |
-		    R500_RGB_ADDR2_CONST);
+		r500fp.check = check_r500fp;
+		r500fp.cmd = _cmd;
+		r500fp.cmd[0] = cmdr500fp(r300->radeon.radeonScreen, 0, 1, 0, 0);
+		r500fp.cmd[1] = R500_INST_TYPE_OUT |
+			R500_INST_TEX_SEM_WAIT |
+			R500_INST_LAST |
+			R500_INST_RGB_OMASK_R |
+			R500_INST_RGB_OMASK_G |
+			R500_INST_RGB_OMASK_B |
+			R500_INST_ALPHA_OMASK |
+			R500_INST_RGB_CLAMP |
+			R500_INST_ALPHA_CLAMP;
+		r500fp.cmd[2] = R500_RGB_ADDR0(0) |
+			R500_RGB_ADDR1(0) |
+			R500_RGB_ADDR1_CONST |
+			R500_RGB_ADDR2(0) |
+			R500_RGB_ADDR2_CONST;
+		r500fp.cmd[3] = R500_ALPHA_ADDR0(0) |
+			R500_ALPHA_ADDR1(0) |
+			R500_ALPHA_ADDR1_CONST |
+			R500_ALPHA_ADDR2(0) |
+			R500_ALPHA_ADDR2_CONST;
+		r500fp.cmd[4] = R500_ALU_RGB_SEL_A_SRC0 |
+			R500_ALU_RGB_R_SWIZ_A_R |
+			R500_ALU_RGB_G_SWIZ_A_G |
+			R500_ALU_RGB_B_SWIZ_A_B |
+			R500_ALU_RGB_SEL_B_SRC0 |
+			R500_ALU_RGB_R_SWIZ_B_R |
+			R500_ALU_RGB_B_SWIZ_B_G |
+			R500_ALU_RGB_G_SWIZ_B_B;
+		r500fp.cmd[5] = R500_ALPHA_OP_CMP |
+			R500_ALPHA_SWIZ_A_A |
+			R500_ALPHA_SWIZ_B_A;
+		r500fp.cmd[6] = R500_ALU_RGBA_OP_CMP |
+			R500_ALU_RGBA_R_SWIZ_0 |
+			R500_ALU_RGBA_G_SWIZ_0 |
+			R500_ALU_RGBA_B_SWIZ_0 |
+			R500_ALU_RGBA_A_SWIZ_0;
 
-		e32(R500_ALPHA_ADDR0(0) |
-		    R500_ALPHA_ADDR1(0) |
-		    R500_ALPHA_ADDR1_CONST |
-		    R500_ALPHA_ADDR2(0) |
-		    R500_ALPHA_ADDR2_CONST);
-
-		e32(R500_ALU_RGB_SEL_A_SRC0 |
-		    R500_ALU_RGB_R_SWIZ_A_R |
-		    R500_ALU_RGB_G_SWIZ_A_G |
-		    R500_ALU_RGB_B_SWIZ_A_B |
-		    R500_ALU_RGB_SEL_B_SRC0 |
-		    R500_ALU_RGB_R_SWIZ_B_R |
-		    R500_ALU_RGB_B_SWIZ_B_G |
-		    R500_ALU_RGB_G_SWIZ_B_B);
-
-		e32(R500_ALPHA_OP_CMP |
-		    R500_ALPHA_SWIZ_A_A |
-		    R500_ALPHA_SWIZ_B_A);
-
-		e32(R500_ALU_RGBA_OP_CMP |
-		    R500_ALU_RGBA_R_SWIZ_0 |
-		    R500_ALU_RGBA_G_SWIZ_0 |
-		    R500_ALU_RGBA_B_SWIZ_0 |
-		    R500_ALU_RGBA_A_SWIZ_0);
+		r500fp.cmd[7] = 0;
+		emit_r500fp(ctx, &r500fp);
 	}
 
-	reg_start(R300_VAP_PVS_STATE_FLUSH_REG, 0);
-	e32(0x00000000);
+	BEGIN_BATCH(2);
+	OUT_BATCH_REGVAL(R300_VAP_PVS_STATE_FLUSH_REG, 0);
+	END_BATCH();
+
 	if (has_tcl) {
-	    vap_cntl = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
+		vap_cntl = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
 			(5 << R300_PVS_NUM_CNTLRS_SHIFT) |
 			(12 << R300_VF_MAX_VTX_NUM_SHIFT));
-	    if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
-		vap_cntl |= R500_TCL_STATE_OPTIMIZATION;
-	} else
-	    vap_cntl = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
+		if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+			vap_cntl |= R500_TCL_STATE_OPTIMIZATION;
+	} else {
+		vap_cntl = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
 			(5 << R300_PVS_NUM_CNTLRS_SHIFT) |
 			(5 << R300_VF_MAX_VTX_NUM_SHIFT));
+	}
 
 	if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV515)
-	    vap_cntl |= (2 << R300_PVS_NUM_FPUS_SHIFT);
+		vap_cntl |= (2 << R300_PVS_NUM_FPUS_SHIFT);
 	else if ((r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530) ||
 		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV560) ||
 		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV570))
-	    vap_cntl |= (5 << R300_PVS_NUM_FPUS_SHIFT);
+		vap_cntl |= (5 << R300_PVS_NUM_FPUS_SHIFT);
 	else if ((r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV410) ||
 		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R420))
-	    vap_cntl |= (6 << R300_PVS_NUM_FPUS_SHIFT);
+		vap_cntl |= (6 << R300_PVS_NUM_FPUS_SHIFT);
 	else if ((r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R520) ||
 		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R580))
-	    vap_cntl |= (8 << R300_PVS_NUM_FPUS_SHIFT);
+		vap_cntl |= (8 << R300_PVS_NUM_FPUS_SHIFT);
 	else
-	    vap_cntl |= (4 << R300_PVS_NUM_FPUS_SHIFT);
+		vap_cntl |= (4 << R300_PVS_NUM_FPUS_SHIFT);
 
-	R300_STATECHANGE(rmesa, vap_cntl);
-	reg_start(R300_VAP_CNTL, 0);
-	e32(vap_cntl);
+	R300_STATECHANGE(r300, vap_cntl);
+
+	BEGIN_BATCH(2);
+	OUT_BATCH_REGVAL(R300_VAP_CNTL, vap_cntl);
+	END_BATCH();
 
 	if (has_tcl) {
+        struct radeon_state_atom vpu;
+        uint32_t _cmd[10];
 		R300_STATECHANGE(r300, pvs);
-		reg_start(R300_VAP_PVS_CODE_CNTL_0, 2);
-
-		e32((0 << R300_PVS_FIRST_INST_SHIFT) |
-		    (0 << R300_PVS_XYZW_VALID_INST_SHIFT) |
-		    (1 << R300_PVS_LAST_INST_SHIFT));
-		e32((0 << R300_PVS_CONST_BASE_OFFSET_SHIFT) |
-		    (0 << R300_PVS_MAX_CONST_ADDR_SHIFT));
-		e32(1 << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
-
 		R300_STATECHANGE(r300, vpi);
-		vsf_start_fragment(0x0, 8);
 
-		e32(PVS_OP_DST_OPERAND(VE_ADD, GL_FALSE, GL_FALSE, 0, 0xf, PVS_DST_REG_OUT));
-		e32(PVS_SRC_OPERAND(0, PVS_SRC_SELECT_X, PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z, PVS_SRC_SELECT_W, PVS_SRC_REG_INPUT, VSF_FLAG_NONE));
-		e32(PVS_SRC_OPERAND(0, PVS_SRC_SELECT_FORCE_0, PVS_SRC_SELECT_FORCE_0, PVS_SRC_SELECT_FORCE_0, PVS_SRC_SELECT_FORCE_0, PVS_SRC_REG_INPUT, VSF_FLAG_NONE));
-		e32(0x0);
+		BEGIN_BATCH(4);
+		OUT_BATCH_REGSEQ(R300_VAP_PVS_CODE_CNTL_0, 3);
+		OUT_BATCH((0 << R300_PVS_FIRST_INST_SHIFT) |
+			  (0 << R300_PVS_XYZW_VALID_INST_SHIFT) |
+			  (1 << R300_PVS_LAST_INST_SHIFT));
+		OUT_BATCH((0 << R300_PVS_CONST_BASE_OFFSET_SHIFT) |
+			  (0 << R300_PVS_MAX_CONST_ADDR_SHIFT));
+		OUT_BATCH(1 << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
+		END_BATCH();
 
-		e32(PVS_OP_DST_OPERAND(VE_ADD, GL_FALSE, GL_FALSE, 1, 0xf, PVS_DST_REG_OUT));
-		e32(PVS_SRC_OPERAND(1, PVS_SRC_SELECT_X, PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z, PVS_SRC_SELECT_W, PVS_SRC_REG_INPUT, VSF_FLAG_NONE));
-		e32(PVS_SRC_OPERAND(1, PVS_SRC_SELECT_FORCE_0, PVS_SRC_SELECT_FORCE_0, PVS_SRC_SELECT_FORCE_0, PVS_SRC_SELECT_FORCE_0, PVS_SRC_REG_INPUT, VSF_FLAG_NONE));
-		e32(0x0);
+		vpu.check = check_vpu;
+		vpu.cmd = _cmd;
+		vpu.cmd[0] = cmdvpu(r300->radeon.radeonScreen, 0, 2);
+
+		vpu.cmd[1] = PVS_OP_DST_OPERAND(VE_ADD, GL_FALSE, GL_FALSE,
+                                         0, 0xf, PVS_DST_REG_OUT);
+		vpu.cmd[2] = PVS_SRC_OPERAND(0, PVS_SRC_SELECT_X, PVS_SRC_SELECT_Y,
+                                      PVS_SRC_SELECT_Z, PVS_SRC_SELECT_W,
+                                      PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+		vpu.cmd[3] = PVS_SRC_OPERAND(0, PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+		vpu.cmd[4] = 0x0;
+
+		vpu.cmd[5] = PVS_OP_DST_OPERAND(VE_ADD, GL_FALSE, GL_FALSE, 1, 0xf,
+                                         PVS_DST_REG_OUT);
+		vpu.cmd[6] = PVS_SRC_OPERAND(1, PVS_SRC_SELECT_X,
+                                      PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z,
+                                      PVS_SRC_SELECT_W, PVS_SRC_REG_INPUT,
+
+                                      VSF_FLAG_NONE);
+		vpu.cmd[7] = PVS_SRC_OPERAND(1, PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+		vpu.cmd[8] = 0x0;
+
+		r300->vap_flush_needed = GL_TRUE;
+		emit_vpu(ctx, &vpu);
 	}
+}
+
+static void r300KernelClear(GLcontext *ctx, GLuint flags)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&r300->radeon);
+	struct radeon_framebuffer *rfb = dPriv->driverPrivate;
+	struct radeon_renderbuffer *rrb;
+	struct radeon_renderbuffer *rrbd;
+	int bits = 0;
+
+	/* Make sure it fits there. */
+	rcommonEnsureCmdBufSpace(&r300->radeon, 421 * 3, __FUNCTION__);
+	if (flags || bits)
+		r300EmitClearState(ctx);
+	rrbd = radeon_get_renderbuffer(&rfb->base, BUFFER_DEPTH);
+	if (rrbd && (flags & BUFFER_BIT_DEPTH))
+		bits |= CLEARBUFFER_DEPTH;
+
+	if (rrbd && (flags & BUFFER_BIT_STENCIL))
+		bits |= CLEARBUFFER_STENCIL;
+
+	if (flags & BUFFER_BIT_COLOR0) {
+		rrb = radeon_get_renderbuffer(&rfb->base, BUFFER_COLOR0);
+		r300ClearBuffer(r300, CLEARBUFFER_COLOR, rrb, NULL);
+		bits = 0;
+	}
+
+	if (flags & BUFFER_BIT_FRONT_LEFT) {
+		rrb = radeon_get_renderbuffer(&rfb->base, BUFFER_FRONT_LEFT);
+		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, rrb, rrbd);
+		bits = 0;
+	}
+
+	if (flags & BUFFER_BIT_BACK_LEFT) {
+		rrb = radeon_get_renderbuffer(&rfb->base, BUFFER_BACK_LEFT);
+		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, rrb, rrbd);
+		bits = 0;
+	}
+
+	if (bits)
+		r300ClearBuffer(r300, bits, NULL, rrbd);
+
+	COMMIT_BATCH();
 }
 
 /**
@@ -467,378 +590,77 @@ static void r300EmitClearState(GLcontext * ctx)
 static void r300Clear(GLcontext * ctx, GLbitfield mask)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
-	int flags = 0;
-	int bits = 0;
-	int swapped;
+	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&r300->radeon);
+	const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask);
+	GLbitfield swrast_mask = 0, tri_mask = 0;
+	int i;
+	struct gl_framebuffer *fb = ctx->DrawBuffer;
 
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "r300Clear\n");
 
-	{
+	if (!r300->radeon.radeonScreen->driScreen->dri2.enabled) {
 		LOCK_HARDWARE(&r300->radeon);
 		UNLOCK_HARDWARE(&r300->radeon);
 		if (dPriv->numClipRects == 0)
 			return;
 	}
 
-	if (mask & BUFFER_BIT_FRONT_LEFT) {
-		flags |= BUFFER_BIT_FRONT_LEFT;
-		mask &= ~BUFFER_BIT_FRONT_LEFT;
+	/* Flush swtcl vertices if necessary, because we will change hardware
+	 * state during clear. See also the state-related comment in
+	 * r300EmitClearState.
+	 */
+	R300_NEWPRIM(r300);
+
+	if (colorMask == ~0)
+	  tri_mask |= (mask & BUFFER_BITS_COLOR);
+
+
+	/* HW stencil */
+	if (mask & BUFFER_BIT_STENCIL) {
+		tri_mask |= BUFFER_BIT_STENCIL;
 	}
 
-	if (mask & BUFFER_BIT_BACK_LEFT) {
-		flags |= BUFFER_BIT_BACK_LEFT;
-		mask &= ~BUFFER_BIT_BACK_LEFT;
-	}
-
+	/* HW depth */
 	if (mask & BUFFER_BIT_DEPTH) {
-		bits |= CLEARBUFFER_DEPTH;
-		mask &= ~BUFFER_BIT_DEPTH;
+    	        tri_mask |= BUFFER_BIT_DEPTH;
 	}
 
-	if ((mask & BUFFER_BIT_STENCIL) && r300->state.stencil.hw_stencil) {
-		bits |= CLEARBUFFER_STENCIL;
-		mask &= ~BUFFER_BIT_STENCIL;
+	/* If we're doing a tri pass for depth/stencil, include a likely color
+	 * buffer with it.
+	 */
+
+	for (i = 0; i < BUFFER_COUNT; i++) {
+	  GLuint bufBit = 1 << i;
+	  if ((tri_mask) & bufBit) {
+	    if (!fb->Attachment[i].Renderbuffer->ClassID) {
+	      tri_mask &= ~bufBit;
+	      swrast_mask |= bufBit;
+	    }
+	  }
 	}
 
-	if (mask) {
+	/* SW fallback clearing */
+	swrast_mask = mask & ~tri_mask;
+
+	if (tri_mask) {
+		if (r300->radeon.radeonScreen->kernel_mm)
+			r300UserClear(ctx, tri_mask);
+		else
+			r300KernelClear(ctx, tri_mask);
+	}
+	if (swrast_mask) {
 		if (RADEON_DEBUG & DEBUG_FALLBACKS)
 			fprintf(stderr, "%s: swrast clear, mask: %x\n",
-				__FUNCTION__, mask);
-		_swrast_Clear(ctx, mask);
+				__FUNCTION__, swrast_mask);
+		_swrast_Clear(ctx, swrast_mask);
 	}
-
-	swapped = r300->radeon.sarea->pfCurrentPage == 1;
-
-	/* Make sure it fits there. */
-	r300EnsureCmdBufSpace(r300, 421 * 3, __FUNCTION__);
-	if (flags || bits)
-		r300EmitClearState(ctx);
-
-	if (flags & BUFFER_BIT_FRONT_LEFT) {
-		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, swapped);
-		bits = 0;
-	}
-
-	if (flags & BUFFER_BIT_BACK_LEFT) {
-		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, swapped ^ 1);
-		bits = 0;
-	}
-
-	if (bits)
-		r300ClearBuffer(r300, bits, 0);
-
 }
 
-void r300Flush(GLcontext * ctx)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-
-	if (RADEON_DEBUG & DEBUG_IOCTL)
-		fprintf(stderr, "%s\n", __FUNCTION__);
-
-	if (rmesa->dma.flush)
-		rmesa->dma.flush( rmesa );
-
-	if (rmesa->cmdbuf.count_used > rmesa->cmdbuf.count_reemit)
-		r300FlushCmdBuf(rmesa, __FUNCTION__);
-}
-
-#ifdef USER_BUFFERS
-#include "r300_mem.h"
-
-void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size)
-{
-	struct r300_dma_buffer *dmabuf;
-	size = MAX2(size, RADEON_BUFFER_SIZE * 16);
-
-	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
-		fprintf(stderr, "%s\n", __FUNCTION__);
-
-	if (rmesa->dma.flush) {
-		rmesa->dma.flush(rmesa);
-	}
-
-	if (rmesa->dma.current.buf) {
-#ifdef USER_BUFFERS
-		r300_mem_use(rmesa, rmesa->dma.current.buf->id);
-#endif
-		r300ReleaseDmaRegion(rmesa, &rmesa->dma.current, __FUNCTION__);
-	}
-	if (rmesa->dma.nr_released_bufs > 4)
-		r300FlushCmdBuf(rmesa, __FUNCTION__);
-
-	dmabuf = CALLOC_STRUCT(r300_dma_buffer);
-	dmabuf->buf = (void *)1;	/* hack */
-	dmabuf->refcount = 1;
-
-	dmabuf->id = r300_mem_alloc(rmesa, 4, size);
-	if (dmabuf->id == 0) {
-		LOCK_HARDWARE(&rmesa->radeon);	/* no need to validate */
-
-		r300FlushCmdBufLocked(rmesa, __FUNCTION__);
-		radeonWaitForIdleLocked(&rmesa->radeon);
-
-		dmabuf->id = r300_mem_alloc(rmesa, 4, size);
-
-		UNLOCK_HARDWARE(&rmesa->radeon);
-
-		if (dmabuf->id == 0) {
-			fprintf(stderr,
-				"Error: Could not get dma buffer... exiting\n");
-			_mesa_exit(-1);
-		}
-	}
-
-	rmesa->dma.current.buf = dmabuf;
-	rmesa->dma.current.address = r300_mem_ptr(rmesa, dmabuf->id);
-	rmesa->dma.current.end = size;
-	rmesa->dma.current.start = 0;
-	rmesa->dma.current.ptr = 0;
-}
-
-void r300ReleaseDmaRegion(r300ContextPtr rmesa,
-			  struct r300_dma_region *region, const char *caller)
-{
-	if (RADEON_DEBUG & DEBUG_IOCTL)
-		fprintf(stderr, "%s from %s\n", __FUNCTION__, caller);
-
-	if (!region->buf)
-		return;
-
-	if (rmesa->dma.flush)
-		rmesa->dma.flush(rmesa);
-
-	if (--region->buf->refcount == 0) {
-		r300_mem_free(rmesa, region->buf->id);
-		FREE(region->buf);
-		rmesa->dma.nr_released_bufs++;
-	}
-
-	region->buf = 0;
-	region->start = 0;
-}
-
-/* Allocates a region from rmesa->dma.current.  If there isn't enough
- * space in current, grab a new buffer (and discard what was left of current)
- */
-void r300AllocDmaRegion(r300ContextPtr rmesa,
-			struct r300_dma_region *region,
-			int bytes, int alignment)
-{
-	if (RADEON_DEBUG & DEBUG_IOCTL)
-		fprintf(stderr, "%s %d\n", __FUNCTION__, bytes);
-
-	if (rmesa->dma.flush)
-		rmesa->dma.flush(rmesa);
-
-	if (region->buf)
-		r300ReleaseDmaRegion(rmesa, region, __FUNCTION__);
-
-	alignment--;
-	rmesa->dma.current.start = rmesa->dma.current.ptr =
-	    (rmesa->dma.current.ptr + alignment) & ~alignment;
-
-	if (rmesa->dma.current.ptr + bytes > rmesa->dma.current.end)
-		r300RefillCurrentDmaRegion(rmesa, (bytes + 0x7) & ~0x7);
-
-	region->start = rmesa->dma.current.start;
-	region->ptr = rmesa->dma.current.start;
-	region->end = rmesa->dma.current.start + bytes;
-	region->address = rmesa->dma.current.address;
-	region->buf = rmesa->dma.current.buf;
-	region->buf->refcount++;
-
-	rmesa->dma.current.ptr += bytes;	/* bug - if alignment > 7 */
-	rmesa->dma.current.start =
-	    rmesa->dma.current.ptr = (rmesa->dma.current.ptr + 0x7) & ~0x7;
-
-	assert(rmesa->dma.current.ptr <= rmesa->dma.current.end);
-}
-
-#else
-static void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
-{
-	struct r300_dma_buffer *dmabuf;
-	int fd = rmesa->radeon.dri.fd;
-	int index = 0;
-	int size = 0;
-	drmDMAReq dma;
-	int ret;
-
-	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
-		fprintf(stderr, "%s\n", __FUNCTION__);
-
-	if (rmesa->dma.flush) {
-		rmesa->dma.flush(rmesa);
-	}
-
-	if (rmesa->dma.current.buf)
-		r300ReleaseDmaRegion(rmesa, &rmesa->dma.current, __FUNCTION__);
-
-	if (rmesa->dma.nr_released_bufs > 4)
-		r300FlushCmdBuf(rmesa, __FUNCTION__);
-
-	dma.context = rmesa->radeon.dri.hwContext;
-	dma.send_count = 0;
-	dma.send_list = NULL;
-	dma.send_sizes = NULL;
-	dma.flags = 0;
-	dma.request_count = 1;
-	dma.request_size = RADEON_BUFFER_SIZE;
-	dma.request_list = &index;
-	dma.request_sizes = &size;
-	dma.granted_count = 0;
-
-	LOCK_HARDWARE(&rmesa->radeon);	/* no need to validate */
-
-	ret = drmDMA(fd, &dma);
-
-	if (ret != 0) {
-		/* Try to release some buffers and wait until we can't get any more */
-		if (rmesa->dma.nr_released_bufs) {
-			r300FlushCmdBufLocked(rmesa, __FUNCTION__);
-		}
-
-		if (RADEON_DEBUG & DEBUG_DMA)
-			fprintf(stderr, "Waiting for buffers\n");
-
-		radeonWaitForIdleLocked(&rmesa->radeon);
-		ret = drmDMA(fd, &dma);
-
-		if (ret != 0) {
-			UNLOCK_HARDWARE(&rmesa->radeon);
-			fprintf(stderr,
-				"Error: Could not get dma buffer... exiting\n");
-			_mesa_exit(-1);
-		}
-	}
-
-	UNLOCK_HARDWARE(&rmesa->radeon);
-
-	if (RADEON_DEBUG & DEBUG_DMA)
-		fprintf(stderr, "Allocated buffer %d\n", index);
-
-	dmabuf = CALLOC_STRUCT(r300_dma_buffer);
-	dmabuf->buf = &rmesa->radeon.radeonScreen->buffers->list[index];
-	dmabuf->refcount = 1;
-
-	rmesa->dma.current.buf = dmabuf;
-	rmesa->dma.current.address = dmabuf->buf->address;
-	rmesa->dma.current.end = dmabuf->buf->total;
-	rmesa->dma.current.start = 0;
-	rmesa->dma.current.ptr = 0;
-}
-
-void r300ReleaseDmaRegion(r300ContextPtr rmesa,
-			  struct r300_dma_region *region, const char *caller)
-{
-	if (RADEON_DEBUG & DEBUG_IOCTL)
-		fprintf(stderr, "%s from %s\n", __FUNCTION__, caller);
-
-	if (!region->buf)
-		return;
-
-	if (rmesa->dma.flush)
-		rmesa->dma.flush(rmesa);
-
-	if (--region->buf->refcount == 0) {
-		drm_radeon_cmd_header_t *cmd;
-
-		if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
-			fprintf(stderr, "%s -- DISCARD BUF %d\n",
-				__FUNCTION__, region->buf->buf->idx);
-		cmd =
-		    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa,
-								sizeof
-								(*cmd) / 4,
-								__FUNCTION__);
-		cmd->dma.cmd_type = R300_CMD_DMA_DISCARD;
-		cmd->dma.buf_idx = region->buf->buf->idx;
-
-		FREE(region->buf);
-		rmesa->dma.nr_released_bufs++;
-	}
-
-	region->buf = 0;
-	region->start = 0;
-}
-
-/* Allocates a region from rmesa->dma.current.  If there isn't enough
- * space in current, grab a new buffer (and discard what was left of current)
- */
-void r300AllocDmaRegion(r300ContextPtr rmesa,
-			struct r300_dma_region *region,
-			int bytes, int alignment)
-{
-	if (RADEON_DEBUG & DEBUG_IOCTL)
-		fprintf(stderr, "%s %d\n", __FUNCTION__, bytes);
-
-	if (rmesa->dma.flush)
-		rmesa->dma.flush(rmesa);
-
-	if (region->buf)
-		r300ReleaseDmaRegion(rmesa, region, __FUNCTION__);
-
-	alignment--;
-	rmesa->dma.current.start = rmesa->dma.current.ptr =
-	    (rmesa->dma.current.ptr + alignment) & ~alignment;
-
-	if (rmesa->dma.current.ptr + bytes > rmesa->dma.current.end)
-		r300RefillCurrentDmaRegion(rmesa);
-
-	region->start = rmesa->dma.current.start;
-	region->ptr = rmesa->dma.current.start;
-	region->end = rmesa->dma.current.start + bytes;
-	region->address = rmesa->dma.current.address;
-	region->buf = rmesa->dma.current.buf;
-	region->buf->refcount++;
-
-	rmesa->dma.current.ptr += bytes;	/* bug - if alignment > 7 */
-	rmesa->dma.current.start =
-	    rmesa->dma.current.ptr = (rmesa->dma.current.ptr + 0x7) & ~0x7;
-
-	assert(rmesa->dma.current.ptr <= rmesa->dma.current.end);
-}
-
-#endif
-
-GLboolean r300IsGartMemory(r300ContextPtr rmesa, const GLvoid * pointer,
-			   GLint size)
-{
-	int offset =
-	    (char *)pointer -
-	    (char *)rmesa->radeon.radeonScreen->gartTextures.map;
-	int valid = (size >= 0 && offset >= 0
-		     && offset + size <
-		     rmesa->radeon.radeonScreen->gartTextures.size);
-
-	if (RADEON_DEBUG & DEBUG_IOCTL)
-		fprintf(stderr, "r300IsGartMemory( %p ) : %d\n", pointer,
-			valid);
-
-	return valid;
-}
-
-GLuint r300GartOffsetFromVirtual(r300ContextPtr rmesa, const GLvoid * pointer)
-{
-	int offset =
-	    (char *)pointer -
-	    (char *)rmesa->radeon.radeonScreen->gartTextures.map;
-
-	//fprintf(stderr, "offset=%08x\n", offset);
-
-	if (offset < 0
-	    || offset > rmesa->radeon.radeonScreen->gartTextures.size)
-		return ~0;
-	else
-		return rmesa->radeon.radeonScreen->gart_texture_offset + offset;
-}
 
 void r300InitIoctlFuncs(struct dd_function_table *functions)
 {
 	functions->Clear = r300Clear;
 	functions->Finish = radeonFinish;
-	functions->Flush = r300Flush;
+	functions->Flush = radeonFlush;
 }

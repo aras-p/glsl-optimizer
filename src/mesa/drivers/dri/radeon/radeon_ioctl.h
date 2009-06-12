@@ -38,31 +38,32 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/simple_list.h"
 #include "radeon_lock.h"
+#include "radeon_bocs_wrapper.h"
 
-
-extern void radeonEmitState( radeonContextPtr rmesa );
-extern void radeonEmitVertexAOS( radeonContextPtr rmesa,
+extern void radeonEmitVertexAOS( r100ContextPtr rmesa,
 				 GLuint vertex_size,
+				 struct radeon_bo *bo,
 				 GLuint offset );
 
-extern void radeonEmitVbufPrim( radeonContextPtr rmesa,
+extern void radeonEmitVbufPrim( r100ContextPtr rmesa,
 				GLuint vertex_format,
 				GLuint primitive,
 				GLuint vertex_nr );
 
-extern void radeonFlushElts( radeonContextPtr rmesa );
+extern void radeonFlushElts( GLcontext *ctx );
+			    
 
-extern GLushort *radeonAllocEltsOpenEnded( radeonContextPtr rmesa,
+extern GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
 					   GLuint vertex_format,
 					   GLuint primitive,
 					   GLuint min_nr );
 
-extern void radeonEmitAOS( radeonContextPtr rmesa,
-			   struct radeon_dma_region **regions,
+
+extern void radeonEmitAOS( r100ContextPtr rmesa,
 			   GLuint n,
 			   GLuint offset );
 
-extern void radeonEmitBlit( radeonContextPtr rmesa,
+extern void radeonEmitBlit( r100ContextPtr rmesa,
 			    GLuint color_fmt,
 			    GLuint src_pitch,
 			    GLuint src_offset,
@@ -72,30 +73,15 @@ extern void radeonEmitBlit( radeonContextPtr rmesa,
 			    GLint dstx, GLint dsty,
 			    GLuint w, GLuint h );
 
-extern void radeonEmitWait( radeonContextPtr rmesa, GLuint flags );
+extern void radeonEmitWait( r100ContextPtr rmesa, GLuint flags );
 
-extern void radeonFlushCmdBuf( radeonContextPtr rmesa, const char * );
-extern void radeonRefillCurrentDmaRegion( radeonContextPtr rmesa );
+extern void radeonFlushCmdBuf( r100ContextPtr rmesa, const char * );
 
-extern void radeonAllocDmaRegion( radeonContextPtr rmesa,
-				  struct radeon_dma_region *region,
-				  int bytes, 
-				  int alignment );
-
-extern void radeonReleaseDmaRegion( radeonContextPtr rmesa,
-				    struct radeon_dma_region *region,
-				    const char *caller );
-
-extern void radeonCopyBuffer( __DRIdrawablePrivate *drawable,
-			      const drm_clip_rect_t	 *rect);
-extern void radeonPageFlip( __DRIdrawablePrivate *drawable );
 extern void radeonFlush( GLcontext *ctx );
 extern void radeonFinish( GLcontext *ctx );
-extern void radeonWaitForIdleLocked( radeonContextPtr rmesa );
-extern void radeonWaitForVBlank( radeonContextPtr rmesa );
 extern void radeonInitIoctlFuncs( GLcontext *ctx );
-extern void radeonGetAllParams( radeonContextPtr rmesa );
-extern void radeonSetUpAtomList( radeonContextPtr rmesa );
+extern void radeonGetAllParams( r100ContextPtr rmesa );
+extern void radeonSetUpAtomList( r100ContextPtr rmesa );
 
 /* ================================================================
  * Helper macros:
@@ -105,33 +91,33 @@ extern void radeonSetUpAtomList( radeonContextPtr rmesa );
  */
 #define RADEON_NEWPRIM( rmesa )			\
 do {						\
-   if ( rmesa->dma.flush )			\
-      rmesa->dma.flush( rmesa );	\
+   if ( rmesa->radeon.dma.flush )			\
+      rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	\
 } while (0)
 
 /* Can accomodate several state changes and primitive changes without
  * actually firing the buffer.
  */
+
 #define RADEON_STATECHANGE( rmesa, ATOM )			\
 do {								\
    RADEON_NEWPRIM( rmesa );					\
    rmesa->hw.ATOM.dirty = GL_TRUE;				\
-   rmesa->hw.is_dirty = GL_TRUE;				\
+   rmesa->radeon.hw.is_dirty = GL_TRUE;				\
 } while (0)
 
-#define RADEON_DB_STATE( ATOM )			        \
+#define RADEON_DB_STATE( ATOM )				\
    memcpy( rmesa->hw.ATOM.lastcmd, rmesa->hw.ATOM.cmd,	\
 	   rmesa->hw.ATOM.cmd_size * 4)
 
-static INLINE int RADEON_DB_STATECHANGE( 
-   radeonContextPtr rmesa,
-   struct radeon_state_atom *atom )
+static INLINE int RADEON_DB_STATECHANGE(r100ContextPtr rmesa,
+					struct radeon_state_atom *atom )
 {
    if (memcmp(atom->cmd, atom->lastcmd, atom->cmd_size*4)) {
-      int *tmp;
+      GLuint *tmp;
       RADEON_NEWPRIM( rmesa );
       atom->dirty = GL_TRUE;
-      rmesa->hw.is_dirty = GL_TRUE;
+      rmesa->radeon.hw.is_dirty = GL_TRUE;
       tmp = atom->cmd; 
       atom->cmd = atom->lastcmd;
       atom->lastcmd = tmp;
@@ -140,16 +126,6 @@ static INLINE int RADEON_DB_STATECHANGE(
    else
       return 0;
 }
-
-
-/* Fire the buffered vertices no matter what.
- */
-#define RADEON_FIREVERTICES( rmesa )			\
-do {							\
-   if ( rmesa->store.cmd_used || rmesa->dma.flush ) {	\
-      radeonFlush( rmesa->glCtx );			\
-   }							\
-} while (0)
 
 /* Command lengths.  Note that any time you ensure ELTS_BUFSZ or VBUF_BUFSZ
  * are available, you will also be adding an rmesa->state.max_state_size because
@@ -167,36 +143,37 @@ do {							\
 #define VBUF_BUFSZ	(4 * sizeof(int))
 #endif
 
-/* Ensure that a minimum amount of space is available in the command buffer.
- * This is used to ensure atomicity of state updates with the rendering requests
- * that rely on them.
- *
- * An alternative would be to implement a "soft lock" such that when the buffer
- * wraps at an inopportune time, we grab the lock, flush the current buffer,
- * and hang on to the lock until the critical section is finished and we flush
- * the buffer again and unlock.
- */
-static INLINE void radeonEnsureCmdBufSpace( radeonContextPtr rmesa,
-					      int bytes )
+
+static inline uint32_t cmdpacket3(int cmd_type)
 {
-   if (rmesa->store.cmd_used + bytes > RADEON_CMD_BUF_SZ)
-      radeonFlushCmdBuf( rmesa, __FUNCTION__ );
-   assert( bytes <= RADEON_CMD_BUF_SZ );
+  drm_radeon_cmd_header_t cmd;
+
+  cmd.i = 0;
+  cmd.header.cmd_type = cmd_type;
+
+  return (uint32_t)cmd.i;
+
 }
 
-/* Alloc space in the command buffer
- */
-static INLINE char *radeonAllocCmdBuf( radeonContextPtr rmesa,
-					 int bytes, const char *where )
-{
-   if (rmesa->store.cmd_used + bytes > RADEON_CMD_BUF_SZ)
-      radeonFlushCmdBuf( rmesa, __FUNCTION__ );
+#define OUT_BATCH_PACKET3(packet, num_extra) do {	      \
+    if (!b_l_rmesa->radeonScreen->kernel_mm) {		      \
+      OUT_BATCH(cmdpacket3(RADEON_CMD_PACKET3));				      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
+    } else {						      \
+      OUT_BATCH(CP_PACKET2);				      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
+    }							      \
+  } while(0)
 
-   {
-      char *head = rmesa->store.cmd_buf + rmesa->store.cmd_used;
-      rmesa->store.cmd_used += bytes;
-      return head;
-   }
-}
+#define OUT_BATCH_PACKET3_CLIP(packet, num_extra) do {	      \
+    if (!b_l_rmesa->radeonScreen->kernel_mm) {		      \
+      OUT_BATCH(cmdpacket3(RADEON_CMD_PACKET3_CLIP));	      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
+    } else {						      \
+      OUT_BATCH(CP_PACKET2);				      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
+    }							      \
+  } while(0)
+
 
 #endif /* __RADEON_IOCTL_H__ */

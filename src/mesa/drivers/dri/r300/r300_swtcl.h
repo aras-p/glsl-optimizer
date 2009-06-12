@@ -39,7 +39,27 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 #include "r300_context.h"
 
+/*
+ * Here are definitions of OVM locations of vertex attributes for non TCL hw
+ */
+#define SWTCL_OVM_POS 0
+#define SWTCL_OVM_COLOR0 2
+#define SWTCL_OVM_COLOR1 3
+#define SWTCL_OVM_COLOR2 4
+#define SWTCL_OVM_COLOR3 5
+#define SWTCL_OVM_TEX(n) ((n) + 6)
+#define SWTCL_OVM_POINT_SIZE 15
+
+extern void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *InputsRead,  GLuint *OutputsWritten);
+
 extern void r300InitSwtcl( GLcontext *ctx );
 extern void r300DestroySwtcl( GLcontext *ctx );
+
+extern void r300RenderStart(GLcontext *ctx);
+extern void r300RenderFinish(GLcontext *ctx);
+extern void r300RenderPrimitive(GLcontext *ctx, GLenum prim);
+extern void r300ResetLineStipple(GLcontext *ctx);
+
+extern void r300_swtcl_flush(GLcontext *ctx, uint32_t current_offset);
 
 #endif

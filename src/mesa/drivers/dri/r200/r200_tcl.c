@@ -123,7 +123,7 @@ static GLboolean discrete_prim[0x10] = {
 
 #define RESET_STIPPLE() do {			\
    R200_STATECHANGE( rmesa, lin );		\
-   r200EmitState( rmesa );			\
+   radeonEmitState(&rmesa->radeon);			\
 } while (0)
 
 #define AUTO_STIPPLE( mode )  do {		\
@@ -134,7 +134,7 @@ static GLboolean discrete_prim[0x10] = {
    else						\
       rmesa->hw.lin.cmd[LIN_RE_LINE_PATTERN] &=	\
 	 ~R200_LINE_PATTERN_AUTO_RESET;	\
-   r200EmitState( rmesa );			\
+   radeonEmitState(&rmesa->radeon);			\
 } while (0)
 
 
@@ -142,26 +142,24 @@ static GLboolean discrete_prim[0x10] = {
 
 static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr ) 
 {
-   if (rmesa->dma.flush == r200FlushElts &&
-       rmesa->store.cmd_used + nr*2 < R200_CMD_BUF_SZ) {
+   if (rmesa->radeon.dma.flush == r200FlushElts &&
+       rmesa->tcl.elt_used + nr*2 < R200_ELT_BUF_SZ) {
 
-      GLushort *dest = (GLushort *)(rmesa->store.cmd_buf +
-				    rmesa->store.cmd_used);
+      GLushort *dest = (GLushort *)(rmesa->radeon.tcl.elt_dma_bo->ptr +
+				    rmesa->tcl.elt_used);
 
-      rmesa->store.cmd_used += nr*2;
+      rmesa->tcl.elt_used += nr*2;
 
       return dest;
    }
    else {
-      if (rmesa->dma.flush)
-	 rmesa->dma.flush( rmesa );
+      if (rmesa->radeon.dma.flush)
+	 rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
 
-      r200EnsureCmdBufSpace( rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
-			     rmesa->hw.max_state_size + ELTS_BUFSZ(nr) );
+      rcommonEnsureCmdBufSpace(&rmesa->radeon, AOS_BUFSZ(rmesa->radeon.tcl.aos_count), __FUNCTION__);
 
       r200EmitAOS( rmesa,
-		   rmesa->tcl.aos_components,
-		   rmesa->tcl.nr_aos_components, 0 );
+		   rmesa->radeon.tcl.aos_count, 0 );
 
       return r200AllocEltsOpenEnded( rmesa, rmesa->tcl.hw_primitive, nr );
    }
@@ -188,13 +186,14 @@ static void r200EmitPrim( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    r200TclPrimitive( ctx, prim, hwprim );
    
-   r200EnsureCmdBufSpace( rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
-			  rmesa->hw.max_state_size + VBUF_BUFSZ );
+   //   fprintf(stderr,"Emit prim %d\n", rmesa->radeon.tcl.aos_count);
+   rcommonEnsureCmdBufSpace( &rmesa->radeon,
+			     AOS_BUFSZ(rmesa->radeon.tcl.aos_count) +
+			     rmesa->radeon.hw.max_state_size + VBUF_BUFSZ, __FUNCTION__ );
 
    r200EmitAOS( rmesa,
-		  rmesa->tcl.aos_components,
-		  rmesa->tcl.nr_aos_components,
-		  start );
+		rmesa->radeon.tcl.aos_count,
+		start );
    
    /* Why couldn't this packet have taken an offset param?
     */
@@ -394,7 +393,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
 
    /* TODO: separate this from the swtnl pipeline 
     */
-   if (rmesa->TclFallback)
+   if (rmesa->radeon.TclFallback)
       return GL_TRUE;	/* fallback to software t&l */
 
    if (R200_DEBUG & DEBUG_PRIMS)
@@ -405,8 +404,9 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
 
    /* Validate state:
     */
-   if (rmesa->NewGLState)
-      r200ValidateState( ctx );
+   if (rmesa->radeon.NewGLState)
+      if (!r200ValidateState( ctx ))
+         return GL_TRUE; /* fallback to sw t&l */
 
    if (!ctx->VertexProgram._Enabled) {
    /* NOTE: inputs != tnl->render_inputs - these are the untransformed
@@ -481,7 +481,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
 
    /* Do the actual work:
     */
-   r200ReleaseArrays( ctx, ~0 /* stage->changed_inputs */ );
+   radeonReleaseArrays( ctx, ~0 /* stage->changed_inputs */ );
    r200EmitArrays( ctx, vimap_rev );
 
    rmesa->tcl.Elts = VB->Elts;
@@ -545,7 +545,7 @@ static void transition_to_swtnl( GLcontext *ctx )
    tnl->Driver.NotifyMaterialChange = 
       _mesa_validate_all_lighting_tables;
 
-   r200ReleaseArrays( ctx, ~0 );
+   radeonReleaseArrays( ctx, ~0 );
 
    /* Still using the D3D based hardware-rasterizer from the radeon;
     * need to put the card into D3D mode to make it work:
@@ -565,15 +565,11 @@ static void transition_to_hwtnl( GLcontext *ctx )
 
    tnl->Driver.NotifyMaterialChange = r200UpdateMaterial;
 
-   if ( rmesa->dma.flush )			
-      rmesa->dma.flush( rmesa );	
+   if ( rmesa->radeon.dma.flush )			
+      rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	
 
-   rmesa->dma.flush = NULL;
+   rmesa->radeon.dma.flush = NULL;
    
-   if (rmesa->swtcl.indexed_verts.buf) 
-      r200ReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, 
-			      __FUNCTION__ );
-
    R200_STATECHANGE( rmesa, vap );
    rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] |= R200_VAP_TCL_ENABLE;
    rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] &= ~R200_VAP_FORCE_W_TO_ONE;
@@ -631,10 +627,10 @@ static char *getFallbackString(GLuint bit)
 void r200TclFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint oldfallback = rmesa->TclFallback;
+   GLuint oldfallback = rmesa->radeon.TclFallback;
 
    if (mode) {
-      rmesa->TclFallback |= bit;
+      rmesa->radeon.TclFallback |= bit;
       if (oldfallback == 0) {
 	 if (R200_DEBUG & DEBUG_FALLBACKS) 
 	    fprintf(stderr, "R200 begin tcl fallback %s\n",
@@ -643,7 +639,7 @@ void r200TclFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
       }
    }
    else {
-      rmesa->TclFallback &= ~bit;
+      rmesa->radeon.TclFallback &= ~bit;
       if (oldfallback == bit) {
 	 if (R200_DEBUG & DEBUG_FALLBACKS) 
 	    fprintf(stderr, "R200 end tcl fallback %s\n",

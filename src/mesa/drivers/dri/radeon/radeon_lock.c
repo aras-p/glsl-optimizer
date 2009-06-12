@@ -41,29 +41,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/glheader.h"
 #include "main/mtypes.h"
-#include "radeon_context.h"
+#include "main/colormac.h"
+#include "dri_util.h"
+#include "radeon_screen.h"
+#include "radeon_common.h"
 #include "radeon_lock.h"
-#include "radeon_tex.h"
-#include "radeon_state.h"
-#include "radeon_ioctl.h"
-
 #include "drirenderbuffer.h"
-
-#if DEBUG_LOCKING
-char *prevLockFile = NULL;
-int prevLockLine = 0;
-#endif
-
-/* Turn on/off page flipping according to the flags in the sarea:
- */
-static void radeonUpdatePageFlipping(radeonContextPtr rmesa)
-{
-	rmesa->doPageFlip = rmesa->sarea->pfState;
-	if (rmesa->glCtx->WinSysDrawBuffer) {
-		driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
-				     rmesa->sarea->pfCurrentPage);
-	}
-}
 
 /* Update the hardware state.  This is called if another context has
  * grabbed the hardware lock, which includes the X server.  This
@@ -75,10 +58,11 @@ static void radeonUpdatePageFlipping(radeonContextPtr rmesa)
  */
 void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 {
-	__DRIdrawablePrivate *const drawable = rmesa->dri.drawable;
-	__DRIdrawablePrivate *const readable = rmesa->dri.readable;
+	__DRIdrawablePrivate *const drawable = radeon_get_drawable(rmesa);
+	__DRIdrawablePrivate *const readable = radeon_get_readable(rmesa);
 	__DRIscreenPrivate *sPriv = rmesa->dri.screen;
-	drm_radeon_sarea_t *sarea = rmesa->sarea;
+
+	assert(drawable != NULL);
 
 	drmGetLock(rmesa->dri.fd, rmesa->dri.hwContext, flags);
 
@@ -96,29 +80,42 @@ void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 	}
 
 	if (rmesa->lastStamp != drawable->lastStamp) {
-		radeonUpdatePageFlipping(rmesa);
-		radeonSetCliprects(rmesa);
-		radeonUpdateViewportOffset(rmesa->glCtx);
-		driUpdateFramebufferSize(rmesa->glCtx, drawable);
+		radeon_window_moved(rmesa);
+		rmesa->lastStamp = drawable->lastStamp;
 	}
 
-	RADEON_STATECHANGE(rmesa, ctx);
-	if (rmesa->sarea->tiling_enabled) {
-		rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |=
-		    RADEON_COLOR_TILE_ENABLE;
-	} else {
-		rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] &=
-		    ~RADEON_COLOR_TILE_ENABLE;
-	}
-
-	if (sarea->ctx_owner != rmesa->dri.hwContext) {
-		int i;
-		sarea->ctx_owner = rmesa->dri.hwContext;
-
-		for (i = 0; i < rmesa->nr_heaps; i++) {
-			DRI_AGE_TEXTURES(rmesa->texture_heaps[i]);
-		}
-	}
+	rmesa->vtbl.get_lock(rmesa);
 
 	rmesa->lost_context = GL_TRUE;
+}
+
+void radeon_lock_hardware(radeonContextPtr radeon)
+{
+	char ret = 0;
+	struct radeon_framebuffer *rfb = NULL;
+	struct radeon_renderbuffer *rrb = NULL;
+
+	if (radeon_get_drawable(radeon)) {
+		rfb = radeon_get_drawable(radeon)->driverPrivate;
+
+		if (rfb)
+			rrb = radeon_get_renderbuffer(&rfb->base,
+						      rfb->base._ColorDrawBufferIndexes[0]);
+	}
+
+	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
+		DRM_CAS(radeon->dri.hwLock, radeon->dri.hwContext,
+			 (DRM_LOCK_HELD | radeon->dri.hwContext), ret );
+		if (ret)
+			radeonGetLock(radeon, 0);
+	}
+}
+
+void radeon_unlock_hardware(radeonContextPtr radeon)
+{
+	if (!radeon->radeonScreen->driScreen->dri2.enabled) {
+		DRM_UNLOCK( radeon->dri.fd,
+			    radeon->dri.hwLock,
+			    radeon->dri.hwContext );
+	}
 }

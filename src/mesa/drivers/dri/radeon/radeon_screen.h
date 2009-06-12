@@ -54,11 +54,12 @@ typedef struct {
    drmAddress map;			/* Mapping of the DRM region */
 } radeonRegionRec, *radeonRegionPtr;
 
-typedef struct {
+typedef struct radeon_screen {
    int chip_family;
    int chip_flags;
    int cpp;
    int card_type;
+   int device_id; /* PCI ID */
    int AGPMode;
    unsigned int irq;			/* IRQ number (0 means none) */
 
@@ -103,9 +104,12 @@ typedef struct {
    /* Configuration cache with default values for all contexts */
    driOptionCache optionCache;
 
-   const __DRIextension *extensions[8];
+   const __DRIextension *extensions[16];
 
    int num_gb_pipes;
+   int kernel_mm;
+   drm_radeon_sarea_t *sarea;	/* Private SAREA data */
+   struct radeon_bo_manager *bom;
 } radeonScreenRec, *radeonScreenPtr;
 
 #define IS_R100_CLASS(screen) \
@@ -115,4 +119,5 @@ typedef struct {
 #define IS_R300_CLASS(screen) \
 	((screen->chip_flags & RADEON_CLASS_MASK) == RADEON_CLASS_R300)
 
+extern void radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv);
 #endif /* __RADEON_SCREEN_H__ */

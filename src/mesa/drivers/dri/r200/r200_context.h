@@ -53,50 +53,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #error This driver requires a newer libdrm to compile
 #endif
 
+#include "radeon_screen.h"
+#include "radeon_common.h"
+
+#include "radeon_lock.h"
+
 struct r200_context;
 typedef struct r200_context r200ContextRec;
 typedef struct r200_context *r200ContextPtr;
 
-/* This union is used to avoid warnings/miscompilation
-   with float to uint32_t casts due to strict-aliasing */
-typedef union { GLfloat f; uint32_t ui32; } float_ui32_type;
-
-#include "r200_lock.h"
-#include "radeon_screen.h"
 #include "main/mm.h"
-
-/* Flags for software fallback cases */
-/* See correponding strings in r200_swtcl.c */
-#define R200_FALLBACK_TEXTURE           0x01
-#define R200_FALLBACK_DRAW_BUFFER       0x02
-#define R200_FALLBACK_STENCIL           0x04
-#define R200_FALLBACK_RENDER_MODE       0x08
-#define R200_FALLBACK_DISABLE           0x10
-#define R200_FALLBACK_BORDER_MODE       0x20
-
-/* The blit width for texture uploads
- */
-#define BLIT_WIDTH_BYTES 1024
-
-/* Use the templated vertex format:
- */
-#define COLOR_IS_RGBA
-#define TAG(x) r200##x
-#include "tnl_dd/t_dd_vertex.h"
-#undef TAG
-
-typedef void (*r200_tri_func)( r200ContextPtr,
-				 r200Vertex *,
-				 r200Vertex *,
-				 r200Vertex * );
-
-typedef void (*r200_line_func)( r200ContextPtr,
-				  r200Vertex *,
-				  r200Vertex * );
-
-typedef void (*r200_point_func)( r200ContextPtr,
-				   r200Vertex * );
-
 
 struct r200_vertex_program {
         struct gl_vertex_program mesa_program; /* Must be first */
@@ -112,93 +78,11 @@ struct r200_vertex_program {
         int fogmode;
 };
 
-struct r200_colorbuffer_state {
-   GLuint clear;
-#if 000
-   GLint drawOffset, drawPitch;
-#endif
-   int roundEnable;
-};
-
-
-struct r200_depthbuffer_state {
-   GLuint clear;
-   GLfloat scale;
-};
-
-#if 000
-struct r200_pixel_state {
-   GLint readOffset, readPitch;
-};
-#endif
-
-struct r200_scissor_state {
-   drm_clip_rect_t rect;
-   GLboolean enabled;
-
-   GLuint numClipRects;			/* Cliprects active */
-   GLuint numAllocedClipRects;		/* Cliprects available */
-   drm_clip_rect_t *pClipRects;
-};
-
-struct r200_stencilbuffer_state {
-   GLboolean hwBuffer;
-   GLuint clear;			/* rb3d_stencilrefmask value */
-};
-
-struct r200_stipple_state {
-   GLuint mask[32];
-};
-
-
-
-#define TEX_0   0x1
-#define TEX_1   0x2
-#define TEX_2	0x4
-#define TEX_3	0x8
-#define TEX_4	0x10
-#define TEX_5	0x20
-#define TEX_ALL 0x3f
-
-typedef struct r200_tex_obj r200TexObj, *r200TexObjPtr;
-
-/* Texture object in locally shared texture space.
- */
-struct r200_tex_obj {
-   driTextureObject   base;
-
-   GLuint bufAddr;			/* Offset to start of locally
-					   shared texture block */
-
-   GLuint dirty_state;		        /* Flags (1 per texunit) for
-					   whether or not this texobj
-					   has dirty hardware state
-					   (pp_*) that needs to be
-					   brought into the
-					   texunit. */
-
-   drm_radeon_tex_image_t image[6][RADEON_MAX_TEXTURE_LEVELS];
-					/* Six, for the cube faces */
-   GLboolean image_override;		/* Image overridden by GLX_EXT_tfp */
-
-   GLuint pp_txfilter;		        /* hardware register values */
-   GLuint pp_txformat;
-   GLuint pp_txformat_x;
-   GLuint pp_txoffset;		        /* Image location in texmem.
-					   All cube faces follow. */
-   GLuint pp_txsize;		        /* npot only */
-   GLuint pp_txpitch;		        /* npot only */
-   GLuint pp_border_color;
-   GLuint pp_cubic_faces;	        /* cube face 1,2,3,4 log2 sizes */
-
-   GLboolean  border_fallback;
-
-   GLuint tile_bits;			/* hw texture tile bits used on this texture */
-};
+#define R200_TEX_ALL 0x3f
 
 
 struct r200_texture_env_state {
-   r200TexObjPtr texobj;
+   radeonTexObjPtr texobj;
    GLuint outputreg;
    GLuint unitneeded;
 };
@@ -208,19 +92,6 @@ struct r200_texture_env_state {
 struct r200_texture_state {
    struct r200_texture_env_state unit[R200_MAX_TEXTURE_UNITS];
 };
-
-
-struct r200_state_atom {
-   struct r200_state_atom *next, *prev;
-   const char *name;		         /* for debug */
-   int cmd_size;		         /* size in bytes */
-   GLuint idx;
-   int *cmd;			         /* one or more cmd's */
-   int *lastcmd;			 /* one or more cmd's */
-   GLboolean dirty;
-   GLboolean (*check)( GLcontext *, int );    /* is this state active? */
-};
-   
 
 
 /* Trying to keep these relatively short as the variables are becoming
@@ -597,181 +468,79 @@ struct r200_state_atom {
 
 
 struct r200_hw_state {
-   /* Head of the linked list of state atoms. */
-   struct r200_state_atom atomlist;
-
    /* Hardware state, stored as cmdbuf commands:  
     *   -- Need to doublebuffer for
     *           - reviving state after loss of context
     *           - eliding noop statechange loops? (except line stipple count)
     */
-   struct r200_state_atom ctx;
-   struct r200_state_atom set;
-   struct r200_state_atom vte;
-   struct r200_state_atom lin;
-   struct r200_state_atom msk;
-   struct r200_state_atom vpt;
-   struct r200_state_atom vap;
-   struct r200_state_atom vtx;
-   struct r200_state_atom tcl;
-   struct r200_state_atom msl;
-   struct r200_state_atom tcg;
-   struct r200_state_atom msc;
-   struct r200_state_atom cst;
-   struct r200_state_atom tam;
-   struct r200_state_atom tf;
-   struct r200_state_atom tex[6];
-   struct r200_state_atom cube[6];
-   struct r200_state_atom zbs;
-   struct r200_state_atom mtl[2];
-   struct r200_state_atom mat[9];
-   struct r200_state_atom lit[8]; /* includes vec, scl commands */
-   struct r200_state_atom ucp[6];
-   struct r200_state_atom pix[6]; /* pixshader stages */
-   struct r200_state_atom eye; /* eye pos */
-   struct r200_state_atom grd; /* guard band clipping */
-   struct r200_state_atom fog;
-   struct r200_state_atom glt;
-   struct r200_state_atom prf;
-   struct r200_state_atom afs[2];
-   struct r200_state_atom pvs;
-   struct r200_state_atom vpi[2];
-   struct r200_state_atom vpp[2];
-   struct r200_state_atom atf;
-   struct r200_state_atom spr;
-   struct r200_state_atom ptp;
-
-   int max_state_size;	/* Number of bytes necessary for a full state emit. */
-   GLboolean is_dirty, all_dirty;
+   struct radeon_state_atom ctx;
+   struct radeon_state_atom set;
+   struct radeon_state_atom vte;
+   struct radeon_state_atom lin;
+   struct radeon_state_atom msk;
+   struct radeon_state_atom vpt;
+   struct radeon_state_atom vap;
+   struct radeon_state_atom vtx;
+   struct radeon_state_atom tcl;
+   struct radeon_state_atom msl;
+   struct radeon_state_atom tcg;
+   struct radeon_state_atom msc;
+   struct radeon_state_atom cst;
+   struct radeon_state_atom tam;
+   struct radeon_state_atom tf;
+   struct radeon_state_atom tex[6];
+   struct radeon_state_atom cube[6];
+   struct radeon_state_atom zbs;
+   struct radeon_state_atom mtl[2];
+   struct radeon_state_atom mat[9];
+   struct radeon_state_atom lit[8]; /* includes vec, scl commands */
+   struct radeon_state_atom ucp[6];
+   struct radeon_state_atom pix[6]; /* pixshader stages */
+   struct radeon_state_atom eye; /* eye pos */
+   struct radeon_state_atom grd; /* guard band clipping */
+   struct radeon_state_atom fog;
+   struct radeon_state_atom glt;
+   struct radeon_state_atom prf;
+   struct radeon_state_atom afs[2];
+   struct radeon_state_atom pvs;
+   struct radeon_state_atom vpi[2];
+   struct radeon_state_atom vpp[2];
+   struct radeon_state_atom atf;
+   struct radeon_state_atom spr;
+   struct radeon_state_atom ptp;
 };
 
 struct r200_state {
    /* Derived state for internal purposes:
     */
-   struct r200_colorbuffer_state color;
-   struct r200_depthbuffer_state depth;
-#if 00
-   struct r200_pixel_state pixel;
-#endif
-   struct r200_scissor_state scissor;
-   struct r200_stencilbuffer_state stencil;
-   struct r200_stipple_state stipple;
+   struct radeon_stipple_state stipple;
    struct r200_texture_state texture;
    GLuint envneeded;
 };
 
-/* Need refcounting on dma buffers:
- */
-struct r200_dma_buffer {
-   int refcount;		/* the number of retained regions in buf */
-   drmBufPtr buf;
-};
-
-#define GET_START(rvb) (rmesa->r200Screen->gart_buffer_offset +		\
-			(rvb)->address - rmesa->dma.buf0_address +	\
-			(rvb)->start)
-
-/* A retained region, eg vertices for indexed vertices.
- */
-struct r200_dma_region {
-   struct r200_dma_buffer *buf;
-   char *address;		/* == buf->address */
-   int start, end, ptr;		/* offsets from start of buf */
-   int aos_start;
-   int aos_stride;
-   int aos_size;
-};
-
-
-struct r200_dma {
-   /* Active dma region.  Allocations for vertices and retained
-    * regions come from here.  Also used for emitting random vertices,
-    * these may be flushed by calling flush_current();
-    */
-   struct r200_dma_region current;
-   
-   void (*flush)( r200ContextPtr );
-
-   char *buf0_address;		/* start of buf[0], for index calcs */
-   GLuint nr_released_bufs;	/* flush after so many buffers released */
-};
-
-struct r200_dri_mirror {
-   __DRIcontextPrivate	*context;	/* DRI context */
-   __DRIscreenPrivate	*screen;	/* DRI screen */
-   __DRIdrawablePrivate	*drawable;	/* DRI drawable bound to this ctx */
-   __DRIdrawablePrivate	*readable;	/* DRI readable bound to this ctx */
-
-   drm_context_t hwContext;
-   drm_hw_lock_t *hwLock;
-   int fd;
-   int drmMinor;
-};
-
-
 #define R200_CMD_BUF_SZ  (16*1024) 
 
-struct r200_store {
-   GLuint statenr;
-   GLuint primnr;
-   char cmd_buf[R200_CMD_BUF_SZ];
-   int cmd_used;   
-   int elts_start;
-};
-
-
+#define R200_ELT_BUF_SZ  (16*1024) 
 /* r200_tcl.c
  */
 struct r200_tcl_info {
    GLuint hw_primitive;
 
-/* hw can handle 12 components max */
-   struct r200_dma_region *aos_components[12];
-   GLuint nr_aos_components;
-
    GLuint *Elts;
 
-   struct r200_dma_region indexed_verts;
-   struct r200_dma_region vertex_data[15];
+   int elt_used;
+
 };
 
 
 /* r200_swtcl.c
  */
 struct r200_swtcl_info {
-   GLuint RenderIndex;
-   
-   /**
-    * Size of a hardware vertex.  This is calculated when \c ::vertex_attrs is
-    * installed in the Mesa state vector.
-    */
-   GLuint vertex_size;
 
-   /**
-    * Attributes instructing the Mesa TCL pipeline where / how to put vertex
-    * data in the hardware buffer.
-    */
-   struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
 
-   /**
-    * Number of elements of \c ::vertex_attrs that are actually used.
-    */
-   GLuint vertex_attr_count;
-
-   /**
-    * Cached pointer to the buffer where Mesa will store vertex data.
-    */
-   GLubyte *verts;
-
-   /* Fallback rasterization functions
-    */
-   r200_point_func draw_point;
-   r200_line_func draw_line;
-   r200_tri_func draw_tri;
-
-   GLuint hw_primitive;
-   GLenum render_primitive;
-   GLuint numverts;
+   radeon_point_func draw_point;
+   radeon_line_func draw_line;
+   radeon_tri_func draw_tri;
 
    /**
     * Offset of the 4UB color data within a hardware (swtcl) vertex.
@@ -787,27 +556,10 @@ struct r200_swtcl_info {
     * Should Mesa project vertex data or will the hardware do it?
     */
    GLboolean needproj;
-
-   struct r200_dma_region indexed_verts;
-};
-
-
-struct r200_ioctl {
-   GLuint vertex_offset;
-   GLuint vertex_size;
 };
 
 
 
-#define R200_MAX_PRIMS 64
-
-
-
-struct r200_prim {
-   GLuint start;
-   GLuint end;
-   GLuint prim;
-};
 
    /* A maximum total of 29 elements per vertex:  3 floats for position, 3
     * floats for normal, 4 floats for color, 4 bytes for secondary color,
@@ -822,9 +574,8 @@ struct r200_prim {
 
 #define R200_MAX_VERTEX_SIZE ((3*6)+11)
 
-
 struct r200_context {
-   GLcontext *glCtx;			/* Mesa context */
+   struct radeon_context radeon;
 
    /* Driver and hardware state management
     */
@@ -832,55 +583,14 @@ struct r200_context {
    struct r200_state state;
    struct r200_vertex_program *curr_vp_hw;
 
-   /* Texture object bookkeeping
-    */
-   unsigned              nr_heaps;
-   driTexHeap          * texture_heaps[ RADEON_NR_TEX_HEAPS ];
-   driTextureObject      swapped;
-   int                   texture_depth;
-   float                 initialMaxAnisotropy;
-
-   /* Rasterization and vertex state:
-    */
-   GLuint TclFallback;
-   GLuint Fallback;
-   GLuint NewGLState;
-   DECLARE_RENDERINPUTS(tnl_index_bitset);	/* index of bits for last tnl_install_attrs */
-
    /* Vertex buffers
     */
-   struct r200_ioctl ioctl;
-   struct r200_dma dma;
-   struct r200_store store;
-   /* A full state emit as of the first state emit in the main store, in case
-    * the context is lost.
-    */
-   struct r200_store backup_store;
-
-   /* Page flipping
-    */
-   GLuint doPageFlip;
-
-   /* Busy waiting
-    */
-   GLuint do_usleeps;
-   GLuint do_irqs;
-   GLuint irqsEmitted;
-   drm_radeon_irq_wait_t iw;
+   struct radeon_ioctl ioctl;
+   struct radeon_store store;
 
    /* Clientdata textures;
     */
    GLuint prefer_gart_client_texturing;
-
-   /* Drawable, cliprect and scissor information
-    */
-   GLuint numClipRects;			/* Cliprects for the draw buffer */
-   drm_clip_rect_t *pClipRects;
-   unsigned int lastStamp;
-   GLboolean lost_context;
-   GLboolean save_on_next_emit;
-   radeonScreenPtr r200Screen;	/* Screen private DRI data */
-   drm_radeon_sarea_t *sarea;		/* Private SAREA data */
 
    /* TCL stuff
     */
@@ -893,15 +603,6 @@ struct r200_context {
    GLuint TexGenCompSel;
    GLmatrix tmpmat;
 
-   /* buffer swap
-    */
-   int64_t swap_ust;
-   int64_t swap_missed_ust;
-
-   GLuint swap_count;
-   GLuint swap_missed_count;
-
-
    /* r200_tcl.c
     */
    struct r200_tcl_info tcl;
@@ -909,14 +610,6 @@ struct r200_context {
    /* r200_swtcl.c
     */
    struct r200_swtcl_info swtcl;
-
-   /* Mirrors of some DRI state
-    */
-   struct r200_dri_mirror dri;
-
-   /* Configuration cache
-    */
-   driOptionCache optionCache;
 
    GLboolean using_hyperz;
    GLboolean texmicrotile;
@@ -927,28 +620,10 @@ struct r200_context {
 #define R200_CONTEXT(ctx)		((r200ContextPtr)(ctx->DriverCtx))
 
 
-static INLINE GLuint r200PackColor( GLuint cpp,
-					GLubyte r, GLubyte g,
-					GLubyte b, GLubyte a )
-{
-   switch ( cpp ) {
-   case 2:
-      return PACK_COLOR_565( r, g, b );
-   case 4:
-      return PACK_COLOR_8888( a, r, g, b );
-   default:
-      return 0;
-   }
-}
-
-
 extern void r200DestroyContext( __DRIcontextPrivate *driContextPriv );
 extern GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 				    __DRIcontextPrivate *driContextPriv,
 				    void *sharedContextPrivate);
-extern void r200SwapBuffers( __DRIdrawablePrivate *dPriv );
-extern void r200CopySubBuffer( __DRIdrawablePrivate * dPriv,
-			       int x, int y, int w, int h );
 extern GLboolean r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
 				  __DRIdrawablePrivate *driDrawPriv,
 				  __DRIdrawablePrivate *driReadPriv );
@@ -957,28 +632,9 @@ extern GLboolean r200UnbindContext( __DRIcontextPrivate *driContextPriv );
 /* ================================================================
  * Debugging:
  */
-#define DO_DEBUG		1
 
-#if DO_DEBUG
-extern int R200_DEBUG;
-#else
-#define R200_DEBUG		0
-#endif
+#define R200_DEBUG RADEON_DEBUG
 
-#define DEBUG_TEXTURE	0x001
-#define DEBUG_STATE	0x002
-#define DEBUG_IOCTL	0x004
-#define DEBUG_PRIMS	0x008
-#define DEBUG_VERTS	0x010
-#define DEBUG_FALLBACKS	0x020
-#define DEBUG_VFMT	0x040
-#define DEBUG_CODEGEN	0x080
-#define DEBUG_VERBOSE	0x100
-#define DEBUG_DRI       0x200
-#define DEBUG_DMA       0x400
-#define DEBUG_SANITY    0x800
-#define DEBUG_SYNC      0x1000
-#define DEBUG_PIXEL     0x2000
-#define DEBUG_MEMORY    0x4000
+
 
 #endif /* __R200_CONTEXT_H__ */

@@ -37,16 +37,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extern void r300SetDepthTexMode(struct gl_texture_object *tObj);
 
+extern void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target,
+			     __DRIdrawable *dPriv);
+
+extern void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
+			      GLint format, __DRIdrawable *dPriv);
+
 extern void r300SetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 			     unsigned long long offset, GLint depth,
 			     GLuint pitch);
 
-extern void r300UpdateTextureState(GLcontext * ctx);
-
-extern int r300UploadTexImages(r300ContextPtr rmesa, r300TexObjPtr t,
-			       GLuint face);
-
-extern void r300DestroyTexObj(r300ContextPtr rmesa, r300TexObjPtr t);
+extern GLboolean r300ValidateBuffers(GLcontext * ctx);
 
 extern void r300InitTextureFuncs(struct dd_function_table *functions);
 

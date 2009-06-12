@@ -43,6 +43,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
 
+#include "radeon_common.h"
+#include "radeon_mipmap_tree.h"
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_state.h"
@@ -52,31 +54,129 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "xmlpool.h"
 
+/* New (1.3) state mechanism.  3 commands (packet, scalar, vector) in
+ * 1.3 cmdbuffers allow all previous state to be updated as well as
+ * the tcl scalar and vector areas.
+ */
+static struct {
+	int start;
+	int len;
+	const char *name;
+} packet[RADEON_MAX_STATE_PACKETS] = {
+	{RADEON_PP_MISC, 7, "RADEON_PP_MISC"},
+	{RADEON_PP_CNTL, 3, "RADEON_PP_CNTL"},
+	{RADEON_RB3D_COLORPITCH, 1, "RADEON_RB3D_COLORPITCH"},
+	{RADEON_RE_LINE_PATTERN, 2, "RADEON_RE_LINE_PATTERN"},
+	{RADEON_SE_LINE_WIDTH, 1, "RADEON_SE_LINE_WIDTH"},
+	{RADEON_PP_LUM_MATRIX, 1, "RADEON_PP_LUM_MATRIX"},
+	{RADEON_PP_ROT_MATRIX_0, 2, "RADEON_PP_ROT_MATRIX_0"},
+	{RADEON_RB3D_STENCILREFMASK, 3, "RADEON_RB3D_STENCILREFMASK"},
+	{RADEON_SE_VPORT_XSCALE, 6, "RADEON_SE_VPORT_XSCALE"},
+	{RADEON_SE_CNTL, 2, "RADEON_SE_CNTL"},
+	{RADEON_SE_CNTL_STATUS, 1, "RADEON_SE_CNTL_STATUS"},
+	{RADEON_RE_MISC, 1, "RADEON_RE_MISC"},
+	{RADEON_PP_TXFILTER_0, 6, "RADEON_PP_TXFILTER_0"},
+	{RADEON_PP_BORDER_COLOR_0, 1, "RADEON_PP_BORDER_COLOR_0"},
+	{RADEON_PP_TXFILTER_1, 6, "RADEON_PP_TXFILTER_1"},
+	{RADEON_PP_BORDER_COLOR_1, 1, "RADEON_PP_BORDER_COLOR_1"},
+	{RADEON_PP_TXFILTER_2, 6, "RADEON_PP_TXFILTER_2"},
+	{RADEON_PP_BORDER_COLOR_2, 1, "RADEON_PP_BORDER_COLOR_2"},
+	{RADEON_SE_ZBIAS_FACTOR, 2, "RADEON_SE_ZBIAS_FACTOR"},
+	{RADEON_SE_TCL_OUTPUT_VTX_FMT, 11, "RADEON_SE_TCL_OUTPUT_VTX_FMT"},
+	{RADEON_SE_TCL_MATERIAL_EMMISSIVE_RED, 17,
+		    "RADEON_SE_TCL_MATERIAL_EMMISSIVE_RED"},
+	{R200_PP_TXCBLEND_0, 4, "R200_PP_TXCBLEND_0"},
+	{R200_PP_TXCBLEND_1, 4, "R200_PP_TXCBLEND_1"},
+	{R200_PP_TXCBLEND_2, 4, "R200_PP_TXCBLEND_2"},
+	{R200_PP_TXCBLEND_3, 4, "R200_PP_TXCBLEND_3"},
+	{R200_PP_TXCBLEND_4, 4, "R200_PP_TXCBLEND_4"},
+	{R200_PP_TXCBLEND_5, 4, "R200_PP_TXCBLEND_5"},
+	{R200_PP_TXCBLEND_6, 4, "R200_PP_TXCBLEND_6"},
+	{R200_PP_TXCBLEND_7, 4, "R200_PP_TXCBLEND_7"},
+	{R200_SE_TCL_LIGHT_MODEL_CTL_0, 6, "R200_SE_TCL_LIGHT_MODEL_CTL_0"},
+	{R200_PP_TFACTOR_0, 6, "R200_PP_TFACTOR_0"},
+	{R200_SE_VTX_FMT_0, 4, "R200_SE_VTX_FMT_0"},
+	{R200_SE_VAP_CNTL, 1, "R200_SE_VAP_CNTL"},
+	{R200_SE_TCL_MATRIX_SEL_0, 5, "R200_SE_TCL_MATRIX_SEL_0"},
+	{R200_SE_TCL_TEX_PROC_CTL_2, 5, "R200_SE_TCL_TEX_PROC_CTL_2"},
+	{R200_SE_TCL_UCP_VERT_BLEND_CTL, 1, "R200_SE_TCL_UCP_VERT_BLEND_CTL"},
+	{R200_PP_TXFILTER_0, 6, "R200_PP_TXFILTER_0"},
+	{R200_PP_TXFILTER_1, 6, "R200_PP_TXFILTER_1"},
+	{R200_PP_TXFILTER_2, 6, "R200_PP_TXFILTER_2"},
+	{R200_PP_TXFILTER_3, 6, "R200_PP_TXFILTER_3"},
+	{R200_PP_TXFILTER_4, 6, "R200_PP_TXFILTER_4"},
+	{R200_PP_TXFILTER_5, 6, "R200_PP_TXFILTER_5"},
+	{R200_PP_TXOFFSET_0, 1, "R200_PP_TXOFFSET_0"},
+	{R200_PP_TXOFFSET_1, 1, "R200_PP_TXOFFSET_1"},
+	{R200_PP_TXOFFSET_2, 1, "R200_PP_TXOFFSET_2"},
+	{R200_PP_TXOFFSET_3, 1, "R200_PP_TXOFFSET_3"},
+	{R200_PP_TXOFFSET_4, 1, "R200_PP_TXOFFSET_4"},
+	{R200_PP_TXOFFSET_5, 1, "R200_PP_TXOFFSET_5"},
+	{R200_SE_VTE_CNTL, 1, "R200_SE_VTE_CNTL"},
+	{R200_SE_TCL_OUTPUT_VTX_COMP_SEL, 1,
+	 "R200_SE_TCL_OUTPUT_VTX_COMP_SEL"},
+	{R200_PP_TAM_DEBUG3, 1, "R200_PP_TAM_DEBUG3"},
+	{R200_PP_CNTL_X, 1, "R200_PP_CNTL_X"},
+	{R200_RB3D_DEPTHXY_OFFSET, 1, "R200_RB3D_DEPTHXY_OFFSET"},
+	{R200_RE_AUX_SCISSOR_CNTL, 1, "R200_RE_AUX_SCISSOR_CNTL"},
+	{R200_RE_SCISSOR_TL_0, 2, "R200_RE_SCISSOR_TL_0"},
+	{R200_RE_SCISSOR_TL_1, 2, "R200_RE_SCISSOR_TL_1"},
+	{R200_RE_SCISSOR_TL_2, 2, "R200_RE_SCISSOR_TL_2"},
+	{R200_SE_VAP_CNTL_STATUS, 1, "R200_SE_VAP_CNTL_STATUS"},
+	{R200_SE_VTX_STATE_CNTL, 1, "R200_SE_VTX_STATE_CNTL"},
+	{R200_RE_POINTSIZE, 1, "R200_RE_POINTSIZE"},
+	{R200_SE_TCL_INPUT_VTX_VECTOR_ADDR_0, 4,
+		    "R200_SE_TCL_INPUT_VTX_VECTOR_ADDR_0"},
+	{R200_PP_CUBIC_FACES_0, 1, "R200_PP_CUBIC_FACES_0"},	/* 61 */
+	{R200_PP_CUBIC_OFFSET_F1_0, 5, "R200_PP_CUBIC_OFFSET_F1_0"}, /* 62 */
+	{R200_PP_CUBIC_FACES_1, 1, "R200_PP_CUBIC_FACES_1"},
+	{R200_PP_CUBIC_OFFSET_F1_1, 5, "R200_PP_CUBIC_OFFSET_F1_1"},
+	{R200_PP_CUBIC_FACES_2, 1, "R200_PP_CUBIC_FACES_2"},
+	{R200_PP_CUBIC_OFFSET_F1_2, 5, "R200_PP_CUBIC_OFFSET_F1_2"},
+	{R200_PP_CUBIC_FACES_3, 1, "R200_PP_CUBIC_FACES_3"},
+	{R200_PP_CUBIC_OFFSET_F1_3, 5, "R200_PP_CUBIC_OFFSET_F1_3"},
+	{R200_PP_CUBIC_FACES_4, 1, "R200_PP_CUBIC_FACES_4"},
+	{R200_PP_CUBIC_OFFSET_F1_4, 5, "R200_PP_CUBIC_OFFSET_F1_4"},
+	{R200_PP_CUBIC_FACES_5, 1, "R200_PP_CUBIC_FACES_5"},
+	{R200_PP_CUBIC_OFFSET_F1_5, 5, "R200_PP_CUBIC_OFFSET_F1_5"},
+	{RADEON_PP_TEX_SIZE_0, 2, "RADEON_PP_TEX_SIZE_0"},
+	{RADEON_PP_TEX_SIZE_1, 2, "RADEON_PP_TEX_SIZE_1"},
+	{RADEON_PP_TEX_SIZE_2, 2, "RADEON_PP_TEX_SIZE_2"},
+	{R200_RB3D_BLENDCOLOR, 3, "R200_RB3D_BLENDCOLOR"},
+	{R200_SE_TCL_POINT_SPRITE_CNTL, 1, "R200_SE_TCL_POINT_SPRITE_CNTL"},
+	{RADEON_PP_CUBIC_FACES_0, 1, "RADEON_PP_CUBIC_FACES_0"},
+	{RADEON_PP_CUBIC_OFFSET_T0_0, 5, "RADEON_PP_CUBIC_OFFSET_T0_0"},
+	{RADEON_PP_CUBIC_FACES_1, 1, "RADEON_PP_CUBIC_FACES_1"},
+	{RADEON_PP_CUBIC_OFFSET_T1_0, 5, "RADEON_PP_CUBIC_OFFSET_T1_0"},
+	{RADEON_PP_CUBIC_FACES_2, 1, "RADEON_PP_CUBIC_FACES_2"},
+	{RADEON_PP_CUBIC_OFFSET_T2_0, 5, "RADEON_PP_CUBIC_OFFSET_T2_0"},
+	{R200_PP_TRI_PERF, 2, "R200_PP_TRI_PERF"},
+	{R200_PP_TXCBLEND_8, 32, "R200_PP_AFS_0"},     /* 85 */
+	{R200_PP_TXCBLEND_0, 32, "R200_PP_AFS_1"},
+	{R200_PP_TFACTOR_0, 8, "R200_ATF_TFACTOR"},
+	{R200_PP_TXFILTER_0, 8, "R200_PP_TXCTLALL_0"},
+	{R200_PP_TXFILTER_1, 8, "R200_PP_TXCTLALL_1"},
+	{R200_PP_TXFILTER_2, 8, "R200_PP_TXCTLALL_2"},
+	{R200_PP_TXFILTER_3, 8, "R200_PP_TXCTLALL_3"},
+	{R200_PP_TXFILTER_4, 8, "R200_PP_TXCTLALL_4"},
+	{R200_PP_TXFILTER_5, 8, "R200_PP_TXCTLALL_5"},
+	{R200_VAP_PVS_CNTL_1, 2, "R200_VAP_PVS_CNTL"},
+};
+
 /* =============================================================
  * State initialization
  */
-
-void r200PrintDirty( r200ContextPtr rmesa, const char *msg )
-{
-   struct r200_state_atom *l;
-
-   fprintf(stderr, msg);
-   fprintf(stderr, ": ");
-
-   foreach(l, &rmesa->hw.atomlist) {
-      if (l->dirty || rmesa->hw.all_dirty)
-	 fprintf(stderr, "%s, ", l->name);
-   }
-
-   fprintf(stderr, "\n");
-}
-
-static int cmdpkt( int id ) 
+static int cmdpkt( r200ContextPtr rmesa, int id ) 
 {
    drm_radeon_cmd_header_t h;
-   h.i = 0;
-   h.packet.cmd_type = RADEON_CMD_PACKET;
-   h.packet.packet_id = id;
+
+   if (rmesa->radeon.radeonScreen->kernel_mm) {
+     return CP_PACKET0(packet[id].start, packet[id].len - 1);
+   } else {
+     h.i = 0;
+     h.packet.cmd_type = RADEON_CMD_PACKET;
+     h.packet.packet_id = id;
+   }
    return h.i;
 }
 
@@ -127,150 +227,467 @@ static int cmdscl2( int offset, int stride, int count )
 }
 
 #define CHECK( NM, FLAG )				\
-static GLboolean check_##NM( GLcontext *ctx, int idx )	\
+static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom) \
 {							\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
-   (void) idx;						\
    (void) rmesa;					\
-   return FLAG;						\
+   return (FLAG) ? atom->cmd_size : 0;			\
 }
 
 #define TCL_CHECK( NM, FLAG )				\
-static GLboolean check_##NM( GLcontext *ctx, int idx )	\
-{							\
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
-   (void) idx;						\
-   return !rmesa->TclFallback && !ctx->VertexProgram._Enabled && (FLAG);	\
+static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom) \
+{									\
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);				\
+   return (!rmesa->radeon.TclFallback && !ctx->VertexProgram._Enabled && (FLAG)) ? atom->cmd_size : 0; \
 }
 
 #define TCL_OR_VP_CHECK( NM, FLAG )			\
-static GLboolean check_##NM( GLcontext *ctx, int idx )	\
+static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom ) \
 {							\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
-   (void) idx;						\
-   return !rmesa->TclFallback && (FLAG);		\
+   return (!rmesa->radeon.TclFallback && (FLAG)) ? atom->cmd_size : 0;	\
 }
 
 #define VP_CHECK( NM, FLAG )				\
-static GLboolean check_##NM( GLcontext *ctx, int idx )	\
-{							\
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
-   (void) idx;						\
-   return !rmesa->TclFallback && ctx->VertexProgram._Enabled && (FLAG);		\
+static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom ) \
+{									\
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);				\
+   (void) atom;								\
+   return (!rmesa->radeon.TclFallback && ctx->VertexProgram._Enabled && (FLAG)) ? atom->cmd_size : 0; \
 }
-
 
 CHECK( always, GL_TRUE )
 CHECK( never, GL_FALSE )
 CHECK( tex_any, ctx->Texture._EnabledUnits )
 CHECK( tf, (ctx->Texture._EnabledUnits && !ctx->ATIFragmentShader._Enabled) );
-CHECK( tex_pair, (rmesa->state.texture.unit[idx].unitneeded | rmesa->state.texture.unit[idx & ~1].unitneeded) )
-CHECK( tex, rmesa->state.texture.unit[idx].unitneeded )
+CHECK( tex_pair, (rmesa->state.texture.unit[atom->idx].unitneeded | rmesa->state.texture.unit[atom->idx & ~1].unitneeded) )
+CHECK( tex, rmesa->state.texture.unit[atom->idx].unitneeded )
 CHECK( pix_zero, !ctx->ATIFragmentShader._Enabled )
-CHECK( texenv, (rmesa->state.envneeded & (1 << idx) && !ctx->ATIFragmentShader._Enabled) )
+   CHECK( texenv, (rmesa->state.envneeded & (1 << (atom->idx)) && !ctx->ATIFragmentShader._Enabled) )
 CHECK( afs_pass1, (ctx->ATIFragmentShader._Enabled && (ctx->ATIFragmentShader.Current->NumPasses > 1)) )
 CHECK( afs, ctx->ATIFragmentShader._Enabled )
-CHECK( tex_cube, rmesa->state.texture.unit[idx].unitneeded & TEXTURE_CUBE_BIT )
+CHECK( tex_cube, rmesa->state.texture.unit[atom->idx].unitneeded & TEXTURE_CUBE_BIT )
 TCL_CHECK( tcl_fog, ctx->Fog.Enabled )
 TCL_CHECK( tcl, GL_TRUE )
-TCL_CHECK( tcl_tex, rmesa->state.texture.unit[idx].unitneeded )
+TCL_CHECK( tcl_tex, rmesa->state.texture.unit[atom->idx].unitneeded )
 TCL_CHECK( tcl_lighting, ctx->Light.Enabled )
-TCL_CHECK( tcl_light, ctx->Light.Enabled && ctx->Light.Light[idx].Enabled )
-TCL_OR_VP_CHECK( tcl_ucp, (ctx->Transform.ClipPlanesEnabled & (1 << idx)) )
+TCL_CHECK( tcl_light, ctx->Light.Enabled && ctx->Light.Light[atom->idx].Enabled )
+TCL_OR_VP_CHECK( tcl_ucp, (ctx->Transform.ClipPlanesEnabled & (1 << (atom->idx))) )
 TCL_OR_VP_CHECK( tcl_or_vp, GL_TRUE )
 VP_CHECK( tcl_vp, GL_TRUE )
 VP_CHECK( tcl_vp_size, ctx->VertexProgram.Current->Base.NumNativeInstructions > 64 )
 VP_CHECK( tcl_vpp_size, ctx->VertexProgram.Current->Base.NumNativeParameters > 96 )
 
+#define OUT_VEC(hdr, data) do {			\
+    drm_radeon_cmd_header_t h;					\
+    h.i = hdr;								\
+    OUT_BATCH(CP_PACKET0(RADEON_SE_TCL_STATE_FLUSH, 0));		\
+    OUT_BATCH(0);							\
+    OUT_BATCH(CP_PACKET0(R200_SE_TCL_VECTOR_INDX_REG, 0));		\
+    OUT_BATCH(h.vectors.offset | (h.vectors.stride << RADEON_VEC_INDX_OCTWORD_STRIDE_SHIFT)); \
+    OUT_BATCH(CP_PACKET0_ONE(R200_SE_TCL_VECTOR_DATA_REG, h.vectors.count - 1));	\
+    OUT_BATCH_TABLE((data), h.vectors.count);				\
+  } while(0)
+
+#define OUT_VECLINEAR(hdr, data) do {					\
+    drm_radeon_cmd_header_t h;						\
+    uint32_t _start, _sz;						\
+    h.i = hdr;								\
+    _start = h.veclinear.addr_lo | (h.veclinear.addr_hi << 8);		\
+    _sz = h.veclinear.count * 4;					\
+    if (r200->radeon.radeonScreen->kernel_mm && _sz) { \
+    BEGIN_BATCH_NO_AUTOSTATE(dwords); \
+    OUT_BATCH(CP_PACKET0(RADEON_SE_TCL_STATE_FLUSH, 0));		\
+    OUT_BATCH(0);							\
+    OUT_BATCH(CP_PACKET0(R200_SE_TCL_VECTOR_INDX_REG, 0));		\
+    OUT_BATCH(_start | (1 << RADEON_VEC_INDX_OCTWORD_STRIDE_SHIFT));	\
+    OUT_BATCH(CP_PACKET0_ONE(R200_SE_TCL_VECTOR_DATA_REG, _sz - 1));	\
+    OUT_BATCH_TABLE((data), _sz);					\
+    END_BATCH(); \
+    } \
+  } while(0)
+
+#define OUT_SCL(hdr, data) do {					\
+    drm_radeon_cmd_header_t h;						\
+    h.i = hdr;								\
+    OUT_BATCH(CP_PACKET0(R200_SE_TCL_SCALAR_INDX_REG, 0));		\
+    OUT_BATCH((h.scalars.offset) | (h.scalars.stride << RADEON_SCAL_INDX_DWORD_STRIDE_SHIFT)); \
+    OUT_BATCH(CP_PACKET0_ONE(R200_SE_TCL_SCALAR_DATA_REG, h.scalars.count - 1));	\
+    OUT_BATCH_TABLE((data), h.scalars.count);				\
+  } while(0)
+
+#define OUT_SCL2(hdr, data) do {					\
+    drm_radeon_cmd_header_t h;						\
+    h.i = hdr;								\
+    OUT_BATCH(CP_PACKET0(R200_SE_TCL_SCALAR_INDX_REG, 0));		\
+    OUT_BATCH((h.scalars.offset + 0x100) | (h.scalars.stride << RADEON_SCAL_INDX_DWORD_STRIDE_SHIFT)); \
+    OUT_BATCH(CP_PACKET0_ONE(R200_SE_TCL_SCALAR_DATA_REG, h.scalars.count - 1));	\
+    OUT_BATCH_TABLE((data), h.scalars.count);				\
+  } while(0)
+
+static void mtl_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   uint32_t dwords = atom->cmd_size;
+
+   dwords += 6;
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   OUT_VEC(atom->cmd[MTL_CMD_0], (atom->cmd+1));
+   OUT_SCL2(atom->cmd[MTL_CMD_1], (atom->cmd + 18));
+   END_BATCH();
+}
+
+static void lit_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   uint32_t dwords = atom->cmd_size;
+
+   dwords += 8;
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   OUT_VEC(atom->cmd[LIT_CMD_0], atom->cmd+1);
+   OUT_VEC(atom->cmd[LIT_CMD_1], atom->cmd+LIT_CMD_1+1);
+   END_BATCH();
+}
+
+static void ptp_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   uint32_t dwords = atom->cmd_size;
+
+   dwords += 8;
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   OUT_VEC(atom->cmd[PTP_CMD_0], atom->cmd+1);
+   OUT_VEC(atom->cmd[PTP_CMD_1], atom->cmd+PTP_CMD_1+1);
+   END_BATCH();
+}
+
+static void veclinear_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   uint32_t dwords = atom->cmd_size;
+
+   dwords += 4;
+   OUT_VECLINEAR(atom->cmd[0], atom->cmd+1);
+}
+
+static void scl_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   uint32_t dwords = atom->cmd_size;
+
+   dwords += 2;
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   OUT_SCL(atom->cmd[0], atom->cmd+1);
+   END_BATCH();
+}
+
+
+static void vec_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   uint32_t dwords = atom->cmd_size;
+
+   dwords += 4;
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   OUT_VEC(atom->cmd[0], atom->cmd+1);
+   END_BATCH();
+}
+
+static void ctx_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   struct radeon_renderbuffer *rrb;
+   uint32_t cbpitch;
+   uint32_t zbpitch, depth_fmt;
+   uint32_t dwords = atom->cmd_size;
+
+   /* output the first 7 bytes of context */
+   BEGIN_BATCH_NO_AUTOSTATE(dwords+2+2);
+   OUT_BATCH_TABLE(atom->cmd, 5);
+
+   rrb = radeon_get_depthbuffer(&r200->radeon);
+   if (!rrb) {
+     OUT_BATCH(0);
+     OUT_BATCH(0);
+   } else {
+     zbpitch = (rrb->pitch / rrb->cpp);
+     if (r200->using_hyperz)
+       zbpitch |= RADEON_DEPTH_HYPERZ;
+     OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+     OUT_BATCH(zbpitch);
+     if (rrb->cpp == 4) 
+       depth_fmt = RADEON_DEPTH_FORMAT_24BIT_INT_Z; 
+     else 
+       depth_fmt = RADEON_DEPTH_FORMAT_16BIT_INT_Z; 
+     atom->cmd[CTX_RB3D_ZSTENCILCNTL] &= ~RADEON_DEPTH_FORMAT_MASK; 
+     atom->cmd[CTX_RB3D_ZSTENCILCNTL] |= depth_fmt; 
+   }
+     
+   OUT_BATCH(atom->cmd[CTX_RB3D_ZSTENCILCNTL]);
+   OUT_BATCH(atom->cmd[CTX_CMD_1]);
+   OUT_BATCH(atom->cmd[CTX_PP_CNTL]);
+
+   rrb = radeon_get_colorbuffer(&r200->radeon);
+   if (!rrb || !rrb->bo) {
+     OUT_BATCH(atom->cmd[CTX_RB3D_CNTL]);
+     OUT_BATCH(atom->cmd[CTX_RB3D_COLOROFFSET]);
+   } else {
+     atom->cmd[CTX_RB3D_CNTL] &= ~(0xf << 10); 
+     if (rrb->cpp == 4) 
+       atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB8888; 
+     else 
+       atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_RGB565; 
+ 
+     OUT_BATCH(atom->cmd[CTX_RB3D_CNTL]); 
+     OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+   }
+
+   OUT_BATCH(atom->cmd[CTX_CMD_2]);
+
+   if (!rrb || !rrb->bo) {
+     OUT_BATCH(atom->cmd[CTX_RB3D_COLORPITCH]);
+   } else {
+     cbpitch = (rrb->pitch / rrb->cpp);
+     if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
+       cbpitch |= R200_COLOR_TILE_ENABLE;
+     OUT_BATCH(cbpitch);
+   }
+
+   if (atom->cmd_size == CTX_STATE_SIZE_NEWDRM)
+     OUT_BATCH_TABLE((atom->cmd + 14), 4);
+
+   END_BATCH();
+}
+
+static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   struct radeon_renderbuffer *rrb, *drb;
+   uint32_t cbpitch = 0;
+   uint32_t zbpitch = 0;
+   uint32_t dwords = atom->cmd_size;
+   uint32_t depth_fmt;
+
+   rrb = radeon_get_colorbuffer(&r200->radeon);
+   if (!rrb || !rrb->bo) {
+      return;
+   }
+
+   atom->cmd[CTX_RB3D_CNTL] &= ~(0xf << 10);
+   if (rrb->cpp == 4)
+	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB8888;
+   else
+	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_RGB565;
+
+   cbpitch = (rrb->pitch / rrb->cpp);
+   if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
+       cbpitch |= R200_COLOR_TILE_ENABLE;
+
+   drb = radeon_get_depthbuffer(&r200->radeon);
+   if (drb) {
+     zbpitch = (drb->pitch / drb->cpp);
+     if (drb->cpp == 4)
+        depth_fmt = RADEON_DEPTH_FORMAT_24BIT_INT_Z;
+     else
+        depth_fmt = RADEON_DEPTH_FORMAT_16BIT_INT_Z;
+     atom->cmd[CTX_RB3D_ZSTENCILCNTL] &= ~RADEON_DEPTH_FORMAT_MASK;
+     atom->cmd[CTX_RB3D_ZSTENCILCNTL] |= depth_fmt;
+   }
+
+   dwords = 10;
+   if (drb)
+     dwords += 6;
+   if (rrb)
+     dwords += 6;
+   if (atom->cmd_size == CTX_STATE_SIZE_NEWDRM)
+     dwords += 4;
+
+   /* output the first 7 bytes of context */
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+
+   /* In the CS case we need to split this up */
+   OUT_BATCH(CP_PACKET0(packet[0].start, 3));
+   OUT_BATCH_TABLE((atom->cmd + 1), 4);
+
+   if (drb) {
+     OUT_BATCH(CP_PACKET0(RADEON_RB3D_DEPTHOFFSET, 0));
+     OUT_BATCH_RELOC(0, drb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+
+     OUT_BATCH(CP_PACKET0(RADEON_RB3D_DEPTHPITCH, 0));
+     OUT_BATCH(zbpitch);
+   }
+
+   OUT_BATCH(CP_PACKET0(RADEON_RB3D_ZSTENCILCNTL, 0));
+   OUT_BATCH(atom->cmd[CTX_RB3D_ZSTENCILCNTL]);
+   OUT_BATCH(CP_PACKET0(RADEON_PP_CNTL, 1));
+   OUT_BATCH(atom->cmd[CTX_PP_CNTL]);
+   OUT_BATCH(atom->cmd[CTX_RB3D_CNTL]);
+
+
+   if (rrb) {
+     OUT_BATCH(CP_PACKET0(RADEON_RB3D_COLOROFFSET, 0));
+     OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+
+     OUT_BATCH(CP_PACKET0(RADEON_RB3D_COLORPITCH, 0));
+     OUT_BATCH(cbpitch);
+   }
+
+   if (atom->cmd_size == CTX_STATE_SIZE_NEWDRM) {
+     OUT_BATCH_TABLE((atom->cmd + 14), 4);
+   }
+
+   END_BATCH();
+}
+
+static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   uint32_t dwords = atom->cmd_size;
+   int i = atom->idx;
+   radeonTexObj *t = r200->state.texture.unit[i].texobj;
+   radeon_mipmap_level *lvl;
+
+   if (t && t->mt && !t->image_override)
+     dwords += 2;
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   /* is this ok even with drm older than 1.18? */
+   OUT_BATCH_TABLE(atom->cmd, 10);
+
+   if (t && t->mt && !t->image_override) {
+     OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+		  RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+   } else if (!t) {
+     /* workaround for old CS mechanism */
+     OUT_BATCH(r200->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP]);
+   } else {
+     OUT_BATCH(t->override_offset);
+   }
+
+   END_BATCH();
+}
+
+static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   uint32_t dwords = atom->cmd_size;
+   int i = atom->idx;
+   radeonTexObj *t = r200->state.texture.unit[i].texobj;
+   radeon_mipmap_level *lvl;
+   int hastexture = 1;
+
+   if (!t)
+	hastexture = 0;
+   else {
+	if (!t->mt && !t->bo)
+		hastexture = 0;
+   }
+
+   if (hastexture)
+     dwords += 2;
+   else
+     dwords -= 2;
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+
+   OUT_BATCH(CP_PACKET0(R200_PP_TXFILTER_0 + (32 * i), 7));
+   OUT_BATCH_TABLE((atom->cmd + 1), 8);
+
+   if (hastexture) {
+     OUT_BATCH(CP_PACKET0(R200_PP_TXOFFSET_0 + (24 * i), 0));
+     if (t->mt && !t->image_override) {
+        OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+		  RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+      } else {
+	if (t->bo)
+            OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
+                            RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
+      }
+   }
+   END_BATCH();
+}
+
+
+static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   uint32_t dwords = 2;
+   int i = atom->idx, j;
+   radeonTexObj *t = r200->state.texture.unit[i].texobj;
+   radeon_mipmap_level *lvl;
+
+   BEGIN_BATCH_NO_AUTOSTATE(dwords + (4 * 5));
+   OUT_BATCH_TABLE(atom->cmd, 2);
+
+   if (t && !t->image_override) {
+     lvl = &t->mt->levels[0];
+     for (j = 1; j <= 5; j++) {
+       OUT_BATCH(CP_PACKET0(R200_PP_CUBIC_OFFSET_F1_0 + (24*i) + (4 * (j-1)), 0));
+       OUT_BATCH_RELOC(lvl->faces[j].offset, t->mt->bo, lvl->faces[j].offset,
+			RADEON_GEM_DOMAIN_VRAM, 0, 0);
+     }
+   }
+   END_BATCH();
+}
 
 /* Initialize the context's hardware state.
  */
 void r200InitState( r200ContextPtr rmesa )
 {
-   GLcontext *ctx = rmesa->glCtx;
-   GLuint color_fmt, depth_fmt, i;
-   GLint drawPitch, drawOffset;
+   GLcontext *ctx = rmesa->radeon.glCtx;
+   GLuint i;
 
-   switch ( rmesa->r200Screen->cpp ) {
-   case 2:
-      color_fmt = R200_COLOR_FORMAT_RGB565;
-      break;
-   case 4:
-      color_fmt = R200_COLOR_FORMAT_ARGB8888;
-      break;
-   default:
-      fprintf( stderr, "Error: Unsupported pixel depth... exiting\n" );
-      exit( -1 );
-   }
-
-   rmesa->state.color.clear = 0x00000000;
+   rmesa->radeon.state.color.clear = 0x00000000;
 
    switch ( ctx->Visual.depthBits ) {
    case 16:
-      rmesa->state.depth.clear = 0x0000ffff;
-      rmesa->state.depth.scale = 1.0 / (GLfloat)0xffff;
-      depth_fmt = R200_DEPTH_FORMAT_16BIT_INT_Z;
-      rmesa->state.stencil.clear = 0x00000000;
+      rmesa->radeon.state.depth.clear = 0x0000ffff;
+      rmesa->radeon.state.stencil.clear = 0x00000000;
       break;
    case 24:
-      rmesa->state.depth.clear = 0x00ffffff;
-      rmesa->state.depth.scale = 1.0 / (GLfloat)0xffffff;
-      depth_fmt = R200_DEPTH_FORMAT_24BIT_INT_Z;
-      rmesa->state.stencil.clear = 0xffff0000;
-      break;
    default:
-      fprintf( stderr, "Error: Unsupported depth %d... exiting\n",
-	       ctx->Visual.depthBits );
-      exit( -1 );
+      rmesa->radeon.state.depth.clear = 0x00ffffff;
+      rmesa->radeon.state.stencil.clear = 0xffff0000;
+      break;
    }
 
-   /* Only have hw stencil when depth buffer is 24 bits deep */
-   rmesa->state.stencil.hwBuffer = ( ctx->Visual.stencilBits > 0 &&
-				     ctx->Visual.depthBits == 24 );
+   rmesa->radeon.Fallback = 0;
 
-   rmesa->Fallback = 0;
-
-   if ( ctx->Visual.doubleBufferMode && rmesa->sarea->pfCurrentPage == 0 ) {
-      drawOffset = rmesa->r200Screen->backOffset;
-      drawPitch  = rmesa->r200Screen->backPitch;
-   } else {
-      drawOffset = rmesa->r200Screen->frontOffset;
-      drawPitch  = rmesa->r200Screen->frontPitch;
-   }
-#if 000
-   if ( ctx->Visual.doubleBufferMode && rmesa->sarea->pfCurrentPage == 0 ) {
-      rmesa->state.color.drawOffset = rmesa->r200Screen->backOffset;
-      rmesa->state.color.drawPitch  = rmesa->r200Screen->backPitch;
-   } else {
-      rmesa->state.color.drawOffset = rmesa->r200Screen->frontOffset;
-      rmesa->state.color.drawPitch  = rmesa->r200Screen->frontPitch;
-   }
-
-   rmesa->state.pixel.readOffset = rmesa->state.color.drawOffset;
-   rmesa->state.pixel.readPitch  = rmesa->state.color.drawPitch;
-#endif
-
-   rmesa->hw.max_state_size = 0;
+   rmesa->radeon.hw.max_state_size = 0;
 
 #define ALLOC_STATE( ATOM, CHK, SZ, NM, IDX )				\
    do {								\
       rmesa->hw.ATOM.cmd_size = SZ;				\
-      rmesa->hw.ATOM.cmd = (int *)CALLOC(SZ * sizeof(int));	\
-      rmesa->hw.ATOM.lastcmd = (int *)CALLOC(SZ * sizeof(int));	\
+      rmesa->hw.ATOM.cmd = (GLuint *)CALLOC(SZ * sizeof(int));	\
+      rmesa->hw.ATOM.lastcmd = (GLuint *)CALLOC(SZ * sizeof(int));	\
       rmesa->hw.ATOM.name = NM;					\
       rmesa->hw.ATOM.idx = IDX;					\
       rmesa->hw.ATOM.check = check_##CHK;			\
       rmesa->hw.ATOM.dirty = GL_FALSE;				\
-      rmesa->hw.max_state_size += SZ * sizeof(int);		\
+      rmesa->radeon.hw.max_state_size += SZ * sizeof(int);		\
    } while (0)
 
 
    /* Allocate state buffers:
     */
-   if (rmesa->r200Screen->drmSupportsBlendColor)
+   if (rmesa->radeon.radeonScreen->drmSupportsBlendColor)
       ALLOC_STATE( ctx, always, CTX_STATE_SIZE_NEWDRM, "CTX/context", 0 );
    else
       ALLOC_STATE( ctx, always, CTX_STATE_SIZE_OLDDRM, "CTX/context", 0 );
+
+   if (rmesa->radeon.radeonScreen->kernel_mm)
+     rmesa->hw.ctx.emit = ctx_emit_cs;
+   else
+     rmesa->hw.ctx.emit = ctx_emit;
    ALLOC_STATE( set, always, SET_STATE_SIZE, "SET/setup", 0 );
    ALLOC_STATE( lin, always, LIN_STATE_SIZE, "LIN/line", 0 );
    ALLOC_STATE( msk, always, MSK_STATE_SIZE, "MSK/mask", 0 );
@@ -282,8 +699,8 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( cst, always, CST_STATE_SIZE, "CST/constant", 0 );
    ALLOC_STATE( zbs, always, ZBS_STATE_SIZE, "ZBS/zbias", 0 );
    ALLOC_STATE( tf, tf, TF_STATE_SIZE, "TF/tfactor", 0 );
-   if (rmesa->r200Screen->drmSupportsFragShader) {
-      if (rmesa->r200Screen->chip_family == CHIP_FAMILY_R200) {
+   if (rmesa->radeon.radeonScreen->drmSupportsFragShader) {
+      if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R200) {
       /* make sure texture units 0/1 are emitted pair-wise for r200 t0 hang workaround */
 	 ALLOC_STATE( tex[0], tex_pair, TEX_STATE_SIZE_NEWDRM, "TEX/tex-0", 0 );
 	 ALLOC_STATE( tex[1], tex_pair, TEX_STATE_SIZE_NEWDRM, "TEX/tex-1", 1 );
@@ -303,7 +720,7 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( afs[1], afs, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
    }
    else {
-      if (rmesa->r200Screen->chip_family == CHIP_FAMILY_R200) {
+      if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R200) {
 	 ALLOC_STATE( tex[0], tex_pair, TEX_STATE_SIZE_OLDDRM, "TEX/tex-0", 0 );
 	 ALLOC_STATE( tex[1], tex_pair, TEX_STATE_SIZE_OLDDRM, "TEX/tex-1", 1 );
 	 ALLOC_STATE( tam, tex_any, TAM_STATE_SIZE, "TAM/tam", 0 );
@@ -321,13 +738,21 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( afs[0], never, AFS_STATE_SIZE, "AFS/afsinst-0", 0 );
       ALLOC_STATE( afs[1], never, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
    }
-   if (rmesa->r200Screen->drmSupportsCubeMapsR200) {
+
+   for (i = 0; i < 5; i++)
+      if (rmesa->radeon.radeonScreen->kernel_mm)
+          rmesa->hw.tex[i].emit = tex_emit_cs;
+      else
+          rmesa->hw.tex[i].emit = tex_emit;
+   if (rmesa->radeon.radeonScreen->drmSupportsCubeMapsR200) {
       ALLOC_STATE( cube[0], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
       ALLOC_STATE( cube[1], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
       ALLOC_STATE( cube[2], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-2", 2 );
       ALLOC_STATE( cube[3], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-3", 3 );
       ALLOC_STATE( cube[4], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
       ALLOC_STATE( cube[5], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
+      for (i = 0; i < 5; i++)
+	rmesa->hw.cube[i].emit = cube_emit;
    }
    else {
       ALLOC_STATE( cube[0], never, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
@@ -337,7 +762,8 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( cube[4], never, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
       ALLOC_STATE( cube[5], never, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
    }
-   if (rmesa->r200Screen->drmSupportsVertexProgram) {
+
+   if (rmesa->radeon.radeonScreen->drmSupportsVertexProgram) {
       ALLOC_STATE( pvs, tcl_vp, PVS_STATE_SIZE, "PVS/pvscntl", 0 );
       ALLOC_STATE( vpi[0], tcl_vp, VPI_STATE_SIZE, "VP/vertexprog-0", 0 );
       ALLOC_STATE( vpi[1], tcl_vp_size, VPI_STATE_SIZE, "VP/vertexprog-1", 1 );
@@ -390,13 +816,13 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( pix[3], texenv, PIX_STATE_SIZE, "PIX/pixstage-3", 3 );
    ALLOC_STATE( pix[4], texenv, PIX_STATE_SIZE, "PIX/pixstage-4", 4 );
    ALLOC_STATE( pix[5], texenv, PIX_STATE_SIZE, "PIX/pixstage-5", 5 );
-   if (rmesa->r200Screen->drmSupportsTriPerf) {
+   if (rmesa->radeon.radeonScreen->drmSupportsTriPerf) {
       ALLOC_STATE( prf, always, PRF_STATE_SIZE, "PRF/performance-tri", 0 );
    }
    else {
       ALLOC_STATE( prf, never, PRF_STATE_SIZE, "PRF/performance-tri", 0 );
    }
-   if (rmesa->r200Screen->drmSupportsPointSprites) {
+   if (rmesa->radeon.radeonScreen->drmSupportsPointSprites) {
       ALLOC_STATE( spr, always, SPR_STATE_SIZE, "SPR/pointsprite", 0 );
       ALLOC_STATE( ptp, tcl, PTP_STATE_SIZE, "PTP/pointparams", 0 );
    }
@@ -409,87 +835,115 @@ void r200InitState( r200ContextPtr rmesa )
 
    /* Fill in the packet headers:
     */
-   rmesa->hw.ctx.cmd[CTX_CMD_0] = cmdpkt(RADEON_EMIT_PP_MISC);
-   rmesa->hw.ctx.cmd[CTX_CMD_1] = cmdpkt(RADEON_EMIT_PP_CNTL);
-   rmesa->hw.ctx.cmd[CTX_CMD_2] = cmdpkt(RADEON_EMIT_RB3D_COLORPITCH);
-   if (rmesa->r200Screen->drmSupportsBlendColor)
-      rmesa->hw.ctx.cmd[CTX_CMD_3] = cmdpkt(R200_EMIT_RB3D_BLENDCOLOR);
-   rmesa->hw.lin.cmd[LIN_CMD_0] = cmdpkt(RADEON_EMIT_RE_LINE_PATTERN);
-   rmesa->hw.lin.cmd[LIN_CMD_1] = cmdpkt(RADEON_EMIT_SE_LINE_WIDTH);
-   rmesa->hw.msk.cmd[MSK_CMD_0] = cmdpkt(RADEON_EMIT_RB3D_STENCILREFMASK);
-   rmesa->hw.vpt.cmd[VPT_CMD_0] = cmdpkt(RADEON_EMIT_SE_VPORT_XSCALE);
-   rmesa->hw.set.cmd[SET_CMD_0] = cmdpkt(RADEON_EMIT_SE_CNTL);
-   rmesa->hw.msc.cmd[MSC_CMD_0] = cmdpkt(RADEON_EMIT_RE_MISC);
-   rmesa->hw.cst.cmd[CST_CMD_0] = cmdpkt(R200_EMIT_PP_CNTL_X);
-   rmesa->hw.cst.cmd[CST_CMD_1] = cmdpkt(R200_EMIT_RB3D_DEPTHXY_OFFSET);
-   rmesa->hw.cst.cmd[CST_CMD_2] = cmdpkt(R200_EMIT_RE_AUX_SCISSOR_CNTL);
-   rmesa->hw.cst.cmd[CST_CMD_3] = cmdpkt(R200_EMIT_RE_SCISSOR_TL_0);
-   rmesa->hw.cst.cmd[CST_CMD_4] = cmdpkt(R200_EMIT_SE_VAP_CNTL_STATUS);
-   rmesa->hw.cst.cmd[CST_CMD_5] = cmdpkt(R200_EMIT_RE_POINTSIZE);
-   rmesa->hw.cst.cmd[CST_CMD_6] = cmdpkt(R200_EMIT_TCL_INPUT_VTX_VECTOR_ADDR_0);
-   rmesa->hw.tam.cmd[TAM_CMD_0] = cmdpkt(R200_EMIT_PP_TAM_DEBUG3);
-   rmesa->hw.tf.cmd[TF_CMD_0] = cmdpkt(R200_EMIT_TFACTOR_0);
-   if (rmesa->r200Screen->drmSupportsFragShader) {
-      rmesa->hw.atf.cmd[ATF_CMD_0] = cmdpkt(R200_EMIT_ATF_TFACTOR);
-      rmesa->hw.tex[0].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCTLALL_0);
-      rmesa->hw.tex[0].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_0);
-      rmesa->hw.tex[1].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCTLALL_1);
-      rmesa->hw.tex[1].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_1);
-      rmesa->hw.tex[2].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCTLALL_2);
-      rmesa->hw.tex[2].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_2);
-      rmesa->hw.tex[3].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCTLALL_3);
-      rmesa->hw.tex[3].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_3);
-      rmesa->hw.tex[4].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCTLALL_4);
-      rmesa->hw.tex[4].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_4);
-      rmesa->hw.tex[5].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCTLALL_5);
-      rmesa->hw.tex[5].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_5);
+   rmesa->hw.ctx.cmd[CTX_CMD_0] = cmdpkt(rmesa, RADEON_EMIT_PP_MISC);
+   rmesa->hw.ctx.cmd[CTX_CMD_1] = cmdpkt(rmesa, RADEON_EMIT_PP_CNTL);
+   rmesa->hw.ctx.cmd[CTX_CMD_2] = cmdpkt(rmesa, RADEON_EMIT_RB3D_COLORPITCH);
+   if (rmesa->radeon.radeonScreen->drmSupportsBlendColor)
+      rmesa->hw.ctx.cmd[CTX_CMD_3] = cmdpkt(rmesa, R200_EMIT_RB3D_BLENDCOLOR);
+   rmesa->hw.lin.cmd[LIN_CMD_0] = cmdpkt(rmesa, RADEON_EMIT_RE_LINE_PATTERN);
+   rmesa->hw.lin.cmd[LIN_CMD_1] = cmdpkt(rmesa, RADEON_EMIT_SE_LINE_WIDTH);
+   rmesa->hw.msk.cmd[MSK_CMD_0] = cmdpkt(rmesa, RADEON_EMIT_RB3D_STENCILREFMASK);
+   rmesa->hw.vpt.cmd[VPT_CMD_0] = cmdpkt(rmesa, RADEON_EMIT_SE_VPORT_XSCALE);
+   rmesa->hw.set.cmd[SET_CMD_0] = cmdpkt(rmesa, RADEON_EMIT_SE_CNTL);
+   rmesa->hw.msc.cmd[MSC_CMD_0] = cmdpkt(rmesa, RADEON_EMIT_RE_MISC);
+   rmesa->hw.cst.cmd[CST_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_CNTL_X);
+   rmesa->hw.cst.cmd[CST_CMD_1] = cmdpkt(rmesa, R200_EMIT_RB3D_DEPTHXY_OFFSET);
+   rmesa->hw.cst.cmd[CST_CMD_2] = cmdpkt(rmesa, R200_EMIT_RE_AUX_SCISSOR_CNTL);
+   rmesa->hw.cst.cmd[CST_CMD_3] = cmdpkt(rmesa, R200_EMIT_RE_SCISSOR_TL_0);
+   rmesa->hw.cst.cmd[CST_CMD_4] = cmdpkt(rmesa, R200_EMIT_SE_VAP_CNTL_STATUS);
+   rmesa->hw.cst.cmd[CST_CMD_5] = cmdpkt(rmesa, R200_EMIT_RE_POINTSIZE);
+   rmesa->hw.cst.cmd[CST_CMD_6] = cmdpkt(rmesa, R200_EMIT_TCL_INPUT_VTX_VECTOR_ADDR_0);
+   rmesa->hw.tam.cmd[TAM_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TAM_DEBUG3);
+   rmesa->hw.tf.cmd[TF_CMD_0] = cmdpkt(rmesa, R200_EMIT_TFACTOR_0);
+   if (rmesa->radeon.radeonScreen->drmSupportsFragShader) {
+      rmesa->hw.atf.cmd[ATF_CMD_0] = cmdpkt(rmesa, R200_EMIT_ATF_TFACTOR);
+      rmesa->hw.tex[0].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_0);
+      rmesa->hw.tex[0].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_0);
+      rmesa->hw.tex[1].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_1);
+      rmesa->hw.tex[1].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_1);
+      rmesa->hw.tex[2].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_2);
+      rmesa->hw.tex[2].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_2);
+      rmesa->hw.tex[3].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_3);
+      rmesa->hw.tex[3].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_3);
+      rmesa->hw.tex[4].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_4);
+      rmesa->hw.tex[4].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_4);
+      rmesa->hw.tex[5].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCTLALL_5);
+      rmesa->hw.tex[5].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_5);
    } else {
-      rmesa->hw.tex[0].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_0);
-      rmesa->hw.tex[0].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_0);
-      rmesa->hw.tex[1].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_1);
-      rmesa->hw.tex[1].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_1);
-      rmesa->hw.tex[2].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_2);
-      rmesa->hw.tex[2].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_2);
-      rmesa->hw.tex[3].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_3);
-      rmesa->hw.tex[3].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_3);
-      rmesa->hw.tex[4].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_4);
-      rmesa->hw.tex[4].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_4);
-      rmesa->hw.tex[5].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_5);
-      rmesa->hw.tex[5].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_5);
+      rmesa->hw.tex[0].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXFILTER_0);
+      rmesa->hw.tex[0].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_0);
+      rmesa->hw.tex[1].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXFILTER_1);
+      rmesa->hw.tex[1].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_1);
+      rmesa->hw.tex[2].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXFILTER_2);
+      rmesa->hw.tex[2].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_2);
+      rmesa->hw.tex[3].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXFILTER_3);
+      rmesa->hw.tex[3].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_3);
+      rmesa->hw.tex[4].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXFILTER_4);
+      rmesa->hw.tex[4].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_4);
+      rmesa->hw.tex[5].cmd[TEX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXFILTER_5);
+      rmesa->hw.tex[5].cmd[TEX_CMD_1_OLDDRM] = cmdpkt(rmesa, R200_EMIT_PP_TXOFFSET_5);
    }
-   rmesa->hw.afs[0].cmd[AFS_CMD_0] = cmdpkt(R200_EMIT_PP_AFS_0);
-   rmesa->hw.afs[1].cmd[AFS_CMD_0] = cmdpkt(R200_EMIT_PP_AFS_1);
-   rmesa->hw.pvs.cmd[PVS_CMD_0] = cmdpkt(R200_EMIT_VAP_PVS_CNTL);
-   rmesa->hw.cube[0].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_0);
-   rmesa->hw.cube[0].cmd[CUBE_CMD_1] = cmdpkt(R200_EMIT_PP_CUBIC_OFFSETS_0);
-   rmesa->hw.cube[1].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_1);
-   rmesa->hw.cube[1].cmd[CUBE_CMD_1] = cmdpkt(R200_EMIT_PP_CUBIC_OFFSETS_1);
-   rmesa->hw.cube[2].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_2);
-   rmesa->hw.cube[2].cmd[CUBE_CMD_1] = cmdpkt(R200_EMIT_PP_CUBIC_OFFSETS_2);
-   rmesa->hw.cube[3].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_3);
-   rmesa->hw.cube[3].cmd[CUBE_CMD_1] = cmdpkt(R200_EMIT_PP_CUBIC_OFFSETS_3);
-   rmesa->hw.cube[4].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_4);
-   rmesa->hw.cube[4].cmd[CUBE_CMD_1] = cmdpkt(R200_EMIT_PP_CUBIC_OFFSETS_4);
-   rmesa->hw.cube[5].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_5);
-   rmesa->hw.cube[5].cmd[CUBE_CMD_1] = cmdpkt(R200_EMIT_PP_CUBIC_OFFSETS_5);
-   rmesa->hw.pix[0].cmd[PIX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCBLEND_0);
-   rmesa->hw.pix[1].cmd[PIX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCBLEND_1);
-   rmesa->hw.pix[2].cmd[PIX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCBLEND_2);
-   rmesa->hw.pix[3].cmd[PIX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCBLEND_3);
-   rmesa->hw.pix[4].cmd[PIX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCBLEND_4);
-   rmesa->hw.pix[5].cmd[PIX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCBLEND_5);
-   rmesa->hw.zbs.cmd[ZBS_CMD_0] = cmdpkt(RADEON_EMIT_SE_ZBIAS_FACTOR);
-   rmesa->hw.tcl.cmd[TCL_CMD_0] = cmdpkt(R200_EMIT_TCL_LIGHT_MODEL_CTL_0);
-   rmesa->hw.tcl.cmd[TCL_CMD_1] = cmdpkt(R200_EMIT_TCL_UCP_VERT_BLEND_CTL);
-   rmesa->hw.tcg.cmd[TCG_CMD_0] = cmdpkt(R200_EMIT_TEX_PROC_CTL_2);
-   rmesa->hw.msl.cmd[MSL_CMD_0] = cmdpkt(R200_EMIT_MATRIX_SELECT_0);
-   rmesa->hw.vap.cmd[VAP_CMD_0] = cmdpkt(R200_EMIT_VAP_CTL);
-   rmesa->hw.vtx.cmd[VTX_CMD_0] = cmdpkt(R200_EMIT_VTX_FMT_0);
-   rmesa->hw.vtx.cmd[VTX_CMD_1] = cmdpkt(R200_EMIT_OUTPUT_VTX_COMP_SEL);
-   rmesa->hw.vtx.cmd[VTX_CMD_2] = cmdpkt(R200_EMIT_SE_VTX_STATE_CNTL);
-   rmesa->hw.vte.cmd[VTE_CMD_0] = cmdpkt(R200_EMIT_VTE_CNTL);
-   rmesa->hw.prf.cmd[PRF_CMD_0] = cmdpkt(R200_EMIT_PP_TRI_PERF_CNTL);
-   rmesa->hw.spr.cmd[SPR_CMD_0] = cmdpkt(R200_EMIT_TCL_POINT_SPRITE_CNTL);
+   rmesa->hw.afs[0].cmd[AFS_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_AFS_0);
+   rmesa->hw.afs[1].cmd[AFS_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_AFS_1);
+   rmesa->hw.pvs.cmd[PVS_CMD_0] = cmdpkt(rmesa, R200_EMIT_VAP_PVS_CNTL);
+   rmesa->hw.cube[0].cmd[CUBE_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_CUBIC_FACES_0);
+   rmesa->hw.cube[0].cmd[CUBE_CMD_1] = cmdpkt(rmesa, R200_EMIT_PP_CUBIC_OFFSETS_0);
+   rmesa->hw.cube[1].cmd[CUBE_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_CUBIC_FACES_1);
+   rmesa->hw.cube[1].cmd[CUBE_CMD_1] = cmdpkt(rmesa, R200_EMIT_PP_CUBIC_OFFSETS_1);
+   rmesa->hw.cube[2].cmd[CUBE_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_CUBIC_FACES_2);
+   rmesa->hw.cube[2].cmd[CUBE_CMD_1] = cmdpkt(rmesa, R200_EMIT_PP_CUBIC_OFFSETS_2);
+   rmesa->hw.cube[3].cmd[CUBE_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_CUBIC_FACES_3);
+   rmesa->hw.cube[3].cmd[CUBE_CMD_1] = cmdpkt(rmesa, R200_EMIT_PP_CUBIC_OFFSETS_3);
+   rmesa->hw.cube[4].cmd[CUBE_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_CUBIC_FACES_4);
+   rmesa->hw.cube[4].cmd[CUBE_CMD_1] = cmdpkt(rmesa, R200_EMIT_PP_CUBIC_OFFSETS_4);
+   rmesa->hw.cube[5].cmd[CUBE_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_CUBIC_FACES_5);
+   rmesa->hw.cube[5].cmd[CUBE_CMD_1] = cmdpkt(rmesa, R200_EMIT_PP_CUBIC_OFFSETS_5);
+   rmesa->hw.pix[0].cmd[PIX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCBLEND_0);
+   rmesa->hw.pix[1].cmd[PIX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCBLEND_1);
+   rmesa->hw.pix[2].cmd[PIX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCBLEND_2);
+   rmesa->hw.pix[3].cmd[PIX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCBLEND_3);
+   rmesa->hw.pix[4].cmd[PIX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCBLEND_4);
+   rmesa->hw.pix[5].cmd[PIX_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TXCBLEND_5);
+   rmesa->hw.zbs.cmd[ZBS_CMD_0] = cmdpkt(rmesa, RADEON_EMIT_SE_ZBIAS_FACTOR);
+   rmesa->hw.tcl.cmd[TCL_CMD_0] = cmdpkt(rmesa, R200_EMIT_TCL_LIGHT_MODEL_CTL_0);
+   rmesa->hw.tcl.cmd[TCL_CMD_1] = cmdpkt(rmesa, R200_EMIT_TCL_UCP_VERT_BLEND_CTL);
+   rmesa->hw.tcg.cmd[TCG_CMD_0] = cmdpkt(rmesa, R200_EMIT_TEX_PROC_CTL_2);
+   rmesa->hw.msl.cmd[MSL_CMD_0] = cmdpkt(rmesa, R200_EMIT_MATRIX_SELECT_0);
+   rmesa->hw.vap.cmd[VAP_CMD_0] = cmdpkt(rmesa, R200_EMIT_VAP_CTL);
+   rmesa->hw.vtx.cmd[VTX_CMD_0] = cmdpkt(rmesa, R200_EMIT_VTX_FMT_0);
+   rmesa->hw.vtx.cmd[VTX_CMD_1] = cmdpkt(rmesa, R200_EMIT_OUTPUT_VTX_COMP_SEL);
+   rmesa->hw.vtx.cmd[VTX_CMD_2] = cmdpkt(rmesa, R200_EMIT_SE_VTX_STATE_CNTL);
+   rmesa->hw.vte.cmd[VTE_CMD_0] = cmdpkt(rmesa, R200_EMIT_VTE_CNTL);
+   rmesa->hw.prf.cmd[PRF_CMD_0] = cmdpkt(rmesa, R200_EMIT_PP_TRI_PERF_CNTL);
+   rmesa->hw.spr.cmd[SPR_CMD_0] = cmdpkt(rmesa, R200_EMIT_TCL_POINT_SPRITE_CNTL);
+   if (rmesa->radeon.radeonScreen->kernel_mm) {
+	rmesa->hw.mtl[0].emit = mtl_emit;
+	rmesa->hw.mtl[1].emit = mtl_emit;
+
+	rmesa->hw.vpi[0].emit = veclinear_emit;
+	rmesa->hw.vpi[1].emit = veclinear_emit;
+	rmesa->hw.vpp[0].emit = veclinear_emit;
+	rmesa->hw.vpp[1].emit = veclinear_emit;
+
+	rmesa->hw.grd.emit = scl_emit;
+	rmesa->hw.fog.emit = vec_emit;
+	rmesa->hw.glt.emit = vec_emit;
+	rmesa->hw.eye.emit = vec_emit;
+
+	for (i = R200_MTX_MV; i <= R200_MTX_TEX5; i++)
+	  rmesa->hw.mat[i].emit = vec_emit;
+
+	for (i = 0; i < 8; i++)
+	  rmesa->hw.lit[i].emit = lit_emit;
+
+	for (i = 0; i < 6; i++)
+	  rmesa->hw.ucp[i].emit = vec_emit;
+
+	rmesa->hw.ptp.emit = ptp_emit;
+   }
+
+
+   
    rmesa->hw.mtl[0].cmd[MTL_CMD_0] = 
       cmdvec( R200_VS_MAT_0_EMISS, 1, 16 );
    rmesa->hw.mtl[0].cmd[MTL_CMD_1] = 
@@ -567,7 +1021,7 @@ void r200InitState( r200ContextPtr rmesa )
 				(R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
 				(R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT));
 
-   if (rmesa->r200Screen->drmSupportsBlendColor) {
+   if (rmesa->radeon.radeonScreen->drmSupportsBlendColor) {
       rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCOLOR] = 0x00000000;
       rmesa->hw.ctx.cmd[CTX_RB3D_ABLENDCNTL] = (R200_COMB_FCN_ADD_CLAMP |
 				(R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
@@ -578,18 +1032,17 @@ void r200InitState( r200ContextPtr rmesa )
    }
 
    rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHOFFSET] =
-      rmesa->r200Screen->depthOffset + rmesa->r200Screen->fbLocation;
+      rmesa->radeon.radeonScreen->depthOffset + rmesa->radeon.radeonScreen->fbLocation;
 
    rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHPITCH] = 
-      ((rmesa->r200Screen->depthPitch &
+      ((rmesa->radeon.radeonScreen->depthPitch &
 	R200_DEPTHPITCH_MASK) |
        R200_DEPTH_ENDIAN_NO_SWAP);
    
    if (rmesa->using_hyperz)
       rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHPITCH] |= R200_DEPTH_HYPERZ;
 
-   rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] = (depth_fmt |
-					       R200_Z_TEST_LESS |
+   rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] = (R200_Z_TEST_LESS |
 					       R200_STENCIL_TEST_ALWAYS |
 					       R200_STENCIL_FAIL_KEEP |
 					       R200_STENCIL_ZPASS_KEEP |
@@ -599,15 +1052,14 @@ void r200InitState( r200ContextPtr rmesa )
    if (rmesa->using_hyperz) {
       rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= R200_Z_COMPRESSION_ENABLE |
 						  R200_Z_DECOMPRESSION_ENABLE;
-/*      if (rmesa->r200Screen->chip_family == CHIP_FAMILY_R200)
+/*      if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R200)
 	 rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_Z_HIERARCHY_ENABLE;*/
    }
 
    rmesa->hw.ctx.cmd[CTX_PP_CNTL] = (R200_ANTI_ALIAS_NONE 
  				     | R200_TEX_BLEND_0_ENABLE);
 
-   rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = color_fmt;
-   switch ( driQueryOptioni( &rmesa->optionCache, "dither_mode" ) ) {
+   switch ( driQueryOptioni( &rmesa->radeon.optionCache, "dither_mode" ) ) {
    case DRI_CONF_DITHER_XERRORDIFFRESET:
       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= R200_DITHER_INIT;
       break;
@@ -615,41 +1067,19 @@ void r200InitState( r200ContextPtr rmesa )
       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= R200_SCALE_DITHER_ENABLE;
       break;
    }
-   if ( driQueryOptioni( &rmesa->optionCache, "round_mode" ) ==
+   if ( driQueryOptioni( &rmesa->radeon.optionCache, "round_mode" ) ==
 	DRI_CONF_ROUND_ROUND )
-      rmesa->state.color.roundEnable = R200_ROUND_ENABLE;
+      rmesa->radeon.state.color.roundEnable = R200_ROUND_ENABLE;
    else
-      rmesa->state.color.roundEnable = 0;
-   if ( driQueryOptioni (&rmesa->optionCache, "color_reduction" ) ==
+      rmesa->radeon.state.color.roundEnable = 0;
+   if ( driQueryOptioni (&rmesa->radeon.optionCache, "color_reduction" ) ==
 	DRI_CONF_COLOR_REDUCTION_DITHER )
       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= R200_DITHER_ENABLE;
    else
-      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= rmesa->state.color.roundEnable;
-
-#if 000
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((rmesa->state.color.drawOffset +
-					       rmesa->r200Screen->fbLocation)
-					      & R200_COLOROFFSET_MASK);
-
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = ((rmesa->state.color.drawPitch &
-					      R200_COLORPITCH_MASK) |
-					     R200_COLOR_ENDIAN_NO_SWAP);
-#else
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((drawOffset +
-					       rmesa->r200Screen->fbLocation)
-					      & R200_COLOROFFSET_MASK);
-
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = ((drawPitch &
-					      R200_COLORPITCH_MASK) |
-					     R200_COLOR_ENDIAN_NO_SWAP);
-#endif
-   /* (fixed size) sarea is initialized to zero afaics so can omit version check. Phew! */
-   if (rmesa->sarea->tiling_enabled) {
-      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
-   }
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= rmesa->radeon.state.color.roundEnable;
 
    rmesa->hw.prf.cmd[PRF_PP_TRI_PERF] = R200_TRI_CUTOFF_MASK - R200_TRI_CUTOFF_MASK * 
-			driQueryOptionf (&rmesa->optionCache,"texture_blend_quality");
+			driQueryOptionf (&rmesa->radeon.optionCache,"texture_blend_quality");
    rmesa->hw.prf.cmd[PRF_PP_PERF_CNTL] = 0;
 
    rmesa->hw.set.cmd[SET_SE_CNTL] = (R200_FFACE_CULL_CCW |
@@ -704,7 +1134,7 @@ void r200InitState( r200ContextPtr rmesa )
 						R200_VC_NO_SWAP;
 #endif
 
-   if (!(rmesa->r200Screen->chip_flags & RADEON_CHIPSET_TCL)) {
+   if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
       /* Bypass TCL */
       rmesa->hw.cst.cmd[CST_SE_VAP_CNTL_STATUS] |= (1<<8);
    }
@@ -743,28 +1173,28 @@ void r200InitState( r200ContextPtr rmesa )
       rmesa->hw.tex[i].cmd[TEX_PP_TXFORMAT_X] =
          (/* R200_TEXCOORD_PROJ | */
           0x100000);	/* Small default bias */
-      if (rmesa->r200Screen->drmSupportsFragShader) {
+      if (rmesa->radeon.radeonScreen->drmSupportsFragShader) {
 	 rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET_NEWDRM] =
-	     rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+	     rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
 	 rmesa->hw.tex[i].cmd[TEX_PP_CUBIC_FACES] = 0;
 	 rmesa->hw.tex[i].cmd[TEX_PP_TXMULTI_CTL] = 0;
       }
       else {
 	  rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET_OLDDRM] =
-	     rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+	     rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
      }
 
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_FACES] = 0;
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F1] =
-         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+         rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F2] =
-         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+         rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F3] =
-         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+         rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F4] =
-         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+         rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F5] =
-         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+         rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
 
       rmesa->hw.pix[i].cmd[PIX_PP_TXCBLEND] =
          (R200_TXC_ARG_A_ZERO |
@@ -967,5 +1397,7 @@ void r200InitState( r200ContextPtr rmesa )
 
    r200LightingSpaceChange( ctx );
 
-   rmesa->hw.all_dirty = GL_TRUE;
+   rmesa->radeon.hw.all_dirty = GL_TRUE;
+
+   rcommonInitCmdBuf(&rmesa->radeon);
 }

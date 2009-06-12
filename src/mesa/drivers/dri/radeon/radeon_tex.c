@@ -44,6 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/texobj.h"
 
 #include "radeon_context.h"
+#include "radeon_mipmap_tree.h"
 #include "radeon_state.h"
 #include "radeon_ioctl.h"
 #include "radeon_swtcl.h"
@@ -170,10 +171,13 @@ static void radeonSetTexFilter( radeonTexObjPtr t, GLenum minf, GLenum magf )
 {
    GLuint anisotropy = (t->pp_txfilter & RADEON_MAX_ANISO_MASK);
 
+   /* Force revalidation to account for switches from/to mipmapping. */
+   t->validated = GL_FALSE;
+
    t->pp_txfilter &= ~(RADEON_MIN_FILTER_MASK | RADEON_MAG_FILTER_MASK);
 
    /* r100 chips can't handle mipmaps/aniso for cubemap/volume textures */
-   if ( t->base.tObj->Target == GL_TEXTURE_CUBE_MAP ) {
+   if ( t->base.Target == GL_TEXTURE_CUBE_MAP ) {
       switch ( minf ) {
       case GL_NEAREST:
       case GL_NEAREST_MIPMAP_NEAREST:
@@ -249,433 +253,13 @@ static void radeonSetTexBorderColor( radeonTexObjPtr t, const GLfloat color[4] )
    t->pp_border_color = radeonPackColor( 4, c[0], c[1], c[2], c[3] );
 }
 
-
-/**
- * Allocate space for and load the mesa images into the texture memory block.
- * This will happen before drawing with a new texture, or drawing with a
- * texture after it was swapped out or teximaged again.
- */
-
-static radeonTexObjPtr radeonAllocTexObj( struct gl_texture_object *texObj )
-{
-   radeonTexObjPtr t;
-
-   t = CALLOC_STRUCT( radeon_tex_obj );
-   texObj->DriverData = t;
-   if ( t != NULL ) {
-      if ( RADEON_DEBUG & DEBUG_TEXTURE ) {
-	 fprintf( stderr, "%s( %p, %p )\n", __FUNCTION__, (void *)texObj, (void *)t );
-      }
-
-      /* Initialize non-image-dependent parts of the state:
-       */
-      t->base.tObj = texObj;
-      t->border_fallback = GL_FALSE;
-
-      t->pp_txfilter = RADEON_BORDER_MODE_OGL;
-      t->pp_txformat = (RADEON_TXFORMAT_ENDIAN_NO_SWAP |
-			RADEON_TXFORMAT_PERSPECTIVE_ENABLE);
-
-      make_empty_list( & t->base );
-
-      radeonSetTexWrap( t, texObj->WrapS, texObj->WrapT );
-      radeonSetTexMaxAnisotropy( t, texObj->MaxAnisotropy );
-      radeonSetTexFilter( t, texObj->MinFilter, texObj->MagFilter );
-      radeonSetTexBorderColor( t, texObj->BorderColor );
-   }
-
-   return t;
-}
-
-
-static const struct gl_texture_format *
-radeonChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
-                           GLenum format, GLenum type )
-{
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   const GLboolean do32bpt =
-       ( rmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_32 );
-   const GLboolean force16bpt =
-       ( rmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FORCE_16 );
-   (void) format;
-
-   switch ( internalFormat ) {
-   case 4:
-   case GL_RGBA:
-   case GL_COMPRESSED_RGBA:
-      switch ( type ) {
-      case GL_UNSIGNED_INT_10_10_10_2:
-      case GL_UNSIGNED_INT_2_10_10_10_REV:
-	 return do32bpt ? _dri_texformat_argb8888 : _dri_texformat_argb1555;
-      case GL_UNSIGNED_SHORT_4_4_4_4:
-      case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-	 return _dri_texformat_argb4444;
-      case GL_UNSIGNED_SHORT_5_5_5_1:
-      case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-	 return _dri_texformat_argb1555;
-      default:
-         return do32bpt ? _dri_texformat_argb8888 : _dri_texformat_argb4444;
-      }
-
-   case 3:
-   case GL_RGB:
-   case GL_COMPRESSED_RGB:
-      switch ( type ) {
-      case GL_UNSIGNED_SHORT_4_4_4_4:
-      case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-	 return _dri_texformat_argb4444;
-      case GL_UNSIGNED_SHORT_5_5_5_1:
-      case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-	 return _dri_texformat_argb1555;
-      case GL_UNSIGNED_SHORT_5_6_5:
-      case GL_UNSIGNED_SHORT_5_6_5_REV:
-	 return _dri_texformat_rgb565;
-      default:
-         return do32bpt ? _dri_texformat_argb8888 : _dri_texformat_rgb565;
-      }
-
-   case GL_RGBA8:
-   case GL_RGB10_A2:
-   case GL_RGBA12:
-   case GL_RGBA16:
-      return !force16bpt ?
-	  _dri_texformat_argb8888 : _dri_texformat_argb4444;
-
-   case GL_RGBA4:
-   case GL_RGBA2:
-      return _dri_texformat_argb4444;
-
-   case GL_RGB5_A1:
-      return _dri_texformat_argb1555;
-
-   case GL_RGB8:
-   case GL_RGB10:
-   case GL_RGB12:
-   case GL_RGB16:
-      return !force16bpt ? _dri_texformat_argb8888 : _dri_texformat_rgb565;
-
-   case GL_RGB5:
-   case GL_RGB4:
-   case GL_R3_G3_B2:
-      return _dri_texformat_rgb565;
-
-   case GL_ALPHA:
-   case GL_ALPHA4:
-   case GL_ALPHA8:
-   case GL_ALPHA12:
-   case GL_ALPHA16:
-   case GL_COMPRESSED_ALPHA:
-      return _dri_texformat_a8;
-
-   case 1:
-   case GL_LUMINANCE:
-   case GL_LUMINANCE4:
-   case GL_LUMINANCE8:
-   case GL_LUMINANCE12:
-   case GL_LUMINANCE16:
-   case GL_COMPRESSED_LUMINANCE:
-      return _dri_texformat_l8;
-
-   case 2:
-   case GL_LUMINANCE_ALPHA:
-   case GL_LUMINANCE4_ALPHA4:
-   case GL_LUMINANCE6_ALPHA2:
-   case GL_LUMINANCE8_ALPHA8:
-   case GL_LUMINANCE12_ALPHA4:
-   case GL_LUMINANCE12_ALPHA12:
-   case GL_LUMINANCE16_ALPHA16:
-   case GL_COMPRESSED_LUMINANCE_ALPHA:
-      return _dri_texformat_al88;
-
-   case GL_INTENSITY:
-   case GL_INTENSITY4:
-   case GL_INTENSITY8:
-   case GL_INTENSITY12:
-   case GL_INTENSITY16:
-   case GL_COMPRESSED_INTENSITY:
-      return _dri_texformat_i8;
-
-   case GL_YCBCR_MESA:
-      if (type == GL_UNSIGNED_SHORT_8_8_APPLE ||
-          type == GL_UNSIGNED_BYTE)
-         return &_mesa_texformat_ycbcr;
-      else
-         return &_mesa_texformat_ycbcr_rev;
-
-   case GL_RGB_S3TC:
-   case GL_RGB4_S3TC:
-   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-      return &_mesa_texformat_rgb_dxt1;
-
-   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-      return &_mesa_texformat_rgba_dxt1;
-
-   case GL_RGBA_S3TC:
-   case GL_RGBA4_S3TC:
-   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-      return &_mesa_texformat_rgba_dxt3;
-
-   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-      return &_mesa_texformat_rgba_dxt5;
-
-   default:
-      _mesa_problem(ctx, "unexpected texture format in %s", __FUNCTION__);
-      return NULL;
-   }
-
-   return NULL; /* never get here */
-}
-
-
-static void radeonTexImage1D( GLcontext *ctx, GLenum target, GLint level,
-                              GLint internalFormat,
-                              GLint width, GLint border,
-                              GLenum format, GLenum type, const GLvoid *pixels,
-                              const struct gl_pixelstore_attrib *packing,
-                              struct gl_texture_object *texObj,
-                              struct gl_texture_image *texImage )
-{
-   driTextureObject * t = (driTextureObject *) texObj->DriverData;
-
-   if ( t ) {
-      driSwapOutTextureObject( t );
-   }
-   else {
-      t = (driTextureObject *) radeonAllocTexObj( texObj );
-      if (!t) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
-         return;
-      }
-   }
-
-   /* Note, this will call ChooseTextureFormat */
-   _mesa_store_teximage1d(ctx, target, level, internalFormat,
-                          width, border, format, type, pixels,
-                          &ctx->Unpack, texObj, texImage);
-
-   t->dirty_images[0] |= (1 << level);
-}
-
-
-static void radeonTexSubImage1D( GLcontext *ctx, GLenum target, GLint level,
-                                 GLint xoffset,
-                                 GLsizei width,
-                                 GLenum format, GLenum type,
-                                 const GLvoid *pixels,
-                                 const struct gl_pixelstore_attrib *packing,
-                                 struct gl_texture_object *texObj,
-                                 struct gl_texture_image *texImage )
-{
-   driTextureObject * t = (driTextureObject *) texObj->DriverData;
-
-   assert( t ); /* this _should_ be true */
-   if ( t ) {
-      driSwapOutTextureObject( t );
-   }
-   else {
-      t = (driTextureObject *) radeonAllocTexObj( texObj );
-      if (!t) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage1D");
-         return;
-      }
-   }
-
-   _mesa_store_texsubimage1d(ctx, target, level, xoffset, width,
-			     format, type, pixels, packing, texObj,
-			     texImage);
-
-   t->dirty_images[0] |= (1 << level);
-}
-
-
-static void radeonTexImage2D( GLcontext *ctx, GLenum target, GLint level,
-                              GLint internalFormat,
-                              GLint width, GLint height, GLint border,
-                              GLenum format, GLenum type, const GLvoid *pixels,
-                              const struct gl_pixelstore_attrib *packing,
-                              struct gl_texture_object *texObj,
-                              struct gl_texture_image *texImage )
-{
-   driTextureObject * t = (driTextureObject *) texObj->DriverData;
-   GLuint face;
-
-   /* which cube face or ordinary 2D image */
-   switch (target) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-      face = (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-      ASSERT(face < 6);
-      break;
-   default:
-      face = 0;
-   }
-
-   if ( t != NULL ) {
-      driSwapOutTextureObject( t );
-   }
-   else {
-      t = (driTextureObject *) radeonAllocTexObj( texObj );
-      if (!t) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
-         return;
-      }
-   }
-
-   /* Note, this will call ChooseTextureFormat */
-   _mesa_store_teximage2d(ctx, target, level, internalFormat,
-                          width, height, border, format, type, pixels,
-                          &ctx->Unpack, texObj, texImage);
-
-   t->dirty_images[face] |= (1 << level);
-}
-
-
-static void radeonTexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
-                                 GLint xoffset, GLint yoffset,
-                                 GLsizei width, GLsizei height,
-                                 GLenum format, GLenum type,
-                                 const GLvoid *pixels,
-                                 const struct gl_pixelstore_attrib *packing,
-                                 struct gl_texture_object *texObj,
-                                 struct gl_texture_image *texImage )
-{
-   driTextureObject * t = (driTextureObject *) texObj->DriverData;
-   GLuint face;
-
-   /* which cube face or ordinary 2D image */
-   switch (target) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-      face = (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-      ASSERT(face < 6);
-      break;
-   default:
-      face = 0;
-   }
-
-   assert( t ); /* this _should_ be true */
-   if ( t ) {
-      driSwapOutTextureObject( t );
-   }
-   else {
-      t = (driTextureObject *) radeonAllocTexObj( texObj );
-      if (!t) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage2D");
-         return;
-      }
-   }
-
-   _mesa_store_texsubimage2d(ctx, target, level, xoffset, yoffset, width,
-			     height, format, type, pixels, packing, texObj,
-			     texImage);
-
-   t->dirty_images[face] |= (1 << level);
-}
-
-static void radeonCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
-                              GLint internalFormat,
-                              GLint width, GLint height, GLint border,
-                              GLsizei imageSize, const GLvoid *data,
-                              struct gl_texture_object *texObj,
-                              struct gl_texture_image *texImage )
-{
-   driTextureObject * t = (driTextureObject *) texObj->DriverData;
-   GLuint face;
-
-   /* which cube face or ordinary 2D image */
-   switch (target) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-      face = (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-      ASSERT(face < 6);
-      break;
-   default:
-      face = 0;
-   }
-
-   if ( t != NULL ) {
-      driSwapOutTextureObject( t );
-   }
-   else {
-      t = (driTextureObject *) radeonAllocTexObj( texObj );
-      if (!t) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
-         return;
-      }
-   }
-
-   /* Note, this will call ChooseTextureFormat */
-   _mesa_store_compressed_teximage2d(ctx, target, level, internalFormat, width,
-                                 height, border, imageSize, data, texObj, texImage);
-
-   t->dirty_images[face] |= (1 << level);
-}
-
-
-static void radeonCompressedTexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
-                                 GLint xoffset, GLint yoffset,
-                                 GLsizei width, GLsizei height,
-                                 GLenum format,
-                                 GLsizei imageSize, const GLvoid *data,
-                                 struct gl_texture_object *texObj,
-                                 struct gl_texture_image *texImage )
-{
-   driTextureObject * t = (driTextureObject *) texObj->DriverData;
-   GLuint face;
-
-
-   /* which cube face or ordinary 2D image */
-   switch (target) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-      face = (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-      ASSERT(face < 6);
-      break;
-   default:
-      face = 0;
-   }
-
-   assert( t ); /* this _should_ be true */
-   if ( t ) {
-      driSwapOutTextureObject( t );
-   }
-   else {
-      t = (driTextureObject *) radeonAllocTexObj( texObj );
-      if (!t) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage2D");
-         return;
-      }
-   }
-
-   _mesa_store_compressed_texsubimage2d(ctx, target, level, xoffset, yoffset, width,
-                                 height, format, imageSize, data, texObj, texImage);
-
-   t->dirty_images[face] |= (1 << level);
-}
-
 #define SCALED_FLOAT_TO_BYTE( x, scale ) \
 		(((GLuint)((255.0F / scale) * (x))) / 2)
 
 static void radeonTexEnv( GLcontext *ctx, GLenum target,
 			  GLenum pname, const GLfloat *param )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLuint unit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
@@ -706,7 +290,7 @@ static void radeonTexEnv( GLcontext *ctx, GLenum target,
        * functions, one mapping [-1.0,0.0] to [-128,0] and one mapping
        * [0.0,4.0] to [0,127].
        */
-      min = driQueryOptionb (&rmesa->optionCache, "no_neg_lod_bias") ?
+      min = driQueryOptionb (&rmesa->radeon.optionCache, "no_neg_lod_bias") ?
 	  0.0 : -1.0;
       bias = CLAMP( *param, min, 4.0 );
       if ( bias == 0 ) {
@@ -739,7 +323,7 @@ static void radeonTexParameter( GLcontext *ctx, GLenum target,
 				struct gl_texture_object *texObj,
 				GLenum pname, const GLfloat *params )
 {
-   radeonTexObjPtr t = (radeonTexObjPtr) texObj->DriverData;
+   radeonTexObj* t = radeon_tex_obj(texObj);
 
    if ( RADEON_DEBUG & (DEBUG_STATE|DEBUG_TEXTURE) ) {
       fprintf( stderr, "%s( %s )\n", __FUNCTION__,
@@ -767,57 +351,51 @@ static void radeonTexParameter( GLcontext *ctx, GLenum target,
    case GL_TEXTURE_MAX_LEVEL:
    case GL_TEXTURE_MIN_LOD:
    case GL_TEXTURE_MAX_LOD:
+
       /* This isn't the most efficient solution but there doesn't appear to
        * be a nice alternative.  Since there's no LOD clamping,
        * we just have to rely on loading the right subset of mipmap levels
        * to simulate a clamped LOD.
        */
-      driSwapOutTextureObject( (driTextureObject *) t );
+      if (t->mt) {
+         radeon_miptree_unreference(t->mt);
+	 t->mt = 0;
+	 t->validated = GL_FALSE;
+      }
       break;
 
    default:
       return;
    }
-
-   /* Mark this texobj as dirty (one bit per tex unit)
-    */
-   t->dirty_state = TEX_ALL;
 }
-
-
-static void radeonBindTexture( GLcontext *ctx, GLenum target,
-			       struct gl_texture_object *texObj )
-{
-   if ( RADEON_DEBUG & (DEBUG_STATE|DEBUG_TEXTURE) ) {
-      fprintf( stderr, "%s( %p ) unit=%d\n", __FUNCTION__, (void *)texObj,
-	       ctx->Texture.CurrentUnit );
-   }
-
-   assert( (target != GL_TEXTURE_1D && target != GL_TEXTURE_2D &&
-            target != GL_TEXTURE_RECTANGLE_NV && target != GL_TEXTURE_CUBE_MAP) ||
-           (texObj->DriverData != NULL) );
-}
-
 
 static void radeonDeleteTexture( GLcontext *ctx,
 				 struct gl_texture_object *texObj )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   driTextureObject * t = (driTextureObject *) texObj->DriverData;
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   radeonTexObj* t = radeon_tex_obj(texObj);
+   int i;
 
    if ( RADEON_DEBUG & (DEBUG_STATE|DEBUG_TEXTURE) ) {
       fprintf( stderr, "%s( %p (target = %s) )\n", __FUNCTION__, (void *)texObj,
 	       _mesa_lookup_enum_by_nr( texObj->Target ) );
    }
 
-   if ( t != NULL ) {
-      if ( rmesa ) {
-         RADEON_FIREVERTICES( rmesa );
-      }
-
-      driDestroyTextureObject( t );
+   if ( rmesa ) {
+     radeon_firevertices(&rmesa->radeon);
+     for ( i = 0 ; i < rmesa->radeon.glCtx->Const.MaxTextureUnits ; i++ ) {
+       if ( t == rmesa->state.texture.unit[i].texobj ) {
+	 rmesa->state.texture.unit[i].texobj = NULL;
+	 rmesa->hw.tex[i].dirty = GL_FALSE;
+	 rmesa->hw.cube[i].dirty = GL_FALSE;
+       }
+     }
    }
 
+   if (t->mt) {
+      radeon_miptree_unreference(t->mt);
+      t->mt = 0;
+   }
    /* Free mipmap images and the texture object itself */
    _mesa_delete_texture_object(ctx, texObj);
 }
@@ -837,7 +415,7 @@ static void radeonTexGen( GLcontext *ctx,
 			  GLenum pname,
 			  const GLfloat *params )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLuint unit = ctx->Texture.CurrentUnit;
    rmesa->recheck_texgen[unit] = GL_TRUE;
 }
@@ -851,29 +429,40 @@ static void radeonTexGen( GLcontext *ctx,
 static struct gl_texture_object *
 radeonNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   struct gl_texture_object *obj;
-   obj = _mesa_new_texture_object(ctx, name, target);
-   if (!obj)
-      return NULL;
-   obj->MaxAnisotropy = rmesa->initialMaxAnisotropy;
-   radeonAllocTexObj( obj );
-   return obj;
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   radeonTexObj* t = CALLOC_STRUCT(radeon_tex_obj);
+
+   _mesa_initialize_texture_object(&t->base, name, target);
+   t->base.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
+
+   t->border_fallback = GL_FALSE;
+
+   t->pp_txfilter = RADEON_BORDER_MODE_OGL;
+   t->pp_txformat = (RADEON_TXFORMAT_ENDIAN_NO_SWAP |
+		     RADEON_TXFORMAT_PERSPECTIVE_ENABLE);
+   
+   radeonSetTexWrap( t, t->base.WrapS, t->base.WrapT );
+   radeonSetTexMaxAnisotropy( t, t->base.MaxAnisotropy );
+   radeonSetTexFilter( t, t->base.MinFilter, t->base.MagFilter );
+   radeonSetTexBorderColor( t, t->base.BorderColor );
+   return &t->base;
 }
+
 
 
 void radeonInitTextureFuncs( struct dd_function_table *functions )
 {
-   functions->ChooseTextureFormat	= radeonChooseTextureFormat;
+   functions->ChooseTextureFormat	= radeonChooseTextureFormat_mesa;
    functions->TexImage1D		= radeonTexImage1D;
    functions->TexImage2D		= radeonTexImage2D;
    functions->TexSubImage1D		= radeonTexSubImage1D;
    functions->TexSubImage2D		= radeonTexSubImage2D;
+   functions->GetTexImage               = radeonGetTexImage;
+   functions->GetCompressedTexImage     = radeonGetCompressedTexImage;
 
    functions->NewTextureObject		= radeonNewTextureObject;
-   functions->BindTexture		= radeonBindTexture;
+   //   functions->BindTexture		= radeonBindTexture;
    functions->DeleteTexture		= radeonDeleteTexture;
-   functions->IsTextureResident		= driIsTextureResident;
 
    functions->TexEnv			= radeonTexEnv;
    functions->TexParameter		= radeonTexParameter;
@@ -881,6 +470,13 @@ void radeonInitTextureFuncs( struct dd_function_table *functions )
 
    functions->CompressedTexImage2D	= radeonCompressedTexImage2D;
    functions->CompressedTexSubImage2D	= radeonCompressedTexSubImage2D;
+
+   functions->GenerateMipmap = radeonGenerateMipmap;
+
+   functions->NewTextureImage = radeonNewTextureImage;
+   functions->FreeTexImageData = radeonFreeTexImageData;
+   functions->MapTexture = radeonMapTexture;
+   functions->UnmapTexture = radeonUnmapTexture;
 
    driInitTextureFormats();
 }

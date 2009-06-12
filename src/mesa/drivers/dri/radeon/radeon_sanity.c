@@ -973,7 +973,7 @@ static int radeon_emit_packet3_cliprect( drm_radeon_cmd_buffer_t *cmdbuf )
 }
 
 
-int radeonSanityCmdBuffer( radeonContextPtr rmesa,
+int radeonSanityCmdBuffer( r100ContextPtr rmesa,
 			   int nbox,
 			   drm_clip_rect_t *boxes )
 {

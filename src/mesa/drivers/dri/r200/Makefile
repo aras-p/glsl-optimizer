@@ -3,6 +3,8 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
+CFLAGS += $(RADEON_CFLAGS)
+
 LIBNAME = r200_dri.so
 
 MINIGLX_SOURCES = server/radeon_dri.c 
@@ -11,25 +13,36 @@ ifeq ($(USING_EGL), 1)
 EGL_SOURCES = server/radeon_egl.c
 endif
 
+RADEON_COMMON_SOURCES = \
+	radeon_texture.c \
+	radeon_common_context.c \
+	radeon_common.c \
+	radeon_dma.c \
+	radeon_lock.c \
+	radeon_bo_legacy.c \
+	radeon_cs_legacy.c \
+	radeon_mipmap_tree.c \
+	radeon_span.c \
+	radeon_fbo.c
+
+
 DRIVER_SOURCES = r200_context.c \
 		 r200_ioctl.c \
-		 r200_lock.c \
 		 r200_state.c \
 		 r200_state_init.c \
 		 r200_cmdbuf.c \
 		 r200_pixel.c \
 		 r200_tex.c \
-		 r200_texmem.c \
 		 r200_texstate.c \
 		 r200_tcl.c \
 		 r200_swtcl.c \
-		 r200_span.c \
 		 r200_maos.c \
 		 r200_sanity.c \
 		 r200_fragshader.c \
 		 r200_vertprog.c \
 		 radeon_screen.c \
-		 $(EGL_SOURCES)
+		 $(EGL_SOURCES) \
+		 $(RADEON_COMMON_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
@@ -48,7 +61,30 @@ SYMLINKS = \
 COMMON_SYMLINKS = \
 	radeon_chipset.h \
 	radeon_screen.c \
-	radeon_screen.h
+	radeon_screen.h \
+	radeon_bo_legacy.c \
+	radeon_cs_legacy.c \
+	radeon_bo_legacy.h \
+	radeon_cs_legacy.h \
+	radeon_bocs_wrapper.h \
+	radeon_span.h \
+	radeon_span.c \
+	radeon_lock.c \
+	radeon_lock.h \
+	radeon_common.c \
+	radeon_common_context.c \
+	radeon_common_context.h \
+	radeon_common.h \
+	radeon_cmdbuf.h \
+	radeon_mipmap_tree.c \
+	radeon_mipmap_tree.h \
+	radeon_texture.c \
+	radeon_texture.h \
+	radeon_dma.c \
+	radeon_dma.h \
+	radeon_fbo.c
+
+DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 
 ##### TARGETS #####
 

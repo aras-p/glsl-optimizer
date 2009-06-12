@@ -39,74 +39,21 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Kevin E. Martin <martin@valinux.com>
  */
 
-#ifndef __RADEON_LOCK_H__
-#define __RADEON_LOCK_H__
+#ifndef COMMON_LOCK_H
+#define COMMON_LOCK_H
+
+#include "main/colormac.h"
+#include "radeon_screen.h"
+#include "radeon_common.h"
 
 extern void radeonGetLock(radeonContextPtr rmesa, GLuint flags);
 
-/* Turn DEBUG_LOCKING on to find locking conflicts.
- */
-#define DEBUG_LOCKING	0
-
-#if DEBUG_LOCKING
-extern char *prevLockFile;
-extern int prevLockLine;
-
-#define DEBUG_LOCK()							\
-   do {									\
-      prevLockFile = (__FILE__);					\
-      prevLockLine = (__LINE__);					\
-   } while (0)
-
-#define DEBUG_RESET()							\
-   do {									\
-      prevLockFile = 0;							\
-      prevLockLine = 0;							\
-   } while (0)
-
-#define DEBUG_CHECK_LOCK()						\
-   do {									\
-      if ( prevLockFile ) {						\
-	 fprintf( stderr,						\
-		  "LOCK SET!\n\tPrevious %s:%d\n\tCurrent: %s:%d\n",	\
-		  prevLockFile, prevLockLine, __FILE__, __LINE__ );	\
-	 exit( 1 );							\
-      }									\
-   } while (0)
-
-#else
-
-#define DEBUG_LOCK()
-#define DEBUG_RESET()
-#define DEBUG_CHECK_LOCK()
-
-#endif
-
-/*
- * !!! We may want to separate locks from locks with validation.  This
- * could be used to improve performance for those things commands that
- * do not do any drawing !!!
- */
+void radeon_lock_hardware(radeonContextPtr rmesa);
+void radeon_unlock_hardware(radeonContextPtr rmesa);
 
 /* Lock the hardware and validate our state.
  */
-#define LOCK_HARDWARE( rmesa )					\
-   do {								\
-      char __ret = 0;						\
-      DEBUG_CHECK_LOCK();					\
-      DRM_CAS( (rmesa)->dri.hwLock, (rmesa)->dri.hwContext,		\
-	       (DRM_LOCK_HELD | (rmesa)->dri.hwContext), __ret );	\
-      if ( __ret )						\
-	 radeonGetLock( (rmesa), 0 );				\
-      DEBUG_LOCK();						\
-   } while (0)
+#define LOCK_HARDWARE( rmesa )	radeon_lock_hardware(rmesa)
+#define UNLOCK_HARDWARE( rmesa )  radeon_unlock_hardware(rmesa)
 
-#define UNLOCK_HARDWARE( rmesa )					\
-   do {									\
-      DRM_UNLOCK( (rmesa)->dri.fd,					\
-		  (rmesa)->dri.hwLock,					\
-		  (rmesa)->dri.hwContext );				\
-      DEBUG_RESET();							\
-   } while (0)
-
-#endif				/* __RADEON_LOCK_H__ */
+#endif

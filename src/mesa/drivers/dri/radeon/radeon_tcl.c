@@ -42,6 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 
+#include "radeon_common.h"
 #include "radeon_context.h"
 #include "radeon_state.h"
 #include "radeon_ioctl.h"
@@ -104,7 +105,7 @@ static GLboolean discrete_prim[0x10] = {
 };
    
 
-#define LOCAL_VARS radeonContextPtr rmesa = RADEON_CONTEXT(ctx)
+#define LOCAL_VARS r100ContextPtr rmesa = R100_CONTEXT(ctx)
 #define ELT_TYPE  GLushort
 
 #define ELT_INIT(prim, hw_prim) \
@@ -125,7 +126,7 @@ static GLboolean discrete_prim[0x10] = {
 
 #define RESET_STIPPLE() do {			\
    RADEON_STATECHANGE( rmesa, lin );		\
-   radeonEmitState( rmesa );			\
+   radeonEmitState(&rmesa->radeon);			\
 } while (0)
 
 #define AUTO_STIPPLE( mode )  do {		\
@@ -136,31 +137,29 @@ static GLboolean discrete_prim[0x10] = {
    else						\
       rmesa->hw.lin.cmd[LIN_RE_LINE_PATTERN] &=	\
 	 ~RADEON_LINE_PATTERN_AUTO_RESET;	\
-   radeonEmitState( rmesa );			\
+   radeonEmitState(&rmesa->radeon);		\
 } while (0)
 
 
 
 #define ALLOC_ELTS(nr)	radeonAllocElts( rmesa, nr )
 
-static GLushort *radeonAllocElts( radeonContextPtr rmesa, GLuint nr ) 
+static GLushort *radeonAllocElts( r100ContextPtr rmesa, GLuint nr ) 
 {
-   if (rmesa->dma.flush)
-      rmesa->dma.flush( rmesa );
+      if (rmesa->radeon.dma.flush)
+	 rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
 
-   radeonEnsureCmdBufSpace(rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
-			   rmesa->hw.max_state_size + ELTS_BUFSZ(nr));
+      rcommonEnsureCmdBufSpace(&rmesa->radeon, rmesa->radeon.hw.max_state_size + ELTS_BUFSZ(nr) + 
+			       AOS_BUFSZ(rmesa->radeon.tcl.aos_count), __FUNCTION__);
 
-   radeonEmitAOS( rmesa,
-		rmesa->tcl.aos_components,
-		rmesa->tcl.nr_aos_components, 0 );
+      radeonEmitAOS( rmesa,
+		     rmesa->radeon.tcl.aos_count, 0 );
 
-   return radeonAllocEltsOpenEnded( rmesa,
-				    rmesa->tcl.vertex_format, 
-				    rmesa->tcl.hw_primitive, nr );
+      return radeonAllocEltsOpenEnded( rmesa, rmesa->tcl.vertex_format,
+				       rmesa->tcl.hw_primitive, nr );
 }
 
-#define CLOSE_ELTS()  RADEON_NEWPRIM( rmesa )
+#define CLOSE_ELTS() if (0)  RADEON_NEWPRIM( rmesa )
 
 
 
@@ -174,15 +173,15 @@ static void radeonEmitPrim( GLcontext *ctx,
 		       GLuint start, 
 		       GLuint count)	
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
+   r100ContextPtr rmesa = R100_CONTEXT( ctx );
    radeonTclPrimitive( ctx, prim, hwprim );
    
-   radeonEnsureCmdBufSpace( rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
-			    rmesa->hw.max_state_size + VBUF_BUFSZ );
+   rcommonEnsureCmdBufSpace( &rmesa->radeon,
+			     AOS_BUFSZ(rmesa->radeon.tcl.aos_count) +
+			     rmesa->radeon.hw.max_state_size + VBUF_BUFSZ, __FUNCTION__ );
 
    radeonEmitAOS( rmesa,
-		  rmesa->tcl.aos_components,
-		  rmesa->tcl.nr_aos_components,
+		  rmesa->radeon.tcl.aos_count,
 		  start );
    
    /* Why couldn't this packet have taken an offset param?
@@ -254,7 +253,7 @@ void radeonTclPrimitive( GLcontext *ctx,
 			 GLenum prim,
 			 int hw_prim )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLuint se_cntl;
    GLuint newprim = hw_prim | RADEON_CP_VC_CNTL_TCL_ENABLE;
 
@@ -371,7 +370,7 @@ radeonComputeFogBlendFactor( GLcontext *ctx, GLfloat fogcoord )
 static GLboolean radeon_run_tcl_render( GLcontext *ctx,
 					struct tnl_pipeline_stage *stage )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint inputs = VERT_BIT_POS | VERT_BIT_COLOR0;
@@ -379,7 +378,7 @@ static GLboolean radeon_run_tcl_render( GLcontext *ctx,
 
    /* TODO: separate this from the swtnl pipeline 
     */
-   if (rmesa->TclFallback)
+   if (rmesa->radeon.TclFallback)
       return GL_TRUE;	/* fallback to software t&l */
 
    if (VB->Count == 0)
@@ -461,7 +460,7 @@ const struct tnl_pipeline_stage _radeon_tcl_stage =
 
 static void transition_to_swtnl( GLcontext *ctx )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint se_cntl;
 
@@ -490,7 +489,7 @@ static void transition_to_swtnl( GLcontext *ctx )
 
 static void transition_to_hwtnl( GLcontext *ctx )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint se_coord_fmt = rmesa->hw.set.cmd[SET_SE_COORDFMT];
 
@@ -509,15 +508,15 @@ static void transition_to_hwtnl( GLcontext *ctx )
 
    tnl->Driver.NotifyMaterialChange = radeonUpdateMaterial;
 
-   if ( rmesa->dma.flush )			
-      rmesa->dma.flush( rmesa );	
+   if ( rmesa->radeon.dma.flush )			
+      rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	
 
-   rmesa->dma.flush = NULL;
+   rmesa->radeon.dma.flush = NULL;
    rmesa->swtcl.vertex_format = 0;
    
-   if (rmesa->swtcl.indexed_verts.buf) 
-      radeonReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, 
-			      __FUNCTION__ );
+   //   if (rmesa->swtcl.indexed_verts.buf) 
+   //      radeonReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, 
+   //			      __FUNCTION__ );
 
    if (RADEON_DEBUG & DEBUG_FALLBACKS) 
       fprintf(stderr, "Radeon end tcl fallback\n");
@@ -550,11 +549,11 @@ static char *getFallbackString(GLuint bit)
 
 void radeonTclFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   GLuint oldfallback = rmesa->TclFallback;
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   GLuint oldfallback = rmesa->radeon.TclFallback;
 
    if (mode) {
-      rmesa->TclFallback |= bit;
+      rmesa->radeon.TclFallback |= bit;
       if (oldfallback == 0) {
 	 if (RADEON_DEBUG & DEBUG_FALLBACKS) 
 	    fprintf(stderr, "Radeon begin tcl fallback %s\n",
@@ -563,7 +562,7 @@ void radeonTclFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
       }
    }
    else {
-      rmesa->TclFallback &= ~bit;
+      rmesa->radeon.TclFallback &= ~bit;
       if (oldfallback == bit) {
 	 if (RADEON_DEBUG & DEBUG_FALLBACKS) 
 	    fprintf(stderr, "Radeon end tcl fallback %s\n",

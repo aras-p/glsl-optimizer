@@ -39,30 +39,25 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "radeon_context.h"
 
-extern void radeonInitState( radeonContextPtr rmesa );
+extern void radeonInitState( r100ContextPtr rmesa );
 extern void radeonInitStateFuncs( GLcontext *ctx );
 
 extern void radeonUpdateMaterial( GLcontext *ctx );
 
-extern void radeonSetCliprects( radeonContextPtr rmesa );
-extern void radeonRecalcScissorRects( radeonContextPtr rmesa );
 extern void radeonUpdateViewportOffset( GLcontext *ctx );
 extern void radeonUpdateWindow( GLcontext *ctx );
 extern void radeonUpdateDrawBuffer( GLcontext *ctx );
-extern void radeonUploadTexMatrix( radeonContextPtr rmesa,
+extern void radeonUploadTexMatrix( r100ContextPtr rmesa,
 				   int unit, GLboolean swapcols );
 
-extern void radeonValidateState( GLcontext *ctx );
-
-extern void radeonPrintDirty( radeonContextPtr rmesa,
-			      const char *msg );
+extern GLboolean radeonValidateState( GLcontext *ctx );
 
 
 extern void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( rmesa, bit, mode ) do {				\
    if ( 0 ) fprintf( stderr, "FALLBACK in %s: #%d=%d\n",		\
 		     __FUNCTION__, bit, mode );				\
-   radeonFallback( rmesa->glCtx, bit, mode );				\
+   radeonFallback( rmesa->radeon.glCtx, bit, mode );				\
 } while (0)
 
 

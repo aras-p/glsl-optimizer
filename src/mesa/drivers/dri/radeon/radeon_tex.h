@@ -41,12 +41,16 @@ extern void radeonSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
                                unsigned long long offset, GLint depth,
                                GLuint pitch);
 
+extern void radeonSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv);
+extern void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_format,
+			       __DRIdrawable *dPriv);
+
 extern void radeonUpdateTextureState( GLcontext *ctx );
 
-extern int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t,
+extern int radeonUploadTexImages( r100ContextPtr rmesa, radeonTexObjPtr t,
 				  GLuint face );
 
-extern void radeonDestroyTexObj( radeonContextPtr rmesa, radeonTexObjPtr t );
+extern void radeonDestroyTexObj( r100ContextPtr rmesa, radeonTexObjPtr t );
 
 extern void radeonInitTextureFuncs( struct dd_function_table *functions );
 

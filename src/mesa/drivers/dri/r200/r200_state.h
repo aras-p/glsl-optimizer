@@ -43,23 +43,17 @@ extern void r200InitTnlFuncs( GLcontext *ctx );
 
 extern void r200UpdateMaterial( GLcontext *ctx );
 
-extern void r200SetCliprects( r200ContextPtr rmesa );
-extern void r200RecalcScissorRects( r200ContextPtr rmesa );
 extern void r200UpdateViewportOffset( GLcontext *ctx );
 extern void r200UpdateWindow( GLcontext *ctx );
 extern void r200UpdateDrawBuffer(GLcontext *ctx);
 
-extern void r200ValidateState( GLcontext *ctx );
-
-extern void r200PrintDirty( r200ContextPtr rmesa,
-			      const char *msg );
-
+extern GLboolean r200ValidateState( GLcontext *ctx );
 
 extern void r200Fallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( rmesa, bit, mode ) do {				\
    if ( 0 ) fprintf( stderr, "FALLBACK in %s: #%d=%d\n",		\
 		     __FUNCTION__, bit, mode );				\
-   r200Fallback( rmesa->glCtx, bit, mode );				\
+   r200Fallback( rmesa->radeon.glCtx, bit, mode );				\
 } while (0)
 
 extern void r200LightingSpaceChange( GLcontext *ctx );

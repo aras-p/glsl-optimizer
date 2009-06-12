@@ -463,8 +463,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_VSC_UPDATE_USER_COLOR_1_ENABLE    0x00020000
 /* gap */
 #define R200_SE_TCL_VECTOR_INDX_REG                0x2200
+#       define RADEON_VEC_INDX_OCTWORD_STRIDE_SHIFT  16
+#       define RADEON_VEC_INDX_DWORD_COUNT_SHIFT     28
 #define R200_SE_TCL_VECTOR_DATA_REG                0x2204
 #define R200_SE_TCL_SCALAR_INDX_REG                0x2208
+#       define RADEON_SCAL_INDX_DWORD_STRIDE_SHIFT  16
 #define R200_SE_TCL_SCALAR_DATA_REG                0x220c
 /* gap */
 #define R200_SE_TCL_MATRIX_SEL_0                   0x2230
@@ -949,6 +952,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_LOD_BIAS_MASK                        (0xfff80000)
 #define     R200_LOD_BIAS_SHIFT                       19
 #define R200_PP_TXSIZE_0                  0x2c0c /* NPOT only */
+#define R200_PP_TX_WIDTHMASK_SHIFT 0
+#define R200_PP_TX_HEIGHTMASK_SHIFT 16
+
 #define R200_PP_TXPITCH_0                 0x2c10 /* NPOT only */
 #define R200_PP_BORDER_COLOR_0            0x2c14
 #define R200_PP_CUBIC_FACES_0             0x2c18

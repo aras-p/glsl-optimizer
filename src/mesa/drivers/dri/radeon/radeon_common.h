@@ -1,0 +1,100 @@
+#ifndef COMMON_MISC_H
+#define COMMON_MISC_H
+
+#include "radeon_common_context.h"
+#include "radeon_dma.h"
+#include "radeon_texture.h"
+
+
+#define TRI_CLEAR_COLOR_BITS (BUFFER_BIT_BACK_LEFT |			\
+			      BUFFER_BIT_FRONT_LEFT |			\
+			      BUFFER_BIT_COLOR0 |			\
+			      BUFFER_BIT_COLOR1 |			\
+			      BUFFER_BIT_COLOR2 |			\
+			      BUFFER_BIT_COLOR3 |			\
+			      BUFFER_BIT_COLOR4 |			\
+			      BUFFER_BIT_COLOR5 |			\
+			      BUFFER_BIT_COLOR6 |			\
+			      BUFFER_BIT_COLOR7)
+
+void radeonRecalcScissorRects(radeonContextPtr radeon);
+void radeonSetCliprects(radeonContextPtr radeon);
+void radeonUpdateScissor( GLcontext *ctx );
+void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+
+void radeonWaitForIdleLocked(radeonContextPtr radeon);
+extern uint32_t radeonGetAge(radeonContextPtr radeon);
+void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
+		       const drm_clip_rect_t	  *rect);
+void radeonSwapBuffers(__DRIdrawablePrivate * dPriv);
+void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
+			 int x, int y, int w, int h );
+
+void radeonUpdatePageFlipping(radeonContextPtr rmesa);
+
+void radeonFlush(GLcontext *ctx);
+void radeonFinish(GLcontext * ctx);
+void radeonEmitState(radeonContextPtr radeon);
+
+void radeon_clear_tris(GLcontext *ctx, GLbitfield mask);
+
+void radeon_window_moved(radeonContextPtr radeon);
+void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb);
+void radeonDrawBuffer( GLcontext *ctx, GLenum mode );
+void radeonReadBuffer( GLcontext *ctx, GLenum mode );
+void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height);
+void radeon_get_cliprects(radeonContextPtr radeon,
+			  struct drm_clip_rect **cliprects,
+			  unsigned int *num_cliprects,
+			  int *x_off, int *y_off);
+GLboolean radeon_revalidate_bos(GLcontext *ctx);
+void radeon_validate_bo(radeonContextPtr radeon, struct radeon_bo *bo, uint32_t read_domains, uint32_t write_domain);
+void radeon_validate_reset_bos(radeonContextPtr radeon);
+
+void radeon_fbo_init(struct radeon_context *radeon);
+void
+radeon_renderbuffer_set_bo(struct radeon_renderbuffer *rb,
+			   struct radeon_bo *bo);
+struct radeon_renderbuffer *
+radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv);
+static inline struct radeon_renderbuffer *radeon_renderbuffer(struct gl_renderbuffer *rb)
+{
+	struct radeon_renderbuffer *rrb = (struct radeon_renderbuffer *)rb;
+	if (rrb && rrb->base.ClassID == RADEON_RB_CLASS)
+		return rrb;
+	else
+		return NULL;
+}
+
+static inline struct radeon_renderbuffer *radeon_get_renderbuffer(struct gl_framebuffer *fb, int att_index)
+{
+	if (att_index >= 0)
+		return radeon_renderbuffer(fb->Attachment[att_index].Renderbuffer);
+	else
+		return NULL;
+}
+
+static inline struct radeon_renderbuffer *radeon_get_depthbuffer(radeonContextPtr rmesa)
+{
+	struct radeon_renderbuffer *rrb;
+	rrb = radeon_renderbuffer(rmesa->state.depth.rb);
+	if (!rrb)
+		return NULL;
+
+	return rrb;
+}
+
+static inline struct radeon_renderbuffer *radeon_get_colorbuffer(radeonContextPtr rmesa)
+{
+	struct radeon_renderbuffer *rrb;
+
+	rrb = radeon_renderbuffer(rmesa->state.color.rb);
+	if (!rrb)
+		return NULL;
+	return rrb;
+}
+
+#include "radeon_cmdbuf.h"
+
+
+#endif

@@ -310,7 +310,7 @@ static void init_tcl_verts( void )
 
 void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLuint req = 0;
    GLuint unit;
@@ -374,14 +374,15 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 	 break;
 
    if (rmesa->tcl.vertex_format == setup_tab[i].vertex_format &&
-       rmesa->tcl.indexed_verts.buf)
+       rmesa->radeon.tcl.aos[0].bo)
       return;
 
-   if (rmesa->tcl.indexed_verts.buf)
+   if (rmesa->radeon.tcl.aos[0].bo)
       radeonReleaseArrays( ctx, ~0 );
 
-   radeonAllocDmaRegion( rmesa,
-			 &rmesa->tcl.indexed_verts, 
+   radeonAllocDmaRegion( &rmesa->radeon,
+			 &rmesa->radeon.tcl.aos[0].bo,
+			 &rmesa->radeon.tcl.aos[0].offset,
 			 VB->Count * setup_tab[i].vertex_size * 4, 
 			 4);
 
@@ -421,29 +422,12 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 
 
    setup_tab[i].emit( ctx, 0, VB->Count, 
-		      rmesa->tcl.indexed_verts.address + 
-		      rmesa->tcl.indexed_verts.start );
+		      rmesa->radeon.tcl.aos[0].bo->ptr + rmesa->radeon.tcl.aos[0].offset);
 
+   //   rmesa->radeon.tcl.aos[0].size = setup_tab[i].vertex_size;
+   rmesa->radeon.tcl.aos[0].stride = setup_tab[i].vertex_size;
    rmesa->tcl.vertex_format = setup_tab[i].vertex_format;
-   rmesa->tcl.indexed_verts.aos_start = GET_START( &rmesa->tcl.indexed_verts );
-   rmesa->tcl.indexed_verts.aos_size = setup_tab[i].vertex_size;
-   rmesa->tcl.indexed_verts.aos_stride = setup_tab[i].vertex_size;
-
-   rmesa->tcl.aos_components[0] = &rmesa->tcl.indexed_verts;
-   rmesa->tcl.nr_aos_components = 1;
+   rmesa->radeon.tcl.aos_count = 1;
 }
 
 
-
-void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
-{
-   radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
-
-#if 0
-   if (RADEON_DEBUG & DEBUG_VERTS) 
-      _tnl_print_vert_flags( __FUNCTION__, newinputs );
-#endif
-
-   if (newinputs) 
-     radeonReleaseDmaRegion( rmesa, &rmesa->tcl.indexed_verts, __FUNCTION__ );
-}

@@ -39,7 +39,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_context.h"
 
 extern void r200InitSwtcl( GLcontext *ctx );
-extern void r200DestroySwtcl( GLcontext *ctx );
 
 extern void r200ChooseRenderState( GLcontext *ctx );
 extern void r200ChooseVertexState( GLcontext *ctx );
@@ -52,15 +51,11 @@ extern void r200BuildVertices( GLcontext *ctx, GLuint start, GLuint count,
 extern void r200PrintSetupFlags(char *msg, GLuint flags );
 
 
-extern void r200_emit_indexed_verts( GLcontext *ctx,
-				       GLuint start,
-				       GLuint count );
-
 extern void r200_translate_vertex( GLcontext *ctx, 
-				     const r200Vertex *src, 
+				     const radeonVertex *src, 
 				     SWvertex *dst );
 
-extern void r200_print_vertex( GLcontext *ctx, const r200Vertex *v );
+extern void r200_print_vertex( GLcontext *ctx, const radeonVertex *v );
 
 extern void r200_import_float_colors( GLcontext *ctx );
 extern void r200_import_float_spec_colors( GLcontext *ctx );
@@ -70,5 +65,5 @@ extern void r200PointsBitmap( GLcontext *ctx, GLint px, GLint py,
 			      const struct gl_pixelstore_attrib *unpack,
 			      const GLubyte *bitmap );
 
-
+void r200_swtcl_flush(GLcontext *ctx, uint32_t current_offset);
 #endif

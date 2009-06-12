@@ -35,7 +35,7 @@
 
 #include "radeon_program_pair.h"
 
-#include "radeon_context.h"
+#include "radeon_common.h"
 
 #include "shader/prog_print.h"
 
@@ -47,7 +47,6 @@
 
 struct pair_state_instruction {
 	GLuint IsTex:1; /**< Is a texture instruction */
-	GLuint IsOutput:1; /**< Is output instruction */
 	GLuint NeedRGB:1; /**< Needs the RGB ALU */
 	GLuint NeedAlpha:1; /**< Needs the Alpha ALU */
 	GLuint IsTranscendent:1; /**< Is a special transcendent instruction */
@@ -124,7 +123,6 @@ struct pair_state {
 	GLboolean Debug;
 	GLboolean Verbose;
 	void *UserData;
-	GLubyte NumKillInsts;
 
 	/**
 	 * Translate Mesa registers to hardware registers
@@ -149,11 +147,6 @@ struct pair_state {
 	struct pair_state_instruction *ReadyRGB;
 	struct pair_state_instruction *ReadyAlpha;
 	struct pair_state_instruction *ReadyTEX;
-
-	/**
-	 * Linked list of deferred instructions
-	 */
-	struct pair_state_instruction *DeferredInsts;
 
 	/**
 	 * Pool of @ref reg_value structures for fast allocation.
@@ -238,9 +231,7 @@ static void instruction_ready(struct pair_state *s, int ip)
 	if (s->Verbose)
 		_mesa_printf("instruction_ready(%i)\n", ip);
 
-	if (s->NumKillInsts > 0 && pairinst->IsOutput)
-		add_pairinst_to_list(&s->DeferredInsts, pairinst);
-	else if (pairinst->IsTex)
+	if (pairinst->IsTex)
 		add_pairinst_to_list(&s->ReadyTEX, pairinst);
 	else if (!pairinst->NeedAlpha)
 		add_pairinst_to_list(&s->ReadyRGB, pairinst);
@@ -348,8 +339,6 @@ static void classify_instruction(struct pair_state *s,
 		error("Unknown opcode %d\n", inst->Opcode);
 		break;
 	}
-
-	pairinst->IsOutput = (inst->DstReg.File == PROGRAM_OUTPUT);
 }
 
 
@@ -613,16 +602,14 @@ static void emit_all_tex(struct pair_state *s)
 		struct prog_instruction *inst = s->Program->Instructions + ip;
 		commit_instruction(s, ip);
 
-		if (inst->Opcode == OPCODE_KIL)
-			--s->NumKillInsts;
-		else
+		if (inst->Opcode != OPCODE_KIL)
 			inst->DstReg.Index = get_hw_reg(s, inst->DstReg.File, inst->DstReg.Index);
-
 		inst->SrcReg[0].Index = get_hw_reg(s, inst->SrcReg[0].File, inst->SrcReg[0].Index);
 
 		if (s->Debug) {
 			_mesa_printf("   ");
 			_mesa_print_instruction(inst);
+			fflush(stdout);
 		}
 		s->Error = s->Error || !s->Handler->EmitTex(s->UserData, inst);
 	}
@@ -875,17 +862,6 @@ static void emit_alu(struct pair_state *s)
 	s->Error = s->Error || !s->Handler->EmitPaired(s->UserData, &pair);
 }
 
-static GLubyte countKillInsts(struct gl_program *prog)
-{
-	GLubyte i, count = 0;
-
-	for (i = 0; i < prog->NumInstructions; ++i) {
-		if (prog->Instructions[i].Opcode == OPCODE_KIL)
-			++count;
-	}
-
-	return count;
-}
 
 GLboolean radeonPairProgram(GLcontext *ctx, struct gl_program *program,
 	const struct radeon_pair_handler* handler, void *userdata)
@@ -899,7 +875,6 @@ GLboolean radeonPairProgram(GLcontext *ctx, struct gl_program *program,
 	s.UserData = userdata;
 	s.Debug = (RADEON_DEBUG & DEBUG_PIXEL) ? GL_TRUE : GL_FALSE;
 	s.Verbose = GL_FALSE && s.Debug;
-	s.NumKillInsts = countKillInsts(program);
 
 	s.Instructions = (struct pair_state_instruction*)_mesa_calloc(
 		sizeof(struct pair_state_instruction)*s.Program->NumInstructions);
@@ -917,21 +892,6 @@ GLboolean radeonPairProgram(GLcontext *ctx, struct gl_program *program,
 	      (s.ReadyTEX || s.ReadyRGB || s.ReadyAlpha || s.ReadyFullALU)) {
 		if (s.ReadyTEX)
 			emit_all_tex(&s);
-
-		if (!s.NumKillInsts) {
-			struct pair_state_instruction *pairinst = s.DeferredInsts;
-			while (pairinst) {
-				if (!pairinst->NeedAlpha)
-					add_pairinst_to_list(&s.ReadyRGB, pairinst);
-				else if (!pairinst->NeedRGB)
-					add_pairinst_to_list(&s.ReadyAlpha, pairinst);
-				else
-					add_pairinst_to_list(&s.ReadyFullALU, pairinst);
-
-				pairinst = pairinst->NextReady;
-			}
-			s.DeferredInsts = NULL;
-		}
 
 		while(s.ReadyFullALU || s.ReadyRGB || s.ReadyAlpha)
 			emit_alu(&s);

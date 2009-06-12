@@ -522,7 +522,7 @@ static void r200UpdateFSConstants( GLcontext *ctx )
 	 CLAMPED_FLOAT_TO_UBYTE(con_byte[2], ctx->ATIFragmentShader.GlobalConstants[i][2]);
 	 CLAMPED_FLOAT_TO_UBYTE(con_byte[3], ctx->ATIFragmentShader.GlobalConstants[i][3]);
       }
-      rmesa->hw.atf.cmd[ATF_TFACTOR_0 + i] = r200PackColor (
+      rmesa->hw.atf.cmd[ATF_TFACTOR_0 + i] = radeonPackColor (
 	 4, con_byte[0], con_byte[1], con_byte[2], con_byte[3] );
    }
 }

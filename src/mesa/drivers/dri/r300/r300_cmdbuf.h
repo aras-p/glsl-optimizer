@@ -38,79 +38,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r300_context.h"
 
-extern int r300FlushCmdBufLocked(r300ContextPtr r300, const char *caller);
-extern int r300FlushCmdBuf(r300ContextPtr r300, const char *caller);
-
-extern void r300EmitState(r300ContextPtr r300);
-
 extern void r300InitCmdBuf(r300ContextPtr r300);
-extern void r300DestroyCmdBuf(r300ContextPtr r300);
+void r300_emit_scissor(GLcontext *ctx);
 
-/**
- * Make sure that enough space is available in the command buffer
- * by flushing if necessary.
- *
- * \param dwords The number of dwords we need to be free on the command buffer
- */
-static INLINE void r300EnsureCmdBufSpace(r300ContextPtr r300,
-					     int dwords, const char *caller)
-{
-	assert(dwords < r300->cmdbuf.size);
+void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom);
+int check_vpu(GLcontext *ctx, struct radeon_state_atom *atom);
 
-	if (r300->cmdbuf.count_used + dwords > r300->cmdbuf.size)
-		r300FlushCmdBuf(r300, caller);
-}
-
-/**
- * Allocate the given number of dwords in the command buffer and return
- * a pointer to the allocated area.
- * When necessary, these functions cause a flush. r300AllocCmdBuf() also
- * causes state reemission after a flush. This is necessary to ensure
- * correct hardware state after an unlock.
- */
-static INLINE uint32_t *r300RawAllocCmdBuf(r300ContextPtr r300,
-					       int dwords, const char *caller)
-{
-	uint32_t *ptr;
-
-	r300EnsureCmdBufSpace(r300, dwords, caller);
-
-	ptr = &r300->cmdbuf.cmd_buf[r300->cmdbuf.count_used];
-	r300->cmdbuf.count_used += dwords;
-	return ptr;
-}
-
-static INLINE uint32_t *r300AllocCmdBuf(r300ContextPtr r300,
-					    int dwords, const char *caller)
-{
-	uint32_t *ptr;
-
-	r300EnsureCmdBufSpace(r300, dwords, caller);
-
-	if (!r300->cmdbuf.count_used) {
-		if (RADEON_DEBUG & DEBUG_IOCTL)
-			fprintf(stderr,
-				"Reemit state after flush (from %s)\n", caller);
-		r300EmitState(r300);
-	}
-
-	ptr = &r300->cmdbuf.cmd_buf[r300->cmdbuf.count_used];
-	r300->cmdbuf.count_used += dwords;
-	return ptr;
-}
-
-extern void r300EmitBlit(r300ContextPtr rmesa,
-			 GLuint color_fmt,
-			 GLuint src_pitch,
-			 GLuint src_offset,
-			 GLuint dst_pitch,
-			 GLuint dst_offset,
-			 GLint srcx, GLint srcy,
-			 GLint dstx, GLint dsty, GLuint w, GLuint h);
-
-extern void r300EmitWait(r300ContextPtr rmesa, GLuint flags);
-extern void r300EmitLOAD_VBPNTR(r300ContextPtr rmesa, int start);
-extern void r300EmitVertexShader(r300ContextPtr rmesa);
-extern void r300EmitPixelShader(r300ContextPtr rmesa);
+void emit_r500fp(GLcontext *ctx, struct radeon_state_atom * atom);
+int check_r500fp(GLcontext *ctx, struct radeon_state_atom *atom);
+int check_r500fp_const(GLcontext *ctx, struct radeon_state_atom *atom);
 
 #endif				/* __R300_CMDBUF_H__ */

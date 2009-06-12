@@ -37,65 +37,30 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/simple_list.h"
 #include "radeon_dri.h"
-#include "r200_lock.h"
+
+#include "radeon_bocs_wrapper.h"
 
 #include "xf86drm.h"
 #include "drm.h"
 #include "radeon_drm.h"
 
-extern void r200EmitState( r200ContextPtr rmesa );
 extern void r200EmitVertexAOS( r200ContextPtr rmesa,
-				 GLuint vertex_size,
-				 GLuint offset );
+			       GLuint vertex_size,
+			       struct radeon_bo *bo,
+			       GLuint offset );
 
 extern void r200EmitVbufPrim( r200ContextPtr rmesa,
 				GLuint primitive,
 				GLuint vertex_nr );
 
-extern void r200FlushElts( r200ContextPtr rmesa );
+extern void r200FlushElts(GLcontext *ctx);
 
 extern GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
 					   GLuint primitive,
 					   GLuint min_nr );
 
-extern void r200EmitAOS( r200ContextPtr rmesa,
-			   struct r200_dma_region **regions,
-			   GLuint n,
-			   GLuint offset );
+extern void r200EmitAOS(r200ContextPtr rmesa, GLuint nr, GLuint offset);
 
-extern void r200EmitBlit( r200ContextPtr rmesa,
-			  GLuint color_fmt,
-			  GLuint src_pitch,
-			  GLuint src_offset,
-			  GLuint dst_pitch,
-			  GLuint dst_offset,
-			  GLint srcx, GLint srcy,
-			  GLint dstx, GLint dsty,
-			  GLuint w, GLuint h );
-
-extern void r200EmitWait( r200ContextPtr rmesa, GLuint flags );
-
-extern void r200FlushCmdBuf( r200ContextPtr rmesa, const char * );
-extern int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller );
-
-extern void r200RefillCurrentDmaRegion( r200ContextPtr rmesa );
-
-extern void r200AllocDmaRegion( r200ContextPtr rmesa,
-				  struct r200_dma_region *region,
-				  int bytes, 
-				  int alignment );
-
-extern void r200ReleaseDmaRegion( r200ContextPtr rmesa,
-				    struct r200_dma_region *region,
-				    const char *caller );
-
-extern void r200CopyBuffer( __DRIdrawablePrivate *drawable,
-			    const drm_clip_rect_t      *rect);
-extern void r200PageFlip( __DRIdrawablePrivate *drawable );
-extern void r200Flush( GLcontext *ctx );
-extern void r200Finish( GLcontext *ctx );
-extern void r200WaitForIdleLocked( r200ContextPtr rmesa );
-extern void r200WaitForVBlank( r200ContextPtr rmesa );
 extern void r200InitIoctlFuncs( struct dd_function_table *functions );
 
 extern void *r200AllocateMemoryMESA( __DRIscreen *screen, GLsizei size, GLfloat readfreq,
@@ -119,8 +84,8 @@ void r200SetUpAtomList( r200ContextPtr rmesa );
  */
 #define R200_NEWPRIM( rmesa )			\
 do {						\
-   if ( rmesa->dma.flush )			\
-      rmesa->dma.flush( rmesa );	\
+   if ( rmesa->radeon.dma.flush )			\
+      rmesa->radeon.dma.flush( rmesa->radeon.glCtx );	\
 } while (0)
 
 /* Can accomodate several state changes and primitive changes without
@@ -130,7 +95,7 @@ do {						\
 do {								\
    R200_NEWPRIM( rmesa );					\
    rmesa->hw.ATOM.dirty = GL_TRUE;				\
-   rmesa->hw.is_dirty = GL_TRUE;				\
+   rmesa->radeon.hw.is_dirty = GL_TRUE;				\
 } while (0)
 
 #define R200_DB_STATE( ATOM )			        \
@@ -139,13 +104,13 @@ do {								\
 
 static INLINE int R200_DB_STATECHANGE( 
    r200ContextPtr rmesa,
-   struct r200_state_atom *atom )
+   struct radeon_state_atom *atom )
 {
    if (memcmp(atom->cmd, atom->lastcmd, atom->cmd_size*4)) {
-      int *tmp;
+      GLuint *tmp;
       R200_NEWPRIM( rmesa );
       atom->dirty = GL_TRUE;
-      rmesa->hw.is_dirty = GL_TRUE;
+      rmesa->radeon.hw.is_dirty = GL_TRUE;
       tmp = atom->cmd; 
       atom->cmd = atom->lastcmd;
       atom->lastcmd = tmp;
@@ -156,15 +121,6 @@ static INLINE int R200_DB_STATECHANGE(
 }
 
 
-/* Fire the buffered vertices no matter what.
- */
-#define R200_FIREVERTICES( rmesa )			\
-do {							\
-   if ( rmesa->store.cmd_used || rmesa->dma.flush ) {	\
-      r200Flush( rmesa->glCtx );			\
-   }							\
-} while (0)
-
 /* Command lengths.  Note that any time you ensure ELTS_BUFSZ or VBUF_BUFSZ
  * are available, you will also be adding an rmesa->state.max_state_size because
  * r200EmitState is called from within r200EmitVbufPrim and r200FlushElts.
@@ -174,36 +130,36 @@ do {							\
 #define ELTS_BUFSZ(nr)	(12 + nr * 2)
 #define VBUF_BUFSZ	(3 * sizeof(int))
 
-/* Ensure that a minimum amount of space is available in the command buffer.
- * This is used to ensure atomicity of state updates with the rendering requests
- * that rely on them.
- *
- * An alternative would be to implement a "soft lock" such that when the buffer
- * wraps at an inopportune time, we grab the lock, flush the current buffer,
- * and hang on to the lock until the critical section is finished and we flush
- * the buffer again and unlock.
- */
-static INLINE void r200EnsureCmdBufSpace( r200ContextPtr rmesa, int bytes )
+static inline uint32_t cmdpacket3(int cmd_type)
 {
-   if (rmesa->store.cmd_used + bytes > R200_CMD_BUF_SZ)
-      r200FlushCmdBuf( rmesa, __FUNCTION__ );
-   assert( bytes <= R200_CMD_BUF_SZ );
+  drm_radeon_cmd_header_t cmd;
+
+  cmd.i = 0;
+  cmd.header.cmd_type = cmd_type;
+
+  return (uint32_t)cmd.i;
+
 }
 
-/* Alloc space in the command buffer
- */
-static INLINE char *r200AllocCmdBuf( r200ContextPtr rmesa,
-					 int bytes, const char *where )
-{
-   char * head;
+#define OUT_BATCH_PACKET3(packet, num_extra) do {	      \
+    if (!b_l_rmesa->radeonScreen->kernel_mm) {		      \
+      OUT_BATCH(cmdpacket3(RADEON_CMD_PACKET3));				      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
+    } else {						      \
+      OUT_BATCH(CP_PACKET2);				      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
+    }							      \
+  } while(0)
 
-   if (rmesa->store.cmd_used + bytes > R200_CMD_BUF_SZ)
-      r200FlushCmdBuf( rmesa, where );
+#define OUT_BATCH_PACKET3_CLIP(packet, num_extra) do {	      \
+    if (!b_l_rmesa->radeonScreen->kernel_mm) {		      \
+      OUT_BATCH(cmdpacket3(RADEON_CMD_PACKET3_CLIP));	      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
+    } else {						      \
+      OUT_BATCH(CP_PACKET2);				      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
+    }							      \
+  } while(0)
 
-   head = rmesa->store.cmd_buf + rmesa->store.cmd_used;
-   rmesa->store.cmd_used += bytes;
-   assert( rmesa->store.cmd_used <= R200_CMD_BUF_SZ );
-   return head;
-}
 
 #endif /* __R200_IOCTL_H__ */
