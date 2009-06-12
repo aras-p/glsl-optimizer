@@ -295,9 +295,6 @@ static void invert_det( struct brw_sf_compile *c)
 
 }
 
-#define NON_PERPECTIVE_ATTRS  (FRAG_BIT_WPOS | \
-                               FRAG_BIT_COL0 | \
-			       FRAG_BIT_COL1)
 
 static GLboolean calculate_masks( struct brw_sf_compile *c,
 				  GLuint reg,
@@ -306,8 +303,15 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
 				  GLushort *pc_linear)
 {
    GLboolean is_last_attr = (reg == c->nr_setup_regs - 1);
-   GLuint persp_mask = c->key.attrs & ~NON_PERPECTIVE_ATTRS;
+   GLuint persp_mask;
    GLuint linear_mask;
+
+   if (c->key.do_flat_shading || c->key.linear_color)
+      persp_mask = c->key.attrs & ~(FRAG_BIT_WPOS |
+                                    FRAG_BIT_COL0 |
+                                    FRAG_BIT_COL1);
+   else
+      persp_mask = c->key.attrs & ~(FRAG_BIT_WPOS);
 
    if (c->key.do_flat_shading)
       linear_mask = c->key.attrs & ~(FRAG_BIT_COL0|FRAG_BIT_COL1);

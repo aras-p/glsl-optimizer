@@ -354,13 +354,25 @@ static void emit_interp( struct brw_wm_compile *c,
 		 src_undef());
       }
       else {
-	 emit_op(c,
-		 WM_LINTERP,
-		 dst,
-		 0,
-		 interp,
-		 deltas,
-		 src_undef());
+         if (c->key.linear_color) {
+            emit_op(c,
+                    WM_LINTERP,
+                    dst,
+                    0,
+                    interp,
+                    deltas,
+                    src_undef());
+         }
+         else {
+            /* perspective-corrected color interpolation */
+            emit_op(c,
+                    WM_PINTERP,
+                    dst,
+                    0,
+                    interp,
+                    deltas,
+                    get_pixel_w(c));
+         }
       }
       break;
    case FRAG_ATTRIB_FOGC:

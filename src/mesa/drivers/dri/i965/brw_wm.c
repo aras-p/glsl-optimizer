@@ -272,6 +272,9 @@ static void brw_wm_populate_key( struct brw_context *brw,
    /* _NEW_LIGHT */
    key->flat_shade = (ctx->Light.ShadeModel == GL_FLAT);
 
+   /* _NEW_HINT */
+   key->linear_color = (ctx->Hint.PerspectiveCorrection == GL_FASTEST);
+
    /* _NEW_TEXTURE */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       const struct gl_texture_unit *unit = &ctx->Texture.Unit[i];
@@ -351,6 +354,7 @@ const struct brw_tracked_state brw_wm_prog = {
    .dirty = {
       .mesa  = (_NEW_COLOR |
 		_NEW_DEPTH |
+                _NEW_HINT |
 		_NEW_STENCIL |
 		_NEW_POLYGON |
 		_NEW_LINE |
