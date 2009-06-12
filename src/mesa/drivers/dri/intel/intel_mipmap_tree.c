@@ -113,9 +113,13 @@ intel_miptree_create(struct intel_context *intel,
    uint32_t tiling;
 
    if (intel->use_texture_tiling && compress_byte == 0 &&
-       intel->intelScreen->kernel_exec_fencing)
-      tiling = I915_TILING_X;
-   else
+       intel->intelScreen->kernel_exec_fencing) {
+      if (IS_965(intel->intelScreen->deviceID) &&
+	  internal_format == GL_DEPTH_COMPONENT)
+	 tiling = I915_TILING_Y;
+      else
+	 tiling = I915_TILING_X;
+   } else
       tiling = I915_TILING_NONE;
 
    mt = intel_miptree_create_internal(intel, target, internal_format,

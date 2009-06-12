@@ -189,7 +189,7 @@ intel_region_alloc(struct intel_context *intel,
 					pitch, buffer);
 
    if (tiling != I915_TILING_NONE) {
-      assert(((pitch * cpp) & 511) == 0);
+      assert(((pitch * cpp) & 127) == 0);
       drm_intel_bo_set_tiling(buffer, &tiling, pitch * cpp);
       drm_intel_bo_get_tiling(buffer, &region->tiling, &region->bit_6_swizzle);
    }
