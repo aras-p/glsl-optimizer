@@ -16,3 +16,8 @@ env.Program(
     target = 'purify',
     source = ['purify.c'],
 )
+
+env.Program(
+    target = 'tokenise',
+    source = ['tokenise.c'],
+)
