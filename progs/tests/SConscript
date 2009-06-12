@@ -90,6 +90,7 @@ progs = [
     'no_s3tc',
     'packedpixels',
     'pbo',
+    'persp_hint',
     'prog_parameter',
     'quads',
     'random',
