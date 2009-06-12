@@ -187,11 +187,10 @@ _mesa_consolidate_registers(struct gl_program *prog)
 static void
 _mesa_remove_dead_code(struct gl_program *prog)
 {
-   GLboolean tempWritten[MAX_PROGRAM_TEMPS], tempRead[MAX_PROGRAM_TEMPS];
+   GLboolean tempRead[MAX_PROGRAM_TEMPS][4];
    GLboolean *removeInst; /* per-instruction removal flag */
-   GLuint i, rem;
+   GLuint i, rem = 0, comp;
 
-   memset(tempWritten, 0, sizeof(tempWritten));
    memset(tempRead, 0, sizeof(tempRead));
 
    if (dbg) {
@@ -217,11 +216,27 @@ _mesa_remove_dead_code(struct gl_program *prog)
             if (inst->SrcReg[j].RelAddr) {
                if (dbg)
                   _mesa_printf("abort remove dead code (indirect temp)\n");
-               _mesa_free(removeInst);
-               return;
+               goto done;
             }
 
-            tempRead[index] = GL_TRUE;
+	    for (comp = 0; comp < 4; comp++) {
+	       GLuint swz = (inst->SrcReg[j].Swizzle >> (3 * comp)) & 0x7;
+
+	       switch (swz) {
+	       case SWIZZLE_X:
+		  tempRead[index][0] = GL_TRUE;
+		  break;
+	       case SWIZZLE_Y:
+		  tempRead[index][1] = GL_TRUE;
+		  break;
+	       case SWIZZLE_Z:
+		  tempRead[index][2] = GL_TRUE;
+		  break;
+	       case SWIZZLE_W:
+		  tempRead[index][3] = GL_TRUE;
+		  break;
+	       }
+	    }
          }
       }
 
@@ -233,50 +248,63 @@ _mesa_remove_dead_code(struct gl_program *prog)
          if (inst->DstReg.RelAddr) {
             if (dbg)
                _mesa_printf("abort remove dead code (indirect temp)\n");
-            _mesa_free(removeInst);
-            return;
+            goto done;
          }
 
-         tempWritten[index] = GL_TRUE;
          if (inst->CondUpdate) {
             /* If we're writing to this register and setting condition
              * codes we cannot remove the instruction.  Prevent removal
              * by setting the 'read' flag.
              */
-            tempRead[index] = GL_TRUE;
+            tempRead[index][0] = GL_TRUE;
+            tempRead[index][1] = GL_TRUE;
+            tempRead[index][2] = GL_TRUE;
+            tempRead[index][3] = GL_TRUE;
          }
-      }
-   }
-
-   if (dbg) {
-      for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
-         if (tempWritten[i] && !tempRead[i])
-            _mesa_printf("Remove writes to tmp %u\n", i);
       }
    }
 
    /* find instructions that write to dead registers, flag for removal */
    for (i = 0; i < prog->NumInstructions; i++) {
-      const struct prog_instruction *inst = prog->Instructions + i;
-      if (inst->DstReg.File == PROGRAM_TEMPORARY) {
-         GLint index = inst->DstReg.Index;
-         removeInst[i] = (tempWritten[index] && !tempRead[index]);
-         if (dbg && removeInst[i]) {
-            _mesa_printf("Remove inst %u: ", i);
-            _mesa_print_instruction(inst);
-         }
+      struct prog_instruction *inst = prog->Instructions + i;
+      const GLuint numDst = _mesa_num_inst_dst_regs(inst->Opcode);
+
+      if (numDst != 0 && inst->DstReg.File == PROGRAM_TEMPORARY) {
+         GLint chan, index = inst->DstReg.Index;
+
+	 for (chan = 0; chan < 4; chan++) {
+	    if (!tempRead[index][chan] &&
+		inst->DstReg.WriteMask & (1 << chan)) {
+	       if (dbg) {
+		  _mesa_printf("Remove writemask on %u.%c\n", i,
+			       chan == 3 ? 'w' : 'x' + chan);
+	       }
+	       inst->DstReg.WriteMask &= ~(1 << chan);
+	       rem++;
+	    }
+	 }
+
+	 if (inst->DstReg.WriteMask == 0) {
+	    /* If we cleared all writes, the instruction can be removed. */
+	    if (dbg)
+	       _mesa_printf("Remove instruction %u: \n", i);
+	    removeInst[i] = GL_TRUE;
+	 }
       }
    }
 
    /* now remove the instructions which aren't needed */
    rem = remove_instructions(prog, removeInst);
 
-   _mesa_free(removeInst);
-
    if (dbg) {
-      _mesa_printf("Optimize: End dead code removal.  %u instructions removed\n", rem);
+      _mesa_printf("Optimize: End dead code removal.\n");
+      _mesa_printf("  %u channel writes removed\n", rem);
+      _mesa_printf("  %u instructions removed\n", rem);
       /*_mesa_print_program(prog);*/
    }
+
+done:
+   _mesa_free(removeInst);
 }
 
 
