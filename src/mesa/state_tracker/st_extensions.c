@@ -174,6 +174,7 @@ void st_init_extensions(struct st_context *st)
 
    ctx->Extensions.NV_blend_square = GL_TRUE;
    ctx->Extensions.NV_texgen_reflection = GL_TRUE;
+   ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;
 
    ctx->Extensions.SGI_color_matrix = GL_TRUE;
    ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;
