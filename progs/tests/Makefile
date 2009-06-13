@@ -59,6 +59,7 @@ SOURCES = \
 	minmag.c \
 	mipgen.c \
 	mipmap_comp.c \
+	mipmap_comp_tests.c \
 	mipmap_limits.c \
 	mipmap_view.c \
 	multipal.c \

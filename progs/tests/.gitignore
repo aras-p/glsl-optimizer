@@ -5,6 +5,7 @@ arbfpspec
 arbfptest1
 arbfptexture
 arbfptrig
+arbgpuprog
 arbnpot
 arbnpot-mipmap
 arbvptest1
@@ -38,6 +39,7 @@ fptest1
 fptexture
 getprocaddress
 getproclist.h
+getteximage
 glutfx
 interleave
 invert
@@ -49,11 +51,13 @@ mapvbo
 minmag
 mipgen
 mipmap_comp
+mipmap_comp_tests
 mipmap_limits
 mipmap_view
 multipal
 no_s3tc
 packedpixels
+persp_hint
 pbo
 prim
 prog_parameter
