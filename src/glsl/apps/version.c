@@ -102,7 +102,10 @@ main(int argc,
       return 1;
    }
 
-   fprintf(out, "%u\n", version);
+   fprintf(out,
+           "%u\n%u\n",
+           version,
+           tokens_eaten);
 
    fclose(out);
 
