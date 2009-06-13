@@ -21,3 +21,8 @@ env.Program(
     target = 'tokenise',
     source = ['tokenise.c'],
 )
+
+env.Program(
+    target = 'version',
+    source = ['version.c'],
+)
