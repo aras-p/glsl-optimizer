@@ -152,6 +152,9 @@ _purify_comment(const char *input,
                   return eaten;
                }
             }
+            if (next == '\0') {
+               return 0;
+            }
          }
       }
    }
@@ -171,8 +174,13 @@ sl_pp_purify(const char *input,
 
    for (;;) {
       char c;
+      unsigned int eaten;
 
-      input += _purify_comment(input, &c);
+      eaten = _purify_comment(input, &c);
+      if (!eaten) {
+         return -1;
+      }
+      input += eaten;
 
       if (out_len >= out_max) {
          unsigned int new_max = out_max;
