@@ -82,6 +82,7 @@ progs = [
     'minmag',
     'mipgen',
     'mipmap_comp',
+    'mipmap_comp_tests',
     'mipmap_limits',
     'mipmap_view',
     'multipal',
