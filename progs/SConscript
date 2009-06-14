@@ -1,6 +1,7 @@
 SConscript([
     'util/SConscript',
     'demos/SConscript',
+    'glsl/SConscript',
     'redbook/SConscript',
     'samples/SConscript',
     'tests/SConscript',

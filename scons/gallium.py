@@ -325,8 +325,10 @@ def generate(env):
     if gcc:
         if debug:
             ccflags += ['-O0', '-g3']
-        elif env['toolchain'] == 'crossmingw':
-            ccflags += ['-O0', '-g3'] # mingw 4.2.1 optimizer is broken
+        elif env['CCVERSION'].startswith('4.2.'):
+            # gcc 4.2.x optimizer is broken
+            print "warning: gcc 4.2.x optimizer is broken -- disabling optimizations"
+            ccflags += ['-O0', '-g3']
         else:
             ccflags += ['-O3', '-g3']
         if env['profile']:
@@ -449,11 +451,15 @@ def generate(env):
 
     # Linker options
     linkflags = []
+    shlinkflags = []
     if gcc:
         if env['machine'] == 'x86':
             linkflags += ['-m32']
         if env['machine'] == 'x86_64':
             linkflags += ['-m64']
+        shlinkflags += [
+            '-Wl,-Bsymbolic',
+        ]
     if platform == 'windows' and msvc:
         # See also:
         # - http://msdn2.microsoft.com/en-us/library/y0zzbyt4.aspx
@@ -501,6 +507,7 @@ def generate(env):
             '/entry:_DllMainCRTStartup',
         ]
     env.Append(LINKFLAGS = linkflags)
+    env.Append(SHLINKFLAGS = shlinkflags)
 
     # Default libs
     env.Append(LIBS = [])

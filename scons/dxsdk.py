@@ -40,10 +40,11 @@ def get_dxsdk_root(env):
     except KeyError:
         return None
 
-def get_dxsdk_paths(env):
+def generate(env):
     dxsdk_root = get_dxsdk_root(env)
     if dxsdk_root is None:
-        raise SCons.Errors.InternalError, "DirectX SDK not found"
+        # DirectX SDK not found
+        return
 
     if env['machine'] in ('generic', 'x86'):
         target_cpu = 'x86'
@@ -56,9 +57,6 @@ def get_dxsdk_paths(env):
     env.Append(CPPDEFINES = [('HAVE_DXSDK', '1')])
     env.Prepend(CPPPATH = [os.path.join(dxsdk_root, 'Include')])
     env.Prepend(LIBPATH = [os.path.join(dxsdk_root, 'Lib', target_cpu)])
-
-def generate(env):
-    get_dxsdk_paths(env)
 
 def exists(env):
     return get_dxsdk_root(env) is not None
