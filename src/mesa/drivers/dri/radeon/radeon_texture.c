@@ -614,6 +614,8 @@ static void radeon_teximage(
 			memcpy(texImage->Data, pixels, imageSize);
 		} else {
 			GLuint dstRowStride;
+			GLuint *dstImageOffsets;
+
 			if (image->mt) {
 				radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
 				dstRowStride = lvl->rowstride;
@@ -621,15 +623,32 @@ static void radeon_teximage(
 				dstRowStride = texImage->Width * texImage->TexFormat->TexelBytes;
 			}
 
+			if (dims == 3) {
+				int i;
+
+				dstImageOffsets = _mesa_malloc(depth * sizeof(GLuint)) ;
+				if (!dstImageOffsets)
+					_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+
+				for (i = 0; i < depth; ++i) {
+					dstImageOffsets[i] = dstRowStride/texImage->TexFormat->TexelBytes * height * i;
+				}
+			} else {
+				dstImageOffsets = texImage->ImageOffsets;
+			}
+
 			if (!texImage->TexFormat->StoreImage(ctx, dims,
 						texImage->_BaseFormat,
 						texImage->TexFormat,
 						texImage->Data, 0, 0, 0, /* dstX/Y/Zoffset */
 						dstRowStride,
-						texImage->ImageOffsets,
+						dstImageOffsets,
 						width, height, depth,
 						format, type, pixels, packing))
 				_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+
+			if (dims == 3)
+				_mesa_free(dstImageOffsets);
 		}
 
 		/* SGIS_generate_mipmap */
