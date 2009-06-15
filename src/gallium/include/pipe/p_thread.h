@@ -36,6 +36,7 @@
 
 
 #include "pipe/p_compiler.h"
+#include "util/u_debug.h" /* for assert */
 
 
 #if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
