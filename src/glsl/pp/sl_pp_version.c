@@ -59,90 +59,98 @@ sl_pp_version(const struct sl_pp_token_info *input,
               unsigned int *tokens_eaten)
 {
    unsigned int i = 0;
-   int found_hash = 0;
-   int found_version = 0;
-   int found_number = 0;
 
    /* Default values if `#version' is not present. */
    *version = 110;
    *tokens_eaten = 0;
 
-   /* Skip whitespace and newlines and seek for hash. */
-   while (!found_hash) {
-      switch (input[i].token) {
-      case SL_PP_WHITESPACE:
-      case SL_PP_NEWLINE:
-         i++;
-         break;
+   /* There can be multiple `#version' directives present.
+    * Accept the value of the last one.
+    */
+   for (;;) {
+      int found_hash = 0;
+      int found_version = 0;
+      int found_number = 0;
+      int found_end = 0;
 
-      case SL_PP_HASH:
-         i++;
-         found_hash = 1;
-         break;
+      /* Skip whitespace and newlines and seek for hash. */
+      while (!found_hash) {
+         switch (input[i].token) {
+         case SL_PP_WHITESPACE:
+         case SL_PP_NEWLINE:
+            i++;
+            break;
 
-      default:
-         return 0;
-      }
-   }
+         case SL_PP_HASH:
+            i++;
+            found_hash = 1;
+            break;
 
-   /* Skip whitespace and seek for `version'. */
-   while (!found_version) {
-      switch (input[i].token) {
-      case SL_PP_WHITESPACE:
-         i++;
-         break;
-
-      case SL_PP_IDENTIFIER:
-         if (strcmp(input[i].data.identifier, "version")) {
+         default:
             return 0;
          }
-         i++;
-         found_version = 1;
-         break;
-
-      default:
-         return 0;
       }
-   }
 
-   /* Skip whitespace and seek for version number. */
-   while (!found_number) {
-      switch (input[i].token) {
-      case SL_PP_WHITESPACE:
-         i++;
-         break;
+      /* Skip whitespace and seek for `version'. */
+      while (!found_version) {
+         switch (input[i].token) {
+         case SL_PP_WHITESPACE:
+            i++;
+            break;
 
-      case SL_PP_NUMBER:
-         if (_parse_integer(input[i].data.number, version)) {
+         case SL_PP_IDENTIFIER:
+            if (strcmp(input[i].data.identifier, "version")) {
+               return 0;
+            }
+            i++;
+            found_version = 1;
+            break;
+
+         default:
+            return 0;
+         }
+      }
+
+      /* Skip whitespace and seek for version number. */
+      while (!found_number) {
+         switch (input[i].token) {
+         case SL_PP_WHITESPACE:
+            i++;
+            break;
+
+         case SL_PP_NUMBER:
+            if (_parse_integer(input[i].data.number, version)) {
+               /* Expected version number. */
+               return -1;
+            }
+            i++;
+            found_number = 1;
+            break;
+
+         default:
             /* Expected version number. */
             return -1;
          }
-         i++;
-         found_number = 1;
-         break;
-
-      default:
-         /* Expected version number. */
-         return -1;
       }
-   }
 
-   /* Skip whitespace and seek for either newline or eof. */
-   for (;;) {
-      switch (input[i].token) {
-      case SL_PP_WHITESPACE:
-         i++;
-         break;
+      /* Skip whitespace and seek for either newline or eof. */
+      while (!found_end) {
+         switch (input[i].token) {
+         case SL_PP_WHITESPACE:
+            i++;
+            break;
 
-      case SL_PP_NEWLINE:
-      case SL_PP_EOF:
-         i++;
-         *tokens_eaten = i;
-         return 0;
+         case SL_PP_NEWLINE:
+         case SL_PP_EOF:
+            i++;
+            *tokens_eaten = i;
+            found_end = 1;
+            break;
 
-      default:
-         /* Expected end of line. */
-         return -1;
+         default:
+            /* Expected end of line. */
+            return -1;
+         }
       }
    }
 
