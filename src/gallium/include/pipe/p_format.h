@@ -563,7 +563,11 @@ pf_is_depth_and_stencil( enum pipe_format format )
 }
 
 /** DEPRECATED: For backwards compatibility */
-#define pf_is_depth_stencil pf_is_depth_or_stencil
+static INLINE boolean
+pf_is_depth_stencil( enum pipe_format format )
+{
+   return pf_is_depth_or_stencil( format );
+}
 
 static INLINE boolean 
 pf_is_compressed( enum pipe_format format )
