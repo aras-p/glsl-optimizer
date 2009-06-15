@@ -1347,7 +1347,7 @@ static void FETCH(f_ycbcr)( const struct gl_texture_image *texImage,
    const GLubyte cb = *src0 & 0xff;         /* chroma U */
    const GLubyte y1 = (*src1 >> 8) & 0xff;  /* luminance */
    const GLubyte cr = *src1 & 0xff;         /* chroma V */
-   const GLfloat y = (i & 1) ? y1 : y0;     /* choose even/odd luminance */
+   const GLubyte y = (i & 1) ? y1 : y0;     /* choose even/odd luminance */
    GLfloat r = 1.164F * (y - 16) + 1.596F * (cr - 128);
    GLfloat g = 1.164F * (y - 16) - 0.813F * (cr - 128) - 0.391F * (cb - 128);
    GLfloat b = 1.164F * (y - 16) + 2.018F * (cb - 128);
@@ -1388,7 +1388,7 @@ static void FETCH(f_ycbcr_rev)( const struct gl_texture_image *texImage,
    const GLubyte cr = (*src0 >> 8) & 0xff;  /* chroma V */
    const GLubyte y1 = *src1 & 0xff;         /* luminance */
    const GLubyte cb = (*src1 >> 8) & 0xff;  /* chroma U */
-   const GLfloat y = (i & 1) ? y1 : y0;     /* choose even/odd luminance */
+   const GLubyte y = (i & 1) ? y1 : y0;     /* choose even/odd luminance */
    GLfloat r = 1.164F * (y - 16) + 1.596F * (cr - 128);
    GLfloat g = 1.164F * (y - 16) - 0.813F * (cr - 128) - 0.391F * (cb - 128);
    GLfloat b = 1.164F * (y - 16) + 2.018F * (cb - 128);
