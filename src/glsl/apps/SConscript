@@ -26,3 +26,8 @@ env.Program(
     target = 'version',
     source = ['version.c'],
 )
+
+env.Program(
+    target = 'process',
+    source = ['process.c'],
+)
