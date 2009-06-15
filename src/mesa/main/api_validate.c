@@ -40,7 +40,7 @@ max_buffer_index(GLcontext *ctx, GLuint count, GLenum type,
 {
    const GLubyte *map = NULL;
    GLuint max = 0;
-   GLint i;
+   GLuint i;
 
    if (elementBuf->Name) {
       /* elements are in a user-defined buffer object.  need to map it */
@@ -224,7 +224,7 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
    /* Vertex buffer object tests */
    if (ctx->Array.ElementArrayBufferObj->Name) {
       /* use indices in the buffer object */
-      GLuint indexBytes;
+      GLsizei indexBytes;
 
       if (type == GL_UNSIGNED_INT) {
          indexBytes = count * sizeof(GLuint);
