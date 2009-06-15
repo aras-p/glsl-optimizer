@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.3
+ * Version:  7.6
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,6 +54,7 @@ static const struct {
    { OFF, "GL_ARB_framebuffer_object",         F(ARB_framebuffer_object) },
    { OFF, "GL_ARB_half_float_pixel",           F(ARB_half_float_pixel) },
    { OFF, "GL_ARB_imaging",                    F(ARB_imaging) },
+   { OFF, "GL_ARB_map_buffer_range",           F(ARB_map_buffer_range) },
    { ON,  "GL_ARB_multisample",                F(ARB_multisample) },
    { OFF, "GL_ARB_multitexture",               F(ARB_multitexture) },
    { OFF, "GL_ARB_occlusion_query",            F(ARB_occlusion_query) },
@@ -199,6 +201,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #endif
    ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
    ctx->Extensions.ARB_imaging = GL_TRUE;
+   ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
    ctx->Extensions.ARB_multitexture = GL_TRUE;
 #if FEATURE_ARB_occlusion_query
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;

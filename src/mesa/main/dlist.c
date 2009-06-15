@@ -8239,6 +8239,12 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_ProgramLocalParameters4fvEXT(table, save_ProgramLocalParameters4fvEXT);
 #endif
 
+   /* ARB 50. GL_ARB_map_buffer_range */
+#if FEATURE_ARB_map_buffer_range
+   SET_MapBufferRange(table, _mesa_MapBufferRange); /* no dlist save */
+   SET_FlushMappedBufferRange(table, _mesa_FlushMappedBufferRange); /* no dl */
+#endif
+
    /* ARB 59. GL_ARB_copy_buffer */
    SET_CopyBufferSubData(table, _mesa_CopyBufferSubData); /* no dlist save */
 }

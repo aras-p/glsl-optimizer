@@ -1503,7 +1503,7 @@ struct gl_buffer_object
    GLubyte *Data;       /**< Location of storage either in RAM or VRAM. */
    /** Fields describing a mapped buffer */
    /*@{*/
-   GLenum Access;       /**< GL_READ_ONLY_ARB, GL_WRITE_ONLY_ARB, etc. */
+   GLbitfield AccessFlags; /**< Mask of GL_MAP_x_BIT flags */
    GLvoid *Pointer;     /**< User-space address of mapping */
    GLintptr Offset;     /**< Mapped offset */
    GLsizeiptr Length;   /**< Mapped length */
@@ -2443,6 +2443,7 @@ struct gl_extensions
    GLboolean ARB_framebuffer_object;
    GLboolean ARB_half_float_pixel;
    GLboolean ARB_imaging;
+   GLboolean ARB_map_buffer_range;
    GLboolean ARB_multisample;
    GLboolean ARB_multitexture;
    GLboolean ARB_occlusion_query;

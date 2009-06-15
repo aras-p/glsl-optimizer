@@ -79,6 +79,16 @@ extern void *
 _mesa_buffer_map( GLcontext *ctx, GLenum target, GLenum access,
 		  struct gl_buffer_object * bufObj );
 
+extern void *
+_mesa_buffer_map_range( GLcontext *ctx, GLenum target, GLintptr offset,
+                        GLsizeiptr length, GLbitfield access,
+                        struct gl_buffer_object *bufObj );
+
+extern void
+_mesa_buffer_flush_mapped_range( GLcontext *ctx, GLenum target, 
+                                 GLintptr offset, GLsizeiptr length,
+                                 struct gl_buffer_object *obj );
+
 extern GLboolean
 _mesa_buffer_unmap( GLcontext *ctx, GLenum target,
                     struct gl_buffer_object * bufObj );
@@ -166,5 +176,12 @@ extern void GLAPIENTRY
 _mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
                         GLintptr readOffset, GLintptr writeOffset,
                         GLsizeiptr size);
+
+extern void * GLAPIENTRY
+_mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
+                     GLbitfield access);
+
+extern void GLAPIENTRY
+_mesa_FlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length);
 
 #endif
