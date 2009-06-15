@@ -26,7 +26,6 @@
  **************************************************************************/
 
 #include <stdlib.h>
-#include "sl_pp_directive.h"
 #include "sl_pp_token.h"
 
 
