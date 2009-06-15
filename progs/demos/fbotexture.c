@@ -9,13 +9,13 @@
  */
 
 
-#include <GL/glew.h>
 #include <GL/glut.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "extfuncs.h"
 
 /* For debug */
 #define DEPTH 1
@@ -80,9 +80,9 @@ RenderTexture(void)
    glTranslatef(0.0, 0.0, -15.0);
 
    /* draw to texture image */
-   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, MyFB);
+   glBindFramebuffer_func(GL_FRAMEBUFFER_EXT, MyFB);
 
-   status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+   status = glCheckFramebufferStatus_func(GL_FRAMEBUFFER_EXT);
    if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       printf("Framebuffer incomplete!!!\n");
    }
@@ -171,7 +171,7 @@ RenderTexture(void)
 
 #if DRAW
    /* Bind normal framebuffer */
-   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+   glBindFramebuffer_func(GL_FRAMEBUFFER_EXT, 0);
 #endif
 
    CheckError(__LINE__);
@@ -252,12 +252,12 @@ static void
 CleanUp(void)
 {
 #if DEPTH
-   glDeleteRenderbuffersEXT(1, &DepthRB);
+   glDeleteRenderbuffers_func(1, &DepthRB);
 #endif
 #if STENCIL
-   glDeleteRenderbuffersEXT(1, &StencilRB);
+   glDeleteRenderbuffers_func(1, &StencilRB);
 #endif
-   glDeleteFramebuffersEXT(1, &MyFB);
+   glDeleteFramebuffers_func(1, &MyFB);
 
    glDeleteTextures(1, &TexObj);
 
@@ -318,14 +318,14 @@ AttachDepthAndStencilBuffers(GLuint fbo,
 
    *depthRbOut = *stencilRbOut = 0;
 
-   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo);
+   glBindFramebuffer_func(GL_FRAMEBUFFER_EXT, fbo);
 
    if (tryDepthStencil) {
       GLuint rb;
 
-      glGenRenderbuffersEXT(1, &rb);
-      glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rb);
-      glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT,
+      glGenRenderbuffers_func(1, &rb);
+      glBindRenderbuffer_func(GL_RENDERBUFFER_EXT, rb);
+      glRenderbufferStorage_func(GL_RENDERBUFFER_EXT,
                                GL_DEPTH24_STENCIL8_EXT,
                                width, height);
       if (glGetError())
@@ -333,7 +333,7 @@ AttachDepthAndStencilBuffers(GLuint fbo,
 
       if (bindDepthStencil) {
          /* attach to both depth and stencil at once */
-         glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,
+         glFramebufferRenderbuffer_func(GL_FRAMEBUFFER_EXT,
                                       GL_DEPTH_STENCIL_ATTACHMENT,
                                       GL_RENDERBUFFER_EXT, rb);
          if (glGetError())
@@ -341,21 +341,21 @@ AttachDepthAndStencilBuffers(GLuint fbo,
       }
       else {
          /* attach to depth attachment point */
-         glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,
+         glFramebufferRenderbuffer_func(GL_FRAMEBUFFER_EXT,
                                       GL_DEPTH_ATTACHMENT_EXT,
                                       GL_RENDERBUFFER_EXT, rb);
          if (glGetError())
             return GL_FALSE;
 
          /* and attach to stencil attachment point */
-         glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,
+         glFramebufferRenderbuffer_func(GL_FRAMEBUFFER_EXT,
                                       GL_STENCIL_ATTACHMENT_EXT,
                                       GL_RENDERBUFFER_EXT, rb);
          if (glGetError())
             return GL_FALSE;
       }
 
-      status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+      status = glCheckFramebufferStatus_func(GL_FRAMEBUFFER_EXT);
       if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
          return GL_FALSE;
 
@@ -367,22 +367,22 @@ AttachDepthAndStencilBuffers(GLuint fbo,
    {
       GLuint rb;
 
-      glGenRenderbuffersEXT(1, &rb);
-      glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rb);
-      glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT,
+      glGenRenderbuffers_func(1, &rb);
+      glBindRenderbuffer_func(GL_RENDERBUFFER_EXT, rb);
+      glRenderbufferStorage_func(GL_RENDERBUFFER_EXT,
                                GL_DEPTH_COMPONENT,
                                width, height);
       if (glGetError())
          return GL_FALSE;
 
       /* attach to depth attachment point */
-      glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,
+      glFramebufferRenderbuffer_func(GL_FRAMEBUFFER_EXT,
                                    GL_DEPTH_ATTACHMENT_EXT,
                                    GL_RENDERBUFFER_EXT, rb);
       if (glGetError())
          return GL_FALSE;
 
-      status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+      status = glCheckFramebufferStatus_func(GL_FRAMEBUFFER_EXT);
       if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
          return GL_FALSE;
 
@@ -393,26 +393,26 @@ AttachDepthAndStencilBuffers(GLuint fbo,
    {
       GLuint rb;
 
-      glGenRenderbuffersEXT(1, &rb);
-      glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rb);
-      glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT,
+      glGenRenderbuffers_func(1, &rb);
+      glBindRenderbuffer_func(GL_RENDERBUFFER_EXT, rb);
+      glRenderbufferStorage_func(GL_RENDERBUFFER_EXT,
                                GL_STENCIL_INDEX,
                                width, height);
       if (glGetError())
          return GL_FALSE;
 
       /* attach to depth attachment point */
-      glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,
+      glFramebufferRenderbuffer_func(GL_FRAMEBUFFER_EXT,
                                    GL_STENCIL_ATTACHMENT_EXT,
                                    GL_RENDERBUFFER_EXT, rb);
       if (glGetError())
          return GL_FALSE;
 
-      status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+      status = glCheckFramebufferStatus_func(GL_FRAMEBUFFER_EXT);
       if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-         glDeleteRenderbuffersEXT(1, depthRbOut);
+         glDeleteRenderbuffers_func(1, depthRbOut);
          *depthRbOut = 0;
-         glDeleteRenderbuffersEXT(1, &rb);
+         glDeleteRenderbuffers_func(1, &rb);
          return GL_FALSE;
       }
 
@@ -463,6 +463,37 @@ ParseArgs(int argc, char *argv[])
 }
 
 
+static void
+SetupFunctionPointers(void)
+{
+   GetExtensionFuncs();
+
+   if (Use_ARB_fbo) {
+      /* no-op: use the ARB functions as-is */
+   }
+   else {
+      /* set the ARB-flavor function pointers to point to the EXT functions */
+      glIsRenderbuffer_func = glIsRenderbufferEXT_func;
+      glBindRenderbuffer_func = glBindRenderbufferEXT_func;
+      glDeleteRenderbuffers_func = glDeleteRenderbuffersEXT_func;
+      glGenRenderbuffers_func = glGenRenderbuffersEXT_func;
+      glRenderbufferStorage_func = glRenderbufferStorageEXT_func;
+      glGetRenderbufferParameteriv_func = glGetRenderbufferParameterivEXT_func;
+      glIsFramebuffer_func = glIsFramebufferEXT_func;
+      glBindFramebuffer_func = glBindFramebufferEXT_func;
+      glDeleteFramebuffers_func = glDeleteFramebuffersEXT_func;
+      glGenFramebuffers_func = glGenFramebuffersEXT_func;
+      glCheckFramebufferStatus_func = glCheckFramebufferStatusEXT_func;
+      glFramebufferTexture1D_func = glFramebufferTexture1DEXT_func;
+      glFramebufferTexture2D_func = glFramebufferTexture2DEXT_func;
+      glFramebufferTexture3D_func = glFramebufferTexture3DEXT_func;
+      glFramebufferRenderbuffer_func = glFramebufferRenderbufferEXT_func;
+      glGetFramebufferAttachmentParameteriv_func = glGetFramebufferAttachmentParameterivEXT_func;
+      glGenerateMipmap_func = glGenerateMipmapEXT_func;
+   }
+}
+
+
 /*
  * Make FBO to render into given texture.
  */
@@ -472,10 +503,10 @@ MakeFBO_RenderTexture(GLuint TexObj)
    GLuint fb;
    GLint sizeFudge = 0;
 
-   glGenFramebuffersEXT(1, &fb);
-   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fb);
+   glGenFramebuffers_func(1, &fb);
+   glBindFramebuffer_func(GL_FRAMEBUFFER_EXT, fb);
    /* Render color to texture */
-   glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
+   glFramebufferTexture2D_func(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
                              TexTarget, TexObj, TextureLevel);
 
    if (Use_ARB_fbo) {
@@ -512,26 +543,26 @@ MakeFBO_RenderTexture(GLuint TexObj)
    {
       GLint bits, w, h;
 
-      glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, DepthRB);
-      glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT,
+      glBindRenderbuffer_func(GL_RENDERBUFFER_EXT, DepthRB);
+      glGetRenderbufferParameteriv_func(GL_RENDERBUFFER_EXT,
                                       GL_RENDERBUFFER_WIDTH_EXT, &w);
-      glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT,
+      glGetRenderbufferParameteriv_func(GL_RENDERBUFFER_EXT,
                                       GL_RENDERBUFFER_HEIGHT_EXT, &h);
       printf("Color/Texture size: %d x %d\n", TexWidth, TexHeight);
       printf("Depth buffer size: %d x %d\n", w, h);
 
-      glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT,
+      glGetRenderbufferParameteriv_func(GL_RENDERBUFFER_EXT,
                                       GL_RENDERBUFFER_DEPTH_SIZE_EXT, &bits);
       printf("Depth renderbuffer size = %d bits\n", bits);
 
-      glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, StencilRB);
-      glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT,
+      glBindRenderbuffer_func(GL_RENDERBUFFER_EXT, StencilRB);
+      glGetRenderbufferParameteriv_func(GL_RENDERBUFFER_EXT,
                                       GL_RENDERBUFFER_STENCIL_SIZE_EXT, &bits);
       printf("Stencil renderbuffer size = %d bits\n", bits);
    }
 
    /* bind the regular framebuffer */
-   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+   glBindFramebuffer_func(GL_FRAMEBUFFER_EXT, 0);
 
    return fb;
 }
@@ -546,6 +577,8 @@ Init(void)
    }
 
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
+
+   SetupFunctionPointers();
 
    /* lighting */
    {
@@ -605,7 +638,6 @@ main(int argc, char *argv[])
    glutInitWindowSize(Width, Height);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
    Win = glutCreateWindow(argv[0]);
-   glewInit();
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
    glutDisplayFunc(Display);
