@@ -126,6 +126,22 @@ softpipe_is_texture_referenced( struct pipe_context *pipe,
 				struct pipe_texture *texture,
 				unsigned face, unsigned level)
 {
+   struct softpipe_context *softpipe = softpipe_context( pipe );
+   unsigned i;
+
+   if(softpipe->dirty_render_cache) {
+      for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++) {
+         if(softpipe->framebuffer.cbufs[i] && 
+            softpipe->framebuffer.cbufs[i]->texture == texture)
+            return PIPE_REFERENCED_FOR_WRITE;
+      }
+      if(softpipe->framebuffer.zsbuf && 
+         softpipe->framebuffer.zsbuf->texture == texture)
+         return PIPE_REFERENCED_FOR_WRITE;
+   }
+   
+   /* FIXME: we also need to do the same for the texture cache */
+   
    return PIPE_UNREFERENCED;
 }
 

@@ -71,6 +71,8 @@ softpipe_flush( struct pipe_context *pipe,
        * to unmap surfaces when flushing.
        */
       softpipe_unmap_transfers(softpipe);
+      
+      softpipe->dirty_render_cache = FALSE;
    }
 
    /* Enable to dump BMPs of the color/depth buffers each frame */
