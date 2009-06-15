@@ -49,7 +49,6 @@
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/mtypes.h"
-#include "main/bufferobj.h"
 
 #include "vbo.h"
 
@@ -162,8 +161,7 @@ void vbo_rebase_prims( GLcontext *ctx,
 				 GL_ELEMENT_ARRAY_BUFFER,
 				 ib->obj);
 
-      _mesa_reference_buffer_object(ctx, &tmp_ib.obj,
-                                    ctx->Shared->NullBufferObj);
+      tmp_ib.obj = ctx->Shared->NullBufferObj;
       tmp_ib.ptr = tmp_indices;
       tmp_ib.count = ib->count;
       tmp_ib.type = ib->type;

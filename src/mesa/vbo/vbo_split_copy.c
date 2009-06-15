@@ -30,7 +30,6 @@
  */
 
 #include "main/glheader.h"
-#include "main/bufferobj.h"
 #include "main/imports.h"
 #include "main/image.h"
 #include "main/macros.h"
@@ -518,8 +517,7 @@ replay_init( struct copy_context *copy )
       dst->Ptr = copy->dstbuf + offset;
       dst->Enabled = GL_TRUE;
       dst->Normalized = src->Normalized; 
-      _mesa_reference_buffer_object(ctx, &dst->BufferObj,
-                                    ctx->Shared->NullBufferObj);
+      dst->BufferObj = ctx->Shared->NullBufferObj;
       dst->_MaxElement = copy->dstbuf_size; /* may be less! */
 
       offset += copy->varying[i].size;
@@ -539,8 +537,7 @@ replay_init( struct copy_context *copy )
     */
    copy->dstib.count = 0;	/* duplicates dstelt_nr */
    copy->dstib.type = GL_UNSIGNED_INT;
-   _mesa_reference_buffer_object(ctx, &copy->dstib.obj,
-                                 ctx->Shared->NullBufferObj);
+   copy->dstib.obj = ctx->Shared->NullBufferObj;
    copy->dstib.ptr = copy->dstelt;
 }
 
