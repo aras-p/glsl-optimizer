@@ -541,6 +541,7 @@ main(int argc, char *argv[])
    for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "-h") == 0) {
          usage();
+         exit(0);
       }
       else if (strcmp(argv[i], "-l") == 0) {
          Locking = 1;
