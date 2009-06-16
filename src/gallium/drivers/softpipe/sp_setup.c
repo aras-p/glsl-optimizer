@@ -444,7 +444,8 @@ static void flush_spans( struct setup_context *setup )
             mask |= MASK_TOP_RIGHT;
          if (x+1 >= xleft1 && x+1 < xright1)
             mask |= MASK_BOTTOM_RIGHT;
-         EMIT_QUAD( setup, x, setup->span.y, mask );
+         if (mask)
+            EMIT_QUAD( setup, x, setup->span.y, mask );
       }
       break;
 
@@ -458,7 +459,8 @@ static void flush_spans( struct setup_context *setup )
             mask |= MASK_TOP_LEFT;
          if (x+1 >= xleft0 && x+1 < xright0)
             mask |= MASK_TOP_RIGHT;
-         EMIT_QUAD( setup, x, setup->span.y, mask );
+         if (mask)
+            EMIT_QUAD( setup, x, setup->span.y, mask );
       }
       break;
 
@@ -472,7 +474,8 @@ static void flush_spans( struct setup_context *setup )
             mask |= MASK_BOTTOM_LEFT;
          if (x+1 >= xleft1 && x+1 < xright1)
             mask |= MASK_BOTTOM_RIGHT;
-         EMIT_QUAD( setup, x, setup->span.y, mask );
+         if (mask)
+            EMIT_QUAD( setup, x, setup->span.y, mask );
       }
       break;
 
