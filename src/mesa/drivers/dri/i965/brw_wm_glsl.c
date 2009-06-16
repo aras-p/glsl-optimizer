@@ -2831,6 +2831,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_trunc(c, inst);
 		break;
 	    case OPCODE_MOV:
+	    case OPCODE_SWZ:
 		emit_mov(c, inst);
 		break;
 	    case OPCODE_DP3:
