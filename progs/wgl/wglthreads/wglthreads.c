@@ -72,6 +72,7 @@ struct winthread {
    int WinWidth, WinHeight;
    GLboolean NewSize;
    HANDLE hEventInitialised;
+   GLboolean Initialized;
    GLboolean MakeNewTexture;
    HANDLE hEventRedraw;
 };
@@ -288,6 +289,15 @@ draw_loop(struct winthread *wt)
 
       wglMakeCurrent(wt->hDC, wt->Context);
 
+      if (!wt->Initialized) {
+         printf("wglthreads: %d: GL_RENDERER = %s\n", wt->Index,
+                (char *) glGetString(GL_RENDERER));
+         if (Texture /*&& wt->Index == 0*/) {
+            MakeNewTexture(wt);
+         }
+         wt->Initialized = GL_TRUE;
+      }
+
       if (Locking)
          LeaveCriticalSection(&Mutex);
 
@@ -482,14 +492,6 @@ create_window(struct winthread *wt, HGLRC shareCtx)
    wt->WinWidth = width;
    wt->WinHeight = height;
    wt->NewSize = GL_TRUE;
-
-   wglMakeCurrent(hdc, ctx);
-   printf("wglthreads: %d: GL_RENDERER = %s\n", wt->Index, (char *) glGetString(GL_RENDERER));
-   wglMakeCurrent(NULL, NULL);
-
-   if (Texture/* && wt->Index == 0*/) {
-      MakeNewTexture(wt);
-   }
 }
 
 
