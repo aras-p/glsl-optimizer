@@ -69,39 +69,65 @@ PUBLIC const char __driConfigOptions[] =
 struct dri1_api *__dri1_api_hooks = NULL;
 
 static const __DRIconfig **
-dri_fill_in_modes(__DRIscreenPrivate * psp,
-		  unsigned pixel_bits, unsigned depth_bits,
-		  unsigned stencil_bits, GLboolean have_back_buffer)
+dri_fill_in_modes(struct dri_screen *screen,
+		  unsigned pixel_bits)
 {
    __DRIconfig **configs;
-   __GLcontextModes *m;
    unsigned num_modes;
-   uint8_t depth_bits_array[3];
-   uint8_t stencil_bits_array[3];
+   uint8_t depth_bits_array[4];
+   uint8_t stencil_bits_array[4];
    uint8_t msaa_samples_array[1];
    unsigned depth_buffer_factor;
    unsigned back_buffer_factor;
    unsigned msaa_samples_factor;
    GLenum fb_format;
    GLenum fb_type;
-   int i;
+   struct pipe_screen *p_screen = screen->pipe_screen;
 
    static const GLenum back_buffer_modes[] = {
       GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
    };
 
-   /* TODO probe the hardware of what is supports */
    depth_bits_array[0] = 0;
-   depth_bits_array[1] = 24;
-   depth_bits_array[2] = 24;
+   stencil_bits_array[0] = 0;
+   depth_buffer_factor = 1;
 
-   stencil_bits_array[0] = 0;	       /* no depth or stencil */
-   stencil_bits_array[1] = 0;	       /* z24x8 */
-   stencil_bits_array[2] = 8;	       /* z24s8 */
+   if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z16_UNORM,
+				     PIPE_TEXTURE_2D,
+				     PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0)) {
+      depth_bits_array[depth_buffer_factor] = 16;
+      stencil_bits_array[depth_buffer_factor++] = 0;
+   }
+   if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_X8Z24_UNORM,
+				     PIPE_TEXTURE_2D,
+				     PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0)) {
+      depth_bits_array[depth_buffer_factor] = 24;
+      stencil_bits_array[depth_buffer_factor++] = 0;
+      screen->d_depth_bits_last = TRUE;
+   } else if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z24X8_UNORM,
+					    PIPE_TEXTURE_2D,
+					    PIPE_TEXTURE_USAGE_DEPTH_STENCIL,
+					    0)) {
+      depth_bits_array[depth_buffer_factor] = 24;
+      stencil_bits_array[depth_buffer_factor++] = 0;
+      screen->d_depth_bits_last = FALSE;
+   }
+   if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z24S8_UNORM,
+				     PIPE_TEXTURE_2D,
+				     PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0)) {
+      depth_bits_array[depth_buffer_factor] = 24;
+      stencil_bits_array[depth_buffer_factor++] = 8;
+      screen->sd_depth_bits_last = FALSE;
+   } else if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z24S8_UNORM,
+					    PIPE_TEXTURE_2D,
+					    PIPE_TEXTURE_USAGE_DEPTH_STENCIL,
+					    0)) {
+      depth_bits_array[depth_buffer_factor] = 24;
+      stencil_bits_array[depth_buffer_factor++] = 8;
+      screen->sd_depth_bits_last = TRUE;
+   }
 
    msaa_samples_array[0] = 0;
-
-   depth_buffer_factor = 3;
    back_buffer_factor = 3;
    msaa_samples_factor = 1;
 
@@ -109,9 +135,19 @@ dri_fill_in_modes(__DRIscreenPrivate * psp,
       depth_buffer_factor * back_buffer_factor * msaa_samples_factor * 4;
 
    if (pixel_bits == 16) {
+      if (!p_screen->is_format_supported(p_screen,
+					 PIPE_FORMAT_R5G6B5_UNORM,
+					 PIPE_TEXTURE_2D,
+					 PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
+	 return NULL;
       fb_format = GL_RGB;
       fb_type = GL_UNSIGNED_SHORT_5_6_5;
    } else {
+      if (!p_screen->is_format_supported(p_screen,
+					 PIPE_FORMAT_A8R8G8B8_UNORM,
+					 PIPE_TEXTURE_2D,
+					 PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
+	 return NULL;
       fb_format = GL_BGRA;
       fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
    }
@@ -124,13 +160,6 @@ dri_fill_in_modes(__DRIscreenPrivate * psp,
    if (configs == NULL) {
       debug_printf("%s: driCreateConfigs failed\n", __FUNCTION__);
       return NULL;
-   }
-
-   for (i = 0; configs[i]; i++) {
-      m = &configs[i]->modes;
-      if ((m->stencilBits != 0) && (m->stencilBits != stencil_bits)) {
-	 m->visualRating = GLX_SLOW_CONFIG;
-      }
    }
 
    return (const const __DRIconfig **)configs;
@@ -200,7 +229,13 @@ dri_init_screen(__DRIscreenPrivate * sPriv)
    driParseOptionInfo(&screen->optionCache,
 		      __driConfigOptions, __driNConfigOptions);
 
-   configs = dri_fill_in_modes(sPriv, sPriv->fbBPP, 24, 8, 1);
+   /**
+    * FIXME: If the driver supports format conversion swapbuffer blits, we might
+    * want to support other color bit depths than the server is currently
+    * using.
+    */
+
+   configs = dri_fill_in_modes(screen, sPriv->fbBPP);
    if (!configs)
       goto out_no_configs;
 
@@ -248,7 +283,7 @@ dri_init_screen2(__DRIscreenPrivate * sPriv)
    driParseOptionInfo(&screen->optionCache,
 		      __driConfigOptions, __driNConfigOptions);
 
-   return dri_fill_in_modes(sPriv, 4 * 8, 24, 8, 1);
+   return dri_fill_in_modes(screen, 32);
  fail:
    return NULL;
 }

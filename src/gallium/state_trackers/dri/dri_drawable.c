@@ -157,29 +157,28 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
       switch (buffers[i].attachment) {
       case __DRI_BUFFER_FRONT_LEFT:
 	 index = ST_SURFACE_FRONT_LEFT;
-	 format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	 format = drawable->color_format;
 	 break;
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
 	 index = ST_SURFACE_FRONT_LEFT;
-	 format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	 format = drawable->color_format;
 	 break;
       case __DRI_BUFFER_BACK_LEFT:
 	 index = ST_SURFACE_BACK_LEFT;
-	 format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	 format = drawable->color_format;
 	 break;
       case __DRI_BUFFER_DEPTH:
 	 index = ST_SURFACE_DEPTH;
-	 format = PIPE_FORMAT_Z24S8_UNORM;
+	 format = drawable->depth_format;
 	 break;
       case __DRI_BUFFER_STENCIL:
 	 index = ST_SURFACE_DEPTH;
-	 format = PIPE_FORMAT_Z24S8_UNORM;
+	 format = drawable->stencil_format;
 	 break;
       case __DRI_BUFFER_ACCUM:
       default:
 	 assert(0);
       }
-      assert(buffers[i].cpp == 4);
 
       if (index == ST_SURFACE_DEPTH) {
 	 if (have_depth)
@@ -218,10 +217,8 @@ dri_create_buffer(__DRIscreenPrivate * sPriv,
 		  __DRIdrawablePrivate * dPriv,
 		  const __GLcontextModes * visual, boolean isPixmap)
 {
-   enum pipe_format colorFormat, depthFormat, stencilFormat;
    struct dri_screen *screen = sPriv->private;
    struct dri_drawable *drawable = NULL;
-   struct pipe_screen *pscreen = screen->pipe_screen;
    int i;
 
    if (isPixmap)
@@ -231,39 +228,52 @@ dri_create_buffer(__DRIscreenPrivate * sPriv,
    if (drawable == NULL)
       goto fail;
 
-   /* XXX: todo: use the pipe_screen queries to figure out which
-    * render targets are supportable.
-    */
-   assert(visual->redBits == 8);
-   assert(visual->depthBits == 24 || visual->depthBits == 0);
-   assert(visual->stencilBits == 8 || visual->stencilBits == 0);
+   drawable->color_format = (visual->redBits == 8) ?
+      PIPE_FORMAT_A8R8G8B8_UNORM : PIPE_FORMAT_R5G6B5_UNORM;
 
-   colorFormat = PIPE_FORMAT_A8R8G8B8_UNORM;
+   debug_printf("Red bits is %d\n", visual->redBits);
 
-   if (visual->depthBits) {
-      if (pscreen->is_format_supported(pscreen, PIPE_FORMAT_Z24S8_UNORM,
-				       PIPE_TEXTURE_2D,
-				       PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
-	 depthFormat = PIPE_FORMAT_Z24S8_UNORM;
-      else
-	 depthFormat = PIPE_FORMAT_S8Z24_UNORM;
-   } else
-      depthFormat = PIPE_FORMAT_NONE;
+   switch(visual->depthBits) {
+   default:
+   case 0:
+      debug_printf("Depth buffer 0.\n");
+      drawable->depth_format = PIPE_FORMAT_NONE;
+      break;
+   case 16:
+      debug_printf("Depth buffer 16.\n");
+      drawable->depth_format = PIPE_FORMAT_Z16_UNORM;
+      break;
+   case 24:
+      if (visual->stencilBits == 0) {
+         debug_printf("Depth buffer 24. Stencil 0.\n");
+	 drawable->depth_format = (screen->d_depth_bits_last) ?
+	    PIPE_FORMAT_X8Z24_UNORM:
+	    PIPE_FORMAT_Z24X8_UNORM;
+      } else {
+         debug_printf("Combined depth stencil 24 / 8.\n");
+	 drawable->depth_format = (screen->sd_depth_bits_last) ?
+	    PIPE_FORMAT_S8Z24_UNORM:
+	    PIPE_FORMAT_Z24S8_UNORM;
+      }
+      break;
+   }
 
-   if (visual->stencilBits) {
-      if (pscreen->is_format_supported(pscreen, PIPE_FORMAT_Z24S8_UNORM,
-				       PIPE_TEXTURE_2D,
-				       PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
-	 stencilFormat = PIPE_FORMAT_Z24S8_UNORM;
-      else
-	 stencilFormat = PIPE_FORMAT_S8Z24_UNORM;
-   } else
-      stencilFormat = PIPE_FORMAT_NONE;
+   switch(visual->stencilBits) {
+   default:
+   case 0:
+      drawable->stencil_format = PIPE_FORMAT_NONE;
+      break;
+   case 8:
+      drawable->stencil_format = (screen->sd_depth_bits_last) ?
+	 PIPE_FORMAT_S8Z24_UNORM:
+         PIPE_FORMAT_Z24S8_UNORM;
+      break;
+   }
 
    drawable->stfb = st_create_framebuffer(visual,
-					  colorFormat,
-					  depthFormat,
-					  stencilFormat,
+					  drawable->color_format,
+					  drawable->depth_format,
+					  drawable->stencil_format,
 					  dPriv->w,
 					  dPriv->h, (void *)drawable);
    if (drawable->stfb == NULL)

@@ -62,6 +62,8 @@ struct dri_screen
    /* gallium */
    struct pipe_winsys *pipe_winsys;
    struct pipe_screen *pipe_screen;
+   boolean d_depth_bits_last;
+   boolean sd_depth_bits_last;
 };
 
 /** cast wrapper */
