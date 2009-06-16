@@ -443,7 +443,7 @@ create_window(struct winthread *wt, HGLRC shareCtx)
    win = CreateWindowEx(0,
                         wc.lpszClassName,
                         "wglthreads",
-                        WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+                        WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TILEDWINDOW,
                         xpos,
                         ypos,
                         width,
