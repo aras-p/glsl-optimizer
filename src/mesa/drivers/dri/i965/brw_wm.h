@@ -65,7 +65,7 @@ struct brw_wm_prog_key {
    GLuint flat_shade:1;
    GLuint runtime_check_aads_emit:1;
    
-   GLuint projtex_mask:16;
+   GLbitfield proj_attrib_mask; /**< one bit per fragment program attribute */
    GLuint shadowtex_mask:16;
    GLuint yuvtex_mask:16;
    GLuint yuvtex_swap_mask:16;	/* UV swaped */

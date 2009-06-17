@@ -39,8 +39,8 @@
  */
 struct tracker {
    GLboolean twoside;
-   GLubyte active[PROGRAM_OUTPUT+1][128];
-   GLuint size_masks[4];
+   GLubyte active[PROGRAM_OUTPUT+1][MAX_PROGRAM_TEMPS];
+   GLbitfield size_masks[4];  /**< one bit per fragment program input attrib */
 };
 
 
@@ -53,8 +53,10 @@ static void set_active_component( struct tracker *t,
    case PROGRAM_TEMPORARY:
    case PROGRAM_INPUT:
    case PROGRAM_OUTPUT:
+      assert(file < PROGRAM_OUTPUT + 1);
+      assert(index < Elements(t->active[0]));
       t->active[file][index] |= active;
-
+      break;
    default:
       break;
    }
@@ -108,10 +110,15 @@ static GLubyte get_active( struct tracker *t,
    return active;
 }
 
+/**
+ * Return the size (1,2,3 or 4) of the output/result for VERT_RESULT_idx.
+ */
 static GLubyte get_output_size( struct tracker *t,
 				GLuint idx )
 {
-   GLubyte active = t->active[PROGRAM_OUTPUT][idx];
+   GLubyte active;
+   assert(idx < VERT_RESULT_MAX);
+   active = t->active[PROGRAM_OUTPUT][idx];
    if (active & (1<<3)) return 4;
    if (active & (1<<2)) return 3;
    if (active & (1<<1)) return 2;
@@ -123,7 +130,7 @@ static GLubyte get_output_size( struct tracker *t,
  */
 static void calc_sizes( struct tracker *t )
 {
-   GLuint i;
+   GLint vertRes;
 
    if (t->twoside) {
       t->active[PROGRAM_OUTPUT][VERT_RESULT_COL0] |= 
@@ -133,12 +140,27 @@ static void calc_sizes( struct tracker *t )
 	 t->active[PROGRAM_OUTPUT][VERT_RESULT_BFC1];
    }
 
-   for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
-      switch (get_output_size(t, i)) {
-      case 4: t->size_masks[4-1] |= 1<<i;
-      case 3: t->size_masks[3-1] |= 1<<i;
-      case 2: t->size_masks[2-1] |= 1<<i;
-      case 1: t->size_masks[1-1] |= 1<<i;
+   /* Examine vertex program output sizes to set the size_masks[] info
+    * which describes the fragment program input sizes.
+    */
+   for (vertRes = VERT_RESULT_TEX0; vertRes < VERT_RESULT_MAX; vertRes++) {
+      GLint fragAttrib;
+
+      /* map vertex program output index to fragment program input index */
+      if (vertRes <= VERT_RESULT_TEX7)
+         fragAttrib = FRAG_ATTRIB_TEX0 + vertRes - VERT_RESULT_TEX0;
+      else if (vertRes >= VERT_RESULT_VAR0)
+         fragAttrib = FRAG_ATTRIB_VAR0 + vertRes - VERT_RESULT_VAR0;
+      else
+         continue;
+      assert(fragAttrib >= FRAG_ATTRIB_TEX0);
+      assert(fragAttrib <= FRAG_ATTRIB_MAX);
+
+      switch (get_output_size(t, vertRes)) {
+      case 4: t->size_masks[4-1] |= 1 << fragAttrib;
+      case 3: t->size_masks[3-1] |= 1 << fragAttrib;
+      case 2: t->size_masks[2-1] |= 1 << fragAttrib;
+      case 1: t->size_masks[1-1] |= 1 << fragAttrib;
 	 break;
       }
    }
