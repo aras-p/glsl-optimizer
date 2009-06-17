@@ -133,20 +133,13 @@ error1:
 boolean
 stw_init_thread(void)
 {
-   if (!stw_tls_init_thread())
-      return FALSE;
-
-   if (!stw_framebuffer_init_thread())
-      return FALSE;
-
-   return TRUE;
+   return stw_tls_init_thread();
 }
 
 
 void
 stw_cleanup_thread(void)
 {
-   stw_framebuffer_cleanup_thread();
    stw_tls_cleanup_thread();
 }
 

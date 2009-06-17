@@ -79,10 +79,4 @@ struct stw_framebuffer *
 stw_framebuffer_from_hdc(
    HDC hdc );
 
-boolean
-stw_framebuffer_init_thread(void);
-
-void
-stw_framebuffer_cleanup_thread(void);
-
 #endif /* STW_FRAMEBUFFER_H */

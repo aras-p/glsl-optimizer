@@ -84,7 +84,7 @@ stw_framebuffer_destroy_locked(
  * @sa http://msdn.microsoft.com/en-us/library/ms644975(VS.85).aspx
  * @sa http://msdn.microsoft.com/en-us/library/ms644960(VS.85).aspx
  */
-static LRESULT CALLBACK
+LRESULT CALLBACK
 stw_call_window_proc(
    int nCode,
    WPARAM wParam,
@@ -422,39 +422,4 @@ stw_swap_layer_buffers(
       return stw_swap_buffers(hdc);
 
    return FALSE;
-}
-
-
-boolean
-stw_framebuffer_init_thread(void)
-{
-   struct stw_tls_data *tls_data;
-   
-   tls_data = stw_tls_get_data();
-   if(!tls_data)
-      return FALSE;
-   
-   tls_data->hCallWndProcHook = SetWindowsHookEx(WH_CALLWNDPROC,
-                                                 stw_call_window_proc,
-                                                 NULL,
-                                                 GetCurrentThreadId());
-   if(tls_data->hCallWndProcHook == NULL)
-      return FALSE;
-   
-   return TRUE;
-}
-
-void
-stw_framebuffer_cleanup_thread(void)
-{
-   struct stw_tls_data *tls_data;
-   
-   tls_data = stw_tls_get_data();
-   if(!tls_data)
-      return;
-   
-   if(tls_data->hCallWndProcHook) {
-      UnhookWindowsHookEx(tls_data->hCallWndProcHook);
-      tls_data->hCallWndProcHook = NULL;
-   }
 }
