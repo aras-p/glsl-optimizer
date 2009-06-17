@@ -134,16 +134,7 @@ void st_resize_framebuffer( struct st_framebuffer *stfb,
    if (stfb->Base.Width != width || stfb->Base.Height != height) {
       GET_CURRENT_CONTEXT(ctx);
       if (ctx) {
-         if (stfb->InitWidth == 0 && stfb->InitHeight == 0) {
-            /* didn't have a valid size until now */
-            stfb->InitWidth = width;
-            stfb->InitHeight = height;
-            if (ctx->Viewport.Width <= 1) {
-               /* set context's initial viewport/scissor size */
-               _mesa_set_viewport(ctx, 0, 0, width, height);
-               _mesa_set_scissor(ctx, 0, 0, width, height);
-            }
-         }
+         _mesa_check_init_viewport(ctx, width, height);
 
          _mesa_resize_framebuffer(ctx, &stfb->Base, width, height);
 
