@@ -507,9 +507,9 @@ ThreadProc(void *p)
    struct winthread *wt = (struct winthread *) p;
    HGLRC share;
 
-   /* Wait for first thread context */
+   /* Wait for the previous thread */
    if(Texture && wt->Index > 0) {
-      WaitForSingleObject(WinThreads[0].hEventInitialised, INFINITE);
+      WaitForSingleObject(WinThreads[wt->Index - 1].hEventInitialised, INFINITE);
       share = WinThreads[0].Context;
    }
    else
