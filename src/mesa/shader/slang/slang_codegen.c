@@ -2488,6 +2488,12 @@ _slang_can_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
    assert(oper->type == SLANG_OPER_FOR);
    assert(oper->num_children == 4);
 
+   if (_slang_find_node_type((slang_operation *) oper, SLANG_OPER_CONTINUE) ||
+       _slang_find_node_type((slang_operation *) oper, SLANG_OPER_BREAK)) {
+      /* dont't unroll loops containing continue/break statements */
+      return GL_FALSE;
+   }
+
    /* children[0] must be either "int i=constant" or "i=constant" */
    if (oper->children[0].type == SLANG_OPER_BLOCK_NO_NEW_SCOPE) {
       slang_variable *var;
