@@ -53,7 +53,7 @@ def AddOptions(opts):
 		from SCons.Variables.EnumVariable import EnumVariable as EnumOption
 	except ImportError:
 		from SCons.Options.EnumOption import EnumOption
-	opts.Add(BoolOption('debug', 'debug build', 'no'))
+	opts.Add(BoolOption('debug', 'debug build', 'yes'))
 	opts.Add(BoolOption('profile', 'profile build', 'no'))
 	opts.Add(BoolOption('quiet', 'quiet command lines', 'yes'))
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
