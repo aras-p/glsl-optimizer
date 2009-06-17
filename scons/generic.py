@@ -264,7 +264,7 @@ def generate(env):
         pass
 
     # Build type
-    env['debug'] = _bool_map[ARGUMENTS.get('debug', 'yes')]
+    env['debug'] = _bool_map[ARGUMENTS.get('debug', 'no')]
     env['profile'] = _bool_map[ARGUMENTS.get('profile', 'no')]
 
     # Put build output in a separate dir, which depends on the current
