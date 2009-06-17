@@ -21,7 +21,7 @@ static void Display(void)
    GLfloat min, max;
    int i;
 
-   glClearColor(0.5, 0.5, 0.5, 0);
+   glClearColor(0.5, 0.5, 0.5, 1.0);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
    /* draw a sphere */
@@ -82,7 +82,7 @@ static void Key(unsigned char key, int x, int y)
 
 static void Init(void)
 {
-   const GLfloat blue[4] = {.1, .1, 1.0, 0.0};
+   const GLfloat blue[4] = {.1, .1, 1.0, 1.0};
    const GLfloat gray[4] = {0.2, 0.2, 0.2, 1.0};
    const GLfloat white[4] = {1.0, 1.0, 1.0, 1.0};
    const GLfloat pos[4] = {0, 0, 10, 0};

@@ -614,9 +614,10 @@ struct brw_context
       struct brw_wm_prog_data *prog_data;
       struct brw_wm_compile *compile_data;
 
-      /* Input sizes, calculated from active vertex program:
+      /** Input sizes, calculated from active vertex program.
+       * One bit per fragment program input attribute.
        */
-      GLuint input_size_masks[4];
+      GLbitfield input_size_masks[4];
 
       /** Array of surface default colors (texture border color) */
       dri_bo *sdc_bo[BRW_MAX_TEX_UNIT];

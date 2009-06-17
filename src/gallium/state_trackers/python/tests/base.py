@@ -46,6 +46,14 @@ for name, value in globals().items():
     if name.startswith("PIPE_FORMAT_") and isinstance(value, int):
         formats[value] = name
 
+def is_depth_stencil_format(format):
+    # FIXME: make and use binding to pf_is_depth_stencil
+    return format in (
+        PIPE_FORMAT_Z32_UNORM,
+        PIPE_FORMAT_Z24S8_UNORM,
+        PIPE_FORMAT_Z24X8_UNORM,
+        PIPE_FORMAT_Z16_UNORM,
+    )
 
 def make_image(width, height, rgba):
     import Image

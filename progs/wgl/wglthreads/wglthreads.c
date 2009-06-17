@@ -72,6 +72,7 @@ struct winthread {
    int WinWidth, WinHeight;
    GLboolean NewSize;
    HANDLE hEventInitialised;
+   GLboolean Initialized;
    GLboolean MakeNewTexture;
    HANDLE hEventRedraw;
 };
@@ -114,20 +115,20 @@ static void
 MakeNewTexture(struct winthread *wt)
 {
 #define TEX_SIZE 128
-   static float step = 0.0;
+   static float step = 0.0f;
    GLfloat image[TEX_SIZE][TEX_SIZE][4];
    GLint width;
    int i, j;
 
    for (j = 0; j < TEX_SIZE; j++) {
       for (i = 0; i < TEX_SIZE; i++) {
-         float dt = 5.0 * (j - 0.5 * TEX_SIZE) / TEX_SIZE;
-         float ds = 5.0 * (i - 0.5 * TEX_SIZE) / TEX_SIZE;
+         float dt = 5.0f * (j - 0.5f * TEX_SIZE) / TEX_SIZE;
+         float ds = 5.0f * (i - 0.5f * TEX_SIZE) / TEX_SIZE;
          float r = dt * dt + ds * ds + step;
          image[j][i][0] = 
          image[j][i][1] = 
-         image[j][i][2] = 0.75 + 0.25 * cos(r);
-         image[j][i][3] = 1.0;
+         image[j][i][2] = 0.75f + 0.25f * (float) cos(r);
+         image[j][i][3] = 1.0f;
       }
    }
 
@@ -159,7 +160,7 @@ static void
 draw_object(void)
 {
    glPushMatrix();
-   glScalef(0.75, 0.75, 0.75);
+   glScalef(0.75f, 0.75f, 0.75f);
 
    glColor3f(1, 0, 0);
 
@@ -288,6 +289,15 @@ draw_loop(struct winthread *wt)
 
       wglMakeCurrent(wt->hDC, wt->Context);
 
+      if (!wt->Initialized) {
+         printf("wglthreads: %d: GL_RENDERER = %s\n", wt->Index,
+                (char *) glGetString(GL_RENDERER));
+         if (Texture /*&& wt->Index == 0*/) {
+            MakeNewTexture(wt);
+         }
+         wt->Initialized = GL_TRUE;
+      }
+
       if (Locking)
          LeaveCriticalSection(&Mutex);
 
@@ -315,7 +325,7 @@ draw_loop(struct winthread *wt)
       glPushMatrix();
          glRotatef(wt->Angle, 0, 1, 0);
          glRotatef(wt->Angle, 1, 0, 0);
-         glScalef(0.7, 0.7, 0.7);
+         glScalef(0.7f, 0.7f, 0.7f);
          draw_object();
       glPopMatrix();
 
@@ -482,14 +492,6 @@ create_window(struct winthread *wt, HGLRC shareCtx)
    wt->WinWidth = width;
    wt->WinHeight = height;
    wt->NewSize = GL_TRUE;
-
-   wglMakeCurrent(hdc, ctx);
-   printf("wglthreads: %d: GL_RENDERER = %s\n", wt->Index, (char *) glGetString(GL_RENDERER));
-   wglMakeCurrent(NULL, NULL);
-
-   if (Texture/* && wt->Index == 0*/) {
-      MakeNewTexture(wt);
-   }
 }
 
 
@@ -539,6 +541,7 @@ main(int argc, char *argv[])
    for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "-h") == 0) {
          usage();
+         exit(0);
       }
       else if (strcmp(argv[i], "-l") == 0) {
          Locking = 1;

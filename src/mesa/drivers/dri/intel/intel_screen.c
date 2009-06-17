@@ -410,6 +410,30 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 static void
 intelDestroyBuffer(__DRIdrawablePrivate * driDrawPriv)
 {
+   struct intel_framebuffer *intel_fb = driDrawPriv->driverPrivate;
+   struct intel_renderbuffer *depth_rb;
+   struct intel_renderbuffer *stencil_rb;
+
+   if (intel_fb) {
+      if (intel_fb->color_rb[0]) {
+         intel_renderbuffer_set_region(intel_fb->color_rb[0], NULL);
+      }
+
+      if (intel_fb->color_rb[1]) {
+         intel_renderbuffer_set_region(intel_fb->color_rb[1], NULL);
+      }
+
+      depth_rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
+      if (depth_rb) {
+         intel_renderbuffer_set_region(depth_rb, NULL);
+      }
+
+      stencil_rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
+      if (stencil_rb) {
+         intel_renderbuffer_set_region(stencil_rb, NULL);
+      }
+   }
+
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 

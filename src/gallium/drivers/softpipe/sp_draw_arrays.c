@@ -182,6 +182,8 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
    /* Note: leave drawing surfaces mapped */
    softpipe_unmap_constant_buffers(sp);
 
+   sp->dirty_render_cache = TRUE;
+   
    return TRUE;
 }
 

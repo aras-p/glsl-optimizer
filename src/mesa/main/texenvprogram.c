@@ -877,6 +877,7 @@ static struct ureg get_source( struct texenv_fragment_program *p,
 
    default:
       assert(0);
+      return undef;
    }
 }
 

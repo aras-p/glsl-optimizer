@@ -497,17 +497,13 @@ def main():
         PIPE_TEXTURE_3D,
     ]
     
-    formats = [
+    color_formats = [
         PIPE_FORMAT_A8R8G8B8_UNORM,
         PIPE_FORMAT_X8R8G8B8_UNORM,
         #PIPE_FORMAT_A8R8G8B8_SRGB,
         PIPE_FORMAT_R5G6B5_UNORM,
         PIPE_FORMAT_A1R5G5B5_UNORM,
         PIPE_FORMAT_A4R4G4B4_UNORM,
-        PIPE_FORMAT_Z32_UNORM,
-        PIPE_FORMAT_Z24S8_UNORM,
-        PIPE_FORMAT_Z24X8_UNORM,
-        PIPE_FORMAT_Z16_UNORM,
         PIPE_FORMAT_A8_UNORM,
         PIPE_FORMAT_L8_UNORM,
         PIPE_FORMAT_YCBCR,
@@ -515,6 +511,13 @@ def main():
         #PIPE_FORMAT_DXT1_RGBA,
         #PIPE_FORMAT_DXT3_RGBA,
         #PIPE_FORMAT_DXT5_RGBA,
+    ]
+    
+    depth_formats = [
+        PIPE_FORMAT_Z32_UNORM,
+        PIPE_FORMAT_Z24S8_UNORM,
+        PIPE_FORMAT_Z24X8_UNORM,
+        PIPE_FORMAT_Z16_UNORM,
     ]
     
     sizes = [64, 32, 16, 8, 4, 2, 1]
@@ -531,8 +534,8 @@ def main():
         PIPE_TEX_FACE_NEG_Z,
     ]
 
-    for target in targets:
-        for format in formats:
+    for format in color_formats:
+        for target in targets:
             for size in sizes:
                 if target == PIPE_TEXTURE_3D:
                     depth = size
@@ -546,17 +549,7 @@ def main():
                         for level in range(0, last_level + 1):
                             zslice = 0
                             while zslice < depth >> level:
-                                if format in (
-                                    PIPE_FORMAT_Z32_UNORM,
-                                    PIPE_FORMAT_Z24S8_UNORM,
-                                    PIPE_FORMAT_Z24X8_UNORM,
-                                    PIPE_FORMAT_Z16_UNORM,
-                                ):
-                                    klass = TextureDepthSampleTest
-                                else:
-                                    klass = TextureColorSampleTest
-
-                                test = klass(
+                                test = TextureColorSampleTest(
                                     dev = dev,
                                     target = target,
                                     format = format, 
@@ -570,6 +563,27 @@ def main():
                                 )
                                 suite.add_test(test)
                                 zslice = (zslice + 1)*2 - 1
+    for format in depth_formats:
+        target = PIPE_TEXTURE_2D
+        depth = 1
+        face = 0
+        last_level = 0
+        level = 0
+        zslice = 0
+        for size in sizes:
+            test = TextureDepthSampleTest(
+                dev = dev,
+                target = target,
+                format = format, 
+                width = size,
+                height = size,
+                depth = depth,
+                last_level = last_level,
+                face = face,
+                level = level,
+                zslice = zslice,
+            )
+            suite.add_test(test)
     suite.run()
 
 
