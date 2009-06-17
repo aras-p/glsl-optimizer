@@ -29,12 +29,49 @@
 #include "sl_pp_process.h"
 
 
-enum process_state {
-   state_seek_hash,
-   state_seek_directive,
-   state_seek_newline,
-   state_expand
+static void
+skip_whitespace(const struct sl_pp_token_info *input,
+                unsigned int *pi)
+{
+   while (input[*pi].token == SL_PP_WHITESPACE) {
+      (*pi)++;
+   }
+}
+
+
+struct process_state {
+   struct sl_pp_token_info *out;
+   unsigned int out_len;
+   unsigned int out_max;
 };
+
+
+static int
+out_token(struct process_state *state,
+          const struct sl_pp_token_info *token)
+{
+   if (state->out_len >= state->out_max) {
+      unsigned int new_max = state->out_max;
+
+      if (new_max < 0x100) {
+         new_max = 0x100;
+      } else if (new_max < 0x10000) {
+         new_max *= 2;
+      } else {
+         new_max += 0x10000;
+      }
+
+      state->out = realloc(state->out, new_max * sizeof(struct sl_pp_token_info));
+      if (!state->out) {
+         return -1;
+      }
+      state->out_max = new_max;
+   }
+
+   state->out[state->out_len++] = *token;
+   return 0;
+}
+
 
 int
 sl_pp_process(struct sl_pp_context *context,
@@ -42,104 +79,116 @@ sl_pp_process(struct sl_pp_context *context,
               struct sl_pp_token_info **output)
 {
    unsigned int i = 0;
-   enum process_state state = state_seek_hash;
-   struct sl_pp_token_info *out = NULL;
-   unsigned int out_len = 0;
-   unsigned int out_max = 0;
+   int found_eof = 0;
+   struct process_state state;
 
-   for (;;) {
-      struct sl_pp_token_info info;
-      int info_valid = 0;
+   memset(&state, 0, sizeof(state));
 
-      switch (input[i].token) {
-      case SL_PP_WHITESPACE:
-         /* Drop whitespace alltogether at this point. */
+   while (!found_eof) {
+      skip_whitespace(input, &i);
+      if (input[i].token == SL_PP_HASH) {
          i++;
-         break;
+         skip_whitespace(input, &i);
+         switch (input[i].token) {
+         case SL_PP_IDENTIFIER:
+            {
+               const char *name;
+               int found_eol = 0;
 
-      case SL_PP_NEWLINE:
-      case SL_PP_EOF:
-         /* Preserve newline just for the sake of line numbering. */
-         info = input[i];
-         info_valid = 1;
-         i++;
-         /* Restart directive parsing. */
-         state = state_seek_hash;
-         break;
+               name = sl_pp_context_cstr(context, input[i].data.identifier);
+               i++;
+               skip_whitespace(input, &i);
 
-      case SL_PP_HASH:
-         if (state == state_seek_hash) {
-            i++;
-            state = state_seek_directive;
-         } else {
-            /* Error: unexpected token. */
-            return -1;
-         }
-         break;
+               while (!found_eol) {
+                  switch (input[i].token) {
+                  case SL_PP_WHITESPACE:
+                     /* Drop whitespace all together at this point. */
+                     i++;
+                     break;
 
-      case SL_PP_IDENTIFIER:
-         if (state == state_seek_hash) {
-            info = input[i];
-            info_valid = 1;
-            i++;
-            state = state_expand;
-         } else if (state == state_seek_directive) {
-            i++;
-            state = state_seek_newline;
-         } else if (state == state_expand) {
-            info = input[i];
-            info_valid = 1;
-            i++;
-         } else {
-            i++;
-         }
-         break;
+                  case SL_PP_NEWLINE:
+                     /* Preserve newline just for the sake of line numbering. */
+                     if (out_token(&state, &input[i])) {
+                        return -1;
+                     }
+                     i++;
+                     found_eol = 1;
+                     break;
 
-      default:
-         if (state == state_seek_hash) {
-            info = input[i];
-            info_valid = 1;
-            i++;
-            state = state_expand;
-         } else if (state == state_seek_directive) {
-            /* Error: expected directive name. */
-            return -1;
-         } else if (state == state_expand) {
-            info = input[i];
-            info_valid = 1;
-            i++;
-         } else {
-            i++;
-         }
-      }
+                  case SL_PP_EOF:
+                     if (out_token(&state, &input[i])) {
+                        return -1;
+                     }
+                     i++;
+                     found_eof = 1;
+                     found_eol = 1;
+                     break;
 
-      if (info_valid) {
-         if (out_len >= out_max) {
-            unsigned int new_max = out_max;
-
-            if (new_max < 0x100) {
-               new_max = 0x100;
-            } else if (new_max < 0x10000) {
-               new_max *= 2;
-            } else {
-               new_max += 0x10000;
+                  default:
+                     i++;
+                  }
+               }
             }
+            break;
 
-            out = realloc(out, new_max * sizeof(struct sl_pp_token_info));
-            if (!out) {
+         case SL_PP_NEWLINE:
+            /* Empty directive. */
+            if (out_token(&state, &input[i])) {
                return -1;
             }
-            out_max = new_max;
-         }
-
-         out[out_len++] = info;
-
-         if (info.token == SL_PP_EOF) {
+            i++;
             break;
+
+         case SL_PP_EOF:
+            /* Empty directive. */
+            if (out_token(&state, &input[i])) {
+               return -1;
+            }
+            i++;
+            found_eof = 1;
+            break;
+
+         default:
+            return -1;
+         }
+      } else {
+         int found_eol = 0;
+
+         while (!found_eol) {
+            switch (input[i].token) {
+            case SL_PP_WHITESPACE:
+               /* Drop whitespace all together at this point. */
+               i++;
+               break;
+
+            case SL_PP_NEWLINE:
+               /* Preserve newline just for the sake of line numbering. */
+               if (out_token(&state, &input[i])) {
+                  return -1;
+               }
+               i++;
+               found_eol = 1;
+               break;
+
+            case SL_PP_EOF:
+               if (out_token(&state, &input[i])) {
+                  return -1;
+               }
+               i++;
+               found_eof = 1;
+               found_eol = 1;
+               break;
+
+            default:
+               if (out_token(&state, &input[i])) {
+                  return -1;
+               }
+               i++;
+            }
          }
       }
    }
 
-   *output = out;
+   *output = state.out;
    return 0;
 }

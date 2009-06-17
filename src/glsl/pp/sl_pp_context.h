@@ -49,4 +49,4 @@ const char *
 sl_pp_context_cstr(const struct sl_pp_context *context,
                    int offset);
 
-#endif /* SL_PP_VERSION_H */
+#endif /* SL_PP_CONTEXT_H */

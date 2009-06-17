@@ -28,6 +28,7 @@
 #ifndef SL_PP_PROCESS_H
 #define SL_PP_PROCESS_H
 
+#include "sl_pp_context.h"
 #include "sl_pp_token.h"
 
 
