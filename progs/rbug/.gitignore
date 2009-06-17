@@ -5,6 +5,7 @@ shdr_info
 shdr_dump
 shdr_disable
 ctx_info
+ctx_rule
 tex_dump
 tex_info
 *.bmp

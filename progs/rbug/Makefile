@@ -22,6 +22,7 @@ SOURCES = \
 	shdr_dump.c \
 	shdr_disable.c \
 	ctx_info.c \
+	ctx_rule.c \
 	tex_info.c \
 	tex_dump.c
 
