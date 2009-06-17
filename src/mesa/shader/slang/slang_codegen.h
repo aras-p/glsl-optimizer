@@ -42,7 +42,6 @@ typedef struct slang_assemble_ctx_
    struct slang_label_ *curFuncEndLabel;
    struct slang_ir_node_ *CurLoop;
    struct slang_function_ *CurFunction;
-   GLuint UnrollLoop;
    GLboolean UnresolvedRefs;
 } slang_assemble_ctx;
 

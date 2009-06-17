@@ -2582,20 +2582,6 @@ _slang_can_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
 }
 
 
-static void
-_unroll_loop_inc(slang_assemble_ctx * A)
-{
-   A->UnrollLoop++;
-}
-
-
-static void
-_unroll_loop_dec(slang_assemble_ctx * A)
-{
-   A->UnrollLoop--;
-}
-
-
 /**
  * Unroll a for-loop.
  * First we determine the number of iterations to unroll.
@@ -2611,9 +2597,6 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
    GLint start, end, iter;
    slang_ir_node *n, *root = NULL;
    slang_atom varId;
-
-   /* Set flag so code generator knows we're unrolling loops */
-   _unroll_loop_inc( A );
 
    if (oper->children[0].type == SLANG_OPER_BLOCK_NO_NEW_SCOPE) {
       /* for (int i=0; ... */
@@ -2637,15 +2620,11 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
 
       /* make a copy of the loop body */
       body = slang_operation_new(1);
-      if (!body) {
-         _unroll_loop_dec( A );
+      if (!body)
          return NULL;
-      }
 
-      if (!slang_operation_copy(body, &oper->children[3])) {
-         _unroll_loop_dec( A );
+      if (!slang_operation_copy(body, &oper->children[3]))
          return NULL;
-      }
 
       /* in body, replace instances of 'varId' with literal 'iter' */
       {
@@ -2656,7 +2635,6 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
          if (!oldVar) {
             /* undeclared loop variable */
             slang_operation_delete(body);
-            _unroll_loop_dec( A );
             return NULL;
          }
 
@@ -2671,17 +2649,13 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
 
       /* do IR codegen for body */
       n = _slang_gen_operation(A, body);
-      if (!n) {
-         _unroll_loop_dec( A );
+      if (!n)
          return NULL;
-      }
 
       root = new_seq(root, n);
 
       slang_operation_delete(body);
    }
-
-   _unroll_loop_dec( A );
 
    return root;
 }
@@ -2819,7 +2793,7 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
    if (is_operation_type(&oper->children[1], SLANG_OPER_BREAK)
        && !haveElseClause) {
       /* Special case: generate a conditional break */
-      if (!A->CurLoop && A->UnrollLoop) /* trying to unroll */
+      if (!A->CurLoop) /* probably trying to unroll */
          return NULL;
       ifBody = new_break_if_true(A->CurLoop, cond);
       return ifBody;
@@ -2827,7 +2801,7 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
    else if (is_operation_type(&oper->children[1], SLANG_OPER_CONTINUE)
             && !haveElseClause) {
       /* Special case: generate a conditional continue */
-      if (!A->CurLoop && A->UnrollLoop) /* trying to unroll */
+      if (!A->CurLoop) /* probably trying to unroll */
          return NULL;
       ifBody = new_cont_if_true(A->CurLoop, cond);
       return ifBody;
@@ -2835,8 +2809,6 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
    else {
       /* general case */
       ifBody = _slang_gen_operation(A, &oper->children[1]);
-      if (!ifBody)
-         return NULL;
       if (haveElseClause)
          elseBody = _slang_gen_operation(A, &oper->children[2]);
       else
@@ -4049,15 +4021,13 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       return _slang_gen_while(A, oper);
    case SLANG_OPER_BREAK:
       if (!A->CurLoop) {
-         if (!A->UnrollLoop)
-            slang_info_log_error(A->log, "'break' not in loop");
+         slang_info_log_error(A->log, "'break' not in loop");
          return NULL;
       }
       return new_break(A->CurLoop);
    case SLANG_OPER_CONTINUE:
       if (!A->CurLoop) {
-         if (!A->UnrollLoop)
-            slang_info_log_error(A->log, "'continue' not in loop");
+         slang_info_log_error(A->log, "'continue' not in loop");
          return NULL;
       }
       return _slang_gen_continue(A, oper);
