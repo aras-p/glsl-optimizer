@@ -30,6 +30,7 @@
 #include "glapi/glthread.h"
 #include "util/u_debug.h"
 #include "pipe/p_screen.h"
+#include "state_tracker/st_public.h"
 
 #ifdef DEBUG
 #include "trace/tr_screen.h"
@@ -63,7 +64,26 @@ stw_flush_frontbuffer(struct pipe_screen *screen,
 {
    const struct stw_winsys *stw_winsys = stw_dev->stw_winsys;
    HDC hdc = (HDC)context_private;
+   struct stw_framebuffer *fb;
    
+   fb = stw_framebuffer_from_hdc( hdc );
+   assert(fb);
+   if (fb == NULL)
+      return;
+
+   pipe_mutex_lock( fb->mutex );
+
+#if DEBUG
+   {
+      struct pipe_surface *surface2;
+
+      if(!st_get_framebuffer_surface( fb->stfb, ST_SURFACE_FRONT_LEFT, &surface2 ))
+         assert(0);
+      else
+         assert(surface2 == surface);
+   }
+#endif
+
 #ifdef DEBUG
    if(stw_dev->trace_running) {
       screen = trace_screen(screen)->screen;
@@ -72,6 +92,10 @@ stw_flush_frontbuffer(struct pipe_screen *screen,
 #endif
    
    stw_winsys->flush_frontbuffer(screen, surface, hdc);
+   
+   stw_framebuffer_update(fb);
+   
+   pipe_mutex_unlock( fb->mutex );
 }
 
 

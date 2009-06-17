@@ -116,6 +116,18 @@ stw_share_lists(
    return ret;
 }
 
+static void
+stw_viewport(GLcontext * glctx, GLint x, GLint y,
+             GLsizei width, GLsizei height)
+{
+   struct stw_context *ctx = (struct stw_context *)glctx->DriverCtx;
+   struct stw_framebuffer *fb;
+   
+   fb = stw_framebuffer_from_hdc( ctx->hdc );
+   if(fb)
+      stw_framebuffer_update(fb);
+}
+
 UINT_PTR
 stw_create_layer_context(
    HDC hdc,
@@ -175,6 +187,7 @@ stw_create_layer_context(
       goto no_st_ctx;
 
    ctx->st->ctx->DriverCtx = ctx;
+   ctx->st->ctx->Driver.Viewport = stw_viewport;
 
    pipe_mutex_lock( stw_dev->mutex );
    ctx->hglrc = handle_table_add(stw_dev->ctx_table, ctx);
@@ -298,8 +311,11 @@ stw_make_current(
 	 st_flush(curctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
       
       /* Return if already current. */
-      if (curctx->hglrc == hglrc && curctx->hdc == hdc)
-         return TRUE;
+      if (curctx->hglrc == hglrc && curctx->hdc == hdc) {
+         ctx = curctx;
+         fb = stw_framebuffer_from_hdc( hdc );
+         goto success;
+      }
    }
 
    if (hdc == NULL || hglrc == 0) {
@@ -343,7 +359,10 @@ stw_make_current(
    if(!st_make_current( ctx->st, fb->stfb, fb->stfb ))
       goto fail;
 
-   stw_framebuffer_resize(fb);
+success:
+   assert(fb);
+   if(fb)
+      stw_framebuffer_update(fb);
    
    return TRUE;
 
