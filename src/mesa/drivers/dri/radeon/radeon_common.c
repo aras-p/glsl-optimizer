@@ -861,6 +861,7 @@ void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei he
 	if (!driContext->driScreenPriv->dri2.enabled)
 		return;
 
+	radeonFlush(ctx);
 	radeon_update_renderbuffers(driContext, driContext->driDrawablePriv);
 	if (driContext->driDrawablePriv != driContext->driReadablePriv)
 		radeon_update_renderbuffers(driContext, driContext->driReadablePriv);
