@@ -837,6 +837,8 @@ _mesa_postprocess_program(GLcontext *ctx, struct gl_program *prog)
    GLint whiteIndex = _mesa_add_unnamed_constant(prog->Parameters,
                                                  white, 4, &whiteSwizzle);
 
+   (void) whiteIndex;
+
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = prog->Instructions + i;
       const GLuint n = _mesa_num_inst_src_regs(inst->Opcode);
