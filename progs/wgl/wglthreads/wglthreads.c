@@ -331,7 +331,9 @@ draw_loop(struct winthread *wt)
 
       if (Locking)
          EnterCriticalSection(&Mutex);
+
       SwapBuffers(wt->hDC);
+
       if (Locking)
          LeaveCriticalSection(&Mutex);
 
@@ -481,7 +483,8 @@ create_window(struct winthread *wt, HGLRC shareCtx)
    }
 
    if (shareCtx) {
-      wglShareLists(shareCtx, ctx);
+      if(!wglShareLists(shareCtx, ctx))
+         Error("Couldn't share WGL context lists");
    }
 
    /* save the info for this window/context */
@@ -504,9 +507,21 @@ ThreadProc(void *p)
    struct winthread *wt = (struct winthread *) p;
    HGLRC share;
 
+   /* Wait for first thread context */
+   if(Texture && wt->Index > 0) {
+      WaitForSingleObject(WinThreads[0].hEventInitialised, INFINITE);
+      share = WinThreads[0].Context;
+   }
+   else
+      share = 0;
+
    share = (Texture && wt->Index > 0) ? WinThreads[0].Context : 0;
    create_window(wt, share);
    SetEvent(wt->hEventInitialised);
+
+   /* Wait for all threads to initialize otherwise wglShareLists will fail */
+   if(wt->Index < NumWinThreads - 1)
+      WaitForSingleObject(WinThreads[NumWinThreads - 1].hEventInitialised, INFINITE);
 
    draw_loop(wt);
    return 0;
@@ -591,13 +606,17 @@ main(int argc, char *argv[])
 
       printf("wglthreads: creating threads\n");
 
+      /* Create the events */
+      for (i = 0; i < NumWinThreads; i++) {
+         WinThreads[i].Index = i;
+         WinThreads[i].hEventInitialised = CreateEvent(NULL, TRUE, FALSE, NULL);
+         WinThreads[i].hEventRedraw = CreateEvent(NULL, FALSE, FALSE, NULL);
+      }
+
       /* Create the threads */
       for (i = 0; i < NumWinThreads; i++) {
          DWORD id;
 
-         WinThreads[i].Index = i;
-         WinThreads[i].hEventInitialised = CreateEvent(NULL, TRUE, FALSE, NULL);
-         WinThreads[i].hEventRedraw = CreateEvent(NULL, FALSE, FALSE, NULL);
          WinThreads[i].Thread = CreateThread(NULL,
                                              0,
                                              ThreadProc,
@@ -605,8 +624,6 @@ main(int argc, char *argv[])
                                              0,
                                              &id);
          printf("wglthreads: Created thread %p\n", (void *) WinThreads[i].Thread);
-
-         WaitForSingleObject(WinThreads[i].hEventInitialised, INFINITE);
 
          threads[i] = WinThreads[i].Thread;
       }
