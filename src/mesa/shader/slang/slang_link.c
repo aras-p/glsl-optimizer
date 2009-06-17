@@ -843,6 +843,14 @@ _slang_link(GLcontext *ctx,
       }
    }
 
+   /* Debug: */
+   if (0) {
+      if (shProg->VertexProgram)
+         _mesa_postprocess_program(ctx, &shProg->VertexProgram->Base);
+      if (shProg->FragmentProgram)
+         _mesa_postprocess_program(ctx, &shProg->FragmentProgram->Base);
+   }
+
    if (ctx->Shader.Flags & GLSL_DUMP) {
       _mesa_printf("Varying vars:\n");
       _mesa_print_parameter_list(shProg->Varying);
