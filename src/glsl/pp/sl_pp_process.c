@@ -26,7 +26,6 @@
  **************************************************************************/
 
 #include <stdlib.h>
-#include <string.h>
 #include "sl_pp_process.h"
 
 
@@ -38,7 +37,8 @@ enum process_state {
 };
 
 int
-sl_pp_process(const struct sl_pp_token_info *input,
+sl_pp_process(struct sl_pp_context *context,
+              const struct sl_pp_token_info *input,
               struct sl_pp_token_info **output)
 {
    unsigned int i = 0;
@@ -130,18 +130,6 @@ sl_pp_process(const struct sl_pp_token_info *input,
                return -1;
             }
             out_max = new_max;
-         }
-
-         if (info.token == SL_PP_IDENTIFIER) {
-            info.data.identifier = strdup(info.data.identifier);
-            if (!info.data.identifier) {
-               return -1;
-            }
-         } else if (info.token == SL_PP_NUMBER) {
-            info.data.number = strdup(info.data.number);
-            if (!info.data.number) {
-               return -1;
-            }
          }
 
          out[out_len++] = info;

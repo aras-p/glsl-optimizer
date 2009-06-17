@@ -28,11 +28,13 @@
 #ifndef SL_PP_VERSION_H
 #define SL_PP_VERSION_H
 
+#include "sl_pp_context.h"
 #include "sl_pp_token.h"
 
 
 int
-sl_pp_version(const struct sl_pp_token_info *input,
+sl_pp_version(struct sl_pp_context *context,
+              const struct sl_pp_token_info *input,
               unsigned int *version,
               unsigned int *tokens_eaten);
 

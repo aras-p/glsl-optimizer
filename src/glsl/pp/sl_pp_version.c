@@ -54,7 +54,8 @@ _parse_integer(const char *input,
 
 
 int
-sl_pp_version(const struct sl_pp_token_info *input,
+sl_pp_version(struct sl_pp_context *context,
+              const struct sl_pp_token_info *input,
               unsigned int *version,
               unsigned int *tokens_eaten)
 {
@@ -99,11 +100,18 @@ sl_pp_version(const struct sl_pp_token_info *input,
             break;
 
          case SL_PP_IDENTIFIER:
-            if (strcmp(input[i].data.identifier, "version")) {
-               return 0;
+            {
+               const char *id = sl_pp_context_cstr(context, input[i].data.identifier);
+
+               if (!id) {
+                  return -1;
+               }
+               if (strcmp(id, "version")) {
+                  return 0;
+               }
+               i++;
+               found_version = 1;
             }
-            i++;
-            found_version = 1;
             break;
 
          default:
@@ -119,12 +127,19 @@ sl_pp_version(const struct sl_pp_token_info *input,
             break;
 
          case SL_PP_NUMBER:
-            if (_parse_integer(input[i].data.number, version)) {
-               /* Expected version number. */
-               return -1;
+            {
+               const char *num = sl_pp_context_cstr(context, input[i].data.number);
+
+               if (!num) {
+                  return -1;
+               }
+               if (_parse_integer(num, version)) {
+                  /* Expected version number. */
+                  return -1;
+               }
+               i++;
+               found_number = 1;
             }
-            i++;
-            found_number = 1;
             break;
 
          default:

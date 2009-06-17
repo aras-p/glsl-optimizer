@@ -41,6 +41,7 @@ main(int argc,
    char *inbuf;
    struct sl_pp_purify_options options;
    char *outbuf;
+   struct sl_pp_context context;
    struct sl_pp_token_info *tokens;
    unsigned int version;
    unsigned int tokens_eaten;
@@ -83,18 +84,23 @@ main(int argc,
 
    free(inbuf);
 
-   if (sl_pp_tokenise(outbuf, &tokens)) {
+   sl_pp_context_init(&context);
+
+   if (sl_pp_tokenise(&context, outbuf, &tokens)) {
+      sl_pp_context_destroy(&context);
       free(outbuf);
       return 1;
    }
 
    free(outbuf);
 
-   if (sl_pp_version(tokens, &version, &tokens_eaten)) {
+   if (sl_pp_version(&context, tokens, &version, &tokens_eaten)) {
+      sl_pp_context_destroy(&context);
       free(tokens);
       return -1;
    }
 
+   sl_pp_context_destroy(&context);
    free(tokens);
 
    out = fopen(argv[2], "wb");

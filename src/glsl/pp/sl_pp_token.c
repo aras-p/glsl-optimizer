@@ -30,7 +30,8 @@
 
 
 static int
-_tokenise_identifier(const char **pinput,
+_tokenise_identifier(struct sl_pp_context *context,
+                     const char **pinput,
                      struct sl_pp_token_info *info)
 {
    const char *input = *pinput;
@@ -38,7 +39,7 @@ _tokenise_identifier(const char **pinput,
    unsigned int i = 0;
 
    info->token = SL_PP_IDENTIFIER;
-   info->data.identifier = NULL;
+   info->data.identifier = -1;
 
    identifier[i++] = *input++;
    while ((*input >= 'a' && *input <= 'z') ||
@@ -52,11 +53,10 @@ _tokenise_identifier(const char **pinput,
    }
    identifier[i++] = '\0';
 
-   info->data.identifier = malloc(i);
-   if (!info->data.identifier) {
+   info->data.identifier = sl_pp_context_add_str(context, identifier);
+   if (info->data.identifier == -1) {
       return -1;
    }
-   memcpy(info->data.identifier, identifier, i);
 
    *pinput = input;
    return 0;
@@ -64,7 +64,8 @@ _tokenise_identifier(const char **pinput,
 
 
 static int
-_tokenise_number(const char **pinput,
+_tokenise_number(struct sl_pp_context *context,
+                 const char **pinput,
                  struct sl_pp_token_info *info)
 {
    const char *input = *pinput;
@@ -72,7 +73,7 @@ _tokenise_number(const char **pinput,
    unsigned int i = 0;
 
    info->token = SL_PP_NUMBER;
-   info->data.number = NULL;
+   info->data.number = -1;
 
    number[i++] = *input++;
    while ((*input >= '0' && *input <= '9') ||
@@ -90,11 +91,10 @@ _tokenise_number(const char **pinput,
    }
    number[i++] = '\0';
 
-   info->data.number = malloc(i);
-   if (!info->data.number) {
+   info->data.number = sl_pp_context_add_str(context, number);
+   if (info->data.number == -1) {
       return -1;
    }
-   memcpy(info->data.number, number, i);
 
    *pinput = input;
    return 0;
@@ -102,7 +102,8 @@ _tokenise_number(const char **pinput,
 
 
 int
-sl_pp_tokenise(const char *input,
+sl_pp_tokenise(struct sl_pp_context *context,
+               const char *input,
                struct sl_pp_token_info **output)
 {
    struct sl_pp_token_info *out = NULL;
@@ -171,7 +172,7 @@ sl_pp_tokenise(const char *input,
 
       case '.':
          if (input[1] >= '0' && input[1] <= '9') {
-            if (_tokenise_number(&input, &info)) {
+            if (_tokenise_number(context, &input, &info)) {
                free(out);
                return -1;
             }
@@ -355,12 +356,12 @@ sl_pp_tokenise(const char *input,
          if ((*input >= 'a' && *input <= 'z') ||
              (*input >= 'A' && *input <= 'Z') ||
              (*input == '_')) {
-            if (_tokenise_identifier(&input, &info)) {
+            if (_tokenise_identifier(context, &input, &info)) {
                free(out);
                return -1;
             }
          } else if (*input >= '0' && *input <= '9') {
-            if (_tokenise_number(&input, &info)) {
+            if (_tokenise_number(context, &input, &info)) {
                free(out);
                return -1;
             }

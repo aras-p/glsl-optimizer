@@ -90,8 +90,8 @@ enum sl_pp_token {
 };
 
 union sl_pp_token_data {
-   char *identifier;
-   char *number;
+   int identifier;
+   int number;
    char other;
 };
 
@@ -101,7 +101,8 @@ struct sl_pp_token_info {
 };
 
 int
-sl_pp_tokenise(const char *input,
+sl_pp_tokenise(struct sl_pp_context *context,
+               const char *input,
                struct sl_pp_token_info **output);
 
 #endif /* SL_PP_TOKEN_H */

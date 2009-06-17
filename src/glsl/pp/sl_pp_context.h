@@ -25,15 +25,28 @@
  * 
  **************************************************************************/
 
-#ifndef SL_PP_PROCESS_H
-#define SL_PP_PROCESS_H
+#ifndef SL_PP_CONTEXT_H
+#define SL_PP_CONTEXT_H
 
-#include "sl_pp_token.h"
 
+struct sl_pp_context {
+   char *cstr_pool;
+   unsigned int cstr_pool_max;
+   unsigned int cstr_pool_len;
+};
+
+void
+sl_pp_context_init(struct sl_pp_context *context);
+
+void
+sl_pp_context_destroy(struct sl_pp_context *context);
 
 int
-sl_pp_process(struct sl_pp_context *context,
-              const struct sl_pp_token_info *input,
-              struct sl_pp_token_info **output);
+sl_pp_context_add_str(struct sl_pp_context *context,
+                      const char *str);
 
-#endif /* SL_PP_PROCESS_H */
+const char *
+sl_pp_context_cstr(const struct sl_pp_context *context,
+                   int offset);
+
+#endif /* SL_PP_VERSION_H */

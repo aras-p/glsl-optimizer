@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "../pp/sl_pp_context.h"
 #include "../pp/sl_pp_purify.h"
 #include "../pp/sl_pp_version.h"
 #include "../pp/sl_pp_process.h"
@@ -42,6 +43,7 @@ main(int argc,
    char *inbuf;
    struct sl_pp_purify_options options;
    char *outbuf;
+   struct sl_pp_context context;
    struct sl_pp_token_info *tokens;
    unsigned int version;
    unsigned int tokens_eaten;
@@ -86,19 +88,24 @@ main(int argc,
 
    free(inbuf);
 
-   if (sl_pp_tokenise(outbuf, &tokens)) {
+   sl_pp_context_init(&context);
+
+   if (sl_pp_tokenise(&context, outbuf, &tokens)) {
+      sl_pp_context_destroy(&context);
       free(outbuf);
       return 1;
    }
 
    free(outbuf);
 
-   if (sl_pp_version(tokens, &version, &tokens_eaten)) {
+   if (sl_pp_version(&context, tokens, &version, &tokens_eaten)) {
+      sl_pp_context_destroy(&context);
       free(tokens);
       return -1;
    }
 
-   if (sl_pp_process(&tokens[tokens_eaten], &outtokens)) {
+   if (sl_pp_process(&context, &tokens[tokens_eaten], &outtokens)) {
+      sl_pp_context_destroy(&context);
       free(tokens);
       return -1;
    }
@@ -107,6 +114,7 @@ main(int argc,
 
    out = fopen(argv[2], "wb");
    if (!out) {
+      sl_pp_context_destroy(&context);
       free(outtokens);
       return 1;
    }
@@ -298,13 +306,11 @@ main(int argc,
          break;
 
       case SL_PP_IDENTIFIER:
-         fprintf(out, "%s ", outtokens[i].data.identifier);
-         free(outtokens[i].data.identifier);
+         fprintf(out, "%s ", sl_pp_context_cstr(&context, outtokens[i].data.identifier));
          break;
 
       case SL_PP_NUMBER:
-         fprintf(out, "(%s) ", outtokens[i].data.number);
-         free(outtokens[i].data.number);
+         fprintf(out, "%s ", sl_pp_context_cstr(&context, outtokens[i].data.number));
          break;
 
       case SL_PP_OTHER:
@@ -316,6 +322,7 @@ main(int argc,
       }
    }
 
+   sl_pp_context_destroy(&context);
    free(outtokens);
    fclose(out);
 
