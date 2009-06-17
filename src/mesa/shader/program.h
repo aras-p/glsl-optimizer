@@ -122,6 +122,8 @@ _mesa_combine_programs(GLcontext *ctx,
 extern GLint
 _mesa_find_free_register(const struct gl_program *prog, GLuint regFile);
 
+extern void
+_mesa_postprocess_program(GLcontext *ctx, struct gl_program *prog);
 
 
 #endif /* PROGRAM_H */
