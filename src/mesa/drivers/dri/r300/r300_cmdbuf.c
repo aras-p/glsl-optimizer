@@ -503,7 +503,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.vap_cntl.cmd[R300_VAP_CNTL_FLUSH] = cmdpacket0(r300->radeon.radeonScreen, R300_VAP_PVS_STATE_FLUSH_REG, 1);
 	r300->hw.vap_cntl.cmd[R300_VAP_CNTL_FLUSH_1] = 0;
 	r300->hw.vap_cntl.cmd[R300_VAP_CNTL_CMD] = cmdpacket0(r300->radeon.radeonScreen, R300_VAP_CNTL, 1);
-	if (is_r500) {
+	if (is_r500 && !r300->radeon.radeonScreen->kernel_mm) {
 	    ALLOC_STATE(vap_index_offset, always, 2, 0);
 	    r300->hw.vap_index_offset.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R500_VAP_INDEX_OFFSET, 1);
 	    r300->hw.vap_index_offset.cmd[1] = 0;
