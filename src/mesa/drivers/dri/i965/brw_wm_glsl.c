@@ -2745,11 +2745,10 @@ static void post_wm_emit( struct brw_wm_compile *c )
 
 static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 {
-#define MAX_IFSN 32
+#define MAX_IF_DEPTH 32
 #define MAX_LOOP_DEPTH 32
-    struct brw_instruction *if_inst[MAX_IFSN], *loop_inst[MAX_LOOP_DEPTH];
-    struct brw_instruction *inst0, *inst1;
-    int i, if_insn = 0, loop_insn = 0;
+    struct brw_instruction *if_inst[MAX_IF_DEPTH], *loop_inst[MAX_LOOP_DEPTH];
+    GLuint i, if_depth = 0, loop_depth = 0;
     struct brw_compile *p = &c->func;
     struct brw_indirect stack_index = brw_indirect(0, 0);
 
@@ -2923,15 +2922,15 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_kil(c);
 		break;
 	    case OPCODE_IF:
-		assert(if_insn < MAX_IFSN);
-		if_inst[if_insn++] = brw_IF(p, BRW_EXECUTE_8);
+		assert(if_depth < MAX_IF_DEPTH);
+		if_inst[if_depth++] = brw_IF(p, BRW_EXECUTE_8);
 		break;
 	    case OPCODE_ELSE:
-		if_inst[if_insn-1]  = brw_ELSE(p, if_inst[if_insn-1]);
+		if_inst[if_depth-1]  = brw_ELSE(p, if_inst[if_depth-1]);
 		break;
 	    case OPCODE_ENDIF:
-		assert(if_insn > 0);
-		brw_ENDIF(p, if_inst[--if_insn]);
+		assert(if_depth > 0);
+		brw_ENDIF(p, if_inst[--if_depth]);
 		break;
 	    case OPCODE_BGNSUB:
 		brw_save_label(p, inst->Comment, p->nr_insn);
@@ -2965,7 +2964,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		break;
 	    case OPCODE_BGNLOOP:
                 /* XXX may need to invalidate the current_constant regs */
-		loop_inst[loop_insn++] = brw_DO(p, BRW_EXECUTE_8);
+		loop_inst[loop_depth++] = brw_DO(p, BRW_EXECUTE_8);
 		break;
 	    case OPCODE_BRK:
 		brw_BREAK(p);
@@ -2976,21 +2975,24 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 		break;
 	    case OPCODE_ENDLOOP: 
-		loop_insn--;
-		inst0 = inst1 = brw_WHILE(p, loop_inst[loop_insn]);
-		/* patch all the BREAK instructions from
-		   last BEGINLOOP */
-		while (inst0 > loop_inst[loop_insn]) {
-		    inst0--;
-		    if (inst0->header.opcode == BRW_OPCODE_BREAK) {
+               {
+                  struct brw_instruction *inst0, *inst1;
+                  loop_depth--;
+                  inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);
+                  /* patch all the BREAK/CONT instructions from last BEGINLOOP */
+                  while (inst0 > loop_inst[loop_depth]) {
+                     inst0--;
+                     if (inst0->header.opcode == BRW_OPCODE_BREAK) {
 			inst0->bits3.if_else.jump_count = inst1 - inst0 + 1;
 			inst0->bits3.if_else.pop_count = 0;
-		    } else if (inst0->header.opcode == BRW_OPCODE_CONTINUE) {
+                     }
+                     else if (inst0->header.opcode == BRW_OPCODE_CONTINUE) {
                         inst0->bits3.if_else.jump_count = inst1 - inst0;
                         inst0->bits3.if_else.pop_count = 0;
-                    }
-		}
-		break;
+                     }
+                  }
+               }
+               break;
 	    default:
 		_mesa_printf("unsupported IR in fragment shader %d\n",
 			inst->Opcode);
