@@ -1184,12 +1184,13 @@ post_vs_emit( struct brw_vs_compile *c,
 void brw_vs_emit(struct brw_vs_compile *c )
 {
 #define MAX_IF_DEPTH 32
+#define MAX_LOOP_DEPTH 32
    struct brw_compile *p = &c->func;
    const GLuint nr_insns = c->vp->program.Base.NumInstructions;
-   GLuint insn, if_depth = 0;
+   GLuint insn, if_depth = 0, loop_depth = 0;
    GLuint end_offset = 0;
    struct brw_instruction *end_inst, *last_inst;
-   struct brw_instruction *if_inst[MAX_IF_DEPTH];
+   struct brw_instruction *if_inst[MAX_IF_DEPTH], *loop_inst[MAX_LOOP_DEPTH];
    const struct brw_indirect stack_index = brw_indirect(0, 0);   
    GLuint index;
    GLuint file;
@@ -1391,6 +1392,41 @@ void brw_vs_emit(struct brw_vs_compile *c )
          assert(if_depth > 0);
 	 brw_ENDIF(p, if_inst[--if_depth]);
 	 break;			
+#if 0
+      case OPCODE_BGNLOOP:
+         loop_inst[loop_depth++] = brw_DO(p, BRW_EXECUTE_8);
+         break;
+      case OPCODE_BRK:
+         brw_BREAK(p);
+         brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+         break;
+      case OPCODE_CONT:
+         brw_CONT(p);
+         brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+         break;
+      case OPCODE_ENDLOOP: 
+         {
+            struct brw_instruction *inst0, *inst1;
+            loop_depth--;
+            inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);
+            /* patch all the BREAK/CONT instructions from last BEGINLOOP */
+            while (inst0 > loop_inst[loop_depth]) {
+               inst0--;
+               if (inst0->header.opcode == BRW_OPCODE_BREAK) {
+                  inst0->bits3.if_else.jump_count = inst1 - inst0 + 1;
+                  inst0->bits3.if_else.pop_count = 0;
+               }
+               else if (inst0->header.opcode == BRW_OPCODE_CONTINUE) {
+                  inst0->bits3.if_else.jump_count = inst1 - inst0;
+                  inst0->bits3.if_else.pop_count = 0;
+               }
+            }
+         }
+         break;
+#else
+         (void) loop_inst;
+         (void) loop_depth;
+#endif
       case OPCODE_BRA:
          brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
          brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
