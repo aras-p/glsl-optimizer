@@ -326,6 +326,17 @@ sampler_to_texture_index(const slang_type_specifier_type type)
 }
 
 
+/** helper to build a SLANG_OPER_IDENTIFIER node */
+static void
+slang_operation_identifier(slang_operation *oper,
+                           slang_assemble_ctx *A,
+                           const char *name)
+{
+   oper->type = SLANG_OPER_IDENTIFIER;
+   oper->a_id = slang_atom_pool_atom(A->atoms, name);
+}
+
+
 #define SWIZZLE_ZWWW MAKE_SWIZZLE4(SWIZZLE_Z, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W)
 
 /**
@@ -2399,6 +2410,174 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
 
 
 /**
+ * Replace 'break' and 'continue' statements inside a do-while loop.
+ * This is a recursive helper function used by _slang_gen_do_without_continue().
+ */
+static void
+replace_break_and_cont(slang_assemble_ctx *A, slang_operation *oper)
+{
+   switch (oper->type) {
+   case SLANG_OPER_BREAK:
+      /* replace 'break' with "_notBreakFlag = false; break" */
+      {
+         slang_operation *block = oper;
+         block->type = SLANG_OPER_BLOCK_NEW_SCOPE;
+         slang_operation_add_children(block, 2);
+         {
+            slang_operation *assign = slang_oper_child(block, 0);
+            assign->type = SLANG_OPER_ASSIGN;
+            slang_operation_add_children(assign, 2);
+            {
+               slang_operation *lhs = slang_oper_child(assign, 0);
+               slang_operation_identifier(lhs, A, "_notBreakFlag");
+            }
+            {
+               slang_operation *rhs = slang_oper_child(assign, 1);
+               slang_operation_literal_bool(rhs, GL_FALSE);
+            }
+         }
+         {
+            slang_operation *brk = slang_oper_child(block, 1);
+            brk->type = SLANG_OPER_BREAK;
+            assert(!brk->children);
+         }
+      }
+      break;
+   case SLANG_OPER_CONTINUE:
+      /* convert continue into a break */
+      oper->type = SLANG_OPER_BREAK;
+      break;
+   case SLANG_OPER_FOR:
+   case SLANG_OPER_DO:
+   case SLANG_OPER_WHILE:
+      /* stop upon finding a nested loop */
+      break;
+   default:
+      /* recurse */
+      {
+         GLuint i;
+         for (i = 0; i < oper->num_children; i++) {
+            replace_break_and_cont(A, slang_oper_child(oper, i));
+         }
+      }
+   }
+}
+
+
+/**
+ * Transform a do-while-loop so that continue statements are converted to breaks.
+ * Then do normal IR code generation.
+ *
+ * Before:
+ * 
+ * do {
+ *    A;
+ *    if (IFCOND)
+ *       continue;
+ *    B;
+ *    break;
+ *    C;
+ * } while (LOOPCOND);
+ * 
+ * After:
+ * 
+ * {
+ *    bool _notBreakFlag = 1;
+ *    do {
+ *       do {
+ *          A;
+ *          if (IFCOND) {
+ *             break;  // was continue
+ *          }
+ *          B;
+ *          _notBreakFlag = 0; // was
+ *          break;             // break
+ *          C;
+ *       } while (0)
+ *    } while (_notBreakFlag && LOOPCOND);
+ * }
+ */
+static slang_ir_node *
+_slang_gen_do_without_continue(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_operation *top;
+   slang_operation *innerBody;
+
+   assert(oper->type == SLANG_OPER_DO);
+
+   top = slang_operation_new(1);
+   top->type = SLANG_OPER_BLOCK_NEW_SCOPE;
+   top->locals->outer_scope = oper->locals->outer_scope;
+   slang_operation_add_children(top, 2);
+
+   /* declare: bool _notBreakFlag = true */
+   {
+      slang_operation *condDecl = slang_oper_child(top, 0);
+      slang_variable *var;
+
+      condDecl->type = SLANG_OPER_VARIABLE_DECL;
+      var = slang_variable_scope_grow(top->locals);
+      slang_fully_specified_type_construct(&var->type);
+      var->type.specifier.type = SLANG_SPEC_BOOL;
+      var->a_name = slang_atom_pool_atom(A->atoms, "_notBreakFlag");
+      condDecl->a_id = var->a_name;
+      var->initializer = slang_operation_new(1);
+      slang_operation_literal_bool(var->initializer, GL_TRUE);
+   }
+
+   /* build outer do-loop:  do { ... } while (_notBreakFlag && LOOPCOND) */
+   {
+      slang_operation *outerDo = slang_oper_child(top, 1);
+      outerDo->type = SLANG_OPER_DO;
+      slang_operation_add_children(outerDo, 2);
+
+      /* inner do-loop */
+      {
+         slang_operation *innerDo = slang_oper_child(outerDo, 0);
+         innerDo->type = SLANG_OPER_DO;
+         slang_operation_add_children(innerDo, 2);
+
+         /* copy original do-loop body into inner do-loop's body */
+         innerBody = slang_oper_child(innerDo, 0);
+         slang_operation_copy(innerBody, slang_oper_child(oper, 0));
+         innerBody->locals->outer_scope = innerDo->locals;
+
+         /* inner do-loop's condition is constant/false */
+         {
+            slang_operation *constFalse = slang_oper_child(innerDo, 1);
+            slang_operation_literal_bool(constFalse, GL_FALSE);
+         }
+      }
+
+      /* _notBreakFlag && LOOPCOND */
+      {
+         slang_operation *cond = slang_oper_child(outerDo, 1);
+         cond->type = SLANG_OPER_LOGICALAND;
+         slang_operation_add_children(cond, 2);
+         {
+            slang_operation *notBreak = slang_oper_child(cond, 0);
+            slang_operation_identifier(notBreak, A, "_notBreakFlag");
+         }
+         {
+            slang_operation *origCond = slang_oper_child(cond, 1);
+            slang_operation_copy(origCond, slang_oper_child(oper, 1));
+         }
+      }
+   }
+
+   /* Finally, in innerBody,
+    *   replace "break" with "_notBreakFlag = 0; break"
+    *   replace "continue" with "break"
+    */
+   replace_break_and_cont(A, innerBody);
+
+   slang_print_tree(top, 0);
+
+   return _slang_gen_operation(A, top);
+}
+
+
+/**
  * Generate IR tree for a do-while loop using high-level LOOP, IF instructions.
  */
 static slang_ir_node *
@@ -2412,6 +2591,15 @@ _slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
     */
    slang_ir_node *prevLoop, *loop;
    GLboolean isConst, constTrue;
+
+   if (!A->EmitContReturn) {
+      /* We don't want to emit CONT instructions.  If this do-loop has
+       * a continue, translate it away.
+       */
+      if (_slang_find_node_type((slang_operation *) oper, SLANG_OPER_CONTINUE)) {
+         return _slang_gen_do_without_continue(A, (slang_operation *) oper);
+      }
+   }
 
    /* type-check expression */
    if (!_slang_is_boolean(A, &oper->children[1])) {
@@ -2670,6 +2858,34 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
 
 
 /**
+ * Replace 'continue' statement with 'break' inside a for-loop.
+ * This is a recursive helper function used by _slang_gen_for_without_continue().
+ */
+static void
+replace_continue_with_break(slang_assemble_ctx *A, slang_operation *oper)
+{
+   switch (oper->type) {
+   case SLANG_OPER_CONTINUE:
+      oper->type = SLANG_OPER_BREAK;
+      break;
+   case SLANG_OPER_FOR:
+   case SLANG_OPER_DO:
+   case SLANG_OPER_WHILE:
+      /* stop upon finding a nested loop */
+      break;
+   default:
+      /* recurse */
+      {
+         GLuint i;
+         for (i = 0; i < oper->num_children; i++) {
+            replace_continue_with_break(A, slang_oper_child(oper, i));
+         }
+      }
+   }
+}
+
+
+/**
  * Transform a for-loop so that continue statements are converted to breaks.
  * Then do normal IR code generation.
  *
@@ -2727,8 +2943,7 @@ _slang_gen_for_without_continue(slang_assemble_ctx *A, slang_operation *oper)
       var->a_name = slang_atom_pool_atom(A->atoms, "_condFlag");
       condDecl->a_id = var->a_name;
       var->initializer = slang_operation_new(1);
-      var->initializer->type = SLANG_OPER_LITERAL_BOOL;
-      var->initializer->literal[0] = 1.0;
+      slang_operation_literal_bool(var->initializer, GL_TRUE);
    }
 
    /* build outer loop:  for (INIT; _condFlag; ) { */
@@ -2793,19 +3008,8 @@ _slang_gen_for_without_continue(slang_assemble_ctx *A, slang_operation *oper)
                               slang_oper_child(oper, 2));
       }
 
-      /* finally, replace "continue" with "break" in inner for-loop */
-      {
-         slang_operation *body = slang_oper_child(innerFor, 3);
-         while (1) {
-            slang_operation *op =_slang_find_node_type(body, SLANG_OPER_CONTINUE);
-            if (op) {
-               op->type = SLANG_OPER_BREAK;
-            }
-            else {
-               break;
-            }
-         }
-      }
+      /* finally, replace "continue" with "break" in the inner for-loop */
+      replace_continue_with_break(A, slang_oper_child(innerFor, 3));
    }
 
    return _slang_gen_operation(A, top);
