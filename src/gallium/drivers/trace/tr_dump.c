@@ -451,11 +451,11 @@ void trace_dump_float(double value)
 }
 
 void trace_dump_bytes(const void *data,
-                      long unsigned size)
+                      size_t size)
 {
    static const char hex_table[16] = "0123456789ABCDEF";
    const uint8_t *p = data;
-   long unsigned i;
+   size_t i;
 
    if (!dumping)
       return;
