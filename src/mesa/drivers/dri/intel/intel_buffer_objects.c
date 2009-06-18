@@ -300,15 +300,19 @@ intel_bufferobj_buffer(struct intel_context *intel,
    }
 
    if (intel_obj->buffer == NULL) {
+      void *sys_buffer = intel_obj->sys_buffer;
+
+      /* only one of buffer and sys_buffer could be non-NULL */
       intel_bufferobj_alloc_buffer(intel, intel_obj);
+      intel_obj->sys_buffer = NULL;
+
       intel_bufferobj_subdata(&intel->ctx,
 			      GL_ARRAY_BUFFER_ARB,
 			      0,
 			      intel_obj->Base.Size,
-			      intel_obj->sys_buffer,
+			      sys_buffer,
 			      &intel_obj->Base);
-      _mesa_free(intel_obj->sys_buffer);
-      intel_obj->sys_buffer = NULL;
+      _mesa_free(sys_buffer);
    }
 
    return intel_obj->buffer;
