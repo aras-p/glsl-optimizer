@@ -69,7 +69,7 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
 	 pack_y_pitch = ALIGN(mt->height0, align_h);
       }
 
-      pack_x_pitch = mt->pitch;
+      pack_x_pitch = width;
       pack_x_nr = 1;
 
       for (level = mt->first_level ; level <= mt->last_level ; level++) {
