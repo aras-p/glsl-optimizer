@@ -427,6 +427,8 @@ intel_region_attach_pbo(struct intel_context *intel,
                         struct intel_region *region,
                         struct intel_buffer_object *pbo)
 {
+   dri_bo *buffer;
+
    if (region->pbo == pbo)
       return;
 
@@ -447,10 +449,13 @@ intel_region_attach_pbo(struct intel_context *intel,
       region->buffer = NULL;
    }
 
+   /* make sure pbo has a buffer of its own */
+   buffer = intel_bufferobj_buffer(intel, pbo, INTEL_WRITE_FULL);
+
    region->pbo = pbo;
    region->pbo->region = region;
-   dri_bo_reference(pbo->buffer);
-   region->buffer = pbo->buffer;
+   dri_bo_reference(buffer);
+   region->buffer = buffer;
 }
 
 
