@@ -500,8 +500,8 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
 
    intelEmitCopyBlit(intel,
 		     region->cpp,
-		     region->pitch, region->buffer, 0, region->tiling,
 		     region->pitch, pbo->buffer, 0, region->tiling,
+		     region->pitch, region->buffer, 0, region->tiling,
 		     0, 0, 0, 0,
 		     region->pitch, region->height,
 		     GL_COPY);
