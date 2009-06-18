@@ -119,11 +119,13 @@ slang_operation_copy(slang_operation * x, const slang_operation * y)
    if (!slang_operation_construct(&z))
       return GL_FALSE;
    z.type = y->type;
-   z.children = (slang_operation *)
-      _slang_alloc(y->num_children * sizeof(slang_operation));
-   if (z.children == NULL) {
-      slang_operation_destruct(&z);
-      return GL_FALSE;
+   if (y->num_children > 0) {
+      z.children = (slang_operation *)
+         _slang_alloc(y->num_children * sizeof(slang_operation));
+      if (z.children == NULL) {
+         slang_operation_destruct(&z);
+         return GL_FALSE;
+      }
    }
    for (z.num_children = 0; z.num_children < y->num_children;
         z.num_children++) {
@@ -284,5 +286,4 @@ slang_operation_add_children(slang_operation *oper, GLuint num_children)
       oper->children[i].locals = _slang_variable_scope_new(oper->locals);
    }
 }
-
 
