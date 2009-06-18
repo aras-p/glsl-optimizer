@@ -708,7 +708,7 @@ static void _glewInfo_GL_ARB_framebuffer_object (void)
   glewInfoFunc("glDeleteFramebuffers", glDeleteFramebuffers == NULL);
   glewInfoFunc("glDeleteRenderbuffers", glDeleteRenderbuffers == NULL);
   glewInfoFunc("glFramebufferRenderbuffer", glFramebufferRenderbuffer == NULL);
-  glewInfoFunc("glFramebufferTexturLayer", glFramebufferTexturLayer == NULL);
+  glewInfoFunc("glFramebufferTextureLayer", glFramebufferTextureLayer == NULL);
   glewInfoFunc("glFramebufferTexture1D", glFramebufferTexture1D == NULL);
   glewInfoFunc("glFramebufferTexture2D", glFramebufferTexture2D == NULL);
   glewInfoFunc("glFramebufferTexture3D", glFramebufferTexture3D == NULL);
