@@ -2796,7 +2796,6 @@ _slang_gen_for_without_continue(slang_assemble_ctx *A, slang_operation *oper)
       /* finally, replace "continue" with "break" in inner for-loop */
       {
          slang_operation *body = slang_oper_child(innerFor, 3);
-         printf("remove continue!\n");
          while (1) {
             slang_operation *op =_slang_find_node_type(body, SLANG_OPER_CONTINUE);
             if (op) {
@@ -2809,11 +2808,7 @@ _slang_gen_for_without_continue(slang_assemble_ctx *A, slang_operation *oper)
       }
    }
 
-   slang_print_tree(top, 5);
-
-
    return _slang_gen_operation(A, top);
-   //return top;//oper;
 }
 
 
