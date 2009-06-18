@@ -243,7 +243,6 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 		fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __FUNCTION__, nr,
 			offset);
 
-
 	if (!rmesa->radeon.radeonScreen->kernel_mm) {
 		BEGIN_BATCH(sz+2+(nr * 2));
 		OUT_BATCH_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, sz - 1);
@@ -384,7 +383,8 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 		 * arrays. *sigh*
 		 */
 		r300EmitElts(ctx, num_verts);
-		r300EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, start);
+		/* don't pass start if we are split up */
+		r300EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, 0);
 		if (rmesa->radeon.radeonScreen->kernel_mm) {
 			BEGIN_BATCH_NO_AUTOSTATE(2);
 			OUT_BATCH_REGSEQ(R300_VAP_VF_MAX_VTX_INDX, 1);
