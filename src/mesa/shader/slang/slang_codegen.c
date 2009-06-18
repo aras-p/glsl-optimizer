@@ -2485,7 +2485,9 @@ _slang_can_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
    const char *varName;
    slang_atom varId;
 
-   assert(oper->type == SLANG_OPER_FOR);
+   if (oper->type != SLANG_OPER_FOR)
+      return GL_FALSE;
+
    assert(oper->num_children == 4);
 
    if (_slang_find_node_type((slang_operation *) oper, SLANG_OPER_CONTINUE) ||
@@ -2668,18 +2670,179 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
 
 
 /**
+ * Transform a for-loop so that continue statements are converted to breaks.
+ * Then do normal IR code generation.
+ *
+ * Before:
+ * 
+ * for (INIT; LOOPCOND; INCR) {
+ *    A;
+ *    if (IFCOND) {
+ *       continue;
+ *    }
+ *    B;
+ * }
+ * 
+ * After:
+ * 
+ * {
+ *    bool _condFlag = 1;
+ *    for (INIT; _condFlag; ) {
+ *       for ( ; _condFlag = LOOPCOND; INCR) {
+ *          A;
+ *          if (IFCOND) {
+ *             break;
+ *          }
+ *          B;
+ *       }
+ *       if (_condFlag)
+ *          INCR;
+ *    }
+ * }
+ */
+static slang_ir_node *
+_slang_gen_for_without_continue(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_operation *top;
+   slang_operation *outerFor, *innerFor, *init, *cond, *incr;
+   slang_operation *lhs, *rhs;
+
+   assert(oper->type == SLANG_OPER_FOR);
+
+   top = slang_operation_new(1);
+   top->type = SLANG_OPER_BLOCK_NEW_SCOPE;
+   top->locals->outer_scope = oper->locals->outer_scope;
+   slang_operation_add_children(top, 2);
+
+   /* declare: bool _condFlag = true */
+   {
+      slang_operation *condDecl;
+      slang_variable *var;
+
+      condDecl = slang_oper_child(top, 0);
+      condDecl->type = SLANG_OPER_VARIABLE_DECL;
+      var = slang_variable_scope_grow(top->locals);
+      slang_fully_specified_type_construct(&var->type);
+      var->type.specifier.type = SLANG_SPEC_BOOL;
+      var->a_name = slang_atom_pool_atom(A->atoms, "_condFlag");
+      condDecl->a_id = var->a_name;
+      var->initializer = slang_operation_new(1);
+      var->initializer->type = SLANG_OPER_LITERAL_BOOL;
+      var->initializer->literal[0] = 1.0;
+   }
+
+   /* build outer loop:  for (INIT; _condFlag; ) { */
+   outerFor = slang_oper_child(top, 1);
+   outerFor->type = SLANG_OPER_FOR;
+   slang_operation_add_children(outerFor, 4);
+
+   init = slang_oper_child(outerFor, 0);
+   slang_operation_copy(init, slang_oper_child(oper, 0));
+
+   cond = slang_oper_child(outerFor, 1);
+   cond->type = SLANG_OPER_IDENTIFIER;
+   cond->a_id = slang_atom_pool_atom(A->atoms, "_condFlag");
+
+   incr = slang_oper_child(outerFor, 2);
+   incr->type = SLANG_OPER_VOID;
+
+   /* body of the outer loop */
+   {
+      slang_operation *block = slang_oper_child(outerFor, 3);
+
+      slang_operation_add_children(block, 2);
+      block->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
+
+      /* build inner loop:  for ( ; _condFlag = LOOPCOND; INCR) { */
+      {
+         innerFor = slang_oper_child(block, 0);
+
+         /* make copy of orig loop */
+         slang_operation_copy(innerFor, oper);
+         assert(innerFor->type == SLANG_OPER_FOR);
+         innerFor->locals->outer_scope = block->locals;
+
+         init = slang_oper_child(innerFor, 0);
+         init->type = SLANG_OPER_VOID; /* leak? */
+
+         cond = slang_oper_child(innerFor, 1);
+         slang_operation_destruct(cond);
+         cond->type = SLANG_OPER_ASSIGN;
+         cond->locals = _slang_variable_scope_new(innerFor->locals);
+         slang_operation_add_children(cond, 2);
+
+         lhs = slang_oper_child(cond, 0);
+         lhs->type = SLANG_OPER_IDENTIFIER;
+         lhs->a_id = slang_atom_pool_atom(A->atoms, "_condFlag");
+
+         rhs = slang_oper_child(cond, 1);
+         slang_operation_copy(rhs, slang_oper_child(oper, 1));
+      }
+
+      /* if (_condFlag) INCR; */
+      {
+         slang_operation *ifop = slang_oper_child(block, 1);
+         ifop->type = SLANG_OPER_IF;
+         slang_operation_add_children(ifop, 2);
+
+         /* re-use cond node build above */
+         slang_operation_copy(slang_oper_child(ifop, 0), cond);
+
+         /* incr node from original for-loop operation */
+         slang_operation_copy(slang_oper_child(ifop, 1),
+                              slang_oper_child(oper, 2));
+      }
+
+      /* finally, replace "continue" with "break" in inner for-loop */
+      {
+         slang_operation *body = slang_oper_child(innerFor, 3);
+         printf("remove continue!\n");
+         while (1) {
+            slang_operation *op =_slang_find_node_type(body, SLANG_OPER_CONTINUE);
+            if (op) {
+               op->type = SLANG_OPER_BREAK;
+            }
+            else {
+               break;
+            }
+         }
+      }
+   }
+
+   slang_print_tree(top, 5);
+
+
+   return _slang_gen_operation(A, top);
+   //return top;//oper;
+}
+
+
+
+/**
  * Generate IR for a for-loop.  Unrolling will be done when possible.
  */
 static slang_ir_node *
-_slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
+_slang_gen_for(slang_assemble_ctx * A, slang_operation *oper)
 {
-   GLboolean unroll = _slang_can_unroll_for_loop(A, oper);
+   GLboolean unroll;
 
+   if (!A->EmitContReturn) {
+      /* We don't want to emit CONT instructions.  If this for-loop has
+       * a continue, translate it away.
+       */
+      if (_slang_find_node_type(oper, SLANG_OPER_CONTINUE)) {
+         return _slang_gen_for_without_continue(A, oper);
+      }
+   }
+
+   unroll = _slang_can_unroll_for_loop(A, oper);
    if (unroll) {
       slang_ir_node *code = _slang_unroll_for_loop(A, oper);
       if (code)
          return code;
    }
+
+   assert(oper->type == SLANG_OPER_FOR);
 
    /* conventional for-loop code generation */
    {
@@ -3434,6 +3597,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
 
    assert(oper->type == SLANG_OPER_VARIABLE_DECL);
    assert(oper->num_children <= 1);
+
 
    /* lookup the variable by name */
    var = _slang_variable_locate(oper->locals, oper->a_id, GL_TRUE);
