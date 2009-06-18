@@ -172,4 +172,30 @@ slang_oper_child(slang_operation *oper, GLuint child)
 }
 
 
+/** Init oper to a boolean literal. */
+static INLINE void
+slang_operation_literal_bool(slang_operation *oper, GLboolean value)
+{
+   oper->type = SLANG_OPER_LITERAL_BOOL;
+   oper->literal[0] =
+   oper->literal[1] =
+   oper->literal[2] =
+   oper->literal[3] = (float) value;
+   oper->literal_size = 1;
+}
+
+
+/** Init oper to an int literal. */
+static INLINE void
+slang_operation_literal_int(slang_operation *oper, GLint value)
+{
+   oper->type = SLANG_OPER_LITERAL_INT;
+   oper->literal[0] =
+   oper->literal[1] =
+   oper->literal[2] =
+   oper->literal[3] = (float) value;
+   oper->literal_size = 1;
+}
+
+
 #endif /* SLANG_COMPILE_OPERATION_H */
