@@ -272,3 +272,17 @@ _slang_operation_swap(slang_operation *oper0, slang_operation *oper1)
 }
 
 
+void
+slang_operation_add_children(slang_operation *oper, GLuint num_children)
+{
+   GLuint i;
+   assert(oper->num_children == 0);
+   assert(oper->children == NULL);
+   oper->num_children = num_children;
+   oper->children = slang_operation_new(num_children);
+   for (i = 0; i < num_children; i++) {
+      oper->children[i].locals = _slang_variable_scope_new(oper->locals);
+   }
+}
+
+

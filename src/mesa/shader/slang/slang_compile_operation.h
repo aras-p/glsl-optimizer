@@ -161,4 +161,15 @@ extern void
 _slang_operation_swap(slang_operation *oper0, slang_operation *oper1);
 
 
+extern void
+slang_operation_add_children(slang_operation *oper, GLuint num_children);
+
+static INLINE slang_operation *
+slang_oper_child(slang_operation *oper, GLuint child)
+{
+   assert(child < oper->num_children);
+   return &oper->children[child];
+}
+
+
 #endif /* SLANG_COMPILE_OPERATION_H */
