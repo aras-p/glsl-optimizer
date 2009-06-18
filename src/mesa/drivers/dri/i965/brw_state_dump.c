@@ -126,6 +126,8 @@ static void dump_wm_surface_state(struct brw_context *brw)
 		surf->ss3.pitch + 1, surf->ss3.tiled_surface ? "" : "not ");
       state_out(name, surf, surfoff, 4, "mip base %d\n",
 		surf->ss4.min_lod);
+      state_out(name, surf, surfoff, 5, "x,y offset: %d,%d\n",
+		surf->ss5.x_offset, surf->ss5.y_offset);
 
       dri_bo_unmap(surf_bo);
    }
