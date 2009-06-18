@@ -81,7 +81,7 @@ struct pb_cache_manager
    pipe_mutex mutex;
    
    struct list_head delayed;
-   size_t numDelayed;
+   pb_size numDelayed;
 };
 
 
@@ -204,7 +204,7 @@ pb_cache_buffer_fence(struct pb_buffer *_buf,
 static void
 pb_cache_buffer_get_base_buffer(struct pb_buffer *_buf,
                               struct pb_buffer **base_buf,
-                              unsigned *offset)
+                              pb_size *offset)
 {
    struct pb_cache_buffer *buf = pb_cache_buffer(_buf);
    pb_get_base_buffer(buf->buffer, base_buf, offset);
@@ -224,7 +224,7 @@ pb_cache_buffer_vtbl = {
 
 static INLINE boolean
 pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,  
-                          size_t size,
+                          pb_size size,
                           const struct pb_desc *desc)
 {
    if(buf->base.base.size < size)
@@ -246,7 +246,7 @@ pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,
 
 static struct pb_buffer *
 pb_cache_manager_create_buffer(struct pb_manager *_mgr, 
-                               size_t size,
+                               pb_size size,
                                const struct pb_desc *desc)
 {
    struct pb_cache_manager *mgr = pb_cache_manager(_mgr);

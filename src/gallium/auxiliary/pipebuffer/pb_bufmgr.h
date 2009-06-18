@@ -73,7 +73,7 @@ struct pb_manager
 
    struct pb_buffer *
    (*create_buffer)( struct pb_manager *mgr, 
-	             size_t size,
+	             pb_size size,
 	             const struct pb_desc *desc);
 
    /**
@@ -106,7 +106,7 @@ pb_malloc_bufmgr_create(void);
  */
 struct pb_manager *
 pool_bufmgr_create(struct pb_manager *provider, 
-                   size_t n, size_t size,
+                   pb_size n, pb_size size,
                    const struct pb_desc *desc);
 
 
@@ -119,7 +119,7 @@ pool_bufmgr_create(struct pb_manager *provider,
  */
 struct pb_manager *
 mm_bufmgr_create(struct pb_manager *provider, 
-                 size_t size, size_t align2);
+                 pb_size size, pb_size align2);
 
 /**
  * Same as mm_bufmgr_create.
@@ -128,7 +128,7 @@ mm_bufmgr_create(struct pb_manager *provider,
  */
 struct pb_manager *
 mm_bufmgr_create_from_buffer(struct pb_buffer *buffer, 
-                             size_t size, size_t align2);
+                             pb_size size, pb_size align2);
 
 
 /**
@@ -136,8 +136,8 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
  */
 struct pb_manager *
 pb_slab_manager_create(struct pb_manager *provider,
-                       size_t bufSize,
-                       size_t slabSize,
+                       pb_size bufSize,
+                       pb_size slabSize,
                        const struct pb_desc *desc);
 
 /**
@@ -146,9 +146,9 @@ pb_slab_manager_create(struct pb_manager *provider,
  */
 struct pb_manager *
 pb_slab_range_manager_create(struct pb_manager *provider,
-                             size_t minBufSize,
-                             size_t maxBufSize,
-                             size_t slabSize,
+                             pb_size minBufSize,
+                             pb_size maxBufSize,
+                             pb_size slabSize,
                              const struct pb_desc *desc);
 
 
@@ -204,7 +204,7 @@ pb_ondemand_manager_create(struct pb_manager *provider);
  */
 struct pb_manager *
 pb_debug_manager_create(struct pb_manager *provider,
-                        size_t underflow_size, size_t overflow_size); 
+                        pb_size underflow_size, pb_size overflow_size); 
 
 
 #ifdef __cplusplus

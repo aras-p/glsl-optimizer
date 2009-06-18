@@ -58,11 +58,11 @@ struct pool_pb_manager
    
    pipe_mutex mutex;
    
-   size_t bufSize;
-   size_t bufAlign;
+   pb_size bufSize;
+   pb_size bufAlign;
    
-   size_t numFree;
-   size_t numTot;
+   pb_size numFree;
+   pb_size numTot;
    
    struct list_head free;
    
@@ -89,7 +89,7 @@ struct pool_buffer
    
    struct list_head head;
    
-   size_t start;
+   pb_size start;
 };
 
 
@@ -162,7 +162,7 @@ pool_buffer_fence(struct pb_buffer *buf,
 static void
 pool_buffer_get_base_buffer(struct pb_buffer *buf,
                             struct pb_buffer **base_buf,
-                            unsigned *offset)
+                            pb_size *offset)
 {
    struct pool_buffer *pool_buf = pool_buffer(buf);
    struct pool_pb_manager *pool = pool_buf->mgr;
@@ -184,7 +184,7 @@ pool_buffer_vtbl = {
 
 static struct pb_buffer *
 pool_bufmgr_create_buffer(struct pb_manager *mgr,
-                          size_t size,
+                          pb_size size,
                           const struct pb_desc *desc)
 {
    struct pool_pb_manager *pool = pool_pb_manager(mgr);
@@ -251,13 +251,13 @@ pool_bufmgr_destroy(struct pb_manager *mgr)
 
 struct pb_manager *
 pool_bufmgr_create(struct pb_manager *provider, 
-                   size_t numBufs, 
-                   size_t bufSize,
+                   pb_size numBufs, 
+                   pb_size bufSize,
                    const struct pb_desc *desc) 
 {
    struct pool_pb_manager *pool;
    struct pool_buffer *pool_buf;
-   size_t i;
+   pb_size i;
 
    if(!provider)
       return NULL;
