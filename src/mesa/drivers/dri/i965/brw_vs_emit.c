@@ -1183,15 +1183,14 @@ post_vs_emit( struct brw_vs_compile *c,
  */
 void brw_vs_emit(struct brw_vs_compile *c )
 {
-#define MAX_IFSN 32
+#define MAX_IF_DEPTH 32
    struct brw_compile *p = &c->func;
-   GLuint nr_insns = c->vp->program.Base.NumInstructions;
-   GLuint insn, if_insn = 0;
+   const GLuint nr_insns = c->vp->program.Base.NumInstructions;
+   GLuint insn, if_depth = 0;
    GLuint end_offset = 0;
    struct brw_instruction *end_inst, *last_inst;
-   struct brw_instruction *if_inst[MAX_IFSN];
-   struct brw_indirect stack_index = brw_indirect(0, 0);   
-
+   struct brw_instruction *if_inst[MAX_IF_DEPTH];
+   const struct brw_indirect stack_index = brw_indirect(0, 0);   
    GLuint index;
    GLuint file;
 
@@ -1382,15 +1381,15 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 emit_xpd(p, dst, args[0], args[1]);
 	 break;
       case OPCODE_IF:
-	 assert(if_insn < MAX_IFSN);
-         if_inst[if_insn++] = brw_IF(p, BRW_EXECUTE_8);
+	 assert(if_depth < MAX_IF_DEPTH);
+         if_inst[if_depth++] = brw_IF(p, BRW_EXECUTE_8);
 	 break;
       case OPCODE_ELSE:
-	 if_inst[if_insn-1] = brw_ELSE(p, if_inst[if_insn-1]);
+	 if_inst[if_depth-1] = brw_ELSE(p, if_inst[if_depth-1]);
 	 break;
       case OPCODE_ENDIF:
-         assert(if_insn > 0);
-	 brw_ENDIF(p, if_inst[--if_insn]);
+         assert(if_depth > 0);
+	 brw_ENDIF(p, if_inst[--if_depth]);
 	 break;			
       case OPCODE_BRA:
          brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
