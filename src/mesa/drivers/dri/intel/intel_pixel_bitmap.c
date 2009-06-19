@@ -495,7 +495,7 @@ intel_texture_bitmap(GLcontext * ctx,
    _mesa_VertexPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &vertices);
    _mesa_Enable(GL_VERTEX_ARRAY);
    intel_meta_set_default_texrect(intel);
-   CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
+   _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
    intel_meta_restore_texcoords(intel);
    intel_meta_restore_transform(intel);
