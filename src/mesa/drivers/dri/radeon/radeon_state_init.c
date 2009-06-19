@@ -465,6 +465,34 @@ static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 {
    r100ContextPtr r100 = R100_CONTEXT(ctx);
    BATCH_LOCALS(&r100->radeon);
+   uint32_t dwords = 3;
+   int i = atom->idx, j;
+   radeonTexObj *t = r100->state.texture.unit[i].texobj;
+   radeon_mipmap_level *lvl;
+
+   if (!(ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT))
+	return;
+
+   if (!t)
+	return;
+
+   if (!t->mt)
+	return;
+
+   BEGIN_BATCH_NO_AUTOSTATE(dwords + (5 * 3));
+   OUT_BATCH_TABLE(atom->cmd, 3);
+   lvl = &t->mt->levels[0];
+   for (j = 0; j < 5; j++) {
+	OUT_BATCH_RELOC(lvl->faces[j].offset, t->mt->bo, lvl->faces[j].offset,
+			RADEON_GEM_DOMAIN_VRAM, 0, 0);
+   }
+   END_BATCH();
+}
+
+static void cube_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r100ContextPtr r100 = R100_CONTEXT(ctx);
+   BATCH_LOCALS(&r100->radeon);
    uint32_t dwords = 2;
    int i = atom->idx, j;
    radeonTexObj *t = r100->state.texture.unit[i].texobj;
@@ -490,7 +518,7 @@ static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    OUT_BATCH_TABLE(atom->cmd, 2);
    lvl = &t->mt->levels[0];
    for (j = 0; j < 5; j++) {
-	OUT_BATCH(CP_PACKET0(base_reg + (4 * (j-1)), 0));
+	OUT_BATCH(CP_PACKET0(base_reg + (4 * j), 0));
 	OUT_BATCH_RELOC(lvl->faces[j].offset, t->mt->bo, lvl->faces[j].offset,
 			RADEON_GEM_DOMAIN_VRAM, 0, 0);
    }
@@ -661,7 +689,10 @@ void radeonInitState( r100ContextPtr rmesa )
       ALLOC_STATE_IDX( cube[1], cube1, CUBE_STATE_SIZE, "CUBE/cube-1", 0, 1 );
       ALLOC_STATE_IDX( cube[2], cube2, CUBE_STATE_SIZE, "CUBE/cube-2", 0, 2 );
       for (i = 0; i < 3; i++)
-         rmesa->hw.cube[i].emit = cube_emit;
+          if (rmesa->radeon.radeonScreen->kernel_mm)
+              rmesa->hw.cube[i].emit = cube_emit_cs;
+          else
+              rmesa->hw.cube[i].emit = cube_emit;
    }
    else
    {
