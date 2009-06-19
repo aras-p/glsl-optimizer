@@ -97,7 +97,7 @@ _mesa_alloc_shared_state(GLcontext *ctx)
     * it never gets deleted.
     * XXX with recent/improved refcounting this may not longer be needed.
     */
-   shared->NullBufferObj = _mesa_new_buffer_object(ctx, 0, 0);
+   shared->NullBufferObj = ctx->Driver.NewBufferObject(ctx, 0, 0);
    shared->NullBufferObj->RefCount = 1000 * 1000 * 1000;
 
    shared->ArrayObjects = _mesa_NewHashTable();
@@ -350,7 +350,7 @@ _mesa_free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
 #endif
 
 #if FEATURE_ARB_vertex_buffer_object
-   _mesa_delete_buffer_object(ctx, shared->NullBufferObj);
+   ctx->Driver.DeleteBuffer(ctx, shared->NullBufferObj);
 #endif
 
    /*
