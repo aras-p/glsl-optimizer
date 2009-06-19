@@ -29,6 +29,7 @@
 #define SL_PP_PROCESS_H
 
 #include "sl_pp_context.h"
+#include "sl_pp_macro.h"
 #include "sl_pp_token.h"
 
 
@@ -36,5 +37,12 @@ int
 sl_pp_process(struct sl_pp_context *context,
               const struct sl_pp_token_info *input,
               struct sl_pp_token_info **output);
+
+int
+sl_pp_process_define(struct sl_pp_context *context,
+                     const struct sl_pp_token_info *input,
+                     unsigned int first,
+                     unsigned int last,
+                     struct sl_pp_macro *macro);
 
 #endif /* SL_PP_PROCESS_H */

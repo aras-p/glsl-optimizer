@@ -80,8 +80,10 @@ sl_pp_process(struct sl_pp_context *context,
 {
    unsigned int i = 0;
    int found_eof = 0;
+   struct sl_pp_macro **macro;
    struct process_state state;
 
+   macro = &context->macro;
    memset(&state, 0, sizeof(state));
 
    while (!found_eof) {
@@ -94,18 +96,18 @@ sl_pp_process(struct sl_pp_context *context,
             {
                const char *name;
                int found_eol = 0;
+               unsigned int first;
+               unsigned int last;
 
+               /* Directive name. */
                name = sl_pp_context_cstr(context, input[i].data.identifier);
                i++;
                skip_whitespace(input, &i);
 
+               first = i;
+
                while (!found_eol) {
                   switch (input[i].token) {
-                  case SL_PP_WHITESPACE:
-                     /* Drop whitespace all together at this point. */
-                     i++;
-                     break;
-
                   case SL_PP_NEWLINE:
                      /* Preserve newline just for the sake of line numbering. */
                      if (out_token(&state, &input[i])) {
@@ -127,6 +129,23 @@ sl_pp_process(struct sl_pp_context *context,
                   default:
                      i++;
                   }
+               }
+
+               last = i - 1;
+
+               if (!strcmp(name, "define")) {
+                  *macro = malloc(sizeof(struct sl_pp_macro));
+                  if (!*macro) {
+                     return -1;
+                  }
+
+                  if (sl_pp_process_define(context, input, first, last, *macro)) {
+                     return -1;
+                  }
+
+                  macro = &(**macro).next;
+               } else {
+                  /* XXX: Ignore. */
                }
             }
             break;

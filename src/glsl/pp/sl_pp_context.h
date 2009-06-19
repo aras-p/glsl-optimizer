@@ -28,11 +28,15 @@
 #ifndef SL_PP_CONTEXT_H
 #define SL_PP_CONTEXT_H
 
+#include "sl_pp_macro.h"
+
 
 struct sl_pp_context {
    char *cstr_pool;
    unsigned int cstr_pool_max;
    unsigned int cstr_pool_len;
+
+   struct sl_pp_macro *macro;
 };
 
 void

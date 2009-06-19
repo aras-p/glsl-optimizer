@@ -26,53 +26,26 @@
  **************************************************************************/
 
 #include <stdlib.h>
-#include "sl_pp_context.h"
+#include "sl_pp_macro.h"
 
 
 void
-sl_pp_context_init(struct sl_pp_context *context)
+sl_pp_macro_free(struct sl_pp_macro *macro)
 {
-   memset(context, 0, sizeof(struct sl_pp_context));
-}
+   while (macro) {
+      struct sl_pp_macro *next_macro = macro->next;
+      struct sl_pp_macro_formal_arg *arg = macro->arg;
 
-void
-sl_pp_context_destroy(struct sl_pp_context *context)
-{
-   free(context->cstr_pool);
-   sl_pp_macro_free(context->macro);
-}
+      while (arg) {
+         struct sl_pp_macro_formal_arg *next_arg = arg->next;
 
-int
-sl_pp_context_add_str(struct sl_pp_context *context,
-                      const char *str)
-{
-   unsigned int size;
-   unsigned int offset;
+         free(arg);
+         arg = next_arg;
+      }
 
-   size = strlen(str) + 1;
+      free(macro->body);
 
-   if (context->cstr_pool_len + size > context->cstr_pool_max) {
-      context->cstr_pool_max = (context->cstr_pool_len + size + 0xffff) & ~0xffff;
-      context->cstr_pool = realloc(context->cstr_pool, context->cstr_pool_max);
+      free(macro);
+      macro = next_macro;
    }
-
-   if (!context->cstr_pool) {
-      return -1;
-   }
-
-   offset = context->cstr_pool_len;
-   memcpy(&context->cstr_pool[offset], str, size);
-   context->cstr_pool_len += size;
-
-   return offset;
-}
-
-const char *
-sl_pp_context_cstr(const struct sl_pp_context *context,
-                   int offset)
-{
-   if (offset == -1) {
-      return NULL;
-   }
-   return &context->cstr_pool[offset];
 }

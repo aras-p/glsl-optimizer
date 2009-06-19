@@ -25,54 +25,26 @@
  * 
  **************************************************************************/
 
-#include <stdlib.h>
-#include "sl_pp_context.h"
+#ifndef SL_PP_MACRO_H
+#define SL_PP_MACRO_H
 
+#include "sl_pp_token.h"
+
+
+struct sl_pp_macro_formal_arg {
+   int name;
+   struct sl_pp_macro_formal_arg *next;
+};
+
+struct sl_pp_macro {
+   int name;
+   struct sl_pp_macro_formal_arg *arg;
+   struct sl_pp_token_info *body;
+   unsigned int body_len;
+   struct sl_pp_macro *next;
+};
 
 void
-sl_pp_context_init(struct sl_pp_context *context)
-{
-   memset(context, 0, sizeof(struct sl_pp_context));
-}
+sl_pp_macro_free(struct sl_pp_macro *macro);
 
-void
-sl_pp_context_destroy(struct sl_pp_context *context)
-{
-   free(context->cstr_pool);
-   sl_pp_macro_free(context->macro);
-}
-
-int
-sl_pp_context_add_str(struct sl_pp_context *context,
-                      const char *str)
-{
-   unsigned int size;
-   unsigned int offset;
-
-   size = strlen(str) + 1;
-
-   if (context->cstr_pool_len + size > context->cstr_pool_max) {
-      context->cstr_pool_max = (context->cstr_pool_len + size + 0xffff) & ~0xffff;
-      context->cstr_pool = realloc(context->cstr_pool, context->cstr_pool_max);
-   }
-
-   if (!context->cstr_pool) {
-      return -1;
-   }
-
-   offset = context->cstr_pool_len;
-   memcpy(&context->cstr_pool[offset], str, size);
-   context->cstr_pool_len += size;
-
-   return offset;
-}
-
-const char *
-sl_pp_context_cstr(const struct sl_pp_context *context,
-                   int offset)
-{
-   if (offset == -1) {
-      return NULL;
-   }
-   return &context->cstr_pool[offset];
-}
+#endif /* SL_PP_MACRO_H */

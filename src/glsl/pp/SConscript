@@ -9,6 +9,8 @@ glsl = env.StaticLibrary(
     target = 'glsl',
     source = [
         'sl_pp_context.c',
+        'sl_pp_define.c',
+        'sl_pp_macro.c',
         'sl_pp_process.c',
         'sl_pp_purify.c',
         'sl_pp_token.c',
