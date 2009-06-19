@@ -592,6 +592,9 @@ _mesa_init_constants(GLcontext *ctx)
    /* GL_ATI_envmap_bumpmap */
    ctx->Const.SupportedBumpUnits = SUPPORTED_ATI_BUMP_UNITS;
 
+   /* GL_EXT_provoking_vertex */
+   ctx->Const.QuadsFollowProvokingVertexConvention = GL_TRUE;
+
    /* sanity checks */
    ASSERT(ctx->Const.MaxTextureUnits == MIN2(ctx->Const.MaxTextureImageUnits,
                                              ctx->Const.MaxTextureCoordUnits));

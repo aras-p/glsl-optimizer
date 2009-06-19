@@ -352,6 +352,9 @@ typedef enum
    OPCODE_EVAL_P1,
    OPCODE_EVAL_P2,
 
+   /* GL_EXT_provoking_vertex */
+   OPCODE_PROVOKING_VERTEX,
+
    /* The following three are meta instructions */
    OPCODE_ERROR,                /* raise compiled-in error */
    OPCODE_CONTINUE,
@@ -5705,6 +5708,25 @@ save_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
 #endif
 
 
+/** GL_EXT_provoking_vertex */
+static void GLAPIENTRY
+save_ProvokingVertexEXT(GLenum mode)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION(ctx, OPCODE_PROVOKING_VERTEX, 1);
+   if (n) {
+      n[1].e = mode;
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_ProvokingVertexEXT(ctx->Exec, (mode));*/
+      _mesa_ProvokingVertexEXT(mode);
+   }
+}
+
+
+
 /**
  * Save an error-generating command into display list.
  *
@@ -6268,6 +6290,9 @@ execute_list(GLcontext *ctx, GLuint list)
             break;
          case OPCODE_SHADE_MODEL:
             CALL_ShadeModel(ctx->Exec, (n[1].e));
+            break;
+         case OPCODE_PROVOKING_VERTEX:
+            CALL_ProvokingVertexEXT(ctx->Exec, (n[1].e));
             break;
          case OPCODE_STENCIL_FUNC:
             CALL_StencilFunc(ctx->Exec, (n[1].e, n[2].i, n[3].ui));
@@ -8247,6 +8272,9 @@ _mesa_init_dlist_table(struct _glapi_table *table)
 
    /* ARB 59. GL_ARB_copy_buffer */
    SET_CopyBufferSubData(table, _mesa_CopyBufferSubData); /* no dlist save */
+
+   /* 364. GL_EXT_provoking_vertex */
+   SET_ProvokingVertexEXT(table, save_ProvokingVertexEXT);
 }
 
 
@@ -8481,6 +8509,11 @@ print_list(GLcontext *ctx, GLuint list)
             break;
          case OPCODE_EVAL_P2:
             _mesa_printf("EVAL_P2 %d %d\n", n[1].i, n[2].i);
+            break;
+
+         case OPCODE_PROVOKING_VERTEX:
+            _mesa_printf("ProvokingVertex %s\n",
+                         _mesa_lookup_enum_by_nr(n[1].ui));
             break;
 
             /*

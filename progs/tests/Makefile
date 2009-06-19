@@ -68,6 +68,7 @@ SOURCES = \
 	packedpixels.c \
 	pbo.c \
 	persp_hint.c \
+	prim.c \
 	prog_parameter.c \
 	quads.c \
 	random.c \

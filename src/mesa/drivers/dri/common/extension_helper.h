@@ -4310,6 +4310,13 @@ static const char SpriteParameterivSGIX_names[] =
     "";
 #endif
 
+#if defined(need_GL_EXT_provoking_vertex)
+static const char ProvokingVertexEXT_names[] = 
+    "i\0" /* Parameter signature */
+    "glProvokingVertexEXT\0"
+    "";
+#endif
+
 #if defined(need_GL_VERSION_1_3)
 static const char MultiTexCoord1fARB_names[] = 
     "if\0" /* Parameter signature */
@@ -5559,6 +5566,13 @@ static const struct dri_extension_function GL_EXT_point_parameters_functions[] =
 #if defined(need_GL_EXT_polygon_offset)
 static const struct dri_extension_function GL_EXT_polygon_offset_functions[] = {
     { PolygonOffsetEXT_names, PolygonOffsetEXT_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_EXT_provoking_vertex)
+static const struct dri_extension_function GL_EXT_provoking_vertex_functions[] = {
+    { ProvokingVertexEXT_names, ProvokingVertexEXT_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif

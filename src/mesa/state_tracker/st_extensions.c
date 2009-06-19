@@ -163,6 +163,7 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_multi_draw_arrays = GL_TRUE;
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
    ctx->Extensions.EXT_point_parameters = GL_TRUE;
+   ctx->Extensions.EXT_provoking_vertex = GL_TRUE;
    ctx->Extensions.EXT_secondary_color = GL_TRUE;
    ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
    ctx->Extensions.EXT_texture_env_add = GL_TRUE;

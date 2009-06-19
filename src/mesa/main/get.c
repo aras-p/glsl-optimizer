@@ -1835,6 +1835,14 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          CHECK_EXT1(EXT_framebuffer_blit, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->ReadBuffer->Name);
          break;
+      case GL_PROVOKING_VERTEX_EXT:
+         CHECK_EXT1(EXT_provoking_vertex, "GetBooleanv");
+         params[0] = ctx->Light.ProvokingVertex;
+         break;
+      case GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION_EXT:
+         CHECK_EXT1(EXT_provoking_vertex, "GetBooleanv");
+         params[0] = ctx->Const.QuadsFollowProvokingVertexConvention;
+         break;
       case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB:
          CHECK_EXT1(ARB_fragment_shader, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Const.FragmentProgram.MaxUniformComponents);
@@ -3649,6 +3657,14 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          CHECK_EXT1(EXT_framebuffer_blit, "GetFloatv");
          params[0] = (GLfloat)(ctx->ReadBuffer->Name);
          break;
+      case GL_PROVOKING_VERTEX_EXT:
+         CHECK_EXT1(EXT_provoking_vertex, "GetFloatv");
+         params[0] = BOOLEAN_TO_FLOAT(ctx->Light.ProvokingVertex);
+         break;
+      case GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION_EXT:
+         CHECK_EXT1(EXT_provoking_vertex, "GetFloatv");
+         params[0] = BOOLEAN_TO_FLOAT(ctx->Const.QuadsFollowProvokingVertexConvention);
+         break;
       case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB:
          CHECK_EXT1(ARB_fragment_shader, "GetFloatv");
          params[0] = (GLfloat)(ctx->Const.FragmentProgram.MaxUniformComponents);
@@ -5462,6 +5478,14 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_READ_FRAMEBUFFER_BINDING_EXT:
          CHECK_EXT1(EXT_framebuffer_blit, "GetIntegerv");
          params[0] = ctx->ReadBuffer->Name;
+         break;
+      case GL_PROVOKING_VERTEX_EXT:
+         CHECK_EXT1(EXT_provoking_vertex, "GetIntegerv");
+         params[0] = BOOLEAN_TO_INT(ctx->Light.ProvokingVertex);
+         break;
+      case GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION_EXT:
+         CHECK_EXT1(EXT_provoking_vertex, "GetIntegerv");
+         params[0] = BOOLEAN_TO_INT(ctx->Const.QuadsFollowProvokingVertexConvention);
          break;
       case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB:
          CHECK_EXT1(ARB_fragment_shader, "GetIntegerv");

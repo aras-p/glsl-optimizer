@@ -47,10 +47,19 @@ static void FUNC( ARGS,
 
    case PIPE_PRIM_TRIANGLES:
       for (i = 0; i+2 < count; i += 3) {
-         TRIANGLE( DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
-                   (i + 0),
-                   (i + 1),
-                   (i + 2 ));
+         if (flatfirst) {
+            /* put provoking vertex in last pos for clipper */
+            TRIANGLE( DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
+                      (i + 1),
+                      (i + 2),
+                      (i + 0 ));
+         }
+         else {
+            TRIANGLE( DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
+                      (i + 0),
+                      (i + 1),
+                      (i + 2 ));
+         }
       }
       break;
 
@@ -58,9 +67,9 @@ static void FUNC( ARGS,
       if (flatfirst) {
          for (i = 0; i+2 < count; i++) {
             TRIANGLE( DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
-                      (i + 0),
                       (i + 1 + (i&1)),
-                      (i + 2 - (i&1)));
+                      (i + 2 - (i&1)),
+                      (i + 0) );
          }
       }
       else {
@@ -78,9 +87,9 @@ static void FUNC( ARGS,
          if (flatfirst) {
             for (i = 0; i+2 < count; i++) {
                TRIANGLE( DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
-                         (i + 1),
                          (i + 2),
-                         (0 ));
+                         0,
+                         (i + 1) );
             }
          }
          else {
@@ -96,20 +105,40 @@ static void FUNC( ARGS,
 
 
    case PIPE_PRIM_QUADS:
-      for (i = 0; i+3 < count; i += 4) {
-         QUAD( (i + 0),
-               (i + 1),
-               (i + 2),
-               (i + 3));
+      if (flatfirst) {
+         for (i = 0; i+3 < count; i += 4) {
+            QUAD( (i + 1),
+                  (i + 2),
+                  (i + 3),
+                  (i + 0) );
+         }
+      }
+      else {
+         for (i = 0; i+3 < count; i += 4) {
+            QUAD( (i + 0),
+                  (i + 1),
+                  (i + 2),
+                  (i + 3));
+         }
       }
       break;
 
    case PIPE_PRIM_QUAD_STRIP:
-      for (i = 0; i+3 < count; i += 2) {
-         QUAD( (i + 2),
-               (i + 0),
-               (i + 1),
-               (i + 3));
+      if (flatfirst) {
+         for (i = 0; i+3 < count; i += 2) {
+            QUAD( (i + 1),
+                  (i + 3),
+                  (i + 2),
+                  (i + 0) );
+         }
+      }
+      else {
+         for (i = 0; i+3 < count; i += 2) {
+            QUAD( (i + 2),
+                  (i + 0),
+                  (i + 1),
+                  (i + 3));
+         }
       }
       break;
 
