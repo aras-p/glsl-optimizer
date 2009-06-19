@@ -166,10 +166,14 @@ _mesa_print_arrays(GLcontext *ctx);
 extern void
 _mesa_init_varray( GLcontext * ctx );
 
+extern void 
+_mesa_free_varray_data(GLcontext *ctx);
+
 #else
 
 /** No-op */
 #define _mesa_init_varray( c )  ((void)0)
+#define _mesa_free_varray_data( c )  ((void)0)
 
 #endif
 

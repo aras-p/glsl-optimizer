@@ -100,8 +100,6 @@ _mesa_alloc_shared_state(GLcontext *ctx)
    shared->NullBufferObj = ctx->Driver.NewBufferObject(ctx, 0, 0);
    shared->NullBufferObj->RefCount = 1000 * 1000 * 1000;
 
-   shared->ArrayObjects = _mesa_NewHashTable();
-
    /* Create default texture objects */
    for (i = 0; i < NUM_TEXTURE_TARGETS; i++) {
       /* NOTE: the order of these enums matches the TEXTURE_x_INDEX values */
@@ -207,18 +205,6 @@ delete_bufferobj_cb(GLuint id, void *data, void *userData)
 
 
 /**
- * Callback for deleting an array object.  Called by _mesa_HashDeleteAll().
- */
-static void
-delete_arrayobj_cb(GLuint id, void *data, void *userData)
-{
-   struct gl_array_object *arrayObj = (struct gl_array_object *) data;
-   GLcontext *ctx = (GLcontext *) userData;
-   _mesa_delete_array_object(ctx, arrayObj);
-}
-
-
-/**
  * Callback for freeing shader program data. Call it before delete_shader_cb
  * to avoid memory access error.
  */
@@ -319,9 +305,6 @@ _mesa_free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
 
    _mesa_HashDeleteAll(shared->Programs, delete_program_cb, ctx);
    _mesa_DeleteHashTable(shared->Programs);
-
-   _mesa_HashDeleteAll(shared->ArrayObjects, delete_arrayobj_cb, ctx);
-   _mesa_DeleteHashTable(shared->ArrayObjects);
 
 #if FEATURE_ARB_vertex_program
    _mesa_reference_vertprog(ctx, &shared->DefaultVertexProgram, NULL);

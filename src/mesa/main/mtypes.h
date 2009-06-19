@@ -1608,6 +1608,9 @@ struct gl_array_attrib
    /** The default vertex array object */
    struct gl_array_object *DefaultArrayObj;
 
+   /** Array objects (GL_ARB/APPLE_vertex_array_object) */
+   struct _mesa_HashTable *Objects;
+
    GLint ActiveTexture;		/**< Client Active Texture */
    GLuint LockFirst;            /**< GL_EXT_compiled_vertex_array */
    GLuint LockCount;            /**< GL_EXT_compiled_vertex_array */
@@ -2118,9 +2121,6 @@ struct gl_shared_state
    struct _mesa_HashTable *RenderBuffers;
    struct _mesa_HashTable *FrameBuffers;
 #endif
-
-   /** Objects associated with the GL_APPLE_vertex_array_object extension. */
-   struct _mesa_HashTable *ArrayObjects;
 
    void *DriverData;  /**< Device driver shared state */
 };

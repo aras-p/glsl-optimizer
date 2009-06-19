@@ -63,10 +63,11 @@
 static INLINE struct gl_array_object *
 lookup_arrayobj(GLcontext *ctx, GLuint id)
 {
-   return (id == 0) 
-     ? NULL 
-     : (struct gl_array_object *) _mesa_HashLookup(ctx->Shared->ArrayObjects,
-						   id);
+   if (id == 0)
+      return NULL;
+   else
+      return (struct gl_array_object *)
+         _mesa_HashLookup(ctx->Array.Objects, id);
 }
 
 
@@ -252,7 +253,7 @@ save_array_object( GLcontext *ctx, struct gl_array_object *obj )
 {
    if (obj->Name > 0) {
       /* insert into hash table */
-      _mesa_HashInsert(ctx->Shared->ArrayObjects, obj->Name, obj);
+      _mesa_HashInsert(ctx->Array.Objects, obj->Name, obj);
    }
 }
 
@@ -266,7 +267,7 @@ remove_array_object( GLcontext *ctx, struct gl_array_object *obj )
 {
    if (obj->Name > 0) {
       /* remove from hash table */
-      _mesa_HashRemove(ctx->Shared->ArrayObjects, obj->Name);
+      _mesa_HashRemove(ctx->Array.Objects, obj->Name);
    }
 }
 
@@ -425,8 +426,6 @@ _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids)
       return;
    }
 
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
-
    for (i = 0; i < n; i++) {
       struct gl_array_object *obj = lookup_arrayobj(ctx, ids[i]);
 
@@ -450,8 +449,6 @@ _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids)
          _mesa_reference_array_object(ctx, &obj, NULL);
       }
    }
-
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 }
 
 
@@ -478,12 +475,7 @@ _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
       return;
    }
 
-   /*
-    * This must be atomic (generation and allocation of array object IDs)
-    */
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
-
-   first = _mesa_HashFindFreeKeyBlock(ctx->Shared->ArrayObjects, n);
+   first = _mesa_HashFindFreeKeyBlock(ctx->Array.Objects, n);
 
    /* Allocate new, empty array objects and return identifiers */
    for (i = 0; i < n; i++) {
@@ -492,15 +484,12 @@ _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
 
       obj = (*ctx->Driver.NewArrayObject)( ctx, name );
       if (!obj) {
-         _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenVertexArraysAPPLE");
          return;
       }
       save_array_object(ctx, obj);
       arrays[i] = first + i;
    }
-
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 }
 
 
@@ -521,9 +510,7 @@ _mesa_IsVertexArrayAPPLE( GLuint id )
    if (id == 0)
       return GL_FALSE;
 
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
    obj = lookup_arrayobj(ctx, id);
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
    return (obj != NULL) ? GL_TRUE : GL_FALSE;
 }

@@ -30,6 +30,7 @@
 #include "context.h"
 #include "enable.h"
 #include "enums.h"
+#include "hash.h"
 #include "mtypes.h"
 #include "varray.h"
 #include "arrayobj.h"
@@ -1120,4 +1121,29 @@ _mesa_init_varray(GLcontext *ctx)
    _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj,
                                 ctx->Array.DefaultArrayObj);
    ctx->Array.ActiveTexture = 0;   /* GL_ARB_multitexture */
+
+   ctx->Array.Objects = _mesa_NewHashTable();
+}
+
+
+/**
+ * Callback for deleting an array object.  Called by _mesa_HashDeleteAll().
+ */
+static void
+delete_arrayobj_cb(GLuint id, void *data, void *userData)
+{
+   struct gl_array_object *arrayObj = (struct gl_array_object *) data;
+   GLcontext *ctx = (GLcontext *) userData;
+   _mesa_delete_array_object(ctx, arrayObj);
+}
+
+
+/**
+ * Free vertex array state for given context.
+ */
+void 
+_mesa_free_varray_data(GLcontext *ctx)
+{
+   _mesa_HashDeleteAll(ctx->Array.Objects, delete_arrayobj_cb, ctx);
+   _mesa_DeleteHashTable(ctx->Array.Objects);
 }
