@@ -410,6 +410,8 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 	r300InitConstValues(ctx, screen);
 
+	_mesa_set_mvp_with_dp4( ctx, GL_TRUE );
+
 	/* Initialize the software rasterizer and helper modules.
 	 */
 	_swrast_CreateContext(ctx);
