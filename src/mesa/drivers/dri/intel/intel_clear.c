@@ -264,7 +264,7 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
 	 _mesa_Disable(GL_STENCIL_TEST);
       }
 
-      CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
+      _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
       mask &= ~this_mask;
    }
