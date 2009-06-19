@@ -40,7 +40,6 @@ struct st_buffer_object
 {
    struct gl_buffer_object Base;
    struct pipe_buffer *buffer;  
-   GLsizeiptrARB size;
 };
 
 

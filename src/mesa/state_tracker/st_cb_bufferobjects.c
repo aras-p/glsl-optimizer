@@ -98,9 +98,6 @@ st_bufferobj_subdata(GLcontext *ctx,
 {
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
-   if (offset >= st_obj->size || size > (st_obj->size - offset))
-      return;
-
    st_cond_flush_pipe_buffer_write(st_context(ctx), st_obj->buffer,
 				   offset, size, data);
 }
@@ -117,9 +114,6 @@ st_bufferobj_get_subdata(GLcontext *ctx,
                          GLvoid * data, struct gl_buffer_object *obj)
 {
    struct st_buffer_object *st_obj = st_buffer_object(obj);
-
-   if (offset >= st_obj->size || size > (st_obj->size - offset))
-      return;
 
    st_cond_flush_pipe_buffer_read(st_context(ctx), st_obj->buffer,
 				  offset, size, data);
@@ -171,8 +165,6 @@ st_bufferobj_data(GLcontext *ctx,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBufferDataARB");
       return;
    }
-
-   st_obj->size = size;
 
    if (data)
       st_no_flush_pipe_buffer_write(st_context(ctx), st_obj->buffer, 0,
