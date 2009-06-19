@@ -65,6 +65,7 @@ softpipe_map_constant_buffers(struct softpipe_context *sp)
                                    size);
 }
 
+
 static void
 softpipe_unmap_constant_buffers(struct softpipe_context *sp)
 {
@@ -108,15 +109,11 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
 }
 
 
-
 /**
  * Draw vertex arrays, with optional indexing.
  * Basically, map the vertex buffers (and drawing surfaces), then hand off
  * the drawing to the 'draw' module.
- *
- * XXX should the element buffer be specified/bound with a separate function?
  */
-
 boolean
 softpipe_draw_range_elements(struct pipe_context *pipe,
                              struct pipe_buffer *indexBuffer,
@@ -147,6 +144,7 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
                                     PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
+
    /* Map index buffer, if present */
    if (indexBuffer) {
       void *mapped_indexes
@@ -159,9 +157,9 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
    }
    else {
       /* no index/element buffer */
-      draw_set_mapped_element_buffer_range(draw, 0, start, start + count - 1, NULL);
+      draw_set_mapped_element_buffer_range(draw, 0, start,
+                                           start + count - 1, NULL);
    }
-
 
    /* draw! */
    draw_arrays(draw, mode, start, count);
@@ -187,6 +185,7 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
    return TRUE;
 }
 
+
 boolean
 softpipe_draw_elements(struct pipe_context *pipe,
                        struct pipe_buffer *indexBuffer,
@@ -200,11 +199,9 @@ softpipe_draw_elements(struct pipe_context *pipe,
 }
 
 
-
 void
 softpipe_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags)
 {
    struct softpipe_context *sp = softpipe_context(pipe);
    draw_set_edgeflags(sp->draw, edgeflags);
 }
-
