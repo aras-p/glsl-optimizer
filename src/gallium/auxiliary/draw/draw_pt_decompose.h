@@ -47,7 +47,7 @@ static void FUNC( ARGS,
 
    case PIPE_PRIM_TRIANGLES:
       for (i = 0; i+2 < count; i += 3) {
-         if (draw->rasterizer->flatshade_first) {
+         if (flatfirst) {
             /* put provoking vertex in last pos for clipper */
             TRIANGLE( DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
                       (i + 1),
