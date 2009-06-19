@@ -98,6 +98,11 @@ st_bufferobj_subdata(GLcontext *ctx,
 {
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
+   /* we may be called from VBO code, so double-check params here */
+   ASSERT(offset >= 0);
+   ASSERT(size >= 0);
+   ASSERT(offset + size <= obj->Size);
+
    st_cond_flush_pipe_buffer_write(st_context(ctx), st_obj->buffer,
 				   offset, size, data);
 }
@@ -114,6 +119,11 @@ st_bufferobj_get_subdata(GLcontext *ctx,
                          GLvoid * data, struct gl_buffer_object *obj)
 {
    struct st_buffer_object *st_obj = st_buffer_object(obj);
+
+   /* we may be called from VBO code, so double-check params here */
+   ASSERT(offset >= 0);
+   ASSERT(size >= 0);
+   ASSERT(offset + size <= obj->Size);
 
    st_cond_flush_pipe_buffer_read(st_context(ctx), st_obj->buffer,
 				  offset, size, data);
