@@ -75,28 +75,3 @@ void draw_pt_split_prim(unsigned prim, unsigned *first, unsigned *incr)
       break;
    }
 }
-
-
-unsigned draw_pt_reduced_prim(unsigned prim)
-{
-   switch (prim) {
-   case PIPE_PRIM_POINTS:
-      return PIPE_PRIM_POINTS;
-   case PIPE_PRIM_LINES:
-   case PIPE_PRIM_LINE_STRIP:
-   case PIPE_PRIM_LINE_LOOP:
-      return PIPE_PRIM_LINES;
-   case PIPE_PRIM_TRIANGLES:
-   case PIPE_PRIM_TRIANGLE_STRIP:
-   case PIPE_PRIM_TRIANGLE_FAN:
-   case PIPE_PRIM_POLYGON:
-   case PIPE_PRIM_QUADS:
-   case PIPE_PRIM_QUAD_STRIP:
-      return PIPE_PRIM_TRIANGLES;
-   default:
-      assert(0);
-      return PIPE_PRIM_POINTS;
-   }
-}
-
-

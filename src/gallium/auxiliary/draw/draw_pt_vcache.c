@@ -31,6 +31,7 @@
   */
 
 #include "util/u_memory.h"
+#include "util/u_prim.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
@@ -467,7 +468,7 @@ vcache_prepare( struct draw_pt_front_end *frontend,
    }
 
    vcache->input_prim = prim;
-   vcache->output_prim = draw_pt_reduced_prim(prim);
+   vcache->output_prim = u_reduced_prim(prim);
 
    vcache->middle = middle;
    vcache->opt = opt;
