@@ -52,6 +52,7 @@ static GLboolean NoClear = GL_FALSE;
 static GLint FrameParity = 0;
 static GLenum FilterIndex = 0;
 static GLint ClampIndex = 0;
+static GLboolean supportFBO = GL_FALSE;
 
 
 static struct {
@@ -403,6 +404,10 @@ static void init_checkers( void )
 
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
+   if (!supportFBO)
+      glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+
+
    /* make colored checkerboard cube faces */
    for (f = 0; f < 6; f++) {
       for (i = 0; i < CUBE_TEX_SIZE; i++) {
@@ -426,7 +431,8 @@ static void init_checkers( void )
                    GL_BGRA, GL_UNSIGNED_BYTE, image);
    }
 
-   glGenerateMipmapEXT(GL_TEXTURE_CUBE_MAP_ARB);
+   if (supportFBO)
+      glGenerateMipmapEXT(GL_TEXTURE_CUBE_MAP_ARB);
 }
 
 
@@ -503,10 +509,13 @@ static void init( GLboolean useImageFiles )
          exit(0);
       }
 
-      /* Needed for glGenerateMipmapEXT
+      /* Needed for glGenerateMipmapEXT / auto mipmapping
        */
-      if (!strstr(exten, "GL_EXT_framebuffer_object")) {
-         printf("Sorry, this demo requires GL_EXT_framebuffer_object\n");
+      if (strstr(exten, "GL_EXT_framebuffer_object")) {
+         supportFBO = GL_TRUE;
+      }
+      else if (!strstr(exten, "GL_SGIS_generate_mipmap")) {
+         printf("Sorry, this demo requires GL_EXT_framebuffer_object or GL_SGIS_generate_mipmap\n");
          exit(0);
       }
    }
