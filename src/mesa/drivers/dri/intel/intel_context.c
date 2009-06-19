@@ -557,6 +557,7 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    intelInitClearFuncs(functions);
    intelInitBufferFuncs(functions);
    intelInitPixelFuncs(functions);
+   intelInitBufferObjectFuncs(functions);
 }
 
 
@@ -717,7 +718,6 @@ intelInitContext(struct intel_context *intel,
 
    intel->batch = intel_batchbuffer_alloc(intel);
 
-   intel_bufferobj_init(intel);
    intel_fbo_init(intel);
 
    if (intel->ctx.Mesa_DXTn) {

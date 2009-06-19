@@ -315,15 +315,13 @@ intel_bufferobj_buffer(struct intel_context *intel,
 }
 
 void
-intel_bufferobj_init(struct intel_context *intel)
+intelInitBufferObjectFuncs(struct dd_function_table *functions)
 {
-   GLcontext *ctx = &intel->ctx;
-
-   ctx->Driver.NewBufferObject = intel_bufferobj_alloc;
-   ctx->Driver.DeleteBuffer = intel_bufferobj_free;
-   ctx->Driver.BufferData = intel_bufferobj_data;
-   ctx->Driver.BufferSubData = intel_bufferobj_subdata;
-   ctx->Driver.GetBufferSubData = intel_bufferobj_get_subdata;
-   ctx->Driver.MapBuffer = intel_bufferobj_map;
-   ctx->Driver.UnmapBuffer = intel_bufferobj_unmap;
+   functions->NewBufferObject = intel_bufferobj_alloc;
+   functions->DeleteBuffer = intel_bufferobj_free;
+   functions->BufferData = intel_bufferobj_data;
+   functions->BufferSubData = intel_bufferobj_subdata;
+   functions->GetBufferSubData = intel_bufferobj_get_subdata;
+   functions->MapBuffer = intel_bufferobj_map;
+   functions->UnmapBuffer = intel_bufferobj_unmap;
 }
