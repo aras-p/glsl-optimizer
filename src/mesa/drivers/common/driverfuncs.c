@@ -202,21 +202,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->GetIntegerv = NULL;
    driver->GetPointerv = NULL;
    
-#if FEATURE_ARB_vertex_buffer_object
-   driver->NewBufferObject = _mesa_new_buffer_object;
-   driver->DeleteBuffer = _mesa_delete_buffer_object;
-   driver->BindBuffer = NULL;
-   driver->BufferData = _mesa_buffer_data;
-   driver->BufferSubData = _mesa_buffer_subdata;
-   driver->GetBufferSubData = _mesa_buffer_get_subdata;
-   driver->MapBuffer = _mesa_buffer_map;
-   driver->UnmapBuffer = _mesa_buffer_unmap;
-#endif
-
-#if FEATURE_ARB_map_buffer_range
-   driver->MapBufferRange = _mesa_buffer_map_range;
-   driver->FlushMappedBufferRange = _mesa_buffer_flush_mapped_range;
-#endif
+   _mesa_init_buffer_object_functions(driver);
 
 #if FEATURE_EXT_framebuffer_object
    driver->NewFramebuffer = _mesa_new_framebuffer;
@@ -242,9 +228,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->NewArrayObject = _mesa_new_array_object;
    driver->DeleteArrayObject = _mesa_delete_array_object;
    driver->BindArrayObject = NULL;
-
-   /* GL_ARB_copy_buffer */
-   driver->CopyBufferSubData = _mesa_copy_buffer_subdata;
 
    /* T&L stuff */
    driver->NeedValidate = GL_FALSE;

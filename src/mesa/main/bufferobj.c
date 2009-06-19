@@ -180,7 +180,7 @@ buffer_object_subdata_range_good( GLcontext * ctx, GLenum target,
  * 
  * Default callback for the \c dd_function_table::NewBufferObject() hook.
  */
-struct gl_buffer_object *
+static struct gl_buffer_object *
 _mesa_new_buffer_object( GLcontext *ctx, GLuint name, GLenum target )
 {
    struct gl_buffer_object *obj;
@@ -198,7 +198,7 @@ _mesa_new_buffer_object( GLcontext *ctx, GLuint name, GLenum target )
  * 
  * Default callback for the \c dd_function_table::DeleteBuffer() hook.
  */
-void
+static void
 _mesa_delete_buffer_object( GLcontext *ctx, struct gl_buffer_object *bufObj )
 {
    (void) ctx;
@@ -316,7 +316,7 @@ _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
  *
  * \sa glBufferDataARB, dd_function_table::BufferData.
  */
-void
+static void
 _mesa_buffer_data( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 		   const GLvoid * data, GLenum usage,
 		   struct gl_buffer_object * bufObj )
@@ -355,7 +355,7 @@ _mesa_buffer_data( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
  *
  * \sa glBufferSubDataARB, dd_function_table::BufferSubData.
  */
-void
+static void
 _mesa_buffer_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
 		      GLsizeiptrARB size, const GLvoid * data,
 		      struct gl_buffer_object * bufObj )
@@ -388,7 +388,7 @@ _mesa_buffer_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
  *
  * \sa glBufferGetSubDataARB, dd_function_table::GetBufferSubData.
  */
-void
+static void
 _mesa_buffer_get_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
 			  GLsizeiptrARB size, GLvoid * data,
 			  struct gl_buffer_object * bufObj )
@@ -415,7 +415,7 @@ _mesa_buffer_get_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
  *
  * \sa glMapBufferARB, dd_function_table::MapBuffer
  */
-void *
+static void *
 _mesa_buffer_map( GLcontext *ctx, GLenum target, GLenum access,
 		  struct gl_buffer_object *bufObj )
 {
@@ -436,7 +436,7 @@ _mesa_buffer_map( GLcontext *ctx, GLenum target, GLenum access,
  * Default fallback for \c dd_function_table::MapBufferRange().
  * Called via glMapBufferRange().
  */
-void *
+static void *
 _mesa_buffer_map_range( GLcontext *ctx, GLenum target, GLintptr offset,
                         GLsizeiptr length, GLbitfield access,
                         struct gl_buffer_object *bufObj )
@@ -455,7 +455,7 @@ _mesa_buffer_map_range( GLcontext *ctx, GLenum target, GLintptr offset,
  * Default fallback for \c dd_function_table::FlushMappedBufferRange().
  * Called via glFlushMappedBufferRange().
  */
-void
+static void
 _mesa_buffer_flush_mapped_range( GLcontext *ctx, GLenum target, 
                                  GLintptr offset, GLsizeiptr length,
                                  struct gl_buffer_object *obj )
@@ -476,7 +476,7 @@ _mesa_buffer_flush_mapped_range( GLcontext *ctx, GLenum target,
  *
  * \sa glUnmapBufferARB, dd_function_table::UnmapBuffer
  */
-GLboolean
+static GLboolean
 _mesa_buffer_unmap( GLcontext *ctx, GLenum target,
                     struct gl_buffer_object *bufObj )
 {
@@ -492,7 +492,7 @@ _mesa_buffer_unmap( GLcontext *ctx, GLenum target,
  * Default fallback for \c dd_function_table::CopyBufferSubData().
  * Called via glCopyBuffserSubData().
  */
-void
+static void
 _mesa_copy_buffer_subdata(GLcontext *ctx,
                           struct gl_buffer_object *src,
                           struct gl_buffer_object *dst,
@@ -860,6 +860,32 @@ unbind(GLcontext *ctx,
    if (*ptr == obj) {
       _mesa_reference_buffer_object(ctx, ptr, ctx->Shared->NullBufferObj);
    }
+}
+
+
+/**
+ * Plug default/fallback buffer object functions into the device
+ * driver hooks.
+ */
+void
+_mesa_init_buffer_object_functions(struct dd_function_table *driver)
+{
+   /* GL_ARB_vertex/pixel_buffer_object */
+   driver->NewBufferObject = _mesa_new_buffer_object;
+   driver->DeleteBuffer = _mesa_delete_buffer_object;
+   driver->BindBuffer = NULL;
+   driver->BufferData = _mesa_buffer_data;
+   driver->BufferSubData = _mesa_buffer_subdata;
+   driver->GetBufferSubData = _mesa_buffer_get_subdata;
+   driver->MapBuffer = _mesa_buffer_map;
+   driver->UnmapBuffer = _mesa_buffer_unmap;
+
+   /* GL_ARB_map_buffer_range */
+   driver->MapBufferRange = _mesa_buffer_map_range;
+   driver->FlushMappedBufferRange = _mesa_buffer_flush_mapped_range;
+
+   /* GL_ARB_copy_buffer */
+   driver->CopyBufferSubData = _mesa_copy_buffer_subdata;
 }
 
 
