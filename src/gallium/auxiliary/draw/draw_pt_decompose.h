@@ -65,13 +65,6 @@ static void FUNC( ARGS,
 
    case PIPE_PRIM_TRIANGLE_STRIP:
       if (flatfirst) {
-         printf("%s tri strip %d %d %d\n",
-                __FUNCTION__,
-                (i + 1 + (i&1)),
-                (i + 2 - (i&1)),
-                (i + 0) );
-
-
          for (i = 0; i+2 < count; i++) {
             TRIANGLE( DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
                       (i + 1 + (i&1)),
