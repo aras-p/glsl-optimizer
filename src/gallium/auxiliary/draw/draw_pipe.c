@@ -216,22 +216,22 @@ void draw_pipeline_run( struct draw_context *draw,
                 ( DRAW_PIPE_RESET_STIPPLE |                      \
                   DRAW_PIPE_EDGE_FLAG_0 |                        \
                   DRAW_PIPE_EDGE_FLAG_2 ),                       \
-                 verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK), \
-                 verts + stride * (i1),                          \
+                verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK),  \
+                verts + stride * (i1),                           \
                 verts + stride * (i3));                          \
-      do_triangle( draw,                                         \
-                   ( DRAW_PIPE_EDGE_FLAG_0 |                     \
-                     DRAW_PIPE_EDGE_FLAG_1 ),                    \
-                 verts + stride * ((i1) & ~DRAW_PIPE_FLAG_MASK), \
-                 verts + stride * (i2),                          \
-                 verts + stride * (i3))
+   do_triangle( draw,                                            \
+                ( DRAW_PIPE_EDGE_FLAG_0 |                        \
+                  DRAW_PIPE_EDGE_FLAG_1 ),                       \
+                verts + stride * ((i1) & ~DRAW_PIPE_FLAG_MASK),  \
+                verts + stride * (i2),                           \
+                verts + stride * (i3))
 
 #define TRIANGLE(flags,i0,i1,i2)                                 \
    do_triangle( draw,                                            \
                 flags,  /* flags */                              \
-                 verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK), \
-                 verts + stride * (i1),                          \
-                 verts + stride * (i2))
+                verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK),  \
+                verts + stride * (i1),                           \
+                verts + stride * (i2))
 
 #define LINE(flags,i0,i1)                                   \
    do_line( draw,                                           \
