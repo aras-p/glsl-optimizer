@@ -201,22 +201,28 @@ static void TAG(render_tri_strip)( GLcontext *ctx,
    INIT(GL_TRIANGLE_STRIP);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+2;j<count;j++,parity^=1) {
-	 GLuint ej2 = ELT(j-2+parity);
-	 GLuint ej1 = ELT(j-1-parity);
-	 GLuint ej = ELT(j);
-	 GLboolean ef2 = EDGEFLAG_GET( ej2 );
-	 GLboolean ef1 = EDGEFLAG_GET( ej1 );
-	 GLboolean ef = EDGEFLAG_GET( ej );
+         GLuint ej2, ej1, ej;
+         GLboolean ef2, ef1, ef;
+         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT) {
+            ej2 = ELT(j-2+parity);
+            ej1 = ELT(j-1-parity);
+            ej = ELT(j);
+         }
+         else {
+            ej2 = ELT(j-1+parity);
+            ej1 = ELT(j-parity);
+            ej = ELT(j-2);
+         }
+	 ef2 = EDGEFLAG_GET( ej2 );
+	 ef1 = EDGEFLAG_GET( ej1 );
+	 ef = EDGEFLAG_GET( ej );
 	 if (TEST_PRIM_BEGIN(flags)) {
 	    RESET_STIPPLE;
 	 }
 	 EDGEFLAG_SET( ej2, GL_TRUE );
 	 EDGEFLAG_SET( ej1, GL_TRUE );
 	 EDGEFLAG_SET( ej, GL_TRUE );
-         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT)
-            RENDER_TRI( ej2, ej1, ej );
-         else
-            RENDER_TRI( ej, ej2, ej1 );
+         RENDER_TRI( ej2, ej1, ej );
 	 EDGEFLAG_SET( ej2, ef2 );
 	 EDGEFLAG_SET( ej1, ef1 );
 	 EDGEFLAG_SET( ej, ef );
