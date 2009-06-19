@@ -507,7 +507,7 @@ intel_texture_bitmap(GLcontext * ctx,
    _mesa_TexCoordPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &texcoords);
    _mesa_Enable(GL_VERTEX_ARRAY);
    _mesa_Enable(GL_TEXTURE_COORD_ARRAY);
-   CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
+   _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
    intel_meta_restore_transform(intel);
    intel_meta_restore_fragment_program(intel);
