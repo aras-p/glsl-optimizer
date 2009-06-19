@@ -512,7 +512,7 @@ const struct gl_texture_format *radeonChooseTextureFormat(GLcontext * ctx,
  */
 static void radeon_teximage(
 	GLcontext *ctx, int dims,
-	GLint face, GLint level,
+	GLenum target, GLint level,
 	GLint internalFormat,
 	GLint width, GLint height, GLint depth,
 	GLsizei imageSize,
@@ -529,6 +529,7 @@ static void radeon_teximage(
 	GLint postConvWidth = width;
 	GLint postConvHeight = height;
 	GLuint texelBytes;
+	GLuint face = radeon_face_for_target(target);
 
 	radeon_firevertices(rmesa);
 
@@ -653,7 +654,7 @@ static void radeon_teximage(
 
 		/* SGIS_generate_mipmap */
 		if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-			radeon_generate_mipmap(ctx, texObj->Target, texObj);
+			radeon_generate_mipmap(ctx, target, texObj);
 		}
 	}
 
@@ -673,7 +674,7 @@ void radeonTexImage1D(GLcontext * ctx, GLenum target, GLint level,
 		      struct gl_texture_object *texObj,
 		      struct gl_texture_image *texImage)
 {
-	radeon_teximage(ctx, 1, 0, level, internalFormat, width, 1, 1,
+	radeon_teximage(ctx, 1, target, level, internalFormat, width, 1, 1,
 		0, format, type, pixels, packing, texObj, texImage, 0);
 }
 
@@ -686,9 +687,7 @@ void radeonTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 			   struct gl_texture_image *texImage)
 
 {
-	GLuint face = radeon_face_for_target(target);
-
-	radeon_teximage(ctx, 2, face, level, internalFormat, width, height, 1,
+	radeon_teximage(ctx, 2, target, level, internalFormat, width, height, 1,
 		0, format, type, pixels, packing, texObj, texImage, 0);
 }
 
@@ -699,9 +698,7 @@ void radeonCompressedTexImage2D(GLcontext * ctx, GLenum target,
 				     struct gl_texture_object *texObj,
 				     struct gl_texture_image *texImage)
 {
-	GLuint face = radeon_face_for_target(target);
-
-	radeon_teximage(ctx, 2, face, level, internalFormat, width, height, 1,
+	radeon_teximage(ctx, 2, target, level, internalFormat, width, height, 1,
 		imageSize, 0, 0, data, &ctx->Unpack, texObj, texImage, 1);
 }
 
@@ -714,14 +711,14 @@ void radeonTexImage3D(GLcontext * ctx, GLenum target, GLint level,
 		      struct gl_texture_object *texObj,
 		      struct gl_texture_image *texImage)
 {
-	radeon_teximage(ctx, 3, 0, level, internalFormat, width, height, depth,
+	radeon_teximage(ctx, 3, target, level, internalFormat, width, height, depth,
 		0, format, type, pixels, packing, texObj, texImage, 0);
 }
 
 /**
  * Update a subregion of the given texture image.
  */
-static void radeon_texsubimage(GLcontext* ctx, int dims, int level,
+static void radeon_texsubimage(GLcontext* ctx, int dims, GLenum target, int level,
 		GLint xoffset, GLint yoffset, GLint zoffset,
 		GLsizei width, GLsizei height, GLsizei depth,
 		GLsizei imageSize,
@@ -781,7 +778,7 @@ static void radeon_texsubimage(GLcontext* ctx, int dims, int level,
 
 		/* GL_SGIS_generate_mipmap */
 		if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-			radeon_generate_mipmap(ctx, texObj->Target, texObj);
+			radeon_generate_mipmap(ctx, target, texObj);
 		}
 	}
 
@@ -801,7 +798,7 @@ void radeonTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
 			 struct gl_texture_object *texObj,
 			 struct gl_texture_image *texImage)
 {
-	radeon_texsubimage(ctx, 1, level, xoffset, 0, 0, width, 1, 1, 0,
+	radeon_texsubimage(ctx, 1, target, level, xoffset, 0, 0, width, 1, 1, 0,
 		format, type, pixels, packing, texObj, texImage, 0);
 }
 
@@ -814,7 +811,7 @@ void radeonTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
 			 struct gl_texture_object *texObj,
 			 struct gl_texture_image *texImage)
 {
-	radeon_texsubimage(ctx, 2, level, xoffset, yoffset, 0, width, height, 1,
+	radeon_texsubimage(ctx, 2, target, level, xoffset, yoffset, 0, width, height, 1,
 			   0, format, type, pixels, packing, texObj, texImage,
 			   0);
 }
@@ -827,7 +824,7 @@ void radeonCompressedTexSubImage2D(GLcontext * ctx, GLenum target,
 				   struct gl_texture_object *texObj,
 				   struct gl_texture_image *texImage)
 {
-	radeon_texsubimage(ctx, 2, level, xoffset, yoffset, 0, width, height, 1,
+	radeon_texsubimage(ctx, 2, target, level, xoffset, yoffset, 0, width, height, 1,
 		imageSize, format, 0, data, &ctx->Unpack, texObj, texImage, 1);
 }
 
@@ -841,7 +838,7 @@ void radeonTexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 			 struct gl_texture_object *texObj,
 			 struct gl_texture_image *texImage)
 {
-	radeon_texsubimage(ctx, 3, level, xoffset, yoffset, zoffset, width, height, depth, 0,
+	radeon_texsubimage(ctx, 3, target, level, xoffset, yoffset, zoffset, width, height, depth, 0,
 		format, type, pixels, packing, texObj, texImage, 0);
 }
 
