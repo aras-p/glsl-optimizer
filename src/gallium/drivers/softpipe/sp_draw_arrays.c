@@ -35,6 +35,7 @@
 #include "pipe/p_context.h"
 #include "pipe/internal/p_winsys_screen.h"
 #include "pipe/p_inlines.h"
+#include "util/u_prim.h"
 
 #include "sp_context.h"
 #include "sp_state.h"
@@ -87,20 +88,6 @@ softpipe_unmap_constant_buffers(struct softpipe_context *sp)
 }
 
 
-static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
-   PIPE_PRIM_POINTS,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES
-};
-
-
 boolean
 softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
                      unsigned start, unsigned count)
@@ -126,7 +113,7 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
    struct draw_context *draw = sp->draw;
    unsigned i;
 
-   sp->reduced_api_prim = reduced_prim[mode];
+   sp->reduced_api_prim = u_reduced_prim(mode);
 
    if (sp->dirty)
       softpipe_update_derived( sp );
