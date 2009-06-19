@@ -35,6 +35,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/internal/p_winsys_screen.h"
+#include "util/u_prim.h"
 
 static unsigned hw_prim[PIPE_PRIM_POLYGON+1] = {
    _3DPRIM_POINTLIST,
@@ -47,20 +48,6 @@ static unsigned hw_prim[PIPE_PRIM_POLYGON+1] = {
    _3DPRIM_QUADLIST,
    _3DPRIM_QUADSTRIP,
    _3DPRIM_POLYGON
-};
-
-
-static const int reduced_prim[PIPE_PRIM_POLYGON+1] = {
-   PIPE_PRIM_POINTS,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES
 };
 
 
@@ -85,8 +72,8 @@ static void brw_set_prim(struct brw_context *brw, int prim)
       brw->primitive = prim;
       brw->state.dirty.brw |= BRW_NEW_PRIMITIVE;
 
-      if (reduced_prim[prim] != brw->reduced_primitive) {
-	 brw->reduced_primitive = reduced_prim[prim];
+      if (u_reduced_prim(prim) != brw->reduced_primitive) {
+	 brw->reduced_primitive = u_reduced_prim(prim);
 	 brw->state.dirty.brw |= BRW_NEW_REDUCED_PRIMITIVE;
       }
 
