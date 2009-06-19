@@ -1139,21 +1139,21 @@ static void vbo_print_vertex_list( GLcontext *ctx, void *data )
    GLuint i;
    (void) ctx;
 
-   _mesa_debug(NULL, "VBO-VERTEX-LIST, %u vertices %d primitives, %d vertsize\n",
-               node->count,
-	       node->prim_count,
-	       node->vertex_size);
+   _mesa_printf("VBO-VERTEX-LIST, %u vertices %d primitives, %d vertsize\n",
+		node->count,
+		node->prim_count,
+		node->vertex_size);
 
    for (i = 0 ; i < node->prim_count ; i++) {
       struct _mesa_prim *prim = &node->prim[i];
-      _mesa_debug(NULL, "   prim %d: %s%s %d..%d %s %s\n",
-		  i, 
-		  _mesa_lookup_enum_by_nr(prim->mode),
-		  prim->weak ? " (weak)" : "",
-		  prim->start, 
-		  prim->start + prim->count,
-		  (prim->begin) ? "BEGIN" : "(wrap)",
-		  (prim->end) ? "END" : "(wrap)");
+      _mesa_printf("   prim %d: %s%s %d..%d %s %s\n",
+		   i,
+		   _mesa_lookup_enum_by_nr(prim->mode),
+		   prim->weak ? " (weak)" : "",
+		   prim->start,
+		   prim->start + prim->count,
+		   (prim->begin) ? "BEGIN" : "(wrap)",
+		   (prim->end) ? "END" : "(wrap)");
    }
 }
 
