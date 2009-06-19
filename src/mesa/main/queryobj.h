@@ -27,9 +27,6 @@
 #define OCCLUDE_H
 
 
-extern struct gl_query_object *
-_mesa_new_query_object(GLcontext *ctx, GLuint id);
-
 extern void
 _mesa_init_query(GLcontext *ctx);
 
@@ -37,19 +34,7 @@ extern void
 _mesa_free_query_data(GLcontext *ctx);
 
 extern void
-_mesa_delete_query(GLcontext *ctx, struct gl_query_object *q);
-
-extern void
-_mesa_begin_query(GLcontext *ctx, struct gl_query_object *q);
-
-extern void
-_mesa_end_query(GLcontext *ctx, struct gl_query_object *q);
-
-extern void
-_mesa_wait_query(GLcontext *ctx, struct gl_query_object *q);
-
-extern void
-_mesa_check_query(GLcontext *ctx, struct gl_query_object *q);
+_mesa_init_query_object_functions(struct dd_function_table *driver);
 
 
 extern void GLAPIENTRY
