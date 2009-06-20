@@ -295,6 +295,14 @@ struct intel_context
     * easily.
     */
    GLboolean is_front_buffer_rendering;
+   /**
+    * Track whether front-buffer is the current read target.
+    *
+    * This is closely associated with is_front_buffer_rendering, but may
+    * be set separately.  The DRI2 fake front buffer must be referenced
+    * either way.
+    */
+   GLboolean is_front_buffer_reading;
 
    drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
 
