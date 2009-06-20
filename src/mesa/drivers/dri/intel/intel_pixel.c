@@ -424,10 +424,8 @@ intelInitPixelFuncs(struct dd_function_table *functions)
       functions->Bitmap = intelBitmap;
       functions->CopyPixels = intelCopyPixels;
       functions->DrawPixels = intelDrawPixels;
-#ifdef I915
-      functions->ReadPixels = intelReadPixels;
-#endif
    }
+   functions->ReadPixels = intelReadPixels;
 }
 
 void

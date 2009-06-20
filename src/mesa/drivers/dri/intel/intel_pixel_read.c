@@ -291,6 +291,7 @@ intelReadPixels(GLcontext * ctx,
 
    intelFlush(ctx);
 
+#ifdef I915
    if (do_blit_readpixels
        (ctx, x, y, width, height, format, type, pack, pixels))
       return;
@@ -298,9 +299,19 @@ intelReadPixels(GLcontext * ctx,
    if (do_texture_readpixels
        (ctx, x, y, width, height, format, type, pack, pixels))
       return;
+#endif
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s: fallback to swrast\n", __FUNCTION__);
+
+   /* Update Mesa state before calling down into _swrast_ReadPixels, as
+    * the spans code requires the computed buffer states to be up to date,
+    * but _swrast_ReadPixels only updates Mesa state after setting up
+    * the spans code.
+    */
+
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
 
    _swrast_ReadPixels(ctx, x, y, width, height, format, type, pack, pixels);
 }
