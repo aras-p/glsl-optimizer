@@ -1563,6 +1563,7 @@ struct gl_array_object
 
    GLint RefCount;
    _glthread_Mutex Mutex;
+   GLboolean VBOonly;  /**< require all arrays to live in VBOs? */
 
    /** Conventional vertex arrays */
    /*@{*/

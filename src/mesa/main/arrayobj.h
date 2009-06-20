@@ -74,6 +74,8 @@ void GLAPIENTRY _mesa_BindVertexArrayAPPLE( GLuint id );
 
 void GLAPIENTRY _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids);
 
+void GLAPIENTRY _mesa_GenVertexArrays(GLsizei n, GLuint *arrays);
+
 void GLAPIENTRY _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *buffer);
 
 GLboolean GLAPIENTRY _mesa_IsVertexArrayAPPLE( GLuint id );

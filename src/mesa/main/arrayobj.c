@@ -485,14 +485,14 @@ _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids)
 
 /**
  * Generate a set of unique array object IDs and store them in \c arrays.
- * 
+ * Helper for _mesa_GenVertexArrays[APPLE]() functions below.
  * \param n       Number of IDs to generate.
  * \param arrays  Array of \c n locations to store the IDs.
+ * \param vboOnly Will arrays have to reside in VBOs?
  */
-void GLAPIENTRY
-_mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
+static void 
+gen_vertex_arrays(GLcontext *ctx, GLsizei n, GLuint *arrays, GLboolean vboOnly)
 {
-   GET_CURRENT_CONTEXT(ctx);
    GLuint first;
    GLint i;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -518,9 +518,34 @@ _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenVertexArraysAPPLE");
          return;
       }
+      obj->VBOonly = vboOnly;
       save_array_object(ctx, obj);
       arrays[i] = first + i;
    }
+}
+
+
+/**
+ * ARB version of glGenVertexArrays()
+ * All arrays will be required to live in VBOs.
+ */
+void GLAPIENTRY
+_mesa_GenVertexArrays(GLsizei n, GLuint *arrays)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   gen_vertex_arrays(ctx, n, arrays, GL_TRUE);
+}
+
+
+/**
+ * APPLE version of glGenVertexArraysAPPLE()
+ * Arrays may live in VBOs or ordinary memory.
+ */
+void GLAPIENTRY
+_mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   gen_vertex_arrays(ctx, n, arrays, GL_FALSE);
 }
 
 
