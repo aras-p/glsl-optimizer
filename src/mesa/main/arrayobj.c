@@ -353,18 +353,15 @@ _mesa_update_array_object_max_element(GLcontext *ctx,
 /* API Functions                                                      */
 /**********************************************************************/
 
+
 /**
- * Bind a new array.
- *
- * \todo
- * The binding could be done more efficiently by comparing the non-NULL
- * pointers in the old and new objects.  The only arrays that are "dirty" are
- * the ones that are non-NULL in either object.
+ * Helper for _mesa_BindVertexArray() and _mesa_BindVertexArrayAPPLE().
+ * \param genRequired  specifies behavour when id was not generated with
+ *                     glGenVertexArrays().
  */
-void GLAPIENTRY
-_mesa_BindVertexArrayAPPLE( GLuint id )
+static void
+bind_vertex_array(GLcontext *ctx, GLuint id, GLboolean genRequired)
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_array_object * const oldObj = ctx->Array.ArrayObj;
    struct gl_array_object *newObj = NULL;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -387,8 +384,12 @@ _mesa_BindVertexArrayAPPLE( GLuint id )
       /* non-default array object */
       newObj = lookup_arrayobj(ctx, id);
       if (!newObj) {
-         /* If this is a new array object id, allocate an array object now.
-	  */
+         if (genRequired) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glBindVertexArray(id)");
+            return;
+         }
+
+         /* For APPLE version, generate a new array object now */
 	 newObj = (*ctx->Driver.NewArrayObject)(ctx, id);
          if (!newObj) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindVertexArrayAPPLE");
@@ -404,7 +405,37 @@ _mesa_BindVertexArrayAPPLE( GLuint id )
 
    /* Pass BindVertexArray call to device driver */
    if (ctx->Driver.BindArrayObject && newObj)
-      (*ctx->Driver.BindArrayObject)( ctx, newObj );
+      ctx->Driver.BindArrayObject(ctx, newObj);
+}
+
+
+/**
+ * ARB version of glBindVertexArray()
+ * This function behaves differently from glBindVertexArrayAPPLE() in
+ * that this function requires all ids to have been previously generated
+ * by glGenVertexArrays[APPLE]().
+ */
+void GLAPIENTRY
+_mesa_BindVertexArray( GLuint id )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   bind_vertex_array(ctx, id, GL_TRUE);
+}
+
+
+/**
+ * Bind a new array.
+ *
+ * \todo
+ * The binding could be done more efficiently by comparing the non-NULL
+ * pointers in the old and new objects.  The only arrays that are "dirty" are
+ * the ones that are non-NULL in either object.
+ */
+void GLAPIENTRY
+_mesa_BindVertexArrayAPPLE( GLuint id )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   bind_vertex_array(ctx, id, GL_FALSE);
 }
 
 
