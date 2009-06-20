@@ -218,7 +218,9 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
       struct intel_renderbuffer *stencil_rb;
 
       i = 0;
-      if ((intel->is_front_buffer_rendering || !intel_fb->color_rb[1])
+      if ((intel->is_front_buffer_rendering ||
+	   intel->is_front_buffer_reading ||
+	   !intel_fb->color_rb[1])
 	   && intel_fb->color_rb[0]) {
 	 attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
 	 attachments[i++] = intel_bits_per_pixel(intel_fb->color_rb[0]);
