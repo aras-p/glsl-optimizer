@@ -406,9 +406,10 @@ static const char UniformMatrix4fvARB_names[] =
     "";
 #endif
 
-#if defined(need_GL_APPLE_vertex_array_object)
+#if defined(need_GL_ARB_vertex_array_object) || defined(need_GL_APPLE_vertex_array_object)
 static const char DeleteVertexArraysAPPLE_names[] = 
     "ip\0" /* Parameter signature */
+    "glDeleteVertexArrays\0"
     "glDeleteVertexArraysAPPLE\0"
     "";
 #endif
@@ -938,6 +939,13 @@ static const char GetShaderInfoLog_names[] =
 static const char WeightivARB_names[] = 
     "ip\0" /* Parameter signature */
     "glWeightivARB\0"
+    "";
+#endif
+
+#if defined(need_GL_SGIX_instruments)
+static const char PollInstrumentsSGIX_names[] = 
+    "p\0" /* Parameter signature */
+    "glPollInstrumentsSGIX\0"
     "";
 #endif
 
@@ -2114,6 +2122,13 @@ static const char Tangent3fvEXT_names[] =
     "";
 #endif
 
+#if defined(need_GL_ARB_vertex_array_object)
+static const char GenVertexArrays_names[] = 
+    "ip\0" /* Parameter signature */
+    "glGenVertexArrays\0"
+    "";
+#endif
+
 #if defined(need_GL_ARB_framebuffer_object) || defined(need_GL_EXT_framebuffer_object)
 static const char BindFramebufferEXT_names[] = 
     "ii\0" /* Parameter signature */
@@ -2340,10 +2355,10 @@ static const char GetCombinerStageParameterfvNV_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_coordinate_frame)
-static const char Binormal3fEXT_names[] = 
-    "fff\0" /* Parameter signature */
-    "glBinormal3fEXT\0"
+#if defined(need_GL_ARB_vertex_array_object)
+static const char BindVertexArray_names[] = 
+    "i\0" /* Parameter signature */
+    "glBindVertexArray\0"
     "";
 #endif
 
@@ -3403,10 +3418,11 @@ static const char GetProgramParameterdvNV_names[] =
     "";
 #endif
 
-#if defined(need_GL_SGIX_instruments)
-static const char PollInstrumentsSGIX_names[] = 
-    "p\0" /* Parameter signature */
-    "glPollInstrumentsSGIX\0"
+#if defined(need_GL_ARB_vertex_array_object) || defined(need_GL_APPLE_vertex_array_object)
+static const char IsVertexArrayAPPLE_names[] = 
+    "i\0" /* Parameter signature */
+    "glIsVertexArray\0"
+    "glIsVertexArrayAPPLE\0"
     "";
 #endif
 
@@ -3940,6 +3956,13 @@ static const char VertexWeightfEXT_names[] =
     "";
 #endif
 
+#if defined(need_GL_EXT_coordinate_frame)
+static const char Binormal3fEXT_names[] = 
+    "fff\0" /* Parameter signature */
+    "glBinormal3fEXT\0"
+    "";
+#endif
+
 #if defined(need_GL_VERSION_1_4) || defined(need_GL_EXT_fog_coord)
 static const char FogCoordfvEXT_names[] = 
     "p\0" /* Parameter signature */
@@ -4052,13 +4075,6 @@ static const char BlendFuncSeparateEXT_names[] =
     "glBlendFuncSeparate\0"
     "glBlendFuncSeparateEXT\0"
     "glBlendFuncSeparateINGR\0"
-    "";
-#endif
-
-#if defined(need_GL_APPLE_vertex_array_object)
-static const char IsVertexArrayAPPLE_names[] = 
-    "i\0" /* Parameter signature */
-    "glIsVertexArrayAPPLE\0"
     "";
 #endif
 
@@ -4961,8 +4977,8 @@ static const struct dri_extension_function GL_3DFX_tbuffer_functions[] = {
 static const struct dri_extension_function GL_APPLE_vertex_array_object_functions[] = {
     { DeleteVertexArraysAPPLE_names, DeleteVertexArraysAPPLE_remap_index, -1 },
     { GenVertexArraysAPPLE_names, GenVertexArraysAPPLE_remap_index, -1 },
-    { BindVertexArrayAPPLE_names, BindVertexArrayAPPLE_remap_index, -1 },
     { IsVertexArrayAPPLE_names, IsVertexArrayAPPLE_remap_index, -1 },
+    { BindVertexArrayAPPLE_names, BindVertexArrayAPPLE_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
@@ -5119,6 +5135,16 @@ static const struct dri_extension_function GL_ARB_transpose_matrix_functions[] =
     { LoadTransposeMatrixdARB_names, LoadTransposeMatrixdARB_remap_index, -1 },
     { MultTransposeMatrixfARB_names, MultTransposeMatrixfARB_remap_index, -1 },
     { LoadTransposeMatrixfARB_names, LoadTransposeMatrixfARB_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_ARB_vertex_array_object)
+static const struct dri_extension_function GL_ARB_vertex_array_object_functions[] = {
+    { DeleteVertexArraysAPPLE_names, DeleteVertexArraysAPPLE_remap_index, -1 },
+    { GenVertexArrays_names, GenVertexArrays_remap_index, -1 },
+    { BindVertexArray_names, BindVertexArray_remap_index, -1 },
+    { IsVertexArrayAPPLE_names, IsVertexArrayAPPLE_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
@@ -5376,7 +5402,6 @@ static const struct dri_extension_function GL_EXT_coordinate_frame_functions[] =
     { Binormal3ivEXT_names, Binormal3ivEXT_remap_index, -1 },
     { Tangent3sEXT_names, Tangent3sEXT_remap_index, -1 },
     { Tangent3fvEXT_names, Tangent3fvEXT_remap_index, -1 },
-    { Binormal3fEXT_names, Binormal3fEXT_remap_index, -1 },
     { Tangent3dvEXT_names, Tangent3dvEXT_remap_index, -1 },
     { Binormal3bvEXT_names, Binormal3bvEXT_remap_index, -1 },
     { Binormal3dEXT_names, Binormal3dEXT_remap_index, -1 },
@@ -5385,6 +5410,7 @@ static const struct dri_extension_function GL_EXT_coordinate_frame_functions[] =
     { Tangent3ivEXT_names, Tangent3ivEXT_remap_index, -1 },
     { Tangent3dEXT_names, Tangent3dEXT_remap_index, -1 },
     { Binormal3svEXT_names, Binormal3svEXT_remap_index, -1 },
+    { Binormal3fEXT_names, Binormal3fEXT_remap_index, -1 },
     { Binormal3dvEXT_names, Binormal3dvEXT_remap_index, -1 },
     { Tangent3iEXT_names, Tangent3iEXT_remap_index, -1 },
     { Tangent3bvEXT_names, Tangent3bvEXT_remap_index, -1 },
@@ -6074,11 +6100,11 @@ static const struct dri_extension_function GL_SGIX_igloo_interface_functions[] =
 #if defined(need_GL_SGIX_instruments)
 static const struct dri_extension_function GL_SGIX_instruments_functions[] = {
     { ReadInstrumentsSGIX_names, ReadInstrumentsSGIX_remap_index, -1 },
+    { PollInstrumentsSGIX_names, PollInstrumentsSGIX_remap_index, -1 },
     { GetInstrumentsSGIX_names, GetInstrumentsSGIX_remap_index, -1 },
     { StartInstrumentsSGIX_names, StartInstrumentsSGIX_remap_index, -1 },
     { StopInstrumentsSGIX_names, StopInstrumentsSGIX_remap_index, -1 },
     { InstrumentsBufferSGIX_names, InstrumentsBufferSGIX_remap_index, -1 },
-    { PollInstrumentsSGIX_names, PollInstrumentsSGIX_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
