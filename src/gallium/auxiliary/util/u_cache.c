@@ -137,6 +137,8 @@ util_cache_set(struct util_cache *cache,
    struct util_cache_entry *entry;
 
    assert(cache);
+   if (!cache)
+      return;
 
    entry = util_cache_entry_get(cache, key);
    util_cache_entry_destroy(cache, entry);
@@ -158,6 +160,8 @@ util_cache_get(struct util_cache *cache,
    struct util_cache_entry *entry;
 
    assert(cache);
+   if (!cache)
+      return NULL;
 
    entry = util_cache_entry_get(cache, key);
    if(!entry->key && !entry->value)
@@ -176,7 +180,9 @@ util_cache_clear(struct util_cache *cache)
    uint32_t i;
 
    assert(cache);
-   
+   if (!cache)
+      return;
+
    for(i = 0; i < cache->size; ++i)
       util_cache_entry_destroy(cache, &cache->entries[i]);
 }
@@ -186,6 +192,8 @@ void
 util_cache_destroy(struct util_cache *cache)
 {
    assert(cache);
+   if (!cache)
+      return;
 
 #ifdef DEBUG
    if(cache->count >= 20*cache->size) {

@@ -148,6 +148,8 @@ hash_table_set(struct hash_table *ht,
    struct cso_hash_iter iter;
 
    assert(ht);
+   if (!ht)
+      return PIPE_ERROR_BAD_INPUT;
 
    key_hash = ht->hash(key);
 
@@ -183,6 +185,8 @@ hash_table_get(struct hash_table *ht,
    struct hash_table_item *item;
 
    assert(ht);
+   if (!ht)
+      return NULL;
 
    key_hash = ht->hash(key);
 
@@ -203,6 +207,8 @@ hash_table_remove(struct hash_table *ht,
    struct hash_table_item *item;
 
    assert(ht);
+   if (!ht)
+      return;
 
    key_hash = ht->hash(key);
 
@@ -225,7 +231,9 @@ hash_table_clear(struct hash_table *ht)
    struct hash_table_item *item;
 
    assert(ht);
-   
+   if (!ht)
+      return;
+
    iter = cso_hash_first_node(ht->cso);
    while (!cso_hash_iter_is_null(iter)) {
       item = (struct hash_table_item *)cso_hash_take(ht->cso, cso_hash_iter_key(iter));
@@ -243,9 +251,11 @@ hash_table_foreach(struct hash_table *ht,
    struct cso_hash_iter iter;
    struct hash_table_item *item;
    enum pipe_error result;
-   
+
    assert(ht);
-   
+   if (!ht)
+      return PIPE_ERROR_BAD_INPUT;
+
    iter = cso_hash_first_node(ht->cso);
    while (!cso_hash_iter_is_null(iter)) {
       item = (struct hash_table_item *)cso_hash_iter_data(iter);
@@ -264,9 +274,11 @@ hash_table_destroy(struct hash_table *ht)
 {
    struct cso_hash_iter iter;
    struct hash_table_item *item;
-   
+
    assert(ht);
-   
+   if (!ht)
+      return;
+
    iter = cso_hash_first_node(ht->cso);
    while (!cso_hash_iter_is_null(iter)) {
       item = (struct hash_table_item *)cso_hash_iter_data(iter);
