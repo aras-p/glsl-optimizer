@@ -46,8 +46,8 @@ void
 sl_pp_context_destroy(struct sl_pp_context *context);
 
 int
-sl_pp_context_add_str(struct sl_pp_context *context,
-                      const char *str);
+sl_pp_context_add_unique_str(struct sl_pp_context *context,
+                             const char *str);
 
 const char *
 sl_pp_context_cstr(const struct sl_pp_context *context,

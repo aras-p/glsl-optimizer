@@ -43,13 +43,27 @@ sl_pp_context_destroy(struct sl_pp_context *context)
 }
 
 int
-sl_pp_context_add_str(struct sl_pp_context *context,
-                      const char *str)
+sl_pp_context_add_unique_str(struct sl_pp_context *context,
+                             const char *str)
 {
    unsigned int size;
-   unsigned int offset;
+   unsigned int offset = 0;
 
    size = strlen(str) + 1;
+
+   /* Find out if this is a unique string. */
+   while (offset < context->cstr_pool_len) {
+      const char *str2;
+      unsigned int size2;
+
+      str2 = &context->cstr_pool[offset];
+      size2 = strlen(str2) + 1;
+      if (size == size2 && !memcmp(str, str2, size - 1)) {
+         return offset;
+      }
+
+      offset += size2;
+   }
 
    if (context->cstr_pool_len + size > context->cstr_pool_max) {
       context->cstr_pool_max = (context->cstr_pool_len + size + 0xffff) & ~0xffff;

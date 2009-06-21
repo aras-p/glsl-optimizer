@@ -28,6 +28,8 @@
 #ifndef SL_PP_TOKEN_H
 #define SL_PP_TOKEN_H
 
+#include "sl_pp_context.h"
+
 
 enum sl_pp_token {
    SL_PP_WHITESPACE,

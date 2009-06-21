@@ -53,7 +53,7 @@ _tokenise_identifier(struct sl_pp_context *context,
    }
    identifier[i++] = '\0';
 
-   info->data.identifier = sl_pp_context_add_str(context, identifier);
+   info->data.identifier = sl_pp_context_add_unique_str(context, identifier);
    if (info->data.identifier == -1) {
       return -1;
    }
@@ -91,7 +91,7 @@ _tokenise_number(struct sl_pp_context *context,
    }
    number[i++] = '\0';
 
-   info->data.number = sl_pp_context_add_str(context, number);
+   info->data.number = sl_pp_context_add_unique_str(context, number);
    if (info->data.number == -1) {
       return -1;
    }
