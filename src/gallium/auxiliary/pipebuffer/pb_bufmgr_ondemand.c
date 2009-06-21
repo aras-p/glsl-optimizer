@@ -74,6 +74,8 @@ static INLINE struct pb_ondemand_buffer *
 pb_ondemand_buffer(struct pb_buffer *buf)
 {
    assert(buf);
+   if (!buf)
+      return NULL;
    assert(buf->vtbl == &pb_ondemand_buffer_vtbl);
    return (struct pb_ondemand_buffer *)buf;
 }

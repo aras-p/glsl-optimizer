@@ -53,6 +53,8 @@ static INLINE struct malloc_buffer *
 malloc_buffer(struct pb_buffer *buf)
 {
    assert(buf);
+   if (!buf)
+      return NULL;
    assert(buf->vtbl == &malloc_buffer_vtbl);
    return (struct malloc_buffer *)buf;
 }
