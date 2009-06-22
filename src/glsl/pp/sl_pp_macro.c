@@ -27,7 +27,17 @@
 
 #include <stdlib.h>
 #include "sl_pp_macro.h"
+#include "sl_pp_process.h"
 
+
+static void
+skip_whitespace(const struct sl_pp_token_info *input,
+                unsigned int *pi)
+{
+   while (input[*pi].token == SL_PP_WHITESPACE) {
+      (*pi)++;
+   }
+}
 
 void
 sl_pp_macro_free(struct sl_pp_macro *macro)
@@ -47,5 +57,199 @@ sl_pp_macro_free(struct sl_pp_macro *macro)
 
       free(macro);
       macro = next_macro;
+   }
+}
+
+int
+sl_pp_macro_expand(struct sl_pp_context *context,
+                   const struct sl_pp_token_info *input,
+                   unsigned int *pi,
+                   struct sl_pp_macro *local,
+                   struct sl_pp_process_state *state)
+{
+   int macro_name;
+   struct sl_pp_macro *macro = NULL;
+   struct sl_pp_macro *actual_arg = NULL;
+   unsigned int j;
+
+   if (input[*pi].token != SL_PP_IDENTIFIER) {
+      return -1;
+   }
+
+   macro_name = input[*pi].data.identifier;
+
+   if (local) {
+      for (macro = local; macro; macro = macro->next) {
+         if (macro->name == macro_name) {
+            break;
+         }
+      }
+   }
+
+   if (!macro) {
+      for (macro = context->macro; macro; macro = macro->next) {
+         if (macro->name == macro_name) {
+            break;
+         }
+      }
+   }
+
+   if (!macro) {
+      if (sl_pp_process_out(state, &input[*pi])) {
+         return -1;
+      }
+      (*pi)++;
+      return 0;
+   }
+
+   (*pi)++;
+
+   if (macro->num_args >= 0) {
+      skip_whitespace(input, pi);
+      if (input[*pi].token != SL_PP_LPAREN) {
+         return -1;
+      }
+      (*pi)++;
+      skip_whitespace(input, pi);
+   }
+
+   if (macro->num_args > 0) {
+      struct sl_pp_macro_formal_arg *formal_arg = macro->arg;
+      struct sl_pp_macro **pmacro = &actual_arg;
+
+      for (j = 0; j < (unsigned int)macro->num_args; j++) {
+         unsigned int body_len;
+         unsigned int i;
+         int done = 0;
+         unsigned int paren_nesting = 0;
+         unsigned int k;
+
+         *pmacro = malloc(sizeof(struct sl_pp_macro));
+         if (!*pmacro) {
+            return -1;
+         }
+
+         (**pmacro).name = formal_arg->name;
+         (**pmacro).num_args = -1;
+         (**pmacro).arg = NULL;
+         (**pmacro).body = NULL;
+         (**pmacro).next = NULL;
+
+         body_len = 1;
+         for (i = *pi; !done; i++) {
+            switch (input[i].token) {
+            case SL_PP_WHITESPACE:
+               break;
+
+            case SL_PP_COMMA:
+               if (!paren_nesting) {
+                  if (j < (unsigned int)macro->num_args - 1) {
+                     done = 1;
+                  } else {
+                     return -1;
+                  }
+               } else {
+                  body_len++;
+               }
+               break;
+
+            case SL_PP_LPAREN:
+               paren_nesting++;
+               body_len++;
+               break;
+
+            case SL_PP_RPAREN:
+               if (!paren_nesting) {
+                  if (j == (unsigned int)macro->num_args - 1) {
+                     done = 1;
+                  } else {
+                     return -1;
+                  }
+               } else {
+                  paren_nesting--;
+                  body_len++;
+               }
+               break;
+
+            case SL_PP_EOF:
+               return -1;
+
+            default:
+               body_len++;
+            }
+         }
+
+         (**pmacro).body = malloc(sizeof(struct sl_pp_token_info) * body_len);
+         if (!(**pmacro).body) {
+            return -1;
+         }
+
+         for (done = 0, k = 0, i = *pi; !done; i++) {
+            switch (input[i].token) {
+            case SL_PP_WHITESPACE:
+               break;
+
+            case SL_PP_COMMA:
+               if (!paren_nesting && j < (unsigned int)macro->num_args - 1) {
+                  done = 1;
+               } else {
+                  (**pmacro).body[k++] = input[i];
+               }
+               break;
+
+            case SL_PP_LPAREN:
+               paren_nesting++;
+               (**pmacro).body[k++] = input[i];
+               break;
+
+            case SL_PP_RPAREN:
+               if (!paren_nesting && j == (unsigned int)macro->num_args - 1) {
+                  done = 1;
+               } else {
+                  paren_nesting--;
+                  (**pmacro).body[k++] = input[i];
+               }
+               break;
+
+            default:
+               (**pmacro).body[k++] = input[i];
+            }
+         }
+
+         (**pmacro).body[k++].token = SL_PP_EOF;
+         (*pi) = i;
+
+         formal_arg = formal_arg->next;
+         pmacro = &(**pmacro).next;
+      }
+   }
+
+   /* Right paren for non-empty argument list has already been eaten. */
+   if (macro->num_args == 0) {
+      skip_whitespace(input, pi);
+      if (input[*pi].token != SL_PP_RPAREN) {
+         return -1;
+      }
+      (*pi)++;
+   }
+
+   for (j = 0;;) {
+      switch (macro->body[j].token) {
+      case SL_PP_IDENTIFIER:
+         if (sl_pp_macro_expand(context, macro->body, &j, actual_arg, state)) {
+            return -1;
+         }
+         break;
+
+      case SL_PP_EOF:
+         sl_pp_macro_free(actual_arg);
+         return 0;
+
+      default:
+         if (sl_pp_process_out(state, &macro->body[j])) {
+            return -1;
+         }
+         j++;
+      }
    }
 }

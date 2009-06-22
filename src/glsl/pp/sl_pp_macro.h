@@ -38,13 +38,20 @@ struct sl_pp_macro_formal_arg {
 
 struct sl_pp_macro {
    int name;
+   int num_args;
    struct sl_pp_macro_formal_arg *arg;
    struct sl_pp_token_info *body;
-   unsigned int body_len;
    struct sl_pp_macro *next;
 };
 
 void
 sl_pp_macro_free(struct sl_pp_macro *macro);
+
+int
+sl_pp_macro_expand(struct sl_pp_context *context,
+                   const struct sl_pp_token_info *input,
+                   unsigned int *pi,
+                   struct sl_pp_macro *local,
+                   struct sl_pp_process_state *state);
 
 #endif /* SL_PP_MACRO_H */

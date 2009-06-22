@@ -48,6 +48,8 @@ _parse_formal_args(const struct sl_pp_token_info *input,
 {
    struct sl_pp_macro_formal_arg **arg;
 
+   macro->num_args = 0;
+
    skip_whitespace(input, first, last);
    if (*first < last) {
       if (input[*first].token == SL_PP_RPAREN) {
@@ -78,6 +80,8 @@ _parse_formal_args(const struct sl_pp_token_info *input,
       (**arg).next = NULL;
       arg = &(**arg).next;
 
+      macro->num_args++;
+
       skip_whitespace(input, first, last);
       if (*first < last) {
          if (input[*first].token == SL_PP_COMMA) {
@@ -104,7 +108,12 @@ sl_pp_process_define(struct sl_pp_context *context,
                      unsigned int last,
                      struct sl_pp_macro *macro)
 {
+   unsigned int i;
+   unsigned int body_len;
+   unsigned int j;
+
    macro->name = -1;
+   macro->num_args = -1;
    macro->arg = NULL;
    macro->body = NULL;
    macro->next = NULL;
@@ -131,26 +140,25 @@ sl_pp_process_define(struct sl_pp_context *context,
       }
    }
 
-   /* Trim whitespace from the left side. */
-   skip_whitespace(input, &first, last);
-
-   /* Trom whitespace from the right side. */
-   while (first < last && input[last - 1].token == SL_PP_WHITESPACE) {
-      last--;
-   }
-
-   /* All that is left between first and last is the macro definition. */
-   macro->body_len = last - first;
-   if (macro->body_len) {
-      macro->body = malloc(sizeof(struct sl_pp_token_info) * macro->body_len);
-      if (!macro->body) {
-         return -1;
+   /* Calculate body size, trim out whitespace, make room for EOF. */
+   body_len = 1;
+   for (i = first; i < last; i++) {
+      if (input[i].token != SL_PP_WHITESPACE) {
+         body_len++;
       }
-
-      memcpy(macro->body,
-             &input[first],
-             sizeof(struct sl_pp_token_info) * macro->body_len);
    }
+
+   macro->body = malloc(sizeof(struct sl_pp_token_info) * body_len);
+   if (!macro->body) {
+      return -1;
+   }
+
+   for (j = 0, i = first; i < last; i++) {
+      if (input[i].token != SL_PP_WHITESPACE) {
+         macro->body[j++] = input[i];
+      }
+   }
+   macro->body[j++].token = SL_PP_EOF;
 
    return 0;
 }

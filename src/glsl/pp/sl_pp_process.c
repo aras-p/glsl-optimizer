@@ -39,16 +39,16 @@ skip_whitespace(const struct sl_pp_token_info *input,
 }
 
 
-struct process_state {
+struct sl_pp_process_state {
    struct sl_pp_token_info *out;
    unsigned int out_len;
    unsigned int out_max;
 };
 
 
-static int
-out_token(struct process_state *state,
-          const struct sl_pp_token_info *token)
+int
+sl_pp_process_out(struct sl_pp_process_state *state,
+                  const struct sl_pp_token_info *token)
 {
    if (state->out_len >= state->out_max) {
       unsigned int new_max = state->out_max;
@@ -72,7 +72,6 @@ out_token(struct process_state *state,
    return 0;
 }
 
-
 int
 sl_pp_process(struct sl_pp_context *context,
               const struct sl_pp_token_info *input,
@@ -81,7 +80,7 @@ sl_pp_process(struct sl_pp_context *context,
    unsigned int i = 0;
    int found_eof = 0;
    struct sl_pp_macro **macro;
-   struct process_state state;
+   struct sl_pp_process_state state;
 
    macro = &context->macro;
    memset(&state, 0, sizeof(state));
@@ -110,7 +109,7 @@ sl_pp_process(struct sl_pp_context *context,
                   switch (input[i].token) {
                   case SL_PP_NEWLINE:
                      /* Preserve newline just for the sake of line numbering. */
-                     if (out_token(&state, &input[i])) {
+                     if (sl_pp_process_out(&state, &input[i])) {
                         return -1;
                      }
                      i++;
@@ -118,7 +117,7 @@ sl_pp_process(struct sl_pp_context *context,
                      break;
 
                   case SL_PP_EOF:
-                     if (out_token(&state, &input[i])) {
+                     if (sl_pp_process_out(&state, &input[i])) {
                         return -1;
                      }
                      i++;
@@ -152,7 +151,7 @@ sl_pp_process(struct sl_pp_context *context,
 
          case SL_PP_NEWLINE:
             /* Empty directive. */
-            if (out_token(&state, &input[i])) {
+            if (sl_pp_process_out(&state, &input[i])) {
                return -1;
             }
             i++;
@@ -160,7 +159,7 @@ sl_pp_process(struct sl_pp_context *context,
 
          case SL_PP_EOF:
             /* Empty directive. */
-            if (out_token(&state, &input[i])) {
+            if (sl_pp_process_out(&state, &input[i])) {
                return -1;
             }
             i++;
@@ -182,7 +181,7 @@ sl_pp_process(struct sl_pp_context *context,
 
             case SL_PP_NEWLINE:
                /* Preserve newline just for the sake of line numbering. */
-               if (out_token(&state, &input[i])) {
+               if (sl_pp_process_out(&state, &input[i])) {
                   return -1;
                }
                i++;
@@ -190,7 +189,7 @@ sl_pp_process(struct sl_pp_context *context,
                break;
 
             case SL_PP_EOF:
-               if (out_token(&state, &input[i])) {
+               if (sl_pp_process_out(&state, &input[i])) {
                   return -1;
                }
                i++;
@@ -198,8 +197,14 @@ sl_pp_process(struct sl_pp_context *context,
                found_eol = 1;
                break;
 
+            case SL_PP_IDENTIFIER:
+               if (sl_pp_macro_expand(context, input, &i, NULL, &state)) {
+                  return -1;
+               }
+               break;
+
             default:
-               if (out_token(&state, &input[i])) {
+               if (sl_pp_process_out(&state, &input[i])) {
                   return -1;
                }
                i++;
