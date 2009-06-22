@@ -31,6 +31,7 @@
 #include "main/macros.h"
 #include "main/image.h"
 #include "main/bufferobj.h"
+#include "main/state.h"
 #include "swrast/swrast.h"
 
 #include "intel_screen.h"
@@ -299,6 +300,9 @@ intelReadPixels(GLcontext * ctx,
    if (do_texture_readpixels
        (ctx, x, y, width, height, format, type, pack, pixels))
       return;
+#else
+   (void)do_blit_readpixels;
+   (void)do_texture_readpixels;
 #endif
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
