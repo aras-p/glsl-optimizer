@@ -101,6 +101,7 @@ intel_miptree_create_internal(struct intel_context *intel,
 struct intel_mipmap_tree *
 intel_miptree_create(struct intel_context *intel,
 		     GLenum target,
+		     GLenum base_format,
 		     GLenum internal_format,
 		     GLuint first_level,
 		     GLuint last_level,
@@ -115,8 +116,8 @@ intel_miptree_create(struct intel_context *intel,
    if (intel->use_texture_tiling && compress_byte == 0 &&
        intel->intelScreen->kernel_exec_fencing) {
       if (IS_965(intel->intelScreen->deviceID) &&
-	  (internal_format == GL_DEPTH_COMPONENT ||
-	   internal_format == GL_DEPTH_STENCIL_EXT))
+	  (base_format == GL_DEPTH_COMPONENT ||
+	   base_format == GL_DEPTH_STENCIL_EXT))
 	 tiling = I915_TILING_Y;
       else
 	 tiling = I915_TILING_X;

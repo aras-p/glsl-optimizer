@@ -126,6 +126,7 @@ struct intel_mipmap_tree
 
 struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLenum target,
+                                               GLenum base_format,
                                                GLenum internal_format,
                                                GLuint first_level,
                                                GLuint last_level,

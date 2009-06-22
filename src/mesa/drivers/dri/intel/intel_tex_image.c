@@ -131,6 +131,7 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
       comp_byte = intel_compressed_num_bytes(intelImage->base.TexFormat->MesaFormat);
    intelObj->mt = intel_miptree_create(intel,
                                        intelObj->base.Target,
+                                       intelImage->base._BaseFormat,
                                        intelImage->base.InternalFormat,
                                        firstLevel,
                                        lastLevel,
@@ -412,7 +413,9 @@ intelTexImage(GLcontext * ctx,
        * a miptree, so create one just for our level and store it in the image.
        * It'll get moved into the object miptree at validate time.
        */
-      intelImage->mt = intel_miptree_create(intel, target, internalFormat,
+      intelImage->mt = intel_miptree_create(intel, target,
+					    intelImage->base.TexFormat->BaseFormat,
+					    internalFormat,
 					    level, level,
 					    width, height, depth,
 					    intelImage->base.TexFormat->TexelBytes,
