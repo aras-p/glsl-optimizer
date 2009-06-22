@@ -235,12 +235,15 @@ try_pbo_upload(struct intel_context *intel,
 					       INTEL_WRITE_FULL);
 
 
-      intelEmitCopyBlit(intel,
-                        intelImage->mt->cpp,
-                        src_stride, src_buffer, src_offset, GL_FALSE,
-                        dst_stride, dst_buffer, dst_offset, GL_FALSE,
-                        0, 0, 0, 0, width, height,
-			GL_COPY);
+      if (!intelEmitCopyBlit(intel,
+			     intelImage->mt->cpp,
+			     src_stride, src_buffer, src_offset, GL_FALSE,
+			     dst_stride, dst_buffer, dst_offset, GL_FALSE,
+			     0, 0, 0, 0, width, height,
+			     GL_COPY)) {
+	 UNLOCK_HARDWARE(intel);
+	 return GL_FALSE;
+      }
    }
    UNLOCK_HARDWARE(intel);
 

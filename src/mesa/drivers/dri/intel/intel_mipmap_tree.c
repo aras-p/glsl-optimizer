@@ -498,6 +498,7 @@ intel_miptree_image_copy(struct intel_context *intel,
    const GLuint *dst_depth_offset = intel_miptree_depth_offsets(dst, level);
    const GLuint *src_depth_offset = intel_miptree_depth_offsets(src, level);
    GLuint i;
+   GLboolean success;
 
    if (dst->compressed) {
        GLuint alignment = intel_compressed_alignment(dst->internal_format);
@@ -506,12 +507,26 @@ intel_miptree_image_copy(struct intel_context *intel,
    }
 
    for (i = 0; i < depth; i++) {
-      intel_region_copy(intel,
-                        dst->region, dst_offset + dst_depth_offset[i],
-                        0,
-                        0,
-                        src->region, src_offset + src_depth_offset[i],
-                        0, 0, width, height, GL_COPY);
-   }
+      success = intel_region_copy(intel,
+				  dst->region, dst_offset + dst_depth_offset[i],
+				  0, 0,
+				  src->region, src_offset + src_depth_offset[i],
+				  0, 0, width, height, GL_COPY);
+      if (!success) {
+	 GLubyte *src_ptr, *dst_ptr;
 
+	 src_ptr = intel_region_map(intel, src->region);
+	 dst_ptr = intel_region_map(intel, dst->region);
+
+	 _mesa_copy_rect(dst_ptr + dst_offset + dst_depth_offset[i],
+			 dst->cpp,
+			 dst->pitch,
+			 0, 0, width, height,
+			 src_ptr + src_offset + src_depth_offset[i],
+			 src->pitch,
+			 0, 0);
+	 intel_region_unmap(intel, src->region);
+	 intel_region_unmap(intel, dst->region);
+      }
+   }
 }

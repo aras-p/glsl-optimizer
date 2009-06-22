@@ -147,18 +147,21 @@ do_copy_texsubimage(struct intel_context *intel,
 	 src_pitch = src->pitch;
       }
 
-      intelEmitCopyBlit(intel,
-			intelImage->mt->cpp,
-			src_pitch,
-			src->buffer,
-			0,
-			src->tiling,
-			intelImage->mt->pitch,
-			dst_bo,
-			image_offset,
-			intelImage->mt->region->tiling,
-			x, y, dstx, dsty, width, height,
-			GL_COPY);
+      if (!intelEmitCopyBlit(intel,
+			     intelImage->mt->cpp,
+			     src_pitch,
+			     src->buffer,
+			     0,
+			     src->tiling,
+			     intelImage->mt->pitch,
+			     dst_bo,
+			     image_offset,
+			     intelImage->mt->region->tiling,
+			     x, y, dstx, dsty, width, height,
+			     GL_COPY)) {
+	 UNLOCK_HARDWARE(intel);
+	 return GL_FALSE;
+      }
    }
 
    UNLOCK_HARDWARE(intel);

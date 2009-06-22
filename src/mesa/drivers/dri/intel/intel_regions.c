@@ -360,7 +360,7 @@ intel_region_data(struct intel_context *intel,
 /* Copy rectangular sub-regions. Need better logic about when to
  * push buffers into AGP - will currently do so whenever possible.
  */
-void
+GLboolean
 intel_region_copy(struct intel_context *intel,
                   struct intel_region *dst,
                   GLuint dst_offset,
@@ -373,7 +373,7 @@ intel_region_copy(struct intel_context *intel,
    _DBG("%s\n", __FUNCTION__);
 
    if (intel == NULL)
-      return;
+      return GL_FALSE;
 
    if (dst->pbo) {
       if (dstx == 0 &&
@@ -385,12 +385,12 @@ intel_region_copy(struct intel_context *intel,
 
    assert(src->cpp == dst->cpp);
 
-   intelEmitCopyBlit(intel,
-                     dst->cpp,
-                     src->pitch, src->buffer, src_offset, src->tiling,
-                     dst->pitch, dst->buffer, dst_offset, dst->tiling,
-                     srcx, srcy, dstx, dsty, width, height,
-		     logicop);
+   return intelEmitCopyBlit(intel,
+			    dst->cpp,
+			    src->pitch, src->buffer, src_offset, src->tiling,
+			    dst->pitch, dst->buffer, dst_offset, dst->tiling,
+			    srcx, srcy, dstx, dsty, width, height,
+			    logicop);
 }
 
 /* Attach to a pbo, discarding our data.  Effectively zero-copy upload
@@ -477,13 +477,13 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
    if (!was_locked)
       LOCK_HARDWARE(intel);
 
-   intelEmitCopyBlit(intel,
-		     region->cpp,
-		     region->pitch, pbo->buffer, 0, region->tiling,
-		     region->pitch, region->buffer, 0, region->tiling,
-		     0, 0, 0, 0,
-		     region->pitch, region->height,
-		     GL_COPY);
+   assert(intelEmitCopyBlit(intel,
+			    region->cpp,
+			    region->pitch, pbo->buffer, 0, region->tiling,
+			    region->pitch, region->buffer, 0, region->tiling,
+			    0, 0, 0, 0,
+			    region->pitch, region->height,
+			    GL_COPY));
 
    if (!was_locked)
       UNLOCK_HARDWARE(intel);

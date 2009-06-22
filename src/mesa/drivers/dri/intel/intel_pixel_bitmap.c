@@ -194,7 +194,7 @@ do_blit_bitmap( GLcontext *ctx,
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLfloat tmpColor[4];
    GLubyte ubcolor[4];
-   GLuint color8888, color565;
+   GLuint color;
    unsigned int num_cliprects;
    drm_clip_rect_t *cliprects;
    int x_off, y_off;
@@ -232,8 +232,11 @@ do_blit_bitmap( GLcontext *ctx,
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[2], tmpColor[2]);
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[3], tmpColor[3]);
 
-   color8888 = INTEL_PACKCOLOR8888(ubcolor[0], ubcolor[1], ubcolor[2], ubcolor[3]);
-   color565 = INTEL_PACKCOLOR565(ubcolor[0], ubcolor[1], ubcolor[2]);
+   if (dst->cpp == 2)
+      color = INTEL_PACKCOLOR565(ubcolor[0], ubcolor[1], ubcolor[2]);
+   else
+      color = INTEL_PACKCOLOR8888(ubcolor[0], ubcolor[1],
+				  ubcolor[2], ubcolor[3]);
 
    if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F))
       return GL_FALSE;
@@ -307,21 +310,21 @@ do_blit_bitmap( GLcontext *ctx,
 				   fb->Name == 0 ? GL_TRUE : GL_FALSE) == 0)
 		  continue;
 
-	       /* 
-		*/
-	       intelEmitImmediateColorExpandBlit( intel,
-						  dst->cpp,
-						  (GLubyte *)stipple, 
-						  sz,
-						  (dst->cpp == 2) ? color565 : color8888,
-						  dst->pitch,
-						  dst->buffer,
-						  0,
-						  dst->tiling,
-						  box_x + px,
-						  box_y + py,
-						  w, h,
-						  logic_op);
+	       if (!intelEmitImmediateColorExpandBlit(intel,
+						      dst->cpp,
+						      (GLubyte *)stipple,
+						      sz,
+						      color,
+						      dst->pitch,
+						      dst->buffer,
+						      0,
+						      dst->tiling,
+						      box_x + px,
+						      box_y + py,
+						      w, h,
+						      logic_op)) {
+		  return GL_FALSE;
+	       }
 	    } 
 	 } 
       }

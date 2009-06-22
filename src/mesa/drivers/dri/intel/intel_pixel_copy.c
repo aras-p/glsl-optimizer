@@ -362,12 +362,16 @@ do_blit_copypixels(GLcontext * ctx,
 				   &clip_x, &clip_y, &clip_w, &clip_h))
             continue;
 
-	 intel_region_copy(intel,
-			   dst, 0, clip_x, clip_y,
-			   src, 0, clip_x + delta_x, clip_y + delta_y,
-			   clip_w, clip_h,
-			   ctx->Color.ColorLogicOpEnabled ?
-			   ctx->Color.LogicOp : GL_COPY);
+	 if (!intel_region_copy(intel,
+				dst, 0, clip_x, clip_y,
+				src, 0, clip_x + delta_x, clip_y + delta_y,
+				clip_w, clip_h,
+				ctx->Color.ColorLogicOpEnabled ?
+				ctx->Color.LogicOp : GL_COPY)) {
+	    DBG("%s: blit failure\n", __FUNCTION__);
+	    UNLOCK_HARDWARE(intel);
+	    return GL_FALSE;
+	 }
       }
    }
 out:
