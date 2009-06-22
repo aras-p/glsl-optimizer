@@ -244,6 +244,8 @@ static void emit_depthbuffer(struct brw_context *brw)
 	 return;
       }
 
+      assert(region->tiling != I915_TILING_X);
+
       BEGIN_BATCH(len, IGNORE_CLIPRECTS);
       OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH(((region->pitch * region->cpp) - 1) |
