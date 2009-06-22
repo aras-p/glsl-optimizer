@@ -179,7 +179,7 @@ do_blit_readpixels(GLcontext * ctx,
    if (!src)
       return GL_FALSE;
 
-   if (dst) {
+   if (pack->BufferObj->Name) {
       /* XXX This validation should be done by core mesa:
        */
       if (!_mesa_validate_pbo_access(2, pack, width, height, 1,

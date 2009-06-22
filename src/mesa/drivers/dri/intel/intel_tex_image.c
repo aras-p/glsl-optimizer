@@ -205,7 +205,7 @@ try_pbo_upload(struct intel_context *intel,
    GLuint src_offset, src_stride;
    GLuint dst_offset, dst_stride;
 
-   if (!pbo ||
+   if (unpack->BufferObj->Name == 0 ||
        intel->ctx._ImageTransferState ||
        unpack->SkipPixels || unpack->SkipRows) {
       DBG("%s: failure 1\n", __FUNCTION__);
@@ -260,7 +260,7 @@ try_pbo_zcopy(struct intel_context *intel,
    GLuint src_offset, src_stride;
    GLuint dst_offset, dst_stride;
 
-   if (!pbo ||
+   if (unpack->BufferObj->Name == 0 ||
        intel->ctx._ImageTransferState ||
        unpack->SkipPixels || unpack->SkipRows) {
       DBG("%s: failure 1\n", __FUNCTION__);
@@ -421,7 +421,7 @@ intelTexImage(GLcontext * ctx,
     */
    if (dims <= 2 &&
        intelImage->mt &&
-       intel_buffer_object(unpack->BufferObj) &&
+       unpack->BufferObj->Name != 0 &&
        check_pbo_format(internalFormat, format,
                         type, intelImage->base.TexFormat)) {
 
