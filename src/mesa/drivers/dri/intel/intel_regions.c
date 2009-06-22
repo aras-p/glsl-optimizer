@@ -392,35 +392,6 @@ intel_region_copy(struct intel_context *intel,
 		     GL_COPY);
 }
 
-/* Fill a rectangular sub-region.  Need better logic about when to
- * push buffers into AGP - will currently do so whenever possible.
- */
-void
-intel_region_fill(struct intel_context *intel,
-                  struct intel_region *dst,
-                  GLuint dst_offset,
-                  GLuint dstx, GLuint dsty,
-                  GLuint width, GLuint height, GLuint color)
-{
-   _DBG("%s\n", __FUNCTION__);
-
-   if (intel == NULL)
-      return;   
-
-   if (dst->pbo) {
-      if (dstx == 0 &&
-          dsty == 0 && width == dst->pitch && height == dst->height)
-         intel_region_release_pbo(intel, dst);
-      else
-         intel_region_cow(intel, dst);
-   }
-
-   intelEmitFillBlit(intel,
-                     dst->cpp,
-                     dst->pitch, dst->buffer, dst_offset, dst->tiling,
-                     dstx, dsty, width, height, color);
-}
-
 /* Attach to a pbo, discarding our data.  Effectively zero-copy upload
  * the pbo's data.
  */

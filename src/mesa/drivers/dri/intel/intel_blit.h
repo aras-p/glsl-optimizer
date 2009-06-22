@@ -50,15 +50,6 @@ extern void intelEmitCopyBlit(struct intel_context *intel,
                               GLshort w, GLshort h,
 			      GLenum logicop );
 
-extern void intelEmitFillBlit(struct intel_context *intel,
-                              GLuint cpp,
-                              GLshort dst_pitch,
-                              dri_bo *dst_buffer,
-                              GLuint dst_offset,
-			      uint32_t dst_tiling,
-                              GLshort x, GLshort y,
-                              GLshort w, GLshort h, GLuint color);
-
 void
 intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				  GLuint cpp,

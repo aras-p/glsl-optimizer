@@ -175,66 +175,6 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
    UNLOCK_HARDWARE(intel);
 }
 
-
-
-
-void
-intelEmitFillBlit(struct intel_context *intel,
-		  GLuint cpp,
-		  GLshort dst_pitch,
-		  dri_bo *dst_buffer,
-		  GLuint dst_offset,
-		  uint32_t dst_tiling,
-		  GLshort x, GLshort y,
-		  GLshort w, GLshort h,
-		  GLuint color)
-{
-   GLuint BR13, CMD;
-   BATCH_LOCALS;
-
-   dst_pitch *= cpp;
-
-   switch (cpp) {
-   case 1:
-      BR13 = (0xF0 << 16);
-      CMD = XY_COLOR_BLT_CMD;
-      break;
-   case 2:
-      BR13 = (0xF0 << 16) | BR13_565;
-      CMD = XY_COLOR_BLT_CMD;
-      break;
-   case 4:
-      BR13 = (0xF0 << 16) | BR13_8888;
-      CMD = XY_COLOR_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
-      break;
-   default:
-      return;
-   }
-#ifndef I915
-   if (dst_tiling != I915_TILING_NONE) {
-      CMD |= XY_DST_TILED;
-      dst_pitch /= 4;
-   }
-#endif
-
-   DBG("%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
-       __FUNCTION__, dst_buffer, dst_pitch, dst_offset, x, y, w, h);
-
-   assert(w > 0);
-   assert(h > 0);
-
-   BEGIN_BATCH(6, NO_LOOP_CLIPRECTS);
-   OUT_BATCH(CMD);
-   OUT_BATCH(BR13 | dst_pitch);
-   OUT_BATCH((y << 16) | x);
-   OUT_BATCH(((y + h) << 16) | (x + w));
-   OUT_RELOC(dst_buffer,
-	     I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-	     dst_offset);
-   OUT_BATCH(color);
-   ADVANCE_BATCH();
-}
-
 static GLuint translate_raster_op(GLenum logicop)
 {
    switch(logicop) {
