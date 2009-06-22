@@ -157,6 +157,9 @@ extern GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 
 extern GLboolean r700InitChipObject(context_t *context);
 extern GLboolean r700SendContextStates(context_t *context);
+extern GLboolean r700SendViewportState(context_t *context, int id);
+extern GLboolean r700SendRenderTargetState(context_t *context, int id);
+
 extern int       r700SetupStreams(GLcontext * ctx);
 extern void      r700SetupVTXConstants(GLcontext  * ctx, 
 				       unsigned int nStreamID,
