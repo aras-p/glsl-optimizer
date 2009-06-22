@@ -80,6 +80,8 @@ struct __GLXDRIdrawablePrivateRec {
     int have_fake_front;
 };
 
+static void dri2WaitX(__GLXDRIdrawable *pdraw);
+
 static void dri2DestroyContext(__GLXDRIcontext *context,
 			      __GLXscreenConfigs *psc, Display *dpy)
 {
@@ -215,6 +217,11 @@ static void dri2CopySubBuffer(__GLXDRIdrawable *pdraw,
     DRI2CopyRegion(pdraw->psc->dpy, pdraw->drawable, region,
 		   DRI2BufferFrontLeft, DRI2BufferBackLeft);
     XFixesDestroyRegion(pdraw->psc->dpy, region);
+
+    /* Refresh the fake front (if present) after we just damaged the real
+     * front.
+     */
+    dri2WaitX(pdraw);
 }
 
 static void dri2SwapBuffers(__GLXDRIdrawable *pdraw)
