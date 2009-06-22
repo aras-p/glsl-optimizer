@@ -1,29 +1,18 @@
-TARGET     = libxorgtracker.a
-CFILES     = $(wildcard ./*.c)
-OBJECTS    = $(patsubst ./%.c,./%.o,$(CFILES))
-GALLIUMDIR = ../..
-TOP        = ../../../..
-
+TOP = ../../../..
 include $(TOP)/configs/current
 
-CFLAGS = -DHAVE_CONFIG_H \
-         -g -Wall -Wimplicit-function-declaration -fPIC \
-         $(shell pkg-config --cflags pixman-1 xorg-server libdrm xproto) \
-         -I$(GALLIUMDIR)/include \
-         -I$(GALLIUMDIR)/auxiliary \
-         -I$(TOP)/src/mesa/drivers/dri/common \
-         -I$(TOP)/src/mesa \
-         -I$(TOP)/include \
-         -I$(TOP)/src/egl/main
+LIBNAME = xorgtracker
 
-#############################################
+LIBRARY_INCLUDES = \
+	-DHAVE_CONFIG_H \
+	$(shell pkg-config --cflags-only-I pixman-1 xorg-server libdrm xproto) \
+	-I$(TOP)/src/gallium/include \
+	-I$(TOP)/src/gallium/auxiliary \
+	-I$(TOP)/include \
+	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/mesa/drivers/dri/common \
+	-I$(TOP)/src/mesa/main
 
-.PHONY	= all clean
+C_SOURCES = $(wildcard ./*.c)
 
-all: $(TARGET)
-
-$(TARGET): $(OBJECTS)
-	ar rcs $(TARGET) $(OBJECTS)
-
-clean:
-	rm -rf $(OBJECTS) $(TARGET)
+include ../../Makefile.template
