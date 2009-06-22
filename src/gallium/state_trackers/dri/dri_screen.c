@@ -112,7 +112,7 @@ dri_fill_in_modes(struct dri_screen *screen,
       stencil_bits_array[depth_buffer_factor++] = 0;
       screen->d_depth_bits_last = FALSE;
    }
-   if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z24S8_UNORM,
+   if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_S8Z24_UNORM,
 				     PIPE_TEXTURE_2D,
 				     PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0)) {
       depth_bits_array[depth_buffer_factor] = 24;
