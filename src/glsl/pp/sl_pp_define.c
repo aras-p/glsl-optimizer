@@ -112,12 +112,6 @@ sl_pp_process_define(struct sl_pp_context *context,
    unsigned int body_len;
    unsigned int j;
 
-   macro->name = -1;
-   macro->num_args = -1;
-   macro->arg = NULL;
-   macro->body = NULL;
-   macro->next = NULL;
-
    if (first < last && input[first].token == SL_PP_IDENTIFIER) {
       macro->name = input[first].data.identifier;
       first++;

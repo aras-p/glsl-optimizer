@@ -30,13 +30,17 @@
 #include "sl_pp_process.h"
 
 
-static void
-skip_whitespace(const struct sl_pp_token_info *input,
-                unsigned int *pi)
+struct sl_pp_macro *
+sl_pp_macro_new(void)
 {
-   while (input[*pi].token == SL_PP_WHITESPACE) {
-      (*pi)++;
+   struct sl_pp_macro *macro;
+
+   macro = calloc(1, sizeof(struct sl_pp_macro));
+   if (macro) {
+      macro->name = -1;
+      macro->num_args = -1;
    }
+   return macro;
 }
 
 void
@@ -57,6 +61,15 @@ sl_pp_macro_free(struct sl_pp_macro *macro)
 
       free(macro);
       macro = next_macro;
+   }
+}
+
+static void
+skip_whitespace(const struct sl_pp_token_info *input,
+                unsigned int *pi)
+{
+   while (input[*pi].token == SL_PP_WHITESPACE) {
+      (*pi)++;
    }
 }
 
@@ -124,16 +137,12 @@ sl_pp_macro_expand(struct sl_pp_context *context,
          unsigned int paren_nesting = 0;
          unsigned int k;
 
-         *pmacro = malloc(sizeof(struct sl_pp_macro));
+         *pmacro = sl_pp_macro_new();
          if (!*pmacro) {
             return -1;
          }
 
          (**pmacro).name = formal_arg->name;
-         (**pmacro).num_args = -1;
-         (**pmacro).arg = NULL;
-         (**pmacro).body = NULL;
-         (**pmacro).next = NULL;
 
          body_len = 1;
          for (i = *pi; !done; i++) {

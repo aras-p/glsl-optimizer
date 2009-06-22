@@ -38,11 +38,14 @@ struct sl_pp_macro_formal_arg {
 
 struct sl_pp_macro {
    int name;
-   int num_args;
+   int num_args;                       /* -1 means no args, 0 means `()' */
    struct sl_pp_macro_formal_arg *arg;
    struct sl_pp_token_info *body;
    struct sl_pp_macro *next;
 };
+
+struct sl_pp_macro *
+sl_pp_macro_new(void);
 
 void
 sl_pp_macro_free(struct sl_pp_macro *macro);

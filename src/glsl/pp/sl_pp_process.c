@@ -133,7 +133,7 @@ sl_pp_process(struct sl_pp_context *context,
                last = i - 1;
 
                if (!strcmp(name, "define")) {
-                  *macro = malloc(sizeof(struct sl_pp_macro));
+                  *macro = sl_pp_macro_new();
                   if (!*macro) {
                      return -1;
                   }
