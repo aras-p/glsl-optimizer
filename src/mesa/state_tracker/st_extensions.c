@@ -149,6 +149,7 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
    ctx->Extensions.ARB_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.ARB_vertex_program = GL_TRUE;
+   ctx->Extensions.ARB_vertex_array_object = GL_TRUE;
    ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
 
    ctx->Extensions.EXT_blend_color = GL_TRUE;
