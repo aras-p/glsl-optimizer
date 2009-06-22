@@ -225,10 +225,18 @@ intelEmitCopyBlit(struct intel_context *intel,
    dri_bo *aper_array[3];
    BATCH_LOCALS;
 
-   if (dst_tiling == I915_TILING_Y)
-      return GL_FALSE;
-   if (src_tiling == I915_TILING_Y)
-      return GL_FALSE;
+   if (dst_tiling != I915_TILING_NONE) {
+      if (dst_offset & 4095)
+	 return GL_FALSE;
+      if (dst_tiling == I915_TILING_Y)
+	 return GL_FALSE;
+   }
+   if (src_tiling != I915_TILING_NONE) {
+      if (src_offset & 4095)
+	 return GL_FALSE;
+      if (src_tiling == I915_TILING_Y)
+	 return GL_FALSE;
+   }
 
    /* do space/cliprects check before going any further */
    do {
@@ -561,8 +569,12 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    int dwords = ALIGN(src_size, 8) / 4;
    uint32_t opcode, br13, blit_cmd;
 
-   if (dst_tiling == I915_TILING_Y)
-      return GL_FALSE;
+   if (dst_tiling != I915_TILING_NONE) {
+      if (dst_offset & 4095)
+	 return GL_FALSE;
+      if (dst_tiling == I915_TILING_Y)
+	 return GL_FALSE;
+   }
 
    assert( logic_op - GL_CLEAR >= 0 );
    assert( logic_op - GL_CLEAR < 0x10 );
