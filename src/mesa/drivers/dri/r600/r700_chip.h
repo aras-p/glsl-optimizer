@@ -416,8 +416,72 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT              	SPI_FOG_CNTL              ;  /* 0xA1B7 */
 	union UINT_FLOAT              	SPI_FOG_FUNC_SCALE        ;  /* 0xA1B8 */
 	union UINT_FLOAT              	SPI_FOG_FUNC_BIAS         ;  /* 0xA1B9 */
-	union UINT_FLOAT                SQ_VTX_SEMANTIC[R700_MAX_SHADER_EXPORTS];
-	union UINT_FLOAT                SPI_PS_INPUT_CNTL[R700_MAX_SHADER_EXPORTS];
+
+    union UINT_FLOAT         	SQ_VTX_SEMANTIC_0         ;  /* 0xA0E0 */
+	union UINT_FLOAT         	SQ_VTX_SEMANTIC_1         ;  /* 0xA0E1 */
+	union UINT_FLOAT         	SQ_VTX_SEMANTIC_2         ;  /* 0xA0E2 */
+	union UINT_FLOAT         	SQ_VTX_SEMANTIC_3         ;  /* 0xA0E3 */
+	union UINT_FLOAT         	SQ_VTX_SEMANTIC_4         ;  /* 0xA0E4 */
+	union UINT_FLOAT         	SQ_VTX_SEMANTIC_5         ;  /* 0xA0E5 */
+	union UINT_FLOAT         	SQ_VTX_SEMANTIC_6         ;  /* 0xA0E6 */
+	union UINT_FLOAT         	SQ_VTX_SEMANTIC_7         ;  /* 0xA0E7 */
+	union UINT_FLOAT         	SQ_VTX_SEMANTIC_8         ;  /* 0xA0E8 */
+	union UINT_FLOAT         	SQ_VTX_SEMANTIC_9         ;  /* 0xA0E9 */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_10        ;  /* 0xA0EA */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_11        ;  /* 0xA0EB */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_12        ;  /* 0xA0EC */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_13        ;  /* 0xA0ED */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_14        ;  /* 0xA0EE */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_15        ;  /* 0xA0EF */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_16        ;  /* 0xA0F0 */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_17        ;  /* 0xA0F1 */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_18        ;  /* 0xA0F2 */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_19        ;  /* 0xA0F3 */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_20        ;  /* 0xA0F4 */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_21        ;  /* 0xA0F5 */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_22        ;  /* 0xA0F6 */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_23        ;  /* 0xA0F7 */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_24        ;  /* 0xA0F8 */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_25        ;  /* 0xA0F9 */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_26        ;  /* 0xA0FA */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_27        ;  /* 0xA0FB */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_28        ;  /* 0xA0FC */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_29        ;  /* 0xA0FD */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_30        ;  /* 0xA0FE */
+	union UINT_FLOAT        	SQ_VTX_SEMANTIC_31        ;  /* 0xA0FF */
+    
+	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_0       ;  /* 0xA191 */
+	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_1       ;  /* 0xA192 */
+	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_2       ;  /* 0xA193 */
+    union UINT_FLOAT       	SPI_PS_INPUT_CNTL_3       ;  /* 0xA194 */
+	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_4       ;  /* 0xA195 */
+	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_5       ;  /* 0xA196 */
+	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_6       ;  /* 0xA197 */
+	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_7       ;  /* 0xA198 */
+	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_8       ;  /* 0xA199 */
+	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_9       ;  /* 0xA19A */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_10      ;  /* 0xA19B */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_11      ;  /* 0xA19C */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_12      ;  /* 0xA19D */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_13      ;  /* 0xA19E */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_14      ;  /* 0xA19F */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_15      ;  /* 0xA1A0 */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_16      ;  /* 0xA1A1 */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_17      ;  /* 0xA1A2 */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_18      ;  /* 0xA1A3 */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_19      ;  /* 0xA1A4 */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_20      ;  /* 0xA1A5 */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_21      ;  /* 0xA1A6 */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_22      ;  /* 0xA1A7 */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_23      ;  /* 0xA1A8 */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_24      ;  /* 0xA1A9 */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_25      ;  /* 0xA1AA */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_26      ;  /* 0xA1AB */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_27      ;  /* 0xA1AC */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_28      ;  /* 0xA1AD */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_29      ;  /* 0xA1AE */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_30      ;  /* 0xA1AF */
+	union UINT_FLOAT      	SPI_PS_INPUT_CNTL_31      ;  /* 0xA1B0 */
 
 	// shaders
 	PS_STATE_STRUCT                 ps;

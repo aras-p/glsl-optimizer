@@ -1040,9 +1040,9 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->SPI_VS_OUT_ID_0.u32All  = 0x03020100;
     r700->SPI_VS_OUT_ID_1.u32All  = 0x07060504;
 
-    r700->SPI_PS_INPUT_CNTL[0].u32All  = 0x00000800;
-    r700->SPI_PS_INPUT_CNTL[1].u32All  = 0x00000801;
-    r700->SPI_PS_INPUT_CNTL[2].u32All  = 0x00000802;
+    r700->SPI_PS_INPUT_CNTL_0.u32All  = 0x00000800;
+    r700->SPI_PS_INPUT_CNTL_1.u32All  = 0x00000801;
+    r700->SPI_PS_INPUT_CNTL_2.u32All  = 0x00000802;
 
     r700->SPI_THREAD_GROUPING.u32All = 0;
     if (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV770)
