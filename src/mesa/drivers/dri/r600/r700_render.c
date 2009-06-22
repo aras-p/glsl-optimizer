@@ -296,7 +296,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     //r700SyncSurf(context); /*  */
 
     r700SendContextStates(context);
-    r700SendViewportState(context);
+    r700SendViewportState(context, 0);
     r700SendRenderTargetState(context, 0);
 
 
