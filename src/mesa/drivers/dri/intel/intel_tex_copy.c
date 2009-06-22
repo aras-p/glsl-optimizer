@@ -107,6 +107,9 @@ do_copy_texsubimage(struct intel_context *intel,
    intelFlush(ctx);
    LOCK_HARDWARE(intel);
    {
+      drm_intel_bo *dst_bo = intel_region_buffer(intel,
+						 intelImage->mt->region,
+						 INTEL_WRITE_PART);
       GLuint image_offset = intel_miptree_image_offset(intelImage->mt,
                                                        intelImage->face,
                                                        intelImage->level);
@@ -151,7 +154,7 @@ do_copy_texsubimage(struct intel_context *intel,
 			0,
 			src->tiling,
 			intelImage->mt->pitch,
-			intelImage->mt->region->buffer,
+			dst_bo,
 			image_offset,
 			intelImage->mt->region->tiling,
 			x, y, dstx, dsty, width, height,

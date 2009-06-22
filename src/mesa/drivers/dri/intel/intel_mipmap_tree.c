@@ -511,7 +511,7 @@ intel_miptree_image_copy(struct intel_context *intel,
                         0,
                         0,
                         src->region, src_offset + src_depth_offset[i],
-                        0, 0, width, height);
+                        0, 0, width, height, GL_COPY);
    }
 
 }

@@ -367,7 +367,8 @@ intel_region_copy(struct intel_context *intel,
                   GLuint dstx, GLuint dsty,
                   struct intel_region *src,
                   GLuint src_offset,
-                  GLuint srcx, GLuint srcy, GLuint width, GLuint height)
+                  GLuint srcx, GLuint srcy, GLuint width, GLuint height,
+		  GLenum logicop)
 {
    _DBG("%s\n", __FUNCTION__);
 
@@ -389,7 +390,7 @@ intel_region_copy(struct intel_context *intel,
                      src->pitch, src->buffer, src_offset, src->tiling,
                      dst->pitch, dst->buffer, dst_offset, dst->tiling,
                      srcx, srcy, dstx, dsty, width, height,
-		     GL_COPY);
+		     logicop);
 }
 
 /* Attach to a pbo, discarding our data.  Effectively zero-copy upload

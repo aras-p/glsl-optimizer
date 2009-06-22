@@ -362,11 +362,9 @@ do_blit_copypixels(GLcontext * ctx,
 				   &clip_x, &clip_y, &clip_w, &clip_h))
             continue;
 
-         intelEmitCopyBlit(intel, dst->cpp,
-			   src->pitch, src->buffer, 0, src->tiling,
-			   dst->pitch, dst->buffer, 0, dst->tiling,
-			   clip_x + delta_x, clip_y + delta_y, /* srcx, srcy */
-			   clip_x, clip_y, /* dstx, dsty */
+	 intel_region_copy(intel,
+			   dst, 0, clip_x, clip_y,
+			   src, 0, clip_x + delta_x, clip_y + delta_y,
 			   clip_w, clip_h,
 			   ctx->Color.ColorLogicOpEnabled ?
 			   ctx->Color.LogicOp : GL_COPY);
