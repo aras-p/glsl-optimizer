@@ -172,6 +172,14 @@ slang_oper_child(slang_operation *oper, GLuint child)
 }
 
 
+static INLINE const slang_operation *
+slang_oper_child_const(const slang_operation *oper, GLuint child)
+{
+   assert(child < oper->num_children);
+   return &oper->children[child];
+}
+
+
 /** Init oper to a boolean literal. */
 static INLINE void
 slang_operation_literal_bool(slang_operation *oper, GLboolean value)
