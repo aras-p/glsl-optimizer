@@ -20,16 +20,17 @@
  */
 
 /*
- * This is a port of the infamous "gears" demo to straight GLX (i.e. no GLUT)
- * Port by Brian Paul  23 March 2001
+ * Version of glxgears that creates/destroys the rendering context for each
+ * frame.  Also periodically destroy/recreate the window.
+ * Good for finding memory leaks, etc.
  *
  * Command line options:
  *    -info      print GL implementation information
- *    -stereo    use stereo enabled GLX visual
  *
  */
 
 
+#include <assert.h>
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -92,13 +93,8 @@ static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
 static GLint gear1, gear2, gear3;
 static GLfloat angle = 0.0;
 
-static GLboolean fullscreen = GL_FALSE;	/* Create a single fullscreen window */
-static GLboolean stereo = GL_FALSE;	/* Enable stereo.  */
-static GLfloat eyesep = 5.0;		/* Eye separation. */
-static GLfloat fix_point = 40.0;	/* Fixation point distance.  */
-static GLfloat left, right, asp;	/* Stereo frustum params.  */
-
-   XVisualInfo *visinfo;
+static XVisualInfo *visinfo = NULL;
+static int WinWidth = 300, WinHeight = 300;
 
 
 /*
@@ -272,22 +268,13 @@ do_draw(void)
 }
 
 
-
 /* new window size or exposure */
 static void
 reshape(int width, int height)
 {
    glViewport(0, 0, (GLint) width, (GLint) height);
 
-   if (stereo) {
-      GLfloat w;
-
-      asp = (GLfloat) height / (GLfloat) width;
-      w = fix_point * (1.0 / 5.0);
-
-      left = -5.0 * ((w - 0.5 * eyesep) / fix_point);
-      right = 5.0 * ((w + 0.5 * eyesep) / fix_point);
-   } else {
+   {
       GLfloat h = (GLfloat) height / (GLfloat) width;
 
       glMatrixMode(GL_PROJECTION);
@@ -299,7 +286,6 @@ reshape(int width, int height)
    glLoadIdentity();
    glTranslatef(0.0, 0.0, -40.0);
 }
-   
 
 
 static void
@@ -337,7 +323,7 @@ init(void)
 
    glEnable(GL_NORMALIZE);
 }
-
+   
 
 static void
 draw( Display *dpy, Window win )
@@ -354,36 +340,9 @@ draw( Display *dpy, Window win )
 
    init();
 
-   if (stereo) {
-      /* First left eye.  */
-      glDrawBuffer(GL_BACK_LEFT);
+   reshape(WinWidth, WinHeight);
 
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      glFrustum(left, right, -asp, asp, 5.0, 60.0);
-
-      glMatrixMode(GL_MODELVIEW);
-
-      glPushMatrix();
-      glTranslated(+0.5 * eyesep, 0.0, 0.0);
-      do_draw();
-      glPopMatrix();
-
-      /* Then right eye.  */
-      glDrawBuffer(GL_BACK_RIGHT);
-
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      glFrustum(-right, -left, -asp, asp, 5.0, 60.0);
-
-      glMatrixMode(GL_MODELVIEW);
-
-      glPushMatrix();
-      glTranslated(-0.5 * eyesep, 0.0, 0.0);
-      do_draw();
-      glPopMatrix();
-   } else
-      do_draw();
+   do_draw();
 
    glDeleteLists(gear1, 1);
    glDeleteLists(gear2, 1);
@@ -410,14 +369,6 @@ make_window( Display *dpy, const char *name,
                      GLX_DOUBLEBUFFER,
                      GLX_DEPTH_SIZE, 1,
                      None };
-   int stereoAttribs[] = { GLX_RGBA,
-                           GLX_RED_SIZE, 1,
-                           GLX_GREEN_SIZE, 1,
-                           GLX_BLUE_SIZE, 1,
-                           GLX_DOUBLEBUFFER,
-                           GLX_DEPTH_SIZE, 1,
-                           GLX_STEREO,
-                           None };
    int scrnum;
    XSetWindowAttributes attr;
    unsigned long mask;
@@ -427,22 +378,9 @@ make_window( Display *dpy, const char *name,
    scrnum = DefaultScreen( dpy );
    root = RootWindow( dpy, scrnum );
 
-   if (fullscreen) {
-      x = 0; y = 0;
-      width = DisplayWidth( dpy, scrnum );
-      height = DisplayHeight( dpy, scrnum );
-   }
-
-   if (stereo)
-      visinfo = glXChooseVisual( dpy, scrnum, stereoAttribs );
-   else
-      visinfo = glXChooseVisual( dpy, scrnum, attribs );
+   visinfo = glXChooseVisual( dpy, scrnum, attribs );
    if (!visinfo) {
-      if (stereo) {
-         printf("Error: couldn't get an RGB, "
-                "Double-buffered, Stereo visual\n");
-      } else
-         printf("Error: couldn't get an RGB, Double-buffered visual\n");
+      printf("Error: couldn't get an RGB, Double-buffered visual\n");
       exit(1);
    }
 
@@ -451,7 +389,7 @@ make_window( Display *dpy, const char *name,
    attr.border_pixel = 0;
    attr.colormap = XCreateColormap( dpy, root, visinfo->visual, AllocNone);
    attr.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask;
-   attr.override_redirect = fullscreen;
+   attr.override_redirect = 0;
    mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask | CWOverrideRedirect;
 
    win = XCreateWindow( dpy, root, x, y, width, height,
@@ -479,9 +417,8 @@ static void
 event_loop(Display *dpy)
 {
    Window win;
-   make_window(dpy, "glxgears", 0, 0, 300, 300, &win);
+   make_window(dpy, "glxgears", 0, 0, WinWidth, WinHeight, &win);
    XMapWindow(dpy, win);
-
 
    while (1) {
       while (XPending(dpy) > 0) {
@@ -492,34 +429,35 @@ event_loop(Display *dpy)
             /* we'll redraw below */
 	    break;
 	 case ConfigureNotify:
-	    reshape(event.xconfigure.width, event.xconfigure.height);
+            WinWidth = event.xconfigure.width;
+            WinHeight = event.xconfigure.height;
 	    break;
          case KeyPress:
-	 {
-	    char buffer[10];
-	    int r, code;
-	    code = XLookupKeysym(&event.xkey, 0);
-	    if (code == XK_Left) {
-	       view_roty += 5.0;
-	    }
-	    else if (code == XK_Right) {
-	       view_roty -= 5.0;
-	    }
-	    else if (code == XK_Up) {
-	       view_rotx += 5.0;
-	    }
-	    else if (code == XK_Down) {
-	       view_rotx -= 5.0;
-	    }
-	    else {
-	       r = XLookupString(&event.xkey, buffer, sizeof(buffer),
-				 NULL, NULL);
-	       if (buffer[0] == 27) {
-		  /* escape */
-		  return;
-	       }
-	    }
-	 }
+            {
+               char buffer[10];
+               int r, code;
+               code = XLookupKeysym(&event.xkey, 0);
+               if (code == XK_Left) {
+                  view_roty += 5.0;
+               }
+               else if (code == XK_Right) {
+                  view_roty -= 5.0;
+               }
+               else if (code == XK_Up) {
+                  view_rotx += 5.0;
+               }
+               else if (code == XK_Down) {
+                  view_rotx -= 5.0;
+               }
+               else {
+                  r = XLookupString(&event.xkey, buffer, sizeof(buffer),
+                                    NULL, NULL);
+                  if (buffer[0] == 27) {
+                     /* escape */
+                     return;
+                  }
+               }
+            }
          }
       }
 
@@ -550,9 +488,12 @@ event_loop(Display *dpy)
             printf("%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds,
                    fps);
             tRate0 = t;
-	    
+
+            /* Destroy window and create new one */	    
 	    XDestroyWindow(dpy, win);
-	    make_window(dpy, "glxgears", (int)(fps * 100) % 100, (int)(fps * 100) % 100, 300, 300, &win);
+	    make_window(dpy, "glxgears",
+                        (int)(fps * 100) % 100, (int)(fps * 100) % 100, /* x,y */
+                        WinWidth, WinHeight, &win);
 	    XMapWindow(dpy, win);
 
             frames = 0;
@@ -560,7 +501,6 @@ event_loop(Display *dpy)
       }
    }
 }
-
 
 
 int
@@ -579,12 +519,6 @@ main(int argc, char *argv[])
       else if (strcmp(argv[i], "-info") == 0) {
          printInfo = GL_TRUE;
       }
-      else if (strcmp(argv[i], "-stereo") == 0) {
-         stereo = GL_TRUE;
-      }
-      else if (strcmp(argv[i], "-fullscreen") == 0) {
-         fullscreen = GL_TRUE;
-      }
       else
 	 printf("Warrning: unknown parameter: %s\n", argv[i]);
    }
@@ -596,14 +530,12 @@ main(int argc, char *argv[])
       return -1;
    }
 
-
    if (printInfo) {
       printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
       printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
       printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
       printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
    }
-
 
    event_loop(dpy);
 
