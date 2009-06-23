@@ -836,6 +836,37 @@ _slang_is_tail_return(const slang_operation *oper)
 }
 
 
+/**
+ * Generate a variable declaration opeartion.
+ * I.e.: generate AST code for "bool flag = false;"
+ */
+static void
+slang_generate_declaration(slang_assemble_ctx *A,
+                           slang_variable_scope *scope,
+                           slang_operation *decl,
+                           slang_type_specifier_type type,
+                           const char *name,
+                           GLint initValue)
+{
+   slang_variable *var;
+
+   assert(type == SLANG_SPEC_BOOL ||
+          type == SLANG_SPEC_INT);
+
+   decl->type = SLANG_OPER_VARIABLE_DECL;
+
+   var = slang_variable_scope_grow(scope);
+
+   slang_fully_specified_type_construct(&var->type);
+
+   var->type.specifier.type = type;
+   var->a_name = slang_atom_pool_atom(A->atoms, name);
+   decl->a_id = var->a_name;
+   var->initializer = slang_operation_new(1);
+   slang_operation_literal_bool(var->initializer, initValue);
+}
+
+
 static void
 slang_resolve_variable(slang_operation *oper)
 {
@@ -2513,16 +2544,8 @@ _slang_gen_while_without_continue(slang_assemble_ctx *A, slang_operation *oper)
    /* declare: bool _notBreakFlag = true */
    {
       slang_operation *condDecl = slang_oper_child(top, 0);
-      slang_variable *var;
-
-      condDecl->type = SLANG_OPER_VARIABLE_DECL;
-      var = slang_variable_scope_grow(top->locals);
-      slang_fully_specified_type_construct(&var->type);
-      var->type.specifier.type = SLANG_SPEC_BOOL;
-      var->a_name = slang_atom_pool_atom(A->atoms, "_notBreakFlag");
-      condDecl->a_id = var->a_name;
-      var->initializer = slang_operation_new(1);
-      slang_operation_literal_bool(var->initializer, GL_TRUE);
+      slang_generate_declaration(A, top->locals, condDecl,
+                                 SLANG_SPEC_BOOL, "_notBreakFlag", GL_TRUE);
    }
 
    /* build outer while-loop:  while (_notBreakFlag && LOOPCOND) { ... } */
@@ -2703,16 +2726,8 @@ _slang_gen_do_without_continue(slang_assemble_ctx *A, slang_operation *oper)
    /* declare: bool _notBreakFlag = true */
    {
       slang_operation *condDecl = slang_oper_child(top, 0);
-      slang_variable *var;
-
-      condDecl->type = SLANG_OPER_VARIABLE_DECL;
-      var = slang_variable_scope_grow(top->locals);
-      slang_fully_specified_type_construct(&var->type);
-      var->type.specifier.type = SLANG_SPEC_BOOL;
-      var->a_name = slang_atom_pool_atom(A->atoms, "_notBreakFlag");
-      condDecl->a_id = var->a_name;
-      var->initializer = slang_operation_new(1);
-      slang_operation_literal_bool(var->initializer, GL_TRUE);
+      slang_generate_declaration(A, top->locals, condDecl,
+                                 SLANG_SPEC_BOOL, "_notBreakFlag", GL_TRUE);
    }
 
    /* build outer do-loop:  do { ... } while (_notBreakFlag && LOOPCOND) */
@@ -3124,17 +3139,8 @@ _slang_gen_for_without_continue(slang_assemble_ctx *A, slang_operation *oper)
    /* declare: bool _condFlag = true */
    {
       slang_operation *condDecl;
-      slang_variable *var;
-
-      condDecl = slang_oper_child(top, 0);
-      condDecl->type = SLANG_OPER_VARIABLE_DECL;
-      var = slang_variable_scope_grow(top->locals);
-      slang_fully_specified_type_construct(&var->type);
-      var->type.specifier.type = SLANG_SPEC_BOOL;
-      var->a_name = slang_atom_pool_atom(A->atoms, "_condFlag");
-      condDecl->a_id = var->a_name;
-      var->initializer = slang_operation_new(1);
-      slang_operation_literal_bool(var->initializer, GL_TRUE);
+      slang_generate_declaration(A, top->locals, condDecl,
+                                 SLANG_SPEC_BOOL, "_condFlag", GL_TRUE);
    }
 
    /* build outer loop:  for (INIT; _condFlag; ) { */
