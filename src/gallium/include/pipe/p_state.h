@@ -75,11 +75,11 @@ struct pipe_surface;
  */
 struct pipe_buffer
 {
-   struct pipe_reference reference;
-   struct pipe_screen *screen;
-   unsigned alignment;
-   unsigned usage;
-   unsigned size;
+   struct pipe_reference  reference;
+   unsigned               size;
+   struct pipe_screen    *screen;
+   unsigned               alignment;
+   unsigned               usage;
 };
 
 
@@ -286,10 +286,10 @@ struct pipe_surface
    unsigned offset;              /**< offset from start of buffer, in bytes */
    unsigned usage;               /**< PIPE_BUFFER_USAGE_*  */
 
+   unsigned zslice;
    struct pipe_texture *texture; /**< texture into which this is a view  */
    unsigned face;
    unsigned level;
-   unsigned zslice;
 };
 
 
