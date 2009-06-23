@@ -2367,7 +2367,41 @@ _slang_loop_contains_continue(const slang_operation *oper)
       {
          GLuint i;
          for (i = 0; i < oper->num_children; i++) {
-            if (_slang_loop_contains_continue(slang_oper_child((slang_operation *) oper, i)))
+            slang_operation *child =
+               slang_oper_child((slang_operation *) oper, i);
+            if (_slang_loop_contains_continue(child))
+               return GL_TRUE;
+         }
+      }
+      return GL_FALSE;
+   }
+}
+
+
+/**
+ * Check if a loop contains a 'continue' or 'break' statement.
+ * Stop looking if we find a nested loop.
+ */
+static GLboolean
+_slang_loop_contains_continue_or_break(const slang_operation *oper)
+{
+   switch (oper->type) {
+   case SLANG_OPER_CONTINUE:
+   case SLANG_OPER_BREAK:
+      return GL_TRUE;
+   case SLANG_OPER_FOR:
+   case SLANG_OPER_DO:
+   case SLANG_OPER_WHILE:
+      /* stop upon finding a nested loop */
+      return GL_FALSE;
+   default:
+       /* recurse */
+      {
+         GLuint i;
+         for (i = 0; i < oper->num_children; i++) {
+            slang_operation *child =
+               slang_oper_child((slang_operation *) oper, i);
+            if (_slang_loop_contains_continue_or_break(child))
                return GL_TRUE;
          }
       }
@@ -2799,11 +2833,8 @@ _slang_can_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
 
    assert(oper->num_children == 4);
 
-   if (_slang_find_node_type((slang_operation *) oper, SLANG_OPER_CONTINUE) ||
-       _slang_find_node_type((slang_operation *) oper, SLANG_OPER_BREAK)) {
-      /* dont't unroll loops containing continue/break statements */
+   if (_slang_loop_contains_continue_or_break(oper))
       return GL_FALSE;
-   }
 
    /* children[0] must be either "int i=constant" or "i=constant" */
    if (oper->children[0].type == SLANG_OPER_BLOCK_NO_NEW_SCOPE) {
