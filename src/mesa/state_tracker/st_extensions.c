@@ -120,6 +120,11 @@ void st_init_limits(struct st_context *st)
    c->MaxDrawBuffers
       = CLAMP(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),
               1, MAX_DRAW_BUFFERS);
+
+   /* Is TGSI_OPCODE_CONT supported? */
+   /* XXX separate query for early function return? */
+   st->ctx->Shader.EmitContReturn =
+      screen->get_param(screen, PIPE_CAP_TGSI_CONT_SUPPORTED);
 }
 
 
