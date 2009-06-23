@@ -157,6 +157,9 @@ extern slang_operation *
 slang_operation_insert(GLuint *numChildren, slang_operation **children,
                        GLuint pos);
 
+extern slang_operation *
+slang_operation_insert_child(slang_operation *oper, GLuint pos);
+
 extern void
 _slang_operation_swap(slang_operation *oper0, slang_operation *oper1);
 

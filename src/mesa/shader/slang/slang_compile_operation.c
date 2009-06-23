@@ -265,6 +265,26 @@ slang_operation_insert(GLuint *numElements, slang_operation **array,
 }
 
 
+/**
+ * Add/insert new child into given node at given position.
+ * \return pointer to the new child node
+ */
+slang_operation *
+slang_operation_insert_child(slang_operation *oper, GLuint pos)
+{
+   slang_operation *newOp;
+
+   newOp = slang_operation_insert(&oper->num_children,
+                                  &oper->children,
+                                  pos);
+   if (newOp) {
+      newOp->locals->outer_scope = oper->locals;
+   }
+
+   return newOp;
+}
+
+
 void
 _slang_operation_swap(slang_operation *oper0, slang_operation *oper1)
 {
