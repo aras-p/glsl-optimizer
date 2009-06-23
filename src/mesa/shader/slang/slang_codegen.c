@@ -1410,9 +1410,6 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
              * implement 'return' with RET (and CAL).
              * Nevertheless, we performed "inlining" to make a new instance
              * of the function body to deal with static register allocation.
-             *
-             * XXX check if there's one 'return' and if it's the very last
-             * statement in the function - we can optimize that case.
              */
             assert(inlined->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
                    inlined->type == SLANG_OPER_SEQUENCE);
