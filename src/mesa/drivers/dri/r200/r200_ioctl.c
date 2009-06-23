@@ -196,7 +196,10 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
    GLuint orig_mask = mask;
 
    if ( R200_DEBUG & DEBUG_IOCTL ) {
-       fprintf( stderr, "r200Clear %x %d\n", mask, rmesa->radeon.sarea->pfCurrentPage);
+	   if (rmesa->radeon.sarea)
+	       fprintf( stderr, "r200Clear %x %d\n", mask, rmesa->radeon.sarea->pfCurrentPage);
+	   else
+	       fprintf( stderr, "r200Clear %x radeon->sarea is NULL\n", mask);
    }
 
    {
