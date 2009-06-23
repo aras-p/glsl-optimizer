@@ -83,28 +83,28 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 
 
 /** Convert GLuint in [0,4294967295] to GLfloat in [0.0,1.0] */
-#define UINT_TO_FLOAT(U)    ((GLfloat) (U) * (1.0F / 4294967295.0F))
+#define UINT_TO_FLOAT(U)    ((GLfloat) (U) * (1.0F / 4294967295.0))
 
 /** Convert GLfloat in [0.0,1.0] to GLuint in [0,4294967295] */
-#define FLOAT_TO_UINT(X)    ((GLuint) ((X) * 4294967295.0F))
+#define FLOAT_TO_UINT(X)    ((GLuint) ((X) * 4294967295.0))
 
 
 /** Convert GLint in [-2147483648,2147483647] to GLfloat in [-1.0,1.0] */
-#define INT_TO_FLOAT(I)     ((2.0F * (I) + 1.0F) * (1.0F/4294967294.0F))
+#define INT_TO_FLOAT(I)     ((2.0F * (I) + 1.0F) * (1.0F/4294967294.0))
 
 /** Convert GLfloat in [-1.0,1.0] to GLint in [-2147483648,2147483647] */
 /* causes overflow:
-#define FLOAT_TO_INT(X)     ( (((GLint) (4294967294.0F * (X))) - 1) / 2 )
+#define FLOAT_TO_INT(X)     ( (((GLint) (4294967294.0 * (X))) - 1) / 2 )
 */
 /* a close approximation: */
-#define FLOAT_TO_INT(X)     ( (GLint) (2147483647.0F * (X)) )
+#define FLOAT_TO_INT(X)     ( (GLint) (2147483647.0 * (X)) )
 
 
 /** Convert GLint in [-2147483648,2147483647] to GLfloat in [-1.0,1.0], texture/fb data */
-#define INT_TO_FLOAT_TEX(I)    ((I) == -2147483648 ? -1.0F : (I) * (1.0F/2147483647.0F))
+#define INT_TO_FLOAT_TEX(I)    ((I) == -2147483648 ? -1.0F : (I) * (1.0F/2147483647.0))
 
 /** Convert GLfloat in [-1.0,1.0] to GLint in [-2147483648,2147483647], texture/fb data */
-#define FLOAT_TO_INT_TEX(X)    ( (GLint) (2147483647.0F * (X)) )
+#define FLOAT_TO_INT_TEX(X)    ( (GLint) (2147483647.0 * (X)) )
 
 
 #define BYTE_TO_UBYTE(b)   ((GLubyte) ((b) < 0 ? 0 : (GLubyte) (b)))
