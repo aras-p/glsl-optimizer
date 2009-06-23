@@ -40,6 +40,7 @@ typedef struct slang_assemble_ctx_
    slang_var_table *vartable;
    slang_info_log *log;
    struct slang_label_ *curFuncEndLabel;
+   const slang_operation *CurLoopOper;
    struct slang_ir_node_ *CurLoop;
    struct slang_function_ *CurFunction;
    GLboolean UnresolvedRefs;
