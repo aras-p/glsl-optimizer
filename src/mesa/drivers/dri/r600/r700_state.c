@@ -624,10 +624,10 @@ void r700SetScissor(context_t *context) //---------------
 		x2 = context->radeon.state.scissor.rect.x2 - 1;
 		y2 = context->radeon.state.scissor.rect.y2 - 1;
 	} else {
-		x1 = 0;
-		y1 = 0;
-		x2 = rrb->width - 1;
-		y2 = rrb->height - 1;
+		x1 = rrb->dPriv->x;
+		y1 = rrb->dPriv->y;
+		x2 = rrb->dPriv->x + rrb->dPriv->w;
+		y2 = rrb->dPriv->y + rrb->dPriv->h;
 	}
 
 	/* window */
