@@ -3855,14 +3855,11 @@ _slang_gen_logical_and(slang_assemble_ctx *A, slang_operation *oper)
 
    select = slang_operation_new(1);
    select->type = SLANG_OPER_SELECT;
-   select->num_children = 3;
-   select->children = slang_operation_new(3);
+   slang_operation_add_children(select, 3);
 
-   slang_operation_copy(&select->children[0], &oper->children[0]);
-   slang_operation_copy(&select->children[1], &oper->children[1]);
-   select->children[2].type = SLANG_OPER_LITERAL_BOOL;
-   ASSIGN_4V(select->children[2].literal, 0, 0, 0, 0); /* false */
-   select->children[2].literal_size = 1;
+   slang_operation_copy(slang_oper_child(select, 0), &oper->children[0]);
+   slang_operation_copy(slang_oper_child(select, 1), &oper->children[1]);
+   slang_operation_literal_bool(slang_oper_child(select, 2), GL_FALSE);
 
    n = _slang_gen_select(A, select);
    return n;
@@ -3881,14 +3878,11 @@ _slang_gen_logical_or(slang_assemble_ctx *A, slang_operation *oper)
 
    select = slang_operation_new(1);
    select->type = SLANG_OPER_SELECT;
-   select->num_children = 3;
-   select->children = slang_operation_new(3);
+   slang_operation_add_children(select, 3);
 
-   slang_operation_copy(&select->children[0], &oper->children[0]);
-   select->children[1].type = SLANG_OPER_LITERAL_BOOL;
-   ASSIGN_4V(select->children[1].literal, 1, 1, 1, 1); /* true */
-   select->children[1].literal_size = 1;
-   slang_operation_copy(&select->children[2], &oper->children[1]);
+   slang_operation_copy(slang_oper_child(select, 0), &oper->children[0]);
+   slang_operation_literal_bool(slang_oper_child(select, 1), GL_TRUE);
+   slang_operation_copy(slang_oper_child(select, 2), &oper->children[1]);
 
    n = _slang_gen_select(A, select);
    return n;
