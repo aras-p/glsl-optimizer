@@ -171,12 +171,14 @@ extern void
 slang_operation_add_children(slang_operation *oper, GLuint num_children);
 
 
+/** Return number of children of given node */
 static INLINE GLuint
 slang_oper_num_children(const slang_operation *oper)
 {
    return oper->num_children;
 }
 
+/** Return child of given operation node */
 static INLINE slang_operation *
 slang_oper_child(slang_operation *oper, GLuint child)
 {
@@ -185,6 +187,7 @@ slang_oper_child(slang_operation *oper, GLuint child)
 }
 
 
+/** Return child of given operation node, const version */
 static INLINE const slang_operation *
 slang_oper_child_const(const slang_operation *oper, GLuint child)
 {
