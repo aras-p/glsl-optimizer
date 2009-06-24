@@ -67,35 +67,36 @@ stw_flush_frontbuffer(struct pipe_screen *screen,
    struct stw_framebuffer *fb;
    
    fb = stw_framebuffer_from_hdc( hdc );
-   assert(fb);
-   if (fb == NULL)
-      return;
-
-   pipe_mutex_lock( fb->mutex );
+   /* fb can be NULL if window was destroyed already */
+   if (fb) {
+      pipe_mutex_lock( fb->mutex );
 
 #if DEBUG
-   {
-      struct pipe_surface *surface2;
-
-      if(!st_get_framebuffer_surface( fb->stfb, ST_SURFACE_FRONT_LEFT, &surface2 ))
-         assert(0);
-      else
-         assert(surface2 == surface);
-   }
+      {
+         struct pipe_surface *surface2;
+   
+         if(!st_get_framebuffer_surface( fb->stfb, ST_SURFACE_FRONT_LEFT, &surface2 ))
+            assert(0);
+         else
+            assert(surface2 == surface);
+      }
 #endif
 
 #ifdef DEBUG
-   if(stw_dev->trace_running) {
-      screen = trace_screen(screen)->screen;
-      surface = trace_surface(surface)->surface;
-   }
+      if(stw_dev->trace_running) {
+         screen = trace_screen(screen)->screen;
+         surface = trace_surface(surface)->surface;
+      }
 #endif
+   }
    
    stw_winsys->flush_frontbuffer(screen, surface, hdc);
    
-   stw_framebuffer_update(fb);
-   
-   pipe_mutex_unlock( fb->mutex );
+   if(fb) {
+      stw_framebuffer_update(fb);
+      
+      pipe_mutex_unlock( fb->mutex );
+   }
 }
 
 
