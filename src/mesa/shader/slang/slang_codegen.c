@@ -3171,7 +3171,7 @@ _slang_gen_for_without_continue(slang_assemble_ctx *A, slang_operation *oper)
 
    /* declare: bool _condFlag = true */
    {
-      slang_operation *condDecl;
+      slang_operation *condDecl = slang_oper_child(top, 0);
       slang_generate_declaration(A, top->locals, condDecl,
                                  SLANG_SPEC_BOOL, "_condFlag", GL_TRUE);
    }
