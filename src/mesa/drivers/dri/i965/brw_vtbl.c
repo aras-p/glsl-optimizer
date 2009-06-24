@@ -194,7 +194,7 @@ static GLuint brw_flush_cmd( void )
    struct brw_mi_flush flush;
    flush.opcode = CMD_MI_FLUSH;
    flush.pad = 0;
-   flush.flags = BRW_FLUSH_READ_CACHE | BRW_FLUSH_STATE_CACHE;
+   flush.flags = BRW_FLUSH_STATE_CACHE;
    return *(GLuint *)&flush;
 }
 
