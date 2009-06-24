@@ -635,7 +635,7 @@ static void brw_emit_indices(struct brw_context *brw)
    if (index_buffer == NULL)
       return;
 
-   ib_size = get_size(index_buffer->type) * index_buffer->count;
+   ib_size = get_size(index_buffer->type) * index_buffer->count - 1;
 
    /* Emit the indexbuffer packet:
     */
