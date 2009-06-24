@@ -167,6 +167,13 @@ _slang_operation_swap(slang_operation *oper0, slang_operation *oper1);
 extern void
 slang_operation_add_children(slang_operation *oper, GLuint num_children);
 
+
+static INLINE GLuint
+slang_oper_num_children(const slang_operation *oper)
+{
+   return oper->num_children;
+}
+
 static INLINE slang_operation *
 slang_oper_child(slang_operation *oper, GLuint child)
 {
