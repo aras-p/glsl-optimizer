@@ -154,6 +154,15 @@ slang_operation_copy(slang_operation * x, const slang_operation * y)
          return GL_FALSE;
       }
    }
+
+   /* update scoping for children */
+   for (i = 0; i < y->num_children; i++) {
+      if (y->children[i].locals &&
+          y->children[i].locals->outer_scope == y->locals) {
+         z.children[i].locals->outer_scope = z.locals;
+      }
+   }
+
 #if 0
    z.var = y->var;
    z.fun = y->fun;
