@@ -102,7 +102,7 @@ malloc_buffer_fence(struct pb_buffer *buf,
 static void
 malloc_buffer_get_base_buffer(struct pb_buffer *buf,
                               struct pb_buffer **base_buf,
-                              unsigned *offset)
+                              pb_size *offset)
 {
    *base_buf = buf;
    *offset = 0;
@@ -121,7 +121,7 @@ malloc_buffer_vtbl = {
 
 
 struct pb_buffer *
-pb_malloc_buffer_create(size_t size,
+pb_malloc_buffer_create(pb_size size,
                    	const struct pb_desc *desc) 
 {
    struct malloc_buffer *buf;
@@ -150,7 +150,7 @@ pb_malloc_buffer_create(size_t size,
 
 static struct pb_buffer *
 pb_malloc_bufmgr_create_buffer(struct pb_manager *mgr, 
-                               size_t size,
+                               pb_size size,
                                const struct pb_desc *desc) 
 {
    return pb_malloc_buffer_create(size, desc);

@@ -50,6 +50,7 @@ struct window {
    float Angle;
    int Id;
    HGLRC sharedContext;
+   HANDLE hEventInitialised;
 };
 
 
@@ -414,6 +415,10 @@ threadRunner (void *arg)
       Error("Couldn't obtain HDC");
    }
 
+   /* Wait for the previous thread */
+   if(tia->id > 0)
+      WaitForSingleObject(Windows[tia->id - 1].hEventInitialised, INFINITE);
+
    pfd.cColorBits = 24;
    pfd.cDepthBits = 24;
    pfd.dwFlags = PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
@@ -434,8 +439,15 @@ threadRunner (void *arg)
    }
 
    if (win->sharedContext) {
-      wglShareLists(win->sharedContext, win->Context);
+      if(!wglShareLists(win->sharedContext, win->Context))
+         Error("Couldn't share WGL context lists");
    }
+
+   SetEvent(win->hEventInitialised);
+
+   /* Wait for all threads to initialize otherwise wglShareLists will fail */
+   if(tia->id < NumWindows - 1)
+      WaitForSingleObject(Windows[NumWindows - 1].hEventInitialised, INFINITE);
 
    SendMessage(win->Win, WM_SIZE, 0, 0);
 
@@ -511,19 +523,25 @@ main(int argc, char *argv[])
    h[2] = AddWindow( 10, 350, gCtx);
    h[3] = AddWindow(330, 350, gCtx);
 
-   if (!wglMakeCurrent(gHDC, gCtx)) {
-      Error("wglMakeCurrent failed for init thread.");
-      return -1;
+   for (i = 0; i < NumWindows; i++) {
+      Windows[i].hEventInitialised = CreateEvent(NULL, TRUE, FALSE, NULL);
    }
-
-   InitGLstuff();
 
    for (i = 0; i < NumWindows; i++) {
       DWORD id;
 
       tia[i].id = i;
       threads[i] = CreateThread(NULL, 0, threadRunner, &tia[i], 0, &id);
+
+      WaitForSingleObject(Windows[i].hEventInitialised, INFINITE);
    }
+
+   if (!wglMakeCurrent(gHDC, gCtx)) {
+      Error("wglMakeCurrent failed for init thread.");
+      return -1;
+   }
+
+   InitGLstuff();
 
    while (1) {
       MSG msg;

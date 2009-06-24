@@ -84,7 +84,7 @@ stw_framebuffer_destroy_locked(
  * @sa http://msdn.microsoft.com/en-us/library/ms644975(VS.85).aspx
  * @sa http://msdn.microsoft.com/en-us/library/ms644960(VS.85).aspx
  */
-static LRESULT CALLBACK
+LRESULT CALLBACK
 stw_call_window_proc(
    int nCode,
    WPARAM wParam,
@@ -111,15 +111,10 @@ stw_call_window_proc(
          unsigned width = LOWORD( pParams->lParam );
          unsigned height = HIWORD( pParams->lParam );
          
-         /* FIXME: The mesa statetracker makes the assumptions that only
-          * one context is using the framebuffer, and that that context is the 
-          * current one. However neither holds true, as WGL allows more than
-          * one context to be bound to the same drawable, and this function can 
-          * be called from any thread.
-          */
          pipe_mutex_lock( fb->mutex );
-         if (fb->stfb)
-            st_resize_framebuffer( fb->stfb, width, height );
+         fb->must_resize = TRUE;
+         fb->width = width;
+         fb->height = height;
          pipe_mutex_unlock( fb->mutex );
       }
    }
@@ -137,6 +132,31 @@ stw_call_window_proc(
    }
 
    return CallNextHookEx(tls_data->hCallWndProcHook, nCode, wParam, lParam);
+}
+
+
+static void
+stw_framebuffer_get_size( struct stw_framebuffer *fb )
+{
+   unsigned width, height;
+   RECT rect;
+
+   assert(fb->hWnd);
+   
+   GetClientRect( fb->hWnd, &rect );
+   width = rect.right - rect.left;
+   height = rect.bottom - rect.top;
+
+   if(width < 1)
+      width = 1;
+   if(height < 1)
+      height = 1;
+
+   if(width != fb->width || height != fb->height) {
+      fb->must_resize = TRUE;
+      fb->width = width; 
+      fb->height = height; 
+   }
 }
 
 
@@ -169,38 +189,14 @@ stw_framebuffer_create_locked(
 
    stw_pixelformat_visual(&fb->visual, pfi);
    
+   stw_framebuffer_get_size(fb);
+
    pipe_mutex_init( fb->mutex );
 
    fb->next = stw_dev->fb_head;
    stw_dev->fb_head = fb;
 
    return fb;
-}
-
-
-static void
-stw_framebuffer_get_size( struct stw_framebuffer *fb, GLuint *pwidth, GLuint *pheight )
-{
-   GLuint width, height;
-
-   if (fb->hWnd) {
-      RECT rect;
-      GetClientRect( fb->hWnd, &rect );
-      width = rect.right - rect.left;
-      height = rect.bottom - rect.top;
-   }
-   else {
-      width = GetDeviceCaps( fb->hDC, HORZRES );
-      height = GetDeviceCaps( fb->hDC, VERTRES );
-   }
-
-   if(width < 1)
-      width = 1;
-   if(height < 1)
-      height = 1;
-
-   *pwidth = width; 
-   *pheight = height; 
 }
 
 
@@ -213,7 +209,6 @@ stw_framebuffer_allocate(
    if(!fb->stfb) {
       const struct stw_pixelformat_info *pfi = fb->pfi;
       enum pipe_format colorFormat, depthFormat, stencilFormat;
-      GLuint width, height; 
 
       colorFormat = pfi->color_format;
       
@@ -229,16 +224,21 @@ stw_framebuffer_allocate(
       else
          stencilFormat = PIPE_FORMAT_NONE;
    
-      stw_framebuffer_get_size(fb, &width, &height);
-      
+      assert(fb->must_resize);
+      assert(fb->width);
+      assert(fb->height);
+
       fb->stfb = st_create_framebuffer(
          &fb->visual,
          colorFormat,
          depthFormat,
          stencilFormat,
-         width,
-         height,
+         fb->width,
+         fb->height,
          (void *) fb );
+      
+      // to notify the context
+      fb->must_resize = TRUE;
    }
    
    pipe_mutex_unlock( fb->mutex );
@@ -247,14 +247,29 @@ stw_framebuffer_allocate(
 }
 
 
+/**
+ * Update the framebuffer's size if necessary.
+ */
 void
-stw_framebuffer_resize(
+stw_framebuffer_update(
    struct stw_framebuffer *fb)
 {
-   GLuint width, height; 
    assert(fb->stfb);
-   stw_framebuffer_get_size(fb, &width, &height);
-   st_resize_framebuffer(fb->stfb, width, height);
+   assert(fb->height);
+   assert(fb->width);
+   
+   /* XXX: It would be nice to avoid checking the size again -- in theory  
+    * stw_call_window_proc would have cought the resize and stored the right 
+    * size already, but unfortunately threads created before the DllMain is 
+    * called don't get a DLL_THREAD_ATTACH notification, and there is no way
+    * to know of their existing without using the not very portable PSAPI.
+    */
+   stw_framebuffer_get_size(fb);
+   
+   if(fb->must_resize) {
+      st_resize_framebuffer(fb->stfb, fb->width, fb->height);
+      fb->must_resize = FALSE;
+   }
 }                      
 
 
@@ -407,6 +422,8 @@ stw_swap_buffers(
 
    stw_dev->stw_winsys->flush_frontbuffer( screen, surface, hdc );
    
+   stw_framebuffer_update(fb);
+   
    pipe_mutex_unlock( fb->mutex );
    
    return TRUE;
@@ -422,39 +439,4 @@ stw_swap_layer_buffers(
       return stw_swap_buffers(hdc);
 
    return FALSE;
-}
-
-
-boolean
-stw_framebuffer_init_thread(void)
-{
-   struct stw_tls_data *tls_data;
-   
-   tls_data = stw_tls_get_data();
-   if(!tls_data)
-      return FALSE;
-   
-   tls_data->hCallWndProcHook = SetWindowsHookEx(WH_CALLWNDPROC,
-                                                 stw_call_window_proc,
-                                                 NULL,
-                                                 GetCurrentThreadId());
-   if(tls_data->hCallWndProcHook == NULL)
-      return FALSE;
-   
-   return TRUE;
-}
-
-void
-stw_framebuffer_cleanup_thread(void)
-{
-   struct stw_tls_data *tls_data;
-   
-   tls_data = stw_tls_get_data();
-   if(!tls_data)
-      return;
-   
-   if(tls_data->hCallWndProcHook) {
-      UnhookWindowsHookEx(tls_data->hCallWndProcHook);
-      tls_data->hCallWndProcHook = NULL;
-   }
 }

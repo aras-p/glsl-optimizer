@@ -30,6 +30,7 @@
 #include "glapi/glthread.h"
 #include "util/u_debug.h"
 #include "pipe/p_screen.h"
+#include "state_tracker/st_public.h"
 
 #ifdef DEBUG
 #include "trace/tr_screen.h"
@@ -63,15 +64,39 @@ stw_flush_frontbuffer(struct pipe_screen *screen,
 {
    const struct stw_winsys *stw_winsys = stw_dev->stw_winsys;
    HDC hdc = (HDC)context_private;
+   struct stw_framebuffer *fb;
    
-#ifdef DEBUG
-   if(stw_dev->trace_running) {
-      screen = trace_screen(screen)->screen;
-      surface = trace_surface(surface)->surface;
-   }
+   fb = stw_framebuffer_from_hdc( hdc );
+   /* fb can be NULL if window was destroyed already */
+   if (fb) {
+      pipe_mutex_lock( fb->mutex );
+
+#if DEBUG
+      {
+         struct pipe_surface *surface2;
+   
+         if(!st_get_framebuffer_surface( fb->stfb, ST_SURFACE_FRONT_LEFT, &surface2 ))
+            assert(0);
+         else
+            assert(surface2 == surface);
+      }
 #endif
+
+#ifdef DEBUG
+      if(stw_dev->trace_running) {
+         screen = trace_screen(screen)->screen;
+         surface = trace_surface(surface)->surface;
+      }
+#endif
+   }
    
    stw_winsys->flush_frontbuffer(screen, surface, hdc);
+   
+   if(fb) {
+      stw_framebuffer_update(fb);
+      
+      pipe_mutex_unlock( fb->mutex );
+   }
 }
 
 
@@ -133,20 +158,13 @@ error1:
 boolean
 stw_init_thread(void)
 {
-   if (!stw_tls_init_thread())
-      return FALSE;
-
-   if (!stw_framebuffer_init_thread())
-      return FALSE;
-
-   return TRUE;
+   return stw_tls_init_thread();
 }
 
 
 void
 stw_cleanup_thread(void)
 {
-   stw_framebuffer_cleanup_thread();
    stw_tls_cleanup_thread();
 }
 

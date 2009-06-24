@@ -51,6 +51,11 @@ struct stw_framebuffer
    pipe_mutex mutex;
    struct st_framebuffer *stfb;
    
+   /* FIXME: Make this work for multiple contexts bound to the same framebuffer */
+   boolean must_resize;
+   unsigned width;
+   unsigned height;
+   
    /** This is protected by stw_device::mutex, not the mutex above */
    struct stw_framebuffer *next;
 };
@@ -65,7 +70,7 @@ stw_framebuffer_allocate(
    struct stw_framebuffer *fb );
 
 void
-stw_framebuffer_resize(
+stw_framebuffer_update(
    struct stw_framebuffer *fb);
 
 void
@@ -78,11 +83,5 @@ stw_framebuffer_from_hdc_locked(
 struct stw_framebuffer *
 stw_framebuffer_from_hdc(
    HDC hdc );
-
-boolean
-stw_framebuffer_init_thread(void);
-
-void
-stw_framebuffer_cleanup_thread(void);
 
 #endif /* STW_FRAMEBUFFER_H */

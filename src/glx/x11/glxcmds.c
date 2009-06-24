@@ -869,6 +869,20 @@ PUBLIC void glXDestroyGLXPixmap(Display *dpy, GLXPixmap glxpixmap)
     req->glxpixmap = glxpixmap;
     UnlockDisplay(dpy);
     SyncHandle();
+
+#ifdef GLX_DIRECT_RENDERING
+    {
+	int screen;
+	__GLXdisplayPrivate *const priv = __glXInitialize(dpy);
+	__GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, glxpixmap, &screen);
+	__GLXscreenConfigs *psc = &priv->screenConfigs[screen];
+
+	if (pdraw != NULL) {
+	    (*pdraw->destroyDrawable) (pdraw);
+	    __glxHashDelete(psc->drawHash, glxpixmap);
+	}
+    }
+#endif
 }
 
 PUBLIC void glXSwapBuffers(Display *dpy, GLXDrawable drawable)

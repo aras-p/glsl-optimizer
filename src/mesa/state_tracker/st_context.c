@@ -274,20 +274,11 @@ st_make_current(struct st_context *st,
    _glapi_check_multithread();
 
    if (st) {
-      GLboolean firstTime = st->ctx->FirstTimeCurrent;
-      if(!_mesa_make_current(st->ctx, &draw->Base, &read->Base))
+      if (!_mesa_make_current(st->ctx, &draw->Base, &read->Base))
          return GL_FALSE;
-      /* Need to initialize viewport here since draw->Base->Width/Height
-       * will still be zero at this point.
-       * This could be improved, but would require rather extensive work
-       * elsewhere (allocate rb surface storage sooner)
-       */
-      if (firstTime) {
-         GLuint w = draw->InitWidth, h = draw->InitHeight;
-         _mesa_set_viewport(st->ctx, 0, 0, w, h);
-         _mesa_set_scissor(st->ctx, 0, 0, w, h);
 
-      }
+      _mesa_check_init_viewport(st->ctx, draw->InitWidth, draw->InitHeight);
+
       return GL_TRUE;
    }
    else {

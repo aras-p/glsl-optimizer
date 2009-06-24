@@ -359,8 +359,12 @@ intel_stencil_drawpixels(GLcontext * ctx,
 
    _mesa_VertexPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &vertices);
    _mesa_Enable(GL_VERTEX_ARRAY);
+<<<<<<< HEAD:src/mesa/drivers/dri/intel/intel_pixel_draw.c
    intel_meta_set_default_texrect(intel);
 
+=======
+   _mesa_Enable(GL_TEXTURE_COORD_ARRAY);
+>>>>>>> mesa_7_5_branch:src/mesa/drivers/dri/intel/intel_pixel_draw.c
    _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
    intel_meta_restore_texcoords(intel);

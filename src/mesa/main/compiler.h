@@ -468,9 +468,9 @@ do {                                                                    \
 #endif
 
 
-
+#ifndef Elements
 #define Elements(x) (sizeof(x)/sizeof(*(x)))
-
+#endif
 
 
 

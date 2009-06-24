@@ -744,7 +744,9 @@ shadow_compare(uint compare_func,
       break;
    }
 
+   /* XXX returning result for default GL_DEPTH_TEXTURE_MODE = GL_LUMINANCE */
    rgba[0][j] = rgba[1][j] = rgba[2][j] = (float) k;
+   rgba[3][j] = 1.0F;
 }
 
 

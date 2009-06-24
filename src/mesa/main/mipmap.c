@@ -1601,9 +1601,6 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
          return;
       }
 
-      if (dstImage->ImageOffsets)
-         _mesa_free(dstImage->ImageOffsets);
-
       /* Free old image data */
       if (dstImage->Data)
          ctx->Driver.FreeTexImageData(ctx, dstImage);

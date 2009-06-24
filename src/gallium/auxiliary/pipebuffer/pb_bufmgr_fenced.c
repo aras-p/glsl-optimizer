@@ -62,7 +62,7 @@ fenced_pb_manager(struct pb_manager *mgr)
 
 static struct pb_buffer *
 fenced_bufmgr_create_buffer(struct pb_manager *mgr, 
-                            size_t size,
+                            pb_size size,
                             const struct pb_desc *desc)
 {
    struct fenced_pb_manager *fenced_mgr = fenced_pb_manager(mgr);

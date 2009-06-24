@@ -72,6 +72,12 @@ struct pb_desc
 
 
 /**
+ * Size. Regular (32bit) unsigned for now.
+ */
+typedef unsigned pb_size;
+
+
+/**
  * Base class for all pb_* buffers.
  */
 struct pb_buffer 
@@ -126,7 +132,7 @@ struct pb_vtbl
     */
    void (*get_base_buffer)( struct pb_buffer *buf,
                             struct pb_buffer **base_buf,
-                            unsigned *offset );
+                            pb_size *offset );
    
 };
 
@@ -177,7 +183,7 @@ pb_unmap(struct pb_buffer *buf)
 static INLINE void
 pb_get_base_buffer( struct pb_buffer *buf,
 		    struct pb_buffer **base_buf,
-		    unsigned *offset )
+		    pb_size *offset )
 {
    assert(buf);
    if(!buf) {
@@ -241,7 +247,7 @@ pb_reference(struct pb_buffer **dst,
  * the requested or not.
  */
 static INLINE boolean
-pb_check_alignment(size_t requested, size_t provided)
+pb_check_alignment(pb_size requested, pb_size provided)
 {
    if(!requested)
       return TRUE;
@@ -269,7 +275,7 @@ pb_check_usage(unsigned requested, unsigned provided)
  * hardware.
  */
 struct pb_buffer *
-pb_malloc_buffer_create(size_t size, 
+pb_malloc_buffer_create(pb_size size, 
                         const struct pb_desc *desc);
 
 

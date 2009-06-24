@@ -65,11 +65,11 @@ struct fenced_buffer_list
    
    struct pb_fence_ops *ops;
    
-   size_t numDelayed;
+   pb_size numDelayed;
    struct list_head delayed;
    
 #ifdef DEBUG
-   size_t numUnfenced;
+   pb_size numUnfenced;
    struct list_head unfenced;
 #endif
 };
@@ -433,7 +433,7 @@ fenced_buffer_fence(struct pb_buffer *buf,
 static void
 fenced_buffer_get_base_buffer(struct pb_buffer *buf,
                               struct pb_buffer **base_buf,
-                              unsigned *offset)
+                              pb_size *offset)
 {
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);
    pb_get_base_buffer(fenced_buf->buffer, base_buf, offset);
