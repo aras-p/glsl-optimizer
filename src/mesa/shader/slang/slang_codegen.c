@@ -951,7 +951,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
           *   return;
           * then do substitutions on the assignment.
           */
-         slang_operation *blockOper, *assignOper, *returnOper;
+         slang_operation *blockOper;
 
          /* check if function actually has a return type */
          assert(A->CurFunction);
@@ -962,31 +962,64 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
 
          blockOper = slang_operation_new(1);
          blockOper->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
-         blockOper->num_children = 2;
          blockOper->locals->outer_scope = oper->locals->outer_scope;
-         blockOper->children = slang_operation_new(2);
-         assignOper = blockOper->children + 0;
-         returnOper = blockOper->children + 1;
+         slang_operation_add_children(blockOper, 2);
 
-         assignOper->type = SLANG_OPER_ASSIGN;
-         assignOper->num_children = 2;
-         assignOper->locals->outer_scope = blockOper->locals;
-         assignOper->children = slang_operation_new(2);
-         assignOper->children[0].type = SLANG_OPER_IDENTIFIER;
-         assignOper->children[0].a_id = slang_atom_pool_atom(A->atoms, "__retVal");
-         assignOper->children[0].locals->outer_scope = assignOper->locals;
+         /* if EmitContReturn:
+          *    if (!__returnFlag) {
+          *       build: __retVal = expr;
+          *    }
+          * otherwise:
+          *    build: __retVal = expr;
+          */
+         {
+            slang_operation *assignOper;
 
-         slang_operation_copy(&assignOper->children[1],
-                              &oper->children[0]);
+            if (!A->EmitContReturn) {
+               slang_operation *ifOper = slang_oper_child(blockOper, 0);
+               ifOper->type = SLANG_OPER_IF;
+               slang_operation_add_children(ifOper, 3);
 
-         returnOper->type = SLANG_OPER_RETURN; /* return w/ no value */
-         returnOper->locals->outer_scope = blockOper->locals;
+               {
+                  slang_operation *cond = slang_oper_child(ifOper, 0);
+                  cond->type = SLANG_OPER_IDENTIFIER;
+                  cond->a_id = slang_atom_pool_atom(A->atoms, "__returnFlag");
+               }
+               {
+                  assignOper = slang_oper_child(ifOper, 1);
+               }
+               {
+                  slang_operation *elseOper = slang_oper_child(ifOper, 2);
+                  elseOper->type = SLANG_OPER_VOID;
+               }
+            }
+            else {
+               assignOper = slang_oper_child(blockOper, 0);
+            }
 
-         assert(returnOper->num_children == 0);
+            assignOper->type = SLANG_OPER_ASSIGN;
+            slang_operation_add_children(assignOper, 2);
+            {
+               slang_operation *lhs = slang_oper_child(assignOper, 0);
+               lhs->type = SLANG_OPER_IDENTIFIER;
+               lhs->a_id = slang_atom_pool_atom(A->atoms, "__retVal");
+            }
+            {
+               slang_operation *rhs = slang_oper_child(assignOper, 1);
+               slang_operation_copy(rhs, &oper->children[0]);
+            }
 
-         /* do substitutions on the "__retVal = expr" sub-tree */
-         slang_substitute(A, assignOper,
-                          substCount, substOld, substNew, GL_FALSE);
+            /* do substitutions on the "__retVal = expr" sub-tree */
+            slang_substitute(A, assignOper,
+                             substCount, substOld, substNew, GL_FALSE);
+         }
+
+         /* build: return; */
+         {
+            slang_operation *returnOper = slang_oper_child(blockOper, 1);
+            returnOper->type = SLANG_OPER_RETURN; /* return w/ no value */
+            assert(returnOper->num_children == 0);
+         }
 
          /* install new code */
          slang_operation_copy(oper, blockOper);
@@ -1408,14 +1441,14 @@ declare_return_flag(slang_assemble_ctx *A, slang_operation *oper)
    decl = slang_operation_insert_child(oper, 1);
 
    slang_generate_declaration(A, oper->locals, decl,
-                              SLANG_SPEC_BOOL, "__returnFlag", GL_FALSE);
+                              SLANG_SPEC_BOOL, "__returnFlag", GL_TRUE);
 
    slang_print_tree(oper, 0);
 }
 
 
 /**
- * Replace 'return' with '__returnFlag = true'.
+ * Replace 'return' with '__returnFlag = false'.
  * This is used to remove 'early returns' from functions.
  */
 static void
@@ -1424,7 +1457,7 @@ replace_return_with_flag_set(slang_assemble_ctx *A, slang_operation *oper)
    slang_atom id = slang_atom_pool_atom(A->atoms, "__returnFlag");
    assert(oper->type == SLANG_OPER_RETURN);
 
-   /* replace 'return' with __returnFlag = true' */
+   /* replace 'return' with __returnFlag = false' */
    slang_operation_free_children(oper);
    oper->type = SLANG_OPER_ASSIGN;
    slang_operation_add_children(oper, 2);
@@ -1435,7 +1468,7 @@ replace_return_with_flag_set(slang_assemble_ctx *A, slang_operation *oper)
    }
    {
       slang_operation *rhs = slang_oper_child(oper, 1);
-      slang_operation_literal_bool(rhs, GL_TRUE);
+      slang_operation_literal_bool(rhs, GL_FALSE);
    }
 
    {
@@ -3966,6 +3999,7 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
                      new_return(A->curFuncEndLabel));
       }
       else {
+         /* set __returnFlag = false; */
          slang_operation *setFlag = slang_operation_new(1);
          setFlag->type = SLANG_OPER_ASSIGN;
          setFlag->locals->outer_scope = oper->locals;
@@ -3977,7 +4011,7 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
          }
          {
             slang_operation *rhs = slang_oper_child(setFlag, 1);
-            slang_operation_literal_bool(rhs, GL_TRUE);
+            slang_operation_literal_bool(rhs, GL_FALSE);
          }
          n = new_seq(_slang_gen_operation(A, assign),
                      _slang_gen_operation(A, setFlag));
