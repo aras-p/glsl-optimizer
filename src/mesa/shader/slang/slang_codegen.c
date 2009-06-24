@@ -980,6 +980,8 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
                               &oper->children[0]);
 
          returnOper->type = SLANG_OPER_RETURN; /* return w/ no value */
+         returnOper->locals->outer_scope = blockOper->locals;
+
          assert(returnOper->num_children == 0);
 
          /* do substitutions on the "__retVal = expr" sub-tree */
@@ -1392,7 +1394,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
 
 
 /**
- * Insert declaration for "bool _returnFlag" in given block operation.
+ * Insert declaration for "bool __returnFlag" in given block operation.
  * This is used when we can't emit "early" return statements in subroutines.
  */
 static void
@@ -1406,9 +1408,42 @@ declare_return_flag(slang_assemble_ctx *A, slang_operation *oper)
    decl = slang_operation_insert_child(oper, 1);
 
    slang_generate_declaration(A, oper->locals, decl,
-                              SLANG_SPEC_BOOL, "_returnFlag", GL_FALSE);
+                              SLANG_SPEC_BOOL, "__returnFlag", GL_FALSE);
 
    slang_print_tree(oper, 0);
+}
+
+
+/**
+ * Replace 'return' with '__returnFlag = true'.
+ * This is used to remove 'early returns' from functions.
+ */
+static void
+replace_return_with_flag_set(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_atom id = slang_atom_pool_atom(A->atoms, "__returnFlag");
+   assert(oper->type == SLANG_OPER_RETURN);
+
+   /* replace 'return' with __returnFlag = true' */
+   slang_operation_free_children(oper);
+   oper->type = SLANG_OPER_ASSIGN;
+   slang_operation_add_children(oper, 2);
+   {
+      slang_operation *lhs = slang_oper_child(oper, 0);
+      lhs->type = SLANG_OPER_IDENTIFIER;
+      lhs->a_id = id;
+   }
+   {
+      slang_operation *rhs = slang_oper_child(oper, 1);
+      slang_operation_literal_bool(rhs, GL_TRUE);
+   }
+
+   {
+      slang_variable *var;
+      var = _slang_variable_locate(oper->locals, id, GL_TRUE);
+      assert(var);
+   }
+
 }
 
 
@@ -1483,8 +1518,6 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
                assert(callOper->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
                       callOper->type == SLANG_OPER_SEQUENCE);
                declare_return_flag(A, callOper);
-               printf("DECLARE _returnFlag\n");
-
             }
             callOper->type = SLANG_OPER_NON_INLINED_CALL;
             callOper->fun = fun;
@@ -3871,6 +3904,8 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
    const GLboolean haveReturnValue
       = (oper->num_children == 1 && oper->children[0].type != SLANG_OPER_VOID);
 
+   assert(oper->type == SLANG_OPER_RETURN);
+
    /* error checking */
    assert(A->CurFunction);
    if (haveReturnValue &&
@@ -3885,7 +3920,13 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
    }
 
    if (!haveReturnValue) {
-      return new_return(A->curFuncEndLabel);
+      if (A->EmitContReturn) {
+         return new_return(A->curFuncEndLabel);
+      }
+      else {
+         replace_return_with_flag_set(A, oper);
+         return _slang_gen_operation(A, oper);
+      }
    }
    else {
       /*
@@ -3926,8 +3967,28 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       slang_operation_copy(&assign->children[1], &oper->children[0]);
 
       /* assemble the new code */
-      n = new_seq(_slang_gen_operation(A, assign),
-                  new_return(A->curFuncEndLabel));
+      if (A->EmitContReturn) {
+         n = new_seq(_slang_gen_operation(A, assign),
+                     new_return(A->curFuncEndLabel));
+      }
+      else {
+         slang_operation *setFlag = slang_operation_new(1);
+         setFlag->type = SLANG_OPER_ASSIGN;
+         setFlag->locals->outer_scope = oper->locals;
+         slang_operation_add_children(setFlag, 2);
+         {
+            slang_operation *lhs = slang_oper_child(setFlag, 0);
+            lhs->type = SLANG_OPER_IDENTIFIER;
+            lhs->a_id = slang_atom_pool_atom(A->atoms, "__returnFlag");
+         }
+         {
+            slang_operation *rhs = slang_oper_child(setFlag, 1);
+            slang_operation_literal_bool(rhs, GL_TRUE);
+         }
+         n = new_seq(_slang_gen_operation(A, assign),
+                     _slang_gen_operation(A, setFlag));
+         slang_operation_delete(setFlag);
+      }
 
       slang_operation_delete(assign);
       return n;
