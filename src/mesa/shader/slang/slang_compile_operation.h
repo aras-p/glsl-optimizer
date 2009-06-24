@@ -150,6 +150,9 @@ slang_operation_new(GLuint count);
 extern void
 slang_operation_delete(slang_operation *oper);
 
+extern void
+slang_operation_free_children(slang_operation *oper);
+
 extern slang_operation *
 slang_operation_grow(GLuint *numChildren, slang_operation **children);
 

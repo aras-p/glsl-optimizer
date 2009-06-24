@@ -200,6 +200,20 @@ slang_operation_delete(slang_operation *oper)
 }
 
 
+void
+slang_operation_free_children(slang_operation *oper)
+{
+   GLuint i;
+   for (i = 0; i < slang_oper_num_children(oper); i++) {
+      slang_operation *child = slang_oper_child(oper, i);
+      slang_operation_destruct(child);
+   }
+   _slang_free(oper->children);
+   oper->children = NULL;
+   oper->num_children = 0;
+}
+
+
 slang_operation *
 slang_operation_grow(GLuint *numChildren, slang_operation **children)
 {
