@@ -1391,6 +1391,27 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
 }
 
 
+/**
+ * Insert declaration for "bool _returnFlag" in given block operation.
+ * This is used when we can't emit "early" return statements in subroutines.
+ */
+static void
+declare_return_flag(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_operation *decl;
+
+   assert(oper->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
+          oper->type == SLANG_OPER_SEQUENCE);
+
+   decl = slang_operation_insert_child(oper, 1);
+
+   slang_generate_declaration(A, oper->locals, decl,
+                              SLANG_SPEC_BOOL, "_returnFlag", GL_FALSE);
+
+   slang_print_tree(oper, 0);
+}
+
+
 static slang_ir_node *
 _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
                          slang_operation *oper, slang_operation *dest)
@@ -1452,6 +1473,18 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
             }
             else {
                callOper = inlined;
+            }
+
+            if (!A->EmitContReturn) {
+               /* Early returns not supported.  Create a _returnFlag variable
+                * that's set upon 'return' and tested elsewhere to no-op any
+                * remaining instructions in the subroutine.
+                */
+               assert(callOper->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
+                      callOper->type == SLANG_OPER_SEQUENCE);
+               declare_return_flag(A, callOper);
+               printf("DECLARE _returnFlag\n");
+
             }
             callOper->type = SLANG_OPER_NON_INLINED_CALL;
             callOper->fun = fun;
