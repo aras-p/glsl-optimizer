@@ -1676,6 +1676,8 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
       n->Comment = _slang_strdup(s);
    }
 
+   A->UseReturnFlag = GL_FALSE;
+
    return n;
 }
 
@@ -4356,6 +4358,9 @@ root_swizzle(const slang_ir_storage *st)
 static slang_ir_node *
 _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
 {
+   slang_operation *pred = NULL;
+   slang_ir_node *n = NULL;
+
    if (oper->children[0].type == SLANG_OPER_IDENTIFIER) {
       /* Check that var is writeable */
       slang_variable *var
@@ -4376,6 +4381,17 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
                               (char *) oper->children[0].a_id);
          return NULL;
       }
+
+      /* check if we need to predicate this assignment based on __returnFlag */
+      if ((var->is_global ||
+           var->type.qualifier == SLANG_QUAL_OUT ||
+           var->type.qualifier == SLANG_QUAL_INOUT) && A->UseReturnFlag) {
+         /* create predicate, used below */
+         pred = slang_operation_new(1);
+         pred->type = SLANG_OPER_IDENTIFIER;
+         pred->a_id = slang_atom_pool_atom(A->atoms, "__returnFlag");
+         pred->locals->outer_scope = oper->locals->outer_scope;
+      }
    }
 
    if (oper->children[0].type == SLANG_OPER_IDENTIFIER &&
@@ -4387,14 +4403,12 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
        * cases such as "v.x = f();"  - would help with typical vertex
        * transformation.
        */
-      slang_ir_node *n;
       n = _slang_gen_function_call_name(A,
                                       (const char *) oper->children[1].a_id,
                                       &oper->children[1], &oper->children[0]);
-      return n;
    }
    else {
-      slang_ir_node *n, *lhs, *rhs;
+      slang_ir_node *lhs, *rhs;
 
       /* lhs and rhs type checking */
       if (!_slang_assignment_compatible(A,
@@ -4434,12 +4448,21 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
             rhs = _slang_gen_swizzle(rhs, newSwizzle);
          }
          n = new_node2(IR_COPY, lhs, rhs);
-         return n;
       }
       else {
          return NULL;
       }
    }
+
+   if (n && pred) {
+      /* predicate the assignment code on __returnFlag */
+      slang_ir_node *top, *cond;
+
+      cond = _slang_gen_operation(A, pred);
+      top = new_if(cond, n, NULL);
+      return top;
+   }
+   return n;
 }
 
 
@@ -5044,6 +5067,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    const GLint arrayLen = _slang_array_length(var);
    const GLint totalSize = _slang_array_size(size, arrayLen);
    GLint texIndex = sampler_to_texture_index(var->type.specifier.type);
+
+   var->is_global = GL_TRUE;
 
    /* check for sampler2D arrays */
    if (texIndex == -1 && var->type.specifier._array)
