@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ *                Joakim Sindholt <opensource@zhasha.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,15 +21,10 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#ifndef R300_STATE_SHADER_H
-#define R300_STATE_SHADER_H
+#ifndef R5XX_FS_H
+#define R5XX_FS_H
 
-#include "tgsi/tgsi_parse.h"
-
-#include "r300_context.h"
-#include "r300_debug.h"
-#include "r300_reg.h"
-#include "r300_screen.h"
+#include "r300_fs_inlines.h"
 
 /* XXX this all should find its way back to r300_reg */
 /* Swizzle tools */
@@ -59,78 +55,7 @@
 #define R500_ALU_OMASK(x) ((x) << 15)
 #define R500_W_OMASK (1 << 31)
 
-/* TGSI constants. TGSI is like XML: If it can't solve your problems, you're
- * not using enough of it. */
-static const struct tgsi_full_src_register r500_constant_zero = {
-    .SrcRegister.Extended = TRUE,
-    .SrcRegister.File = TGSI_FILE_NULL,
-    .SrcRegisterExtSwz.ExtSwizzleX = TGSI_EXTSWIZZLE_ZERO,
-    .SrcRegisterExtSwz.ExtSwizzleY = TGSI_EXTSWIZZLE_ZERO,
-    .SrcRegisterExtSwz.ExtSwizzleZ = TGSI_EXTSWIZZLE_ZERO,
-    .SrcRegisterExtSwz.ExtSwizzleW = TGSI_EXTSWIZZLE_ZERO,
-};
-
-static const struct tgsi_full_src_register r500_constant_one = {
-    .SrcRegister.Extended = TRUE,
-    .SrcRegister.File = TGSI_FILE_NULL,
-    .SrcRegisterExtSwz.ExtSwizzleX = TGSI_EXTSWIZZLE_ONE,
-    .SrcRegisterExtSwz.ExtSwizzleY = TGSI_EXTSWIZZLE_ONE,
-    .SrcRegisterExtSwz.ExtSwizzleZ = TGSI_EXTSWIZZLE_ONE,
-    .SrcRegisterExtSwz.ExtSwizzleW = TGSI_EXTSWIZZLE_ONE,
-};
-
-/* Temporary struct used to hold assembly state while putting together
- * fragment programs. */
-struct r300_fs_asm {
-    /* Pipe context. */
-    struct r300_context* r300;
-    /* Number of colors. */
-    unsigned color_count;
-    /* Number of texcoords. */
-    unsigned tex_count;
-    /* Offset for temporary registers. Inputs and temporaries have no
-     * distinguishing markings, so inputs start at 0 and the first usable
-     * temporary register is after all inputs. */
-    unsigned temp_offset;
-    /* Number of requested temporary registers. */
-    unsigned temp_count;
-    /* Offset for immediate constants. Neither R300 nor R500 can do four
-     * inline constants per source, so instead we copy immediates into the
-     * constant buffer. */
-    unsigned imm_offset;
-    /* Number of immediate constants. */
-    unsigned imm_count;
-    /* Are depth writes enabled? */
-    boolean writes_depth;
-    /* Depth write offset. This is the TGSI output that corresponds to
-     * depth writes. */
-    unsigned depth_output;
-};
-
-void r300_translate_fragment_shader(struct r300_context* r300,
-                           struct r3xx_fragment_shader* fs);
-
-static struct r300_fragment_shader r300_passthrough_fragment_shader = {
-    .alu_instruction_count = 1,
-    .tex_instruction_count = 0,
-    .indirections = 0,
-    .shader.stack_size = 1,
-
-    .instructions[0].alu_rgb_inst = R300_RGB_SWIZA(R300_ALU_ARGC_SRC0C_XYZ) |
-        R300_RGB_SWIZB(R300_ALU_ARGC_SRC0C_XYZ) |
-        R300_RGB_SWIZC(R300_ALU_ARGC_ZERO) |
-        R300_ALU_OUTC_CMP,
-    .instructions[0].alu_rgb_addr = R300_RGB_ADDR0(0) | R300_RGB_ADDR1(0) |
-        R300_RGB_ADDR2(0) | R300_ALU_DSTC_OUTPUT_XYZ,
-    .instructions[0].alu_alpha_inst = R300_ALPHA_SWIZA(R300_ALU_ARGA_SRC0A) |
-        R300_ALPHA_SWIZB(R300_ALU_ARGA_SRC0A) |
-        R300_ALPHA_SWIZC(R300_ALU_ARGA_ZERO) |
-        R300_ALU_OUTA_CMP,
-    .instructions[0].alu_alpha_addr = R300_ALPHA_ADDR0(0) |
-        R300_ALPHA_ADDR1(0) | R300_ALPHA_ADDR2(0) | R300_ALU_DSTA_OUTPUT,
-};
-
-static struct r500_fragment_shader r500_passthrough_fragment_shader = {
+static struct r5xx_fragment_shader r5xx_passthrough_fragment_shader = {
     .shader.stack_size = 0,
     .instruction_count = 1,
     .instructions[0].inst0 = R500_INST_TYPE_OUT |
@@ -156,27 +81,7 @@ static struct r500_fragment_shader r500_passthrough_fragment_shader = {
         R500_ALU_RGBA_A_SWIZ_0,
 };
 
-static struct r300_fragment_shader r300_texture_fragment_shader = {
-    .alu_instruction_count = 1,
-    .tex_instruction_count = 0,
-    .indirections = 0,
-    .shader.stack_size = 1,
-
-    .instructions[0].alu_rgb_inst = R300_RGB_SWIZA(R300_ALU_ARGC_SRC0C_XYZ) |
-        R300_RGB_SWIZB(R300_ALU_ARGC_SRC0C_XYZ) |
-        R300_RGB_SWIZC(R300_ALU_ARGC_ZERO) |
-        R300_ALU_OUTC_CMP,
-    .instructions[0].alu_rgb_addr = R300_RGB_ADDR0(0) | R300_RGB_ADDR1(0) |
-        R300_RGB_ADDR2(0) | R300_ALU_DSTC_OUTPUT_XYZ,
-    .instructions[0].alu_alpha_inst = R300_ALPHA_SWIZA(R300_ALU_ARGA_SRC0A) |
-        R300_ALPHA_SWIZB(R300_ALU_ARGA_SRC0A) |
-        R300_ALPHA_SWIZC(R300_ALU_ARGA_ZERO) |
-        R300_ALU_OUTA_CMP,
-    .instructions[0].alu_alpha_addr = R300_ALPHA_ADDR0(0) |
-        R300_ALPHA_ADDR1(0) | R300_ALPHA_ADDR2(0) | R300_ALU_DSTA_OUTPUT,
-};
-
-static struct r500_fragment_shader r500_texture_fragment_shader = {
+static struct r5xx_fragment_shader r5xx_texture_fragment_shader = {
     .shader.stack_size = 1,
     .instruction_count = 2,
     .instructions[0].inst0 = R500_INST_TYPE_TEX |
@@ -217,4 +122,11 @@ static struct r500_fragment_shader r500_texture_fragment_shader = {
         R500_ALU_RGBA_A_SWIZ_0,
 };
 
-#endif /* R300_STATE_SHADER_H */
+void r5xx_fs_finalize(struct r5xx_fragment_shader* fs,
+                      struct r300_fs_asm* assembler);
+
+void r5xx_fs_instruction(struct r5xx_fragment_shader* fs,
+                         struct r300_fs_asm* assembler,
+                         struct tgsi_full_instruction* inst);
+
+#endif /* R5XX_FS_H */

@@ -22,7 +22,7 @@
 
 #include "r300_debug.h"
 
-static void r300_dump_fs(struct r300_fragment_shader* fs)
+void r3xx_dump_fs(struct r3xx_fragment_shader* fs)
 {
     int i;
 
@@ -30,7 +30,7 @@ static void r300_dump_fs(struct r300_fragment_shader* fs)
     }
 }
 
-void r500_fs_dump(struct r500_fragment_shader* fs)
+void r5xx_fs_dump(struct r5xx_fragment_shader* fs)
 {
     int i;
     uint32_t inst;
@@ -58,8 +58,8 @@ void r500_fs_dump(struct r500_fragment_shader* fs)
                 inst & R500_INST_NOP ? "NOP" : "",
                 inst & R500_INST_ALU_WAIT ? "ALU_WAIT" : "");
         debug_printf("wmask: %s omask: %s\n",
-                r500_fs_mask[(inst >> 11) & 0xf],
-                r500_fs_mask[(inst >> 15) & 0xf]);
+                r5xx_fs_mask[(inst >> 11) & 0xf],
+                r5xx_fs_mask[(inst >> 15) & 0xf]);
         switch (inst & 0x3) {
             case R500_INST_TYPE_ALU:
             case R500_INST_TYPE_OUT:
@@ -85,36 +85,36 @@ void r500_fs_dump(struct r500_fragment_shader* fs)
                 debug_printf("    3: RGB_INST   0x%08x:", inst);
                 debug_printf("rgb_A_src:%d %s/%s/%s %d "
                         "rgb_B_src:%d %s/%s/%s %d\n",
-                        inst & 0x3, r500_fs_swiz[(inst >> 2) & 0x7],
-                        r500_fs_swiz[(inst >> 5) & 0x7],
-                        r500_fs_swiz[(inst >> 8) & 0x7],
+                        inst & 0x3, r5xx_fs_swiz[(inst >> 2) & 0x7],
+                        r5xx_fs_swiz[(inst >> 5) & 0x7],
+                        r5xx_fs_swiz[(inst >> 8) & 0x7],
                         (inst >> 11) & 0x3, (inst >> 13) & 0x3,
-                        r500_fs_swiz[(inst >> 15) & 0x7],
-                        r500_fs_swiz[(inst >> 18) & 0x7],
-                        r500_fs_swiz[(inst >> 21) & 0x7],
+                        r5xx_fs_swiz[(inst >> 15) & 0x7],
+                        r5xx_fs_swiz[(inst >> 18) & 0x7],
+                        r5xx_fs_swiz[(inst >> 21) & 0x7],
                         (inst >> 24) & 0x3);
 
                 inst = fs->instructions[i].inst4;
                 debug_printf("    4: ALPHA_INST 0x%08x:", inst);
                 debug_printf("%s dest:%d%s alp_A_src:%d %s %d "
                         "alp_B_src:%d %s %d w:%d\n",
-                        r500_fs_op_alpha[inst & 0xf], (inst >> 4) & 0x7f,
+                        r5xx_fs_op_alpha[inst & 0xf], (inst >> 4) & 0x7f,
                         inst & (1<<11) ? "(rel)":"", (inst >> 12) & 0x3,
-                        r500_fs_swiz[(inst >> 14) & 0x7], (inst >> 17) & 0x3,
-                        (inst >> 19) & 0x3, r500_fs_swiz[(inst >> 21) & 0x7],
+                        r5xx_fs_swiz[(inst >> 14) & 0x7], (inst >> 17) & 0x3,
+                        (inst >> 19) & 0x3, r5xx_fs_swiz[(inst >> 21) & 0x7],
                         (inst >> 24) & 0x3, (inst >> 31) & 0x1);
 
                 inst = fs->instructions[i].inst5;
                 debug_printf("    5: RGBA_INST  0x%08x:", inst);
                 debug_printf("%s dest:%d%s rgb_C_src:%d %s/%s/%s %d "
                         "alp_C_src:%d %s %d\n",
-                        r500_fs_op_rgb[inst & 0xf], (inst >> 4) & 0x7f,
+                        r5xx_fs_op_rgb[inst & 0xf], (inst >> 4) & 0x7f,
                         inst & (1 << 11) ? "(rel)":"", (inst >> 12) & 0x3,
-                        r500_fs_swiz[(inst >> 14) & 0x7],
-                        r500_fs_swiz[(inst >> 17) & 0x7],
-                        r500_fs_swiz[(inst >> 20) & 0x7],
+                        r5xx_fs_swiz[(inst >> 14) & 0x7],
+                        r5xx_fs_swiz[(inst >> 17) & 0x7],
+                        r5xx_fs_swiz[(inst >> 20) & 0x7],
                         (inst >> 23) & 0x3, (inst >> 25) & 0x3,
-                        r500_fs_swiz[(inst >> 27) & 0x7], (inst >> 30) & 0x3);
+                        r5xx_fs_swiz[(inst >> 27) & 0x7], (inst >> 30) & 0x3);
                 break;
             case R500_INST_TYPE_FC:
                 /* XXX don't even bother yet */
@@ -124,7 +124,7 @@ void r500_fs_dump(struct r500_fragment_shader* fs)
                 debug_printf("    1: TEX_INST   0x%08x: id: %d "
                         "op:%s, %s, %s %s\n",
                         inst, (inst >> 16) & 0xf,
-                        r500_fs_tex[(inst >> 22) & 0x7],
+                        r5xx_fs_tex[(inst >> 22) & 0x7],
                         (inst & (1 << 25)) ? "ACQ" : "",
                         (inst & (1 << 26)) ? "IGNUNC" : "",
                         (inst & (1 << 27)) ? "UNSCALED" : "SCALED");
@@ -133,15 +133,15 @@ void r500_fs_dump(struct r500_fragment_shader* fs)
                 debug_printf("    2: TEX_ADDR   0x%08x: "
                         "src: %d%s %s/%s/%s/%s dst: %d%s %s/%s/%s/%s\n",
                         inst, inst & 0x7f, inst & (1 << 7) ? "(rel)" : "",
-                        r500_fs_swiz[(inst >> 8) & 0x3],
-                        r500_fs_swiz[(inst >> 10) & 0x3],
-                        r500_fs_swiz[(inst >> 12) & 0x3],
-                        r500_fs_swiz[(inst >> 14) & 0x3],
+                        r5xx_fs_swiz[(inst >> 8) & 0x3],
+                        r5xx_fs_swiz[(inst >> 10) & 0x3],
+                        r5xx_fs_swiz[(inst >> 12) & 0x3],
+                        r5xx_fs_swiz[(inst >> 14) & 0x3],
                         (inst >> 16) & 0x7f, inst & (1 << 23) ? "(rel)" : "",
-                        r500_fs_swiz[(inst >> 24) & 0x3],
-                        r500_fs_swiz[(inst >> 26) & 0x3],
-                        r500_fs_swiz[(inst >> 28) & 0x3],
-                        r500_fs_swiz[(inst >> 30) & 0x3]);
+                        r5xx_fs_swiz[(inst >> 24) & 0x3],
+                        r5xx_fs_swiz[(inst >> 26) & 0x3],
+                        r5xx_fs_swiz[(inst >> 28) & 0x3],
+                        r5xx_fs_swiz[(inst >> 30) & 0x3]);
                 
                 inst = fs->instructions[i].inst3;
                 debug_printf("    3: TEX_DXDY   0x%08x\n", inst);

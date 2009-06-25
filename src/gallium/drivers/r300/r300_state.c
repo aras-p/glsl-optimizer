@@ -29,7 +29,7 @@
 #include "r300_context.h"
 #include "r300_reg.h"
 #include "r300_state_inlines.h"
-#include "r300_state_shader.h"
+#include "r300_fs.h"
 
 /* r300_state: Functions used to intialize state context by translating
  * Gallium state objects into semi-native r300 state objects. */
@@ -283,14 +283,12 @@ static void* r300_create_fs_state(struct pipe_context* pipe,
                                   const struct pipe_shader_state* shader)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r3xx_fragment_shader* fs = NULL;
+    struct r300_fragment_shader* fs = NULL;
 
     if (r300_screen(r300->context.screen)->caps->is_r500) {
-        fs =
-            (struct r3xx_fragment_shader*)CALLOC_STRUCT(r500_fragment_shader);
+        fs = (struct r300_fragment_shader*)CALLOC_STRUCT(r5xx_fragment_shader);
     } else {
-        fs =
-            (struct r3xx_fragment_shader*)CALLOC_STRUCT(r300_fragment_shader);
+        fs = (struct r300_fragment_shader*)CALLOC_STRUCT(r3xx_fragment_shader);
     }
 
     /* Copy state directly into shader. */
@@ -306,7 +304,7 @@ static void* r300_create_fs_state(struct pipe_context* pipe,
 static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r3xx_fragment_shader* fs = (struct r3xx_fragment_shader*)shader;
+    struct r300_fragment_shader* fs = (struct r300_fragment_shader*)shader;
 
     if (fs == NULL) {
         r300->fs = NULL;
@@ -324,7 +322,7 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
 /* Delete fragment shader state. */
 static void r300_delete_fs_state(struct pipe_context* pipe, void* shader)
 {
-    struct r3xx_fragment_shader* fs = (struct r3xx_fragment_shader*)shader;
+    struct r300_fragment_shader* fs = (struct r300_fragment_shader*)shader;
     FREE(fs->state.tokens);
     FREE(shader);
 }

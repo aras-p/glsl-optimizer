@@ -149,7 +149,7 @@ struct r300_constant_buffer {
     unsigned count;
 };
 
-struct r3xx_fragment_shader {
+struct r300_fragment_shader {
     /* Parent class */
     struct pipe_shader_state state;
     struct tgsi_shader_info info;
@@ -165,9 +165,9 @@ struct r3xx_fragment_shader {
     boolean uses_imms;
 };
 
-struct r300_fragment_shader {
+struct r3xx_fragment_shader {
     /* Parent class */
-    struct r3xx_fragment_shader shader;
+    struct r300_fragment_shader shader;
 
     /* Number of ALU instructions */
     int alu_instruction_count;
@@ -190,9 +190,9 @@ struct r300_fragment_shader {
     } instructions[64]; /* XXX magic num */
 };
 
-struct r500_fragment_shader {
+struct r5xx_fragment_shader {
     /* Parent class */
-    struct r3xx_fragment_shader shader;
+    struct r300_fragment_shader shader;
 
     /* Number of used instructions */
     int instruction_count;
@@ -300,7 +300,7 @@ struct r300_context {
     /* Depth, stencil, and alpha state. */
     struct r300_dsa_state* dsa_state;
     /* Fragment shader. */
-    struct r3xx_fragment_shader* fs;
+    struct r300_fragment_shader* fs;
     /* Framebuffer state. We currently don't need our own version of this. */
     struct pipe_framebuffer_state framebuffer_state;
     /* Rasterizer state. */

@@ -43,10 +43,10 @@ void r300_emit_dsa_state(struct r300_context* r300,
                          struct r300_dsa_state* dsa);
 
 void r300_emit_fragment_shader(struct r300_context* r300,
-                               struct r300_fragment_shader* fs);
+                               struct r3xx_fragment_shader* fs);
 
 void r500_emit_fragment_shader(struct r300_context* r300,
-                               struct r500_fragment_shader* fs);
+                               struct r5xx_fragment_shader* fs);
 
 void r300_emit_fb_state(struct r300_context* r300,
                         struct pipe_framebuffer_state* fb);

@@ -151,11 +151,11 @@ validate:
 
     /* Fragment shader setup */
     if (caps->is_r500) {
-        r500_emit_fragment_shader(r300, &r500_passthrough_fragment_shader);
-        r300_emit_rs_block_state(r300, &r500_rs_block_clear_state);
+        r500_emit_fragment_shader(r300, &r5xx_passthrough_fragment_shader);
+        r300_emit_rs_block_state(r300, &r5xx_rs_block_clear_state);
     } else {
-        r300_emit_fragment_shader(r300, &r300_passthrough_fragment_shader);
-        r300_emit_rs_block_state(r300, &r300_rs_block_clear_state);
+        r300_emit_fragment_shader(r300, &r3xx_passthrough_fragment_shader);
+        r300_emit_rs_block_state(r300, &r3xx_rs_block_clear_state);
     }
 
     BEGIN_CS(26);
@@ -291,11 +291,11 @@ validate:
 
     /* Fragment shader setup */
     if (caps->is_r500) {
-        r500_emit_fragment_shader(r300, &r500_texture_fragment_shader);
-        r300_emit_rs_block_state(r300, &r500_rs_block_copy_state);
+        r500_emit_fragment_shader(r300, &r5xx_texture_fragment_shader);
+        r300_emit_rs_block_state(r300, &r5xx_rs_block_copy_state);
     } else {
-        r300_emit_fragment_shader(r300, &r300_texture_fragment_shader);
-        r300_emit_rs_block_state(r300, &r300_rs_block_copy_state);
+        r300_emit_fragment_shader(r300, &r3xx_texture_fragment_shader);
+        r300_emit_rs_block_state(r300, &r3xx_rs_block_copy_state);
     }
 
     BEGIN_CS(30);

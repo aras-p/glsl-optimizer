@@ -20,15 +20,17 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#ifndef R300_STATE_TCL_H
-#define R300_STATE_TCL_H
+#ifndef R300_VS_H
+#define R300_VS_H
 
 #include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_dump.h"
 
 #include "r300_context.h"
 #include "r300_debug.h"
 #include "r300_reg.h"
 #include "r300_screen.h"
+#include "r300_shader_inlines.h"
 
 /* XXX get these to r300_reg */
 #define R300_PVS_DST_OPCODE(x)   ((x) << 0)
@@ -83,15 +85,6 @@
 #define R300_PVS_NEGATE_XYZW \
     (R300_PVS_MODIFIER_X | R300_PVS_MODIFIER_Y | \
      R300_PVS_MODIFIER_Z | R300_PVS_MODIFIER_W)
-
-static const struct tgsi_full_src_register r300_constant_zero = {
-    .SrcRegister.Extended = TRUE,
-    .SrcRegister.File = TGSI_FILE_NULL,
-    .SrcRegisterExtSwz.ExtSwizzleX = TGSI_EXTSWIZZLE_ZERO,
-    .SrcRegisterExtSwz.ExtSwizzleY = TGSI_EXTSWIZZLE_ZERO,
-    .SrcRegisterExtSwz.ExtSwizzleZ = TGSI_EXTSWIZZLE_ZERO,
-    .SrcRegisterExtSwz.ExtSwizzleW = TGSI_EXTSWIZZLE_ZERO,
-};
 
 /* Temporary struct used to hold assembly state while putting together
  * fragment programs. */
@@ -161,4 +154,4 @@ static struct r300_vertex_shader r300_texture_vertex_shader = {
 void r300_translate_vertex_shader(struct r300_context* r300,
                                   struct r300_vertex_shader* vs);
 
-#endif /* R300_STATE_TCL_H */
+#endif /* R300_VS_H */

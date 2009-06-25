@@ -110,7 +110,7 @@ void r300_emit_dsa_state(struct r300_context* r300,
 }
 
 void r300_emit_fragment_shader(struct r300_context* r300,
-                               struct r300_fragment_shader* fs)
+                               struct r3xx_fragment_shader* fs)
 {
     int i;
     CS_LOCALS(r300);
@@ -142,7 +142,7 @@ void r300_emit_fragment_shader(struct r300_context* r300,
 }
 
 void r500_emit_fragment_shader(struct r300_context* r300,
-                               struct r500_fragment_shader* fs)
+                               struct r5xx_fragment_shader* fs)
 {
     int i;
     struct r300_constant_buffer* constants =
@@ -570,10 +570,10 @@ validate:
     if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER) {
         if (r300screen->caps->is_r500) {
             r500_emit_fragment_shader(r300,
-                (struct r500_fragment_shader*)r300->fs);
+                (struct r5xx_fragment_shader*)r300->fs);
         } else {
             r300_emit_fragment_shader(r300,
-                (struct r300_fragment_shader*)r300->fs);
+                (struct r3xx_fragment_shader*)r300->fs);
         }
         r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER;
     }

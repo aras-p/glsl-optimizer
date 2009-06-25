@@ -20,7 +20,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "r300_state_tcl.h"
+#include "r300_vs.h"
 
 static void r300_vs_declare(struct r300_vs_asm* assembler,
                             struct tgsi_full_declaration* decl)
@@ -403,7 +403,7 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     debug_printf("r300: vs: tab: %d %d %d %d\n", assembler->tab[0],
             assembler->tab[1], assembler->tab[2], assembler->tab[3]);
 
-    tgsi_dump(vs->state.tokens);
+    tgsi_dump(vs->state.tokens, 0);
     /* XXX finish r300 vertex shader dumper */
     r300_vs_dump(vs);
 
