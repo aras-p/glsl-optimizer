@@ -3465,8 +3465,6 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
    if (is_operation_type(&oper->children[1], SLANG_OPER_BREAK)
        && !haveElseClause) {
       /* Special case: generate a conditional break */
-      if (!A->CurLoop) /* probably trying to unroll */
-         return NULL;
       ifBody = new_break_if_true(A, cond);
       return ifBody;
    }
@@ -3475,8 +3473,6 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
             && A->CurLoopOper
             && A->CurLoopOper->type != SLANG_OPER_FOR) {
       /* Special case: generate a conditional continue */
-      if (!A->CurLoop) /* probably trying to unroll */
-         return NULL;
       ifBody = new_cont_if_true(A, cond);
       return ifBody;
    }
