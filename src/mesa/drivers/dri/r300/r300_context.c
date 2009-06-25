@@ -270,10 +270,16 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 	ctx->Const.MaxTextureLodBias = 16.0;
 
-	if (screen->chip_family >= CHIP_FAMILY_RV515)
+	if (screen->chip_family >= CHIP_FAMILY_RV515) {
 		ctx->Const.MaxTextureLevels = 13;
-	else
+		ctx->Const.MaxCubeTextureLevels = 13;
+		ctx->Const.MaxTextureRectSize = 4096;
+	}
+	else {
 		ctx->Const.MaxTextureLevels = 12;
+		ctx->Const.MaxCubeTextureLevels = 12;
+		ctx->Const.MaxTextureRectSize = 2048;
+	}
 
 	ctx->Const.MinPointSize = 1.0;
 	ctx->Const.MinPointSizeAA = 1.0;
