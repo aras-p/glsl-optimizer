@@ -391,11 +391,15 @@ static int cs_check_space(struct radeon_cs *cs, struct radeon_cs_space_check *bo
 	  continue;
  
       /* already accounted this bo */
-      if (write_domain && (write_domain == bo->space_accounted))
+      if (write_domain && (write_domain == bo->space_accounted)) {
+	  bos[i].new_accounted = bo->space_accounted;
 	  continue;
+      }
 
-      if (read_domains && ((read_domains << 16) == bo->space_accounted))
+      if (read_domains && ((read_domains << 16) == bo->space_accounted)) {
+	  bos[i].new_accounted = bo->space_accounted;
 	  continue;
+      }
       
       if (bo->space_accounted == 0) {
 	  if (write_domain == RADEON_GEM_DOMAIN_VRAM)
