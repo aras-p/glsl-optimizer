@@ -42,13 +42,16 @@ typedef struct slang_assemble_ctx_
    struct gl_sl_pragmas *pragmas;
    slang_var_table *vartable;
    slang_info_log *log;
-   struct slang_label_ *curFuncEndLabel;
 
+   /* current loop stack */
    const slang_operation *LoopOperStack[MAX_LOOP_DEPTH];
    struct slang_ir_node_ *LoopIRStack[MAX_LOOP_DEPTH];
    GLuint LoopDepth;
 
+   /* current function */
    struct slang_function_ *CurFunction;
+   struct slang_label_ *curFuncEndLabel;
+
    GLboolean UnresolvedRefs;
    GLboolean EmitContReturn;
 } slang_assemble_ctx;
