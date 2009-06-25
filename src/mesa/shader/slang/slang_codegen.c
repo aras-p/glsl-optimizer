@@ -832,7 +832,7 @@ _slang_find_node_type(slang_operation *oper, slang_operation_type type)
  * Count the number of operations of the given time rooted at 'oper'.
  */
 static GLuint
-_slang_count_node_type(slang_operation *oper, slang_operation_type type)
+_slang_count_node_type(const slang_operation *oper, slang_operation_type type)
 {
    GLuint i, count = 0;
    if (oper->type == type) {
@@ -1025,7 +1025,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
          {
             slang_operation *assignOper;
 
-            if (!A->EmitContReturn) {
+            if (A->UseReturnFlag) {
                slang_operation *ifOper = slang_oper_child(blockOper, 0);
                ifOper->type = SLANG_OPER_IF;
                slang_operation_add_children(ifOper, 3);
@@ -1493,7 +1493,7 @@ declare_return_flag(slang_assemble_ctx *A, slang_operation *oper)
    slang_generate_declaration(A, oper->locals, decl,
                               SLANG_SPEC_BOOL, "__returnFlag", GL_TRUE);
 
-   slang_print_tree(oper, 0);
+   /*slang_print_tree(oper, 0);*/
 }
 
 
@@ -1526,10 +1526,31 @@ replace_return_with_flag_set(slang_assemble_ctx *A, slang_operation *oper)
       var = _slang_variable_locate(oper->locals, id, GL_TRUE);
       assert(var);
    }
-
 }
 
 
+/**
+ * Test if the given function body has an "early return".  That is, there's
+ * a 'return' statement that's not the very last instruction in the body.
+ */
+static GLboolean
+has_early_return(const slang_operation *funcBody)
+{
+   GLuint retCount = _slang_count_node_type(funcBody, SLANG_OPER_RETURN);
+   if (retCount == 0)
+      return GL_FALSE;
+   else if (retCount == 1 && _slang_is_tail_return(funcBody))
+      return GL_FALSE;
+   else
+      return GL_TRUE;
+}
+
+
+/**
+ * Emit IR code for a function call.  This does one of two things:
+ * 1. Inline the function's code
+ * 2. Create an IR for the function's body and create a real call to it.
+ */
 static slang_ir_node *
 _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
                          slang_operation *oper, slang_operation *dest)
@@ -1555,9 +1576,12 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
        *  1. insert the inline code
        *  2. Generate a call to the "inline" code as a subroutine
        */
-
-
+      const GLboolean earlyReturn = has_early_return(fun->body);
       slang_operation *ret = NULL;
+
+      if (earlyReturn && !A->EmitContReturn) {
+         A->UseReturnFlag = GL_TRUE;
+      }
 
       inlined = slang_inline_function_call(A, fun, oper, dest);
       if (!inlined)
@@ -1566,8 +1590,7 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
       ret = _slang_find_node_type(inlined, SLANG_OPER_RETURN);
       if (ret) {
          /* check if this is a "tail" return */
-         if (_slang_count_node_type(inlined, SLANG_OPER_RETURN) == 1 &&
-             _slang_is_tail_return(inlined)) {
+         if (!earlyReturn) {
             /* The only RETURN is the last stmt in the function, no-op it
              * and inline the function body.
              */
@@ -1593,7 +1616,7 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
                callOper = inlined;
             }
 
-            if (!A->EmitContReturn) {
+            if (A->UseReturnFlag) {
                /* Early returns not supported.  Create a _returnFlag variable
                 * that's set upon 'return' and tested elsewhere to no-op any
                 * remaining instructions in the subroutine.
@@ -4030,7 +4053,7 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
          n = new_seq(_slang_gen_operation(A, assign),
                      new_return(A->curFuncEndLabel));
       }
-      else {
+      else if (A->UseReturnFlag) {
          /* set __returnFlag = false; */
          slang_operation *setFlag = slang_operation_new(1);
          setFlag->type = SLANG_OPER_ASSIGN;
@@ -5301,12 +5324,9 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    assert(A->program->Parameters );
    assert(A->program->Varying);
    assert(A->vartable);
-#if 0
-   A->CurLoop = NULL;
-   A->CurLoopOper = NULL;
-#else
+
    A->LoopDepth = 0;
-#endif
+   A->UseReturnFlag = GL_FALSE;
    A->CurFunction = fun;
 
    /* fold constant expressions, etc. */

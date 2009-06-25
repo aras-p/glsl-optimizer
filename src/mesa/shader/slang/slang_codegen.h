@@ -51,6 +51,7 @@ typedef struct slang_assemble_ctx_
    /* current function */
    struct slang_function_ *CurFunction;
    struct slang_label_ *curFuncEndLabel;
+   GLboolean UseReturnFlag;
 
    GLboolean UnresolvedRefs;
    GLboolean EmitContReturn;
