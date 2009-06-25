@@ -288,7 +288,7 @@ restart:
                         relocs[i].base.bo, soffset, eoffset);
                 return r;
             }
-            asicoffset = cs->packets[relocs[i].indices[j]] + soffset;
+            asicoffset = soffset;
             if (asicoffset >= eoffset) 
             {
 	      /*                radeon_bo_debug(relocs[i].base.bo, 12); */
