@@ -119,6 +119,10 @@
 #define PIPE_OS_SOLARIS
 #endif
 
+#if defined(__APPLE__)
+#define PIPE_OS_APPLE
+#endif
+
 #if defined(_WIN32) || defined(WIN32)
 #define PIPE_OS_WINDOWS
 #endif
