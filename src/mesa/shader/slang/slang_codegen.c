@@ -818,6 +818,7 @@ _slang_is_noop(const slang_operation *oper)
 /**
  * Recursively search tree for a node of the given type.
  */
+#if 0
 static slang_operation *
 _slang_find_node_type(slang_operation *oper, slang_operation_type type)
 {
@@ -831,6 +832,7 @@ _slang_find_node_type(slang_operation *oper, slang_operation_type type)
    }
    return NULL;
 }
+#endif
 
 
 /**
@@ -932,41 +934,43 @@ slang_resolve_variable(slang_operation *oper)
 
 
 /**
- * Generate code for "return expr;"
+ * Rewrite AST code for "return expression;".
+ *
  * We return values from functions by assinging the returned value to
  * the hidden __retVal variable which is an extra 'out' parameter we add
  * to the function signature.
  * This code basically converts "return expr;" into "__retVal = expr; return;"
+ *
  * \return the new AST code.
  */
 static slang_operation *
-gen_return_expression(slang_assemble_ctx *A, slang_operation *oper)
+gen_return_with_expression(slang_assemble_ctx *A, slang_operation *oper)
 {
-   slang_operation *blockOper;
+   slang_operation *blockOper, *assignOper;
+
+   assert(oper->type == SLANG_OPER_RETURN);
 
    blockOper = slang_operation_new(1);
    blockOper->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
    blockOper->locals->outer_scope = oper->locals->outer_scope;
    slang_operation_add_children(blockOper, 2);
 
-   /* if EmitContReturn:
-    *    if (!__returnFlag) {
-    *       build: __retVal = expr;
-    *    }
-    * otherwise:
-    *    build: __retVal = expr;
-    */
-   {
-      slang_operation *assignOper;
-
-      if (A->UseReturnFlag) {
+   if (A->UseReturnFlag) {
+      /* Emit:
+       *    {
+       *       if (__notRetFlag)
+       *          __retVal = expr;
+       *       __notRetFlag = 0;
+       *    }
+       */
+      {
          slang_operation *ifOper = slang_oper_child(blockOper, 0);
          ifOper->type = SLANG_OPER_IF;
          slang_operation_add_children(ifOper, 3);
          {
             slang_operation *cond = slang_oper_child(ifOper, 0);
             cond->type = SLANG_OPER_IDENTIFIER;
-            cond->a_id = slang_atom_pool_atom(A->atoms, "__returnFlag");
+            cond->a_id = slang_atom_pool_atom(A->atoms, "__notRetFlag");
          }
          {
             slang_operation *elseOper = slang_oper_child(ifOper, 2);
@@ -974,32 +978,101 @@ gen_return_expression(slang_assemble_ctx *A, slang_operation *oper)
          }
          assignOper = slang_oper_child(ifOper, 1);
       }
-      else {
-         assignOper = slang_oper_child(blockOper, 0);
-      }
-
-      assignOper->type = SLANG_OPER_ASSIGN;
-      slang_operation_add_children(assignOper, 2);
       {
-         slang_operation *lhs = slang_oper_child(assignOper, 0);
-         lhs->type = SLANG_OPER_IDENTIFIER;
-         lhs->a_id = slang_atom_pool_atom(A->atoms, "__retVal");
+         slang_operation *setOper = slang_oper_child(blockOper, 1);
+         setOper->type = SLANG_OPER_ASSIGN;
+         slang_operation_add_children(setOper, 2);
+         {
+            slang_operation *lhs = slang_oper_child(setOper, 0);
+            lhs->type = SLANG_OPER_IDENTIFIER;
+            lhs->a_id = slang_atom_pool_atom(A->atoms, "__notRetFlag");
+         }
+         {
+            slang_operation *rhs = slang_oper_child(setOper, 1);
+            slang_operation_literal_bool(rhs, GL_FALSE);
+         }
       }
+   }
+   else {
+      /* Emit:
+       *    {
+       *       __retVal = expr;
+       *       return_inlined;
+       *    }
+       */
+      assignOper = slang_oper_child(blockOper, 0);
       {
-         slang_operation *rhs = slang_oper_child(assignOper, 1);
-         slang_operation_copy(rhs, &oper->children[0]);
+         slang_operation *returnOper = slang_oper_child(blockOper, 1);
+         returnOper->type = SLANG_OPER_RETURN_INLINED;
+         assert(returnOper->num_children == 0);
       }
    }
 
-   /* build: return; (with no return value) */
+   /* __retVal = expression; */
+   assignOper->type = SLANG_OPER_ASSIGN;
+   slang_operation_add_children(assignOper, 2);
    {
-      slang_operation *returnOper = slang_oper_child(blockOper, 1);
-      returnOper->type = SLANG_OPER_RETURN; /* return w/ no value */
-      assert(returnOper->num_children == 0);
+      slang_operation *lhs = slang_oper_child(assignOper, 0);
+      lhs->type = SLANG_OPER_IDENTIFIER;
+      lhs->a_id = slang_atom_pool_atom(A->atoms, "__retVal");
    }
+   {
+      slang_operation *rhs = slang_oper_child(assignOper, 1);
+      slang_operation_copy(rhs, &oper->children[0]);
+   }
+
+   ///blockOper->locals->outer_scope = oper->locals->outer_scope;
+
+   /*slang_print_tree(blockOper, 0);*/
 
    return blockOper;
 }
+
+
+/**
+ * Rewrite AST code for "return;" (no expression).
+ */
+static slang_operation *
+gen_return_without_expression(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_operation *newRet;
+
+   assert(oper->type == SLANG_OPER_RETURN);
+
+   if (A->UseReturnFlag) {
+      /* Emit:
+       *    __notRetFlag = 0;
+       */
+      {
+         newRet = slang_operation_new(1);
+         newRet->locals->outer_scope = oper->locals->outer_scope;
+         newRet->type = SLANG_OPER_ASSIGN;
+         slang_operation_add_children(newRet, 2);
+         {
+            slang_operation *lhs = slang_oper_child(newRet, 0);
+            lhs->type = SLANG_OPER_IDENTIFIER;
+            lhs->a_id = slang_atom_pool_atom(A->atoms, "__notRetFlag");
+         }
+         {
+            slang_operation *rhs = slang_oper_child(newRet, 1);
+            slang_operation_literal_bool(rhs, GL_FALSE);
+         }
+      }
+   }
+   else {
+      /* Emit:
+       *    return_inlined;
+       */
+      newRet = slang_operation_new(1);
+      newRet->locals->outer_scope = oper->locals->outer_scope;
+      newRet->type = SLANG_OPER_RETURN_INLINED;
+   }
+
+   /*slang_print_tree(newRet, 0);*/
+
+   return newRet;
+}
+
 
 
 
@@ -1038,7 +1111,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
 	 GLuint i;
          v = _slang_variable_locate(oper->locals, id, GL_TRUE);
 	 if (!v) {
-            if (_mesa_strcmp((char *) oper->a_id, "__returnFlag"))
+            if (_mesa_strcmp((char *) oper->a_id, "__notRetFlag"))
                _mesa_problem(NULL, "var %s not found!\n", (char *) oper->a_id);
             return;
 	 }
@@ -1069,36 +1142,21 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
       break;
 
    case SLANG_OPER_RETURN:
-      /* do return replacement here too */
-      assert(oper->num_children == 0 || oper->num_children == 1);
-      if (oper->num_children == 1 && !_slang_is_noop(&oper->children[0])) {
+      {
          slang_operation *newReturn;
-
-         /* check if function actually has a return type */
-         assert(A->CurFunction);
-         if (A->CurFunction->header.type.specifier.type == SLANG_SPEC_VOID) {
-            slang_info_log_error(A->log, "illegal return expression");
-            return;
-         }
-
          /* generate new 'return' code' */
-         newReturn = gen_return_expression(A, oper);
+         if (slang_oper_child(oper, 0)->type == SLANG_OPER_VOID)
+            newReturn = gen_return_without_expression(A, oper);
+         else
+            newReturn = gen_return_with_expression(A, oper);
 
-         /* do substitutions on the "__retVal = expr" sub-tree */
-         slang_substitute(A, slang_oper_child(newReturn, 0),
+         /* do substitutions on the new 'return' code */
+         slang_substitute(A, newReturn,
                           substCount, substOld, substNew, GL_FALSE);
 
          /* install new 'return' code */
          slang_operation_copy(oper, newReturn);
          slang_operation_destruct(newReturn);
-      }
-      else {
-         /* check if return value was expected */
-         assert(A->CurFunction);
-         if (A->CurFunction->header.type.specifier.type != SLANG_SPEC_VOID) {
-            slang_info_log_error(A->log, "return statement requires an expression");
-            return;
-         }
       }
       break;
 
@@ -1494,7 +1552,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
 
 
 /**
- * Insert declaration for "bool __returnFlag" in given block operation.
+ * Insert declaration for "bool __notRetFlag" in given block operation.
  * This is used when we can't emit "early" return statements in subroutines.
  */
 static void
@@ -1508,42 +1566,29 @@ declare_return_flag(slang_assemble_ctx *A, slang_operation *oper)
    decl = slang_operation_insert_child(oper, 1);
 
    slang_generate_declaration(A, oper->locals, decl,
-                              SLANG_SPEC_BOOL, "__returnFlag", GL_TRUE);
+                              SLANG_SPEC_BOOL, "__notRetFlag", GL_TRUE);
 
    /*slang_print_tree(oper, 0);*/
 }
 
 
 /**
- * Replace 'return' with '__returnFlag = false'.
- * This is used to remove 'early returns' from functions.
+ * Recursively replace instances of the old node type with the new type.
  */
 static void
-replace_return_with_flag_set(slang_assemble_ctx *A, slang_operation *oper)
+replace_node_type(slang_operation *oper, slang_operation_type oldType,
+                  slang_operation_type newType)
 {
-   slang_atom id = slang_atom_pool_atom(A->atoms, "__returnFlag");
-   assert(oper->type == SLANG_OPER_RETURN);
+   GLuint i;
 
-   /* replace 'return' with __returnFlag = false' */
-   slang_operation_free_children(oper);
-   oper->type = SLANG_OPER_ASSIGN;
-   slang_operation_add_children(oper, 2);
-   {
-      slang_operation *lhs = slang_oper_child(oper, 0);
-      lhs->type = SLANG_OPER_IDENTIFIER;
-      lhs->a_id = id;
-   }
-   {
-      slang_operation *rhs = slang_oper_child(oper, 1);
-      slang_operation_literal_bool(rhs, GL_FALSE);
-   }
+   if (oper->type == oldType)
+      oper->type = newType;
 
-   {
-      slang_variable *var;
-      var = _slang_variable_locate(oper->locals, id, GL_TRUE);
-      assert(var);
+   for (i = 0; i < slang_oper_num_children(oper); i++) {
+      replace_node_type(slang_oper_child(oper, i), oldType, newType);
    }
 }
+
 
 
 /**
@@ -1573,7 +1618,7 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
                          slang_operation *oper, slang_operation *dest)
 {
    slang_ir_node *n;
-   slang_operation *inlined;
+   slang_operation *instance;
    slang_label *prevFuncEndLabel;
    char name[200];
 
@@ -1582,9 +1627,14 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    A->curFuncEndLabel = _slang_label_new(name);
    assert(A->curFuncEndLabel);
 
+   /*
+    * 'instance' is basically a copy of the function's body with various
+    * transformations.
+    */
+
    if (slang_is_asm_function(fun) && !dest) {
       /* assemble assembly function - tree style */
-      inlined = slang_inline_asm_function(A, fun, oper);
+      instance = slang_inline_asm_function(A, fun, oper);
    }
    else {
       /* non-assembly function */
@@ -1594,73 +1644,81 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
        *  2. Generate a call to the "inline" code as a subroutine
        */
       const GLboolean earlyReturn = has_early_return(fun->body);
-      slang_operation *ret = NULL;
 
       if (earlyReturn && !A->EmitContReturn) {
          A->UseReturnFlag = GL_TRUE;
       }
 
-      inlined = slang_inline_function_call(A, fun, oper, dest);
-      if (!inlined)
+      instance = slang_inline_function_call(A, fun, oper, dest);
+      if (!instance)
          return NULL;
 
-      ret = _slang_find_node_type(inlined, SLANG_OPER_RETURN);
-      if (ret) {
-         /* check if this is a "tail" return */
-         if (!earlyReturn) {
-            /* The only RETURN is the last stmt in the function, no-op it
-             * and inline the function body.
-             */
-            ret->type = SLANG_OPER_NONE;
+      if (earlyReturn) {
+         /* The function we're calling has one or more 'return' statements
+          * that prevent us from inlining the function's code.
+          *
+          * In this case, change the function's body type from
+          * SLANG_OPER_BLOCK_NEW_SCOPE to SLANG_OPER_NON_INLINED_CALL.
+          * During code emit this will result in a true subroutine call.
+          *
+          * Also, convert SLANG_OPER_RETURN_INLINED nodes to SLANG_OPER_RETURN.
+          */
+         slang_operation *callOper;
+
+         assert(instance->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
+                instance->type == SLANG_OPER_SEQUENCE);
+
+         if (_slang_function_has_return_value(fun) && !dest) {
+            assert(instance->children[0].type == SLANG_OPER_VARIABLE_DECL);
+            assert(instance->children[2].type == SLANG_OPER_IDENTIFIER);
+            callOper = &instance->children[1];
          }
          else {
-            slang_operation *callOper;
-            /* The function we're calling has one or more 'return' statements.
-             * So, we can't truly inline this function because we need to
-             * implement 'return' with RET (and CAL).
-             * Nevertheless, we performed "inlining" to make a new instance
-             * of the function body to deal with static register allocation.
-             */
-            assert(inlined->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
-                   inlined->type == SLANG_OPER_SEQUENCE);
-
-            if (_slang_function_has_return_value(fun) && !dest) {
-               assert(inlined->children[0].type == SLANG_OPER_VARIABLE_DECL);
-               assert(inlined->children[2].type == SLANG_OPER_IDENTIFIER);
-               callOper = &inlined->children[1];
-            }
-            else {
-               callOper = inlined;
-            }
-
-            if (A->UseReturnFlag) {
-               /* Early returns not supported.  Create a _returnFlag variable
-                * that's set upon 'return' and tested elsewhere to no-op any
-                * remaining instructions in the subroutine.
-                */
-               assert(callOper->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
-                      callOper->type == SLANG_OPER_SEQUENCE);
-               declare_return_flag(A, callOper);
-            }
-            callOper->type = SLANG_OPER_NON_INLINED_CALL;
-            callOper->fun = fun;
-            callOper->label = _slang_label_new_unique((char*) fun->header.a_name);
+            callOper = instance;
          }
+
+         if (A->UseReturnFlag) {
+            /* Early returns not supported.  Create a _returnFlag variable
+             * that's set upon 'return' and tested elsewhere to no-op any
+             * remaining instructions in the subroutine.
+             */
+            assert(callOper->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
+                   callOper->type == SLANG_OPER_SEQUENCE);
+            declare_return_flag(A, callOper);
+         }
+         else {
+            /* We can emit real 'return' statements.  If we generated any
+             * 'inline return' statements during function instantiation,
+             * change them back to regular 'return' statements.
+             */
+            replace_node_type(instance, SLANG_OPER_RETURN_INLINED,
+                              SLANG_OPER_RETURN);
+         }
+
+         callOper->type = SLANG_OPER_NON_INLINED_CALL;
+         callOper->fun = fun;
+         callOper->label = _slang_label_new_unique((char*) fun->header.a_name);
+      }
+      else {
+         /* If there are any 'return' statements remaining, they're at the
+          * very end of the function and can effectively become no-ops.
+          */
+         replace_node_type(instance, SLANG_OPER_RETURN_INLINED,
+                           SLANG_OPER_VOID);
       }
    }
 
-   if (!inlined)
+   if (!instance)
       return NULL;
 
-   /* Replace the function call with the inlined block (or new CALL stmt) */
+   /* Replace the function call with the instance block (or new CALL stmt) */
    slang_operation_destruct(oper);
-   *oper = *inlined;
-   _slang_free(inlined);
+   *oper = *instance;
+   _slang_free(instance);
 
 #if 0
-   assert(inlined->locals);
-   printf("*** Inlined code for call to %s:\n",
-          (char*) fun->header.a_name);
+   assert(instance->locals);
+   printf("*** Inlined code for call to %s:\n", (char*) fun->header.a_name);
    slang_print_tree(oper, 10);
    printf("\n");
 #endif
@@ -4005,98 +4063,26 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
    const GLboolean haveReturnValue
       = (oper->num_children == 1 && oper->children[0].type != SLANG_OPER_VOID);
 
-   assert(oper->type == SLANG_OPER_RETURN);
+   assert(oper->type == SLANG_OPER_RETURN ||
+          oper->type == SLANG_OPER_RETURN_INLINED);
 
    /* error checking */
-   assert(A->CurFunction);
-   if (haveReturnValue &&
-       A->CurFunction->header.type.specifier.type == SLANG_SPEC_VOID) {
-      slang_info_log_error(A->log, "illegal return expression");
-      return NULL;
-   }
-   else if (!haveReturnValue &&
-            A->CurFunction->header.type.specifier.type != SLANG_SPEC_VOID) {
-      slang_info_log_error(A->log, "return statement requires an expression");
-      return NULL;
-   }
+   if (oper->type == SLANG_OPER_RETURN) {
+      assert(A->CurFunction);
 
-   if (!haveReturnValue) {
-      if (A->EmitContReturn) {
-         return new_return(A->curFuncEndLabel);
+      if (haveReturnValue &&
+          A->CurFunction->header.type.specifier.type == SLANG_SPEC_VOID) {
+         slang_info_log_error(A->log, "illegal return expression");
+         return NULL;
       }
-      else {
-         replace_return_with_flag_set(A, oper);
-         return _slang_gen_operation(A, oper);
+      else if (!haveReturnValue &&
+               A->CurFunction->header.type.specifier.type != SLANG_SPEC_VOID) {
+         slang_info_log_error(A->log, "return statement requires an expression");
+         return NULL;
       }
    }
-   else {
-      /*
-       * Convert from:
-       *   return expr;
-       * To:
-       *   __retVal = expr;
-       *   return;  // goto __endOfFunction
-       */
-      slang_operation *assign;
-      slang_atom a_retVal;
-      slang_ir_node *n;
 
-      a_retVal = slang_atom_pool_atom(A->atoms, "__retVal");
-      assert(a_retVal);
-
-#if 1 /* DEBUG */
-      {
-         slang_variable *v =
-            _slang_variable_locate(oper->locals, a_retVal, GL_TRUE);
-         if (!v) {
-            /* trying to return a value in a void-valued function */
-            return NULL;
-         }
-      }
-#endif
-
-      /* XXX use the gen_return_expression() function here */
-
-      assign = slang_operation_new(1);
-      assign->type = SLANG_OPER_ASSIGN;
-      assign->num_children = 2;
-      assign->children = slang_operation_new(2);
-      /* lhs (__retVal) */
-      assign->children[0].type = SLANG_OPER_IDENTIFIER;
-      assign->children[0].a_id = a_retVal;
-      assign->children[0].locals->outer_scope = assign->locals;
-      /* rhs (expr) */
-      /* XXX we might be able to avoid this copy someday */
-      slang_operation_copy(&assign->children[1], &oper->children[0]);
-
-      /* assemble the new code */
-      if (A->EmitContReturn) {
-         n = new_seq(_slang_gen_operation(A, assign),
-                     new_return(A->curFuncEndLabel));
-      }
-      else if (A->UseReturnFlag) {
-         /* set __returnFlag = false; */
-         slang_operation *setFlag = slang_operation_new(1);
-         setFlag->type = SLANG_OPER_ASSIGN;
-         setFlag->locals->outer_scope = oper->locals;
-         slang_operation_add_children(setFlag, 2);
-         {
-            slang_operation *lhs = slang_oper_child(setFlag, 0);
-            lhs->type = SLANG_OPER_IDENTIFIER;
-            lhs->a_id = slang_atom_pool_atom(A->atoms, "__returnFlag");
-         }
-         {
-            slang_operation *rhs = slang_oper_child(setFlag, 1);
-            slang_operation_literal_bool(rhs, GL_FALSE);
-         }
-         n = new_seq(_slang_gen_operation(A, assign),
-                     _slang_gen_operation(A, setFlag));
-         slang_operation_delete(setFlag);
-      }
-
-      slang_operation_delete(assign);
-      return n;
-   }
+   return new_return(A->curFuncEndLabel);
 }
 
 
@@ -4382,14 +4368,14 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
          return NULL;
       }
 
-      /* check if we need to predicate this assignment based on __returnFlag */
+      /* check if we need to predicate this assignment based on __notRetFlag */
       if ((var->is_global ||
            var->type.qualifier == SLANG_QUAL_OUT ||
            var->type.qualifier == SLANG_QUAL_INOUT) && A->UseReturnFlag) {
          /* create predicate, used below */
          pred = slang_operation_new(1);
          pred->type = SLANG_OPER_IDENTIFIER;
-         pred->a_id = slang_atom_pool_atom(A->atoms, "__returnFlag");
+         pred->a_id = slang_atom_pool_atom(A->atoms, "__notRetFlag");
          pred->locals->outer_scope = oper->locals->outer_scope;
       }
    }
@@ -4455,7 +4441,7 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
    }
 
    if (n && pred) {
-      /* predicate the assignment code on __returnFlag */
+      /* predicate the assignment code on __notRetFlag */
       slang_ir_node *top, *cond;
 
       cond = _slang_gen_operation(A, pred);
@@ -4946,6 +4932,8 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case SLANG_OPER_METHOD:
       return _slang_gen_method_call(A, oper);
    case SLANG_OPER_RETURN:
+      return _slang_gen_return(A, oper);
+   case SLANG_OPER_RETURN_INLINED:
       return _slang_gen_return(A, oper);
    case SLANG_OPER_LABEL:
       return new_label(oper->label);

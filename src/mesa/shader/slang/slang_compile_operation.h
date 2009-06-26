@@ -42,6 +42,7 @@ typedef enum slang_operation_type_
    SLANG_OPER_CONTINUE,         /* "continue" statement */
    SLANG_OPER_DISCARD,          /* "discard" (kill fragment) statement */
    SLANG_OPER_RETURN,           /* "return" [expr]  */
+   SLANG_OPER_RETURN_INLINED,   /* "return" [expr] from inlined function  */
    SLANG_OPER_LABEL,            /* a jump target */
    SLANG_OPER_EXPRESSION,       /* [expr] */
    SLANG_OPER_IF,               /* "if" [0] then [1] else [2] */
