@@ -585,6 +585,8 @@ static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    radeon_mipmap_level *lvl;
    int hastexture = 1;
 
+   if (!r200->state.texture.unit[i].unitneeded)
+        hastexture = 0;
    if (!t)
 	hastexture = 0;
    else {
