@@ -27,6 +27,7 @@
 
 #include "util/u_debug.h"
 #include "util/u_string.h"
+#include "util/u_math.h"
 #include "tgsi_dump.h"
 #include "tgsi_info.h"
 #include "tgsi_iterate.h"
@@ -516,7 +517,7 @@ struct str_dump_ctx
    struct dump_ctx base;
    char *str;
    char *ptr;
-   size_t left;
+   int left;
 };
 
 static void
@@ -525,13 +526,20 @@ str_dump_ctx_printf(struct dump_ctx *ctx, const char *format, ...)
    struct str_dump_ctx *sctx = (struct str_dump_ctx *)ctx;
    
    if(sctx->left > 1) {
-      size_t written;
+      int written;
       va_list ap;
       va_start(ap, format);
       written = util_vsnprintf(sctx->ptr, sctx->left, format, ap);
       va_end(ap);
-      sctx->ptr += written;
-      sctx->left -= written;
+
+      /* Some complicated logic needed to handle the return value of
+       * vsnprintf:
+       */
+      if (written > 0) {
+         written = MIN2(sctx->left, written);
+         sctx->ptr += written;
+         sctx->left -= written;
+      }
    }
 }
 
@@ -556,7 +564,7 @@ tgsi_dump_str(
    ctx.str = str;
    ctx.str[0] = 0;
    ctx.ptr = str;
-   ctx.left = size;
+   ctx.left = (int)size;
 
    tgsi_iterate_shader( tokens, &ctx.base.iter );
 }
