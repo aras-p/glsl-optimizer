@@ -271,6 +271,17 @@ void radeonFreeDmaRegions(radeonContextPtr rmesa)
 	}
 }
 
+void radeonReturnDmaRegion(radeonContextPtr rmesa, int return_bytes)
+{
+	if (is_empty_list(&rmesa->dma.reserved))
+		return;
+
+	if (RADEON_DEBUG & DEBUG_IOCTL)
+		fprintf(stderr, "%s %d\n", __FUNCTION__, return_bytes);
+	rmesa->dma.current_used -= return_bytes;
+	rmesa->dma.current_vertexptr = rmesa->dma.current_used;
+}
+
 void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 {
 	struct radeon_dma_bo *dma_bo;

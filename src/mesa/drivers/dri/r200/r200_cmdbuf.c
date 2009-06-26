@@ -219,6 +219,9 @@ void r200FlushElts(GLcontext *ctx)
    radeon_bo_unref(rmesa->radeon.tcl.elt_dma_bo);
    rmesa->radeon.tcl.elt_dma_bo = NULL;
 
+   if (R200_ELT_BUF_SZ > elt_used)
+     radeonReturnDmaRegion(&rmesa->radeon, R200_ELT_BUF_SZ - elt_used);
+
    if (R200_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "%s: Syncing\n", __FUNCTION__);
       radeonFinish( rmesa->radeon.glCtx );
@@ -240,22 +243,13 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
    
    radeonEmitState(&rmesa->radeon);
 
-   rmesa->radeon.tcl.elt_dma_bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
-					  0, R200_ELT_BUF_SZ, 4,
-					  RADEON_GEM_DOMAIN_GTT, 0);
-   rmesa->radeon.tcl.elt_dma_offset = 0;
+   radeonAllocDmaRegion(&rmesa->radeon, &rmesa->radeon.tcl.elt_dma_bo,
+			&rmesa->radeon.tcl.elt_dma_offset, R200_ELT_BUF_SZ, 4);
    rmesa->tcl.elt_used = min_nr * 2;
-
-   ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs, rmesa->radeon.tcl.elt_dma_bo,
-				 RADEON_GEM_DOMAIN_GTT, 0);
-   if (ret) {
-      fprintf(stderr,"failure to revalidate BOs - badness\n");
-   }
 
    radeon_bo_map(rmesa->radeon.tcl.elt_dma_bo, 1);
    retval = rmesa->radeon.tcl.elt_dma_bo->ptr + rmesa->radeon.tcl.elt_dma_offset;
    
-
    if (R200_DEBUG & DEBUG_PRIMS)
       fprintf(stderr, "%s: header prim %x \n",
 	      __FUNCTION__, primitive);
