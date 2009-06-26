@@ -244,7 +244,7 @@ int u_index_generator( unsigned hw_mask,
 
       default:
          assert(0);
-         *out_generate = generate[out_idx][in_pv][out_pv][prim];
+         *out_generate = generate[out_idx][in_pv][out_pv][PIPE_PRIM_POINTS];
          *out_prim = PIPE_PRIM_POINTS;
          *out_nr = nr;
          return U_TRANSLATE_ERROR;
