@@ -855,12 +855,10 @@ void brw_math( struct brw_compile *p,
 
 void brw_dp_READ_16( struct brw_compile *p,
 		     struct brw_reg dest,
-		     GLuint msg_reg_nr,
 		     GLuint scratch_offset );
 
 void brw_dp_READ_4( struct brw_compile *p,
                     struct brw_reg dest,
-                    GLuint msg_reg_nr,
                     GLboolean relAddr,
                     GLuint location,
                     GLuint bind_table_index );
@@ -875,7 +873,6 @@ void brw_dp_READ_4_vs( struct brw_compile *p,
 
 void brw_dp_WRITE_16( struct brw_compile *p,
 		      struct brw_reg src,
-		      GLuint msg_reg_nr,
 		      GLuint scratch_offset );
 
 /* If/else/endif.  Works by manipulating the execution flags on each

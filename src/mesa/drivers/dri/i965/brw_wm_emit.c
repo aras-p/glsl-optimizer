@@ -1057,7 +1057,6 @@ static void emit_spill( struct brw_wm_compile *c,
    */
    brw_dp_WRITE_16(p, 
 		   retype(vec16(brw_vec8_grf(0, 0)), BRW_REGISTER_TYPE_UW),
-		   1, 
 		   slot);
 }
 
@@ -1085,7 +1084,6 @@ static void emit_unspill( struct brw_wm_compile *c,
 
    brw_dp_READ_16(p,
 		  retype(vec16(reg), BRW_REGISTER_TYPE_UW),
-		  1,
 		  slot);
 }
 

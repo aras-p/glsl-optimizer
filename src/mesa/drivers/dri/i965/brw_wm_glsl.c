@@ -446,7 +446,6 @@ static void fetch_constants(struct brw_wm_compile *c,
 	 /* need to fetch the constant now */
 	 brw_dp_READ_4(p,
 		       c->current_const[i].reg,  /* writeback dest */
-		       1,                        /* msg_reg */
 		       src->RelAddr,             /* relative indexing? */
 		       16 * src->Index,          /* byte offset */
 		       SURF_INDEX_FRAG_CONST_BUFFER/* binding table index */

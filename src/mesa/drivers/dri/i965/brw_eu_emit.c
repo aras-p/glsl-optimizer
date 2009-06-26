@@ -865,9 +865,9 @@ void brw_math_16( struct brw_compile *p,
  */
 void brw_dp_WRITE_16( struct brw_compile *p,
 		      struct brw_reg src,
-		      GLuint msg_reg_nr,
 		      GLuint scratch_offset )
 {
+   GLuint msg_reg_nr = 1;
    {
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
@@ -877,7 +877,7 @@ void brw_dp_WRITE_16( struct brw_compile *p,
       brw_MOV(p,
 	      retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_D),
 	      brw_imm_d(scratch_offset));
-			   
+
       brw_pop_insn_state(p);
    }
 
@@ -912,9 +912,9 @@ void brw_dp_WRITE_16( struct brw_compile *p,
  */
 void brw_dp_READ_16( struct brw_compile *p,
 		      struct brw_reg dest,
-		      GLuint msg_reg_nr,
 		      GLuint scratch_offset )
 {
+   GLuint msg_reg_nr = 1;
    {
       brw_push_insn_state(p);
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
@@ -924,7 +924,7 @@ void brw_dp_READ_16( struct brw_compile *p,
       brw_MOV(p,
 	      retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_D),
 	      brw_imm_d(scratch_offset));
-			   
+
       brw_pop_insn_state(p);
    }
 
@@ -958,21 +958,26 @@ void brw_dp_READ_16( struct brw_compile *p,
  */
 void brw_dp_READ_4( struct brw_compile *p,
                     struct brw_reg dest,
-                    GLuint msg_reg_nr,
                     GLboolean relAddr,
                     GLuint location,
                     GLuint bind_table_index )
 {
+   /* XXX: relAddr not implemented */
+   GLuint msg_reg_nr = 1;
    {
+      struct brw_reg b;
       brw_push_insn_state(p);
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
 
-      /* set message header global offset field (reg 0, element 2) */
-      /* Note that grf[0] will be copied to mrf[1] implicitly by the SEND instr */
-      brw_MOV(p,
-	      retype(brw_vec1_grf(0, 2), BRW_REGISTER_TYPE_UD),
-	      brw_imm_d(location));
+   /* Setup MRF[1] with location/offset into const buffer */
+      b = brw_message_reg(msg_reg_nr);
+      b = retype(b, BRW_REGISTER_TYPE_UD);
+      /* XXX I think we're setting all the dwords of MRF[1] to 'location'.
+       * when the docs say only dword[2] should be set.  Hmmm.  But it works.
+       */
+      brw_MOV(p, b, brw_imm_ud(location));
       brw_pop_insn_state(p);
    }
 
@@ -988,7 +993,7 @@ void brw_dp_READ_4( struct brw_compile *p,
       dest = retype(vec8(dest), BRW_REGISTER_TYPE_UW);
 
       brw_set_dest(insn, dest);
-      brw_set_src0(insn, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
+      brw_set_src0(insn, brw_null_reg());
 
       brw_set_dp_read_message(insn,
 			      bind_table_index,
