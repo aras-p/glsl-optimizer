@@ -176,3 +176,38 @@ sl_pp_process_define(struct sl_pp_context *context,
 
    return 0;
 }
+
+
+int
+sl_pp_process_undef(struct sl_pp_context *context,
+                    const struct sl_pp_token_info *input,
+                    unsigned int first,
+                    unsigned int last)
+{
+   int macro_name = -1;
+   struct sl_pp_macro **pmacro;
+   struct sl_pp_macro *macro;
+
+   if (first < last && input[first].token == SL_PP_IDENTIFIER) {
+      macro_name = input[first].data.identifier;
+   }
+   if (macro_name == -1) {
+      return 0;
+   }
+
+   for (pmacro = &context->macro; *pmacro; pmacro = &(**pmacro).next) {
+      if ((**pmacro).name == macro_name) {
+         break;
+      }
+   }
+   if (!*pmacro) {
+      return 0;
+   }
+
+   macro = *pmacro;
+   *pmacro = macro->next;
+   macro->next = NULL;
+   sl_pp_macro_free(macro);
+
+   return 0;
+}

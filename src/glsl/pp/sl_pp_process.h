@@ -51,6 +51,12 @@ sl_pp_process_define(struct sl_pp_context *context,
                      unsigned int last);
 
 int
+sl_pp_process_undef(struct sl_pp_context *context,
+                    const struct sl_pp_token_info *input,
+                    unsigned int first,
+                    unsigned int last);
+
+int
 sl_pp_process_if(struct sl_pp_context *context,
                  const struct sl_pp_token_info *input,
                  unsigned int first,

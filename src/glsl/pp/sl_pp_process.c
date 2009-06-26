@@ -122,13 +122,7 @@ sl_pp_process(struct sl_pp_context *context,
 
                last = i - 1;
 
-               if (!strcmp(name, "define")) {
-                  if (context->if_value) {
-                     if (sl_pp_process_define(context, input, first, last)) {
-                        return -1;
-                     }
-                  }
-               } else if (!strcmp(name, "if")) {
+               if (!strcmp(name, "if")) {
                   if (sl_pp_process_if(context, input, first, last)) {
                      return -1;
                   }
@@ -152,8 +146,18 @@ sl_pp_process(struct sl_pp_context *context,
                   if (sl_pp_process_endif(context, input, first, last)) {
                      return -1;
                   }
-               } else {
-                  /* XXX: Ignore. */
+               } else if (context->if_value) {
+                  if (!strcmp(name, "define")) {
+                     if (sl_pp_process_define(context, input, first, last)) {
+                        return -1;
+                     }
+                  } else if (!strcmp(name, "undef")) {
+                     if (sl_pp_process_undef(context, input, first, last)) {
+                        return -1;
+                     }
+                  } else {
+                     /* XXX: Ignore. */
+                  }
                }
             }
             break;
