@@ -562,6 +562,8 @@ static void r700UpdateWindow(GLcontext * ctx, int id) //--------------------
 	r700->viewport[id].PA_CL_VPORT_ZOFFSET.f32All = tz;
 
 	r700->viewport[id].enabled = GL_TRUE;
+
+	r700SetScissor(context);
 }
 
 
@@ -615,7 +617,6 @@ void r700SetScissor(context_t *context) //---------------
 
 	rrb = radeon_get_colorbuffer(&context->radeon);
 	if (!rrb || !rrb->bo) {
-		fprintf(stderr, "no rrb\n");
 		return;
 	}
 	if (context->radeon.state.scissor.enabled) {
