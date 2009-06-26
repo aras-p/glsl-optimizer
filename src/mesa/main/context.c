@@ -1011,6 +1011,7 @@ _mesa_free_context_data( GLcontext *ctx )
 #if FEATURE_ARB_occlusion_query
    _mesa_free_query_data(ctx);
 #endif
+   _mesa_free_varray_data(ctx);
 
    _mesa_delete_array_object(ctx, ctx->Array.DefaultArrayObj);
 

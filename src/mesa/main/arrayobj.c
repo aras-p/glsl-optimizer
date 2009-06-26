@@ -63,10 +63,11 @@
 static INLINE struct gl_array_object *
 lookup_arrayobj(GLcontext *ctx, GLuint id)
 {
-   return (id == 0) 
-     ? NULL 
-     : (struct gl_array_object *) _mesa_HashLookup(ctx->Shared->ArrayObjects,
-						   id);
+   if (id == 0)
+      return NULL;
+   else
+      return (struct gl_array_object *)
+         _mesa_HashLookup(ctx->Array.Objects, id);
 }
 
 
@@ -252,7 +253,7 @@ save_array_object( GLcontext *ctx, struct gl_array_object *obj )
 {
    if (obj->Name > 0) {
       /* insert into hash table */
-      _mesa_HashInsert(ctx->Shared->ArrayObjects, obj->Name, obj);
+      _mesa_HashInsert(ctx->Array.Objects, obj->Name, obj);
    }
 }
 
@@ -266,7 +267,7 @@ remove_array_object( GLcontext *ctx, struct gl_array_object *obj )
 {
    if (obj->Name > 0) {
       /* remove from hash table */
-      _mesa_HashRemove(ctx->Shared->ArrayObjects, obj->Name);
+      _mesa_HashRemove(ctx->Array.Objects, obj->Name);
    }
 }
 
@@ -352,18 +353,15 @@ _mesa_update_array_object_max_element(GLcontext *ctx,
 /* API Functions                                                      */
 /**********************************************************************/
 
+
 /**
- * Bind a new array.
- *
- * \todo
- * The binding could be done more efficiently by comparing the non-NULL
- * pointers in the old and new objects.  The only arrays that are "dirty" are
- * the ones that are non-NULL in either object.
+ * Helper for _mesa_BindVertexArray() and _mesa_BindVertexArrayAPPLE().
+ * \param genRequired  specifies behavour when id was not generated with
+ *                     glGenVertexArrays().
  */
-void GLAPIENTRY
-_mesa_BindVertexArrayAPPLE( GLuint id )
+static void
+bind_vertex_array(GLcontext *ctx, GLuint id, GLboolean genRequired)
 {
-   GET_CURRENT_CONTEXT(ctx);
    struct gl_array_object * const oldObj = ctx->Array.ArrayObj;
    struct gl_array_object *newObj = NULL;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -386,8 +384,12 @@ _mesa_BindVertexArrayAPPLE( GLuint id )
       /* non-default array object */
       newObj = lookup_arrayobj(ctx, id);
       if (!newObj) {
-         /* If this is a new array object id, allocate an array object now.
-	  */
+         if (genRequired) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glBindVertexArray(id)");
+            return;
+         }
+
+         /* For APPLE version, generate a new array object now */
 	 newObj = (*ctx->Driver.NewArrayObject)(ctx, id);
          if (!newObj) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindVertexArrayAPPLE");
@@ -403,7 +405,37 @@ _mesa_BindVertexArrayAPPLE( GLuint id )
 
    /* Pass BindVertexArray call to device driver */
    if (ctx->Driver.BindArrayObject && newObj)
-      (*ctx->Driver.BindArrayObject)( ctx, newObj );
+      ctx->Driver.BindArrayObject(ctx, newObj);
+}
+
+
+/**
+ * ARB version of glBindVertexArray()
+ * This function behaves differently from glBindVertexArrayAPPLE() in
+ * that this function requires all ids to have been previously generated
+ * by glGenVertexArrays[APPLE]().
+ */
+void GLAPIENTRY
+_mesa_BindVertexArray( GLuint id )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   bind_vertex_array(ctx, id, GL_TRUE);
+}
+
+
+/**
+ * Bind a new array.
+ *
+ * \todo
+ * The binding could be done more efficiently by comparing the non-NULL
+ * pointers in the old and new objects.  The only arrays that are "dirty" are
+ * the ones that are non-NULL in either object.
+ */
+void GLAPIENTRY
+_mesa_BindVertexArrayAPPLE( GLuint id )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   bind_vertex_array(ctx, id, GL_FALSE);
 }
 
 
@@ -424,8 +456,6 @@ _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids)
       _mesa_error(ctx, GL_INVALID_VALUE, "glDeleteVertexArrayAPPLE(n)");
       return;
    }
-
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
 
    for (i = 0; i < n; i++) {
       struct gl_array_object *obj = lookup_arrayobj(ctx, ids[i]);
@@ -450,21 +480,19 @@ _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids)
          _mesa_reference_array_object(ctx, &obj, NULL);
       }
    }
-
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 }
 
 
 /**
  * Generate a set of unique array object IDs and store them in \c arrays.
- * 
+ * Helper for _mesa_GenVertexArrays[APPLE]() functions below.
  * \param n       Number of IDs to generate.
  * \param arrays  Array of \c n locations to store the IDs.
+ * \param vboOnly Will arrays have to reside in VBOs?
  */
-void GLAPIENTRY
-_mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
+static void 
+gen_vertex_arrays(GLcontext *ctx, GLsizei n, GLuint *arrays, GLboolean vboOnly)
 {
-   GET_CURRENT_CONTEXT(ctx);
    GLuint first;
    GLint i;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -478,12 +506,7 @@ _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
       return;
    }
 
-   /*
-    * This must be atomic (generation and allocation of array object IDs)
-    */
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
-
-   first = _mesa_HashFindFreeKeyBlock(ctx->Shared->ArrayObjects, n);
+   first = _mesa_HashFindFreeKeyBlock(ctx->Array.Objects, n);
 
    /* Allocate new, empty array objects and return identifiers */
    for (i = 0; i < n; i++) {
@@ -492,15 +515,37 @@ _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
 
       obj = (*ctx->Driver.NewArrayObject)( ctx, name );
       if (!obj) {
-         _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenVertexArraysAPPLE");
          return;
       }
+      obj->VBOonly = vboOnly;
       save_array_object(ctx, obj);
       arrays[i] = first + i;
    }
+}
 
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+
+/**
+ * ARB version of glGenVertexArrays()
+ * All arrays will be required to live in VBOs.
+ */
+void GLAPIENTRY
+_mesa_GenVertexArrays(GLsizei n, GLuint *arrays)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   gen_vertex_arrays(ctx, n, arrays, GL_TRUE);
+}
+
+
+/**
+ * APPLE version of glGenVertexArraysAPPLE()
+ * Arrays may live in VBOs or ordinary memory.
+ */
+void GLAPIENTRY
+_mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   gen_vertex_arrays(ctx, n, arrays, GL_FALSE);
 }
 
 
@@ -521,9 +566,7 @@ _mesa_IsVertexArrayAPPLE( GLuint id )
    if (id == 0)
       return GL_FALSE;
 
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
    obj = lookup_arrayobj(ctx, id);
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
    return (obj != NULL) ? GL_TRUE : GL_FALSE;
 }

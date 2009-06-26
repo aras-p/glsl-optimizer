@@ -904,4 +904,8 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 
    /* GL_ARB_copy_buffer */
    SET_CopyBufferSubData(exec, _mesa_CopyBufferSubData);
+
+   /* GL_ARB_vertex_array_object */
+   SET_BindVertexArray(exec, _mesa_BindVertexArray);
+   SET_GenVertexArrays(exec, _mesa_GenVertexArrays);
 }
