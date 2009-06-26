@@ -33,6 +33,7 @@ void
 sl_pp_context_init(struct sl_pp_context *context)
 {
    memset(context, 0, sizeof(struct sl_pp_context));
+   context->macro_tail = &context->macro;
    context->if_ptr = SL_PP_MAX_IF_NESTING;
    context->if_value = 1;
 }

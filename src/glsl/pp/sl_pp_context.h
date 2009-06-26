@@ -39,6 +39,7 @@ struct sl_pp_context {
    unsigned int cstr_pool_len;
 
    struct sl_pp_macro *macro;
+   struct sl_pp_macro **macro_tail;
 
    unsigned int if_stack[SL_PP_MAX_IF_NESTING];
    unsigned int if_ptr;

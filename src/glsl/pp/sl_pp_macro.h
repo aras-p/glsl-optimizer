@@ -50,6 +50,9 @@ sl_pp_macro_new(void);
 void
 sl_pp_macro_free(struct sl_pp_macro *macro);
 
+void
+sl_pp_macro_reset(struct sl_pp_macro *macro);
+
 int
 sl_pp_macro_expand(struct sl_pp_context *context,
                    const struct sl_pp_token_info *input,

@@ -30,6 +30,15 @@
 #include "sl_pp_process.h"
 
 
+static void
+_macro_init(struct sl_pp_macro *macro)
+{
+   macro->name = -1;
+   macro->num_args = -1;
+   macro->arg = NULL;
+   macro->body = NULL;
+}
+
 struct sl_pp_macro *
 sl_pp_macro_new(void)
 {
@@ -37,10 +46,24 @@ sl_pp_macro_new(void)
 
    macro = calloc(1, sizeof(struct sl_pp_macro));
    if (macro) {
-      macro->name = -1;
-      macro->num_args = -1;
+      _macro_init(macro);
    }
    return macro;
+}
+
+static void
+_macro_destroy(struct sl_pp_macro *macro)
+{
+   struct sl_pp_macro_formal_arg *arg = macro->arg;
+
+   while (arg) {
+      struct sl_pp_macro_formal_arg *next_arg = arg->next;
+
+      free(arg);
+      arg = next_arg;
+   }
+
+   free(macro->body);
 }
 
 void
@@ -48,20 +71,18 @@ sl_pp_macro_free(struct sl_pp_macro *macro)
 {
    while (macro) {
       struct sl_pp_macro *next_macro = macro->next;
-      struct sl_pp_macro_formal_arg *arg = macro->arg;
 
-      while (arg) {
-         struct sl_pp_macro_formal_arg *next_arg = arg->next;
-
-         free(arg);
-         arg = next_arg;
-      }
-
-      free(macro->body);
-
+      _macro_destroy(macro);
       free(macro);
       macro = next_macro;
    }
+}
+
+void
+sl_pp_macro_reset(struct sl_pp_macro *macro)
+{
+   _macro_destroy(macro);
+   _macro_init(macro);
 }
 
 static void

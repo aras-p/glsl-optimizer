@@ -105,21 +105,41 @@ int
 sl_pp_process_define(struct sl_pp_context *context,
                      const struct sl_pp_token_info *input,
                      unsigned int first,
-                     unsigned int last,
-                     struct sl_pp_macro *macro)
+                     unsigned int last)
 {
+   int macro_name = -1;
+   struct sl_pp_macro *macro;
    unsigned int i;
    unsigned int body_len;
    unsigned int j;
 
    if (first < last && input[first].token == SL_PP_IDENTIFIER) {
-      macro->name = input[first].data.identifier;
+      macro_name = input[first].data.identifier;
       first++;
    }
-
-   if (macro->name == -1) {
+   if (macro_name == -1) {
       return -1;
    }
+
+   for (macro = context->macro; macro; macro = macro->next) {
+      if (macro->name == macro_name) {
+         break;
+      }
+   }
+
+   if (!macro) {
+      macro = sl_pp_macro_new();
+      if (!macro) {
+         return -1;
+      }
+
+      *context->macro_tail = macro;
+      context->macro_tail = &macro->next;
+   } else {
+      sl_pp_macro_reset(macro);
+   }
+
+   macro->name = macro_name;
 
    /*
     * If there is no whitespace between macro name and left paren, a macro

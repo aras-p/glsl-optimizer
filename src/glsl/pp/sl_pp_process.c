@@ -71,10 +71,8 @@ sl_pp_process(struct sl_pp_context *context,
 {
    unsigned int i = 0;
    int found_eof = 0;
-   struct sl_pp_macro **macro;
    struct sl_pp_process_state state;
 
-   macro = &context->macro;
    memset(&state, 0, sizeof(state));
 
    while (!found_eof) {
@@ -126,16 +124,9 @@ sl_pp_process(struct sl_pp_context *context,
 
                if (!strcmp(name, "define")) {
                   if (context->if_value) {
-                     *macro = sl_pp_macro_new();
-                     if (!*macro) {
+                     if (sl_pp_process_define(context, input, first, last)) {
                         return -1;
                      }
-
-                     if (sl_pp_process_define(context, input, first, last, *macro)) {
-                        return -1;
-                     }
-
-                     macro = &(**macro).next;
                   }
                } else if (!strcmp(name, "if")) {
                   if (sl_pp_process_if(context, input, first, last)) {
