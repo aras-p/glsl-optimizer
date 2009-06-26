@@ -416,15 +416,17 @@ def generate(env):
         # See also:
         # - http://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
         ccflags += [
-            '-Werror=declaration-after-statement',
             '-Wall',
-            '-Wmissing-prototypes',
             '-Wmissing-field-initializers',
             '-Wpointer-arith',
             '-Wno-long-long',
             '-ffast-math',
-            '-std=gnu99',
             '-fmessage-length=0', # be nice to Eclipse
+        ]
+        cflags += [
+            '-Werror=declaration-after-statement',
+            '-Wmissing-prototypes',
+            '-std=gnu99',
         ]
     if msvc:
         # See also:
