@@ -31,12 +31,18 @@
 #include "sl_pp_macro.h"
 
 
+#define SL_PP_MAX_IF_NESTING  64
+
 struct sl_pp_context {
    char *cstr_pool;
    unsigned int cstr_pool_max;
    unsigned int cstr_pool_len;
 
    struct sl_pp_macro *macro;
+
+   unsigned int if_stack[SL_PP_MAX_IF_NESTING];
+   unsigned int if_ptr;
+   int if_value;
 };
 
 void

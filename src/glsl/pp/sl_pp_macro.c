@@ -78,7 +78,8 @@ sl_pp_macro_expand(struct sl_pp_context *context,
                    const struct sl_pp_token_info *input,
                    unsigned int *pi,
                    struct sl_pp_macro *local,
-                   struct sl_pp_process_state *state)
+                   struct sl_pp_process_state *state,
+                   int mute)
 {
    int macro_name;
    struct sl_pp_macro *macro = NULL;
@@ -108,8 +109,10 @@ sl_pp_macro_expand(struct sl_pp_context *context,
    }
 
    if (!macro) {
-      if (sl_pp_process_out(state, &input[*pi])) {
-         return -1;
+      if (!mute) {
+         if (sl_pp_process_out(state, &input[*pi])) {
+            return -1;
+         }
       }
       (*pi)++;
       return 0;
@@ -244,8 +247,15 @@ sl_pp_macro_expand(struct sl_pp_context *context,
 
    for (j = 0;;) {
       switch (macro->body[j].token) {
+      case SL_PP_NEWLINE:
+         if (sl_pp_process_out(state, &macro->body[j])) {
+            return -1;
+         }
+         j++;
+         break;
+
       case SL_PP_IDENTIFIER:
-         if (sl_pp_macro_expand(context, macro->body, &j, actual_arg, state)) {
+         if (sl_pp_macro_expand(context, macro->body, &j, actual_arg, state, mute)) {
             return -1;
          }
          break;
@@ -255,8 +265,10 @@ sl_pp_macro_expand(struct sl_pp_context *context,
          return 0;
 
       default:
-         if (sl_pp_process_out(state, &macro->body[j])) {
-            return -1;
+         if (!mute) {
+            if (sl_pp_process_out(state, &macro->body[j])) {
+               return -1;
+            }
          }
          j++;
       }

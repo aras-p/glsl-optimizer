@@ -33,7 +33,11 @@
 #include "sl_pp_token.h"
 
 
-struct sl_pp_process_state;
+struct sl_pp_process_state {
+   struct sl_pp_token_info *out;
+   unsigned int out_len;
+   unsigned int out_max;
+};
 
 int
 sl_pp_process(struct sl_pp_context *context,
@@ -46,6 +50,42 @@ sl_pp_process_define(struct sl_pp_context *context,
                      unsigned int first,
                      unsigned int last,
                      struct sl_pp_macro *macro);
+
+int
+sl_pp_process_if(struct sl_pp_context *context,
+                 const struct sl_pp_token_info *input,
+                 unsigned int first,
+                 unsigned int last);
+
+int
+sl_pp_process_ifdef(struct sl_pp_context *context,
+                    const struct sl_pp_token_info *input,
+                    unsigned int first,
+                    unsigned int last);
+
+int
+sl_pp_process_ifndef(struct sl_pp_context *context,
+                     const struct sl_pp_token_info *input,
+                     unsigned int first,
+                     unsigned int last);
+
+int
+sl_pp_process_elif(struct sl_pp_context *context,
+                   const struct sl_pp_token_info *input,
+                   unsigned int first,
+                   unsigned int last);
+
+int
+sl_pp_process_else(struct sl_pp_context *context,
+                   const struct sl_pp_token_info *input,
+                   unsigned int first,
+                   unsigned int last);
+
+int
+sl_pp_process_endif(struct sl_pp_context *context,
+                    const struct sl_pp_token_info *input,
+                    unsigned int first,
+                    unsigned int last);
 
 int
 sl_pp_process_out(struct sl_pp_process_state *state,

@@ -55,6 +55,7 @@ sl_pp_macro_expand(struct sl_pp_context *context,
                    const struct sl_pp_token_info *input,
                    unsigned int *pi,
                    struct sl_pp_macro *local,
-                   struct sl_pp_process_state *state);
+                   struct sl_pp_process_state *state,
+                   int mute);
 
 #endif /* SL_PP_MACRO_H */

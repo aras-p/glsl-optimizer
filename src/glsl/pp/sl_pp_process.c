@@ -38,14 +38,6 @@ skip_whitespace(const struct sl_pp_token_info *input,
    }
 }
 
-
-struct sl_pp_process_state {
-   struct sl_pp_token_info *out;
-   unsigned int out_len;
-   unsigned int out_max;
-};
-
-
 int
 sl_pp_process_out(struct sl_pp_process_state *state,
                   const struct sl_pp_token_info *token)
@@ -133,16 +125,42 @@ sl_pp_process(struct sl_pp_context *context,
                last = i - 1;
 
                if (!strcmp(name, "define")) {
-                  *macro = sl_pp_macro_new();
-                  if (!*macro) {
+                  if (context->if_value) {
+                     *macro = sl_pp_macro_new();
+                     if (!*macro) {
+                        return -1;
+                     }
+
+                     if (sl_pp_process_define(context, input, first, last, *macro)) {
+                        return -1;
+                     }
+
+                     macro = &(**macro).next;
+                  }
+               } else if (!strcmp(name, "if")) {
+                  if (sl_pp_process_if(context, input, first, last)) {
                      return -1;
                   }
-
-                  if (sl_pp_process_define(context, input, first, last, *macro)) {
+               } else if (!strcmp(name, "ifdef")) {
+                  if (sl_pp_process_ifdef(context, input, first, last)) {
                      return -1;
                   }
-
-                  macro = &(**macro).next;
+               } else if (!strcmp(name, "ifndef")) {
+                  if (sl_pp_process_ifndef(context, input, first, last)) {
+                     return -1;
+                  }
+               } else if (!strcmp(name, "elif")) {
+                  if (sl_pp_process_elif(context, input, first, last)) {
+                     return -1;
+                  }
+               } else if (!strcmp(name, "else")) {
+                  if (sl_pp_process_else(context, input, first, last)) {
+                     return -1;
+                  }
+               } else if (!strcmp(name, "endif")) {
+                  if (sl_pp_process_endif(context, input, first, last)) {
+                     return -1;
+                  }
                } else {
                   /* XXX: Ignore. */
                }
@@ -198,19 +216,26 @@ sl_pp_process(struct sl_pp_context *context,
                break;
 
             case SL_PP_IDENTIFIER:
-               if (sl_pp_macro_expand(context, input, &i, NULL, &state)) {
+               if (sl_pp_macro_expand(context, input, &i, NULL, &state, !context->if_value)) {
                   return -1;
                }
                break;
 
             default:
-               if (sl_pp_process_out(&state, &input[i])) {
-                  return -1;
+               if (context->if_value) {
+                  if (sl_pp_process_out(&state, &input[i])) {
+                     return -1;
+                  }
                }
                i++;
             }
          }
       }
+   }
+
+   if (context->if_ptr != SL_PP_MAX_IF_NESTING) {
+      /* #endif expected. */
+      return -1;
    }
 
    *output = state.out;
