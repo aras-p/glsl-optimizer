@@ -950,6 +950,11 @@ gen_return_with_expression(slang_assemble_ctx *A, slang_operation *oper)
 
    assert(oper->type == SLANG_OPER_RETURN);
 
+   if (A->CurFunction->header.type.specifier.type == SLANG_SPEC_VOID) {
+      slang_info_log_error(A->log, "illegal return expression");
+      return NULL;
+   }
+
    blockOper = slang_operation_new(1);
    blockOper->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
    blockOper->locals->outer_scope = oper->locals->outer_scope;
@@ -1038,6 +1043,11 @@ gen_return_without_expression(slang_assemble_ctx *A, slang_operation *oper)
    slang_operation *newRet;
 
    assert(oper->type == SLANG_OPER_RETURN);
+
+   if (A->CurFunction->header.type.specifier.type != SLANG_SPEC_VOID) {
+      slang_info_log_error(A->log, "return statement requires an expression");
+      return NULL;
+   }
 
    if (A->UseReturnFlag) {
       /* Emit:
@@ -1149,6 +1159,9 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
             newReturn = gen_return_without_expression(A, oper);
          else
             newReturn = gen_return_with_expression(A, oper);
+
+         if (!newReturn)
+            return;
 
          /* do substitutions on the new 'return' code */
          slang_substitute(A, newReturn,
@@ -4060,28 +4073,7 @@ _slang_gen_logical_or(slang_assemble_ctx *A, slang_operation *oper)
 static slang_ir_node *
 _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
 {
-   const GLboolean haveReturnValue
-      = (oper->num_children == 1 && oper->children[0].type != SLANG_OPER_VOID);
-
-   assert(oper->type == SLANG_OPER_RETURN ||
-          oper->type == SLANG_OPER_RETURN_INLINED);
-
-   /* error checking */
-   if (oper->type == SLANG_OPER_RETURN) {
-      assert(A->CurFunction);
-
-      if (haveReturnValue &&
-          A->CurFunction->header.type.specifier.type == SLANG_SPEC_VOID) {
-         slang_info_log_error(A->log, "illegal return expression");
-         return NULL;
-      }
-      else if (!haveReturnValue &&
-               A->CurFunction->header.type.specifier.type != SLANG_SPEC_VOID) {
-         slang_info_log_error(A->log, "return statement requires an expression");
-         return NULL;
-      }
-   }
-
+   assert(oper->type == SLANG_OPER_RETURN);
    return new_return(A->curFuncEndLabel);
 }
 
