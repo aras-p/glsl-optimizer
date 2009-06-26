@@ -167,7 +167,7 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 	size = MAX2(size, MAX_DMA_BUF_SZ);
 
 	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
-		fprintf(stderr, "%s\n", __FUNCTION__);
+		fprintf(stderr, "%s %d\n", __FUNCTION__, rmesa->dma.nr_released_bufs);
 
 	if (rmesa->dma.flush) {
 		rmesa->dma.flush(rmesa->glCtx);
@@ -178,11 +178,7 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 		rmesa->dma.nr_released_bufs = 0;
 	}
 
-	if (rmesa->dma.current) {
-		radeon_bo_unmap(rmesa->dma.current);
-		radeon_bo_unref(rmesa->dma.current);
-		rmesa->dma.current = 0;
-	}
+	radeonReleaseDmaRegion(rmesa);
 
 again_alloc:	
 	rmesa->dma.current = radeon_bo_open(rmesa->radeonScreen->bom,
@@ -242,6 +238,17 @@ void radeonAllocDmaRegion(radeonContextPtr rmesa,
 	rmesa->dma.current_vertexptr = rmesa->dma.current_used;
 
 	assert(rmesa->dma.current_used <= rmesa->dma.current->size);
+}
+
+void radeonReturnDmaRegion(radeonContextPtr rmesa, int return_bytes)
+{
+	if (!rmesa->dma.current)
+		return;
+
+	if (RADEON_DEBUG & DEBUG_IOCTL)
+		fprintf(stderr, "%s %d\n", __FUNCTION__, return_bytes);
+	rmesa->dma.current_used -= return_bytes;
+	rmesa->dma.current_vertexptr = rmesa->dma.current_used;
 }
 
 void radeonReleaseDmaRegion(radeonContextPtr rmesa)
