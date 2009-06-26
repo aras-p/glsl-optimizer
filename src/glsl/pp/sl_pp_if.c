@@ -30,6 +30,70 @@
 #include "sl_pp_process.h"
 
 
+static void
+skip_whitespace(const struct sl_pp_token_info *input,
+                unsigned int *pi)
+{
+   while (input[*pi].token == SL_PP_WHITESPACE) {
+      (*pi)++;
+   }
+}
+
+static int
+_parse_defined(struct sl_pp_context *context,
+               const struct sl_pp_token_info *input,
+               unsigned int *pi,
+               struct sl_pp_process_state *state)
+{
+   int parens = 0;
+   int macro_name;
+   struct sl_pp_macro *macro;
+   int defined = 0;
+   struct sl_pp_token_info result;
+
+   skip_whitespace(input, pi);
+   if (input[*pi].token == SL_PP_LPAREN) {
+      (*pi)++;
+      skip_whitespace(input, pi);
+      parens = 1;
+   }
+
+   if (input[*pi].token != SL_PP_IDENTIFIER) {
+      /* Identifier expected. */
+      return -1;
+   }
+
+   macro_name = input[*pi].data.identifier;
+   for (macro = context->macro; macro; macro = macro->next) {
+      if (macro->name == macro_name) {
+         defined = 1;
+         break;
+      }
+   }
+   (*pi)++;
+
+   if (parens) {
+      skip_whitespace(input, pi);
+      if (input[*pi].token != SL_PP_RPAREN) {
+         /* `)' expected */
+         return -1;
+      }
+      (*pi)++;
+   }
+
+   result.token = SL_PP_NUMBER;
+   if (defined) {
+      result.data.number = sl_pp_context_add_unique_str(context, "1");
+   } else {
+      result.data.number = sl_pp_context_add_unique_str(context, "0");
+   }
+   if (result.data.number == -1) {
+      return -1;
+   }
+
+   return sl_pp_process_out(state, &result);
+}
+
 static int
 _evaluate_if_stack(struct sl_pp_context *context)
 {
@@ -67,9 +131,21 @@ _parse_if(struct sl_pp_context *context,
          break;
 
       case SL_PP_IDENTIFIER:
-         if (sl_pp_macro_expand(context, input, &i, NULL, &state, 0)) {
-            free(state.out);
-            return -1;
+         {
+            const char *id = sl_pp_context_cstr(context, input[i].data.identifier);
+
+            if (!strcmp(id, "defined")) {
+               i++;
+               if (_parse_defined(context, input, &i, &state)) {
+                  free(state.out);
+                  return -1;
+               }
+            } else {
+               if (sl_pp_macro_expand(context, input, &i, NULL, &state, 0)) {
+                  free(state.out);
+                  return -1;
+               }
+            }
          }
          break;
 
