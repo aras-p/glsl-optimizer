@@ -71,6 +71,8 @@ int INTEL_DEBUG = (0);
 #define DRIVER_DATE_GEM                 "GEM " DRIVER_DATE
 
 
+static void intel_flush(GLcontext *ctx, GLboolean needs_mi_flush);
+
 static const GLubyte *
 intelGetString(GLcontext * ctx, GLenum name)
 {
@@ -395,6 +397,15 @@ intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 	return;
 
     if (!intel->internal_viewport_call && ctx->DrawBuffer->Name == 0) {
+       /* If we're rendering to the fake front buffer, make sure all the pending
+	* drawing has landed on the real front buffer.  Otherwise when we
+	* eventually get to DRI2GetBuffersWithFormat the stale real front
+	* buffer contents will get copied to the new fake front buffer.
+	*/
+       if (intel->is_front_buffer_rendering) {
+	  intel_flush(ctx, GL_FALSE);
+       }
+
        intel_update_renderbuffers(driContext, driContext->driDrawablePriv);
        if (driContext->driDrawablePriv != driContext->driReadablePriv)
 	  intel_update_renderbuffers(driContext, driContext->driReadablePriv);
