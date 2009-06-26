@@ -1953,6 +1953,7 @@ static int
 parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
                       const slang_fully_specified_type * type)
 {
+   GET_CURRENT_CONTEXT(ctx); /* a hack */
    slang_variable *var;
    slang_atom a_name;
 
@@ -2066,6 +2067,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       A.vartable = O->vartable;
       A.log = C->L;
       A.curFuncEndLabel = NULL;
+      A.EmitContReturn = ctx->Shader.EmitContReturn;
       if (!_slang_codegen_global_variable(&A, var, C->type))
          RETURN0;
    }
@@ -2430,6 +2432,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
       A.program = o.program;
       A.pragmas = &shader->Pragmas;
       A.vartable = o.vartable;
+      A.EmitContReturn = ctx->Shader.EmitContReturn;
       A.log = C->L;
 
       /* main() takes no parameters */

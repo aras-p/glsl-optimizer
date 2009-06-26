@@ -86,6 +86,8 @@ cell_get_param(struct pipe_screen *screen, int param)
       return 1; /* XXX not really true */
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
       return 0; /* XXX to do */
+   case PIPE_CAP_TGSI_CONT_SUPPORTED:
+      return 1;
    default:
       return 0;
    }

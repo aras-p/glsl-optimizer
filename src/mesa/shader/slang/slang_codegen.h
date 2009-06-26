@@ -31,6 +31,9 @@
 #include "slang_compile.h"
 
 
+#define MAX_LOOP_DEPTH 30
+
+
 typedef struct slang_assemble_ctx_
 {
    slang_atom_pool *atoms;
@@ -39,11 +42,19 @@ typedef struct slang_assemble_ctx_
    struct gl_sl_pragmas *pragmas;
    slang_var_table *vartable;
    slang_info_log *log;
-   struct slang_label_ *curFuncEndLabel;
-   struct slang_ir_node_ *CurLoop;
+
+   /* current loop stack */
+   const slang_operation *LoopOperStack[MAX_LOOP_DEPTH];
+   struct slang_ir_node_ *LoopIRStack[MAX_LOOP_DEPTH];
+   GLuint LoopDepth;
+
+   /* current function */
    struct slang_function_ *CurFunction;
-   GLuint UnrollLoop;
+   struct slang_label_ *curFuncEndLabel;
+   GLboolean UseReturnFlag;
+
    GLboolean UnresolvedRefs;
+   GLboolean EmitContReturn;
 } slang_assemble_ctx;
 
 

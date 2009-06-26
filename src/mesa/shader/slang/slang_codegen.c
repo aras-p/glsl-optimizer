@@ -75,6 +75,11 @@ const GLuint MAX_FOR_LOOP_UNROLL_COMPLEXITY = 256;
 static slang_ir_node *
 _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper);
 
+static void
+slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
+                 GLuint substCount, slang_variable **substOld,
+		 slang_operation **substNew, GLboolean isLHS);
+
 
 /**
  * Retrieves type information about an operation.
@@ -326,6 +331,17 @@ sampler_to_texture_index(const slang_type_specifier_type type)
 }
 
 
+/** helper to build a SLANG_OPER_IDENTIFIER node */
+static void
+slang_operation_identifier(slang_operation *oper,
+                           slang_assemble_ctx *A,
+                           const char *name)
+{
+   oper->type = SLANG_OPER_IDENTIFIER;
+   oper->a_id = slang_atom_pool_atom(A->atoms, name);
+}
+
+
 #define SWIZZLE_ZWWW MAKE_SWIZZLE4(SWIZZLE_Z, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W)
 
 /**
@@ -428,6 +444,56 @@ _slang_output_index(const char *name, GLenum target)
    return -1;
 }
 
+
+/**
+ * Called when we begin code/IR generation for a new while/do/for loop.
+ */
+static void
+push_loop(slang_assemble_ctx *A, slang_operation *loopOper, slang_ir_node *loopIR)
+{
+   A->LoopOperStack[A->LoopDepth] = loopOper;
+   A->LoopIRStack[A->LoopDepth] = loopIR;
+   A->LoopDepth++;
+}
+
+
+/**
+ * Called when we end code/IR generation for a new while/do/for loop.
+ */
+static void
+pop_loop(slang_assemble_ctx *A)
+{
+   assert(A->LoopDepth > 0);
+   A->LoopDepth--;
+}
+
+
+/**
+ * Return pointer to slang_operation for the loop we're currently inside,
+ * or NULL if not in a loop.
+ */
+static const slang_operation *
+current_loop_oper(const slang_assemble_ctx *A)
+{
+   if (A->LoopDepth > 0)
+      return A->LoopOperStack[A->LoopDepth - 1];
+   else
+      return NULL;
+}
+
+
+/**
+ * Return pointer to slang_ir_node for the loop we're currently inside,
+ * or NULL if not in a loop.
+ */
+static slang_ir_node *
+current_loop_ir(const slang_assemble_ctx *A)
+{
+   if (A->LoopDepth > 0)
+      return A->LoopIRStack[A->LoopDepth - 1];
+   else
+      return NULL;
+}
 
 
 /**********************************************************************/
@@ -636,7 +702,7 @@ new_break(slang_ir_node *loopNode)
    assert(loopNode);
    assert(loopNode->Opcode == IR_LOOP);
    if (n) {
-      /* insert this node at head of linked list */
+      /* insert this node at head of linked list of cont/break instructions */
       n->List = loopNode->List;
       loopNode->List = n;
    }
@@ -648,14 +714,15 @@ new_break(slang_ir_node *loopNode)
  * Make new IR_BREAK_IF_TRUE.
  */
 static slang_ir_node *
-new_break_if_true(slang_ir_node *loopNode, slang_ir_node *cond)
+new_break_if_true(slang_assemble_ctx *A, slang_ir_node *cond)
 {
+   slang_ir_node *loopNode = current_loop_ir(A);
    slang_ir_node *n;
    assert(loopNode);
    assert(loopNode->Opcode == IR_LOOP);
    n = new_node1(IR_BREAK_IF_TRUE, cond);
    if (n) {
-      /* insert this node at head of linked list */
+      /* insert this node at head of linked list of cont/break instructions */
       n->List = loopNode->List;
       loopNode->List = n;
    }
@@ -667,14 +734,16 @@ new_break_if_true(slang_ir_node *loopNode, slang_ir_node *cond)
  * Make new IR_CONT_IF_TRUE node.
  */
 static slang_ir_node *
-new_cont_if_true(slang_ir_node *loopNode, slang_ir_node *cond)
+new_cont_if_true(slang_assemble_ctx *A, slang_ir_node *cond)
 {
+   slang_ir_node *loopNode = current_loop_ir(A);
    slang_ir_node *n;
    assert(loopNode);
    assert(loopNode->Opcode == IR_LOOP);
    n = new_node1(IR_CONT_IF_TRUE, cond);
    if (n) {
-      /* insert this node at head of linked list */
+      n->Parent = loopNode; /* pointer to containing loop */
+      /* insert this node at head of linked list of cont/break instructions */
       n->List = loopNode->List;
       loopNode->List = n;
    }
@@ -749,6 +818,7 @@ _slang_is_noop(const slang_operation *oper)
 /**
  * Recursively search tree for a node of the given type.
  */
+#if 0
 static slang_operation *
 _slang_find_node_type(slang_operation *oper, slang_operation_type type)
 {
@@ -762,13 +832,14 @@ _slang_find_node_type(slang_operation *oper, slang_operation_type type)
    }
    return NULL;
 }
+#endif
 
 
 /**
  * Count the number of operations of the given time rooted at 'oper'.
  */
 static GLuint
-_slang_count_node_type(slang_operation *oper, slang_operation_type type)
+_slang_count_node_type(const slang_operation *oper, slang_operation_type type)
 {
    GLuint i, count = 0;
    if (oper->type == type) {
@@ -822,6 +893,37 @@ _slang_is_tail_return(const slang_operation *oper)
 }
 
 
+/**
+ * Generate a variable declaration opeartion.
+ * I.e.: generate AST code for "bool flag = false;"
+ */
+static void
+slang_generate_declaration(slang_assemble_ctx *A,
+                           slang_variable_scope *scope,
+                           slang_operation *decl,
+                           slang_type_specifier_type type,
+                           const char *name,
+                           GLint initValue)
+{
+   slang_variable *var;
+
+   assert(type == SLANG_SPEC_BOOL ||
+          type == SLANG_SPEC_INT);
+
+   decl->type = SLANG_OPER_VARIABLE_DECL;
+
+   var = slang_variable_scope_grow(scope);
+
+   slang_fully_specified_type_construct(&var->type);
+
+   var->type.specifier.type = type;
+   var->a_name = slang_atom_pool_atom(A->atoms, name);
+   decl->a_id = var->a_name;
+   var->initializer = slang_operation_new(1);
+   slang_operation_literal_bool(var->initializer, initValue);
+}
+
+
 static void
 slang_resolve_variable(slang_operation *oper)
 {
@@ -829,6 +931,159 @@ slang_resolve_variable(slang_operation *oper)
       oper->var = _slang_variable_locate(oper->locals, oper->a_id, GL_TRUE);
    }
 }
+
+
+/**
+ * Rewrite AST code for "return expression;".
+ *
+ * We return values from functions by assinging the returned value to
+ * the hidden __retVal variable which is an extra 'out' parameter we add
+ * to the function signature.
+ * This code basically converts "return expr;" into "__retVal = expr; return;"
+ *
+ * \return the new AST code.
+ */
+static slang_operation *
+gen_return_with_expression(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_operation *blockOper, *assignOper;
+
+   assert(oper->type == SLANG_OPER_RETURN);
+
+   if (A->CurFunction->header.type.specifier.type == SLANG_SPEC_VOID) {
+      slang_info_log_error(A->log, "illegal return expression");
+      return NULL;
+   }
+
+   blockOper = slang_operation_new(1);
+   blockOper->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
+   blockOper->locals->outer_scope = oper->locals->outer_scope;
+   slang_operation_add_children(blockOper, 2);
+
+   if (A->UseReturnFlag) {
+      /* Emit:
+       *    {
+       *       if (__notRetFlag)
+       *          __retVal = expr;
+       *       __notRetFlag = 0;
+       *    }
+       */
+      {
+         slang_operation *ifOper = slang_oper_child(blockOper, 0);
+         ifOper->type = SLANG_OPER_IF;
+         slang_operation_add_children(ifOper, 3);
+         {
+            slang_operation *cond = slang_oper_child(ifOper, 0);
+            cond->type = SLANG_OPER_IDENTIFIER;
+            cond->a_id = slang_atom_pool_atom(A->atoms, "__notRetFlag");
+         }
+         {
+            slang_operation *elseOper = slang_oper_child(ifOper, 2);
+            elseOper->type = SLANG_OPER_VOID;
+         }
+         assignOper = slang_oper_child(ifOper, 1);
+      }
+      {
+         slang_operation *setOper = slang_oper_child(blockOper, 1);
+         setOper->type = SLANG_OPER_ASSIGN;
+         slang_operation_add_children(setOper, 2);
+         {
+            slang_operation *lhs = slang_oper_child(setOper, 0);
+            lhs->type = SLANG_OPER_IDENTIFIER;
+            lhs->a_id = slang_atom_pool_atom(A->atoms, "__notRetFlag");
+         }
+         {
+            slang_operation *rhs = slang_oper_child(setOper, 1);
+            slang_operation_literal_bool(rhs, GL_FALSE);
+         }
+      }
+   }
+   else {
+      /* Emit:
+       *    {
+       *       __retVal = expr;
+       *       return_inlined;
+       *    }
+       */
+      assignOper = slang_oper_child(blockOper, 0);
+      {
+         slang_operation *returnOper = slang_oper_child(blockOper, 1);
+         returnOper->type = SLANG_OPER_RETURN_INLINED;
+         assert(returnOper->num_children == 0);
+      }
+   }
+
+   /* __retVal = expression; */
+   assignOper->type = SLANG_OPER_ASSIGN;
+   slang_operation_add_children(assignOper, 2);
+   {
+      slang_operation *lhs = slang_oper_child(assignOper, 0);
+      lhs->type = SLANG_OPER_IDENTIFIER;
+      lhs->a_id = slang_atom_pool_atom(A->atoms, "__retVal");
+   }
+   {
+      slang_operation *rhs = slang_oper_child(assignOper, 1);
+      slang_operation_copy(rhs, &oper->children[0]);
+   }
+
+   ///blockOper->locals->outer_scope = oper->locals->outer_scope;
+
+   /*slang_print_tree(blockOper, 0);*/
+
+   return blockOper;
+}
+
+
+/**
+ * Rewrite AST code for "return;" (no expression).
+ */
+static slang_operation *
+gen_return_without_expression(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_operation *newRet;
+
+   assert(oper->type == SLANG_OPER_RETURN);
+
+   if (A->CurFunction->header.type.specifier.type != SLANG_SPEC_VOID) {
+      slang_info_log_error(A->log, "return statement requires an expression");
+      return NULL;
+   }
+
+   if (A->UseReturnFlag) {
+      /* Emit:
+       *    __notRetFlag = 0;
+       */
+      {
+         newRet = slang_operation_new(1);
+         newRet->locals->outer_scope = oper->locals->outer_scope;
+         newRet->type = SLANG_OPER_ASSIGN;
+         slang_operation_add_children(newRet, 2);
+         {
+            slang_operation *lhs = slang_oper_child(newRet, 0);
+            lhs->type = SLANG_OPER_IDENTIFIER;
+            lhs->a_id = slang_atom_pool_atom(A->atoms, "__notRetFlag");
+         }
+         {
+            slang_operation *rhs = slang_oper_child(newRet, 1);
+            slang_operation_literal_bool(rhs, GL_FALSE);
+         }
+      }
+   }
+   else {
+      /* Emit:
+       *    return_inlined;
+       */
+      newRet = slang_operation_new(1);
+      newRet->locals->outer_scope = oper->locals->outer_scope;
+      newRet->type = SLANG_OPER_RETURN_INLINED;
+   }
+
+   /*slang_print_tree(newRet, 0);*/
+
+   return newRet;
+}
+
+
 
 
 /**
@@ -866,7 +1121,8 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
 	 GLuint i;
          v = _slang_variable_locate(oper->locals, id, GL_TRUE);
 	 if (!v) {
-            _mesa_problem(NULL, "var %s not found!\n", (char *) oper->a_id);
+            if (_mesa_strcmp((char *) oper->a_id, "__notRetFlag"))
+               _mesa_problem(NULL, "var %s not found!\n", (char *) oper->a_id);
             return;
 	 }
 
@@ -896,62 +1152,24 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
       break;
 
    case SLANG_OPER_RETURN:
-      /* do return replacement here too */
-      assert(oper->num_children == 0 || oper->num_children == 1);
-      if (oper->num_children == 1 && !_slang_is_noop(&oper->children[0])) {
-         /* replace:
-          *   return expr;
-          * with:
-          *   __retVal = expr;
-          *   return;
-          * then do substitutions on the assignment.
-          */
-         slang_operation *blockOper, *assignOper, *returnOper;
+      {
+         slang_operation *newReturn;
+         /* generate new 'return' code' */
+         if (slang_oper_child(oper, 0)->type == SLANG_OPER_VOID)
+            newReturn = gen_return_without_expression(A, oper);
+         else
+            newReturn = gen_return_with_expression(A, oper);
 
-         /* check if function actually has a return type */
-         assert(A->CurFunction);
-         if (A->CurFunction->header.type.specifier.type == SLANG_SPEC_VOID) {
-            slang_info_log_error(A->log, "illegal return expression");
+         if (!newReturn)
             return;
-         }
 
-         blockOper = slang_operation_new(1);
-         blockOper->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
-         blockOper->num_children = 2;
-         blockOper->locals->outer_scope = oper->locals->outer_scope;
-         blockOper->children = slang_operation_new(2);
-         assignOper = blockOper->children + 0;
-         returnOper = blockOper->children + 1;
-
-         assignOper->type = SLANG_OPER_ASSIGN;
-         assignOper->num_children = 2;
-         assignOper->locals->outer_scope = blockOper->locals;
-         assignOper->children = slang_operation_new(2);
-         assignOper->children[0].type = SLANG_OPER_IDENTIFIER;
-         assignOper->children[0].a_id = slang_atom_pool_atom(A->atoms, "__retVal");
-         assignOper->children[0].locals->outer_scope = assignOper->locals;
-
-         slang_operation_copy(&assignOper->children[1],
-                              &oper->children[0]);
-
-         returnOper->type = SLANG_OPER_RETURN; /* return w/ no value */
-         assert(returnOper->num_children == 0);
-
-         /* do substitutions on the "__retVal = expr" sub-tree */
-         slang_substitute(A, assignOper,
+         /* do substitutions on the new 'return' code */
+         slang_substitute(A, newReturn,
                           substCount, substOld, substNew, GL_FALSE);
 
-         /* install new code */
-         slang_operation_copy(oper, blockOper);
-         slang_operation_destruct(blockOper);
-      }
-      else {
-         /* check if return value was expected */
-         assert(A->CurFunction);
-         if (A->CurFunction->header.type.specifier.type != SLANG_SPEC_VOID) {
-            slang_info_log_error(A->log, "return statement requires an expression");
-            return;
-         }
+         /* install new 'return' code */
+         slang_operation_copy(oper, newReturn);
+         slang_operation_destruct(newReturn);
       }
       break;
 
@@ -1346,12 +1564,74 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
 }
 
 
+/**
+ * Insert declaration for "bool __notRetFlag" in given block operation.
+ * This is used when we can't emit "early" return statements in subroutines.
+ */
+static void
+declare_return_flag(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_operation *decl;
+
+   assert(oper->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
+          oper->type == SLANG_OPER_SEQUENCE);
+
+   decl = slang_operation_insert_child(oper, 1);
+
+   slang_generate_declaration(A, oper->locals, decl,
+                              SLANG_SPEC_BOOL, "__notRetFlag", GL_TRUE);
+
+   /*slang_print_tree(oper, 0);*/
+}
+
+
+/**
+ * Recursively replace instances of the old node type with the new type.
+ */
+static void
+replace_node_type(slang_operation *oper, slang_operation_type oldType,
+                  slang_operation_type newType)
+{
+   GLuint i;
+
+   if (oper->type == oldType)
+      oper->type = newType;
+
+   for (i = 0; i < slang_oper_num_children(oper); i++) {
+      replace_node_type(slang_oper_child(oper, i), oldType, newType);
+   }
+}
+
+
+
+/**
+ * Test if the given function body has an "early return".  That is, there's
+ * a 'return' statement that's not the very last instruction in the body.
+ */
+static GLboolean
+has_early_return(const slang_operation *funcBody)
+{
+   GLuint retCount = _slang_count_node_type(funcBody, SLANG_OPER_RETURN);
+   if (retCount == 0)
+      return GL_FALSE;
+   else if (retCount == 1 && _slang_is_tail_return(funcBody))
+      return GL_FALSE;
+   else
+      return GL_TRUE;
+}
+
+
+/**
+ * Emit IR code for a function call.  This does one of two things:
+ * 1. Inline the function's code
+ * 2. Create an IR for the function's body and create a real call to it.
+ */
 static slang_ir_node *
 _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
                          slang_operation *oper, slang_operation *dest)
 {
    slang_ir_node *n;
-   slang_operation *inlined;
+   slang_operation *instance;
    slang_label *prevFuncEndLabel;
    char name[200];
 
@@ -1360,9 +1640,14 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    A->curFuncEndLabel = _slang_label_new(name);
    assert(A->curFuncEndLabel);
 
+   /*
+    * 'instance' is basically a copy of the function's body with various
+    * transformations.
+    */
+
    if (slang_is_asm_function(fun) && !dest) {
       /* assemble assembly function - tree style */
-      inlined = slang_inline_asm_function(A, fun, oper);
+      instance = slang_inline_asm_function(A, fun, oper);
    }
    else {
       /* non-assembly function */
@@ -1371,65 +1656,82 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
        *  1. insert the inline code
        *  2. Generate a call to the "inline" code as a subroutine
        */
+      const GLboolean earlyReturn = has_early_return(fun->body);
 
+      if (earlyReturn && !A->EmitContReturn) {
+         A->UseReturnFlag = GL_TRUE;
+      }
 
-      slang_operation *ret = NULL;
-
-      inlined = slang_inline_function_call(A, fun, oper, dest);
-      if (!inlined)
+      instance = slang_inline_function_call(A, fun, oper, dest);
+      if (!instance)
          return NULL;
 
-      ret = _slang_find_node_type(inlined, SLANG_OPER_RETURN);
-      if (ret) {
-         /* check if this is a "tail" return */
-         if (_slang_count_node_type(inlined, SLANG_OPER_RETURN) == 1 &&
-             _slang_is_tail_return(inlined)) {
-            /* The only RETURN is the last stmt in the function, no-op it
-             * and inline the function body.
-             */
-            ret->type = SLANG_OPER_NONE;
+      if (earlyReturn) {
+         /* The function we're calling has one or more 'return' statements
+          * that prevent us from inlining the function's code.
+          *
+          * In this case, change the function's body type from
+          * SLANG_OPER_BLOCK_NEW_SCOPE to SLANG_OPER_NON_INLINED_CALL.
+          * During code emit this will result in a true subroutine call.
+          *
+          * Also, convert SLANG_OPER_RETURN_INLINED nodes to SLANG_OPER_RETURN.
+          */
+         slang_operation *callOper;
+
+         assert(instance->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
+                instance->type == SLANG_OPER_SEQUENCE);
+
+         if (_slang_function_has_return_value(fun) && !dest) {
+            assert(instance->children[0].type == SLANG_OPER_VARIABLE_DECL);
+            assert(instance->children[2].type == SLANG_OPER_IDENTIFIER);
+            callOper = &instance->children[1];
          }
          else {
-            slang_operation *callOper;
-            /* The function we're calling has one or more 'return' statements.
-             * So, we can't truly inline this function because we need to
-             * implement 'return' with RET (and CAL).
-             * Nevertheless, we performed "inlining" to make a new instance
-             * of the function body to deal with static register allocation.
-             *
-             * XXX check if there's one 'return' and if it's the very last
-             * statement in the function - we can optimize that case.
-             */
-            assert(inlined->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
-                   inlined->type == SLANG_OPER_SEQUENCE);
-
-            if (_slang_function_has_return_value(fun) && !dest) {
-               assert(inlined->children[0].type == SLANG_OPER_VARIABLE_DECL);
-               assert(inlined->children[2].type == SLANG_OPER_IDENTIFIER);
-               callOper = &inlined->children[1];
-            }
-            else {
-               callOper = inlined;
-            }
-            callOper->type = SLANG_OPER_NON_INLINED_CALL;
-            callOper->fun = fun;
-            callOper->label = _slang_label_new_unique((char*) fun->header.a_name);
+            callOper = instance;
          }
+
+         if (A->UseReturnFlag) {
+            /* Early returns not supported.  Create a _returnFlag variable
+             * that's set upon 'return' and tested elsewhere to no-op any
+             * remaining instructions in the subroutine.
+             */
+            assert(callOper->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
+                   callOper->type == SLANG_OPER_SEQUENCE);
+            declare_return_flag(A, callOper);
+         }
+         else {
+            /* We can emit real 'return' statements.  If we generated any
+             * 'inline return' statements during function instantiation,
+             * change them back to regular 'return' statements.
+             */
+            replace_node_type(instance, SLANG_OPER_RETURN_INLINED,
+                              SLANG_OPER_RETURN);
+         }
+
+         callOper->type = SLANG_OPER_NON_INLINED_CALL;
+         callOper->fun = fun;
+         callOper->label = _slang_label_new_unique((char*) fun->header.a_name);
+      }
+      else {
+         /* If there are any 'return' statements remaining, they're at the
+          * very end of the function and can effectively become no-ops.
+          */
+         replace_node_type(instance, SLANG_OPER_RETURN_INLINED,
+                           SLANG_OPER_VOID);
       }
    }
 
-   if (!inlined)
+   if (!instance)
       return NULL;
 
-   /* Replace the function call with the inlined block (or new CALL stmt) */
+   /* Replace the function call with the instance block (or new CALL stmt) */
    slang_operation_destruct(oper);
-   *oper = *inlined;
-   _slang_free(inlined);
+   *oper = *instance;
+   _slang_free(instance);
 
 #if 0
-   assert(inlined->locals);
-   printf("*** Inlined code for call to %s:\n",
-          (char*) fun->header.a_name);
+   assert(instance->locals);
+   printf("*** Inlined code for call to %s:\n", (char*) fun->header.a_name);
    slang_print_tree(oper, 10);
    printf("\n");
 #endif
@@ -1444,6 +1746,8 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
       _mesa_snprintf(s, sizeof(s), "Call/inline %s()", (char *) fun->header.a_name);
       n->Comment = _slang_strdup(s);
    }
+
+   A->UseReturnFlag = GL_FALSE;
 
    return n;
 }
@@ -2337,18 +2641,251 @@ _slang_is_boolean(slang_assemble_ctx *A, slang_operation *oper)
 
 
 /**
+ * Check if a loop contains a 'continue' statement.
+ * Stop looking if we find a nested loop.
+ */
+static GLboolean
+_slang_loop_contains_continue(const slang_operation *oper)
+{
+   switch (oper->type) {
+   case SLANG_OPER_CONTINUE:
+      return GL_TRUE;
+   case SLANG_OPER_FOR:
+   case SLANG_OPER_DO:
+   case SLANG_OPER_WHILE:
+      /* stop upon finding a nested loop */
+      return GL_FALSE;
+   default:
+       /* recurse */
+      {
+         GLuint i;
+         for (i = 0; i < oper->num_children; i++) {
+            const slang_operation *child = slang_oper_child_const(oper, i);
+            if (_slang_loop_contains_continue(child))
+               return GL_TRUE;
+         }
+      }
+      return GL_FALSE;
+   }
+}
+
+
+/**
+ * Check if a loop contains a 'continue' or 'break' statement.
+ * Stop looking if we find a nested loop.
+ */
+static GLboolean
+_slang_loop_contains_continue_or_break(const slang_operation *oper)
+{
+   switch (oper->type) {
+   case SLANG_OPER_CONTINUE:
+   case SLANG_OPER_BREAK:
+      return GL_TRUE;
+   case SLANG_OPER_FOR:
+   case SLANG_OPER_DO:
+   case SLANG_OPER_WHILE:
+      /* stop upon finding a nested loop */
+      return GL_FALSE;
+   default:
+       /* recurse */
+      {
+         GLuint i;
+         for (i = 0; i < oper->num_children; i++) {
+            const slang_operation *child = slang_oper_child_const(oper, i);
+            if (_slang_loop_contains_continue_or_break(child))
+               return GL_TRUE;
+         }
+      }
+      return GL_FALSE;
+   }
+}
+
+
+/**
+ * Replace 'break' and 'continue' statements inside a do and while loops.
+ * This is a recursive helper function used by
+ * _slang_gen_do/while_without_continue().
+ */
+static void
+replace_break_and_cont(slang_assemble_ctx *A, slang_operation *oper)
+{
+   switch (oper->type) {
+   case SLANG_OPER_BREAK:
+      /* replace 'break' with "_notBreakFlag = false; break" */
+      {
+         slang_operation *block = oper;
+         block->type = SLANG_OPER_BLOCK_NEW_SCOPE;
+         slang_operation_add_children(block, 2);
+         {
+            slang_operation *assign = slang_oper_child(block, 0);
+            assign->type = SLANG_OPER_ASSIGN;
+            slang_operation_add_children(assign, 2);
+            {
+               slang_operation *lhs = slang_oper_child(assign, 0);
+               slang_operation_identifier(lhs, A, "_notBreakFlag");
+            }
+            {
+               slang_operation *rhs = slang_oper_child(assign, 1);
+               slang_operation_literal_bool(rhs, GL_FALSE);
+            }
+         }
+         {
+            slang_operation *brk = slang_oper_child(block, 1);
+            brk->type = SLANG_OPER_BREAK;
+            assert(!brk->children);
+         }
+      }
+      break;
+   case SLANG_OPER_CONTINUE:
+      /* convert continue into a break */
+      oper->type = SLANG_OPER_BREAK;
+      break;
+   case SLANG_OPER_FOR:
+   case SLANG_OPER_DO:
+   case SLANG_OPER_WHILE:
+      /* stop upon finding a nested loop */
+      break;
+   default:
+      /* recurse */
+      {
+         GLuint i;
+         for (i = 0; i < oper->num_children; i++) {
+            replace_break_and_cont(A, slang_oper_child(oper, i));
+         }
+      }
+   }
+}
+
+
+/**
+ * Transform a while-loop so that continue statements are converted to breaks.
+ * Then do normal IR code generation.
+ *
+ * Before:
+ * 
+ * while (LOOPCOND) {
+ *    A;
+ *    if (IFCOND)
+ *       continue;
+ *    B;
+ *    break;
+ *    C;
+ * }
+ * 
+ * After:
+ * 
+ * {
+ *    bool _notBreakFlag = 1;
+ *    while (_notBreakFlag && LOOPCOND) {
+ *       do {
+ *          A;
+ *          if (IFCOND) {
+ *             break;  // was continue
+ *          }
+ *          B;
+ *          _notBreakFlag = 0; // was
+ *          break;             // break
+ *          C;
+ *       } while (0)
+ *    }
+ * }
+ */
+static slang_ir_node *
+_slang_gen_while_without_continue(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_operation *top;
+   slang_operation *innerBody;
+
+   assert(oper->type == SLANG_OPER_WHILE);
+
+   top = slang_operation_new(1);
+   top->type = SLANG_OPER_BLOCK_NEW_SCOPE;
+   top->locals->outer_scope = oper->locals->outer_scope;
+   slang_operation_add_children(top, 2);
+
+   /* declare: bool _notBreakFlag = true */
+   {
+      slang_operation *condDecl = slang_oper_child(top, 0);
+      slang_generate_declaration(A, top->locals, condDecl,
+                                 SLANG_SPEC_BOOL, "_notBreakFlag", GL_TRUE);
+   }
+
+   /* build outer while-loop:  while (_notBreakFlag && LOOPCOND) { ... } */
+   {
+      slang_operation *outerWhile = slang_oper_child(top, 1);
+      outerWhile->type = SLANG_OPER_WHILE;
+      slang_operation_add_children(outerWhile, 2);
+
+      /* _notBreakFlag && LOOPCOND */
+      {
+         slang_operation *cond = slang_oper_child(outerWhile, 0);
+         cond->type = SLANG_OPER_LOGICALAND;
+         slang_operation_add_children(cond, 2);
+         {
+            slang_operation *notBreak = slang_oper_child(cond, 0);
+            slang_operation_identifier(notBreak, A, "_notBreakFlag");
+         }
+         {
+            slang_operation *origCond = slang_oper_child(cond, 1);
+            slang_operation_copy(origCond, slang_oper_child(oper, 0));
+         }
+      }
+
+      /* inner loop */
+      {
+         slang_operation *innerDo = slang_oper_child(outerWhile, 1);
+         innerDo->type = SLANG_OPER_DO;
+         slang_operation_add_children(innerDo, 2);
+
+         /* copy original do-loop body into inner do-loop's body */
+         innerBody = slang_oper_child(innerDo, 0);
+         slang_operation_copy(innerBody, slang_oper_child(oper, 1));
+         innerBody->locals->outer_scope = innerDo->locals;
+
+         /* inner do-loop's condition is constant/false */
+         {
+            slang_operation *constFalse = slang_oper_child(innerDo, 1);
+            slang_operation_literal_bool(constFalse, GL_FALSE);
+         }
+      }
+   }
+
+   /* Finally, in innerBody,
+    *   replace "break" with "_notBreakFlag = 0; break"
+    *   replace "continue" with "break"
+    */
+   replace_break_and_cont(A, innerBody);
+
+   /*slang_print_tree(top, 0);*/
+
+   return _slang_gen_operation(A, top);
+
+   return NULL;
+}
+
+
+/**
  * Generate loop code using high-level IR_LOOP instruction
  */
 static slang_ir_node *
-_slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
+_slang_gen_while(slang_assemble_ctx * A, slang_operation *oper)
 {
    /*
     * LOOP:
     *    BREAK if !expr (child[0])
     *    body code (child[1])
     */
-   slang_ir_node *prevLoop, *loop, *breakIf, *body;
+   slang_ir_node *loop, *breakIf, *body;
    GLboolean isConst, constTrue;
+
+   if (!A->EmitContReturn) {
+      /* We don't want to emit CONT instructions.  If this while-loop has
+       * a continue, translate it away.
+       */
+      if (_slang_loop_contains_continue(slang_oper_child(oper, 1))) {
+         return _slang_gen_while_without_continue(A, oper);
+      }
+   }
 
    /* type-check expression */
    if (!_slang_is_boolean(A, &oper->children[0])) {
@@ -2364,11 +2901,11 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
       return new_node0(IR_NOP);
    }
 
+   /* Begin new loop */
    loop = new_loop(NULL);
 
-   /* save old, push new loop */
-   prevLoop = A->CurLoop;
-   A->CurLoop = loop;
+   /* save loop state */
+   push_loop(A, oper, loop);
 
    if (isConst && constTrue) {
       /* while(nonzero constant), no conditional break */
@@ -2377,7 +2914,7 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    else {
       slang_ir_node *cond
          = new_cond(new_not(_slang_gen_operation(A, &oper->children[0])));
-      breakIf = new_break_if_true(A->CurLoop, cond);
+      breakIf = new_break_if_true(A, cond);
    }
    body = _slang_gen_operation(A, &oper->children[1]);
    loop->Children[0] = new_seq(breakIf, body);
@@ -2386,15 +2923,120 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    /* loop->List is head of linked list of break/continue nodes */
    if (!loop->List && isConst && constTrue) {
       /* infinite loop detected */
-      A->CurLoop = prevLoop; /* clean-up */
+      pop_loop(A);
       slang_info_log_error(A->log, "Infinite loop detected!");
       return NULL;
    }
 
-   /* pop loop, restore prev */
-   A->CurLoop = prevLoop;
+   /* restore loop state */
+   pop_loop(A);
 
    return loop;
+}
+
+
+/**
+ * Transform a do-while-loop so that continue statements are converted to breaks.
+ * Then do normal IR code generation.
+ *
+ * Before:
+ * 
+ * do {
+ *    A;
+ *    if (IFCOND)
+ *       continue;
+ *    B;
+ *    break;
+ *    C;
+ * } while (LOOPCOND);
+ * 
+ * After:
+ * 
+ * {
+ *    bool _notBreakFlag = 1;
+ *    do {
+ *       do {
+ *          A;
+ *          if (IFCOND) {
+ *             break;  // was continue
+ *          }
+ *          B;
+ *          _notBreakFlag = 0; // was
+ *          break;             // break
+ *          C;
+ *       } while (0)
+ *    } while (_notBreakFlag && LOOPCOND);
+ * }
+ */
+static slang_ir_node *
+_slang_gen_do_without_continue(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_operation *top;
+   slang_operation *innerBody;
+
+   assert(oper->type == SLANG_OPER_DO);
+
+   top = slang_operation_new(1);
+   top->type = SLANG_OPER_BLOCK_NEW_SCOPE;
+   top->locals->outer_scope = oper->locals->outer_scope;
+   slang_operation_add_children(top, 2);
+
+   /* declare: bool _notBreakFlag = true */
+   {
+      slang_operation *condDecl = slang_oper_child(top, 0);
+      slang_generate_declaration(A, top->locals, condDecl,
+                                 SLANG_SPEC_BOOL, "_notBreakFlag", GL_TRUE);
+   }
+
+   /* build outer do-loop:  do { ... } while (_notBreakFlag && LOOPCOND) */
+   {
+      slang_operation *outerDo = slang_oper_child(top, 1);
+      outerDo->type = SLANG_OPER_DO;
+      slang_operation_add_children(outerDo, 2);
+
+      /* inner do-loop */
+      {
+         slang_operation *innerDo = slang_oper_child(outerDo, 0);
+         innerDo->type = SLANG_OPER_DO;
+         slang_operation_add_children(innerDo, 2);
+
+         /* copy original do-loop body into inner do-loop's body */
+         innerBody = slang_oper_child(innerDo, 0);
+         slang_operation_copy(innerBody, slang_oper_child(oper, 0));
+         innerBody->locals->outer_scope = innerDo->locals;
+
+         /* inner do-loop's condition is constant/false */
+         {
+            slang_operation *constFalse = slang_oper_child(innerDo, 1);
+            slang_operation_literal_bool(constFalse, GL_FALSE);
+         }
+      }
+
+      /* _notBreakFlag && LOOPCOND */
+      {
+         slang_operation *cond = slang_oper_child(outerDo, 1);
+         cond->type = SLANG_OPER_LOGICALAND;
+         slang_operation_add_children(cond, 2);
+         {
+            slang_operation *notBreak = slang_oper_child(cond, 0);
+            slang_operation_identifier(notBreak, A, "_notBreakFlag");
+         }
+         {
+            slang_operation *origCond = slang_oper_child(cond, 1);
+            slang_operation_copy(origCond, slang_oper_child(oper, 1));
+         }
+      }
+   }
+
+   /* Finally, in innerBody,
+    *   replace "break" with "_notBreakFlag = 0; break"
+    *   replace "continue" with "break"
+    */
+   replace_break_and_cont(A, innerBody);
+
+   /*slang_print_tree(top, 0);*/
+
+   return _slang_gen_operation(A, top);
 }
 
 
@@ -2402,7 +3044,7 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
  * Generate IR tree for a do-while loop using high-level LOOP, IF instructions.
  */
 static slang_ir_node *
-_slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
+_slang_gen_do(slang_assemble_ctx * A, slang_operation *oper)
 {
    /*
     * LOOP:
@@ -2410,8 +3052,17 @@ _slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
     *    tail code:
     *       BREAK if !expr (child[1])
     */
-   slang_ir_node *prevLoop, *loop;
+   slang_ir_node *loop;
    GLboolean isConst, constTrue;
+
+   if (!A->EmitContReturn) {
+      /* We don't want to emit CONT instructions.  If this do-loop has
+       * a continue, translate it away.
+       */
+      if (_slang_loop_contains_continue(slang_oper_child(oper, 0))) {
+         return _slang_gen_do_without_continue(A, oper);
+      }
+   }
 
    /* type-check expression */
    if (!_slang_is_boolean(A, &oper->children[1])) {
@@ -2421,9 +3072,8 @@ _slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
 
    loop = new_loop(NULL);
 
-   /* save old, push new loop */
-   prevLoop = A->CurLoop;
-   A->CurLoop = loop;
+   /* save loop state */
+   push_loop(A, oper, loop);
 
    /* loop body: */
    loop->Children[0] = _slang_gen_operation(A, &oper->children[0]);
@@ -2437,13 +3087,13 @@ _slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
    else {
       slang_ir_node *cond
          = new_cond(new_not(_slang_gen_operation(A, &oper->children[1])));
-      loop->Children[1] = new_break_if_true(A->CurLoop, cond);
+      loop->Children[1] = new_break_if_true(A, cond);
    }
 
    /* XXX we should do infinite loop detection, as above */
 
-   /* pop loop, restore prev */
-   A->CurLoop = prevLoop;
+   /* restore loop state */
+   pop_loop(A);
 
    return loop;
 }
@@ -2485,8 +3135,13 @@ _slang_can_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
    const char *varName;
    slang_atom varId;
 
-   assert(oper->type == SLANG_OPER_FOR);
+   if (oper->type != SLANG_OPER_FOR)
+      return GL_FALSE;
+
    assert(oper->num_children == 4);
+
+   if (_slang_loop_contains_continue_or_break(slang_oper_child_const(oper, 3)))
+      return GL_FALSE;
 
    /* children[0] must be either "int i=constant" or "i=constant" */
    if (oper->children[0].type == SLANG_OPER_BLOCK_NO_NEW_SCOPE) {
@@ -2582,20 +3237,6 @@ _slang_can_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
 }
 
 
-static void
-_unroll_loop_inc(slang_assemble_ctx * A)
-{
-   A->UnrollLoop++;
-}
-
-
-static void
-_unroll_loop_dec(slang_assemble_ctx * A)
-{
-   A->UnrollLoop--;
-}
-
-
 /**
  * Unroll a for-loop.
  * First we determine the number of iterations to unroll.
@@ -2611,9 +3252,6 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
    GLint start, end, iter;
    slang_ir_node *n, *root = NULL;
    slang_atom varId;
-
-   /* Set flag so code generator knows we're unrolling loops */
-   _unroll_loop_inc( A );
 
    if (oper->children[0].type == SLANG_OPER_BLOCK_NO_NEW_SCOPE) {
       /* for (int i=0; ... */
@@ -2637,15 +3275,11 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
 
       /* make a copy of the loop body */
       body = slang_operation_new(1);
-      if (!body) {
-         _unroll_loop_dec( A );
+      if (!body)
          return NULL;
-      }
 
-      if (!slang_operation_copy(body, &oper->children[3])) {
-         _unroll_loop_dec( A );
+      if (!slang_operation_copy(body, &oper->children[3]))
          return NULL;
-      }
 
       /* in body, replace instances of 'varId' with literal 'iter' */
       {
@@ -2656,7 +3290,6 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
          if (!oldVar) {
             /* undeclared loop variable */
             slang_operation_delete(body);
-            _unroll_loop_dec( A );
             return NULL;
          }
 
@@ -2671,35 +3304,194 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
 
       /* do IR codegen for body */
       n = _slang_gen_operation(A, body);
-      if (!n) {
-         _unroll_loop_dec( A );
+      if (!n)
          return NULL;
-      }
 
       root = new_seq(root, n);
 
       slang_operation_delete(body);
    }
 
-   _unroll_loop_dec( A );
-
    return root;
 }
+
+
+/**
+ * Replace 'continue' statement with 'break' inside a for-loop.
+ * This is a recursive helper function used by _slang_gen_for_without_continue().
+ */
+static void
+replace_continue_with_break(slang_assemble_ctx *A, slang_operation *oper)
+{
+   switch (oper->type) {
+   case SLANG_OPER_CONTINUE:
+      oper->type = SLANG_OPER_BREAK;
+      break;
+   case SLANG_OPER_FOR:
+   case SLANG_OPER_DO:
+   case SLANG_OPER_WHILE:
+      /* stop upon finding a nested loop */
+      break;
+   default:
+      /* recurse */
+      {
+         GLuint i;
+         for (i = 0; i < oper->num_children; i++) {
+            replace_continue_with_break(A, slang_oper_child(oper, i));
+         }
+      }
+   }
+}
+
+
+/**
+ * Transform a for-loop so that continue statements are converted to breaks.
+ * Then do normal IR code generation.
+ *
+ * Before:
+ * 
+ * for (INIT; LOOPCOND; INCR) {
+ *    A;
+ *    if (IFCOND) {
+ *       continue;
+ *    }
+ *    B;
+ * }
+ * 
+ * After:
+ * 
+ * {
+ *    bool _condFlag = 1;
+ *    for (INIT; _condFlag; ) {
+ *       for ( ; _condFlag = LOOPCOND; INCR) {
+ *          A;
+ *          if (IFCOND) {
+ *             break;
+ *          }
+ *          B;
+ *       }
+ *       if (_condFlag)
+ *          INCR;
+ *    }
+ * }
+ */
+static slang_ir_node *
+_slang_gen_for_without_continue(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_operation *top;
+   slang_operation *outerFor, *innerFor, *init, *cond, *incr;
+   slang_operation *lhs, *rhs;
+
+   assert(oper->type == SLANG_OPER_FOR);
+
+   top = slang_operation_new(1);
+   top->type = SLANG_OPER_BLOCK_NEW_SCOPE;
+   top->locals->outer_scope = oper->locals->outer_scope;
+   slang_operation_add_children(top, 2);
+
+   /* declare: bool _condFlag = true */
+   {
+      slang_operation *condDecl = slang_oper_child(top, 0);
+      slang_generate_declaration(A, top->locals, condDecl,
+                                 SLANG_SPEC_BOOL, "_condFlag", GL_TRUE);
+   }
+
+   /* build outer loop:  for (INIT; _condFlag; ) { */
+   outerFor = slang_oper_child(top, 1);
+   outerFor->type = SLANG_OPER_FOR;
+   slang_operation_add_children(outerFor, 4);
+
+   init = slang_oper_child(outerFor, 0);
+   slang_operation_copy(init, slang_oper_child(oper, 0));
+
+   cond = slang_oper_child(outerFor, 1);
+   cond->type = SLANG_OPER_IDENTIFIER;
+   cond->a_id = slang_atom_pool_atom(A->atoms, "_condFlag");
+
+   incr = slang_oper_child(outerFor, 2);
+   incr->type = SLANG_OPER_VOID;
+
+   /* body of the outer loop */
+   {
+      slang_operation *block = slang_oper_child(outerFor, 3);
+
+      slang_operation_add_children(block, 2);
+      block->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
+
+      /* build inner loop:  for ( ; _condFlag = LOOPCOND; INCR) { */
+      {
+         innerFor = slang_oper_child(block, 0);
+
+         /* make copy of orig loop */
+         slang_operation_copy(innerFor, oper);
+         assert(innerFor->type == SLANG_OPER_FOR);
+         innerFor->locals->outer_scope = block->locals;
+
+         init = slang_oper_child(innerFor, 0);
+         init->type = SLANG_OPER_VOID; /* leak? */
+
+         cond = slang_oper_child(innerFor, 1);
+         slang_operation_destruct(cond);
+         cond->type = SLANG_OPER_ASSIGN;
+         cond->locals = _slang_variable_scope_new(innerFor->locals);
+         slang_operation_add_children(cond, 2);
+
+         lhs = slang_oper_child(cond, 0);
+         lhs->type = SLANG_OPER_IDENTIFIER;
+         lhs->a_id = slang_atom_pool_atom(A->atoms, "_condFlag");
+
+         rhs = slang_oper_child(cond, 1);
+         slang_operation_copy(rhs, slang_oper_child(oper, 1));
+      }
+
+      /* if (_condFlag) INCR; */
+      {
+         slang_operation *ifop = slang_oper_child(block, 1);
+         ifop->type = SLANG_OPER_IF;
+         slang_operation_add_children(ifop, 2);
+
+         /* re-use cond node build above */
+         slang_operation_copy(slang_oper_child(ifop, 0), cond);
+
+         /* incr node from original for-loop operation */
+         slang_operation_copy(slang_oper_child(ifop, 1),
+                              slang_oper_child(oper, 2));
+      }
+
+      /* finally, replace "continue" with "break" in the inner for-loop */
+      replace_continue_with_break(A, slang_oper_child(innerFor, 3));
+   }
+
+   return _slang_gen_operation(A, top);
+}
+
 
 
 /**
  * Generate IR for a for-loop.  Unrolling will be done when possible.
  */
 static slang_ir_node *
-_slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
+_slang_gen_for(slang_assemble_ctx * A, slang_operation *oper)
 {
-   GLboolean unroll = _slang_can_unroll_for_loop(A, oper);
+   GLboolean unroll;
 
+   if (!A->EmitContReturn) {
+      /* We don't want to emit CONT instructions.  If this for-loop has
+       * a continue, translate it away.
+       */
+      if (_slang_loop_contains_continue(slang_oper_child(oper, 3))) {
+         return _slang_gen_for_without_continue(A, oper);
+      }
+   }
+
+   unroll = _slang_can_unroll_for_loop(A, oper);
    if (unroll) {
       slang_ir_node *code = _slang_unroll_for_loop(A, oper);
       if (code)
          return code;
    }
+
+   assert(oper->type == SLANG_OPER_FOR);
 
    /* conventional for-loop code generation */
    {
@@ -2711,24 +3503,23 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
        *    tail code:
        *       incr code (child[2])   // XXX continue here
        */
-      slang_ir_node *prevLoop, *loop, *cond, *breakIf, *body, *init, *incr;
+      slang_ir_node *loop, *cond, *breakIf, *body, *init, *incr;
       init = _slang_gen_operation(A, &oper->children[0]);
       loop = new_loop(NULL);
 
-      /* save old, push new loop */
-      prevLoop = A->CurLoop;
-      A->CurLoop = loop;
+      /* save loop state */
+      push_loop(A, oper, loop);
 
       cond = new_cond(new_not(_slang_gen_operation(A, &oper->children[1])));
-      breakIf = new_break_if_true(A->CurLoop, cond);
+      breakIf = new_break_if_true(A, cond);
       body = _slang_gen_operation(A, &oper->children[3]);
       incr = _slang_gen_operation(A, &oper->children[2]);
 
       loop->Children[0] = new_seq(breakIf, body);
       loop->Children[1] = incr;  /* tail code */
 
-      /* pop loop, restore prev */
-      A->CurLoop = prevLoop;
+      /* restore loop state */
+      pop_loop(A);
 
       return new_seq(init, loop);
    }
@@ -2738,18 +3529,22 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
 static slang_ir_node *
 _slang_gen_continue(slang_assemble_ctx * A, const slang_operation *oper)
 {
-   slang_ir_node *n, *loopNode;
+   slang_ir_node *n, *cont, *incr = NULL, *loopNode;
+
    assert(oper->type == SLANG_OPER_CONTINUE);
-   loopNode = A->CurLoop;
+   loopNode = current_loop_ir(A);
    assert(loopNode);
    assert(loopNode->Opcode == IR_LOOP);
-   n = new_node0(IR_CONT);
-   if (n) {
-      n->Parent = loopNode;
-      /* insert this node at head of linked list */
-      n->List = loopNode->List;
-      loopNode->List = n;
+
+   cont = new_node0(IR_CONT);
+   if (cont) {
+      cont->Parent = loopNode;
+      /* insert this node at head of linked list of cont/break instructions */
+      cont->List = loopNode->List;
+      loopNode->List = cont;
    }
+
+   n = new_seq(incr, cont);
    return n;
 }
 
@@ -2819,24 +3614,20 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
    if (is_operation_type(&oper->children[1], SLANG_OPER_BREAK)
        && !haveElseClause) {
       /* Special case: generate a conditional break */
-      if (!A->CurLoop && A->UnrollLoop) /* trying to unroll */
-         return NULL;
-      ifBody = new_break_if_true(A->CurLoop, cond);
+      ifBody = new_break_if_true(A, cond);
       return ifBody;
    }
    else if (is_operation_type(&oper->children[1], SLANG_OPER_CONTINUE)
-            && !haveElseClause) {
+            && !haveElseClause
+            && current_loop_oper(A)
+            && current_loop_oper(A)->type != SLANG_OPER_FOR) {
       /* Special case: generate a conditional continue */
-      if (!A->CurLoop && A->UnrollLoop) /* trying to unroll */
-         return NULL;
-      ifBody = new_cont_if_true(A->CurLoop, cond);
+      ifBody = new_cont_if_true(A, cond);
       return ifBody;
    }
    else {
       /* general case */
       ifBody = _slang_gen_operation(A, &oper->children[1]);
-      if (!ifBody)
-         return NULL;
       if (haveElseClause)
          elseBody = _slang_gen_operation(A, &oper->children[2]);
       else
@@ -3242,14 +4033,11 @@ _slang_gen_logical_and(slang_assemble_ctx *A, slang_operation *oper)
 
    select = slang_operation_new(1);
    select->type = SLANG_OPER_SELECT;
-   select->num_children = 3;
-   select->children = slang_operation_new(3);
+   slang_operation_add_children(select, 3);
 
-   slang_operation_copy(&select->children[0], &oper->children[0]);
-   slang_operation_copy(&select->children[1], &oper->children[1]);
-   select->children[2].type = SLANG_OPER_LITERAL_BOOL;
-   ASSIGN_4V(select->children[2].literal, 0, 0, 0, 0); /* false */
-   select->children[2].literal_size = 1;
+   slang_operation_copy(slang_oper_child(select, 0), &oper->children[0]);
+   slang_operation_copy(slang_oper_child(select, 1), &oper->children[1]);
+   slang_operation_literal_bool(slang_oper_child(select, 2), GL_FALSE);
 
    n = _slang_gen_select(A, select);
    return n;
@@ -3268,14 +4056,11 @@ _slang_gen_logical_or(slang_assemble_ctx *A, slang_operation *oper)
 
    select = slang_operation_new(1);
    select->type = SLANG_OPER_SELECT;
-   select->num_children = 3;
-   select->children = slang_operation_new(3);
+   slang_operation_add_children(select, 3);
 
-   slang_operation_copy(&select->children[0], &oper->children[0]);
-   select->children[1].type = SLANG_OPER_LITERAL_BOOL;
-   ASSIGN_4V(select->children[1].literal, 1, 1, 1, 1); /* true */
-   select->children[1].literal_size = 1;
-   slang_operation_copy(&select->children[2], &oper->children[1]);
+   slang_operation_copy(slang_oper_child(select, 0), &oper->children[0]);
+   slang_operation_literal_bool(slang_oper_child(select, 1), GL_TRUE);
+   slang_operation_copy(slang_oper_child(select, 2), &oper->children[1]);
 
    n = _slang_gen_select(A, select);
    return n;
@@ -3288,70 +4073,8 @@ _slang_gen_logical_or(slang_assemble_ctx *A, slang_operation *oper)
 static slang_ir_node *
 _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
 {
-   const GLboolean haveReturnValue
-      = (oper->num_children == 1 && oper->children[0].type != SLANG_OPER_VOID);
-
-   /* error checking */
-   assert(A->CurFunction);
-   if (haveReturnValue &&
-       A->CurFunction->header.type.specifier.type == SLANG_SPEC_VOID) {
-      slang_info_log_error(A->log, "illegal return expression");
-      return NULL;
-   }
-   else if (!haveReturnValue &&
-            A->CurFunction->header.type.specifier.type != SLANG_SPEC_VOID) {
-      slang_info_log_error(A->log, "return statement requires an expression");
-      return NULL;
-   }
-
-   if (!haveReturnValue) {
-      return new_return(A->curFuncEndLabel);
-   }
-   else {
-      /*
-       * Convert from:
-       *   return expr;
-       * To:
-       *   __retVal = expr;
-       *   return;  // goto __endOfFunction
-       */
-      slang_operation *assign;
-      slang_atom a_retVal;
-      slang_ir_node *n;
-
-      a_retVal = slang_atom_pool_atom(A->atoms, "__retVal");
-      assert(a_retVal);
-
-#if 1 /* DEBUG */
-      {
-         slang_variable *v =
-            _slang_variable_locate(oper->locals, a_retVal, GL_TRUE);
-         if (!v) {
-            /* trying to return a value in a void-valued function */
-            return NULL;
-         }
-      }
-#endif
-
-      assign = slang_operation_new(1);
-      assign->type = SLANG_OPER_ASSIGN;
-      assign->num_children = 2;
-      assign->children = slang_operation_new(2);
-      /* lhs (__retVal) */
-      assign->children[0].type = SLANG_OPER_IDENTIFIER;
-      assign->children[0].a_id = a_retVal;
-      assign->children[0].locals->outer_scope = assign->locals;
-      /* rhs (expr) */
-      /* XXX we might be able to avoid this copy someday */
-      slang_operation_copy(&assign->children[1], &oper->children[0]);
-
-      /* assemble the new code */
-      n = new_seq(_slang_gen_operation(A, assign),
-                  new_return(A->curFuncEndLabel));
-
-      slang_operation_delete(assign);
-      return n;
-   }
+   assert(oper->type == SLANG_OPER_RETURN);
+   return new_return(A->curFuncEndLabel);
 }
 
 
@@ -3456,6 +4179,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
 
    assert(oper->type == SLANG_OPER_VARIABLE_DECL);
    assert(oper->num_children <= 1);
+
 
    /* lookup the variable by name */
    var = _slang_variable_locate(oper->locals, oper->a_id, GL_TRUE);
@@ -3612,6 +4336,9 @@ root_swizzle(const slang_ir_storage *st)
 static slang_ir_node *
 _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
 {
+   slang_operation *pred = NULL;
+   slang_ir_node *n = NULL;
+
    if (oper->children[0].type == SLANG_OPER_IDENTIFIER) {
       /* Check that var is writeable */
       slang_variable *var
@@ -3632,6 +4359,17 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
                               (char *) oper->children[0].a_id);
          return NULL;
       }
+
+      /* check if we need to predicate this assignment based on __notRetFlag */
+      if ((var->is_global ||
+           var->type.qualifier == SLANG_QUAL_OUT ||
+           var->type.qualifier == SLANG_QUAL_INOUT) && A->UseReturnFlag) {
+         /* create predicate, used below */
+         pred = slang_operation_new(1);
+         pred->type = SLANG_OPER_IDENTIFIER;
+         pred->a_id = slang_atom_pool_atom(A->atoms, "__notRetFlag");
+         pred->locals->outer_scope = oper->locals->outer_scope;
+      }
    }
 
    if (oper->children[0].type == SLANG_OPER_IDENTIFIER &&
@@ -3643,14 +4381,12 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
        * cases such as "v.x = f();"  - would help with typical vertex
        * transformation.
        */
-      slang_ir_node *n;
       n = _slang_gen_function_call_name(A,
                                       (const char *) oper->children[1].a_id,
                                       &oper->children[1], &oper->children[0]);
-      return n;
    }
    else {
-      slang_ir_node *n, *lhs, *rhs;
+      slang_ir_node *lhs, *rhs;
 
       /* lhs and rhs type checking */
       if (!_slang_assignment_compatible(A,
@@ -3690,12 +4426,21 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
             rhs = _slang_gen_swizzle(rhs, newSwizzle);
          }
          n = new_node2(IR_COPY, lhs, rhs);
-         return n;
       }
       else {
          return NULL;
       }
    }
+
+   if (n && pred) {
+      /* predicate the assignment code on __notRetFlag */
+      slang_ir_node *top, *cond;
+
+      cond = _slang_gen_operation(A, pred);
+      top = new_if(cond, n, NULL);
+      return top;
+   }
+   return n;
 }
 
 
@@ -4048,16 +4793,14 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case SLANG_OPER_WHILE:
       return _slang_gen_while(A, oper);
    case SLANG_OPER_BREAK:
-      if (!A->CurLoop) {
-         if (!A->UnrollLoop)
-            slang_info_log_error(A->log, "'break' not in loop");
+      if (!current_loop_oper(A)) {
+         slang_info_log_error(A->log, "'break' not in loop");
          return NULL;
       }
-      return new_break(A->CurLoop);
+      return new_break(current_loop_ir(A));
    case SLANG_OPER_CONTINUE:
-      if (!A->CurLoop) {
-         if (!A->UnrollLoop)
-            slang_info_log_error(A->log, "'continue' not in loop");
+      if (!current_loop_oper(A)) {
+         slang_info_log_error(A->log, "'continue' not in loop");
          return NULL;
       }
       return _slang_gen_continue(A, oper);
@@ -4182,6 +4925,8 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       return _slang_gen_method_call(A, oper);
    case SLANG_OPER_RETURN:
       return _slang_gen_return(A, oper);
+   case SLANG_OPER_RETURN_INLINED:
+      return _slang_gen_return(A, oper);
    case SLANG_OPER_LABEL:
       return new_label(oper->label);
    case SLANG_OPER_IDENTIFIER:
@@ -4302,6 +5047,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    const GLint arrayLen = _slang_array_length(var);
    const GLint totalSize = _slang_array_size(size, arrayLen);
    GLint texIndex = sampler_to_texture_index(var->type.specifier.type);
+
+   var->is_global = GL_TRUE;
 
    /* check for sampler2D arrays */
    if (texIndex == -1 && var->type.specifier._array)
@@ -4601,7 +5348,9 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    assert(A->program->Parameters );
    assert(A->program->Varying);
    assert(A->vartable);
-   A->CurLoop = NULL;
+
+   A->LoopDepth = 0;
+   A->UseReturnFlag = GL_FALSE;
    A->CurFunction = fun;
 
    /* fold constant expressions, etc. */

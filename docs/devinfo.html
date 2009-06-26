@@ -123,20 +123,21 @@ These are the instructions for making a new Mesa release.
 
 <H3>Get latest source files</H3>
 <p>
-Use "cvs update -dAP " to get the latest Mesa files from CVS.
+Use git to get the latest Mesa files from the git repository, from whatever
+branch is relevant.
 </p>
 
 
 <H3>Verify and update version info</H3>
 <p>
-Create/edit the docs/RELNOTES-X.Y file to document what's new in the release.
-Add the new RELNOTES-X.Y file to <a href="relnotes.html">relnotes.html</a>.
-Update the docs/VERSIONS file too.
+Create/edit the docs/relnotes-x.y.html file to document what's new in the release.
+Add the new relnotes-x.y.html file to <a href="relnotes.html">relnotes.html</a>.
 </p>
 
 <p>
-Edit the MESA_MAJOR, MESA_MINOR and MESA_TINY version numbers in
+Update the MESA_MAJOR, MESA_MINOR and MESA_TINY version numbers in
 configs/default.
+Also update the VERSION line in the top-level Makefile.
 </p>
 
 <p>
@@ -144,27 +145,24 @@ Make sure the values in src/mesa/main/version.h are correct.
 </p>
 
 <p>
-Edit the top-level Makefile and verify that DIRECTORY, LIB_NAME and
-DEMO_NAME are correct.
-</p>
-
-<p>
 Update the docs/news.html file and docs/download.html files.
 </p>
 
 <p>
-Check in all updates to CVS.
+Check in all updates to git.
 </p>
 
 <p>
-Tag the CVS files with the release name (in the form <b>mesa_X_Y</b>).
+Tag the files with the release name (in the form <b>mesa_X_Y</b>)
+with: <code>git tag -a mesa_X_Y</code>
+Then: <code>git push origin mesa_X_Y</code>
 </p>
 
 
 <H3>Make the tarballs</H3>
 <p>
 Make a symbolic link from $(DIRECTORY) to 'Mesa'.  For example,
-ln -s Mesa Mesa-6.3
+<code>ln -s Mesa Mesa-7.5</code>
 This is needed in order to make a correct tar file in the next step.
 </p>
 
@@ -177,7 +175,7 @@ Make the distribution files.  From inside the Mesa directory:
 <p>
 After the tarballs are created, the md5 checksums for the files will
 be computed.
-Add them to the docs/news.html file.
+Add them to the docs/relnotes-X.Y.html file.
 </p>
 
 <p>
@@ -192,8 +190,20 @@ uploading the tarballs.
 </p>
 
 <p>
+Basically, to upload the tarball files with:
+<br>
+<code>
+rsync -avP ssh Mesa*-X.Y.* USERNAME@frs.sourceforge.net:uploads/
+</code>
+</p>
+
+<p>
 Update the web site by copying the docs/ directory's files to 
-/home/users/b/br/brianp/mesa-www/htdocs/
+/home/users/b/br/brianp/mesa-www/htdocs/ with:
+<br>
+<code>
+sftp USERNAME,mesa3d@web.sourceforge.net
+</code>
 </p>
 
 <p>

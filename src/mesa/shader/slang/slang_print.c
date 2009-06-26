@@ -261,6 +261,7 @@ slang_print_tree(const slang_operation *op, int indent)
       break;
 
    case SLANG_OPER_BLOCK_NEW_SCOPE:
+   case SLANG_OPER_NON_INLINED_CALL:
       spaces(indent);
       printf("{{ // new scope  locals=%p outer=%p: ",
              (void *) op->locals,
@@ -344,6 +345,13 @@ slang_print_tree(const slang_operation *op, int indent)
    case SLANG_OPER_RETURN:
       spaces(indent);
       printf("RETURN\n");
+      if (op->num_children > 0)
+         slang_print_tree(&op->children[0], indent + 3);
+      break;
+
+   case SLANG_OPER_RETURN_INLINED:
+      spaces(indent);
+      printf("RETURN_INLINED\n");
       if (op->num_children > 0)
          slang_print_tree(&op->children[0], indent + 3);
       break;
@@ -478,7 +486,7 @@ slang_print_tree(const slang_operation *op, int indent)
                    (void *) scope,
                    (void *) op->locals,
                    (void *) op->locals->outer_scope);
-            assert(scope);
+            /*assert(scope);*/
          }
       }
       break;

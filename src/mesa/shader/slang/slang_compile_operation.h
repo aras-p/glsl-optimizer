@@ -42,6 +42,7 @@ typedef enum slang_operation_type_
    SLANG_OPER_CONTINUE,         /* "continue" statement */
    SLANG_OPER_DISCARD,          /* "discard" (kill fragment) statement */
    SLANG_OPER_RETURN,           /* "return" [expr]  */
+   SLANG_OPER_RETURN_INLINED,   /* "return" [expr] from inlined function  */
    SLANG_OPER_LABEL,            /* a jump target */
    SLANG_OPER_EXPRESSION,       /* [expr] */
    SLANG_OPER_IF,               /* "if" [0] then [1] else [2] */
@@ -150,6 +151,9 @@ slang_operation_new(GLuint count);
 extern void
 slang_operation_delete(slang_operation *oper);
 
+extern void
+slang_operation_free_children(slang_operation *oper);
+
 extern slang_operation *
 slang_operation_grow(GLuint *numChildren, slang_operation **children);
 
@@ -157,8 +161,66 @@ extern slang_operation *
 slang_operation_insert(GLuint *numChildren, slang_operation **children,
                        GLuint pos);
 
+extern slang_operation *
+slang_operation_insert_child(slang_operation *oper, GLuint pos);
+
 extern void
 _slang_operation_swap(slang_operation *oper0, slang_operation *oper1);
+
+
+extern void
+slang_operation_add_children(slang_operation *oper, GLuint num_children);
+
+
+/** Return number of children of given node */
+static INLINE GLuint
+slang_oper_num_children(const slang_operation *oper)
+{
+   return oper->num_children;
+}
+
+/** Return child of given operation node */
+static INLINE slang_operation *
+slang_oper_child(slang_operation *oper, GLuint child)
+{
+   assert(child < oper->num_children);
+   return &oper->children[child];
+}
+
+
+/** Return child of given operation node, const version */
+static INLINE const slang_operation *
+slang_oper_child_const(const slang_operation *oper, GLuint child)
+{
+   assert(child < oper->num_children);
+   return &oper->children[child];
+}
+
+
+/** Init oper to a boolean literal. */
+static INLINE void
+slang_operation_literal_bool(slang_operation *oper, GLboolean value)
+{
+   oper->type = SLANG_OPER_LITERAL_BOOL;
+   oper->literal[0] =
+   oper->literal[1] =
+   oper->literal[2] =
+   oper->literal[3] = (float) value;
+   oper->literal_size = 1;
+}
+
+
+/** Init oper to an int literal. */
+static INLINE void
+slang_operation_literal_int(slang_operation *oper, GLint value)
+{
+   oper->type = SLANG_OPER_LITERAL_INT;
+   oper->literal[0] =
+   oper->literal[1] =
+   oper->literal[2] =
+   oper->literal[3] = (float) value;
+   oper->literal_size = 1;
+}
 
 
 #endif /* SLANG_COMPILE_OPERATION_H */

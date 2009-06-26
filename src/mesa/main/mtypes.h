@@ -2049,6 +2049,7 @@ struct gl_shader_state
    struct gl_shader_program *CurrentProgram; /**< The user-bound program */
    /** Driver-selectable options: */
    GLboolean EmitHighLevelInstructions; /**< IF/ELSE/ENDIF vs. BRA, etc. */
+   GLboolean EmitContReturn;            /**< Emit CONT/RET opcodes? */
    GLboolean EmitCondCodes;             /**< Use condition codes? */
    GLboolean EmitComments;              /**< Annotated instructions */
    void *MemPool;
