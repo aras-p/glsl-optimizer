@@ -44,6 +44,17 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
             return R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
         case PIPE_FORMAT_R8G8B8A8_UNORM:
             return R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8);
+        /* DXT1 */
+        case PIPE_FORMAT_DXT1_RGB:
+            return R300_EASY_TX_FORMAT(X, Y, Z, ONE, DXT1);
+        case PIPE_FORMAT_DXT1_RGBA:
+            return R300_EASY_TX_FORMAT(X, Y, Z, W, DXT1);
+        /* DXT3 */
+        case PIPE_FORMAT_DXT3_RGBA:
+            return R300_EASY_TX_FORMAT(X, Y, Z, W, DXT3);
+        /* DXT5 */
+        case PIPE_FORMAT_DXT5_RGBA:
+            return R300_EASY_TX_FORMAT(Y, Z, W, X, DXT5);
         default:
             debug_printf("r300: Implementation error: "
                 "Got unsupported texture format %s in %s\n",
