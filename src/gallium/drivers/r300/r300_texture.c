@@ -38,7 +38,7 @@ static void r300_setup_texture_state(struct r300_texture* tex,
         R300_TX_HEIGHT((height - 1) & 0x7ff) | R300_TX_PITCH_EN;
 
     /* XXX */
-    state->format1 = R300_TX_FORMAT_A8R8G8B8;
+    state->format1 = r300_translate_texformat(tex->tex.format);
 
     state->format2 = pitch - 1;
 

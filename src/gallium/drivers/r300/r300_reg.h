@@ -1487,9 +1487,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 	   They are given meanings as R, G, B and Alpha by the swizzle
 	   specification */
 #	define R300_TX_FORMAT_X8		    0x0
-#	define R500_TX_FORMAT_X1		    0x0 // bit set in format 2
 #	define R300_TX_FORMAT_X16		    0x1
-#	define R500_TX_FORMAT_X1_REV		    0x0 // bit set in format 2
 #	define R300_TX_FORMAT_Y4X4		    0x2
 #	define R300_TX_FORMAT_Y8X8		    0x3
 #	define R300_TX_FORMAT_Y16X16		    0x4
@@ -1506,31 +1504,29 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_FORMAT_DXT1	    	    0xF
 #	define R300_TX_FORMAT_DXT3	    	    0x10
 #	define R300_TX_FORMAT_DXT5	    	    0x11
-#	define R300_TX_FORMAT_D3DMFT_CxV8U8	    0x12     /* no swizzle */
-#	define R300_TX_FORMAT_A8R8G8B8	    	    0x13     /* no swizzle */
-#	define R300_TX_FORMAT_B8G8_B8G8	    	    0x14     /* no swizzle */
-#	define R300_TX_FORMAT_G8R8_G8B8	    	    0x15     /* no swizzle */
+#	define R300_TX_FORMAT_Y8           	    0x12
+#	define R300_TX_FORMAT_AVYU444 	    	    0x13
+#	define R300_TX_FORMAT_VYUY422  	    	    0x14
+#	define R300_TX_FORMAT_YVYU422  	    	    0x15
+#	define R300_TX_FORMAT_16_MPEG  	    	    0x16
+#	define R300_TX_FORMAT_16_16_MPEG    	    0x17
+#	define R300_TX_FORMAT_16F     	    	    0x18
+#	define R300_TX_FORMAT_16F_16F 	    	    0x19
+#	define R300_TX_FORMAT_16F_16F_16F_16F  	    0x1A
+#	define R300_TX_FORMAT_32F     	    	    0x1B
+#	define R300_TX_FORMAT_32F_32F 	    	    0x1C
+#	define R300_TX_FORMAT_32F_32F_32F_32F  	    0x1D
+#       define R300_TX_FORMAT_W24_FP                0x1E
 
-	/* These two values are wrong, but they're the only values that
-	 * produce any even vaguely correct results.  Can r300 only do 16-bit
-	 * depth textures?
-	 */
-#	define R300_TX_FORMAT_X24_Y8	    	    0x1e
-#	define R300_TX_FORMAT_X32	    	    0x1e
+#       define R300_TX_FORMAT_SIGNED_W             (1 << 5)
+#       define R300_TX_FORMAT_SIGNED_Z             (1 << 6)
+#       define R300_TX_FORMAT_SIGNED_Y             (1 << 7)
+#       define R300_TX_FORMAT_SIGNED_X             (1 << 8)
+#       define R300_TX_FORMAT_SIGNED               (0xf << 5)
 
-	/* 0x16 - some 16 bit green format.. ?? */
 #	define R300_TX_FORMAT_3D		   (1 << 25)
 #	define R300_TX_FORMAT_CUBIC_MAP		   (2 << 25)
 
-	/* gap */
-	/* Floating point formats */
-	/* Note - hardware supports both 16 and 32 bit floating point */
-#	define R300_TX_FORMAT_FL_I16	    	    0x18
-#	define R300_TX_FORMAT_FL_I16A16	    	    0x19
-#	define R300_TX_FORMAT_FL_R16G16B16A16	    0x1A
-#	define R300_TX_FORMAT_FL_I32	    	    0x1B
-#	define R300_TX_FORMAT_FL_I32A32	    	    0x1C
-#	define R300_TX_FORMAT_FL_R32G32B32A32	    0x1D
 	/* alpha modes, convenience mostly */
 	/* if you have alpha, pick constant appropriate to the
 	   number of channels (1 for I8, 2 for I8A8, 4 for R8G8B8A8, etc */

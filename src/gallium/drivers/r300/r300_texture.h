@@ -32,6 +32,27 @@
 
 void r300_init_screen_texture_functions(struct pipe_screen* screen);
 
+/* Note the signature of R300_EASY_TX_FORMAT(A, R, G, B, FORMAT)... */
+static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
+{
+    switch (format) {
+        /* X8 */
+        case PIPE_FORMAT_I8_UNORM:
+            return R300_EASY_TX_FORMAT(X, X, X, X, X8);
+        /* W8Z8Y8X8 */
+        case PIPE_FORMAT_A8R8G8B8_UNORM:
+            return R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
+        case PIPE_FORMAT_R8G8B8A8_UNORM:
+            return R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8);
+        default:
+            debug_printf("r300: Implementation error: "
+                "Got unsupported texture format %s in %s\n",
+                pf_name(format), __FUNCTION__);
+            break;
+    }
+    return 0;
+}
+
 #ifndef R300_WINSYS_H
 
 boolean r300_get_texture_buffer(struct pipe_texture* texture,
