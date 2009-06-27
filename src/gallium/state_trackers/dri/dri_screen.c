@@ -117,14 +117,14 @@ dri_fill_in_modes(struct dri_screen *screen,
 				     PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0)) {
       depth_bits_array[depth_buffer_factor] = 24;
       stencil_bits_array[depth_buffer_factor++] = 8;
-      screen->sd_depth_bits_last = FALSE;
+      screen->sd_depth_bits_last = TRUE;
    } else if (p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z24S8_UNORM,
 					    PIPE_TEXTURE_2D,
 					    PIPE_TEXTURE_USAGE_DEPTH_STENCIL,
 					    0)) {
       depth_bits_array[depth_buffer_factor] = 24;
       stencil_bits_array[depth_buffer_factor++] = 8;
-      screen->sd_depth_bits_last = TRUE;
+      screen->sd_depth_bits_last = FALSE;
    }
 
    msaa_samples_array[0] = 0;
