@@ -1565,7 +1565,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_FORMAT_CONST_Z		(4<<5)
 #	define R300_TX_FORMAT_CONST_W		(8<<5)
 
-#	define R300_TX_FORMAT_YUV_MODE		0x00800000
+#       define R300_TX_FORMAT_GAMMA               (1 << 21)
+#       define R300_TX_FORMAT_YUV_TO_RGB          (1 << 22)
 
 #define R300_TX_FORMAT2_0		    0x4500 /* obvious missing in gap */
 #       define R300_TX_PITCHMASK_SHIFT           0

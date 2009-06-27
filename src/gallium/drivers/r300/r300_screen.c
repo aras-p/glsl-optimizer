@@ -196,10 +196,13 @@ static boolean check_tex_2d_format(enum pipe_format format, uint32_t usage,
                  PIPE_TEXTURE_USAGE_PRIMARY);
 
         /* Texture */
+        case PIPE_FORMAT_A8R8G8B8_SRGB:
+        case PIPE_FORMAT_R8G8B8A8_SRGB:
         case PIPE_FORMAT_DXT1_RGB:
         case PIPE_FORMAT_DXT1_RGBA:
         case PIPE_FORMAT_DXT3_RGBA:
         case PIPE_FORMAT_DXT5_RGBA:
+        case PIPE_FORMAT_YCBCR:
             return usage & PIPE_TEXTURE_USAGE_SAMPLER;
 
         /* Colorbuffer or texture */

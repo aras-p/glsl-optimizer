@@ -44,6 +44,12 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
             return R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
         case PIPE_FORMAT_R8G8B8A8_UNORM:
             return R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8);
+        case PIPE_FORMAT_A8R8G8B8_SRGB:
+            return R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8) |
+                R300_TX_FORMAT_GAMMA;
+        case PIPE_FORMAT_R8G8B8A8_SRGB:
+            return R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8) |
+                R300_TX_FORMAT_GAMMA;
         /* DXT1 */
         case PIPE_FORMAT_DXT1_RGB:
             return R300_EASY_TX_FORMAT(X, Y, Z, ONE, DXT1);
@@ -55,6 +61,10 @@ static INLINE uint32_t r300_translate_texformat(enum pipe_format format)
         /* DXT5 */
         case PIPE_FORMAT_DXT5_RGBA:
             return R300_EASY_TX_FORMAT(Y, Z, W, X, DXT5);
+        /* YVYU422 */
+        case PIPE_FORMAT_YCBCR:
+            return R300_EASY_TX_FORMAT(X, Y, Z, ONE, YVYU422) |
+                R300_TX_FORMAT_YUV_TO_RGB;
         /* W24_FP */
         case PIPE_FORMAT_Z24S8_UNORM:
             return R300_EASY_TX_FORMAT(X, X, X, X, W24_FP);
