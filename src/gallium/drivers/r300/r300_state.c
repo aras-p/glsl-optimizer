@@ -421,6 +421,10 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         rs->color_control = R300_SHADE_MODEL_SMOOTH;
     }
 
+    if (!state->flatshade_first) {
+        rs->color_control |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
+    }
+
     return (void*)rs;
 }
 
