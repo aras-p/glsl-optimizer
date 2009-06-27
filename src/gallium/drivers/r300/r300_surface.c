@@ -234,7 +234,7 @@ static void r300_surface_copy(struct pipe_context* pipe,
         " dimensions %dx%d (pixel pitch %d)\n",
         src, srcx, srcy, dest, destx, desty, w, h, pixpitch);
 
-    if ((srctex == desttex) &&
+    if ((srctex->buffer == desttex->buffer) &&
             ((destx < srcx + w) || (srcx < destx + w)) &&
             ((desty < srcy + h) || (srcy < desty + h))) {
 fallback:
