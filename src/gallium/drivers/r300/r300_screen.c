@@ -185,6 +185,7 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param)
 static boolean check_tex_2d_format(enum pipe_format format, boolean is_r500)
 {
     switch (format) {
+        /* Supported formats. */
         /* Colorbuffer */
         case PIPE_FORMAT_A4R4G4B4_UNORM:
         case PIPE_FORMAT_R5G6B5_UNORM:
@@ -197,6 +198,15 @@ static boolean check_tex_2d_format(enum pipe_format format, boolean is_r500)
         /* Z buffer with stencil */
         case PIPE_FORMAT_Z24S8_UNORM:
             return TRUE;
+
+        /* Definitely unsupported formats. */
+        /* Non-usable Z buffer/stencil formats. */
+        case PIPE_FORMAT_Z24X8_UNORM:
+        case PIPE_FORMAT_S8Z24_UNORM:
+        case PIPE_FORMAT_X8Z24_UNORM:
+            debug_printf("r300: Note: Got unsupported format: %s in %s\n",
+                pf_name(format), __FUNCTION__);
+            return FALSE;
 
         /* XXX These don't even exist
         case PIPE_FORMAT_A32R32G32B32:
@@ -219,7 +229,8 @@ static boolean check_tex_2d_format(enum pipe_format format, boolean is_r500)
             return FALSE; */
 
         default:
-            debug_printf("r300: Warning: Got unsupported format: %s in %s\n",
+            /* Unknown format... */
+            debug_printf("r300: Warning: Got unknown format: %s in %s\n",
                 pf_name(format), __FUNCTION__);
             break;
     }
