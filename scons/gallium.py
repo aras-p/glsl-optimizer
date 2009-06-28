@@ -448,11 +448,15 @@ def generate(env):
 
     # Linker options
     linkflags = []
+    shlinkflags = []
     if gcc:
         if env['machine'] == 'x86':
             linkflags += ['-m32']
         if env['machine'] == 'x86_64':
             linkflags += ['-m64']
+        shlinkflags += [
+            '-Wl,-Bsymbolic',
+        ]
     if platform == 'windows' and msvc:
         # See also:
         # - http://msdn2.microsoft.com/en-us/library/y0zzbyt4.aspx
@@ -500,6 +504,7 @@ def generate(env):
             '/entry:_DllMainCRTStartup',
         ]
     env.Append(LINKFLAGS = linkflags)
+    env.Append(SHLINKFLAGS = shlinkflags)
 
     # Default libs
     env.Append(LIBS = [])
