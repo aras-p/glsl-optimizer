@@ -324,8 +324,10 @@ def generate(env):
     if gcc:
         if debug:
             ccflags += ['-O0', '-g3']
-        elif env['toolchain'] == 'crossmingw':
-            ccflags += ['-O0', '-g3'] # mingw 4.2.1 optimizer is broken
+        elif env['CCVERSION'].startswith('4.2.'):
+            # gcc 4.2.x optimizer is broken
+            print "warning: gcc 4.2.x optimizer is broken -- disabling optimizations"
+            ccflags += ['-O0', '-g3']
         else:
             ccflags += ['-O3', '-g3']
         if env['profile']:
