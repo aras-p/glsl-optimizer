@@ -39,7 +39,6 @@ void radeonEmitVec12(uint32_t *out, GLvoid * data, int stride, int count);
 void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 			 GLvoid * data, int size, int stride, int count);
 
-void radeonReturnDmaRegion(radeonContextPtr rmesa, int return_bytes);
 void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size);
 void radeonAllocDmaRegion(radeonContextPtr rmesa,
 			  struct radeon_bo **pbo, int *poffset,
