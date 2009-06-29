@@ -290,4 +290,10 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
    }
+
+   /* GL_ARB_framebuffer_object */
+   if (ctx->Extensions.EXT_packed_depth_stencil) {
+      /* we support always support GL_EXT_framebuffer_blit */
+      ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
+   }
 }
