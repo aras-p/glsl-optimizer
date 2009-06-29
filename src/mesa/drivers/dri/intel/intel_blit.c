@@ -252,12 +252,7 @@ intelEmitCopyBlit(struct intel_context *intel,
    } while (pass < 2);
 
    if (pass >= 2) {
-       GLboolean locked = GL_FALSE;       
-       if (!intel->locked) {
-           LOCK_HARDWARE(intel);
-           locked = GL_TRUE;
-       }
-
+       LOCK_HARDWARE(intel);
        dri_bo_map(dst_buffer, GL_TRUE);
        dri_bo_map(src_buffer, GL_FALSE);
        _mesa_copy_rect((GLubyte *)dst_buffer->virtual + dst_offset,
@@ -271,9 +266,7 @@ intelEmitCopyBlit(struct intel_context *intel,
        
        dri_bo_unmap(src_buffer);
        dri_bo_unmap(dst_buffer);
-       
-       if (locked)
-           UNLOCK_HARDWARE(intel);
+       UNLOCK_HARDWARE(intel);
 
        return GL_TRUE;
    }

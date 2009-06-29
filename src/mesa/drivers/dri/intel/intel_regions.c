@@ -325,8 +325,6 @@ intel_region_data(struct intel_context *intel,
                   const void *src, GLuint src_pitch,
                   GLuint srcx, GLuint srcy, GLuint width, GLuint height)
 {
-   GLboolean locked = GL_FALSE;
-
    _DBG("%s\n", __FUNCTION__);
 
    if (intel == NULL)
@@ -340,21 +338,14 @@ intel_region_data(struct intel_context *intel,
          intel_region_cow(intel, dst);
    }
 
-   if (!intel->locked) {
-      LOCK_HARDWARE(intel);
-      locked = GL_TRUE;
-   }
-
+   LOCK_HARDWARE(intel);
    _mesa_copy_rect(intel_region_map(intel, dst) + dst_offset,
                    dst->cpp,
                    dst->pitch,
                    dstx, dsty, width, height, src, src_pitch, srcx, srcy);
 
    intel_region_unmap(intel, dst);
-
-   if (locked)
-      UNLOCK_HARDWARE(intel);
-
+   UNLOCK_HARDWARE(intel);
 }
 
 /* Copy rectangular sub-regions. Need better logic about when to
@@ -459,10 +450,6 @@ void
 intel_region_cow(struct intel_context *intel, struct intel_region *region)
 {
    struct intel_buffer_object *pbo = region->pbo;
-   GLboolean was_locked = intel->locked;
-
-   if (intel == NULL)
-      return;
 
    intel_region_release_pbo(intel, region);
 
@@ -473,10 +460,7 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
    /* Now blit from the texture buffer to the new buffer: 
     */
 
-   was_locked = intel->locked;
-   if (!was_locked)
-      LOCK_HARDWARE(intel);
-
+   LOCK_HARDWARE(intel);
    assert(intelEmitCopyBlit(intel,
 			    region->cpp,
 			    region->pitch, pbo->buffer, 0, region->tiling,
@@ -484,9 +468,7 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
 			    0, 0, 0, 0,
 			    region->pitch, region->height,
 			    GL_COPY));
-
-   if (!was_locked)
-      UNLOCK_HARDWARE(intel);
+   UNLOCK_HARDWARE(intel);
 }
 
 dri_bo *

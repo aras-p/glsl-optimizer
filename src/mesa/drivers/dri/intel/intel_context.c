@@ -994,7 +994,6 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
    int me = intel->hHWContext;
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);
-   intel->locked = 1;
 
    if (INTEL_DEBUG & DEBUG_LOCK)
       _mesa_printf("%s - got contended lock\n", __progname);
@@ -1051,9 +1050,11 @@ void LOCK_HARDWARE( struct intel_context *intel )
     struct intel_framebuffer *intel_fb = NULL;
     struct intel_renderbuffer *intel_rb = NULL;
 
+    intel->locked++;
+    if (intel->locked >= 2)
+       return;
+
     _glthread_LOCK_MUTEX(lockMutex);
-    assert(!intel->locked);
-    intel->locked = 1;
 
     if (intel->driDrawable) {
        intel_fb = intel->driDrawable->driverPrivate;
@@ -1101,7 +1102,11 @@ void UNLOCK_HARDWARE( struct intel_context *intel )
     __DRIscreen *sPriv = intel->driScreen;
 
    intel->vtbl.note_unlock( intel );
-   intel->locked = 0;
+   intel->locked--;
+   if (intel->locked > 0)
+      return;
+
+   assert(intel->locked == 0);
 
    if (!sPriv->dri2.enabled)
       DRM_UNLOCK(intel->driFd, intel->driHwLock, intel->hHWContext);
