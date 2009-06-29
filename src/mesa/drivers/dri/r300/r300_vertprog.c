@@ -32,6 +32,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/macros.h"
 #include "main/enums.h"
 #include "shader/program.h"
+#include "shader/programopt.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
@@ -1191,94 +1192,6 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 	}
 }
 
-/* DP4 version seems to trigger some hw peculiarity */
-//#define PREFER_DP4
-
-static void position_invariant(struct gl_program *prog)
-{
-	struct prog_instruction *vpi;
-	struct gl_program_parameter_list *paramList;
-	int i;
-
-	gl_state_index tokens[STATE_LENGTH] = { STATE_MVP_MATRIX, 0, 0, 0, 0 };
-
-	/* tokens[4] = matrix modifier */
-#ifdef PREFER_DP4
-	tokens[4] = 0;		/* not transposed or inverted */
-#else
-	tokens[4] = STATE_MATRIX_TRANSPOSE;
-#endif
-	paramList = prog->Parameters;
-
-	vpi = _mesa_alloc_instructions(prog->NumInstructions + 4);
-	_mesa_init_instructions(vpi, prog->NumInstructions + 4);
-
-	for (i = 0; i < 4; i++) {
-		GLint idx;
-		tokens[2] = tokens[3] = i;	/* matrix row[i]..row[i] */
-		idx = _mesa_add_state_reference(paramList, tokens);
-#ifdef PREFER_DP4
-		vpi[i].Opcode = OPCODE_DP4;
-		vpi[i].StringPos = 0;
-		vpi[i].Data = 0;
-
-		vpi[i].DstReg.File = PROGRAM_OUTPUT;
-		vpi[i].DstReg.Index = VERT_RESULT_HPOS;
-		vpi[i].DstReg.WriteMask = 1 << i;
-		vpi[i].DstReg.CondMask = COND_TR;
-
-		vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
-		vpi[i].SrcReg[0].Index = idx;
-		vpi[i].SrcReg[0].Swizzle = SWIZZLE_XYZW;
-
-		vpi[i].SrcReg[1].File = PROGRAM_INPUT;
-		vpi[i].SrcReg[1].Index = VERT_ATTRIB_POS;
-		vpi[i].SrcReg[1].Swizzle = SWIZZLE_XYZW;
-#else
-		if (i == 0)
-			vpi[i].Opcode = OPCODE_MUL;
-		else
-			vpi[i].Opcode = OPCODE_MAD;
-
-		vpi[i].Data = 0;
-
-		if (i == 3)
-			vpi[i].DstReg.File = PROGRAM_OUTPUT;
-		else
-			vpi[i].DstReg.File = PROGRAM_TEMPORARY;
-		vpi[i].DstReg.Index = 0;
-		vpi[i].DstReg.WriteMask = 0xf;
-		vpi[i].DstReg.CondMask = COND_TR;
-
-		vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
-		vpi[i].SrcReg[0].Index = idx;
-		vpi[i].SrcReg[0].Swizzle = SWIZZLE_XYZW;
-
-		vpi[i].SrcReg[1].File = PROGRAM_INPUT;
-		vpi[i].SrcReg[1].Index = VERT_ATTRIB_POS;
-		vpi[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(i, i, i, i);
-
-		if (i > 0) {
-			vpi[i].SrcReg[2].File = PROGRAM_TEMPORARY;
-			vpi[i].SrcReg[2].Index = 0;
-			vpi[i].SrcReg[2].Swizzle = SWIZZLE_XYZW;
-		}
-#endif
-	}
-
-	_mesa_copy_instructions(&vpi[i], prog->Instructions,
-				prog->NumInstructions);
-
-	free(prog->Instructions);
-
-	prog->Instructions = vpi;
-
-	prog->NumInstructions += 4;
-	vpi = &prog->Instructions[prog->NumInstructions - 1];
-
-	assert(vpi->Opcode == OPCODE_END);
-}
-
 static void insert_wpos(struct r300_vertex_program *vp, struct gl_program *prog,
 			GLuint temp_index)
 {
@@ -1335,9 +1248,10 @@ static void pos_as_texcoord(struct r300_vertex_program *vp,
 	insert_wpos(vp, prog, tempregi);
 }
 
-static struct r300_vertex_program *build_program(struct r300_vertex_program_key
-						 *wanted_key, struct gl_vertex_program
-						 *mesa_vp, GLint wpos_idx)
+static struct r300_vertex_program *build_program(GLcontext *ctx,
+						 struct r300_vertex_program_key *wanted_key,
+						 struct gl_vertex_program *mesa_vp,
+						 GLint wpos_idx)
 {
 	struct r300_vertex_program *vp;
 
@@ -1346,7 +1260,7 @@ static struct r300_vertex_program *build_program(struct r300_vertex_program_key
 	vp->wpos_idx = wpos_idx;
 
 	if (mesa_vp->IsPositionInvariant) {
-		position_invariant(&mesa_vp->Base);
+		_mesa_insert_mvp_code(ctx, mesa_vp);
 	}
 
 	if (wpos_idx > -1) {
@@ -1480,7 +1394,7 @@ void r300SelectVertexShader(r300ContextPtr r300)
 		fflush(stdout);
 	}
 
-	vp = build_program(&wanted_key, &vpc->mesa_program, wpos_idx);
+	vp = build_program(ctx, &wanted_key, &vpc->mesa_program, wpos_idx);
 	vp->next = vpc->progs;
 	vpc->progs = vp;
 	r300->selected_vp = vp;
