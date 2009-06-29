@@ -1097,7 +1097,6 @@ void UNLOCK_HARDWARE( struct intel_context *intel )
 {
     __DRIscreen *sPriv = intel->driScreen;
 
-   intel->vtbl.note_unlock( intel );
    intel->locked--;
    if (intel->locked > 0)
       return;

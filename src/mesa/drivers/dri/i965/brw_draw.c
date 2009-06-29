@@ -416,6 +416,8 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
  out:
    UNLOCK_HARDWARE(intel);
 
+   brw_state_cache_check_size(brw);
+
    if (warn)
       fprintf(stderr, "i965: Single primitive emit potentially exceeded "
 	      "available aperture space\n");
