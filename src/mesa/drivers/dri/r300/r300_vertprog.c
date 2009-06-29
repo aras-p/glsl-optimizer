@@ -1259,18 +1259,18 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	_mesa_memcpy(&vp->key, wanted_key, sizeof(vp->key));
 	vp->wpos_idx = wpos_idx;
 
+	if (RADEON_DEBUG & DEBUG_VERTS) {
+		fprintf(stderr, "Initial vertex program:\n");
+		_mesa_print_program(&mesa_vp->Base);
+		fflush(stdout);
+	}
+
 	if (mesa_vp->IsPositionInvariant) {
 		_mesa_insert_mvp_code(ctx, mesa_vp);
 	}
 
 	if (wpos_idx > -1) {
 		pos_as_texcoord(vp, &mesa_vp->Base);
-	}
-
-	if (RADEON_DEBUG & DEBUG_VERTS) {
-		fprintf(stderr, "Vertex program after native rewrite:\n");
-		_mesa_print_program(&mesa_vp->Base);
-		fflush(stdout);
 	}
 
 	/* Some outputs may be artificially added, to match the inputs of the fragment program.
@@ -1308,6 +1308,12 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 				}
 			}
 		}
+	}
+
+	if (RADEON_DEBUG & DEBUG_VERTS) {
+		fprintf(stderr, "Vertex program after native rewrite:\n");
+		_mesa_print_program(&mesa_vp->Base);
+		fflush(stdout);
 	}
 
 	assert(mesa_vp->Base.NumInstructions);
@@ -1387,12 +1393,6 @@ void r300SelectVertexShader(r300ContextPtr r300)
 			r300->selected_vp = vp;
 			return;
 		}
-
-	if (RADEON_DEBUG & DEBUG_VERTS) {
-		fprintf(stderr, "Initial vertex program:\n");
-		_mesa_print_program(&vpc->mesa_program.Base);
-		fflush(stdout);
-	}
 
 	vp = build_program(ctx, &wanted_key, &vpc->mesa_program, wpos_idx);
 	vp->next = vpc->progs;
