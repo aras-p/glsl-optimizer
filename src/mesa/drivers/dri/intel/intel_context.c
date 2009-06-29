@@ -1038,6 +1038,8 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 }
 
 
+_glthread_DECLARE_STATIC_MUTEX(lockMutex);
+
 /* Lock the hardware and validate our state.  
  */
 void LOCK_HARDWARE( struct intel_context *intel )
@@ -1051,6 +1053,9 @@ void LOCK_HARDWARE( struct intel_context *intel )
     intel->locked++;
     if (intel->locked >= 2)
        return;
+
+    if (!sPriv->dri2.enabled)
+       _glthread_LOCK_MUTEX(lockMutex);
 
     if (intel->driDrawable) {
        intel_fb = intel->driDrawable->driverPrivate;
@@ -1103,8 +1108,10 @@ void UNLOCK_HARDWARE( struct intel_context *intel )
 
    assert(intel->locked == 0);
 
-   if (!sPriv->dri2.enabled)
+   if (!sPriv->dri2.enabled) {
       DRM_UNLOCK(intel->driFd, intel->driHwLock, intel->hHWContext);
+      _glthread_UNLOCK_MUTEX(lockMutex);
+   }
 
    if (INTEL_DEBUG & DEBUG_LOCK)
       _mesa_printf("%s - unlocked\n", __progname);
