@@ -359,31 +359,14 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 	if (type < 0 || num_verts <= 0)
 		return;
 
-	/* Make space for at least 64 dwords.
+	/* Make space for at least 128 dwords.
 	 * This is supposed to ensure that we can get all rendering
 	 * commands into a single command buffer.
 	 */
 	rcommonEnsureCmdBufSpace(&rmesa->radeon, 128, __FUNCTION__);
 
 	if (rmesa->ind_buf.ptr) {
-		if (num_verts > 65535) {
-			/* not implemented yet */
-			WARN_ONCE("Too many elts\n");
-			return;
-		}
-		/* Note: The following is incorrect, but it's the best I can do
-		 * without a major refactoring of how DMA memory is handled.
-		 * The problem: Ensuring that both vertex arrays *and* index
-		 * arrays are at the right position, and then ensuring that
-		 * the LOAD_VBPNTR, DRAW_INDX and INDX_BUFFER packets are emitted
-		 * at once.
-		 *
-		 * So why is the following incorrect? Well, it seems like
-		 * allocating the index array might actually evict the vertex
-		 * arrays. *sigh*
-		 */
 		r300EmitElts(ctx, num_verts);
-		/* don't pass start if we are split up */
 		r300EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, 0);
 		if (rmesa->radeon.radeonScreen->kernel_mm) {
 			BEGIN_BATCH_NO_AUTOSTATE(2);

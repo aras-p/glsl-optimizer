@@ -442,8 +442,6 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 	return GL_TRUE;
 }
 
-/* TODO: rebase if number of indices in any of primitives is > 8192 for 32bit indices or 16384 for 16bit indices */
-
 static void r300DrawPrims(GLcontext *ctx,
 			 const struct gl_client_array *arrays[],
 			 const struct _mesa_prim *prim,
@@ -455,7 +453,11 @@ static void r300DrawPrims(GLcontext *ctx,
 	struct split_limits limits;
 	GLboolean retval;
 
-	limits.max_verts = 65535;
+	if (ib)
+		limits.max_verts = 0xffffffff;
+	else
+		limits.max_verts = 65535;
+
 	limits.max_indices = 65535;
 	limits.max_vb_size = 1024*1024;
 
@@ -463,7 +465,7 @@ static void r300DrawPrims(GLcontext *ctx,
 		vbo_rebase_prims( ctx, arrays, prim, nr_prims, ib, min_index, max_index, r300DrawPrims );
 		return;
 	}
-	if ((ib && ib->count > 65536)) {
+	if ((ib && ib->count > 65535)) {
 		vbo_split_prims (ctx, arrays, prim, nr_prims, ib, min_index, max_index, r300DrawPrims, &limits);
 		return;
 	}
