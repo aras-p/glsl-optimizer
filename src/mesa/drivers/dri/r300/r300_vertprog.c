@@ -1283,52 +1283,38 @@ static void insert_wpos(struct r300_vertex_program *vp, struct gl_program *prog,
 			GLuint temp_index)
 {
 	struct prog_instruction *vpi;
-	struct prog_instruction *vpi_insert;
-	int i = 0;
 
-	vpi = _mesa_alloc_instructions(prog->NumInstructions + 2);
-	_mesa_init_instructions(vpi, prog->NumInstructions + 2);
-	/* all but END */
-	_mesa_copy_instructions(vpi, prog->Instructions,
-				prog->NumInstructions - 1);
-	/* END */
-	_mesa_copy_instructions(&vpi[prog->NumInstructions + 1],
-				&prog->Instructions[prog->NumInstructions - 1],
-				1);
-	vpi_insert = &vpi[prog->NumInstructions - 1];
+	_mesa_insert_instructions(prog, prog->NumInstructions - 1, 2);
 
-	vpi_insert[i].Opcode = OPCODE_MOV;
+	vpi = &prog->Instructions[prog->NumInstructions - 3];
 
-	vpi_insert[i].DstReg.File = PROGRAM_OUTPUT;
-	vpi_insert[i].DstReg.Index = VERT_RESULT_HPOS;
-	vpi_insert[i].DstReg.WriteMask = WRITEMASK_XYZW;
-	vpi_insert[i].DstReg.CondMask = COND_TR;
+	vpi->Opcode = OPCODE_MOV;
 
-	vpi_insert[i].SrcReg[0].File = PROGRAM_TEMPORARY;
-	vpi_insert[i].SrcReg[0].Index = temp_index;
-	vpi_insert[i].SrcReg[0].Swizzle = SWIZZLE_XYZW;
-	i++;
+	vpi->DstReg.File = PROGRAM_OUTPUT;
+	vpi->DstReg.Index = VERT_RESULT_HPOS;
+	vpi->DstReg.WriteMask = WRITEMASK_XYZW;
+	vpi->DstReg.CondMask = COND_TR;
 
-	vpi_insert[i].Opcode = OPCODE_MOV;
+	vpi->SrcReg[0].File = PROGRAM_TEMPORARY;
+	vpi->SrcReg[0].Index = temp_index;
+	vpi->SrcReg[0].Swizzle = SWIZZLE_XYZW;
 
-	vpi_insert[i].DstReg.File = PROGRAM_OUTPUT;
-	vpi_insert[i].DstReg.Index = VERT_RESULT_TEX0 + vp->wpos_idx;
-	vpi_insert[i].DstReg.WriteMask = WRITEMASK_XYZW;
-	vpi_insert[i].DstReg.CondMask = COND_TR;
+	++vpi;
 
-	vpi_insert[i].SrcReg[0].File = PROGRAM_TEMPORARY;
-	vpi_insert[i].SrcReg[0].Index = temp_index;
-	vpi_insert[i].SrcReg[0].Swizzle = SWIZZLE_XYZW;
-	i++;
+	vpi->Opcode = OPCODE_MOV;
 
-	free(prog->Instructions);
+	vpi->DstReg.File = PROGRAM_OUTPUT;
+	vpi->DstReg.Index = VERT_RESULT_TEX0 + vp->wpos_idx;
+	vpi->DstReg.WriteMask = WRITEMASK_XYZW;
+	vpi->DstReg.CondMask = COND_TR;
 
-	prog->Instructions = vpi;
+	vpi->SrcReg[0].File = PROGRAM_TEMPORARY;
+	vpi->SrcReg[0].Index = temp_index;
+	vpi->SrcReg[0].Swizzle = SWIZZLE_XYZW;
 
-	prog->NumInstructions += i;
-	vpi = &prog->Instructions[prog->NumInstructions - 1];
+	++vpi;
 
-	assert(vpi->Opcode == OPCODE_END);
+	vpi->Opcode = OPCODE_END;
 }
 
 static void pos_as_texcoord(struct r300_vertex_program *vp,
@@ -1336,16 +1322,16 @@ static void pos_as_texcoord(struct r300_vertex_program *vp,
 {
 	struct prog_instruction *vpi;
 	GLuint tempregi = prog->NumTemporaries;
-	/* should do something else if no temps left... */
+
 	prog->NumTemporaries++;
 
 	for (vpi = prog->Instructions; vpi->Opcode != OPCODE_END; vpi++) {
-		if (vpi->DstReg.File == PROGRAM_OUTPUT
-		    && vpi->DstReg.Index == VERT_RESULT_HPOS) {
+		if (vpi->DstReg.File == PROGRAM_OUTPUT && vpi->DstReg.Index == VERT_RESULT_HPOS) {
 			vpi->DstReg.File = PROGRAM_TEMPORARY;
 			vpi->DstReg.Index = tempregi;
 		}
 	}
+
 	insert_wpos(vp, prog, tempregi);
 }
 
