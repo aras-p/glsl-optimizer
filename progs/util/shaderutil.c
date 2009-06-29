@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include "extfuncs.h"
 #include "shaderutil.h"
@@ -78,8 +79,12 @@ CompileShaderFile(GLenum shaderType, const char *filename)
    int n;
    char *buffer = (char*) malloc(max);
    GLuint shader;
+   FILE *f;
 
-   FILE *f = fopen(filename, "r");
+   Init();
+
+
+   f = fopen(filename, "r");
    if (!f) {
       fprintf(stderr, "Unable to open shader file %s\n", filename);
       return 0;
