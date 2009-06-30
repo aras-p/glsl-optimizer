@@ -738,8 +738,7 @@ i915_init_screen_texture_functions(struct pipe_screen *screen)
    screen->tex_surface_destroy = i915_tex_surface_destroy;
 }
 
-boolean i915_get_texture_buffer( struct drm_api *api,
-                                 struct pipe_texture *texture,
+boolean i915_get_texture_buffer( struct pipe_texture *texture,
                                  struct pipe_buffer **buf,
                                  unsigned *stride )
 {

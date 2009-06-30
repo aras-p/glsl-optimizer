@@ -403,8 +403,7 @@ softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 
 
 boolean
-softpipe_get_texture_buffer( struct drm_api *api,
-                             struct pipe_texture *texture,
+softpipe_get_texture_buffer( struct pipe_texture *texture,
                              struct pipe_buffer **buf,
                              unsigned *stride )
 {

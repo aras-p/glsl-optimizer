@@ -61,7 +61,6 @@ struct pipe_buffer;
 struct pipe_fence_handle;
 struct pipe_winsys;
 struct pipe_screen;
-struct drm_api;
 
 
 /**
@@ -133,8 +132,7 @@ struct pipe_context *i915_create_context( struct pipe_screen *screen,
  *
  * This is needed for example kms.
  */
-boolean i915_get_texture_buffer( struct drm_api *api,
-                                 struct pipe_texture *texture,
+boolean i915_get_texture_buffer( struct pipe_texture *texture,
                                  struct pipe_buffer **buf,
                                  unsigned *stride );
 

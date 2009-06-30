@@ -39,7 +39,7 @@
 extern "C" {
 #endif
 
-struct drm_api;
+
 struct pipe_screen;
 struct pipe_winsys;
 struct pipe_context;
@@ -53,8 +53,7 @@ softpipe_create_screen(struct pipe_winsys *);
 
 
 boolean
-softpipe_get_texture_buffer( struct drm_api *api,
-                             struct pipe_texture *texture,
+softpipe_get_texture_buffer( struct pipe_texture *texture,
                              struct pipe_buffer **buf,
                              unsigned *stride );
 

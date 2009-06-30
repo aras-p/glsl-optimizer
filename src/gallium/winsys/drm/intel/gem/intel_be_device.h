@@ -52,6 +52,15 @@ struct intel_be_buffer {
 	unsigned flink;
 };
 
+/*
+ * Wrapper for driver get_texture_buffer functions.
+ */
+boolean
+intel_be_get_texture_buffer(struct drm_api *api,
+                            struct pipe_texture *texture,
+                            struct pipe_buffer **buffer,
+                            unsigned *stride);
+
 /**
  * Create a be buffer from a drm bo handle.
  *

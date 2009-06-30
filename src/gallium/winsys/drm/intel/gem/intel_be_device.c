@@ -142,6 +142,24 @@ err:
 	return NULL;
 }
 
+boolean
+intel_be_get_texture_buffer(struct drm_api *api,
+                            struct pipe_texture *texture,
+                            struct pipe_buffer **buffer,
+                            unsigned *stride)
+{
+	struct intel_be_device *dev;
+
+	if (!texture)
+		return FALSE;
+
+	dev = intel_be_device(texture->screen->winsys);
+	if (dev->softpipe)
+		return softpipe_get_texture_buffer(texture, buffer, stride);
+	else
+		return i915_get_texture_buffer(texture, buffer, stride);
+}
+
 struct pipe_buffer *
 intel_be_buffer_from_handle(struct drm_api *api,
                             struct pipe_screen *screen,
@@ -344,7 +362,6 @@ intel_be_create_screen(struct drm_api *api, int drmFD,
 
 	if (dev->softpipe) {
 		screen = softpipe_create_screen(&dev->base);
-		intel_be_drm_api.buffer_from_texture = softpipe_get_texture_buffer;
 	} else
 		screen = i915_create_screen(&dev->base, deviceID);
 
