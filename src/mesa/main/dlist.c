@@ -3203,7 +3203,11 @@ save_ShadeModel(GLenum mode)
       return;
 
    SAVE_FLUSH_VERTICES(ctx);
-   ctx->ListState.Current.ShadeModel = mode;
+
+   /* Only save the value if we know the statechange will take effect:
+    */
+   if (ctx->Driver.CurrentSavePrimitive == PRIM_OUTSIDE_BEGIN_END)
+      ctx->ListState.Current.ShadeModel = mode;
 
    n = ALLOC_INSTRUCTION(ctx, OPCODE_SHADE_MODEL, 1);
    if (n) {
