@@ -401,6 +401,8 @@ driCreateScreen(__GLXscreenConfigs * psc, int screen,
    psc->configs = driConvertConfigs(psc->core, psc->configs, driver_configs);
    psc->visuals = driConvertConfigs(psc->core, psc->visuals, driver_configs);
 
+   free(driver_configs);
+
    psp->destroyScreen = driDestroyScreen;
    psp->createContext = driCreateContext;
    psp->createDrawable = driCreateDrawable;
