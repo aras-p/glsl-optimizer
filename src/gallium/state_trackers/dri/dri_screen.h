@@ -60,6 +60,7 @@ struct dri_screen
    drmLock *drmLock;
 
    /* gallium */
+   struct drm_api *api;
    struct pipe_winsys *pipe_winsys;
    struct pipe_screen *pipe_screen;
    boolean d_depth_bits_last;

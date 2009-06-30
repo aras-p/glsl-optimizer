@@ -97,7 +97,7 @@ intel_be_init_context(struct intel_be_context *intel, struct intel_be_device *de
 }
 
 struct pipe_context *
-intel_be_create_context(struct pipe_screen *screen)
+intel_be_create_context(struct drm_api *api, struct pipe_screen *screen)
 {
 	struct intel_be_context *intel;
 	struct pipe_context *pipe;

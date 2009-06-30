@@ -35,6 +35,8 @@ _eglMain(_EGLDisplay *dpy, const char *args)
 		return NULL;
 	}
 
+	drm->api = drm_api_create();
+
 	/* First fill in the dispatch table with defaults */
 	_eglInitDriverFallbacks(&drm->base);
 	/* then plug in our Drm-specific functions */
@@ -146,7 +148,7 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 	dev->drmFD = fd;
 	drm_get_device_id(dev);
 
-	dev->screen = drm_api_hooks.create_screen(dev->drmFD, NULL);
+	dev->screen = dev->api->create_screen(dev->api, dev->drmFD, NULL);
 	if (!dev->screen)
 		goto err_screen;
 	dev->winsys = dev->screen->winsys;
@@ -234,6 +236,7 @@ drm_terminate(_EGLDriver *drv, EGLDisplay dpy)
 
 	dev->screen->destroy(dev->screen);
 	dev->winsys = NULL;
+	dev->api->destroy(dev->api);
 
 	drmClose(dev->drmFD);
 

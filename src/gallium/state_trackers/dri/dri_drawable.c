@@ -53,7 +53,8 @@ dri_copy_to_front(__DRIdrawablePrivate * dPriv,
 }
 
 static struct pipe_surface *
-dri_surface_from_handle(struct pipe_screen *screen,
+dri_surface_from_handle(struct drm_api *api,
+			struct pipe_screen *screen,
 			unsigned handle,
 			enum pipe_format format,
 			unsigned width, unsigned height, unsigned pitch)
@@ -63,7 +64,7 @@ dri_surface_from_handle(struct pipe_screen *screen,
    struct pipe_texture templat;
    struct pipe_buffer *buf = NULL;
 
-   buf = drm_api_hooks.buffer_from_handle(screen, "dri2 buffer", handle);
+   buf = api->buffer_from_handle(api, screen, "dri2 buffer", handle);
    if (!buf)
       return NULL;
 
@@ -100,12 +101,14 @@ dri_surface_from_handle(struct pipe_screen *screen,
 void
 dri_get_buffers(__DRIdrawablePrivate * dPriv)
 {
+
    struct dri_drawable *drawable = dri_drawable(dPriv);
    struct pipe_surface *surface = NULL;
    struct pipe_screen *screen = dri_screen(drawable->sPriv)->pipe_screen;
    __DRIbuffer *buffers = NULL;
    __DRIscreen *dri_screen = drawable->sPriv;
    __DRIdrawable *dri_drawable = drawable->dPriv;
+   struct drm_api *api = ((struct dri_screen*)(dri_screen->private))->api;
    boolean have_depth = FALSE;
    int i, count;
 
@@ -187,7 +190,8 @@ dri_get_buffers(__DRIdrawablePrivate * dPriv)
 	    have_depth = TRUE;
       }
 
-      surface = dri_surface_from_handle(screen,
+      surface = dri_surface_from_handle(api,
+					screen,
 					buffers[i].name,
 					format,
 					dri_drawable->w,

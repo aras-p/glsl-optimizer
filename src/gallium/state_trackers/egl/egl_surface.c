@@ -132,7 +132,7 @@ drm_create_texture(_EGLDriver *drv,
 	scrn->front.width = w;
 	scrn->front.height = h;
 	scrn->front.pitch = pitch;
-	drm_api_hooks.handle_from_buffer(screen, scrn->buffer, &scrn->front.handle);
+	dev->api->handle_from_buffer(dev->api, screen, scrn->buffer, &scrn->front.handle);
 	if (0)
 		goto err_handle;
 

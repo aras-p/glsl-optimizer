@@ -75,6 +75,7 @@ typedef struct _modesettingRec
     CreateScreenResourcesProcPtr createScreenResources;
 
     /* gallium */
+    struct drm_api *api;
     struct pipe_screen *screen;
     struct pipe_context *ctx;
 

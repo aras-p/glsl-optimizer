@@ -199,6 +199,7 @@ dri_init_screen(__DRIscreenPrivate * sPriv)
    if (!screen)
       return NULL;
 
+   screen->api = drm_api_create();
    screen->sPriv = sPriv;
    screen->fd = sPriv->fd;
    screen->drmLock = (drmLock *) & sPriv->pSAREA->lock;
@@ -216,7 +217,7 @@ dri_init_screen(__DRIscreenPrivate * sPriv)
    dri_copy_version(&arg.drm_version, &sPriv->drm_version);
    arg.api = NULL;
 
-   screen->pipe_screen = drm_api_hooks.create_screen(screen->fd, &arg.base);
+   screen->pipe_screen = screen->api->create_screen(screen->api, screen->fd, &arg.base);
 
    if (!screen->pipe_screen || !arg.api) {
       debug_printf("%s: failed to create dri1 screen\n", __FUNCTION__);
@@ -265,13 +266,14 @@ dri_init_screen2(__DRIscreenPrivate * sPriv)
    if (!screen)
       goto fail;
 
+   screen->api = drm_api_create();
    screen->sPriv = sPriv;
    screen->fd = sPriv->fd;
    sPriv->private = (void *)screen;
    sPriv->extensions = dri_screen_extensions;
    arg.mode = DRM_CREATE_NORMAL;
 
-   screen->pipe_screen = drm_api_hooks.create_screen(screen->fd, &arg);
+   screen->pipe_screen = screen->api->create_screen(screen->api, screen->fd, &arg);
    if (!screen->pipe_screen) {
       debug_printf("%s: failed to create pipe_screen\n", __FUNCTION__);
       goto fail;

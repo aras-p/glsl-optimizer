@@ -300,6 +300,7 @@ PreInit(ScrnInfoPtr pScrn, int flags)
 	    ms->PciInfo->dev, ms->PciInfo->func
 	);
 
+    ms->api = drm_api_create();
     ms->fd = drmOpen(NULL, BusID);
 
     if (ms->fd < 0)
@@ -476,7 +477,7 @@ ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     }
 
     if (!ms->screen) {
-	ms->screen = drm_api_hooks.create_screen(ms->fd, NULL);
+	ms->screen = ms->api->create_screen(ms->api, ms->fd, NULL);
 
 	if (!ms->screen) {
 	    FatalError("Could not init pipe_screen\n");
@@ -678,6 +679,8 @@ CloseScreen(int scrnIndex, ScreenPtr pScreen)
     if (ms->exa)
 	xorg_exa_close(pScrn);
 
+	ms->api->destroy(ms->api);
+	ms->api = NULL;
     drmClose(ms->fd);
     ms->fd = -1;
 
