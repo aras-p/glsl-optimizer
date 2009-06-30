@@ -20,6 +20,7 @@ SOURCES = \
 	clear.c \
 	dlist-dangling.c \
 	dlist-tri-flat-tri.c \
+	dlist-recursive-call.c \
 	dlist-edgeflag-dangling.c \
 	dlist-edgeflag.c \
 	dlist-degenerate.c \
