@@ -265,7 +265,10 @@ intel_bufferobj_unmap(GLcontext * ctx,
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
-   if (intel_obj->buffer != NULL) {
+   if (intel_obj->sys_buffer != NULL) {
+      assert(obj->Pointer);
+      obj->Pointer = NULL;
+   } else if (intel_obj->buffer != NULL) {
       assert(obj->Pointer);
       if (intel_obj->mapped_gtt) {
 	 drm_intel_gem_bo_unmap_gtt(intel_obj->buffer);
