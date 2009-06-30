@@ -1148,7 +1148,7 @@ static void vbo_print_vertex_list( GLcontext *ctx, void *data )
       struct _mesa_prim *prim = &node->prim[i];
       _mesa_debug(NULL, "   prim %d: %s%s %d..%d %s %s\n",
 		  i, 
-		  _mesa_lookup_enum_by_nr(prim->mode),
+		  _mesa_lookup_prim_by_nr(prim->mode),
 		  prim->weak ? " (weak)" : "",
 		  prim->start, 
 		  prim->start + prim->count,
