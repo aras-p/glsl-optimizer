@@ -5225,19 +5225,27 @@ save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
 
    bitmask = _mesa_material_bitmask(ctx, face, pname, ~0, NULL);
 
-   /* Try to eliminate redundant statechanges
+   /* Try to eliminate redundant statechanges.  Because it is legal to
+    * call glMaterial even inside begin/end calls, don't need to worry
+    * about ctx->Driver.CurrentSavePrimitive here.
     */
    for (i = 0; i < MAT_ATTRIB_MAX; i++) {
       if (bitmask & (1 << i)) {
-         if (ctx->Driver.CurrentSavePrimitive == PRIM_OUTSIDE_BEGIN_END && 
-             ctx->ListState.ActiveMaterialSize[i] == args &&
-             compare4fv(ctx->ListState.CurrentMaterial[i], param, args))
-            return;
-             
-         ctx->ListState.ActiveMaterialSize[i] = args;
-         COPY_SZ_4V(ctx->ListState.CurrentMaterial[i], args, param);
+         if (ctx->ListState.ActiveMaterialSize[i] == args &&
+             compare4fv(ctx->ListState.CurrentMaterial[i], param, args)) {
+            bitmask &= ~(1 << i);
+         }
+         else {
+            ctx->ListState.ActiveMaterialSize[i] = args;
+            COPY_SZ_4V(ctx->ListState.CurrentMaterial[i], args, param);
+         }
       }
    }
+
+   /* If this call has effect, return early:
+    */
+   if (bitmask == 0)
+      return;
 
    SAVE_FLUSH_VERTICES(ctx);
 
