@@ -21,6 +21,7 @@ SOURCES = \
 	dlist-dangling.c \
 	dlist-flat-tri.c \
 	dlist-tri-flat-tri.c \
+	dlist-tri-mat-tri.c \
 	dlist-recursive-call.c \
 	dlist-edgeflag-dangling.c \
 	dlist-edgeflag.c \
