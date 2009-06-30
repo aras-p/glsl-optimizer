@@ -133,6 +133,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    c->nr_outputs = 0;
    c->first_output = reg;
+   c->first_overflow_output = 0;
    mrf = 4;
    for (i = 0; i < VERT_RESULT_MAX; i++) {
       if (c->prog_data.outputs_written & (1 << i)) {
@@ -148,8 +149,17 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 	    mrf++;		/* just a placeholder?  XXX fix later stages & remove this */
 	 }
 	 else {
-	    c->regs[PROGRAM_OUTPUT][i] = brw_message_reg(mrf);
-	    mrf++;
+            if (mrf < 16) {
+               c->regs[PROGRAM_OUTPUT][i] = brw_message_reg(mrf);
+               mrf++;
+            }
+            else {
+               /* too many vertex results to fit in MRF, use GRF for overflow */
+               if (!c->first_overflow_output)
+                  c->first_overflow_output = i;
+               c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
+               reg++;
+            }
 	 }
       }
    }     
@@ -1067,6 +1077,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    struct brw_reg m0 = brw_message_reg(0);
    struct brw_reg pos = c->regs[PROGRAM_OUTPUT][VERT_RESULT_HPOS];
    struct brw_reg ndc;
+   int eot;
 
    if (c->key.copy_edgeflag) {
       brw_MOV(p, 
@@ -1145,18 +1156,51 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    brw_MOV(p, offset(m0, 2), ndc);
    brw_MOV(p, offset(m0, 3), pos);
 
+   eot = (c->first_overflow_output == 0);
+
    brw_urb_WRITE(p, 
 		 brw_null_reg(), /* dest */
 		 0,		/* starting mrf reg nr */
 		 c->r0,		/* src */
 		 0,		/* allocate */
 		 1,		/* used */
-		 c->nr_outputs + 3, /* msg len */
+		 MIN2(c->nr_outputs + 3, (BRW_MAX_MRF-1)), /* msg len */
 		 0,		/* response len */
-		 1, 		/* eot */
+		 eot, 		/* eot */
 		 1, 		/* writes complete */
 		 0, 		/* urb destination offset */
 		 BRW_URB_SWIZZLE_INTERLEAVE);
+
+   if (c->first_overflow_output > 0) {
+      /* Not all of the vertex outputs/results fit into the MRF.
+       * Move the overflowed attributes from the GRF to the MRF and
+       * issue another brw_urb_WRITE().
+       */
+      /* XXX I'm not 100% sure about which MRF regs to use here.  Starting
+       * at mrf[4] atm...
+       */
+      GLuint i, mrf = 0;
+      for (i = c->first_overflow_output; i < VERT_RESULT_MAX; i++) {
+         if (c->prog_data.outputs_written & (1 << i)) {
+            /* move from GRF to MRF */
+            brw_MOV(p, brw_message_reg(4+mrf), c->regs[PROGRAM_OUTPUT][i]);
+            mrf++;
+         }
+      }
+
+      brw_urb_WRITE(p,
+                    brw_null_reg(), /* dest */
+                    4,              /* starting mrf reg nr */
+                    c->r0,          /* src */
+                    0,              /* allocate */
+                    1,              /* used */
+                    mrf+1,          /* msg len */
+                    0,              /* response len */
+                    1,              /* eot */
+                    1,              /* writes complete */
+                    BRW_MAX_MRF-1,  /* urb destination offset */
+                    BRW_URB_SWIZZLE_INTERLEAVE);
+   }
 }
 
 
