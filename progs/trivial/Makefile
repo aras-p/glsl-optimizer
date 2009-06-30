@@ -105,6 +105,7 @@ SOURCES = \
 	tri-fp.c \
 	tri-fp-const-imm.c \
 	tri-lit.c \
+	tri-lit-material.c \
 	tri-mask-tri.c \
 	tri-orig.c \
 	tri-query.c \
