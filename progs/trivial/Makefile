@@ -20,6 +20,7 @@ SOURCES = \
 	clear.c \
 	dlist-dangling.c \
 	dlist-flat-tri.c \
+	dlist-mat-tri.c \
 	dlist-tri-flat-tri.c \
 	dlist-tri-mat-tri.c \
 	dlist-recursive-call.c \
