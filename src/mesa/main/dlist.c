@@ -3186,6 +3186,7 @@ save_ShadeModel(GLenum mode)
    if (ctx->ListState.Current.ShadeModel == mode)
       return;
 
+   SAVE_FLUSH_VERTICES(ctx);
    ctx->ListState.Current.ShadeModel = mode;
 
    n = ALLOC_INSTRUCTION(ctx, OPCODE_SHADE_MODEL, 1);
