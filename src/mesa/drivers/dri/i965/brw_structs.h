@@ -33,6 +33,14 @@
 #ifndef BRW_STRUCTS_H
 #define BRW_STRUCTS_H
 
+
+/** Number of general purpose registers (VS, WM, etc) */
+#define BRW_MAX_GRF 128
+
+/** Number of message register file registers */
+#define BRW_MAX_MRF 16
+
+
 /* Command packets:
  */
 struct header 
