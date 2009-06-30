@@ -83,6 +83,7 @@ SOURCES = \
 	subtexrate.c \
 	tex1d.c \
 	texcompress2.c \
+	texcompsub.c \
 	texdown \
 	texfilt.c \
 	texline.c \

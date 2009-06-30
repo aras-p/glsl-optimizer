@@ -55,6 +55,7 @@ multipal
 no_s3tc
 packedpixels
 pbo
+prim
 prog_parameter
 quads
 random
@@ -77,6 +78,7 @@ subtex
 subtexrate
 tex1d
 texcompress2
+texcompsub
 texdown
 texfilt
 texline
