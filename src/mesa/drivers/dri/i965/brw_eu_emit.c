@@ -1232,7 +1232,7 @@ void brw_urb_WRITE(struct brw_compile *p,
 {
    struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
 
-   assert(msg_length < 16);
+   assert(msg_length < BRW_MAX_MRF);
 
    brw_set_dest(insn, dest);
    brw_set_src0(insn, src0);
