@@ -164,7 +164,7 @@ GetGLXScreenConfigs(Display *dpy, int scrn)
 {
     __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
 
-    return (priv->screenConfigs != NULL) ? &priv->screenConfigs[scrn] : NULL;
+    return (priv && priv->screenConfigs != NULL) ? &priv->screenConfigs[scrn] : NULL;
 }
 
 

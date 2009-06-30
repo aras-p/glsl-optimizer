@@ -236,6 +236,9 @@ st_bufferobj_map_range(GLcontext *ctx, GLenum target,
    if (access & GL_MAP_READ_BIT)
       flags |= PIPE_BUFFER_USAGE_CPU_READ;
 
+   if (access & GL_MAP_FLUSH_EXPLICIT_BIT)
+      flags |= PIPE_BUFFER_USAGE_FLUSH_EXPLICIT;
+   
    /* ... other flags ...
     */
 

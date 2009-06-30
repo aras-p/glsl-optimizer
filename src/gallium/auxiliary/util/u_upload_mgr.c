@@ -83,7 +83,9 @@ my_buffer_write(struct pipe_screen *screen,
    assert(dirty_size >= size);
    assert(size);
 
-   map = pipe_buffer_map_range(screen, buf, offset, size, PIPE_BUFFER_USAGE_CPU_WRITE);
+   map = pipe_buffer_map_range(screen, buf, offset, size, 
+                               PIPE_BUFFER_USAGE_CPU_WRITE |
+                               PIPE_BUFFER_USAGE_FLUSH_EXPLICIT);
    if (map == NULL) 
       return PIPE_ERROR_OUT_OF_MEMORY;
 
