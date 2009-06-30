@@ -1170,6 +1170,18 @@ st_TexSubImage1D(GLcontext *ctx, GLenum target, GLint level,
 
 
 static void
+st_CompressedTexSubImage1D(GLcontext *ctx, GLenum target, GLint level,
+                           GLint xoffset, GLsizei width,
+                           GLenum format,
+                           GLsizei imageSize, const GLvoid *data,
+                           struct gl_texture_object *texObj,
+                           struct gl_texture_image *texImage)
+{
+   assert(0);
+}
+
+
+static void
 st_CompressedTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
                            GLint xoffset, GLint yoffset,
                            GLsizei width, GLint height,
@@ -1223,6 +1235,19 @@ st_CompressedTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
       st_texture_image_unmap(ctx->st, stImage);
       texImage->Data = NULL;
    }
+}
+
+
+static void
+st_CompressedTexSubImage3D(GLcontext *ctx, GLenum target, GLint level,
+                           GLint xoffset, GLint yoffset, GLint zoffset,
+                           GLsizei width, GLint height, GLint depth,
+                           GLenum format,
+                           GLsizei imageSize, const GLvoid *data,
+                           struct gl_texture_object *texObj,
+                           struct gl_texture_image *texImage)
+{
+   assert(0);
 }
 
 
@@ -1875,7 +1900,9 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->TexSubImage1D = st_TexSubImage1D;
    functions->TexSubImage2D = st_TexSubImage2D;
    functions->TexSubImage3D = st_TexSubImage3D;
+   functions->CompressedTexSubImage1D = st_CompressedTexSubImage1D;
    functions->CompressedTexSubImage2D = st_CompressedTexSubImage2D;
+   functions->CompressedTexSubImage3D = st_CompressedTexSubImage3D;
    functions->CopyTexImage1D = st_CopyTexImage1D;
    functions->CopyTexImage2D = st_CopyTexImage2D;
    functions->CopyTexSubImage1D = st_CopyTexSubImage1D;
