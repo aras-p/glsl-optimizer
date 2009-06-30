@@ -73,6 +73,7 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 		rt_format |= NV40TCL_RT_FORMAT_ZETA_Z16;
 		break;
 	case PIPE_FORMAT_Z24S8_UNORM:
+	case PIPE_FORMAT_Z24X8_UNORM:
 	case 0:
 		rt_format |= NV40TCL_RT_FORMAT_ZETA_Z24S8;
 		break;

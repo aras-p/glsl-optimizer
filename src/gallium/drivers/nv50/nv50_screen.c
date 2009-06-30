@@ -37,7 +37,15 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 		switch (format) {
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_R5G6B5_UNORM:
+			return TRUE;
+		default:
+			break;
+		}
+	} else
+	if (tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL) {
+		switch (format) {
 		case PIPE_FORMAT_Z24S8_UNORM:
+		case PIPE_FORMAT_Z24X8_UNORM:
 		case PIPE_FORMAT_Z16_UNORM:
 			return TRUE;
 		default:

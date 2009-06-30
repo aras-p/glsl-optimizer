@@ -42,6 +42,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 	mt->base.screen = pscreen;
 
 	switch (pt->format) {
+	case PIPE_FORMAT_Z24X8_UNORM:
 	case PIPE_FORMAT_Z24S8_UNORM:
 	case PIPE_FORMAT_Z16_UNORM:
 		tile_flags = 0x2800;
