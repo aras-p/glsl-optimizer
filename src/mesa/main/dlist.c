@@ -3177,13 +3177,20 @@ save_ShadeModel(GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END(ctx);
+
+   if (ctx->ExecuteFlag) {
+      CALL_ShadeModel(ctx->Exec, (mode));
+   }
+
+   if (ctx->ListState.Current.ShadeModel == mode)
+      return;
+
+   ctx->ListState.Current.ShadeModel = mode;
+
    n = ALLOC_INSTRUCTION(ctx, OPCODE_SHADE_MODEL, 1);
    if (n) {
       n[1].e = mode;
-   }
-   if (ctx->ExecuteFlag) {
-      CALL_ShadeModel(ctx->Exec, (mode));
    }
 }
 
@@ -5146,14 +5153,21 @@ save_EdgeFlag(GLboolean x)
    save_Attr1fNV(VERT_ATTRIB_EDGEFLAG, x ? (GLfloat)1.0 : (GLfloat)0.0);
 }
 
+static INLINE GLboolean compare4fv( const GLfloat *a,
+                                    const GLfloat *b,
+                                    GLuint count )
+{
+   return memcmp( a, b, count * sizeof(GLfloat) ) == 0;
+}
+                              
+
 static void GLAPIENTRY
 save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    int args, i;
-
-   SAVE_FLUSH_VERTICES(ctx);
+   GLuint bitmask;
 
    switch (face) {
    case GL_BACK:
@@ -5183,6 +5197,28 @@ save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
       _mesa_compile_error(ctx, GL_INVALID_ENUM, "material(pname)");
       return;
    }
+   
+   if (ctx->ExecuteFlag) {
+      CALL_Materialfv(ctx->Exec, (face, pname, param));
+   }
+
+   bitmask = _mesa_material_bitmask(ctx, face, pname, ~0, NULL);
+
+   /* Try to eliminate redundant statechanges
+    */
+   for (i = 0; i < MAT_ATTRIB_MAX; i++) {
+      if (bitmask & (1 << i)) {
+         if (ctx->Driver.CurrentSavePrimitive == PRIM_OUTSIDE_BEGIN_END && 
+             ctx->ListState.ActiveMaterialSize[i] == args &&
+             compare4fv(ctx->ListState.CurrentMaterial[i], param, args))
+            return;
+             
+         ctx->ListState.ActiveMaterialSize[i] = args;
+         COPY_SZ_4V(ctx->ListState.CurrentMaterial[i], args, param);
+      }
+   }
+
+   SAVE_FLUSH_VERTICES(ctx);
 
    n = ALLOC_INSTRUCTION(ctx, OPCODE_MATERIAL, 6);
    if (n) {
@@ -5190,19 +5226,6 @@ save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
       n[2].e = pname;
       for (i = 0; i < args; i++)
          n[3 + i].f = param[i];
-   }
-
-   {
-      GLuint bitmask = _mesa_material_bitmask(ctx, face, pname, ~0, NULL);
-      for (i = 0; i < MAT_ATTRIB_MAX; i++)
-         if (bitmask & (1 << i)) {
-            ctx->ListState.ActiveMaterialSize[i] = args;
-            COPY_SZ_4V(ctx->ListState.CurrentMaterial[i], args, param);
-         }
-   }
-
-   if (ctx->ExecuteFlag) {
-      CALL_Materialfv(ctx->Exec, (face, pname, param));
    }
 }
 
@@ -6811,6 +6834,8 @@ _mesa_NewList(GLuint name, GLenum mode)
 
    for (i = 0; i < MAT_ATTRIB_MAX; i++)
       ctx->ListState.ActiveMaterialSize[i] = 0;
+
+   memset(&ctx->ListState.Current, 0, sizeof ctx->ListState.Current);
 
    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
    ctx->Driver.NewList(ctx, name, mode);
