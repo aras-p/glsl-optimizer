@@ -8,6 +8,7 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/winsys/drm/intel/gem/libinteldrm.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
+	$(TOP)/src/gallium/drivers/identity/libidentity.a \
 	$(TOP)/src/gallium/drivers/i915simple/libi915simple.a
 
 

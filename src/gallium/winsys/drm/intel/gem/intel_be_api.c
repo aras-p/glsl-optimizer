@@ -1,6 +1,7 @@
 
 #include "intel_be_api.h"
 #include "i915simple/i915_winsys.h"
+#include "identity/id_drm.h"
 
 static void destroy(struct drm_api *api)
 {
@@ -23,5 +24,9 @@ struct drm_api intel_be_drm_api =
 struct drm_api *
 drm_api_create()
 {
+#ifdef DEBUG
+	return identity_drm_create(&intel_be_drm_api);
+#else
 	return &intel_be_drm_api;
+#endif
 }
