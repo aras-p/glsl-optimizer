@@ -32,6 +32,7 @@
 #include "main/mtypes.h"
 #include "main/enums.h"
 
+#include "radeon_lock.h"
 #include "r600_context.h"
 
 #include "r700_shaderinst.h"
@@ -68,14 +69,12 @@ void r700Clear(GLcontext * ctx, GLbitfield mask)
         return;
     }
 
-#if 0
 	if (!context->radeon.radeonScreen->driScreen->dri2.enabled) {
 		LOCK_HARDWARE(&context->radeon);
 		UNLOCK_HARDWARE(&context->radeon);
 		if (dPriv->numClipRects == 0)
 			return;
 	}
-#endif
 
 	R600_NEWPRIM(context);
 

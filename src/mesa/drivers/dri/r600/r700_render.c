@@ -44,7 +44,6 @@
 #include "tnl/t_vertex.h"
 #include "tnl/t_pipeline.h"
 
-#include "radeon_lock.h"
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
 
@@ -295,9 +294,6 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     /* flush vtx */
     //r700SyncSurf(context); /*  */
-
-    LOCK_HARDWARE( &context->radeon );
-    UNLOCK_HARDWARE( &context->radeon );
 
     r700SendContextStates(context);
     r700SendViewportState(context, 0);
