@@ -1074,7 +1074,6 @@ static int vlInit
 		sampler.compare_func = PIPE_FUNC_ALWAYS;
 		sampler.normalized_coords = 1;
 		/*sampler.prefilter = ;*/
-		/*sampler.shadow_ambient = ;*/
 		/*sampler.lod_bias = ;*/
 		sampler.min_lod = 0;
 		/*sampler.max_lod = ;*/
