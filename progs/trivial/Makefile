@@ -19,6 +19,7 @@ SOURCES = \
 	clear-random.c \
 	clear.c \
 	dlist-dangling.c \
+	dlist-begin-call-end.c \
 	dlist-edgeflag-dangling.c \
 	dlist-edgeflag.c \
 	dlist-degenerate.c \

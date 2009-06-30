@@ -667,19 +667,33 @@ do {								\
  *     -- Flush current buffer
  *     -- Fallback to opcodes for the rest of the begin/end object.
  */
-#define DO_FALLBACK(ctx) 							\
-do {									\
-   struct vbo_save_context *save = &vbo_context(ctx)->save;					\
-									\
-   if (save->vert_count || save->prim_count) 						\
-      _save_compile_vertex_list( ctx );					\
-									\
-   _save_copy_to_current( ctx );					\
-   _save_reset_vertex( ctx );						\
-   _save_reset_counters( ctx );  \
-   _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );	\
-   ctx->Driver.SaveNeedFlush = 0;					\
-} while (0)
+static void DO_FALLBACK( GLcontext *ctx )
+{
+   struct vbo_save_context *save = &vbo_context(ctx)->save;
+
+   if (save->vert_count || save->prim_count) {
+      GLint i = save->prim_count - 1;
+
+      /* Close off in-progress primitive.
+       */
+      save->prim[i].count = (save->vert_count - 
+                             save->prim[i].start);
+
+      /* Need to replay this display list with loopback,
+       * unfortunately, otherwise this primitive won't be handled
+       * properly:
+       */
+      save->dangling_attr_ref = 1;
+      
+      _save_compile_vertex_list( ctx );
+   }
+
+   _save_copy_to_current( ctx );
+   _save_reset_vertex( ctx );
+   _save_reset_counters( ctx );
+   _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
+   ctx->Driver.SaveNeedFlush = 0;
+}
 
 static void GLAPIENTRY _save_EvalCoord1f( GLfloat u )
 {
