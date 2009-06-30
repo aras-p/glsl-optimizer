@@ -129,8 +129,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       }
    }
 
-   /* Allocate outputs: TODO: could organize the non-position outputs
-    * to go straight into message regs.
+   /* Allocate outputs.  The non-position outputs go straight into message regs.
     */
    c->nr_outputs = 0;
    c->first_output = reg;
@@ -138,6 +137,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    for (i = 0; i < VERT_RESULT_MAX; i++) {
       if (c->prog_data.outputs_written & (1 << i)) {
 	 c->nr_outputs++;
+         assert(i < Elements(c->regs[PROGRAM_OUTPUT]));
 	 if (i == VERT_RESULT_HPOS) {
 	    c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
 	    reg++;
@@ -1076,7 +1076,9 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 
    /* Build ndc coords */
    ndc = get_tmp(c);
+   /* ndc = 1.0 / pos.w */
    emit_math1(c, BRW_MATH_FUNCTION_INV, ndc, brw_swizzle1(pos, 3), BRW_MATH_PRECISION_FULL);
+   /* ndc.xyz = pos * ndc */
    brw_MUL(p, brw_writemask(ndc, WRITEMASK_XYZ), pos, ndc);
 
    /* Update the header for point size, user clipping flags, and -ve rhw
