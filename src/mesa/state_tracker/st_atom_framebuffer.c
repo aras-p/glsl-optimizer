@@ -147,6 +147,8 @@ update_framebuffer_state( struct st_context *st )
          assert(strb->surface);
          pipe_surface_reference(&framebuffer->zsbuf, strb->surface);
       }
+      else
+         pipe_surface_reference(&framebuffer->zsbuf, NULL);
    }
 
    cso_set_framebuffer(st->cso_context, framebuffer);
