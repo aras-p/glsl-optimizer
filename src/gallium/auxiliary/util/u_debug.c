@@ -97,10 +97,8 @@ void _debug_vprintf(const char *format, va_list ap)
       buf[0] = '\0';
    }
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
-   /* EngDebugPrint does not handle float point arguments, so we need to use
-    * our own vsnprintf implementation. It is also very slow, so buffer until
-    * we find a newline. */
-   static char buf[512 + 1] = {'\0'};
+   /* OutputDebugStringA can be very slow, so buffer until we find a newline. */
+   static char buf[4096] = {'\0'};
    size_t len = strlen(buf);
    int ret = util_vsnprintf(buf + len, sizeof(buf) - len, format, ap);
    if(ret > (int)(sizeof(buf) - len - 1) || util_strchr(buf + len, '\n')) {
