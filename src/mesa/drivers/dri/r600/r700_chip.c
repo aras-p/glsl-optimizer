@@ -309,7 +309,7 @@ void r700SetupVTXConstants(GLcontext  * ctx,
     unsigned int uSQ_VTX_CONSTANT_WORD6_0 = 0;
 
     uSQ_VTX_CONSTANT_WORD0_0 = paos->offset;
-    uSQ_VTX_CONSTANT_WORD1_0 = count * stride - 1;
+    uSQ_VTX_CONSTANT_WORD1_0 = count * (size * 4) - 1;
 
     uSQ_VTX_CONSTANT_WORD2_0 |= 0 << BASE_ADDRESS_HI_shift /* TODO */
 	    |stride << SQ_VTX_CONSTANT_WORD2_0__STRIDE_shift
@@ -385,9 +385,9 @@ int r700SetupStreams(GLcontext * ctx)
 			r700SetupVTXConstants(ctx,
 					      i,
 					      (void*)(&context->radeon.tcl.aos[i]),
-					      (unsigned int)vb->AttribPtr[i]->size,
-					      (unsigned int)(vb->AttribPtr[i]->size * 4),
-					      (unsigned int)vb->Count);
+					      (unsigned int)context->radeon.tcl.aos[i].components,
+					      (unsigned int)context->radeon.tcl.aos[i].stride * 4,
+					      (unsigned int)context->radeon.tcl.aos[i].count);
 
 			context->radeon.tcl.aos_count++;
 		}
