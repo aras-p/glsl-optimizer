@@ -479,7 +479,7 @@ intel_miptree_image_data(struct intel_context *intel,
 			0, 0,                             /* source x, y */
 			dst->level[level].width, height); /* width, height */
 
-      src += src_image_pitch * dst->cpp;
+      src = (char *)src + src_image_pitch * dst->cpp;
    }
 }
 
