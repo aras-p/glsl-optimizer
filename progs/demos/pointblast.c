@@ -194,11 +194,11 @@ redraw(void)
 {
   int i;
 
+  glDepthMask(GL_TRUE);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   if (newModel)
     recalcModelView();
 
-  glDepthMask(GL_FALSE);
 
   /* Draw the floor. */
 /*  glEnable(GL_TEXTURE_2D);*/
@@ -215,7 +215,7 @@ redraw(void)
   glEnd();
 
   /* Allow particles to blend with each other. */
-  glDepthMask(GL_TRUE);
+  glDepthMask(GL_FALSE);
 
   if (blend)
      glEnable(GL_BLEND);
