@@ -32,28 +32,26 @@
 
 #include <GL/gl.h>
 #include <GL/wglext.h>
+#include "util/u_debug.h"
 
-
-static const char *stw_extension_string = 
-   "WGL_ARB_extensions_string "
-   "WGL_ARB_multisample "
-   "WGL_ARB_pixel_format "
-   "WGL_EXT_swap_interval "
-   "WGL_EXT_extensions_string";
-
-
-WINGDIAPI const char * APIENTRY
-wglGetExtensionsStringARB(
-   HDC hdc )
+/* A dummy implementation of this extension.
+ *
+ * Required as some applications retrieve and call these functions
+ * regardless of the fact that we don't advertise the extension and
+ * further more the results of wglGetProcAddress are NULL.
+ */
+WINGDIAPI BOOL APIENTRY
+wglSwapIntervalEXT(int interval)
 {
-   (void) hdc;
+   (void) interval;
+   debug_printf("%s: %d\n", __FUNCTION__, interval);
+   return TRUE;
+}
 
-   return stw_extension_string;
+WINGDIAPI int APIENTRY
+wglGetSwapIntervalEXT(void)
+{
+   return 0;
 }
 
 
-WINGDIAPI const char * APIENTRY
-wglGetExtensionsStringEXT( void )
-{
-   return stw_extension_string;
-}

@@ -56,6 +56,10 @@ static const struct stw_extension_entry stw_extension_entries[] = {
    /* WGL_EXT_extensions_string */
    STW_EXTENSION_ENTRY( wglGetExtensionsStringEXT ),
 
+   /* WGL_EXT_swap_interval */
+   STW_EXTENSION_ENTRY( wglGetSwapIntervalEXT ),
+   STW_EXTENSION_ENTRY( wglSwapIntervalEXT ),
+
    { NULL, NULL }
 };
 
