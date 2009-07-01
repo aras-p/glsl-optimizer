@@ -72,6 +72,33 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 		u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1; \
 	} while (0)
 
+static GLuint combineSwizzles(GLuint src, GLuint swz_x, GLuint swz_y, GLuint swz_z, GLuint swz_w)
+{
+	GLuint ret = 0;
+
+	if (swz_x == SWIZZLE_ZERO || swz_x == SWIZZLE_ONE)
+		ret |= swz_x;
+	else
+		ret |= GET_SWZ(src, swz_x);
+
+	if (swz_y == SWIZZLE_ZERO || swz_y == SWIZZLE_ONE)
+		ret |= swz_y << 3;
+	else
+		ret |= GET_SWZ(src, swz_y) << 3;
+
+	if (swz_z == SWIZZLE_ZERO || swz_z == SWIZZLE_ONE)
+		ret |= swz_z << 6;
+	else
+		ret |= GET_SWZ(src, swz_z) << 6;
+
+	if (swz_w == SWIZZLE_ZERO || swz_w == SWIZZLE_ONE)
+		ret |= swz_w << 9;
+	else
+		ret |= GET_SWZ(src, swz_w) << 9;
+
+	return ret;
+}
+
 int r300VertexProgUpdateParams(GLcontext * ctx,
 			       struct r300_vertex_program_cont *vp, float *dst)
 {
@@ -1248,6 +1275,179 @@ static void pos_as_texcoord(struct r300_vertex_program *vp,
 	insert_wpos(vp, prog, tempregi);
 }
 
+static int translateABS(struct gl_program *prog, int pos)
+{
+	struct prog_instruction *inst;
+
+	inst = &prog->Instructions[pos];
+
+	inst->Opcode = OPCODE_MAX;
+	inst->SrcReg[1] = inst->SrcReg[0];
+	inst->SrcReg[1].Negate ^= NEGATE_XYZW;
+
+	return 0;
+}
+
+static int translateDP3(struct gl_program *prog, int pos)
+{
+	struct prog_instruction *inst;
+
+	inst = &prog->Instructions[pos];
+
+	inst->Opcode = OPCODE_DP4;
+	inst->SrcReg[0].Swizzle = combineSwizzles(inst->SrcReg[0].Swizzle, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+
+	return 0;
+}
+
+static int translateDPH(struct gl_program *prog, int pos)
+{
+	struct prog_instruction *inst;
+
+	inst = &prog->Instructions[pos];
+
+	inst->Opcode = OPCODE_DP4;
+	inst->SrcReg[0].Swizzle = combineSwizzles(inst->SrcReg[0].Swizzle, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
+
+	return 0;
+}
+
+static int translateFLR(struct gl_program *prog, int pos)
+{
+	struct prog_instruction *inst;
+	struct prog_dst_register dst;
+	int tmp_idx;
+
+	tmp_idx = prog->NumTemporaries++;
+
+	_mesa_insert_instructions(prog, pos + 1, 1);
+
+	inst = &prog->Instructions[pos];
+	dst = inst->DstReg;
+
+	inst->Opcode = OPCODE_FRC;
+	inst->DstReg.File = PROGRAM_TEMPORARY;
+	inst->DstReg.Index = tmp_idx;
+	++inst;
+
+	inst->Opcode = OPCODE_ADD;
+	inst->DstReg = dst;
+	inst->SrcReg[0] = (inst-1)->SrcReg[0];
+	inst->SrcReg[1].File = PROGRAM_TEMPORARY;
+	inst->SrcReg[1].Index = tmp_idx;
+	inst->SrcReg[1].Negate = NEGATE_XYZW;
+
+	return 1;
+}
+
+static int translateSUB(struct gl_program *prog, int pos)
+{
+	struct prog_instruction *inst;
+
+	inst = &prog->Instructions[pos];
+
+	inst->Opcode = OPCODE_ADD;
+	inst->SrcReg[1].Negate ^= NEGATE_XYZW;
+
+	return 0;
+}
+
+static int translateSWZ(struct gl_program *prog, int pos)
+{
+	struct prog_instruction *inst;
+	GLuint orig_negate, orig_writemask;
+
+	inst = &prog->Instructions[pos];
+	orig_negate = inst->SrcReg[0].Negate;
+	orig_writemask = inst->DstReg.WriteMask;
+
+	inst->Opcode = OPCODE_MOV;
+
+	/* If all relevant components are either negated or not negated at the same time, we are ok.
+	 */
+	if ((orig_negate & orig_writemask) == 0 || (orig_negate & orig_writemask) == (NEGATE_XYZW & orig_writemask))
+		return 0;
+
+	_mesa_insert_instructions(prog, pos + 1, 1);
+
+	inst = &prog->Instructions[pos];
+	inst->DstReg.WriteMask = orig_writemask & (orig_negate ^ NEGATE_XYZW);
+	inst->SrcReg[0].Negate = NEGATE_NONE;
+	++inst;
+
+	*inst = *(inst-1);
+	inst->DstReg.WriteMask = orig_writemask & orig_negate;
+	inst->SrcReg[0].Negate = NEGATE_XYZW;
+
+	return 1;
+}
+
+static int translateXPD(struct gl_program *prog, int pos)
+{
+	struct prog_instruction *inst;
+	int tmp_idx;
+
+	tmp_idx = prog->NumTemporaries++;
+
+	_mesa_insert_instructions(prog, pos + 1, 1);
+
+	inst = &prog->Instructions[pos];
+
+	*(inst+1) = *inst;
+
+	inst->Opcode = OPCODE_MUL;
+	inst->DstReg.File = PROGRAM_TEMPORARY;
+	inst->DstReg.Index = tmp_idx;
+	inst->SrcReg[0].Swizzle = combineSwizzles(inst->SrcReg[0].Swizzle, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_W);
+	inst->SrcReg[1].Swizzle = combineSwizzles(inst->SrcReg[1].Swizzle, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_W);
+	++inst;
+
+	inst->Opcode = OPCODE_MAD;
+	inst->SrcReg[0].Swizzle = combineSwizzles(inst->SrcReg[0].Swizzle, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_W);
+	inst->SrcReg[1].Swizzle = combineSwizzles(inst->SrcReg[1].Swizzle, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_W);
+	inst->SrcReg[1].Negate ^= NEGATE_XYZW;
+	inst->SrcReg[2].File = PROGRAM_TEMPORARY;
+	inst->SrcReg[2].Index = tmp_idx;
+
+	return 1;
+}
+
+static void translateInsts(struct gl_program *prog)
+{
+	struct prog_instruction *inst;
+	int i;
+
+	for (i = 0; i < prog->NumInstructions; ++i) {
+		inst = &prog->Instructions[i];
+
+		switch (inst->Opcode) {
+			case OPCODE_ABS:
+				i += translateABS(prog, i);
+				break;
+			case OPCODE_DP3:
+				i += translateDP3(prog, i);
+				break;
+			case OPCODE_DPH:
+				i += translateDPH(prog, i);
+				break;
+			case OPCODE_FLR:
+				i += translateFLR(prog, i);
+				break;
+			case OPCODE_SUB:
+				i += translateSUB(prog, i);
+				break;
+			case OPCODE_SWZ:
+				i += translateSWZ(prog, i);
+				break;
+			case OPCODE_XPD:
+				i += translateXPD(prog, i);
+				break;
+			default:
+				break;
+		}
+	}
+}
+
 static struct r300_vertex_program *build_program(GLcontext *ctx,
 						 struct r300_vertex_program_key *wanted_key,
 						 struct gl_vertex_program *mesa_vp,
@@ -1309,6 +1509,8 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 			}
 		}
 	}
+
+	translateInsts(&mesa_vp->Base);
 
 	if (RADEON_DEBUG & DEBUG_VERTS) {
 		fprintf(stderr, "Vertex program after native rewrite:\n");
