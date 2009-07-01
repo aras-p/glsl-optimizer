@@ -65,13 +65,13 @@ stw_get_proc_address(
 {
    const struct stw_extension_entry *entry;
 
-   PROC p = (PROC) _glapi_get_proc_address( lpszProc );
-   if (p)
-      return p;
+   if (lpszProc[0] == 'w' && lpszProc[1] == 'g' && lpszProc[2] == 'l')
+      for (entry = stw_extension_entries; entry->name; entry++)
+         if (strcmp( lpszProc, entry->name ) == 0)
+            return entry->proc;
 
-   for (entry = stw_extension_entries; entry->name; entry++)
-      if (strcmp( lpszProc, entry->name ) == 0)
-         return entry->proc;
+   if (lpszProc[0] == 'g' && lpszProc[1] == 'l')
+        return (PROC) _glapi_get_proc_address( lpszProc );
 
    return NULL;
 }
