@@ -101,8 +101,10 @@ map_register_file(
  */
 static GLuint
 map_register_file_index(
+   GLuint procType,
    GLuint file,
    GLuint index,
+   GLuint *swizzle,
    const GLuint inputMapping[],
    const GLuint outputMapping[],
    const GLuint immediateMapping[],
@@ -110,6 +112,20 @@ map_register_file_index(
 {
    switch( file ) {
    case TGSI_FILE_INPUT:
+      if (procType == TGSI_PROCESSOR_FRAGMENT &&
+          index == FRAG_ATTRIB_FOGC) {
+         if (GET_SWZ(*swizzle, 0) == SWIZZLE_X) {
+            /* do nothing we're, ok */
+         } else if (GET_SWZ(*swizzle, 0) == SWIZZLE_Y) {
+            /* replace the swizzle with xxxx */
+            *swizzle = MAKE_SWIZZLE4(SWIZZLE_X,
+                                     SWIZZLE_X,
+                                     SWIZZLE_X,
+                                     SWIZZLE_X);
+         } else {
+            /* fixme: point coord */
+         }
+      }
       /* inputs are mapped according to the user-defined map */
       return inputMapping[index];
 
@@ -236,8 +252,10 @@ compile_instruction(
    fulldst = &fullinst->FullDstRegisters[0];
    fulldst->DstRegister.File = map_register_file( inst->DstReg.File, 0, NULL, GL_FALSE );
    fulldst->DstRegister.Index = map_register_file_index(
+      procType,
       fulldst->DstRegister.File,
       inst->DstReg.Index,
+      NULL,
       inputMapping,
       outputMapping,
       NULL,
@@ -246,6 +264,7 @@ compile_instruction(
 
    for (i = 0; i < fullinst->Instruction.NumSrcRegs; i++) {
       GLuint j;
+      GLuint swizzle = inst->SrcReg[i].Swizzle;
 
       fullsrc = &fullinst->FullSrcRegisters[i];
 
@@ -264,8 +283,10 @@ compile_instruction(
             immediateMapping,
             indirectAccess );
          fullsrc->SrcRegister.Index = map_register_file_index(
+            procType,
             fullsrc->SrcRegister.File,
             inst->SrcReg[i].Index,
+            &swizzle,
             inputMapping,
             outputMapping,
             immediateMapping,
@@ -278,7 +299,7 @@ compile_instruction(
          GLboolean extended = (inst->SrcReg[i].Negate != NEGATE_NONE &&
                                inst->SrcReg[i].Negate != NEGATE_XYZW);
          for( j = 0; j < 4; j++ ) {
-            swz[j] = GET_SWZ( inst->SrcReg[i].Swizzle, j );
+            swz[j] = GET_SWZ( swizzle, j );
             if (swz[j] > SWIZZLE_W)
                extended = GL_TRUE;
          }

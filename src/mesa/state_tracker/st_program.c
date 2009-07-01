@@ -437,11 +437,16 @@ st_translate_fragment_program(struct st_context *st,
             if (stfp->Base.UsesPointCoord) {
                stfp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
                stfp->input_semantic_index[slot] = num_generic++;
+               interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
+            } else if (stfp->Base.UsesFrontFacing) {
+               stfp->input_semantic_name[slot] = TGSI_SEMANTIC_FACE;
+               stfp->input_semantic_index[slot] = 0;
+               interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
             } else {
                stfp->input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
                stfp->input_semantic_index[slot] = 0;
+               interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
 	    }
-            interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
          case FRAG_ATTRIB_TEX0:
          case FRAG_ATTRIB_TEX1:
