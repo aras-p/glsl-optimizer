@@ -299,7 +299,7 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 
     ui = (r700->SPI_PS_IN_CONTROL_0.u32All & NUM_INTERP_mask) / (1 << NUM_INTERP_shift);
 
-    ui = ui ? unNumOfReg : ui;
+    ui = (ui < unNumOfReg) ? unNumOfReg : ui;
 
     SETfield(r700->ps.SQ_PGM_RESOURCES_PS.u32All, ui, NUM_GPRS_shift, NUM_GPRS_mask); 
     
