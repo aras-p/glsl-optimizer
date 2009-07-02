@@ -2,6 +2,7 @@
 #include "intel_be_api.h"
 #include "i915simple/i915_winsys.h"
 #include "identity/id_drm.h"
+#include "trace/tr_drm.h"
 
 static void destroy(struct drm_api *api)
 {
@@ -25,7 +26,11 @@ struct drm_api *
 drm_api_create()
 {
 #ifdef DEBUG
+#if 0
 	return identity_drm_create(&intel_be_drm_api);
+#else
+	return trace_drm_create(&intel_be_drm_api);
+#endif
 #else
 	return &intel_be_drm_api;
 #endif
