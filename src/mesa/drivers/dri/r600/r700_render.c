@@ -238,6 +238,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
 {
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+    int lastIndex = 0;
 #if 1
     BATCH_LOCALS(&context->radeon);
 
@@ -308,7 +309,6 @@ static GLboolean r700RunRender(GLcontext * ctx,
         GLuint end = vb->Primitive[i].start + vb->Primitive[i].count;
         GLuint numIndices = vb->Primitive[i].count;
         GLuint numEntires;
-		//r300RunRenderPrimitive(rmesa, ctx, start, end, prim);
 
         unsigned int VGT_DRAW_INITIATOR = 0;
         unsigned int VGT_INDEX_TYPE     = 0;
@@ -340,10 +340,12 @@ static GLboolean r700RunRender(GLcontext * ctx,
         R600_OUT_BATCH(VGT_NUM_INDICES);
         R600_OUT_BATCH(VGT_DRAW_INITIATOR);
 
-        for (j=0; j<numIndices; j++)
+        for (j = lastIndex; j < lastIndex + numIndices; j++)
         {
             R600_OUT_BATCH(j);
         }
+        lastIndex += numIndices;
+
         END_BATCH();
         COMMIT_BATCH();
     }
