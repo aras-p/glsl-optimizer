@@ -335,7 +335,9 @@ guess_and_alloc_texture(struct st_context *st,
     * pagetable arrangements.
     */
    if ((stObj->base.MinFilter == GL_NEAREST ||
-        stObj->base.MinFilter == GL_LINEAR) &&
+        stObj->base.MinFilter == GL_LINEAR ||
+        stImage->base._BaseFormat == GL_DEPTH_COMPONENT ||
+        stImage->base._BaseFormat == GL_DEPTH_STENCIL_EXT) &&
        stImage->level == firstLevel) {
       lastLevel = firstLevel;
    }
