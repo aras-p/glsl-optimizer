@@ -29,6 +29,7 @@
  */
 
 #include "radeon_drm.h"
+#include "trace/tr_drm.h"
 
 /* Create a pipe_screen. */
 struct pipe_screen* radeon_create_screen(struct drm_api* api,
@@ -130,5 +131,9 @@ struct drm_api drm_api_hooks = {
 
 struct drm_api* drm_api_create()
 {
+#ifdef DEBUG
+    return trace_drm_create(&drm_api_hooks);
+#else
     return &drm_api_hooks;
+#endif
 }
