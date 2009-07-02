@@ -3928,7 +3928,7 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
     * coordinate in GLSL shaders.
     */
    if (program->Base.InputsRead & FRAG_BIT_FOGC)
-      program->UsesFogFragCoord = TRUE;
+      program->UsesFogFragCoord = GL_TRUE;
       
    if (program->Base.Instructions)
       _mesa_free(program->Base.Instructions);
