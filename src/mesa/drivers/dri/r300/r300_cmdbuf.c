@@ -232,8 +232,8 @@ void r300_emit_scissor(GLcontext *ctx)
     } else {
         x1 = 0;
         y1 = 0;
-        x2 = rrb->width - 1;
-        y2 = rrb->height - 1;
+        x2 = rrb->base.Width - 1;
+        y2 = rrb->base.Height - 1;
     }
     if (r300->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515) {
         x1 += R300_SCISSORS_OFFSET;
@@ -263,7 +263,8 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 		fprintf(stderr, "no rrb\n");
 		return;
 	}
-
+	
+	fprintf(stderr,"rrb is %p %d %dx%d\n", rrb, offset, rrb->base.Width, rrb->base.Height);
 	cbpitch = (rrb->pitch / rrb->cpp);
 	if (rrb->cpp == 4)
 		cbpitch |= R300_COLOR_FORMAT_ARGB8888;
@@ -289,14 +290,14 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
             BEGIN_BATCH_NO_AUTOSTATE(3);
             OUT_BATCH_REGSEQ(R300_SC_SCISSORS_TL, 2);
             OUT_BATCH(0);
-            OUT_BATCH(((rrb->width - 1) << R300_SCISSORS_X_SHIFT) |
-                    ((rrb->height - 1) << R300_SCISSORS_Y_SHIFT));
+            OUT_BATCH(((rrb->base.Width - 1) << R300_SCISSORS_X_SHIFT) |
+                    ((rrb->base.Height - 1) << R300_SCISSORS_Y_SHIFT));
             END_BATCH();
             BEGIN_BATCH_NO_AUTOSTATE(16);
             for (i = 0; i < 4; i++) {
                 OUT_BATCH_REGSEQ(R300_SC_CLIPRECT_TL_0 + (i * 8), 2);
                 OUT_BATCH((0 << R300_CLIPRECT_X_SHIFT) | (0 << R300_CLIPRECT_Y_SHIFT));
-                OUT_BATCH(((rrb->width - 1) << R300_CLIPRECT_X_SHIFT) | ((rrb->height - 1) << R300_CLIPRECT_Y_SHIFT));
+                OUT_BATCH(((rrb->base.Width - 1) << R300_CLIPRECT_X_SHIFT) | ((rrb->base.Height - 1) << R300_CLIPRECT_Y_SHIFT));
             }
             OUT_BATCH_REGSEQ(R300_SC_CLIP_RULE, 1);
             OUT_BATCH(0xAAAA);
@@ -308,15 +309,15 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
             OUT_BATCH_REGSEQ(R300_SC_SCISSORS_TL, 2);
             OUT_BATCH((R300_SCISSORS_OFFSET << R300_SCISSORS_X_SHIFT) |
                     (R300_SCISSORS_OFFSET << R300_SCISSORS_Y_SHIFT));
-            OUT_BATCH(((rrb->width + R300_SCISSORS_OFFSET - 1) << R300_SCISSORS_X_SHIFT) |
-                    ((rrb->height + R300_SCISSORS_OFFSET - 1) << R300_SCISSORS_Y_SHIFT));
+            OUT_BATCH(((rrb->base.Width + R300_SCISSORS_OFFSET - 1) << R300_SCISSORS_X_SHIFT) |
+                    ((rrb->base.Height + R300_SCISSORS_OFFSET - 1) << R300_SCISSORS_Y_SHIFT));
             END_BATCH();
             BEGIN_BATCH_NO_AUTOSTATE(16);
             for (i = 0; i < 4; i++) {
                 OUT_BATCH_REGSEQ(R300_SC_CLIPRECT_TL_0 + (i * 8), 2);
                 OUT_BATCH((R300_SCISSORS_OFFSET << R300_CLIPRECT_X_SHIFT) | (R300_SCISSORS_OFFSET << R300_CLIPRECT_Y_SHIFT));
-                OUT_BATCH(((R300_SCISSORS_OFFSET + rrb->width - 1) << R300_CLIPRECT_X_SHIFT) |
-                          ((R300_SCISSORS_OFFSET + rrb->height - 1) << R300_CLIPRECT_Y_SHIFT));
+                OUT_BATCH(((R300_SCISSORS_OFFSET + rrb->base.Width - 1) << R300_CLIPRECT_X_SHIFT) |
+                          ((R300_SCISSORS_OFFSET + rrb->base.Height - 1) << R300_CLIPRECT_Y_SHIFT));
             }
             OUT_BATCH_REGSEQ(R300_SC_CLIP_RULE, 1);
             OUT_BATCH(0xAAAA);
