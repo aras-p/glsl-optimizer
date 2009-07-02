@@ -228,6 +228,7 @@ static void r300_surface_copy(struct pipe_context* pipe,
     struct r300_texture* desttex = (struct r300_texture*)dest->texture;
     unsigned pixpitch = srctex->stride / srctex->tex.block.size;
     boolean invalid = FALSE;
+    float fsrcx = srcx, fsrcy = srcy, fdestx = destx, fdesty = desty;
     CS_LOCALS(r300);
 
     debug_printf("r300: Copying surface %p at (%d,%d) to %p at (%d, %d),"
@@ -329,25 +330,25 @@ validate:
     OUT_CS(R300_PRIM_TYPE_QUADS | R300_PRIM_WALK_RING |
             (4 << R300_PRIM_NUM_VERTICES_SHIFT));
     /* (x    , y    ) */
-    OUT_CS_32F((float)(destx / dest->width));
-    OUT_CS_32F((float)(desty / dest->height));
-    OUT_CS_32F((float)(srcx  / dest->width));
-    OUT_CS_32F((float)(srcy  / dest->height));
+    OUT_CS_32F(fdestx / dest->width);
+    OUT_CS_32F(fdesty / dest->height);
+    OUT_CS_32F(fsrcx  / src->width);
+    OUT_CS_32F(fsrcy  / src->height);
     /* (x    , y + h) */
-    OUT_CS_32F((float)(destx / dest->width));
-    OUT_CS_32F((float)((desty + h) / dest->height));
-    OUT_CS_32F((float)(srcx  / dest->width));
-    OUT_CS_32F((float)((srcy  + h) / dest->height));
+    OUT_CS_32F(fdestx / dest->width);
+    OUT_CS_32F((fdesty + h) / dest->height);
+    OUT_CS_32F(fsrcx  / src->width);
+    OUT_CS_32F((fsrcy  + h) / src->height);
     /* (x + w, y + h) */
-    OUT_CS_32F((float)((destx + w) / dest->width));
-    OUT_CS_32F((float)((desty + h) / dest->height));
-    OUT_CS_32F((float)((srcx  + w) / dest->width));
-    OUT_CS_32F((float)((srcy  + h) / dest->height));
+    OUT_CS_32F((fdestx + w) / dest->width);
+    OUT_CS_32F((fdesty + h) / dest->height);
+    OUT_CS_32F((fsrcx  + w) / src->width);
+    OUT_CS_32F((fsrcy  + h) / src->height);
     /* (x + w, y    ) */
-    OUT_CS_32F((float)((destx + w) / dest->width));
-    OUT_CS_32F((float)(desty / dest->height));
-    OUT_CS_32F((float)((srcx  + w) / dest->width));
-    OUT_CS_32F((float)(srcy  / dest->height));
+    OUT_CS_32F((fdestx + w) / dest->width);
+    OUT_CS_32F(fdesty / dest->height);
+    OUT_CS_32F((fsrcx  + w) / src->width);
+    OUT_CS_32F(fsrcy  / src->height);
 
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT, 0xA);
 
