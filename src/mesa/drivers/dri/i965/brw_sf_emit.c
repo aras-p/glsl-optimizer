@@ -161,16 +161,16 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
 
    brw_push_insn_state(p);
    
-   brw_MUL(p, c->pv, c->pv, brw_imm_ud(nr*2+1));
+   brw_MUL(p, c->pv, c->pv, brw_imm_d(nr*2+1));
    brw_JMPI(p, ip, ip, c->pv);
 
    copy_colors(c, c->vert[1], c->vert[0]);
    copy_colors(c, c->vert[2], c->vert[0]);
-   brw_JMPI(p, ip, ip, brw_imm_ud(nr*4+1));
+   brw_JMPI(p, ip, ip, brw_imm_d(nr*4+1));
 
    copy_colors(c, c->vert[0], c->vert[1]);
    copy_colors(c, c->vert[2], c->vert[1]);
-   brw_JMPI(p, ip, ip, brw_imm_ud(nr*2));
+   brw_JMPI(p, ip, ip, brw_imm_d(nr*2));
 
    copy_colors(c, c->vert[0], c->vert[2]);
    copy_colors(c, c->vert[1], c->vert[2]);
@@ -195,11 +195,11 @@ static void do_flatshade_line( struct brw_sf_compile *c )
 
    brw_push_insn_state(p);
    
-   brw_MUL(p, c->pv, c->pv, brw_imm_ud(nr+1));
+   brw_MUL(p, c->pv, c->pv, brw_imm_d(nr+1));
    brw_JMPI(p, ip, ip, c->pv);
    copy_colors(c, c->vert[1], c->vert[0]);
 
-   brw_JMPI(p, ip, ip, brw_imm_ud(nr));
+   brw_JMPI(p, ip, ip, brw_imm_d(nr));
    copy_colors(c, c->vert[0], c->vert[1]);
 
    brw_pop_insn_state(p);
@@ -218,7 +218,7 @@ static void alloc_regs( struct brw_sf_compile *c )
 
    /* Values computed by fixed function unit:
     */
-   c->pv  = retype(brw_vec1_grf(1, 1), BRW_REGISTER_TYPE_UD);
+   c->pv  = retype(brw_vec1_grf(1, 1), BRW_REGISTER_TYPE_D);
    c->det = brw_vec1_grf(1, 2);
    c->dx0 = brw_vec1_grf(1, 3);
    c->dx2 = brw_vec1_grf(1, 4);
@@ -678,7 +678,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_POLYGON) |
 					       (1<<_3DPRIM_RECTLIST) |
 					       (1<<_3DPRIM_TRIFAN_NOSTIPPLE)));
-   jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
+   jmp = brw_JMPI(p, ip, ip, brw_imm_d(0));
    {
       saveflag = p->flag_value;
       brw_push_insn_state(p); 
@@ -699,7 +699,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_LINESTRIP_CONT) |
 					       (1<<_3DPRIM_LINESTRIP_BF) |
 					       (1<<_3DPRIM_LINESTRIP_CONT_BF)));
-   jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
+   jmp = brw_JMPI(p, ip, ip, brw_imm_d(0));
    {
       saveflag = p->flag_value;
       brw_push_insn_state(p); 
@@ -712,7 +712,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 
    brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
    brw_AND(p, v1_null_ud, payload_attr, brw_imm_ud(1<<BRW_SPRITE_POINT_ENABLE));
-   jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
+   jmp = brw_JMPI(p, ip, ip, brw_imm_d(0));
    {
       saveflag = p->flag_value;
       brw_push_insn_state(p); 

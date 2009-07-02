@@ -484,6 +484,10 @@ struct brw_instruction *brw_JMPI(struct brw_compile *p,
 {
    struct brw_instruction *insn = brw_alu2(p, BRW_OPCODE_JMPI, dest, src0, src1);
 
+   insn->header.execution_size = 1;
+   insn->header.compression_control = BRW_COMPRESSION_NONE;
+   insn->header.mask_control = BRW_MASK_DISABLE;
+
    p->current->header.predicate_control = BRW_PREDICATE_NONE;
 
    return insn;

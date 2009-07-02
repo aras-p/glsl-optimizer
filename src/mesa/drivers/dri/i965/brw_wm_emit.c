@@ -1022,7 +1022,7 @@ static void emit_fb_write( struct brw_wm_compile *c,
 	      get_element_ud(brw_vec8_grf(1,0), 6), 
 	      brw_imm_ud(1<<26)); 
 
-      jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
+      jmp = brw_JMPI(p, ip, ip, brw_imm_d(0));
       {
 	 emit_aa(c, arg1, 2);
 	 fire_fb_write(c, 0, nr, target, eot);
