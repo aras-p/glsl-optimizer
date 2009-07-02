@@ -598,7 +598,7 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
    GLboolean gem_supported;
    struct drm_i915_getparam gp;
    __DRIscreenPrivate *spriv = intelScreen->driScrnPriv;
-   int num_fences;
+   int num_fences = 0;
 
    intelScreen->no_hw = getenv("INTEL_NO_HW") != NULL;
 
