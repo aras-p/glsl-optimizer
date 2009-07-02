@@ -1115,10 +1115,6 @@ void r700InitState(GLcontext * ctx) //-------------------
     /* Set up line control */
     SETfield(r700->PA_SU_LINE_CNTL.u32All, 0x8,
              PA_SU_LINE_CNTL__WIDTH_shift, PA_SU_LINE_CNTL__WIDTH_mask);
-    SETfield(r700->PA_SU_LINE_CNTL.u32All, 0x2,
-             PA_SU_VTX_CNTL__ROUND_MODE_shift, PA_SU_VTX_CNTL__ROUND_MODE_mask);
-    SETfield(r700->PA_SU_LINE_CNTL.u32All, 0x5,
-             QUANT_MODE_shift, QUANT_MODE_mask);
 
     r700->PA_SC_LINE_CNTL.u32All = 0;
     CLEARbit(r700->PA_SC_LINE_CNTL.u32All, EXPAND_LINE_WIDTH_bit);
