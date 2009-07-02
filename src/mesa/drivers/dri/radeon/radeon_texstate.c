@@ -706,7 +706,7 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_
 		rImage->mt = NULL;
 	}
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
-				   rb->width, rb->height, 1, 0, rb->cpp);
+				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
 	texImage->TexFormat = radeonChooseTextureFormat(radeon->glCtx,
 							internalFormat,
@@ -738,8 +738,8 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_
 		t->pp_txfilter |= tx_table[MESA_FORMAT_RGB565].filter;
 		break;
 	}
-        t->pp_txsize = ((rb->width - 1) << RADEON_TEX_USIZE_SHIFT)
-		   | ((rb->height - 1) << RADEON_TEX_VSIZE_SHIFT);
+        t->pp_txsize = ((rb->base.Width - 1) << RADEON_TEX_USIZE_SHIFT)
+		   | ((rb->base.Height - 1) << RADEON_TEX_VSIZE_SHIFT);
         t->pp_txformat |= RADEON_TXFORMAT_NON_POWER2;
 	t->pp_txpitch = pitch_val;
         t->pp_txpitch -= 32;

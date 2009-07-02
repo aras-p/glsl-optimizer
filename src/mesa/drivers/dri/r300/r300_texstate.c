@@ -437,7 +437,7 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		rImage->mt = NULL;
 	}
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
-				   rb->width, rb->height, 1, 0, rb->cpp);
+				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
 	texImage->TexFormat = radeonChooseTextureFormat(radeon->glCtx,
 							internalFormat,
@@ -473,15 +473,15 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		break;
 	}
 	pitch_val--;
-	t->pp_txsize = ((rb->width - 1) << R300_TX_WIDTHMASK_SHIFT) |
-              ((rb->height - 1) << R300_TX_HEIGHTMASK_SHIFT);
+	t->pp_txsize = ((rb->base.Width - 1) << R300_TX_WIDTHMASK_SHIFT) |
+              ((rb->base.Height - 1) << R300_TX_HEIGHTMASK_SHIFT);
 	t->pp_txsize |= R300_TX_SIZE_TXPITCH_EN;
 	t->pp_txpitch |= pitch_val;
 
 	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
-	    if (rb->width > 2048)
+	    if (rb->base.Width > 2048)
 		t->pp_txpitch |= R500_TXWIDTH_BIT11;
-	    if (rb->height > 2048)
+	    if (rb->base.Height > 2048)
 		t->pp_txpitch |= R500_TXHEIGHT_BIT11;
 	}
 	t->validated = GL_TRUE;

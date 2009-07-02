@@ -605,8 +605,8 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 
 		rb->cpp = buffers[i].cpp;
 		rb->pitch = buffers[i].pitch;
-		rb->width = drawable->w;
-		rb->height = drawable->h;
+		rb->base.Width = drawable->w;
+		rb->base.Height = drawable->h;
 		rb->has_surface = 0;
 
 		if (buffers[i].attachment == __DRI_BUFFER_STENCIL && depth_bo) {

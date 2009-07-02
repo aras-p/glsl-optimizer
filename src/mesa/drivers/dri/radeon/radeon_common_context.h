@@ -83,8 +83,6 @@ struct radeon_renderbuffer
 	unsigned int cpp;
 	/* unsigned int offset; */
 	unsigned int pitch;
-	unsigned int width;
-	unsigned int height;
 
 	uint32_t draw_offset; /* FBO */
 	/* boo Xorg 6.8.2 compat */
