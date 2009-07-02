@@ -30,12 +30,9 @@
 
 #include "radeon_drm.h"
 
-#ifdef DEBUG
-#include "trace/trace_drm.h"
-#endif
-
 /* Create a pipe_screen. */
-struct pipe_screen* radeon_create_screen(int drmFB,
+struct pipe_screen* radeon_create_screen(struct drm_api* api,
+                                         int drmFB,
 					 struct drm_create_screen_arg *arg)
 {
     struct radeon_winsys* winsys = radeon_pipe_winsys(drmFB);
@@ -50,7 +47,8 @@ struct pipe_screen* radeon_create_screen(int drmFB,
 }
 
 /* Create a pipe_context. */
-struct pipe_context* radeon_create_context(struct pipe_screen* screen)
+struct pipe_context* radeon_create_context(struct drm_api* api,
+                                           struct pipe_screen* screen)
 {
     if (getenv("RADEON_SOFTPIPE")) {
         return radeon_create_softpipe(screen->winsys);
@@ -59,16 +57,19 @@ struct pipe_context* radeon_create_context(struct pipe_screen* screen)
     }
 }
 
-boolean radeon_buffer_from_texture(struct pipe_texture* texture,
+boolean radeon_buffer_from_texture(struct drm_api* api,
+                                   struct pipe_texture* texture,
                                    struct pipe_buffer** buffer,
                                    unsigned* stride)
 {
-    return FALSE;
+    /* XXX fix this */
+    return r300_get_texture_buffer(texture, buffer, stride);
 }
 
 /* Create a buffer from a handle. */
 /* XXX what's up with name? */
-struct pipe_buffer* radeon_buffer_from_handle(struct pipe_screen* screen,
+struct pipe_buffer* radeon_buffer_from_handle(struct drm_api* api,
+                                              struct pipe_screen* screen,
                                               const char* name,
                                               unsigned handle)
 {
@@ -95,7 +96,8 @@ struct pipe_buffer* radeon_buffer_from_handle(struct pipe_screen* screen,
     return &radeon_buffer->base;
 }
 
-boolean radeon_handle_from_buffer(struct pipe_screen* screen,
+boolean radeon_handle_from_buffer(struct drm_api* api,
+                                  struct pipe_screen* screen,
                                   struct pipe_buffer* buffer,
                                   unsigned* handle)
 {
@@ -105,7 +107,8 @@ boolean radeon_handle_from_buffer(struct pipe_screen* screen,
     return TRUE;
 }
 
-boolean radeon_global_handle_from_buffer(struct pipe_screen* screen,
+boolean radeon_global_handle_from_buffer(struct drm_api* api,
+                                         struct pipe_screen* screen,
                                          struct pipe_buffer* buffer,
                                          unsigned* handle)
 {
@@ -116,16 +119,16 @@ boolean radeon_global_handle_from_buffer(struct pipe_screen* screen,
     return TRUE;
 }
 
-#ifdef DEBUG
-struct drm_api hooks = {
-#else
 struct drm_api drm_api_hooks = {
-#endif
     .create_screen = radeon_create_screen,
     .create_context = radeon_create_context,
-    /* XXX fix this */
-    .buffer_from_texture = r300_get_texture_buffer,
+    .buffer_from_texture = radeon_buffer_from_texture,
     .buffer_from_handle = radeon_buffer_from_handle,
     .handle_from_buffer = radeon_handle_from_buffer,
     .global_handle_from_buffer = radeon_global_handle_from_buffer,
 };
+
+struct drm_api* drm_api_create()
+{
+    return &drm_api_hooks;
+}
