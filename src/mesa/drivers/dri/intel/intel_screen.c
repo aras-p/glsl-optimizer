@@ -316,7 +316,7 @@ intelDestroyScreen(__DRIscreenPrivate * sPriv)
 
    dri_bufmgr_destroy(intelScreen->bufmgr);
    intelUnmapScreenRegions(intelScreen);
-   driDestroyOptionCache(&intelScreen->optionCache);
+   driDestroyOptionInfo(&intelScreen->optionCache);
 
    FREE(intelScreen);
    sPriv->private = NULL;
