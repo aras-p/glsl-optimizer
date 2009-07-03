@@ -673,7 +673,6 @@ extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 				   __DRIcontextPrivate * driContextPriv,
 				   void *sharedContextPrivate);
 
-extern void r300SelectVertexShader(r300ContextPtr r300);
 extern void r300InitShaderFuncs(struct dd_function_table *functions);
 
 extern void r300InitShaderFunctions(r300ContextPtr r300);

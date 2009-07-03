@@ -128,8 +128,13 @@ r300IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
 			r300TranslateFragmentShader(ctx, fp);
 
 		return !fp->error;
-	} else
-		return GL_TRUE;
+	} else {
+		struct r300_vertex_program *vp = r300SelectVertexShader(ctx);
+		if (!vp->translated)
+			r300TranslateVertexShader(vp);
+
+		return !vp->error;
+	}
 }
 
 void r300InitShaderFuncs(struct dd_function_table *functions)

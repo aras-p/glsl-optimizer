@@ -1027,7 +1027,7 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 	}
 }
 
-static void r300TranslateVertexShader(struct r300_vertex_program *vp)
+void r300TranslateVertexShader(struct r300_vertex_program *vp)
 {
 	struct prog_instruction *vpi = vp->Base->Base.Instructions;
 	int i;
@@ -1524,7 +1524,6 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 
 	assert(prog->NumInstructions);
 	vp->num_temporaries = prog->NumTemporaries;
-	r300TranslateVertexShader(vp);
 
 	return vp;
 }
@@ -1538,9 +1537,9 @@ static void add_outputs(struct r300_vertex_program_key *key, GLint vert)
 	key->OutputsAdded |= 1 << vert;
 }
 
-void r300SelectVertexShader(r300ContextPtr r300)
+struct r300_vertex_program * r300SelectVertexShader(GLcontext *ctx)
 {
-	GLcontext *ctx = ctx = r300->radeon.glCtx;
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	GLuint InputsRead;
 	struct r300_vertex_program_key wanted_key = { 0 };
 	GLint i;
@@ -1596,14 +1595,14 @@ void r300SelectVertexShader(r300ContextPtr r300)
 	for (vp = vpc->progs; vp; vp = vp->next)
 		if (_mesa_memcmp(&vp->key, &wanted_key, sizeof(wanted_key))
 		    == 0) {
-			r300->selected_vp = vp;
-			return;
+			return r300->selected_vp = vp;
 		}
 
 	vp = build_program(ctx, &wanted_key, &vpc->mesa_program, wpos_idx);
 	vp->next = vpc->progs;
 	vpc->progs = vp;
-	r300->selected_vp = vp;
+
+	return r300->selected_vp = vp;
 }
 
 #define bump_vpu_count(ptr, new_count)   do { \

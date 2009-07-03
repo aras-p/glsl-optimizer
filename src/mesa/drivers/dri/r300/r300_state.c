@@ -2045,6 +2045,7 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 	}
 
 	if (rmesa->radeon.NewGLState && rmesa->options.hw_tcl_enabled) {
+		struct r300_vertex_program *vp;
 		int i;
 		for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
 			rmesa->temp_attrib[i] =
@@ -2060,8 +2061,11 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 			    rmesa->temp_attrib[i];
 		}
 
-		r300SelectVertexShader(rmesa);
-		r300SwitchFallback(ctx, R300_FALLBACK_VERTEX_PROGRAM, rmesa->selected_vp->error);
+		vp = r300SelectVertexShader(ctx);
+		if (!vp->translated)
+			r300TranslateVertexShader(vp);
+
+		r300SwitchFallback(ctx, R300_FALLBACK_VERTEX_PROGRAM, vp->error);
 	}
 
 	fp = r300SelectFragmentShader(ctx);
