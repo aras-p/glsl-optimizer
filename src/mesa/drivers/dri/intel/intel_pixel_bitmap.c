@@ -409,6 +409,12 @@ intel_texture_bitmap(GLcontext * ctx,
       return GL_FALSE;
    }
 
+   if (ctx->Fog.Enabled) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "glBitmap() fallback: fog\n");
+      return GL_FALSE;
+   }
+
    /* Check that we can load in a texture this big. */
    if (width > (1 << (ctx->Const.MaxTextureLevels - 1)) ||
        height > (1 << (ctx->Const.MaxTextureLevels - 1))) {
