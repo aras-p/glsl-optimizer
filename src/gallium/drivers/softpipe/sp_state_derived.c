@@ -110,6 +110,7 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
             break;
 
          case TGSI_SEMANTIC_GENERIC:
+         case TGSI_SEMANTIC_FACE:
             /* this includes texcoords and varying vars */
             src = draw_find_vs_output(softpipe->draw, TGSI_SEMANTIC_GENERIC,
                                       spfs->info.input_semantic_index[i]);

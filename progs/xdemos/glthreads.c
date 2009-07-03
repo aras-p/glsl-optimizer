@@ -26,7 +26,7 @@
  *  -p                       Open a display connection for each thread
  *  -l                       Enable application-side locking
  *  -n <num threads>         Number of threads to create (default is 2)
- *  -display <display name>  Specify X display (default is :0.0)
+ *  -display <display name>  Specify X display (default is $DISPLAY)
  *  -t                       Use texture mapping
  *
  * Brian Paul  20 July 2000
@@ -573,7 +573,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-   char *displayName = ":0.0";
+   char *displayName = NULL;
    int numThreads = 2;
    Display *dpy = NULL;
    int i;

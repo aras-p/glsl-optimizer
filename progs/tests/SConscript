@@ -110,6 +110,7 @@ progs = [
     'tex1d',
     'texcmp',
     'texcompress2',
+    'texcompsub',
     'texdown',
     'texfilt',
     'texgenmix',

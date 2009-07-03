@@ -19,6 +19,12 @@ SOURCES = \
 	clear-random.c \
 	clear.c \
 	dlist-dangling.c \
+	dlist-flat-tri.c \
+	dlist-mat-tri.c \
+	dlist-tri-flat-tri.c \
+	dlist-tri-mat-tri.c \
+	dlist-recursive-call.c \
+	dlist-begin-call-end.c \
 	dlist-edgeflag-dangling.c \
 	dlist-edgeflag.c \
 	dlist-degenerate.c \
@@ -105,6 +111,7 @@ SOURCES = \
 	tri-fp.c \
 	tri-fp-const-imm.c \
 	tri-lit.c \
+	tri-lit-material.c \
 	tri-mask-tri.c \
 	tri-orig.c \
 	tri-query.c \

@@ -137,8 +137,23 @@ find_translated_vp(struct st_context *st,
 
       for (inAttr = 0; inAttr < FRAG_ATTRIB_MAX; inAttr++) {
          if (fragInputsRead & (1 << inAttr)) {
-            stfp->input_to_slot[inAttr] = numIn;
-            numIn++;
+            if ((fragInputsRead & FRAG_BIT_FOGC)) {
+               if (stfp->Base.UsesPointCoord) {
+                  stfp->input_to_slot[inAttr] = numIn;
+                  numIn++;
+               }
+               if (stfp->Base.UsesFrontFacing) {
+                  stfp->input_to_slot[inAttr] = numIn;
+                  numIn++;
+               }
+               if (stfp->Base.UsesFogFragCoord) {
+                  stfp->input_to_slot[inAttr] = numIn;
+                  numIn++;
+               }
+            } else {
+               stfp->input_to_slot[inAttr] = numIn;
+               numIn++;
+            }
          }
          else {
             stfp->input_to_slot[inAttr] = UNUSED;

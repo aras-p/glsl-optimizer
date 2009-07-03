@@ -2834,6 +2834,13 @@ struct gl_dlist_state
    
    GLubyte ActiveEdgeFlag;
    GLboolean CurrentEdgeFlag;
+
+   struct {
+      /* State known to have been set by the currently-compiling display
+       * list.  Used to eliminate some redundant state changes.
+       */
+      GLenum ShadeModel;
+   } Current;
 };
 
 

@@ -1,8 +1,9 @@
 /**************************************************************************
- *
+ * 
+ * Copyright 2009 VMware, Inc.
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +11,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +23,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
+ * 
  **************************************************************************/
 
 #include <windows.h>
@@ -31,51 +32,26 @@
 
 #include <GL/gl.h>
 #include <GL/wglext.h>
+#include "util/u_debug.h"
 
-#include "glapi/glapi.h"
-#include "stw_public.h"
-
-struct stw_extension_entry
+/* A dummy implementation of this extension.
+ *
+ * Required as some applications retrieve and call these functions
+ * regardless of the fact that we don't advertise the extension and
+ * further more the results of wglGetProcAddress are NULL.
+ */
+WINGDIAPI BOOL APIENTRY
+wglSwapIntervalEXT(int interval)
 {
-   const char *name;
-   PROC proc;
-};
-
-#define STW_EXTENSION_ENTRY(P) { #P, (PROC) P }
-
-static const struct stw_extension_entry stw_extension_entries[] = {
-
-   /* WGL_ARB_extensions_string */
-   STW_EXTENSION_ENTRY( wglGetExtensionsStringARB ),
-
-   /* WGL_ARB_pixel_format */
-   STW_EXTENSION_ENTRY( wglChoosePixelFormatARB ),
-   STW_EXTENSION_ENTRY( wglGetPixelFormatAttribfvARB ),
-   STW_EXTENSION_ENTRY( wglGetPixelFormatAttribivARB ),
-
-   /* WGL_EXT_extensions_string */
-   STW_EXTENSION_ENTRY( wglGetExtensionsStringEXT ),
-
-   /* WGL_EXT_swap_interval */
-   STW_EXTENSION_ENTRY( wglGetSwapIntervalEXT ),
-   STW_EXTENSION_ENTRY( wglSwapIntervalEXT ),
-
-   { NULL, NULL }
-};
-
-PROC
-stw_get_proc_address(
-   LPCSTR lpszProc )
-{
-   const struct stw_extension_entry *entry;
-
-   if (lpszProc[0] == 'w' && lpszProc[1] == 'g' && lpszProc[2] == 'l')
-      for (entry = stw_extension_entries; entry->name; entry++)
-         if (strcmp( lpszProc, entry->name ) == 0)
-            return entry->proc;
-
-   if (lpszProc[0] == 'g' && lpszProc[1] == 'l')
-        return (PROC) _glapi_get_proc_address( lpszProc );
-
-   return NULL;
+   (void) interval;
+   debug_printf("%s: %d\n", __FUNCTION__, interval);
+   return TRUE;
 }
+
+WINGDIAPI int APIENTRY
+wglGetSwapIntervalEXT(void)
+{
+   return 0;
+}
+
+

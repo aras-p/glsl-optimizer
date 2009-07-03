@@ -335,7 +335,9 @@ guess_and_alloc_texture(struct st_context *st,
     * pagetable arrangements.
     */
    if ((stObj->base.MinFilter == GL_NEAREST ||
-        stObj->base.MinFilter == GL_LINEAR) &&
+        stObj->base.MinFilter == GL_LINEAR ||
+        stImage->base._BaseFormat == GL_DEPTH_COMPONENT ||
+        stImage->base._BaseFormat == GL_DEPTH_STENCIL_EXT) &&
        stImage->level == firstLevel) {
       lastLevel = firstLevel;
    }
@@ -1169,6 +1171,88 @@ st_TexSubImage1D(GLcontext *ctx, GLenum target, GLint level,
 }
 
 
+static void
+st_CompressedTexSubImage1D(GLcontext *ctx, GLenum target, GLint level,
+                           GLint xoffset, GLsizei width,
+                           GLenum format,
+                           GLsizei imageSize, const GLvoid *data,
+                           struct gl_texture_object *texObj,
+                           struct gl_texture_image *texImage)
+{
+   assert(0);
+}
+
+
+static void
+st_CompressedTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
+                           GLint xoffset, GLint yoffset,
+                           GLsizei width, GLint height,
+                           GLenum format,
+                           GLsizei imageSize, const GLvoid *data,
+                           struct gl_texture_object *texObj,
+                           struct gl_texture_image *texImage)
+{
+   struct st_texture_image *stImage = st_texture_image(texImage);
+   struct pipe_format_block block;
+   int srcBlockStride;
+   int dstBlockStride;
+   int y;
+
+   if (stImage->pt) {
+      st_teximage_flush_before_map(ctx->st, stImage->pt, 0, level,
+				   PIPE_TRANSFER_WRITE);
+      texImage->Data = st_texture_image_map(ctx->st, stImage, 0, 
+                                            PIPE_TRANSFER_WRITE,
+                                            xoffset, yoffset,
+                                            width, height);
+      
+      block = stImage->pt->block;
+      srcBlockStride = pf_get_stride(&block, width);
+      dstBlockStride = stImage->transfer->stride;
+   } else {
+      assert(stImage->pt);
+      /* TODO find good values for block and strides */
+      /* TODO also adjust texImage->data for yoffset/xoffset */
+      return;
+   }
+
+   if (!texImage->Data) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage");
+      return;
+   }
+
+   assert(xoffset % block.width == 0);
+   assert(yoffset % block.height == 0);
+   assert(width % block.width == 0);
+   assert(height % block.height == 0);
+
+   for (y = 0; y < height; y += block.height) {
+      /* don't need to adjust for xoffset and yoffset as st_texture_image_map does that */
+      const char *src = (const char*)data + srcBlockStride * pf_get_nblocksy(&block, y);
+      char *dst = (char*)texImage->Data + dstBlockStride * pf_get_nblocksy(&block, y);
+      memcpy(dst, src, pf_get_stride(&block, width));
+   }
+
+   if (stImage->pt) {
+      st_texture_image_unmap(ctx->st, stImage);
+      texImage->Data = NULL;
+   }
+}
+
+
+static void
+st_CompressedTexSubImage3D(GLcontext *ctx, GLenum target, GLint level,
+                           GLint xoffset, GLint yoffset, GLint zoffset,
+                           GLsizei width, GLint height, GLint depth,
+                           GLenum format,
+                           GLsizei imageSize, const GLvoid *data,
+                           struct gl_texture_object *texObj,
+                           struct gl_texture_image *texImage)
+{
+   assert(0);
+}
+
+
 
 /**
  * Do a CopyTexSubImage operation using a read transfer from the source,
@@ -1818,6 +1902,9 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->TexSubImage1D = st_TexSubImage1D;
    functions->TexSubImage2D = st_TexSubImage2D;
    functions->TexSubImage3D = st_TexSubImage3D;
+   functions->CompressedTexSubImage1D = st_CompressedTexSubImage1D;
+   functions->CompressedTexSubImage2D = st_CompressedTexSubImage2D;
+   functions->CompressedTexSubImage3D = st_CompressedTexSubImage3D;
    functions->CopyTexImage1D = st_CopyTexImage1D;
    functions->CopyTexImage2D = st_CopyTexImage2D;
    functions->CopyTexSubImage1D = st_CopyTexSubImage1D;

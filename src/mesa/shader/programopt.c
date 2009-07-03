@@ -396,6 +396,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    fprog->Base.Instructions = newInst;
    fprog->Base.NumInstructions = inst - newInst;
    fprog->Base.InputsRead |= FRAG_BIT_FOGC;
+   fprog->UsesFogFragCoord = GL_TRUE;
    /* XXX do this?  fprog->FogOption = GL_NONE; */
 }
 

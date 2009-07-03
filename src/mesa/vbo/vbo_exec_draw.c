@@ -51,7 +51,7 @@ vbo_exec_debug_verts( struct vbo_exec_context *exec )
       struct _mesa_prim *prim = &exec->vtx.prim[i];
       _mesa_printf("   prim %d: %s%s %d..%d %s %s\n",
 		   i, 
-		   _mesa_lookup_enum_by_nr(prim->mode),
+		   _mesa_lookup_prim_by_nr(prim->mode),
 		   prim->weak ? " (weak)" : "",
 		   prim->start, 
 		   prim->start + prim->count,

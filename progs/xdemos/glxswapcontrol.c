@@ -759,7 +759,7 @@ main(int argc, char *argv[])
    Display *dpy;
    Window win;
    GLXContext ctx;
-   char *dpyName = ":0";
+   char *dpyName = NULL;
    int swap_interval = 1;
    GLboolean do_swap_interval = GL_FALSE;
    GLboolean force_get_rate = GL_FALSE;
