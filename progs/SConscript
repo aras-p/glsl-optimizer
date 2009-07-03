@@ -1,4 +1,13 @@
 SConscript([
     'util/SConscript',
+    'demos/SConscript',
+    'glsl/SConscript',
+    'redbook/SConscript',
+    'samples/SConscript',
     'tests/SConscript',
+    'trivial/SConscript',
+    'vp/SConscript',
+    'vpglsl/SConscript',
+    'fp/SConscript',
+    'wgl/SConscript',
 ])
