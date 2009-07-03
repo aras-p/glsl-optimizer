@@ -405,6 +405,7 @@ struct r300_hw_state {
 #undef TAG
 
 struct r300_vertex_program {
+	struct gl_vertex_program *Base;
 	struct r300_vertex_program *next;
 
 	struct r300_vertex_program_key {
@@ -674,9 +675,6 @@ extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 extern void r300SelectVertexShader(r300ContextPtr r300);
 extern void r300InitShaderFuncs(struct dd_function_table *functions);
-extern int r300VertexProgUpdateParams(GLcontext * ctx,
-				      struct r300_vertex_program_cont *vp,
-				      float *dst);
 
 extern void r300InitShaderFunctions(r300ContextPtr r300);
 

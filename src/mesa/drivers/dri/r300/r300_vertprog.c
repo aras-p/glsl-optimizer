@@ -99,15 +99,13 @@ static GLuint combineSwizzles(GLuint src, GLuint swz_x, GLuint swz_y, GLuint swz
 	return ret;
 }
 
-int r300VertexProgUpdateParams(GLcontext * ctx,
-			       struct r300_vertex_program_cont *vp, float *dst)
+static int r300VertexProgUpdateParams(GLcontext * ctx, struct gl_vertex_program *vp, float *dst)
 {
 	int pi;
-	struct gl_vertex_program *mesa_vp = &vp->mesa_program;
 	float *dst_o = dst;
 	struct gl_program_parameter_list *paramList;
 
-	if (mesa_vp->IsNVProgram) {
+	if (vp->IsNVProgram) {
 		_mesa_load_tracked_matrices(ctx);
 
 		for (pi = 0; pi < MAX_NV_VERTEX_PROGRAM_PARAMS; pi++) {
@@ -119,16 +117,18 @@ int r300VertexProgUpdateParams(GLcontext * ctx,
 		return dst - dst_o;
 	}
 
-	assert(mesa_vp->Base.Parameters);
-	_mesa_load_state_parameters(ctx, mesa_vp->Base.Parameters);
+	if (!vp->Base.Parameters)
+		return 0;
 
-	if (mesa_vp->Base.Parameters->NumParameters * 4 >
+	_mesa_load_state_parameters(ctx, vp->Base.Parameters);
+
+	if (vp->Base.Parameters->NumParameters * 4 >
 	    VSF_MAX_FRAGMENT_LENGTH) {
 		fprintf(stderr, "%s:Params exhausted\n", __FUNCTION__);
 		_mesa_exit(-1);
 	}
 
-	paramList = mesa_vp->Base.Parameters;
+	paramList = vp->Base.Parameters;
 	for (pi = 0; pi < paramList->NumParameters; pi++) {
 		switch (paramList->Parameters[pi].Type) {
 		case PROGRAM_STATE_VAR:
@@ -1027,9 +1027,9 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 	}
 }
 
-static void r300TranslateVertexShader(struct r300_vertex_program *vp,
-				      struct prog_instruction *vpi)
+static void r300TranslateVertexShader(struct r300_vertex_program *vp)
 {
+	struct prog_instruction *vpi = vp->Base->Base.Instructions;
 	int i;
 	GLuint *inst;
 	unsigned long num_operands;
@@ -1450,27 +1450,31 @@ static void translateInsts(struct gl_program *prog)
 
 static struct r300_vertex_program *build_program(GLcontext *ctx,
 						 struct r300_vertex_program_key *wanted_key,
-						 struct gl_vertex_program *mesa_vp,
+						 const struct gl_vertex_program *mesa_vp,
 						 GLint wpos_idx)
 {
 	struct r300_vertex_program *vp;
+	struct gl_program *prog;
 
 	vp = _mesa_calloc(sizeof(*vp));
+	vp->Base = (struct gl_vertex_program *) _mesa_clone_program(ctx, &mesa_vp->Base);
 	_mesa_memcpy(&vp->key, wanted_key, sizeof(vp->key));
 	vp->wpos_idx = wpos_idx;
 
+	prog = &vp->Base->Base;
+
 	if (RADEON_DEBUG & DEBUG_VERTS) {
 		fprintf(stderr, "Initial vertex program:\n");
-		_mesa_print_program(&mesa_vp->Base);
+		_mesa_print_program(prog);
 		fflush(stdout);
 	}
 
 	if (mesa_vp->IsPositionInvariant) {
-		_mesa_insert_mvp_code(ctx, mesa_vp);
+		_mesa_insert_mvp_code(ctx, vp->Base);
 	}
 
 	if (wpos_idx > -1) {
-		pos_as_texcoord(vp, &mesa_vp->Base);
+		pos_as_texcoord(vp, prog);
 	}
 
 	/* Some outputs may be artificially added, to match the inputs of the fragment program.
@@ -1488,8 +1492,8 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 		if (count > 0) {
 			struct prog_instruction *inst;
 
-			_mesa_insert_instructions(&mesa_vp->Base, mesa_vp->Base.NumInstructions - 1, count);
-			inst = &mesa_vp->Base.Instructions[mesa_vp->Base.NumInstructions - 1 - count];
+			_mesa_insert_instructions(prog, prog->NumInstructions - 1, count);
+			inst = &prog->Instructions[prog->NumInstructions - 1 - count];
 
 			for (i = 0; i < VERT_RESULT_MAX; ++i) {
 				if (vp->key.OutputsAdded & (1 << i)) {
@@ -1510,17 +1514,17 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 		}
 	}
 
-	translateInsts(&mesa_vp->Base);
+	translateInsts(prog);
 
 	if (RADEON_DEBUG & DEBUG_VERTS) {
 		fprintf(stderr, "Vertex program after native rewrite:\n");
-		_mesa_print_program(&mesa_vp->Base);
+		_mesa_print_program(prog);
 		fflush(stdout);
 	}
 
-	assert(mesa_vp->Base.NumInstructions);
-	vp->num_temporaries = mesa_vp->Base.NumTemporaries;
-	r300TranslateVertexShader(vp, mesa_vp->Base.Instructions);
+	assert(prog->NumInstructions);
+	vp->num_temporaries = prog->NumTemporaries;
+	r300TranslateVertexShader(vp);
 
 	return vp;
 }
@@ -1653,10 +1657,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	((drm_r300_cmd_header_t *) rmesa->hw.vps.cmd)->vpu.count = 0;
 	
 	R300_STATECHANGE(rmesa, vpp);
-	param_count = r300VertexProgUpdateParams(ctx,
-								(struct r300_vertex_program_cont *)
-								ctx->VertexProgram._Current,
-								(float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
+	param_count = r300VertexProgUpdateParams(ctx, prog->Base, (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
 	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
 	param_count /= 4;
 

@@ -50,6 +50,7 @@ static void freeVertProgCache(GLcontext *ctx, struct r300_vertex_program_cont *c
 
 	while (vp) {
 		tmp = vp->next;
+		_mesa_reference_vertprog(ctx, &vp->Base, NULL);
 		_mesa_free(vp);
 		vp = tmp;
 	}
