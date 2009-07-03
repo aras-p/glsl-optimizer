@@ -243,6 +243,9 @@ intel_bufferobj_map(GLcontext * ctx,
       return obj->Pointer;
    }
 
+   if (!read_only)
+      intelFlush(ctx);
+
    if (intel_obj->region)
       intel_bufferobj_cow(intel, intel_obj);
 

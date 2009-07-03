@@ -111,6 +111,8 @@ debug_backtrace(void)
 GLubyte *
 intel_region_map(struct intel_context *intel, struct intel_region *region)
 {
+   intelFlush(&intel->ctx);
+
    _DBG("%s %p\n", __FUNCTION__, region);
    if (!region->map_refcount++) {
       if (region->pbo)
