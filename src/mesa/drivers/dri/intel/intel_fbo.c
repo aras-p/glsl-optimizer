@@ -515,6 +515,7 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
    irb->Base.BlueBits = texImage->TexFormat->BlueBits;
    irb->Base.AlphaBits = texImage->TexFormat->AlphaBits;
    irb->Base.DepthBits = texImage->TexFormat->DepthBits;
+   irb->Base.StencilBits = texImage->TexFormat->StencilBits;
 
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;
