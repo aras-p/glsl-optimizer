@@ -263,8 +263,9 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 		fprintf(stderr, "no rrb\n");
 		return;
 	}
-	
-	fprintf(stderr,"rrb is %p %d %dx%d\n", rrb, offset, rrb->base.Width, rrb->base.Height);
+
+        if (RADEON_DEBUG & DEBUG_STATE)
+           fprintf(stderr,"rrb is %p %d %dx%d\n", rrb, offset, rrb->base.Width, rrb->base.Height);
 	cbpitch = (rrb->pitch / rrb->cpp);
 	if (rrb->cpp == 4)
 		cbpitch |= R300_COLOR_FORMAT_ARGB8888;
