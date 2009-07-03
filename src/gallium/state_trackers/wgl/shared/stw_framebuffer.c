@@ -300,8 +300,18 @@ struct stw_framebuffer *
 stw_framebuffer_from_hdc_locked(
    HDC hdc )
 {
+   HWND hwnd;
    struct stw_framebuffer *fb;
 
+   /* 
+    * Some applications create and use several HDCs for the same window, so 
+    * looking up the framebuffer by the HDC is not reliable. Use HWND whenever
+    * possible.
+    */ 
+   hwnd = WindowFromDC(hdc);
+   if(hwnd)
+      return stw_framebuffer_from_hwnd_locked(hwnd);
+   
    for (fb = stw_dev->fb_head; fb != NULL; fb = fb->next)
       if (fb->hDC == hdc)
          break;
