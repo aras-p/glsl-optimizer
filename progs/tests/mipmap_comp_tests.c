@@ -76,6 +76,9 @@ static struct view views[] =
    { 2, 4, "Blue, Black, White" },
    { 3, 4, "Black, White" },
    { 4, 4, "White" },
+   { 3, 3, "Black" },
+   { 2, 2, "Blue" },
+   { 1, 1, "Red" },
    { 1, 3, "Red, Blue, Black" },
    { 1, 2, "Red, Blue" },
    { 2, 3, "Blue, Black" },
@@ -85,7 +88,7 @@ static struct view views[] =
 static void
 initValues(void)
 {
-   View = 9;
+   View = 12;
    BaseLevel = 0;
    MaxLevel = 9;
    MinLod = views[View].minLod;
