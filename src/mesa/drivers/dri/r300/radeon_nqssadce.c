@@ -264,6 +264,32 @@ static void process_instruction(struct nqssadce_state* s)
 	}
 }
 
+static void calculateInputsOutputs(struct gl_program *p)
+{
+	struct prog_instruction *inst;
+	int i, tmp;
+	GLuint InputsRead, OutputsWritten;
+
+	inst = p->Instructions;
+	InputsRead = 0;
+	OutputsWritten = 0;
+	while (inst->Opcode != OPCODE_END)
+	{
+		tmp = _mesa_num_inst_src_regs(inst->Opcode);
+		for (i = 0; i < tmp; ++i) {
+			if (inst->SrcReg[i].File == PROGRAM_INPUT)
+				InputsRead |= 1 << inst->SrcReg[i].Index;
+		}
+
+		if (inst->DstReg.File == PROGRAM_OUTPUT)
+			OutputsWritten |= 1 << inst->DstReg.Index;
+
+		++inst;
+	}
+
+	p->InputsRead = InputsRead;
+	p->OutputsWritten = OutputsWritten;
+}
 
 void radeonNqssaDce(GLcontext *ctx, struct gl_program *p, struct radeon_nqssadce_descr* descr)
 {
@@ -280,4 +306,6 @@ void radeonNqssaDce(GLcontext *ctx, struct gl_program *p, struct radeon_nqssadce
 		s.IP--;
 		process_instruction(&s);
 	}
+
+	calculateInputsOutputs(p);
 }
