@@ -50,13 +50,6 @@
 #include "radeon_program.h"
 #include "radeon_program_alu.h"
 
-static void update_params(GLcontext *ctx, struct gl_fragment_program *fp)
-{
-	/* Ask Mesa nicely to fill in ParameterValues for us */
-	if (fp->Base.Parameters)
-		_mesa_load_state_parameters(ctx, fp->Base.Parameters);
-}
-
 static void nqssadce_init(struct nqssadce_state* s)
 {
 	s->Outputs[FRAG_RESULT_COLOR].Sourced = WRITEMASK_XYZW;
@@ -281,11 +274,7 @@ void r300TranslateFragmentShader(GLcontext *ctx, struct gl_fragment_program *fp)
 
 		r300_fp->translated = GL_TRUE;
 
-		r300UpdateStateParameters(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
-
 		if (r300_fp->error || (RADEON_DEBUG & DEBUG_PIXEL))
 			r300->vtbl.FragmentProgramDump(&r300_fp->code);
 	}
-
-	update_params(ctx, fp);
 }

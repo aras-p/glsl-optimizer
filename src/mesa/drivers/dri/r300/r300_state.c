@@ -1093,7 +1093,7 @@ r300FetchStateParameter(GLcontext * ctx,
  * Update R300's own internal state parameters.
  * For now just STATE_R300_WINDOW_DIMENSION
  */
-void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state)
+static void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state)
 {
 	struct r300_fragment_program *fp;
 	struct gl_program_parameter_list *paramList;
@@ -1110,6 +1110,8 @@ void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state)
 
 	if (!paramList)
 		return;
+
+	_mesa_load_state_parameters(ctx, paramList);
 
 	for (i = 0; i < paramList->NumParameters; i++) {
 		if (paramList->Parameters[i].Type == PROGRAM_STATE_VAR) {
@@ -2322,8 +2324,6 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 
 		R300_STATECHANGE(r300, cb);
 	}
-
-	r300UpdateStateParameters(ctx, new_state);
 
 	r300->radeon.NewGLState |= new_state;
 }

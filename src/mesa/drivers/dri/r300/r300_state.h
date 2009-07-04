@@ -52,7 +52,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 void r300UpdateViewportOffset (GLcontext * ctx);
 void r300UpdateDrawBuffer (GLcontext * ctx);
-void r300UpdateStateParameters (GLcontext * ctx, GLuint new_state);
 void r300UpdateShaders (r300ContextPtr rmesa);
 void r300UpdateShaderStates (r300ContextPtr rmesa);
 void r300InitState (r300ContextPtr r300);
