@@ -234,7 +234,7 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 		type = input->Type;
 		r300_attr.free_needed = GL_FALSE;
 		r300_attr.data = (GLvoid *)src_ptr;
-		r300_attr.stride = stride;
+		r300_attr.stride = input->StrideB;
 		r300_attr.dwords = (getTypeSize(type) * input->Size  + 3)/ 4;
 	}
 
