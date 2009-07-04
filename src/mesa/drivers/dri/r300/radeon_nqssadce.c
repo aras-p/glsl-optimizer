@@ -188,6 +188,8 @@ static void process_instruction(struct nqssadce_state* s)
 	case OPCODE_MAX:
 	case OPCODE_MIN:
 	case OPCODE_MUL:
+	case OPCODE_SGE:
+	case OPCODE_SLT:
 		inst = track_used_srcreg(s, inst, 0, inst->DstReg.WriteMask);
 		inst = track_used_srcreg(s, inst, 1, inst->DstReg.WriteMask);
 		break;
@@ -218,6 +220,18 @@ static void process_instruction(struct nqssadce_state* s)
 	case OPCODE_TXB:
 	case OPCODE_TXP:
 		inst = track_used_srcreg(s, inst, 0, 0xf);
+		break;
+	case OPCODE_DST:
+		inst = track_used_srcreg(s, inst, 0, 0x6);
+		inst = track_used_srcreg(s, inst, 1, 0xa);
+		break;
+	case OPCODE_EXP:
+	case OPCODE_LOG:
+	case OPCODE_POW:
+		inst = track_used_srcreg(s, inst, 0, 0x3);
+		break;
+	case OPCODE_LIT:
+		inst = track_used_srcreg(s, inst, 0, 0xb);
 		break;
 	default:
 		_mesa_problem(s->Ctx, "NqssaDce: Unknown opcode %d\n", inst->Opcode);
