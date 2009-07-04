@@ -2225,8 +2225,8 @@ void r300SetupVAP(GLcontext *ctx, GLuint InputsRead, GLuint OutputsWritten)
 
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
-	rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten, rmesa->selected_fp->Base->InputsRead);
-	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = r300VAPOutputCntl1(ctx, OutputsWritten, rmesa->selected_fp->Base->InputsRead);
+	rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
+	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = r300VAPOutputCntl1(ctx, OutputsWritten);
 }
 
 void r300UpdateShaderStates(r300ContextPtr rmesa)
