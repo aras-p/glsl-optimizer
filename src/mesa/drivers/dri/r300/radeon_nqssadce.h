@@ -83,14 +83,10 @@ struct radeon_nqssadce_descr {
 	 */
 	void (*BuildSwizzle)(struct nqssadce_state*, struct prog_dst_register dst, struct prog_src_register src);
 
-	/**
-	 * Rewrite instructions that write to DEPR.z to write to DEPR.w
-	 * instead (rewriting is done *before* the WriteMask test).
-	 */
-	GLboolean RewriteDepthOut;
 	void *Data;
 };
 
 void radeonNqssaDce(GLcontext *ctx, struct gl_program *p, struct radeon_nqssadce_descr* descr);
+struct prog_src_register lmul_swizzle(GLuint swizzle, struct prog_src_register srcreg);
 
 #endif /* __RADEON_PROGRAM_NQSSADCE_H_ */

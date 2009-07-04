@@ -239,6 +239,46 @@ static void build_state(
 	}
 }
 
+static void rewrite_depth_out(struct gl_program *prog)
+{
+	struct prog_instruction *inst;
+
+	for (inst = prog->Instructions; inst->Opcode != OPCODE_END; ++inst) {
+		if (inst->DstReg.File != PROGRAM_OUTPUT || inst->DstReg.Index != FRAG_RESULT_DEPTH)
+			continue;
+
+		if (inst->DstReg.WriteMask & WRITEMASK_Z) {
+			inst->DstReg.WriteMask = WRITEMASK_W;
+		} else {
+			inst->DstReg.WriteMask = 0;
+			continue;
+		}
+
+		switch (inst->Opcode) {
+			case OPCODE_FRC:
+			case OPCODE_MOV:
+				inst->SrcReg[0] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[0]);
+				break;
+			case OPCODE_ADD:
+			case OPCODE_MAX:
+			case OPCODE_MIN:
+			case OPCODE_MUL:
+				inst->SrcReg[0] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[0]);
+				inst->SrcReg[1] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[1]);
+				break;
+			case OPCODE_CMP:
+			case OPCODE_MAD:
+				inst->SrcReg[0] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[0]);
+				inst->SrcReg[1] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[1]);
+				inst->SrcReg[2] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[2]);
+				break;
+			default:
+				// Scalar instructions needn't be reswizzled
+				break;
+		}
+	}
+}
+
 void r300TranslateFragmentShader(GLcontext *ctx, struct r300_fragment_program *fp)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
@@ -259,6 +299,8 @@ void r300TranslateFragmentShader(GLcontext *ctx, struct r300_fragment_program *f
 	insert_WPOS_trailer(&compiler);
 
 	rewriteFog(&compiler);
+
+	rewrite_depth_out(compiler.program);
 
 	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
 		struct radeon_program_transformation transformations[] = {
@@ -287,16 +329,14 @@ void r300TranslateFragmentShader(GLcontext *ctx, struct r300_fragment_program *f
 		struct radeon_nqssadce_descr nqssadce = {
 			.Init = &nqssadce_init,
 			.IsNativeSwizzle = &r500FPIsNativeSwizzle,
-			.BuildSwizzle = &r500FPBuildSwizzle,
-			.RewriteDepthOut = GL_TRUE
+			.BuildSwizzle = &r500FPBuildSwizzle
 		};
 		radeonNqssaDce(ctx, compiler.program, &nqssadce);
 	} else {
 		struct radeon_nqssadce_descr nqssadce = {
 			.Init = &nqssadce_init,
 			.IsNativeSwizzle = &r300FPIsNativeSwizzle,
-			.BuildSwizzle = &r300FPBuildSwizzle,
-			.RewriteDepthOut = GL_TRUE
+			.BuildSwizzle = &r300FPBuildSwizzle
 		};
 		radeonNqssaDce(ctx, compiler.program, &nqssadce);
 	}

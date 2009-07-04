@@ -56,7 +56,7 @@ static struct register_state *get_reg_state(struct nqssadce_state* s, GLuint fil
  *
  * @note Works correctly only for X, Y, Z, W swizzles, not for constant swizzles.
  */
-static struct prog_src_register lmul_swizzle(GLuint swizzle, struct prog_src_register srcreg)
+struct prog_src_register lmul_swizzle(GLuint swizzle, struct prog_src_register srcreg)
 {
 	struct prog_src_register tmp = srcreg;
 	int i;
@@ -121,40 +121,6 @@ static struct prog_instruction* track_used_srcreg(struct nqssadce_state* s,
 	return inst;
 }
 
-
-static void rewrite_depth_out(struct prog_instruction *inst)
-{
-	if (inst->DstReg.WriteMask & WRITEMASK_Z) {
-		inst->DstReg.WriteMask = WRITEMASK_W;
-	} else {
-		inst->DstReg.WriteMask = 0;
-		return;
-	}
-
-	switch (inst->Opcode) {
-	case OPCODE_FRC:
-	case OPCODE_MOV:
-		inst->SrcReg[0] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[0]);
-		break;
-	case OPCODE_ADD:
-	case OPCODE_MAX:
-	case OPCODE_MIN:
-	case OPCODE_MUL:
-		inst->SrcReg[0] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[0]);
-		inst->SrcReg[1] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[1]);
-		break;
-	case OPCODE_CMP:
-	case OPCODE_MAD:
-		inst->SrcReg[0] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[0]);
-		inst->SrcReg[1] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[1]);
-		inst->SrcReg[2] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[2]);
-		break;
-	default:
-		// Scalar instructions needn't be reswizzled
-		break;
-	}
-}
-
 static void unalias_srcregs(struct prog_instruction *inst, GLuint oldindex, GLuint newindex)
 {
 	int nsrc = _mesa_num_inst_src_regs(inst->Opcode);
@@ -189,11 +155,6 @@ static void process_instruction(struct nqssadce_state* s)
 		return;
 
 	if (inst->Opcode != OPCODE_KIL) {
-		if (s->Descr->RewriteDepthOut) {
-			if (inst->DstReg.File == PROGRAM_OUTPUT && inst->DstReg.Index == FRAG_RESULT_DEPTH)
-				rewrite_depth_out(inst);
-		}
-
 		struct register_state *regstate = get_reg_state(s, inst->DstReg.File, inst->DstReg.Index);
 		if (!regstate) {
 			_mesa_problem(s->Ctx, "NqssaDce: bad destination register (%i[%i])\n",
