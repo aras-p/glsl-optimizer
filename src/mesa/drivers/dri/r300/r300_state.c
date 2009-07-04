@@ -2035,7 +2035,6 @@ static void r300ResetHwState(r300ContextPtr r300)
 void r300UpdateShaders(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;
-	struct r300_fragment_program *fp;
 
 	/* should only happenen once, just after context is created */
 	/* TODO: shouldn't we fallback to sw here? */
@@ -2044,21 +2043,34 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 		return;
 	}
 
-	if (rmesa->radeon.NewGLState && rmesa->options.hw_tcl_enabled) {
+	{
+		struct r300_fragment_program *fp;
+
+		fp = r300SelectFragmentShader(ctx);
+		if (!fp->translated)
+			r300TranslateFragmentShader(ctx, fp);
+
+		r300SwitchFallback(ctx, R300_FALLBACK_FRAGMENT_PROGRAM, fp->error);
+	}
+
+	if (rmesa->options.hw_tcl_enabled) {
 		struct r300_vertex_program *vp;
-		int i;
-		for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
-			rmesa->temp_attrib[i] =
-			    TNL_CONTEXT(ctx)->vb.AttribPtr[i];
-			TNL_CONTEXT(ctx)->vb.AttribPtr[i] =
-			    &rmesa->dummy_attrib[i];
-		}
 
-		_tnl_UpdateFixedFunctionProgram(ctx);
+		if (rmesa->radeon.NewGLState) {
+			int i;
+			for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
+				rmesa->temp_attrib[i] =
+				    TNL_CONTEXT(ctx)->vb.AttribPtr[i];
+				TNL_CONTEXT(ctx)->vb.AttribPtr[i] =
+				    &rmesa->dummy_attrib[i];
+			}
 
-		for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
-			TNL_CONTEXT(ctx)->vb.AttribPtr[i] =
-			    rmesa->temp_attrib[i];
+			_tnl_UpdateFixedFunctionProgram(ctx);
+
+			for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
+				TNL_CONTEXT(ctx)->vb.AttribPtr[i] =
+				    rmesa->temp_attrib[i];
+			}
 		}
 
 		vp = r300SelectVertexShader(ctx);
@@ -2067,12 +2079,6 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 
 		r300SwitchFallback(ctx, R300_FALLBACK_VERTEX_PROGRAM, vp->error);
 	}
-
-	fp = r300SelectFragmentShader(ctx);
-	if (!fp->translated)
-		r300TranslateFragmentShader(ctx, fp);
-
-	r300SwitchFallback(ctx, R300_FALLBACK_FRAGMENT_PROGRAM, fp->error);
 
 	r300UpdateStateParameters(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
 	rmesa->radeon.NewGLState = 0;
