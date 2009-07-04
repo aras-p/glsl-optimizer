@@ -32,11 +32,34 @@
 #include "r300_context.h"
 #include "r300_fragprog_common.h"
 
+static void freeFragProgCache(GLcontext *ctx, struct r300_fragment_program_cont *cache)
+{
+	struct r300_fragment_program *tmp, *fp = cache->progs;
+
+	while (fp) {
+		tmp = fp->next;
+		_mesa_reference_program(ctx, &fp->Base, NULL);
+		_mesa_free(fp);
+		fp = tmp;
+	}
+}
+
+static void freeVertProgCache(GLcontext *ctx, struct r300_vertex_program_cont *cache)
+{
+	struct r300_vertex_program *tmp, *vp = cache->progs;
+
+	while (vp) {
+		tmp = vp->next;
+		_mesa_free(vp);
+		vp = tmp;
+	}
+}
+
 static struct gl_program *r300NewProgram(GLcontext * ctx, GLenum target,
 					 GLuint id)
 {
 	struct r300_vertex_program_cont *vp;
-	struct r300_fragment_program *fp;
+	struct r300_fragment_program_cont *fp;
 
 	switch (target) {
 	case GL_VERTEX_STATE_PROGRAM_NV:
@@ -47,7 +70,7 @@ static struct gl_program *r300NewProgram(GLcontext * ctx, GLenum target,
 
 	case GL_FRAGMENT_PROGRAM_NV:
 	case GL_FRAGMENT_PROGRAM_ARB:
-		fp = CALLOC_STRUCT(r300_fragment_program);
+		fp = CALLOC_STRUCT(r300_fragment_program_cont);
 		return _mesa_init_fragment_program(ctx, &fp->Base, target, id);
 
 	default:
@@ -59,21 +82,35 @@ static struct gl_program *r300NewProgram(GLcontext * ctx, GLenum target,
 
 static void r300DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 {
+	struct r300_vertex_program_cont *vp = (struct r300_vertex_program_cont *)prog;
+	struct r300_fragment_program_cont *fp = (struct r300_fragment_program_cont *)prog;
+
+	switch (prog->Target) {
+		case GL_VERTEX_PROGRAM_ARB:
+			freeVertProgCache(ctx, vp);
+			break;
+		case GL_FRAGMENT_PROGRAM_ARB:
+			freeFragProgCache(ctx, fp);
+			break;
+	}
+
 	_mesa_delete_program(ctx, prog);
 }
 
 static void
 r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
-	struct r300_vertex_program_cont *vp = (void *)prog;
-	struct r300_fragment_program *r300_fp = (struct r300_fragment_program *)prog;
+	struct r300_vertex_program_cont *vp = (struct r300_vertex_program_cont *)prog;
+	struct r300_fragment_program_cont *fp = (struct r300_fragment_program_cont *)prog;
 
 	switch (target) {
 	case GL_VERTEX_PROGRAM_ARB:
+		freeVertProgCache(ctx, vp);
 		vp->progs = NULL;
 		break;
 	case GL_FRAGMENT_PROGRAM_ARB:
-		r300_fp->translated = GL_FALSE;
+		freeFragProgCache(ctx, fp);
+		fp->progs = NULL;
 		break;
 	}
 
@@ -85,9 +122,9 @@ static GLboolean
 r300IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
 	if (target == GL_FRAGMENT_PROGRAM_ARB) {
-		struct r300_fragment_program *fp = (struct r300_fragment_program *)prog;
+		struct r300_fragment_program *fp = r300SelectFragmentShader(ctx);
 		if (!fp->translated)
-			r300TranslateFragmentShader(ctx, &fp->Base);
+			r300TranslateFragmentShader(ctx, fp);
 
 		return !fp->error;
 	} else

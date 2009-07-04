@@ -546,7 +546,7 @@ struct r500_fragment_program_code {
 * to render with that program.
 */
 struct r300_fragment_program {
-	struct gl_fragment_program Base;
+	struct gl_program *Base;
 
 	GLboolean translated;
 	GLboolean error;
@@ -559,6 +559,13 @@ struct r300_fragment_program {
 
 	GLboolean writes_depth;
 	GLuint optimization;
+
+	struct r300_fragment_program *next;
+};
+
+struct r300_fragment_program_cont {
+	struct gl_fragment_program Base;
+	struct r300_fragment_program *progs;
 };
 
 struct r300_fragment_program_compiler {
@@ -633,6 +640,7 @@ struct r300_context {
 	struct r300_hw_state hw;
 
 	struct r300_vertex_program *selected_vp;
+	struct r300_fragment_program *selected_fp;
 
 	/* Vertex buffers
 	 */
