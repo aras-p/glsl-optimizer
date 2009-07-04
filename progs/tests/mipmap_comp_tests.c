@@ -131,7 +131,9 @@ makeImage(int level, int width, int height)
       }
    }
 
-   glTexImage2D(GL_TEXTURE_2D, level, 3, width, height, 0,
+   glTexImage2D(GL_TEXTURE_2D, level,
+                GL_COMPRESSED_RGB_S3TC_DXT1_EXT,
+                width, height, 0,
                 GL_RGB, GL_UNSIGNED_BYTE, img);
 }
 
