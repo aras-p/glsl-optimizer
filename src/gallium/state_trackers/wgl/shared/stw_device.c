@@ -69,8 +69,6 @@ stw_flush_frontbuffer(struct pipe_screen *screen,
    fb = stw_framebuffer_from_hdc( hdc );
    /* fb can be NULL if window was destroyed already */
    if (fb) {
-      pipe_mutex_lock( fb->mutex );
-
 #if DEBUG
       {
          struct pipe_surface *surface2;
@@ -94,8 +92,7 @@ stw_flush_frontbuffer(struct pipe_screen *screen,
    
    if(fb) {
       stw_framebuffer_update(fb);
-      
-      pipe_mutex_unlock( fb->mutex );
+      stw_framebuffer_release(fb);
    }
 }
 
@@ -138,7 +135,8 @@ stw_init(const struct stw_winsys *stw_winsys)
    
    stw_dev->screen->flush_frontbuffer = &stw_flush_frontbuffer;
    
-   pipe_mutex_init( stw_dev->mutex );
+   pipe_mutex_init( stw_dev->ctx_mutex );
+   pipe_mutex_init( stw_dev->fb_mutex );
 
    stw_dev->ctx_table = handle_table_create();
    if (!stw_dev->ctx_table) {
@@ -179,7 +177,7 @@ stw_cleanup(void)
    if (!stw_dev)
       return;
    
-   pipe_mutex_lock( stw_dev->mutex );
+   pipe_mutex_lock( stw_dev->ctx_mutex );
    {
       /* Ensure all contexts are destroyed */
       i = handle_table_get_first_handle(stw_dev->ctx_table);
@@ -189,11 +187,12 @@ stw_cleanup(void)
       }
       handle_table_destroy(stw_dev->ctx_table);
    }
-   pipe_mutex_unlock( stw_dev->mutex );
+   pipe_mutex_unlock( stw_dev->ctx_mutex );
 
    stw_framebuffer_cleanup();
    
-   pipe_mutex_destroy( stw_dev->mutex );
+   pipe_mutex_destroy( stw_dev->fb_mutex );
+   pipe_mutex_destroy( stw_dev->ctx_mutex );
    
    stw_dev->screen->destroy(stw_dev->screen);
 

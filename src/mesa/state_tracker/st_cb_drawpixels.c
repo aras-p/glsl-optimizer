@@ -1037,10 +1037,16 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
          st_cond_flush_get_tex_transfer(st, rbRead->texture, 0, 0, 0,
 					PIPE_TRANSFER_READ, srcx, srcy, width,
 					height);
+      struct pipe_transfer *ptTex;
+      enum pipe_transfer_usage transfer_usage;
 
-      struct pipe_transfer *ptTex =
-         st_cond_flush_get_tex_transfer(st, pt, 0, 0, 0, PIPE_TRANSFER_WRITE,
-					0, 0, width, height);
+      if (type == GL_DEPTH && pf_is_depth_and_stencil(pt->format))
+         transfer_usage = PIPE_TRANSFER_READ_WRITE;
+      else
+         transfer_usage = PIPE_TRANSFER_WRITE;
+
+      ptTex = st_cond_flush_get_tex_transfer(st, pt, 0, 0, 0, transfer_usage,
+                                             0, 0, width, height);
 
       if (type == GL_COLOR) {
          /* alternate path using get/put_tile() */

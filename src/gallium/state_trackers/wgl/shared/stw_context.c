@@ -60,8 +60,14 @@ stw_context(GLcontext *glctx)
 static INLINE struct stw_context *
 stw_current_context(void)
 {
-   GET_CURRENT_CONTEXT( glctx );
-   return stw_context(glctx);
+   /* We must check if multiple threads are being used or GET_CURRENT_CONTEXT 
+    * might return the current context of the thread first seen. */
+   _glapi_check_multithread();
+
+   {
+      GET_CURRENT_CONTEXT( glctx );
+      return stw_context(glctx);
+   }
 }
 
 BOOL
@@ -74,7 +80,7 @@ stw_copy_context(
    struct stw_context *dst;
    BOOL ret = FALSE;
 
-   pipe_mutex_lock( stw_dev->mutex );
+   pipe_mutex_lock( stw_dev->ctx_mutex );
    
    src = stw_lookup_context_locked( hglrcSrc );
    dst = stw_lookup_context_locked( hglrcDst );
@@ -87,7 +93,7 @@ stw_copy_context(
       (void) mask;
    }
 
-   pipe_mutex_unlock( stw_dev->mutex );
+   pipe_mutex_unlock( stw_dev->ctx_mutex );
    
    return ret;
 }
@@ -101,7 +107,7 @@ stw_share_lists(
    struct stw_context *ctx2;
    BOOL ret = FALSE;
 
-   pipe_mutex_lock( stw_dev->mutex );
+   pipe_mutex_lock( stw_dev->ctx_mutex );
    
    ctx1 = stw_lookup_context_locked( hglrc1 );
    ctx2 = stw_lookup_context_locked( hglrc2 );
@@ -111,7 +117,7 @@ stw_share_lists(
       ret = _mesa_share_state(ctx2->st->ctx, ctx1->st->ctx);
    }
 
-   pipe_mutex_unlock( stw_dev->mutex );
+   pipe_mutex_unlock( stw_dev->ctx_mutex );
    
    return ret;
 }
@@ -124,8 +130,10 @@ stw_viewport(GLcontext * glctx, GLint x, GLint y,
    struct stw_framebuffer *fb;
    
    fb = stw_framebuffer_from_hdc( ctx->hdc );
-   if(fb)
+   if(fb) {
       stw_framebuffer_update(fb);
+      stw_framebuffer_release(fb);
+   }
 }
 
 UINT_PTR
@@ -189,9 +197,9 @@ stw_create_layer_context(
    ctx->st->ctx->DriverCtx = ctx;
    ctx->st->ctx->Driver.Viewport = stw_viewport;
 
-   pipe_mutex_lock( stw_dev->mutex );
+   pipe_mutex_lock( stw_dev->ctx_mutex );
    ctx->hglrc = handle_table_add(stw_dev->ctx_table, ctx);
-   pipe_mutex_unlock( stw_dev->mutex );
+   pipe_mutex_unlock( stw_dev->ctx_mutex );
    if (!ctx->hglrc)
       goto no_hglrc;
 
@@ -218,10 +226,10 @@ stw_delete_context(
    if (!stw_dev)
       return FALSE;
 
-   pipe_mutex_lock( stw_dev->mutex );
+   pipe_mutex_lock( stw_dev->ctx_mutex );
    ctx = stw_lookup_context_locked(hglrc);
    handle_table_remove(stw_dev->ctx_table, hglrc);
-   pipe_mutex_unlock( stw_dev->mutex );
+   pipe_mutex_unlock( stw_dev->ctx_mutex );
 
    if (ctx) {
       struct stw_context *curctx = stw_current_context();
@@ -248,9 +256,9 @@ stw_release_context(
    if (!stw_dev)
       return FALSE;
 
-   pipe_mutex_lock( stw_dev->mutex );
+   pipe_mutex_lock( stw_dev->ctx_mutex );
    ctx = stw_lookup_context_locked( hglrc );
-   pipe_mutex_unlock( stw_dev->mutex );
+   pipe_mutex_unlock( stw_dev->ctx_mutex );
 
    if (!ctx)
       return FALSE;
@@ -298,9 +306,9 @@ stw_make_current(
    HDC hdc,
    UINT_PTR hglrc )
 {
-   struct stw_context *curctx;
-   struct stw_context *ctx;
-   struct stw_framebuffer *fb;
+   struct stw_context *curctx = NULL;
+   struct stw_context *ctx = NULL;
+   struct stw_framebuffer *fb = NULL;
 
    if (!stw_dev)
       goto fail;
@@ -322,13 +330,13 @@ stw_make_current(
       return st_make_current( NULL, NULL, NULL );
    }
 
-   pipe_mutex_lock( stw_dev->mutex ); 
-
+   pipe_mutex_lock( stw_dev->ctx_mutex ); 
    ctx = stw_lookup_context_locked( hglrc );
+   pipe_mutex_unlock( stw_dev->ctx_mutex ); 
    if(!ctx)
       goto fail;
 
-   fb = stw_framebuffer_from_hdc_locked( hdc );
+   fb = stw_framebuffer_from_hdc( hdc );
    if(!fb) { 
       /* Applications should call SetPixelFormat before creating a context,
        * but not all do, and the opengl32 runtime seems to use a default pixel
@@ -336,13 +344,11 @@ stw_make_current(
        */
       int iPixelFormat = GetPixelFormat(hdc);
       if(iPixelFormat)
-         fb = stw_framebuffer_create_locked( hdc, iPixelFormat );
+         fb = stw_framebuffer_create( hdc, iPixelFormat );
       if(!fb) 
          goto fail;
    }
    
-   pipe_mutex_unlock( stw_dev->mutex );
-
    if(fb->iPixelFormat != ctx->iPixelFormat)
       goto fail;
 
@@ -361,12 +367,16 @@ stw_make_current(
 
 success:
    assert(fb);
-   if(fb)
+   if(fb) {
       stw_framebuffer_update(fb);
+      stw_framebuffer_release(fb);
+   }
    
    return TRUE;
 
 fail:
+   if(fb)
+      stw_framebuffer_release(fb);
    st_make_current( NULL, NULL, NULL );
    return FALSE;
 }

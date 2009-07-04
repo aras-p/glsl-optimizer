@@ -280,7 +280,8 @@ st_notify_swapbuffers(struct st_framebuffer *stfb)
 		PIPE_FLUSH_SWAPBUFFERS |
 		PIPE_FLUSH_FRAME,
                 NULL );
-      ctx->st->frontbuffer_status = FRONT_STATUS_COPY_OF_BACK;
+      if (st_renderbuffer(stfb->Base.Attachment[BUFFER_BACK_LEFT].Renderbuffer))
+         ctx->st->frontbuffer_status = FRONT_STATUS_COPY_OF_BACK;
    }
 }
 
