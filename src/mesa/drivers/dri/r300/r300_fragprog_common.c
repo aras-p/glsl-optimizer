@@ -69,8 +69,10 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 {
 	GLuint InputsRead = compiler->fp->Base->InputsRead;
 
-	if (!(InputsRead & FRAG_BIT_WPOS))
+	if (!(InputsRead & FRAG_BIT_WPOS)) {
+		compiler->fp->wpos_attr = FRAG_ATTRIB_MAX;
 		return;
+	}
 
 	static gl_state_index tokens[STATE_LENGTH] = {
 		STATE_INTERNAL, STATE_R300_WINDOW_DIMENSION, 0, 0, 0
@@ -78,10 +80,23 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 	struct prog_instruction *fpi;
 	GLuint window_index;
 	int i = 0;
+
+	for (i = FRAG_ATTRIB_TEX0; i <= FRAG_ATTRIB_TEX7; ++i)
+	{
+		if (!(InputsRead & (1 << i))) {
+			InputsRead &= ~(1 << FRAG_ATTRIB_WPOS);
+			InputsRead |= 1 << i;
+			compiler->fp->Base->InputsRead = InputsRead;
+			compiler->fp->wpos_attr = i;
+			break;
+		}
+	}
+
 	GLuint tempregi = _mesa_find_free_register(compiler->program, PROGRAM_TEMPORARY);
 
 	_mesa_insert_instructions(compiler->program, 0, 3);
 	fpi = compiler->program->Instructions;
+	i = 0;
 
 	/* perspective divide */
 	fpi[i].Opcode = OPCODE_RCP;
@@ -92,7 +107,7 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 	fpi[i].DstReg.CondMask = COND_TR;
 
 	fpi[i].SrcReg[0].File = PROGRAM_INPUT;
-	fpi[i].SrcReg[0].Index = FRAG_ATTRIB_WPOS;
+	fpi[i].SrcReg[0].Index = compiler->fp->wpos_attr;
 	fpi[i].SrcReg[0].Swizzle = SWIZZLE_WWWW;
 	i++;
 
@@ -104,7 +119,7 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 	fpi[i].DstReg.CondMask = COND_TR;
 
 	fpi[i].SrcReg[0].File = PROGRAM_INPUT;
-	fpi[i].SrcReg[0].Index = FRAG_ATTRIB_WPOS;
+	fpi[i].SrcReg[0].Index = compiler->fp->wpos_attr;
 	fpi[i].SrcReg[0].Swizzle = SWIZZLE_XYZW;
 
 	fpi[i].SrcReg[1].File = PROGRAM_TEMPORARY;
@@ -143,6 +158,45 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 				fpi[i].SrcReg[reg].File = PROGRAM_TEMPORARY;
 				fpi[i].SrcReg[reg].Index = tempregi;
 			}
+		}
+	}
+}
+
+static void rewriteFog(struct r300_fragment_program_compiler *compiler)
+{
+	struct r300_fragment_program *fp = compiler->fp;
+	GLuint InputsRead;
+	int i;
+
+	InputsRead = fp->Base->InputsRead;
+
+	if (!(InputsRead & FRAG_BIT_FOGC)) {
+		fp->fog_attr = FRAG_ATTRIB_MAX;
+		return;
+	}
+
+	for (i = FRAG_ATTRIB_TEX0; i <= FRAG_ATTRIB_TEX7; ++i)
+	{
+		if (!(InputsRead & (1 << i))) {
+			InputsRead &= ~(1 << FRAG_ATTRIB_FOGC);
+			InputsRead |= 1 << i;
+			fp->Base->InputsRead = InputsRead;
+			fp->fog_attr = i;
+			break;
+		}
+	}
+
+	{
+		struct prog_instruction *inst;
+
+		inst = compiler->program->Instructions;
+		while (inst->Opcode != OPCODE_END) {
+			const int src_regs = _mesa_num_inst_src_regs(inst->Opcode);
+			for (i = 0; i < src_regs; ++i) {
+				if (inst->SrcReg[i].File == PROGRAM_INPUT && inst->SrcReg[i].Index == FRAG_ATTRIB_FOGC)
+					inst->SrcReg[i].Index = fp->fog_attr;
+			}
+			++inst;
 		}
 	}
 }
@@ -203,6 +257,8 @@ void r300TranslateFragmentShader(GLcontext *ctx, struct r300_fragment_program *f
 	}
 
 	insert_WPOS_trailer(&compiler);
+
+	rewriteFog(&compiler);
 
 	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
 		struct radeon_program_transformation transformations[] = {

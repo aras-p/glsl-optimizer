@@ -410,6 +410,8 @@ struct r300_vertex_program {
 
 	struct r300_vertex_program_key {
 		GLuint FpReads;
+		GLuint FogAttr;
+		GLuint WPosAttr;
 	} key;
 	
 	struct r300_vertex_shader_hw_code {
@@ -425,7 +427,6 @@ struct r300_vertex_program {
 
 	int pos_end;
 	int num_temporaries;	/* Number of temp vars used by program */
-	int wpos_idx;
 	int inputs[VERT_ATTRIB_MAX];
 	int outputs[VERT_RESULT_MAX];
 };
@@ -560,6 +561,11 @@ struct r300_fragment_program {
 	GLuint optimization;
 
 	struct r300_fragment_program *next;
+
+	/* attribute that we are sending the WPOS in */
+	gl_frag_attrib wpos_attr;
+	/* attribute that we are sending the fog coordinate in */
+	gl_frag_attrib fog_attr;
 };
 
 struct r300_fragment_program_cont {

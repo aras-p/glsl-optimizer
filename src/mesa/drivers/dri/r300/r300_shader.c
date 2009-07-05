@@ -66,8 +66,7 @@ static struct gl_program *r300NewProgram(GLcontext * ctx, GLenum target,
 	case GL_VERTEX_STATE_PROGRAM_NV:
 	case GL_VERTEX_PROGRAM_ARB:
 		vp = CALLOC_STRUCT(r300_vertex_program_cont);
-		return _mesa_init_vertex_program(ctx, &vp->mesa_program,
-						 target, id);
+		return _mesa_init_vertex_program(ctx, &vp->mesa_program, target, id);
 
 	case GL_FRAGMENT_PROGRAM_NV:
 	case GL_FRAGMENT_PROGRAM_ARB:

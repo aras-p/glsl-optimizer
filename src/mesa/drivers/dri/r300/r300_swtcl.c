@@ -192,31 +192,23 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 		}
 	}
 
-	/* RS can't put fragment position on the pixel stack, so stuff it in texcoord if needed */
-	if (fp_reads & FRAG_BIT_WPOS) {
-		if (first_free_tex >= ctx->Const.MaxTextureUnits) {
-			fprintf(stderr, "\tout of free texcoords to write w pos\n");
-			_mesa_exit(-1);
-		}
+	if (rmesa->selected_fp->wpos_attr != FRAG_ATTRIB_MAX) {
+		int tex_id = rmesa->selected_fp->wpos_attr - FRAG_ATTRIB_TEX0;
 
-		InputsRead |= 1 << (VERT_ATTRIB_TEX0 + first_free_tex);
-		OutputsWritten |= 1 << (VERT_RESULT_TEX0 + first_free_tex);
-		EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F );
-		ADD_ATTR(VERT_ATTRIB_POS, R300_DATA_TYPE_FLOAT_4, SWTCL_OVM_TEX(first_free_tex), SWIZZLE_XYZW, MASK_XYZW, 0);
-		++first_free_tex;
+		VB->AttribPtr[VERT_ATTRIB_TEX0 + tex_id] = VB->AttribPtr[VERT_ATTRIB_POS];
+		RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX0 + tex_id);
 	}
 
-	if (fp_reads & FRAG_BIT_FOGC) {
-		if (first_free_tex >= ctx->Const.MaxTextureUnits) {
-			fprintf(stderr, "\tout of free texcoords to write fog coordinate\n");
-			_mesa_exit(-1);
-		}
+	if (rmesa->selected_fp->fog_attr != FRAG_ATTRIB_MAX) {
+		int tex_id = rmesa->selected_fp->fog_attr - FRAG_ATTRIB_TEX0;
 
-		InputsRead |= 1 << VERT_ATTRIB_FOG;
-		OutputsWritten |= 1 << VERT_RESULT_FOGC;
-		GLuint swiz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO);
-		EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1F );
-		ADD_ATTR(VERT_ATTRIB_FOG, R300_DATA_TYPE_FLOAT_1, SWTCL_OVM_TEX(first_free_tex), swiz, MASK_XYZW, 0);
+		VB->AttribPtr[VERT_ATTRIB_TEX0 + tex_id] = VB->AttribPtr[VERT_ATTRIB_FOG];
+		RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX0 + tex_id);
+	}
+
+	if (first_free_tex >= ctx->Const.MaxTextureUnits) {
+		fprintf(stderr, "\tout of free texcoords to write fog coordinate\n");
+		_mesa_exit(-1);
 	}
 
 	R300_NEWPRIM(rmesa);
@@ -497,11 +489,13 @@ void r300RenderStart(GLcontext *ctx)
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
 
 	r300ChooseRenderState(ctx);
+
+	r300UpdateShaders(rmesa);
+
 	r300PrepareVertices(ctx);
 
 	r300ValidateBuffers(ctx);
 
-	r300UpdateShaders(rmesa);
 	r300UpdateShaderStates(rmesa);
 
 	r300EmitCacheFlush(rmesa);

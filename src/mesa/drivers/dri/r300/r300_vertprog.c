@@ -1223,8 +1223,7 @@ void r300TranslateVertexShader(struct r300_vertex_program *vp)
 	}
 }
 
-static void insert_wpos(struct r300_vertex_program *vp, struct gl_program *prog,
-			GLuint temp_index)
+static void insert_wpos(struct gl_program *prog, GLuint temp_index, int tex_id)
 {
 	struct prog_instruction *vpi;
 
@@ -1248,7 +1247,7 @@ static void insert_wpos(struct r300_vertex_program *vp, struct gl_program *prog,
 	vpi->Opcode = OPCODE_MOV;
 
 	vpi->DstReg.File = PROGRAM_OUTPUT;
-	vpi->DstReg.Index = VERT_RESULT_TEX0 + vp->wpos_idx;
+	vpi->DstReg.Index = VERT_RESULT_TEX0 + tex_id;
 	vpi->DstReg.WriteMask = WRITEMASK_XYZW;
 	vpi->DstReg.CondMask = COND_TR;
 
@@ -1259,12 +1258,9 @@ static void insert_wpos(struct r300_vertex_program *vp, struct gl_program *prog,
 	++vpi;
 
 	vpi->Opcode = OPCODE_END;
-
-	prog->OutputsWritten |= 1 << (VERT_RESULT_TEX0 + vp->wpos_idx);
 }
 
-static void pos_as_texcoord(struct r300_vertex_program *vp,
-			    struct gl_program *prog)
+static void pos_as_texcoord(struct gl_program *prog, int tex_id)
 {
 	struct prog_instruction *vpi;
 	GLuint tempregi = prog->NumTemporaries;
@@ -1278,7 +1274,37 @@ static void pos_as_texcoord(struct r300_vertex_program *vp,
 		}
 	}
 
-	insert_wpos(vp, prog, tempregi);
+	insert_wpos(prog, tempregi, tex_id);
+
+	prog->OutputsWritten |= 1 << (VERT_RESULT_TEX0 + tex_id);
+}
+
+/**
+ @TODO
+  We can put X001 swizzle only if input components are directly mapped from output components.
+  For some insts we need to skip source swizzles and add: MOV OUTPUT[fog_attr].yzw, CONST[0].0001
+ */
+static void fog_as_texcoord(struct gl_program *prog, int tex_id)
+{
+	struct prog_instruction *vpi;
+	int i;
+
+	vpi = prog->Instructions;
+	while (vpi->Opcode != OPCODE_END) {
+		if (vpi->DstReg.File == PROGRAM_OUTPUT && vpi->DstReg.Index == VERT_RESULT_FOGC) {
+			vpi->DstReg.Index = VERT_RESULT_TEX0 + tex_id;
+			vpi->DstReg.WriteMask = WRITEMASK_XYZW;
+
+			for (i = 0; i < _mesa_num_inst_src_regs(vpi->Opcode); ++i) {
+				vpi->SrcReg[i].Swizzle = combineSwizzles(vpi->SrcReg[i].Swizzle, SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ONE);
+			}
+		}
+
+		++vpi;
+	}
+
+	prog->OutputsWritten &= ~(1 << VERT_RESULT_FOGC);
+	prog->OutputsWritten |= 1 << (VERT_RESULT_TEX0 + tex_id);
 }
 
 static int translateABS(struct gl_program *prog, int pos)
@@ -1513,16 +1539,15 @@ static void addArtificialOutputs(GLcontext *ctx, struct gl_program *prog)
 
 static struct r300_vertex_program *build_program(GLcontext *ctx,
 						 struct r300_vertex_program_key *wanted_key,
-						 const struct gl_vertex_program *mesa_vp,
-						 GLint wpos_idx)
+						 const struct gl_vertex_program *mesa_vp)
 {
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_program *vp;
 	struct gl_program *prog;
 
 	vp = _mesa_calloc(sizeof(*vp));
 	vp->Base = (struct gl_vertex_program *) _mesa_clone_program(ctx, &mesa_vp->Base);
 	_mesa_memcpy(&vp->key, wanted_key, sizeof(vp->key));
-	vp->wpos_idx = wpos_idx;
 
 	prog = &vp->Base->Base;
 
@@ -1532,12 +1557,16 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 		fflush(stdout);
 	}
 
-	if (mesa_vp->IsPositionInvariant) {
+	if (vp->Base->IsPositionInvariant) {
 		_mesa_insert_mvp_code(ctx, vp->Base);
 	}
 
-	if (wpos_idx > -1) {
-		pos_as_texcoord(vp, prog);
+	if (r300->selected_fp->wpos_attr != FRAG_ATTRIB_MAX) {
+		pos_as_texcoord(&vp->Base->Base, r300->selected_fp->wpos_attr - FRAG_ATTRIB_TEX0);
+	}
+
+	if (r300->selected_fp->fog_attr != FRAG_ATTRIB_MAX) {
+		fog_as_texcoord(&vp->Base->Base, r300->selected_fp->fog_attr - FRAG_ATTRIB_TEX0);
 	}
 
 	addArtificialOutputs(ctx, prog);
@@ -1562,34 +1591,20 @@ struct r300_vertex_program * r300SelectVertexShader(GLcontext *ctx)
 	struct r300_vertex_program_key wanted_key = { 0 };
 	struct r300_vertex_program_cont *vpc;
 	struct r300_vertex_program *vp;
-	GLint wpos_idx;
 
 	vpc = (struct r300_vertex_program_cont *)ctx->VertexProgram._Current;
 	wanted_key.FpReads = r300->selected_fp->Base->InputsRead;
+	wanted_key.FogAttr = r300->selected_fp->fog_attr;
+	wanted_key.WPosAttr = r300->selected_fp->wpos_attr;
 
-	for (vp = vpc->progs; vp; vp = vp->next)
+	for (vp = vpc->progs; vp; vp = vp->next) {
 		if (_mesa_memcmp(&vp->key, &wanted_key, sizeof(wanted_key))
 		    == 0) {
 			return r300->selected_vp = vp;
 		}
-
-	wpos_idx = -1;
-	if (wanted_key.FpReads & FRAG_BIT_WPOS) {
-		GLint i;
-
-		for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
-			if (!(wanted_key.FpReads & (FRAG_BIT_TEX(i))))
-				break;
-
-			if (i == ctx->Const.MaxTextureUnits) {
-				fprintf(stderr, "\tno free texcoord found\n");
-				_mesa_exit(-1);
-			}
-
-			wpos_idx = i;
 	}
 
-	vp = build_program(ctx, &wanted_key, &vpc->mesa_program, wpos_idx);
+	vp = build_program(ctx, &wanted_key, &vpc->mesa_program);
 	vp->next = vpc->progs;
 	vpc->progs = vp;
 

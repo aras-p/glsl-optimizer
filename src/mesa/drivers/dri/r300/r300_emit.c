@@ -116,15 +116,6 @@ GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint vp_writes, GLuint fp_reads)
 		}
 	}
 
-	if (fp_reads & FRAG_BIT_WPOS) {
-		ret |= (4 << (3 * first_free_texcoord));
-		++first_free_texcoord;
-	}
-
-	if (vp_writes & (1 << VERT_RESULT_FOGC) && fp_reads & FRAG_BIT_FOGC) {
-		ret |= 4 << (3 * first_free_texcoord);
-	}
-
 	if (first_free_texcoord > 8) {
 		fprintf(stderr, "\tout of free texcoords\n");
 		_mesa_exit(-1);
