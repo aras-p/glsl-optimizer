@@ -409,9 +409,7 @@ struct r300_vertex_program {
 	struct r300_vertex_program *next;
 
 	struct r300_vertex_program_key {
-		GLuint InputsRead;
-		GLuint OutputsWritten;
-		GLuint OutputsAdded;
+		GLuint FpReads;
 	} key;
 	
 	struct r300_vertex_shader_hw_code {

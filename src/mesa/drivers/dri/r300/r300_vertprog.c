@@ -961,10 +961,14 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 {
 	int i;
 	int cur_reg;
+	GLuint OutputsWritten, InputsRead;
+
+	OutputsWritten = vp->Base->Base.OutputsWritten;
+	InputsRead = vp->Base->Base.InputsRead;
 
 	cur_reg = -1;
 	for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-		if (vp->key.InputsRead & (1 << i))
+		if (InputsRead & (1 << i))
 			vp->inputs[i] = ++cur_reg;
 		else
 			vp->inputs[i] = -1;
@@ -974,13 +978,13 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 	for (i = 0; i < VERT_RESULT_MAX; i++)
 		vp->outputs[i] = -1;
 
-	assert(vp->key.OutputsWritten & (1 << VERT_RESULT_HPOS));
+	assert(OutputsWritten & (1 << VERT_RESULT_HPOS));
 
-	if (vp->key.OutputsWritten & (1 << VERT_RESULT_HPOS)) {
+	if (OutputsWritten & (1 << VERT_RESULT_HPOS)) {
 		vp->outputs[VERT_RESULT_HPOS] = cur_reg++;
 	}
 
-	if (vp->key.OutputsWritten & (1 << VERT_RESULT_PSIZ)) {
+	if (OutputsWritten & (1 << VERT_RESULT_PSIZ)) {
 		vp->outputs[VERT_RESULT_PSIZ] = cur_reg++;
 	}
 
@@ -990,39 +994,39 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 	 * pretend it does by skipping output index reg so the colors
 	 * get written into appropriate output vectors.
 	 */
-	if (vp->key.OutputsWritten & (1 << VERT_RESULT_COL0)) {
+	if (OutputsWritten & (1 << VERT_RESULT_COL0)) {
 		vp->outputs[VERT_RESULT_COL0] = cur_reg++;
-	} else if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC0) ||
-		vp->key.OutputsWritten & (1 << VERT_RESULT_BFC1)) {
+	} else if (OutputsWritten & (1 << VERT_RESULT_BFC0) ||
+		OutputsWritten & (1 << VERT_RESULT_BFC1)) {
 		cur_reg++;
 	}
 
-	if (vp->key.OutputsWritten & (1 << VERT_RESULT_COL1)) {
+	if (OutputsWritten & (1 << VERT_RESULT_COL1)) {
 		vp->outputs[VERT_RESULT_COL1] = cur_reg++;
-	} else if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC0) ||
-		vp->key.OutputsWritten & (1 << VERT_RESULT_BFC1)) {
+	} else if (OutputsWritten & (1 << VERT_RESULT_BFC0) ||
+		OutputsWritten & (1 << VERT_RESULT_BFC1)) {
 		cur_reg++;
 	}
 
-	if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC0)) {
+	if (OutputsWritten & (1 << VERT_RESULT_BFC0)) {
 		vp->outputs[VERT_RESULT_BFC0] = cur_reg++;
-	} else if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC1)) {
+	} else if (OutputsWritten & (1 << VERT_RESULT_BFC1)) {
 		cur_reg++;
 	}
 
-	if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC1)) {
+	if (OutputsWritten & (1 << VERT_RESULT_BFC1)) {
 		vp->outputs[VERT_RESULT_BFC1] = cur_reg++;
-	} else if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC0)) {
+	} else if (OutputsWritten & (1 << VERT_RESULT_BFC0)) {
 		cur_reg++;
 	}
 
 	for (i = VERT_RESULT_TEX0; i <= VERT_RESULT_TEX7; i++) {
-		if (vp->key.OutputsWritten & (1 << i)) {
+		if (OutputsWritten & (1 << i)) {
 			vp->outputs[i] = cur_reg++;
 		}
 	}
 
-	if (vp->key.OutputsWritten & (1 << VERT_RESULT_FOGC)) {
+	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) {
 		vp->outputs[VERT_RESULT_FOGC] = cur_reg++;
 	}
 }
@@ -1255,6 +1259,8 @@ static void insert_wpos(struct r300_vertex_program *vp, struct gl_program *prog,
 	++vpi;
 
 	vpi->Opcode = OPCODE_END;
+
+	prog->OutputsWritten |= 1 << (VERT_RESULT_TEX0 + vp->wpos_idx);
 }
 
 static void pos_as_texcoord(struct r300_vertex_program *vp,
@@ -1448,6 +1454,63 @@ static void translateInsts(struct gl_program *prog)
 	}
 }
 
+#define ADD_OUTPUT(fp_attr, vp_result) \
+	do { \
+		if ((FpReads & (1 << (fp_attr))) && !(prog->OutputsWritten & (1 << (vp_result)))) { \
+			OutputsAdded |= 1 << (vp_result); \
+			count++; \
+		} \
+	} while (0)
+
+static void addArtificialOutputs(GLcontext *ctx, struct gl_program *prog)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	GLuint OutputsAdded, FpReads;
+	int i, count;
+
+	OutputsAdded = count = 0;
+	FpReads = r300->selected_fp->Base->InputsRead;
+
+	ADD_OUTPUT(FRAG_ATTRIB_COL0, VERT_RESULT_COL0);
+	ADD_OUTPUT(FRAG_ATTRIB_COL1, VERT_RESULT_COL1);
+
+	for (i = 0; i < 7; ++i) {
+		ADD_OUTPUT(FRAG_ATTRIB_TEX0 + i, VERT_RESULT_TEX0 + i);
+	}
+
+	/* Some outputs may be artificially added, to match the inputs of the fragment program.
+	 * Issue 16 of vertex program spec says that all vertex attributes that are unwritten by
+	 * vertex program are undefined, so just use MOV [vertex_result], CONST[0]
+	 */
+	if (count > 0) {
+		struct prog_instruction *inst;
+
+		_mesa_insert_instructions(prog, prog->NumInstructions - 1, count);
+		inst = &prog->Instructions[prog->NumInstructions - 1 - count];
+
+		for (i = 0; i < VERT_RESULT_MAX; ++i) {
+			if (OutputsAdded & (1 << i)) {
+				inst->Opcode = OPCODE_MOV;
+
+				inst->DstReg.File = PROGRAM_OUTPUT;
+				inst->DstReg.Index = i;
+				inst->DstReg.WriteMask = WRITEMASK_XYZW;
+				inst->DstReg.CondMask = COND_TR;
+
+				inst->SrcReg[0].File = PROGRAM_CONSTANT;
+				inst->SrcReg[0].Index = 0;
+				inst->SrcReg[0].Swizzle = SWIZZLE_XYZW;
+
+				++inst;
+			}
+		}
+
+		prog->OutputsWritten |= OutputsAdded;
+	}
+}
+
+#undef ADD_OUTPUT
+
 static struct r300_vertex_program *build_program(GLcontext *ctx,
 						 struct r300_vertex_program_key *wanted_key,
 						 const struct gl_vertex_program *mesa_vp,
@@ -1477,42 +1540,7 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 		pos_as_texcoord(vp, prog);
 	}
 
-	/* Some outputs may be artificially added, to match the inputs of the fragment program.
-	 * Issue 16 of vertex program spec says that all vertex attributes that are unwritten by
-	 * vertex program are undefined, so just use MOV [vertex_result], CONST[0]
-	 */
-	{
-		int i, count = 0;
-		for (i = 0; i < VERT_RESULT_MAX; ++i) {
-			if (vp->key.OutputsAdded & (1 << i)) {
-				++count;
-			}
-		}
-
-		if (count > 0) {
-			struct prog_instruction *inst;
-
-			_mesa_insert_instructions(prog, prog->NumInstructions - 1, count);
-			inst = &prog->Instructions[prog->NumInstructions - 1 - count];
-
-			for (i = 0; i < VERT_RESULT_MAX; ++i) {
-				if (vp->key.OutputsAdded & (1 << i)) {
-					inst->Opcode = OPCODE_MOV;
-
-					inst->DstReg.File = PROGRAM_OUTPUT;
-					inst->DstReg.Index = i;
-					inst->DstReg.WriteMask = WRITEMASK_XYZW;
-					inst->DstReg.CondMask = COND_TR;
-
-					inst->SrcReg[0].File = PROGRAM_CONSTANT;
-					inst->SrcReg[0].Index = 0;
-					inst->SrcReg[0].Swizzle = SWIZZLE_XYZW;
-
-					++inst;
-				}
-			}
-		}
-	}
+	addArtificialOutputs(ctx, prog);
 
 	translateInsts(prog);
 
@@ -1528,75 +1556,38 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	return vp;
 }
 
-static void add_outputs(struct r300_vertex_program_key *key, GLint vert)
-{
-	if (key->OutputsWritten & (1 << vert))
-		return;
-
-	key->OutputsWritten |= 1 << vert;
-	key->OutputsAdded |= 1 << vert;
-}
-
 struct r300_vertex_program * r300SelectVertexShader(GLcontext *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	GLuint InputsRead;
 	struct r300_vertex_program_key wanted_key = { 0 };
-	GLint i;
 	struct r300_vertex_program_cont *vpc;
 	struct r300_vertex_program *vp;
 	GLint wpos_idx;
 
 	vpc = (struct r300_vertex_program_cont *)ctx->VertexProgram._Current;
-	wanted_key.InputsRead = vpc->mesa_program.Base.InputsRead;
-	wanted_key.OutputsWritten = vpc->mesa_program.Base.OutputsWritten;
-	InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
-
-	wpos_idx = -1;
-	if (InputsRead & FRAG_BIT_WPOS) {
-		for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
-			if (!(InputsRead & (FRAG_BIT_TEX0 << i)))
-				break;
-
-		if (i == ctx->Const.MaxTextureUnits) {
-			fprintf(stderr, "\tno free texcoord found\n");
-			_mesa_exit(-1);
-		}
-
-		wanted_key.OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
-		wpos_idx = i;
-	}
-
-	if (vpc->mesa_program.IsPositionInvariant) {
-		wanted_key.InputsRead |= (1 << VERT_ATTRIB_POS);
-		wanted_key.OutputsWritten |= (1 << VERT_RESULT_HPOS);
-	} else {
-		add_outputs(&wanted_key, VERT_RESULT_HPOS);
-	}
-
-	if (InputsRead & FRAG_BIT_COL0) {
-		add_outputs(&wanted_key, VERT_RESULT_COL0);
-	}
-
-	if (InputsRead & FRAG_BIT_COL1) {
-		add_outputs(&wanted_key, VERT_RESULT_COL1);
-	}
-
-	if (InputsRead & FRAG_BIT_FOGC) {
-		add_outputs(&wanted_key, VERT_RESULT_FOGC);
-	}
-
-	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
-			add_outputs(&wanted_key, VERT_RESULT_TEX0 + i);
-		}
-	}
+	wanted_key.FpReads = r300->selected_fp->Base->InputsRead;
 
 	for (vp = vpc->progs; vp; vp = vp->next)
 		if (_mesa_memcmp(&vp->key, &wanted_key, sizeof(wanted_key))
 		    == 0) {
 			return r300->selected_vp = vp;
 		}
+
+	wpos_idx = -1;
+	if (wanted_key.FpReads & FRAG_BIT_WPOS) {
+		GLint i;
+
+		for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+			if (!(wanted_key.FpReads & (FRAG_BIT_TEX(i))))
+				break;
+
+			if (i == ctx->Const.MaxTextureUnits) {
+				fprintf(stderr, "\tno free texcoord found\n");
+				_mesa_exit(-1);
+			}
+
+			wpos_idx = i;
+	}
 
 	vp = build_program(ctx, &wanted_key, &vpc->mesa_program, wpos_idx);
 	vp->next = vpc->progs;
@@ -1663,8 +1654,8 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	r300EmitVertexProgram(rmesa, R300_PVS_CODE_START, &(prog->hw_code));
 	inst_count = (prog->hw_code.length / 4) - 1;
 
-	r300VapCntl(rmesa, _mesa_bitcount(prog->key.InputsRead),
-				 _mesa_bitcount(prog->key.OutputsWritten), prog->num_temporaries);
+	r300VapCntl(rmesa, _mesa_bitcount(prog->Base->Base.InputsRead),
+				 _mesa_bitcount(prog->Base->Base.OutputsWritten), prog->num_temporaries);
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] = (0 << R300_PVS_FIRST_INST_SHIFT) | (inst_count << R300_PVS_XYZW_VALID_INST_SHIFT) |
