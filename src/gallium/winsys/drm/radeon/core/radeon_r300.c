@@ -39,7 +39,7 @@ static boolean radeon_r300_add_buffer(struct r300_winsys* winsys,
         if (sc[i].bo == bo) {
             sc[i].read_domains |= rd;
             sc[i].write_domain |= wd;
-            return;
+            return TRUE;
         }
     }
 
