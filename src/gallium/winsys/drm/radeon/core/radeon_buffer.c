@@ -141,6 +141,8 @@ static void *radeon_buffer_map(struct pipe_winsys *ws,
         write = 1;
     }
 
+    radeon_bo_wait(radeon_buffer->bo);
+
     if (radeon_bo_map(radeon_buffer->bo, write))
         return NULL;
     return radeon_buffer->bo->ptr;
