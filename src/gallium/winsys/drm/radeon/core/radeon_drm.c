@@ -113,10 +113,28 @@ boolean radeon_global_handle_from_buffer(struct drm_api* api,
                                          struct pipe_buffer* buffer,
                                          unsigned* handle)
 {
-    /* XXX WTF is the difference here? global? */
+    int retval, fd;
+    struct drm_gem_flink flink;
     struct radeon_pipe_buffer* radeon_buffer =
         (struct radeon_pipe_buffer*)buffer;
-    *handle = radeon_buffer->bo->handle;
+
+    if (!radeon_buffer->flinked) {
+        fd = ((struct radeon_winsys*)screen->winsys)->priv->fd;
+
+        flink.handle = radeon_buffer->bo->handle;
+
+        retval = ioctl(fd, DRM_IOCTL_GEM_FLINK, &flink);
+        if (retval) {
+            debug_printf("radeon: DRM_IOCTL_GEM_FLINK failed, error %d\n",
+                    retval);
+            return FALSE;
+        }
+
+        radeon_buffer->flink = flink.name;
+        radeon_buffer->flinked = TRUE;
+    }
+
+    *handle = radeon_buffer->flink;
     return TRUE;
 }
 

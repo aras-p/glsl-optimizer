@@ -48,11 +48,16 @@
 struct radeon_pipe_buffer {
     struct pipe_buffer  base;
     struct radeon_bo    *bo;
+    boolean flinked;
+    uint32_t flink;
 };
 
 #define RADEON_MAX_BOS 24
 
 struct radeon_winsys_priv {
+    /* DRM FD */
+    int fd;
+
     /* Radeon BO manager. */
     struct radeon_bo_manager* bom;
 
