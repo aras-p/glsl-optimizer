@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/dri/dri_util.c,v 1.7 2003/04/28 17:01:25 dawes Exp $ */
 /**
  * \file dri_util.c
  * DRI utility functions.
