@@ -713,7 +713,7 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 	}
 
 	if (fb->_StencilBuffer && fb->_StencilBuffer->Wrapped) {
-		rrbStencil = radeon_renderbuffer(fb->_DepthBuffer->Wrapped);
+		rrbStencil = radeon_renderbuffer(fb->_StencilBuffer->Wrapped);
 		if (rrbStencil && rrbStencil->bo) {
 			radeon->vtbl.fallback(ctx, RADEON_FALLBACK_STENCIL_BUFFER, GL_FALSE);
 			/* need to re-compute stencil hw state */
