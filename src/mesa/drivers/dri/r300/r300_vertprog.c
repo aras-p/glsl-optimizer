@@ -34,11 +34,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "shader/program.h"
 #include "shader/programopt.h"
 #include "shader/prog_instruction.h"
+#include "shader/prog_optimize.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
 #include "shader/prog_statevars.h"
 #include "tnl/tnl.h"
 
+#include "radeon_nqssadce.h"
 #include "r300_context.h"
 #include "r300_state.h"
 
@@ -1537,6 +1539,86 @@ static void addArtificialOutputs(GLcontext *ctx, struct gl_program *prog)
 
 #undef ADD_OUTPUT
 
+static GLuint getUsedComponents(const GLuint swizzle)
+{
+	GLuint ret;
+
+	ret = 0;
+
+	/* need to mask out ZERO, ONE and NIL swizzles */
+	ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_X) & 0x3);
+	ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_Y) & 0x3);
+	ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_Z) & 0x3);
+	ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_W) & 0x3);
+
+	return ret;
+}
+
+static GLuint trackUsedComponents(const struct gl_program *prog, const GLuint attrib)
+{
+	struct prog_instruction *inst;
+	int tmp, i;
+	GLuint ret;
+
+	inst = prog->Instructions;
+	ret = 0;
+	while (inst->Opcode != OPCODE_END) {
+		tmp = _mesa_num_inst_src_regs(inst->Opcode);
+		for (i = 0; i < tmp; ++i) {
+			if (inst->SrcReg[i].File == PROGRAM_INPUT && inst->SrcReg[i].Index == attrib) {
+				ret |= getUsedComponents(inst->SrcReg[i].Swizzle);
+			}
+		}
+		++inst;
+	}
+
+	return ret;
+}
+
+static void nqssadceInit(struct nqssadce_state* s)
+{
+	r300ContextPtr r300 = R300_CONTEXT(s->Ctx);
+	GLuint fp_reads;
+
+	fp_reads = r300->selected_fp->Base->InputsRead;
+	{
+		GLuint tmp;
+
+		if (fp_reads & FRAG_BIT_COL0) {
+				tmp = trackUsedComponents(r300->selected_fp->Base, FRAG_ATTRIB_COL0);
+				s->Outputs[VERT_RESULT_COL0].Sourced = tmp;
+				s->Outputs[VERT_RESULT_BFC0].Sourced = tmp;
+		}
+
+		if (fp_reads & FRAG_BIT_COL1) {
+				tmp = trackUsedComponents(r300->selected_fp->Base, FRAG_ATTRIB_COL1);
+				s->Outputs[VERT_RESULT_COL1].Sourced = tmp;
+				s->Outputs[VERT_RESULT_BFC1].Sourced = tmp;
+		}
+	}
+
+	{
+		int i;
+		for (i = 0; i < 8; ++i) {
+			if (fp_reads & FRAG_BIT_TEX(i)) {
+				s->Outputs[VERT_RESULT_TEX0 + i].Sourced = trackUsedComponents(r300->selected_fp->Base, FRAG_ATTRIB_TEX0 + i);
+			}
+		}
+	}
+
+	s->Outputs[VERT_RESULT_HPOS].Sourced = WRITEMASK_XYZW;
+	if (s->Program->OutputsWritten & (1 << VERT_RESULT_PSIZ))
+		s->Outputs[VERT_RESULT_PSIZ].Sourced = WRITEMASK_X;
+}
+
+static GLboolean swizzleIsNative(GLuint opcode, struct prog_src_register reg)
+{
+	(void) opcode;
+	(void) reg;
+
+	return GL_TRUE;
+}
+
 static struct r300_vertex_program *build_program(GLcontext *ctx,
 						 struct r300_vertex_program_key *wanted_key,
 						 const struct gl_vertex_program *mesa_vp)
@@ -1579,8 +1661,57 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 		fflush(stdout);
 	}
 
+	{
+		struct radeon_nqssadce_descr nqssadce = {
+			.Init = &nqssadceInit,
+			.IsNativeSwizzle = &swizzleIsNative,
+			.BuildSwizzle = NULL
+		};
+		radeonNqssaDce(ctx, prog, &nqssadce);
+
+		/* We need this step for reusing temporary registers */
+		_mesa_optimize_program(ctx, prog);
+
+		if (RADEON_DEBUG & DEBUG_VERTS) {
+			fprintf(stderr, "Vertex program after NQSSADCE:\n");
+			_mesa_print_program(prog);
+			fflush(stdout);
+		}
+	}
+
 	assert(prog->NumInstructions);
-	vp->num_temporaries = prog->NumTemporaries;
+	{
+		struct prog_instruction *inst;
+		int max, i, tmp;
+
+		inst = prog->Instructions;
+		max = -1;
+		while (inst->Opcode != OPCODE_END) {
+			tmp = _mesa_num_inst_src_regs(inst->Opcode);
+			for (i = 0; i < tmp; ++i) {
+				if (inst->SrcReg[i].File == PROGRAM_TEMPORARY) {
+					if ((int) inst->SrcReg[i].Index > max) {
+						max = inst->SrcReg[i].Index;
+					}
+				}
+			}
+
+			if (_mesa_num_inst_dst_regs(inst->Opcode)) {
+				if (inst->DstReg.File == PROGRAM_TEMPORARY) {
+					if ((int) inst->DstReg.Index > max) {
+						max = inst->DstReg.Index;
+					}
+				}
+			}
+			++inst;
+		}
+
+		/* We actually want highest index of used temporary register,
+		 * not the number of temporaries used.
+		 * These values aren't always the same.
+		 */
+		vp->num_temporaries = max + 1;
+	}
 
 	return vp;
 }
