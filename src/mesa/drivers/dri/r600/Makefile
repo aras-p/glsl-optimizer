@@ -50,7 +50,8 @@ DRIVER_SOURCES = \
 		 r700_state.c    \
 		 r700_clear.c    \
 		 r700_render.c   \
-		 r700_tex.c      \
+		 r600_tex.c      \
+		 r600_texstate.c      \
 		 r700_debug.c    \
 		 $(RADEON_COMMON_SOURCES) \
 		 $(EGL_SOURCES)

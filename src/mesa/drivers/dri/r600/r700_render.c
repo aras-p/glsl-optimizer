@@ -44,10 +44,11 @@
 #include "tnl/t_vertex.h"
 #include "tnl/t_pipeline.h"
 
+#include "radeon_mipmap_tree.h"
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
 
-#include "r700_tex.h"
+#include "r600_tex.h"
 
 #include "r700_vertprog.h"
 #include "r700_fragprog.h"
@@ -131,36 +132,46 @@ static GLboolean r700SetupShaders(GLcontext * ctx)
 GLboolean r700SendTextureState(context_t *context)
 {
     unsigned int i;
-
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-#if 0 /* to be enabled */
-    for(i=0; i<R700_TEXTURE_NUMBERUNITS; i++)
-    {
-        if(r700->texture_states.textures[i] != 0)
-        {
-            R700_CMDBUF_CHECK_SPACE(9);
-            R700EP3 (context, IT_SET_RESOURCE, 7);
-            R700E32 (context, i * 7);
-            R700E32 (context, r700->texture_states.textures[i]->SQ_TEX_RESOURCE0.u32All);
-            R700E32 (context, r700->texture_states.textures[i]->SQ_TEX_RESOURCE1.u32All);
-            R700E32 (context, r700->texture_states.textures[i]->SQ_TEX_RESOURCE2.u32All);
-            R700E32 (context, r700->texture_states.textures[i]->SQ_TEX_RESOURCE3.u32All);
-            R700E32 (context, r700->texture_states.textures[i]->SQ_TEX_RESOURCE4.u32All);
-            R700E32 (context, r700->texture_states.textures[i]->SQ_TEX_RESOURCE5.u32All);
-            R700E32 (context, r700->texture_states.textures[i]->SQ_TEX_RESOURCE6.u32All);
-        }
+    offset_modifiers offset_mod = {NO_SHIFT, 0, 0xFFFFFFFF};
+    struct radeon_bo *bo = NULL;
+    BATCH_LOCALS(&context->radeon);
 
-        if(r700->texture_states.samplers[i] != 0)
-        {
-            R700_CMDBUF_CHECK_SPACE(5);
-            R700EP3 (context, IT_SET_SAMPLER, 3);        
-            R700E32 (context, i * 3);   // Base at 0x7000
-            R700E32 (context, r700->texture_states.samplers[i]->SQ_TEX_SAMPLER0.u32All);
-            R700E32 (context, r700->texture_states.samplers[i]->SQ_TEX_SAMPLER1.u32All);
-            R700E32 (context, r700->texture_states.samplers[i]->SQ_TEX_SAMPLER2.u32All);
-        }
+    for (i=0; i<R700_TEXTURE_NUMBERUNITS; i++) {
+	    radeonTexObj *t = r700->textures[i];
+	    if (t) {
+		    if (!t->image_override)
+			    bo = t->mt->bo;
+		    else
+			    bo = t->bo;
+		    if (bo) {
+			    BEGIN_BATCH_NO_AUTOSTATE(14);
+			    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
+			    R600_OUT_BATCH(i * 7);
+			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE0);
+			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE1);
+			    R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE2,
+						 bo,
+						 0,
+						 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0, &offset_mod);
+			    R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE3,
+						 bo,
+						 0,
+						 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0, &offset_mod);
+			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE4);
+			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE5);
+			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE6);
+
+			    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, 3));
+			    R600_OUT_BATCH(i * 3);
+			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER0);
+			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER1);
+			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER2);
+			    END_BATCH();
+			    COMMIT_BATCH();
+		    }
+	    }
     }
-#endif
     return GL_TRUE;
 }
 
@@ -253,6 +264,9 @@ static GLboolean r700RunRender(GLcontext * ctx,
         fp->r700AsmCode.bR6xx = 1;
     }
 
+    if (!r600ValidateBuffers(ctx))
+	    return GL_TRUE;
+
     r700Start3D(context); /* TODO : this is too much. */
 
     r700SyncSurf(context); /* TODO : make it light. */
@@ -273,7 +287,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     /* flush TX */
     //r700SyncSurf(context); /*  */
 
-    r700UpdateTextureState(context);
+    r600UpdateTextureState(ctx);
     r700SendTextureState(context);
 
     if(GL_FALSE == fp->translated)
@@ -391,7 +405,7 @@ static GLboolean r700RunTCLRender(GLcontext * ctx,  /*----------------------*/
     /**
     * Ensure all enabled and complete textures are uploaded along with any buffers being used.
     */
-    if(!r700ValidateBuffers(ctx))
+    if(!r600ValidateBuffers(ctx))
     {
         return GL_TRUE;
     }

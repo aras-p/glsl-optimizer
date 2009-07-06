@@ -1,0 +1,795 @@
+/*
+Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
+
+The Weather Channel (TM) funded Tungsten Graphics to develop the
+initial release of the Radeon 8500 driver under the XFree86 license.
+This notice must be preserved.
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice (including the
+next paragraph) shall be included in all copies or substantial
+portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+**************************************************************************/
+
+/**
+ * \file
+ *
+ * \author Keith Whitwell <keith@tungstengraphics.com>
+ *
+ * \todo Enable R300 texture tiling code?
+ */
+
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/context.h"
+#include "main/macros.h"
+#include "main/texformat.h"
+#include "main/teximage.h"
+#include "main/texobj.h"
+#include "main/enums.h"
+
+#include "r600_context.h"
+#include "r700_state.h"
+#include "radeon_mipmap_tree.h"
+#include "r600_tex.h"
+
+void r600UpdateTextureState(GLcontext * ctx)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	struct gl_texture_unit *texUnit;
+	struct radeon_tex_obj *t;
+	GLuint    unit;
+
+	for (unit = 0; unit < R700_MAX_TEXTURE_UNITS; unit++) {
+		texUnit = &ctx->Texture.Unit[unit];
+		t = radeon_tex_obj(ctx->Texture.Unit[unit]._Current);
+
+		if (texUnit->_ReallyEnabled) {
+			if (!t)
+				continue;
+			r700->textures[unit] = t;
+		}
+	}
+}
+
+static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, GLuint mesa_format)
+{
+	radeonTexObj *t = radeon_tex_obj(tObj);
+
+	t->SQ_TEX_RESOURCE4 &= ~( SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_mask
+				  |SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_mask
+				  |SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask
+				  |SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask );
+
+	switch (mesa_format) /* This is mesa format. */
+	{
+	case MESA_FORMAT_RGBA8888:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_RGBA8888_REV:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_ARGB8888:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_ARGB8888_REV:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_RGB888:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_RGB565:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_5_6_5,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_RGB565_REV:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_5_6_5,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_ARGB4444:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_4_4_4_4,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_ARGB4444_REV:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_4_4_4_4,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_ARGB1555:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_1_5_5_5,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_ARGB1555_REV:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_1_5_5_5,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_AL88:
+	case MESA_FORMAT_AL88_REV: /* TODO : Check this. */
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_RGB332:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_3_3_2,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_A8: /* ZERO, ZERO, ZERO, X */
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_8,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_0 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_0 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_0 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_L8: /* X, X, X, ONE */
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_8,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_I8: /* X, X, X, X */
+	case MESA_FORMAT_CI8:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_8,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+		/* YUV422 TODO conversion */  /* X, Y, Z, ONE, G8R8_G8B8 */
+		/*
+		  case MESA_FORMAT_YCBCR:
+		  t->SQ_TEX_RESOURCE1.bitfields.DATA_FORMAT = ;
+		  break;
+		*/
+		/* VUY422 TODO conversion */  /* X, Y, Z, ONE, G8R8_G8B8 */
+		/*
+		  case MESA_FORMAT_YCBCR_REV:
+		  t->SQ_TEX_RESOURCE1.bitfields.DATA_FORMAT = ;
+		  break;
+		*/
+	case MESA_FORMAT_RGB_DXT1: /* not supported yet */
+
+		break;
+	case MESA_FORMAT_RGBA_DXT1: /* not supported yet */
+
+		break;
+	case MESA_FORMAT_RGBA_DXT3: /* not supported yet */
+
+		break;
+	case MESA_FORMAT_RGBA_DXT5: /* not supported yet */
+
+		break;
+	case MESA_FORMAT_RGBA_FLOAT32:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_32_32_32_32_FLOAT,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_RGBA_FLOAT16:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_16_16_16_16_FLOAT,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_RGB_FLOAT32: /* X, Y, Z, ONE */
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_32_32_32_FLOAT,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_RGB_FLOAT16:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_16_16_16_FLOAT,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_ALPHA_FLOAT32: /* ZERO, ZERO, ZERO, X */
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_32_FLOAT,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_0 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_0 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_0 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_ALPHA_FLOAT16: /* ZERO, ZERO, ZERO, X */
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_16_FLOAT,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_0 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_0 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_0 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_LUMINANCE_FLOAT32: /* X, X, X, ONE */
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_32_FLOAT,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_LUMINANCE_FLOAT16: /* X, X, X, ONE */
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_16_FLOAT,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_32_32_FLOAT,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_16_16_FLOAT,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_INTENSITY_FLOAT32: /* X, X, X, X */
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_32_FLOAT,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_INTENSITY_FLOAT16: /* X, X, X, X */
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_16_FLOAT,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		break;
+	case MESA_FORMAT_Z16:
+	case MESA_FORMAT_Z24_S8:
+	case MESA_FORMAT_Z32:
+		switch (mesa_format) {
+		case MESA_FORMAT_Z16:
+			SETfield(t->SQ_TEX_RESOURCE1, FMT_16,
+				 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+			break;
+		case MESA_FORMAT_Z24_S8:
+			SETfield(t->SQ_TEX_RESOURCE1, FMT_24_8,
+				 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+			break;
+		case MESA_FORMAT_Z32:
+			SETfield(t->SQ_TEX_RESOURCE1, FMT_32,
+				 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+			break;
+		};
+		switch (tObj->DepthMode) {
+		case GL_LUMINANCE:  /* X, X, X, ONE */
+			t->SQ_TEX_RESOURCE4 |=
+				(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+				|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+				|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+				|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+			break;
+		case GL_INTENSITY:  /* X, X, X, X */
+			t->SQ_TEX_RESOURCE4 |=
+				(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+				|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+				|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+				|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+			break;
+		case GL_ALPHA:     /* ZERO, ZERO, ZERO, X */
+			t->SQ_TEX_RESOURCE4 |=
+				(SQ_SEL_0 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+				|(SQ_SEL_0 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+				|(SQ_SEL_0 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+				|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+			break;
+		default:
+			return GL_FALSE;
+		}
+		break;
+	default:
+		/* Not supported format */
+		return GL_FALSE;
+	};
+
+	return GL_TRUE;
+}
+
+void r600SetDepthTexMode(struct gl_texture_object *tObj)
+{
+	const GLuint *format;
+	radeonTexObjPtr t;
+
+	if (!tObj)
+		return;
+
+	t = radeon_tex_obj(tObj);
+
+	r600GetTexFormat(tObj, tObj->Image[0][tObj->BaseLevel]->TexFormat->MesaFormat);
+
+}
+
+/**
+ * Compute the cached hardware register values for the given texture object.
+ *
+ * \param rmesa Context pointer
+ * \param t the r300 texture object
+ */
+static void setup_hardware_state(context_t *rmesa, struct gl_texture_object *texObj)
+{
+	radeonTexObj *t = radeon_tex_obj(texObj);
+	const struct gl_texture_image *firstImage;
+	int firstlevel = t->mt ? t->mt->firstLevel : 0;
+	GLuint uTexelPitch;
+
+	firstImage = t->base.Image[0][firstlevel];
+
+	if (!t->image_override) {
+		if (!r600GetTexFormat(texObj, firstImage->TexFormat->MesaFormat)) {
+			_mesa_problem(NULL, "unexpected texture format in %s",
+				      __FUNCTION__);
+			return;
+		}
+	}
+
+	if (t->image_override && t->bo)
+		return;
+
+	switch (texObj->Target) {
+        case GL_TEXTURE_1D:
+		SETfield(t->SQ_TEX_RESOURCE0, SQ_TEX_DIM_1D, DIM_shift, DIM_mask);
+		SETfield(t->SQ_TEX_RESOURCE1, 0, TEX_DEPTH_shift, TEX_DEPTH_mask);
+		break;
+        case GL_TEXTURE_2D:
+        case GL_TEXTURE_RECTANGLE_NV:
+		SETfield(t->SQ_TEX_RESOURCE0, SQ_TEX_DIM_2D, DIM_shift, DIM_mask);
+		SETfield(t->SQ_TEX_RESOURCE1, 0, TEX_DEPTH_shift, TEX_DEPTH_mask);
+		break;
+        case GL_TEXTURE_3D:
+		SETfield(t->SQ_TEX_RESOURCE0, SQ_TEX_DIM_3D, DIM_shift, DIM_mask);
+		SETfield(t->SQ_TEX_RESOURCE1, firstImage->Depth - 1, // ???
+			 TEX_DEPTH_shift, TEX_DEPTH_mask);
+		break;
+        case GL_TEXTURE_CUBE_MAP:
+		SETfield(t->SQ_TEX_RESOURCE0, SQ_TEX_DIM_CUBEMAP, DIM_shift, DIM_mask);
+		SETfield(t->SQ_TEX_RESOURCE1, 0, TEX_DEPTH_shift, TEX_DEPTH_mask);
+		break;
+        default:
+		_mesa_problem(NULL, "unexpected texture target type in %s", __FUNCTION__);
+		return;
+	}
+
+	uTexelPitch = (firstImage->Width + R700_TEXEL_PITCH_ALIGNMENT_MASK)
+		& ~R700_TEXEL_PITCH_ALIGNMENT_MASK;
+
+	SETfield(t->SQ_TEX_RESOURCE0, (uTexelPitch/8)-1, PITCH_shift, PITCH_mask);
+	SETfield(t->SQ_TEX_RESOURCE0, firstImage->Width - 1,
+		 TEX_WIDTH_shift, TEX_WIDTH_mask);
+	SETfield(t->SQ_TEX_RESOURCE1, firstImage->Height - 1,
+		 TEX_HEIGHT_shift, TEX_HEIGHT_mask);
+
+}
+
+/**
+ * Ensure the given texture is ready for rendering.
+ *
+ * Mostly this means populating the texture object's mipmap tree.
+ */
+static GLboolean r600_validate_texture(GLcontext * ctx, struct gl_texture_object *texObj)
+{
+	context_t *rmesa = R700_CONTEXT(ctx);
+	radeonTexObj *t = radeon_tex_obj(texObj);
+
+	if (!radeon_validate_texture_miptree(ctx, texObj))
+		return GL_FALSE;
+
+	/* Configure the hardware registers (more precisely, the cached version
+	 * of the hardware registers). */
+	setup_hardware_state(rmesa, texObj);
+
+	t->validated = GL_TRUE;
+	return GL_TRUE;
+}
+
+/**
+ * Ensure all enabled and complete textures are uploaded along with any buffers being used.
+ */
+GLboolean r600ValidateBuffers(GLcontext * ctx)
+{
+	context_t *rmesa = R700_CONTEXT(ctx);
+	struct radeon_renderbuffer *rrb;
+	int i;
+
+	radeon_validate_reset_bos(&rmesa->radeon);
+
+	rrb = radeon_get_colorbuffer(&rmesa->radeon);
+	/* color buffer */
+	if (rrb && rrb->bo) {
+		radeon_validate_bo(&rmesa->radeon, rrb->bo,
+				   0, RADEON_GEM_DOMAIN_VRAM);
+	}
+
+	/* depth buffer */
+	rrb = radeon_get_depthbuffer(&rmesa->radeon);
+	if (rrb && rrb->bo) {
+		radeon_validate_bo(&rmesa->radeon, rrb->bo,
+				   0, RADEON_GEM_DOMAIN_VRAM);
+	}
+
+	for (i = 0; i < ctx->Const.MaxTextureImageUnits; ++i) {
+		radeonTexObj *t;
+
+		if (!ctx->Texture.Unit[i]._ReallyEnabled)
+			continue;
+
+		if (!r600_validate_texture(ctx, ctx->Texture.Unit[i]._Current)) {
+			_mesa_warning(ctx,
+				      "failed to validate texture for unit %d.\n",
+				      i);
+		}
+		t = radeon_tex_obj(ctx->Texture.Unit[i]._Current);
+		if (t->image_override && t->bo)
+			radeon_validate_bo(&rmesa->radeon, t->bo,
+					   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
+
+		else if (t->mt->bo)
+			radeon_validate_bo(&rmesa->radeon, t->mt->bo,
+					   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
+	}
+	if (rmesa->radeon.dma.current)
+		radeon_validate_bo(&rmesa->radeon, rmesa->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
+
+	return radeon_revalidate_bos(ctx);
+}
+
+void r600SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
+		      unsigned long long offset, GLint depth, GLuint pitch)
+{
+	context_t *rmesa = pDRICtx->driverPrivate;
+	struct gl_texture_object *tObj =
+	    _mesa_lookup_texture(rmesa->radeon.glCtx, texname);
+	radeonTexObjPtr t = radeon_tex_obj(tObj);
+	uint32_t pitch_val;
+
+	if (!tObj)
+		return;
+
+	t->image_override = GL_TRUE;
+
+	if (!offset)
+		return;
+
+	t->bo = NULL;
+	t->override_offset = offset;
+	pitch_val = pitch;
+	switch (depth) {
+	case 32:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		pitch_val /= 4;
+		break;
+	case 24:
+	default:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		pitch_val /= 4;
+		break;
+	case 16:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_5_6_5,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		pitch_val /= 2;
+		break;
+	}
+
+	pitch_val = (pitch_val + R700_TEXEL_PITCH_ALIGNMENT_MASK)
+		& ~R700_TEXEL_PITCH_ALIGNMENT_MASK;
+	SETfield(t->SQ_TEX_RESOURCE0, (pitch_val/8)-1, PITCH_shift, PITCH_mask);
+}
+
+void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_format, __DRIdrawable *dPriv)
+{
+	struct gl_texture_unit *texUnit;
+	struct gl_texture_object *texObj;
+	struct gl_texture_image *texImage;
+	struct radeon_renderbuffer *rb;
+	radeon_texture_image *rImage;
+	radeonContextPtr radeon;
+	context_t *rmesa;
+	struct radeon_framebuffer *rfb;
+	radeonTexObjPtr t;
+	uint32_t pitch_val;
+	uint32_t internalFormat, type, format;
+
+	type = GL_BGRA;
+	format = GL_UNSIGNED_BYTE;
+	internalFormat = (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT ? 3 : 4);
+
+	radeon = pDRICtx->driverPrivate;
+	rmesa = pDRICtx->driverPrivate;
+
+	rfb = dPriv->driverPrivate;
+        texUnit = &radeon->glCtx->Texture.Unit[radeon->glCtx->Texture.CurrentUnit];
+	texObj = _mesa_select_tex_object(radeon->glCtx, texUnit, target);
+        texImage = _mesa_get_tex_image(radeon->glCtx, texObj, target, 0);
+
+	rImage = get_radeon_texture_image(texImage);
+	t = radeon_tex_obj(texObj);
+        if (t == NULL) {
+    	    return;
+    	}
+
+	radeon_update_renderbuffers(pDRICtx, dPriv);
+	/* back & depth buffer are useless free them right away */
+	rb = (void*)rfb->base.Attachment[BUFFER_DEPTH].Renderbuffer;
+	if (rb && rb->bo) {
+		radeon_bo_unref(rb->bo);
+        rb->bo = NULL;
+	}
+	rb = (void*)rfb->base.Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+	if (rb && rb->bo) {
+		radeon_bo_unref(rb->bo);
+		rb->bo = NULL;
+	}
+	rb = rfb->color_rb[0];
+	if (rb->bo == NULL) {
+		/* Failed to BO for the buffer */
+		return;
+	}
+
+	_mesa_lock_texture(radeon->glCtx, texObj);
+	if (t->bo) {
+		radeon_bo_unref(t->bo);
+		t->bo = NULL;
+	}
+	if (rImage->bo) {
+		radeon_bo_unref(rImage->bo);
+		rImage->bo = NULL;
+	}
+	if (t->mt) {
+		radeon_miptree_unreference(t->mt);
+		t->mt = NULL;
+	}
+	if (rImage->mt) {
+		radeon_miptree_unreference(rImage->mt);
+		rImage->mt = NULL;
+	}
+	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
+				   rb->width, rb->height, 1, 0, rb->cpp);
+	texImage->RowStride = rb->pitch / rb->cpp;
+	texImage->TexFormat = radeonChooseTextureFormat(radeon->glCtx,
+							internalFormat,
+							type, format, 0);
+	rImage->bo = rb->bo;
+	radeon_bo_ref(rImage->bo);
+	t->bo = rb->bo;
+	radeon_bo_ref(t->bo);
+	t->image_override = GL_TRUE;
+	t->override_offset = 0;
+	pitch_val = rb->pitch;
+	switch (rb->cpp) {
+	case 4:
+		if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT) {
+			SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
+				 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+			t->SQ_TEX_RESOURCE4 |=
+				(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+				|(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+				|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+				|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		} else {
+			SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
+				 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+			t->SQ_TEX_RESOURCE4 |=
+				(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+				|(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+				|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+				|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		}
+		pitch_val /= 4;
+		break;
+	case 3:
+	default:
+		// FMT_8_8_8 ???
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_8_8_8_8,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_W << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		pitch_val /= 4;
+		break;
+	case 2:
+		SETfield(t->SQ_TEX_RESOURCE1, FMT_5_6_5,
+			 SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
+
+		t->SQ_TEX_RESOURCE4 |=
+			(SQ_SEL_Z << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift)
+			|(SQ_SEL_Y << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift)
+			|(SQ_SEL_X << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift)
+			|(SQ_SEL_1 << SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift);
+		pitch_val /= 2;
+		break;
+	}
+
+	pitch_val = (pitch_val + R700_TEXEL_PITCH_ALIGNMENT_MASK)
+		& ~R700_TEXEL_PITCH_ALIGNMENT_MASK;
+
+	SETfield(t->SQ_TEX_RESOURCE0, (pitch_val/8)-1, PITCH_shift, PITCH_mask);
+	SETfield(t->SQ_TEX_RESOURCE0, rb->width - 1,
+		 TEX_WIDTH_shift, TEX_WIDTH_mask);
+	SETfield(t->SQ_TEX_RESOURCE1, rb->height - 1,
+		 TEX_HEIGHT_shift, TEX_HEIGHT_mask);
+
+	t->validated = GL_TRUE;
+	_mesa_unlock_texture(radeon->glCtx, texObj);
+	return;
+}
+
+void r600SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
+{
+        r600SetTexBuffer2(pDRICtx, target, GLX_TEXTURE_FORMAT_RGBA_EXT, dPriv);
+}

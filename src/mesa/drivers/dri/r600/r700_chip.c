@@ -32,7 +32,7 @@
 #include "r600_cmdbuf.h"
 
 #include "r700_state.h"
-#include "r700_tex.h"
+#include "r600_tex.h"
 #include "r700_oglprog.h"
 #include "r700_fragprog.h"
 #include "r700_vertprog.h"

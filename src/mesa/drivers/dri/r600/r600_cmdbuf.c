@@ -52,7 +52,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_mipmap_tree.h"
 #include "radeon_reg.h"
 
-struct r600_cs_manager_legacy 
+struct r600_cs_manager_legacy
 {
     struct radeon_cs_manager    base;
     struct radeon_context       *ctx;

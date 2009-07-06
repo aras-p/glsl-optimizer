@@ -227,6 +227,19 @@ struct radeon_tex_obj {
 
         GLuint pp_txfilter_1;	/*  r300 */
 
+	/* r700 texture states */
+	GLuint SQ_TEX_RESOURCE0;
+	GLuint SQ_TEX_RESOURCE1;
+	GLuint SQ_TEX_RESOURCE2;
+	GLuint SQ_TEX_RESOURCE3;
+	GLuint SQ_TEX_RESOURCE4;
+	GLuint SQ_TEX_RESOURCE5;
+	GLuint SQ_TEX_RESOURCE6;
+
+	GLuint SQ_TEX_SAMPLER0;
+	GLuint SQ_TEX_SAMPLER1;
+	GLuint SQ_TEX_SAMPLER2;
+
 	GLboolean border_fallback;
 
 

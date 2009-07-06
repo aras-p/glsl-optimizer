@@ -251,7 +251,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	r700InitChipObject(r600);  /* let the eag... */
 
 	r700InitStateFuncs(&functions);
-	r700InitTextureFuncs(&functions);
+	r600InitTextureFuncs(&functions);
 	r700InitShaderFuncs(&functions);
 	r700InitIoctlFuncs(&functions);
 

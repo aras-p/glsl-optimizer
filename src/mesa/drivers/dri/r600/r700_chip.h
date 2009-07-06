@@ -148,6 +148,7 @@ union UINT_FLOAT
     float	f32All;
 };
 
+#if 0
 typedef struct _TEXTURE_STATE_STRUCT
 {
     union UINT_FLOAT     SQ_TEX_RESOURCE0;
@@ -173,6 +174,7 @@ typedef struct _R700_TEXTURE_STATES
     TEXTURE_STATE_STRUCT *textures[R700_TEXTURE_NUMBERUNITS];
     SAMPLER_STATE_STRUCT *samplers[R700_TEXTURE_NUMBERUNITS];
 } R700_TEXTURE_STATES;
+#endif
 
 typedef struct _RENDER_TARGET_STATE_STRUCT
 {
@@ -506,7 +508,7 @@ typedef struct _R700_CHIP_CONTEXT
 
 	ContextState*                   pStateList;
 
-	R700_TEXTURE_STATES             texture_states;
+	radeonTexObj*                   textures[R700_TEXTURE_NUMBERUNITS];
 
 	GLboolean                       bEnablePerspective;
 
