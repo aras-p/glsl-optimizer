@@ -146,8 +146,8 @@ radeon_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
-      rb->_ActualFormat = GL_DEPTH24_STENCIL8_EXT;
-      rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
+      rb->_ActualFormat = GL_DEPTH_COMPONENT24;
+      rb->DataType = GL_UNSIGNED_INT;
       rb->DepthBits = 24;
       cpp = 4;
       break;
@@ -305,7 +305,7 @@ radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
 	    rrb->base.DataType = GL_UNSIGNED_SHORT;
 	    break;
 	case GL_DEPTH_COMPONENT24:
-	    rrb->base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
+	    rrb->base._ActualFormat = GL_DEPTH_COMPONENT24;
 	    rrb->base._BaseFormat = GL_DEPTH_COMPONENT;
 	    rrb->base.DepthBits = 24;
 	    rrb->base.DataType = GL_UNSIGNED_INT;
