@@ -198,10 +198,10 @@ again_alloc:
 	rmesa->dma.current_used = 0;
 	rmesa->dma.current_vertexptr = 0;
 	
-	radeon_validate_bo(rmesa, rmesa->dma.current, RADEON_GEM_DOMAIN_GTT, 0);
-
-	if (radeon_revalidate_bos(rmesa->glCtx) == GL_FALSE)
-	  fprintf(stderr,"failure to revalidate BOs - badness\n");
+	if (radeon_cs_space_check_with_bo(rmesa->cmdbuf.cs,
+					  rmesa->dma.current,
+					  RADEON_GEM_DOMAIN_GTT, 0))
+		fprintf(stderr,"failure to revalidate BOs - badness\n");
 
 	if (!rmesa->dma.current) {
         /* Cmd buff have been flushed in radeon_revalidate_bos */

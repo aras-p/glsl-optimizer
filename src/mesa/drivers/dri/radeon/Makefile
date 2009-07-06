@@ -10,6 +10,10 @@ LIBNAME = radeon_dri.so
 
 MINIGLX_SOURCES = server/radeon_dri.c 
 
+ifeq ($(RADEON_LDFLAGS),)
+CS_SOURCES = radeon_cs_space_drm.c
+endif
+
 RADEON_COMMON_SOURCES = \
 	radeon_texture.c \
 	radeon_common_context.c \
@@ -38,7 +42,8 @@ DRIVER_SOURCES = \
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \
-	$(DRIVER_SOURCES) 
+	$(DRIVER_SOURCES) \
+	$(CS_SOURCES)
 
 DRIVER_DEFINES = -DRADEON_COMMON=0
 

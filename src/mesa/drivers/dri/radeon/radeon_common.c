@@ -964,56 +964,15 @@ static INLINE void radeonEmitAtoms(radeonContextPtr radeon, GLboolean dirty)
 	COMMIT_BATCH();
 }
 
-GLboolean radeon_revalidate_bos(GLcontext *ctx)
+static GLboolean radeon_revalidate_bos(GLcontext *ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-	int flushed = 0;
 	int ret;
-again:
-	ret = radeon_cs_space_check(radeon->cmdbuf.cs, radeon->state.bos, radeon->state.validated_bo_count);
-	if (ret == RADEON_CS_SPACE_OP_TO_BIG)
+
+	ret = radeon_cs_space_check(radeon->cmdbuf.cs);
+	if (ret == RADEON_CS_SPACE_FLUSH)
 		return GL_FALSE;
-	if (ret == RADEON_CS_SPACE_FLUSH) {
-		radeonFlush(ctx);
-		if (flushed)
-			return GL_FALSE;
-		flushed = 1;
-		goto again;
-	}
 	return GL_TRUE;
-}
-
-void radeon_validate_reset_bos(radeonContextPtr radeon)
-{
-	int i;
-
-	for (i = 0; i < radeon->state.validated_bo_count; i++) {
-		radeon_bo_unref(radeon->state.bos[i].bo);
-		radeon->state.bos[i].bo = NULL;
-		radeon->state.bos[i].read_domains = 0;
-		radeon->state.bos[i].write_domain = 0;
-		radeon->state.bos[i].new_accounted = 0;
-	}
-	radeon->state.validated_bo_count = 0;
-}
-
-void radeon_validate_bo(radeonContextPtr radeon, struct radeon_bo *bo, uint32_t read_domains, uint32_t write_domain)
-{
-	int i;
-	for (i = 0; i < radeon->state.validated_bo_count; i++) {
-		if (radeon->state.bos[i].bo == bo &&
-		    radeon->state.bos[i].read_domains == read_domains &&
-		    radeon->state.bos[i].write_domain == write_domain)
-			return;
-	}
-	radeon_bo_ref(bo);
-	radeon->state.bos[radeon->state.validated_bo_count].bo = bo;
-	radeon->state.bos[radeon->state.validated_bo_count].read_domains = read_domains;
-	radeon->state.bos[radeon->state.validated_bo_count].write_domain = write_domain;
-	radeon->state.bos[radeon->state.validated_bo_count].new_accounted = 0;
-	radeon->state.validated_bo_count++;
-
-	assert(radeon->state.validated_bo_count < RADEON_MAX_BOS);
 }
 
 void radeonEmitState(radeonContextPtr radeon)
@@ -1228,6 +1187,9 @@ void rcommonInitCmdBuf(radeonContextPtr rmesa)
 	rmesa->cmdbuf.cs = radeon_cs_create(rmesa->cmdbuf.csm, size);
 	assert(rmesa->cmdbuf.cs != NULL);
 	rmesa->cmdbuf.size = size;
+
+	radeon_cs_space_set_flush(rmesa->cmdbuf.cs,
+				  (void (*)(void *))radeonFlush, rmesa->glCtx);
 
 	if (!rmesa->radeonScreen->kernel_mm) {
 		radeon_cs_set_limit(rmesa->cmdbuf.cs, RADEON_GEM_DOMAIN_VRAM, rmesa->radeonScreen->texSize[0]);

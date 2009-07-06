@@ -68,6 +68,7 @@ struct radeon_bo_funcs {
     int (*bo_map)(struct radeon_bo *bo, int write);
     int (*bo_unmap)(struct radeon_bo *bo);
     int (*bo_wait)(struct radeon_bo *bo);
+    int (*bo_is_static)(struct radeon_bo *bo);
 };
 
 struct radeon_bo_manager {
@@ -162,6 +163,13 @@ static inline int _radeon_bo_wait(struct radeon_bo *bo,
                                   int line)
 {
     return bo->bom->funcs->bo_wait(bo);
+}
+
+static inline int radeon_bo_is_static(struct radeon_bo *bo)
+{
+    if (bo->bom->funcs->bo_is_static)
+	return bo->bom->funcs->bo_is_static(bo);
+    return 0;
 }
 
 #define radeon_bo_open(bom, h, s, a, d, f)\

@@ -365,105 +365,6 @@ static void cs_print(struct radeon_cs *cs, FILE *file)
 {
 }
 
-static int cs_check_space(struct radeon_cs *cs, struct radeon_cs_space_check *bos, int num_bo)
-{
-    struct radeon_cs_manager *csm = cs->csm;
-    int this_op_read = 0, this_op_gart_write = 0, this_op_vram_write = 0;
-    uint32_t read_domains, write_domain;
-    int i;
-    struct radeon_bo *bo;
-
-    /* check the totals for this operation */
-
-    if (num_bo == 0)
-        return 0;
-
-    /* prepare */
-    for (i = 0; i < num_bo; i++) {
-      bo = bos[i].bo;
-
-      bos[i].new_accounted = 0;
-      read_domains = bos[i].read_domains;
-      write_domain = bos[i].write_domain;
-		
-      /* pinned bos don't count */
-      if (radeon_legacy_bo_is_static(bo))
-	  continue;
- 
-      /* already accounted this bo */
-      if (write_domain && (write_domain == bo->space_accounted)) {
-	  bos[i].new_accounted = bo->space_accounted;
-	  continue;
-      }
-
-      if (read_domains && ((read_domains << 16) == bo->space_accounted)) {
-	  bos[i].new_accounted = bo->space_accounted;
-	  continue;
-      }
-      
-      if (bo->space_accounted == 0) {
-	  if (write_domain == RADEON_GEM_DOMAIN_VRAM)
-	      this_op_vram_write += bo->size;
-	  else if (write_domain == RADEON_GEM_DOMAIN_GTT)
-	      this_op_gart_write += bo->size;
-	  else
-	      this_op_read += bo->size;
-	  bos[i].new_accounted = (read_domains << 16) | write_domain;
-      } else {
-	  uint16_t old_read, old_write;
-	  
-	  old_read = bo->space_accounted >> 16;
-	  old_write = bo->space_accounted & 0xffff;
-
-	  if (write_domain && (old_read & write_domain)) {
-	      bos[i].new_accounted = write_domain;
-	      /* moving from read to a write domain */
-	      if (write_domain == RADEON_GEM_DOMAIN_VRAM) {
-		  this_op_read -= bo->size;
-		  this_op_vram_write += bo->size;
-	      } else if (write_domain == RADEON_GEM_DOMAIN_VRAM) {
-		  this_op_read -= bo->size;
-		  this_op_gart_write += bo->size;
-	      }
-	  } else if (read_domains & old_write) {
-	      bos[i].new_accounted = bo->space_accounted & 0xffff;
-	  } else {
-	      /* rewrite the domains */
-	      if (write_domain != old_write)
-		  fprintf(stderr,"WRITE DOMAIN RELOC FAILURE 0x%x %d %d\n", bo->handle, write_domain, old_write);
-	      if (read_domains != old_read)
-		  fprintf(stderr,"READ DOMAIN RELOC FAILURE 0x%x %d %d\n", bo->handle, read_domains, old_read);
-	      return RADEON_CS_SPACE_FLUSH;
-	  }
-      }
-	}
-	
-	if (this_op_read < 0)
-		this_op_read = 0;
-
-	/* check sizes - operation first */
-	if ((this_op_read + this_op_gart_write > csm->gart_limit) ||
-	    (this_op_vram_write > csm->vram_limit)) {
-	    return RADEON_CS_SPACE_OP_TO_BIG;
-	}
-
-	if (((csm->vram_write_used + this_op_vram_write) > csm->vram_limit) ||
-	    ((csm->read_used + csm->gart_write_used + this_op_gart_write + this_op_read) > csm->gart_limit)) {
-		return RADEON_CS_SPACE_FLUSH;
-	}
-
-	csm->gart_write_used += this_op_gart_write;
-	csm->vram_write_used += this_op_vram_write;
-	csm->read_used += this_op_read;
-	/* commit */
-	for (i = 0; i < num_bo; i++) {
-		bo = bos[i].bo;
-		bo->space_accounted = bos[i].new_accounted;
-	}
-
-	return RADEON_CS_SPACE_OK;
-}
-
 static struct radeon_cs_funcs  radeon_cs_legacy_funcs = {
     cs_create,
     cs_write_reloc,
@@ -474,7 +375,6 @@ static struct radeon_cs_funcs  radeon_cs_legacy_funcs = {
     cs_erase,
     cs_need_flush,
     cs_print,
-    cs_check_space
 };
 
 struct radeon_cs_manager *radeon_cs_manager_legacy_ctor(struct radeon_context *ctx)

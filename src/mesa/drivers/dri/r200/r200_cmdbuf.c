@@ -225,6 +225,7 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
 				    GLuint min_nr )
 {
    GLushort *retval;
+   int ret;
 
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s %d prim %x\n", __FUNCTION__, min_nr, primitive);
@@ -239,10 +240,11 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
    rmesa->radeon.tcl.elt_dma_offset = 0;
    rmesa->tcl.elt_used = min_nr * 2;
 
-   radeon_validate_bo(&rmesa->radeon, rmesa->radeon.tcl.elt_dma_bo,
-                      RADEON_GEM_DOMAIN_GTT, 0);
-   if (radeon_revalidate_bos(rmesa->radeon.glCtx) == GL_FALSE)
+   ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs, rmesa->radeon.tcl.elt_dma_bo,
+				 RADEON_GEM_DOMAIN_GTT, 0);
+   if (ret) {
       fprintf(stderr,"failure to revalidate BOs - badness\n");
+   }
 
    radeon_bo_map(rmesa->radeon.tcl.elt_dma_bo, 1);
    retval = rmesa->radeon.tcl.elt_dma_bo->ptr + rmesa->radeon.tcl.elt_dma_offset;

@@ -56,6 +56,8 @@ struct radeon_cs_space_check {
     uint32_t new_accounted;
 };
 
+#define MAX_SPACE_BOS (32)
+
 struct radeon_cs_manager;
 
 struct radeon_cs {
@@ -72,7 +74,10 @@ struct radeon_cs {
     const char                  *section_file;
     const char                  *section_func;
     int                         section_line;
-
+    struct radeon_cs_space_check bos[MAX_SPACE_BOS];
+    int                         bo_count;
+    void                        (*space_flush_fn)(void *);
+    void                        *space_flush_data;
 };
 
 /* cs functions */
@@ -98,16 +103,14 @@ struct radeon_cs_funcs {
     int (*cs_erase)(struct radeon_cs *cs);
     int (*cs_need_flush)(struct radeon_cs *cs);
     void (*cs_print)(struct radeon_cs *cs, FILE *file);
-    int (*cs_space_check)(struct radeon_cs *cs, struct radeon_cs_space_check *bos,
-			  int num_bo);
 };
 
 struct radeon_cs_manager {
     struct radeon_cs_funcs  *funcs;
     int                     fd;
-    uint32_t vram_limit, gart_limit;
-    uint32_t vram_write_used, gart_write_used;
-    uint32_t read_used;
+    int32_t vram_limit, gart_limit;
+    int32_t vram_write_used, gart_write_used;
+    int32_t read_used;
 };
 
 static inline struct radeon_cs *radeon_cs_create(struct radeon_cs_manager *csm,
@@ -171,13 +174,6 @@ static inline void radeon_cs_print(struct radeon_cs *cs, FILE *file)
     cs->csm->funcs->cs_print(cs, file);
 }
 
-static inline int radeon_cs_space_check(struct radeon_cs *cs,
-					    struct radeon_cs_space_check *bos,
-					    int num_bo)
-{
-    return cs->csm->funcs->cs_space_check(cs, bos, num_bo);
-}
-
 static inline void radeon_cs_set_limit(struct radeon_cs *cs, uint32_t domain, uint32_t limit)
 {
     
@@ -204,4 +200,38 @@ static inline void radeon_cs_write_qword(struct radeon_cs *cs, uint64_t qword)
         cs->section_cdw+=2;
     }
 }
+
+static inline void radeon_cs_space_set_flush(struct radeon_cs *cs, void (*fn)(void *), void *data)
+{
+    cs->space_flush_fn = fn;
+    cs->space_flush_data = data;
+}
+
+
+/*
+ * add a persistent BO to the list
+ * a persistent BO is one that will be referenced across flushes,
+ * i.e. colorbuffer, textures etc.
+ * They get reset when a new "operation" happens, where an operation
+ * is a state emission with a color/textures etc followed by a bunch of vertices.
+ */
+void radeon_cs_space_add_persistent_bo(struct radeon_cs *cs,
+				       struct radeon_bo *bo,
+				       uint32_t read_domains,
+				       uint32_t write_domain);
+
+/* reset the persistent BO list */
+void radeon_cs_space_reset_bos(struct radeon_cs *cs);
+
+/* do a space check with the current persistent BO list */
+int radeon_cs_space_check(struct radeon_cs *cs);
+
+/* do a space check with the current persistent BO list and a temporary BO
+ * a temporary BO is like a DMA buffer, which  gets flushed with the
+ * command buffer */
+int radeon_cs_space_check_with_bo(struct radeon_cs *cs,
+				  struct radeon_bo *bo,
+				  uint32_t read_domains,
+				  uint32_t write_domain);
+
 #endif

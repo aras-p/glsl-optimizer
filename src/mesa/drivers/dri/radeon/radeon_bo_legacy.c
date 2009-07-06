@@ -528,12 +528,21 @@ static int bo_unmap(struct radeon_bo *bo)
     return 0;
 }
 
+
+static int bo_is_static(struct radeon_bo *bo)
+{
+    struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
+    return bo_legacy->static_bo;
+}
+
 static struct radeon_bo_funcs bo_legacy_funcs = {
     bo_open,
     bo_ref,
     bo_unref,
     bo_map,
-    bo_unmap
+    bo_unmap,
+    NULL,
+    bo_is_static,
 };
 
 static int bo_vram_validate(struct radeon_bo *bo,
@@ -820,11 +829,5 @@ unsigned radeon_bo_legacy_relocs_size(struct radeon_bo *bo)
         return 0;
     }
     return bo->size;
-}
-
-int radeon_legacy_bo_is_static(struct radeon_bo *bo)
-{
-    struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
-    return bo_legacy->static_bo;
 }
 

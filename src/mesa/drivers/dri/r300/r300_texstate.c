@@ -281,21 +281,24 @@ GLboolean r300ValidateBuffers(GLcontext * ctx)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct radeon_renderbuffer *rrb;
 	int i;
+	int ret;
 
-	radeon_validate_reset_bos(&rmesa->radeon);
+	radeon_cs_space_reset_bos(rmesa->radeon.cmdbuf.cs);
 
 	rrb = radeon_get_colorbuffer(&rmesa->radeon);
 	/* color buffer */
 	if (rrb && rrb->bo) {
-		radeon_validate_bo(&rmesa->radeon, rrb->bo,
-				   0, RADEON_GEM_DOMAIN_VRAM);
+		radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
+						  rrb->bo, 0,
+						  RADEON_GEM_DOMAIN_VRAM);
 	}
 
 	/* depth buffer */
 	rrb = radeon_get_depthbuffer(&rmesa->radeon);
 	if (rrb && rrb->bo) {
-		radeon_validate_bo(&rmesa->radeon, rrb->bo,
-				   0, RADEON_GEM_DOMAIN_VRAM);
+		radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
+						  rrb->bo, 0,
+						  RADEON_GEM_DOMAIN_VRAM);
 	}
 	
 	for (i = 0; i < ctx->Const.MaxTextureImageUnits; ++i) {
@@ -311,17 +314,19 @@ GLboolean r300ValidateBuffers(GLcontext * ctx)
 		}
 		t = radeon_tex_obj(ctx->Texture.Unit[i]._Current);
 		if (t->image_override && t->bo)
-			radeon_validate_bo(&rmesa->radeon, t->bo,
-					   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
-
+			radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
+							  t->bo,
+							  RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
 		else if (t->mt->bo)
-			radeon_validate_bo(&rmesa->radeon, t->mt->bo,
-					   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
+			radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
+							  t->mt->bo,
+							  RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
 	}
-	if (rmesa->radeon.dma.current)
-		radeon_validate_bo(&rmesa->radeon, rmesa->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
 
-	return radeon_revalidate_bos(ctx);
+	ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs, rmesa->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
+	if (ret)
+		return GL_FALSE;
+	return GL_TRUE;
 }
 
 void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
