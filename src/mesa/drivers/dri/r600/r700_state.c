@@ -749,7 +749,6 @@ void r700SetDepthTarget(context_t *context)
     r700->DB_DEPTH_BASE.u32All = 0;
     r700->DB_DEPTH_INFO.u32All = 0;
 
-    r700->DB_DEPTH_CONTROL.u32All   = 0;
     r700->DB_DEPTH_CLEAR.u32All     = 0x3F800000;
     r700->DB_DEPTH_VIEW.u32All      = 0;
     r700->DB_RENDER_CONTROL.u32All  = 0;
