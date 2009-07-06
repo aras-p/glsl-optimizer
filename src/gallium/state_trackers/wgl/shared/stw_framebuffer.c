@@ -80,62 +80,7 @@ stw_framebuffer_destroy_locked(
 }
 
 
-/**
- * @sa http://msdn.microsoft.com/en-us/library/ms644975(VS.85).aspx
- * @sa http://msdn.microsoft.com/en-us/library/ms644960(VS.85).aspx
- */
-LRESULT CALLBACK
-stw_call_window_proc(
-   int nCode,
-   WPARAM wParam,
-   LPARAM lParam )
-{
-   struct stw_tls_data *tls_data;
-   PCWPSTRUCT pParams = (PCWPSTRUCT)lParam;
-   
-   tls_data = stw_tls_get_data();
-   if(!tls_data)
-      return 0;
-   
-   if (nCode < 0)
-       return CallNextHookEx(tls_data->hCallWndProcHook, nCode, wParam, lParam);
-
-   if (pParams->message == WM_SIZE && pParams->wParam != SIZE_MINIMIZED) {
-      struct stw_framebuffer *fb;
-
-      pipe_mutex_lock( stw_dev->mutex );
-      fb = stw_framebuffer_from_hwnd_locked( pParams->hwnd );
-      pipe_mutex_unlock( stw_dev->mutex );
-      
-      if(fb) {
-         unsigned width = LOWORD( pParams->lParam );
-         unsigned height = HIWORD( pParams->lParam );
-         
-         pipe_mutex_lock( fb->mutex );
-         fb->must_resize = TRUE;
-         fb->width = width;
-         fb->height = height;
-         pipe_mutex_unlock( fb->mutex );
-      }
-   }
-
-   if (pParams->message == WM_DESTROY) {
-      struct stw_framebuffer *fb;
-
-      pipe_mutex_lock( stw_dev->mutex );
-      
-      fb = stw_framebuffer_from_hwnd_locked( pParams->hwnd );
-      if(fb)
-         stw_framebuffer_destroy_locked(fb);
-      
-      pipe_mutex_unlock( stw_dev->mutex );
-   }
-
-   return CallNextHookEx(tls_data->hCallWndProcHook, nCode, wParam, lParam);
-}
-
-
-static void
+static INLINE void
 stw_framebuffer_get_size( struct stw_framebuffer *fb )
 {
    unsigned width, height;
@@ -157,6 +102,62 @@ stw_framebuffer_get_size( struct stw_framebuffer *fb )
       fb->width = width; 
       fb->height = height; 
    }
+}
+
+
+/**
+ * @sa http://msdn.microsoft.com/en-us/library/ms644975(VS.85).aspx
+ * @sa http://msdn.microsoft.com/en-us/library/ms644960(VS.85).aspx
+ */
+LRESULT CALLBACK
+stw_call_window_proc(
+   int nCode,
+   WPARAM wParam,
+   LPARAM lParam )
+{
+   struct stw_tls_data *tls_data;
+   PCWPSTRUCT pParams = (PCWPSTRUCT)lParam;
+   struct stw_framebuffer *fb;
+   
+   tls_data = stw_tls_get_data();
+   if(!tls_data)
+      return 0;
+   
+   if (nCode < 0)
+       return CallNextHookEx(tls_data->hCallWndProcHook, nCode, wParam, lParam);
+
+   if (pParams->message == WM_WINDOWPOSCHANGED) {
+      /* We handle WM_WINDOWPOSCHANGED instead of WM_SIZE because according to
+       * http://blogs.msdn.com/oldnewthing/archive/2008/01/15/7113860.aspx 
+       * WM_SIZE is generated from WM_WINDOWPOSCHANGED by DefWindowProc so it 
+       * can be masked out by the application. */
+      LPWINDOWPOS lpWindowPos = (LPWINDOWPOS)pParams->lParam;
+      if((lpWindowPos->flags & SWP_SHOWWINDOW) || 
+         !(lpWindowPos->flags & SWP_NOSIZE)) {
+         pipe_mutex_lock( stw_dev->mutex );
+         fb = stw_framebuffer_from_hwnd_locked( pParams->hwnd );
+         pipe_mutex_unlock( stw_dev->mutex );
+         
+         if(fb) {
+            pipe_mutex_lock( fb->mutex );
+            /* Size in WINDOWPOS includes the window frame, so get the size 
+             * of the client area via GetClientRect.  */
+            stw_framebuffer_get_size(fb);
+            pipe_mutex_unlock( fb->mutex );
+         }
+      }
+   }
+   else if (pParams->message == WM_DESTROY) {
+      pipe_mutex_lock( stw_dev->mutex );
+      
+      fb = stw_framebuffer_from_hwnd_locked( pParams->hwnd );
+      if(fb)
+         stw_framebuffer_destroy_locked(fb);
+      
+      pipe_mutex_unlock( stw_dev->mutex );
+   }
+
+   return CallNextHookEx(tls_data->hCallWndProcHook, nCode, wParam, lParam);
 }
 
 
