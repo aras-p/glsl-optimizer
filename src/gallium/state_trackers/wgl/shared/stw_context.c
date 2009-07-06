@@ -60,8 +60,14 @@ stw_context(GLcontext *glctx)
 static INLINE struct stw_context *
 stw_current_context(void)
 {
-   GET_CURRENT_CONTEXT( glctx );
-   return stw_context(glctx);
+   /* We must check if multiple threads are being used or GET_CURRENT_CONTEXT 
+    * might return the current context of the thread first seen. */
+   _glapi_check_multithread();
+
+   {
+      GET_CURRENT_CONTEXT( glctx );
+      return stw_context(glctx);
+   }
 }
 
 BOOL
