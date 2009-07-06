@@ -417,6 +417,12 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 
 	r300FixupIndexBuffer(ctx, ib, bo, &nr_bo);
 
+	/* ensure we have the cmd buf space in advance to cover
+ 	 * the state + DMA AOS pointers */
+	rcommonEnsureCmdBufSpace(&r300->radeon,
+                           r300->radeon.hw.max_state_size + (50*sizeof(int)),
+                           __FUNCTION__);
+
 	r300SetVertexFormat(ctx, arrays, max_index + 1, bo, &nr_bo);
 
 	if (r300->fallback)
