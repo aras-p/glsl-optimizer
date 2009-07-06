@@ -129,7 +129,6 @@ struct brw_context;
 #define BRW_NEW_PRIMITIVE               0x40
 #define BRW_NEW_CONTEXT                 0x80
 #define BRW_NEW_WM_INPUT_DIMENSIONS     0x100
-#define BRW_NEW_INPUT_VARYING           0x200
 #define BRW_NEW_PSP                     0x800
 #define BRW_NEW_WM_SURFACES		0x1000
 #define BRW_NEW_FENCE                   0x2000
@@ -402,7 +401,6 @@ struct brw_vertex_element {
 
 
 struct brw_vertex_info {
-   GLuint varying;  /* varying:1[VERT_ATTRIB_MAX] */
    GLuint sizes[ATTRIB_BIT_DWORDS * 2]; /* sizes:2[VERT_ATTRIB_MAX] */
 };
 

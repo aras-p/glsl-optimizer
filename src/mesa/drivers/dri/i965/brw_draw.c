@@ -187,19 +187,13 @@ static void brw_merge_inputs( struct brw_context *brw,
       brw->vb.inputs[i].glarray = arrays[i];
 
       if (arrays[i]->StrideB != 0)
-	 brw->vb.info.varying |= 1 << i;
-
 	 brw->vb.info.sizes[i/16] |= (brw->vb.inputs[i].glarray->Size - 1) <<
 	    ((i%16) * 2);
    }
 
-   /* Raise statechanges if input sizes and varying have changed: 
-    */
+   /* Raise statechanges if input sizes have changed. */
    if (memcmp(brw->vb.info.sizes, old.sizes, sizeof(old.sizes)) != 0)
       brw->state.dirty.brw |= BRW_NEW_INPUT_DIMENSIONS;
-
-   if (brw->vb.info.varying != old.varying)
-      brw->state.dirty.brw |= BRW_NEW_INPUT_VARYING;
 }
 
 /* XXX: could split the primitive list to fallback only on the
