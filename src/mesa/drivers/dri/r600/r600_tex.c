@@ -351,9 +351,8 @@ static void r600DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 	}
 
 	if (rmesa) {
-		// fixme
 		int i;
-		//radeon_firevertices(&rmesa->radeon);
+		radeon_firevertices(&rmesa->radeon);
 
 		for(i = 0; i < R700_MAX_TEXTURE_UNITS; ++i)
 			if (rmesa->hw.textures[i] == t)

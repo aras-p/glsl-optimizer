@@ -264,9 +264,6 @@ static GLboolean r700RunRender(GLcontext * ctx,
         fp->r700AsmCode.bR6xx = 1;
     }
 
-    if (!r600ValidateBuffers(ctx))
-	    return GL_TRUE;
-
     r700Start3D(context); /* TODO : this is too much. */
 
     r700SyncSurf(context); /* TODO : make it light. */
