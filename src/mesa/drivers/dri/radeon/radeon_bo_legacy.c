@@ -609,44 +609,53 @@ static int bo_vram_validate(struct radeon_bo *bo,
 	driUpdateTextureLRU(&bo_legacy->tobj->base);
 
     if (bo_legacy->dirty || bo_legacy->tobj->base.dirty_images[0]) {
-        /* Copy to VRAM using a blit.
-         * All memory is 4K aligned. We're using 1024 pixels wide blits.
-         */
-        drm_radeon_texture_t tex;
-        drm_radeon_tex_image_t tmp;
-        int ret;
+	    if (IS_R600_CLASS(boml->screen)) {
+		    char *src = bo_legacy->ptr;
+		    char *dst = (char *) boml->screen->driScreen->pFB +
+			    (bo_legacy->offset - boml->fb_location);
 
-        tex.offset = bo_legacy->offset;
-        tex.image = &tmp;
-        assert(!(tex.offset & 1023));
+		    /* FIXME: alignment, pitch, etc. */
+		    r600_sw_blit(src, 0, dst, 0, 0, 0, 1, 1, bo->size);
+	    } else {
+		    /* Copy to VRAM using a blit.
+		     * All memory is 4K aligned. We're using 1024 pixels wide blits.
+		     */
+		    drm_radeon_texture_t tex;
+		    drm_radeon_tex_image_t tmp;
+		    int ret;
 
-        tmp.x = 0;
-        tmp.y = 0;
-        if (bo->size < 4096) {
-            tmp.width = (bo->size + 3) / 4;
-            tmp.height = 1;
-        } else {
-            tmp.width = 1024;
-            tmp.height = (bo->size + 4095) / 4096;
-        }
-        tmp.data = bo_legacy->ptr;
-        tex.format = RADEON_TXFORMAT_ARGB8888;
-        tex.width = tmp.width;
-        tex.height = tmp.height;
-        tex.pitch = MAX2(tmp.width / 16, 1);
-        do {
-            ret = drmCommandWriteRead(bo->bom->fd,
-                                      DRM_RADEON_TEXTURE,
-                                      &tex,
-                                      sizeof(drm_radeon_texture_t));
-            if (ret) {
-                if (RADEON_DEBUG & DEBUG_IOCTL)
-                    fprintf(stderr, "DRM_RADEON_TEXTURE:  again!\n");
-                usleep(1);
-            }
-        } while (ret == -EAGAIN);
-        bo_legacy->dirty = 0;
-	bo_legacy->tobj->base.dirty_images[0] = 0;
+		    tex.offset = bo_legacy->offset;
+		    tex.image = &tmp;
+		    assert(!(tex.offset & 1023));
+
+		    tmp.x = 0;
+		    tmp.y = 0;
+		    if (bo->size < 4096) {
+			    tmp.width = (bo->size + 3) / 4;
+			    tmp.height = 1;
+		    } else {
+			    tmp.width = 1024;
+			    tmp.height = (bo->size + 4095) / 4096;
+		    }
+		    tmp.data = bo_legacy->ptr;
+		    tex.format = RADEON_TXFORMAT_ARGB8888;
+		    tex.width = tmp.width;
+		    tex.height = tmp.height;
+		    tex.pitch = MAX2(tmp.width / 16, 1);
+		    do {
+			    ret = drmCommandWriteRead(bo->bom->fd,
+						      DRM_RADEON_TEXTURE,
+						      &tex,
+						      sizeof(drm_radeon_texture_t));
+			    if (ret) {
+				    if (RADEON_DEBUG & DEBUG_IOCTL)
+					    fprintf(stderr, "DRM_RADEON_TEXTURE:  again!\n");
+				    usleep(1);
+			    }
+		    } while (ret == -EAGAIN);
+	    }
+	    bo_legacy->dirty = 0;
+	    bo_legacy->tobj->base.dirty_images[0] = 0;
     }
     return 0;
 }

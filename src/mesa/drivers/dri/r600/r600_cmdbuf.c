@@ -645,3 +645,20 @@ void r600InitCmdBuf(context_t *r600) /* from rcommonInitCmdBuf */
 		}
 	}
 }
+
+void r600_sw_blit(char *srcp, int src_pitch, char *dstp, int dst_pitch,
+		  int x, int y, int w, int h, int cpp)
+{
+	char *src = srcp;
+	char *dst = dstp;
+
+	src += (y * src_pitch) + (x * cpp);
+	dst += (y * dst_pitch) + (x * cpp);
+
+	while (h--) {
+		memcpy(dst, src, w * cpp);
+		src += src_pitch;
+		dst += dst_pitch;
+	}
+}
+
