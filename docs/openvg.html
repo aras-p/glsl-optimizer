@@ -1,0 +1,68 @@
+<HTML>
+
+<TITLE>Mesa Release Notes</TITLE>
+
+<head><link rel="stylesheet" type="text/css" href="mesa.css"></head>
+
+<BODY>
+
+<body bgcolor="#eeeeee">
+
+<H1>OpenVG State Tracker</H1>
+
+<p>
+The current version of the OpenVG state tracker implements OpenVG 1.0.
+</p>
+<p>
+More informations about OpenVG can be found at
+<a href="http://www.khronos.org/openvg/" target="_parent">
+http://www.khronos.org/openvg/</a> .
+</p>
+<p>
+The OpenVG state tracker depends on the Gallium architecture and a working EGL implementation.
+</p>
+
+
+<h2>Building the library</h2>
+<ol>
+<li>Build Mesa3D with Gallium3D. Any build that builds Gallium3D libraries and EGL will suffice</li>
+<li>cd src/gallium/state_trackers/vega; make</li>
+<li>The last step will build libOpenVG library. You can add the libdir to LD_LIBRARY_PATH or install libOpenVG</li>
+</ol>
+
+<h3>Sample build</h3>
+A sample build looks as follows:
+<pre>
+  make linux-x86-64-debug
+  cd src/gallium/state_trackers/vega
+  make
+  cd ../../../..
+  export LD_LIBRARY_PATH=$PWD/lib64
+  export EGL_DRIVER="egl_softpipe"
+</pre>
+
+<h2>OpenVG Demos</h2>
+
+<p>
+To build the OpenVG demos:
+</p>
+<pre>
+  cd progs/openvg
+  make
+</pre>
+<p>
+To run a demo:
+</p>
+<pre>
+  cd openvg/demos
+  ./lion
+</pre>
+
+
+<h2>Notes</h2>
+<ul>
+<li>EGL_DRIVER environmental variable: forces usage of a specific EGL driver. Unless you force egl_softpipe the implementation will look for a DRI hardware accelerate driver and unless you have a Gallium driver that supports it, you'll see crashes</li>
+</ul>
+
+</body>
+</html>
