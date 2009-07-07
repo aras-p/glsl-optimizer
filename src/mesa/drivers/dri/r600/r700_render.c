@@ -145,15 +145,17 @@ GLboolean r700SendTextureState(context_t *context)
 		    else
 			    bo = t->bo;
 		    if (bo) {
-			    BEGIN_BATCH_NO_AUTOSTATE(14);
+			    BEGIN_BATCH_NO_AUTOSTATE(9);
 			    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
 			    R600_OUT_BATCH(i * 7);
 			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE0);
 			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE1);
+			    printf("tex base\n");
 			    R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE2,
 						 bo,
 						 0,
 						 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0, &offset_mod);
+			    printf("tex mipbase\n");
 			    R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE3,
 						 bo,
 						 0,
@@ -161,7 +163,9 @@ GLboolean r700SendTextureState(context_t *context)
 			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE4);
 			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE5);
 			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE6);
+			    END_BATCH();
 
+			    BEGIN_BATCH_NO_AUTOSTATE(5);
 			    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, 3));
 			    R600_OUT_BATCH(i * 3);
 			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER0);
