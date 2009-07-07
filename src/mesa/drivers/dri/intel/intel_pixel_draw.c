@@ -211,8 +211,9 @@ intel_stencil_drawpixels(GLcontext * ctx,
    struct gl_renderbuffer *rb;
    struct gl_pixelstore_attrib old_unpack;
    GLstencil *stencil_pixels;
-   int row;
+   int row, y1, y2;
    GLint old_active_texture;
+   GLboolean rendering_to_fbo = ctx->DrawBuffer->Name != 0;
 
    if (format != GL_STENCIL_INDEX)
       return GL_FALSE;
@@ -348,14 +349,25 @@ intel_stencil_drawpixels(GLcontext * ctx,
    _mesa_free(stencil_pixels);
 
    intel_meta_set_passthrough_transform(intel);
+
+   /* Since we're rendering to the framebuffer as if it was an FBO,
+    * if it's the window system we have to flip the coordinates.
+    */
+   if (rendering_to_fbo) {
+      y1 = y;
+      y2 = y + height * ctx->Pixel.ZoomY;
+   } else {
+      y1 = irb->Base.Height - (y + height * ctx->Pixel.ZoomY);
+      y2 = irb->Base.Height - y;
+   }
    vertices[0][0] = x;
-   vertices[0][1] = y;
+   vertices[0][1] = y1;
    vertices[1][0] = x + width * ctx->Pixel.ZoomX;
-   vertices[1][1] = y;
+   vertices[1][1] = y1;
    vertices[2][0] = x + width * ctx->Pixel.ZoomX;
-   vertices[2][1] = y + height * ctx->Pixel.ZoomY;
+   vertices[2][1] = y2;
    vertices[3][0] = x;
-   vertices[3][1] = y + height * ctx->Pixel.ZoomY;
+   vertices[3][1] = y2;
 
    _mesa_VertexPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &vertices);
    _mesa_Enable(GL_VERTEX_ARRAY);
