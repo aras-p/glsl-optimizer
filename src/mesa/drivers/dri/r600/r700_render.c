@@ -150,12 +150,10 @@ GLboolean r700SendTextureState(context_t *context)
 			    R600_OUT_BATCH(i * 7);
 			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE0);
 			    R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE1);
-			    printf("tex base\n");
 			    R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE2,
 						 bo,
 						 0,
 						 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0, &offset_mod);
-			    printf("tex mipbase\n");
 			    R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE3,
 						 bo,
 						 0,
