@@ -122,8 +122,15 @@ map_register_file_index(
                                      SWIZZLE_X,
                                      SWIZZLE_X,
                                      SWIZZLE_X);
+            /* register after fog */
+            return inputMapping[index] + 1;
          } else {
-            /* fixme: point coord */
+            *swizzle = MAKE_SWIZZLE4(SWIZZLE_Z,
+                                     SWIZZLE_W,
+                                     SWIZZLE_Z,
+                                     SWIZZLE_W);
+            /* register after frontface */
+            return inputMapping[index] + 2;
          }
       }
       /* inputs are mapped according to the user-defined map */
