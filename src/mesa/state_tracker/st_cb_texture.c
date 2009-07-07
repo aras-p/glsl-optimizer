@@ -529,6 +529,7 @@ st_TexImage(GLcontext * ctx,
    GLint texelBytes, sizeInBytes;
    GLuint dstRowStride;
    struct gl_pixelstore_attrib unpackNB;
+   enum pipe_transfer_usage transfer_usage;
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
@@ -680,8 +681,14 @@ st_TexImage(GLcontext * ctx,
    }
 
    if (stImage->pt) {
+      if (format == GL_DEPTH_COMPONENT &&
+          pf_is_depth_and_stencil(stImage->pt->format))
+         transfer_usage = PIPE_TRANSFER_READ_WRITE;
+      else
+         transfer_usage = PIPE_TRANSFER_WRITE;
+
       texImage->Data = st_texture_image_map(ctx->st, stImage, 0,
-                                            PIPE_TRANSFER_WRITE, 0, 0,
+                                            transfer_usage, 0, 0,
                                             stImage->base.Width,
                                             stImage->base.Height);
       if(stImage->transfer)
@@ -742,7 +749,7 @@ st_TexImage(GLcontext * ctx,
 	    st_texture_image_unmap(ctx->st, stImage);
             /* map next slice of 3D texture */
 	    texImage->Data = st_texture_image_map(ctx->st, stImage, i + 1,
-                                                  PIPE_TRANSFER_WRITE, 0, 0,
+                                                  transfer_usage, 0, 0,
                                                   stImage->base.Width,
                                                   stImage->base.Height);
 	    src += srcImageStride;
@@ -1041,6 +1048,7 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
       _mesa_image_image_stride(packing, width, height, format, type);
    GLint i;
    const GLubyte *src;
+   enum pipe_transfer_usage transfer_usage;
 
    DBG("%s target %s level %d offset %d,%d %dx%d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
@@ -1072,10 +1080,16 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
     * from uploading the buffer under us.
     */
    if (stImage->pt) {
+      if (format == GL_DEPTH_COMPONENT &&
+          pf_is_depth_and_stencil(stImage->pt->format))
+         transfer_usage = PIPE_TRANSFER_READ_WRITE;
+      else
+         transfer_usage = PIPE_TRANSFER_WRITE;
+
       st_teximage_flush_before_map(ctx->st, stImage->pt, 0, level,
-				   PIPE_TRANSFER_WRITE);
+				   transfer_usage);
       texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset, 
-                                            PIPE_TRANSFER_WRITE,
+                                            transfer_usage,
                                             xoffset, yoffset,
                                             width, height);
    }
@@ -1106,7 +1120,7 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
          /* map next slice of 3D texture */
 	 texImage->Data = st_texture_image_map(ctx->st, stImage,
                                                zoffset + i + 1,
-                                               PIPE_TRANSFER_WRITE,
+                                               transfer_usage,
                                                xoffset, yoffset,
                                                width, height);
 	 src += srcImageStride;
@@ -1274,6 +1288,7 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
    struct pipe_screen *screen = pipe->screen;
    struct pipe_transfer *src_trans;
    GLvoid *texDest;
+   enum pipe_transfer_usage transfer_usage;
 
    assert(width <= MAX_WIDTH);
 
@@ -1288,10 +1303,16 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
 					       srcX, srcY,
 					       width, height);
 
-   st_teximage_flush_before_map(ctx->st, stImage->pt, 0, 0,
-				PIPE_TRANSFER_WRITE);
+   if (baseFormat == GL_DEPTH_COMPONENT &&
+       pf_is_depth_and_stencil(stImage->pt->format))
+      transfer_usage = PIPE_TRANSFER_READ_WRITE;
+   else
+      transfer_usage = PIPE_TRANSFER_WRITE;
 
-   texDest = st_texture_image_map(ctx->st, stImage, 0, PIPE_TRANSFER_WRITE,
+   st_teximage_flush_before_map(ctx->st, stImage->pt, 0, 0,
+				transfer_usage);
+
+   texDest = st_texture_image_map(ctx->st, stImage, 0, transfer_usage,
                                   destX, destY, width, height);
 
    if (baseFormat == GL_DEPTH_COMPONENT ||
