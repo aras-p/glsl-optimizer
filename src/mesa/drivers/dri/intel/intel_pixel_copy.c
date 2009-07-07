@@ -272,6 +272,12 @@ do_blit_copypixels(GLcontext * ctx,
    drm_clip_rect_t *cliprects;
    int x_off, y_off;
 
+   if (type == GL_DEPTH || type == GL_STENCIL) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "glCopyPixels() fallback: GL_DEPTH || GL_STENCIL\n");
+      return GL_FALSE;
+   }
+
    /* Update draw buffer bounds */
    _mesa_update_state(ctx);
 
