@@ -153,7 +153,7 @@ DrawPolygonArray(void)
 
    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-      glBindBufferARB_func(GL_ARRAY_BUFFER_ARB, 0);
+   glBindBufferARB_func(GL_ARRAY_BUFFER_ARB, 0);
 }
 
 
