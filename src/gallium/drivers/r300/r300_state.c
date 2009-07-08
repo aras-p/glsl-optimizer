@@ -24,6 +24,8 @@
 #include "util/u_pack_color.h"
 
 #include "util/u_debug.h"
+
+#include "pipe/p_config.h"
 #include "pipe/internal/p_winsys_screen.h"
 
 #include "r300_context.h"
@@ -350,14 +352,19 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     rs->enable_vte = !state->bypass_vs_clip_and_viewport;
 
+#ifdef PIPE_ARCH_LITTLE_ENDIAN
+    rs->vap_control_status = R300_VC_NO_SWAP;
+#else
+    rs->vap_control_status = R300_VC_32BIT_SWAP;
+#endif
+
     /* If bypassing TCL, or if no TCL engine is present, turn off the HW TCL.
      * Else, enable HW TCL and force Draw's TCL off. */
     if (state->bypass_vs_clip_and_viewport ||
             !r300_screen(pipe->screen)->caps->has_tcl) {
-        rs->vap_control_status = R300_VAP_TCL_BYPASS;
+        rs->vap_control_status |= R300_VAP_TCL_BYPASS;
     } else {
         rs->rs.bypass_vs_clip_and_viewport = TRUE;
-        rs->vap_control_status = 0;
     }
 
     rs->point_size = pack_float_16_6x(state->point_size) |
