@@ -564,6 +564,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       key.cpp = 4;
       key.draw_offset = 0;
    }
+   /* _NEW_COLOR */
    memcpy(key.color_mask, ctx->Color.ColorMask,
 	  sizeof(key.color_mask));
    key.color_blend = (!ctx->Color._LogicOpEnabled &&
@@ -696,7 +697,7 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    GLuint i;
    int old_nr_surfaces;
 
-   /* _NEW_BUFFERS */
+   /* _NEW_BUFFERS | _NEW_COLOR */
    /* Update surfaces for drawing buffers */
    if (ctx->DrawBuffer->_NumColorDrawBuffers >= 1) {
       for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
