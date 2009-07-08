@@ -1478,6 +1478,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_TX_PITCH_EN                  (1 << 31)
 #       define R300_TX_WIDTH(x)                  ((x) << 0)
 #       define R300_TX_HEIGHT(x)                 ((x) << 11)
+#       define R300_TX_NUM_LEVELS(x)             ((x) << 26)
 
 #define R300_TX_FORMAT1_0                   0x44C0
 	/* The interpretation of the format word by Wladimir van der Laan */
