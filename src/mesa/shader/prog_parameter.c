@@ -44,6 +44,34 @@ _mesa_new_parameter_list(void)
 }
 
 
+struct gl_program_parameter_list *
+_mesa_new_parameter_list_sized(unsigned size)
+{
+   struct gl_program_parameter_list *p = _mesa_new_parameter_list();
+
+   if ((p != NULL) && (size != 0)) {
+      p->Size = size;
+
+      /* alloc arrays */
+      p->Parameters = (struct gl_program_parameter *)
+	 _mesa_calloc(size * sizeof(struct gl_program_parameter));
+
+      p->ParameterValues = (GLfloat (*)[4])
+         _mesa_align_malloc(size * 4 *sizeof(GLfloat), 16);
+
+
+      if ((p->Parameters == NULL) || (p->ParameterValues == NULL)) {
+	 _mesa_free(p->Parameters);
+	 _mesa_align_free(p->ParameterValues);
+	 _mesa_free(p);
+	 p = NULL;
+      }
+   }
+
+   return p;
+}
+
+
 /**
  * Free a parameter list and all its parameters
  */
