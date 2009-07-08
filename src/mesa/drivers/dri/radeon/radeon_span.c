@@ -295,7 +295,11 @@ s8z24_to_z24s8(uint32_t val)
 
 #define TAG(x)    radeon##x##_ARGB8888
 #define TAG2(x,y) radeon##x##_ARGB8888##y
-#define GET_PTR(X,Y) radeon_ptr32(rrb, (X) + x_off, (Y) + y_off)
+#define GET_VALUE(_x, _y) (*(GLuint*)(radeon_ptr32(rrb, _x + x_off, _y + y_off)))
+#define PUT_VALUE(_x, _y, d) { \
+   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );		\
+   *_ptr = d;								\
+} while (0)
 #include "spantmp2.h"
 
 /* ================================================================
