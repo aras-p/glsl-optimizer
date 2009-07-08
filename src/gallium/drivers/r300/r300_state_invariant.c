@@ -72,7 +72,7 @@ void r300_emit_invariant_state(struct r300_context* r300)
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(77 + (caps->has_tcl ? 5 : 0));
+    BEGIN_CS(75 + (caps->has_tcl ? 5 : 0));
     /* Flush PVS. */
     OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x0);
 
@@ -80,17 +80,12 @@ void r300_emit_invariant_state(struct r300_context* r300)
         R300_VPORT_X_OFFSET_ENA | R300_VPORT_Y_SCALE_ENA |
         R300_VPORT_Y_OFFSET_ENA | R300_VPORT_Z_SCALE_ENA |
         R300_VPORT_Z_OFFSET_ENA | R300_VTX_W0_FMT);
-    /* XXX endian */
     if (caps->has_tcl) {
-        OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VC_NO_SWAP);
         OUT_CS_REG_SEQ(R300_VAP_GB_VERT_CLIP_ADJ, 4);
         OUT_CS_32F(1.0);
         OUT_CS_32F(1.0);
         OUT_CS_32F(1.0);
         OUT_CS_32F(1.0);
-    } else {
-        OUT_CS_REG(R300_VAP_CNTL_STATUS, R300_VC_NO_SWAP |
-                R300_VAP_TCL_BYPASS);
     }
     /* XXX point tex stuffing */
     OUT_CS_REG_SEQ(R300_GA_POINT_S0, 1);
