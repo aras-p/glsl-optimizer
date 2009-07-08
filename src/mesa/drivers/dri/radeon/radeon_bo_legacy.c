@@ -171,7 +171,9 @@ static void legacy_get_current_age(struct bo_manager_legacy *boml)
     unsigned char *RADEONMMIO = NULL;
     int r;
 
-    if (IS_R300_CLASS(boml->screen)) {
+    if (   IS_R300_CLASS(boml->screen) 
+        || IS_R600_CLASS(boml->screen) ) 
+    {
     	gp.param = RADEON_PARAM_LAST_CLEAR;
     	gp.value = (int *)&boml->current_age;
     	r = drmCommandWriteRead(boml->base.fd, DRM_RADEON_GETPARAM,
@@ -180,7 +182,8 @@ static void legacy_get_current_age(struct bo_manager_legacy *boml)
        	 fprintf(stderr, "%s: drmRadeonGetParam: %d\n", __FUNCTION__, r);
          exit(1);
        }
-    } else {
+    } 
+    else {
         RADEONMMIO = boml->screen->mmio.map;
         boml->current_age = boml->screen->scratch[3];
         boml->current_age = INREG(RADEON_GUI_SCRATCH_REG3);

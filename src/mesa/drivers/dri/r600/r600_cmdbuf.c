@@ -378,7 +378,36 @@ static int r600_cs_emit(struct radeon_cs *cs)
     /* TODO : put chip level things here if need. */
     /* csm->ctx->vtbl.emit_cs_header(cs, csm->ctx); */
 
-    /* TODO : append buffer age */
+    BATCH_LOCALS(csm->ctx);
+    drm_radeon_getparam_t gp;
+    uint32_t              current_scratchx_age;
+
+    gp.param = RADEON_PARAM_LAST_CLEAR;
+    gp.value = (int *)&current_scratchx_age;
+    r = drmCommandWriteRead(cs->csm->fd, 
+                            DRM_RADEON_GETPARAM,
+                            &gp, 
+                            sizeof(gp));
+    if (r) 
+    {
+        fprintf(stderr, "%s: drmRadeonGetParam: %d\n", __FUNCTION__, r);
+        exit(1);
+    }
+
+    csm->pending_age = 0;
+    csm->pending_count = 1;
+
+    current_scratchx_age++;
+    csm->pending_age = current_scratchx_age;
+
+    BEGIN_BATCH_NO_AUTOSTATE(2);
+    R600_OUT_BATCH(0x2142); /* scratch 2 */
+    R600_OUT_BATCH(current_scratchx_age);
+    END_BATCH();
+    COMMIT_BATCH();
+
+    //TODO ioctl to get back cs id assigned in drm
+    //csm->pending_age = cs_id_back;
     
     r = r600_cs_process_relocs(cs, &(reloc_chunk[0]), &length_dw_reloc_chunk);
     if (r) {
