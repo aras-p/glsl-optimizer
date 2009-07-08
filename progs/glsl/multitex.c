@@ -140,7 +140,7 @@ DrawPolygonArray(void)
    }
    else {
       glVertexPointer(2, GL_FLOAT, 0, vertPtr);
-      glEnable(GL_VERTEX_ARRAY);
+      glEnableClientState(GL_VERTEX_ARRAY);
    }
 
    glVertexAttribPointer_func(TexCoord0_attr, 2, GL_FLOAT, GL_FALSE,

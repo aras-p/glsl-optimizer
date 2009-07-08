@@ -98,10 +98,10 @@ Draw(void)
 {
    glBindBufferARB(GL_ARRAY_BUFFER_ARB, BufferID);
    glVertexPointer(3, GL_FLOAT, 24, 0);
-   glEnable(GL_VERTEX_ARRAY);
+   glEnableClientState(GL_VERTEX_ARRAY);
 
    glColorPointer(3, GL_FLOAT, 24, (void*) 12);
-   glEnable(GL_COLOR_ARRAY);
+   glEnableClientState(GL_COLOR_ARRAY);
 
    glDrawArrays(GL_QUADS, 0, NumRects * 4);
 

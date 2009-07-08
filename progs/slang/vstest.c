@@ -128,29 +128,29 @@ static void va_render ()
       {
       case C:
          glColorPointer (4, GL_FLOAT, 0, att->data);
-         glEnable (GL_COLOR_ARRAY);
+         glEnableClientState (GL_COLOR_ARRAY);
          break;
       case S:
          glSecondaryColorPointerEXT (4, GL_FLOAT, 0, att->data);
-         glEnable (GL_SECONDARY_COLOR_ARRAY_EXT);
+         glEnableClientState (GL_SECONDARY_COLOR_ARRAY_EXT);
          break;
       case N:
          glNormalPointer (GL_FLOAT, 0, att->data);
-         glEnable (GL_NORMAL_ARRAY);
+         glEnableClientState (GL_NORMAL_ARRAY);
          break;
       case V:
          glVertexPointer (4, GL_FLOAT, 0, att->data);
-         glEnable (GL_VERTEX_ARRAY);
+         glEnableClientState (GL_VERTEX_ARRAY);
          break;
       case T:
          assert (att->index >= 0 && att->index < 8);
          glClientActiveTextureARB (GL_TEXTURE0_ARB + att->index);
          glTexCoordPointer (4, GL_FLOAT, 0, att->data);
-         glEnable (GL_TEXTURE_COORD_ARRAY);
+         glEnableClientState (GL_TEXTURE_COORD_ARRAY);
          break;
       case F:
          glFogCoordPointerEXT (GL_FLOAT, 0, att->data);
-         glEnable (GL_FOG_COORDINATE_ARRAY_EXT);
+         glEnableClientState (GL_FOG_COORDINATE_ARRAY_EXT);
          break;
       case A:
          assert (att->index > 0 && att->index < 16);
@@ -169,23 +169,23 @@ static void va_render ()
       switch (att->dispatch)
       {
       case C:
-         glDisable (GL_COLOR_ARRAY);
+         glDisableClientState (GL_COLOR_ARRAY);
          break;
       case S:
-         glDisable (GL_SECONDARY_COLOR_ARRAY_EXT);
+         glDisableClientState (GL_SECONDARY_COLOR_ARRAY_EXT);
          break;
       case N:
-         glDisable (GL_NORMAL_ARRAY);
+         glDisableClientState (GL_NORMAL_ARRAY);
          break;
       case V:
-         glDisable (GL_VERTEX_ARRAY);
+         glDisableClientState (GL_VERTEX_ARRAY);
          break;
       case T:
          glClientActiveTextureARB (GL_TEXTURE0_ARB + att->index);
-         glDisable (GL_TEXTURE_COORD_ARRAY);
+         glDisableClientState (GL_TEXTURE_COORD_ARRAY);
          break;
       case F:
-         glDisable (GL_FOG_COORDINATE_ARRAY_EXT);
+         glDisableClientState (GL_FOG_COORDINATE_ARRAY_EXT);
          break;
       case A:
          glDisableVertexAttribArrayARB (att->index);

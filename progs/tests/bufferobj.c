@@ -73,7 +73,7 @@ static void DrawObject( const struct object *obj )
 
       glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->VertexBufferID);
       glVertexPointer(3, GL_FLOAT, obj->VertexStride, (void *) obj->VertexOffset);
-      glEnable(GL_VERTEX_ARRAY);
+      glEnableClientState(GL_VERTEX_ARRAY);
 
       /* test push/pop attrib */
       /* XXX this leads to a segfault with NVIDIA's 53.36 driver */
@@ -88,7 +88,7 @@ static void DrawObject( const struct object *obj )
 #endif
       glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->ColorBufferID);
       glColorPointer(3, GL_FLOAT, obj->ColorStride, (void *) obj->ColorOffset);
-      glEnable(GL_COLOR_ARRAY);
+      glEnableClientState(GL_COLOR_ARRAY);
 
       if (obj->NumElements > 0) {
          /* indexed arrays */
@@ -223,11 +223,11 @@ CreateVertexArrayObject(struct object *obj)
 
    glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->VertexBufferID);
    glVertexPointer(3, GL_FLOAT, obj->VertexStride, (void *) obj->VertexOffset);
-   glEnable(GL_VERTEX_ARRAY);
+   glEnableClientState(GL_VERTEX_ARRAY);
 
    glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->ColorBufferID);
    glColorPointer(3, GL_FLOAT, obj->ColorStride, (void *) obj->ColorOffset);
-   glEnable(GL_COLOR_ARRAY);
+   glEnableClientState(GL_COLOR_ARRAY);
 
    glBindVertexArray(0);
 }

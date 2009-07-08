@@ -847,8 +847,8 @@ static void Init(int argc, char *argv[])
 
    glClearColor(0.0, 0.0, 1.0, 0.0);
    glEnable( GL_DEPTH_TEST );
-   glEnable( GL_VERTEX_ARRAY_EXT );
-   glEnable( GL_NORMAL_ARRAY_EXT );
+   glEnableClientState( GL_VERTEX_ARRAY );
+   glEnableClientState( GL_NORMAL_ARRAY );
 
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
