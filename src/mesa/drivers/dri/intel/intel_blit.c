@@ -441,6 +441,10 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                   intel_region_buffer(intel, irb->region,
                                       all ? INTEL_WRITE_FULL :
                                       INTEL_WRITE_PART);
+	       int x1 = b.x1 + irb->region->draw_x;
+	       int y1 = b.y1 + irb->region->draw_y;
+	       int x2 = b.x2 + irb->region->draw_x;
+	       int y2 = b.y2 + irb->region->draw_y;
 
                GLuint clearVal;
                GLint pitch, cpp;
@@ -449,11 +453,10 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                pitch = irb->region->pitch;
                cpp = irb->region->cpp;
 
-               DBG("%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
+               DBG("%s dst:buf(%p)/%d %d,%d sz:%dx%d\n",
                    __FUNCTION__,
                    irb->region->buffer, (pitch * cpp),
-                   irb->region->draw_offset,
-                   b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1);
+                   x1, y1, x2 - x1, y2 - y1);
 
 	       BR13 = 0xf0 << 16;
 	       CMD = XY_COLOR_BLT_CMD;
@@ -526,17 +529,17 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                   buf, irb->Base.Name);
                 */
 
-               assert(b.x1 < b.x2);
-               assert(b.y1 < b.y2);
+               assert(x1 < x2);
+               assert(y1 < y2);
 
                BEGIN_BATCH(6, REFERENCES_CLIPRECTS);
                OUT_BATCH(CMD);
                OUT_BATCH(BR13);
-               OUT_BATCH((b.y1 << 16) | b.x1);
-               OUT_BATCH((b.y2 << 16) | b.x2);
+               OUT_BATCH((y1 << 16) | x1);
+               OUT_BATCH((y2 << 16) | x2);
                OUT_RELOC(write_buffer,
 			 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                         irb->region->draw_offset);
+                         0);
                OUT_BATCH(clearVal);
                ADVANCE_BATCH();
                clearMask &= ~bufBit;    /* turn off bit, for faster loop exit */

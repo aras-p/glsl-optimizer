@@ -204,7 +204,7 @@ try_pbo_upload(struct intel_context *intel,
 {
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset, src_stride;
-   GLuint dst_offset, dst_stride;
+   GLuint dst_x, dst_y, dst_stride;
 
    if (unpack->BufferObj->Name == 0 ||
        intel->ctx._ImageTransferState ||
@@ -221,9 +221,9 @@ try_pbo_upload(struct intel_context *intel,
    else
       src_stride = width;
 
-   dst_offset = intel_miptree_image_offset(intelImage->mt,
-                                           intelImage->face,
-                                           intelImage->level);
+   intel_miptree_get_image_offset(intelImage->mt, intelImage->level,
+				  intelImage->face, 0,
+				  &dst_x, &dst_y);
 
    dst_stride = intelImage->mt->pitch;
 
@@ -239,8 +239,8 @@ try_pbo_upload(struct intel_context *intel,
       if (!intelEmitCopyBlit(intel,
 			     intelImage->mt->cpp,
 			     src_stride, src_buffer, src_offset, GL_FALSE,
-			     dst_stride, dst_buffer, dst_offset, GL_FALSE,
-			     0, 0, 0, 0, width, height,
+			     dst_stride, dst_buffer, 0, GL_FALSE,
+			     0, 0, dst_x, dst_y, width, height,
 			     GL_COPY)) {
 	 UNLOCK_HARDWARE(intel);
 	 return GL_FALSE;
@@ -262,7 +262,7 @@ try_pbo_zcopy(struct intel_context *intel,
 {
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset, src_stride;
-   GLuint dst_offset, dst_stride;
+   GLuint dst_x, dst_y, dst_stride;
 
    if (unpack->BufferObj->Name == 0 ||
        intel->ctx._ImageTransferState ||
@@ -279,13 +279,14 @@ try_pbo_zcopy(struct intel_context *intel,
    else
       src_stride = width;
 
-   dst_offset = intel_miptree_image_offset(intelImage->mt,
-                                           intelImage->face,
-                                           intelImage->level);
+   intel_miptree_get_image_offset(intelImage->mt, intelImage->level,
+				  intelImage->face, 0,
+				  &dst_x, &dst_y);
 
    dst_stride = intelImage->mt->pitch;
 
-   if (src_stride != dst_stride || dst_offset != 0 || src_offset != 0) {
+   if (src_stride != dst_stride || dst_x != 0 || dst_y != 0 ||
+       src_offset != 0) {
       DBG("%s: failure 2\n", __FUNCTION__);
       return GL_FALSE;
    }

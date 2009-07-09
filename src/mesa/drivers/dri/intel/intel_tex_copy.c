@@ -115,20 +115,22 @@ do_copy_texsubimage(struct intel_context *intel,
       drm_intel_bo *dst_bo = intel_region_buffer(intel,
 						 intelImage->mt->region,
 						 INTEL_WRITE_PART);
-      GLuint image_offset = intel_miptree_image_offset(intelImage->mt,
-                                                       intelImage->face,
-                                                       intelImage->level);
       const GLint orig_x = x;
       const GLint orig_y = y;
+      GLuint image_x, image_y;
       GLshort src_pitch;
 
+      intel_miptree_get_image_offset(intelImage->mt,
+				     intelImage->level,
+				     intelImage->face,
+				     0,
+				     &image_x, &image_y);
       /* Update dst for clipped src.  Need to also clip the source rect. */
       dstx += x - orig_x;
       dsty += y - orig_y;
 
       /* Can't blit to tiled buffers with non-tile-aligned offset. */
-      if (intelImage->mt->region->tiling != I915_TILING_NONE &&
-	  (image_offset & 4095) != 0) {
+      if (intelImage->mt->region->tiling == I915_TILING_Y) {
 	 UNLOCK_HARDWARE(intel);
 	 return GL_FALSE;
       }
@@ -160,9 +162,10 @@ do_copy_texsubimage(struct intel_context *intel,
 			     src->tiling,
 			     intelImage->mt->pitch,
 			     dst_bo,
-			     image_offset,
+			     0,
 			     intelImage->mt->region->tiling,
-			     x, y, dstx, dsty, width, height,
+			     x, y, image_x + dstx, image_y + dsty,
+			     width, height,
 			     GL_COPY)) {
 	 UNLOCK_HARDWARE(intel);
 	 return GL_FALSE;

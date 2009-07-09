@@ -86,10 +86,10 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
           mt->pitch = intel_miptree_pitch_align(intel, mt, tiling, mt->pitch);
 
           if (mt->compressed) {
-              qpitch = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) / 4 * mt->pitch * mt->cpp;
+              qpitch = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) / 4;
               mt->total_height = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) / 4 * 6;
           } else {
-              qpitch = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) * mt->pitch * mt->cpp;
+              qpitch = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h);
               mt->total_height = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) * 6;
           }
 
@@ -102,7 +102,8 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
                                            height, 1);
 
               for (q = 0; q < nr_images; q++)
-                  intel_miptree_set_image_offset_ex(mt, level, q, x, y, q * qpitch);
+                  intel_miptree_set_image_offset(mt, level, q,
+						 x, y + q * qpitch);
 
               if (mt->compressed)
                   img_height = MAX2(1, height/4);

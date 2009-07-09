@@ -287,9 +287,10 @@ intel_miptree_release(struct intel_context *intel,
 
       intel_region_release(&((*mt)->region));
 
-      for (i = 0; i < MAX_TEXTURE_LEVELS; i++)
-         if ((*mt)->level[i].image_offset)
-            free((*mt)->level[i].image_offset);
+      for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
+	 free((*mt)->level[i].x_offset);
+	 free((*mt)->level[i].y_offset);
+      }
 
       free(*mt);
    }
@@ -350,81 +351,57 @@ intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
    mt->level[level].height = h;
    mt->level[level].depth = d;
    mt->level[level].level_offset = (x + y * mt->pitch) * mt->cpp;
+   mt->level[level].level_x = x;
+   mt->level[level].level_y = y;
    mt->level[level].nr_images = nr_images;
 
    DBG("%s level %d size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
        level, w, h, d, x, y, mt->level[level].level_offset);
 
-   /* Not sure when this would happen, but anyway: 
-    */
-   if (mt->level[level].image_offset) {
-      free(mt->level[level].image_offset);
-      mt->level[level].image_offset = NULL;
-   }
-
    assert(nr_images);
+   assert(!mt->level[level].x_offset);
 
-   mt->level[level].image_offset = malloc(nr_images * sizeof(GLuint));
-   mt->level[level].image_offset[0] = 0;
+   mt->level[level].x_offset = malloc(nr_images * sizeof(GLuint));
+   mt->level[level].x_offset[0] = mt->level[level].level_x;
+   mt->level[level].y_offset = malloc(nr_images * sizeof(GLuint));
+   mt->level[level].y_offset[0] = mt->level[level].level_y;
 }
 
-
-void
-intel_miptree_set_image_offset_ex(struct intel_mipmap_tree *mt,
-                                  GLuint level, GLuint img,
-                                  GLuint x, GLuint y, 
-                                  GLuint offset)
-{
-   if (img == 0 && level == 0)
-      assert(x == 0 && y == 0);
-
-   assert(img < mt->level[level].nr_images);
-
-   mt->level[level].image_offset[img] = (x + y * mt->pitch) * mt->cpp + offset;
-
-   DBG("%s level %d img %d pos %d,%d image_offset %x\n",
-       __FUNCTION__, level, img, x, y, mt->level[level].image_offset[img]);
-}
 
 void
 intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
 			       GLuint level, GLuint img,
 			       GLuint x, GLuint y)
 {
-    intel_miptree_set_image_offset_ex(mt, level, img, x, y, 0);
+   if (img == 0 && level == 0)
+      assert(x == 0 && y == 0);
+
+   assert(img < mt->level[level].nr_images);
+
+   mt->level[level].x_offset[img] = mt->level[level].level_x + x;
+   mt->level[level].y_offset[img] = mt->level[level].level_y + y;
+
+   DBG("%s level %d img %d pos %d,%d\n",
+       __FUNCTION__, level, img,
+       mt->level[level].x_offset[img], mt->level[level].y_offset[img]);
 }
 
-
-/* Although we use the image_offset[] array to store relative offsets
- * to cube faces, Mesa doesn't know anything about this and expects
- * each cube face to be treated as a separate image.
- *
- * These functions present that view to mesa:
- */
-const GLuint *
-intel_miptree_depth_offsets(struct intel_mipmap_tree *mt, GLuint level)
+void
+intel_miptree_get_image_offset(struct intel_mipmap_tree *mt,
+			       GLuint level, GLuint face, GLuint depth,
+			       GLuint *x, GLuint *y)
 {
-   static const GLuint zero = 0;
-
-   if (mt->target != GL_TEXTURE_3D || mt->level[level].nr_images == 1)
-      return &zero;
-   else
-      return mt->level[level].image_offset;
+   if (mt->target == GL_TEXTURE_CUBE_MAP_ARB) {
+      *x = mt->level[level].x_offset[face];
+      *y = mt->level[level].y_offset[face];
+   } else if (mt->target == GL_TEXTURE_3D) {
+      *x = mt->level[level].x_offset[depth];
+      *y = mt->level[level].y_offset[depth];
+   } else {
+      *x = mt->level[level].x_offset[0];
+      *y = mt->level[level].y_offset[0];
+   }
 }
-
-
-GLuint
-intel_miptree_image_offset(struct intel_mipmap_tree *mt,
-			   GLuint face, GLuint level)
-{
-   if (mt->target == GL_TEXTURE_CUBE_MAP_ARB)
-      return (mt->level[level].level_offset +
-	      mt->level[level].image_offset[face]);
-   else
-      return mt->level[level].level_offset;
-}
-
-
 
 /**
  * Map a teximage in a mipmap tree.
@@ -441,6 +418,7 @@ intel_miptree_image_map(struct intel_context * intel,
                         GLuint level,
                         GLuint * row_stride, GLuint * image_offsets)
 {
+   GLuint x, y;
    DBG("%s \n", __FUNCTION__);
 
    if (row_stride)
@@ -449,17 +427,23 @@ intel_miptree_image_map(struct intel_context * intel,
    if (mt->target == GL_TEXTURE_3D) {
       int i;
 
-      for (i = 0; i < mt->level[level].depth; i++)
-	 image_offsets[i] = mt->level[level].image_offset[i] / mt->cpp;
+      for (i = 0; i < mt->level[level].depth; i++) {
+
+	 intel_miptree_get_image_offset(mt, level, face, i,
+					&x, &y);
+	 image_offsets[i] = x + y * mt->pitch;
+      }
+
+      return intel_region_map(intel, mt->region);
    } else {
       assert(mt->level[level].depth == 1);
-      assert(mt->target == GL_TEXTURE_CUBE_MAP ||
-	     mt->level[level].image_offset[0] == 0);
+      intel_miptree_get_image_offset(mt, level, face, 0,
+				     &x, &y);
       image_offsets[0] = 0;
-   }
 
-   return (intel_region_map(intel, mt->region) +
-           intel_miptree_image_offset(mt, face, level));
+      return intel_region_map(intel, mt->region) +
+	 (x + y * mt->pitch) * mt->cpp;
+   }
 }
 
 void
@@ -484,20 +468,19 @@ intel_miptree_image_data(struct intel_context *intel,
 			 GLuint src_image_pitch)
 {
    GLuint depth = dst->level[level].depth;
-   GLuint dst_offset = intel_miptree_image_offset(dst, face, level);
-   const GLuint *dst_depth_offset = intel_miptree_depth_offsets(dst, level);
    GLuint i;
-   GLuint height = 0;
 
    DBG("%s: %d/%d\n", __FUNCTION__, face, level);
    for (i = 0; i < depth; i++) {
+      GLuint dst_x, dst_y, height;
+
+      intel_miptree_get_image_offset(dst, level, face, i, &dst_x, &dst_y);
+
       height = dst->level[level].height;
       if(dst->compressed)
 	 height = (height + 3) / 4;
       intel_region_data(intel,
-			dst->region,
-			dst_offset + dst_depth_offset[i], /* dst_offset */
-			0, 0,                             /* dstx, dsty */
+			dst->region, 0, dst_x, dst_y,
 			src,
 			src_row_pitch,
 			0, 0,                             /* source x, y */
@@ -519,10 +502,7 @@ intel_miptree_image_copy(struct intel_context *intel,
    GLuint width = src->level[level].width;
    GLuint height = src->level[level].height;
    GLuint depth = src->level[level].depth;
-   GLuint dst_offset = intel_miptree_image_offset(dst, face, level);
-   GLuint src_offset = intel_miptree_image_offset(src, face, level);
-   const GLuint *dst_depth_offset = intel_miptree_depth_offsets(dst, level);
-   const GLuint *src_depth_offset = intel_miptree_depth_offsets(src, level);
+   GLuint src_x, src_y, dst_x, dst_y;
    GLuint i;
    GLboolean success;
 
@@ -535,22 +515,23 @@ intel_miptree_image_copy(struct intel_context *intel,
    }
 
    for (i = 0; i < depth; i++) {
+      intel_miptree_get_image_offset(src, level, face, i, &src_x, &src_y);
+      intel_miptree_get_image_offset(dst, level, face, i, &dst_x, &dst_y);
       success = intel_region_copy(intel,
-				  dst->region, dst_offset + dst_depth_offset[i],
-				  0, 0,
-				  src->region, src_offset + src_depth_offset[i],
-				  0, 0, width, height, GL_COPY);
+				  dst->region, 0, dst_x, dst_y,
+				  src->region, 0, src_x, src_y, width, height,
+				  GL_COPY);
       if (!success) {
 	 GLubyte *src_ptr, *dst_ptr;
 
 	 src_ptr = intel_region_map(intel, src->region);
 	 dst_ptr = intel_region_map(intel, dst->region);
 
-	 _mesa_copy_rect(dst_ptr + dst_offset + dst_depth_offset[i],
+	 _mesa_copy_rect(dst_ptr + dst->cpp * (dst_x + dst_y * dst->pitch),
 			 dst->cpp,
 			 dst->pitch,
 			 0, 0, width, height,
-			 src_ptr + src_offset + src_depth_offset[i],
+			 src_ptr + src->cpp * (src_x + src_y * src->pitch),
 			 src->pitch,
 			 0, 0);
 	 intel_region_unmap(intel, src->region);
