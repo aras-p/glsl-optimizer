@@ -431,7 +431,7 @@ static int r600_cs_emit(struct radeon_cs *cs)
     /* cs_cmd.cs_id      = 0; */
     cs_cmd.chunks     = (uint64_t)(unsigned long)chunk_ptrs;
 
-    dump_cmdbuf(cs);
+    //dump_cmdbuf(cs);
 
     do 
     {
