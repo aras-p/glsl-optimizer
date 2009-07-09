@@ -1417,8 +1417,9 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
       }
       else if (p->type.qualifier == SLANG_QUAL_CONST) {
 	 /* a constant input param */
-	 if (args[i].type == SLANG_OPER_IDENTIFIER ||
-	     args[i].type == SLANG_OPER_LITERAL_FLOAT) {
+         if (args[i].type == SLANG_OPER_IDENTIFIER ||
+             args[i].type == SLANG_OPER_LITERAL_FLOAT ||
+             args[i].type == SLANG_OPER_SUBSCRIPT) {
 	    /* replace all occurances of this parameter variable with the
 	     * actual argument variable or a literal.
 	     */
