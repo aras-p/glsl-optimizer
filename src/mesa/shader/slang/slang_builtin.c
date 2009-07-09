@@ -111,10 +111,9 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
 
    if (isMatrix) {
       if (tokens[0] == STATE_TEXTURE_MATRIX) {
-         if (index1 >= 0) {
-            tokens[1] = index1; /* which texture matrix */
-            index1 = 0; /* prevent extra addition at end of function */
-         }
+         /* texture_matrix[index1][index2] */
+         tokens[1] = index1 >= 0 ? index1 : 0; /* which texture matrix */
+         index1 = index2; /* move matrix row value to index1 */
       }
       if (index1 < 0) {
          /* index1 is unused: prevent extra addition at end of function */
@@ -682,7 +681,9 @@ _slang_alloc_statevar(slang_ir_node *n,
    if (n->Opcode == IR_ELEMENT) {
       /* XXX can only handle constant indexes for now */
       if (n->Children[1]->Opcode == IR_FLOAT) {
-         index2 = (GLint) n->Children[1]->Value[0];
+         /* two-dimensional array index: mat[i][j] */
+         index2 = index1;
+         index1 = (GLint) n->Children[1]->Value[0];
       }
       else {
          *direct = GL_FALSE;
