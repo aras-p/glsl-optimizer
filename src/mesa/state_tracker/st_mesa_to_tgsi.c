@@ -268,6 +268,11 @@ compile_instruction(
       NULL,
       GL_FALSE );
    fulldst->DstRegister.WriteMask = convert_writemask( inst->DstReg.WriteMask );
+   if (inst->DstReg.RelAddr) {
+      fulldst->DstRegister.Indirect = 1;
+      fulldst->DstRegisterInd.File = TGSI_FILE_ADDRESS;
+      fulldst->DstRegisterInd.Index = 0;
+   }
 
    for (i = 0; i < fullinst->Instruction.NumSrcRegs; i++) {
       GLuint j;
