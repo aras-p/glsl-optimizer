@@ -365,7 +365,7 @@ r100CreateContext( const __GLcontextModes *glVisual,
       _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
    }
 
-   if (rmesa->radeon.dri.drmMinor >= 9)
+   if (rmesa->radeon.radeonScreen->kernel_mm || rmesa->radeon.dri.drmMinor >= 9)
       _mesa_enable_extension( ctx, "GL_NV_texture_rectangle");
 
    /* XXX these should really go right after _mesa_init_driver_functions() */
