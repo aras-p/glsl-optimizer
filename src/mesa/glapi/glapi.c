@@ -240,6 +240,10 @@ _glapi_check_multithread(void)
 
    _glthread_LOCK_MUTEX(ThreadCheckMutex);
    if (firstCall) {
+      /* initialize TSDs */
+      (void) _glthread_GetTSD(&ContextTSD);
+      (void) _glthread_GetTSD(&_gl_DispatchTSD);
+
       knownID = _glthread_GetID();
       firstCall = GL_FALSE;
    }
