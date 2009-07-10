@@ -355,11 +355,22 @@ iter_instruction(
          CHR( ',' );
       CHR( ' ' );
 
-      _dump_register(
-         ctx,
-         dst->DstRegister.File,
-         dst->DstRegister.Index,
-         dst->DstRegister.Index );
+      if (dst->DstRegister.Indirect) {
+         _dump_register_ind(
+            ctx,
+            dst->DstRegister.File,
+            dst->DstRegister.Index,
+            dst->DstRegisterInd.File,
+            dst->DstRegisterInd.Index,
+            dst->DstRegisterInd.SwizzleX );
+      }
+      else {
+         _dump_register(
+            ctx,
+            dst->DstRegister.File,
+            dst->DstRegister.Index,
+            dst->DstRegister.Index );
+      }
       ENM( dst->DstRegisterExtModulate.Modulate, modulate_names );
       _dump_writemask( ctx, dst->DstRegister.WriteMask );
 
