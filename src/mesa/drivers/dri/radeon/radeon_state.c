@@ -2073,7 +2073,7 @@ static GLboolean r100ValidateBuffers(GLcontext *ctx)
       if (!ctx->Texture.Unit[i]._ReallyEnabled)
 	 continue;
 
-      t = radeon_tex_obj(ctx->Texture.Unit[i]._Current);
+      t = rmesa->state.texture.unit[i].texobj;
       if (t->image_override && t->bo)
 	radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs, t->bo,
 			   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);

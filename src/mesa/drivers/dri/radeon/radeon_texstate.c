@@ -1143,12 +1143,14 @@ static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
 
    if (ctx->Texture.Unit[unit]._ReallyEnabled & TEXTURE_3D_BIT) {
+     rmesa->state.texture.unit[unit].texobj = NULL;
      return GL_FALSE;
    }
 
    if (!ctx->Texture.Unit[unit]._ReallyEnabled) {
      /* disable the unit */
      disable_tex_obj_state(rmesa, unit);
+     rmesa->state.texture.unit[unit].texobj = NULL;
      return GL_TRUE;
    }
 
@@ -1156,8 +1158,8 @@ static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
     _mesa_warning(ctx,
 		  "failed to validate texture for unit %d.\n",
 		  unit);
-    rmesa->state.texture.unit[unit].texobj = NULL;
-    return GL_FALSE;
+     rmesa->state.texture.unit[unit].texobj = NULL;
+     return GL_FALSE;
    }
    rmesa->state.texture.unit[unit].texobj = radeon_tex_obj(ctx->Texture.Unit[unit]._Current);
    return GL_TRUE;
