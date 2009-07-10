@@ -299,7 +299,7 @@ restart:
         if (!rmesa->dma.flush) {
 		/* make sure we have enough space to use this in cmdbuf */
    		rcommonEnsureCmdBufSpace(rmesa,
-			      rmesa->hw.max_state_size + (12*sizeof(int)),
+			      rmesa->hw.max_state_size + (20*sizeof(int)),
 			      __FUNCTION__);
 		/* if cmdbuf flushed DMA restart */
 		if (!rmesa->dma.current)
