@@ -73,11 +73,8 @@ get_teximage_source(struct intel_context *intel, GLenum internalFormat)
       return NULL;
    case GL_RGBA:
    case GL_RGBA8:
-      return intel_readbuf_region(intel);
    case GL_RGB:
-      if (intel->ctx.Visual.rgbBits == 16)
-         return intel_readbuf_region(intel);
-      return NULL;
+      return intel_readbuf_region(intel);
    default:
       return NULL;
    }
@@ -99,8 +96,15 @@ do_copy_texsubimage(struct intel_context *intel,
 
    if (!intelImage->mt || !src) {
       if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr, "%s fail %p %p\n",
-		 __FUNCTION__, intelImage->mt, src);
+	 fprintf(stderr, "%s fail %p %p (0x%08x)\n",
+		 __FUNCTION__, intelImage->mt, src, internalFormat);
+      return GL_FALSE;
+   }
+
+   if (intelImage->mt->cpp != src->cpp) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "%s fail %d vs %d cpp\n",
+		 __FUNCTION__, intelImage->mt->cpp, src->cpp);
       return GL_FALSE;
    }
 
