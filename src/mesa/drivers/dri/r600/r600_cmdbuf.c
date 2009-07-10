@@ -400,8 +400,9 @@ static int r600_cs_emit(struct radeon_cs *cs)
     current_scratchx_age++;
     csm->pending_age = current_scratchx_age;
 
-    BEGIN_BATCH_NO_AUTOSTATE(2);
-    R600_OUT_BATCH(0x2142); /* scratch 2 */
+    BEGIN_BATCH_NO_AUTOSTATE(3);
+    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONFIG_REG, 1));
+    R600_OUT_BATCH((SCRATCH_REG2 - R600_SET_CONFIG_REG_OFFSET) >> 2);
     R600_OUT_BATCH(current_scratchx_age);
     END_BATCH();
     COMMIT_BATCH();
