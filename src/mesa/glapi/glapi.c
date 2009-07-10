@@ -198,6 +198,7 @@ PUBLIC const void *_glapi_Context = NULL;
 
 #if defined(THREADS)
 
+_glthread_DECLARE_STATIC_MUTEX(ThreadCheckMutex);
 static GLboolean ThreadSafe = GL_FALSE;  /**< In thread-safe mode? */
 _glthread_TSD _gl_DispatchTSD;           /**< Per-thread dispatch pointer */
 static _glthread_TSD ContextTSD;         /**< Per-thread context pointer */
@@ -231,23 +232,23 @@ void
 _glapi_check_multithread(void)
 {
 #if defined(THREADS) && !defined(GLX_USE_TLS)
-   if (!ThreadSafe) {
-      static unsigned long knownID;
-      static GLboolean firstCall = GL_TRUE;
-      if (firstCall) {
-         knownID = _glthread_GetID();
-         firstCall = GL_FALSE;
-      }
-      else if (knownID != _glthread_GetID()) {
-         ThreadSafe = GL_TRUE;
-         _glapi_set_dispatch(NULL);
-         _glapi_set_context(NULL);
-      }
+   static unsigned long knownID;
+   static GLboolean firstCall = GL_TRUE;
+
+   if (ThreadSafe)
+      return;
+
+   _glthread_LOCK_MUTEX(ThreadCheckMutex);
+   if (firstCall) {
+      knownID = _glthread_GetID();
+      firstCall = GL_FALSE;
    }
-   else if (!_glapi_get_dispatch()) {
-      /* make sure that this thread's dispatch pointer isn't null */
+   else if (knownID != _glthread_GetID()) {
+      ThreadSafe = GL_TRUE;
       _glapi_set_dispatch(NULL);
+      _glapi_set_context(NULL);
    }
+   _glthread_UNLOCK_MUTEX(ThreadCheckMutex);
 #endif
 }
 
