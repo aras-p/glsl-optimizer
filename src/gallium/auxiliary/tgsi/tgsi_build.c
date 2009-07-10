@@ -139,8 +139,8 @@ tgsi_build_declaration(
 {
    struct tgsi_declaration declaration;
 
-   assert( file <= TGSI_FILE_IMMEDIATE );
-   assert( interpolate <= TGSI_INTERPOLATE_PERSPECTIVE );
+   assert( file < TGSI_FILE_COUNT );
+   assert( interpolate < TGSI_INTERPOLATE_COUNT );
 
    declaration = tgsi_default_declaration();
    declaration.File = file;
@@ -996,7 +996,7 @@ tgsi_build_src_register(
 {
    struct tgsi_src_register   src_register;
 
-   assert( file <= TGSI_FILE_IMMEDIATE );
+   assert( file < TGSI_FILE_COUNT );
    assert( swizzle_x <= TGSI_SWIZZLE_W );
    assert( swizzle_y <= TGSI_SWIZZLE_W );
    assert( swizzle_z <= TGSI_SWIZZLE_W );
@@ -1224,7 +1224,7 @@ tgsi_build_dst_register(
 {
    struct tgsi_dst_register dst_register;
 
-   assert( file <= TGSI_FILE_IMMEDIATE );
+   assert( file < TGSI_FILE_COUNT );
    assert( mask <= TGSI_WRITEMASK_XYZW );
    assert( index >= -32768 && index <= 32767 );
 
