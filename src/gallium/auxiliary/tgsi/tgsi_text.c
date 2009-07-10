@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "util/u_debug.h"
+#include "util/u_memory.h"
 #include "tgsi_text.h"
 #include "tgsi_build.h"
 #include "tgsi_info.h"
@@ -927,7 +928,8 @@ static const char *semantic_names[TGSI_SEMANTIC_COUNT] =
    "FOG",
    "PSIZE",
    "GENERIC",
-   "NORMAL"
+   "NORMAL",
+   "FACE"
 };
 
 static const char *interpolate_names[TGSI_INTERPOLATE_COUNT] =
@@ -946,6 +948,9 @@ static boolean parse_declaration( struct translate_ctx *ctx )
    uint writemask;
    const char *cur;
    uint advance;
+
+   assert(Elements(semantic_names) == TGSI_SEMANTIC_COUNT);
+   assert(Elements(interpolate_names) == TGSI_INTERPOLATE_COUNT);
 
    if (!eat_white( &ctx->cur )) {
       report_error( ctx, "Syntax error" );
