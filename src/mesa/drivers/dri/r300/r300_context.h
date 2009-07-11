@@ -432,7 +432,12 @@ struct r300_vertex_program {
 };
 
 struct r300_vertex_program_cont {
-	struct gl_vertex_program mesa_program;	/* Must be first */
+	/* This is the unmodified vertex program mesa provided us with.
+	 * We need to keep it unchanged because we may need to create another
+	 * hw specific vertex program based on this.
+	 */
+	struct gl_vertex_program mesa_program;
+	/* This is the list of hw specific vertex programs derived from mesa_program */
 	struct r300_vertex_program *progs;
 };
 
@@ -571,7 +576,7 @@ struct r300_fragment_program {
 struct r300_fragment_program_cont {
 	/* This is the unmodified fragment program mesa provided us with.
 	 * We need to keep it unchanged because we may need to create another
-	 * hw specific fragment program based on this
+	 * hw specific fragment program based on this.
 	 */
 	struct gl_fragment_program Base;
 	/* This is the list of hw specific fragment programs derived from Base */
