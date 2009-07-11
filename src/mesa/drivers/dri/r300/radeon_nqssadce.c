@@ -250,7 +250,6 @@ static void process_instruction(struct nqssadce_state* s)
 static void calculateInputsOutputs(struct gl_program *p)
 {
 	struct prog_instruction *inst;
-	int i, tmp;
 	GLuint InputsRead, OutputsWritten;
 
 	inst = p->Instructions;
@@ -258,8 +257,10 @@ static void calculateInputsOutputs(struct gl_program *p)
 	OutputsWritten = 0;
 	while (inst->Opcode != OPCODE_END)
 	{
-		tmp = _mesa_num_inst_src_regs(inst->Opcode);
-		for (i = 0; i < tmp; ++i) {
+		int i, num_src_regs;
+
+		num_src_regs = _mesa_num_inst_src_regs(inst->Opcode);
+		for (i = 0; i < num_src_regs; ++i) {
 			if (inst->SrcReg[i].File == PROGRAM_INPUT)
 				InputsRead |= 1 << inst->SrcReg[i].Index;
 		}
