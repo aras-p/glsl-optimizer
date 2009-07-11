@@ -1524,10 +1524,14 @@ static GLuint getUsedComponents(const GLuint swizzle)
 	ret = 0;
 
 	/* need to mask out ZERO, ONE and NIL swizzles */
-	ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_X) & 0x3);
-	ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_Y) & 0x3);
-	ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_Z) & 0x3);
-	ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_W) & 0x3);
+	if (GET_SWZ(swizzle, SWIZZLE_X) <= SWIZZLE_W)
+		ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_X));
+	if (GET_SWZ(swizzle, SWIZZLE_Y) <= SWIZZLE_W)
+		ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_Y));
+	if (GET_SWZ(swizzle, SWIZZLE_Z) <= SWIZZLE_W)
+		ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_Z));
+	if (GET_SWZ(swizzle, SWIZZLE_W) <= SWIZZLE_W)
+		ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_W));
 
 	return ret;
 }
