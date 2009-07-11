@@ -39,17 +39,20 @@
 #include "r300_state.h"
 #include "r300_tex.h"
 
+#include "radeon_buffer_objects.h"
+
 #include "tnl/tnl.h"
 #include "tnl/t_vp_build.h"
 #include "vbo/vbo_context.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 
-static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer *mesa_ind_buf, struct gl_buffer_object **bo, GLuint *nr_bo)
+static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer *mesa_ind_buf)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_index_buffer *ind_buf = &r300->ind_buf;
 	GLvoid *src_ptr;
+	GLboolean mapped_bo = GL_FALSE;
 
 	if (!mesa_ind_buf) {
 		ind_buf->ptr = NULL;
@@ -58,9 +61,8 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 
 	ind_buf->count = mesa_ind_buf->count;
 	if (mesa_ind_buf->obj->Name && !mesa_ind_buf->obj->Pointer) {
-		bo[*nr_bo] = mesa_ind_buf->obj;
-		(*nr_bo)++;
 		ctx->Driver.MapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, GL_READ_ONLY_ARB, mesa_ind_buf->obj);
+		mapped_bo = GL_TRUE;
 		assert(mesa_ind_buf->obj->Pointer != NULL);
 	}
 	src_ptr = ADD_POINTERS(mesa_ind_buf->obj->Pointer, mesa_ind_buf->ptr);
@@ -109,6 +111,10 @@ static void r300FixupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 		ind_buf->ptr = src_ptr;
 		ind_buf->free_needed = GL_FALSE;
 		ind_buf->is_32bit = GL_TRUE;
+	}
+
+	if (mapped_bo) {
+		ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER, mesa_ind_buf->obj);
 	}
 }
 
@@ -161,26 +167,118 @@ static int getTypeSize(GLenum type)
 	}						\
 } while (0)
 
-static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const struct gl_client_array *input, struct gl_buffer_object **bo, GLuint *nr_bo)
+/**
+ * Convert attribute data type to float
+ * If the attribute uses named buffer object replace the bo with newly allocated bo
+ */
+static void r300ConvertAttrib(GLcontext *ctx, int count, const struct gl_client_array *input, struct vertex_attribute *attr)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	const GLvoid *src_ptr;
+	GLboolean mapped_named_bo = GL_FALSE;
+	GLfloat *dst_ptr;
+	GLuint stride;
+
+	stride = (input->StrideB == 0) ? getTypeSize(input->Type) * input->Size : input->StrideB;
+
+	/* Convert value for first element only */
+	if (input->StrideB == 0)
+		count = 1;
+
+	if (input->BufferObj->Name) {
+		if (!input->BufferObj->Pointer) {
+			ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER, GL_READ_ONLY_ARB, input->BufferObj);
+			mapped_named_bo = GL_TRUE;
+		}
+
+		src_ptr = ADD_POINTERS(input->BufferObj->Pointer, input->Ptr);
+	} else {
+		src_ptr = input->Ptr;
+	}
+
+	radeonAllocDmaRegion(&r300->radeon, &attr->bo, &attr->bo_offset, sizeof(GLfloat) * input->Size * count, 32);
+	dst_ptr = (GLfloat *)ADD_POINTERS(attr->bo->ptr, attr->bo_offset);
+
+	if (RADEON_DEBUG & DEBUG_FALLBACKS) {
+		fprintf(stderr, "%s: Converting vertex attributes, attribute data format %x,", __FUNCTION__, input->Type);
+		fprintf(stderr, "stride %d, components %d\n", stride, input->Size);
+	}
+
+	assert(src_ptr != NULL);
+
+	switch (input->Type) {
+		case GL_DOUBLE:
+			CONVERT(GLdouble, (GLfloat));
+			break;
+		case GL_UNSIGNED_INT:
+			CONVERT(GLuint, UINT_TO_FLOAT);
+			break;
+		case GL_INT:
+			CONVERT(GLint, INT_TO_FLOAT);
+			break;
+		case GL_UNSIGNED_SHORT:
+			CONVERT(GLushort, USHORT_TO_FLOAT);
+			break;
+		case GL_SHORT:
+			CONVERT(GLshort, SHORT_TO_FLOAT);
+			break;
+		case GL_UNSIGNED_BYTE:
+			assert(input->Format != GL_BGRA);
+			CONVERT(GLubyte, UBYTE_TO_FLOAT);
+			break;
+		case GL_BYTE:
+			CONVERT(GLbyte, BYTE_TO_FLOAT);
+			break;
+		default:
+			assert(0);
+			break;
+	}
+
+	if (mapped_named_bo) {
+		ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, input->BufferObj);
+	}
+}
+
+static void r300AlignDataToDword(GLcontext *ctx, const struct gl_client_array *input, int count, struct vertex_attribute *attr)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	const int dst_stride = (input->StrideB + 3) & ~3;
+	const int size = getTypeSize(input->Type) * input->Size * count;
+	GLboolean mapped_named_bo = GL_FALSE;
+
+	radeonAllocDmaRegion(&r300->radeon, &attr->bo, &attr->bo_offset, size, 32);
+
+	if (!input->BufferObj->Pointer) {
+		ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER, GL_READ_ONLY_ARB, input->BufferObj);
+		mapped_named_bo = GL_TRUE;
+	}
+
+	{
+		GLvoid *src_ptr = ADD_POINTERS(input->BufferObj->Pointer, input->Ptr);
+		GLvoid *dst_ptr = ADD_POINTERS(attr->bo->ptr, attr->bo_offset);
+		int i;
+
+		for (i = 0; i < count; ++i) {
+			_mesa_memcpy(dst_ptr, src_ptr, input->StrideB);
+			src_ptr += input->StrideB;
+			dst_ptr += dst_stride;
+		}
+	}
+
+	if (mapped_named_bo) {
+		ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, input->BufferObj);
+	}
+
+	attr->stride = dst_stride;
+}
+
+static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const struct gl_client_array *input)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_buffer *vbuf = &r300->vbuf;
 	struct vertex_attribute r300_attr;
-	const void *src_ptr;
 	GLenum type;
 	GLuint stride;
-
-	if (input->BufferObj->Name) {
-		if (!input->BufferObj->Pointer) {
-			bo[*nr_bo] = input->BufferObj;
-			(*nr_bo)++;
-			ctx->Driver.MapBuffer(ctx, GL_ARRAY_BUFFER, GL_READ_ONLY_ARB, input->BufferObj);
-			assert(input->BufferObj->Pointer != NULL);
-		}
-
-		src_ptr = ADD_POINTERS(input->BufferObj->Pointer, input->Ptr);
-	} else
-		src_ptr = input->Ptr;
 
 	stride = (input->StrideB == 0) ? getTypeSize(input->Type) * input->Size : input->StrideB;
 
@@ -189,62 +287,57 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 	    getTypeSize(input->Type) != 4 ||
 #endif
 	    stride < 4) {
-		if (RADEON_DEBUG & DEBUG_FALLBACKS) {
-			fprintf(stderr, "%s: Converting vertex attributes, attribute data format %x,", __FUNCTION__, input->Type);
-			fprintf(stderr, "stride %d, components %d\n", stride, input->Size);
-		}
-
-		GLfloat *dst_ptr, *tmp;
-
-		/* Convert value for first element only */
-		if (input->StrideB == 0)
-			count = 1;
-
-		tmp = dst_ptr = _mesa_malloc(sizeof(GLfloat) * input->Size * count);
-
-		switch (input->Type) {
-			case GL_DOUBLE:
-				CONVERT(GLdouble, (GLfloat));
-				break;
-			case GL_UNSIGNED_INT:
-				CONVERT(GLuint, UINT_TO_FLOAT);
-				break;
-			case GL_INT:
-				CONVERT(GLint, INT_TO_FLOAT);
-				break;
-			case GL_UNSIGNED_SHORT:
-				CONVERT(GLushort, USHORT_TO_FLOAT);
-				break;
-			case GL_SHORT:
-				CONVERT(GLshort, SHORT_TO_FLOAT);
-				break;
-			case GL_UNSIGNED_BYTE:
-				assert(input->Format != GL_BGRA);
-				CONVERT(GLubyte, UBYTE_TO_FLOAT);
-				break;
-			case GL_BYTE:
-				CONVERT(GLbyte, BYTE_TO_FLOAT);
-				break;
-			default:
-				assert(0);
-				break;
-		}
 
 		type = GL_FLOAT;
-		r300_attr.free_needed = GL_TRUE;
-		r300_attr.data = tmp;
+
+		r300ConvertAttrib(ctx, count, input, &r300_attr);
 		if (input->StrideB == 0) {
 			r300_attr.stride = 0;
 		} else {
 			r300_attr.stride = sizeof(GLfloat) * input->Size;
 		}
 		r300_attr.dwords = input->Size;
+		r300_attr.is_named_bo = GL_FALSE;
 	} else {
 		type = input->Type;
-		r300_attr.free_needed = GL_FALSE;
-		r300_attr.data = (GLvoid *)src_ptr;
-		r300_attr.stride = input->StrideB;
-		r300_attr.dwords = (getTypeSize(type) * input->Size  + 3)/ 4;
+		r300_attr.dwords = (getTypeSize(type) * input->Size + 3)/ 4;
+		if (input->BufferObj->Name) {
+			if (stride % 4 != 0) {
+				assert(((int) input->Ptr) % input->StrideB == 0);
+				r300AlignDataToDword(ctx, input, count, &r300_attr);
+				r300_attr.is_named_bo = GL_FALSE;
+			} else {
+				r300_attr.stride = input->StrideB;
+				r300_attr.bo_offset = (GLuint) input->Ptr;
+				r300_attr.bo = get_radeon_buffer_object(input->BufferObj)->bo;
+				r300_attr.is_named_bo = GL_TRUE;
+			}
+		} else {
+			int size;
+			uint32_t *dst;
+
+			if (input->StrideB == 0) {
+				size = getTypeSize(input->Type) * input->Size;
+				count = 1;
+				r300_attr.stride = 0;
+			} else {
+				size = getTypeSize(input->Type) * input->Size * count;
+				r300_attr.stride = (getTypeSize(type) * input->Size + 3) & ~3;
+			}
+
+			radeonAllocDmaRegion(&r300->radeon, &r300_attr.bo, &r300_attr.bo_offset, size, 32);
+			assert(r300_attr.bo->ptr != NULL);
+			dst = (uint32_t *)ADD_POINTERS(r300_attr.bo->ptr, r300_attr.bo_offset);
+			switch (r300_attr.dwords) {
+				case 1: radeonEmitVec4(dst, input->Ptr, input->StrideB, count); break;
+				case 2: radeonEmitVec8(dst, input->Ptr, input->StrideB, count); break;
+				case 3: radeonEmitVec12(dst, input->Ptr, input->StrideB, count); break;
+				case 4: radeonEmitVec16(dst, input->Ptr, input->StrideB, count); break;
+				default: assert(0); break;
+			}
+
+			r300_attr.is_named_bo = GL_FALSE;
+		}
 	}
 
 	r300_attr.size = input->Size;
@@ -333,7 +426,7 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 	++vbuf->num_attribs;
 }
 
-static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[], int count, struct gl_buffer_object **bo, GLuint *nr_bo)
+static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[], int count)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_buffer *vbuf = &r300->vbuf;
@@ -351,7 +444,7 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 				++i;
 			}
 
-			r300TranslateAttrib(ctx, i, count, arrays[i], bo, nr_bo);
+			r300TranslateAttrib(ctx, i, count, arrays[i]);
 
 			tmp >>= 1;
 			++i;
@@ -366,39 +459,49 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 		int i;
 
 		for (i = 0; i < vbuf->num_attribs; i++) {
-			rcommon_emit_vector(ctx, &r300->radeon.tcl.aos[i],
-						vbuf->attribs[i].data, vbuf->attribs[i].dwords,
-						vbuf->attribs[i].stride, count);
+			struct radeon_aos *aos = &r300->radeon.tcl.aos[i];
+
+			aos->count = vbuf->attribs[i].stride == 0 ? 1 : count;
+			aos->stride = vbuf->attribs[i].stride / sizeof(float);
+			aos->offset = vbuf->attribs[i].bo_offset;
+			aos->components = vbuf->attribs[i].dwords;
+			aos->bo = vbuf->attribs[i].bo;
+
+			if (vbuf->attribs[i].is_named_bo) {
+				radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs,
+											  aos->bo,
+											  RADEON_GEM_DOMAIN_GTT, 0);
+			}
 		}
 
 		r300->radeon.tcl.aos_count = vbuf->num_attribs;
 	}
 }
 
-static void r300FreeData(GLcontext *ctx, struct gl_buffer_object **bo, GLuint nr_bo)
+static void r300FreeData(GLcontext *ctx)
 {
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	{
-		struct r300_vertex_buffer *vbuf = &R300_CONTEXT(ctx)->vbuf;
 		int i;
 
-		for (i = 0; i < vbuf->num_attribs; i++) {
-			if (vbuf->attribs[i].free_needed)
-				_mesa_free(vbuf->attribs[i].data);
+		for (i = 0; i < r300->vbuf.num_attribs; i++) {
+			if (!r300->vbuf.attribs[i].is_named_bo) {
+				radeon_bo_unref(r300->vbuf.attribs[i].bo);
+			}
+			r300->radeon.tcl.aos[i].bo = NULL;
 		}
 	}
 
 	{
 		struct r300_index_buffer *ind_buf = &R300_CONTEXT(ctx)->ind_buf;
-		if (ind_buf->free_needed)
+		if (ind_buf->free_needed) {
 			_mesa_free(ind_buf->ptr);
-	}
-
-	{
-		int i;
-
-		for (i = 0; i < nr_bo; ++i) {
-			ctx->Driver.UnmapBuffer(ctx, 0, bo[i]);
 		}
+
+		if (r300->radeon.tcl.elt_dma_bo) {
+			radeon_bo_unref(r300->radeon.tcl.elt_dma_bo);
+		}
+		r300->radeon.tcl.elt_dma_bo = NULL;
 	}
 }
 
@@ -411,8 +514,7 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 					 GLuint max_index )
 {
 	struct r300_context *r300 = R300_CONTEXT(ctx);
-	struct gl_buffer_object *bo[VERT_ATTRIB_MAX+1];
-	GLuint i, nr_bo = 0;
+	GLuint i;
 
 	if (ctx->NewState)
 		_mesa_update_state( ctx );
@@ -424,7 +526,7 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 
 	r300SwitchFallback(ctx, R300_FALLBACK_INVALID_BUFFERS, !r300ValidateBuffers(ctx));
 
-	r300FixupIndexBuffer(ctx, ib, bo, &nr_bo);
+	r300FixupIndexBuffer(ctx, ib);
 
 	/* ensure we have the cmd buf space in advance to cover
  	 * the state + DMA AOS pointers */
@@ -432,7 +534,7 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
                            r300->radeon.hw.max_state_size + (50*sizeof(int)),
                            __FUNCTION__);
 
-	r300SetVertexFormat(ctx, arrays, max_index + 1, bo, &nr_bo);
+	r300SetVertexFormat(ctx, arrays, max_index + 1);
 
 	if (r300->fallback)
 		return GL_FALSE;
@@ -450,9 +552,7 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 
 	r300EmitCacheFlush(r300);
 
-	radeonReleaseArrays(ctx, ~0);
-
-	r300FreeData(ctx, bo, nr_bo);
+	r300FreeData(ctx);
 
 	return GL_TRUE;
 }

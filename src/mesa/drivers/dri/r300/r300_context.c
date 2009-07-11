@@ -67,6 +67,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_render.h"
 #include "r300_swtcl.h"
 #include "radeon_bocs_wrapper.h"
+#include "radeon_buffer_objects.h"
 
 
 #include "vblank.h"
@@ -398,6 +399,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitStateFuncs(&functions);
 	r300InitTextureFuncs(&functions);
 	r300InitShaderFuncs(&functions);
+	radeonInitBufferObjectFuncs(&functions);
 
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv,
