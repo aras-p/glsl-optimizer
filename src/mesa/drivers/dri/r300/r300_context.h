@@ -569,7 +569,12 @@ struct r300_fragment_program {
 };
 
 struct r300_fragment_program_cont {
+	/* This is the unmodified fragment program mesa provided us with.
+	 * We need to keep it unchanged because we may need to create another
+	 * hw specific fragment program based on this
+	 */
 	struct gl_fragment_program Base;
+	/* This is the list of hw specific fragment programs derived from Base */
 	struct r300_fragment_program *progs;
 };
 
