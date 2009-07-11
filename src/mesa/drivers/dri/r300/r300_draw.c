@@ -195,6 +195,11 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 		}
 
 		GLfloat *dst_ptr, *tmp;
+
+		/* Convert value for first element only */
+		if (input->StrideB == 0)
+			count = 1;
+
 		tmp = dst_ptr = _mesa_malloc(sizeof(GLfloat) * input->Size * count);
 
 		switch (input->Type) {
@@ -228,7 +233,11 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 		type = GL_FLOAT;
 		r300_attr.free_needed = GL_TRUE;
 		r300_attr.data = tmp;
-		r300_attr.stride = sizeof(GLfloat) * input->Size;
+		if (input->StrideB == 0) {
+			r300_attr.stride = 0;
+		} else {
+			r300_attr.stride = sizeof(GLfloat) * input->Size;
+		}
 		r300_attr.dwords = input->Size;
 	} else {
 		type = input->Type;
