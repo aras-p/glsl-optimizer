@@ -1388,32 +1388,9 @@ static int translateSUB(struct gl_program *prog, int pos)
 
 static int translateSWZ(struct gl_program *prog, int pos)
 {
-	struct prog_instruction *inst;
-	GLuint orig_negate, orig_writemask;
+	prog->Instructions[pos].Opcode = OPCODE_MOV;
 
-	inst = &prog->Instructions[pos];
-	orig_negate = inst->SrcReg[0].Negate;
-	orig_writemask = inst->DstReg.WriteMask;
-
-	inst->Opcode = OPCODE_MOV;
-
-	/* If all relevant components are either negated or not negated at the same time, we are ok.
-	 */
-	if ((orig_negate & orig_writemask) == 0 || (orig_negate & orig_writemask) == (NEGATE_XYZW & orig_writemask))
-		return 0;
-
-	_mesa_insert_instructions(prog, pos + 1, 1);
-
-	inst = &prog->Instructions[pos];
-	inst->DstReg.WriteMask = orig_writemask & (orig_negate ^ NEGATE_XYZW);
-	inst->SrcReg[0].Negate = NEGATE_NONE;
-	++inst;
-
-	*inst = *(inst-1);
-	inst->DstReg.WriteMask = orig_writemask & orig_negate;
-	inst->SrcReg[0].Negate = NEGATE_XYZW;
-
-	return 1;
+	return 0;
 }
 
 static int translateXPD(struct gl_program *prog, int pos)
