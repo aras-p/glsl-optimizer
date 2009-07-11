@@ -221,7 +221,7 @@ void radeonUpdateScissor( GLcontext *ctx )
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 
-	if ( radeon_get_drawable(rmesa) ) {
+	if ( !ctx->DrawBuffer->Name ) {
 		__DRIdrawablePrivate *dPriv = radeon_get_drawable(rmesa);
 
 		int x = ctx->Scissor.X;
@@ -233,9 +233,14 @@ void radeonUpdateScissor( GLcontext *ctx )
 		rmesa->state.scissor.rect.y1 = y + dPriv->y;
 		rmesa->state.scissor.rect.x2 = w + dPriv->x + 1;
 		rmesa->state.scissor.rect.y2 = h + dPriv->y + 1;
-
-		radeonRecalcScissorRects( rmesa );
+	} else {
+		rmesa->state.scissor.rect.x1 = ctx->Scissor.X;
+		rmesa->state.scissor.rect.y1 = ctx->Scissor.Y;
+		rmesa->state.scissor.rect.x2 = ctx->Scissor.X + ctx->Scissor.Width;
+		rmesa->state.scissor.rect.y2 = ctx->Scissor.Y + ctx->Scissor.Height;
 	}
+
+	radeonRecalcScissorRects( rmesa );
 }
 
 /* =============================================================
