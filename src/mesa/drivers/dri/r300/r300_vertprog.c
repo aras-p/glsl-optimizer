@@ -1473,7 +1473,8 @@ static void addArtificialOutputs(GLcontext *ctx, struct gl_program *prog)
 	GLuint OutputsAdded, FpReads;
 	int i, count;
 
-	OutputsAdded = count = 0;
+	OutputsAdded = 0;
+	count = 0;
 	FpReads = r300->selected_fp->Base->InputsRead;
 
 	ADD_OUTPUT(FRAG_ATTRIB_COL0, VERT_RESULT_COL0);
