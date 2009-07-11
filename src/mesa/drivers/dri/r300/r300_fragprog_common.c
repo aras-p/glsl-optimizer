@@ -368,10 +368,10 @@ struct r300_fragment_program *r300SelectFragmentShader(GLcontext *ctx)
 
 	fp = fp_list->progs;
 	while (fp) {
-	       if (_mesa_memcmp(&fp->state, &state, sizeof(state)) == 0) {
-	               return r300->selected_fp = fp;
-	       }
-	       fp = fp->next;
+		if (_mesa_memcmp(&fp->state, &state, sizeof(state)) == 0) {
+			return r300->selected_fp = fp;
+		}
+		fp = fp->next;
 	}
 
 	fp = _mesa_calloc(sizeof(struct r300_fragment_program));
