@@ -646,6 +646,8 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 
 	if (colorMask == ~0)
 	  tri_mask |= (mask & BUFFER_BITS_COLOR);
+	else
+	  tri_mask |= (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT));
 
 
 	/* HW stencil */
