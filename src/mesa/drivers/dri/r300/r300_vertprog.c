@@ -1494,46 +1494,6 @@ static void addArtificialOutputs(GLcontext *ctx, struct gl_program *prog)
 
 #undef ADD_OUTPUT
 
-static GLuint getUsedComponents(const GLuint swizzle)
-{
-	GLuint ret;
-
-	ret = 0;
-
-	/* need to mask out ZERO, ONE and NIL swizzles */
-	if (GET_SWZ(swizzle, SWIZZLE_X) <= SWIZZLE_W)
-		ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_X));
-	if (GET_SWZ(swizzle, SWIZZLE_Y) <= SWIZZLE_W)
-		ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_Y));
-	if (GET_SWZ(swizzle, SWIZZLE_Z) <= SWIZZLE_W)
-		ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_Z));
-	if (GET_SWZ(swizzle, SWIZZLE_W) <= SWIZZLE_W)
-		ret |= 1 << (GET_SWZ(swizzle, SWIZZLE_W));
-
-	return ret;
-}
-
-static GLuint trackUsedComponents(const struct gl_program *prog, const GLuint attrib)
-{
-	struct prog_instruction *inst;
-	int tmp, i;
-	GLuint ret;
-
-	inst = prog->Instructions;
-	ret = 0;
-	while (inst->Opcode != OPCODE_END) {
-		tmp = _mesa_num_inst_src_regs(inst->Opcode);
-		for (i = 0; i < tmp; ++i) {
-			if (inst->SrcReg[i].File == PROGRAM_INPUT && inst->SrcReg[i].Index == attrib) {
-				ret |= getUsedComponents(inst->SrcReg[i].Swizzle);
-			}
-		}
-		++inst;
-	}
-
-	return ret;
-}
-
 static void nqssadceInit(struct nqssadce_state* s)
 {
 	r300ContextPtr r300 = R300_CONTEXT(s->Ctx);
@@ -1541,18 +1501,14 @@ static void nqssadceInit(struct nqssadce_state* s)
 
 	fp_reads = r300->selected_fp->Base->InputsRead;
 	{
-		GLuint tmp;
-
 		if (fp_reads & FRAG_BIT_COL0) {
-				tmp = trackUsedComponents(r300->selected_fp->Base, FRAG_ATTRIB_COL0);
-				s->Outputs[VERT_RESULT_COL0].Sourced = tmp;
-				s->Outputs[VERT_RESULT_BFC0].Sourced = tmp;
+				s->Outputs[VERT_RESULT_COL0].Sourced = WRITEMASK_XYZW;
+				s->Outputs[VERT_RESULT_BFC0].Sourced = WRITEMASK_XYZW;
 		}
 
 		if (fp_reads & FRAG_BIT_COL1) {
-				tmp = trackUsedComponents(r300->selected_fp->Base, FRAG_ATTRIB_COL1);
-				s->Outputs[VERT_RESULT_COL1].Sourced = tmp;
-				s->Outputs[VERT_RESULT_BFC1].Sourced = tmp;
+				s->Outputs[VERT_RESULT_COL1].Sourced = WRITEMASK_XYZW;
+				s->Outputs[VERT_RESULT_BFC1].Sourced = WRITEMASK_XYZW;
 		}
 	}
 
@@ -1560,7 +1516,7 @@ static void nqssadceInit(struct nqssadce_state* s)
 		int i;
 		for (i = 0; i < 8; ++i) {
 			if (fp_reads & FRAG_BIT_TEX(i)) {
-				s->Outputs[VERT_RESULT_TEX0 + i].Sourced = trackUsedComponents(r300->selected_fp->Base, FRAG_ATTRIB_TEX0 + i);
+				s->Outputs[VERT_RESULT_TEX0 + i].Sourced = WRITEMASK_XYZW;
 			}
 		}
 	}
