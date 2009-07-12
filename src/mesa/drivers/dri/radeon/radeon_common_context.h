@@ -467,6 +467,14 @@ struct radeon_context {
     */
    GLboolean is_front_buffer_rendering;
 
+   /* info for radeon_clear_tris() */
+   struct {
+      struct gl_array_object *arrayObj;
+      GLfloat vertices[4][3];
+      GLfloat color[4][4];
+   } clear;
+   GLboolean internal_viewport_call;
+
   struct {
       struct gl_fragment_program *bitmap_fp;
       struct gl_vertex_program *passthrough_vp;

@@ -45,6 +45,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/context.h"
+#include "main/arrayobj.h"
 #include "main/api_arrayelt.h"
 #include "main/enums.h"
 #include "main/colormac.h"
@@ -866,10 +867,14 @@ void radeon_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei he
 	if (!driContext->driScreenPriv->dri2.enabled)
 		return;
 
-	radeonFlush(ctx);
-	radeon_update_renderbuffers(driContext, driContext->driDrawablePriv);
-	if (driContext->driDrawablePriv != driContext->driReadablePriv)
-		radeon_update_renderbuffers(driContext, driContext->driReadablePriv);
+	if (!radeon->internal_viewport_call && ctx->DrawBuffer->Name == 0) {
+		if (radeon->is_front_buffer_rendering) {
+			radeonFlush(ctx);
+		}
+		radeon_update_renderbuffers(driContext, driContext->driDrawablePriv);
+		if (driContext->driDrawablePriv != driContext->driReadablePriv)
+			radeon_update_renderbuffers(driContext, driContext->driReadablePriv);
+	}
 
 	old_viewport = ctx->Driver.Viewport;
 	ctx->Driver.Viewport = NULL;
@@ -1256,7 +1261,9 @@ radeon_meta_set_passthrough_transform(radeonContextPtr radeon)
    radeon->meta.saved_vp_height = ctx->Viewport.Height;
    radeon->meta.saved_matrix_mode = ctx->Transform.MatrixMode;
 
+   radeon->internal_viewport_call = GL_TRUE;
    _mesa_Viewport(0, 0, ctx->DrawBuffer->Width, ctx->DrawBuffer->Height);
+   radeon->internal_viewport_call = GL_FALSE;
 
    _mesa_MatrixMode(GL_PROJECTION);
    _mesa_PushMatrix();
@@ -1278,8 +1285,10 @@ radeon_meta_restore_transform(radeonContextPtr radeon)
 
    _mesa_MatrixMode(radeon->meta.saved_matrix_mode);
 
+   radeon->internal_viewport_call = GL_TRUE;
    _mesa_Viewport(radeon->meta.saved_vp_x, radeon->meta.saved_vp_y,
 		  radeon->meta.saved_vp_width, radeon->meta.saved_vp_height);
+   radeon->internal_viewport_call = GL_FALSE;
 }
 
 
@@ -1292,31 +1301,60 @@ radeon_meta_restore_transform(radeonContextPtr radeon)
  * it.
  */
 
+static void radeon_clear_init(GLcontext *ctx)
+{
+    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+    struct gl_array_object *arraySave = NULL;
+    const GLuint arrayBuffer = ctx->Array.ArrayBufferObj->Name;
+    const GLuint elementBuffer = ctx->Array.ElementArrayBufferObj->Name;
+
+    /* create new array object */
+    rmesa->clear.arrayObj = _mesa_new_array_object(ctx, ~0);
+    _mesa_reference_array_object(ctx, &arraySave, ctx->Array.ArrayObj);
+    _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, rmesa->clear.arrayObj);
+
+    /* one time setup of vertex arrays (pos, color) */
+    _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+    _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+    _mesa_ColorPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), rmesa->clear.color);
+    _mesa_VertexPointer(3, GL_FLOAT, 3 * sizeof(GLfloat), rmesa->clear.vertices);
+    _mesa_Enable(GL_COLOR_ARRAY);
+    _mesa_Enable(GL_VERTEX_ARRAY);
+
+    /* restore original array object */
+    _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, arraySave);
+    _mesa_reference_array_object(ctx, &arraySave, NULL);
+
+    /* restore original buffer objects */
+    _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, arrayBuffer);
+    _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, elementBuffer);
+}
+
 
 void radeon_clear_tris(GLcontext *ctx, GLbitfield mask)
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   GLfloat vertices[4][3];
-   GLfloat color[4][4];
    GLfloat dst_z;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    int i;
    GLboolean saved_fp_enable = GL_FALSE, saved_vp_enable = GL_FALSE;
    GLboolean saved_shader_program = 0;
    unsigned int saved_active_texture;
+   struct gl_array_object *arraySave = NULL;
+
+   if (!rmesa->clear.arrayObj)
+       radeon_clear_init(ctx);
 
    assert((mask & ~(TRI_CLEAR_COLOR_BITS | BUFFER_BIT_DEPTH |
 		    BUFFER_BIT_STENCIL)) == 0);
 
    _mesa_PushAttrib(GL_COLOR_BUFFER_BIT |
-		    GL_CURRENT_BIT |
 		    GL_DEPTH_BUFFER_BIT |
 		    GL_ENABLE_BIT |
 		    GL_POLYGON_BIT |
 		    GL_STENCIL_BUFFER_BIT |
 		    GL_TRANSFORM_BIT |
 		    GL_CURRENT_BIT);
-   _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
    saved_active_texture = ctx->Texture.CurrentUnit;
 
   /* Disable existing GL state we don't want to apply to a clear. */
@@ -1367,18 +1405,14 @@ void radeon_clear_tris(GLcontext *ctx, GLbitfield mask)
       }
    }
 
-#if FEATURE_ARB_vertex_buffer_object
-   _mesa_BindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-   _mesa_BindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-#endif
+   /* save current array object, bind our private one */
+   _mesa_reference_array_object(ctx, &arraySave, ctx->Array.ArrayObj);
+   _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, rmesa->clear.arrayObj);
 
    radeon_meta_set_passthrough_transform(rmesa);
 
    for (i = 0; i < 4; i++) {
-      color[i][0] = ctx->Color.ClearColor[0];
-      color[i][1] = ctx->Color.ClearColor[1];
-      color[i][2] = ctx->Color.ClearColor[2];
-      color[i][3] = ctx->Color.ClearColor[3];
+      COPY_4FV(rmesa->clear.color[i], ctx->Color.ClearColor);
    }
 
    /* convert clear Z from [0,1] to NDC coord in [-1,1] */
@@ -1387,23 +1421,18 @@ void radeon_clear_tris(GLcontext *ctx, GLbitfield mask)
    /* Prepare the vertices, which are the same regardless of which buffer we're
     * drawing to.
     */
-   vertices[0][0] = fb->_Xmin;
-   vertices[0][1] = fb->_Ymin;
-   vertices[0][2] = dst_z;
-   vertices[1][0] = fb->_Xmax;
-   vertices[1][1] = fb->_Ymin;
-   vertices[1][2] = dst_z;
-   vertices[2][0] = fb->_Xmax;
-   vertices[2][1] = fb->_Ymax;
-   vertices[2][2] = dst_z;
-   vertices[3][0] = fb->_Xmin;
-   vertices[3][1] = fb->_Ymax;
-   vertices[3][2] = dst_z;
-
-   _mesa_ColorPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &color);
-   _mesa_VertexPointer(3, GL_FLOAT, 3 * sizeof(GLfloat), &vertices);
-   _mesa_Enable(GL_COLOR_ARRAY);
-   _mesa_Enable(GL_VERTEX_ARRAY);
+   rmesa->clear.vertices[0][0] = fb->_Xmin;
+   rmesa->clear.vertices[0][1] = fb->_Ymin;
+   rmesa->clear.vertices[0][2] = dst_z;
+   rmesa->clear.vertices[1][0] = fb->_Xmax;
+   rmesa->clear.vertices[1][1] = fb->_Ymin;
+   rmesa->clear.vertices[1][2] = dst_z;
+   rmesa->clear.vertices[2][0] = fb->_Xmax;
+   rmesa->clear.vertices[2][1] = fb->_Ymax;
+   rmesa->clear.vertices[2][2] = dst_z;
+   rmesa->clear.vertices[3][0] = fb->_Xmin;
+   rmesa->clear.vertices[3][1] = fb->_Ymax;
+   rmesa->clear.vertices[3][2] = dst_z;
 
    while (mask != 0) {
       GLuint this_mask = 0;
@@ -1449,7 +1478,7 @@ void radeon_clear_tris(GLcontext *ctx, GLbitfield mask)
 	 _mesa_Disable(GL_STENCIL_TEST);
       }
 
-      CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
+      _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
       mask &= ~this_mask;
    }
@@ -1465,6 +1494,8 @@ void radeon_clear_tris(GLcontext *ctx, GLbitfield mask)
    if (saved_shader_program)
       _mesa_UseProgramObjectARB(saved_shader_program);
 
-   _mesa_PopClientAttrib();
    _mesa_PopAttrib();
+     /* restore current array object */
+   _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, arraySave);
+   _mesa_reference_array_object(ctx, &arraySave, NULL);
 }
