@@ -239,7 +239,7 @@ s8z24_to_z24s8(uint32_t val)
 	 int miny = cliprects[_nc].y1 - y_off;				\
 	 int maxx = cliprects[_nc].x2 - x_off;				\
 	 int maxy = cliprects[_nc].y2 - y_off;
-	
+
 /* ================================================================
  * Color buffer
  */
@@ -251,6 +251,26 @@ s8z24_to_z24s8(uint32_t val)
 
 #define TAG(x)    radeon##x##_RGB565
 #define TAG2(x,y) radeon##x##_RGB565##y
+#define GET_PTR(X,Y) radeon_ptr16(rrb, (X) + x_off, (Y) + y_off)
+#include "spantmp2.h"
+
+/* 16 bit, ARGB1555 color spanline and pixel functions
+ */
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_1_5_5_5_REV
+
+#define TAG(x)    radeon##x##_ARGB1555
+#define TAG2(x,y) radeon##x##_ARGB1555##y
+#define GET_PTR(X,Y) radeon_ptr16(rrb, (X) + x_off, (Y) + y_off)
+#include "spantmp2.h"
+
+/* 16 bit, RGBA4 color spanline and pixel functions
+ */
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_4_4_4_4_REV
+
+#define TAG(x)    radeon##x##_ARGB4444
+#define TAG2(x,y) radeon##x##_ARGB4444##y
 #define GET_PTR(X,Y) radeon_ptr16(rrb, (X) + x_off, (Y) + y_off)
 #include "spantmp2.h"
 
@@ -438,7 +458,7 @@ static void map_unmap_rb(struct gl_renderbuffer *rb, int flag)
 {
 	struct radeon_renderbuffer *rrb = radeon_renderbuffer(rb);
 	int r;
-	
+
 	if (rrb == NULL || !rrb->bo)
 		return;
 
@@ -474,25 +494,30 @@ radeon_map_unmap_buffers(GLcontext *ctx, GLboolean map)
 			ctx->DrawBuffer->Attachment + i;
 		struct gl_texture_object *tex = att->Texture;
 		if (tex) {
-			/* render to texture */
+			/* Render to texture. Note that a mipmapped texture need not
+			 * be complete for render to texture, so we must restrict to
+			 * mapping only the attached image.
+			 */
+			radeon_texture_image *image = get_radeon_texture_image(tex->Image[att->CubeMapFace][att->TextureLevel]);
 			ASSERT(att->Renderbuffer);
+
 			if (map)
-				ctx->Driver.MapTexture(ctx, tex);
+				radeon_teximage_map(image, GL_TRUE);
 			else
-				ctx->Driver.UnmapTexture(ctx, tex);
+				radeon_teximage_unmap(image);
 		}
 	}
-	
+
 	map_unmap_rb(ctx->ReadBuffer->_ColorReadBuffer, map);
 
 	/* depth buffer (Note wrapper!) */
 	if (ctx->DrawBuffer->_DepthBuffer)
 		map_unmap_rb(ctx->DrawBuffer->_DepthBuffer->Wrapped, map);
-	
+
 	if (ctx->DrawBuffer->_StencilBuffer)
 		map_unmap_rb(ctx->DrawBuffer->_StencilBuffer->Wrapped, map);
-
 }
+
 static void radeonSpanRenderStart(GLcontext * ctx)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
@@ -509,15 +534,13 @@ static void radeonSpanRenderStart(GLcontext * ctx)
 		LOCK_HARDWARE(rmesa);
 		radeonWaitForIdleLocked(rmesa);
 	}
+
 	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
 		if (ctx->Texture.Unit[i]._ReallyEnabled)
 			ctx->Driver.MapTexture(ctx, ctx->Texture.Unit[i]._Current);
 	}
 
 	radeon_map_unmap_buffers(ctx, 1);
-
-
-
 }
 
 static void radeonSpanRenderFinish(GLcontext * ctx)
@@ -555,6 +578,10 @@ static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
 		radeonInitPointers_xRGB8888(&rrb->base);
 	} else if (rrb->base._ActualFormat == GL_RGBA8) {
 		radeonInitPointers_ARGB8888(&rrb->base);
+	} else if (rrb->base._ActualFormat == GL_RGBA4) {
+		radeonInitPointers_ARGB4444(&rrb->base);
+	} else if (rrb->base._ActualFormat == GL_RGB5_A1) {
+		radeonInitPointers_ARGB1555(&rrb->base);
 	} else if (rrb->base._ActualFormat == GL_DEPTH_COMPONENT16) {
 		radeonInitDepthPointers_z16(&rrb->base);
 	} else if (rrb->base._ActualFormat == GL_DEPTH_COMPONENT24) {
@@ -563,5 +590,7 @@ static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
 		radeonInitDepthPointers_z24_s8(&rrb->base);
 	} else if (rrb->base._ActualFormat == GL_STENCIL_INDEX8_EXT) {
 		radeonInitStencilPointers_z24_s8(&rrb->base);
+	} else {
+		fprintf(stderr, "radeonSetSpanFunctions: bad actual format: 0x%04X\n", rrb->base._ActualFormat);
 	}
 }
