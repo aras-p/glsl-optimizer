@@ -398,6 +398,20 @@ restart:
 		rrb->base.DataType = GL_UNSIGNED_SHORT;
 		DBG("Render to RGB5 texture OK\n");
 	}
+	else if (texImage->TexFormat == &_mesa_texformat_argb1555) {
+		rrb->cpp = 2;
+		rrb->base._ActualFormat = GL_RGB5_A1;
+		rrb->base._BaseFormat = GL_RGBA;
+		rrb->base.DataType = GL_UNSIGNED_BYTE;
+		DBG("Render to ARGB1555 texture OK\n");
+	}
+	else if (texImage->TexFormat == &_mesa_texformat_argb4444) {
+		rrb->cpp = 2;
+		rrb->base._ActualFormat = GL_RGBA4;
+		rrb->base._BaseFormat = GL_RGBA;
+		rrb->base.DataType = GL_UNSIGNED_BYTE;
+		DBG("Render to ARGB1555 texture OK\n");
+	}
 	else if (texImage->TexFormat == &_mesa_texformat_z16) {
 		rrb->cpp = 2;
 		rrb->base._ActualFormat = GL_DEPTH_COMPONENT16;
