@@ -74,33 +74,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 		u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1; \
 	} while (0)
 
-static GLuint combineSwizzles(GLuint src, GLuint swz_x, GLuint swz_y, GLuint swz_z, GLuint swz_w)
-{
-	GLuint ret = 0;
-
-	if (swz_x == SWIZZLE_ZERO || swz_x == SWIZZLE_ONE)
-		ret |= swz_x;
-	else
-		ret |= GET_SWZ(src, swz_x);
-
-	if (swz_y == SWIZZLE_ZERO || swz_y == SWIZZLE_ONE)
-		ret |= swz_y << 3;
-	else
-		ret |= GET_SWZ(src, swz_y) << 3;
-
-	if (swz_z == SWIZZLE_ZERO || swz_z == SWIZZLE_ONE)
-		ret |= swz_z << 6;
-	else
-		ret |= GET_SWZ(src, swz_z) << 6;
-
-	if (swz_w == SWIZZLE_ZERO || swz_w == SWIZZLE_ONE)
-		ret |= swz_w << 9;
-	else
-		ret |= GET_SWZ(src, swz_w) << 9;
-
-	return ret;
-}
-
 static int r300VertexProgUpdateParams(GLcontext * ctx, struct gl_vertex_program *vp, float *dst)
 {
 	int pi;
@@ -1282,24 +1255,28 @@ static void pos_as_texcoord(struct gl_program *prog, int tex_id)
 }
 
 /**
- @TODO
-  We can put X001 swizzle only if input components are directly mapped from output components.
-  For some insts we need to skip source swizzles and add: MOV OUTPUT[fog_attr].yzw, CONST[0].0001
+ * The fogcoord attribute is special in that only the first component
+ * is relevant, and the remaining components are always fixed (when read
+ * from by the fragment program) to yield an X001 pattern.
+ *
+ * We need to enforce this either in the vertex program or in the fragment
+ * program, and this code chooses not to enforce it in the vertex program.
+ * This is slightly cheaper, as long as the fragment program does not use
+ * weird swizzles.
+ *
+ * And it seems that usually, weird swizzles are not used, so...
+ *
+ * See also the counterpart rewriting for fragment programs.
  */
 static void fog_as_texcoord(struct gl_program *prog, int tex_id)
 {
 	struct prog_instruction *vpi;
-	int i;
 
 	vpi = prog->Instructions;
 	while (vpi->Opcode != OPCODE_END) {
 		if (vpi->DstReg.File == PROGRAM_OUTPUT && vpi->DstReg.Index == VERT_RESULT_FOGC) {
 			vpi->DstReg.Index = VERT_RESULT_TEX0 + tex_id;
-			vpi->DstReg.WriteMask = WRITEMASK_XYZW;
-
-			for (i = 0; i < _mesa_num_inst_src_regs(vpi->Opcode); ++i) {
-				vpi->SrcReg[i].Swizzle = combineSwizzles(vpi->SrcReg[i].Swizzle, SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ONE);
-			}
+			vpi->DstReg.WriteMask = WRITEMASK_X;
 		}
 
 		++vpi;
@@ -1329,7 +1306,7 @@ static int translateDP3(struct gl_program *prog, int pos)
 	inst = &prog->Instructions[pos];
 
 	inst->Opcode = OPCODE_DP4;
-	inst->SrcReg[0].Swizzle = combineSwizzles(inst->SrcReg[0].Swizzle, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+	inst->SrcReg[0].Swizzle = combine_swizzles4(inst->SrcReg[0].Swizzle, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
 
 	return 0;
 }
@@ -1341,7 +1318,7 @@ static int translateDPH(struct gl_program *prog, int pos)
 	inst = &prog->Instructions[pos];
 
 	inst->Opcode = OPCODE_DP4;
-	inst->SrcReg[0].Swizzle = combineSwizzles(inst->SrcReg[0].Swizzle, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
+	inst->SrcReg[0].Swizzle = combine_swizzles4(inst->SrcReg[0].Swizzle, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE);
 
 	return 0;
 }
@@ -1409,13 +1386,13 @@ static int translateXPD(struct gl_program *prog, int pos)
 	inst->Opcode = OPCODE_MUL;
 	inst->DstReg.File = PROGRAM_TEMPORARY;
 	inst->DstReg.Index = tmp_idx;
-	inst->SrcReg[0].Swizzle = combineSwizzles(inst->SrcReg[0].Swizzle, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_W);
-	inst->SrcReg[1].Swizzle = combineSwizzles(inst->SrcReg[1].Swizzle, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_W);
+	inst->SrcReg[0].Swizzle = combine_swizzles4(inst->SrcReg[0].Swizzle, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_W);
+	inst->SrcReg[1].Swizzle = combine_swizzles4(inst->SrcReg[1].Swizzle, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_W);
 	++inst;
 
 	inst->Opcode = OPCODE_MAD;
-	inst->SrcReg[0].Swizzle = combineSwizzles(inst->SrcReg[0].Swizzle, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_W);
-	inst->SrcReg[1].Swizzle = combineSwizzles(inst->SrcReg[1].Swizzle, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_W);
+	inst->SrcReg[0].Swizzle = combine_swizzles4(inst->SrcReg[0].Swizzle, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_W);
+	inst->SrcReg[1].Swizzle = combine_swizzles4(inst->SrcReg[1].Swizzle, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_W);
 	inst->SrcReg[1].Negate ^= NEGATE_XYZW;
 	inst->SrcReg[2].File = PROGRAM_TEMPORARY;
 	inst->SrcReg[2].Index = tmp_idx;
@@ -1768,12 +1745,12 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	struct r300_vertex_program *prog = rmesa->selected_vp;
 	int inst_count = 0;
 	int param_count = 0;
-	
+
 	/* Reset state, in case we don't use something */
 	((drm_r300_cmd_header_t *) rmesa->hw.vpp.cmd)->vpu.count = 0;
 	((drm_r300_cmd_header_t *) rmesa->hw.vpi.cmd)->vpu.count = 0;
 	((drm_r300_cmd_header_t *) rmesa->hw.vps.cmd)->vpu.count = 0;
-	
+
 	R300_STATECHANGE(rmesa, vpp);
 	param_count = r300VertexProgUpdateParams(ctx, prog->Base, (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
 	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);

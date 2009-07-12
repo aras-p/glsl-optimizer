@@ -162,6 +162,14 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 	}
 }
 
+
+/**
+ * Rewrite fragment.fogcoord to use a texture coordinate slot.
+ * Note that fogcoord is forced into an X001 pattern, and this enforcement
+ * is done here.
+ *
+ * See also the counterpart rewriting for vertex programs.
+ */
 static void rewriteFog(struct r300_fragment_program_compiler *compiler)
 {
 	struct r300_fragment_program *fp = compiler->fp;
@@ -193,8 +201,12 @@ static void rewriteFog(struct r300_fragment_program_compiler *compiler)
 		while (inst->Opcode != OPCODE_END) {
 			const int src_regs = _mesa_num_inst_src_regs(inst->Opcode);
 			for (i = 0; i < src_regs; ++i) {
-				if (inst->SrcReg[i].File == PROGRAM_INPUT && inst->SrcReg[i].Index == FRAG_ATTRIB_FOGC)
+				if (inst->SrcReg[i].File == PROGRAM_INPUT && inst->SrcReg[i].Index == FRAG_ATTRIB_FOGC) {
 					inst->SrcReg[i].Index = fp->fog_attr;
+					inst->SrcReg[i].Swizzle = combine_swizzles(
+						MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ONE),
+						inst->SrcReg[i].Swizzle);
+				}
 			}
 			++inst;
 		}

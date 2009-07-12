@@ -52,6 +52,38 @@ enum {
 #define SWIZZLE_0000 MAKE_SWIZZLE4(SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO)
 #define SWIZZLE_1111 MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE)
 
+static inline GLuint get_swz(GLuint swz, GLuint idx)
+{
+	if (idx & 0x4)
+		return idx;
+	return GET_SWZ(swz, idx);
+}
+
+static inline GLuint combine_swizzles4(GLuint src, GLuint swz_x, GLuint swz_y, GLuint swz_z, GLuint swz_w)
+{
+	GLuint ret = 0;
+
+	ret |= get_swz(src, swz_x);
+	ret |= get_swz(src, swz_y) << 3;
+	ret |= get_swz(src, swz_z) << 6;
+	ret |= get_swz(src, swz_w) << 9;
+
+	return ret;
+}
+
+static inline GLuint combine_swizzles(GLuint src, GLuint swz)
+{
+	GLuint ret = 0;
+
+	ret |= get_swz(src, GET_SWZ(swz, SWIZZLE_X));
+	ret |= get_swz(src, GET_SWZ(swz, SWIZZLE_Y)) << 3;
+	ret |= get_swz(src, GET_SWZ(swz, SWIZZLE_Z)) << 6;
+	ret |= get_swz(src, GET_SWZ(swz, SWIZZLE_W)) << 9;
+
+	return ret;
+}
+
+
 /**
  * Transformation context that is passed to local transformations.
  *
