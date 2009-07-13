@@ -95,7 +95,14 @@ clip_unit_create_from_key(struct brw_context *brw,
        * even number.
        */
       assert(key->nr_urb_entries % 2 == 0);
-      clip.thread4.max_threads = 2 - 1;
+      
+      /* Although up to 16 concurrent Clip threads are allowed on IGDNG, 
+       * only 2 threads can output VUEs at a time.
+       */
+      if (BRW_IS_IGDNG(brw))
+         clip.thread4.max_threads = 16 - 1;        
+      else
+         clip.thread4.max_threads = 2 - 1;
    } else {
       assert(key->nr_urb_entries >= 5);
       clip.thread4.max_threads = 1 - 1;

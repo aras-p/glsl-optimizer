@@ -36,6 +36,7 @@
 #include "intel_tex_layout.h"
 #include "intel_context.h"
 #include "main/macros.h"
+#include "intel_chipset.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
@@ -48,6 +49,77 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
 
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
+      if (IS_IGDNG(intel->intelScreen->deviceID)) {
+          GLuint align_h = 2, align_w = 4;
+          GLuint level;
+          GLuint x = 0;
+          GLuint y = 0;
+          GLuint width = mt->width0;
+          GLuint height = mt->height0;
+          GLuint qpitch = 0;
+          GLuint y_pitch = 0;
+
+          mt->pitch = mt->width0;
+          intel_get_texture_alignment_unit(mt->internal_format, &align_w, &align_h);
+          y_pitch = ALIGN(height, align_h);
+
+          if (mt->compressed) {
+              mt->pitch = ALIGN(mt->width0, align_w);
+              qpitch = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) / 4 * mt->pitch * mt->cpp;
+              mt->total_height = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) / 4 * 6;
+          } else {
+              qpitch = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) * mt->pitch * mt->cpp;
+              mt->total_height = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) * 6;
+          }
+
+          if (mt->first_level != mt->last_level) {
+              GLuint mip1_width;
+
+              if (mt->compressed) {
+                  mip1_width = ALIGN(minify(mt->width0), align_w)
+                      + ALIGN(minify(minify(mt->width0)), align_w);
+              } else {
+                  mip1_width = ALIGN(minify(mt->width0), align_w)
+                      + minify(minify(mt->width0));
+              }
+
+              if (mip1_width > mt->pitch) {
+                  mt->pitch = mip1_width;
+              }
+          }
+
+          mt->pitch = intel_miptree_pitch_align(intel, mt, tiling, mt->pitch);
+
+          for (level = mt->first_level; level <= mt->last_level; level++) {
+              GLuint img_height;
+              GLuint nr_images = 6;
+              GLuint q = 0;
+
+              intel_miptree_set_level_info(mt, level, nr_images, x, y, width, 
+                                           height, 1);
+
+              for (q = 0; q < nr_images; q++)
+                  intel_miptree_set_image_offset_ex(mt, level, q, x, y, q * qpitch);
+
+              if (mt->compressed)
+                  img_height = MAX2(1, height/4);
+              else
+                  img_height = ALIGN(height, align_h);
+
+              if (level == mt->first_level + 1) {
+                  x += ALIGN(width, align_w);
+              }
+              else {
+                  y += img_height;
+              }
+
+              width  = minify(width);
+              height = minify(height);
+          }
+
+          break;
+      }
+
    case GL_TEXTURE_3D: {
       GLuint width  = mt->width0;
       GLuint height = mt->height0;
@@ -59,9 +131,9 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
       GLuint align_w = 4;
 
       mt->total_height = 0;
+      intel_get_texture_alignment_unit(mt->internal_format, &align_w, &align_h);
 
       if (mt->compressed) {
-          align_w = intel_compressed_alignment(mt->internal_format);
           mt->pitch = ALIGN(width, align_w);
           pack_y_pitch = (height + 3) / 4;
       } else {

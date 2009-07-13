@@ -151,6 +151,8 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
    struct brw_compile *p = &c->func;
    struct brw_reg ip = brw_ip_reg();
    GLuint nr = brw_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
+   GLuint jmpi = 1;
+
    if (!nr)
       return;
 
@@ -159,18 +161,21 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
+   if (BRW_IS_IGDNG(p->brw))
+       jmpi = 2;
+
    brw_push_insn_state(p);
    
-   brw_MUL(p, c->pv, c->pv, brw_imm_d(nr*2+1));
+   brw_MUL(p, c->pv, c->pv, brw_imm_d(jmpi*(nr*2+1)));
    brw_JMPI(p, ip, ip, c->pv);
 
    copy_colors(c, c->vert[1], c->vert[0]);
    copy_colors(c, c->vert[2], c->vert[0]);
-   brw_JMPI(p, ip, ip, brw_imm_d(nr*4+1));
+   brw_JMPI(p, ip, ip, brw_imm_d(jmpi*(nr*4+1)));
 
    copy_colors(c, c->vert[0], c->vert[1]);
    copy_colors(c, c->vert[2], c->vert[1]);
-   brw_JMPI(p, ip, ip, brw_imm_d(nr*2));
+   brw_JMPI(p, ip, ip, brw_imm_d(jmpi*nr*2));
 
    copy_colors(c, c->vert[0], c->vert[2]);
    copy_colors(c, c->vert[1], c->vert[2]);
@@ -184,7 +189,8 @@ static void do_flatshade_line( struct brw_sf_compile *c )
    struct brw_compile *p = &c->func;
    struct brw_reg ip = brw_ip_reg();
    GLuint nr = brw_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
-   
+   GLuint jmpi = 1;
+
    if (!nr)
       return;
 
@@ -193,13 +199,16 @@ static void do_flatshade_line( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
+   if (BRW_IS_IGDNG(p->brw))
+       jmpi = 2;
+
    brw_push_insn_state(p);
    
-   brw_MUL(p, c->pv, c->pv, brw_imm_d(nr+1));
+   brw_MUL(p, c->pv, c->pv, brw_imm_d(jmpi*(nr+1)));
    brw_JMPI(p, ip, ip, c->pv);
    copy_colors(c, c->vert[1], c->vert[0]);
 
-   brw_JMPI(p, ip, ip, brw_imm_d(nr));
+   brw_JMPI(p, ip, ip, brw_imm_ud(jmpi*nr));
    copy_colors(c, c->vert[0], c->vert[1]);
 
    brw_pop_insn_state(p);

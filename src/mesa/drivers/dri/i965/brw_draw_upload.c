@@ -512,7 +512,19 @@ static void brw_emit_vertices(struct brw_context *brw)
       OUT_RELOC(input->bo,
 		I915_GEM_DOMAIN_VERTEX, 0,
 		input->offset);
-      OUT_BATCH(brw->vb.max_index);
+      if (BRW_IS_IGDNG(brw)) {
+          if (input->stride) {
+              OUT_RELOC(input->bo,
+                        I915_GEM_DOMAIN_VERTEX, 0,
+                        input->offset + input->stride * input->count);
+          } else {
+              assert(input->count == 1);
+              OUT_RELOC(input->bo,
+                        I915_GEM_DOMAIN_VERTEX, 0,
+                        input->offset + input->element_size);
+          }
+      } else
+          OUT_BATCH(brw->vb.max_index);
       OUT_BATCH(0); /* Instance data step rate */
    }
    ADVANCE_BATCH();
@@ -542,11 +554,18 @@ static void brw_emit_vertices(struct brw_context *brw)
 		BRW_VE0_VALID |
 		(format << BRW_VE0_FORMAT_SHIFT) |
 		(0 << BRW_VE0_SRC_OFFSET_SHIFT));
-      OUT_BATCH((comp0 << BRW_VE1_COMPONENT_0_SHIFT) |
-		(comp1 << BRW_VE1_COMPONENT_1_SHIFT) |
-		(comp2 << BRW_VE1_COMPONENT_2_SHIFT) |
-		(comp3 << BRW_VE1_COMPONENT_3_SHIFT) |
-		((i * 4) << BRW_VE1_DST_OFFSET_SHIFT));
+
+      if (BRW_IS_IGDNG(brw))
+          OUT_BATCH((comp0 << BRW_VE1_COMPONENT_0_SHIFT) |
+                    (comp1 << BRW_VE1_COMPONENT_1_SHIFT) |
+                    (comp2 << BRW_VE1_COMPONENT_2_SHIFT) |
+                    (comp3 << BRW_VE1_COMPONENT_3_SHIFT));
+      else
+          OUT_BATCH((comp0 << BRW_VE1_COMPONENT_0_SHIFT) |
+                    (comp1 << BRW_VE1_COMPONENT_1_SHIFT) |
+                    (comp2 << BRW_VE1_COMPONENT_2_SHIFT) |
+                    (comp3 << BRW_VE1_COMPONENT_3_SHIFT) |
+                    ((i * 4) << BRW_VE1_DST_OFFSET_SHIFT));
    }
    ADVANCE_BATCH();
 }

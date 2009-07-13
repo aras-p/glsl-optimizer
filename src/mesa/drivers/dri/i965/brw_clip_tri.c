@@ -77,6 +77,10 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
    if (c->nr_attrs & 1) {
       for (j = 0; j < 3; j++) {
 	 GLuint delta = c->nr_attrs*16 + 32;
+
+         if (BRW_IS_IGDNG(c->func.brw))
+             delta = c->nr_attrs * 16 + 32 * 3;
+
 	 brw_MOV(&c->func, byte_offset(c->reg.vertex[j], delta), brw_imm_f(0));
       }
    }
@@ -562,7 +566,7 @@ void brw_emit_tri_clip( struct brw_clip_compile *c )
 
    /* if -ve rhw workaround bit is set, 
       do cliptest */
-   if (!BRW_IS_G4X(p->brw)) {
+   if (BRW_IS_965(p->brw)) {
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_AND(p, brw_null_reg(), get_element_ud(c->reg.R0, 2), 
               brw_imm_ud(1<<20));
@@ -579,11 +583,14 @@ void brw_emit_tri_clip( struct brw_clip_compile *c )
    if (c->key.do_flat_shading) 
       brw_clip_tri_flat_shade(c); 
       
-   if (c->key.clip_mode == BRW_CLIPMODE_NORMAL)
+   if ((c->key.clip_mode == BRW_CLIPMODE_NORMAL) ||
+       (c->key.clip_mode == BRW_CLIPMODE_KERNEL_CLIP))
       do_clip_tri(c);
    else 
       maybe_do_clip_tri(c);
-      
+
+   if (c->need_ff_sync)
+	   brw_clip_ff_sync(c);      
    brw_clip_tri_emit_polygon(c);
 
    /* Send an empty message to kill the thread:

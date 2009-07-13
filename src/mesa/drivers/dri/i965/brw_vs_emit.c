@@ -134,7 +134,12 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    c->nr_outputs = 0;
    c->first_output = reg;
    c->first_overflow_output = 0;
-   mrf = 4;
+
+   if (BRW_IS_IGDNG(c->func.brw))
+       mrf = 8;
+   else
+       mrf = 4;
+
    for (i = 0; i < VERT_RESULT_MAX; i++) {
       if (c->prog_data.outputs_written & (1 << i)) {
 	 c->nr_outputs++;
@@ -216,7 +221,11 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    c->prog_data.urb_read_length = (c->nr_inputs + 1) / 2;
 
-   c->prog_data.urb_entry_size = (c->nr_outputs + 2 + 3) / 4;
+   if (BRW_IS_IGDNG(c->func.brw))
+       c->prog_data.urb_entry_size = (c->nr_outputs + 6 + 3) / 4;
+   else
+       c->prog_data.urb_entry_size = (c->nr_outputs + 2 + 3) / 4;
+
    c->prog_data.total_grf = reg;
 
    if (INTEL_DEBUG & DEBUG_VS) {
@@ -1078,6 +1087,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    struct brw_reg pos = c->regs[PROGRAM_OUTPUT][VERT_RESULT_HPOS];
    struct brw_reg ndc;
    int eot;
+   GLuint len_vertext_header = 2;
 
    if (c->key.copy_edgeflag) {
       brw_MOV(p, 
@@ -1096,7 +1106,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
     * workaround.
     */
    if ((c->prog_data.outputs_written & (1<<VERT_RESULT_PSIZ)) ||
-       c->key.nr_userclip || !BRW_IS_G4X(p->brw))
+       c->key.nr_userclip || BRW_IS_965(p->brw))
    {
       struct brw_reg header1 = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
       GLuint i;
@@ -1127,7 +1137,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * Later, clipping will detect ucp[6] and ensure the primitive is
        * clipped against all fixed planes.
        */
-      if (!BRW_IS_G4X(p->brw)) {
+      if (BRW_IS_965(p->brw)) {
 	 brw_CMP(p,
 		 vec8(brw_null_reg()),
 		 BRW_CONDITIONAL_L,
@@ -1154,7 +1164,21 @@ static void emit_vertex_write( struct brw_vs_compile *c)
     */
    brw_set_access_mode(p, BRW_ALIGN_1);
    brw_MOV(p, offset(m0, 2), ndc);
-   brw_MOV(p, offset(m0, 3), pos);
+
+   if (BRW_IS_IGDNG(p->brw)) {
+       /* There are 20 DWs (D0-D19) in VUE vertex header on IGDNG */
+       brw_MOV(p, offset(m0, 3), pos); /* a portion of vertex header */
+       /* m4, m5 contain the distances from vertex to the user clip planeXXX. 
+        * Seems it is useless for us.
+        * m6 is used for aligning, so that the remainder of vertex element is 
+        * reg-aligned.
+        */
+       brw_MOV(p, offset(m0, 7), pos); /* the remainder of vertex element */
+       len_vertext_header = 6;
+   } else {
+       brw_MOV(p, offset(m0, 3), pos);
+       len_vertext_header = 2;
+   }
 
    eot = (c->first_overflow_output == 0);
 
@@ -1164,7 +1188,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 		 c->r0,		/* src */
 		 0,		/* allocate */
 		 1,		/* used */
-		 MIN2(c->nr_outputs + 3, (BRW_MAX_MRF-1)), /* msg len */
+		 MIN2(c->nr_outputs + 1 + len_vertext_header, (BRW_MAX_MRF-1)), /* msg len */
 		 0,		/* response len */
 		 eot, 		/* eot */
 		 1, 		/* writes complete */

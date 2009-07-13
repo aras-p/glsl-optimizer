@@ -35,28 +35,39 @@
 #include "intel_context.h"
 #include "main/macros.h"
 
-GLuint intel_compressed_alignment(GLenum internalFormat)
+void intel_get_texture_alignment_unit(GLenum internalFormat, GLuint *w, GLuint *h)
 {
-    GLuint alignment = 4;
-
     switch (internalFormat) {
     case GL_COMPRESSED_RGB_FXT1_3DFX:
     case GL_COMPRESSED_RGBA_FXT1_3DFX:
-        alignment = 8;
+        *w = 8;
+        *h = 4;
+        break;
+
+    case GL_RGB_S3TC:
+    case GL_RGB4_S3TC:
+    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+    case GL_RGBA_S3TC:
+    case GL_RGBA4_S3TC:
+    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+        *w = 4;
+        *h = 4;
         break;
 
     default:
+        *w = 4;
+        *h = 2;
         break;
     }
-
-    return alignment;
 }
 
 void i945_miptree_layout_2d( struct intel_context *intel,
 			     struct intel_mipmap_tree *mt,
 			     uint32_t tiling )
 {
-   GLint align_h = 2, align_w = 4;
+   GLuint align_h = 2, align_w = 4;
    GLuint level;
    GLuint x = 0;
    GLuint y = 0;
@@ -64,9 +75,9 @@ void i945_miptree_layout_2d( struct intel_context *intel,
    GLuint height = mt->height0;
 
    mt->pitch = mt->width0;
+   intel_get_texture_alignment_unit(mt->internal_format, &align_w, &align_h);
 
    if (mt->compressed) {
-       align_w = intel_compressed_alignment(mt->internal_format);
        mt->pitch = ALIGN(mt->width0, align_w);
    }
 

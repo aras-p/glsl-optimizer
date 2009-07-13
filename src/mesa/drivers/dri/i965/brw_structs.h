@@ -823,7 +823,9 @@ struct brw_gs_unit_state
 
    struct
    {
-      GLuint pad0:10;
+      GLuint pad0:8;
+      GLuint rendering_enable:1; /* for IGDNG */
+      GLuint pad4:1;
       GLuint stats_enable:1; 
       GLuint nr_urb_entries:7; 
       GLuint pad1:1;
@@ -931,6 +933,28 @@ struct brw_wm_unit_state
    
    GLfloat global_depth_offset_constant;  
    GLfloat global_depth_offset_scale;   
+   
+   /* for IGDNG only */
+   struct {
+      GLuint pad0:1;
+      GLuint grf_reg_count_1:3; 
+      GLuint pad1:2;
+      GLuint kernel_start_pointer_1:26;
+   } wm8;       
+
+   struct {
+      GLuint pad0:1;
+      GLuint grf_reg_count_2:3; 
+      GLuint pad1:2;
+      GLuint kernel_start_pointer_2:26;
+   } wm9;       
+
+   struct {
+      GLuint pad0:1;
+      GLuint grf_reg_count_3:3; 
+      GLuint pad1:2;
+      GLuint kernel_start_pointer_3:26;
+   } wm10;       
 };
 
 struct brw_sampler_default_color {
@@ -1306,6 +1330,14 @@ struct brw_instruction
 	 GLuint pad1:6;
       } ia16;
 
+       struct 
+       {
+           GLuint pad:26;
+           GLuint end_of_thread:1;
+           GLuint pad1:1;
+           GLuint sfid:4;
+       } send_igdng;  /* for IGDNG only */
+
    } bits2;
 
    union
@@ -1393,6 +1425,21 @@ struct brw_instruction
       } math;
 
       struct {
+	 GLuint function:4;
+	 GLuint int_type:1;
+	 GLuint precision:1;
+	 GLuint saturate:1;
+	 GLuint data_type:1;
+	 GLuint snapshot:1;
+	 GLuint pad0:10;
+	 GLuint header_present:1;
+	 GLuint response_length:5;
+	 GLuint msg_length:4;
+	 GLuint pad1:2;
+	 GLuint end_of_thread:1;
+      } math_igdng;
+
+      struct {
 	 GLuint binding_table_index:8;
 	 GLuint sampler:4;
 	 GLuint return_format:2; 
@@ -1415,7 +1462,36 @@ struct brw_instruction
          GLuint end_of_thread:1;
       } sampler_g4x;
 
+      struct {
+	 GLuint binding_table_index:8;
+	 GLuint sampler:4;
+	 GLuint msg_type:4;
+	 GLuint simd_mode:2;
+	 GLuint pad0:1;
+	 GLuint header_present:1;
+	 GLuint response_length:5;
+	 GLuint msg_length:4;
+	 GLuint pad1:2;
+	 GLuint end_of_thread:1;
+      } sampler_igdng;
+
       struct brw_urb_immediate urb;
+
+      struct {
+	 GLuint opcode:4;
+	 GLuint offset:6;
+	 GLuint swizzle_control:2; 
+	 GLuint pad:1;
+	 GLuint allocate:1;
+	 GLuint used:1;
+	 GLuint complete:1;
+	 GLuint pad0:3;
+	 GLuint header_present:1;
+	 GLuint response_length:5;
+	 GLuint msg_length:4;
+	 GLuint pad1:2;
+	 GLuint end_of_thread:1;
+      } urb_igdng;
 
       struct {
 	 GLuint binding_table_index:8;
@@ -1431,6 +1507,19 @@ struct brw_instruction
 
       struct {
 	 GLuint binding_table_index:8;
+	 GLuint msg_control:3;  
+	 GLuint msg_type:3;  
+	 GLuint target_cache:2;    
+	 GLuint pad0:3;
+	 GLuint header_present:1;
+	 GLuint response_length:5;
+	 GLuint msg_length:4;
+	 GLuint pad1:2;
+	 GLuint end_of_thread:1;
+      } dp_read_igdng;
+
+      struct {
+	 GLuint binding_table_index:8;
 	 GLuint msg_control:3;
 	 GLuint pixel_scoreboard_clear:1;
 	 GLuint msg_type:3;    
@@ -1443,6 +1532,20 @@ struct brw_instruction
       } dp_write;
 
       struct {
+	 GLuint binding_table_index:8;
+	 GLuint msg_control:3;
+	 GLuint pixel_scoreboard_clear:1;
+	 GLuint msg_type:3;    
+	 GLuint send_commit_msg:1;
+	 GLuint pad0:3;
+	 GLuint header_present:1;
+	 GLuint response_length:5;
+	 GLuint msg_length:4;
+	 GLuint pad1:2;
+	 GLuint end_of_thread:1;
+      } dp_write_igdng;
+
+      struct {
 	 GLuint pad:16;
 	 GLuint response_length:4;
 	 GLuint msg_length:4;
@@ -1450,6 +1553,15 @@ struct brw_instruction
 	 GLuint pad1:3;
 	 GLuint end_of_thread:1;
       } generic;
+
+      struct {
+	 GLuint pad:19;
+	 GLuint header_present:1;
+	 GLuint response_length:5;
+	 GLuint msg_length:4;
+	 GLuint pad1:2;
+	 GLuint end_of_thread:1;
+      } generic_igdng;
 
       GLint d;
       GLuint ud;

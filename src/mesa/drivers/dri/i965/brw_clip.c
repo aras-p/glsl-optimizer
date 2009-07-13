@@ -65,21 +65,31 @@ static void compile_clip_prog( struct brw_context *brw,
    c.func.single_program_flow = 1;
 
    c.key = *key;
-
+   c.need_ff_sync = BRW_IS_IGDNG(brw);
 
    /* Need to locate the two positions present in vertex + header.
     * These are currently hardcoded:
     */
    c.header_position_offset = ATTR_SIZE;
 
-   for (i = 0, delta = REG_SIZE; i < VERT_RESULT_MAX; i++)
+   if (BRW_IS_IGDNG(brw))
+       delta = 3 * REG_SIZE;
+   else
+       delta = REG_SIZE;
+
+   for (i = 0; i < VERT_RESULT_MAX; i++)
       if (c.key.attrs & (1<<i)) {
 	 c.offset[i] = delta;
 	 delta += ATTR_SIZE;
       }
 
    c.nr_attrs = brw_count_bits(c.key.attrs);
-   c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
+   
+   if (BRW_IS_IGDNG(brw))
+       c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
+   else
+       c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
+
    c.nr_bytes = c.nr_regs * REG_SIZE;
 
    c.prog_data.clip_mode = c.key.clip_mode; /* XXX */
@@ -148,7 +158,11 @@ static void upload_clip_prog(struct brw_context *brw)
    key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
    /* _NEW_TRANSFORM */
    key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
-   key.clip_mode = BRW_CLIPMODE_NORMAL;
+
+   if (BRW_IS_IGDNG(brw))
+       key.clip_mode = BRW_CLIPMODE_KERNEL_CLIP;
+   else
+       key.clip_mode = BRW_CLIPMODE_NORMAL;
 
    /* _NEW_POLYGON */
    if (key.primitive == GL_TRIANGLES) {

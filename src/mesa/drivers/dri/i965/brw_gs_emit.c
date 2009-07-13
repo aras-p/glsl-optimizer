@@ -101,6 +101,23 @@ static void brw_gs_emit_vue(struct brw_gs_compile *c,
 		 BRW_URB_SWIZZLE_NONE);
 }
 
+void brw_gs_ff_sync(struct brw_gs_compile *c, int num_prim)
+{
+	struct brw_compile *p = &c->func;
+	brw_MOV(p, get_element_ud(c->reg.R0, 1), brw_imm_ud(num_prim));
+	brw_ff_sync(p, 
+				c->reg.R0,
+				0,
+				c->reg.R0,
+				1,	
+				1,		/* used */
+				1,  	/* msg length */
+				1,		/* response length */
+				0,		/* eot */
+				1,		/* write compelete */
+				0,		/* urb offset */
+				BRW_URB_SWIZZLE_NONE);
+}
 
 
 void brw_gs_quads( struct brw_gs_compile *c )
@@ -110,6 +127,8 @@ void brw_gs_quads( struct brw_gs_compile *c )
    /* Use polygons for correct edgeflag behaviour. Note that vertex 3
     * is the PV for quads, but vertex 0 for polygons:
     */
+   if (c->need_ff_sync)
+	   brw_gs_ff_sync(c, 1);    
    brw_gs_emit_vue(c, c->reg.vertex[3], 0, ((_3DPRIM_POLYGON << 2) | R02_PRIM_START));
    brw_gs_emit_vue(c, c->reg.vertex[0], 0, (_3DPRIM_POLYGON << 2));
    brw_gs_emit_vue(c, c->reg.vertex[1], 0, (_3DPRIM_POLYGON << 2)); 
@@ -120,6 +139,8 @@ void brw_gs_quad_strip( struct brw_gs_compile *c )
 {
    brw_gs_alloc_regs(c, 4);
    
+   if (c->need_ff_sync)
+	   brw_gs_ff_sync(c, 1);      
    brw_gs_emit_vue(c, c->reg.vertex[2], 0, ((_3DPRIM_POLYGON << 2) | R02_PRIM_START));
    brw_gs_emit_vue(c, c->reg.vertex[3], 0, (_3DPRIM_POLYGON << 2));
    brw_gs_emit_vue(c, c->reg.vertex[0], 0, (_3DPRIM_POLYGON << 2)); 
@@ -129,6 +150,9 @@ void brw_gs_quad_strip( struct brw_gs_compile *c )
 void brw_gs_tris( struct brw_gs_compile *c )
 {
    brw_gs_alloc_regs(c, 3);
+
+   if (c->need_ff_sync)
+	   brw_gs_ff_sync(c, 1);      
    brw_gs_emit_vue(c, c->reg.vertex[0], 0, ((_3DPRIM_TRILIST << 2) | R02_PRIM_START));
    brw_gs_emit_vue(c, c->reg.vertex[1], 0, (_3DPRIM_TRILIST << 2));
    brw_gs_emit_vue(c, c->reg.vertex[2], 1, ((_3DPRIM_TRILIST << 2) | R02_PRIM_END));
@@ -137,6 +161,9 @@ void brw_gs_tris( struct brw_gs_compile *c )
 void brw_gs_lines( struct brw_gs_compile *c )
 {
    brw_gs_alloc_regs(c, 2);
+
+   if (c->need_ff_sync)
+	   brw_gs_ff_sync(c, 1);      
    brw_gs_emit_vue(c, c->reg.vertex[0], 0, ((_3DPRIM_LINESTRIP << 2) | R02_PRIM_START));
    brw_gs_emit_vue(c, c->reg.vertex[1], 1, ((_3DPRIM_LINESTRIP << 2) | R02_PRIM_END));
 }
@@ -144,6 +171,9 @@ void brw_gs_lines( struct brw_gs_compile *c )
 void brw_gs_points( struct brw_gs_compile *c )
 {
    brw_gs_alloc_regs(c, 1);
+
+   if (c->need_ff_sync)
+	   brw_gs_ff_sync(c, 1);      
    brw_gs_emit_vue(c, c->reg.vertex[0], 1, ((_3DPRIM_POINTLIST << 2) | R02_PRIM_START | R02_PRIM_END));
 }
 

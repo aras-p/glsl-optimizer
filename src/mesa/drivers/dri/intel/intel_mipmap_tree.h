@@ -196,6 +196,11 @@ void intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
                                   GLuint x, GLuint y,
                                   GLuint w, GLuint h, GLuint d);
 
+void intel_miptree_set_image_offset_ex(struct intel_mipmap_tree *mt,
+                                       GLuint level,
+                                       GLuint img, GLuint x, GLuint y,
+                                       GLuint offset);
+
 void intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
                                     GLuint level,
                                     GLuint img, GLuint x, GLuint y);

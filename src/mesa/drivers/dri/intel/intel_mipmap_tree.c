@@ -353,21 +353,29 @@ intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
 }
 
 
-
 void
-intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
-			       GLuint level, GLuint img,
-			       GLuint x, GLuint y)
+intel_miptree_set_image_offset_ex(struct intel_mipmap_tree *mt,
+                                  GLuint level, GLuint img,
+                                  GLuint x, GLuint y, 
+                                  GLuint offset)
 {
    if (img == 0 && level == 0)
       assert(x == 0 && y == 0);
 
    assert(img < mt->level[level].nr_images);
 
-   mt->level[level].image_offset[img] = (x + y * mt->pitch) * mt->cpp;
+   mt->level[level].image_offset[img] = (x + y * mt->pitch) * mt->cpp + offset;
 
    DBG("%s level %d img %d pos %d,%d image_offset %x\n",
        __FUNCTION__, level, img, x, y, mt->level[level].image_offset[img]);
+}
+
+void
+intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
+			       GLuint level, GLuint img,
+			       GLuint x, GLuint y)
+{
+    intel_miptree_set_image_offset_ex(mt, level, img, x, y, 0);
 }
 
 
@@ -483,7 +491,7 @@ intel_miptree_image_data(struct intel_context *intel,
    }
 }
 
-extern GLuint intel_compressed_alignment(GLenum);
+extern void intel_get_texture_alignment_unit(GLenum, GLuint *, GLuint *);
 /* Copy mipmap image between trees
  */
 void
@@ -503,9 +511,11 @@ intel_miptree_image_copy(struct intel_context *intel,
    GLboolean success;
 
    if (dst->compressed) {
-       GLuint alignment = intel_compressed_alignment(dst->internal_format);
+       GLuint align_w, align_h;
+
+       intel_get_texture_alignment_unit(dst->internal_format, &align_w, &align_h);
        height = (height + 3) / 4;
-       width = ((width + alignment - 1) & ~(alignment - 1));
+       width = ALIGN(width, align_w);
    }
 
    for (i = 0; i < depth; i++) {

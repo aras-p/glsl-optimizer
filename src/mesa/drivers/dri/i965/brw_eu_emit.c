@@ -241,7 +241,8 @@ void brw_set_src1( struct brw_instruction *insn,
 
 
 
-static void brw_set_math_message( struct brw_instruction *insn,
+static void brw_set_math_message( struct brw_context *brw,
+				  struct brw_instruction *insn,
 				  GLuint msg_length,
 				  GLuint response_length,
 				  GLuint function,
@@ -252,18 +253,35 @@ static void brw_set_math_message( struct brw_instruction *insn,
 {
    brw_set_src1(insn, brw_imm_d(0));
 
-   insn->bits3.math.function = function;
-   insn->bits3.math.int_type = integer_type;
-   insn->bits3.math.precision = low_precision;
-   insn->bits3.math.saturate = saturate;
-   insn->bits3.math.data_type = dataType;
-   insn->bits3.math.response_length = response_length;
-   insn->bits3.math.msg_length = msg_length;
-   insn->bits3.math.msg_target = BRW_MESSAGE_TARGET_MATH;
-   insn->bits3.math.end_of_thread = 0;
+   if (BRW_IS_IGDNG(brw)) {
+       insn->bits3.math_igdng.function = function;
+       insn->bits3.math_igdng.int_type = integer_type;
+       insn->bits3.math_igdng.precision = low_precision;
+       insn->bits3.math_igdng.saturate = saturate;
+       insn->bits3.math_igdng.data_type = dataType;
+       insn->bits3.math_igdng.snapshot = 0;
+       insn->bits3.math_igdng.header_present = 0;
+       insn->bits3.math_igdng.response_length = response_length;
+       insn->bits3.math_igdng.msg_length = msg_length;
+       insn->bits3.math_igdng.end_of_thread = 0;
+       insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_MATH;
+       insn->bits2.send_igdng.end_of_thread = 0;
+   } else {
+       insn->bits3.math.function = function;
+       insn->bits3.math.int_type = integer_type;
+       insn->bits3.math.precision = low_precision;
+       insn->bits3.math.saturate = saturate;
+       insn->bits3.math.data_type = dataType;
+       insn->bits3.math.response_length = response_length;
+       insn->bits3.math.msg_length = msg_length;
+       insn->bits3.math.msg_target = BRW_MESSAGE_TARGET_MATH;
+       insn->bits3.math.end_of_thread = 0;
+   }
 }
 
-static void brw_set_urb_message( struct brw_instruction *insn,
+
+static void brw_set_ff_sync_message( struct brw_context *brw,
+				 struct brw_instruction *insn,
 				 GLboolean allocate,
 				 GLboolean used,
 				 GLuint msg_length,
@@ -273,21 +291,64 @@ static void brw_set_urb_message( struct brw_instruction *insn,
 				 GLuint offset,
 				 GLuint swizzle_control )
 {
-   brw_set_src1(insn, brw_imm_d(0));
+	brw_set_src1(insn, brw_imm_d(0));
 
-   insn->bits3.urb.opcode = 0;	/* ? */
-   insn->bits3.urb.offset = offset;
-   insn->bits3.urb.swizzle_control = swizzle_control;
-   insn->bits3.urb.allocate = allocate;
-   insn->bits3.urb.used = used;	/* ? */
-   insn->bits3.urb.complete = complete;
-   insn->bits3.urb.response_length = response_length;
-   insn->bits3.urb.msg_length = msg_length;
-   insn->bits3.urb.msg_target = BRW_MESSAGE_TARGET_URB;
-   insn->bits3.urb.end_of_thread = end_of_thread;
+	insn->bits3.urb_igdng.opcode = 1;
+	insn->bits3.urb_igdng.offset = offset;
+	insn->bits3.urb_igdng.swizzle_control = swizzle_control;
+	insn->bits3.urb_igdng.allocate = allocate;
+	insn->bits3.urb_igdng.used = used;
+	insn->bits3.urb_igdng.complete = complete;
+	insn->bits3.urb_igdng.header_present = 1;
+	insn->bits3.urb_igdng.response_length = response_length;
+	insn->bits3.urb_igdng.msg_length = msg_length;
+	insn->bits3.urb_igdng.end_of_thread = end_of_thread;
+	insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_URB;
+	insn->bits2.send_igdng.end_of_thread = end_of_thread;
 }
 
-static void brw_set_dp_write_message( struct brw_instruction *insn,
+static void brw_set_urb_message( struct brw_context *brw,
+				 struct brw_instruction *insn,
+				 GLboolean allocate,
+				 GLboolean used,
+				 GLuint msg_length,
+				 GLuint response_length,
+				 GLboolean end_of_thread,
+				 GLboolean complete,
+				 GLuint offset,
+				 GLuint swizzle_control )
+{
+    brw_set_src1(insn, brw_imm_d(0));
+
+    if (BRW_IS_IGDNG(brw)) {
+        insn->bits3.urb_igdng.opcode = 0;	/* ? */
+        insn->bits3.urb_igdng.offset = offset;
+        insn->bits3.urb_igdng.swizzle_control = swizzle_control;
+        insn->bits3.urb_igdng.allocate = allocate;
+        insn->bits3.urb_igdng.used = used;	/* ? */
+        insn->bits3.urb_igdng.complete = complete;
+        insn->bits3.urb_igdng.header_present = 1;
+        insn->bits3.urb_igdng.response_length = response_length;
+        insn->bits3.urb_igdng.msg_length = msg_length;
+        insn->bits3.urb_igdng.end_of_thread = end_of_thread;
+        insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_URB;
+        insn->bits2.send_igdng.end_of_thread = end_of_thread;
+    } else {
+        insn->bits3.urb.opcode = 0;	/* ? */
+        insn->bits3.urb.offset = offset;
+        insn->bits3.urb.swizzle_control = swizzle_control;
+        insn->bits3.urb.allocate = allocate;
+        insn->bits3.urb.used = used;	/* ? */
+        insn->bits3.urb.complete = complete;
+        insn->bits3.urb.response_length = response_length;
+        insn->bits3.urb.msg_length = msg_length;
+        insn->bits3.urb.msg_target = BRW_MESSAGE_TARGET_URB;
+        insn->bits3.urb.end_of_thread = end_of_thread;
+    }
+}
+
+static void brw_set_dp_write_message( struct brw_context *brw,
+				      struct brw_instruction *insn,
 				      GLuint binding_table_index,
 				      GLuint msg_control,
 				      GLuint msg_type,
@@ -298,18 +359,33 @@ static void brw_set_dp_write_message( struct brw_instruction *insn,
 {
    brw_set_src1(insn, brw_imm_d(0));
 
-   insn->bits3.dp_write.binding_table_index = binding_table_index;
-   insn->bits3.dp_write.msg_control = msg_control;
-   insn->bits3.dp_write.pixel_scoreboard_clear = pixel_scoreboard_clear;
-   insn->bits3.dp_write.msg_type = msg_type;
-   insn->bits3.dp_write.send_commit_msg = 0;
-   insn->bits3.dp_write.response_length = response_length;
-   insn->bits3.dp_write.msg_length = msg_length;
-   insn->bits3.dp_write.msg_target = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
-   insn->bits3.urb.end_of_thread = end_of_thread;
+   if (BRW_IS_IGDNG(brw)) {
+       insn->bits3.dp_write_igdng.binding_table_index = binding_table_index;
+       insn->bits3.dp_write_igdng.msg_control = msg_control;
+       insn->bits3.dp_write_igdng.pixel_scoreboard_clear = pixel_scoreboard_clear;
+       insn->bits3.dp_write_igdng.msg_type = msg_type;
+       insn->bits3.dp_write_igdng.send_commit_msg = 0;
+       insn->bits3.dp_write_igdng.header_present = 1;
+       insn->bits3.dp_write_igdng.response_length = response_length;
+       insn->bits3.dp_write_igdng.msg_length = msg_length;
+       insn->bits3.dp_write_igdng.end_of_thread = end_of_thread;
+       insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
+       insn->bits2.send_igdng.end_of_thread = end_of_thread;
+   } else {
+       insn->bits3.dp_write.binding_table_index = binding_table_index;
+       insn->bits3.dp_write.msg_control = msg_control;
+       insn->bits3.dp_write.pixel_scoreboard_clear = pixel_scoreboard_clear;
+       insn->bits3.dp_write.msg_type = msg_type;
+       insn->bits3.dp_write.send_commit_msg = 0;
+       insn->bits3.dp_write.response_length = response_length;
+       insn->bits3.dp_write.msg_length = msg_length;
+       insn->bits3.dp_write.msg_target = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
+       insn->bits3.dp_write.end_of_thread = end_of_thread;
+   }
 }
 
-static void brw_set_dp_read_message( struct brw_instruction *insn,
+static void brw_set_dp_read_message( struct brw_context *brw,
+				      struct brw_instruction *insn,
 				      GLuint binding_table_index,
 				      GLuint msg_control,
 				      GLuint msg_type,
@@ -320,15 +396,29 @@ static void brw_set_dp_read_message( struct brw_instruction *insn,
 {
    brw_set_src1(insn, brw_imm_d(0));
 
-   insn->bits3.dp_read.binding_table_index = binding_table_index; /*0:7*/
-   insn->bits3.dp_read.msg_control = msg_control;  /*8:11*/
-   insn->bits3.dp_read.msg_type = msg_type;  /*12:13*/
-   insn->bits3.dp_read.target_cache = target_cache;  /*14:15*/
-   insn->bits3.dp_read.response_length = response_length;  /*16:19*/
-   insn->bits3.dp_read.msg_length = msg_length;  /*20:23*/
-   insn->bits3.dp_read.msg_target = BRW_MESSAGE_TARGET_DATAPORT_READ; /*24:27*/
-   insn->bits3.dp_read.pad1 = 0;  /*28:30*/
-   insn->bits3.dp_read.end_of_thread = end_of_thread;  /*31*/
+   if (BRW_IS_IGDNG(brw)) {
+       insn->bits3.dp_read_igdng.binding_table_index = binding_table_index;
+       insn->bits3.dp_read_igdng.msg_control = msg_control;
+       insn->bits3.dp_read_igdng.msg_type = msg_type;
+       insn->bits3.dp_read_igdng.target_cache = target_cache;
+       insn->bits3.dp_read_igdng.header_present = 1;
+       insn->bits3.dp_read_igdng.response_length = response_length;
+       insn->bits3.dp_read_igdng.msg_length = msg_length;
+       insn->bits3.dp_read_igdng.pad1 = 0;
+       insn->bits3.dp_read_igdng.end_of_thread = end_of_thread;
+       insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_DATAPORT_READ;
+       insn->bits2.send_igdng.end_of_thread = end_of_thread;
+   } else {
+       insn->bits3.dp_read.binding_table_index = binding_table_index; /*0:7*/
+       insn->bits3.dp_read.msg_control = msg_control;  /*8:11*/
+       insn->bits3.dp_read.msg_type = msg_type;  /*12:13*/
+       insn->bits3.dp_read.target_cache = target_cache;  /*14:15*/
+       insn->bits3.dp_read.response_length = response_length;  /*16:19*/
+       insn->bits3.dp_read.msg_length = msg_length;  /*20:23*/
+       insn->bits3.dp_read.msg_target = BRW_MESSAGE_TARGET_DATAPORT_READ; /*24:27*/
+       insn->bits3.dp_read.pad1 = 0;  /*28:30*/
+       insn->bits3.dp_read.end_of_thread = end_of_thread;  /*31*/
+   }
 }
 
 static void brw_set_sampler_message(struct brw_context *brw,
@@ -338,11 +428,25 @@ static void brw_set_sampler_message(struct brw_context *brw,
                                     GLuint msg_type,
                                     GLuint response_length,
                                     GLuint msg_length,
-                                    GLboolean eot)
+                                    GLboolean eot,
+                                    GLuint header_present,
+                                    GLuint simd_mode)
 {
+   assert(eot == 0);
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_G4X(brw)) {
+   if (BRW_IS_IGDNG(brw)) {
+      insn->bits3.sampler_igdng.binding_table_index = binding_table_index;
+      insn->bits3.sampler_igdng.sampler = sampler;
+      insn->bits3.sampler_igdng.msg_type = msg_type;
+      insn->bits3.sampler_igdng.simd_mode = simd_mode;
+      insn->bits3.sampler_igdng.header_present = header_present;
+      insn->bits3.sampler_igdng.response_length = response_length;
+      insn->bits3.sampler_igdng.msg_length = msg_length;
+      insn->bits3.sampler_igdng.end_of_thread = eot;
+      insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_SAMPLER;
+      insn->bits2.send_igdng.end_of_thread = eot;
+   } else if (BRW_IS_G4X(brw)) {
       insn->bits3.sampler_g4x.binding_table_index = binding_table_index;
       insn->bits3.sampler_g4x.sampler = sampler;
       insn->bits3.sampler_g4x.msg_type = msg_type;
@@ -729,11 +833,15 @@ void brw_land_fwd_jump(struct brw_compile *p,
 		       struct brw_instruction *jmp_insn)
 {
    struct brw_instruction *landing = &p->store[p->nr_insn];
+   GLuint jmpi = 1;
+
+   if (BRW_IS_IGDNG(p->brw))
+       jmpi = 2;
 
    assert(jmp_insn->header.opcode == BRW_OPCODE_JMPI);
    assert(jmp_insn->bits1.da1.src1_reg_file = BRW_IMMEDIATE_VALUE);
 
-   jmp_insn->bits3.ud = (landing - jmp_insn) - 1; 
+   jmp_insn->bits3.ud = jmpi * ((landing - jmp_insn) - 1);
 }
 
 
@@ -798,7 +906,8 @@ void brw_math( struct brw_compile *p,
 
    brw_set_dest(insn, dest);
    brw_set_src0(insn, src);
-   brw_set_math_message(insn, 
+   brw_set_math_message(p->brw,
+			insn, 
 			msg_length, response_length, 
 			function,
 			BRW_MATH_INTEGER_UNSIGNED,
@@ -834,7 +943,8 @@ void brw_math_16( struct brw_compile *p,
 
    brw_set_dest(insn, dest);
    brw_set_src0(insn, src);
-   brw_set_math_message(insn, 
+   brw_set_math_message(p->brw,
+			insn, 
 			msg_length, response_length, 
 			function,
 			BRW_MATH_INTEGER_UNSIGNED,
@@ -850,7 +960,8 @@ void brw_math_16( struct brw_compile *p,
 
    brw_set_dest(insn, offset(dest,1));
    brw_set_src0(insn, src);
-   brw_set_math_message(insn, 
+   brw_set_math_message(p->brw, 
+			insn, 
 			msg_length, response_length, 
 			function,
 			BRW_MATH_INTEGER_UNSIGNED,
@@ -897,7 +1008,8 @@ void brw_dp_WRITE_16( struct brw_compile *p,
       brw_set_dest(insn, dest);
       brw_set_src0(insn, src);
 
-      brw_set_dp_write_message(insn,
+      brw_set_dp_write_message(p->brw,
+			       insn,
 			       255, /* binding table index (255=stateless) */
 			       BRW_DATAPORT_OWORD_BLOCK_4_OWORDS, /* msg_control */
 			       BRW_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE, /* msg_type */
@@ -942,7 +1054,8 @@ void brw_dp_READ_16( struct brw_compile *p,
       brw_set_dest(insn, dest);	/* UW? */
       brw_set_src0(insn, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
 
-      brw_set_dp_read_message(insn,
+      brw_set_dp_read_message(p->brw,
+			      insn,
 			      255, /* binding table index (255=stateless) */
 			      3,  /* msg_control (3 means 4 Owords) */
 			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
@@ -999,7 +1112,8 @@ void brw_dp_READ_4( struct brw_compile *p,
       brw_set_dest(insn, dest);
       brw_set_src0(insn, brw_null_reg());
 
-      brw_set_dp_read_message(insn,
+      brw_set_dp_read_message(p->brw,
+			      insn,
 			      bind_table_index,
 			      0,  /* msg_control (0 means 1 Oword) */
 			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
@@ -1070,7 +1184,8 @@ void brw_dp_READ_4_vs(struct brw_compile *p,
       brw_set_dest(insn, dest);
       brw_set_src0(insn, brw_null_reg());
 
-      brw_set_dp_read_message(insn,
+      brw_set_dp_read_message(p->brw,
+			      insn,
 			      bind_table_index,
 			      oword,  /* 0 = lower Oword, 1 = upper Oword */
 			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
@@ -1100,7 +1215,8 @@ void brw_fb_WRITE(struct brw_compile *p,
   
    brw_set_dest(insn, dest);
    brw_set_src0(insn, src0);
-   brw_set_dp_write_message(insn,
+   brw_set_dp_write_message(p->brw,
+			    insn,
 			    binding_table_index,
 			    BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE, /* msg_control */
 			    BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE, /* msg_type */
@@ -1126,7 +1242,9 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint msg_type,
 		GLuint response_length,
 		GLuint msg_length,
-		GLboolean eot)
+		GLboolean eot,
+		GLuint header_present,
+		GLuint simd_mode)
 {
    GLboolean need_stall = 0;
    
@@ -1201,7 +1319,9 @@ void brw_SAMPLE(struct brw_compile *p,
 			      msg_type,
 			      response_length, 
 			      msg_length,
-			      eot);
+			      eot,
+			      header_present,
+			      simd_mode);
    }
 
    if (need_stall) {
@@ -1244,7 +1364,8 @@ void brw_urb_WRITE(struct brw_compile *p,
 
    insn->header.destreg__conditonalmod = msg_reg_nr;
 
-   brw_set_urb_message(insn,
+   brw_set_urb_message(p->brw,
+		       insn,
 		       allocate,
 		       used,
 		       msg_length,
@@ -1255,3 +1376,37 @@ void brw_urb_WRITE(struct brw_compile *p,
 		       swizzle);
 }
 
+void brw_ff_sync(struct brw_compile *p,
+		   struct brw_reg dest,
+		   GLuint msg_reg_nr,
+		   struct brw_reg src0,
+		   GLboolean allocate,
+		   GLboolean used,
+		   GLuint msg_length,
+		   GLuint response_length,
+		   GLboolean eot,
+		   GLboolean writes_complete,
+		   GLuint offset,
+		   GLuint swizzle)
+{
+   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+
+   assert(msg_length < 16);
+
+   brw_set_dest(insn, dest);
+   brw_set_src0(insn, src0);
+   brw_set_src1(insn, brw_imm_d(0));
+
+   insn->header.destreg__conditonalmod = msg_reg_nr;
+
+   brw_set_ff_sync_message(p->brw,
+		       insn,
+		       allocate,
+		       used,
+		       msg_length,
+		       response_length, 
+		       eot, 
+		       writes_complete, 
+		       offset,
+		       swizzle);
+}

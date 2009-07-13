@@ -71,7 +71,9 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
       key->max_threads = 1;
    else {
       /* WM maximum threads is number of EUs times number of threads per EU. */
-      if (BRW_IS_G4X(brw))
+      if (BRW_IS_IGDNG(brw))
+         key->max_threads = 12 * 6;
+      else if (BRW_IS_G4X(brw))
 	 key->max_threads = 10 * 5;
       else
 	 key->max_threads = 8 * 4;
@@ -141,7 +143,11 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    wm.thread0.kernel_start_pointer = brw->wm.prog_bo->offset >> 6; /* reloc */
    wm.thread1.depth_coef_urb_read_offset = 1;
    wm.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
-   wm.thread1.binding_table_entry_count = key->nr_surfaces;
+
+   if (BRW_IS_IGDNG(brw))
+      wm.thread1.binding_table_entry_count = 0; /* hardware requirement */
+   else
+      wm.thread1.binding_table_entry_count = key->nr_surfaces;
 
    if (key->total_scratch != 0) {
       wm.thread2.scratch_space_base_pointer =
@@ -158,7 +164,11 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    wm.thread3.const_urb_entry_read_length = key->curb_entry_read_length;
    wm.thread3.const_urb_entry_read_offset = key->curbe_offset * 2;
 
-   wm.wm4.sampler_count = (key->sampler_count + 1) / 4;
+   if (BRW_IS_IGDNG(brw)) 
+      wm.wm4.sampler_count = 0; /* hardware requirement */
+   else
+      wm.wm4.sampler_count = (key->sampler_count + 1) / 4;
+
    if (brw->wm.sampler_bo != NULL) {
       /* reloc */
       wm.wm4.sampler_state_pointer = brw->wm.sampler_bo->offset >> 5;

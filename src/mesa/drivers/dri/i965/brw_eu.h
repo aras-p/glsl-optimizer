@@ -816,6 +816,19 @@ void brw_urb_WRITE(struct brw_compile *p,
 		   GLuint offset,
 		   GLuint swizzle);
 
+void brw_ff_sync(struct brw_compile *p,
+		   struct brw_reg dest,
+		   GLuint msg_reg_nr,
+		   struct brw_reg src0,
+		   GLboolean allocate,
+		   GLboolean used,
+		   GLuint msg_length,
+		   GLuint response_length,
+		   GLboolean eot,
+		   GLboolean writes_complete,
+		   GLuint offset,
+		   GLuint swizzle);
+
 void brw_fb_WRITE(struct brw_compile *p,
 		   struct brw_reg dest,
 		   GLuint msg_reg_nr,
@@ -835,7 +848,9 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint msg_type,
 		GLuint response_length,
 		GLuint msg_length,
-		GLboolean eot);
+		GLboolean eot,
+		GLuint header_present,
+		GLuint simd_mode);
 
 void brw_math_16( struct brw_compile *p,
 		  struct brw_reg dest,
