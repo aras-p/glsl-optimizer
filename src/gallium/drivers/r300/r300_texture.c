@@ -73,12 +73,15 @@ static void r300_setup_miptree(struct r300_texture* tex)
         base->nblocksx[i] = pf_get_nblocksx(&base->block, base->width[i]);
         base->nblocksy[i] = pf_get_nblocksy(&base->block, base->width[i]);
 
-        /* Radeons enjoy things in multiples of 32. */
-        /* XXX this can be 32 when POT */
-        stride = (base->nblocksx[i] * base->block.size + 63) & ~63;
+        /* Radeons enjoy things in multiples of 64.
+         *
+         * XXX
+         * POT, uncompressed, unmippmapped textures can be aligned to 32,
+         * instead of 64. */
+        stride = align(base->nblocksx[i] * base->block.size, 64);
         size = stride * base->nblocksy[i] * base->depth[i];
 
-        tex->offset[i] = (tex->size + 63) & ~63;
+        tex->offset[i] = align(tex->size, 64);
         tex->size = tex->offset[i] + size;
 
         /* Save stride of first level to the texture. */
