@@ -46,6 +46,7 @@ static struct register_state *get_reg_state(struct nqssadce_state* s, GLuint fil
 	switch(file) {
 	case PROGRAM_TEMPORARY: return &s->Temps[index];
 	case PROGRAM_OUTPUT: return &s->Outputs[index];
+	case PROGRAM_ADDRESS: return &s->Address;
 	default: return 0;
 	}
 }
@@ -114,7 +115,13 @@ static struct prog_instruction* track_used_srcreg(struct nqssadce_state* s,
 		deswz_source = sourced;
 	}
 
-	struct register_state *regstate = get_reg_state(s, inst->SrcReg[src].File, inst->SrcReg[src].Index);
+	struct register_state *regstate;
+
+	if (inst->SrcReg[src].RelAddr)
+		regstate = get_reg_state(s, PROGRAM_ADDRESS, 0);
+	else
+		regstate = get_reg_state(s, inst->SrcReg[src].File, inst->SrcReg[src].Index);
+
 	if (regstate)
 		regstate->Sourced |= deswz_source & 0xf;
 
@@ -178,6 +185,7 @@ static void process_instruction(struct nqssadce_state* s)
 	 * might change the instruction stream under us, so we have
 	 * to be careful with the inst pointer. */
 	switch (inst->Opcode) {
+	case OPCODE_ARL:
 	case OPCODE_DDX:
 	case OPCODE_DDY:
 	case OPCODE_FRC:

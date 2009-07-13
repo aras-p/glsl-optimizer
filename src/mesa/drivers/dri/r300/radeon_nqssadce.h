@@ -58,6 +58,7 @@ struct nqssadce_state {
 	 */
 	struct register_state Temps[MAX_PROGRAM_TEMPS];
 	struct register_state Outputs[VERT_RESULT_MAX];
+	struct register_state Address;
 };
 
 
