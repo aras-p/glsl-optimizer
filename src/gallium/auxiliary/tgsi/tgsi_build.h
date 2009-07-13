@@ -289,6 +289,7 @@ struct tgsi_dst_register
 tgsi_build_dst_register(
    unsigned file,
    unsigned mask,
+   unsigned indirect,
    int index,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header );

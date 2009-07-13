@@ -219,7 +219,6 @@ tgsi_parse_token(
          /*
           * No support for indirect or multi-dimensional addressing.
           */
-         assert( !inst->FullDstRegisters[i].DstRegister.Indirect );
          assert( !inst->FullDstRegisters[i].DstRegister.Dimension );
 
          extended = inst->FullDstRegisters[i].DstRegister.Extended;
@@ -245,6 +244,17 @@ tgsi_parse_token(
             }
 
             extended = token.Extended;
+         }
+
+         if( inst->FullDstRegisters[i].DstRegister.Indirect ) {
+            next_token( ctx, &inst->FullDstRegisters[i].DstRegisterInd );
+
+            /*
+             * No support for indirect or multi-dimensional addressing.
+             */
+            assert( !inst->FullDstRegisters[i].DstRegisterInd.Indirect );
+            assert( !inst->FullDstRegisters[i].DstRegisterInd.Dimension );
+            assert( !inst->FullDstRegisters[i].DstRegisterInd.Extended );
          }
       }
 

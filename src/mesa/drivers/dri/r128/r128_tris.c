@@ -426,7 +426,7 @@ r128_fallback_point( r128ContextPtr rmesa,
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)
 #define _R128_NEW_RENDER_STATE (ANY_FALLBACK_FLAGS | ANY_RASTER_FLAGS)
 
-static void r128ChooseRenderState(GLcontext *ctx)
+void r128ChooseRenderState(GLcontext *ctx)
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint flags = ctx->_TriangleCaps;

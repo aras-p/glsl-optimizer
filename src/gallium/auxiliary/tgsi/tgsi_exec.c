@@ -1395,10 +1395,48 @@ store_dest(
    union tgsi_exec_channel null;
    union tgsi_exec_channel *dst;
    uint execmask = mach->ExecMask;
+   int offset = 0;  /* indirection offset */
+   int index;
 
 #ifdef DEBUG
    check_inf_or_nan(chan);
 #endif
+
+   /* There is an extra source register that indirectly subscripts
+    * a register file. The direct index now becomes an offset
+    * that is being added to the indirect register.
+    *
+    *    file[ind[2].x+1],
+    *    where:
+    *       ind = DstRegisterInd.File
+    *       [2] = DstRegisterInd.Index
+    *       .x = DstRegisterInd.SwizzleX
+    */
+   if (reg->DstRegister.Indirect) {
+      union tgsi_exec_channel index;
+      union tgsi_exec_channel indir_index;
+      uint swizzle;
+
+      /* which address register (always zero for now) */
+      index.i[0] =
+      index.i[1] =
+      index.i[2] =
+      index.i[3] = reg->DstRegisterInd.Index;
+
+      /* get current value of address register[swizzle] */
+      swizzle = tgsi_util_get_src_register_swizzle( &reg->DstRegisterInd, CHAN_X );
+
+      /* fetch values from the address/indirection register */
+      fetch_src_file_channel(
+         mach,
+         reg->DstRegisterInd.File,
+         swizzle,
+         &index,
+         &indir_index );
+
+      /* save indirection offset */
+      offset = (int) indir_index.f[0];
+   }
 
    switch (reg->DstRegister.File) {
    case TGSI_FILE_NULL:
@@ -1406,17 +1444,20 @@ store_dest(
       break;
 
    case TGSI_FILE_OUTPUT:
-      dst = &mach->Outputs[mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0]
-                           + reg->DstRegister.Index].xyzw[chan_index];
+      index = mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0]
+         + reg->DstRegister.Index;
+      dst = &mach->Outputs[offset + index].xyzw[chan_index];
       break;
 
    case TGSI_FILE_TEMPORARY:
-      assert( reg->DstRegister.Index < TGSI_EXEC_NUM_TEMPS );
-      dst = &mach->Temps[reg->DstRegister.Index].xyzw[chan_index];
+      index = reg->DstRegister.Index;
+      assert( index < TGSI_EXEC_NUM_TEMPS );
+      dst = &mach->Temps[offset + index].xyzw[chan_index];
       break;
 
    case TGSI_FILE_ADDRESS:
-      dst = &mach->Addrs[reg->DstRegister.Index].xyzw[chan_index];
+      index = reg->DstRegister.Index;
+      dst = &mach->Addrs[index].xyzw[chan_index];
       break;
 
    default:

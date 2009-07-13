@@ -1144,6 +1144,11 @@ static void vbo_destroy_vertex_list( GLcontext *ctx, void *data )
 
    if ( --node->prim_store->refcount == 0 )
       FREE( node->prim_store );
+
+   if (node->current_data) {
+      FREE(node->current_data);
+      node->current_data = NULL;
+   }
 }
 
 

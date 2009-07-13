@@ -139,7 +139,7 @@ find_translated_vp(struct st_context *st,
          if (fragInputsRead & (1 << inAttr)) {
             stfp->input_to_slot[inAttr] = numIn;
             numIn++;
-            if ((fragInputsRead & FRAG_BIT_FOGC)) {
+            if (((1 << inAttr) & FRAG_BIT_FOGC)) {
                /* leave placeholders for the
                 * extra registers we extract from fog */
                if (stfp->Base.UsesFrontFacing) {

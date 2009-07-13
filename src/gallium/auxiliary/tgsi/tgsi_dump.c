@@ -28,6 +28,7 @@
 #include "util/u_debug.h"
 #include "util/u_string.h"
 #include "util/u_math.h"
+#include "util/u_memory.h"
 #include "tgsi_dump.h"
 #include "tgsi_info.h"
 #include "tgsi_iterate.h"
@@ -108,7 +109,8 @@ static const char *semantic_names[] =
    "FOG",
    "PSIZE",
    "GENERIC",
-   "NORMAL"
+   "NORMAL",
+   "FACE"
 };
 
 static const char *immediate_type_names[] =
@@ -223,6 +225,9 @@ iter_declaration(
    struct tgsi_full_declaration *decl )
 {
    struct dump_ctx *ctx = (struct dump_ctx *)iter;
+
+   assert(Elements(semantic_names) == TGSI_SEMANTIC_COUNT);
+   assert(Elements(interpolate_names) == TGSI_INTERPOLATE_COUNT);
 
    TXT( "DCL " );
 
@@ -355,11 +360,22 @@ iter_instruction(
          CHR( ',' );
       CHR( ' ' );
 
-      _dump_register(
-         ctx,
-         dst->DstRegister.File,
-         dst->DstRegister.Index,
-         dst->DstRegister.Index );
+      if (dst->DstRegister.Indirect) {
+         _dump_register_ind(
+            ctx,
+            dst->DstRegister.File,
+            dst->DstRegister.Index,
+            dst->DstRegisterInd.File,
+            dst->DstRegisterInd.Index,
+            dst->DstRegisterInd.SwizzleX );
+      }
+      else {
+         _dump_register(
+            ctx,
+            dst->DstRegister.File,
+            dst->DstRegister.Index,
+            dst->DstRegister.Index );
+      }
       ENM( dst->DstRegisterExtModulate.Modulate, modulate_names );
       _dump_writemask( ctx, dst->DstRegister.WriteMask );
 

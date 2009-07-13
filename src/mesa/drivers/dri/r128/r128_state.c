@@ -771,6 +771,11 @@ static void r128DDLightModelfv( GLcontext *ctx, GLenum pname,
       FLUSH_BATCH( rmesa );
       updateSpecularLighting(ctx);
    }
+
+   if ( pname == GL_LIGHT_MODEL_TWO_SIDE ) {
+      FLUSH_BATCH( rmesa );
+      r128ChooseRenderState( ctx );
+   }
 }
 
 static void r128DDShadeModel( GLcontext *ctx, GLenum mode )
