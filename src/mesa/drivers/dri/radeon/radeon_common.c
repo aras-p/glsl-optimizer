@@ -751,9 +751,8 @@ void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 		ctx->Driver.Enable(ctx, GL_DEPTH_TEST,
 				   (ctx->Depth.Test && fb->Visual.depthBits > 0));
 		/* Need to update the derived ctx->Stencil._Enabled first */
-		_mesa_update_stencil(ctx);
 		ctx->Driver.Enable(ctx, GL_STENCIL_TEST,
-				   (ctx->Stencil._Enabled && fb->Visual.stencilBits > 0));
+				   (ctx->Stencil.Enabled && fb->Visual.stencilBits > 0));
 	} else {
 		ctx->NewState |= (_NEW_DEPTH | _NEW_STENCIL);
 	}
