@@ -508,11 +508,18 @@ static void radeonColorMask( GLcontext *ctx,
 			     GLboolean b, GLboolean a )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   GLuint mask = radeonPackColor( rmesa->radeon.radeonScreen->cpp,
-				  ctx->Color.ColorMask[RCOMP],
-				  ctx->Color.ColorMask[GCOMP],
-				  ctx->Color.ColorMask[BCOMP],
-				  ctx->Color.ColorMask[ACOMP] );
+   struct radeon_renderbuffer *rrb;
+   GLuint mask;
+
+   rrb = radeon_get_colorbuffer(&rmesa->radeon);
+   if (!rrb)
+     return;
+
+   mask = radeonPackColor( rrb->cpp,
+			   ctx->Color.ColorMask[RCOMP],
+			   ctx->Color.ColorMask[GCOMP],
+			   ctx->Color.ColorMask[BCOMP],
+			   ctx->Color.ColorMask[ACOMP] );
 
    if ( rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK] != mask ) {
       RADEON_STATECHANGE( rmesa, msk );
@@ -1500,11 +1507,17 @@ static void radeonClearColor( GLcontext *ctx, const GLfloat color[4] )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLubyte c[4];
+   struct radeon_renderbuffer *rrb;
+
+   rrb = radeon_get_colorbuffer(&rmesa->radeon);
+   if (!rrb)
+     return;
+     
    CLAMPED_FLOAT_TO_UBYTE(c[0], color[0]);
    CLAMPED_FLOAT_TO_UBYTE(c[1], color[1]);
    CLAMPED_FLOAT_TO_UBYTE(c[2], color[2]);
    CLAMPED_FLOAT_TO_UBYTE(c[3], color[3]);
-   rmesa->radeon.state.color.clear = radeonPackColor( rmesa->radeon.radeonScreen->cpp,
+   rmesa->radeon.state.color.clear = radeonPackColor( rrb->cpp,
 					       c[0], c[1], c[2], c[3] );
 }
 

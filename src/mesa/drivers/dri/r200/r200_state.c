@@ -709,13 +709,19 @@ static void r200ColorMask( GLcontext *ctx,
 			   GLboolean b, GLboolean a )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint mask = radeonPackColor( rmesa->radeon.radeonScreen->cpp,
-				ctx->Color.ColorMask[RCOMP],
-				ctx->Color.ColorMask[GCOMP],
-				ctx->Color.ColorMask[BCOMP],
-				ctx->Color.ColorMask[ACOMP] );
-
+   GLuint mask;
+   struct radeon_renderbuffer *rrb;
    GLuint flag = rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] & ~R200_PLANE_MASK_ENABLE;
+
+   rrb = radeon_get_colorbuffer(&rmesa->radeon);
+   if (!rrb)
+     return;
+   mask = radeonPackColor( rrb->cpp,
+			   ctx->Color.ColorMask[RCOMP],
+			   ctx->Color.ColorMask[GCOMP],
+			   ctx->Color.ColorMask[BCOMP],
+			   ctx->Color.ColorMask[ACOMP] );
+
 
    if (!(r && g && b && a))
       flag |= R200_PLANE_MASK_ENABLE;
@@ -1720,11 +1726,16 @@ static void r200ClearColor( GLcontext *ctx, const GLfloat c[4] )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLubyte color[4];
+   struct radeon_renderbuffer *rrb;
+
+   rrb = radeon_get_colorbuffer(&rmesa->radeon);
+   if (!rrb)
+     return;
    CLAMPED_FLOAT_TO_UBYTE(color[0], c[0]);
    CLAMPED_FLOAT_TO_UBYTE(color[1], c[1]);
    CLAMPED_FLOAT_TO_UBYTE(color[2], c[2]);
    CLAMPED_FLOAT_TO_UBYTE(color[3], c[3]);
-   rmesa->radeon.state.color.clear = radeonPackColor( rmesa->radeon.radeonScreen->cpp,
+   rmesa->radeon.state.color.clear = radeonPackColor( rrb->cpp,
                                              color[0], color[1],
                                              color[2], color[3] );
 }
