@@ -217,7 +217,7 @@ struct r300_texture {
 
     /* Stride (pitch?) of this texture in bytes */
     unsigned stride;
-    
+
     /* Total size of this texture, in bytes. */
     unsigned size;
 
