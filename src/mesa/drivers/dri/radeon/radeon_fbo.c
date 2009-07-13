@@ -450,6 +450,7 @@ restart:
 	rrb->base.BlueBits = texImage->TexFormat->BlueBits;
 	rrb->base.AlphaBits = texImage->TexFormat->AlphaBits;
 	rrb->base.DepthBits = texImage->TexFormat->DepthBits;
+	rrb->base.StencilBits = texImage->TexFormat->StencilBits;
 	
 	rrb->base.Delete = radeon_delete_renderbuffer;
 	rrb->base.AllocStorage = radeon_nop_alloc_storage;
