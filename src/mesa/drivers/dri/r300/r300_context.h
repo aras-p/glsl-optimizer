@@ -405,12 +405,13 @@ struct r300_hw_state {
 #undef TAG
 
 struct r300_vertex_program {
+	struct gl_vertex_program *Base;
 	struct r300_vertex_program *next;
 
 	struct r300_vertex_program_key {
-		GLuint InputsRead;
-		GLuint OutputsWritten;
-		GLuint OutputsAdded;
+		GLuint FpReads;
+		GLuint FogAttr;
+		GLuint WPosAttr;
 	} key;
 	
 	struct r300_vertex_shader_hw_code {
@@ -426,13 +427,17 @@ struct r300_vertex_program {
 
 	int pos_end;
 	int num_temporaries;	/* Number of temp vars used by program */
-	int wpos_idx;
 	int inputs[VERT_ATTRIB_MAX];
 	int outputs[VERT_RESULT_MAX];
 };
 
 struct r300_vertex_program_cont {
-	struct gl_vertex_program mesa_program;	/* Must be first */
+	/* This is the unmodified vertex program mesa provided us with.
+	 * We need to keep it unchanged because we may need to create another
+	 * hw specific vertex program based on this.
+	 */
+	struct gl_vertex_program mesa_program;
+	/* This is the list of hw specific vertex programs derived from mesa_program */
 	struct r300_vertex_program *progs;
 };
 
@@ -546,7 +551,7 @@ struct r500_fragment_program_code {
 * to render with that program.
 */
 struct r300_fragment_program {
-	struct gl_fragment_program Base;
+	struct gl_program *Base;
 
 	GLboolean translated;
 	GLboolean error;
@@ -559,6 +564,23 @@ struct r300_fragment_program {
 
 	GLboolean writes_depth;
 	GLuint optimization;
+
+	struct r300_fragment_program *next;
+
+	/* attribute that we are sending the WPOS in */
+	gl_frag_attrib wpos_attr;
+	/* attribute that we are sending the fog coordinate in */
+	gl_frag_attrib fog_attr;
+};
+
+struct r300_fragment_program_cont {
+	/* This is the unmodified fragment program mesa provided us with.
+	 * We need to keep it unchanged because we may need to create another
+	 * hw specific fragment program based on this.
+	 */
+	struct gl_fragment_program Base;
+	/* This is the list of hw specific fragment programs derived from Base */
+	struct r300_fragment_program *progs;
 };
 
 struct r300_fragment_program_compiler {
@@ -633,6 +655,7 @@ struct r300_context {
 	struct r300_hw_state hw;
 
 	struct r300_vertex_program *selected_vp;
+	struct r300_fragment_program *selected_fp;
 
 	/* Vertex buffers
 	 */
@@ -664,11 +687,7 @@ extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 				   __DRIcontextPrivate * driContextPriv,
 				   void *sharedContextPrivate);
 
-extern void r300SelectVertexShader(r300ContextPtr r300);
 extern void r300InitShaderFuncs(struct dd_function_table *functions);
-extern int r300VertexProgUpdateParams(GLcontext * ctx,
-				      struct r300_vertex_program_cont *vp,
-				      float *dst);
 
 extern void r300InitShaderFunctions(r300ContextPtr r300);
 

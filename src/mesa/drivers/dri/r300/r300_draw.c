@@ -195,6 +195,11 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 		}
 
 		GLfloat *dst_ptr, *tmp;
+
+		/* Convert value for first element only */
+		if (input->StrideB == 0)
+			count = 1;
+
 		tmp = dst_ptr = _mesa_malloc(sizeof(GLfloat) * input->Size * count);
 
 		switch (input->Type) {
@@ -228,7 +233,11 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 		type = GL_FLOAT;
 		r300_attr.free_needed = GL_TRUE;
 		r300_attr.data = tmp;
-		r300_attr.stride = sizeof(GLfloat) * input->Size;
+		if (input->StrideB == 0) {
+			r300_attr.stride = 0;
+		} else {
+			r300_attr.stride = sizeof(GLfloat) * input->Size;
+		}
 		r300_attr.dwords = input->Size;
 	} else {
 		type = input->Type;
@@ -332,7 +341,7 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 	{
 		int i, tmp;
 
-		tmp = r300->selected_vp->key.InputsRead;
+		tmp = r300->selected_vp->Base->Base.InputsRead;
 		i = 0;
 		vbuf->num_attribs = 0;
 		while (tmp) {
@@ -428,7 +437,7 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 	if (r300->fallback)
 		return GL_FALSE;
 
-	r300SetupVAP(ctx, r300->selected_vp->key.InputsRead, r300->selected_vp->key.OutputsWritten);
+	r300SetupVAP(ctx, r300->selected_vp->Base->Base.InputsRead, r300->selected_vp->Base->Base.OutputsWritten);
 
 	r300UpdateShaderStates(r300);
 

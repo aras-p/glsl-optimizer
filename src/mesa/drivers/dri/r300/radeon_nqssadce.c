@@ -46,6 +46,7 @@ static struct register_state *get_reg_state(struct nqssadce_state* s, GLuint fil
 	switch(file) {
 	case PROGRAM_TEMPORARY: return &s->Temps[index];
 	case PROGRAM_OUTPUT: return &s->Outputs[index];
+	case PROGRAM_ADDRESS: return &s->Address;
 	default: return 0;
 	}
 }
@@ -56,7 +57,7 @@ static struct register_state *get_reg_state(struct nqssadce_state* s, GLuint fil
  *
  * @note Works correctly only for X, Y, Z, W swizzles, not for constant swizzles.
  */
-static struct prog_src_register lmul_swizzle(GLuint swizzle, struct prog_src_register srcreg)
+struct prog_src_register lmul_swizzle(GLuint swizzle, struct prog_src_register srcreg)
 {
 	struct prog_src_register tmp = srcreg;
 	int i;
@@ -114,45 +115,17 @@ static struct prog_instruction* track_used_srcreg(struct nqssadce_state* s,
 		deswz_source = sourced;
 	}
 
-	struct register_state *regstate = get_reg_state(s, inst->SrcReg[src].File, inst->SrcReg[src].Index);
+	struct register_state *regstate;
+
+	if (inst->SrcReg[src].RelAddr)
+		regstate = get_reg_state(s, PROGRAM_ADDRESS, 0);
+	else
+		regstate = get_reg_state(s, inst->SrcReg[src].File, inst->SrcReg[src].Index);
+
 	if (regstate)
 		regstate->Sourced |= deswz_source & 0xf;
 
 	return inst;
-}
-
-
-static void rewrite_depth_out(struct prog_instruction *inst)
-{
-	if (inst->DstReg.WriteMask & WRITEMASK_Z) {
-		inst->DstReg.WriteMask = WRITEMASK_W;
-	} else {
-		inst->DstReg.WriteMask = 0;
-		return;
-	}
-
-	switch (inst->Opcode) {
-	case OPCODE_FRC:
-	case OPCODE_MOV:
-		inst->SrcReg[0] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[0]);
-		break;
-	case OPCODE_ADD:
-	case OPCODE_MAX:
-	case OPCODE_MIN:
-	case OPCODE_MUL:
-		inst->SrcReg[0] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[0]);
-		inst->SrcReg[1] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[1]);
-		break;
-	case OPCODE_CMP:
-	case OPCODE_MAD:
-		inst->SrcReg[0] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[0]);
-		inst->SrcReg[1] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[1]);
-		inst->SrcReg[2] = lmul_swizzle(SWIZZLE_ZZZZ, inst->SrcReg[2]);
-		break;
-	default:
-		// Scalar instructions needn't be reswizzled
-		break;
-	}
 }
 
 static void unalias_srcregs(struct prog_instruction *inst, GLuint oldindex, GLuint newindex)
@@ -189,11 +162,6 @@ static void process_instruction(struct nqssadce_state* s)
 		return;
 
 	if (inst->Opcode != OPCODE_KIL) {
-		if (s->Descr->RewriteDepthOut) {
-			if (inst->DstReg.File == PROGRAM_OUTPUT && inst->DstReg.Index == FRAG_RESULT_DEPTH)
-				rewrite_depth_out(inst);
-		}
-
 		struct register_state *regstate = get_reg_state(s, inst->DstReg.File, inst->DstReg.Index);
 		if (!regstate) {
 			_mesa_problem(s->Ctx, "NqssaDce: bad destination register (%i[%i])\n",
@@ -217,6 +185,7 @@ static void process_instruction(struct nqssadce_state* s)
 	 * might change the instruction stream under us, so we have
 	 * to be careful with the inst pointer. */
 	switch (inst->Opcode) {
+	case OPCODE_ARL:
 	case OPCODE_DDX:
 	case OPCODE_DDY:
 	case OPCODE_FRC:
@@ -227,6 +196,8 @@ static void process_instruction(struct nqssadce_state* s)
 	case OPCODE_MAX:
 	case OPCODE_MIN:
 	case OPCODE_MUL:
+	case OPCODE_SGE:
+	case OPCODE_SLT:
 		inst = track_used_srcreg(s, inst, 0, inst->DstReg.WriteMask);
 		inst = track_used_srcreg(s, inst, 1, inst->DstReg.WriteMask);
 		break;
@@ -258,12 +229,51 @@ static void process_instruction(struct nqssadce_state* s)
 	case OPCODE_TXP:
 		inst = track_used_srcreg(s, inst, 0, 0xf);
 		break;
+	case OPCODE_DST:
+		inst = track_used_srcreg(s, inst, 0, 0x6);
+		inst = track_used_srcreg(s, inst, 1, 0xa);
+		break;
+	case OPCODE_EXP:
+	case OPCODE_LOG:
+	case OPCODE_POW:
+		inst = track_used_srcreg(s, inst, 0, 0x3);
+		break;
+	case OPCODE_LIT:
+		inst = track_used_srcreg(s, inst, 0, 0xb);
+		break;
 	default:
 		_mesa_problem(s->Ctx, "NqssaDce: Unknown opcode %d\n", inst->Opcode);
 		return;
 	}
 }
 
+static void calculateInputsOutputs(struct gl_program *p)
+{
+	struct prog_instruction *inst;
+	GLuint InputsRead, OutputsWritten;
+
+	inst = p->Instructions;
+	InputsRead = 0;
+	OutputsWritten = 0;
+	while (inst->Opcode != OPCODE_END)
+	{
+		int i, num_src_regs;
+
+		num_src_regs = _mesa_num_inst_src_regs(inst->Opcode);
+		for (i = 0; i < num_src_regs; ++i) {
+			if (inst->SrcReg[i].File == PROGRAM_INPUT)
+				InputsRead |= 1 << inst->SrcReg[i].Index;
+		}
+
+		if (inst->DstReg.File == PROGRAM_OUTPUT)
+			OutputsWritten |= 1 << inst->DstReg.Index;
+
+		++inst;
+	}
+
+	p->InputsRead = InputsRead;
+	p->OutputsWritten = OutputsWritten;
+}
 
 void radeonNqssaDce(GLcontext *ctx, struct gl_program *p, struct radeon_nqssadce_descr* descr)
 {
@@ -280,4 +290,6 @@ void radeonNqssaDce(GLcontext *ctx, struct gl_program *p, struct radeon_nqssadce
 		s.IP--;
 		process_instruction(&s);
 	}
+
+	calculateInputsOutputs(p);
 }
