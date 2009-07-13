@@ -823,6 +823,17 @@ void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
 
 void radeonReadBuffer( GLcontext *ctx, GLenum mode )
 {
+	if ((ctx->DrawBuffer != NULL) && (ctx->DrawBuffer->Name == 0)) {
+		struct radeon_context *const rmesa = RADEON_CONTEXT(ctx);
+		const GLboolean was_front_buffer_reading = rmesa->is_front_buffer_reading;
+		rmesa->is_front_buffer_reading = (mode == GL_FRONT_LEFT)
+					|| (mode == GL_FRONT);
+
+		if (!was_front_buffer_reading && rmesa->is_front_buffer_reading) {
+			radeon_update_renderbuffers(rmesa->dri.context,
+						    rmesa->dri.context->driReadablePriv);
+	 	}
+	}
 	/* nothing, until we implement h/w glRead/CopyPixels or CopyTexImage */
 	if (ctx->ReadBuffer == ctx->DrawBuffer) {
 		/* This will update FBO completeness status.

@@ -467,6 +467,15 @@ struct radeon_context {
     */
    GLboolean is_front_buffer_rendering;
 
+   /**
+    * Track whether front-buffer is the current read target.
+    *
+    * This is closely associated with is_front_buffer_rendering, but may
+    * be set separately.  The DRI2 fake front buffer must be referenced
+    * either way.
+    */
+   GLboolean is_front_buffer_reading;
+
    /* info for radeon_clear_tris() */
    struct {
       struct gl_array_object *arrayObj;
