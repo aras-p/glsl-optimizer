@@ -390,8 +390,17 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    atom->cmd[CTX_RB3D_CNTL] &= ~(0xf << 10);
    if (rrb->cpp == 4)
 	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB8888;
-   else
+   else switch (rrb->base._ActualFormat) {
+   case GL_RGB5:
 	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_RGB565;
+	break;
+   case GL_RGBA4:
+	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB4444;
+	break;
+   case GL_RGB5_A1:
+	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB1555;
+	break;
+   }
 
    cbpitch = (rrb->pitch / rrb->cpp);
    if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)

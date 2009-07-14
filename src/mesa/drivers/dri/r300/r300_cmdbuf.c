@@ -269,8 +269,17 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	cbpitch = (rrb->pitch / rrb->cpp);
 	if (rrb->cpp == 4)
 		cbpitch |= R300_COLOR_FORMAT_ARGB8888;
-	else
+	else switch (rrb->base._ActualFormat) {
+	case GL_RGB5:
 		cbpitch |= R300_COLOR_FORMAT_RGB565;
+		break;
+	case GL_RGBA4:
+		cbpitch |= R300_COLOR_FORMAT_ARGB4444;
+		break;
+	case GL_RGB5_A1:
+		cbpitch |= R300_COLOR_FORMAT_ARGB1555;
+		break;
+	}
 
 	if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
 		cbpitch |= R300_COLOR_TILE_ENABLE;
