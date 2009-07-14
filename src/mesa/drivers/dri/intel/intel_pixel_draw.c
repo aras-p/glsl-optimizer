@@ -45,6 +45,7 @@
 #include "main/depth.h"
 #include "main/hash.h"
 #include "main/blend.h"
+#include "main/viewport.h"
 #include "glapi/dispatch.h"
 #include "swrast/swrast.h"
 
@@ -128,7 +129,7 @@ intel_texture_drawpixels(GLcontext * ctx,
    }
 
    _mesa_PushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT |
-		    GL_CURRENT_BIT);
+		    GL_CURRENT_BIT | GL_VIEWPORT_BIT);
    _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
 
    /* XXX: pixel store stuff */
@@ -153,6 +154,9 @@ intel_texture_drawpixels(GLcontext * ctx,
 
    /* convert rasterpos Z from [0,1] to NDC coord in [-1,1] */
    z = -1.0 + 2.0 * ctx->Current.RasterPos[2];
+
+   /* RasterPos[2] already takes into account the DepthRange mapping. */
+   _mesa_DepthRange(0.0, 1.0);
 
    /* Create the vertex buffer based on the current raster pos.  The x and y
     * we're handed are ctx->Current.RasterPos[0,1] rounded to integers.

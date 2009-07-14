@@ -42,6 +42,7 @@
 #include "main/varray.h"
 #include "main/attrib.h"
 #include "main/enable.h"
+#include "main/viewport.h"
 #include "shader/arbprogram.h"
 #include "glapi/dispatch.h"
 #include "swrast/swrast.h"
@@ -483,6 +484,9 @@ intel_texture_bitmap(GLcontext * ctx,
 
    /* convert rasterpos Z from [0,1] to NDC coord in [-1,1] */
    dst_z = -1.0 + 2.0 * ctx->Current.RasterPos[2];
+
+   /* RasterPos[2] already takes into account the DepthRange mapping. */
+   _mesa_DepthRange(0.0, 1.0);
 
    vertices[0][0] = dst_x;
    vertices[0][1] = dst_y;
