@@ -1482,7 +1482,7 @@ void radeon_clear_tris(GLcontext *ctx, GLbitfield mask)
       if (this_mask & BUFFER_BIT_STENCIL) {
 	 _mesa_Enable(GL_STENCIL_TEST);
 	 _mesa_StencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
-	 _mesa_StencilFuncSeparate(GL_FRONT_AND_BACK, GL_ALWAYS, ctx->Stencil.Clear,
+	 _mesa_StencilFuncSeparate(GL_FRONT_AND_BACK, GL_ALWAYS, (GLint)ctx->Stencil.Clear,
 				   ctx->Stencil.WriteMask[0]);
       } else {
 	 _mesa_Disable(GL_STENCIL_TEST);
