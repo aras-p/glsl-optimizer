@@ -143,7 +143,8 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
 		    GL_POLYGON_BIT |
 		    GL_STENCIL_BUFFER_BIT |
 		    GL_TRANSFORM_BIT |
-		    GL_CURRENT_BIT);
+		    GL_CURRENT_BIT |
+		    GL_VIEWPORT_BIT);
    saved_active_texture = ctx->Texture.CurrentUnit;
 
    /* Disable existing GL state we don't want to apply to a clear. */
@@ -208,6 +209,11 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
 
    /* convert clear Z from [0,1] to NDC coord in [-1,1] */
    dst_z = -1.0 + 2.0 * ctx->Depth.Clear;
+
+   /* The ClearDepth value is unaffected by DepthRange, so do a default
+    * mapping.
+    */
+   _mesa_DepthRange(0.0, 1.0);
 
    /* Prepare the vertices, which are the same regardless of which buffer we're
     * drawing to.
