@@ -86,6 +86,8 @@ init_clear(GLcontext *ctx)
 
    /* save current array object, bind new one */
    _mesa_reference_array_object(ctx, &arraySave, ctx->Array.ArrayObj);
+   ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_ALL;
    _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, intel->clear.arrayObj);
 
    /* one-time setup of vertex arrays (pos, color) */
@@ -97,6 +99,8 @@ init_clear(GLcontext *ctx)
    _mesa_Enable(GL_VERTEX_ARRAY);
 
    /* restore original array object */
+   ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_ALL;
    _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, arraySave);
    _mesa_reference_array_object(ctx, &arraySave, NULL);
 
@@ -192,6 +196,8 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
 
    /* save current array object, bind our private one */
    _mesa_reference_array_object(ctx, &arraySave, ctx->Array.ArrayObj);
+   ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_ALL;
    _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, intel->clear.arrayObj);
 
    intel_meta_set_passthrough_transform(intel);
@@ -283,6 +289,8 @@ intel_clear_tris(GLcontext *ctx, GLbitfield mask)
    _mesa_PopAttrib();
 
    /* restore current array object */
+   ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_ALL;
    _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, arraySave);
    _mesa_reference_array_object(ctx, &arraySave, NULL);
 }
