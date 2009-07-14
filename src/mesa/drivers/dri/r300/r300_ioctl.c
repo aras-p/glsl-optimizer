@@ -68,11 +68,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static void r300EmitClearState(GLcontext * ctx);
 
-static void r300UserClear(GLcontext *ctx, GLuint mask)
-{
-	radeon_clear_tris(ctx, mask);
-}
-
 static void r300ClearBuffer(r300ContextPtr r300, int flags,
 			    struct radeon_renderbuffer *rrb,
 			    struct radeon_renderbuffer *rrbd)
@@ -680,7 +675,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 	ret = 0;
 	if (tri_mask) {
 		if (r300->radeon.radeonScreen->kernel_mm)
-			r300UserClear(ctx, tri_mask);
+			radeonUserClear(ctx, tri_mask);
 		else {
 			/* if kernel clear fails due to size restraints fallback */
 			ret = r300KernelClear(ctx, tri_mask);

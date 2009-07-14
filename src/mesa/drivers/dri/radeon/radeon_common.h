@@ -5,18 +5,7 @@
 #include "radeon_dma.h"
 #include "radeon_texture.h"
 
-
-#define TRI_CLEAR_COLOR_BITS (BUFFER_BIT_BACK_LEFT |			\
-			      BUFFER_BIT_FRONT_LEFT |			\
-			      BUFFER_BIT_COLOR0 |			\
-			      BUFFER_BIT_COLOR1 |			\
-			      BUFFER_BIT_COLOR2 |			\
-			      BUFFER_BIT_COLOR3 |			\
-			      BUFFER_BIT_COLOR4 |			\
-			      BUFFER_BIT_COLOR5 |			\
-			      BUFFER_BIT_COLOR6 |			\
-			      BUFFER_BIT_COLOR7)
-
+void radeonUserClear(GLcontext *ctx, GLuint mask);
 void radeonRecalcScissorRects(radeonContextPtr radeon);
 void radeonSetCliprects(radeonContextPtr radeon);
 void radeonUpdateScissor( GLcontext *ctx );

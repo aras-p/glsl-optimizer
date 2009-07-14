@@ -58,11 +58,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_TIMEOUT             512
 #define R200_IDLE_RETRY           16
 
-static void r200UserClear(GLcontext *ctx, GLuint mask)
-{
-   radeon_clear_tris(ctx, mask);
-}
-
 static void r200KernelClear(GLcontext *ctx, GLuint flags)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -253,7 +248,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
    }
 
    if (rmesa->radeon.radeonScreen->kernel_mm)
-      r200UserClear(ctx, orig_mask);
+      radeonUserClear(ctx, orig_mask);
    else {
       r200KernelClear(ctx, flags);
       rmesa->radeon.hw.all_dirty = GL_TRUE;

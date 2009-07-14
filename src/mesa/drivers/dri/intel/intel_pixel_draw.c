@@ -150,7 +150,7 @@ intel_texture_drawpixels(GLcontext * ctx,
    _mesa_TexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format,
 		    type, pixels);
 
-   intel_meta_set_passthrough_transform(intel);
+   meta_set_passthrough_transform(&intel->meta);
 
    /* convert rasterpos Z from [0,1] to NDC coord in [-1,1] */
    z = -1.0 + 2.0 * ctx->Current.RasterPos[2];
@@ -182,12 +182,12 @@ intel_texture_drawpixels(GLcontext * ctx,
 
    _mesa_VertexPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &vertices);
    _mesa_Enable(GL_VERTEX_ARRAY);
-   intel_meta_set_default_texrect(intel);
+   meta_set_default_texrect(&intel->meta);
 
    _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-   intel_meta_restore_texcoords(intel);
-   intel_meta_restore_transform(intel);
+   meta_restore_texcoords(&intel->meta);
+   meta_restore_transform(&intel->meta);
 
    _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + old_active_texture);
    _mesa_PopClientAttrib();
@@ -352,7 +352,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
    ctx->Unpack = old_unpack;
    _mesa_free(stencil_pixels);
 
-   intel_meta_set_passthrough_transform(intel);
+   meta_set_passthrough_transform(&intel->meta);
 
    /* Since we're rendering to the framebuffer as if it was an FBO,
     * if it's the window system we have to flip the coordinates.
@@ -375,12 +375,12 @@ intel_stencil_drawpixels(GLcontext * ctx,
 
    _mesa_VertexPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &vertices);
    _mesa_Enable(GL_VERTEX_ARRAY);
-   intel_meta_set_default_texrect(intel);
+   meta_set_default_texrect(&intel->meta);
 
    _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-   intel_meta_restore_texcoords(intel);
-   intel_meta_restore_transform(intel);
+   meta_restore_texcoords(&intel->meta);
+   meta_restore_transform(&intel->meta);
 
    _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + old_active_texture);
    _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, old_fb_name);

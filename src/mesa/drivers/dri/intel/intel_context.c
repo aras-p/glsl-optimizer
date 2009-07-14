@@ -404,7 +404,7 @@ intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     if (!driContext->driScreenPriv->dri2.enabled)
 	return;
 
-    if (!intel->internal_viewport_call && ctx->DrawBuffer->Name == 0) {
+    if (!intel->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
        /* If we're rendering to the fake front buffer, make sure all the pending
 	* drawing has landed on the real front buffer.  Otherwise when we
 	* eventually get to DRI2GetBuffersWithFormat the stale real front
@@ -672,6 +672,7 @@ intelInitContext(struct intel_context *intel,
     */
    _mesa_init_point(ctx);
 
+   meta_init_metaops(ctx, &intel->meta);
    ctx->Const.MaxColorAttachments = 4;  /* XXX FBO: review this */
    if (IS_965(intelScreen->deviceID)) {
       if (MAX_WIDTH > 8192)
@@ -794,8 +795,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 
       INTEL_FIREVERTICES(intel);
 
-      if (intel->clear.arrayObj)
-         _mesa_delete_array_object(&intel->ctx, intel->clear.arrayObj);
+      meta_destroy_metaops(&intel->meta);
 
       intel->vtbl.destroy(intel);
 

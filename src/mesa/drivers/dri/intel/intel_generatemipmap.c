@@ -88,7 +88,7 @@ intel_generate_mipmap_level(GLcontext *ctx, GLuint tex_name,
    if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
       return GL_FALSE;
 
-   intel_meta_set_passthrough_transform(intel);
+   meta_set_passthrough_transform(&intel->meta);
 
    /* XXX: Doing it right would involve setting up the transformation to do
     * 0-1 mapping or something, and not changing the vertex data.
@@ -104,12 +104,12 @@ intel_generate_mipmap_level(GLcontext *ctx, GLuint tex_name,
 
    _mesa_VertexPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &vertices);
    _mesa_Enable(GL_VERTEX_ARRAY);
-   intel_meta_set_default_texrect(intel);
+   meta_set_default_texrect(&intel->meta);
 
    _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-   intel_meta_restore_texcoords(intel);
-   intel_meta_restore_transform(intel);
+   meta_restore_texcoords(&intel->meta);
+   meta_restore_transform(&intel->meta);
 
    return GL_TRUE;
 }
@@ -153,9 +153,9 @@ intel_generate_mipmap_2d(GLcontext *ctx,
    _mesa_GenFramebuffersEXT(1, &fb_name);
    _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, fb_name);
 
-   intel_meta_set_fragment_program(intel, &intel->meta.tex2d_fp,
-				   intel_fp_tex2d);
-   intel_meta_set_passthrough_vertex_program(intel);
+   meta_set_fragment_program(&intel->meta, &intel->meta.tex2d_fp,
+			     intel_fp_tex2d);
+   meta_set_passthrough_vertex_program(&intel->meta);
 
    max_levels = _mesa_max_texture_levels(ctx, texObj->Target);
    start_level = texObj->BaseLevel;
@@ -202,8 +202,8 @@ intel_generate_mipmap_2d(GLcontext *ctx,
    success = GL_TRUE;
 
 fail:
-   intel_meta_restore_fragment_program(intel);
-   intel_meta_restore_vertex_program(intel);
+   meta_restore_fragment_program(&intel->meta);
+   meta_restore_vertex_program(&intel->meta);
 
    _mesa_DeleteFramebuffersEXT(1, &fb_name);
    _mesa_ActiveTextureARB(GL_TEXTURE0_ARB + old_active_texture);
