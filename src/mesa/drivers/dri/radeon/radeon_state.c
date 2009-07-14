@@ -458,6 +458,10 @@ static void radeonFrontFace( GLcontext *ctx, GLenum mode )
    RADEON_STATECHANGE( rmesa, tcl );
    rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] &= ~RADEON_CULL_FRONT_IS_CCW;
 
+   /* Winding is inverted when rendering to FBO */
+   if (ctx->DrawBuffer && ctx->DrawBuffer->Name)
+      mode = (mode == GL_CW) ? GL_CCW : GL_CW;
+
    switch ( mode ) {
    case GL_CW:
       rmesa->hw.set.cmd[SET_SE_CNTL] |= RADEON_FFACE_CULL_CW;

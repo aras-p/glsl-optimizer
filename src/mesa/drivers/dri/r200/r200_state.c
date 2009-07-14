@@ -574,6 +574,10 @@ static void r200FrontFace( GLcontext *ctx, GLenum mode )
    R200_STATECHANGE( rmesa, tcl );
    rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] &= ~R200_CULL_FRONT_IS_CCW;
 
+   /* Winding is inverted when rendering to FBO */
+   if (ctx->DrawBuffer && ctx->DrawBuffer->Name)
+      mode = (mode == GL_CW) ? GL_CCW : GL_CW;
+
    switch ( mode ) {
    case GL_CW:
       rmesa->hw.set.cmd[SET_SE_CNTL] |= R200_FFACE_CULL_CW;

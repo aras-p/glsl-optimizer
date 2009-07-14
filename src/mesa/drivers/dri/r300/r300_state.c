@@ -434,6 +434,10 @@ static void r300UpdateCulling(GLcontext * ctx)
 		break;
 	}
 
+	/* Winding is inverted when rendering to FBO */
+	if (ctx->DrawBuffer && ctx->DrawBuffer->Name)
+		val ^= R300_FRONT_FACE_CW;
+
 	R300_STATECHANGE(r300, cul);
 	r300->hw.cul.cmd[R300_CUL_CULL] = val;
 }
