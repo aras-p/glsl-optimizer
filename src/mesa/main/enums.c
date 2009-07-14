@@ -958,8 +958,8 @@ LONGSTRING static const char enum_string_table[] =
    "GL_MAX_TRACK_MATRIX_STACK_DEPTH_NV\0"
    "GL_MAX_VARYING_FLOATS\0"
    "GL_MAX_VARYING_FLOATS_ARB\0"
-   "GL_MAX_VERTEX_GENERIC_ATTRIBS\0"
-   "GL_MAX_VERTEX_GENERIC_ATTRIBS_ARB\0"
+   "GL_MAX_VERTEX_ATTRIBS\0"
+   "GL_MAX_VERTEX_ATTRIBS_ARB\0"
    "GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS\0"
    "GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB\0"
    "GL_MAX_VERTEX_UNIFORM_COMPONENTS\0"
@@ -5111,6 +5111,7 @@ const char *_mesa_lookup_prim_by_nr( int nr )
    default: return "<invalid>";
    }
 }
+
 
 
 int _mesa_lookup_enum_by_name( const char *symbol )
