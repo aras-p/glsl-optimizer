@@ -198,7 +198,16 @@ PUBLIC const void *_glapi_Context = NULL;
 
 #if defined(THREADS)
 
+#ifdef WIN32_THREADS
+/* _glthread_DECLARE_STATIC_MUTEX is broken on windows.  There will be race! */
+#define CHECK_MULTITHREAD_LOCK()
+#define CHECK_MULTITHREAD_UNLOCK()
+#else
 _glthread_DECLARE_STATIC_MUTEX(ThreadCheckMutex);
+#define CHECK_MULTITHREAD_LOCK() _glthread_LOCK_MUTEX(ThreadCheckMutex)
+#define CHECK_MULTITHREAD_UNLOCK() _glthread_UNLOCK_MUTEX(ThreadCheckMutex)
+#endif
+
 static GLboolean ThreadSafe = GL_FALSE;  /**< In thread-safe mode? */
 _glthread_TSD _gl_DispatchTSD;           /**< Per-thread dispatch pointer */
 static _glthread_TSD ContextTSD;         /**< Per-thread context pointer */
@@ -238,7 +247,7 @@ _glapi_check_multithread(void)
    if (ThreadSafe)
       return;
 
-   _glthread_LOCK_MUTEX(ThreadCheckMutex);
+   CHECK_MULTITHREAD_LOCK();
    if (firstCall) {
       /* initialize TSDs */
       (void) _glthread_GetTSD(&ContextTSD);
@@ -252,7 +261,7 @@ _glapi_check_multithread(void)
       _glapi_set_dispatch(NULL);
       _glapi_set_context(NULL);
    }
-   _glthread_UNLOCK_MUTEX(ThreadCheckMutex);
+   CHECK_MULTITHREAD_UNLOCK();
 #endif
 }
 
