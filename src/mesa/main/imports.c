@@ -1081,22 +1081,25 @@ _mesa_problem( const GLcontext *ctx, const char *fmtString, ... )
 void
 _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
 {
-   const char *debugEnv;
-   GLboolean debug;
+   static GLint debug = -1;
 
-   debugEnv = _mesa_getenv("MESA_DEBUG");
+   /* Check debug environment variable only once:
+    */
+   if (debug == -1) {
+      const char *debugEnv = _mesa_getenv("MESA_DEBUG");
 
 #ifdef DEBUG
-   if (debugEnv && _mesa_strstr(debugEnv, "silent"))
-      debug = GL_FALSE;
-   else
-      debug = GL_TRUE;
+      if (debugEnv && _mesa_strstr(debugEnv, "silent"))
+         debug = GL_FALSE;
+      else
+         debug = GL_TRUE;
 #else
-   if (debugEnv)
-      debug = GL_TRUE;
-   else
-      debug = GL_FALSE;
+      if (debugEnv)
+         debug = GL_TRUE;
+      else
+         debug = GL_FALSE;
 #endif
+   }
 
    if (debug) {
       va_list args;
