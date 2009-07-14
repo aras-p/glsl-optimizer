@@ -55,6 +55,9 @@ void DumpHwBinary(int type, void *addr, int size)
 {
     int i;
     unsigned int *pHw = (unsigned int *)addr;
+
+    return;
+
     switch (type)
     {
         case DUMP_PIXEL_SHADER:
