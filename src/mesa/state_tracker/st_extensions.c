@@ -158,7 +158,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.ARB_vertex_program = GL_TRUE;
 
    ctx->Extensions.EXT_blend_color = GL_TRUE;
-   ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
    ctx->Extensions.EXT_blend_func_separate = GL_TRUE;
    ctx->Extensions.EXT_blend_logic_op = GL_TRUE;
    ctx->Extensions.EXT_blend_minmax = GL_TRUE;
@@ -204,6 +203,10 @@ void st_init_extensions(struct st_context *st)
 
    if (screen->get_param(screen, PIPE_CAP_TEXTURE_MIRROR_REPEAT) > 0) {
       ctx->Extensions.ARB_texture_mirrored_repeat = GL_TRUE;
+   }
+
+   if (screen->get_param(screen, PIPE_CAP_BLEND_EQUATION_SEPARATE)) {
+      ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
    }
 
    if (screen->get_param(screen, PIPE_CAP_TEXTURE_MIRROR_CLAMP) > 0) {

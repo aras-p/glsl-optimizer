@@ -46,6 +46,8 @@ nv40_screen_get_param(struct pipe_screen *pscreen, int param)
 		return 0; /* We have 4 - but unsupported currently */
 	case PIPE_CAP_TGSI_CONT_SUPPORTED:
 		return 0;
+	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
+		return 1;
 	case NOUVEAU_CAP_HW_VTXBUF:
 		return 1;
 	case NOUVEAU_CAP_HW_IDXBUF:
