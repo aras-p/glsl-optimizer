@@ -38,6 +38,8 @@ import SCons.Action
 import SCons.Builder
 import SCons.Scanner
 
+import fixes
+
 
 def quietCommandLines(env):
     # Quiet command lines
