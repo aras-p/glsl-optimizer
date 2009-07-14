@@ -82,6 +82,7 @@ const struct dri_extension card_extensions[] = {
    {"GL_ARB_vertex_program", GL_ARB_vertex_program_functions},
    {"GL_ARB_window_pos", GL_ARB_window_pos_functions},
    {"GL_EXT_blend_color", GL_EXT_blend_color_functions},
+   {"GL_EXT_blend_equation_separate", GL_EXT_blend_equation_separate_functions},
    {"GL_EXT_blend_func_separate", GL_EXT_blend_func_separate_functions},
    {"GL_EXT_blend_minmax", GL_EXT_blend_minmax_functions},
    {"GL_EXT_blend_subtract", NULL},
