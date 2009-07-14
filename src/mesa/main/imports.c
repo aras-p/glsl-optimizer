@@ -1102,13 +1102,7 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
    }
 
    if (debug) {
-      va_list args;
-      char where[MAXSTRING];
       const char *errstr;
-
-      va_start( args, fmtString );  
-      vsnprintf( where, MAXSTRING, fmtString, args );
-      va_end( args );
 
       switch (error) {
 	 case GL_NO_ERROR:
