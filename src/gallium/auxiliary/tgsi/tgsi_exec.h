@@ -198,14 +198,15 @@ struct tgsi_exec_machine
 
    float                         Imms[TGSI_EXEC_NUM_IMMEDIATES][4];
 
+   struct tgsi_exec_vector       Inputs[PIPE_MAX_ATTRIBS];
+   struct tgsi_exec_vector       Outputs[PIPE_MAX_ATTRIBS];
+
    struct tgsi_exec_vector       *Addrs;
 
    struct tgsi_sampler           **Samplers;
 
    unsigned                      ImmLimit;
    const float                   (*Consts)[4];
-   struct tgsi_exec_vector       *Inputs;
-   struct tgsi_exec_vector       *Outputs;
    const struct tgsi_token       *Tokens;   /**< Declarations, instructions */
    unsigned                      Processor; /**< TGSI_PROCESSOR_x */
 

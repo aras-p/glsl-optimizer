@@ -379,23 +379,11 @@ tgsi_exec_machine_create( void )
 
    mach->Samplers = NULL;
    mach->Consts = NULL;
-   mach->Inputs = NULL;
-   mach->Outputs = NULL;
    mach->Tokens = NULL;
    mach->Primitives = NULL;
    mach->InterpCoefs = NULL;
    mach->Instructions = NULL;
    mach->Declarations = NULL;
-
-   mach->Inputs = align_malloc(PIPE_MAX_ATTRIBS * 
-			       sizeof(struct tgsi_exec_vector), 16);
-   if (!mach->Inputs)
-      goto fail;
-
-   mach->Outputs = align_malloc(PIPE_MAX_ATTRIBS * 
-				sizeof(struct tgsi_exec_vector), 16);
-   if (!mach->Outputs)
-      goto fail;
 
    /* Setup constants. */
    for( i = 0; i < 4; i++ ) {
@@ -420,12 +408,7 @@ tgsi_exec_machine_create( void )
    return mach;
 
 fail:
-   if (mach) {
-      align_free(mach->Inputs);
-      align_free(mach->Outputs);
-      align_free(mach);
-   }
-
+   align_free(mach);
    return NULL;
 }
 
@@ -433,16 +416,11 @@ fail:
 void
 tgsi_exec_machine_destroy(struct tgsi_exec_machine *mach)
 {
-   if (mach->Instructions) {
+   if (mach) {
       FREE(mach->Instructions);
-      mach->Instructions = NULL;
-      mach->NumInstructions = 0;
-   }
-   if (mach->Declarations) {
       FREE(mach->Declarations);
-      mach->Declarations = NULL;
-      mach->NumDeclarations = 0;
    }
+
    align_free(mach);
 }
 
