@@ -58,7 +58,8 @@ DRIVER_SOURCES = \
 		 r600_texstate.c      \
 		 r700_debug.c    \
 		 $(RADEON_COMMON_SOURCES) \
-		 $(EGL_SOURCES)
+		 $(EGL_SOURCES) \
+		 $(CS_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
@@ -99,7 +100,8 @@ COMMON_SYMLINKS = \
 	radeon_mipmap_tree.h \
 	radeon_texture.c \
 	radeon_texture.h \
-	radeon_fbo.c
+	radeon_fbo.c \
+	$(CS_SOURCES)
 
 DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 
