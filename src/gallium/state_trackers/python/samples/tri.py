@@ -139,7 +139,7 @@ def test(dev):
         tex_usage=PIPE_TEXTURE_USAGE_DISPLAY_TARGET,
     ).get_surface()
     zbuf = dev.texture_create(
-        PIPE_FORMAT_Z32_UNORM, 
+        PIPE_FORMAT_Z16_UNORM, 
         width, height,
         tex_usage=PIPE_TEXTURE_USAGE_DEPTH_STENCIL,
     ).get_surface()
