@@ -49,6 +49,7 @@ RADEON_COMPILER_SOURCES = \
 		compiler/r300_fragprog_emit.c \
 		compiler/r500_fragprog.c \
 		compiler/r500_fragprog_emit.c \
+		compiler/memory_pool.c
 
 DRIVER_SOURCES = \
 		 radeon_screen.c \

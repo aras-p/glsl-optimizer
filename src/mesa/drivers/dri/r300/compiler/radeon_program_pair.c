@@ -37,6 +37,7 @@
 
 #include "radeon_common.h"
 
+#include "memory_pool.h"
 #include "shader/prog_print.h"
 
 #define error(fmt, args...) do { \
@@ -46,6 +47,9 @@
 } while(0)
 
 struct pair_state_instruction {
+	struct prog_instruction Instruction;
+	GLuint IP; /**< Position of this instruction in original program */
+
 	GLuint IsTex:1; /**< Is a texture instruction */
 	GLuint NeedRGB:1; /**< Needs the RGB ALU */
 	GLuint NeedAlpha:1; /**< Needs the Alpha ALU */
@@ -73,7 +77,7 @@ struct pair_state_instruction {
  * Used to keep track of which instructions read a value.
  */
 struct reg_value_reader {
-	GLuint IP; /**< IP of the instruction that performs this access */
+	struct pair_state_instruction *Reader;
 	struct reg_value_reader *Next;
 };
 
@@ -82,7 +86,7 @@ struct reg_value_reader {
  * PROGRAM_TEMPORARY.
  */
 struct reg_value {
-	GLuint IP; /**< IP of the instruction that writes this value */
+	struct pair_state_instruction *Writer;
 	struct reg_value *Next; /**< Pointer to the next value to be written to the same PROGRAM_TEMPORARY component */
 
 	/**
@@ -117,6 +121,7 @@ struct pair_register_translation {
 
 struct pair_state {
 	GLcontext *Ctx;
+	struct memory_pool Pool;
 	struct gl_program *Program;
 	const struct radeon_pair_handler *Handler;
 	GLboolean Error;
@@ -130,11 +135,6 @@ struct pair_state {
 	struct pair_register_translation Inputs[FRAG_ATTRIB_MAX];
 	struct pair_register_translation Temps[MAX_PROGRAM_TEMPS];
 
-	/**
-	 * Derived information about program instructions.
-	 */
-	struct pair_state_instruction *Instructions;
-
 	struct {
 		GLuint RefCount; /**< # of times this occurs in an unscheduled SrcReg or DstReg */
 	} HwTemps[128];
@@ -147,14 +147,6 @@ struct pair_state {
 	struct pair_state_instruction *ReadyRGB;
 	struct pair_state_instruction *ReadyAlpha;
 	struct pair_state_instruction *ReadyTEX;
-
-	/**
-	 * Pool of @ref reg_value structures for fast allocation.
-	 */
-	struct reg_value *ValuePool;
-	GLuint ValuePoolUsed;
-	struct reg_value_reader *ReaderPool;
-	GLuint ReaderPoolUsed;
 };
 
 
@@ -221,15 +213,13 @@ static void add_pairinst_to_list(struct pair_state_instruction **list, struct pa
 }
 
 /**
- * The instruction at the given IP has become ready. Link it into the ready
+ * The given instruction has become ready. Link it into the ready
  * instructions.
  */
-static void instruction_ready(struct pair_state *s, int ip)
+static void instruction_ready(struct pair_state *s, struct pair_state_instruction *pairinst)
 {
-	struct pair_state_instruction *pairinst = s->Instructions + ip;
-
 	if (s->Verbose)
-		_mesa_printf("instruction_ready(%i)\n", ip);
+		_mesa_printf("instruction_ready(%i)\n", pairinst->IP);
 
 	if (pairinst->IsTex)
 		add_pairinst_to_list(&s->ReadyTEX, pairinst);
@@ -296,12 +286,12 @@ static void final_rewrite(struct pair_state *s, struct prog_instruction *inst)
  * Classify an instruction according to which ALUs etc. it needs
  */
 static void classify_instruction(struct pair_state *s,
-	struct prog_instruction *inst, struct pair_state_instruction *pairinst)
+	struct pair_state_instruction *psi)
 {
-	pairinst->NeedRGB = (inst->DstReg.WriteMask & WRITEMASK_XYZ) ? 1 : 0;
-	pairinst->NeedAlpha = (inst->DstReg.WriteMask & WRITEMASK_W) ? 1 : 0;
+	psi->NeedRGB = (psi->Instruction.DstReg.WriteMask & WRITEMASK_XYZ) ? 1 : 0;
+	psi->NeedAlpha = (psi->Instruction.DstReg.WriteMask & WRITEMASK_W) ? 1 : 0;
 
-	switch(inst->Opcode) {
+	switch(psi->Instruction.Opcode) {
 	case OPCODE_ADD:
 	case OPCODE_CMP:
 	case OPCODE_DDX:
@@ -319,24 +309,24 @@ static void classify_instruction(struct pair_state *s,
 	case OPCODE_RCP:
 	case OPCODE_RSQ:
 	case OPCODE_SIN:
-		pairinst->IsTranscendent = 1;
-		pairinst->NeedAlpha = 1;
+		psi->IsTranscendent = 1;
+		psi->NeedAlpha = 1;
 		break;
 	case OPCODE_DP4:
-		pairinst->NeedAlpha = 1;
+		psi->NeedAlpha = 1;
 		/* fall through */
 	case OPCODE_DP3:
-		pairinst->NeedRGB = 1;
+		psi->NeedRGB = 1;
 		break;
 	case OPCODE_KIL:
 	case OPCODE_TEX:
 	case OPCODE_TXB:
 	case OPCODE_TXP:
 	case OPCODE_END:
-		pairinst->IsTex = 1;
+		psi->IsTex = 1;
 		break;
 	default:
-		error("Unknown opcode %d\n", inst->Opcode);
+		error("Unknown opcode %d\n", psi->Instruction.Opcode);
 		break;
 	}
 }
@@ -348,30 +338,34 @@ static void classify_instruction(struct pair_state *s,
  */
 static void scan_instructions(struct pair_state *s)
 {
-	struct prog_instruction *inst;
-	struct pair_state_instruction *pairinst;
+	struct prog_instruction *source;
 	GLuint ip;
 
-	for(inst = s->Program->Instructions, pairinst = s->Instructions, ip = 0;
-	    inst->Opcode != OPCODE_END;
-	    ++inst, ++pairinst, ++ip) {
-		final_rewrite(s, inst);
-		classify_instruction(s, inst, pairinst);
+	for(source = s->Program->Instructions, ip = 0;
+	    source->Opcode != OPCODE_END;
+	    ++source, ++ip) {
+		struct pair_state_instruction *pairinst = memory_pool_malloc(&s->Pool, sizeof(*pairinst));
+		memset(pairinst, 0, sizeof(struct pair_state_instruction));
 
-		int nsrc = _mesa_num_inst_src_regs(inst->Opcode);
+		pairinst->Instruction = *source;
+		pairinst->IP = ip;
+		final_rewrite(s, &pairinst->Instruction);
+		classify_instruction(s, pairinst);
+
+		int nsrc = _mesa_num_inst_src_regs(pairinst->Instruction.Opcode);
 		int j;
 		for(j = 0; j < nsrc; j++) {
 			struct pair_register_translation *t =
-				get_register(s, inst->SrcReg[j].File, inst->SrcReg[j].Index);
+				get_register(s, pairinst->Instruction.SrcReg[j].File, pairinst->Instruction.SrcReg[j].Index);
 			if (!t)
 				continue;
 
 			t->RefCount++;
 
-			if (inst->SrcReg[j].File == PROGRAM_TEMPORARY) {
+			if (pairinst->Instruction.SrcReg[j].File == PROGRAM_TEMPORARY) {
 				int i;
 				for(i = 0; i < 4; ++i) {
-					GLuint swz = GET_SWZ(inst->SrcReg[j].Swizzle, i);
+					GLuint swz = GET_SWZ(pairinst->Instruction.SrcReg[j].Swizzle, i);
 					if (swz >= 4)
 						continue; /* constant or NIL swizzle */
 					if (!t->Value[swz])
@@ -381,36 +375,37 @@ static void scan_instructions(struct pair_state *s)
 					 * also rewrites the value. The code below adds
 					 * a dependency for the DstReg, which is a superset
 					 * of the SrcReg dependency. */
-					if (inst->DstReg.File == PROGRAM_TEMPORARY &&
-					    inst->DstReg.Index == inst->SrcReg[j].Index &&
-					    GET_BIT(inst->DstReg.WriteMask, swz))
+					if (pairinst->Instruction.DstReg.File == PROGRAM_TEMPORARY &&
+					    pairinst->Instruction.DstReg.Index == pairinst->Instruction.SrcReg[j].Index &&
+					    GET_BIT(pairinst->Instruction.DstReg.WriteMask, swz))
 						continue;
 
-					struct reg_value_reader* r = &s->ReaderPool[s->ReaderPoolUsed++];
+					struct reg_value_reader* r = memory_pool_malloc(&s->Pool, sizeof(*r));
 					pairinst->NumDependencies++;
 					t->Value[swz]->NumReaders++;
-					r->IP = ip;
+					r->Reader = pairinst;
 					r->Next = t->Value[swz]->Readers;
 					t->Value[swz]->Readers = r;
 				}
 			}
 		}
 
-		int ndst = _mesa_num_inst_dst_regs(inst->Opcode);
+		int ndst = _mesa_num_inst_dst_regs(pairinst->Instruction.Opcode);
 		if (ndst) {
 			struct pair_register_translation *t =
-				get_register(s, inst->DstReg.File, inst->DstReg.Index);
+				get_register(s, pairinst->Instruction.DstReg.File, pairinst->Instruction.DstReg.Index);
 			if (t) {
 				t->RefCount++;
 
-				if (inst->DstReg.File == PROGRAM_TEMPORARY) {
+				if (pairinst->Instruction.DstReg.File == PROGRAM_TEMPORARY) {
 					int j;
 					for(j = 0; j < 4; ++j) {
-						if (!GET_BIT(inst->DstReg.WriteMask, j))
+						if (!GET_BIT(pairinst->Instruction.DstReg.WriteMask, j))
 							continue;
 
-						struct reg_value* v = &s->ValuePool[s->ValuePoolUsed++];
-						v->IP = ip;
+						struct reg_value* v = memory_pool_malloc(&s->Pool, sizeof(*v));
+						memset(v, 0, sizeof(struct reg_value));
+						v->Writer = pairinst;
 						if (t->Value[j]) {
 							pairinst->NumDependencies++;
 							t->Value[j]->Next = v;
@@ -426,7 +421,7 @@ static void scan_instructions(struct pair_state *s)
 			_mesa_printf("scan(%i): NumDeps = %i\n", ip, pairinst->NumDependencies);
 
 		if (!pairinst->NumDependencies)
-			instruction_ready(s, ip);
+			instruction_ready(s, pairinst);
 	}
 
 	/* Clear the PROGRAM_TEMPORARY state */
@@ -483,25 +478,23 @@ static void allocate_input_registers(struct pair_state *s)
 }
 
 
-static void decrement_dependencies(struct pair_state *s, int ip)
+static void decrement_dependencies(struct pair_state *s, struct pair_state_instruction *pairinst)
 {
-	struct pair_state_instruction *pairinst = s->Instructions + ip;
 	ASSERT(pairinst->NumDependencies > 0);
 	if (!--pairinst->NumDependencies)
-		instruction_ready(s, ip);
+		instruction_ready(s, pairinst);
 }
 
 /**
  * Update the dependency tracking state based on what the instruction
  * at the given IP does.
  */
-static void commit_instruction(struct pair_state *s, int ip)
+static void commit_instruction(struct pair_state *s, struct pair_state_instruction *pairinst)
 {
-	struct prog_instruction *inst = s->Program->Instructions + ip;
-	struct pair_state_instruction *pairinst = s->Instructions + ip;
+	struct prog_instruction *inst = &pairinst->Instruction;
 
 	if (s->Verbose)
-		_mesa_printf("commit_instruction(%i)\n", ip);
+		_mesa_printf("commit_instruction(%i)\n", pairinst->IP);
 
 	if (inst->DstReg.File == PROGRAM_TEMPORARY) {
 		struct pair_register_translation *t = &s->Temps[inst->DstReg.Index];
@@ -516,11 +509,11 @@ static void commit_instruction(struct pair_state *s, int ip)
 			if (t->Value[i]->NumReaders) {
 				struct reg_value_reader *r;
 				for(r = pairinst->Values[i]->Readers; r; r = r->Next)
-					decrement_dependencies(s, r->IP);
+					decrement_dependencies(s, r->Reader);
 			} else if (t->Value[i]->Next) {
 				/* This happens when the only reader writes
 				 * the register at the same time */
-				decrement_dependencies(s, t->Value[i]->Next->IP);
+				decrement_dependencies(s, t->Value[i]->Next->Writer);
 			}
 		}
 	}
@@ -554,7 +547,7 @@ static void commit_instruction(struct pair_state *s, int ip)
 
 			if (!--t->Value[swz]->NumReaders) {
 				if (t->Value[swz]->Next)
-					decrement_dependencies(s, t->Value[swz]->Next->IP);
+					decrement_dependencies(s, t->Value[swz]->Next->Writer);
 			}
 		}
 	}
@@ -585,8 +578,7 @@ static void emit_all_tex(struct pair_state *s)
 
 	// Allocate destination hardware registers in one block to avoid conflicts.
 	for(pairinst = readytex; pairinst; pairinst = pairinst->NextReady) {
-		int ip = pairinst - s->Instructions;
-		struct prog_instruction *inst = s->Program->Instructions + ip;
+		struct prog_instruction *inst = &pairinst->Instruction;
 		if (inst->Opcode != OPCODE_KIL)
 			get_hw_reg(s, inst->DstReg.File, inst->DstReg.Index);
 	}
@@ -598,9 +590,8 @@ static void emit_all_tex(struct pair_state *s)
 		s->Error = s->Error || !s->Handler->BeginTexBlock(s->UserData);
 
 	for(pairinst = readytex; pairinst; pairinst = pairinst->NextReady) {
-		int ip = pairinst - s->Instructions;
-		struct prog_instruction *inst = s->Program->Instructions + ip;
-		commit_instruction(s, ip);
+		struct prog_instruction *inst = &pairinst->Instruction;
+		commit_instruction(s, pairinst);
 
 		if (inst->Opcode != OPCODE_KIL)
 			inst->DstReg.Index = get_hw_reg(s, inst->DstReg.File, inst->DstReg.Index);
@@ -684,10 +675,12 @@ static int alloc_pair_source(struct pair_state *s, struct radeon_pair_instructio
  * Fill the given ALU instruction's opcodes and source operands into the given pair,
  * if possible.
  */
-static GLboolean fill_instruction_into_pair(struct pair_state *s, struct radeon_pair_instruction *pair, int ip)
+static GLboolean fill_instruction_into_pair(
+	struct pair_state *s,
+	struct radeon_pair_instruction *pair,
+	struct pair_state_instruction *pairinst)
 {
-	struct pair_state_instruction *pairinst = s->Instructions + ip;
-	struct prog_instruction *inst = s->Program->Instructions + ip;
+	struct prog_instruction *inst = &pairinst->Instruction;
 
 	ASSERT(!pairinst->NeedRGB || pair->RGB.Opcode == OPCODE_NOP);
 	ASSERT(!pairinst->NeedAlpha || pair->Alpha.Opcode == OPCODE_NOP);
@@ -768,10 +761,12 @@ static GLboolean fill_instruction_into_pair(struct pair_state *s, struct radeon_
  * we are absolutely certain that we're going to emit a certain
  * instruction pairing.
  */
-static void fill_dest_into_pair(struct pair_state *s, struct radeon_pair_instruction *pair, int ip)
+static void fill_dest_into_pair(
+	struct pair_state *s,
+	struct radeon_pair_instruction *pair,
+	struct pair_state_instruction *pairinst)
 {
-	struct pair_state_instruction *pairinst = s->Instructions + ip;
-	struct prog_instruction *inst = s->Program->Instructions + ip;
+	struct prog_instruction *inst = &pairinst->Instruction;
 
 	if (inst->DstReg.File == PROGRAM_OUTPUT) {
 		if (inst->DstReg.Index == FRAG_RESULT_COLOR) {
@@ -804,24 +799,24 @@ static void fill_dest_into_pair(struct pair_state *s, struct radeon_pair_instruc
 static void emit_alu(struct pair_state *s)
 {
 	struct radeon_pair_instruction pair;
+	struct pair_state_instruction *psi;
 
 	if (s->ReadyFullALU || !(s->ReadyRGB && s->ReadyAlpha)) {
-		int ip;
 		if (s->ReadyFullALU) {
-			ip = s->ReadyFullALU - s->Instructions;
+			psi = s->ReadyFullALU;
 			s->ReadyFullALU = s->ReadyFullALU->NextReady;
 		} else if (s->ReadyRGB) {
-			ip = s->ReadyRGB - s->Instructions;
+			psi = s->ReadyRGB;
 			s->ReadyRGB = s->ReadyRGB->NextReady;
 		} else {
-			ip = s->ReadyAlpha - s->Instructions;
+			psi = s->ReadyAlpha;
 			s->ReadyAlpha = s->ReadyAlpha->NextReady;
 		}
 
 		_mesa_bzero(&pair, sizeof(pair));
-		fill_instruction_into_pair(s, &pair, ip);
-		fill_dest_into_pair(s, &pair, ip);
-		commit_instruction(s, ip);
+		fill_instruction_into_pair(s, &pair, psi);
+		fill_dest_into_pair(s, &pair, psi);
+		commit_instruction(s, psi);
 	} else {
 		struct pair_state_instruction **prgb;
 		struct pair_state_instruction **palpha;
@@ -830,29 +825,30 @@ static void emit_alu(struct pair_state *s)
 		 * many source slots; try all possible pairings if necessary */
 		for(prgb = &s->ReadyRGB; *prgb; prgb = &(*prgb)->NextReady) {
 			for(palpha = &s->ReadyAlpha; *palpha; palpha = &(*palpha)->NextReady) {
-				int rgbip = *prgb - s->Instructions;
-				int alphaip = *palpha - s->Instructions;
+				struct pair_state_instruction * psirgb = *prgb;
+				struct pair_state_instruction * psialpha = *palpha;
 				_mesa_bzero(&pair, sizeof(pair));
-				fill_instruction_into_pair(s, &pair, rgbip);
-				if (!fill_instruction_into_pair(s, &pair, alphaip))
+				fill_instruction_into_pair(s, &pair, psirgb);
+				if (!fill_instruction_into_pair(s, &pair, psialpha))
 					continue;
 				*prgb = (*prgb)->NextReady;
 				*palpha = (*palpha)->NextReady;
-				fill_dest_into_pair(s, &pair, rgbip);
-				fill_dest_into_pair(s, &pair, alphaip);
-				commit_instruction(s, rgbip);
-				commit_instruction(s, alphaip);
+				fill_dest_into_pair(s, &pair, psirgb);
+				fill_dest_into_pair(s, &pair, psialpha);
+				commit_instruction(s, psirgb);
+				commit_instruction(s, psialpha);
 				goto success;
 			}
 		}
 
 		/* No success in pairing; just take the first RGB instruction */
-		int ip = s->ReadyRGB - s->Instructions;
+		psi = s->ReadyRGB;
 		s->ReadyRGB = s->ReadyRGB->NextReady;
+
 		_mesa_bzero(&pair, sizeof(pair));
-		fill_instruction_into_pair(s, &pair, ip);
-		fill_dest_into_pair(s, &pair, ip);
-		commit_instruction(s, ip);
+		fill_instruction_into_pair(s, &pair, psi);
+		fill_dest_into_pair(s, &pair, psi);
+		commit_instruction(s, psi);
 	success: ;
 	}
 
@@ -870,17 +866,12 @@ GLboolean radeonPairProgram(GLcontext *ctx, struct gl_program *program,
 
 	_mesa_bzero(&s, sizeof(s));
 	s.Ctx = ctx;
-	s.Program = _mesa_clone_program(ctx, program);
+	memory_pool_init(&s.Pool);
+	s.Program = program;
 	s.Handler = handler;
 	s.UserData = userdata;
 	s.Debug = (RADEON_DEBUG & DEBUG_PIXEL) ? GL_TRUE : GL_FALSE;
 	s.Verbose = GL_FALSE && s.Debug;
-
-	s.Instructions = (struct pair_state_instruction*)_mesa_calloc(
-		sizeof(struct pair_state_instruction)*s.Program->NumInstructions);
-	s.ValuePool = (struct reg_value*)_mesa_calloc(sizeof(struct reg_value)*s.Program->NumInstructions*4);
-	s.ReaderPool = (struct reg_value_reader*)_mesa_calloc(
-		sizeof(struct reg_value_reader)*s.Program->NumInstructions*12);
 
 	if (s.Debug)
 		_mesa_printf("Emit paired program\n");
@@ -900,11 +891,7 @@ GLboolean radeonPairProgram(GLcontext *ctx, struct gl_program *program,
 	if (s.Debug)
 		_mesa_printf(" END\n");
 
-	_mesa_free(s.Instructions);
-	_mesa_free(s.ValuePool);
-	_mesa_free(s.ReaderPool);
-
-	_mesa_reference_program(ctx, &s.Program, NULL);
+	memory_pool_destroy(&s.Pool);
 
 	return !s.Error;
 }
