@@ -618,7 +618,7 @@ static int bo_vram_validate(struct radeon_bo *bo,
 			    (bo_legacy->offset - boml->fb_location);
 
 		    /* FIXME: alignment, pitch, etc. */
-		    r600_sw_blit(src, 0, dst, 0, 0, 0, 1, 1, bo->size);
+		    memcpy(dst, src, bo->size);
 	    } else {
 		    /* Copy to VRAM using a blit.
 		     * All memory is 4K aligned. We're using 1024 pixels wide blits.

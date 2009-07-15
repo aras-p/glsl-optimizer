@@ -476,8 +476,9 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 			continue;
 
 		if (IS_R600_CLASS(rmesa->radeonScreen)) {
-			int src_pitch = rmesa->radeonScreen->backPitch * rmesa->radeonScreen->cpp;
-			int dst_pitch = rmesa->radeonScreen->frontPitch * rmesa->radeonScreen->cpp;
+			int cpp = rmesa->radeonScreen->cpp;
+			int src_pitch = rmesa->radeonScreen->backPitch * cpp;
+			int dst_pitch = rmesa->radeonScreen->frontPitch * cpp;
 			char *src = (char *)rmesa->radeonScreen->driScreen->pFB + rmesa->radeonScreen->backOffset;
 			char *dst = (char *)rmesa->radeonScreen->driScreen->pFB + rmesa->radeonScreen->frontOffset;
 			int j;
@@ -489,7 +490,14 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 				int w = pb[j].x2 - x;
 				int h = pb[j].y2 - y;
 
-				r600_sw_blit(src, src_pitch, dst, dst_pitch, x, y, w, h, rmesa->radeonScreen->cpp);
+				src += (y * src_pitch) + (x * cpp);
+				dst += (y * dst_pitch) + (x * cpp);
+
+				while (h--) {
+					memcpy(dst, src, w * cpp);
+					src += src_pitch;
+					dst += dst_pitch;
+				}
 			}
 		}
 
