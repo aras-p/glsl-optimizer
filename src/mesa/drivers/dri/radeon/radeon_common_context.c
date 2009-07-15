@@ -205,8 +205,11 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	fthrottle_mode = driQueryOptioni(&radeon->optionCache, "fthrottle_mode");
 	radeon->iw.irq_seq = -1;
 	radeon->irqsEmitted = 0;
-	radeon->do_irqs = (fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS &&
-			  radeon->radeonScreen->irq);
+	if (IS_R600_CLASS(radeon->radeonScreen))
+		radeon->do_irqs = 0;
+	else
+		radeon->do_irqs = (fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS &&
+				   radeon->radeonScreen->irq);
 
 	radeon->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
