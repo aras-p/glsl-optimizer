@@ -591,6 +591,10 @@ class Context(Object):
         self.real.draw_range_elements(indexBuffer, indexSize, minIndex, maxIndex, mode, start, count)
         self._set_dirty()
         
+    def surface_copy(self, dest, destx, desty, src, srcx, srcy, width, height):
+        if dest is not None and src is not None:
+            self.real.surface_copy(dest, destx, desty, src, srcx, srcy, width, height)
+
     def is_texture_referenced(self, texture, face, level):
         #return self.real.is_texture_referenced(format, texture, face, level)
         pass
