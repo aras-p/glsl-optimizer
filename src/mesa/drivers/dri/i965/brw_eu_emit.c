@@ -648,6 +648,10 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
 				 struct brw_instruction *if_insn)
 {
    struct brw_instruction *insn;
+   GLuint br = 1;
+
+   if (BRW_IS_IGDNG(p->brw))
+      br = 2;
 
    if (p->single_program_flow) {
       insn = next_insn(p, BRW_OPCODE_ADD);
@@ -674,7 +678,7 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
    } else {
       assert(if_insn->header.opcode == BRW_OPCODE_IF);
 
-      if_insn->bits3.if_else.jump_count = insn - if_insn;
+      if_insn->bits3.if_else.jump_count = br * (insn - if_insn);
       if_insn->bits3.if_else.pop_count = 1;
       if_insn->bits3.if_else.pad0 = 0;
    }
@@ -685,6 +689,11 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
 void brw_ENDIF(struct brw_compile *p, 
 	       struct brw_instruction *patch_insn)
 {
+   GLuint br = 1;
+
+   if (BRW_IS_IGDNG(p->brw))
+      br = 2; 
+ 
    if (p->single_program_flow) {
       /* In single program flow mode, there's no need to execute an ENDIF,
        * since we don't need to do any stack operations, and if we're executing
@@ -716,11 +725,11 @@ void brw_ENDIF(struct brw_compile *p,
 	 /* Automagically turn it into an IFF:
 	  */
 	 patch_insn->header.opcode = BRW_OPCODE_IFF;
-	 patch_insn->bits3.if_else.jump_count = insn - patch_insn + 1;
+	 patch_insn->bits3.if_else.jump_count = br * (insn - patch_insn + 1);
 	 patch_insn->bits3.if_else.pop_count = 0;
 	 patch_insn->bits3.if_else.pad0 = 0;
       } else if (patch_insn->header.opcode == BRW_OPCODE_ELSE) {
-	 patch_insn->bits3.if_else.jump_count = insn - patch_insn + 1;
+	 patch_insn->bits3.if_else.jump_count = br * (insn - patch_insn + 1);
 	 patch_insn->bits3.if_else.pop_count = 1;
 	 patch_insn->bits3.if_else.pad0 = 0;
       } else {
@@ -794,6 +803,10 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
                                   struct brw_instruction *do_insn)
 {
    struct brw_instruction *insn;
+   GLuint br = 1;
+
+   if (BRW_IS_IGDNG(p->brw))
+      br = 2;
 
    if (p->single_program_flow)
       insn = next_insn(p, BRW_OPCODE_ADD);
@@ -814,7 +827,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
       insn->header.execution_size = do_insn->header.execution_size;
 
       assert(do_insn->header.opcode == BRW_OPCODE_DO);
-      insn->bits3.if_else.jump_count = do_insn - insn + 1;
+      insn->bits3.if_else.jump_count = br * (do_insn - insn + 1);
       insn->bits3.if_else.pop_count = 0;
       insn->bits3.if_else.pad0 = 0;
    }

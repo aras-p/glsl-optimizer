@@ -3000,17 +3000,22 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_ENDLOOP: 
                {
                   struct brw_instruction *inst0, *inst1;
+                  GLuint br = 1;
+
+                  if (BRW_IS_IGDNG(brw))
+                     br = 2;
+ 
                   loop_depth--;
                   inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);
                   /* patch all the BREAK/CONT instructions from last BEGINLOOP */
                   while (inst0 > loop_inst[loop_depth]) {
                      inst0--;
                      if (inst0->header.opcode == BRW_OPCODE_BREAK) {
-			inst0->bits3.if_else.jump_count = inst1 - inst0 + 1;
+			inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
 			inst0->bits3.if_else.pop_count = 0;
                      }
                      else if (inst0->header.opcode == BRW_OPCODE_CONTINUE) {
-                        inst0->bits3.if_else.jump_count = inst1 - inst0;
+                        inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
                         inst0->bits3.if_else.pop_count = 0;
                      }
                   }
