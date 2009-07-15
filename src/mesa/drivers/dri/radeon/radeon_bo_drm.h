@@ -187,6 +187,13 @@ static inline int _radeon_bo_wait(struct radeon_bo *bo,
     return bo->bom->funcs->bo_wait(bo);
 }
 
+static inline int radeon_bo_is_static(struct radeon_bo *bo)
+{
+	if (bo->bom->funcs->bo_is_static)
+		return bo->bom->funcs->bo_is_static(bo);
+	return 0;
+}
+
 #ifdef RADEON_DEBUG_BO
 #define radeon_bo_open(bom, h, s, a, d, f, u)\
     _radeon_bo_open(bom, h, s, a, d, f, u, __FILE__, __FUNCTION__, __LINE__)
