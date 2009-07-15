@@ -54,6 +54,14 @@
 #include "r700_fragprog.h"
 #include "r700_state.h"
 
+void r700WaitForIdle(context_t *context);
+void r700WaitForIdleClean(context_t *context);
+void r700Start3D(context_t *context);
+GLboolean r700SendTextureState(context_t *context);
+GLboolean r700SyncSurf(context_t *context);
+unsigned int r700PrimitiveType(int prim);
+void r600UpdateTextureState(GLcontext * ctx);
+
 void r700WaitForIdle(context_t *context)
 {
     BATCH_LOCALS(&context->radeon);

@@ -53,6 +53,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 struct r600_context;
 typedef struct r600_context context_t;
 
+GLboolean r700SendPSState(context_t *context);
+GLboolean r700SendVSState(context_t *context);
+GLboolean r700SendSQConfig(context_t *context);
+
 #include "main/mm.h"
 
 /* From http://gcc. gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .

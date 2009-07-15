@@ -55,6 +55,7 @@
 #define ASIC_CONTEXT_BASE_INDEX   0xA000
 #define ASIC_CTL_CONST_BASE_INDEX 0xF3FC
 
+
 enum 
 {
     SQ_ABSOLUTE                              = 0x00000000,

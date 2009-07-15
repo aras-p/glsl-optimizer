@@ -47,6 +47,9 @@ do                                                                  \
     pStateListWork++;                                               \
 }while(0)
 
+inline GLboolean needRelocReg(context_t *context, unsigned int reg);
+inline static GLboolean setRelocReg(context_t *context, unsigned int reg);
+
 GLboolean r700InitChipObject(context_t *context)
 {
     ContextState * pStateListWork;
@@ -421,7 +424,7 @@ inline GLboolean needRelocReg(context_t *context, unsigned int reg)
     return GL_FALSE;
 }
 
-inline GLboolean setRelocReg(context_t *context, unsigned int reg)
+inline static GLboolean setRelocReg(context_t *context, unsigned int reg)
 {
     BATCH_LOCALS(&context->radeon);
     R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
