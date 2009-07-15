@@ -51,28 +51,39 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb);
 
-static GLubyte *radeon_ptr32(const struct radeon_renderbuffer * rrb,
+/* radeon tiling on r300-r500 has 4 states,
+   macro-linear/micro-linear
+   macro-linear/micro-tiled
+   macro-tiled /micro-linear
+   macro-tiled /micro-tiled
+   1 byte surface 
+   2 byte surface - two types - we only provide 8x2 microtiling
+   4 byte surface
+   8/16 byte (unused)
+*/
+   
+static GLubyte *radeon_ptr_4byte(const struct radeon_renderbuffer * rrb,
 			     GLint x, GLint y)
 {
     GLubyte *ptr = rrb->bo->ptr;
     uint32_t mask = RADEON_BO_FLAGS_MACRO_TILE | RADEON_BO_FLAGS_MICRO_TILE;
     GLint offset;
-    GLint nmacroblkpl;
-    GLint nmicroblkpl;
 
     if (rrb->has_surface || !(rrb->bo->flags & mask)) {
         offset = x * rrb->cpp + y * rrb->pitch;
     } else {
         offset = 0;
         if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE) {
-            if (rrb->bo->flags & RADEON_BO_FLAGS_MICRO_TILE) {
-                nmacroblkpl = rrb->pitch >> 5;
-                offset += ((y >> 4) * nmacroblkpl) << 11;
-                offset += ((y & 15) >> 1) << 8;
-                offset += (y & 1) << 4;
-                offset += (x >> 5) << 11;
-                offset += ((x & 31) >> 2) << 5;
-                offset += (x & 3) << 2;
+	    if (rrb->bo->flags & RADEON_BO_FLAGS_MICRO_TILE) {
+		offset = ((y >> 4) * (rrb->pitch >> 7) + (x >> 5)) << 11;
+		offset += (((y >> 3) ^ (x >> 5)) & 0x1) << 10;
+		offset += (((y >> 4) ^ (x >> 4)) & 0x1) << 9;
+		offset += (((y >> 2) ^ (x >> 4)) & 0x1) << 8;
+		offset += (((y >> 3) ^ (x >> 3)) & 0x1) << 7;
+		offset += ((y >> 1) & 0x1) << 6;
+		offset += ((x >> 2) & 0x1) << 5;
+		offset += (y & 1) << 4;
+		offset += (x & 3) << 2;
             } else {
 		offset = ((y >> 3) * (rrb->pitch >> 8) + (x >> 6)) << 11;
 		offset += (((y >> 2) ^ (x >> 6)) & 0x1) << 10;
@@ -83,23 +94,20 @@ static GLubyte *radeon_ptr32(const struct radeon_renderbuffer * rrb,
 		offset += (x & 15) << 2;
             }
         } else {
-            nmicroblkpl = ((rrb->pitch + 31) & ~31) >> 5;
-            offset += (y * nmicroblkpl) << 5;
-            offset += (x >> 3) << 5;
-            offset += (x & 7) << 2;
+	    offset = ((y >> 1) * (rrb->pitch >> 4) + (x >> 2)) << 5;
+	    offset += (y & 1) << 4;
+	    offset += (x & 3) << 2;
         }
     }
     return &ptr[offset];
 }
 
-static GLubyte *radeon_ptr16(const struct radeon_renderbuffer * rrb,
-			     GLint x, GLint y)
+static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
+				     GLint x, GLint y)
 {
     GLubyte *ptr = rrb->bo->ptr;
     uint32_t mask = RADEON_BO_FLAGS_MACRO_TILE | RADEON_BO_FLAGS_MICRO_TILE;
     GLint offset;
-    GLint nmacroblkpl;
-    GLint nmicroblkpl;
 
     if (rrb->has_surface || !(rrb->bo->flags & mask)) {
         offset = x * rrb->cpp + y * rrb->pitch;
@@ -107,73 +115,29 @@ static GLubyte *radeon_ptr16(const struct radeon_renderbuffer * rrb,
         offset = 0;
         if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE) {
             if (rrb->bo->flags & RADEON_BO_FLAGS_MICRO_TILE) {
-                nmacroblkpl = rrb->pitch >> 6;
-                offset += ((y >> 4) * nmacroblkpl) << 11;
-                offset += ((y & 15) >> 1) << 8;
-                offset += (y & 1) << 4;
-                offset += (x >> 6) << 11;
-                offset += ((x & 63) >> 3) << 5;
-                offset += (x & 7) << 1;
+		offset = ((y >> 4) * (rrb->pitch >> 7) + (x >> 6)) << 11;
+		offset += (((y >> 3) ^ (x >> 6)) & 0x1) << 10;
+		offset += (((y >> 4) ^ (x >> 5)) & 0x1) << 9;
+		offset += (((y >> 2) ^ (x >> 5)) & 0x1) << 8;
+		offset += (((y >> 3) ^ (x >> 4)) & 0x1) << 7;
+		offset += ((y >> 1) & 0x1) << 6;
+		offset += ((x >> 3) & 0x1) << 5;
+		offset += (y & 1) << 4;
+		offset += (x & 3) << 2;
             } else {
-                nmacroblkpl = rrb->pitch >> 7;
-                offset += ((y >> 3) * nmacroblkpl) << 11;
-                offset += (y & 7) << 8;
-                offset += (x >> 7) << 11;
-                offset += ((x & 127) >> 4) << 5;
+		offset = ((y >> 3) * (rrb->pitch >> 8) + (x >> 7)) << 11;
+		offset += (((y >> 2) ^ (x >> 7)) & 0x1) << 10;
+		offset += (((y >> 3) ^ (x >> 6)) & 0x1) << 9;
+		offset += (((y >> 1) ^ (x >> 6)) & 0x1) << 8;
+		offset += (((y >> 2) ^ (x >> 5)) & 0x1) << 7;
+		offset += (y & 1) << 6;
+		offset += ((x >> 4) & 0x1) << 5;
                 offset += (x & 15) << 2;
             }
         } else {
-            nmicroblkpl = ((rrb->pitch + 31) & ~31) >> 5;
-            offset += (y * nmicroblkpl) << 5;
-            offset += (x >> 4) << 5;
-            offset += (x & 15) << 2;
-        }
-    }
-    return &ptr[offset];
-}
-
-static GLubyte *radeon_ptr(const struct radeon_renderbuffer * rrb,
-			   GLint x, GLint y)
-{
-    GLubyte *ptr = rrb->bo->ptr;
-    uint32_t mask = RADEON_BO_FLAGS_MACRO_TILE | RADEON_BO_FLAGS_MICRO_TILE;
-    GLint offset;
-    GLint microblkxs;
-    GLint macroblkxs;
-    GLint nmacroblkpl;
-    GLint nmicroblkpl;
-
-    if (rrb->has_surface || !(rrb->bo->flags & mask)) {
-        offset = x * rrb->cpp + y * rrb->pitch;
-    } else {
-        offset = 0;
-        if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE) {
-            if (rrb->bo->flags & RADEON_BO_FLAGS_MICRO_TILE) {
-                microblkxs = 16 / rrb->cpp;
-                macroblkxs = 128 / rrb->cpp;
-                nmacroblkpl = rrb->pitch / macroblkxs;
-                offset += ((y >> 4) * nmacroblkpl) << 11;
-                offset += ((y & 15) >> 1) << 8;
-                offset += (y & 1) << 4;
-                offset += (x / macroblkxs) << 11;
-                offset += ((x & (macroblkxs - 1)) / microblkxs) << 5;
-                offset += (x & (microblkxs - 1)) * rrb->cpp;
-            } else {
-                microblkxs = 32 / rrb->cpp;
-                macroblkxs = 256 / rrb->cpp;
-                nmacroblkpl = rrb->pitch / macroblkxs;
-                offset += ((y >> 3) * nmacroblkpl) << 11;
-                offset += (y & 7) << 8;
-                offset += (x / macroblkxs) << 11;
-                offset += ((x & (macroblkxs - 1)) / microblkxs) << 5;
-                offset += (x & (microblkxs - 1)) * rrb->cpp;
-            }
-        } else {
-            microblkxs = 32 / rrb->cpp;
-            nmicroblkpl = ((rrb->pitch + 31) & ~31) >> 5;
-            offset += (y * nmicroblkpl) << 5;
-            offset += (x / microblkxs) << 5;
-            offset += (x & (microblkxs - 1)) * rrb->cpp;
+	    offset = ((y >> 1) * (rrb->pitch >> 4) + (x >> 3)) << 5;
+	    offset += (y & 0x1) << 4;
+	    offset += (x & 0x7) << 1;
         }
     }
     return &ptr[offset];
@@ -252,7 +216,7 @@ s8z24_to_z24s8(uint32_t val)
 
 #define TAG(x)    radeon##x##_RGB565
 #define TAG2(x,y) radeon##x##_RGB565##y
-#define GET_PTR(X,Y) radeon_ptr16(rrb, (X) + x_off, (Y) + y_off)
+#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
 #include "spantmp2.h"
 
 /* 16 bit, ARGB1555 color spanline and pixel functions
@@ -262,7 +226,7 @@ s8z24_to_z24s8(uint32_t val)
 
 #define TAG(x)    radeon##x##_ARGB1555
 #define TAG2(x,y) radeon##x##_ARGB1555##y
-#define GET_PTR(X,Y) radeon_ptr16(rrb, (X) + x_off, (Y) + y_off)
+#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
 #include "spantmp2.h"
 
 /* 16 bit, RGBA4 color spanline and pixel functions
@@ -272,7 +236,7 @@ s8z24_to_z24s8(uint32_t val)
 
 #define TAG(x)    radeon##x##_ARGB4444
 #define TAG2(x,y) radeon##x##_ARGB4444##y
-#define GET_PTR(X,Y) radeon_ptr16(rrb, (X) + x_off, (Y) + y_off)
+#define GET_PTR(X,Y) radeon_ptr_2byte_8x2(rrb, (X) + x_off, (Y) + y_off)
 #include "spantmp2.h"
 
 /* 32 bit, xRGB8888 color spanline and pixel functions
@@ -282,9 +246,9 @@ s8z24_to_z24s8(uint32_t val)
 
 #define TAG(x)    radeon##x##_xRGB8888
 #define TAG2(x,y) radeon##x##_xRGB8888##y
-#define GET_VALUE(_x, _y) ((*(GLuint*)(radeon_ptr32(rrb, _x + x_off, _y + y_off)) | 0xff000000))
+#define GET_VALUE(_x, _y) ((*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)) | 0xff000000))
 #define PUT_VALUE(_x, _y, d) { \
-   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );		\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
    *_ptr = d;								\
 } while (0)
 #include "spantmp2.h"
@@ -296,9 +260,9 @@ s8z24_to_z24s8(uint32_t val)
 
 #define TAG(x)    radeon##x##_ARGB8888
 #define TAG2(x,y) radeon##x##_ARGB8888##y
-#define GET_VALUE(_x, _y) (*(GLuint*)(radeon_ptr32(rrb, _x + x_off, _y + y_off)))
+#define GET_VALUE(_x, _y) (*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)))
 #define PUT_VALUE(_x, _y, d) { \
-   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );		\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
    *_ptr = d;								\
 } while (0)
 #include "spantmp2.h"
@@ -322,10 +286,10 @@ s8z24_to_z24s8(uint32_t val)
 #define VALUE_TYPE GLushort
 
 #define WRITE_DEPTH( _x, _y, d )					\
-   *(GLushort *)radeon_ptr(rrb, _x + x_off, _y + y_off) = d
+   *(GLushort *)radeon_ptr_2byte_8x2(rrb, _x + x_off, _y + y_off) = d
 
 #define READ_DEPTH( d, _x, _y )						\
-   d = *(GLushort *)radeon_ptr(rrb, _x + x_off, _y + y_off)
+   d = *(GLushort *)radeon_ptr_2byte_8x2(rrb, _x + x_off, _y + y_off)
 
 #define TAG(x) radeon##x##_z16
 #include "depthtmp.h"
@@ -340,7 +304,7 @@ s8z24_to_z24s8(uint32_t val)
 #ifdef COMPILE_R300
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );		\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
    GLuint tmp = *_ptr;				\
    tmp &= 0x000000ff;							\
    tmp |= ((d << 8) & 0xffffff00);					\
@@ -349,7 +313,7 @@ do {									\
 #else
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );	\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );	\
    GLuint tmp = *_ptr;							\
    tmp &= 0xff000000;							\
    tmp |= ((d) & 0x00ffffff);						\
@@ -360,11 +324,11 @@ do {									\
 #ifdef COMPILE_R300
 #define READ_DEPTH( d, _x, _y )						\
   do {									\
-    d = (*(GLuint*)(radeon_ptr32(rrb, _x + x_off, _y + y_off)) & 0xffffff00) >> 8; \
+    d = (*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)) & 0xffffff00) >> 8; \
   }while(0)
 #else
 #define READ_DEPTH( d, _x, _y )	\
-  d = *(GLuint*)(radeon_ptr32(rrb, _x + x_off,	_y + y_off)) & 0x00ffffff;
+  d = *(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off,	_y + y_off)) & 0x00ffffff;
 #endif
 /*
     fprintf(stderr, "dval(%d, %d, %d, %d)=0x%08X\n", _x, xo, _y, yo, d);\
@@ -384,13 +348,13 @@ do {									\
 #ifdef COMPILE_R300
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );		\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
    *_ptr = d;								\
 } while (0)
 #else
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );	\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );	\
    GLuint tmp = z24s8_to_s8z24(d);					\
    *_ptr = tmp;					\
 } while (0)
@@ -399,11 +363,11 @@ do {									\
 #ifdef COMPILE_R300
 #define READ_DEPTH( d, _x, _y )						\
   do { \
-    d = (*(GLuint*)(radeon_ptr32(rrb, _x + x_off, _y + y_off)));	\
+    d = (*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off, _y + y_off)));	\
   }while(0)
 #else
 #define READ_DEPTH( d, _x, _y )	do {					\
-    d = s8z24_to_z24s8(*(GLuint*)(radeon_ptr32(rrb, _x + x_off,	_y + y_off ))); \
+    d = s8z24_to_z24s8(*(GLuint*)(radeon_ptr_4byte(rrb, _x + x_off,	_y + y_off ))); \
   } while (0)
 #endif
 /*
@@ -422,7 +386,7 @@ do {									\
 #ifdef COMPILE_R300
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x + x_off, _y + y_off);		\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte(rrb, _x + x_off, _y + y_off);		\
    GLuint tmp = *_ptr;				\
    tmp &= 0xffffff00;							\
    tmp |= (d) & 0xff;							\
@@ -431,7 +395,7 @@ do {									\
 #else
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x + x_off, _y + y_off);		\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte(rrb, _x + x_off, _y + y_off);		\
    GLuint tmp = *_ptr;				\
    tmp &= 0x00ffffff;							\
    tmp |= (((d) & 0xff) << 24);						\
@@ -442,14 +406,14 @@ do {									\
 #ifdef COMPILE_R300
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );		\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
    GLuint tmp = *_ptr;				\
    d = tmp & 0x000000ff;						\
 } while (0)
 #else
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
-   GLuint *_ptr = (GLuint*)radeon_ptr32( rrb, _x + x_off, _y + y_off );		\
+   GLuint *_ptr = (GLuint*)radeon_ptr_4byte( rrb, _x + x_off, _y + y_off );		\
    GLuint tmp = *_ptr;				\
    d = (tmp & 0xff000000) >> 24;					\
 } while (0)
