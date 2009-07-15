@@ -13,6 +13,10 @@ ifeq ($(USING_EGL), 1)
 EGL_SOURCES = server/radeon_egl.c
 endif
 
+ifeq ($(RADEON_LDFLAGS),)
+CS_SOURCES = radeon_cs_space_drm.c
+endif
+
 COMMON_SOURCES = \
 	../../common/driverfuncs.c \
 	../common/mm.c \
