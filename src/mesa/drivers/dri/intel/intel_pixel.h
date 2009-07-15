@@ -31,19 +31,6 @@
 #include "main/mtypes.h"
 
 void intelInitPixelFuncs(struct dd_function_table *functions);
-void intel_meta_set_passthrough_transform(struct intel_context *intel);
-void intel_meta_restore_transform(struct intel_context *intel);
-void intel_meta_set_passthrough_vertex_program(struct intel_context *intel);
-void intel_meta_restore_vertex_program(struct intel_context *intel);
-void intel_meta_set_fragment_program(struct intel_context *intel,
-				     struct gl_fragment_program **prog,
-				     const char *prog_string);
-void intel_meta_restore_fragment_program(struct intel_context *intel);
-void intel_free_pixel_state(struct intel_context *intel);
-void intel_meta_set_default_texrect(struct intel_context *intel);
-void intel_meta_set_default_texrect(struct intel_context *intel);
-void intel_meta_restore_texcoords(struct intel_context *intel);
-
 GLboolean intel_check_blit_fragment_ops(GLcontext * ctx,
 					GLboolean src_alpha_is_one);
 
@@ -78,7 +65,5 @@ void intelBitmap(GLcontext * ctx,
 		 GLsizei width, GLsizei height,
 		 const struct gl_pixelstore_attrib *unpack,
 		 const GLubyte * pixels);
-
-void intel_clear_tris(GLcontext *ctx, GLbitfield mask);
 
 #endif

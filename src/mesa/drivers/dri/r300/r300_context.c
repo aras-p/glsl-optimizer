@@ -124,6 +124,7 @@ const struct dri_extension card_extensions[] = {
   {"GL_EXT_texture_lod_bias",		NULL},
   {"GL_EXT_texture_mirror_clamp",	NULL},
   {"GL_EXT_texture_rectangle",		NULL},
+  {"GL_EXT_texture_sRGB",		NULL},
   {"GL_EXT_vertex_array_bgra",		NULL},
   {"GL_ATI_separate_stencil",		GL_ATI_separate_stencil_functions},
   {"GL_ATI_texture_env_combine3",	NULL},
@@ -269,10 +270,16 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 	ctx->Const.MaxTextureLodBias = 16.0;
 
-	if (screen->chip_family >= CHIP_FAMILY_RV515)
+	if (screen->chip_family >= CHIP_FAMILY_RV515) {
 		ctx->Const.MaxTextureLevels = 13;
-	else
+		ctx->Const.MaxCubeTextureLevels = 13;
+		ctx->Const.MaxTextureRectSize = 4096;
+	}
+	else {
 		ctx->Const.MaxTextureLevels = 12;
+		ctx->Const.MaxCubeTextureLevels = 12;
+		ctx->Const.MaxTextureRectSize = 2048;
+	}
 
 	ctx->Const.MinPointSize = 1.0;
 	ctx->Const.MinPointSizeAA = 1.0;
@@ -408,6 +415,8 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
 	r300InitConstValues(ctx, screen);
+
+	_mesa_set_mvp_with_dp4( ctx, GL_TRUE );
 
 	/* Initialize the software rasterizer and helper modules.
 	 */

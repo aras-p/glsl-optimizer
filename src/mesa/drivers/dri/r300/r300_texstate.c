@@ -119,6 +119,10 @@ static const struct tx_table {
 	_ASSIGN(Z24_S8, R300_EASY_TX_FORMAT(X, X, X, X, X24_Y8)),
 	_ASSIGN(S8_Z24, R300_EASY_TX_FORMAT(Y, Y, Y, Y, X24_Y8)),
 	_ASSIGN(Z32, R300_EASY_TX_FORMAT(X, X, X, X, X32)),
+	/* EXT_texture_sRGB */
+	_ASSIGN(SRGBA8, R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8) | R300_TX_FORMAT_GAMMA),
+	_ASSIGN(SLA8, R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8) | R300_TX_FORMAT_GAMMA),
+	_ASSIGN(SL8, R300_EASY_TX_FORMAT(X, X, X, ONE, X8) | R300_TX_FORMAT_GAMMA),
 	/* *INDENT-ON* */
 };
 
@@ -277,21 +281,24 @@ GLboolean r300ValidateBuffers(GLcontext * ctx)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct radeon_renderbuffer *rrb;
 	int i;
+	int ret;
 
-	radeon_validate_reset_bos(&rmesa->radeon);
+	radeon_cs_space_reset_bos(rmesa->radeon.cmdbuf.cs);
 
 	rrb = radeon_get_colorbuffer(&rmesa->radeon);
 	/* color buffer */
 	if (rrb && rrb->bo) {
-		radeon_validate_bo(&rmesa->radeon, rrb->bo,
-				   0, RADEON_GEM_DOMAIN_VRAM);
+		radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
+						  rrb->bo, 0,
+						  RADEON_GEM_DOMAIN_VRAM);
 	}
 
 	/* depth buffer */
 	rrb = radeon_get_depthbuffer(&rmesa->radeon);
 	if (rrb && rrb->bo) {
-		radeon_validate_bo(&rmesa->radeon, rrb->bo,
-				   0, RADEON_GEM_DOMAIN_VRAM);
+		radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
+						  rrb->bo, 0,
+						  RADEON_GEM_DOMAIN_VRAM);
 	}
 	
 	for (i = 0; i < ctx->Const.MaxTextureImageUnits; ++i) {
@@ -307,17 +314,19 @@ GLboolean r300ValidateBuffers(GLcontext * ctx)
 		}
 		t = radeon_tex_obj(ctx->Texture.Unit[i]._Current);
 		if (t->image_override && t->bo)
-			radeon_validate_bo(&rmesa->radeon, t->bo,
-					   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
-
+			radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
+							  t->bo,
+							  RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
 		else if (t->mt->bo)
-			radeon_validate_bo(&rmesa->radeon, t->mt->bo,
-					   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
+			radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
+							  t->mt->bo,
+							  RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
 	}
-	if (rmesa->radeon.dma.current)
-		radeon_validate_bo(&rmesa->radeon, rmesa->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
 
-	return radeon_revalidate_bos(ctx);
+	ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs, rmesa->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
+	if (ret)
+		return GL_FALSE;
+	return GL_TRUE;
 }
 
 void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
@@ -433,7 +442,7 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		rImage->mt = NULL;
 	}
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
-				   rb->width, rb->height, 1, 0, rb->cpp);
+				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
 	texImage->TexFormat = radeonChooseTextureFormat(radeon->glCtx,
 							internalFormat,
@@ -469,15 +478,15 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		break;
 	}
 	pitch_val--;
-	t->pp_txsize = ((rb->width - 1) << R300_TX_WIDTHMASK_SHIFT) |
-              ((rb->height - 1) << R300_TX_HEIGHTMASK_SHIFT);
+	t->pp_txsize = ((rb->base.Width - 1) << R300_TX_WIDTHMASK_SHIFT) |
+              ((rb->base.Height - 1) << R300_TX_HEIGHTMASK_SHIFT);
 	t->pp_txsize |= R300_TX_SIZE_TXPITCH_EN;
 	t->pp_txpitch |= pitch_val;
 
 	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
-	    if (rb->width > 2048)
+	    if (rb->base.Width > 2048)
 		t->pp_txpitch |= R500_TXWIDTH_BIT11;
-	    if (rb->height > 2048)
+	    if (rb->base.Height > 2048)
 		t->pp_txpitch |= R500_TXHEIGHT_BIT11;
 	}
 	t->validated = GL_TRUE;

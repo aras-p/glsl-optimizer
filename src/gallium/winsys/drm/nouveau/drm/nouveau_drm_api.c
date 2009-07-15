@@ -12,7 +12,7 @@
 #include "nouveau/nouveau_screen.h"
 
 static struct pipe_surface *
-dri_surface_from_handle(struct pipe_screen *screen,
+dri_surface_from_handle(struct drm_api *api, struct pipe_screen *screen,
                         unsigned handle,
                         enum pipe_format format,
                         unsigned width,
@@ -24,7 +24,7 @@ dri_surface_from_handle(struct pipe_screen *screen,
    struct pipe_texture templat;
    struct pipe_buffer *buf = NULL;
 
-   buf = drm_api_hooks.buffer_from_handle(screen, "front buffer", handle);
+   buf = api->buffer_from_handle(api, screen, "front buffer", handle);
    if (!buf)
       return NULL;
 
@@ -70,7 +70,8 @@ static struct dri1_api nouveau_dri1_api = {
 };
 
 static struct pipe_screen *
-nouveau_drm_create_screen(int fd, struct drm_create_screen_arg *arg)
+nouveau_drm_create_screen(struct drm_api *api, int fd,
+			  struct drm_create_screen_arg *arg)
 {
 	struct dri1_create_screen_arg *dri1 = (void *)arg;
 	struct nouveau_winsys *nvws;
@@ -134,13 +135,12 @@ nouveau_drm_create_screen(int fd, struct drm_create_screen_arg *arg)
 		else
 			format = PIPE_FORMAT_A8R8G8B8_UNORM;
 
-		nvws->front = dri_surface_from_handle(nvws->pscreen,
-						       nvdri->front_offset,
-						       format,
-						       nvdri->width,
-						       nvdri->height,
-						       nvdri->front_pitch *
-						       (nvdri->bpp / 8));
+		nvws->front = dri_surface_from_handle(api, nvws->pscreen,
+						      nvdri->front_offset,
+						      format, nvdri->width,
+						      nvdri->height,
+						      nvdri->front_pitch *
+						      (nvdri->bpp / 8));
 		if (!nvws->front) {
 			debug_printf("%s: error referencing front buffer\n",
 				     __func__);
@@ -155,7 +155,7 @@ nouveau_drm_create_screen(int fd, struct drm_create_screen_arg *arg)
 }
 
 static struct pipe_context *
-nouveau_drm_create_context(struct pipe_screen *pscreen)
+nouveau_drm_create_context(struct drm_api *api, struct pipe_screen *pscreen)
 {
 	struct nouveau_winsys *nvws = nouveau_winsys_screen(pscreen);
 	struct pipe_context *(*init)(struct pipe_screen *, unsigned);
@@ -206,15 +206,15 @@ nouveau_drm_create_context(struct pipe_screen *pscreen)
 }
 
 static boolean
-nouveau_drm_pb_from_pt(struct pipe_texture *pt, struct pipe_buffer **ppb,
-		       unsigned *stride)
+nouveau_drm_pb_from_pt(struct drm_api *api, struct pipe_texture *pt,
+		       struct pipe_buffer **ppb, unsigned *stride)
 {
 	return false;
 }
 
 static struct pipe_buffer *
-nouveau_drm_pb_from_handle(struct pipe_screen *pscreen, const char *name,
-			   unsigned handle)
+nouveau_drm_pb_from_handle(struct drm_api *api, struct pipe_screen *pscreen,
+			   const char *name, unsigned handle)
 {
 	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 	struct pipe_buffer *pb;
@@ -242,8 +242,8 @@ nouveau_drm_pb_from_handle(struct pipe_screen *pscreen, const char *name,
 }
 
 static boolean
-nouveau_drm_handle_from_pb(struct pipe_screen *pscreen, struct pipe_buffer *pb,
-			   unsigned *handle)
+nouveau_drm_handle_from_pb(struct drm_api *api, struct pipe_screen *pscreen,
+			   struct pipe_buffer *pb, unsigned *handle)
 {
 	struct nouveau_bo *bo = nouveau_bo(pb);
 
@@ -255,8 +255,8 @@ nouveau_drm_handle_from_pb(struct pipe_screen *pscreen, struct pipe_buffer *pb,
 }
 
 static boolean
-nouveau_drm_name_from_pb(struct pipe_screen *pscreen, struct pipe_buffer *pb,
-			 unsigned *handle)
+nouveau_drm_name_from_pb(struct drm_api *api, struct pipe_screen *pscreen,
+			 struct pipe_buffer *pb, unsigned *handle)
 {
 	struct nouveau_bo *bo = nouveau_bo(pb);
 
@@ -274,4 +274,9 @@ struct drm_api drm_api_hooks = {
 	.handle_from_buffer = nouveau_drm_handle_from_pb,
 	.global_handle_from_buffer = nouveau_drm_name_from_pb,
 };
+
+struct drm_api *
+drm_api_create() {
+	return &drm_api_hooks;
+}
 

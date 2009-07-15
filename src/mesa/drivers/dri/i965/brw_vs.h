@@ -58,6 +58,7 @@ struct brw_vs_compile {
 
    GLuint first_output;
    GLuint nr_outputs;
+   GLuint first_overflow_output; /**< VERT_ATTRIB_x */
 
    GLuint first_tmp;
    GLuint last_tmp;

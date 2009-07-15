@@ -7950,6 +7950,10 @@
 
 <xi:include href="ARB_copy_buffer.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<xi:include href="ARB_map_buffer_range.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<xi:include href="ARB_vertex_array_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 
 <!-- Non-ARB extensions sorted by extension number. -->
 
@@ -12225,6 +12229,8 @@
 </category>
 
 <xi:include href="EXT_framebuffer_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<xi:include href="EXT_provoking_vertex.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <category name="GL_EXT_framebuffer_blit" number="316">
     <enum name="READ_FRAMEBUFFER_EXT" value="0x8CA8"/>

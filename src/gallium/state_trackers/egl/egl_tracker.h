@@ -38,6 +38,7 @@ struct drm_device
 	 * pipe
 	 */
 
+	struct drm_api *api;
 	struct pipe_winsys *winsys;
 	struct pipe_screen *screen;
 

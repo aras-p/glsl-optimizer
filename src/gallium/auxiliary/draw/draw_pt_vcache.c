@@ -31,6 +31,7 @@
   */
 
 #include "util/u_memory.h"
+#include "util/u_prim.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
@@ -193,16 +194,30 @@ vcache_ef_quad( struct vcache_frontend *vcache,
                 unsigned i2,
                 unsigned i3 )
 {
-   vcache_triangle_flags( vcache,
-                          ( DRAW_PIPE_RESET_STIPPLE |
-                            DRAW_PIPE_EDGE_FLAG_0 |
-                            DRAW_PIPE_EDGE_FLAG_2 ),
-                          i0, i1, i3 );
+   if (vcache->draw->rasterizer->flatshade_first) {
+      vcache_triangle_flags( vcache,
+                             ( DRAW_PIPE_RESET_STIPPLE |
+                               DRAW_PIPE_EDGE_FLAG_0 |
+                               DRAW_PIPE_EDGE_FLAG_1 ),
+                             i0, i1, i2 );
 
-   vcache_triangle_flags( vcache,
-                          ( DRAW_PIPE_EDGE_FLAG_0 |
-                            DRAW_PIPE_EDGE_FLAG_1 ),
-                          i1, i2, i3 );
+      vcache_triangle_flags( vcache,
+                             ( DRAW_PIPE_EDGE_FLAG_2 |
+                               DRAW_PIPE_EDGE_FLAG_1 ),
+                             i0, i2, i3 );
+   }
+   else {
+      vcache_triangle_flags( vcache,
+                             ( DRAW_PIPE_RESET_STIPPLE |
+                               DRAW_PIPE_EDGE_FLAG_0 |
+                               DRAW_PIPE_EDGE_FLAG_2 ),
+                             i0, i1, i3 );
+
+      vcache_triangle_flags( vcache,
+                             ( DRAW_PIPE_EDGE_FLAG_0 |
+                               DRAW_PIPE_EDGE_FLAG_1 ),
+                             i1, i2, i3 );
+   }
 }
 
 /* At least for now, we're back to using a template include file for
@@ -453,7 +468,7 @@ vcache_prepare( struct draw_pt_front_end *frontend,
    }
 
    vcache->input_prim = prim;
-   vcache->output_prim = draw_pt_reduced_prim(prim);
+   vcache->output_prim = u_reduced_prim(prim);
 
    vcache->middle = middle;
    vcache->opt = opt;

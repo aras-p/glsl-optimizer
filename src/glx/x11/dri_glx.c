@@ -305,6 +305,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
     drm_handle_t  hFB;
     int        junk;
     const __DRIconfig **driver_configs;
+    __GLcontextModes *visual;
 
     /* DRI protocol version. */
     dri_version.major = driDpy->driMajor;
@@ -416,6 +417,28 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 
     psc->configs = driConvertConfigs(psc->core, psc->configs, driver_configs);
     psc->visuals = driConvertConfigs(psc->core, psc->visuals, driver_configs);
+
+    /* Visuals with depth != screen depth are subject to automatic compositing
+     * in the X server, so DRI1 can't render to them properly. Mark them as
+     * non-conformant to prevent apps from picking them up accidentally.
+     */
+    for (visual = psc->visuals; visual; visual = visual->next) {
+	XVisualInfo template;
+	XVisualInfo *visuals;
+	int num_visuals;
+	long mask;
+
+	template.visualid = visual->visualID;
+	mask = VisualIDMask;
+	visuals = XGetVisualInfo(dpy, mask, &template, &num_visuals);
+
+	if (visuals) {
+	    if (num_visuals > 0 && visuals->depth != DefaultDepth(dpy, scrn))
+		visual->visualRating = GLX_NON_CONFORMANT_CONFIG;
+
+	    XFree(visuals);
+	}
+    }
 
     return psp;
 

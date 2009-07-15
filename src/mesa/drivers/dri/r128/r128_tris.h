@@ -38,7 +38,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/mtypes.h"
 
 extern void r128InitTriFuncs( GLcontext *ctx );
-
+extern void r128ChooseRenderState( GLcontext *ctx );
 
 extern void r128Fallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define FALLBACK( rmesa, bit, mode ) r128Fallback( rmesa->glCtx, bit, mode )

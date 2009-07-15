@@ -75,11 +75,11 @@ struct pipe_surface;
  */
 struct pipe_buffer
 {
-   struct pipe_reference reference;
-   struct pipe_screen *screen;
-   unsigned alignment;
-   unsigned usage;
-   unsigned size;
+   struct pipe_reference  reference;
+   unsigned               size;
+   struct pipe_screen    *screen;
+   unsigned               alignment;
+   unsigned               usage;
 };
 
 
@@ -265,7 +265,6 @@ struct pipe_sampler_state
    unsigned compare_func:3;      /**< PIPE_FUNC_x */
    unsigned normalized_coords:1; /**< Are coords normalized to [0,1]? */
    unsigned prefilter:4;         /**< Wierd sampling state exposed by some api's */
-   float shadow_ambient;         /**< shadow test fail color/intensity */
    float lod_bias;               /**< LOD/lambda bias */
    float min_lod, max_lod;       /**< LOD clamp range, after bias */
    float border_color[4];
@@ -287,10 +286,10 @@ struct pipe_surface
    unsigned offset;              /**< offset from start of buffer, in bytes */
    unsigned usage;               /**< PIPE_BUFFER_USAGE_*  */
 
+   unsigned zslice;
    struct pipe_texture *texture; /**< texture into which this is a view  */
    unsigned face;
    unsigned level;
-   unsigned zslice;
 };
 
 

@@ -110,7 +110,7 @@ void r300_emit_dsa_state(struct r300_context* r300,
 }
 
 void r300_emit_fragment_shader(struct r300_context* r300,
-                               struct r300_fragment_shader* fs)
+                               struct r3xx_fragment_shader* fs)
 {
     int i;
     CS_LOCALS(r300);
@@ -142,7 +142,7 @@ void r300_emit_fragment_shader(struct r300_context* r300,
 }
 
 void r500_emit_fragment_shader(struct r300_context* r300,
-                               struct r500_fragment_shader* fs)
+                               struct r5xx_fragment_shader* fs)
 {
     int i;
     struct r300_constant_buffer* constants =
@@ -289,18 +289,6 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_sampler(struct r300_context* r300,
-                       struct r300_sampler_state* sampler, unsigned offset)
-{
-    CS_LOCALS(r300);
-
-    BEGIN_CS(6);
-    OUT_CS_REG(R300_TX_FILTER0_0 + (offset * 4), sampler->filter0);
-    OUT_CS_REG(R300_TX_FILTER1_0 + (offset * 4), sampler->filter1);
-    OUT_CS_REG(R300_TX_BORDER_COLOR_0 + (offset * 4), sampler->border_color);
-    END_CS;
-}
-
 void r300_emit_scissor_state(struct r300_context* r300,
                              struct r300_scissor_state* scissor)
 {
@@ -314,11 +302,17 @@ void r300_emit_scissor_state(struct r300_context* r300,
 }
 
 void r300_emit_texture(struct r300_context* r300,
-                       struct r300_texture* tex, unsigned offset)
+                       struct r300_sampler_state* sampler,
+                       struct r300_texture* tex,
+                       unsigned offset)
 {
     CS_LOCALS(r300);
 
-    BEGIN_CS(10);
+    BEGIN_CS(16);
+    OUT_CS_REG(R300_TX_FILTER0_0 + (offset * 4), sampler->filter0);
+    OUT_CS_REG(R300_TX_FILTER1_0 + (offset * 4), sampler->filter1);
+    OUT_CS_REG(R300_TX_BORDER_COLOR_0 + (offset * 4), sampler->border_color);
+
     OUT_CS_REG(R300_TX_FORMAT0_0 + (offset * 4), tex->state.format0);
     OUT_CS_REG(R300_TX_FORMAT1_0 + (offset * 4), tex->state.format1);
     OUT_CS_REG(R300_TX_FORMAT2_0 + (offset * 4), tex->state.format2);
@@ -570,10 +564,10 @@ validate:
     if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER) {
         if (r300screen->caps->is_r500) {
             r500_emit_fragment_shader(r300,
-                (struct r500_fragment_shader*)r300->fs);
+                (struct r5xx_fragment_shader*)r300->fs);
         } else {
             r300_emit_fragment_shader(r300,
-                (struct r300_fragment_shader*)r300->fs);
+                (struct r3xx_fragment_shader*)r300->fs);
         }
         r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER;
     }
@@ -593,29 +587,27 @@ validate:
         r300->dirty_state &= ~R300_NEW_RS_BLOCK;
     }
 
-    if (r300->dirty_state & R300_ANY_NEW_SAMPLERS) {
-        for (i = 0; i < r300->sampler_count; i++) {
-            if (r300->dirty_state & (R300_NEW_SAMPLER << i)) {
-                r300_emit_sampler(r300, r300->sampler_states[i], i);
-                r300->dirty_state &= ~(R300_NEW_SAMPLER << i);
-                dirty_tex++;
-            }
-        }
-    }
-
     if (r300->dirty_state & R300_NEW_SCISSOR) {
         r300_emit_scissor_state(r300, r300->scissor_state);
         r300->dirty_state &= ~R300_NEW_SCISSOR;
     }
 
-    if (r300->dirty_state & R300_ANY_NEW_TEXTURES) {
-        for (i = 0; i < r300->texture_count; i++) {
-            if (r300->dirty_state & (R300_NEW_TEXTURE << i)) {
-                r300_emit_texture(r300, r300->textures[i], i);
-                r300->dirty_state &= ~(R300_NEW_TEXTURE << i);
+    /* Samplers and textures are tracked separately but emitted together. */
+    if (r300->dirty_state &
+            (R300_ANY_NEW_SAMPLERS | R300_ANY_NEW_TEXTURES)) {
+        for (i = 0; i < MIN2(r300->sampler_count, r300->texture_count); i++) {
+            if (r300->dirty_state &
+                    ((R300_NEW_SAMPLER << i) | (R300_NEW_TEXTURE << i))) {
+                r300_emit_texture(r300,
+                        r300->sampler_states[i],
+                        r300->textures[i],
+                        i);
+                r300->dirty_state &=
+                    ~((R300_NEW_SAMPLER << i) | (R300_NEW_TEXTURE << i));
                 dirty_tex++;
             }
         }
+        r300->dirty_state &= ~(R300_ANY_NEW_SAMPLERS | R300_ANY_NEW_TEXTURES);
     }
 
     if (r300->dirty_state & R300_NEW_VIEWPORT) {
@@ -636,6 +628,10 @@ validate:
         r300_emit_vertex_shader(r300, r300->vs);
         r300->dirty_state &= ~R300_NEW_VERTEX_SHADER;
     }
+
+    /* XXX
+    assert(r300->dirty_state == 0);
+    */
 
     /* Finally, emit the VBO. */
     r300_emit_vertex_buffer(r300);

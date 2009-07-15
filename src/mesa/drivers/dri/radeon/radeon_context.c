@@ -285,8 +285,10 @@ r100CreateContext( const __GLcontextModes *glVisual,
 
    /* FIXME: When no memory manager is available we should set this 
     * to some reasonable value based on texture memory pool size */
-   /* FIXME: does r100 support 2048x2048 texture ? */
    ctx->Const.MaxTextureLevels = 12;
+   ctx->Const.Max3DTextureLevels = 9;
+   ctx->Const.MaxCubeTextureLevels = 12;
+   ctx->Const.MaxTextureRectSize = 2048;
 
    ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 
@@ -315,6 +317,8 @@ r100CreateContext( const __GLcontextModes *glVisual,
    rmesa->boxes = 0;
 
    ctx->Const.MaxDrawBuffers = 1;
+
+   _mesa_set_mvp_with_dp4( ctx, GL_TRUE );
 
    /* Initialize the software rasterizer and helper modules.
     */
@@ -361,7 +365,7 @@ r100CreateContext( const __GLcontextModes *glVisual,
       _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
    }
 
-   if (rmesa->radeon.dri.drmMinor >= 9)
+   if (rmesa->radeon.radeonScreen->kernel_mm || rmesa->radeon.dri.drmMinor >= 9)
       _mesa_enable_extension( ctx, "GL_NV_texture_rectangle");
 
    /* XXX these should really go right after _mesa_init_driver_functions() */

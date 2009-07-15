@@ -42,6 +42,7 @@
 #include "main/varray.h"
 #include "main/attrib.h"
 #include "main/enable.h"
+#include "main/viewport.h"
 #include "shader/arbprogram.h"
 #include "glapi/dispatch.h"
 #include "swrast/swrast.h"
@@ -194,7 +195,7 @@ do_blit_bitmap( GLcontext *ctx,
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLfloat tmpColor[4];
    GLubyte ubcolor[4];
-   GLuint color8888, color565;
+   GLuint color;
    unsigned int num_cliprects;
    drm_clip_rect_t *cliprects;
    int x_off, y_off;
@@ -232,8 +233,11 @@ do_blit_bitmap( GLcontext *ctx,
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[2], tmpColor[2]);
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[3], tmpColor[3]);
 
-   color8888 = INTEL_PACKCOLOR8888(ubcolor[0], ubcolor[1], ubcolor[2], ubcolor[3]);
-   color565 = INTEL_PACKCOLOR565(ubcolor[0], ubcolor[1], ubcolor[2]);
+   if (dst->cpp == 2)
+      color = INTEL_PACKCOLOR565(ubcolor[0], ubcolor[1], ubcolor[2]);
+   else
+      color = INTEL_PACKCOLOR8888(ubcolor[0], ubcolor[1],
+				  ubcolor[2], ubcolor[3]);
 
    if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F))
       return GL_FALSE;
@@ -307,21 +311,21 @@ do_blit_bitmap( GLcontext *ctx,
 				   fb->Name == 0 ? GL_TRUE : GL_FALSE) == 0)
 		  continue;
 
-	       /* 
-		*/
-	       intelEmitImmediateColorExpandBlit( intel,
-						  dst->cpp,
-						  (GLubyte *)stipple, 
-						  sz,
-						  (dst->cpp == 2) ? color565 : color8888,
-						  dst->pitch,
-						  dst->buffer,
-						  0,
-						  dst->tiling,
-						  box_x + px,
-						  box_y + py,
-						  w, h,
-						  logic_op);
+	       if (!intelEmitImmediateColorExpandBlit(intel,
+						      dst->cpp,
+						      (GLubyte *)stipple,
+						      sz,
+						      color,
+						      dst->pitch,
+						      dst->buffer,
+						      0,
+						      dst->tiling,
+						      box_x + px,
+						      box_y + py,
+						      w, h,
+						      logic_op)) {
+		  return GL_FALSE;
+	       }
 	    } 
 	 } 
       }
@@ -408,6 +412,12 @@ intel_texture_bitmap(GLcontext * ctx,
       return GL_FALSE;
    }
 
+   if (ctx->Fog.Enabled) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "glBitmap() fallback: fog\n");
+      return GL_FALSE;
+   }
+
    /* Check that we can load in a texture this big. */
    if (width > (1 << (ctx->Const.MaxTextureLevels - 1)) ||
        height > (1 << (ctx->Const.MaxTextureLevels - 1))) {
@@ -466,14 +476,17 @@ intel_texture_bitmap(GLcontext * ctx,
 		    GL_ALPHA, GL_UNSIGNED_BYTE, a8_bitmap);
    _mesa_free(a8_bitmap);
 
-   intel_meta_set_fragment_program(intel, &intel->meta.bitmap_fp, fp);
+   meta_set_fragment_program(&intel->meta, &intel->meta.bitmap_fp, fp);
    _mesa_ProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0,
 				     ctx->Current.RasterColor);
-   intel_meta_set_passthrough_vertex_program(intel);
-   intel_meta_set_passthrough_transform(intel);
+   meta_set_passthrough_vertex_program(&intel->meta);
+   meta_set_passthrough_transform(&intel->meta);
 
    /* convert rasterpos Z from [0,1] to NDC coord in [-1,1] */
    dst_z = -1.0 + 2.0 * ctx->Current.RasterPos[2];
+
+   /* RasterPos[2] already takes into account the DepthRange mapping. */
+   _mesa_DepthRange(0.0, 1.0);
 
    vertices[0][0] = dst_x;
    vertices[0][1] = dst_y;
@@ -494,13 +507,13 @@ intel_texture_bitmap(GLcontext * ctx,
 
    _mesa_VertexPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), &vertices);
    _mesa_Enable(GL_VERTEX_ARRAY);
-   intel_meta_set_default_texrect(intel);
-   CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
+   meta_set_default_texrect(&intel->meta);
+   _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-   intel_meta_restore_texcoords(intel);
-   intel_meta_restore_transform(intel);
-   intel_meta_restore_fragment_program(intel);
-   intel_meta_restore_vertex_program(intel);
+   meta_restore_texcoords(&intel->meta);
+   meta_restore_transform(&intel->meta);
+   meta_restore_fragment_program(&intel->meta);
+   meta_restore_vertex_program(&intel->meta);
 
    _mesa_PopClientAttrib();
    _mesa_Disable(GL_TEXTURE_2D); /* asserted that it was disabled at entry */

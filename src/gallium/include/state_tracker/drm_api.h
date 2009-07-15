@@ -32,33 +32,37 @@ struct drm_api
 	 * Special buffer functions
 	 */
 	/*@{*/
-	struct pipe_screen*  (*create_screen)(int drm_fd,
-					      struct drm_create_screen_arg *arg);
-	struct pipe_context* (*create_context)(struct pipe_screen *screen);
+	struct pipe_screen*  (*create_screen)(struct drm_api *api, int drm_fd,
+	                                      struct drm_create_screen_arg *arg);
+	struct pipe_context* (*create_context)(struct drm_api *api,
+	                                       struct pipe_screen *screen);
 	/*@}*/
 
 	/**
 	 * Special buffer functions
 	 */
 	/*@{*/
-	boolean (*buffer_from_texture)(struct pipe_texture *texture,
-                                       struct pipe_buffer **buffer,
-                                       unsigned *stride);
-	struct pipe_buffer* (*buffer_from_handle)(struct pipe_screen *screen,
+	boolean (*buffer_from_texture)(struct drm_api *api,
+	                               struct pipe_texture *texture,
+	                               struct pipe_buffer **buffer,
+	                               unsigned *stride);
+	struct pipe_buffer* (*buffer_from_handle)(struct drm_api *api,
+	                                          struct pipe_screen *screen,
                                                   const char *name,
                                                   unsigned handle);
-	boolean (*handle_from_buffer)(struct pipe_screen *screen,
-                                      struct pipe_buffer *buffer,
-                                      unsigned *handle);
-	boolean (*global_handle_from_buffer)(struct pipe_screen *screen,
-                                             struct pipe_buffer *buffer,
-                                             unsigned *handle);
+	boolean (*handle_from_buffer)(struct drm_api *api,
+	                              struct pipe_screen *screen,
+	                              struct pipe_buffer *buffer,
+	                              unsigned *handle);
+	boolean (*global_handle_from_buffer)(struct drm_api *api,
+	                                     struct pipe_screen *screen,
+	                                     struct pipe_buffer *buffer,
+	                                     unsigned *handle);
 	/*@}*/
+
+	void (*destroy)(struct drm_api *api);
 };
 
-/**
- * A driver needs to export this symbol
- */
-extern struct drm_api drm_api_hooks;
+extern struct drm_api * drm_api_create(void);
 
 #endif

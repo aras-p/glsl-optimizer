@@ -354,13 +354,25 @@ static void emit_interp( struct brw_wm_compile *c,
 		 src_undef());
       }
       else {
-	 emit_op(c,
-		 WM_LINTERP,
-		 dst,
-		 0,
-		 interp,
-		 deltas,
-		 src_undef());
+         if (c->key.linear_color) {
+            emit_op(c,
+                    WM_LINTERP,
+                    dst,
+                    0,
+                    interp,
+                    deltas,
+                    src_undef());
+         }
+         else {
+            /* perspective-corrected color interpolation */
+            emit_op(c,
+                    WM_PINTERP,
+                    dst,
+                    0,
+                    interp,
+                    deltas,
+                    get_pixel_w(c));
+         }
       }
       break;
    case FRAG_ATTRIB_FOGC:
@@ -834,10 +846,16 @@ static void precalc_tex( struct brw_wm_compile *c,
 }
 
 
+/**
+ * Check if the given TXP instruction really needs the divide-by-W step.
+ */
 static GLboolean projtex( struct brw_wm_compile *c,
 			  const struct prog_instruction *inst )
 {
-   struct prog_src_register src = inst->SrcReg[0];
+   const struct prog_src_register src = inst->SrcReg[0];
+   GLboolean retVal;
+
+   assert(inst->Opcode == OPCODE_TXP);
 
    /* Only try to detect the simplest cases.  Could detect (later)
     * cases where we are trying to emit code like RCP {1.0}, MUL x,
@@ -847,16 +865,21 @@ static GLboolean projtex( struct brw_wm_compile *c,
     * user-provided fragment programs anyway:
     */
    if (inst->TexSrcTarget == TEXTURE_CUBE_INDEX)
-      return 0;  /* ut2004 gun rendering !?! */
+      retVal = GL_FALSE;  /* ut2004 gun rendering !?! */
    else if (src.File == PROGRAM_INPUT && 
 	    GET_SWZ(src.Swizzle, W) == W &&
-           (c->key.projtex_mask & (1<<(src.Index + FRAG_ATTRIB_WPOS - FRAG_ATTRIB_TEX0))) == 0)
-      return 0;
+            (c->key.proj_attrib_mask & (1 << src.Index)) == 0)
+      retVal = GL_FALSE;
    else
-      return 1;
+      retVal = GL_TRUE;
+
+   return retVal;
 }
 
 
+/**
+ * Emit code for TXP.
+ */
 static void precalc_txp( struct brw_wm_compile *c,
 			       const struct prog_instruction *inst )
 {

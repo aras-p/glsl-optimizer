@@ -194,6 +194,8 @@ util_keymap_insert(struct keymap *map, const void *key,
    struct cso_hash_iter iter;
 
    assert(map);
+   if (!map)
+      return FALSE;
 
    key_hash = hash(key, map->key_size);
 
@@ -234,6 +236,8 @@ util_keymap_lookup(const struct keymap *map, const void *key)
    struct keymap_item *item;
 
    assert(map);
+   if (!map)
+      return NULL;
 
    key_hash = hash(key, map->key_size);
 
@@ -258,6 +262,8 @@ util_keymap_remove(struct keymap *map, const void *key, void *user)
    struct keymap_item *item;
 
    assert(map);
+   if (!map)
+      return;
 
    key_hash = hash(key, map->key_size);
 
@@ -267,6 +273,8 @@ util_keymap_remove(struct keymap *map, const void *key, void *user)
    
    item = hash_table_item(iter);
    assert(item);
+   if (!item)
+      return;
    map->delete_func(map, item->key, item->value, user);
    FREE(item->key);
    FREE(item);
@@ -288,7 +296,9 @@ util_keymap_remove_all(struct keymap *map, void *user)
    struct keymap_item *item;
 
    assert(map);
-   
+   if (!map)
+      return;
+
    iter = cso_hash_first_node(map->cso);
    while (!cso_hash_iter_is_null(iter)) {
       item = (struct keymap_item *)

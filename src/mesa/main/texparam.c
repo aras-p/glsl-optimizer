@@ -882,7 +882,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                         "glGetTexLevelParameter[if]v(pname)");
          break;
       case GL_TEXTURE_STENCIL_SIZE_EXT:
-         if (ctx->Extensions.EXT_packed_depth_stencil) {
+         if (ctx->Extensions.EXT_packed_depth_stencil ||
+             ctx->Extensions.ARB_framebuffer_object) {
             *params = img->TexFormat->StencilBits;
          }
          else {

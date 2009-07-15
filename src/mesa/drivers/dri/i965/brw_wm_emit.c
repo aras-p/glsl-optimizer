@@ -714,6 +714,7 @@ static void emit_tex( struct brw_wm_compile *c,
    GLuint msgLength, responseLength;
    GLuint i, nr;
    GLuint emit;
+   GLuint msg_type;
 
    /* How many input regs are there?
     */
@@ -751,6 +752,18 @@ static void emit_tex( struct brw_wm_compile *c,
 
    responseLength = 8;		/* always */
 
+   if (BRW_IS_IGDNG(p->brw)) {
+       if (inst->tex_shadow)
+           msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE_IGDNG;
+       else
+           msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_IGDNG;
+   } else {
+       if (inst->tex_shadow)
+           msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE;
+       else
+           msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE;
+   }
+
    brw_SAMPLE(p, 
 	      retype(vec16(dst[0]), BRW_REGISTER_TYPE_UW),
 	      1,
@@ -758,12 +771,12 @@ static void emit_tex( struct brw_wm_compile *c,
               SURF_INDEX_TEXTURE(inst->tex_unit),
 	      inst->tex_unit,	  /* sampler */
 	      inst->writemask,
-	      (inst->tex_shadow ? 
-	       BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE : 
-	       BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE),
+	      msg_type, 
 	      responseLength,
 	      msgLength,
-	      0);	
+	      0,	
+	      1,
+	      BRW_SAMPLER_SIMD_MODE_SIMD16);	
 }
 
 
@@ -775,7 +788,7 @@ static void emit_txb( struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
    GLuint msgLength;
-
+   GLuint msg_type;
    /* Shadow ignored for txb.
     */
    switch (inst->tex_idx) {
@@ -800,6 +813,11 @@ static void emit_txb( struct brw_wm_compile *c,
    brw_MOV(p, brw_message_reg(8), arg[3]);
    msgLength = 9;
 
+   if (BRW_IS_IGDNG(p->brw))
+       msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS_IGDNG;
+   else
+       msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
+
    brw_SAMPLE(p, 
 	      retype(vec16(dst[0]), BRW_REGISTER_TYPE_UW),
 	      1,
@@ -807,10 +825,12 @@ static void emit_txb( struct brw_wm_compile *c,
               SURF_INDEX_TEXTURE(inst->tex_unit),
 	      inst->tex_unit,	  /* sampler */
 	      inst->writemask,
-	      BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS,
+	      msg_type,
 	      8,		/* responseLength */
 	      msgLength,
-	      0);	
+	      0,	
+	      1,
+	      BRW_SAMPLER_SIMD_MODE_SIMD16);	
 }
 
 
@@ -1022,7 +1042,7 @@ static void emit_fb_write( struct brw_wm_compile *c,
 	      get_element_ud(brw_vec8_grf(1,0), 6), 
 	      brw_imm_ud(1<<26)); 
 
-      jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
+      jmp = brw_JMPI(p, ip, ip, brw_imm_d(0));
       {
 	 emit_aa(c, arg1, 2);
 	 fire_fb_write(c, 0, nr, target, eot);
@@ -1057,7 +1077,6 @@ static void emit_spill( struct brw_wm_compile *c,
    */
    brw_dp_WRITE_16(p, 
 		   retype(vec16(brw_vec8_grf(0, 0)), BRW_REGISTER_TYPE_UW),
-		   1, 
 		   slot);
 }
 
@@ -1085,7 +1104,6 @@ static void emit_unspill( struct brw_wm_compile *c,
 
    brw_dp_READ_16(p,
 		  retype(vec16(reg), BRW_REGISTER_TYPE_UW),
-		  1,
 		  slot);
 }
 

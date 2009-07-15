@@ -29,7 +29,11 @@ static void r300_flush(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     CS_LOCALS(r300);
 
-    draw_flush(r300->draw);
+    /* We probably need to flush Draw, but we may have been called from
+     * within Draw. This feels kludgy, but it might be the best thing. */
+    if (!r300->draw->flushing) {
+        draw_flush(r300->draw);
+    }
 
     if (r300->dirty_hw) {
         FLUSH_CS;

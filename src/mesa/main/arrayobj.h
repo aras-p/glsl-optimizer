@@ -67,9 +67,14 @@ _mesa_update_array_object_max_element(GLcontext *ctx,
  * API functions
  */
 
+
+void GLAPIENTRY _mesa_BindVertexArray( GLuint id );
+
 void GLAPIENTRY _mesa_BindVertexArrayAPPLE( GLuint id );
 
 void GLAPIENTRY _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids);
+
+void GLAPIENTRY _mesa_GenVertexArrays(GLsizei n, GLuint *arrays);
 
 void GLAPIENTRY _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *buffer);
 

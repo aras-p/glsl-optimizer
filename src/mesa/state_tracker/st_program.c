@@ -303,6 +303,26 @@ st_translate_vertex_program(struct st_context *st,
       outputMapping = defaultOutputMapping;
    }
 
+#if 0 /* debug */
+   {
+      GLuint i;
+      printf("outputMapping? %d\n", outputMapping ? 1 : 0);
+      if (outputMapping) {
+         printf("attr -> slot\n");
+         for (i = 0; i < 16;  i++) {
+            printf(" %2d       %3d\n", i, outputMapping[i]);
+         }
+      }
+      printf("slot    sem_name  sem_index\n");
+      for (i = 0; i < vs_num_outputs; i++) {
+         printf(" %2d         %d         %d\n",
+                i,
+                vs_output_semantic_name[i],
+                vs_output_semantic_index[i]);
+      }
+   }
+#endif
+
    /* free old shader state, if any */
    if (stvp->state.tokens) {
       _mesa_free((void *) stvp->state.tokens);
@@ -433,15 +453,34 @@ st_translate_fragment_program(struct st_context *st,
             stfp->input_semantic_index[slot] = 1;
             interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
             break;
-         case FRAG_ATTRIB_FOGC:
-            if (stfp->Base.UsesPointCoord) {
-               stfp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-               stfp->input_semantic_index[slot] = num_generic++;
-            } else {
+         case FRAG_ATTRIB_FOGC: {
+            int extra_decls = 0;
+            if (stfp->Base.UsesFogFragCoord) {
                stfp->input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
                stfp->input_semantic_index[slot] = 0;
+               interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
+               input_flags[slot] = stfp->Base.Base.InputFlags[attr];
+               ++extra_decls;
 	    }
-            interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
+            if (stfp->Base.UsesFrontFacing) {
+               GLint idx = slot + extra_decls;
+               stfp->input_semantic_name[idx] = TGSI_SEMANTIC_FACE;
+               stfp->input_semantic_index[idx] = 0;
+               interpMode[idx] = TGSI_INTERPOLATE_CONSTANT;
+               input_flags[idx] = stfp->Base.Base.InputFlags[attr];
+               ++extra_decls;
+            }
+            if (stfp->Base.UsesPointCoord) {
+               GLint idx = slot + extra_decls;
+               stfp->input_semantic_name[idx] = TGSI_SEMANTIC_GENERIC;
+               stfp->input_semantic_index[idx] = num_generic++;
+               interpMode[idx] = TGSI_INTERPOLATE_PERSPECTIVE;
+               input_flags[idx] = stfp->Base.Base.InputFlags[attr];
+               ++extra_decls;
+            }
+            fs_num_inputs += extra_decls - 1;
+            continue;
+         }
             break;
          case FRAG_ATTRIB_TEX0:
          case FRAG_ATTRIB_TEX1:

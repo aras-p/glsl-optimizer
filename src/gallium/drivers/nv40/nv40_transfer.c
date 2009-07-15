@@ -136,7 +136,7 @@ nv40_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 }
 
 static void
-nv40_transfer_del(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
+nv40_transfer_del(struct pipe_transfer *ptx)
 {
 	struct nv40_transfer *tx = (struct nv40_transfer *)ptx;
 

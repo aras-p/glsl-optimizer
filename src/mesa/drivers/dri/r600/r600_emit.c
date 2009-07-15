@@ -98,13 +98,12 @@ shader_again_alloc:
 		goto shader_again_alloc;
 	}
 
-	radeon_validate_bo(radeonctx, pbo, RADEON_GEM_DOMAIN_GTT, 0);
+        if (radeon_cs_space_check_with_bo(radeonctx->cmdbuf.cs,
+                                          pbo,
+                                          RADEON_GEM_DOMAIN_GTT, 0))
+                fprintf(stderr,"failure to revalidate BOs - badness\n");
 
-	if (radeon_revalidate_bos(radeonctx->glCtx) == GL_FALSE)
-    {
-	    fprintf(stderr,"failure to revalidate BOs - badness\n");
-    }
-	  
+
 	radeon_bo_map(pbo, 1);
 
     radeon_bo_ref(pbo);

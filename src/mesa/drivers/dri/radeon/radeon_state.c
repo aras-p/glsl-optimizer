@@ -458,6 +458,10 @@ static void radeonFrontFace( GLcontext *ctx, GLenum mode )
    RADEON_STATECHANGE( rmesa, tcl );
    rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] &= ~RADEON_CULL_FRONT_IS_CCW;
 
+   /* Winding is inverted when rendering to FBO */
+   if (ctx->DrawBuffer && ctx->DrawBuffer->Name)
+      mode = (mode == GL_CW) ? GL_CCW : GL_CW;
+
    switch ( mode ) {
    case GL_CW:
       rmesa->hw.set.cmd[SET_SE_CNTL] |= RADEON_FFACE_CULL_CW;
@@ -508,11 +512,18 @@ static void radeonColorMask( GLcontext *ctx,
 			     GLboolean b, GLboolean a )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   GLuint mask = radeonPackColor( rmesa->radeon.radeonScreen->cpp,
-				  ctx->Color.ColorMask[RCOMP],
-				  ctx->Color.ColorMask[GCOMP],
-				  ctx->Color.ColorMask[BCOMP],
-				  ctx->Color.ColorMask[ACOMP] );
+   struct radeon_renderbuffer *rrb;
+   GLuint mask;
+
+   rrb = radeon_get_colorbuffer(&rmesa->radeon);
+   if (!rrb)
+     return;
+
+   mask = radeonPackColor( rrb->cpp,
+			   ctx->Color.ColorMask[RCOMP],
+			   ctx->Color.ColorMask[GCOMP],
+			   ctx->Color.ColorMask[BCOMP],
+			   ctx->Color.ColorMask[ACOMP] );
 
    if ( rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK] != mask ) {
       RADEON_STATECHANGE( rmesa, msk );
@@ -1500,11 +1511,17 @@ static void radeonClearColor( GLcontext *ctx, const GLfloat color[4] )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLubyte c[4];
+   struct radeon_renderbuffer *rrb;
+
+   rrb = radeon_get_colorbuffer(&rmesa->radeon);
+   if (!rrb)
+     return;
+     
    CLAMPED_FLOAT_TO_UBYTE(c[0], color[0]);
    CLAMPED_FLOAT_TO_UBYTE(c[1], color[1]);
    CLAMPED_FLOAT_TO_UBYTE(c[2], color[2]);
    CLAMPED_FLOAT_TO_UBYTE(c[3], color[3]);
-   rmesa->radeon.state.color.clear = radeonPackColor( rmesa->radeon.radeonScreen->cpp,
+   rmesa->radeon.state.color.clear = radeonPackColor( rrb->cpp,
 					       c[0], c[1], c[2], c[3] );
 }
 
@@ -2048,23 +2065,23 @@ static GLboolean r100ValidateBuffers(GLcontext *ctx)
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct radeon_renderbuffer *rrb;
-   int i;
+   int i, ret;
 
-   radeon_validate_reset_bos(&rmesa->radeon);
+   radeon_cs_space_reset_bos(rmesa->radeon.cmdbuf.cs);
 
    rrb = radeon_get_colorbuffer(&rmesa->radeon);
    /* color buffer */
    if (rrb && rrb->bo) {
-     radeon_validate_bo(&rmesa->radeon, rrb->bo,
-			0, RADEON_GEM_DOMAIN_VRAM);
+     radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs, rrb->bo,
+				       0, RADEON_GEM_DOMAIN_VRAM);
    }
 
    /* depth buffer */
    rrb = radeon_get_depthbuffer(&rmesa->radeon);
    /* color buffer */
    if (rrb && rrb->bo) {
-     radeon_validate_bo(&rmesa->radeon, rrb->bo,
-			0, RADEON_GEM_DOMAIN_VRAM);
+     radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs, rrb->bo,
+				       0, RADEON_GEM_DOMAIN_VRAM);
    }
 
    for (i = 0; i < ctx->Const.MaxTextureImageUnits; ++i) {
@@ -2073,20 +2090,19 @@ static GLboolean r100ValidateBuffers(GLcontext *ctx)
       if (!ctx->Texture.Unit[i]._ReallyEnabled)
 	 continue;
 
-      t = radeon_tex_obj(ctx->Texture.Unit[i]._Current);
+      t = rmesa->state.texture.unit[i].texobj;
       if (t->image_override && t->bo)
-	radeon_validate_bo(&rmesa->radeon, t->bo,
+	radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs, t->bo,
 			   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
       else if (t->mt->bo)
-	radeon_validate_bo(&rmesa->radeon, t->mt->bo,
+	radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs, t->mt->bo,
 			   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
    }
 
-   if (rmesa->radeon.dma.current)
-       radeon_validate_bo(&rmesa->radeon, rmesa->radeon.dma.current,
-			  RADEON_GEM_DOMAIN_GTT, 0);
-
-   return radeon_revalidate_bos(ctx);
+   ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs, rmesa->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
+   if (ret)
+       return GL_FALSE;
+   return GL_TRUE;
 }
 
 GLboolean radeonValidateState( GLcontext *ctx )

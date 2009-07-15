@@ -73,11 +73,11 @@ linear_to_nonlinear(GLfloat cl)
 {
    /* can't have values outside [0, 1] */
    GLfloat cs;
-   if (cl < 0.0031308) {
-      cs = 12.92 * cl;
+   if (cl < 0.0031308f) {
+      cs = 12.92f * cl;
    }
    else {
-      cs = 1.055 * _mesa_pow(cl, 0.41666) - 0.055;
+      cs = (GLfloat)(1.055 * _mesa_pow(cl, 0.41666) - 0.055);
    }
    return cs;
 }

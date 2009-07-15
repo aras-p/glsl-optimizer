@@ -31,11 +31,14 @@
 #ifndef _XORG_TRACKER_H_
 #define _XORG_TRACKER_H_
 
+#include <stdint.h>
 #include <errno.h>
 #include <drm.h>
 #include <xf86drm.h>
 #include <xf86drmMode.h>
-#include "exa.h"
+#include <xorg-server.h>
+#include <xf86.h>
+#include <exa.h>
 
 #include "pipe/p_screen.h"
 #include "state_tracker/drm_api.h"
@@ -75,6 +78,7 @@ typedef struct _modesettingRec
     CreateScreenResourcesProcPtr createScreenResources;
 
     /* gallium */
+    struct drm_api *api;
     struct pipe_screen *screen;
     struct pipe_context *ctx;
 

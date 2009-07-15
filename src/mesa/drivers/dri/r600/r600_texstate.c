@@ -541,23 +541,26 @@ GLboolean r600ValidateBuffers(GLcontext * ctx)
 	context_t *rmesa = R700_CONTEXT(ctx);
 	struct radeon_renderbuffer *rrb;
 	int i;
+	int ret;
 
-	radeon_validate_reset_bos(&rmesa->radeon);
+	radeon_cs_space_reset_bos(rmesa->radeon.cmdbuf.cs);
 
 	rrb = radeon_get_colorbuffer(&rmesa->radeon);
 	/* color buffer */
 	if (rrb && rrb->bo) {
-		radeon_validate_bo(&rmesa->radeon, rrb->bo,
-				   0, RADEON_GEM_DOMAIN_VRAM);
+		radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
+						  rrb->bo, 0,
+						  RADEON_GEM_DOMAIN_VRAM);
 	}
 
 	/* depth buffer */
 	rrb = radeon_get_depthbuffer(&rmesa->radeon);
 	if (rrb && rrb->bo) {
-		radeon_validate_bo(&rmesa->radeon, rrb->bo,
-				   0, RADEON_GEM_DOMAIN_VRAM);
+		radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
+						  rrb->bo, 0,
+						  RADEON_GEM_DOMAIN_VRAM);
 	}
-
+	
 	for (i = 0; i < ctx->Const.MaxTextureImageUnits; ++i) {
 		radeonTexObj *t;
 
@@ -571,17 +574,19 @@ GLboolean r600ValidateBuffers(GLcontext * ctx)
 		}
 		t = radeon_tex_obj(ctx->Texture.Unit[i]._Current);
 		if (t->image_override && t->bo)
-			radeon_validate_bo(&rmesa->radeon, t->bo,
-					   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
-
+			radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
+							  t->bo,
+							  RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
 		else if (t->mt->bo)
-			radeon_validate_bo(&rmesa->radeon, t->mt->bo,
-					   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
+			radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
+							  t->mt->bo,
+							  RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);
 	}
-	if (rmesa->radeon.dma.current)
-		radeon_validate_bo(&rmesa->radeon, rmesa->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
 
-	return radeon_revalidate_bos(ctx);
+	ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs, rmesa->radeon.dma.current, RADEON_GEM_DOMAIN_GTT, 0);
+	if (ret)
+		return GL_FALSE;
+	return GL_TRUE;
 }
 
 void r600SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
@@ -714,7 +719,7 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		rImage->mt = NULL;
 	}
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
-				   rb->width, rb->height, 1, 0, rb->cpp);
+				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
 	texImage->TexFormat = radeonChooseTextureFormat(radeon->glCtx,
 							internalFormat,
@@ -779,9 +784,9 @@ void r600SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 		& ~R700_TEXEL_PITCH_ALIGNMENT_MASK;
 
 	SETfield(t->SQ_TEX_RESOURCE0, (pitch_val/8)-1, PITCH_shift, PITCH_mask);
-	SETfield(t->SQ_TEX_RESOURCE0, rb->width - 1,
+	SETfield(t->SQ_TEX_RESOURCE0, rb->base.Width - 1,
 		 TEX_WIDTH_shift, TEX_WIDTH_mask);
-	SETfield(t->SQ_TEX_RESOURCE1, rb->height - 1,
+	SETfield(t->SQ_TEX_RESOURCE1, rb->base.Height - 1,
 		 TEX_HEIGHT_shift, TEX_HEIGHT_mask);
 
 	t->validated = GL_TRUE;

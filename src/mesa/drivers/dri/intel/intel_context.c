@@ -67,9 +67,11 @@ int INTEL_DEBUG = (0);
 #endif
 
 
-#define DRIVER_DATE                     "20090114"
+#define DRIVER_DATE                     "20090712 2009Q2 RC3"
 #define DRIVER_DATE_GEM                 "GEM " DRIVER_DATE
 
+
+static void intel_flush(GLcontext *ctx, GLboolean needs_mi_flush);
 
 static const GLubyte *
 intelGetString(GLcontext * ctx, GLenum name)
@@ -159,6 +161,12 @@ intelGetString(GLcontext * ctx, GLenum name)
       case PCI_CHIP_G41_G:
          chipset = "Intel(R) G41";
          break;
+      case PCI_CHIP_ILD_G:
+         chipset = "Intel(R) IGDNG_D";
+         break;
+      case PCI_CHIP_ILM_G:
+         chipset = "Intel(R) IGDNG_M";
+         break;
       default:
          chipset = "Unknown Intel Chipset";
          break;
@@ -218,7 +226,9 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
       struct intel_renderbuffer *stencil_rb;
 
       i = 0;
-      if ((intel->is_front_buffer_rendering || !intel_fb->color_rb[1])
+      if ((intel->is_front_buffer_rendering ||
+	   intel->is_front_buffer_reading ||
+	   !intel_fb->color_rb[1])
 	   && intel_fb->color_rb[0]) {
 	 attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
 	 attachments[i++] = intel_bits_per_pixel(intel_fb->color_rb[0]);
@@ -394,7 +404,16 @@ intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     if (!driContext->driScreenPriv->dri2.enabled)
 	return;
 
-    if (!intel->internal_viewport_call && ctx->DrawBuffer->Name == 0) {
+    if (!intel->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
+       /* If we're rendering to the fake front buffer, make sure all the pending
+	* drawing has landed on the real front buffer.  Otherwise when we
+	* eventually get to DRI2GetBuffersWithFormat the stale real front
+	* buffer contents will get copied to the new fake front buffer.
+	*/
+       if (intel->is_front_buffer_rendering) {
+	  intel_flush(ctx, GL_FALSE);
+       }
+
        intel_update_renderbuffers(driContext, driContext->driDrawablePriv);
        if (driContext->driDrawablePriv != driContext->driReadablePriv)
 	  intel_update_renderbuffers(driContext, driContext->driReadablePriv);
@@ -526,7 +545,7 @@ intelFinish(GLcontext * ctx)
 
        irb = intel_renderbuffer(fb->_ColorDrawBuffers[i]);
 
-       if (irb->region)
+       if (irb && irb->region)
 	  dri_bo_wait_rendering(irb->region->buffer);
    }
    if (fb->_DepthBuffer) {
@@ -557,6 +576,7 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    intelInitClearFuncs(functions);
    intelInitBufferFuncs(functions);
    intelInitPixelFuncs(functions);
+   intelInitBufferObjectFuncs(functions);
 }
 
 
@@ -652,6 +672,7 @@ intelInitContext(struct intel_context *intel,
     */
    _mesa_init_point(ctx);
 
+   meta_init_metaops(ctx, &intel->meta);
    ctx->Const.MaxColorAttachments = 4;  /* XXX FBO: review this */
    if (IS_965(intelScreen->deviceID)) {
       if (MAX_WIDTH > 8192)
@@ -717,7 +738,6 @@ intelInitContext(struct intel_context *intel,
 
    intel->batch = intel_batchbuffer_alloc(intel);
 
-   intel_bufferobj_init(intel);
    intel_fbo_init(intel);
 
    if (intel->ctx.Mesa_DXTn) {
@@ -729,6 +749,12 @@ intelInitContext(struct intel_context *intel,
    }
    intel->use_texture_tiling = driQueryOptionb(&intel->optionCache,
 					       "texture_tiling");
+   if (intel->use_texture_tiling &&
+       !intel->intelScreen->kernel_exec_fencing) {
+      fprintf(stderr, "No kernel support for execution fencing, "
+	      "disabling texture tiling");
+      intel->use_texture_tiling = GL_FALSE;
+   }
    intel->use_early_z = driQueryOptionb(&intel->optionCache, "early_z");
 
    intel->prim.primitive = ~0;
@@ -769,8 +795,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 
       INTEL_FIREVERTICES(intel);
 
-      if (intel->clear.arrayObj)
-         _mesa_delete_array_object(&intel->ctx, intel->clear.arrayObj);
+      meta_destroy_metaops(&intel->meta);
 
       intel->vtbl.destroy(intel);
 
@@ -858,7 +883,8 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       /* free the Mesa context */
       _mesa_free_context_data(&intel->ctx);
 
-      
+      FREE(intel);
+      driContextPriv->driverPrivate = NULL;
    }
 }
 
@@ -975,7 +1001,6 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
    int me = intel->hHWContext;
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);
-   intel->locked = 1;
 
    if (INTEL_DEBUG & DEBUG_LOCK)
       _mesa_printf("%s - got contended lock\n", __progname);
@@ -1032,9 +1057,12 @@ void LOCK_HARDWARE( struct intel_context *intel )
     struct intel_framebuffer *intel_fb = NULL;
     struct intel_renderbuffer *intel_rb = NULL;
 
-    _glthread_LOCK_MUTEX(lockMutex);
-    assert(!intel->locked);
-    intel->locked = 1;
+    intel->locked++;
+    if (intel->locked >= 2)
+       return;
+
+    if (!sPriv->dri2.enabled)
+       _glthread_LOCK_MUTEX(lockMutex);
 
     if (intel->driDrawable) {
        intel_fb = intel->driDrawable->driverPrivate;
@@ -1081,13 +1109,16 @@ void UNLOCK_HARDWARE( struct intel_context *intel )
 {
     __DRIscreen *sPriv = intel->driScreen;
 
-   intel->vtbl.note_unlock( intel );
-   intel->locked = 0;
+   intel->locked--;
+   if (intel->locked > 0)
+      return;
 
-   if (!sPriv->dri2.enabled)
+   assert(intel->locked == 0);
+
+   if (!sPriv->dri2.enabled) {
       DRM_UNLOCK(intel->driFd, intel->driHwLock, intel->hHWContext);
-
-   _glthread_UNLOCK_MUTEX(lockMutex);
+      _glthread_UNLOCK_MUTEX(lockMutex);
+   }
 
    if (INTEL_DEBUG & DEBUG_LOCK)
       _mesa_printf("%s - unlocked\n", __progname);

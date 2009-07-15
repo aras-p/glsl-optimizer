@@ -131,6 +131,7 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
       comp_byte = intel_compressed_num_bytes(intelImage->base.TexFormat->MesaFormat);
    intelObj->mt = intel_miptree_create(intel,
                                        intelObj->base.Target,
+                                       intelImage->base._BaseFormat,
                                        intelImage->base.InternalFormat,
                                        firstLevel,
                                        lastLevel,
@@ -205,7 +206,7 @@ try_pbo_upload(struct intel_context *intel,
    GLuint src_offset, src_stride;
    GLuint dst_offset, dst_stride;
 
-   if (!pbo ||
+   if (unpack->BufferObj->Name == 0 ||
        intel->ctx._ImageTransferState ||
        unpack->SkipPixels || unpack->SkipRows) {
       DBG("%s: failure 1\n", __FUNCTION__);
@@ -235,12 +236,15 @@ try_pbo_upload(struct intel_context *intel,
 					       INTEL_WRITE_FULL);
 
 
-      intelEmitCopyBlit(intel,
-                        intelImage->mt->cpp,
-                        src_stride, src_buffer, src_offset, GL_FALSE,
-                        dst_stride, dst_buffer, dst_offset, GL_FALSE,
-                        0, 0, 0, 0, width, height,
-			GL_COPY);
+      if (!intelEmitCopyBlit(intel,
+			     intelImage->mt->cpp,
+			     src_stride, src_buffer, src_offset, GL_FALSE,
+			     dst_stride, dst_buffer, dst_offset, GL_FALSE,
+			     0, 0, 0, 0, width, height,
+			     GL_COPY)) {
+	 UNLOCK_HARDWARE(intel);
+	 return GL_FALSE;
+      }
    }
    UNLOCK_HARDWARE(intel);
 
@@ -260,7 +264,7 @@ try_pbo_zcopy(struct intel_context *intel,
    GLuint src_offset, src_stride;
    GLuint dst_offset, dst_stride;
 
-   if (!pbo ||
+   if (unpack->BufferObj->Name == 0 ||
        intel->ctx._ImageTransferState ||
        unpack->SkipPixels || unpack->SkipRows) {
       DBG("%s: failure 1\n", __FUNCTION__);
@@ -409,7 +413,9 @@ intelTexImage(GLcontext * ctx,
        * a miptree, so create one just for our level and store it in the image.
        * It'll get moved into the object miptree at validate time.
        */
-      intelImage->mt = intel_miptree_create(intel, target, internalFormat,
+      intelImage->mt = intel_miptree_create(intel, target,
+					    intelImage->base.TexFormat->BaseFormat,
+					    internalFormat,
 					    level, level,
 					    width, height, depth,
 					    intelImage->base.TexFormat->TexelBytes,
@@ -421,7 +427,7 @@ intelTexImage(GLcontext * ctx,
     */
    if (dims <= 2 &&
        intelImage->mt &&
-       intel_buffer_object(unpack->BufferObj) &&
+       unpack->BufferObj->Name != 0 &&
        check_pbo_format(internalFormat, format,
                         type, intelImage->base.TexFormat)) {
 

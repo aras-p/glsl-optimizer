@@ -171,7 +171,6 @@ crtc_shadow_destroy(xf86CrtcPtr crtc, PixmapPtr rotate_pixmap, void *data)
 static void
 crtc_destroy(xf86CrtcPtr crtc)
 {
-    modesettingPtr ms = modesettingPTR(crtc->scrn);
     struct crtc_private *crtcp = crtc->driver_private;
 
     if (crtcp->cursor_buf)
@@ -194,9 +193,10 @@ crtc_load_cursor_argb(xf86CrtcPtr crtc, CARD32 * image)
 					       PIPE_BUFFER_USAGE_CPU_WRITE |
 					       PIPE_BUFFER_USAGE_GPU_READ,
 					       64*64*4);
-	drm_api_hooks.handle_from_buffer(ms->screen,
-					 crtcp->cursor_buf,
-					 &crtcp->cursor_handle);
+	ms->api->handle_from_buffer(ms->api,
+				    ms->screen,
+				    crtcp->cursor_buf,
+				    &crtcp->cursor_handle);
     }
 
     ptr = pipe_buffer_map(ms->screen, crtcp->cursor_buf, PIPE_BUFFER_USAGE_CPU_WRITE);

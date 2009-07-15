@@ -102,6 +102,19 @@
 
 
 /*
+ * Endian detection.
+ */
+
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
+#define PIPE_ARCH_LITTLE_ENDIAN
+#elif defined(PIPE_ARCH_PPC) || defined(PIPE_ARCH_PPC_64)
+#define PIPE_ARCH_BIG_ENDIAN
+#else
+#define PIPE_ARCH_UNKNOWN_ENDIAN
+#endif
+
+
+/*
  * Operating system family.
  * 
  * See subsystem below for a more fine-grained distinction.
@@ -117,6 +130,10 @@
 
 #if defined(__sun)
 #define PIPE_OS_SOLARIS
+#endif
+
+#if defined(__APPLE__)
+#define PIPE_OS_APPLE
 #endif
 
 #if defined(_WIN32) || defined(WIN32)

@@ -119,11 +119,13 @@ slang_operation_copy(slang_operation * x, const slang_operation * y)
    if (!slang_operation_construct(&z))
       return GL_FALSE;
    z.type = y->type;
-   z.children = (slang_operation *)
-      _slang_alloc(y->num_children * sizeof(slang_operation));
-   if (z.children == NULL) {
-      slang_operation_destruct(&z);
-      return GL_FALSE;
+   if (y->num_children > 0) {
+      z.children = (slang_operation *)
+         _slang_alloc(y->num_children * sizeof(slang_operation));
+      if (z.children == NULL) {
+         slang_operation_destruct(&z);
+         return GL_FALSE;
+      }
    }
    for (z.num_children = 0; z.num_children < y->num_children;
         z.num_children++) {
@@ -152,6 +154,15 @@ slang_operation_copy(slang_operation * x, const slang_operation * y)
          return GL_FALSE;
       }
    }
+
+   /* update scoping for children */
+   for (i = 0; i < y->num_children; i++) {
+      if (y->children[i].locals &&
+          y->children[i].locals->outer_scope == y->locals) {
+         z.children[i].locals->outer_scope = z.locals;
+      }
+   }
+
 #if 0
    z.var = y->var;
    z.fun = y->fun;
@@ -195,6 +206,20 @@ slang_operation_delete(slang_operation *oper)
 {
    slang_operation_destruct(oper);
    _slang_free(oper);
+}
+
+
+void
+slang_operation_free_children(slang_operation *oper)
+{
+   GLuint i;
+   for (i = 0; i < slang_oper_num_children(oper); i++) {
+      slang_operation *child = slang_oper_child(oper, i);
+      slang_operation_destruct(child);
+   }
+   _slang_free(oper->children);
+   oper->children = NULL;
+   oper->num_children = 0;
 }
 
 
@@ -263,6 +288,26 @@ slang_operation_insert(GLuint *numElements, slang_operation **array,
 }
 
 
+/**
+ * Add/insert new child into given node at given position.
+ * \return pointer to the new child node
+ */
+slang_operation *
+slang_operation_insert_child(slang_operation *oper, GLuint pos)
+{
+   slang_operation *newOp;
+
+   newOp = slang_operation_insert(&oper->num_children,
+                                  &oper->children,
+                                  pos);
+   if (newOp) {
+      newOp->locals->outer_scope = oper->locals;
+   }
+
+   return newOp;
+}
+
+
 void
 _slang_operation_swap(slang_operation *oper0, slang_operation *oper1)
 {
@@ -271,4 +316,17 @@ _slang_operation_swap(slang_operation *oper0, slang_operation *oper1)
    *oper1 = tmp;
 }
 
+
+void
+slang_operation_add_children(slang_operation *oper, GLuint num_children)
+{
+   GLuint i;
+   assert(oper->num_children == 0);
+   assert(oper->children == NULL);
+   oper->num_children = num_children;
+   oper->children = slang_operation_new(num_children);
+   for (i = 0; i < num_children; i++) {
+      oper->children[i].locals = _slang_variable_scope_new(oper->locals);
+   }
+}
 

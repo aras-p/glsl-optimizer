@@ -195,6 +195,11 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 		}
 
 		GLfloat *dst_ptr, *tmp;
+
+		/* Convert value for first element only */
+		if (input->StrideB == 0)
+			count = 1;
+
 		tmp = dst_ptr = _mesa_malloc(sizeof(GLfloat) * input->Size * count);
 
 		switch (input->Type) {
@@ -228,13 +233,17 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 		type = GL_FLOAT;
 		r300_attr.free_needed = GL_TRUE;
 		r300_attr.data = tmp;
-		r300_attr.stride = sizeof(GLfloat) * input->Size;
+		if (input->StrideB == 0) {
+			r300_attr.stride = 0;
+		} else {
+			r300_attr.stride = sizeof(GLfloat) * input->Size;
+		}
 		r300_attr.dwords = input->Size;
 	} else {
 		type = input->Type;
 		r300_attr.free_needed = GL_FALSE;
 		r300_attr.data = (GLvoid *)src_ptr;
-		r300_attr.stride = stride;
+		r300_attr.stride = input->StrideB;
 		r300_attr.dwords = (getTypeSize(type) * input->Size  + 3)/ 4;
 	}
 
@@ -332,7 +341,7 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 	{
 		int i, tmp;
 
-		tmp = r300->selected_vp->key.InputsRead;
+		tmp = r300->selected_vp->Base->Base.InputsRead;
 		i = 0;
 		vbuf->num_attribs = 0;
 		while (tmp) {
@@ -417,12 +426,18 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 
 	r300FixupIndexBuffer(ctx, ib, bo, &nr_bo);
 
+	/* ensure we have the cmd buf space in advance to cover
+ 	 * the state + DMA AOS pointers */
+	rcommonEnsureCmdBufSpace(&r300->radeon,
+                           r300->radeon.hw.max_state_size + (50*sizeof(int)),
+                           __FUNCTION__);
+
 	r300SetVertexFormat(ctx, arrays, max_index + 1, bo, &nr_bo);
 
 	if (r300->fallback)
 		return GL_FALSE;
 
-	r300SetupVAP(ctx, r300->selected_vp->key.InputsRead, r300->selected_vp->key.OutputsWritten);
+	r300SetupVAP(ctx, r300->selected_vp->Base->Base.InputsRead, r300->selected_vp->Base->Base.OutputsWritten);
 
 	r300UpdateShaderStates(r300);
 
@@ -442,8 +457,6 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 	return GL_TRUE;
 }
 
-/* TODO: rebase if number of indices in any of primitives is > 8192 for 32bit indices or 16384 for 16bit indices */
-
 static void r300DrawPrims(GLcontext *ctx,
 			 const struct gl_client_array *arrays[],
 			 const struct _mesa_prim *prim,
@@ -452,10 +465,23 @@ static void r300DrawPrims(GLcontext *ctx,
 			 GLuint min_index,
 			 GLuint max_index)
 {
+	struct split_limits limits;
 	GLboolean retval;
+
+	if (ib)
+		limits.max_verts = 0xffffffff;
+	else
+		limits.max_verts = 65535;
+
+	limits.max_indices = 65535;
+	limits.max_vb_size = 1024*1024;
 
 	if (min_index) {
 		vbo_rebase_prims( ctx, arrays, prim, nr_prims, ib, min_index, max_index, r300DrawPrims );
+		return;
+	}
+	if ((ib && ib->count > 65535)) {
+		vbo_split_prims (ctx, arrays, prim, nr_prims, ib, min_index, max_index, r300DrawPrims, &limits);
 		return;
 	}
 

@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/dri/dri_util.c,v 1.7 2003/04/28 17:01:25 dawes Exp $ */
 /**
  * \file dri_util.c
  * DRI utility functions.
@@ -122,6 +121,9 @@ static int driUnbindContext(__DRIcontext *pcp)
     pdp = pcp->driDrawablePriv;
     prp = pcp->driReadablePriv;
 
+    /* already unbound */
+    if (!pdp && !prp)
+      return GL_TRUE;
     /* Let driver unbind drawable from context */
     (*psp->DriverAPI.UnbindContext)(pcp);
 
@@ -146,9 +148,10 @@ static int driUnbindContext(__DRIcontext *pcp)
      * window we can determine the last context bound to the window and
      * use that context's lock. (BrianP, 2-Dec-2000)
      */
+    pcp->driDrawablePriv = pcp->driReadablePriv = NULL;
+
 #if 0
     /* Unbind the drawable */
-    pcp->driDrawablePriv = NULL;
     pdp->driContextPriv = &psp->dummyContextPriv;
 #endif
 

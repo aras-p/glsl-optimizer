@@ -352,6 +352,9 @@ typedef enum
    OPCODE_EVAL_P1,
    OPCODE_EVAL_P2,
 
+   /* GL_EXT_provoking_vertex */
+   OPCODE_PROVOKING_VERTEX,
+
    /* The following three are meta instructions */
    OPCODE_ERROR,                /* raise compiled-in error */
    OPCODE_CONTINUE,
@@ -957,6 +960,20 @@ save_BlendColor(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
    }
 }
 
+static void invalidate_saved_current_state( GLcontext *ctx )
+{
+   GLint i;
+
+   for (i = 0; i < VERT_ATTRIB_MAX; i++)
+      ctx->ListState.ActiveAttribSize[i] = 0;
+
+   for (i = 0; i < MAT_ATTRIB_MAX; i++)
+      ctx->ListState.ActiveMaterialSize[i] = 0;
+
+   memset(&ctx->ListState.Current, 0, sizeof ctx->ListState.Current);
+
+   ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
+}
 
 void GLAPIENTRY
 _mesa_save_CallList(GLuint list)
@@ -970,9 +987,10 @@ _mesa_save_CallList(GLuint list)
       n[1].ui = list;
    }
 
-   /* After this, we don't know what begin/end state we're in:
+   /* After this, we don't know what state we're in.  Invalidate all
+    * cached information previously gathered:
     */
-   ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
+   invalidate_saved_current_state( ctx );
 
    if (ctx->ExecuteFlag) {
       _mesa_CallList(list);
@@ -1015,9 +1033,10 @@ _mesa_save_CallLists(GLsizei n, GLenum type, const GLvoid * lists)
       }
    }
 
-   /* After this, we don't know what begin/end state we're in:
+   /* After this, we don't know what state we're in.  Invalidate all
+    * cached information previously gathered:
     */
-   ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
+   invalidate_saved_current_state( ctx );
 
    if (ctx->ExecuteFlag) {
       CALL_CallLists(ctx->Exec, (n, type, lists));
@@ -3177,13 +3196,25 @@ save_ShadeModel(GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END(ctx);
+
+   if (ctx->ExecuteFlag) {
+      CALL_ShadeModel(ctx->Exec, (mode));
+   }
+
+   if (ctx->ListState.Current.ShadeModel == mode)
+      return;
+
+   SAVE_FLUSH_VERTICES(ctx);
+
+   /* Only save the value if we know the statechange will take effect:
+    */
+   if (ctx->Driver.CurrentSavePrimitive == PRIM_OUTSIDE_BEGIN_END)
+      ctx->ListState.Current.ShadeModel = mode;
+
    n = ALLOC_INSTRUCTION(ctx, OPCODE_SHADE_MODEL, 1);
    if (n) {
       n[1].e = mode;
-   }
-   if (ctx->ExecuteFlag) {
-      CALL_ShadeModel(ctx->Exec, (mode));
    }
 }
 
@@ -5146,14 +5177,21 @@ save_EdgeFlag(GLboolean x)
    save_Attr1fNV(VERT_ATTRIB_EDGEFLAG, x ? (GLfloat)1.0 : (GLfloat)0.0);
 }
 
+static INLINE GLboolean compare4fv( const GLfloat *a,
+                                    const GLfloat *b,
+                                    GLuint count )
+{
+   return memcmp( a, b, count * sizeof(GLfloat) ) == 0;
+}
+                              
+
 static void GLAPIENTRY
 save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    int args, i;
-
-   SAVE_FLUSH_VERTICES(ctx);
+   GLuint bitmask;
 
    switch (face) {
    case GL_BACK:
@@ -5183,6 +5221,36 @@ save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
       _mesa_compile_error(ctx, GL_INVALID_ENUM, "material(pname)");
       return;
    }
+   
+   if (ctx->ExecuteFlag) {
+      CALL_Materialfv(ctx->Exec, (face, pname, param));
+   }
+
+   bitmask = _mesa_material_bitmask(ctx, face, pname, ~0, NULL);
+
+   /* Try to eliminate redundant statechanges.  Because it is legal to
+    * call glMaterial even inside begin/end calls, don't need to worry
+    * about ctx->Driver.CurrentSavePrimitive here.
+    */
+   for (i = 0; i < MAT_ATTRIB_MAX; i++) {
+      if (bitmask & (1 << i)) {
+         if (ctx->ListState.ActiveMaterialSize[i] == args &&
+             compare4fv(ctx->ListState.CurrentMaterial[i], param, args)) {
+            bitmask &= ~(1 << i);
+         }
+         else {
+            ctx->ListState.ActiveMaterialSize[i] = args;
+            COPY_SZ_4V(ctx->ListState.CurrentMaterial[i], args, param);
+         }
+      }
+   }
+
+   /* If this call has effect, return early:
+    */
+   if (bitmask == 0)
+      return;
+
+   SAVE_FLUSH_VERTICES(ctx);
 
    n = ALLOC_INSTRUCTION(ctx, OPCODE_MATERIAL, 6);
    if (n) {
@@ -5190,19 +5258,6 @@ save_Materialfv(GLenum face, GLenum pname, const GLfloat * param)
       n[2].e = pname;
       for (i = 0; i < args; i++)
          n[3 + i].f = param[i];
-   }
-
-   {
-      GLuint bitmask = _mesa_material_bitmask(ctx, face, pname, ~0, NULL);
-      for (i = 0; i < MAT_ATTRIB_MAX; i++)
-         if (bitmask & (1 << i)) {
-            ctx->ListState.ActiveMaterialSize[i] = args;
-            COPY_SZ_4V(ctx->ListState.CurrentMaterial[i], args, param);
-         }
-   }
-
-   if (ctx->ExecuteFlag) {
-      CALL_Materialfv(ctx->Exec, (face, pname, param));
    }
 }
 
@@ -5703,6 +5758,25 @@ save_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    }
 }
 #endif
+
+
+/** GL_EXT_provoking_vertex */
+static void GLAPIENTRY
+save_ProvokingVertexEXT(GLenum mode)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION(ctx, OPCODE_PROVOKING_VERTEX, 1);
+   if (n) {
+      n[1].e = mode;
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_ProvokingVertexEXT(ctx->Exec, (mode));*/
+      _mesa_ProvokingVertexEXT(mode);
+   }
+}
+
 
 
 /**
@@ -6269,6 +6343,9 @@ execute_list(GLcontext *ctx, GLuint list)
          case OPCODE_SHADE_MODEL:
             CALL_ShadeModel(ctx->Exec, (n[1].e));
             break;
+         case OPCODE_PROVOKING_VERTEX:
+            CALL_ProvokingVertexEXT(ctx->Exec, (n[1].e));
+            break;
          case OPCODE_STENCIL_FUNC:
             CALL_StencilFunc(ctx->Exec, (n[1].e, n[2].i, n[3].ui));
             break;
@@ -6771,7 +6848,6 @@ void GLAPIENTRY
 _mesa_NewList(GLuint name, GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLint i;
 
    FLUSH_CURRENT(ctx, 0);       /* must be called before assert */
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -6799,20 +6875,15 @@ _mesa_NewList(GLuint name, GLenum mode)
    ctx->CompileFlag = GL_TRUE;
    ctx->ExecuteFlag = (mode == GL_COMPILE_AND_EXECUTE);
 
+   /* Reset acumulated list state:
+    */
+   invalidate_saved_current_state( ctx );
+
    /* Allocate new display list */
    ctx->ListState.CurrentList = make_list(name, BLOCK_SIZE);
    ctx->ListState.CurrentBlock = ctx->ListState.CurrentList->Head;
    ctx->ListState.CurrentPos = 0;
 
-   /* Reset acumulated list state:
-    */
-   for (i = 0; i < Elements(ctx->ListState.ActiveAttribSize); i++)
-      ctx->ListState.ActiveAttribSize[i] = 0;
-
-   for (i = 0; i < Elements(ctx->ListState.ActiveMaterialSize); i++)
-      ctx->ListState.ActiveMaterialSize[i] = 0;
-
-   ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
    ctx->Driver.NewList(ctx, name, mode);
 
    ctx->CurrentDispatch = ctx->Save;
@@ -8239,8 +8310,17 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_ProgramLocalParameters4fvEXT(table, save_ProgramLocalParameters4fvEXT);
 #endif
 
+   /* ARB 50. GL_ARB_map_buffer_range */
+#if FEATURE_ARB_map_buffer_range
+   SET_MapBufferRange(table, _mesa_MapBufferRange); /* no dlist save */
+   SET_FlushMappedBufferRange(table, _mesa_FlushMappedBufferRange); /* no dl */
+#endif
+
    /* ARB 59. GL_ARB_copy_buffer */
    SET_CopyBufferSubData(table, _mesa_CopyBufferSubData); /* no dlist save */
+
+   /* 364. GL_EXT_provoking_vertex */
+   SET_ProvokingVertexEXT(table, save_ProvokingVertexEXT);
 }
 
 
@@ -8475,6 +8555,11 @@ print_list(GLcontext *ctx, GLuint list)
             break;
          case OPCODE_EVAL_P2:
             _mesa_printf("EVAL_P2 %d %d\n", n[1].i, n[2].i);
+            break;
+
+         case OPCODE_PROVOKING_VERTEX:
+            _mesa_printf("ProvokingVertex %s\n",
+                         _mesa_lookup_enum_by_nr(n[1].ui));
             break;
 
             /*

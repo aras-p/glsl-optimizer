@@ -40,6 +40,10 @@ nv04_screen_get_param(struct pipe_screen *screen, int param)
 		return 0;
 	case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
 		return 1;
+	case PIPE_CAP_TGSI_CONT_SUPPORTED:
+		return 0;
+	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
+		return 0;
 	case NOUVEAU_CAP_HW_VTXBUF:
 	case NOUVEAU_CAP_HW_IDXBUF:
 		return 0;
@@ -79,6 +83,13 @@ nv04_screen_is_format_supported(struct pipe_screen *screen,
 		switch (format) {
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_R5G6B5_UNORM: 
+			return TRUE;
+		default:
+			break;
+		}
+	} else
+	if (tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL) {
+		switch (format) {
 		case PIPE_FORMAT_Z16_UNORM:
 			return TRUE;
 		default:

@@ -81,17 +81,17 @@ GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
 	return vic_1;
 }
 
-GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint vp_writes, GLuint fp_reads)
+GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint vp_writes)
 {
 	GLuint ret = 0;
 
 	if (vp_writes & (1 << VERT_RESULT_HPOS))
 		ret |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
 
-	if (vp_writes & (1 << VERT_RESULT_COL0) && fp_reads & FRAG_BIT_COL0)
+	if (vp_writes & (1 << VERT_RESULT_COL0))
 		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT;
 
-	if (vp_writes & (1 << VERT_RESULT_COL1) && fp_reads & FRAG_BIT_COL1)
+	if (vp_writes & (1 << VERT_RESULT_COL1))
 		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
 
 	/* Two sided lighting works only if all 4 colors are written */
@@ -105,24 +105,15 @@ GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint vp_writes, GLuint fp_reads)
 	return ret;
 }
 
-GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint vp_writes, GLuint fp_reads)
+GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint vp_writes)
 {
 	GLuint i, ret = 0, first_free_texcoord = 0;
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-		if (vp_writes & (1 << (VERT_RESULT_TEX0 + i)) && fp_reads & FRAG_BIT_TEX(i)) {
+		if (vp_writes & (1 << (VERT_RESULT_TEX0 + i))) {
 			ret |= (4 << (3 * first_free_texcoord));
 			++first_free_texcoord;
 		}
-	}
-
-	if (fp_reads & FRAG_BIT_WPOS) {
-		ret |= (4 << (3 * first_free_texcoord));
-		++first_free_texcoord;
-	}
-
-	if (vp_writes & (1 << VERT_RESULT_FOGC) && fp_reads & FRAG_BIT_FOGC) {
-		ret |= 4 << (3 * first_free_texcoord);
 	}
 
 	if (first_free_texcoord > 8) {

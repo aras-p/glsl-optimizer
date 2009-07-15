@@ -162,7 +162,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 {
    struct brw_sf_unit_state sf;
    dri_bo *bo;
-
+   int chipset_max_threads;
    memset(&sf, 0, sizeof(sf));
 
    sf.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
@@ -171,13 +171,26 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    sf.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
 
    sf.thread3.dispatch_grf_start_reg = 3;
-   sf.thread3.urb_entry_read_offset = 1;
+
+   if (BRW_IS_IGDNG(brw))
+       sf.thread3.urb_entry_read_offset = 3;
+   else
+       sf.thread3.urb_entry_read_offset = 1;
+
    sf.thread3.urb_entry_read_length = key->urb_entry_read_length;
 
    sf.thread4.nr_urb_entries = key->nr_urb_entries;
    sf.thread4.urb_entry_allocation_size = key->sfsize - 1;
-   /* Each SF thread produces 1 PUE, and there can be up to 24 threads */
-   sf.thread4.max_threads = MIN2(24, key->nr_urb_entries) - 1;
+
+   /* Each SF thread produces 1 PUE, and there can be up to 24(Pre-IGDNG) or 
+    * 48(IGDNG) threads 
+    */
+   if (BRW_IS_IGDNG(brw))
+      chipset_max_threads = 48;
+   else
+      chipset_max_threads = 24;
+
+   sf.thread4.max_threads = MIN2(chipset_max_threads, key->nr_urb_entries) - 1;
 
    if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
       sf.thread4.max_threads = 0;

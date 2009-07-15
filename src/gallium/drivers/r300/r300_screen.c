@@ -94,8 +94,7 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
                 return 0;
             }
         case PIPE_CAP_S3TC:
-            /* IN THEORY */
-            return 0;
+            return 1;
         case PIPE_CAP_ANISOTROPIC_FILTER:
             return 1;
         case PIPE_CAP_POINT_SPRITE:
@@ -145,6 +144,9 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
         case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
             /* XXX guessing (what a terrible guess) */
             return 2;
+        case PIPE_CAP_TGSI_CONT_SUPPORTED:
+            /* XXX */
+            return 0;
         default:
             debug_printf("r300: Implementation error: Bad param %d\n",
                 param);
@@ -179,21 +181,58 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param)
     }
 }
 
-static boolean check_tex_2d_format(enum pipe_format format, boolean is_r500)
+static boolean check_tex_2d_format(enum pipe_format format, uint32_t usage,
+                                   boolean is_r500)
 {
     switch (format) {
+        /* Supported formats. */
         /* Colorbuffer */
         case PIPE_FORMAT_A4R4G4B4_UNORM:
         case PIPE_FORMAT_R5G6B5_UNORM:
         case PIPE_FORMAT_A1R5G5B5_UNORM:
-        case PIPE_FORMAT_A8R8G8B8_UNORM:
+            return usage &
+                (PIPE_TEXTURE_USAGE_RENDER_TARGET |
+                 PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                 PIPE_TEXTURE_USAGE_PRIMARY);
+
+        /* Texture */
+        case PIPE_FORMAT_A8R8G8B8_SRGB:
+        case PIPE_FORMAT_R8G8B8A8_SRGB:
+        case PIPE_FORMAT_DXT1_RGB:
+        case PIPE_FORMAT_DXT1_RGBA:
+        case PIPE_FORMAT_DXT3_RGBA:
+        case PIPE_FORMAT_DXT5_RGBA:
+        case PIPE_FORMAT_YCBCR:
+            return usage & PIPE_TEXTURE_USAGE_SAMPLER;
+
         /* Colorbuffer or texture */
+        case PIPE_FORMAT_A8R8G8B8_UNORM:
+        case PIPE_FORMAT_R8G8B8A8_UNORM:
         case PIPE_FORMAT_I8_UNORM:
+            return usage &
+                (PIPE_TEXTURE_USAGE_RENDER_TARGET |
+                 PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                 PIPE_TEXTURE_USAGE_PRIMARY |
+                 PIPE_TEXTURE_USAGE_SAMPLER);
+
         /* Z buffer */
         case PIPE_FORMAT_Z16_UNORM:
-        /* Z buffer with stencil */
+            return usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+
+        /* Z buffer with stencil or texture */
         case PIPE_FORMAT_Z24S8_UNORM:
-            return TRUE;
+            return usage &
+                (PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
+                 PIPE_TEXTURE_USAGE_SAMPLER);
+
+        /* Definitely unsupported formats. */
+        /* Non-usable Z buffer/stencil formats. */
+        case PIPE_FORMAT_Z24X8_UNORM:
+        case PIPE_FORMAT_S8Z24_UNORM:
+        case PIPE_FORMAT_X8Z24_UNORM:
+            debug_printf("r300: Note: Got unsupported format: %s in %s\n",
+                pf_name(format), __FUNCTION__);
+            return FALSE;
 
         /* XXX These don't even exist
         case PIPE_FORMAT_A32R32G32B32:
@@ -216,7 +255,8 @@ static boolean check_tex_2d_format(enum pipe_format format, boolean is_r500)
             return FALSE; */
 
         default:
-            debug_printf("r300: Warning: Got unsupported format: %s in %s\n",
+            /* Unknown format... */
+            debug_printf("r300: Warning: Got unknown format: %s in %s\n",
                 pf_name(format), __FUNCTION__);
             break;
     }
@@ -233,7 +273,7 @@ static boolean r300_is_format_supported(struct pipe_screen* pscreen,
 {
     switch (target) {
         case PIPE_TEXTURE_2D:
-            return check_tex_2d_format(format,
+            return check_tex_2d_format(format, tex_usage,
                 r300_screen(pscreen)->caps->is_r500);
         case PIPE_TEXTURE_1D:
         case PIPE_TEXTURE_3D:

@@ -705,15 +705,18 @@ get_texel(const struct tgsi_sampler *tgsi_sampler,
  * Compare texcoord 'p' (aka R) against texture value 'rgba[0]'
  * When we sampled the depth texture, the depth value was put into all
  * RGBA channels.  We look at the red channel here.
+ * \param rgba  quad of (depth) texel values
+ * \param p  texture 'P' components for four pixels in quad
+ * \param j  which pixel in the quad to test [0..3]
  */
 static INLINE void
-shadow_compare(uint compare_func,
+shadow_compare(const struct pipe_sampler_state *sampler,
                float rgba[NUM_CHANNELS][QUAD_SIZE],
                const float p[QUAD_SIZE],
                uint j)
 {
    int k;
-   switch (compare_func) {
+   switch (sampler->compare_func) {
    case PIPE_FUNC_LESS:
       k = p[j] < rgba[0][j];
       break;
@@ -744,7 +747,81 @@ shadow_compare(uint compare_func,
       break;
    }
 
+   /* XXX returning result for default GL_DEPTH_TEXTURE_MODE = GL_LUMINANCE */
    rgba[0][j] = rgba[1][j] = rgba[2][j] = (float) k;
+   rgba[3][j] = 1.0F;
+}
+
+
+/**
+ * As above, but do four z/texture comparisons.
+ */
+static INLINE void
+shadow_compare4(const struct pipe_sampler_state *sampler,
+                float rgba[NUM_CHANNELS][QUAD_SIZE],
+                const float p[QUAD_SIZE])
+{
+   int j, k0, k1, k2, k3;
+   float val;
+
+   /* compare four texcoords vs. four texture samples */
+   switch (sampler->compare_func) {
+   case PIPE_FUNC_LESS:
+      k0 = p[0] < rgba[0][0];
+      k1 = p[1] < rgba[0][1];
+      k2 = p[2] < rgba[0][2];
+      k3 = p[3] < rgba[0][3];
+      break;
+   case PIPE_FUNC_LEQUAL:
+      k0 = p[0] <= rgba[0][0];
+      k1 = p[1] <= rgba[0][1];
+      k2 = p[2] <= rgba[0][2];
+      k3 = p[3] <= rgba[0][3];
+      break;
+   case PIPE_FUNC_GREATER:
+      k0 = p[0] > rgba[0][0];
+      k1 = p[1] > rgba[0][1];
+      k2 = p[2] > rgba[0][2];
+      k3 = p[3] > rgba[0][3];
+      break;
+   case PIPE_FUNC_GEQUAL:
+      k0 = p[0] >= rgba[0][0];
+      k1 = p[1] >= rgba[0][1];
+      k2 = p[2] >= rgba[0][2];
+      k3 = p[3] >= rgba[0][3];
+      break;
+   case PIPE_FUNC_EQUAL:
+      k0 = p[0] == rgba[0][0];
+      k1 = p[1] == rgba[0][1];
+      k2 = p[2] == rgba[0][2];
+      k3 = p[3] == rgba[0][3];
+      break;
+   case PIPE_FUNC_NOTEQUAL:
+      k0 = p[0] != rgba[0][0];
+      k1 = p[1] != rgba[0][1];
+      k2 = p[2] != rgba[0][2];
+      k3 = p[3] != rgba[0][3];
+      break;
+   case PIPE_FUNC_ALWAYS:
+      k0 = k1 = k2 = k3 = 1;
+      break;
+   case PIPE_FUNC_NEVER:
+      k0 = k1 = k2 = k3 = 0;
+      break;
+   default:
+      k0 = k1 = k2 = k3 = 0;
+      assert(0);
+      break;
+   }
+
+   /* convert four pass/fail values to an intensity in [0,1] */
+   val = 0.25F * (k0 + k1 + k2 + k3);
+
+   /* XXX returning result for default GL_DEPTH_TEXTURE_MODE = GL_LUMINANCE */
+   for (j = 0; j < 4; j++) {
+      rgba[0][j] = rgba[1][j] = rgba[2][j] = val;
+      rgba[3][j] = 1.0F;
+   }
 }
 
 
@@ -767,7 +844,6 @@ sp_get_samples_2d_common(const struct tgsi_sampler *tgsi_sampler,
    const uint unit = samp->unit;
    const struct pipe_texture *texture = sp->texture[unit];
    const struct pipe_sampler_state *sampler = sp->sampler[unit];
-   const uint compare_func = sampler->compare_func;
    unsigned level0, level1, j, imgFilter;
    int width, height;
    float levelBlend;
@@ -792,7 +868,7 @@ sp_get_samples_2d_common(const struct tgsi_sampler *tgsi_sampler,
          for (j = 0; j < QUAD_SIZE; j++) {
             get_texel(tgsi_sampler, faces[j], level0, x[j], y[j], 0, rgba, j);
             if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-               shadow_compare(compare_func, rgba, p, j);
+               shadow_compare(sampler, rgba, p, j);
             }
 
             if (level0 != level1) {
@@ -804,7 +880,7 @@ sp_get_samples_2d_common(const struct tgsi_sampler *tgsi_sampler,
                get_texel(tgsi_sampler, faces[j], level1, x[j], y[j], 0,
                          rgba2, j);
                if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE){
-                  shadow_compare(compare_func, rgba2, p, j);
+                  shadow_compare(sampler, rgba2, p, j);
                }
 
                for (c = 0; c < NUM_CHANNELS; c++) {
@@ -831,10 +907,7 @@ sp_get_samples_2d_common(const struct tgsi_sampler *tgsi_sampler,
             get_texel(tgsi_sampler, faces[j], level0, x0[j], y1[j], 0, tx, 2);
             get_texel(tgsi_sampler, faces[j], level0, x1[j], y1[j], 0, tx, 3);
             if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-               shadow_compare(compare_func, tx, p, 0);
-               shadow_compare(compare_func, tx, p, 1);
-               shadow_compare(compare_func, tx, p, 2);
-               shadow_compare(compare_func, tx, p, 3);
+               shadow_compare4(sampler, tx, p);
             }
 
             /* interpolate R, G, B, A */
@@ -856,10 +929,7 @@ sp_get_samples_2d_common(const struct tgsi_sampler *tgsi_sampler,
                get_texel(tgsi_sampler, faces[j], level1, x0[j], y1[j], 0, tx, 2);
                get_texel(tgsi_sampler, faces[j], level1, x1[j], y1[j], 0, tx, 3);
                if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE){
-                  shadow_compare(compare_func, tx, p, 0);
-                  shadow_compare(compare_func, tx, p, 1);
-                  shadow_compare(compare_func, tx, p, 2);
-                  shadow_compare(compare_func, tx, p, 3);
+                  shadow_compare4(sampler, tx, p);
                }
 
                /* interpolate R, G, B, A */
@@ -1074,7 +1144,6 @@ sp_get_samples_rect(const struct tgsi_sampler *tgsi_sampler,
    const struct pipe_texture *texture = sp->texture[unit];
    const struct pipe_sampler_state *sampler = sp->sampler[unit];
    const uint face = 0;
-   const uint compare_func = sampler->compare_func;
    unsigned level0, level1, j, imgFilter;
    int width, height;
    float levelBlend;
@@ -1099,7 +1168,7 @@ sp_get_samples_rect(const struct tgsi_sampler *tgsi_sampler,
          for (j = 0; j < QUAD_SIZE; j++) {
             get_texel(tgsi_sampler, face, level0, x[j], y[j], 0, rgba, j);
             if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-               shadow_compare(compare_func, rgba, p, j);
+               shadow_compare(sampler, rgba, p, j);
             }
          }
       }
@@ -1119,10 +1188,7 @@ sp_get_samples_rect(const struct tgsi_sampler *tgsi_sampler,
             get_texel(tgsi_sampler, face, level0, x0[j], y1[j], 0, tx, 2);
             get_texel(tgsi_sampler, face, level0, x1[j], y1[j], 0, tx, 3);
             if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-               shadow_compare(compare_func, tx, p, 0);
-               shadow_compare(compare_func, tx, p, 1);
-               shadow_compare(compare_func, tx, p, 2);
-               shadow_compare(compare_func, tx, p, 3);
+               shadow_compare4(sampler, tx, p);
             }
             for (c = 0; c < 4; c++) {
                rgba[c][j] = lerp_2d(xw[j], yw[j],

@@ -27,6 +27,8 @@
 #include "r300_cs.h"
 #include "r300_reg.h"
 
+struct r300_context;
+
 struct r300_query {
     /* The kind of query. Currently only OQ is supported. */
     unsigned type;

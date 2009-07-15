@@ -1250,6 +1250,8 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
     * We allocate the array for 1D/2D textures too in order to avoid special-
     * case code in the texstore routines.
     */
+   if (img->ImageOffsets)
+      _mesa_free(img->ImageOffsets);
    img->ImageOffsets = (GLuint *) _mesa_malloc(depth * sizeof(GLuint));
    for (i = 0; i < depth; i++) {
       img->ImageOffsets[i] = i * width * height;

@@ -49,7 +49,7 @@ struct r300_transfer {
 };
 
 /* Convenience cast wrapper. */
-static struct r300_screen* r300_screen(struct pipe_screen* screen) {
+static INLINE struct r300_screen* r300_screen(struct pipe_screen* screen) {
     return (struct r300_screen*)screen;
 }
 

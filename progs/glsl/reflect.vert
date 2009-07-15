@@ -11,6 +11,7 @@ void main()
    float two_n_dot_u = 2.0 * dot(n, u);
    vec4 f;
    f.xyz = u - n * two_n_dot_u;
+   f.w = 1.0;
 
    // outputs
    normal = n;

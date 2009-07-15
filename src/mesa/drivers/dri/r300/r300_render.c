@@ -243,7 +243,6 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 		fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __FUNCTION__, nr,
 			offset);
 
-
 	if (!rmesa->radeon.radeonScreen->kernel_mm) {
 		BEGIN_BATCH(sz+2+(nr * 2));
 		OUT_BATCH_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, sz - 1);
@@ -360,31 +359,15 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 	if (type < 0 || num_verts <= 0)
 		return;
 
-	/* Make space for at least 64 dwords.
+	/* Make space for at least 128 dwords.
 	 * This is supposed to ensure that we can get all rendering
 	 * commands into a single command buffer.
 	 */
 	rcommonEnsureCmdBufSpace(&rmesa->radeon, 128, __FUNCTION__);
 
 	if (rmesa->ind_buf.ptr) {
-		if (num_verts > 65535) {
-			/* not implemented yet */
-			WARN_ONCE("Too many elts\n");
-			return;
-		}
-		/* Note: The following is incorrect, but it's the best I can do
-		 * without a major refactoring of how DMA memory is handled.
-		 * The problem: Ensuring that both vertex arrays *and* index
-		 * arrays are at the right position, and then ensuring that
-		 * the LOAD_VBPNTR, DRAW_INDX and INDX_BUFFER packets are emitted
-		 * at once.
-		 *
-		 * So why is the following incorrect? Well, it seems like
-		 * allocating the index array might actually evict the vertex
-		 * arrays. *sigh*
-		 */
 		r300EmitElts(ctx, num_verts);
-		r300EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, start);
+		r300EmitAOS(rmesa, rmesa->radeon.tcl.aos_count, 0);
 		if (rmesa->radeon.radeonScreen->kernel_mm) {
 			BEGIN_BATCH_NO_AUTOSTATE(2);
 			OUT_BATCH_REGSEQ(R300_VAP_VF_MAX_VTX_INDX, 1);
@@ -469,7 +452,8 @@ void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode)
 	
 	if (mode) {
 		if ((fallback_warn & bit) == 0) {
-			_mesa_fprintf(stderr, "WARNING! Falling back to software for %s\n", getFallbackString(bit));
+			if (RADEON_DEBUG & DEBUG_FALLBACKS)
+				_mesa_fprintf(stderr, "WARNING! Falling back to software for %s\n", getFallbackString(bit));
 			fallback_warn |= bit;
 		}
 		rmesa->fallback |= bit;

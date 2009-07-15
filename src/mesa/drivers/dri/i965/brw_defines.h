@@ -139,6 +139,7 @@
 #define BRW_CLIPMODE_CLIP_NON_REJECTED   2
 #define BRW_CLIPMODE_REJECT_ALL          3
 #define BRW_CLIPMODE_ACCEPT_ALL          4
+#define BRW_CLIPMODE_KERNEL_CLIP         5
 
 #define BRW_CLIP_NDCSPACE     0
 #define BRW_CLIP_SCREENSPACE  1
@@ -670,6 +671,25 @@
 #define BRW_SAMPLER_MESSAGE_SIMD8_LD                  3
 #define BRW_SAMPLER_MESSAGE_SIMD16_LD                 3
 
+#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_IGDNG            0
+#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_IGDNG          0
+#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_IGDNG           0
+#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_BIAS_IGDNG       1
+#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_BIAS_IGDNG     1
+#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS_IGDNG      1
+#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_LOD_IGDNG        2
+#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_LOD_IGDNG      2
+#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_LOD_IGDNG       2
+#define BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_COMPARE_IGDNG    3
+#define BRW_SAMPLER_MESSAGE_SIMD4X2_SAMPLE_COMPARE_IGDNG  3
+#define BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE_IGDNG   3
+
+/* for IGDNG only */
+#define BRW_SAMPLER_SIMD_MODE_SIMD4X2                   0
+#define BRW_SAMPLER_SIMD_MODE_SIMD8                     1
+#define BRW_SAMPLER_SIMD_MODE_SIMD16                    2
+#define BRW_SAMPLER_SIMD_MODE_SIMD32_64                 3
+
 #define BRW_DATAPORT_OWORD_BLOCK_1_OWORDLOW   0
 #define BRW_DATAPORT_OWORD_BLOCK_1_OWORDHIGH  1
 #define BRW_DATAPORT_OWORD_BLOCK_2_OWORDS     2
@@ -819,8 +839,11 @@
 #include "intel_chipset.h"
 
 #define BRW_IS_G4X(brw)         (IS_G4X((brw)->intel.intelScreen->deviceID))
-#define CMD_PIPELINE_SELECT(brw)        (BRW_IS_G4X(brw) ? CMD_PIPELINE_SELECT_GM45 : CMD_PIPELINE_SELECT_965)
-#define CMD_VF_STATISTICS(brw)          (BRW_IS_G4X(brw) ? CMD_VF_STATISTICS_GM45 : CMD_VF_STATISTICS_965)
-#define URB_SIZES(brw)                  (BRW_IS_G4X(brw) ? 384 : 256)  /* 512 bit units */
+#define BRW_IS_IGDNG(brw)         (IS_IGDNG((brw)->intel.intelScreen->deviceID))
+#define BRW_IS_965(brw)         (!(BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)))
+#define CMD_PIPELINE_SELECT(brw)        ((BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? CMD_PIPELINE_SELECT_GM45 : CMD_PIPELINE_SELECT_965)
+#define CMD_VF_STATISTICS(brw)          ((BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? CMD_VF_STATISTICS_GM45 : CMD_VF_STATISTICS_965)
+#define URB_SIZES(brw)                  (BRW_IS_IGDNG(brw) ? 1024 : \
+                                         (BRW_IS_G4X(brw) ? 384 : 256))  /* 512 bit units */
 
 #endif

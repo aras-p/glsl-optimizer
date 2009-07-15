@@ -829,7 +829,7 @@ util_vsnprintf(char *str, size_t size, const char *format, va_list args)
 					break;
 				default:
 					intptr = va_arg(args, int *);
-					*intptr = len;
+					*intptr = (int)len;
 					break;
 				}
 				break;

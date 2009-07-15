@@ -145,6 +145,13 @@ engine.o: engine.c trackball.h
 	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) engine.c
 
 
+fbotexture: fbotexture.o
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) fbotexture.o $(LIBS) -o $@
+
+fbotexture.o: fbotexture.c extfuncs.h
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) fbotexture.c
+
+
 fslight: fslight.o
 	$(APP_CC) $(CFLAGS) $(LDFLAGS) fslight.o $(LIBS) -o $@
 

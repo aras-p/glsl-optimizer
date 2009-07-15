@@ -50,5 +50,7 @@ void brw_emit_point_clip( struct brw_clip_compile *c )
    /* Send an empty message to kill the thread:
     */
    brw_clip_tri_alloc_regs(c, 0);
+   if (c->need_ff_sync)
+	   brw_clip_ff_sync(c);      
    brw_clip_kill_thread(c);
 }

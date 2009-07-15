@@ -457,7 +457,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
                                     &dummy_reply);
    }
 #ifdef GLX_DIRECT_RENDERING
-   else if (oldGC->driContext) {
+   else if (oldGC->driContext && oldGC != gc) {
       oldGC->driContext->unbindContext(oldGC->driContext);
    }
 #endif

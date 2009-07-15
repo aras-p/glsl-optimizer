@@ -101,6 +101,7 @@ intel_miptree_create_internal(struct intel_context *intel,
 struct intel_mipmap_tree *
 intel_miptree_create(struct intel_context *intel,
 		     GLenum target,
+		     GLenum base_format,
 		     GLenum internal_format,
 		     GLuint first_level,
 		     GLuint last_level,
@@ -113,9 +114,14 @@ intel_miptree_create(struct intel_context *intel,
    uint32_t tiling;
 
    if (intel->use_texture_tiling && compress_byte == 0 &&
-       intel->intelScreen->kernel_exec_fencing)
-      tiling = I915_TILING_X;
-   else
+       intel->intelScreen->kernel_exec_fencing) {
+      if (IS_965(intel->intelScreen->deviceID) &&
+	  (base_format == GL_DEPTH_COMPONENT ||
+	   base_format == GL_DEPTH_STENCIL_EXT))
+	 tiling = I915_TILING_Y;
+      else
+	 tiling = I915_TILING_X;
+   } else
       tiling = I915_TILING_NONE;
 
    mt = intel_miptree_create_internal(intel, target, internal_format,
@@ -347,21 +353,29 @@ intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
 }
 
 
-
 void
-intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
-			       GLuint level, GLuint img,
-			       GLuint x, GLuint y)
+intel_miptree_set_image_offset_ex(struct intel_mipmap_tree *mt,
+                                  GLuint level, GLuint img,
+                                  GLuint x, GLuint y, 
+                                  GLuint offset)
 {
    if (img == 0 && level == 0)
       assert(x == 0 && y == 0);
 
    assert(img < mt->level[level].nr_images);
 
-   mt->level[level].image_offset[img] = (x + y * mt->pitch) * mt->cpp;
+   mt->level[level].image_offset[img] = (x + y * mt->pitch) * mt->cpp + offset;
 
    DBG("%s level %d img %d pos %d,%d image_offset %x\n",
        __FUNCTION__, level, img, x, y, mt->level[level].image_offset[img]);
+}
+
+void
+intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
+			       GLuint level, GLuint img,
+			       GLuint x, GLuint y)
+{
+    intel_miptree_set_image_offset_ex(mt, level, img, x, y, 0);
 }
 
 
@@ -473,11 +487,11 @@ intel_miptree_image_data(struct intel_context *intel,
 			0, 0,                             /* source x, y */
 			dst->level[level].width, height); /* width, height */
 
-      src += src_image_pitch * dst->cpp;
+      src = (char *)src + src_image_pitch * dst->cpp;
    }
 }
 
-extern GLuint intel_compressed_alignment(GLenum);
+extern void intel_get_texture_alignment_unit(GLenum, GLuint *, GLuint *);
 /* Copy mipmap image between trees
  */
 void
@@ -494,20 +508,37 @@ intel_miptree_image_copy(struct intel_context *intel,
    const GLuint *dst_depth_offset = intel_miptree_depth_offsets(dst, level);
    const GLuint *src_depth_offset = intel_miptree_depth_offsets(src, level);
    GLuint i;
+   GLboolean success;
 
    if (dst->compressed) {
-       GLuint alignment = intel_compressed_alignment(dst->internal_format);
+       GLuint align_w, align_h;
+
+       intel_get_texture_alignment_unit(dst->internal_format, &align_w, &align_h);
        height = (height + 3) / 4;
-       width = ((width + alignment - 1) & ~(alignment - 1));
+       width = ALIGN(width, align_w);
    }
 
    for (i = 0; i < depth; i++) {
-      intel_region_copy(intel,
-                        dst->region, dst_offset + dst_depth_offset[i],
-                        0,
-                        0,
-                        src->region, src_offset + src_depth_offset[i],
-                        0, 0, width, height);
-   }
+      success = intel_region_copy(intel,
+				  dst->region, dst_offset + dst_depth_offset[i],
+				  0, 0,
+				  src->region, src_offset + src_depth_offset[i],
+				  0, 0, width, height, GL_COPY);
+      if (!success) {
+	 GLubyte *src_ptr, *dst_ptr;
 
+	 src_ptr = intel_region_map(intel, src->region);
+	 dst_ptr = intel_region_map(intel, dst->region);
+
+	 _mesa_copy_rect(dst_ptr + dst_offset + dst_depth_offset[i],
+			 dst->cpp,
+			 dst->pitch,
+			 0, 0, width, height,
+			 src_ptr + src_offset + src_depth_offset[i],
+			 src->pitch,
+			 0, 0);
+	 intel_region_unmap(intel, src->region);
+	 intel_region_unmap(intel, dst->region);
+      }
+   }
 }

@@ -303,13 +303,13 @@ draw(void)
       glDisable(GL_LIGHTING);
       glShadeModel(GL_SMOOTH);
 
-      glEnable( GL_VERTEX_ARRAY );
-      glEnable( GL_COLOR_ARRAY );
+      glEnableClientState( GL_VERTEX_ARRAY );
+      glEnableClientState( GL_COLOR_ARRAY );
       glVertexPointer( 3, GL_FLOAT, 0, vert );
       glColorPointer( 3, GL_FLOAT, 0, col );
       glDrawArrays( GL_POLYGON, 0, 4 );
-      glDisable( GL_COLOR_ARRAY );
-      glDisable( GL_VERTEX_ARRAY );
+      glDisableClientState( GL_COLOR_ARRAY );
+      glDisableClientState( GL_VERTEX_ARRAY );
 
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
@@ -759,7 +759,7 @@ main(int argc, char *argv[])
    Display *dpy;
    Window win;
    GLXContext ctx;
-   char *dpyName = ":0";
+   char *dpyName = NULL;
    int swap_interval = 1;
    GLboolean do_swap_interval = GL_FALSE;
    GLboolean force_get_rate = GL_FALSE;

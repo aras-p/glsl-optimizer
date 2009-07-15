@@ -87,6 +87,8 @@ handle_table_set_destroy(struct handle_table *ht,
                          void (*destroy)(void *object))
 {
    assert(ht);
+   if (!ht)
+      return;
    ht->destroy = destroy;
 }
 
@@ -155,7 +157,7 @@ handle_table_add(struct handle_table *ht,
    
    assert(ht);
    assert(object);
-   if(!object)
+   if(!object || !ht)
       return 0;
 
    /* linear search for an empty handle */
@@ -193,7 +195,7 @@ handle_table_set(struct handle_table *ht,
    
    assert(ht);
    assert(handle);
-   if(!handle)
+   if(!handle || !ht)
       return 0;
 
    assert(object);
@@ -222,7 +224,7 @@ handle_table_get(struct handle_table *ht,
    
    assert(ht);
    assert(handle);
-   if(!handle || handle > ht->size)
+   if(!handle || !ht || handle > ht->size)
       return NULL;
 
    object = ht->objects[handle - 1];
@@ -240,7 +242,7 @@ handle_table_remove(struct handle_table *ht,
    
    assert(ht);
    assert(handle);
-   if(!handle || handle > ht->size)
+   if(!handle || !ht || handle > ht->size)
       return;
 
    index = handle - 1;
@@ -282,6 +284,9 @@ handle_table_destroy(struct handle_table *ht)
 {
    unsigned index;
    assert(ht);
+
+   if (!ht)
+      return;
 
    if(ht->destroy)
       for(index = 0; index < ht->size; ++index)

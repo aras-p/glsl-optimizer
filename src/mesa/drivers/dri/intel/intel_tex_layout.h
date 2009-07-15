@@ -41,4 +41,4 @@ static GLuint minify( GLuint d )
 extern void i945_miptree_layout_2d(struct intel_context *intel,
 				   struct intel_mipmap_tree *mt,
 				   uint32_t tiling);
-extern GLuint intel_compressed_alignment(GLenum);
+extern void intel_get_texture_alignment_unit(GLenum, GLuint *, GLuint *);

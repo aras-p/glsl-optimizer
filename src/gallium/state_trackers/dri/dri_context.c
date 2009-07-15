@@ -69,7 +69,7 @@ dri_create_context(const __GLcontextModes * visual,
    driParseConfigFiles(&ctx->optionCache,
 		       &screen->optionCache, sPriv->myNum, "dri");
 
-   ctx->pipe = drm_api_hooks.create_context(screen->pipe_screen);
+   ctx->pipe = screen->api->create_context(screen->api, screen->pipe_screen);
 
    if (ctx->pipe == NULL)
       goto fail;

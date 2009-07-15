@@ -3973,6 +3973,13 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
 
    if (program->FogOption)
       program->Base.InputsRead |= FRAG_BIT_FOGC;
+
+   /* XXX: assume that ARB fragment programs don't have access to the
+    * FrontFacing and PointCoord values stuffed into the fog
+    * coordinate in GLSL shaders.
+    */
+   if (program->Base.InputsRead & FRAG_BIT_FOGC)
+      program->UsesFogFragCoord = GL_TRUE;
       
    if (program->Base.Instructions)
       _mesa_free(program->Base.Instructions);

@@ -108,8 +108,8 @@ driCreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 	    tex = ms->screen->texture_create(ms->screen, &template);
 	}
 
-	drm_api_hooks.buffer_from_texture(tex, &buf, &stride);
-	drm_api_hooks.global_handle_from_buffer(ms->screen, buf, &handle);
+	ms->api->buffer_from_texture(ms->api, tex, &buf, &stride);
+	ms->api->global_handle_from_buffer(ms->api, ms->screen, buf, &handle);
 
 	buffers[i].name = handle;
 	buffers[i].attachment = attachments[i];

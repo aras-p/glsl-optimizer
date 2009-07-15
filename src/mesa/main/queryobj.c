@@ -38,7 +38,7 @@
  * \param id - the new object's ID
  * \return pointer to new query_object object or NULL if out of memory.
  */
-struct gl_query_object *
+static struct gl_query_object *
 _mesa_new_query_object(GLcontext *ctx, GLuint id)
 {
    struct gl_query_object *q = MALLOC_STRUCT(gl_query_object);
@@ -57,7 +57,7 @@ _mesa_new_query_object(GLcontext *ctx, GLuint id)
  * Begin a query.  Software driver fallback.
  * Called via ctx->Driver.BeginQuery().
  */
-void
+static void
 _mesa_begin_query(GLcontext *ctx, struct gl_query_object *q)
 {
    /* no-op */
@@ -68,7 +68,7 @@ _mesa_begin_query(GLcontext *ctx, struct gl_query_object *q)
  * End a query.  Software driver fallback.
  * Called via ctx->Driver.EndQuery().
  */
-void
+static void
 _mesa_end_query(GLcontext *ctx, struct gl_query_object *q)
 {
    q->Ready = GL_TRUE;
@@ -79,7 +79,7 @@ _mesa_end_query(GLcontext *ctx, struct gl_query_object *q)
  * Wait for query to complete.  Software driver fallback.
  * Called via ctx->Driver.WaitQuery().
  */
-void
+static void
 _mesa_wait_query(GLcontext *ctx, struct gl_query_object *q)
 {
    /* For software drivers, _mesa_end_query() should have completed the query.
@@ -94,7 +94,7 @@ _mesa_wait_query(GLcontext *ctx, struct gl_query_object *q)
  * Check if a query results are ready.  Software driver fallback.
  * Called via ctx->Driver.CheckQuery().
  */
-void
+static void
 _mesa_check_query(GLcontext *ctx, struct gl_query_object *q)
 {
    /* No-op for sw rendering.
@@ -107,7 +107,7 @@ _mesa_check_query(GLcontext *ctx, struct gl_query_object *q)
  * Delete a query object.  Called via ctx->Driver.DeleteQuery().
  * Not removed from hash table here.
  */
-void
+static void
 _mesa_delete_query(GLcontext *ctx, struct gl_query_object *q)
 {
    _mesa_free(q);
@@ -121,6 +121,18 @@ lookup_query_object(GLcontext *ctx, GLuint id)
       _mesa_HashLookup(ctx->Query.QueryObjects, id);
 }
 
+
+
+void
+_mesa_init_query_object_functions(struct dd_function_table *driver)
+{
+   driver->NewQueryObject = _mesa_new_query_object;
+   driver->DeleteQuery = _mesa_delete_query;
+   driver->BeginQuery = _mesa_begin_query;
+   driver->EndQuery = _mesa_end_query;
+   driver->WaitQuery = _mesa_wait_query;
+   driver->CheckQuery = _mesa_check_query;
+}
 
 
 void GLAPIENTRY

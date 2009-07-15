@@ -30,6 +30,7 @@
 #include "context.h"
 #include "enable.h"
 #include "enums.h"
+#include "hash.h"
 #include "mtypes.h"
 #include "varray.h"
 #include "arrayobj.h"
@@ -38,6 +39,8 @@
 
 /**
  * Set the fields of a vertex array.
+ * Also do an error check for GL_ARB_vertex_array_object: check that
+ * all arrays reside in VBOs when using a vertex array object.
  *
  * \param array  the array to update
  * \param dirtyBit  which bit to set in ctx->Array.NewState for this array
@@ -48,14 +51,26 @@
  * \param stride  stride between elements, in elements
  * \param normalized  are integer types converted to floats in [-1, 1]?
  * \param ptr  the address (or offset inside VBO) of the array data
+ * \return GL_TRUE if no error, GL_FALSE if error
  */
-static void
+static GLboolean
 update_array(GLcontext *ctx, struct gl_client_array *array,
              GLbitfield dirtyBit, GLsizei elementSize,
              GLint size, GLenum type, GLenum format,
              GLsizei stride, GLboolean normalized, const GLvoid *ptr)
 {
    ASSERT(format == GL_RGBA || format == GL_BGRA);
+
+   if (ctx->Array.ArrayObj->VBOonly &&
+       ctx->Array.ArrayBufferObj->Name == 0) {
+      /* GL_ARB_vertex_array_object requires that all arrays reside in VBOs.
+       * Generate GL_INVALID_OPERATION if that's not true.
+       */
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glVertex/Normal/EtcPointer(non-VBO array)");
+      return GL_FALSE;
+   }
+
    array->Size = size;
    array->Type = type;
    array->Format = format;
@@ -70,6 +85,8 @@ update_array(GLcontext *ctx, struct gl_client_array *array,
 
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= dirtyBit;
+
+   return GL_TRUE;
 }
 
 
@@ -122,8 +139,9 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
          return;
    }
 
-   update_array(ctx, &ctx->Array.ArrayObj->Vertex, _NEW_ARRAY_VERTEX,
-                elementSize, size, type, GL_RGBA, stride, GL_FALSE, ptr);
+   if (!update_array(ctx, &ctx->Array.ArrayObj->Vertex, _NEW_ARRAY_VERTEX,
+                     elementSize, size, type, GL_RGBA, stride, GL_FALSE, ptr))
+      return;
 
    if (ctx->Driver.VertexPointer)
       ctx->Driver.VertexPointer( ctx, size, type, stride, ptr );
@@ -172,8 +190,9 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
          return;
    }
 
-   update_array(ctx, &ctx->Array.ArrayObj->Normal, _NEW_ARRAY_NORMAL,
-                elementSize, 3, type, GL_RGBA, stride, GL_TRUE, ptr);
+   if (!update_array(ctx, &ctx->Array.ArrayObj->Normal, _NEW_ARRAY_NORMAL,
+                     elementSize, 3, type, GL_RGBA, stride, GL_TRUE, ptr))
+      return;
 
    if (ctx->Driver.NormalPointer)
       ctx->Driver.NormalPointer( ctx, type, stride, ptr );
@@ -250,8 +269,9 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
          return;
    }
 
-   update_array(ctx, &ctx->Array.ArrayObj->Color, _NEW_ARRAY_COLOR0,
-                elementSize, size, type, format, stride, GL_TRUE, ptr);
+   if (!update_array(ctx, &ctx->Array.ArrayObj->Color, _NEW_ARRAY_COLOR0,
+                     elementSize, size, type, format, stride, GL_TRUE, ptr))
+      return;
 
    if (ctx->Driver.ColorPointer)
       ctx->Driver.ColorPointer( ctx, size, type, stride, ptr );
@@ -282,8 +302,9 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
          return;
    }
 
-   update_array(ctx, &ctx->Array.ArrayObj->FogCoord, _NEW_ARRAY_FOGCOORD,
-                elementSize, 1, type, GL_RGBA, stride, GL_FALSE, ptr);
+   if (!update_array(ctx, &ctx->Array.ArrayObj->FogCoord, _NEW_ARRAY_FOGCOORD,
+                     elementSize, 1, type, GL_RGBA, stride, GL_FALSE, ptr))
+      return;
 
    if (ctx->Driver.FogCoordPointer)
       ctx->Driver.FogCoordPointer( ctx, type, stride, ptr );
@@ -323,8 +344,9 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
          return;
    }
 
-   update_array(ctx, &ctx->Array.ArrayObj->Index, _NEW_ARRAY_INDEX,
-                elementSize, 1, type, GL_RGBA, stride, GL_FALSE, ptr);
+   if (!update_array(ctx, &ctx->Array.ArrayObj->Index, _NEW_ARRAY_INDEX,
+                     elementSize, 1, type, GL_RGBA, stride, GL_FALSE, ptr))
+      return;
 
    if (ctx->Driver.IndexPointer)
       ctx->Driver.IndexPointer( ctx, type, stride, ptr );
@@ -397,8 +419,10 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
          return;
    }
 
-   update_array(ctx, &ctx->Array.ArrayObj->SecondaryColor, _NEW_ARRAY_COLOR1,
-                elementSize, size, type, format, stride, GL_TRUE, ptr);
+   if (!update_array(ctx, &ctx->Array.ArrayObj->SecondaryColor,
+                     _NEW_ARRAY_COLOR1, elementSize, size, type,
+                     format, stride, GL_TRUE, ptr))
+      return;
 
    if (ctx->Driver.SecondaryColorPointer)
       ctx->Driver.SecondaryColorPointer( ctx, size, type, stride, ptr );
@@ -456,9 +480,10 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
          return;
    }
 
-   update_array(ctx, &ctx->Array.ArrayObj->TexCoord[unit],
-                _NEW_ARRAY_TEXCOORD(unit),
-                elementSize, size, type, GL_RGBA, stride, GL_FALSE, ptr);
+   if (!update_array(ctx, &ctx->Array.ArrayObj->TexCoord[unit],
+                     _NEW_ARRAY_TEXCOORD(unit),
+                     elementSize, size, type, GL_RGBA, stride, GL_FALSE, ptr))
+      return;
 
    if (ctx->Driver.TexCoordPointer)
       ctx->Driver.TexCoordPointer( ctx, size, type, stride, ptr );
@@ -476,9 +501,10 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
       return;
    }
 
-   update_array(ctx, &ctx->Array.ArrayObj->EdgeFlag, _NEW_ARRAY_EDGEFLAG,
-                sizeof(GLboolean), 1, GL_UNSIGNED_BYTE, GL_RGBA,
-                stride, GL_FALSE, ptr);
+   if (!update_array(ctx, &ctx->Array.ArrayObj->EdgeFlag, _NEW_ARRAY_EDGEFLAG,
+                     sizeof(GLboolean), 1, GL_UNSIGNED_BYTE, GL_RGBA,
+                     stride, GL_FALSE, ptr))
+      return;
 
    if (ctx->Driver.EdgeFlagPointer)
       ctx->Driver.EdgeFlagPointer( ctx, stride, ptr );
@@ -588,9 +614,10 @@ _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
          return;
    }
 
-   update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
-                _NEW_ARRAY_ATTRIB(index),
-                elementSize, size, type, format, stride, normalized, ptr);
+   if (!update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
+                     _NEW_ARRAY_ATTRIB(index),
+                     elementSize, size, type, format, stride, normalized, ptr))
+      return;
 
    if (ctx->Driver.VertexAttribPointer)
       ctx->Driver.VertexAttribPointer( ctx, index, size, type, stride, ptr );
@@ -687,9 +714,10 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
          return;
    }
 
-   update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
-                _NEW_ARRAY_ATTRIB(index),
-                elementSize, size, type, format, stride, normalized, ptr);
+   if (!update_array(ctx, &ctx->Array.ArrayObj->VertexAttrib[index],
+                     _NEW_ARRAY_ATTRIB(index),
+                     elementSize, size, type, format, stride, normalized, ptr))
+      return;
 
    if (ctx->Driver.VertexAttribPointer)
       ctx->Driver.VertexAttribPointer(ctx, index, size, type, stride, ptr);
@@ -1120,4 +1148,29 @@ _mesa_init_varray(GLcontext *ctx)
    _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj,
                                 ctx->Array.DefaultArrayObj);
    ctx->Array.ActiveTexture = 0;   /* GL_ARB_multitexture */
+
+   ctx->Array.Objects = _mesa_NewHashTable();
+}
+
+
+/**
+ * Callback for deleting an array object.  Called by _mesa_HashDeleteAll().
+ */
+static void
+delete_arrayobj_cb(GLuint id, void *data, void *userData)
+{
+   struct gl_array_object *arrayObj = (struct gl_array_object *) data;
+   GLcontext *ctx = (GLcontext *) userData;
+   _mesa_delete_array_object(ctx, arrayObj);
+}
+
+
+/**
+ * Free vertex array state for given context.
+ */
+void 
+_mesa_free_varray_data(GLcontext *ctx)
+{
+   _mesa_HashDeleteAll(ctx->Array.Objects, delete_arrayobj_cb, ctx);
+   _mesa_DeleteHashTable(ctx->Array.Objects);
 }

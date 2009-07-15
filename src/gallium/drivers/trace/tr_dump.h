@@ -91,7 +91,7 @@ void trace_dump_bool(int value);
 void trace_dump_int(long long int value);
 void trace_dump_uint(long long unsigned value);
 void trace_dump_float(double value);
-void trace_dump_bytes(const void *data, long unsigned size);
+void trace_dump_bytes(const void *data, size_t size);
 void trace_dump_string(const char *str);
 void trace_dump_enum(const char *value);
 void trace_dump_array_begin(void);
@@ -130,7 +130,7 @@ void trace_dump_transfer_ptr(struct pipe_transfer *_transfer);
 
 #define trace_dump_array(_type, _obj, _size) \
    do { \
-      unsigned long idx; \
+      size_t idx; \
       trace_dump_array_begin(); \
       for(idx = 0; idx < (_size); ++idx) { \
          trace_dump_elem_begin(); \
@@ -142,7 +142,7 @@ void trace_dump_transfer_ptr(struct pipe_transfer *_transfer);
 
 #define trace_dump_struct_array(_type, _obj, _size) \
    do { \
-      unsigned long idx; \
+      size_t idx; \
       trace_dump_array_begin(); \
       for(idx = 0; idx < (_size); ++idx) { \
          trace_dump_elem_begin(); \

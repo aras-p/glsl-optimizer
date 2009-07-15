@@ -496,6 +496,8 @@ void brw_emit_unfilled_clip( struct brw_clip_compile *c )
    }
    brw_ENDIF(p, do_clip);
    
+   if (c->need_ff_sync)
+	   brw_clip_ff_sync(c);      
    emit_unfilled_primitives(c);
    brw_clip_kill_thread(c);
 }

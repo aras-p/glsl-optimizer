@@ -82,7 +82,10 @@ static void TAG(render_lines)( GLcontext *ctx,
    INIT(GL_LINES);
    for (j=start+1; j<count; j+=2 ) {
       RESET_STIPPLE;
-      RENDER_LINE( ELT(j-1), ELT(j) );
+      if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT)
+         RENDER_LINE( ELT(j-1), ELT(j) );
+      else
+         RENDER_LINE( ELT(j), ELT(j-1) );
    }
    POSTFIX;
 }
@@ -103,9 +106,12 @@ static void TAG(render_line_strip)( GLcontext *ctx,
       RESET_STIPPLE;
    }
 
-   for (j=start+1; j<count; j++ )
-      RENDER_LINE( ELT(j-1), ELT(j) );
-
+   for (j=start+1; j<count; j++ ) {
+      if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT)
+         RENDER_LINE( ELT(j-1), ELT(j) );
+      else
+         RENDER_LINE( ELT(j), ELT(j-1) );
+   }
    POSTFIX;
 }
 
@@ -125,15 +131,24 @@ static void TAG(render_line_loop)( GLcontext *ctx,
    if (start+1 < count) {
       if (TEST_PRIM_BEGIN(flags)) {
 	 RESET_STIPPLE;
-	 RENDER_LINE( ELT(start), ELT(start+1) );
+         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT)
+            RENDER_LINE( ELT(start), ELT(start+1) );
+         else
+            RENDER_LINE( ELT(start+1), ELT(start) );
       }
 
       for ( i = start+2 ; i < count ; i++) {
-	 RENDER_LINE( ELT(i-1), ELT(i) );
+         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT)
+            RENDER_LINE( ELT(i-1), ELT(i) );
+         else
+            RENDER_LINE( ELT(i), ELT(i-1) );
       }
 
       if ( TEST_PRIM_END(flags)) {
-	 RENDER_LINE( ELT(count-1), ELT(start) );
+         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT)
+            RENDER_LINE( ELT(count-1), ELT(start) );
+         else
+            RENDER_LINE( ELT(start), ELT(count-1) );
       }
    }
 
@@ -156,11 +171,17 @@ static void TAG(render_triangles)( GLcontext *ctx,
 	 /* Leave the edgeflags as supplied by the user.
 	  */
 	 RESET_STIPPLE;
-	 RENDER_TRI( ELT(j-2), ELT(j-1), ELT(j) );
+         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT)
+            RENDER_TRI( ELT(j-2), ELT(j-1), ELT(j) );
+         else
+            RENDER_TRI( ELT(j-1), ELT(j), ELT(j-2) );
       }
    } else {
       for (j=start+2; j<count; j+=3) {
-	 RENDER_TRI( ELT(j-2), ELT(j-1), ELT(j) );
+         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT)
+            RENDER_TRI( ELT(j-2), ELT(j-1), ELT(j) );
+         else
+            RENDER_TRI( ELT(j-1), ELT(j), ELT(j-2) );
       }
    }
    POSTFIX;
@@ -180,26 +201,38 @@ static void TAG(render_tri_strip)( GLcontext *ctx,
    INIT(GL_TRIANGLE_STRIP);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+2;j<count;j++,parity^=1) {
-	 GLuint ej2 = ELT(j-2+parity);
-	 GLuint ej1 = ELT(j-1-parity);
-	 GLuint ej = ELT(j);
-	 GLboolean ef2 = EDGEFLAG_GET( ej2 );
-	 GLboolean ef1 = EDGEFLAG_GET( ej1 );
-	 GLboolean ef = EDGEFLAG_GET( ej );
+         GLuint ej2, ej1, ej;
+         GLboolean ef2, ef1, ef;
+         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT) {
+            ej2 = ELT(j-2+parity);
+            ej1 = ELT(j-1-parity);
+            ej = ELT(j);
+         }
+         else {
+            ej2 = ELT(j-1+parity);
+            ej1 = ELT(j-parity);
+            ej = ELT(j-2);
+         }
+	 ef2 = EDGEFLAG_GET( ej2 );
+	 ef1 = EDGEFLAG_GET( ej1 );
+	 ef = EDGEFLAG_GET( ej );
 	 if (TEST_PRIM_BEGIN(flags)) {
 	    RESET_STIPPLE;
 	 }
 	 EDGEFLAG_SET( ej2, GL_TRUE );
 	 EDGEFLAG_SET( ej1, GL_TRUE );
 	 EDGEFLAG_SET( ej, GL_TRUE );
-	 RENDER_TRI( ej2, ej1, ej );
+         RENDER_TRI( ej2, ej1, ej );
 	 EDGEFLAG_SET( ej2, ef2 );
 	 EDGEFLAG_SET( ej1, ef1 );
 	 EDGEFLAG_SET( ej, ef );
       }
    } else {
       for (j=start+2; j<count ; j++, parity^=1) {
-	 RENDER_TRI( ELT(j-2+parity), ELT(j-1-parity), ELT(j) );
+         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT)
+            RENDER_TRI( ELT(j-2+parity), ELT(j-1-parity), ELT(j) );
+         else
+            RENDER_TRI( ELT(j-1+parity), ELT(j-parity), ELT(j-2) );
       }
    }
    POSTFIX;
@@ -232,14 +265,20 @@ static void TAG(render_tri_fan)( GLcontext *ctx,
 	 EDGEFLAG_SET( ejs, GL_TRUE );
 	 EDGEFLAG_SET( ej1, GL_TRUE );
 	 EDGEFLAG_SET( ej, GL_TRUE );
-	 RENDER_TRI( ejs, ej1, ej);
+         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT)
+            RENDER_TRI( ejs, ej1, ej);
+         else
+            RENDER_TRI( ej, ejs, ej1);
 	 EDGEFLAG_SET( ejs, efs );
 	 EDGEFLAG_SET( ej1, ef1 );
 	 EDGEFLAG_SET( ej, ef );
       }
    } else {
       for (j=start+2;j<count;j++) {
-	 RENDER_TRI( ELT(start), ELT(j-1), ELT(j) );
+         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT)
+            RENDER_TRI( ELT(start), ELT(j-1), ELT(j) );
+         else
+            RENDER_TRI( ELT(j), ELT(start), ELT(j-1) );
       }
    }
 
@@ -331,11 +370,19 @@ static void TAG(render_quads)( GLcontext *ctx,
 	 /* Use user-specified edgeflags for quads.
 	  */
 	 RESET_STIPPLE;
-	 RENDER_QUAD( ELT(j-3), ELT(j-2), ELT(j-1), ELT(j) );
+         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT ||
+             !ctx->Const.QuadsFollowProvokingVertexConvention)
+            RENDER_QUAD( ELT(j-3), ELT(j-2), ELT(j-1), ELT(j) );
+         else
+            RENDER_QUAD( ELT(j-2), ELT(j-1), ELT(j), ELT(j-3) );
       }
    } else {
       for (j=start+3; j<count; j+=4) {
-	 RENDER_QUAD( ELT(j-3), ELT(j-2), ELT(j-1), ELT(j) );
+         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT ||
+             !ctx->Const.QuadsFollowProvokingVertexConvention)
+            RENDER_QUAD( ELT(j-3), ELT(j-2), ELT(j-1), ELT(j) );
+         else
+            RENDER_QUAD( ELT(j-2), ELT(j-1), ELT(j), ELT(j-3) );
       }
    }
    POSTFIX;
@@ -367,7 +414,11 @@ static void TAG(render_quad_strip)( GLcontext *ctx,
 	 EDGEFLAG_SET( ELT(j-2), GL_TRUE );
 	 EDGEFLAG_SET( ELT(j-1), GL_TRUE );
 	 EDGEFLAG_SET( ELT(j), GL_TRUE );
-	 RENDER_QUAD( ELT(j-1), ELT(j-3), ELT(j-2), ELT(j) );
+         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT ||
+             !ctx->Const.QuadsFollowProvokingVertexConvention)
+            RENDER_QUAD( ELT(j-1), ELT(j-3), ELT(j-2), ELT(j) );
+         else
+            RENDER_QUAD( ELT(j-2), ELT(j), ELT(j-1), ELT(j-3) );
 	 EDGEFLAG_SET( ELT(j-3), ef3 );
 	 EDGEFLAG_SET( ELT(j-2), ef2 );
 	 EDGEFLAG_SET( ELT(j-1), ef1 );
@@ -375,7 +426,11 @@ static void TAG(render_quad_strip)( GLcontext *ctx,
       }
    } else {
       for (j=start+3;j<count;j+=2) {
-	 RENDER_QUAD( ELT(j-1), ELT(j-3), ELT(j-2), ELT(j) );
+         if (ctx->Light.ProvokingVertex == GL_LAST_VERTEX_CONVENTION_EXT ||
+             !ctx->Const.QuadsFollowProvokingVertexConvention)
+            RENDER_QUAD( ELT(j-1), ELT(j-3), ELT(j-2), ELT(j) );
+         else
+            RENDER_QUAD( ELT(j-2), ELT(j), ELT(j-1), ELT(j-3) );
       }
    }
    POSTFIX;

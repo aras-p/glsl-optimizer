@@ -190,6 +190,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	ctx = radeon->glCtx;
 	driContextPriv->driverPrivate = radeon;
 
+	meta_init_metaops(ctx, &radeon->meta);
 	/* DRI fields */
 	radeon->dri.context = driContextPriv;
 	radeon->dri.screen = sPriv;
@@ -286,7 +287,7 @@ void radeonDestroyContext(__DRIcontextPrivate *driContextPriv )
 		}
 
 		radeonReleaseArrays(radeon->glCtx, ~0);
-
+		meta_destroy_metaops(&radeon->meta);
 		if (radeon->vtbl.free_context)
 			radeon->vtbl.free_context(radeon->glCtx);
 		_swsetup_DestroyContext( radeon->glCtx );
@@ -596,8 +597,10 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 		struct radeon_renderbuffer *stencil_rb;
 
 		i = 0;
-		if ((radeon->is_front_buffer_rendering || !draw->color_rb[1])
-			&& draw->color_rb[0]) {
+		if ((radeon->is_front_buffer_rendering ||
+		     radeon->is_front_buffer_reading ||
+		     !draw->color_rb[1])
+		    && draw->color_rb[0]) {
 			attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
 			attachments[i++] = radeon_bits_per_pixel(draw->color_rb[0]);
 		}
@@ -715,8 +718,8 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 
 		rb->cpp = buffers[i].cpp;
 		rb->pitch = buffers[i].pitch;
-		rb->width = drawable->w;
-		rb->height = drawable->h;
+		rb->base.Width = drawable->w;
+		rb->base.Height = drawable->h;
 		rb->has_surface = 0;
 
 		if (buffers[i].attachment == __DRI_BUFFER_STENCIL && depth_bo) {

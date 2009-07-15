@@ -27,6 +27,8 @@
 
 #include "util/u_debug.h"
 #include "util/u_string.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "tgsi_dump.h"
 #include "tgsi_info.h"
 #include "tgsi_iterate.h"
@@ -107,7 +109,8 @@ static const char *semantic_names[] =
    "FOG",
    "PSIZE",
    "GENERIC",
-   "NORMAL"
+   "NORMAL",
+   "FACE"
 };
 
 static const char *immediate_type_names[] =
@@ -222,6 +225,9 @@ iter_declaration(
    struct tgsi_full_declaration *decl )
 {
    struct dump_ctx *ctx = (struct dump_ctx *)iter;
+
+   assert(Elements(semantic_names) == TGSI_SEMANTIC_COUNT);
+   assert(Elements(interpolate_names) == TGSI_INTERPOLATE_COUNT);
 
    TXT( "DCL " );
 
@@ -354,11 +360,22 @@ iter_instruction(
          CHR( ',' );
       CHR( ' ' );
 
-      _dump_register(
-         ctx,
-         dst->DstRegister.File,
-         dst->DstRegister.Index,
-         dst->DstRegister.Index );
+      if (dst->DstRegister.Indirect) {
+         _dump_register_ind(
+            ctx,
+            dst->DstRegister.File,
+            dst->DstRegister.Index,
+            dst->DstRegisterInd.File,
+            dst->DstRegisterInd.Index,
+            dst->DstRegisterInd.SwizzleX );
+      }
+      else {
+         _dump_register(
+            ctx,
+            dst->DstRegister.File,
+            dst->DstRegister.Index,
+            dst->DstRegister.Index );
+      }
       ENM( dst->DstRegisterExtModulate.Modulate, modulate_names );
       _dump_writemask( ctx, dst->DstRegister.WriteMask );
 
@@ -516,7 +533,7 @@ struct str_dump_ctx
    struct dump_ctx base;
    char *str;
    char *ptr;
-   size_t left;
+   int left;
 };
 
 static void
@@ -525,13 +542,20 @@ str_dump_ctx_printf(struct dump_ctx *ctx, const char *format, ...)
    struct str_dump_ctx *sctx = (struct str_dump_ctx *)ctx;
    
    if(sctx->left > 1) {
-      size_t written;
+      int written;
       va_list ap;
       va_start(ap, format);
       written = util_vsnprintf(sctx->ptr, sctx->left, format, ap);
       va_end(ap);
-      sctx->ptr += written;
-      sctx->left -= written;
+
+      /* Some complicated logic needed to handle the return value of
+       * vsnprintf:
+       */
+      if (written > 0) {
+         written = MIN2(sctx->left, written);
+         sctx->ptr += written;
+         sctx->left -= written;
+      }
    }
 }
 
@@ -556,7 +580,7 @@ tgsi_dump_str(
    ctx.str = str;
    ctx.str[0] = 0;
    ctx.ptr = str;
-   ctx.left = size;
+   ctx.left = (int)size;
 
    tgsi_iterate_shader( tokens, &ctx.base.iter );
 }

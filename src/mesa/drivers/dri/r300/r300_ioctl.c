@@ -68,11 +68,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static void r300EmitClearState(GLcontext * ctx);
 
-static void r300UserClear(GLcontext *ctx, GLuint mask)
-{
-	radeon_clear_tris(ctx, mask);
-}
-
 static void r300ClearBuffer(r300ContextPtr r300, int flags,
 			    struct radeon_renderbuffer *rrb,
 			    struct radeon_renderbuffer *rrbd)
@@ -540,19 +535,50 @@ static void r300EmitClearState(GLcontext * ctx)
 	}
 }
 
-static void r300KernelClear(GLcontext *ctx, GLuint flags)
+static int r300KernelClear(GLcontext *ctx, GLuint flags)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&r300->radeon);
 	struct radeon_framebuffer *rfb = dPriv->driverPrivate;
 	struct radeon_renderbuffer *rrb;
 	struct radeon_renderbuffer *rrbd;
-	int bits = 0;
+	int bits = 0, ret;
 
 	/* Make sure it fits there. */
+	radeon_cs_space_reset_bos(r300->radeon.cmdbuf.cs);
+	
+	if (flags & BUFFER_BIT_COLOR0) {
+		rrb = radeon_get_renderbuffer(&rfb->base, BUFFER_COLOR0);
+		radeon_cs_space_add_persistent_bo(r300->radeon.cmdbuf.cs,
+						  rrb->bo, 0, RADEON_GEM_DOMAIN_VRAM);
+	}
+
+	if (flags & BUFFER_BIT_FRONT_LEFT) {
+		rrb = radeon_get_renderbuffer(&rfb->base, BUFFER_FRONT_LEFT);
+		radeon_cs_space_add_persistent_bo(r300->radeon.cmdbuf.cs,
+						  rrb->bo, 0, RADEON_GEM_DOMAIN_VRAM);
+	}
+
+	if (flags & BUFFER_BIT_BACK_LEFT) {
+		rrb = radeon_get_renderbuffer(&rfb->base, BUFFER_BACK_LEFT);
+		radeon_cs_space_add_persistent_bo(r300->radeon.cmdbuf.cs,
+						  rrb->bo, 0, RADEON_GEM_DOMAIN_VRAM);
+	}
+
+	rrbd = radeon_get_renderbuffer(&rfb->base, BUFFER_DEPTH);
+	if (rrbd) {
+		radeon_cs_space_add_persistent_bo(r300->radeon.cmdbuf.cs,
+						  rrbd->bo, 0, RADEON_GEM_DOMAIN_VRAM);
+	}
+
+	ret = radeon_cs_space_check(r300->radeon.cmdbuf.cs);
+	if (ret)
+	  return -1;
+
 	rcommonEnsureCmdBufSpace(&r300->radeon, 421 * 3, __FUNCTION__);
 	if (flags || bits)
 		r300EmitClearState(ctx);
+
 	rrbd = radeon_get_renderbuffer(&rfb->base, BUFFER_DEPTH);
 	if (rrbd && (flags & BUFFER_BIT_DEPTH))
 		bits |= CLEARBUFFER_DEPTH;
@@ -582,6 +608,7 @@ static void r300KernelClear(GLcontext *ctx, GLuint flags)
 		r300ClearBuffer(r300, bits, NULL, rrbd);
 
 	COMMIT_BATCH();
+	return 0;
 }
 
 /**
@@ -593,7 +620,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&r300->radeon);
 	const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask);
 	GLbitfield swrast_mask = 0, tri_mask = 0;
-	int i;
+	int i, ret;
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 
 	if (RADEON_DEBUG & DEBUG_IOCTL)
@@ -614,6 +641,8 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 
 	if (colorMask == ~0)
 	  tri_mask |= (mask & BUFFER_BITS_COLOR);
+	else
+	  tri_mask |= (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT));
 
 
 	/* HW stencil */
@@ -643,12 +672,18 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 	/* SW fallback clearing */
 	swrast_mask = mask & ~tri_mask;
 
+	ret = 0;
 	if (tri_mask) {
 		if (r300->radeon.radeonScreen->kernel_mm)
-			r300UserClear(ctx, tri_mask);
-		else
-			r300KernelClear(ctx, tri_mask);
+			radeonUserClear(ctx, tri_mask);
+		else {
+			/* if kernel clear fails due to size restraints fallback */
+			ret = r300KernelClear(ctx, tri_mask);
+			if (ret < 0)
+				swrast_mask |= tri_mask;
+		}
 	}
+
 	if (swrast_mask) {
 		if (RADEON_DEBUG & DEBUG_FALLBACKS)
 			fprintf(stderr, "%s: swrast clear, mask: %x\n",

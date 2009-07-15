@@ -75,6 +75,16 @@ compute_max_element(struct gl_client_array *array)
 {
    assert(array->Enabled);
    if (array->BufferObj->Name) {
+      GLsizeiptrARB offset = (GLsizeiptrARB) array->Ptr;
+      GLsizeiptrARB obj_size = (GLsizeiptrARB) array->BufferObj->Size;
+
+      if (offset < obj_size) {
+	 array->_MaxElement = (obj_size - offset +
+			       array->StrideB -
+			       array->_ElementSize) / array->StrideB;
+      } else {
+	 array->_MaxElement = 0;
+      }
       /* Compute the max element we can access in the VBO without going
        * out of bounds.
        */
@@ -537,7 +547,7 @@ _mesa_update_state_locked( GLcontext *ctx )
    /* Determine which state flags effect vertex/fragment program state */
    if (ctx->FragmentProgram._MaintainTexEnvProgram) {
       prog_flags |= (_NEW_TEXTURE | _NEW_FOG | _DD_NEW_SEPARATE_SPECULAR |
-		     _NEW_ARRAY);
+		     _NEW_ARRAY | _NEW_LIGHT | _NEW_POINT | _NEW_RENDERMODE);
    }
    if (ctx->VertexProgram._MaintainTnlProgram) {
       prog_flags |= (_NEW_ARRAY | _NEW_TEXTURE | _NEW_TEXTURE_MATRIX |

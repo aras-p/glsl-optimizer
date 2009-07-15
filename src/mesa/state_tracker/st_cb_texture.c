@@ -335,7 +335,9 @@ guess_and_alloc_texture(struct st_context *st,
     * pagetable arrangements.
     */
    if ((stObj->base.MinFilter == GL_NEAREST ||
-        stObj->base.MinFilter == GL_LINEAR) &&
+        stObj->base.MinFilter == GL_LINEAR ||
+        stImage->base._BaseFormat == GL_DEPTH_COMPONENT ||
+        stImage->base._BaseFormat == GL_DEPTH_STENCIL_EXT) &&
        stImage->level == firstLevel) {
       lastLevel = firstLevel;
    }
@@ -527,6 +529,7 @@ st_TexImage(GLcontext * ctx,
    GLint texelBytes, sizeInBytes;
    GLuint dstRowStride;
    struct gl_pixelstore_attrib unpackNB;
+   enum pipe_transfer_usage transfer_usage;
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
@@ -678,8 +681,14 @@ st_TexImage(GLcontext * ctx,
    }
 
    if (stImage->pt) {
+      if (format == GL_DEPTH_COMPONENT &&
+          pf_is_depth_and_stencil(stImage->pt->format))
+         transfer_usage = PIPE_TRANSFER_READ_WRITE;
+      else
+         transfer_usage = PIPE_TRANSFER_WRITE;
+
       texImage->Data = st_texture_image_map(ctx->st, stImage, 0,
-                                            PIPE_TRANSFER_WRITE, 0, 0,
+                                            transfer_usage, 0, 0,
                                             stImage->base.Width,
                                             stImage->base.Height);
       if(stImage->transfer)
@@ -740,7 +749,7 @@ st_TexImage(GLcontext * ctx,
 	    st_texture_image_unmap(ctx->st, stImage);
             /* map next slice of 3D texture */
 	    texImage->Data = st_texture_image_map(ctx->st, stImage, i + 1,
-                                                  PIPE_TRANSFER_WRITE, 0, 0,
+                                                  transfer_usage, 0, 0,
                                                   stImage->base.Width,
                                                   stImage->base.Height);
 	    src += srcImageStride;
@@ -1039,6 +1048,7 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
       _mesa_image_image_stride(packing, width, height, format, type);
    GLint i;
    const GLubyte *src;
+   enum pipe_transfer_usage transfer_usage;
 
    DBG("%s target %s level %d offset %d,%d %dx%d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
@@ -1070,10 +1080,16 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
     * from uploading the buffer under us.
     */
    if (stImage->pt) {
+      if (format == GL_DEPTH_COMPONENT &&
+          pf_is_depth_and_stencil(stImage->pt->format))
+         transfer_usage = PIPE_TRANSFER_READ_WRITE;
+      else
+         transfer_usage = PIPE_TRANSFER_WRITE;
+
       st_teximage_flush_before_map(ctx->st, stImage->pt, 0, level,
-				   PIPE_TRANSFER_WRITE);
+				   transfer_usage);
       texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset, 
-                                            PIPE_TRANSFER_WRITE,
+                                            transfer_usage,
                                             xoffset, yoffset,
                                             width, height);
    }
@@ -1104,7 +1120,7 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
          /* map next slice of 3D texture */
 	 texImage->Data = st_texture_image_map(ctx->st, stImage,
                                                zoffset + i + 1,
-                                               PIPE_TRANSFER_WRITE,
+                                               transfer_usage,
                                                xoffset, yoffset,
                                                width, height);
 	 src += srcImageStride;
@@ -1169,6 +1185,88 @@ st_TexSubImage1D(GLcontext *ctx, GLenum target, GLint level,
 }
 
 
+static void
+st_CompressedTexSubImage1D(GLcontext *ctx, GLenum target, GLint level,
+                           GLint xoffset, GLsizei width,
+                           GLenum format,
+                           GLsizei imageSize, const GLvoid *data,
+                           struct gl_texture_object *texObj,
+                           struct gl_texture_image *texImage)
+{
+   assert(0);
+}
+
+
+static void
+st_CompressedTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
+                           GLint xoffset, GLint yoffset,
+                           GLsizei width, GLint height,
+                           GLenum format,
+                           GLsizei imageSize, const GLvoid *data,
+                           struct gl_texture_object *texObj,
+                           struct gl_texture_image *texImage)
+{
+   struct st_texture_image *stImage = st_texture_image(texImage);
+   struct pipe_format_block block;
+   int srcBlockStride;
+   int dstBlockStride;
+   int y;
+
+   if (stImage->pt) {
+      st_teximage_flush_before_map(ctx->st, stImage->pt, 0, level,
+				   PIPE_TRANSFER_WRITE);
+      texImage->Data = st_texture_image_map(ctx->st, stImage, 0, 
+                                            PIPE_TRANSFER_WRITE,
+                                            xoffset, yoffset,
+                                            width, height);
+      
+      block = stImage->pt->block;
+      srcBlockStride = pf_get_stride(&block, width);
+      dstBlockStride = stImage->transfer->stride;
+   } else {
+      assert(stImage->pt);
+      /* TODO find good values for block and strides */
+      /* TODO also adjust texImage->data for yoffset/xoffset */
+      return;
+   }
+
+   if (!texImage->Data) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage");
+      return;
+   }
+
+   assert(xoffset % block.width == 0);
+   assert(yoffset % block.height == 0);
+   assert(width % block.width == 0);
+   assert(height % block.height == 0);
+
+   for (y = 0; y < height; y += block.height) {
+      /* don't need to adjust for xoffset and yoffset as st_texture_image_map does that */
+      const char *src = (const char*)data + srcBlockStride * pf_get_nblocksy(&block, y);
+      char *dst = (char*)texImage->Data + dstBlockStride * pf_get_nblocksy(&block, y);
+      memcpy(dst, src, pf_get_stride(&block, width));
+   }
+
+   if (stImage->pt) {
+      st_texture_image_unmap(ctx->st, stImage);
+      texImage->Data = NULL;
+   }
+}
+
+
+static void
+st_CompressedTexSubImage3D(GLcontext *ctx, GLenum target, GLint level,
+                           GLint xoffset, GLint yoffset, GLint zoffset,
+                           GLsizei width, GLint height, GLint depth,
+                           GLenum format,
+                           GLsizei imageSize, const GLvoid *data,
+                           struct gl_texture_object *texObj,
+                           struct gl_texture_image *texImage)
+{
+   assert(0);
+}
+
+
 
 /**
  * Do a CopyTexSubImage operation using a read transfer from the source,
@@ -1190,6 +1288,7 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
    struct pipe_screen *screen = pipe->screen;
    struct pipe_transfer *src_trans;
    GLvoid *texDest;
+   enum pipe_transfer_usage transfer_usage;
 
    assert(width <= MAX_WIDTH);
 
@@ -1204,10 +1303,16 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
 					       srcX, srcY,
 					       width, height);
 
-   st_teximage_flush_before_map(ctx->st, stImage->pt, 0, 0,
-				PIPE_TRANSFER_WRITE);
+   if (baseFormat == GL_DEPTH_COMPONENT &&
+       pf_is_depth_and_stencil(stImage->pt->format))
+      transfer_usage = PIPE_TRANSFER_READ_WRITE;
+   else
+      transfer_usage = PIPE_TRANSFER_WRITE;
 
-   texDest = st_texture_image_map(ctx->st, stImage, 0, PIPE_TRANSFER_WRITE,
+   st_teximage_flush_before_map(ctx->st, stImage->pt, 0, 0,
+				transfer_usage);
+
+   texDest = st_texture_image_map(ctx->st, stImage, 0, transfer_usage,
                                   destX, destY, width, height);
 
    if (baseFormat == GL_DEPTH_COMPONENT ||
@@ -1818,6 +1923,9 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->TexSubImage1D = st_TexSubImage1D;
    functions->TexSubImage2D = st_TexSubImage2D;
    functions->TexSubImage3D = st_TexSubImage3D;
+   functions->CompressedTexSubImage1D = st_CompressedTexSubImage1D;
+   functions->CompressedTexSubImage2D = st_CompressedTexSubImage2D;
+   functions->CompressedTexSubImage3D = st_CompressedTexSubImage3D;
    functions->CopyTexImage1D = st_CopyTexImage1D;
    functions->CopyTexImage2D = st_CopyTexImage2D;
    functions->CopyTexSubImage1D = st_CopyTexSubImage1D;

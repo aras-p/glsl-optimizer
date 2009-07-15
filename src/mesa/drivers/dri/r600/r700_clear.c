@@ -44,11 +44,6 @@ static GLboolean r700ClearFast(context_t *context, GLbitfield mask)
     return GL_FALSE;
 }
 
-static void r700UserClear(GLcontext *ctx, GLuint mask)
-{
-	radeon_clear_tris(ctx, mask);
-}
-
 #define R600_NEWPRIM( rmesa )			\
   do {						\
   if ( rmesa->radeon.dma.flush )			\
@@ -80,6 +75,8 @@ void r700Clear(GLcontext * ctx, GLbitfield mask)
 
 	if (colorMask == ~0)
 	  tri_mask |= (mask & BUFFER_BITS_COLOR);
+	else
+	  tri_mask |= (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT));
 
 
 	/* HW stencil */
@@ -109,8 +106,10 @@ void r700Clear(GLcontext * ctx, GLbitfield mask)
 	/* SW fallback clearing */
 	swrast_mask = mask & ~tri_mask;
 
-	if (tri_mask)
-		r700UserClear(ctx, tri_mask);
+	if (tri_mask) {
+		radeonUserClear(ctx, tri_mask);
+	}
+
 	if (swrast_mask) {
 		if (RADEON_DEBUG & DEBUG_FALLBACKS)
 			fprintf(stderr, "%s: swrast clear, mask: %x\n",

@@ -40,22 +40,14 @@ struct st_buffer_object
 {
    struct gl_buffer_object Base;
    struct pipe_buffer *buffer;  
-   GLsizeiptrARB size;
 };
 
 
-/* Are the obj->Name tests necessary?  Unfortunately yes, mesa
- * allocates a couple of gl_buffer_object structs statically, and the
- * Name == 0 test is the only way to identify them and avoid casting
- * them erroneously to our structs.
- */
+/** cast wrapper */
 static INLINE struct st_buffer_object *
 st_buffer_object(struct gl_buffer_object *obj)
 {
-   if (obj->Name)
-      return (struct st_buffer_object *) obj;
-   else
-      return NULL;
+   return (struct st_buffer_object *) obj;
 }
 
 

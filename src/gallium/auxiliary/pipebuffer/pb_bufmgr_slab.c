@@ -68,7 +68,7 @@ struct pb_slab_buffer
    unsigned mapCount;
    
    /** Offset relative to the start of the slab buffer. */
-   size_t start;
+   pb_size start;
    
    /** Use when validating, to signal that all mappings are finished */
    /* TODO: Actually validation does not reach this stage yet */
@@ -83,8 +83,8 @@ struct pb_slab
 {
    struct list_head head;
    struct list_head freeBuffers;
-   size_t numBuffers;
-   size_t numFree;
+   pb_size numBuffers;
+   pb_size numFree;
    
    struct pb_slab_buffer *buffers;
    struct pb_slab_manager *mgr;
@@ -108,10 +108,10 @@ struct pb_slab_manager
    struct pb_manager *provider;
    
    /** Size of the buffers we hand on downstream */
-   size_t bufSize;
+   pb_size bufSize;
    
    /** Size of the buffers we request upstream */
-   size_t slabSize;
+   pb_size slabSize;
    
    /** 
     * Alignment, usage to be used to allocate the slab buffers.
@@ -150,14 +150,14 @@ struct pb_slab_range_manager
 
    struct pb_manager *provider;
    
-   size_t minBufSize;
-   size_t maxBufSize;
+   pb_size minBufSize;
+   pb_size maxBufSize;
    
    /** @sa pb_slab_manager::desc */ 
    struct pb_desc desc;
    
    unsigned numBuckets;
-   size_t *bucketSizes;
+   pb_size *bucketSizes;
    
    /** Array of pb_slab_manager, one for each bucket size */
    struct pb_manager **buckets;
@@ -270,7 +270,7 @@ pb_slab_buffer_fence(struct pb_buffer *_buf,
 static void
 pb_slab_buffer_get_base_buffer(struct pb_buffer *_buf,
                                struct pb_buffer **base_buf,
-                               unsigned *offset)
+                               pb_size *offset)
 {
    struct pb_slab_buffer *buf = pb_slab_buffer(_buf);
    pb_get_base_buffer(buf->slab->bo, base_buf, offset);
@@ -369,7 +369,7 @@ out_err0:
 
 static struct pb_buffer *
 pb_slab_manager_create_buffer(struct pb_manager *_mgr,
-                              size_t size,
+                              pb_size size,
                               const struct pb_desc *desc)
 {
    struct pb_slab_manager *mgr = pb_slab_manager(_mgr);
@@ -450,8 +450,8 @@ pb_slab_manager_destroy(struct pb_manager *_mgr)
 
 struct pb_manager *
 pb_slab_manager_create(struct pb_manager *provider,
-                       size_t bufSize,
-                       size_t slabSize,
+                       pb_size bufSize,
+                       pb_size slabSize,
                        const struct pb_desc *desc)
 {
    struct pb_slab_manager *mgr;
@@ -479,11 +479,11 @@ pb_slab_manager_create(struct pb_manager *provider,
 
 static struct pb_buffer *
 pb_slab_range_manager_create_buffer(struct pb_manager *_mgr,
-                                    size_t size,
+                                    pb_size size,
                                     const struct pb_desc *desc)
 {
    struct pb_slab_range_manager *mgr = pb_slab_range_manager(_mgr);
-   size_t bufSize;
+   pb_size bufSize;
    unsigned i;
 
    bufSize = mgr->minBufSize;
@@ -527,13 +527,13 @@ pb_slab_range_manager_destroy(struct pb_manager *_mgr)
 
 struct pb_manager *
 pb_slab_range_manager_create(struct pb_manager *provider,
-                             size_t minBufSize,
-                             size_t maxBufSize,
-                             size_t slabSize,
+                             pb_size minBufSize,
+                             pb_size maxBufSize,
+                             pb_size slabSize,
                              const struct pb_desc *desc)
 {
    struct pb_slab_range_manager *mgr;
-   size_t bufSize;
+   pb_size bufSize;
    unsigned i;
 
    if(!provider)

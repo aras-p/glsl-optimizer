@@ -51,7 +51,7 @@ vbo_exec_debug_verts( struct vbo_exec_context *exec )
       struct _mesa_prim *prim = &exec->vtx.prim[i];
       _mesa_printf("   prim %d: %s%s %d..%d %s %s\n",
 		   i, 
-		   _mesa_lookup_enum_by_nr(prim->mode),
+		   _mesa_lookup_prim_by_nr(prim->mode),
 		   prim->weak ? " (weak)" : "",
 		   prim->start, 
 		   prim->start + prim->count,
@@ -282,9 +282,14 @@ void
 vbo_exec_vtx_map( struct vbo_exec_context *exec )
 {
    GLcontext *ctx = exec->ctx;
-   GLenum target = GL_ARRAY_BUFFER_ARB;
-   GLenum access = GL_READ_WRITE_ARB;
-   GLenum usage = GL_STREAM_DRAW_ARB;
+   const GLenum target = GL_ARRAY_BUFFER_ARB;
+   const GLenum access = GL_READ_WRITE_ARB; /* for MapBuffer */
+   const GLenum accessRange = GL_MAP_WRITE_BIT |  /* for MapBufferRange */
+                              GL_MAP_INVALIDATE_RANGE_BIT |
+                              GL_MAP_UNSYNCHRONIZED_BIT |
+                              GL_MAP_FLUSH_EXPLICIT_BIT |
+                              MESA_MAP_NOWAIT_BIT;
+   const GLenum usage = GL_STREAM_DRAW_ARB;
    
    if (exec->vtx.bufferobj->Name == 0)
       return;
@@ -303,10 +308,7 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
                                                exec->vtx.buffer_used,
                                                (VBO_VERT_BUFFER_SIZE - 
                                                 exec->vtx.buffer_used),
-                                               (GL_MAP_WRITE_BIT |
-                                                GL_MAP_INVALIDATE_RANGE_BIT | 
-                                                GL_MAP_UNSYNCHRONIZED_BIT | 
-                                                MESA_MAP_NOWAIT_BIT),
+                                               accessRange,
                                                exec->vtx.bufferobj);
       exec->vtx.buffer_ptr = exec->vtx.buffer_map;
    }
@@ -318,8 +320,17 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
                              VBO_VERT_BUFFER_SIZE, 
                              NULL, usage, exec->vtx.bufferobj);
 
-      exec->vtx.buffer_map = (GLfloat *)
-         ctx->Driver.MapBuffer(ctx, target, access, exec->vtx.bufferobj);
+
+      if (ctx->Driver.MapBufferRange)
+         exec->vtx.buffer_map = 
+            (GLfloat *)ctx->Driver.MapBufferRange(ctx, target,
+                                                  0, VBO_VERT_BUFFER_SIZE,
+                                                  accessRange,
+                                                  exec->vtx.bufferobj);
+      if (!exec->vtx.buffer_map)
+         exec->vtx.buffer_map =
+            (GLfloat *)ctx->Driver.MapBuffer(ctx, target, access, exec->vtx.bufferobj);
+      assert(exec->vtx.buffer_map);
       exec->vtx.buffer_ptr = exec->vtx.buffer_map;
    }
 

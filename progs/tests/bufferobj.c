@@ -1,5 +1,6 @@
 /*
  * Test GL_ARB_vertex_buffer_object
+ * Also test GL_ARB_vertex_array_object if supported
  *
  * Brian Paul
  * 16 Sep 2003
@@ -9,6 +10,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <GL/glew.h>
 #include <GL/glut.h>
@@ -17,6 +19,7 @@
 
 struct object
 {
+   GLuint ArrayObjectID; /** GL_ARB_vertex_array_object */
    GLuint VertexBufferID;
    GLuint ColorBufferID;
    GLuint ElementsBufferID;
@@ -35,6 +38,7 @@ static GLuint Win;
 
 static GLfloat Xrot = 0, Yrot = 0, Zrot = 0;
 static GLboolean Anim = GL_TRUE;
+static GLboolean Have_ARB_vertex_array_object = GL_FALSE;
 
 
 static void CheckError(int line)
@@ -48,34 +52,54 @@ static void CheckError(int line)
 
 static void DrawObject( const struct object *obj )
 {
-   glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->VertexBufferID);
-   glVertexPointer(3, GL_FLOAT, obj->VertexStride, (void *) obj->VertexOffset);
-   glEnable(GL_VERTEX_ARRAY);
+   if (Have_ARB_vertex_array_object && obj->ArrayObjectID) {
+      glBindVertexArray(obj->ArrayObjectID);
 
-   /* test push/pop attrib */
-   /* XXX this leads to a segfault with NVIDIA's 53.36 driver */
-#if 0
-   if (1)
-   {
-      glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
-      /*glVertexPointer(3, GL_FLOAT, 0, (void *) (obj->VertexOffset + 10000));*/
-      glBindBufferARB(GL_ARRAY_BUFFER_ARB, 999999);
-      glPopClientAttrib();
-   }
-#endif
-   glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->ColorBufferID);
-   glColorPointer(3, GL_FLOAT, obj->ColorStride, (void *) obj->ColorOffset);
-   glEnable(GL_COLOR_ARRAY);
+      if (obj->NumElements > 0) {
+         /* indexed arrays */
+         glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, obj->ElementsBufferID);
+         glDrawElements(GL_LINE_LOOP, obj->NumElements, GL_UNSIGNED_INT, NULL);
+      }
+      else {
+         /* non-indexed arrays */
+         glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+         glDrawArrays(GL_LINE_LOOP, 0, obj->NumVerts);
+      }
 
-   if (obj->NumElements > 0) {
-      /* indexed arrays */
-      glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, obj->ElementsBufferID);
-      glDrawElements(GL_LINE_LOOP, obj->NumElements, GL_UNSIGNED_INT, NULL);
+      glBindVertexArray(0);
    }
    else {
-      /* non-indexed arrays */
-      glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-      glDrawArrays(GL_LINE_LOOP, 0, obj->NumVerts);
+      /* no vertex array objects, must set vertex/color pointers per draw */
+
+      glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->VertexBufferID);
+      glVertexPointer(3, GL_FLOAT, obj->VertexStride, (void *) obj->VertexOffset);
+      glEnableClientState(GL_VERTEX_ARRAY);
+
+      /* test push/pop attrib */
+      /* XXX this leads to a segfault with NVIDIA's 53.36 driver */
+#if 0
+      if (1)
+      {
+         glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
+         /*glVertexPointer(3, GL_FLOAT, 0, (void *) (obj->VertexOffset + 10000));*/
+         glBindBufferARB(GL_ARRAY_BUFFER_ARB, 999999);
+         glPopClientAttrib();
+      }
+#endif
+      glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->ColorBufferID);
+      glColorPointer(3, GL_FLOAT, obj->ColorStride, (void *) obj->ColorOffset);
+      glEnableClientState(GL_COLOR_ARRAY);
+
+      if (obj->NumElements > 0) {
+         /* indexed arrays */
+         glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, obj->ElementsBufferID);
+         glDrawElements(GL_LINE_LOOP, obj->NumElements, GL_UNSIGNED_INT, NULL);
+      }
+      else {
+         /* non-indexed arrays */
+         glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+         glDrawArrays(GL_LINE_LOOP, 0, obj->NumVerts);
+      }
    }
 }
 
@@ -187,6 +211,28 @@ static void SpecialKey( int key, int x, int y )
 }
 
 
+/**
+ * If GL_ARB_vertex_array_object is supported, create an array object
+ * and set all the per-array state.
+ */
+static void
+CreateVertexArrayObject(struct object *obj)
+{
+   glGenVertexArrays(1, &obj->ArrayObjectID);
+   glBindVertexArray(obj->ArrayObjectID);
+
+   glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->VertexBufferID);
+   glVertexPointer(3, GL_FLOAT, obj->VertexStride, (void *) obj->VertexOffset);
+   glEnableClientState(GL_VERTEX_ARRAY);
+
+   glBindBufferARB(GL_ARRAY_BUFFER_ARB, obj->ColorBufferID);
+   glColorPointer(3, GL_FLOAT, obj->ColorStride, (void *) obj->ColorOffset);
+   glEnableClientState(GL_COLOR_ARRAY);
+
+   glBindVertexArray(0);
+}
+
+
 /*
  * Non-interleaved position/color data.
  */
@@ -262,6 +308,10 @@ static void MakeObject1(struct object *obj)
 
    glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_MAPPED_ARB, &i);
    assert(!i);
+
+   if (Have_ARB_vertex_array_object) {
+      CreateVertexArrayObject(obj);
+   }
 }
 
 
@@ -297,6 +347,10 @@ static void MakeObject2(struct object *obj)
    obj->NumElements = 0;
 
    glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
+
+   if (Have_ARB_vertex_array_object) {
+      CreateVertexArrayObject(obj);
+   }
 }
 
 
@@ -347,6 +401,10 @@ static void MakeObject3(struct object *obj)
    i[3] = 3;
    glUnmapBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB);
    obj->NumElements = 4;
+
+   if (Have_ARB_vertex_array_object) {
+      CreateVertexArrayObject(obj);
+   }
 }
 
 
@@ -387,6 +445,10 @@ static void MakeObject4(struct object *obj)
    /* Setup a buffer of indices to test the ELEMENTS path */
    obj->ElementsBufferID = 0;
    obj->NumElements = 0;
+
+   if (Have_ARB_vertex_array_object) {
+      CreateVertexArrayObject(obj);
+   }
 }
 
 
@@ -398,6 +460,13 @@ static void Init( void )
       exit(0);
    }
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
+
+   Have_ARB_vertex_array_object =
+      glutExtensionSupported("GL_ARB_vertex_array_object");
+
+   printf("Using GL_ARB_vertex_array_object: %s\n",
+          (Have_ARB_vertex_array_object ? "yes" : "no"));
+
 
    /* Test buffer object deletion */
    if (1) {
@@ -413,6 +482,7 @@ static void Init( void )
       assert(!glIsBufferARB(id));
    }
 
+   memset(Objects, 0, sizeof(Objects));
    MakeObject1(Objects + 0);
    MakeObject2(Objects + 1);
    MakeObject3(Objects + 2);

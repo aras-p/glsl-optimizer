@@ -1820,7 +1820,7 @@ Fake_glXCreatePixmap( Display *dpy, GLXFBConfig config, Pixmap pixmap,
    if (!dpy || !config || !pixmap)
       return 0;
 
-   for (attr = attribList; *attr; attr++) {
+   for (attr = attribList; attr && *attr; attr++) {
       switch (*attr) {
       case GLX_TEXTURE_FORMAT_EXT:
          attr++;

@@ -959,7 +959,7 @@ void GLAPIENTRY
 _mesa_GetTexBumpParameterivATI( GLenum pname, GLint *param )
 {
    const struct gl_texture_unit *texUnit;
-   GLint i;
+   GLuint i;
    GLint temp = 0;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -1006,7 +1006,7 @@ void GLAPIENTRY
 _mesa_GetTexBumpParameterfvATI( GLenum pname, GLfloat *param )
 {
    const struct gl_texture_unit *texUnit;
-   GLint i;
+   GLuint i;
    GLint temp = 0;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);

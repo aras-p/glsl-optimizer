@@ -60,7 +60,7 @@ dri_bo *intel_bufferobj_buffer(struct intel_context *intel,
 
 /* Hook the bufferobject implementation into mesa: 
  */
-void intel_bufferobj_init(struct intel_context *intel);
+void intelInitBufferObjectFuncs(struct dd_function_table *functions);
 
 
 
@@ -72,10 +72,7 @@ void intel_bufferobj_init(struct intel_context *intel);
 static INLINE struct intel_buffer_object *
 intel_buffer_object(struct gl_buffer_object *obj)
 {
-   if (obj->Name)
-      return (struct intel_buffer_object *) obj;
-   else
-      return NULL;
+   return (struct intel_buffer_object *) obj;
 }
 
 /* Helpers for zerocopy image uploads.  See also intel_regions.h:

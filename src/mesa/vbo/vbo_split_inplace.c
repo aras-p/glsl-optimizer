@@ -63,35 +63,19 @@ static void flush_vertex( struct split_context *split )
    if (!split->dstprim_nr) 
       return;
 
-   if (split->ib) {
-      /* This should basically be multipass rendering over the same
-       * unchanging set of VBO's.  Would like the driver not to
-       * re-upload the data, or swtnl not to re-transform the
-       * vertices.
-       */
-      assert(split->max_index - split->min_index < split->limits->max_verts);
-      min_index = split->min_index;
-      max_index = split->max_index;
-   }
-   else {
-      /* Non-indexed rendering.  Cannot assume that the primitives are
-       * ordered by increasing vertex, because of entrypoints like
-       * MultiDrawArrays.
-       */
-      GLuint i;
-      min_index = split->dstprim[0].start;
-      max_index = min_index + split->dstprim[0].count - 1;
+   GLuint i;
+   min_index = split->dstprim[0].start;
+   max_index = min_index + split->dstprim[0].count - 1;
 
-      for (i = 1; i < split->dstprim_nr; i++) {
-	 GLuint tmp_min = split->dstprim[i].start;
-	 GLuint tmp_max = tmp_min + split->dstprim[i].count - 1;
+   for (i = 1; i < split->dstprim_nr; i++) {
+      GLuint tmp_min = split->dstprim[i].start;
+      GLuint tmp_max = tmp_min + split->dstprim[i].count - 1;
 
-	 if (tmp_min < min_index) 
-	    min_index = tmp_min;
+      if (tmp_min < min_index)
+	 min_index = tmp_min;
 
-	 if (tmp_max > max_index) 
-	    max_index = tmp_max;
-      }
+      if (tmp_max > max_index)
+	 max_index = tmp_max;
    }
 
    assert(max_index >= min_index);

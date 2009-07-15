@@ -267,7 +267,8 @@ main(int argc, char *argv[])
       printf("  glxheads xdisplayname ...\n");
       printf("Example:\n");
       printf("  glxheads :0 mars:0 venus:1\n");
-      h = AddHead(":0");
+
+      h = AddHead(XDisplayName(NULL));
       if (h)
          PrintInfo(h);
    }

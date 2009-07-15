@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <GL/glew.h>
 #include "GL/glut.h"
 #include "readtex.h"
 #include "extfuncs.h"
@@ -139,7 +140,7 @@ DrawPolygonArray(void)
    }
    else {
       glVertexPointer(2, GL_FLOAT, 0, vertPtr);
-      glEnable(GL_VERTEX_ARRAY);
+      glEnableClientState(GL_VERTEX_ARRAY);
    }
 
    glVertexAttribPointer_func(TexCoord0_attr, 2, GL_FLOAT, GL_FALSE,
@@ -152,7 +153,7 @@ DrawPolygonArray(void)
 
    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-      glBindBufferARB_func(GL_ARRAY_BUFFER_ARB, 0);
+   glBindBufferARB_func(GL_ARRAY_BUFFER_ARB, 0);
 }
 
 
@@ -400,6 +401,7 @@ main(int argc, char *argv[])
    glutInitWindowSize(500, 400);
    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
    glutCreateWindow(Demo);
+   glewInit();
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(key);
    glutSpecialFunc(specialkey);

@@ -93,6 +93,7 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 			      NOUVEAU_BO_LOW | NOUVEAU_BO_RDWR, 0, 0);
 		switch (fb->zsbuf->format) {
 		case PIPE_FORMAT_Z24S8_UNORM:
+		case PIPE_FORMAT_Z24X8_UNORM:
 			so_data(so, 0x16);
 			break;
 		case PIPE_FORMAT_Z16_UNORM:

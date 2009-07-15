@@ -54,7 +54,8 @@ static unsigned elt_ubyte( const void *elts, unsigned idx )
 
 static unsigned elt_vert( const void *elts, unsigned idx )
 {
-   return (const ubyte *)elts - (const ubyte *)NULL + idx;
+   /* unsigned index is packed in the pointer */
+   return (unsigned)(uintptr_t)elts + idx;
 }
 
 pt_elt_func draw_pt_elt_func( struct draw_context *draw )

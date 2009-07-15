@@ -770,6 +770,7 @@ struct gl_light_attrib
 
    GLboolean Enabled;			/**< Lighting enabled flag */
    GLenum ShadeModel;			/**< GL_FLAT or GL_SMOOTH */
+   GLenum ProvokingVertex;              /**< GL_EXT_provoking_vertex */
    GLenum ColorMaterialFace;		/**< GL_FRONT, BACK or FRONT_AND_BACK */
    GLenum ColorMaterialMode;		/**< GL_AMBIENT, GL_DIFFUSE, etc */
    GLbitfield ColorMaterialBitmask;	/**< bitmask formed from Face and Mode */
@@ -1503,7 +1504,7 @@ struct gl_buffer_object
    GLubyte *Data;       /**< Location of storage either in RAM or VRAM. */
    /** Fields describing a mapped buffer */
    /*@{*/
-   GLenum Access;       /**< GL_READ_ONLY_ARB, GL_WRITE_ONLY_ARB, etc. */
+   GLbitfield AccessFlags; /**< Mask of GL_MAP_x_BIT flags */
    GLvoid *Pointer;     /**< User-space address of mapping */
    GLintptr Offset;     /**< Mapped offset */
    GLsizeiptr Length;   /**< Mapped length */
@@ -1562,6 +1563,7 @@ struct gl_array_object
 
    GLint RefCount;
    _glthread_Mutex Mutex;
+   GLboolean VBOonly;  /**< require all arrays to live in VBOs? */
 
    /** Conventional vertex arrays */
    /*@{*/
@@ -1606,6 +1608,9 @@ struct gl_array_attrib
 
    /** The default vertex array object */
    struct gl_array_object *DefaultArrayObj;
+
+   /** Array objects (GL_ARB/APPLE_vertex_array_object) */
+   struct _mesa_HashTable *Objects;
 
    GLint ActiveTexture;		/**< Client Active Texture */
    GLuint LockFirst;            /**< GL_EXT_compiled_vertex_array */
@@ -2048,6 +2053,7 @@ struct gl_shader_state
    struct gl_shader_program *CurrentProgram; /**< The user-bound program */
    /** Driver-selectable options: */
    GLboolean EmitHighLevelInstructions; /**< IF/ELSE/ENDIF vs. BRA, etc. */
+   GLboolean EmitContReturn;            /**< Emit CONT/RET opcodes? */
    GLboolean EmitCondCodes;             /**< Use condition codes? */
    GLboolean EmitComments;              /**< Annotated instructions */
    void *MemPool;
@@ -2117,9 +2123,6 @@ struct gl_shared_state
    struct _mesa_HashTable *RenderBuffers;
    struct _mesa_HashTable *FrameBuffers;
 #endif
-
-   /** Objects associated with the GL_APPLE_vertex_array_object extension. */
-   struct _mesa_HashTable *ArrayObjects;
 
    void *DriverData;  /**< Device driver shared state */
 };
@@ -2424,6 +2427,9 @@ struct gl_constants
    GLuint MaxVarying;  /**< Number of float[4] varying parameters */
 
    GLbitfield SupportedBumpUnits; /**> units supporting GL_ATI_envmap_bumpmap as targets */
+
+   /**< GL_EXT_provoking_vertex */
+   GLboolean QuadsFollowProvokingVertexConvention;
 };
 
 
@@ -2443,6 +2449,7 @@ struct gl_extensions
    GLboolean ARB_framebuffer_object;
    GLboolean ARB_half_float_pixel;
    GLboolean ARB_imaging;
+   GLboolean ARB_map_buffer_range;
    GLboolean ARB_multisample;
    GLboolean ARB_multitexture;
    GLboolean ARB_occlusion_query;
@@ -2462,6 +2469,7 @@ struct gl_extensions
    GLboolean ARB_texture_mirrored_repeat;
    GLboolean ARB_texture_non_power_of_two;
    GLboolean ARB_transpose_matrix;
+   GLboolean ARB_vertex_array_object;
    GLboolean ARB_vertex_buffer_object;
    GLboolean ARB_vertex_program;
    GLboolean ARB_vertex_shader;
@@ -2493,6 +2501,7 @@ struct gl_extensions
    GLboolean EXT_pixel_buffer_object;
    GLboolean EXT_point_parameters;
    GLboolean EXT_polygon_offset;
+   GLboolean EXT_provoking_vertex;
    GLboolean EXT_rescale_normal;
    GLboolean EXT_shadow_funcs;
    GLboolean EXT_secondary_color;
@@ -2825,6 +2834,13 @@ struct gl_dlist_state
    
    GLubyte ActiveEdgeFlag;
    GLboolean CurrentEdgeFlag;
+
+   struct {
+      /* State known to have been set by the currently-compiling display
+       * list.  Used to eliminate some redundant state changes.
+       */
+      GLenum ShadeModel;
+   } Current;
 };
 
 
@@ -2972,6 +2988,8 @@ struct __GLcontextRec
    GLenum ErrorValue;        /**< Last error code */
    GLenum RenderMode;        /**< either GL_RENDER, GL_SELECT, GL_FEEDBACK */
    GLbitfield NewState;      /**< bitwise-or of _NEW_* flags */
+
+   GLboolean ViewportInitialized;  /**< has viewport size been initialized? */
 
    GLbitfield varying_vp_inputs;  /**< mask of VERT_BIT_* flags */
 

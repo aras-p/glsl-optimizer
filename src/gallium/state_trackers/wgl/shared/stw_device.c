@@ -30,6 +30,7 @@
 #include "glapi/glthread.h"
 #include "util/u_debug.h"
 #include "pipe/p_screen.h"
+#include "state_tracker/st_public.h"
 
 #ifdef DEBUG
 #include "trace/tr_screen.h"
@@ -63,15 +64,36 @@ stw_flush_frontbuffer(struct pipe_screen *screen,
 {
    const struct stw_winsys *stw_winsys = stw_dev->stw_winsys;
    HDC hdc = (HDC)context_private;
+   struct stw_framebuffer *fb;
    
-#ifdef DEBUG
-   if(stw_dev->trace_running) {
-      screen = trace_screen(screen)->screen;
-      surface = trace_surface(surface)->surface;
-   }
+   fb = stw_framebuffer_from_hdc( hdc );
+   /* fb can be NULL if window was destroyed already */
+   if (fb) {
+#if DEBUG
+      {
+         struct pipe_surface *surface2;
+   
+         if(!st_get_framebuffer_surface( fb->stfb, ST_SURFACE_FRONT_LEFT, &surface2 ))
+            assert(0);
+         else
+            assert(surface2 == surface);
+      }
 #endif
+
+#ifdef DEBUG
+      if(stw_dev->trace_running) {
+         screen = trace_screen(screen)->screen;
+         surface = trace_surface(surface)->surface;
+      }
+#endif
+   }
    
    stw_winsys->flush_frontbuffer(screen, surface, hdc);
+   
+   if(fb) {
+      stw_framebuffer_update(fb);
+      stw_framebuffer_release(fb);
+   }
 }
 
 
@@ -113,7 +135,8 @@ stw_init(const struct stw_winsys *stw_winsys)
    
    stw_dev->screen->flush_frontbuffer = &stw_flush_frontbuffer;
    
-   pipe_mutex_init( stw_dev->mutex );
+   pipe_mutex_init( stw_dev->ctx_mutex );
+   pipe_mutex_init( stw_dev->fb_mutex );
 
    stw_dev->ctx_table = handle_table_create();
    if (!stw_dev->ctx_table) {
@@ -133,20 +156,13 @@ error1:
 boolean
 stw_init_thread(void)
 {
-   if (!stw_tls_init_thread())
-      return FALSE;
-
-   if (!stw_framebuffer_init_thread())
-      return FALSE;
-
-   return TRUE;
+   return stw_tls_init_thread();
 }
 
 
 void
 stw_cleanup_thread(void)
 {
-   stw_framebuffer_cleanup_thread();
    stw_tls_cleanup_thread();
 }
 
@@ -161,7 +177,7 @@ stw_cleanup(void)
    if (!stw_dev)
       return;
    
-   pipe_mutex_lock( stw_dev->mutex );
+   pipe_mutex_lock( stw_dev->ctx_mutex );
    {
       /* Ensure all contexts are destroyed */
       i = handle_table_get_first_handle(stw_dev->ctx_table);
@@ -171,11 +187,12 @@ stw_cleanup(void)
       }
       handle_table_destroy(stw_dev->ctx_table);
    }
-   pipe_mutex_unlock( stw_dev->mutex );
+   pipe_mutex_unlock( stw_dev->ctx_mutex );
 
    stw_framebuffer_cleanup();
    
-   pipe_mutex_destroy( stw_dev->mutex );
+   pipe_mutex_destroy( stw_dev->fb_mutex );
+   pipe_mutex_destroy( stw_dev->ctx_mutex );
    
    stw_dev->screen->destroy(stw_dev->screen);
 

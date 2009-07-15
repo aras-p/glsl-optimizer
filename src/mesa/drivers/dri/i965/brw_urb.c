@@ -143,7 +143,29 @@ static void recalculate_urb_fence( struct brw_context *brw )
       brw->urb.nr_clip_entries = limits[CLP].preferred_nr_entries;
       brw->urb.nr_sf_entries = limits[SF].preferred_nr_entries;	
       brw->urb.nr_cs_entries = limits[CS].preferred_nr_entries;	
-      
+
+      brw->urb.constrained = 0;
+
+      if (BRW_IS_IGDNG(brw)) {
+         brw->urb.nr_vs_entries = 128;
+         brw->urb.nr_sf_entries = 48;
+         if (check_urb_layout(brw)) {
+            goto done;
+         } else {
+            brw->urb.constrained = 1;
+            brw->urb.nr_vs_entries = limits[VS].preferred_nr_entries;
+            brw->urb.nr_sf_entries = limits[SF].preferred_nr_entries;
+         }
+      } else if (BRW_IS_G4X(brw)) {
+	 brw->urb.nr_vs_entries = 64;
+	 if (check_urb_layout(brw)) {
+	    goto done;
+	 } else {
+	    brw->urb.constrained = 1;
+	    brw->urb.nr_vs_entries = limits[VS].preferred_nr_entries;
+	 }
+      }
+
       if (!check_urb_layout(brw)) {
 	 brw->urb.nr_vs_entries = limits[VS].min_nr_entries;	
 	 brw->urb.nr_gs_entries = limits[GS].min_nr_entries;	
@@ -169,9 +191,8 @@ static void recalculate_urb_fence( struct brw_context *brw )
 	 if (INTEL_DEBUG & (DEBUG_URB|DEBUG_FALLBACKS))
 	    _mesa_printf("URB CONSTRAINED\n");
       }
-      else 
-	 brw->urb.constrained = 0;
 
+done:
       if (INTEL_DEBUG & DEBUG_URB)
 	 _mesa_printf("URB fence: %d ..VS.. %d ..GS.. %d ..CLP.. %d ..SF.. %d ..CS.. %d\n",
 		      brw->urb.vs_start,

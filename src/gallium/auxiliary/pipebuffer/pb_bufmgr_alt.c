@@ -60,7 +60,7 @@ pb_alt_manager(struct pb_manager *mgr)
 
 static struct pb_buffer *
 pb_alt_manager_create_buffer(struct pb_manager *_mgr, 
-                             size_t size,
+                             pb_size size,
                              const struct pb_desc *desc)
 {
    struct pb_alt_manager *mgr = pb_alt_manager(_mgr);

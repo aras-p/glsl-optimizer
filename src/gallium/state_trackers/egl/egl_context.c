@@ -115,7 +115,7 @@ drm_create_context(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext
 
 	_eglInitContext(drv, dpy, &ctx->base, config, attrib_list);
 
-	ctx->pipe = drm_api_hooks.create_context(dev->screen);
+	ctx->pipe = dev->api->create_context(dev->api, dev->screen);
 	if (!ctx->pipe)
 		goto err_pipe;
 

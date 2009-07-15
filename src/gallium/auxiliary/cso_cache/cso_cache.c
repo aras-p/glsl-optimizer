@@ -361,6 +361,10 @@ void cso_for_each_state(struct cso_cache *sc, enum cso_cache_type type,
 void cso_cache_delete(struct cso_cache *sc)
 {
    assert(sc);
+
+   if (!sc)
+      return;
+
    /* delete driver data */
    cso_for_each_state(sc, CSO_BLEND, delete_blend_state, 0);
    cso_for_each_state(sc, CSO_DEPTH_STENCIL_ALPHA, delete_depth_stencil_state, 0);

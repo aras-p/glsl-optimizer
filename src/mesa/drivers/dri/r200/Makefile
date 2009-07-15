@@ -13,6 +13,10 @@ ifeq ($(USING_EGL), 1)
 EGL_SOURCES = server/radeon_egl.c
 endif
 
+ifeq ($(RADEON_LDFLAGS),)
+CS_SOURCES = radeon_cs_space_drm.c
+endif
+
 RADEON_COMMON_SOURCES = \
 	radeon_texture.c \
 	radeon_common_context.c \
@@ -42,7 +46,8 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_vertprog.c \
 		 radeon_screen.c \
 		 $(EGL_SOURCES) \
-		 $(RADEON_COMMON_SOURCES)
+		 $(RADEON_COMMON_SOURCES) \
+		 $(CS_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
@@ -82,7 +87,8 @@ COMMON_SYMLINKS = \
 	radeon_texture.h \
 	radeon_dma.c \
 	radeon_dma.h \
-	radeon_fbo.c
+	radeon_fbo.c \
+	$(CS_SOURCES)
 
 DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 

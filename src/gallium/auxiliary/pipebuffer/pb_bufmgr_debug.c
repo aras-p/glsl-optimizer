@@ -72,8 +72,8 @@ struct pb_debug_buffer
    struct pb_buffer *buffer;
    struct pb_debug_manager *mgr;
    
-   size_t underflow_size;
-   size_t overflow_size;
+   pb_size underflow_size;
+   pb_size overflow_size;
 
    struct debug_stack_frame create_backtrace[PB_DEBUG_CREATE_BACKTRACE];
 
@@ -91,8 +91,8 @@ struct pb_debug_manager
 
    struct pb_manager *provider;
 
-   size_t underflow_size;
-   size_t overflow_size;
+   pb_size underflow_size;
+   pb_size overflow_size;
    
    pipe_mutex mutex;
    struct list_head list;
@@ -124,9 +124,9 @@ static const uint8_t random_pattern[32] = {
 
 
 static INLINE void 
-fill_random_pattern(uint8_t *dst, size_t size)
+fill_random_pattern(uint8_t *dst, pb_size size)
 {
-   size_t i = 0;
+   pb_size i = 0;
    while(size--) {
       *dst++ = random_pattern[i++];
       i &= sizeof(random_pattern) - 1;
@@ -135,11 +135,11 @@ fill_random_pattern(uint8_t *dst, size_t size)
 
 
 static INLINE boolean 
-check_random_pattern(const uint8_t *dst, size_t size, 
-                     size_t *min_ofs, size_t *max_ofs) 
+check_random_pattern(const uint8_t *dst, pb_size size, 
+                     pb_size *min_ofs, pb_size *max_ofs) 
 {
    boolean result = TRUE;
-   size_t i;
+   pb_size i;
    *min_ofs = size;
    *max_ofs = 0;
    for(i = 0; i < size; ++i) {
@@ -183,7 +183,7 @@ pb_debug_buffer_check(struct pb_debug_buffer *buf)
    assert(map);
    if(map) {
       boolean underflow, overflow;
-      size_t min_ofs, max_ofs;
+      pb_size min_ofs, max_ofs;
       
       underflow = !check_random_pattern(map, buf->underflow_size, 
                                         &min_ofs, &max_ofs);
@@ -287,7 +287,7 @@ pb_debug_buffer_unmap(struct pb_buffer *_buf)
 static void
 pb_debug_buffer_get_base_buffer(struct pb_buffer *_buf,
                                 struct pb_buffer **base_buf,
-                                unsigned *offset)
+                                pb_size *offset)
 {
    struct pb_debug_buffer *buf = pb_debug_buffer(_buf);
    pb_get_base_buffer(buf->buffer, base_buf, offset);
@@ -363,13 +363,13 @@ pb_debug_manager_dump(struct pb_debug_manager *mgr)
 
 static struct pb_buffer *
 pb_debug_manager_create_buffer(struct pb_manager *_mgr, 
-                               size_t size,
+                               pb_size size,
                                const struct pb_desc *desc)
 {
    struct pb_debug_manager *mgr = pb_debug_manager(_mgr);
    struct pb_debug_buffer *buf;
    struct pb_desc real_desc;
-   size_t real_size;
+   pb_size real_size;
    
    buf = CALLOC_STRUCT(pb_debug_buffer);
    if(!buf)
@@ -455,7 +455,7 @@ pb_debug_manager_destroy(struct pb_manager *_mgr)
 
 struct pb_manager *
 pb_debug_manager_create(struct pb_manager *provider, 
-                        size_t underflow_size, size_t overflow_size) 
+                        pb_size underflow_size, pb_size overflow_size) 
 {
    struct pb_debug_manager *mgr;
 
@@ -485,7 +485,7 @@ pb_debug_manager_create(struct pb_manager *provider,
 
 struct pb_manager *
 pb_debug_manager_create(struct pb_manager *provider, 
-                        size_t underflow_size, size_t overflow_size) 
+                        pb_size underflow_size, pb_size overflow_size) 
 {
    return provider;
 }

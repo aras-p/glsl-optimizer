@@ -21,6 +21,7 @@
   <li><a href="#pkg-config">Building OpenGL programs with pkg-config
   </ul>
 <li><a href="#windows">Windows</a>
+<li><a href="#scons">SCons</a>
 <li><a href="#other">Other</a>
 </ol>
 <br>
@@ -328,13 +329,60 @@ For example, compiling and linking a GLUT application can be done with:
 <H2>2. Windows Compilation and Installation</H1>
 
 <p>
-Please see the <a href="README.WIN32">README.WIN32</a> file.
+Please see the <a href="#scons">instructions on building with SCons</a>.
+Alternatively see <a href="README.WIN32">README.WIN32</a> file.
 </p>
 
 
 
+<a name="scons">
+<H2>3. Building with SCons</H1>
+
+<p>
+To build Mesa with SCons on Linux or Windows do
+</p>
+<pre>
+    scons
+</pre>
+<p>
+The build output will be placed in
+build/<i>platform</i>-<i>machine</i>-<i>debug</i>/..., where <i>platform</i> is for
+example linux or windows, <i>machine</i> is x86 or x86_64, optionally followed
+by -debug for debug builds.
+</p>
+
+<p>
+The sample programs are built seperately. To build them do
+<pre>
+    scons -C progs
+</pre>
+And the build output will be placed in progs/build/...
+</p>
+
+<p>
+To build Mesa with SCons for Windows on Linux using the MinGW crosscompiler toolchain do
+</p>
+<pre>
+    scons platform=windows toolchain=crossmingw machine=x86 statetrackers=mesa drivers=softpipe,trace winsys=gdi
+    scons -C progs platform=windows toolchain=crossmingw machine=x86 -k
+</pre>
+<p>
+This will create:
+</p>
+<ul>
+<li>build/windows-x86-debug/gallium/winsys/gdi/opengl32.dll &mdash; Mesa + Gallium + softpipe, binary compatible with Windows's opengl32.dll 
+<li>build/windows-x86-debug/glut/glx/glut32.dll
+<li>progs/build/windows-x86-debug/wgl/wglinfo.exe
+<li>progs/build/windows-x86-debug/trivial/tri.exe
+<li>and many other samples in progs/build/windows-x86-debug/...
+</ul>
+<p>
+Put them all in the same directory to test them.
+</p>
+
+
 <a name="other">
-<H2>3. Other systems</H1>
+<H2>4. Other systems</H1>
 
 <p>
 Documentation for other environments (some may be very out of date):

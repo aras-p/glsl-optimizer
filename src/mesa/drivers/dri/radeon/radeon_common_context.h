@@ -13,6 +13,7 @@
 #include "dri_util.h"
 #include "tnl/t_vertex.h"
 
+#include "dri_metaops.h"
 struct radeon_context;
 
 #include "radeon_bocs_wrapper.h"
@@ -83,8 +84,6 @@ struct radeon_renderbuffer
 	unsigned int cpp;
 	/* unsigned int offset; */
 	unsigned int pitch;
-	unsigned int width;
-	unsigned int height;
 
 	uint32_t draw_offset; /* FBO */
 	/* boo Xorg 6.8.2 compat */
@@ -482,19 +481,16 @@ struct radeon_context {
     */
    GLboolean is_front_buffer_rendering;
 
-  struct {
-      struct gl_fragment_program *bitmap_fp;
-      struct gl_vertex_program *passthrough_vp;
+   /**
+    * Track whether front-buffer is the current read target.
+    *
+    * This is closely associated with is_front_buffer_rendering, but may
+    * be set separately.  The DRI2 fake front buffer must be referenced
+    * either way.
+    */
+   GLboolean is_front_buffer_reading;
 
-      struct gl_fragment_program *saved_fp;
-      GLboolean saved_fp_enable;
-      struct gl_vertex_program *saved_vp;
-      GLboolean saved_vp_enable;
-
-      GLint saved_vp_x, saved_vp_y;
-      GLsizei saved_vp_width, saved_vp_height;
-      GLenum saved_matrix_mode;
-   } meta;
+   struct dri_metaops meta;
 
    struct {
 	   void (*get_lock)(radeonContextPtr radeon);

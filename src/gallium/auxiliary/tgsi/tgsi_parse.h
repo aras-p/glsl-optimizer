@@ -48,6 +48,7 @@ struct tgsi_full_header
 struct tgsi_full_dst_register
 {
    struct tgsi_dst_register               DstRegister;
+   struct tgsi_src_register               DstRegisterInd;
    struct tgsi_dst_register_ext_concode   DstRegisterExtConcode;
    struct tgsi_dst_register_ext_modulate  DstRegisterExtModulate;
 };

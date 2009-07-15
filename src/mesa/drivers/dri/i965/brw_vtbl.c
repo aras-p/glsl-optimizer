@@ -177,14 +177,6 @@ static void brw_note_fence( struct intel_context *intel, GLuint fence )
    brw_context(&intel->ctx)->state.dirty.brw |= BRW_NEW_FENCE;
 }
 
-
-static void brw_note_unlock( struct intel_context *intel )
-{
-   struct brw_context *brw = brw_context(&intel->ctx);
-   brw_state_cache_check_size(brw);
-}
-
-
 /* called from intelWaitForIdle() and intelFlush()
  *
  * For now, just flush everything.  Could be smarter later.
@@ -194,7 +186,7 @@ static GLuint brw_flush_cmd( void )
    struct brw_mi_flush flush;
    flush.opcode = CMD_MI_FLUSH;
    flush.pad = 0;
-   flush.flags = BRW_FLUSH_READ_CACHE | BRW_FLUSH_STATE_CACHE;
+   flush.flags = BRW_FLUSH_STATE_CACHE;
    return *(GLuint *)&flush;
 }
 
@@ -215,7 +207,6 @@ void brwInitVtbl( struct brw_context *brw )
 
    brw->intel.vtbl.invalidate_state = brw_invalidate_state;
    brw->intel.vtbl.note_fence = brw_note_fence;
-   brw->intel.vtbl.note_unlock = brw_note_unlock;
    brw->intel.vtbl.new_batch = brw_new_batch;
    brw->intel.vtbl.finish_batch = brw_finish_batch;
    brw->intel.vtbl.destroy = brw_destroy_context;

@@ -57,10 +57,10 @@ struct stw_device
    unsigned pixelformat_count;
    unsigned pixelformat_extended_count;
 
-   pipe_mutex mutex;
-
+   pipe_mutex ctx_mutex;
    struct handle_table *ctx_table;
    
+   pipe_mutex fb_mutex;
    struct stw_framebuffer *fb_head;
    
 #ifdef DEBUG

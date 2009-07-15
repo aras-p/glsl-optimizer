@@ -357,6 +357,9 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    /* FIXME: When no memory manager is available we should set this 
     * to some reasonable value based on texture memory pool size */
    ctx->Const.MaxTextureLevels = 12;
+   ctx->Const.Max3DTextureLevels = 9;
+   ctx->Const.MaxCubeTextureLevels = 12;
+   ctx->Const.MaxTextureRectSize = 2048;
 
    ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 
@@ -387,6 +390,8 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
 
    ctx->Const.MaxDrawBuffers = 1;
+
+   _mesa_set_mvp_with_dp4( ctx, GL_TRUE );
 
    /* Initialize the software rasterizer and helper modules.
     */

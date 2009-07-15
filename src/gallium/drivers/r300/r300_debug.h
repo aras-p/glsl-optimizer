@@ -24,10 +24,10 @@
 #define R300_DEBUG_H
 
 #include "r300_reg.h"
-#include "r300_state_shader.h"
-#include "r300_state_tcl.h"
+#include "r300_fs.h"
+#include "r300_vs.h"
 
-static char* r500_fs_swiz[] = {
+static char* r5xx_fs_swiz[] = {
     " R",
     " G",
     " B",
@@ -38,7 +38,7 @@ static char* r500_fs_swiz[] = {
     " U",
 };
 
-static char* r500_fs_op_rgb[] = {
+static char* r5xx_fs_op_rgb[] = {
     "MAD",
     "DP3",
     "DP4",
@@ -54,7 +54,7 @@ static char* r500_fs_op_rgb[] = {
     "MDV",
 };
 
-static char* r500_fs_op_alpha[] = {
+static char* r5xx_fs_op_alpha[] = {
     "MAD",
     " DP",
     "MIN",
@@ -73,7 +73,7 @@ static char* r500_fs_op_alpha[] = {
     "MDV",
 };
 
-static char* r500_fs_mask[] = {
+static char* r5xx_fs_mask[] = {
     "NONE",
     "R   ",
     " G  ",
@@ -92,7 +92,7 @@ static char* r500_fs_mask[] = {
     "RGBA",
 };
 
-static char* r500_fs_tex[] = {
+static char* r5xx_fs_tex[] = {
     "    NOP",
     "     LD",
     "TEXKILL",
@@ -203,7 +203,8 @@ static char* r300_vs_swiz_debug[] = {
     "U",
 };
 
-void r500_fs_dump(struct r500_fragment_shader* fs);
+void r5xx_fs_dump(struct r5xx_fragment_shader* fs);
+void r3xx_dump_fs(struct r3xx_fragment_shader* fs);
 
 void r300_vs_dump(struct r300_vertex_shader* vs);
 

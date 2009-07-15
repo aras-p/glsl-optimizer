@@ -706,7 +706,7 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_
 		rImage->mt = NULL;
 	}
 	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
-				   rb->width, rb->height, 1, 0, rb->cpp);
+				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
 	texImage->RowStride = rb->pitch / rb->cpp;
 	texImage->TexFormat = radeonChooseTextureFormat(radeon->glCtx,
 							internalFormat,
@@ -738,8 +738,8 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_
 		t->pp_txfilter |= tx_table[MESA_FORMAT_RGB565].filter;
 		break;
 	}
-        t->pp_txsize = ((rb->width - 1) << RADEON_TEX_USIZE_SHIFT)
-		   | ((rb->height - 1) << RADEON_TEX_VSIZE_SHIFT);
+        t->pp_txsize = ((rb->base.Width - 1) << RADEON_TEX_USIZE_SHIFT)
+		   | ((rb->base.Height - 1) << RADEON_TEX_VSIZE_SHIFT);
         t->pp_txformat |= RADEON_TXFORMAT_NON_POWER2;
 	t->pp_txpitch = pitch_val;
         t->pp_txpitch -= 32;
@@ -1143,12 +1143,14 @@ static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
 
    if (ctx->Texture.Unit[unit]._ReallyEnabled & TEXTURE_3D_BIT) {
+     rmesa->state.texture.unit[unit].texobj = NULL;
      return GL_FALSE;
    }
 
    if (!ctx->Texture.Unit[unit]._ReallyEnabled) {
      /* disable the unit */
      disable_tex_obj_state(rmesa, unit);
+     rmesa->state.texture.unit[unit].texobj = NULL;
      return GL_TRUE;
    }
 
@@ -1156,8 +1158,8 @@ static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
     _mesa_warning(ctx,
 		  "failed to validate texture for unit %d.\n",
 		  unit);
-    rmesa->state.texture.unit[unit].texobj = NULL;
-    return GL_FALSE;
+     rmesa->state.texture.unit[unit].texobj = NULL;
+     return GL_FALSE;
    }
    rmesa->state.texture.unit[unit].texobj = radeon_tex_obj(ctx->Texture.Unit[unit]._Current);
    return GL_TRUE;

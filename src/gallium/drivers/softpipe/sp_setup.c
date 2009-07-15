@@ -444,7 +444,8 @@ static void flush_spans( struct setup_context *setup )
             mask |= MASK_TOP_RIGHT;
          if (x+1 >= xleft1 && x+1 < xright1)
             mask |= MASK_BOTTOM_RIGHT;
-         EMIT_QUAD( setup, x, setup->span.y, mask );
+         if (mask)
+            EMIT_QUAD( setup, x, setup->span.y, mask );
       }
       break;
 
@@ -458,7 +459,8 @@ static void flush_spans( struct setup_context *setup )
             mask |= MASK_TOP_LEFT;
          if (x+1 >= xleft0 && x+1 < xright0)
             mask |= MASK_TOP_RIGHT;
-         EMIT_QUAD( setup, x, setup->span.y, mask );
+         if (mask)
+            EMIT_QUAD( setup, x, setup->span.y, mask );
       }
       break;
 
@@ -472,7 +474,8 @@ static void flush_spans( struct setup_context *setup )
             mask |= MASK_BOTTOM_LEFT;
          if (x+1 >= xleft1 && x+1 < xright1)
             mask |= MASK_BOTTOM_RIGHT;
-         EMIT_QUAD( setup, x, setup->span.y, mask );
+         if (mask)
+            EMIT_QUAD( setup, x, setup->span.y, mask );
       }
       break;
 
@@ -784,11 +787,10 @@ static void setup_tri_coefficients( struct setup_context *setup )
          assert(0);
       }
 
-      if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
-         /* FOG.y = front/back facing  XXX fix this */
-         setup->coef[fragSlot].a0[1] = 1.0f - setup->quad.input.facing;
-         setup->coef[fragSlot].dadx[1] = 0.0;
-         setup->coef[fragSlot].dady[1] = 0.0;
+      if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
+         setup->coef[fragSlot].a0[0] = 1.0f - setup->quad.input.facing;
+         setup->coef[fragSlot].dadx[0] = 0.0;
+         setup->coef[fragSlot].dady[0] = 0.0;
       }
    }
 }
@@ -1051,7 +1053,10 @@ setup_line_coefficients(struct setup_context *setup,
    float area;
 
    /* use setup->vmin, vmax to point to vertices */
-   setup->vprovoke = v1;
+   if (softpipe->rasterizer->flatshade_first)
+      setup->vprovoke = v0;
+   else
+      setup->vprovoke = v1;
    setup->vmin = v0;
    setup->vmax = v1;
 
@@ -1095,11 +1100,10 @@ setup_line_coefficients(struct setup_context *setup,
          assert(0);
       }
 
-      if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
-         /* FOG.y = front/back facing  XXX fix this */
-         setup->coef[fragSlot].a0[1] = 1.0f - setup->quad.input.facing;
-         setup->coef[fragSlot].dadx[1] = 0.0;
-         setup->coef[fragSlot].dady[1] = 0.0;
+      if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
+         setup->coef[fragSlot].a0[0] = 1.0f - setup->quad.input.facing;
+         setup->coef[fragSlot].dadx[0] = 0.0;
+         setup->coef[fragSlot].dady[0] = 0.0;
       }
    }
    return TRUE;
@@ -1341,11 +1345,10 @@ setup_point( struct setup_context *setup,
          assert(0);
       }
 
-      if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
-         /* FOG.y = front/back facing  XXX fix this */
-         setup->coef[fragSlot].a0[1] = 1.0f - setup->quad.input.facing;
-         setup->coef[fragSlot].dadx[1] = 0.0;
-         setup->coef[fragSlot].dady[1] = 0.0;
+      if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
+         setup->coef[fragSlot].a0[0] = 1.0f - setup->quad.input.facing;
+         setup->coef[fragSlot].dadx[0] = 0.0;
+         setup->coef[fragSlot].dady[0] = 0.0;
       }
    }
 

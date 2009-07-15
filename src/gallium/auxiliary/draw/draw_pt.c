@@ -36,6 +36,7 @@
 #include "draw/draw_vs.h"
 #include "tgsi/tgsi_dump.h"
 #include "util/u_math.h"
+#include "util/u_prim.h"
 
 static unsigned trim( unsigned count, unsigned first, unsigned incr )
 {
@@ -278,7 +279,7 @@ void
 draw_arrays(struct draw_context *draw, unsigned prim,
             unsigned start, unsigned count)
 {
-   unsigned reduced_prim = draw_pt_reduced_prim(prim);
+   unsigned reduced_prim = u_reduced_prim(prim);
    if (reduced_prim != draw->reduced_prim) {
       draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
       draw->reduced_prim = reduced_prim;

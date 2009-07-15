@@ -345,6 +345,23 @@ intelDrawBuffer(GLcontext * ctx, GLenum mode)
 static void
 intelReadBuffer(GLcontext * ctx, GLenum mode)
 {
+   if ((ctx->DrawBuffer != NULL) && (ctx->DrawBuffer->Name == 0)) {
+      struct intel_context *const intel = intel_context(ctx);
+      const GLboolean was_front_buffer_reading =
+	intel->is_front_buffer_reading;
+
+      intel->is_front_buffer_reading = (mode == GL_FRONT_LEFT)
+	|| (mode == GL_FRONT);
+
+      /* If we weren't front-buffer reading before but we are now, make sure
+       * that the front-buffer has actually been allocated.
+       */
+      if (!was_front_buffer_reading && intel->is_front_buffer_reading) {
+	 intel_update_renderbuffers(intel->driContext,
+				    intel->driContext->driDrawablePriv);
+      }
+   }
+
    if (ctx->ReadBuffer == ctx->DrawBuffer) {
       /* This will update FBO completeness status.
        * A framebuffer will be incomplete if the GL_READ_BUFFER setting

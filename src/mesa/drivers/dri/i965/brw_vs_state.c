@@ -97,7 +97,11 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
     * brw_urb_WRITE() results.
     */
    vs.thread1.single_program_flow = 0;
-   vs.thread1.binding_table_entry_count = key->nr_surfaces;
+
+   if (BRW_IS_IGDNG(brw))
+      vs.thread1.binding_table_entry_count = 0; /* hardware requirement */
+   else
+      vs.thread1.binding_table_entry_count = key->nr_surfaces;
 
    vs.thread3.urb_entry_read_length = key->urb_entry_read_length;
    vs.thread3.const_urb_entry_read_length = key->curb_entry_read_length;
@@ -105,10 +109,16 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    vs.thread3.urb_entry_read_offset = 0;
    vs.thread3.const_urb_entry_read_offset = key->curbe_offset * 2;
 
-   vs.thread4.nr_urb_entries = key->nr_urb_entries;
+   if (BRW_IS_IGDNG(brw))
+       vs.thread4.nr_urb_entries = key->nr_urb_entries >> 2;
+   else
+       vs.thread4.nr_urb_entries = key->nr_urb_entries;
+
    vs.thread4.urb_entry_allocation_size = key->urb_size - 1;
 
-   if (BRW_IS_G4X(brw))
+   if (BRW_IS_IGDNG(brw))
+      chipset_max_threads = 72;
+   else if (BRW_IS_G4X(brw))
       chipset_max_threads = 32;
    else
       chipset_max_threads = 16;
@@ -119,6 +129,8 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
       vs.thread4.max_threads = 0;
 
    /* No samplers for ARB_vp programs:
+    */
+   /* It has to be set to 0 for IGDNG
     */
    vs.vs5.sampler_count = 0;
 

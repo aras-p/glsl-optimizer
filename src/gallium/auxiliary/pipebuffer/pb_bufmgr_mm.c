@@ -55,10 +55,10 @@ struct mm_pb_manager
    
    pipe_mutex mutex;
    
-   size_t size;
+   pb_size size;
    struct mem_block *heap;
    
-   size_t align2;
+   pb_size align2;
    
    struct pb_buffer *buffer;
    void *map;
@@ -148,7 +148,7 @@ mm_buffer_fence(struct pb_buffer *buf,
 static void
 mm_buffer_get_base_buffer(struct pb_buffer *buf,
                           struct pb_buffer **base_buf,
-                          unsigned *offset)
+                          pb_size *offset)
 {
    struct mm_buffer *mm_buf = mm_buffer(buf);
    struct mm_pb_manager *mm = mm_buf->mgr;
@@ -170,15 +170,15 @@ mm_buffer_vtbl = {
 
 static struct pb_buffer *
 mm_bufmgr_create_buffer(struct pb_manager *mgr, 
-                        size_t size,
+                        pb_size size,
                         const struct pb_desc *desc)
 {
    struct mm_pb_manager *mm = mm_pb_manager(mgr);
    struct mm_buffer *mm_buf;
 
    /* We don't handle alignments larger then the one initially setup */
-   assert(pb_check_alignment(desc->alignment, 1 << mm->align2));
-   if(!pb_check_alignment(desc->alignment, 1 << mm->align2))
+   assert(pb_check_alignment(desc->alignment, (pb_size)1 << mm->align2));
+   if(!pb_check_alignment(desc->alignment, (pb_size)1 << mm->align2))
       return NULL;
    
    pipe_mutex_lock(mm->mutex);
@@ -198,7 +198,7 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
    
    mm_buf->mgr = mm;
    
-   mm_buf->block = u_mmAllocMem(mm->heap, size, mm->align2, 0);
+   mm_buf->block = u_mmAllocMem(mm->heap, (int)size, (int)mm->align2, 0);
    if(!mm_buf->block) {
 #if 0
       debug_printf("warning: heap full\n");
@@ -210,8 +210,8 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
    }
    
    /* Some sanity checks */
-   assert(0 <= (unsigned)mm_buf->block->ofs && (unsigned)mm_buf->block->ofs < mm->size);
-   assert(size <= (unsigned)mm_buf->block->size && (unsigned)mm_buf->block->ofs + (unsigned)mm_buf->block->size <= mm->size);
+   assert(0 <= (pb_size)mm_buf->block->ofs && (pb_size)mm_buf->block->ofs < mm->size);
+   assert(size <= (pb_size)mm_buf->block->size && (pb_size)mm_buf->block->ofs + (pb_size)mm_buf->block->size <= mm->size);
    
    pipe_mutex_unlock(mm->mutex);
    return SUPER(mm_buf);
@@ -245,7 +245,7 @@ mm_bufmgr_destroy(struct pb_manager *mgr)
 
 struct pb_manager *
 mm_bufmgr_create_from_buffer(struct pb_buffer *buffer, 
-                             size_t size, size_t align2) 
+                             pb_size size, pb_size align2) 
 {
    struct mm_pb_manager *mm;
 
@@ -273,7 +273,7 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
    if(!mm->map)
       goto failure;
 
-   mm->heap = u_mmInit(0, size); 
+   mm->heap = u_mmInit(0, (int)size); 
    if (!mm->heap)
       goto failure;
 
@@ -292,7 +292,7 @@ if(mm->heap)
 
 struct pb_manager *
 mm_bufmgr_create(struct pb_manager *provider, 
-                 size_t size, size_t align2) 
+                 pb_size size, pb_size align2) 
 {
    struct pb_buffer *buffer;
    struct pb_manager *mgr;

@@ -5,23 +5,7 @@
 #include "radeon_dma.h"
 #include "radeon_texture.h"
 
-#ifndef HAVE_LIBDRM_RADEON
-#ifndef RADEON_DEBUG_BO
-#define RADEON_DEBUG_BO 1
-#endif
-#endif
-
-#define TRI_CLEAR_COLOR_BITS (BUFFER_BIT_BACK_LEFT |			\
-			      BUFFER_BIT_FRONT_LEFT |			\
-			      BUFFER_BIT_COLOR0 |			\
-			      BUFFER_BIT_COLOR1 |			\
-			      BUFFER_BIT_COLOR2 |			\
-			      BUFFER_BIT_COLOR3 |			\
-			      BUFFER_BIT_COLOR4 |			\
-			      BUFFER_BIT_COLOR5 |			\
-			      BUFFER_BIT_COLOR6 |			\
-			      BUFFER_BIT_COLOR7)
-
+void radeonUserClear(GLcontext *ctx, GLuint mask);
 void radeonRecalcScissorRects(radeonContextPtr radeon);
 void radeonSetCliprects(radeonContextPtr radeon);
 void radeonUpdateScissor( GLcontext *ctx );
@@ -52,10 +36,6 @@ void radeon_get_cliprects(radeonContextPtr radeon,
 			  struct drm_clip_rect **cliprects,
 			  unsigned int *num_cliprects,
 			  int *x_off, int *y_off);
-GLboolean radeon_revalidate_bos(GLcontext *ctx);
-void radeon_validate_bo(radeonContextPtr radeon, struct radeon_bo *bo, uint32_t read_domains, uint32_t write_domain);
-void radeon_validate_reset_bos(radeonContextPtr radeon);
-
 void radeon_fbo_init(struct radeon_context *radeon);
 void
 radeon_renderbuffer_set_bo(struct radeon_renderbuffer *rb,

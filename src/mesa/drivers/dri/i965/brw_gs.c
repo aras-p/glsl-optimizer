@@ -54,12 +54,17 @@ static void compile_gs_prog( struct brw_context *brw,
    memset(&c, 0, sizeof(c));
    
    c.key = *key;
-
+   c.need_ff_sync = BRW_IS_IGDNG(brw);
    /* Need to locate the two positions present in vertex + header.
     * These are currently hardcoded:
     */
    c.nr_attrs = brw_count_bits(c.key.attrs);
-   c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
+
+   if (BRW_IS_IGDNG(brw))
+       c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
+   else
+       c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
+
    c.nr_bytes = c.nr_regs * REG_SIZE;
 
    

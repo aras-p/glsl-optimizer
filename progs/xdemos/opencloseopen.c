@@ -158,7 +158,7 @@ main(int argc, char *argv[])
    Display *dpy;
    Window win;
    GLXContext ctx;
-   char *dpyName = ":0";
+   char *dpyName = NULL;
    int i;
 
    for (i = 1; i < argc; i++) {

@@ -583,10 +583,14 @@ ParseOptions(int argc, char *argv[])
    int i;
    for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "-fs") == 0) {
-         FragProgFile = argv[i+1];
+         FragProgFile = argv[++i];
       }
       else if (strcmp(argv[i], "-vs") == 0) {
-         VertProgFile = argv[i+1];
+         VertProgFile = argv[++i];
+      }
+      else {
+         fprintf(stderr, "unknown option %s\n", argv[i]);
+         break;
       }
    }
 }

@@ -50,4 +50,10 @@ stw_tls_cleanup(void);
 struct stw_tls_data *
 stw_tls_get_data(void);
 
+LRESULT CALLBACK
+stw_call_window_proc(
+   int nCode,
+   WPARAM wParam,
+   LPARAM lParam );
+
 #endif /* STW_TLS_H */

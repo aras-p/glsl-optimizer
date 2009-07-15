@@ -1,0 +1,55 @@
+Import('*')
+
+if not env['GLUT']:
+    Return()
+
+env = env.Clone()
+
+env.Prepend(CPPPATH = [
+	'../util',
+])
+
+env.Prepend(LIBS = [
+	util,
+	'$GLUT_LIB'
+])
+
+if env['platform'] == 'windows':
+    env.Append(CPPDEFINES = ['NOMINMAX'])
+    env.Prepend(LIBS = ['winmm'])
+
+progs = [
+      'array',
+      'bitmap',
+      'brick',
+      'bump',
+      'convolutions',
+      'deriv',
+      'fragcoord',
+      'identity',
+      'linktest',
+      'mandelbrot',
+      'multinoise',
+      'multitex',
+      'noise',
+      'noise2',
+      'pointcoord',
+      'points',
+      'samplers',
+      'shadow_sampler',
+      'skinning',
+      'texaaline',
+      'texdemo1',
+      'toyball',
+      'trirast',
+      'twoside',
+      'vert-or-frag-only',
+      'vert-tex',
+]
+
+for prog in progs:
+    env.Program(
+        target = prog,
+        source = prog + '.c',
+    )
+    

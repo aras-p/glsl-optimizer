@@ -55,7 +55,7 @@ struct pb_ondemand_buffer
    
    /** Real buffer */
    struct pb_buffer *buffer;
-   size_t size;
+   pb_size size;
    struct pb_desc desc;
 };
 
@@ -74,6 +74,8 @@ static INLINE struct pb_ondemand_buffer *
 pb_ondemand_buffer(struct pb_buffer *buf)
 {
    assert(buf);
+   if (!buf)
+      return NULL;
    assert(buf->vtbl == &pb_ondemand_buffer_vtbl);
    return (struct pb_ondemand_buffer *)buf;
 }
@@ -204,7 +206,7 @@ pb_ondemand_buffer_fence(struct pb_buffer *_buf,
 static void
 pb_ondemand_buffer_get_base_buffer(struct pb_buffer *_buf,
                                    struct pb_buffer **base_buf,
-                                   unsigned *offset)
+                                   pb_size *offset)
 {
    struct pb_ondemand_buffer *buf = pb_ondemand_buffer(_buf);
 
@@ -232,7 +234,7 @@ pb_ondemand_buffer_vtbl = {
 
 static struct pb_buffer *
 pb_ondemand_manager_create_buffer(struct pb_manager *_mgr, 
-                                  size_t size,
+                                  pb_size size,
                                   const struct pb_desc *desc) 
 {
    struct pb_ondemand_manager *mgr = pb_ondemand_manager(_mgr);

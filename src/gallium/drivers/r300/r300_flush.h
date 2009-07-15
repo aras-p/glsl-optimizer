@@ -23,6 +23,8 @@
 #ifndef R300_FLUSH_H
 #define R300_FLUSH_H
 
+#include "draw/draw_private.h"
+
 #include "pipe/p_context.h"
 
 #include "r300_context.h"

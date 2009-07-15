@@ -108,6 +108,8 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 CMD = XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       }
 
+      assert(src->tiling != I915_TILING_Y);
+      assert(dst->tiling != I915_TILING_Y);
 #ifndef I915
       if (src->tiling != I915_TILING_NONE) {
 	 CMD |= XY_SRC_TILED;
@@ -175,66 +177,6 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
    UNLOCK_HARDWARE(intel);
 }
 
-
-
-
-void
-intelEmitFillBlit(struct intel_context *intel,
-		  GLuint cpp,
-		  GLshort dst_pitch,
-		  dri_bo *dst_buffer,
-		  GLuint dst_offset,
-		  uint32_t dst_tiling,
-		  GLshort x, GLshort y,
-		  GLshort w, GLshort h,
-		  GLuint color)
-{
-   GLuint BR13, CMD;
-   BATCH_LOCALS;
-
-   dst_pitch *= cpp;
-
-   switch (cpp) {
-   case 1:
-      BR13 = (0xF0 << 16);
-      CMD = XY_COLOR_BLT_CMD;
-      break;
-   case 2:
-      BR13 = (0xF0 << 16) | BR13_565;
-      CMD = XY_COLOR_BLT_CMD;
-      break;
-   case 4:
-      BR13 = (0xF0 << 16) | BR13_8888;
-      CMD = XY_COLOR_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
-      break;
-   default:
-      return;
-   }
-#ifndef I915
-   if (dst_tiling != I915_TILING_NONE) {
-      CMD |= XY_DST_TILED;
-      dst_pitch /= 4;
-   }
-#endif
-
-   DBG("%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
-       __FUNCTION__, dst_buffer, dst_pitch, dst_offset, x, y, w, h);
-
-   assert(w > 0);
-   assert(h > 0);
-
-   BEGIN_BATCH(6, NO_LOOP_CLIPRECTS);
-   OUT_BATCH(CMD);
-   OUT_BATCH(BR13 | dst_pitch);
-   OUT_BATCH((y << 16) | x);
-   OUT_BATCH(((y + h) << 16) | (x + w));
-   OUT_RELOC(dst_buffer,
-	     I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-	     dst_offset);
-   OUT_BATCH(color);
-   ADVANCE_BATCH();
-}
-
 static GLuint translate_raster_op(GLenum logicop)
 {
    switch(logicop) {
@@ -261,7 +203,7 @@ static GLuint translate_raster_op(GLenum logicop)
 
 /* Copy BitBlt
  */
-void
+GLboolean
 intelEmitCopyBlit(struct intel_context *intel,
 		  GLuint cpp,
 		  GLshort src_pitch,
@@ -283,6 +225,19 @@ intelEmitCopyBlit(struct intel_context *intel,
    dri_bo *aper_array[3];
    BATCH_LOCALS;
 
+   if (dst_tiling != I915_TILING_NONE) {
+      if (dst_offset & 4095)
+	 return GL_FALSE;
+      if (dst_tiling == I915_TILING_Y)
+	 return GL_FALSE;
+   }
+   if (src_tiling != I915_TILING_NONE) {
+      if (src_offset & 4095)
+	 return GL_FALSE;
+      if (src_tiling == I915_TILING_Y)
+	 return GL_FALSE;
+   }
+
    /* do space/cliprects check before going any further */
    do {
        aper_array[0] = intel->batch->buf;
@@ -297,12 +252,7 @@ intelEmitCopyBlit(struct intel_context *intel,
    } while (pass < 2);
 
    if (pass >= 2) {
-       GLboolean locked = GL_FALSE;       
-       if (!intel->locked) {
-           LOCK_HARDWARE(intel);
-           locked = GL_TRUE;
-       }
-
+       LOCK_HARDWARE(intel);
        dri_bo_map(dst_buffer, GL_TRUE);
        dri_bo_map(src_buffer, GL_FALSE);
        _mesa_copy_rect((GLubyte *)dst_buffer->virtual + dst_offset,
@@ -316,11 +266,9 @@ intelEmitCopyBlit(struct intel_context *intel,
        
        dri_bo_unmap(src_buffer);
        dri_bo_unmap(dst_buffer);
-       
-       if (locked)
-           UNLOCK_HARDWARE(intel);
+       UNLOCK_HARDWARE(intel);
 
-       return;
+       return GL_TRUE;
    }
 
    intel_batchbuffer_require_space(intel->batch, 8 * 4, NO_LOOP_CLIPRECTS);
@@ -347,7 +295,7 @@ intelEmitCopyBlit(struct intel_context *intel,
       CMD = XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       break;
    default:
-      return;
+      return GL_FALSE;
    }
 
 #ifndef I915
@@ -362,7 +310,7 @@ intelEmitCopyBlit(struct intel_context *intel,
 #endif
 
    if (dst_y2 <= dst_y || dst_x2 <= dst_x) {
-      return;
+      return GL_TRUE;
    }
 
    assert(dst_x < dst_x2);
@@ -384,6 +332,8 @@ intelEmitCopyBlit(struct intel_context *intel,
    ADVANCE_BATCH();
 
    intel_batchbuffer_emit_mi_flush(intel->batch);
+
+   return GL_TRUE;
 }
 
 
@@ -596,7 +546,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
    UNLOCK_HARDWARE(intel);
 }
 
-void
+GLboolean
 intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				  GLuint cpp,
 				  GLubyte *src_bits, GLuint src_size,
@@ -612,11 +562,18 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    int dwords = ALIGN(src_size, 8) / 4;
    uint32_t opcode, br13, blit_cmd;
 
+   if (dst_tiling != I915_TILING_NONE) {
+      if (dst_offset & 4095)
+	 return GL_FALSE;
+      if (dst_tiling == I915_TILING_Y)
+	 return GL_FALSE;
+   }
+
    assert( logic_op - GL_CLEAR >= 0 );
    assert( logic_op - GL_CLEAR < 0x10 );
 
    if (w < 0 || h < 0)
-      return;
+      return GL_TRUE;
 
    dst_pitch *= cpp;
 
@@ -673,4 +630,6 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 			   REFERENCES_CLIPRECTS );
 
    intel_batchbuffer_emit_mi_flush(intel->batch);
+
+   return GL_TRUE;
 }

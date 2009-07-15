@@ -13,6 +13,10 @@ ifeq ($(USING_EGL), 1)
 EGL_SOURCES = server/radeon_egl.c
 endif
 
+ifeq ($(RADEON_LDFLAGS),)
+CS_SOURCES = radeon_cs_space_drm.c
+endif
+
 COMMON_SOURCES = \
 	../../common/driverfuncs.c \
 	../common/mm.c \
@@ -59,7 +63,8 @@ DRIVER_SOURCES = \
 		 r300_emit.c \
 		 r300_swtcl.c \
 		 $(RADEON_COMMON_SOURCES) \
-		 $(EGL_SOURCES)
+		 $(EGL_SOURCES) \
+		 $(CS_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
@@ -100,7 +105,8 @@ COMMON_SYMLINKS = \
 	radeon_mipmap_tree.h \
 	radeon_texture.c \
 	radeon_texture.h \
-	radeon_fbo.c
+	radeon_fbo.c \
+	$(CS_SOURCES)
 
 DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 

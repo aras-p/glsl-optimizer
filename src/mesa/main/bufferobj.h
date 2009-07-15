@@ -42,11 +42,6 @@ _mesa_init_buffer_objects( GLcontext *ctx );
 extern void
 _mesa_update_default_objects_buffer_objects(GLcontext *ctx);
 
-extern struct gl_buffer_object *
-_mesa_new_buffer_object( GLcontext *ctx, GLuint name, GLenum target );
-
-extern void
-_mesa_delete_buffer_object( GLcontext *ctx, struct gl_buffer_object *bufObj );
 
 extern struct gl_buffer_object *
 _mesa_lookup_bufferobj(GLcontext *ctx, GLuint buffer);
@@ -59,36 +54,6 @@ extern void
 _mesa_reference_buffer_object(GLcontext *ctx,
                               struct gl_buffer_object **ptr,
                               struct gl_buffer_object *bufObj);
-
-extern void
-_mesa_buffer_data( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
-		   const GLvoid * data, GLenum usage,
-		   struct gl_buffer_object * bufObj );
-
-extern void
-_mesa_buffer_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
-		      GLsizeiptrARB size, const GLvoid * data,
-		      struct gl_buffer_object * bufObj );
-
-extern void
-_mesa_buffer_get_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
-			  GLsizeiptrARB size, GLvoid * data,
-			  struct gl_buffer_object * bufObj );
-
-extern void *
-_mesa_buffer_map( GLcontext *ctx, GLenum target, GLenum access,
-		  struct gl_buffer_object * bufObj );
-
-extern GLboolean
-_mesa_buffer_unmap( GLcontext *ctx, GLenum target,
-                    struct gl_buffer_object * bufObj );
-
-extern void
-_mesa_copy_buffer_subdata(GLcontext *ctx,
-                          struct gl_buffer_object *src,
-                          struct gl_buffer_object *dst,
-                          GLintptr readOffset, GLintptr writeOffset,
-                          GLsizeiptr size);
 
 extern GLboolean
 _mesa_validate_pbo_access(GLuint dimensions,
@@ -123,6 +88,9 @@ extern void
 _mesa_unmap_readpix_pbo(GLcontext *ctx,
                         const struct gl_pixelstore_attrib *pack);
 
+
+extern void
+_mesa_init_buffer_object_functions(struct dd_function_table *driver);
 
 
 /*
@@ -166,5 +134,12 @@ extern void GLAPIENTRY
 _mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
                         GLintptr readOffset, GLintptr writeOffset,
                         GLsizeiptr size);
+
+extern void * GLAPIENTRY
+_mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
+                     GLbitfield access);
+
+extern void GLAPIENTRY
+_mesa_FlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length);
 
 #endif

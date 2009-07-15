@@ -168,7 +168,7 @@ ppc_allocate_register(struct ppc_function *p)
 {
    unsigned i;
    for (i = 0; i < PPC_NUM_REGS; i++) {
-      const uint64_t mask = 1 << i;
+      const uint32_t mask = 1 << i;
       if ((p->reg_used & mask) == 0) {
          p->reg_used |= mask;
          return i;
@@ -200,7 +200,7 @@ ppc_allocate_fp_register(struct ppc_function *p)
 {
    unsigned i;
    for (i = 0; i < PPC_NUM_FP_REGS; i++) {
-      const uint64_t mask = 1 << i;
+      const uint32_t mask = 1 << i;
       if ((p->fp_used & mask) == 0) {
          p->fp_used |= mask;
          return i;
@@ -232,7 +232,7 @@ ppc_allocate_vec_register(struct ppc_function *p)
 {
    unsigned i;
    for (i = 0; i < PPC_NUM_VEC_REGS; i++) {
-      const uint64_t mask = 1 << i;
+      const uint32_t mask = 1 << i;
       if ((p->vec_used & mask) == 0) {
          p->vec_used |= mask;
          return i;

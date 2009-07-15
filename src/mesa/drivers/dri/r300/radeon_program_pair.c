@@ -870,7 +870,7 @@ GLboolean radeonPairProgram(GLcontext *ctx, struct gl_program *program,
 
 	_mesa_bzero(&s, sizeof(s));
 	s.Ctx = ctx;
-	s.Program = program;
+	s.Program = _mesa_clone_program(ctx, program);
 	s.Handler = handler;
 	s.UserData = userdata;
 	s.Debug = (RADEON_DEBUG & DEBUG_PIXEL) ? GL_TRUE : GL_FALSE;
@@ -903,6 +903,8 @@ GLboolean radeonPairProgram(GLcontext *ctx, struct gl_program *program,
 	_mesa_free(s.Instructions);
 	_mesa_free(s.ValuePool);
 	_mesa_free(s.ReaderPool);
+
+	_mesa_reference_program(ctx, &s.Program, NULL);
 
 	return !s.Error;
 }

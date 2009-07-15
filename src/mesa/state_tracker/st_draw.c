@@ -229,8 +229,10 @@ setup_edgeflags(GLcontext *ctx, GLenum primMode, GLint start, GLint count,
       struct st_buffer_object *stobj = st_buffer_object(array->BufferObj);
       ubyte *map;
 
-      if (!stobj)
+      if (!stobj || stobj->Base.Name == 0) {
+         /* edge flags are not in a VBO */
          return NULL;
+      }
 
       vec = (unsigned *) _mesa_calloc(sizeof(unsigned) * ((count + 31) / 32));
       if (!vec)

@@ -484,8 +484,17 @@ static void ctx_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    atom->cmd[CTX_RB3D_CNTL] &= ~(0xf << 10);
    if (rrb->cpp == 4)
 	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB8888;
-   else
+   else switch (rrb->base._ActualFormat) {
+   case GL_RGB5:
 	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_RGB565;
+	break;
+   case GL_RGBA4:
+	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB4444;
+	break;
+   case GL_RGB5_A1:
+	atom->cmd[CTX_RB3D_CNTL] |= RADEON_COLOR_FORMAT_ARGB1555;
+	break;
+   }
 
    cbpitch = (rrb->pitch / rrb->cpp);
    if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
@@ -585,6 +594,8 @@ static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
    radeon_mipmap_level *lvl;
    int hastexture = 1;
 
+   if (!r200->state.texture.unit[i].unitneeded)
+        hastexture = 0;
    if (!t)
 	hastexture = 0;
    else {
@@ -617,6 +628,30 @@ static void tex_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
 
 
 static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   uint32_t dwords = 3;
+   int i = atom->idx, j;
+   radeonTexObj *t = r200->state.texture.unit[i].texobj;
+   radeon_mipmap_level *lvl;
+
+   BEGIN_BATCH_NO_AUTOSTATE(dwords + (3 * 5));
+   /* XXX that size won't really match with image_override... */
+   OUT_BATCH_TABLE(atom->cmd, 2);
+
+   if (t && !t->image_override) {
+     lvl = &t->mt->levels[0];
+     OUT_BATCH_TABLE((atom->cmd + 2), 1);
+     for (j = 1; j <= 5; j++) {
+       OUT_BATCH_RELOC(lvl->faces[j].offset, t->mt->bo, lvl->faces[j].offset,
+			RADEON_GEM_DOMAIN_VRAM, 0, 0);
+     }
+   }
+   END_BATCH();
+}
+
+static void cube_emit_cs(GLcontext *ctx, struct radeon_state_atom *atom)
 {
    r200ContextPtr r200 = R200_CONTEXT(ctx);
    BATCH_LOCALS(&r200->radeon);
@@ -752,7 +787,10 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( cube[4], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
       ALLOC_STATE( cube[5], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
       for (i = 0; i < 5; i++)
-	rmesa->hw.cube[i].emit = cube_emit;
+          if (rmesa->radeon.radeonScreen->kernel_mm)
+              rmesa->hw.cube[i].emit = cube_emit_cs;
+          else
+              rmesa->hw.cube[i].emit = cube_emit;
    }
    else {
       ALLOC_STATE( cube[0], never, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );

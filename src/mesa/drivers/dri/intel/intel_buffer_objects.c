@@ -243,6 +243,9 @@ intel_bufferobj_map(GLcontext * ctx,
       return obj->Pointer;
    }
 
+   if (!read_only)
+      intelFlush(ctx);
+
    if (intel_obj->region)
       intel_bufferobj_cow(intel, intel_obj);
 
@@ -274,7 +277,10 @@ intel_bufferobj_unmap(GLcontext * ctx,
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
-   if (intel_obj->buffer != NULL) {
+   if (intel_obj->sys_buffer != NULL) {
+      assert(obj->Pointer);
+      obj->Pointer = NULL;
+   } else if (intel_obj->buffer != NULL) {
       assert(obj->Pointer);
       if (intel_obj->mapped_gtt) {
 	 drm_intel_gem_bo_unmap_gtt(intel_obj->buffer);
@@ -300,14 +306,19 @@ intel_bufferobj_buffer(struct intel_context *intel,
    }
 
    if (intel_obj->buffer == NULL) {
+      void *sys_buffer = intel_obj->sys_buffer;
+
+      /* only one of buffer and sys_buffer could be non-NULL */
       intel_bufferobj_alloc_buffer(intel, intel_obj);
+      intel_obj->sys_buffer = NULL;
+
       intel_bufferobj_subdata(&intel->ctx,
 			      GL_ARRAY_BUFFER_ARB,
 			      0,
 			      intel_obj->Base.Size,
-			      intel_obj->sys_buffer,
+			      sys_buffer,
 			      &intel_obj->Base);
-      _mesa_free(intel_obj->sys_buffer);
+      _mesa_free(sys_buffer);
       intel_obj->sys_buffer = NULL;
    }
 
@@ -315,15 +326,13 @@ intel_bufferobj_buffer(struct intel_context *intel,
 }
 
 void
-intel_bufferobj_init(struct intel_context *intel)
+intelInitBufferObjectFuncs(struct dd_function_table *functions)
 {
-   GLcontext *ctx = &intel->ctx;
-
-   ctx->Driver.NewBufferObject = intel_bufferobj_alloc;
-   ctx->Driver.DeleteBuffer = intel_bufferobj_free;
-   ctx->Driver.BufferData = intel_bufferobj_data;
-   ctx->Driver.BufferSubData = intel_bufferobj_subdata;
-   ctx->Driver.GetBufferSubData = intel_bufferobj_get_subdata;
-   ctx->Driver.MapBuffer = intel_bufferobj_map;
-   ctx->Driver.UnmapBuffer = intel_bufferobj_unmap;
+   functions->NewBufferObject = intel_bufferobj_alloc;
+   functions->DeleteBuffer = intel_bufferobj_free;
+   functions->BufferData = intel_bufferobj_data;
+   functions->BufferSubData = intel_bufferobj_subdata;
+   functions->GetBufferSubData = intel_bufferobj_get_subdata;
+   functions->MapBuffer = intel_bufferobj_map;
+   functions->UnmapBuffer = intel_bufferobj_unmap;
 }

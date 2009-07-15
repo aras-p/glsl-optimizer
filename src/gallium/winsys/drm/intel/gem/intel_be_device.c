@@ -142,8 +142,27 @@ err:
 	return NULL;
 }
 
+boolean
+intel_be_get_texture_buffer(struct drm_api *api,
+                            struct pipe_texture *texture,
+                            struct pipe_buffer **buffer,
+                            unsigned *stride)
+{
+	struct intel_be_device *dev;
+
+	if (!texture)
+		return FALSE;
+
+	dev = intel_be_device(texture->screen->winsys);
+	if (dev->softpipe)
+		return softpipe_get_texture_buffer(texture, buffer, stride);
+	else
+		return i915_get_texture_buffer(texture, buffer, stride);
+}
+
 struct pipe_buffer *
-intel_be_buffer_from_handle(struct pipe_screen *screen,
+intel_be_buffer_from_handle(struct drm_api *api,
+                            struct pipe_screen *screen,
                             const char* name, unsigned handle)
 {
 	struct intel_be_device *dev = intel_be_device(screen->winsys);
@@ -174,7 +193,8 @@ err:
 }
 
 boolean
-intel_be_handle_from_buffer(struct pipe_screen *screen,
+intel_be_handle_from_buffer(struct drm_api *api,
+                            struct pipe_screen *screen,
                             struct pipe_buffer *buffer,
                             unsigned *handle)
 {
@@ -186,7 +206,8 @@ intel_be_handle_from_buffer(struct pipe_screen *screen,
 }
 
 boolean
-intel_be_global_handle_from_buffer(struct pipe_screen *screen,
+intel_be_global_handle_from_buffer(struct drm_api *api,
+                                   struct pipe_screen *screen,
 				   struct pipe_buffer *buffer,
 				   unsigned *handle)
 {
@@ -296,6 +317,7 @@ intel_be_get_device_id(unsigned int *device_id)
 {
    char path[512];
    FILE *file;
+   void *shutup_gcc;
 
    /*
     * FIXME: Fix this up to use a drm ioctl or whatever.
@@ -307,13 +329,14 @@ intel_be_get_device_id(unsigned int *device_id)
       return;
    }
 
-   fgets(path, sizeof(path), file);
+   shutup_gcc = fgets(path, sizeof(path), file);
    sscanf(path, "%x", device_id);
    fclose(file);
 }
 
 struct pipe_screen *
-intel_be_create_screen(int drmFD, struct drm_create_screen_arg *arg)
+intel_be_create_screen(struct drm_api *api, int drmFD,
+		       struct drm_create_screen_arg *arg)
 {
 	struct intel_be_device *dev;
 	struct pipe_screen *screen;
@@ -339,7 +362,6 @@ intel_be_create_screen(int drmFD, struct drm_create_screen_arg *arg)
 
 	if (dev->softpipe) {
 		screen = softpipe_create_screen(&dev->base);
-		drm_api_hooks.buffer_from_texture = softpipe_get_texture_buffer;
 	} else
 		screen = i915_create_screen(&dev->base, deviceID);
 

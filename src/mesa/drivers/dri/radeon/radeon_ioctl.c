@@ -445,11 +445,6 @@ void radeonEmitAOS( r100ContextPtr rmesa,
  */
 #define RADEON_MAX_CLEARS	256
 
-static void radeonUserClear(GLcontext *ctx, GLuint mask)
-{
-   radeon_clear_tris(ctx, mask);
-}
-
 static void radeonKernelClear(GLcontext *ctx, GLuint flags)
 {
      r100ContextPtr rmesa = R100_CONTEXT(ctx);

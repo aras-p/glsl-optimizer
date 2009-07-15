@@ -272,6 +272,12 @@ do_blit_copypixels(GLcontext * ctx,
    drm_clip_rect_t *cliprects;
    int x_off, y_off;
 
+   if (type == GL_DEPTH || type == GL_STENCIL) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "glCopyPixels() fallback: GL_DEPTH || GL_STENCIL\n");
+      return GL_FALSE;
+   }
+
    /* Update draw buffer bounds */
    _mesa_update_state(ctx);
 
@@ -362,14 +368,16 @@ do_blit_copypixels(GLcontext * ctx,
 				   &clip_x, &clip_y, &clip_w, &clip_h))
             continue;
 
-         intelEmitCopyBlit(intel, dst->cpp,
-			   src->pitch, src->buffer, 0, src->tiling,
-			   dst->pitch, dst->buffer, 0, dst->tiling,
-			   clip_x + delta_x, clip_y + delta_y, /* srcx, srcy */
-			   clip_x, clip_y, /* dstx, dsty */
-			   clip_w, clip_h,
-			   ctx->Color.ColorLogicOpEnabled ?
-			   ctx->Color.LogicOp : GL_COPY);
+	 if (!intel_region_copy(intel,
+				dst, 0, clip_x, clip_y,
+				src, 0, clip_x + delta_x, clip_y + delta_y,
+				clip_w, clip_h,
+				ctx->Color.ColorLogicOpEnabled ?
+				ctx->Color.LogicOp : GL_COPY)) {
+	    DBG("%s: blit failure\n", __FUNCTION__);
+	    UNLOCK_HARDWARE(intel);
+	    return GL_FALSE;
+	 }
       }
    }
 out:

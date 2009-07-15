@@ -31,8 +31,8 @@
 #include "r300_context.h"
 #include "r300_cs.h"
 #include "r300_emit.h"
-#include "r300_state_shader.h"
-#include "r300_state_tcl.h"
+#include "r300_fs.h"
+#include "r300_vs.h"
 #include "r300_state_inlines.h"
 
 static struct r300_blend_state blend_clear_state = {
@@ -72,7 +72,7 @@ static struct r300_rs_state rs_clear_state = {
     .color_control = R300_SHADE_MODEL_FLAT,
 };
 
-static struct r300_rs_block r300_rs_block_clear_state = {
+static struct r300_rs_block r3xx_rs_block_clear_state = {
     .ip[0] = R500_RS_SEL_S(R300_RS_SEL_K0) |
         R500_RS_SEL_T(R300_RS_SEL_K0) |
         R500_RS_SEL_R(R300_RS_SEL_K0) |
@@ -82,7 +82,7 @@ static struct r300_rs_block r300_rs_block_clear_state = {
     .inst_count = 0,
 };
 
-static struct r300_rs_block r500_rs_block_clear_state = {
+static struct r300_rs_block r5xx_rs_block_clear_state = {
     .ip[0] = R500_RS_SEL_S(R500_RS_IP_PTR_K0) |
         R500_RS_SEL_T(R500_RS_IP_PTR_K0) |
         R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
@@ -94,7 +94,7 @@ static struct r300_rs_block r500_rs_block_clear_state = {
 
 /* The following state is used for surface_copy only. */
 
-static struct r300_rs_block r300_rs_block_copy_state = {
+static struct r300_rs_block r3xx_rs_block_copy_state = {
     .ip[0] = R500_RS_SEL_S(R300_RS_SEL_K0) |
         R500_RS_SEL_T(R300_RS_SEL_K0) |
         R500_RS_SEL_R(R300_RS_SEL_K0) |
@@ -104,7 +104,7 @@ static struct r300_rs_block r300_rs_block_copy_state = {
     .inst_count = R300_RS_TX_OFFSET(0),
 };
 
-static struct r300_rs_block r500_rs_block_copy_state = {
+static struct r300_rs_block r5xx_rs_block_copy_state = {
     .ip[0] = R500_RS_SEL_S(0) |
         R500_RS_SEL_T(1) |
         R500_RS_SEL_R(R500_RS_IP_PTR_K0) |

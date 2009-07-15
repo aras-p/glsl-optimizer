@@ -118,21 +118,39 @@ static void FUNC( struct draw_pt_front_end *frontend,
 
    case PIPE_PRIM_QUADS:
       for (i = 0; i+3 < count; i += 4) {
-         QUAD( vcache,
-               get_elt(elts, i + 0),
-               get_elt(elts, i + 1),
-               get_elt(elts, i + 2),
-               get_elt(elts, i + 3));
+         if (flatfirst) {
+            QUAD( vcache,
+                  get_elt(elts, i + 0),
+                  get_elt(elts, i + 1),
+                  get_elt(elts, i + 2),
+                  get_elt(elts, i + 3) );
+         }
+         else {
+            QUAD( vcache,
+                  get_elt(elts, i + 0),
+                  get_elt(elts, i + 1),
+                  get_elt(elts, i + 2),
+                  get_elt(elts, i + 3) );
+         }
       }
       break;
 
    case PIPE_PRIM_QUAD_STRIP:
       for (i = 0; i+3 < count; i += 2) {
-         QUAD( vcache,
-               get_elt(elts, i + 2),
-               get_elt(elts, i + 0),
-               get_elt(elts, i + 1),
-               get_elt(elts, i + 3));
+         if (flatfirst) {
+            QUAD( vcache,
+                  get_elt(elts, i + 0),
+                  get_elt(elts, i + 1),
+                  get_elt(elts, i + 3),
+                  get_elt(elts, i + 2) );
+         }
+         else {
+            QUAD( vcache,
+                  get_elt(elts, i + 2),
+                  get_elt(elts, i + 0),
+                  get_elt(elts, i + 1),
+                  get_elt(elts, i + 3) );
+         }
       }
       break;
 
@@ -144,19 +162,38 @@ static void FUNC( struct draw_pt_front_end *frontend,
          const ushort edge_first  = DRAW_PIPE_EDGE_FLAG_2;
          const ushort edge_middle = DRAW_PIPE_EDGE_FLAG_0;
          const ushort edge_last   = DRAW_PIPE_EDGE_FLAG_1;
+         ushort edge_next, edge_finish;
 
-         flags = DRAW_PIPE_RESET_STIPPLE | edge_first | edge_middle;
+         if (flatfirst) {
+            flags = DRAW_PIPE_RESET_STIPPLE | edge_middle | edge_last;
+            edge_next = edge_last;
+            edge_finish = edge_first;
+         }
+         else {
+            flags = DRAW_PIPE_RESET_STIPPLE | edge_first | edge_middle;
+            edge_next = edge_middle;
+            edge_finish = edge_last;
+         }
 
-	 for (i = 0; i+2 < count; i++, flags = edge_middle) {
+	 for (i = 0; i+2 < count; i++, flags = edge_next) {
 
             if (i + 3 == count)
-               flags |= edge_last;
+               flags |= edge_finish;
 
-	    TRIANGLE( vcache,
-                      flags,
-                      get_elt(elts, i + 1),
-                      get_elt(elts, i + 2),
-                      get_elt(elts, 0));
+            if (flatfirst) {
+               TRIANGLE( vcache,
+                         flags,
+                         get_elt(elts, 0),
+                         get_elt(elts, i + 1),
+                         get_elt(elts, i + 2) );
+            }
+            else {
+               TRIANGLE( vcache,
+                         flags,
+                         get_elt(elts, i + 1),
+                         get_elt(elts, i + 2),
+                         get_elt(elts, 0));
+            }
 	 }
       }
       break;

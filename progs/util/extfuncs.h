@@ -95,6 +95,47 @@ static PFNGLBUFFERSUBDATAARBPROC glBufferSubDataARB_func = NULL;
 static PFNGLMAPBUFFERARBPROC glMapBufferARB_func = NULL;
 static PFNGLUNMAPBUFFERARBPROC glUnmapBufferARB_func = NULL;
 
+/* GL_EXT_framebuffer_object */
+static PFNGLISRENDERBUFFEREXTPROC glIsRenderbufferEXT_func = NULL;
+static PFNGLBINDRENDERBUFFEREXTPROC glBindRenderbufferEXT_func = NULL;
+static PFNGLDELETERENDERBUFFERSEXTPROC glDeleteRenderbuffersEXT_func = NULL;
+static PFNGLGENRENDERBUFFERSEXTPROC glGenRenderbuffersEXT_func = NULL;
+static PFNGLRENDERBUFFERSTORAGEEXTPROC glRenderbufferStorageEXT_func = NULL;
+static PFNGLGETRENDERBUFFERPARAMETERIVEXTPROC glGetRenderbufferParameterivEXT_func = NULL;
+static PFNGLISFRAMEBUFFEREXTPROC glIsFramebufferEXT_func = NULL;
+static PFNGLBINDFRAMEBUFFEREXTPROC glBindFramebufferEXT_func = NULL;
+static PFNGLDELETEFRAMEBUFFERSEXTPROC glDeleteFramebuffersEXT_func = NULL;
+static PFNGLGENFRAMEBUFFERSEXTPROC glGenFramebuffersEXT_func = NULL;
+static PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC glCheckFramebufferStatusEXT_func = NULL;
+static PFNGLFRAMEBUFFERTEXTURE1DEXTPROC glFramebufferTexture1DEXT_func = NULL;
+static PFNGLFRAMEBUFFERTEXTURE2DEXTPROC glFramebufferTexture2DEXT_func = NULL;
+static PFNGLFRAMEBUFFERTEXTURE3DEXTPROC glFramebufferTexture3DEXT_func = NULL;
+static PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC glFramebufferRenderbufferEXT_func = NULL;
+static PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC glGetFramebufferAttachmentParameterivEXT_func = NULL;
+static PFNGLGENERATEMIPMAPEXTPROC glGenerateMipmapEXT_func = NULL;
+
+/* GL_ARB_framebuffer_object */
+static PFNGLISRENDERBUFFERPROC glIsRenderbuffer_func = NULL;
+static PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer_func = NULL;
+static PFNGLDELETERENDERBUFFERSPROC glDeleteRenderbuffers_func = NULL;
+static PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers_func = NULL;
+static PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage_func = NULL;
+static PFNGLGETRENDERBUFFERPARAMETERIVPROC glGetRenderbufferParameteriv_func = NULL;
+static PFNGLISFRAMEBUFFERPROC glIsFramebuffer_func = NULL;
+static PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer_func = NULL;
+static PFNGLDELETEFRAMEBUFFERSPROC glDeleteFramebuffers_func = NULL;
+static PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers_func = NULL;
+static PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus_func = NULL;
+static PFNGLFRAMEBUFFERTEXTURE1DPROC glFramebufferTexture1D_func = NULL;
+static PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D_func = NULL;
+static PFNGLFRAMEBUFFERTEXTURE3DPROC glFramebufferTexture3D_func = NULL;
+static PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer_func = NULL;
+static PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC glGetFramebufferAttachmentParameteriv_func = NULL;
+static PFNGLGENERATEMIPMAPPROC glGenerateMipmap_func = NULL;
+static PFNGLBLITFRAMEBUFFERPROC glBlitFramebuffer_func = NULL;
+static PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC glRenderbufferStorageMultisample_func = NULL;
+static PFNGLFRAMEBUFFERTEXTURELAYERPROC glFramebufferTextureLayer_func = NULL;
+
 
 static void
 GetExtensionFuncs(void)
@@ -192,5 +233,45 @@ GetExtensionFuncs(void)
    glMapBufferARB_func = (PFNGLMAPBUFFERARBPROC) glutGetProcAddress("glMapBufferARB");
    glUnmapBufferARB_func = (PFNGLUNMAPBUFFERARBPROC) glutGetProcAddress("glUnmapBufferARB");
 
+   /* GL_EXT_framebuffer_object */
+   glIsRenderbufferEXT_func = (PFNGLISRENDERBUFFEREXTPROC) glutGetProcAddress("glIsRenderbufferEXT");
+   glBindRenderbufferEXT_func = (PFNGLBINDRENDERBUFFEREXTPROC) glutGetProcAddress("glBindRenderbufferEXT");
+   glDeleteRenderbuffersEXT_func = (PFNGLDELETERENDERBUFFERSEXTPROC) glutGetProcAddress("glDeleteRenderbuffersEXT");
+   glGenRenderbuffersEXT_func = (PFNGLGENRENDERBUFFERSEXTPROC) glutGetProcAddress("glGenRenderbuffersEXT");
+   glRenderbufferStorageEXT_func = (PFNGLRENDERBUFFERSTORAGEEXTPROC) glutGetProcAddress("glRenderbufferStorageEXT");
+   glGetRenderbufferParameterivEXT_func = (PFNGLGETRENDERBUFFERPARAMETERIVEXTPROC) glutGetProcAddress("glGetRenderbufferParameterivEXT");
+   glIsFramebufferEXT_func = (PFNGLISFRAMEBUFFEREXTPROC) glutGetProcAddress("glIsFramebufferEXT");
+   glBindFramebufferEXT_func = (PFNGLBINDFRAMEBUFFEREXTPROC) glutGetProcAddress("glBindFramebufferEXT");
+   glDeleteFramebuffersEXT_func = (PFNGLDELETEFRAMEBUFFERSEXTPROC) glutGetProcAddress("glDeleteFramebuffersEXT");
+   glGenFramebuffersEXT_func = (PFNGLGENFRAMEBUFFERSEXTPROC) glutGetProcAddress("glGenFramebuffersEXT");
+   glCheckFramebufferStatusEXT_func = (PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC) glutGetProcAddress("glCheckFramebufferStatusEXT");
+   glFramebufferTexture1DEXT_func = (PFNGLFRAMEBUFFERTEXTURE1DEXTPROC) glutGetProcAddress("glFramebufferTexture1DEXT");
+   glFramebufferTexture2DEXT_func = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC) glutGetProcAddress("glFramebufferTexture2DEXT");
+   glFramebufferTexture3DEXT_func = (PFNGLFRAMEBUFFERTEXTURE3DEXTPROC) glutGetProcAddress("glFramebufferTexture3DEXT");
+   glFramebufferRenderbufferEXT_func = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC) glutGetProcAddress("glFramebufferRenderbufferEXT");
+   glGetFramebufferAttachmentParameterivEXT_func = (PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC) glutGetProcAddress("glGetFramebufferAttachmentParameterivEXT");
+   glGenerateMipmapEXT_func = (PFNGLGENERATEMIPMAPEXTPROC) glutGetProcAddress("glGenerateMipmapEXT");
+
+   /* GL_ARB_framebuffer_object */
+   glIsRenderbuffer_func = (PFNGLISRENDERBUFFERPROC) glutGetProcAddress("glIsRenderbuffer");
+   glBindRenderbuffer_func = (PFNGLBINDRENDERBUFFERPROC) glutGetProcAddress("glBindRenderbuffer");
+   glDeleteRenderbuffers_func = (PFNGLDELETERENDERBUFFERSPROC) glutGetProcAddress("glDeleteRenderbuffers");
+   glGenRenderbuffers_func = (PFNGLGENRENDERBUFFERSPROC) glutGetProcAddress("glGenRenderbuffers");
+   glRenderbufferStorage_func = (PFNGLRENDERBUFFERSTORAGEPROC) glutGetProcAddress("glRenderbufferStorage");
+   glGetRenderbufferParameteriv_func = (PFNGLGETRENDERBUFFERPARAMETERIVPROC) glutGetProcAddress("glGetRenderbufferParameteriv");
+   glIsFramebuffer_func = (PFNGLISFRAMEBUFFERPROC) glutGetProcAddress("glIsFramebuffer");
+   glBindFramebuffer_func = (PFNGLBINDFRAMEBUFFERPROC) glutGetProcAddress("glBindFramebuffer");
+   glDeleteFramebuffers_func = (PFNGLDELETEFRAMEBUFFERSPROC) glutGetProcAddress("glDeleteFramebuffers");
+   glGenFramebuffers_func = (PFNGLGENFRAMEBUFFERSPROC) glutGetProcAddress("glGenFramebuffers");
+   glCheckFramebufferStatus_func = (PFNGLCHECKFRAMEBUFFERSTATUSPROC) glutGetProcAddress("glCheckFramebufferStatus");
+   glFramebufferTexture1D_func = (PFNGLFRAMEBUFFERTEXTURE1DPROC) glutGetProcAddress("glFramebufferTexture1D");
+   glFramebufferTexture2D_func = (PFNGLFRAMEBUFFERTEXTURE2DPROC) glutGetProcAddress("glFramebufferTexture2D");
+   glFramebufferTexture3D_func = (PFNGLFRAMEBUFFERTEXTURE3DPROC) glutGetProcAddress("glFramebufferTexture3D");
+   glFramebufferRenderbuffer_func = (PFNGLFRAMEBUFFERRENDERBUFFERPROC) glutGetProcAddress("glFramebufferRenderbuffer");
+   glGetFramebufferAttachmentParameteriv_func = (PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC) glutGetProcAddress("glGetFramebufferAttachmentParameteriv");
+   glGenerateMipmap_func = (PFNGLGENERATEMIPMAPPROC) glutGetProcAddress("glGenerateMipmap");
+   glBlitFramebuffer_func = (PFNGLBLITFRAMEBUFFERPROC) glutGetProcAddress("glBlitFramebuffer");
+   glRenderbufferStorageMultisample_func = (PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC) glutGetProcAddress("glRenderbufferStorageMultisample");
+   glFramebufferTextureLayer_func = (PFNGLFRAMEBUFFERTEXTURELAYERPROC) glutGetProcAddress("glFramebufferTextureLayer");
 }
 

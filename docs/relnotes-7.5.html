@@ -68,6 +68,10 @@ including GL_ATI_separate_stencil, GL_EXT_stencil_two_side and OpenGL 2.0
 <li>GL_EXT_texture_swizzle extension (software drivers, i965 driver)
 <li>Updated SPARC assembly optimizations (David S. Miller)
 <li>Initial support for separate compilation units in GLSL compiler.
+<li>Increased max number of generic GLSL varying variables to 16 (formerly 8).
+<li>GLSL linker now detects when too many varying variables are used.
+<li>Optimize-out redundant glMaterial and glShadeModel calls in display lists
+<li>Fixed gl_TextureMatrix[i][j] array indexing bug in GLSL compiler.
 </ul>
 
 
@@ -75,6 +79,7 @@ including GL_ATI_separate_stencil, GL_EXT_stencil_two_side and OpenGL 2.0
 <ul>
 <li>Lots of i965 driver bug fixes
 <li>Fixed some GLSL preprocessor bugs
+<li>GLSL: continue inside of a for-loop didn't work
 </ul>
 
 

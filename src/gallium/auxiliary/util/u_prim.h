@@ -119,7 +119,7 @@ static INLINE boolean u_trim_pipe_prim( unsigned pipe_prim, unsigned *nr )
 }
 
 
-static INLINE boolean u_reduced_prim( unsigned pipe_prim )
+static INLINE unsigned u_reduced_prim( unsigned pipe_prim )
 {
    switch (pipe_prim) {
    case PIPE_PRIM_POINTS:
