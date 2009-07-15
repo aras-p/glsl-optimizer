@@ -355,7 +355,7 @@ int r700SetupStreams(GLcontext * ctx)
 	struct vertex_buffer *vb = &tnl->vb;
 
     unsigned int unBit;
-	unsigned int i;
+    unsigned int i, j = 0;
 
     BEGIN_BATCH_NO_AUTOSTATE(6);
     R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
@@ -374,21 +374,23 @@ int r700SetupStreams(GLcontext * ctx)
 		unBit = 1 << i;
 		if(vpc->mesa_program.Base.InputsRead & unBit)
 		{
-			rcommon_emit_vector(ctx,
-					    &context->radeon.tcl.aos[i],
-					    vb->AttribPtr[i]->data,
-					    vb->AttribPtr[i]->size,
-					    vb->AttribPtr[i]->stride,
-					    vb->Count);
+			if (!context->radeon.tcl.aos[j].bo) {
+				rcommon_emit_vector(ctx,
+						    &context->radeon.tcl.aos[j],
+						    vb->AttribPtr[i]->data,
+						    vb->AttribPtr[i]->size,
+						    vb->AttribPtr[i]->stride,
+						    vb->Count);
 
-			/* currently aos are packed */
-			r700SetupVTXConstants(ctx,
-					      i,
-					      (void*)(&context->radeon.tcl.aos[i]),
-					      (unsigned int)context->radeon.tcl.aos[i].components,
-					      (unsigned int)context->radeon.tcl.aos[i].stride * 4,
-					      (unsigned int)context->radeon.tcl.aos[i].count);
-
+				/* currently aos are packed */
+				r700SetupVTXConstants(ctx,
+						      j,
+						      (void*)(&context->radeon.tcl.aos[j]),
+						      (unsigned int)context->radeon.tcl.aos[j].components,
+						      (unsigned int)context->radeon.tcl.aos[j].stride * 4,
+						      (unsigned int)context->radeon.tcl.aos[j].count);
+				j++;
+			}
 			context->radeon.tcl.aos_count++;
 		}
 	}
