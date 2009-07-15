@@ -44,7 +44,6 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 
-#include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_scan.h"
 
 
@@ -55,6 +54,8 @@ struct draw_vertex_shader;
 struct draw_context;
 struct draw_stage;
 struct vbuf_render;
+struct tgsi_exec_machine;
+struct tgsi_sampler;
 
 
 /**

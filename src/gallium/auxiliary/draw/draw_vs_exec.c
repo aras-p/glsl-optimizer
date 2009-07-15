@@ -41,6 +41,7 @@
 
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_scan.h"
+#include "tgsi/tgsi_exec.h"
 
 
 struct exec_vertex_shader {

@@ -29,6 +29,7 @@
 #define TGSI_EXEC_H
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_state.h"
 
 #if defined __cplusplus
 extern "C" {
