@@ -1021,6 +1021,22 @@ output_if_debug(const char *prefixString, const char *outputString,
    }
 }
 
+static const char *error_string( GLenum error );
+
+static void flush_delayed_errors( GLcontext *ctx )
+{
+   char s2[MAXSTRING];
+
+   if (ctx->ErrorDebugCount) {
+      _mesa_snprintf(s2, MAXSTRING, "%d similar %s errors", 
+                     ctx->ErrorDebugCount,
+                     error_string(ctx->ErrorValue));
+
+      output_if_debug("Mesa: ", s2, GL_TRUE);
+
+      ctx->ErrorDebugCount = 0;
+   }
+}
 
 /**
  * Report a warning (a recoverable error condition) to stderr if
@@ -1034,10 +1050,12 @@ _mesa_warning( GLcontext *ctx, const char *fmtString, ... )
 {
    char str[MAXSTRING];
    va_list args;
-   (void) ctx;
    va_start( args, fmtString );  
    (void) vsnprintf( str, MAXSTRING, fmtString, args );
    va_end( args );
+   
+   if (ctx)
+      flush_delayed_errors( ctx );
 
    output_if_debug("Mesa warning", str, GL_TRUE);
 }
@@ -1126,16 +1144,26 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
 #endif
    }
 
-   if (debug) {
-      {
+   if (debug) {      
+      if (ctx->ErrorValue == error &&
+          ctx->ErrorDebugFmtString == fmtString) {
+         ctx->ErrorDebugCount++;
+      }
+      else {
          char s[MAXSTRING], s2[MAXSTRING];
          va_list args;
+
+         flush_delayed_errors( ctx );
+         
          va_start(args, fmtString);
          vsnprintf(s, MAXSTRING, fmtString, args);
          va_end(args);
 
          _mesa_snprintf(s2, MAXSTRING, "%s in %s", error_string(error), s);
          output_if_debug("Mesa: User error", s2, GL_TRUE);
+         
+         ctx->ErrorDebugFmtString = fmtString;
+         ctx->ErrorDebugCount = 0;
       }
    }
 
