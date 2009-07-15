@@ -72,6 +72,24 @@ do { \
    R[3] = A[3] - B[3]; \
 } while (0)
 
+/** Add and limit result to ceiling of 1.0 */
+#define VEC4_ADD_SAT(R, A, B) \
+do { \
+   R[0] = A[0] + B[0];  if (R[0] > 1.0f) R[0] = 1.0f; \
+   R[1] = A[1] + B[1];  if (R[1] > 1.0f) R[1] = 1.0f; \
+   R[2] = A[2] + B[2];  if (R[2] > 1.0f) R[2] = 1.0f; \
+   R[3] = A[3] + B[3];  if (R[3] > 1.0f) R[3] = 1.0f; \
+} while (0)
+
+/** Subtract and limit result to floor of 0.0 */
+#define VEC4_SUB_SAT(R, A, B) \
+do { \
+   R[0] = A[0] - B[0];  if (R[0] < 0.0f) R[0] = 0.0f; \
+   R[1] = A[1] - B[1];  if (R[1] < 0.0f) R[1] = 0.0f; \
+   R[2] = A[2] - B[2];  if (R[2] < 0.0f) R[2] = 0.0f; \
+   R[3] = A[3] - B[3];  if (R[3] < 0.0f) R[3] = 0.0f; \
+} while (0)
+
 #define VEC4_MUL(R, A, B) \
 do { \
    R[0] = A[0] * B[0]; \
@@ -676,19 +694,19 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
        */
       switch (softpipe->blend->rgb_func) {
       case PIPE_BLEND_ADD:
-         VEC4_ADD(quadColor[0], source[0], dest[0]); /* R */
-         VEC4_ADD(quadColor[1], source[1], dest[1]); /* G */
-         VEC4_ADD(quadColor[2], source[2], dest[2]); /* B */
+         VEC4_ADD_SAT(quadColor[0], source[0], dest[0]); /* R */
+         VEC4_ADD_SAT(quadColor[1], source[1], dest[1]); /* G */
+         VEC4_ADD_SAT(quadColor[2], source[2], dest[2]); /* B */
          break;
       case PIPE_BLEND_SUBTRACT:
-         VEC4_SUB(quadColor[0], source[0], dest[0]); /* R */
-         VEC4_SUB(quadColor[1], source[1], dest[1]); /* G */
-         VEC4_SUB(quadColor[2], source[2], dest[2]); /* B */
+         VEC4_SUB_SAT(quadColor[0], source[0], dest[0]); /* R */
+         VEC4_SUB_SAT(quadColor[1], source[1], dest[1]); /* G */
+         VEC4_SUB_SAT(quadColor[2], source[2], dest[2]); /* B */
          break;
       case PIPE_BLEND_REVERSE_SUBTRACT:
-         VEC4_SUB(quadColor[0], dest[0], source[0]); /* R */
-         VEC4_SUB(quadColor[1], dest[1], source[1]); /* G */
-         VEC4_SUB(quadColor[2], dest[2], source[2]); /* B */
+         VEC4_SUB_SAT(quadColor[0], dest[0], source[0]); /* R */
+         VEC4_SUB_SAT(quadColor[1], dest[1], source[1]); /* G */
+         VEC4_SUB_SAT(quadColor[2], dest[2], source[2]); /* B */
          break;
       case PIPE_BLEND_MIN:
          VEC4_MIN(quadColor[0], source[0], dest[0]); /* R */
@@ -709,13 +727,13 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
        */
       switch (softpipe->blend->alpha_func) {
       case PIPE_BLEND_ADD:
-         VEC4_ADD(quadColor[3], source[3], dest[3]); /* A */
+         VEC4_ADD_SAT(quadColor[3], source[3], dest[3]); /* A */
          break;
       case PIPE_BLEND_SUBTRACT:
-         VEC4_SUB(quadColor[3], source[3], dest[3]); /* A */
+         VEC4_SUB_SAT(quadColor[3], source[3], dest[3]); /* A */
          break;
       case PIPE_BLEND_REVERSE_SUBTRACT:
-         VEC4_SUB(quadColor[3], dest[3], source[3]); /* A */
+         VEC4_SUB_SAT(quadColor[3], dest[3], source[3]); /* A */
          break;
       case PIPE_BLEND_MIN:
          VEC4_MIN(quadColor[3], source[3], dest[3]); /* A */
