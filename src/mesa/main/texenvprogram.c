@@ -261,6 +261,7 @@ static GLuint translate_tex_src_bit( GLbitfield bit )
  */
 static GLbitfield get_fp_input_mask( GLcontext *ctx )
 {
+   /* _NEW_PROGRAM */
    const GLboolean vertexShader = (ctx->Shader.CurrentProgram &&
                                    ctx->Shader.CurrentProgram->VertexProgram);
    const GLboolean vertexProgram = ctx->VertexProgram._Enabled;
@@ -274,22 +275,26 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
       fp_inputs = ~0;
    }
    else if (ctx->RenderMode == GL_FEEDBACK) {
+      /* _NEW_RENDERMODE */
       fp_inputs = (FRAG_BIT_COL0 | FRAG_BIT_TEX0);
    }
    else if (!(vertexProgram || vertexShader) ||
             !ctx->VertexProgram._Current) {
       /* Fixed function vertex logic */
+      /* _NEW_ARRAY */
       GLbitfield varying_inputs = ctx->varying_vp_inputs;
 
       /* These get generated in the setup routine regardless of the
        * vertex program:
        */
+      /* _NEW_POINT */
       if (ctx->Point.PointSprite)
          varying_inputs |= FRAG_BITS_TEX_ANY;
 
       /* First look at what values may be computed by the generated
        * vertex program:
        */
+      /* _NEW_LIGHT */
       if (ctx->Light.Enabled) {
          fp_inputs |= FRAG_BIT_COL0;
 
@@ -297,6 +302,7 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
             fp_inputs |= FRAG_BIT_COL1;
       }
 
+      /* _NEW_TEXTURE */
       fp_inputs |= (ctx->Texture._TexGenEnabled |
                     ctx->Texture._TexMatEnabled) << FRAG_ATTRIB_TEX0;
 
@@ -329,6 +335,7 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
       /* These get generated in the setup routine regardless of the
        * vertex program:
        */
+      /* _NEW_POINT */
       if (ctx->Point.PointSprite)
          vp_outputs |= FRAG_BITS_TEX_ANY;
 
@@ -355,6 +362,7 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
 
    memset(key, 0, sizeof(*key));
 
+   /* _NEW_TEXTURE */
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
       GLenum format;
@@ -408,11 +416,13 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
        }
    }
 
+   /* _DD_NEW_SEPARATE_SPECULAR */
    if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
       key->separate_specular = 1;
       inputs_referenced |= FRAG_BIT_COL1;
    }
 
+   /* _NEW_FOG */
    if (ctx->Fog.Enabled) {
       key->fog_enabled = 1;
       key->fog_mode = translate_fog_mode(ctx->Fog.Mode);
