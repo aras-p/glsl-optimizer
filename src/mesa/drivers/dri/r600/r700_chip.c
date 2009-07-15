@@ -374,23 +374,21 @@ int r700SetupStreams(GLcontext * ctx)
 		unBit = 1 << i;
 		if(vpc->mesa_program.Base.InputsRead & unBit)
 		{
-			if (!context->radeon.tcl.aos[j].bo) {
-				rcommon_emit_vector(ctx,
-						    &context->radeon.tcl.aos[j],
-						    vb->AttribPtr[i]->data,
-						    vb->AttribPtr[i]->size,
-						    vb->AttribPtr[i]->stride,
-						    vb->Count);
+			rcommon_emit_vector(ctx,
+					    &context->radeon.tcl.aos[j],
+					    vb->AttribPtr[i]->data,
+					    vb->AttribPtr[i]->size,
+					    vb->AttribPtr[i]->stride,
+					    vb->Count);
 
-				/* currently aos are packed */
-				r700SetupVTXConstants(ctx,
-						      j,
-						      (void*)(&context->radeon.tcl.aos[j]),
-						      (unsigned int)context->radeon.tcl.aos[j].components,
-						      (unsigned int)context->radeon.tcl.aos[j].stride * 4,
-						      (unsigned int)context->radeon.tcl.aos[j].count);
-				j++;
-			}
+			/* currently aos are packed */
+			r700SetupVTXConstants(ctx,
+					      j,
+					      (void*)(&context->radeon.tcl.aos[j]),
+					      (unsigned int)context->radeon.tcl.aos[j].components,
+					      (unsigned int)context->radeon.tcl.aos[j].stride * 4,
+					      (unsigned int)context->radeon.tcl.aos[j].count);
+			j++;
 			context->radeon.tcl.aos_count++;
 		}
 	}
