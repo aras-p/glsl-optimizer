@@ -74,12 +74,13 @@ static GLubyte *radeon_ptr32(const struct radeon_renderbuffer * rrb,
                 offset += ((x & 31) >> 2) << 5;
                 offset += (x & 3) << 2;
             } else {
-                nmacroblkpl = rrb->pitch >> 6;
-                offset += ((y >> 3) * nmacroblkpl) << 11;
-                offset += (y & 7) << 8;
-                offset += (x >> 6) << 11;
-                offset += ((x & 63) >> 3) << 5;
-                offset += (x & 7) << 2;
+		offset = ((y >> 3) * (rrb->pitch >> 8) + (x >> 6)) << 11;
+		offset += (((y >> 2) ^ (x >> 6)) & 0x1) << 10;
+		offset += (((y >> 3) ^ (x >> 5)) & 0x1) << 9;
+		offset += (((y >> 1) ^ (x >> 5)) & 0x1) << 8;
+		offset += (((y >> 2) ^ (x >> 4)) & 0x1) << 7;
+		offset += (y & 1) << 6;
+		offset += (x & 15) << 2;
             }
         } else {
             nmicroblkpl = ((rrb->pitch + 31) & ~31) >> 5;
