@@ -520,7 +520,7 @@ emit_coef_dady(
  * that the stack pointer is 16 byte aligned, as expected.
  */
 static void
-emit_func_call_dst(
+emit_func_call(
    struct x86_function *func,
    unsigned xmm_save,
    unsigned xmm_dst,
@@ -534,11 +534,6 @@ emit_func_call_dst(
    xmm_mask = (1 << xmm_save) - 1;
    xmm_mask &= ~(1 << xmm_dst);
 
-   sse_movaps(
-      func,
-      get_temp( TEMP_R0, 0 ),
-      make_xmm( xmm_dst ) );
-
    x86_push(
       func,
       x86_make_reg( file_REG32, reg_AX) );
@@ -549,6 +544,8 @@ emit_func_call_dst(
       func,
       x86_make_reg( file_REG32, reg_DX) );
    
+   /* Store XMM regs to the stack
+    */
    for(i = 0, n = 0; i < 8; ++i)
       if(xmm_mask & (1 << i))
          ++n;
@@ -567,16 +564,25 @@ emit_func_call_dst(
          ++n;
       }
    
+   /* Load the address of the buffer we use for passing arguments and
+    * receiving results:
+    */
    x86_lea(
       func,
       ecx,
       get_temp( TEMP_R0, 0 ) );
    
+   /* Push actual function arguments (currently just the pointer to
+    * the buffer above), and call the function:
+    */
    x86_push( func, ecx );
    x86_mov_reg_imm( func, ecx, (unsigned long) code );
    x86_call( func, ecx );
    x86_pop(func, ecx );
    
+
+   /* Pop the saved XMM regs:
+    */
    for(i = 0, n = 0; i < 8; ++i)
       if(xmm_mask & (1 << i)) {
          sse_movups(
@@ -602,6 +608,31 @@ emit_func_call_dst(
    x86_pop(
       func,
       x86_make_reg( file_REG32, reg_AX) );
+}
+
+
+static void
+emit_func_call_dst_src1(
+   struct x86_function *func,
+   unsigned xmm_save, 
+   unsigned xmm_dst,
+   unsigned xmm_src0,
+   void (PIPE_CDECL *code)() )
+{
+   /* Store our input parameters (in xmm regs) to the buffer we use
+    * for passing arguments.  We will pass a pointer to this buffer as
+    * the actual function argument.
+    */
+   sse_movaps(
+      func,
+      get_temp( TEMP_R0, 0 ),
+      make_xmm( xmm_src0 ) );
+
+   emit_func_call(
+      func,
+      xmm_save,
+      xmm_dst,
+      code );
 
    sse_movaps(
       func,
@@ -609,25 +640,47 @@ emit_func_call_dst(
       get_temp( TEMP_R0, 0 ) );
 }
 
+
 static void
-emit_func_call_dst_src(
+emit_func_call_dst_src2(
    struct x86_function *func,
    unsigned xmm_save, 
    unsigned xmm_dst,
-   unsigned xmm_src,
+   unsigned xmm_src0,
+   unsigned xmm_src1,
    void (PIPE_CDECL *code)() )
 {
+   /* Store two inputs to parameter buffer.
+    */
+   sse_movaps(
+      func,
+      get_temp( TEMP_R0, 0 ),
+      make_xmm( xmm_src0 ) );
+
    sse_movaps(
       func,
       get_temp( TEMP_R0, 1 ),
-      make_xmm( xmm_src ) );
+      make_xmm( xmm_src1 ) );
 
-   emit_func_call_dst(
+
+   /* Emit the call
+    */
+   emit_func_call(
       func,
       xmm_save,
       xmm_dst,
       code );
+
+   /* Retrieve the results:
+    */
+   sse_movaps(
+      func,
+      make_xmm( xmm_dst ),
+      get_temp( TEMP_R0, 0 ) );
 }
+
+
+
 
 
 #if defined(PIPE_ARCH_SSE)
@@ -782,9 +835,10 @@ emit_cos(
    unsigned xmm_save, 
    unsigned xmm_dst )
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save, 
+      xmm_dst,
       xmm_dst,
       cos4f );
 }
@@ -812,9 +866,10 @@ emit_ex2(
    unsigned xmm_save, 
    unsigned xmm_dst )
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save,
+      xmm_dst,
       xmm_dst,
       ex24f );
 }
@@ -857,9 +912,10 @@ emit_flr(
    unsigned xmm_save, 
    unsigned xmm_dst )
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save,
+      xmm_dst,
       xmm_dst,
       flr4f );
 }
@@ -880,9 +936,10 @@ emit_frc(
    unsigned xmm_save, 
    unsigned xmm_dst )
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save,
+      xmm_dst,
       xmm_dst,
       frc4f );
 }
@@ -910,9 +967,10 @@ emit_lg2(
    unsigned xmm_save, 
    unsigned xmm_dst )
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save,
+      xmm_dst,
       xmm_dst,
       lg24f );
 }
@@ -975,13 +1033,15 @@ emit_pow(
    struct x86_function *func,
    unsigned xmm_save, 
    unsigned xmm_dst,
-   unsigned xmm_src )
+   unsigned xmm_src0,
+   unsigned xmm_src1 )
 {
-   emit_func_call_dst_src(
+   emit_func_call_dst_src2(
       func,
       xmm_save,
       xmm_dst,
-      xmm_src,
+      xmm_src0,
+      xmm_src1,
       pow4f );
 }
 
@@ -1017,9 +1077,10 @@ emit_rnd(
    unsigned xmm_save, 
    unsigned xmm_dst )
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save,
+      xmm_dst,
       xmm_dst,
       rnd4f );
 }
@@ -1099,9 +1160,10 @@ emit_sgn(
    unsigned xmm_save, 
    unsigned xmm_dst )
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save,
+      xmm_dst,
       xmm_dst,
       sgn4f );
 }
@@ -1121,9 +1183,10 @@ emit_sin (struct x86_function *func,
           unsigned xmm_save, 
           unsigned xmm_dst)
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save,
+      xmm_dst,
       xmm_dst,
       sin4f );
 }
@@ -1573,7 +1636,7 @@ emit_instruction(
                get_temp(
                   TGSI_EXEC_TEMP_MINUS_128_I,
                   TGSI_EXEC_TEMP_MINUS_128_C ) );
-            emit_pow( func, 3, 1, 2 );
+            emit_pow( func, 3, 1, 1, 2 );
             FETCH( func, *inst, 0, 0, CHAN_X );
             sse_xorps(
                func,
@@ -1917,7 +1980,7 @@ emit_instruction(
    /* TGSI_OPCODE_POW */
       FETCH( func, *inst, 0, 0, CHAN_X );
       FETCH( func, *inst, 1, 1, CHAN_X );
-      emit_pow( func, 0, 0, 1 );
+      emit_pow( func, 0, 0, 0, 1 );
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          STORE( func, *inst, 0, 0, chan_index );
       }

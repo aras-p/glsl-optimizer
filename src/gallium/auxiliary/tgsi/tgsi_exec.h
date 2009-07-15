@@ -94,7 +94,6 @@ struct tgsi_exec_labels
 
 
 #define TGSI_EXEC_NUM_TEMPS       128
-#define TGSI_EXEC_NUM_TEMP_EXTRAS   6
 #define TGSI_EXEC_NUM_IMMEDIATES  256
 
 /*
@@ -162,9 +161,14 @@ struct tgsi_exec_labels
 #define TGSI_EXEC_MASK_I            (TGSI_EXEC_NUM_TEMPS + 3)
 #define TGSI_EXEC_MASK_C            2
 
+/* 4 register buffer for various purposes */
 #define TGSI_EXEC_TEMP_R0           (TGSI_EXEC_NUM_TEMPS + 4)
+#define TGSI_EXEC_NUM_TEMP_R        4
 
-#define TGSI_EXEC_TEMP_ADDR         (TGSI_EXEC_NUM_TEMPS + 5)
+#define TGSI_EXEC_TEMP_ADDR         (TGSI_EXEC_NUM_TEMPS + 8)
+#define TGSI_EXEC_NUM_ADDRS         1
+#define TGSI_EXEC_NUM_TEMP_EXTRAS   9
+
 
 
 #define TGSI_EXEC_MAX_COND_NESTING  20
