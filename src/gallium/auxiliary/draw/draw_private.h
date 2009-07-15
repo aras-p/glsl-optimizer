@@ -185,7 +185,7 @@ struct draw_context
       uint position_output;
 
       /** TGSI program interpreter runtime state */
-      struct tgsi_exec_machine machine;
+      struct tgsi_exec_machine *machine;
 
       uint num_samplers;
       struct tgsi_sampler **samplers;

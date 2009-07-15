@@ -365,14 +365,37 @@ tgsi_exec_machine_bind_shader(
 }
 
 
-void
-tgsi_exec_machine_init(
-   struct tgsi_exec_machine *mach )
+struct tgsi_exec_machine *
+tgsi_exec_machine_create( void )
 {
+   struct tgsi_exec_machine *mach;
    uint i;
 
-   mach->Temps = (struct tgsi_exec_vector *) tgsi_align_128bit( mach->_Temps);
+   mach = align_malloc( sizeof *mach, 16 );
+   if (!mach)
+      goto fail;
+
    mach->Addrs = &mach->Temps[TGSI_EXEC_TEMP_ADDR];
+
+   mach->Samplers = NULL;
+   mach->Consts = NULL;
+   mach->Inputs = NULL;
+   mach->Outputs = NULL;
+   mach->Tokens = NULL;
+   mach->Primitives = NULL;
+   mach->InterpCoefs = NULL;
+   mach->Instructions = NULL;
+   mach->Declarations = NULL;
+
+   mach->Inputs = align_malloc(PIPE_MAX_ATTRIBS * 
+			       sizeof(struct tgsi_exec_vector), 16);
+   if (!mach->Inputs)
+      goto fail;
+
+   mach->Outputs = align_malloc(PIPE_MAX_ATTRIBS * 
+				sizeof(struct tgsi_exec_vector), 16);
+   if (!mach->Outputs)
+      goto fail;
 
    /* Setup constants. */
    for( i = 0; i < 4; i++ ) {
@@ -393,11 +416,22 @@ tgsi_exec_machine_init(
    (void) print_chan;
    (void) print_temp;
 #endif
+
+   return mach;
+
+fail:
+   if (mach) {
+      align_free(mach->Inputs);
+      align_free(mach->Outputs);
+      align_free(mach);
+   }
+
+   return NULL;
 }
 
 
 void
-tgsi_exec_machine_free_data(struct tgsi_exec_machine *mach)
+tgsi_exec_machine_destroy(struct tgsi_exec_machine *mach)
 {
    if (mach->Instructions) {
       FREE(mach->Instructions);
@@ -409,6 +443,7 @@ tgsi_exec_machine_free_data(struct tgsi_exec_machine *mach)
       mach->Declarations = NULL;
       mach->NumDeclarations = 0;
    }
+   align_free(mach);
 }
 
 

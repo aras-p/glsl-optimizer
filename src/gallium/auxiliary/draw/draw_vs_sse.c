@@ -184,7 +184,7 @@ draw_create_vs_sse(struct draw_context *draw,
    vs->base.immediates = align_malloc(TGSI_EXEC_NUM_IMMEDIATES * 4 *
                                       sizeof(float), 16);
 
-   vs->machine = &draw->vs.machine;
+   vs->machine = draw->vs.machine;
    
    x86_init_func( &vs->sse2_program );
 

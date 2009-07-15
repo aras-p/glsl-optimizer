@@ -187,20 +187,16 @@ struct tgsi_exec_labels
 struct tgsi_exec_machine
 {
    /* Total = program temporaries + internal temporaries
-    *         + 1 padding to align to 16 bytes
     */
-   struct tgsi_exec_vector       _Temps[TGSI_EXEC_NUM_TEMPS +
-                                        TGSI_EXEC_NUM_TEMP_EXTRAS + 1];
+   struct tgsi_exec_vector       Temps[TGSI_EXEC_NUM_TEMPS +
+                                       TGSI_EXEC_NUM_TEMP_EXTRAS];
 
-   /*
-    * This will point to _Temps after aligning to 16B boundary.
-    */
-   struct tgsi_exec_vector       *Temps;
+   float                         Imms[TGSI_EXEC_NUM_IMMEDIATES][4];
+
    struct tgsi_exec_vector       *Addrs;
 
    struct tgsi_sampler           **Samplers;
 
-   float                         Imms[TGSI_EXEC_NUM_IMMEDIATES][4];
    unsigned                      ImmLimit;
    const float                   (*Consts)[4];
    struct tgsi_exec_vector       *Inputs;
@@ -251,9 +247,11 @@ struct tgsi_exec_machine
    struct tgsi_exec_labels Labels;
 };
 
+struct tgsi_exec_machine *
+tgsi_exec_machine_create( void );
+
 void
-tgsi_exec_machine_init(
-   struct tgsi_exec_machine *mach );
+tgsi_exec_machine_destroy(struct tgsi_exec_machine *mach);
 
 
 void 
@@ -266,10 +264,6 @@ tgsi_exec_machine_bind_shader(
 uint
 tgsi_exec_machine_run(
    struct tgsi_exec_machine *mach );
-
-
-void
-tgsi_exec_machine_free_data(struct tgsi_exec_machine *mach);
 
 
 static INLINE void
