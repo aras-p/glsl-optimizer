@@ -344,23 +344,33 @@ static void emit_zb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	BATCH_LOCALS(&r300->radeon);
 	struct radeon_renderbuffer *rrb;
 	uint32_t zbpitch;
+	uint32_t dw;
 
 	rrb = radeon_get_depthbuffer(&r300->radeon);
 	if (!rrb)
 		return;
 
 	zbpitch = (rrb->pitch / rrb->cpp);
-	if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE) {
-		zbpitch |= R300_DEPTHMACROTILE_ENABLE;
-	}
-	if (rrb->bo->flags & RADEON_BO_FLAGS_MICRO_TILE){
-		zbpitch |= R300_DEPTHMICROTILE_TILED;
+	if (!r300->radeon.radeonScreen->kernel_mm) {
+	    if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE) {
+	        zbpitch |= R300_DEPTHMACROTILE_ENABLE;
+	   }
+	    if (rrb->bo->flags & RADEON_BO_FLAGS_MICRO_TILE){
+	        zbpitch |= R300_DEPTHMICROTILE_TILED;
+	    }
 	}
 
-	BEGIN_BATCH_NO_AUTOSTATE(6);
+	dw = 6;
+    	if (r300->radeon.radeonScreen->kernel_mm)
+		dw += 2;
+	BEGIN_BATCH_NO_AUTOSTATE(dw);
 	OUT_BATCH_REGSEQ(R300_ZB_DEPTHOFFSET, 1);
 	OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-	OUT_BATCH_REGVAL(R300_ZB_DEPTHPITCH, zbpitch);
+	OUT_BATCH_REGSEQ(R300_ZB_DEPTHPITCH, 1);
+    	if (!r300->radeon.radeonScreen->kernel_mm)
+	    OUT_BATCH(zbpitch);
+	else
+	    OUT_BATCH_RELOC(cbpitch, rrb->bo, zbpitch, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 	END_BATCH();
 }
 
