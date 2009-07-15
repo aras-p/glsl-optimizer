@@ -38,6 +38,18 @@ RADEON_COMMON_SOURCES = \
 	radeon_span.c \
 	radeon_fbo.c
 
+RADEON_COMPILER_SOURCES = \
+		compiler/radeon_nqssadce.c \
+		compiler/radeon_program.c \
+		compiler/radeon_program_alu.c \
+		compiler/radeon_program_pair.c \
+		compiler/r3xx_fragprog.c \
+		compiler/r300_fragprog.c \
+		compiler/r300_fragprog_swizzle.c \
+		compiler/r300_fragprog_emit.c \
+		compiler/r500_fragprog.c \
+		compiler/r500_fragprog_emit.c \
+
 DRIVER_SOURCES = \
 		 radeon_screen.c \
 		 r300_context.c \
@@ -48,21 +60,13 @@ DRIVER_SOURCES = \
 		 r300_render.c \
 		 r300_tex.c \
 		 r300_texstate.c \
-		 radeon_program.c \
-		 radeon_program_alu.c \
-		 radeon_program_pair.c \
-		 radeon_nqssadce.c \
 		 r300_vertprog.c \
 		 r300_fragprog_common.c \
-		 r300_fragprog.c \
-		 r300_fragprog_swizzle.c \
-		 r300_fragprog_emit.c \
-		 r500_fragprog.c \
-		 r500_fragprog_emit.c \
 		 r300_shader.c \
 		 r300_emit.c \
 		 r300_swtcl.c \
 		 $(RADEON_COMMON_SOURCES) \
+		 $(RADEON_COMPILER_SOURCES) \
 		 $(EGL_SOURCES) \
 		 $(CS_SOURCES)
 

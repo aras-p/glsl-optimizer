@@ -38,16 +38,17 @@
  * \todo FogOption
  */
 
-#include "r300_fragprog.h"
+#include "compiler/r300_fragprog.h"
 
-#include "radeon_program_pair.h"
-#include "r300_fragprog_swizzle.h"
 #include "r300_reg.h"
+
+#include "compiler/radeon_program_pair.h"
+#include "compiler/r300_fragprog_swizzle.h"
 
 
 #define PROG_CODE \
 	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)data; \
-	struct r300_fragment_program_code *code = &c->code->r300
+	struct r300_fragment_program_code *code = &c->code->code.r300
 
 #define error(fmt, args...) do {			\
 		fprintf(stderr, "%s::%s(): " fmt "\n",	\
@@ -201,7 +202,7 @@ static GLboolean emit_alu(void* data, struct radeon_pair_instruction* inst)
 	if (inst->Alpha.DepthWriteMask) {
 		code->alu.inst[ip].inst3 |= R300_ALU_DSTA_DEPTH;
 		code->node[code->cur_node].flags |= R300_W_OUT;
-		c->fp->writes_depth = GL_TRUE;
+		c->code->writes_depth = GL_TRUE;
 	}
 
 	return GL_TRUE;
@@ -213,7 +214,7 @@ static GLboolean emit_alu(void* data, struct radeon_pair_instruction* inst)
  */
 static GLboolean finish_node(struct r300_fragment_program_compiler *c)
 {
-	struct r300_fragment_program_code *code = &c->code->r300;
+	struct r300_fragment_program_code *code = &c->code->code.r300;
 	struct r300_fragment_program_node *node = &code->node[code->cur_node];
 
 	if (node->alu_end < 0) {
@@ -327,13 +328,13 @@ static const struct radeon_pair_handler pair_handler = {
  */
 GLboolean r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler)
 {
-	struct r300_fragment_program_code *code = &compiler->code->r300;
+	struct r300_fragment_program_code *code = &compiler->code->code.r300;
 
 	_mesa_bzero(code, sizeof(struct r300_fragment_program_code));
 	code->node[0].alu_end = -1;
 	code->node[0].tex_end = -1;
 
-	if (!radeonPairProgram(compiler->r300->radeon.glCtx, compiler->program, &pair_handler, compiler))
+	if (!radeonPairProgram(compiler->ctx, compiler->program, &pair_handler, compiler))
 		return GL_FALSE;
 
 	if (!finish_node(compiler))

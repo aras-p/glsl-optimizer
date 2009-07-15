@@ -44,6 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/mtypes.h"
 #include "shader/prog_instruction.h"
+#include "compiler/radeon_compiler.h"
 
 struct r300_context;
 typedef struct r300_context r300ContextRec;
@@ -396,9 +397,6 @@ struct r300_hw_state {
 /* Can be tested with colormat currently. */
 #define VSF_MAX_FRAGMENT_TEMPS (14)
 
-#define STATE_R300_WINDOW_DIMENSION (STATE_INTERNAL_DRIVER+0)
-#define STATE_R300_TEXRECT_FACTOR (STATE_INTERNAL_DRIVER+1)
-
 #define COLOR_IS_RGBA
 #define TAG(x) r300##x
 #include "tnl_dd/t_dd_vertex.h"
@@ -413,7 +411,7 @@ struct r300_vertex_program {
 		GLuint FogAttr;
 		GLuint WPosAttr;
 	} key;
-	
+
 	struct r300_vertex_shader_hw_code {
 		int length;
 		union {
@@ -441,110 +439,6 @@ struct r300_vertex_program_cont {
 	struct r300_vertex_program *progs;
 };
 
-#define R300_PFS_MAX_ALU_INST	64
-#define R300_PFS_MAX_TEX_INST	32
-#define R300_PFS_MAX_TEX_INDIRECT 4
-#define R300_PFS_NUM_TEMP_REGS	32
-#define R300_PFS_NUM_CONST_REGS	32
-
-#define R500_PFS_MAX_INST 512
-#define R500_PFS_NUM_TEMP_REGS 128
-#define R500_PFS_NUM_CONST_REGS 256
-
-struct r300_pfs_compile_state;
-struct r500_pfs_compile_state;
-
-/**
- * Stores state that influences the compilation of a fragment program.
- */
-struct r300_fragment_program_external_state {
-	struct {
-		/**
-		 * If the sampler is used as a shadow sampler,
-		 * this field is:
-		 *  0 - GL_LUMINANCE
-		 *  1 - GL_INTENSITY
-		 *  2 - GL_ALPHA
-		 * depending on the depth texture mode.
-		 */
-		GLuint depth_texture_mode : 2;
-
-		/**
-		 * If the sampler is used as a shadow sampler,
-		 * this field is (texture_compare_func - GL_NEVER).
-		 * [e.g. if compare function is GL_LEQUAL, this field is 3]
-		 *
-		 * Otherwise, this field is 0.
-		 */
-		GLuint texture_compare_func : 3;
-	} unit[16];
-};
-
-
-struct r300_fragment_program_node {
-	int tex_offset; /**< first tex instruction */
-	int tex_end; /**< last tex instruction, relative to tex_offset */
-	int alu_offset; /**< first ALU instruction */
-	int alu_end; /**< last ALU instruction, relative to alu_offset */
-	int flags;
-};
-
-/**
- * Stores an R300 fragment program in its compiled-to-hardware form.
- */
-struct r300_fragment_program_code {
-	struct {
-		int length; /**< total # of texture instructions used */
-		GLuint inst[R300_PFS_MAX_TEX_INST];
-	} tex;
-
-	struct {
-		int length; /**< total # of ALU instructions used */
-		struct {
-			GLuint inst0;
-			GLuint inst1;
-			GLuint inst2;
-			GLuint inst3;
-		} inst[R300_PFS_MAX_ALU_INST];
-	} alu;
-
-	struct r300_fragment_program_node node[4];
-	int cur_node;
-	int first_node_has_tex;
-
-	/**
-	 * Remember which program register a given hardware constant
-	 * belongs to.
-	 */
-	struct prog_src_register constant[R300_PFS_NUM_CONST_REGS];
-	int const_nr;
-
-	int max_temp_idx;
-};
-
-
-struct r500_fragment_program_code {
-	struct {
-		GLuint inst0;
-		GLuint inst1;
-		GLuint inst2;
-		GLuint inst3;
-		GLuint inst4;
-		GLuint inst5;
-	} inst[R500_PFS_MAX_INST];
-
-	int inst_offset;
-	int inst_end;
-
-	/**
-	 * Remember which program register a given hardware constant
-	 * belongs to.
-	 */
-	struct prog_src_register constant[R500_PFS_NUM_CONST_REGS];
-	int const_nr;
-
-	int max_temp_idx;
-};
 
 /**
 * Store everything about a fragment program that is needed
@@ -555,22 +449,10 @@ struct r300_fragment_program {
 
 	GLboolean translated;
 	GLboolean error;
-
-	struct r300_fragment_program_external_state state;
-	union rX00_fragment_program_code {
-		struct r300_fragment_program_code r300;
-		struct r500_fragment_program_code r500;
-	} code;
-
-	GLboolean writes_depth;
-	GLuint optimization;
-
 	struct r300_fragment_program *next;
+	struct r300_fragment_program_external_state state;
 
-	/* attribute that we are sending the WPOS in */
-	gl_frag_attrib wpos_attr;
-	/* attribute that we are sending the fog coordinate in */
-	gl_frag_attrib fog_attr;
+	struct rX00_fragment_program_code code;
 };
 
 struct r300_fragment_program_cont {
@@ -583,12 +465,6 @@ struct r300_fragment_program_cont {
 	struct r300_fragment_program *progs;
 };
 
-struct r300_fragment_program_compiler {
-	r300ContextPtr r300;
-	struct r300_fragment_program *fp;
-	union rX00_fragment_program_code *code;
-	struct gl_program *program;
-};
 
 #define R300_MAX_AOS_ARRAYS		16
 
@@ -610,8 +486,6 @@ struct r300_swtcl_info {
 struct r300_vtable {
 	void (* SetupRSUnit)(GLcontext *ctx);
 	void (* SetupFragmentShaderTextures)(GLcontext *ctx, int *tmu_mappings);
-	GLboolean (* BuildFragmentProgramHwCode)(struct r300_fragment_program_compiler *compiler);
-	void (* FragmentProgramDump)(union rX00_fragment_program_code *code);
 	void (* SetupPixelShader)(GLcontext *ctx);
 };
 
@@ -669,7 +543,7 @@ struct r300_context {
 		uint32_t s3tc_force_disabled:1;
 		uint32_t stencil_two_side_disabled:1;
 	} options;
-	
+
 	struct r300_swtcl_info swtcl;
 	struct r300_vertex_buffer vbuf;
 	struct r300_index_buffer ind_buf;

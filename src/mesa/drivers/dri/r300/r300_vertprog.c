@@ -40,7 +40,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "shader/prog_statevars.h"
 #include "tnl/tnl.h"
 
-#include "radeon_nqssadce.h"
+#include "compiler/radeon_nqssadce.h"
 #include "r300_context.h"
 #include "r300_state.h"
 
@@ -1558,12 +1558,12 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 		_mesa_insert_mvp_code(ctx, vp->Base);
 	}
 
-	if (r300->selected_fp->wpos_attr != FRAG_ATTRIB_MAX) {
-		pos_as_texcoord(&vp->Base->Base, r300->selected_fp->wpos_attr - FRAG_ATTRIB_TEX0);
+	if (r300->selected_fp->code.wpos_attr != FRAG_ATTRIB_MAX) {
+		pos_as_texcoord(&vp->Base->Base, r300->selected_fp->code.wpos_attr - FRAG_ATTRIB_TEX0);
 	}
 
-	if (r300->selected_fp->fog_attr != FRAG_ATTRIB_MAX) {
-		fog_as_texcoord(&vp->Base->Base, r300->selected_fp->fog_attr - FRAG_ATTRIB_TEX0);
+	if (r300->selected_fp->code.fog_attr != FRAG_ATTRIB_MAX) {
+		fog_as_texcoord(&vp->Base->Base, r300->selected_fp->code.fog_attr - FRAG_ATTRIB_TEX0);
 	}
 
 	addArtificialOutputs(ctx, prog);
@@ -1640,8 +1640,8 @@ struct r300_vertex_program * r300SelectVertexShader(GLcontext *ctx)
 
 	vpc = (struct r300_vertex_program_cont *)ctx->VertexProgram._Current;
 	wanted_key.FpReads = r300->selected_fp->Base->InputsRead;
-	wanted_key.FogAttr = r300->selected_fp->fog_attr;
-	wanted_key.WPosAttr = r300->selected_fp->wpos_attr;
+	wanted_key.FogAttr = r300->selected_fp->code.fog_attr;
+	wanted_key.WPosAttr = r300->selected_fp->code.wpos_attr;
 
 	for (vp = vpc->progs; vp; vp = vp->next) {
 		if (_mesa_memcmp(&vp->key, &wanted_key, sizeof(wanted_key))

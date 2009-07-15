@@ -43,14 +43,16 @@
  *
  */
 
-#include "r500_fragprog.h"
+#include "compiler/r500_fragprog.h"
 
-#include "radeon_program_pair.h"
+#include "r300_reg.h"
+
+#include "compiler/radeon_program_pair.h"
 
 
 #define PROG_CODE \
 	struct r300_fragment_program_compiler *c = (struct r300_fragment_program_compiler*)data; \
-	struct r500_fragment_program_code *code = &c->code->r500
+	struct r500_fragment_program_code *code = &c->code->code.r500
 
 #define error(fmt, args...) do {			\
 		fprintf(stderr, "%s::%s(): " fmt "\n",	\
@@ -202,7 +204,7 @@ static GLboolean emit_paired(void *data, struct radeon_pair_instruction *inst)
 	code->inst[ip].inst0 |= (inst->RGB.OutputWriteMask << 15) | (inst->Alpha.OutputWriteMask << 18);
 	if (inst->Alpha.DepthWriteMask) {
 		code->inst[ip].inst4 |= R500_ALPHA_W_OMASK;
-		c->fp->writes_depth = GL_TRUE;
+		c->code->writes_depth = GL_TRUE;
 	}
 
 	code->inst[ip].inst4 |= R500_ALPHA_ADDRD(inst->Alpha.DestIndex);
@@ -301,14 +303,14 @@ static const struct radeon_pair_handler pair_handler = {
 
 GLboolean r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler)
 {
-	struct r500_fragment_program_code *code = &compiler->code->r500;
+	struct r500_fragment_program_code *code = &compiler->code->code.r500;
 
 	_mesa_bzero(code, sizeof(*code));
 	code->max_temp_idx = 1;
 	code->inst_offset = 0;
 	code->inst_end = -1;
 
-	if (!radeonPairProgram(compiler->r300->radeon.glCtx, compiler->program, &pair_handler, compiler))
+	if (!radeonPairProgram(compiler->ctx, compiler->program, &pair_handler, compiler))
 		return GL_FALSE;
 
 	if ((code->inst[code->inst_end].inst0 & R500_INST_TYPE_MASK) != R500_INST_TYPE_OUT) {

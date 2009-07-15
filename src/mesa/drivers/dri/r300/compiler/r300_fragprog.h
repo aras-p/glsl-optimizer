@@ -30,23 +30,20 @@
  *   Ben Skeggs <darktama@iinet.net.au>
  *   Jerome Glisse <j.glisse@gmail.com>
  */
-#ifndef __R500_FRAGPROG_H_
-#define __R500_FRAGPROG_H_
+#ifndef __R300_FRAGPROG_H_
+#define __R300_FRAGPROG_H_
 
-#include "shader/prog_parameter.h"
+#include "shader/program.h"
 #include "shader/prog_instruction.h"
 
-#include "r300_context.h"
-#include "radeon_nqssadce.h"
+#include "compiler/radeon_compiler.h"
+#include "compiler/radeon_program.h"
 
-extern GLboolean r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler);
 
-extern void r500FragmentProgramDump(union rX00_fragment_program_code *c);
+extern GLboolean r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler);
 
-extern GLboolean r500FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg);
+extern void r300FragmentProgramDump(struct rX00_fragment_program_code *c);
 
-extern void r500FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, struct prog_src_register src);
-
-extern GLboolean r500_transform_TEX(struct radeon_transform_context *t, struct prog_instruction* orig_inst, void* data);
+extern GLboolean r300_transform_TEX(struct radeon_transform_context *t, struct prog_instruction* orig_inst, void* data);
 
 #endif

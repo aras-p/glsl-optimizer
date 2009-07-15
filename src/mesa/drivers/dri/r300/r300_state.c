@@ -62,8 +62,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_emit.h"
 #include "r300_tex.h"
 #include "r300_fragprog_common.h"
-#include "r300_fragprog.h"
-#include "r500_fragprog.h"
 #include "r300_render.h"
 #include "r300_vertprog.h"
 
@@ -458,7 +456,7 @@ static GLboolean current_fragment_program_writes_depth(GLcontext* ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
-	return ctx->FragmentProgram._Current && r300->selected_fp->writes_depth;
+	return ctx->FragmentProgram._Current && r300->selected_fp->code.writes_depth;
 }
 
 static void r300SetEarlyZState(GLcontext * ctx)
@@ -1230,7 +1228,7 @@ static void r300SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int i;
-	struct r300_fragment_program_code *code = &r300->selected_fp->code.r300;
+	struct r300_fragment_program_code *code = &r300->selected_fp->code.code.r300;
 
 	R300_STATECHANGE(r300, fpt);
 
@@ -1272,7 +1270,7 @@ static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int i;
-	struct r500_fragment_program_code *code = &r300->selected_fp->code.r500;
+	struct r500_fragment_program_code *code = &r300->selected_fp->code.code.r500;
 
 	/* find all the texture instructions and relocate the texture units */
 	for (i = 0; i < code->inst_end + 1; i++) {
@@ -2063,7 +2061,7 @@ static void r300SetupPixelShader(GLcontext *ctx)
 	struct r300_fragment_program_code *code;
 	int i, k;
 
-	code = &fp->code.r300;
+	code = &fp->code.code.r300;
 
 	R300_STATECHANGE(rmesa, fpi[0]);
 	R300_STATECHANGE(rmesa, fpi[1]);
@@ -2137,7 +2135,7 @@ static void r500SetupPixelShader(GLcontext *ctx)
 	((drm_r300_cmd_header_t *) rmesa->hw.r500fp.cmd)->r500fp.count = 0;
 	((drm_r300_cmd_header_t *) rmesa->hw.r500fp_const.cmd)->r500fp.count = 0;
 
-	code = &fp->code.r500;
+	code = &fp->code.code.r500;
 
 	R300_STATECHANGE(rmesa, fp);
 	rmesa->hw.fp.cmd[R500_FP_PIXSIZE] = code->max_temp_idx;
@@ -2345,13 +2343,9 @@ void r300InitShaderFunctions(r300ContextPtr r300)
 		r300->vtbl.SetupRSUnit = r500SetupRSUnit;
 		r300->vtbl.SetupPixelShader = r500SetupPixelShader;
 		r300->vtbl.SetupFragmentShaderTextures = r500SetupFragmentShaderTextures;
-		r300->vtbl.BuildFragmentProgramHwCode = r500BuildFragmentProgramHwCode;
-		r300->vtbl.FragmentProgramDump = r500FragmentProgramDump;
 	} else {
 		r300->vtbl.SetupRSUnit = r300SetupRSUnit;
 		r300->vtbl.SetupPixelShader = r300SetupPixelShader;
 		r300->vtbl.SetupFragmentShaderTextures = r300SetupFragmentShaderTextures;
-		r300->vtbl.BuildFragmentProgramHwCode = r300BuildFragmentProgramHwCode;
-		r300->vtbl.FragmentProgramDump = r300FragmentProgramDump;
 	}
 }

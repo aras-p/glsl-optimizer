@@ -25,7 +25,9 @@
  *
  */
 
-#include "r500_fragprog.h"
+#include "compiler/r500_fragprog.h"
+
+#include "r300_reg.h"
 
 static void reset_srcreg(struct prog_src_register* reg)
 {
@@ -73,7 +75,7 @@ GLboolean r500_transform_TEX(
 	/* ARB_shadow & EXT_shadow_funcs */
 	if (inst.Opcode != OPCODE_KIL &&
 	    t->Program->ShadowSamplers & (1 << inst.TexSrcUnit)) {
-		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
+		GLuint comparefunc = GL_NEVER + compiler->state.unit[inst.TexSrcUnit].texture_compare_func;
 
 		if (comparefunc == GL_NEVER || comparefunc == GL_ALWAYS) {
 			tgt = radeonAppendInstructions(t->Program, 1);
@@ -119,8 +121,8 @@ GLboolean r500_transform_TEX(
 
 	if (inst.Opcode != OPCODE_KIL &&
 	    t->Program->ShadowSamplers & (1 << inst.TexSrcUnit)) {
-		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
-		GLuint depthmode = compiler->fp->state.unit[inst.TexSrcUnit].depth_texture_mode;
+		GLuint comparefunc = GL_NEVER + compiler->state.unit[inst.TexSrcUnit].texture_compare_func;
+		GLuint depthmode = compiler->state.unit[inst.TexSrcUnit].depth_texture_mode;
 		int rcptemp = radeonFindFreeTemporary(t);
 		int pass, fail;
 
@@ -375,9 +377,9 @@ static char *to_texop(int val)
   return NULL;
 }
 
-void r500FragmentProgramDump(union rX00_fragment_program_code *c)
+void r500FragmentProgramDump(struct rX00_fragment_program_code *c)
 {
-  struct r500_fragment_program_code *code = &c->r500;
+  struct r500_fragment_program_code *code = &c->code.r500;
   fprintf(stderr, "R500 Fragment Program:\n--------\n");
 
   int n;

@@ -57,7 +57,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_tex.h"
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 #include "r300_context.h"
-#include "r300_fragprog.h"
 #include "r300_tex.h"
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R600)
 #include "r600_context.h"
@@ -149,6 +148,9 @@ extern const struct dri_extension ATI_fs_extension[];
 extern const struct dri_extension point_extensions[];
 
 #elif RADEON_COMMON && (defined(RADEON_COMMON_FOR_R300) || defined(RADEON_COMMON_FOR_R600))
+
+#define DRI_CONF_FP_OPTIMIZATION_SPEED   0
+#define DRI_CONF_FP_OPTIMIZATION_QUALITY 1
 
 /* TODO: integrate these into xmlpool.h! */
 #define DRI_CONF_MAX_TEXTURE_IMAGE_UNITS(def,min,max) \

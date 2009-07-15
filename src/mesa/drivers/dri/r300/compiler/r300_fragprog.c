@@ -25,12 +25,11 @@
  *
  */
 
-#include "r300_fragprog.h"
+#include "compiler/r300_fragprog.h"
 
 #include "shader/prog_parameter.h"
 
-#include "r300_context.h"
-#include "r300_fragprog_swizzle.h"
+#include "r300_reg.h"
 
 static void reset_srcreg(struct prog_src_register* reg)
 {
@@ -79,7 +78,7 @@ GLboolean r300_transform_TEX(
 
 	if (inst.Opcode != OPCODE_KIL &&
 	    t->Program->ShadowSamplers & (1 << inst.TexSrcUnit)) {
-		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
+		GLuint comparefunc = GL_NEVER + compiler->state.unit[inst.TexSrcUnit].texture_compare_func;
 
 		if (comparefunc == GL_NEVER || comparefunc == GL_ALWAYS) {
 			tgt = radeonAppendInstructions(t->Program, 1);
@@ -163,8 +162,8 @@ GLboolean r300_transform_TEX(
 
 	if (inst.Opcode != OPCODE_KIL &&
 	    t->Program->ShadowSamplers & (1 << inst.TexSrcUnit)) {
-		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
-		GLuint depthmode = compiler->fp->state.unit[inst.TexSrcUnit].depth_texture_mode;
+		GLuint comparefunc = GL_NEVER + compiler->state.unit[inst.TexSrcUnit].texture_compare_func;
+		GLuint depthmode = compiler->state.unit[inst.TexSrcUnit].depth_texture_mode;
 		int rcptemp = radeonFindFreeTemporary(t);
 		int pass, fail;
 
@@ -230,9 +229,9 @@ GLboolean r300_transform_TEX(
 }
 
 /* just some random things... */
-void r300FragmentProgramDump(union rX00_fragment_program_code *c)
+void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 {
-	struct r300_fragment_program_code *code = &c->r300;
+	struct r300_fragment_program_code *code = &c->code.r300;
 	int n, i, j;
 	static int pc = 0;
 
