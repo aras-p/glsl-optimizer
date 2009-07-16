@@ -25,62 +25,55 @@
  *
  **************************************************************************/
 
-#include <windows.h>
 
-#define WGL_WGLEXT_PROTOTYPES
-
-#include <GL/gl.h>
-#include <GL/wglext.h>
-
-#include "glapi/glapi.h"
+#include "pipe/p_screen.h"
 #include "stw_public.h"
-#include "stw_extgallium.h"
+#include "stw_device.h"
+#include "stw_winsys.h"
 
-struct stw_extension_entry
+#ifdef DEBUG
+#include "trace/tr_screen.h"
+#include "trace/tr_context.h"
+#endif
+
+
+struct pipe_screen * APIENTRY
+wglGetGalliumScreenMESA(void)
 {
-   const char *name;
-   PROC proc;
-};
+   return stw_dev ? stw_dev->screen : NULL;
+}
 
-#define STW_EXTENSION_ENTRY(P) { #P, (PROC) P }
 
-static const struct stw_extension_entry stw_extension_entries[] = {
-
-   /* WGL_ARB_extensions_string */
-   STW_EXTENSION_ENTRY( wglGetExtensionsStringARB ),
-
-   /* WGL_ARB_pixel_format */
-   STW_EXTENSION_ENTRY( wglChoosePixelFormatARB ),
-   STW_EXTENSION_ENTRY( wglGetPixelFormatAttribfvARB ),
-   STW_EXTENSION_ENTRY( wglGetPixelFormatAttribivARB ),
-
-   /* WGL_EXT_extensions_string */
-   STW_EXTENSION_ENTRY( wglGetExtensionsStringEXT ),
-
-   /* WGL_EXT_swap_interval */
-   STW_EXTENSION_ENTRY( wglGetSwapIntervalEXT ),
-   STW_EXTENSION_ENTRY( wglSwapIntervalEXT ),
-
-   /* WGL_EXT_gallium ? */
-   STW_EXTENSION_ENTRY( wglGetGalliumScreenMESA ),
-   STW_EXTENSION_ENTRY( wglCreateGalliumContextMESA ),
-
-   { NULL, NULL }
-};
-
-PROC
-stw_get_proc_address(
-   LPCSTR lpszProc )
+/* XXX: Unify with stw_create_layer_context */
+struct pipe_context * APIENTRY
+wglCreateGalliumContextMESA(void)
 {
-   const struct stw_extension_entry *entry;
+   struct pipe_screen *screen = NULL;
+   struct pipe_context *pipe = NULL;
 
-   if (lpszProc[0] == 'w' && lpszProc[1] == 'g' && lpszProc[2] == 'l')
-      for (entry = stw_extension_entries; entry->name; entry++)
-         if (strcmp( lpszProc, entry->name ) == 0)
-            return entry->proc;
+   if(!stw_dev)
+      return NULL;
 
-   if (lpszProc[0] == 'g' && lpszProc[1] == 'l')
-      return (PROC) _glapi_get_proc_address( lpszProc );
+   screen = stw_dev->screen;
 
+#ifdef DEBUG
+   /* Unwrap screen */
+   if(stw_dev->trace_running)
+      screen = trace_screen(screen)->screen;
+#endif
+
+   pipe = stw_dev->stw_winsys->create_context( screen );
+   if (pipe == NULL)
+      goto no_pipe;
+
+#ifdef DEBUG
+   /* Wrap context */
+   if(stw_dev->trace_running)
+      pipe = trace_context_create(stw_dev->screen, pipe);
+#endif
+
+   return pipe;
+
+no_pipe:
    return NULL;
 }

@@ -29,6 +29,7 @@ if env['platform'] in ['windows']:
         'shared/stw_extensionsstring.c',
         'shared/stw_extswapinterval.c',
         'shared/stw_getprocaddress.c',
+        'shared/stw_extgallium.c',
         'shared/stw_arbpixelformat.c',
         'shared/stw_tls.c',
     ]
