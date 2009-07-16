@@ -151,6 +151,7 @@ st_translate_vertex_program(struct st_context *st,
          case VERT_ATTRIB_TEX5:
          case VERT_ATTRIB_TEX6:
          case VERT_ATTRIB_TEX7:
+            assert(slot < Elements(vs_input_semantic_name));
             vs_input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
             vs_input_semantic_index[slot] = num_generic++;
             break;
@@ -171,6 +172,7 @@ st_translate_vertex_program(struct st_context *st,
          case VERT_ATTRIB_GENERIC14:
          case VERT_ATTRIB_GENERIC15:
             assert(attr < VERT_ATTRIB_MAX);
+            assert(slot < Elements(vs_input_semantic_name));
             vs_input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
             vs_input_semantic_index[slot] = num_generic++;
             break;
@@ -198,6 +200,7 @@ st_translate_vertex_program(struct st_context *st,
 
    /* initialize output semantics to defaults */
    for (i = 0; i < PIPE_MAX_SHADER_OUTPUTS; i++) {
+      assert(i < Elements(vs_output_semantic_name));
       vs_output_semantic_name[i] = TGSI_SEMANTIC_GENERIC;
       vs_output_semantic_index[i] = 0;
       output_flags[i] = 0x0;
@@ -273,6 +276,7 @@ st_translate_vertex_program(struct st_context *st,
          case VERT_RESULT_VAR0:
             /* fall-through */
          default:
+            assert(slot < Elements(vs_output_semantic_name));
             if (outputSemanticName) {
                /* use provided semantic into */
                assert(outputSemanticName[attr] != TGSI_SEMANTIC_COUNT);
@@ -286,6 +290,7 @@ st_translate_vertex_program(struct st_context *st,
             }
          }
 
+         assert(slot < Elements(output_flags));
          output_flags[slot] = stvp->Base.Base.OutputFlags[attr];
       }
    }
