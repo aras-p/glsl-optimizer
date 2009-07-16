@@ -596,7 +596,17 @@ class Context(Object):
         
     def surface_copy(self, dest, destx, desty, src, srcx, srcy, width, height):
         if dest is not None and src is not None:
+            if self.interpreter.options.all:
+                self.interpreter.present(src, 'surface_copy_src', srcx, srcy, width, height)
             self.real.surface_copy(dest, destx, desty, src, srcx, srcy, width, height)
+            if dest in self.cbufs:
+                self._set_dirty()
+                flags = gallium.PIPE_FLUSH_FRAME
+            else:
+                flags = 0
+            self.flush(flags)
+            if self.interpreter.options.all:
+                self.interpreter.present(dest, 'surface_copy_dest', destx, desty, width, height)
 
     def is_texture_referenced(self, texture, face, level):
         #return self.real.is_texture_referenced(format, texture, face, level)
