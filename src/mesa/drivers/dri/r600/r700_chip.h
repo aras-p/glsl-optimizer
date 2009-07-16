@@ -491,7 +491,7 @@ typedef struct _R700_CHIP_CONTEXT
 	VS_STATE_STRUCT                 vs;
 	GS_STATE_STRUCT                 gs;
 	ES_STATE_STRUCT                 es;
-	PS_STATE_STRUCT                 fs;
+	FS_STATE_STRUCT                 fs;
 
 	// SQ CONFIG
 	SQ_CONFIG_STRUCT                sq_config;

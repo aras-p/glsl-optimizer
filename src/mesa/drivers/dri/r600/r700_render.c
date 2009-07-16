@@ -311,6 +311,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     r700SetupShaders(ctx);
 
+    r700SendFSState(context); // FIXME just a place holder for now
     r700SendPSState(context);
     r700SendVSState(context);
 

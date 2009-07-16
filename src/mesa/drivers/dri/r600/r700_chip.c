@@ -638,6 +638,47 @@ GLboolean r700SendVSState(context_t *context)
 	return GL_TRUE;
 }
 
+GLboolean r700SendFSState(context_t *context)
+{
+	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+	struct radeon_renderbuffer *rrb;
+	struct radeon_bo * pbo;
+	offset_modifiers offset_mod;
+	BATCH_LOCALS(&context->radeon);
+
+	/* XXX fixme
+	 * R6xx chips require a FS be emitted, even if it's not used.
+	 * since we aren't using FS yet, just send the VS address to make
+	 * the kernel command checker happy
+	 */
+	pbo = (struct radeon_bo *)r700GetActiveVpShaderBo(GL_CONTEXT(context));
+	r700->fs.SQ_PGM_START_FS.u32All = r700->vs.SQ_PGM_START_VS.u32All;
+	r700->fs.SQ_PGM_RESOURCES_FS.u32All = 0;
+	r700->fs.SQ_PGM_CF_OFFSET_FS.u32All = 0;
+	/* XXX */
+
+	offset_mod.shift     = NO_SHIFT;
+	offset_mod.shiftbits = 0;
+	offset_mod.mask      = 0xFFFFFFFF;
+
+        BEGIN_BATCH_NO_AUTOSTATE(3);
+	R600_OUT_BATCH_REGSEQ(SQ_PGM_START_FS, 1);
+	R600_OUT_BATCH_RELOC(r700->fs.SQ_PGM_START_FS.u32All,
+			     pbo,
+			     r700->fs.SQ_PGM_START_FS.u32All,
+			     RADEON_GEM_DOMAIN_GTT, 0, 0, &offset_mod);
+	END_BATCH();
+
+        BEGIN_BATCH_NO_AUTOSTATE(6);
+	R600_OUT_BATCH_REGVAL(SQ_PGM_RESOURCES_FS, r700->fs.SQ_PGM_RESOURCES_FS.u32All);
+	R600_OUT_BATCH_REGVAL(SQ_PGM_CF_OFFSET_FS, r700->fs.SQ_PGM_CF_OFFSET_FS.u32All);
+        END_BATCH();
+
+	COMMIT_BATCH();
+
+	return GL_TRUE;
+}
+
 GLboolean r700SendViewportState(context_t *context, int id)
 {
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
