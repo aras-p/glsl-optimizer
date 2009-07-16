@@ -236,8 +236,7 @@ lp_tile_cache_unmap_transfers(struct llvmpipe_tile_cache *tc)
  * Specify the texture to cache.
  */
 void
-lp_tile_cache_set_texture(struct pipe_context *pipe,
-                          struct llvmpipe_tile_cache *tc,
+lp_tile_cache_set_texture(struct llvmpipe_tile_cache *tc,
                           struct pipe_texture *texture)
 {
    uint i;
@@ -344,8 +343,7 @@ clear_tile(struct llvmpipe_cached_tile *tile,
  * Actually clear the tiles which were flagged as being in a clear state.
  */
 static void
-lp_tile_cache_flush_clear(struct pipe_context *pipe,
-                          struct llvmpipe_tile_cache *tc)
+lp_tile_cache_flush_clear(struct llvmpipe_tile_cache *tc)
 {
    struct pipe_transfer *pt = tc->transfer;
    const uint w = tc->transfer->width;
@@ -382,8 +380,7 @@ lp_tile_cache_flush_clear(struct pipe_context *pipe,
  * any tiles "flagged" as cleared will be "really" cleared.
  */
 void
-lp_flush_tile_cache(struct llvmpipe_context *llvmpipe,
-                    struct llvmpipe_tile_cache *tc)
+lp_flush_tile_cache(struct llvmpipe_tile_cache *tc)
 {
    struct pipe_transfer *pt = tc->transfer;
    int inuse = 0, pos;
@@ -409,7 +406,7 @@ lp_flush_tile_cache(struct llvmpipe_context *llvmpipe,
       }
 
 #if TILE_CLEAR_OPTIMIZATION
-      lp_tile_cache_flush_clear(&llvmpipe->pipe, tc);
+      lp_tile_cache_flush_clear(tc);
 #endif
    }
    else if (tc->texture) {
@@ -431,8 +428,7 @@ lp_flush_tile_cache(struct llvmpipe_context *llvmpipe,
  * \param x, y  position of tile, in pixels
  */
 struct llvmpipe_cached_tile *
-lp_get_cached_tile(struct llvmpipe_context *llvmpipe,
-                   struct llvmpipe_tile_cache *tc, int x, int y)
+lp_get_cached_tile(struct llvmpipe_tile_cache *tc, int x, int y)
 {
    struct pipe_transfer *pt = tc->transfer;
 
@@ -513,11 +509,11 @@ tex_cache_pos(int x, int y, int z, int face, int level)
  * Tiles are read-only and indexed with more params.
  */
 const struct llvmpipe_cached_tile *
-lp_get_cached_tile_tex(struct llvmpipe_context *lp,
-                       struct llvmpipe_tile_cache *tc, int x, int y, int z,
+lp_get_cached_tile_tex(struct llvmpipe_tile_cache *tc, 
+                       int x, int y, int z,
                        int face, int level)
 {
-   struct pipe_screen *screen = lp->pipe.screen;
+   struct pipe_screen *screen = tc->screen;
    /* tile pos in framebuffer: */
    const int tile_x = x & ~(TILE_SIZE - 1);
    const int tile_y = y & ~(TILE_SIZE - 1);

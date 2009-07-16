@@ -97,7 +97,7 @@ llvmpipe_set_sampler_textures(struct pipe_context *pipe,
       struct pipe_texture *tex = i < num ? texture[i] : NULL;
 
       pipe_texture_reference(&llvmpipe->texture[i], tex);
-      lp_tile_cache_set_texture(pipe, llvmpipe->tex_cache[i], tex);
+      lp_tile_cache_set_texture(llvmpipe->tex_cache[i], tex);
    }
 
    llvmpipe->num_textures = num;

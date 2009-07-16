@@ -52,17 +52,17 @@ llvmpipe_flush( struct pipe_context *pipe,
 
    if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
       for (i = 0; i < llvmpipe->num_textures; i++) {
-         lp_flush_tile_cache(llvmpipe, llvmpipe->tex_cache[i]);
+         lp_flush_tile_cache(llvmpipe->tex_cache[i]);
       }
    }
 
    if (flags & PIPE_FLUSH_RENDER_CACHE) {
       for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++)
          if (llvmpipe->cbuf_cache[i])
-            lp_flush_tile_cache(llvmpipe, llvmpipe->cbuf_cache[i]);
+            lp_flush_tile_cache(llvmpipe->cbuf_cache[i]);
 
       if (llvmpipe->zsbuf_cache)
-         lp_flush_tile_cache(llvmpipe, llvmpipe->zsbuf_cache);
+         lp_flush_tile_cache(llvmpipe->zsbuf_cache);
 
       /* Need this call for hardware buffers before swapbuffers.
        *

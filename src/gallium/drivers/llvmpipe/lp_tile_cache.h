@@ -80,25 +80,21 @@ extern void
 lp_tile_cache_unmap_transfers(struct llvmpipe_tile_cache *tc);
 
 extern void
-lp_tile_cache_set_texture(struct pipe_context *pipe,
-                          struct llvmpipe_tile_cache *tc,
+lp_tile_cache_set_texture(struct llvmpipe_tile_cache *tc,
                           struct pipe_texture *texture);
 
 extern void
-lp_flush_tile_cache(struct llvmpipe_context *llvmpipe,
-                    struct llvmpipe_tile_cache *tc);
+lp_flush_tile_cache(struct llvmpipe_tile_cache *tc);
 
 extern void
 lp_tile_cache_clear(struct llvmpipe_tile_cache *tc, const float *rgba,
                     uint clearValue);
 
 extern struct llvmpipe_cached_tile *
-lp_get_cached_tile(struct llvmpipe_context *llvmpipe,
-                   struct llvmpipe_tile_cache *tc, int x, int y);
+lp_get_cached_tile(struct llvmpipe_tile_cache *tc, int x, int y);
 
 extern const struct llvmpipe_cached_tile *
-lp_get_cached_tile_tex(struct llvmpipe_context *llvmpipe,
-                       struct llvmpipe_tile_cache *tc, int x, int y, int z,
+lp_get_cached_tile_tex(struct llvmpipe_tile_cache *tc, int x, int y, int z,
                        int face, int level);
 
 

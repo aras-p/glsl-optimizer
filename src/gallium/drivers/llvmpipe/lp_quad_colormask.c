@@ -54,8 +54,7 @@ colormask_quad(struct quad_stage *qs, struct quad_header *quad)
    for (cbuf = 0; cbuf < llvmpipe->framebuffer.nr_cbufs; cbuf++) {
       float dest[4][QUAD_SIZE];
       struct llvmpipe_cached_tile *tile
-         = lp_get_cached_tile(llvmpipe,
-                              llvmpipe->cbuf_cache[cbuf],
+         = lp_get_cached_tile(llvmpipe->cbuf_cache[cbuf],
                               quad->input.x0, quad->input.y0);
       float (*quadColor)[4] = quad->output.color[cbuf];
       uint i, j;

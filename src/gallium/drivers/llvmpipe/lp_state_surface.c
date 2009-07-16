@@ -53,7 +53,7 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
       /* check if changing cbuf */
       if (lp->framebuffer.cbufs[i] != fb->cbufs[i]) {
          /* flush old */
-         lp_flush_tile_cache(lp, lp->cbuf_cache[i]);
+         lp_flush_tile_cache(lp->cbuf_cache[i]);
 
          /* assign new */
          lp->framebuffer.cbufs[i] = fb->cbufs[i];
@@ -68,7 +68,7 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
    /* zbuf changing? */
    if (lp->framebuffer.zsbuf != fb->zsbuf) {
       /* flush old */
-      lp_flush_tile_cache(lp, lp->zsbuf_cache);
+      lp_flush_tile_cache(lp->zsbuf_cache);
 
       /* assign new */
       lp->framebuffer.zsbuf = fb->zsbuf;

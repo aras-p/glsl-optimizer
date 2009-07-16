@@ -668,10 +668,8 @@ get_texel(const struct tgsi_sampler *tgsi_sampler,
           float rgba[NUM_CHANNELS][QUAD_SIZE], unsigned j)
 {
    const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
-   struct llvmpipe_context *lp = samp->lp;
-   const uint unit = samp->unit;
-   const struct pipe_texture *texture = lp->texture[unit];
-   const struct pipe_sampler_state *sampler = lp->sampler[unit];
+   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_sampler_state *sampler = samp->sampler;
 
    if (x < 0 || x >= (int) texture->width[level] ||
        y < 0 || y >= (int) texture->height[level] ||
@@ -685,7 +683,7 @@ get_texel(const struct tgsi_sampler *tgsi_sampler,
       const int tx = x % TILE_SIZE;
       const int ty = y % TILE_SIZE;
       const struct llvmpipe_cached_tile *tile
-         = lp_get_cached_tile_tex(lp, samp->cache,
+         = lp_get_cached_tile_tex(samp->cache,
                                   x, y, z, face, level);
       rgba[0][j] = tile->data.color[ty][tx][0];
       rgba[1][j] = tile->data.color[ty][tx][1];
@@ -840,10 +838,8 @@ lp_get_samples_2d_common(const struct tgsi_sampler *tgsi_sampler,
                          const unsigned faces[4])
 {
    const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
-   const struct llvmpipe_context *lp = samp->lp;
-   const uint unit = samp->unit;
-   const struct pipe_texture *texture = lp->texture[unit];
-   const struct pipe_sampler_state *sampler = lp->sampler[unit];
+   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_sampler_state *sampler = samp->sampler;
    unsigned level0, level1, j, imgFilter;
    int width, height;
    float levelBlend;
@@ -992,10 +988,8 @@ lp_get_samples_3d(const struct tgsi_sampler *tgsi_sampler,
                   float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
-   const struct llvmpipe_context *lp = samp->lp;
-   const uint unit = samp->unit;
-   const struct pipe_texture *texture = lp->texture[unit];
-   const struct pipe_sampler_state *sampler = lp->sampler[unit];
+   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_sampler_state *sampler = samp->sampler;
    /* get/map pipe_surfaces corresponding to 3D tex slices */
    unsigned level0, level1, j, imgFilter;
    int width, height, depth;
@@ -1139,10 +1133,8 @@ lp_get_samples_rect(const struct tgsi_sampler *tgsi_sampler,
                     float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
-   const struct llvmpipe_context *lp = samp->lp;
-   const uint unit = samp->unit;
-   const struct pipe_texture *texture = lp->texture[unit];
-   const struct pipe_sampler_state *sampler = lp->sampler[unit];
+   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_sampler_state *sampler = samp->sampler;
    const uint face = 0;
    unsigned level0, level1, j, imgFilter;
    int width, height;
@@ -1216,10 +1208,8 @@ lp_get_samples(struct tgsi_sampler *tgsi_sampler,
                float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct lp_shader_sampler *samp = lp_shader_sampler(tgsi_sampler);
-   const struct llvmpipe_context *lp = samp->lp;
-   const uint unit = samp->unit;
-   const struct pipe_texture *texture = lp->texture[unit];
-   const struct pipe_sampler_state *sampler = lp->sampler[unit];
+   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_sampler_state *sampler = samp->sampler;
 
    if (!texture)
       return;

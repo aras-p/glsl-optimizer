@@ -50,8 +50,7 @@ output_quad(struct quad_stage *qs, struct quad_header *quad)
    /* loop over colorbuffer outputs */
    for (cbuf = 0; cbuf < llvmpipe->framebuffer.nr_cbufs; cbuf++) {
       struct llvmpipe_cached_tile *tile
-         = lp_get_cached_tile(llvmpipe,
-                              llvmpipe->cbuf_cache[cbuf],
+         = lp_get_cached_tile(llvmpipe->cbuf_cache[cbuf],
                               quad->input.x0, quad->input.y0);
       float (*quadColor)[4] = quad->output.color[cbuf];
       int i, j;

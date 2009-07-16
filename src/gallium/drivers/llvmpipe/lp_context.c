@@ -73,8 +73,8 @@ llvmpipe_unmap_transfers(struct llvmpipe_context *lp)
    uint i;
 
    for (i = 0; i < lp->framebuffer.nr_cbufs; i++)
-      lp_flush_tile_cache(lp, lp->cbuf_cache[i]);
-   lp_flush_tile_cache(lp, lp->zsbuf_cache);
+      lp_flush_tile_cache(lp->cbuf_cache[i]);
+   lp_flush_tile_cache(lp->zsbuf_cache);
 
    for (i = 0; i < lp->framebuffer.nr_cbufs; i++) {
       lp_tile_cache_unmap_transfers(lp->cbuf_cache[i]);
@@ -254,8 +254,6 @@ llvmpipe_create( struct pipe_screen *screen )
    /* vertex shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       llvmpipe->tgsi.vert_samplers[i].base.get_samples = lp_get_samples_vertex;
-      llvmpipe->tgsi.vert_samplers[i].unit = i;
-      llvmpipe->tgsi.vert_samplers[i].lp = llvmpipe;
       llvmpipe->tgsi.vert_samplers[i].cache = llvmpipe->tex_cache[i];
       llvmpipe->tgsi.vert_samplers_list[i] = &llvmpipe->tgsi.vert_samplers[i];
    }
@@ -263,8 +261,6 @@ llvmpipe_create( struct pipe_screen *screen )
    /* fragment shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       llvmpipe->tgsi.frag_samplers[i].base.get_samples = lp_get_samples_fragment;
-      llvmpipe->tgsi.frag_samplers[i].unit = i;
-      llvmpipe->tgsi.frag_samplers[i].lp = llvmpipe;
       llvmpipe->tgsi.frag_samplers[i].cache = llvmpipe->tex_cache[i];
       llvmpipe->tgsi.frag_samplers_list[i] = &llvmpipe->tgsi.frag_samplers[i];
    }

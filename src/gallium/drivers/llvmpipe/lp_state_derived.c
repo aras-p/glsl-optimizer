@@ -184,11 +184,33 @@ compute_cliprect(struct llvmpipe_context *lp)
 }
 
 
+static void
+update_tgsi_samplers( struct llvmpipe_context *llvmpipe )
+{
+   unsigned i;
+
+   /* vertex shader samplers */
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      llvmpipe->tgsi.vert_samplers[i].sampler = llvmpipe->sampler[i];
+      llvmpipe->tgsi.vert_samplers[i].texture = llvmpipe->texture[i];
+   }
+
+   /* fragment shader samplers */
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      llvmpipe->tgsi.frag_samplers[i].sampler = llvmpipe->sampler[i];
+      llvmpipe->tgsi.frag_samplers[i].texture = llvmpipe->texture[i];
+   }
+}
+
 /* Hopefully this will remain quite simple, otherwise need to pull in
  * something like the state tracker mechanism.
  */
 void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
 {
+   if (llvmpipe->dirty & (LP_NEW_SAMPLER |
+                          LP_NEW_TEXTURE))
+      update_tgsi_samplers( llvmpipe );
+
    if (llvmpipe->dirty & (LP_NEW_RASTERIZER |
                           LP_NEW_FS |
                           LP_NEW_VS))

@@ -39,8 +39,9 @@ struct lp_shader_sampler
 {
    struct tgsi_sampler base;  /**< base class */
 
-   uint unit;
-   struct llvmpipe_context *lp;
+   const struct pipe_texture *texture;
+   const struct pipe_sampler_state *sampler;
+
    struct llvmpipe_tile_cache *cache;
 };
 

@@ -206,7 +206,7 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
    ubyte ref, wrtMask, valMask;
    ubyte stencilVals[QUAD_SIZE];
    struct llvmpipe_cached_tile *tile
-      = lp_get_cached_tile(llvmpipe, llvmpipe->zsbuf_cache, quad->input.x0, quad->input.y0);
+      = lp_get_cached_tile(llvmpipe->zsbuf_cache, quad->input.x0, quad->input.y0);
    uint j;
    uint face = quad->input.facing;
 
