@@ -456,6 +456,7 @@ class Context(Object):
             x, y, z, w = unpack_from(format, data, offset)
             sys.stdout.write('\tCONST[%2u] = {%10.4f, %10.4f, %10.4f, %10.4f}\n' % (index, x, y, z, w))
             index += 1
+        sys.stdout.flush()
 
     def set_constant_buffer(self, shader, index, buffer):
         if buffer is not None:
@@ -537,6 +538,7 @@ class Context(Object):
                 sys.stdout.write('\t\t{' + ', '.join(map(str, values)) + '},\n')
                 assert len(values) == velem.nr_components
             sys.stdout.write('\t},\n')
+        sys.stdout.flush()
 
     def dump_indices(self, ibuf, isize, start, count):
         if not self.interpreter.verbosity(2):
@@ -564,6 +566,7 @@ class Context(Object):
             minindex = min(minindex, index)
             maxindex = max(maxindex, index)
         sys.stdout.write('\t},\n')
+        sys.stdout.flush()
 
         return minindex, maxindex
 
@@ -674,6 +677,7 @@ class Interpreter(parser.TraceDumper):
 
         if self.verbosity(1):
             parser.TraceDumper.handle_call(self, call)
+            sys.stdout.flush()
         
         args = [(str(name), self.interpret_arg(arg)) for name, arg in call.args] 
         
