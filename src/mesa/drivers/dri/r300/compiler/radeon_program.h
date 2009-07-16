@@ -85,7 +85,6 @@ static inline GLuint combine_swizzles(GLuint src, GLuint swz)
  * e.g. finding new temporary registers must use @ref radeonFindFreeTemporary
  */
 struct radeon_transform_context {
-	GLcontext *Ctx;
 	struct gl_program *Program;
 	struct prog_instruction *OldInstructions;
 	GLuint OldNumInstructions;
@@ -110,7 +109,6 @@ struct radeon_program_transformation {
 };
 
 void radeonLocalTransform(
-	GLcontext* ctx,
 	struct gl_program *program,
 	int num_transformations,
 	struct radeon_program_transformation* transformations);

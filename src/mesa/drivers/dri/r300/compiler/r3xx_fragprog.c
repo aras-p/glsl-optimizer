@@ -259,14 +259,14 @@ GLboolean r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c
 			{ &radeonTransformDeriv, 0 },
 			{ &radeonTransformTrigScale, 0 }
 		};
-		radeonLocalTransform(c->ctx, c->program, 4, transformations);
+		radeonLocalTransform(c->program, 4, transformations);
 	} else {
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_TEX, c },
 			{ &radeonTransformALU, 0 },
 			{ &radeonTransformTrigSimple, 0 }
 		};
-		radeonLocalTransform(c->ctx, c->program, 3, transformations);
+		radeonLocalTransform(c->program, 3, transformations);
 	}
 
 	if (c->debug) {

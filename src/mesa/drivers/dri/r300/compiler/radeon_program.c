@@ -46,7 +46,6 @@
  * one instruction at a time.
  */
 void radeonLocalTransform(
-	GLcontext *Ctx,
 	struct gl_program *program,
 	int num_transformations,
 	struct radeon_program_transformation* transformations)
@@ -54,7 +53,6 @@ void radeonLocalTransform(
 	struct radeon_transform_context ctx;
 	int ip;
 
-	ctx.Ctx = Ctx;
 	ctx.Program = program;
 	ctx.OldInstructions = program->Instructions;
 	ctx.OldNumInstructions = program->NumInstructions;
