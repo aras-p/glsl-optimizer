@@ -36,12 +36,6 @@
 
 
 enum {
-	CLAUSE_MIXED = 0,
-	CLAUSE_ALU,
-	CLAUSE_TEX
-};
-
-enum {
 	PROGRAM_BUILTIN = PROGRAM_FILE_MAX /**< not a real register, but a special swizzle constant */
 };
 
