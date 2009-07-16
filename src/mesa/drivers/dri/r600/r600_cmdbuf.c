@@ -521,7 +521,7 @@ static int r600_cs_check_space(struct radeon_cs *cs, struct radeon_cs_space_chec
          write_domain = bos[i].write_domain;
 		   
          /* pinned bos don't count */
-         if (radeon_legacy_bo_is_static(bo))
+         if (radeon_bo_is_static(bo))
 	     continue;
  
          /* already accounted this bo */
