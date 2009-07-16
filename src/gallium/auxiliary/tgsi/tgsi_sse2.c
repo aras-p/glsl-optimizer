@@ -1558,10 +1558,9 @@ emit_kil(
    const struct tgsi_full_src_register *reg )
 {
    unsigned uniquemask;
-   unsigned registers[4];
-   unsigned nextregister = 0;
-   unsigned firstchan = ~0;
+   unsigned unique_count = 0;
    unsigned chan_index;
+   unsigned i;
 
    /* This mask stores component bits that were already tested. Note that
     * we test if the value is less than zero, so 1.0 and 0.0 need not to be
@@ -1581,18 +1580,11 @@ emit_kil(
          uniquemask |= 1 << swizzle;
 
          /* allocate register */
-         registers[chan_index] = nextregister;
          emit_fetch(
             func,
-            nextregister,
+            unique_count++,
             reg,
             chan_index );
-         nextregister++;
-
-         /* mark the first channel used */
-         if( firstchan == ~0 ) {
-            firstchan = chan_index;
-         }
       }
    }
 
@@ -1603,32 +1595,32 @@ emit_kil(
       func,
       x86_make_reg( file_REG32, reg_DX ) );
 
-   FOR_EACH_CHANNEL( chan_index ) {
-      if( uniquemask & (1 << chan_index) ) {
-         sse_cmpps(
-            func,
-            make_xmm( registers[chan_index] ),
-            get_temp(
-               TGSI_EXEC_TEMP_00000000_I,
-               TGSI_EXEC_TEMP_00000000_C ),
-            cc_LessThan );
+   for (i = 0 ; i < unique_count; i++ ) {
+      struct x86_reg dataXMM = make_xmm(i);
 
-         if( chan_index == firstchan ) {
-            sse_pmovmskb(
-               func,
-               x86_make_reg( file_REG32, reg_AX ),
-               make_xmm( registers[chan_index] ) );
-         }
-         else {
-            sse_pmovmskb(
-               func,
-               x86_make_reg( file_REG32, reg_DX ),
-               make_xmm( registers[chan_index] ) );
-            x86_or(
-               func,
-               x86_make_reg( file_REG32, reg_AX ),
-               x86_make_reg( file_REG32, reg_DX ) );
-         }
+      sse_cmpps(
+         func,
+         dataXMM,
+         get_temp(
+            TGSI_EXEC_TEMP_00000000_I,
+            TGSI_EXEC_TEMP_00000000_C ),
+         cc_LessThan );
+      
+      if( i == 0 ) {
+         sse_movmskps(
+            func,
+            x86_make_reg( file_REG32, reg_AX ),
+            dataXMM );
+      }
+      else {
+         sse_movmskps(
+            func,
+            x86_make_reg( file_REG32, reg_DX ),
+            dataXMM );
+         x86_or(
+            func,
+            x86_make_reg( file_REG32, reg_AX ),
+            x86_make_reg( file_REG32, reg_DX ) );
       }
    }
 
