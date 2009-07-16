@@ -52,22 +52,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_mipmap_tree.h"
 #include "radeon_reg.h"
 
-struct r600_cs_manager_legacy
-{
-    struct radeon_cs_manager    base;
-    struct radeon_context       *ctx;
-    /* hack for scratch stuff */
-    uint32_t                    pending_age;
-    uint32_t                    pending_count;
-};
 
-struct r600_cs_reloc_legacy {
-    struct radeon_cs_reloc  base;
-    uint32_t                cindices;
-    uint32_t                *indices;
-    uint32_t                *reloc_indices;
-    struct offset_modifiers offset_mod;
-};
 
 static struct radeon_cs * r600_cs_create(struct radeon_cs_manager *csm,
                                    uint32_t ndw)

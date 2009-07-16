@@ -63,7 +63,6 @@ void r700Clear(GLcontext * ctx, GLbitfield mask)
     {
         return;
     }
-
 	if (!context->radeon.radeonScreen->driScreen->dri2.enabled) {
 		LOCK_HARDWARE(&context->radeon);
 		UNLOCK_HARDWARE(&context->radeon);

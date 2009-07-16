@@ -118,6 +118,23 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R600_IT_SET_CTL_CONST                     0x00006F00
 #define R600_IT_SURFACE_BASE_UPDATE               0x00007300
 
+struct r600_cs_manager_legacy
+{
+    struct radeon_cs_manager    base;
+    struct radeon_context       *ctx;
+    /* hack for scratch stuff */
+    uint32_t                    pending_age;
+    uint32_t                    pending_count;
+};
+
+struct r600_cs_reloc_legacy {
+    struct radeon_cs_reloc  base;
+    uint32_t                cindices;
+    uint32_t                *indices;
+    uint32_t                *reloc_indices;
+    struct offset_modifiers offset_mod;
+};
+
 extern int r600_cs_write_reloc(struct radeon_cs *cs,
                         struct radeon_bo *bo,
                         uint32_t read_domain,
@@ -129,6 +146,8 @@ static inline void r600_cs_write_dword(struct radeon_cs *cs, uint32_t dword)
 {
     cs->packets[cs->cdw++] = dword;
 }
+
+struct radeon_cs_manager * r600_radeon_cs_manager_legacy_ctor(struct radeon_context *ctx);
 
 /**
  * Write one dword to the command buffer.
