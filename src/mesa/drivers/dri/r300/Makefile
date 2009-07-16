@@ -38,19 +38,6 @@ RADEON_COMMON_SOURCES = \
 	radeon_span.c \
 	radeon_fbo.c
 
-RADEON_COMPILER_SOURCES = \
-		compiler/radeon_nqssadce.c \
-		compiler/radeon_program.c \
-		compiler/radeon_program_alu.c \
-		compiler/radeon_program_pair.c \
-		compiler/r3xx_fragprog.c \
-		compiler/r300_fragprog.c \
-		compiler/r300_fragprog_swizzle.c \
-		compiler/r300_fragprog_emit.c \
-		compiler/r500_fragprog.c \
-		compiler/r500_fragprog_emit.c \
-		compiler/memory_pool.c
-
 DRIVER_SOURCES = \
 		 radeon_screen.c \
 		 r300_context.c \
@@ -67,7 +54,6 @@ DRIVER_SOURCES = \
 		 r300_emit.c \
 		 r300_swtcl.c \
 		 $(RADEON_COMMON_SOURCES) \
-		 $(RADEON_COMPILER_SOURCES) \
 		 $(EGL_SOURCES) \
 		 $(CS_SOURCES)
 
@@ -80,8 +66,16 @@ DRIVER_DEFINES = -DCOMPILE_R300 -DR200_MERGED=0 \
 
 DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 
+PIPE_DRIVERS =  compiler/libr300compiler.a
+
 ##### TARGETS #####
 
 include ../Makefile.template
 
 symlinks:
+
+# Mark the archive phony so that we always check for recompilation
+.PHONY : compiler/libr300compiler.a
+
+compiler/libr300compiler.a:
+	cd compiler && $(MAKE)
