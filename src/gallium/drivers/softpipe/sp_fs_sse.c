@@ -72,6 +72,7 @@ fs_sse_prepare( const struct sp_fragment_shader *base,
 		struct tgsi_exec_machine *machine,
 		struct tgsi_sampler **samplers )
 {
+   machine->Samplers = samplers;
 }
 
 

@@ -101,7 +101,7 @@ get_const_base( void )
 {
    return x86_make_reg(
       file_REG32,
-      reg_CX );
+      reg_AX );
 }
 
 static struct x86_reg
@@ -109,7 +109,7 @@ get_machine_base( void )
 {
    return x86_make_reg(
       file_REG32,
-      reg_AX );
+      reg_CX );
 }
 
 static struct x86_reg
@@ -145,6 +145,14 @@ get_coef_base( void )
 }
 
 static struct x86_reg
+get_sampler_base( void )
+{
+   return x86_make_reg(
+      file_REG32,
+      reg_DI );
+}
+
+static struct x86_reg
 get_immediate_base( void )
 {
    return x86_make_reg(
@@ -176,6 +184,15 @@ get_const(
    return x86_make_disp(
       get_const_base(),
       (vec * 4 + chan) * 4 );
+}
+
+static struct x86_reg
+get_sampler_ptr(
+   unsigned unit )
+{
+   return x86_make_disp(
+      get_sampler_base(),
+      unit * sizeof( struct tgsi_sampler * ) );
 }
 
 static struct x86_reg
@@ -1222,6 +1239,12 @@ emit_sub(
       make_xmm( xmm_src ) );
 }
 
+
+
+
+
+
+
 /**
  * Register fetch.
  */
@@ -1380,9 +1403,154 @@ emit_store(
 #define STORE( FUNC, INST, XMM, INDEX, CHAN )\
    emit_store( FUNC, XMM, &(INST).FullDstRegisters[INDEX], &(INST), CHAN )
 
+
+static void PIPE_CDECL
+fetch_texel( struct tgsi_sampler **sampler,
+             float *store )
+{
+#if 0
+   uint j;
+
+   debug_printf("%s sampler: %p (%p) store: %p\n", 
+                __FUNCTION__,
+                sampler, *sampler,
+                store );
+
+   debug_printf("lodbias %f\n", store[12]);
+
+   for (j = 0; j < 4; j++)
+      debug_printf("sample %d texcoord %f %f\n", 
+                   j, 
+                   store[0+j],
+                   store[4+j]);
+#endif
+
+   {
+      float rgba[NUM_CHANNELS][QUAD_SIZE];
+      (*sampler)->get_samples(*sampler, 
+                              &store[0], 
+                              &store[4], 
+                              &store[8], 
+                              0.0f, /*store[12],  lodbias */
+                              rgba);
+
+      memcpy( store, rgba, 16 * sizeof(float));
+   }
+
+#if 0
+   for (j = 0; j < 4; j++)
+      debug_printf("sample %d result %f %f %f %f\n", 
+                   j, 
+                   store[0+j],
+                   store[4+j],
+                   store[8+j],
+                   store[12+j]);
+#endif
+}
+
 /**
  * High-level instruction translators.
  */
+
+static void
+emit_tex( struct x86_function *func,
+          const struct tgsi_full_instruction *inst,
+          boolean lodbias,
+          boolean projected)
+{
+   const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
+   struct x86_reg args[2];
+   unsigned count;
+   unsigned i;
+
+   switch (inst->InstructionExtTexture.Texture) {
+   case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_SHADOW1D:
+      count = 1;
+      break;
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
+      count = 2;
+      break;
+   case TGSI_TEXTURE_3D:
+   case TGSI_TEXTURE_CUBE:
+      count = 3;
+      break;
+   default:
+      assert(0);
+      return;
+   }
+
+   if (lodbias) {
+      FETCH( func, *inst, 3, 0, 3 );
+   }
+   else {
+      emit_tempf(
+         func,
+         3,
+         TGSI_EXEC_TEMP_00000000_I,
+         TGSI_EXEC_TEMP_00000000_C );
+
+   }
+
+   /* store lodbias whether enabled or not -- fetch_texel currently
+    * respects it always.
+    */
+   sse_movaps( func,
+               get_temp( TEMP_R0, 3 ),
+               make_xmm( 3 ) );
+
+   
+   if (projected) {
+      FETCH( func, *inst, 3, 0, 3 );
+
+      emit_rcp( func, 3, 3 );
+   }
+
+   for (i = 0; i < count; i++) {
+      FETCH( func, *inst, i, 0, i );
+
+      if (projected) {
+         sse_mulps(
+            func,
+            make_xmm( i ),
+            make_xmm( 3 ) );
+      }
+      
+      /* Store in the argument buffer:
+       */
+      sse_movaps(
+         func,
+         get_temp( TEMP_R0, i ),
+         make_xmm( i ) );
+   }
+
+   args[0] = get_temp( TEMP_R0, 0 );
+   args[1] = get_sampler_ptr( unit );
+
+
+   emit_func_call( func,
+                   0,
+                   args,
+                   Elements(args),
+                   fetch_texel );
+
+   /* If all four channels are enabled, could use a pointer to
+    * dst[0].x instead of TEMP_R0 for store?
+    */
+   FOR_EACH_DST0_ENABLED_CHANNEL( *inst, i ) {
+
+      sse_movaps(
+         func,
+         make_xmm( 0 ),
+         get_temp( TEMP_R0, i ) );
+
+      STORE( func, *inst, 0, 0, i );
+   }
+}
+
 
 static void
 emit_kil(
@@ -2168,21 +2336,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TEX:
-      if (0) {
-	 /* Disable dummy texture code: 
-	  */
-	 emit_tempf(
-	    func,
-	    0,
-	    TEMP_ONE_I,
-	    TEMP_ONE_C );
-	 FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
-	    STORE( func, *inst, 0, 0, chan_index );
-	 }
-      }
-      else {
-	 return 0;
-      }
+      emit_tex( func, inst, FALSE, FALSE );
       break;
 
    case TGSI_OPCODE_TXD:
@@ -2280,7 +2434,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXB:
-      return 0;
+      emit_tex( func, inst, TRUE, FALSE );
       break;
 
    case TGSI_OPCODE_NRM:
@@ -2388,9 +2542,13 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXL:
-      return 0;
+      emit_tex( func, inst, TRUE, FALSE );
       break;
 
+   case TGSI_OPCODE_TXP:
+      emit_tex( func, inst, FALSE, TRUE );
+      break;
+      
    case TGSI_OPCODE_BRK:
       return 0;
       break;
@@ -2758,6 +2916,12 @@ tgsi_emit_sse2(
 	 func,
 	 get_coef_base(),
 	 x86_fn_arg( func, 4 ) );
+
+      x86_mov(
+	 func,
+	 get_sampler_base(),
+	 x86_make_disp( get_machine_base(),
+                        Offset( struct tgsi_exec_machine, Samplers ) ) );
    }
 
 
