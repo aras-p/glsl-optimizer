@@ -993,6 +993,15 @@ void sse_pmovmskb( struct x86_function *p,
    emit_modrm(p, dst, src);
 }
 
+void sse_movmskps( struct x86_function *p,
+                   struct x86_reg dst,
+                   struct x86_reg src)
+{
+   DUMP_RR( dst, src );
+   emit_2ub(p, X86_TWOB, 0x50);
+   emit_modrm(p, dst, src);
+}
+
 /***********************************************************************
  * SSE2 instructions
  */
