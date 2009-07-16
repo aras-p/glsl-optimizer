@@ -41,7 +41,7 @@
 #include "shader/prog_print.h"
 
 #define error(fmt, args...) do { \
-	_mesa_problem(s->Ctx, "%s::%s(): " fmt "\n",	\
+	fprintf(stderr, "r300 driver problem: %s::%s(): " fmt "\n",	\
 		__FILE__, __FUNCTION__, ##args);	\
 	s->Error = GL_TRUE;				\
 } while(0)
@@ -120,7 +120,6 @@ struct pair_register_translation {
 };
 
 struct pair_state {
-	GLcontext *Ctx;
 	struct memory_pool Pool;
 	struct gl_program *Program;
 	const struct radeon_pair_handler *Handler;
@@ -175,7 +174,7 @@ static GLuint get_hw_reg(struct pair_state *s, GLuint file, GLuint index)
 
 	struct pair_register_translation *t = get_register(s, file, index);
 	if (!t) {
-		_mesa_problem(s->Ctx, "get_hw_reg: %i[%i]\n", file, index);
+		error("get_hw_reg: %i[%i]\n", file, index);
 		return 0;
 	}
 
@@ -456,7 +455,7 @@ static void allocate_input_registers(struct pair_state *s)
 	InputsRead &= ~FRAG_BIT_COL1;
 
 	/* Texcoords */
-	for (i = 0; i < s->Ctx->Const.MaxTextureUnits; i++) {
+	for (i = 0; i < 8; i++) {
 		if (InputsRead & (FRAG_BIT_TEX0 << i))
 			alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_TEX0+i, hwindex++);
 	}
@@ -877,13 +876,12 @@ static void emit_alu(struct pair_state *s)
 }
 
 
-GLboolean radeonPairProgram(GLcontext *ctx, struct gl_program *program,
+GLboolean radeonPairProgram(struct gl_program *program,
 	const struct radeon_pair_handler* handler, void *userdata)
 {
 	struct pair_state s;
 
 	_mesa_bzero(&s, sizeof(s));
-	s.Ctx = ctx;
 	memory_pool_init(&s.Pool);
 	s.Program = program;
 	s.Handler = handler;
