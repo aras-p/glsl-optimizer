@@ -281,14 +281,14 @@ GLboolean r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c
 			.IsNativeSwizzle = &r500FPIsNativeSwizzle,
 			.BuildSwizzle = &r500FPBuildSwizzle
 		};
-		radeonNqssaDce(c->ctx, c->program, &nqssadce);
+		radeonNqssaDce(c->program, &nqssadce, 0);
 	} else {
 		struct radeon_nqssadce_descr nqssadce = {
 			.Init = &nqssadce_init,
 			.IsNativeSwizzle = &r300FPIsNativeSwizzle,
 			.BuildSwizzle = &r300FPBuildSwizzle
 		};
-		radeonNqssaDce(c->ctx, c->program, &nqssadce);
+		radeonNqssaDce(c->program, &nqssadce, 0);
 	}
 
 	if (c->debug) {

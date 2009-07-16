@@ -166,7 +166,7 @@ static void process_instruction(struct nqssadce_state* s)
 	if (inst->Opcode != OPCODE_KIL) {
 		struct register_state *regstate = get_reg_state(s, inst->DstReg.File, inst->DstReg.Index);
 		if (!regstate) {
-			_mesa_problem(s->Ctx, "NqssaDce: bad destination register (%i[%i])\n",
+			fprintf(stderr, "r300 driver: NqssaDce: bad destination register (%i[%i])\n",
 				inst->DstReg.File, inst->DstReg.Index);
 			return;
 		}
@@ -244,7 +244,7 @@ static void process_instruction(struct nqssadce_state* s)
 		inst = track_used_srcreg(s, inst, 0, 0xb);
 		break;
 	default:
-		_mesa_problem(s->Ctx, "NqssaDce: Unknown opcode %d\n", inst->Opcode);
+		fprintf(stderr, "r300 driver: NqssaDce: Unknown opcode %d\n", inst->Opcode);
 		return;
 	}
 }
@@ -277,14 +277,14 @@ static void calculateInputsOutputs(struct gl_program *p)
 	p->OutputsWritten = OutputsWritten;
 }
 
-void radeonNqssaDce(GLcontext *ctx, struct gl_program *p, struct radeon_nqssadce_descr* descr)
+void radeonNqssaDce(struct gl_program *p, struct radeon_nqssadce_descr* descr, void * data)
 {
 	struct nqssadce_state s;
 
 	_mesa_bzero(&s, sizeof(s));
-	s.Ctx = ctx;
 	s.Program = p;
 	s.Descr = descr;
+	s.UserData = data;
 	s.Descr->Init(&s);
 	s.IP = p->NumInstructions;
 

@@ -1496,7 +1496,7 @@ static void addArtificialOutputs(GLcontext *ctx, struct gl_program *prog)
 
 static void nqssadceInit(struct nqssadce_state* s)
 {
-	r300ContextPtr r300 = R300_CONTEXT(s->Ctx);
+	r300ContextPtr r300 = (r300ContextPtr)(s->UserData);
 	GLuint fp_reads;
 
 	fp_reads = r300->selected_fp->Base->InputsRead;
@@ -1582,7 +1582,7 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 			.IsNativeSwizzle = &swizzleIsNative,
 			.BuildSwizzle = NULL
 		};
-		radeonNqssaDce(ctx, prog, &nqssadce);
+		radeonNqssaDce(prog, &nqssadce, r300);
 
 		/* We need this step for reusing temporary registers */
 		_mesa_optimize_program(ctx, prog);

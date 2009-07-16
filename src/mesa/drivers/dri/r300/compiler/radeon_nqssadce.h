@@ -44,7 +44,6 @@ struct register_state {
  * read from, etc.
  */
 struct nqssadce_state {
-	GLcontext *Ctx;
 	struct gl_program *Program;
 	struct radeon_nqssadce_descr *Descr;
 
@@ -59,6 +58,8 @@ struct nqssadce_state {
 	struct register_state Temps[MAX_PROGRAM_TEMPS];
 	struct register_state Outputs[VERT_RESULT_MAX];
 	struct register_state Address;
+
+	void * UserData;
 };
 
 
@@ -83,11 +84,9 @@ struct radeon_nqssadce_descr {
 	 * The transformation will work recursively on the emitted instruction(s).
 	 */
 	void (*BuildSwizzle)(struct nqssadce_state*, struct prog_dst_register dst, struct prog_src_register src);
-
-	void *Data;
 };
 
-void radeonNqssaDce(GLcontext *ctx, struct gl_program *p, struct radeon_nqssadce_descr* descr);
+void radeonNqssaDce(struct gl_program *p, struct radeon_nqssadce_descr* descr, void * data);
 struct prog_src_register lmul_swizzle(GLuint swizzle, struct prog_src_register srcreg);
 
 #endif /* __RADEON_PROGRAM_NQSSADCE_H_ */
