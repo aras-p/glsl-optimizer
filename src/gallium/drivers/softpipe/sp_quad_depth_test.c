@@ -60,7 +60,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
    unsigned zmask = 0;
    unsigned j;
    struct softpipe_cached_tile *tile
-      = sp_get_cached_tile(softpipe, softpipe->zsbuf_cache, quad->input.x0, quad->input.y0);
+      = sp_get_cached_tile(softpipe->zsbuf_cache, quad->input.x0, quad->input.y0);
 
    assert(ps); /* shouldn't get here if there's no zbuffer */
 

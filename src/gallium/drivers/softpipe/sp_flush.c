@@ -52,17 +52,17 @@ softpipe_flush( struct pipe_context *pipe,
 
    if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
       for (i = 0; i < softpipe->num_textures; i++) {
-         sp_flush_tile_cache(softpipe, softpipe->tex_cache[i]);
+         sp_flush_tile_cache(softpipe->tex_cache[i]);
       }
    }
 
    if (flags & PIPE_FLUSH_RENDER_CACHE) {
       for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++)
          if (softpipe->cbuf_cache[i])
-            sp_flush_tile_cache(softpipe, softpipe->cbuf_cache[i]);
+            sp_flush_tile_cache(softpipe->cbuf_cache[i]);
 
       if (softpipe->zsbuf_cache)
-         sp_flush_tile_cache(softpipe, softpipe->zsbuf_cache);
+         sp_flush_tile_cache(softpipe->zsbuf_cache);
 
       /* Need this call for hardware buffers before swapbuffers.
        *

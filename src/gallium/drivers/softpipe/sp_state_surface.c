@@ -53,7 +53,7 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
       /* check if changing cbuf */
       if (sp->framebuffer.cbufs[i] != fb->cbufs[i]) {
          /* flush old */
-         sp_flush_tile_cache(sp, sp->cbuf_cache[i]);
+         sp_flush_tile_cache(sp->cbuf_cache[i]);
 
          /* assign new */
          sp->framebuffer.cbufs[i] = fb->cbufs[i];
@@ -68,7 +68,7 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
    /* zbuf changing? */
    if (sp->framebuffer.zsbuf != fb->zsbuf) {
       /* flush old */
-      sp_flush_tile_cache(sp, sp->zsbuf_cache);
+      sp_flush_tile_cache(sp->zsbuf_cache);
 
       /* assign new */
       sp->framebuffer.zsbuf = fb->zsbuf;

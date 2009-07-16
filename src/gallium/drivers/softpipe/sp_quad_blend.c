@@ -130,8 +130,7 @@ logicop_quad(struct quad_stage *qs, struct quad_header *quad)
       uint *dst4 = (uint *) dst;
       uint *res4 = (uint *) res;
       struct softpipe_cached_tile *
-         tile = sp_get_cached_tile(softpipe,
-                                   softpipe->cbuf_cache[cbuf],
+         tile = sp_get_cached_tile(softpipe->cbuf_cache[cbuf],
                                    quad->input.x0, quad->input.y0);
       float (*quadColor)[4] = quad->output.color[cbuf];
       uint i, j;
@@ -260,8 +259,7 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
    for (cbuf = 0; cbuf < softpipe->framebuffer.nr_cbufs; cbuf++) {
       float source[4][QUAD_SIZE], dest[4][QUAD_SIZE];
       struct softpipe_cached_tile *tile
-         = sp_get_cached_tile(softpipe,
-                              softpipe->cbuf_cache[cbuf],
+         = sp_get_cached_tile(softpipe->cbuf_cache[cbuf],
                               quad->input.x0, quad->input.y0);
       float (*quadColor)[4] = quad->output.color[cbuf];
       uint i, j;

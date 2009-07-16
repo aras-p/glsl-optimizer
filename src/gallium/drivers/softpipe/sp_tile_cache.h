@@ -80,25 +80,21 @@ extern void
 sp_tile_cache_unmap_transfers(struct softpipe_tile_cache *tc);
 
 extern void
-sp_tile_cache_set_texture(struct pipe_context *pipe,
-                          struct softpipe_tile_cache *tc,
+sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
                           struct pipe_texture *texture);
 
 extern void
-sp_flush_tile_cache(struct softpipe_context *softpipe,
-                    struct softpipe_tile_cache *tc);
+sp_flush_tile_cache(struct softpipe_tile_cache *tc);
 
 extern void
 sp_tile_cache_clear(struct softpipe_tile_cache *tc, const float *rgba,
                     uint clearValue);
 
 extern struct softpipe_cached_tile *
-sp_get_cached_tile(struct softpipe_context *softpipe,
-                   struct softpipe_tile_cache *tc, int x, int y);
+sp_get_cached_tile(struct softpipe_tile_cache *tc, int x, int y);
 
 extern const struct softpipe_cached_tile *
-sp_get_cached_tile_tex(struct softpipe_context *softpipe,
-                       struct softpipe_tile_cache *tc, int x, int y, int z,
+sp_get_cached_tile_tex(struct softpipe_tile_cache *tc, int x, int y, int z,
                        int face, int level);
 
 

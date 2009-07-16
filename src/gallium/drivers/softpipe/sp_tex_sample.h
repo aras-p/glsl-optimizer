@@ -39,8 +39,9 @@ struct sp_shader_sampler
 {
    struct tgsi_sampler base;  /**< base class */
 
-   uint unit;
-   struct softpipe_context *sp;
+   const struct pipe_texture *texture;
+   const struct pipe_sampler_state *sampler;
+
    struct softpipe_tile_cache *cache;
 };
 

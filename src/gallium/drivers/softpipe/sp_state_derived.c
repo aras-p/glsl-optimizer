@@ -184,11 +184,33 @@ compute_cliprect(struct softpipe_context *sp)
 }
 
 
+static void
+update_tgsi_samplers( struct softpipe_context *softpipe )
+{
+   unsigned i;
+
+   /* vertex shader samplers */
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      softpipe->tgsi.vert_samplers[i].sampler = softpipe->sampler[i];
+      softpipe->tgsi.vert_samplers[i].texture = softpipe->texture[i];
+   }
+
+   /* fragment shader samplers */
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      softpipe->tgsi.frag_samplers[i].sampler = softpipe->sampler[i];
+      softpipe->tgsi.frag_samplers[i].texture = softpipe->texture[i];
+   }
+}
+
 /* Hopefully this will remain quite simple, otherwise need to pull in
  * something like the state tracker mechanism.
  */
 void softpipe_update_derived( struct softpipe_context *softpipe )
 {
+   if (softpipe->dirty & (SP_NEW_SAMPLER |
+                          SP_NEW_TEXTURE))
+      update_tgsi_samplers( softpipe );
+
    if (softpipe->dirty & (SP_NEW_RASTERIZER |
                           SP_NEW_FS |
                           SP_NEW_VS))

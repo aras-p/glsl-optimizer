@@ -97,7 +97,7 @@ softpipe_set_sampler_textures(struct pipe_context *pipe,
       struct pipe_texture *tex = i < num ? texture[i] : NULL;
 
       pipe_texture_reference(&softpipe->texture[i], tex);
-      sp_tile_cache_set_texture(pipe, softpipe->tex_cache[i], tex);
+      sp_tile_cache_set_texture(softpipe->tex_cache[i], tex);
    }
 
    softpipe->num_textures = num;

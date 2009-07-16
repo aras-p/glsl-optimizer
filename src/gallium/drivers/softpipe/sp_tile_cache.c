@@ -236,8 +236,7 @@ sp_tile_cache_unmap_transfers(struct softpipe_tile_cache *tc)
  * Specify the texture to cache.
  */
 void
-sp_tile_cache_set_texture(struct pipe_context *pipe,
-                          struct softpipe_tile_cache *tc,
+sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
                           struct pipe_texture *texture)
 {
    uint i;
@@ -344,8 +343,7 @@ clear_tile(struct softpipe_cached_tile *tile,
  * Actually clear the tiles which were flagged as being in a clear state.
  */
 static void
-sp_tile_cache_flush_clear(struct pipe_context *pipe,
-                          struct softpipe_tile_cache *tc)
+sp_tile_cache_flush_clear(struct softpipe_tile_cache *tc)
 {
    struct pipe_transfer *pt = tc->transfer;
    const uint w = tc->transfer->width;
@@ -382,8 +380,7 @@ sp_tile_cache_flush_clear(struct pipe_context *pipe,
  * any tiles "flagged" as cleared will be "really" cleared.
  */
 void
-sp_flush_tile_cache(struct softpipe_context *softpipe,
-                    struct softpipe_tile_cache *tc)
+sp_flush_tile_cache(struct softpipe_tile_cache *tc)
 {
    struct pipe_transfer *pt = tc->transfer;
    int inuse = 0, pos;
@@ -409,7 +406,7 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
       }
 
 #if TILE_CLEAR_OPTIMIZATION
-      sp_tile_cache_flush_clear(&softpipe->pipe, tc);
+      sp_tile_cache_flush_clear(tc);
 #endif
    }
    else if (tc->texture) {
@@ -431,8 +428,7 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
  * \param x, y  position of tile, in pixels
  */
 struct softpipe_cached_tile *
-sp_get_cached_tile(struct softpipe_context *softpipe,
-                   struct softpipe_tile_cache *tc, int x, int y)
+sp_get_cached_tile(struct softpipe_tile_cache *tc, int x, int y)
 {
    struct pipe_transfer *pt = tc->transfer;
 
@@ -513,11 +509,11 @@ tex_cache_pos(int x, int y, int z, int face, int level)
  * Tiles are read-only and indexed with more params.
  */
 const struct softpipe_cached_tile *
-sp_get_cached_tile_tex(struct softpipe_context *sp,
-                       struct softpipe_tile_cache *tc, int x, int y, int z,
+sp_get_cached_tile_tex(struct softpipe_tile_cache *tc, 
+                       int x, int y, int z,
                        int face, int level)
 {
-   struct pipe_screen *screen = sp->pipe.screen;
+   struct pipe_screen *screen = tc->screen;
    /* tile pos in framebuffer: */
    const int tile_x = x & ~(TILE_SIZE - 1);
    const int tile_y = y & ~(TILE_SIZE - 1);

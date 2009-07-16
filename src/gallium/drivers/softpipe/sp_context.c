@@ -73,8 +73,8 @@ softpipe_unmap_transfers(struct softpipe_context *sp)
    uint i;
 
    for (i = 0; i < sp->framebuffer.nr_cbufs; i++)
-      sp_flush_tile_cache(sp, sp->cbuf_cache[i]);
-   sp_flush_tile_cache(sp, sp->zsbuf_cache);
+      sp_flush_tile_cache(sp->cbuf_cache[i]);
+   sp_flush_tile_cache(sp->zsbuf_cache);
 
    for (i = 0; i < sp->framebuffer.nr_cbufs; i++) {
       sp_tile_cache_unmap_transfers(sp->cbuf_cache[i]);
@@ -254,8 +254,6 @@ softpipe_create( struct pipe_screen *screen )
    /* vertex shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       softpipe->tgsi.vert_samplers[i].base.get_samples = sp_get_samples_vertex;
-      softpipe->tgsi.vert_samplers[i].unit = i;
-      softpipe->tgsi.vert_samplers[i].sp = softpipe;
       softpipe->tgsi.vert_samplers[i].cache = softpipe->tex_cache[i];
       softpipe->tgsi.vert_samplers_list[i] = &softpipe->tgsi.vert_samplers[i];
    }
@@ -263,8 +261,6 @@ softpipe_create( struct pipe_screen *screen )
    /* fragment shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       softpipe->tgsi.frag_samplers[i].base.get_samples = sp_get_samples_fragment;
-      softpipe->tgsi.frag_samplers[i].unit = i;
-      softpipe->tgsi.frag_samplers[i].sp = softpipe;
       softpipe->tgsi.frag_samplers[i].cache = softpipe->tex_cache[i];
       softpipe->tgsi.frag_samplers_list[i] = &softpipe->tgsi.frag_samplers[i];
    }
