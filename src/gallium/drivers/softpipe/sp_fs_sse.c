@@ -45,17 +45,6 @@
 
 #include "rtasm/rtasm_x86sse.h"
 
-/* Surely this should be defined somewhere in a tgsi header:
- */
-typedef void (PIPE_CDECL *codegen_function)(
-   const struct tgsi_exec_vector *input,
-   struct tgsi_exec_vector *output,
-   const float (*constant)[4],
-   struct tgsi_exec_vector *temporary,
-   const struct tgsi_interp_coef *coef,
-   float (*immediates)[4]
-   //, const struct tgsi_exec_vector *quadPos
- );
 
 
 /**
@@ -65,7 +54,7 @@ struct sp_sse_fragment_shader
 {
    struct sp_fragment_shader base;
    struct x86_function sse2_program;
-   codegen_function func;
+   tgsi_sse2_fs_function func;
    float immediates[TGSI_EXEC_NUM_IMMEDIATES][4];
 };
 
@@ -107,12 +96,10 @@ fs_sse_run( const struct sp_fragment_shader *base,
    tgsi_set_kill_mask(machine, 0x0);
    tgsi_set_exec_mask(machine, 1, 1, 1, 1);
 
-   shader->func( machine->Inputs,
-		 machine->Outputs,
+   shader->func( machine,
 		 machine->Consts,
-		 machine->Temps,
-		 machine->InterpCoefs,
-                 shader->immediates
+                 (const float (*)[4])shader->immediates,
+		 machine->InterpCoefs
 		 //	 , &machine->QuadPos
       );
 
@@ -151,7 +138,7 @@ softpipe_create_fs_sse(struct softpipe_context *softpipe,
       return NULL;
    }
 
-   shader->func = (codegen_function) x86_get_func( &shader->sse2_program );
+   shader->func = (tgsi_sse2_fs_function) x86_get_func( &shader->sse2_program );
    if (!shader->func) {
       x86_release_func( &shader->sse2_program );
       FREE(shader);

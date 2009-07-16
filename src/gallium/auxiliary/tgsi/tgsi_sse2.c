@@ -32,6 +32,7 @@
 #include "util/u_debug.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
+#include "util/u_memory.h"
 #if defined(PIPE_ARCH_SSE)
 #include "util/u_sse.h"
 #endif
@@ -104,7 +105,7 @@ get_const_base( void )
 }
 
 static struct x86_reg
-get_input_base( void )
+get_machine_base( void )
 {
    return x86_make_reg(
       file_REG32,
@@ -112,15 +113,31 @@ get_input_base( void )
 }
 
 static struct x86_reg
+get_input_base( void )
+{
+   return x86_make_disp(
+      get_machine_base(),
+      Offset(struct tgsi_exec_machine, Inputs) );
+}
+
+static struct x86_reg
 get_output_base( void )
 {
-   return x86_make_reg(
-      file_REG32,
-      reg_DX );
+   return x86_make_disp(
+      get_machine_base(),
+      Offset(struct tgsi_exec_machine, Outputs) );
 }
 
 static struct x86_reg
 get_temp_base( void )
+{
+   return x86_make_disp(
+      get_machine_base(),
+      Offset(struct tgsi_exec_machine, Temps) );
+}
+
+static struct x86_reg
+get_coef_base( void )
 {
    return x86_make_reg(
       file_REG32,
@@ -128,17 +145,11 @@ get_temp_base( void )
 }
 
 static struct x86_reg
-get_coef_base( void )
-{
-   return get_output_base();
-}
-
-static struct x86_reg
 get_immediate_base( void )
 {
    return x86_make_reg(
       file_REG32,
-      reg_DI );
+      reg_DX );
 }
 
 
@@ -2551,7 +2562,7 @@ emit_declaration(
 
 static void aos_to_soa( struct x86_function *func, 
                         uint arg_aos,
-                        uint arg_soa, 
+                        uint arg_machine, 
                         uint arg_num, 
                         uint arg_stride )
 {
@@ -2566,7 +2577,10 @@ static void aos_to_soa( struct x86_function *func,
    x86_push( func, x86_make_reg( file_REG32, reg_BX ) );
 
    x86_mov( func, aos_input,  x86_fn_arg( func, arg_aos ) );
-   x86_mov( func, soa_input,  x86_fn_arg( func, arg_soa ) );
+   x86_mov( func, soa_input,  x86_fn_arg( func, arg_machine ) );
+   x86_lea( func, soa_input,  
+	    x86_make_disp( soa_input, 
+			   Offset(struct tgsi_exec_machine, Inputs) ) );
    x86_mov( func, num_inputs, x86_fn_arg( func, arg_num ) );
    x86_mov( func, stride,     x86_fn_arg( func, arg_stride ) );
 
@@ -2608,28 +2622,30 @@ static void aos_to_soa( struct x86_function *func,
    x86_jcc( func, cc_NE, inner_loop );
 
    /* Restore EBX */
-   x86_pop( func, aos_input );
+   x86_pop( func, x86_make_reg( file_REG32, reg_BX ) );
 }
 
-static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num, uint stride )
+static void soa_to_aos( struct x86_function *func, 
+			uint arg_aos, 
+			uint arg_machine, 
+			uint arg_num, 
+			uint arg_stride )
 {
-   struct x86_reg soa_output;
-   struct x86_reg aos_output;
-   struct x86_reg num_outputs;
-   struct x86_reg temp;
+   struct x86_reg soa_output = x86_make_reg( file_REG32, reg_AX );
+   struct x86_reg aos_output = x86_make_reg( file_REG32, reg_BX );
+   struct x86_reg num_outputs = x86_make_reg( file_REG32, reg_CX );
+   struct x86_reg temp = x86_make_reg( file_REG32, reg_DX );
    int inner_loop;
 
-   soa_output = x86_make_reg( file_REG32, reg_AX );
-   aos_output = x86_make_reg( file_REG32, reg_BX );
-   num_outputs = x86_make_reg( file_REG32, reg_CX );
-   temp = x86_make_reg( file_REG32, reg_DX );
-
    /* Save EBX */
-   x86_push( func, aos_output );
+   x86_push( func, x86_make_reg( file_REG32, reg_BX ) );
 
-   x86_mov( func, soa_output, x86_fn_arg( func, soa ) );
-   x86_mov( func, aos_output, x86_fn_arg( func, aos ) );
-   x86_mov( func, num_outputs, x86_fn_arg( func, num ) );
+   x86_mov( func, aos_output, x86_fn_arg( func, arg_aos ) );
+   x86_mov( func, soa_output, x86_fn_arg( func, arg_machine ) );
+   x86_lea( func, soa_output, 
+	    x86_make_disp( soa_output, 
+			   Offset(struct tgsi_exec_machine, Outputs) ) );
+   x86_mov( func, num_outputs, x86_fn_arg( func, arg_num ) );
 
    /* do */
    inner_loop = x86_get_label( func );
@@ -2646,7 +2662,7 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
       sse_unpcklps( func, make_xmm( 3 ), make_xmm( 4 ) );
       sse_unpckhps( func, make_xmm( 5 ), make_xmm( 4 ) );
 
-      x86_mov( func, temp, x86_fn_arg( func, stride ) );
+      x86_mov( func, temp, x86_fn_arg( func, arg_stride ) );
       x86_push( func, aos_output );
       sse_movlps( func, x86_make_disp( aos_output, 0 ), make_xmm( 0 ) );
       sse_movlps( func, x86_make_disp( aos_output, 8 ), make_xmm( 3 ) );
@@ -2670,19 +2686,12 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
    x86_jcc( func, cc_NE, inner_loop );
 
    /* Restore EBX */
-   x86_pop( func, aos_output );
+   x86_pop( func, x86_make_reg( file_REG32, reg_BX ) );
 }
 
 /**
  * Translate a TGSI vertex/fragment shader to SSE2 code.
  * Slightly different things are done for vertex vs. fragment shaders.
- *
- * Note that fragment shaders are responsible for interpolating shader
- * inputs. Because on x86 we have only 4 GP registers, and here we
- * have 5 shader arguments (input, output, const, temp and coef), the
- * code is split into two phases -- DECLARATION and INSTRUCTION phase.
- * GP register holding the output argument is aliased with the coeff
- * argument, as outputs are not needed in the DECLARATION phase.
  *
  * \param tokens  the TGSI input shader
  * \param func  the output SSE code/function
@@ -2697,7 +2706,6 @@ tgsi_emit_sse2(
    boolean do_swizzles )
 {
    struct tgsi_parse_context parse;
-   boolean instruction_phase = FALSE;
    unsigned ok = 1;
    uint num_immediates = 0;
 
@@ -2709,73 +2717,41 @@ tgsi_emit_sse2(
 
    /* Can't just use EDI, EBX without save/restoring them:
     */
-   x86_push(
-      func,
-      get_immediate_base() );
-
-   x86_push(
-      func,
-      get_temp_base() );
-
+   x86_push( func, x86_make_reg( file_REG32, reg_BX ) );
+   x86_push( func, x86_make_reg( file_REG32, reg_DI ) );
 
    /*
     * Different function args for vertex/fragment shaders:
     */
-   if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
-      /* DECLARATION phase, do not load output argument. */
-      x86_mov(
-         func,
-         get_input_base(),
-         x86_fn_arg( func, 1 ) );
-      /* skipping outputs argument here */
-      x86_mov(
-         func,
-         get_const_base(),
-         x86_fn_arg( func, 3 ) );
-      x86_mov(
-         func,
-         get_temp_base(),
-         x86_fn_arg( func, 4 ) );
-      x86_mov(
-         func,
-         get_coef_base(),
-         x86_fn_arg( func, 5 ) );
-      x86_mov(
-         func,
-         get_immediate_base(),
-         x86_fn_arg( func, 6 ) );
-   }
-   else {
-      assert(parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX);
-
+   if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX) {
       if (do_swizzles)
          aos_to_soa( func, 
-                     6,         /* aos_input */
-                     1,         /* machine->input */
-                     7,         /* num_inputs */
-                     8 );       /* input_stride */
-
-      x86_mov(
-         func,
-         get_input_base(),
-         x86_fn_arg( func, 1 ) );
-      x86_mov(
-         func,
-         get_output_base(),
-         x86_fn_arg( func, 2 ) );
-      x86_mov(
-         func,
-         get_const_base(),
-         x86_fn_arg( func, 3 ) );
-      x86_mov(
-         func,
-         get_temp_base(),
-         x86_fn_arg( func, 4 ) );
-      x86_mov(
-         func,
-         get_immediate_base(),
-         x86_fn_arg( func, 5 ) );
+                     4,         /* aos_input */
+                     1,         /* machine */
+                     5,         /* num_inputs */
+                     6 );       /* input_stride */
    }
+
+   x86_mov(
+      func,
+      get_machine_base(),
+      x86_fn_arg( func, 1 ) );
+   x86_mov(
+      func,
+      get_const_base(),
+      x86_fn_arg( func, 2 ) );
+   x86_mov(
+      func,
+      get_immediate_base(),
+      x86_fn_arg( func, 3 ) );
+
+   if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
+      x86_mov(
+	 func,
+	 get_coef_base(),
+	 x86_fn_arg( func, 4 ) );
+   }
+
 
    while( !tgsi_parse_end_of_tokens( &parse ) && ok ) {
       tgsi_parse_token( &parse );
@@ -2790,17 +2766,6 @@ tgsi_emit_sse2(
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
-            if( !instruction_phase ) {
-               /* INSTRUCTION phase, overwrite coeff with output. */
-               instruction_phase = TRUE;
-               x86_mov(
-                  func,
-                  get_output_base(),
-                  x86_fn_arg( func, 2 ) );
-            }
-         }
-
          ok = emit_instruction(
             func,
             &parse.FullToken.FullInstruction );
@@ -2844,18 +2809,17 @@ tgsi_emit_sse2(
 
    if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX) {
       if (do_swizzles)
-         soa_to_aos( func, 9, 2, 10, 11 );
+         soa_to_aos( func, 
+		     7, 	/* aos_output */
+		     1, 	/* machine */
+		     8, 	/* num_outputs */
+		     9 );	/* output_stride */
    }
 
    /* Can't just use EBX, EDI without save/restoring them:
     */
-   x86_pop(
-      func,
-      get_temp_base() );
-
-   x86_pop(
-      func,
-      get_immediate_base() );
+   x86_pop( func, x86_make_reg( file_REG32, reg_DI ) );
+   x86_pop( func, x86_make_reg( file_REG32, reg_BX ) );
 
    emit_ret( func );
 
