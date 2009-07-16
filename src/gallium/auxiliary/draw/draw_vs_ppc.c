@@ -48,6 +48,7 @@
 #include "rtasm/rtasm_ppc.h"
 #include "tgsi/tgsi_ppc.h"
 #include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_exec.h"
 
 
 
