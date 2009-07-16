@@ -82,6 +82,27 @@ struct radeon_pair_instruction {
 };
 
 
+enum {
+	RADEON_OPCODE_TEX = 0,
+	RADEON_OPCODE_TXB,
+	RADEON_OPCODE_TXP,
+	RADEON_OPCODE_KIL
+};
+
+struct radeon_pair_texture_instruction {
+	GLuint Opcode:2; /**< one of RADEON_OPCODE_xxx */
+
+	GLuint DestIndex:8;
+	GLuint WriteMask:4;
+
+	GLuint TexSrcUnit:5;
+	GLuint TexSrcTarget:3;
+
+	GLuint SrcIndex:8;
+	GLuint SrcSwizzle:12;
+};
+
+
 /**
  *
  */
@@ -107,7 +128,7 @@ struct radeon_pair_handler {
 	 *
 	 * @return GL_FALSE on error.
 	 */
-	GLboolean (*EmitTex)(void*, struct prog_instruction*);
+	GLboolean (*EmitTex)(void*, struct radeon_pair_texture_instruction*);
 
 	/**
 	 * Called before a block of contiguous, independent texture

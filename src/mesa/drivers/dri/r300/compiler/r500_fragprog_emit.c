@@ -236,19 +236,19 @@ static GLboolean emit_paired(void *data, struct radeon_pair_instruction *inst)
 	return GL_TRUE;
 }
 
-static GLuint translate_strq_swizzle(struct prog_src_register src)
+static GLuint translate_strq_swizzle(GLuint swizzle)
 {
 	GLuint swiz = 0;
 	int i;
 	for (i = 0; i < 4; i++)
-		swiz |= (GET_SWZ(src.Swizzle, i) & 0x3) << i*2;
+		swiz |= (GET_SWZ(swizzle, i) & 0x3) << i*2;
 	return swiz;
 }
 
 /**
  * Emit a single TEX instruction
  */
-static GLboolean emit_tex(void *data, struct prog_instruction *inst)
+static GLboolean emit_tex(void *data, struct radeon_pair_texture_instruction *inst)
 {
 	PROG_CODE;
 
@@ -260,7 +260,7 @@ static GLboolean emit_tex(void *data, struct prog_instruction *inst)
 	int ip = ++code->inst_end;
 
 	code->inst[ip].inst0 = R500_INST_TYPE_TEX
-		| (inst->DstReg.WriteMask << 11)
+		| (inst->WriteMask << 11)
 		| R500_INST_TEX_SEM_WAIT;
 	code->inst[ip].inst1 = R500_TEX_ID(inst->TexSrcUnit)
 		| R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED;
@@ -269,25 +269,25 @@ static GLboolean emit_tex(void *data, struct prog_instruction *inst)
 	        code->inst[ip].inst1 |= R500_TEX_UNSCALED;
 
 	switch (inst->Opcode) {
-	case OPCODE_KIL:
+	case RADEON_OPCODE_KIL:
 		code->inst[ip].inst1 |= R500_TEX_INST_TEXKILL;
 		break;
-	case OPCODE_TEX:
+	case RADEON_OPCODE_TEX:
 		code->inst[ip].inst1 |= R500_TEX_INST_LD;
 		break;
-	case OPCODE_TXB:
+	case RADEON_OPCODE_TXB:
 		code->inst[ip].inst1 |= R500_TEX_INST_LODBIAS;
 		break;
-	case OPCODE_TXP:
+	case RADEON_OPCODE_TXP:
 		code->inst[ip].inst1 |= R500_TEX_INST_PROJ;
 		break;
 	default:
 		error("emit_tex can't handle opcode %x\n", inst->Opcode);
 	}
 
-	code->inst[ip].inst2 = R500_TEX_SRC_ADDR(inst->SrcReg[0].Index)
-		| (translate_strq_swizzle(inst->SrcReg[0]) << 8)
-		| R500_TEX_DST_ADDR(inst->DstReg.Index)
+	code->inst[ip].inst2 = R500_TEX_SRC_ADDR(inst->SrcIndex)
+		| (translate_strq_swizzle(inst->SrcSwizzle) << 8)
+		| R500_TEX_DST_ADDR(inst->DestIndex)
 		| R500_TEX_DST_R_SWIZ_R | R500_TEX_DST_G_SWIZ_G
 		| R500_TEX_DST_B_SWIZ_B | R500_TEX_DST_A_SWIZ_A;
 

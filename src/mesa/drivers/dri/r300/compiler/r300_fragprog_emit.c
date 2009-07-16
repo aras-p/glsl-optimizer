@@ -272,7 +272,7 @@ static GLboolean begin_tex(void* data)
 }
 
 
-static GLboolean emit_tex(void* data, struct prog_instruction* inst)
+static GLboolean emit_tex(void* data, struct radeon_pair_texture_instruction* inst)
 {
 	PROG_CODE;
 
@@ -282,31 +282,31 @@ static GLboolean emit_tex(void* data, struct prog_instruction* inst)
 	}
 
 	GLuint unit = inst->TexSrcUnit;
-	GLuint dest = inst->DstReg.Index;
+	GLuint dest = inst->DestIndex;
 	GLuint opcode;
 
 	switch(inst->Opcode) {
-	case OPCODE_KIL: opcode = R300_TEX_OP_KIL; break;
-	case OPCODE_TEX: opcode = R300_TEX_OP_LD; break;
-	case OPCODE_TXB: opcode = R300_TEX_OP_TXB; break;
-	case OPCODE_TXP: opcode = R300_TEX_OP_TXP; break;
+	case RADEON_OPCODE_KIL: opcode = R300_TEX_OP_KIL; break;
+	case RADEON_OPCODE_TEX: opcode = R300_TEX_OP_LD; break;
+	case RADEON_OPCODE_TXB: opcode = R300_TEX_OP_TXB; break;
+	case RADEON_OPCODE_TXP: opcode = R300_TEX_OP_TXP; break;
 	default:
 		error("Unknown texture opcode %i", inst->Opcode);
 		return GL_FALSE;
 	}
 
-	if (inst->Opcode == OPCODE_KIL) {
+	if (inst->Opcode == RADEON_OPCODE_KIL) {
 		unit = 0;
 		dest = 0;
 	} else {
 		use_temporary(code, dest);
 	}
 
-	use_temporary(code, inst->SrcReg[0].Index);
+	use_temporary(code, inst->SrcIndex);
 
 	code->node[code->cur_node].tex_end++;
 	code->tex.inst[code->tex.length++] =
-		(inst->SrcReg[0].Index << R300_SRC_ADDR_SHIFT) |
+		(inst->SrcIndex << R300_SRC_ADDR_SHIFT) |
 		(dest << R300_DST_ADDR_SHIFT) |
 		(unit << R300_TEX_ID_SHIFT) |
 		(opcode << R300_TEX_INST_SHIFT);

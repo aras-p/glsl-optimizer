@@ -602,7 +602,25 @@ static void emit_all_tex(struct pair_state *s)
 			_mesa_print_instruction(inst);
 			fflush(stdout);
 		}
-		s->Error = s->Error || !s->Handler->EmitTex(s->UserData, inst);
+
+		struct radeon_pair_texture_instruction rpti;
+
+		switch(inst->Opcode) {
+		case OPCODE_TEX: rpti.Opcode = RADEON_OPCODE_TEX; break;
+		case OPCODE_TXB: rpti.Opcode = RADEON_OPCODE_TXB; break;
+		case OPCODE_TXP: rpti.Opcode = RADEON_OPCODE_TXP; break;
+		default:
+		case OPCODE_KIL: rpti.Opcode = RADEON_OPCODE_KIL; break;
+		}
+
+		rpti.DestIndex = inst->DstReg.Index;
+		rpti.WriteMask = inst->DstReg.WriteMask;
+		rpti.TexSrcUnit = inst->TexSrcUnit;
+		rpti.TexSrcTarget = inst->TexSrcTarget;
+		rpti.SrcIndex = inst->SrcReg[0].Index;
+		rpti.SrcSwizzle = inst->SrcReg[0].Swizzle;
+
+		s->Error = s->Error || !s->Handler->EmitTex(s->UserData, &rpti);
 	}
 
 	if (s->Debug)
