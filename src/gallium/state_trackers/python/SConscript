@@ -15,6 +15,19 @@ if 'python' in env['statetrackers']:
     
     env.Append(CPPPATH = '.')
 
+    if env['platform'] == 'windows':
+        env.Append(LIBS = [
+            'opengl32',
+            'gdi32',
+            'user32',
+            'kernel32',
+        ])
+    else:
+        env.Append(LIBS = [
+        	'GL',
+            'X11',
+        ])
+
     pyst = env.ConvenienceLibrary(
         target = 'pyst',
         source = [
