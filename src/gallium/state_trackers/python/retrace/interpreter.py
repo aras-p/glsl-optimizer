@@ -677,7 +677,7 @@ class Interpreter(parser.TraceDumper):
             self.interpret_call(call)
 
     def handle_call(self, call):
-        if self.options.stop and call.no >= self.options.stop:
+        if self.options.stop and call.no > self.options.stop:
             sys.exit(0)
 
         if (call.klass, call.method) in self.ignore_calls:
