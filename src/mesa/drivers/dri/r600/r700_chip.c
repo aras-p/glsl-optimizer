@@ -386,7 +386,7 @@ int r700SetupStreams(GLcontext * ctx)
 
 			/* currently aos are packed */
 			r700SetupVTXConstants(ctx,
-					      j,
+					      i,
 					      (void*)(&context->radeon.tcl.aos[j]),
 					      (unsigned int)context->radeon.tcl.aos[j].components,
 					      (unsigned int)context->radeon.tcl.aos[j].stride * 4,

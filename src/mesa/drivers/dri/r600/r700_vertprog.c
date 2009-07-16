@@ -115,7 +115,7 @@ unsigned int Map_Vertex_Input(r700_AssemblerBase       *pAsm,
 					  struct gl_vertex_program *mesa_vp,
 					  unsigned int unStart)
 {
-	int i, j = 0;
+	int i;
 	unsigned int unBit;
 	unsigned int unTotal = unStart;
 	for(i=0; i<VERT_ATTRIB_MAX; i++)
@@ -123,8 +123,7 @@ unsigned int Map_Vertex_Input(r700_AssemblerBase       *pAsm,
 		unBit = 1 << i;
 		if(mesa_vp->Base.InputsRead & unBit)
 		{
-			pAsm->ucVP_AttributeMap[j] = unTotal++;
-			j++;
+			pAsm->ucVP_AttributeMap[i] = unTotal++;
 		}
 	}
 	return (unTotal - unStart);
@@ -134,7 +133,7 @@ GLboolean Process_Vertex_Program_Vfetch_Instructions(
 						struct r700_vertex_program *vp,
 						struct gl_vertex_program   *mesa_vp)
 {
-	int i, j = 0;
+	int i;
     unsigned int unBit;
 	VTX_FETCH_METHOD vtxFetchMethod;
 	vtxFetchMethod.bEnableMini          = GL_FALSE;
@@ -146,12 +145,11 @@ GLboolean Process_Vertex_Program_Vfetch_Instructions(
 		if(mesa_vp->Base.InputsRead & unBit)
 		{
 			assemble_vfetch_instruction(&vp->r700AsmCode,
-						    j,
-						    vp->r700AsmCode.ucVP_AttributeMap[j],
-						    vp->aos_desc[j].size,
-						    vp->aos_desc[j].type,
+						    i,
+						    vp->r700AsmCode.ucVP_AttributeMap[i],
+						    vp->aos_desc[i].size,
+						    vp->aos_desc[i].type,
 						    &vtxFetchMethod);
-			j++;
 		}
 	}
 	
@@ -307,16 +305,15 @@ void r700SelectVertexShader(GLcontext *ctx)
 	struct vertex_buffer *vb = &tnl->vb;
 
     unsigned int unBit;
-    unsigned int i, j = 0;
+    unsigned int i;
 	for(i=0; i<VERT_ATTRIB_MAX; i++)
 	{
 		unBit = 1 << i;
 		if(vpc->mesa_program.Base.InputsRead & unBit) /* ctx->Array.ArrayObj->xxxxxxx */
 		{
-			vpc->aos_desc[j].size   = vb->AttribPtr[i]->size;
-			vpc->aos_desc[j].stride = vb->AttribPtr[i]->size * sizeof(GL_FLOAT);/* when emit array, data is packed. vb->AttribPtr[i]->stride;*/
-			vpc->aos_desc[j].type   = GL_FLOAT;
-			j++;
+			vpc->aos_desc[i].size   = vb->AttribPtr[i]->size;
+			vpc->aos_desc[i].stride = vb->AttribPtr[i]->size * sizeof(GL_FLOAT);/* when emit array, data is packed. vb->AttribPtr[i]->stride;*/
+			vpc->aos_desc[i].type   = GL_FLOAT;
 		}
 	}
 
