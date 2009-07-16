@@ -149,7 +149,6 @@ struct rX00_fragment_program_code {
 };
 
 struct r300_fragment_program_compiler {
-	GLcontext * ctx;
 	struct rX00_fragment_program_code *code;
 	struct gl_program *program;
 	struct r300_fragment_program_external_state state;

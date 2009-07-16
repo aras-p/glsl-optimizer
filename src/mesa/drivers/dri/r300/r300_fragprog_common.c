@@ -95,7 +95,6 @@ void r300TranslateFragmentShader(GLcontext *ctx, struct r300_fragment_program *f
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_fragment_program_compiler compiler;
 
-	compiler.ctx = ctx;
 	compiler.code = &fp->code;
 	compiler.state = fp->state;
 	compiler.program = fp->Base;
