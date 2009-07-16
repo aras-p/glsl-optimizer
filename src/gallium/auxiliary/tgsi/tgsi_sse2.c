@@ -533,17 +533,13 @@ emit_coef_dady(
 static void
 emit_func_call(
    struct x86_function *func,
-   unsigned xmm_save,
-   unsigned xmm_dst,
+   unsigned xmm_save_mask,
+   const struct x86_reg *arg,
+   unsigned nr_args,
    void (PIPE_CDECL *code)() )
 {
    struct x86_reg ecx = x86_make_reg( file_REG32, reg_CX );
    unsigned i, n;
-   unsigned xmm_mask;
-   
-   /* Bitmask of the xmm registers to save */
-   xmm_mask = (1 << xmm_save) - 1;
-   xmm_mask &= ~(1 << xmm_dst);
 
    x86_push(
       func,
@@ -558,7 +554,7 @@ emit_func_call(
    /* Store XMM regs to the stack
     */
    for(i = 0, n = 0; i < 8; ++i)
-      if(xmm_mask & (1 << i))
+      if(xmm_save_mask & (1 << i))
          ++n;
    
    x86_sub_imm(
@@ -567,35 +563,42 @@ emit_func_call(
       n*16);
 
    for(i = 0, n = 0; i < 8; ++i)
-      if(xmm_mask & (1 << i)) {
+      if(xmm_save_mask & (1 << i)) {
          sse_movups(
             func,
             x86_make_disp( x86_make_reg( file_REG32, reg_SP ), n*16 ),
             make_xmm( i ) );
          ++n;
       }
+
+   for (i = 0; i < nr_args; i++) {
+      /* Load the address of the buffer we use for passing arguments and
+       * receiving results:
+       */
+      x86_lea(
+	 func,
+	 ecx,
+	 arg[i] );
    
-   /* Load the address of the buffer we use for passing arguments and
-    * receiving results:
-    */
-   x86_lea(
-      func,
-      ecx,
-      get_temp( TEMP_R0, 0 ) );
-   
-   /* Push actual function arguments (currently just the pointer to
-    * the buffer above), and call the function:
-    */
-   x86_push( func, ecx );
+      /* Push actual function arguments (currently just the pointer to
+       * the buffer above), and call the function:
+       */
+      x86_push( func, ecx );
+   }
+
    x86_mov_reg_imm( func, ecx, (unsigned long) code );
    x86_call( func, ecx );
-   x86_pop(func, ecx );
-   
+
+   /* Pop the arguments (or just add an immediate to esp)
+    */
+   for (i = 0; i < nr_args; i++) {
+      x86_pop(func, ecx );
+   }
 
    /* Pop the saved XMM regs:
     */
    for(i = 0, n = 0; i < 8; ++i)
-      if(xmm_mask & (1 << i)) {
+      if(xmm_save_mask & (1 << i)) {
          sse_movups(
             func,
             make_xmm( i ),
@@ -621,7 +624,6 @@ emit_func_call(
       x86_make_reg( file_REG32, reg_AX) );
 }
 
-
 static void
 emit_func_call_dst_src1(
    struct x86_function *func,
@@ -630,25 +632,28 @@ emit_func_call_dst_src1(
    unsigned xmm_src0,
    void (PIPE_CDECL *code)() )
 {
+   struct x86_reg store = get_temp( TEMP_R0, 0 );
+   unsigned xmm_mask = ((1 << xmm_save) - 1) & ~(1 << xmm_dst);
+   
    /* Store our input parameters (in xmm regs) to the buffer we use
     * for passing arguments.  We will pass a pointer to this buffer as
     * the actual function argument.
     */
    sse_movaps(
       func,
-      get_temp( TEMP_R0, 0 ),
+      store,
       make_xmm( xmm_src0 ) );
 
-   emit_func_call(
-      func,
-      xmm_save,
-      xmm_dst,
-      code );
+   emit_func_call( func,
+                   xmm_mask,
+                   &store,
+                   1,
+                   code );
 
    sse_movaps(
       func,
       make_xmm( xmm_dst ),
-      get_temp( TEMP_R0, 0 ) );
+      store );
 }
 
 
@@ -661,33 +666,36 @@ emit_func_call_dst_src2(
    unsigned xmm_src1,
    void (PIPE_CDECL *code)() )
 {
+   struct x86_reg store = get_temp( TEMP_R0, 0 );
+   unsigned xmm_mask = ((1 << xmm_save) - 1) & ~(1 << xmm_dst);
+
    /* Store two inputs to parameter buffer.
     */
    sse_movaps(
       func,
-      get_temp( TEMP_R0, 0 ),
+      store,
       make_xmm( xmm_src0 ) );
 
    sse_movaps(
       func,
-      get_temp( TEMP_R0, 1 ),
+      x86_make_disp( store, 4 * sizeof(float) ),
       make_xmm( xmm_src1 ) );
 
 
    /* Emit the call
     */
-   emit_func_call(
-      func,
-      xmm_save,
-      xmm_dst,
-      code );
+   emit_func_call( func,
+                   xmm_mask,
+                   &store,
+                   1,
+                   code );
 
    /* Retrieve the results:
     */
    sse_movaps(
       func,
       make_xmm( xmm_dst ),
-      get_temp( TEMP_R0, 0 ) );
+      store );
 }
 
 
