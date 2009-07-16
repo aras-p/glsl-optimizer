@@ -445,14 +445,13 @@ struct r300_vertex_program_cont {
 * to render with that program.
 */
 struct r300_fragment_program {
-	struct gl_program *Base;
-
-	GLboolean translated;
 	GLboolean error;
+	struct gl_program *Base;
 	struct r300_fragment_program *next;
 	struct r300_fragment_program_external_state state;
 
 	struct rX00_fragment_program_code code;
+	GLbitfield InputsRead;
 };
 
 struct r300_fragment_program_cont {

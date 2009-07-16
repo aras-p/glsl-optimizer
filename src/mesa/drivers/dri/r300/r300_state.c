@@ -1462,7 +1462,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	else
 		RENDERINPUTS_COPY(OutputsWritten.index_bitset, r300->render_inputs_bitset);
 
-	InputsRead = r300->selected_fp->Base->InputsRead;
+	InputsRead = r300->selected_fp->InputsRead;
 
 	R300_STATECHANGE(r300, ri);
 	R300_STATECHANGE(r300, rc);
@@ -1556,7 +1556,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	else
 		RENDERINPUTS_COPY(OutputsWritten.index_bitset, r300->render_inputs_bitset);
 
-	InputsRead = r300->selected_fp->Base->InputsRead;
+	InputsRead = r300->selected_fp->InputsRead;
 
 	R300_STATECHANGE(r300, ri);
 	R300_STATECHANGE(r300, rc);
@@ -1995,9 +1995,7 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 	{
 		struct r300_fragment_program *fp;
 
-		fp = r300SelectFragmentShader(ctx);
-		if (!fp->translated)
-			r300TranslateFragmentShader(ctx, fp);
+		fp = r300SelectAndTranslateFragmentShader(ctx);
 
 		r300SwitchFallback(ctx, R300_FALLBACK_FRAGMENT_PROGRAM, fp->error);
 	}
@@ -2034,9 +2032,11 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 }
 
 static const GLfloat *get_fragmentprogram_constant(GLcontext *ctx,
-	struct gl_program *program, struct prog_src_register srcreg)
+	struct prog_src_register srcreg)
 {
 	static const GLfloat dummy[4] = { 0, 0, 0, 0 };
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	struct gl_program * program = rmesa->selected_fp->Base;
 
 	switch(srcreg.File) {
 	case PROGRAM_LOCAL_PARAM:
@@ -2103,7 +2103,7 @@ static void r300SetupPixelShader(GLcontext *ctx)
 	R300_STATECHANGE(rmesa, fpp);
 	rmesa->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(rmesa->radeon.radeonScreen, R300_PFS_PARAM_0_X, code->const_nr * 4);
 	for (i = 0; i < code->const_nr; i++) {
-		const GLfloat *constant = get_fragmentprogram_constant(ctx, fp->Base, code->constant[i]);
+		const GLfloat *constant = get_fragmentprogram_constant(ctx, code->constant[i]);
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat24(constant[0]);
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat24(constant[1]);
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat24(constant[2]);
@@ -2164,7 +2164,7 @@ static void r500SetupPixelShader(GLcontext *ctx)
 
 	R300_STATECHANGE(rmesa, r500fp_const);
 	for (i = 0; i < code->const_nr; i++) {
-		const GLfloat *constant = get_fragmentprogram_constant(ctx, fp->Base, code->constant[i]);
+		const GLfloat *constant = get_fragmentprogram_constant(ctx, code->constant[i]);
 		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat32(constant[0]);
 		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat32(constant[1]);
 		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat32(constant[2]);

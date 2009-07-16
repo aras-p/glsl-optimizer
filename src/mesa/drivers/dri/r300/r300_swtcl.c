@@ -76,7 +76,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 	GLuint InputsRead = 0;
 	GLuint OutputsWritten = 0;
 	int num_attrs = 0;
-	GLuint fp_reads = rmesa->selected_fp->Base->InputsRead;
+	GLuint fp_reads = rmesa->selected_fp->InputsRead;
 	struct vertex_attribute *attrs = rmesa->vbuf.attribs;
 
 	rmesa->swtcl.coloroffset = rmesa->swtcl.specoffset = 0;

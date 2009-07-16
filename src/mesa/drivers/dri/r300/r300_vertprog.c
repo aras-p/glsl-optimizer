@@ -1452,7 +1452,7 @@ static void addArtificialOutputs(GLcontext *ctx, struct gl_program *prog)
 
 	OutputsAdded = 0;
 	count = 0;
-	FpReads = r300->selected_fp->Base->InputsRead;
+	FpReads = r300->selected_fp->InputsRead;
 
 	ADD_OUTPUT(FRAG_ATTRIB_COL0, VERT_RESULT_COL0);
 	ADD_OUTPUT(FRAG_ATTRIB_COL1, VERT_RESULT_COL1);
@@ -1499,7 +1499,7 @@ static void nqssadceInit(struct nqssadce_state* s)
 	r300ContextPtr r300 = (r300ContextPtr)(s->UserData);
 	GLuint fp_reads;
 
-	fp_reads = r300->selected_fp->Base->InputsRead;
+	fp_reads = r300->selected_fp->InputsRead;
 	{
 		if (fp_reads & FRAG_BIT_COL0) {
 				s->Outputs[VERT_RESULT_COL0].Sourced = WRITEMASK_XYZW;
@@ -1639,7 +1639,7 @@ struct r300_vertex_program * r300SelectVertexShader(GLcontext *ctx)
 	struct r300_vertex_program *vp;
 
 	vpc = (struct r300_vertex_program_cont *)ctx->VertexProgram._Current;
-	wanted_key.FpReads = r300->selected_fp->Base->InputsRead;
+	wanted_key.FpReads = r300->selected_fp->InputsRead;
 	wanted_key.FogAttr = r300->selected_fp->code.fog_attr;
 	wanted_key.WPosAttr = r300->selected_fp->code.wpos_attr;
 

@@ -122,9 +122,7 @@ static GLboolean
 r300IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
 	if (target == GL_FRAGMENT_PROGRAM_ARB) {
-		struct r300_fragment_program *fp = r300SelectFragmentShader(ctx);
-		if (!fp->translated)
-			r300TranslateFragmentShader(ctx, fp);
+		struct r300_fragment_program *fp = r300SelectAndTranslateFragmentShader(ctx);
 
 		return !fp->error;
 	} else {
