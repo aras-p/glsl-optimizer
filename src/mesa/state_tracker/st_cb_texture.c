@@ -237,14 +237,12 @@ do_memcpy(void *dest, const void *src, size_t n)
 }
 
 
-static int
-logbase2(int n)
+static INLINE unsigned
+logbase2(unsigned n)
 {
-   GLint i = 1, log2 = 0;
-   while (n > i) {
-      i *= 2;
-      log2++;
-   }
+   unsigned log2 = 0;
+   while (n >>= 1)
+      ++log2;
    return log2;
 }
 
