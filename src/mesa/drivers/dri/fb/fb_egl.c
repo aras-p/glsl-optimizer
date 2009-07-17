@@ -605,12 +605,8 @@ fbDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
    fbSurface *fs = Lookup_fbSurface(surface);
    _eglUnlinkSurface(&fs->Base);
-   if (fs->Base.IsBound) {
-      fs->Base.DeletePending = EGL_TRUE;
-   }
-   else {
+   if (!fs->Base.IsBound)
       free(fs);
-   }
    return EGL_TRUE;
 }
 
@@ -620,12 +616,8 @@ fbDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 {
    fbContext *fc = Lookup_fbContext(context);
    _eglUnlinkContext(&fc->Base);
-   if (fc->Base.IsBound) {
-      fc->Base.DeletePending = EGL_TRUE;
-   }
-   else {
+   if (!fc->Base.IsBound)
       free(fc);
-   }
    return EGL_TRUE;
 }
 

@@ -52,6 +52,16 @@ extern _EGLDisplay *
 _eglLookupDisplay(EGLDisplay dpy);
 
 
+/**
+ * Return true if the display is linked.
+ */
+static INLINE EGLBoolean
+_eglIsDisplayLinked(_EGLDisplay *dpy)
+{
+   return (EGLBoolean) (_eglGetDisplayHandle(dpy) != EGL_NO_DISPLAY);
+}
+
+
 extern _EGLDisplay *
 _eglFindDisplay(NativeDisplayType nativeDisplay);
 
@@ -80,6 +90,15 @@ extern _EGLContext *
 _eglLookupContext(EGLContext ctx);
 
 
+/**
+ * Return true if the context is linked to a display.
+ */
+static INLINE EGLBoolean
+_eglIsContextLinked(_EGLContext *ctx)
+{
+   return (EGLBoolean) (_eglGetContextHandle(ctx) != EGL_NO_CONTEXT);
+}
+
 extern EGLSurface
 _eglLinkSurface(_EGLSurface *surf, _EGLDisplay *dpy);
 
@@ -94,6 +113,16 @@ _eglGetSurfaceHandle(_EGLSurface *);
 
 extern _EGLSurface *
 _eglLookupSurface(EGLSurface surf);
+
+
+/**
+ * Return true if the surface is linked to a display.
+ */
+static INLINE EGLBoolean
+_eglIsSurfaceLinked(_EGLSurface *surf)
+{
+   return (EGLBoolean) (_eglGetSurfaceHandle(surf) != EGL_NO_SURFACE);
+}
 
 
 #endif /* EGLDISPLAY_INCLUDED */

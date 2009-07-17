@@ -958,10 +958,7 @@ xdri_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
    struct xdri_egl_surface *xdri_surf = lookup_surface(surface);
    if (xdri_surf) {
       _eglUnlinkSurface(&xdri_surf->Base);
-      if (xdri_surf->Base.IsBound) {
-         xdri_surf->Base.DeletePending = EGL_TRUE;
-      }
-      else {
+      if (!xdri_surf->Base.IsBound) {
          /*
          st_unreference_framebuffer(surf->Framebuffer);
          */

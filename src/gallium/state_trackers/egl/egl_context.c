@@ -148,9 +148,7 @@ drm_destroy_context(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 {
 	struct drm_context *c = lookup_drm_context(context);
         _eglUnlinkContext(&c->base);
-	if (c->base.IsBound) {
-		c->base.DeletePending = EGL_TRUE;
-	} else {
+	if (!c->base.IsBound) {
 		st_destroy_context(c->st);
 		c->pipe->destroy(c->pipe);
 		free(c);

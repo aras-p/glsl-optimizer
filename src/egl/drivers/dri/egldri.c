@@ -296,12 +296,8 @@ _eglDRIDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 
    fs->drawable.destroyDrawable(disp, fs->drawable.private);
 
-   if (fs->Base.IsBound) {
-      fs->Base.DeletePending = EGL_TRUE;
-   }
-   else {
+   if (!fs->Base.IsBound)
       free(fs);
-   }
    return EGL_TRUE;
 }
 
@@ -316,12 +312,8 @@ _eglDRIDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 
    fc->driContext.destroyContext(disp, 0, fc->driContext.private);
 
-   if (fc->Base.IsBound) {
-      fc->Base.DeletePending = EGL_TRUE;
-   }
-   else {
+   if (!fc->Base.IsBound)
       free(fc);
-   }
    return EGL_TRUE;
 }
 

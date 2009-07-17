@@ -21,7 +21,6 @@ struct _egl_context
    _EGLSurface *ReadSurface;
 
    EGLBoolean IsBound;
-   EGLBoolean DeletePending;
 
    EGLint ClientAPI; /**< EGL_OPENGL_ES_API, EGL_OPENGL_API, EGL_OPENVG_API */
    EGLint ClientVersion; /**< 1 = OpenGLES 1.x, 2 = OpenGLES 2.x */

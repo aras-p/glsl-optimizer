@@ -413,12 +413,8 @@ _eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
    _EGLSurface *surf = _eglLookupSurface(surface);
    if (surf) {
       _eglUnlinkSurface(surf);
-      if (surf->IsBound) {
-         surf->DeletePending = EGL_TRUE;
-      }
-      else {
+      if (!surf->IsBound)
          free(surf);
-      }
       return EGL_TRUE;
    }
    else {

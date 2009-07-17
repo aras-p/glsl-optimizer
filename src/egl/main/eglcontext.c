@@ -96,12 +96,8 @@ _eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
    _EGLContext *context = _eglLookupContext(ctx);
    if (context) {
       _eglUnlinkContext(context);
-      if (context->IsBound) {
-         context->DeletePending = EGL_TRUE;
-      }
-      else {
+      if (!context->IsBound)
          free(context);
-      }
       return EGL_TRUE;
    }
    else {
@@ -146,7 +142,7 @@ _eglQueryContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx,
 
 /**
  * Drivers will typically call this to do the error checking and
- * update the various IsBound and DeletePending flags.
+ * update the various flags.
  * Then, the driver will do its device-dependent Make-Current stuff.
  */
 EGLBoolean
@@ -212,7 +208,7 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
     */
    if (oldDrawSurface != NULL) {
       oldDrawSurface->IsBound = EGL_FALSE;
-      if (oldDrawSurface->DeletePending) {
+      if (!_eglIsSurfaceLinked(oldDrawSurface)) {
          /* make sure we don't try to rebind a deleted surface */
          if (draw == oldDrawSurface || draw == oldReadSurface) {
             draw = NULL;
@@ -223,7 +219,7 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
    }
    if (oldReadSurface != NULL && oldReadSurface != oldDrawSurface) {
       oldReadSurface->IsBound = EGL_FALSE;
-      if (oldReadSurface->DeletePending) {
+      if (!_eglIsSurfaceLinked(oldReadSurface)) {
          /* make sure we don't try to rebind a deleted surface */
          if (read == oldDrawSurface || read == oldReadSurface) {
             read = NULL;
@@ -234,7 +230,7 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
    }
    if (oldContext != NULL) {
       oldContext->IsBound = EGL_FALSE;
-      if (oldContext->DeletePending) {
+      if (!_eglIsContextLinked(oldContext)) {
          /* make sure we don't try to rebind a deleted context */
          if (ctx == oldContext) {
             ctx = NULL;

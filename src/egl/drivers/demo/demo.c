@@ -236,12 +236,8 @@ demoDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
    DemoSurface *fs = LookupDemoSurface(surface);
    _eglUnlinkSurface(&fs->Base);
-   if (fs->Base.IsBound) {
-      fs->Base.DeletePending = EGL_TRUE;
-   }
-   else {
+   if (!fs->Base.IsBound)
       free(fs);
-   }
    return EGL_TRUE;
 }
 
@@ -251,12 +247,8 @@ demoDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 {
    DemoContext *fc = LookupDemoContext(context);
    _eglUnlinkContext(&fc->Base);
-   if (fc->Base.IsBound) {
-      fc->Base.DeletePending = EGL_TRUE;
-   }
-   else {
+   if (!fc->Base.IsBound)
       free(fc);
-   }
    return EGL_TRUE;
 }
 

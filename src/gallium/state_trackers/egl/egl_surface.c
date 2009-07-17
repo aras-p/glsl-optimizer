@@ -366,9 +366,7 @@ drm_destroy_surface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 	struct drm_surface *surf = lookup_drm_surface(surface);
 	_eglUnlinkSurface(&surf->base);
 
-	if (surf->base.IsBound) {
-		surf->base.DeletePending = EGL_TRUE;
-	} else {
+	if (!surf->base.IsBound) {
 		if (surf->screen)
 			drm_takedown_shown_screen(drv, surf->screen);
 		st_unreference_framebuffer(surf->stfb);
