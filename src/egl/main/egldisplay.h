@@ -52,6 +52,10 @@ extern _EGLDisplay *
 _eglLookupDisplay(EGLDisplay dpy);
 
 
+extern _EGLDisplay *
+_eglFindDisplay(NativeDisplayType nativeDisplay);
+
+
 extern void
 _eglCleanupDisplay(_EGLDisplay *disp);
 

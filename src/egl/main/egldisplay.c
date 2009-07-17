@@ -97,6 +97,30 @@ _eglLookupDisplay(EGLDisplay dpy)
 
 
 /**
+ * Find the display corresponding to the specified native display id in all
+ * linked displays.
+ */
+_EGLDisplay *
+_eglFindDisplay(NativeDisplayType nativeDisplay)
+{
+   EGLuint key = _eglHashFirstEntry(_eglGlobal.Displays);
+
+   /* Walk the hash table.  Should switch to list if it is a problem. */
+   while (key) {
+      _EGLDisplay *dpy = (_EGLDisplay *)
+            _eglHashLookup(_eglGlobal.Displays, key);
+      assert(dpy);
+
+      if (dpy->NativeDisplay == nativeDisplay)
+         return dpy;
+      key = _eglHashNextEntry(_eglGlobal.Displays, key);
+   }
+
+   return NULL;
+}
+
+
+/**
  * Free all the data hanging of an _EGLDisplay object, but not
  * the object itself.
  */
