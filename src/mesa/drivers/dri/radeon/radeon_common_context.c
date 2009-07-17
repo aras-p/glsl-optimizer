@@ -46,6 +46,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R600) /* +r6/r7 */
+#include "r600_context.h"
+#endif
+
 #define DRIVER_DATE "20090101"
 
 #ifndef RADEON_DEBUG

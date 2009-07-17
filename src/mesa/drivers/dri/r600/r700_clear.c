@@ -37,6 +37,7 @@
 
 #include "r700_shaderinst.h"
 #include "r600_emit.h"
+#include "r700_clear.h"
 
 static GLboolean r700ClearFast(context_t *context, GLbitfield mask)
 {

@@ -41,6 +41,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r600_cmdbuf.h"
 #include "radeon_reg.h"
 
+void r600EmitCacheFlush(context_t *rmesa);
+
 extern GLboolean r600EmitShader(GLcontext * ctx, 
                                 void ** shaderbo,
 			                    GLvoid * data, 

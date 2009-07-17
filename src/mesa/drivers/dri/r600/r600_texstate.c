@@ -49,6 +49,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_mipmap_tree.h"
 #include "r600_tex.h"
 
+void r600UpdateTextureState(GLcontext * ctx);
+
 void r600UpdateTextureState(GLcontext * ctx)
 {
 	context_t *context = R700_CONTEXT(ctx);

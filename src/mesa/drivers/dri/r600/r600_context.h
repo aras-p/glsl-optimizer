@@ -49,6 +49,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/colormac.h"
 
 #include "r700_chip.h"
+#include "r600_tex.h"
+#include "r700_oglprog.h"
 
 struct r600_context;
 typedef struct r600_context context_t;
