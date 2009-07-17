@@ -62,6 +62,18 @@ struct texenvprog_cache_item
    struct texenvprog_cache_item *next;
 };
 
+static GLboolean
+texenv_doing_secondary_color(GLcontext *ctx)
+{
+   if (ctx->Light.Enabled &&
+       (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR))
+      return GL_TRUE;
+
+   if (ctx->Fog.ColorSumEnabled)
+      return GL_TRUE;
+
+   return GL_FALSE;
+}
 
 /**
  * Up to nine instructions per tex unit, plus fog, specular color.
@@ -298,7 +310,7 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
       if (ctx->Light.Enabled) {
          fp_inputs |= FRAG_BIT_COL0;
 
-         if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
+         if (texenv_doing_secondary_color(ctx))
             fp_inputs |= FRAG_BIT_COL1;
       }
 
@@ -416,8 +428,8 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
        }
    }
 
-   /* _DD_NEW_SEPARATE_SPECULAR */
-   if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
+   /* _NEW_LIGHT | _NEW_FOG */
+   if (texenv_doing_secondary_color(ctx)) {
       key->separate_specular = 1;
       inputs_referenced |= FRAG_BIT_COL1;
    }
