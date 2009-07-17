@@ -57,6 +57,10 @@ _eglFindDisplay(NativeDisplayType nativeDisplay);
 
 
 extern void
+_eglReleaseDisplayResources(_EGLDriver *drv, EGLDisplay dpy);
+
+
+extern void
 _eglCleanupDisplay(_EGLDisplay *disp);
 
 

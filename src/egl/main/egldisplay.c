@@ -121,6 +121,38 @@ _eglFindDisplay(NativeDisplayType nativeDisplay)
 
 
 /**
+ * Destroy the contexts and surfaces that are linked to the display.
+ */
+void
+_eglReleaseDisplayResources(_EGLDriver *drv, EGLDisplay dpy)
+{
+   _EGLDisplay *display;
+   _EGLContext *contexts;
+   _EGLSurface *surfaces;
+
+   display = _eglLookupDisplay(dpy);
+   if (!display)
+      return;
+   contexts = display->ContextList;
+   surfaces = display->SurfaceList;
+
+   while (contexts) {
+      EGLContext handle = _eglGetContextHandle(contexts);
+      contexts = contexts->Next;
+      drv->API.DestroyContext(drv, dpy, handle);
+   }
+   assert(!display->ContextList);
+
+   while (surfaces) {
+      EGLSurface handle = _eglGetSurfaceHandle(surfaces);
+      surfaces = surfaces->Next;
+      drv->API.DestroySurface(drv, dpy, handle);
+   }
+   assert(!display->SurfaceList);
+}
+
+
+/**
  * Free all the data hanging of an _EGLDisplay object, but not
  * the object itself.
  */

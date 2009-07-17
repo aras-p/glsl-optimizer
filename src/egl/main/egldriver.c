@@ -284,9 +284,7 @@ _eglCloseDriver(_EGLDriver *drv, EGLDisplay dpy)
 
    _eglLog(_EGL_DEBUG, "Closing %s", drv->Name);
 
-   /*
-    * XXX check for currently bound context/surfaces and delete them?
-    */
+   _eglReleaseDisplayResources(drv, dpy);
 
    b = drv->API.Terminate(drv, dpy);
 
