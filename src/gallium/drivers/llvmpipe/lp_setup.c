@@ -178,8 +178,6 @@ struct setup_context {
       int left[2];   /**< [0] = row0, [1] = row1 */
       int right[2];
       int y;
-      unsigned y_flags;
-      unsigned mask;     /**< mask of MASK_BOTTOM/TOP_LEFT/RIGHT bits */
    } span;
 
 #if DEBUG_FRAGS
@@ -461,7 +459,6 @@ static void flush_spans( struct setup_context *setup )
 
 
    setup->span.y = 0;
-   setup->span.y_flags = 0;
    setup->span.right[0] = 0;
    setup->span.right[1] = 0;
    setup->span.left[0] = 1000000;     /* greater than right[0] */
@@ -863,7 +860,6 @@ static void subtriangle( struct setup_context *setup,
 
          setup->span.left[_y&1] = left;
          setup->span.right[_y&1] = right;
-         setup->span.y_flags |= 1<<(_y&1);
       }
    }
 
@@ -939,7 +935,6 @@ void setup_tri( struct setup_context *setup,
    setup->quad.input.prim = QUAD_PRIM_TRI;
 
    setup->span.y = 0;
-   setup->span.y_flags = 0;
    setup->span.right[0] = 0;
    setup->span.right[1] = 0;
    /*   setup->span.z_mode = tri_z_mode( setup->ctx ); */
