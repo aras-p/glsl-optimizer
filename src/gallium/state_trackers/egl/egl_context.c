@@ -113,7 +113,7 @@ drm_create_context(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext
 	if (!ctx)
 		goto err_c;
 
-	_eglInitContext(drv, dpy, &ctx->base, conf, attrib_list);
+	_eglInitContext(drv, &ctx->base, conf, attrib_list);
 
 	ctx->pipe = dev->api->create_context(dev->api, dev->screen);
 	if (!ctx->pipe)
