@@ -58,9 +58,13 @@ void r700WaitForIdle(context_t *context);
 void r700WaitForIdleClean(context_t *context);
 void r700Start3D(context_t *context);
 GLboolean r700SendTextureState(context_t *context);
-GLboolean r700SyncSurf(context_t *context);
 unsigned int r700PrimitiveType(int prim);
 void r600UpdateTextureState(GLcontext * ctx);
+GLboolean r700SyncSurf(context_t *context,
+		       struct radeon_bo *pbo,
+		       uint32_t read_domain,
+		       uint32_t write_domain,
+		       uint32_t sync_type);
 
 void r700WaitForIdle(context_t *context)
 {
@@ -153,6 +157,11 @@ GLboolean r700SendTextureState(context_t *context)
 		    else
 			    bo = t->bo;
 		    if (bo) {
+
+			    r700SyncSurf(context, bo,
+					 RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM,
+					 0, TC_ACTION_ENA_bit);
+
 			    BEGIN_BATCH_NO_AUTOSTATE(9);
 			    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
 			    R600_OUT_BATCH(i * 7);
@@ -185,26 +194,33 @@ GLboolean r700SendTextureState(context_t *context)
     return GL_TRUE;
 }
 
-GLboolean r700SyncSurf(context_t *context)
+GLboolean r700SyncSurf(context_t *context,
+		       struct radeon_bo *pbo,
+		       uint32_t read_domain,
+		       uint32_t write_domain,
+		       uint32_t sync_type)
 {
     BATCH_LOCALS(&context->radeon);
+    uint32_t cp_coher_size;
+    offset_modifiers offset_mod;
 
-    /* TODO : too heavy? */
-    unsigned int CP_COHER_CNTL   = 0;
+    if (pbo->size == 0xffffffff)
+	    cp_coher_size = 0xffffffff;
+    else
+	    cp_coher_size = ((pbo->size + 255) >> 8);
 
-    CP_COHER_CNTL |= (TC_ACTION_ENA_bit
-		      | VC_ACTION_ENA_bit
-		      | CB_ACTION_ENA_bit
-		      | DB_ACTION_ENA_bit
-		      | SH_ACTION_ENA_bit
-		      | SMX_ACTION_ENA_bit);
-
+    offset_mod.shift     = NO_SHIFT;
+    offset_mod.shiftbits = 0;
+    offset_mod.mask      = 0xFFFFFFFF;
 
     BEGIN_BATCH_NO_AUTOSTATE(5);
     R600_OUT_BATCH(CP_PACKET3(R600_IT_SURFACE_SYNC, 3));
-    R600_OUT_BATCH(CP_COHER_CNTL);
-    R600_OUT_BATCH(0xFFFFFFFF);
-    R600_OUT_BATCH(0x00000000);
+    R600_OUT_BATCH(sync_type);
+    R600_OUT_BATCH(cp_coher_size);
+    R600_OUT_BATCH_RELOC(0,
+			 pbo,
+			 0,
+			 read_domain, write_domain, 0, &offset_mod); // ???
     R600_OUT_BATCH(10);
 
     END_BATCH();
@@ -276,8 +292,6 @@ static GLboolean r700RunRender(GLcontext * ctx,
 
     r700Start3D(context); /* TODO : this is too much. */
 
-    r700SyncSurf(context); /* TODO : make it light. */
-
     r700SendSQConfig(context);
 
     r700UpdateShaders(ctx);
@@ -291,9 +305,6 @@ static GLboolean r700RunRender(GLcontext * ctx,
         return GL_TRUE;
     }
 
-    /* flush TX */
-    //r700SyncSurf(context); /*  */
-
     r600UpdateTextureState(ctx);
     r700SendTextureState(context);
 
@@ -305,18 +316,11 @@ static GLboolean r700RunRender(GLcontext * ctx,
         }
     }
 
-    /* flush SQ */
-    //r700SyncSurf(context); /*  */
-    //r700SyncSurf(context); /*  */
-
     r700SetupShaders(ctx);
 
     r700SendFSState(context); // FIXME just a place holder for now
     r700SendPSState(context);
     r700SendVSState(context);
-
-    /* flush vtx */
-    //r700SyncSurf(context); /*  */
 
     r700SendContextStates(context);
     r700SendViewportState(context, 0);
@@ -375,19 +379,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     /* Flush render op cached for last several quads. */
     r700WaitForIdleClean(context);
 
-    /* flush dst */
-    //r700SyncSurf(context); /*  */
-
     radeonReleaseArrays(ctx, 0);
-
-    //richard test
-    /* test stamp, write a number to mmSCRATCH4 */
-#if 0
-    BEGIN_BATCH_NO_AUTOSTATE(3);
-    R600_OUT_BATCH_REGVAL((0x2144 << 2), 0x56785678);
-    END_BATCH();
-    COMMIT_BATCH();
-#endif
 
 #endif //0
     rcommonFlushCmdBuf( &context->radeon, __FUNCTION__ );

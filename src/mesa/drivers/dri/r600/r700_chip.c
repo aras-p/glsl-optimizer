@@ -294,6 +294,14 @@ void r700SetupVTXConstants(GLcontext  * ctx,
     unsigned int uSQ_VTX_CONSTANT_WORD3_0 = 0;
     unsigned int uSQ_VTX_CONSTANT_WORD6_0 = 0;
 
+    if ((context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV610) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV620) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RS780) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV710))
+	    r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, TC_ACTION_ENA_bit);
+    else
+	    r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, VC_ACTION_ENA_bit);
+
     uSQ_VTX_CONSTANT_WORD0_0 = paos->offset;
     uSQ_VTX_CONSTANT_WORD1_0 = count * (size * 4) - 1;
 
@@ -433,7 +441,6 @@ GLboolean r700SendDepthTargetState(context_t *context, int id)
 {
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	struct radeon_renderbuffer *rrb;
-	struct radeon_bo * pbo;
 	offset_modifiers offset_mod;
 	BATCH_LOCALS(&context->radeon);
 
@@ -482,6 +489,9 @@ GLboolean r700SendDepthTargetState(context_t *context, int id)
 
 	COMMIT_BATCH();
 
+	r700SyncSurf(context, rrb->bo, 0, RADEON_GEM_DOMAIN_VRAM,
+		     DB_ACTION_ENA_bit | DB_DEST_BASE_ENA_bit);
+
 	return GL_TRUE;
 }
 
@@ -489,7 +499,6 @@ GLboolean r700SendRenderTargetState(context_t *context, int id)
 {
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	struct radeon_renderbuffer *rrb;
-	struct radeon_bo * pbo;
 	offset_modifiers offset_mod;
 	BATCH_LOCALS(&context->radeon);
 
@@ -542,6 +551,9 @@ GLboolean r700SendRenderTargetState(context_t *context, int id)
 
 	COMMIT_BATCH();
 
+	r700SyncSurf(context, rrb->bo, 0, RADEON_GEM_DOMAIN_VRAM,
+		     CB_ACTION_ENA_bit | (1 << (id + 6)));
+
 	return GL_TRUE;
 }
 
@@ -558,6 +570,8 @@ GLboolean r700SendPSState(context_t *context)
 	offset_mod.shift     = NO_SHIFT;
 	offset_mod.shiftbits = 0;
 	offset_mod.mask      = 0xFFFFFFFF;
+
+	r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
         BEGIN_BATCH_NO_AUTOSTATE(3);
 	R600_OUT_BATCH_REGSEQ(SQ_PGM_START_PS, 1);
@@ -591,6 +605,8 @@ GLboolean r700SendVSState(context_t *context)
 	offset_mod.shift     = NO_SHIFT;
 	offset_mod.shiftbits = 0;
 	offset_mod.mask      = 0xFFFFFFFF;
+
+	r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
 
         BEGIN_BATCH_NO_AUTOSTATE(3);
 	R600_OUT_BATCH_REGSEQ(SQ_PGM_START_VS, 1);
@@ -633,6 +649,8 @@ GLboolean r700SendFSState(context_t *context)
 	offset_mod.shiftbits = 0;
 	offset_mod.mask      = 0xFFFFFFFF;
 
+	r700SyncSurf(context, pbo, RADEON_GEM_DOMAIN_GTT, 0, SH_ACTION_ENA_bit);
+
         BEGIN_BATCH_NO_AUTOSTATE(3);
 	R600_OUT_BATCH_REGSEQ(SQ_PGM_START_FS, 1);
 	R600_OUT_BATCH_RELOC(r700->fs.SQ_PGM_START_FS.u32All,
@@ -655,7 +673,6 @@ GLboolean r700SendViewportState(context_t *context, int id)
 {
 	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
 	struct radeon_renderbuffer *rrb;
-	struct radeon_bo * pbo;
 	offset_modifiers offset_mod;
 	BATCH_LOCALS(&context->radeon);
 
