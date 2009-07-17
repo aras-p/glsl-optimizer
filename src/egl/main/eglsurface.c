@@ -259,24 +259,6 @@ _eglLookupSurface(EGLSurface surf)
 }
 
 
-_EGLSurface *
-_eglGetCurrentSurface(EGLint readdraw)
-{
-   _EGLContext *ctx = _eglGetCurrentContext();
-   if (ctx) {
-      switch (readdraw) {
-      case EGL_DRAW:
-         return ctx->DrawSurface;
-      case EGL_READ:
-         return ctx->ReadSurface;
-      default:
-         return NULL;
-      }
-   }
-   return NULL;
-}
-
-
 EGLBoolean
 _eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 {

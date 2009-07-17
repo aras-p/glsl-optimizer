@@ -47,10 +47,6 @@ extern _EGLContext *
 _eglLookupContext(EGLContext ctx);
  
 
-extern _EGLContext *
-_eglGetCurrentContext(void);
-
-
 extern EGLContext
 _eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list);
 

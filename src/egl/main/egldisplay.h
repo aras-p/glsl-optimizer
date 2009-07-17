@@ -45,10 +45,6 @@ extern void
 _eglSaveDisplay(_EGLDisplay *dpy);
 
 
-extern _EGLDisplay *
-_eglGetCurrentDisplay(void);
-
-
 extern void
 _eglCleanupDisplay(_EGLDisplay *disp);
 

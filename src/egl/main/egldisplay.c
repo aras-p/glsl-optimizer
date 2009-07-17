@@ -86,17 +86,6 @@ _eglSaveDisplay(_EGLDisplay *dpy)
 }
 
 
-_EGLDisplay *
-_eglGetCurrentDisplay(void)
-{
-   _EGLContext *ctx = _eglGetCurrentContext();
-   if (ctx)
-      return ctx->Display;
-   else
-      return NULL;
-}
-
-
 /**
  * Free all the data hanging of an _EGLDisplay object, but not
  * the object itself.

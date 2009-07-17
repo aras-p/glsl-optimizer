@@ -60,10 +60,6 @@ extern _EGLSurface *
 _eglLookupSurface(EGLSurface surf);
  
 
-extern _EGLSurface *
-_eglGetCurrentSurface(EGLint readdraw);
-
-
 extern EGLBoolean
 _eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw);
 

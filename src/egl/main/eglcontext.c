@@ -109,17 +109,6 @@ _eglLookupContext(EGLContext ctx)
 
 
 /**
- * Return the currently bound _EGLContext object, or NULL.
- */
-_EGLContext *
-_eglGetCurrentContext(void)
-{
-   _EGLThreadInfo *t = _eglGetCurrentThread();
-   return t->CurrentContext;
-}
-
-
-/**
  * Just a placeholder/demo function.  Real driver will never use this!
  */
 EGLContext
@@ -218,6 +207,9 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
    _EGLContext *oldContext = _eglGetCurrentContext();
    _EGLSurface *oldDrawSurface = _eglGetCurrentSurface(EGL_DRAW);
    _EGLSurface *oldReadSurface = _eglGetCurrentSurface(EGL_READ);
+
+   if (_eglIsCurrentThreadDummy())
+      return _eglError(EGL_BAD_ALLOC, "eglMakeCurrent");
 
    /* error checking */
    if (ctx) {

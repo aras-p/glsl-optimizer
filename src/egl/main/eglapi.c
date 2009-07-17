@@ -321,7 +321,8 @@ eglGetError(void)
 {
    _EGLThreadInfo *t = _eglGetCurrentThread();
    EGLint e = t->LastError;
-   t->LastError = EGL_SUCCESS;
+   if (!_eglIsCurrentThreadDummy())
+      t->LastError = EGL_SUCCESS;
    return e;
 }
 
@@ -546,6 +547,9 @@ eglBindAPI(EGLenum api)
 {
    _EGLThreadInfo *t = _eglGetCurrentThread();
 
+   if (_eglIsCurrentThreadDummy())
+      return _eglError(EGL_BAD_ALLOC, "eglBindAPI");
+
    switch (api) {
 #ifdef EGL_VERSION_1_4
    case EGL_OPENGL_API:
@@ -603,15 +607,19 @@ eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype,
 EGLBoolean
 eglReleaseThread(void)
 {
-   _EGLThreadInfo *t = _eglGetCurrentThread();
-   EGLDisplay dpy = eglGetCurrentDisplay();
+   EGLDisplay dpy;
+
+   if (_eglIsCurrentThreadDummy())
+      return EGL_TRUE;
+
+   dpy = eglGetCurrentDisplay();
    if (dpy) {
       _EGLDriver *drv = _eglLookupDriver(dpy);
       /* unbind context */
       (void) drv->API.MakeCurrent(drv, dpy, EGL_NO_SURFACE,
                                   EGL_NO_SURFACE, EGL_NO_CONTEXT);
    }
-   _eglDeleteThreadData(t);
+   _eglDestroyCurrentThread();
    return EGL_TRUE;
 }
 
