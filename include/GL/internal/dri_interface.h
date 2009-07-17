@@ -262,10 +262,22 @@ struct __DRItexBufferExtensionRec {
  * Used by drivers that implement DRI2
  */
 #define __DRI2_FLUSH "DRI2_Flush"
-#define __DRI2_FLUSH_VERSION 1
+#define __DRI2_FLUSH_VERSION 2
 struct __DRI2flushExtensionRec {
     __DRIextension base;
     void (*flush)(__DRIdrawable *drawable);
+
+    /**
+     * Flush all rendering queue in the driver to the drm and
+     * invalidate all buffers.  The driver will call out to
+     * getBuffers/getBuffersWithFormat before it starts rendering
+     * again.
+     *
+     * \param drawable the drawable to flush and invalidate
+     *
+     * \since 2
+     */
+    void (*flushInvalidate)(__DRIdrawable *drawable);
 };
 
 

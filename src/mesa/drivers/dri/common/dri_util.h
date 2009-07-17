@@ -380,6 +380,8 @@ struct __DRIdrawableRec {
      * GLX_MESA_swap_control.
      */
     unsigned int swap_interval;
+
+    GLboolean validBuffers;
 };
 
 /**

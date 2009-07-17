@@ -35,6 +35,7 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/Xdamage.h>
+#include "glapi.h"
 #include "glxclient.h"
 #include "glcontextmodes.h"
 #include "xf86dri.h"
@@ -64,6 +65,7 @@ struct __GLXDRIdisplayPrivateRec
    int driMajor;
    int driMinor;
    int driPatch;
+   int swapAvailable;
 };
 
 struct __GLXDRIcontextPrivateRec
@@ -240,7 +242,7 @@ dri2SwapBuffers(__GLXDRIdrawable * pdraw)
 }
 
 static void
-dri2WaitX(__GLXDRIdrawable * pdraw)
+dri2WaitX(__GLXDRIdrawable *pdraw)
 {
    __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
    XRectangle xrect;
@@ -340,6 +342,31 @@ process_buffers(__GLXDRIdrawablePrivate * pdraw, DRI2Buffer * buffers,
          pdraw->have_back = 1;
    }
 
+}
+
+static void dri2SwapBuffers(__GLXDRIdrawable *pdraw)
+{
+    __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
+    __GLXdisplayPrivate *dpyPriv = __glXInitialize(priv->base.psc->dpy);
+    __GLXDRIdisplayPrivate *pdp =
+	(__GLXDRIdisplayPrivate *)dpyPriv->dri2Display;
+    __GLXscreenConfigs *psc = pdraw->psc;
+
+#ifdef __DRI2_FLUSH
+    if (pdraw->psc->f)
+    	(*pdraw->psc->f->flush)(pdraw->driDrawable);
+#endif
+
+    /* Old servers can't handle swapbuffers */
+    if (!pdp->swapAvailable)
+	return dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height);
+
+    DRI2SwapBuffers(pdraw->psc->dpy, pdraw->drawable);
+
+#if __DRI2_FLUSH_VERSION >= 2
+    if (pdraw->psc->f)
+       (*pdraw->psc->f->flushInvalidate)(pdraw->driDrawable);
+#endif
 }
 
 static __DRIbuffer *
@@ -559,6 +586,9 @@ dri2CreateDisplay(Display * dpy)
    }
 
    pdp->driPatch = 0;
+   pdp->swapAvailable = 0;
+   if (pdp->driMinor >= 2)
+      pdp->swapAvailable = 1;
 
    pdp->base.destroyDisplay = dri2DestroyDisplay;
    pdp->base.createScreen = dri2CreateScreen;
