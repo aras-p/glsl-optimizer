@@ -32,6 +32,7 @@
 #include "draw/draw_vertex.h"
 #include "draw/draw_private.h"
 #include "lp_context.h"
+#include "lp_screen.h"
 #include "lp_state.h"
 
 
@@ -200,6 +201,10 @@ update_tgsi_samplers( struct llvmpipe_context *llvmpipe )
       llvmpipe->tgsi.frag_samplers[i].sampler = llvmpipe->sampler[i];
       llvmpipe->tgsi.frag_samplers[i].texture = llvmpipe->texture[i];
    }
+
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      lp_tile_cache_validate_texture( llvmpipe->tex_cache[i] );
+   }
 }
 
 /* Hopefully this will remain quite simple, otherwise need to pull in
@@ -207,6 +212,15 @@ update_tgsi_samplers( struct llvmpipe_context *llvmpipe )
  */
 void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
 {
+   struct llvmpipe_screen *lp_screen = llvmpipe_screen(llvmpipe->pipe.screen);
+
+   /* Check for updated textures.
+    */
+   if (llvmpipe->tex_timestamp != lp_screen->timestamp) {
+      llvmpipe->tex_timestamp = lp_screen->timestamp;
+      llvmpipe->dirty |= LP_NEW_TEXTURE;
+   }
+      
    if (llvmpipe->dirty & (LP_NEW_SAMPLER |
                           LP_NEW_TEXTURE))
       update_tgsi_samplers( llvmpipe );

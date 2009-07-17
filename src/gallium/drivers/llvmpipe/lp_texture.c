@@ -227,7 +227,8 @@ llvmpipe_get_tex_surface(struct pipe_screen *screen,
       if (ps->usage & (PIPE_BUFFER_USAGE_CPU_WRITE |
                        PIPE_BUFFER_USAGE_GPU_WRITE)) {
          /* Mark the surface as dirty.  The tile cache will look for this. */
-         lpt->modified = TRUE;
+         lpt->timestamp++;
+         llvmpipe_screen(screen)->timestamp++;
       }
 
       ps->face = face;

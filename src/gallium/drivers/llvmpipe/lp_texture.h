@@ -48,7 +48,7 @@ struct llvmpipe_texture
     */
    struct pipe_buffer *buffer;
 
-   boolean modified;
+   unsigned timestamp;
 };
 
 struct llvmpipe_transfer

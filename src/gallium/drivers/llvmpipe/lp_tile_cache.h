@@ -83,6 +83,9 @@ extern void
 lp_tile_cache_set_texture(struct llvmpipe_tile_cache *tc,
                           struct pipe_texture *texture);
 
+void
+lp_tile_cache_validate_texture(struct llvmpipe_tile_cache *tc);
+
 extern void
 lp_flush_tile_cache(struct llvmpipe_tile_cache *tc);
 

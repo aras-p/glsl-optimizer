@@ -54,7 +54,10 @@ struct llvmpipe_tile_cache
    struct pipe_surface *surface;  /**< the surface we're caching */
    struct pipe_transfer *transfer;
    void *transfer_map;
+
    struct pipe_texture *texture;  /**< if caching a texture */
+   unsigned timestamp;
+
    struct llvmpipe_cached_tile entries[NUM_ENTRIES];
    uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
    float clear_color[4];  /**< for color bufs */
@@ -231,6 +234,23 @@ lp_tile_cache_unmap_transfers(struct llvmpipe_tile_cache *tc)
    }
 }
 
+void
+lp_tile_cache_validate_texture(struct llvmpipe_tile_cache *tc)
+{
+   if (tc->texture) {
+      struct llvmpipe_texture *lpt = llvmpipe_texture(tc->texture);
+      if (lpt->timestamp != tc->timestamp) {
+         /* texture was modified, invalidate all cached tiles */
+         uint i;
+         _debug_printf("INV %d %d\n", tc->timestamp, lpt->timestamp);
+         for (i = 0; i < NUM_ENTRIES; i++) {
+            tc->entries[i].x = -3;
+         }
+
+         tc->timestamp = lpt->timestamp;
+      }
+   }
+}
 
 /**
  * Specify the texture to cache.
@@ -243,27 +263,29 @@ lp_tile_cache_set_texture(struct llvmpipe_tile_cache *tc,
 
    assert(!tc->transfer);
 
-   pipe_texture_reference(&tc->texture, texture);
+   if (tc->texture != texture) {
+      pipe_texture_reference(&tc->texture, texture);
 
-   if (tc->tex_trans) {
-      struct pipe_screen *screen = tc->tex_trans->texture->screen;
+      if (tc->tex_trans) {
+         struct pipe_screen *screen = tc->tex_trans->texture->screen;
+         
+         if (tc->tex_trans_map) {
+            screen->transfer_unmap(screen, tc->tex_trans);
+            tc->tex_trans_map = NULL;
+         }
 
-      if (tc->tex_trans_map) {
-         screen->transfer_unmap(screen, tc->tex_trans);
-         tc->tex_trans_map = NULL;
+         screen->tex_transfer_destroy(tc->tex_trans);
+         tc->tex_trans = NULL;
       }
 
-      screen->tex_transfer_destroy(tc->tex_trans);
-      tc->tex_trans = NULL;
-   }
+      /* mark as entries as invalid/empty */
+      /* XXX we should try to avoid this when the teximage hasn't changed */
+      for (i = 0; i < NUM_ENTRIES; i++) {
+         tc->entries[i].x = -1;
+      }
 
-   /* mark as entries as invalid/empty */
-   /* XXX we should try to avoid this when the teximage hasn't changed */
-   for (i = 0; i < NUM_ENTRIES; i++) {
-      tc->entries[i].x = -1;
+      tc->tex_face = -1; /* any invalid value here */
    }
-
-   tc->tex_face = -1; /* any invalid value here */
 }
 
 
@@ -443,7 +465,7 @@ lp_get_cached_tile(struct llvmpipe_tile_cache *tc, int x, int y)
    if (tile_x != tile->x ||
        tile_y != tile->y) {
 
-      if (tile->x != -1) {
+      if (tile->x >= 0) {
          /* put dirty tile back in framebuffer */
          if (tc->depth_stencil) {
             pipe_put_tile_raw(pt,
@@ -522,30 +544,24 @@ lp_get_cached_tile_tex(struct llvmpipe_tile_cache *tc,
                                   face, level);
    struct llvmpipe_cached_tile *tile = tc->entries + pos;
 
-   if (tc->texture) {
-      struct llvmpipe_texture *lpt = llvmpipe_texture(tc->texture);
-      if (lpt->modified) {
-         /* texture was modified, invalidate all cached tiles */
-         uint p;
-         for (p = 0; p < NUM_ENTRIES; p++) {
-            tile = tc->entries + p;
-            tile->x = -1;
-         }
-         lpt->modified = FALSE;
-      }
-   }
-
    if (tile_x != tile->x ||
        tile_y != tile->y ||
        z != tile->z ||
        face != tile->face ||
        level != tile->level) {
-      /* cache miss */
 
+      /* cache miss.  Most misses are because we've invaldiated the
+       * texture cache previously -- most commonly on binding a new
+       * texture.  Currently we effectively flush the cache on texture
+       * bind.
+       */
 #if 0
-      printf("miss at %u  x=%d y=%d z=%d face=%d level=%d\n", pos,
-             x/TILE_SIZE, y/TILE_SIZE, z, face, level);
+      _debug_printf("miss at %u:  x=%d y=%d z=%d face=%d level=%d\n"
+                    "   tile %u:  x=%d y=%d z=%d face=%d level=%d\n",
+                    pos, x/TILE_SIZE, y/TILE_SIZE, z, face, level,
+                    pos, tile->x, tile->y, tile->z, tile->face, tile->level);
 #endif
+
       /* check if we need to get a new transfer */
       if (!tc->tex_trans ||
           tc->tex_face != face ||
