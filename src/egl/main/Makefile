@@ -7,6 +7,7 @@ include $(TOP)/configs/current
 INCLUDE_DIRS = -I$(TOP)/include -I$(TOP)/src/mesa/glapi
 
 HEADERS = \
+	eglcompiler.h \
 	eglconfig.h \
 	eglconfigutil.h \
 	eglcontext.h \

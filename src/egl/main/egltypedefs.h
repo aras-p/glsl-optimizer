@@ -6,6 +6,7 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
+#include "eglcompiler.h"
 
 typedef struct _egl_api _EGLAPI;
 
