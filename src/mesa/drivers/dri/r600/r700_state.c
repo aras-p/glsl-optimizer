@@ -752,6 +752,8 @@ void r700SetDepthTarget(context_t *context)
     r700->DB_DEPTH_CLEAR.u32All     = 0x3F800000;
     r700->DB_DEPTH_VIEW.u32All      = 0;
     r700->DB_RENDER_CONTROL.u32All  = 0;
+    SETbit(r700->DB_RENDER_CONTROL.u32All, STENCIL_COMPRESS_DISABLE_bit);
+    SETbit(r700->DB_RENDER_CONTROL.u32All, DEPTH_COMPRESS_DISABLE_bit);
     r700->DB_RENDER_OVERRIDE.u32All = 0;
     if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
 	    SETbit(r700->DB_RENDER_OVERRIDE.u32All, FORCE_SHADER_Z_ORDER_bit);
