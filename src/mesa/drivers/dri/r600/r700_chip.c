@@ -47,9 +47,6 @@ do                                                                  \
     pStateListWork++;                                               \
 }while(0)
 
-inline GLboolean needRelocReg(context_t *context, unsigned int reg);
-inline static GLboolean setRelocReg(context_t *context, unsigned int reg);
-
 GLboolean r700InitChipObject(context_t *context)
 {
     ContextState * pStateListWork;
@@ -66,23 +63,6 @@ GLboolean r700InitChipObject(context_t *context)
     LINK_STATES(SQ_DYN_GPR_CNTL_PS_FLUSH_REQ);
     LINK_STATES(DB_DEBUG);
     LINK_STATES(DB_WATERMARKS);
-
-    // DB
-    LINK_STATES(DB_DEPTH_SIZE);
-    LINK_STATES(DB_DEPTH_VIEW);
-    LINK_STATES(DB_DEPTH_BASE);
-    LINK_STATES(DB_DEPTH_INFO);
-    LINK_STATES(DB_HTILE_DATA_BASE);
-    LINK_STATES(DB_STENCIL_CLEAR);
-    LINK_STATES(DB_DEPTH_CLEAR);
-    LINK_STATES(DB_STENCILREFMASK);
-    LINK_STATES(DB_STENCILREFMASK_BF);
-    LINK_STATES(DB_DEPTH_CONTROL);
-    LINK_STATES(DB_SHADER_CONTROL);
-    LINK_STATES(DB_RENDER_CONTROL);
-    LINK_STATES(DB_RENDER_OVERRIDE);
-    LINK_STATES(DB_HTILE_SURFACE);
-    LINK_STATES(DB_ALPHA_TO_MASK);
 
     // SC
     LINK_STATES(PA_SC_SCREEN_SCISSOR_TL);
@@ -402,65 +382,6 @@ int r700SetupStreams(GLcontext * ctx)
     return R600_FALLBACK_NONE;
 }
 
-inline GLboolean needRelocReg(context_t *context, unsigned int reg)
-{
-    switch (reg + ASIC_CONTEXT_BASE_INDEX)
-    {
-        case mmCB_COLOR0_BASE:
-        case mmCB_COLOR1_BASE:
-        case mmCB_COLOR2_BASE:
-        case mmCB_COLOR3_BASE:
-        case mmCB_COLOR4_BASE:
-        case mmCB_COLOR5_BASE:
-        case mmCB_COLOR6_BASE:
-        case mmCB_COLOR7_BASE:
-        case mmDB_DEPTH_BASE:
-        case mmSQ_PGM_START_VS:
-        case mmSQ_PGM_START_FS:
-        case mmSQ_PGM_START_ES:
-        case mmSQ_PGM_START_GS:
-        case mmSQ_PGM_START_PS:
-            return GL_TRUE;
-            break;
-    }
-
-    return GL_FALSE;
-}
-
-inline static GLboolean setRelocReg(context_t *context, unsigned int reg)
-{
-    BATCH_LOCALS(&context->radeon);
-    R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
-
-    struct radeon_bo * pbo;
-    uint32_t voffset;
-    offset_modifiers offset_mod;
-
-    switch (reg + ASIC_CONTEXT_BASE_INDEX)
-    {
-        case mmDB_DEPTH_BASE:
-            {
-                GLcontext *ctx = GL_CONTEXT(context);
-                struct radeon_renderbuffer *rrb;
-                rrb = radeon_get_depthbuffer(&context->radeon);
-
-                offset_mod.shift     = NO_SHIFT;
-                offset_mod.shiftbits = 0;
-                offset_mod.mask      = 0xFFFFFFFF;
-
-                R600_OUT_BATCH_RELOC(r700->DB_DEPTH_BASE.u32All,
-                                     rrb->bo,
-                                     r700->DB_DEPTH_BASE.u32All,
-                                     0, RADEON_GEM_DOMAIN_VRAM, 0, &offset_mod);
-
-                return GL_TRUE;
-            }
-            break;
-    }
-
-    return GL_FALSE;
-}
-
 GLboolean r700SendContextStates(context_t *context)
 {
     BATCH_LOCALS(&context->radeon);
@@ -478,22 +399,18 @@ GLboolean r700SendContextStates(context_t *context)
 
         pInit = pState;
 
-        if(GL_FALSE == needRelocReg(context, pState->unOffset))
-        {
-            while(NULL != pState->pNext)
-            {
-                if( ((pState->pNext->unOffset - pState->unOffset) > 1)
-                    || (GL_TRUE == needRelocReg(context, pState->pNext->unOffset)) )
+	while(NULL != pState->pNext)
+	{
+                if ((pState->pNext->unOffset - pState->unOffset) > 1)
                 {
-                    break;
+			break;
                 }
                 else
                 {
-                    pState = pState->pNext;
-                    toSend++;
+			pState = pState->pNext;
+			toSend++;
                 }
-            };
-        }
+	}
 
         pState = pState->pNext;
 
@@ -501,12 +418,8 @@ GLboolean r700SendContextStates(context_t *context)
         R600_OUT_BATCH_REGSEQ(((pInit->unOffset + ASIC_CONTEXT_BASE_INDEX)<<2), toSend);
         for(ui=0; ui<toSend; ui++)
         {
-            if( GL_FALSE == setRelocReg(context, pInit->unOffset) )
-            {
-                /* for not reloc reg. */
                 R600_OUT_BATCH(*(pInit->puiValue));
-            }
-            pInit = pInit->pNext;
+		pInit = pInit->pNext;
         };
         END_BATCH();
     };
@@ -515,6 +428,62 @@ GLboolean r700SendContextStates(context_t *context)
     return GL_TRUE;
 }
 
+
+GLboolean r700SendDepthTargetState(context_t *context, int id)
+{
+	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+	struct radeon_renderbuffer *rrb;
+	struct radeon_bo * pbo;
+	offset_modifiers offset_mod;
+	BATCH_LOCALS(&context->radeon);
+
+	rrb = radeon_get_depthbuffer(&context->radeon);
+	if (!rrb || !rrb->bo) {
+		fprintf(stderr, "no rrb\n");
+		return GL_FALSE;
+	}
+
+	offset_mod.shift     = NO_SHIFT;
+	offset_mod.shiftbits = 0;
+	offset_mod.mask      = 0xFFFFFFFF;
+
+        BEGIN_BATCH_NO_AUTOSTATE(9);
+	R600_OUT_BATCH_REGSEQ(DB_DEPTH_SIZE, 2);
+	R600_OUT_BATCH(r700->DB_DEPTH_SIZE.u32All);
+	R600_OUT_BATCH(r700->DB_DEPTH_VIEW.u32All);
+	R600_OUT_BATCH_REGSEQ(DB_DEPTH_BASE, 3);
+	R600_OUT_BATCH_RELOC(r700->DB_DEPTH_BASE.u32All,
+			     rrb->bo,
+			     r700->DB_DEPTH_BASE.u32All,
+			     0, RADEON_GEM_DOMAIN_VRAM, 0, &offset_mod);
+	R600_OUT_BATCH(r700->DB_DEPTH_INFO.u32All);
+	R600_OUT_BATCH(r700->DB_HTILE_DATA_BASE.u32All);
+        END_BATCH();
+
+        BEGIN_BATCH_NO_AUTOSTATE(24);
+	R600_OUT_BATCH_REGSEQ(DB_STENCIL_CLEAR, 2);
+	R600_OUT_BATCH(r700->DB_STENCIL_CLEAR.u32All);
+	R600_OUT_BATCH(r700->DB_DEPTH_CLEAR.u32All);
+
+	R600_OUT_BATCH_REGSEQ(DB_STENCILREFMASK, 2);
+	R600_OUT_BATCH(r700->DB_STENCILREFMASK.u32All);
+	R600_OUT_BATCH(r700->DB_STENCILREFMASK_BF.u32All);
+
+	R600_OUT_BATCH_REGVAL(DB_DEPTH_CONTROL, r700->DB_DEPTH_CONTROL.u32All);
+	R600_OUT_BATCH_REGVAL(DB_SHADER_CONTROL, r700->DB_SHADER_CONTROL.u32All);
+
+	R600_OUT_BATCH_REGSEQ(DB_RENDER_CONTROL, 2);
+	R600_OUT_BATCH(r700->DB_RENDER_CONTROL.u32All);
+	R600_OUT_BATCH(r700->DB_RENDER_OVERRIDE.u32All);
+
+	R600_OUT_BATCH_REGVAL(DB_HTILE_SURFACE, r700->DB_HTILE_SURFACE.u32All);
+	R600_OUT_BATCH_REGVAL(DB_ALPHA_TO_MASK, r700->DB_ALPHA_TO_MASK.u32All);
+        END_BATCH();
+
+	COMMIT_BATCH();
+
+	return GL_TRUE;
+}
 
 GLboolean r700SendRenderTargetState(context_t *context, int id)
 {

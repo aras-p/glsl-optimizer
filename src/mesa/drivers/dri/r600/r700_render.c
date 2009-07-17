@@ -321,7 +321,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     r700SendContextStates(context);
     r700SendViewportState(context, 0);
     r700SendRenderTargetState(context, 0);
-
+    r700SendDepthTargetState(context);
 
     /* richard test code */
     for (i = 0; i < vb->PrimitiveCount; i++) 
