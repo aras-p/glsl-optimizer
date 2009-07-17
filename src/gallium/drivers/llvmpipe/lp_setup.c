@@ -428,65 +428,31 @@ static void flush_spans( struct setup_context *setup )
    int minleft, maxright;
    int x;
 
-   switch (setup->span.y_flags) {
-   case 0x3:
-      /* both odd and even lines written (both quad rows) */
-      minleft = block(MIN2(xleft0, xleft1));
-      maxright = block(MAX2(xright0, xright1));
-      for (x = minleft; x <= maxright; x += 2) {
-         /* determine which of the four pixels is inside the span bounds */
-         uint mask = 0x0;
-         if (x >= xleft0 && x < xright0)
-            mask |= MASK_TOP_LEFT;
-         if (x >= xleft1 && x < xright1)
-            mask |= MASK_BOTTOM_LEFT;
-         if (x+1 >= xleft0 && x+1 < xright0)
-            mask |= MASK_TOP_RIGHT;
-         if (x+1 >= xleft1 && x+1 < xright1)
-            mask |= MASK_BOTTOM_RIGHT;
-         if (mask)
-            EMIT_QUAD( setup, x, setup->span.y, mask );
-      }
-      break;
+   minleft = block(MIN2(xleft0, xleft1));
+   maxright = block(MAX2(xright0, xright1));
 
-   case 0x1:
-      /* only even line written (quad top row) */
-      minleft = block(xleft0);
-      maxright = block(xright0);
-      for (x = minleft; x <= maxright; x += 2) {
-         uint mask = 0x0;
-         if (x >= xleft0 && x < xright0)
-            mask |= MASK_TOP_LEFT;
-         if (x+1 >= xleft0 && x+1 < xright0)
-            mask |= MASK_TOP_RIGHT;
-         if (mask)
-            EMIT_QUAD( setup, x, setup->span.y, mask );
-      }
-      break;
-
-   case 0x2:
-      /* only odd line written (quad bottom row) */
-      minleft = block(xleft1);
-      maxright = block(xright1);
-      for (x = minleft; x <= maxright; x += 2) {
-         uint mask = 0x0;
-         if (x >= xleft1 && x < xright1)
-            mask |= MASK_BOTTOM_LEFT;
-         if (x+1 >= xleft1 && x+1 < xright1)
-            mask |= MASK_BOTTOM_RIGHT;
-         if (mask)
-            EMIT_QUAD( setup, x, setup->span.y, mask );
-      }
-      break;
-
-   default:
-      return;
+   for (x = minleft; x <= maxright; x += 2) {
+      /* determine which of the four pixels is inside the span bounds */
+      uint mask = 0x0;
+      if (x >= xleft0 && x < xright0)
+         mask |= MASK_TOP_LEFT;
+      if (x >= xleft1 && x < xright1)
+         mask |= MASK_BOTTOM_LEFT;
+      if (x+1 >= xleft0 && x+1 < xright0)
+         mask |= MASK_TOP_RIGHT;
+      if (x+1 >= xleft1 && x+1 < xright1)
+         mask |= MASK_BOTTOM_RIGHT;
+      if (mask)
+         EMIT_QUAD( setup, x, setup->span.y, mask );
    }
+
 
    setup->span.y = 0;
    setup->span.y_flags = 0;
    setup->span.right[0] = 0;
    setup->span.right[1] = 0;
+   setup->span.left[0] = 1;     /* greater than right[0] */
+   setup->span.left[1] = 1;     /* greater than right[1] */
 }
 
 
