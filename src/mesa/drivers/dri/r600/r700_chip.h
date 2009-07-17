@@ -284,6 +284,8 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT                DB_HTILE_DATA_BASE        ;  /* 0xA005 */
 	union UINT_FLOAT          	DB_STENCIL_CLEAR          ;  /* 0xA00A */
 	union UINT_FLOAT            	DB_DEPTH_CLEAR            ;  /* 0xA00B */
+	union UINT_FLOAT            	DB_STENCILREFMASK         ;  /* 0xA10C */
+	union UINT_FLOAT            	DB_STENCILREFMASK_BF      ;  /* 0xA10D */
 	union UINT_FLOAT         	DB_RENDER_CONTROL         ;  /* 0xA343 */
 	union UINT_FLOAT        	DB_RENDER_OVERRIDE        ;  /* 0xA344 */
 	union UINT_FLOAT          	DB_HTILE_SURFACE          ;  /* 0xA349 */
@@ -452,11 +454,11 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT        	SQ_VTX_SEMANTIC_29        ;  /* 0xA0FD */
 	union UINT_FLOAT        	SQ_VTX_SEMANTIC_30        ;  /* 0xA0FE */
 	union UINT_FLOAT        	SQ_VTX_SEMANTIC_31        ;  /* 0xA0FF */
-    
+
 	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_0       ;  /* 0xA191 */
 	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_1       ;  /* 0xA192 */
 	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_2       ;  /* 0xA193 */
-    union UINT_FLOAT       	SPI_PS_INPUT_CNTL_3       ;  /* 0xA194 */
+	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_3       ;  /* 0xA194 */
 	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_4       ;  /* 0xA195 */
 	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_5       ;  /* 0xA196 */
 	union UINT_FLOAT       	SPI_PS_INPUT_CNTL_6       ;  /* 0xA197 */
