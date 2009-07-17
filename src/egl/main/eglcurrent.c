@@ -1,0 +1,283 @@
+#include <stdlib.h>
+#include <string.h>
+#include "eglcurrent.h"
+#include "eglcontext.h"
+#include "egllog.h"
+
+
+/* a fallback thread info to guarantee that every thread always has one */
+static _EGLThreadInfo dummy_thread;
+
+
+#ifdef GLX_USE_TLS
+static __thread const _EGLThreadInfo *_egl_TSD;
+   __attribute__ ((tls_model("initial-exec")));
+
+static INLINE EGLBoolean _eglInitTSD(void) { return EGL_TRUE; }
+static INLINE void _eglFiniTSD(void) { }
+static INLINE void _eglSetTSD(const _EGLThreadInfo *t) { _egl_TSD = t; }
+
+static INLINE _EGLThreadInfo *_eglGetTSD(void)
+{
+   return (_EGLThreadInfo *) _egl_TSD;
+}
+
+#elif PTHREADS
+#include <pthread.h>
+
+static pthread_key_t _egl_TSD;
+
+static INLINE EGLBoolean _eglInitTSD(void)
+{
+   return (pthread_key_create(&_egl_TSD, NULL) == 0);
+}
+
+static INLINE void _eglFiniTSD(void)
+{
+   pthread_key_delete(_egl_TSD);
+}
+
+static INLINE void _eglSetTSD(const _EGLThreadInfo *t)
+{
+   pthread_setspecific(_egl_TSD, (const void *) t);
+}
+
+static INLINE _EGLThreadInfo *_eglGetTSD(void)
+{
+   return (_EGLThreadInfo *) pthread_getspecific(_egl_TSD);
+}
+
+#else /* PTHREADS */
+static const _EGLThreadInfo *_egl_TSD;
+
+static INLINE EGLBoolean _eglInitTSD(void) { return EGL_TRUE; }
+static INLINE void _eglFiniTSD(void) { }
+static INLINE void _eglSetTSD(const _EGLThreadInfo *t) { _egl_TSD = t; }
+
+static INLINE _EGLThreadInfo *_eglGetTSD(void)
+{
+   return (_EGLThreadInfo *) _egl_TSD;
+}
+#endif /* !PTHREADS */
+
+
+static void
+_eglInitThreadInfo(_EGLThreadInfo *t)
+{
+   memset(t, 0, sizeof(*t));
+   t->LastError = EGL_SUCCESS;
+   /* default, per EGL spec */
+   t->CurrentAPIIndex = _eglConvertApiToIndex(EGL_OPENGL_ES_API);
+}
+
+
+/**
+ * Allocate and init a new _EGLThreadInfo object.
+ */
+static _EGLThreadInfo *
+_eglCreateThreadInfo(void)
+{
+   _EGLThreadInfo *t = (_EGLThreadInfo *) calloc(1, sizeof(_EGLThreadInfo));
+   if (t)
+      _eglInitThreadInfo(t);
+   else
+      t = &dummy_thread;
+   return t;
+}
+
+
+/**
+ * Delete/free a _EGLThreadInfo object.
+ */
+static void
+_eglDestroyThreadInfo(_EGLThreadInfo *t)
+{
+   if (t != &dummy_thread)
+      free(t);
+}
+
+
+/**
+ * Initialize "current thread" management.
+ */
+EGLBoolean
+_eglInitCurrent(void)
+{
+   _eglInitThreadInfo(&dummy_thread);
+   return _eglInitTSD();
+}
+
+
+/**
+ * Finish "current thread" management.
+ */
+void
+_eglFiniCurrent(void)
+{
+   /* TODO trace and release all threads... */
+   _eglFiniTSD();
+}
+
+
+/**
+ * Return the calling thread's thread info.
+ * If the calling thread nevers calls this function before, or if its thread
+ * info was destroyed, a new one is created.  This function never returns NULL.
+ * In the case allocation fails, a dummy one is returned.  See also
+ * _eglIsCurrentThreadDummy.
+ */
+_EGLThreadInfo *
+_eglGetCurrentThread(void)
+{
+   _EGLThreadInfo *t = _eglGetTSD();
+   if (!t) {
+      t = _eglCreateThreadInfo();
+      _eglSetTSD(t);
+   }
+
+   return t;
+}
+
+
+/**
+ * Destroy the calling thread's thread info.
+ */
+void
+_eglDestroyCurrentThread(void)
+{
+   _EGLThreadInfo *t = _eglGetTSD();
+   if (t) {
+      _eglDestroyThreadInfo(t);
+      _eglSetTSD(NULL);
+   }
+}
+
+
+/**
+ * Return true if the calling thread's thread info is dummy.
+ * A dummy thread info is shared by all threads and should not be modified.
+ * Functions like eglBindAPI or eglMakeCurrent should check for dummy-ness
+ * before updating the thread info.
+ */
+EGLBoolean
+_eglIsCurrentThreadDummy(void)
+{
+   _EGLThreadInfo *t = _eglGetTSD();
+   return (!t || t == &dummy_thread);
+}
+
+
+/**
+ * Return the currently bound context, or NULL.
+ */
+_EGLContext *
+_eglGetCurrentContext(void)
+{
+   _EGLThreadInfo *t = _eglGetCurrentThread();
+   return t->CurrentContexts[t->CurrentAPIIndex];
+}
+
+
+/**
+ * Return the display of the currently bound context, or NULL.
+ */
+_EGLDisplay *
+_eglGetCurrentDisplay(void)
+{
+   _EGLThreadInfo *t = _eglGetCurrentThread();
+   _EGLContext *ctx = t->CurrentContexts[t->CurrentAPIIndex];
+   if (ctx)
+      return ctx->Display;
+   else
+      return NULL;
+}
+
+
+/**
+ * Return the read or write surface of the currently bound context, or NULL.
+ */
+_EGLSurface *
+_eglGetCurrentSurface(EGLint readdraw)
+{
+   _EGLThreadInfo *t = _eglGetCurrentThread();
+   _EGLContext *ctx = t->CurrentContexts[t->CurrentAPIIndex];
+   if (ctx) {
+      switch (readdraw) {
+      case EGL_DRAW:
+         return ctx->DrawSurface;
+      case EGL_READ:
+         return ctx->ReadSurface;
+      default:
+         return NULL;
+      }
+   }
+   return NULL;
+}
+
+
+/**
+ * Record EGL error code.
+ */
+EGLBoolean
+_eglError(EGLint errCode, const char *msg)
+{
+   _EGLThreadInfo *t = _eglGetCurrentThread();
+   const char *s;
+
+   if (t == &dummy_thread)
+      return EGL_FALSE;
+
+   if (t->LastError == EGL_SUCCESS) {
+      t->LastError = errCode;
+
+      switch (errCode) {
+      case EGL_BAD_ACCESS:
+         s = "EGL_BAD_ACCESS";
+         break;
+      case EGL_BAD_ALLOC:
+         s = "EGL_BAD_ALLOC";
+         break;
+      case EGL_BAD_ATTRIBUTE:
+         s = "EGL_BAD_ATTRIBUTE";
+         break;
+      case EGL_BAD_CONFIG:
+         s = "EGL_BAD_CONFIG";
+         break;
+      case EGL_BAD_CONTEXT:
+         s = "EGL_BAD_CONTEXT";
+         break;
+      case EGL_BAD_CURRENT_SURFACE:
+         s = "EGL_BAD_CURRENT_SURFACE";
+         break;
+      case EGL_BAD_DISPLAY:
+         s = "EGL_BAD_DISPLAY";
+         break;
+      case EGL_BAD_MATCH:
+         s = "EGL_BAD_MATCH";
+         break;
+      case EGL_BAD_NATIVE_PIXMAP:
+         s = "EGL_BAD_NATIVE_PIXMAP";
+         break;
+      case EGL_BAD_NATIVE_WINDOW:
+         s = "EGL_BAD_NATIVE_WINDOW";
+         break;
+      case EGL_BAD_PARAMETER:
+         s = "EGL_BAD_PARAMETER";
+         break;
+      case EGL_BAD_SURFACE:
+         s = "EGL_BAD_SURFACE";
+         break;
+      case EGL_BAD_SCREEN_MESA:
+         s = "EGL_BAD_SCREEN_MESA";
+         break;
+      case EGL_BAD_MODE_MESA:
+         s = "EGL_BAD_MODE_MESA";
+         break;
+      default:
+         s = "other";
+      }
+      _eglLog(_EGL_DEBUG, "EGL user error 0x%x (%s) in %s\n", errCode, s, msg);
+   }
+
+   return EGL_FALSE;
+}
