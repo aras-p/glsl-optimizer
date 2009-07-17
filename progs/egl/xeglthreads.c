@@ -261,6 +261,12 @@ draw_loop(struct winthread *wt)
       if (Locking)
          pthread_mutex_unlock(&Mutex);
 
+      eglBindAPI(EGL_OPENGL_API);
+      if (eglGetCurrentContext() != wt->Context) {
+         printf("xeglthreads: current context %p != %p\n",
+               eglGetCurrentContext(), wt->Context);
+      }
+
       glEnable(GL_DEPTH_TEST);
 
       if (wt->NewSize) {
@@ -308,6 +314,7 @@ draw_loop(struct winthread *wt)
       }
       wt->Angle += 1.0;
    }
+   eglMakeCurrent(wt->Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 }
 
 
@@ -574,7 +581,7 @@ clean_up(void)
    }
 
    for (i = 0; i < NumWinThreads; i++) {
-      eglDestroyContext(WinThreads[i].Dpy, WinThreads[i].Context);
+      eglDestroyContext(WinThreads[i].Display, WinThreads[i].Context);
       XDestroyWindow(WinThreads[i].Dpy, WinThreads[i].Win);
    }
 }
@@ -742,7 +749,7 @@ main(int argc, char *argv[])
       }
    }
    else {
-      eglTerminate(dpy);
+      eglTerminate(egl_dpy);
       XCloseDisplay(dpy);
    }
 
