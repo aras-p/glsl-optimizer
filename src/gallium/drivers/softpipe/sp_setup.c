@@ -388,19 +388,19 @@ emit_quad_job( struct setup_context *setup, uint thread, struct quad_job *job )
    emit_quad( setup, &quad, thread );
 }
 
-#define EMIT_QUAD(setup,x,y,mask) do {\
+#define EMIT_QUAD(setup,x,y,qmask) do {\
       setup->quad.input.x0 = x;\
       setup->quad.input.y0 = y;\
-      setup->quad.inout.mask = mask;\
+      setup->quad.inout.mask = qmask;\
       add_quad_job( &setup->que, &setup->quad, emit_quad_job );\
    } while (0)
 
 #else
 
-#define EMIT_QUAD(setup,x,y,mask) do {\
+#define EMIT_QUAD(setup,x,y,qmask) do {\
       setup->quad.input.x0 = x;\
       setup->quad.input.y0 = y;\
-      setup->quad.inout.mask = mask;\
+      setup->quad.inout.mask = qmask;\
       emit_quad( setup, &setup->quad, 0 );\
    } while (0)
 
@@ -421,29 +421,42 @@ static INLINE int block( int x )
  */
 static void flush_spans( struct setup_context *setup )
 {
+   const int step = 30;
    const int xleft0 = setup->span.left[0];
    const int xleft1 = setup->span.left[1];
    const int xright0 = setup->span.right[0];
    const int xright1 = setup->span.right[1];
-   int minleft, maxright;
+
+   int minleft = block(MIN2(xleft0, xleft1));
+   int maxright = MAX2(xright0, xright1);
    int x;
 
-   minleft = block(MIN2(xleft0, xleft1));
-   maxright = block(MAX2(xright0, xright1));
+   for (x = minleft; x < maxright; x += step) {
+      unsigned skip_left0 = CLAMP(xleft0 - x, 0, step);
+      unsigned skip_left1 = CLAMP(xleft1 - x, 0, step);
+      unsigned skip_right0 = CLAMP(x + step - xright0, 0, step);
+      unsigned skip_right1 = CLAMP(x + step - xright1, 0, step);
+      unsigned lx = x;
+      
+      unsigned skipmask_left0 = (1U << skip_left0) - 1U;
+      unsigned skipmask_left1 = (1U << skip_left1) - 1U;
 
-   for (x = minleft; x <= maxright; x += 2) {
-      /* determine which of the four pixels is inside the span bounds */
-      uint mask = 0x0;
-      if (x >= xleft0 && x < xright0)
-         mask |= MASK_TOP_LEFT;
-      if (x >= xleft1 && x < xright1)
-         mask |= MASK_BOTTOM_LEFT;
-      if (x+1 >= xleft0 && x+1 < xright0)
-         mask |= MASK_TOP_RIGHT;
-      if (x+1 >= xleft1 && x+1 < xright1)
-         mask |= MASK_BOTTOM_RIGHT;
-      if (mask)
-         EMIT_QUAD( setup, x, setup->span.y, mask );
+      /* These calculations fail when step == 32 and skip_right == 0.
+       */
+      unsigned skipmask_right0 = ~0U << (unsigned)(step - skip_right0);
+      unsigned skipmask_right1 = ~0U << (unsigned)(step - skip_right1);
+
+      unsigned mask0 = ~skipmask_left0 & ~skipmask_right0;
+      unsigned mask1 = ~skipmask_left1 & ~skipmask_right1;
+
+      while (mask0 | mask1) {
+         unsigned quadmask = (mask0 & 3) | ((mask1 & 3) << 2);
+         if (quadmask)
+            EMIT_QUAD( setup, lx, setup->span.y, quadmask );
+         mask0 >>= 2;
+         mask1 >>= 2;
+         lx += 2;
+      }
    }
 
 
@@ -451,8 +464,8 @@ static void flush_spans( struct setup_context *setup )
    setup->span.y_flags = 0;
    setup->span.right[0] = 0;
    setup->span.right[1] = 0;
-   setup->span.left[0] = 1;     /* greater than right[0] */
-   setup->span.left[1] = 1;     /* greater than right[1] */
+   setup->span.left[0] = 1000000;     /* greater than right[0] */
+   setup->span.left[1] = 1000000;     /* greater than right[1] */
 }
 
 
@@ -810,11 +823,10 @@ static void subtriangle( struct setup_context *setup,
 
    /* clip top/bottom */
    start_y = sy;
-   finish_y = sy + lines;
-
    if (start_y < miny)
       start_y = miny;
 
+   finish_y = sy + lines;
    if (finish_y > maxy)
       finish_y = maxy;
 
@@ -1494,6 +1506,9 @@ struct setup_context *setup_create_context( struct softpipe_context *softpipe )
 
    setup->quad.coef = setup->coef;
    setup->quad.posCoef = &setup->posCoef;
+
+   setup->span.left[0] = 1000000;     /* greater than right[0] */
+   setup->span.left[1] = 1000000;     /* greater than right[1] */
 
 #if SP_NUM_QUAD_THREADS > 1
    setup->que.first = 0;
