@@ -11,10 +11,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glew.h>
-#include <GL/gl.h>
 #include <GL/glut.h>
-#include <GL/glext.h>
-#include "extfuncs.h"
 #include "shaderutil.h"
 
 
@@ -65,9 +62,9 @@ Reshape(int width, int height)
 static void
 CleanUp(void)
 {
-   glDeleteShader_func(fragShader);
-   glDeleteShader_func(vertShader);
-   glDeleteProgram_func(program);
+   glDeleteShader(fragShader);
+   glDeleteShader(vertShader);
+   glDeleteProgram(program);
    glutDestroyWindow(win);
 }
 
@@ -142,18 +139,16 @@ Init(void)
    if (!ShadersSupported())
       exit(1);
 
-   GetExtensionFuncs();
-
    vertShader = CompileShaderText(GL_VERTEX_SHADER, vertShaderText);
    fragShader = CompileShaderText(GL_FRAGMENT_SHADER, fragShaderText);
    program = LinkShaders(vertShader, fragShader);
 
-   glUseProgram_func(program);
+   glUseProgram(program);
 
-   tex0 = glGetUniformLocation_func(program, "tex0");
+   tex0 = glGetUniformLocation(program, "tex0");
    printf("Uniforms: tex0: %d\n", tex0);
 
-   glUniform1i_func(tex0, 0); /* tex unit 0 */
+   glUniform1i(tex0, 0); /* tex unit 0 */
 
    /*assert(glGetError() == 0);*/
 
@@ -161,9 +156,9 @@ Init(void)
 
    printf("GL_RENDERER = %s\n",(const char *) glGetString(GL_RENDERER));
 
-   assert(glIsProgram_func(program));
-   assert(glIsShader_func(fragShader));
-   assert(glIsShader_func(vertShader));
+   assert(glIsProgram(program));
+   assert(glIsShader(fragShader));
+   assert(glIsShader(vertShader));
 
    MakeTexture();
 

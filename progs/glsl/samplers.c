@@ -42,7 +42,6 @@
 #include <GL/glew.h>
 #include "GL/glut.h"
 #include "readtex.h"
-#include "extfuncs.h"
 #include "shaderutil.h"
 
 
@@ -291,7 +290,7 @@ CreateProgram(void)
    assert(vertShader);
    program = LinkShaders(vertShader, fragShader);
 
-   glUseProgram_func(program);
+   glUseProgram(program);
 
    free(fragShaderText);
 
@@ -316,10 +315,10 @@ InitProgram(void)
 #else
       sprintf(uname, "tex[%d]", s);
 #endif
-      loc = glGetUniformLocation_func(Program, uname);
+      loc = glGetUniformLocation(Program, uname);
       assert(loc >= 0);
 
-      glUniform1i_func(loc, s);
+      glUniform1i(loc, s);
    }
 }
 
@@ -333,8 +332,6 @@ InitGL(void)
    }
 
    printf("GL_RENDERER = %s\n", (const char *) glGetString(GL_RENDERER));
-
-   GetExtensionFuncs();
 
    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &NumSamplers);
    if (NumSamplers > MAX_SAMPLERS)

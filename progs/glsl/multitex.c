@@ -31,7 +31,6 @@
 #include <GL/glew.h>
 #include "GL/glut.h"
 #include "readtex.h"
-#include "extfuncs.h"
 #include "shaderutil.h"
 
 static const char *Demo = "multitex";
@@ -81,22 +80,22 @@ static void
 DrawPolygonArray(void)
 {
    if (VertCoord_attr >= 0) {
-      glVertexAttribPointer_func(VertCoord_attr, 2, GL_FLOAT, GL_FALSE,
+      glVertexAttribPointer(VertCoord_attr, 2, GL_FLOAT, GL_FALSE,
                                  0, VertCoords);
-      glEnableVertexAttribArray_func(VertCoord_attr);
+      glEnableVertexAttribArray(VertCoord_attr);
    }
    else {
       glVertexPointer(2, GL_FLOAT, 0, VertCoords);
       glEnable(GL_VERTEX_ARRAY);
    }
 
-   glVertexAttribPointer_func(TexCoord0_attr, 2, GL_FLOAT, GL_FALSE,
+   glVertexAttribPointer(TexCoord0_attr, 2, GL_FLOAT, GL_FALSE,
                               0, Tex0Coords);
-   glEnableVertexAttribArray_func(TexCoord0_attr);
+   glEnableVertexAttribArray(TexCoord0_attr);
 
-   glVertexAttribPointer_func(TexCoord1_attr, 2, GL_FLOAT, GL_FALSE,
+   glVertexAttribPointer(TexCoord1_attr, 2, GL_FLOAT, GL_FALSE,
                               0, Tex1Coords);
-   glEnableVertexAttribArray_func(TexCoord1_attr);
+   glEnableVertexAttribArray(TexCoord1_attr);
 
    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
@@ -110,11 +109,11 @@ DrawPolygonVert(void)
    glBegin(GL_TRIANGLE_FAN);
 
    for (i = 0; i < 4; i++) {
-      glVertexAttrib2fv_func(TexCoord0_attr, Tex0Coords[i]);
-      glVertexAttrib2fv_func(TexCoord1_attr, Tex1Coords[i]);
+      glVertexAttrib2fv(TexCoord0_attr, Tex0Coords[i]);
+      glVertexAttrib2fv(TexCoord1_attr, Tex1Coords[i]);
 
       if (VertCoord_attr >= 0)
-         glVertexAttrib2fv_func(VertCoord_attr, VertCoords[i]);
+         glVertexAttrib2fv(VertCoord_attr, VertCoords[i]);
       else
          glVertex2fv(VertCoords[i]);
    }
@@ -268,27 +267,27 @@ CreateProgram(const char *vertProgFile, const char *fragProgFile,
    assert(vertShader);
    program = LinkShaders(vertShader, fragShader);
 
-   glUseProgram_func(program);
+   glUseProgram(program);
 
    InitUniforms(program, uniforms);
 
-   VertCoord_attr = glGetAttribLocation_func(program, "VertCoord");
+   VertCoord_attr = glGetAttribLocation(program, "VertCoord");
    if (VertCoord_attr > 0) {
       /* We want the VertCoord attrib to have position zero so that
        * the call to glVertexAttrib(0, xyz) triggers vertex processing.
        * Otherwise, if TexCoord0 or TexCoord1 gets position 0 we'd have
        * to set that attribute last (which is a PITA to manage).
        */
-      glBindAttribLocation_func(program, 0, "VertCoord");
+      glBindAttribLocation(program, 0, "VertCoord");
       /* re-link */
-      glLinkProgram_func(program);
+      glLinkProgram(program);
       /* VertCoord_attr should be zero now */
-      VertCoord_attr = glGetAttribLocation_func(program, "VertCoord");
+      VertCoord_attr = glGetAttribLocation(program, "VertCoord");
       assert(VertCoord_attr == 0);
    }
 
-   TexCoord0_attr = glGetAttribLocation_func(program, "TexCoord0");
-   TexCoord1_attr = glGetAttribLocation_func(program, "TexCoord1");
+   TexCoord0_attr = glGetAttribLocation(program, "TexCoord0");
+   TexCoord1_attr = glGetAttribLocation(program, "TexCoord1");
 
    printf("TexCoord0_attr = %d\n", TexCoord0_attr);
    printf("TexCoord1_attr = %d\n", TexCoord1_attr);
@@ -315,8 +314,6 @@ InitGL(void)
       /*exit(1);*/
    }
    printf("GL_RENDERER = %s\n",(const char *) glGetString(GL_RENDERER));
-
-   GetExtensionFuncs();
 
    InitTextures();
    InitPrograms();

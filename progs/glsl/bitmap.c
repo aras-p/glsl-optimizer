@@ -10,10 +10,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glew.h>
-#include <GL/gl.h>
 #include <GL/glut.h>
-#include <GL/glext.h>
-#include "extfuncs.h"
 #include "shaderutil.h"
 
 
@@ -79,11 +76,11 @@ Redisplay(void)
       BitmapText("-X");
    }
    else {
-      glUseProgram_func(Program);
+      glUseProgram(Program);
 
       /* vertex positions (deltas) depend on texture size and window size */
       if (uScale != -1) {
-         glUniform2f_func(uScale,
+         glUniform2f(uScale,
                           2.0 * TEX_WIDTH / WinWidth,
                           2.0 * TEX_HEIGHT / WinHeight);
       }
@@ -106,7 +103,7 @@ Redisplay(void)
       glTexCoord2f(0, 1);  glVertex3fv(nx);
       glEnd();
 
-      glUseProgram_func(0);
+      glUseProgram(0);
    }
 
    glPopMatrix();
@@ -161,9 +158,9 @@ Key(unsigned char key, int x, int y)
          printf("Using billboard texture\n");
       break;
    case 27:
-      glDeleteShader_func(FragShader);
-      glDeleteShader_func(VertShader);
-      glDeleteProgram_func(Program);
+      glDeleteShader(FragShader);
+      glDeleteShader(VertShader);
+      glDeleteProgram(Program);
       glutDestroyWindow(Win);
       exit(0);
    }
@@ -278,21 +275,19 @@ Init(void)
    if (!ShadersSupported())
       exit(1);
 
-   GetExtensionFuncs();
-
    VertShader = CompileShaderText(GL_VERTEX_SHADER, vertShaderText);
    FragShader = CompileShaderText(GL_FRAGMENT_SHADER, fragShaderText);
    Program = LinkShaders(VertShader, FragShader);
 
-   glUseProgram_func(Program);
+   glUseProgram(Program);
 
-   uScale = glGetUniformLocation_func(Program, "scale");
-   uTex = glGetUniformLocation_func(Program, "tex2d");
+   uScale = glGetUniformLocation(Program, "scale");
+   uTex = glGetUniformLocation(Program, "tex2d");
    if (uTex != -1) {
-      glUniform1i_func(uTex, 0);  /* tex unit 0 */
+      glUniform1i(uTex, 0);  /* tex unit 0 */
    }
 
-   glUseProgram_func(0);
+   glUseProgram(0);
 
    glClearColor(0.3f, 0.3f, 0.3f, 0.0f);
    glEnable(GL_DEPTH_TEST);

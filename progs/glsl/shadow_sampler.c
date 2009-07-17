@@ -11,10 +11,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glew.h>
-#include <GL/gl.h>
 #include <GL/glut.h>
-#include <GL/glext.h>
-#include "extfuncs.h"
 
 
 /** Use GL_RECTANGLE texture (with projective texcoords)? */
@@ -67,7 +64,7 @@ Redisplay(void)
    glPushMatrix();
 
    CheckError(__LINE__);
-   glUseProgram_func(program);
+   glUseProgram(program);
    CheckError(__LINE__);
 
    glBegin(GL_POLYGON);
@@ -87,7 +84,7 @@ Redisplay(void)
 
    glPopMatrix();
 
-   glUseProgram_func(0);
+   glUseProgram(0);
    glWindowPos2iARB(80, 20);
    PrintString("white   black   white   black");
 
@@ -111,9 +108,9 @@ Reshape(int width, int height)
 static void
 CleanUp(void)
 {
-   glDeleteShader_func(fragShader);
-   glDeleteShader_func(vertShader);
-   glDeleteProgram_func(program);
+   glDeleteShader(fragShader);
+   glDeleteShader(vertShader);
+   glDeleteProgram(program);
    glutDestroyWindow(win);
 }
 
@@ -179,13 +176,13 @@ static void
 LoadAndCompileShader(GLuint shader, const char *text)
 {
    GLint stat;
-   glShaderSource_func(shader, 1, (const GLchar **) &text, NULL);
-   glCompileShader_func(shader);
-   glGetShaderiv_func(shader, GL_COMPILE_STATUS, &stat);
+   glShaderSource(shader, 1, (const GLchar **) &text, NULL);
+   glCompileShader(shader);
+   glGetShaderiv(shader, GL_COMPILE_STATUS, &stat);
    if (!stat) {
       GLchar log[1000];
       GLsizei len;
-      glGetShaderInfoLog_func(shader, 1000, &len, log);
+      glGetShaderInfoLog(shader, 1000, &len, log);
       fprintf(stderr, "fslight: problem compiling shader:\n%s\n", log);
       exit(1);
    }
@@ -223,11 +220,11 @@ static void
 CheckLink(GLuint prog)
 {
    GLint stat;
-   glGetProgramiv_func(prog, GL_LINK_STATUS, &stat);
+   glGetProgramiv(prog, GL_LINK_STATUS, &stat);
    if (!stat) {
       GLchar log[1000];
       GLsizei len;
-      glGetProgramInfoLog_func(prog, 1000, &len, log);
+      glGetProgramInfoLog(prog, 1000, &len, log);
       fprintf(stderr, "Linker error:\n%s\n", log);
    }
 }
@@ -267,35 +264,33 @@ Init(void)
    }
    printf("GL_RENDERER = %s\n",(const char *) glGetString(GL_RENDERER));
 
-   GetExtensionFuncs();
-
-   fragShader = glCreateShader_func(GL_FRAGMENT_SHADER);
+   fragShader = glCreateShader(GL_FRAGMENT_SHADER);
    if (FragProgFile)
       ReadShader(fragShader, FragProgFile);
    else
       LoadAndCompileShader(fragShader, fragShaderText);
 
-   vertShader = glCreateShader_func(GL_VERTEX_SHADER);
+   vertShader = glCreateShader(GL_VERTEX_SHADER);
    if (VertProgFile)
       ReadShader(vertShader, VertProgFile);
    else
       LoadAndCompileShader(vertShader, vertShaderText);
 
-   program = glCreateProgram_func();
-   glAttachShader_func(program, fragShader);
-   glAttachShader_func(program, vertShader);
-   glLinkProgram_func(program);
+   program = glCreateProgram();
+   glAttachShader(program, fragShader);
+   glAttachShader(program, vertShader);
+   glLinkProgram(program);
    CheckLink(program);
-   glUseProgram_func(program);
+   glUseProgram(program);
 
-   uTexture2D = glGetUniformLocation_func(program, "shadowTex2D");
-   uTextureRect = glGetUniformLocation_func(program, "shadowTexRect");
+   uTexture2D = glGetUniformLocation(program, "shadowTex2D");
+   uTextureRect = glGetUniformLocation(program, "shadowTexRect");
    printf("uTexture2D %d  uTextureRect %d\n", uTexture2D, uTextureRect);
    if (uTexture2D >= 0) {
-      glUniform1i_func(uTexture2D, 0);  /* use texture unit 0 */
+      glUniform1i(uTexture2D, 0);  /* use texture unit 0 */
    }
    if (uTextureRect >= 0) {
-      glUniform1i_func(uTextureRect, 1);  /* use texture unit 0 */
+      glUniform1i(uTextureRect, 1);  /* use texture unit 0 */
    }
    CheckError(__LINE__);
 

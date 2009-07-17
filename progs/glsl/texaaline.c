@@ -12,10 +12,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glew.h>
-#include <GL/gl.h>
 #include <GL/glut.h>
-#include <GL/glext.h>
-#include "extfuncs.h"
 
 
 static GLint WinWidth = 300, WinHeight = 300;
@@ -328,8 +325,6 @@ Init(void)
       printf("This program requires OpenGL 2.x, found %s\n", version);
       exit(1);
    }
-
-   GetExtensionFuncs();
 
    glClearColor(0.3f, 0.3f, 0.3f, 0.0f);
 

@@ -11,10 +11,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glew.h>
-#include <GL/gl.h>
 #include <GL/glut.h>
-#include <GL/glext.h>
-#include "extfuncs.h"
 #include "shaderutil.h"
 
 
@@ -100,7 +97,7 @@ Redisplay(void)
     */
    glPushMatrix();
    glTranslatef(0, 1.2, 0);
-   glUseProgram_func(0);
+   glUseProgram(0);
    DrawPoints(GL_FALSE);
    glPopMatrix();
 
@@ -109,9 +106,9 @@ Redisplay(void)
     */
    glPushMatrix();
    glTranslatef(0, -1.2, 0);
-   glUseProgram_func(Program);
+   glUseProgram(Program);
    if (uViewportInv != -1) {
-      glUniform2f_func(uViewportInv, 1.0 / WinWidth, 1.0 / WinHeight);
+      glUniform2f(uViewportInv, 1.0 / WinWidth, 1.0 / WinHeight);
    }
    DrawPoints(GL_TRUE);
    glPopMatrix();
@@ -151,9 +148,9 @@ Key(unsigned char key, int x, int y)
       Smooth = !Smooth;
       break;
    case 27:
-      glDeleteShader_func(FragShader);
-      glDeleteShader_func(VertShader);
-      glDeleteProgram_func(Program);
+      glDeleteShader(FragShader);
+      glDeleteShader(VertShader);
+      glDeleteProgram(Program);
       glutDestroyWindow(Win);
       exit(0);
    }
@@ -226,17 +223,15 @@ Init(void)
    if (!ShadersSupported())
       exit(1);
 
-   GetExtensionFuncs();
-
    VertShader = CompileShaderText(GL_VERTEX_SHADER, vertShaderText);
    FragShader = CompileShaderText(GL_FRAGMENT_SHADER, fragShaderText);
    Program = LinkShaders(VertShader, FragShader);
 
-   glUseProgram_func(Program);
+   glUseProgram(Program);
 
-   uViewportInv = glGetUniformLocation_func(Program, "viewportInv");
+   uViewportInv = glGetUniformLocation(Program, "viewportInv");
 
-   glUseProgram_func(0);
+   glUseProgram(0);
 
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
