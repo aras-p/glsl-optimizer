@@ -128,20 +128,25 @@ _eglCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 {
 #if 0 /* THIS IS JUST EXAMPLE CODE */
    _EGLSurface *surf;
+   _EGLConfig *conf;
+
+   conf = _eglLookupConfig(drv, dpy, config);
+   if (!conf) {
+      _eglError(EGL_BAD_CONFIG, "eglCreateScreenSurfaceMESA");
+      return EGL_NO_SURFACE;
+   }
 
    surf = (_EGLSurface *) calloc(1, sizeof(_EGLSurface));
    if (!surf)
       return EGL_NO_SURFACE;
 
-   if (!_eglInitSurface(drv, dpy, surf, EGL_SCREEN_BIT_MESA,
-                        config, attrib_list)) {
+   if (!_eglInitSurface(drv, surf, EGL_SCREEN_BIT_MESA,
+                        conf, attrib_list)) {
       free(surf);
       return EGL_NO_SURFACE;
    }
 
-   _eglSaveSurface(surf);
-
-   return surf->Handle;
+   return _eglLinkSurface(surf, _eglLookupDisplay(dpy));
 #endif
    return EGL_NO_SURFACE;
 }

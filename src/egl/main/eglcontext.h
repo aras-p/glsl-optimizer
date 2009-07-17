@@ -29,16 +29,8 @@ struct _egl_context
 
 
 extern EGLBoolean
-_eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
-                EGLConfig config, const EGLint *attrib_list);
-
-
-extern void
-_eglSaveContext(_EGLContext *ctx);
-
-
-extern void
-_eglRemoveContext(_EGLContext *ctx);
+_eglInitContext(_EGLDriver *drv, _EGLContext *ctx,
+                _EGLConfig *config, const EGLint *attrib_list);
 
 
 extern EGLContext

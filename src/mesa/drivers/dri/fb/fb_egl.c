@@ -472,8 +472,8 @@ fbCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext sh
    c->Base.DrawSurface = EGL_NO_SURFACE;
    c->Base.ReadSurface = EGL_NO_SURFACE;
 
-   /* generate handle and insert into hash table */
-   _eglSaveContext(&c->Base);
+   /* link to display */
+   _eglLinkContext(&c->Base, disp);
    assert(c->Base.Handle);
 
    /* Init default driver functions then plug in our FBdev-specific functions
@@ -604,7 +604,7 @@ static EGLBoolean
 fbDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
    fbSurface *fs = Lookup_fbSurface(surface);
-   _eglRemoveSurface(&fs->Base);
+   _eglUnlinkSurface(&fs->Base);
    if (fs->Base.IsBound) {
       fs->Base.DeletePending = EGL_TRUE;
    }
@@ -619,7 +619,7 @@ static EGLBoolean
 fbDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 {
    fbContext *fc = Lookup_fbContext(context);
-   _eglRemoveContext(&fc->Base);
+   _eglUnlinkContext(&fc->Base);
    if (fc->Base.IsBound) {
       fc->Base.DeletePending = EGL_TRUE;
    }
@@ -688,7 +688,7 @@ fbCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
    surface->mesa_framebuffer = _mesa_create_framebuffer(&vis);
    if (!surface->mesa_framebuffer) {
       free(surface);
-      _eglRemoveSurface(&surface->Base);
+      _eglUnlinkSurface(&surface->Base);
       return EGL_NO_SURFACE;
    }
 

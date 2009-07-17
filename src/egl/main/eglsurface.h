@@ -43,17 +43,8 @@ struct _egl_surface
 
 
 extern EGLBoolean
-_eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
-                _EGLSurface *surf, EGLint type, EGLConfig config,
-                const EGLint *attrib_list);
-
-
-extern void
-_eglSaveSurface(_EGLSurface *surf);
-
-
-extern void
-_eglRemoveSurface(_EGLSurface *surf);
+_eglInitSurface(_EGLDriver *drv, _EGLSurface *surf, EGLint type,
+                _EGLConfig *config, const EGLint *attrib_list);
 
 
 extern EGLBoolean

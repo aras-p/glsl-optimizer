@@ -14,11 +14,9 @@
  * in the attrib_list.
  */
 EGLBoolean
-_eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
-                EGLConfig config, const EGLint *attrib_list)
+_eglInitContext(_EGLDriver *drv, _EGLContext *ctx,
+                _EGLConfig *conf, const EGLint *attrib_list)
 {
-   _EGLConfig *conf;
-   _EGLDisplay *display = _eglLookupDisplay(dpy);
    EGLint i;
    const EGLenum api = eglQueryAPI();
 
@@ -27,7 +25,6 @@ _eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
       return EGL_FALSE;
    }
 
-   conf = _eglLookupConfig(drv, dpy, config);
    if (!conf) {
       _eglError(EGL_BAD_CONFIG, "_eglInitContext");
       return EGL_FALSE;
@@ -49,37 +46,12 @@ _eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
       }
    }
 
-   ctx->Display = display;
    ctx->Config = conf;
    ctx->DrawSurface = EGL_NO_SURFACE;
    ctx->ReadSurface = EGL_NO_SURFACE;
    ctx->ClientAPI = api;
 
    return EGL_TRUE;
-}
-
-
-/**
- * Save a new _EGLContext into the hash table.
- */
-void
-_eglSaveContext(_EGLContext *ctx)
-{
-   /* no-op.
-    * Public EGLContext handle and private _EGLContext are the same.
-    */
-}
-
-
-/**
- * Remove the given _EGLContext object from the hash table.
- */
-void
-_eglRemoveContext(_EGLContext *ctx)
-{
-   /* no-op.
-    * Public EGLContext handle and private _EGLContext are the same.
-    */
 }
 
 
@@ -92,18 +64,24 @@ _eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 {
 #if 0 /* example code */
    _EGLContext *context;
+   _EGLConfig *conf;
+
+   conf = _eglLookupConfig(drv, dpy, config);
+   if (!conf) {
+      _eglError(EGL_BAD_CONFIG, "eglCreateContext");
+      return EGL_NO_CONTEXT;
+   }
 
    context = (_EGLContext *) calloc(1, sizeof(_EGLContext));
    if (!context)
       return EGL_NO_CONTEXT;
 
-   if (!_eglInitContext(drv, dpy, context, config, attrib_list)) {
+   if (!_eglInitContext(drv, context, conf, attrib_list)) {
       free(context);
       return EGL_NO_CONTEXT;
    }
 
-   _eglSaveContext(context);
-   return (EGLContext) context;
+   return _eglLinkContext(context, _eglLookupDisplay(dpy));
 #endif
    return EGL_NO_CONTEXT;
 }
@@ -117,6 +95,7 @@ _eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
 {
    _EGLContext *context = _eglLookupContext(ctx);
    if (context) {
+      _eglUnlinkContext(context);
       if (context->IsBound) {
          context->DeletePending = EGL_TRUE;
       }

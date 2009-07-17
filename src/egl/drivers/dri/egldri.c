@@ -171,7 +171,10 @@ _eglDRICreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    if (!c)
       return EGL_NO_CONTEXT;
 
-   if (!_eglInitContext(drv, dpy, &c->Base, config, attrib_list)) {
+   conf = _eglLookupConfig(drv, dpy, config);
+   assert(conf);
+
+   if (!_eglInitContext(drv, &c->Base, conf, attrib_list)) {
       free(c);
       return EGL_NO_CONTEXT;
    }
@@ -189,8 +192,6 @@ _eglDRICreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    else
       sharePriv = NULL;
 
-   conf = _eglLookupConfig(drv, dpy, config);
-   assert(conf);
    _eglConfigToContextModesRec(conf, &visMode);
 
    c->driContext.private = disp->driScreen.createNewContext(disp, &visMode,
@@ -200,8 +201,8 @@ _eglDRICreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
       return EGL_FALSE;
    }
 
-   /* generate handle and insert into hash table */
-   _eglSaveContext(&c->Base);
+   /* link to display */
+   _eglLinkContext(&c->Base, &disp->Base);
 
    return _eglGetContextHandle(&c->Base);
 }
@@ -237,14 +238,18 @@ _eglDRICreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
                             const EGLint *attrib_list)
 {
    driSurface *surf;
+   _EGLConfig *conf;
+
+   conf = _eglLookupConfig(drv, dpy, config);
+   assert(conf);
 
    surf = (driSurface *) calloc(1, sizeof(*surf));
    if (!surf) {
       return EGL_NO_SURFACE;
    }
 
-   if (!_eglInitSurface(drv, dpy, &surf->Base, EGL_PBUFFER_BIT,
-                        config, attrib_list)) {
+   if (!_eglInitSurface(drv, &surf->Base, EGL_PBUFFER_BIT,
+                        conf, attrib_list)) {
       free(surf);
       return EGL_NO_SURFACE;
    }
@@ -275,7 +280,7 @@ _eglDRICreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 #endif
    }
 
-   _eglSaveSurface(&surf->Base);
+   _eglLinkSurface(&surf->Base, _eglLookupDisplay(dpy));
 
    return surf->Base.Handle;
 }
@@ -287,7 +292,7 @@ _eglDRIDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
    driDisplay *disp = Lookup_driDisplay(dpy);
    driSurface *fs = Lookup_driSurface(surface);
 
-   _eglRemoveSurface(&fs->Base);
+   _eglUnlinkSurface(&fs->Base);
 
    fs->drawable.destroyDrawable(disp, fs->drawable.private);
 
@@ -307,7 +312,7 @@ _eglDRIDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
    driDisplay *disp = Lookup_driDisplay(dpy);
    driContext *fc = Lookup_driContext(context);
 
-   _eglRemoveContext(&fc->Base);
+   _eglUnlinkContext(&fc->Base);
 
    fc->driContext.destroyContext(disp, 0, fc->driContext.private);
 
@@ -340,13 +345,13 @@ _eglDRICreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
    }
 
    /* init base class, do error checking, etc. */
-   if (!_eglInitSurface(drv, dpy, &surface->Base, EGL_SCREEN_BIT_MESA,
-                        cfg, attrib_list)) {
+   if (!_eglInitSurface(drv, &surface->Base, EGL_SCREEN_BIT_MESA,
+                        config, attrib_list)) {
       free(surface);
       return EGL_NO_SURFACE;
    }
 
-   _eglSaveSurface(&surface->Base);
+   _eglLinkSurface(&surface->Base &disp->Base);
 
 
    /*
@@ -363,7 +368,7 @@ _eglDRICreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
    if (!disp->driScreen.createNewDrawable(disp, &visMode, drawBuf,
                                           &surface->drawable, GLX_WINDOW_BIT,
                                           empty_attribute_list)) {
-      _eglRemoveSurface(&surface->Base);
+      _eglUnlinkSurface(&surface->Base);
       free(surface);
       return EGL_NO_SURFACE;
    }
