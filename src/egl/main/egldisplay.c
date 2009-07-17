@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "eglcontext.h"
+#include "eglsurface.h"
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglglobals.h"
@@ -25,11 +26,6 @@ _eglNewDisplay(NativeDisplayType nativeDisplay)
 {
    _EGLDisplay *dpy = (_EGLDisplay *) calloc(1, sizeof(_EGLDisplay));
    if (dpy) {
-      EGLuint key = _eglHashGenKey(_eglGlobal.Displays);
-
-      dpy->Handle = (EGLDisplay) key;
-      _eglHashInsert(_eglGlobal.Displays, key, dpy);
-
       dpy->NativeDisplay = nativeDisplay;
 #if defined(_EGL_PLATFORM_X)
       dpy->Xdpy = (Display *) nativeDisplay;
@@ -46,8 +42,37 @@ _eglNewDisplay(NativeDisplayType nativeDisplay)
 
 
 /**
- * Return the public handle for an internal _EGLDisplay.
- * This is the inverse of _eglLookupDisplay().
+ * Link a display to itself and return the handle of the link.
+ * The handle can be passed to client directly.
+ */
+EGLDisplay
+_eglLinkDisplay(_EGLDisplay *dpy)
+{
+   EGLuint key;
+   key = _eglHashGenKey(_eglGlobal.Displays);
+   assert(key);
+   /* "link" the display to the hash table */
+   _eglHashInsert(_eglGlobal.Displays, key, dpy);
+   dpy->Handle = (EGLDisplay) key;
+
+   return dpy->Handle;
+}
+
+
+/**
+ * Unlink a linked display from itself.
+ * Accessing an unlinked display should generate EGL_BAD_DISPLAY error.
+ */
+void
+_eglUnlinkDisplay(_EGLDisplay *dpy)
+{
+   _eglHashRemove(_eglGlobal.Displays, (EGLuint) dpy->Handle);
+   dpy->Handle = EGL_NO_DISPLAY;
+}
+
+
+/**
+ * Return the handle of a linked display, or EGL_NO_DISPLAY.
  */
 EGLDisplay
 _eglGetDisplayHandle(_EGLDisplay *display)
@@ -60,29 +85,14 @@ _eglGetDisplayHandle(_EGLDisplay *display)
 
  
 /**
- * Return the _EGLDisplay object that corresponds to the given public/
- * opaque display handle.
- * This is the inverse of _eglGetDisplayHandle().
+ * Lookup a handle to find the linked display.
+ * Return NULL if the handle has no corresponding linked display.
  */
 _EGLDisplay *
 _eglLookupDisplay(EGLDisplay dpy)
 {
    EGLuint key = (EGLuint) dpy;
-   if (!_eglGlobal.Displays)
-      return NULL;
    return (_EGLDisplay *) _eglHashLookup(_eglGlobal.Displays, key);
-}
-
-
-void
-_eglSaveDisplay(_EGLDisplay *dpy)
-{
-   EGLuint key = _eglHashGenKey(_eglGlobal.Displays);
-   assert(dpy);
-   assert(!dpy->Handle);
-   dpy->Handle = (EGLDisplay) key;
-   assert(dpy->Handle);
-   _eglHashInsert(_eglGlobal.Displays, key, dpy);
 }
 
 
@@ -107,4 +117,148 @@ _eglCleanupDisplay(_EGLDisplay *disp)
    disp->DriverName = NULL;
 
    /* driver deletes the _EGLDisplay object */
+}
+
+
+/**
+ * Link a context to a display and return the handle of the link.
+ * The handle can be passed to client directly.
+ */
+EGLContext
+_eglLinkContext(_EGLContext *ctx, _EGLDisplay *dpy)
+{
+   ctx->Display = dpy;
+   ctx->Next = dpy->ContextList;
+   dpy->ContextList = ctx;
+   return (EGLContext) ctx;
+}
+
+
+/**
+ * Unlink a linked context from its display.
+ * Accessing an unlinked context should generate EGL_BAD_CONTEXT error.
+ */
+void
+_eglUnlinkContext(_EGLContext *ctx)
+{
+   _EGLContext *prev;
+
+   prev = ctx->Display->ContextList;
+   if (prev != ctx) {
+      while (prev) {
+         if (prev->Next == ctx)
+            break;
+         prev = prev->Next;
+      }
+      assert(prev);
+      prev->Next = ctx->Next;
+   }
+   else {
+      ctx->Display->ContextList = ctx->Next;
+   }
+
+   ctx->Next = NULL;
+   ctx->Display = NULL;
+}
+
+
+/**
+ * Return the handle of a linked context, or EGL_NO_CONTEXT.
+ */
+EGLContext
+_eglGetContextHandle(_EGLContext *ctx)
+{
+   return (EGLContext) (ctx && ctx->Display) ? ctx : EGL_NO_CONTEXT;
+}
+
+
+/**
+ * Lookup a handle to find the linked context.
+ * Return NULL if the handle has no corresponding linked context.
+ */
+_EGLContext *
+_eglLookupContext(EGLContext ctx)
+{
+   _EGLContext *context = (_EGLContext *) ctx;
+   return (context && context->Display) ? context : NULL;
+}
+
+
+/**
+ * Link a surface to a display and return the handle of the link.
+ * The handle can be passed to client directly.
+ */
+EGLSurface
+_eglLinkSurface(_EGLSurface *surf, _EGLDisplay *dpy)
+{
+   EGLuint key;
+
+   surf->Display = dpy;
+   surf->Next = dpy->SurfaceList;
+   dpy->SurfaceList = surf;
+
+   key = _eglHashGenKey(_eglGlobal.Surfaces);
+   assert(key);
+   _eglHashInsert(_eglGlobal.Surfaces, key, surf);
+
+   surf->Handle = (EGLSurface) key;
+   return surf->Handle;
+}
+
+
+/**
+ * Unlink a linked surface from its display.
+ * Accessing an unlinked surface should generate EGL_BAD_SURFACE error.
+ */
+void
+_eglUnlinkSurface(_EGLSurface *surf)
+{
+   _EGLSurface *prev;
+
+   _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surf->Handle);
+   surf->Handle = EGL_NO_SURFACE;
+
+   prev = surf->Display->SurfaceList;
+   if (prev != surf) {
+      while (prev) {
+         if (prev->Next == surf)
+            break;
+         prev = prev->Next;
+      }
+      assert(prev);
+      prev->Next = surf->Next;
+   }
+   else {
+      prev = NULL;
+      surf->Display->SurfaceList = surf->Next;
+   }
+
+   surf->Next = NULL;
+   surf->Display = NULL;
+}
+
+
+/**
+ * Return the handle of a linked surface, or EGL_NO_SURFACE.
+ */
+EGLSurface
+_eglGetSurfaceHandle(_EGLSurface *surface)
+{
+   if (surface)
+      return surface->Handle;
+   else
+      return EGL_NO_SURFACE;
+}
+
+
+/**
+ * Lookup a handle to find the linked surface.
+ * Return NULL if the handle has no corresponding linked surface.
+ */
+_EGLSurface *
+_eglLookupSurface(EGLSurface surf)
+{
+   _EGLSurface *c = (_EGLSurface *) _eglHashLookup(_eglGlobal.Surfaces,
+                                                   (EGLuint) surf);
+   return c;
 }

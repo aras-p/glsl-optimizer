@@ -84,31 +84,6 @@ _eglRemoveContext(_EGLContext *ctx)
 
 
 /**
- * Return the public handle for the given private context ptr.
- * This is the inverse of _eglLookupContext().
- */
-EGLContext
-_eglGetContextHandle(_EGLContext *ctx)
-{
-   /* just a cast! */
-   return (EGLContext) ctx;
-}
-
-
-/**
- * Return the _EGLContext object that corresponds to the given
- * EGLContext handle.
- * This is the inverse of _eglGetContextHandle().
- */
-_EGLContext *
-_eglLookupContext(EGLContext ctx)
-{
-   /* just a cast since EGLContext is just a void ptr */
-   return (_EGLContext *) ctx;
-}
-
-
-/**
  * Just a placeholder/demo function.  Real driver will never use this!
  */
 EGLContext

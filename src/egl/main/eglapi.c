@@ -52,6 +52,8 @@ eglGetDisplay(NativeDisplayType nativeDisplay)
    _EGLDisplay *dpy;
    _eglInitGlobals();
    dpy = _eglNewDisplay(nativeDisplay);
+   if (dpy)
+      _eglLinkDisplay(dpy);
    return _eglGetDisplayHandle(dpy);
 }
 

@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include "egldisplay.h"
 #include "eglcontext.h"
 #include "eglconfig.h"
 #include "egldriver.h"
@@ -229,34 +230,6 @@ _eglRemoveSurface(_EGLSurface *surf)
    _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surf->Handle);
 }
 
-
-
-/**
- * Return the public handle for an internal _EGLSurface.
- * This is the inverse of _eglLookupSurface().
- */
-EGLSurface
-_eglGetSurfaceHandle(_EGLSurface *surface)
-{
-   if (surface)
-      return surface->Handle;
-   else
-      return EGL_NO_SURFACE;
-}
-
-
-/**
- * Return the private _EGLSurface which corresponds to a public EGLSurface
- * handle.
- * This is the inverse of _eglGetSurfaceHandle().
- */
-_EGLSurface *
-_eglLookupSurface(EGLSurface surf)
-{
-   _EGLSurface *c = (_EGLSurface *) _eglHashLookup(_eglGlobal.Surfaces,
-                                                   (EGLuint) surf);
-   return c;
-}
 
 
 EGLBoolean

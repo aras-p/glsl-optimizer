@@ -11,7 +11,9 @@
  */
 struct _egl_context
 {
-   _EGLDisplay *Display; /* who do I belong to? */
+   /* Managed by EGLDisplay for linking */
+   _EGLDisplay *Display;
+   _EGLContext *Next;
 
    _EGLConfig *Config;
 
@@ -38,14 +40,6 @@ _eglSaveContext(_EGLContext *ctx);
 extern void
 _eglRemoveContext(_EGLContext *ctx);
 
-
-extern EGLContext
-_eglGetContextHandle(_EGLContext *ctx);
-
-
-extern _EGLContext *
-_eglLookupContext(EGLContext ctx);
- 
 
 extern EGLContext
 _eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list);

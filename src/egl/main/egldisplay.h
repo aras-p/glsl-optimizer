@@ -23,6 +23,9 @@ struct _egl_display
    EGLint NumConfigs;
    _EGLConfig **Configs;  /* array [NumConfigs] of ptr to _EGLConfig */
 
+   /* lists of linked contexts and surface */
+   _EGLContext *ContextList;
+   _EGLSurface *SurfaceList;
 #ifdef _EGL_PLATFORM_X
    Display *Xdpy;
 #endif
@@ -33,7 +36,15 @@ extern _EGLDisplay *
 _eglNewDisplay(NativeDisplayType displayName);
 
 
-EGLDisplay
+extern EGLDisplay
+_eglLinkDisplay(_EGLDisplay *dpy);
+
+
+extern void
+_eglUnlinkDisplay(_EGLDisplay *dpy);
+
+
+extern EGLDisplay
 _eglGetDisplayHandle(_EGLDisplay *display);
 
 
@@ -42,16 +53,39 @@ _eglLookupDisplay(EGLDisplay dpy);
 
 
 extern void
-_eglSaveDisplay(_EGLDisplay *dpy);
-
-
-extern void
 _eglCleanupDisplay(_EGLDisplay *disp);
 
 
-extern EGLBoolean 
-_eglQueryDisplayMESA(_EGLDriver *drv, EGLDisplay dpy, EGLint attrib, EGLint *value);
+extern EGLContext
+_eglLinkContext(_EGLContext *ctx, _EGLDisplay *dpy);
 
+
+extern void
+_eglUnlinkContext(_EGLContext *ctx);
+
+
+extern EGLContext
+_eglGetContextHandle(_EGLContext *ctx);
+
+
+extern _EGLContext *
+_eglLookupContext(EGLContext ctx);
+
+
+extern EGLSurface
+_eglLinkSurface(_EGLSurface *surf, _EGLDisplay *dpy);
+
+
+extern void
+_eglUnlinkSurface(_EGLSurface *surf);
+
+
+extern EGLSurface
+_eglGetSurfaceHandle(_EGLSurface *);
+
+
+extern _EGLSurface *
+_eglLookupSurface(EGLSurface surf);
 
 
 #endif /* EGLDISPLAY_INCLUDED */

@@ -10,7 +10,11 @@
  */
 struct _egl_surface
 {
-   EGLSurface Handle;  /* The public/opaque handle which names this object */
+   /* Managed by EGLDisplay for linking */
+   _EGLDisplay *Display;
+   _EGLSurface *Next;
+   EGLSurface Handle;
+
    _EGLConfig *Config;
 
    /* May need reference counting here */
@@ -51,14 +55,6 @@ _eglSaveSurface(_EGLSurface *surf);
 extern void
 _eglRemoveSurface(_EGLSurface *surf);
 
-
-extern EGLSurface
-_eglGetSurfaceHandle(_EGLSurface *surface);
-
-
-extern _EGLSurface *
-_eglLookupSurface(EGLSurface surf);
- 
 
 extern EGLBoolean
 _eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw);
