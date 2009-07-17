@@ -149,7 +149,8 @@ struct softpipe_context {
    
    struct softpipe_tile_cache *cbuf_cache[PIPE_MAX_COLOR_BUFS];
    struct softpipe_tile_cache *zsbuf_cache;
-
+   
+   unsigned tex_timestamp;
    struct softpipe_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
 
    unsigned use_sse : 1;

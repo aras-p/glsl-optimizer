@@ -83,6 +83,9 @@ extern void
 sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
                           struct pipe_texture *texture);
 
+void
+sp_tile_cache_validate_texture(struct softpipe_tile_cache *tc);
+
 extern void
 sp_flush_tile_cache(struct softpipe_tile_cache *tc);
 

@@ -32,6 +32,7 @@
 #include "draw/draw_vertex.h"
 #include "draw/draw_private.h"
 #include "sp_context.h"
+#include "sp_screen.h"
 #include "sp_state.h"
 
 
@@ -200,6 +201,10 @@ update_tgsi_samplers( struct softpipe_context *softpipe )
       softpipe->tgsi.frag_samplers[i].sampler = softpipe->sampler[i];
       softpipe->tgsi.frag_samplers[i].texture = softpipe->texture[i];
    }
+
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      sp_tile_cache_validate_texture( softpipe->tex_cache[i] );
+   }
 }
 
 /* Hopefully this will remain quite simple, otherwise need to pull in
@@ -207,6 +212,15 @@ update_tgsi_samplers( struct softpipe_context *softpipe )
  */
 void softpipe_update_derived( struct softpipe_context *softpipe )
 {
+   struct softpipe_screen *sp_screen = softpipe_screen(softpipe->pipe.screen);
+
+   /* Check for updated textures.
+    */
+   if (softpipe->tex_timestamp != sp_screen->timestamp) {
+      softpipe->tex_timestamp = sp_screen->timestamp;
+      softpipe->dirty |= SP_NEW_TEXTURE;
+   }
+      
    if (softpipe->dirty & (SP_NEW_SAMPLER |
                           SP_NEW_TEXTURE))
       update_tgsi_samplers( softpipe );

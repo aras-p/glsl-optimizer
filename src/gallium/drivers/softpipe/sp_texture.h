@@ -48,7 +48,7 @@ struct softpipe_texture
     */
    struct pipe_buffer *buffer;
 
-   boolean modified;
+   unsigned timestamp;
 };
 
 struct softpipe_transfer
