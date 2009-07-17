@@ -232,7 +232,7 @@ drm_create_pbuffer_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 	if (!surf)
 		goto err;
 
-	if (!_eglInitSurface(drv, dpy, &surf->base, EGL_PBUFFER_BIT, config, attrib_list))
+	if (!_eglInitSurface(drv, &surf->base, EGL_PBUFFER_BIT, conf, attrib_list))
 		goto err_surf;
 
 	surf->w = width;
@@ -245,7 +245,7 @@ drm_create_pbuffer_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 	                                    (void*)surf);
 	drm_visual_modes_destroy(visual);
 
-	_eglSaveSurface(&surf->base);
+        _eglLinkSurface(&surf->base, _eglLookupDisplay(dpy));
 	return surf->base.Handle;
 
 err_surf:
@@ -364,10 +364,9 @@ EGLBoolean
 drm_destroy_surface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
 	struct drm_surface *surf = lookup_drm_surface(surface);
-	_eglRemoveSurface(&surf->base);
-	if (surf->base.IsBound) {
-		surf->base.DeletePending = EGL_TRUE;
-	} else {
+	_eglUnlinkSurface(&surf->base);
+
+	if (!surf->base.IsBound) {
 		if (surf->screen)
 			drm_takedown_shown_screen(drv, surf->screen);
 		st_unreference_framebuffer(surf->stfb);

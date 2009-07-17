@@ -113,7 +113,7 @@ drm_create_context(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext
 	if (!ctx)
 		goto err_c;
 
-	_eglInitContext(drv, dpy, &ctx->base, config, attrib_list);
+	_eglInitContext(drv, dpy, &ctx->base, conf, attrib_list);
 
 	ctx->pipe = dev->api->create_context(dev->api, dev->screen);
 	if (!ctx->pipe)
@@ -129,8 +129,8 @@ drm_create_context(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext
 	if (!ctx->st)
 		goto err_gl;
 
-	/* generate handle and insert into hash table */
-	_eglSaveContext(&ctx->base);
+        /* link to display */
+        _eglLinkContext(&ctx->base, _eglLookupDisplay(dpy));
 	assert(_eglGetContextHandle(&ctx->base));
 
 	return _eglGetContextHandle(&ctx->base);
@@ -147,10 +147,8 @@ EGLBoolean
 drm_destroy_context(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 {
 	struct drm_context *c = lookup_drm_context(context);
-	_eglRemoveContext(&c->base);
-	if (c->base.IsBound) {
-		c->base.DeletePending = EGL_TRUE;
-	} else {
+        _eglUnlinkContext(&c->base);
+	if (!c->base.IsBound) {
 		st_destroy_context(c->st);
 		c->pipe->destroy(c->pipe);
 		free(c);

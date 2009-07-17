@@ -34,6 +34,7 @@ extern "C" {
 
 struct tgsi_token;
 struct x86_function;
+struct tgsi_interp_coef;
 
 unsigned
 tgsi_emit_sse2(
@@ -41,6 +42,33 @@ tgsi_emit_sse2(
    struct x86_function *function,
    float (*immediates)[4],
    boolean do_swizzles );
+
+
+/* This is the function prototype generated when do_swizzles is false
+ * -- effectively for fragment shaders.
+ */
+typedef void (PIPE_CDECL *tgsi_sse2_fs_function) (
+   struct tgsi_exec_machine *machine, /* 1 */
+   const float (*constant)[4],		    /* 2 */
+   const float (*immediate)[4],		    /* 3 */
+   const struct tgsi_interp_coef *coef	    /* 4 */
+   );
+
+
+/* This is the function prototype generated when do_swizzles is true
+ * -- effectively for vertex shaders.
+ */
+typedef void (PIPE_CDECL *tgsi_sse2_vs_func) (
+   struct tgsi_exec_machine *machine, /* 1 */
+   const float (*constant)[4],        /* 2 */
+   const float (*immediate)[4],       /* 3 */
+   const float (*aos_input)[4], /* 4 */
+   uint num_inputs,             /* 5 */
+   uint input_stride,           /* 6 */
+   float (*aos_output)[4],      /* 7 */
+   uint num_outputs,            /* 8 */
+   uint output_stride );        /* 9 */
+
 
 #if defined __cplusplus
 }

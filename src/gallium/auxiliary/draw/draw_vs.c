@@ -43,6 +43,8 @@
 #include "translate/translate.h"
 #include "translate/translate_cache.h"
 
+#include "tgsi/tgsi_exec.h"
+
 
 
 
@@ -146,16 +148,8 @@ draw_delete_vertex_shader(struct draw_context *draw,
 boolean 
 draw_vs_init( struct draw_context *draw )
 {
-   tgsi_exec_machine_init(&draw->vs.machine);
-
-   /* FIXME: give this machine thing a proper constructor:
-    */
-   draw->vs.machine.Inputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
-   if (!draw->vs.machine.Inputs)
-      return FALSE;
-
-   draw->vs.machine.Outputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
-   if (!draw->vs.machine.Outputs)
+   draw->vs.machine = tgsi_exec_machine_create();
+   if (!draw->vs.machine)
       return FALSE;
 
    draw->vs.emit_cache = translate_cache_create();
@@ -178,12 +172,6 @@ draw_vs_init( struct draw_context *draw )
 void
 draw_vs_destroy( struct draw_context *draw )
 {
-   if (draw->vs.machine.Inputs)
-      align_free(draw->vs.machine.Inputs);
-
-   if (draw->vs.machine.Outputs)
-      align_free(draw->vs.machine.Outputs);
-
    if (draw->vs.fetch_cache)
       translate_cache_destroy(draw->vs.fetch_cache);
 
@@ -196,8 +184,7 @@ draw_vs_destroy( struct draw_context *draw )
    if (draw->vs.aligned_constant_storage)
       align_free((void*)draw->vs.aligned_constant_storage);
 
-   tgsi_exec_machine_free_data(&draw->vs.machine);
-
+   tgsi_exec_machine_destroy(draw->vs.machine);
 }
 
 

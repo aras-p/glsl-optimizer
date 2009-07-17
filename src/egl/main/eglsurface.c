@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include "egldisplay.h"
 #include "eglcontext.h"
 #include "eglconfig.h"
 #include "egldriver.h"
@@ -20,12 +21,10 @@
  * \return EGL_TRUE if no errors, EGL_FALSE otherwise.
  */
 EGLBoolean
-_eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
-                _EGLSurface *surf, EGLint type, EGLConfig config,
-                const EGLint *attrib_list)
+_eglInitSurface(_EGLDriver *drv, _EGLSurface *surf, EGLint type,
+                _EGLConfig *conf, const EGLint *attrib_list)
 {
    const char *func;
-   _EGLConfig *conf;
    EGLint width = 0, height = 0, largest = 0;
    EGLint texFormat = 0, texTarget = 0, mipmapTex = 0;
    EGLint renderBuffer = EGL_BACK_BUFFER;
@@ -55,7 +54,6 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
       return EGL_FALSE;
    }
 
-   conf = _eglLookupConfig(drv, dpy, config);
    if (!conf) {
       _eglError(EGL_BAD_CONFIG, func);
       return EGL_FALSE;
@@ -211,72 +209,6 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
 }
 
 
-void
-_eglSaveSurface(_EGLSurface *surf)
-{
-   EGLuint key = _eglHashGenKey(_eglGlobal.Surfaces);
-   assert(surf);
-   assert(!surf->Handle);
-   surf->Handle = (EGLSurface) key;
-   assert(surf->Handle);
-   _eglHashInsert(_eglGlobal.Surfaces, key, surf);
-}
-
-
-void
-_eglRemoveSurface(_EGLSurface *surf)
-{
-   _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surf->Handle);
-}
-
-
-
-/**
- * Return the public handle for an internal _EGLSurface.
- * This is the inverse of _eglLookupSurface().
- */
-EGLSurface
-_eglGetSurfaceHandle(_EGLSurface *surface)
-{
-   if (surface)
-      return surface->Handle;
-   else
-      return EGL_NO_SURFACE;
-}
-
-
-/**
- * Return the private _EGLSurface which corresponds to a public EGLSurface
- * handle.
- * This is the inverse of _eglGetSurfaceHandle().
- */
-_EGLSurface *
-_eglLookupSurface(EGLSurface surf)
-{
-   _EGLSurface *c = (_EGLSurface *) _eglHashLookup(_eglGlobal.Surfaces,
-                                                   (EGLuint) surf);
-   return c;
-}
-
-
-_EGLSurface *
-_eglGetCurrentSurface(EGLint readdraw)
-{
-   _EGLContext *ctx = _eglGetCurrentContext();
-   if (ctx) {
-      switch (readdraw) {
-      case EGL_DRAW:
-         return ctx->DrawSurface;
-      case EGL_READ:
-         return ctx->ReadSurface;
-      default:
-         return NULL;
-      }
-   }
-   return NULL;
-}
-
-
 EGLBoolean
 _eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 {
@@ -385,19 +317,24 @@ _eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 {
 #if 0 /* THIS IS JUST EXAMPLE CODE */
    _EGLSurface *surf;
+   _EGLConfig *conf;
+
+   conf = _eglLookupConfig(drv, dpy, config);
+   if (!conf) {
+      _eglError(EGL_BAD_CONFIG, "eglCreateWindowSurface");
+      return EGL_NO_SURFACE;
+   }
 
    surf = (_EGLSurface *) calloc(1, sizeof(_EGLSurface));
    if (!surf)
       return EGL_NO_SURFACE;
 
-   if (!_eglInitSurface(drv, dpy, surf, EGL_WINDOW_BIT, config, attrib_list)) {
+   if (!_eglInitSurface(drv, surf, EGL_WINDOW_BIT, conf, attrib_list)) {
       free(surf);
       return EGL_NO_SURFACE;
    }
 
-   _eglSaveSurface(surf);
-
-   return surf->Handle;
+   return _eglLinkSurface(surf, _eglLookupDisplay(dpy));
 #endif
    return EGL_NO_SURFACE;
 }
@@ -412,19 +349,24 @@ _eglCreatePixmapSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 {
 #if 0 /* THIS IS JUST EXAMPLE CODE */
    _EGLSurface *surf;
+   _EGLConfig *conf;
+
+   conf = _eglLookupConfig(drv, dpy, config);
+   if (!conf) {
+      _eglError(EGL_BAD_CONFIG, "eglCreatePixmapSurface");
+      return EGL_NO_SURFACE;
+   }
 
    surf = (_EGLSurface *) calloc(1, sizeof(_EGLSurface));
    if (!surf)
       return EGL_NO_SURFACE;
 
-   if (!_eglInitSurface(drv, dpy, surf, EGL_PIXMAP_BIT, config, attrib_list)) {
+   if (!_eglInitSurface(drv, surf, EGL_PIXMAP_BIT, conf, attrib_list)) {
       free(surf);
       return EGL_NO_SURFACE;
    }
 
-   _eglSaveSurface(surf);
-
-   return surf->Handle;
+   return _eglLinkSurface(surf, _eglLookupDisplay(dpy));
 #endif
    return EGL_NO_SURFACE;
 }
@@ -439,19 +381,24 @@ _eglCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 {
 #if 0 /* THIS IS JUST EXAMPLE CODE */
    _EGLSurface *surf;
+   _EGLConfig *conf;
+
+   conf = _eglLookupConfig(drv, dpy, config);
+   if (!conf) {
+      _eglError(EGL_BAD_CONFIG, "eglCreatePbufferSurface");
+      return EGL_NO_SURFACE;
+   }
 
    surf = (_EGLSurface *) calloc(1, sizeof(_EGLSurface));
    if (!surf)
       return EGL_NO_SURFACE;
 
-   if (!_eglInitSurface(drv, dpy, surf, EGL_PBUFFER_BIT, config, attrib_list)) {
+   if (!_eglInitSurface(drv, surf, EGL_PBUFFER_BIT, conf, attrib_list)) {
       free(surf);
       return EGL_NO_SURFACE;
    }
 
-   _eglSaveSurface(surf);
-
-   return surf->Handle;
+   return _eglLinkSurface(surf, _eglLookupDisplay(dpy));
 #endif
    return EGL_NO_SURFACE;
 }
@@ -465,13 +412,9 @@ _eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
    _EGLSurface *surf = _eglLookupSurface(surface);
    if (surf) {
-      _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surface);
-      if (surf->IsBound) {
-         surf->DeletePending = EGL_TRUE;
-      }
-      else {
+      _eglUnlinkSurface(surf);
+      if (!surf->IsBound)
          free(surf);
-      }
       return EGL_TRUE;
    }
    else {

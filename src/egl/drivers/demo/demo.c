@@ -146,12 +146,12 @@ demoCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext 
    if (!c)
       return EGL_NO_CONTEXT;
 
-   _eglInitContext(drv, dpy, &c->Base, config, attrib_list);
+   _eglInitContext(drv, &c->Base, conf, attrib_list);
    c->DemoStuff = 1;
    printf("demoCreateContext\n");
 
-   /* generate handle and insert into hash table */
-   _eglSaveContext(&c->Base);
+   /* link to display */
+   _eglLinkContext(&c->Base, _eglLookupDisplay(dpy));
    assert(_eglGetContextHandle(&c->Base));
 
    return _eglGetContextHandle(&c->Base);
@@ -213,11 +213,14 @@ demoCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
                          const EGLint *attrib_list)
 {
    DemoSurface *surf = (DemoSurface *) calloc(1, sizeof(DemoSurface));
+   _EGLConfig *conf;
+
    if (!surf)
       return EGL_NO_SURFACE;
 
-   if (!_eglInitSurface(drv, dpy, &surf->Base, EGL_PBUFFER_BIT,
-                        config, attrib_list)) {
+   conf = _eglLookupConfig(drv, dpy, config);
+   if (!_eglInitSurface(drv, &surf->Base, EGL_PBUFFER_BIT,
+                        conf, attrib_list)) {
       free(surf);
       return EGL_NO_SURFACE;
    }
@@ -232,13 +235,9 @@ static EGLBoolean
 demoDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
    DemoSurface *fs = LookupDemoSurface(surface);
-   _eglRemoveSurface(&fs->Base);
-   if (fs->Base.IsBound) {
-      fs->Base.DeletePending = EGL_TRUE;
-   }
-   else {
+   _eglUnlinkSurface(&fs->Base);
+   if (!fs->Base.IsBound)
       free(fs);
-   }
    return EGL_TRUE;
 }
 
@@ -247,13 +246,9 @@ static EGLBoolean
 demoDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 {
    DemoContext *fc = LookupDemoContext(context);
-   _eglRemoveContext(&fc->Base);
-   if (fc->Base.IsBound) {
-      fc->Base.DeletePending = EGL_TRUE;
-   }
-   else {
+   _eglUnlinkContext(&fc->Base);
+   if (!fc->Base.IsBound)
       free(fc);
-   }
    return EGL_TRUE;
 }
 

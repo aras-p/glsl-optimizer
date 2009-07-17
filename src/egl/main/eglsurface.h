@@ -10,12 +10,15 @@
  */
 struct _egl_surface
 {
-   EGLSurface Handle;  /* The public/opaque handle which names this object */
+   /* Managed by EGLDisplay for linking */
+   _EGLDisplay *Display;
+   _EGLSurface *Next;
+   EGLSurface Handle;
+
    _EGLConfig *Config;
 
    /* May need reference counting here */
    EGLBoolean IsBound;
-   EGLBoolean DeletePending;
    EGLBoolean BoundToTexture;
 
    EGLint Type; /* one of EGL_WINDOW_BIT, EGL_PIXMAP_BIT or EGL_PBUFFER_BIT */
@@ -39,29 +42,8 @@ struct _egl_surface
 
 
 extern EGLBoolean
-_eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
-                _EGLSurface *surf, EGLint type, EGLConfig config,
-                const EGLint *attrib_list);
-
-
-extern void
-_eglSaveSurface(_EGLSurface *surf);
-
-
-extern void
-_eglRemoveSurface(_EGLSurface *surf);
-
-
-extern EGLSurface
-_eglGetSurfaceHandle(_EGLSurface *surface);
-
-
-extern _EGLSurface *
-_eglLookupSurface(EGLSurface surf);
- 
-
-extern _EGLSurface *
-_eglGetCurrentSurface(EGLint readdraw);
+_eglInitSurface(_EGLDriver *drv, _EGLSurface *surf, EGLint type,
+                _EGLConfig *config, const EGLint *attrib_list);
 
 
 extern EGLBoolean

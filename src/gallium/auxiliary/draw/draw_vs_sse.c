@@ -48,27 +48,16 @@
 #include "rtasm/rtasm_x86sse.h"
 #include "tgsi/tgsi_sse2.h"
 #include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_exec.h"
 
 #define SSE_MAX_VERTICES 4
 
-typedef void (PIPE_CDECL *codegen_function) (
-   const struct tgsi_exec_vector *input, /* 1 */
-   struct tgsi_exec_vector *output, /* 2 */
-   float (*constant)[4],        /* 3 */
-   struct tgsi_exec_vector *temporary, /* 4 */
-   float (*immediates)[4],      /* 5 */
-   const float (*aos_input)[4], /* 6 */
-   uint num_inputs,             /* 7 */
-   uint input_stride,           /* 8 */
-   float (*aos_output)[4],      /* 9 */
-   uint num_outputs,            /* 10 */
-   uint output_stride );        /* 11 */
 
 struct draw_sse_vertex_shader {
    struct draw_vertex_shader base;
    struct x86_function sse2_program;
 
-   codegen_function func;
+   tgsi_sse2_vs_func func;
    
    struct tgsi_exec_machine *machine;
 };
@@ -118,11 +107,9 @@ vs_sse_run_linear( struct draw_vertex_shader *base,
 
       /* run compiled shader
        */
-      shader->func(machine->Inputs,
-		   machine->Outputs,
-		   (float (*)[4])constants,
-		   machine->Temps,
-		   (float (*)[4])shader->base.immediates,
+      shader->func(machine,
+		   constants,
+		   shader->base.immediates,
                    input,
                    base->info.num_inputs,
                    input_stride,
@@ -184,7 +171,7 @@ draw_create_vs_sse(struct draw_context *draw,
    vs->base.immediates = align_malloc(TGSI_EXEC_NUM_IMMEDIATES * 4 *
                                       sizeof(float), 16);
 
-   vs->machine = &draw->vs.machine;
+   vs->machine = draw->vs.machine;
    
    x86_init_func( &vs->sse2_program );
 
@@ -194,7 +181,7 @@ draw_create_vs_sse(struct draw_context *draw,
                         TRUE )) 
       goto fail;
       
-   vs->func = (codegen_function) x86_get_func( &vs->sse2_program );
+   vs->func = (tgsi_sse2_vs_func) x86_get_func( &vs->sse2_program );
    if (!vs->func) {
       goto fail;
    }

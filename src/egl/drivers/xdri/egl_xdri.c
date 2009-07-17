@@ -770,7 +770,7 @@ xdri_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    if (!xdri_ctx)
       return EGL_NO_CONTEXT;
 
-   if (!_eglInitContext(drv, dpy, &xdri_ctx->Base, config, attrib_list)) {
+   if (!_eglInitContext(drv, &xdri_ctx->Base, &xdri_config->Base, attrib_list)) {
       free(xdri_ctx);
       return EGL_NO_CONTEXT;
    }
@@ -794,7 +794,7 @@ xdri_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 
    xdri_ctx->driContext.mode = xdri_config->mode;
 
-   return _eglGetContextHandle(&xdri_ctx->Base);
+   return _eglLinkContext(&xdri_ctx->Base, &disp);
 }
 
 
@@ -835,6 +835,7 @@ xdri_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
                             NativeWindowType window, const EGLint *attrib_list)
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   struct xdri_egl_config *xdri_config = lookup_config(drv, dpy, config);
    struct xdri_egl_surface *xdri_surf;
    int scrn = DefaultScreen(disp->Xdpy);
    uint width, height;
@@ -843,8 +844,8 @@ xdri_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    if (!xdri_surf)
       return EGL_NO_SURFACE;
 
-   if (!_eglInitSurface(drv, dpy, &xdri_surf->Base, EGL_WINDOW_BIT,
-                        config, attrib_list)) {
+   if (!_eglInitSurface(drv, &xdri_surf->Base, EGL_WINDOW_BIT,
+                        &xdri_config->Base, attrib_list)) {
       free(xdri_surf);
       return EGL_FALSE;
    }
@@ -856,7 +857,7 @@ xdri_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 
    xdri_surf->driDrawable = window;
 
-   _eglSaveSurface(&xdri_surf->Base);
+   _eglLinkSurface(&xdri_surf->Base, disp);
 
    get_drawable_size(disp->Xdpy, window, &width, &height);
    xdri_surf->Base.Width = width;
@@ -888,8 +889,8 @@ xdri_eglCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    if (!xdri_surf)
       return EGL_NO_SURFACE;
 
-   if (!_eglInitSurface(drv, dpy, &xdri_surf->Base, EGL_PBUFFER_BIT,
-                        config, attrib_list)) {
+   if (!_eglInitSurface(drv, &xdri_surf->Base, EGL_PBUFFER_BIT,
+                        &xdri_config->Base, attrib_list)) {
       free(xdri_surf);
       return EGL_FALSE;
    }
@@ -939,7 +940,7 @@ xdri_eglCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 
    xdri_surf->driDrawable = window;
 
-   _eglSaveSurface(&xdri_surf->Base);
+   _eglLinkSurface(&xdri_surf->Base, disp);
 
    _eglLog(_EGL_DEBUG,
            "XDRI: CreatePbufferSurface handle %d  hDrawable %d",
@@ -956,11 +957,8 @@ xdri_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
    struct xdri_egl_surface *xdri_surf = lookup_surface(surface);
    if (xdri_surf) {
-      _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surface);
-      if (xdri_surf->Base.IsBound) {
-         xdri_surf->Base.DeletePending = EGL_TRUE;
-      }
-      else {
+      _eglUnlinkSurface(&xdri_surf->Base);
+      if (!xdri_surf->Base.IsBound) {
          /*
          st_unreference_framebuffer(surf->Framebuffer);
          */

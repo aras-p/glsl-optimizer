@@ -52,7 +52,7 @@
 struct quad_shade_stage
 {
    struct quad_stage stage;  /**< base class */
-   struct tgsi_exec_machine machine;
+   struct tgsi_exec_machine *machine;
    struct tgsi_exec_vector *inputs, *outputs;
 };
 
@@ -73,7 +73,7 @@ shade_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct softpipe_context *softpipe = qs->softpipe;
-   struct tgsi_exec_machine *machine = &qss->machine;
+   struct tgsi_exec_machine *machine = qss->machine;
    boolean z_written;
    
    /* Consts do not require 16 byte alignment. */
@@ -146,7 +146,7 @@ shade_begin(struct quad_stage *qs)
    struct softpipe_context *softpipe = qs->softpipe;
 
    softpipe->fs->prepare( softpipe->fs, 
-			  &qss->machine,
+			  qss->machine,
 			  (struct tgsi_sampler **)
                              softpipe->tgsi.frag_samplers_list );
 
@@ -159,9 +159,8 @@ shade_destroy(struct quad_stage *qs)
 {
    struct quad_shade_stage *qss = (struct quad_shade_stage *) qs;
 
-   tgsi_exec_machine_free_data(&qss->machine);
-   FREE( qss->inputs );
-   FREE( qss->outputs );
+   tgsi_exec_machine_destroy(qss->machine);
+
    FREE( qs );
 }
 
@@ -170,19 +169,24 @@ struct quad_stage *
 sp_quad_shade_stage( struct softpipe_context *softpipe )
 {
    struct quad_shade_stage *qss = CALLOC_STRUCT(quad_shade_stage);
-
-   /* allocate storage for program inputs/outputs, aligned to 16 bytes */
-   qss->inputs = MALLOC(PIPE_MAX_ATTRIBS * sizeof(*qss->inputs) + 16);
-   qss->outputs = MALLOC(PIPE_MAX_ATTRIBS * sizeof(*qss->outputs) + 16);
-   qss->machine.Inputs = align16(qss->inputs);
-   qss->machine.Outputs = align16(qss->outputs);
+   if (!qss)
+      goto fail;
 
    qss->stage.softpipe = softpipe;
    qss->stage.begin = shade_begin;
    qss->stage.run = shade_quad;
    qss->stage.destroy = shade_destroy;
 
-   tgsi_exec_machine_init( &qss->machine );
+   qss->machine = tgsi_exec_machine_create();
+   if (!qss->machine)
+      goto fail;
 
    return &qss->stage;
+
+fail:
+   if (qss && qss->machine)
+      tgsi_exec_machine_destroy(qss->machine);
+
+   FREE(qss);
+   return NULL;
 }

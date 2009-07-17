@@ -345,7 +345,7 @@ xlib_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
       return EGL_NO_CONTEXT;
 
    /* let EGL lib init the common stuff */
-   if (!_eglInitContext(drv, dpy, &ctx->Base, config, attrib_list)) {
+   if (!_eglInitContext(drv, &ctx->Base, conf, attrib_list)) {
       free(ctx);
       return EGL_NO_CONTEXT;
    }
@@ -370,7 +370,7 @@ xlib_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
       return EGL_NO_CONTEXT;
    }
 
-   _eglSaveContext(&ctx->Base);
+   _eglLinkContext(&ctx->Base, _eglLookupDisplay(dpy));
 
    return _eglGetContextHandle(&ctx->Base);
 }
@@ -381,10 +381,8 @@ xlib_eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
 {
    struct xlib_egl_context *context = lookup_context(ctx);
    if (context) {
-      if (context->Base.IsBound) {
-         context->Base.DeletePending = EGL_TRUE;
-      }
-      else {
+      _eglUnlinkContext(&context->Base);
+      if (!context->Base.IsBound) {
          /* API-dependent clean-up */
          switch (context->Base.ClientAPI) {
          case EGL_OPENGL_ES_API:
@@ -491,13 +489,13 @@ xlib_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
       return EGL_NO_SURFACE;
 
    /* Let EGL lib init the common stuff */
-   if (!_eglInitSurface(drv, dpy, &surf->Base, EGL_WINDOW_BIT,
-                        config, attrib_list)) {
+   if (!_eglInitSurface(drv, &surf->Base, EGL_WINDOW_BIT,
+                        conf, attrib_list)) {
       free(surf);
       return EGL_NO_SURFACE;
    }
 
-   _eglSaveSurface(&surf->Base);
+   _eglLinkSurface(&surf->Base, disp);
 
    /*
     * Now init the Xlib and gallium stuff
@@ -534,11 +532,8 @@ xlib_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
    struct xlib_egl_surface *surf = lookup_surface(surface);
    if (surf) {
-      _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surface);
-      if (surf->Base.IsBound) {
-         surf->Base.DeletePending = EGL_TRUE;
-      }
-      else {
+      _eglUnlinkSurface(&surf->Base);
+      if (!surf->Base.IsBound) {
          XFreeGC(surf->Dpy, surf->Gc);
          st_unreference_framebuffer(surf->Framebuffer);
          free(surf);

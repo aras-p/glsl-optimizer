@@ -41,6 +41,7 @@
 
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_scan.h"
+#include "tgsi/tgsi_exec.h"
 
 
 struct exec_vertex_shader {
@@ -201,7 +202,7 @@ draw_create_vs_exec(struct draw_context *draw,
    vs->base.run_linear = vs_exec_run_linear;
    vs->base.delete = vs_exec_delete;
    vs->base.create_varient = draw_vs_varient_generic;
-   vs->machine = &draw->vs.machine;
+   vs->machine = draw->vs.machine;
 
    return &vs->base;
 }

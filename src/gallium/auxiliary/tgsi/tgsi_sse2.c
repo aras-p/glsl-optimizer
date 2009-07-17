@@ -32,6 +32,7 @@
 #include "util/u_debug.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
+#include "util/u_memory.h"
 #if defined(PIPE_ARCH_SSE)
 #include "util/u_sse.h"
 #endif
@@ -100,27 +101,43 @@ get_const_base( void )
 {
    return x86_make_reg(
       file_REG32,
+      reg_AX );
+}
+
+static struct x86_reg
+get_machine_base( void )
+{
+   return x86_make_reg(
+      file_REG32,
       reg_CX );
 }
 
 static struct x86_reg
 get_input_base( void )
 {
-   return x86_make_reg(
-      file_REG32,
-      reg_AX );
+   return x86_make_disp(
+      get_machine_base(),
+      Offset(struct tgsi_exec_machine, Inputs) );
 }
 
 static struct x86_reg
 get_output_base( void )
 {
-   return x86_make_reg(
-      file_REG32,
-      reg_DX );
+   return x86_make_disp(
+      get_machine_base(),
+      Offset(struct tgsi_exec_machine, Outputs) );
 }
 
 static struct x86_reg
 get_temp_base( void )
+{
+   return x86_make_disp(
+      get_machine_base(),
+      Offset(struct tgsi_exec_machine, Temps) );
+}
+
+static struct x86_reg
+get_coef_base( void )
 {
    return x86_make_reg(
       file_REG32,
@@ -128,9 +145,11 @@ get_temp_base( void )
 }
 
 static struct x86_reg
-get_coef_base( void )
+get_sampler_base( void )
 {
-   return get_output_base();
+   return x86_make_reg(
+      file_REG32,
+      reg_DI );
 }
 
 static struct x86_reg
@@ -138,7 +157,7 @@ get_immediate_base( void )
 {
    return x86_make_reg(
       file_REG32,
-      reg_DI );
+      reg_DX );
 }
 
 
@@ -165,6 +184,15 @@ get_const(
    return x86_make_disp(
       get_const_base(),
       (vec * 4 + chan) * 4 );
+}
+
+static struct x86_reg
+get_sampler_ptr(
+   unsigned unit )
+{
+   return x86_make_disp(
+      get_sampler_base(),
+      unit * sizeof( struct tgsi_sampler * ) );
 }
 
 static struct x86_reg
@@ -520,24 +548,15 @@ emit_coef_dady(
  * that the stack pointer is 16 byte aligned, as expected.
  */
 static void
-emit_func_call_dst(
+emit_func_call(
    struct x86_function *func,
-   unsigned xmm_save,
-   unsigned xmm_dst,
+   unsigned xmm_save_mask,
+   const struct x86_reg *arg,
+   unsigned nr_args,
    void (PIPE_CDECL *code)() )
 {
    struct x86_reg ecx = x86_make_reg( file_REG32, reg_CX );
    unsigned i, n;
-   unsigned xmm_mask;
-   
-   /* Bitmask of the xmm registers to save */
-   xmm_mask = (1 << xmm_save) - 1;
-   xmm_mask &= ~(1 << xmm_dst);
-
-   sse_movaps(
-      func,
-      get_temp( TEMP_R0, 0 ),
-      make_xmm( xmm_dst ) );
 
    x86_push(
       func,
@@ -549,8 +568,10 @@ emit_func_call_dst(
       func,
       x86_make_reg( file_REG32, reg_DX) );
    
+   /* Store XMM regs to the stack
+    */
    for(i = 0, n = 0; i < 8; ++i)
-      if(xmm_mask & (1 << i))
+      if(xmm_save_mask & (1 << i))
          ++n;
    
    x86_sub_imm(
@@ -559,26 +580,42 @@ emit_func_call_dst(
       n*16);
 
    for(i = 0, n = 0; i < 8; ++i)
-      if(xmm_mask & (1 << i)) {
+      if(xmm_save_mask & (1 << i)) {
          sse_movups(
             func,
             x86_make_disp( x86_make_reg( file_REG32, reg_SP ), n*16 ),
             make_xmm( i ) );
          ++n;
       }
+
+   for (i = 0; i < nr_args; i++) {
+      /* Load the address of the buffer we use for passing arguments and
+       * receiving results:
+       */
+      x86_lea(
+	 func,
+	 ecx,
+	 arg[i] );
    
-   x86_lea(
-      func,
-      ecx,
-      get_temp( TEMP_R0, 0 ) );
-   
-   x86_push( func, ecx );
+      /* Push actual function arguments (currently just the pointer to
+       * the buffer above), and call the function:
+       */
+      x86_push( func, ecx );
+   }
+
    x86_mov_reg_imm( func, ecx, (unsigned long) code );
    x86_call( func, ecx );
-   x86_pop(func, ecx );
-   
+
+   /* Pop the arguments (or just add an immediate to esp)
+    */
+   for (i = 0; i < nr_args; i++) {
+      x86_pop(func, ecx );
+   }
+
+   /* Pop the saved XMM regs:
+    */
    for(i = 0, n = 0; i < 8; ++i)
-      if(xmm_mask & (1 << i)) {
+      if(xmm_save_mask & (1 << i)) {
          sse_movups(
             func,
             make_xmm( i ),
@@ -602,32 +639,84 @@ emit_func_call_dst(
    x86_pop(
       func,
       x86_make_reg( file_REG32, reg_AX) );
+}
+
+static void
+emit_func_call_dst_src1(
+   struct x86_function *func,
+   unsigned xmm_save, 
+   unsigned xmm_dst,
+   unsigned xmm_src0,
+   void (PIPE_CDECL *code)() )
+{
+   struct x86_reg store = get_temp( TEMP_R0, 0 );
+   unsigned xmm_mask = ((1 << xmm_save) - 1) & ~(1 << xmm_dst);
+   
+   /* Store our input parameters (in xmm regs) to the buffer we use
+    * for passing arguments.  We will pass a pointer to this buffer as
+    * the actual function argument.
+    */
+   sse_movaps(
+      func,
+      store,
+      make_xmm( xmm_src0 ) );
+
+   emit_func_call( func,
+                   xmm_mask,
+                   &store,
+                   1,
+                   code );
 
    sse_movaps(
       func,
       make_xmm( xmm_dst ),
-      get_temp( TEMP_R0, 0 ) );
+      store );
 }
 
+
 static void
-emit_func_call_dst_src(
+emit_func_call_dst_src2(
    struct x86_function *func,
    unsigned xmm_save, 
    unsigned xmm_dst,
-   unsigned xmm_src,
+   unsigned xmm_src0,
+   unsigned xmm_src1,
    void (PIPE_CDECL *code)() )
 {
+   struct x86_reg store = get_temp( TEMP_R0, 0 );
+   unsigned xmm_mask = ((1 << xmm_save) - 1) & ~(1 << xmm_dst);
+
+   /* Store two inputs to parameter buffer.
+    */
    sse_movaps(
       func,
-      get_temp( TEMP_R0, 1 ),
-      make_xmm( xmm_src ) );
+      store,
+      make_xmm( xmm_src0 ) );
 
-   emit_func_call_dst(
+   sse_movaps(
       func,
-      xmm_save,
-      xmm_dst,
-      code );
+      x86_make_disp( store, 4 * sizeof(float) ),
+      make_xmm( xmm_src1 ) );
+
+
+   /* Emit the call
+    */
+   emit_func_call( func,
+                   xmm_mask,
+                   &store,
+                   1,
+                   code );
+
+   /* Retrieve the results:
+    */
+   sse_movaps(
+      func,
+      make_xmm( xmm_dst ),
+      store );
 }
+
+
+
 
 
 #if defined(PIPE_ARCH_SSE)
@@ -782,9 +871,10 @@ emit_cos(
    unsigned xmm_save, 
    unsigned xmm_dst )
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save, 
+      xmm_dst,
       xmm_dst,
       cos4f );
 }
@@ -812,9 +902,10 @@ emit_ex2(
    unsigned xmm_save, 
    unsigned xmm_dst )
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save,
+      xmm_dst,
       xmm_dst,
       ex24f );
 }
@@ -857,9 +948,10 @@ emit_flr(
    unsigned xmm_save, 
    unsigned xmm_dst )
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save,
+      xmm_dst,
       xmm_dst,
       flr4f );
 }
@@ -880,9 +972,10 @@ emit_frc(
    unsigned xmm_save, 
    unsigned xmm_dst )
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save,
+      xmm_dst,
       xmm_dst,
       frc4f );
 }
@@ -910,9 +1003,10 @@ emit_lg2(
    unsigned xmm_save, 
    unsigned xmm_dst )
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save,
+      xmm_dst,
       xmm_dst,
       lg24f );
 }
@@ -975,13 +1069,15 @@ emit_pow(
    struct x86_function *func,
    unsigned xmm_save, 
    unsigned xmm_dst,
-   unsigned xmm_src )
+   unsigned xmm_src0,
+   unsigned xmm_src1 )
 {
-   emit_func_call_dst_src(
+   emit_func_call_dst_src2(
       func,
       xmm_save,
       xmm_dst,
-      xmm_src,
+      xmm_src0,
+      xmm_src1,
       pow4f );
 }
 
@@ -1017,9 +1113,10 @@ emit_rnd(
    unsigned xmm_save, 
    unsigned xmm_dst )
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save,
+      xmm_dst,
       xmm_dst,
       rnd4f );
 }
@@ -1099,9 +1196,10 @@ emit_sgn(
    unsigned xmm_save, 
    unsigned xmm_dst )
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save,
+      xmm_dst,
       xmm_dst,
       sgn4f );
 }
@@ -1121,9 +1219,10 @@ emit_sin (struct x86_function *func,
           unsigned xmm_save, 
           unsigned xmm_dst)
 {
-   emit_func_call_dst(
+   emit_func_call_dst_src1(
       func,
       xmm_save,
+      xmm_dst,
       xmm_dst,
       sin4f );
 }
@@ -1139,6 +1238,12 @@ emit_sub(
       make_xmm( xmm_dst ),
       make_xmm( xmm_src ) );
 }
+
+
+
+
+
+
 
 /**
  * Register fetch.
@@ -1298,9 +1403,154 @@ emit_store(
 #define STORE( FUNC, INST, XMM, INDEX, CHAN )\
    emit_store( FUNC, XMM, &(INST).FullDstRegisters[INDEX], &(INST), CHAN )
 
+
+static void PIPE_CDECL
+fetch_texel( struct tgsi_sampler **sampler,
+             float *store )
+{
+#if 0
+   uint j;
+
+   debug_printf("%s sampler: %p (%p) store: %p\n", 
+                __FUNCTION__,
+                sampler, *sampler,
+                store );
+
+   debug_printf("lodbias %f\n", store[12]);
+
+   for (j = 0; j < 4; j++)
+      debug_printf("sample %d texcoord %f %f\n", 
+                   j, 
+                   store[0+j],
+                   store[4+j]);
+#endif
+
+   {
+      float rgba[NUM_CHANNELS][QUAD_SIZE];
+      (*sampler)->get_samples(*sampler, 
+                              &store[0], 
+                              &store[4], 
+                              &store[8], 
+                              0.0f, /*store[12],  lodbias */
+                              rgba);
+
+      memcpy( store, rgba, 16 * sizeof(float));
+   }
+
+#if 0
+   for (j = 0; j < 4; j++)
+      debug_printf("sample %d result %f %f %f %f\n", 
+                   j, 
+                   store[0+j],
+                   store[4+j],
+                   store[8+j],
+                   store[12+j]);
+#endif
+}
+
 /**
  * High-level instruction translators.
  */
+
+static void
+emit_tex( struct x86_function *func,
+          const struct tgsi_full_instruction *inst,
+          boolean lodbias,
+          boolean projected)
+{
+   const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
+   struct x86_reg args[2];
+   unsigned count;
+   unsigned i;
+
+   switch (inst->InstructionExtTexture.Texture) {
+   case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_SHADOW1D:
+      count = 1;
+      break;
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
+      count = 2;
+      break;
+   case TGSI_TEXTURE_3D:
+   case TGSI_TEXTURE_CUBE:
+      count = 3;
+      break;
+   default:
+      assert(0);
+      return;
+   }
+
+   if (lodbias) {
+      FETCH( func, *inst, 3, 0, 3 );
+   }
+   else {
+      emit_tempf(
+         func,
+         3,
+         TGSI_EXEC_TEMP_00000000_I,
+         TGSI_EXEC_TEMP_00000000_C );
+
+   }
+
+   /* store lodbias whether enabled or not -- fetch_texel currently
+    * respects it always.
+    */
+   sse_movaps( func,
+               get_temp( TEMP_R0, 3 ),
+               make_xmm( 3 ) );
+
+   
+   if (projected) {
+      FETCH( func, *inst, 3, 0, 3 );
+
+      emit_rcp( func, 3, 3 );
+   }
+
+   for (i = 0; i < count; i++) {
+      FETCH( func, *inst, i, 0, i );
+
+      if (projected) {
+         sse_mulps(
+            func,
+            make_xmm( i ),
+            make_xmm( 3 ) );
+      }
+      
+      /* Store in the argument buffer:
+       */
+      sse_movaps(
+         func,
+         get_temp( TEMP_R0, i ),
+         make_xmm( i ) );
+   }
+
+   args[0] = get_temp( TEMP_R0, 0 );
+   args[1] = get_sampler_ptr( unit );
+
+
+   emit_func_call( func,
+                   0,
+                   args,
+                   Elements(args),
+                   fetch_texel );
+
+   /* If all four channels are enabled, could use a pointer to
+    * dst[0].x instead of TEMP_R0 for store?
+    */
+   FOR_EACH_DST0_ENABLED_CHANNEL( *inst, i ) {
+
+      sse_movaps(
+         func,
+         make_xmm( 0 ),
+         get_temp( TEMP_R0, i ) );
+
+      STORE( func, *inst, 0, 0, i );
+   }
+}
+
 
 static void
 emit_kil(
@@ -1308,10 +1558,9 @@ emit_kil(
    const struct tgsi_full_src_register *reg )
 {
    unsigned uniquemask;
-   unsigned registers[4];
-   unsigned nextregister = 0;
-   unsigned firstchan = ~0;
+   unsigned unique_count = 0;
    unsigned chan_index;
+   unsigned i;
 
    /* This mask stores component bits that were already tested. Note that
     * we test if the value is less than zero, so 1.0 and 0.0 need not to be
@@ -1331,18 +1580,11 @@ emit_kil(
          uniquemask |= 1 << swizzle;
 
          /* allocate register */
-         registers[chan_index] = nextregister;
          emit_fetch(
             func,
-            nextregister,
+            unique_count++,
             reg,
             chan_index );
-         nextregister++;
-
-         /* mark the first channel used */
-         if( firstchan == ~0 ) {
-            firstchan = chan_index;
-         }
       }
    }
 
@@ -1353,32 +1595,32 @@ emit_kil(
       func,
       x86_make_reg( file_REG32, reg_DX ) );
 
-   FOR_EACH_CHANNEL( chan_index ) {
-      if( uniquemask & (1 << chan_index) ) {
-         sse_cmpps(
-            func,
-            make_xmm( registers[chan_index] ),
-            get_temp(
-               TGSI_EXEC_TEMP_00000000_I,
-               TGSI_EXEC_TEMP_00000000_C ),
-            cc_LessThan );
+   for (i = 0 ; i < unique_count; i++ ) {
+      struct x86_reg dataXMM = make_xmm(i);
 
-         if( chan_index == firstchan ) {
-            sse_pmovmskb(
-               func,
-               x86_make_reg( file_REG32, reg_AX ),
-               make_xmm( registers[chan_index] ) );
-         }
-         else {
-            sse_pmovmskb(
-               func,
-               x86_make_reg( file_REG32, reg_DX ),
-               make_xmm( registers[chan_index] ) );
-            x86_or(
-               func,
-               x86_make_reg( file_REG32, reg_AX ),
-               x86_make_reg( file_REG32, reg_DX ) );
-         }
+      sse_cmpps(
+         func,
+         dataXMM,
+         get_temp(
+            TGSI_EXEC_TEMP_00000000_I,
+            TGSI_EXEC_TEMP_00000000_C ),
+         cc_LessThan );
+      
+      if( i == 0 ) {
+         sse_movmskps(
+            func,
+            x86_make_reg( file_REG32, reg_AX ),
+            dataXMM );
+      }
+      else {
+         sse_movmskps(
+            func,
+            x86_make_reg( file_REG32, reg_DX ),
+            dataXMM );
+         x86_or(
+            func,
+            x86_make_reg( file_REG32, reg_AX ),
+            x86_make_reg( file_REG32, reg_DX ) );
       }
    }
 
@@ -1573,7 +1815,7 @@ emit_instruction(
                get_temp(
                   TGSI_EXEC_TEMP_MINUS_128_I,
                   TGSI_EXEC_TEMP_MINUS_128_C ) );
-            emit_pow( func, 3, 1, 2 );
+            emit_pow( func, 3, 1, 1, 2 );
             FETCH( func, *inst, 0, 0, CHAN_X );
             sse_xorps(
                func,
@@ -1917,7 +2159,7 @@ emit_instruction(
    /* TGSI_OPCODE_POW */
       FETCH( func, *inst, 0, 0, CHAN_X );
       FETCH( func, *inst, 1, 1, CHAN_X );
-      emit_pow( func, 0, 0, 1 );
+      emit_pow( func, 0, 0, 0, 1 );
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          STORE( func, *inst, 0, 0, chan_index );
       }
@@ -2086,21 +2328,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TEX:
-      if (0) {
-	 /* Disable dummy texture code: 
-	  */
-	 emit_tempf(
-	    func,
-	    0,
-	    TEMP_ONE_I,
-	    TEMP_ONE_C );
-	 FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
-	    STORE( func, *inst, 0, 0, chan_index );
-	 }
-      }
-      else {
-	 return 0;
-      }
+      emit_tex( func, inst, FALSE, FALSE );
       break;
 
    case TGSI_OPCODE_TXD:
@@ -2198,7 +2426,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXB:
-      return 0;
+      emit_tex( func, inst, TRUE, FALSE );
       break;
 
    case TGSI_OPCODE_NRM:
@@ -2306,9 +2534,13 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXL:
-      return 0;
+      emit_tex( func, inst, TRUE, FALSE );
       break;
 
+   case TGSI_OPCODE_TXP:
+      emit_tex( func, inst, FALSE, TRUE );
+      break;
+      
    case TGSI_OPCODE_BRK:
       return 0;
       break;
@@ -2488,7 +2720,7 @@ emit_declaration(
 
 static void aos_to_soa( struct x86_function *func, 
                         uint arg_aos,
-                        uint arg_soa, 
+                        uint arg_machine, 
                         uint arg_num, 
                         uint arg_stride )
 {
@@ -2503,7 +2735,10 @@ static void aos_to_soa( struct x86_function *func,
    x86_push( func, x86_make_reg( file_REG32, reg_BX ) );
 
    x86_mov( func, aos_input,  x86_fn_arg( func, arg_aos ) );
-   x86_mov( func, soa_input,  x86_fn_arg( func, arg_soa ) );
+   x86_mov( func, soa_input,  x86_fn_arg( func, arg_machine ) );
+   x86_lea( func, soa_input,  
+	    x86_make_disp( soa_input, 
+			   Offset(struct tgsi_exec_machine, Inputs) ) );
    x86_mov( func, num_inputs, x86_fn_arg( func, arg_num ) );
    x86_mov( func, stride,     x86_fn_arg( func, arg_stride ) );
 
@@ -2545,28 +2780,30 @@ static void aos_to_soa( struct x86_function *func,
    x86_jcc( func, cc_NE, inner_loop );
 
    /* Restore EBX */
-   x86_pop( func, aos_input );
+   x86_pop( func, x86_make_reg( file_REG32, reg_BX ) );
 }
 
-static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num, uint stride )
+static void soa_to_aos( struct x86_function *func, 
+			uint arg_aos, 
+			uint arg_machine, 
+			uint arg_num, 
+			uint arg_stride )
 {
-   struct x86_reg soa_output;
-   struct x86_reg aos_output;
-   struct x86_reg num_outputs;
-   struct x86_reg temp;
+   struct x86_reg soa_output = x86_make_reg( file_REG32, reg_AX );
+   struct x86_reg aos_output = x86_make_reg( file_REG32, reg_BX );
+   struct x86_reg num_outputs = x86_make_reg( file_REG32, reg_CX );
+   struct x86_reg temp = x86_make_reg( file_REG32, reg_DX );
    int inner_loop;
 
-   soa_output = x86_make_reg( file_REG32, reg_AX );
-   aos_output = x86_make_reg( file_REG32, reg_BX );
-   num_outputs = x86_make_reg( file_REG32, reg_CX );
-   temp = x86_make_reg( file_REG32, reg_DX );
-
    /* Save EBX */
-   x86_push( func, aos_output );
+   x86_push( func, x86_make_reg( file_REG32, reg_BX ) );
 
-   x86_mov( func, soa_output, x86_fn_arg( func, soa ) );
-   x86_mov( func, aos_output, x86_fn_arg( func, aos ) );
-   x86_mov( func, num_outputs, x86_fn_arg( func, num ) );
+   x86_mov( func, aos_output, x86_fn_arg( func, arg_aos ) );
+   x86_mov( func, soa_output, x86_fn_arg( func, arg_machine ) );
+   x86_lea( func, soa_output, 
+	    x86_make_disp( soa_output, 
+			   Offset(struct tgsi_exec_machine, Outputs) ) );
+   x86_mov( func, num_outputs, x86_fn_arg( func, arg_num ) );
 
    /* do */
    inner_loop = x86_get_label( func );
@@ -2583,7 +2820,7 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
       sse_unpcklps( func, make_xmm( 3 ), make_xmm( 4 ) );
       sse_unpckhps( func, make_xmm( 5 ), make_xmm( 4 ) );
 
-      x86_mov( func, temp, x86_fn_arg( func, stride ) );
+      x86_mov( func, temp, x86_fn_arg( func, arg_stride ) );
       x86_push( func, aos_output );
       sse_movlps( func, x86_make_disp( aos_output, 0 ), make_xmm( 0 ) );
       sse_movlps( func, x86_make_disp( aos_output, 8 ), make_xmm( 3 ) );
@@ -2607,19 +2844,12 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
    x86_jcc( func, cc_NE, inner_loop );
 
    /* Restore EBX */
-   x86_pop( func, aos_output );
+   x86_pop( func, x86_make_reg( file_REG32, reg_BX ) );
 }
 
 /**
  * Translate a TGSI vertex/fragment shader to SSE2 code.
  * Slightly different things are done for vertex vs. fragment shaders.
- *
- * Note that fragment shaders are responsible for interpolating shader
- * inputs. Because on x86 we have only 4 GP registers, and here we
- * have 5 shader arguments (input, output, const, temp and coef), the
- * code is split into two phases -- DECLARATION and INSTRUCTION phase.
- * GP register holding the output argument is aliased with the coeff
- * argument, as outputs are not needed in the DECLARATION phase.
  *
  * \param tokens  the TGSI input shader
  * \param func  the output SSE code/function
@@ -2634,7 +2864,6 @@ tgsi_emit_sse2(
    boolean do_swizzles )
 {
    struct tgsi_parse_context parse;
-   boolean instruction_phase = FALSE;
    unsigned ok = 1;
    uint num_immediates = 0;
 
@@ -2646,73 +2875,47 @@ tgsi_emit_sse2(
 
    /* Can't just use EDI, EBX without save/restoring them:
     */
-   x86_push(
-      func,
-      get_immediate_base() );
-
-   x86_push(
-      func,
-      get_temp_base() );
-
+   x86_push( func, x86_make_reg( file_REG32, reg_BX ) );
+   x86_push( func, x86_make_reg( file_REG32, reg_DI ) );
 
    /*
     * Different function args for vertex/fragment shaders:
     */
-   if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
-      /* DECLARATION phase, do not load output argument. */
-      x86_mov(
-         func,
-         get_input_base(),
-         x86_fn_arg( func, 1 ) );
-      /* skipping outputs argument here */
-      x86_mov(
-         func,
-         get_const_base(),
-         x86_fn_arg( func, 3 ) );
-      x86_mov(
-         func,
-         get_temp_base(),
-         x86_fn_arg( func, 4 ) );
-      x86_mov(
-         func,
-         get_coef_base(),
-         x86_fn_arg( func, 5 ) );
-      x86_mov(
-         func,
-         get_immediate_base(),
-         x86_fn_arg( func, 6 ) );
-   }
-   else {
-      assert(parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX);
-
+   if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX) {
       if (do_swizzles)
          aos_to_soa( func, 
-                     6,         /* aos_input */
-                     1,         /* machine->input */
-                     7,         /* num_inputs */
-                     8 );       /* input_stride */
+                     4,         /* aos_input */
+                     1,         /* machine */
+                     5,         /* num_inputs */
+                     6 );       /* input_stride */
+   }
+
+   x86_mov(
+      func,
+      get_machine_base(),
+      x86_fn_arg( func, 1 ) );
+   x86_mov(
+      func,
+      get_const_base(),
+      x86_fn_arg( func, 2 ) );
+   x86_mov(
+      func,
+      get_immediate_base(),
+      x86_fn_arg( func, 3 ) );
+
+   if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
+      x86_mov(
+	 func,
+	 get_coef_base(),
+	 x86_fn_arg( func, 4 ) );
 
       x86_mov(
-         func,
-         get_input_base(),
-         x86_fn_arg( func, 1 ) );
-      x86_mov(
-         func,
-         get_output_base(),
-         x86_fn_arg( func, 2 ) );
-      x86_mov(
-         func,
-         get_const_base(),
-         x86_fn_arg( func, 3 ) );
-      x86_mov(
-         func,
-         get_temp_base(),
-         x86_fn_arg( func, 4 ) );
-      x86_mov(
-         func,
-         get_immediate_base(),
-         x86_fn_arg( func, 5 ) );
+	 func,
+	 get_sampler_base(),
+	 x86_make_disp( get_machine_base(),
+                        Offset( struct tgsi_exec_machine, Samplers ) ) );
    }
+
 
    while( !tgsi_parse_end_of_tokens( &parse ) && ok ) {
       tgsi_parse_token( &parse );
@@ -2727,17 +2930,6 @@ tgsi_emit_sse2(
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
-            if( !instruction_phase ) {
-               /* INSTRUCTION phase, overwrite coeff with output. */
-               instruction_phase = TRUE;
-               x86_mov(
-                  func,
-                  get_output_base(),
-                  x86_fn_arg( func, 2 ) );
-            }
-         }
-
          ok = emit_instruction(
             func,
             &parse.FullToken.FullInstruction );
@@ -2781,18 +2973,17 @@ tgsi_emit_sse2(
 
    if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX) {
       if (do_swizzles)
-         soa_to_aos( func, 9, 2, 10, 11 );
+         soa_to_aos( func, 
+		     7, 	/* aos_output */
+		     1, 	/* machine */
+		     8, 	/* num_outputs */
+		     9 );	/* output_stride */
    }
 
    /* Can't just use EBX, EDI without save/restoring them:
     */
-   x86_pop(
-      func,
-      get_temp_base() );
-
-   x86_pop(
-      func,
-      get_immediate_base() );
+   x86_pop( func, x86_make_reg( file_REG32, reg_DI ) );
+   x86_pop( func, x86_make_reg( file_REG32, reg_BX ) );
 
    emit_ret( func );
 

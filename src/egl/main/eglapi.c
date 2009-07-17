@@ -51,7 +51,12 @@ eglGetDisplay(NativeDisplayType nativeDisplay)
 {
    _EGLDisplay *dpy;
    _eglInitGlobals();
-   dpy = _eglNewDisplay(nativeDisplay);
+   dpy = _eglFindDisplay(nativeDisplay);
+   if (!dpy) {
+      dpy = _eglNewDisplay(nativeDisplay);
+      if (dpy)
+         _eglLinkDisplay(dpy);
+   }
    return _eglGetDisplayHandle(dpy);
 }
 
@@ -321,7 +326,8 @@ eglGetError(void)
 {
    _EGLThreadInfo *t = _eglGetCurrentThread();
    EGLint e = t->LastError;
-   t->LastError = EGL_SUCCESS;
+   if (!_eglIsCurrentThreadDummy())
+      t->LastError = EGL_SUCCESS;
    return e;
 }
 
@@ -546,11 +552,17 @@ eglBindAPI(EGLenum api)
 {
    _EGLThreadInfo *t = _eglGetCurrentThread();
 
+   if (_eglIsCurrentThreadDummy())
+      return _eglError(EGL_BAD_ALLOC, "eglBindAPI");
+
+   if (!_eglIsApiValid(api))
+      return _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
+
    switch (api) {
 #ifdef EGL_VERSION_1_4
    case EGL_OPENGL_API:
       if (_eglGlobal.ClientAPIsMask & EGL_OPENGL_BIT) {
-         t->CurrentAPI = api;
+         t->CurrentAPIIndex = _eglConvertApiToIndex(api);
          return EGL_TRUE;
       }
       _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
@@ -558,14 +570,14 @@ eglBindAPI(EGLenum api)
 #endif
    case EGL_OPENGL_ES_API:
       if (_eglGlobal.ClientAPIsMask & (EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT)) {
-         t->CurrentAPI = api;
+         t->CurrentAPIIndex = _eglConvertApiToIndex(api);
          return EGL_TRUE;
       }
       _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
       return EGL_FALSE;
    case EGL_OPENVG_API:
       if (_eglGlobal.ClientAPIsMask & EGL_OPENVG_BIT) {
-         t->CurrentAPI = api;
+         t->CurrentAPIIndex = _eglConvertApiToIndex(api);
          return EGL_TRUE;
       }
       _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
@@ -585,7 +597,7 @@ eglQueryAPI(void)
 {
    /* returns one of EGL_OPENGL_API, EGL_OPENGL_ES_API or EGL_OPENVG_API */
    _EGLThreadInfo *t = _eglGetCurrentThread();
-   return t->CurrentAPI;
+   return _eglConvertApiFromIndex(t->CurrentAPIIndex);
 }
 
 
@@ -603,15 +615,19 @@ eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype,
 EGLBoolean
 eglReleaseThread(void)
 {
-   _EGLThreadInfo *t = _eglGetCurrentThread();
-   EGLDisplay dpy = eglGetCurrentDisplay();
+   EGLDisplay dpy;
+
+   if (_eglIsCurrentThreadDummy())
+      return EGL_TRUE;
+
+   dpy = eglGetCurrentDisplay();
    if (dpy) {
       _EGLDriver *drv = _eglLookupDriver(dpy);
       /* unbind context */
       (void) drv->API.MakeCurrent(drv, dpy, EGL_NO_SURFACE,
                                   EGL_NO_SURFACE, EGL_NO_CONTEXT);
    }
-   _eglDeleteThreadData(t);
+   _eglDestroyCurrentThread();
    return EGL_TRUE;
 }
 

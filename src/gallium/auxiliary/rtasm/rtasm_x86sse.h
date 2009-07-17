@@ -223,6 +223,7 @@ void sse_unpckhps( struct x86_function *p, struct x86_reg dst, struct x86_reg sr
 void sse_unpcklps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_pmovmskb( struct x86_function *p, struct x86_reg dest, struct x86_reg src );
 void sse2_punpcklbw( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_movmskps( struct x86_function *p, struct x86_reg dst, struct x86_reg src);
 
 void x86_add( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_and( struct x86_function *p, struct x86_reg dst, struct x86_reg src );

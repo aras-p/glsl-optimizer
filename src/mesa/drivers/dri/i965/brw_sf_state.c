@@ -246,7 +246,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    else if (sf.sf6.line_width <= 0x2)
        sf.sf6.line_width = 0;
 
-   /* _NEW_POINT */
+   /* _NEW_BUFFERS */
    key->render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
    if (!key->render_to_fbo) {
       /* Rendering to an OpenGL window */
@@ -276,6 +276,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    }
    /* XXX clamp max depends on AA vs. non-AA */
 
+   /* _NEW_POINT */
    sf.sf7.sprite_point = key->point_sprite;
    sf.sf7.point_size = CLAMP(rint(key->point_size), 1, 255) * (1<<3);
    sf.sf7.use_point_size_state = !key->point_attenuated;
@@ -341,7 +342,8 @@ const struct brw_tracked_state brw_sf_unit = {
       .mesa  = (_NEW_POLYGON | 
 		_NEW_LINE | 
 		_NEW_POINT | 
-		_NEW_SCISSOR),
+		_NEW_SCISSOR |
+		_NEW_BUFFERS),
       .brw   = BRW_NEW_URB_FENCE,
       .cache = (CACHE_NEW_SF_VP |
 		CACHE_NEW_SF_PROG)

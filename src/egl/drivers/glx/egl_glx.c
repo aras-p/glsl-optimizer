@@ -532,7 +532,10 @@ GLX_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    if (!GLX_ctx)
       return EGL_NO_CONTEXT;
 
-   if (!_eglInitContext(drv, dpy, &GLX_ctx->Base, config, attrib_list)) {
+   conf = _eglLookupConfig(drv, dpy, config);
+   assert(conf);
+
+   if (!_eglInitContext(drv, &GLX_ctx->Base, conf, attrib_list)) {
       free(GLX_ctx);
       return EGL_NO_CONTEXT;
    }
@@ -545,9 +548,6 @@ GLX_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
       }
       GLX_ctx_shared = GLX_egl_context(shareCtx);
    }
-
-   conf = _eglLookupConfig(drv, dpy, config);
-   assert(conf);
 
 #ifdef GLX_VERSION_1_3
    if (GLX_drv->fbconfigs)
@@ -564,7 +564,7 @@ GLX_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
       return EGL_FALSE;
 #endif
 
-   return _eglGetContextHandle(&GLX_ctx->Base);
+   return _eglLinkContext(&GLX_ctx->Base, disp);
 }
 
 
@@ -619,18 +619,22 @@ GLX_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    struct GLX_egl_surface *GLX_surf;
    uint width, height;
+   _EGLConfig *conf;
+
+   conf = _eglLookupConfig(drv, dpy, config);
+   assert(conf);
 
    GLX_surf = CALLOC_STRUCT(GLX_egl_surface);
    if (!GLX_surf)
       return EGL_NO_SURFACE;
 
-   if (!_eglInitSurface(drv, dpy, &GLX_surf->Base, EGL_WINDOW_BIT,
-                        config, attrib_list)) {
+   if (!_eglInitSurface(drv, &GLX_surf->Base, EGL_WINDOW_BIT,
+                        conf, attrib_list)) {
       free(GLX_surf);
       return EGL_FALSE;
    }
 
-   _eglSaveSurface(&GLX_surf->Base);
+   _eglLinkSurface(&GLX_surf->Base, disp);
 
    GLX_surf->drawable = window;
    get_drawable_size(disp->Xdpy, window, &width, &height);
@@ -648,19 +652,23 @@ GLX_eglCreatePixmapSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    struct GLX_egl_surface *GLX_surf;
+   _EGLConfig *conf;
    int i;
+
+   conf = _eglLookupConfig(drv, dpy, config);
+   assert(conf);
 
    GLX_surf = CALLOC_STRUCT(GLX_egl_surface);
    if (!GLX_surf)
       return EGL_NO_SURFACE;
 
-   if (!_eglInitSurface(drv, dpy, &GLX_surf->Base, EGL_PIXMAP_BIT,
-                        config, attrib_list)) {
+   if (!_eglInitSurface(drv, &GLX_surf->Base, EGL_PIXMAP_BIT,
+                        conf, attrib_list)) {
       free(GLX_surf);
       return EGL_FALSE;
    }
 
-   _eglSaveSurface(&GLX_surf->Base);
+   _eglLinkSurface(&GLX_surf->Base, disp);
 
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
       switch (attrib_list[i]) {
@@ -683,20 +691,24 @@ GLX_eglCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    struct GLX_egl_surface *GLX_surf;
+   _EGLConfig *conf;
    int attribs[5];
    int i = 0, j = 0;
+
+   conf = _eglLookupConfig(drv, dpy, config);
+   assert(conf);
 
    GLX_surf = CALLOC_STRUCT(GLX_egl_surface);
    if (!GLX_surf)
       return EGL_NO_SURFACE;
 
-   if (!_eglInitSurface(drv, dpy, &GLX_surf->Base, EGL_PBUFFER_BIT,
-                        config, attrib_list)) {
+   if (!_eglInitSurface(drv, &GLX_surf->Base, EGL_PBUFFER_BIT,
+                        conf, attrib_list)) {
       free(GLX_surf);
       return EGL_NO_SURFACE;
    }
 
-   _eglSaveSurface(&GLX_surf->Base);
+   _eglLinkSurface(&GLX_surf->Base, disp);
 
    while(attrib_list[i] != EGL_NONE) {
       switch (attrib_list[i]) {
@@ -726,13 +738,9 @@ GLX_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
    _EGLSurface *surf = _eglLookupSurface(surface);
    return EGL_TRUE;
    if (surf) {
-      _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surface);
-      if (surf->IsBound) {
-         surf->DeletePending = EGL_TRUE;
-      }
-      else {
+      _eglUnlinkSurface(surf);
+      if (!surf->IsBound)
          free(surf);
-      }
 
       return EGL_TRUE;
    }
