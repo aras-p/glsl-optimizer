@@ -203,10 +203,10 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
    _EGLContext *ctx = _eglLookupContext(context);
    _EGLSurface *draw = _eglLookupSurface(d);
    _EGLSurface *read = _eglLookupSurface(r);
-
-   _EGLContext *oldContext = _eglGetCurrentContext();
-   _EGLSurface *oldDrawSurface = _eglGetCurrentSurface(EGL_DRAW);
-   _EGLSurface *oldReadSurface = _eglGetCurrentSurface(EGL_READ);
+   _EGLContext *oldContext = NULL;
+   _EGLSurface *oldDrawSurface = NULL;
+   _EGLSurface *oldReadSurface = NULL;
+   EGLint apiIndex;
 
    if (_eglIsCurrentThreadDummy())
       return _eglError(EGL_BAD_ALLOC, "eglMakeCurrent");
@@ -225,6 +225,32 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
          _eglError(EGL_BAD_MATCH, "eglMakeCurrent");
          return EGL_FALSE;
       }
+
+#ifdef EGL_VERSION_1_4
+      /* OpenGL and OpenGL ES are conflicting */
+      switch (ctx->ClientAPI) {
+      case EGL_OPENGL_ES_API:
+         if (t->CurrentContexts[_eglConvertApiToIndex(EGL_OPENGL_API)])
+            return _eglError(EGL_BAD_ACCESS, "eglMakeCurrent");
+         break;
+      case EGL_OPENGL_API:
+         if (t->CurrentContexts[_eglConvertApiToIndex(EGL_OPENGL_ES_API)])
+            return _eglError(EGL_BAD_ACCESS, "eglMakeCurrent");
+         break;
+      default:
+         break;
+      }
+#endif
+      apiIndex = _eglConvertApiToIndex(ctx->ClientAPI);
+   }
+   else {
+      apiIndex = t->CurrentAPIIndex;
+   }
+
+   oldContext = t->CurrentContexts[apiIndex];
+   if (oldContext) {
+      oldDrawSurface = oldContext->DrawSurface;
+      oldReadSurface = oldContext->ReadSurface;
    }
 
    /*
@@ -275,9 +301,11 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
       ctx->IsBound = EGL_TRUE;
       draw->IsBound = EGL_TRUE;
       read->IsBound = EGL_TRUE;
+      t->CurrentContexts[apiIndex] = ctx;
    }
-
-   t->CurrentContext = ctx;
+   else {
+      t->CurrentContexts[apiIndex] = NULL;
+   }
 
    return EGL_TRUE;
 }

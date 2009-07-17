@@ -550,11 +550,14 @@ eglBindAPI(EGLenum api)
    if (_eglIsCurrentThreadDummy())
       return _eglError(EGL_BAD_ALLOC, "eglBindAPI");
 
+   if (!_eglIsApiValid(api))
+      return _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
+
    switch (api) {
 #ifdef EGL_VERSION_1_4
    case EGL_OPENGL_API:
       if (_eglGlobal.ClientAPIsMask & EGL_OPENGL_BIT) {
-         t->CurrentAPI = api;
+         t->CurrentAPIIndex = _eglConvertApiToIndex(api);
          return EGL_TRUE;
       }
       _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
@@ -562,14 +565,14 @@ eglBindAPI(EGLenum api)
 #endif
    case EGL_OPENGL_ES_API:
       if (_eglGlobal.ClientAPIsMask & (EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT)) {
-         t->CurrentAPI = api;
+         t->CurrentAPIIndex = _eglConvertApiToIndex(api);
          return EGL_TRUE;
       }
       _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
       return EGL_FALSE;
    case EGL_OPENVG_API:
       if (_eglGlobal.ClientAPIsMask & EGL_OPENVG_BIT) {
-         t->CurrentAPI = api;
+         t->CurrentAPIIndex = _eglConvertApiToIndex(api);
          return EGL_TRUE;
       }
       _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
@@ -589,7 +592,7 @@ eglQueryAPI(void)
 {
    /* returns one of EGL_OPENGL_API, EGL_OPENGL_ES_API or EGL_OPENVG_API */
    _EGLThreadInfo *t = _eglGetCurrentThread();
-   return t->CurrentAPI;
+   return _eglConvertApiFromIndex(t->CurrentAPIIndex);
 }
 
 
