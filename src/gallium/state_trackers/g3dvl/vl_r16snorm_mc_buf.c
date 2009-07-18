@@ -1089,7 +1089,6 @@ static int vlInit
 	template.width[0] = vlRoundUpPOT(mc->picture_width);
 	template.height[0] = vlRoundUpPOT(mc->picture_height);
 	template.depth[0] = 1;
-	template.compressed = 0;
 	pf_get_block(template.format, &template.block);
 	template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_DYNAMIC;
 

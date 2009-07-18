@@ -45,7 +45,6 @@ int vlCreateSurface
 	template.width[0] = vlRoundUpPOT(sfc->width);
 	template.height[0] = vlRoundUpPOT(sfc->height);
 	template.depth[0] = 1;
-	template.compressed = 0;
 	pf_get_block(template.format, &template.block);
 	template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_RENDER_TARGET;
 
