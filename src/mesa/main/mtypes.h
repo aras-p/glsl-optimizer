@@ -2986,6 +2986,13 @@ struct __GLcontextRec
 #endif
 
    GLenum ErrorValue;        /**< Last error code */
+
+   /**
+    * Recognize and silence repeated error debug messages in buggy apps.
+    */
+   const char *ErrorDebugFmtString;
+   GLuint ErrorDebugCount;
+
    GLenum RenderMode;        /**< either GL_RENDER, GL_SELECT, GL_FEEDBACK */
    GLbitfield NewState;      /**< bitwise-or of _NEW_* flags */
 

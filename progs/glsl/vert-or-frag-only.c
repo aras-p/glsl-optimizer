@@ -12,10 +12,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glew.h>
-#include <GL/gl.h>
 #include <GL/glut.h>
-#include <GL/glext.h>
-#include "extfuncs.h"
 #include "shaderutil.h"
 
 
@@ -59,14 +56,14 @@ Redisplay(void)
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
    /* render with vertex shader only */
-   glUseProgram_func(VertProgram);
+   glUseProgram(VertProgram);
    glPushMatrix();
    glTranslatef(-1.5, 0, 0);
    DrawQuadTex();
    glPopMatrix();
 
    /* render with fragment shader only */
-   glUseProgram_func(FragProgram);
+   glUseProgram(FragProgram);
    glPushMatrix();
    glTranslatef(+1.5, 0, 0);
    DrawQuadColor();
@@ -91,10 +88,10 @@ Reshape(int width, int height)
 static void
 CleanUp(void)
 {
-   glDeleteShader_func(FragShader);
-   glDeleteShader_func(VertShader);
-   glDeleteProgram_func(VertProgram);
-   glDeleteProgram_func(FragProgram);
+   glDeleteShader(FragShader);
+   glDeleteShader(VertShader);
+   glDeleteProgram(VertProgram);
+   glDeleteProgram(FragProgram);
    glutDestroyWindow(Win);
 }
 
@@ -130,8 +127,6 @@ Init(void)
    if (!ShadersSupported())
       exit(1);
 
-   GetExtensionFuncs();
-
    if (FragProgFile)
       FragShader = CompileShaderFile(GL_FRAGMENT_SHADER, FragProgFile);
    else
@@ -150,10 +145,10 @@ Init(void)
 
    printf("GL_RENDERER = %s\n",(const char *) glGetString(GL_RENDERER));
 
-   assert(glIsProgram_func(VertProgram));
-   assert(glIsProgram_func(FragProgram));
-   assert(glIsShader_func(FragShader));
-   assert(glIsShader_func(VertShader));
+   assert(glIsProgram(VertProgram));
+   assert(glIsProgram(FragProgram));
+   assert(glIsShader(FragShader));
+   assert(glIsShader(VertShader));
 
    glColor3f(1, 0, 0);
 }

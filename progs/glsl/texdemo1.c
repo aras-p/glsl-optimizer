@@ -31,7 +31,6 @@
 #include <GL/glew.h>
 #include "GL/glut.h"
 #include "readtex.h"
-#include "extfuncs.h"
 #include "shaderutil.h"
 
 static const char *Demo = "texdemo1";
@@ -98,7 +97,7 @@ draw(void)
       /* sphere w/ reflection map */
       glPushMatrix();
          glTranslatef(0, 1, 0);
-         glUseProgram_func(Program1);
+         glUseProgram(Program1);
 
          /* setup texture matrix */
          glActiveTexture(GL_TEXTURE0);
@@ -117,7 +116,7 @@ draw(void)
       glPopMatrix();
 
       /* ground */
-      glUseProgram_func(Program2);
+      glUseProgram(Program2);
       glTranslatef(0, -1.0, 0);
       DrawGround(5);
 
@@ -381,7 +380,7 @@ CreateProgram(const char *vertProgFile, const char *fragProgFile,
    fragShader = CompileShaderFile(GL_FRAGMENT_SHADER, fragProgFile);
    program = LinkShaders(vertShader, fragShader);
 
-   glUseProgram_func(program);
+   glUseProgram(program);
 
    InitUniforms(program, uniforms);
 
@@ -407,8 +406,6 @@ Init(GLboolean useImageFiles)
       /*exit(1);*/
    }
    printf("GL_RENDERER = %s\n",(const char *) glGetString(GL_RENDERER));
-
-   GetExtensionFuncs();
 
    InitTextures(useImageFiles);
    InitPrograms();

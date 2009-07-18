@@ -849,7 +849,6 @@ pop_texture_group(GLcontext *ctx, struct texture_state *texstate)
       /* Restore texture object state for each target */
       for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++) {
          const struct gl_texture_object *obj = NULL;
-         GLfloat bordColor[4];
          GLenum target;
 
          obj = &texstate->SavedObj[u][tgt];
@@ -875,12 +874,7 @@ pop_texture_group(GLcontext *ctx, struct texture_state *texstate)
 
          _mesa_BindTexture(target, obj->Name);
 
-         bordColor[0] = CHAN_TO_FLOAT(obj->BorderColor[0]);
-         bordColor[1] = CHAN_TO_FLOAT(obj->BorderColor[1]);
-         bordColor[2] = CHAN_TO_FLOAT(obj->BorderColor[2]);
-         bordColor[3] = CHAN_TO_FLOAT(obj->BorderColor[3]);
-
-         _mesa_TexParameterfv(target, GL_TEXTURE_BORDER_COLOR, bordColor);
+         _mesa_TexParameterfv(target, GL_TEXTURE_BORDER_COLOR, obj->BorderColor);
          _mesa_TexParameterf(target, GL_TEXTURE_PRIORITY, obj->Priority);
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, obj->WrapS);
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, obj->WrapT);

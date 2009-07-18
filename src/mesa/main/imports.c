@@ -1021,6 +1021,22 @@ output_if_debug(const char *prefixString, const char *outputString,
    }
 }
 
+static const char *error_string( GLenum error );
+
+static void flush_delayed_errors( GLcontext *ctx )
+{
+   char s2[MAXSTRING];
+
+   if (ctx->ErrorDebugCount) {
+      _mesa_snprintf(s2, MAXSTRING, "%d similar %s errors", 
+                     ctx->ErrorDebugCount,
+                     error_string(ctx->ErrorValue));
+
+      output_if_debug("Mesa: ", s2, GL_TRUE);
+
+      ctx->ErrorDebugCount = 0;
+   }
+}
 
 /**
  * Report a warning (a recoverable error condition) to stderr if
@@ -1034,10 +1050,12 @@ _mesa_warning( GLcontext *ctx, const char *fmtString, ... )
 {
    char str[MAXSTRING];
    va_list args;
-   (void) ctx;
    va_start( args, fmtString );  
    (void) vsnprintf( str, MAXSTRING, fmtString, args );
    va_end( args );
+   
+   if (ctx)
+      flush_delayed_errors( ctx );
 
    output_if_debug("Mesa warning", str, GL_TRUE);
 }
@@ -1065,6 +1083,31 @@ _mesa_problem( const GLcontext *ctx, const char *fmtString, ... )
    fprintf(stderr, "Please report at bugzilla.freedesktop.org\n");
 }
 
+static const char *error_string( GLenum error )
+{
+   switch (error) {
+   case GL_NO_ERROR:
+      return "GL_NO_ERROR";
+   case GL_INVALID_VALUE:
+      return "GL_INVALID_VALUE";
+   case GL_INVALID_ENUM:
+      return "GL_INVALID_ENUM";
+   case GL_INVALID_OPERATION:
+      return "GL_INVALID_OPERATION";
+   case GL_STACK_OVERFLOW:
+      return "GL_STACK_OVERFLOW";
+   case GL_STACK_UNDERFLOW:
+      return "GL_STACK_UNDERFLOW";
+   case GL_OUT_OF_MEMORY:
+      return "GL_OUT_OF_MEMORY";
+   case GL_TABLE_TOO_LARGE:
+      return "GL_TABLE_TOO_LARGE";
+   case GL_INVALID_FRAMEBUFFER_OPERATION_EXT:
+      return "GL_INVALID_FRAMEBUFFER_OPERATION";
+   default:
+      return "unknown";
+   }
+}
 
 /**
  * Record an OpenGL state error.  These usually occur when the user
@@ -1081,74 +1124,46 @@ _mesa_problem( const GLcontext *ctx, const char *fmtString, ... )
 void
 _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
 {
-   const char *debugEnv;
-   GLboolean debug;
+   static GLint debug = -1;
 
-   debugEnv = _mesa_getenv("MESA_DEBUG");
+   /* Check debug environment variable only once:
+    */
+   if (debug == -1) {
+      const char *debugEnv = _mesa_getenv("MESA_DEBUG");
 
 #ifdef DEBUG
-   if (debugEnv && _mesa_strstr(debugEnv, "silent"))
-      debug = GL_FALSE;
-   else
-      debug = GL_TRUE;
+      if (debugEnv && _mesa_strstr(debugEnv, "silent"))
+         debug = GL_FALSE;
+      else
+         debug = GL_TRUE;
 #else
-   if (debugEnv)
-      debug = GL_TRUE;
-   else
-      debug = GL_FALSE;
+      if (debugEnv)
+         debug = GL_TRUE;
+      else
+         debug = GL_FALSE;
 #endif
+   }
 
-   if (debug) {
-      va_list args;
-      char where[MAXSTRING];
-      const char *errstr;
-
-      va_start( args, fmtString );  
-      vsnprintf( where, MAXSTRING, fmtString, args );
-      va_end( args );
-
-      switch (error) {
-	 case GL_NO_ERROR:
-	    errstr = "GL_NO_ERROR";
-	    break;
-	 case GL_INVALID_VALUE:
-	    errstr = "GL_INVALID_VALUE";
-	    break;
-	 case GL_INVALID_ENUM:
-	    errstr = "GL_INVALID_ENUM";
-	    break;
-	 case GL_INVALID_OPERATION:
-	    errstr = "GL_INVALID_OPERATION";
-	    break;
-	 case GL_STACK_OVERFLOW:
-	    errstr = "GL_STACK_OVERFLOW";
-	    break;
-	 case GL_STACK_UNDERFLOW:
-	    errstr = "GL_STACK_UNDERFLOW";
-	    break;
-	 case GL_OUT_OF_MEMORY:
-	    errstr = "GL_OUT_OF_MEMORY";
-	    break;
-         case GL_TABLE_TOO_LARGE:
-            errstr = "GL_TABLE_TOO_LARGE";
-            break;
-         case GL_INVALID_FRAMEBUFFER_OPERATION_EXT:
-            errstr = "GL_INVALID_FRAMEBUFFER_OPERATION";
-            break;
-	 default:
-	    errstr = "unknown";
-	    break;
+   if (debug) {      
+      if (ctx->ErrorValue == error &&
+          ctx->ErrorDebugFmtString == fmtString) {
+         ctx->ErrorDebugCount++;
       }
-
-      {
+      else {
          char s[MAXSTRING], s2[MAXSTRING];
          va_list args;
+
+         flush_delayed_errors( ctx );
+         
          va_start(args, fmtString);
          vsnprintf(s, MAXSTRING, fmtString, args);
          va_end(args);
 
-         _mesa_snprintf(s2, MAXSTRING, "%s in %s", errstr, s);
+         _mesa_snprintf(s2, MAXSTRING, "%s in %s", error_string(error), s);
          output_if_debug("Mesa: User error", s2, GL_TRUE);
+         
+         ctx->ErrorDebugFmtString = fmtString;
+         ctx->ErrorDebugCount = 0;
       }
    }
 

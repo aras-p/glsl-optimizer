@@ -9,10 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
-#include <GL/glu.h>
-#include <GL/glext.h>
-#include "extfuncs.h"
 #include "shaderutil.h"
 
 
@@ -60,7 +58,7 @@ static void
 Square(GLfloat size)
 {
    glNormal3f(0, 0, 1);
-   glVertexAttrib3f_func(tangentAttrib, 1, 0, 0);
+   glVertexAttrib3f(tangentAttrib, 1, 0, 0);
    glBegin(GL_POLYGON);
    glTexCoord2f(0, 0);  glVertex2f(-size, -size);
    glTexCoord2f(1, 0);  glVertex2f( size, -size);
@@ -164,9 +162,9 @@ Reshape(int width, int height)
 static void
 CleanUp(void)
 {
-   glDeleteShader_func(fragShader);
-   glDeleteShader_func(vertShader);
-   glDeleteProgram_func(program);
+   glDeleteShader(fragShader);
+   glDeleteShader(vertShader);
+   glDeleteProgram(program);
    glutDestroyWindow(win);
 }
 
@@ -230,17 +228,15 @@ Init(void)
    if (!ShadersSupported())
       exit(1);
 
-   GetExtensionFuncs();
-
    vertShader = CompileShaderFile(GL_VERTEX_SHADER, VertProgFile);
    fragShader = CompileShaderFile(GL_FRAGMENT_SHADER, FragProgFile);
    program = LinkShaders(vertShader, fragShader);
 
-   glUseProgram_func(program);
+   glUseProgram(program);
 
-   assert(glIsProgram_func(program));
-   assert(glIsShader_func(fragShader));
-   assert(glIsShader_func(vertShader));
+   assert(glIsProgram(program));
+   assert(glIsShader(fragShader));
+   assert(glIsShader(vertShader));
 
    assert(glGetError() == 0);
 
@@ -250,7 +246,7 @@ Init(void)
 
    CheckError(__LINE__);
 
-   tangentAttrib = glGetAttribLocation_func(program, "Tangent");
+   tangentAttrib = glGetAttribLocation(program, "Tangent");
    printf("Tangent Attrib: %d\n", tangentAttrib);
 
    assert(tangentAttrib >= 0);

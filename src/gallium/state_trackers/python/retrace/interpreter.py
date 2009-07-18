@@ -456,6 +456,7 @@ class Context(Object):
             x, y, z, w = unpack_from(format, data, offset)
             sys.stdout.write('\tCONST[%2u] = {%10.4f, %10.4f, %10.4f, %10.4f}\n' % (index, x, y, z, w))
             index += 1
+        sys.stdout.flush()
 
     def set_constant_buffer(self, shader, index, buffer):
         if buffer is not None:
@@ -537,6 +538,7 @@ class Context(Object):
                 sys.stdout.write('\t\t{' + ', '.join(map(str, values)) + '},\n')
                 assert len(values) == velem.nr_components
             sys.stdout.write('\t},\n')
+        sys.stdout.flush()
 
     def dump_indices(self, ibuf, isize, start, count):
         if not self.interpreter.verbosity(2):
@@ -564,6 +566,7 @@ class Context(Object):
             minindex = min(minindex, index)
             maxindex = max(maxindex, index)
         sys.stdout.write('\t},\n')
+        sys.stdout.flush()
 
         return minindex, maxindex
 
@@ -591,6 +594,20 @@ class Context(Object):
         self.real.draw_range_elements(indexBuffer, indexSize, minIndex, maxIndex, mode, start, count)
         self._set_dirty()
         
+    def surface_copy(self, dest, destx, desty, src, srcx, srcy, width, height):
+        if dest is not None and src is not None:
+            if self.interpreter.options.all:
+                self.interpreter.present(src, 'surface_copy_src', srcx, srcy, width, height)
+            self.real.surface_copy(dest, destx, desty, src, srcx, srcy, width, height)
+            if dest in self.cbufs:
+                self._set_dirty()
+                flags = gallium.PIPE_FLUSH_FRAME
+            else:
+                flags = 0
+            self.flush(flags)
+            if self.interpreter.options.all:
+                self.interpreter.present(dest, 'surface_copy_dest', destx, desty, width, height)
+
     def is_texture_referenced(self, texture, face, level):
         #return self.real.is_texture_referenced(format, texture, face, level)
         pass
@@ -660,7 +677,7 @@ class Interpreter(parser.TraceDumper):
             self.interpret_call(call)
 
     def handle_call(self, call):
-        if self.options.stop and call.no >= self.options.stop:
+        if self.options.stop and call.no > self.options.stop:
             sys.exit(0)
 
         if (call.klass, call.method) in self.ignore_calls:
@@ -670,6 +687,7 @@ class Interpreter(parser.TraceDumper):
 
         if self.verbosity(1):
             parser.TraceDumper.handle_call(self, call)
+            sys.stdout.flush()
         
         args = [(str(name), self.interpret_arg(arg)) for name, arg in call.args] 
         

@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <GL/glew.h>
 #include <GL/glut.h>
-#include "extfuncs.h"
 #include "shaderutil.h"
 
 
@@ -20,7 +19,6 @@ Init(void)
 {
    static GLboolean firstCall = GL_TRUE;
    if (firstCall) {
-      GetExtensionFuncs();
       firstCall = GL_FALSE;
    }
 }
@@ -51,14 +49,14 @@ CompileShaderText(GLenum shaderType, const char *text)
 
    Init();
 
-   shader = glCreateShader_func(shaderType);
-   glShaderSource_func(shader, 1, (const GLchar **) &text, NULL);
-   glCompileShader_func(shader);
-   glGetShaderiv_func(shader, GL_COMPILE_STATUS, &stat);
+   shader = glCreateShader(shaderType);
+   glShaderSource(shader, 1, (const GLchar **) &text, NULL);
+   glCompileShader(shader);
+   glGetShaderiv(shader, GL_COMPILE_STATUS, &stat);
    if (!stat) {
       GLchar log[1000];
       GLsizei len;
-      glGetShaderInfoLog_func(shader, 1000, &len, log);
+      glGetShaderInfoLog(shader, 1000, &len, log);
       fprintf(stderr, "Error: problem compiling shader: %s\n", log);
       exit(1);
    }
@@ -110,24 +108,24 @@ CompileShaderFile(GLenum shaderType, const char *filename)
 GLuint
 LinkShaders(GLuint vertShader, GLuint fragShader)
 {
-   GLuint program = glCreateProgram_func();
+   GLuint program = glCreateProgram();
 
    assert(vertShader || fragShader);
 
    if (fragShader)
-      glAttachShader_func(program, fragShader);
+      glAttachShader(program, fragShader);
    if (vertShader)
-      glAttachShader_func(program, vertShader);
-   glLinkProgram_func(program);
+      glAttachShader(program, vertShader);
+   glLinkProgram(program);
 
    /* check link */
    {
       GLint stat;
-      glGetProgramiv_func(program, GL_LINK_STATUS, &stat);
+      glGetProgramiv(program, GL_LINK_STATUS, &stat);
       if (!stat) {
          GLchar log[1000];
          GLsizei len;
-         glGetProgramInfoLog_func(program, 1000, &len, log);
+         glGetProgramInfoLog(program, 1000, &len, log);
          fprintf(stderr, "Shader link error:\n%s\n", log);
          return 0;
       }
@@ -144,7 +142,7 @@ InitUniforms(GLuint program, struct uniform_info uniforms[])
 
    for (i = 0; uniforms[i].name; i++) {
       uniforms[i].location
-         = glGetUniformLocation_func(program, uniforms[i].name);
+         = glGetUniformLocation(program, uniforms[i].name);
 
       printf("Uniform %s location: %d\n", uniforms[i].name,
              uniforms[i].location);
@@ -152,19 +150,19 @@ InitUniforms(GLuint program, struct uniform_info uniforms[])
       switch (uniforms[i].size) {
       case 1:
          if (uniforms[i].type == GL_INT)
-            glUniform1i_func(uniforms[i].location,
+            glUniform1i(uniforms[i].location,
                              (GLint) uniforms[i].value[0]);
          else
-            glUniform1fv_func(uniforms[i].location, 1, uniforms[i].value);
+            glUniform1fv(uniforms[i].location, 1, uniforms[i].value);
          break;
       case 2:
-         glUniform2fv_func(uniforms[i].location, 1, uniforms[i].value);
+         glUniform2fv(uniforms[i].location, 1, uniforms[i].value);
          break;
       case 3:
-         glUniform3fv_func(uniforms[i].location, 1, uniforms[i].value);
+         glUniform3fv(uniforms[i].location, 1, uniforms[i].value);
          break;
       case 4:
-         glUniform4fv_func(uniforms[i].location, 1, uniforms[i].value);
+         glUniform4fv(uniforms[i].location, 1, uniforms[i].value);
          break;
       default:
          abort();

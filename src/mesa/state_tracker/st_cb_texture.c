@@ -237,14 +237,12 @@ do_memcpy(void *dest, const void *src, size_t n)
 }
 
 
-static int
-logbase2(int n)
+static INLINE unsigned
+logbase2(unsigned n)
 {
-   GLint i = 1, log2 = 0;
-   while (n > i) {
-      i *= 2;
-      log2++;
-   }
+   unsigned log2 = 0;
+   while (n >>= 1)
+      ++log2;
    return log2;
 }
 
@@ -950,8 +948,9 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
       /* Image is stored in hardware format in a buffer managed by the
        * kernel.  Need to explicitly map and unmap it.
        */
+      unsigned face = _mesa_tex_target_to_face(target);
 
-      st_teximage_flush_before_map(ctx->st, stImage->pt, 0, level,
+      st_teximage_flush_before_map(ctx->st, stImage->pt, face, level,
 				   PIPE_TRANSFER_READ);
 
       texImage->Data = st_texture_image_map(ctx->st, stImage, 0,
@@ -1080,13 +1079,15 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
     * from uploading the buffer under us.
     */
    if (stImage->pt) {
+      unsigned face = _mesa_tex_target_to_face(target);
+
       if (format == GL_DEPTH_COMPONENT &&
           pf_is_depth_and_stencil(stImage->pt->format))
          transfer_usage = PIPE_TRANSFER_READ_WRITE;
       else
          transfer_usage = PIPE_TRANSFER_WRITE;
 
-      st_teximage_flush_before_map(ctx->st, stImage->pt, 0, level,
+      st_teximage_flush_before_map(ctx->st, stImage->pt, face, level,
 				   transfer_usage);
       texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset, 
                                             transfer_usage,
@@ -1213,7 +1214,9 @@ st_CompressedTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
    int y;
 
    if (stImage->pt) {
-      st_teximage_flush_before_map(ctx->st, stImage->pt, 0, level,
+      unsigned face = _mesa_tex_target_to_face(target);
+
+      st_teximage_flush_before_map(ctx->st, stImage->pt, face, level,
 				   PIPE_TRANSFER_WRITE);
       texImage->Data = st_texture_image_map(ctx->st, stImage, 0, 
                                             PIPE_TRANSFER_WRITE,

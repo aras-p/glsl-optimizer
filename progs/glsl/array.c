@@ -10,9 +10,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glew.h>
-#include <GL/gl.h>
 #include <GL/glut.h>
-#include "extfuncs.h"
 #include "shaderutil.h"
 
 
@@ -144,9 +142,9 @@ Reshape(int width, int height)
 static void
 CleanUp(void)
 {
-   glDeleteShader_func(fragShader);
-   glDeleteShader_func(vertShader);
-   glDeleteProgram_func(program);
+   glDeleteShader(fragShader);
+   glDeleteShader(vertShader);
+   glDeleteProgram(program);
    glutDestroyWindow(win);
 }
 
@@ -219,19 +217,17 @@ Init(void)
    if (!ShadersSupported())
       exit(1);
 
-   GetExtensionFuncs();
-
    vertShader = CompileShaderText(GL_VERTEX_SHADER, VertShaderText);
    fragShader = CompileShaderText(GL_FRAGMENT_SHADER, FragShaderText);
    program = LinkShaders(vertShader, fragShader);
 
-   glUseProgram_func(program);
+   glUseProgram(program);
 
    /* Setup the HeightArray[] uniform */
    for (i = 0; i < 20; i++)
       HeightArray[i] = i / 20.0;
-   u = glGetUniformLocation_func(program, "HeightArray");
-   glUniform1fv_func(u, 20, HeightArray);
+   u = glGetUniformLocation(program, "HeightArray");
+   glUniform1fv(u, 20, HeightArray);
 
    assert(glGetError() == 0);
 

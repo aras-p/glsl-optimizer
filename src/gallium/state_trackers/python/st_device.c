@@ -44,8 +44,14 @@
 static void
 st_device_really_destroy(struct st_device *st_dev) 
 {
-   if(st_dev->screen)
+   if(st_dev->screen) {
+      /* FIXME: Don't really destroy until we keep track of every single 
+       * reference or we end up causing a segmentation fault every time 
+       * python exits. */
+#if 0
       st_dev->screen->destroy(st_dev->screen);
+#endif
+   }
    
    FREE(st_dev);
 }

@@ -10,10 +10,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glew.h>
-#include <GL/gl.h>
 #include <GL/glut.h>
-#include <GL/glext.h>
-#include "extfuncs.h"
 #include "shaderutil.h"
 
 
@@ -133,11 +130,11 @@ Reshape(int width, int height)
 static void
 CleanUp(void)
 {
-   glDeleteShader_func(VertShader1);
-   glDeleteShader_func(VertShader2);
-   glDeleteShader_func(FragShader1);
-   glDeleteShader_func(FragShader2);
-   glDeleteProgram_func(Program);
+   glDeleteShader(VertShader1);
+   glDeleteShader(VertShader2);
+   glDeleteShader(FragShader1);
+   glDeleteShader(FragShader2);
+   glDeleteProgram(Program);
    glutDestroyWindow(Win);
 }
 
@@ -176,11 +173,11 @@ static void
 CheckLink(GLuint prog)
 {
    GLint stat;
-   glGetProgramiv_func(prog, GL_LINK_STATUS, &stat);
+   glGetProgramiv(prog, GL_LINK_STATUS, &stat);
    if (!stat) {
       GLchar log[1000];
       GLsizei len;
-      glGetProgramInfoLog_func(prog, 1000, &len, log);
+      glGetProgramInfoLog(prog, 1000, &len, log);
       fprintf(stderr, "Linker error:\n%s\n", log);
    }
 }
@@ -192,8 +189,6 @@ Init(void)
    if (!ShadersSupported())
       exit(1);
 
-   GetExtensionFuncs();
-
    printf("GL_RENDERER = %s\n",(const char *) glGetString(GL_RENDERER));
 
    VertShader1 = CompileShaderText(GL_VERTEX_SHADER, VertShaderSource1);
@@ -201,26 +196,26 @@ Init(void)
    FragShader1 = CompileShaderText(GL_FRAGMENT_SHADER, FragShaderSource1);
    FragShader2 = CompileShaderText(GL_FRAGMENT_SHADER, FragShaderSource2);
 
-   Program = glCreateProgram_func();
-   glAttachShader_func(Program, VertShader1);
-   glAttachShader_func(Program, VertShader2);
-   glAttachShader_func(Program, FragShader1);
-   glAttachShader_func(Program, FragShader2);
+   Program = glCreateProgram();
+   glAttachShader(Program, VertShader1);
+   glAttachShader(Program, VertShader2);
+   glAttachShader(Program, FragShader1);
+   glAttachShader(Program, FragShader2);
 
-   glLinkProgram_func(Program);
+   glLinkProgram(Program);
 
    CheckLink(Program);
 
-   glUseProgram_func(Program);
+   glUseProgram(Program);
 
-   uDiffuse = glGetUniformLocation_func(Program, "diffuse");
-   uSpecular = glGetUniformLocation_func(Program, "specular");
-   uTexture = glGetUniformLocation_func(Program, "texture");
+   uDiffuse = glGetUniformLocation(Program, "diffuse");
+   uSpecular = glGetUniformLocation(Program, "specular");
+   uTexture = glGetUniformLocation(Program, "texture");
    printf("DiffusePos %d  SpecularPos %d  TexturePos %d\n",
           uDiffuse, uSpecular, uTexture);
 
-   glUniform4fv_func(uDiffuse, 1, diffuse);
-   glUniform4fv_func(uSpecular, 1, specular);
+   glUniform4fv(uDiffuse, 1, diffuse);
+   glUniform4fv(uSpecular, 1, specular);
 
    glClearColor(0.3f, 0.3f, 0.3f, 0.0f);
    glEnable(GL_DEPTH_TEST);
@@ -229,11 +224,11 @@ Init(void)
    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 10.0f);
 
-   assert(glIsProgram_func(Program));
-   assert(glIsShader_func(VertShader1));
-   assert(glIsShader_func(VertShader2));
-   assert(glIsShader_func(FragShader1));
-   assert(glIsShader_func(FragShader2));
+   assert(glIsProgram(Program));
+   assert(glIsShader(VertShader1));
+   assert(glIsShader(VertShader2));
+   assert(glIsShader(FragShader1));
+   assert(glIsShader(FragShader2));
 
    glColor3f(1, 0, 0);
 }
