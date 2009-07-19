@@ -1200,12 +1200,14 @@ dnl
 dnl Gallium SVGA configuration
 dnl
 AC_ARG_ENABLE([gallium-svga],
-    [AS_HELP_STRING([--disable-gallium-svga],
-        [build gallium SVGA @<:@default=enabled@:>@])],
+    [AS_HELP_STRING([--enable-gallium-svga],
+        [build gallium SVGA @<:@default=disabled@:>@])],
     [enable_gallium_svga="$enableval"],
-    [enable_gallium_svga=yes])
+    [enable_gallium_svga=auto])
 if test "x$enable_gallium_svga" = xyes; then
     GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS vmware"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
+elif test "x$enable_gallium_svga" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
 fi
 
