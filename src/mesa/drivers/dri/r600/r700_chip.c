@@ -722,3 +722,25 @@ GLboolean r700SendSQConfig(context_t *context)
 	return GL_TRUE;
 }
 
+GLboolean r700SendUCPState(context_t *context)
+{
+	R700_CHIP_CONTEXT *r700 = R700_CONTEXT_STATES(context);
+	BATCH_LOCALS(&context->radeon);
+	int i;
+
+	for (i = 0; i < R700_MAX_UCP; i++) {
+		if (r700->ucp[i].enabled) {
+			BEGIN_BATCH_NO_AUTOSTATE(6);
+			R600_OUT_BATCH_REGSEQ(PA_CL_UCP_0_X + (16 * i), 4);
+			R600_OUT_BATCH(r700->ucp[i].PA_CL_UCP_0_X.u32All);
+			R600_OUT_BATCH(r700->ucp[i].PA_CL_UCP_0_Y.u32All);
+			R600_OUT_BATCH(r700->ucp[i].PA_CL_UCP_0_Z.u32All);
+			R600_OUT_BATCH(r700->ucp[i].PA_CL_UCP_0_W.u32All);
+			END_BATCH();
+			COMMIT_BATCH();
+		}
+	}
+
+	return GL_TRUE;
+}
+

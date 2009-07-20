@@ -56,6 +56,8 @@
 #include "r700_vertprog.h"
 
 
+static void r700SetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state);
+
 void r700SetDefaultStates(context_t *context) //--------------------
 {
     
@@ -446,7 +448,7 @@ static void r700Enable(GLcontext * ctx, GLenum cap, GLboolean state) //---------
 	case GL_CLIP_PLANE3:
 	case GL_CLIP_PLANE4:
 	case GL_CLIP_PLANE5:
-		//r700SetClipPlaneState(ctx, cap, state);
+		r700SetClipPlaneState(ctx, cap, state);
 		break;
 	case GL_DEPTH_TEST:
 		r700SetDepthState(ctx);
@@ -675,8 +677,37 @@ static void r700RenderMode(GLcontext * ctx, GLenum mode) //---------------------
 {
 }
 
-static void r700ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq ) //-----------------
+static void r700ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq )
 {
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	GLint p;
+	GLint *ip;
+
+	p = (GLint) plane - (GLint) GL_CLIP_PLANE0;
+	ip = (GLint *)ctx->Transform._ClipUserPlane[p];
+
+	r700->ucp[p].PA_CL_UCP_0_X.u32All = ip[0];
+	r700->ucp[p].PA_CL_UCP_0_Y.u32All = ip[1];
+	r700->ucp[p].PA_CL_UCP_0_Z.u32All = ip[2];
+	r700->ucp[p].PA_CL_UCP_0_W.u32All = ip[3];
+}
+
+static void r700SetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	GLuint p;
+
+	p = cap - GL_CLIP_PLANE0;
+	if (state) {
+		r700->PA_CL_CLIP_CNTL.u32All |= (UCP_ENA_0_bit << p);
+		r700->ucp[p].enabled = GL_TRUE;
+		r700ClipPlane(ctx, cap, NULL);
+	} else {
+		r700->PA_CL_CLIP_CNTL.u32All &= ~(UCP_ENA_0_bit << p);
+		r700->ucp[p].enabled = GL_FALSE;
+	}
 }
 
 void r700SetScissor(context_t *context) //---------------

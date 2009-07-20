@@ -322,6 +322,7 @@ static GLboolean r700RunRender(GLcontext * ctx,
     r700SendPSState(context);
     r700SendVSState(context);
 
+    r700SendUCPState(context);
     r700SendContextStates(context);
     r700SendViewportState(context, 0);
     r700SendRenderTargetState(context, 0);
