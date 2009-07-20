@@ -2193,6 +2193,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
 GLboolean next_ins(r700_AssemblerBase *pAsm)
 {
     struct prog_instruction *pILInst = &(pAsm->pILInst[pAsm->uiCurInst]);
+    uint index;
 
     if( GL_TRUE == IsTex(pILInst->Opcode) )
     {
@@ -2213,14 +2214,20 @@ GLboolean next_ins(r700_AssemblerBase *pAsm)
       
     if(pAsm->D.dst.rtype == DST_REG_OUT) 
     {
+	    if (pAsm->starting_export_register_number >= pAsm->D.dst.reg) {
+		    index = 0;
+	    } else {
+		    index = pAsm->D.dst.reg - pAsm->starting_export_register_number;
+	    }
+
         if(pAsm->D.dst.op3) 
         {        
             // There is no mask for OP3 instructions, so all channels are written        
-            pAsm->pucOutMask[pAsm->D.dst.reg - pAsm->starting_export_register_number] = 0xF;
+            pAsm->pucOutMask[index] = 0xF;
         }
         else 
         {
-            pAsm->pucOutMask[pAsm->D.dst.reg - pAsm->starting_export_register_number] 
+            pAsm->pucOutMask[index]
                |= (unsigned char)pAsm->pILInst[pAsm->uiCurInst].DstReg.WriteMask;
         }
     }
