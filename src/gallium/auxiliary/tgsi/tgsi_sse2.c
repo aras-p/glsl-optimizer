@@ -2910,13 +2910,13 @@ tgsi_emit_sse2(
 	 func,
 	 get_coef_base(),
 	 x86_fn_arg( func, 4 ) );
-
-      x86_mov(
-	 func,
-	 get_sampler_base(),
-	 x86_make_disp( get_machine_base(),
-                        Offset( struct tgsi_exec_machine, Samplers ) ) );
    }
+
+   x86_mov(
+      func,
+      get_sampler_base(),
+      x86_make_disp( get_machine_base(),
+                     Offset( struct tgsi_exec_machine, Samplers ) ) );
 
 
    while( !tgsi_parse_end_of_tokens( &parse ) && ok ) {
