@@ -367,6 +367,19 @@ static void r700UpdateCulling(GLcontext * ctx)
     }
 }
 
+static void r700UpdateLineStipple(GLcontext * ctx)
+{
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&R700_CONTEXT(ctx)->hw);
+    if (ctx->Line.StippleFlag)
+    {
+	SETbit(r700->PA_SC_MODE_CNTL.u32All, LINE_STIPPLE_ENABLE_bit);
+    }
+    else
+    {
+	CLEARbit(r700->PA_SC_MODE_CNTL.u32All, LINE_STIPPLE_ENABLE_bit);
+    }
+}
+
 static void r700Enable(GLcontext * ctx, GLenum cap, GLboolean state) //------------------
 {
 	context_t *context = R700_CONTEXT(ctx);
@@ -416,6 +429,9 @@ static void r700Enable(GLcontext * ctx, GLenum cap, GLboolean state) //---------
 		context->radeon.state.scissor.enabled = state;
 		radeonUpdateScissor(ctx);
 		break;
+	case GL_LINE_STIPPLE:
+		r700UpdateLineStipple(ctx);
+		break;	
 	default:
 		break;
 	}
@@ -589,6 +605,23 @@ static void r700PointSize(GLcontext * ctx, GLfloat size) //-------------------
 
 static void r700LineWidth(GLcontext * ctx, GLfloat widthf) //---------------
 {
+    context_t *context = R700_CONTEXT(ctx);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+    uint32_t lineWidth = (uint32_t)((widthf * 0.5) * (1 << 4));
+    if (lineWidth > 0xFFFF)
+	lineWidth = 0xFFFF;
+    SETfield(r700->PA_SU_LINE_CNTL.u32All,(uint16_t)lineWidth,
+	PA_SU_LINE_CNTL__WIDTH_shift, PA_SU_LINE_CNTL__WIDTH_mask);
+}
+
+static void r700LineStipple(GLcontext *ctx, GLint factor, GLushort pattern)
+{
+    context_t *context = R700_CONTEXT(ctx);
+    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+    SETfield(r700->PA_SC_LINE_STIPPLE.u32All, pattern, LINE_PATTERN_shift, LINE
+    SETfield(r700->PA_SC_LINE_STIPPLE.u32All, (factor-1), REPEAT_COUNT_shift, REP
+    SETfield(r700->PA_SC_LINE_STIPPLE.u32All, 1, AUTO_RESET_CNTL_shift, AUTO_RE
 }
 
 static void r700PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units) //--------------
@@ -1209,6 +1242,7 @@ void r700InitStateFuncs(struct dd_function_table *functions) //-----------------
 	functions->DepthRange = r700DepthRange;
 	functions->PointSize = r700PointSize;
 	functions->LineWidth = r700LineWidth;
+	functions->LineStipple = r700LineStipple;
 
 	functions->PolygonOffset = r700PolygonOffset;
 	functions->PolygonMode = r700PolygonMode;
