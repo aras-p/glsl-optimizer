@@ -4,4 +4,4 @@ SConscript(['core/SConscript',])
 
 if 'mesa' in env['statetrackers']:
 
-    SConscript(['dri2/SConscript'])
+    SConscript(['dri/SConscript'])

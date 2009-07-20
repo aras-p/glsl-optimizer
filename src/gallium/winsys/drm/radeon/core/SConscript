@@ -11,7 +11,9 @@ radeon_sources = [
 
 env.Append(CPPPATH = '#/src/gallium/drivers/r300')
 
-env.ConvenienceLibrary(
+radeonwinsys = env.ConvenienceLibrary(
     target ='radeonwinsys',
     source = radeon_sources,
 )
+
+Export('radeonwinsys')
