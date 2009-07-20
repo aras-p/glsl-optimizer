@@ -283,12 +283,12 @@ radeonFillInModes( __DRIscreenPrivate *psp,
      * with a stencil buffer.  It will be a sw fallback, but some apps won't
      * care about that.
      */
-    stencil_bits_array[0] = 0;
+    stencil_bits_array[0] = stencil_bits;
     stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
 
     msaa_samples_array[0] = 0;
 
-    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
+    depth_buffer_factor = (stencil_bits == 0) ? 2 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
 
     if (pixel_bits == 16) {
