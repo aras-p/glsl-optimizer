@@ -493,7 +493,7 @@ static void r700SetBlendState(GLcontext * ctx)
 	SETfield(blend_reg,
 		 eqnA, ALPHA_COMB_FCN_shift, ALPHA_COMB_FCN_mask);
 
-	SETbit(r700->render_target[id].CB_BLEND0_CONTROL.u32All, SEPARATE_ALPHA_BLEND_bit);
+	SETbit(blend_reg, SEPARATE_ALPHA_BLEND_bit);
 
 	if (context->radeon.radeonScreen->chip_family == CHIP_FAMILY_R600)
 		r700->CB_BLEND_CONTROL.u32All = blend_reg;
