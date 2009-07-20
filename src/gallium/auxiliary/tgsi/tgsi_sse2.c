@@ -269,12 +269,14 @@ emit_const(
       /* 'vec' is the offset from the address register's value.
        * We're loading CONST[ADDR+vec] into an xmm register.
        */
-      struct x86_reg r0 = get_input_base();
-      struct x86_reg r1 = get_output_base();
+      struct x86_reg r0 = get_immediate_base();
+      struct x86_reg r1 = get_coef_base();
       uint i;
 
       assert( indirectFile == TGSI_FILE_ADDRESS );
       assert( indirectIndex == 0 );
+      assert( r0.mod == mod_REG );
+      assert( r1.mod == mod_REG );
 
       x86_push( func, r0 );
       x86_push( func, r1 );
