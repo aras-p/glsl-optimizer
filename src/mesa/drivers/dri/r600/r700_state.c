@@ -619,9 +619,9 @@ static void r700LineStipple(GLcontext *ctx, GLint factor, GLushort pattern)
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
-    SETfield(r700->PA_SC_LINE_STIPPLE.u32All, pattern, LINE_PATTERN_shift, LINE
-    SETfield(r700->PA_SC_LINE_STIPPLE.u32All, (factor-1), REPEAT_COUNT_shift, REP
-    SETfield(r700->PA_SC_LINE_STIPPLE.u32All, 1, AUTO_RESET_CNTL_shift, AUTO_RE
+    SETfield(r700->PA_SC_LINE_STIPPLE.u32All, pattern, LINE_PATTERN_shift, LINE_PATTERN_mask);
+    SETfield(r700->PA_SC_LINE_STIPPLE.u32All, (factor-1), REPEAT_COUNT_shift, REPEAT_COUNT_mask);
+    SETfield(r700->PA_SC_LINE_STIPPLE.u32All, 1, AUTO_RESET_CNTL_shift, AUTO_RESET_CNTL_mask);
 }
 
 static void r700PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units) //--------------
