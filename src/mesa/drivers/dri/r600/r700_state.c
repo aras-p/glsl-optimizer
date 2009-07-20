@@ -30,6 +30,7 @@
 #include "main/imports.h"
 #include "main/enums.h"
 #include "main/macros.h"
+#include "main/context.h"
 #include "main/dd.h"
 #include "main/simple_list.h"
 
@@ -322,6 +323,43 @@ static void r700BlendFuncSeparate(GLcontext * ctx,
 {
 }
 
+/**
+ * Translate LogicOp enums into hardware representation.
+ * Both use a very logical bit-wise layout, but unfortunately the order
+ * of bits is reversed.
+ */
+static GLuint translate_logicop(GLenum logicop)
+{
+	GLuint bits = logicop - GL_CLEAR;
+	bits = ((bits & 1) << 3) | ((bits & 2) << 1) | ((bits & 4) >> 1) | ((bits & 8) >> 3);
+	return bits;
+}
+
+/**
+ * Used internally to update the r300->hw hardware state to match the
+ * current OpenGL state.
+ */
+static void r700SetLogicOpState(GLcontext *ctx)
+{
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&R700_CONTEXT(ctx)->hw);
+
+	if (RGBA_LOGICOP_ENABLED(ctx))
+		SETfield(r700->CB_COLOR_CONTROL.u32All,
+			 translate_logicop(ctx->Color.LogicOp), ROP3_shift, ROP3_mask);
+	else
+		SETfield(r700->CB_COLOR_CONTROL.u32All, 0xCC, ROP3_shift, ROP3_mask);
+}
+
+/**
+ * Called by Mesa when an application program changes the LogicOp state
+ * via glLogicOp.
+ */
+static void r700LogicOpcode(GLcontext *ctx, GLenum logicop)
+{
+	if (RGBA_LOGICOP_ENABLED(ctx))
+		r700SetLogicOpState(ctx);
+}
+
 static void r700UpdateCulling(GLcontext * ctx)
 {
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&R700_CONTEXT(ctx)->hw);
@@ -397,7 +435,7 @@ static void r700Enable(GLcontext * ctx, GLenum cap, GLboolean state) //---------
 		//r700SetAlphaState(ctx);
 		break;
 	case GL_COLOR_LOGIC_OP:
-		//r700SetLogicOpState(ctx);
+		r700SetLogicOpState(ctx);
 		/* fall-through, because logic op overrides blending */
 	case GL_BLEND:
 		//r700SetBlendState(ctx);
@@ -1083,7 +1121,7 @@ void r700InitState(GLcontext * ctx) //-------------------
     if (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV770)
 	    SETfield(r700->SPI_THREAD_GROUPING.u32All, 1, PS_GROUPING_shift, PS_GROUPING_mask);
 
-    SETfield(r700->CB_COLOR_CONTROL.u32All, 0xCC, ROP3_shift, ROP3_mask);
+    r700SetLogicOpState(ctx);
     CLEARbit(r700->CB_COLOR_CONTROL.u32All, PER_MRT_BLEND_bit);
 
     r700->DB_SHADER_CONTROL.u32All = 0;
@@ -1228,6 +1266,7 @@ void r700InitStateFuncs(struct dd_function_table *functions) //-----------------
 	functions->Fogfv = r700Fogfv;
 	functions->FrontFace = r700FrontFace;
 	functions->ShadeModel = r700ShadeModel;
+	functions->LogicOpcode = r700LogicOpcode;
 
 	/* ARB_point_parameters */
 	functions->PointParameterfv = r700PointParameter;
