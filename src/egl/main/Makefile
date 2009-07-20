@@ -4,7 +4,7 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 
-INCLUDE_DIRS = -I$(TOP)/include -I$(TOP)/src/mesa/glapi
+INCLUDE_DIRS = -I$(TOP)/include -I$(TOP)/src/mesa/glapi $(X11_INCLUDES)
 
 HEADERS = \
 	eglconfig.h \
