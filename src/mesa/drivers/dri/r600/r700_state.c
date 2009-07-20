@@ -312,17 +312,211 @@ static void r700AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref) //---------
 
 static void r700BlendColor(GLcontext * ctx, const GLfloat cf[4]) //----------------
 {
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+	r700->CB_BLEND_RED.f32All = cf[0];
+	r700->CB_BLEND_GREEN.f32All = cf[1];
+	r700->CB_BLEND_BLUE.f32All = cf[2];
+	r700->CB_BLEND_ALPHA.f32All = cf[3];
+}
+
+static int blend_factor(GLenum factor, GLboolean is_src)
+{
+	switch (factor) {
+	case GL_ZERO:
+		return BLEND_ZERO;
+		break;
+	case GL_ONE:
+		return BLEND_ONE;
+		break;
+	case GL_DST_COLOR:
+		return BLEND_DST_COLOR;
+		break;
+	case GL_ONE_MINUS_DST_COLOR:
+		return BLEND_ONE_MINUS_DST_COLOR;
+		break;
+	case GL_SRC_COLOR:
+		return BLEND_SRC_COLOR;
+		break;
+	case GL_ONE_MINUS_SRC_COLOR:
+		return BLEND_ONE_MINUS_SRC_COLOR;
+		break;
+	case GL_SRC_ALPHA:
+		return BLEND_SRC_ALPHA;
+		break;
+	case GL_ONE_MINUS_SRC_ALPHA:
+		return BLEND_ONE_MINUS_SRC_ALPHA;
+		break;
+	case GL_DST_ALPHA:
+		return BLEND_DST_ALPHA;
+		break;
+	case GL_ONE_MINUS_DST_ALPHA:
+		return BLEND_ONE_MINUS_DST_ALPHA;
+		break;
+	case GL_SRC_ALPHA_SATURATE:
+		return (is_src) ? BLEND_SRC_ALPHA_SATURATE : BLEND_ZERO;
+		break;
+	case GL_CONSTANT_COLOR:
+		return BLEND_CONSTANT_COLOR;
+		break;
+	case GL_ONE_MINUS_CONSTANT_COLOR:
+		return BLEND_ONE_MINUS_CONSTANT_COLOR;
+		break;
+	case GL_CONSTANT_ALPHA:
+		return BLEND_CONSTANT_ALPHA;
+		break;
+	case GL_ONE_MINUS_CONSTANT_ALPHA:
+		return BLEND_ONE_MINUS_CONSTANT_ALPHA;
+		break;
+	default:
+		fprintf(stderr, "unknown blend factor %x\n", factor);
+		return (is_src) ? BLEND_ONE : BLEND_ZERO;
+		break;
+	}
+}
+
+static void r700SetBlendState(GLcontext * ctx)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	int id = 0;
+	uint32_t blend_reg = 0, eqn, eqnA;
+
+	if (RGBA_LOGICOP_ENABLED(ctx) || !ctx->Color.BlendEnabled) {
+		SETfield(blend_reg,
+			 BLEND_ONE, COLOR_SRCBLEND_shift, COLOR_SRCBLEND_mask);
+		SETfield(blend_reg,
+			 BLEND_ZERO, COLOR_DESTBLEND_shift, COLOR_DESTBLEND_mask);
+		SETfield(blend_reg,
+			 COMB_DST_PLUS_SRC, COLOR_COMB_FCN_shift, COLOR_COMB_FCN_mask);
+		SETfield(blend_reg,
+			 BLEND_ONE, ALPHA_SRCBLEND_shift, ALPHA_SRCBLEND_mask);
+		SETfield(blend_reg,
+			 BLEND_ZERO, ALPHA_DESTBLEND_shift, ALPHA_DESTBLEND_mask);
+		SETfield(blend_reg,
+			 COMB_DST_PLUS_SRC, ALPHA_COMB_FCN_shift, ALPHA_COMB_FCN_mask);
+		if (context->radeon.radeonScreen->chip_family == CHIP_FAMILY_R600)
+			r700->CB_BLEND_CONTROL.u32All = blend_reg;
+		else
+			r700->render_target[id].CB_BLEND0_CONTROL.u32All = blend_reg;
+		return;
+	}
+
+	SETfield(blend_reg,
+		 blend_factor(ctx->Color.BlendSrcRGB, GL_TRUE),
+		 COLOR_SRCBLEND_shift, COLOR_SRCBLEND_mask);
+	SETfield(blend_reg,
+		 blend_factor(ctx->Color.BlendDstRGB, GL_FALSE),
+		 COLOR_DESTBLEND_shift, COLOR_DESTBLEND_mask);
+
+	switch (ctx->Color.BlendEquationRGB) {
+	case GL_FUNC_ADD:
+		eqn = COMB_DST_PLUS_SRC;
+		break;
+	case GL_FUNC_SUBTRACT:
+		eqn = COMB_SRC_MINUS_DST;
+		break;
+	case GL_FUNC_REVERSE_SUBTRACT:
+		eqn = COMB_DST_MINUS_SRC;
+		break;
+	case GL_MIN:
+		eqn = COMB_MIN_DST_SRC;
+		SETfield(blend_reg,
+			 BLEND_ONE,
+			 COLOR_SRCBLEND_shift, COLOR_SRCBLEND_mask);
+		SETfield(blend_reg,
+			 BLEND_ONE,
+			 COLOR_DESTBLEND_shift, COLOR_DESTBLEND_mask);
+		break;
+	case GL_MAX:
+		eqn = COMB_MAX_DST_SRC;
+		SETfield(blend_reg,
+			 BLEND_ONE,
+			 COLOR_SRCBLEND_shift, COLOR_SRCBLEND_mask);
+		SETfield(blend_reg,
+			 BLEND_ONE,
+			 COLOR_DESTBLEND_shift, COLOR_DESTBLEND_mask);
+		break;
+
+	default:
+		fprintf(stderr,
+			"[%s:%u] Invalid RGB blend equation (0x%04x).\n",
+			__FUNCTION__, __LINE__, ctx->Color.BlendEquationRGB);
+		return;
+	}
+	SETfield(blend_reg,
+		 eqn, COLOR_COMB_FCN_shift, COLOR_COMB_FCN_mask);
+
+	SETfield(blend_reg,
+		 blend_factor(ctx->Color.BlendSrcRGB, GL_TRUE),
+		 ALPHA_SRCBLEND_shift, ALPHA_SRCBLEND_mask);
+	SETfield(blend_reg,
+		 blend_factor(ctx->Color.BlendDstRGB, GL_FALSE),
+		 ALPHA_DESTBLEND_shift, ALPHA_DESTBLEND_mask);
+
+	switch (ctx->Color.BlendEquationA) {
+	case GL_FUNC_ADD:
+		eqnA = COMB_DST_PLUS_SRC;
+		break;
+	case GL_FUNC_SUBTRACT:
+		eqnA = COMB_SRC_MINUS_DST;
+		break;
+	case GL_FUNC_REVERSE_SUBTRACT:
+		eqnA = COMB_DST_MINUS_SRC;
+		break;
+	case GL_MIN:
+		eqnA = COMB_MIN_DST_SRC;
+		SETfield(blend_reg,
+			 BLEND_ONE,
+			 ALPHA_SRCBLEND_shift, ALPHA_SRCBLEND_mask);
+		SETfield(blend_reg,
+			 BLEND_ONE,
+			 ALPHA_DESTBLEND_shift, ALPHA_DESTBLEND_mask);
+		break;
+	case GL_MAX:
+		eqnA = COMB_MAX_DST_SRC;
+		SETfield(blend_reg,
+			 BLEND_ONE,
+			 ALPHA_SRCBLEND_shift, ALPHA_SRCBLEND_mask);
+		SETfield(blend_reg,
+			 BLEND_ONE,
+			 ALPHA_DESTBLEND_shift, ALPHA_DESTBLEND_mask);
+		break;
+	default:
+		fprintf(stderr,
+			"[%s:%u] Invalid A blend equation (0x%04x).\n",
+			__FUNCTION__, __LINE__, ctx->Color.BlendEquationA);
+		return;
+	}
+
+	SETfield(blend_reg,
+		 eqnA, ALPHA_COMB_FCN_shift, ALPHA_COMB_FCN_mask);
+
+	SETbit(r700->render_target[id].CB_BLEND0_CONTROL.u32All, SEPARATE_ALPHA_BLEND_bit);
+
+	if (context->radeon.radeonScreen->chip_family == CHIP_FAMILY_R600)
+		r700->CB_BLEND_CONTROL.u32All = blend_reg;
+	else {
+		r700->render_target[id].CB_BLEND0_CONTROL.u32All = blend_reg;
+		SETbit(r700->CB_COLOR_CONTROL.u32All, PER_MRT_BLEND_bit);
+	}
+	SETfield(r700->CB_COLOR_CONTROL.u32All, (1 << id),
+		 TARGET_BLEND_ENABLE_shift, TARGET_BLEND_ENABLE_mask);
+
 }
 
 static void r700BlendEquationSeparate(GLcontext * ctx,
 				                      GLenum modeRGB, GLenum modeA) //-----------------
 {
+	r700SetBlendState(ctx);
 }
 
 static void r700BlendFuncSeparate(GLcontext * ctx,
 				  GLenum sfactorRGB, GLenum dfactorRGB,
 				  GLenum sfactorA, GLenum dfactorA) //------------------------
 {
+	r700SetBlendState(ctx);
 }
 
 /**
@@ -440,7 +634,7 @@ static void r700Enable(GLcontext * ctx, GLenum cap, GLboolean state) //---------
 		r700SetLogicOpState(ctx);
 		/* fall-through, because logic op overrides blending */
 	case GL_BLEND:
-		//r700SetBlendState(ctx);
+		r700SetBlendState(ctx);
 		break;
 	case GL_CLIP_PLANE0:
 	case GL_CLIP_PLANE1:
@@ -471,7 +665,7 @@ static void r700Enable(GLcontext * ctx, GLenum cap, GLboolean state) //---------
 		break;
 	case GL_LINE_STIPPLE:
 		r700UpdateLineStipple(ctx);
-		break;	
+		break;
 	default:
 		break;
 	}
@@ -833,9 +1027,6 @@ void r700SetRenderTarget(context_t *context, int id)
     SETbit(r700->render_target[id].CB_COLOR0_INFO.u32All, BLEND_CLAMP_bit);
     SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
 
-    CLEARfield(r700->render_target[id].CB_BLEND0_CONTROL.u32All, COLOR_SRCBLEND_mask); /* no dst blend */
-    CLEARfield(r700->render_target[id].CB_BLEND0_CONTROL.u32All, ALPHA_SRCBLEND_mask); /* no dst blend */
-
     r700->render_target[id].enabled = GL_TRUE;
 }
 
@@ -1152,8 +1343,8 @@ void r700InitState(GLcontext * ctx) //-------------------
     if (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV770)
 	    SETfield(r700->SPI_THREAD_GROUPING.u32All, 1, PS_GROUPING_shift, PS_GROUPING_mask);
 
+    r700SetBlendState(ctx);
     r700SetLogicOpState(ctx);
-    CLEARbit(r700->CB_COLOR_CONTROL.u32All, PER_MRT_BLEND_bit);
 
     r700->DB_SHADER_CONTROL.u32All = 0;
     SETbit(r700->DB_SHADER_CONTROL.u32All, DUAL_EXPORT_ENABLE_bit);
@@ -1244,13 +1435,6 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->CB_FOG_RED_R6XX.u32All = 0; //r6xx only
     r700->CB_FOG_GREEN_R6XX.u32All = 0; //r6xx only
     r700->CB_FOG_BLUE_R6XX.u32All = 0; //r6xx only
-
-    r700->CB_BLEND_RED.u32All = 0;
-    r700->CB_BLEND_GREEN.u32All = 0;
-    r700->CB_BLEND_BLUE.u32All = 0;
-    r700->CB_BLEND_ALPHA.u32All = 0;
-
-    r700->CB_BLEND_CONTROL.u32All = 0;
 
     /* Disable color compares */
     SETfield(r700->CB_CLRCMP_CONTROL.u32All, CLRCMP_DRAW_ALWAYS,
