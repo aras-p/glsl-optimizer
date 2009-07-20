@@ -67,6 +67,10 @@ static void
 vs_sse_prepare( struct draw_vertex_shader *base,
 		struct draw_context *draw )
 {
+   struct draw_sse_vertex_shader *shader = (struct draw_sse_vertex_shader *)base;
+   struct tgsi_exec_machine *machine = shader->machine;
+
+   machine->Samplers = draw->vs.samplers;
 }
 
 
