@@ -1557,6 +1557,9 @@ void r700InitState(GLcontext * ctx) //-------------------
     CLEARfield(r700->PA_SU_POINT_MINMAX.u32All, MIN_SIZE_mask);
     SETfield(r700->PA_SU_POINT_MINMAX.u32All, 0x8000, MAX_SIZE_shift, MAX_SIZE_mask);
 
+    /* GL uses last vtx for flat shading components */
+    SETbit(r700->PA_SU_SC_MODE_CNTL.u32All, PROVOKING_VTX_LAST_bit);
+
     /* Set up line control */
     SETfield(r700->PA_SU_LINE_CNTL.u32All, 0x8,
              PA_SU_LINE_CNTL__WIDTH_shift, PA_SU_LINE_CNTL__WIDTH_mask);
