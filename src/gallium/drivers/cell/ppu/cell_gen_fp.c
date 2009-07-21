@@ -1875,9 +1875,9 @@ emit_immediate(struct codegen *gen, const struct tgsi_full_immediate *immed)
    assert(gen->num_imm < MAX_TEMPS);
 
    for (ch = 0; ch < 4; ch++) {
-      float val = immed->u.ImmediateFloat32[ch].Float;
+      float val = immed->u[ch].Float;
 
-      if (ch > 0 && val == immed->u.ImmediateFloat32[ch - 1].Float) {
+      if (ch > 0 && val == immed->u[ch - 1].Float) {
          /* re-use previous register */
          gen->imm_regs[gen->num_imm][ch] = gen->imm_regs[gen->num_imm][ch - 1];
       }

@@ -1091,7 +1091,10 @@ static boolean parse_immediate( struct translate_ctx *ctx )
    imm = tgsi_default_full_immediate();
    imm.Immediate.NrTokens += 4;
    imm.Immediate.DataType = TGSI_IMM_FLOAT32;
-   imm.u.Pointer = values;
+   imm.u[0].Float = values[0];
+   imm.u[1].Float = values[1];
+   imm.u[2].Float = values[2];
+   imm.u[3].Float = values[3];
 
    advance = tgsi_build_full_immediate(
       &imm,

@@ -788,10 +788,10 @@ nv40_vertprog_translate(struct nv40_context *nv40,
 			assert(imm->Immediate.NrTokens == 4 + 1);
 			vpc->imm[vpc->nr_imm++] =
 				constant(vpc, -1,
-					 imm->u.ImmediateFloat32[0].Float,
-					 imm->u.ImmediateFloat32[1].Float,
-					 imm->u.ImmediateFloat32[2].Float,
-					 imm->u.ImmediateFloat32[3].Float);
+					 imm->u[0].Float,
+					 imm->u[1].Float,
+					 imm->u[2].Float,
+					 imm->u[3].Float);
 		}
 			break;
 		case TGSI_TOKEN_TYPE_INSTRUCTION:

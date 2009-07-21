@@ -225,11 +225,15 @@ static struct tgsi_full_immediate
 make_immediate(const float *value, uint size)
 {
    struct tgsi_full_immediate imm;
+   unsigned i;
 
    imm = tgsi_default_full_immediate();
    imm.Immediate.NrTokens += size;
    imm.Immediate.DataType = TGSI_IMM_FLOAT32;
-   imm.u.Pointer = value;
+
+   for (i = 0; i < size; i++)
+      imm.u[i].Float = value[i];
+
    return imm;
 }
 

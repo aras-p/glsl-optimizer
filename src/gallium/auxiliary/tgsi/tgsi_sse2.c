@@ -2953,7 +2953,7 @@ tgsi_emit_sse2(
             assert(num_immediates < TGSI_EXEC_NUM_IMMEDIATES);
             for( i = 0; i < size; i++ ) {
                immediates[num_immediates][i] =
-		  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
+		  parse.FullToken.FullImmediate.u[i].Float;
             }
 #if 0
             debug_printf("SSE FS immediate[%d] = %f %f %f %f\n",

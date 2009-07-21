@@ -152,7 +152,7 @@ struct tgsi_immediate
    unsigned Extended   : 1;  /**< BOOL */
 };
 
-struct tgsi_immediate_float32
+union tgsi_immediate_data
 {
    float Float;
 };

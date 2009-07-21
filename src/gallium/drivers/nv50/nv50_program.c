@@ -1809,10 +1809,10 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			const struct tgsi_full_immediate *imm =
 				&p.FullToken.FullImmediate;
 
-			ctor_immd(pc, imm->u.ImmediateFloat32[0].Float,
-				      imm->u.ImmediateFloat32[1].Float,
-				      imm->u.ImmediateFloat32[2].Float,
-				      imm->u.ImmediateFloat32[3].Float);
+			ctor_immd(pc, imm->u[0].Float,
+				      imm->u[1].Float,
+				      imm->u[2].Float,
+				      imm->u[3].Float);
 		}
 			break;
 		case TGSI_TOKEN_TYPE_DECLARATION:

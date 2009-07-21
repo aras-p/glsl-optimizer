@@ -1333,7 +1333,7 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
             assert(num_immediates < TGSI_EXEC_NUM_IMMEDIATES);
             for (i = 0; i < size; i++) {
                immediates[num_immediates][i] =
-		  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
+		  parse.FullToken.FullImmediate.u[i].Float;
             }
             num_immediates++;
          }

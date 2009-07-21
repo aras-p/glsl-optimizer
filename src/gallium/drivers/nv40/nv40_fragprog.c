@@ -790,10 +790,10 @@ nv40_fragprog_prepare(struct nv40_fpc *fpc)
 			assert(imm->Immediate.DataType == TGSI_IMM_FLOAT32);
 			assert(fpc->nr_imm < MAX_IMM);
 
-			vals[0] = imm->u.ImmediateFloat32[0].Float;
-			vals[1] = imm->u.ImmediateFloat32[1].Float;
-			vals[2] = imm->u.ImmediateFloat32[2].Float;
-			vals[3] = imm->u.ImmediateFloat32[3].Float;
+			vals[0] = imm->u[0].Float;
+			vals[1] = imm->u[1].Float;
+			vals[2] = imm->u[2].Float;
+			vals[3] = imm->u[3].Float;
 			fpc->imm[fpc->nr_imm++] = constant(fpc, -1, vals);
 		}
 			break;

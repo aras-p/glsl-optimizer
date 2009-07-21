@@ -301,14 +301,14 @@ tgsi_exec_machine_bind_shader(
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          {
             uint size = parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
-            assert( size % 4 == 0 );
-            assert( mach->ImmLimit + size / 4 <= TGSI_EXEC_NUM_IMMEDIATES );
+            assert( size <= 4 );
+            assert( mach->ImmLimit + 1 <= TGSI_EXEC_NUM_IMMEDIATES );
 
             for( i = 0; i < size; i++ ) {
-               mach->Imms[mach->ImmLimit + i / 4][i % 4] = 
-		  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
+               mach->Imms[mach->ImmLimit][i] = 
+		  parse.FullToken.FullImmediate.u[i].Float;
             }
-            mach->ImmLimit += size / 4;
+            mach->ImmLimit += 1;
          }
          break;
 

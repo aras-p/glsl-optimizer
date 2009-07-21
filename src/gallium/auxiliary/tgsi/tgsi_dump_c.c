@@ -283,12 +283,13 @@ dump_immediate_verbose(
       UIX( imm->Immediate.Padding );
    }
 
+   assert( imm->Immediate.NrTokens <= 4 + 1 );
    for( i = 0; i < imm->Immediate.NrTokens - 1; i++ ) {
       EOL();
       switch( imm->Immediate.DataType ) {
       case TGSI_IMM_FLOAT32:
          TXT( "\nFloat: " );
-         FLT( imm->u.ImmediateFloat32[i].Float );
+         FLT( imm->u[i].Float );
          break;
 
       default:

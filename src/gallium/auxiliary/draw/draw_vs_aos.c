@@ -1891,8 +1891,9 @@ static boolean note_immediate( struct aos_compilation *cp,
    unsigned pos = cp->num_immediates++;
    unsigned j;
 
+   assert( imm->Immediate.NrTokens <= 4 + 1 );
    for (j = 0; j < imm->Immediate.NrTokens - 1; j++) {
-      cp->vaos->machine->immediate[pos][j] = imm->u.ImmediateFloat32[j].Float;
+      cp->vaos->machine->immediate[pos][j] = imm->u[j].Float;
    }
 
    return TRUE;
