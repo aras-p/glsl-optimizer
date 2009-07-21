@@ -59,6 +59,7 @@
 static void r700SetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state);
 static void r700UpdatePolygonMode(GLcontext * ctx);
 static void r700SetPolygonOffsetState(GLcontext * ctx, GLboolean state);
+static void r700SetStencilState(GLcontext * ctx, GLboolean state);
 
 void r700SetDefaultStates(context_t *context) //--------------------
 {
@@ -273,40 +274,40 @@ static void r700SetDepthState(GLcontext * ctx)
 
         switch (ctx->Depth.Func)
         {
-        case GL_NEVER:            
-            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_NEVER, 
+        case GL_NEVER:
+            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_NEVER,
                      ZFUNC_shift, ZFUNC_mask);
             break;
         case GL_LESS:
-            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_LESS, 
-                     ZFUNC_shift, ZFUNC_mask);            
+            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_LESS,
+                     ZFUNC_shift, ZFUNC_mask);
             break;
         case GL_EQUAL:
-            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_EQUAL, 
+            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_EQUAL,
                      ZFUNC_shift, ZFUNC_mask);
             break;
         case GL_LEQUAL:
-            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_LEQUAL,  
+            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_LEQUAL,
                      ZFUNC_shift, ZFUNC_mask);
             break;
         case GL_GREATER:
-            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_GREATER,  
-                     ZFUNC_shift, ZFUNC_mask);           
+            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_GREATER,
+                     ZFUNC_shift, ZFUNC_mask);
             break;
         case GL_NOTEQUAL:
-            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_NOTEQUAL,  
+            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_NOTEQUAL,
                      ZFUNC_shift, ZFUNC_mask);
             break;
         case GL_GEQUAL:
-            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_GEQUAL,  
+            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_GEQUAL,
                      ZFUNC_shift, ZFUNC_mask);
             break;
         case GL_ALWAYS:
-            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_ALWAYS,  
+            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_ALWAYS,
                      ZFUNC_shift, ZFUNC_mask);
             break;
         default:
-            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_ALWAYS,  
+            SETfield(r700->DB_DEPTH_CONTROL.u32All, FRAG_ALWAYS,
                      ZFUNC_shift, ZFUNC_mask);
             break;
         }
@@ -710,7 +711,7 @@ static void r700Enable(GLcontext * ctx, GLenum cap, GLboolean state) //---------
 		r700SetDepthState(ctx);
 		break;
 	case GL_STENCIL_TEST:
-		//r700SetStencilState(ctx, state);
+		r700SetStencilState(ctx, state);
 		break;
 	case GL_CULL_FACE:
 		r700UpdateCulling(ctx);
@@ -863,24 +864,154 @@ static void r700PointParameter(GLcontext * ctx, GLenum pname, const GLfloat * pa
 	}
 }
 
+static int translate_stencil_func(int func)
+{
+	switch (func) {
+	case GL_NEVER:
+		return REF_NEVER;
+	case GL_LESS:
+		return REF_LESS;
+	case GL_EQUAL:
+		return REF_EQUAL;
+	case GL_LEQUAL:
+		return REF_LEQUAL;
+	case GL_GREATER:
+		return REF_GREATER;
+	case GL_NOTEQUAL:
+		return REF_NOTEQUAL;
+	case GL_GEQUAL:
+		return REF_GEQUAL;
+	case GL_ALWAYS:
+		return REF_ALWAYS;
+	}
+	return 0;
+}
+
+static int translate_stencil_op(int op)
+{
+	switch (op) {
+	case GL_KEEP:
+		return STENCIL_KEEP;
+	case GL_ZERO:
+		return STENCIL_ZERO;
+	case GL_REPLACE:
+		return STENCIL_REPLACE;
+	case GL_INCR:
+		return STENCIL_INCR_CLAMP;
+	case GL_DECR:
+		return STENCIL_DECR_CLAMP;
+	case GL_INCR_WRAP_EXT:
+		return STENCIL_INCR_WRAP;
+	case GL_DECR_WRAP_EXT:
+		return STENCIL_DECR_WRAP;
+	case GL_INVERT:
+		return STENCIL_INVERT;
+	default:
+		WARN_ONCE("Do not know how to translate stencil op");
+		return STENCIL_KEEP;
+	}
+	return 0;
+}
+
+static void r700SetStencilState(GLcontext * ctx, GLboolean state)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	GLboolean hw_stencil = GL_FALSE;
+
+	//fixme
+	//r300CatchStencilFallback(ctx);
+
+	if (ctx->DrawBuffer) {
+		struct radeon_renderbuffer *rrbStencil
+			= radeon_get_renderbuffer(ctx->DrawBuffer, BUFFER_STENCIL);
+		hw_stencil = (rrbStencil && rrbStencil->bo);
+	}
+
+	if (hw_stencil) {
+		if (state)
+			SETbit(r700->DB_DEPTH_CONTROL.u32All, STENCIL_ENABLE_bit);
+		else
+			CLEARbit(r700->DB_DEPTH_CONTROL.u32All, STENCIL_ENABLE_bit);
+	}
+}
+
 static void r700StencilFuncSeparate(GLcontext * ctx, GLenum face,
 				    GLenum func, GLint ref, GLuint mask) //---------------------
 {
-}
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	const unsigned back = ctx->Stencil._BackFace;
 
+	//fixme
+	//r300CatchStencilFallback(ctx);
+
+	//front
+	SETfield(r700->DB_STENCILREFMASK.u32All, ctx->Stencil.Ref[0],
+		 STENCILREF_shift, STENCILREF_mask);
+	SETfield(r700->DB_STENCILREFMASK.u32All, ctx->Stencil.ValueMask[0],
+		 STENCILMASK_shift, STENCILMASK_mask);
+
+	SETfield(r700->DB_DEPTH_CONTROL.u32All, translate_stencil_func(ctx->Stencil.Function[0]),
+		 STENCILFUNC_shift, STENCILFUNC_mask);
+
+	//back
+	SETfield(r700->DB_STENCILREFMASK_BF.u32All, ctx->Stencil.Ref[back],
+		 STENCILREF_BF_shift, STENCILREF_BF_mask);
+	SETfield(r700->DB_STENCILREFMASK_BF.u32All, ctx->Stencil.ValueMask[back],
+		 STENCILMASK_BF_shift, STENCILMASK_BF_mask);
+
+	SETfield(r700->DB_DEPTH_CONTROL.u32All, translate_stencil_func(ctx->Stencil.Function[back]),
+		 STENCILFUNC_BF_shift, STENCILFUNC_BF_mask);
+
+}
 
 static void r700StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask) //--------------
 {
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	const unsigned back = ctx->Stencil._BackFace;
+
+	//fixme
+	//r300CatchStencilFallback(ctx);
+
+	// front
+	SETfield(r700->DB_STENCILREFMASK.u32All, ctx->Stencil.WriteMask[0],
+		 STENCILWRITEMASK_shift, STENCILWRITEMASK_mask);
+
+	// back
+	SETfield(r700->DB_STENCILREFMASK_BF.u32All, ctx->Stencil.WriteMask[back],
+		 STENCILWRITEMASK_BF_shift, STENCILWRITEMASK_BF_mask);
+
 }
 
 static void r700StencilOpSeparate(GLcontext * ctx, GLenum face,
 				  GLenum fail, GLenum zfail, GLenum zpass) //--------------------
 {
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	const unsigned back = ctx->Stencil._BackFace;
+
+	//fixme
+	//r300CatchStencilFallback(ctx);
+
+	SETfield(r700->DB_DEPTH_CONTROL.u32All, translate_stencil_op(ctx->Stencil.FailFunc[0]),
+		 STENCILFAIL_shift, STENCILFAIL_mask);
+	SETfield(r700->DB_DEPTH_CONTROL.u32All, translate_stencil_op(ctx->Stencil.ZFailFunc[0]),
+		 STENCILZFAIL_shift, STENCILZFAIL_mask);
+	SETfield(r700->DB_DEPTH_CONTROL.u32All, translate_stencil_op(ctx->Stencil.ZPassFunc[0]),
+		 STENCILZPASS_shift, STENCILZPASS_mask);
+
+	SETfield(r700->DB_DEPTH_CONTROL.u32All, translate_stencil_op(ctx->Stencil.FailFunc[back]),
+		 STENCILFAIL_BF_shift, STENCILFAIL_BF_mask);
+	SETfield(r700->DB_DEPTH_CONTROL.u32All, translate_stencil_op(ctx->Stencil.ZFailFunc[back]),
+		 STENCILZFAIL_BF_shift, STENCILZFAIL_BF_mask);
+	SETfield(r700->DB_DEPTH_CONTROL.u32All, translate_stencil_op(ctx->Stencil.ZPassFunc[back]),
+		 STENCILZPASS_BF_shift, STENCILZPASS_BF_mask);
 }
 
 static void r700UpdateWindow(GLcontext * ctx, int id) //--------------------
 {
-
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&context->radeon);
