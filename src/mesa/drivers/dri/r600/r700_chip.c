@@ -139,6 +139,7 @@ GLboolean r700InitChipObject(context_t *context)
     // SX
     LINK_STATES(SX_MISC);
     LINK_STATES(SX_ALPHA_TEST_CONTROL);
+    LINK_STATES(SX_ALPHA_REF);
 
     // VGT
     LINK_STATES(VGT_MAX_VTX_INDX);

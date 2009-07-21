@@ -372,6 +372,7 @@ typedef struct _R700_CHIP_CONTEXT
 	// SX
 	union UINT_FLOAT                SX_MISC                   ;  /* 0xA0D4 */
 	union UINT_FLOAT     	        SX_ALPHA_TEST_CONTROL     ;  /* 0xA104 */
+	union UINT_FLOAT     	        SX_ALPHA_REF              ;  /* 0xA10E */
 
 	// VGT
 	union UINT_FLOAT          	VGT_MAX_VTX_INDX          ;  /* 0xA100 */
@@ -422,7 +423,7 @@ typedef struct _R700_CHIP_CONTEXT
 	union UINT_FLOAT              	SPI_FOG_FUNC_SCALE        ;  /* 0xA1B8 */
 	union UINT_FLOAT              	SPI_FOG_FUNC_BIAS         ;  /* 0xA1B9 */
 
-    union UINT_FLOAT         	SQ_VTX_SEMANTIC_0         ;  /* 0xA0E0 */
+	union UINT_FLOAT         	SQ_VTX_SEMANTIC_0         ;  /* 0xA0E0 */
 	union UINT_FLOAT         	SQ_VTX_SEMANTIC_1         ;  /* 0xA0E1 */
 	union UINT_FLOAT         	SQ_VTX_SEMANTIC_2         ;  /* 0xA0E2 */
 	union UINT_FLOAT         	SQ_VTX_SEMANTIC_3         ;  /* 0xA0E3 */

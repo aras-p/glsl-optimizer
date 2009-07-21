@@ -305,8 +305,57 @@ static void r700SetDepthState(GLcontext * ctx)
     }
 }
 
+static void r700SetAlphaState(GLcontext * ctx)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	uint32_t alpha_func;
+	GLboolean really_enabled = ctx->Color.AlphaEnabled;
+
+	switch (ctx->Color.AlphaFunc) {
+	case GL_NEVER:
+		alpha_func = REF_NEVER;
+		break;
+	case GL_LESS:
+		alpha_func = REF_LESS;
+		break;
+	case GL_EQUAL:
+		alpha_func = REF_EQUAL;
+		break;
+	case GL_LEQUAL:
+		alpha_func = REF_LEQUAL;
+		break;
+	case GL_GREATER:
+		alpha_func = REF_GREATER;
+		break;
+	case GL_NOTEQUAL:
+		alpha_func = REF_NOTEQUAL;
+		break;
+	case GL_GEQUAL:
+		alpha_func = REF_GEQUAL;
+		break;
+	case GL_ALWAYS:
+		/*alpha_func = REF_ALWAYS; */
+		really_enabled = GL_FALSE;
+		break;
+	}
+
+	if (really_enabled) {
+		SETfield(r700->SX_ALPHA_TEST_CONTROL.u32All, alpha_func,
+			 ALPHA_FUNC_shift, ALPHA_FUNC_mask);
+		SETbit(r700->SX_ALPHA_TEST_CONTROL.u32All, ALPHA_TEST_ENABLE_bit);
+		r700->SX_ALPHA_REF.f32All = ctx->Color.AlphaRef;
+	} else {
+		CLEARbit(r700->SX_ALPHA_TEST_CONTROL.u32All, ALPHA_TEST_ENABLE_bit);
+	}
+
+}
+
 static void r700AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref) //---------------
 {
+	(void)func;
+	(void)ref;
+	r700SetAlphaState(ctx);
 }
 
 
@@ -628,7 +677,7 @@ static void r700Enable(GLcontext * ctx, GLenum cap, GLboolean state) //---------
 		/* empty */
 		break;
 	case GL_ALPHA_TEST:
-		//r700SetAlphaState(ctx);
+		r700SetAlphaState(ctx);
 		break;
 	case GL_COLOR_LOGIC_OP:
 		r700SetLogicOpState(ctx);
@@ -1327,9 +1376,7 @@ void r700InitState(GLcontext * ctx) //-------------------
     /* Specify the number of instances */
     r700->VGT_DMA_NUM_INSTANCES.u32All = 1;
 
-    /* not alpha blend */
-    CLEARfield(r700->SX_ALPHA_TEST_CONTROL.u32All, ALPHA_FUNC_mask);
-    CLEARbit(r700->SX_ALPHA_TEST_CONTROL.u32All, ALPHA_TEST_ENABLE_bit);
+    r700AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
 
     /* default shader connections. */
     r700->SPI_VS_OUT_ID_0.u32All  = 0x03020100;
