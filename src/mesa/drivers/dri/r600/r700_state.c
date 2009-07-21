@@ -1525,8 +1525,6 @@ void r700InitState(GLcontext * ctx) //-------------------
     /* Specify the number of instances */
     r700->VGT_DMA_NUM_INSTANCES.u32All = 1;
 
-    r700AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
-
     /* default shader connections. */
     r700->SPI_VS_OUT_ID_0.u32All  = 0x03020100;
     r700->SPI_VS_OUT_ID_1.u32All  = 0x07060504;
@@ -1538,12 +1536,6 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->SPI_THREAD_GROUPING.u32All = 0;
     if (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV770)
 	    SETfield(r700->SPI_THREAD_GROUPING.u32All, 1, PS_GROUPING_shift, PS_GROUPING_mask);
-
-    r700SetBlendState(ctx);
-    r700SetLogicOpState(ctx);
-
-    r700->DB_SHADER_CONTROL.u32All = 0;
-    SETbit(r700->DB_SHADER_CONTROL.u32All, DUAL_EXPORT_ENABLE_bit);
 
     /* screen */
     r700->PA_SC_SCREEN_SCISSOR_TL.u32All = 0x0;
@@ -1588,22 +1580,8 @@ void r700InitState(GLcontext * ctx) //-------------------
     SETbit(r700->PA_CL_VTE_CNTL.u32All, VPORT_Z_SCALE_ENA_bit);
     SETbit(r700->PA_CL_VTE_CNTL.u32All, VPORT_Z_OFFSET_ENA_bit);
 
-    /* Set up point sizes and min/max values */
-    r700PointSize(ctx, 1.0);
-
-    CLEARfield(r700->PA_SU_POINT_MINMAX.u32All, MIN_SIZE_mask);
-    SETfield(r700->PA_SU_POINT_MINMAX.u32All, 0x8000, MAX_SIZE_shift, MAX_SIZE_mask);
-
     /* GL uses last vtx for flat shading components */
     SETbit(r700->PA_SU_SC_MODE_CNTL.u32All, PROVOKING_VTX_LAST_bit);
-
-    /* Set up line control */
-    SETfield(r700->PA_SU_LINE_CNTL.u32All, 0x8,
-             PA_SU_LINE_CNTL__WIDTH_shift, PA_SU_LINE_CNTL__WIDTH_mask);
-
-    r700->PA_SC_LINE_CNTL.u32All = 0;
-    CLEARbit(r700->PA_SC_LINE_CNTL.u32All, EXPAND_LINE_WIDTH_bit);
-    SETbit(r700->PA_SC_LINE_CNTL.u32All, LAST_PIXEL_bit);
 
     /* Set up vertex control */
     r700->PA_SU_VTX_CNTL.u32All = 0;
@@ -1618,7 +1596,66 @@ void r700InitState(GLcontext * ctx) //-------------------
     r700->PA_CL_GB_HORZ_CLIP_ADJ.u32All  = 0x3F800000;
     r700->PA_CL_GB_HORZ_DISC_ADJ.u32All  = 0x3F800000;
 
+    /* Enable all samples for multi-sample anti-aliasing */
+    r700->PA_SC_AA_MASK.u32All = 0xFFFFFFFF;
+    /* Turn off AA */
+    r700->PA_SC_AA_CONFIG.u32All = 0;
+
+    r700->SX_MISC.u32All = 0;
+
+    r700InitSQConfig(ctx);
+
+    r700ColorMask(ctx,
+		  ctx->Color.ColorMask[RCOMP],
+		  ctx->Color.ColorMask[GCOMP],
+		  ctx->Color.ColorMask[BCOMP],
+		  ctx->Color.ColorMask[ACOMP]);
+
+    r700Enable(ctx, GL_DEPTH_TEST, ctx->Depth.Test);
+    r700DepthMask(ctx, ctx->Depth.Mask);
+    r700DepthFunc(ctx, ctx->Depth.Func);
+    SETbit(r700->DB_SHADER_CONTROL.u32All, DUAL_EXPORT_ENABLE_bit);
+
+    /* stencil */
+    r700Enable(ctx, GL_STENCIL_TEST, ctx->Stencil._Enabled);
+    r700StencilMaskSeparate(ctx, 0, ctx->Stencil.WriteMask[0]);
+    r700StencilFuncSeparate(ctx, 0, ctx->Stencil.Function[0],
+			    ctx->Stencil.Ref[0], ctx->Stencil.ValueMask[0]);
+    r700StencilOpSeparate(ctx, 0, ctx->Stencil.FailFunc[0],
+			  ctx->Stencil.ZFailFunc[0],
+			  ctx->Stencil.ZPassFunc[0]);
+
+    r700UpdateCulling(ctx);
+
+    r700SetBlendState(ctx);
+    r700SetLogicOpState(ctx);
+
+    r700AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
+    r700Enable(ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled);
+
+    r700PointSize(ctx, 1.0);
+
+    CLEARfield(r700->PA_SU_POINT_MINMAX.u32All, MIN_SIZE_mask);
+    SETfield(r700->PA_SU_POINT_MINMAX.u32All, 0x8000, MAX_SIZE_shift, MAX_SIZE_mask);
+
+    r700LineWidth(ctx, 1.0);
+
+    r700->PA_SC_LINE_CNTL.u32All = 0;
+    CLEARbit(r700->PA_SC_LINE_CNTL.u32All, EXPAND_LINE_WIDTH_bit);
+    SETbit(r700->PA_SC_LINE_CNTL.u32All, LAST_PIXEL_bit);
+
+    r700ShadeModel(ctx, ctx->Light.ShadeModel);
+    r700PolygonMode(ctx, GL_FRONT, ctx->Polygon.FrontMode);
+    r700PolygonMode(ctx, GL_BACK, ctx->Polygon.BackMode);
+    r700PolygonOffset(ctx, ctx->Polygon.OffsetFactor,
+		      ctx->Polygon.OffsetUnits);
+    r700Enable(ctx, GL_POLYGON_OFFSET_POINT, ctx->Polygon.OffsetPoint);
+    r700Enable(ctx, GL_POLYGON_OFFSET_LINE, ctx->Polygon.OffsetLine);
+    r700Enable(ctx, GL_POLYGON_OFFSET_FILL, ctx->Polygon.OffsetFill);
+
     /* CB */
+    r700BlendColor(ctx, ctx->Color.BlendColor);
+
     r700->CB_CLEAR_RED_R6XX.f32All = 1.0; //r6xx only
     r700->CB_CLEAR_GREEN_R6XX.f32All = 0.0; //r6xx only
     r700->CB_CLEAR_BLUE_R6XX.f32All = 1.0; //r6xx only
@@ -1644,17 +1681,6 @@ void r700InitState(GLcontext * ctx) //-------------------
     /* Set up color compare mask */
     r700->CB_CLRCMP_MSK.u32All = 0xFFFFFFFF;
 
-    /* default color mask */
-    SETfield(r700->CB_SHADER_MASK.u32All, 0xF, OUTPUT0_ENABLE_shift, OUTPUT0_ENABLE_mask);
-
-    /* Enable all samples for multi-sample anti-aliasing */
-    r700->PA_SC_AA_MASK.u32All = 0xFFFFFFFF;
-    /* Turn off AA */
-    r700->PA_SC_AA_CONFIG.u32All = 0;
-
-    r700->SX_MISC.u32All = 0;
-
-    r700InitSQConfig(ctx);
 }
 
 void r700InitStateFuncs(struct dd_function_table *functions) //-----------------
