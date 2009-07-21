@@ -86,11 +86,11 @@ unsigned int Map_Vertex_Output(r700_AssemblerBase       *pAsm,
 	//}
 
 	//TODO : dealing fog.
-	//unBit = 1 << VERT_RESULT_FOGC;
-	//if(mesa_vp->Base.OutputsWritten & unBit)
-	//{
-	//	pAsm->ucVP_OutputMap[VERT_RESULT_FOGC] = unTotal++;
-	//}
+	unBit = 1 << VERT_RESULT_FOGC;
+	if(mesa_vp->Base.OutputsWritten & unBit)
+	{
+		pAsm->ucVP_OutputMap[VERT_RESULT_FOGC] = unTotal++;
+	}
 
 	//TODO : dealing point size.
 	//unBit = 1 << VERT_RESULT_PSIZ;
