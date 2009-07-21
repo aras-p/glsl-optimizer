@@ -43,11 +43,11 @@
  *
  */
 
-#include "compiler/r500_fragprog.h"
+#include "r500_fragprog.h"
 
-#include "r300_reg.h"
+#include "../r300_reg.h"
 
-#include "compiler/radeon_program_pair.h"
+#include "radeon_program_pair.h"
 
 
 #define PROG_CODE \
@@ -310,7 +310,7 @@ GLboolean r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *
 	code->inst_offset = 0;
 	code->inst_end = -1;
 
-	if (!radeonPairProgram(compiler->program, &pair_handler, compiler))
+	if (!radeonPairProgram(compiler->program, &pair_handler, compiler, compiler->debug))
 		return GL_FALSE;
 
 	if ((code->inst[code->inst_end].inst0 & R500_INST_TYPE_MASK) != R500_INST_TYPE_OUT) {

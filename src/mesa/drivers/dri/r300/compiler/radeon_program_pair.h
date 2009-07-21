@@ -140,7 +140,8 @@ struct radeon_pair_handler {
 };
 
 GLboolean radeonPairProgram(struct gl_program *program,
-	const struct radeon_pair_handler*, void *userdata);
+	const struct radeon_pair_handler*, void *userdata,
+	GLboolean debug);
 
 void radeonPrintPairInstruction(struct radeon_pair_instruction *inst);
 

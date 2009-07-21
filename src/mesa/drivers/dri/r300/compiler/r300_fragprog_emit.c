@@ -38,12 +38,12 @@
  * \todo FogOption
  */
 
-#include "compiler/r300_fragprog.h"
+#include "r300_fragprog.h"
 
-#include "r300_reg.h"
+#include "../r300_reg.h"
 
-#include "compiler/radeon_program_pair.h"
-#include "compiler/r300_fragprog_swizzle.h"
+#include "radeon_program_pair.h"
+#include "r300_fragprog_swizzle.h"
 
 
 #define PROG_CODE \
@@ -334,7 +334,7 @@ GLboolean r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *
 	code->node[0].alu_end = -1;
 	code->node[0].tex_end = -1;
 
-	if (!radeonPairProgram(compiler->program, &pair_handler, compiler))
+	if (!radeonPairProgram(compiler->program, &pair_handler, compiler, compiler->debug))
 		return GL_FALSE;
 
 	if (!finish_node(compiler))

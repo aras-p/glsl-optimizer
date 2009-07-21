@@ -25,11 +25,11 @@
  *
  */
 
-#include "compiler/r300_fragprog.h"
+#include "r300_fragprog.h"
 
 #include "shader/prog_parameter.h"
 
-#include "r300_reg.h"
+#include "../r300_reg.h"
 
 static void reset_srcreg(struct prog_src_register* reg)
 {

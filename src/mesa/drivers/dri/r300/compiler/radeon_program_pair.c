@@ -35,8 +35,6 @@
 
 #include "radeon_program_pair.h"
 
-#include "radeon_common.h"
-
 #include "memory_pool.h"
 #include "shader/prog_print.h"
 
@@ -877,7 +875,8 @@ static void emit_alu(struct pair_state *s)
 
 
 GLboolean radeonPairProgram(struct gl_program *program,
-	const struct radeon_pair_handler* handler, void *userdata)
+	const struct radeon_pair_handler* handler, void *userdata,
+	GLboolean debug)
 {
 	struct pair_state s;
 
@@ -886,7 +885,7 @@ GLboolean radeonPairProgram(struct gl_program *program,
 	s.Program = program;
 	s.Handler = handler;
 	s.UserData = userdata;
-	s.Debug = (RADEON_DEBUG & DEBUG_PIXEL) ? GL_TRUE : GL_FALSE;
+	s.Debug = debug;
 	s.Verbose = GL_FALSE && s.Debug;
 
 	if (s.Debug)

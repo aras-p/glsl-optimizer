@@ -33,7 +33,7 @@
 
 #include "r300_fragprog_swizzle.h"
 
-#include "r300_reg.h"
+#include "../r300_reg.h"
 #include "radeon_nqssadce.h"
 
 #define MAKE_SWZ3(x, y, z) (MAKE_SWIZZLE4(SWIZZLE_##x, SWIZZLE_##y, SWIZZLE_##z, SWIZZLE_ZERO))

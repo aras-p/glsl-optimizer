@@ -25,9 +25,9 @@
  *
  */
 
-#include "compiler/r500_fragprog.h"
+#include "r500_fragprog.h"
 
-#include "r300_reg.h"
+#include "../r300_reg.h"
 
 static void reset_srcreg(struct prog_src_register* reg)
 {

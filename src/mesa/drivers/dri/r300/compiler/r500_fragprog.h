@@ -36,8 +36,8 @@
 #include "shader/prog_parameter.h"
 #include "shader/prog_instruction.h"
 
-#include "compiler/radeon_compiler.h"
-#include "compiler/radeon_nqssadce.h"
+#include "radeon_compiler.h"
+#include "radeon_nqssadce.h"
 
 extern GLboolean r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler);
 
