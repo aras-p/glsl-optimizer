@@ -57,7 +57,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drivers/common/driverfuncs.h"
 
 #include "r600_context.h"
-#include "radeon_context.h"
+#include "radeon_common_context.h"
 #include "radeon_span.h"
 #include "r600_cmdbuf.h"
 #include "r600_emit.h"
@@ -218,7 +218,6 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	struct dd_function_table functions;
 	context_t *r600;
 	GLcontext *ctx;
-	int tcl_mode;
 
 	assert(glVisual);
 	assert(driContextPriv);
@@ -377,22 +376,11 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 
 	TNL_CONTEXT(ctx)->Driver.RunPipeline = r600RunPipeline;
 
-	tcl_mode = driQueryOptioni(&r600->radeon.optionCache, "tcl_mode");
 	if (driQueryOptionb(&r600->radeon.optionCache, "no_rast")) {
 		fprintf(stderr, "disabling 3D acceleration\n");
 #if R200_MERGED
 		FALLBACK(&r600->radeon, RADEON_FALLBACK_DISABLE, 1);
 #endif
-	}
-	if (tcl_mode == DRI_CONF_TCL_SW ||
-	    !(r600->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
-		if (r600->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
-			r600->radeon.radeonScreen->chip_flags &=
-			    ~RADEON_CHIPSET_TCL;
-			fprintf(stderr, "Disabling HW TCL support\n");
-		}
-		TCL_FALLBACK(r600->radeon.glCtx,
-			     RADEON_TCL_FALLBACK_TCL_DISABLE, 1);
 	}
 
 	return GL_TRUE;
