@@ -118,10 +118,21 @@ void r700UpdateShaders (GLcontext * ctx)  //----------------------------------
  */
 void r700UpdateViewportOffset(GLcontext * ctx) //------------------
 {
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	__DRIdrawablePrivate *dPriv = radeon_get_drawable(&context->radeon);
+	GLfloat xoffset = (GLfloat) dPriv->x;
+	GLfloat yoffset = (GLfloat) dPriv->y + dPriv->h;
+	const GLfloat *v = ctx->Viewport._WindowMap.m;
+	int id = 0;
 
-	//radeonUpdateScissor(ctx);
+	GLfloat tx = v[MAT_TX] + xoffset;
+	GLfloat ty = (-v[MAT_TY]) + yoffset;
 
-    return;
+	r700->viewport[id].PA_CL_VPORT_XOFFSET.f32All = tx;
+	r700->viewport[id].PA_CL_VPORT_YOFFSET.f32All = ty;
+
+	radeonUpdateScissor(ctx);
 }
 
 /**
@@ -311,7 +322,7 @@ static void r700SetAlphaState(GLcontext * ctx)
 {
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-	uint32_t alpha_func;
+	uint32_t alpha_func = REF_ALWAYS;
 	GLboolean really_enabled = ctx->Color.AlphaEnabled;
 
 	switch (ctx->Color.AlphaFunc) {
