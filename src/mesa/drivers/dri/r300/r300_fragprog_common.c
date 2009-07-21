@@ -44,12 +44,6 @@
 
 #include "r300_state.h"
 
-#include "compiler/radeon_program.h"
-#include "compiler/radeon_program_alu.h"
-#include "compiler/r300_fragprog_swizzle.h"
-#include "compiler/r300_fragprog.h"
-#include "compiler/r500_fragprog.h"
-
 
 static GLuint build_dtm(GLuint depthmode)
 {
