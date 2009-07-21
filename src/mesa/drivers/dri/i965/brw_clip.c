@@ -152,7 +152,8 @@ static void upload_clip_prog(struct brw_context *brw)
 
    /* _NEW_POLYGON */
    if (key.primitive == GL_TRIANGLES) {
-      if (ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK) 
+      if (ctx->Polygon.CullFlag &&
+	  ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
 	 key.clip_mode = BRW_CLIPMODE_REJECT_ALL;
       else {
 	 GLuint fill_front = CLIP_CULL;
