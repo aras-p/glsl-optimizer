@@ -57,6 +57,8 @@
 
 
 static void r700SetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state);
+static void r700UpdatePolygonMode(GLcontext * ctx);
+static void r700SetPolygonOffsetState(GLcontext * ctx, GLboolean state);
 
 void r700SetDefaultStates(context_t *context) //--------------------
 {
@@ -613,11 +615,11 @@ static void r700UpdateCulling(GLcontext * ctx)
     CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, CULL_FRONT_bit);
     CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, CULL_BACK_bit);
 
-    if (ctx->Polygon.CullFlag) 
+    if (ctx->Polygon.CullFlag)
     {
-        switch (ctx->Polygon.CullFaceMode) 
+        switch (ctx->Polygon.CullFaceMode)
         {
-        case GL_FRONT:            
+        case GL_FRONT:
             SETbit(r700->PA_SU_SC_MODE_CNTL.u32All, CULL_FRONT_bit);
             CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, CULL_BACK_bit);
             break;
@@ -636,13 +638,13 @@ static void r700UpdateCulling(GLcontext * ctx)
         }
     }
 
-    switch (ctx->Polygon.FrontFace) 
+    switch (ctx->Polygon.FrontFace)
     {
         case GL_CW:
             SETbit(r700->PA_SU_SC_MODE_CNTL.u32All, FACE_bit);
             break;
         case GL_CCW:
-            CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, FACE_bit); 
+            CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, FACE_bit);
             break;
         default:
             CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, FACE_bit); /* default: ccw */
@@ -705,7 +707,7 @@ static void r700Enable(GLcontext * ctx, GLenum cap, GLboolean state) //---------
 	case GL_POLYGON_OFFSET_POINT:
 	case GL_POLYGON_OFFSET_LINE:
 	case GL_POLYGON_OFFSET_FILL:
-		//r700SetPolygonOffsetState(ctx, state);
+		r700SetPolygonOffsetState(ctx, state);
 		break;
 	case GL_SCISSOR_TEST:
 		radeon_firevertices(&context->radeon);
@@ -782,6 +784,7 @@ static void r700Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param) //--
 static void r700FrontFace(GLcontext * ctx, GLenum mode) //------------------
 {
     r700UpdateCulling(ctx);
+    r700UpdatePolygonMode(ctx);
 }
 
 static void r700ShadeModel(GLcontext * ctx, GLenum mode) //--------------------
@@ -907,15 +910,111 @@ static void r700LineStipple(GLcontext *ctx, GLint factor, GLushort pattern)
     SETfield(r700->PA_SC_LINE_STIPPLE.u32All, 1, AUTO_RESET_CNTL_shift, AUTO_RESET_CNTL_mask);
 }
 
-static void r700PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units) //--------------
+static void r700SetPolygonOffsetState(GLcontext * ctx, GLboolean state)
 {
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+	if (state) {
+		SETbit(r700->PA_SU_SC_MODE_CNTL.u32All, POLY_OFFSET_FRONT_ENABLE_bit);
+		SETbit(r700->PA_SU_SC_MODE_CNTL.u32All, POLY_OFFSET_BACK_ENABLE_bit);
+		SETbit(r700->PA_SU_SC_MODE_CNTL.u32All, POLY_OFFSET_PARA_ENABLE_bit);
+	} else {
+		CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, POLY_OFFSET_FRONT_ENABLE_bit);
+		CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, POLY_OFFSET_BACK_ENABLE_bit);
+		CLEARbit(r700->PA_SU_SC_MODE_CNTL.u32All, POLY_OFFSET_PARA_ENABLE_bit);
+	}
 }
 
+static void r700PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units) //--------------
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+	GLfloat constant = units;
+
+	switch (ctx->Visual.depthBits) {
+	case 16:
+		constant *= 4.0;
+		break;
+	case 24:
+		constant *= 2.0;
+		break;
+	}
+
+	factor *= 12.0;
+
+	r700->PA_SU_POLY_OFFSET_FRONT_SCALE.f32All = factor;
+	r700->PA_SU_POLY_OFFSET_FRONT_OFFSET.f32All = constant;
+	r700->PA_SU_POLY_OFFSET_BACK_SCALE.f32All = factor;
+	r700->PA_SU_POLY_OFFSET_BACK_OFFSET.f32All = constant;
+}
+
+static void r700UpdatePolygonMode(GLcontext * ctx)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+	SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DISABLE_POLY_MODE, POLY_MODE_shift, POLY_MODE_mask);
+
+	/* Only do something if a polygon mode is wanted, default is GL_FILL */
+	if (ctx->Polygon.FrontMode != GL_FILL ||
+	    ctx->Polygon.BackMode != GL_FILL) {
+		GLenum f, b;
+
+		/* Handle GL_CW (clock wise and GL_CCW (counter clock wise)
+		 * correctly by selecting the correct front and back face
+		 */
+		if (ctx->Polygon.FrontFace == GL_CCW) {
+			f = ctx->Polygon.FrontMode;
+			b = ctx->Polygon.BackMode;
+		} else {
+			f = ctx->Polygon.BackMode;
+			b = ctx->Polygon.FrontMode;
+		}
+
+		/* Enable polygon mode */
+		SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DUAL_MODE, POLY_MODE_shift, POLY_MODE_mask);
+
+		switch (f) {
+		case GL_LINE:
+			SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DRAW_LINES,
+				 POLYMODE_FRONT_PTYPE_shift, POLYMODE_FRONT_PTYPE_mask);
+			break;
+		case GL_POINT:
+			SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DRAW_POINTS,
+				 POLYMODE_FRONT_PTYPE_shift, POLYMODE_FRONT_PTYPE_mask);
+			break;
+		case GL_FILL:
+			SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DRAW_TRIANGLES,
+				 POLYMODE_FRONT_PTYPE_shift, POLYMODE_FRONT_PTYPE_mask);
+			break;
+		}
+
+		switch (b) {
+		case GL_LINE:
+			SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DRAW_LINES,
+				 POLYMODE_BACK_PTYPE_shift, POLYMODE_BACK_PTYPE_mask);
+			break;
+		case GL_POINT:
+			SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DRAW_POINTS,
+				 POLYMODE_BACK_PTYPE_shift, POLYMODE_BACK_PTYPE_mask);
+			break;
+		case GL_FILL:
+			SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DRAW_TRIANGLES,
+				 POLYMODE_BACK_PTYPE_shift, POLYMODE_BACK_PTYPE_mask);
+			break;
+		}
+	}
+}
 
 static void r700PolygonMode(GLcontext * ctx, GLenum face, GLenum mode) //------------------
 {
+	(void)face;
+	(void)mode;
+
+	r700UpdatePolygonMode(ctx);
 }
- 
+
 static void r700RenderMode(GLcontext * ctx, GLenum mode) //---------------------
 {
 }
@@ -1395,12 +1494,6 @@ void r700InitState(GLcontext * ctx) //-------------------
 
     r700->DB_SHADER_CONTROL.u32All = 0;
     SETbit(r700->DB_SHADER_CONTROL.u32All, DUAL_EXPORT_ENABLE_bit);
-
-    /* Set up the culling control register */
-    SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DRAW_TRIANGLES,
-             POLYMODE_FRONT_PTYPE_shift, POLYMODE_FRONT_PTYPE_mask);
-    SETfield(r700->PA_SU_SC_MODE_CNTL.u32All, X_DRAW_TRIANGLES,
-             POLYMODE_BACK_PTYPE_shift, POLYMODE_BACK_PTYPE_mask);
 
     /* screen */
     r700->PA_SC_SCREEN_SCISSOR_TL.u32All = 0x0;
