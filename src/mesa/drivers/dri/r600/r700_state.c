@@ -816,8 +816,51 @@ static void r700ShadeModel(GLcontext * ctx, GLenum mode) //--------------------
 	}
 }
 
+/* =============================================================
+ * Point state
+ */
+static void r700PointSize(GLcontext * ctx, GLfloat size)
+{
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+	/* We need to clamp to user defined range here, because
+	 * the HW clamping happens only for per vertex point size. */
+	size = CLAMP(size, ctx->Point.MinSize, ctx->Point.MaxSize);
+
+	/* same size limits for AA, non-AA points */
+	size = CLAMP(size, ctx->Const.MinPointSize, ctx->Const.MaxPointSize);
+
+	/* format is 12.4 fixed point */
+	SETfield(r700->PA_SU_POINT_SIZE.u32All, (int)(size * 16),
+		 PA_SU_POINT_SIZE__HEIGHT_shift, PA_SU_POINT_SIZE__HEIGHT_mask);
+	SETfield(r700->PA_SU_POINT_SIZE.u32All, (int)(size * 16),
+		 PA_SU_POINT_SIZE__WIDTH_shift, PA_SU_POINT_SIZE__WIDTH_mask);
+
+}
+
 static void r700PointParameter(GLcontext * ctx, GLenum pname, const GLfloat * param) //---------------
 {
+	context_t *context = R700_CONTEXT(ctx);
+	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+	/* format is 12.4 fixed point */
+	switch (pname) {
+	case GL_POINT_SIZE_MIN:
+		SETfield(r700->PA_SU_POINT_MINMAX.u32All, (int)(ctx->Point.MinSize * 16.0),
+			 MIN_SIZE_shift, MIN_SIZE_mask);
+		break;
+	case GL_POINT_SIZE_MAX:
+		SETfield(r700->PA_SU_POINT_MINMAX.u32All, (int)(ctx->Point.MaxSize * 16.0),
+			 MAX_SIZE_shift, MAX_SIZE_mask);
+		break;
+	case GL_POINT_DISTANCE_ATTENUATION:
+		break;
+	case GL_POINT_FADE_THRESHOLD_SIZE:
+		break;
+	default:
+		break;
+	}
 }
 
 static void r700StencilFuncSeparate(GLcontext * ctx, GLenum face,
@@ -894,10 +937,6 @@ static void r700Viewport(GLcontext * ctx,
 static void r700DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval) //-------------
 {
 	r700UpdateWindow(ctx, 0);
-}
-
-static void r700PointSize(GLcontext * ctx, GLfloat size) //-------------------
-{
 }
 
 static void r700LineWidth(GLcontext * ctx, GLfloat widthf) //---------------
@@ -1550,10 +1589,8 @@ void r700InitState(GLcontext * ctx) //-------------------
     SETbit(r700->PA_CL_VTE_CNTL.u32All, VPORT_Z_OFFSET_ENA_bit);
 
     /* Set up point sizes and min/max values */
-    SETfield(r700->PA_SU_POINT_SIZE.u32All, 0x8,
-             PA_SU_POINT_SIZE__HEIGHT_shift, PA_SU_POINT_SIZE__HEIGHT_mask);
-    SETfield(r700->PA_SU_POINT_SIZE.u32All, 0x8,
-             PA_SU_POINT_SIZE__WIDTH_shift, PA_SU_POINT_SIZE__WIDTH_mask);
+    r700PointSize(ctx, 1.0);
+
     CLEARfield(r700->PA_SU_POINT_MINMAX.u32All, MIN_SIZE_mask);
     SETfield(r700->PA_SU_POINT_MINMAX.u32All, 0x8000, MAX_SIZE_shift, MAX_SIZE_mask);
 
