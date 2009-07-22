@@ -1774,11 +1774,15 @@ asm_instruction_ctor(gl_inst_opcode op,
       if (src1 != NULL) {
 	 inst->Base.SrcReg[1] = src1->Base;
 	 inst->SrcReg[1] = *src1;
+      } else {
+	 init_src_reg(& inst->SrcReg[1]);
       }
 
       if (src2 != NULL) {
 	 inst->Base.SrcReg[2] = src2->Base;
 	 inst->SrcReg[2] = *src2;
+      } else {
+	 init_src_reg(& inst->SrcReg[2]);
       }
    }
 
