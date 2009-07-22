@@ -302,7 +302,15 @@ statement: instruction ';'
 	;
 
 instruction: ALU_instruction
+	{
+	   $$ = $1;
+	   state->prog->NumAluInstructions++;
+	}
 	| TexInstruction
+	{
+	   $$ = $1;
+	   state->prog->NumTexInstructions++;
+	}
 	;
 
 ALU_instruction: ARL_instruction
@@ -368,6 +376,8 @@ SAMPLE_instruction: SAMPLE_OP maskedDstReg ',' swizzleSrcReg ',' texImageUnit ',
 	      $$->Base.SaturateMode = $1.SaturateMode;
 	      $$->Base.TexSrcUnit = $6;
 	      $$->Base.TexSrcTarget = $8;
+
+	      state->prog->TexturesUsed[$6] |= (1U << $8);
 	   }
 	}
 	;
@@ -375,6 +385,7 @@ SAMPLE_instruction: SAMPLE_OP maskedDstReg ',' swizzleSrcReg ',' texImageUnit ',
 KIL_instruction: KIL swizzleSrcReg
 	{
 	   $$ = asm_instruction_ctor(OPCODE_KIL, NULL, & $2, NULL, NULL);
+	   state->fragment.UsesKill = 1;
 	}
 	;
 
