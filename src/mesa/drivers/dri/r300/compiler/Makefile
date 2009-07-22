@@ -6,6 +6,7 @@ include $(TOP)/configs/current
 LIBNAME = r300compiler
 
 C_SOURCES = \
+		radeon_compiler.c \
 		radeon_nqssadce.c \
 		radeon_program.c \
 		radeon_program_alu.c \

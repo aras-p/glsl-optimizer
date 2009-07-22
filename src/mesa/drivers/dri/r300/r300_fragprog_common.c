@@ -89,18 +89,21 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_fragment_program_compiler compiler;
 
+	rc_init(&compiler.Base);
+	compiler.Base.Debug = (RADEON_DEBUG & DEBUG_PIXEL) ? GL_TRUE : GL_FALSE;
+
 	compiler.code = &fp->code;
 	compiler.state = fp->state;
 	compiler.program = _mesa_clone_program(ctx, &cont->Base.Base);
 	compiler.is_r500 = (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) ? GL_TRUE : GL_FALSE;
-	compiler.debug = (RADEON_DEBUG & DEBUG_PIXEL) ? GL_TRUE : GL_FALSE;
 
 	if (!r3xx_compile_fragment_program(&compiler))
 		fp->error = GL_TRUE;
 
 	fp->InputsRead = compiler.program->InputsRead;
-
 	fp->Base = compiler.program;
+
+	rc_destroy(&compiler.Base);
 }
 
 struct r300_fragment_program *r300SelectAndTranslateFragmentShader(GLcontext *ctx)

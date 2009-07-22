@@ -36,6 +36,7 @@
 #include "radeon_program_pair.h"
 
 #include "memory_pool.h"
+#include "radeon_compiler.h"
 #include "shader/prog_print.h"
 
 #define error(fmt, args...) do { \
@@ -118,11 +119,10 @@ struct pair_register_translation {
 };
 
 struct pair_state {
-	struct memory_pool Pool;
+	struct radeon_compiler * Compiler;
 	struct gl_program *Program;
 	const struct radeon_pair_handler *Handler;
 	GLboolean Error;
-	GLboolean Debug;
 	GLboolean Verbose;
 	void *UserData;
 
@@ -341,7 +341,7 @@ static void scan_instructions(struct pair_state *s)
 	for(source = s->Program->Instructions, ip = 0;
 	    source->Opcode != OPCODE_END;
 	    ++source, ++ip) {
-		struct pair_state_instruction *pairinst = memory_pool_malloc(&s->Pool, sizeof(*pairinst));
+		struct pair_state_instruction *pairinst = memory_pool_malloc(&s->Compiler->Pool, sizeof(*pairinst));
 		memset(pairinst, 0, sizeof(struct pair_state_instruction));
 
 		pairinst->Instruction = *source;
@@ -377,7 +377,7 @@ static void scan_instructions(struct pair_state *s)
 					    GET_BIT(pairinst->Instruction.DstReg.WriteMask, swz))
 						continue;
 
-					struct reg_value_reader* r = memory_pool_malloc(&s->Pool, sizeof(*r));
+					struct reg_value_reader* r = memory_pool_malloc(&s->Compiler->Pool, sizeof(*r));
 					pairinst->NumDependencies++;
 					t->Value[swz]->NumReaders++;
 					r->Reader = pairinst;
@@ -400,7 +400,7 @@ static void scan_instructions(struct pair_state *s)
 						if (!GET_BIT(pairinst->Instruction.DstReg.WriteMask, j))
 							continue;
 
-						struct reg_value* v = memory_pool_malloc(&s->Pool, sizeof(*v));
+						struct reg_value* v = memory_pool_malloc(&s->Compiler->Pool, sizeof(*v));
 						memset(v, 0, sizeof(struct reg_value));
 						v->Writer = pairinst;
 						if (t->Value[j]) {
@@ -580,7 +580,7 @@ static void emit_all_tex(struct pair_state *s)
 			get_hw_reg(s, inst->DstReg.File, inst->DstReg.Index);
 	}
 
-	if (s->Debug)
+	if (s->Compiler->Debug)
 		_mesa_printf(" BEGIN_TEX\n");
 
 	if (s->Handler->BeginTexBlock)
@@ -594,7 +594,7 @@ static void emit_all_tex(struct pair_state *s)
 			inst->DstReg.Index = get_hw_reg(s, inst->DstReg.File, inst->DstReg.Index);
 		inst->SrcReg[0].Index = get_hw_reg(s, inst->SrcReg[0].File, inst->SrcReg[0].Index);
 
-		if (s->Debug) {
+		if (s->Compiler->Debug) {
 			_mesa_printf("   ");
 			_mesa_print_instruction(inst);
 			fflush(stdout);
@@ -620,7 +620,7 @@ static void emit_all_tex(struct pair_state *s)
 		s->Error = s->Error || !s->Handler->EmitTex(s->UserData, &rpti);
 	}
 
-	if (s->Debug)
+	if (s->Compiler->Debug)
 		_mesa_printf(" END_TEX\n");
 }
 
@@ -867,28 +867,28 @@ static void emit_alu(struct pair_state *s)
 	success: ;
 	}
 
-	if (s->Debug)
+	if (s->Compiler->Debug)
 		radeonPrintPairInstruction(&pair);
 
 	s->Error = s->Error || !s->Handler->EmitPaired(s->UserData, &pair);
 }
 
 
-GLboolean radeonPairProgram(struct gl_program *program,
-	const struct radeon_pair_handler* handler, void *userdata,
-	GLboolean debug)
+GLboolean radeonPairProgram(
+	struct radeon_compiler * compiler,
+	struct gl_program *program,
+	const struct radeon_pair_handler* handler, void *userdata)
 {
 	struct pair_state s;
 
 	_mesa_bzero(&s, sizeof(s));
-	memory_pool_init(&s.Pool);
+	s.Compiler = compiler;
 	s.Program = program;
 	s.Handler = handler;
 	s.UserData = userdata;
-	s.Debug = debug;
-	s.Verbose = GL_FALSE && s.Debug;
+	s.Verbose = GL_FALSE && s.Compiler->Debug;
 
-	if (s.Debug)
+	if (s.Compiler->Debug)
 		_mesa_printf("Emit paired program\n");
 
 	scan_instructions(&s);
@@ -903,10 +903,8 @@ GLboolean radeonPairProgram(struct gl_program *program,
 			emit_alu(&s);
 	}
 
-	if (s.Debug)
+	if (s.Compiler->Debug)
 		_mesa_printf(" END\n");
-
-	memory_pool_destroy(&s.Pool);
 
 	return !s.Error;
 }

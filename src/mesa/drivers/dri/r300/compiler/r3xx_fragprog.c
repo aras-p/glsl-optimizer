@@ -239,7 +239,7 @@ GLboolean r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c
 {
 	GLboolean success = GL_FALSE;
 
-	if (c->debug) {
+	if (c->Base.Debug) {
 		fflush(stdout);
 		_mesa_printf("Fragment Program: Initial program:\n");
 		_mesa_print_program(c->program);
@@ -269,7 +269,7 @@ GLboolean r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c
 		radeonLocalTransform(c->program, 3, transformations);
 	}
 
-	if (c->debug) {
+	if (c->Base.Debug) {
 		_mesa_printf("Fragment Program: After native rewrite:\n");
 		_mesa_print_program(c->program);
 		fflush(stdout);
@@ -291,7 +291,7 @@ GLboolean r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c
 		radeonNqssaDce(c->program, &nqssadce, 0);
 	}
 
-	if (c->debug) {
+	if (c->Base.Debug) {
 		_mesa_printf("Compiler: after NqSSA-DCE:\n");
 		_mesa_print_program(c->program);
 		fflush(stdout);
@@ -303,7 +303,7 @@ GLboolean r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c
 		success = r300BuildFragmentProgramHwCode(c);
 	}
 
-	if (!success || c->debug) {
+	if (!success || c->Base.Debug) {
 		if (c->is_r500) {
 			r500FragmentProgramDump(c->code);
 		} else {

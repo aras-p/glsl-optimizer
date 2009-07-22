@@ -30,6 +30,8 @@
 
 #include "radeon_program.h"
 
+struct radeon_compiler;
+
 
 /**
  * Represents a paired instruction, as found in R300 and R500
@@ -139,9 +141,10 @@ struct radeon_pair_handler {
 	GLuint MaxHwTemps;
 };
 
-GLboolean radeonPairProgram(struct gl_program *program,
-	const struct radeon_pair_handler*, void *userdata,
-	GLboolean debug);
+GLboolean radeonPairProgram(
+	struct radeon_compiler * compiler,
+	struct gl_program *program,
+	const struct radeon_pair_handler*, void *userdata);
 
 void radeonPrintPairInstruction(struct radeon_pair_instruction *inst);
 

@@ -26,6 +26,8 @@
 #include "main/mtypes.h"
 #include "shader/prog_instruction.h"
 
+#include "memory_pool.h"
+
 #define R300_PFS_MAX_ALU_INST     64
 #define R300_PFS_MAX_TEX_INST     32
 #define R300_PFS_MAX_TEX_INDIRECT 4
@@ -148,12 +150,20 @@ struct rX00_fragment_program_code {
 	gl_frag_attrib fog_attr;
 };
 
+struct radeon_compiler {
+	struct memory_pool Pool;
+	GLboolean Debug;
+};
+
+void rc_init(struct radeon_compiler * c);
+void rc_destroy(struct radeon_compiler * c);
+
 struct r300_fragment_program_compiler {
+	struct radeon_compiler Base;
 	struct rX00_fragment_program_code *code;
 	struct gl_program *program;
 	struct r300_fragment_program_external_state state;
 	GLboolean is_r500;
-	GLboolean debug;
 };
 
 GLboolean r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c);
