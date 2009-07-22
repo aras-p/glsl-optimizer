@@ -117,13 +117,15 @@ static struct prog_instruction* track_used_srcreg(struct nqssadce_state* s,
 
 	struct register_state *regstate;
 
-	if (inst->SrcReg[src].RelAddr)
+	if (inst->SrcReg[src].RelAddr) {
 		regstate = get_reg_state(s, PROGRAM_ADDRESS, 0);
-	else
+		if (regstate)
+			regstate->Sourced |= WRITEMASK_X;
+	} else {
 		regstate = get_reg_state(s, inst->SrcReg[src].File, inst->SrcReg[src].Index);
-
-	if (regstate)
-		regstate->Sourced |= deswz_source & 0xf;
+		if (regstate)
+			regstate->Sourced |= deswz_source & 0xf;
+	}
 
 	return inst;
 }
