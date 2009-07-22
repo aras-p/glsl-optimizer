@@ -2341,16 +2341,6 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_INDEX:
-      /* XXX: considered for removal */
-      assert (0);
-      break;
-
-   case TGSI_OPCODE_NEGATE:
-      /* XXX: considered for removal */
-      assert (0);
-      break;
-
    case TGSI_OPCODE_FRC:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
@@ -2453,11 +2443,6 @@ exec_instruction(
          STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
       }
       break;
-
-    case TGSI_OPCODE_MULTIPLYMATRIX:
-       /* XXX: considered for removal */
-       assert (0);
-       break;
 
     case TGSI_OPCODE_ABS:
        FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {

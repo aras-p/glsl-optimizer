@@ -354,12 +354,6 @@ translate_instruction(llvm::Module *module,
       out = instr->dot2add(inputs[0], inputs[1], inputs[2]);
    }
       break;
-   case TGSI_OPCODE_INDEX:
-      break;
-   case TGSI_OPCODE_NEGATE: {
-      out = instr->neg(inputs[0]);
-   }
-      break;
    case TGSI_OPCODE_FRAC: {
       out = instr->frc(inputs[0]);
    }
@@ -389,8 +383,6 @@ translate_instruction(llvm::Module *module,
    case TGSI_OPCODE_CROSSPRODUCT: {
       out = instr->cross(inputs[0], inputs[1]);
    }
-      break;
-   case TGSI_OPCODE_MULTIPLYMATRIX:
       break;
    case TGSI_OPCODE_ABS: {
       out = instr->abs(inputs[0]);
@@ -619,14 +611,6 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_NOP:
       break;
-   case TGSI_OPCODE_M4X3:
-      break;
-   case TGSI_OPCODE_M3X4:
-      break;
-   case TGSI_OPCODE_M3X3:
-      break;
-   case TGSI_OPCODE_M3X2:
-      break;
    case TGSI_OPCODE_CALLNZ:
       break;
    case TGSI_OPCODE_IFC:
@@ -816,8 +800,6 @@ translate_instructionir(llvm::Module *module,
    case TGSI_OPCODE_CROSSPRODUCT: {
    }
       break;
-   case TGSI_OPCODE_MULTIPLYMATRIX:
-      break;
    case TGSI_OPCODE_ABS: {
       out = instr->abs(inputs[0]);
    }
@@ -984,14 +966,6 @@ translate_instructionir(llvm::Module *module,
    case TGSI_OPCODE_NOISE4:
       break;
    case TGSI_OPCODE_NOP:
-      break;
-   case TGSI_OPCODE_M4X3:
-      break;
-   case TGSI_OPCODE_M3X4:
-      break;
-   case TGSI_OPCODE_M3X3:
-      break;
-   case TGSI_OPCODE_M3X2:
       break;
    case TGSI_OPCODE_NRM4:
       break;

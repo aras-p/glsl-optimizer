@@ -53,8 +53,8 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 3, 0, 0, "CND", TGSI_OPCODE_CND },
    { 1, 3, 0, 0, "CND0", TGSI_OPCODE_CND0 },
    { 1, 3, 0, 0, "DP2A", TGSI_OPCODE_DP2A },
-   { 1, 2, 0, 0, "INDEX", TGSI_OPCODE_INDEX },
-   { 1, 1, 0, 0, "NEGATE", TGSI_OPCODE_NEGATE },
+   { 0, 0, 0, 0, "", 22 },      /* removed */
+   { 0, 0, 0, 0, "", 23 },      /* removed */
    { 1, 1, 0, 0, "FRC", TGSI_OPCODE_FRC },
    { 1, 3, 0, 0, "CLAMP", TGSI_OPCODE_CLAMP },
    { 1, 1, 0, 0, "FLR", TGSI_OPCODE_FLR },
@@ -63,7 +63,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 1, 0, 0, "LG2", TGSI_OPCODE_LG2 },
    { 1, 2, 0, 0, "POW", TGSI_OPCODE_POW },
    { 1, 2, 0, 0, "XPD", TGSI_OPCODE_XPD },
-   { 1, 2, 0, 0, "M4X4", TGSI_OPCODE_MULTIPLYMATRIX },
+   { 0, 0, 0, 0, "", 32 },      /* removed */
    { 1, 1, 0, 0, "ABS", TGSI_OPCODE_ABS },
    { 1, 1, 0, 0, "RCC", TGSI_OPCODE_RCC },
    { 1, 2, 0, 0, "DPH", TGSI_OPCODE_DPH },
@@ -139,10 +139,10 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 1, 0, 0, "NOISE3", TGSI_OPCODE_NOISE3 },
    { 1, 1, 0, 0, "NOISE4", TGSI_OPCODE_NOISE4 },
    { 0, 0, 0, 0, "NOP", TGSI_OPCODE_NOP },
-   { 1, 2, 0, 0, "M4X3", TGSI_OPCODE_M4X3 },
-   { 1, 2, 0, 0, "M3X4", TGSI_OPCODE_M3X4 },
-   { 1, 2, 0, 0, "M3X3", TGSI_OPCODE_M3X3 },
-   { 1, 2, 0, 0, "M3X2", TGSI_OPCODE_M3X2 },
+   { 0, 0, 0, 0, "", 108 },     /* removed */
+   { 0, 0, 0, 0, "", 109 },     /* removed */
+   { 0, 0, 0, 0, "", 110 },     /* removed */
+   { 0, 0, 0, 0, "", 111 },     /* removed */
    { 1, 1, 0, 0, "NRM4", TGSI_OPCODE_NRM4 },
    { 0, 1, 0, 0, "CALLNZ", TGSI_OPCODE_CALLNZ },
    { 0, 1, 0, 0, "IFC", TGSI_OPCODE_IFC },

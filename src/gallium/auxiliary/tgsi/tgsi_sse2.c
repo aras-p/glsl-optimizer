@@ -2099,14 +2099,6 @@ emit_instruction(
       }
       break;
 
-   case TGSI_OPCODE_INDEX:
-      return 0;
-      break;
-
-   case TGSI_OPCODE_NEGATE:
-      return 0;
-      break;
-
    case TGSI_OPCODE_FRC:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
@@ -2204,10 +2196,6 @@ emit_instruction(
 	    TEMP_ONE_C );
          STORE( func, *inst, 0, 0, CHAN_W );
       }
-      break;
-
-   case TGSI_OPCODE_MULTIPLYMATRIX:
-      return 0;
       break;
 
    case TGSI_OPCODE_ABS:

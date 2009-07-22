@@ -1158,14 +1158,6 @@ exec_instruction(
       ASSERT (0);
       break;
 
-   case TGSI_OPCODE_INDEX:
-      ASSERT (0);
-      break;
-
-   case TGSI_OPCODE_NEGATE:
-      ASSERT (0);
-      break;
-
    case TGSI_OPCODE_FRC:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
@@ -1264,10 +1256,6 @@ exec_instruction(
          STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
       }
       break;
-
-    case TGSI_OPCODE_MULTIPLYMATRIX:
-       ASSERT (0);
-       break;
 
     case TGSI_OPCODE_ABS:
        FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {

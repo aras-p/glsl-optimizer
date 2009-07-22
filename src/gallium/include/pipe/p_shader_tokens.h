@@ -192,8 +192,6 @@ union tgsi_immediate_data
 /*
  * GL_EXT_vertex_shader
  */
-#define TGSI_OPCODE_INDEX               22   /* considered for removal */
-#define TGSI_OPCODE_NEGATE              23   /* considered for removal */
 /*#define TGSI_OPCODE_MADD                TGSI_OPCODE_MAD*/
 #define TGSI_OPCODE_FRC                 24
 /*#define TGSI_OPCODE_SETGE               TGSI_OPCODE_SGE*/
@@ -207,7 +205,6 @@ union tgsi_immediate_data
 /*#define TGSI_OPCODE_RECIP               TGSI_OPCODE_RCP*/
 /*#define TGSI_OPCODE_RECIPSQRT           TGSI_OPCODE_RSQ*/
 #define TGSI_OPCODE_XPD                 31
-#define TGSI_OPCODE_MULTIPLYMATRIX      32   /* considered for removal */
 
 /*
  * GL_NV_vertex_program1_1
@@ -378,11 +375,6 @@ union tgsi_immediate_data
 /*
  * ps_2_0
  */
-/*#define TGSI_OPCODE_M4X4                TGSI_OPCODE_MULTIPLYMATRIX*/
-#define TGSI_OPCODE_M4X3                108
-#define TGSI_OPCODE_M3X4                109
-#define TGSI_OPCODE_M3X3                110
-#define TGSI_OPCODE_M3X2                111
 /*#define TGSI_OPCODE_CRS                 TGSI_OPCODE_XPD*/
 #define TGSI_OPCODE_NRM4                112
 /*#define TGSI_OPCODE_SINCOS              TGSI_OPCODE_SCS*/
