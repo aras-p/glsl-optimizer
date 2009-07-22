@@ -141,7 +141,8 @@ lp_tile_cache_clear(struct llvmpipe_tile_cache *tc, const float *rgba,
                     uint clearValue);
 
 extern struct llvmpipe_cached_tile *
-lp_get_cached_tile(struct llvmpipe_tile_cache *tc, int x, int y);
+lp_find_cached_tile(struct llvmpipe_tile_cache *tc, 
+                    union tile_address addr );
 
 extern const struct llvmpipe_cached_tile *
 lp_find_cached_tile_tex(struct llvmpipe_tile_cache *tc, 
@@ -176,6 +177,19 @@ lp_get_cached_tile_tex(struct llvmpipe_tile_cache *tc,
       return tc->last_tile;
 
    return lp_find_cached_tile_tex( tc, addr );
+}
+
+
+static INLINE struct llvmpipe_cached_tile *
+lp_get_cached_tile(struct llvmpipe_tile_cache *tc, 
+                   int x, int y )
+{
+   union tile_address addr = tile_address( x, y, 0, 0, 0 );
+
+   if (tc->last_tile->addr.value == addr.value)
+      return tc->last_tile;
+
+   return lp_find_cached_tile( tc, addr );
 }
 
 
