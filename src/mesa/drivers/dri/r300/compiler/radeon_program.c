@@ -27,6 +27,7 @@
 
 #include "radeon_program.h"
 
+#include "radeon_compiler.h"
 #include "shader/prog_print.h"
 
 
@@ -124,3 +125,72 @@ struct prog_instruction *radeonAppendInstructions(struct gl_program *program, in
 	_mesa_insert_instructions(program, oldnum, count);
 	return program->Instructions + oldnum;
 }
+
+
+GLint rc_find_free_temporary(struct radeon_compiler * c)
+{
+	GLboolean used[MAX_PROGRAM_TEMPS];
+	GLuint i;
+
+	memset(used, 0, sizeof(used));
+
+	for (struct rc_instruction * rcinst = c->Program.Instructions.Next; rcinst != &c->Program.Instructions; rcinst = rcinst->Next) {
+		const struct prog_instruction *inst = &rcinst->I;
+		const GLuint n = _mesa_num_inst_src_regs(inst->Opcode);
+		GLuint k;
+
+		for (k = 0; k < n; k++) {
+			if (inst->SrcReg[k].File == PROGRAM_TEMPORARY)
+				used[inst->SrcReg[k].Index] = GL_TRUE;
+		}
+	}
+
+	for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
+		if (!used[i])
+			return i;
+	}
+
+	return -1;
+}
+
+
+struct rc_instruction *rc_alloc_instruction(struct radeon_compiler * c)
+{
+	struct rc_instruction * inst = memory_pool_malloc(&c->Pool, sizeof(struct rc_instruction));
+
+	inst->Prev = 0;
+	inst->Next = 0;
+
+	_mesa_init_instructions(&inst->I, 1);
+
+	return inst;
+}
+
+
+struct rc_instruction *rc_insert_new_instruction(struct radeon_compiler * c, struct rc_instruction * after)
+{
+	struct rc_instruction * inst = rc_alloc_instruction(c);
+
+	inst->Prev = after;
+	inst->Next = after->Next;
+
+	inst->Prev->Next = inst;
+	inst->Next->Prev = inst;
+
+	return inst;
+}
+
+
+void rc_mesa_to_rc_program(struct radeon_compiler * c, struct gl_program * program)
+{
+	struct prog_instruction *source;
+
+	for(source = program->Instructions; source->Opcode != OPCODE_END; ++source) {
+		struct rc_instruction * dest = rc_insert_new_instruction(c, c->Program.Instructions.Prev);
+		dest->I = *source;
+	}
+
+	c->Program.ShadowSamplers = program->ShadowSamplers;
+	c->Program.InputsRead = program->InputsRead;
+}
+

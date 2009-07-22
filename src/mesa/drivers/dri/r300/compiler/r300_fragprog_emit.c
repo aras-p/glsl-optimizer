@@ -334,7 +334,7 @@ GLboolean r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *
 	code->node[0].alu_end = -1;
 	code->node[0].tex_end = -1;
 
-	if (!radeonPairProgram(&compiler->Base, compiler->program, &pair_handler, compiler))
+	if (!radeonPairProgram(&compiler->Base, &pair_handler, compiler))
 		return GL_FALSE;
 
 	if (!finish_node(compiler))

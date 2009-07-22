@@ -100,7 +100,7 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 	if (!r3xx_compile_fragment_program(&compiler))
 		fp->error = GL_TRUE;
 
-	fp->InputsRead = compiler.program->InputsRead;
+	fp->InputsRead = compiler.Base.Program.InputsRead;
 	fp->Base = compiler.program;
 
 	rc_destroy(&compiler.Base);

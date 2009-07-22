@@ -150,8 +150,26 @@ struct rX00_fragment_program_code {
 	gl_frag_attrib fog_attr;
 };
 
+struct rc_instruction {
+	struct rc_instruction * Prev;
+	struct rc_instruction * Next;
+	struct prog_instruction I;
+};
+
+struct rc_program {
+	/**
+	 * Instructions.Next points to the first instruction,
+	 * Instructions.Prev points to the last instruction.
+	 */
+	struct rc_instruction Instructions;
+
+	GLbitfield InputsRead;
+	GLbitfield ShadowSamplers; /**< Texture units used for shadow sampling. */
+};
+
 struct radeon_compiler {
 	struct memory_pool Pool;
+	struct rc_program Program;
 	GLboolean Debug;
 };
 

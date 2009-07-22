@@ -297,6 +297,8 @@ GLboolean r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c
 		fflush(stdout);
 	}
 
+	rc_mesa_to_rc_program(&c->Base, c->program);
+
 	if (c->is_r500) {
 		success = r500BuildFragmentProgramHwCode(c);
 	} else {

@@ -120,7 +120,6 @@ struct pair_register_translation {
 
 struct pair_state {
 	struct radeon_compiler * Compiler;
-	struct gl_program *Program;
 	const struct radeon_pair_handler *Handler;
 	GLboolean Error;
 	GLboolean Verbose;
@@ -335,16 +334,16 @@ static void classify_instruction(struct pair_state *s,
  */
 static void scan_instructions(struct pair_state *s)
 {
-	struct prog_instruction *source;
+	struct rc_instruction *source;
 	GLuint ip;
 
-	for(source = s->Program->Instructions, ip = 0;
-	    source->Opcode != OPCODE_END;
-	    ++source, ++ip) {
+	for(source = s->Compiler->Program.Instructions.Next, ip = 0;
+	    source != &s->Compiler->Program.Instructions;
+	    source = source->Next, ++ip) {
 		struct pair_state_instruction *pairinst = memory_pool_malloc(&s->Compiler->Pool, sizeof(*pairinst));
 		memset(pairinst, 0, sizeof(struct pair_state_instruction));
 
-		pairinst->Instruction = *source;
+		pairinst->Instruction = source->I;
 		pairinst->IP = ip;
 		final_rewrite(s, &pairinst->Instruction);
 		classify_instruction(s, pairinst);
@@ -438,7 +437,7 @@ static void scan_instructions(struct pair_state *s)
  */
 static void allocate_input_registers(struct pair_state *s)
 {
-	GLuint InputsRead = s->Program->InputsRead;
+	GLuint InputsRead = s->Compiler->Program.InputsRead;
 	int i;
 	GLuint hwindex = 0;
 
@@ -876,14 +875,12 @@ static void emit_alu(struct pair_state *s)
 
 GLboolean radeonPairProgram(
 	struct radeon_compiler * compiler,
-	struct gl_program *program,
 	const struct radeon_pair_handler* handler, void *userdata)
 {
 	struct pair_state s;
 
 	_mesa_bzero(&s, sizeof(s));
 	s.Compiler = compiler;
-	s.Program = program;
 	s.Handler = handler;
 	s.UserData = userdata;
 	s.Verbose = GL_FALSE && s.Compiler->Debug;

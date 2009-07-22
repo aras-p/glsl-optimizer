@@ -28,6 +28,9 @@ void rc_init(struct radeon_compiler * c)
 	memset(c, 0, sizeof(*c));
 
 	memory_pool_init(&c->Pool);
+	c->Program.Instructions.Prev = &c->Program.Instructions;
+	c->Program.Instructions.Next = &c->Program.Instructions;
+	c->Program.Instructions.I.Opcode = OPCODE_END;
 }
 
 void rc_destroy(struct radeon_compiler * c)
