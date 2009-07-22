@@ -153,8 +153,8 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 	    OUT_RING  (chan, src_pitch |
 			     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
 			     NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
-	    OUT_RELOCl(chan, src_bo, src->offset + cy * src_pitch +
-			     cx * src->texture->block.size, NOUVEAU_BO_GART |
+	    OUT_RELOCl(chan, src_bo, src->offset + (cy+sy) * src_pitch +
+			     (cx+sx) * src->texture->block.size, NOUVEAU_BO_GART |
 			     NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	    OUT_RING  (chan, 0);
 	  }
