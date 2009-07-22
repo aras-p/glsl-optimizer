@@ -4702,6 +4702,7 @@ initialize_symbol_from_state(struct gl_program *prog,
    memcpy(state_tokens, tokens, sizeof(state_tokens));
 
    param_var->type = at_param;
+   param_var->param_binding_type = PROGRAM_STATE_VAR;
 
    /* If we are adding a STATE_MATRIX that has multiple rows, we need to
     * unroll it and call add_state_reference() for each row
@@ -4753,6 +4754,8 @@ initialize_symbol_from_param(struct gl_program *prog,
 	  || (state_tokens[1] == STATE_LOCAL));
 
    param_var->type = at_param;
+   param_var->param_binding_type = (state_tokens[1] == STATE_ENV)
+     ? PROGRAM_ENV_PARAM : PROGRAM_LOCAL_PARAM;
 
    /* If we are adding a STATE_ENV or STATE_LOCAL that has multiple elements,
     * we need to unroll it and call add_state_reference() for each row
@@ -4792,6 +4795,7 @@ initialize_symbol_from_const(struct gl_program *prog,
 				       NULL, 0x0);
 
    param_var->type = at_param;
+   param_var->param_binding_type = PROGRAM_CONSTANT;
 
    if (param_var->param_binding_begin == ~0U)
       param_var->param_binding_begin = idx;
