@@ -619,17 +619,17 @@ emit_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
             ppc_vandc(gen->f, v1, v0, bit31_vec); /* v1 = v0 & ~bit31 */
          }
          break;
-      case TGSI_OPCODE_FLOOR:
+      case TGSI_OPCODE_FLR:
          ppc_vrfim(gen->f, v1, v0);         /* v1 = floor(v0) */
          break;
-      case TGSI_OPCODE_FRAC:
+      case TGSI_OPCODE_FRC:
          ppc_vrfim(gen->f, v1, v0);      /* tmp = floor(v0) */
          ppc_vsubfp(gen->f, v1, v0, v1); /* v1 = v0 - v1 */
          break;
-      case TGSI_OPCODE_EXPBASE2:
+      case TGSI_OPCODE_EX2:
          ppc_vexptefp(gen->f, v1, v0);     /* v1 = 2^v0 */
          break;
-      case TGSI_OPCODE_LOGBASE2:
+      case TGSI_OPCODE_LG2:
          /* XXX this may be broken! */
          ppc_vlogefp(gen->f, v1, v0);      /* v1 = log2(v0) */
          break;
@@ -1111,10 +1111,10 @@ emit_instruction(struct gen_context *gen,
    case TGSI_OPCODE_MOV:
    case TGSI_OPCODE_SWZ:
    case TGSI_OPCODE_ABS:
-   case TGSI_OPCODE_FLOOR:
-   case TGSI_OPCODE_FRAC:
-   case TGSI_OPCODE_EXPBASE2:
-   case TGSI_OPCODE_LOGBASE2:
+   case TGSI_OPCODE_FLR:
+   case TGSI_OPCODE_FRC:
+   case TGSI_OPCODE_EX2:
+   case TGSI_OPCODE_LG2:
       emit_unaryop(gen, inst);
       break;
    case TGSI_OPCODE_RSQ:
