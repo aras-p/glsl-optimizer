@@ -4801,14 +4801,56 @@ initialize_symbol_from_const(struct gl_program *prog,
 }
 
 
+char *
+make_error_string(const char *fmt, ...)
+{
+   int length;
+   char *str;
+   va_list args;
+
+   va_start(args, fmt);
+
+   /* Call vsnprintf once to determine how large the final string is.  Call it
+    * again to do the actual formatting.  from the vsnprintf manual page:
+    *
+    *    Upon successful return, these functions return the number of
+    *    characters printed  (not including the trailing '\0' used to end
+    *    output to strings).
+    */
+   length = 1 + vsnprintf(NULL, 0, fmt, args);
+
+   str = _mesa_malloc(length);
+   if (str) {
+      vsnprintf(str, length, fmt, args);
+   }
+
+   va_end(args);
+
+   return str;
+}
+
+
 void
 yyerror(YYLTYPE *locp, struct asm_parser_state *state, const char *s)
 {
-   (void) state;
+   char *err_str;
 
-   fprintf(stderr, "line %u, char %u: error: %s\n", locp->first_line,
-	   locp->first_column, s);
+
+   err_str = make_error_string("glProgramStringARB(%s)\n", s);
+   if (err_str) {
+      _mesa_error(state->ctx, GL_INVALID_OPERATION, err_str);
+      _mesa_free(err_str);
+   }
+
+   err_str = make_error_string("line %u, char %u: error: %s\n",
+			       locp->first_line, locp->first_column, s);
+   _mesa_set_program_error(state->ctx, locp->position, err_str);
+
+   if (err_str) {
+      _mesa_free(err_str);
+   }
 }
+
 
 GLboolean
 _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
@@ -4819,6 +4861,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
    unsigned i;
    GLubyte *strz;
 
+   state->ctx = ctx;
    state->prog->Target = target;
    state->prog->Parameters = _mesa_new_parameter_list();
 
@@ -4877,8 +4920,18 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
    _mesa_program_lexer_dtor(state->scanner);
 
 
+   if (ctx->Program.ErrorPos != -1) {
+      return GL_FALSE;
+   }
+
    if (! _mesa_layout_parameters(state)) {
-      fprintf(stderr, "error: layout\n");
+      struct YYLTYPE loc;
+
+      loc.first_line = 0;
+      loc.first_column = 0;
+      loc.position = len;
+
+      yyerror(& loc, state, "invalid PARAM usage");
       return GL_FALSE;
    }
 

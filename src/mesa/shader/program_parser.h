@@ -24,6 +24,11 @@
 
 #include "main/config.h"
 
+#ifndef MTYPES_H
+struct __GLcontextRec;
+typedef struct __GLcontextRec GLcontext;
+#endif
+
 enum asm_type {
    at_none,
    at_address,
@@ -119,6 +124,7 @@ struct asm_instruction {
 
 
 struct asm_parser_state {
+   GLcontext *ctx;
    struct gl_program *prog;
 
    /**
@@ -212,11 +218,6 @@ typedef struct YYLTYPE {
 #define YYLTYPE_IS_DECLARED 1
 #define YYLTYPE_IS_TRIVIAL 1
 
-
-#ifndef MTYPES_H
-struct __GLcontextRec;
-typedef struct __GLcontextRec GLcontext;
-#endif
 
 extern GLboolean _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
     const GLubyte *str, GLsizei len, struct asm_parser_state *state);
