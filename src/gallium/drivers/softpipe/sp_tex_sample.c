@@ -680,11 +680,13 @@ get_texel(const struct tgsi_sampler *tgsi_sampler,
       rgba[3][j] = sampler->border_color[3];
    }
    else {
-      const int tx = x % TILE_SIZE;
-      const int ty = y % TILE_SIZE;
-      const struct softpipe_cached_tile *tile
-         = sp_get_cached_tile_tex(samp->cache,
-                                  x, y, z, face, level);
+      const unsigned tx = x % TILE_SIZE;
+      const unsigned ty = y % TILE_SIZE;
+      const struct softpipe_cached_tile *tile;
+
+      tile = sp_get_cached_tile_tex(samp->cache, 
+                                    tile_address(x, y, z, face, level));
+
       rgba[0][j] = tile->data.color[ty][tx][0];
       rgba[1][j] = tile->data.color[ty][tx][1];
       rgba[2][j] = tile->data.color[ty][tx][2];
