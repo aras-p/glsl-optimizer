@@ -141,7 +141,8 @@ sp_tile_cache_clear(struct softpipe_tile_cache *tc, const float *rgba,
                     uint clearValue);
 
 extern struct softpipe_cached_tile *
-sp_get_cached_tile(struct softpipe_tile_cache *tc, int x, int y);
+sp_find_cached_tile(struct softpipe_tile_cache *tc, 
+                    union tile_address addr );
 
 extern const struct softpipe_cached_tile *
 sp_find_cached_tile_tex(struct softpipe_tile_cache *tc, 
@@ -176,6 +177,19 @@ sp_get_cached_tile_tex(struct softpipe_tile_cache *tc,
       return tc->last_tile;
 
    return sp_find_cached_tile_tex( tc, addr );
+}
+
+
+static INLINE struct softpipe_cached_tile *
+sp_get_cached_tile(struct softpipe_tile_cache *tc, 
+                   int x, int y )
+{
+   union tile_address addr = tile_address( x, y, 0, 0, 0 );
+
+   if (tc->last_tile->addr.value == addr.value)
+      return tc->last_tile;
+
+   return sp_find_cached_tile( tc, addr );
 }
 
 
