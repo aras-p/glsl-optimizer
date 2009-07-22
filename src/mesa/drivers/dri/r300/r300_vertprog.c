@@ -1006,7 +1006,7 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 	}
 }
 
-void r300TranslateVertexShader(struct r300_vertex_program *vp)
+static void translate_vertex_program(struct r300_vertex_program *vp)
 {
 	struct prog_instruction *vpi = vp->Base->Base.Instructions;
 	int i;
@@ -1020,7 +1020,6 @@ void r300TranslateVertexShader(struct r300_vertex_program *vp)
 
 	vp->pos_end = 0;	/* Not supported yet */
 	vp->hw_code.length = 0;
-	vp->translated = GL_TRUE;
 	vp->error = GL_FALSE;
 
 	t_inputs_outputs(vp);
@@ -1628,10 +1627,12 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 		vp->num_temporaries = max + 1;
 	}
 
+	translate_vertex_program(vp);
+
 	return vp;
 }
 
-struct r300_vertex_program * r300SelectVertexShader(GLcontext *ctx)
+struct r300_vertex_program * r300SelectAndTranslateVertexShader(GLcontext *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_program_key wanted_key = { 0 };

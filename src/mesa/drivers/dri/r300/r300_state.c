@@ -2020,9 +2020,7 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 			}
 		}
 
-		vp = r300SelectVertexShader(ctx);
-		if (!vp->translated)
-			r300TranslateVertexShader(vp);
+		vp = r300SelectAndTranslateVertexShader(ctx);
 
 		r300SwitchFallback(ctx, R300_FALLBACK_VERTEX_PROGRAM, vp->error);
 	}

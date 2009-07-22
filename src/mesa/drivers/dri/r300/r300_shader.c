@@ -126,9 +126,7 @@ r300IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
 
 		return !fp->error;
 	} else {
-		struct r300_vertex_program *vp = r300SelectVertexShader(ctx);
-		if (!vp->translated)
-			r300TranslateVertexShader(vp);
+		struct r300_vertex_program *vp = r300SelectAndTranslateVertexShader(ctx);
 
 		return !vp->error;
 	}

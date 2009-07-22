@@ -420,7 +420,6 @@ struct r300_vertex_program {
 		} body;
 	} hw_code;
 
-	GLboolean translated;
 	GLboolean error;
 
 	int pos_end;

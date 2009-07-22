@@ -34,8 +34,6 @@
 
 void r300SetupVertexProgram(r300ContextPtr rmesa);
 
-struct r300_vertex_program * r300SelectVertexShader(GLcontext *ctx);
-
-void r300TranslateVertexShader(struct r300_vertex_program *vp);
+struct r300_vertex_program * r300SelectAndTranslateVertexShader(GLcontext *ctx);
 
 #endif
