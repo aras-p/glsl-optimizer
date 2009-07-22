@@ -44,7 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/mtypes.h"
 #include "shader/prog_instruction.h"
-#include "compiler/radeon_compiler.h"
+#include "compiler/radeon_code.h"
 
 struct r300_context;
 typedef struct r300_context r300ContextRec;
