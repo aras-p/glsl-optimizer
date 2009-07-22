@@ -157,8 +157,11 @@ union tgsi_immediate_data
    float Float;
 };
 
-/*
- * GL_NV_vertex_program
+/* TGSI opcodes.  
+ * 
+ * For more information on semantics of opcodes and
+ * which APIs are known to use which opcodes, see
+ * auxiliary/tgsi/tgsi-instruction-set.txt
  */
 #define TGSI_OPCODE_ARL                 0
 #define TGSI_OPCODE_MOV                 1
@@ -177,59 +180,32 @@ union tgsi_immediate_data
 #define TGSI_OPCODE_SLT                 14
 #define TGSI_OPCODE_SGE                 15
 #define TGSI_OPCODE_MAD                 16
-
-/*
- * GL_ATI_fragment_shader
- */
 #define TGSI_OPCODE_SUB                 17
-/*#define TGSI_OPCODE_DOT3                TGSI_OPCODE_DP3*/
-/*#define TGSI_OPCODE_DOT4                TGSI_OPCODE_DP4*/
 #define TGSI_OPCODE_LRP                 18
 #define TGSI_OPCODE_CND                 19
 #define TGSI_OPCODE_CND0                20
 #define TGSI_OPCODE_DP2A                21
-
-/*
- * GL_EXT_vertex_shader
- */
-/*#define TGSI_OPCODE_MADD                TGSI_OPCODE_MAD*/
+                                /* gap */
 #define TGSI_OPCODE_FRC                 24
-/*#define TGSI_OPCODE_SETGE               TGSI_OPCODE_SGE*/
-/*#define TGSI_OPCODE_SETLT               TGSI_OPCODE_SLT*/
 #define TGSI_OPCODE_CLAMP               25
 #define TGSI_OPCODE_FLR                 26
 #define TGSI_OPCODE_ROUND               27
 #define TGSI_OPCODE_EX2                 28
 #define TGSI_OPCODE_LG2                 29
 #define TGSI_OPCODE_POW                 30
-/*#define TGSI_OPCODE_RECIP               TGSI_OPCODE_RCP*/
-/*#define TGSI_OPCODE_RECIPSQRT           TGSI_OPCODE_RSQ*/
 #define TGSI_OPCODE_XPD                 31
-
-/*
- * GL_NV_vertex_program1_1
- */
+                                /* gap */
 #define TGSI_OPCODE_ABS                 33
 #define TGSI_OPCODE_RCC                 34
 #define TGSI_OPCODE_DPH                 35
-
-/*
- * GL_NV_fragment_program
- */
 #define TGSI_OPCODE_COS                 36
 #define TGSI_OPCODE_DDX                 37
 #define TGSI_OPCODE_DDY                 38
-/*#define TGSI_OPCODE_EX2                 TGSI_OPCODE_EXPBASE2*/
-/*#define TGSI_OPCODE_FLR                 TGSI_OPCODE_FLOOR*/
-/*#define TGSI_OPCODE_FRC                 TGSI_OPCODE_FRAC*/
 #define TGSI_OPCODE_KILP                39  /* predicated kill */
-/*#define TGSI_OPCODE_LG2                 TGSI_OPCODE_LOGBASE2*/
-/*#define TGSI_OPCODE_LRP                 TGSI_OPCODE_LERP*/
 #define TGSI_OPCODE_PK2H                40
 #define TGSI_OPCODE_PK2US               41
 #define TGSI_OPCODE_PK4B                42
 #define TGSI_OPCODE_PK4UB               43
-/*#define TGSI_OPCODE_POW                 TGSI_OPCODE_POWER*/
 #define TGSI_OPCODE_RFL                 44
 #define TGSI_OPCODE_SEQ                 45
 #define TGSI_OPCODE_SFL                 46
@@ -246,43 +222,18 @@ union tgsi_immediate_data
 #define TGSI_OPCODE_UP4B                57
 #define TGSI_OPCODE_UP4UB               58
 #define TGSI_OPCODE_X2D                 59
-
-/*
- * GL_NV_vertex_program2
- */
 #define TGSI_OPCODE_ARA                 60
 #define TGSI_OPCODE_ARR                 61
 #define TGSI_OPCODE_BRA                 62
 #define TGSI_OPCODE_CAL                 63
 #define TGSI_OPCODE_RET                 64
-#define TGSI_OPCODE_SSG                 65
-
-/*
- * GL_ARB_vertex_program
- */
-#define TGSI_OPCODE_SWZ                 118
-/*#define TGSI_OPCODE_XPD                 TGSI_OPCODE_CROSSPRODUCT*/
-
-/*
- * GL_ARB_fragment_program
- */
+#define TGSI_OPCODE_SSG                 65 /* SGN */
 #define TGSI_OPCODE_CMP                 66
-#define TGSI_OPCODE_KIL                 116  /* conditional kill */
 #define TGSI_OPCODE_SCS                 67
 #define TGSI_OPCODE_TXB                 68
-
-/*
- * GL_NV_fragment_program_option
- */
-/* No new opcode */
-
-/*
- * GL_NV_fragment_program2
- */
 #define TGSI_OPCODE_NRM                 69
 #define TGSI_OPCODE_DIV                 70
 #define TGSI_OPCODE_DP2                 71
-/*#define TGSI_OPCODE_DP2A                TGSI_OPCODE_DOT2ADD*/
 #define TGSI_OPCODE_TXL                 72
 #define TGSI_OPCODE_BRK                 73
 #define TGSI_OPCODE_IF                  74
@@ -292,20 +243,8 @@ union tgsi_immediate_data
 #define TGSI_OPCODE_ENDIF               78
 #define TGSI_OPCODE_ENDLOOP             79
 #define TGSI_OPCODE_ENDREP              80
-
-/*
- * GL_NV_vertex_program2_option
- */
-
-/*
- * GL_NV_vertex_program3
- */
 #define TGSI_OPCODE_PUSHA               81
 #define TGSI_OPCODE_POPA                82
-
-/*
- * GL_NV_gpu_program4
- */
 #define TGSI_OPCODE_CEIL                83
 #define TGSI_OPCODE_I2F                 84
 #define TGSI_OPCODE_NOT                 85
@@ -320,98 +259,25 @@ union tgsi_immediate_data
 #define TGSI_OPCODE_TXF                 94
 #define TGSI_OPCODE_TXQ                 95
 #define TGSI_OPCODE_CONT                96
-
-/*
- * GL_NV_vertex_program4
- */
-/* Same as GL_NV_gpu_program4 */
-
-/*
- * GL_NV_fragment_program4
- */
-/* Same as GL_NV_gpu_program4 */
-
-/*
- * GL_NV_geometry_program4
- */
-/* Same as GL_NV_gpu_program4 */
 #define TGSI_OPCODE_EMIT                97
 #define TGSI_OPCODE_ENDPRIM             98
-
-/*
- * GLSL
- */
 #define TGSI_OPCODE_BGNLOOP2            99
 #define TGSI_OPCODE_BGNSUB              100
 #define TGSI_OPCODE_ENDLOOP2            101
 #define TGSI_OPCODE_ENDSUB              102
-/*#define TGSI_OPCODE_INT                 TGSI_OPCODE_TRUNC*/
 #define TGSI_OPCODE_NOISE1              103
 #define TGSI_OPCODE_NOISE2              104
 #define TGSI_OPCODE_NOISE3              105
 #define TGSI_OPCODE_NOISE4              106
 #define TGSI_OPCODE_NOP                 107
-
-/*
- * ps_1_1
- */
-/*#define TGSI_OPCODE_TEXKILL             TGSI_OPCODE_KIL*/
-
-/*
- * ps_1_2
- */
-/* CMP - use TGSI_OPCODE_CND0 */
-
-/*
- * ps_1_3
- */
-/* CMP - use TGSI_OPCODE_CND0 */
-
-/*
- * ps_1_4
- */
-/*#define TGSI_OPCODE_TEXLD               TGSI_OPCODE_TEX*/
-
-/*
- * ps_2_0
- */
-/*#define TGSI_OPCODE_CRS                 TGSI_OPCODE_XPD*/
+                                /* gap */
 #define TGSI_OPCODE_NRM4                112
-/*#define TGSI_OPCODE_SINCOS              TGSI_OPCODE_SCS*/
-/*#define TGSI_OPCODE_TEXLDB              TGSI_OPCODE_TXB*/
-/*#define TGSI_OPCODE_DP2ADD              TGSI_OPCODE_DP2A*/
-
-/*
- * ps_2_x
- */
-/*#define TGSI_OPCODE_CALL                TGSI_OPCODE_CAL*/
 #define TGSI_OPCODE_CALLNZ              113
 #define TGSI_OPCODE_IFC                 114
-/*#define TGSI_OPCODE_BREAK               TGSI_OPCODE_BRK*/
 #define TGSI_OPCODE_BREAKC              115
-/*#define TGSI_OPCODE_DSX                 TGSI_OPCODE_DDX*/
-/*#define TGSI_OPCODE_DSY                 TGSI_OPCODE_DDY*/
-/*#define TGSI_OPCODE_TEXLDD              TGSI_OPCODE_TXD*/
-
-/*
- * vs_1_1
- */
-/*#define TGSI_OPCODE_EXPP                TGSI_OPCODE_EXP*/
-/*#define TGSI_OPCODE_LOGP                TGSI_OPCODE_LG2*/
-
-/*
- * vs_2_0
- */
-/*#define TGSI_OPCODE_SGN                 TGSI_OPCODE_SSG*/
-/*#define TGSI_OPCODE_MOVA                TGSI_OPCODE_ARR*/
-/* EXPP - use TGSI_OPCODE_EX2 */
-
-/*
- * vs_2_x
- */
-
+#define TGSI_OPCODE_KIL                 116  /* conditional kill */
 #define TGSI_OPCODE_END                 117  /* aka HALT */
-
+#define TGSI_OPCODE_SWZ                 118
 #define TGSI_OPCODE_LAST                119
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
