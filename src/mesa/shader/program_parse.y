@@ -590,7 +590,9 @@ srcReg: IDENTIFIER /* temporaryReg | progParamSingle */
 	| paramSingleItemUse
 	{
 	   init_src_reg(& $$);
-	   $$.Base.File = $1.param_binding_type;
+	   $$.Base.File = ($1.name != NULL) 
+	      ? $1.param_binding_type
+	      : PROGRAM_CONSTANT;
 	   $$.Base.Index = $1.param_binding_begin;
 	}
 	;
