@@ -105,4 +105,7 @@ void r300_translate_fragment_shader(struct r300_context* r300,
 
     tgsi_parse_free(&parser);
     FREE(assembler);
+
+    /* And, finally... */
+    fs->translated = TRUE;
 }

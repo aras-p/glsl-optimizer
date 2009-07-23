@@ -408,4 +408,7 @@ void r300_translate_vertex_shader(struct r300_context* r300,
 
     tgsi_parse_free(&parser);
     FREE(assembler);
+
+    /* And, finally... */
+    vs->translated = TRUE;
 }
