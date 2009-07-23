@@ -56,13 +56,15 @@ softpipe_flush( struct pipe_context *pipe,
       }
    }
 
-   if (flags & PIPE_FLUSH_RENDER_CACHE) {
+   if (flags & PIPE_FLUSH_SWAPBUFFERS) {
+      /* If this is a swapbuffers, just flush color buffers.
+       *
+       * The zbuffer changes are not discarded, but held in the cache
+       * in the hope that a later clear will wipe them out.
+       */
       for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++)
          if (softpipe->cbuf_cache[i])
             sp_flush_tile_cache(softpipe->cbuf_cache[i]);
-
-      if (softpipe->zsbuf_cache)
-         sp_flush_tile_cache(softpipe->zsbuf_cache);
 
       /* Need this call for hardware buffers before swapbuffers.
        *
@@ -71,7 +73,15 @@ softpipe_flush( struct pipe_context *pipe,
        * to unmap surfaces when flushing.
        */
       softpipe_unmap_transfers(softpipe);
-      
+   }
+   else if (flags & PIPE_FLUSH_RENDER_CACHE) {
+      for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++)
+         if (softpipe->cbuf_cache[i])
+            sp_flush_tile_cache(softpipe->cbuf_cache[i]);
+
+      if (softpipe->zsbuf_cache)
+         sp_flush_tile_cache(softpipe->zsbuf_cache);
+     
       softpipe->dirty_render_cache = FALSE;
    }
 

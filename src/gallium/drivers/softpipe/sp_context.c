@@ -72,13 +72,10 @@ softpipe_unmap_transfers(struct softpipe_context *sp)
 {
    uint i;
 
-   for (i = 0; i < sp->framebuffer.nr_cbufs; i++)
-      sp_flush_tile_cache(sp->cbuf_cache[i]);
-   sp_flush_tile_cache(sp->zsbuf_cache);
-
    for (i = 0; i < sp->framebuffer.nr_cbufs; i++) {
       sp_tile_cache_unmap_transfers(sp->cbuf_cache[i]);
    }
+
    sp_tile_cache_unmap_transfers(sp->zsbuf_cache);
 }
 
