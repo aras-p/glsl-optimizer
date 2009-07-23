@@ -56,13 +56,15 @@ llvmpipe_flush( struct pipe_context *pipe,
       }
    }
 
-   if (flags & PIPE_FLUSH_RENDER_CACHE) {
+   if (flags & PIPE_FLUSH_SWAPBUFFERS) {
+      /* If this is a swapbuffers, just flush color buffers.
+       *
+       * The zbuffer changes are not discarded, but held in the cache
+       * in the hope that a later clear will wipe them out.
+       */
       for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++)
          if (llvmpipe->cbuf_cache[i])
             lp_flush_tile_cache(llvmpipe->cbuf_cache[i]);
-
-      if (llvmpipe->zsbuf_cache)
-         lp_flush_tile_cache(llvmpipe->zsbuf_cache);
 
       /* Need this call for hardware buffers before swapbuffers.
        *
@@ -71,7 +73,15 @@ llvmpipe_flush( struct pipe_context *pipe,
        * to unmap surfaces when flushing.
        */
       llvmpipe_unmap_transfers(llvmpipe);
-      
+   }
+   else if (flags & PIPE_FLUSH_RENDER_CACHE) {
+      for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++)
+         if (llvmpipe->cbuf_cache[i])
+            lp_flush_tile_cache(llvmpipe->cbuf_cache[i]);
+
+      if (llvmpipe->zsbuf_cache)
+         lp_flush_tile_cache(llvmpipe->zsbuf_cache);
+     
       llvmpipe->dirty_render_cache = FALSE;
    }
 

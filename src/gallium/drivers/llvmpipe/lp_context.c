@@ -72,13 +72,10 @@ llvmpipe_unmap_transfers(struct llvmpipe_context *lp)
 {
    uint i;
 
-   for (i = 0; i < lp->framebuffer.nr_cbufs; i++)
-      lp_flush_tile_cache(lp->cbuf_cache[i]);
-   lp_flush_tile_cache(lp->zsbuf_cache);
-
    for (i = 0; i < lp->framebuffer.nr_cbufs; i++) {
       lp_tile_cache_unmap_transfers(lp->cbuf_cache[i]);
    }
+
    lp_tile_cache_unmap_transfers(lp->zsbuf_cache);
 }
 
