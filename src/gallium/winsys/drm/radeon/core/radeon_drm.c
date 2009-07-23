@@ -31,6 +31,11 @@
 #include "radeon_drm.h"
 #include "trace/tr_drm.h"
 
+#include "r300_screen.h"
+#include "xf86drm.h"
+
+#include <sys/ioctl.h>
+
 /* Create a pipe_screen. */
 struct pipe_screen* radeon_create_screen(struct drm_api* api,
                                          int drmFB,

@@ -20,6 +20,9 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#ifndef RADEON_R300_H
+#define RADEON_R300_H
+
 /* XXX WTF is this! I shouldn't have to include those first three! FUCK! */
 #include <stdint.h>
 #include <stdlib.h>
@@ -44,5 +47,9 @@ struct drm_radeon_info {
 };
 #endif
 
+struct radeon_winsys;
+
 struct r300_winsys*
 radeon_create_r300_winsys(int fd, struct radeon_winsys* old_winsys);
+
+#endif /* RADEON_R300_H */

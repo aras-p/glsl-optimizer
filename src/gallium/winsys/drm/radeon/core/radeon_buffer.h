@@ -61,11 +61,6 @@ struct radeon_winsys_priv {
     /* Radeon BO manager. */
     struct radeon_bo_manager* bom;
 
-    /* Radeon BO space checker. */
-    struct radeon_cs_space_check sc[RADEON_MAX_BOS];
-    /* Current BO count. */
-    unsigned bo_count;
-
     /* Radeon CS manager. */
     struct radeon_cs_manager* csm;
 
