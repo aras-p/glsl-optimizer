@@ -952,7 +952,6 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_RCP:
-   /* TGSI_OPCODE_RECIP */
       FETCH( &r[0], 0, CHAN_X );
       r[0].q = micro_div(mach->Temps[TEMP_1_I].xyzw[TEMP_1_C].q, r[0].q);
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -961,7 +960,6 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_RSQ:
-   /* TGSI_OPCODE_RECIPSQRT */
       FETCH( &r[0], 0, CHAN_X );
       r[0].q = micro_sqrt(r[0].q);
       r[0].q = micro_div(mach->Temps[TEMP_1_I].xyzw[TEMP_1_C].q, r[0].q);
@@ -1115,7 +1113,6 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_MAD:
-   /* TGSI_OPCODE_MADD */
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
@@ -1136,8 +1133,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_LERP:
-   /* TGSI_OPCODE_LRP */
+   case TGSI_OPCODE_LRP:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH(&r[0], 0, chan_index);
          FETCH(&r[1], 1, chan_index);
@@ -1158,8 +1154,7 @@ exec_instruction(
       ASSERT (0);
       break;
 
-   case TGSI_OPCODE_DOT2ADD:
-      /* TGSI_OPCODE_DP2A */
+   case TGSI_OPCODE_DP2A:
       ASSERT (0);
       break;
 
@@ -1171,8 +1166,7 @@ exec_instruction(
       ASSERT (0);
       break;
 
-   case TGSI_OPCODE_FRAC:
-   /* TGSI_OPCODE_FRC */
+   case TGSI_OPCODE_FRC:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          r[0].q = micro_frc(r[0].q);
@@ -1184,8 +1178,7 @@ exec_instruction(
       ASSERT (0);
       break;
 
-   case TGSI_OPCODE_FLOOR:
-   /* TGSI_OPCODE_FLR */
+   case TGSI_OPCODE_FLR:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          r[0].q = micro_flr(r[0].q);
@@ -1201,8 +1194,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_EXPBASE2:
-    /* TGSI_OPCODE_EX2 */
+   case TGSI_OPCODE_EX2:
       FETCH(&r[0], 0, CHAN_X);
 
       r[0].q = micro_pow(mach->Temps[TEMP_2_I].xyzw[TEMP_2_C].q, r[0].q);
@@ -1212,8 +1204,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_LOGBASE2:
-   /* TGSI_OPCODE_LG2 */
+   case TGSI_OPCODE_LG2:
       FETCH( &r[0], 0, CHAN_X );
       r[0].q = micro_lg2(r[0].q);
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -1221,8 +1212,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_POWER:
-      /* TGSI_OPCODE_POW */
+   case TGSI_OPCODE_POW:
       FETCH(&r[0], 0, CHAN_X);
       FETCH(&r[1], 1, CHAN_X);
 
@@ -1233,7 +1223,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_CROSSPRODUCT:
+   case TGSI_OPCODE_XPD:
       /* TGSI_OPCODE_XPD */
       FETCH(&r[0], 0, CHAN_Y);
       FETCH(&r[1], 1, CHAN_Z);
