@@ -273,29 +273,29 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		fflush(stdout);
 	}
 
+	rc_mesa_to_rc_program(&c->Base, c->program);
+
 	if (c->is_r500) {
 		struct radeon_nqssadce_descr nqssadce = {
 			.Init = &nqssadce_init,
 			.IsNativeSwizzle = &r500FPIsNativeSwizzle,
 			.BuildSwizzle = &r500FPBuildSwizzle
 		};
-		radeonNqssaDce(c->program, &nqssadce, 0);
+		radeonNqssaDce(&c->Base, &nqssadce, 0);
 	} else {
 		struct radeon_nqssadce_descr nqssadce = {
 			.Init = &nqssadce_init,
 			.IsNativeSwizzle = &r300FPIsNativeSwizzle,
 			.BuildSwizzle = &r300FPBuildSwizzle
 		};
-		radeonNqssaDce(c->program, &nqssadce, 0);
+		radeonNqssaDce(&c->Base, &nqssadce, 0);
 	}
 
 	if (c->Base.Debug) {
 		_mesa_printf("Compiler: after NqSSA-DCE:\n");
-		_mesa_print_program(c->program);
+		rc_print_program(&c->Base.Program);
 		fflush(stdout);
 	}
-
-	rc_mesa_to_rc_program(&c->Base, c->program);
 
 	if (c->is_r500) {
 		r500BuildFragmentProgramHwCode(c);

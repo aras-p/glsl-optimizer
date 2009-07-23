@@ -30,7 +30,6 @@
 
 #include "radeon_program.h"
 
-
 struct register_state {
 	/**
 	 * Bitmask indicating which components of the register are sourced
@@ -44,13 +43,13 @@ struct register_state {
  * read from, etc.
  */
 struct nqssadce_state {
-	struct gl_program *Program;
+	struct radeon_compiler *Compiler;
 	struct radeon_nqssadce_descr *Descr;
 
 	/**
 	 * All instructions after this instruction pointer have been dealt with.
 	 */
-	int IP;
+	struct rc_instruction * IP;
 
 	/**
 	 * Which registers are read by subsequent instructions?
@@ -86,7 +85,7 @@ struct radeon_nqssadce_descr {
 	void (*BuildSwizzle)(struct nqssadce_state*, struct prog_dst_register dst, struct prog_src_register src);
 };
 
-void radeonNqssaDce(struct gl_program *p, struct radeon_nqssadce_descr* descr, void * data);
+void radeonNqssaDce(struct radeon_compiler * c, struct radeon_nqssadce_descr* descr, void * data);
 struct prog_src_register lmul_swizzle(GLuint swizzle, struct prog_src_register srcreg);
 
 #endif /* __RADEON_PROGRAM_NQSSADCE_H_ */

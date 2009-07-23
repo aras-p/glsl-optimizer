@@ -35,6 +35,7 @@
 
 #include "../r300_reg.h"
 #include "radeon_nqssadce.h"
+#include "radeon_compiler.h"
 
 #define MAKE_SWZ3(x, y, z) (MAKE_SWIZZLE4(SWIZZLE_##x, SWIZZLE_##y, SWIZZLE_##z, SWIZZLE_ZERO))
 
@@ -174,18 +175,15 @@ void r300FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, 
 			}
 		}
 
-		struct prog_instruction *inst;
-
-		_mesa_insert_instructions(s->Program, s->IP, 1);
-		inst = s->Program->Instructions + s->IP++;
-		inst->Opcode = OPCODE_MOV;
-		inst->DstReg = dst;
-		inst->DstReg.WriteMask &= (best_matchmask | WRITEMASK_W);
-		inst->SrcReg[0] = src;
-		inst->SrcReg[0].Negate = (best_matchmask & src.Negate) ? NEGATE_XYZW : NEGATE_NONE;
+		struct rc_instruction *inst = rc_insert_new_instruction(s->Compiler, s->IP->Prev);
+		inst->I.Opcode = OPCODE_MOV;
+		inst->I.DstReg = dst;
+		inst->I.DstReg.WriteMask &= (best_matchmask | WRITEMASK_W);
+		inst->I.SrcReg[0] = src;
+		inst->I.SrcReg[0].Negate = (best_matchmask & src.Negate) ? NEGATE_XYZW : NEGATE_NONE;
 		/* Note: We rely on NqSSA/DCE to set unused swizzle components to NIL */
 
-		dst.WriteMask &= ~inst->DstReg.WriteMask;
+		dst.WriteMask &= ~inst->I.DstReg.WriteMask;
 	}
 }
 

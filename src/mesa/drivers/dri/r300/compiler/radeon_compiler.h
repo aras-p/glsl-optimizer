@@ -44,6 +44,7 @@ struct rc_program {
 	struct rc_instruction Instructions;
 
 	GLbitfield InputsRead;
+	GLbitfield OutputsWritten;
 	GLbitfield ShadowSamplers; /**< Texture units used for shadow sampling. */
 };
 

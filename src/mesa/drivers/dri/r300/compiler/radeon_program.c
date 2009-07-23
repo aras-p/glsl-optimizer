@@ -180,6 +180,12 @@ struct rc_instruction *rc_insert_new_instruction(struct radeon_compiler * c, str
 	return inst;
 }
 
+void rc_remove_instruction(struct rc_instruction * inst)
+{
+	inst->Prev->Next = inst->Next;
+	inst->Next->Prev = inst->Prev;
+}
+
 
 void rc_mesa_to_rc_program(struct radeon_compiler * c, struct gl_program * program)
 {
@@ -192,6 +198,7 @@ void rc_mesa_to_rc_program(struct radeon_compiler * c, struct gl_program * progr
 
 	c->Program.ShadowSamplers = program->ShadowSamplers;
 	c->Program.InputsRead = program->InputsRead;
+	c->Program.OutputsWritten = program->OutputsWritten;
 }
 
 

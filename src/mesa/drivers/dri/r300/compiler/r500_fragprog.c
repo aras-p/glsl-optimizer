@@ -245,7 +245,6 @@ GLboolean r500FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg)
  */
 void r500FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, struct prog_src_register src)
 {
-	struct prog_instruction *inst;
 	GLuint negatebase[2] = { 0, 0 };
 	int i;
 
@@ -256,20 +255,16 @@ void r500FPBuildSwizzle(struct nqssadce_state *s, struct prog_dst_register dst, 
 		negatebase[GET_BIT(src.Negate, i)] |= 1 << i;
 	}
 
-	_mesa_insert_instructions(s->Program, s->IP, (negatebase[0] ? 1 : 0) + (negatebase[1] ? 1 : 0));
-	inst = s->Program->Instructions + s->IP;
-
 	for(i = 0; i <= 1; ++i) {
 		if (!negatebase[i])
 			continue;
 
-		inst->Opcode = OPCODE_MOV;
-		inst->DstReg = dst;
-		inst->DstReg.WriteMask = negatebase[i];
-		inst->SrcReg[0] = src;
-		inst->SrcReg[0].Negate = (i == 0) ? NEGATE_NONE : NEGATE_XYZW;
-		inst++;
-		s->IP++;
+		struct rc_instruction *inst = rc_insert_new_instruction(s->Compiler, s->IP->Prev);
+		inst->I.Opcode = OPCODE_MOV;
+		inst->I.DstReg = dst;
+		inst->I.DstReg.WriteMask = negatebase[i];
+		inst->I.SrcReg[0] = src;
+		inst->I.SrcReg[0].Negate = (i == 0) ? NEGATE_NONE : NEGATE_XYZW;
 	}
 }
 

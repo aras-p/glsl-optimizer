@@ -310,35 +310,35 @@ static void ei_pow(struct r300_vertex_program_code *vp,
 	inst[3] = t_src_scalar(vp, &vpi->SrcReg[1]);
 }
 
-static void t_inputs_outputs(struct r300_vertex_program_code *vp, struct gl_program * glvp)
+static void t_inputs_outputs(struct r300_vertex_program_compiler * c)
 {
 	int i;
 	int cur_reg;
 	GLuint OutputsWritten, InputsRead;
 
-	OutputsWritten = glvp->OutputsWritten;
-	InputsRead = glvp->InputsRead;
+	OutputsWritten = c->Base.Program.OutputsWritten;
+	InputsRead = c->Base.Program.InputsRead;
 
 	cur_reg = -1;
 	for (i = 0; i < VERT_ATTRIB_MAX; i++) {
 		if (InputsRead & (1 << i))
-			vp->inputs[i] = ++cur_reg;
+			c->code->inputs[i] = ++cur_reg;
 		else
-			vp->inputs[i] = -1;
+			c->code->inputs[i] = -1;
 	}
 
 	cur_reg = 0;
 	for (i = 0; i < VERT_RESULT_MAX; i++)
-		vp->outputs[i] = -1;
+		c->code->outputs[i] = -1;
 
 	assert(OutputsWritten & (1 << VERT_RESULT_HPOS));
 
 	if (OutputsWritten & (1 << VERT_RESULT_HPOS)) {
-		vp->outputs[VERT_RESULT_HPOS] = cur_reg++;
+		c->code->outputs[VERT_RESULT_HPOS] = cur_reg++;
 	}
 
 	if (OutputsWritten & (1 << VERT_RESULT_PSIZ)) {
-		vp->outputs[VERT_RESULT_PSIZ] = cur_reg++;
+		c->code->outputs[VERT_RESULT_PSIZ] = cur_reg++;
 	}
 
 	/* If we're writing back facing colors we need to send
@@ -348,39 +348,39 @@ static void t_inputs_outputs(struct r300_vertex_program_code *vp, struct gl_prog
 	 * get written into appropriate output vectors.
 	 */
 	if (OutputsWritten & (1 << VERT_RESULT_COL0)) {
-		vp->outputs[VERT_RESULT_COL0] = cur_reg++;
+		c->code->outputs[VERT_RESULT_COL0] = cur_reg++;
 	} else if (OutputsWritten & (1 << VERT_RESULT_BFC0) ||
 		OutputsWritten & (1 << VERT_RESULT_BFC1)) {
 		cur_reg++;
 	}
 
 	if (OutputsWritten & (1 << VERT_RESULT_COL1)) {
-		vp->outputs[VERT_RESULT_COL1] = cur_reg++;
+		c->code->outputs[VERT_RESULT_COL1] = cur_reg++;
 	} else if (OutputsWritten & (1 << VERT_RESULT_BFC0) ||
 		OutputsWritten & (1 << VERT_RESULT_BFC1)) {
 		cur_reg++;
 	}
 
 	if (OutputsWritten & (1 << VERT_RESULT_BFC0)) {
-		vp->outputs[VERT_RESULT_BFC0] = cur_reg++;
+		c->code->outputs[VERT_RESULT_BFC0] = cur_reg++;
 	} else if (OutputsWritten & (1 << VERT_RESULT_BFC1)) {
 		cur_reg++;
 	}
 
 	if (OutputsWritten & (1 << VERT_RESULT_BFC1)) {
-		vp->outputs[VERT_RESULT_BFC1] = cur_reg++;
+		c->code->outputs[VERT_RESULT_BFC1] = cur_reg++;
 	} else if (OutputsWritten & (1 << VERT_RESULT_BFC0)) {
 		cur_reg++;
 	}
 
 	for (i = VERT_RESULT_TEX0; i <= VERT_RESULT_TEX7; i++) {
 		if (OutputsWritten & (1 << i)) {
-			vp->outputs[i] = cur_reg++;
+			c->code->outputs[i] = cur_reg++;
 		}
 	}
 
 	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) {
-		vp->outputs[VERT_RESULT_FOGC] = cur_reg++;
+		c->code->outputs[VERT_RESULT_FOGC] = cur_reg++;
 	}
 }
 
@@ -391,7 +391,7 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 	compiler->code->pos_end = 0;	/* Not supported yet */
 	compiler->code->length = 0;
 
-	t_inputs_outputs(compiler->code, compiler->program);
+	t_inputs_outputs(compiler);
 
 	for(rci = compiler->Base.Program.Instructions.Next; rci != &compiler->Base.Program.Instructions; rci = rci->Next) {
 		struct prog_instruction *vpi = &rci->I;
@@ -756,7 +756,7 @@ static void nqssadceInit(struct nqssadce_state* s)
 	}
 
 	s->Outputs[VERT_RESULT_HPOS].Sourced = WRITEMASK_XYZW;
-	if (s->Program->OutputsWritten & (1 << VERT_RESULT_PSIZ))
+	if (s->Compiler->Program.OutputsWritten & (1 << VERT_RESULT_PSIZ))
 		s->Outputs[VERT_RESULT_PSIZ].Sourced = WRITEMASK_X;
 }
 
@@ -812,15 +812,15 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 		fflush(stdout);
 	}
 
+	rc_mesa_to_rc_program(&compiler->Base, compiler->program);
+
 	{
 		struct radeon_nqssadce_descr nqssadce = {
 			.Init = &nqssadceInit,
 			.IsNativeSwizzle = &swizzleIsNative,
 			.BuildSwizzle = NULL
 		};
-		radeonNqssaDce(compiler->program, &nqssadce, compiler);
-
-		rc_mesa_to_rc_program(&compiler->Base, compiler->program);
+		radeonNqssaDce(&compiler->Base, &nqssadce, compiler);
 
 		/* We need this step for reusing temporary registers */
 		allocate_temporary_registers(compiler);
@@ -834,6 +834,6 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 
 	translate_vertex_program(compiler);
 
-	compiler->code->InputsRead = compiler->program->InputsRead;
-	compiler->code->OutputsWritten = compiler->program->OutputsWritten;
+	compiler->code->InputsRead = compiler->Base.Program.InputsRead;
+	compiler->code->OutputsWritten = compiler->Base.Program.OutputsWritten;
 }
