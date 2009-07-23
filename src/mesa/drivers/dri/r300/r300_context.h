@@ -402,15 +402,19 @@ struct r300_hw_state {
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
+struct r300_vertex_program_key {
+	GLuint FpReads;
+	GLuint FogAttr;
+	GLuint WPosAttr;
+};
+
 struct r300_vertex_program {
 	struct gl_vertex_program *Base;
 	struct r300_vertex_program *next;
 
-	struct r300_vertex_program_key {
-		GLuint FpReads;
-		GLuint FogAttr;
-		GLuint WPosAttr;
-	} key;
+	struct r300_vertex_program_key key;
+	GLbitfield InputsRead;
+	GLbitfield OutputsWritten;
 
 	struct r300_vertex_shader_hw_code {
 		int length;

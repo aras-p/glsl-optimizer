@@ -932,14 +932,14 @@ static GLuint *r300TranslateOpcodeXPD(struct r300_vertex_program *vp,
 	return inst;
 }
 
-static void t_inputs_outputs(struct r300_vertex_program *vp)
+static void t_inputs_outputs(struct r300_vertex_program *vp, struct gl_program * glvp)
 {
 	int i;
 	int cur_reg;
 	GLuint OutputsWritten, InputsRead;
 
-	OutputsWritten = vp->Base->Base.OutputsWritten;
-	InputsRead = vp->Base->Base.InputsRead;
+	OutputsWritten = glvp->OutputsWritten;
+	InputsRead = glvp->InputsRead;
 
 	cur_reg = -1;
 	for (i = 0; i < VERT_ATTRIB_MAX; i++) {
@@ -1006,9 +1006,9 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 	}
 }
 
-static void translate_vertex_program(struct r300_vertex_program *vp)
+static void translate_vertex_program(struct r300_vertex_program *vp, struct gl_program * glvp)
 {
-	struct prog_instruction *vpi = vp->Base->Base.Instructions;
+	struct prog_instruction *vpi = glvp->Instructions;
 	int i;
 	GLuint *inst;
 	unsigned long num_operands;
@@ -1022,7 +1022,7 @@ static void translate_vertex_program(struct r300_vertex_program *vp)
 	vp->hw_code.length = 0;
 	vp->error = GL_FALSE;
 
-	t_inputs_outputs(vp);
+	t_inputs_outputs(vp, glvp);
 
 	for (inst = vp->hw_code.body.d; vpi->Opcode != OPCODE_END;
 	     vpi++, inst += 4) {
@@ -1539,13 +1539,14 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_program *vp;
+	struct gl_vertex_program * glvp = (struct gl_vertex_program *) _mesa_clone_program(ctx, &mesa_vp->Base);
 	struct gl_program *prog;
 
 	vp = _mesa_calloc(sizeof(*vp));
-	vp->Base = (struct gl_vertex_program *) _mesa_clone_program(ctx, &mesa_vp->Base);
+	vp->Base = glvp;
 	_mesa_memcpy(&vp->key, wanted_key, sizeof(vp->key));
 
-	prog = &vp->Base->Base;
+	prog = &glvp->Base;
 
 	if (RADEON_DEBUG & DEBUG_VERTS) {
 		fprintf(stderr, "Initial vertex program:\n");
@@ -1553,16 +1554,16 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 		fflush(stdout);
 	}
 
-	if (vp->Base->IsPositionInvariant) {
-		_mesa_insert_mvp_code(ctx, vp->Base);
+	if (glvp->IsPositionInvariant) {
+		_mesa_insert_mvp_code(ctx, glvp);
 	}
 
 	if (r300->selected_fp->code.wpos_attr != FRAG_ATTRIB_MAX) {
-		pos_as_texcoord(&vp->Base->Base, r300->selected_fp->code.wpos_attr - FRAG_ATTRIB_TEX0);
+		pos_as_texcoord(&glvp->Base, r300->selected_fp->code.wpos_attr - FRAG_ATTRIB_TEX0);
 	}
 
 	if (r300->selected_fp->code.fog_attr != FRAG_ATTRIB_MAX) {
-		fog_as_texcoord(&vp->Base->Base, r300->selected_fp->code.fog_attr - FRAG_ATTRIB_TEX0);
+		fog_as_texcoord(&glvp->Base, r300->selected_fp->code.fog_attr - FRAG_ATTRIB_TEX0);
 	}
 
 	addArtificialOutputs(ctx, prog);
@@ -1627,7 +1628,10 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 		vp->num_temporaries = max + 1;
 	}
 
-	translate_vertex_program(vp);
+	translate_vertex_program(vp, &glvp->Base);
+
+	vp->InputsRead = glvp->Base.InputsRead;
+	vp->OutputsWritten = glvp->Base.OutputsWritten;
 
 	return vp;
 }
@@ -1716,8 +1720,8 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	r300EmitVertexProgram(rmesa, R300_PVS_CODE_START, &(prog->hw_code));
 	inst_count = (prog->hw_code.length / 4) - 1;
 
-	r300VapCntl(rmesa, _mesa_bitcount(prog->Base->Base.InputsRead),
-				 _mesa_bitcount(prog->Base->Base.OutputsWritten), prog->num_temporaries);
+	r300VapCntl(rmesa, _mesa_bitcount(prog->InputsRead),
+				 _mesa_bitcount(prog->OutputsWritten), prog->num_temporaries);
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] = (0 << R300_PVS_FIRST_INST_SHIFT) | (inst_count << R300_PVS_XYZW_VALID_INST_SHIFT) |
