@@ -386,14 +386,15 @@ static void t_inputs_outputs(struct r300_vertex_program_code *vp, struct gl_prog
 
 static void translate_vertex_program(struct r300_vertex_program_compiler * compiler)
 {
-	struct prog_instruction *vpi = compiler->program->Instructions;
+	struct rc_instruction *rci;
 
 	compiler->code->pos_end = 0;	/* Not supported yet */
 	compiler->code->length = 0;
 
 	t_inputs_outputs(compiler->code, compiler->program);
 
-	for (; vpi->Opcode != OPCODE_END; vpi++) {
+	for(rci = compiler->Base.Program.Instructions.Next; rci != &compiler->Base.Program.Instructions; rci = rci->Next) {
+		struct prog_instruction *vpi = &rci->I;
 		GLuint *inst = compiler->code->body.d + compiler->code->length;
 
 		/* Skip instructions writing to non-existing destination */
@@ -441,12 +442,12 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 struct temporary_allocation {
 	GLuint Allocated:1;
 	GLuint HwTemp:15;
-	struct prog_instruction * LastRead;
+	struct rc_instruction * LastRead;
 };
 
 static void allocate_temporary_registers(struct r300_vertex_program_compiler * compiler)
 {
-	struct prog_instruction *inst;
+	struct rc_instruction *inst;
 	GLuint num_orig_temps = 0;
 	GLboolean hwtemps[VSF_MAX_FRAGMENT_TEMPS];
 	struct temporary_allocation * ta;
@@ -456,21 +457,21 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 	memset(hwtemps, 0, sizeof(hwtemps));
 
 	/* Pass 1: Count original temporaries and allocate structures */
-	for(inst = compiler->program->Instructions; inst->Opcode != OPCODE_END; inst++) {
-		GLuint numsrcs = _mesa_num_inst_src_regs(inst->Opcode);
-		GLuint numdsts = _mesa_num_inst_dst_regs(inst->Opcode);
+	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
+		GLuint numsrcs = _mesa_num_inst_src_regs(inst->I.Opcode);
+		GLuint numdsts = _mesa_num_inst_dst_regs(inst->I.Opcode);
 
 		for (i = 0; i < numsrcs; ++i) {
-			if (inst->SrcReg[i].File == PROGRAM_TEMPORARY) {
-				if (inst->SrcReg[i].Index >= num_orig_temps)
-					num_orig_temps = inst->SrcReg[i].Index + 1;
+			if (inst->I.SrcReg[i].File == PROGRAM_TEMPORARY) {
+				if (inst->I.SrcReg[i].Index >= num_orig_temps)
+					num_orig_temps = inst->I.SrcReg[i].Index + 1;
 			}
 		}
 
 		if (numdsts) {
-			if (inst->DstReg.File == PROGRAM_TEMPORARY) {
-				if (inst->DstReg.Index >= num_orig_temps)
-					num_orig_temps = inst->DstReg.Index + 1;
+			if (inst->I.DstReg.File == PROGRAM_TEMPORARY) {
+				if (inst->I.DstReg.Index >= num_orig_temps)
+					num_orig_temps = inst->I.DstReg.Index + 1;
 			}
 		}
 	}
@@ -480,24 +481,24 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 	memset(ta, 0, sizeof(struct temporary_allocation) * num_orig_temps);
 
 	/* Pass 2: Determine original temporary lifetimes */
-	for(inst = compiler->program->Instructions; inst->Opcode != OPCODE_END; inst++) {
-		GLuint numsrcs = _mesa_num_inst_src_regs(inst->Opcode);
+	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
+		GLuint numsrcs = _mesa_num_inst_src_regs(inst->I.Opcode);
 
 		for (i = 0; i < numsrcs; ++i) {
-			if (inst->SrcReg[i].File == PROGRAM_TEMPORARY)
-				ta[inst->SrcReg[i].Index].LastRead = inst;
+			if (inst->I.SrcReg[i].File == PROGRAM_TEMPORARY)
+				ta[inst->I.SrcReg[i].Index].LastRead = inst;
 		}
 	}
 
 	/* Pass 3: Register allocation */
-	for(inst = compiler->program->Instructions; inst->Opcode != OPCODE_END; inst++) {
-		GLuint numsrcs = _mesa_num_inst_src_regs(inst->Opcode);
-		GLuint numdsts = _mesa_num_inst_dst_regs(inst->Opcode);
+	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
+		GLuint numsrcs = _mesa_num_inst_src_regs(inst->I.Opcode);
+		GLuint numdsts = _mesa_num_inst_dst_regs(inst->I.Opcode);
 
 		for (i = 0; i < numsrcs; ++i) {
-			if (inst->SrcReg[i].File == PROGRAM_TEMPORARY) {
-				GLuint orig = inst->SrcReg[i].Index;
-				inst->SrcReg[i].Index = ta[orig].HwTemp;
+			if (inst->I.SrcReg[i].File == PROGRAM_TEMPORARY) {
+				GLuint orig = inst->I.SrcReg[i].Index;
+				inst->I.SrcReg[i].Index = ta[orig].HwTemp;
 
 				if (ta[orig].Allocated && inst == ta[orig].LastRead)
 					hwtemps[ta[orig].HwTemp] = GL_FALSE;
@@ -505,8 +506,8 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 		}
 
 		if (numdsts) {
-			if (inst->DstReg.File == PROGRAM_TEMPORARY) {
-				GLuint orig = inst->DstReg.Index;
+			if (inst->I.DstReg.File == PROGRAM_TEMPORARY) {
+				GLuint orig = inst->I.DstReg.Index;
 
 				if (!ta[orig].Allocated) {
 					for(j = 0; j < VSF_MAX_FRAGMENT_TEMPS; ++j) {
@@ -525,7 +526,7 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 					}
 				}
 
-				inst->DstReg.Index = ta[orig].HwTemp;
+				inst->I.DstReg.Index = ta[orig].HwTemp;
 			}
 		}
 	}
@@ -819,17 +820,17 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 		};
 		radeonNqssaDce(compiler->program, &nqssadce, compiler);
 
+		rc_mesa_to_rc_program(&compiler->Base, compiler->program);
+
 		/* We need this step for reusing temporary registers */
 		allocate_temporary_registers(compiler);
 
 		if (compiler->Base.Debug) {
 			fprintf(stderr, "Vertex program after NQSSADCE:\n");
-			_mesa_print_program(compiler->program);
+			rc_print_program(&compiler->Base.Program);
 			fflush(stdout);
 		}
 	}
-
-	assert(compiler->program->NumInstructions);
 
 	translate_vertex_program(compiler);
 
