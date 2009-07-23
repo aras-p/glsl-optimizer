@@ -567,12 +567,12 @@ static void r300EmitClearState(GLcontext * ctx)
                                          0, 0xf, PVS_DST_REG_OUT);
 		vpu.cmd[2] = PVS_SRC_OPERAND(0, PVS_SRC_SELECT_X, PVS_SRC_SELECT_Y,
                                       PVS_SRC_SELECT_Z, PVS_SRC_SELECT_W,
-                                      PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+                                      PVS_SRC_REG_INPUT, NEGATE_NONE);
 		vpu.cmd[3] = PVS_SRC_OPERAND(0, PVS_SRC_SELECT_FORCE_0,
                                       PVS_SRC_SELECT_FORCE_0,
                                       PVS_SRC_SELECT_FORCE_0,
                                       PVS_SRC_SELECT_FORCE_0,
-                                      PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+                                      PVS_SRC_REG_INPUT, NEGATE_NONE);
 		vpu.cmd[4] = 0x0;
 
 		vpu.cmd[5] = PVS_OP_DST_OPERAND(VE_ADD, GL_FALSE, GL_FALSE, 1, 0xf,
@@ -580,13 +580,12 @@ static void r300EmitClearState(GLcontext * ctx)
 		vpu.cmd[6] = PVS_SRC_OPERAND(1, PVS_SRC_SELECT_X,
                                       PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z,
                                       PVS_SRC_SELECT_W, PVS_SRC_REG_INPUT,
-
-                                      VSF_FLAG_NONE);
+                                      NEGATE_NONE);
 		vpu.cmd[7] = PVS_SRC_OPERAND(1, PVS_SRC_SELECT_FORCE_0,
                                       PVS_SRC_SELECT_FORCE_0,
                                       PVS_SRC_SELECT_FORCE_0,
                                       PVS_SRC_SELECT_FORCE_0,
-                                      PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+                                      PVS_SRC_REG_INPUT, NEGATE_NONE);
 		vpu.cmd[8] = 0x0;
 
 		r300->vap_flush_needed = GL_TRUE;

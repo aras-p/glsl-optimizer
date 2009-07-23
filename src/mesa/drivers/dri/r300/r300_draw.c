@@ -341,7 +341,7 @@ static void r300SetVertexFormat(GLcontext *ctx, const struct gl_client_array *ar
 	{
 		int i, tmp;
 
-		tmp = r300->selected_vp->InputsRead;
+		tmp = r300->selected_vp->code.InputsRead;
 		i = 0;
 		vbuf->num_attribs = 0;
 		while (tmp) {
@@ -437,7 +437,7 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 	if (r300->fallback)
 		return GL_FALSE;
 
-	r300SetupVAP(ctx, r300->selected_vp->InputsRead, r300->selected_vp->OutputsWritten);
+	r300SetupVAP(ctx, r300->selected_vp->code.InputsRead, r300->selected_vp->code.OutputsWritten);
 
 	r300UpdateShaderStates(r300);
 

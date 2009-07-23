@@ -133,6 +133,7 @@
 #define NEGATE_Y    0x2
 #define NEGATE_Z    0x4
 #define NEGATE_W    0x8
+#define NEGATE_XYZ  0x7
 #define NEGATE_XYZW 0xf
 #define NEGATE_NONE 0x0
 /*@}*/
@@ -303,11 +304,11 @@ struct prog_dst_register
     * Condition code swizzle value.
     */
    GLuint CondSwizzle:12;
-   
+
    /**
     * Selects the condition code register to use for conditional destination
     * update masking.  In NV_fragmnet_program or NV_vertex_program2 mode, only
-    * condition code register 0 is available.  In NV_vertex_program3 mode, 
+    * condition code register 0 is available.  In NV_vertex_program3 mode,
     * condition code registers 0 and 1 are available.
     */
    GLuint CondSrc:1;
@@ -359,7 +360,7 @@ struct prog_instruction
     * NV_fragment_program, NV_fragment_program_option, NV_vertex_program3.
     */
    GLuint SaturateMode:2;
-   
+
    /**
     * Per-instruction selectable precision: FLOAT32, FLOAT16, FIXED12.
     *
@@ -374,7 +375,7 @@ struct prog_instruction
    /*@{*/
    /** Source texture unit. */
    GLuint TexSrcUnit:5;
-   
+
    /** Source texture target, one of TEXTURE_{1D,2D,3D,CUBE,RECT}_INDEX */
    GLuint TexSrcTarget:3;
 

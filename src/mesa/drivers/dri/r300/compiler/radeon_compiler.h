@@ -66,4 +66,14 @@ struct r300_fragment_program_compiler {
 
 GLboolean r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c);
 
+
+struct r300_vertex_program_compiler {
+	struct radeon_compiler Base;
+	struct r300_vertex_program_code *code;
+	struct r300_vertex_program_external_state state;
+	struct gl_program *program;
+};
+
+GLboolean r3xx_compile_vertex_program(struct r300_vertex_program_compiler* c, GLcontext * ctx);
+
 #endif /* RADEON_COMPILER_H */

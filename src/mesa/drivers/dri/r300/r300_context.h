@@ -390,46 +390,19 @@ struct r300_hw_state {
 
 /* Vertex shader state */
 
-/* Perhaps more if we store programs in vmem? */
-/* drm_r300_cmd_header_t->vpu->count is unsigned char */
-#define VSF_MAX_FRAGMENT_LENGTH (255*4)
-
-/* Can be tested with colormat currently. */
-#define VSF_MAX_FRAGMENT_TEMPS (14)
-
 #define COLOR_IS_RGBA
 #define TAG(x) r300##x
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
-struct r300_vertex_program_key {
-	GLuint FpReads;
-	GLuint FogAttr;
-	GLuint WPosAttr;
-};
-
 struct r300_vertex_program {
 	struct gl_vertex_program *Base;
 	struct r300_vertex_program *next;
 
-	struct r300_vertex_program_key key;
-	GLbitfield InputsRead;
-	GLbitfield OutputsWritten;
-
-	struct r300_vertex_shader_hw_code {
-		int length;
-		union {
-			GLuint d[VSF_MAX_FRAGMENT_LENGTH];
-			float f[VSF_MAX_FRAGMENT_LENGTH];
-		} body;
-	} hw_code;
+	struct r300_vertex_program_external_state key;
+	struct r300_vertex_program_code code;
 
 	GLboolean error;
-
-	int pos_end;
-	int num_temporaries;	/* Number of temp vars used by program */
-	int inputs[VERT_ATTRIB_MAX];
-	int outputs[VERT_RESULT_MAX];
 };
 
 struct r300_vertex_program_cont {

@@ -1458,7 +1458,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	hw_tcl_on = r300->options.hw_tcl_enabled;
 
 	if (hw_tcl_on)
-		OutputsWritten.vp_outputs = r300->selected_vp->OutputsWritten;
+		OutputsWritten.vp_outputs = r300->selected_vp->code.OutputsWritten;
 	else
 		RENDERINPUTS_COPY(OutputsWritten.index_bitset, r300->render_inputs_bitset);
 
@@ -1552,7 +1552,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	hw_tcl_on = r300->options.hw_tcl_enabled;
 
 	if (hw_tcl_on)
-		OutputsWritten.vp_outputs = r300->selected_vp->OutputsWritten;
+		OutputsWritten.vp_outputs = r300->selected_vp->code.OutputsWritten;
 	else
 		RENDERINPUTS_COPY(OutputsWritten.index_bitset, r300->render_inputs_bitset);
 

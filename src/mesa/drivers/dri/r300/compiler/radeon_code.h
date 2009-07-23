@@ -147,4 +147,29 @@ struct rX00_fragment_program_code {
 };
 
 
+#define VSF_MAX_FRAGMENT_LENGTH (255*4)
+#define VSF_MAX_FRAGMENT_TEMPS (14)
+
+struct r300_vertex_program_external_state {
+	GLuint FpReads;
+	GLuint FogAttr;
+	GLuint WPosAttr;
+};
+
+struct r300_vertex_program_code {
+	int length;
+	union {
+		GLuint d[VSF_MAX_FRAGMENT_LENGTH];
+		float f[VSF_MAX_FRAGMENT_LENGTH];
+	} body;
+
+	int pos_end;
+	int num_temporaries;	/* Number of temp vars used by program */
+	int inputs[VERT_ATTRIB_MAX];
+	int outputs[VERT_RESULT_MAX];
+
+	GLbitfield InputsRead;
+	GLbitfield OutputsWritten;
+};
+
 #endif /* RADEON_CODE_H */
