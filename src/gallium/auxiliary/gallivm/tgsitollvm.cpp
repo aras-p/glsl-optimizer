@@ -338,7 +338,7 @@ translate_instruction(llvm::Module *module,
       out = instr->sub(inputs[0], inputs[1]);
    }
       break;
-   case TGSI_OPCODE_LERP: {
+   case TGSI_OPCODE_LRP: {
       out = instr->lerp(inputs[0], inputs[1], inputs[2]);
    }
       break;
@@ -350,11 +350,11 @@ translate_instruction(llvm::Module *module,
       out = instr->cnd0(inputs[0], inputs[1], inputs[2]);
    }
       break;
-   case TGSI_OPCODE_DOT2ADD: {
+   case TGSI_OPCODE_DP2A: {
       out = instr->dot2add(inputs[0], inputs[1], inputs[2]);
    }
       break;
-   case TGSI_OPCODE_FRAC: {
+   case TGSI_OPCODE_FRC: {
       out = instr->frc(inputs[0]);
    }
       break;
@@ -362,25 +362,25 @@ translate_instruction(llvm::Module *module,
       out = instr->clamp(inputs[0]);
    }
       break;
-   case TGSI_OPCODE_FLOOR: {
+   case TGSI_OPCODE_FLR: {
       out = instr->floor(inputs[0]);
    }
       break;
    case TGSI_OPCODE_ROUND:
       break;
-   case TGSI_OPCODE_EXPBASE2: {
+   case TGSI_OPCODE_EX2: {
       out = instr->ex2(inputs[0]);
    }
       break;
-   case TGSI_OPCODE_LOGBASE2: {
+   case TGSI_OPCODE_LG2: {
       out = instr->lg2(inputs[0]);
    }
       break;
-   case TGSI_OPCODE_POWER: {
+   case TGSI_OPCODE_POW: {
       out = instr->pow(inputs[0], inputs[1]);
    }
       break;
-   case TGSI_OPCODE_CROSSPRODUCT: {
+   case TGSI_OPCODE_XPD: {
       out = instr->cross(inputs[0], inputs[1]);
    }
       break;
@@ -764,40 +764,36 @@ translate_instructionir(llvm::Module *module,
       out = instr->sub(inputs[0], inputs[1]);
    }
       break;
-   case TGSI_OPCODE_LERP: {
+   case TGSI_OPCODE_LRP: {
    }
       break;
    case TGSI_OPCODE_CND:
       break;
    case TGSI_OPCODE_CND0:
       break;
-   case TGSI_OPCODE_DOT2ADD:
+   case TGSI_OPCODE_DP2A:
       break;
-   case TGSI_OPCODE_INDEX:
-      break;
-   case TGSI_OPCODE_NEGATE:
-      break;
-   case TGSI_OPCODE_FRAC: {
+   case TGSI_OPCODE_FRC: {
    }
       break;
    case TGSI_OPCODE_CLAMP:
       break;
-   case TGSI_OPCODE_FLOOR: {
+   case TGSI_OPCODE_FLR: {
    }
       break;
    case TGSI_OPCODE_ROUND:
       break;
-   case TGSI_OPCODE_EXPBASE2: {
+   case TGSI_OPCODE_EX2: {
    }
       break;
-   case TGSI_OPCODE_LOGBASE2: {
+   case TGSI_OPCODE_LG2: {
    }
       break;
-   case TGSI_OPCODE_POWER: {
+   case TGSI_OPCODE_POW: {
       out = instr->pow(inputs[0], inputs[1]);
    }
       break;
-   case TGSI_OPCODE_CROSSPRODUCT: {
+   case TGSI_OPCODE_XPD: {
    }
       break;
    case TGSI_OPCODE_ABS: {
