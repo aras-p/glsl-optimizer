@@ -145,7 +145,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 100 "program_parse.y"
+#line 107 "program_parse.y"
 
    struct asm_instruction *inst;
    struct asm_symbol *sym;

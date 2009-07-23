@@ -26,6 +26,8 @@
 #include <string.h>
 
 #include "main/mtypes.h"
+#include "main/imports.h"
+#include "program.h"
 #include "prog_parameter.h"
 #include "prog_parameter_layout.h"
 #include "prog_statevars.h"
@@ -40,6 +42,9 @@ extern void yy_delete_buffer(void *);
 static struct asm_symbol *declare_variable(struct asm_parser_state *state,
     char *name, enum asm_type t, struct YYLTYPE *locp);
 
+static int add_state_reference(struct gl_program_parameter_list *param_list,
+    const gl_state_index tokens[STATE_LENGTH]);
+
 static int initialize_symbol_from_state(struct gl_program *prog,
     struct asm_symbol *param_var, const gl_state_index tokens[STATE_LENGTH]);
 
@@ -50,6 +55,8 @@ static int initialize_symbol_from_const(struct gl_program *prog,
     struct asm_symbol *param_var, const struct asm_vector *vec);
 
 static int yyparse(struct asm_parser_state *state);
+
+static char *make_error_string(const char *fmt, ...);
 
 static void yyerror(struct YYLTYPE *locp, struct asm_parser_state *state,
     const char *s);
@@ -580,7 +587,7 @@ srcReg: IDENTIFIER /* temporaryReg | progParamSingle */
 	| progParamArray '[' progParamArrayMem ']'
 	{
 	   if (! $3.Base.RelAddr
-	       && ($3.Base.Index >= $1->param_binding_length)) {
+	       && ((unsigned) $3.Base.Index >= $1->param_binding_length)) {
 	      yyerror(& @3, state, "out of bounds array access");
 	      YYERROR;
 	   }
@@ -830,7 +837,7 @@ vtxAttribItem: POSITION
 
 vtxAttribNum: INTEGER
 	{
-	   if ($1 >= state->limits->MaxAttribs) {
+	   if ((unsigned) $1 >= state->limits->MaxAttribs) {
 	      yyerror(& @1, state, "invalid vertex attribute reference");
 	      YYERROR;
 	   }
@@ -880,7 +887,7 @@ PARAM_singleStmt: PARAM IDENTIFIER paramSingleInit
 
 PARAM_multipleStmt: PARAM IDENTIFIER '[' optArraySize ']' paramMultipleInit
 	{
-	   if (($4 != 0) && ($4 != $6.param_binding_length)) {
+	   if (($4 != 0) && ((unsigned) $4 != $6.param_binding_length)) {
 	      yyerror(& @4, state, 
 		      "parameter array size and number of bindings must match");
 	      YYERROR;
@@ -906,7 +913,7 @@ optArraySize:
 	}
 	| INTEGER
         {
-	   if (($1 < 1) || ($1 >= state->limits->MaxParameters)) {
+	   if (($1 < 1) || ((unsigned) $1 >= state->limits->MaxParameters)) {
 	      yyerror(& @1, state, "invalid parameter array size");
 	      YYERROR;
 	   } else {
@@ -1133,7 +1140,7 @@ ambDiffSpecProperty: AMBIENT
 
 stateLightNumber: INTEGER
 	{
-	   if ($1 >= state->MaxLights) {
+	   if ((unsigned) $1 >= state->MaxLights) {
 	      yyerror(& @1, state, "invalid light selector");
 	      YYERROR;
 	   }
@@ -1205,7 +1212,7 @@ stateClipPlaneItem: CLIP '[' stateClipPlaneNum ']' PLANE
 
 stateClipPlaneNum: INTEGER
 	{
-	   if ($1 >= state->MaxClipPlanes) {
+	   if ((unsigned) $1 >= state->MaxClipPlanes) {
 	      yyerror(& @1, state, "invalid clip plane selector");
 	      YYERROR;
 	   }
@@ -1380,7 +1387,7 @@ statePaletteMatNum: INTEGER
 	;
 stateProgramMatNum: INTEGER
 	{
-	   if ($1 >= state->MaxProgramMatrices) {
+	   if ((unsigned) $1 >= state->MaxProgramMatrices) {
 	      yyerror(& @1, state, "invalid program matrix selector");
 	      YYERROR;
 	   }
@@ -1460,7 +1467,7 @@ progLocalParam: PROGRAM LOCAL '[' progLocalParamNum ']'
 
 progEnvParamNum: INTEGER
 	{
-	   if ($1 >= state->limits->MaxEnvParams) {
+	   if ((unsigned) $1 >= state->limits->MaxEnvParams) {
 	      yyerror(& @1, state, "invalid environment parameter reference");
 	      YYERROR;
 	   }
@@ -1470,7 +1477,7 @@ progEnvParamNum: INTEGER
 
 progLocalParamNum: INTEGER
 	{
-	   if ($1 >= state->limits->MaxLocalParams) {
+	   if ((unsigned) $1 >= state->limits->MaxLocalParams) {
 	      yyerror(& @1, state, "invalid local parameter reference");
 	      YYERROR;
 	   }
@@ -1711,7 +1718,7 @@ optLegacyTexUnitNum:               { $$ = 0; }
 
 texCoordUnitNum: INTEGER
 	{
-	   if ($1 >= state->MaxTextureCoordUnits) {
+	   if ((unsigned) $1 >= state->MaxTextureCoordUnits) {
 	      yyerror(& @1, state, "invalid texture coordinate unit selector");
 	      YYERROR;
 	   }
@@ -1722,7 +1729,7 @@ texCoordUnitNum: INTEGER
 
 texImageUnitNum: INTEGER
 	{
-	   if ($1 >= state->MaxTextureImageUnits) {
+	   if ((unsigned) $1 >= state->MaxTextureImageUnits) {
 	      yyerror(& @1, state, "invalid texture image unit selector");
 	      YYERROR;
 	   }
@@ -1733,7 +1740,7 @@ texImageUnitNum: INTEGER
 
 legacyTexUnitNum: INTEGER
 	{
-	   if ($1 >= state->MaxTextureUnits) {
+	   if ((unsigned) $1 >= state->MaxTextureUnits) {
 	      yyerror(& @1, state, "invalid texture unit selector");
 	      YYERROR;
 	   }
@@ -1775,7 +1782,7 @@ asm_instruction_ctor(gl_inst_opcode op,
    struct asm_instruction *inst = calloc(1, sizeof(struct asm_instruction));
 
    if (inst) {
-      _mesa_init_instructions(inst, 1);
+      _mesa_init_instructions(& inst->Base, 1);
       inst->Base.Opcode = op;
       inst->Base.DstReg = *dst;
 
