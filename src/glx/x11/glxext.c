@@ -646,17 +646,6 @@ __glXInitialize(Display * dpy)
    Bool glx_direct, glx_accel;
 #endif
 
-#if defined(USE_XTHREADS)
-   {
-      static int firstCall = 1;
-      if (firstCall) {
-         /* initialize the GLX mutexes */
-         xmutex_init(&__glXmutex);
-         firstCall = 0;
-      }
-   }
-#endif
-
    /* The one and only long long lock */
    __glXLock();
 

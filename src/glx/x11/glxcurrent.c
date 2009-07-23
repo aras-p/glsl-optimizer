@@ -73,45 +73,7 @@ static __GLapi *IndirectAPI = NULL;
  * Current context management and locking
  */
 
-#if defined( USE_XTHREADS )
-
-/* thread safe */
-static GLboolean TSDinitialized = GL_FALSE;
-static xthread_key_t ContextTSD;
-
-_X_HIDDEN __GLXcontext *
-__glXGetCurrentContext(void)
-{
-   if (!TSDinitialized) {
-      xthread_key_create(&ContextTSD, NULL);
-      TSDinitialized = GL_TRUE;
-      return &dummyContext;
-   }
-   else {
-      void *p;
-      xthread_get_specific(ContextTSD, &p);
-      if (!p)
-         return &dummyContext;
-      else
-         return (__GLXcontext *) p;
-   }
-}
-
-_X_HIDDEN void
-__glXSetCurrentContext(__GLXcontext * c)
-{
-   if (!TSDinitialized) {
-      xthread_key_create(&ContextTSD, NULL);
-      TSDinitialized = GL_TRUE;
-   }
-   xthread_set_specific(ContextTSD, c);
-}
-
-
-/* Used by the __glXLock() and __glXUnlock() macros */
-_X_HIDDEN xmutex_rec __glXmutex;
-
-#elif defined( PTHREADS )
+#if defined( PTHREADS )
 
 _X_HIDDEN pthread_mutex_t __glXmutex = PTHREAD_MUTEX_INITIALIZER;
 
