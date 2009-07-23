@@ -119,7 +119,7 @@ draw_create_vs_llvm(struct draw_context *draw,
    vs->base.create_varient = draw_vs_varient_generic;
    vs->base.run_linear = vs_llvm_run_linear;
    vs->base.delete = vs_llvm_delete;
-   vs->machine = &draw->vs.machine;
+   vs->machine = draw->vs.machine;
 
    {
       struct gallivm_ir *ir = gallivm_ir_new(GALLIVM_VS);
