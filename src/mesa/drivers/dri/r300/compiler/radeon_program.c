@@ -194,3 +194,27 @@ void rc_mesa_to_rc_program(struct radeon_compiler * c, struct gl_program * progr
 	c->Program.InputsRead = program->InputsRead;
 }
 
+
+/**
+ * Print program to stderr, default options.
+ */
+void rc_print_program(const struct rc_program *prog)
+{
+	GLuint indent = 0;
+	GLuint linenum = 1;
+	struct rc_instruction *inst;
+
+	fprintf(stderr, "# Radeon Compiler Program\n");
+
+	for(inst = prog->Instructions.Next; inst != &prog->Instructions; inst = inst->Next) {
+		fprintf(stderr, "%3d: ", linenum);
+
+		/* Massive hack: We rely on the fact that the printers do not actually
+		 * use the gl_program argument (last argument) in debug mode */
+		indent = _mesa_fprint_instruction_opt(
+				stderr, &inst->I,
+				indent, PROG_PRINT_DEBUG, 0);
+
+		linenum++;
+	}
+}

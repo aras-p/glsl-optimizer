@@ -541,7 +541,7 @@ _mesa_print_alu_instruction(const struct prog_instruction *inst,
 /**
  * Print a single vertex/fragment program instruction.
  */
-static GLint
+GLint
 _mesa_fprint_instruction_opt(FILE *f,
                             const struct prog_instruction *inst,
                             GLint indent,

@@ -57,6 +57,13 @@ extern void
 _mesa_print_instruction(const struct prog_instruction *inst);
 
 extern GLint
+_mesa_fprint_instruction_opt(FILE *f,
+                            const struct prog_instruction *inst,
+                            GLint indent,
+                            gl_prog_print_mode mode,
+                            const struct gl_program *prog);
+
+extern GLint
 _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
                             gl_prog_print_mode mode,
                             const struct gl_program *prog);
