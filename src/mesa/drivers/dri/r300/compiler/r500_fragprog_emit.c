@@ -55,7 +55,7 @@
 	struct r500_fragment_program_code *code = &c->code->code.r500
 
 #define error(fmt, args...) do {			\
-		fprintf(stderr, "%s::%s(): " fmt "\n",	\
+		rc_error(&c->Base, "%s::%s(): " fmt "\n",	\
 			__FILE__, __FUNCTION__, ##args);	\
 	} while(0)
 
@@ -87,7 +87,7 @@ static GLboolean emit_const(void *data, GLuint file, GLuint idx, GLuint *hwindex
 	return GL_TRUE;
 }
 
-static GLuint translate_rgb_op(GLuint opcode)
+static GLuint translate_rgb_op(struct r300_fragment_program_compiler *c, GLuint opcode)
 {
 	switch(opcode) {
 	case OPCODE_CMP: return R500_ALU_RGBA_OP_CMP;
@@ -108,7 +108,7 @@ static GLuint translate_rgb_op(GLuint opcode)
 	}
 }
 
-static GLuint translate_alpha_op(GLuint opcode)
+static GLuint translate_alpha_op(struct r300_fragment_program_compiler *c, GLuint opcode)
 {
 	switch(opcode) {
 	case OPCODE_CMP: return R500_ALPHA_OP_CMP;
@@ -191,8 +191,8 @@ static GLboolean emit_paired(void *data, struct radeon_pair_instruction *inst)
 
 	int ip = ++code->inst_end;
 
-	code->inst[ip].inst5 = translate_rgb_op(inst->RGB.Opcode);
-	code->inst[ip].inst4 = translate_alpha_op(inst->Alpha.Opcode);
+	code->inst[ip].inst5 = translate_rgb_op(c, inst->RGB.Opcode);
+	code->inst[ip].inst4 = translate_alpha_op(c, inst->Alpha.Opcode);
 
 	if (inst->RGB.OutputWriteMask || inst->Alpha.OutputWriteMask || inst->Alpha.DepthWriteMask)
 		code->inst[ip].inst0 = R500_INST_TYPE_OUT;
@@ -301,7 +301,7 @@ static const struct radeon_pair_handler pair_handler = {
 	.MaxHwTemps = 128
 };
 
-GLboolean r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler)
+void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler)
 {
 	struct r500_fragment_program_code *code = &compiler->code->code.r500;
 
@@ -310,20 +310,19 @@ GLboolean r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *
 	code->inst_offset = 0;
 	code->inst_end = -1;
 
-	if (!radeonPairProgram(&compiler->Base, &pair_handler, compiler))
-		return GL_FALSE;
+	radeonPairProgram(&compiler->Base, &pair_handler, compiler);
+	if (compiler->Base.Error)
+		return;
 
 	if ((code->inst[code->inst_end].inst0 & R500_INST_TYPE_MASK) != R500_INST_TYPE_OUT) {
 		/* This may happen when dead-code elimination is disabled or
 		 * when most of the fragment program logic is leading to a KIL */
 		if (code->inst_end >= 511) {
-			error("Introducing fake OUT: Too many instructions");
-			return GL_FALSE;
+			rc_error(&compiler->Base, "Introducing fake OUT: Too many instructions");
+			return;
 		}
 
 		int ip = ++code->inst_end;
 		code->inst[ip].inst0 = R500_INST_TYPE_OUT | R500_INST_TEX_SEM_WAIT;
 	}
-
-	return GL_TRUE;
 }

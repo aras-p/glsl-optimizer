@@ -384,22 +384,25 @@ static void t_inputs_outputs(struct r300_vertex_program_code *vp, struct gl_prog
 	}
 }
 
-static GLboolean translate_vertex_program(struct r300_vertex_program_compiler * compiler)
+static void translate_vertex_program(struct r300_vertex_program_compiler * compiler)
 {
 	struct prog_instruction *vpi = compiler->program->Instructions;
-	GLuint *inst;
 
 	compiler->code->pos_end = 0;	/* Not supported yet */
 	compiler->code->length = 0;
 
 	t_inputs_outputs(compiler->code, compiler->program);
 
-	for (inst = compiler->code->body.d; vpi->Opcode != OPCODE_END;
-	     vpi++, inst += 4) {
+	for (; vpi->Opcode != OPCODE_END; vpi++) {
+		GLuint *inst = compiler->code->body.d + compiler->code->length;
+
 		/* Skip instructions writing to non-existing destination */
-		if (!valid_dst(compiler->code, &vpi->DstReg)) {
-			inst -= 4;
+		if (!valid_dst(compiler->code, &vpi->DstReg))
 			continue;
+
+		if (compiler->code->length >= VSF_MAX_FRAGMENT_LENGTH) {
+			rc_error(&compiler->Base, "Vertex program has too many instructions\n");
+			return;
 		}
 
 		switch (vpi->Opcode) {
@@ -424,17 +427,15 @@ static GLboolean translate_vertex_program(struct r300_vertex_program_compiler * 
 		case OPCODE_SGE: ei_vector2(compiler->code, VE_SET_GREATER_THAN_EQUAL, vpi, inst); break;
 		case OPCODE_SLT: ei_vector2(compiler->code, VE_SET_LESS_THAN, vpi, inst); break;
 		default:
-			fprintf(stderr, "Unknown opcode %i\n", vpi->Opcode);
-			return GL_FALSE;
+			rc_error(&compiler->Base, "Unknown opcode %i\n", vpi->Opcode);
+			return;
 		}
-	}
 
-	compiler->code->length = (inst - compiler->code->body.d);
-	if (compiler->code->length >= VSF_MAX_FRAGMENT_LENGTH) {
-		return GL_FALSE;
-	}
+		compiler->code->length += 4;
 
-	return GL_TRUE;
+		if (compiler->Base.Error)
+			return;
+	}
 }
 
 struct temporary_allocation {
@@ -768,10 +769,8 @@ static GLboolean swizzleIsNative(GLuint opcode, struct prog_src_register reg)
 
 
 
-GLboolean r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
+void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 {
-	GLboolean success;
-
 	if (compiler->state.WPosAttr != FRAG_ATTRIB_MAX) {
 		pos_as_texcoord(compiler->program, compiler->state.WPosAttr - FRAG_ATTRIB_TEX0);
 	}
@@ -832,10 +831,8 @@ GLboolean r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compi
 
 	assert(compiler->program->NumInstructions);
 
-	success = translate_vertex_program(compiler);
+	translate_vertex_program(compiler);
 
 	compiler->code->InputsRead = compiler->program->InputsRead;
 	compiler->code->OutputsWritten = compiler->program->OutputsWritten;
-
-	return success;
 }

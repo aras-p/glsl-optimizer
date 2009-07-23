@@ -51,7 +51,7 @@
 	struct r300_fragment_program_code *code = &c->code->code.r300
 
 #define error(fmt, args...) do {			\
-		fprintf(stderr, "%s::%s(): " fmt "\n",	\
+		rc_error(&c->Base, "%s::%s(): " fmt "\n",	\
 			__FILE__, __FUNCTION__, ##args);	\
 	} while(0)
 
@@ -91,7 +91,7 @@ static void use_temporary(struct r300_fragment_program_code *code, GLuint index)
 }
 
 
-static GLuint translate_rgb_opcode(GLuint opcode)
+static GLuint translate_rgb_opcode(struct r300_fragment_program_compiler * c, GLuint opcode)
 {
 	switch(opcode) {
 	case OPCODE_CMP: return R300_ALU_OUTC_CMP;
@@ -110,7 +110,7 @@ static GLuint translate_rgb_opcode(GLuint opcode)
 	}
 }
 
-static GLuint translate_alpha_opcode(GLuint opcode)
+static GLuint translate_alpha_opcode(struct r300_fragment_program_compiler * c, GLuint opcode)
 {
 	switch(opcode) {
 	case OPCODE_CMP: return R300_ALU_OUTA_CMP;
@@ -148,8 +148,8 @@ static GLboolean emit_alu(void* data, struct radeon_pair_instruction* inst)
 	int j;
 	code->node[code->cur_node].alu_end++;
 
-	code->alu.inst[ip].inst0 = translate_rgb_opcode(inst->RGB.Opcode);
-	code->alu.inst[ip].inst2 = translate_alpha_opcode(inst->Alpha.Opcode);
+	code->alu.inst[ip].inst0 = translate_rgb_opcode(c, inst->RGB.Opcode);
+	code->alu.inst[ip].inst2 = translate_alpha_opcode(c, inst->Alpha.Opcode);
 
 	for(j = 0; j < 3; ++j) {
 		GLuint src = inst->RGB.Src[j].Index | (inst->RGB.Src[j].Constant << 5);
@@ -326,7 +326,7 @@ static const struct radeon_pair_handler pair_handler = {
  * Final compilation step: Turn the intermediate radeon_program into
  * machine-readable instructions.
  */
-GLboolean r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler)
+void r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler)
 {
 	struct r300_fragment_program_code *code = &compiler->code->code.r300;
 
@@ -334,12 +334,10 @@ GLboolean r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *
 	code->node[0].alu_end = -1;
 	code->node[0].tex_end = -1;
 
-	if (!radeonPairProgram(&compiler->Base, &pair_handler, compiler))
-		return GL_FALSE;
+	radeonPairProgram(&compiler->Base, &pair_handler, compiler);
+	if (compiler->Base.Error)
+		return;
 
-	if (!finish_node(compiler))
-		return GL_FALSE;
-
-	return GL_TRUE;
+	finish_node(compiler);
 }
 

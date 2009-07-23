@@ -141,7 +141,7 @@ struct radeon_pair_handler {
 	GLuint MaxHwTemps;
 };
 
-GLboolean radeonPairProgram(
+void radeonPairProgram(
 	struct radeon_compiler * compiler,
 	const struct radeon_pair_handler*, void *userdata);
 

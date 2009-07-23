@@ -235,10 +235,8 @@ static void rewrite_depth_out(struct gl_program *prog)
 	}
 }
 
-GLboolean r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
+void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 {
-	GLboolean success = GL_FALSE;
-
 	if (c->Base.Debug) {
 		fflush(stdout);
 		_mesa_printf("Fragment Program: Initial program:\n");
@@ -300,18 +298,16 @@ GLboolean r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c
 	rc_mesa_to_rc_program(&c->Base, c->program);
 
 	if (c->is_r500) {
-		success = r500BuildFragmentProgramHwCode(c);
+		r500BuildFragmentProgramHwCode(c);
 	} else {
-		success = r300BuildFragmentProgramHwCode(c);
+		r300BuildFragmentProgramHwCode(c);
 	}
 
-	if (!success || c->Base.Debug) {
+	if (c->Base.Debug) {
 		if (c->is_r500) {
 			r500FragmentProgramDump(c->code);
 		} else {
 			r300FragmentProgramDump(c->code);
 		}
 	}
-
-	return success;
 }

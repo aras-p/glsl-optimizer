@@ -40,9 +40,8 @@
 #include "shader/prog_print.h"
 
 #define error(fmt, args...) do { \
-	fprintf(stderr, "r300 driver problem: %s::%s(): " fmt "\n",	\
+	rc_error(s->Compiler, "%s::%s(): " fmt "\n",	\
 		__FILE__, __FUNCTION__, ##args);	\
-	s->Error = GL_TRUE;				\
 } while(0)
 
 struct pair_state_instruction {
@@ -121,7 +120,6 @@ struct pair_register_translation {
 struct pair_state {
 	struct radeon_compiler * Compiler;
 	const struct radeon_pair_handler *Handler;
-	GLboolean Error;
 	GLboolean Verbose;
 	void *UserData;
 
@@ -583,7 +581,7 @@ static void emit_all_tex(struct pair_state *s)
 		_mesa_printf(" BEGIN_TEX\n");
 
 	if (s->Handler->BeginTexBlock)
-		s->Error = s->Error || !s->Handler->BeginTexBlock(s->UserData);
+		s->Compiler->Error = s->Compiler->Error || !s->Handler->BeginTexBlock(s->UserData);
 
 	for(pairinst = readytex; pairinst; pairinst = pairinst->NextReady) {
 		struct prog_instruction *inst = &pairinst->Instruction;
@@ -616,7 +614,7 @@ static void emit_all_tex(struct pair_state *s)
 		rpti.SrcIndex = inst->SrcReg[0].Index;
 		rpti.SrcSwizzle = inst->SrcReg[0].Swizzle;
 
-		s->Error = s->Error || !s->Handler->EmitTex(s->UserData, &rpti);
+		s->Compiler->Error = s->Compiler->Error || !s->Handler->EmitTex(s->UserData, &rpti);
 	}
 
 	if (s->Compiler->Debug)
@@ -642,7 +640,7 @@ static int alloc_pair_source(struct pair_state *s, struct radeon_pair_instructio
 		index = get_hw_reg(s, src.File, src.Index);
 	} else {
 		constant = 1;
-		s->Error |= !s->Handler->EmitConst(s->UserData, src.File, src.Index, &index);
+		s->Compiler->Error |= !s->Handler->EmitConst(s->UserData, src.File, src.Index, &index);
 	}
 
 	for(i = 0; i < 3; ++i) {
@@ -869,11 +867,11 @@ static void emit_alu(struct pair_state *s)
 	if (s->Compiler->Debug)
 		radeonPrintPairInstruction(&pair);
 
-	s->Error = s->Error || !s->Handler->EmitPaired(s->UserData, &pair);
+	s->Compiler->Error = s->Compiler->Error || !s->Handler->EmitPaired(s->UserData, &pair);
 }
 
 
-GLboolean radeonPairProgram(
+void radeonPairProgram(
 	struct radeon_compiler * compiler,
 	const struct radeon_pair_handler* handler, void *userdata)
 {
@@ -891,7 +889,7 @@ GLboolean radeonPairProgram(
 	scan_instructions(&s);
 	allocate_input_registers(&s);
 
-	while(!s.Error &&
+	while(!s.Compiler->Error &&
 	      (s.ReadyTEX || s.ReadyRGB || s.ReadyAlpha || s.ReadyFullALU)) {
 		if (s.ReadyTEX)
 			emit_all_tex(&s);
@@ -902,8 +900,6 @@ GLboolean radeonPairProgram(
 
 	if (s.Compiler->Debug)
 		_mesa_printf(" END\n");
-
-	return !s.Error;
 }
 
 

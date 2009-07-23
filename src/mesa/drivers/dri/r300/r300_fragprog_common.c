@@ -99,8 +99,8 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 	compiler.program = _mesa_clone_program(ctx, &cont->Base.Base);
 	compiler.is_r500 = (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) ? GL_TRUE : GL_FALSE;
 
-	if (!r3xx_compile_fragment_program(&compiler))
-		fp->error = GL_TRUE;
+	r3xx_compile_fragment_program(&compiler);
+	fp->error = compiler.Base.Error;
 
 	fp->InputsRead = compiler.Base.Program.InputsRead;
 	fp->Base = compiler.program;

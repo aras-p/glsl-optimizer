@@ -22,6 +22,8 @@
 
 #include "radeon_compiler.h"
 
+#include <stdarg.h>
+
 
 void rc_init(struct radeon_compiler * c)
 {
@@ -36,4 +38,52 @@ void rc_init(struct radeon_compiler * c)
 void rc_destroy(struct radeon_compiler * c)
 {
 	memory_pool_destroy(&c->Pool);
+	free(c->ErrorMsg);
+}
+
+void rc_debug(struct radeon_compiler * c, const char * fmt, ...)
+{
+	va_list ap;
+
+	if (!c->Debug)
+		return;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+}
+
+void rc_error(struct radeon_compiler * c, const char * fmt, ...)
+{
+	va_list ap;
+
+	c->Error = GL_TRUE;
+
+	if (!c->ErrorMsg) {
+		/* Only remember the first error */
+		char buf[1024];
+		int written;
+
+		va_start(ap, fmt);
+		written = vsnprintf(buf, sizeof(buf), fmt, ap);
+		va_end(ap);
+
+		if (written < sizeof(buf)) {
+			c->ErrorMsg = strdup(buf);
+		} else {
+			c->ErrorMsg = malloc(written + 1);
+
+			va_start(ap, fmt);
+			vsnprintf(c->ErrorMsg, written + 1, fmt, ap);
+			va_end(ap);
+		}
+	}
+
+	if (c->Debug) {
+		fprintf(stderr, "r300compiler error: ");
+
+		va_start(ap, fmt);
+		vfprintf(stderr, fmt, ap);
+		va_end(ap);
+	}
 }

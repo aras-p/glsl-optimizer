@@ -39,7 +39,7 @@
 #include "radeon_compiler.h"
 #include "radeon_nqssadce.h"
 
-extern GLboolean r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler);
+extern void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler);
 
 extern void r500FragmentProgramDump(struct rX00_fragment_program_code *c);
 

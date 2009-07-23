@@ -51,10 +51,15 @@ struct radeon_compiler {
 	struct memory_pool Pool;
 	struct rc_program Program;
 	GLboolean Debug;
+	GLboolean Error;
+	char * ErrorMsg;
 };
 
 void rc_init(struct radeon_compiler * c);
 void rc_destroy(struct radeon_compiler * c);
+
+void rc_debug(struct radeon_compiler * c, const char * fmt, ...);
+void rc_error(struct radeon_compiler * c, const char * fmt, ...);
 
 struct r300_fragment_program_compiler {
 	struct radeon_compiler Base;
@@ -64,7 +69,7 @@ struct r300_fragment_program_compiler {
 	GLboolean is_r500;
 };
 
-GLboolean r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c);
+void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c);
 
 
 struct r300_vertex_program_compiler {
@@ -74,6 +79,6 @@ struct r300_vertex_program_compiler {
 	struct gl_program *program;
 };
 
-GLboolean r3xx_compile_vertex_program(struct r300_vertex_program_compiler* c);
+void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* c);
 
 #endif /* RADEON_COMPILER_H */
