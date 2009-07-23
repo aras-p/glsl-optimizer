@@ -74,6 +74,6 @@ struct r300_vertex_program_compiler {
 	struct gl_program *program;
 };
 
-GLboolean r3xx_compile_vertex_program(struct r300_vertex_program_compiler* c, GLcontext * ctx);
+GLboolean r3xx_compile_vertex_program(struct r300_vertex_program_compiler* c);
 
 #endif /* RADEON_COMPILER_H */

@@ -125,7 +125,7 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 		_mesa_insert_mvp_code(ctx, (struct gl_vertex_program *)compiler.program);
 	}
 
-	if (!r3xx_compile_vertex_program(&compiler, ctx))
+	if (!r3xx_compile_vertex_program(&compiler))
 		vp->error = GL_TRUE;
 
 	rc_destroy(&compiler.Base);

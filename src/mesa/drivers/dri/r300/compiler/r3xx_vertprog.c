@@ -28,7 +28,6 @@
 #include "radeon_program.h"
 #include "radeon_program_alu.h"
 
-#include "shader/prog_optimize.h"
 #include "shader/prog_print.h"
 
 
@@ -438,6 +437,100 @@ static GLboolean translate_vertex_program(struct r300_vertex_program_compiler * 
 	return GL_TRUE;
 }
 
+struct temporary_allocation {
+	GLuint Allocated:1;
+	GLuint HwTemp:15;
+	struct prog_instruction * LastRead;
+};
+
+static void allocate_temporary_registers(struct r300_vertex_program_compiler * compiler)
+{
+	struct prog_instruction *inst;
+	GLuint num_orig_temps = 0;
+	GLboolean hwtemps[VSF_MAX_FRAGMENT_TEMPS];
+	struct temporary_allocation * ta;
+	GLuint i, j;
+
+	compiler->code->num_temporaries = 0;
+	memset(hwtemps, 0, sizeof(hwtemps));
+
+	/* Pass 1: Count original temporaries and allocate structures */
+	for(inst = compiler->program->Instructions; inst->Opcode != OPCODE_END; inst++) {
+		GLuint numsrcs = _mesa_num_inst_src_regs(inst->Opcode);
+		GLuint numdsts = _mesa_num_inst_dst_regs(inst->Opcode);
+
+		for (i = 0; i < numsrcs; ++i) {
+			if (inst->SrcReg[i].File == PROGRAM_TEMPORARY) {
+				if (inst->SrcReg[i].Index >= num_orig_temps)
+					num_orig_temps = inst->SrcReg[i].Index + 1;
+			}
+		}
+
+		if (numdsts) {
+			if (inst->DstReg.File == PROGRAM_TEMPORARY) {
+				if (inst->DstReg.Index >= num_orig_temps)
+					num_orig_temps = inst->DstReg.Index + 1;
+			}
+		}
+	}
+
+	ta = (struct temporary_allocation*)memory_pool_malloc(&compiler->Base.Pool,
+			sizeof(struct temporary_allocation) * num_orig_temps);
+	memset(ta, 0, sizeof(struct temporary_allocation) * num_orig_temps);
+
+	/* Pass 2: Determine original temporary lifetimes */
+	for(inst = compiler->program->Instructions; inst->Opcode != OPCODE_END; inst++) {
+		GLuint numsrcs = _mesa_num_inst_src_regs(inst->Opcode);
+
+		for (i = 0; i < numsrcs; ++i) {
+			if (inst->SrcReg[i].File == PROGRAM_TEMPORARY)
+				ta[inst->SrcReg[i].Index].LastRead = inst;
+		}
+	}
+
+	/* Pass 3: Register allocation */
+	for(inst = compiler->program->Instructions; inst->Opcode != OPCODE_END; inst++) {
+		GLuint numsrcs = _mesa_num_inst_src_regs(inst->Opcode);
+		GLuint numdsts = _mesa_num_inst_dst_regs(inst->Opcode);
+
+		for (i = 0; i < numsrcs; ++i) {
+			if (inst->SrcReg[i].File == PROGRAM_TEMPORARY) {
+				GLuint orig = inst->SrcReg[i].Index;
+				inst->SrcReg[i].Index = ta[orig].HwTemp;
+
+				if (ta[orig].Allocated && inst == ta[orig].LastRead)
+					hwtemps[ta[orig].HwTemp] = GL_FALSE;
+			}
+		}
+
+		if (numdsts) {
+			if (inst->DstReg.File == PROGRAM_TEMPORARY) {
+				GLuint orig = inst->DstReg.Index;
+
+				if (!ta[orig].Allocated) {
+					for(j = 0; j < VSF_MAX_FRAGMENT_TEMPS; ++j) {
+						if (!hwtemps[j])
+							break;
+					}
+					if (j >= VSF_MAX_FRAGMENT_TEMPS) {
+						fprintf(stderr, "Out of hw temporaries\n");
+					} else {
+						ta[orig].Allocated = GL_TRUE;
+						ta[orig].HwTemp = j;
+						hwtemps[j] = GL_TRUE;
+
+						if (j >= compiler->code->num_temporaries)
+							compiler->code->num_temporaries = j + 1;
+					}
+				}
+
+				inst->DstReg.Index = ta[orig].HwTemp;
+			}
+		}
+	}
+}
+
+
 /**
  * Vertex engine cannot read two inputs or two constants at the same time.
  * Introduce intermediate MOVs to temporary registers to account for this.
@@ -675,7 +768,7 @@ static GLboolean swizzleIsNative(GLuint opcode, struct prog_src_register reg)
 
 
 
-GLboolean r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler, GLcontext * ctx)
+GLboolean r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 {
 	GLboolean success;
 
@@ -728,7 +821,7 @@ GLboolean r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compi
 		radeonNqssaDce(compiler->program, &nqssadce, compiler);
 
 		/* We need this step for reusing temporary registers */
-		_mesa_optimize_program(ctx, compiler->program);
+		allocate_temporary_registers(compiler);
 
 		if (compiler->Base.Debug) {
 			fprintf(stderr, "Vertex program after NQSSADCE:\n");
@@ -738,38 +831,6 @@ GLboolean r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compi
 	}
 
 	assert(compiler->program->NumInstructions);
-	{
-		struct prog_instruction *inst;
-		int max, i, tmp;
-
-		inst = compiler->program->Instructions;
-		max = -1;
-		while (inst->Opcode != OPCODE_END) {
-			tmp = _mesa_num_inst_src_regs(inst->Opcode);
-			for (i = 0; i < tmp; ++i) {
-				if (inst->SrcReg[i].File == PROGRAM_TEMPORARY) {
-					if ((int) inst->SrcReg[i].Index > max) {
-						max = inst->SrcReg[i].Index;
-					}
-				}
-			}
-
-			if (_mesa_num_inst_dst_regs(inst->Opcode)) {
-				if (inst->DstReg.File == PROGRAM_TEMPORARY) {
-					if ((int) inst->DstReg.Index > max) {
-						max = inst->DstReg.Index;
-					}
-				}
-			}
-			++inst;
-		}
-
-		/* We actually want highest index of used temporary register,
-		 * not the number of temporaries used.
-		 * These values aren't always the same.
-		 */
-		compiler->code->num_temporaries = max + 1;
-	}
 
 	success = translate_vertex_program(compiler);
 
