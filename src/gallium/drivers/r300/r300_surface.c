@@ -125,9 +125,10 @@ validate:
         r300->context.flush(&r300->context, 0, NULL);
         goto validate;
     }
-    if (r300->winsys->validate(r300->winsys)) {
+    if (!r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
+            debug_printf("r300: Stuck in validation loop, gonna fallback.");
             goto fallback;
         }
         invalid = TRUE;
@@ -256,9 +257,10 @@ validate:
         r300->context.flush(&r300->context, 0, NULL);
         goto validate;
     }
-    if (r300->winsys->validate(r300->winsys)) {
+    if (!r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
+            debug_printf("r300: Stuck in validation loop, gonna fallback.");
             goto fallback;
         }
         invalid = TRUE;

@@ -29,12 +29,6 @@
  */
 
 #include "radeon_drm.h"
-#include "trace/tr_drm.h"
-
-#include "r300_screen.h"
-#include "xf86drm.h"
-
-#include <sys/ioctl.h>
 
 /* Create a pipe_screen. */
 struct pipe_screen* radeon_create_screen(struct drm_api* api,
@@ -59,7 +53,8 @@ struct pipe_context* radeon_create_context(struct drm_api* api,
     if (getenv("RADEON_SOFTPIPE")) {
         return radeon_create_softpipe(screen->winsys);
     } else {
-        return r300_create_context(screen, screen->winsys);
+        return r300_create_context(screen,
+                                   (struct r300_winsys*)screen->winsys);
     }
 }
 

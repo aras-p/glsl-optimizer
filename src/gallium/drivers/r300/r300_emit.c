@@ -531,10 +531,11 @@ validate:
     } else {
         debug_printf("No VBO while emitting dirty state!\n");
     }
-    if (r300->winsys->validate(r300->winsys)) {
+    if (!r300->winsys->validate(r300->winsys)) {
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
             /* Well, hell. */
+            debug_printf("r300: Stuck in validation loop, gonna quit now.");
             exit(1);
         }
         invalid = TRUE;

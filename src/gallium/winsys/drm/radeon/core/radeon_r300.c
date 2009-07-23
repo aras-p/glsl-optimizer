@@ -41,11 +41,11 @@ static boolean radeon_r300_validate(struct r300_winsys* winsys)
         (struct radeon_winsys_priv*)winsys->radeon_winsys;
 
     if (radeon_cs_space_check(priv->cs) < 0) {
-        return TRUE;
+        return FALSE;
     }
 
     /* Things are fine, we can proceed as normal. */
-    return FALSE;
+    return TRUE;
 }
 
 static boolean radeon_r300_check_cs(struct r300_winsys* winsys, int size)
@@ -118,10 +118,15 @@ static void radeon_r300_flush_cs(struct r300_winsys* winsys)
         debug_printf("radeon: Bad CS, dumping...\n");
         radeon_cs_print(priv->cs, stderr);
     }
-    radeon_cs_erase(priv->cs);
 
     /* Clean out BOs. */
     radeon_cs_space_reset_bos(priv->cs);
+
+    /* Reset CS.
+     * Someday, when we care about performance, we should really find a way
+     * to rotate between two or three CS objects so that the GPU can be
+     * spinning through one CS while another one is being filled. */
+    radeon_cs_erase(priv->cs);
 }
 
 /* Helper function to do the ioctls needed for setup and init. */
