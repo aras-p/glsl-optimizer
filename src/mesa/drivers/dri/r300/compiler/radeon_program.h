@@ -79,6 +79,12 @@ static inline GLuint combine_swizzles(GLuint src, GLuint swz)
 	return ret;
 }
 
+static INLINE void reset_srcreg(struct prog_src_register* reg)
+{
+	_mesa_bzero(reg, sizeof(*reg));
+	reg->Swizzle = SWIZZLE_NOOP;
+}
+
 
 /**
  * Transformation context that is passed to local transformations.

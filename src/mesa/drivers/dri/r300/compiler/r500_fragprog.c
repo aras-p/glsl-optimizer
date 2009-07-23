@@ -29,12 +29,6 @@
 
 #include "../r300_reg.h"
 
-static void reset_srcreg(struct prog_src_register* reg)
-{
-	_mesa_bzero(reg, sizeof(*reg));
-	reg->Swizzle = SWIZZLE_NOOP;
-}
-
 static struct prog_src_register shadow_ambient(struct gl_program *program, int tmu)
 {
 	gl_state_index fail_value_tokens[STATE_LENGTH] = {
