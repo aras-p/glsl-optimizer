@@ -52,7 +52,7 @@ unsigned int Map_Vertex_Output(r700_AssemblerBase       *pAsm,
 	unsigned int unBit;
 	unsigned int unTotal = unStart;
 
-    //!!!!!!! THE ORDER MATCH FS INPUT 
+    //!!!!!!! THE ORDER MATCH FS INPUT
 
 	unBit = 1 << VERT_RESULT_HPOS;
 	if(mesa_vp->Base.OutputsWritten & unBit)
@@ -73,17 +73,17 @@ unsigned int Map_Vertex_Output(r700_AssemblerBase       *pAsm,
 	}
 
 	//TODO : dealing back face.
-	//unBit = 1 << VERT_RESULT_BFC0;
-	//if(mesa_vp->Base.OutputsWritten & unBit)
-	//{
-	//	pAsm->ucVP_OutputMap[VERT_RESULT_COL0] = unTotal++;
-	//}
+	unBit = 1 << VERT_RESULT_BFC0;
+	if(mesa_vp->Base.OutputsWritten & unBit)
+	{
+		pAsm->ucVP_OutputMap[VERT_RESULT_BFC0] = unTotal++;
+	}
 
-	//unBit = 1 << VERT_RESULT_BFC1;
-	//if(mesa_vp->Base.OutputsWritten & unBit)
-	//{
-	//	pAsm->ucVP_OutputMap[VERT_RESULT_COL1] = unTotal++;
-	//}
+	unBit = 1 << VERT_RESULT_BFC1;
+	if(mesa_vp->Base.OutputsWritten & unBit)
+	{
+		pAsm->ucVP_OutputMap[VERT_RESULT_BFC1] = unTotal++;
+	}
 
 	//TODO : dealing fog.
 	unBit = 1 << VERT_RESULT_FOGC;
@@ -93,11 +93,11 @@ unsigned int Map_Vertex_Output(r700_AssemblerBase       *pAsm,
 	}
 
 	//TODO : dealing point size.
-	//unBit = 1 << VERT_RESULT_PSIZ;
-	//if(mesa_vp->Base.OutputsWritten & unBit)
-	//{
-	//	pAsm->ucVP_OutputMap[VERT_RESULT_PSIZ] = unTotal++;
-	//}
+	unBit = 1 << VERT_RESULT_PSIZ;
+	if(mesa_vp->Base.OutputsWritten & unBit)
+	{
+		pAsm->ucVP_OutputMap[VERT_RESULT_PSIZ] = unTotal++;
+	}
 
 	for(i=0; i<8; i++)
 	{
