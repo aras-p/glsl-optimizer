@@ -149,6 +149,12 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
       Xfree((char *) psc->serverGLXexts);
 
 #ifdef GLX_DIRECT_RENDERING
+      if (psc->driver_configs) {
+         for(unsigned int i = 0; psc->driver_configs[i]; i++)
+            free((__DRIconfig*)psc->driver_configs[i]);
+         free(psc->driver_configs);
+         psc->driver_configs = NULL;
+      }
       if (psc->driScreen) {
          psc->driScreen->destroyScreen(psc);
          __glxHashDestroy(psc->drawHash);
